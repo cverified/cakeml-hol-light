@@ -16,7 +16,7 @@ let destTOK_def = cake_define
         | _2 -> NONE`;;
 let grammar_FIELDS = define_record "grammar"
   ["start","'b+num";
-   "rules","('b+num,('a,'b)grammar_symbol list->bool)fmap"];;
+   "rules","('b+num,((('a,'b)grammar_symbol) list->bool))fmap"];;
 let parsetree_INDUCT,parsetree_RECURSION = define_datatype
   "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd (('b+num)#'locs) (parsetree list)";;
 let ptree_loc_def = cake_define
@@ -32,7 +32,7 @@ let valid_ptree_def = cake_define
    (valid_ptree G (Nd (nt,l) children) <=>
      nt IN FDOM (grammar_rules G) /\ MAP grammar_ptree_head children
        IN FAPPLY (grammar_rules G) nt /\
-     (!pt. pt IN set children ==> valid_ptree G pt))`;;
+     (!pt. pt IN set_of_list children ==> valid_ptree G pt))`;;
 let valid_locs_def = cake_define
   `(valid_locs (Lf _7) <=> T) /\
    (valid_locs (Nd (_8,l) children) <=>

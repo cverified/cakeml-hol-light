@@ -7,6 +7,10 @@
 
 let locn_INDUCT,locn_RECURSION = define_datatype
   "locn = UNKNOWNpt | EOFpt | POSN (num) (num)";;
+let locnrow_def = cake_define
+  `locnrow (POSN r c) = r`;;
+let locncol_def = cake_define
+  `locncol (POSN r c) = c`;;
 let locs_INDUCT,locs_RECURSION = define_datatype
   "locs = Locs (locn) (locn)";;
 (* HOL4 overload (expanded in the port):

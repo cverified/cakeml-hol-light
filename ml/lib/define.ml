@@ -22,6 +22,10 @@
 (*  relation is one on the sum of the tupled arguments, as in HOL4.          *)
 (* ========================================================================= *)
 
+(* with cake_debug set, a failing definition is shown *)
+
+let cake_debug = ref false;;
+
 (* ------------------------------------------------------------------------- *)
 (* Tuples and sums.                                                          *)
 (* ------------------------------------------------------------------------- *)
@@ -196,7 +200,14 @@ let discharge_conditions (rel,tac) th =
            let rel' = inst (type_match (type_of rel) (type_of v) []) rel in
            EXISTS_TAC rel' THEN CONJ_TAC THENL [WF_TAC; tac]
          else tac in
-       PROVE_HYP (prove(h,gtac)) th)
+       let hth =
+         try prove(h,gtac)
+         with Failure s ->
+           (if !cake_debug then
+              (print_string "\ncannot prove the termination condition:\n";
+               print_term h; print_newline(); flush stdout);
+            failwith s) in
+       PROVE_HYP hth th)
     (hyp th) th;;
 
 (* ------------------------------------------------------------------------- *)
@@ -252,6 +263,61 @@ let DEPAIR_CONV tm =
 let DEPAIR_TAC = CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV);;
 
 (* ------------------------------------------------------------------------- *)
+(* Putting the recursive calls under a MAP.                                  *)
+(* ------------------------------------------------------------------------- *)
+
+let mapify fs tm =
+  let itl op b l =
+    let v1 = mk_var("b",bool_ty) and v2 = mk_var("a",bool_ty) in
+    list_mk_comb(mk_mconst("ITLIST",
+      mk_fun_ty (mk_fun_ty bool_ty (mk_fun_ty bool_ty bool_ty))
+        (mk_fun_ty (type_of l) (mk_fun_ty bool_ty bool_ty))),
+      [mk_abs(v1,mk_abs(v2,mk_binop op v1 v2)); l; b]) in
+  let rec go tm =
+    match tm with
+      Comb(Comb(Const("ALL",_),f),l)
+        when exists (fun g -> vfree_in g f) fs ->
+          let f = go f and l = go l in
+          let mty = mk_fun_ty (type_of f)
+                      (mk_fun_ty (type_of l)
+                         (mk_type("list",[bool_ty]))) in
+          itl `(/\)` `T` (list_mk_comb(mk_mconst("MAP",mty),[f;l]))
+    | Comb(Comb(Const("EX",_),f),l)
+        when exists (fun g -> vfree_in g f) fs ->
+          let f = go f and l = go l in
+          let mty = mk_fun_ty (type_of f)
+                      (mk_fun_ty (type_of l)
+                         (mk_type("list",[bool_ty]))) in
+          itl `(\/)` `F` (list_mk_comb(mk_mconst("MAP",mty),[f;l]))
+    | Comb(Const("!",_),Abs(v,bod))
+        when is_imp bod &&
+             (let p = lhand bod in
+              is_comb p && is_comb(rator p) &&
+              (name_of(rator(rator p)) = "MEM" ||
+               (name_of(rator(rator p)) = "IN" &&
+                is_comb(rand p) &&
+                name_of(rator(rand p)) = "set_of_list"))) &&
+             exists (fun g -> vfree_in g (rand bod)) fs ->
+          let p = lhand bod in
+          let l = if name_of(rator(rator p)) = "MEM" then rand p
+                  else rand(rand p) in
+          let f = mk_abs(v,go (rand bod)) in
+          go (list_mk_comb(mk_mconst("ALL",
+                mk_fun_ty (type_of f)
+                  (mk_fun_ty (type_of l) bool_ty)),[f;l]))
+    | Comb(s,t) -> mk_comb(go s,go t)
+    | Abs(v,b) -> mk_abs(v,go b)
+    | _ -> tm in
+  go tm;;
+
+let MAPIFY_CONV fs tm =
+  let tm' = mapify fs tm in
+  if tm' = tm then failwith "MAPIFY_CONV: no change" else
+  prove(mk_eq(tm,tm'),
+        REWRITE_TAC[ALL_MAPIFY; EX_MAPIFY; GSYM ALL_MEM;
+                    IN_SET_OF_LIST]);;
+
+(* ------------------------------------------------------------------------- *)
 (* Definition of one function, with a given termination relation.            *)
 (* ------------------------------------------------------------------------- *)
 
@@ -269,14 +335,19 @@ let define_single wfs tm =
   try let dth = new_specification [name] (existence cls) in
       CONJUNCTS dth,dth
   with Failure _ ->
-    let cls' = map depair cls in
+    (* the recursive calls may be under a lambda with a pattern, or
+       under ALL or EX, which HOL Light's machinery cannot handle *)
+    let cls' = map (fun cl -> mapify [f] (depair cl)) cls in
     if cls' = cls then failwith "define_single" else
     let dth = new_specification [name] (existence cls') in
     let c = mk_mconst(name,type_of f) in
     let dths = CONJUNCTS dth in
     let derive cl =
       prove(vsubst [c,f] cl,
-            REPEAT GEN_TAC THEN DEPAIR_TAC THEN
+            REPEAT GEN_TAC THEN
+            CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV) THEN
+            REWRITE_TAC[IN_SET_OF_LIST; GSYM ALL_MEM; ALL_MAPIFY;
+                        EX_MAPIFY] THEN
             FIRST (map MATCH_ACCEPT_TAC dths)) in
     map derive cls,dth;;
 
@@ -361,8 +432,6 @@ let define_mutual wfs tm =
 
 (* the recursion theorems of the datatypes, by the name of a type of the
    family that they are about *)
-
-let cake_debug = ref false;;
 
 let the_rec_thms = ref ([]:(string * thm) list);;
 

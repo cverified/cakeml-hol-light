@@ -1,0 +1,11 @@
+#!/bin/sh
+# checkmany <file>... : check each file, write the results to
+# cakeml/tools/check.log and print them
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+log=/home/freek/claude/hol-light/cakeml/tools/check.log
+: > $log
+for f in "$@"; do
+  r=$(check "$f" 2>&1 | tr '\n' '|')
+  printf '%-34s %s\n' "$f" "$r" >> $log
+  printf '%-34s %s\n' "$f" "$r"
+done

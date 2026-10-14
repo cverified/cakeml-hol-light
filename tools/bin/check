@@ -1,7 +1,7 @@
 #!/bin/sh
-# check <mlfile> : load an ml file of the port in a fresh session
-# cloned from hol-template-cakeml and report where it fails, how long
-# it took, and that it added no axioms
+# check <mlfile> : load an ml file of the port in a session cloned
+# from hol-template-cakeml; print the time, the number of axioms and
+# the first failure
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 f="$1"
 case "$f" in /*) ;; *) f="/home/freek/claude/hol-light/cakeml/ml/$f";; esac
@@ -13,8 +13,12 @@ repl-step $s "let cake_t0 = Sys.time();;" > /dev/null 2>&1
 TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$f\";;" > /dev/null 2>&1
 TIMEOUT=120 repl-step $s \
   "(Sys.time() -. cake_t0,length(axioms()));;" > /dev/null 2>&1
-tmux capture-pane -p -S - -t hol-$s |
-  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
-  grep -E '^(val [a-zA-Z_0-9]* :|Error|Exception|Warning|cake_define|- : float \* int|val it : float \* int|Error in included)' |
-  tail -${TAIL:-6}
+out=$(tmux capture-pane -p -S - -t hol-$s |
+      sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g')
+printf '%s' "$out" | grep -oE '\(?[0-9]+\.[0-9]+, *3\)?' | tail -1
+printf '%s' "$out" |
+  grep -E '^(cake_define [a-zA-Z_0-9]* failed|Exception|Error|Warning [0-9])' |
+  head -${TAIL:-2}
+printf '%s' "$out" | grep -cE '^(Exception|Error)' |
+  sed 's/^/errors=/'
 repl-kill $s > /dev/null 2>&1

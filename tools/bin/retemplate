@@ -1,11 +1,15 @@
 #!/bin/sh
-# rebuild the hol-template-cakeml session from hol-base
+# rebuild the hol-template-cakeml session from hol-base, and report
+# any error in the preamble
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
-for s in $(tmux ls 2>/dev/null | sed -n 's/^hol-\(t[0-9]*\):.*/\1/p'); do
-  repl-kill "$s" > /dev/null 2>&1
-done
+holclean > /dev/null 2>&1
 repl-kill template-cakeml > /dev/null 2>&1
-repl-clone hol-base template-cakeml > /dev/null 2>&1 || exit 1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-template-cakeml
+repl-clone hol-base template-cakeml > /dev/null 2>&1 || {
+  echo "retemplate: cannot clone hol-base"; exit 1; }
 TIMEOUT=900 repl-step template-cakeml \
   'loadt "/home/freek/claude/hol-light/cakeml/ml/lib/preamble.ml";;' \
-  2>&1 | tail -2
+  > /dev/null 2>&1
+tmux capture-pane -p -S - -t hol-template-cakeml |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+  grep -B3 -E '^(Error|Exception)' | head -12

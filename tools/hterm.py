@@ -1006,7 +1006,8 @@ def print_type(ty, ctx=None, prec=0):
   if len(args) == 1:
     s = print_type(args[0], ctx, 6) + ' ' + nm
     return '(' + s + ')' if prec > 5 else s
-  return '(' + ','.join(print_type(a, ctx, 0) for a in args) + ')' + nm
+  s = '(' + ','.join(print_type(a, ctx, 3) for a in args) + ')' + nm
+  return '(' + s + ')' if prec > 5 else s
 
 
 def type_vars_of(ty):

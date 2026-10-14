@@ -403,3 +403,20 @@ let list_size_REVERSE = prove
  (`!f:A->num l. list_size f (REVERSE l) = list_size f l`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[REVERSE; list_size; list_size_APPEND] THEN ARITH_TAC);;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL Light's machinery for the admissibility of a recursion knows MAP      *)
+(* but not ALL, EX or a bounded quantifier, so a definition that recurses    *)
+(* under those is made with the right hand side rewritten with these         *)
+(* lemmas, and then the definition as it was given is derived from it.       *)
+(* ------------------------------------------------------------------------- *)
+
+let ALL_MAPIFY = prove
+ (`!f:A->bool l. ALL f l <=> ITLIST (\b a. b /\ a) (MAP f l) T`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[ALL; MAP; ITLIST]);;
+
+let EX_MAPIFY = prove
+ (`!f:A->bool l. EX f l <=> ITLIST (\b a. b \/ a) (MAP f l) F`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[EX; MAP; ITLIST]);;

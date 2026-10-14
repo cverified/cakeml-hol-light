@@ -200,7 +200,8 @@ class Db:
     if self.kind_of_thy.get(thy) == 'lib' and \
        all(nm in self.provided for nm in names):
       return False
-    return any((thy, nm) in self.needed_names and
+    return any(((thy, nm) in self.needed_names or
+                (thy, nm) in overrides.ALSO_NEEDED) and
                (thy, nm) not in overrides.NOT_NEEDED for nm in names)
 
   def mlpath_of(self, thy):

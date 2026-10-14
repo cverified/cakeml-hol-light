@@ -10,6 +10,7 @@ FIELD_OF: the record type of a field name where several record
 NAME_MAP = {
   'measure': 'MEASURE',
   'unit': 'one',
+  'set': 'set_of_list',
   '()': 'one',
   'Num': 'num_of_int',
   'ABS': 'abs',
@@ -32,6 +33,13 @@ FIELD_OF = {
 NOT_NEEDED = set([
   ('toto', 'comp'), ('toto', 'cpn'), ('toto', 'lexTO'),
   ('toto', 'lextoto'), ('toto', 'TO_of_LinearOrder'),
+])
+
+# names that the dependency analysis misses, because the CakeML
+# sources use them through HOL4 syntax that mentions them only
+# indirectly (a record field declared with ML code, say)
+ALSO_NEEDED = set([
+  ('location', 'locnrow'), ('location', 'locncol'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's

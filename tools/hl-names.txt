@@ -1,3 +1,20 @@
+LUNFOLD
+LUNFOLD_state
+LMAP
+LAPPEND
+toList
+fromList
+LPREFIX
+LTAKE
+LLENGTH
+LFINITE
+LNTH
+LTL
+LHD
+LCONS
+LNIL
+llist_fn
+mk_llist
 fmap_size
 fmap_to_alist
 alist_to_fmap
@@ -31,6 +48,7 @@ INT_MIN
 dimword
 word_log2
 word_abs
+word_slice_alt
 word_reverse
 bit_field_insert
 @@
@@ -39,6 +57,7 @@ word_slice
 word_bits
 word_lsb
 word_msb
+DIV2
 sum_measure
 LEX
 inv_image
@@ -92,6 +111,7 @@ SUM
 FLAT
 FOLDL
 OPT_MMAP
+some
 OPTION_APPLY
 OPTION_ALL
 OPTION_CHOICE
@@ -189,6 +209,7 @@ bit
 bitvector
 mk_word
 bitval
+LOG2
 superadmissible
 tailadmissible
 admissible
@@ -492,6 +513,7 @@ F
 /\
 T
 =
+llist
 fmap
 word
 tybit1
