@@ -76,7 +76,13 @@ class Db:
     for thy, path, kind in self.order:
       self.thy_of_file[thy] = path
       self.kind_of_thy[thy] = kind
+      hterm.set_equality(False)
       for b in hol4.parse(path):
+        mode = hol4.equality_mode(b.text) if b.kind == 'ML' else None
+        if mode: hterm.set_equality(mode == 'loose')
+        if b.kind == 'ML':
+          for tok, prec, ass in hol4.fixities(b.text):
+            hterm.add_infix(tok, prec, ass)
         if b.kind == 'Ancestors':
           anc = [w for w in b.body.split()]
           self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))

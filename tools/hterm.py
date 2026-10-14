@@ -15,6 +15,8 @@ UNI = {
   '∈': 'IN', '∉': 'NOTIN', '⊆': 'SUBSET', '∪': 'UNION', '∩': 'INTER',
   '∅': '{}', '⧺': '++', '∘': 'o', '−': '-', '×': '*', '≼': '<<=',
   '⊂': 'PSUBSET', '≥': '>=', '⊕': 'XOR',
+  '⊌': 'FUNION', '⊑': 'SUBMAP', '≪': '<<', '≫': '>>', '⋙': '>>>',
+  '‖': '||', '↦': '|->',
 }
 
 GREEK = dict(zip('αβγδεζηθ'
@@ -34,7 +36,7 @@ SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '&&',
         '𝕌', 'univ',
         '(', ')', '[', ']', '{', '}', ',', ';', '.', '|', '=', '<',
         '>', '+', '-', '*', '/', '~', '!', '?', '\\', ':', '$', '&',
-        '^', '#', '@', '%', '§', '><']
+        '^', '#', '@', '%', '§', '><', '⟨', '⟩']
 
 
 class Tok:
@@ -131,8 +133,13 @@ def tokenize(s):
       i = j; nl = 0; continue
     for sym in SYMS:
       if s.startswith(sym, i):
+        # the unsigned word comparisons are <, <=, > and >= with a
+        # subscript plus
+        n2 = len(sym)
+        if sym in ('<', '<=', '>', '>=') and s.startswith('₊', i + n2):
+          sym += '+'; n2 += 1
         toks.append(Tok('sym', sym, start, nl, icol))
-        i += len(sym); col += len(sym); nl = 0; break
+        i += n2; col += n2; nl = 0; break
     else:
       raise SyntaxError(f'tokenize: {s[i:i+20]!r}')
   toks.append(Tok('eof', '', n, nl, 0))
@@ -194,6 +201,8 @@ INFIX = {
   '#<<':   (680, 'l', '#<<',    23),
   '@@':    (700, 'l', '@@',     23),
   'o':     (800, 'r', 'o',      26),
+  'FUNION':(500, 'l', 'FUNION', None),
+  'SUBMAP':(450, 'n', 'SUBMAP', 12),
   '$':     (460,  'r', '$',      0),
   "'":     (2000, 'l', 'FAPPLY', 0),
   "''":    (350, 'l', 'word_slice', 0),
@@ -343,7 +352,23 @@ class Parser:
   def parse_postfix(self, e):
     while True:
       t = self.peek()
-      if t.text == 'with':
+      # fm⟨k ↦ v⟩ is fm |+ (k,v) and fm⟨k⟩ is fm ' k (the finite map
+      # syntax of HOL4's combinpp)
+      if t.text == '⟨':
+        self.next()
+        while True:
+          k = self.parse(101)
+          if self.at('|->'):
+            self.next()
+            v = self.parse(0)
+            e = Node('infix', tok=t, op='|+', l=e,
+                     r=Node('infix', tok=t, op=',', l=k, r=v))
+          else:
+            e = Node('infix', tok=t, op="'", l=e, r=k)
+          if self.at(';'): self.next(); continue
+          break
+        self.expect('⟩')
+      elif t.text == 'with':
         self.next()
         if self.at('<|'):
           self.next()
@@ -468,6 +493,11 @@ class Parser:
         if self.at(')'):
           self.next()
           return Node('id', tok=t, name='()')
+        # the operator form of an infix, as in FIELDS ((=) #"\n") ls
+        if self.peek().text in INFIX and \
+           self.peek(1).text == ')':
+          o = self.next(); self.next()
+          return Node('dollar', tok=t, name=o.text)
         e = self.parse(0)
         self.expect(')')
         return Node('paren', tok=t, e=e)
@@ -480,6 +510,8 @@ class Parser:
             break
         self.expect(']')
         return Node('list', tok=t, items=items)
+      if t.text == '{}':
+        return Node('set', tok=t, items=[])
       if t.text == '{':
         if self.at('}'):
           self.next(); return Node('set', tok=t, items=[])
@@ -561,6 +593,66 @@ ARGPERM = {
 }
 
 
+def subnodes(e):
+  """the direct children of a node"""
+  out = []
+  def add(v):
+    if isinstance(v, Node): out.append(v)
+    elif isinstance(v, (list, tuple)):
+      for w in v: add(w)
+  for k, v in e.__dict__.items():
+    if k != 'tok': add(v)
+  return out
+
+
+# the constructors of HOL Light that a pattern can use
+HLCONS = set(['SOME', 'NONE', 'INL', 'INR', 'CONS', 'NIL', 'T', 'F'])
+
+
+def pattern_vars(e, cons, lam=False):
+  """the variables that a pattern binds; lam is true where the head
+     of an application is bound as well (a lambda or a let)"""
+  while e.kind in ('paren', 'typed'): e = e.e
+  if e.kind == 'id':
+    return [] if not lam and (e.name in cons or e.name in HLCONS) \
+           else [e.name]
+  if e.kind == 'app':
+    h, args = strip_app(e)
+    out = pattern_vars(h, cons, True) if lam else []
+    for a in args: out += pattern_vars(a, cons)
+    return out
+  if e.kind == 'infix':
+    return pattern_vars(e.l, cons) + pattern_vars(e.r, cons)
+  if e.kind in ('list', 'set'):
+    return [v for i in e.items for v in pattern_vars(i, cons)]
+  return []
+
+
+def bound_names(e, cons, defn=False):
+  """the names that the term binds somewhere; with defn, it is a
+     definition, whose left hand sides bind their arguments"""
+  out = set()
+  if defn:
+    try:
+      for _, args, _ in clauses_of(e):
+        for a in args: out.update(pattern_vars(a, cons))
+    except Exception:
+      pass
+  def go(e):
+    k = e.kind
+    if k in ('quant', 'some'):
+      for v in e.vs: out.update(pattern_vars(v, cons, True))
+    elif k == 'let':
+      for p, _ in e.binds: out.update(pattern_vars(p, cons, True))
+    elif k == 'case':
+      for p, _ in e.arms: out.update(pattern_vars(p, cons))
+    elif k in ('setabs', 'setabs2'):
+      out.update(pattern_vars(e.e, cons, True))
+    for t in subnodes(e): go(t)
+  go(e)
+  return out
+
+
 def strip_app(e):
   args = []
   while e.kind == 'app':
@@ -582,6 +674,7 @@ class Ctx:
     self.cons = cons or set()          # the constructor names
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.intnums = False               # are numerals integers here?
+    self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
     self.thy = thy
     self.wild = 0
@@ -645,6 +738,23 @@ NUMCTX = set(['+', '-', '*', '/', 'DIV', 'MOD', 'EXP', '**',
 BINDERS = set(['minimal'])
 
 
+def add_infix(tok, prec, assoc):
+  """an infix that a CakeML source declares itself; the port writes
+     it as an application of the constant it is overloaded with"""
+  INFIX[tok] = (prec, assoc, tok, None)
+  if tok not in SYMS and not tok[0].isalpha():
+    SYMS.append(tok)
+    SYMS.sort(key=len, reverse=True)
+
+
+def set_equality(loose):
+  """HOL4's ParseExtras.loose_equality puts = at precedence 100,
+     where it binds looser than /\\, and tight_equality back at 450,
+     where it binds tighter (which is HOL4's default)"""
+  _, assoc, hop, hprec = INFIX['=']
+  INFIX['='] = (100 if loose else 450, assoc, hop, hprec)
+
+
 class Printer:
   def __init__(self, ctx):
     self.ctx = ctx
@@ -683,6 +793,7 @@ class Printer:
     if k == 'id':
       n = e.name
       if n == '_': return self.ctx.fresh()
+      if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
         return '(' + self.ctx.overloads[n] + ')'
       return self.ctx.name(n)
@@ -758,6 +869,14 @@ class Printer:
         return self.paren('word_bit ' + self.pr(e.r, APP) + ' ' +
                           self.pr(e.l, APP), PRE_APP, prec)
       _, assoc, hop, hprec = INFIX[op]
+      # an infix that HOL Light does not have is written as an
+      # application of the constant that HOL4 overloads it with
+      if hprec is None:
+        fn = self.ctx.overloads.get(hop) if self.ctx is not None \
+             else None
+        fn = '(' + fn + ')' if fn else self.ctx.name(hop)
+        return self.paren(fn + ' ' + self.pr(e.l, APP) + ' ' +
+                          self.pr(e.r, APP), PRE_APP, prec)
       old = self.numctx
       self.numctx = op in NUMCTX
       # the exponent of pow, EXP and ** is a natural number, also in
@@ -803,8 +922,9 @@ class Printer:
       return self.paren('let ' + bs + ' in ' + self.pr(e.body, 0),
                         1, prec)
     if k == 'case':
-      # a tuple of values or a tuple pattern needs its parentheses
-      arms = ' | '.join(self.pr(p, 15) + ' -> ' + self.pr(b, 0)
+      # a tuple of values or a tuple pattern needs its parentheses,
+      # and so does a match, a let or a conditional in an arm
+      arms = ' | '.join(self.pr(p, 15) + ' -> ' + self.pr(b, 2)
                         for p, b in e.arms)
       return self.paren('match ' + self.pr(e.s, 15) + ' with ' + arms,
                         1, prec)

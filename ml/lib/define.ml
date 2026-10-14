@@ -832,7 +832,7 @@ let define_nested tm =
    into a type variable, which would silently give a wrong type, so
    the names in a datatype specification are checked first *)
 
-let check_type_names s =
+let check_type_names news s =
   let letter c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') in
   let idchar c = letter c || (c >= '0' && c <= '9') ||
                  c = '_' || c = '\'' in
@@ -844,6 +844,7 @@ let check_type_names s =
        while !j < n && idchar s.[!j] do incr j done;
        let name = String.sub s !i (!j - !i) in
        if not (!i > 0 && s.[!i - 1] = '\'') &&
+          not (mem name news) &&
           not (can get_type_arity name) &&
           not (can (assoc name) (type_abbrevs()))
        then failwith ("unknown type " ^ name);
@@ -892,6 +893,14 @@ let parse_datatype_spec s =
     if !cur <> [] then
       out := (implode(rev(map (String.make 1) (!cur))))::(!out);
     rev (!out) in
+  let parts = split ';' s in
+  (* the types that the specification itself defines *)
+  let news =
+    mapfilter (fun part ->
+                 match split '=' part with
+                   [l;_] -> trim l
+                 | _ -> fail())
+              parts in
   map (fun part ->
          match split '=' part with
            [l;r] ->
@@ -900,12 +909,12 @@ let parse_datatype_spec s =
              map (fun alt ->
                     match args (trim alt) with
                       c::tys ->
-                        c,map (fun t -> check_type_names t;
+                        c,map (fun t -> check_type_names news t;
                                         parse_type t) tys
                     | [] -> failwith "parse_datatype_spec")
                  (split '|' r)
          | _ -> failwith "parse_datatype_spec")
-      (split ';' s);;
+      parts;;
 
 let define_datatype spec =
   let ith,rth = define_type_raw (parse_datatype_spec spec) in

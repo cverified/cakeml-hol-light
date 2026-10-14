@@ -48,6 +48,58 @@ HEAD = re.compile(r'''^(Theory|Ancestors|Libs|Datatype|Definition|
     Datatype)\b''', re.X)
 
 
+def sml_string(s):
+  """the value of an SML string literal body (\\ddd is a byte)"""
+  out = bytearray()
+  i = 0
+  while i < len(s):
+    if s[i] == '\\' and i + 3 < len(s) and s[i+1:i+4].isdigit():
+      out.append(int(s[i+1:i+4])); i += 4
+    elif s[i] == '\\':
+      out.append(ord(s[i+1])); i += 2
+    else:
+      out.extend(s[i].encode('utf-8')); i += 1
+  return out.decode('utf-8', 'replace')
+
+
+FIXITY = re.compile(r'set_fixity\s*"((?:[^"\\]|\\.)*)"\s*'
+                    r'\(\s*(Infixl|Infixr|Infix)\s*'
+                    r'(?:\(\s*(LEFT|RIGHT|NONASSOC)\s*,\s*)?(\d+)')
+ADD_INFIX = re.compile(r'add_infix\s*\(\s*"((?:[^"\\]|\\.)*)"\s*,'
+                       r'\s*(\d+)\s*,\s*(?:\w+\.)?'
+                       r'(LEFT|RIGHT|NONASSOC)')
+MAPPED_FIXITY = re.compile(
+  r'set_mapped_fixity\s*\{[^}]*?tok\s*=\s*"((?:[^"\\]|\\.)*)"'
+  r'[^}]*?fixity\s*=\s*(Infixl|Infixr|Infix)\s*'
+  r'(?:\(\s*(LEFT|RIGHT|NONASSOC)\s*,\s*)?(\d+)', re.S)
+
+
+def fixities(text):
+  """the infixes that an ML declaration of a HOL4 source adds, as
+     (token, precedence, associativity)"""
+  out = []
+  for m in list(FIXITY.finditer(text)) + \
+           list(MAPPED_FIXITY.finditer(text)):
+    tok, kind, ass, prec = m.groups()
+    a = 'l' if kind == 'Infixl' else 'r' if kind == 'Infixr' else \
+        {'LEFT': 'l', 'RIGHT': 'r'}.get(ass, 'n')
+    out.append((sml_string(tok), int(prec), a))
+  for m in ADD_INFIX.finditer(text):
+    tok, prec, ass = m.groups()
+    out.append((sml_string(tok), int(prec),
+                {'LEFT': 'l', 'RIGHT': 'r'}.get(ass, 'n')))
+  return out
+
+
+EQ_MODE = re.compile(r'\b(?:temp_)?(loose|tight)_equality\b')
+
+
+def equality_mode(text):
+  """a loose_equality or tight_equality declaration of a block"""
+  m = EQ_MODE.search(text)
+  return m.group(1) if m else None
+
+
 ML_DEF = re.compile(r"""^val\s+([A-Za-z0-9_']+)\s*=\s*
                         [txz]?Define\b\s*("[^"]*")?\s*""", re.X)
 

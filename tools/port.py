@@ -52,6 +52,12 @@ def fill(pre, words, width=70):
   return lines
 
 
+def shorten(text, width=72):
+  """break the lines of a comment that are too long"""
+  return '\n'.join(wrap(l.rstrip(), 0, width)
+                   for l in text.split('\n'))
+
+
 class Porter:
   def __init__(self, db, thy):
     self.db = db
@@ -91,7 +97,24 @@ class Porter:
     if p.peek().kind != 'eof':
       t = p.peek()
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
-    return hterm.Printer(self.ctx).pr(e, 0)
+    old = self.ctx.vars
+    self.ctx.vars = self.shadowing(e)
+    try:
+      return hterm.Printer(self.ctx).pr(e, 0)
+    finally:
+      self.ctx.vars = old
+
+  def shadowing(self, e):
+    """HOL4 lets a variable shadow a constant, HOL Light does not,
+       so a bound variable whose name is a constant of the port or of
+       HOL Light is renamed"""
+    names = hterm.bound_names(e, self.ctx.cons, True)
+    return {n: n + "'" for n in names if self.is_const(n)}
+
+  def is_const(self, n):
+    return (n in self.db.hl or n in self.db.provided or
+            any(k not in ('type', 'tyabbrev')
+                for _, k in self.db.defs.get(n, [])))
 
   def typ(self, text):
     ty = hterm.parse_type_text(text)
@@ -103,8 +126,16 @@ class Porter:
   def run(self):
     blocks = hol4.parse(self.path)
     first = True
+    hterm.set_equality(False)
     for b in blocks:
       try:
+        # a loose_equality or tight_equality declaration changes the
+        # precedence of = from here on
+        mode = hol4.equality_mode(b.text) if b.kind == 'ML' else None
+        if mode: hterm.set_equality(mode == 'loose')
+        if b.kind == 'ML':
+          for tok, prec, ass in hol4.fixities(b.text):
+            hterm.add_infix(tok, prec, ass)
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')
@@ -134,12 +165,15 @@ class Porter:
     if not self.wanted(b):
       return
     if k == 'Comment':
-      self.out.append(b.text)
+      self.out.append(shorten(b.text))
     elif k == 'Theory':
-      self.out.append(HEAD % (b.name, self.srcname(),
-                              LIBNOTE if self.kind == 'lib' else ''))
+      # the header of the port comes first, before the comments that
+      # the HOL4 file has before its Theory line
+      self.out.insert(0, HEAD % (b.name, self.srcname(),
+                                 LIBNOTE if self.kind == 'lib' else ''))
     elif k == 'Ancestors':
-      deps = [w for w in b.body.split()] + \
+      # an ancestor may be marked as [qualified]
+      deps = [re.sub(r'\[.*\]', '', w) for w in b.body.split()] + \
              overrides.EXTRA_NEEDS.get(self.thy, [])
       needs = []
       for d in deps:
@@ -173,7 +207,8 @@ class Porter:
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
         return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
-      self.out.append('(* HOL4 ML code, not ported:\n' + b.text + '\n*)')
+      self.out.append('(* HOL4 ML code, not ported:\n' +
+                      shorten(b.text) + '\n*)')
     else:
       self.warn.append('unknown block ' + k)
 
@@ -267,7 +302,8 @@ class Porter:
       if rel is None:
         self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
         self.out.append('(* TERMINATION: %s *)\nlet %s = cake_define\n'
-                        '  `%s`;;' % (b.extra.strip(), name, term))
+                        '  `%s`;;'
+                        % (shorten(b.extra.strip()), name, term))
       else:
         self.out.append('\n'.join(
                           fill('(* HOL4 termination:', rest.split(), 69))
