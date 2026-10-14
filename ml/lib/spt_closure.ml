@@ -7,6 +7,7 @@
 
 needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: pred_set arithmetic relation *)
+
 let num_set_tree_union_def = cake_define
   `(num_set_tree_union LN t2 = (t2:(one spt) spt)) /\
    (num_set_tree_union (LS a) t =
@@ -26,6 +27,7 @@ let num_set_tree_union_def = cake_define
                t2') | BS t1' b t2' ->
              BS (num_set_tree_union t1 t1') (sptree_union a b)
                  (num_set_tree_union t2 t2')))`;;
+
 (* HOL4 termination: >> rw[] >> gvs[subspt_domain, SUBSET_DEF] >>
    irule size_diff_less >> gvs[domain_union, domain_spt_fold_union,
    lookup_inter] >> EVERY_CASE_TAC >> gvs[] >> simp[PULL_EXISTS, GSYM

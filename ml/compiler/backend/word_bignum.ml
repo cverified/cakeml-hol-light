@@ -1,0 +1,708 @@
+(* ======================================================== *)
+(*  word_bignum: ported from HOL4's
+    compiler/backend/word_bignumScript.sml  *)
+(* ======================================================== *)
+
+(*
+  The bignum library used by the CakeML compiler. Note that the
+  implementation is automatically generated from a shallow embedding
+  that is part of the HOL distribution in mc_multiwordTheory.
+*)
+
+needs "compiler/backend/wordLang.ml";;
+needs "semantics/ast.ml";;
+(* HOL4 ancestors outside the port: mc_multiword *)
+
+(* syntax of a little language *)
+
+let address_INDUCT,address_RECURSION = define_datatype
+  "address = In1 | In2 | Out";;
+
+let mini_INDUCT,mini_RECURSION = define_datatype
+  "mini = word_bignum_Skip | word_bignum_Assign (num) ('a \
+   wordLang_exp) | word_bignum_Delete (num list) | word_bignum_Seq \
+   (mini) (mini) | word_bignum_Load (num) (num) (address) | \
+   word_bignum_Store (num) (num) | word_bignum_If (cmp) (num) ('a \
+   asm_reg_imm) (mini) (mini) | word_bignum_Swap | word_bignum_Add \
+   (num) (num) (num) ('a asm_reg_imm) ('a asm_reg_imm) | \
+   word_bignum_Sub (num) (num) (num) ('a asm_reg_imm) ('a \
+   asm_reg_imm) | word_bignum_Mul (num) (num) (num) (num) | \
+   word_bignum_Div (num) (num) (num) (num) (num) | word_bignum_Loop \
+   (bool) (num list) (mini) | word_bignum_Continue | word_bignum_Rec \
+   (num list) (num list) | word_bignum_LoopBody (mini)";;
+
+
+(* syntax helper funs *)
+
+(* HOL4 ML code, not ported:
+val Skip_tm = ``Skip:'a word_bignum$mini``
+val Swap_tm = ``Swap:'a word_bignum$mini``
+val Continue_tm = ``Continue:'a word_bignum$mini``
+*)
+
+(* HOL4 ML code, not ported:
+local val s = HolKernel.syntax_fns1 "word_bignum" in
+  val (Delete_tm,mk_Delete,dest_Delete,is_Delete) = s "Delete"
+end
+local val s = HolKernel.syntax_fns2 "word_bignum" in
+  val (Assign_tm,mk_Assign,dest_Assign,is_Assign) = s "Assign"
+  val (Rec_tm,mk_Rec,dest_Rec,is_Rec) = s "Rec"
+  val (Seq_tm,mk_Seq,dest_Seq,is_Seq) = s "Seq"
+  val (Store_tm,mk_Store,dest_Store,is_Store) = s "Store"
+end
+local val s = HolKernel.syntax_fns3 "word_bignum" in
+  val (Loop_tm,mk_Loop,dest_Loop,is_Loop) = s "Loop"
+  val (Load_tm,mk_Load,dest_Load,is_Load) = s "Load"
+end
+*)
+
+(* HOL4 ML code, not ported:
+local val s = HolKernel.syntax_fns1 "asm" in
+  val (Imm_tm,mk_Imm,dest_Imm,is_Imm) = s "Imm"
+  val (Reg_tm,mk_Reg,dest_Reg,is_Reg) = s "Reg"
+end
+*)
+
+(* HOL4 ML code, not ported:
+val If_pat = ``word_bignum$If c r (ri:'a reg_imm) p1 p2``
+fun dest_If tm = let
+  val i = fst (match_term If_pat tm)
+  fun list_dest f tm = let
+    val (x,y) = f tm
+    in list_dest f x @ list_dest f y end handle HOL_ERR _ => [tm]
+  val ts = list_dest dest_comb If_pat
+  in (subst i (el 2 ts),
+      subst i (el 3 ts),
+      subst i (el 4 ts),
+      subst i (el 5 ts),
+      subst i (el 6 ts)) end
+fun mk_If (c,r,ri,p1,p2) = ``word_bignum$If ^c ^r ^ri ^p1 ^p2``;
+fun is_If tm = can dest_If tm
+*)
+
+(* generate deep embeddings *)
+
+(* HOL4 ML code, not ported:
+fun my_dest_let tm = let
+  val (x,y) = pairSyntax.dest_anylet tm
+  in if length x = 1 then (hd x,y) else fail() end
+*)
+
+(* HOL4 ML code, not ported:
+local
+  val word_ty = ``:'a word``
+in
+  fun dest_reg v = let
+    val (n,ty) = dest_var v
+    val _ = ty = word_ty orelse fail()
+    val n = String.substring(n,1,String.size(n)-1) |> string_to_int
+    val n = numSyntax.term_of_int n
+    in n end handle Subscript => fail()
+end;
+*)
+
+(* HOL4 ML code, not ported:
+val binops = [(word_add_def,``asm$Add``),
+              (word_sub_def,``asm$Sub``),
+              (word_and_def,``asm$And``),
+              (word_xor_def,``asm$Xor``),
+              (word_or_def, ``asm$Or``)]
+  |> map (fn (x,y) => (x |> SPEC_ALL |> concl |> dest_eq |> fst, y))
+*)
+
+(* HOL4 ML code, not ported:
+val shifts = [(word_lsr_def,``ast$Lsr``),
+              (word_lsl_def,``ast$Lsl``),
+              (word_asr_def,``ast$Asr``)]
+  |> map (fn (x,y) => (x |> SPEC_ALL |> concl |> dest_eq |> fst, y))
+*)
+
+(* HOL4 ML code, not ported:
+fun get_exp x =
+*)
+  (* Var *) let
+(* HOL4 ML code, not ported:
+  val n = dest_reg x
+  in wordLangSyntax.mk_Var n end handle HOL_ERR _ =>
+*)
+  (* Const *) let
+(* HOL4 ML code, not ported:
+  val _ = wordsSyntax.dest_n2w x
+  in wordLangSyntax.mk_Const x end handle HOL_ERR _ =>
+*)
+  (* Op *) let
+(* HOL4 ML code, not ported:
+  val (_,name) = first (fn (pat,_) => can (match_term pat) x) binops
+  val x1 = get_exp (x |> rator |> rand)
+  val x2 = get_exp (x |> rand)
+  in wordLangSyntax.mk_Op(name,listSyntax.mk_list([x1,x2],type_of x1))
+    end
+  handle HOL_ERR _ =>
+*)
+  (* Shift *) let
+(* HOL4 ML code, not ported:
+  val (_,name) = first (fn (pat,_) => can (match_term pat) x) shifts
+  val x1 = get_exp (x |> rator |> rand)
+  val x2 = x |> rand
+  in wordLangSyntax.mk_Shift(name,x1,``Const (n2w ^x2)``) end
+  handle HOL_ERR _ =>
+*)
+  (* ~ *) let
+(* HOL4 ML code, not ported:
+  val r = wordsSyntax.dest_word_1comp x
+  in get_exp ``word_xor ^r (0w - 1w)`` end
+*)
+
+(* HOL4 ML code, not ported:
+val cmps = [(word_lo_def,``asm$Lower``),
+            (word_lt_def,``asm$Less``),
+            (GSYM w2n_11,``asm$Equal``)]
+  |> map (fn (x,y) => (x |> SPEC_ALL |> concl |> dest_eq |> fst, y))
+*)
+
+(* HOL4 ML code, not ported:
+fun dest_reg_imm ri =
+  mk_Reg (dest_reg ri) handle HOL_ERR _ =>
+  if can wordsSyntax.dest_n2w ri then mk_Imm ri else fail()
+*)
+
+(* HOL4 ML code, not ported:
+fun get_guard b = (* Op *) let
+  val (_,name) = first (fn (pat,_) => can (match_term pat) b) cmps
+  val x1 = dest_reg (b |> rator |> rand)
+  val x2 = dest_reg_imm (b |> rand)
+  in (name,x1,x2) end handle HOL_ERR _ => let
+  val _ = can (match_term ``(w && n2w n) = 0w:'a word``) b orelse fail()
+  val x1 = b |> rator |> rand |> rator |> rand
+  val x2 = b |> rator |> rand |> rand
+  in (``asm$Test``,dest_reg x1,dest_reg_imm x2) end
+*)
+
+(* HOL4 ML code, not ported:
+local
+  val LUPDATE_pat = ``LUPDATE a (w2n (r:'a word)) (zs:'b list)``
+in
+  fun dest_lupdate_let tm = let
+    val (rest,r) = dest_let tm
+    val (v,body) = dest_abs rest
+    val _ = (v ~~ rand r) orelse fail ()
+    val _ = can (match_term LUPDATE_pat) r orelse fail()
+    val x = r |> rator |> rator |> rand
+    val y = r |> rator |> rand |> rand
+    in (x,y,body) end
+end
+*)
+
+(* HOL4 ML code, not ported:
+local
+  val EL_pat = ``EL (w2n (r:'a word)) (zs:'b list)``
+in
+  fun dest_el_let tm = let
+    val (rest,r) = dest_let tm
+    val (v,body) = dest_abs rest
+    val _ = can (match_term EL_pat) r orelse fail()
+    val a = r |> rand |> dest_var |> fst
+    val a = if a = "xs" then ``In1`` else
+            if a = "ys" then ``In2`` else
+            if a = "zs" then ``Out`` else fail()
+    val y = r |> rator |> rand |> rand
+    in (v,y,a,body) end
+end
+*)
+
+(* HOL4 ML code, not ported:
+local
+  val add_pat = ``single_add_word r0 r1 ri``
+  val sub_pat = ``single_sub_word r0 r1 ri``
+  fun dest_single_add_sub_let pat tm = let
+    val (rest,r) = dest_let tm
+    val (v,body) = dest_pabs rest
+    val _ = can (match_term pat) r orelse fail()
+    val (a1,a2) = pairSyntax.dest_pair v
+    val a1 = dest_reg a1
+    val a2 = dest_reg a2
+    val args = snd (strip_comb r)
+    val r1 = dest_reg (el 1 args)
+    val r2 = dest_reg_imm (el 2 args)
+    val r3 = dest_reg_imm (el 3 args)
+    in (a1,a2,r1,r2,r3,body) end
+in
+  val dest_single_add_let = dest_single_add_sub_let add_pat
+  val dest_single_sub_let = dest_single_add_sub_let sub_pat
+end
+*)
+
+(* HOL4 ML code, not ported:
+local
+  val mul_pat = ``single_mul r0 r2 0w``
+in
+  fun dest_single_mul_let tm = let
+    val (rest,r) = dest_let tm
+    val (v,body) = dest_pabs rest
+    val _ = can (match_term mul_pat) r orelse fail()
+    val (a1,a2) = pairSyntax.dest_pair v
+    val a1 = dest_reg a1
+    val a2 = dest_reg a2
+    val args = snd (strip_comb r)
+    val r1 = dest_reg (el 1 args)
+    val r2 = dest_reg (el 2 args)
+    in (a1,a2,r1,r2,body) end
+end
+*)
+
+(* HOL4 ML code, not ported:
+local
+  val div_pat = ``single_div r2 r0 r1``
+in
+  fun dest_single_div_let tm = let
+    val (rest,r) = dest_let tm
+    val (v,body) = dest_pabs rest
+    val _ = can (match_term div_pat) r orelse fail()
+    val (a1,a2) = pairSyntax.dest_pair v
+    val a1 = dest_reg a1
+    val a2 = dest_reg a2
+    val args = snd (strip_comb r)
+    val r1 = dest_reg (el 1 args)
+    val r2 = dest_reg (el 2 args)
+    val r3 = dest_reg (el 3 args)
+    in (a1,a2,r1,r2,r3,body) end
+end
+*)
+
+(* HOL4 ML code, not ported:
+fun get_let tm =
+*)
+  (* Load *)
+(* HOL4 ML code, not ported:
+  let
+    val (r,i,a,rest) = dest_el_let tm
+  in (mk_Load(dest_reg r, dest_reg i, a),rest) end handle HOL_ERR _ =>
+*)
+  (* Store *)
+(* HOL4 ML code, not ported:
+  let
+    val (r,i,rest) = dest_lupdate_let tm
+  in (mk_Store(dest_reg r, dest_reg i),rest) end handle HOL_ERR _ =>
+*)
+  (* Assign *)
+(* HOL4 ML code, not ported:
+  let
+    val ((v,x),rest) = my_dest_let tm
+    val n = dest_reg v
+    val e = get_exp x
+  in (mk_Assign(n,e),rest) end handle HOL_ERR _ =>
+*)
+  (* Swap *)
+(* HOL4 ML code, not ported:
+  let
+    val ((v,x),rest) = my_dest_let tm
+    val _ = pairSyntax.is_pair x orelse fail()
+    val xs = find_terms is_const x
+             |> filter (fn x => #Thy (dest_thy_const x) <> "pair")
+    val _ = length xs = 0 orelse fail()
+  in (``Swap``,rest) end handle HOL_ERR _ =>
+*)
+  (* Add *)
+(* HOL4 ML code, not ported:
+  let
+    val (a1,a2,r1,r2,r3,rest) = dest_single_add_let tm
+  in (``Add ^a1 ^a2 ^r1 ^r2 ^r3``,rest) end handle HOL_ERR _ =>
+*)
+  (* Sub *)
+(* HOL4 ML code, not ported:
+  let
+    val (a1,a2,r1,r2,r3,rest) = dest_single_sub_let tm
+  in (``Sub ^a1 ^a2 ^r1 ^r2 ^r3``,rest) end handle HOL_ERR _ =>
+*)
+  (* Mul *)
+(* HOL4 ML code, not ported:
+  let
+    val (a1,a2,r1,r2,rest) = dest_single_mul_let tm
+  in (``Mul ^a1 ^a2 ^r1 ^r2``,rest) end handle HOL_ERR _ =>
+*)
+  (* Div *)
+(* HOL4 ML code, not ported:
+  let
+    val (a1,a2,r1,r2,r3,rest) = dest_single_div_let tm
+  in (``Div ^a1 ^a2 ^r1 ^r2 ^r3``,rest) end handle HOL_ERR _ =>
+  fail ()
+*)
+
+(* HOL4 ML code, not ported:
+val code_defs = ref TRUTH;
+val prev_trans = ref ([]: (term * term) list);
+*)
+
+(* HOL4 ML code, not ported:
+exception UnableToTranslate of string;
+*)
+
+(* HOL4 ML code, not ported:
+val def = mc_mul_zero_def
+val tm = def |> concl |> rand
+val inp = def |> concl |> rator |> rand |> rand
+*)
+
+(* HOL4 ML code, not ported:
+fun dest_tuple tm = let
+  val (x,y) = dest_pair tm
+  in dest_tuple x @ dest_tuple y end
+  handle HOL_ERR _ => [tm];
+*)
+
+(* HOL4 ML code, not ported:
+fun get_full_prog inp tm = let
+  val immediate_deps = ref ([]:term list);
+  val ret_tm = ref Skip_tm;
+  val cont_tm = ref Continue_tm;
+  val ret_vars = ref ([]:term list);
+  val cont_vars = ref ([]:term list);
+*)
+  (* helpers *)
+(* HOL4 ML code, not ported:
+  fun dest_num_let tm =
+    if (dest_let tm |> snd |> type_of) = ``:num`` then
+      dest_let tm |> fst |> dest_abs |> snd else fail ()
+  fun dest_num_if tm = let
+    val (x,y,z) = dest_cond tm
+    val (l,r) = dest_eq x
+    in if type_of l = ``:num`` then z else fail () end
+  fun dest_num_let_or_if tm =
+    dest_num_if tm handle HOL_ERR _ => dest_num_let tm
+  fun dest_rec_let tm = let
+    val ((_,y),rest) = my_dest_let tm
+    val (saves,call) = dest_pair y
+    in (saves,call,rest) end
+*)
+  (* main function *)
+(* HOL4 ML code, not ported:
+  fun get_prog tm =
+*)
+    (* return *)
+(* HOL4 ML code, not ported:
+    if is_var tm orelse pairSyntax.is_pair tm
+    then (ret_vars := free_vars tm; !ret_tm)
+    else
+*)
+    (* let *) let
+(* HOL4 ML code, not ported:
+    val (x,rest) = get_let tm
+    in mk_Seq(x,get_prog rest) end handle HOL_ERR _ =>
+*)
+    (* previous translation *) let
+(* HOL4 ML code, not ported:
+    val ((v,x),rest) = my_dest_let tm
+    val f = x |> repeat rator
+    val (_,code) = first (fn (x,y) => same_const x f) (!prev_trans)
+    val _ = (immediate_deps := code :: (!immediate_deps))
+    in mk_Seq(code,get_prog rest) end handle HOL_ERR _ =>
+*)
+    (* recursive let *) let
+(* HOL4 ML code, not ported:
+    val (saves,call,rest) = dest_rec_let tm
+    val saves = saves |> dest_tuple |> map dest_reg
+    val saves = listSyntax.mk_list(saves,``:num``)
+    val dels = listSyntax.mk_list([],``:num``)
+    val _ = (cont_vars := free_vars call)
+    in mk_Seq(mk_Rec(saves,dels),get_prog rest) end handle HOL_ERR _ =>
+*)
+    (* If *) let
+(* HOL4 ML code, not ported:
+    val (b,t1,t2) = dest_cond tm
+    val (x1,x2,x3) = get_guard b
+    in mk_If(x1,x2,x3,get_prog t1,get_prog t2) end handle HOL_ERR _ =>
+    if is_const (rator tm) andalso (is_var (rand tm) orelse is_pair
+      (rand tm))
+    then (cont_vars := free_vars tm; !cont_tm) else
+    if can dest_num_let_or_if tm then get_prog (dest_num_let_or_if tm)
+      else
+    let
+      val ((v,x),rest) = my_dest_let tm
+      val str = repeat rator x |> dest_const |> fst
+      in raise UnableToTranslate str end
+      handle HOL_ERR e =>
+        (print "Unable to translate\n\n";
+         print_term tm;
+         print "\n\n";
+         raise HOL_ERR e)
+*)
+  (* compute deps *)
+(* HOL4 ML code, not ported:
+  val init_prog = get_prog tm
+*)
+  (* compute what vars are deleted or assigned *)
+(* HOL4 ML code, not ported:
+  val x = !code_defs |> CONJUNCTS
+             |> filter (fn tm => tmem (lhs (concl tm)) (!immediate_deps)
+                                 handle HOL_ERR _ => true)
+             |> LIST_CONJ |> CONJ (REFL init_prog) |> concl
+  fun is_delete tm =
+    can (match_term ``(Delete n):'a mini``) tm
+  val Add_tm = ``(Add n1 n2):num -> α reg_imm -> α reg_imm -> α mini``
+  val Sub_tm = ``(Sub n1 n2):num -> α reg_imm -> α reg_imm -> α mini``
+  val Mul_tm = ``(Mul n1 n2):num -> num -> α mini``
+  val Div_tm = ``(Div n1 n2):num -> num -> num -> α mini``
+  fun is_assign tm =
+    can (match_term ``(Assign n):α wordLang$exp -> α mini``) tm orelse
+    can (match_term ``(Load n):num -> address -> α mini``) tm orelse
+    can (match_term Add_tm) tm orelse can (match_term (rator Add_tm)) tm
+      orelse
+    can (match_term Sub_tm) tm orelse can (match_term (rator Sub_tm)) tm
+      orelse
+    can (match_term Mul_tm) tm orelse can (match_term (rator Mul_tm)) tm
+      orelse
+    can (match_term Div_tm) tm orelse can (match_term (rator Div_tm)) tm
+  fun f tm = dest_reg tm handle HOL_ERR _ => tm
+  val ds = op_mk_set aconv ((find_terms is_assign x |> map rand) @
+                       (find_terms is_delete x
+                            |> map (fst o listSyntax.dest_list o rand)
+                            |> flatten) @
+                       filter (not o is_var) (map f (free_vars inp)))
+  fun add_dels [] tm = tm
+    | add_dels vs tm = mk_Seq (mk_Delete (listSyntax.mk_list(vs,type_of
+      (hd vs))), tm)
+  val _ = (ret_tm := add_dels (op_set_diff aconv ds (map f (!ret_vars)))
+    Skip_tm)
+  val cont_dels = (op_set_diff aconv ds (map f (!cont_vars)))
+  val _ = (cont_tm := add_dels cont_dels Continue_tm)
+  in (listSyntax.mk_list(cont_dels,``:num``),get_prog tm) end
+*)
+
+(* HOL4 ML code, not ported:
+fun to_deep def = let
+*)
+  (* produce deep embedding *)
+(* HOL4 ML code, not ported:
+  val f = def |> SPEC_ALL |> concl |> dest_eq |> fst |> repeat rator
+  val tm = def |> SPEC_ALL |> concl |> rand
+  val inp = def |> SPEC_ALL |> concl |> rator |> rand |> rand
+  val is_rec = can (find_term (aconv f)) tm
+  fun loop () =
+    get_full_prog inp tm
+    handle UnableToTranslate str =>
+      (to_deep (find (str ^ "_def") |> hd |> snd |> #1);
+       loop ())
+  val (dels,deep) = loop ()
+  val rec_flag = if can (find_term is_Rec) deep then T else F
+  val deep = if is_rec then mk_Loop (rec_flag,dels,deep) else deep
+*)
+  (* store deep embedding *)
+(* HOL4 ML code, not ported:
+  val name = mk_var((f |> dest_const |> fst) ^ "_code", type_of deep)
+  val code_def = Define `^name = ^deep`
+  val code_const = code_def |> concl |> dest_eq |> fst
+  val _ = (code_defs := CONJ code_def (!code_defs))
+  val _ = (prev_trans := (f,code_const) :: (!prev_trans))
+  in code_def end
+  handle HOL_ERR e =>
+    (print ("Failed at " ^ term_to_string
+       (def |> SPEC_ALL |> concl |> dest_eq |> fst |> repeat rator) ^
+         "\n");
+     raise (HOL_ERR e))
+*)
+
+(*
+val tm = def |> SPEC_ALL |> concl |> rand
+*)
+
+(* HOL4 ML code, not ported:
+val def = mc_cmp_def |> to_deep
+val def = mc_compare_def |> to_deep
+val def = mc_idiv_def |> to_deep
+val def = mc_iadd_def |> to_deep
+val def = mc_imul_def |> to_deep
+val def = mc_iop_def |> to_deep
+*)
+
+(* an example that produces Rec *)
+
+(* HOL4 ML code, not ported:
+val def = mc_fac_init_def |> to_deep
+val def = mc_fac_final_def |> to_deep
+val def = mc_fac_def |> to_deep
+val def = mc_use_fac_def |> to_deep
+*)
+
+(* compiler into wordLang *)
+
+let has_compiled_def = cake_define
+  `has_compiled code (n,code_list') =
+     (match ALOOKUP code_list' code with NONE -> INR (n:num) |
+       SOME (index,word_code) -> INL (index:num))`;;
+
+let code_acc_next_def = cake_define
+  `code_acc_next (n,code_list') = (n + 1,code_list')`;;
+
+let install_def = cake_define
+  `install c (n,code_list') = (n,c :: code_list')`;;
+
+let compile_exp_def = cake_define
+  `word_bignum_compile_exp x1 =
+      match x1 with
+        (wordLang_Op b [x1; x2]) -> wordLang_Op b
+          [word_bignum_compile_exp x1; word_bignum_compile_exp x2]
+      | (wordLang_Var n) -> wordLang_Lookup (Temp (n2w n))
+      | (wordLang_Const w) -> wordLang_Const w
+      | (wordLang_Shift sh x y) -> wordLang_Shift sh
+        (word_bignum_compile_exp x) (word_bignum_compile_exp y)
+      | _1 -> wordLang_Const (n2w 0)`;;
+
+let TempIn1_def = cake_define
+  `TempIn1 = Temp (n2w 31)`;;
+let TempIn2_def = cake_define
+  `TempIn2 = Temp (n2w 30)`;;
+let TempOut_def = cake_define
+  `TempOut = Temp (n2w 29)`;;
+
+let SeqTemp_def = cake_define
+  `SeqTemp i r p = word_bignum_Seq (wordLang_Assign i
+  (wordLang_Lookup (Temp (n2w r)))) p`;;
+
+let SeqTempImm_def = cake_define
+  `SeqTempImm i (Reg r) p = SeqTemp i r p /\
+   SeqTempImm i (Imm w) p = word_bignum_Seq (wordLang_Assign i
+     (wordLang_Const w)) p`;;
+
+let SeqTempImmNot_def = cake_define
+  `SeqTempImmNot i (Reg r) p =
+     SeqTemp i r (word_bignum_Seq (word_bignum_Assign i (wordLang_Op
+       asm_Xor [wordLang_Var i; wordLang_Const (--(n2w 0))])) p) /\
+   SeqTempImmNot i (Imm w) p = word_bignum_Seq (wordLang_Assign i
+     (wordLang_Const (~w))) p`;;
+
+let SeqIndex_def = cake_define
+  `SeqIndex i r arr p =
+     (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
+       -> TempIn1) in
+       word_bignum_Seq (word_bignum_Assign i (wordLang_Op
+         word_bignum_Add [wordLang_Lookup t;
+            (\sh e n. wordLang_Shift sh e (wordLang_Const (n2w
+              n))) Lsl (wordLang_Lookup (Temp (n2w r)))
+              ((backend_common_word_shift) (:'a))])) p:'a
+              wordLang_prog)`;;
+
+let div_location_def = cake_define
+  `div_location = 23`;;
+
+let DivCode_def = cake_define
+  `DivCode l1 l2 n1 n2 n3 n4 n5 =
+     wordLang_MustTerminate
+       (word_bignum_Seq (wordLang_Call (SOME ([n1],(LS
+         one,LN),word_bignum_Skip,l1,l2)) (SOME div_location) [n3; n4;
+         n5] NONE)
+            (word_bignum_Assign n2 (wordLang_Lookup (Temp (n2w
+              28)))))`;;
+
+let LoadRegs_def = cake_define
+  `(LoadRegs [] p = (p:'a wordLang_prog)) /\
+   (LoadRegs (n :: ns) p = word_bignum_Seq (wordLang_Get (n + 2)
+     (Temp (n2w n))) (LoadRegs ns p))`;;
+
+let SaveRegs_def = cake_define
+  `(SaveRegs [] = (word_bignum_Skip:'a wordLang_prog)) /\
+   (SaveRegs (n :: ns) = word_bignum_Seq (wordLang_Set (Temp (n2w
+     n)) (wordLang_Var (n + 2))) (SaveRegs ns))`;;
+
+let compile_def = cake_define
+  `word_bignum_compile n l i cs x5 =
+        match x5 with
+          word_bignum_Skip -> (wordLang_Skip,l,i,cs)
+        | word_bignum_Continue -> (wordLang_Call NONE (SOME n) [0]
+          NONE,l,i,cs)
+        | (word_bignum_Rec save_regs names) ->
+        (LoadRegs save_regs
+          (wordLang_Call (SOME ([1],(LS one,list_insert (MAP (\n. n +
+            2) save_regs) LN),
+             SaveRegs save_regs,n,l)) (SOME n) [] NONE),l + 1,i,cs)
+        | (word_bignum_Loop rec_calls vs body) ->
+        match has_compiled body cs with INL existing_index ->
+            (wordLang_Call (SOME ([i],(LS
+              one,LN),word_bignum_Skip,n,l)) (SOME existing_index) []
+              NONE,l + 1,i + 1,cs) | INR new_index ->
+            (let (new_code,a,b,cs) = word_bignum_compile new_index 2
+              1 (code_acc_next cs) body in
+              (wordLang_Call (SOME ([i],(LS
+                one,LN),word_bignum_Skip,n,l)) (SOME new_index) []
+                NONE,l + 1,i + 1,
+               install (body,new_index,new_code) cs))
+        | (word_bignum_LoopBody b) -> word_bignum_compile n l i cs b
+        | (word_bignum_Seq p1 p2) ->
+        let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
+        let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
+          (word_bignum_Seq p1 p2,l,i,cs)
+        | (word_bignum_If t r ri p1 p2) ->
+        let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
+        let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
+          match ri with Reg r2 -> (SeqTemp i r (SeqTemp (i + 1) r2
+            (word_bignum_If t i (Reg (i + 1)) p1 p2)),
+                       l,i + 2,cs) | Imm im -> (SeqTemp i r
+                         (word_bignum_If t i ri p1 p2),l,i + 1,cs)
+        | (word_bignum_Assign j e) ->
+        (word_bignum_Seq (word_bignum_Assign i
+          (word_bignum_compile_exp e)) (wordLang_Set (Temp (n2w j))
+          (wordLang_Var i)),l,i + 1,cs)
+        | (word_bignum_Delete _2) -> ((word_bignum_Skip:'a
+          wordLang_prog),l,i,cs)
+        | word_bignum_Swap ->
+        (word_bignum_Seq (word_bignum_Assign i (wordLang_Lookup
+          (TempIn1)))
+        (word_bignum_Seq (wordLang_Set (TempIn1) (wordLang_Lookup
+          (TempIn2)))
+             (wordLang_Set (TempIn2) (wordLang_Var i))),l,i + 1,cs)
+        | (word_bignum_Store r1 r2) ->
+        (SeqTemp i r1
+        (SeqIndex (i + 1) r2 Out
+           (word_bignum_Store (wordLang_Var (i + 1)) i)),l,i + 2,cs)
+        | (word_bignum_Load r1 r2 arr) ->
+        (SeqIndex i r2 arr
+        (word_bignum_Seq (word_bignum_Assign (i + 1)
+          (word_bignum_Load (wordLang_Var i)))
+             (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
+               1)))),l,i + 2,cs)
+        | (word_bignum_Add r0 r1 r2 r3 r4) ->
+        (SeqTempImm (i + 4) r4 (SeqTempImm (i + 3) r3 (SeqTemp (i +
+          2) r2
+        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i +
+          1) (i + 2) (i + 3) (i + 4))))
+        (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
+          (i + 1)))
+             (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
+               4))))))),l,i + 5,cs)
+        | (word_bignum_Sub r0 r1 r2 r3 r4) ->
+        (SeqTempImm (i + 4) r4 (SeqTempImmNot (i + 3) r3 (SeqTemp (i
+          + 2) r2
+        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_AddCarry (i +
+          1) (i + 2) (i + 3) (i + 4))))
+        (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
+          (i + 1)))
+             (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
+               4))))))),l,i + 5,cs)
+        | (word_bignum_Mul r0 r1 r2 r3) ->
+        (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
+        (word_bignum_Seq (wordLang_Inst (asm_Arith (asm_LongMul (i +
+          0) (i + 1) (i + 2) (i + 3))))
+        (word_bignum_Seq (wordLang_Set (Temp (n2w r1)) (wordLang_Var
+          (i + 0)))
+             (wordLang_Set (Temp (n2w r0)) (wordLang_Var (i +
+               1)))))),l,i + 4,cs)
+        | (word_bignum_Div r0 r1 r2 r3 r4) ->
+        (SeqTemp (i + 4) r4 (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
+        (word_bignum_Seq (DivCode n l (i + 0) (i + 1) (i + 2) (i + 3)
+          (i + 4))
+        (word_bignum_Seq (wordLang_Set (Temp (n2w r0)) (wordLang_Var
+          (i + 0)))
+             (wordLang_Set (Temp (n2w r1)) (wordLang_Var (i +
+               1))))))),l + 1,i + 5,cs)
+        | _3 -> (word_bignum_Skip,l,i,cs)`;;
+
+(* HOL4 ML code, not ported:
+val _ = (max_print_depth := 25);
+*)
+
+let generated_bignum_stubs_def = cake_define
+  `generated_bignum_stubs n =
+     (let (x1,_4,_5,(_6,cs)) = word_bignum_compile n 2 1 (n + 1,[])
+       mc_iop_code in
+       (n,1,word_bignum_Seq x1 (wordLang_Return 0 [0])) :: MAP
+         (\(x,y,z). (y,1,word_bignum_Seq z (wordLang_Return 0 [0])))
+         cs)`;;

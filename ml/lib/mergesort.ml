@@ -8,11 +8,13 @@
 needs "lib/sorting.ml";;
 (* HOL4 ancestors outside the port: pred_set arithmetic list
    rich_list option pair relation *)
+
 let sort2_def = cake_define
   `sort2 R x y =
      (if R x y then
        [x; y] else
        [y; x])`;;
+
 let sort3_def = cake_define
   `sort3 R x y z =
      (if R x y then
@@ -24,6 +26,7 @@ let sort3_def = cake_define
          [y; x; z] else
          [y; z; x] else
        [z; y; x])`;;
+
 let merge_def = cake_define
   `mergesort_merge R l x3 =
         match (l,x3) with
@@ -34,6 +37,7 @@ let merge_def = cake_define
        if R x y then
          x :: mergesort_merge R l1 (y :: l2) else
          y :: mergesort_merge R (x :: l1) l2`;;
+
 let mergesortN_def = cake_define_wf
   `MEASURE (\(R,n,l). n)`
   `mergesortN R n l =
@@ -54,13 +58,16 @@ let mergesortN_def = cake_define_wf
        mergesort_merge R
          (mergesortN R (DIV2 n) l)
          (mergesortN R (n - len1) (DROP len1 l))`;;
+
 let mergesort_def = cake_define
   `mergesort R l = mergesortN R (LENGTH l) l`;;
+
 let sort2_tail_def = cake_define
   `sort2_tail (neg:bool) R x y =
      (if ~(R x y = neg) then
        [x; y] else
        [y; x])`;;
+
 let sort3_tail_def = cake_define
   `sort3_tail (neg:bool) R x y z =
     (if ~(R x y = neg) then
@@ -72,6 +79,7 @@ let sort3_tail_def = cake_define
         [y; x; z] else
         [y; z; x] else
       [z; y; x])`;;
+
 let merge_tail_def = cake_define
   `merge_tail negate R l x4 acc =
         match (negate,l,x4) with
@@ -82,6 +90,7 @@ let merge_tail_def = cake_define
        if ~(R x y = negate) then
          merge_tail negate R l1 (y :: l2) (x :: acc) else
          merge_tail negate R (x :: l1) l2 (y :: acc)`;;
+
 let mergesortN_tail_def = cake_define_wf
   `MEASURE (\(negate,R,n,l). n)`
   `mergesortN_tail negate R n l =
@@ -104,5 +113,6 @@ let mergesortN_tail_def = cake_define_wf
                         (mergesortN_tail neg R (n - len1)
                                          (DROP len1 l))
                         []`;;
+
 let mergesort_tail_def = cake_define
   `mergesort_tail R l = mergesortN_tail F R (LENGTH l) l`;;

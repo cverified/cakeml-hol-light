@@ -9,28 +9,37 @@ needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
+
 let balanced_map_INDUCT,balanced_map_RECURSION = define_datatype
   "balanced_map = Tip | Bin (num) ('k) ('v) (balanced_map) \
    (balanced_map)";;
+
 let ratio_def = cake_define
   `ratio = (2:num)`;;
+
 let delta_def = cake_define
   `delta = (3:num)`;;
+
 let size_def = cake_define
   `balanced_map_size Tip = 0 /\
    balanced_map_size (Bin s k v l r) = s`;;
+
 let bin_def = cake_define
   `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
   k x l r`;;
+
 let lookup_def = cake_define
   `balanced_map_lookup cmp k Tip = NONE /\
    balanced_map_lookup cmp k (Bin s k' v l r) =
-     (match cmp k k' with (LESS) -> balanced_map_lookup cmp k l |
-       (GREATER) -> balanced_map_lookup cmp k r | (EQUAL) -> SOME v)`;;
+     (match cmp k k' with Less' -> balanced_map_lookup cmp k l |
+       Greater' -> balanced_map_lookup cmp k r | Equal' -> SOME v)`;;
+
 let empty_def = cake_define
   `balanced_map_empty = Tip`;;
+
 let singleton_def = cake_define
   `singleton k x = Bin 1 k x Tip Tip`;;
+
 let balanceL_def = cake_define
   `(balanceL k x Tip Tip =
      Bin 1 k x Tip Tip) /\
@@ -56,17 +65,17 @@ let balanceL_def = cake_define
      (if ls > delta * rs then
        match (ll,lr) with (Bin lls _6 _7 _8 _9,Bin lrs lrk lrx lrl
          lrr) ->
-              if lrs < ratio * lls then
+              (if lrs < ratio * lls then
                 Bin (1 + ls + rs) lk lx ll (Bin (1 + rs + lrs) k x lr
                   (Bin rs k' v' l' r')) else
                 Bin (1 + ls + rs) lrk lrx (Bin (1 + lls +
                   balanced_map_size lrl) lk lx ll lrl)
-                                      (Bin (1 + rs +
-                                        balanced_map_size lrr) k x lrr
-                                        (Bin rs k' v' l' r')) |
-                                        (_10,_11) -> Tip else
+                              (Bin (1 + rs + balanced_map_size lrr) k
+                                x lrr (Bin rs k' v' l' r'))) | (_10,_11)
+                                -> Tip else
        Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l'
          r')))`;;
+
 let balanceR_def = cake_define
   `(balanceR k x Tip Tip =
      Bin 1 k x Tip Tip) /\
@@ -91,37 +100,40 @@ let balanceR_def = cake_define
      (if rs > delta * ls then
        match (rl,rr) with (Bin rls rlk rlx rll rlr,Bin rrs _17 _18
          _19 _20) ->
-              if rls < ratio * rrs then
+              (if rls < ratio * rrs then
                 Bin (1 + ls + rs) rk rx (Bin (1 + ls + rls) k x (Bin
                   ls k' v' l' r') rl) rr else
                 Bin (1 + ls + rs) rlk rlx (Bin (1 + ls +
                   balanced_map_size rll) k x (Bin ls k' v' l' r') rll)
-                                      (Bin (1 + rrs +
-                                        balanced_map_size rlr) rk rx rlr
-                                        rr) | (_21,_22) -> Tip else
+                              (Bin (1 + rrs + balanced_map_size rlr)
+                                rk rx rlr rr)) | (_21,_22) -> Tip else
        Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl
          rr)))`;;
+
 let insert_def = cake_define
   `(balanced_map_insert cmp k v Tip = singleton k v) /\
    (balanced_map_insert cmp k v (Bin s k' v' l r) =
-     (match cmp k k' with (LESS) -> balanceL k' v'
-       (balanced_map_insert cmp k v l) r | (GREATER) -> balanceR k'
-       v' l (balanced_map_insert cmp k v r) | (EQUAL) -> Bin s k v l
-       r))`;;
+     (match cmp k k' with Less' -> balanceL k' v'
+       (balanced_map_insert cmp k v l) r | Greater' -> balanceR k' v'
+       l (balanced_map_insert cmp k v r) | Equal' -> Bin s k v l r))`;;
+
 let insertR_def = cake_define
   `(insertR cmp k v Tip = singleton k v) /\
    (insertR cmp k v (Bin s k' v' l r) =
-     (match cmp k k' with (LESS) -> balanceL k' v' (insertR cmp k
-       v l) r | (GREATER) -> balanceR k' v' l (insertR cmp k v r) |
-       (EQUAL) -> Bin s k' v' l r))`;;
+     (match cmp k k' with Less' -> balanceL k' v' (insertR cmp k v
+       l) r | Greater' -> balanceR k' v' l (insertR cmp k v r) |
+       Equal' -> Bin s k' v' l r))`;;
+
 let insertMax_def = cake_define
   `(insertMax k v Tip = singleton k v) /\
    (insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax
      k v r))`;;
+
 let insertMin_def = cake_define
   `(insertMin k v Tip = singleton k v) /\
    (insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k
      v l) r)`;;
+
 let deleteFindMax_def = cake_define
   `deleteFindMax x1 =
         match x1 with
@@ -131,6 +143,7 @@ let deleteFindMax_def = cake_define
        (km,balanceL k x l r')
         | Tip ->
      (ARB,Tip)`;;
+
 let deleteFindMin_def = cake_define
   `deleteFindMin x1 =
         match x1 with
@@ -140,6 +153,7 @@ let deleteFindMin_def = cake_define
        (km,balanceR k x l' r)
         | Tip ->
      (ARB,Tip)`;;
+
 let glue_def = cake_define
   `glue l r =
         match (l,r) with
@@ -151,24 +165,28 @@ let glue_def = cake_define
          balanceR km m l' r else
        let ((km,m),r') = deleteFindMin r in
          balanceL km m l r'`;;
+
 let delete_def = cake_define
   `(balanced_map_delete cmp k Tip = Tip) /\
    (balanced_map_delete cmp k (Bin s k' v l r) =
-     (match cmp k k' with (LESS) -> balanceR k' v
-       (balanced_map_delete cmp k l) r | (GREATER) -> balanceL k' v l
-       (balanced_map_delete cmp k r) | Eq -> glue l r))`;;
+     (match cmp k k' with Less' -> balanceR k' v
+       (balanced_map_delete cmp k l) r | Greater' -> balanceL k' v l
+       (balanced_map_delete cmp k r) | Eq' -> glue l r))`;;
+
 let trim_help_greater_def = cake_define
   `(trim_help_greater cmp lo (Bin s' k v' l' r) =
      (if cmp k lo = (LESS) \/ cmp k lo = (EQUAL) then
        trim_help_greater cmp lo r else
        Bin s' k v' l' r)) /\
    (trim_help_greater cmp lo Tip = Tip)`;;
+
 let trim_help_lesser_def = cake_define
   `(trim_help_lesser cmp hi (Bin s' k v' l r') =
      (if cmp k hi = (GREATER) \/ cmp k hi = (EQUAL) then
        trim_help_lesser cmp hi l else
        Bin s' k v' l r')) /\
    (trim_help_lesser cmp lo Tip = Tip)`;;
+
 let trim_help_middle_def = cake_define
   `(trim_help_middle cmp lo hi (Bin s' k v' l r) =
      (if cmp k lo = (LESS) \/ cmp k lo = (EQUAL) then
@@ -177,11 +195,13 @@ let trim_help_middle_def = cake_define
        trim_help_middle cmp lo hi l else
        Bin s' k v' l r)) /\
    (trim_help_middle lo cmp hi Tip = Tip)`;;
+
 let trim_def = cake_define
   `(trim cmp NONE NONE t = t) /\
    (trim cmp (SOME lk) NONE t = trim_help_greater cmp lk t) /\
    (trim cmp NONE (SOME hk) t = trim_help_lesser cmp hk t) /\
    (trim cmp (SOME lk) (SOME hk) t = trim_help_middle cmp lk hk t)`;;
+
 let link_def = cake_define
   `link k v l r =
         match (l,r) with
@@ -193,23 +213,27 @@ let link_def = cake_define
          delta * sizeR < sizeL then
        balanceR ky y ly (link k v ry (Bin sizeR kz z lz rz)) else
        bin k v (Bin sizeL ky y ly ry) (Bin sizeR kz z lz rz)`;;
+
 let filterLt_help_def = cake_define
   `(filterLt_help cmp b Tip = Tip) /\
    (filterLt_help cmp b' (Bin s kx x l r) =
-     (match cmp kx b' with (LESS) -> link kx x l (filterLt_help
-       cmp b' r) | (EQUAL) -> l | (GREATER) -> filterLt_help cmp b'
-       l))`;;
+     (match cmp kx b' with Less' -> link kx x l (filterLt_help cmp
+       b' r) | Equal' -> l | Greater' -> filterLt_help cmp b' l))`;;
+
 let filterLt_def = cake_define
   `(filterLt cmp NONE t = t) /\
    (filterLt cmp (SOME b) t = filterLt_help cmp b t)`;;
+
 let filterGt_help_def = cake_define
   `(filterGt_help cmp b Tip = Tip) /\
    (filterGt_help cmp b' (Bin s kx x l r) =
-     (match cmp b' kx with (LESS) -> link kx x (filterGt_help cmp
-       b' l) r | (EQUAL) -> r | (GREATER) -> filterGt_help cmp b' r))`;;
+     (match cmp b' kx with Less' -> link kx x (filterGt_help cmp
+       b' l) r | Equal' -> r | Greater' -> filterGt_help cmp b' r))`;;
+
 let filterGt_def = cake_define
   `(filterGt cmp NONE t = t) /\
    (filterGt cmp (SOME b) t = filterGt_help cmp b t)`;;
+
 let hedgeUnion_def = cake_define
   `hedgeUnion cmp blo bhi t1 t2 =
         match (t1,t2) with
@@ -222,6 +246,7 @@ let hedgeUnion_def = cake_define
        kx) t2))
                (hedgeUnion cmp (SOME kx) bhi r (trim cmp (SOME kx)
                  bhi t2))`;;
+
 let union_def = cake_define
   `balanced_map_union cmp t1 t2 =
         match (t1,t2) with

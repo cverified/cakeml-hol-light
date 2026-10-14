@@ -13,5 +13,6 @@
      Equal = EQUAL *)
 (* HOL4 overload (expanded in the port):
      Greater = GREATER *)
+
 (* HOL4 overload (expanded in the port):
      num_cmp = num_compare *)

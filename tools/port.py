@@ -53,8 +53,11 @@ def fill(pre, words, width=70):
 
 
 def shorten(text, width=72):
-  """break the lines of a comment that are too long"""
-  return '\n'.join(wrap(l.rstrip(), 0, width)
+  """break the lines of a comment that are too long; a line that
+     opens the comment is continued under its (* """
+  return '\n'.join(wrap(l.rstrip(), 0, width,
+                        3 if l.lstrip().startswith('(*') else 2,
+                        hard=True)
                    for l in text.split('\n'))
 
 
@@ -81,6 +84,7 @@ class Porter:
         except Exception: pass
     self.out = []
     self.warn = []
+    self.head = None
 
   # -- helpers ---------------------------------------------------
 
@@ -125,23 +129,36 @@ class Porter:
 
   def run(self):
     blocks = hol4.parse(self.path)
-    first = True
-    hterm.set_equality(False)
+    self.db.base_grammar(self.thy)
+    chunks = []                 # (blank lines before, text)
     for b in blocks:
+      before = len(self.out)
       try:
         # a loose_equality or tight_equality declaration changes the
         # precedence of = from here on
         mode = hol4.equality_mode(b.text) if b.kind == 'ML' else None
         if mode: hterm.set_equality(mode == 'loose')
         if b.kind == 'ML':
-          for tok, prec, ass in hol4.fixities(b.text):
+          for tok, prec, ass, _ in hol4.fixities(b.text):
             hterm.add_infix(tok, prec, ass)
+          if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')
         self.out.append(f'(* PORT FAILED: {b.kind} {b.name}: {ex}\n'
-                        f'{b.text}\n*)\n')
-    return '\n'.join(self.out)
+                        f'{b.text}\n*)')
+      new = self.out[before:]
+      if new:
+        # the needs of the port start a paragraph of their own
+        blanks = max(1, b.blanks) if b.kind == 'Ancestors' else b.blanks
+        chunks.append((blanks, '\n'.join(new)))
+    # the blank lines of the HOL4 source are kept between the blocks,
+    # so that a comment stays with what it belongs to
+    text = ''
+    for i, (blanks, c) in enumerate(chunks):
+      if i: text += '\n' * (1 + min(blanks, 2))
+      text += c
+    return (self.head + '\n' + text if self.head else text) + '\n'
 
   def wanted(self, b):
     """of a HOL4 library theory only the needed definitions are ported"""
@@ -169,8 +186,8 @@ class Porter:
     elif k == 'Theory':
       # the header of the port comes first, before the comments that
       # the HOL4 file has before its Theory line
-      self.out.insert(0, HEAD % (b.name, self.srcname(),
-                                 LIBNOTE if self.kind == 'lib' else ''))
+      self.head = HEAD % (b.name, self.srcname(),
+                          LIBNOTE if self.kind == 'lib' else '')
     elif k == 'Ancestors':
       # an ancestor may be marked as [qualified]
       deps = [re.sub(r'\[.*\]', '', w) for w in b.body.split()] + \
@@ -188,7 +205,7 @@ class Porter:
       # definitions that HOL4 generates with ML code, and that the
       # port has by hand
       if self.thy in overrides.EXTRA_HEAD:
-        self.out.append(overrides.EXTRA_HEAD[self.thy].strip())
+        self.out.append('\n' + overrides.EXTRA_HEAD[self.thy].strip())
     elif k == 'Libs':
       pass
     elif k == 'Datatype':
@@ -252,9 +269,15 @@ class Porter:
     # characters; a line that is continued ends in a backslash,
     # which OCaml leaves out of the string
     text = '\n'.join(
-      ' \\\n'.join(fill('  "' if k == 0 else '   ', part.split()))
+      ' \\\n'.join(fill('  "' if k == 0 else '   ', part.split(), 69))
       for k, part in enumerate(spec.split('\n')))
-    self.out.append('let %s = define_datatype\n%s";;' % (lhs, text))
+    head = 'let %s = define_datatype' % lhs
+    if len(head) > 72:
+      head = 'let %s =\n  define_datatype' % lhs
+      if max(len(l) for l in head.split('\n')) > 72:
+        head = ('let %s,\n    %s =\n  define_datatype'
+                % tuple(lhs.split(',')))
+    self.out.append('%s\n%s";;' % (head, text))
 
   def typ_ast(self, ty):
     ty = hterm.expand_type(ty, self.abbrevs)
@@ -267,10 +290,17 @@ class Porter:
       if not f.strip(): continue
       name, tytext = f.split(':', 1)
       flds.append((name.strip(), self.typ(tytext.strip())))
-    self.out.append('let %s_FIELDS = define_record "%s"\n  [%s];;'
-                    % (self.nm(ty), self.nm(ty),
-                       ';\n   '.join('"%s","%s"' % (f, t)
-                                     for f, t in flds)))
+    lines = []
+    for i, (f, t) in enumerate(flds):
+      pre = '  [' if i == 0 else '   '
+      lines.append(' \\\n'.join(
+        fill(pre + '"%s","' % f, t.split(' '), 70)) + '"')
+    head = 'let %s_FIELDS = define_record "%s"' % (self.nm(ty),
+                                                   self.nm(ty))
+    if len(head) > 72:
+      head = ('let %s_FIELDS =\n  define_record "%s"'
+              % (self.nm(ty), self.nm(ty)))
+    self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
 
   # -- definitions -----------------------------------------------
 
@@ -301,14 +331,15 @@ class Porter:
       rel, rest = wf_relation(b.extra)
       if rel is None:
         self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
-        self.out.append('(* TERMINATION: %s *)\nlet %s = cake_define\n'
-                        '  `%s`;;'
-                        % (shorten(b.extra.strip()), name, term))
+        self.out.append(shorten('(* TERMINATION: %s *)'
+                                % b.extra.strip()) +
+                        '\nlet %s = cake_define\n  `%s`;;'
+                        % (name, term))
       else:
-        self.out.append('\n'.join(
+        self.out.append(shorten('\n'.join(
                           fill('(* HOL4 termination:', rest.split(), 69))
-                        + ' *)\n'
-                        'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
+                        + ' *)') +
+                        '\nlet %s = cake_define_wf\n  `%s`\n  `%s`;;'
                         % (name, fmt(self.term(rel), last=1), term))
 
   # -- a definition as one clause with a match -------------------
@@ -383,17 +414,25 @@ class Porter:
     ty = hterm.parse_type_text(txt)
     params = hterm.type_vars_of(ty)
     if params:
-      self.out.append('(* HOL4 type abbreviation (expanded in the port):'
-                      '\n     %s = %s *)' % (b.name, txt))
+      self.out.append(shorten(
+        '(* HOL4 type abbreviation (expanded in the port):'
+        '\n     %s = %s *)' % (b.name, txt)))
     else:
-      self.out.append('new_type_abbrev("%s",`:%s`);;'
-                      % (self.nm(b.name), self.typ(txt)))
+      # the type may be too long for one line
+      body = self.typ(txt)
+      head = 'new_type_abbrev("%s",`:' % self.nm(b.name)
+      text = '\n'.join(fill(head, body.split(' '), 69)) + '`);;'
+      if max(len(l) for l in text.split('\n')) > 72:
+        text = ('new_type_abbrev("%s",\n' % self.nm(b.name) +
+                '\n'.join(fill('  `:', body.split(' '), 69)) + '`);;')
+      self.out.append(text)
 
   def overload(self, b):
     txt = dbmod.strip_quote(b.body)
     self.warn.append('Overload %s' % b.name)
-    self.out.append('(* HOL4 overload (expanded in the port):\n'
-                    '     %s = %s *)' % (b.name, txt))
+    self.out.append(shorten(
+      '(* HOL4 overload (expanded in the port):\n'
+      '     %s = %s *)' % (b.name, txt)))
 
   def inductive(self, b):
     term = fmt(self.term(b.body))
@@ -454,28 +493,62 @@ def fmt(text, indent=3, width=72, last=3):
   out = [lines[0].lstrip()]
   for l in lines[1:]:
     k = len(l) - len(l.lstrip())
-    out.append(' ' * (indent + max(0, k - base)) + l.lstrip())
+    out.append(' ' * min(indent + max(0, k - base), 30) + l.lstrip())
   return '\n'.join(
     wrap(l, indent, width - (last if i == len(out) - 1 else 0))
     for i, l in enumerate(out))
 
 
-def wrap(line, indent, width):
-  """break a line that is too long"""
-  if len(line) + indent <= width: return line
+# the characters a term may be broken before: a newline is as good
+# as a space between two tokens of HOL Light
+SAFE = '([,#+|'
+
+
+def wrap(line, indent, width, extra=2, hard=False):
+  """break a line that is too long at a space (or, in a term, before
+     a character that starts a token); the continuation is indented
+     by extra, and with hard a line without any place to break is
+     broken anyway (which only comments allow)"""
   k = len(line) - len(line.lstrip())
+  ind = ' ' * (k + extra)
   out = []
   cur = line
-  while len(cur) + (indent if not out else 0) > width:
+  first = True
+  while len(cur) + (indent if first else 0) > width:
+    limit = width - (indent if first else 0)
     cut = -1
-    for i, c in enumerate(cur):
-      if c == ' ' and i > k and \
-         i + (indent if not out else 0) <= width and \
-         cur[:i].count('"') % 2 == 0:
-        cut = i
-    if cut < 0: break
+    drop = 0
+    safe = -1
+    quoted = False
+    i = 0
+    while i < len(cur) and i <= limit:
+      c = cur[i]
+      if quoted:
+        # a backslash in a string escapes the next character
+        if c == '\\': i += 2; continue
+        if c == '"': quoted = False
+        i += 1; continue
+      if c == '"':
+        quoted = True; i += 1; continue
+      # the break has to be beyond the indentation of the
+      # continuation, or the line would not get any shorter
+      if i > len(ind):
+        if c == ' ': cut = i; drop = 1
+        elif c in SAFE and cur[i-1] != ' ': safe = i
+      i += 1
+    if cut < 0 and safe > 0: cut = safe; drop = 0
+    if cut < 0:
+      # nothing to break at: with a long indentation, try again with
+      # a shorter one
+      if len(ind) > 6:
+        ind = ' ' * 6
+        continue
+      if not hard or limit <= len(ind) + 1: break
+      cut = limit
+      drop = 0
     out.append(cur[:cut])
-    cur = ' ' * (k + 2) + cur[cut+1:]
+    cur = ind + cur[cut+drop:]
+    first = False
   out.append(cur)
   return '\n'.join(out)
 
@@ -503,6 +576,7 @@ def port(thy, db=None):
   p = Porter(db, thy)
   text = p.run()
   text = '\n'.join(l.rstrip() for l in text.split('\n'))
+  text = re.sub(r'\n\n\n+', '\n\n\n', text).strip('\n')
   for i, l in enumerate(text.split('\n')):
     if len(l) > 72:
       p.warn.append('line %d is %d characters' % (i + 1, len(l)))

@@ -8,22 +8,26 @@
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 (* HOL4 ancestors outside the port: rich_list *)
+
 let kont_INDUCT,kont_RECURSION = define_datatype
-  "kont = ksym (('atok,'bnt,'cvalue,'err)pegsym) (kont) (kont) | appf1 \
-   ('cvalue->'cvalue) (kont) | appf2 ('cvalue->'cvalue->'cvalue) \
-   (kont) | dropErr (kont) | addErr (locs) ('err) (kont) | cmpErrs \
-   (kont) | cmpEO ((locs#'err) option) (kont) | returnTo (('atok#locs) \
-   list) (('cvalue option) list) (kont) | restoreEO ((locs#'err) \
-   option) (kont) | poplist ('cvalue list->'cvalue) (kont) | listsym \
-   (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue list->'cvalue) (kont) | \
-   done | failed";;
+  "kont = ksym (('atok,'bnt,'cvalue,'err)pegsym) (kont) (kont) | \
+   appf1 ('cvalue->'cvalue) (kont) | appf2 \
+   ('cvalue->'cvalue->'cvalue) (kont) | dropErr (kont) | addErr \
+   (locs) ('err) (kont) | cmpErrs (kont) | cmpEO ((locs#'err) option) \
+   (kont) | returnTo (('atok#locs) list) (('cvalue option) list) \
+   (kont) | restoreEO ((locs#'err) option) (kont) | poplist ('cvalue \
+   list->'cvalue) (kont) | listsym (('atok,'bnt,'cvalue,'err)pegsym) \
+   ('cvalue list->'cvalue) (kont) | done | failed";;
+
 let poplist_aux_def = cake_define
   `poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t /\
    poplist_aux acc (NONE :: t) = (acc,t) /\
    poplist_aux acc [] = (acc,[])`;;
+
 let poplistval_def = cake_define
-  `poplistval f l = (let (values,rest) = poplist_aux [] l in
-                      SOME (f values) :: rest)`;;
+  `poplistval f' l = (let (values,rest) = poplist_aux [] l in
+                      SOME (f' values) :: rest)`;;
+
 let evalcase_INDUCT,evalcase_RECURSION = define_datatype
   "evalcase = pegexec_EV (('atok,'bnt,'cvalue,'err)pegsym) \
    (('atok#locs) list) (('cvalue option) list) ((locs#'err) option) \
@@ -33,10 +37,12 @@ let evalcase_INDUCT,evalcase_RECURSION = define_datatype
    option) list) ((locs#'err) option) ((locs#'err) list) | \
    pegexec_Result ((('atok#locs) list,'cvalue,'err)pegresult) | \
    pegexec_Looped";;
+
 (* HOL4 overload (expanded in the port):
      OME = optmax MAXerr *)
 (* HOL4 overload (expanded in the port):
      EOF = Locs EOFpt EOFpt *)
+
 let coreloop_def = cake_define
   `coreloop G =
     OWHILE (\s. match s with pegexec_Result _1 -> F | _2 -> T)
@@ -45,35 +51,34 @@ let coreloop_def = cake_define
                       pegexec_AP k i (SOME v :: r) eo errs | pegexec_EV
                       (peg_any tf) i r eo errs k fk ->
                     (match i with
-                         [] -> let err = ((Locs EOFpt
+                         [] -> (let err = ((Locs EOFpt
                            EOFpt),peg_anyEOF G) in
-                                 pegexec_AP fk i r ((optmax MAXerr)
-                                   eo (SOME err)) (err :: errs) | h :: t
-                                   -> pegexec_AP k t (SOME (tf h) :: r)
-                                   eo errs) | pegexec_EV (peg_tok P tf2)
-                                   i r eo errs k fk ->
+                              pegexec_AP fk i r ((optmax MAXerr) eo
+                                (SOME err)) (err :: errs)) | h :: t ->
+                                pegexec_AP k t (SOME (tf h) :: r) eo
+                                errs) | pegexec_EV (peg_tok P tf2) i r
+                                eo errs k fk ->
                     (match i with
-                         [] -> let err = ((Locs EOFpt
+                         [] -> (let err = ((Locs EOFpt
                            EOFpt),peg_tokEOF G) in
-                                 pegexec_AP fk i r ((optmax MAXerr)
-                                   eo (SOME err)) (err :: errs) | h :: t
-                                   -> if P (FST h) then
-                                   pegexec_AP k t (SOME (tf2 h) :: r)
-                                     eo errs else let err = (sloc
-                                     i,peg_tokFALSE G) in pegexec_AP fk
-                                     i r ((optmax MAXerr) eo (SOME err))
-                                            (err :: errs)) |
-                                              pegexec_EV (peg_nt n tf3)
-                                              i r eo errs k fk ->
-                    if n IN FDOM (peg_rules G) then
+                              pegexec_AP fk i r ((optmax MAXerr) eo
+                                (SOME err)) (err :: errs)) | h :: t ->
+                                (if P (FST h) then
+                              pegexec_AP k t (SOME (tf2 h) :: r) eo
+                                errs else let err = (sloc i,peg_tokFALSE
+                                G) in pegexec_AP fk i r ((optmax MAXerr)
+                                eo (SOME err))
+                              (err :: errs))) | pegexec_EV (peg_nt n
+                                tf3) i r eo errs k fk ->
+                    (if n IN FDOM (peg_rules G) then
                       pegexec_EV (FAPPLY (peg_rules G) n) i r eo errs
                         (appf1 tf3 k) fk else
-                      pegexec_Looped | pegexec_EV (peg_seq e1 e2 f) i
-                        r eo errs k fk ->
+                      pegexec_Looped) | pegexec_EV (peg_seq e1 e2 f')
+                        i r eo errs k fk ->
                       pegexec_EV e1 i r eo errs
                          (restoreEO eo
                           (ksym e2
-                           (appf2 f k)
+                           (appf2 f' k)
                            (cmpEO eo (returnTo i r fk))))
                          fk | pegexec_EV (peg_choice e1 e2 cf) i r eo
                            errs k fk ->
@@ -95,9 +100,9 @@ let coreloop_def = cake_define
                          (restoreEO eo (returnTo i (SOME v :: r)
                            (dropErr k))) | pegexec_EV (peg_error err) i
                            r eo errs k fk ->
-                      let err = (sloc i,err) in
+                      (let err = (sloc i,err) in
                         pegexec_AP fk i r ((optmax MAXerr) eo (SOME
-                          err)) (err :: errs) | pegexec_AP done i [] _3
+                          err)) (err :: errs)) | pegexec_AP done i [] _3
                           _4 -> pegexec_Looped | pegexec_AP done i (NONE
                           :: t) _5 _6 -> pegexec_Looped | pegexec_AP
                           done i (SOME rv :: _7) eo _8 -> pegexec_Result
@@ -135,17 +140,19 @@ let coreloop_def = cake_define
                         r' eo errs -> pegexec_AP k i r eo errs |
                         pegexec_AP (restoreEO eo k) i r eo' errs ->
                         pegexec_AP k i r eo errs | pegexec_AP (listsym e
-                        f k) i r eo errs ->
+                        f' k) i r eo errs ->
                       pegexec_EV e i r eo errs (restoreEO eo (listsym
-                        e f k)) (poplist f k) | pegexec_AP (poplist f k)
-                        i r eo [] -> pegexec_Looped | pegexec_AP
-                        (poplist f k) i r eo (e :: errs) ->
-                      pegexec_AP k i (poplistval f r) eo errs |
+                        e f' k)) (poplist f' k) | pegexec_AP (poplist f'
+                        k) i r eo [] -> pegexec_Looped | pegexec_AP
+                        (poplist f' k) i r eo (e :: errs) ->
+                      pegexec_AP k i (poplistval f' r) eo errs |
                         pegexec_Result r -> pegexec_Result r |
                         pegexec_Looped -> pegexec_Looped)`;;
+
 let peg_exec_def = cake_define
   `peg_exec (G:('atok,'bnt,'cvalue,'err)peg) e i r eo errs k fk =
      (match coreloop G (pegexec_EV e i r eo errs k fk) with
          SOME r -> r | NONE -> pegexec_Looped)`;;
+
 let destResult_def = cake_define
   `pegexec_destResult (pegexec_Result r) = r`;;

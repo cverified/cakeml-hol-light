@@ -62,36 +62,45 @@ def sml_string(s):
   return out.decode('utf-8', 'replace')
 
 
-FIXITY = re.compile(r'set_fixity\s*"((?:[^"\\]|\\.)*)"\s*'
+FIXITY = re.compile(r'(temp_)?set_fixity\s*"((?:[^"\\]|\\.)*)"\s*'
                     r'\(\s*(Infixl|Infixr|Infix)\s*'
                     r'(?:\(\s*(LEFT|RIGHT|NONASSOC)\s*,\s*)?(\d+)')
-ADD_INFIX = re.compile(r'add_infix\s*\(\s*"((?:[^"\\]|\\.)*)"\s*,'
+ADD_INFIX = re.compile(r'(temp_)?add_infix\s*\(\s*'
+                       r'"((?:[^"\\]|\\.)*)"\s*,'
                        r'\s*(\d+)\s*,\s*(?:\w+\.)?'
                        r'(LEFT|RIGHT|NONASSOC)')
 MAPPED_FIXITY = re.compile(
-  r'set_mapped_fixity\s*\{[^}]*?tok\s*=\s*"((?:[^"\\]|\\.)*)"'
+  r'(temp_)?set_mapped_fixity\s*\{[^}]*?'
+  r'tok\s*=\s*"((?:[^"\\]|\\.)*)"'
   r'[^}]*?fixity\s*=\s*(Infixl|Infixr|Infix)\s*'
   r'(?:\(\s*(LEFT|RIGHT|NONASSOC)\s*,\s*)?(\d+)', re.S)
 
 
 def fixities(text):
-  """the infixes that an ML declaration of a HOL4 source adds, as
-     (token, precedence, associativity)"""
+  """the infixes that the ML declarations of a HOL4 source add, as
+     (token, precedence, associativity, temporary); a temporary one
+     does not reach the theories that descend from this one"""
   out = []
   for m in list(FIXITY.finditer(text)) + \
            list(MAPPED_FIXITY.finditer(text)):
-    tok, kind, ass, prec = m.groups()
+    temp, tok, kind, ass, prec = m.groups()
     a = 'l' if kind == 'Infixl' else 'r' if kind == 'Infixr' else \
         {'LEFT': 'l', 'RIGHT': 'r'}.get(ass, 'n')
-    out.append((sml_string(tok), int(prec), a))
+    out.append((sml_string(tok), int(prec), a, bool(temp)))
   for m in ADD_INFIX.finditer(text):
-    tok, prec, ass = m.groups()
+    temp, tok, prec, ass = m.groups()
     out.append((sml_string(tok), int(prec),
-                {'LEFT': 'l', 'RIGHT': 'r'}.get(ass, 'n')))
+                {'LEFT': 'l', 'RIGHT': 'r'}.get(ass, 'n'), bool(temp)))
   return out
 
 
 EQ_MODE = re.compile(r'\b(?:temp_)?(loose|tight)_equality\b')
+
+
+def pmatch_mode(text):
+  """does a block enable the pmatch syntax of HOL4's patternMatches
+     library?"""
+  return 'enable_pmatch' in text
 
 
 def equality_mode(text):
@@ -125,6 +134,13 @@ def ml_definition(text):
                text=text)
 
 
+def blanks_before(lines, i):
+  """the number of blank lines just before line i"""
+  k = 0
+  while i - k - 1 >= 0 and not lines[i-k-1].strip(): k += 1
+  return k
+
+
 def parse(path):
   """returns the list of blocks of a Script.sml file"""
   src = open(path, encoding='utf-8').read()
@@ -135,10 +151,19 @@ def parse(path):
              for l in (re.split(r'(?<=^End)(?=\(\*)|(?<=^QED)(?=\(\*)',
                                 line)
                        if re.match(r'^(End|QED)\(\*', line) else [line])]
-  blocks = []
+  # every block records the line it starts at, so that the port can
+  # keep the blank lines of the source between the blocks
+  cur = [0]
+  class Blocks(list):
+    def append(self, b):
+      b.line = cur[0]
+      b.blanks = blanks_before(lines, cur[0])
+      list.append(self, b)
+  blocks = Blocks()
   i = 0
   n = len(lines)
   while i < n:
+    cur[0] = i
     line = lines[i]
     # comments are kept, as they have to end up in the port
     if line.lstrip().startswith('(*'):

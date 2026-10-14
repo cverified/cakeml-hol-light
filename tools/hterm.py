@@ -29,13 +29,16 @@ KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
 
 # symbols, longest first
 SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '&&',
+        '##',
         "''", '--', '%%',
         '??', '|->', '<|', '|>', ':=', '<-', '->', '=>', '::', '++',
-        '<<', '>>', '@@', '**', '|+', '/\\', '\\/', '<>', '<=', '>=',
+        '<<', '>>', '@@', '**', '|++', '|+', '/\\', '\\/', '<>',
+        '<=', '>=',
         '<+', '>+', '=+', '<*>', '<<=', '≼', '«', '»', '⟪', '⟫',
         '𝕌', 'univ',
         '(', ')', '[', ']', '{', '}', ',', ';', '.', '|', '=', '<',
-        '>', '+', '-', '*', '/', '~', '!', '?', '\\', ':', '$', '&',
+        '>', '+', '-', '*', '/', '~', '!', '?', '\\\\', '\\', ':',
+        '$', '&',
         '^', '#', '@', '%', '§', '><', '⟨', '⟩']
 
 
@@ -75,8 +78,13 @@ def tokenize(s):
     start = i; icol = col
     if c in UNI:
       t = UNI[c]
-      toks.append(Tok('key' if t in KEYWORDS else 'sym', t, start, nl, icol))
-      i += 1; col += 1; nl = 0; continue
+      # the unsigned word comparisons have a subscript plus
+      n2 = 1
+      if t in ('<', '<=', '>', '>=') and s.startswith('₊', i + 1):
+        t += '+'; n2 = 2
+      toks.append(Tok('key' if t in KEYWORDS else 'sym', t, start,
+                      nl, icol))
+      i += n2; col += n2; nl = 0; continue
     if c == '«':
       j = s.index('»', i)
       toks.append(Tok('mlstr', s[i+1:j], start, nl, icol))
@@ -174,6 +182,8 @@ INFIX = {
   '<=+':   (450, 'n', '<=+',    12),
   '>=+':   (450, 'n', '>=+',    12),
   '|+':    (500, 'l', '|+',     15),
+  '|++':   (500, 'l', '|++',    15),
+  '\\\\':    (600, 'l', '\\\\',     21),
   '|->':   (100, 'n', '|->',    13),
   '++':    (480, 'l', '++',     16),
   '::':    (490, 'r', '::',     15),
@@ -201,6 +211,7 @@ INFIX = {
   '#<<':   (680, 'l', '#<<',    23),
   '@@':    (700, 'l', '@@',     23),
   'o':     (800, 'r', 'o',      26),
+  '##':    (490, 'r', '##',     20),
   'FUNION':(500, 'l', 'FUNION', None),
   'SUBMAP':(450, 'n', 'SUBMAP', 12),
   '$':     (460,  'r', '$',      0),
@@ -385,29 +396,75 @@ class Parser:
     upds = []
     while True:
       fld = self.next()
-      self.expect(':=')
+      # HOL4 has r with fld := v and r with fld updated_by f
+      if self.peek().text == 'updated_by':
+        self.next(); fn = True
+      else:
+        self.expect(':='); fn = False
       v = self.parse(60)
-      upds.append((fld.text, v))
+      upds.append((fld.text, v, fn))
       if single or not self.at(';'): break
       self.next()
+      # a record literal may have a semicolon before its |>
+      if self.at('|>'): break
     return upds
 
   def parse_binders(self):
     vs = []
+    paired = False
     while not self.at('.'):
+      # HOL4 writes a paired abstraction as \x,y. e as well as as
+      # \(x,y). e
+      if self.at(','):
+        self.next(); paired = True; continue
       t = self.peek()
       if t.text == '(':
         vs.append(self.parse_atom())
-      elif t.kind == 'id':
+      elif t.kind == 'id' or t.text == '_':
         self.next()
-        vs.append(Node('id', tok=t, name=t.text))
-      elif t.text == '_':
-        self.next()
-        vs.append(Node('id', tok=t, name='_'))
+        v = Node('id', tok=t, name=t.text)
+        if self.at(':'):
+          self.next()
+          v = Node('typed', tok=t, e=v, ty=self.parse_type())
+        vs.append(v)
       else:
         raise SyntaxError(f'binder expected at {t.pos}: {t.text!r}')
     self.expect('.')
+    if paired and len(vs) > 1:
+      e = vs[-1]
+      for v in reversed(vs[:-1]):
+        e = Node('infix', tok=v.tok, op=',', l=v, r=e)
+      vs = [Node('paren', tok=vs[0].tok, e=e)]
     return vs
+
+  def starts_binder(self):
+    """does a list of binders and a dot follow?"""
+    j = self.i
+    while j < len(self.toks):
+      t = self.toks[j]
+      if t.text == '.': return j > self.i
+      if t.kind == 'id' or t.kind == 'tyvar' or \
+         t.text in ('(', ')', ',', ':', '_'):
+        j += 1
+      else:
+        return False
+    return False
+
+  def parse_case(self, t):
+    s = self.parse(0)
+    self.expect('of')
+    arms = []
+    if self.at('|'): self.next()
+    while True:
+      # a pattern may be a tuple (HOL4 writes a case on several
+      # values as "case x, y of p, q => ...")
+      pat = self.parse(50)
+      self.expect('=>')
+      b = self.parse(60)
+      arms.append((pat, b))
+      if self.at('|'): self.next(); continue
+      break
+    return Node('case', tok=t, s=s, arms=arms)
 
   def parse_atom(self):
     t = self.next()
@@ -417,7 +474,19 @@ class Parser:
       return Node('str', tok=t, text=t.text)
     if t.kind == 'chr':
       return Node('chr', tok=t, text=t.text)
+    if t.kind == 'mlstr':
+      return Node('mlstr', tok=t, text=t.text)
+    if t.kind == 'quoted':
+      return Node('quoted', tok=t, text=t.text)
     if t.kind == 'id':
+      # the patternMatches library of HOL4 writes a case as a pmatch
+      if t.text == 'pmatch' and PMATCH[0]:
+        return self.parse_case(t)
+      # the binders of HOL4 that are constants in HOL Light
+      if t.text in HOL4_BINDERS and self.starts_binder():
+        vs = self.parse_binders()
+        return Node('some', tok=t, name=t.text, vs=vs,
+                    body=self.parse(0))
       return Node('id', tok=t, name=t.text)
     if t.kind == 'tyvar':
       return Node('id', tok=t, name=t.text)
@@ -454,32 +523,26 @@ class Parser:
       if t.text == 'some':
         vs = self.parse_binders()
         b = self.parse(0)
-        return Node('some', tok=t, vs=vs, body=b)
+        return Node('some', tok=t, name='some', vs=vs, body=b)
       if t.text == 'case':
-        s = self.parse(0)
-        self.expect('of')
-        arms = []
-        if self.at('|'): self.next()
-        while True:
-          # a pattern may be a tuple (HOL4 writes a case on several
-          # values as "case x, y of p, q => ...")
-          pat = self.parse(50)
-          self.expect('=>')
-          b = self.parse(60)
-          arms.append((pat, b))
-          if self.at('|'): self.next(); continue
-          break
-        return Node('case', tok=t, s=s, arms=arms)
+        return self.parse_case(t)
       if t.text == 'do':
         stmts = []
         while not self.at('od'):
-          if self.peek(1).text == '<-':
-            v = self.next(); self.next()
-            e = self.parse(0)
-            stmts.append((v.text, e))
+          # the left hand side of a <- may be a pattern
+          save = self.i
+          v = None
+          try:
+            v = self.parse_atoms()
+            if not self.at('<-'): v = None
+          except SyntaxError:
+            v = None
+          if v is None:
+            self.i = save
+            stmts.append((None, self.parse(0)))
           else:
-            e = self.parse(0)
-            stmts.append((None, e))
+            self.next()
+            stmts.append((v, self.parse(0)))
           if self.at(';'): self.next()
         self.expect('od')
         return Node('do', tok=t, stmts=stmts)
@@ -493,9 +556,11 @@ class Parser:
         if self.at(')'):
           self.next()
           return Node('id', tok=t, name='()')
-        # the operator form of an infix, as in FIELDS ((=) #"\n") ls
-        if self.peek().text in INFIX and \
-           self.peek(1).text == ')':
+        # the operator form of an operator, as in FIELDS ((=) #"\n") ls
+        if self.peek().kind in ('sym', 'id') and \
+           self.peek(1).text == ')' and \
+           (self.peek().text in INFIX or
+            self.peek().text in ('&', '~', '--')):
           o = self.next(); self.next()
           return Node('dollar', tok=t, name=o.text)
         e = self.parse(0)
@@ -505,9 +570,12 @@ class Parser:
         items = []
         if not self.at(']'):
           while True:
-            items.append(self.parse(60))
-            if self.at(';'): self.next(); continue
-            break
+            # HOL4 separates the elements with a semicolon, so a
+            # comma in an element makes it a pair
+            items.append(self.parse(50))
+            if self.at(';'): self.next()
+            else: break
+            if self.at(']'): break
         self.expect(']')
         return Node('list', tok=t, items=items)
       if t.text == '{}':
@@ -528,7 +596,9 @@ class Parser:
           return Node('setabs', tok=t, e=e, p=p)
         items = [e]
         while self.at(';'):
-          self.next(); items.append(self.parse(60))
+          self.next()
+          if self.at('}'): break
+          items.append(self.parse(50))
         self.expect('}')
         return Node('set', tok=t, items=items)
       if t.text == '<|':
@@ -704,6 +774,17 @@ NUMERIC_FUNS = set(['int_of_num', 'num_of_int', 'w2i', 'i2w', 'ival',
                     'int_neg', 'ABS', 'abs', 'Num'])
 
 
+def sml_char(s):
+  """the character that an SML character literal body denotes"""
+  esc = {'n': '\n', 't': '\t', '\\': '\\', '"': '"', 'r': '\r',
+         'a': '\a', 'b': '\b', 'f': '\f', 'v': '\v'}
+  if len(s) > 1 and s[0] == '\\':
+    if s[1:].isdigit(): return chr(int(s[1:]))
+    if s[1] == 'u': return chr(int(s[2:], 16))
+    return esc.get(s[1], s[1])
+  return s
+
+
 def numeric(e):
   """is this term a number rather than a proposition?"""
   while e.kind == 'paren': e = e.e
@@ -736,6 +817,29 @@ NUMCTX = set(['+', '-', '*', '/', 'DIV', 'MOD', 'EXP', '**',
 # HOL Light constants that are binders, so that f (\x. b) has to be
 # printed as f x. b
 BINDERS = set(['minimal'])
+
+
+# the binders of HOL4 that the port writes as a constant applied to
+# an abstraction, and whether the pmatch syntax of the patternMatches
+# library is enabled in this file
+HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'MIN_SET', 'MAX_SET'])
+PMATCH = [False]
+
+
+BASE_INFIX = dict(INFIX)
+BASE_SYMS = list(SYMS)
+
+
+def enable_pmatch(on):
+  PMATCH[0] = on
+
+
+def reset_grammar():
+  """the term grammar of a fresh HOL4 theory: the infixes that a
+     CakeML source adds itself do not reach the other files"""
+  INFIX.clear(); INFIX.update(BASE_INFIX)
+  SYMS[:] = BASE_SYMS
+  PMATCH[0] = False
 
 
 def add_infix(tok, prec, assoc):
@@ -813,9 +917,7 @@ class Printer:
     if k == 'str':
       return e.text
     if k == 'chr':
-      c = e.text[2:-1]
-      c = {'\\n': '\n', '\\t': '\t', '\\\\': '\\', '\\"': '"'}.get(c, c)
-      return '(CHR ' + str(ord(c)) + ')'
+      return '(CHR ' + str(ord(sml_char(e.text[2:-1]))) + ')'
     if k == 'mlstr':
       return '(strlit "' + e.text + '")'
     if k == 'paren':
@@ -907,8 +1009,8 @@ class Printer:
         return self.paren('&' + self.pr(e.e, APP), PRE_APP, prec)
     if k == 'some':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
-      return self.paren('some (\\' + vs + '. ' + self.pr(e.body, 0) +
-                        ')', PRE_APP, prec)
+      return self.paren(self.ctx.name(e.name) + ' (\\' + vs + '. ' +
+                        self.pr(e.body, 0) + ')', PRE_APP, prec)
     if k == 'quant':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
       return self.paren(e.q + vs + '. ' + self.pr(e.body, 0), 1, prec)
@@ -933,18 +1035,19 @@ class Printer:
                         PRE_APP, prec)
     if k == 'recupd':
       s = self.pr(e.e, APP)
-      for i, (fld, v) in enumerate(e.upds):
-        s = (self.ctx.field(fld) + '_fupd (K ' + self.pr(v, APP) +
-             ') ' + s)
+      for i, (fld, v, fn) in enumerate(e.upds):
+        s = (self.ctx.field(fld) + '_fupd ' +
+             (self.pr(v, APP) if fn else '(K ' + self.pr(v, APP) + ')')
+             + ' ' + s)
         if i < len(e.upds) - 1: s = '(' + s + ')'
       return self.paren(s, PRE_APP, prec)
     if k == 'reclit':
-      flds = [f for f, _ in e.upds]
+      flds = [f for f, _, _ in e.upds]
       rty = self.ctx.fields.get(flds[0], '?')
       order = self.ctx.recs.get(rty, flds)
       vals = []
       for f in order:
-        v = [v for g, v in e.upds if g == f]
+        v = [v for g, v, _ in e.upds if g == f]
         vals.append(self.pr(v[0], APP) if v else 'ARB')
       return self.paren('mk_' + rty + ' ' + ' '.join(vals),
                         PRE_APP, prec)
@@ -982,8 +1085,8 @@ class Printer:
     rest = self.pr_do(stmts[1:])
     if v is None:
       return ('monad_ignore_bind ' + self.pr(e, APP) + ' (' + rest + ')')
-    return ('monad_bind ' + self.pr(e, APP) + ' (\\' + v + '. ' +
-            rest + ')')
+    return ('monad_bind ' + self.pr(e, APP) + ' (\\' +
+            self.pr(v, 0) + '. ' + rest + ')')
 
 
 def rename_ast(e, sub):

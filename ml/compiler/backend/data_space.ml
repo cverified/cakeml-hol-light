@@ -1,0 +1,105 @@
+(* ======================================================== *)
+(*  data_space: ported from HOL4's
+    compiler/backend/data_spaceScript.sml  *)
+(* ======================================================== *)
+
+(*
+  This dataLang phase lumps together MakeSpace operations. Each
+  MakeSpace operations corresponds to a memory allocation in the later
+  wordLang code. By lumping together MakeSpace operations we turn
+  several calls to the memory allocator into a single efficient call.
+*)
+
+needs "compiler/backend/dataLang.ml";;
+
+let num_size_def = cake_define
+  `data_space_num_size (n:num) =
+     (if n < 2 EXP 32 then 2:num else 1 + data_space_num_size (n
+       DIV 2 EXP 32))`;;
+
+let part_space_req_def = cake_define
+  `part_space_req (closLang_W64 s) = 3 /\
+   part_space_req (closLang_Int i) =
+     (if num_of_int (abs i) < 2 EXP 29 then 0 else
+       data_space_num_size (num_of_int (abs i))) /\
+   part_space_req (closLang_Str s) = strlen s DIV 4 + 2 /\
+   part_space_req (closLang_Con t ns) =
+     (let l = LENGTH ns in if l = 0 then 0 else l + 1)`;;
+
+let op_space_req_def = cake_define
+  `op_space_req x1 l =
+        match x1 with
+          (closLang_MemOp closLang_Ref) -> l + 1
+        | (closLang_MemOp (closLang_MutCons tag k)) -> l + 1
+        | (closLang_BlockOp (closLang_Cons _1)) -> if l = 0 then 0
+          else l + 1
+        | (closLang_BlockOp (closLang_Build parts)) -> SUM (MAP
+          part_space_req parts)
+        | (closLang_WordOp (WordOpw closLang_W64 _2)) -> 3
+        | (closLang_WordOp (WordShift closLang_W64 _3 _4)) -> 3
+        | (closLang_WordOp WordFromInt) -> 3
+        | (closLang_WordOp WordToInt) -> 3
+        | (closLang_WordOp (WordFromWord F)) -> 3
+        | (closLang_WordOp (FP_uop _5)) -> 3
+        | (closLang_WordOp (FP_bop _6)) -> 3
+        | (closLang_WordOp (FP_top _7)) -> 3
+        | (closLang_ThunkOp (AllocThunk _8)) -> l + 1
+        | _9 -> 0`;;
+
+(*
+Theorem op_space_req_pmatch:
+  !op l.
+  op_space_req op l =
+    pmatch op of
+      Cons _ => if l = 0n then 0 else l+1
+    | Ref => l + 1
+    | WordOp (WordOpw W64 _) => 3
+    | WordShift W64 _ _ => 3
+    | WordFromInt => 3
+    | WordToInt => 3
+    | WordFromWord b => (if b then 0 else 3)
+    | FP_uop _ => 3
+    | FP_bop _ => 3
+    | _ => 0
+Proof
+  rpt strip_tac
+  >> CONV_TAC(RAND_CONV patternMatchesLib.PMATCH_ELIM_CONV)
+  >> every_case_tac >> fs[op_space_req_def]
+QED
+*)
+
+let pMakeSpace_def = cake_define
+  `(pMakeSpace (INL c) = c) /\
+   (pMakeSpace (INR (k,names,c)) = dataLang_Seq
+     (dataLang_MakeSpace k names) c)`;;
+
+let space_def = cake_define
+  `space c =
+        match c with
+          (dataLang_MakeSpace k names) -> INR (k,names,dataLang_Skip)
+        | (dataLang_Seq c1 c2) ->
+        let d1 = pMakeSpace (space c1) in
+        let x2 = space c2 in
+          match x2 with INL c4 ->
+             (match c1 with dataLang_MakeSpace k names -> INR
+               (k,names,c4) | dataLang_Skip -> INL c4 | _10 -> INL
+               (dataLang_Seq d1 c4)) | INR (k2,names2,c4) ->
+             (match c1 with dataLang_Skip -> INR (k2,names2,c4) |
+               dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
+               names2,c4) | dataLang_Move dest src ->
+                  INR (k2,sptree_insert src one (sptree_delete dest
+                    names2),
+                       dataLang_Seq (dataLang_Move dest src) c4) |
+                         dataLang_Assign dest closLang_op args NONE ->
+                  INR (op_space_req closLang_op (LENGTH args) + k2,
+                       list_insert args (sptree_delete dest names2),
+                       dataLang_Seq (dataLang_Assign dest closLang_op
+                         args NONE) c4) | _11 -> INL (dataLang_Seq d1
+                         (pMakeSpace x2)))
+        | (dataLang_If n c2 c3) ->
+        INL (dataLang_If n (pMakeSpace (space c2)) (pMakeSpace (space
+          c3)))
+        | c -> INL c`;;
+
+let compile_def = cake_define
+  `data_space_compile c = pMakeSpace (space c)`;;

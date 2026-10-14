@@ -1,0 +1,809 @@
+(* ======================================================== *)
+(*  clos_to_bvl: ported from HOL4's
+    compiler/backend/clos_to_bvlScript.sml  *)
+(* ======================================================== *)
+
+(*
+  This compiler phase performs closure conversion.  This phase puts
+  all of the code into a table of first-order, closed, multi-argument
+  functions.
+
+  The table is indexed by natural numbers, and each entry
+  is a pair of a number (the function's arity) and a BVL expression
+  (the function's body). The table has the following layout.
+
+  Entry i in the range 0 to max_app - 1 (inclusive):
+    generic application of a closure to i+1 arguments. Takes i+2
+      arguments
+    (the arguments and the closure). The closure might expect more or
+      less
+    than i+1 arguments, and this code would then allocate a partial
+      application
+    closure, or make repeated applications.
+
+  Entries in the range max_app to max_app + (max_app * (max_app - 1) DIV
+    2) - 1 (inclusive) :
+    code to fully apply a partially applied closure wrapper.
+    For a closure expecting tot number of arguments, which has already
+      been
+    given prev number of arguments, the wrapper is in location
+    max_app + tot * (tot - 1) DIV 2 + prev
+    and takes tot - prev + 1 arguments
+
+  The next entry initialises a global variable that contains a jump
+    table used
+  by the generic application stubs (0 argument).
+
+  The num_stubs function gives the total number of these functions.
+
+  Starting at index num_stubs, there are 0 argument functions that
+    evaluate
+  each expression that should be evaluated, and then call the next
+    function.
+
+  Following these functions, at even numbers there are the bodies of
+  functions in the program, with one extra argument for the closure
+    value to be
+  passed in to them. The odd entries are the bodies of the functions
+    that have
+  no free variables, and so they don't have any extra arguments. Their
+  correcponding odd entries just indirect to the even ones. (clos_call)
+  One entry might be skipped in between the expressions and the
+    source-level
+  function bodies to get the alignment right.
+
+*)
+
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/bvl.ml";;
+needs "compiler/backend/bvl_jump.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_annotate.ml";;
+needs "compiler/backend/clos_call.ml";;
+needs "compiler/backend/clos_known.ml";;
+needs "compiler/backend/clos_mti.ml";;
+needs "compiler/backend/clos_number.ml";;
+
+(* Constant flattening *)
+
+(* HOL4 overload (expanded in the port):
+     PRIME = 999983:num *)
+
+let part_hash_def = cake_define
+  `part_hash (clos_known_Int i) = num_of_int (abs i) MOD (999983:num) /\
+   part_hash (closLang_Str s) =
+     (strlen s + 3 * SUM (MAP ORD (explode s))) MOD (999983:num) /\
+   part_hash (closLang_W64 w) = (17 + w2n w) MOD (999983:num) /\
+   part_hash (closLang_Con t ns) = (18 + 5 * t + 7 * SUM ns) MOD
+     (999983:num)`;;
+
+let add_part_def = cake_define
+  `add_part n p aux acc =
+     (let h = part_hash p in
+       match sptree_lookup h aux with NONE -> (n + 1,n,sptree_insert
+         h [(p,n)] aux,p :: acc) | SOME bucket ->
+           (match ALOOKUP bucket p with NONE -> (n +
+             1,n,sptree_insert h ((p,n) :: bucket) aux,p :: acc) |
+             SOME k -> (n,k,aux,acc)))`;;
+
+let add_parts_def = cake_define
+  `add_parts (ConstInt i) n aux acc = add_part n (clos_known_Int i) aux
+  acc /\
+   add_parts (ConstStr s) n aux acc = add_part n (closLang_Str s) aux
+     acc /\
+   add_parts (ConstWord64 w) n aux acc = add_part n (closLang_W64 w)
+     aux acc /\
+   add_parts (ConstCons t cs) n aux acc =
+     (let (n,rs,aux,acc) = add_parts_list cs n aux acc in
+        add_part n (closLang_Con (clos_tag_shift t) rs) aux acc) /\
+   add_parts_list [] n aux acc = (n,[],aux,acc) /\
+   add_parts_list (c :: cs) n aux acc =
+     (let (n,r,aux,acc) = add_parts c n aux acc in
+     let (n,rs,aux,acc) = add_parts_list cs n aux acc in
+       (n,r :: rs,aux,acc))`;;
+
+let compile_const_def = cake_define
+  `compile_const (ConstInt i) = closLang_IntOp (closLang_Const i) /\
+   compile_const (ConstStr s) = closLang_BlockOp (closLang_Build
+     [closLang_Str s]) /\
+   compile_const (ConstWord64 w) = closLang_BlockOp (closLang_Build
+     [closLang_W64 w]) /\
+   compile_const (ConstCons t cs) =
+     (if NULL cs then closLang_BlockOp (closLang_Cons (clos_tag_shift
+       t)) else
+       let (n,rs,aux,acc) = add_parts_list cs 0 LN [] in
+         closLang_BlockOp (closLang_Build (REVERSE ((closLang_Con
+           (clos_tag_shift t) rs) :: acc))))`;;
+
+(* / Constant flattening *)
+
+let num_added_globals_def = cake_define
+  `num_added_globals = 1`;;
+
+let partial_app_label_table_loc_def = cake_define
+  `partial_app_label_table_loc = 0`;;
+
+let compile_op_def = cake_define
+  `clos_to_bvl_compile_op x =
+      match x with
+        (closLang_BlockOp (closLang_Cons tag)) -> closLang_BlockOp
+          (closLang_Cons (clos_tag_shift tag))
+      | (closLang_BlockOp (closLang_ConsExtend tag)) ->
+        closLang_BlockOp (closLang_ConsExtend (clos_tag_shift tag))
+      | (closLang_BlockOp (closLang_TagEq tag)) -> closLang_BlockOp
+        (closLang_TagEq (clos_tag_shift tag))
+      | (closLang_BlockOp (closLang_TagLenEq tag a)) ->
+        closLang_BlockOp (closLang_TagLenEq (clos_tag_shift tag) a)
+      | (closLang_BlockOp (closLang_FromList tag)) ->
+        closLang_BlockOp (closLang_FromList (clos_tag_shift tag))
+      | (closLang_MemOp closLang_LengthByteVec) -> closLang_MemOp
+        closLang_LengthByte
+      | (closLang_MemOp closLang_DerefByteVec) -> closLang_MemOp
+        closLang_DerefByte
+      | (closLang_GlobOp (SetGlobal n)) -> closLang_GlobOp (SetGlobal
+        (n + num_added_globals))
+      | (closLang_GlobOp (Global n)) -> closLang_GlobOp (Global (n +
+        num_added_globals))
+      | (closLang_BlockOp (closLang_Constant c)) -> compile_const c
+      | x -> x`;;
+
+let mk_const_def = cake_define
+  `(mk_const n:bvl_exp) = bvl_Op (closLang_IntOp (closLang_Const
+  (&n))) []`;;
+
+let mk_label_def = cake_define
+  `(mk_label n:bvl_exp) = bvl_Op (closLang_Label n) []`;;
+
+let mk_el_def = cake_define
+  `(mk_el b i:bvl_exp) = bvl_Op (closLang_MemOp closLang_El) [i; b]`;;
+
+let free_let_def = cake_define
+  `free_let cl n = (GENLIST (\n. (\b i. bvl_Op (closLang_BlockOp
+  (closLang_ElemAt i)) [b]) cl (n + 2)) n)`;;
+
+let code_for_recc_case_def = cake_define
+  `code_for_recc_case n num_args (c:bvl_exp) =
+     (num_args + 1,
+      bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
+        [b]) (db_vars_Var num_args) 2]
+       (bvl_Let (GENLIST (\a. db_vars_Var (a + 1)) num_args ++
+         GENLIST (\i. (\b i. bvl_Op (closLang_BlockOp
+         (closLang_ElemAt i)) [b]) (db_vars_Var 0) i) n) c))`;;
+
+let build_aux_def = cake_define
+  `(build_aux i [] aux = ((i:num),aux)) /\
+   (build_aux i ((x:num#bvl_exp) :: xs) aux = build_aux (i + 2) xs
+     ((i,x) :: aux))`;;
+
+let recc_Let_def = cake_define
+  `recc_Let n num_args i =
+     bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
+       [b]) (db_vars_Var 0) 2]
+      (bvl_Let [bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+        [db_vars_Var 0; mk_const (num_args - 1); mk_label n]]
+        (bvl_Let [bvl_Op (closLang_MemOp closLang_Update)
+          [db_vars_Var 0; mk_const i; db_vars_Var 1]]
+          (db_vars_Var 1:bvl_exp)))`;;
+
+let recc_Lets_def = cake_define
+  `recc_Lets n nargs k rest =
+     (if k = (0:num) then rest else
+       let k = k - 1 in
+         bvl_Let [recc_Let (n + 2 * k) (HD nargs) k] (recc_Lets n
+           (TL nargs) k rest))`;;
+
+let recc_Let0_def = cake_define
+  `recc_Let0 n num_args i =
+     bvl_Let [bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+       [db_vars_Var 0; mk_const (num_args - 1); mk_label n]]
+       (bvl_Let [bvl_Op (closLang_MemOp closLang_Update)
+         [db_vars_Var 0; mk_const i; db_vars_Var 1]] (db_vars_Var
+         1:bvl_exp))`;;
+
+let build_recc_lets_def = cake_define
+  `build_recc_lets (nargs:num list) vs n1 fns_l (c3:bvl_exp) =
+     bvl_Let [bvl_Let [bvl_Op (closLang_MemOp closLang_Ref) (REVERSE
+       (MAP (K (mk_const 0)) nargs ++ MAP db_vars_Var vs))]
+            (recc_Let0 (n1 + (2 * (fns_l - 1))) (HD (REVERSE nargs))
+              (fns_l - 1))]
+       (recc_Lets n1 (TL (REVERSE nargs)) (fns_l - 1) c3)`;;
+
+let num_stubs_def = cake_define
+  `num_stubs max_app =
+              max_app + (max_app * (max_app - 1)) DIV 2 + 1 + 1`;;
+
+let generic_app_fn_location_def = cake_define
+  `generic_app_fn_location n = n`;;
+
+let partial_app_fn_location_def = cake_define
+  `partial_app_fn_location (max_app:num) tot prev =
+     max_app + (tot * (tot - 1)) DIV 2 + prev`;;
+
+let partial_app_fn_location_code_def = cake_define
+  `(partial_app_fn_location_code max_app tot_exp prev_exp:bvl_exp) =
+     bvl_Let [tot_exp]
+      (bvl_Op (closLang_IntOp closLang_Add) [prev_exp;
+         bvl_Op (closLang_IntOp closLang_Div) [mk_const 2;
+           bvl_Op (closLang_IntOp closLang_Mult) [db_vars_Var 0;
+             bvl_Op (closLang_IntOp closLang_Sub) [mk_const 1;
+             db_vars_Var 0]]]])`;;
+
+let mk_cl_call_def = cake_define
+  `mk_cl_call cl args =
+     bvl_If (bvl_Op (closLang_BlockOp (closLang_EqualConst
+       (closLang_Int (&(LENGTH args - 1))))) [(\b i. bvl_Op
+       (closLang_BlockOp (closLang_ElemAt i)) [b]) cl 1])
+        (bvl_Call (LENGTH args - 1) NONE (args ++ [cl] ++ [(\b i.
+          bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b]) cl 0]))
+        (bvl_Call 0 (SOME (generic_app_fn_location (LENGTH args -
+          1))) (args ++ [cl]))`;;
+
+(* Generic application of a function to n+1 arguments *)
+let generate_generic_app_def = cake_define
+  `generate_generic_app max_app n =
+     bvl_Let [bvl_Op (closLang_IntOp closLang_Sub) [mk_const (n + 1);
+       (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+       (db_vars_Var (n + 1)) 1]]
+         (bvl_If (bvl_Op (closLang_IntOp (LESS)) [mk_const 0;
+           db_vars_Var 0])
+             (bvl_jump_Jump ((\b i. bvl_Op (closLang_BlockOp
+               (closLang_ElemAt i)) [b]) (db_vars_Var (n + 2)) 1)
+               (GENLIST (\num_args.
+                  bvl_Let [bvl_Call num_args
+                            NONE
+                            (GENLIST (\arg. db_vars_Var ((arg + 2 +
+                              n) - num_args)) (num_args + 1) ++
+                             [db_vars_Var (n + 3)] ++
+                             [(\b i. bvl_Op (closLang_BlockOp
+                               (closLang_ElemAt i)) [b]) (db_vars_Var (n
+                               + 3)) 0])]
+                    (mk_cl_call (db_vars_Var 0) (GENLIST (\n.
+                      db_vars_Var (n + 3)) (n - num_args))))
+                max_app))
+             (mk_tick n
+             (bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq
+               closure_tag)) [db_vars_Var (n + 2)])
+                 (bvl_Op (closLang_BlockOp (closLang_Cons
+                   partial_app_tag))
+                     (REVERSE
+                       (mk_el (bvl_Op (closLang_GlobOp (Global 0))
+                         [])
+                         (partial_app_fn_location_code max_app
+                           ((\b i. bvl_Op (closLang_BlockOp
+                             (closLang_ElemAt i)) [b]) (db_vars_Var (n +
+                             2)) 1)
+                           (mk_const n)) ::
+                        db_vars_Var 0 ::
+                        db_vars_Var (n + 2) ::
+                        GENLIST (\n. db_vars_Var (n + 1)) (n + 1))))
+                 (bvl_Let [bvl_Op (closLang_IntOp closLang_Sub)
+                   [mk_const 3; bvl_Op (closLang_BlockOp
+                   closLang_LengthBlock) [db_vars_Var (n + 2)]]]
+                   (bvl_Op (closLang_BlockOp (closLang_ConsExtend
+                     partial_app_tag))
+                     (REVERSE
+                       (db_vars_Var (n + 3) ::
+                        mk_const 3 ::
+                        db_vars_Var 0 ::
+                        bvl_Op (closLang_IntOp closLang_Add)
+                          [db_vars_Var 0; mk_const (n + 4)] ::
+                        mk_el (bvl_Op (closLang_GlobOp (Global 0))
+                          [])
+                          (partial_app_fn_location_code max_app
+                            (bvl_Op (closLang_IntOp closLang_Add)
+                              [db_vars_Var 0; bvl_Op (closLang_IntOp
+                              closLang_Add) [mk_const (n + 1);
+                              db_vars_Var 1]])
+                            (bvl_Op (closLang_IntOp closLang_Add)
+                              [db_vars_Var 1; mk_const n])) ::
+                        db_vars_Var 1 ::
+                        (\b i. bvl_Op (closLang_BlockOp
+                          (closLang_ElemAt i)) [b]) (db_vars_Var (n +
+                          3)) 2 ::
+                        GENLIST (\this_arg. db_vars_Var (this_arg
+                          + 2)) (n + 1))))))))`;;
+
+(* The functions to complete the application of a partial closure.
+ * We expect prev_args < total_args, also the function should take one
+   more
+ * argument than total, and have seen one more than prev (since there is
+ * possiblity for a 0 argument function, or a partial application
+   wrapper that
+ * has seen no arguments yet. *)
+let generate_partial_app_closure_fn_def = cake_define
+  `generate_partial_app_closure_fn total_args prev_args =
+     bvl_Let [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
+       [b]) (db_vars_Var (total_args - prev_args)) 2]
+       (bvl_Call 0
+         NONE
+         (GENLIST (\this_arg. db_vars_Var (this_arg + 1)) (total_args
+           - prev_args) ++
+          GENLIST (\prev_arg.
+            (\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b])
+              (db_vars_Var (total_args - prev_args + 1)) (prev_arg + 3))
+              (prev_args + 1) ++
+          [db_vars_Var 0] ++
+          [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
+            [b]) (db_vars_Var 0) 0]))`;;
+
+let check_closure_def = cake_define
+  `check_closure v e =
+     bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq closure_tag))
+       [db_vars_Var v]) (bvl_Bool T)
+       (bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq
+         partial_app_tag)) [db_vars_Var v]) (bvl_Bool T) e)`;;
+
+let init_code_def = cake_define
+  `clos_to_bvl_init_code max_app =
+     fromList
+       (GENLIST (\n. (n + 2,generate_generic_app max_app n)) max_app
+         ++
+        FLAT
+          (GENLIST
+            (\tot.
+              GENLIST
+                (\prev. (tot - prev +
+                  1,generate_partial_app_closure_fn tot prev))
+                tot)
+            max_app))`;;
+
+let init_globals_def = cake_define
+  `init_globals max_app start_loc =
+     bvl_Let [bvl_Op (closLang_GlobOp AllocGlobal) [bvl_Op
+       (closLang_IntOp (closLang_Const 1)) []]]
+     (bvl_Let
+       [bvl_Op (closLang_GlobOp (SetGlobal
+         partial_app_label_table_loc))
+         [bvl_Op (closLang_BlockOp (closLang_Cons tuple_tag))
+           (REVERSE (FLAT
+             (GENLIST
+               (\tot.
+                 GENLIST
+                   (\prev. mk_label (partial_app_fn_location max_app
+                     tot prev))
+                   tot)
+               max_app)))]]
+       (bvl_Call 0 (SOME start_loc) []))`;;
+
+let force_thunk_code_def = cake_define
+  `force_thunk_code =
+     (bvl_If (bvl_Op (closLang_BlockOp (closLang_EqualConst
+       (clos_known_Int 0))) [(\b i. bvl_Op (closLang_BlockOp
+       (closLang_ElemAt i)) [b]) (db_vars_Var 1) 1])
+       (bvl_Let [bvl_Call 0 NONE [(bvl_Op (closLang_BlockOp
+         (closLang_Cons 0)) []); db_vars_Var 1; (\b i. bvl_Op
+         (closLang_BlockOp (closLang_ElemAt i)) [b]) (db_vars_Var 1) 0]]
+         (bvl_Let [bvl_Op (closLang_ThunkOp (UpdateThunk Evaluated))
+           [db_vars_Var 0; db_vars_Var 1]] (db_vars_Var 1)))
+       (bvl_Let [bvl_Call 0 (SOME 0) [(bvl_Op (closLang_BlockOp
+         (closLang_Cons 0)) []); db_vars_Var 1]]
+         (bvl_Let [bvl_Op (closLang_ThunkOp (UpdateThunk
+           Evaluated)) [db_vars_Var 0; db_vars_Var 1]] (db_vars_Var
+           1))):bvl_exp)`;;
+
+(* HOL4 termination: >> srw_tac [ARITH_ss]
+   [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
+   l) <= exp1_size l` by (Induct_on `l` >> rw
+   [closLangTheory.exp_size_def] >> PairCases_on `h` >> full_simp_tac
+   (srw_ss()++ARITH_ss) [closLangTheory.exp_size_def]) >> pop_assum
+   (qspec_then `v7` assume_tac) >> decide_tac *)
+let compile_exps_def = cake_define_wf
+  `MEASURE (exp3_size o FST o SND)`
+  `(clos_to_bvl_compile_exps max_app [] aux = ([],aux)) /\
+   (clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs)
+     aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux in
+      let (c2,aux2) = clos_to_bvl_compile_exps max_app (y :: xs) aux1
+        in
+        (c1 ++ c2,aux2))) /\
+   (clos_to_bvl_compile_exps max_app [db_vars_Var t v] aux =
+     ([(db_vars_Var v):bvl_exp],aux)) /\
+   (clos_to_bvl_compile_exps max_app [bvl_If t x1 x2 x3] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+      let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+      let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2 in
+        ([bvl_If (HD c1) (HD c2) (HD c3)],aux3))) /\
+   (clos_to_bvl_compile_exps max_app [bvl_Let t xs x2] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+      let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+        ([bvl_Let c1 (HD c2)],aux2))) /\
+   (clos_to_bvl_compile_exps max_app [bvl_Raise t x1] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+        ([bvl_Raise (HD c1)],aux1))) /\
+   (clos_to_bvl_compile_exps max_app [bvl_Tick t x1] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+        ([bvl_Tick (HD c1)],aux1))) /\
+   (clos_to_bvl_compile_exps max_app [bvl_Op t closLang_op xs] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+      (
+      [if closLang_op = closLang_Install then
+          bvl_Call 0 NONE [bvl_Op closLang_Install c1] else if
+            closLang_op = closLang_ThunkOp ForceThunk then
+          bvl_Let c1 (bvl_Force (num_stubs max_app - 2) 0) else
+          bvl_Op (clos_to_bvl_compile_op closLang_op) c1],aux1))) /\
+   (clos_to_bvl_compile_exps max_app [closLang_App t loc_opt x1 xs2]
+     aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+      let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1 in
+        ([match loc_opt with NONE ->
+              bvl_Let (c2 ++ c1) (mk_cl_call (db_vars_Var (LENGTH
+                c2)) (GENLIST db_vars_Var (LENGTH c2))) | SOME loc ->
+              (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
+                max_app))) (c2 ++ c1))],
+         aux2))) /\
+   (clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt
+     num_args x1] aux =
+      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+      let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+      let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+      let c2 =
+        bvl_Let (GENLIST db_vars_Var num_args ++ free_let
+          (db_vars_Var num_args) (LENGTH vs))
+            (HD c1) in
+        ([bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+             (REVERSE (mk_label (loc + num_stubs max_app) :: mk_const
+               (num_args - 1) :: MAP db_vars_Var vs))],
+         (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))) /\
+   (clos_to_bvl_compile_exps max_app [closLang_Letrec t loc_opt vsopt
+     fns x1] aux =
+      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+      let vs = match vsopt with NONE -> [] | SOME x -> x in
+      match fns with [] -> clos_to_bvl_compile_exps max_app [x1] aux
+        | [(num_args,bvl_exp)] ->
+          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [bvl_exp]
+            aux in
+          let c3 = bvl_Let (GENLIST db_vars_Var num_args ++
+            [db_vars_Var num_args] ++ free_let (db_vars_Var num_args)
+            (LENGTH vs)) (HD c1) in
+          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1] ((loc
+            + (num_stubs max_app),num_args + 1,c3) :: aux1) in
+          let c4 =
+            bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+               (REVERSE (mk_label (loc + (num_stubs max_app)) ::
+                 mk_const (num_args - 1) :: MAP db_vars_Var vs)) in
+            ([bvl_Let [c4] (HD c2)],aux2)) | _1 ->
+          (let fns_l = LENGTH fns in
+          let l = fns_l + LENGTH vs in
+          let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP SND
+            fns) aux in
+          let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
+          let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1
+            aux1 in
+          let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1] aux2
+            in
+          let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
+            max_app)) fns_l (HD c3) in
+            ([c4],aux3)))) /\
+   (clos_to_bvl_compile_exps max_app [bvl_Handle t x1 x2] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+      let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+        ([bvl_Handle (HD c1) (HD c2)],aux2))) /\
+   (clos_to_bvl_compile_exps max_app [bvl_Call t ticks dest xs] aux =
+      (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+        ([bvl_Call ticks (SOME (dest + (num_stubs max_app)))
+          c1],aux1)))`;;
+
+(* HOL4 ML code, not ported:
+val compile_exps_ind = theorem"compile_exps_ind";
+*)
+
+(* HOL4 termination: >> srw_tac [ARITH_ss]
+   [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
+   l) <= exp1_size l` by ( Induct_on `l` >> rw
+   [closLangTheory.exp_size_def] >> PairCases_on `h` >> full_simp_tac
+   (srw_ss()++ARITH_ss) [closLangTheory.exp_size_def]) >> pop_assum
+   (qspec_then `v7` assume_tac) >> decide_tac *)
+let compile_exp_sing_def = cake_define_wf
+  `MEASURE (\x. match x with INL (_3,e,_4) -> exp_size e | INR
+  (_5,es,_6) -> exp3_size es)`
+  `(compile_exp_sing max_app (db_vars_Var t v) aux = (((db_vars_Var
+  v):bvl_exp),aux)) /\
+   (compile_exp_sing max_app (bvl_If t x1 x2 x3) aux =
+      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+      let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
+      let (c3,aux3) = compile_exp_sing max_app x3 aux2 in
+        (bvl_If c1 c2 c3,aux3))) /\
+   (compile_exp_sing max_app (bvl_Let t xs x2) aux =
+      (let (c1,aux1) = compile_exp_list max_app xs aux in
+      let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
+        (bvl_Let c1 c2,aux2))) /\
+   (compile_exp_sing max_app (bvl_Raise t x1) aux =
+      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+        (bvl_Raise c1,aux1))) /\
+   (compile_exp_sing max_app (bvl_Tick t x1) aux =
+      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+        (bvl_Tick c1,aux1))) /\
+   (compile_exp_sing max_app (bvl_Op t closLang_op xs) aux =
+      (let (c1,aux1) = compile_exp_list max_app xs aux in
+      (if closLang_op = closLang_Install then bvl_Call 0 NONE [bvl_Op
+        closLang_Install c1] else if closLang_op = closLang_ThunkOp
+        ForceThunk then bvl_Let c1 (bvl_Force (num_stubs max_app - 2) 0)
+        else
+      bvl_Op (clos_to_bvl_compile_op closLang_op) c1,aux1))) /\
+   (compile_exp_sing max_app (closLang_App t loc_opt x1 xs2) aux =
+      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+      let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
+        ((match loc_opt with NONE ->
+              bvl_Let (c2 ++ [c1]) (mk_cl_call (db_vars_Var (LENGTH
+                c2)) (GENLIST db_vars_Var (LENGTH c2))) | SOME loc ->
+              (bvl_Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
+                max_app))) (c2 ++ [c1]))),
+         aux2))) /\
+   (compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args
+     x1) aux =
+      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+      let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+      let (c1,aux1) = compile_exp_sing max_app x1 aux in
+      let c2 =
+        bvl_Let (GENLIST db_vars_Var num_args ++ free_let
+          (db_vars_Var num_args) (LENGTH vs)) c1 in
+        (bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+            (REVERSE (mk_label (loc + num_stubs max_app) :: mk_const
+              (num_args - 1) :: MAP db_vars_Var vs)),
+         (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))) /\
+   (compile_exp_sing max_app (closLang_Letrec t loc_opt vsopt fns x1)
+     aux =
+      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+      let vs = match vsopt with NONE -> [] | SOME x -> x in
+      match fns with [] -> compile_exp_sing max_app x1 aux |
+        [(num_args,bvl_exp)] ->
+          (let (c1,aux1) = compile_exp_sing max_app bvl_exp aux in
+          let c3 = bvl_Let (GENLIST db_vars_Var num_args ++
+            [db_vars_Var num_args] ++ free_let (db_vars_Var num_args)
+            (LENGTH vs)) c1 in
+          let (c2,aux2) = compile_exp_sing max_app x1 ((loc +
+            (num_stubs max_app),num_args + 1,c3) :: aux1) in
+          let c4 =
+            bvl_Op (closLang_BlockOp (closLang_Cons closure_tag))
+               (REVERSE (mk_label (loc + (num_stubs max_app)) ::
+                 mk_const (num_args - 1) :: MAP db_vars_Var vs)) in
+            (bvl_Let [c4] c2,aux2)) | _2 ->
+          (let fns_l = LENGTH fns in
+          let l = fns_l + LENGTH vs in
+          let (cs,aux1) = compile_exp_list max_app (MAP SND fns) aux
+            in
+          let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
+          let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1
+            aux1 in
+          let (c3,aux3) = compile_exp_sing max_app x1 aux2 in
+          let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
+            max_app)) fns_l c3 in
+            (c4,aux3)))) /\
+   (compile_exp_sing max_app (bvl_Handle t x1 x2) aux =
+      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+      let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
+        (bvl_Handle c1 c2,aux2))) /\
+   (compile_exp_sing max_app (bvl_Call t ticks dest xs) aux =
+      (let (c1,aux1) = compile_exp_list max_app xs aux in
+        (bvl_Call ticks (SOME (dest + (num_stubs max_app)))
+          c1,aux1))) /\
+   (compile_exp_list max_app [] aux = ([],aux)) /\
+   (compile_exp_list max_app ((x:closLang_exp) :: xs) aux =
+      (let (c1,aux1) = compile_exp_sing max_app x aux in
+      let (c2,aux2) = compile_exp_list max_app xs aux1 in
+        (c1 :: c2,aux2)))`;;
+
+let compile_prog_def = cake_define
+  `clos_to_bvl_compile_prog max_app prog =
+     (let (new_exps,aux) = clos_to_bvl_compile_exps max_app (MAP (SND
+       o SND) prog) [] in
+       MAP2 (\(loc,args,_7) bvl_exp. (loc + num_stubs
+         max_app,args,bvl_exp))
+         prog new_exps ++ aux)`;;
+
+let clos_to_bvl_config_FIELDS = define_record "clos_to_bvl_config"
+  ["next_loc","num";
+   "start","num";
+   "do_mti","bool";
+   "known_conf","clos_known_config option";
+   "do_call","bool";
+   "call_state","one spt#(num#num#closLang_exp) list";
+   "max_app","num"];;
+
+let default_config_def = cake_define
+  `clos_to_bvl_default_config = mk_clos_to_bvl_config 0 1 T (SOME
+  (clos_known_default_config 10)) T (LN,[]) 10`;;
+
+let code_split_def = cake_define
+  `(code_split [] xs ys = (xs,ys)) /\
+   (code_split (z :: zs) xs ys = code_split zs (z :: ys) xs)`;;
+
+(* HOL4 termination: \\ rw [] *)
+let code_merge_def = cake_define_wf
+  `MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)`
+  `code_merge xs ys =
+     (match (xs,ys) with ([],[]) -> [] | ([],_8) -> ys | (_9,[]) ->
+       xs | (x1 :: xs1,y1 :: ys1) ->
+         (if FST x1 < ((FST y1):num) then
+           x1 :: code_merge xs1 ys else
+           y1 :: code_merge xs ys1))`;;
+
+(* HOL4 termination: \\ rw [] \\ imp_res_tac code_split_LENGTH \\
+   drule code_split_NULL \\ fs [] \\ full_simp_tac std_ss [GSYM
+   LENGTH_NIL] >> decide_tac *)
+let code_sort_def = cake_define_wf
+  `MEASURE LENGTH`
+  `(code_sort [] = []) /\
+   (code_sort [x] = [x]) /\
+   (code_sort (x :: y :: xs) =
+      (let (xs,ys) = code_split xs [x] [y] in
+        code_merge (code_sort xs) (code_sort ys)))`;;
+
+let chain_exps_def = cake_define
+  `chain_exps i x2 =
+        match x2 with
+          [] -> [(i,0,bvl_Op backend_common_None (closLang_IntOp
+            (closLang_Const 0)) [])]
+        | [e] -> [(i,0,e)]
+        | (e :: es) ->
+       (i,0,
+        closLang_Let backend_common_None [e] (closLang_Call
+          backend_common_None 0 (i + 1) [])) :: chain_exps (i + 1) es`;;
+
+(* c.max_app must be the same each time this is called *)
+let compile_common_def = cake_define
+  `compile_common c es =
+     (let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
+       (clos_to_bvl_config_max_app c) es in
+     let loc = clos_to_bvl_config_next_loc c + MAX 1 (LENGTH es) in
+     let loc = if loc MOD 2 = 0 then loc else loc + 1 in
+     let (n,es) = renumber_code_locs_list loc es in
+     let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf
+       c) es in
+     let (es,g',aux) = clos_call_compile (clos_to_bvl_config_do_call
+       c) es in
+     let prog = chain_exps (clos_to_bvl_config_next_loc c) es ++ aux
+       in
+     let prog = clos_annotate_compile prog in
+       (clos_to_bvl_config_call_state_fupd (K (g',aux))
+         (clos_to_bvl_config_known_conf_fupd (K kc)
+         (clos_to_bvl_config_next_loc_fupd (K n)
+         (clos_to_bvl_config_start_fupd (K (clos_to_bvl_config_next_loc
+         c)) c))),
+        prog))`;;
+
+let add_src_names_def = cake_define
+  `add_src_names n [] l = l /\
+   add_src_names n (x :: xs) l =
+     add_src_names (n + 2) xs (sptree_insert n (mlstring_concat
+       [x; implode "_clos"]) (sptree_insert (n + 1) x l))`;;
+
+(* HOL4 termination: \\ rw [] \\ qsuff_tac ‘exp3_size (MAP SND funs)
+   <= exp1_size funs’ \\ fs [] \\ Induct_on ‘funs’ \\ fs
+   [closLangTheory.exp_size_def] \\ fs
+   [FORALL_PROD,closLangTheory.exp_size_def] *)
+let get_src_names_def = cake_define_wf
+  `MEASURE (exp3_size o FST)`
+  `get_src_names [] l = l /\
+   get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
+     (get_src_names [x] l) /\
+   get_src_names [closLang_If _10 x y z] l =
+     get_src_names [x] (get_src_names [y] (get_src_names [z] l)) /\
+   get_src_names [closLang_Var _11 _12] l = l /\
+   get_src_names [closLang_Let _13 xs x] l = get_src_names (x :: xs)
+     l /\
+   get_src_names [bvl_Raise _14 x] l = get_src_names [x] l /\
+   get_src_names [bvl_Handle _15 x y] l = get_src_names [x]
+     (get_src_names [y] l) /\
+   get_src_names [bvl_Tick _16 x] l = get_src_names [x] l /\
+   get_src_names [bvl_Call _17 _18 _19 xs] l = get_src_names xs l /\
+   get_src_names [bvl_Op _20 _21 xs] l = get_src_names xs l /\
+   get_src_names [closLang_App _22 _23 x xs] l = get_src_names (x ::
+     xs) l /\
+   get_src_names [closLang_Fn name loc_opt _24 _25 x] l =
+     (let l1 = get_src_names [x] l in
+        match loc_opt with NONE -> l1 | SOME n -> add_src_names n
+          [name] l1) /\
+   get_src_names [closLang_Letrec names loc_opt _26 funs x] l =
+     (let l0 = get_src_names (MAP SND funs) l in
+      let l1 = get_src_names [x] l0 in
+        match loc_opt with NONE -> l1 | SOME n -> add_src_names n
+          names l1)`;;
+
+(* HOL4 termination: \\ rw [closLangTheory.exp_size_def] \\ qsuff_tac
+   ‘exp3_size (MAP SND funs) <= exp1_size funs’ \\ fs [] \\ Induct_on
+   ‘funs’ \\ fs [closLangTheory.exp_size_def] \\ fs
+   [FORALL_PROD,closLangTheory.exp_size_def] *)
+let get_src_names_sing_def = cake_define_wf
+  `MEASURE (\x. match x with INL (e,_44) -> exp_size e | INR (es,_45)
+  -> exp3_size es)`
+  `get_src_names_sing (closLang_If _27 x y z) l =
+     get_src_names_sing x (get_src_names_sing y (get_src_names_sing z
+       l)) /\
+   get_src_names_sing (closLang_Var _28 _29) l = l /\
+   get_src_names_sing (closLang_Let _30 xs x) l =
+     get_src_names_list xs (get_src_names_sing x l) /\
+   get_src_names_sing (bvl_Raise _31 x) l = get_src_names_sing x l /\
+   get_src_names_sing (bvl_Handle _32 x y) l = get_src_names_sing x
+     (get_src_names_sing y l) /\
+   get_src_names_sing (bvl_Tick _33 x) l = get_src_names_sing x l /\
+   get_src_names_sing (bvl_Call _34 _35 _36 xs) l =
+     get_src_names_list xs l /\
+   get_src_names_sing (bvl_Op _37 _38 xs) l = get_src_names_list xs l
+     /\
+   get_src_names_sing (closLang_App _39 _40 x xs) l =
+     get_src_names_list xs (get_src_names_sing x l) /\
+   get_src_names_sing (closLang_Fn name loc_opt _41 _42 x) l =
+     (let l1 = get_src_names_sing x l in
+        match loc_opt with NONE -> l1 | SOME n -> add_src_names n
+          [name] l1) /\
+   get_src_names_sing (closLang_Letrec names loc_opt _43 funs x) l =
+     (let l0 = get_src_names_list (MAP SND funs) l in
+      let l1 = get_src_names_sing x l0 in
+        match loc_opt with NONE -> l1 | SOME n -> add_src_names n
+          names l1) /\
+   get_src_names_list [] l = l /\
+   get_src_names_list (x :: xs) l = get_src_names_list xs
+     (get_src_names_sing x l)`;;
+
+let make_name_alist_def = cake_define
+  `make_name_alist nums prog nstubs dec_start (dec_length:num) =
+     (let src_names = get_src_names (MAP (SND o SND) prog) LN in
+       fromAList (MAP (\n. (n,(if n < nstubs then
+                              if n = nstubs - 1 then implode
+                                "bvl_init" else
+                              if n = nstubs - 2 then implode
+                                "bvl_force" else
+                              implode "bvl_stub" else let clos_name =
+                                n - nstubs in
+                              if dec_start <= clos_name /\ clos_name
+                                < dec_start + dec_length then implode
+                                "dec" else
+                              match sptree_lookup clos_name
+                                src_names with NONE -> implode
+                                "unknown_clos_fun" | SOME s -> s)))
+                                nums):mlstring spt)`;;
+
+let compile_def = cake_define
+  `clos_to_bvl_compile c0 es =
+     (let (c,prog) = compile_common c0 es in
+     let n = num_stubs (clos_to_bvl_config_max_app c) in
+     let init_stubs' = toAList (clos_to_bvl_init_code
+       (clos_to_bvl_config_max_app c)) in
+     let init_globs = [(n - 1,0,init_globals
+       (clos_to_bvl_config_max_app c) (n + clos_to_bvl_config_start c))]
+       in
+     let force_stub = [(n - 2,2,force_thunk_code)] in
+     let comp_progs = clos_to_bvl_compile_prog
+       (clos_to_bvl_config_max_app c) prog in
+     let prog' = init_stubs' ++ force_stub ++ init_globs ++
+       comp_progs in
+     let func_names = make_name_alist (MAP FST prog') prog n
+       (clos_to_bvl_config_next_loc
+                        c0) (LENGTH es) in
+     let c = clos_to_bvl_config_start_fupd (K (n - 1)) c in
+       (c,code_sort prog',func_names))`;;
+
+let extract_name_def = cake_define
+  `extract_name [] = (0,[]) /\
+   extract_name (x :: xs) =
+     (match (some (\n. ?t. x = bvl_Op t (closLang_IntOp
+       (closLang_Const (&n))) [])) with NONE -> (0,x :: xs) | SOME n
+       -> (n,(if xs = [] then [x] else xs)))`;;
+
+let compile_inc_def = cake_define
+  `clos_to_bvl_compile_inc max_app (es,prog) =
+     (let (n,real_es) = extract_name es in
+         clos_to_bvl_compile_prog max_app
+           (chain_exps n real_es ++ prog):(num#num#bvl_exp) list)`;;
+
+let clos_to_bvl_compile_inc_def = cake_define
+  `clos_to_bvl_compile_inc c p =
+     (let p = cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
+       (clos_to_bvl_config_max_app c) p in
+     let (n,p) = ignore_table clos_number_compile_inc
+       (clos_to_bvl_config_next_loc c) p in
+     let c = clos_to_bvl_config_next_loc_fupd (K n) c in
+     let spt = option_val_approx_spt (clos_to_bvl_config_known_conf
+       c) in
+     let (spt,p) = known_compile_inc (known_static_conf
+       (clos_to_bvl_config_known_conf c)) spt p in
+     let c = clos_to_bvl_config_known_conf_fupd (K
+       (option_upd_val_spt spt (clos_to_bvl_config_known_conf c))) c in
+     let (c',p) = cond_call_compile_inc (clos_to_bvl_config_do_call
+       c) (FST (clos_to_bvl_config_call_state c)) p in
+     let c = clos_to_bvl_config_call_state_fupd (K (c',[])) c in
+     let p = clos_annotate_compile_inc p in
+     let p = clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c) p
+       in
+       (c,p))`;;

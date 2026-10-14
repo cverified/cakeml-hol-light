@@ -58,6 +58,7 @@ class Db:
     self.order = load_order()
     self.hl = hl_names()
     self.provided = provided_names()
+    self.read_fixities()
     self.deps = json.load(open(T + 'deps.json'))['deps']
     self.defs = collections.defaultdict(list)   # name -> [(thy,kind)]
     self.datatypes = {}        # (thy,ty) -> ([cons],[fields])
@@ -72,17 +73,42 @@ class Db:
 
   # ---------------------------------------------------------------
 
+  def read_fixities(self):
+    """the infixes that each source declares itself"""
+    self.fix = {}
+    for thy, path, kind in self.order:
+      try:
+        text = open(path, encoding='utf-8').read()
+      except Exception:
+        text = ''
+      self.fix[thy] = hol4.fixities(text)
+
+  def base_grammar(self, thy):
+    """put the term grammar in the state in which a theory starts:
+       the infixes that its ancestors declare permanently (a temp_
+       declaration does not reach the theories that descend from the
+       one that makes it)"""
+    hterm.reset_grammar()
+    hterm.set_equality(False)
+    anc = self.ancestors(thy)
+    for t, _, _ in self.order:
+      if t == thy: break
+      if t in anc:
+        for tok, prec, ass, temp in self.fix.get(t, []):
+          if not temp: hterm.add_infix(tok, prec, ass)
+
   def scan(self):
     for thy, path, kind in self.order:
       self.thy_of_file[thy] = path
       self.kind_of_thy[thy] = kind
-      hterm.set_equality(False)
+      self.base_grammar(thy)
       for b in hol4.parse(path):
         mode = hol4.equality_mode(b.text) if b.kind == 'ML' else None
         if mode: hterm.set_equality(mode == 'loose')
         if b.kind == 'ML':
-          for tok, prec, ass in hol4.fixities(b.text):
+          for tok, prec, ass, _ in hol4.fixities(b.text):
             hterm.add_infix(tok, prec, ass)
+          if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
         if b.kind == 'Ancestors':
           anc = [w for w in b.body.split()]
           self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))
@@ -324,12 +350,15 @@ def prefix(thy, nm):
 
 
 def strip_quote(s):
+  """the contents of the first quotation of a block (what follows it,
+     a comment or ML code, is not part of it)"""
   s = s.strip()
   for a, b in [('``', '``'), ('“', '”'), ('‘', '’'),
                ('`', '`')]:
     if s.startswith(a):
       s = s[len(a):]
-      if s.endswith(b): s = s[:-len(b)]
+      k = s.find(b)
+      if k >= 0: s = s[:k]
       break
   s = s.strip()
   if s.startswith(':'): s = s[1:]

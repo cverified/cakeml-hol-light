@@ -1,0 +1,307 @@
+(* ======================================================== *)
+(*  bvl_const: ported from HOL4's
+    compiler/backend/bvl_constScript.sml  *)
+(* ======================================================== *)
+
+(*
+   This is a BVL transformation that propagates simple and
+   cheap-to-compute context-free expression from Let bindings. It also
+   performs some simple constant folding with SmartOp (below).
+
+   The most significant impact of this optimisation is that it removes
+   each Var in a Let, i.e. Let [...; Var ...; ...] ..., and replaces
+   them with constants Let [...; Op (IntOp (Const _)) []; ...] .... and
+   replaces all occurrences of the bound var with a lookup to the
+   original variable.
+
+   bvi_let is a simpler version of this optimisation.
+*)
+
+needs "compiler/backend/bvl.ml";;
+
+let dest_simple_def = cake_define
+  `dest_simple x1 =
+        match x1 with
+          (bvl_Op (closLang_IntOp (closLang_Const i)) xs) -> if NULL
+            xs then SOME i else NONE
+        | _1 -> NONE`;;
+
+let case_op_const_def = cake_define
+  `case_op_const bvl_exp =
+       (match bvl_exp with (bvl_Op closLang_op [x1; bvl_Op
+         (closLang_IntOp (closLang_Const n2)) l]) -> (if NULL l then
+         SOME (closLang_op,x1,n2) else NONE) | _2 -> NONE)`;;
+
+let SmartOp_flip_def = cake_define
+  `SmartOp_flip closLang_op x1 x2 =
+     (match (dest_simple x1) with (SOME i) ->
+         (if MEM closLang_op [closLang_IntOp closLang_Add;
+           closLang_IntOp closLang_Mult] then (closLang_op,x2,x1)
+           else if closLang_op = closLang_IntOp closLang_Sub then
+           (closLang_IntOp closLang_Add,x2,bvl_Op (closLang_IntOp
+           (closLang_Const (--i))) []) else (closLang_op,x1,x2)) | _3
+           -> (closLang_op,x1,x2))`;;
+
+(* HOL4 ML code, not ported:
+local val SmartOp2_quotation = `
+  SmartOp2 (op, x1:bvl$exp, x2:bvl$exp) =
+    let mk_add_const x1 c2 =
+      if c2 = 0 then x1
+      else Op (IntOp Add) [x1; Op (IntOp (Const c2)) []]
+    in
+    let mk_add x1 x2 =
+      let default = Op (IntOp Add) [x1; x2] in
+        case (dest_simple x2) of
+        | (SOME n2) => (
+            case (case_op_const x1) of
+            | SOME (op, x11, n12) =>
+                if op = IntOp Add then mk_add_const x11 (n2+n12)
+                else if op = IntOp Sub then Op (IntOp Sub) [x11; Op
+                  (IntOp (Const (n2+n12))) []]
+                else default
+            | _ =>
+                case (dest_simple x1) of
+                | SOME n1 => Op (IntOp (Const (n2+n1))) []
+                | _ => mk_add_const x1 n2
+        )
+        | _ =>
+            case (case_op_const x1, case_op_const x2) of
+            | (SOME (op1, x11, n12), SOME (op2, x21, n22)) =>
+                if op1 = IntOp Add /\ op2 = IntOp Add then
+                  mk_add_const (Op (IntOp Add) [x11; x21]) (n22+n12)
+                else if op1 = IntOp Add /\ op2 = IntOp Sub then
+                  Op (IntOp Sub) [Op (IntOp Sub) [x11; x21]; Op (IntOp
+                    (Const (n22+n12))) []]
+                else if op1 = IntOp Sub /\ op2 = IntOp Add then
+                  mk_add_const (Op (IntOp Sub) [x11; x21]) (n22+n12)
+                else default
+            | _ => default
+    in
+    let mk_sub x1 x2 =
+      let default = Op (IntOp Sub) [x1; x2] in
+        case (dest_simple x2) of
+        | (SOME n2) => (
+            case (case_op_const x1) of
+            | SOME (op, x11, n12) =>
+                if op = IntOp Add then Op (IntOp Sub) [x11; Op (IntOp
+                  (Const (n2-n12))) []]
+                else if op = IntOp Sub then mk_add_const x11 (n2-n12)
+                else default
+            | _ =>
+                case (dest_simple x1) of
+                | SOME n1 => Op (IntOp (Const (n2-n1))) []
+                | _ => default
+        )
+        | _ =>
+            case (case_op_const x1, case_op_const x2) of
+            | (SOME (op1, x11, n12), SOME (op2, x21, n22)) =>
+                if op1 = IntOp Add /\ op2 = IntOp Add then
+                  Op (IntOp Add) [Op (IntOp Sub) [x11; x21]; Op (IntOp
+                    (Const (n22-n12))) []]
+                else if op1 = IntOp Add /\ op2 = IntOp Sub then
+                  Op (IntOp Sub) [Op (IntOp Add) [x11; x21]; Op (IntOp
+                    (Const (n22-n12))) []]
+                else if op1 = IntOp Sub /\ op2 = IntOp Add then
+                  mk_add_const (Op (IntOp Add) [x11; x21]) (n22-n12)
+                else default
+            | _ => default
+    in
+    let mk_mul x1 x2 =
+      let default = Op (IntOp Mult) [x1; x2] in
+        case (dest_simple x2) of
+        | (SOME n2) => (
+            case (case_op_const x1) of
+            | SOME (op, x11, n12) =>
+                if op = IntOp Mult then Op (IntOp Mult) [x11; Op (IntOp
+                  (Const (n2*n12))) []]
+                else default
+            | _ =>
+                case (dest_simple x1) of
+                | SOME n1 => Op (IntOp (Const (n2*n1))) []
+                | _ =>
+                    if n2 = 1 then x1
+                    else if n2 = -1 then mk_sub x1 (Op (IntOp (Const 0))
+                      [])
+                    else default
+        )
+        | _ =>
+            case (case_op_const x1, case_op_const x2) of
+            | (SOME (op1, x11, n12), SOME (op2, x21, n22)) =>
+                if op1 = IntOp Mult /\ op2 = IntOp Mult then
+                  Op (IntOp Mult) [Op (IntOp (Const (n22*n12))) []; Op
+                    (IntOp Mult) [x11; x21]]
+                else default
+            | _ => default
+    in
+    let default = Op op [x1;x2] in
+    if op = IntOp Add then
+      mk_add x1 x2
+    else if op = IntOp Sub then
+      mk_sub x1 x2
+    else if op = IntOp Mult then
+      mk_mul x1 x2
+    else if MEM op [IntOp Div; IntOp Mod; IntOp Less; IntOp LessEq;
+      IntOp Greater; IntOp GreaterEq] then
+      case (dest_simple x1, dest_simple x2) of
+      | (SOME x1, SOME (x2:int)) =>
+          (case op of
+           | IntOp Div => if x1 = 0 then default else Op (IntOp (Const
+             (x2 / x1))) []
+           | IntOp Mod => if x1 = 0 then default else Op (IntOp (Const
+             (x2 % x1))) []
+           | IntOp Less => Bool (x2 < x1)
+           | IntOp LessEq => Bool (x2 <= x1)
+           | IntOp Greater => Bool (x2 > x1)
+           | IntOp GreaterEq => Bool (x2 >= x1)
+           | _ => default)
+      | _ => default
+    else if op = BlockOp Equal then
+      case (dest_simple x1, dest_simple x2) of
+      | (SOME i, SOME j) => Bool (j = i)
+      | (SOME i, _) => Op (BlockOp (EqualConst (Int i))) [x2]
+      | (_, SOME i) => Op (BlockOp (EqualConst (Int i))) [x1]
+      | _ => default
+    else if op = MemOp El then
+      case dest_simple x1 of
+      | SOME i => if i < 0 then default else Op (BlockOp (ElemAt (Num
+        i))) [x2]
+      | _ => default
+    else default`
+in
+val SmartOp2_def = Define SmartOp2_quotation
+*)
+
+(* NOTE: the space after case and pmatch is important *)
+(* HOL4 ML code, not ported:
+val tm = (SmartOp2_quotation |>
+   map (fn QUOTE s => Portable.replace_string
+     {from="case ",to="pmatch "} s |> QUOTE
+       | aq => aq)) |> Term
+*)
+(* HOL4 ML code, not ported:
+end
+*)
+
+
+let dest_EqualInt_def = cake_define
+  `dest_EqualInt x1 =
+      match x1 with
+        (closLang_BlockOp (closLang_EqualConst (closLang_Int i))) ->
+          SOME i
+      | _4 -> NONE`;;
+
+let SmartOp1_def = cake_define
+  `SmartOp1 closLang_op x =
+     (match dest_EqualInt closLang_op with NONE -> bvl_Op closLang_op
+       [x] | SOME i ->
+       (match dest_simple x with NONE -> bvl_Op closLang_op [x] |
+         SOME j -> bvl_Bool (j = i)))`;;
+
+
+let SmartOp_def = cake_define
+  `bvl_const_SmartOp closLang_op xs =
+     (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip closLang_op
+       x1 x2) | [x] -> SmartOp1 closLang_op x | _5 -> bvl_Op
+       closLang_op xs)`;;
+
+let extract_def = cake_define
+  `bvl_const_extract x1 ys =
+        match x1 with
+          ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys +
+            1)):bvl_exp)
+        | (bvl_Op (closLang_IntOp (closLang_Const i)) xs) -> SOME
+          (bvl_Op (closLang_IntOp (closLang_Const i)) [])
+        | (bvl_Op (closLang_BlockOp (closLang_Cons t)) xs) ->
+       if NULL xs then SOME (bvl_Op (closLang_BlockOp (closLang_Cons
+         t)) []) else NONE
+        | _6 -> NONE`;;
+
+let extract_list_def = cake_define
+  `(bvl_const_extract_list [] = []) /\
+   (bvl_const_extract_list (x :: xs) = bvl_const_extract x xs ::
+     bvl_const_extract_list xs)`;;
+
+let delete_var_def = cake_define
+  `bvl_const_delete_var x =
+        match x with
+          ((bvl_Var n):bvl_exp) -> bvl_Op (closLang_IntOp
+            (closLang_Const 0)) []
+        | x -> x`;;
+
+let compile_def = cake_define
+  `(bvl_const_compile env [] = []) /\
+   (bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
+     ++ bvl_const_compile env (y :: xs)) /\
+   (bvl_const_compile env [bvl_Var v] =
+      (match (\l n. oEL n l) env v with NONE -> [bvl_Var v] | SOME
+        NONE -> [bvl_Var v] | SOME (SOME (bvl_Var i)) -> [bvl_Var (v +
+        i)] | SOME (SOME x) -> [x])) /\
+   (bvl_const_compile env [bvl_If x1 x2 x3] =
+      (let y1 = HD (bvl_const_compile env [x1]) in
+      let y2 = HD (bvl_const_compile env [x2]) in
+      let y3 = HD (bvl_const_compile env [x3]) in
+        if y1 = bvl_Bool T then [y2] else
+        if y1 = bvl_Bool F then [y3] else
+          [bvl_If y1 y2 y3])) /\
+   (bvl_const_compile env [bvl_Let xs x2] =
+      (let ys = bvl_const_compile env xs in
+        [bvl_Let (MAP bvl_const_delete_var ys)
+             (HD (bvl_const_compile (bvl_const_extract_list ys ++
+               env) [x2]))])) /\
+   (bvl_const_compile env [bvl_Handle x1 x2] =
+      [bvl_Handle (HD (bvl_const_compile env [x1])) (HD
+        (bvl_const_compile (NONE :: env) [x2]))]) /\
+   (bvl_const_compile env [bvl_Raise x1] =
+      [bvl_Raise (HD (bvl_const_compile env [x1]))]) /\
+   (bvl_const_compile env [bvl_Op closLang_op xs] =
+     [bvl_const_SmartOp closLang_op (bvl_const_compile env xs)]) /\
+   (bvl_const_compile env [bvl_Tick x] = [bvl_Tick (HD
+     (bvl_const_compile env [x]))]) /\
+   (bvl_const_compile env [bvl_Force loc v] =
+      (match (\l n. oEL n l) env v with NONE -> [bvl_Force loc v] |
+        SOME NONE -> [bvl_Force loc v] | SOME (SOME (bvl_Var i)) ->
+        [bvl_Force loc (v + i)] | SOME (SOME x) -> [bvl_Force loc v]))
+        /\
+   (bvl_const_compile env [bvl_Call t dest xs] = [bvl_Call t dest
+     (bvl_const_compile env xs)])`;;
+
+let compile_sing_def = cake_define
+  `(bvl_const_compile_sing env (bvl_Var v) =
+      (match (\l n. oEL n l) env v with NONE -> bvl_Var v | SOME NONE
+        -> bvl_Var v | SOME (SOME (bvl_Var i)) -> bvl_Var (v + i) | SOME
+        (SOME x) -> x)) /\
+   (bvl_const_compile_sing env (bvl_If x1 x2 x3) =
+      (let y1 = bvl_const_compile_sing env x1 in
+      let y2 = bvl_const_compile_sing env x2 in
+      let y3 = bvl_const_compile_sing env x3 in
+        if y1 = bvl_Bool T then y2 else
+        if y1 = bvl_Bool F then y3 else
+          bvl_If y1 y2 y3)) /\
+   (bvl_const_compile_sing env (bvl_Let xs x2) =
+      (let ys = bvl_const_compile_list env xs in
+        bvl_Let (MAP bvl_const_delete_var ys)
+            (bvl_const_compile_sing (bvl_const_extract_list ys ++
+              env) x2))) /\
+   (bvl_const_compile_sing env (bvl_Handle x1 x2) =
+      bvl_Handle (bvl_const_compile_sing env x1)
+        (bvl_const_compile_sing (NONE :: env) x2)) /\
+   (bvl_const_compile_sing env (bvl_Raise x1) =
+      bvl_Raise (bvl_const_compile_sing env x1)) /\
+   (bvl_const_compile_sing env (bvl_Op closLang_op xs) =
+     bvl_const_SmartOp closLang_op (bvl_const_compile_list env xs)) /\
+   (bvl_const_compile_sing env (bvl_Tick x) = bvl_Tick
+     (bvl_const_compile_sing env x)) /\
+   (bvl_const_compile_sing env (bvl_Force loc v) =
+      (match (\l n. oEL n l) env v with NONE -> bvl_Force loc v |
+        SOME NONE -> bvl_Force loc v | SOME (SOME (bvl_Var i)) ->
+        bvl_Force loc (v + i) | SOME (SOME x) -> bvl_Force loc v)) /\
+   (bvl_const_compile_sing env (bvl_Call t dest xs) = bvl_Call t dest
+     (bvl_const_compile_list env xs)) /\
+   (bvl_const_compile_list env [] = []) /\
+   (bvl_const_compile_list env (x :: xs) = bvl_const_compile_sing
+     env x :: bvl_const_compile_list env xs)`;;
+
+let compile_exp_def = cake_define
+  `bvl_const_compile_exp x =
+     (match bvl_const_compile [] [x] with (y :: _7) -> y | _8 ->
+       bvl_Var 0)`;;

@@ -5,7 +5,9 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
-(* HOL4 ancestors outside the port: pred_set relation pair arithmetic numeral string list ternaryComparisons[qualified] set_relation[qualified] *)
+(* HOL4 ancestors outside the port: pred_set relation pair arithmetic *)
+(* numeral string list ternaryComparisons[qualified]                  *)
+(* set_relation[qualified]                                            *)
 let lexTO = cake_define
   `(R:'a toto_comp) lexTO (V:'b toto_comp) = TO_of_LinearOrder (
      StrongLinearOrder_of_TO R LEX StrongLinearOrder_of_TO V)`;;

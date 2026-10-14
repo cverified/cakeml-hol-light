@@ -1,24 +1,27 @@
-(* ========================================================================= *)
-(*  The vocabulary of the HOL4 basic libraries that HOL Light does not have. *)
-(*                                                                          *)
-(*  The definitions are the ones of HOL4's combinTheory, optionTheory,       *)
-(*  listTheory, rich_listTheory, indexedListsTheory and stringTheory, so     *)
-(*  that the CakeML sources can be ported without changing them.            *)
-(*                                                                          *)
-(*  HOL Light already provides, with the same meaning as in HOL4:            *)
-(*    I o FST SND CURRY UNCURRY ARB SUC PRE DIV MOD EXP MIN MAX EVEN ODD     *)
-(*    NIL CONS APPEND LENGTH MAP FILTER MEM EL HD TL LAST NULL REVERSE       *)
-(*    ZIP MAP2 REPLICATE SOME NONE INL INR OUTL OUTR                        *)
-(*  and the following, which the port uses under the HOL Light name:         *)
-(*    EVERY = ALL, EXISTS = EX, FRONT = BUTLAST,                             *)
-(*    LIST_TO_SET = set_of_list, GENLIST f n = list_of_seq f n,              *)
-(*    FOLDR f e l = ITLIST f l e                                            *)
-(* ========================================================================= *)
+(* ================================================================== *)
+(*  The vocabulary of the HOL4 basic libraries that HOL Light does not*)
+(*  have.                                                             *)
+(*                                                                    *)
+(*  The definitions are the ones of HOL4's combinTheory, optionTheory,*)
+(*  listTheory, rich_listTheory, indexedListsTheory and stringTheory, *)
+(*  so                                                                *)
+(*  that the CakeML sources can be ported without changing them.      *)
+(*                                                                    *)
+(*  HOL Light already provides, with the same meaning as in HOL4:     *)
+(*    I o FST SND CURRY UNCURRY ARB SUC PRE DIV MOD EXP MIN MAX EVEN  *)
+(*    ODD                                                             *)
+(*    NIL CONS APPEND LENGTH MAP FILTER MEM EL HD TL LAST NULL REVERSE*)
+(*    ZIP MAP2 REPLICATE SOME NONE INL INR OUTL OUTR                  *)
+(*  and the following, which the port uses under the HOL Light name:  *)
+(*    EVERY = ALL, EXISTS = EX, FRONT = BUTLAST,                      *)
+(*    LIST_TO_SET = set_of_list, GENLIST f n = list_of_seq f n,       *)
+(*    FOLDR f e l = ITLIST f l e                                      *)
+(* ================================================================== *)
 
-(* ------------------------------------------------------------------------- *)
-(* The HOL4 names and notations of the HOL Light constants that have         *)
-(* another name, so that the port can use the CakeML ones.                   *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* The HOL4 names and notations of the HOL Light constants that have  *)
+(* another name, so that the port can use the CakeML ones.            *)
+(* ------------------------------------------------------------------ *)
 
 parse_as_infix("::",(15,"right"));;
 override_interface("::",`CONS:A->(A)list->(A)list`);;
@@ -31,9 +34,9 @@ override_interface("LIST_TO_SET",`set_of_list:(A)list->A->bool`);;
 override_interface("LIST_REL",
   `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
 
-(* ------------------------------------------------------------------------- *)
-(* combinTheory                                                              *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* combinTheory                                                       *)
+(* ------------------------------------------------------------------ *)
 
 let K_DEF = new_definition
   `K (x:A) (y:B) = x`;;
@@ -51,9 +54,9 @@ let FUNPOW = new_recursive_definition num_RECURSION
 let FLIP_DEF = new_definition
   `FLIP (f:A->B->C) x y = f y x`;;
 
-(* ------------------------------------------------------------------------- *)
-(* optionTheory                                                              *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* optionTheory                                                       *)
+(* ------------------------------------------------------------------ *)
 
 let THE = new_recursive_definition option_RECURSION
   `THE (SOME (x:A)) = x`;;
@@ -107,9 +110,9 @@ let OPT_MMAP = new_recursive_definition list_RECURSION
    (OPT_MMAP f (CONS h t) =
     OPTION_BIND (f h) (\x. OPTION_MAP (CONS x) (OPT_MMAP f t)))`;;
 
-(* ------------------------------------------------------------------------- *)
-(* listTheory and rich_listTheory                                            *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* listTheory and rich_listTheory                                     *)
+(* ------------------------------------------------------------------ *)
 
 
 
@@ -230,9 +233,9 @@ let bool_size = new_definition
 let num_size = new_definition
   `num_size (n:num) = n`;;
 
-(* ------------------------------------------------------------------------- *)
-(* whileTheory                                                               *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* whileTheory                                                        *)
+(* ------------------------------------------------------------------ *)
 
 let OWHILE = new_definition
   `OWHILE G (f:A->A) s =
@@ -243,9 +246,9 @@ let OWHILE = new_definition
 let WHILE = new_definition
   `WHILE G (f:A->A) s = THE (OWHILE G f s)`;;
 
-(* ------------------------------------------------------------------------- *)
-(* The case constants of HOL4's datatypes                                    *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* The case constants of HOL4's datatypes                             *)
+(* ------------------------------------------------------------------ *)
 
 let sum_CASE = new_recursive_definition sum_RECURSION
   `(sum_CASE (INL (x:A)) (f:A->C) (g:B->C) = f x) /\
@@ -266,9 +269,9 @@ let num_CASE = new_recursive_definition num_RECURSION
   `(num_CASE 0 (b:A) (f:num->A) = b) /\
    (num_CASE (SUC n) b f = f n)`;;
 
-(* ------------------------------------------------------------------------- *)
-(* stringTheory                                                              *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* stringTheory                                                       *)
+(* ------------------------------------------------------------------ *)
 
 let ORD = new_recursive_definition char_RECURSION
   `ORD (ASCII b0 b1 b2 b3 b4 b5 b6 b7) =
@@ -343,11 +346,11 @@ let toLower = new_definition
 let toUpper = new_definition
   `toUpper c = if isLower c then CHR (ORD c - 32) else c`;;
 
-(* ------------------------------------------------------------------------- *)
-(* What the termination proofs of the port need: the wellfounded             *)
-(* relations of HOL4's WF_REL_TAC, and the fact that the elements of a       *)
-(* list are smaller than the list.                                           *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* What the termination proofs of the port need: the wellfounded      *)
+(* relations of HOL4's WF_REL_TAC, and the fact that the elements of a*)
+(* list are smaller than the list.                                    *)
+(* ------------------------------------------------------------------ *)
 
 let inv_image = new_definition
   `inv_image (R:B->B->bool) (f:A->B) = \x y. R (f x) (f y)`;;
@@ -438,15 +441,18 @@ let list_size_APPEND = prove
 let list_size_REVERSE = prove
  (`!f:A->num l. list_size f (REVERSE l) = list_size f l`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
-  ASM_REWRITE_TAC[REVERSE; list_size; list_size_APPEND] THEN ARITH_TAC);;
+  ASM_REWRITE_TAC[REVERSE; list_size; list_size_APPEND] THEN
+    ARITH_TAC);;
 
-(* ------------------------------------------------------------------------- *)
-(* HOL4's integer division and modulus (integerTheory).  HOL Light has div   *)
-(* and rem on the integers, but those are the Euclidean ones (with a         *)
-(* nonnegative remainder), while HOL4's / and % round towards negative       *)
-(* infinity.  HOL4 leaves i / j and i % j unspecified for j = 0; the port    *)
-(* takes the value that the HOL4 formula gives there.                        *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* HOL4's integer division and modulus (integerTheory). HOL Light has *)
+(* div                                                                *)
+(* and rem on the integers, but those are the Euclidean ones (with a  *)
+(* nonnegative remainder), while HOL4's / and % round towards negative*)
+(* infinity. HOL4 leaves i / j and i % j unspecified for j = 0; the   *)
+(* port                                                               *)
+(* takes the value that the HOL4 formula gives there.                 *)
+(* ------------------------------------------------------------------ *)
 
 let int_div = new_definition
   `int_div (i:int) (j:int) =
@@ -493,10 +499,18 @@ let INT_MOD_NUM = prove
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RAND_CONV) [th]) THEN
   REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN INT_ARITH_TAC);;
 
-(* ------------------------------------------------------------------------- *)
-(* HOL4's LEAST_INT (integerTheory) and the floor and the ceiling of a       *)
-(* real number as an integer (intrealTheory).                               *)
-(* ------------------------------------------------------------------------- *)
+(* HOL4's ## of pairTheory, the map of a pair *)
+
+let PAIR_MAP = new_definition
+  `PAIR_MAP (f:A->C) (g:B->D) p = (f (FST p),g (SND p))`;;
+
+parse_as_infix("##",(20,"right"));;
+override_interface("##",`PAIR_MAP:(A->C)->(B->D)->A#B->C#D`);;
+
+(* ------------------------------------------------------------------ *)
+(* HOL4's LEAST_INT (integerTheory) and the floor and the ceiling of a*)
+(* real number as an integer (intrealTheory).                         *)
+(* ------------------------------------------------------------------ *)
 
 let LEAST_INT = new_definition
   `LEAST_INT (P:int->bool) = (@i. P i /\ (!j. j < i ==> ~P j))`;;
@@ -509,12 +523,14 @@ let INT_FLOOR = new_definition
 let INT_CEILING = new_definition
   `INT_CEILING x = LEAST_INT i. x <= real_of_int i`;;
 
-(* ------------------------------------------------------------------------- *)
-(* HOL Light's machinery for the admissibility of a recursion knows MAP      *)
-(* but not ALL, EX or a bounded quantifier, so a definition that recurses    *)
-(* under those is made with the right hand side rewritten with these         *)
-(* lemmas, and then the definition as it was given is derived from it.       *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* HOL Light's machinery for the admissibility of a recursion knows   *)
+(* MAP                                                                *)
+(* but not ALL, EX or a bounded quantifier, so a definition that      *)
+(* recurses                                                           *)
+(* under those is made with the right hand side rewritten with these  *)
+(* lemmas, and then the definition as it was given is derived from it.*)
+(* ------------------------------------------------------------------ *)
 
 let ALL_MAPIFY = prove
  (`!f:A->bool l. ALL f l <=> ITLIST (\b a. b /\ a) (MAP f l) T`,

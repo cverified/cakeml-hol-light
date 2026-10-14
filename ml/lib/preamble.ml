@@ -1,7 +1,8 @@
-(* ========================================================================= *)
-(*  The preamble of the CakeML port: the HOL Light libraries it uses and     *)
-(*  the HOL4 compatibility layer.                                           *)
-(* ========================================================================= *)
+(* ================================================================== *)
+(*  The preamble of the CakeML port: the HOL Light libraries it uses  *)
+(*  and                                                               *)
+(*  the HOL4 compatibility layer.                                     *)
+(* ================================================================== *)
 
 let cakeml_dir = "/home/freek/claude/hol-light/cakeml/ml";;
 

@@ -8,14 +8,18 @@
 needs "lib/numposrep.ml";;
 (* HOL4 ancestors outside the port: string arithmetic list combin
    pair num rich_list logroot bit *)
+
 let s2n_def = cake_define
-  `s2n b f (s:string) = l2n b (MAP f (REVERSE s))`;;
+  `s2n b f' (s:string) = l2n b (MAP f' (REVERSE s))`;;
+
 let n2s_def = cake_define
-  `(n2s b f n:string) = REVERSE (MAP f (n2l b n))`;;
+  `(n2s b f' n:string) = REVERSE (MAP f' (n2l b n))`;;
+
 let HEX = cake_define
   `HEX n = (if n < 10 then CHR (ORD (CHR 48) + n) else
            if n < 16 then CHR (ORD (CHR 65) + (n - 10)) else CHR
              0)`;;
+
 let UNHEX = cake_define
   `UNHEX c =
      (let n = ORD c in
@@ -33,5 +37,6 @@ let num_to_dec_string_def = cake_define
   `num_to_dec_string = n2s 10 HEX`;;
 let num_to_hex_string_def = cake_define
   `num_to_hex_string = n2s 16 HEX`;;
+
 (* HOL4 overload (expanded in the port):
      toString = num_to_dec_string *)

@@ -1,0 +1,96 @@
+(* ======================================================== *)
+(*  stackLang: ported from HOL4's
+    compiler/backend/stackLangScript.sml  *)
+(* ======================================================== *)
+
+(*
+  The stackLang intermediate language is a structured programming
+  language with function calls, while loops, if statements, etc. All
+  assignments are assembly instructions and register allocation is
+  assumed to have been done. This is the language within which stack
+  operations get optimised and turned into normal memory accesses.
+*)
+
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "misc/misc.ml";;
+(* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
+
+
+let store_name_INDUCT,store_name_RECURSION = define_datatype
+  "store_name = NextFree | EndOfHeap | TriggerGC | HeapLength | \
+   ProgStart | BitmapBase | CurrHeap | OtherHeap | AllocSize | \
+   Globals | GlobReal | Handler | GenStart | CodeBuffer | \
+   CodeBufferEnd | BitmapBuffer | BitmapBufferEnd | Temp (5 word)";;
+
+let stackLang_prog_INDUCT,stackLang_prog_RECURSION = define_datatype
+  "stackLang_prog = stackLang_Skip | stackLang_Inst ('a asm_inst) | \
+   stackLang_Get (num) (store_name) | stackLang_Set (store_name) \
+   (num) | stackLang_OpCurrHeap (binop) (num) (num) | stackLang_Call \
+   ((stackLang_prog#num#num#num) option) (num+num) \
+   ((stackLang_prog#num#num) option) | stackLang_Seq (stackLang_prog) \
+   (stackLang_prog) | stackLang_If (cmp) (num) ('a asm_reg_imm) \
+   (stackLang_prog) (stackLang_prog) | stackLang_Loop \
+   (stackLang_prog) | stackLang_JumpLower (num) (num) (num) | \
+   stackLang_Alloc (num) | stackLang_StoreConsts (num) (num) (num \
+   option) | stackLang_Raise (num) | stackLang_Return (num) | \
+   stackLang_Break (num) | stackLang_Continue (num) | stackLang_FFI \
+   (mlstring) (num) (num) (num) (num) (num) | stackLang_Tick | \
+   stackLang_LocValue (num) (num) (num) | stackLang_Install (num) \
+   (num) (num) (num) (num) | stackLang_ShMemOp (memop) (num) ('a \
+   asm_addr) | stackLang_CodeBufferWrite (num) (num) | \
+   stackLang_DataBufferWrite (num) (num) | stackLang_RawCall (num) | \
+   stackLang_StackAlloc (num) | stackLang_StackFree (num) | \
+   stackLang_StackStore (num) (num) | stackLang_StackStoreAny (num) \
+   (num) | stackLang_StackLoad (num) (num) | stackLang_StackLoadAny \
+   (num) (num) | stackLang_StackGetSize (num) | \
+   stackLang_StackSetSize (num) | stackLang_BitmapLoad (num) (num) | \
+   stackLang_Halt (num)";;
+
+(* HOL4 overload (expanded in the port):
+     While = λcmp r ri c. Loop (If cmp r ri c (Break 0)) *)
+
+(* HOL4 overload (expanded in the port):
+     move = λdest src. Inst (Arith (Binop Or dest src (Reg src))) *)
+(* HOL4 overload (expanded in the port):
+     sub_1_inst = λr1. Inst (Arith (Binop Sub r1 r1 (Imm 1w))) *)
+(* HOL4 overload (expanded in the port):
+     sub_inst = λr1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2))) *)
+(* HOL4 overload (expanded in the port):
+     add_inst = λr1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2))) *)
+(* HOL4 overload (expanded in the port):
+     and_inst = λr1 r2. Inst (Arith (Binop And r1 r1 (Reg r2))) *)
+(* HOL4 overload (expanded in the port):
+     xor_inst = λr1 r2. Inst (Arith (Binop Xor r1 r1 (Reg r2))) *)
+(* HOL4 overload (expanded in the port):
+     add_1_inst = λr1. Inst (Arith (Binop Add r1 r1 (Imm 1w))) *)
+(* HOL4 overload (expanded in the port):
+     or_inst = λr1 r2. Inst (Arith (Binop Or r1 r1 (Reg r2))) *)
+(* HOL4 overload (expanded in the port):
+     add_bytes_in_word_inst = λr1. Inst (Arith (Binop Add r1 r1 (Imm
+       (bytes_in_word)))) *)
+(* HOL4 overload (expanded in the port):
+     div2_inst = λr. Inst (Arith (Shift Lsr r r (Imm 1w))) *)
+(* HOL4 overload (expanded in the port):
+     left_shift_inst = λr v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))
+       *)
+(* HOL4 overload (expanded in the port):
+     right_shift_inst = λr v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))
+       *)
+(* HOL4 overload (expanded in the port):
+     const_inst = λr w. Inst (Const r w) *)
+(* HOL4 overload (expanded in the port):
+     load_inst = λr a. Inst (Mem Load r (Addr a 0w)) *)
+(* HOL4 overload (expanded in the port):
+     store_inst = λr a. Inst (Mem Store r (Addr a 0w)) *)
+
+let list_Seq_def = cake_define
+  `(stackLang_list_Seq [] = stackLang_Skip) /\
+   (stackLang_list_Seq [x] = x) /\
+   (stackLang_list_Seq (x :: y :: xs) = stackLang_Seq x
+     (stackLang_list_Seq (y :: xs)))`;;
+
+let gc_stub_location_def = cake_define
+  `gc_stub_location = stack_num_stubs - 1`;;
+let store_consts_stub_location_def = cake_define
+  `stackLang_store_consts_stub_location = gc_stub_location - 1`;;

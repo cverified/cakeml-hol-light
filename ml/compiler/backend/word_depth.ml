@@ -1,0 +1,112 @@
+(* ======================================================== *)
+(*  word_depth: ported from HOL4's
+    compiler/backend/word_depthScript.sml  *)
+(* ======================================================== *)
+
+(*
+  Computes the call graph for wordLang program with an acyclic call
+  graph. This graph is in turn used to compute the max stack depth
+  used by the wordLang program.
+*)
+
+needs "compiler/backend/wordLang.ml";;
+
+(* representation of acyclic call graph, i.e. call tree *)
+
+let call_tree_INDUCT,call_tree_RECURSION = define_datatype
+  "call_tree = word_depth_Leaf | word_depth_Unknown | \
+   word_depth_Const (num) (call_tree) | word_depth_Call (num) \
+   (call_tree) | word_depth_Branch (call_tree) (call_tree)";;
+
+(* computing the max stack depth *)
+
+let max_depth_def = cake_define
+  `max_depth frame_sizes word_depth_Leaf = SOME 0 /\
+   max_depth frame_sizes word_depth_Unknown = NONE /\
+   max_depth frame_sizes (word_depth_Const n t) =
+     OPTION_MAP ((+) n) (max_depth frame_sizes t) /\
+   max_depth frame_sizes (word_depth_Branch t1 t2) =
+     OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth
+       frame_sizes t2) /\
+   max_depth frame_sizes (word_depth_Call n t) =
+     OPTION_MAP2 (+) (sptree_lookup n frame_sizes) (max_depth
+       frame_sizes t)`;;
+
+(* computing the call graph *)
+
+let mk_Branch_def = cake_define
+  `mk_Branch t1 t2 =
+     (if t1 = t2 then t1 else
+     if t1 = word_depth_Leaf then t2 else
+     if t2 = word_depth_Leaf then t1 else
+     if t1 = word_depth_Unknown then t1 else
+     if t2 = word_depth_Unknown then t2 else
+       word_depth_Branch t1 t2)`;;
+
+(* HOL4 termination: \\ rpt strip_tac \\ fs [size_delete] \\
+   imp_res_tac miscTheory.lookup_zero \\ fs [] *)
+let call_graph_def = cake_define_wf
+  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
+         (\(funs,n,ns,total,p). (sptree_size funs,total - LENGTH
+           ns,prog_size (K 0) p)))`
+  `call_graph funs n ns total x5 =
+        match x5 with
+          (wordLang_Seq p1 p2) ->
+        mk_Branch (call_graph funs n ns total p1) (call_graph funs n
+          ns total p2)
+        | (wordLang_If _1 _2 _3 p1 p2) ->
+        mk_Branch (call_graph funs n ns total p1) (call_graph funs n
+          ns total p2)
+        | (word_depth_Call ret dest args handler) ->
+        match dest with NONE -> word_depth_Unknown | SOME d ->
+          (if MEM d ns /\ ret = NONE then word_depth_Leaf else
+          match sptree_lookup d funs with NONE -> word_depth_Unknown
+            | SOME ((a:num),body) ->
+            (match ret with NONE ->
+              (if LENGTH ns < total then
+                 mk_Branch (word_depth_Call d (word_depth_Leaf))
+                   (call_graph funs d (d :: ns) total body) else
+                     word_depth_Leaf) | SOME (_4,_5,ret_prog,_6,_7) ->
+              (let new_funs = sptree_delete d funs in
+                match handler with NONE -> word_depth_Branch
+                  (word_depth_Call n (word_depth_Call d
+                  word_depth_Leaf))
+                      (mk_Branch (word_depth_Call n (call_graph
+                        new_funs d [d] total body))
+                              (call_graph funs n ns total ret_prog))
+                                | SOME (_8,p,_9,_10) ->
+                                word_depth_Branch (word_depth_Call n
+                                (word_depth_Const 3 (word_depth_Call d
+                                word_depth_Leaf)))
+                   (mk_Branch (word_depth_Call n (word_depth_Const 3
+                     (call_graph new_funs d [d] total body)))
+                   (mk_Branch (call_graph funs n ns total p)
+                              (call_graph funs n ns total
+                                ret_prog))))))
+        | (wordLang_MustTerminate p) -> call_graph funs n ns total p
+        | (wordLang_Alloc _11 _12) -> word_depth_Call n
+          word_depth_Leaf
+        | (wordLang_Install _13 _14 _15 _16 _17) ->
+          word_depth_Unknown
+        | (wordLang_Loop _18 body _19) -> call_graph funs n ns total
+          body
+        | _20 -> word_depth_Leaf`;;
+
+let full_call_graph_def = cake_define
+  `full_call_graph n funs =
+     (match sptree_lookup n funs with NONE -> word_depth_Unknown |
+       SOME (a,wordLang_prog) -> word_depth_Branch (word_depth_Call n
+       word_depth_Leaf)
+                              (call_graph funs n [n] (sptree_size
+                                funs) wordLang_prog))`;;
+
+let max_depth_graphs_def = cake_define
+  `max_depth_graphs ss [] all' funs all_funs = SOME 0 /\
+   max_depth_graphs ss (n :: ns) all' funs all_funs =
+     (match sptree_lookup n all_funs with NONE -> NONE | SOME
+       (a,body) ->
+         OPTION_MAP2 MAX (sptree_lookup n ss)
+        (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all'
+          (sptree_size all_funs) body))
+                         (max_depth_graphs ss ns all' funs
+                           all_funs)))`;;

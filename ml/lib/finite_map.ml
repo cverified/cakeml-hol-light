@@ -1,10 +1,12 @@
-(* ========================================================================= *)
-(*  Finite maps, which HOL Light does not have.                             *)
-(*                                                                          *)
-(*  The same notion as HOL4's finite_mapTheory: a finite map is a function   *)
-(*  to an option type with a finite domain.  The definitions below are the   *)
-(*  HOL4 ones, phrased with the representing function.                      *)
-(* ========================================================================= *)
+(* ================================================================== *)
+(*  Finite maps, which HOL Light does not have.                       *)
+(*                                                                    *)
+(*  The same notion as HOL4's finite_mapTheory: a finite map is a     *)
+(*  function                                                          *)
+(*  to an option type with a finite domain. The definitions below are *)
+(*  the                                                               *)
+(*  HOL4 ones, phrased with the representing function.                *)
+(* ================================================================== *)
 
 let fmap_tybij =
   let th = prove
@@ -70,17 +72,20 @@ let FRANGE = new_definition
 parse_as_infix("o_f",(26,"right"));;
 
 let o_f = new_definition
-  `(g:B->C) o_f (fm:(A,B)fmap) = mk_fmap (\x. OPTION_MAP g (fmap_fn fm x))`;;
+  `(g:B->C) o_f (fm:(A,B)fmap) = mk_fmap (\x. OPTION_MAP g (fmap_fn fm
+    x))`;;
 
 let FMERGE = new_definition
   `FMERGE (m:B->B->B) (f:(A,B)fmap) g =
    mk_fmap (\x. if x IN FDOM f then
-                  (if x IN FDOM g then SOME (m (FAPPLY f x) (FAPPLY g x))
+                  (if x IN FDOM g then SOME (m (FAPPLY f x) (FAPPLY g
+                    x))
                    else fmap_fn f x)
                 else fmap_fn g x)`;;
 
 let FUN_FMAP = new_definition
-  `FUN_FMAP (f:A->B) s = mk_fmap (\x. if x IN s then SOME (f x) else NONE)`;;
+  `FUN_FMAP (f:A->B) s = mk_fmap (\x. if x IN s then SOME (f x) else
+    NONE)`;;
 
 let FCARD = new_definition
   `FCARD (fm:(A,B)fmap) = CARD (FDOM fm)`;;

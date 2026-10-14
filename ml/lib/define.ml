@@ -1,26 +1,29 @@
-(* ========================================================================= *)
-(*  HOL4's Definition for HOL Light.                                        *)
-(*                                                                          *)
-(*  cake_define handles what HOL4's Define handles, as far as CakeML needs   *)
-(*  it:                                                                     *)
-(*                                                                          *)
-(*    not recursive                   -> new_definition                      *)
-(*    primitive recursive             -> new_recursive_definition            *)
-(*    otherwise recursive             -> define                             *)
-(*    mutually recursive              -> encoded in a sum type              *)
-(*                                                                          *)
-(*  For definitions whose termination HOL Light cannot guess there are       *)
-(*                                                                          *)
-(*    cake_define_wf `relation` `clauses`                                    *)
-(*    cake_define_tac (`relation`,tactic) `clauses`                          *)
-(*                                                                          *)
-(*  where the relation is the one of HOL4's WF_REL_TAC.  HOL4's             *)
-(*  `measure f` is `MEASURE f`, `inv_image R f` is `\x y. R (f x) (f y)`     *)
-(*  and `R1 LEX R2` is `\(x1,y1) (x2,y2). R1 x1 x2 \/ x1 = x2 /\ R2 y1 y2`,  *)
-(*  which are the HOL Light forms of the same notions (see WF_MEASURE,       *)
-(*  WF_MEASURE_GEN and WF_LEX).  For mutually recursive functions the        *)
-(*  relation is one on the sum of the tupled arguments, as in HOL4.          *)
-(* ========================================================================= *)
+(* ================================================================== *)
+(*  HOL4's Definition for HOL Light.                                  *)
+(*                                                                    *)
+(*  cake_define handles what HOL4's Define handles, as far as CakeML  *)
+(*  needs                                                             *)
+(*  it:                                                               *)
+(*                                                                    *)
+(*    not recursive -> new_definition                                 *)
+(*    primitive recursive -> new_recursive_definition                 *)
+(*    otherwise recursive -> define                                   *)
+(*    mutually recursive -> encoded in a sum type                     *)
+(*                                                                    *)
+(*  For definitions whose termination HOL Light cannot guess there are*)
+(*                                                                    *)
+(*    cake_define_wf `relation` `clauses`                             *)
+(*    cake_define_tac (`relation`,tactic) `clauses`                   *)
+(*                                                                    *)
+(*  where the relation is the one of HOL4's WF_REL_TAC. HOL4's        *)
+(*  `measure f` is `MEASURE f`, `inv_image R f` is `\x y. R (f x) (f  *)
+(*  y)`                                                               *)
+(*  and `R1 LEX R2` is `\(x1,y1) (x2,y2). R1 x1 x2 \/ x1 = x2 /\ R2 y1*)
+(*  y2`,                                                              *)
+(*  which are the HOL Light forms of the same notions (see WF_MEASURE,*)
+(*  WF_MEASURE_GEN and WF_LEX). For mutually recursive functions the  *)
+(*  relation is one on the sum of the tupled arguments, as in HOL4.   *)
+(* ================================================================== *)
 
 (* with cake_debug set, a failing definition is written to
    cakeml/tmp/debug.txt *)
@@ -35,9 +38,9 @@ let cake_log s =
 let cake_log_term tm =
   cake_log (string_of_term tm);;
 
-(* ------------------------------------------------------------------------- *)
-(* Tuples and sums.                                                          *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Tuples and sums.                                                   *)
+(* ------------------------------------------------------------------ *)
 
 let mk_tuple_type tys =
   end_itlist (fun ty1 ty2 -> mk_type("prod",[ty1;ty2])) tys;;
@@ -80,9 +83,9 @@ let rec mk_proj tys i tm =
              (mk_comb(mk_sum_const "OUTR" (mk_fun_ty sumty sty),tm))
   | [] -> failwith "mk_proj";;
 
-(* ------------------------------------------------------------------------- *)
-(* The clauses of a definition and the functions it defines.                 *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* The clauses of a definition and the functions it defines.          *)
+(* ------------------------------------------------------------------ *)
 
 let definition_clauses tm =
   map (fun cl ->
@@ -105,9 +108,9 @@ let close_clause fs cl =
 let beta_normalize tm =
   try rhs(concl(TOP_DEPTH_CONV BETA_CONV tm)) with Failure _ -> tm;;
 
-(* ------------------------------------------------------------------------- *)
-(* Discharging the side conditions of an existence theorem.                  *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Discharging the side conditions of an existence theorem.           *)
+(* ------------------------------------------------------------------ *)
 
 (* the tactic that proves that a termination relation is wellfounded *)
 
@@ -201,7 +204,8 @@ let cake_term_lemmas =
 let LOG_TAC (asl,w) =
   cake_log "unsolved termination goal:";
   cake_log_term w;
-  do_list (fun (_,th) -> cake_log ("  asm: " ^ string_of_term(concl th)))
+  do_list (fun (_,th) -> cake_log ("  asm: " ^ string_of_term(concl
+    th)))
           asl;
   failwith "LOG_TAC";;
 
@@ -225,7 +229,8 @@ let discharge_conditions (rel,tac) th =
        let gtac =
          if is_exists h then
            let v,_ = dest_exists h in
-           let rel' = inst (type_match (type_of rel) (type_of v) []) rel in
+           let rel' = inst (type_match (type_of rel) (type_of v) []) rel
+             in
            EXISTS_TAC rel' THEN CONJ_TAC THENL [WF_TAC; tac]
          else tac in
        let hth =
@@ -241,20 +246,24 @@ let discharge_conditions (rel,tac) th =
        PROVE_HYP hth th)
     (hyp th) th;;
 
-(* ------------------------------------------------------------------------- *)
-(* Taking paired lambdas apart.                                              *)
-(*                                                                          *)
-(* HOL Light's machinery for the admissibility of a recursion loses the      *)
-(* connection between the pattern of a paired lambda and the argument it     *)
-(* is applied to, so that for instance                                      *)
-(*                                                                          *)
-(*   nsMap f (Bind v m) = Bind (MAP (\(n,x). (n,f x)) v)                     *)
-(*                             (MAP (\(mn,e). (mn,nsMap f e)) m)             *)
-(*                                                                          *)
-(* gets an unprovable termination condition.  Therefore such a definition    *)
-(* is made with \p. ... FST p ... SND p ... instead, and the definition as   *)
-(* it was given is then derived from it.                                     *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Taking paired lambdas apart.                                       *)
+(*                                                                    *)
+(* HOL Light's machinery for the admissibility of a recursion loses   *)
+(* the                                                                *)
+(* connection between the pattern of a paired lambda and the argument *)
+(* it                                                                 *)
+(* is applied to, so that for instance                                *)
+(*                                                                    *)
+(*   nsMap f (Bind v m) = Bind (MAP (\(n,x). (n,f x)) v)              *)
+(*                             (MAP (\(mn,e). (mn,nsMap f e)) m)      *)
+(*                                                                    *)
+(* gets an unprovable termination condition. Therefore such a         *)
+(* definition                                                         *)
+(* is made with \p. ... FST p ... SND p ... instead, and the          *)
+(* definition as                                                      *)
+(* it was given is then derived from it.                              *)
+(* ------------------------------------------------------------------ *)
 
 let mk_fst tm =
   match snd(dest_type(type_of tm)) with
@@ -293,9 +302,9 @@ let DEPAIR_CONV tm =
 
 let DEPAIR_TAC = CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV);;
 
-(* ------------------------------------------------------------------------- *)
-(* Putting the recursive calls under a MAP.                                  *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Putting the recursive calls under a MAP.                           *)
+(* ------------------------------------------------------------------ *)
 
 let mapify fs tm =
   let itl op b l =
@@ -348,9 +357,9 @@ let MAPIFY_CONV fs tm =
         REWRITE_TAC[ALL_MAPIFY; EX_MAPIFY; ALL_MEM;
                     IN_SET_OF_LIST; ETA_AX]);;
 
-(* ------------------------------------------------------------------------- *)
-(* Definition of one function, with a given termination relation.            *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Definition of one function, with a given termination relation.     *)
+(* ------------------------------------------------------------------ *)
 
 let define_single wfs tm =
   let fs = definition_heads tm in
@@ -382,9 +391,9 @@ let define_single wfs tm =
             FIRST (map MATCH_ACCEPT_TAC dths)) in
     map derive cls,dth;;
 
-(* ------------------------------------------------------------------------- *)
-(* Definition of a family of mutually recursive functions.                   *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Definition of a family of mutually recursive functions.            *)
+(* ------------------------------------------------------------------ *)
 
 let define_mutual wfs tm =
   let fs = definition_heads tm in
@@ -411,7 +420,8 @@ let define_mutual wfs tm =
     let tys,_ = splitlist dest_fun_ty (type_of f) in
     let vs = map (fun j -> mk_var("a" ^ string_of_int j,el j tys))
                  (0--(k-1)) in
-    list_mk_abs(vs,mk_proj rtys i (mk_comb(g,mk_inj dtys i (mk_tuple vs)))),
+    list_mk_abs(vs,mk_proj rtys i (mk_comb(g,mk_inj dtys i (mk_tuple
+      vs)))),
     f in
   let repls = map2 repl (0--(length fs - 1)) fs in
   let newcl (f,args,r) =
@@ -451,15 +461,18 @@ let define_mutual wfs tm =
           REWRITE_TAC[OUTL; OUTR]) in
   map derive (conjuncts(snd(strip_forall tm))),gth;;
 
-(* ========================================================================= *)
+(* ================================================================== *)
 
-(*  Primitive recursion for a family of functions.                          *)
-(*                                                                          *)
-(*  HOL Light's new_recursive_definition defines one function at a time,     *)
-(*  but the recursion theorem of a (nested) datatype is about the whole      *)
-(*  family of its types, so it can define a family of functions at once,     *)
-(*  which is what the CakeML definitions over the syntax trees need.         *)
-(* ========================================================================= *)
+(*  Primitive recursion for a family of functions.                    *)
+(*                                                                    *)
+(*  HOL Light's new_recursive_definition defines one function at a    *)
+(*  time,                                                             *)
+(*  but the recursion theorem of a (nested) datatype is about the     *)
+(*  whole                                                             *)
+(*  family of its types, so it can define a family of functions at    *)
+(*  once,                                                             *)
+(*  which is what the CakeML definitions over the syntax trees need.  *)
+(* ================================================================== *)
 
 (* the recursion theorems of the datatypes, by the name of a type of the
    family that they are about *)
@@ -499,7 +512,8 @@ let rec_thm_clauses rth =
         (conjuncts cjbod) in
   pvars,fns,cls;;
 
-(* the position of the argument on which a function is defined by cases *)
+(* the position of the argument on which a function is defined by     *)
+(* cases                                                              *)
 
 let pattern_position f cls =
   let mycls = filter (fun (g,_,_) -> g = f) cls in
@@ -514,7 +528,8 @@ let define_prim_rec tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
   let arity f =
-    itlist (fun (g,args,_) n -> if g = f then max n (length args) else n)
+    itlist (fun (g,args,_) n -> if g = f then max n (length args) else
+      n)
            cls 0 in
   let posns = map (fun f -> pattern_position f cls) fs in
   let patty f r =
@@ -524,7 +539,8 @@ let define_prim_rec tm =
     let _,fns,_ = rec_thm_clauses rth in
     forall (fun (f,r) ->
               exists (fun fn ->
-                        tymatches (fst(dest_fun_ty(type_of fn))) (patty f r))
+                        tymatches (fst(dest_fun_ty(type_of fn))) (patty
+                          f r))
                      fns)
            (zip fs posns) in
   let rth = find covers
@@ -540,7 +556,8 @@ let define_prim_rec tm =
                           (try let con' = find
                                  (fun (_,c,_,_,_,_) ->
                                     is_const c &&
-                                    fst(dest_const c) = fst(dest_const hop))
+                                    fst(dest_const c) = fst(dest_const
+                                      hop))
                                  canon in
                                let _,c,_,_,_,_ = con' in
                                type_match (type_of c) (type_of hop) ins
@@ -653,7 +670,8 @@ let define_prim_rec tm =
         (print_string "define_prim_rec: SPECL failed\n";
          do_list (fun (p,w) ->
                     print_term p; print_string " : ";
-                    print_type (type_of p); print_string "\n  witness : ";
+                    print_type (type_of p); print_string
+                      "\n  witness : ";
                     print_type (type_of w); print_newline())
                  (zip (fst(strip_forall(concl(INST_TYPE tyins rth))))
                       order_wits));
@@ -663,9 +681,11 @@ let define_prim_rec tm =
   let names =
     map (fun fn ->
           try let f,r = assoc fn assign in
-              if r = 0 then fst(dest_var f) else fst(dest_var f) ^ "_rec"
+              if r = 0 then fst(dest_var f) else fst(dest_var f) ^
+                "_rec"
           with Failure _ -> fst(dest_var(hd fs)) ^ "_aux_" ^
-                            fst(dest_type(fst(dest_fun_ty(type_of fn)))))
+                            fst(dest_type(fst(dest_fun_ty(type_of
+                              fn)))))
         fns in
   let spec = new_specification names th2 in
   (* the functions that still have to be defined *)
@@ -696,15 +716,15 @@ let define_prim_rec tm =
           REWRITE_TAC[spec]) in
   map derive (conjuncts(snd(strip_forall tm))),spec;;
 
-(* ------------------------------------------------------------------------- *)
-(* Nested recursion: a recursive call under a MAP, as in                     *)
-(* real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl).                      *)
-(* HOL Light's machinery for such a recursion does not see that the          *)
-(* elements of ptl are smaller, so the port defines the function             *)
-(* together with the list function it needs (which is how HOL4 defines       *)
-(* the size functions of a nested datatype as well), and then derives        *)
-(* the equations as HOL4 states them.                                        *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* Nested recursion: a recursive call under a MAP, as in              *)
+(* real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl).               *)
+(* HOL Light's machinery for such a recursion does not see that the   *)
+(* elements of ptl are smaller, so the port defines the function      *)
+(* together with the list function it needs (which is how HOL4 defines*)
+(* the size functions of a nested datatype as well), and then derives *)
+(* the equations as HOL4 states them.                                 *)
+(* ------------------------------------------------------------------ *)
 
 let mk_nil ty = mk_mconst("NIL",mk_type("list",[ty]));;
 
@@ -770,7 +790,8 @@ let define_nested tm =
       Comb(Comb(Const("MAP",_),h),l)
         when exists (fun g -> vfree_in g h) fs &&
              exists (fun (hk,_,_) -> aconv hk (canon h)) auxs ->
-          let _,_,aux = find (fun (hk,_,_) -> aconv hk (canon h)) auxs in
+          let _,_,aux = find (fun (hk,_,_) -> aconv hk (canon h)) auxs
+            in
           list_mk_comb(aux,args h @ [repl l])
     | Comb(s,t) -> mk_comb(repl s,repl t)
     | Abs(v,b) -> mk_abs(v,repl b)
@@ -817,11 +838,12 @@ let define_nested tm =
        FIRST (map MATCH_ACCEPT_TAC fths)] in
   map derive cls0,spec;;
 
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
 
-(* HOL4's Datatype, which also registers the recursion theorem and (as HOL4  *)
-(* does) defines the size functions of the family.                           *)
-(* ------------------------------------------------------------------------- *)
+(* HOL4's Datatype, which also registers the recursion theorem and (as*)
+(* HOL4                                                               *)
+(* does) defines the size functions of the family.                    *)
+(* ------------------------------------------------------------------ *)
 
 (* HOL Light's own parser for the specification of a datatype splits
    the types of the constructor arguments on commas, which goes wrong
@@ -858,7 +880,8 @@ let parse_datatype_spec s =
     String.iter
       (fun ch ->
          if ch = '(' || ch = '[' then (incr depth; cur := ch::(!cur))
-         else if ch = ')' || ch = ']' then (decr depth; cur := ch::(!cur))
+         else if ch = ')' || ch = ']' then (decr depth; cur :=
+           ch::(!cur))
          else if ch = c && !depth = 0 then
            (out := (implode(rev(map (String.make 1) (!cur))))::(!out);
             cur := [])
@@ -882,11 +905,13 @@ let parse_datatype_spec s =
            (if !depth > 0 then cur := ch::(!cur); incr depth)
          else if ch = ')' then
            (decr depth; if !depth > 0 then cur := ch::(!cur)
-            else (out := (implode(rev(map (String.make 1) (!cur))))::(!out);
+            else (out := (implode(rev(map (String.make 1)
+              (!cur))))::(!out);
                   cur := []))
          else if !depth = 0 && (ch = ' ' || ch = '\n' || ch = '\t') then
            (if !cur <> [] then
-              (out := (implode(rev(map (String.make 1) (!cur))))::(!out);
+              (out := (implode(rev(map (String.make 1)
+                (!cur))))::(!out);
                cur := []))
          else cur := ch::(!cur))
       s;
@@ -929,16 +954,19 @@ register_rec_thm num_RECURSION;;
 register_rec_thm sum_RECURSION;;
 register_rec_thm char_RECURSION;;
 
-(* ========================================================================= *)
+(* ================================================================== *)
 
-(*  Size functions, for the termination of the definitions that are not      *)
-(*  primitive recursive.                                                     *)
-(*                                                                          *)
-(*  define_size "exp" defines exp_size, and exp_size1, exp_size2, ... for    *)
-(*  the other types of the family of exp (as HOL4 defines exp1_size,         *)
-(*  exp2_size, ...), and identifies the ones on lists with list_size, so     *)
-(*  that MEM_list_size gives the facts a termination proof needs.            *)
-(* ========================================================================= *)
+(*  Size functions, for the termination of the definitions that are   *)
+(*  not                                                               *)
+(*  primitive recursive.                                              *)
+(*                                                                    *)
+(*  define_size "exp" defines exp_size, and exp_size1, exp_size2, ... *)
+(*  for                                                               *)
+(*  the other types of the family of exp (as HOL4 defines exp1_size,  *)
+(*  exp2_size, ...), and identifies the ones on lists with list_size, *)
+(*  so                                                                *)
+(*  that MEM_list_size gives the facts a termination proof needs.     *)
+(* ================================================================== *)
 
 let the_size_fns = ref ([]:(hol_type * term * hol_type list) list);;
 
@@ -957,7 +985,8 @@ let define_size tyname =
   let params =
     itlist (fun fn l ->
               itlist (fun v l -> if mem v l then l else l @ [v])
-                     (sort (<) (tyvars(fst(dest_fun_ty(type_of fn))))) l)
+                     (sort (<) (tyvars(fst(dest_fun_ty(type_of fn)))))
+                       l)
            ifns [] in
   let pvars = map (fun ty -> mk_var("size" ^ dest_vartype ty,
                                     mk_fun_ty ty numty))
@@ -981,7 +1010,8 @@ let define_size tyname =
   let clause (fn,con,args,_,rvs,_) =
     let tms =
       mapfilter (fun a ->
-                   try mk_comb(svar_of (rator (find (fun rv -> rand rv = a)
+                   try mk_comb(svar_of (rator (find (fun rv -> rand rv =
+                     a)
                                                     rvs)),a)
                    with Failure _ ->
                      let ty = type_of a in
@@ -1009,7 +1039,8 @@ let define_size tyname =
          let efn = find (fun g -> fst(dest_fun_ty(type_of g)) = ety)
                         ifns in
          let sl = list_mk_comb(mk_mconst(el (index fn ifns) names,
-                                 type_of(el (index fn ifns) svars)),pvars)
+                                 type_of(el (index fn ifns)
+                                   svars)),pvars)
          and se = list_mk_comb(mk_mconst(el (index efn ifns) names,
                                  type_of(el (index efn ifns) svars)),
                                pvars) in
@@ -1040,7 +1071,8 @@ let size_thms tyname =
 (* the size function of a type, which the measures use *)
 
 let rec size_fn_of_type ty =
-  try let ty0,f,params = find (fun (ty0,_,_) -> can (type_match ty0 ty) [])
+  try let ty0,f,params = find (fun (ty0,_,_) -> can (type_match ty0 ty)
+    [])
                               (!the_size_fns) in
       let ins = type_match ty0 ty [] in
       list_mk_comb(inst ins f,
@@ -1068,10 +1100,11 @@ let rec size_fn_of_type ty =
      (let _ = define_size s in size_fn_of_type ty)
     else mk_abs(mk_var("x",ty),mk_small_numeral 0);;
 
-(* ------------------------------------------------------------------------- *)
-(* A measure for a definition whose termination HOL Light cannot guess and   *)
-(* for which HOL4 did not give one either (because HOL4 guessed it).         *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* A measure for a definition whose termination HOL Light cannot guess*)
+(* and                                                                *)
+(* for which HOL4 did not give one either (because HOL4 guessed it).  *)
+(* ------------------------------------------------------------------ *)
 
 size_fn_of_type_fwd := size_fn_of_type;;
 
@@ -1099,7 +1132,8 @@ let pattern_positions f cls =
 let mk_measure m =
   let dty = fst(dest_fun_ty(type_of m)) in
   list_mk_comb(mk_mconst("MEASURE",
-    mk_fun_ty (type_of m) (mk_fun_ty dty (mk_fun_ty dty bool_ty))),[m]);;
+    mk_fun_ty (type_of m) (mk_fun_ty dty (mk_fun_ty dty
+      bool_ty))),[m]);;
 
 let arity_in f cls =
   itlist (fun (g,args,_) k ->
@@ -1146,8 +1180,8 @@ let candidate_measures tm =
 let size_thms tyname =
   let a,b = assoc tyname (!the_size_thms) in a @ b;;
 
-(* The definition functions that the port uses.                             *)
-(* ------------------------------------------------------------------------- *)
+(* The definition functions that the port uses.                       *)
+(* ------------------------------------------------------------------ *)
 
 let cake_define_gen wf tm =
   let fs = definition_heads tm in
@@ -1155,7 +1189,8 @@ let cake_define_gen wf tm =
   let recursive =
     exists (fun (_,_,r) -> exists (fun f -> vfree_in f r) fs) cls in
   let attempt wfs =
-    if length fs = 1 then define_single wfs tm else define_mutual wfs tm in
+    if length fs = 1 then define_single wfs tm else define_mutual wfs tm
+      in
   let ths,_ =
     if not recursive then
       (if length fs = 1 then
@@ -1167,7 +1202,8 @@ let cake_define_gen wf tm =
          itlist
            (fun f (l,th) ->
               let mycls = filter (fun cl ->
-                            fst(strip_comb(lhs(snd(strip_forall cl)))) = f)
+                            fst(strip_comb(lhs(snd(strip_forall cl)))) =
+                              f)
                             (conjuncts(snd(strip_forall tm))) in
               let ths,th' = define_single [] (list_mk_conj mycls) in
               ths @ l,th')
@@ -1217,4 +1253,4 @@ let cake_define_tac (rel,tac) tm =
   try cake_time (cake_define_gen (Some(rel,tac))) tm
   with Failure s -> cake_report tm s;;
 
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)

@@ -1,10 +1,12 @@
-(* ========================================================================= *)
-(*  HOL4's words vocabulary, on top of HOL Light's Library/words.ml.        *)
-(*                                                                          *)
-(*  Where HOL Light has the same notion under another name, the HOL4 name    *)
-(*  is made an interface for it, so that no second constant is introduced;   *)
-(*  the rest is defined in terms of HOL Light's words.                      *)
-(* ========================================================================= *)
+(* ================================================================== *)
+(*  HOL4's words vocabulary, on top of HOL Light's Library/words.ml.  *)
+(*                                                                    *)
+(*  Where HOL Light has the same notion under another name, the HOL4  *)
+(*  name                                                              *)
+(*  is made an interface for it, so that no second constant is        *)
+(*  introduced;                                                       *)
+(*  the rest is defined in terms of HOL Light's words.                *)
+(* ================================================================== *)
 
 new_type_abbrev("word1",`:(1)word`);;
 new_type_abbrev("word2",`:(2)word`);;
@@ -30,9 +32,9 @@ new_type_abbrev("word64",`:(64)word`);;
 new_type_abbrev("word96",`:(96)word`);;
 new_type_abbrev("word128",`:(128)word`);;
 
-(* ------------------------------------------------------------------------- *)
-(* The HOL4 names of HOL Light's word operations.                            *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* The HOL4 names of HOL Light's word operations.                     *)
+(* ------------------------------------------------------------------ *)
 
 override_interface("w2n",`val:(N)word->num`);;
 override_interface("n2w",`word:num->(N)word`);;
@@ -63,10 +65,10 @@ override_interface("word_smax",`word_imax:(N)word->(N)word->(N)word`);;
 override_interface("word_sdiv",`word_jdiv:(N)word->(N)word->(N)word`);;
 override_interface("word_srem",`word_jrem:(N)word->(N)word->(N)word`);;
 
-(* ------------------------------------------------------------------------- *)
-(* HOL4 overloads the arithmetic operations for words, HOL Light does        *)
-(* not, so the port makes them overloaded.                                   *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* HOL4 overloads the arithmetic operations for words, HOL Light does *)
+(* not, so the port makes them overloaded.                            *)
+(* ------------------------------------------------------------------ *)
 
 overload_interface("+",`word_add:(N)word->(N)word->(N)word`);;
 overload_interface("-",`word_sub:(N)word->(N)word->(N)word`);;
@@ -82,9 +84,9 @@ overload_interface("--",`word_neg:(N)word->(N)word`);;
 
 prioritize_num();;
 
-(* ------------------------------------------------------------------------- *)
-(* The HOL4 notations.                                                       *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* The HOL4 notations.                                                *)
+(* ------------------------------------------------------------------ *)
 
 parse_as_infix("&&",(20,"right"));;
 override_interface("&&",`word_and:(N)word->(N)word->(N)word`);;
@@ -125,9 +127,9 @@ override_interface(">=+",`word_uge:(N)word->(N)word->bool`);;
 parse_as_infix("//",(22,"left"));;
 override_interface("//",`word_udiv:(N)word->(N)word->(N)word`);;
 
-(* ------------------------------------------------------------------------- *)
-(* The HOL4 operations that HOL Light does not have.                        *)
-(* ------------------------------------------------------------------------- *)
+(* ------------------------------------------------------------------ *)
+(* The HOL4 operations that HOL Light does not have.                  *)
+(* ------------------------------------------------------------------ *)
 
 let word_msb = new_definition
   `word_msb (w:(N)word) <=> bit (dimindex(:N) - 1) w`;;
@@ -158,7 +160,8 @@ let bit_field_insert = new_definition
 
 let word_reverse = new_definition
   `word_reverse (w:(N)word) =
-   word_of_bits {i | i < dimindex(:N) /\ bit (dimindex(:N) - 1 - i) w}`;;
+   word_of_bits {i | i < dimindex(:N) /\ bit (dimindex(:N) - 1 - i)
+     w}`;;
 
 let word_slice_alt = new_definition
   `word_slice_alt h l (w:(N)word) =

@@ -1,0 +1,79 @@
+(* ======================================================== *)
+(*  displayLang: ported from HOL4's
+    compiler/backend/displayLangScript.sml  *)
+(* ======================================================== *)
+
+(*
+  displayLang is a stepping stone before pretty printing any of
+  the compiler's intermediate languages for inspection by humans. The
+  design of displayLang is intentionally very simple. The language
+  supports Tuples, Items (e.g. datatype constructors), and Lists.
+*)
+
+needs "basis/pure/mlint.ml";;
+needs "basis/pure/mlsexp.ml";;
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/jsonLang.ml";;
+(* HOL4 ancestors outside the port: (* for str_tree *) *)
+
+let sExp_INDUCT,sExp_RECURSION = define_datatype
+  "sExp = displayLang_Item (tra option) (mlstring) (sExp list) | \
+   displayLang_String (mlstring) | displayLang_Tuple (sExp list) | \
+   displayLang_List (sExp list)";;
+
+(* HOL4 ML code, not ported:
+val sExp_size_def = fetch "-" "sExp_size_def";
+*)
+
+(* display_to_json *)
+let trace_to_json_def = cake_define
+  `(trace_to_json (backend_common_Cons tra num') =
+     jsonLang_Object [((strlit "name"),displayLang_String (strlit
+       "Cons"));
+       ((strlit "num"),displayLang_String ((num_to_str) num'));
+       ((strlit "trace"),trace_to_json tra)]) /\
+   (trace_to_json (backend_common_Union tra1 tra2) =
+     jsonLang_Object [((strlit "name"),displayLang_String (strlit
+       "Union"));
+       ((strlit "trace1"),trace_to_json tra1);
+       ((strlit "trace2"),trace_to_json tra2)]) /\
+   (trace_to_json (backend_common_SourceLoc sr scc er ec) =
+     (let arr = MAP jsonLang_Int (MAP & [sr; scc; er; ec]) in
+       jsonLang_Object [((strlit "name"),displayLang_String (strlit
+         "SourcePos"));
+         ((strlit "pos"),jsonLang_Array arr)])) /\
+   (trace_to_json backend_common_None = jsonLang_Null)`;;
+
+(* Converts a display expression to JSON *)
+let display_to_json_def = cake_define
+  `(display_to_json (displayLang_Item tra name es) =
+     (let es' = MAP display_to_json es in
+     let props = [((strlit "name"),displayLang_String name); ((strlit
+       "args"),jsonLang_Array es')] in
+     let props' = match tra with NONE -> props | SOME t -> ((strlit
+       "trace"),trace_to_json t) :: props in
+       jsonLang_Object props')) /\
+   (display_to_json (displayLang_String s:sExp) = displayLang_String
+     s) /\
+   (display_to_json (displayLang_Tuple es) =
+     (let es' = MAP display_to_json es in
+       jsonLang_Object [((strlit "isTuple"),jsonLang_Bool T);
+         ((strlit "elements"),jsonLang_Array es')])) /\
+    (display_to_json (displayLang_List es) = jsonLang_Array (MAP
+      display_to_json es))`;;
+
+let display_to_str_tree_def = cake_define
+  `(display_to_str_tree (displayLang_Item tra name es) =
+      mlsexp_Trees (mlsexp_Str name :: display_to_str_tree_list es))
+        /\
+   (display_to_str_tree (displayLang_String s:sExp) = mlsexp_Str s)
+     /\
+   (display_to_str_tree (displayLang_Tuple es) =
+      (if NULL es then mlsexp_Str (strlit "()") else mlsexp_Trees
+        (display_to_str_tree_list es))) /\
+   (display_to_str_tree (displayLang_List es) =
+      (if NULL es then mlsexp_Str (strlit "()") else mlsexp_Trees
+        (MAP mlsexp_GrabLine (display_to_str_tree_list es)))) /\
+   (display_to_str_tree_list [] = []) /\
+   (display_to_str_tree_list (x :: xs) =
+     display_to_str_tree x :: display_to_str_tree_list xs)`;;
