@@ -96,20 +96,114 @@ let beta_normalize tm =
 (* Discharging the side conditions of an existence theorem.                  *)
 (* ------------------------------------------------------------------------- *)
 
-(* the tactic that is tried on the termination condition if none is given *)
+(* the tactic that proves that a termination relation is wellfounded *)
 
-let TERM_TAC =
-  REWRITE_TAC[MEASURE; FORALL_PAIR_THM; LE_LT] THEN ARITH_TAC;;
+let WF_TAC =
+  REPEAT(MATCH_MP_TAC WF_inv_image ORELSE MATCH_MP_TAC WF_LEX_ALT ORELSE
+         CONJ_TAC) THEN
+  REWRITE_TAC[WF_MEASURE; WF_num];;
+
+(* the size functions and lemmas, which the tactic that proves the
+   termination conditions uses; they are added by define_size below *)
+
+let the_size_thms = ref ([]:(string * (thm list * thm list)) list);;
+
+let all_size_thms () =
+  itlist (fun (_,(a,b)) l -> a @ b @ l) (!the_size_thms) [];;
+
+let all_size_fns () =
+  map (fun th -> fst(strip_comb(lhs(snd(strip_forall(concl th))))))
+      (itlist (fun (_,(a,_)) l -> a @ l) (!the_size_thms) []);;
+
+(* MEM x l gives f x < list_size f l for every size function f *)
+
+let MEM_SIZE_TAC (asl,w as gl) =
+  let mems =
+    mapfilter (fun (_,th) ->
+                 let tm = concl th in
+                 if is_comb tm && is_comb(rator tm) &&
+                    name_of(rator(rator tm)) = "MEM"
+                 then th else fail())
+              asl in
+  let fns = setify (all_size_fns()) in
+  let facts =
+    itlist (fun th acc ->
+              let f = MATCH_MP MEM_list_size_ALT th in
+              mapfilter (fun sf -> SPEC sf f) fns @ acc)
+           mems [] in
+  MAP_EVERY MP_TAC facts gl;;
+
+(* the tactic that is tried on the termination conditions *)
+
+let TERM_TAC g =
+  (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM] THEN
+   REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+   REWRITE_TAC(all_size_thms()) THEN MEM_SIZE_TAC THEN
+   REWRITE_TAC(all_size_thms()) THEN ASM_ARITH_TAC) g;;
 
 let discharge_conditions (rel,tac) th =
   itlist
     (fun h th ->
        let gtac =
-         if is_exists h then EXISTS_TAC rel THEN
-           REWRITE_TAC[WF_MEASURE; WF_LEX; WF_num] THEN tac
+         if is_exists h then
+           let v,_ = dest_exists h in
+           let rel' = inst (type_match (type_of rel) (type_of v) []) rel in
+           EXISTS_TAC rel' THEN CONJ_TAC THENL [WF_TAC; tac]
          else tac in
        PROVE_HYP (prove(h,gtac)) th)
     (hyp th) th;;
+
+(* ------------------------------------------------------------------------- *)
+(* Taking paired lambdas apart.                                              *)
+(*                                                                          *)
+(* HOL Light's machinery for the admissibility of a recursion loses the      *)
+(* connection between the pattern of a paired lambda and the argument it     *)
+(* is applied to, so that for instance                                      *)
+(*                                                                          *)
+(*   nsMap f (Bind v m) = Bind (MAP (\(n,x). (n,f x)) v)                     *)
+(*                             (MAP (\(mn,e). (mn,nsMap f e)) m)             *)
+(*                                                                          *)
+(* gets an unprovable termination condition.  Therefore such a definition    *)
+(* is made with \p. ... FST p ... SND p ... instead, and the definition as   *)
+(* it was given is then derived from it.                                     *)
+(* ------------------------------------------------------------------------- *)
+
+let mk_fst tm =
+  match snd(dest_type(type_of tm)) with
+    [ty1;ty2] -> mk_comb(mk_const("FST",[ty1,aty; ty2,bty]),tm)
+  | _ -> failwith "mk_fst";;
+
+let mk_snd tm =
+  match snd(dest_type(type_of tm)) with
+    [ty1;ty2] -> mk_comb(mk_const("SND",[ty1,aty; ty2,bty]),tm)
+  | _ -> failwith "mk_snd";;
+
+let rec depair tm =
+  if is_abs tm then
+    let v,b = dest_abs tm in mk_abs(v,depair b)
+  else if is_gabs tm then
+    let pat,bod = dest_gabs tm in
+    let bod = depair bod in
+    let p = variant (frees bod) (mk_var("p",type_of pat)) in
+    let rec sub pat tm =
+      if is_var pat then [tm,pat]
+      else let a,b = dest_pair pat in
+           sub a (mk_fst tm) @ sub b (mk_snd tm) in
+    mk_abs(p,vsubst (sub pat p) bod)
+  else
+    match tm with
+      Comb(s,t) -> mk_comb(depair s,depair t)
+    | _ -> tm;;
+
+let DEPAIR_CONV tm =
+  let tm' = depair tm in
+  if tm' = tm then failwith "DEPAIR_CONV: no change" else
+  prove(mk_eq(tm,tm'),
+        REWRITE_TAC[FUN_EQ_THM; FORALL_PAIR_THM] THEN
+        CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN
+        REWRITE_TAC[FST; SND]);;
+
+let DEPAIR_TAC = CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV);;
 
 (* ------------------------------------------------------------------------- *)
 (* Definition of one function, with a given termination relation.            *)
@@ -120,14 +214,23 @@ let define_single wf tm =
   let f = hd fs in
   let name = fst(dest_var f) in
   let cls = map (close_clause fs) (conjuncts(snd(strip_forall tm))) in
-  let etm = mk_exists(f,list_mk_conj cls) in
-  let eth =
+  let existence cls =
+    let etm = mk_exists(f,list_mk_conj cls) in
     match wf with
       None -> prove_general_recursive_function_exists etm
     | Some rt -> discharge_conditions rt
                    (pure_prove_recursive_function_exists etm) in
-  let dth = new_specification [name] eth in
-  CONJUNCTS dth,dth;;
+  try let dth = new_specification [name] (existence cls) in
+      CONJUNCTS dth,dth
+  with Failure _ ->
+    let cls' = map depair cls in
+    if cls' = cls then failwith "define_single" else
+    let dth = new_specification [name] (existence cls') in
+    let c = mk_mconst(name,type_of f) in
+    let derive cl =
+      prove(vsubst [c,f] cl,
+            REPEAT GEN_TAC THEN DEPAIR_TAC THEN REWRITE_TAC[dth]) in
+    map derive cls,dth;;
 
 (* ------------------------------------------------------------------------- *)
 (* Definition of a family of mutually recursive functions.                   *)
@@ -166,12 +269,14 @@ let define_mutual wf tm =
     mk_eq(mk_comb(g,mk_inj dtys i (mk_tuple args)),
           mk_inj rtys i (beta_normalize(vsubst repls r))) in
   let newcls = map (fun cl -> close_clause [g] (newcl cl)) cls in
-  let etm = mk_exists(g,list_mk_conj newcls) in
-  let eth =
+  let existence cls =
+    let etm = mk_exists(g,list_mk_conj cls) in
     match wf with
       None -> prove_general_recursive_function_exists etm
     | Some rt -> discharge_conditions rt
                    (pure_prove_recursive_function_exists etm) in
+  let eth = try existence newcls
+            with Failure _ -> existence (map depair newcls) in
   let gth = new_specification [gname] eth in
   let gc = mk_mconst(gname,type_of g) in
   (* now define the functions themselves *)
@@ -191,12 +296,13 @@ let define_mutual wf tm =
   let derive cl =
     let gcl = close_clause [] (vsubst (zip fcs fs) cl) in
     prove(gcl,
-          REPEAT GEN_TAC THEN REWRITE_TAC fdefs THEN
+          REPEAT GEN_TAC THEN TRY DEPAIR_TAC THEN REWRITE_TAC fdefs THEN
           GEN_REWRITE_TAC (LAND_CONV o ONCE_DEPTH_CONV) [gth] THEN
           REWRITE_TAC[OUTL; OUTR]) in
   map derive (conjuncts(snd(strip_forall tm))),gth;;
 
 (* ========================================================================= *)
+
 (*  Primitive recursion for a family of functions.                          *)
 (*                                                                          *)
 (*  HOL Light's new_recursive_definition defines one function at a time,     *)
@@ -419,6 +525,172 @@ let define_prim_rec tm =
   map derive (conjuncts(snd(strip_forall tm))),spec;;
 
 (* ------------------------------------------------------------------------- *)
+
+(* HOL4's Datatype, which also registers the recursion theorem and (as HOL4  *)
+(* does) defines the size functions of the family.                           *)
+(* ------------------------------------------------------------------------- *)
+
+let define_datatype spec =
+  let ith,rth = define_type spec in
+  register_rec_thm rth;
+  ith,rth;;
+
+(* the recursion theorems of the types that HOL Light defines itself *)
+
+register_rec_thm list_RECURSION;;
+register_rec_thm option_RECURSION;;
+register_rec_thm num_RECURSION;;
+register_rec_thm sum_RECURSION;;
+register_rec_thm char_RECURSION;;
+
+(* ========================================================================= *)
+
+(*  Size functions, for the termination of the definitions that are not      *)
+(*  primitive recursive.                                                     *)
+(*                                                                          *)
+(*  define_size "exp" defines exp_size, and exp_size1, exp_size2, ... for    *)
+(*  the other types of the family of exp (as HOL4 defines exp1_size,         *)
+(*  exp2_size, ...), and identifies the ones on lists with list_size, so     *)
+(*  that MEM_list_size gives the facts a termination proof needs.            *)
+(* ========================================================================= *)
+
+let the_size_fns = ref ([]:(hol_type * term) list);;
+
+let define_size tyname =
+  let rth = assoc tyname (!the_rec_thms) in
+  let _,fns,canon = rec_thm_clauses rth in
+  let numty = mk_type("num",[]) in
+  let tyins = map (fun fn -> numty,snd(dest_fun_ty(type_of fn))) fns in
+  let ifns = map (inst tyins) fns in
+  let canon = map (fun (fn,con,args,fj,rvs) ->
+                     inst tyins fn,inst tyins con,map (inst tyins) args,
+                     fj,map (inst tyins) rvs)
+                  canon in
+  (* the name of the size function of each type of the family *)
+  let k = ref 0 in
+  let names =
+    map (fun fn ->
+          let ty = fst(dest_fun_ty(type_of fn)) in
+          if fst(dest_type ty) = tyname then tyname ^ "_size"
+          else (k := !k + 1; tyname ^ "_size" ^ string_of_int !k))
+        ifns in
+  let svars = map2 (fun fn nm -> mk_var(nm,type_of fn)) ifns names in
+  let svar_of fn = el (index fn ifns) svars in
+  let zero = mk_small_numeral 0 and one = mk_small_numeral 1 in
+  let clause (fn,con,args,_,rvs) =
+    let base =
+      if rvs = [] &&
+         (fst(dest_const con) = "NIL" || fst(dest_const con) = "NONE")
+      then zero else one in
+    let tms = map (fun rv -> mk_comb(svar_of (rator rv),rand rv)) rvs in
+    let rhs = itlist (fun t s -> mk_binop `(+):num->num->num` t s)
+                     tms base in
+    let rhs = if tms = [] then base
+              else mk_binop `(+):num->num->num` base
+                     (end_itlist (fun a b ->
+                        mk_binop `(+):num->num->num` a b) tms) in
+    mk_eq(mk_comb(svar_of fn,list_mk_comb(con,args)),rhs) in
+  let cls = map clause canon in
+  let ths,_ = define_prim_rec (list_mk_conj cls) in
+  let sizedefs = ths in
+  (* the size functions on lists are the generic list_size *)
+  let listlems =
+    mapfilter
+      (fun fn ->
+         let ty = fst(dest_fun_ty(type_of fn)) in
+         if fst(dest_type ty) <> "list" then fail() else
+         let ety = hd(snd(dest_type ty)) in
+         let efn = find (fun g -> fst(dest_fun_ty(type_of g)) = ety) ifns in
+         let sl = mk_mconst(el (index fn ifns) names,type_of fn)
+         and se = mk_mconst(el (index efn ifns) names,type_of efn) in
+         let l = mk_var("l",ty) in
+         prove(mk_forall(l,mk_eq(mk_comb(sl,l),
+                 list_mk_comb(mk_mconst("list_size",
+                   mk_fun_ty (type_of se) (mk_fun_ty ty numty)),[se;l]))),
+               LIST_INDUCT_TAC THEN
+               ASM_REWRITE_TAC(list_size::sizedefs) THEN ARITH_TAC))
+      ifns in
+  the_size_thms := (tyname,(sizedefs,listlems))::(!the_size_thms);
+  do_list
+    (fun th ->
+       let f = fst(strip_comb(lhs(snd(strip_forall(concl th))))) in
+       let ty = fst(dest_fun_ty(type_of f)) in
+       if not (exists (fun (ty0,_) -> ty0 = ty) (!the_size_fns))
+       then the_size_fns := (ty,f)::(!the_size_fns))
+    sizedefs;
+  sizedefs,listlems;;
+
+(* ------------------------------------------------------------------------- *)
+(* A measure for a definition whose termination HOL Light cannot guess and   *)
+(* for which HOL4 did not give one either (because HOL4 guessed it).         *)
+(* ------------------------------------------------------------------------- *)
+
+let rec size_fn_of_type ty =
+  try let ty0,f = find (fun (ty0,_) -> can (type_match ty0 ty) [])
+                       (!the_size_fns) in
+      inst (type_match ty0 ty []) f
+  with Failure _ ->
+    if is_vartype ty then mk_abs(mk_var("x",ty),mk_small_numeral 0) else
+    let s,args = dest_type ty in
+    if s = "num" then mk_abs(mk_var("n",ty),mk_var("n",ty))
+    else if s = "list" then
+      let ety = hd args in
+      let f = size_fn_of_type ety in
+      list_mk_comb(mk_mconst("list_size",
+        mk_fun_ty (type_of f) (mk_fun_ty ty (mk_type("num",[])))),[f])
+    else if s = "option" then
+      let f = size_fn_of_type (hd args) in
+      list_mk_comb(mk_mconst("option_size",
+        mk_fun_ty (type_of f) (mk_fun_ty ty (mk_type("num",[])))),[f])
+    else if s = "prod" then
+      let f = size_fn_of_type (hd args)
+      and g = size_fn_of_type (hd(tl args)) in
+      list_mk_comb(mk_mconst("pair_size",
+        mk_fun_ty (type_of f) (mk_fun_ty (type_of g)
+          (mk_fun_ty ty (mk_type("num",[]))))),[f;g])
+    else if can (assoc s) (!the_rec_thms) then
+     (let _ = define_size s in size_fn_of_type ty)
+    else mk_abs(mk_var("x",ty),mk_small_numeral 0);;
+
+(* the sum of the sizes of the arguments in the pattern positions *)
+
+let measure_of_function f cls =
+  let tys,_ = splitlist dest_fun_ty (type_of f) in
+  let mycls = filter (fun (g,_,_) -> g = f) cls in
+  let n = itlist (fun (_,args,_) n -> max n (length args)) mycls 0 in
+  let tys = fst(chop_list n tys) in
+  let pats = filter (fun i -> exists (fun (_,args,_) ->
+                                        not(is_var(el i args))) mycls)
+                    (0--(n-1)) in
+  let pats = if pats = [] then 0--(n-1) else pats in
+  let vs = map (fun i -> mk_var("x" ^ string_of_int i,el i tys))
+               (0--(n-1)) in
+  let tms = map (fun i -> mk_comb(size_fn_of_type (el i tys),el i vs))
+                pats in
+  let body = end_itlist (fun a b -> mk_binop `(+):num->num->num` a b)
+                        tms in
+  mk_gabs(mk_tuple vs,body);;
+
+let auto_measure tm =
+  let fs = definition_heads tm in
+  let cls = definition_clauses tm in
+  let ms = map (fun f -> measure_of_function f cls) fs in
+  let m =
+    itlist (fun m1 m2 ->
+              list_mk_comb(mk_mconst("sum_measure",
+                mk_fun_ty (type_of m1) (mk_fun_ty (type_of m2)
+                  (mk_fun_ty (mk_type("sum",
+                     [fst(dest_fun_ty(type_of m1));
+                      fst(dest_fun_ty(type_of m2))]))
+                   (mk_type("num",[]))))),[m1;m2]))
+           (butlast ms) (last ms) in
+  list_mk_comb(mk_mconst("MEASURE",
+    mk_fun_ty (type_of m) (mk_fun_ty (fst(dest_fun_ty(type_of m)))
+      (mk_fun_ty (fst(dest_fun_ty(type_of m))) bool_ty))),[m]);;
+
+let size_thms tyname =
+  let a,b = assoc tyname (!the_size_thms) in a @ b;;
+
 (* The definition functions that the port uses.                             *)
 (* ------------------------------------------------------------------------- *)
 
@@ -445,7 +717,12 @@ let cake_define_gen wf tm =
            fs ([],TRUTH))
     else if wf = None then
       (try define_prim_rec tm with Failure _ ->
-       if length fs = 1 then define_single wf tm else define_mutual wf tm)
+       try (if length fs = 1 then define_single wf tm
+            else define_mutual wf tm)
+       with Failure _ ->
+         let wf' = Some(auto_measure tm,TERM_TAC) in
+         if length fs = 1 then define_single wf' tm
+         else define_mutual wf' tm)
     else
       (if length fs = 1 then define_single wf tm else define_mutual wf tm) in
   end_itlist CONJ ths;;
@@ -457,19 +734,3 @@ let cake_define_wf rel tm = cake_define_gen (Some(rel,TERM_TAC)) tm;;
 let cake_define_tac (rel,tac) tm = cake_define_gen (Some(rel,tac)) tm;;
 
 (* ------------------------------------------------------------------------- *)
-(* HOL4's Datatype, which also registers the recursion theorem and (as HOL4  *)
-(* does) defines the size functions of the family.                           *)
-(* ------------------------------------------------------------------------- *)
-
-let define_datatype spec =
-  let ith,rth = define_type spec in
-  register_rec_thm rth;
-  ith,rth;;
-
-(* the recursion theorems of the types that HOL Light defines itself *)
-
-register_rec_thm list_RECURSION;;
-register_rec_thm option_RECURSION;;
-register_rec_thm num_RECURSION;;
-register_rec_thm sum_RECURSION;;
-register_rec_thm char_RECURSION;;

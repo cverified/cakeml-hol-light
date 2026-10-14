@@ -16,6 +16,22 @@
 (* ========================================================================= *)
 
 (* ------------------------------------------------------------------------- *)
+(* The HOL4 names and notations of the HOL Light constants that have         *)
+(* another name, so that the port can use the CakeML ones.                   *)
+(* ------------------------------------------------------------------------- *)
+
+parse_as_infix("::",(15,"right"));;
+override_interface("::",`CONS:A->(A)list->(A)list`);;
+override_interface("++",`APPEND:(A)list->(A)list->(A)list`);;
+override_interface("EVERY",`ALL:(A->bool)->(A)list->bool`);;
+override_interface("EXISTS",`EX:(A->bool)->(A)list->bool`);;
+override_interface("FRONT",`BUTLAST:(A)list->(A)list`);;
+override_interface("GENLIST",`list_of_seq:(num->A)->num->(A)list`);;
+override_interface("LIST_TO_SET",`set_of_list:(A)list->A->bool`);;
+override_interface("LIST_REL",
+  `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
+
+(* ------------------------------------------------------------------------- *)
 (* combinTheory                                                              *)
 (* ------------------------------------------------------------------------- *)
 
@@ -163,11 +179,6 @@ let nub = new_recursive_definition list_RECURSION
   `(nub ([]:A list) = []) /\
    (nub (CONS x l) = if MEM x l then nub l else CONS x (nub l))`;;
 
-let LIST_REL = new_recursive_definition list_RECURSION
-  `(LIST_REL (R:A->B->bool) [] l2 <=> l2 = []) /\
-   (LIST_REL R (CONS h1 t1) l2 <=>
-    ~(l2 = []) /\ R h1 (HD l2) /\ LIST_REL R t1 (TL l2))`;;
-
 let SPLITP = new_recursive_definition list_RECURSION
   `(SPLITP (P:A->bool) [] = ([],[])) /\
    (SPLITP P (CONS x xs) =
@@ -289,3 +300,56 @@ let toLower = new_definition
 
 let toUpper = new_definition
   `toUpper c = if isLower c then CHR (ORD c - 32) else c`;;
+
+(* ------------------------------------------------------------------------- *)
+(* What the termination proofs of the port need: the wellfounded             *)
+(* relations of HOL4's WF_REL_TAC, and the fact that the elements of a       *)
+(* list are smaller than the list.                                           *)
+(* ------------------------------------------------------------------------- *)
+
+let inv_image = new_definition
+  `inv_image (R:B->B->bool) (f:A->B) = \x y. R (f x) (f y)`;;
+
+parse_as_infix("LEX",(14,"right"));;
+
+let LEX = new_definition
+  `((R1:A->A->bool) LEX (R2:B->B->bool)) =
+   \(x1,y1) (x2,y2). R1 x1 x2 \/ x1 = x2 /\ R2 y1 y2`;;
+
+let WF_inv_image = prove
+ (`!R:B->B->bool f:A->B. WF R ==> WF (inv_image R f)`,
+  REWRITE_TAC[inv_image] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC WF_MEASURE_GEN THEN ASM_REWRITE_TAC[]);;
+
+let WF_LEX_ALT = prove
+ (`!R1:A->A->bool R2:B->B->bool.
+     WF R1 /\ WF R2 ==> WF (R1 LEX R2)`,
+  REWRITE_TAC[LEX] THEN MATCH_ACCEPT_TAC WF_LEX);;
+
+let MEM_list_size = prove
+ (`!f:A->num x l. MEM x l ==> f x < list_size f l`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[MEM; list_size] THEN
+  DISCH_THEN(DISJ_CASES_THEN2 SUBST_ALL_TAC ASSUME_TAC) THENL
+   [ARITH_TAC;
+    FIRST_X_ASSUM(MP_TAC o check (is_imp o concl)) THEN
+    ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
+
+let sum_measure = new_recursive_definition sum_RECURSION
+  `(sum_measure (f:A->num) (g:B->num) (INL a) = f a) /\
+   (sum_measure f g (INR b) = g b)`;;
+
+let MEM_list_size_ALT = prove
+ (`!(x:A) l. MEM x l ==> !f:A->num. f x < list_size f l`,
+  MESON_TAC[MEM_list_size]);;
+
+let list_size_APPEND = prove
+ (`!f:A->num l1 l2.
+     list_size f (APPEND l1 l2) = list_size f l1 + list_size f l2`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[APPEND; list_size] THEN ARITH_TAC);;
+
+let list_size_REVERSE = prove
+ (`!f:A->num l. list_size f (REVERSE l) = list_size f l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  ASM_REWRITE_TAC[REVERSE; list_size; list_size_APPEND] THEN ARITH_TAC);;
