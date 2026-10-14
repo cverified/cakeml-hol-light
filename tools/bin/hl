@@ -1,0 +1,6 @@
+#!/bin/sh
+# hl SESSION 'code;;' -- repl-step with the terminal escapes stripped
+s="$1"; shift
+PATH=/home/freek/claude/hol-light/bin:$PATH
+repl-step "$s" "$*" 2>&1 | sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' \
+  -e 's/\r//g' -e 's/.*\x08//' | grep -v '^$' | tail -n 60

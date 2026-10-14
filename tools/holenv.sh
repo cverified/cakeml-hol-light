@@ -1,3 +1,4 @@
-# source this to get HOL Light repl tools in the path
-eval $(opam env --switch hol-light --set-switch 2>/dev/null)
-export PATH=/home/freek/claude/hol-light/bin:$PATH
+# source this to get the repl-* scripts and hol.sh in the path
+# the hol.sh here is a shim that forces the hol-light opam
+# switch, see tools/bin/hol.sh
+export PATH=/home/freek/claude/hol-light/cakeml/tools/bin:/home/freek/claude/hol-light/bin:$PATH
