@@ -273,9 +273,11 @@ let define_single wfs tm =
     if cls' = cls then failwith "define_single" else
     let dth = new_specification [name] (existence cls') in
     let c = mk_mconst(name,type_of f) in
+    let dths = CONJUNCTS dth in
     let derive cl =
       prove(vsubst [c,f] cl,
-            REPEAT GEN_TAC THEN DEPAIR_TAC THEN REWRITE_TAC[dth]) in
+            REPEAT GEN_TAC THEN DEPAIR_TAC THEN
+            FIRST (map MATCH_ACCEPT_TAC dths)) in
     map derive cls,dth;;
 
 (* ------------------------------------------------------------------------- *)
