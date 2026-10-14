@@ -302,6 +302,31 @@ let string_lt = new_recursive_definition list_RECURSION
 let string_le = new_definition
   `string_le s1 s2 <=> s1 = s2 \/ string_lt s1 s2`;;
 
+let char_gt = new_definition
+  `char_gt c1 c2 <=> char_lt c2 c1`;;
+
+let char_ge = new_definition
+  `char_ge c1 c2 <=> char_le c2 c1`;;
+
+let string_gt = new_definition
+  `string_gt s1 s2 <=> string_lt s2 s1`;;
+
+let string_ge = new_definition
+  `string_ge s1 s2 <=> string_le s2 s1`;;
+
+(* HOL4 overloads the comparisons for the characters and the strings
+   (stringTheory), which HOL Light can do as well *)
+
+overload_interface("<",`char_lt:char->char->bool`);;
+overload_interface("<=",`char_le:char->char->bool`);;
+overload_interface(">",`char_gt:char->char->bool`);;
+overload_interface(">=",`char_ge:char->char->bool`);;
+
+overload_interface("<",`string_lt:string->string->bool`);;
+overload_interface("<=",`string_le:string->string->bool`);;
+overload_interface(">",`string_gt:string->string->bool`);;
+overload_interface(">=",`string_ge:string->string->bool`);;
+
 let STRCAT = new_definition
   `STRCAT (s1:string) s2 = APPEND s1 s2`;;
 
@@ -498,6 +523,13 @@ let INT_MOD_NUM = prove
   DISCH_THEN(fun th ->
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RAND_CONV) [th]) THEN
   REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN INT_ARITH_TAC);;
+
+(* HOL4's SEG of rich_listTheory: HOL4 specifies it by its equations
+   and leaves it underspecified where they do not apply; the port
+   takes the witness that HOL4's existence proof uses *)
+
+let SEG = new_definition
+  `SEG m k (l:A list) = TAKE m (DROP k l)`;;
 
 (* HOL4's function update of combinTheory, which it writes
    (a =+ b) f *)

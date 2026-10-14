@@ -1258,6 +1258,21 @@ let cake_time f x =
 let cake_report tm s =
   let name =
     try fst(dest_var(hd(definition_heads tm))) with Failure _ -> "?" in
+  (* a free variable that is not one of the functions being defined
+     is a constant that the port does not have yet *)
+  let free =
+    try itlist
+          (fun (_,args,r) l ->
+             union (subtract (subtract (frees r) (definition_heads tm))
+                             (itlist (fun a l -> union (frees a) l)
+                                     args []))
+                   l)
+          (definition_clauses tm) []
+    with Failure _ -> [] in
+  let s = if free = [] then s else
+          s ^ " (free: " ^
+          end_itlist (fun a b -> a ^ ", " ^ b)
+                     (map (fst o dest_var) free) ^ ")" in
   print_string ("\ncake_define " ^ name ^ " failed: " ^ s ^ "\n");
   flush stdout;
   if !cake_debug then

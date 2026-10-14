@@ -309,9 +309,9 @@ let collate_def = cake_define
 
 let char_escape_seq_def = cake_define
   `char_escape_seq c =
-     (if c = (CHR 9) then SOME (strlit "\\t") else if c = (CHR 10)
-       then SOME (strlit "\\n") else if c = (CHR 92) then SOME
-       (strlit "\\\\") else if c = (CHR 34) then SOME ((implode)
+     (if c = (CHR 9) then SOME (implode "\\t") else if c = (CHR
+       10) then SOME (implode "\\n") else if c = (CHR 92) then SOME
+       (implode "\\\\") else if c = (CHR 34) then SOME ((implode)
        "\\\"") else NONE)`;;
 
 let char_escaped_def = cake_define

@@ -1,0 +1,37 @@
+#!/bin/sh
+# checkseq <file>... : load the files one after the other in one
+# session and report the time, the axioms and the first failure of
+# each; the session hol-seq stays, so a run can be continued
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+ML=/home/freek/claude/hol-light/cakeml/ml
+s=seq
+log=/home/freek/claude/hol-light/cakeml/tools/checkseq.log
+[ "$KEEP" = 1 ] && tmux has -t hol-$s 2> /dev/null || {
+  repl-kill $s > /dev/null 2>&1
+  rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
+  repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
+    echo "checkseq: cannot clone the template"; exit 1; }
+  : > $log; }
+for f in "$@"; do
+  case "$f" in /*) g="$f";; *) g="$ML/$f";; esac
+  repl-step $s "let cake_t0 = Sys.time();; print_string \"CHECKSEQ\";;" \
+    > /dev/null 2>&1
+  TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$g\";;" > /dev/null 2>&1
+  TIMEOUT=120 repl-step $s \
+    "(Sys.time() -. cake_t0,length(axioms()));;" > /dev/null 2>&1
+  out=$(tmux capture-pane -p -S - -t hol-$s |
+        sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+        sed -n '/CHECKSEQ/,$p')
+  r=$(printf '%s' "$out" |
+      grep -oE '\(?[0-9]+(\.[0-9]+)?(e-[0-9]+)?, *[0-9]+\)?' | tail -1)
+  # an error of a file that this one needs was reported when that
+  # file was checked, so only what follows the last such report
+  # belongs to this file
+  e=$(printf '%s' "$out" |
+      awk -v f="$g" '/Error in included file/ {
+             if (index($0, f) == 0) { b = ""; next } }
+           { b = b $0 "\n" } END { printf "%s", b }' |
+      grep -E '^(cake_define [a-zA-Z_0-9]* failed|Exception|Error|Warning [0-9])' |
+      head -${TAIL:-1} | tr '\n' '|')
+  printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
+done

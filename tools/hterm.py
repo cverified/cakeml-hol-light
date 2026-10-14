@@ -865,6 +865,12 @@ class Printer:
     self.done = set()
     self.numctx = False
 
+  def cname(self, n):
+    """the HOL Light name of a HOL4 constant, expanding an
+       overload"""
+    if self.ctx.overloads.get(n): return self.ctx.overloads[n]
+    return self.ctx.name(n)
+
   def pr(self, e, prec=0):
     tok = e.tok
     fresh = tok is not None and tok.pos not in self.done
@@ -919,7 +925,9 @@ class Printer:
     if k == 'chr':
       return '(CHR ' + str(ord(sml_char(e.text[2:-1]))) + ')'
     if k == 'mlstr':
-      return '(strlit "' + e.text + '")'
+      # the mlstring literal of HOL4: its constructor is implode,
+      # and strlit is an overload of it
+      return '(' + self.cname('strlit') + ' "' + e.text + '")'
     if k == 'paren':
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'typed':
