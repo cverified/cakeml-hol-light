@@ -186,6 +186,13 @@ class Db:
         byname.setdefault(nm, []).append(i)
     needed = set(i for i, (thy, _, _, kind) in enumerate(blocks)
                  if kind == 'cakeml')
+    # the definitions of a HOL4 library theory that the port needs
+    # although no ported definition mentions them (because HOL4
+    # generates what mentions them in ML)
+    for thy, nm in overrides.ALSO_NEEDED:
+      for j in byname.get(nm, []):
+        if blocks[j][0] == thy:
+          needed.add(j)
     stack = list(needed)
     while stack:
       i = stack.pop()

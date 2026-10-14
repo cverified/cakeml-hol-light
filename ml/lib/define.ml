@@ -828,6 +828,29 @@ let define_nested tm =
    for a type like (num,'a list->bool)fmap.  So the specification is
    parsed here, and the types with HOL Light's type parser. *)
 
+(* HOL Light's type parser turns a type name that it does not know
+   into a type variable, which would silently give a wrong type, so
+   the names in a datatype specification are checked first *)
+
+let check_type_names s =
+  let letter c = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') in
+  let idchar c = letter c || (c >= '0' && c <= '9') ||
+                 c = '_' || c = '\'' in
+  let n = String.length s in
+  let i = ref 0 in
+  while !i < n do
+    if letter s.[!i] then
+      (let j = ref !i in
+       while !j < n && idchar s.[!j] do incr j done;
+       let name = String.sub s !i (!j - !i) in
+       if not (!i > 0 && s.[!i - 1] = '\'') &&
+          not (can get_type_arity name) &&
+          not (can (assoc name) (type_abbrevs()))
+       then failwith ("unknown type " ^ name);
+       i := !j)
+    else incr i
+  done;;
+
 let parse_datatype_spec s =
   let split c s =
     let out = ref [] and cur = ref [] and depth = ref 0 in
@@ -876,7 +899,9 @@ let parse_datatype_spec s =
              mk_vartype ty,
              map (fun alt ->
                     match args (trim alt) with
-                      c::tys -> c,map parse_type tys
+                      c::tys ->
+                        c,map (fun t -> check_type_names t;
+                                        parse_type t) tys
                     | [] -> failwith "parse_datatype_spec")
                  (split '|' r)
          | _ -> failwith "parse_datatype_spec")

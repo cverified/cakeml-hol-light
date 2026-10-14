@@ -5,7 +5,8 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
-(* HOL4 ancestors outside the port: arithmetic logroot list alist pred_set rich_list[qualified] *)
+(* HOL4 ancestors outside the port: arithmetic logroot list alist
+   pred_set rich_list[qualified] *)
 let spt_INDUCT,spt_RECURSION = define_datatype
   "spt = LN | LS ('a) | BN (spt) (spt) | BS (spt) ('a) (spt)";;
 (* HOL4 type abbreviation (expanded in the port):
@@ -18,8 +19,8 @@ let wf_def = cake_define
    (sptree_wf (LS a) <=> T) /\
    (sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t. t
      = LN) t1 /\ (\t. t = LN) t2)) /\
-   (sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t.
-     t = LN) t1 /\ (\t. t = LN) t2))`;;
+   (sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
+     ~((\t. t = LN) t1 /\ (\t. t = LN) t2))`;;
 (* HOL4 termination: >> simp[DIV_LT_X] *)
 let lookup_def = cake_define_wf
   `MEASURE FST`
@@ -46,9 +47,9 @@ let insert_def = cake_define_wf
         ((k - 1) DIV 2) a t1) t2 else BN t1 (sptree_insert ((k - 1) DIV
         2) a t2))) /\
    (sptree_insert k a (BS t1 a' t2) =
-      (if k = 0 then BS t1 a t2 else if EVEN k then BS (sptree_insert
-        ((k - 1) DIV 2) a t1) a' t2 else BS t1 a' (sptree_insert ((k -
-        1) DIV 2) a t2)))`;;
+      (if k = 0 then BS t1 a t2 else if EVEN k then BS
+        (sptree_insert ((k - 1) DIV 2) a t1) a' t2 else BS t1 a'
+        (sptree_insert ((k - 1) DIV 2) a t2)))`;;
 let mk_BN_def = cake_define
   `mk_BN t1 t2 =
         match (t1,t2) with
@@ -74,7 +75,8 @@ let size_def = cake_define
   `(sptree_size LN = 0) /\
    (sptree_size (LS a) = 1) /\
    (sptree_size (BN t1 t2) = sptree_size t1 + sptree_size t2) /\
-   (sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 + 1)`;;
+   (sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 +
+     1)`;;
 let union_def = cake_define
   `(sptree_union LN t = t) /\
    (sptree_union (LS a) t =
@@ -85,9 +87,10 @@ let union_def = cake_define
         -> BN (sptree_union t1 t1') (sptree_union t2 t2') | BS t1' a t2'
         -> BS (sptree_union t1 t1') a (sptree_union t2 t2'))) /\
    (sptree_union (BS t1 a t2) t =
-      (match t with LN -> BS t1 a t2 | LS a' -> BS t1 a t2 | BN t1'
-        t2' -> BS (sptree_union t1 t1') a (sptree_union t2 t2') | BS t1'
-        a' t2' -> BS (sptree_union t1 t1') a (sptree_union t2 t2')))`;;
+      (match t with LN -> BS t1 a t2 | LS a' -> BS t1 a t2 | BN
+        t1' t2' -> BS (sptree_union t1 t1') a (sptree_union t2 t2') |
+        BS t1' a' t2' -> BS (sptree_union t1 t1') a (sptree_union t2
+        t2')))`;;
 let inter_def = cake_define
   `(inter LN t = LN) /\
    (inter (LS a) t =
@@ -99,8 +102,8 @@ let inter_def = cake_define
         t1') (inter t2 t2'))) /\
    (inter (BS t1 a t2) t =
       (match t with LN -> LN | LS a' -> LS a | BN t1' t2' -> mk_BN
-        (inter t1 t1') (inter t2 t2') | BS t1' a' t2' -> mk_BS (inter t1
-        t1') a (inter t2 t2')))`;;
+        (inter t1 t1') (inter t2 t2') | BS t1' a' t2' -> mk_BS (inter
+        t1 t1') a (inter t2 t2')))`;;
 let inter_eq_def = cake_define
   `(inter_eq LN t = LN) /\
    (inter_eq (LS a) t =
@@ -115,8 +118,8 @@ let inter_eq_def = cake_define
         BN t1' t2' -> mk_BN (inter_eq t1 t1') (inter_eq t2 t2') | BS t1'
         a' t2' ->
             if a' = a then
-              mk_BS (inter_eq t1 t1') a (inter_eq t2 t2') else mk_BN
-                (inter_eq t1 t1') (inter_eq t2 t2')))`;;
+              mk_BS (inter_eq t1 t1') a (inter_eq t2 t2') else
+                mk_BN (inter_eq t1 t1') (inter_eq t2 t2')))`;;
 let difference_def = cake_define
   `(difference LN t = LN) /\
    (difference (LS a) t =
@@ -127,10 +130,11 @@ let difference_def = cake_define
         mk_BN (difference t1 t1') (difference t2 t2') | BS t1' a t2' ->
         mk_BN (difference t1 t1') (difference t2 t2'))) /\
    (difference (BS t1 a t2) t =
-      (match t with LN -> BS t1 a t2 | LS a' -> BN t1 t2 | BN t1' t2'
-        -> mk_BS (difference t1 t1') a (difference t2 t2') | BS t1' a'
-        t2' -> mk_BN (difference t1 t1') (difference t2 t2')))`;;
-(* HOL4 termination: \\ fs [DIV_LT_X] \\ REPEAT STRIP_TAC \\ DECIDE_TAC *)
+      (match t with LN -> BS t1 a t2 | LS a' -> BN t1 t2 | BN t1'
+        t2' -> mk_BS (difference t1 t1') a (difference t2 t2') | BS
+        t1' a' t2' -> mk_BN (difference t1 t1') (difference t2 t2')))`;;
+(* HOL4 termination: \\ fs [DIV_LT_X] \\ REPEAT STRIP_TAC \\
+   DECIDE_TAC *)
 let lrnext_def = cake_define_wf
   `MEASURE I`
   `lrnext n = (if n = 0 then 1 else 2 * lrnext ((n - 1) DIV 2))`;;
@@ -151,7 +155,8 @@ let foldi_def = cake_define
         foldi f (i + inc) (foldi f (i + 2 * inc) acc t1) t2)) /\
    (foldi f i acc (BS t1 a t2) =
       (let inc = lrnext i in
-        foldi f (i + inc) (f i a (foldi f (i + 2 * inc) acc t1)) t2))`;;
+        foldi f (i + inc) (f i a (foldi f (i + 2 * inc) acc t1))
+          t2))`;;
 let mapi0_def = cake_define
   `(mapi0 f i LN = LN) /\
    (mapi0 f i (LS a) = LS (f i a)) /\
@@ -225,21 +230,22 @@ let spt_fold_def = cake_define
      t1)) t2)`;;
 let list_to_num_set_def = cake_define
   `(list_to_num_set [] = LN) /\
-   (list_to_num_set (n :: ns) = sptree_insert n one (list_to_num_set
-     ns))`;;
+   (list_to_num_set (n :: ns) = sptree_insert n one
+     (list_to_num_set ns))`;;
 let list_insert_def = cake_define
   `(list_insert [] t = t) /\
-   (list_insert (n :: ns) t = list_insert ns (sptree_insert n one t))`;;
+   (list_insert (n :: ns) t = list_insert ns (sptree_insert n one
+     t))`;;
 let alist_insert_def = cake_define
   `alist_insert vs xs t =
       match (vs,xs) with
         ([],xs) -> t
       | (vs,[]) -> t
-      | ((v :: vs),(x :: xs)) -> sptree_insert v x (alist_insert vs
-        xs t)`;;
+      | ((v :: vs),(x :: xs)) -> sptree_insert v x (alist_insert
+        vs xs t)`;;
 let spts_to_alist_add_pause_def = cake_define
-  `spts_to_alist_add_pause j q = (match q with [] -> [(j,LN)] | ((i,spt)
-  :: q) -> ((i + j,spt) :: q))`;;
+  `spts_to_alist_add_pause j q = (match q with [] -> [(j,LN)] |
+  ((i,spt) :: q) -> ((i + j,spt) :: q))`;;
 (* HOL4 overload (expanded in the port):
      add_pause = spts_to_alist_add_pause *)
 let spts_to_alist_aux_def = cake_define
@@ -255,7 +261,9 @@ let spts_to_alist_aux_def = cake_define
          ((j,spt_right spt) :: acc_right) ((j,spt_left spt) ::
            acc_left)
          T)`;;
-(* HOL4 termination: \\ rw [] \\ first_x_assum (assume_tac o GSYM) \\ drule_then mp_tac spts_to_alist_aux_size \\ simp [combinTheory.o_DEF] *)
+(* HOL4 termination: \\ rw [] \\ first_x_assum (assume_tac o GSYM) \\
+   drule_then mp_tac spts_to_alist_aux_size \\ simp
+   [combinTheory.o_DEF] *)
 let spts_to_alist_def = cake_define_wf
   `MEASURE (\(_6,xs,_7). SUM (MAP (spt_size (K 0) o SND) xs))`
   `spts_to_alist i xs acc_cent =

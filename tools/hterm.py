@@ -182,6 +182,7 @@ INFIX = {
   'MOD':   (650, 'l', 'MOD',    22),
   '%':     (650, 'l', '%',      22),
   '**':    (700, 'r', 'EXP',    24),
+  'pow':   (700, 'r', 'pow',    24),
   'EXP':   (700, 'r', 'EXP',    24),
   '&&':    (650, 'l', '&&',     20),
   '||':    (650, 'l', '||',     16),
@@ -403,15 +404,27 @@ class Parser:
         return Node('cond', tok=t, c=c, a=a, b=b)
       if t.text == 'let':
         binds = []
+        seq = False
         while True:
           pat = self.parse_atoms()
           self.expect('=')
           v = self.parse(0)
           binds.append((pat, v))
           if self.at('and'): self.next(); continue
+          # HOL4 also separates the bindings of a let with a
+          # semicolon, and then they are nested (and there may be
+          # one before the in)
+          if self.at(';'):
+            self.next()
+            if self.at('in'): break
+            seq = True; continue
           break
         self.expect('in')
         b = self.parse(0)
+        if seq:
+          for pat, v in reversed(binds[1:]):
+            b = Node('let', tok=None, binds=[(pat, v)], body=b)
+          binds = binds[:1]
         return Node('let', tok=t, binds=binds, body=b)
       if t.text == 'some':
         vs = self.parse_binders()
@@ -423,7 +436,9 @@ class Parser:
         arms = []
         if self.at('|'): self.next()
         while True:
-          pat = self.parse(60)
+          # a pattern may be a tuple (HOL4 writes a case on several
+          # values as "case x, y of p, q => ...")
+          pat = self.parse(50)
           self.expect('=>')
           b = self.parse(60)
           arms.append((pat, b))
@@ -567,6 +582,7 @@ class Ctx:
     self.cons = cons or set()          # the constructor names
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.intnums = False               # are numerals integers here?
+    self.wordnot = False               # is ~ the word complement?
     self.thy = thy
     self.wild = 0
     self.warn = []
@@ -674,7 +690,7 @@ class Printer:
       t = e.text
       if t.endswith('w'):
         return '(n2w ' + t[:-1] + ')'
-      if t.endswith('i'):
+      if t.endswith('i') or t.endswith('r'):
         return '(&' + t[:-1] + ')'
       if t.endswith('n') or t.endswith('c'):
         return t[:-1]
@@ -744,20 +760,26 @@ class Printer:
       _, assoc, hop, hprec = INFIX[op]
       old = self.numctx
       self.numctx = op in NUMCTX
-      if assoc == 'r':
-        l = self.pr(e.l, hprec + 1); r = self.pr(e.r, hprec)
-      elif assoc == 'l':
-        l = self.pr(e.l, hprec); r = self.pr(e.r, hprec + 1)
-      else:
-        l = self.pr(e.l, hprec + 1); r = self.pr(e.r, hprec + 1)
+      # the exponent of pow, EXP and ** is a natural number, also in
+      # a definition whose other numerals are integers or reals
+      oldint = self.ctx.intnums
+      lp = hprec + 1 if assoc != 'l' else hprec
+      rp = hprec if assoc == 'r' else hprec + 1
+      l = self.pr(e.l, lp)
+      if op in ('pow', 'EXP', '**'): self.ctx.intnums = False
+      r = self.pr(e.r, rp)
       sep = '' if hop == ',' else ' '
       self.numctx = old
+      self.ctx.intnums = oldint
       return self.paren(l + sep + hop + sep + r, hprec, prec)
     if k == 'prefix':
       if e.op == '~':
-        # HOL4 writes ~ for the negation of a number as well as for
-        # the negation of a proposition; HOL Light writes -- for the
-        # first one
+        # HOL4 writes ~ for the negation of a number and for the
+        # complement of a word as well as for the negation of a
+        # proposition; HOL Light writes -- and word_not for those
+        if self.ctx.wordnot:
+          return self.paren('word_not ' + self.pr(e.e, APP),
+                            PRE_APP, prec)
         op = '--' if numeric(e.e) or self.numctx else '~'
         return self.paren(op + self.pr(e.e, PRE_APP), PRE_APP, prec)
       if e.op == '-':
@@ -781,9 +803,10 @@ class Printer:
       return self.paren('let ' + bs + ' in ' + self.pr(e.body, 0),
                         1, prec)
     if k == 'case':
-      arms = ' | '.join(self.pr(p, 0) + ' -> ' + self.pr(b, 0)
+      # a tuple of values or a tuple pattern needs its parentheses
+      arms = ' | '.join(self.pr(p, 15) + ' -> ' + self.pr(b, 0)
                         for p, b in e.arms)
-      return self.paren('match ' + self.pr(e.s, 0) + ' with ' + arms,
+      return self.paren('match ' + self.pr(e.s, 15) + ' with ' + arms,
                         1, prec)
     if k == 'field':
       return self.paren(self.ctx.field(e.fld) + ' ' + self.pr(e.e, APP),

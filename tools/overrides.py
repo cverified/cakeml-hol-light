@@ -16,6 +16,10 @@ NAME_MAP = {
   'ABS': 'abs',
   'LEAST': 'minimal',
   'ARB': 'ARB',
+  # the word constants of HOL4's wordsTheory
+  'INT_MINw': 'word_L',
+  'INT_MAXw': 'word_H',
+  'UINT_MAXw': 'word_T',
   'UNCURRY': 'UNCURRY',
   'I': 'I',
 }
@@ -50,15 +54,45 @@ EXTRA_NEEDS = {
 # indirectly (a record field declared with ML code, say)
 ALSO_NEEDED = set([
   ('location', 'locnrow'), ('location', 'locncol'),
+  # HOL4 generates the fp64 encoding of machine_ieee with ML code
+  # (machine_ieeeLib), which the port writes out by hand; these are
+  # the binary_ieee definitions that it uses
+  ('binary_ieee', 'float_to_real'), ('binary_ieee', 'float_to_int'),
+  ('binary_ieee', 'real_to_float'), ('binary_ieee', 'float_sqrt'),
+  ('binary_ieee', 'float_negate'), ('binary_ieee', 'float_abs'),
+  ('binary_ieee', 'float_is_nan'), ('binary_ieee', 'float_add'),
+  ('binary_ieee', 'float_sub'), ('binary_ieee', 'float_mul'),
+  ('binary_ieee', 'float_div'), ('binary_ieee', 'float_compare'),
+  ('binary_ieee', 'float_equal'),
+  ('binary_ieee', 'float_less_than'),
+  ('binary_ieee', 'float_less_equal'),
+  ('binary_ieee', 'float_greater_than'),
+  ('binary_ieee', 'float_greater_equal'),
+  ('binary_ieee', 'float_mul_add'),
 ])
 
-# definitions in which the numerals are integers, not natural
-# numbers (HOL Light writes an integer numeral as &n)
+# definitions in which the numerals are integers or reals, not
+# natural numbers (HOL Light writes both as &n; the exponent of pow,
+# EXP and ** stays a natural number)
 INT_NUMERALS = set([
   ('multiword', 'i2mw_def'),
   ('multiword', 'int_op_def'),
+  ('binary_ieee', 'float_is_zero_def'),
+  ('binary_ieee', 'float_round_with_flags_def'),
+  ('binary_ieee', 'float_to_int_def'),
+  ('binary_ieee', 'float_add_def'),
+  ('binary_ieee', 'float_sub_def'),
+  ('binary_ieee', 'float_mul_def'),
+  ('binary_ieee', 'float_div_def'),
+  ('binary_ieee', 'float_mul_add_def'),
   ('integer_word', 'toString_def'),
   ('integer_word', 'fromString_def'),
+])
+
+# definitions in which a prefix ~ is the complement of a word, not
+# the negation of a proposition
+WORD_NOT = set([
+  ('binary_ieee', 'float_negate_def'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's
@@ -130,5 +164,99 @@ let mergesortN_tail_def = cake_define_wf
                         (mergesortN_tail neg R (n - len1)
                                          (DROP len1 l))
                         []`;;
+''',
+}
+
+# definitions that HOL4 generates with ML code, so that there is no
+# Definition block to translate; the port has them by hand, and they
+# are put just after the needs of the file
+EXTRA_HEAD = {
+  'machine_ieee': r'''
+(* HOL4 generates the definitions of the fp16, fp32 and fp64
+   encodings of floating point numbers with ML code (the function
+   mk_fp_encoding of machine_ieeeLib), so there is nothing to
+   translate here; these are the fp64 definitions that the CakeML
+   port needs, in the order in which HOL4 generates them  *)
+
+let fp64_to_float_def = cake_define
+  `fp64_to_float (w:word64) =
+     (mk_float ((63 >< 63) w) ((62 >< 52) w)
+               ((51 >< 0) w)):(52,11)float`;;
+
+let float_to_fp64_def = cake_define
+  `float_to_fp64 (x:(52,11)float) =
+     (((float_Sign x @@ float_Exponent x):word12) @@
+      float_Significand x):word64`;;
+
+let real_to_fp64_def = cake_define
+  `real_to_fp64 mode = float_to_fp64 o real_to_float mode`;;
+
+let int_to_fp64_def = cake_define
+  `int_to_fp64 mode a = real_to_fp64 mode (real_of_int a)`;;
+
+let fp64_to_int_def = cake_define
+  `fp64_to_int mode = float_to_int mode o fp64_to_float`;;
+
+let fp64_abs_def = cake_define
+  `fp64_abs = float_to_fp64 o float_abs o fp64_to_float`;;
+
+let fp64_negate_def = cake_define
+  `fp64_negate = float_to_fp64 o float_negate o fp64_to_float`;;
+
+let fp64_isNan_def = cake_define
+  `fp64_isNan = float_is_nan o fp64_to_float`;;
+
+let fp64_sqrt_def = cake_define
+  `fp64_sqrt mode =
+     float_to_fp64 o SND o float_sqrt mode o fp64_to_float`;;
+
+let fp64_add_def = cake_define
+  `fp64_add mode a b =
+     float_to_fp64 (SND (float_add mode (fp64_to_float a)
+                                        (fp64_to_float b)))`;;
+
+let fp64_sub_def = cake_define
+  `fp64_sub mode a b =
+     float_to_fp64 (SND (float_sub mode (fp64_to_float a)
+                                        (fp64_to_float b)))`;;
+
+let fp64_mul_def = cake_define
+  `fp64_mul mode a b =
+     float_to_fp64 (SND (float_mul mode (fp64_to_float a)
+                                        (fp64_to_float b)))`;;
+
+let fp64_div_def = cake_define
+  `fp64_div mode a b =
+     float_to_fp64 (SND (float_div mode (fp64_to_float a)
+                                        (fp64_to_float b)))`;;
+
+let fp64_compare_def = cake_define
+  `fp64_compare a b =
+     float_compare (fp64_to_float a) (fp64_to_float b)`;;
+
+let fp64_equal_def = cake_define
+  `fp64_equal a b = float_equal (fp64_to_float a) (fp64_to_float b)`;;
+
+let fp64_lessThan_def = cake_define
+  `fp64_lessThan a b =
+     float_less_than (fp64_to_float a) (fp64_to_float b)`;;
+
+let fp64_lessEqual_def = cake_define
+  `fp64_lessEqual a b =
+     float_less_equal (fp64_to_float a) (fp64_to_float b)`;;
+
+let fp64_greaterThan_def = cake_define
+  `fp64_greaterThan a b =
+     float_greater_than (fp64_to_float a) (fp64_to_float b)`;;
+
+let fp64_greaterEqual_def = cake_define
+  `fp64_greaterEqual a b =
+     float_greater_equal (fp64_to_float a) (fp64_to_float b)`;;
+
+let fp64_mul_add_def = cake_define
+  `fp64_mul_add mode a b c =
+     float_to_fp64 (SND (float_mul_add mode (fp64_to_float a)
+                                            (fp64_to_float b)
+                                            (fp64_to_float c)))`;;
 ''',
 }

@@ -151,6 +151,10 @@ class Porter:
       if ext:
         self.out.append('\n'.join(
           fill('(* HOL4 ancestors outside the port:', ext, 69)) + ' *)')
+      # definitions that HOL4 generates with ML code, and that the
+      # port has by hand
+      if self.thy in overrides.EXTRA_HEAD:
+        self.out.append(overrides.EXTRA_HEAD[self.thy].strip())
     elif k == 'Libs':
       pass
     elif k == 'Datatype':
@@ -243,6 +247,7 @@ class Porter:
       return
     body = b.body
     self.ctx.intnums = key in overrides.INT_NUMERALS
+    self.ctx.wordnot = key in overrides.WORD_NOT
     if key in overrides.MATCH_FORM or self.overlapping(body):
       term = fmt(self.match_form(body))
     else:
@@ -254,6 +259,7 @@ class Porter:
                       '  `%s`;;' % (name, rel, term))
       return
     self.ctx.intnums = False
+    self.ctx.wordnot = False
     if b.extra is None:
       self.out.append('let %s = cake_define\n  `%s`;;' % (name, term))
     else:
@@ -267,7 +273,7 @@ class Porter:
                           fill('(* HOL4 termination:', rest.split(), 69))
                         + ' *)\n'
                         'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
-                        % (name, fmt(self.term(rel)), term))
+                        % (name, fmt(self.term(rel), last=1), term))
 
   # -- a definition as one clause with a match -------------------
 
@@ -402,8 +408,10 @@ def Node_list(items, tok):
   return hterm.Node('list', tok=tok.tok, items=items)
 
 
-def fmt(text, indent=3, width=72):
-  """the layout of a translated term in the HOL Light source"""
+def fmt(text, indent=3, width=72, last=3):
+  """the layout of a translated term in the HOL Light source; the
+     last line of the term is followed by a quote and a ;; (last
+     characters), so it has to be that much shorter"""
   lines = [l.rstrip() for l in text.split('\n') if l.strip()]
   if not lines: return ''
   base = len(lines[0]) - len(lines[0].lstrip())
@@ -411,7 +419,9 @@ def fmt(text, indent=3, width=72):
   for l in lines[1:]:
     k = len(l) - len(l.lstrip())
     out.append(' ' * (indent + max(0, k - base)) + l.lstrip())
-  return '\n'.join(wrap(l, indent, width) for l in out)
+  return '\n'.join(
+    wrap(l, indent, width - (last if i == len(out) - 1 else 0))
+    for i, l in enumerate(out))
 
 
 def wrap(line, indent, width):

@@ -26,10 +26,14 @@ let num_set_tree_union_def = cake_define
                t2') | BS t1' b t2' ->
              BS (num_set_tree_union t1 t1') (sptree_union a b)
                  (num_set_tree_union t2 t2')))`;;
-(* HOL4 termination: >> rw[] >> gvs[subspt_domain, SUBSET_DEF] >> irule size_diff_less >> gvs[domain_union, domain_spt_fold_union, lookup_inter] >> EVERY_CASE_TAC >> gvs[] >> simp[PULL_EXISTS, GSYM CONJ_ASSOC] >> goal_assum drule >> goal_assum drule >> simp[] >> goal_assum (drule_at Any) >> qexists_tac `k` >> simp[] *)
+(* HOL4 termination: >> rw[] >> gvs[subspt_domain, SUBSET_DEF] >>
+   irule size_diff_less >> gvs[domain_union, domain_spt_fold_union,
+   lookup_inter] >> EVERY_CASE_TAC >> gvs[] >> simp[PULL_EXISTS, GSYM
+   CONJ_ASSOC] >> goal_assum drule >> goal_assum drule >> simp[] >>
+   goal_assum (drule_at Any) >> qexists_tac `k` >> simp[] *)
 let closure_spt_def = cake_define_wf
-  `MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN t)
-  r))`
+  `MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN
+  t) r))`
   `closure_spt (reachable:one spt) tree =
      (let sets = inter tree reachable in
      let nodes = spt_fold sptree_union LN sets in

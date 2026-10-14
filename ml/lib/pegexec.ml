@@ -9,7 +9,14 @@ needs "lib/location.ml";;
 needs "lib/peg.ml";;
 (* HOL4 ancestors outside the port: rich_list *)
 let kont_INDUCT,kont_RECURSION = define_datatype
-  "kont = ksym (('atok,'bnt,'cvalue,'err)pegsym) (kont) (kont) | appf1 ('cvalue->'cvalue) (kont) | appf2 ('cvalue->'cvalue->'cvalue) (kont) | dropErr (kont) | addErr (locs) ('err) (kont) | cmpErrs (kont) | cmpEO ((locs#'err) option) (kont) | returnTo (('atok#locs) list) (('cvalue option) list) (kont) | restoreEO ((locs#'err) option) (kont) | poplist ('cvalue list->'cvalue) (kont) | listsym (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue list->'cvalue) (kont) | done | failed";;
+  "kont = ksym (('atok,'bnt,'cvalue,'err)pegsym) (kont) (kont) | appf1 \
+   ('cvalue->'cvalue) (kont) | appf2 ('cvalue->'cvalue->'cvalue) \
+   (kont) | dropErr (kont) | addErr (locs) ('err) (kont) | cmpErrs \
+   (kont) | cmpEO ((locs#'err) option) (kont) | returnTo (('atok#locs) \
+   list) (('cvalue option) list) (kont) | restoreEO ((locs#'err) \
+   option) (kont) | poplist ('cvalue list->'cvalue) (kont) | listsym \
+   (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue list->'cvalue) (kont) | \
+   done | failed";;
 let poplist_aux_def = cake_define
   `poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t /\
    poplist_aux acc (NONE :: t) = (acc,t) /\
@@ -18,7 +25,14 @@ let poplistval_def = cake_define
   `poplistval f l = (let (values,rest) = poplist_aux [] l in
                       SOME (f values) :: rest)`;;
 let evalcase_INDUCT,evalcase_RECURSION = define_datatype
-  "evalcase = pegexec_EV (('atok,'bnt,'cvalue,'err)pegsym) (('atok#locs) list) (('cvalue option) list) ((locs#'err) option) ((locs#'err) list) (('atok,'bnt,'cvalue,'err)kont) (('atok,'bnt,'cvalue,'err)kont) | pegexec_AP (('atok,'bnt,'cvalue,'err)kont) (('atok#locs) list) (('cvalue option) list) ((locs#'err) option) ((locs#'err) list) | pegexec_Result ((('atok#locs) list,'cvalue,'err)pegresult) | pegexec_Looped";;
+  "evalcase = pegexec_EV (('atok,'bnt,'cvalue,'err)pegsym) \
+   (('atok#locs) list) (('cvalue option) list) ((locs#'err) option) \
+   ((locs#'err) list) (('atok,'bnt,'cvalue,'err)kont) \
+   (('atok,'bnt,'cvalue,'err)kont) | pegexec_AP \
+   (('atok,'bnt,'cvalue,'err)kont) (('atok#locs) list) (('cvalue \
+   option) list) ((locs#'err) option) ((locs#'err) list) | \
+   pegexec_Result ((('atok#locs) list,'cvalue,'err)pegresult) | \
+   pegexec_Looped";;
 (* HOL4 overload (expanded in the port):
      OME = optmax MAXerr *)
 (* HOL4 overload (expanded in the port):

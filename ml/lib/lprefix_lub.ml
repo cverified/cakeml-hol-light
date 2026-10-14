@@ -5,7 +5,8 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
-(* HOL4 ancestors outside the port: list rich_list llist pred_set option *)
+(* HOL4 ancestors outside the port: list rich_list llist pred_set
+   option *)
 let lprefix_chain_nth_def = cake_define
   `lprefix_chain_nth n ls =
      some (\x. ?l. l IN ls /\ LNTH n l = SOME x)`;;

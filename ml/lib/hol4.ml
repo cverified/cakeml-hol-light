@@ -494,6 +494,22 @@ let INT_MOD_NUM = prove
   REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN INT_ARITH_TAC);;
 
 (* ------------------------------------------------------------------------- *)
+(* HOL4's LEAST_INT (integerTheory) and the floor and the ceiling of a       *)
+(* real number as an integer (intrealTheory).                               *)
+(* ------------------------------------------------------------------------- *)
+
+let LEAST_INT = new_definition
+  `LEAST_INT (P:int->bool) = (@i. P i /\ (!j. j < i ==> ~P j))`;;
+
+parse_as_binder "LEAST_INT";;
+
+let INT_FLOOR = new_definition
+  `INT_FLOOR x = LEAST_INT i. x < real_of_int (i + &1)`;;
+
+let INT_CEILING = new_definition
+  `INT_CEILING x = LEAST_INT i. x <= real_of_int i`;;
+
+(* ------------------------------------------------------------------------- *)
 (* HOL Light's machinery for the admissibility of a recursion knows MAP      *)
 (* but not ALL, EX or a bounded quantifier, so a definition that recurses    *)
 (* under those is made with the right hand side rewritten with these         *)

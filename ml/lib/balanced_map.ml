@@ -7,9 +7,11 @@
 
 needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
-(* HOL4 ancestors outside the port: option pair string arithmetic pred_set list finite_map alist *)
+(* HOL4 ancestors outside the port: option pair string arithmetic
+   pred_set list finite_map alist *)
 let balanced_map_INDUCT,balanced_map_RECURSION = define_datatype
-  "balanced_map = Tip | Bin (num) ('k) ('v) (balanced_map) (balanced_map)";;
+  "balanced_map = Tip | Bin (num) ('k) ('v) (balanced_map) \
+   (balanced_map)";;
 let ratio_def = cake_define
   `ratio = (2:num)`;;
 let delta_def = cake_define
@@ -18,8 +20,8 @@ let size_def = cake_define
   `balanced_map_size Tip = 0 /\
    balanced_map_size (Bin s k v l r) = s`;;
 let bin_def = cake_define
-  `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1) k x
-  l r`;;
+  `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
+  k x l r`;;
 let lookup_def = cake_define
   `balanced_map_lookup cmp k Tip = NONE /\
    balanced_map_lookup cmp k (Bin s k' v l r) =
@@ -103,22 +105,23 @@ let insert_def = cake_define
   `(balanced_map_insert cmp k v Tip = singleton k v) /\
    (balanced_map_insert cmp k v (Bin s k' v' l r) =
      (match cmp k k' with (LESS) -> balanceL k' v'
-       (balanced_map_insert cmp k v l) r | (GREATER) -> balanceR k' v' l
-       (balanced_map_insert cmp k v r) | (EQUAL) -> Bin s k v l r))`;;
+       (balanced_map_insert cmp k v l) r | (GREATER) -> balanceR k'
+       v' l (balanced_map_insert cmp k v r) | (EQUAL) -> Bin s k v l
+       r))`;;
 let insertR_def = cake_define
   `(insertR cmp k v Tip = singleton k v) /\
    (insertR cmp k v (Bin s k' v' l r) =
-     (match cmp k k' with (LESS) -> balanceL k' v' (insertR cmp k v
-       l) r | (GREATER) -> balanceR k' v' l (insertR cmp k v r) |
+     (match cmp k k' with (LESS) -> balanceL k' v' (insertR cmp k
+       v l) r | (GREATER) -> balanceR k' v' l (insertR cmp k v r) |
        (EQUAL) -> Bin s k' v' l r))`;;
 let insertMax_def = cake_define
   `(insertMax k v Tip = singleton k v) /\
-   (insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax k v
-     r))`;;
+   (insertMax k v (Bin s k' v' l r) = balanceR k' v' l (insertMax
+     k v r))`;;
 let insertMin_def = cake_define
   `(insertMin k v Tip = singleton k v) /\
-   (insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k v
-     l) r)`;;
+   (insertMin k v (Bin s k' v' l r) = balanceL k' v' (insertMin k
+     v l) r)`;;
 let deleteFindMax_def = cake_define
   `deleteFindMax x1 =
         match x1 with
@@ -193,16 +196,17 @@ let link_def = cake_define
 let filterLt_help_def = cake_define
   `(filterLt_help cmp b Tip = Tip) /\
    (filterLt_help cmp b' (Bin s kx x l r) =
-     (match cmp kx b' with (LESS) -> link kx x l (filterLt_help cmp
-       b' r) | (EQUAL) -> l | (GREATER) -> filterLt_help cmp b' l))`;;
+     (match cmp kx b' with (LESS) -> link kx x l (filterLt_help
+       cmp b' r) | (EQUAL) -> l | (GREATER) -> filterLt_help cmp b'
+       l))`;;
 let filterLt_def = cake_define
   `(filterLt cmp NONE t = t) /\
    (filterLt cmp (SOME b) t = filterLt_help cmp b t)`;;
 let filterGt_help_def = cake_define
   `(filterGt_help cmp b Tip = Tip) /\
    (filterGt_help cmp b' (Bin s kx x l r) =
-     (match cmp b' kx with (LESS) -> link kx x (filterGt_help cmp b'
-       l) r | (EQUAL) -> r | (GREATER) -> filterGt_help cmp b' r))`;;
+     (match cmp b' kx with (LESS) -> link kx x (filterGt_help cmp
+       b' l) r | (EQUAL) -> r | (GREATER) -> filterGt_help cmp b' r))`;;
 let filterGt_def = cake_define
   `(filterGt cmp NONE t = t) /\
    (filterGt cmp (SOME b) t = filterGt_help cmp b t)`;;

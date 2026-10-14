@@ -5,12 +5,13 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
-(* HOL4 ancestors outside the port: arithmetic list[qualified] words rich_list *)
+(* HOL4 ancestors outside the port: arithmetic list[qualified] words
+   rich_list *)
 let byte_index_def = cake_define
   `byte_index (a:'a word) is_bigendian =
      (let d = dimindex (:'a) DIV 8 in
-       if is_bigendian then 8 * ((d - 1) - w2n a MOD d) else 8 * (w2n
-         a MOD d))`;;
+       if is_bigendian then 8 * ((d - 1) - w2n a MOD d) else 8 *
+         (w2n a MOD d))`;;
 let get_byte_def = cake_define
   `get_byte (a:'a word) (w:'a word) is_bigendian =
      ((w2w (w >>> byte_index a is_bigendian)):word8)`;;

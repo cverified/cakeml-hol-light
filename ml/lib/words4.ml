@@ -6,10 +6,29 @@
 (*  the rest is defined in terms of HOL Light's words.                      *)
 (* ========================================================================= *)
 
+new_type_abbrev("word1",`:(1)word`);;
+new_type_abbrev("word2",`:(2)word`);;
+new_type_abbrev("word3",`:(3)word`);;
+new_type_abbrev("word4",`:(4)word`);;
+new_type_abbrev("word5",`:(5)word`);;
+new_type_abbrev("word6",`:(6)word`);;
+new_type_abbrev("word7",`:(7)word`);;
 new_type_abbrev("word8",`:(8)word`);;
+new_type_abbrev("word9",`:(9)word`);;
+new_type_abbrev("word10",`:(10)word`);;
+new_type_abbrev("word11",`:(11)word`);;
+new_type_abbrev("word12",`:(12)word`);;
 new_type_abbrev("word16",`:(16)word`);;
+new_type_abbrev("word20",`:(20)word`);;
+new_type_abbrev("word24",`:(24)word`);;
+new_type_abbrev("word28",`:(28)word`);;
+new_type_abbrev("word30",`:(30)word`);;
 new_type_abbrev("word32",`:(32)word`);;
+new_type_abbrev("word48",`:(48)word`);;
+new_type_abbrev("word56",`:(56)word`);;
 new_type_abbrev("word64",`:(64)word`);;
+new_type_abbrev("word96",`:(96)word`);;
+new_type_abbrev("word128",`:(128)word`);;
 
 (* ------------------------------------------------------------------------- *)
 (* The HOL4 names of HOL Light's word operations.                            *)

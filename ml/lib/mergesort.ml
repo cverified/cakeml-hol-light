@@ -6,7 +6,8 @@
 (* ======================================================== *)
 
 needs "lib/sorting.ml";;
-(* HOL4 ancestors outside the port: pred_set arithmetic list rich_list option pair relation *)
+(* HOL4 ancestors outside the port: pred_set arithmetic list
+   rich_list option pair relation *)
 let sort2_def = cake_define
   `sort2 R x y =
      (if R x y then

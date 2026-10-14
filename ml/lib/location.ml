@@ -25,8 +25,8 @@ let locnle_def = cake_define
      l1 = (UNKNOWNpt) \/
      l2 = (EOFpt) \/ ~(
      l2 = (UNKNOWNpt)) /\ ~(l1 = (EOFpt)) /\
-     (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2 /\ locncol
-       l1 < locncol l2)`;;
+     (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2 /\
+       locncol l1 < locncol l2)`;;
 let locsle_def = cake_define
   `locsle (Locs l1 _1) (Locs l2 _2) <=> locnle l1 l2`;;
 let merge_locs_def = cake_define
