@@ -7,9 +7,14 @@
   Syntactic properties used by wordLang across passes.
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/sptree.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/typeSystem.ml";;
 (*** Mono and conj lemmas for every_var/every_stack_var ***)
 
 (*Conjunct*)

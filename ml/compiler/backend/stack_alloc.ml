@@ -11,8 +11,15 @@
   implementation of the garbage collector.
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/byte.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "semantics/ast.ml";;
 
 let memcpy_code_def = cake_define
   `memcpy_code =

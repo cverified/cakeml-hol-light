@@ -7,8 +7,25 @@
   The formal semantics of stackLang
 *)
 
+needs "compiler/backend/data_live.ml";;
+needs "compiler/backend/export.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/wordLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/alignment.ml";;
+needs "lib/binary_ieee.ml";;
+needs "lib/byte.ml";;
+needs "lib/integer_word.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ffi/ffi.ml";;
+needs "semantics/fpSem.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: (* for word_loc and word_cmp *) *)
 
 
@@ -481,17 +498,17 @@ let inst_def = cake_define
          SOME (stackSem_set_var r
            (wordLang_Word (if fp64_equal f1 f2 then (n2w 1) else (n2w
              0))) s) | _35 -> NONE) | asm_FP (FPMov d1 d2) ->
-       (match stackSem_get_fp_var d2 s with SOME f' ->
-         SOME (stackSem_set_fp_var d1 f' s) | _36 -> NONE) | asm_FP
+       (match stackSem_get_fp_var d2 s with SOME f ->
+         SOME (stackSem_set_fp_var d1 f s) | _36 -> NONE) | asm_FP
            (FPAbs d1 d2) ->
-       (match stackSem_get_fp_var d2 s with SOME f' ->
-         SOME (stackSem_set_fp_var d1 (fp64_abs f') s) | _37 -> NONE)
+       (match stackSem_get_fp_var d2 s with SOME f ->
+         SOME (stackSem_set_fp_var d1 (fp64_abs f) s) | _37 -> NONE)
            | asm_FP (FPNeg d1 d2) ->
-       (match stackSem_get_fp_var d2 s with SOME f' ->
-         SOME (stackSem_set_fp_var d1 (fp64_negate f') s) | _38 ->
+       (match stackSem_get_fp_var d2 s with SOME f ->
+         SOME (stackSem_set_fp_var d1 (fp64_negate f) s) | _38 ->
            NONE) | asm_FP (FPSqrt d1 d2) ->
-       (match stackSem_get_fp_var d2 s with SOME f' ->
-         SOME (stackSem_set_fp_var d1 (fp64_sqrt roundTiesToEven f')
+       (match stackSem_get_fp_var d2 s with SOME f ->
+         SOME (stackSem_set_fp_var d1 (fp64_sqrt roundTiesToEven f)
            s) | _39 -> NONE) | asm_FP (FPAdd d1 d2 d3) ->
        (match (stackSem_get_fp_var d2 s,stackSem_get_fp_var d3 s)
          with (SOME f1,SOME f2) ->
@@ -528,22 +545,22 @@ let inst_def = cake_define
              (stackSem_set_fp_var d (w2 @@ w1) s) | _47 -> NONE) |
              asm_FP (FPToInt d1 d2) ->
        (match stackSem_get_fp_var d2 s with
-         NONE -> NONE | SOME f' ->
-       (match fp64_to_int roundTiesToEven f' with
+         NONE -> NONE | SOME f ->
+       (match fp64_to_int roundTiesToEven f with
          NONE -> NONE | SOME i ->
          (let w = i2w i:word32 in
          if w2i w = i then
            (if dimindex (:'a) = 64 then
               SOME (stackSem_set_fp_var d1 (w2w w) s) else
             match stackSem_get_fp_var (d1 DIV 2) s with
-              NONE -> NONE | SOME f' ->
+              NONE -> NONE | SOME f ->
               (let (h,l) = if ODD d1 then (63,32) else (31,0) in
                    SOME (stackSem_set_fp_var (d1 DIV 2)
-                     (bit_field_insert h l w f') s))) else
+                     (bit_field_insert h l w f) s))) else
            NONE))) | asm_FP (FPFromInt d1 d2) ->
        (if dimindex (:'a) = 64 then
-         match stackSem_get_fp_var d2 s with SOME f' ->
-           (let i = w2i ((31 >< 0) f':word32) in
+         match stackSem_get_fp_var d2 s with SOME f ->
+           (let i = w2i ((31 >< 0) f:word32) in
              SOME (stackSem_set_fp_var d1 (int_to_fp64
                roundTiesToEven i) s)) | NONE -> NONE else
          match stackSem_get_fp_var (d2 DIV 2) s with SOME v ->
@@ -608,7 +625,7 @@ let copy_words_for_pattern_def = cake_define
 (* HOL4 termination: \\ rw [] \\ imp_res_tac
    copy_words_for_pattern_LESS_EQ \\ fs [] *)
 let copy_words_def = cake_define_wf
-  `MEASURE (\(i,a,f',bs,dm,m). LENGTH bs - i)`
+  `MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)`
   `copy_words i a off bs dm m =
      (if LENGTH bs <= i then NONE else
        let pattern = EL i bs in
@@ -994,7 +1011,7 @@ let semantics_def = cake_define
             res = SOME stackSem_TimeOut) /\ ~(res = SOME
               (stackSem_Result (wordLang_Loc 1 0))) /\
             (!w. ~(res = SOME (stackSem_Halt (wordLang_Word w)))) /\
-              (!f'. ~(res = SOME (stackSem_FinalFFI f'))) then ffi_Fail
+              (!f. ~(res = SOME (stackSem_FinalFFI f))) then ffi_Fail
               else
      match some (\res.
        ?k t r outcome.

@@ -8,6 +8,7 @@
   proof-producing monadic translator.
 *)
 
+needs "lib/set_sep.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* 'a is the type of the state, 'b is the type of successful
@@ -30,17 +31,17 @@ let liftM_def = cake_define
 (* Definitions using monadic syntax *)
 
 let st_ex_bind_def = cake_define
-  `(st_ex_bind) x f' =
+  `(st_ex_bind) x f =
      (\s.
        match x s with
-         (M_success y,s) -> f' y s | (M_failure x,s) -> (M_failure
+         (M_success y,s) -> f y s | (M_failure x,s) -> (M_failure
            x,s))`;;
 
 let st_ex_ignore_bind_def = cake_define
-  `(st_ex_ignore_bind) x f' =
+  `(st_ex_ignore_bind) x f =
      (\s.
        match x s with
-         (M_success y,s) -> f' s | (M_failure x,s) -> (M_failure
+         (M_success y,s) -> f s | (M_failure x,s) -> (M_failure
            x,s))`;;
 
 
@@ -74,9 +75,9 @@ let otherwise_def = cake_define
                -> (y:'a->('b,'c)exc#'a) s)`;;
 
 let can_def = cake_define
-  `can f' x = (
-              otherwise monad_ignore_bind (f' x) (return T)
-                (return F))`;;
+  `can f x = (
+              otherwise monad_ignore_bind (f x) (return T) (return
+                F))`;;
 
 (* Dynamic allocation of references *)
 let store_ref_INDUCT,store_ref_RECURSION = define_datatype
@@ -85,14 +86,14 @@ let store_ref_INDUCT,store_ref_RECURSION = define_datatype
 (* Arrays *)
 
 (* Msub *)
-let Msub_def = cake_define
+let msub_def = cake_define
   `Msub e (n:num) l =
      (match l with
        [] -> M_failure e | x :: l' -> (if n = 0 then M_success x
          else Msub e (n - 1) l'))`;;
 
 (* Mupdate *)
-let Mupdate_def = cake_define
+let mupdate_def = cake_define
   `Mupdate e x (n:num) l =
      (match l with
        [] -> M_failure e | x' :: l' ->
@@ -112,52 +113,52 @@ let array_resize_def = cake_define
            array_resize (n - 1) x a')`;;
 
 (* User functions *)
-let Marray_length_def = cake_define
+let marray_length_def = cake_define
   `Marray_length get_arr =
      (\s. (M_success (LENGTH (get_arr s)),s))`;;
 
-let Marray_sub_def = cake_define
+let marray_sub_def = cake_define
   `Marray_sub get_arr e n =
      (\s. (Msub e n (get_arr s),s))`;;
 
-let Marray_update_def = cake_define
+let marray_update_def = cake_define
   `Marray_update get_arr set_arr e n x =
      (\s. match Mupdate e x n (get_arr s) with
            M_success a -> (M_success one,set_arr a s) | M_failure
              e -> (M_failure e,s))`;;
 
-let Marray_alloc_def = cake_define
+let marray_alloc_def = cake_define
   `Marray_alloc set_arr n x =
      (\s. (M_success one,set_arr (REPLICATE n x) s))`;;
 
-let Marray_resize_def = cake_define
+let marray_resize_def = cake_define
   `Marray_resize get_arr set_arr n x =
      (\s. (M_success one,set_arr (array_resize n x (get_arr s))
        s))`;;
 
 (* Dynamic allocated references *)
-let Mref_def = cake_define
+let mref_def = cake_define
   `Mref cons x = (\s. (M_success (StoreRef (LENGTH s)),cons x :: s))`;;
 
 let dref_def = cake_define
   `dref n = (\s. EL (LENGTH s - n - 1) s)`;;
 
-let Mdref_aux_def = cake_define
+let mdref_aux_def = cake_define
   `Mdref_aux e (n:num) =
      (\s. match s with
            [] -> M_failure e | x :: s -> (if n = 0 then M_success
              x else Mdref_aux e (n - 1) s))`;;
 
-let Mdref_def = cake_define
+let mdref_def = cake_define
   `Mdref e (StoreRef n) =
      (\s. (Mdref_aux e (LENGTH s - n - 1) s,s))`;;
 
-let Mpop_ref_def = cake_define
+let mpop_ref_def = cake_define
   `Mpop_ref e =
      (\(r,s). match s with
                 x :: s -> (r,s) | [] -> (M_failure e,s))`;;
 
-let Mref_assign_aux_def = cake_define
+let mref_assign_aux_def = cake_define
   `Mref_assign_aux e (n:num) x =
      (\s. match s with
            x' :: s ->
@@ -167,7 +168,7 @@ let Mref_assign_aux_def = cake_define
                   M_success s -> M_success (x' :: s) | other ->
                     other)) | [] -> M_failure e)`;;
 
-let Mref_assign_def = cake_define
+let mref_assign_def = cake_define
   `Mref_assign e (StoreRef n) x =
      (\s. match Mref_assign_aux e (LENGTH s - n - 1) x s with
            M_success s -> (M_success one,s) | M_failure e ->
@@ -177,16 +178,16 @@ let ref_assign_def = cake_define
   `ref_assign n x = (\s. LUPDATE x (LENGTH s - n - 1) s)`;;
 
 let ref_bind_def = cake_define
-  `ref_bind create f' pop =
+  `ref_bind create f pop =
      (\s. match create s with
-           (M_success x,s) -> pop (f' x s) | (M_failure x,s) ->
+           (M_success x,s) -> pop (f x s) | (M_failure x,s) ->
              (M_failure x,s))`;;
 
 (* TODO: use that *)
-let Mget_ref_def = cake_define
+let mget_ref_def = cake_define
   `Mget_ref get_var' = (\s. (M_success (get_var' s),s))`;;
 
-let Mset_ref_def = cake_define
+let mset_ref_def = cake_define
   `Mset_ref set_var' x = (\s. (M_success one,set_var' x s))`;;
 
 (* Rules to deal with the monads *)

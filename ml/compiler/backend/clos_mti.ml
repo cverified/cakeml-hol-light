@@ -10,6 +10,7 @@
   functions. This phase is vital for good performance.
 *)
 
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 
 let collect_args_def = cake_define

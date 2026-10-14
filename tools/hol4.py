@@ -110,7 +110,9 @@ def equality_mode(text):
 
 
 ML_DEF = re.compile(r"""^val\s+([A-Za-z0-9_']+)\s*=\s*
-                        [txz]?Define\b\s*("[^"]*")?\s*""", re.X)
+                        (?:[txz]?Define\b\s*("[^"]*")?\s*
+                          |new_(?:binder_|infixr_|infixl_)?definition
+                           \s*\(\s*"[^"]*"\s*,\s*)""", re.X)
 
 
 def ml_definition(text):
@@ -129,6 +131,11 @@ def ml_definition(text):
   if j < 0: return None
   rest = rest.strip()
   if rest.endswith(';'): rest = rest[:-1].strip()
+  # the closing parenthesis of a new_definition call, or the
+  # termination tactic of a tDefine
+  while rest.startswith(')') or rest.endswith(')'):
+    if rest.startswith('('): break
+    rest = (rest[1:] if rest.startswith(')') else rest[:-1]).strip()
   if rest.startswith('(') and rest.endswith(')'): rest = rest[1:-1]
   return Block('Definition', m.group(1), [], body, rest or None,
                text=text)

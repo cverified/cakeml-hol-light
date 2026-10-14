@@ -30,6 +30,7 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: (* for op *) (* for num_set *) *)
 

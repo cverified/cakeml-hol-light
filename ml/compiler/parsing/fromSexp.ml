@@ -13,11 +13,17 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/encoders/asm/asmSem.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "lib/numposrep.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
+needs "semantics/namespace.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: simpleSexp quantHeuristics *)
 
 (* TODO: this is duplicated in parserProgTheory *)
@@ -214,7 +220,7 @@ let sexptype_alt_def = cake_define
 
 let sexplit_def = cake_define
   `sexplit s =
-     (OPTION_MAP) (ast_IntLit o &) (odestSXNUM s) ++
+     (OPTION_MAP) (ast_IntLit o (&)) (odestSXNUM s) ++
      (OPTION_MAP) ast_StrLit (odestSEXSTR s) ++
      monad_bind (dstrip_sexp s) (\
        (nm,args). monad_ignore_bind
@@ -983,7 +989,7 @@ let decsexp_def = cake_define
           SX_SYM "Dletrec";
           locssexp locs;
           listsexp
-            (MAP (\(f',x,e). SX_CONS (SEXSTR (explode f')) (SX_CONS
+            (MAP (\(f,x,e). SX_CONS (SEXSTR (explode f)) (SX_CONS
               (SEXSTR (explode x)) (expsexp e)))
              funs)] /\
    decsexp (Dtype locs td) = (SX_SYM "Dtype"; locssexp locs;

@@ -10,6 +10,9 @@
 
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mloption.ml";;
+needs "basis/pure/mlsexp.ml";;
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -17,11 +20,19 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/displayLang.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "compiler/backend/jsonLang.ml";;
 needs "compiler/backend/labLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/source_to_flat.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/fpSem.ml";;
+needs "semantics/namespace.ml";;
 
 (* basics *)
 
@@ -315,10 +326,10 @@ let pat_to_display_def = cake_define_wf
        displayLang_Item NONE (strlit "Pvar") [displayLang_String
        semanticPrimitives_v] | flatLang_Plit l -> displayLang_Item NONE
        (strlit "Plit") [lit_to_display l] | flatLang_Pcon opt_id pats ->
-         displayLang_Item NONE (strlit "Pcon") [(\f' opt. match opt
+         displayLang_Item NONE (strlit "Pcon") [(\f opt. match opt
            with NONE -> empty_item (strlit "none") | SOME opt' ->
-           displayLang_Item NONE (strlit "some") [f' opt'])
-           id_to_display opt_id;
+           displayLang_Item NONE (strlit "some") [f opt']) id_to_display
+           opt_id;
                            displayLang_Tuple (pat_to_display_list
                              pats)] | flatLang_Pas t
                              semanticPrimitives_v -> displayLang_Item
@@ -341,8 +352,8 @@ let exp_to_display_def = cake_define
        (strlit "Lit") [lit_to_display l] | flatLang_Raise e ->
        displayLang_Item NONE (strlit "Raise") [exp_to_display e] |
        flatLang_Con opt_id es -> displayLang_Item NONE (strlit "Con")
-       [(\f' opt. match opt with NONE -> empty_item (strlit "none") |
-       SOME opt' -> displayLang_Item NONE (strlit "some") [f' opt'])
+       [(\f opt. match opt with NONE -> empty_item (strlit "none") |
+       SOME opt' -> displayLang_Item NONE (strlit "some") [f opt'])
        id_to_display opt_id;
                               displayLang_Tuple (exp_to_display_list
                                 es)] | wordLang_Var id ->
@@ -365,8 +376,8 @@ let exp_to_display_def = cake_define
                               exp_to_display e3] | flatLang_Let n_opt
                                 e1 e2 -> displayLang_Item NONE (strlit
                                 "Let")
-         [(\f' opt. match opt with NONE -> empty_item (strlit "none")
-           | SOME opt' -> displayLang_Item NONE (strlit "some") [f'
+         [(\f opt. match opt with NONE -> empty_item (strlit "none")
+           | SOME opt' -> displayLang_Item NONE (strlit "some") [f
            opt']) displayLang_String n_opt;
           exp_to_display e1;
           exp_to_display e2] | flatLang_Mat e pats ->
@@ -531,9 +542,9 @@ let flat_to_display_def = cake_define
            flat_to_display flatLang_exp :: pat_flat_to_display_list
              pes)
         | (flatLang_Let tra varN_opt exp1 exp2) ->
-       displayLang_Item (SOME tra) (strlit "let") [(\f' opt. match
-         opt with NONE -> empty_item (strlit "none") | SOME opt' ->
-         displayLang_Item NONE (strlit "some") [f' opt']) string_imp
+       displayLang_Item (SOME tra) (strlit "let") [(\f opt. match opt
+         with NONE -> empty_item (strlit "none") | SOME opt' ->
+         displayLang_Item NONE (strlit "some") [f opt']) string_imp
          varN_opt;
            flat_to_display exp1; flat_to_display exp2]
         | (flatLang_Letrec name_hint funs flatLang_exp) ->
@@ -786,33 +797,33 @@ let clos_to_display_def = cake_define_wf
         (clos_to_display_list ns h xs))) /\
    (clos_to_display ns h (flatLang_App t opt_n x xs) =
      displayLang_Item (SOME t) (strlit "app")
-         ([(\f' opt. match opt with NONE -> empty_item (strlit
-           "none") | SOME opt' -> displayLang_Item NONE (strlit "some")
-           [f' opt']) num_to_display opt_n;
+         ([(\f opt. match opt with NONE -> empty_item (strlit "none")
+           | SOME opt' -> displayLang_Item NONE (strlit "some") [f
+           opt']) num_to_display opt_n;
            clos_to_display ns h x] ++ (clos_to_display_list ns h
              xs))) /\
    (clos_to_display ns h (closLang_Fn name_hint n1 n2 vn x) =
      displayLang_Item (SOME backend_common_None) (add_name_hint
        (strlit "fn") name_hint)
-         [(\f' opt. match opt with NONE -> empty_item (strlit "none")
-           | SOME opt' -> displayLang_Item NONE (strlit "some") [f'
+         [(\f opt. match opt with NONE -> empty_item (strlit "none")
+           | SOME opt' -> displayLang_Item NONE (strlit "some") [f
            opt']) num_to_display n1;
-          (\f' opt. match opt with NONE -> empty_item (strlit "none")
-            | SOME opt' -> displayLang_Item NONE (strlit "some") [f'
-            opt']) ((\f' xs. displayLang_Tuple (MAP f' xs))
+          (\f opt. match opt with NONE -> empty_item (strlit "none")
+            | SOME opt' -> displayLang_Item NONE (strlit "some") [f
+            opt']) ((\f xs. displayLang_Tuple (MAP f xs))
             num_to_display) n2;
-          (\f' xs. displayLang_Tuple (MAP f' xs)) string_imp
+          (\f xs. displayLang_Tuple (MAP f xs)) string_imp
             (num_to_varn_list h vn);
           clos_to_display ns h x]) /\
    (clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
      displayLang_Item (SOME backend_common_None) (add_name_hint
        (strlit "letrec") (presLang_commas name_hint))
-         [(\f' opt. match opt with NONE -> empty_item (strlit "none")
-           | SOME opt' -> displayLang_Item NONE (strlit "some") [f'
+         [(\f opt. match opt with NONE -> empty_item (strlit "none")
+           | SOME opt' -> displayLang_Item NONE (strlit "some") [f
            opt']) num_to_display n1;
-          (\f' opt. match opt with NONE -> empty_item (strlit "none")
-            | SOME opt' -> displayLang_Item NONE (strlit "some") [f'
-            opt']) ((\f' xs. displayLang_Tuple (MAP f' xs))
+          (\f opt. match opt with NONE -> empty_item (strlit "none")
+            | SOME opt' -> displayLang_Item NONE (strlit "some") [f
+            opt']) ((\f xs. displayLang_Tuple (MAP f xs))
             num_to_display) n2;
           displayLang_Tuple (clos_to_display_letrecs ns h (LENGTH es
             - 1) (LENGTH es) es);
@@ -832,7 +843,7 @@ let clos_to_display_def = cake_define_wf
    (clos_to_display_letrecs ns h i len [] = []) /\
    (clos_to_display_letrecs ns h i len ((vn,e) :: es) =
      displayLang_Tuple [display_num_as_varn (h + i);
-         (\f' xs. displayLang_Tuple (MAP f' xs)) string_imp
+         (\f xs. displayLang_Tuple (MAP f xs)) string_imp
            (num_to_varn_list ((h + len) - 1) vn);
          clos_to_display ns (h + len + vn) e] ::
            clos_to_display_letrecs ns h (i - 1) len es)`;;
@@ -1006,26 +1017,26 @@ let data_prog_to_display_def = cake_define_wf
            [num_to_display x; displayLang_String (strlit ":=");
              num_to_display y] | labLang_Call rets target args NONE ->
              displayLang_Item NONE (strlit "call")
-           [(\f' opt. match opt with NONE -> empty_item (strlit
+           [(\f opt. match opt with NONE -> empty_item (strlit
              "none") | SOME opt' -> displayLang_Item NONE (strlit
-             "some") [f' opt']) (\(x,y). displayLang_Tuple
-                   [(\f' xs. displayLang_Tuple (MAP f' xs))
+             "some") [f opt']) (\(x,y). displayLang_Tuple
+                   [(\f xs. displayLang_Tuple (MAP f xs))
                      num_to_display x;
                     num_set_to_display y]) rets;
                displayLang_String (attach_name ns target);
-               (\f' xs. displayLang_Tuple (MAP f' xs)) num_to_display
+               (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
                  args;
                empty_item (strlit "none")] | labLang_Call rets target
                  args (SOME (semanticPrimitives_v,handler)) ->
                  displayLang_Item NONE (strlit "call")
-           [(\f' opt. match opt with NONE -> empty_item (strlit
+           [(\f opt. match opt with NONE -> empty_item (strlit
              "none") | SOME opt' -> displayLang_Item NONE (strlit
-             "some") [f' opt']) (\(x,y). displayLang_Tuple
-                   [(\f' xs. displayLang_Tuple (MAP f' xs))
+             "some") [f opt']) (\(x,y). displayLang_Tuple
+                   [(\f xs. displayLang_Tuple (MAP f xs))
                      num_to_display x;
                     num_set_to_display y]) rets;
                displayLang_String (attach_name ns target);
-               (\f' xs. displayLang_Tuple (MAP f' xs)) num_to_display
+               (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
                  args;
                displayLang_Item NONE (strlit "some")
                  [displayLang_Tuple [num_to_display
@@ -1033,9 +1044,9 @@ let data_prog_to_display_def = cake_define_wf
                    data_prog_to_display k ns handler]]] | bvl_Force
                      ret loc src -> displayLang_Item NONE (strlit
                      "force")
-           [(\f' opt. match opt with NONE -> empty_item (strlit
+           [(\f opt. match opt with NONE -> empty_item (strlit
              "none") | SOME opt' -> displayLang_Item NONE (strlit
-             "some") [f' opt']) (\(x,y). displayLang_Tuple
+             "some") [f opt']) (\(x,y). displayLang_Tuple
                    [num_to_display x; num_set_to_display y]) ret;
             num_to_display loc;
             num_to_display src] | wordLang_Assign n flatLang_op args
@@ -1043,11 +1054,11 @@ let data_prog_to_display_def = cake_define_wf
            [num_to_display n;
             displayLang_String (strlit ":=");
             clos_op_to_display ns flatLang_op;
-               (\f' xs. displayLang_Tuple (MAP f' xs)) num_to_display
+               (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
                  args;
-               (\f' opt. match opt with NONE -> empty_item (strlit
+               (\f opt. match opt with NONE -> empty_item (strlit
                  "none") | SOME opt' -> displayLang_Item NONE (strlit
-                 "some") [f' opt']) num_set_to_display n_set] |
+                 "some") [f opt']) num_set_to_display n_set] |
                  wordLang_Seq x y ->
            (let xs = append (mlsexp_Append (data_seqs x) (data_seqs
              y)) in
@@ -1061,7 +1072,7 @@ let data_prog_to_display_def = cake_define_wf
            [num_to_display n; num_set_to_display ns] | flatLang_Raise
              n -> displayLang_Item NONE (strlit "raise") [num_to_display
              n] | wordLang_Return ns -> displayLang_Item NONE (strlit
-             "return") [(\f' xs. displayLang_Tuple (MAP f' xs))
+             "return") [(\f xs. displayLang_Tuple (MAP f xs))
              num_to_display ns] | wordLang_Tick -> empty_item (strlit
              "tick")
         | (k,[]) -> []
@@ -1478,10 +1489,10 @@ let word_prog_to_display_def = cake_define_wf
         | ((SUC k),(labLang_Call a b c d)) -> displayLang_Item NONE
           (strlit "call")
        [word_prog_to_display_ret k ns a;
-        (\f' opt. match opt with NONE -> empty_item (strlit "none") |
-          SOME opt' -> displayLang_Item NONE (strlit "some") [f' opt'])
+        (\f opt. match opt with NONE -> empty_item (strlit "none") |
+          SOME opt' -> displayLang_Item NONE (strlit "some") [f opt'])
           (\n. displayLang_String (attach_name ns (SOME n))) b;
-        (\f' xs. displayLang_Tuple (MAP f' xs)) num_to_display c;
+        (\f xs. displayLang_Tuple (MAP f xs)) num_to_display c;
         word_prog_to_display_handler k ns d]
         | ((SUC k),(wordLang_OpCurrHeap b n1 n2)) ->
           displayLang_Tuple
@@ -1582,9 +1593,9 @@ let default_tap_config_def = cake_define
 (* ------------------------- *)
 
 let map_to_append_def = cake_define
-  `map_to_append f' [] = misc_Nil /\
-   map_to_append f' (x :: xs) = mlsexp_Append (displayLang_List
-     (f' x)) (map_to_append f' xs)`;;
+  `map_to_append f [] = misc_Nil /\
+   map_to_append f (x :: xs) = mlsexp_Append (displayLang_List (f
+     x)) (map_to_append f xs)`;;
 
 let source_to_strs_def = cake_define
   `source_to_strs decs =

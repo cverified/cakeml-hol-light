@@ -36,7 +36,7 @@ let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
    (num) (num option) (bvl_exp list) | bvl_Force (num) (num) | bvl_Op \
    (closLang_op) (bvl_exp list)";;
 
-let Bool_def = cake_define
+let bool_def = cake_define
   `bvl_Bool b = bvl_Op (closLang_BlockOp (closLang_Cons (bool_to_tag
   b))) []`;;
 

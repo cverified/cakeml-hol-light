@@ -7,9 +7,14 @@
   The semantics of the asm instruction description.
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/binary_ieee.ml";;
+needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: (* for bytes_in_memory *) *)
 
 (* -- semantics of ASM program -- *)

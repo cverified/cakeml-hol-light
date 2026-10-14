@@ -13,9 +13,12 @@
   Removes unreachable functions from the code.
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "lib/set_sep.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
+needs "semantics/typeSystem.ml";;
 
 
 let find_word_loc_def = cake_define

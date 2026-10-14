@@ -144,9 +144,9 @@ let dt_eval_guard_def = cake_define
      (pattern_semantics_PosTest pos test) =
       (match app_pos refs pos semanticPrimitives_v with NONE -> NONE
         | SOME x -> dt_test test x)) /\
-   (dt_eval_guard refs semanticPrimitives_v (pattern_semantics_Not
-     g') =
-      (match dt_eval_guard refs semanticPrimitives_v g' with NONE ->
+   (dt_eval_guard refs semanticPrimitives_v (pattern_semantics_Not g)
+     =
+      (match dt_eval_guard refs semanticPrimitives_v g with NONE ->
         NONE | SOME b -> SOME (~b))) /\
    (dt_eval_guard refs semanticPrimitives_v (pattern_semantics_Conj
      g1 g2) =

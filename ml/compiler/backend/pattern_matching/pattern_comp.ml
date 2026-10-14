@@ -79,8 +79,8 @@ let mk_Conj_def = cake_define
      if is_True q then p else pattern_semantics_Conj p q)`;;
 
 let mk_If_def = cake_define
-  `mk_If g' p q = (if is_True g' then p else pattern_semantics_If g'
-  p q)`;;
+  `mk_If g p q = (if is_True g then p else pattern_semantics_If g p
+  q)`;;
 
 let get_pos_def = cake_define
   `get_pos [] = EmptyPos /\

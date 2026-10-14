@@ -33,10 +33,10 @@ let MAXerr_def = cake_define
    (if locsle fl1 fl2 then (fl2,fe2) else (fl1,fe1))`;;
 
 let optmax_def = cake_define
-  `optmax f' NONE NONE = NONE /\
-   optmax f' NONE (SOME x) = SOME x /\
-   optmax f' (SOME x) NONE = SOME x /\
-   optmax f' (SOME x) (SOME y) = SOME (f' x y)`;;
+  `optmax f NONE NONE = NONE /\
+   optmax f NONE (SOME x) = SOME x /\
+   optmax f (SOME x) NONE = SOME x /\
+   optmax f (SOME x) (SOME y) = SOME (f x y)`;;
 
 (* HOL4 overload (expanded in the port):
      EOF = Locs EOFpt EOFpt *)
@@ -44,7 +44,7 @@ let sloc_def = cake_define
   `sloc [] = (Locs EOFpt EOFpt) /\
    sloc (h :: t) = SND h`;;
 let pegf_def = cake_define
-  `peg_pegf sym f' = peg_seq sym (peg_empty ARB) (\l1 l2. f' l1)`;;
+  `peg_pegf sym f = peg_seq sym (peg_empty ARB) (\l1 l2. f l1)`;;
 
 let choicel_def = cake_define
   `(peg_choicel [] = peg_not (peg_empty ARB) ARB) /\

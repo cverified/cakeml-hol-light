@@ -5,6 +5,7 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
+(* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: option pair string list
    arithmetic toto *)
 (* HOL4 overload (expanded in the port):

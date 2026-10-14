@@ -52,6 +52,43 @@ def fill(pre, words, width=70):
   return lines
 
 
+# where the needs of a file go (they are known at the end of a run)
+NEEDS = '(*__NEEDS__*)'
+
+
+def strip_ml(text):
+  """the text without its comments and strings, which is what the
+     needs of a file have to be computed from"""
+  out = []
+  i = 0
+  depth = 0
+  n = len(text)
+  while i < n:
+    if text.startswith('(*', i):
+      depth += 1; i += 2
+    elif text.startswith('*)', i) and depth:
+      depth -= 1; i += 2
+    elif depth:
+      i += 1
+    elif text[i] == '"':
+      i += 1
+      while i < n and text[i] != '"':
+        i += 2 if text[i] == '\\' else 1
+      i += 1
+    else:
+      out.append(text[i]); i += 1
+  return ''.join(out)
+
+
+def ocaml_name(n):
+  """the name of the OCaml binding of a definition: HOL Light's
+     parser takes an identifier of capitals as a value name, but
+     not one that starts with a capital and has small letters"""
+  if n[:1].isupper() and not any(c.isupper() for c in n[1:]):
+    return n[0].lower() + n[1:]
+  return n
+
+
 def shorten(text, width=72):
   """break the lines of a comment that are too long; a line that
      opens the comment is continued under its (* """
@@ -85,6 +122,7 @@ class Porter:
     self.out = []
     self.warn = []
     self.head = None
+    self.deps = []
 
   # -- helpers ---------------------------------------------------
 
@@ -158,7 +196,14 @@ class Porter:
     for i, (blanks, c) in enumerate(chunks):
       if i: text += '\n' * (1 + min(blanks, 2))
       text += c
-    return (self.head + '\n' + text if self.head else text) + '\n'
+    text = (self.head + '\n' + text if self.head else text) + '\n'
+    # the files that the translation needs
+    deps = sorted(set(self.deps) |
+                  self.db.providers(self.thy, strip_ml(text)))
+    needs = sorted(set('needs "%s";;' % self.db.mlpath_of(d)
+                       for d in deps if d in self.db.thy_of_file))
+    return text.replace(NEEDS, '\n'.join(needs) if needs else
+                        '(* this file needs nothing of the port *)')
 
   def wanted(self, b):
     """of a HOL4 library theory only the needed definitions are ported"""
@@ -192,12 +237,11 @@ class Porter:
       # an ancestor may be marked as [qualified]
       deps = [re.sub(r'\[.*\]', '', w) for w in b.body.split()] + \
              overrides.EXTRA_NEEDS.get(self.thy, [])
-      needs = []
-      for d in deps:
-        if d in self.db.thy_of_file:
-          needs.append('needs "%s";;' % self.db.mlpath_of(d))
-      if needs:
-        self.out.append('\n'.join(sorted(set(needs))))
+      # the needs are computed from the translation, which uses the
+      # names that the port gives the constants, so they are filled
+      # in at the end of the run
+      self.deps = deps
+      self.out.append(NEEDS)
       ext = [d for d in deps if d not in self.db.thy_of_file]
       if ext:
         self.out.append('\n'.join(
@@ -262,7 +306,7 @@ class Porter:
                               ['(%s)' % self.typ_ast(a) for a in args])
                      for c, args in cons))
       for ty, cons in parts)
-    names = [self.nm(ty) for ty, _ in parts]
+    names = [ocaml_name(self.nm(ty)) for ty, _ in parts]
     lhs = ','.join('%s_INDUCT' % n for n in names[:1]) + ',' + \
           ','.join('%s_RECURSION' % n for n in names[:1])
     # the specification is laid out in lines of at most 72
@@ -295,17 +339,24 @@ class Porter:
       pre = '  [' if i == 0 else '   '
       lines.append(' \\\n'.join(
         fill(pre + '"%s","' % f, t.split(' '), 70)) + '"')
-    head = 'let %s_FIELDS = define_record "%s"' % (self.nm(ty),
-                                                   self.nm(ty))
+    head = ('let %s_FIELDS = define_record "%s"'
+            % (ocaml_name(self.nm(ty)), self.nm(ty)))
     if len(head) > 72:
       head = ('let %s_FIELDS =\n  define_record "%s"'
-              % (self.nm(ty), self.nm(ty)))
+              % (ocaml_name(self.nm(ty)), self.nm(ty)))
     self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
 
   # -- definitions -----------------------------------------------
 
   def definition(self, b):
-    name = b.name
+    name = ocaml_name(b.name)
+    key = (self.thy, b.name)
+    if key in overrides.NOT_YET:
+      self.warn.append('%s: PENDING (%s)'
+                       % (b.name, overrides.NOT_YET[key].split('\n')[0]))
+      self.out.append('(* PENDING: %s\n%s *)'
+                      % (overrides.NOT_YET[key], shorten(b.text.strip())))
+      return
     key = (self.thy, name)
     if key in overrides.REPLACE:
       self.out.append(overrides.REPLACE[key].strip())
@@ -436,7 +487,8 @@ class Porter:
 
   def inductive(self, b):
     term = fmt(self.term(b.body))
-    self.out.append('let %s = cake_inductive\n  `%s`;;' % (b.name, term))
+    self.out.append('let %s = cake_inductive\n  `%s`;;'
+                    % (ocaml_name(b.name), term))
 
 
 CONS = set()           # the constructors in scope, set by the porter

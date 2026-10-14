@@ -9,9 +9,15 @@
   This pass is to run immediately after the SSA-like renaming.
 *)
 
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
 needs "lib/balanced_map.ml";;
 needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: words bool *)
 
 
@@ -663,7 +669,7 @@ let word_common_subexp_elim_def = cake_define
 
 (* tests *)
 
-let Seqs_def = cake_define
+let seqs_def = cake_define
   `(word_cse_Seqs [] = wordLang_Skip) /\
    (word_cse_Seqs [x] = x) /\
    (word_cse_Seqs (x :: y :: xs) = wordLang_Seq x (word_cse_Seqs

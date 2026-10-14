@@ -11,6 +11,8 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "lib/indexedLists.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 
 (* matchers *)
@@ -70,8 +72,8 @@ let dest_Op_def = cake_define
       | _8 -> NONE`;;
 
 let dest_Op_Nil_def = cake_define
-  `dest_Op_Nil f' x =
-     (match dest_Op f' x with NONE -> NONE | SOME (i,xs) -> (if
+  `dest_Op_Nil f x =
+     (match dest_Op f x with NONE -> NONE | SOME (i,xs) -> (if
        NULL xs then SOME i else NONE))`;;
 
 (* HOL4 overload (expanded in the port):

@@ -7,9 +7,24 @@
   The formal semantics of closLang
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/integer_word.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/evaluate.ml";;
+needs "semantics/ffi/ffi.ml";;
+needs "semantics/fpSem.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: semanticPrimitivesProps (* for
    opw_lookup_def and others *) *)
 
@@ -50,7 +65,7 @@ let get_global_def = cake_define
   `get_global n globals =
      (if n < LENGTH globals then SOME (EL n globals) else NONE)`;;
 
-let Boolv_def = cake_define
+let boolv_def = cake_define
   `(closSem_Boolv b = closSem_Block (if b then true_tag else
   false_tag) [])`;;
 
@@ -100,7 +115,7 @@ let list_to_v_def = cake_define
    closSem_list_to_v (x :: xs) = closSem_Block cons_tag [x;
      closSem_list_to_v xs]`;;
 
-let Unit_def = cake_define
+let unit_def = cake_define
   `closSem_Unit = closSem_Block tuple_tag []`;;
 
 (* HOL4 overload (expanded in the port):
@@ -110,7 +125,7 @@ let Unit_def = cake_define
 let v_to_bytes_def = cake_define
   `closSem_v_to_bytes lv = some (\(ns:word8 list).
                      closSem_v_to_list lv = SOME (MAP
-                       (closSem_Number o & o w2n) ns))`;;
+                       (closSem_Number o (&) o w2n) ns))`;;
 
 let v_to_words_def = cake_define
   `closSem_v_to_words lv = some (\ns. closSem_v_to_list lv = SOME
@@ -402,8 +417,7 @@ let do_app_def = cake_define
                    (closLang_MemOp (closLang_RefByte F),[closSem_Number
                    i; closSem_Number b]) ->
             (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-              let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s))))
-                in
+              let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
                 Rval (closSem_RefPtr T ptr,?_refs_fupd (K (?_refs s
                   |+
                   (ptr,closSem_ByteArray (REPLICATE (num_of_int i)
@@ -413,7 +427,7 @@ let do_app_def = cake_define
                     (closLang_MemOp closLang_RefArray,[closSem_Number i;
                     closSem_v]) ->
            (if 0 <= i then
-             let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s)))) in
+             let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
                Rval (closSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
                  (ptr,closSem_ValueArray (REPLICATE (num_of_int i)
                    closSem_v)))) s) else ((Rerr (Rabort
@@ -457,7 +471,7 @@ let do_app_def = cake_define
              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
              closLang_FromListByte,[lv]) ->
            (match some (\ns. closSem_v_to_list lv = SOME (MAP
-             (closSem_Number o &) ns) /\ EVERY (\n. n < 256) ns) with
+             (closSem_Number o (&)) ns) /\ EVERY (\n. n < 256) ns) with
              SOME ns -> Rval (closSem_ByteVector (MAP n2w ns),s) | NONE
              -> ((Rerr (Rabort
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -568,7 +582,7 @@ let do_app_def = cake_define
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
              closLang_Ref,xs) ->
-           (let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s)))) in
+           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
              Rval (closSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
                (ptr,closSem_ValueArray xs))) s)) | (closLang_MemOp
                closLang_Update,[closSem_RefPtr _69 ptr; closSem_Number
@@ -643,8 +657,8 @@ let do_app_def = cake_define
                   then ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                   ,closSem_v)semanticPrimitives_result) else
-                 let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs
-                   s)))) in
+                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
+                   in
                    Rval (closSem_RefPtr F ptr,?_refs_fupd (K (?_refs
                      s |+ (ptr,closSem_Thunk m closSem_v))) s)) |
                      (UpdateThunk m,[closSem_RefPtr F ptr; closSem_v])
@@ -704,8 +718,8 @@ let app_kind_INDUCT,app_kind_RECURSION = define_datatype
    (closSem_v list) (closSem_v list)";;
 
 let dest_closure_def = cake_define
-  `dest_closure max_app loc_opt f' args =
-     (match f' with closSem_Closure loc arg_env clo_env num_args
+  `dest_closure max_app loc_opt f args =
+     (match f with closSem_Closure loc arg_env clo_env num_args
        flatLang_exp ->
          (if check_loc max_app loc_opt loc num_args (LENGTH args)
            (LENGTH arg_env) /\ LENGTH arg_env < num_args then
@@ -810,7 +824,7 @@ let evaluate_def = cake_define_wf
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
                    (\x. match x with INL (xs,env,s) -> (?_clock
                      s,list_size closSem_exp_alt_size xs,0) | INR
-                     (l,f',args,s) -> (?_clock s,0,LENGTH args)))`
+                     (l,f,args,s) -> (?_clock s,0,LENGTH args)))`
   `(closSem_evaluate ([],(env:closSem_v list),s) = (Rval [],s)) /\
    (closSem_evaluate (x :: y :: xs,env,s) =
       (match closSem_fix_clock s (closSem_evaluate ([x],env,s)) with
@@ -852,9 +866,9 @@ let evaluate_def = cake_define_wf
             -> (Rerr (Rabort Rtype_error),s) | closSem_NotThunk -> (Rerr
             (Rabort Rtype_error),s) | closSem_IsThunk Evaluated
             closSem_v -> (Rval [closSem_v],s) | closSem_IsThunk
-            NotEvaluated f' ->
+            NotEvaluated f ->
               (match closSem_evaluate ([closSem_AppUnit (closLang_Var
-                backend_common_None 0)],[f'],s) with (Rval vs2,s) ->
+                backend_common_None 0)],[f],s) with (Rval vs2,s) ->
                   (match closSem_update_thunk vs (?_refs s) vs2 with
                     NONE -> (Rerr (Rabort Rtype_error),s) | SOME refs ->
                     (Rval vs2,?_refs_fupd (K refs) s)) | (Rerr e,s) ->
@@ -907,9 +921,9 @@ let evaluate_def = cake_define_wf
                  Rtimeout_error),?_clock_fupd (K 0) s) else
                    closSem_evaluate ([flatLang_exp],args,dec_clock
                      (ticks + 1) s))) | res -> res)) /\
-   (evaluate_app loc_opt f' [] s = (Rval [f'],s)) /\
-   (evaluate_app loc_opt f' args s =
-      (match dest_closure (closSem_state_max_app s) loc_opt f' args
+   (evaluate_app loc_opt f [] s = (Rval [f],s)) /\
+   (evaluate_app loc_opt f args s =
+      (match dest_closure (closSem_state_max_app s) loc_opt f args
         with NONE -> (Rerr (Rabort Rtype_error),s) | SOME (Partial_app
         closSem_v) ->
           (if ?_clock s < LENGTH args then (Rerr (Rabort

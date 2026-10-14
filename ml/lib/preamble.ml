@@ -16,6 +16,7 @@ needs "lib/records.ml";;
 needs "lib/words4.ml";;
 needs "lib/finite_map.ml";;
 needs "lib/llist.ml";;
+needs "lib/string4.ml";;
 
 (* the port has polymorphic definitions all over the place, as the
    CakeML sources do, so the warning about that is turned off *)

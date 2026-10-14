@@ -175,14 +175,14 @@ let every_exp_def = cake_define
               p (ast_Letrec funs e) /\ every_exp p e /\ EVERY
                 (\(n,v,e). every_exp p e) funs)`;;
 
-let Seqs_def = cake_define
+let seqs_def = cake_define
   `ast_Seqs [] = ast_Con NONE [] /\
    ast_Seqs (x :: xs) = ast_Let NONE x (ast_Seqs xs)`;;
 
-let Apps_def = cake_define
-  `Apps f' [] = f' /\
-   Apps f' (x :: xs) = Apps (ast_App ast_Opapp [f'; x]) xs`;;
+let apps_def = cake_define
+  `Apps f [] = f /\
+   Apps f (x :: xs) = Apps (ast_App ast_Opapp [f; x]) xs`;;
 
-let Funs_def = cake_define
+let funs_def = cake_define
   `Funs [] e = e /\
    Funs (x :: xs) e = ast_Fun x (Funs xs e)`;;

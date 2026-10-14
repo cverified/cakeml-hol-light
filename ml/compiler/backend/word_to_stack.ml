@@ -13,11 +13,17 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/pegexec.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* bitmaps_length stores the current length of the bitmaps *)
 let word_to_stack_config_FIELDS = define_record "word_to_stack_config"
@@ -32,27 +38,27 @@ let word_to_stack_config_FIELDS = define_record "word_to_stack_config"
     and kf = (k,f,f') *)
 
 let wReg1_def = cake_define
-  `wReg1 r (k,f',(f':num)) =
+  `wReg1 r (k,f,(f':num)) =
      (let r = r DIV 2 in
-       if r < k then ([],r) else ([(k,f' - 1 - (r - k))],(k:num)))`;;
+       if r < k then ([],r) else ([(k,f - 1 - (r - k))],(k:num)))`;;
 
 let wReg2_def = cake_define
-  `wReg2 r (k,f',(f':num)) =
+  `wReg2 r (k,f,(f':num)) =
      (let r = r DIV 2 in
-       if r < k then ([],r) else ([(k + 1,f' - 1 - (r - k))],k +
+       if r < k then ([],r) else ([(k + 1,f - 1 - (r - k))],k +
          (1:num)))`;;
 
 let wRegWrite1_def = cake_define
-  `wRegWrite1 g' r (k,f',(f':num)) =
+  `wRegWrite1 g r (k,f,(f':num)) =
      (let r = r DIV 2 in
-       if r < k then g' r else linear_scan_Seq (g' k)
-         (stackLang_StackStore k (f' - 1 - (r - k))))`;;
+       if r < k then g r else linear_scan_Seq (g k)
+         (stackLang_StackStore k (f - 1 - (r - k))))`;;
 
 let wRegWrite2_def = cake_define
-  `wRegWrite2 g' r (k,f',(f':num)) =
+  `wRegWrite2 g r (k,f,(f':num)) =
      (let r = r DIV 2 in
-       if r < k then g' r else linear_scan_Seq (g' (k + 1))
-         (stackLang_StackStore (k + 1) (f' - 1 - (r - k))))`;;
+       if r < k then g r else linear_scan_Seq (g (k + 1))
+         (stackLang_StackStore (k + 1) (f - 1 - (r - k))))`;;
 
 let wStackLoad_def = cake_define
   `(wStackLoad [] x = x) /\
@@ -65,14 +71,14 @@ let wStackStore_def = cake_define
      x) (stackLang_StackStore r i))`;;
 
 let wMoveSingle_def = cake_define
-  `wMoveSingle (x,y) (k,f',(f':num)) =
+  `wMoveSingle (x,y) (k,f,(f':num)) =
      (match (x,y) with (INL r1,INL r2) -> wordLang_Inst (asm_Arith
        (asm_Binop asm_Or r1 r2 (Reg r2))) | (INL r1,INR r2) ->
-       stackLang_StackLoad r1 (f' - 1 - (r2 - k)) | (INR r1,INL r2) ->
-       stackLang_StackStore r2 (f' - 1 - (r1 - k)) | (INR r1,INR r2) ->
-       linear_scan_Seq (stackLang_StackLoad k (f' - 1 - (r2 - k)))
-                              (stackLang_StackStore k (f' - 1 -
-                                (r1 - k))))`;;
+       stackLang_StackLoad r1 (f - 1 - (r2 - k)) | (INR r1,INL r2) ->
+       stackLang_StackStore r2 (f - 1 - (r1 - k)) | (INR r1,INR r2) ->
+       linear_scan_Seq (stackLang_StackLoad k (f - 1 - (r2 - k)))
+                              (stackLang_StackStore k (f - 1 - (r1
+                                - k))))`;;
 
 let wMoveAux_def = cake_define
   `wMoveAux x1 kf =
@@ -88,9 +94,9 @@ let format_var_def = cake_define
      x))`;;
 
 let wMove_def = cake_define
-  `wMove xs (k,(f':num),(f':num)) =
+  `wMove xs (k,(f:num),(f':num)) =
      wMoveAux (MAP (format_var k ## format_var k) (parmove (MAP
-       (DIV2 ## DIV2) xs))) (k,f',f')`;;
+       (DIV2 ## DIV2) xs))) (k,f,f')`;;
 
 let wInst_def = cake_define
   `wInst x1 kf =
@@ -272,8 +278,8 @@ let insert_bitmap_def = cake_define
 
 let wLive_def = cake_define
   `wLive (live:one spt#one spt) (bitmaps:('a word) app_list#num)
-  (k,(f':num),(f':num)) =
-     (if f' = 0 then (wordLang_Skip,bitmaps) else
+  (k,(f:num),(f':num)) =
+     (if f = 0 then (wordLang_Skip,bitmaps) else
        let (new_bitmaps,i) = insert_bitmap (write_bitmap (SND live) k
          f') bitmaps in
          ((linear_scan_Seq (wordLang_Inst (wordLang_Const k (n2w
@@ -298,8 +304,8 @@ let stack_arg_count_def = cake_define
        ((arg_count - 1) - (k:num)))`;;
 
 let stack_free_def = cake_define
-  `word_to_stack_stack_free dest arg_count (k,f',(f':num)) =
-     f' - stack_arg_count dest arg_count k`;;
+  `word_to_stack_stack_free dest arg_count (k,f,(f':num)) =
+     f - stack_arg_count dest arg_count k`;;
 
 let stack_move_def = cake_define
   `(stack_move 0 start offset i p = p) /\
@@ -309,9 +315,9 @@ let stack_move_def = cake_define
             offset)) (stackLang_StackStore i start)))`;;
 
 let StackArgs_def = cake_define
-  `StackArgs dest arg_count (k,f',(f':num)) =
+  `StackArgs dest arg_count (k,f,(f':num)) =
      (let n = stack_arg_count dest arg_count k in
-       stack_move n 0 f' k (stackLang_StackAlloc n))`;;
+       stack_move n 0 f k (stackLang_StackAlloc n))`;;
 
 (* Unverified x64 perf-mode instrumentation.
 
@@ -360,12 +366,12 @@ let handler_slots_def = cake_define
   `handler_slots perf = (if perf then 5 else 3)`;;
 
 let StackHandlerArgs_def = cake_define
-  `StackHandlerArgs perf dest arg_count (k,f',(f':num)) =
-     StackArgs dest arg_count (k,f' + handler_slots perf,f' +
+  `StackHandlerArgs perf dest arg_count (k,f,(f':num)) =
+     StackArgs dest arg_count (k,f + handler_slots perf,f' +
        handler_slots perf)`;;
 
 let PushHandler_def = cake_define
-  `PushHandler perf l1 l2 (k,f',f') =
+  `PushHandler perf l1 l2 (k,f,f') =
      linear_scan_Seq (stackLang_StackAlloc (handler_slots perf))
     (linear_scan_Seq (wordLang_Inst (wordLang_Const k (n2w 1)))
     (linear_scan_Seq (stackLang_StackStore k 0)
@@ -385,7 +391,7 @@ let PushHandler_def = cake_define
          (reg_alloc_Set Handler k)))))))))`;;
 
 let PopHandler_def = cake_define
-  `PopHandler perf (k,f',f') wordLang_prog =
+  `PopHandler perf (k,f,f') wordLang_prog =
     linear_scan_Seq (stackLang_StackLoad k 2)
    (linear_scan_Seq (reg_alloc_Set Handler k)
    (linear_scan_Seq (stackLang_StackFree (handler_slots perf))
@@ -425,26 +431,26 @@ let num_stack_ret_def = cake_define
 
 (* Number of slots to free by callee *)
 let skip_free_def = cake_define
-  `skip_free (k,f',f') vs =
-     f' - num_stack_ret k vs`;;
+  `skip_free (k,f,f') vs =
+     f - num_stack_ret k vs`;;
 
 (* Caller copying from the previous stack frame into its own *)
 let copy_ret_aux_def = cake_define
-  `(copy_ret_aux k f' n =
+  `(copy_ret_aux k f n =
      (if n = 0 then wordLang_Skip else
        let n' = n - 1 in
        stackLang_list_Seq
        [
          stackLang_StackLoad k n';
-         stackLang_StackStore k (n' + f');
-         copy_ret_aux k f' n']))`;;
+         stackLang_StackStore k (n' + f);
+         copy_ret_aux k f n']))`;;
 
 let copy_ret_def = cake_define
-  `copy_ret perf is_handle (k,f',f') vs kont =
+  `copy_ret perf is_handle (k,f,f') vs kont =
    (let n = num_stack_ret k vs in
    if n = 0 then kont else linear_scan_Seq
-       (copy_ret_aux k (if is_handle then f' + handler_slots perf
-         else f') n)
+       (copy_ret_aux k (if is_handle then f + handler_slots perf else
+         f) n)
        (SeqStackFree n kont))`;;
 
 (* Return should be 2,4,6,...,2k,2k+1,... *)
@@ -604,23 +610,23 @@ let compile_prog_def = cake_define
      (let stack_arg_count' = arg_count - reg_count in
      let stack_var_count = MAX ((max_var wordLang_prog DIV 2 + 1) -
        reg_count) stack_arg_count' in
-     let f' = if stack_var_count = 0 then 0 else stack_var_count + 1
+     let f = if stack_var_count = 0 then 0 else stack_var_count + 1
        in
      let (q1,bitmaps) = word_to_stack_comp asm_conf perf
-       wordLang_prog bitmaps (reg_count,f',stack_var_count) in
-       (linear_scan_Seq (stackLang_StackAlloc (f' -
-         stack_arg_count')) q1,f',bitmaps))`;;
+       wordLang_prog bitmaps (reg_count,f,stack_var_count) in
+       (linear_scan_Seq (stackLang_StackAlloc (f -
+         stack_arg_count')) q1,f,bitmaps))`;;
 
 let compile_word_to_stack_def = cake_define
   `(compile_word_to_stack asm_conf perf k [] bitmaps = ([],[],bitmaps))
   /\
    (compile_word_to_stack asm_conf perf k ((i,n,p) :: progs) bitmaps
      =
-      (let (wordLang_prog,f',bitmaps) = word_to_stack_compile_prog
+      (let (wordLang_prog,f,bitmaps) = word_to_stack_compile_prog
         asm_conf perf p n k bitmaps in
       let (progs,fs,bitmaps) = compile_word_to_stack asm_conf perf k
         progs bitmaps in
-        ((i,wordLang_prog) :: progs,f' :: fs,bitmaps)))`;;
+        ((i,wordLang_prog) :: progs,f :: fs,bitmaps)))`;;
 
 let compile_def = cake_define
   `word_to_stack_compile asm_conf perf progs =

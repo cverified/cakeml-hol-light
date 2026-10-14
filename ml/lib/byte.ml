@@ -5,6 +5,7 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
+(* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: arithmetic list words rich_list *)
 
 let byte_index_def = cake_define

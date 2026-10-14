@@ -17,11 +17,19 @@
   than Recclosures.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/flat_pattern.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/indexedLists.ml";;
+needs "lib/location.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
+needs "semantics/namespace.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 let var_name_INDUCT,var_name_RECURSION = define_datatype
   "var_name = Glob (tra) (num) | Local (tra) (mlstring)";;

@@ -10,7 +10,12 @@
   several calls to the memory allocator into a single efficient call.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "semantics/ast.ml";;
 
 let num_size_def = cake_define
   `data_space_num_size (n:num) =

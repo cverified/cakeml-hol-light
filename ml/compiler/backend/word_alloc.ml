@@ -14,11 +14,19 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_call.ml";;
+needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* for arity-2 Const *) *)
 
 (* HOL4 overload (expanded in the port):
@@ -28,13 +36,13 @@ needs "misc/misc.ml";;
 
 (*SSA form*)
 let apply_nummap_key_def = cake_define
-  `apply_nummap_key f' names =
-   fromAList (MAP (\(x,y). f' x,y) (toAList names))`;;
+  `apply_nummap_key f names =
+   fromAList (MAP (\(x,y). f x,y) (toAList names))`;;
 
 let apply_nummaps_key_def = cake_define
-  `apply_nummaps_key f' names =
-   (fromAList (MAP (\(x,y). f' x,y) (toAList (FST names))),
-    fromAList (MAP (\(x,y). f' x,y) (toAList (SND names))))`;;
+  `apply_nummaps_key f names =
+   (fromAList (MAP (\(x,y). f x,y) (toAList (FST names))),
+    fromAList (MAP (\(x,y). f x,y) (toAList (SND names))))`;;
 
 let option_lookup_def = cake_define
   `option_lookup t semanticPrimitives_v = (match sptree_lookup

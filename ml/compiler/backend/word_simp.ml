@@ -12,6 +12,8 @@
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 (* function that makes all Seq associate to the left *)
 
@@ -19,7 +21,7 @@ let SmartSeq_def = cake_define
   `SmartSeq p1 (p2:'a wordLang_prog) =
      (if p1 = wordLang_Skip then p2 else wordLang_Seq p1 p2)`;;
 
-let Seq_assoc_def = cake_define
+let seq_assoc_def = cake_define
   `Seq_assoc p1 other =
         match other with
           wordLang_Skip -> p1

@@ -11,13 +11,24 @@
   collector and bignum library, among other things.
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/backend/word_to_word.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/binary_ieee.ml";;
+needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/fpSem.ml";;
 
 let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
   "gc_kind = data_to_word_None | data_to_word_Simple | \
@@ -48,7 +59,7 @@ let adjust_sets_def = cake_define
   `adjust_sets (names:'a spt) =
      ((LS one,adjust_set names):one spt#one spt)`;;
 
-let Unit_def = cake_define
+let unit_def = cake_define
   `data_to_word_Unit = word_depth_Const (n2w 2)`;;
 
 let GiveUp_def = cake_define
@@ -182,27 +193,27 @@ let RefByte_location_def = cake_define
   `RefByte_location = FromList1_location + 1`;;
 let RefArray_location_def = cake_define
   `RefArray_location = RefByte_location + 1`;;
-let Replicate_location_def = cake_define
+let replicate_location_def = cake_define
   `Replicate_location = RefArray_location + 1`;;
 let AnyArith_location_def = cake_define
   `AnyArith_location = Replicate_location + 1`;;
-let Add_location_def = cake_define
+let add_location_def = cake_define
   `Add_location = AnyArith_location + 1`;;
-let Sub_location_def = cake_define
+let sub_location_def = cake_define
   `Sub_location = Add_location + 1`;;
-let Mul_location_def = cake_define
+let mul_location_def = cake_define
   `Mul_location = Sub_location + 1`;;
-let Div_location_def = cake_define
+let div_location_def = cake_define
   `Div_location = Mul_location + 1`;;
-let Mod_location_def = cake_define
+let mod_location_def = cake_define
   `Mod_location = Div_location + 1`;;
-let Compare1_location_def = cake_define
+let compare1_location_def = cake_define
   `Compare1_location = Mod_location + 1`;;
-let Compare_location_def = cake_define
+let compare_location_def = cake_define
   `Compare_location = Compare1_location + 1`;;
-let Equal1_location_def = cake_define
+let equal1_location_def = cake_define
   `Equal1_location = Compare_location + 1`;;
-let Equal_location_def = cake_define
+let equal_location_def = cake_define
   `Equal_location = Equal1_location + 1`;;
 let LongDiv1_location_def = cake_define
   `LongDiv1_location = Equal_location + 1`;;
@@ -218,15 +229,15 @@ let ByteCopySub_location_def = cake_define
   `ByteCopySub_location = ByteCopyAdd_location + 1`;;
 let ByteCopyNew_location_def = cake_define
   `ByteCopyNew_location = ByteCopySub_location + 1`;;
-let Install_location_def = cake_define
+let install_location_def = cake_define
   `Install_location = ByteCopyNew_location + 1`;;
 let InstallCode_location_def = cake_define
   `InstallCode_location = Install_location + 1`;;
 let InstallData_location_def = cake_define
   `InstallData_location = InstallCode_location + 1`;;
-let Dummy_location_def = cake_define
+let dummy_location_def = cake_define
   `Dummy_location = InstallData_location + 1`;;
-let Append_location_def = cake_define
+let append_location_def = cake_define
   `Append_location = Dummy_location + 1`;;
 let AppendMainLoop_location_def = cake_define
   `AppendMainLoop_location = Append_location + 1`;;
@@ -234,11 +245,11 @@ let AppendLenLoop_location_def = cake_define
   `AppendLenLoop_location = AppendMainLoop_location + 1`;;
 let XorLoop_location_def = cake_define
   `XorLoop_location = AppendLenLoop_location + 1`;;
-let Unused_location_def = cake_define
+let unused_location_def = cake_define
   `Unused_location = XorLoop_location + 1`;;
 let StringCmpLoop_location_def = cake_define
   `StringCmpLoop_location = Unused_location + 1`;;
-let Bignum_location_def = cake_define
+let bignum_location_def = cake_define
   `Bignum_location = StringCmpLoop_location + 1`;;
 
 let SilentFFI_def = cake_define
@@ -368,7 +379,7 @@ let RefByte_code_def = cake_define
             word_depth_Call NONE (SOME Replicate_location)
               [0; 9; 4; 7; 3] NONE]:'a wordLang_prog)`;;
 
-let Maxout_bits_code_def = cake_define
+let maxout_bits_code_def = cake_define
   `Maxout_bits_code rep_len k dest n =
      (word_bignum_If asm_Lower n (Imm (n2w (2 EXP rep_len - 1)))
        (word_bignum_Assign dest (wordLang_Op asm_Or [wordLang_Var
@@ -378,7 +389,7 @@ let Maxout_bits_code_def = cake_define
          dest; word_depth_Const (all_ones (k + rep_len) k)])):'a
          wordLang_prog)`;;
 
-let Make_ptr_bits_code_def = cake_define
+let make_ptr_bits_code_def = cake_define
   `Make_ptr_bits_code c reg_alloc_tag len dest =
      (data_to_word_list_Seq [word_bignum_Assign dest (wordLang_Op
        asm_Or
@@ -472,7 +483,7 @@ let RefArray_code_def = cake_define
             word_depth_Call NONE (SOME Replicate_location)
                [0; 1; 4; 2; 3] NONE]:'a wordLang_prog)`;;
 
-let Replicate_code_def = cake_define
+let replicate_code_def = cake_define
   `Replicate_code =
      (word_bignum_If (EQUAL) 6 (Imm (n2w 0)) (wordLang_Return 0 [8])
        (data_to_word_list_Seq [word_bignum_Assign 2 (wordLang_Op
@@ -636,37 +647,37 @@ let AnyArith_code_def = cake_define
                                ((backend_common_word_shift) (:'a))]);
        wordLang_Return 0 [1]]:'a wordLang_prog)`;;
 
-let Add_code_def = cake_define
+let add_code_def = cake_define
   `Add_code = (linear_scan_Seq (word_bignum_Assign 6 (word_depth_Const
   (n2w (4 * 0))))
                   (word_depth_Call NONE (SOME AnyArith_location)
                     [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
-let Sub_code_def = cake_define
+let sub_code_def = cake_define
   `Sub_code = (linear_scan_Seq (word_bignum_Assign 6 (word_depth_Const
   (n2w (4 * 1))))
                   (word_depth_Call NONE (SOME AnyArith_location)
                     [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
-let Mul_code_def = cake_define
+let mul_code_def = cake_define
   `Mul_code = (linear_scan_Seq (word_bignum_Assign 6 (word_depth_Const
   (n2w (4 * 4))))
                   (word_depth_Call NONE (SOME AnyArith_location)
                     [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
-let Div_code_def = cake_define
+let div_code_def = cake_define
   `Div_code = (linear_scan_Seq (word_bignum_Assign 6 (word_depth_Const
   (n2w (4 * 5))))
                   (word_depth_Call NONE (SOME AnyArith_location)
                     [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
-let Mod_code_def = cake_define
+let mod_code_def = cake_define
   `Mod_code = (linear_scan_Seq (word_bignum_Assign 6 (word_depth_Const
   (n2w (4 * 6))))
                   (word_depth_Call NONE (SOME AnyArith_location)
                     [0; 2; 4; 6] NONE):'a wordLang_prog)`;;
 
-let Install_code_def = cake_define
+let install_code_def = cake_define
   `Install_code c =
        (data_to_word_list_Seq [word_bignum_Assign 1 (wordLang_Lookup
          BitmapBuffer);
@@ -723,7 +734,7 @@ let InstallData_code_def = cake_define
                       InstallData_location) [0; 2; 4; 6] NONE]):'a
                       wordLang_prog)`;;
 
-let Compare1_code_def = cake_define
+let compare1_code_def = cake_define
   `Compare1_code =
      word_bignum_If (EQUAL) 2 (Imm (n2w 0))
        (linear_scan_Seq (word_bignum_Assign 2 (word_depth_Const (n2w
@@ -748,7 +759,7 @@ let Compare1_code_def = cake_define
                  (word_depth_Const (n2w 2))) (wordLang_Return 0
                  [2])))])`;;
 
-let Compare_code_def = cake_define
+let compare_code_def = cake_define
   `Compare_code c =
      word_bignum_If asm_Test 2 (Imm (n2w 1))
        (data_to_word_list_Seq [word_bignum_Assign 1 (word_bignum_Load
@@ -825,7 +836,7 @@ let Compare_code_def = cake_define
                                2 (word_depth_Const (n2w 0)))
                                (wordLang_Return 0 [2])))))]))`;;
 
-let Equal1_code_def = cake_define
+let equal1_code_def = cake_define
   `Equal1_code =
      data_to_word_list_Seq [
        word_bignum_If (EQUAL) 2 (Imm (n2w 0))
@@ -847,7 +858,7 @@ let Equal1_code_def = cake_define
        word_depth_Call NONE (SOME Equal1_location) [0; 2; 4; 6]
          NONE]`;;
 
-let Equal_code_def = cake_define
+let equal_code_def = cake_define
   `Equal_code c =
      data_to_word_list_Seq [
        word_bignum_If (EQUAL) 2 (Reg 4)
@@ -963,7 +974,7 @@ let LongDiv1_code_def = cake_define
                     word_depth_Call NONE (SOME LongDiv1_location)
                       [0; 2; 4; 6; 8; 10; 12] NONE]))`;;
 
-let Append_code_def = cake_define
+let append_code_def = cake_define
   `Append_code c =
      (match encode_header c 0 2 with NONE -> (word_bignum_Skip:'a
        wordLang_prog) | SOME (header:'a word) ->
@@ -1291,7 +1302,7 @@ let WordShift64_on_32_def = cake_define
                     word_bignum_Assign 31 (ShiftVar sh 11 32)] |
                       Ror -> []))`;;
 
-let Smallnum_def = cake_define
+let smallnum_def = cake_define
   `Smallnum i =
      (if i < 0 then (n2w 0) - n2w (num_of_int (4 * (0 - i))) else
        n2w (num_of_int (4 * i)))`;;
@@ -1343,19 +1354,17 @@ let fp_uop_inst_def = cake_define
       |  -> FPSqrt 1 0`;;
 
 let arg1_def = cake_define
-  `data_to_word_arg1 vs f' x = (match vs with [v1] -> f' v1 | _1 ->
-  x)`;;
+  `data_to_word_arg1 vs f x = (match vs with [v1] -> f v1 | _1 -> x)`;;
 
 let arg2_def = cake_define
-  `data_to_word_arg2 vs f' x = (match vs with [v1; v2] -> f' v1 v2 |
-  _2 -> x)`;;
+  `data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 | _2
+  -> x)`;;
 
 let arg3_def = cake_define
-  `arg3 vs f' x = (match vs with [v1; v2; v3] -> f' v1 v2 v3 | _3 ->
-  x)`;;
+  `arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _3 -> x)`;;
 
 let arg4_def = cake_define
-  `arg4 vs f' x = (match vs with [v1; v2; v3; v4] -> f' v1 v2 v3 v4 |
+  `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
   _4 -> x)`;;
 
 (* HOL4 ML code, not ported:

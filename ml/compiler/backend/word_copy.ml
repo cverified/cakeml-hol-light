@@ -9,7 +9,10 @@
 *)
 
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/sptree.ml";;
 
 (*
   The copy propagator does the "propagation" but

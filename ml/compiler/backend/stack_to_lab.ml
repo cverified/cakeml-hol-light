@@ -9,14 +9,18 @@
   of goto-like jumps.
 *)
 
+needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/labLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_alloc.ml";;
 needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_rawcall.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/word_to_stack.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
 
 (* HOL4 overload (expanded in the port):
      Asm = λa. Asm (Asmi a) *)
@@ -167,8 +171,8 @@ let compile_def = cake_define
        MAP prog_to_section labLang_prog)`;;
 
 let compile_no_stubs_def = cake_define
-  `compile_no_stubs f' jump offset sp labLang_prog =
+  `compile_no_stubs f jump offset sp labLang_prog =
    MAP prog_to_section
-     (stack_names_compile f'
+     (stack_names_compile f
        (MAP (stack_remove_prog_comp jump offset sp)
          (MAP stack_remove_prog_comp labLang_prog)))`;;

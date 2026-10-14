@@ -12,7 +12,9 @@
 *)
 
 needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "lib/sptree.ml";;
 
 (* collect stack allocation information *)
 
@@ -22,10 +24,10 @@ let seq_stack_alloc_def = cake_define
        SOME k | _2 -> NONE)`;;
 
 let collect_info_def = cake_define
-  `(collect_info [] f' = f') /\
-   (collect_info ((n,(b:'a stackLang_prog)) :: xs) f' =
-      collect_info xs (match seq_stack_alloc b with NONE -> f' |
-        SOME k -> balanced_map_insert n k f'))`;;
+  `(collect_info [] f = f) /\
+   (collect_info ((n,(b:'a stackLang_prog)) :: xs) f =
+      collect_info xs (match seq_stack_alloc b with NONE -> f |
+        SOME k -> balanced_map_insert n k f))`;;
 
 (* optimise based on stack allocation information *)
 

@@ -7,7 +7,9 @@
   Types, functions and lemmas that are shared between GC definitions
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: finite_map words *)
 
 (* The ML heap is represented as a list of heap_elements. *)
@@ -172,16 +174,15 @@ let heap_addresses_def = cake_define
      el_length x) xs)`;;
 
 let ADDR_MAP_def = cake_define
-  `(ADDR_MAP f' [] = []) /\
-   (ADDR_MAP f' (gc_shared_Data x :: xs) = gc_shared_Data x ::
-     ADDR_MAP f' xs) /\
-   (ADDR_MAP f' (gc_shared_Pointer a d :: xs) = gc_shared_Pointer
-     (f' a) d :: ADDR_MAP f' xs)`;;
+  `(ADDR_MAP f [] = []) /\
+   (ADDR_MAP f (gc_shared_Data x :: xs) = gc_shared_Data x ::
+     ADDR_MAP f xs) /\
+   (ADDR_MAP f (gc_shared_Pointer a d :: xs) = gc_shared_Pointer
+     (f a) d :: ADDR_MAP f xs)`;;
 
 let ADDR_APPLY_def = cake_define
-  `(ADDR_APPLY f' (gc_shared_Pointer x d) = gc_shared_Pointer (f' x) d)
-  /\
-   (ADDR_APPLY f' (gc_shared_Data y) = gc_shared_Data y)`;;
+  `(ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d) /\
+   (ADDR_APPLY f (gc_shared_Data y) = gc_shared_Data y)`;;
 
 (* HOL4 ML code, not ported:
 val _ = augment_srw_ss [rewrites [LIST_REL_def]];
@@ -196,18 +197,17 @@ let heaps_similar_def = cake_define
 (* --- *)
 
 let gc_related_def = cake_define
-  `gc_related (f':(num,num)fmap) heap1 heap2 = (
-     INJ (FAPPLY f') (FDOM f') {a | isSomeDataElement (heap_lookup a
+  `gc_related (f:(num,num)fmap) heap1 heap2 = (
+     INJ (FAPPLY f) (FDOM f) {a | isSomeDataElement (heap_lookup a
        heap2)} /\
-     (!i. i IN FDOM f' ==> isSomeDataElement (heap_lookup i heap1))
-       /\
+     (!i. i IN FDOM f ==> isSomeDataElement (heap_lookup i heap1)) /\
      (!i xs l d.
-       i IN FDOM f' /\ (heap_lookup i heap1 = SOME (DataElement xs l
+       i IN FDOM f /\ (heap_lookup i heap1 = SOME (DataElement xs l
          d)) ==>
-       (heap_lookup (FAPPLY f' i) heap2 = SOME (DataElement (ADDR_MAP
-         (FAPPLY f') xs) l d)) /\
+       (heap_lookup (FAPPLY f i) heap2 = SOME (DataElement (ADDR_MAP
+         (FAPPLY f) xs) l d)) /\
        (!ptr u. MEM (gc_shared_Pointer ptr u) xs ==> ptr IN FDOM
-         f')))`;;
+         f)))`;;
 
 (* an edge in the heap *)
 

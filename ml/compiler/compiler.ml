@@ -14,14 +14,23 @@
 *)
 
 needs "basis/pure/mlint.ml";;
+needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_passes.ml";;
+needs "compiler/backend/clos_known.ml";;
+needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/labLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
+needs "lib/location.ml";;
+needs "lib/set_sep.ml";;
+needs "misc/misc.ml";;
 needs "semantics/lexer_fun.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: basisProg simpleSexpParse
    x64_config export_x64 arm8_config export_arm8 riscv_config
    export_riscv mips_config export_mips arm7_config export_arm7

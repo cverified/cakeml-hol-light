@@ -54,6 +54,7 @@
 
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_jump.ml";;
@@ -63,6 +64,10 @@ needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "semantics/ast.ml";;
 
 (* Constant flattening *)
 
@@ -650,12 +655,12 @@ let compile_common_def = cake_define
      let (n,es) = renumber_code_locs_list loc es in
      let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf
        c) es in
-     let (es,g',aux) = clos_call_compile (clos_to_bvl_config_do_call
+     let (es,g,aux) = clos_call_compile (clos_to_bvl_config_do_call
        c) es in
      let prog = chain_exps (clos_to_bvl_config_next_loc c) es ++ aux
        in
      let prog = clos_annotate_compile prog in
-       (clos_to_bvl_config_call_state_fupd (K (g',aux))
+       (clos_to_bvl_config_call_state_fupd (K (g,aux))
          (clos_to_bvl_config_known_conf_fupd (K kc)
          (clos_to_bvl_config_next_loc_fupd (K n)
          (clos_to_bvl_config_start_fupd (K (clos_to_bvl_config_next_loc

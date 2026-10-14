@@ -11,6 +11,8 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "misc/misc.ml";;
 
 (* HOL4 termination: \\ fs [listTheory.LENGTH_DROP] *)
 let split16_def = cake_define_wf
@@ -126,10 +128,9 @@ let newl_strlit_def = cake_define
   `newl_strlit = (strlit "\n")`;;
 
 let comma_cat_def = cake_define
-  `comma_cat f' x =
-     (match x with [] -> [newl_strlit] | [x] -> [f' x;
-       newl_strlit] | (x :: xs) -> f' x :: comm_strlit :: comma_cat
-       f' xs)`;;
+  `comma_cat f x =
+     (match x with [] -> [newl_strlit] | [x] -> [f x; newl_strlit]
+       | (x :: xs) -> f x :: comm_strlit :: comma_cat f xs)`;;
 
 let words_line_def = cake_define
   `words_line word_directive to_string ls =

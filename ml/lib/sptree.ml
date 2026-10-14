@@ -5,6 +5,7 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
+(* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: arithmetic logroot list alist
    pred_set rich_list *)
 
@@ -165,29 +166,29 @@ let domain_def = cake_define
       IMAGE (\n. 2 * n + 1) (domain t2)`;;
 
 let foldi_def = cake_define
-  `(foldi f' i acc LN = acc) /\
-   (foldi f' i acc (LS a) = f' i a acc) /\
-   (foldi f' i acc (BN t1 t2) =
+  `(foldi f i acc LN = acc) /\
+   (foldi f i acc (LS a) = f i a acc) /\
+   (foldi f i acc (BN t1 t2) =
       (let inc = lrnext i in
-        foldi f' (i + inc) (foldi f' (i + 2 * inc) acc t1) t2)) /\
-   (foldi f' i acc (BS t1 a t2) =
+        foldi f (i + inc) (foldi f (i + 2 * inc) acc t1) t2)) /\
+   (foldi f i acc (BS t1 a t2) =
       (let inc = lrnext i in
-        foldi f' (i + inc) (f' i a (foldi f' (i + 2 * inc) acc
-          t1)) t2))`;;
+        foldi f (i + inc) (f i a (foldi f (i + 2 * inc) acc t1))
+          t2))`;;
 
 let mapi0_def = cake_define
-  `(mapi0 f' i LN = LN) /\
-   (mapi0 f' i (LS a) = LS (f' i a)) /\
-   (mapi0 f' i (BN t1 t2) =
+  `(mapi0 f i LN = LN) /\
+   (mapi0 f i (LS a) = LS (f i a)) /\
+   (mapi0 f i (BN t1 t2) =
     (let inc = lrnext i in
-      mk_BN (mapi0 f' (i + 2 * inc) t1) (mapi0 f' (i + inc) t2))) /\
-   (mapi0 f' i (BS t1 a t2) =
+      mk_BN (mapi0 f (i + 2 * inc) t1) (mapi0 f (i + inc) t2))) /\
+   (mapi0 f i (BS t1 a t2) =
     (let inc = lrnext i in
-      mk_BS (mapi0 f' (i + 2 * inc) t1) (f' i a) (mapi0 f' (i +
-        inc) t2)))`;;
+      mk_BS (mapi0 f (i + 2 * inc) t1) (f i a) (mapi0 f (i + inc)
+        t2)))`;;
 
 let mapi_def = cake_define
-  `sptree_mapi f' pt = mapi0 f' 0 pt`;;
+  `sptree_mapi f pt = mapi0 f 0 pt`;;
 
 let toAList_def = cake_define
   `toAList = foldi (\k v a. (k,v) :: a) 0 []`;;
@@ -209,12 +210,12 @@ let fromAList_def = cake_define
    (fromAList ((x,y) :: xs) = sptree_insert x y (fromAList xs))`;;
 
 let map_def = cake_define
-  `(sptree_map f' LN = LN) /\
-   (sptree_map f' (LS a) = (LS (f' a))) /\
-   (sptree_map f' (BN t1 t2) = BN (sptree_map f' t1) (sptree_map f'
-     t2)) /\
-   (sptree_map f' (BS t1 a t2) = BS (sptree_map f' t1) (f' a)
-     (sptree_map f' t2))`;;
+  `(sptree_map f LN = LN) /\
+   (sptree_map f (LS a) = (LS (f a))) /\
+   (sptree_map f (BN t1 t2) = BN (sptree_map f t1) (sptree_map f t2))
+     /\
+   (sptree_map f (BS t1 a t2) = BS (sptree_map f t1) (f a)
+     (sptree_map f t2))`;;
 
 let spt_left_def = cake_define
   `(spt_left LN = LN) /\
@@ -245,20 +246,19 @@ let subspt_eq = cake_define
       subspt t1 (spt_left t) /\ subspt t2 (spt_right t))`;;
 
 let filter_v_def = cake_define
-  `(filter_v f' LN = LN) /\
-   (filter_v f' (LS x) = (if f' x then LS x else LN)) /\
-   (filter_v f' (BN l r) = mk_BN (filter_v f' l) (filter_v f' r)) /\
-   (filter_v f' (BS l x r) =
-     (if f' x then mk_BS (filter_v f' l) x (filter_v f' r) else
-       mk_BN (filter_v f' l) (filter_v f' r)))`;;
+  `(filter_v f LN = LN) /\
+   (filter_v f (LS x) = (if f x then LS x else LN)) /\
+   (filter_v f (BN l r) = mk_BN (filter_v f l) (filter_v f r)) /\
+   (filter_v f (BS l x r) =
+     (if f x then mk_BS (filter_v f l) x (filter_v f r) else mk_BN
+       (filter_v f l) (filter_v f r)))`;;
 
 let spt_fold_def = cake_define
-  `(spt_fold f' acc LN = acc) /\
-   (spt_fold f' acc (LS a) = f' a acc) /\
-   (spt_fold f' acc (BN t1 t2) = spt_fold f' (spt_fold f' acc t1) t2)
-     /\
-   (spt_fold f' acc (BS t1 a t2) = spt_fold f' (f' a (spt_fold f'
-     acc t1)) t2)`;;
+  `(spt_fold f acc LN = acc) /\
+   (spt_fold f acc (LS a) = f a acc) /\
+   (spt_fold f acc (BN t1 t2) = spt_fold f (spt_fold f acc t1) t2) /\
+   (spt_fold f acc (BS t1 a t2) = spt_fold f (f a (spt_fold f acc
+     t1)) t2)`;;
 
 let list_to_num_set_def = cake_define
   `(list_to_num_set [] = LN) /\

@@ -25,8 +25,8 @@ let poplist_aux_def = cake_define
    poplist_aux acc [] = (acc,[])`;;
 
 let poplistval_def = cake_define
-  `poplistval f' l = (let (values,rest) = poplist_aux [] l in
-                      SOME (f' values) :: rest)`;;
+  `poplistval f l = (let (values,rest) = poplist_aux [] l in
+                      SOME (f values) :: rest)`;;
 
 let evalcase_INDUCT,evalcase_RECURSION = define_datatype
   "evalcase = pegexec_EV (('atok,'bnt,'cvalue,'err)pegsym) \
@@ -73,12 +73,12 @@ let coreloop_def = cake_define
                     (if n IN FDOM (peg_rules G) then
                       pegexec_EV (FAPPLY (peg_rules G) n) i r eo errs
                         (appf1 tf3 k) fk else
-                      pegexec_Looped) | pegexec_EV (peg_seq e1 e2 f')
+                      pegexec_Looped) | pegexec_EV (peg_seq e1 e2 f)
                         i r eo errs k fk ->
                       pegexec_EV e1 i r eo errs
                          (restoreEO eo
                           (ksym e2
-                           (appf2 f' k)
+                           (appf2 f k)
                            (cmpEO eo (returnTo i r fk))))
                          fk | pegexec_EV (peg_choice e1 e2 cf) i r eo
                            errs k fk ->
@@ -140,12 +140,12 @@ let coreloop_def = cake_define
                         r' eo errs -> pegexec_AP k i r eo errs |
                         pegexec_AP (restoreEO eo k) i r eo' errs ->
                         pegexec_AP k i r eo errs | pegexec_AP (listsym e
-                        f' k) i r eo errs ->
+                        f k) i r eo errs ->
                       pegexec_EV e i r eo errs (restoreEO eo (listsym
-                        e f' k)) (poplist f' k) | pegexec_AP (poplist f'
-                        k) i r eo [] -> pegexec_Looped | pegexec_AP
-                        (poplist f' k) i r eo (e :: errs) ->
-                      pegexec_AP k i (poplistval f' r) eo errs |
+                        e f k)) (poplist f k) | pegexec_AP (poplist f k)
+                        i r eo [] -> pegexec_Looped | pegexec_AP
+                        (poplist f k) i r eo (e :: errs) ->
+                      pegexec_AP k i (poplistval f r) eo errs |
                         pegexec_Result r -> pegexec_Result r |
                         pegexec_Looped -> pegexec_Looped)`;;
 

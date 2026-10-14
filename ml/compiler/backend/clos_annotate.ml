@@ -11,7 +11,9 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/db_vars.ml";;
+needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
 (* alt_free calculates free variable annotations, and replaces unused

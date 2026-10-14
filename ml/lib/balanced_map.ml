@@ -7,6 +7,7 @@
 
 needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
+needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
 

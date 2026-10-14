@@ -499,6 +499,20 @@ let INT_MOD_NUM = prove
     GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RAND_CONV) [th]) THEN
   REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN INT_ARITH_TAC);;
 
+(* HOL4's function update of combinTheory, which it writes
+   (a =+ b) f *)
+
+let UPDATE = new_definition
+  `UPDATE a (b:B) = \(f:A->B) c. if a = c then b else f c`;;
+
+parse_as_infix("=+",(23,"right"));;
+override_interface("=+",`UPDATE:A->B->(A->B)->A->B`);;
+
+(* HOL4's LEAST, which HOL Light has as the binder minimal *)
+
+let LEAST = new_definition
+  `LEAST (P:num->bool) = minimal n. P n`;;
+
 (* HOL4's ## of pairTheory, the map of a pair *)
 
 let PAIR_MAP = new_definition
@@ -515,13 +529,11 @@ override_interface("##",`PAIR_MAP:(A->C)->(B->D)->A#B->C#D`);;
 let LEAST_INT = new_definition
   `LEAST_INT (P:int->bool) = (@i. P i /\ (!j. j < i ==> ~P j))`;;
 
-parse_as_binder "LEAST_INT";;
-
 let INT_FLOOR = new_definition
-  `INT_FLOOR x = LEAST_INT i. x < real_of_int (i + &1)`;;
+  `INT_FLOOR x = LEAST_INT (\i. x < real_of_int (i + &1))`;;
 
 let INT_CEILING = new_definition
-  `INT_CEILING x = LEAST_INT i. x <= real_of_int i`;;
+  `INT_CEILING x = LEAST_INT (\i. x <= real_of_int i)`;;
 
 (* ------------------------------------------------------------------ *)
 (* HOL Light's machinery for the admissibility of a recursion knows   *)

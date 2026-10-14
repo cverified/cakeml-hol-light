@@ -12,6 +12,8 @@
 *)
 
 needs "compiler/backend/flatLang.ml";;
+needs "lib/location.ml";;
+needs "lib/set_sep.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;

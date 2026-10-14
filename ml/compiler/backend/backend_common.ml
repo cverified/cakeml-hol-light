@@ -7,6 +7,7 @@
   Definitions that are common for many parts of the compiler backend.
 *)
 
+needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: arithmetic integer words *)
 
 needs "lib/sptree.ml";;

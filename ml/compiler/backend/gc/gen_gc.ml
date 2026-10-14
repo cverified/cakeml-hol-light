@@ -8,7 +8,10 @@
 *)
 
 needs "compiler/backend/gc/gc_shared.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/integer_word.ml";;
+needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 ML code, not ported:

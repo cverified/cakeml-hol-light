@@ -11,6 +11,8 @@
 
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_handle.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "lib/sptree.ml";;
 
 (* tick_inline -- a function that inlines a function body *)
 

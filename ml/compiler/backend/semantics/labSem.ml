@@ -7,10 +7,24 @@
   The formal semantics of labLang
 *)
 
+needs "compiler/backend/export.ml";;
 needs "compiler/backend/labLang.ml";;
+needs "compiler/backend/lab_to_target.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
+needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
+needs "lib/binary_ieee.ml";;
+needs "lib/byte.ml";;
+needs "lib/integer_word.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/pegexec.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ffi/ffi.ml";;
+needs "semantics/fpSem.ml";;
+needs "semantics/typeSystem.ml";;
 
 let word8_loc_INDUCT,word8_loc_RECURSION = define_datatype
   "word8_loc = Byte (word8) | LocByte (num) (num) (num)";;

@@ -22,7 +22,9 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/namespace.ml";;
 
 (* Most ops are inherited from ast$op via the Src wrapper.
  * GlobalVar ops, TagLenEq, LenEq, El, and Id are flatLang-specific. *)
@@ -77,7 +79,7 @@ val exp_size_def = definition"exp_size_def";
 let bool_id_def = cake_define
   `bool_id = 0`;;
 
-let Bool_def = cake_define
+let bool_def = cake_define
   `flatLang_Bool t b = flatLang_Con t (SOME (bool_to_tag b,SOME
   bool_id)) []`;;
 

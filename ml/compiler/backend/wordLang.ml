@@ -9,7 +9,13 @@
   This is the language where register allocation is performed.
 *)
 
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 
 new_type_abbrev("wordLang_shift",`: ast_shift`);;
 

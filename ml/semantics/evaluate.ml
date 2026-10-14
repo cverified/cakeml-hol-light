@@ -7,6 +7,7 @@
   Functional big-step semantics for evaluation of CakeML programs.
 *)
 
+needs "lib/location.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
@@ -120,8 +121,8 @@ let evaluate_def = cake_define_wf
            | semanticPrimitives_NotThunk -> (st',Rerr (Rabort
            Rtype_error)) | semanticPrimitives_IsThunk Evaluated
            semanticPrimitives_v -> (st',Rval [semanticPrimitives_v]) |
-           semanticPrimitives_IsThunk NotEvaluated f' ->
-             (match semanticPrimitives_do_opapp [f';
+           semanticPrimitives_IsThunk NotEvaluated f ->
+             (match semanticPrimitives_do_opapp [f;
                semanticPrimitives_Conv NONE []] with SOME (env',e) ->
                   (if semanticPrimitives_state_clock st' = 0 then
                     (st',Rerr (Rabort Rtimeout_error)) else
@@ -247,7 +248,7 @@ let evaluate_def = cake_define_wf
    evaluate_evaluate_decs st env [Dletrec locs funs] =
      (st,
       (if ALL_DISTINCT (MAP (\(x,y,z). x) funs) /\
-         EVERY (\(f',n,e). every_exp (one_con_check (sem_env_c env))
+         EVERY (\(f,n,e). every_exp (one_con_check (sem_env_c env))
            e) funs then
         Rval (mk_sem_env (semanticPrimitives_build_rec_env funs env
           nsEmpty) nsEmpty) else Rerr (Rabort Rtype_error))) /\

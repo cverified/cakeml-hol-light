@@ -7,9 +7,27 @@
   The formal semantics of BVL
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/integer_word.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/ffi/ffi.ml";;
+needs "semantics/fpSem.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: (* for closure_tag and
    num_added_globals *) backendProps *)
 
@@ -29,10 +47,10 @@ let bvlSem_v_INDUCT,bvlSem_v_RECURSION = define_datatype
    bvlSem_Block (num) (bvlSem_v list) | bvlSem_CodePtr (num) | \
    bvlSem_RefPtr (bool) (num)";;
 
-let Boolv_def = cake_define
+let boolv_def = cake_define
   `bvlSem_Boolv b = bvlSem_Block (bool_to_tag b) []`;;
 
-let Unit_def = cake_define
+let unit_def = cake_define
   `bvlSem_Unit = bvlSem_Block (tuple_tag) []`;;
 
 (* -- *)
@@ -109,7 +127,7 @@ let do_eq_def = cake_define
 let v_to_bytes_def = cake_define
   `bvlSem_v_to_bytes lv = some (\(ns:word8 list).
                      bvlSem_v_to_list lv = SOME (MAP
-                       (bvlSem_Number o & o w2n) ns))`;;
+                       (bvlSem_Number o (&) o w2n) ns))`;;
 
 let v_to_words_def = cake_define
   `bvlSem_v_to_words lv = some (\ns. bvlSem_v_to_list lv = SOME (MAP
@@ -152,7 +170,7 @@ let do_part_def = cake_define
    bvlSem_do_part m (flatLang_Con t ns) refs = (bvlSem_Block t (MAP m
      ns),refs) /\
    bvlSem_do_part m (closLang_Str t) refs =
-     (let ptr = (minimal (\ptr. ~(ptr IN FDOM refs))) in
+     (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
      let bytes = MAP (n2w o ORD) (explode t) in
        (bvlSem_RefPtr T ptr,refs |+ (ptr,((bvlSem_ByteArray T
          bytes):bvlSem_v bvlSem_ref))))`;;
@@ -398,8 +416,7 @@ let do_app_def = cake_define
                    (closLang_MemOp (closLang_RefByte F),[bvlSem_Number
                    i; bvlSem_Number b]) ->
             (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-              let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s))))
-                in
+              let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
                 Rval (bvlSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
                   (ptr,bvlSem_ByteArray F (REPLICATE (num_of_int i)
                     (i2w b))))) s) else ((Rerr (Rabort
@@ -408,7 +425,7 @@ let do_app_def = cake_define
                     (closLang_MemOp closLang_RefArray,[bvlSem_Number i;
                     bvlSem_v]) ->
            (if 0 <= i then
-             let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s)))) in
+             let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
                Rval (bvlSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
                  (ptr,bvlSem_ValueArray (REPLICATE (num_of_int i)
                    bvlSem_v)))) s) else ((Rerr (Rabort
@@ -428,11 +445,11 @@ let do_app_def = cake_define
                  closLang_UpdateByte,[bvlSem_RefPtr _57 ptr;
                  bvlSem_Number i; bvlSem_Number b]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (bvlSem_ByteArray
-             f' bs) ->
+             f bs) ->
                (if 0 <= i /\ i < &LENGTH bs /\ (?(w:word8). b = &(w2n
                  w)) then
                   Rval (bvlSem_Unit,?_refs_fupd (K (?_refs s |+
-                    (ptr,bvlSem_ByteArray f' (LUPDATE (i2w b)
+                    (ptr,bvlSem_ByteArray f (LUPDATE (i2w b)
                       (num_of_int i) bs)))) s) else ((Rerr (Rabort
                       Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                       ,bvlSem_v)semanticPrimitives_result)) | _58 ->
@@ -446,7 +463,7 @@ let do_app_def = cake_define
                    ps) /\
                  MAP (FLOOKUP (?_refs s)) ps = MAP (SOME o
                    bvlSem_ByteArray T) wss)) with SOME wss ->
-               (let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s))))
+               (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
                  in
                  Rval (bvlSem_RefPtr T ptr,?_refs_fupd (K (?_refs s
                    |+
@@ -463,8 +480,8 @@ let do_app_def = cake_define
              ,bvlSem_v)semanticPrimitives_result)) | (closLang_MemOp
              closLang_FromListByte,[lv]) ->
            (match some (\ns. bvlSem_v_to_list lv = SOME (MAP
-             (bvlSem_Number o &) ns) /\ EVERY (\n. n < 256) ns) with
-             SOME ns -> (let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs
+             (bvlSem_Number o (&)) ns) /\ EVERY (\n. n < 256) ns) with
+             SOME ns -> (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs
              s)))) in
                             Rval (bvlSem_RefPtr T ptr,?_refs_fupd (K
                               (?_refs s |+
@@ -477,7 +494,7 @@ let do_app_def = cake_define
                                 closLang_ToListByte,[bvlSem_RefPtr _61
                                 ptr]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (bvlSem_ByteArray
-             f' bs) ->
+             f bs) ->
                (Rval (bvlSem_list_to_v (MAP (\b. bvlSem_Number (&(w2n
                  b))) bs),s)) | _62 -> ((Rerr (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
@@ -502,8 +519,8 @@ let do_app_def = cake_define
           (match (FLOOKUP (?_refs s) src) with SOME (bvlSem_ByteArray
             _68 ws) ->
               (match copy_array (ws,srcoff) len NONE with SOME ds ->
-                 (let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs
-                   s)))) in
+                 (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
+                   in
                  Rval (bvlSem_RefPtr T ptr,?_refs_fupd (K (?_refs s
                    |+ (ptr,bvlSem_ByteArray T ds))) s)) | _69 -> ((Rerr
                    (Rabort
@@ -576,7 +593,7 @@ let do_app_def = cake_define
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (closLang_MemOp
              closLang_Ref,xs) ->
-           (let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s)))) in
+           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
              Rval (bvlSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
                (ptr,bvlSem_ValueArray xs))) s)) | (closLang_MemOp
                closLang_Update,[bvlSem_RefPtr _87 ptr; bvlSem_Number i;
@@ -660,8 +677,8 @@ let do_app_def = cake_define
                   then ((Rerr (Rabort
                   Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                   ,bvlSem_v)semanticPrimitives_result) else
-                 let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs
-                   s)))) in
+                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
+                   in
                    Rval (bvlSem_RefPtr F ptr,?_refs_fupd (K (?_refs s
                      |+ (ptr,bvlSem_Thunk m bvlSem_v))) s)) |
                      (UpdateThunk m,[bvlSem_RefPtr F ptr; bvlSem_v]) ->
@@ -767,8 +784,8 @@ let evaluate_def = cake_define_wf
             bvlSem_BadRef -> (Rerr (Rabort Rtype_error),s) |
             bvlSem_NotThunk -> (Rerr (Rabort Rtype_error),s) |
             bvlSem_IsThunk Evaluated bvlSem_v -> (Rval [bvlSem_v],s) |
-            bvlSem_IsThunk NotEvaluated f' ->
-              (match bvlSem_find_code (SOME force_loc) [thunk_v; f']
+            bvlSem_IsThunk NotEvaluated f ->
+              (match bvlSem_find_code (SOME force_loc) [thunk_v; f]
                 (?_code s) with NONE -> (Rerr (Rabort Rtype_error),s) |
                 SOME (args,flatLang_exp) ->
                    (if ?_clock s = 0 then

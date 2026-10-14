@@ -9,8 +9,12 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "compiler/backend/stackLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
+needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let live_tree_INDUCT,live_tree_RECURSION = define_datatype
@@ -52,25 +56,25 @@ let get_live_tree_def = cake_define
 
 let check_live_tree_def = cake_define
   `(
-     check_live_tree f' (linear_scan_Writes l) live flive =
-       (match check_partial_col f' l live flive with NONE -> NONE |
+     check_live_tree f (linear_scan_Writes l) live flive =
+       (match check_partial_col f l live flive with NONE -> NONE |
          SOME _1 ->
        (let livein = numset_list_delete l live in
-       let flivein = numset_list_delete (MAP f' l) flive in
+       let flivein = numset_list_delete (MAP f l) flive in
        SOME (livein,flivein)))) /\ (
-     check_live_tree f' (linear_scan_Reads l) live flive =
-       check_partial_col f' l live flive) /\ (
-     check_live_tree f' (linear_scan_Branch lt1 lt2) live flive =
-       (match check_live_tree f' lt1 live flive with NONE -> NONE |
+     check_live_tree f (linear_scan_Reads l) live flive =
+       check_partial_col f l live flive) /\ (
+     check_live_tree f (linear_scan_Branch lt1 lt2) live flive =
+       (match check_live_tree f lt1 live flive with NONE -> NONE |
          SOME (livein1,flivein1) ->
-       (match check_live_tree f' lt2 live flive with NONE -> NONE |
+       (match check_live_tree f lt2 live flive with NONE -> NONE |
          SOME (livein2,flivein2) ->
-       check_partial_col f' (MAP FST (toAList (difference livein2
+       check_partial_col f (MAP FST (toAList (difference livein2
          livein1))) livein1 flivein1))) /\ (
-     check_live_tree f' (linear_scan_Seq lt1 lt2) live flive =
-       (match check_live_tree f' lt2 live flive with NONE -> NONE |
+     check_live_tree f (linear_scan_Seq lt1 lt2) live flive =
+       (match check_live_tree f lt2 live flive with NONE -> NONE |
          SOME (livein2,flivein2) ->
-         check_live_tree f' lt1 livein2 flivein2))`;;
+         check_live_tree f lt1 livein2 flivein2))`;;
 
 let get_live_backward_def = cake_define
   `(
@@ -258,12 +262,12 @@ let point_inside_interval_def = cake_define
   `point_inside_interval ((l:int),(r:int)) n = (l <= n /\ n <= r)`;;
 
 let check_intervals_def = cake_define
-  `check_intervals f' int_beg int_end = (!r1 r2.
+  `check_intervals f int_beg int_end = (!r1 r2.
      r1 IN domain int_beg /\ r2 IN domain int_beg /\
      interval_intersect (THE (sptree_lookup r1 int_beg),THE
        (sptree_lookup r1 int_end)) (THE (sptree_lookup r2 int_beg),THE
        (sptree_lookup r2 int_end)) /\
-     f' r1 = f' r2 ==>
+     f r1 = f r2 ==>
      r1 = r2)`;;
 
 let get_intervals_ct_aux_def = cake_define
@@ -665,12 +669,12 @@ let find_reg_exchange_def = cake_define
 
 let MAP_colors_def = cake_define
   `(
-     MAP_colors f' 0 = return one) /\ (
-     MAP_colors f' (SUC n) =
+     MAP_colors f 0 = return one) /\ (
+     MAP_colors f (SUC n) =
        monad_bind (colors_sub n) (\
          col. monad_ignore_bind
-         (update_colors n (f' col)) (
-         MAP_colors f' n)))`;;
+         (update_colors n (f col)) (
+         MAP_colors f n)))`;;
 
 let apply_reg_exchange_def = cake_define
   `apply_reg_exchange phyregs =
@@ -682,11 +686,11 @@ let apply_reg_exchange_def = cake_define
 
 let st_ex_FOLDL_def = cake_define
   `(
-     st_ex_FOLDL f' e [] = return e) /\ (
-     st_ex_FOLDL f' e (x :: xs) =
-       monad_bind (f' e x) (\
+     st_ex_FOLDL f e [] = return e) /\ (
+     st_ex_FOLDL f e (x :: xs) =
+       monad_bind (f e x) (\
          e'.
-         st_ex_FOLDL f' e' xs))`;;
+         st_ex_FOLDL f e' xs))`;;
 
 (* like st_ex_FILTER, but preserve the order *)
 let st_ex_FILTER_good_def = cake_define

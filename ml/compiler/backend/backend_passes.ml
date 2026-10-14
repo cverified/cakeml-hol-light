@@ -8,8 +8,34 @@
   compiler pass
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend.ml";;
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/bvl_handle.ml";;
+needs "compiler/backend/bvl_inline.ml";;
+needs "compiler/backend/bvl_to_bvi.ml";;
+needs "compiler/backend/clos_number.ml";;
+needs "compiler/backend/clos_to_bvl.ml";;
+needs "compiler/backend/data_simp.ml";;
+needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/flat_elim.ml";;
+needs "compiler/backend/flat_pattern.ml";;
+needs "compiler/backend/lab_filter.ml";;
+needs "compiler/backend/lab_to_target.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/presLang.ml";;
+needs "compiler/backend/stack_to_lab.ml";;
+needs "compiler/backend/wordLang.ml";;
+needs "compiler/backend/word_alloc.ml";;
+needs "compiler/backend/word_copy.ml";;
+needs "compiler/backend/word_cse.ml";;
+needs "compiler/backend/word_inst.ml";;
+needs "compiler/backend/word_remove.ml";;
+needs "compiler/backend/word_to_word.ml";;
+needs "compiler/backend/word_unreach.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
 
 
 let any_prog_INDUCT,any_prog_RECURSION = define_datatype
@@ -72,7 +98,7 @@ let to_bvl_all_def = cake_define
        c0) es in
      let ps = ps ++ [((strlit "after clos_known"),backend_passes_Clos
        es [])] in
-     let (es,g',aux) = clos_call_compile (clos_to_bvl_config_do_call
+     let (es,g,aux) = clos_call_compile (clos_to_bvl_config_do_call
        c0) es in
      let ps = ps ++ [((strlit "after clos_call"),backend_passes_Clos
        es aux)] in
@@ -81,7 +107,7 @@ let to_bvl_all_def = cake_define
      let labLang_prog = clos_annotate_compile labLang_prog in
      let ps = ps ++ [((strlit
        "after clos_annotate"),backend_passes_Clos [] labLang_prog)] in
-     let c1 = clos_to_bvl_config_call_state_fupd (K (g',aux))
+     let c1 = clos_to_bvl_config_call_state_fupd (K (g,aux))
        (clos_to_bvl_config_known_conf_fupd (K kc)
        (clos_to_bvl_config_next_loc_fupd (K n)
        (clos_to_bvl_config_start_fupd (K (clos_to_bvl_config_next_loc

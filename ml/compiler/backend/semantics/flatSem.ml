@@ -7,9 +7,23 @@
   The formal semantics of flatLang
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: semanticPrimitivesProps *)
 
 (* The values of flatLang differ from source semantic values in that
@@ -59,11 +73,11 @@ val s = ``s:('c,'ffi) flatSem$state``
 let list_id_def = cake_define
   `list_id = 1`;;
 
-let Boolv_def = cake_define
+let boolv_def = cake_define
   `flatSem_Boolv b = flatSem_Conv (SOME (if b then true_tag else
   false_tag,SOME bool_id)) []`;;
 
-let Unitv_def = cake_define
+let unitv_def = cake_define
   `Unitv = flatSem_Conv NONE []`;;
 
 let bind_exn_v_def = cake_define
@@ -80,8 +94,8 @@ let subscript_exn_v_def = cake_define
 
 let build_rec_env_def = cake_define
   `flatSem_build_rec_env funs cl_env add_to_env =
-     ITLIST (\(f',x,e) env'. (f',flatSem_Recclosure cl_env funs f')
-       :: env') funs
+     ITLIST (\(f,x,e) env'. (f,flatSem_Recclosure cl_env funs f) ::
+       env') funs
        add_to_env`;;
 
 let ctor_same_type_def = cake_define
@@ -815,8 +829,8 @@ let evaluate_def = cake_define
             -> (s,Rerr (Rabort Rtype_error)) | flatSem_NotThunk ->
             (s,Rerr (Rabort Rtype_error)) | flatSem_IsThunk Evaluated
             flatSem_v -> (s,Rval [flatSem_v]) | flatSem_IsThunk
-            NotEvaluated f' ->
-              (match flatSem_evaluate (mk_? [((strlit "f"),f')]) s
+            NotEvaluated f ->
+              (match flatSem_evaluate (mk_? [((strlit "f"),f)]) s
                      [flatSem_AppUnit (flatLang_Var_local
                        backend_common_None (strlit "f"))] with (s,Rval
                        vs2) ->

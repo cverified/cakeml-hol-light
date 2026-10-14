@@ -130,13 +130,14 @@ let fromString_def = cake_define
   `mlint_fromString str =
      (if strlen str = 0 then (NONE:int option) else if strsub str 0 =
        (CHR 126) \/
-             strsub str 0 = (CHR 45) then OPTION_MAP (~ o &)
+             strsub str 0 = (CHR 45) then OPTION_MAP ((~) o (&))
               (fromChars (strlen str - 1)
                          (substring str 1 (strlen str - 1))) else if
-                           strsub str 0 = (CHR 43) then OPTION_MAP &
+                           strsub str 0 = (CHR 43) then OPTION_MAP (&)
               (fromChars (strlen str - 1)
                          (substring str 1 (strlen str - 1))) else
-                           OPTION_MAP & (fromChars (strlen str) str))`;;
+                           OPTION_MAP (&) (fromChars (strlen str)
+                           str))`;;
 
 let fromNatString_def = cake_define
   `fromNatString str =

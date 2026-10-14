@@ -7,9 +7,17 @@
   The top-level semantics of CakeML programs.
 *)
 
+needs "compiler/backend/dataLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/semantics/closSem.ml";;
+needs "lib/grammar.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 let parse_def = cake_define
   `semantics_parse toks =

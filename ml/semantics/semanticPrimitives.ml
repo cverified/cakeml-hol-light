@@ -10,7 +10,11 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/binary_ieee.ml";;
+needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -257,7 +261,7 @@ let ctor_same_type_def = cake_define
       (NONE,NONE) -> T | (SOME stamp1,SOME stamp2) -> same_type
         stamp1 stamp2 | _27 -> F)`;;
 
-let Boolv_def = cake_define
+let boolv_def = cake_define
   `semanticPrimitives_Boolv b =
      (if b then semanticPrimitives_Conv (SOME (TypeStamp (strlit
        "True") bool_type_num)) [] else semanticPrimitives_Conv (SOME
@@ -337,8 +341,8 @@ let build_rec_env_def = cake_define
   list->semanticPrimitives_v
   sem_env->(mlstring,mlstring,semanticPrimitives_v)namespace->(mlstring
   ,mlstring,semanticPrimitives_v)namespace) funs cl_env add_to_env =
-   ITLIST (\(f',x,e) env'. nsBind f' (semanticPrimitives_Recclosure
-     cl_env funs f') env') funs
+   ITLIST (\(f,x,e) env'. nsBind f (semanticPrimitives_Recclosure
+     cl_env funs f) env') funs
          add_to_env`;;
 
 (* Lookup in the list of mutually recursive functions *)
@@ -346,7 +350,7 @@ let find_recfun_def = cake_define
   `(find_recfun:mlstring->(mlstring#'a#'b) list->('a#'b) option) n funs
   =
    (match funs with
-     [] -> NONE | (f',x,e) :: funs' -> (if f' = n then SOME (x,e)
+     [] -> NONE | (f,x,e) :: funs' -> (if f = n then SOME (x,e)
        else find_recfun n funs'))`;;
 
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
@@ -404,7 +408,7 @@ let do_opapp_def = cake_define
         semanticPrimitives_v (sem_env_v env))) env,e) |
         [semanticPrimitives_Recclosure env' funs n';
         semanticPrimitives_v] ->
-        (if ALL_DISTINCT (MAP (\(f',x,e). f') funs) then
+        (if ALL_DISTINCT (MAP (\(f,x,e). f) funs) then
           match find_recfun n' funs with
             NONE -> NONE | SOME (n,e) ->
             SOME
@@ -570,10 +574,10 @@ let concrete_v_def = cake_define_wf
           semanticPrimitives_v /\ concrete_v_list vs`;;
 
 let compiler_agrees_def = cake_define
-  `compiler_agrees (f':(num#num)#semanticPrimitives_v#dec
+  `compiler_agrees (f:(num#num)#semanticPrimitives_v#dec
   list->(semanticPrimitives_v#word8 list#word64 list) option)
        args (st_v,bs_v,ws_v) <=>
-     (match (f' args,args,v_to_word8_list bs_v,v_to_word64_list ws_v)
+     (match (f args,args,v_to_word8_list bs_v,v_to_word64_list ws_v)
        with (SOME (st,c_bs,c_ws),(v16,prev_st_v,_49),SOME bs,SOME ws) ->
          st = st_v /\ c_bs = bs /\ c_ws = ws /\ concrete_v st_v /\
          concrete_v prev_st_v | _50 -> F)`;;

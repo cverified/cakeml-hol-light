@@ -21,6 +21,7 @@ needs "lib/machine_ieee.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
    container list pred_set finite_map rich_list llist option pair
    relation toto bit words string address path res_quan *)
@@ -200,8 +201,8 @@ new_type_abbrev("misc_num_set",`: one spt`);;
 (* used only twice, both times in candle/set-theory *)
 
 let least_from_def = cake_define
-  `least_from P n = (if (?x. P x /\ n <= x) then minimal (\x. P x /\
-  n <= x) else minimal P)`;;
+  `least_from P n = (if (?x. P x /\ n <= x) then LEAST (\x. P x /\ n
+  <= x) else LEAST P)`;;
 
 (* used just once; better as
      transitive R ==> transitive (OPTREL R)
@@ -326,7 +327,7 @@ let word_list_def = cake_define
 
 let word_list_exists_def = cake_define
   `word_list_exists a n =
-     SEP_EXISTS (?_word_list xs) a xs * cond (LENGTH xs = n)`;;
+     SEP_EXISTS (\xs. misc_word_list a xs * cond (LENGTH xs = n))`;;
 
 (* lookup_vars vs env = OPT_MMAP (\i. oEL i env) vs *)
 let lookup_vars_def = cake_define
@@ -355,8 +356,8 @@ let enumerate_def = cake_define
 (* TODO - candidate for move to HOL *)
 
 let option_fold_def = cake_define
-  `(option_fold f' x NONE = x) /\
-   (option_fold f' x (SOME y) = f' y x)`;;
+  `(option_fold f x NONE = x) /\
+   (option_fold f x (SOME y) = f y x)`;;
 
 let shift_left_def = cake_define
   `shift_left (a:'a word) n =
@@ -417,7 +418,15 @@ let list_set_eq_def = cake_define
 (* move into llistTheory? *)
 
 (* computes the next position for which P holds *)
-(* TERMINATION: exists_tac``\(P,ll') (P',ll).
+(* PENDING: HOL4 proves the termination with the induction principle of
+   llistTheory's eventually, which the port does not have yet
+Definition Lnext_def:
+  Lnext P ll = if eventually P ll then
+                        if P ll then 0
+                        else SUC(Lnext P (THE (LTL ll)))
+                     else ARB
+Termination
+  exists_tac``\(P,ll') (P',ll).
     ((P = P') /\ eventually P ll /\ eventually P ll' /\
     (LTL ll = SOME ll') /\ ¬ P ll)`` >>
     reverse(rw[relationTheory.WF_DEF,eventually_thm])
@@ -432,15 +441,14 @@ let list_set_eq_def = cake_define
   >-(qexists_tac`(P,ll)` >> rw[] >> pairarg_tac >> fs[] >> res_tac >>
     rfs[]) >>
   Cases_on`B(P,ll)` >-(metis_tac[]) >>
-  qexists_tac`(P,h:::ll)` >> fs[] >> rw[] >> pairarg_tac >> fs[] *)
-let Lnext_def = cake_define
-  `Lnext P ll = (if eventually P ll then
-                         if P ll then 0 else SUC (Lnext P (THE
-                           (LTL ll))) else ARB)`;;
+  qexists_tac`(P,h:::ll)` >> fs[] >> rw[] >> pairarg_tac >> fs[]
+End *)
 
-let Lnext_pos_def = cake_define
-  `Lnext_pos (ll:num llist) = Lnext (\ll. ?k. LHD ll = SOME k /\ ~(k
-  = 0)) ll`;;
+(* PENDING: needs Lnext
+Definition Lnext_pos_def:
+  Lnext_pos (ll :num llist) = Lnext (λll. ∃k. LHD ll = SOME k ∧ k ≠ 0)
+    ll
+End *)
 
 (* insert a string (l1) at specified index (n) in a list (l2) *)
 let insert_atI_def = cake_define
@@ -492,10 +500,10 @@ let make_even_def = cake_define
   `make_even n = (if EVEN n then n else n + 1)`;;
 
 let steps_def = cake_define
-  `(steps f' x [] = []) /\
-   (steps f' x (j :: js) =
-    (let y = f' x j in
-    let tr = steps f' y js in
+  `(steps f x [] = []) /\
+   (steps f x (j :: js) =
+    (let y = f x j in
+    let tr = steps f y js in
       ((j,y) :: tr)))`;;
 
 let steps_rel_def = cake_define
@@ -597,7 +605,7 @@ val LESS8 = DECIDE ``n < 8 <=> (n = 0) \/ (n = 1) \/ (n = 2) \/ (n =
 (* must be used instead of FUPDATE in defitions that go through
    translation *)
 let fmap_update_def = cake_define
-  `fmap_update f' k v = f' |+ (k,v)`;;
+  `fmap_update f k v = f |+ (k,v)`;;
 
 (* TODO: move to HOL? *)
 let sum_cmp_def = cake_define

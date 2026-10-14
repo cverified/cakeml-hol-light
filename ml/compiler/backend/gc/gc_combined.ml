@@ -12,6 +12,7 @@ needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
+needs "compiler/backend/semantics/dataSem.ml";;
 
 let gen_state_INDUCT,gen_state_RECURSION = define_datatype
   "gen_state = GenState (num) (num list)";;

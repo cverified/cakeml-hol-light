@@ -8,6 +8,7 @@
   are live when traversing a language using dB vars.
 *)
 
+needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 
 let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype

@@ -199,6 +199,27 @@ let cake_term_lemmas =
        DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
        list_size_APPEND; list_size_REVERSE];;
 
+(* the lemmas that state a fact about a subterm of a termination
+   goal (and not an equation, so that rewriting cannot use them);
+   they are instantiated by matching and added to the assumptions *)
+
+let cake_term_facts = ref ([]:thm list);;
+
+let FACTS_TAC (asl,w as gl) =
+  let sel bod =
+    let c = if is_imp bod then rand bod else bod in
+    lhand c in
+  let tms =
+    itlist (fun t l -> union (find_terms (fun _ -> true) t) l)
+           (w :: map (concl o snd) asl) [] in
+  let instances th =
+    let key = sel (snd(strip_forall(concl th))) in
+    mapfilter (fun t -> PART_MATCH sel th t)
+              (filter (fun t -> can (term_match [] key) t) tms) in
+  let facts = itlist (fun th l -> instances th @ l)
+                     (!cake_term_facts) [] in
+  (if facts = [] then ALL_TAC else MAP_EVERY MP_TAC facts) gl;;
+
 (* when a termination proof does not close, the goal is logged *)
 
 let LOG_TAC (asl,w) =
@@ -210,13 +231,16 @@ let LOG_TAC (asl,w) =
   failwith "LOG_TAC";;
 
 let TERM_TAC g =
-  (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM] THEN
+  (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM;
+               o_THM; FST; SND] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REWRITE_TAC(all_size_thms()) THEN
    RULE_ASSUM_TAC(REWRITE_RULE(all_size_thms())) THEN
    MEM_SIZE_TAC THEN DIV_FACTS_TAC THEN
+   (* a fact may make a subterm appear that another fact is about *)
+   FACTS_TAC THEN FACTS_TAC THEN
    REWRITE_TAC(I_THM::all_size_thms() @ (!cake_term_lemmas)) THEN
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN

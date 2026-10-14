@@ -10,6 +10,7 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
+needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: integer *)
 
 let pure_op_def = cake_define

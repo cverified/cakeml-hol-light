@@ -14,6 +14,8 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "lib/sptree.ml";;
 
 let bvi_mk_tick_def = cake_define
   `bvi_mk_tick n e = FUNPOW bvi_Tick n e`;;

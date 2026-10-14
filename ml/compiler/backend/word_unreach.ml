@@ -8,6 +8,8 @@
 *)
 
 needs "compiler/backend/wordLang.ml";;
+needs "misc/misc.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 (* function that makes all Seq associate to the right *)
 
@@ -39,7 +41,7 @@ let SimpSeq_def = cake_define
                         (wordLang_Move (MAX n1 n2) l) rest)) | _7 ->
                         default)`;;
 
-let Seq_assoc_right_def = cake_define
+let seq_assoc_right_def = cake_define
   `Seq_assoc_right p1 acc =
         match p1 with
           wordLang_Skip -> acc

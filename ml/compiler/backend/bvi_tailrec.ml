@@ -10,6 +10,9 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/namespace.ml";;
 
 let dummy_def = cake_define
   `dummy = bvi_Var 1234567890`;;
@@ -210,10 +213,10 @@ let try_swap_def = cake_define
 let check_op_def = cake_define
   `check_op ts opr loc bvi_exp =
      (match opbinargs opr (try_swap loc opr bvi_exp) with
-       NONE -> NONE | SOME (xs,f') ->
-         (if bvi_tailrec_is_rec loc f' /\ term_ok ts (op_type opr) xs
+       NONE -> NONE | SOME (xs,f) ->
+         (if bvi_tailrec_is_rec loc f /\ term_ok ts (op_type opr) xs
            then
-           SOME (apply_op opr xs f') else
+           SOME (apply_op opr xs f) else
            NONE))`;;
 
 (* --- Type analysis --- *)

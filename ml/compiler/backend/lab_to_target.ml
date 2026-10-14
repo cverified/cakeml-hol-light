@@ -13,6 +13,10 @@
 
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 
 (* Number of bytes per FFI *)
@@ -339,8 +343,8 @@ let lab_to_target_config_FIELDS = define_record "lab_to_target_config"
 
 let list_add_if_fresh_def = cake_define
   `(list_add_if_fresh e [] = [e]) /\
-   (list_add_if_fresh e (f' :: r) =
-     (if e = f' then f' :: r else f' :: list_add_if_fresh e r))`;;
+   (list_add_if_fresh e (f :: r) =
+     (if e = f then f :: r else f :: list_add_if_fresh e r))`;;
 
 let find_ffi_names_def = cake_define
   `(find_ffi_names [] = []) /\

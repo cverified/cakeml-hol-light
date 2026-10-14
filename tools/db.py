@@ -47,7 +47,11 @@ def provided_names():
                        s):
     for cl in re.split(r'/\\\\', m.group(1)):
       mm = re.match(r"\s*\(?\s*([A-Za-z_][A-Za-z0-9_']*)", cl)
-      if mm: names.add(mm.group(1))
+      # the first identifier of a clause is the constant it defines,
+      # unless the clause starts with an annotated argument of an
+      # infix, as in `(fm:(A,B)fmap) |+ kv = ...'
+      if mm and not (len(mm.group(1)) <= 2 and mm.group(1).islower()):
+        names.add(mm.group(1))
   for m in re.finditer(r'override_interface\("([^"]+)"', s):
     names.add(m.group(1))
   return names
@@ -247,6 +251,26 @@ class Db:
     return any(((thy, nm) in self.needed_names or
                 (thy, nm) in overrides.ALSO_NEEDED) and
                (thy, nm) not in overrides.NOT_NEEDED for nm in names)
+
+  def providers(self, thy, text):
+    """the ported theories that define a name the text uses; the
+     needs of a file of the port are these, not only the ancestors
+     that HOL4 lists (an ancestor provides what its own ancestors
+     provide, which a file of the port does not)"""
+    used = set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", text))
+    rank = dict((t, i) for i, (t, _, _) in enumerate(self.order))
+    anc = self.ancestors(thy) - {thy}
+    out = set()
+    for nm in used:
+      # a name can be defined in several theories; the one to take
+      # is an ancestor, and otherwise the first one of the order
+      ts = [t for t, _ in self.defs.get(nm, [])
+            if t in self.thy_of_file and
+               rank.get(t, 0) < rank.get(thy, 0)]
+      if not ts: continue
+      good = [t for t in ts if t in anc]
+      out.add(min(good if good else ts, key=lambda t: rank[t]))
+    return out
 
   def mlpath_of(self, thy):
     """where the port of a theory goes"""

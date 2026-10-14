@@ -7,6 +7,11 @@
   Specification of CakeML's type system.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/pattern_matching/pattern_exh.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/location.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -19,49 +24,49 @@ let t_INDUCT,t_RECURSION = define_datatype
 
 
 (* Some abbreviations *)
-let Tarray_num_def = cake_define
+let tarray_num_def = cake_define
   `(((Tarray_num:num):num) = ((0:num)))`;;
 
-let Tbool_num_def = cake_define
+let tbool_num_def = cake_define
   `(((Tbool_num:num):num) = ((1:num)))`;;
 
-let Tchar_num_def = cake_define
+let tchar_num_def = cake_define
   `(((Tchar_num:num):num) = ((2:num)))`;;
 
-let Texn_num_def = cake_define
+let texn_num_def = cake_define
   `(((Texn_num:num):num) = ((3:num)))`;;
 
-let Tfn_num_def = cake_define
+let tfn_num_def = cake_define
   `(((Tfn_num:num):num) = ((4:num)))`;;
 
-let Tint_num_def = cake_define
+let tint_num_def = cake_define
   `(((Tint_num:num):num) = ((5:num)))`;;
 
-let Tlist_num_def = cake_define
+let tlist_num_def = cake_define
   `(((Tlist_num:num):num) = ((6:num)))`;;
 
-let Tref_num_def = cake_define
+let tref_num_def = cake_define
   `(((Tref_num:num):num) = ((7:num)))`;;
 
-let Tstring_num_def = cake_define
+let tstring_num_def = cake_define
   `(((Tstring_num:num):num) = ((8:num)))`;;
 
-let Ttup_num_def = cake_define
+let ttup_num_def = cake_define
   `(((Ttup_num:num):num) = ((9:num)))`;;
 
-let Tvector_num_def = cake_define
+let tvector_num_def = cake_define
   `(((Tvector_num:num):num) = ((10:num)))`;;
 
-let Tword64_num_def = cake_define
+let tword64_num_def = cake_define
   `(((Tword64_num:num):num) = ((11:num)))`;;
 
-let Tword8_num_def = cake_define
+let tword8_num_def = cake_define
   `(((Tword8_num:num):num) = ((12:num)))`;;
 
-let Tword8array_num_def = cake_define
+let tword8array_num_def = cake_define
   `(((Tword8array_num:num):num) = ((13:num)))`;;
 
-let Tdouble_num_def = cake_define
+let tdouble_num_def = cake_define
   `(((Tdouble_num:num):num) = ((14:num)))`;;
 
 (* The numbers for the primitive types *)
@@ -72,49 +77,49 @@ let prim_type_nums_def = cake_define
     Ttup_num; Tvector_num; Tword64_num; Tword8_num;
       Tword8array_num; Tdouble_num]`;;
 
-let Tarray_def = cake_define
+let tarray_def = cake_define
   `((Tarray:t->t) t = (Tapp [t] Tarray_num))`;;
 
-let Tbool_def = cake_define
+let tbool_def = cake_define
   `((Tbool:t) = (Tapp [] Tbool_num))`;;
 
-let Tchar_def = cake_define
+let tchar_def = cake_define
   `((Tchar:t) = (Tapp [] Tchar_num))`;;
 
-let Texn_def = cake_define
+let texn_def = cake_define
   `((Texn:t) = (Tapp [] Texn_num))`;;
 
-let Tfn_def = cake_define
+let tfn_def = cake_define
   `((Tfn:t->t->t) t1 t2 = (Tapp [t1; t2] Tfn_num))`;;
 
-let Tint_def = cake_define
+let tint_def = cake_define
   `((Tint:t) = (Tapp [] Tint_num))`;;
 
-let Tlist_def = cake_define
+let tlist_def = cake_define
   `((Tlist:t->t) t = (Tapp [t] Tlist_num))`;;
 
-let Tref_def = cake_define
+let tref_def = cake_define
   `((Tref:t->t) t = (Tapp [t] Tref_num))`;;
 
-let Tstring_def = cake_define
+let tstring_def = cake_define
   `((Tstring:t) = (Tapp [] Tstring_num))`;;
 
-let Ttup_def = cake_define
+let ttup_def = cake_define
   `((Ttup:t list->t) ts = (Tapp ts Ttup_num))`;;
 
-let Tvector_def = cake_define
+let tvector_def = cake_define
   `((Tvector:t->t) t = (Tapp [t] Tvector_num))`;;
 
-let Tword64_def = cake_define
+let tword64_def = cake_define
   `((Tword64:t) = (Tapp [] Tword64_num))`;;
 
-let Tword8_def = cake_define
+let tword8_def = cake_define
   `((Tword8:t) = (Tapp [] Tword8_num))`;;
 
-let Tword8array_def = cake_define
+let tword8array_def = cake_define
   `((Tword8array:t) = (Tapp [] Tword8array_num))`;;
 
-let Tdouble_def = cake_define
+let tdouble_def = cake_define
   `((Tdouble:t) = (Tapp [] Tdouble_num))`;;
 
 (* Check that the free type variables are in the given list. Every

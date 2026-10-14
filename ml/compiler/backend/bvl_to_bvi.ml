@@ -12,6 +12,7 @@
   the register allocator from overly large inputs).
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvi_inline.ml";;
@@ -22,7 +23,11 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
+needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
 
 let destLet_def = cake_define
   `destLet x1 =

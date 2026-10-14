@@ -14,7 +14,6 @@ NAME_MAP = {
   '()': 'one',
   'Num': 'num_of_int',
   'ABS': 'abs',
-  'LEAST': 'minimal',
   'ARB': 'ARB',
   # the word constants of HOL4's wordsTheory
   'INT_MINw': 'word_L',
@@ -53,6 +52,11 @@ EXTRA_NEEDS = {
 # sources use them through HOL4 syntax that mentions them only
 # indirectly (a record field declared with ML code, say)
 ALSO_NEEDED = set([
+  # set_sep's separating conjunction is the overloaded *, and
+  # SEP_EXISTS is a binder, so the dependency analysis does not see
+  # that the port needs them
+  ('set_sep', 'STAR'), ('set_sep', 'SEP_EXISTS'),
+  ('set_sep', 'SPLIT'), ('set_sep', 'SEP_T'),
   ('location', 'locnrow'), ('location', 'locncol'),
   # HOL4 generates the fp64 encoding of machine_ieee with ML code
   # (machine_ieeeLib), which the port writes out by hand; these are
@@ -116,6 +120,15 @@ MEASURE = {
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # HOL4 overloads * with the separating conjunction (and ~ with
+  # SEP_HIDE, which the port does not need)
+  ('set_sep', 'STAR_def'): '''
+let STAR_def = cake_define
+  `STAR p q = (\\s. ?u v. SPLIT s (u,v) /\\ p u /\\ q v)`;;
+
+overload_interface("*",
+  `STAR:((A->bool)->bool)->((A->bool)->bool)->(A->bool)->bool`);;
+''',
   # HOL4 matches the number of elements with overlapping patterns and
   # a catch-all clause; the port uses nested conditionals, so that the
   # termination conditions have the guards that they need
@@ -165,6 +178,17 @@ let mergesortN_tail_def = cake_define_wf
                                          (DROP len1 l))
                         []`;;
 ''',
+}
+
+# definitions that the port does not have yet, with the reason; the
+# port writes the HOL4 text in a comment, so that the gap is visible
+# in the file (PENDING.md lists them all)
+NOT_YET = {
+  ('misc', 'Lnext_def'):
+    'HOL4 proves the termination with the induction principle of\n'
+    '   llistTheory\'s eventually, which the port does not have yet',
+  ('misc', 'Lnext_pos_def'):
+    'needs Lnext',
 }
 
 # definitions that HOL4 generates with ML code, so that there is no

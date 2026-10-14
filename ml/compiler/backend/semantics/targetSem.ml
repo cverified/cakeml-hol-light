@@ -9,9 +9,21 @@
   state function of the target architecture.
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/lab_to_target.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/encoders/asm/asmSem.ml";;
+needs "lib/alignment.ml";;
+needs "lib/byte.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: evaluateProps asmProps *)
 
 (* -- execute target machine with interference from environment -- *)
@@ -278,8 +290,8 @@ let target_configured_def = cake_define
        mc_conf)) with NONE -> T | SOME r -> asm_state_lr t = r)`;;
 
 let get_reg_value_def = cake_define
-  `(get_reg_value NONE w f' = w) /\
-   (get_reg_value (SOME semanticPrimitives_v) _4 f' = f'
+  `(get_reg_value NONE w f = w) /\
+   (get_reg_value (SOME semanticPrimitives_v) _4 f = f
      semanticPrimitives_v)`;;
 
 let mmio_pcs_min_index_def = cake_define

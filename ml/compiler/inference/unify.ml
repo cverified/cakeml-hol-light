@@ -11,7 +11,12 @@
   those definitions and theorems.
 *)
 
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_comp.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
+needs "lib/sptree.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: unifProps unifDef walk walkstar
    collapse subst rmfmap tcallUnif transfer cps *)
 
@@ -57,8 +62,8 @@ let RKC_def = cake_define
   `RKC rkt ct <=> encode_infer_t ct = rkt`;;
 
 let substR_def = cake_define
-  `substR fm' sp <=> wfs fm' /\ sptree_wf sp /\ fm' = encode_infer_t
-  o_f sp2fm sp`;;
+  `substR fm sp <=> wfs fm /\ sptree_wf sp /\ fm = encode_infer_t o_f
+  sp2fm sp`;;
 
 let cwfs_def = cake_define
   `cwfs s <=> swfs (sptree_map encode_infer_t s) /\ sptree_wf s`;;

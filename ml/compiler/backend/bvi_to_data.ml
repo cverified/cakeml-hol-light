@@ -9,10 +9,14 @@
 *)
 
 needs "compiler/backend/bvi.ml";;
+needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_space.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
 
 (* compilation from BVI to dataLang *)
 

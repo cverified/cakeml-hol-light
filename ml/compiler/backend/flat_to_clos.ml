@@ -10,10 +10,16 @@
   exceptions raised explicitly.
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/fpSem.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 let dest_pat_def = cake_define
   `dest_pat x1 =
@@ -33,13 +39,13 @@ let compile_lit_def = cake_define
         closLang_BlockOp (closLang_Constant (ConstWord64 w))) []`;;
 
 let arg1_def = cake_define
-  `flat_to_clos_arg1 xs f' =
-     (match xs with [x] -> f' x | _2 -> closLang_Let
+  `flat_to_clos_arg1 xs f =
+     (match xs with [x] -> f x | _2 -> closLang_Let
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
 
 let arg2_def = cake_define
-  `flat_to_clos_arg2 xs f' =
-     (match xs with [x; y] -> f' x y | _3 -> closLang_Let
+  `flat_to_clos_arg2 xs f =
+     (match xs with [x; y] -> f x y | _3 -> closLang_Let
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
 
 (* HOL4 ML code, not ported:
@@ -166,8 +172,8 @@ let compile_op_def = cake_define
        closLang_Op t (closLang_GlobOp (SetGlobal (n + 1))) xs |
        flatLang_GlobalVarLookup n -> closLang_Op t (closLang_GlobOp
        (Global (n + 1))) xs | flatLang_Id -> flat_to_clos_arg1 xs (\x.
-       x) | flatLang_Src ast_Opapp -> flat_to_clos_arg2 xs (\x f'.
-       closLang_App t NONE f' [x]) | flatLang_Src ast_Opassign ->
+       x) | flatLang_Src ast_Opapp -> flat_to_clos_arg2 xs (\x f.
+       closLang_App t NONE f [x]) | flatLang_Src ast_Opassign ->
        flat_to_clos_arg2 xs (\x y. closLang_Op t (closLang_MemOp
        closLang_Update) [x; closLang_Op backend_common_None
        (closLang_IntOp (closLang_Const 0)) []; y]) | flatLang_Src
@@ -455,7 +461,7 @@ let compile_def = cake_define_wf
       (let new_m = MAP (\n. SOME (FST n)) funs ++ m in
         [flatLang_Letrec (MAP (\n. join_strings t (FST n)) funs) NONE
           NONE
-           (MAP (\(f',v,x). (1,HD (flat_to_clos_compile (SOME v ::
+           (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (SOME v ::
              new_m) [x]))) funs)
            (HD (flat_to_clos_compile new_m [e]))]))`;;
 

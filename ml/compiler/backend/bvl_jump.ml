@@ -8,6 +8,7 @@
 *)
 
 needs "compiler/backend/bvl.ml";;
+needs "lib/ternaryComparisons.ml";;
 
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\
    Q.ISPEC_THEN`xs`STRIP_ASSUME_TAC SPLIT_LIST \\ FULL_SIMP_TAC
@@ -32,5 +33,5 @@ let JumpList_def = cake_define_wf
             in
             bvl_If lt (JumpList n ys) (JumpList (n + k) zs)))`;;
 
-let Jump_def = cake_define
+let jump_def = cake_define
   `bvl_jump_Jump x xs = bvl_Let [x] (JumpList 0 xs)`;;

@@ -7,10 +7,20 @@
   Specification of how to convert parse trees to abstract syntax.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/encoders/asm/asmSem.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
+needs "lib/grammar.ml";;
+needs "lib/location.ml";;
+needs "lib/peg.ml";;
+needs "lib/set_sep.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/namespace.ml";;
+needs "semantics/semanticPrimitives.ml";;
 needs "semantics/tokenUtils.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* handling constructor arities gets very complicated when "open" is
    implemented *)
@@ -47,14 +57,14 @@ let mfixity_lookup_def = cake_define
      (\pcs. OPTION_MAP (\r. (r,pcs)) (fixity_lookup nm pcs))`;;
 
 let mFUPD_HD_def = cake_define
-  `mFUPD_HD f' pcs =
+  `mFUPD_HD f pcs =
      (match pcs with
-         [] -> NONE | h :: t -> SOME (one,f' h :: t))`;;
+         [] -> NONE | h :: t -> SOME (one,f h :: t))`;;
 
 (* msetfix : mlstring -> num option -> unit M *)
 let msetfix_def = cake_define
   `(msetfix nm fix:PCstate0 list->(one#PCstate0 list) option) =
-     mFUPD_HD (\s0. PCstate0_fixities_fupd (\fm'. fm' |+ (nm,fix))
+     mFUPD_HD (\s0. PCstate0_fixities_fupd (\fm. fm |+ (nm,fix))
        s0)`;;
 
 (* mpop_anonscope : unit M *)
@@ -506,7 +516,7 @@ let ptree_OpID_def = cake_define
                     tk = tokens_EqualsT then return (ast_Var (Short
                     (strlit "="))) else NONE) | _48 -> NONE)`;;
 
-let Papply_def = cake_define
+let papply_def = cake_define
   `Papply ast_pat arg =
      (match ast_pat with
        ast_Pcon cn args -> ast_Pcon cn (args ++ [arg]) | _49 ->
@@ -647,7 +657,7 @@ let ptree_PbaseList1_def = cake_define
                       (ptree_Pattern nPbase p_pt)
                       (ptree_PbaseList1 pl_pt) | _62 -> NONE))`;;
 
-let Eseq_encode_def = cake_define
+let eseq_encode_def = cake_define
   `Eseq_encode x1 =
         match x1 with
           [] -> NONE
@@ -919,11 +929,11 @@ let ptree_Expr_def = cake_define
                  tokens_OfT])) (monad_bind (ptree_Expr nE pnt') (\
                e. monad_bind (ptree_PEs ent) (\
                pes.
-               SOME (ast_Mat e pes)))) | [ift; g'; thent; te; elset;
+               SOME (ast_Mat e pes)))) | [ift; g; thent; te; elset;
                  ee] -> monad_ignore_bind
                (assert (tokcheckl [ift; thent; elset] [tokens_IfT;
                  tokens_ThenT; tokens_ElseT])) (monad_bind (ptree_Expr
-                 nE g') (\
+                 nE g) (\
                a1. monad_bind (ptree_Expr nE te) (\
                a2. monad_bind (ptree_Expr nE ee) (\
                a3.

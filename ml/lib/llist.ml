@@ -83,3 +83,40 @@ let LUNFOLD = new_definition
    mk_llist (\n. match LUNFOLD_state f n x with
                    NONE -> NONE
                  | SOME y -> OPTION_MAP SND (f y))`;;
+
+(* the n-th tail of a lazy list, which is NONE when the list has
+   fewer than n elements (HOL4's LDROP) *)
+
+let LDROP = new_definition
+  `LDROP n (l:A llist) =
+   if (!m. m < n ==> ~(llist_fn l m = NONE))
+   then SOME (mk_llist (\m. llist_fn l (m + n))) else NONE`;;
+
+(* HOL4 defines eventually inductively: it says that P holds of the
+   list itself or of a tail of it *)
+
+let eventually = new_definition
+  `eventually P (l:A llist) <=> ?n t. LDROP n l = SOME t /\ P t`;;
+
+(* the facts about LDROP that a recursion along a lazy list needs *)
+
+let LLIST_FN_EQ = prove
+ (`!l1 l2:A llist. llist_fn l1 = llist_fn l2 ==> l1 = l2`,
+  REPEAT GEN_TAC THEN
+  DISCH_THEN(MP_TAC o AP_TERM `mk_llist:(num->A option)->A llist`) THEN
+  REWRITE_TAC[CONJUNCT1 llist_tybij]);;
+
+let LDROP_0 = prove
+ (`!l:A llist. LDROP 0 l = SOME l`,
+  GEN_TAC THEN REWRITE_TAC[LDROP; ARITH_RULE `~(m < 0)`] THEN
+  AP_TERM_TAC THEN MATCH_MP_TAC LLIST_FN_EQ THEN
+  REWRITE_TAC[ADD_CLAUSES; ETA_AX; CONJUNCT1 llist_tybij]);;
+
+let LTL_LDROP_1 = prove
+ (`!(l:A llist) t. LTL l = SOME t ==> LDROP 1 l = SOME t`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[LTL] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[option_INJ; NOT_SUC] THEN
+  DISCH_THEN(SUBST1_TAC o SYM) THEN
+  ASM_REWRITE_TAC[LDROP; ARITH_RULE `m < 1 <=> m = 0`] THEN
+  REWRITE_TAC[LEFT_FORALL_IMP_THM; EXISTS_REFL] THEN
+  ASM_REWRITE_TAC[ARITH_RULE `m + 1 = m + 1`]);;

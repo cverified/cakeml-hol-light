@@ -44,9 +44,9 @@ let line_INDUCT,line_RECURSION = define_datatype
 let sec_INDUCT,sec_RECURSION = define_datatype
   "sec = Section (num) (('a line) list)";;
 
-let Section_num_def = cake_define
+let section_num_def = cake_define
   `Section_num (Section k _1) = k`;;
-let Section_lines_def = cake_define
+let section_lines_def = cake_define
   `Section_lines (Section _2 lines) = lines`;;
 
 (* A full assembly program consists of a list of sections. *)

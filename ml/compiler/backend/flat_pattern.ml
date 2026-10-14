@@ -12,11 +12,19 @@
   - encodes the variable bindings of each case as let-bindings
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_comp.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/indexedLists.ml";;
+needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/ffi/ffi.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 
 let flat_pattern_config_FIELDS = define_record "flat_pattern_config"

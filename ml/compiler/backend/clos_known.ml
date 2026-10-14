@@ -13,12 +13,16 @@
   recursive and controlled using configurable parameters.
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_fvs.ml";;
 needs "compiler/backend/clos_letop.ml";;
 needs "compiler/backend/clos_op.ml";;
 needs "compiler/backend/clos_ticks.ml";;
 needs "compiler/backend/db_vars.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 
 (* val _ = set_grammar_ancestry ["closLang", "sptree", "misc",
    "backend_common"] *)
@@ -462,47 +466,47 @@ let decide_inline_def = cake_define
   \\ disch_then (qspec_then `pair_size (λx. x) exp_size` mp_tac)
   \\ simp[list_size_pair_size_MAP_FST_SND] *)
 let known_def = cake_define
-  `(known c [] vs (g':val_approx spt) = ([],g')) /\
-   (known c ((x:closLang_exp) :: y :: xs) vs g' =
-      (let (eas1,g') = known c [x] vs g' in
-      let (eas2,g') = known c (y :: xs) vs g' in
-        (eas1 ++ eas2,g'))) /\
-   (known c [db_vars_Var t v] vs g' =
-      ([(db_vars_Var t v,any_el v vs clos_known_Other)],g')) /\
-   (known c [closLang_If t x1 x2 x3] vs g' =
-      (let (ea1,g') = known c [x1] vs g' in
-      let (ea2,g') = known c [x2] vs g' in
-      let (ea3,g') = known c [x3] vs g' in
+  `(known c [] vs (g:val_approx spt) = ([],g)) /\
+   (known c ((x:closLang_exp) :: y :: xs) vs g =
+      (let (eas1,g) = known c [x] vs g in
+      let (eas2,g) = known c (y :: xs) vs g in
+        (eas1 ++ eas2,g))) /\
+   (known c [db_vars_Var t v] vs g =
+      ([(db_vars_Var t v,any_el v vs clos_known_Other)],g)) /\
+   (known c [closLang_If t x1 x2 x3] vs g =
+      (let (ea1,g) = known c [x1] vs g in
+      let (ea2,g) = known c [x2] vs g in
+      let (ea3,g) = known c [x3] vs g in
       let (e1,a1) = HD ea1 in
       let (e2,a2) = HD ea2 in
       let (e3,a3) = HD ea3 in
-        ([(closLang_If t e1 e2 e3),clos_known_merge a2 a3],g'))) /\
-   (known c [closLang_Let t xs x2] vs g' =
-      (let (ea1,g') = known c xs vs g' in
-      let (ea2,g') = known c [x2] (MAP SND ea1 ++ vs) g' in
+        ([(closLang_If t e1 e2 e3),clos_known_merge a2 a3],g))) /\
+   (known c [closLang_Let t xs x2] vs g =
+      (let (ea1,g) = known c xs vs g in
+      let (ea2,g) = known c [x2] (MAP SND ea1 ++ vs) g in
       let (e2,a2) = HD ea2 in
-        ([(closLang_Let t (MAP FST ea1) e2,a2)],g'))) /\
-   (known c [closLang_Raise t x1] vs g' =
-      (let (ea1,g') = known c [x1] vs g' in
+        ([(closLang_Let t (MAP FST ea1) e2,a2)],g))) /\
+   (known c [closLang_Raise t x1] vs g =
+      (let (ea1,g) = known c [x1] vs g in
       let (e1,a1) = HD ea1 in
-        ([(closLang_Raise t e1,clos_known_Impossible)],g'))) /\
-   (known c [closLang_Tick t x1] vs g' =
-      (let (ea1,g') = known c [x1] vs g' in
+        ([(closLang_Raise t e1,clos_known_Impossible)],g))) /\
+   (known c [closLang_Tick t x1] vs g =
+      (let (ea1,g) = known c [x1] vs g in
       let (e1,a1) = HD ea1 in
-        ([(closLang_Tick t e1,a1)],g'))) /\
-   (known c [closLang_Handle t x1 x2] vs g' =
-      (let (ea1,g') = known c [x1] vs g' in
-      let (ea2,g') = known c [x2] (clos_known_Other :: vs) g' in
+        ([(closLang_Tick t e1,a1)],g))) /\
+   (known c [closLang_Handle t x1 x2] vs g =
+      (let (ea1,g) = known c [x1] vs g in
+      let (ea2,g) = known c [x2] (clos_known_Other :: vs) g in
       let (e1,a1) = HD ea1 in
       let (e2,a2) = HD ea2 in
-        ([(closLang_Handle t e1 e2,clos_known_merge a1 a2)],g'))) /\
-   (known c [closLang_Call t ticks dest xs] vs g' =
-      (let (ea1,g') = known c xs vs g' in
+        ([(closLang_Handle t e1 e2,clos_known_merge a1 a2)],g))) /\
+   (known c [closLang_Call t ticks dest xs] vs g =
+      (let (ea1,g) = known c xs vs g in
         ([(closLang_Call t ticks dest (MAP FST
-          ea1),clos_known_Other)],g'))) /\
-   (known c [closLang_Op t closLang_op xs] vs g' =
-      (let (ea1,g') = known c xs vs g' in
-      let (a,g') = known_op closLang_op (REVERSE (MAP SND ea1)) g' in
+          ea1),clos_known_Other)],g))) /\
+   (known c [closLang_Op t closLang_op xs] vs g =
+      (let (ea1,g) = known c xs vs g in
+      let (a,g) = known_op closLang_op (REVERSE (MAP SND ea1)) g in
       let e =
           (if isGlobal closLang_op then
             match gO_destApx a with gO_None -> clos_op_SmartOp t
@@ -510,60 +514,59 @@ let known_def = cake_define
               (closLang_Const i)) | gO_NullTuple tag -> closLang_Op t
               (closLang_BlockOp (closLang_Cons tag)) else
               clos_op_SmartOp t closLang_op) (MAP FST ea1) in
-        ([(e,a)],g'))) /\
-   (known c [closLang_App t loc_opt x xs] vs g' =
-      (let (ea2,g') = known c xs vs g' in
-      let (ea1,g') = known c [x] vs g' in
+        ([(e,a)],g))) /\
+   (known c [closLang_App t loc_opt x xs] vs g =
+      (let (ea2,g) = known c xs vs g in
+      let (ea1,g) = known c [x] vs g in
       let (e1,a1) = HD ea1 in
         match decide_inline c a1 loc_opt (LENGTH xs) with
           inlD_Nothing -> ([(closLang_App t loc_opt e1 (MAP FST
-          ea2),clos_known_Other)],g') | inlD_Annotate new_loc ->
+          ea2),clos_known_Other)],g) | inlD_Annotate new_loc ->
           ([(closLang_App t (SOME new_loc) e1 (MAP FST
-          ea2),clos_known_Other)],g') | inlD_LetInline body ->
+          ea2),clos_known_Other)],g) | inlD_LetInline body ->
               (let (eabody,_14) = known (dec_inline_factor c) [body]
-                (MAP SND ea2) g' in
+                (MAP SND ea2) g in
               let (ebody,abody) = HD eabody in
                 if pure x then
                   ([(closLang_Let (§ t 0) (MAP FST ea2)
                               (mk_Ticks t 1 (LENGTH xs)
-                                ebody),abody)],g') else
+                                ebody),abody)],g) else
                   ([(closLang_Let (§ t 0) (SNOC e1 (MAP FST ea2))
                               (mk_Ticks t 1 (LENGTH xs)
-                                ebody),abody)],g')))) /\
-   (known c [closLang_Fn t loc_opt ws_opt num_args x1] vs g' =
-      (let (ea1,g') = known c [x1] (REPLICATE num_args
-        clos_known_Other ++ vs) g' in
+                                ebody),abody)],g)))) /\
+   (known c [closLang_Fn t loc_opt ws_opt num_args x1] vs g =
+      (let (ea1,g) = known c [x1] (REPLICATE num_args
+        clos_known_Other ++ vs) g in
       let (body,a1) = HD ea1 in
         ([(closLang_Fn t loc_opt NONE num_args body,
            (match loc_opt with SOME loc -> clos_approx
              (clos_known_config_inline_max_body_size c) loc num_args x1
-             | NONE -> clos_known_Other))],g'))) /\
-   (known c [closLang_Letrec t loc_opt _15 fns x1] vs g' =
+             | NONE -> clos_known_Other))],g))) /\
+   (known c [closLang_Letrec t loc_opt _15 fns x1] vs g =
       (let clos = match loc_opt with
                     NONE -> REPLICATE (LENGTH fns) clos_known_Other |
                       SOME loc -> clos_gen_noinline loc 0 fns in
       let new_fns = MAP (\(num_args,x).
                      let new_vs = REPLICATE num_args clos_known_Other
                        ++ clos ++ vs in
-                     let res = known c [x] new_vs g' in
+                     let res = known c [x] new_vs g in
                        (num_args,FST (HD (FST res)))) fns in
-      let (ea1,g') = known c [x1] (clos ++ vs) g' in
+      let (ea1,g) = known c [x1] (clos ++ vs) g in
       let (e1,a1) = HD ea1 in
-        ([(closLang_Letrec t loc_opt NONE new_fns e1,a1)],g')))`;;
+        ([(closLang_Letrec t loc_opt NONE new_fns e1,a1)],g)))`;;
 
 let compile_def = cake_define
   `clos_known_compile NONE exps = (NONE,exps) /\
    clos_known_compile (SOME c) exps =
      (let exps = clos_fvs_compile exps in
-     let (es,g') = known c exps [] LN in
+     let (es,g) = known c exps [] LN in
      let es1 = clos_ticks_remove_ticks (MAP FST es) in
      let es2 = clos_letop_let_op es1 in
-       (SOME (clos_known_config_val_approx_spt_fupd (K g')
-         c),es2))`;;
+       (SOME (clos_known_config_val_approx_spt_fupd (K g) c),es2))`;;
 
 let compile_inc_def = cake_define
-  `clos_known_compile_inc c g' (es,xs) =
-     (let (eas,g') = known (reset_inline_factor c) es [] g' in
+  `clos_known_compile_inc c g (es,xs) =
+     (let (eas,g') = known (reset_inline_factor c) es [] g in
        (g',MAP FST eas,xs))`;;
 
 let known_static_conf_def = cake_define

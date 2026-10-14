@@ -12,6 +12,8 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: toto *)
 
@@ -85,12 +87,12 @@ let chr_to_str_def = cake_define
      toString = chr_to_str *)
 
 let translate_aux_def = cake_define
-  `(translate_aux f' s n 0 = []) /\
-   (translate_aux f' s n (SUC len) = f' (strsub s n) ::
-     translate_aux f' s (n + 1) len)`;;
+  `(translate_aux f s n 0 = []) /\
+   (translate_aux f s n (SUC len) = f (strsub s n) ::
+     translate_aux f s (n + 1) len)`;;
 
 let translate_def = cake_define
-  `translate f' s = implode (translate_aux f' s 0 (strlen s))`;;
+  `translate f s = implode (translate_aux f s 0 (strlen s))`;;
 
 (* HOL4 termination: *)
 let splitl_aux_def = cake_define_wf
@@ -108,22 +110,22 @@ let splitl_def = cake_define
   `splitl P s = splitl_aux P s 0`;;
 
 let tokens_aux_def = cake_define
-  `(tokens_aux f' s [] n 0 = []) /\
-   (tokens_aux f' s (h :: t) n 0 = [implode (REVERSE (h :: t))]) /\
-   (tokens_aux f' s [] n (SUC len) =
-     (if f' (strsub s n) then tokens_aux f' s [] (n + 1) len else
-       tokens_aux f' s [strsub s n] (n + 1) len)) /\
-   (tokens_aux f' s (h :: t) n (SUC len) =
-     (if f' (strsub s n) then (implode (REVERSE (h :: t))) ::
-       (tokens_aux f' s [] (n + 1) len) else tokens_aux f' s (strsub
-       s n :: (h :: t)) (n + 1) len))`;;
+  `(tokens_aux f s [] n 0 = []) /\
+   (tokens_aux f s (h :: t) n 0 = [implode (REVERSE (h :: t))]) /\
+   (tokens_aux f s [] n (SUC len) =
+     (if f (strsub s n) then tokens_aux f s [] (n + 1) len else
+       tokens_aux f s [strsub s n] (n + 1) len)) /\
+   (tokens_aux f s (h :: t) n (SUC len) =
+     (if f (strsub s n) then (implode (REVERSE (h :: t))) ::
+       (tokens_aux f s [] (n + 1) len) else tokens_aux f s (strsub s
+       n :: (h :: t)) (n + 1) len))`;;
 
 (* HOL4 ML code, not ported:
 val tokens_aux_ind = theorem"tokens_aux_ind";
 *)
 
 let tokens_def = cake_define
-  `tokens f' s = tokens_aux f' s [] 0 (strlen s)`;;
+  `tokens f s = tokens_aux f s [] 0 (strlen s)`;;
 (*
   >> TRY (
   recogniser (e.g., rename1_tac or qmatch_goalsub_rename_tac ...) >>
@@ -145,36 +147,36 @@ Theorem TOKENS_eq_tokens_sym
 
 (* HOL4 termination: >>rw[] *)
 let tokens_alt_aux_def = cake_define_wf
-  `MEASURE (\(f',s,i,j,n). n - j)`
-  `(tokens_alt_aux f' s i j n =
+  `MEASURE (\(f,s,i,j,n). n - j)`
+  `(tokens_alt_aux f s i j n =
    (if j < n then
-     (if f' (strsub s j) then
-       (if i = j then tokens_alt_aux f' s (i + 1) (j + 1) n else
+     (if f (strsub s j) then
+       (if i = j then tokens_alt_aux f s (i + 1) (j + 1) n else
          substring s i (j - i) ::
-         (tokens_alt_aux f' s (j + 1) (j + 1) n)) else
-       tokens_alt_aux f' s i (j + 1) n) else
+         (tokens_alt_aux f s (j + 1) (j + 1) n)) else
+       tokens_alt_aux f s i (j + 1) n) else
      if i = j then [] else [substring s i (j - i)]))`;;
 
 let fields_aux_def = cake_define
-  `(fields_aux f' s ss n 0 = [implode (REVERSE ss)]) /\
-   (fields_aux f' s ss n (SUC len) =
-     (if f' (strsub s n) then implode (REVERSE ss) :: (fields_aux
-       f' s [] (n + 1) len) else fields_aux f' s (strsub s n :: ss)
-       (n + 1) len))`;;
+  `(fields_aux f s ss n 0 = [implode (REVERSE ss)]) /\
+   (fields_aux f s ss n (SUC len) =
+     (if f (strsub s n) then implode (REVERSE ss) :: (fields_aux f
+       s [] (n + 1) len) else fields_aux f s (strsub s n :: ss) (n +
+       1) len))`;;
 
 
 let fields_def = cake_define
-  `fields f' s = fields_aux f' s [] 0 (strlen s)`;;
+  `fields f s = fields_aux f s [] 0 (strlen s)`;;
 
 (* HOL4 termination: >>rw[] *)
 let fields_alt_aux_def = cake_define_wf
-  `MEASURE (\(f',s,i,j,n). n - j)`
-  `(fields_alt_aux f' s i j n =
+  `MEASURE (\(f,s,i,j,n). n - j)`
+  `(fields_alt_aux f s i j n =
    (if j < n then
-     (if f' (strsub s j) then
+     (if f (strsub s j) then
          substring s i (j - i) ::
-         (fields_alt_aux f' s (j + 1) (j + 1) n) else
-       fields_alt_aux f' s i (j + 1) n) else
+         (fields_alt_aux f s (j + 1) (j + 1) n) else
+       fields_alt_aux f s i (j + 1) n) else
      [substring s i (j - i)]))`;;
 
 
@@ -292,18 +294,18 @@ val flip_ord_def = ternaryComparisonsTheory.invert_comparison_def
      flip_ord = invert_comparison *)
 
 let collate_aux_def = cake_define
-  `(mlstring_collate_aux f' (s1:mlstring) s2 ord n 0 = ord) /\
-   (mlstring_collate_aux f' s1 s2 ord n (SUC len) =
-     (if f' (strsub s1 n) (strsub s2 n) = EQUAL then
-       mlstring_collate_aux f' s1 s2 ord (n + 1) len else f' (strsub
-       s1 n) (strsub s2 n)))`;;
+  `(mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord) /\
+   (mlstring_collate_aux f s1 s2 ord n (SUC len) =
+     (if f (strsub s1 n) (strsub s2 n) = EQUAL then
+       mlstring_collate_aux f s1 s2 ord (n + 1) len else f (strsub s1
+       n) (strsub s2 n)))`;;
 
 let collate_def = cake_define
-  `mlstring_collate f' s1 s2 =
-   (if (strlen s1) < (strlen s2) then mlstring_collate_aux f' s1
-     s2 LESS 0 (strlen s1) else if (strlen s2) < (strlen s1) then
-     mlstring_collate_aux f' s1 s2 GREATER 0 (strlen s2) else
-     mlstring_collate_aux f' s1 s2 EQUAL 0 (strlen s2))`;;
+  `mlstring_collate f s1 s2 =
+   (if (strlen s1) < (strlen s2) then mlstring_collate_aux f s1 s2
+     LESS 0 (strlen s1) else if (strlen s2) < (strlen s1) then
+     mlstring_collate_aux f s1 s2 GREATER 0 (strlen s2) else
+     mlstring_collate_aux f s1 s2 EQUAL 0 (strlen s2))`;;
 
 let char_escape_seq_def = cake_define
   `char_escape_seq c =

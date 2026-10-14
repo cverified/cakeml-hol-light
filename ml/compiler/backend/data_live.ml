@@ -9,7 +9,12 @@
   phase also locally deletes code that has no observable effect.
 *)
 
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
 
 let is_pure_def = cake_define
   `data_live_is_pure x1 =

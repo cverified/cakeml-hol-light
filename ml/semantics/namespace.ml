@@ -8,6 +8,7 @@
   short (e.g. foo) or long (e.g. ModuleA.InnerB.bar).
 *)
 
+(* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 type abbreviation (expanded in the port):
@@ -79,7 +80,7 @@ let nsSub_def = cake_define
         path' = NONE)`;;
 
 let nsAll_def = cake_define
-  `nsAll f' env <=> (!id v. nsLookup env id = SOME v ==> f' id v)`;;
+  `nsAll f env <=> (!id v. nsLookup env id = SOME v ==> f id v)`;;
 
 let nsAll2_def = cake_define
   `nsAll2 r env1 env2 <=>
@@ -96,6 +97,6 @@ let nsDomMod_def = cake_define
                    nsLookupMod env n = SOME v}`;;
 
 let nsMap_def = cake_define
-  `nsMap (f':'v->'w) ((Bind v m):('m,'n,'v)namespace) =
-     Bind (MAP (\(n,x). (n,f' x)) v) (MAP (\(mn,e). (mn,nsMap f'
-       e)) m)`;;
+  `nsMap (f:'v->'w) ((Bind v m):('m,'n,'v)namespace) =
+     Bind (MAP (\(n,x). (n,f x)) v) (MAP (\(mn,e). (mn,nsMap f e))
+       m)`;;

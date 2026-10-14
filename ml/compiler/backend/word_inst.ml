@@ -10,7 +10,10 @@
 
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 (*Scheme:
 1) Pull all nested ops and consts as far up as possible and convert

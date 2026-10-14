@@ -9,7 +9,9 @@
 
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
+needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 ML code, not ported:
@@ -302,12 +304,12 @@ let f_old_ptrs_def = cake_define
             gen_gc_partial_conf_refs_start conf <= a)}`;;
 
 let new_f_def = cake_define
-  `new_f f' conf heap =
+  `new_f f conf heap =
      FUNION (FUN_FMAP I (f_old_ptrs conf heap))
             (FUN_FMAP (\a. gen_gc_partial_conf_gen_start conf +
-              FAPPLY f' (a - gen_gc_partial_conf_gen_start conf))
+              FAPPLY f (a - gen_gc_partial_conf_gen_start conf))
                       (IMAGE ((+) (gen_gc_partial_conf_gen_start
-                        conf)) (FDOM f')))`;;
+                        conf)) (FDOM f)))`;;
 
 (* HOL4 ML code, not ported:
 val heap_lookup_heap_expand = isSomeDataElement_heap_lookup_heap_expand

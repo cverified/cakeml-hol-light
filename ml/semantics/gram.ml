@@ -12,6 +12,7 @@
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
+needs "semantics/typeSystem.ml";;
 
 
 (* HOL4 ML code, not ported:
@@ -262,10 +263,10 @@ in
 end
 *)
 
-let Ndl_def = cake_define
+let ndl_def = cake_define
   `(Ndl n l = Nd (n,unknown_loc) l)`;;
 
-let Lfl_def = cake_define
+let lfl_def = cake_define
   `(Lfl t = Lf (t,unknown_loc))`;;
 
 (* HOL4 ML code, not ported:

@@ -7,6 +7,7 @@
   Types common to some different parts of the pattern match compiler.
 *)
 
+(* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: num list arithmetic *)
 
 

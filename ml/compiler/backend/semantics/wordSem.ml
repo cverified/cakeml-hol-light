@@ -9,14 +9,30 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/clos_annotate.ml";;
+needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/semantics/closSem.ml";;
+needs "compiler/backend/semantics/dataSem.ml";;
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
+needs "lib/binary_ieee.ml";;
+needs "lib/byte.ml";;
+needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/machine_ieee.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
+needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: finite_map (* for call_FFI *) (*
    for build_lprefix_lub *) (* for FP *) (* for word_add_carry *) *)
 
@@ -767,17 +783,17 @@ let inst_def = cake_define
            SOME (set_var r
              (wordLang_Word (if fp64_equal f1 f2 then (n2w 1) else
                (n2w 0))) s) | _63 -> NONE) | asm_FP (FPMov d1 d2) ->
-         (match wordSem_get_fp_var d2 s with SOME f' ->
-           SOME (wordSem_set_fp_var d1 f' s) | _64 -> NONE) | asm_FP
+         (match wordSem_get_fp_var d2 s with SOME f ->
+           SOME (wordSem_set_fp_var d1 f s) | _64 -> NONE) | asm_FP
              (FPAbs d1 d2) ->
-         (match wordSem_get_fp_var d2 s with SOME f' ->
-           SOME (wordSem_set_fp_var d1 (fp64_abs f') s) | _65 ->
-             NONE) | asm_FP (FPNeg d1 d2) ->
-         (match wordSem_get_fp_var d2 s with SOME f' ->
-           SOME (wordSem_set_fp_var d1 (fp64_negate f') s) | _66 ->
+         (match wordSem_get_fp_var d2 s with SOME f ->
+           SOME (wordSem_set_fp_var d1 (fp64_abs f) s) | _65 -> NONE)
+             | asm_FP (FPNeg d1 d2) ->
+         (match wordSem_get_fp_var d2 s with SOME f ->
+           SOME (wordSem_set_fp_var d1 (fp64_negate f) s) | _66 ->
              NONE) | asm_FP (FPSqrt d1 d2) ->
-         (match wordSem_get_fp_var d2 s with SOME f' ->
-           SOME (wordSem_set_fp_var d1 (fp64_sqrt roundTiesToEven f')
+         (match wordSem_get_fp_var d2 s with SOME f ->
+           SOME (wordSem_set_fp_var d1 (fp64_sqrt roundTiesToEven f)
              s) | _67 -> NONE) | asm_FP (FPAdd d1 d2 d3) ->
          (match (wordSem_get_fp_var d2 s,wordSem_get_fp_var d3 s)
            with (SOME f1,SOME f2) ->
@@ -814,22 +830,22 @@ let inst_def = cake_define
                SOME (wordSem_set_fp_var d (w2 @@ w1) s) | _75 -> NONE) |
                asm_FP (FPToInt d1 d2) ->
          (match wordSem_get_fp_var d2 s with
-           NONE -> NONE | SOME f' ->
-         (match fp64_to_int roundTiesToEven f' with
+           NONE -> NONE | SOME f ->
+         (match fp64_to_int roundTiesToEven f with
            NONE -> NONE | SOME i ->
            (let w = i2w i:word32 in
            if w2i w = i then
              (if dimindex (:'a) = 64 then
                 SOME (wordSem_set_fp_var d1 (w2w w) s) else
               match wordSem_get_fp_var (d1 DIV 2) s with
-                NONE -> NONE | SOME f' ->
+                NONE -> NONE | SOME f ->
                 (let (h,l) = if ODD d1 then (63,32) else (31,0) in
                      SOME (wordSem_set_fp_var (d1 DIV 2)
-                       (bit_field_insert h l w f') s))) else
+                       (bit_field_insert h l w f) s))) else
              NONE))) | asm_FP (FPFromInt d1 d2) ->
          (if dimindex (:'a) = 64 then
-           match wordSem_get_fp_var d2 s with SOME f' ->
-             (let i = w2i ((31 >< 0) f':word32) in
+           match wordSem_get_fp_var d2 s with SOME f ->
+             (let i = w2i ((31 >< 0) f:word32) in
                SOME (wordSem_set_fp_var d1 (int_to_fp64
                  roundTiesToEven i) s)) | NONE -> NONE else
            match wordSem_get_fp_var (d2 DIV 2) s with SOME v ->

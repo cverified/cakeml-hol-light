@@ -9,6 +9,7 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
+needs "misc/misc.ml";;
 
 (* add fresh code locations *)
 
@@ -75,5 +76,5 @@ let compile_inc_def = cake_define
          (closLang_Const (&n))) [] :: ys))`;;
 
 let ignore_table_def = cake_define
-  `ignore_table f' st (code,aux) = (let (st',code') = f' st code in
+  `ignore_table f st (code,aux) = (let (st',code') = f st code in
   (st',(code',aux)))`;;

@@ -12,6 +12,9 @@
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/db_vars.ml";;
+needs "lib/indexedLists.ml";;
+needs "lib/sptree.ml";;
+needs "semantics/ast.ml";;
 
 let can_raise_def = cake_define
   `(can_raise (db_vars_Var v) = F) /\

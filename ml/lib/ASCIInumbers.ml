@@ -10,10 +10,10 @@ needs "lib/numposrep.ml";;
    pair num rich_list logroot bit *)
 
 let s2n_def = cake_define
-  `s2n b f' (s:string) = l2n b (MAP f' (REVERSE s))`;;
+  `s2n b f (s:string) = l2n b (MAP f (REVERSE s))`;;
 
 let n2s_def = cake_define
-  `(n2s b f' n:string) = REVERSE (MAP f' (n2l b n))`;;
+  `(n2s b f n:string) = REVERSE (MAP f (n2l b n))`;;
 
 let HEX = cake_define
   `HEX n = (if n < 10 then CHR (ORD (CHR 48) + n) else

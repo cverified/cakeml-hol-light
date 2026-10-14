@@ -10,8 +10,14 @@
   `../semantics/cmlPtreeConversion`.
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
+needs "lib/location.ml";;
+needs "lib/peg.ml";;
+needs "lib/pegexec.ml";;
+needs "lib/set_sep.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* HOL4 overload (expanded in the port):
      cmlpegexec = λn t. peg_exec cmlPEG (pnt n) t [] NONE [] done failed
@@ -31,17 +37,17 @@ let destResult_def = cake_define
      M = (token # locs) list -> ((token # locs) list, α, string)
        pegresult *)
 let pegresult_bind_def = cake_define
-  `pegresult_bind (f') (g') =
+  `pegresult_bind (f) (g) =
    (\toks.
-     match f' toks with
-       peg_Success toks' x eo -> g' x toks' | peg_Failure fl fe ->
+     match f toks with
+       peg_Success toks' x eo -> g x toks' | peg_Failure fl fe ->
          peg_Failure fl fe)`;;
 
 let pegresult_choice_def = cake_define
-  `pegresult_choice (f') (g') =
+  `pegresult_choice (f) (g) =
    (\toks.
-     match f' toks with
-       peg_Success toks' x eo -> peg_Success toks' x eo | _6 -> g'
+     match f toks with
+       peg_Success toks' x eo -> peg_Success toks' x eo | _6 -> g
          toks)`;;
 
 let toks_to_loc_def = cake_define

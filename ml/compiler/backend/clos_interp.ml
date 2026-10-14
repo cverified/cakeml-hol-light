@@ -8,8 +8,10 @@
     closLang.
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 
 (* fits in subset *)
 

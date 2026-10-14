@@ -8,10 +8,15 @@
   Includes a proof that the PEG is well-formed.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/grammar.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
+needs "lib/set_sep.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/tokenUtils.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* HOL4 overload (expanded in the port):
      monad_bind = OPTION_BIND *)
@@ -82,11 +87,11 @@ let choicel_def = cake_define
    cmlPEG_choicel (h :: t) = peg_choice h (cmlPEG_choicel t) sumID`;;
 
 let pegf_def = cake_define
-  `cmlPEG_pegf sym f' = peg_seq sym (peg_empty []) (\l1 l2. f' l1)`;;
+  `cmlPEG_pegf sym f = peg_seq sym (peg_empty []) (\l1 l2. f l1)`;;
 
 let seql_def = cake_define
-  `seql l f' = cmlPEG_pegf (ITLIST (\p acc. peg_seq p acc (++)) l
-  (peg_empty [])) f'`;;
+  `seql l f = cmlPEG_pegf (ITLIST (\p acc. peg_seq p acc (++)) l
+  (peg_empty [])) f`;;
 
 (* unused
 Definition peg_nonfix_def:

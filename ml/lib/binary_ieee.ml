@@ -5,6 +5,7 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
+needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: words real intreal pred_set
    set_relation arithmetic *)
 
@@ -181,7 +182,7 @@ let fp_op_INDUCT,fp_op_RECURSION = define_datatype
 
 let float_some_qnan_def = cake_define
   `float_some_qnan (fp_op:('t,'w)fp_op) =
-   ((@f'. let qnan = f' fp_op in float_is_nan qnan /\
+   ((@f. let qnan = f fp_op in float_is_nan qnan /\
      ~float_is_signalling qnan)
      fp_op:('t,'w)float)`;;
 
@@ -220,11 +221,11 @@ let float_to_int_def = cake_define
       Float r ->
        SOME (match mode with
                 roundTiesToEven ->
-                  (let f' = INT_FLOOR r in
-                  let df = abs (r - real_of_int f') in
+                  (let f = INT_FLOOR r in
+                  let df = abs (r - real_of_int f) in
                   if (df < (&1) / (&2)) \/ (df = (&1) / (&2)) /\ EVEN
-                    (num_of_int (abs f')) then
-                    f' else
+                    (num_of_int (abs f)) then
+                    f else
                     INT_CEILING r) | roundTowardPositive ->
                       INT_CEILING r | roundTowardNegative -> INT_FLOOR r
                       | roundTowardZero ->

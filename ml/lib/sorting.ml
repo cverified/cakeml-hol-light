@@ -5,6 +5,7 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
+(* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: rich_list combin pair relation
    list arithmetic pred_set *)
 

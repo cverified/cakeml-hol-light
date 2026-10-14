@@ -8,8 +8,10 @@
   TODO: perhaps should just appear in tokensTheory.
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/grammar.ml";;
 needs "semantics/tokens.ml";;
+needs "semantics/typeSystem.ml";;
 
 
 let isInt_def = cake_define

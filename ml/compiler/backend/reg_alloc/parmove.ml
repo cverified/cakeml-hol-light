@@ -11,7 +11,9 @@
   http://gallium.inria.fr/~xleroy/publi/parallel-move.pdf
 *)
 
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "misc/misc.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* Non-deterministic algorithm *)
 
@@ -225,11 +227,11 @@ let state_to_list_def = cake_define
 (* mapping an injective function over compiled moves *)
 
 let map_state_def = cake_define
-  `map_state f' = (let m = MAP (f' ## f') in m ## m ## m)`;;
+  `map_state f = (let m = MAP (f ## f) in m ## m ## m)`;;
 
 let inj_on_state_def = cake_define
-  `inj_on_state f' p =
+  `inj_on_state f p =
       (let ls0 = state_to_list p in
       let ls = MAP FST ls0 ++ MAP SND ls0 in
-      (!x y. MEM x ls /\ MEM y ls /\ f' x = f' y ==> x = y) /\
-      (!x. f' x = NONE <=> x = NONE))`;;
+      (!x y. MEM x ls /\ MEM y ls /\ f x = f y ==> x = y) /\
+      (!x. f x = NONE <=> x = NONE))`;;

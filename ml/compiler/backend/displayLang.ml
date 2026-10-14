@@ -12,6 +12,7 @@
 
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlsexp.ml";;
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/jsonLang.ml";;
 (* HOL4 ancestors outside the port: (* for str_tree *) *)
@@ -38,7 +39,7 @@ let trace_to_json_def = cake_define
        ((strlit "trace1"),trace_to_json tra1);
        ((strlit "trace2"),trace_to_json tra2)]) /\
    (trace_to_json (backend_common_SourceLoc sr scc er ec) =
-     (let arr = MAP jsonLang_Int (MAP & [sr; scc; er; ec]) in
+     (let arr = MAP jsonLang_Int (MAP (&) [sr; scc; er; ec]) in
        jsonLang_Object [((strlit "name"),displayLang_String (strlit
          "SourcePos"));
          ((strlit "pos"),jsonLang_Array arr)])) /\

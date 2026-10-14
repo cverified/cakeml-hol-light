@@ -9,7 +9,20 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/clos_annotate.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
+needs "lib/integer_word.ml";;
+needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/ffi/ffi.ml";;
+needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: backendProps *)
 
 (* HOL4 overload (expanded in the port):
@@ -111,17 +124,17 @@ let do_app_aux_def = cake_define
                (match bvlSem_v_to_list lv with SOME vs -> (if len =
                  bvlSem_Number (&(LENGTH vs)) then SOME (SOME
                  (bvlSem_Block n vs,s)) else NONE) | _8 -> NONE) | _9 ->
-                 NONE) | (closLang_MemOp (closLang_RefByte f'),xs) ->
+                 NONE) | (closLang_MemOp (closLang_RefByte f),xs) ->
            (match xs with [bvlSem_Number i; bvlSem_Number b] ->
                (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-                 let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs
-                   s)))) in
+                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
+                   in
                    SOME (SOME (bvlSem_RefPtr T ptr,?_refs_fupd (K
                      (?_refs s |+
-                     (ptr,bvlSem_ByteArray f' (REPLICATE (num_of_int
+                     (ptr,bvlSem_ByteArray f (REPLICATE (num_of_int
                        i) (i2w b))))) s)) else NONE) | _10 -> NONE) |
                        (closLang_MemOp (closLang_MutCons tag i),xs) ->
-           (let ptr = (minimal (\ptr. ~(ptr IN FDOM (?_refs s)))) in
+           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
               if i >= LENGTH xs then NONE else
                 let l = TAKE i xs in
                 let c = EL i xs in
@@ -266,8 +279,8 @@ let evaluate_def = cake_define_wf
             bviSem_BadRef -> (Rerr (Rabort Rtype_error),s) |
             bviSem_NotThunk -> (Rerr (Rabort Rtype_error),s) |
             bviSem_IsThunk Evaluated bvlSem_v -> (Rval [bvlSem_v],s) |
-            bviSem_IsThunk NotEvaluated f' ->
-              (match bvlSem_find_code (SOME force_loc) [thunk_v; f']
+            bviSem_IsThunk NotEvaluated f ->
+              (match bvlSem_find_code (SOME force_loc) [thunk_v; f]
                 (?_code s) with NONE -> (Rerr (Rabort Rtype_error),s) |
                 SOME (args,flatLang_exp) ->
                    (if ?_clock s = 0 then
@@ -336,8 +349,8 @@ let semantics_def = cake_define
    (let es = [bvi_Call 0 (SOME start) [] NONE] in
    let init = bviSem_initial_state init_ffi code co cc in
      if ?k e. FST (bviSem_evaluate (es,[],init k)) = Rerr e /\
-        ~(e = Rabort Rtimeout_error) /\ (!f'. ~(e = Rabort
-          (Rffi_error f'))) then ffi_Fail else
+        ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error
+          f))) then ffi_Fail else
      match some (\res.
        ?k s r outcome.
          bviSem_evaluate (es,[],init k) = (r,s) /\

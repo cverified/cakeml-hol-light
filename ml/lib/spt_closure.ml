@@ -5,6 +5,7 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
+needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: pred_set arithmetic relation *)
 

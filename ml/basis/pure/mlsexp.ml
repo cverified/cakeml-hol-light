@@ -9,6 +9,8 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "misc/misc.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 (*--------------------------------------------------------------*
    Definition of s-expression

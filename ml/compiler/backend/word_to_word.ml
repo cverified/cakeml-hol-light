@@ -20,6 +20,7 @@ needs "compiler/backend/word_remove.ml";;
 needs "compiler/backend/word_simp.ml";;
 needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/sptree.ml";;
 
 (*reg_alg = choice of register allocator*)
 let word_to_word_config_FIELDS = define_record "word_to_word_config"

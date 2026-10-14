@@ -7,14 +7,19 @@
   The formal semantics of dataLang
 *)
 
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/compiler.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/semantics.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: (* TODO: immoral, shouldn't
    depend on *) backendProps *)
 
@@ -23,10 +28,10 @@ let dataSem_v_INDUCT,dataSem_v_RECURSION = define_datatype
    dataSem_Block (num) (num) (dataSem_v list) | dataSem_CodePtr (num) \
    | dataSem_RefPtr (bool) (num)";;
 
-let Boolv_def = cake_define
+let boolv_def = cake_define
   `dataSem_Boolv b = dataSem_Block 0 (bool_to_tag b) []`;;
 
-let Unit_def = cake_define
+let unit_def = cake_define
   `dataSem_Unit = dataSem_Block 0 (tuple_tag) []`;;
 
 (* Stack frame with:
@@ -483,7 +488,7 @@ let do_stack_def = cake_define
 let v_to_bytes_def = cake_define
   `dataSem_v_to_bytes lv = some (\(ns:word8 list).
                      dataSem_v_to_list lv = SOME (MAP
-                       (dataSem_Number o & o w2n) ns))`;;
+                       (dataSem_Number o (&) o w2n) ns))`;;
 
 let v_to_words_def = cake_define
   `dataSem_v_to_words lv = some (\ns. dataSem_v_to_list lv = SOME
@@ -762,7 +767,7 @@ let do_part_def = cake_define
        NONE -> (dataSem_Block 0 t (MAP m ns),s,ts) | SOME n ->
        (dataSem_Block n t (MAP m ns),s,SOME (n + (1:num)))) /\
    dataSem_do_part m (mlsexp_Str t) s ts =
-     (let ptr = (minimal (\ptr. ~(ptr IN domain s))) in
+     (let ptr = (LEAST (\ptr. ~(ptr IN domain s))) in
      let bytes = MAP (n2w o ORD) (explode t) in
        (dataSem_RefPtr T ptr,balanced_map_insert ptr
          (bvlSem_ByteArray T bytes) s,ts))`;;
@@ -997,14 +1002,14 @@ let do_app_aux_def = cake_define
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
                                 #string)) | (closLang_MemOp
-                                (closLang_RefByte f'),xs) ->
+                                (closLang_RefByte f),xs) ->
            (match xs with [dataSem_Number i; dataSem_Number b] ->
                (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-                 let ptr = (minimal (\ptr. ~(ptr IN domain (?_refs
+                 let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs
                    s)))) in
                    Rval (dataSem_RefPtr T ptr,?_refs_fupd (K
                      (balanced_map_insert ptr
-                     (bvlSem_ByteArray f' (REPLICATE (num_of_int i)
+                     (bvlSem_ByteArray f (REPLICATE (num_of_int i)
                        (i2w b))) (?_refs s))) s) else Rerr (Rabort
                        Rtype_error)) | _102 -> Rerr (Rabort
                        Rtype_error)) | (closLang_GlobOp
@@ -1118,8 +1123,7 @@ let do_app_aux_def = cake_define
                    #string+dataSem_v#string)) | (closLang_MemOp
                    closLang_RefArray,[dataSem_Number i; dataSem_v]) ->
            (if 0 <= i then
-             let ptr = (minimal (\ptr. ~(ptr IN domain (?_refs s))))
-               in
+             let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs s)))) in
                Rval (dataSem_RefPtr T ptr,?_refs_fupd (K
                  (balanced_map_insert ptr
                               (bvlSem_ValueArray (REPLICATE
@@ -1140,12 +1144,12 @@ let do_app_aux_def = cake_define
                  closLang_UpdateByte,[dataSem_RefPtr _126 ptr;
                  dataSem_Number i; dataSem_Number b]) ->
            (match balanced_map_lookup ptr (?_refs s) with SOME
-             (bvlSem_ByteArray f' bs) ->
+             (bvlSem_ByteArray f bs) ->
                (if 0 <= i /\ i < &LENGTH bs /\ (?(w:word8). b = &(w2n
                  w)) then
                   Rval (dataSem_Unit,?_refs_fupd (K
                     (balanced_map_insert ptr
-                    (bvlSem_ByteArray f' (LUPDATE (i2w b) (num_of_int
+                    (bvlSem_ByteArray f (LUPDATE (i2w b) (num_of_int
                       i) bs)) (?_refs s))) s) else ((Rerr (Rabort
                       Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                       #string+dataSem_v#string)) | _127 -> ((Rerr
@@ -1156,11 +1160,10 @@ let do_app_aux_def = cake_define
                       dataSem_RefPtr _129 src]) ->
            (match (balanced_map_lookup src (?_refs
              s),balanced_map_lookup dst (?_refs s)) with (SOME
-             (bvlSem_ByteArray _130 ws),SOME (bvlSem_ByteArray f' ds))
-             ->
+             (bvlSem_ByteArray _130 ws),SOME (bvlSem_ByteArray f ds)) ->
               (match xor_bytes ws ds with SOME ds1 -> Rval
                 (dataSem_Unit,?_refs_fupd (K (balanced_map_insert dst
-                (bvlSem_ByteArray f' ds1) (?_refs s))) s) | NONE ->
+                (bvlSem_ByteArray f ds1) (?_refs s))) s) | NONE ->
                 ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                 +dataSem_v#string)) | _131 -> ((Rerr (Rabort
@@ -1232,8 +1235,7 @@ let do_app_aux_def = cake_define
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
              +dataSem_v#string)) | (closLang_MemOp
              pattern_semantics_Ref,xs) ->
-           (let ptr = (minimal (\ptr. ~(ptr IN domain (?_refs s))))
-             in
+           (let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs s)))) in
              Rval (dataSem_RefPtr T ptr,?_refs_fupd (K
                (balanced_map_insert ptr (bvlSem_ValueArray xs) (?_refs
                s))) s)) | (closLang_MemOp
@@ -1254,8 +1256,7 @@ let do_app_aux_def = cake_define
                                 #string)) | (closLang_MemOp
                                 (closLang_MutCons pattern_semantics_tag
                                 i),xs) ->
-           (let ptr = (minimal (\ptr. ~(ptr IN domain (?_refs s))))
-             in
+           (let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs s)))) in
               if i >= LENGTH xs then ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                 +dataSem_v#string) else
@@ -1348,7 +1349,7 @@ let do_app_aux_def = cake_define
                   then ((Rerr (Rabort
                   Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                   #string+dataSem_v#string) else
-                 let ptr = (minimal (\ptr. ~(ptr IN domain (?_refs
+                 let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs
                    s)))) in
                    Rval (dataSem_RefPtr F ptr,?_refs_fupd (K
                      (balanced_map_insert ptr (bvlSem_Thunk m dataSem_v)
@@ -1618,8 +1619,8 @@ let evaluate_def = cake_define_wf
                 with NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
                 env -> (NONE,dataSem_set_var dest dataSem_v
                 (dataSem_state_locals_fupd (K env) s)))) |
-                dataSem_IsThunk NotEvaluated f' ->
-            (match dataSem_find_code (SOME loc) [thunk_v; f'] (?_code
+                dataSem_IsThunk NotEvaluated f ->
+            (match dataSem_find_code (SOME loc) [thunk_v; f] (?_code
               s) (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
               (Rerr (Rabort Rtype_error)),s) | SOME
               (args1,labLang_prog,ss) ->
@@ -1727,8 +1728,8 @@ let semantics_def = cake_define
    let init = dataSem_initial_state init_ffi code coracle cc T lims
      ss in
      if ?k. match FST (dataSem_evaluate (p,init k)) with SOME (Rerr
-       e) -> ~(e = Rabort Rtimeout_error) /\ (!f'. ~(e = Rabort
-       (Rffi_error f'))) | NONE -> T | _179 -> F then
+       e) -> ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort
+       (Rffi_error f))) | NONE -> T | _179 -> F then
        pattern_semantics_Fail else
      match some (\res.
        ?k s r outcome.

@@ -219,7 +219,7 @@ INFIX = {
   "''":    (350, 'l', 'word_slice', 0),
   '--':    (350, 'l', 'word_bits', 0),
   '%%':    (400, 'l', 'word_bit', 0),
-  '=+':    (715, 'l', '=+',     23),
+  '=+':    (320, 'n', '=+',     23),
   '><':    (350, 'l', '><',     23),
   '<*>':   (500, 'l', '<*>',    16),
 }
@@ -822,7 +822,7 @@ BINDERS = set(['minimal'])
 # the binders of HOL4 that the port writes as a constant applied to
 # an abstraction, and whether the pmatch syntax of the patternMatches
 # library is enabled in this file
-HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'MIN_SET', 'MAX_SET'])
+HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'SEP_EXISTS'])
 PMATCH = [False]
 
 
@@ -1064,6 +1064,9 @@ class Printer:
     if k == 'dollar':
       n = e.name
       if n in INFIX: return '(' + INFIX[n][2] + ')'
+      # an operator that is not an identifier needs its parentheses
+      if not n[0].isalpha() and n[0] != '_':
+        return '(' + self.ctx.name(n) + ')'
       return self.ctx.name(n)
     if k == 'univ':
       if greek(e.ty): return 'UNIV'
@@ -1104,10 +1107,12 @@ def rename_ast(e, sub):
 
 
 def head_of(e):
-  """the head of an application, through parentheses and annotations"""
+  """the head of an application, through parentheses, annotations
+     and the operator form of HOL4 ($f)"""
   while True:
     if e.kind in ('paren', 'typed'): e = e.e
     elif e.kind == 'app': e = strip_app(e)[0]
+    elif e.kind == 'dollar': return Node('id', tok=e.tok, name=e.name)
     else: return e
 
 

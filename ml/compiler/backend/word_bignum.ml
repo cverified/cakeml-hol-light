@@ -9,7 +9,11 @@
   that is part of the HOL distribution in mc_multiwordTheory.
 *)
 
+needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: mc_multiword *)
 

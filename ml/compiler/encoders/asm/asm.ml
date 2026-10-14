@@ -71,6 +71,7 @@
      ---- *)
 
 needs "lib/alignment.ml";;
+needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: words *)
 

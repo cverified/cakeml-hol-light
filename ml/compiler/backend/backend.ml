@@ -10,6 +10,8 @@
   to the front-end, i.e. parsing and type inference.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
@@ -17,13 +19,27 @@ needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "compiler/backend/source_to_flat.ml";;
 needs "compiler/backend/source_to_source.ml";;
 needs "compiler/backend/stack_to_lab.ml";;
+needs "compiler/backend/wordLang.ml";;
+needs "compiler/backend/word_alloc.ml";;
+needs "compiler/backend/word_copy.ml";;
+needs "compiler/backend/word_cse.ml";;
+needs "compiler/backend/word_inst.ml";;
+needs "compiler/backend/word_remove.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/backend/word_to_word.ml";;
+needs "compiler/backend/word_unreach.ml";;
+needs "compiler/encoders/asm/asm.ml";;
+needs "lib/set_sep.ml";;
+needs "lib/sptree.ml";;
+needs "misc/misc.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "semantics/primTypes.ml";;
+needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let backend_config_FIELDS = define_record "backend_config"
   ["source_conf","source_to_flat_config";
