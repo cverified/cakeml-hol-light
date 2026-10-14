@@ -1,0 +1,9 @@
+#!/bin/sh
+# checkall <file>... : load each file in a fresh session and show the
+# first error of each
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+for f in "$@"; do
+  printf "=== %s\n" "$f"
+  check "$f" 2>&1 | grep -iE "^(Error|Exception|Warning)|^- : float|^val it : float" |
+    head -3
+done

@@ -1,0 +1,163 @@
+(* ========================================================================= *)
+(*  HOL4's words vocabulary, on top of HOL Light's Library/words.ml.        *)
+(*                                                                          *)
+(*  Where HOL Light has the same notion under another name, the HOL4 name    *)
+(*  is made an interface for it, so that no second constant is introduced;   *)
+(*  the rest is defined in terms of HOL Light's words.                      *)
+(* ========================================================================= *)
+
+new_type_abbrev("word8",`:(8)word`);;
+new_type_abbrev("word16",`:(16)word`);;
+new_type_abbrev("word32",`:(32)word`);;
+new_type_abbrev("word64",`:(64)word`);;
+
+(* ------------------------------------------------------------------------- *)
+(* The HOL4 names of HOL Light's word operations.                            *)
+(* ------------------------------------------------------------------------- *)
+
+override_interface("w2n",`val:(N)word->num`);;
+override_interface("n2w",`word:num->(N)word`);;
+override_interface("w2i",`ival:(N)word->int`);;
+override_interface("i2w",`iword:int->(N)word`);;
+override_interface("w2w",`word_zx:(M)word->(N)word`);;
+override_interface("sw2sw",`word_sx:(M)word->(N)word`);;
+override_interface("word_1comp",`word_not:(N)word->(N)word`);;
+override_interface("word_2comp",`word_neg:(N)word->(N)word`);;
+override_interface("word_lsl",`word_shl:(N)word->num->(N)word`);;
+override_interface("word_lsr",`word_ushr:(N)word->num->(N)word`);;
+override_interface("word_asr",`word_ishr:(N)word->num->(N)word`);;
+override_interface("word_bit",`bit:num->(N)word->bool`);;
+override_interface("word_div",`word_udiv:(N)word->(N)word->(N)word`);;
+override_interface("word_mod",`word_umod:(N)word->(N)word->(N)word`);;
+override_interface("word_lo",`word_ult:(N)word->(N)word->bool`);;
+override_interface("word_ls",`word_ule:(N)word->(N)word->bool`);;
+override_interface("word_hi",`word_ugt:(N)word->(N)word->bool`);;
+override_interface("word_hs",`word_uge:(N)word->(N)word->bool`);;
+override_interface("word_lt",`word_ilt:(N)word->(N)word->bool`);;
+override_interface("word_le",`word_ile:(N)word->(N)word->bool`);;
+override_interface("word_gt",`word_igt:(N)word->(N)word->bool`);;
+override_interface("word_ge",`word_ige:(N)word->(N)word->bool`);;
+override_interface("word_min",`word_umin:(N)word->(N)word->(N)word`);;
+override_interface("word_max",`word_umax:(N)word->(N)word->(N)word`);;
+override_interface("word_smin",`word_imin:(N)word->(N)word->(N)word`);;
+override_interface("word_smax",`word_imax:(N)word->(N)word->(N)word`);;
+override_interface("word_sdiv",`word_jdiv:(N)word->(N)word->(N)word`);;
+override_interface("word_srem",`word_jrem:(N)word->(N)word->(N)word`);;
+
+(* ------------------------------------------------------------------------- *)
+(* The HOL4 notations.                                                       *)
+(* ------------------------------------------------------------------------- *)
+
+parse_as_infix("&&",(20,"right"));;
+override_interface("&&",`word_and:(N)word->(N)word->(N)word`);;
+
+parse_as_infix("||",(16,"right"));;
+override_interface("||",`word_or:(N)word->(N)word->(N)word`);;
+
+parse_as_infix("??",(16,"right"));;
+override_interface("??",`word_xor:(N)word->(N)word->(N)word`);;
+
+parse_as_infix("<<",(23,"left"));;
+override_interface("<<",`word_shl:(N)word->num->(N)word`);;
+
+parse_as_infix(">>",(23,"left"));;
+override_interface(">>",`word_ishr:(N)word->num->(N)word`);;
+
+parse_as_infix(">>>",(23,"left"));;
+override_interface(">>>",`word_ushr:(N)word->num->(N)word`);;
+
+parse_as_infix("#>>",(23,"left"));;
+override_interface("#>>",`word_ror:(N)word->num->(N)word`);;
+
+parse_as_infix("#<<",(23,"left"));;
+override_interface("#<<",`word_rol:(N)word->num->(N)word`);;
+
+parse_as_infix("<+",(12,"right"));;
+override_interface("<+",`word_ult:(N)word->(N)word->bool`);;
+
+parse_as_infix("<=+",(12,"right"));;
+override_interface("<=+",`word_ule:(N)word->(N)word->bool`);;
+
+parse_as_infix(">+",(12,"right"));;
+override_interface(">+",`word_ugt:(N)word->(N)word->bool`);;
+
+parse_as_infix(">=+",(12,"right"));;
+override_interface(">=+",`word_uge:(N)word->(N)word->bool`);;
+
+parse_as_infix("//",(22,"left"));;
+override_interface("//",`word_udiv:(N)word->(N)word->(N)word`);;
+
+(* ------------------------------------------------------------------------- *)
+(* The HOL4 operations that HOL Light does not have.                        *)
+(* ------------------------------------------------------------------------- *)
+
+let word_msb = new_definition
+  `word_msb (w:(N)word) <=> bit (dimindex(:N) - 1) w`;;
+
+let word_lsb = new_definition
+  `word_lsb (w:(N)word) <=> bit 0 w`;;
+
+let word_bits = new_definition
+  `word_bits h l (w:(N)word) = (word_subword w (l,h + 1 - l):(N)word)`;;
+
+parse_as_infix("><",(23,"left"));;
+
+let word_extract = new_definition
+  `((><) h l (w:(M)word)):(N)word = word_subword w (l,h + 1 - l)`;;
+
+let word_slice = new_definition
+  `word_slice h l (w:(N)word) = word_shl (word_bits h l w) l`;;
+
+parse_as_infix("@@",(23,"left"));;
+
+let word_concat = new_definition
+  `((@@) (v:(M)word) (w:(N)word)):(P)word =
+   word_zx (word_join v w : ((M,N)finite_sum)word)`;;
+
+let bit_field_insert = new_definition
+  `bit_field_insert h l (v:(M)word) (w:(N)word) =
+   (word_insert w (l,h + 1 - l) v:(N)word)`;;
+
+let word_reverse = new_definition
+  `word_reverse (w:(N)word) =
+   word_of_bits {i | i < dimindex(:N) /\ bit (dimindex(:N) - 1 - i) w}`;;
+
+let word_abs = new_definition
+  `word_abs (w:(N)word) = if word_msb w then word_neg w else w`;;
+
+let word_log2 = new_definition
+  `word_log2 (w:(N)word) =
+   (word (dimindex(:N) - 1 - word_clz w):(N)word)`;;
+
+(* the numbers that bound a word type, as HOL4 defines them *)
+
+let dimword = new_definition
+  `dimword (:N) = 2 EXP dimindex(:N)`;;
+
+let INT_MIN = new_definition
+  `INT_MIN (:N) = 2 EXP (dimindex(:N) - 1)`;;
+
+let INT_MAX = new_definition
+  `INT_MAX (:N) = INT_MIN (:N) - 1`;;
+
+let UINT_MAX = new_definition
+  `UINT_MAX (:N) = dimword (:N) - 1`;;
+
+let word_L = new_definition
+  `word_L = (word (INT_MIN (:N)):(N)word)`;;
+
+let word_H = new_definition
+  `word_H = (word (INT_MAX (:N)):(N)word)`;;
+
+let word_T = new_definition
+  `word_T = (word (UINT_MAX (:N)):(N)word)`;;
+
+(* the bit list of a word and back, as in HOL4's bitstringTheory *)
+
+let w2v = new_definition
+  `w2v (w:(N)word) =
+   list_of_seq (\i. bit (dimindex(:N) - 1 - i) w) (dimindex(:N))`;;
+
+let v2w = new_definition
+  `v2w l = (word (ITLIST (\b n. 2 * n + (if b then 1 else 0))
+                         (REVERSE l) 0):(N)word)`;;

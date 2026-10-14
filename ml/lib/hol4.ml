@@ -339,6 +339,29 @@ let sum_measure = new_recursive_definition sum_RECURSION
   `(sum_measure (f:A->num) (g:B->num) (INL a) = f a) /\
    (sum_measure f g (INR b) = g b)`;;
 
+let DIV2 = new_definition
+  `DIV2 n = n DIV 2`;;
+
+let DIV2_LT = prove
+ (`!n. ~(n = 0) ==> DIV2 n < n`,
+  GEN_TAC THEN REWRITE_TAC[DIV2] THEN
+  MP_TAC(SPECL [`n:num`; `2`] DIVISION) THEN ARITH_TAC);;
+
+let list_size_DROP = prove
+ (`!f:A->num l k. list_size f (DROP k l) <= list_size f l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[DROP; list_size; LE_REFL] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[list_size; LE_REFL] THEN
+  MATCH_MP_TAC LE_TRANS THEN EXISTS_TAC `list_size (f:A->num) t` THEN
+  CONJ_TAC THENL [FIRST_ASSUM MATCH_ACCEPT_TAC; ARITH_TAC]);;
+
+let list_size_TAKE = prove
+ (`!f:A->num l k. list_size f (TAKE k l) <= list_size f l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[TAKE; list_size; LE_REFL; LE_0] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[list_size; LE_0] THEN
+  ASM_SIMP_TAC[LE_ADD_LCANCEL] THEN ASM_ARITH_TAC);;
+
 let MEM_list_size_ALT = prove
  (`!(x:A) l. MEM x l ==> !f:A->num. f x < list_size f l`,
   MESON_TAC[MEM_list_size]);;

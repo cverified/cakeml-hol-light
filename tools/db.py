@@ -10,10 +10,11 @@ constructors of a type stay uniform.
 """
 import sys, os, re, json, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hol4, hterm
+import hol4, hterm, overrides
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 SRC = hol4.SRC
+HOL4 = T + '../hol4-src/'
 
 # theories that HOL Light provides itself, or that the port
 # provides in ml/lib; the name is the HOL Light name
@@ -21,34 +22,59 @@ BUILTIN = {}
 
 
 def load_order():
-  return [tuple(l.split('\t'))
+  """the theories to port: the HOL4 libraries first, then CakeML"""
+  libs = [(l.split('\t')[0], HOL4 + l.split('\t')[1].strip(), 'lib')
+          for l in open(T + 'libs.txt').read().split('\n') if l]
+  cake = [(l.split('\t')[0], SRC + l.split('\t')[1].strip(), 'cakeml')
           for l in open(T + 'order.txt').read().split('\n') if l]
+  return libs + cake
 
 
 def hl_names():
   return set(l.strip() for l in open(T + 'hl-names.txt') if l.strip())
 
 
+def provided_names():
+  """the HOL4 library constants that ml/lib/hol4.ml provides"""
+  s = open(T + '../ml/lib/hol4.ml').read()
+  names = set()
+  for m in re.finditer(r'new_(?:recursive_)?definition\b[^`]*`([^`]*)`',
+                       s):
+    for cl in re.split(r'/\\\\', m.group(1)):
+      mm = re.match(r"\s*\(?\s*([A-Za-z_][A-Za-z0-9_']*)", cl)
+      if mm: names.add(mm.group(1))
+  for m in re.finditer(r'override_interface\("([^"]+)"', s):
+    names.add(m.group(1))
+  return names
+
+
 class Db:
   def __init__(self):
     self.order = load_order()
     self.hl = hl_names()
+    self.provided = provided_names()
     self.deps = json.load(open(T + 'deps.json'))['deps']
     self.defs = collections.defaultdict(list)   # name -> [(thy,kind)]
     self.datatypes = {}        # (thy,ty) -> ([cons],[fields])
     self.recs = {}             # (thy,ty) -> [fields]
     self.abbrevs = {}          # (thy,name) -> (params, type text)
+    self.overloads = {}        # (thy,name) -> term text
     self.thy_of_file = {}
+    self.kind_of_thy = {}
     self.scan()
     self.mapping()
+    self.compute_needed()
 
   # ---------------------------------------------------------------
 
   def scan(self):
-    for thy, rel in self.order:
-      rel = rel.strip()
-      self.thy_of_file[thy] = rel
-      for b in hol4.parse(SRC + rel):
+    for thy, path, kind in self.order:
+      self.thy_of_file[thy] = path
+      self.kind_of_thy[thy] = kind
+      for b in hol4.parse(path):
+        if b.kind == 'Ancestors':
+          anc = [w for w in b.body.split()]
+          self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))
         if b.kind == 'Datatype':
           for ty, cons, flds in hol4.datatype_names(b.body):
             self.datatypes[(thy, ty)] = (cons, flds)
@@ -57,10 +83,10 @@ class Db:
             if flds:
               self.recs[(thy, ty)] = flds
         elif b.kind == 'Definition':
-          for nm in hol4.definition_names(b.body):
+          for nm in definition_names(b.body):
             self.defs[nm].append((thy, 'def'))
         elif b.kind in ('Inductive', 'CoInductive'):
-          for nm in hol4.definition_names(b.body):
+          for nm in definition_names(b.body):
             self.defs[nm].append((thy, 'rel'))
         elif b.kind == 'Type':
           txt = strip_quote(b.body)
@@ -74,7 +100,10 @@ class Db:
           self.defs[b.name].append((thy, 'tyabbrev'))
         elif b.kind == 'Overload':
           if b.name:
-            self.defs[b.name].append((thy, 'overload'))
+            local = 'local' in b.attrs
+            if not local:
+              self.defs[b.name].append((thy, 'overload'))
+            self.overloads[(thy, b.name)] = (strip_quote(b.body), local)
 
   # ---------------------------------------------------------------
 
@@ -98,10 +127,78 @@ class Db:
       for thy, kind in v:
         if (thy, nm) in self.rename: continue
         if kind in ('con', 'type'): continue
+        if self.kind_of_thy.get(thy) == 'lib' and nm in self.provided:
+          continue
         if nm in multi or nm in self.hl:
           self.rename[(thy, nm)] = prefix(thy, nm)
 
   # ---------------------------------------------------------------
+
+  # ---------------------------------------------------------------
+  # which definitions of the HOL4 libraries the port needs
+  # ---------------------------------------------------------------
+
+  def compute_needed(self):
+    # the names that each block defines, and the names it uses
+    blocks = []                      # (thy, [names], set(uses))
+    self.defining_block = {}         # (thy,name) -> block index
+    for thy, path, kind in self.order:
+      for b in hol4.parse(path):
+        if b.kind not in ('Datatype', 'Definition', 'Inductive',
+                          'CoInductive', 'Type', 'Overload'):
+          continue
+        names = []
+        if b.kind == 'Datatype':
+          for ty, cons, flds in hol4.datatype_names(b.body):
+            names += [ty] + cons + flds
+        elif b.kind in ('Definition', 'Inductive', 'CoInductive'):
+          names += definition_names(b.body)
+        elif b.name:
+          names.append(b.name)
+        body = hol4.strip_comments(b.body) + \
+               (hol4.strip_comments(b.extra) if b.extra else '')
+        uses = set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", body))
+        i = len(blocks)
+        blocks.append((thy, names, uses, kind))
+        for nm in names:
+          if (thy, nm) not in self.defining_block:
+            self.defining_block[(thy, nm)] = i
+    # a name can be defined in several theories; index by name too
+    byname = {}
+    for i, (thy, names, _, kind) in enumerate(blocks):
+      for nm in names:
+        byname.setdefault(nm, []).append(i)
+    needed = set(i for i, (thy, _, _, kind) in enumerate(blocks)
+                 if kind == 'cakeml')
+    stack = list(needed)
+    while stack:
+      i = stack.pop()
+      thy, _, uses, _ = blocks[i]
+      anc = self.ancestors(thy) | {thy}
+      for nm in uses:
+        for j in byname.get(nm, []):
+          if j not in needed and blocks[j][0] in anc:
+            needed.add(j); stack.append(j)
+    self.needed_names = set()
+    for i in needed:
+      thy, names, _, _ = blocks[i]
+      for nm in names:
+        self.needed_names.add((thy, nm))
+
+  def is_needed(self, thy, names):
+    if self.kind_of_thy.get(thy) == 'lib' and \
+       all(nm in self.provided for nm in names):
+      return False
+    return any((thy, nm) in self.needed_names and
+               (thy, nm) not in overrides.NOT_NEEDED for nm in names)
+
+  def mlpath_of(self, thy):
+    """where the port of a theory goes"""
+    if self.kind_of_thy[thy] == 'lib':
+      return 'lib/' + thy + '.ml'
+    p = self.thy_of_file[thy]
+    p = re.sub(r'^.*/cakeml-src/', '', p)
+    return re.sub(r'Script\.sml$', '.ml', p)
 
   def ancestors(self, thy):
     seen = set(); st = [thy]
@@ -140,6 +237,12 @@ class Db:
     return {self.rename.get((t, ty), ty): flds
             for (t, ty), flds in self.recs.items() if t in anc}
 
+  def overloads_for(self, thy):
+    """the overloads in scope: the local ones only in their own theory"""
+    anc = self.ancestors(thy)
+    return {nm: txt for (t, nm), (txt, local) in self.overloads.items()
+            if t == thy or (t in anc and not local)}
+
   def abbrevs_for(self, thy):
     anc = self.ancestors(thy) | {thy}
     out = {}
@@ -147,6 +250,37 @@ class Db:
       if t in anc:
         out[nm] = (params, hterm.parse_type_text(txt))
     return out
+
+
+def definition_names(body):
+  """the constants that a Definition block defines, from its term"""
+  try:
+    toks = hterm.tokenize(hol4.strip_comments(body))
+    e = hterm.Parser(toks).parse()
+  except Exception:
+    return hol4.definition_names(body)
+  out = []
+  def conjuncts(e):
+    if e.kind == 'infix' and e.op in ('/\\', '\\/') and e.op == '/\\':
+      return conjuncts(e.l) + conjuncts(e.r)
+    if e.kind == 'paren': return conjuncts(e.e)
+    if e.kind == 'quant' and e.q == '!': return conjuncts(e.body)
+    return [e]
+  for cl in conjuncts(e):
+    while cl.kind in ('paren',):
+      cl = cl.e
+    if cl.kind == 'quant' and cl.q == '!':
+      cl = cl.body
+      while cl.kind == 'paren': cl = cl.e
+    if cl.kind != 'infix' or cl.op not in ('=', '<=>'): continue
+    l = cl.l
+    while l.kind == 'paren': l = l.e
+    hop, _ = hterm.strip_app(l)
+    while hop.kind == 'paren': hop = hop.e
+    if hop.kind == 'typed': hop = hop.e
+    if hop.kind == 'id' and hop.name not in out:
+      out.append(hop.name)
+  return out
 
 
 def prefix(thy, nm):

@@ -135,11 +135,21 @@ let MEM_SIZE_TAC (asl,w as gl) =
 
 (* the tactic that is tried on the termination conditions *)
 
+(* the lemmas that the termination proofs may need; a ported file can
+   add the ones that its definitions need *)
+
+let cake_term_lemmas =
+  ref [DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
+       list_size_APPEND; list_size_REVERSE];;
+
 let TERM_TAC g =
   (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM] THEN
    REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
    REWRITE_TAC(all_size_thms()) THEN MEM_SIZE_TAC THEN
-   REWRITE_TAC(all_size_thms()) THEN ASM_ARITH_TAC) g;;
+   REWRITE_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
+   (ASM_ARITH_TAC ORELSE
+    (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
+     TRY ASM_ARITH_TAC))) g;;
 
 let discharge_conditions (rel,tac) th =
   itlist

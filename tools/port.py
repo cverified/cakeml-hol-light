@@ -6,19 +6,21 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 """
 import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hol4, hterm, db as dbmod
+import hol4, hterm, db as dbmod, overrides
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 ML = T + '../ml/'
 SRC = hol4.SRC
 
-HEAD = '''(* =========================================================================\
- *)
-(*  %s *)
-(*  Ported from HOL4's %s%s *)
-(* =========================================================================\
- *)
+HEAD = '''(* ======================================================== *)
+(*  %s: ported from HOL4's
+    %s  *)%s
+(* ======================================================== *)
 '''
+
+LIBNOTE = '''
+(*  Of this HOL4 library theory only the definitions that the
+    CakeML port needs are ported.  *)'''
 
 
 # HOL4 declarations that only configure its parser or its
@@ -36,18 +38,29 @@ class Porter:
   def __init__(self, db, thy):
     self.db = db
     self.thy = thy
-    self.rel = db.thy_of_file[thy]
+    self.path = db.thy_of_file[thy]
+    self.kind = db.kind_of_thy[thy]
     names = db.names_for(thy)
     fields, amb = db.fields_for(thy)
     self.amb = amb
-    self.ctx = hterm.Ctx(names=names,
-                         fields={f: t for f, t in fields.items() if t},
-                         recs=db.recs_for(thy), thy=thy)
+    flds = {f: t for f, t in fields.items() if t}
+    flds.update(overrides.FIELD_OF.get(thy, {}))
+    self.ctx = hterm.Ctx(names=names, fields=flds,
+                         recs=db.recs_for(thy), thy=thy,
+                         accessors=overrides.ACCESSORS.get(thy, {}))
     self.abbrevs = db.abbrevs_for(thy)
+    raw = db.overloads_for(thy)
+    for _ in range(3):
+      for nm, txt in raw.items():
+        try: self.ctx.overloads[nm] = self.term(txt)
+        except Exception: pass
     self.out = []
     self.warn = []
 
   # -- helpers ---------------------------------------------------
+
+  def srcname(self):
+    return re.sub(r'^.*/(cakeml-src|hol4-src)/', '', self.path)
 
   def nm(self, n):
     return self.ctx.name(n)
@@ -69,7 +82,7 @@ class Porter:
   # -- the blocks ------------------------------------------------
 
   def run(self):
-    blocks = hol4.parse(SRC + self.rel)
+    blocks = hol4.parse(self.path)
     first = True
     for b in blocks:
       try:
@@ -80,19 +93,38 @@ class Porter:
                         f'{b.text}\n*)\n')
     return '\n'.join(self.out)
 
+  def wanted(self, b):
+    """of a HOL4 library theory only the needed definitions are ported"""
+    if self.kind != 'lib': return True
+    if b.kind == 'Datatype':
+      names = []
+      for ty, cons, flds in hol4.datatype_names(b.body):
+        names += [ty] + cons + flds
+    elif b.kind in ('Definition', 'Inductive', 'CoInductive'):
+      names = dbmod.definition_names(b.body)
+    elif b.kind in ('Type', 'Overload'):
+      names = [b.name]
+    else:
+      return True
+    return self.db.is_needed(self.thy, names)
+
   def block(self, b):
     k = b.kind
+    if self.kind == 'lib' and k in ('Comment', 'ML'):
+      return
+    if not self.wanted(b):
+      return
     if k == 'Comment':
       self.out.append(b.text)
     elif k == 'Theory':
-      self.out.append(HEAD % (b.name, self.rel, ''))
+      self.out.append(HEAD % (b.name, self.srcname(),
+                              LIBNOTE if self.kind == 'lib' else ''))
     elif k == 'Ancestors':
       deps = [w for w in b.body.split()]
       needs = []
       for d in deps:
         if d in self.db.thy_of_file:
-          path = self.db.thy_of_file[d]
-          needs.append('needs "%s";;' % mlpath(path))
+          needs.append('needs "%s";;' % self.db.mlpath_of(d))
       if needs:
         self.out.append('\n'.join(sorted(set(needs))))
       ext = [d for d in deps if d not in self.db.thy_of_file]
@@ -180,8 +212,21 @@ class Porter:
 
   def definition(self, b):
     name = b.name
+    key = (self.thy, name)
+    if key in overrides.REPLACE:
+      self.out.append(overrides.REPLACE[key].strip())
+      return
     body = b.body
-    term = fmt(self.term(body))
+    if key in overrides.MATCH_FORM:
+      term = fmt(self.match_form(body))
+    else:
+      term = fmt(self.term(body))
+    rel = overrides.MEASURE.get(key)
+    if rel is not None:
+      self.out.append('(* the termination relation is not in the HOL4 '
+                      'source *)\nlet %s = cake_define_wf\n  `%s`\n'
+                      '  `%s`;;' % (name, rel, term))
+      return
     if b.extra is None:
       self.out.append('let %s = cake_define\n  `%s`;;' % (name, term))
     else:
@@ -195,6 +240,46 @@ class Porter:
                         'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
                         % (' '.join(rest.split()), name,
                            fmt(self.term(rel)), term))
+
+  # -- a definition as one clause with a match -------------------
+
+  def match_form(self, body):
+    """the clauses of a definition as one clause with a match, which
+       is what HOL4's first match semantics means"""
+    toks = hterm.tokenize(hol4.strip_comments(body))
+    e = hterm.Parser(toks, self.ctx).parse()
+    cls = hterm.clauses_of(e)
+    hop = cls[0][0]
+    n = max(len(args) for _, args, _ in cls)
+    if any(len(args) != n for _, args, _ in cls):
+      raise SyntaxError('match_form: different arities')
+    # the names of the arguments, from the clauses that have a
+    # variable there
+    names = []
+    for i in range(n):
+      nm = None
+      for _, args, _ in cls:
+        if args[i].kind == 'id' and args[i].name not in names:
+          nm = args[i].name; break
+      if nm is None:
+        nm = 'x' + str(i + 1)
+        while nm in names: nm += "'"
+      names.append(nm)
+    pats = [i for i in range(n)
+            if any(args[i].kind != 'id' for _, args, _ in cls)]
+    pr = hterm.Printer(self.ctx)
+    arms = []
+    for _, args, r in cls:
+      sub = {args[i].name: names[i] for i in range(n)
+             if i not in pats and args[i].kind == 'id'}
+      pat = ','.join(pr.pr(args[i], 60) for i in pats)
+      if len(pats) > 1: pat = '(' + pat + ')'
+      arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 0)))
+    scrut = ','.join(names[i] for i in pats)
+    if len(pats) > 1: scrut = '(' + scrut + ')'
+    head = pr.pr(hop, 0) + ' ' + ' '.join(names)
+    body = '\n     | '.join('%s -> %s' % (p, b) for p, b in arms)
+    return '%s =\n     match %s with\n       %s' % (head, scrut, body)
 
   # -- type abbreviations, overloads, inductive relations --------
 
@@ -220,20 +305,35 @@ class Porter:
     self.out.append('let %s = cake_inductive\n  `%s`;;' % (b.name, term))
 
 
-def fmt(text, indent=3):
+def fmt(text, indent=3, width=72):
   """the layout of a translated term in the HOL Light source"""
-  lines = [l.rstrip() for l in text.split('\n')]
-  while lines and not lines[0].strip(): lines.pop(0)
-  while lines and not lines[-1].strip(): lines.pop()
+  lines = [l.rstrip() for l in text.split('\n') if l.strip()]
   if not lines: return ''
   base = len(lines[0]) - len(lines[0].lstrip())
   out = [lines[0].lstrip()]
   for l in lines[1:]:
-    if not l.strip():
-      out.append('')
-    else:
-      k = len(l) - len(l.lstrip())
-      out.append(' ' * (indent + max(0, k - base)) + l.lstrip())
+    k = len(l) - len(l.lstrip())
+    out.append(' ' * (indent + max(0, k - base)) + l.lstrip())
+  return '\n'.join(wrap(l, indent, width) for l in out)
+
+
+def wrap(line, indent, width):
+  """break a line that is too long"""
+  if len(line) + indent <= width: return line
+  k = len(line) - len(line.lstrip())
+  out = []
+  cur = line
+  while len(cur) + (indent if not out else 0) > width:
+    cut = -1
+    for i, c in enumerate(cur):
+      if c == ' ' and i > k and \
+         i + (indent if not out else 0) <= width and \
+         cur[:i].count('"') % 2 == 0:
+        cut = i
+    if cut < 0: break
+    out.append(cur[:cut])
+    cur = ' ' * (k + 2) + cur[cut+1:]
+  out.append(cur)
   return '\n'.join(out)
 
 
@@ -263,7 +363,7 @@ def port(thy, db=None):
   for i, l in enumerate(text.split('\n')):
     if len(l) > 72:
       p.warn.append('line %d is %d characters' % (i + 1, len(l)))
-  path = ML + mlpath(p.rel)
+  path = ML + db.mlpath_of(thy)
   os.makedirs(os.path.dirname(path), exist_ok=True)
   open(path, 'w').write(text + '\n')
   return path, p.warn, p.amb

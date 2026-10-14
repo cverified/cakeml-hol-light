@@ -23,10 +23,11 @@ GREEK = dict(zip('αβγδεζηθ'
                  ["'g" + c for c in 'abcdefghijklmnopqrstuvw']))
 
 KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
-            'do', 'od', 'with', 'otherwise']
+            'do', 'od', 'with', 'otherwise', 'some']
 
 # symbols, longest first
 SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '&&',
+        "''", '--', '%%',
         '??', '|->', '<|', '|>', ':=', '<-', '->', '=>', '::', '++',
         '<<', '>>', '@@', '**', '|+', '/\\', '\\/', '<>', '<=', '>=',
         '<+', '>+', '=+', '<*>', '<<=', '≼', '«', '»', '⟪', '⟫',
@@ -116,6 +117,13 @@ def tokenize(s):
       w = s[i:j]
       toks.append(Tok('key' if w in KEYWORDS else 'id', w, start, nl, icol))
       i = j; col += j - i; nl = 0; continue
+    if s.startswith("''", i):
+      toks.append(Tok('sym', "''", start, nl, icol))
+      i += 2; col += 2; nl = 0; continue
+    if c == "'" and not (i + 1 < n and (s[i+1].isalnum()
+                                       or s[i+1] == '_')):
+      toks.append(Tok('sym', "'", start, nl, icol))
+      i += 1; col += 1; nl = 0; continue
     if c == "'":                      # type variable
       j = i + 1
       while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
@@ -184,8 +192,12 @@ INFIX = {
   '#<<':   (680, 'l', '#<<',    23),
   '@@':    (700, 'l', '@@',     23),
   'o':     (800, 'r', 'o',      26),
+  "'":     (2000, 'l', 'FAPPLY', 0),
+  "''":    (350, 'l', 'word_slice', 0),
+  '--':    (350, 'l', 'word_bits', 0),
+  '%%':    (400, 'l', 'word_bit', 0),
   '=+':    (715, 'l', '=+',     23),
-  '><':    (600, 'l', '><',     20),
+  '><':    (350, 'l', '><',     23),
   '<*>':   (500, 'l', '<*>',    16),
 }
 
@@ -285,32 +297,45 @@ class Parser:
       e = Node('infix', tok=t, op=op, l=e, r=r)
     return e
 
-  def starts_atom(self):
+  def starts_atom(self, arg=False):
+    """arg: in the position of an argument of an application, where a
+       prefix operator does not start a new argument"""
     t = self.peek()
-    if t.kind in ('id', 'num', 'str', 'chr', 'tyvar'):
+    if t.kind in ('id', 'num', 'str', 'chr', 'tyvar', 'mlstr',
+                  'quoted'):
       return not (t.text in INFIX and t.kind == 'id')
     if t.kind == 'key':
-      return t.text in ('if', 'let', 'case', 'do')
+      return t.text in ('if', 'let', 'case', 'do', 'some')
     if t.kind == 'sym':
-      return t.text in ('(', '[', '{', '~', '!', '?', '\\', '@', '$',
-                        '&', '<|', '«', '⟪', '-', '^')
+      if t.text in ('(', '[', '{', '$', '&', '<|', '«', '⟪',
+                    '𝕌'):
+        return True
+      if t.text == '~': return True
+      return not arg and t.text in ('!', '?', '\\', '@', '-', '^')
     return False
 
   def parse_atoms(self):
-    e = self.parse_atom()
-    while self.starts_atom():
-      # an infix symbol that can also start an atom stops application
-      a = self.parse_atom()
+    e = self.parse_fields(self.parse_atom())
+    while self.starts_atom(True):
+      a = self.parse_fields(self.parse_atom())
       e = Node('app', tok=e.tok, fn=e, arg=a)
-    return self.parse_postfix(e)
+    e = self.parse_postfix(e)
+    if self.at(':'):
+      self.next()
+      ty = self.parse_type()
+      e = Node('typed', tok=e.tok, e=e, ty=ty)
+    return e
+
+  def parse_fields(self, e):
+    while self.peek().text == '.' and self.peek(1).kind == 'id':
+      t = self.next(); fld = self.next()
+      e = Node('field', tok=t, e=e, fld=fld.text)
+    return e
 
   def parse_postfix(self, e):
     while True:
       t = self.peek()
-      if t.text == '.' and self.peek(1).kind == 'id':
-        self.next(); fld = self.next()
-        e = Node('field', tok=t, e=e, fld=fld.text)
-      elif t.text == 'with':
+      if t.text == 'with':
         self.next()
         if self.at('<|'):
           self.next()
@@ -381,6 +406,10 @@ class Parser:
         self.expect('in')
         b = self.parse(0)
         return Node('let', tok=t, binds=binds, body=b)
+      if t.text == 'some':
+        vs = self.parse_binders()
+        b = self.parse(0)
+        return Node('some', tok=t, vs=vs, body=b)
       if t.text == 'case':
         s = self.parse(0)
         self.expect('of')
@@ -418,11 +447,6 @@ class Parser:
           self.next()
           return Node('id', tok=t, name='()')
         e = self.parse(0)
-        if self.at(':'):
-          self.next()
-          ty = self.parse_type()
-          self.expect(')')
-          return Node('typed', tok=t, e=e, ty=ty)
         self.expect(')')
         return Node('paren', tok=t, e=e)
       if t.text == '[':
@@ -522,10 +546,13 @@ def strip_app(e):
 class Ctx:
   """what the printer needs to know about the port"""
 
-  def __init__(self, names=None, fields=None, recs=None, thy=''):
+  def __init__(self, names=None, fields=None, recs=None, thy='',
+               overloads=None, accessors=None):
     self.names = names or {}     # cakeml name -> hol light name
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
+    self.overloads = overloads or {}   # name -> hol light term text
+    self.accessors = accessors or {}   # field name -> accessor name
     self.thy = thy
     self.wild = 0
     self.warn = []
@@ -537,10 +564,11 @@ class Ctx:
     return self.names.get((self.thy, n), self.names.get(n, n))
 
   def field(self, f):
-    """the record type that has this field"""
-    if f in self.fields: return self.fields[f]
+    """the accessor of a record field, without its argument"""
+    if f in self.accessors: return self.accessors[f]
+    if f in self.fields: return self.fields[f] + '_' + f
     self.warn.append(f'unknown record field {f}')
-    return '?'
+    return '?_' + f
 
   def fresh(self):
     self.wild += 1
@@ -591,6 +619,8 @@ class Printer:
     if k == 'id':
       n = e.name
       if n == '_': return self.ctx.fresh()
+      if n in self.ctx.overloads:
+        return '(' + self.ctx.overloads[n] + ')'
       return self.ctx.name(n)
     if k == 'num':
       t = e.text
@@ -614,7 +644,8 @@ class Printer:
     if k == 'typed':
       if greek(e.ty):
         return self.pr(e.e, prec)
-      return '(' + self.pr(e.e, 0) + ':' + self.pr_type(e.ty) + ')'
+      return self.paren(self.pr(e.e, 1) + ':' + self.pr_type(e.ty),
+                        0, prec)
     if k == 'app':
       hop, args = strip_app(e)
       if hop.kind == 'id':
@@ -636,6 +667,12 @@ class Printer:
       if op == 'NOTIN':
         return self.paren('~(' + self.pr(e.l, 11) + ' IN ' +
                           self.pr(e.r, 12) + ')', PRE_APP, prec)
+      if op in ("'", "''", '--'):
+        return self.paren(INFIX[op][2] + ' ' + self.pr(e.l, APP) + ' ' +
+                          self.pr(e.r, APP), PRE_APP, prec)
+      if op == '%%':
+        return self.paren('word_bit ' + self.pr(e.r, APP) + ' ' +
+                          self.pr(e.l, APP), PRE_APP, prec)
       _, assoc, hop, hprec = INFIX[op]
       if assoc == 'r':
         l = self.pr(e.l, hprec + 1); r = self.pr(e.r, hprec)
@@ -652,6 +689,10 @@ class Printer:
         return self.paren('--' + self.pr(e.e, PRE_APP), PRE_APP, prec)
       if e.op == '&':
         return self.paren('&' + self.pr(e.e, APP), PRE_APP, prec)
+    if k == 'some':
+      vs = ' '.join(self.pr(v, APP) for v in e.vs)
+      return self.paren('some (\\' + vs + '. ' + self.pr(e.body, 0) +
+                        ')', PRE_APP, prec)
     if k == 'quant':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
       return self.paren(e.q + vs + '. ' + self.pr(e.body, 0), 1, prec)
@@ -670,19 +711,18 @@ class Printer:
       return self.paren('match ' + self.pr(e.s, 0) + ' with ' + arms,
                         1, prec)
     if k == 'field':
-      rty = self.ctx.field(e.fld)
-      return self.paren(rty + '_' + e.fld + ' ' + self.pr(e.e, APP),
+      return self.paren(self.ctx.field(e.fld) + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)
     if k == 'recupd':
       s = self.pr(e.e, APP)
       for i, (fld, v) in enumerate(e.upds):
-        rty = self.ctx.field(fld)
-        s = (rty + '_' + fld + '_fupd (K ' + self.pr(v, APP) + ') ' + s)
+        s = (self.ctx.field(fld) + '_fupd (K ' + self.pr(v, APP) +
+             ') ' + s)
         if i < len(e.upds) - 1: s = '(' + s + ')'
       return self.paren(s, PRE_APP, prec)
     if k == 'reclit':
       flds = [f for f, _ in e.upds]
-      rty = self.ctx.field(flds[0])
+      rty = self.ctx.fields.get(flds[0], '?')
       order = self.ctx.recs.get(rty, flds)
       vals = []
       for f in order:
@@ -728,6 +768,44 @@ class Printer:
             rest + ')')
 
 
+def rename_ast(e, sub):
+  """rename identifiers in a syntax tree"""
+  if isinstance(e, Node):
+    d = {}
+    for k, v in e.__dict__.items():
+      if k in ('tok', 'kind'): continue
+      elif k == 'name' and v in sub: d[k] = sub[v]
+      else: d[k] = rename_ast(v, sub)
+    return Node(e.kind, tok=e.tok, **d)
+  if isinstance(e, list): return [rename_ast(x, sub) for x in e]
+  if isinstance(e, tuple): return tuple(rename_ast(x, sub) for x in e)
+  return e
+
+
+def clauses_of(e):
+  """the clauses of a definition, as (head, args, rhs)"""
+  def conj(e):
+    if e.kind == 'paren': return conj(e.e)
+    if e.kind == 'quant' and e.q == '!': return conj(e.body)
+    if e.kind == 'infix' and e.op == '/\\':
+      return conj(e.l) + conj(e.r)
+    return [e]
+  out = []
+  for cl in conj(e):
+    while cl.kind == 'paren': cl = cl.e
+    if cl.kind == 'quant' and cl.q == '!':
+      cl = cl.body
+      while cl.kind == 'paren': cl = cl.e
+    if cl.kind != 'infix' or cl.op not in ('=', '<=>'):
+      raise SyntaxError('clauses_of: not an equation')
+    l = cl.l
+    while l.kind == 'paren': l = l.e
+    hop, args = strip_app(l)
+    while hop.kind in ('paren', 'typed'): hop = hop.e
+    out.append((hop, args, cl.r))
+  return out
+
+
 def translate(text, ctx):
   """translate a HOL4 term to a HOL Light term"""
   toks = tokenize(text)
@@ -765,10 +843,24 @@ class TypeParser:
     return ty
 
   def parse_prod(self):
+    ty = self.parse_sum()
+    if self.at('|->'):
+      self.next()
+      return ('op', 'fmap', [ty, self.parse_prod()])
+    return ty
+
+  def parse_sum(self):
+    ty = self.parse_prodonly()
+    if self.at('+'):
+      self.next()
+      return ('op', 'sum', [ty, self.parse_sum()])
+    return ty
+
+  def parse_prodonly(self):
     ty = self.parse_app()
     if self.at('#'):
       self.next()
-      return ('op', 'prod', [ty, self.parse_prod()])
+      return ('op', 'prod', [ty, self.parse_prodonly()])
     return ty
 
   def parse_app(self):
@@ -836,6 +928,10 @@ def print_type(ty, ctx=None, prec=0):
     s = (print_type(args[0], ctx, 5) + '#' +
          print_type(args[1], ctx, 4))
     return '(' + s + ')' if prec > 4 else s
+  if name == 'sum':
+    s = (print_type(args[0], ctx, 4) + '+' +
+         print_type(args[1], ctx, 3))
+    return '(' + s + ')' if prec > 3 else s
   nm = ctx.name(name) if ctx is not None else name
   if not args: return nm
   if len(args) == 1:

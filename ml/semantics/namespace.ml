@@ -2,10 +2,10 @@
   Defines a datatype for nested namespaces where names can be either
   short (e.g. foo) or long (e.g. ModuleA.InnerB.bar).
 *)
-(* ========================================================================= *)
-(*  namespace *)
-(*  Ported from HOL4's semantics/namespaceScript.sml *)
-(* ========================================================================= *)
+(* ======================================================== *)
+(*  namespace: ported from HOL4's
+    semantics/namespaceScript.sml  *)
+(* ======================================================== *)
 
 (* HOL4 ancestors outside the port: alist *)
 (* HOL4 type abbreviation (expanded in the port):
@@ -28,11 +28,13 @@ let nsLookup_def = cake_define
   `nsLookup ((Bind v m):('m, 'n, 'v) namespace) (Short n) =
      ALOOKUP v n /\
    nsLookup (Bind v m) (Long mn id) =
-     (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookup env id)`;;
+     (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookup env
+       id)`;;
 let nsLookupMod_def = cake_define
   `nsLookupMod e [] = SOME (e:('m, 'n, 'v) namespace) /\
    nsLookupMod (Bind v m) (mn :: path) =
-   (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookupMod env path)`;;
+   (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookupMod
+     env path)`;;
 let nsEmpty_def = cake_define
   `nsEmpty = Bind [] []`;;
 let nsAppend_def = cake_define
@@ -46,7 +48,8 @@ let nsBind_def = cake_define
 let nsBindList_def = cake_define
   `nsBindList l e = ITLIST (\(x,v) e. nsBind x v e) l e`;;
 let nsOptBind_def = cake_define
-  `nsOptBind n x env = (match n with NONE -> env | SOME n -> nsBind n x env)`;;
+  `nsOptBind n x env = (match n with NONE -> env | SOME n -> nsBind n x
+  env)`;;
 let nsSing_def = cake_define
   `nsSing n x = Bind [(n,x)] []`;;
 let nsSub_def = cake_define
@@ -54,7 +57,8 @@ let nsSub_def = cake_define
       (!id v1.
          nsLookup env1 id = SOME v1 ==>
          (?v2. nsLookup env2 id = SOME v2 /\ r id v1 v2)) /\
-      (!path. nsLookupMod env2 path = NONE ==> nsLookupMod env1 path = NONE)`;;
+      (!path. nsLookupMod env2 path = NONE ==> nsLookupMod env1 path
+        = NONE)`;;
 let nsAll_def = cake_define
   `nsAll f env <=> (!id v. nsLookup env id = SOME v ==> f id v)`;;
 let nsAll2_def = cake_define

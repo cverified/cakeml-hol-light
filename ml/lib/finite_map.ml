@@ -1,0 +1,110 @@
+(* ========================================================================= *)
+(*  Finite maps, which HOL Light does not have.                             *)
+(*                                                                          *)
+(*  The same notion as HOL4's finite_mapTheory: a finite map is a function   *)
+(*  to an option type with a finite domain.  The definitions below are the   *)
+(*  HOL4 ones, phrased with the representing function.                      *)
+(* ========================================================================= *)
+
+let fmap_tybij =
+  let th = prove
+   (`?f:A->B option. FINITE {x | ~(f x = NONE)}`,
+    EXISTS_TAC `\x:A. (NONE:B option)` THEN
+    REWRITE_TAC[EMPTY_GSPEC; FINITE_EMPTY]) in
+  new_type_definition "fmap" ("mk_fmap","fmap_fn") th;;
+
+(* the domain, the application and the lookup of a finite map *)
+
+let FDOM = new_definition
+  `FDOM (fm:(A,B)fmap) = {x | ~(fmap_fn fm x = NONE)}`;;
+
+let FAPPLY = new_definition
+  `FAPPLY (fm:(A,B)fmap) x = THE (fmap_fn fm x)`;;
+
+let FLOOKUP = new_definition
+  `FLOOKUP (fm:(A,B)fmap) x = fmap_fn fm x`;;
+
+(* the empty map and the update, which HOL4 writes fm |+ (k,v) *)
+
+let FEMPTY = new_definition
+  `FEMPTY = mk_fmap (\x:A. (NONE:B option))`;;
+
+parse_as_infix("|+",(15,"left"));;
+
+let FUPDATE = new_definition
+  `(fm:(A,B)fmap) |+ (kv:A#B) =
+   mk_fmap (\x. if x = FST kv then SOME (SND kv) else fmap_fn fm x)`;;
+
+parse_as_infix("|++",(15,"left"));;
+
+let FUPDATE_LIST = new_definition
+  `(fm:(A,B)fmap) |++ l = FOLDL (|+) fm l`;;
+
+(* removing a key, which HOL4 writes fm \\ k *)
+
+parse_as_infix("\\\\",(21,"left"));;
+
+let DOMSUB = new_definition
+  `(fm:(A,B)fmap) \\ k =
+   mk_fmap (\x. if x = k then NONE else fmap_fn fm x)`;;
+
+(* the union of two finite maps, which takes the first one first *)
+
+let FUNION = new_definition
+  `FUNION (f:(A,B)fmap) g =
+   mk_fmap (\x. if x IN FDOM f then fmap_fn f x else fmap_fn g x)`;;
+
+let FDIFF = new_definition
+  `FDIFF (f:(A,B)fmap) s =
+   mk_fmap (\x. if x IN s then NONE else fmap_fn f x)`;;
+
+let DRESTRICT = new_definition
+  `DRESTRICT (f:(A,B)fmap) s =
+   mk_fmap (\x. if x IN s then fmap_fn f x else NONE)`;;
+
+let FRANGE = new_definition
+  `FRANGE (f:(A,B)fmap) = {v | ?k. fmap_fn f k = SOME v}`;;
+
+(* the map of the values, which HOL4 writes g o_f fm *)
+
+parse_as_infix("o_f",(26,"right"));;
+
+let o_f = new_definition
+  `(g:B->C) o_f (fm:(A,B)fmap) = mk_fmap (\x. OPTION_MAP g (fmap_fn fm x))`;;
+
+let FMERGE = new_definition
+  `FMERGE (m:B->B->B) (f:(A,B)fmap) g =
+   mk_fmap (\x. if x IN FDOM f then
+                  (if x IN FDOM g then SOME (m (FAPPLY f x) (FAPPLY g x))
+                   else fmap_fn f x)
+                else fmap_fn g x)`;;
+
+let FUN_FMAP = new_definition
+  `FUN_FMAP (f:A->B) s = mk_fmap (\x. if x IN s then SOME (f x) else NONE)`;;
+
+let FCARD = new_definition
+  `FCARD (fm:(A,B)fmap) = CARD (FDOM fm)`;;
+
+let FEVERY = new_definition
+  `FEVERY P (fm:(A,B)fmap) <=>
+   !k v. FLOOKUP fm k = SOME v ==> P (k,v)`;;
+
+parse_as_infix("SUBMAP",(12,"right"));;
+
+let SUBMAP = new_definition
+  `(f:(A,B)fmap) SUBMAP g <=>
+   !x. x IN FDOM f ==> x IN FDOM g /\ FAPPLY f x = FAPPLY g x`;;
+
+(* the finite map of an association list, and back *)
+
+let alist_to_fmap = new_definition
+  `alist_to_fmap (l:(A#B)list) = ITLIST (\kv fm. fm |+ kv) l FEMPTY`;;
+
+let fmap_to_alist = new_definition
+  `fmap_to_alist (fm:(A,B)fmap) =
+   MAP (\k. (k,FAPPLY fm k)) (list_of_set (FDOM fm))`;;
+
+let fmap_size = new_definition
+  `fmap_size (f:A->num) (g:B->num) (fm:(A,B)fmap) =
+   CARD (FDOM fm) +
+   ITLIST (\kv n. f (FST kv) + g (SND kv) + n) (fmap_to_alist fm) 0`;;
