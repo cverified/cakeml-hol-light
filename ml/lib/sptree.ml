@@ -10,7 +10,7 @@ let spt_INDUCT,spt_RECURSION = define_datatype
   "spt = LN | LS ('a) | BN (spt) (spt) | BS (spt) ('a) (spt)";;
 (* HOL4 type abbreviation (expanded in the port):
      num_map = 'a spt *)
-new_type_abbrev("sptree_num_set",`:unit spt`);;
+new_type_abbrev("sptree_num_set",`:one spt`);;
 (* HOL4 overload (expanded in the port):
      isEmpty = \t. t = LN *)
 let wf_def = cake_define
@@ -22,7 +22,7 @@ let wf_def = cake_define
      t = LN) t1 /\ (\t. t = LN) t2))`;;
 (* HOL4 termination: >> simp[DIV_LT_X] *)
 let lookup_def = cake_define_wf
-  `measure FST`
+  `MEASURE FST`
   `(sptree_lookup k LN = NONE) /\
    (sptree_lookup k (LS a) = (if k = 0 then SOME a else NONE)) /\
    (sptree_lookup k (BN t1 t2) =
@@ -33,7 +33,7 @@ let lookup_def = cake_define_wf
         EVEN k then t1 else t2)))`;;
 (* HOL4 termination: >> simp[DIV_LT_X] *)
 let insert_def = cake_define_wf
-  `measure FST`
+  `MEASURE FST`
   `(sptree_insert k a LN = (if k = 0 then LS a else if EVEN k then BN
   (sptree_insert ((k - 1) DIV 2) a LN) LN else BN LN (sptree_insert ((k
   - 1) DIV 2) a LN))) /\
@@ -50,11 +50,15 @@ let insert_def = cake_define_wf
         ((k - 1) DIV 2) a t1) a' t2 else BS t1 a' (sptree_insert ((k -
         1) DIV 2) a t2)))`;;
 let mk_BN_def = cake_define
-  `(mk_BN LN LN = LN) /\
-   (mk_BN t1 t2 = BN t1 t2)`;;
+  `mk_BN t1 t2 =
+        match (t1,t2) with
+          (LN,LN) -> LN
+        | (t1,t2) -> BN t1 t2`;;
 let mk_BS_def = cake_define
-  `(mk_BS LN x LN = LS x) /\
-   (mk_BS t1 x t2 = BS t1 x t2)`;;
+  `mk_BS t1 x t2 =
+        match (t1,t2) with
+          (LN,LN) -> LS x
+        | (t1,t2) -> BS t1 x t2`;;
 let delete_def = cake_define
   `(sptree_delete k LN = LN) /\
    (sptree_delete k (LS a) = (if k = 0 then LN else LS a)) /\
@@ -131,7 +135,7 @@ let difference_def = cake_define
         t2' -> mk_BN (difference t1 t1') (difference t2 t2')))`;;
 (* HOL4 termination: \\ fs [DIV_LT_X] \\ REPEAT STRIP_TAC \\ DECIDE_TAC *)
 let lrnext_def = cake_define_wf
-  `measure I`
+  `MEASURE I`
   `lrnext n = (if n = 0 then 1 else 2 * lrnext ((n - 1) DIV 2))`;;
 let domain_def = cake_define
   `domain LN = {} /\
@@ -183,9 +187,11 @@ let spt_right_def = cake_define
    (spt_right (BN t1 t2) = t2) /\
    (spt_right (BS t1 x t2) = t2)`;;
 let spt_center_def = cake_define
-  `(spt_center (LS x) = SOME x) /\
-   (spt_center (BS t1 x t2) = SOME x) /\
-   (spt_center _5 = NONE)`;;
+  `spt_center _ =
+        match _ with
+          (LS x) -> SOME x
+        | (BS t1 x t2) -> SOME x
+        | _5 -> NONE`;;
 let subspt_eq = cake_define
   `(subspt LN t <=> T) /\
    (subspt (LS x) t <=> (spt_center t = SOME x)) /\
@@ -209,16 +215,18 @@ let spt_fold_def = cake_define
      t1)) t2)`;;
 let list_to_num_set_def = cake_define
   `(list_to_num_set [] = LN) /\
-   (list_to_num_set (n :: ns) = sptree_insert n () (list_to_num_set
+   (list_to_num_set (n :: ns) = sptree_insert n one (list_to_num_set
      ns))`;;
 let list_insert_def = cake_define
   `(list_insert [] t = t) /\
-   (list_insert (n :: ns) t = list_insert ns (sptree_insert n () t))`;;
+   (list_insert (n :: ns) t = list_insert ns (sptree_insert n one t))`;;
 let alist_insert_def = cake_define
-  `alist_insert [] xs t = t /\
-   alist_insert vs [] t = t /\
-   alist_insert (v :: vs) (x :: xs) t = sptree_insert v x
-     (alist_insert vs xs t)`;;
+  `alist_insert vs xs t =
+      match (vs,xs) with
+        ([],xs) -> t
+      | (vs,[]) -> t
+      | ((v :: vs),(x :: xs)) -> sptree_insert v x (alist_insert vs
+        xs t)`;;
 let spts_to_alist_add_pause_def = cake_define
   `spts_to_alist_add_pause j q = (match q with [] -> [(j,LN)] | ((i,spt)
   :: q) -> ((i + j,spt) :: q))`;;
@@ -239,7 +247,7 @@ let spts_to_alist_aux_def = cake_define
          T)`;;
 (* HOL4 termination: \\ rw [] \\ first_x_assum (assume_tac o GSYM) \\ drule_then mp_tac spts_to_alist_aux_size \\ simp [combinTheory.o_DEF] *)
 let spts_to_alist_def = cake_define_wf
-  `measure (\(_6,xs,_7). SUM (MAP (spt_size (K 0) o SND) xs))`
+  `MEASURE (\(_6,xs,_7). SUM (MAP (spt_size (K 0) o SND) xs))`
   `spts_to_alist i xs acc_cent =
      (let (i,xs,acc_cent,repeat) =
        spts_to_alist_aux i xs acc_cent [] [] F in

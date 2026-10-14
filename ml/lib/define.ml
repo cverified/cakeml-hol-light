@@ -133,20 +133,56 @@ let MEM_SIZE_TAC (asl,w as gl) =
            mems [] in
   MAP_EVERY MP_TAC facts gl;;
 
+(* the facts about division and remainder in the goal *)
+
+let DIV_FACTS_TAC (asl,w as gl) =
+  let tms =
+    find_terms (fun t -> is_comb t && is_comb(rator t) &&
+                         is_const(rator(rator t)) &&
+                         (name_of(rator(rator t)) = "DIV" ||
+                          name_of(rator(rator t)) = "MOD")) w in
+  let facts =
+    itlist (fun t l ->
+              let a = rand(rator t) and k = rand t in
+              let op = name_of(rator(rator t)) in
+              (if op = "DIV" then
+                 [SPECL [a;k] DIV_LE;
+                  SPECL [a;k] DIV_LT_SELF]
+               else [SPECL [a;k] MOD_LE;
+                     SPECL [a;k] MOD_LT_SELF]) @ l)
+           (setify tms) [] in
+  MAP_EVERY MP_TAC facts gl;;
+
+(* the equations of the pattern that a match provides, as
+   substitutions: the goal then talks about the subterms *)
+
+let SUBST_VAR_TAC (asl,w as gl) =
+  let eqs =
+    mapfilter (fun (_,th) ->
+                 let l,r = dest_eq(concl th) in
+                 if is_var r && not (vfree_in r l) then SYM th
+                 else if is_var l && not (vfree_in l r) then th
+                 else fail())
+              asl in
+  (if eqs = [] then ALL_TAC
+   else MAP_EVERY (fun th -> TRY(SUBST_ALL_TAC th)) eqs) gl;;
+
 (* the tactic that is tried on the termination conditions *)
 
 (* the lemmas that the termination proofs may need; a ported file can
    add the ones that its definitions need *)
 
 let cake_term_lemmas =
-  ref [DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
+  ref [list_size; pair_size; option_size; num_size; bool_size;
+       DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
        list_size_APPEND; list_size_REVERSE];;
 
 let TERM_TAC g =
   (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM] THEN
-   REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN
+   REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
    REWRITE_TAC(all_size_thms()) THEN MEM_SIZE_TAC THEN
-   REWRITE_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
+   DIV_FACTS_TAC THEN
+   REWRITE_TAC(I_THM::all_size_thms() @ (!cake_term_lemmas)) THEN
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
      TRY ASM_ARITH_TAC))) g;;
@@ -219,17 +255,17 @@ let DEPAIR_TAC = CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV);;
 (* Definition of one function, with a given termination relation.            *)
 (* ------------------------------------------------------------------------- *)
 
-let define_single wf tm =
+let define_single wfs tm =
   let fs = definition_heads tm in
   let f = hd fs in
   let name = fst(dest_var f) in
   let cls = map (close_clause fs) (conjuncts(snd(strip_forall tm))) in
   let existence cls =
     let etm = mk_exists(f,list_mk_conj cls) in
-    match wf with
-      None -> prove_general_recursive_function_exists etm
-    | Some rt -> discharge_conditions rt
-                   (pure_prove_recursive_function_exists etm) in
+    if wfs = [] then prove_general_recursive_function_exists etm else
+    let th = pure_prove_recursive_function_exists etm in
+    if hyp th = [] then th
+    else tryfind (fun rt -> discharge_conditions rt th) wfs in
   try let dth = new_specification [name] (existence cls) in
       CONJUNCTS dth,dth
   with Failure _ ->
@@ -246,7 +282,7 @@ let define_single wf tm =
 (* Definition of a family of mutually recursive functions.                   *)
 (* ------------------------------------------------------------------------- *)
 
-let define_mutual wf tm =
+let define_mutual wfs tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
   let arity f =
@@ -281,10 +317,10 @@ let define_mutual wf tm =
   let newcls = map (fun cl -> close_clause [g] (newcl cl)) cls in
   let existence cls =
     let etm = mk_exists(g,list_mk_conj cls) in
-    match wf with
-      None -> prove_general_recursive_function_exists etm
-    | Some rt -> discharge_conditions rt
-                   (pure_prove_recursive_function_exists etm) in
+    if wfs = [] then prove_general_recursive_function_exists etm else
+    let th = pure_prove_recursive_function_exists etm in
+    if hyp th = [] then th
+    else tryfind (fun rt -> discharge_conditions rt th) wfs in
   let eth = try existence newcls
             with Failure _ -> existence (map depair newcls) in
   let gth = new_specification [gname] eth in
@@ -324,6 +360,8 @@ let define_mutual wf tm =
 (* the recursion theorems of the datatypes, by the name of a type of the
    family that they are about *)
 
+let cake_debug = ref false;;
+
 let the_rec_thms = ref ([]:(string * thm) list);;
 
 let rec_thm_of_type ty =
@@ -354,8 +392,8 @@ let rec_thm_clauses rth =
           let fn = rator l in
           let con,args = strip_comb(rand l) in
           let fj,rargs = strip_comb r in
-          let recvals = snd(chop_list (length args) rargs) in
-          fn,con,args,fj,recvals)
+          let recvals = filter is_comb rargs in
+          fn,con,args,fj,recvals,rargs)
         (conjuncts cjbod) in
   pvars,fns,cls;;
 
@@ -398,11 +436,11 @@ let define_prim_rec tm =
                         let hop = fst(strip_comb a) in
                         if is_const hop then
                           (try let con' = find
-                                 (fun (_,c,_,_,_) ->
+                                 (fun (_,c,_,_,_,_) ->
                                     is_const c &&
                                     fst(dest_const c) = fst(dest_const hop))
                                  canon in
-                               let _,c,_,_,_ = con' in
+                               let _,c,_,_,_,_ = con' in
                                type_match (type_of c) (type_of hop) ins
                            with Failure _ -> ins)
                         else ins)
@@ -435,16 +473,20 @@ let define_prim_rec tm =
              else (mk_type("one",[]),resvar)::ins)
            fns tyins in
   let fns = map (inst tyins) fns in
-  let canon = map (fun (fn,con,args,fj,rvs) ->
+  let canon = map (fun (fn,con,args,fj,rvs,rargs) ->
                      inst tyins fn,inst tyins con,map (inst tyins) args,
-                     inst tyins fj,map (inst tyins) rvs)
+                     inst tyins fj,map (inst tyins) rvs,
+                     map (inst tyins) rargs)
                   canon in
   let assign = map (fun (fn,x) -> inst tyins fn,x) assign in
   (* the witness for each parameter of the recursion theorem *)
-  let witness (fn,con,args,fj,recvals) =
+  let witness (fn,con,args,fj,recvals,rargs) =
     let rvs = map (fun i -> mk_var("r" ^ string_of_int i,
                                    type_of (el i recvals)))
                   (0--(length recvals - 1)) in
+    let absvars =
+      map (fun t -> if is_comb t then el (index t recvals) rvs else t)
+          rargs in
     let body =
       try
         let f,r = assoc fn assign in
@@ -490,12 +532,23 @@ let define_prim_rec tm =
                           (snd(dest_fun_ty(type_of fn))) in
              mk_const("ARB",[ty,aty])
          with Failure _ -> mk_const("one",[])) in
-    list_mk_abs(args @ rvs,body) in
+    list_mk_abs(absvars,body) in
   let wits = map witness canon in
-  let wnames = map (fun (_,_,_,fj,_) -> fst(dest_var fj)) canon in
+  let wnames = map (fun (_,_,_,fj,_,_) -> fst(dest_var fj)) canon in
   let order_wits =
     map (fun pv -> el (index (fst(dest_var pv)) wnames) wits) pvars in
-  let th1 = SPECL order_wits (INST_TYPE tyins rth) in
+  let th1 =
+    try SPECL order_wits (INST_TYPE tyins rth)
+    with Failure _ ->
+      (if !cake_debug then
+        (print_string "define_prim_rec: SPECL failed\n";
+         do_list (fun (p,w) ->
+                    print_term p; print_string " : ";
+                    print_type (type_of p); print_string "\n  witness : ";
+                    print_type (type_of w); print_newline())
+                 (zip (fst(strip_forall(concl(INST_TYPE tyins rth))))
+                      order_wits));
+       failwith "SPECL") in
   let th2 = CONV_RULE (TOP_DEPTH_CONV GEN_BETA_CONV) th1 in
   (* names for the functions of the family *)
   let names =
@@ -564,7 +617,7 @@ register_rec_thm char_RECURSION;;
 (*  that MEM_list_size gives the facts a termination proof needs.            *)
 (* ========================================================================= *)
 
-let the_size_fns = ref ([]:(hol_type * term) list);;
+let the_size_fns = ref ([]:(hol_type * term * hol_type list) list);;
 
 let define_size tyname =
   let rth = assoc tyname (!the_rec_thms) in
@@ -572,10 +625,20 @@ let define_size tyname =
   let numty = mk_type("num",[]) in
   let tyins = map (fun fn -> numty,snd(dest_fun_ty(type_of fn))) fns in
   let ifns = map (inst tyins) fns in
-  let canon = map (fun (fn,con,args,fj,rvs) ->
+  let canon = map (fun (fn,con,args,fj,rvs,rargs) ->
                      inst tyins fn,inst tyins con,map (inst tyins) args,
-                     fj,map (inst tyins) rvs)
+                     fj,map (inst tyins) rvs,map (inst tyins) rargs)
                   canon in
+  (* the type variables of the family are the parameters: a size
+     function for each of them, as HOL4's size functions have *)
+  let params =
+    itlist (fun fn l ->
+              itlist (fun v l -> if mem v l then l else l @ [v])
+                     (sort (<) (tyvars(fst(dest_fun_ty(type_of fn))))) l)
+           ifns [] in
+  let pvars = map (fun ty -> mk_var("size" ^ dest_vartype ty,
+                                    mk_fun_ty ty numty))
+                  params in
   (* the name of the size function of each type of the family *)
   let k = ref 0 in
   let names =
@@ -584,21 +647,31 @@ let define_size tyname =
           if fst(dest_type ty) = tyname then tyname ^ "_size"
           else (k := !k + 1; tyname ^ "_size" ^ string_of_int !k))
         ifns in
-  let svars = map2 (fun fn nm -> mk_var(nm,type_of fn)) ifns names in
-  let svar_of fn = el (index fn ifns) svars in
+  let svars =
+    map2 (fun fn nm ->
+            mk_var(nm,itlist (fun v ty -> mk_fun_ty (type_of v) ty)
+                             pvars (type_of fn)))
+         ifns names in
+  let svar_of fn =
+    list_mk_comb(el (index fn ifns) svars,pvars) in
   let zero = mk_small_numeral 0 and one = mk_small_numeral 1 in
-  let clause (fn,con,args,_,rvs) =
-    let base =
-      if rvs = [] &&
-         (fst(dest_const con) = "NIL" || fst(dest_const con) = "NONE")
-      then zero else one in
-    let tms = map (fun rv -> mk_comb(svar_of (rator rv),rand rv)) rvs in
-    let rhs = itlist (fun t s -> mk_binop `(+):num->num->num` t s)
-                     tms base in
-    let rhs = if tms = [] then base
-              else mk_binop `(+):num->num->num` base
-                     (end_itlist (fun a b ->
-                        mk_binop `(+):num->num->num` a b) tms) in
+  let clause (fn,con,args,_,rvs,_) =
+    let tms =
+      mapfilter (fun a ->
+                   try mk_comb(svar_of (rator (find (fun rv -> rand rv = a)
+                                                    rvs)),a)
+                   with Failure _ ->
+                     let ty = type_of a in
+                     if is_vartype ty && mem ty params
+                     then mk_comb(el (index ty params) pvars,a)
+                     else fail())
+                args in
+    let rhs =
+      if args = [] then zero
+      else if tms = [] then one
+      else mk_binop `(+):num->num->num` one
+             (end_itlist (fun a b -> mk_binop `(+):num->num->num` a b)
+                         tms) in
     mk_eq(mk_comb(svar_of fn,list_mk_comb(con,args)),rhs) in
   let cls = map clause canon in
   let ths,_ = define_prim_rec (list_mk_conj cls) in
@@ -610,42 +683,51 @@ let define_size tyname =
          let ty = fst(dest_fun_ty(type_of fn)) in
          if fst(dest_type ty) <> "list" then fail() else
          let ety = hd(snd(dest_type ty)) in
-         let efn = find (fun g -> fst(dest_fun_ty(type_of g)) = ety) ifns in
-         let sl = mk_mconst(el (index fn ifns) names,type_of fn)
-         and se = mk_mconst(el (index efn ifns) names,type_of efn) in
+         let efn = find (fun g -> fst(dest_fun_ty(type_of g)) = ety)
+                        ifns in
+         let sl = list_mk_comb(mk_mconst(el (index fn ifns) names,
+                                 type_of(el (index fn ifns) svars)),pvars)
+         and se = list_mk_comb(mk_mconst(el (index efn ifns) names,
+                                 type_of(el (index efn ifns) svars)),
+                               pvars) in
          let l = mk_var("l",ty) in
-         prove(mk_forall(l,mk_eq(mk_comb(sl,l),
-                 list_mk_comb(mk_mconst("list_size",
-                   mk_fun_ty (type_of se) (mk_fun_ty ty numty)),[se;l]))),
-               LIST_INDUCT_TAC THEN
+         prove(list_mk_forall(pvars @ [l],
+                 mk_eq(mk_comb(sl,l),
+                   list_mk_comb(mk_mconst("list_size",
+                     mk_fun_ty (type_of se) (mk_fun_ty ty numty)),
+                     [se;l]))),
+               REPEAT GEN_TAC THEN LIST_INDUCT_TAC THEN
                ASM_REWRITE_TAC(list_size::sizedefs) THEN ARITH_TAC))
       ifns in
   the_size_thms := (tyname,(sizedefs,listlems))::(!the_size_thms);
   do_list
     (fun th ->
        let f = fst(strip_comb(lhs(snd(strip_forall(concl th))))) in
-       let ty = fst(dest_fun_ty(type_of f)) in
-       if not (exists (fun (ty0,_) -> ty0 = ty) (!the_size_fns))
-       then the_size_fns := (ty,f)::(!the_size_fns))
+       let ty = el (length pvars) (fst(splitlist dest_fun_ty
+                                         (type_of f))) in
+       if not (exists (fun (ty0,_,_) -> ty0 = ty) (!the_size_fns))
+       then the_size_fns := (ty,f,params)::(!the_size_fns))
     sizedefs;
   sizedefs,listlems;;
 
-(* ------------------------------------------------------------------------- *)
-(* A measure for a definition whose termination HOL Light cannot guess and   *)
-(* for which HOL4 did not give one either (because HOL4 guessed it).         *)
-(* ------------------------------------------------------------------------- *)
+let size_thms tyname =
+  let a,b = assoc tyname (!the_size_thms) in a @ b;;
+
+(* the size function of a type, which the measures use *)
 
 let rec size_fn_of_type ty =
-  try let ty0,f = find (fun (ty0,_) -> can (type_match ty0 ty) [])
-                       (!the_size_fns) in
-      inst (type_match ty0 ty []) f
+  try let ty0,f,params = find (fun (ty0,_,_) -> can (type_match ty0 ty) [])
+                              (!the_size_fns) in
+      let ins = type_match ty0 ty [] in
+      list_mk_comb(inst ins f,
+                   map (fun v -> size_fn_of_type (type_subst ins v))
+                       params)
   with Failure _ ->
     if is_vartype ty then mk_abs(mk_var("x",ty),mk_small_numeral 0) else
     let s,args = dest_type ty in
     if s = "num" then mk_abs(mk_var("n",ty),mk_var("n",ty))
     else if s = "list" then
-      let ety = hd args in
-      let f = size_fn_of_type ety in
+      let f = size_fn_of_type (hd args) in
       list_mk_comb(mk_mconst("list_size",
         mk_fun_ty (type_of f) (mk_fun_ty ty (mk_type("num",[])))),[f])
     else if s = "option" then
@@ -662,41 +744,78 @@ let rec size_fn_of_type ty =
      (let _ = define_size s in size_fn_of_type ty)
     else mk_abs(mk_var("x",ty),mk_small_numeral 0);;
 
-(* the sum of the sizes of the arguments in the pattern positions *)
+(* ------------------------------------------------------------------------- *)
+(* A measure for a definition whose termination HOL Light cannot guess and   *)
+(* for which HOL4 did not give one either (because HOL4 guessed it).         *)
+(* ------------------------------------------------------------------------- *)
 
-let measure_of_function f cls =
+let measure_of_positions f cls idxs =
   let tys,_ = splitlist dest_fun_ty (type_of f) in
   let mycls = filter (fun (g,_,_) -> g = f) cls in
-  let n = itlist (fun (_,args,_) n -> max n (length args)) mycls 0 in
+  let n = itlist (fun (_,args,_) k -> max k (length args)) mycls 0 in
   let tys = fst(chop_list n tys) in
-  let pats = filter (fun i -> exists (fun (_,args,_) ->
-                                        not(is_var(el i args))) mycls)
-                    (0--(n-1)) in
-  let pats = if pats = [] then 0--(n-1) else pats in
   let vs = map (fun i -> mk_var("x" ^ string_of_int i,el i tys))
                (0--(n-1)) in
   let tms = map (fun i -> mk_comb(size_fn_of_type (el i tys),el i vs))
-                pats in
-  let body = end_itlist (fun a b -> mk_binop `(+):num->num->num` a b)
-                        tms in
-  mk_gabs(mk_tuple vs,body);;
+                idxs in
+  let body =
+    if tms = [] then mk_small_numeral 0
+    else end_itlist (fun a b -> mk_binop `(+):num->num->num` a b) tms in
+  if n = 1 then mk_abs(hd vs,body) else mk_gabs(mk_tuple vs,body);;
 
-let auto_measure tm =
+let pattern_positions f cls =
+  let mycls = filter (fun (g,_,_) -> g = f) cls in
+  let n = itlist (fun (_,args,_) k -> max k (length args)) mycls 0 in
+  filter (fun i -> exists (fun (_,args,_) -> not(is_var(el i args)))
+                          mycls)
+         (0--(n-1));;
+
+let mk_measure m =
+  let dty = fst(dest_fun_ty(type_of m)) in
+  list_mk_comb(mk_mconst("MEASURE",
+    mk_fun_ty (type_of m) (mk_fun_ty dty (mk_fun_ty dty bool_ty))),[m]);;
+
+let arity_in f cls =
+  itlist (fun (g,args,_) k ->
+            if g = f then max k (length args) else k) cls 0;;
+
+(* the measures to try for a definition whose termination relation
+   the HOL4 source does not give: the arguments that are matched on,
+   then each argument on its own, then all of them together *)
+
+let candidate_measures tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
-  let ms = map (fun f -> measure_of_function f cls) fs in
-  let m =
-    itlist (fun m1 m2 ->
-              list_mk_comb(mk_mconst("sum_measure",
-                mk_fun_ty (type_of m1) (mk_fun_ty (type_of m2)
-                  (mk_fun_ty (mk_type("sum",
-                     [fst(dest_fun_ty(type_of m1));
-                      fst(dest_fun_ty(type_of m2))]))
-                   (mk_type("num",[]))))),[m1;m2]))
-           (butlast ms) (last ms) in
-  list_mk_comb(mk_mconst("MEASURE",
-    mk_fun_ty (type_of m) (mk_fun_ty (fst(dest_fun_ty(type_of m)))
-      (mk_fun_ty (fst(dest_fun_ty(type_of m))) bool_ty))),[m]);;
+  if length fs > 1 then
+    let combine ms =
+      itlist (fun m1 m2 ->
+                list_mk_comb(mk_mconst("sum_measure",
+                  mk_fun_ty (type_of m1) (mk_fun_ty (type_of m2)
+                    (mk_fun_ty (mk_type("sum",
+                       [fst(dest_fun_ty(type_of m1));
+                        fst(dest_fun_ty(type_of m2))]))
+                     (mk_type("num",[]))))),[m1;m2]))
+             (butlast ms) (last ms) in
+    let pats = map (fun f ->
+                      let p = pattern_positions f cls in
+                      measure_of_positions f cls
+                        (if p = [] then 0--(arity_in f cls - 1) else p))
+                   fs in
+    let alls = map (fun f ->
+                      measure_of_positions f cls
+                        (0--(arity_in f cls - 1)))
+                   fs in
+    [mk_measure (combine pats); mk_measure (combine alls)]
+  else
+    let f = hd fs in
+    let n = arity_in f cls in
+    let pats = pattern_positions f cls in
+    let cands =
+      (if pats = [] then [] else [pats]) @
+      map (fun i -> [i]) (0--(n-1)) @
+      [0--(n-1)] in
+    map (fun idxs -> mk_measure (measure_of_positions f cls idxs))
+        (setify cands);;
 
 let size_thms tyname =
   let a,b = assoc tyname (!the_size_thms) in a @ b;;
@@ -709,38 +828,47 @@ let cake_define_gen wf tm =
   let cls = definition_clauses tm in
   let recursive =
     exists (fun (_,_,r) -> exists (fun f -> vfree_in f r) fs) cls in
+  let attempt wfs =
+    if length fs = 1 then define_single wfs tm else define_mutual wfs tm in
   let ths,_ =
     if not recursive then
       (if length fs = 1 then
          (if length cls = 1
           then (try [new_definition tm],TRUTH
-                with Failure _ -> define_single wf tm)
-          else define_single wf tm)
+                with Failure _ -> define_single [] tm)
+          else define_single [] tm)
        else
          itlist
            (fun f (l,th) ->
               let mycls = filter (fun cl ->
                             fst(strip_comb(lhs(snd(strip_forall cl)))) = f)
                             (conjuncts(snd(strip_forall tm))) in
-              let ths,th' = define_single wf (list_mk_conj mycls) in
+              let ths,th' = define_single [] (list_mk_conj mycls) in
               ths @ l,th')
            fs ([],TRUTH))
-    else if wf = None then
-      (try define_prim_rec tm with Failure _ ->
-       try (if length fs = 1 then define_single wf tm
-            else define_mutual wf tm)
-       with Failure _ ->
-         let wf' = Some(auto_measure tm,TERM_TAC) in
-         if length fs = 1 then define_single wf' tm
-         else define_mutual wf' tm)
     else
-      (if length fs = 1 then define_single wf tm else define_mutual wf tm) in
+      (try define_prim_rec tm with Failure _ ->
+       let given = match wf with Some rt -> [rt] | None -> [] in
+       let cands = given @ map (fun rel -> rel,TERM_TAC)
+                               (candidate_measures tm) in
+       try attempt cands with Failure _ -> attempt []) in
   end_itlist CONJ ths;;
 
-let cake_define tm = cake_define_gen None tm;;
+(* with cake_timing set, every definition reports how long it took *)
 
-let cake_define_wf rel tm = cake_define_gen (Some(rel,TERM_TAC)) tm;;
+let cake_timing = ref false;;
 
-let cake_define_tac (rel,tac) tm = cake_define_gen (Some(rel,tac)) tm;;
+let cake_time f x =
+  if not (!cake_timing) then f x else
+  let t = Sys.time() in
+  let y = f x in
+  (print_string (Printf.sprintf "[%.2fs] " (Sys.time() -. t));
+   flush stdout; y);;
+
+let cake_define tm = cake_time (cake_define_gen None) tm;;
+
+let cake_define_wf rel tm = cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm;;
+
+let cake_define_tac (rel,tac) tm = cake_time (cake_define_gen (Some(rel,tac))) tm;;
 
 (* ------------------------------------------------------------------------- *)

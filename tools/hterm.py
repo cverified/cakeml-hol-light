@@ -531,6 +531,9 @@ for k, v in INFIX.items():
   HLPREC[v[2]] = v[3]
 
 
+NAME_MAP = {}          # set by the porter, from tools/overrides.py
+
+
 ARGPERM = {
   'FOLDR': (3, [0, 2, 1], 'ITLIST'),
 }
@@ -547,12 +550,13 @@ class Ctx:
   """what the printer needs to know about the port"""
 
   def __init__(self, names=None, fields=None, recs=None, thy='',
-               overloads=None, accessors=None):
+               overloads=None, accessors=None, cons=None):
     self.names = names or {}     # cakeml name -> hol light name
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
     self.overloads = overloads or {}   # name -> hol light term text
     self.accessors = accessors or {}   # field name -> accessor name
+    self.cons = cons or set()          # the constructor names
     self.thy = thy
     self.wild = 0
     self.warn = []
@@ -561,6 +565,7 @@ class Ctx:
     if '$' in n:
       thy, n2 = n.split('$')
       return self.names.get((thy, n2), self.names.get(n2, n2))
+    if n in NAME_MAP: return NAME_MAP[n]
     return self.names.get((self.thy, n), self.names.get(n, n))
 
   def field(self, f):

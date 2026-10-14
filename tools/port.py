@@ -7,6 +7,7 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides
+hterm.NAME_MAP = overrides.NAME_MAP
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 ML = T + '../ml/'
@@ -47,7 +48,8 @@ class Porter:
     flds.update(overrides.FIELD_OF.get(thy, {}))
     self.ctx = hterm.Ctx(names=names, fields=flds,
                          recs=db.recs_for(thy), thy=thy,
-                         accessors=overrides.ACCESSORS.get(thy, {}))
+                         accessors=overrides.ACCESSORS.get(thy, {}),
+                         cons=db.cons_for(thy))
     self.abbrevs = db.abbrevs_for(thy)
     raw = db.overloads_for(thy)
     for _ in range(3):
@@ -217,7 +219,7 @@ class Porter:
       self.out.append(overrides.REPLACE[key].strip())
       return
     body = b.body
-    if key in overrides.MATCH_FORM:
+    if key in overrides.MATCH_FORM or self.overlapping(body):
       term = fmt(self.match_form(body))
     else:
       term = fmt(self.term(body))
@@ -243,6 +245,25 @@ class Porter:
 
   # -- a definition as one clause with a match -------------------
 
+  def overlapping(self, body):
+    """do the clauses of a definition overlap, so that they rely on
+       HOL4's first match semantics?"""
+    try:
+      toks = hterm.tokenize(hol4.strip_comments(body))
+      cls = hterm.clauses_of(hterm.Parser(toks, self.ctx).parse())
+    except Exception:
+      return False
+    global CONS
+    CONS = self.ctx.cons
+    if len(cls) < 2: return False
+    pats = [args for _, args, _ in cls]
+    if any(len(a) != len(pats[0]) for a in pats): return False
+    for i in range(len(pats)):
+      for j in range(i + 1, len(pats)):
+        if all(overlap(p, q) for p, q in zip(pats[i], pats[j])):
+          return True
+    return False
+
   def match_form(self, body):
     """the clauses of a definition as one clause with a match, which
        is what HOL4's first match semantics means"""
@@ -259,19 +280,22 @@ class Porter:
     for i in range(n):
       nm = None
       for _, args, _ in cls:
-        if args[i].kind == 'id' and args[i].name not in names:
+        if args[i].kind == 'id' and args[i].name not in self.ctx.cons \
+           and args[i].name not in names:
           nm = args[i].name; break
       if nm is None:
         nm = 'x' + str(i + 1)
         while nm in names: nm += "'"
       names.append(nm)
     pats = [i for i in range(n)
-            if any(args[i].kind != 'id' for _, args, _ in cls)]
+            if any(args[i].kind != 'id' or args[i].name in self.ctx.cons
+                   for _, args, _ in cls)]
     pr = hterm.Printer(self.ctx)
     arms = []
     for _, args, r in cls:
       sub = {args[i].name: names[i] for i in range(n)
-             if i not in pats and args[i].kind == 'id'}
+             if i not in pats and args[i].kind == 'id'
+             and args[i].name not in self.ctx.cons}
       pat = ','.join(pr.pr(args[i], 60) for i in pats)
       if len(pats) > 1: pat = '(' + pat + ')'
       arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 0)))
@@ -303,6 +327,50 @@ class Porter:
   def inductive(self, b):
     term = fmt(self.term(b.body))
     self.out.append('let %s = cake_inductive\n  `%s`;;' % (b.name, term))
+
+
+CONS = set()           # the constructors in scope, set by the porter
+
+
+def overlap(p, q):
+  """can two patterns match the same value?"""
+  while p.kind == 'paren': p = p.e
+  while q.kind == 'paren': q = q.e
+  if p.kind == 'typed': return overlap(p.e, q)
+  if q.kind == 'typed': return overlap(p, q.e)
+  if p.kind == 'id' and p.name not in CONS: return True
+  if q.kind == 'id' and q.name not in CONS: return True
+  if p.kind == 'id' and q.kind == 'id': return p.name == q.name
+  if p.kind == 'id' or q.kind == 'id':
+    h = hterm.strip_app(q if p.kind == 'id' else p)[0]
+    return h.kind == 'id' and h.name == (p.name if p.kind == 'id'
+                                         else q.name)
+  if p.kind == 'num' and q.kind == 'num': return p.text == q.text
+  if p.kind == 'num' or q.kind == 'num': return False
+  if p.kind == 'list' and q.kind == 'list':
+    return len(p.items) == len(q.items) and \
+           all(overlap(a, b) for a, b in zip(p.items, q.items))
+  if p.kind == 'list' or q.kind == 'list':
+    o, l = (q, p) if p.kind == 'list' else (p, q)
+    # a list pattern against a :: pattern
+    if o.kind == 'infix' and o.op == '::':
+      if not l.items: return False
+      return overlap(o.l, l.items[0]) and \
+             overlap(o.r, Node_list(l.items[1:], l))
+    return False
+  if p.kind == 'infix' and q.kind == 'infix':
+    if p.op != q.op: return False
+    return overlap(p.l, q.l) and overlap(p.r, q.r)
+  if p.kind == 'infix' or q.kind == 'infix': return False
+  hp, ap = hterm.strip_app(p)
+  hq, aq = hterm.strip_app(q)
+  if hp.kind != 'id' or hq.kind != 'id': return True
+  if hp.name != hq.name: return False
+  return all(overlap(a, b) for a, b in zip(ap, aq))
+
+
+def Node_list(items, tok):
+  return hterm.Node('list', tok=tok.tok, items=items)
 
 
 def fmt(text, indent=3, width=72):

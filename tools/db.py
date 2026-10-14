@@ -232,6 +232,14 @@ class Db:
       out[f] = tys[0] if len(set(tys)) == 1 else None
     return out, {f: tys for f, tys in amb.items() if len(set(tys)) > 1}
 
+  def cons_for(self, thy):
+    """the constructor names in scope, as the CakeML sources write them"""
+    anc = self.ancestors(thy) | {thy}
+    out = set()
+    for (t, ty), (cons, flds) in self.datatypes.items():
+      if t in anc: out |= set(cons)
+    return out
+
   def recs_for(self, thy):
     anc = self.ancestors(thy) | {thy}
     return {self.rename.get((t, ty), ty): flds

@@ -6,6 +6,19 @@ FIELD_OF: the record type of a field name where several record
   types have a field of that name
 """
 
+# HOL4 names of notions that HOL Light has under another name
+NAME_MAP = {
+  'measure': 'MEASURE',
+  'unit': 'one',
+  '()': 'one',
+  'Num': 'num_of_int',
+  'ABS': 'abs',
+  'LEAST': 'minimal',
+  'ARB': 'ARB',
+  'UNCURRY': 'UNCURRY',
+  'I': 'I',
+}
+
 ACCESSORS = {
   'location': {'row': 'locnrow', 'col': 'locncol'},
 }

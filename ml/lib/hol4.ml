@@ -362,6 +362,22 @@ let list_size_TAKE = prove
   COND_CASES_TAC THEN REWRITE_TAC[list_size; LE_0] THEN
   ASM_SIMP_TAC[LE_ADD_LCANCEL] THEN ASM_ARITH_TAC);;
 
+(* the facts about division that termination proofs need; HOL Light
+   has DIV_LE and MOD_LE already *)
+
+let DIV_LT_SELF = prove
+ (`!m k. ~(m = 0) /\ 2 <= k ==> m DIV k < m`,
+  REPEAT STRIP_TAC THEN
+  MP_TAC(SPECL [`m:num`; `k:num`] DIVISION) THEN
+  ASM_SIMP_TAC[ARITH_RULE `2 <= k ==> ~(k = 0)`] THEN STRIP_TAC THEN
+  SUBGOAL_THEN `m DIV k * 2 <= m DIV k * k` MP_TAC THENL
+   [REWRITE_TAC[LE_MULT_LCANCEL] THEN ASM_REWRITE_TAC[];
+    ASM_ARITH_TAC]);;
+
+let MOD_LT_SELF = prove
+ (`!m k. ~(k = 0) ==> m MOD k < k`,
+  MESON_TAC[DIVISION]);;
+
 let MEM_list_size_ALT = prove
  (`!(x:A) l. MEM x l ==> !f:A->num. f x < list_size f l`,
   MESON_TAC[MEM_list_size]);;
