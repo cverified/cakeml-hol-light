@@ -1,8 +1,11 @@
 #!/bin/sh
-# rebuild the hol-template-cakeml session from hol-base, and report
-# any error in the preamble
+# rebuild the hol-template-cakeml session from hol-base (and hol-base
+# itself if it is gone), and report any error in the preamble
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 holclean > /dev/null 2>&1
+tmux has -t hol-base 2> /dev/null || {
+  rm -f /home/freek/claude/hol-light/bin/fifo/hol-base
+  repl-new-template base > /dev/null 2>&1; }
 repl-kill template-cakeml > /dev/null 2>&1
 rm -f /home/freek/claude/hol-light/bin/fifo/hol-template-cakeml
 repl-clone hol-base template-cakeml > /dev/null 2>&1 || {

@@ -22,9 +22,18 @@
 (*  relation is one on the sum of the tupled arguments, as in HOL4.          *)
 (* ========================================================================= *)
 
-(* with cake_debug set, a failing definition is shown *)
+(* with cake_debug set, a failing definition is written to
+   cakeml/tmp/debug.txt *)
 
 let cake_debug = ref false;;
+
+let cake_log s =
+  let ch = open_out_gen [Open_append; Open_creat] 0o644
+             "/home/freek/claude/hol-light/cakeml/tmp/debug.txt" in
+  output_string ch s; output_string ch "\n"; close_out ch;;
+
+let cake_log_term tm =
+  cake_log (string_of_term tm);;
 
 (* ------------------------------------------------------------------------- *)
 (* Tuples and sums.                                                          *)
@@ -119,7 +128,12 @@ let all_size_fns () =
   map (fun th -> fst(strip_comb(lhs(snd(strip_forall(concl th))))))
       (itlist (fun (_,(a,_)) l -> a @ l) (!the_size_thms) []);;
 
-(* MEM x l gives f x < list_size f l for every size function f *)
+(* MEM x l gives f x < list_size f l for the size function of the
+   type of x; size_fn_of_type is defined further down, so it is
+   reached through a reference *)
+
+let size_fn_of_type_fwd =
+  ref ((fun ty -> failwith "size_fn_of_type"):hol_type->term);;
 
 let MEM_SIZE_TAC (asl,w as gl) =
   let mems =
@@ -129,12 +143,13 @@ let MEM_SIZE_TAC (asl,w as gl) =
                     name_of(rator(rator tm)) = "MEM"
                  then th else fail())
               asl in
-  let fns = setify (all_size_fns()) in
   let facts =
-    itlist (fun th acc ->
-              let f = MATCH_MP MEM_list_size_ALT th in
-              mapfilter (fun sf -> SPEC sf f) fns @ acc)
-           mems [] in
+    mapfilter
+      (fun th ->
+         let x = rand(rator(concl th)) in
+         SPEC ((!size_fn_of_type_fwd) (type_of x))
+              (MATCH_MP MEM_list_size_ALT th))
+      mems in
   MAP_EVERY MP_TAC facts gl;;
 
 (* the facts about division and remainder in the goal *)
@@ -181,15 +196,27 @@ let cake_term_lemmas =
        DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
        list_size_APPEND; list_size_REVERSE];;
 
+(* when a termination proof does not close, the goal is logged *)
+
+let LOG_TAC (asl,w) =
+  cake_log "unsolved termination goal:";
+  cake_log_term w;
+  do_list (fun (_,th) -> cake_log ("  asm: " ^ string_of_term(concl th)))
+          asl;
+  failwith "LOG_TAC";;
+
 let TERM_TAC g =
   (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM] THEN
+   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REWRITE_TAC(all_size_thms()) THEN MEM_SIZE_TAC THEN
    DIV_FACTS_TAC THEN
    REWRITE_TAC(I_THM::all_size_thms() @ (!cake_term_lemmas)) THEN
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
-     TRY ASM_ARITH_TAC))) g;;
+     ASM_ARITH_TAC) ORELSE
+    (if !cake_debug then LOG_TAC else NO_TAC))) g;;
 
 let discharge_conditions (rel,tac) th =
   itlist
@@ -204,8 +231,11 @@ let discharge_conditions (rel,tac) th =
          try prove(h,gtac)
          with Failure s ->
            (if !cake_debug then
-              (print_string "\ncannot prove the termination condition:\n";
-               print_term h; print_newline(); flush stdout);
+              (cake_log ("cannot prove the condition (" ^ s ^
+                         ") with the relation");
+               cake_log_term rel;
+               cake_log "for the condition:";
+               cake_log_term h);
             failwith s) in
        PROVE_HYP hth th)
     (hyp th) th;;
@@ -569,7 +599,14 @@ let define_prim_rec tm =
                       cls in
         let _,cargs,rhs = cl in
         let pargs = snd(strip_comb(el r cargs)) in
-        let rhs = vsubst (zip args pargs) rhs in
+        (* a pattern argument may itself be a tuple of variables, which
+           is then taken apart with FST and SND *)
+        let rec patsub a p =
+          if is_var p then [a,p]
+          else let x,y = dest_pair p in
+               patsub (mk_fst a) x @ patsub (mk_snd a) y in
+        let rhs = vsubst (itlist2 (fun a p l -> patsub a p @ l)
+                                  args pargs []) rhs in
         let ovars = map (fun i -> el i cargs) others in
         let rmap = map2 (fun rv rval -> rator rval,rand rval,rv)
                         rvs recvals in
@@ -821,13 +858,14 @@ let define_size tyname =
                                  type_of(el (index efn ifns) svars)),
                                pvars) in
          let l = mk_var("l",ty) in
-         prove(list_mk_forall(pvars @ [l],
+         prove(mk_forall(l,list_mk_forall(pvars,
                  mk_eq(mk_comb(sl,l),
                    list_mk_comb(mk_mconst("list_size",
                      mk_fun_ty (type_of se) (mk_fun_ty ty numty)),
-                     [se;l]))),
-               REPEAT GEN_TAC THEN LIST_INDUCT_TAC THEN
-               ASM_REWRITE_TAC(list_size::sizedefs) THEN ARITH_TAC))
+                     [se;l])))),
+               LIST_INDUCT_TAC THEN REPEAT GEN_TAC THEN
+               ASM_REWRITE_TAC(list_size::sizedefs) THEN
+               TRY ARITH_TAC))
       ifns in
   the_size_thms := (tyname,(sizedefs,listlems))::(!the_size_thms);
   do_list
@@ -878,6 +916,8 @@ let rec size_fn_of_type ty =
 (* A measure for a definition whose termination HOL Light cannot guess and   *)
 (* for which HOL4 did not give one either (because HOL4 guessed it).         *)
 (* ------------------------------------------------------------------------- *)
+
+size_fn_of_type_fwd := size_fn_of_type;;
 
 let measure_of_positions f cls idxs =
   let tys,_ = splitlist dest_fun_ty (type_of f) in
@@ -1002,8 +1042,10 @@ let cake_report tm s =
   let name =
     try fst(dest_var(hd(definition_heads tm))) with Failure _ -> "?" in
   print_string ("\ncake_define " ^ name ^ " failed: " ^ s ^ "\n");
-  if !cake_debug then (print_term tm; print_newline());
   flush stdout;
+  if !cake_debug then
+    (cake_log ("cake_define " ^ name ^ " failed: " ^ s);
+     cake_log_term tm);
   failwith s;;
 
 let cake_define tm =

@@ -177,7 +177,7 @@ class Porter:
         tp = hterm.TypeParser(toks[1:-1])
         argtys = []
         while tp.i < len(tp.toks):
-          argtys.append(tp.parse_atom())
+          argtys.append(tp.parse_dtarg())
         cons.append((cname, argtys))
       parts.append((ty, cons))
     if not parts: return

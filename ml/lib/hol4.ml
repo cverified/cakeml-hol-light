@@ -231,6 +231,29 @@ let num_size = new_definition
   `num_size (n:num) = n`;;
 
 (* ------------------------------------------------------------------------- *)
+(* The case constants of HOL4's datatypes                                    *)
+(* ------------------------------------------------------------------------- *)
+
+let sum_CASE = new_recursive_definition sum_RECURSION
+  `(sum_CASE (INL (x:A)) (f:A->C) (g:B->C) = f x) /\
+   (sum_CASE (INR (y:B)) f g = g y)`;;
+
+let option_CASE = new_recursive_definition option_RECURSION
+  `(option_CASE NONE (u:B) (f:A->B) = u) /\
+   (option_CASE (SOME x) u f = f x)`;;
+
+let list_CASE = new_recursive_definition list_RECURSION
+  `(list_CASE [] (b:B) (f:A->(A)list->B) = b) /\
+   (list_CASE (CONS h t) b f = f h t)`;;
+
+let pair_CASE = new_definition
+  `pair_CASE (p:A#B) (f:A->B->C) = f (FST p) (SND p)`;;
+
+let num_CASE = new_recursive_definition num_RECURSION
+  `(num_CASE 0 (b:A) (f:num->A) = b) /\
+   (num_CASE (SUC n) b f = f n)`;;
+
+(* ------------------------------------------------------------------------- *)
 (* stringTheory                                                              *)
 (* ------------------------------------------------------------------------- *)
 

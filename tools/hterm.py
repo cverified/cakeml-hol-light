@@ -963,6 +963,24 @@ class TypeParser:
     raise SyntaxError(f'type: {t.kind}:{t.text!r} at {t.pos}')
 
 
+  def parse_dtarg(self):
+    """one argument of a datatype constructor: an identifier or a
+       parenthesised type, without absorbing what follows"""
+    t = self.next()
+    if t.kind == 'tyvar': return ('v', t.text)
+    if t.kind in ('id', 'num'): return ('op', t.text, [])
+    if t.text == '(':
+      tys = [self.parse()]
+      while self.at(','):
+        self.next(); tys.append(self.parse())
+      if not self.at(')'): raise SyntaxError('type: ) expected')
+      self.next()
+      if len(tys) == 1: return tys[0]
+      name = self.next()
+      return ('op', name.text, tys)
+    raise SyntaxError(f'datatype argument: {t.text!r}')
+
+
 def parse_type_text(s):
   return TypeParser(tokenize(s)[:-1]).parse()
 

@@ -9,7 +9,7 @@ needs "lib/location.ml";;
 needs "lib/peg.ml";;
 (* HOL4 ancestors outside the port: rich_list *)
 let kont_INDUCT,kont_RECURSION = define_datatype
-  "kont = ksym (((('atok,'bnt,'cvalue,'err)pegsym) kont) kont) | appf1 (('cvalue->'cvalue) kont) | appf2 (('cvalue->'cvalue->'cvalue) kont) | dropErr (kont) | addErr (locs) ('err) (kont) | cmpErrs (kont) | cmpEO (((locs#'err) option) kont) | returnTo (('atok#locs) list) ((('cvalue option) list) kont) | restoreEO (((locs#'err) option) kont) | poplist (('cvalue list->'cvalue) kont) | listsym (('atok,'bnt,'cvalue,'err)pegsym) (('cvalue list->'cvalue) kont) | done | failed";;
+  "kont = ksym (('atok,'bnt,'cvalue,'err)pegsym) (kont) (kont) | appf1 ('cvalue->'cvalue) (kont) | appf2 ('cvalue->'cvalue->'cvalue) (kont) | dropErr (kont) | addErr (locs) ('err) (kont) | cmpErrs (kont) | cmpEO ((locs#'err) option) (kont) | returnTo (('atok#locs) list) (('cvalue option) list) (kont) | restoreEO ((locs#'err) option) (kont) | poplist ('cvalue list->'cvalue) (kont) | listsym (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue list->'cvalue) (kont) | done | failed";;
 let poplist_aux_def = cake_define
   `poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t /\
    poplist_aux acc (NONE :: t) = (acc,t) /\

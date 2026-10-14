@@ -63,6 +63,60 @@ MEASURE = {
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # as valid_ptree below: the recursive call is under a bounded
+  # quantifier, so the port defines the function together with its
+  # list version and derives the definition as HOL4 states it
+  ('grammar', 'valid_locs_def'): '''
+let valid_locs_list_def,valid_locs_def =
+  let ths = cake_define
+    `(valid_locs (Lf _6) <=> T) /\\
+     (valid_locs (Nd (_7,l) children) <=>
+        l = merge_list_locs (MAP ptree_loc children) /\\
+        valid_locs_list children) /\\
+     (valid_locs_list [] <=> T) /\\
+     (valid_locs_list (p :: ps) <=>
+        valid_locs p /\\ valid_locs_list ps)` in
+  let lem = prove
+   (`!l. valid_locs_list l <=> ALL valid_locs l`,
+    LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ths; ALL]) in
+  ths,
+  prove
+   (`(valid_locs (Lf _6) <=> T) /\\
+     (valid_locs (Nd (_7,l) children) <=>
+        l = merge_list_locs (MAP ptree_loc children) /\\
+        (!pt. MEM pt children ==> valid_locs pt))`,
+    REWRITE_TAC[ths; lem; GSYM ALL_MEM]);;
+''',
+  # HOL Light's machinery for the admissibility of a recursion cannot
+  # see that the recursive call under the quantifier is on a smaller
+  # tree, so the port defines the function together with its list
+  # version, and derives the definition as HOL4 states it
+  ('grammar', 'valid_ptree_def'): '''
+let valid_ptree_list_def,valid_ptree_def =
+  let ths = cake_define
+    `(valid_ptree G (Lf _1) <=> T) /\\
+     (valid_ptree G (Nd (nt,l) children) <=>
+        nt IN FDOM (grammar_rules G) /\\
+        MAP grammar_ptree_head children IN
+          FAPPLY (grammar_rules G) nt /\\
+        valid_ptree_list G children) /\\
+     (valid_ptree_list G [] <=> T) /\\
+     (valid_ptree_list G (p :: ps) <=>
+        valid_ptree G p /\\ valid_ptree_list G ps)` in
+  let lem = prove
+   (`!G l. valid_ptree_list G l <=> ALL (valid_ptree G) l`,
+    GEN_TAC THEN LIST_INDUCT_TAC THEN
+    ASM_REWRITE_TAC[ths; ALL]) in
+  ths,
+  prove
+   (`(valid_ptree G (Lf _1) <=> T) /\\
+     (valid_ptree G (Nd (nt,l) children) <=>
+        nt IN FDOM (grammar_rules G) /\\
+        MAP grammar_ptree_head children IN
+          FAPPLY (grammar_rules G) nt /\\
+        (!pt. pt IN set_of_list children ==> valid_ptree G pt))`,
+    REWRITE_TAC[ths; lem; IN_SET_OF_LIST; GSYM ALL_MEM]);;
+''',
   # HOL4 matches the number of elements with overlapping patterns and
   # a catch-all clause; the port uses nested conditionals, so that the
   # termination conditions have the guards that they need
