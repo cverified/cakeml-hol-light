@@ -37,6 +37,11 @@ The work has two passes:
   that takes minutes to process is a bug; fix it (or record the
   timing in a comment if there really is no alternative).
 - Lines in `.ml` files are at most 72 characters.
+- The port must not add **any axiom**: after loading everything,
+  `length (axioms())` has to be 3, the three axioms of HOL Light's
+  kernel.  So no `mk_thm`, no `new_axiom`, and no cheating: every
+  definition goes through `new_definition`, `new_specification` or
+  `define_type`.
 
 ## Layout of this directory
 
