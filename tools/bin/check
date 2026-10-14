@@ -5,8 +5,9 @@
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 f="$1"
 case "$f" in /*) ;; *) f="/home/freek/claude/hol-light/cakeml/ml/$f";; esac
-s=chk$$
+s=chk
 repl-kill $s > /dev/null 2>&1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
 repl-clone hol-template-cakeml $s > /dev/null 2>&1 || exit 1
 repl-step $s "let cake_t0 = Sys.time();;" > /dev/null 2>&1
 TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$f\";;" > /dev/null 2>&1
@@ -14,6 +15,6 @@ TIMEOUT=120 repl-step $s \
   "(Sys.time() -. cake_t0,length(axioms()));;" > /dev/null 2>&1
 tmux capture-pane -p -S - -t hol-$s |
   sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
-  grep -E '^(val [a-zA-Z_0-9]* :|Error|Exception|Warning|- : float \* int|Error in included)' |
+  grep -E '^(val [a-zA-Z_0-9]* :|Error|Exception|Warning|cake_define|- : float \* int|val it : float \* int|Error in included)' |
   tail -${TAIL:-6}
 repl-kill $s > /dev/null 2>&1

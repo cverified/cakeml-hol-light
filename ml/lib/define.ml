@@ -926,10 +926,27 @@ let cake_time f x =
   (print_string (Printf.sprintf "[%.2fs] " (Sys.time() -. t));
    flush stdout; y);;
 
-let cake_define tm = cake_time (cake_define_gen None) tm;;
+(* on failure, say which definition failed (and show it when
+   cake_debug is set) *)
 
-let cake_define_wf rel tm = cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm;;
+let cake_report tm s =
+  let name =
+    try fst(dest_var(hd(definition_heads tm))) with Failure _ -> "?" in
+  print_string ("\ncake_define " ^ name ^ " failed: " ^ s ^ "\n");
+  if !cake_debug then (print_term tm; print_newline());
+  flush stdout;
+  failwith s;;
 
-let cake_define_tac (rel,tac) tm = cake_time (cake_define_gen (Some(rel,tac))) tm;;
+let cake_define tm =
+  try cake_time (cake_define_gen None) tm
+  with Failure s -> cake_report tm s;;
+
+let cake_define_wf rel tm =
+  try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm
+  with Failure s -> cake_report tm s;;
+
+let cake_define_tac (rel,tac) tm =
+  try cake_time (cake_define_gen (Some(rel,tac))) tm
+  with Failure s -> cake_report tm s;;
 
 (* ------------------------------------------------------------------------- *)

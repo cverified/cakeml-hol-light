@@ -96,6 +96,12 @@ let OPTION_APPLY = new_recursive_definition option_RECURSION
   `(OPTION_APPLY NONE (x:A) = (NONE:B option)) /\
    (OPTION_APPLY (SOME f) x = SOME (f x))`;;
 
+(* HOL4's some binder: the choice that gives NONE when there is
+   nothing to choose *)
+
+let some_DEF = new_definition
+  `some (P:A->bool) = if (?x. P x) then SOME (@x. P x) else NONE`;;
+
 let OPT_MMAP = new_recursive_definition list_RECURSION
   `(OPT_MMAP (f:A->B option) [] = SOME []) /\
    (OPT_MMAP f (CONS h t) =

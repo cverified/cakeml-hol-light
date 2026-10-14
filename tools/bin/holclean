@@ -1,8 +1,8 @@
 #!/bin/sh
 # holclean : kill all the temporary HOL Light sessions of the port
 PATH=/home/freek/claude/hol-light/bin:$PATH
-for s in $(tmux ls 2>/dev/null | sed -n 's/^hol-\(chk[0-9]*\|s[0-9]*\|t[0-9]*\|dev[0-9]*\):.*/\1/p'); do
+for s in $(tmux ls 2>/dev/null |
+           sed -n 's/^hol-\(chk[0-9]*\|chk\|s[0-9]*\|t[0-9]*\|tst[0-9]*\|dev[0-9]*\):.*/\1/p'); do
   repl-kill "$s" > /dev/null 2>&1
 done
-rm -f /home/freek/claude/hol-light/bin/fifo/hol-chk* 2>/dev/null
 tmux ls 2>/dev/null | grep hol
