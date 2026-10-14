@@ -34,9 +34,14 @@ def hl_names():
   return set(l.strip() for l in open(T + 'hl-names.txt') if l.strip())
 
 
+# the hand written files of the library layer
+HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml']
+
+
 def provided_names():
-  """the HOL4 library constants that ml/lib/hol4.ml provides"""
-  s = open(T + '../ml/lib/hol4.ml').read()
+  """the HOL4 library constants that the hand written files of
+     ml/lib provide"""
+  s = ''.join(open(T + '../ml/lib/' + f).read() for f in HANDWRITTEN)
   names = set()
   for m in re.finditer(r'new_(?:recursive_)?definition\b[^`]*`([^`]*)`',
                        s):

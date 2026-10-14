@@ -27,48 +27,20 @@ let ptree_list_loc_def = cake_define
 let ptree_head_def = cake_define
   `(grammar_ptree_head (Lf (tok,l)) = tok) /\
    (grammar_ptree_head (Nd (nt,l) children) = grammar_NT nt)`;;
-let valid_ptree_list_def,valid_ptree_def =
-  let ths = cake_define
-    `(valid_ptree G (Lf _1) <=> T) /\
-     (valid_ptree G (Nd (nt,l) children) <=>
-        nt IN FDOM (grammar_rules G) /\
-        MAP grammar_ptree_head children IN
-          FAPPLY (grammar_rules G) nt /\
-        valid_ptree_list G children) /\
-     (valid_ptree_list G [] <=> T) /\
-     (valid_ptree_list G (p :: ps) <=>
-        valid_ptree G p /\ valid_ptree_list G ps)` in
-  let lem = prove
-   (`!G l. valid_ptree_list G l <=> ALL (valid_ptree G) l`,
-    GEN_TAC THEN LIST_INDUCT_TAC THEN
-    ASM_REWRITE_TAC[ths; ALL]) in
-  ths,
-  prove
-   (`(valid_ptree G (Lf _1) <=> T) /\
-     (valid_ptree G (Nd (nt,l) children) <=>
-        nt IN FDOM (grammar_rules G) /\
-        MAP grammar_ptree_head children IN
-          FAPPLY (grammar_rules G) nt /\
-        (!pt. pt IN set_of_list children ==> valid_ptree G pt))`,
-    REWRITE_TAC[ths; lem; IN_SET_OF_LIST; GSYM ALL_MEM]);;
-let valid_locs_list_def,valid_locs_def =
-  let ths = cake_define
-    `(valid_locs (Lf _6) <=> T) /\
-     (valid_locs (Nd (_7,l) children) <=>
-        l = merge_list_locs (MAP ptree_loc children) /\
-        valid_locs_list children) /\
-     (valid_locs_list [] <=> T) /\
-     (valid_locs_list (p :: ps) <=>
-        valid_locs p /\ valid_locs_list ps)` in
-  let lem = prove
-   (`!l. valid_locs_list l <=> ALL valid_locs l`,
-    LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[ths; ALL]) in
-  ths,
-  prove
-   (`(valid_locs (Lf _6) <=> T) /\
-     (valid_locs (Nd (_7,l) children) <=>
-        l = merge_list_locs (MAP ptree_loc children) /\
-        (!pt. MEM pt children ==> valid_locs pt))`,
-    REWRITE_TAC[ths; lem; GSYM ALL_MEM]);;
+let valid_ptree_def = cake_define
+  `(valid_ptree G (Lf _6) <=> T) /\
+   (valid_ptree G (Nd (nt,l) children) <=>
+     nt IN FDOM (grammar_rules G) /\ MAP grammar_ptree_head children
+       IN FAPPLY (grammar_rules G) nt /\
+     (!pt. pt IN set_of_list children ==> valid_ptree G pt))`;;
+let real_fringe_def = cake_define
+  `(grammar_real_fringe (Lf t) = [t]) /\
+   (grammar_real_fringe (Nd n ptl) = FLAT (MAP grammar_real_fringe
+     ptl))`;;
+let valid_locs_def = cake_define
+  `(valid_locs (Lf _7) <=> T) /\
+   (valid_locs (Nd (_8,l) children) <=>
+      l = merge_list_locs (MAP ptree_loc children) /\
+      (!pt. MEM pt children ==> valid_locs pt))`;;
 let valid_lptree_def = cake_define
   `valid_lptree G pt <=> valid_locs pt /\ valid_ptree G pt`;;

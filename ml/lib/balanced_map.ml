@@ -224,6 +224,3 @@ let union_def = cake_define
           (Tip,t2) -> t2
         | (t1,Tip) -> t1
         | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
-let fromList_def = cake_define
-  `balanced_map_fromList cmp l = ITLIST (\(k,v) t. balanced_map_insert
-  cmp k v t) l balanced_map_empty`;;

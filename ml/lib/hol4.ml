@@ -231,6 +231,19 @@ let num_size = new_definition
   `num_size (n:num) = n`;;
 
 (* ------------------------------------------------------------------------- *)
+(* whileTheory                                                               *)
+(* ------------------------------------------------------------------------- *)
+
+let OWHILE = new_definition
+  `OWHILE G (f:A->A) s =
+   if ?n. ~G (FUNPOW f n s)
+   then SOME (FUNPOW f (minimal n. ~G (FUNPOW f n s)) s)
+   else NONE`;;
+
+let WHILE = new_definition
+  `WHILE G (f:A->A) s = THE (OWHILE G f s)`;;
+
+(* ------------------------------------------------------------------------- *)
 (* The case constants of HOL4's datatypes                                    *)
 (* ------------------------------------------------------------------------- *)
 
@@ -426,6 +439,59 @@ let list_size_REVERSE = prove
  (`!f:A->num l. list_size f (REVERSE l) = list_size f l`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   ASM_REWRITE_TAC[REVERSE; list_size; list_size_APPEND] THEN ARITH_TAC);;
+
+(* ------------------------------------------------------------------------- *)
+(* HOL4's integer division and modulus (integerTheory).  HOL Light has div   *)
+(* and rem on the integers, but those are the Euclidean ones (with a         *)
+(* nonnegative remainder), while HOL4's / and % round towards negative       *)
+(* infinity.  HOL4 leaves i / j and i % j unspecified for j = 0; the port    *)
+(* takes the value that the HOL4 formula gives there.                        *)
+(* ------------------------------------------------------------------------- *)
+
+let int_div = new_definition
+  `int_div (i:int) (j:int) =
+     (if &0 < j then
+        (if &0 <= i then &(num_of_int i DIV num_of_int j)
+         else --(&(num_of_int(--i) DIV num_of_int j)) +
+              (if num_of_int(--i) MOD num_of_int j = 0
+               then &0 else --(&1)))
+      else
+        (if &0 <= i
+         then --(&(num_of_int i DIV num_of_int(--j))) +
+              (if num_of_int i MOD num_of_int(--j) = 0
+               then &0 else --(&1))
+         else &(num_of_int(--i) DIV num_of_int(--j)))):int`;;
+
+(* HOL Light's int_mod is the congruence relation of the integers, so
+   the port renames HOL4's int_mod, the way it renames the CakeML
+   names that clash with a HOL Light name *)
+
+let integer_int_mod = new_definition
+  `integer_int_mod (i:int) (j:int) = i - int_div i j * j`;;
+
+overload_interface("/",`int_div:int->int->int`);;
+
+parse_as_infix("%",(22,"left"));;
+override_interface("%",`integer_int_mod:int->int->int`);;
+
+(* the HOL4 theorems that say that / and % on the nonnegative integers
+   are DIV and MOD (INT_DIV and INT_MOD of integerTheory) *)
+
+let INT_DIV_NUM = prove
+ (`!m n. ~(n = 0) ==> &m / &n = &(m DIV n)`,
+  REPEAT STRIP_TAC THEN REWRITE_TAC[int_div] THEN
+  ASM_SIMP_TAC[INT_OF_NUM_LT; INT_POS; NUM_OF_INT_OF_NUM;
+               ARITH_RULE `~(n = 0) ==> 0 < n`]);;
+
+let INT_MOD_NUM = prove
+ (`!m n. ~(n = 0) ==> &m % &n = &(m MOD n)`,
+  REPEAT STRIP_TAC THEN
+  ASM_SIMP_TAC[integer_int_mod; INT_DIV_NUM; INT_OF_NUM_MUL] THEN
+  MP_TAC(SPECL [`m:num`; `n:num`] DIVISION) THEN ASM_REWRITE_TAC[] THEN
+  DISCH_THEN(MP_TAC o CONJUNCT1) THEN
+  DISCH_THEN(fun th ->
+    GEN_REWRITE_TAC (LAND_CONV o LAND_CONV o RAND_CONV) [th]) THEN
+  REWRITE_TAC[GSYM INT_OF_NUM_ADD] THEN INT_ARITH_TAC);;
 
 (* ------------------------------------------------------------------------- *)
 (* HOL Light's machinery for the admissibility of a recursion knows MAP      *)

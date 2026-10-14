@@ -35,6 +35,23 @@ IGNORE_ML = [
 ]
 
 
+def fill(pre, words, width=70):
+  """lay out the words in lines of at most width characters, the
+     first line starting with pre and the others indented by 3"""
+  lines = []
+  cur = pre
+  for w in words:
+    if cur == pre and (pre.endswith('"') or pre.endswith(' ')):
+      cur += w
+    elif len(cur) + 1 + len(w) <= width:
+      cur += ' ' + w
+    else:
+      lines.append(cur)
+      cur = '   ' + w
+  lines.append(cur)
+  return lines
+
+
 class Porter:
   def __init__(self, db, thy):
     self.db = db
@@ -122,7 +139,8 @@ class Porter:
       self.out.append(HEAD % (b.name, self.srcname(),
                               LIBNOTE if self.kind == 'lib' else ''))
     elif k == 'Ancestors':
-      deps = [w for w in b.body.split()]
+      deps = [w for w in b.body.split()] + \
+             overrides.EXTRA_NEEDS.get(self.thy, [])
       needs = []
       for d in deps:
         if d in self.db.thy_of_file:
@@ -131,8 +149,8 @@ class Porter:
         self.out.append('\n'.join(sorted(set(needs))))
       ext = [d for d in deps if d not in self.db.thy_of_file]
       if ext:
-        self.out.append('(* HOL4 ancestors outside the port: %s *)'
-                        % ' '.join(ext))
+        self.out.append('\n'.join(
+          fill('(* HOL4 ancestors outside the port:', ext, 69)) + ' *)')
     elif k == 'Libs':
       pass
     elif k == 'Datatype':
@@ -145,7 +163,7 @@ class Porter:
       self.overload(b)
     elif k in ('Inductive', 'CoInductive'):
       self.inductive(b)
-    elif k in ('Theorem', 'Triviality'):
+    elif k in ('Theorem', 'Triviality', 'ThmValue'):
       pass
     elif k == 'ML':
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
@@ -191,8 +209,13 @@ class Porter:
     names = [self.nm(ty) for ty, _ in parts]
     lhs = ','.join('%s_INDUCT' % n for n in names[:1]) + ',' + \
           ','.join('%s_RECURSION' % n for n in names[:1])
-    self.out.append('let %s = define_datatype\n  "%s";;'
-                    % (lhs, spec))
+    # the specification is laid out in lines of at most 72
+    # characters; a line that is continued ends in a backslash,
+    # which OCaml leaves out of the string
+    text = '\n'.join(
+      ' \\\n'.join(fill('  "' if k == 0 else '   ', part.split()))
+      for k, part in enumerate(spec.split('\n')))
+    self.out.append('let %s = define_datatype\n%s";;' % (lhs, text))
 
   def typ_ast(self, ty):
     ty = hterm.expand_type(ty, self.abbrevs)
@@ -219,6 +242,7 @@ class Porter:
       self.out.append(overrides.REPLACE[key].strip())
       return
     body = b.body
+    self.ctx.intnums = key in overrides.INT_NUMERALS
     if key in overrides.MATCH_FORM or self.overlapping(body):
       term = fmt(self.match_form(body))
     else:
@@ -229,6 +253,7 @@ class Porter:
                       'source *)\nlet %s = cake_define_wf\n  `%s`\n'
                       '  `%s`;;' % (name, rel, term))
       return
+    self.ctx.intnums = False
     if b.extra is None:
       self.out.append('let %s = cake_define\n  `%s`;;' % (name, term))
     else:
@@ -238,10 +263,11 @@ class Porter:
         self.out.append('(* TERMINATION: %s *)\nlet %s = cake_define\n'
                         '  `%s`;;' % (b.extra.strip(), name, term))
       else:
-        self.out.append('(* HOL4 termination: %s *)\n'
+        self.out.append('\n'.join(
+                          fill('(* HOL4 termination:', rest.split(), 69))
+                        + ' *)\n'
                         'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
-                        % (' '.join(rest.split()), name,
-                           fmt(self.term(rel)), term))
+                        % (name, fmt(self.term(rel)), term))
 
   # -- a definition as one clause with a match -------------------
 

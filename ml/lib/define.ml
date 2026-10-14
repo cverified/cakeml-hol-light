@@ -210,8 +210,9 @@ let TERM_TAC g =
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-   REWRITE_TAC(all_size_thms()) THEN MEM_SIZE_TAC THEN
-   DIV_FACTS_TAC THEN
+   REWRITE_TAC(all_size_thms()) THEN
+   RULE_ASSUM_TAC(REWRITE_RULE(all_size_thms())) THEN
+   MEM_SIZE_TAC THEN DIV_FACTS_TAC THEN
    REWRITE_TAC(I_THM::all_size_thms() @ (!cake_term_lemmas)) THEN
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
@@ -344,8 +345,8 @@ let MAPIFY_CONV fs tm =
   let tm' = mapify fs tm in
   if tm' = tm then failwith "MAPIFY_CONV: no change" else
   prove(mk_eq(tm,tm'),
-        REWRITE_TAC[ALL_MAPIFY; EX_MAPIFY; GSYM ALL_MEM;
-                    IN_SET_OF_LIST]);;
+        REWRITE_TAC[ALL_MAPIFY; EX_MAPIFY; ALL_MEM;
+                    IN_SET_OF_LIST; ETA_AX]);;
 
 (* ------------------------------------------------------------------------- *)
 (* Definition of one function, with a given termination relation.            *)
@@ -376,8 +377,8 @@ let define_single wfs tm =
       prove(vsubst [c,f] cl,
             REPEAT GEN_TAC THEN
             CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV) THEN
-            REWRITE_TAC[IN_SET_OF_LIST; GSYM ALL_MEM; ALL_MAPIFY;
-                        EX_MAPIFY] THEN
+            REWRITE_TAC[IN_SET_OF_LIST; ALL_MEM; ALL_MAPIFY;
+                        EX_MAPIFY; ETA_AX] THEN
             FIRST (map MATCH_ACCEPT_TAC dths)) in
     map derive cls,dth;;
 
@@ -694,6 +695,127 @@ let define_prim_rec tm =
           REPEAT GEN_TAC THEN REWRITE_TAC fdefs THEN
           REWRITE_TAC[spec]) in
   map derive (conjuncts(snd(strip_forall tm))),spec;;
+
+(* ------------------------------------------------------------------------- *)
+(* Nested recursion: a recursive call under a MAP, as in                     *)
+(* real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl).                      *)
+(* HOL Light's machinery for such a recursion does not see that the          *)
+(* elements of ptl are smaller, so the port defines the function             *)
+(* together with the list function it needs (which is how HOL4 defines       *)
+(* the size functions of a nested datatype as well), and then derives        *)
+(* the equations as HOL4 states them.                                        *)
+(* ------------------------------------------------------------------------- *)
+
+let mk_nil ty = mk_mconst("NIL",mk_type("list",[ty]));;
+
+let mk_cons h t =
+  list_mk_comb(mk_mconst("CONS",
+    mk_fun_ty (type_of h) (mk_fun_ty (type_of t) (type_of t))),[h;t]);;
+
+let NESTED_LEMMAS =
+  [IN_SET_OF_LIST; ALL_MEM; ALL_MAPIFY; EX_MAPIFY; ETA_AX];;
+
+(* a name for a list function that is not in use yet *)
+
+let fresh_const_name s =
+  if not (can get_const_type s) then s else
+  let rec go i =
+    let s' = s ^ string_of_int i in
+    if can get_const_type s' then go (i + 1) else s' in
+  go 1;;
+
+let define_nested tm =
+  let fs = definition_heads tm in
+  let cls0 = map (close_clause fs) (conjuncts(snd(strip_forall tm))) in
+  let cls = map (fun cl -> mapify fs (depair cl)) cls0 in
+  (* the arguments of a map of a recursive call, and the map with
+     those arguments made canonical, so that clauses that use
+     different variable names share one list function *)
+  let args h = filter (fun v -> not (mem v fs)) (frees h) in
+  let canon h =
+    let vs = args h in
+    vsubst (map (fun i -> mk_var("v" ^ string_of_int i,
+                                 type_of (el i vs)),el i vs)
+                (0--(length vs - 1))) h in
+  let found = ref [] in
+  let rec collect tm =
+    match tm with
+      Comb(Comb(Const("MAP",_),h),l)
+        when exists (fun g -> vfree_in g h) fs ->
+          let hk = canon h in
+          (if not (exists (fun k -> aconv k hk) !found)
+           then found := !found @ [hk]);
+          collect h; collect l
+    | Comb(s,t) -> (collect s; collect t)
+    | Abs(_,b) -> collect b
+    | _ -> () in
+  do_list collect cls;
+  if !found = [] then failwith "define_nested" else
+  let name0 = fst(dest_var(hd fs)) in
+  let auxs =
+    map (fun i ->
+          let hk = el i !found in
+          let vs = args hk in
+          let ty,rty = dest_fun_ty (type_of hk) in
+          let name = fresh_const_name (name0 ^ "_list" ^
+                       (if i = 0 then "" else string_of_int (i+1))) in
+          let auxty =
+            itlist (fun v t -> mk_fun_ty (type_of v) t) vs
+              (mk_fun_ty (mk_type("list",[ty]))
+                         (mk_type("list",[rty]))) in
+          hk,vs,mk_var(name,auxty))
+        (0--(length !found - 1)) in
+  let rec repl tm =
+    match tm with
+      Comb(Comb(Const("MAP",_),h),l)
+        when exists (fun g -> vfree_in g h) fs &&
+             exists (fun (hk,_,_) -> aconv hk (canon h)) auxs ->
+          let _,_,aux = find (fun (hk,_,_) -> aconv hk (canon h)) auxs in
+          list_mk_comb(aux,args h @ [repl l])
+    | Comb(s,t) -> mk_comb(repl s,repl t)
+    | Abs(v,b) -> mk_abs(v,repl b)
+    | _ -> tm in
+  let auxcls (hk,vs,aux) =
+    let ty,rty = dest_fun_ty (type_of hk) in
+    let p = mk_var("p",ty) and ps = mk_var("ps",mk_type("list",[ty])) in
+    [mk_eq(list_mk_comb(aux,vs @ [mk_nil ty]),mk_nil rty);
+     mk_eq(list_mk_comb(aux,vs @ [mk_cons p ps]),
+           mk_cons (repl(beta_normalize(mk_comb(hk,p))))
+                   (list_mk_comb(aux,vs @ [ps])))] in
+  let gs = map (fun (_,_,aux) -> aux) auxs in
+  let newcls = map (close_clause (fs @ gs))
+                   (map repl cls @ itlist (fun a l -> auxcls a @ l)
+                                          auxs []) in
+  let ths,spec = define_prim_rec (list_mk_conj newcls) in
+  let fths,auxths = chop_list (length cls) ths in
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   (fs @ gs) in
+  (* each list function is the map of the function it belongs to *)
+  let lemma i (hk,vs,aux) =
+    let ty,rty = dest_fun_ty (type_of hk) in
+    let lty = mk_type("list",[ty]) in
+    let l = mk_var("l",lty) in
+    let mapc = mk_mconst("MAP",
+                 mk_fun_ty (type_of hk)
+                   (mk_fun_ty lty (mk_type("list",[rty])))) in
+    prove(list_mk_forall(vs @ [l],
+            mk_eq(list_mk_comb(vsubst consts aux,vs @ [l]),
+                  list_mk_comb(mapc,[vsubst consts hk; l]))),
+          REPLICATE_TAC (length vs) GEN_TAC THEN LIST_INDUCT_TAC THEN
+          ASM_REWRITE_TAC (MAP :: el (2*i) auxths ::
+                           [el (2*i+1) auxths])) in
+  let lems = map2 lemma (0--(length auxs - 1)) auxs in
+  let derive cl =
+    let gcl = vsubst consts cl in
+    tryfind (fun tac -> prove(gcl,tac))
+      [REPEAT GEN_TAC THEN REWRITE_TAC (fths @ lems) THEN
+       REWRITE_TAC NESTED_LEMMAS;
+       REPEAT GEN_TAC THEN DEPAIR_TAC THEN
+       REWRITE_TAC (fths @ lems) THEN REWRITE_TAC NESTED_LEMMAS;
+       REPEAT GEN_TAC THEN DEPAIR_TAC THEN
+       REWRITE_TAC NESTED_LEMMAS THEN REWRITE_TAC (map GSYM lems) THEN
+       FIRST (map MATCH_ACCEPT_TAC fths)] in
+  map derive cls0,spec;;
 
 (* ------------------------------------------------------------------------- *)
 
@@ -1018,6 +1140,7 @@ let cake_define_gen wf tm =
            fs ([],TRUTH))
     else
       (try define_prim_rec tm with Failure _ ->
+       try define_nested tm with Failure _ ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in

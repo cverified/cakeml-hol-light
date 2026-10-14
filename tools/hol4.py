@@ -48,10 +48,41 @@ HEAD = re.compile(r'''^(Theory|Ancestors|Libs|Datatype|Definition|
     Datatype)\b''', re.X)
 
 
+ML_DEF = re.compile(r"""^val\s+([A-Za-z0-9_']+)\s*=\s*
+                        [txz]?Define\b\s*("[^"]*")?\s*""", re.X)
+
+
+def ml_definition(text):
+  """an old style HOL4 definition in ML (Define, tDefine, ...) as a
+     Definition block, so that it is ported like the others"""
+  m = ML_DEF.match(text)
+  if not m: return None
+  i = text.find('`', m.end())
+  if i < 0: return None
+  if text[i:i+2] == '``':
+    j = text.find('``', i + 2)
+    body, rest = text[i+2:j], text[j+2:]
+  else:
+    j = text.find('`', i + 1)
+    body, rest = text[i+1:j], text[j+1:]
+  if j < 0: return None
+  rest = rest.strip()
+  if rest.endswith(';'): rest = rest[:-1].strip()
+  if rest.startswith('(') and rest.endswith(')'): rest = rest[1:-1]
+  return Block('Definition', m.group(1), [], body, rest or None,
+               text=text)
+
+
 def parse(path):
   """returns the list of blocks of a Script.sml file"""
   src = open(path, encoding='utf-8').read()
   lines = src.split('\n')
+  # a comment on the line that closes a block (as in "End(* ... *)")
+  # becomes a line of its own, so that the block is recognized
+  lines = [l for line in lines
+             for l in (re.split(r'(?<=^End)(?=\(\*)|(?<=^QED)(?=\(\*)',
+                                line)
+                       if re.match(r'^(End|QED)\(\*', line) else [line])]
   blocks = []
   i = 0
   n = len(lines)
@@ -75,7 +106,8 @@ def parse(path):
             and not lines[j].lstrip().startswith('(*'):
           j += 1
         text = '\n'.join(lines[i:j])
-        blocks.append(Block('ML', None, [], text, text=text))
+        b = ml_definition(text)
+        blocks.append(b if b else Block('ML', None, [], text, text=text))
         i = j
       else:
         i += 1
@@ -105,6 +137,16 @@ def parse(path):
       attrs = (mm.group(2) or '')[1:-1].split(',') if mm and mm.group(2) else []
       body = mm.group(3) if mm else ''
       blocks.append(Block(kind, name, attrs, body.strip(), text=text))
+      i = j; continue
+    # Theorem name = term is a one line form without Proof and QED
+    if kind in ('Theorem', 'Triviality') and \
+       re.match(r'^\w+\s+[A-Za-z0-9_\']+\s*(\[[^\]]*\])?\s*=', line):
+      j = i + 1
+      while j < n and lines[j].strip() and not HEAD.match(lines[j]) \
+          and not lines[j].lstrip().startswith('(*'):
+        j += 1
+      text = '\n'.join(lines[i:j])
+      blocks.append(Block('ThmValue', None, [], text, text=text))
       i = j; continue
     # block structures ending in End or QED
     if kind in ('Datatype', 'Definition', 'Inductive', 'CoInductive'):

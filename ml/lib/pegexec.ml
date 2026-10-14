@@ -51,8 +51,8 @@ let coreloop_def = cake_define
                                             (err :: errs)) |
                                               pegexec_EV (peg_nt n tf3)
                                               i r eo errs k fk ->
-                    if n IN FDOM (?_rules G) then
-                      pegexec_EV (FAPPLY (?_rules G) n) i r eo errs
+                    if n IN FDOM (peg_rules G) then
+                      pegexec_EV (FAPPLY (peg_rules G) n) i r eo errs
                         (appf1 tf3 k) fk else
                       pegexec_Looped | pegexec_EV (peg_seq e1 e2 f) i
                         r eo errs k fk ->
@@ -60,7 +60,7 @@ let coreloop_def = cake_define
                          (restoreEO eo
                           (ksym e2
                            (appf2 f k)
-                           (cmpEO eo returnTo i r fk)))
+                           (cmpEO eo (returnTo i r fk))))
                          fk | pegexec_EV (peg_choice e1 e2 cf) i r eo
                            errs k fk ->
                       pegexec_EV e1 i r eo errs
@@ -71,15 +71,16 @@ let coreloop_def = cake_define
                            (cmpErrs fk))) | pegexec_EV (peg_rpt e lf)
                              i r eo errs k fk ->
                       pegexec_EV e i (NONE :: r) eo errs
-                         (restoreEO eo listsym e lf k)
+                         (restoreEO eo (listsym e lf k))
                          (poplist lf k) | pegexec_EV (peg_not e v) i
                            r eo errs k fk ->
                       pegexec_EV e i r eo errs
-                         (restoreEO eo returnTo i r (addErr (sloc i)
-                           (peg_notFAIL G) fk))
-                         (restoreEO eo returnTo i (SOME v :: r)
-                           (dropErr k)) | pegexec_EV (peg_error err) i r
-                           eo errs k fk ->
+                         (restoreEO eo
+                            (returnTo i r (addErr (sloc i)
+                              (peg_notFAIL G) fk)))
+                         (restoreEO eo (returnTo i (SOME v :: r)
+                           (dropErr k))) | pegexec_EV (peg_error err) i
+                           r eo errs k fk ->
                       let err = (sloc i,err) in
                         pegexec_AP fk i r ((optmax MAXerr) eo (SOME
                           err)) (err :: errs) | pegexec_AP done i [] _3
@@ -121,8 +122,8 @@ let coreloop_def = cake_define
                         pegexec_AP (restoreEO eo k) i r eo' errs ->
                         pegexec_AP k i r eo errs | pegexec_AP (listsym e
                         f k) i r eo errs ->
-                      pegexec_EV e i r eo errs (restoreEO eo listsym
-                        e f k) (poplist f k) | pegexec_AP (poplist f k)
+                      pegexec_EV e i r eo errs (restoreEO eo (listsym
+                        e f k)) (poplist f k) | pegexec_AP (poplist f k)
                         i r eo [] -> pegexec_Looped | pegexec_AP
                         (poplist f k) i r eo (e :: errs) ->
                       pegexec_AP k i (poplistval f r) eo errs |

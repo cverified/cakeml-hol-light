@@ -70,9 +70,6 @@ let delete_def = cake_define
       (if k = 0 then BN t1 t2 else if EVEN k then
         mk_BS (sptree_delete ((k - 1) DIV 2) t1) a t2 else
         mk_BS t1 a (sptree_delete ((k - 1) DIV 2) t2)))`;;
-let fromList_def = cake_define
-  `sptree_fromList l = SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a
-  t)) (0,LN) l)`;;
 let size_def = cake_define
   `(sptree_size LN = 0) /\
    (sptree_size (LS a) = 1) /\
@@ -155,6 +152,18 @@ let foldi_def = cake_define
    (foldi f i acc (BS t1 a t2) =
       (let inc = lrnext i in
         foldi f (i + inc) (f i a (foldi f (i + 2 * inc) acc t1)) t2))`;;
+let mapi0_def = cake_define
+  `(mapi0 f i LN = LN) /\
+   (mapi0 f i (LS a) = LS (f i a)) /\
+   (mapi0 f i (BN t1 t2) =
+    (let inc = lrnext i in
+      mk_BN (mapi0 f (i + 2 * inc) t1) (mapi0 f (i + inc) t2))) /\
+   (mapi0 f i (BS t1 a t2) =
+    (let inc = lrnext i in
+      mk_BS (mapi0 f (i + 2 * inc) t1) (f i a) (mapi0 f (i + inc)
+        t2)))`;;
+let mapi_def = cake_define
+  `sptree_mapi f pt = mapi0 f 0 pt`;;
 let toAList_def = cake_define
   `toAList = foldi (\k v a. (k,v) :: a) 0 []`;;
 let toListA_def = cake_define
@@ -162,13 +171,14 @@ let toListA_def = cake_define
    (toListA acc (LS a) = a :: acc) /\
    (toListA acc (BN t1 t2) = toListA (toListA acc t2) t1) /\
    (toListA acc (BS t1 a t2) = toListA (a :: toListA acc t2) t1)`;;
-let toList_def = cake_define
-  `sptree_toList m = toListA [] m`;;
 let mk_wf_def = cake_define
   `(mk_wf LN = LN) /\
    (mk_wf (LS x) = LS x) /\
    (mk_wf (BN t1 t2) = mk_BN (mk_wf t1) (mk_wf t2)) /\
    (mk_wf (BS t1 x t2) = mk_BS (mk_wf t1) x (mk_wf t2))`;;
+let fromAList_def = cake_define
+  `(fromAList [] = LN) /\
+   (fromAList ((x,y) :: xs) = sptree_insert x y (fromAList xs))`;;
 let map_def = cake_define
   `(sptree_map f LN = LN) /\
    (sptree_map f (LS a) = (LS (f a))) /\

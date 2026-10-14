@@ -180,6 +180,7 @@ INFIX = {
   '/':     (600, 'l', '/',      22),
   'DIV':   (600, 'l', 'DIV',    22),
   'MOD':   (650, 'l', 'MOD',    22),
+  '%':     (650, 'l', '%',      22),
   '**':    (700, 'r', 'EXP',    24),
   'EXP':   (700, 'r', 'EXP',    24),
   '&&':    (650, 'l', '&&',     20),
@@ -192,6 +193,7 @@ INFIX = {
   '#<<':   (680, 'l', '#<<',    23),
   '@@':    (700, 'l', '@@',     23),
   'o':     (800, 'r', 'o',      26),
+  '$':     (460,  'r', '$',      0),
   "'":     (2000, 'l', 'FAPPLY', 0),
   "''":    (350, 'l', 'word_slice', 0),
   '--':    (350, 'l', 'word_bits', 0),
@@ -308,7 +310,11 @@ class Parser:
     if t.kind == 'key':
       return t.text in ('if', 'let', 'case', 'do', 'some')
     if t.kind == 'sym':
-      if t.text in ('(', '[', '{', '$', '&', '<|', '«', '⟪',
+      if t.text == '$':
+        # $+ is the function form of an operator, f $ x is an
+        # application with a low precedence
+        return self.peek(1).pos == t.pos + 1
+      if t.text in ('(', '[', '{', '&', '<|', '«', '⟪',
                     '𝕌'):
         return True
       if t.text == '~': return True
@@ -560,6 +566,7 @@ class Ctx:
     self.accessors = accessors or {}   # field name -> accessor name
     self.cons = cons or set()          # the constructor names
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
+    self.intnums = False               # are numerals integers here?
     self.thy = thy
     self.wild = 0
     self.warn = []
@@ -667,10 +674,14 @@ class Printer:
       t = e.text
       if t.endswith('w'):
         return '(n2w ' + t[:-1] + ')'
-      if t.endswith('n') or t.endswith('i') or t.endswith('c'):
+      if t.endswith('i'):
+        return '(&' + t[:-1] + ')'
+      if t.endswith('n') or t.endswith('c'):
         return t[:-1]
       if t.startswith('0x'):
-        return str(int(t, 16))
+        t = str(int(t, 16))
+      if self.ctx.intnums:
+        return '(&' + t + ')'
       return t
     if k == 'str':
       return e.text
@@ -721,6 +732,9 @@ class Printer:
       if op == 'NOTIN':
         return self.paren('~(' + self.pr(e.l, 11) + ' IN ' +
                           self.pr(e.r, 12) + ')', PRE_APP, prec)
+      if op == '$':
+        return self.paren(self.pr(e.l, PRE_APP) + ' ' +
+                          self.pr(e.r, APP), PRE_APP, prec)
       if op in ("'", "''", '--'):
         return self.paren(INFIX[op][2] + ' ' + self.pr(e.l, APP) + ' ' +
                           self.pr(e.r, APP), PRE_APP, prec)

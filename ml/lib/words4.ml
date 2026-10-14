@@ -184,3 +184,19 @@ let w2v = new_definition
 let v2w = new_definition
   `v2w l = (word (ITLIST (\b n. 2 * n + (if b then 1 else 0))
                          (REVERSE l) 0):(N)word)`;;
+
+(* the facts about dimword that termination proofs need, as HOL4's
+   ONE_LT_dimword and DIV_LT_X do *)
+
+let ONE_LT_dimword = prove
+ (`1 < dimword(:N)`,
+  REWRITE_TAC[dimword; ARITH_RULE `1 = 2 EXP 0`] THEN
+  SIMP_TAC[LT_EXP; LE_1; DIMINDEX_GE_1] THEN ARITH_TAC);;
+
+let DIV_LT_dimword = prove
+ (`!n. ~(n = 0) ==> n DIV dimword(:N) < n`,
+  REPEAT STRIP_TAC THEN MATCH_MP_TAC DIV_LT_SELF THEN
+  ASM_REWRITE_TAC[] THEN MP_TAC(SPEC_ALL ONE_LT_dimword) THEN
+  ARITH_TAC);;
+
+cake_term_lemmas := DIV_LT_dimword :: (!cake_term_lemmas);;
