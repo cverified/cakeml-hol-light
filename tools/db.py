@@ -98,6 +98,17 @@ class Db:
           params = hterm.type_vars_of(ty)
           self.abbrevs[(thy, b.name)] = (params, txt)
           self.defs[b.name].append((thy, 'tyabbrev'))
+        elif b.kind == 'ML':
+          for m in re.finditer(r'(?:temp_)?type_abbrev\s*\(\s*"([^"]+)"'
+                               r'\s*,\s*(?:``|\u201c)\s*:(.*?)'
+                               r'(?:``|\u201d)', b.text, re.S):
+            nm, txt = m.group(1), m.group(2).strip()
+            try:
+              ty = hterm.parse_type_text(txt)
+            except Exception:
+              continue
+            self.abbrevs[(thy, nm)] = (hterm.type_vars_of(ty), txt)
+            self.defs[nm].append((thy, 'tyabbrev'))
         elif b.kind == 'Overload':
           if b.name:
             local = 'local' in b.attrs
@@ -235,7 +246,8 @@ class Db:
   def cons_for(self, thy):
     """the constructor names in scope, as the CakeML sources write them"""
     anc = self.ancestors(thy) | {thy}
-    out = set()
+    out = set(['NONE', 'SOME', 'NIL', 'CONS', 'INL', 'INR', 'T', 'F',
+               'LN', 'LS', 'BN', 'BS'])
     for (t, ty), (cons, flds) in self.datatypes.items():
       if t in anc: out |= set(cons)
     return out
@@ -253,7 +265,8 @@ class Db:
 
   def abbrevs_for(self, thy):
     anc = self.ancestors(thy) | {thy}
-    out = {}
+    # HOL4's 'a set is HOL Light's A->bool
+    out = {'set': (["'a"], hterm.parse_type_text("'a -> bool"))}
     for (t, nm), (params, txt) in self.abbrevs.items():
       if t in anc:
         out[nm] = (params, hterm.parse_type_text(txt))
@@ -281,11 +294,7 @@ def definition_names(body):
       cl = cl.body
       while cl.kind == 'paren': cl = cl.e
     if cl.kind != 'infix' or cl.op not in ('=', '<=>'): continue
-    l = cl.l
-    while l.kind == 'paren': l = l.e
-    hop, _ = hterm.strip_app(l)
-    while hop.kind == 'paren': hop = hop.e
-    if hop.kind == 'typed': hop = hop.e
+    hop = hterm.head_of(cl.l)
     if hop.kind == 'id' and hop.name not in out:
       out.append(hop.name)
   return out

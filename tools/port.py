@@ -46,11 +46,11 @@ class Porter:
     self.amb = amb
     flds = {f: t for f, t in fields.items() if t}
     flds.update(overrides.FIELD_OF.get(thy, {}))
+    self.abbrevs = db.abbrevs_for(thy)
     self.ctx = hterm.Ctx(names=names, fields=flds,
                          recs=db.recs_for(thy), thy=thy,
                          accessors=overrides.ACCESSORS.get(thy, {}),
-                         cons=db.cons_for(thy))
-    self.abbrevs = db.abbrevs_for(thy)
+                         cons=db.cons_for(thy), abbrevs=self.abbrevs)
     raw = db.overloads_for(thy)
     for _ in range(3):
       for nm, txt in raw.items():
@@ -281,7 +281,7 @@ class Porter:
       nm = None
       for _, args, _ in cls:
         if args[i].kind == 'id' and args[i].name not in self.ctx.cons \
-           and args[i].name not in names:
+           and args[i].name != '_' and args[i].name not in names:
           nm = args[i].name; break
       if nm is None:
         nm = 'x' + str(i + 1)
@@ -289,7 +289,10 @@ class Porter:
       names.append(nm)
     pats = [i for i in range(n)
             if any(args[i].kind != 'id' or args[i].name in self.ctx.cons
-                   for _, args, _ in cls)]
+                   for _, args, _ in cls)
+            and not all(args[i].kind == 'id' and
+                        args[i].name not in self.ctx.cons
+                        for _, args, _ in cls)]
     pr = hterm.Printer(self.ctx)
     arms = []
     for _, args, r in cls:

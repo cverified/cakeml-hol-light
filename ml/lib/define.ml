@@ -595,8 +595,67 @@ let define_prim_rec tm =
 (* does) defines the size functions of the family.                           *)
 (* ------------------------------------------------------------------------- *)
 
+(* HOL Light's own parser for the specification of a datatype splits
+   the types of the constructor arguments on commas, which goes wrong
+   for a type like (num,'a list->bool)fmap.  So the specification is
+   parsed here, and the types with HOL Light's type parser. *)
+
+let parse_datatype_spec s =
+  let split c s =
+    let out = ref [] and cur = ref [] and depth = ref 0 in
+    String.iter
+      (fun ch ->
+         if ch = '(' || ch = '[' then (incr depth; cur := ch::(!cur))
+         else if ch = ')' || ch = ']' then (decr depth; cur := ch::(!cur))
+         else if ch = c && !depth = 0 then
+           (out := (implode(rev(map (String.make 1) (!cur))))::(!out);
+            cur := [])
+         else cur := ch::(!cur))
+      s;
+    rev ((implode(rev(map (String.make 1) (!cur))))::(!out)) in
+  let trim s =
+    let n = String.length s in
+    let i = ref 0 and j = ref n in
+    while !i < n && (s.[!i] = ' ' || s.[!i] = '\n' || s.[!i] = '\t')
+      do incr i done;
+    while !j > !i && (s.[!j-1] = ' ' || s.[!j-1] = '\n' ||
+                      s.[!j-1] = '\t') do decr j done;
+    String.sub s !i (!j - !i) in
+  let args s =
+    (* the arguments of a constructor: tokens or parenthesised groups *)
+    let out = ref [] and cur = ref [] and depth = ref 0 in
+    String.iter
+      (fun ch ->
+         if ch = '(' then
+           (if !depth > 0 then cur := ch::(!cur); incr depth)
+         else if ch = ')' then
+           (decr depth; if !depth > 0 then cur := ch::(!cur)
+            else (out := (implode(rev(map (String.make 1) (!cur))))::(!out);
+                  cur := []))
+         else if !depth = 0 && (ch = ' ' || ch = '\n' || ch = '\t') then
+           (if !cur <> [] then
+              (out := (implode(rev(map (String.make 1) (!cur))))::(!out);
+               cur := []))
+         else cur := ch::(!cur))
+      s;
+    if !cur <> [] then
+      out := (implode(rev(map (String.make 1) (!cur))))::(!out);
+    rev (!out) in
+  map (fun part ->
+         match split '=' part with
+           [l;r] ->
+             let ty = trim l in
+             mk_vartype ty,
+             map (fun alt ->
+                    match args (trim alt) with
+                      c::tys -> c,map parse_type tys
+                    | [] -> failwith "parse_datatype_spec")
+                 (split '|' r)
+         | _ -> failwith "parse_datatype_spec")
+      (split ';' s);;
+
 let define_datatype spec =
-  let ith,rth = define_type spec in
+  let ith,rth = define_type_raw (parse_datatype_spec spec) in
   register_rec_thm rth;
   ith,rth;;
 

@@ -8,15 +8,17 @@
 needs "lib/location.ml";;
 (* HOL4 ancestors outside the port: list pred_set finite_map relation *)
 let grammar_symbol_INDUCT,grammar_symbol_RECURSION = define_datatype
-  "grammar_symbol = grammar_TOK ('a) | grammar_NT ('b inf)";;
+  "grammar_symbol = grammar_TOK ('a) | grammar_NT ('b+num)";;
 let destTOK_def = cake_define
-  `(grammar_destTOK (grammar_TOK tk,_1) = SOME tk) /\
-   (grammar_destTOK _2 = NONE)`;;
+  `grammar_destTOK x1 =
+        match x1 with
+          (grammar_TOK tk,_1) -> SOME tk
+        | _2 -> NONE`;;
 let grammar_FIELDS = define_record "grammar"
-  ["start","'b inf";
-   "rules","('b inf,(('a,'b)grammar_symbol list) set)fmap"];;
+  ["start","'b+num";
+   "rules","('b+num,('a,'b)grammar_symbol list->bool)fmap"];;
 let parsetree_INDUCT,parsetree_RECURSION = define_datatype
-  "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd ('b inf#'locs) (parsetree list)";;
+  "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd (('b+num)#'locs) (parsetree list)";;
 let ptree_loc_def = cake_define
   `ptree_loc (Lf (_3,l)) = l /\
    ptree_loc (Nd (_4,l) _5) = l`;;

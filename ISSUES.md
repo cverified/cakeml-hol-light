@@ -40,6 +40,25 @@ sources, and why.
   the sizes of the arguments that are matched on (see
   `auto_measure` in `ml/lib/define.ml`).
 
+## Hand written parts of the library layer
+
+HOL Light has no finite maps, no lazy lists and no words with
+HOL4's names, so `ml/lib/finite_map.ml`, `ml/lib/llist.ml` and
+`ml/lib/words4.ml` are written by hand:
+
+- a finite map is a function to an option type with a finite
+  domain, and the operations are HOL4's;
+- a lazy list is the function that gives its elements, which is
+  `NONE` from the end of the list onwards.  HOL4's `LUNFOLD` is
+  coinductive, so the port defines it with a helper
+  (`LUNFOLD_state`) that HOL4 does not have;
+- the word operations are HOL Light's, under HOL4's names; the
+  ones HOL Light does not have are defined in terms of them.
+
+HOL4's `pathTheory` is not ported: the dependency analysis found
+it only because CakeML definitions use variables called `el`,
+`first`, `exists` and `length`.
+
 ## What is not ported
 
 See the list in `PLAN.md`: the L3 instruction set models and the

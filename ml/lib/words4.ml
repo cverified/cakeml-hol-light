@@ -45,6 +45,20 @@ override_interface("word_sdiv",`word_jdiv:(N)word->(N)word->(N)word`);;
 override_interface("word_srem",`word_jrem:(N)word->(N)word->(N)word`);;
 
 (* ------------------------------------------------------------------------- *)
+(* HOL4 overloads the arithmetic operations for words, HOL Light does        *)
+(* not, so the port makes them overloaded.                                   *)
+(* ------------------------------------------------------------------------- *)
+
+overload_interface("+",`word_add:(N)word->(N)word->(N)word`);;
+overload_interface("-",`word_sub:(N)word->(N)word->(N)word`);;
+overload_interface("*",`word_mul:(N)word->(N)word->(N)word`);;
+overload_interface("<",`word_ilt:(N)word->(N)word->bool`);;
+overload_interface("<=",`word_ile:(N)word->(N)word->bool`);;
+overload_interface(">",`word_igt:(N)word->(N)word->bool`);;
+overload_interface(">=",`word_ige:(N)word->(N)word->bool`);;
+overload_interface("--",`word_neg:(N)word->(N)word`);;
+
+(* ------------------------------------------------------------------------- *)
 (* The HOL4 notations.                                                       *)
 (* ------------------------------------------------------------------------- *)
 
@@ -121,6 +135,10 @@ let bit_field_insert = new_definition
 let word_reverse = new_definition
   `word_reverse (w:(N)word) =
    word_of_bits {i | i < dimindex(:N) /\ bit (dimindex(:N) - 1 - i) w}`;;
+
+let word_slice_alt = new_definition
+  `word_slice_alt h l (w:(N)word) =
+   word_shl (word_subword w (l,h - l):(N)word) l`;;
 
 let word_abs = new_definition
   `word_abs (w:(N)word) = if word_msb w then word_neg w else w`;;

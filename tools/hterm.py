@@ -228,6 +228,11 @@ class Node:
 STOP = {')', ']', '}', '|', ';', '=>', 'of', 'then', 'else', 'in',
         'od', '|>', 'and', '.', '->', ':=', '<-', '»', '⟫', ','}
 
+# where a type stops: everything that only occurs in terms
+TYPE_STOP = (STOP - {'->'}) | {'=', '<=>', '==>', '/\\', '\\/', '<',
+        '>', '<=', '>=', '~', '::', '++', '*', '@', '$', '!', '?',
+        '\\', '&', '%%', "'", "''", '--', '|+', '|++'}
+
 
 class Parser:
   def __init__(self, toks, ctx=None):
@@ -260,17 +265,13 @@ class Parser:
     while True:
       t = self.peek()
       if t.kind == 'eof': break
-      if t.text in ('(', '[') :
+      if t.text in ('(', '['):
         depth += 1
       elif t.text in (')', ']'):
         if depth == 0: break
         depth -= 1
-      elif depth == 0 and (t.text in STOP and t.text not in ('->',)
-                           or t.kind == 'num' and False):
+      elif depth == 0 and (t.text in TYPE_STOP or t.kind == 'key'):
         break
-      elif depth == 0 and t.kind == 'key':
-        break
-      out.append(t); self.next(); continue
       out.append(t); self.next()
     return out
 
@@ -550,13 +551,15 @@ class Ctx:
   """what the printer needs to know about the port"""
 
   def __init__(self, names=None, fields=None, recs=None, thy='',
-               overloads=None, accessors=None, cons=None):
+               overloads=None, accessors=None, cons=None,
+               abbrevs=None):
     self.names = names or {}     # cakeml name -> hol light name
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
     self.overloads = overloads or {}   # name -> hol light term text
     self.accessors = accessors or {}   # field name -> accessor name
     self.cons = cons or set()          # the constructor names
+    self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.thy = thy
     self.wild = 0
     self.warn = []
@@ -580,6 +583,25 @@ class Ctx:
     return '_' + str(self.wild)
 
 
+NUMERIC_FUNS = set(['int_of_num', 'num_of_int', 'w2i', 'i2w', 'ival',
+                    'iword', 'int_add', 'int_sub', 'int_mul',
+                    'int_neg', 'ABS', 'abs', 'Num'])
+
+
+def numeric(e):
+  """is this term a number rather than a proposition?"""
+  while e.kind == 'paren': e = e.e
+  if e.kind == 'num': return True
+  if e.kind == 'prefix': return e.op in ('&', '-', '~')
+  if e.kind == 'infix':
+    return e.op in ('+', '-', '*', '/', 'DIV', 'MOD', 'EXP', '**')
+  if e.kind == 'app':
+    h, _ = strip_app(e)
+    return h.kind == 'id' and h.name in NUMERIC_FUNS
+  if e.kind == 'typed': return numeric(e.e)
+  return False
+
+
 def greek(toks):
   """a type with type variables that came from Greek letters, which
      HOL4 unifies with the types around it, but HOL Light does not"""
@@ -592,10 +614,19 @@ def layout(tok, s):
   return s
 
 
+NUMCTX = set(['+', '-', '*', '/', 'DIV', 'MOD', 'EXP', '**',
+              '<', '<=', '>', '>='])
+
+# HOL Light constants that are binders, so that f (\x. b) has to be
+# printed as f x. b
+BINDERS = set(['minimal'])
+
+
 class Printer:
   def __init__(self, ctx):
     self.ctx = ctx
     self.done = set()
+    self.numctx = False
 
   def pr(self, e, prec=0):
     tok = e.tok
@@ -608,6 +639,11 @@ class Printer:
     return '(' + s + ')' if inner < outer else s
 
   def pr_type(self, toks):
+    try:
+      ty = TypeParser(list(toks)).parse()
+      return print_type(expand_type(ty, self.ctx.abbrevs), self.ctx)
+    except Exception:
+      pass
     out = ''
     for t in toks:
       txt = self.ctx.name(t.text) if t.kind == 'id' else t.text
@@ -653,16 +689,29 @@ class Printer:
                         0, prec)
     if k == 'app':
       hop, args = strip_app(e)
+      old = self.numctx
+      if hop.kind == 'id' and hop.name in NUMERIC_FUNS:
+        self.numctx = True
+      elif hop.kind == 'id':
+        self.numctx = False
       if hop.kind == 'id':
         n = self.ctx.name(hop.name)
+        if n in BINDERS and len(args) == 1 and args[0].kind == 'quant' \
+           and args[0].q == '\\':
+          vs = ' '.join(self.pr(v, APP) for v in args[0].vs)
+          self.numctx = old
+          return self.paren(n + ' ' + vs + '. ' +
+                            self.pr(args[0].body, 0), 1, prec)
         if n in ARGPERM:
           ar, perm, newname = ARGPERM[n]
           if len(args) == ar:
             s = newname + ' ' + ' '.join(self.pr(args[i], APP)
                                          for i in perm)
+            self.numctx = old
             return self.paren(s, PRE_APP, prec)
       fn = self.pr(e.fn, PRE_APP)
       arg = self.pr(e.arg, APP)
+      self.numctx = old
       return self.paren(fn + ' ' + arg, PRE_APP, prec)
     if k == 'infix':
       op = e.op
@@ -679,6 +728,8 @@ class Printer:
         return self.paren('word_bit ' + self.pr(e.r, APP) + ' ' +
                           self.pr(e.l, APP), PRE_APP, prec)
       _, assoc, hop, hprec = INFIX[op]
+      old = self.numctx
+      self.numctx = op in NUMCTX
       if assoc == 'r':
         l = self.pr(e.l, hprec + 1); r = self.pr(e.r, hprec)
       elif assoc == 'l':
@@ -686,10 +737,15 @@ class Printer:
       else:
         l = self.pr(e.l, hprec + 1); r = self.pr(e.r, hprec + 1)
       sep = '' if hop == ',' else ' '
+      self.numctx = old
       return self.paren(l + sep + hop + sep + r, hprec, prec)
     if k == 'prefix':
       if e.op == '~':
-        return self.paren('~' + self.pr(e.e, PRE_APP), PRE_APP, prec)
+        # HOL4 writes ~ for the negation of a number as well as for
+        # the negation of a proposition; HOL Light writes -- for the
+        # first one
+        op = '--' if numeric(e.e) or self.numctx else '~'
+        return self.paren(op + self.pr(e.e, PRE_APP), PRE_APP, prec)
       if e.op == '-':
         return self.paren('--' + self.pr(e.e, PRE_APP), PRE_APP, prec)
       if e.op == '&':
@@ -787,6 +843,14 @@ def rename_ast(e, sub):
   return e
 
 
+def head_of(e):
+  """the head of an application, through parentheses and annotations"""
+  while True:
+    if e.kind in ('paren', 'typed'): e = e.e
+    elif e.kind == 'app': e = strip_app(e)[0]
+    else: return e
+
+
 def clauses_of(e):
   """the clauses of a definition, as (head, args, rhs)"""
   def conj(e):
@@ -804,9 +868,9 @@ def clauses_of(e):
     if cl.kind != 'infix' or cl.op not in ('=', '<=>'):
       raise SyntaxError('clauses_of: not an equation')
     l = cl.l
-    while l.kind == 'paren': l = l.e
+    while l.kind in ('paren', 'typed'): l = l.e
     hop, args = strip_app(l)
-    while hop.kind in ('paren', 'typed'): hop = hop.e
+    hop = head_of(hop)
     out.append((hop, args, cl.r))
   return out
 

@@ -187,8 +187,8 @@ let spt_right_def = cake_define
    (spt_right (BN t1 t2) = t2) /\
    (spt_right (BS t1 x t2) = t2)`;;
 let spt_center_def = cake_define
-  `spt_center _ =
-        match _ with
+  `spt_center x1 =
+        match x1 with
           (LS x) -> SOME x
         | (BS t1 x t2) -> SOME x
         | _5 -> NONE`;;

@@ -9,9 +9,7 @@ alignment	src/n-bit/alignmentScript.sml
 bitstring	src/n-bit/bitstringScript.sml
 byte	src/n-bit/byteScript.sml
 integer_word	src/integer/integer_wordScript.sml
-llist	src/coalgebras/llistScript.sml
 lprefix_lub	examples/pl-semantics/lprefix_lub/lprefix_lubScript.sml
-path	src/coalgebras/pathScript.sml
 set_sep	examples/machine-code/hoare-triple/set_sepScript.sml
 state_transformer	src/monad/more_monads/state_transformerScript.sml
 numposrep	src/list/src/numposrepScript.sml

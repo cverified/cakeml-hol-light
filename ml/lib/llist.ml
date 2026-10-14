@@ -1,35 +1,84 @@
-(* ======================================================== *)
-(*  llist: ported from HOL4's
-    src/coalgebras/llistScript.sml  *)
-(*  Of this HOL4 library theory only the definitions that the
-    CakeML port needs are ported.  *)
-(* ======================================================== *)
+(* ========================================================================= *)
+(*  Lazy lists, which HOL Light does not have.                              *)
+(*                                                                          *)
+(*  HOL4 defines 'a llist coinductively; HOL Light has no coinductive       *)
+(*  types, so a lazy list is represented here by the function that gives     *)
+(*  its elements, which is NONE from the end of the list onwards.  The       *)
+(*  operations are the ones of HOL4's llistTheory that the CakeML port       *)
+(*  needs; LUNFOLD needs the helper LUNFOLD_state, which HOL4 does not       *)
+(*  have (see ISSUES.md).                                                    *)
+(* ========================================================================= *)
 
-(* HOL4 ancestors outside the port: option combin option pair num arithmetic prim_rec list rich_list While pair pred_set set_relation arithmetic *)
-let LNIL = cake_define
-  `LNIL = llist_abs (\n. NONE)`;;
-let LCONS = cake_define
-  `LCONS h t = llist_abs (\n. if n = 0 then SOME h else llist_rep t (n -
-  1))`;;
-let LHD = cake_define
-  `LHD ll = llist_rep ll 0`;;
-let LTL = cake_define
-  `LTL ll = (match LHD ll with
-                NONE -> NONE | SOME _1 -> SOME (llist_abs (\n.
-                  llist_rep ll (n + 1))))`;;
-let LTAKE = cake_define
-  `(LTAKE 0 ll = SOME []) /\
-   (LTAKE (SUC n) ll =
-      (match LHD ll with
-          NONE -> NONE | SOME hd ->
-          match LTAKE n (THE (LTL ll)) with
-              NONE -> NONE | SOME tl -> SOME (hd :: tl)))`;;
-let LLENGTH = cake_define
-  `LLENGTH ll = (if LFINITE ll then SOME (@n. llength_rel ll n) else
-  NONE)`;;
-let toList = cake_define
-  `llist_toList ll = (if LFINITE ll then LTAKE (THE (LLENGTH ll)) ll
-  else NONE)`;;
-let fromList_def = cake_define
-  `(llist_fromList [] = LNIL) /\ (llist_fromList (h :: t) = LCONS h
-  (llist_fromList t))`;;
+let llist_tybij =
+  let th = prove
+   (`?f:num->A option. !n. f n = NONE ==> f (SUC n) = NONE`,
+    EXISTS_TAC `\n:num. (NONE:A option)` THEN REWRITE_TAC[]) in
+  new_type_definition "llist" ("mk_llist","llist_fn") th;;
+
+let LNIL = new_definition
+  `LNIL = mk_llist (\n:num. (NONE:A option))`;;
+
+let LCONS = new_definition
+  `LCONS (h:A) t =
+   mk_llist (\n. if n = 0 then SOME h else llist_fn t (n - 1))`;;
+
+let LHD = new_definition
+  `LHD (l:A llist) = llist_fn l 0`;;
+
+let LTL = new_definition
+  `LTL (l:A llist) =
+   if llist_fn l 0 = NONE then NONE
+   else SOME (mk_llist (\n. llist_fn l (n + 1)))`;;
+
+let LNTH = new_definition
+  `LNTH n (l:A llist) = llist_fn l n`;;
+
+let LFINITE = new_definition
+  `LFINITE (l:A llist) <=> ?n. llist_fn l n = NONE`;;
+
+let LLENGTH = new_definition
+  `LLENGTH (l:A llist) =
+   if LFINITE l then SOME (minimal n. llist_fn l n = NONE) else NONE`;;
+
+let LTAKE = new_definition
+  `LTAKE n (l:A llist) =
+   if (!m. m < n ==> ~(llist_fn l m = NONE))
+   then SOME (list_of_seq (\m. THE (llist_fn l m)) n) else NONE`;;
+
+let LPREFIX = new_definition
+  `LPREFIX (l1:A llist) l2 <=>
+   !n x. llist_fn l1 n = SOME x ==> llist_fn l2 n = SOME x`;;
+
+let fromList = new_definition
+  `fromList (l:A list) = mk_llist (\n. oEL n l)`;;
+
+let toList = new_definition
+  `toList (l:A llist) =
+   if LFINITE l then LTAKE (THE (LLENGTH l)) l else NONE`;;
+
+let LAPPEND = new_definition
+  `LAPPEND (l1:A llist) l2 =
+   mk_llist (\n. match LLENGTH l1 with
+                   NONE -> llist_fn l1 n
+                 | SOME k -> if n < k then llist_fn l1 n
+                             else llist_fn l2 (n - k))`;;
+
+let LMAP = new_definition
+  `LMAP (f:A->B) l = mk_llist (\n. OPTION_MAP f (llist_fn l n))`;;
+
+(* the state of LUNFOLD after n steps, and LUNFOLD itself *)
+
+let LUNFOLD_state = new_recursive_definition num_RECURSION
+  `(LUNFOLD_state (f:A->(A#B)option) 0 x = SOME x) /\
+   (LUNFOLD_state f (SUC n) x =
+    match LUNFOLD_state f n x with
+      NONE -> NONE
+    | SOME y -> (match f y with
+                   NONE -> NONE
+                 | SOME (z,a) -> SOME z))`;;
+
+let LUNFOLD = new_definition
+  `LUNFOLD (f:A->(A#B)option) x =
+   mk_llist (\n. match LUNFOLD_state f n x with
+                   NONE -> NONE
+                 | SOME y -> OPTION_MAP SND (f y))`;;

@@ -362,6 +362,11 @@ let list_size_TAKE = prove
   COND_CASES_TAC THEN REWRITE_TAC[list_size; LE_0] THEN
   ASM_SIMP_TAC[LE_ADD_LCANCEL] THEN ASM_ARITH_TAC);;
 
+(* HOL4's LOG2, from logrootTheory *)
+
+let LOG2 = define
+  `LOG2 n = if n < 2 then 0 else SUC (LOG2 (n DIV 2))`;;
+
 (* the facts about division that termination proofs need; HOL Light
    has DIV_LE and MOD_LE already *)
 

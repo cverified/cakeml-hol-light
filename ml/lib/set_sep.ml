@@ -13,4 +13,4 @@ let emp_def = cake_define
 let cond_def = cake_define
   `cond c = (\s. (s = {}) /\ c)`;;
 let fun2set_def = cake_define
-  `fun2set ((f:'b -> 'a),d) = {(a,f a) | a IN d}`;;
+  `fun2set ((f:'b->'a),d) = {(a,f a) | a IN d}`;;

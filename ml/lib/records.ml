@@ -19,7 +19,7 @@ let the_records =
 let define_record name fields =
   let spec = name ^ " = mk_" ^ name ^
              itlist (fun (_,t) s -> " (" ^ t ^ ")" ^ s) fields "" in
-  let _,rth = define_type spec in
+  let _,rth = define_datatype spec in
   let cty = get_const_type ("mk_" ^ name) in
   let argtys,rty = splitlist dest_fun_ty cty in
   let vars = map2 (fun (f,_) ty -> mk_var(f,ty)) fields argtys in
