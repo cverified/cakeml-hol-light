@@ -1116,6 +1116,60 @@ let define_nested tm =
   map derive cls0,spec;;
 
 (* ------------------------------------------------------------------ *)
+(* A definition whose clauses overlap is written with a match (HOL4   *)
+(* takes the first clause that matches, and so does HOL Light's       *)
+(* match), and then HOL Light's machinery for a recursion does not    *)
+(* see the recursive calls that are in it.  The port makes a clause   *)
+(* for every constructor of the type that is matched on, defines the  *)
+(* function from those, and derives the definition as it was given.   *)
+(* ------------------------------------------------------------------ *)
+
+let MATCH_REDUCE_CONV = REPEATC (CHANGED_CONV MATCH_CONV);;
+
+let define_match tm =
+  let fs = definition_heads tm in
+  let cls = definition_clauses tm in
+  if length fs <> 1 || length cls <> 1 then failwith "define_match"
+  else
+  let f,args,bod = hd cls in
+  let hop,margs = strip_comb bod in
+  if not (is_const hop && fst(dest_const hop) = "_MATCH") ||
+     length margs <> 2
+  then failwith "define_match" else
+  let scrut = hd margs in
+  if not (is_var scrut && mem scrut args) then failwith "define_match"
+  else
+  let ty = type_of scrut in
+  (* the cases theorem of a family is the conjunction of the ones
+     of its types *)
+  let casth =
+    let ths = CONJUNCTS (cases (fst(dest_type ty))) in
+    let th = try find (fun th ->
+                         type_of(fst(dest_forall(concl th))) = ty) ths
+             with Failure _ -> find (can (ISPEC scrut)) ths in
+    ISPEC scrut th in
+  let others = subtract (freesl (bod :: args)) [scrut] in
+  let clause dj =
+    let vs,eq = strip_exists dj in
+    let vs' = map (fun v -> variant others v) vs in
+    let pat = vsubst (zip vs' vs) (rhs eq) in
+    let sub = [pat,scrut] in
+    let th = try MATCH_REDUCE_CONV (vsubst sub bod)
+             with Failure _ -> failwith "define_match: no match" in
+    mk_eq(list_mk_comb(f,map (vsubst sub) args),rand(concl th)) in
+  let newcls = map clause (disjuncts(concl casth)) in
+  let ths,spec =
+    define_prim_rec (list_mk_conj (map (close_clause [f]) newcls)) in
+  let c = mk_mconst(fst(dest_var f),type_of f) in
+  let gcl = close_clause [] (vsubst [c,f] (snd(strip_forall
+              (hd(conjuncts(snd(strip_forall tm))))))) in
+  [prove(gcl,
+         REPEAT GEN_TAC THEN
+         STRUCT_CASES_TAC casth THEN REWRITE_TAC ths THEN
+         CONV_TAC (ONCE_DEPTH_CONV MATCH_REDUCE_CONV) THEN
+         REWRITE_TAC[])],spec;;
+
+(* ------------------------------------------------------------------ *)
 
 (* A name that several theories of the port define is an overloaded
    name in HOL4, which resolves it by the type; HOL Light can do the
@@ -1518,6 +1572,7 @@ let cake_define_gen wf tm =
     else
       (try define_prim_rec tm with Failure _ when not (declared ()) ->
        try define_nested tm with Failure _ when not (declared ()) ->
+       try define_match tm with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in

@@ -34,6 +34,21 @@ override_interface("LIST_TO_SET",`set_of_list:(A)list->A->bool`);;
 override_interface("LIST_REL",
   `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
 
+(* HOL4's OPTREL (optionTheory), with the monotonicity theorem that
+   an inductive definition over it needs (HOL Light has the ones of
+   ALL and ALL2, which are HOL4's EVERY and LIST_REL) *)
+
+let OPTREL_def = new_definition
+  `OPTREL R x y <=>
+   (x = NONE) /\ (y = NONE) \/
+   ?x0 y0. (x = SOME x0) /\ (y = SOME y0) /\ R x0 y0`;;
+
+let OPTREL_MONO = prove
+ (`(!x:A y:B. P x y ==> Q x y) ==> OPTREL P x y ==> OPTREL Q x y`,
+  REWRITE_TAC[OPTREL_def] THEN MESON_TAC[]);;
+
+monotonicity_theorems := OPTREL_MONO :: !monotonicity_theorems;;
+
 (* ------------------------------------------------------------------ *)
 (* combinTheory                                                       *)
 (* ------------------------------------------------------------------ *)
