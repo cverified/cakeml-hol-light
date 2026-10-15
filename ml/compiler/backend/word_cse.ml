@@ -165,10 +165,10 @@ let canonicalArith_def = cake_define_list
       asm_Binop op r1 (canonicalRegs' r1 data r2)
         (canonicalImmReg' r1 data r3)`;
    `canonicalArith data (asm_Shift s r1 r2 ri) =
-      Shift s r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
-        data ri)`;
+      asm_Shift s r1 (canonicalRegs' r1 data r2)
+        (canonicalImmReg' r1 data ri)`;
    `canonicalArith data (asm_Div r1 r2 r3) =
-      Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
+      asm_Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
    `canonicalArith data (asm_LongMul r1 r2 r3 r4) =
       asm_LongMul r1 r2 (canonicalRegs data r3) (canonicalRegs
         data r4)`;
@@ -667,7 +667,8 @@ let word_common_subexp_elim_def = cake_define
 let seqs_def = cake_define_list
   [`word_cse_Seqs [] = wordLang_Skip`;
    `word_cse_Seqs [x] = x`;
-   `word_cse_Seqs (x :: y :: xs) = Seq x (word_cse_Seqs (y :: xs))`];;
+   `word_cse_Seqs (x :: y :: xs) = wordLang_Seq x (word_cse_Seqs (y
+  :: xs))`];;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
 (* Concrete word type: the load-fact keys compare distinct offsets,

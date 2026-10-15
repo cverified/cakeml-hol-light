@@ -304,8 +304,8 @@ let force_rename_def = cake_define_list
 
 let mk_prio_def = cake_define
   `mk_prio el er =
-   (if el = Skip then SOME (INL one) else if er = Skip then SOME
-     (INR one) else NONE)`;;
+   (if el = wordLang_Skip then SOME (INL one) else if er =
+     wordLang_Skip then SOME (INR one) else NONE)`;;
 
 (*Generate reconciliation moves from current ssa to target ssa for vars
    in ns.

@@ -357,6 +357,15 @@ CON_OF = {
   # wordLang has as well
   ('word_alloc', 'get_clash_tree_def'): {'*': 'reg_alloc'},
   ('word_alloc', 'full_ssa_cc_trans_def'): {'*': 'wordLang'},
+  # these compare a program with Skip, or give Skip back, where
+  # nothing else in the definition says which language it is of
+  # (word_bignum's mini and stackLang have a Skip as well)
+  ('word_alloc', 'mk_prio_def'): {'Skip': 'wordLang'},
+  ('data_to_word', 'StoreEach_def'): {'*': 'wordLang'},
+  ('word_simp', 'drop_consts_def'): {'*': 'wordLang'},
+  ('word_cse', 'seqs_def'): {'*': 'wordLang'},
+  # the Shift and the Div that this canonicalises are asm's
+  ('word_cse', 'canonicalArith_def'): {'*': 'asm'},
 }
 
 # definitions whose patterns need the type of their constructor on

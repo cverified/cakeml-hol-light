@@ -190,11 +190,11 @@ let all_names_def = cake_define
 
 (* We only drop constants that can potentially be in registers *)
 let drop_consts_def = cake_define_list
-  [`drop_consts cs [] = Skip`;
+  [`drop_consts cs [] = wordLang_Skip`;
    `drop_consts cs (n :: ns) =
       (match sptree_lookup n cs with NONE -> drop_consts cs ns
         | SOME w -> SmartSeq (drop_consts cs ns) (wordLang_Assign n
-        (Const w)))`];;
+        (wordLang_Const w)))`];;
 
 let const_fp_loop_def = cake_define
   `const_fp_loop p cs =

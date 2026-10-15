@@ -104,9 +104,10 @@ let list_Seq_def = cake_define
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
 let StoreEach_def = cake_define_list
-  [`StoreEach v [] (offset:'a word) = Skip`;
+  [`StoreEach v [] (offset:'a word) = wordLang_Skip`;
    `StoreEach v (x :: xs) (offset:'a word) =
-         Seq (Store (Op Add [Var v; Const offset]) x)
+         wordLang_Seq (wordLang_Store (wordLang_Op Add [wordLang_Var
+           v; wordLang_Const offset]) x)
              (StoreEach v xs (offset + bytes_in_word))`];;
 
 let small_shift_length_def = cake_define
