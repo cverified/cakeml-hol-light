@@ -49,8 +49,7 @@ let find_lab_def = cake_define
   `find_lab n labs =
      (match oEL n labs with NONE -> (0:num) | SOME k -> k)`;;
 
-(* HOL4 overload (expanded in the port):
-     ++ = misc$Append *)
+hol4_overload "++" "misc_Append";;
 
 let flatten_def = cake_define
   `stack_to_lab_flatten t p n m conts breaks =
@@ -179,3 +178,5 @@ let compile_no_stubs_def = cake_define
      (stack_names_compile f
        (MAP (prog_comp jump offset sp)
          (MAP prog_comp prog)))`;;
+
+hol4_overload "++" "APPEND";;

@@ -86,6 +86,13 @@ ALSO_NEEDED = set([
   ('ternaryComparisons', 'num_compare'),
 ])
 
+# the HOL Light constant that an infix of HOL4 means where no
+# CakeML source overloads it with one of its own; a source that does
+# (bvl_to_bvi overloads ++ with SmartAppend) has the port declare
+# that overload before its definitions and this one after them, so
+# that the files that come after mean this one again
+BASE_INFIX_CONST = {'++': 'APPEND'}
+
 # definitions in which the numerals are integers or reals, not
 # natural numbers (HOL Light writes both as &n; the exponent of pow,
 # EXP and ** stays a natural number)

@@ -128,6 +128,7 @@ class Porter:
     self.warn = []
     self.head = None
     self.deps = []
+    self.restore = set()   # the infixes to put back at the end
     self.bound = set()
     self.contys = set()
     # an overload of an ancestor does not shadow a constant that
@@ -219,8 +220,10 @@ class Porter:
     self.db.base_grammar(self.thy)
     # an infix that an ancestor overloads with a constant is written
     # as an application of that constant
-    for tok, txt in self.db.ovl_infix.items():
-      if tok in hterm.OWN_INFIX and IDENT.match(txt):
+    anc = self.db.ancestors(self.thy)
+    for (thy, tok), (txt, loc) in self.db.ovl_infix.items():
+      if (thy in anc and not loc and tok in hterm.OWN_INFIX
+          and IDENT.match(txt)):
         hterm.set_infix_name(tok, self.ctx.name(txt))
     chunks = []                 # (blank lines before, text)
     for b in blocks:
@@ -252,6 +255,13 @@ class Porter:
       if i: text += '\n' * (1 + min(blanks, 2))
       text += c
     text = (self.head + '\n' + text if self.head else text) + '\n'
+    # an infix that this file overloads with an append of its own is
+    # the one of HOL Light again for the files that come after
+    if self.restore:
+      text += '\n' + ''.join(
+          'hol4_overload "%s" "%s";;\n'
+          % (tok, overrides.BASE_INFIX_CONST[tok])
+          for tok in sorted(self.restore))
     # the files that the translation needs
     deps = sorted(set(self.deps) |
                   self.db.providers(self.thy, strip_ml(text),
@@ -527,21 +537,28 @@ class Porter:
     self.ctx.wordnot = False
     self.ctx.defining = set()
 
-  def con_thy(self, nm):
-    """the theory whose constructor of this name is meant.  Where
-       the name is ambiguous it is the theory that comes last among
-       the ones in scope, which is the one HOL4's overload
-       resolution takes"""
+  def con_thy(self, nm, kinds=('con',)):
+    """the theory whose constant of this name is meant.  Where the
+       name is ambiguous it is the theory that comes last among the
+       ones in scope, which is the one HOL4's overload resolution
+       takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
     if t: return t
     anc = self.db.ancestors(self.thy) | {self.thy}
     ts = [x for x, k in self.db.defs.get(n, [])
-          if k == 'con' and x in anc]
-    if self.contys:
+          if k in kinds and x in anc]
+    if kinds == ('con',) and self.contys:
       ts = [x for x in ts if x in self.contys] or ts
     if not ts: return None
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
     return max(ts, key=lambda x: rank.get(x, -1))
+
+  def const_name(self, nm):
+    """the name that the port gives the constant that a name of a
+       CakeML source means, also where that name is overloaded"""
+    n = nm.split('$')[-1]
+    t = self.con_thy(nm, ('con', 'def', 'rel'))
+    return self.ctx.names.get((t, n), n) if t else self.ctx.name(nm)
 
   def con_name(self, nm):
     """the name that the port gives the constructor that an
@@ -885,8 +902,17 @@ class Porter:
       return
     # an overload of a symbolic infix the source declared itself is
     # written as an application of the constant it stands for
-    if b.name in hterm.OWN_INFIX and IDENT.match(txt.strip()):
+    if (b.name in hterm.OWN_INFIX and
+        b.name not in hterm.BASE_INFIX and IDENT.match(txt.strip())):
       hterm.set_infix_name(b.name, self.ctx.name(txt.strip()))
+      return
+    # an infix that HOL Light has as well becomes an overload of
+    # HOL Light, which resolves it by the type as HOL4 does
+    if b.name in hterm.BASE_INFIX and IDENT.match(txt.strip()):
+      c = self.const_name(txt.strip())
+      self.out.append('hol4_overload "%s" "%s";;' % (b.name, c))
+      if b.name in overrides.BASE_INFIX_CONST:
+        self.restore.add(b.name)
       return
     self.warn.append('Overload %s' % b.name)
     self.out.append(shorten(

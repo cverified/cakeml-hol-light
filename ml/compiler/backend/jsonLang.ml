@@ -28,8 +28,7 @@ hol4_overload "Int" "jsonLang_Int";;
 hol4_overload "Bool" "jsonLang_Bool";;
 hol4_overload "Null" "jsonLang_Null";;
 
-(* HOL4 overload (expanded in the port):
-     ++ = Append *)
+hol4_overload "++" "misc_Append";;
 
 let concat_with_def = cake_define
   `concat_with x1 c =
@@ -78,3 +77,5 @@ let json_to_mlstring_def = cake_define_list
    `mem_to_string n_obj = (let (n,obj) = n_obj in
             List [implode "\""; n; implode "\":"] ++
               json_to_mlstring obj)`];;
+
+hol4_overload "++" "APPEND";;

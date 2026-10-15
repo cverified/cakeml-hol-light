@@ -290,8 +290,7 @@ in
 val compile_op_def = Define compile_op_quotation;
 *)
 
-(* HOL4 overload (expanded in the port):
-     ++ = SmartAppend *)
+hol4_overload "++" "SmartAppend";;
 (* HOL4 overload (expanded in the port):
      nss = bvl_to_bvi_namespaces *)
 
@@ -520,3 +519,5 @@ let bvl_to_bvi_compile_inc_all_def = cake_define
        (bvl_to_bvi_config_bvi_inlines c) p in
      let c = bvl_to_bvi_config_bvi_inlines_fupd (K bvi_inlines) c in
        (c,p))`;;
+
+hol4_overload "++" "APPEND";;

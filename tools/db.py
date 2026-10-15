@@ -132,7 +132,8 @@ class Db:
           if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
         if (b.kind == 'Overload' and b.name and
             not b.name[0].isalpha()):
-          self.ovl_infix[b.name] = strip_quote(b.body).strip()
+          self.ovl_infix[(thy, b.name)] = (
+              strip_quote(b.body).strip(), 'local' in b.attrs)
         if b.kind == 'Ancestors':
           anc = [w for w in b.body.split()]
           self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))

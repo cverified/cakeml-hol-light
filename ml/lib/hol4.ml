@@ -26,6 +26,9 @@
 parse_as_infix("::",(15,"right"));;
 override_interface("::",`CONS:A->(A)list->(A)list`);;
 override_interface("++",`APPEND:(A)list->(A)list->(A)list`);;
+(* a CakeML source may overload ++ with an append of its own
+   (misc's Append on app_list, bvl_to_bvi's SmartAppend) *)
+make_overloadable "++" `:A`;;
 override_interface("EVERY",`ALL:(A->bool)->(A)list->bool`);;
 override_interface("EXISTS",`EX:(A->bool)->(A)list->bool`);;
 override_interface("FRONT",`BUTLAST:(A)list->(A)list`);;

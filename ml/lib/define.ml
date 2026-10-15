@@ -2010,15 +2010,24 @@ let cake_cheat_list cls =
   print_string ("\ncake_define " ^ name ^ " CHEATED (clause by " ^
                 "clause)\n");
   flush stdout;
+  (* only the functions that the clauses define become constants; a
+     variable whose name is a constant of something else stays a
+     variable, which close_clause quantifies *)
   let cheat cl =
-    let vs = filter (fun v -> can get_const_type (fst(dest_var v)))
+    let vs = filter (fun v -> exists (fun g -> fst(dest_var g) =
+                                               fst(dest_var v)) fs)
                     (frees cl) in
-    let consts = map (fun v -> mk_mconst(fst(dest_var v),type_of v),v)
-                     vs in
+    let consts = mapfilter
+                   (fun v -> mk_mconst(fst(dest_var v),type_of v),v)
+                   vs in
     new_axiom (close_clause [] (vsubst consts cl)) in
   let ths = mapfilter cheat cls in
-  if ths = [] then failwith "cake_cheat_list" else
-  end_itlist CONJ ths;;
+  (* the last resort must not fail: the constants are there, and the
+     clauses are recorded as a cheat that gives nothing *)
+  if ths = [] then
+    (print_string ("\ncake_define " ^ name ^
+                   " CHEATED (no clause)\n"); flush stdout; TRUTH)
+  else end_itlist CONJ ths;;
 
 let cake_define_list cls =
   try cake_define (cake_conj_list cls)
