@@ -130,6 +130,20 @@ MEASURE = {
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # HOL4 states the call tree that EVAL computes for the
+  # expression below, in which the type and the fields of the
+  # configuration other than the two that are given are free
+  # (the value does not depend on them, or EVAL could not have
+  # computed it); the port states the expression, with the type
+  # and the configuration instantiated, which is the same tree
+  ('data_to_word', 'AnyArith_call_tree_def'): r'''
+let AnyArith_call_tree_def = cake_define
+  `AnyArith_call_tree =
+     full_call_graph AnyArith_location
+       (fromAList (stubs (:1)
+          (data_to_word_config_has_longdiv_fupd (K F)
+             (data_to_word_config_call_empty_ffi_fupd (K F) ARB))))`;;
+''',
   # HOL4 proves the termination with the induction principle
   # of llistTheory's eventually; the port proves the
   # existence of the function with the number of steps to
@@ -244,10 +258,6 @@ let mergesortN_tail_def = cake_define_wf
 # port writes the HOL4 text in a comment, so that the gap is visible
 # in the file (PENDING.md lists them all)
 NOT_YET = {
-  ('data_to_word', 'AnyArith_call_tree_def'):
-    'the value is the call graph that HOL4 computes with EVAL;\n'
-    '   the expression that it evaluates has a free variable\n'
-    '   (data_conf), so the port has to compute the value as well',
 }
 
 # Type blocks whose type HOL4 computes with ML code, with the type

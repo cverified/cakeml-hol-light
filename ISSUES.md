@@ -53,6 +53,14 @@ sources, and why.
   split clauses, not for the clauses as written.  In the port
   such clauses are made disjoint by hand; each place says so in
   a comment.  So far: `location$merge_list_locs`.
+- A recursive call under a `MAP` (or an `EVERY`) over a list of
+  _pairs_ is not primitive recursive in HOL Light's sense: the
+  recursion theorem of a datatype family that nests such a list
+  has a function for the list, and one for the pair as well.  The
+  port defines those functions too (`define_nested` in
+  `ml/lib/define.ml`) and derives the equations as HOL4 states
+  them.  Without them `ast$every_exp` took six minutes and failed;
+  with them it takes half a second.
 - Definitions that are not primitive recursive need a
   termination measure.  Where HOL4's `Termination` gives one, the
   port uses it; where HOL4 guessed one, the port uses the sum of
@@ -78,11 +86,12 @@ HOL4's `pathTheory` is not ported: the dependency analysis found
 it only because CakeML definitions use variables called `el`,
 `first`, `exists` and `length`.
 
-## Definitions that the port does not have yet
+## Definitions whose form deviates
 
-`PENDING.md` lists the definitions of the ported files that the
-port does not have yet, with the reason.  They are in the files as
-a comment that starts with `PENDING`, so that nothing is lost.
+Every definition of the ported files is in the port.  Three of
+them state the expression that HOL4's ML code evaluates instead of
+the value that it finds, and one (`misc$Lnext`) is proved to exist
+by hand; `PENDING.md` lists all four, with the reason.
 
 ## What is not ported
 

@@ -3065,12 +3065,12 @@ val th_TT = EVAL ``full_call_graph AnyArith_location
                                                        |>)))``
 *)
 
-(* PENDING: the value is the call graph that HOL4 computes with EVAL;
-   the expression that it evaluates has a free variable
-   (data_conf), so the port has to compute the value as well
-Definition AnyArith_call_tree_def:
-  AnyArith_call_tree = ^(th_FF |> concl |> rand )
-End *)
+let AnyArith_call_tree_def = cake_define
+  `AnyArith_call_tree =
+     full_call_graph AnyArith_location
+       (fromAList (stubs (:1)
+          (data_to_word_config_has_longdiv_fupd (K F)
+             (data_to_word_config_call_empty_ffi_fupd (K F) ARB))))`;;
 
 let structure_le_def = cake_define
   `structure_le x1 x2 =
