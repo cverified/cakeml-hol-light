@@ -866,7 +866,9 @@ def bound_names(e, cons, defn=False):
       for v, _ in e.stmts:
         if v is not None: out.update(pattern_vars(v, cons, True))
     elif k == 'setabs':
-      out.update(pattern_vars(e.e, cons, True))
+      # {f x | p} binds the arguments of f, not f itself, where f
+      # is a constructor (pegComplete has {TyvarT s | T})
+      out.update(pattern_vars(e.e, cons))
     elif k == 'setabs2':
       # {e | vs | p} binds the variables of the middle part, not
       # the ones of the element

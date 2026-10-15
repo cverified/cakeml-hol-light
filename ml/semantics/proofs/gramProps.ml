@@ -246,7 +246,7 @@ val rank_assum =
 *)
 
 let fringe_lengths_def = cake_define
-  `fringe_lengths G sf = {LENGTH' i | (\G. RTC (derive G)) G sf (MAP
+  `fringe_lengths G sf = {LENGTH i | (\G. RTC (derive G)) G sf (MAP
   grammar_TOK i)}`;;
 
 (* HOL4 ML code, not ported:

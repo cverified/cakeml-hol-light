@@ -11,6 +11,7 @@ needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/ffi/ffi.ml";;
+needs "semantics/gram.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;

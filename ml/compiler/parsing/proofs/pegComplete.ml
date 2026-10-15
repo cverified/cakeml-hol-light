@@ -292,58 +292,58 @@ let nestoppers_def = cake_define
                    ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])`;;
 
 let stoppers_def = cake_define
-  `stoppers nAndFDecls =
-        match  with
-           -> nestoppers DELETE tokens_AndT
-        |  ->
+  `stoppers x1 =
+        match x1 with
+          nAndFDecls -> nestoppers DELETE tokens_AndT
+        | nDconstructor ->
         UNIV DIFF
           ({tokens_StarT,tokens_OfT,tokens_ArrowT,tokens_LparT} UNION
           firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
           nt')) nTyOp] UNION
-                   {TyvarT' s | T})
-        |  ->
+                   {tokens_TyvarT s | T})
+        | nDecl ->
         nestoppers DIFF
           ({tokens_BarT,tokens_StarT,tokens_AndT,tokens_OfT} UNION
-          {TyvarT' s | T})
-        |  ->
+          {tokens_TyvarT s | T})
+        | nDecls ->
         nestoppers DIFF
         ({tokens_BarT,tokens_StarT,tokens_AndT,tokens_SemicolonT
           ,tokens_FunT,tokens_ValT,tokens_DatatypeT,tokens_OfT
           ,tokens_ExceptionT,
           tokens_TypeT,tokens_LocalT,tokens_StructureT} UNION
-            {TyvarT' s | T})
-        |  -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
+            {tokens_TyvarT s | T})
+        | nDType -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp]
-        |  ->
+        | nDtypeCons ->
         UNIV DIFF
           ({tokens_ArrowT,tokens_BarT,tokens_StarT,tokens_OfT
           ,tokens_LparT} UNION firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
-                   {TyvarT' s | T})
-        |  ->
+                   {tokens_TyvarT s | T})
+        | nDtypeDecl ->
         UNIV DIFF
           ({tokens_ArrowT,tokens_BarT,tokens_StarT,tokens_OfT
           ,tokens_LparT} UNION firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
-                   {TyvarT' s | T})
-        |  ->
+                   {tokens_TyvarT s | T})
+        | nDtypeDecls ->
         UNIV DIFF
           ({tokens_AndT,tokens_ArrowT,tokens_BarT,tokens_StarT
-          ,tokens_OfT,tokens_LparT} UNION {TyvarT' s | T} UNION
+          ,tokens_OfT,tokens_LparT} UNION {tokens_TyvarT s | T} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  -> nestoppers
-        |  ->
+        | nE -> nestoppers
+        | nEadd ->
         UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-        |  -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
+        | nEapp -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nEbase]
-        |  ->
-        UNIV DIFF ({AlphaT' (implode "before")} UNION
+        | nEbefore ->
+        UNIV DIFF ({tokens_AlphaT (implode "before")} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -356,7 +356,7 @@ let stoppers_def = cake_define
                      ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-        |  ->
+        | nEcomp ->
         UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -369,10 +369,10 @@ let stoppers_def = cake_define
                      ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-        |  -> nestoppers
-        |  -> nestoppers DELETE tokens_CommaT
-        |  -> nestoppers DELETE tokens_CommaT
-        |  -> UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
+        | nEhandle -> nestoppers
+        | nElist1 -> nestoppers DELETE tokens_CommaT
+        | nElist2 -> nestoppers DELETE tokens_CommaT
+        | nElistop -> UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps] UNION
                               firstSet cmlG [(\nt'. grammar_NT
                                 ((INL:MMLnonT->MMLnonT+num) nt'))
@@ -383,10 +383,10 @@ let stoppers_def = cake_define
                               firstSet cmlG [(\nt'. grammar_NT
                                 ((INL:MMLnonT->MMLnonT+num) nt'))
                                 nEbase])
-        |  ->
+        | nElogicAND ->
         UNIV DIFF
-          ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,AlphaT' (implode
-          "before")} UNION
+          ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,tokens_AlphaT
+          (implode "before")} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -401,10 +401,10 @@ let stoppers_def = cake_define
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  ->
+        | nElogicOR ->
         UNIV DIFF
           ({tokens_AndalsoT,tokens_ColonT,tokens_ArrowT,tokens_OrelseT
-          ,AlphaT' (implode "before")} UNION
+          ,tokens_AlphaT (implode "before")} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -419,12 +419,12 @@ let stoppers_def = cake_define
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  ->
+        | nEmult ->
         UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nMultOps])
-        |  ->
+        | nErel ->
         UNIV DIFF (firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nRelOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -435,10 +435,10 @@ let stoppers_def = cake_define
                      ((INL:MMLnonT->MMLnonT+num) nt')) nAddOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase])
-        |  -> nestoppers DELETE tokens_SemicolonT
-        |  ->
-        UNIV DIFF ({tokens_ColonT,tokens_ArrowT,AlphaT' (implode
-          "before")} UNION
+        | nEseq -> nestoppers DELETE tokens_SemicolonT
+        | nEtyped ->
+        UNIV DIFF ({tokens_ColonT,tokens_ArrowT,tokens_AlphaT
+          (implode "before")} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nCompOps] UNION
                    firstSet cmlG [(\nt'. grammar_NT
@@ -453,99 +453,101 @@ let stoppers_def = cake_define
                      ((INL:MMLnonT->MMLnonT+num) nt')) nEbase] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  -> nestoppers
-        |  -> nestoppers DELETE tokens_AndT
-        |  -> nestoppers DIFF
+        | nFDecl -> nestoppers
+        | nLetDec -> nestoppers DELETE tokens_AndT
+        | nLetDecs -> nestoppers DIFF
           {tokens_AndT,tokens_FunT,tokens_ValT,tokens_SemicolonT}
-        |  -> {}
-        |  ->
+        | nNonETopLevelDecs -> {}
+        | nOptTypEqn ->
         UNIV DIFF ({tokens_ArrowT,tokens_StarT,tokens_EqualsT} UNION
           firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
           nt')) nTyOp])
-        |  ->
+        | nPcons ->
         UNIV DIFF
-          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,SymbolT'
+          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_SymbolT
           (implode "::"),tokens_OpT} UNION
-                   {IntT' i | T} UNION {StringT' s | T} UNION {CharT'
-                     c | T} UNION
+                   {tokens_IntT i | T} UNION {tokens_StringT s | T}
+                     UNION {tokens_CharT c | T} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
-        |  ->
+        | nPas ->
         UNIV DIFF
-          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,SymbolT'
+          ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_SymbolT
           (implode "::"),tokens_AsT,tokens_OpT} UNION
-                   {IntT' i | T} UNION {StringT' s | T} UNION {CharT'
-                     c | T} UNION
+                   {tokens_IntT i | T} UNION {tokens_StringT s | T}
+                     UNION {tokens_CharT c | T} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
-        |  ->
+        | nPConApp ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT}
-          UNION {IntT' i | T} UNION
-                   {StringT' s | T} UNION {CharT' c | T} UNION
+          UNION {tokens_IntT i | T} UNION
+                   {tokens_StringT s | T} UNION {tokens_CharT c | T}
+                     UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
-        |  ->
+        | nPapp ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_OpT}
-          UNION {IntT' i | T} UNION
-                   {StringT' s | T} UNION {CharT' c | T} UNION
+          UNION {tokens_IntT i | T} UNION
+                   {tokens_StringT s | T} UNION {tokens_CharT c | T}
+                     UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
-        |  ->
+        | nPattern ->
         UNIV DIFF
           ({tokens_LparT,tokens_UnderbarT,tokens_LbrackT,tokens_ColonT
           ,tokens_ArrowT,tokens_StarT,tokens_AsT,tokens_OpT} UNION
-                   {AlphaT' s | T} UNION {SymbolT' s | T} UNION
-                     {LongidT' s1 s2 | T} UNION
-                   {IntT' i | T} UNION {StringT' s | T} UNION {CharT'
-                     c | T} UNION
+                   {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
+                     UNION {tokens_LongidT s1 s2 | T} UNION
+                   {tokens_IntT i | T} UNION {tokens_StringT s | T}
+                     UNION {tokens_CharT c | T} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
-        |  ->
+        | nPatternList ->
         UNIV DIFF
           ({tokens_CommaT,tokens_LparT,tokens_UnderbarT,tokens_LbrackT
           ,tokens_ColonT,tokens_ArrowT,tokens_StarT,tokens_AsT,
                     tokens_OpT} UNION
-                   {AlphaT' s | T} UNION {SymbolT' s | T} UNION
-                     {LongidT' s1 s2 | T} UNION
-                   {IntT' i | T} UNION {StringT' s | T} UNION {CharT'
-                     c | T} UNION
+                   {tokens_AlphaT s | T} UNION {tokens_SymbolT s | T}
+                     UNION {tokens_LongidT s1 s2 | T} UNION
+                   {tokens_IntT i | T} UNION {tokens_StringT s | T}
+                     UNION {tokens_CharT c | T} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nV] UNION
                      firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt'))
                      nConstructorName])
-        |  -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
+        | nPbaseList1 -> UNIV DIFF firstSet cmlG [(\nt'. grammar_NT
           ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]
-        |  -> nestoppers
-        |  -> nestoppers
-        |  -> nestoppers
-        |  -> UNIV DIFF ({tokens_StarT} UNION firstSet cmlG [(\nt'.
-          grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  ->
+        | nPE -> nestoppers
+        | nPEs -> nestoppers
+        | nPEsfx -> nestoppers
+        | nPType -> UNIV DIFF ({tokens_StarT} UNION firstSet cmlG
+          [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
+        | nSpecLine ->
         UNIV DIFF
           ({tokens_ArrowT,tokens_AndT,tokens_BarT,tokens_StarT
           ,tokens_OfT,tokens_EqualsT,tokens_LparT} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
-                     {TyvarT' s | T})
-        |  ->
+                     {tokens_TyvarT s | T})
+        | nSpecLineList ->
         UNIV DIFF
           ({tokens_ValT,tokens_DatatypeT,tokens_TypeT,tokens_ExceptionT
           ,tokens_SemicolonT,
@@ -554,35 +556,35 @@ let stoppers_def = cake_define
                       ,tokens_LparT} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
-                     {TyvarT' s | T})
-        |  ->
+                     {tokens_TyvarT s | T})
+        | nTbaseList ->
         UNIV DIFF ({tokens_LparT} UNION firstSet cmlG [(\nt'.
           grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp] UNION
-          {TyvarT' s | T})
-        |  -> {}
-        |  -> UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet
-          cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt'))
-          nTyOp])
-        |  ->
+          {tokens_TyvarT s | T})
+        | nTopLevelDecs -> {}
+        | nType -> UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION
+          firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          nt')) nTyOp])
+        | nTypeAbbrevDec ->
         UNIV DIFF ({tokens_ArrowT,tokens_StarT} UNION firstSet cmlG
           [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  ->
+        | nTypeDec ->
         UNIV DIFF
           ({tokens_AndT,tokens_ArrowT,tokens_StarT,tokens_BarT
-          ,tokens_OfT,tokens_LparT} UNION {TyvarT' s | T} UNION
+          ,tokens_OfT,tokens_LparT} UNION {tokens_TyvarT s | T} UNION
                    firstSet cmlG [(\nt'. grammar_NT
                      ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])
-        |  ->
+        | nTypeList1 ->
         UNIV DIFF ({tokens_CommaT,tokens_ArrowT,tokens_StarT} UNION
           firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
           nt')) nTyOp])
-        |  ->
+        | nTypeList2 ->
         UNIV DIFF ({tokens_CommaT,tokens_ArrowT,tokens_StarT} UNION
           firstSet cmlG [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
           nt')) nTyOp])
-        |  -> {tokens_RparT}
-        |  -> UNIV DELETE tokens_SealT
-        |  -> UNIV`;;
+        | nTyVarList -> {tokens_RparT}
+        | nOptionalSignatureAscription -> UNIV DELETE tokens_SealT
+        | _9 -> UNIV`;;
 
 (* HOL4 ML code, not ported:
 val normlist = REWRITE_TAC [GSYM APPEND_ASSOC, listTheory.APPEND]

@@ -15,6 +15,7 @@ needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
+needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
 
 (* HOL4 overload (expanded in the port):

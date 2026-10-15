@@ -38,7 +38,9 @@ val _ = augment_srw_ss [rewrites [
 let pegsym_to_sym_def = cake_define
   `pegsym_to_sym x1 =
         match x1 with
-          peg_tok P f -> (if f = mktokLf then {TK' t | P t} else {})
+          peg_tok P f -> (if f = mktokLf then
+            {(grammar_TOK:tokens_token->(tokens_token
+            ,MMLnonT)grammar_symbol) t | P t} else {})
         | (peg_nt N f) -> {grammar_NT N}
         | _1 -> {}`;;
 
