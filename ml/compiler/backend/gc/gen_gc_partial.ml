@@ -9,7 +9,6 @@
 
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: words *)
 

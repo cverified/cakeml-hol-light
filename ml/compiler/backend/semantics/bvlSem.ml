@@ -13,7 +13,6 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/comparison.ml";;

@@ -9,7 +9,6 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/export.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
@@ -32,7 +31,6 @@ needs "semantics/ast.ml";;
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/export.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;

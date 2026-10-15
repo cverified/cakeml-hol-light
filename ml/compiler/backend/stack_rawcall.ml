@@ -14,7 +14,6 @@
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "lib/sptree.ml";;
 

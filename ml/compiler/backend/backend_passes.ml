@@ -26,7 +26,6 @@ needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/stack_to_lab.ml";;

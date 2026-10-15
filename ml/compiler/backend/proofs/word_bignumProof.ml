@@ -10,7 +10,6 @@
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;

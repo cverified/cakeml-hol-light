@@ -7,7 +7,6 @@
   Proofs about the namespace datatype.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 

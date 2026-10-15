@@ -15,7 +15,6 @@ needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/export.ml";;
 needs "compiler/backend/labLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
 needs "compiler/backend/proofs/stack_allocProof.ml";;
 needs "compiler/backend/proofs/stack_namesProof.ml";;

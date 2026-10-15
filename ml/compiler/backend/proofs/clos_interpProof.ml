@@ -11,7 +11,6 @@
 
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;

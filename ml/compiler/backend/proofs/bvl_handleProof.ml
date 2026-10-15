@@ -10,7 +10,6 @@
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/db_vars.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvl_constProof.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;

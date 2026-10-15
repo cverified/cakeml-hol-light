@@ -7,7 +7,6 @@
   Types, functions and lemmas that are shared between GC definitions
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: finite_map words *)
 

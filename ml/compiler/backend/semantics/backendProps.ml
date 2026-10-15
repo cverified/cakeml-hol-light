@@ -8,7 +8,6 @@
   about the compiler backend.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "misc/misc.ml";;
 
 let state_cc_def = cake_define

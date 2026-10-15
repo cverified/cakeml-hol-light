@@ -13,7 +13,6 @@
 
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_comp.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: unifProps unifDef walk walkstar

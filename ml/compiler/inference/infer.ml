@@ -8,7 +8,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
 needs "lib/integer_word.ml";;

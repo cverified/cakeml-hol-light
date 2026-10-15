@@ -8,7 +8,6 @@
   be switched to one that includes an oracle.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;

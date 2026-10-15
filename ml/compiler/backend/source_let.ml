@@ -9,7 +9,6 @@
   that sit at the top of Dlet:s into their own Dlet/Dletrec:s.
  *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;

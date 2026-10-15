@@ -10,7 +10,6 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/comparison.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;

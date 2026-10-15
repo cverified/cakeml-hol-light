@@ -8,7 +8,6 @@
   then it is valid w.r.t. the specification grammar.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/grammar.ml";;
 needs "lib/peg.ml";;

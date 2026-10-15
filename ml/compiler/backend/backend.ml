@@ -20,7 +20,6 @@ needs "compiler/backend/flat_to_clos.ml";;
 needs "compiler/backend/jsonLang.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/presLang.ml";;
 needs "compiler/backend/source_to_flat.ml";;
 needs "compiler/backend/source_to_source.ml";;

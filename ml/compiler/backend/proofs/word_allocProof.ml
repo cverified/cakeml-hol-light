@@ -9,7 +9,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/reg_alloc/proofs/linear_scanProof.ml";;
 needs "compiler/backend/reg_alloc/proofs/reg_allocProof.ml";;

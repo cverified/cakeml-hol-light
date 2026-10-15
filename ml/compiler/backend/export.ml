@@ -12,7 +12,6 @@ needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/data_space.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
 needs "misc/misc.ml";;
 

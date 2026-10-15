@@ -8,7 +8,6 @@
 *)
 
 needs "compiler/backend/bvi_let.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
 

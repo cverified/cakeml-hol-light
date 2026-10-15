@@ -16,7 +16,6 @@ needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;

@@ -10,7 +10,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/word_simpProof.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;

@@ -9,7 +9,6 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;

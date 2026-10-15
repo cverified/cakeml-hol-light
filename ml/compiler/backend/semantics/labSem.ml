@@ -11,7 +11,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/export.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;

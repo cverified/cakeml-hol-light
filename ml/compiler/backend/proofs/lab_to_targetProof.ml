@@ -10,7 +10,6 @@
 needs "compiler/backend/export.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/lab_filterProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;

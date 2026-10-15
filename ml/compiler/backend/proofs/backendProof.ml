@@ -17,7 +17,6 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvi_inlineProof.ml";;
 needs "compiler/backend/proofs/bvi_to_dataProof.ml";;
 needs "compiler/backend/proofs/bvl_to_bviProof.ml";;

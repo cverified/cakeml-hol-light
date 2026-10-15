@@ -7,7 +7,6 @@
   Properties of the operational semantics.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;

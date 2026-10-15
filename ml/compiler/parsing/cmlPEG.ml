@@ -9,7 +9,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/grammar.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;

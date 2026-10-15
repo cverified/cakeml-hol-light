@@ -120,14 +120,14 @@ hol4_overload "pmatch" "pattern_semantics_pmatch";;
 hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
 let match_def = cake_define_list
-  [`match refs [] v = SOME MatchFailure`;
-   `match refs ((p,e) :: rows) v =
+  [`pattern_semantics_match refs [] v = SOME MatchFailure`;
+   `pattern_semantics_match refs ((p,e) :: rows) v =
         (match pmatch refs p v with
            PMatchSuccess ->
-             (match match refs rows v with
+             (match pattern_semantics_match refs rows v with
                NONE -> NONE | SOME _6 -> SOME (MatchSuccess e)) |
-                 PMatchFailure -> match refs rows v | PTypeFailure ->
-                 NONE)`];;
+                 PMatchFailure -> pattern_semantics_match refs rows v
+                 | PTypeFailure -> NONE)`];;
 
 (* semantics of output *)
 

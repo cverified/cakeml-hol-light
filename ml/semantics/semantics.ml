@@ -7,7 +7,6 @@
   The top-level semantics of CakeML programs.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;

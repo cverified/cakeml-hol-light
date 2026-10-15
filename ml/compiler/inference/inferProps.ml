@@ -8,7 +8,6 @@
   proofs of the type inferencer.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;

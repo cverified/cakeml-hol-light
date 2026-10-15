@@ -11,7 +11,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_inline.ml";;
 needs "compiler/backend/bvi_let.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvi_inlineProof.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/bvi_tailrecProof.ml";;

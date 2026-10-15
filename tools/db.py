@@ -39,8 +39,16 @@ def load_order():
   return libs + cake
 
 
+# the words that HOL Light's term parser reserves: a constant of
+# the port cannot have one of them for a name
+RESERVED = set(['let', 'in', 'and', 'if', 'then', 'else',
+                'match', 'with', 'function', 'when'])
+
+
 def hl_names():
-  return set(l.strip() for l in open(T + 'hl-names.txt') if l.strip())
+  return RESERVED | set(l.strip()
+                        for l in open(T + 'hl-names.txt')
+                        if l.strip())
 
 
 # the hand written files of the library layer

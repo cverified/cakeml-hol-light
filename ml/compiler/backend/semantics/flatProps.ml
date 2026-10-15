@@ -8,7 +8,6 @@
 *)
 
 needs "compiler/backend/flatLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "semantics/ast.ml";;

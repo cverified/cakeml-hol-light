@@ -10,7 +10,6 @@
   structures, signatures, and between parentheses).
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "misc/misc.ml";;

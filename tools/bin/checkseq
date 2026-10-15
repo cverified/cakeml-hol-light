@@ -32,17 +32,9 @@ for f in "$@"; do
   r=$(printf '%s' "$out" |
       grep -oE '\(?[0-9]+(\.[0-9]+)?(e-[0-9]+)?, *[0-9]+\)?' | tail -1)
   # an error of a file that this one needs was reported when that
-  # file was checked, so only what follows the last such report
-  # belongs to this file
+  # file was checked, so only the errors of this file are kept
   e=$(printf '%s' "$out" |
-      awk -v f="$g" '/Error in included file/ {
-             if (index($0, f) == 0) { b = ""; next } }
-           { b = b $0 "\n" } END { printf "%s", b }' |
-      awk '/^(cake_define [a-zA-Z_0-9]* failed|Exception|Error|Warning [0-9])/ {
-             print;
-             # the toplevel breaks a long exception over lines
-             if ($0 ~ /^Exception:$/) { getline; print; getline; print }
-             exit }' | tr '\n' ' ')
+      python3 -I /home/freek/claude/hol-light/cakeml/tools/cserr.py "$g")
   [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
 done

@@ -10,7 +10,6 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
 needs "lib/spt_closure.ml";;

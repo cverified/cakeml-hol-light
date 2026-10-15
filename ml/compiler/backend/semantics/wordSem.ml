@@ -12,7 +12,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/data_to_word.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/stackLang.ml";;

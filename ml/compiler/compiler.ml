@@ -23,7 +23,6 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/labLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;

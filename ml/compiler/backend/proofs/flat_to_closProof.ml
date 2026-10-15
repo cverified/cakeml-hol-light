@@ -13,7 +13,6 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/clos_interpProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;

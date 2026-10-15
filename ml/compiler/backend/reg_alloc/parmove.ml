@@ -11,7 +11,6 @@
   http://gallium.inria.fr/~xleroy/publi/parallel-move.pdf
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "misc/misc.ml";;
 
 (* Non-deterministic algorithm *)

@@ -9,7 +9,6 @@
   the grammar’s rules finite map.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/grammar.ml";;
 needs "semantics/gram.ml";;
 (* HOL4 ancestors outside the port: NTproperties pred_set *)

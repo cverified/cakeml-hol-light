@@ -10,7 +10,6 @@
   `../semantics/cmlPtreeConversion`.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;

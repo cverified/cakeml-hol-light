@@ -7,7 +7,6 @@
   Properties about stackLang and its semantics
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/stackLang.ml";;

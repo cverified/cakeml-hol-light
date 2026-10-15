@@ -7,7 +7,6 @@
   Proofs of general properties of the asm language
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 

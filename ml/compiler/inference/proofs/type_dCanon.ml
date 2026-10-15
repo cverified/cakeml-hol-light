@@ -8,7 +8,6 @@
   succeeds.
 *)
 
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/inferProps.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;

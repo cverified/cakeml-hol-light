@@ -10,7 +10,6 @@
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/encoders/asm/asm.ml";;

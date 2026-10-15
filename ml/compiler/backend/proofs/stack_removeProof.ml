@@ -9,7 +9,6 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/export.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
