@@ -1289,10 +1289,13 @@ let do_alloc1_def = cake_define
      st_ex_return st))))`;;
 
 let extract_tag_def = cake_define
-  `((extract_tag t = (match t with
-     Fixed m -> m | _15 -> 0))
-   End'
-   Definition extract_color_def:extract_color ta) =
+  `(extract_tag t = (match t with
+     Fixed m -> m | _15 -> 0))`;;
+(* never happens*)
+
+(* return the final coloring as an sptree *)
+let extract_color_def = cake_define
+  `extract_color ta =
    st_ex_bind (st_ex_return (toAList ta)) (\
      taa. st_ex_bind (st_ex_MAP (\(k,v).
        st_ex_bind (node_tag_sub v) (\

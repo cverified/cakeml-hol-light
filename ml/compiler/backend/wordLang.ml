@@ -112,43 +112,42 @@ let every_var_imm_def = cake_define
         | _1 -> T`;;
 
 let every_var_inst_def = cake_define
-  `(every_var_inst P (Const reg w) = P reg) /\
-   (every_var_inst P (Arith (asm_Binop bop r1 r2 ri)) =
-     (P r1 /\ P r2 /\ every_var_imm P ri)) /\
-   (every_var_inst P (Arith (Shift backend_common_word_shift r1 r2
-     ri)) = (P r1 /\ P r2 /\ every_var_imm P ri)) /\
-   (every_var_inst P (Arith (Div r1 r2 r3)) = (P r1 /\ P r2 /\ P r3))
-     /\
-   (every_var_inst P (Arith (asm_AddCarry r1 r2 r3 r4)) = (P r1 /\ P
-     r2 /\ P r3 /\ P r4)) /\
-   (every_var_inst P (Arith (asm_AddOverflow r1 r2 r3 r4)) = (P r1 /\
-     P r2 /\ P r3 /\ P r4)) /\
-   (every_var_inst P (Arith (asm_SubOverflow r1 r2 r3 r4)) = (P r1 /\
-     P r2 /\ P r3 /\ P r4)) /\
-   (every_var_inst P (Arith (asm_LongMul r1 r2 r3 r4)) = (P r1 /\ P
-     r2 /\ P r3 /\ P r4)) /\
-   (every_var_inst P (Arith (asm_LongDiv r1 r2 r3 r4 r5)) = (P r1 /\
-     P r2 /\ P r3 /\ P r4 /\ P r5)) /\
-   (every_var_inst P (asm_Mem Load r (Addr a w)) = (P r /\ P a)) /\
-   (every_var_inst P (asm_Mem Store r (Addr a w)) = (P r /\ P a)) /\
-   (every_var_inst P (asm_Mem asm_Load32 r (Addr a w)) = (P r /\ P
-     a)) /\
-   (every_var_inst P (asm_Mem asm_Store32 r (Addr a w)) = (P r /\ P
-     a)) /\
-   (every_var_inst P (asm_Mem asm_Load8 r (Addr a w)) = (P r /\ P a))
-     /\
-   (every_var_inst P (asm_Mem asm_Store8 r (Addr a w)) = (P r /\ P
-     a)) /\
-   (every_var_inst P (asm_FP (FPLess r d1 d2)) = P r) /\
-   (every_var_inst P (asm_FP (FPLessEqual r d1 d2)) = P r) /\
-   (every_var_inst P (asm_FP (FPEqual r d1 d2)) = P r) /\
-   (every_var_inst P (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) =
-     (if dimindex (:'a) = 64 then P r1 else (P r1 /\ P r2))) /\
-   (every_var_inst P (asm_FP (FPMovFromReg d r1 r2)) =
-     (if dimindex (:'a) = 64 then P r1 else (P r1 /\ P r2))) /\
-   ((every_var_inst P inst = T)
-   End
-   Definition every_name_def:every_name P) <=>
+  `every_var_inst P inst =
+        match inst with
+          wordLang_Const reg w -> P reg
+        | (Arith (asm_Binop bop r1 r2 ri)) ->
+       (P r1 /\ P r2 /\ every_var_imm P ri)
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) -> (P r1
+          /\ P r2 /\ every_var_imm P ri)
+        | (Arith (Div r1 r2 r3)) -> (P r1 /\ P r2 /\ P r3)
+        | (Arith (asm_AddCarry r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P r3
+          /\ P r4)
+        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P
+          r3 /\ P r4)
+        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P
+          r3 /\ P r4)
+        | (Arith (asm_LongMul r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P r3
+          /\ P r4)
+        | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> (P r1 /\ P r2 /\ P
+          r3 /\ P r4 /\ P r5)
+        | (asm_Mem Load r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem Store r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem asm_Load32 r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem asm_Store32 r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem asm_Load8 r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem asm_Store8 r (Addr a w)) -> (P r /\ P a)
+        | (asm_FP (FPLess r d1 d2)) -> P r
+        | (asm_FP (FPLessEqual r d1 d2)) -> P r
+        | (asm_FP (FPEqual r d1 d2)) -> P r
+        | (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) ->
+       (if dimindex (:'a) = 64 then P r1 else (P r1 /\ P r2))
+        | (asm_FP (FPMovFromReg d r1 r2)) ->
+       (if dimindex (:'a) = 64 then P r1 else (P r1 /\ P r2))
+        | inst -> T`;;
+(*catchall*)
+
+let every_name_def = cake_define
+  `every_name P (t:1 spt#1 spt) <=>
    EVERY P (MAP FST (toAList (FST t))) /\
    EVERY P (MAP FST (toAList (SND t)))`;;
 

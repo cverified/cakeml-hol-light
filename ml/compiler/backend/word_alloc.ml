@@ -14,7 +14,6 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -606,106 +605,104 @@ let apply_colour_imm_def = cake_define
         | x -> x`;;
 
 let apply_colour_inst_def = cake_define
-  `(apply_colour_inst f Skip = Skip) /\
-   (apply_colour_inst f (Const reg w) = Const (f reg) w) /\
-   (apply_colour_inst f (Arith (asm_Binop bop r1 r2 ri)) =
-     Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f ri))) /\
-   (apply_colour_inst f (Arith (Shift backend_common_word_shift r1 r2
-     ri)) =
-     Arith (Shift backend_common_word_shift (f r1) (f r2)
-       (apply_colour_imm f ri))) /\
-   (apply_colour_inst f (Arith (Div r1 r2 r3)) =
-     Arith (Div (f r1) (f r2) (f r3))) /\
-   (apply_colour_inst f (Arith (asm_AddCarry r1 r2 r3 r4)) =
-     Arith (asm_AddCarry (f r1) (f r2) (f r3) (f r4))) /\
-   (apply_colour_inst f (Arith (asm_AddOverflow r1 r2 r3 r4)) =
-     Arith (asm_AddOverflow (f r1) (f r2) (f r3) (f r4))) /\
-   (apply_colour_inst f (Arith (asm_SubOverflow r1 r2 r3 r4)) =
-     Arith (asm_SubOverflow (f r1) (f r2) (f r3) (f r4))) /\
-   (apply_colour_inst f (Arith (asm_LongMul r1 r2 r3 r4)) =
-     Arith (asm_LongMul (f r1) (f r2) (f r3) (f r4))) /\
-   (apply_colour_inst f (Arith (asm_LongDiv r1 r2 r3 r4 r5)) =
-     Arith (asm_LongDiv (f r1) (f r2) (f r3) (f r4) (f r5))) /\
-   (apply_colour_inst f (asm_Mem Load r (Addr a w)) =
-     asm_Mem Load (f r) (Addr (f a) w)) /\
-   (apply_colour_inst f (asm_Mem Store r (Addr a w)) =
-     asm_Mem Store (f r) (Addr (f a) w)) /\
-   (apply_colour_inst f (asm_Mem asm_Load32 r (Addr a w)) =
-     asm_Mem asm_Load32 (f r) (Addr (f a) w)) /\
-   (apply_colour_inst f (asm_Mem asm_Store32 r (Addr a w)) =
-     asm_Mem asm_Store32 (f r) (Addr (f a) w)) /\
-   (apply_colour_inst f (asm_Mem asm_Load8 r (Addr a w)) =
-     asm_Mem asm_Load8 (f r) (Addr (f a) w)) /\
-   (apply_colour_inst f (asm_Mem asm_Store8 r (Addr a w)) =
-     asm_Mem asm_Store8 (f r) (Addr (f a) w)) /\
-   (apply_colour_inst f (asm_FP (FPLess r f1 f2)) = asm_FP (FPLess (f
-     r) f1 f2)) /\
-   (apply_colour_inst f (asm_FP (FPLessEqual r f1 f2)) = asm_FP
-     (FPLessEqual (f r) f1 f2)) /\
-   (apply_colour_inst f (asm_FP (FPEqual r f1 f2)) = asm_FP (FPEqual
-     (f r) f1 f2)) /\
-   (apply_colour_inst f (asm_FP (FPMovToReg r1 r2 d)) = asm_FP
-     (FPMovToReg (f r1) (f r2) d)) /\
-   (apply_colour_inst f (asm_FP (FPMovFromReg d r1 r2)) = asm_FP
-     (FPMovFromReg d (f r1) (f r2))) /\
-   ((apply_colour_inst f x = x)
-   End
-   Definition apply_colour_def [simp]:(apply_colour f Skip = Skip))
-     /\
-   (apply_colour f (wordLang_Move pri ls) =
-     wordLang_Move pri (ZIP (MAP (f o FST) ls) (MAP (f o SND) ls)))
-       /\
-   (apply_colour f (Inst i) = Inst (apply_colour_inst f i)) /\
-   (apply_colour f (wordLang_Assign num exp) = wordLang_Assign (f
-     num) (apply_colour_exp f exp)) /\
-   (apply_colour f (Get num store) = Get (f num) store) /\
-   (apply_colour f (Store exp num) = Store (apply_colour_exp f exp)
-     (f num)) /\
-   (apply_colour f (Call ret dest args h) =
-     (let ret = match ret with NONE -> NONE | SOME
-       (vs,cutset,ret_handler,l1,l2) ->
-                           SOME (MAP f vs,apply_nummaps_key f
-                             cutset,apply_colour f ret_handler,l1,l2) in
-     let args = MAP f args in
-     let h = match h with NONE -> NONE | SOME (v,prog,l1,l2) -> SOME
-       (f v,apply_colour f prog,l1,l2) in
-       Call ret dest args h)) /\
-   (apply_colour f (Seq s1 s2) = Seq (apply_colour f s1)
-     (apply_colour f s2)) /\
-   (apply_colour f (wordLang_MustTerminate s1) =
-     wordLang_MustTerminate (apply_colour f s1)) /\
-   (apply_colour f (If cmp r1 ri e2 e3) =
-     If cmp (f r1) (apply_colour_imm f ri) (apply_colour f e2)
-       (apply_colour f e3)) /\
-   (apply_colour f (Install r1 r2 r3 r4 numset) =
-     Install (f r1) (f r2) (f r3) (f r4) (apply_nummaps_key f
-       numset)) /\
-   (apply_colour f (CodeBufferWrite r1 r2) =
-     CodeBufferWrite (f r1) (f r2)) /\
-   (apply_colour f (DataBufferWrite r1 r2) =
-     DataBufferWrite (f r1) (f r2)) /\
-   (apply_colour f (FFI ffi_index ptr1 len1 ptr2 len2 numset) =
-     FFI ffi_index (f ptr1) (f len1) (f ptr2) (f len2)
-       (apply_nummaps_key f numset)) /\
-   (apply_colour f (LocValue r l1) =
-     LocValue (f r) l1) /\
-   (apply_colour f (Alloc num numset) =
-     Alloc (f num) (apply_nummaps_key f numset)) /\
-   (apply_colour f (StoreConsts a b c d ws) =
-     StoreConsts (f a) (f b) (f c) (f d) ws) /\
-   (apply_colour f (Raise num) = Raise (f num)) /\
-   (apply_colour f (Return num1 nums) = Return (f num1) (MAP f nums))
-     /\
-   (apply_colour f Tick = Tick) /\
-   (apply_colour f (Set n exp) = Set n (apply_colour_exp f exp)) /\
-   (apply_colour f (OpCurrHeap b n1 n2) = OpCurrHeap b (f n1) (f n2))
-     /\
-   (apply_colour f (wordLang_ShareInst op v exp) = wordLang_ShareInst
-     op (f v) (apply_colour_exp f exp)) /\
-   (apply_colour f (Loop names body exit_names) =
-     Loop (apply_nummap_key f names) (apply_colour f body)
-       (apply_nummap_key f exit_names)) /\
-   (apply_colour f p = p)`;;
+  `apply_colour_inst f x =
+        match x with
+          Skip -> Skip
+        | (Const reg w) -> Const (f reg) w
+        | (Arith (asm_Binop bop r1 r2 ri)) ->
+       Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f ri))
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
+       Arith (Shift backend_common_word_shift (f r1) (f r2)
+         (apply_colour_imm f ri))
+        | (Arith (Div r1 r2 r3)) ->
+       Arith (Div (f r1) (f r2) (f r3))
+        | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
+       Arith (asm_AddCarry (f r1) (f r2) (f r3) (f r4))
+        | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
+       Arith (asm_AddOverflow (f r1) (f r2) (f r3) (f r4))
+        | (Arith (asm_SubOverflow r1 r2 r3 r4)) ->
+       Arith (asm_SubOverflow (f r1) (f r2) (f r3) (f r4))
+        | (Arith (asm_LongMul r1 r2 r3 r4)) ->
+       Arith (asm_LongMul (f r1) (f r2) (f r3) (f r4))
+        | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
+       Arith (asm_LongDiv (f r1) (f r2) (f r3) (f r4) (f r5))
+        | (asm_Mem Load r (Addr a w)) ->
+       asm_Mem Load (f r) (Addr (f a) w)
+        | (asm_Mem Store r (Addr a w)) ->
+       asm_Mem Store (f r) (Addr (f a) w)
+        | (asm_Mem asm_Load32 r (Addr a w)) ->
+       asm_Mem asm_Load32 (f r) (Addr (f a) w)
+        | (asm_Mem asm_Store32 r (Addr a w)) ->
+       asm_Mem asm_Store32 (f r) (Addr (f a) w)
+        | (asm_Mem asm_Load8 r (Addr a w)) ->
+       asm_Mem asm_Load8 (f r) (Addr (f a) w)
+        | (asm_Mem asm_Store8 r (Addr a w)) ->
+       asm_Mem asm_Store8 (f r) (Addr (f a) w)
+        | (asm_FP (FPLess r f1 f2)) -> asm_FP (FPLess (f r) f1 f2)
+        | (asm_FP (FPLessEqual r f1 f2)) -> asm_FP (FPLessEqual (f r)
+          f1 f2)
+        | (asm_FP (FPEqual r f1 f2)) -> asm_FP (FPEqual (f r) f1 f2)
+        | (asm_FP (FPMovToReg r1 r2 d)) -> asm_FP (FPMovToReg (f r1)
+          (f r2) d)
+        | (asm_FP (FPMovFromReg d r1 r2)) -> asm_FP (FPMovFromReg d
+          (f r1) (f r2))
+        | x -> x`;;
+(*Catchall -- for future instructions to be added*)
+
+let apply_colour_def = cake_define
+  `apply_colour f p =
+        match p with
+          Skip -> Skip
+        | (wordLang_Move pri ls) ->
+       wordLang_Move pri (ZIP (MAP (f o FST) ls) (MAP (f o SND) ls))
+        | (Inst i) -> Inst (apply_colour_inst f i)
+        | (wordLang_Assign num exp) -> wordLang_Assign (f num)
+          (apply_colour_exp f exp)
+        | (Get num store) -> Get (f num) store
+        | (Store exp num) -> Store (apply_colour_exp f exp) (f num)
+        | (Call ret dest args h) ->
+       (let ret = match ret with NONE -> NONE | SOME
+         (vs,cutset,ret_handler,l1,l2) ->
+                             SOME (MAP f vs,apply_nummaps_key f
+                               cutset,apply_colour f ret_handler,l1,l2)
+                               in
+       let args = MAP f args in
+       let h = match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
+         SOME (f v,apply_colour f prog,l1,l2) in
+         Call ret dest args h)
+        | (Seq s1 s2) -> Seq (apply_colour f s1) (apply_colour f s2)
+        | (wordLang_MustTerminate s1) -> wordLang_MustTerminate
+          (apply_colour f s1)
+        | (If cmp r1 ri e2 e3) ->
+       If cmp (f r1) (apply_colour_imm f ri) (apply_colour f e2)
+         (apply_colour f e3)
+        | (Install r1 r2 r3 r4 numset) ->
+       Install (f r1) (f r2) (f r3) (f r4) (apply_nummaps_key f
+         numset)
+        | (CodeBufferWrite r1 r2) ->
+       CodeBufferWrite (f r1) (f r2)
+        | (DataBufferWrite r1 r2) ->
+       DataBufferWrite (f r1) (f r2)
+        | (FFI ffi_index ptr1 len1 ptr2 len2 numset) ->
+       FFI ffi_index (f ptr1) (f len1) (f ptr2) (f len2)
+         (apply_nummaps_key f numset)
+        | (LocValue r l1) ->
+       LocValue (f r) l1
+        | (Alloc num numset) ->
+       Alloc (f num) (apply_nummaps_key f numset)
+        | (StoreConsts a b c d ws) ->
+       StoreConsts (f a) (f b) (f c) (f d) ws
+        | (Raise num) -> Raise (f num)
+        | (Return num1 nums) -> Return (f num1) (MAP f nums)
+        | Tick -> Tick
+        | (Set n exp) -> Set n (apply_colour_exp f exp)
+        | (OpCurrHeap b n1 n2) -> OpCurrHeap b (f n1) (f n2)
+        | (wordLang_ShareInst op v exp) -> wordLang_ShareInst op (f
+          v) (apply_colour_exp f exp)
+        | (Loop names body exit_names) ->
+       Loop (apply_nummap_key f names) (apply_colour f body)
+         (apply_nummap_key f exit_names)
+        | p -> p`;;
 
 
 (* Liveness Analysis*)

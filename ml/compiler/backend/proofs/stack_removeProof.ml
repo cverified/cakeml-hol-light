@@ -54,12 +54,15 @@ let code_rel_def = cake_define
        sptree_lookup n code1 = SOME prog ==>
        reg_bound prog k /\
        sptree_lookup n code2 = SOME (comp jump off k prog)) /\
-     domain code2 = domain code1 UNION ({0,1,2}
-   tokens_End
-   Definition is_SOME_Word_def:(is_SOME_Word (SOME (wordLang_Word w))
-     = T)) /\
-   (is_SOME_Word _1 = F)`;;
+     domain code2 = domain code1 UNION {0,1,2}`;;
 hol4_overload "code_rel" "stack_removeProof_code_rel";;
+(* exact characterization for Install *)
+
+let is_SOME_Word_def = cake_define
+  `is_SOME_Word x1 =
+        match x1 with
+          SOME (wordLang_Word w) -> T
+        | _1 -> F`;;
 
 let the_SOME_Word_def = cake_define
   `(the_SOME_Word (SOME (wordLang_Word w)) = w)`;;

@@ -259,12 +259,15 @@ def parse(path):
   """returns the list of blocks of a Script.sml file"""
   src = open(path, encoding='utf-8').read()
   lines = src.split('\n')
-  # a comment on the line that closes a block (as in "End(* ... *)")
-  # becomes a line of its own, so that the block is recognized
-  lines = [l for line in lines
-             for l in (re.split(r'(?<=^End)(?=\(\*)|(?<=^QED)(?=\(\*)',
-                                line)
-                       if re.match(r'^(End|QED)\(\*', line) else [line])]
+  # a comment on the line that closes a block (as in "End(* ... *)"
+  # or "End (*catchall*)") becomes a line of its own, so that the
+  # block is recognized
+  def split_end(line):
+    m = re.match(r'^(End|QED)\s*\(\*', line)
+    if not m: return [line]
+    return [line[:m.end(1)], line[m.end(1):].lstrip()]
+
+  lines = [l for line in lines for l in split_end(line)]
   # every block records the line it starts at, so that the port can
   # keep the blank lines of the source between the blocks
   cur = [0]
