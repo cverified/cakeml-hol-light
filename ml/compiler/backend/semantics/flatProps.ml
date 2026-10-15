@@ -266,10 +266,10 @@ end
 *)
 
 let store_v_vs_def = cake_define_list
-  [`flatProps_store_v_vs (Varray vs:store_v) = vs`;
-   `flatProps_store_v_vs (Refv v:store_v) = [v]`;
-   `flatProps_store_v_vs (Thunk m v:store_v) = [v]`;
-   `flatProps_store_v_vs (W8array xs:store_v) = []`];;
+  [`flatProps_store_v_vs (Varray vs:'a store_v) = vs`;
+   `flatProps_store_v_vs (Refv v:'a store_v) = [v]`;
+   `flatProps_store_v_vs (Thunk m v:'a store_v) = [v]`;
+   `flatProps_store_v_vs (W8array xs:'a store_v) = []`];;
 hol4_overload "store_v_vs" "flatProps_store_v_vs";;
 
 let result_vs_def = cake_define

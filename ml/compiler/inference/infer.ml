@@ -1021,18 +1021,18 @@ let alist_nub_def = cake_define_list
   FST t)) xs)`];;
 
 let ns_nub_def = cake_define_list
-  [`ns_nub (Bind xs ys:namespace) = Bind (alist_nub xs) (alist_nub
-  (inner_ns_nubs ys))`;
+  [`ns_nub (Bind xs ys:('m,'n,'v)namespace) = Bind (alist_nub xs)
+  (alist_nub (inner_ns_nubs ys))`;
    `inner_ns_nubs [] = []`;
    `inner_ns_nubs ((x,y) :: tl) = (x,ns_nub y) :: inner_ns_nubs tl`];;
 
 let ns_to_alist_def = cake_define_list
-  [`ns_to_alist (Bind [] []:namespace) = []`;
-   `ns_to_alist (Bind [] ((n,x) :: ms):namespace) =
+  [`ns_to_alist (Bind [] []:('m,'n,'v)namespace) = []`;
+   `ns_to_alist (Bind [] ((n,x) :: ms):('m,'n,'v)namespace) =
         MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
           (implode ".")) x,y)) (ns_to_alist x) ++
         ns_to_alist (Bind [] ms)`;
-   `ns_to_alist (Bind ((s,x) :: xs) m:namespace) = (s,x) ::
+   `ns_to_alist (Bind ((s,x) :: xs) m:('m,'n,'v)namespace) = (s,x) ::
   ns_to_alist (Bind xs m)`];;
 
 let inf_env_to_types_string_def = cake_define

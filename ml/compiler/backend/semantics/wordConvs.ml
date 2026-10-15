@@ -63,8 +63,8 @@ let flat_exp_conventions_def = cake_define
 let inst_ok_less_def = cake_define
   `inst_ok_less c x2 =
         match (c,x2) with
-          ((c:'a asm_config),(Arith (Binop b r1 r2 (Imm
-            w)):asm_inst)) -> asm_config_valid_imm
+          ((c:'a asm_config),(Arith (Binop b r1 r2 (Imm w)):'a
+            asm_inst)) -> asm_config_valid_imm
        c (INL b) w
         | (c,(Arith (Shift l r1 r2 (Imm i)))) ->
        (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i < dimindex (:'a))
@@ -135,7 +135,7 @@ let inst_ok_less_def = cake_define
 let distinct_tar_reg_def = cake_define
   `distinct_tar_reg x1 =
         match x1 with
-          (Arith (Binop bop r1 r2 ri):asm_inst) -> ~(ri = Reg r1)
+          (Arith (Binop bop r1 r2 ri):'a asm_inst) -> ~(ri = Reg r1)
         | (Arith (Shift l r1 r2 ri)) -> ~(ri = Reg r1)
         | (Arith (AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\ ~(r1 = r4)
         | (Arith (AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
@@ -148,7 +148,7 @@ let distinct_tar_reg_def = cake_define
 let two_reg_inst_def = cake_define
   `two_reg_inst x1 =
         match x1 with
-          (Arith (Binop bop r1 r2 ri):asm_inst) -> (r1 = r2)
+          (Arith (Binop bop r1 r2 ri):'a asm_inst) -> (r1 = r2)
         | (Arith (Shift l r1 r2 ri)) -> (r1 = r2)
         | (Arith (AddCarry r1 r2 r3 r4)) -> (r1 = r2)
         | (Arith (AddOverflow r1 r2 r3 r4)) -> (r1 = r2)
@@ -159,7 +159,7 @@ let two_reg_inst_def = cake_define
 let every_inst_def = cake_define
   `every_inst P prog =
         match prog with
-          (Inst i:wordLang_prog) -> P i
+          (Inst i:'a wordLang_prog) -> P i
         | (Seq p1 p2) -> (every_inst P p1 /\ every_inst P p2)
         | (Loop names c exit_names) ->
        every_inst P c
@@ -178,7 +178,7 @@ let every_inst_def = cake_define
 let full_inst_ok_less_def = cake_define
   `full_inst_ok_less c prog =
         match prog with
-          (Inst i:wordLang_prog) -> inst_ok_less c i
+          (Inst i:'a wordLang_prog) -> inst_ok_less c i
         | (Seq p1 p2) ->
        (full_inst_ok_less c p1 /\ full_inst_ok_less c p2)
         | (Loop names p exit_names) ->
@@ -208,7 +208,7 @@ let wf_names_def = cake_define
 let wf_cutsets_def = cake_define
   `wf_cutsets x1 =
         match x1 with
-          (Alloc n s:wordLang_prog) -> wf_names s
+          (Alloc n s:'a wordLang_prog) -> wf_names s
         | (Install _9 _10 _11 _12 s) -> wf_names s
         | (Call ret dest args h) ->
        (match ret with
@@ -233,7 +233,7 @@ let wf_cutsets_def = cake_define
 let inst_arg_convention_def = cake_define
   `inst_arg_convention x1 =
         match x1 with
-          (Arith (AddCarry r1 r2 r3 r4):asm_inst) -> r4 = 0
+          (Arith (AddCarry r1 r2 r3 r4):'a asm_inst) -> r4 = 0
         | (Arith (Shift _14 _15 _16 (Reg r))) -> r = 8
         | (Arith (AddOverflow r1 r2 r3 r4)) -> r4 = 0
         | (Arith (SubOverflow r1 r2 r3 r4)) -> r4 = 0
@@ -247,7 +247,7 @@ let inst_arg_convention_def = cake_define
 let call_arg_convention_def = cake_define
   `call_arg_convention p =
         match p with
-          (Inst i:wordLang_prog) ->
+          (Inst i:'a wordLang_prog) ->
        inst_arg_convention i
         | (Return x ys) -> (ys = GENLIST (\x. 2 * (x + 1)) (LENGTH
           ys))
@@ -297,7 +297,7 @@ let post_alloc_conventions_def = cake_define
 let extract_labels_def = cake_define
   `wordConvs_extract_labels x1 =
         match x1 with
-          (Call ret dest args h:wordLang_prog) ->
+          (Call ret dest args h:'a wordLang_prog) ->
        (match ret with
          NONE -> [] | SOME (v,cutset,ret_handler,l1,l2) ->
          (let ret_rest = wordConvs_extract_labels ret_handler in
@@ -321,7 +321,7 @@ hol4_overload "extract_labels" "wordConvs_extract_labels";;
 let get_code_labels_def = cake_define
   `wordConvs_get_code_labels x1 =
         match x1 with
-          (Call r d a h:wordLang_prog) ->
+          (Call r d a h:'a wordLang_prog) ->
        (match d with SOME x -> {x} | _22 -> {}) UNION
        (match r with SOME (_23,_24,x,_25,_26) ->
          wordConvs_get_code_labels x | _27 -> {}) UNION
@@ -343,7 +343,7 @@ hol4_overload "get_code_labels" "wordConvs_get_code_labels";;
 let good_handlers_def = cake_define
   `good_handlers n x2 =
         match x2 with
-          (Call r d a h:wordLang_prog) ->
+          (Call r d a h:'a wordLang_prog) ->
        (match r with
          NONE -> T | SOME (_35,_36,x,_37,_38) -> good_handlers n x /\
        (match h with SOME (_39,x,l1,_40) -> l1 = n /\ good_handlers n

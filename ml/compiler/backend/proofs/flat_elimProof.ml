@@ -122,8 +122,8 @@ let find_sem_prim_res_globals_def = cake_define_list
   [`find_sem_prim_res_globals (Rerr e:(flatSem_v
   list,flatSem_v)semanticPrimitives_result) =
             find_result_globals (SOME e)`;
-   `find_sem_prim_res_globals (Rval e:semanticPrimitives_result) =
-  find_v_globalsL e`];;
+   `find_sem_prim_res_globals (Rval
+  e:('a,'b)semanticPrimitives_result) = find_v_globalsL e`];;
 
 (* HOL4 ML code, not ported:
 val s =  ``s:('c,'ffi) state``

@@ -65,9 +65,9 @@ let is_Label_def = cake_define
 
 let asm_fetch_aux_def = cake_define_list
   [`asm_fetch_aux pos [] = NONE`;
-   `asm_fetch_aux pos ((Section k []:sec) :: xs) = asm_fetch_aux pos
-  xs`;
-   `asm_fetch_aux pos ((Section k (y :: ys):sec) :: xs) =
+   `asm_fetch_aux pos ((Section k []:'a sec) :: xs) = asm_fetch_aux
+  pos xs`;
+   `asm_fetch_aux pos ((Section k (y :: ys):'a sec) :: xs) =
          (if is_Label y then asm_fetch_aux pos ((Section k ys) ::
            xs) else if pos = (0:num) then SOME y else asm_fetch_aux
            (pos - 1) ((Section k ys) :: xs))`];;
@@ -93,8 +93,8 @@ let assert_def = cake_define
 hol4_overload "assert" "labSem_assert";;
 
 let reg_imm_def = cake_define_list
-  [`labSem_reg_imm (Reg r:asm_reg_imm) s = (\r s. ?_regs s r) r s`;
-   `labSem_reg_imm (Imm w:asm_reg_imm) s = Word w`];;
+  [`labSem_reg_imm (Reg r:'a asm_reg_imm) s = (\r s. ?_regs s r) r s`;
+   `labSem_reg_imm (Imm w:'a asm_reg_imm) s = Word w`];;
 hol4_overload "reg_imm" "labSem_reg_imm";;
 
 let binop_upd_def = cake_define_list
@@ -106,21 +106,22 @@ let binop_upd_def = cake_define_list
 hol4_overload "binop_upd" "labSem_binop_upd";;
 
 let arith_upd_def = cake_define_list
-  [`labSem_arith_upd (Binop b r1 r2 (ri:'a asm_reg_imm):asm_arith) s =
+  [`labSem_arith_upd (Binop b r1 r2 (ri:'a asm_reg_imm):'a asm_arith) s
+  =
          (match ((\r s. ?_regs s r) r2 s,reg_imm ri s) with (Word
            w1,Word w2) -> binop_upd r1 b w1 w2 s | (x,_13) -> (if b =
            Or /\ ri = Reg r2 then upd_reg r1 x s else assert F s))`;
-   `labSem_arith_upd (Shift l r1 r2 ri:asm_arith) s =
+   `labSem_arith_upd (Shift l r1 r2 ri:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r2 s,reg_imm ri s) with (Word
            w1,Word w2) ->
              assert (w2n w2 < dimindex (:'a)) (upd_reg r1 (Word
                (word_shift l w1 (w2n w2))) s) | _14 -> assert F s)`;
-   `labSem_arith_upd (Div r1 r2 r3:asm_arith) s =
+   `labSem_arith_upd (Div r1 r2 r3:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r3 s,(\r s. ?_regs s r) r2 s)
            with (Word q,Word w2) ->
            assert (~(q = (n2w 0))) (upd_reg r1 (Word (w2 / q)) s)
              | _15 -> assert F s)`;
-   `labSem_arith_upd (AddCarry r1 r2 r3 r4:asm_arith) s =
+   `labSem_arith_upd (AddCarry r1 r2 r3 r4:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r2 s,(\r s. ?_regs s r) r3 s,(\r
            s. ?_regs s r) r4 s) with (Word w2,Word w3,Word w4) ->
            (let r = w2n w2 + w2n w3 + (if w4 = (n2w 0) then 0 else
@@ -129,14 +130,14 @@ let arith_upd_def = cake_define_list
                else (n2w 0)))
                 (upd_reg r1 (Word (n2w r)) s)) | _16 -> assert F
                   s)`;
-   `labSem_arith_upd (LongMul r1 r2 r3 r4:asm_arith) s =
+   `labSem_arith_upd (LongMul r1 r2 r3 r4:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r3 s,(\r s. ?_regs s r) r4 s)
            with (Word w3,Word w4) ->
            (let r = w2n w3 * w2n w4 in
           upd_reg r2 (Word (n2w r))
            (upd_reg r1 (Word (n2w (r DIV dimword (:'a)))) s)) |
              _17 -> assert F s)`;
-   `labSem_arith_upd (LongDiv r1 r2 r3 r4 r5:asm_arith) s =
+   `labSem_arith_upd (LongDiv r1 r2 r3 r4 r5:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r3 s,(\r s. ?_regs s r) r4 s,(\r
            s. ?_regs s r) r5 s) with (Word w3,Word w4,Word w5) ->
            (let n = w2n w3 * dimword (:'a) + w2n w4 in
@@ -145,14 +146,14 @@ let arith_upd_def = cake_define_list
            assert (~(d = 0) /\ q < dimword (:'a))
              (upd_reg r1 (Word (n2w q)) (upd_reg r2 (Word (n2w (n
                MOD d))) s))) | _18 -> assert F s)`;
-   `labSem_arith_upd (AddOverflow r1 r2 r3 r4:asm_arith) s =
+   `labSem_arith_upd (AddOverflow r1 r2 r3 r4:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r2 s,(\r s. ?_regs s r) r3 s)
            with (Word w2,Word w3) ->
              upd_reg r4 (Word (if ~(w2i (w2 + w3) = w2i w2 + w2i w3)
                then (n2w 1) else (n2w 0)))
                 (upd_reg r1 (Word (w2 + w3)) s) | _19 -> assert F
                   s)`;
-   `labSem_arith_upd (SubOverflow r1 r2 r3 r4:asm_arith) s =
+   `labSem_arith_upd (SubOverflow r1 r2 r3 r4:'a asm_arith) s =
          (match ((\r s. ?_regs s r) r2 s,(\r s. ?_regs s r) r3 s)
            with (Word w2,Word w3) ->
              upd_reg r4 (Word (if ~(w2i (w2 - w3) = w2i w2 - w2i w3)
@@ -252,7 +253,7 @@ hol4_overload "addr" "labSem_addr";;
 let is_Loc_def = cake_define
   `is_Loc x1 =
         match x1 with
-          (Loc _28 _29:asm) -> T
+          (Loc _28 _29:'a asm) -> T
         | _30 -> F`;;
 
 let mem_store_def = cake_define
@@ -314,10 +315,10 @@ hol4_overload "mem_op" "labSem_mem_op";;
 
 let asm_inst_def = cake_define_list
   [`asm_inst Skip s = (s:('a,'c,'ffi)labSem_state)`;
-   `asm_inst (Const r imm:asm_inst) s = upd_reg r (Word imm) s`;
-   `asm_inst (Arith x:asm_inst) s = arith_upd x s`;
-   `asm_inst (Mem m r a:asm_inst) s = mem_op m r a s`;
-   `asm_inst (FP fp:asm_inst) s = fp_upd fp s`];;
+   `asm_inst (Const r imm:'a asm_inst) s = upd_reg r (Word imm) s`;
+   `asm_inst (Arith x:'a asm_inst) s = arith_upd x s`;
+   `asm_inst (Mem m r a:'a asm_inst) s = mem_op m r a s`;
+   `asm_inst (FP fp:'a asm_inst) s = fp_upd fp s`];;
 
 let dec_clock_def = cake_define
   `labSem_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
@@ -328,8 +329,9 @@ let inc_pc_def = cake_define
 
 let asm_code_length_def = cake_define_list
   [`asm_code_length [] = 0`;
-   `asm_code_length ((Section k []:sec) :: xs) = asm_code_length xs`;
-   `asm_code_length ((Section k (y :: ys):sec) :: xs) =
+   `asm_code_length ((Section k []:'a sec) :: xs) = asm_code_length
+  xs`;
+   `asm_code_length ((Section k (y :: ys):'a sec) :: xs) =
          asm_code_length ((Section k ys) :: xs) + (if is_Label y
            then 0 else 1:num)`];;
 
@@ -338,7 +340,7 @@ let lab_to_loc_def = cake_define
 
 let loc_to_pc_def = cake_define_list
   [`loc_to_pc n1 n2 [] = NONE`;
-   `loc_to_pc n1 n2 ((Section k xs:sec) :: ys) =
+   `loc_to_pc n1 n2 ((Section k xs:'a sec) :: ys) =
          (if (k = n1) /\ (n2 = 0) then SOME (0:num) else
            match xs with [] -> loc_to_pc n1 n2 ys | (z :: zs) ->
              (if (?k. z = Label n1 n2 k) /\ ~(n2 = 0) then SOME 0
@@ -365,9 +367,9 @@ let next_label_def = cake_define
 
 let get_lab_after_def = cake_define_list
   [`get_lab_after pos [] = NONE`;
-   `get_lab_after pos ((Section k []:sec) :: xs) = get_lab_after pos
-  xs`;
-   `get_lab_after pos ((Section k (y :: ys):sec) :: xs) =
+   `get_lab_after pos ((Section k []:'a sec) :: xs) = get_lab_after
+  pos xs`;
+   `get_lab_after pos ((Section k (y :: ys):'a sec) :: xs) =
          (if is_Label y then get_lab_after pos ((Section k ys) ::
            xs) else if pos = (0:num) then next_label ((Section k ys)
            :: xs) else get_lab_after (pos - 1) ((Section k ys) ::

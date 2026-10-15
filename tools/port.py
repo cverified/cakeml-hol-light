@@ -367,6 +367,12 @@ class Porter:
                               ['(%s)' % self.typ_ast(a) for a in args])
                      for c, args in cons))
       for ty, cons in parts)
+    # HOL Light gives the type the type variables of the whole
+    # specification, in the order in which it sorts them, so the
+    # port knows how to write the type of a constructor
+    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*", spec)))
+    for ty, _ in parts:
+      self.db.ty_params[(self.thy, self.tnm(ty))] = params
     names = [ocaml_name(self.tnm(ty)) for ty, _ in parts]
     lhs = ','.join('%s_INDUCT' % n for n in names[:1]) + ',' + \
           ','.join('%s_RECURSION' % n for n in names[:1])
@@ -538,7 +544,10 @@ class Porter:
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
     t = max(ts, key=lambda x: rank.get(x, -1))
     for (t2, ty), (cons, _) in self.db.datatypes.items():
-      if t2 == t and n in cons: return self.ctx.tyname(ty)
+      if t2 == t and n in cons:
+        nm = self.ctx.tyname(ty)
+        ps = self.db.ty_params.get((t2, nm))
+        return '(%s)%s' % (','.join(ps), nm) if ps else nm
     return None
 
   def ambiguous_con(self, nm):

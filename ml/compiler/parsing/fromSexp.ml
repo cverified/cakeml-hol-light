@@ -735,10 +735,10 @@ let optsexp_def = cake_define_list
    `optsexp (SOME x) = listsexp [SX_SYM "SOME"; x]`];;
 
 let idsexp_def = cake_define_list
-  [`idsexp (Short n:namespace_id) = listsexp [SX_SYM "Short"; SEXSTR
-  (explode n)]`;
-   `idsexp (Long ns n:namespace_id) = listsexp [SX_SYM "Long"; SEXSTR
-  (explode ns); idsexp n]`];;
+  [`idsexp (Short n:('m,'n)namespace_id) = listsexp [SX_SYM "Short";
+  SEXSTR (explode n)]`;
+   `idsexp (Long ns n:('m,'n)namespace_id) = listsexp [SX_SYM "Long";
+  SEXSTR (explode ns); idsexp n]`];;
 
 let typesexp_def = cake_define_list
   [`typesexp (Atvar s:ast_t) = listsexp [SX_SYM "Atvar"; SEXSTR

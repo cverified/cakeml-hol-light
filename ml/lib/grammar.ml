@@ -28,30 +28,31 @@ let parsetree_INDUCT,parsetree_RECURSION = define_datatype
    (parsetree list)";;
 
 let ptree_loc_def = cake_define_list
-  [`ptree_loc (Lf (_3,l):parsetree) = l`;
-   `ptree_loc (Nd (_4,l) _5:parsetree) = l`];;
+  [`ptree_loc (Lf (_3,l):('a,'b,'locs)parsetree) = l`;
+   `ptree_loc (Nd (_4,l) _5:('a,'b,'locs)parsetree) = l`];;
 
 let ptree_list_loc_def = cake_define
   `ptree_list_loc l = merge_list_locs (MAP ptree_loc l)`;;
 
 let ptree_head_def = cake_define_list
-  [`ptree_head (Lf (tok',l):parsetree) = tok'`;
-   `ptree_head (Nd (nt',l) children:parsetree) = NT nt'`];;
+  [`ptree_head (Lf (tok',l):('a,'b,'locs)parsetree) = tok'`;
+   `ptree_head (Nd (nt',l) children:('a,'b,'locs)parsetree) = NT nt'`];;
 
 let valid_ptree_def = cake_define_list
-  [`valid_ptree G (Lf _6:parsetree) <=> T`;
-   `valid_ptree G (Nd (nt',l) children:parsetree) <=>
+  [`valid_ptree G (Lf _6:('a,'b,'locs)parsetree) <=> T`;
+   `valid_ptree G (Nd (nt',l) children:('a,'b,'locs)parsetree) <=>
         nt' IN FDOM (grammar_rules G) /\ MAP ptree_head children IN
           FAPPLY (grammar_rules G) nt' /\
         (!pt. pt IN set_of_list children ==> valid_ptree G pt)`];;
 
 let real_fringe_def = cake_define_list
-  [`real_fringe (Lf t:parsetree) = [t]`;
-   `real_fringe (Nd n ptl:parsetree) = FLAT (MAP real_fringe ptl)`];;
+  [`real_fringe (Lf t:('a,'b,'locs)parsetree) = [t]`;
+   `real_fringe (Nd n ptl:('a,'b,'locs)parsetree) = FLAT (MAP
+  real_fringe ptl)`];;
 
 let valid_locs_def = cake_define_list
-  [`valid_locs (Lf _7:parsetree) <=> T`;
-   `valid_locs (Nd (_8,l) children:parsetree) <=>
+  [`valid_locs (Lf _7:('a,'b,'locs)parsetree) <=> T`;
+   `valid_locs (Nd (_8,l) children:('a,'b,'locs)parsetree) <=>
          l = merge_list_locs (MAP ptree_loc children) /\
          (!pt. MEM pt children ==> valid_locs pt)`];;
 

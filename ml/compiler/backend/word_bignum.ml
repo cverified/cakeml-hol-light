@@ -578,15 +578,15 @@ let SeqTemp_def = cake_define
   `SeqTemp i r p = Seq (wordLang_Assign i (Lookup (Temp (n2w r)))) p`;;
 
 let SeqTempImm_def = cake_define_list
-  [`SeqTempImm i (Reg r:asm_reg_imm) p = SeqTemp i r p`;
-   `SeqTempImm i (Imm w:asm_reg_imm) p = Seq (wordLang_Assign i
+  [`SeqTempImm i (Reg r:'a asm_reg_imm) p = SeqTemp i r p`;
+   `SeqTempImm i (Imm w:'a asm_reg_imm) p = Seq (wordLang_Assign i
   (Const w)) p`];;
 
 let SeqTempImmNot_def = cake_define_list
-  [`SeqTempImmNot i (Reg r:asm_reg_imm) p =
+  [`SeqTempImmNot i (Reg r:'a asm_reg_imm) p =
       SeqTemp i r (Seq (Assign i (Op Xor [Var i; Const (--(n2w
         0))])) p)`;
-   `SeqTempImmNot i (Imm w:asm_reg_imm) p = Seq (wordLang_Assign i
+   `SeqTempImmNot i (Imm w:'a asm_reg_imm) p = Seq (wordLang_Assign i
   (Const (~w))) p`];;
 
 let SeqIndex_def = cake_define

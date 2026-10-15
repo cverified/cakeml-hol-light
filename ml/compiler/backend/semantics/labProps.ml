@@ -34,7 +34,7 @@ val extract_labels_ind = theorem"extract_labels_ind";
 let labs_of_def = cake_define
   `labs_of x1 =
       match x1 with
-        (LocValue _2 (Lab n1 n2):asm_with_lab) -> {(n1,n2)}
+        (LocValue _2 (Lab n1 n2):'a asm_with_lab) -> {(n1,n2)}
       | (Jump (Lab n1 n2)) -> {(n1,n2)}
       | (JumpCmp _3 _4 _5 (Lab n1 n2)) -> {(n1,n2)}
       | _6 -> {}`;;
@@ -76,9 +76,9 @@ let sec_ends_with_label_def = cake_define
      ~NULL ls /\ is_Label (LAST ls)`;;
 
 let line_length_def = cake_define_list
-  [`line_length (Label k1 k2 l:line) = (if l = 0 then 0 else 1)`;
-   `line_length (Asm b bytes l:line) = LENGTH bytes`;
-   `line_length (LabAsm a w bytes l:line) = LENGTH bytes`];;
+  [`line_length (Label k1 k2 l:'a line) = (if l = 0 then 0 else 1)`;
+   `line_length (Asm b bytes l:'a line) = LENGTH bytes`;
+   `line_length (LabAsm a w bytes l:'a line) = LENGTH bytes`];;
 
 let align_dm_def = cake_define
   `align_dm (s:('a,'c,'ffi)labSem_state) =

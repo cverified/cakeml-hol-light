@@ -57,9 +57,9 @@ let decode_length_def = cake_define
   data_to_word_config_len_size conf)`;;
 
 let word_gc_move_def = cake_define_list
-  [`word_gc_move conf ((Loc l1 l2:word_loc),i,pa,old,m,dm) = (Loc l1
-  l2,i,pa,m,(l2 = 0))`;
-   `word_gc_move conf ((Word w:word_loc),i,pa,old,m,dm) =
+  [`word_gc_move conf ((Loc l1 l2:'a word_loc),i,pa,old,m,dm) = (Loc
+  l1 l2,i,pa,m,(l2 = 0))`;
+   `word_gc_move conf ((Word w:'a word_loc),i,pa,old,m,dm) =
          (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
@@ -79,10 +79,10 @@ let word_gc_move_def = cake_define_list
                  (Word (update_addr conf i w),v,pa1,m1,c))`];;
 
 let word_gen_gc_partial_move_def = cake_define_list
-  [`word_gen_gc_partial_move conf ((Loc l1
-  l2:word_loc),i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))`;
-   `word_gen_gc_partial_move conf ((Word
-  w:word_loc),i,pa,old,m,dm,gs,rs) =
+  [`word_gen_gc_partial_move conf ((Loc l1 l2:'a
+  word_loc),i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))`;
+   `word_gen_gc_partial_move conf ((Word w:'a
+  word_loc),i,pa,old,m,dm,gs,rs) =
        (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
          let header_addr = ptr_to_addr conf old w in
          let tmp = header_addr - old in
@@ -282,9 +282,10 @@ let is_ref_header_def = cake_define
   0b01000))`;;
 
 let word_gen_gc_move_def = cake_define_list
-  [`word_gen_gc_move conf ((Loc l1 l2:word_loc),i,pa,ib,pb,old,m,dm) =
+  [`word_gen_gc_move conf ((Loc l1 l2:'a word_loc),i,pa,ib,pb,old,m,dm)
+  =
          (Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))`;
-   `word_gen_gc_move conf ((Word w:word_loc),i,pa,ib,pb,old,m,dm) =
+   `word_gen_gc_move conf ((Word w:'a word_loc),i,pa,ib,pb,old,m,dm) =
          (if ((n2w 1) && w) = (n2w 0) then (Word w,i,pa,ib,pb,m,T)
            else
            let c = (ptr_to_addr conf old w IN dm) in

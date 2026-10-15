@@ -276,9 +276,9 @@ let op_to_display_def = cake_define
                              thunk_op_to_display t)`;;
 
 let id_to_display_def = cake_define_list
-  [`id_to_display (Short n:namespace_id) =
+  [`id_to_display (Short n:('m,'n)namespace_id) =
       Item NONE (implode "Short") [String n]`;
-   `id_to_display (Long n i:namespace_id) =
+   `id_to_display (Long n i:('m,'n)namespace_id) =
       Item NONE (implode "Long") [String n; id_to_display i]`];;
 
 let ast_t_to_display_def = cake_define_list

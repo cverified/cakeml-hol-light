@@ -15,10 +15,10 @@ needs "lib/integer_word.ml";;
 (* The GC is a copying collector which moves elements *)
 
 let gc_move_def = cake_define_list
-  [`copying_gc_gc_move ((Data d:heap_address),h2,a,n,heap,c,limit) =
-  (Data d,h2,a,n,heap,c)`;
-   `copying_gc_gc_move ((Pointer ptr
-  d:heap_address),h2,a,n,heap,c,limit) =
+  [`copying_gc_gc_move ((Data d:'a heap_address),h2,a,n,heap,c,limit)
+  = (Data d,h2,a,n,heap,c)`;
+   `copying_gc_gc_move ((Pointer ptr d:'a
+  heap_address),h2,a,n,heap,c,limit) =
          (match heap_lookup ptr heap with SOME (DataElement xs l dd)
            ->
              (let c = c /\ l + 1 <= n /\ (a + n = limit) in

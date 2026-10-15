@@ -45,10 +45,11 @@ let dest_result_loc_def = cake_define
     not necessary though, may not be cleaner *)
 let get_locals_def = cake_define_list
   [`get_locals (LN:('a word_loc) spt) = LN`;
-   `get_locals (LS a:spt) = (match (dest_word_loc a) with SOME n ->
-  insert n one LN | NONE -> LN)`;
-   `get_locals (BN t1 t2:spt) = union (get_locals t1) (get_locals t2)`;
-   `get_locals (BS t1 a t2:spt) =
+   `get_locals (LS a:'a spt) = (match (dest_word_loc a) with SOME n
+  -> insert n one LN | NONE -> LN)`;
+   `get_locals (BN t1 t2:'a spt) = union (get_locals t1) (get_locals
+  t2)`;
+   `get_locals (BS t1 a t2:'a spt) =
             (let t = (union (get_locals t1) (get_locals t2)) in
                 match (dest_word_loc a) with SOME n -> insert n
                   one t | NONE -> t)`];;
@@ -69,7 +70,7 @@ let get_num_wordloc_alist_def = cake_define
 
 let get_stack_def = cake_define_list
   [`get_stack [] = (LN:1 spt)`;
-   `get_stack ((StackFrame lsz e0 e _4:stack_frame) :: xs) =
+   `get_stack ((StackFrame lsz e0 e _4:'a stack_frame) :: xs) =
             union (union (get_num_wordloc_alist e0)
               (get_num_wordloc_alist e)) (get_stack xs)`];;
 

@@ -198,7 +198,7 @@ let result_view_def = cake_define
 let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
-          (Word (n2w 0):any_prog) -> Halt Success
+          (Word (n2w 0):'ga any_prog) -> Halt Success
         | (Word _11) -> Halt Resource_limit_hit
         | _12 -> Error`;;
 

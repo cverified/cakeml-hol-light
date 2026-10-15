@@ -276,7 +276,7 @@ let ssa_cc_trans_inst_def = cake_define
 let ssa_cc_trans_exp_def = cake_define
   `ssa_cc_trans_exp t expr =
         match expr with
-          (Var num:wordLang_exp) ->
+          (Var num:'a wordLang_exp) ->
        Var (option_lookup t num)
         | (Load exp) -> Load (ssa_cc_trans_exp t exp)
         | (Op wop ls) ->
@@ -351,7 +351,7 @@ let loop_setup_def = cake_define
 
 let ssa_cc_trans_def = cake_define_list
   [`ssa_cc_trans Skip ssa na lt = (Skip,ssa,na)`;
-   `ssa_cc_trans (Move pri ls:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Move pri ls:'a wordLang_prog) ssa na lt =
         (let ls_1 = MAP FST ls in
         let ls_2 = MAP SND ls in
         let ren_ls2 = MAP (option_lookup ssa) ls_2 in
@@ -360,7 +360,7 @@ let ssa_cc_trans_def = cake_define_list
           FILTER (\(x,y). ~MEM x ls_1) (ZIP ls_2 ren_ls1) in
           (Move pri (ZIP ren_ls1 ren_ls2),force_rename force
             ssa',na'))`;
-   `ssa_cc_trans (StoreConsts a b c d ws:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (StoreConsts a b c d ws:'a wordLang_prog) ssa na lt =
         (let c1 = option_lookup ssa c in
         let d1 = option_lookup ssa d in
         let (d2,ssa',na') = next_var_rename d ssa na in
@@ -369,28 +369,28 @@ let ssa_cc_trans_def = cake_define_list
           (Seq (StoreConsts 0 2 4 6 ws)
                ((Move 1) [(c2,4); (d2,6)])) in
         (prog,ssa'',na''))`;
-   `ssa_cc_trans (Inst i:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Inst i:'a wordLang_prog) ssa na lt =
         (let (i',ssa',na') = ssa_cc_trans_inst i ssa na in
           (i',ssa',na'))`;
-   `ssa_cc_trans (Assign num' exp:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Assign num' exp:'a wordLang_prog) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         let (num',ssa',na') = next_var_rename num' ssa na in
           (Assign num' exp',ssa',na'))`;
-   `ssa_cc_trans (Get num' store:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Get num' store:'a wordLang_prog) ssa na lt =
         (let (num',ssa',na') = next_var_rename num' ssa na in
           (Get num' store,ssa',na'))`;
-   `ssa_cc_trans (Store exp num':wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Store exp num':'a wordLang_prog) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         let num' = option_lookup ssa num' in
           (Store exp' num',ssa,na))`;
-   `ssa_cc_trans (Seq s1 s2:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Seq s1 s2:'a wordLang_prog) ssa na lt =
         (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
         let (s2',ssa'',na'') = ssa_cc_trans s2 ssa' na' lt in
           (Seq s1' s2',ssa'',na''))`;
-   `ssa_cc_trans (MustTerminate s1:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (MustTerminate s1:'a wordLang_prog) ssa na lt =
         (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
           (MustTerminate s1',ssa',na'))`;
-   `ssa_cc_trans (If cmp r1 ri e2 e3:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (If cmp r1 ri e2 e3:'a wordLang_prog) ssa na lt =
         (let r1' = option_lookup ssa r1 in
         let ri' = match ri with Reg r -> Reg (option_lookup ssa r) |
           Imm v -> Imm v in
@@ -401,7 +401,7 @@ let ssa_cc_trans_def = cake_define_list
           fix_inconsistencies prio ssa2 ssa3 na3 in
         (If cmp r1' ri' (Seq e2' e2_cons) (Seq e3'
           e3_cons),ssa_fin,na_fin))`;
-   `ssa_cc_trans (Alloc num' numset:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Alloc num' numset:'a wordLang_prog) ssa na lt =
         (let all_names' = union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
@@ -416,29 +416,29 @@ let ssa_cc_trans_def = cake_define_list
                    (Seq ((Move 1) [(2,num')])
                    (Seq (Alloc 2 stack_set) (ret_mov)))) in
         (prog,ssa'',na''))`;
-   `ssa_cc_trans (Raise num':wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Raise num':'a wordLang_prog) ssa na lt =
         (let num' = option_lookup ssa num' in
         let mov = (Move 1) [(2,num')] in
         (Seq mov (Raise 2),ssa,na))`;
-   `ssa_cc_trans (OpCurrHeap b dst src:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (OpCurrHeap b dst src:'a wordLang_prog) ssa na lt =
         (let src' = option_lookup ssa src in
         let (dst',ssa',na') = next_var_rename dst ssa na in
           (OpCurrHeap b dst' src',ssa',na'))`;
-   `ssa_cc_trans (Return num' nums:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Return num' nums:'a wordLang_prog) ssa na lt =
         (let num' = option_lookup ssa num' in
         let nums' = MAP (option_lookup ssa) nums in
         let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
         let mov = Move 0 (ZIP rets nums') in
         (Seq mov (Return num' rets),ssa,na))`;
    `ssa_cc_trans Tick ssa na lt = (Tick,ssa,na)`;
-   `ssa_cc_trans (Set n exp:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Set n exp:'a wordLang_prog) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         (Set n exp',ssa,na))`;
-   `ssa_cc_trans (LocValue r l1:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (LocValue r l1:'a wordLang_prog) ssa na lt =
         (let (r',ssa',na') = next_var_rename r ssa na in
           (LocValue r' l1,ssa',na'))`;
-   `ssa_cc_trans (Install ptr len dptr dlen numset:wordLang_prog) ssa na
-  lt =
+   `ssa_cc_trans (Install ptr len dptr dlen numset:'a wordLang_prog) ssa
+  na lt =
         (let all_names' = union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
@@ -459,16 +459,16 @@ let ssa_cc_trans_def = cake_define_list
                    (Seq (Install 2 4 dptr' dlen' stack_set)
                    (Seq ((Move 1) [(ptr'',2)]) ret_mov)))) in
         (prog,ssa''',na'''))`;
-   `ssa_cc_trans (CodeBufferWrite r1 r2:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (CodeBufferWrite r1 r2:'a wordLang_prog) ssa na lt =
         (let r1' = option_lookup ssa r1 in
         let r2' = option_lookup ssa r2 in
         (CodeBufferWrite r1' r2',ssa,na))`;
-   `ssa_cc_trans (DataBufferWrite r1 r2:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (DataBufferWrite r1 r2:'a wordLang_prog) ssa na lt =
         (let r1' = option_lookup ssa r1 in
         let r2' = option_lookup ssa r2 in
         (DataBufferWrite r1' r2',ssa,na))`;
-   `ssa_cc_trans (FFI ffi_index ptr1 len1 ptr2 len2
-  numset:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (FFI ffi_index ptr1 len1 ptr2 len2 numset:'a
+  wordLang_prog) ssa na lt =
         (let all_names' = union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
@@ -488,14 +488,14 @@ let ssa_cc_trans_def = cake_define_list
                    (Seq (FFI ffi_index 2 4 6 8 stack_set)
                      (ret_mov)))) in
         (prog,ssa'',na''))`;
-   `ssa_cc_trans (Call NONE dest args h:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Call NONE dest args h:'a wordLang_prog) ssa na lt =
         (let names = MAP (option_lookup ssa) args in
         let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
         let move_args = ((Move 1) (ZIP conv_args names)) in
         let prog = Seq move_args (Call NONE dest conv_args h) in
           (prog,ssa,na))`;
    `ssa_cc_trans (Call (SOME (ret,numset,ret_handler,l1,l2)) dest args
-  h:wordLang_prog) ssa na lt =
+  h:'a wordLang_prog) ssa na lt =
         (let all_names' = union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
         let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
@@ -541,14 +541,15 @@ let ssa_cc_trans_def = cake_define_list
                    dest conv_args (SOME
                      (2,cons_exc_handler,l1',l2'))))) in
             (prog,ssa_fin,na_fin))))`;
-   `ssa_cc_trans (ShareInst op v exp:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (ShareInst op v exp:'a wordLang_prog) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
           if op = Store \/ op = Store8 \/ op = Store16 \/ op =
             Store32 then
             (ShareInst op (option_lookup ssa v) exp',ssa,na) else
             let (v',ssa',na') = next_var_rename v ssa na in
               (ShareInst op v' exp',ssa',na'))`;
-   `ssa_cc_trans (Loop names body exit_names:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Loop names body exit_names:'a wordLang_prog) ssa na lt
+  =
         (let (setup_prog,ssa_refreshed,na_refreshed) =
           loop_setup names exit_names ssa na in
         let ssa_names = apply_nummap_key (option_lookup
@@ -564,14 +565,14 @@ let ssa_cc_trans_def = cake_define_list
           body' back_moves in
         (Seq setup_prog (Loop ssa_names body_final ssa_exit),
          inter ssa_refreshed exit_names,na'))`;
-   `ssa_cc_trans (Break n:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Break n:'a wordLang_prog) ssa na lt =
         (match oEL n lt with
           NONE -> (Break n,ssa,na) | SOME (tgt_ssa,names,exit_names)
             ->
             (let moves = ssa_reconcile ssa tgt_ssa exit_names in
             ((if moves = Skip then Break n else Seq moves (Break
               n)),ssa,na)))`;
-   `ssa_cc_trans (Continue n:wordLang_prog) ssa na lt =
+   `ssa_cc_trans (Continue n:'a wordLang_prog) ssa na lt =
         (match oEL n lt with
           NONE -> (Continue n,ssa,na) | SOME
             (tgt_ssa,names,exit_names) ->
@@ -584,7 +585,7 @@ let ssa_cc_trans_def = cake_define_list
 let apply_colour_exp_def = cake_define
   `apply_colour_exp f expr =
         match expr with
-          (Var num:wordLang_exp) -> Var (f num)
+          (Var num:'a wordLang_exp) -> Var (f num)
         | (Load exp) -> Load (apply_colour_exp f exp)
         | (Op wop ls) -> Op wop (MAP (apply_colour_exp f) ls)
         | (Shift sh exp nexp) -> Shift sh (apply_colour_exp f exp)
@@ -705,7 +706,7 @@ let apply_colour_inst_def = cake_define
 let get_writes_inst_def = cake_define
   `get_writes_inst inst =
         match inst with
-          (Const reg w:wordLang_exp) -> insert reg one LN
+          (Const reg w:'a wordLang_exp) -> insert reg one LN
         | (Arith (Binop bop r1 r2 ri)) -> insert r1 one LN
         | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
           insert r1 one LN
@@ -786,7 +787,7 @@ let big_union_def = cake_define
 let get_live_exp_def = cake_define
   `get_live_exp expr =
         match expr with
-          (Var num:wordLang_exp) -> insert num one LN
+          (Var num:'a wordLang_exp) -> insert num one LN
         | (Load exp) -> get_live_exp exp
         | (Op wop ls) ->
        big_union (MAP get_live_exp ls)
@@ -1100,7 +1101,7 @@ let get_delta_inst_def = cake_define
 let get_reads_exp_def = cake_define
   `get_reads_exp expr =
         match expr with
-          (Var num:wordLang_exp) -> [num]
+          (Var num:'a wordLang_exp) -> [num]
         | (Load exp) -> get_reads_exp exp
         | (Op wop ls) ->
          FLAT (MAP get_reads_exp ls)
@@ -1110,66 +1111,66 @@ let get_reads_exp_def = cake_define
 
 let get_clash_tree_def = cake_define_list
   [`get_clash_tree Skip lt = Delta [] []`;
-   `get_clash_tree (Move pri ls:wordLang_prog) lt =
+   `get_clash_tree (Move pri ls:'a wordLang_prog) lt =
         Delta (MAP FST ls) (MAP SND ls)`;
-   `get_clash_tree (Inst i:wordLang_prog) lt = get_delta_inst i`;
-   `get_clash_tree (Assign num' exp:wordLang_prog) lt = Delta [num']
-  (get_reads_exp exp)`;
-   `get_clash_tree (Get num' store:wordLang_prog) lt = Delta [num']
-  []`;
-   `get_clash_tree (Store exp num':wordLang_prog) lt = Delta [] (num'
-  :: get_reads_exp exp)`;
-   `get_clash_tree (Seq s1 s2:wordLang_prog) lt = Seq (get_clash_tree
-  s1 lt) (get_clash_tree s2 lt)`;
-   `get_clash_tree (If cmp r1 ri e2 e3:wordLang_prog) lt =
+   `get_clash_tree (Inst i:'a wordLang_prog) lt = get_delta_inst i`;
+   `get_clash_tree (Assign num' exp:'a wordLang_prog) lt = Delta
+  [num'] (get_reads_exp exp)`;
+   `get_clash_tree (Get num' store:'a wordLang_prog) lt = Delta
+  [num'] []`;
+   `get_clash_tree (Store exp num':'a wordLang_prog) lt = Delta []
+  (num' :: get_reads_exp exp)`;
+   `get_clash_tree (Seq s1 s2:'a wordLang_prog) lt = Seq
+  (get_clash_tree s1 lt) (get_clash_tree s2 lt)`;
+   `get_clash_tree (If cmp r1 ri e2 e3:'a wordLang_prog) lt =
         (let e2t = get_clash_tree e2 lt in
         let e3t = get_clash_tree e3 lt in
         match ri with
           Reg r2 -> Seq (Delta [] [r1; r2]) (Branch NONE e2t e3t)
             | _29 -> Seq (Delta [] [r1]) (Branch NONE e2t e3t))`;
-   `get_clash_tree (MustTerminate s:wordLang_prog) lt =
+   `get_clash_tree (MustTerminate s:'a wordLang_prog) lt =
         get_clash_tree s lt`;
-   `get_clash_tree (Alloc num' numset:wordLang_prog) lt =
+   `get_clash_tree (Alloc num' numset:'a wordLang_prog) lt =
         Seq (Delta [] [num']) (Set (union (FST numset) (SND
           numset)))`;
-   `get_clash_tree (Install r1 r2 r3 r4 numset:wordLang_prog) lt =
+   `get_clash_tree (Install r1 r2 r3 r4 numset:'a wordLang_prog) lt =
         Seq (Delta [] [r4; r3; r2; r1]) (Seq (Set (union (FST
           numset) (SND numset))) (Delta [r1] []))`;
-   `get_clash_tree (CodeBufferWrite r1 r2:wordLang_prog) lt =
+   `get_clash_tree (CodeBufferWrite r1 r2:'a wordLang_prog) lt =
         Delta [] [r2; r1]`;
-   `get_clash_tree (DataBufferWrite r1 r2:wordLang_prog) lt =
+   `get_clash_tree (DataBufferWrite r1 r2:'a wordLang_prog) lt =
         Delta [] [r2; r1]`;
-   `get_clash_tree (FFI ffi_index ptr1 len1 ptr2 len2
-  numset:wordLang_prog) lt =
+   `get_clash_tree (FFI ffi_index ptr1 len1 ptr2 len2 numset:'a
+  wordLang_prog) lt =
         Seq (Delta [] [ptr1; len1; ptr2; len2]) (Set (union (FST
           numset) (SND numset)))`;
-   `get_clash_tree (Raise num':wordLang_prog) lt = Delta [] [num']`;
-   `get_clash_tree (Return num1 nums:wordLang_prog) lt = Delta []
+   `get_clash_tree (Raise num':'a wordLang_prog) lt = Delta [] [num']`;
+   `get_clash_tree (Return num1 nums:'a wordLang_prog) lt = Delta []
   (num1 :: nums)`;
    `get_clash_tree Tick lt = Delta [] []`;
-   `get_clash_tree (LocValue r l1:wordLang_prog) lt = Delta [r] []`;
-   `get_clash_tree (Set n exp:wordLang_prog) lt = Delta []
+   `get_clash_tree (LocValue r l1:'a wordLang_prog) lt = Delta [r] []`;
+   `get_clash_tree (Set n exp:'a wordLang_prog) lt = Delta []
   (get_reads_exp exp)`;
-   `get_clash_tree (OpCurrHeap b dst src:wordLang_prog) lt = Delta
+   `get_clash_tree (OpCurrHeap b dst src:'a wordLang_prog) lt = Delta
   [dst] [src]`;
-   `get_clash_tree (StoreConsts a b c d ws:wordLang_prog) lt = Delta
-  [a; b; c; d] [c; d]`;
-   `get_clash_tree (ShareInst op v exp:wordLang_prog) lt = (if op =
-  Store \/ op = Store8 \/ op = Store16 \/ op = Store32 then Delta []
-  (v :: get_reads_exp exp) else Delta [v] (get_reads_exp exp))`;
-   `get_clash_tree (Loop names body exit_names:wordLang_prog) lt =
+   `get_clash_tree (StoreConsts a b c d ws:'a wordLang_prog) lt =
+  Delta [a; b; c; d] [c; d]`;
+   `get_clash_tree (ShareInst op v exp:'a wordLang_prog) lt = (if op
+  = Store \/ op = Store8 \/ op = Store16 \/ op = Store32 then Delta
+  [] (v :: get_reads_exp exp) else Delta [v] (get_reads_exp exp))`;
+   `get_clash_tree (Loop names body exit_names:'a wordLang_prog) lt =
         Seq (Set names)
           (Seq (Set exit_names)
             (Seq (get_clash_tree body ((names,exit_names) :: lt))
               (Set names)))`;
-   `get_clash_tree (Break n:wordLang_prog) lt =
+   `get_clash_tree (Break n:'a wordLang_prog) lt =
         (match oEL n lt with
           NONE -> Set LN | SOME (names,exit_names) -> Set
             exit_names)`;
-   `get_clash_tree (Continue n:wordLang_prog) lt =
+   `get_clash_tree (Continue n:'a wordLang_prog) lt =
         (match oEL n lt with
           NONE -> Set LN | SOME (names,exit_names) -> Set names)`;
-   `get_clash_tree (Call ret dest args h:wordLang_prog) lt =
+   `get_clash_tree (Call ret dest args h:'a wordLang_prog) lt =
         (let args_set = numset_list_insert args LN in
         match ret with
           NONE -> Set args_set | SOME

@@ -25,13 +25,13 @@ let ffi_offset_def = cake_define
 (* basic assemble function *)
 
 let lab_inst_def = cake_define_list
-  [`lab_inst w (Jump _1:asm_with_lab) = Jump w`;
-   `lab_inst w (JumpCmp c r ri _2:asm_with_lab) = JumpCmp c r ri w`;
-   `lab_inst w (Call _3:asm_with_lab) = Call w`;
-   `lab_inst w (LocValue r _4:asm_with_lab) = Loc r (w:'a word)`;
+  [`lab_inst w (Jump _1:'a asm_with_lab) = Jump w`;
+   `lab_inst w (JumpCmp c r ri _2:'a asm_with_lab) = JumpCmp c r ri w`;
+   `lab_inst w (Call _3:'a asm_with_lab) = Call w`;
+   `lab_inst w (LocValue r _4:'a asm_with_lab) = Loc r (w:'a word)`;
    `lab_inst w Halt = Jump w`;
    `lab_inst w Install = Jump w`;
-   `lab_inst w (CallFFI n:asm_with_lab) = Jump w`];;
+   `lab_inst w (CallFFI n:'a asm_with_lab) = Jump w`];;
 
 let cbw_to_asm_def = cake_define
   `cbw_to_asm a =
@@ -41,11 +41,11 @@ let cbw_to_asm_def = cake_define
 
 
 let enc_line_def = cake_define_list
-  [`enc_line enc skip_len (Label n1 n2 n3:line) = Label n1 n2
+  [`enc_line enc skip_len (Label n1 n2 n3:'a line) = Label n1 n2
   skip_len`;
-   `enc_line enc skip_len (Asm a _5 _6:line) =
+   `enc_line enc skip_len (Asm a _5 _6:'a line) =
          (let bs = enc (cbw_to_asm a) in Asm a bs (LENGTH bs))`;
-   `enc_line enc skip_len (LabAsm l _7 _8 _9:line) =
+   `enc_line enc skip_len (LabAsm l _7 _8 _9:'a line) =
          (let bs = enc (lab_inst (n2w 0) l) in
            LabAsm l (n2w 0) bs (LENGTH bs))`];;
 
@@ -62,19 +62,19 @@ let enc_sec_list_def = cake_define
 
 let section_labels_def = cake_define_list
   [`section_labels pos [] labs = (pos,labs)`;
-   `section_labels pos ((Label _10 l2 len:line) :: xs) labs =
+   `section_labels pos ((Label _10 l2 len:'a line) :: xs) labs =
          (if l2 = 0 then
            section_labels (pos + len) xs labs else
            section_labels (pos + len) xs ((l2,pos + len) ::
              labs))`;
-   `section_labels pos ((Asm _11 _12 len:line) :: xs) labs =
+   `section_labels pos ((Asm _11 _12 len:'a line) :: xs) labs =
          section_labels (pos + len) xs labs`;
-   `section_labels pos ((LabAsm _13 _14 _15 len:line) :: xs) labs =
+   `section_labels pos ((LabAsm _13 _14 _15 len:'a line) :: xs) labs =
          section_labels (pos + len) xs labs`];;
 
 let compute_labels_alt_def = cake_define_list
   [`compute_labels_alt pos [] labs = labs`;
-   `compute_labels_alt pos ((Section k lines:sec) :: rest) labs =
+   `compute_labels_alt pos ((Section k lines:'a sec) :: rest) labs =
         (let (new_pos,sec_labs) = section_labels pos lines [] in
         compute_labels_alt new_pos rest
           (insert k (fromAList ((0,pos) :: sec_labs)) labs))`];;
@@ -88,7 +88,7 @@ let find_pos_def = cake_define
 let get_label_def = cake_define
   `get_label x1 =
         match x1 with
-          (Jump l:asm_with_lab) -> l
+          (Jump l:'a asm_with_lab) -> l
         | (JumpCmp c r ri l) -> l
         | (Call l) -> l
         | (LocValue r l) -> l
@@ -118,16 +118,16 @@ let get_jump_offset_def = cake_define
 let enc_lines_again_def = cake_define_list
   [`enc_lines_again labs ffis pos enc [] (acc,ok) = (REVERSE
   acc,pos,(ok:bool))`;
-   `enc_lines_again labs ffis pos enc ((Label k1 k2 l:line) :: xs)
+   `enc_lines_again labs ffis pos enc ((Label k1 k2 l:'a line) :: xs)
   (acc,ok) =
          enc_lines_again labs ffis (pos + l) enc xs ((Label k1 k2
            l) :: acc,ok)`;
-   `enc_lines_again labs ffis pos enc ((Asm x1 x2 l:line) :: xs)
+   `enc_lines_again labs ffis pos enc ((Asm x1 x2 l:'a line) :: xs)
   (acc,ok) =
          enc_lines_again labs ffis (pos + l) enc xs ((Asm x1 x2
            l) :: acc,ok)`;
-   `enc_lines_again labs ffis pos enc ((LabAsm a w bytes l:line) :: xs)
-  (acc,ok) =
+   `enc_lines_again labs ffis pos enc ((LabAsm a w bytes l:'a line) ::
+  xs) (acc,ok) =
          (let w1 = get_jump_offset a ffis labs pos in
            if w = w1 then
              enc_lines_again labs ffis (pos + l) enc xs ((LabAsm a w
@@ -139,7 +139,8 @@ let enc_lines_again_def = cake_define_list
 
 let enc_secs_again_def = cake_define_list
   [`enc_secs_again pos labs ffis enc [] = ([],T)`;
-   `enc_secs_again pos labs ffis enc ((Section s lines:sec) :: rest) =
+   `enc_secs_again pos labs ffis enc ((Section s lines:'a sec) :: rest)
+  =
          (let (lines1,pos1,ok) = enc_lines_again labs ffis pos enc
            lines ([],T) in
          let (rest1,ok1) = enc_secs_again pos1 labs ffis enc rest in
@@ -149,19 +150,19 @@ let enc_secs_again_def = cake_define_list
 
 let lines_upd_lab_len_def = cake_define_list
   [`lines_upd_lab_len pos [] acc = (REVERSE acc,pos)`;
-   `lines_upd_lab_len pos ((Label k1 k2 l:line) :: xs) acc =
+   `lines_upd_lab_len pos ((Label k1 k2 l:'a line) :: xs) acc =
          (let l1 = if EVEN pos then 0 else 1 in
            lines_upd_lab_len (pos + l1) xs ((Label k1 k2 l1 ::
              acc)))`;
-   `lines_upd_lab_len pos ((Asm x1 x2 l:line) :: xs) acc =
+   `lines_upd_lab_len pos ((Asm x1 x2 l:'a line) :: xs) acc =
          lines_upd_lab_len (pos + l) xs ((Asm x1 x2 l) :: acc)`;
-   `lines_upd_lab_len pos ((LabAsm a w bytes l:line) :: xs) acc =
+   `lines_upd_lab_len pos ((LabAsm a w bytes l:'a line) :: xs) acc =
          lines_upd_lab_len (pos + l) xs ((LabAsm a w bytes l) ::
            acc)`];;
 
 let upd_lab_len_def = cake_define_list
   [`upd_lab_len pos [] = []`;
-   `upd_lab_len pos ((Section s lines:sec) :: rest) =
+   `upd_lab_len pos ((Section s lines:'a sec) :: rest) =
          (let (lines1,pos1) = lines_upd_lab_len pos lines [] in
          let rest1 = upd_lab_len pos1 rest in
            (Section s lines1) :: rest1)`];;
@@ -201,41 +202,42 @@ let pad_bytes_def = cake_define
 
 let add_nop_def = cake_define_list
   [`add_nop nop [] = []`;
-   `add_nop nop ((Label l1 l2 len:line) :: xs) =
+   `add_nop nop ((Label l1 l2 len:'a line) :: xs) =
         (Label l1 l2 len) :: add_nop nop xs`;
-   `add_nop nop ((Asm x bytes len:line) :: xs) =
+   `add_nop nop ((Asm x bytes len:'a line) :: xs) =
         Asm x (bytes ++ nop) (len + 1) :: xs`;
-   `add_nop nop ((LabAsm y w bytes len:line) :: xs) =
+   `add_nop nop ((LabAsm y w bytes len:'a line) :: xs) =
         LabAsm y w (bytes ++ nop) (len + 1) :: xs`];;
 
 let pad_section_def = cake_define_list
   [`pad_section nop [] aux = REVERSE aux`;
-   `pad_section nop ((Label l1 l2 len:line) :: xs) aux =
+   `pad_section nop ((Label l1 l2 len:'a line) :: xs) aux =
          pad_section nop xs ((Label l1 l2 0) ::
          (if len = 0 then aux else add_nop nop aux))`;
-   `pad_section nop ((Asm x bytes len:line) :: xs) aux =
+   `pad_section nop ((Asm x bytes len:'a line) :: xs) aux =
          pad_section nop xs (Asm x (pad_bytes bytes len nop) len
            :: aux)`;
-   `pad_section nop ((LabAsm y w bytes len:line) :: xs) aux =
+   `pad_section nop ((LabAsm y w bytes len:'a line) :: xs) aux =
          pad_section nop xs (LabAsm y w (pad_bytes bytes len nop)
            len :: aux)`];;
 
 let pad_code_def = cake_define_list
   [`pad_code nop [] = []`;
-   `pad_code nop ((Section n xs:sec) :: ys) =
+   `pad_code nop ((Section n xs:'a sec) :: ys) =
       Section n (pad_section nop xs []) :: pad_code nop ys`];;
 
 let sec_length_def = cake_define_list
   [`sec_length [] k = k`;
-   `sec_length ((Label _19 _20 l:line) :: xs) k = sec_length xs (k +
+   `sec_length ((Label _19 _20 l:'a line) :: xs) k = sec_length xs (k
+  + l)`;
+   `sec_length ((Asm x1 x2 l:'a line) :: xs) k = sec_length xs (k +
   l)`;
-   `sec_length ((Asm x1 x2 l:line) :: xs) k = sec_length xs (k + l)`;
-   `sec_length ((LabAsm a w bytes l:line) :: xs) k = sec_length xs (k
-  + l)`];;
+   `sec_length ((LabAsm a w bytes l:'a line) :: xs) k = sec_length xs
+  (k + l)`];;
 
 let get_symbols_def = cake_define_list
   [`get_symbols pos [] = []`;
-   `get_symbols pos ((Section k l:sec) :: secs) =
+   `get_symbols pos ((Section k l:'a sec) :: secs) =
         (let len = sec_length l 0 in (k,pos,len) :: get_symbols
           (pos + len) secs)`];;
 
@@ -303,14 +305,14 @@ let remove_labels_def = cake_define
 (* code extraction *)
 
 let line_bytes_def = cake_define_list
-  [`line_bytes (Label _32 _33 _34:line) = []`;
-   `line_bytes (Asm _35 bytes _36:line) = bytes`;
-   `line_bytes (LabAsm _37 _38 bytes _39:line) = bytes`];;
+  [`line_bytes (Label _32 _33 _34:'a line) = []`;
+   `line_bytes (Asm _35 bytes _36:'a line) = bytes`;
+   `line_bytes (LabAsm _37 _38 bytes _39:'a line) = bytes`];;
 
 let prog_to_bytes_def = cake_define_list
   [`prog_to_bytes [] = []`;
-   `prog_to_bytes ((Section k []:sec) :: xs) = prog_to_bytes xs`;
-   `prog_to_bytes ((Section k (y :: ys):sec) :: xs) =
+   `prog_to_bytes ((Section k []:'a sec) :: xs) = prog_to_bytes xs`;
+   `prog_to_bytes ((Section k (y :: ys):'a sec) :: xs) =
          line_bytes y ++ prog_to_bytes ((Section k ys) :: xs)`];;
 
 (* HOL4 ML code, not ported:
@@ -342,9 +344,9 @@ let list_add_if_fresh_def = cake_define_list
 
 let find_ffi_names_def = cake_define_list
   [`find_ffi_names [] = []`;
-   `find_ffi_names ((Section k []:sec) :: rest) =
+   `find_ffi_names ((Section k []:'a sec) :: rest) =
          find_ffi_names rest`;
-   `find_ffi_names ((Section k (x :: xs):sec) :: rest) =
+   `find_ffi_names ((Section k (x :: xs):'a sec) :: rest) =
        (match x with LabAsm (CallFFI s) _40 _41 _42 ->
            list_add_if_fresh (ExtCall s) (find_ffi_names (Section
              k xs :: rest)) | _43 -> find_ffi_names (Section k xs ::

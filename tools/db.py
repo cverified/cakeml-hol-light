@@ -81,6 +81,7 @@ class Db:
     self.con_argty = {}        # (constructor,index) -> {type texts}
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
+    self.ty_params = {}        # (thy,type) -> the type parameters
     self.thy_of_file = {}
     self.kind_of_thy = {}
     self.scan()

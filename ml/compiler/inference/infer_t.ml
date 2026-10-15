@@ -21,17 +21,17 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
    Infer_Tuvar (num)";;
 
 let id_to_string_def = cake_define_list
-  [`id_to_string (Short s:namespace_id) = s`;
-   `id_to_string (Long x id':namespace_id) =
+  [`id_to_string (Short s:('m,'n)namespace_id) = s`;
+   `id_to_string (Long x id':('m,'n)namespace_id) =
         concat [x; implode "."; id_to_string id']`];;
 
 let get_tyname_def = cake_define_list
-  [`get_tyname n (Bind [] []:namespace) = NONE`;
-   `get_tyname n (Bind [] ((m,ys) :: xs):namespace) =
+  [`get_tyname n (Bind [] []:('m,'n,'v)namespace) = NONE`;
+   `get_tyname n (Bind [] ((m,ys) :: xs):('m,'n,'v)namespace) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
         xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x y)
         m (implode ".")) x))`;
-   `get_tyname n (Bind ((tyname,_1,t) :: xs) m:namespace) =
+   `get_tyname n (Bind ((tyname,_1,t) :: xs) m:('m,'n,'v)namespace) =
       (if (match t with Tapp _2 m -> m = n | _3 -> F) then
         SOME tyname else get_tyname n (Bind xs m))`];;
 

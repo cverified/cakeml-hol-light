@@ -58,12 +58,13 @@ val eqs = LIST_CONJ (map TypeBase.case_eq_of
 (* Alternate definition for build_rec_env *)
 
 let map_error_result_def = cake_define_list
-  [`map_error_result f (Rraise e:error_result) = Rraise (f e)`;
-   `map_error_result f (Rabort a:error_result) = Rabort a`];;
+  [`map_error_result f (Rraise e:'a error_result) = Rraise (f e)`;
+   `map_error_result f (Rabort a:'a error_result) = Rabort a`];;
 
 let map_result_def = cake_define_list
-  [`map_result f1 f2 (Rval v:semanticPrimitives_result) = Rval (f1 v)`;
-   `map_result f1 f2 (Rerr e:semanticPrimitives_result) = Rerr
+  [`map_result f1 f2 (Rval v:('a,'b)semanticPrimitives_result) = Rval
+  (f1 v)`;
+   `map_result f1 f2 (Rerr e:('a,'b)semanticPrimitives_result) = Rerr
   (map_error_result f2 e)`];;
 
 let exc_rel_def = cake_define
@@ -81,19 +82,20 @@ let result_rel_def = cake_define
         | (_5,_6) -> F`;;
 
 let every_error_result_def = cake_define_list
-  [`every_error_result P (Rraise e:error_result) = P e`;
-   `every_error_result P (Rabort a:error_result) = T`];;
+  [`every_error_result P (Rraise e:'a error_result) = P e`;
+   `every_error_result P (Rabort a:'a error_result) = T`];;
 
 let every_result_def = cake_define_list
-  [`every_result P1 P2 (Rval v:semanticPrimitives_result) = (P1 v)`;
-   `every_result P1 P2 (Rerr e:semanticPrimitives_result) =
+  [`every_result P1 P2 (Rval v:('a,'b)semanticPrimitives_result) =
+  (P1 v)`;
+   `every_result P1 P2 (Rerr e:('a,'b)semanticPrimitives_result) =
   (every_error_result P2 e)`];;
 
 let map_sv_def = cake_define_list
-  [`map_sv f (Refv v:store_v) = Refv (f v)`;
-   `map_sv _7 (W8array w:store_v) = (W8array w)`;
-   `map_sv f (Varray vs:store_v) = (Varray (MAP f vs))`;
-   `map_sv f (Thunk m v:store_v) = (Thunk m (f v))`];;
+  [`map_sv f (Refv v:'a store_v) = Refv (f v)`;
+   `map_sv _7 (W8array w:'a store_v) = (W8array w)`;
+   `map_sv f (Varray vs:'a store_v) = (Varray (MAP f vs))`;
+   `map_sv f (Thunk m v:'a store_v) = (Thunk m (f v))`];;
 
 let dest_Refv_def = cake_define
   `dest_Refv (Refv v) = v`;;
@@ -121,10 +123,10 @@ let sv_rel_def = cake_define
       | (_11,_12) -> F`;;
 
 let store_v_vs_def = cake_define_list
-  [`semanticPrimitivesProps_store_v_vs (Refv v:store_v) = [v]`;
-   `semanticPrimitivesProps_store_v_vs (Varray vs:store_v) = vs`;
-   `semanticPrimitivesProps_store_v_vs (W8array _13:store_v) = []`;
-   `semanticPrimitivesProps_store_v_vs (Thunk _14 v:store_v) = [v]`];;
+  [`semanticPrimitivesProps_store_v_vs (Refv v:'a store_v) = [v]`;
+   `semanticPrimitivesProps_store_v_vs (Varray vs:'a store_v) = vs`;
+   `semanticPrimitivesProps_store_v_vs (W8array _13:'a store_v) = []`;
+   `semanticPrimitivesProps_store_v_vs (Thunk _14 v:'a store_v) = [v]`];;
 hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
 let store_vs_def = cake_define

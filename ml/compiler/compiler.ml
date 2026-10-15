@@ -749,10 +749,10 @@ let has_pancake_flag_def = cake_define
   `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
 
 let format_compiler_result_def = cake_define_list
-  [`format_compiler_result bytes_export (M_failure err:exc) =
+  [`format_compiler_result bytes_export (M_failure err:('a,'b)exc) =
       ((List []:mlstring app_list),error_to_str err)`;
    `format_compiler_result bytes_export (M_success ((bytes:word8
-  list),(data:('a word) list),(c:backend_config)):exc) =
+  list),(data:('a word) list),(c:backend_config)):('a,'b)exc) =
       (bytes_export (the [] (lab_to_target_config_ffi_names
         (backend_config_lab_conf c))) bytes data,implode "")`];;
 

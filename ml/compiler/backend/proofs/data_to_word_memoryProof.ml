@@ -262,7 +262,7 @@ let v_all_ts_def = cake_define_wf
 let find_ref_def = cake_define
   `find_ref x1 x =
       match x1 with
-        (ValueArray l:bvlSem_ref) -> MEM x l
+        (ValueArray l:'a bvlSem_ref) -> MEM x l
       | (Thunk m v) -> (v = x)
       | (MutBlock tg fin l c r) -> MEM x (l ++ [c] ++ r)
       | _15 -> F`;;
@@ -737,7 +737,7 @@ let get_addr_def = cake_define
 let word_addr_def = cake_define
   `word_addr conf x2 =
         match x2 with
-          (Data (Loc l1 l2):heap_address) -> Loc l1 0
+          (Data (Loc l1 l2):'a heap_address) -> Loc l1 0
         | (Data (Word v)) -> Word (v && (--(n2w 1)))
         | (Pointer n w) -> Word (get_addr conf n w)`;;
 
@@ -785,12 +785,12 @@ let word_payload_def = cake_define_list
                 conf + k))))`];;
 
 let word_el_def = cake_define_list
-  [`word_el a (Unused l:heap_element) conf = word_list_exists (a:'a
-  word) (l + 1)`;
-   `word_el a (ForwardPointer n d l:heap_element) conf =
+  [`word_el a (Unused l:('a,'b)heap_element) conf = word_list_exists
+  (a:'a word) (l + 1)`;
+   `word_el a (ForwardPointer n d l:('a,'b)heap_element) conf =
          set_sep_one (a,Word (n2w n << 2)) *
          word_list_exists (a + bytes_in_word) l`;
-   `word_el a (DataElement ys l (tag,qs):heap_element) conf =
+   `word_el a (DataElement ys l (tag,qs):('a,'b)heap_element) conf =
          (let (h,ts,c) = word_payload ys l tag qs conf in
            word_list a (Word h :: ts) *
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\

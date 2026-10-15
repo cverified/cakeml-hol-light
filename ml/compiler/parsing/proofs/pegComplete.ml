@@ -141,14 +141,14 @@ val fFail_def = new_specification(
 *)
 
 let sym2peg_def = cake_define_list
-  [`sym2peg (TOK tk:grammar_symbol) = tokeq tk`;
-   `sym2peg (NT N:grammar_symbol) = nt N I`];;
+  [`sym2peg (TOK tk:('a,'b)grammar_symbol) = tokeq tk`;
+   `sym2peg (NT N:('a,'b)grammar_symbol) = nt N I`];;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
 let left_insert1_def = cake_define_list
-  [`left_insert1 pt (Lf (tk,l):parsetree) = Lf (tk,merge_locs
-  (ptree_loc pt) l)`;
-   `left_insert1 pt (Nd (n,l0) subs:parsetree) =
+  [`left_insert1 pt (Lf (tk,l):('a,'b,'locs)parsetree) = Lf
+  (tk,merge_locs (ptree_loc pt) l)`;
+   `left_insert1 pt (Nd (n,l0) subs:('a,'b,'locs)parsetree) =
          (match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [x]
                -> mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n
@@ -191,8 +191,8 @@ let rightLoc_def = cake_define
 *)
 
 let leftmost_def = cake_define_list
-  [`leftmost (Lf s:parsetree) = Lf s`;
-   `leftmost (Nd (n,l) args:parsetree) =
+  [`leftmost (Lf s:('a,'b,'locs)parsetree) = Lf s`;
+   `leftmost (Nd (n,l) args:('a,'b,'locs)parsetree) =
       (if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then
         HD args else
         match args with
@@ -200,9 +200,9 @@ let leftmost_def = cake_define_list
 
 (* pt is a Tbase, and n will be DType all the way down *)
 let left_insert2_def = cake_define_list
-  [`left_insert2 pt (Lf (tk,l):parsetree) = Lf (tk,merge_locs
-  (ptree_loc pt) l)`;
-   `left_insert2 pt (Nd (n,l0) subs:parsetree) =
+  [`left_insert2 pt (Lf (tk,l):('a,'b,'locs)parsetree) = Lf
+  (tk,merge_locs (ptree_loc pt) l)`;
+   `left_insert2 pt (Nd (n,l0) subs:('a,'b,'locs)parsetree) =
          (match subs with
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [Nd
                _6 [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x :: ys ->
@@ -253,9 +253,9 @@ let left_insert2_def = cake_define_list
 
 
 let left_insert_def = cake_define_list
-  [`left_insert (Lf (tk,l):parsetree) p sep c = Lf (tk,merge_locs
-  (ptree_loc c) l)`;
-   `left_insert (Nd (n,l) subs:parsetree) p sep c =
+  [`left_insert (Lf (tk,l):('a,'b,'locs)parsetree) p sep c = Lf
+  (tk,merge_locs (ptree_loc c) l)`;
+   `left_insert (Nd (n,l) subs:('a,'b,'locs)parsetree) p sep c =
          (if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs
            else
            match subs with

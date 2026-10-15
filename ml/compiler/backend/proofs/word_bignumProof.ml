@@ -45,32 +45,32 @@ let word_bignumProof_state_FIELDS =
    "clock","num"];;
 
 let eval_exp_def = cake_define_list
-  [`eval_exp s (Const w:wordLang_exp) = w`;
-   `eval_exp s (Var v:wordLang_exp) = FAPPLY
+  [`eval_exp s (Const w:'a wordLang_exp) = w`;
+   `eval_exp s (Var v:'a wordLang_exp) = FAPPLY
   (word_bignumProof_state_regs s) v`;
-   `eval_exp s (Op Add [x1; x2]:wordLang_exp) = eval_exp s x1 +
+   `eval_exp s (Op Add [x1; x2]:'a wordLang_exp) = eval_exp s x1 +
   eval_exp s x2`;
-   `eval_exp s (Op Sub [x1; x2]:wordLang_exp) = eval_exp s x1 -
+   `eval_exp s (Op Sub [x1; x2]:'a wordLang_exp) = eval_exp s x1 -
   eval_exp s x2`;
-   `eval_exp s (Op And [x1; x2]:wordLang_exp) = word_and (eval_exp s
+   `eval_exp s (Op And [x1; x2]:'a wordLang_exp) = word_and (eval_exp
+  s x1) (eval_exp s x2)`;
+   `eval_exp s (Op Or [x1; x2]:'a wordLang_exp) = word_or (eval_exp s
   x1) (eval_exp s x2)`;
-   `eval_exp s (Op Or [x1; x2]:wordLang_exp) = word_or (eval_exp s
-  x1) (eval_exp s x2)`;
-   `eval_exp s (Op Xor [x1; x2]:wordLang_exp) = word_xor (eval_exp s
-  x1) (eval_exp s x2)`;
-   `eval_exp s (Shift Lsl x1 x2:wordLang_exp) = eval_exp s x1 << (w2n
-  (eval_exp s x2))`;
-   `eval_exp s (Shift Asr x1 x2:wordLang_exp) = eval_exp s x1 >> (w2n
-  (eval_exp s x2))`;
-   `eval_exp s (Shift Lsr x1 x2:wordLang_exp) = eval_exp s x1 >>>
+   `eval_exp s (Op Xor [x1; x2]:'a wordLang_exp) = word_xor (eval_exp
+  s x1) (eval_exp s x2)`;
+   `eval_exp s (Shift Lsl x1 x2:'a wordLang_exp) = eval_exp s x1 <<
   (w2n (eval_exp s x2))`;
-   `eval_exp s (Shift Ror x1 x2:wordLang_exp) = word_ror (eval_exp s
-  x1) (w2n (eval_exp s x2))`];;
+   `eval_exp s (Shift Asr x1 x2:'a wordLang_exp) = eval_exp s x1 >>
+  (w2n (eval_exp s x2))`;
+   `eval_exp s (Shift Lsr x1 x2:'a wordLang_exp) = eval_exp s x1 >>>
+  (w2n (eval_exp s x2))`;
+   `eval_exp s (Shift Ror x1 x2:'a wordLang_exp) = word_ror (eval_exp
+  s x1) (w2n (eval_exp s x2))`];;
 
 let eval_exp_pre_def = cake_define
   `eval_exp_pre s x2 =
         match x2 with
-          (Const w:wordLang_exp) -> T
+          (Const w:'a wordLang_exp) -> T
         | (Var v) -> v IN FDOM (word_bignumProof_state_regs s)
         | (Op _1 [x; y]) -> eval_exp_pre s x /\ eval_exp_pre s y
         | (Shift sh x1 x2) ->
@@ -79,13 +79,13 @@ let eval_exp_pre_def = cake_define
         | _2 -> F`;;
 
 let eval_ri_pre_def = cake_define_list
-  [`eval_ri_pre s (Reg r:asm_reg_imm) <=> eval_exp_pre (s:'a
+  [`eval_ri_pre s (Reg r:'a asm_reg_imm) <=> eval_exp_pre (s:'a
   word_bignumProof_state) ((Var r):'a wordLang_exp)`;
-   `eval_ri_pre s (Imm (w:'a word):asm_reg_imm) <=> T`];;
+   `eval_ri_pre s (Imm (w:'a word):'a asm_reg_imm) <=> T`];;
 
 let eval_ri_def = cake_define_list
-  [`eval_ri s (Reg r:asm_reg_imm) = eval_exp s (Var r)`;
-   `eval_ri s (Imm w:asm_reg_imm) = w`];;
+  [`eval_ri s (Reg r:'a asm_reg_imm) = eval_exp s (Var r)`;
+   `eval_ri s (Imm w:'a asm_reg_imm) = w`];;
 
 let dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
@@ -339,7 +339,7 @@ hol4_overload "state_rel" "word_bignumProof_state_rel";;
 let exp_ok_def = cake_define
   `exp_ok x1 =
         match x1 with
-          (Const _3:wordLang_exp) -> T
+          (Const _3:'a wordLang_exp) -> T
         | (Var i) -> i < (25)
         | (Op _4 [x; y]) -> exp_ok x /\ exp_ok y
         | (Shift sh e n) -> exp_ok e
@@ -348,7 +348,7 @@ let exp_ok_def = cake_define
 let syntax_ok_aux_def = cake_define
   `syntax_ok_aux x1 =
       match x1 with
-        (Loop r vs body:mini) -> syntax_ok_aux body
+        (Loop r vs body:'a mini) -> syntax_ok_aux body
       | (LoopBody body) -> F
       | (Seq p1 p2) -> syntax_ok_aux p1 /\ syntax_ok_aux p2
       | (Assign t1 e) -> t1 < (25) /\ exp_ok e

@@ -209,7 +209,7 @@ let locals_ok_def = cake_define
 let get_code_labels_def = cake_define
   `dataProps_get_code_labels x1 =
         match x1 with
-          (Call r d a h:asm_with_lab) ->
+          (Call r d a h:'a asm_with_lab) ->
        (match d with SOME x -> {x} | _6 -> {}) UNION
        (match h with SOME (n,p) -> dataProps_get_code_labels p | _7
          -> {})

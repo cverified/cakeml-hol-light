@@ -60,7 +60,7 @@ let call_graph_def = cake_define_wf
            ns,prog_size (K 0) p)))`
   `call_graph funs n ns total x5 =
         match x5 with
-          (Seq p1 p2:wordLang_prog) ->
+          (Seq p1 p2:'a wordLang_prog) ->
         mk_Branch (call_graph funs n ns total p1) (call_graph funs n
           ns total p2)
         | (If _1 _2 _3 p1 p2) ->

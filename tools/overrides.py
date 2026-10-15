@@ -81,6 +81,9 @@ ALSO_NEEDED = set([
   ('binary_ieee', 'float_greater_than'),
   ('binary_ieee', 'float_greater_equal'),
   ('binary_ieee', 'float_mul_add'),
+  # comparison's num_cmp is an overload of ternaryComparisons'
+  # num_compare, which HOL4 reaches through toto
+  ('ternaryComparisons', 'num_compare'),
 ])
 
 # definitions in which the numerals are integers or reals, not

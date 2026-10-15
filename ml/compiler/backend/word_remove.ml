@@ -19,8 +19,8 @@ needs "semantics/ast.ml";;
 let remove_must_terminate_def = cake_define
   `remove_must_terminate prog =
         match prog with
-          (Seq p0 p1:wordLang_prog) -> Seq (remove_must_terminate p0)
-            (remove_must_terminate p1)
+          (Seq p0 p1:'a wordLang_prog) -> Seq (remove_must_terminate
+            p0) (remove_must_terminate p1)
         | (If cmp r1 ri e2 e3) ->
        If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate
          e3)

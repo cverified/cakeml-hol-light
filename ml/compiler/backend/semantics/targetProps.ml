@@ -34,13 +34,15 @@ let interference_app_INDUCT,interference_app_RECURSION = define_datatype
 
 let is_ffi_app_def = cake_define_list
   [`is_ffi_app (FfiApp index new_bytes ms_pre
-  ms_post:interference_app) = T`;
-   `is_ffi_app (CcApp a1 a2 ms_pre ms_post:interference_app) = F`];;
+  ms_post:('a,'state)interference_app) = T`;
+   `is_ffi_app (CcApp a1 a2 ms_pre
+  ms_post:('a,'state)interference_app) = F`];;
 
 let app_post_def = cake_define_list
-  [`app_post (FfiApp index new_bytes ms_pre ms_post:interference_app)
-  = ms_post`;
-   `app_post (CcApp a1 a2 ms_pre ms_post:interference_app) = ms_post`];;
+  [`app_post (FfiApp index new_bytes ms_pre
+  ms_post:('a,'state)interference_app) = ms_post`;
+   `app_post (CcApp a1 a2 ms_pre ms_post:('a,'state)interference_app)
+  = ms_post`];;
 
 (* clocked clone of evaluate that stops at the first interference
    application (FFI, shared-memory or cache-clear) and returns its data
