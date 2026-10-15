@@ -169,6 +169,14 @@ sources, and why.
   to replace each of them by a real definition; until then the
   port is not conservative over HOL Light.
 
+- HOL4 makes CakeML's grammar (`gram$cmlG`) and the datatype of
+  its nonterminals (`MMLnonT`) with the ML code of `grammarLib`,
+  out of the BNF that the source states.  The port parses that
+  BNF itself (`tools/grammardef.py`) and writes the datatype and
+  the grammar out: the rules are the finite map from a
+  nonterminal to the set of the lists of symbols of its
+  alternatives, as `mk_grammar_def` builds it.
+
 ## Hand written parts of the library layer
 
 HOL Light has no finite maps, no lazy lists, no bags, no closure

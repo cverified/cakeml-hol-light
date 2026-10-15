@@ -34,9 +34,12 @@ The first pass ports, in the topological order of
 A definition that a source makes with ML code counts as well:
 `Define` with any wrapper around it (`data_to_word` has 60
 definitions behind its own `assign_Define`), `tDefine`,
-`Hol_reln` (`parmove`'s `step` and `dstep`) and a definition from
+`Hol_reln` (`parmove`'s `step` and `dstep`), a definition from
 a quotation that the source keeps in a value (`stack_rawcall`'s
-`comp` and six others).
+`comp` and six others), the monadic machinery that
+`ml_monadBaseLib` makes (`reg_alloc` and `linear_scan`) and the
+grammar that `grammarLib`'s `mk_grammar_def` makes out of a BNF
+(`gram`'s `MMLnonT` and `cmlG`, see `tools/grammardef.py`).
 
 `tools/portall.py` translates all of them (in seven seconds).
 
@@ -170,6 +173,8 @@ The other checks:
 - `tools/bin/locate`   which phrase of a file fails
 - `tools/bin/retry`    load a file from the phrase that failed on,
                        in a clone of the session of the last run
+- `tools/grammardef.py` the BNF of a grammar that HOL4 turns into
+                       a datatype and a definition with ML code
 - `tools/bin/deps`     load only what a file needs
 - `tools/bin/cheats`   write `ml/CHEATS.md` from `cake_cheats ()`
 - `tools/bin/timings`  write `ml/TIMINGS.md` from the last run
