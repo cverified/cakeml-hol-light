@@ -30,7 +30,6 @@ let flat_pattern_config_FIELDS = define_record "flat_pattern_config"
 
 let init_config_def = cake_define
   `flat_pattern_init_config ph = mk_flat_pattern_config ph`;;
-hol4_overload "init_config" "flat_pattern_init_config";;
 
 (* HOL4 termination: *)
 let sum_string_ords_def = cake_define_wf
@@ -58,7 +57,7 @@ let compile_pat_bindings_def = cake_define_list
    `compile_pat_bindings t i (((Pvar s:pattern_semantics_pat),k,x) :: m)
   exp = (
       let (spt,exp2) = compile_pat_bindings t i m exp in
-      (insert k one spt,Let t (SOME s) x exp2))`;
+      (sptree_insert k one spt,Let t (SOME s) x exp2))`;
    `compile_pat_bindings t i (((Plit _5:pattern_semantics_pat),_6,_7) ::
   m) exp =
       compile_pat_bindings t i m exp`;
@@ -66,31 +65,34 @@ let compile_pat_bindings_def = cake_define_list
   :: m) exp = (
       let j_nms = MAP (\(j,p). let k = i + 1 + j in
           let nm = enc_num_to_name k in
-          ((j,nm),(p,k,Var_local t nm))) (enumerate 0 ps) in
+          ((j,nm),(p,k,flatLang_Var_local t nm))) (enumerate 0 ps)
+            in
       let (spt,exp2) = compile_pat_bindings t (i + 2 + LENGTH ps)
           (MAP SND j_nms ++ m) exp in
-      let j_nms_used = FILTER (\(_9,(_10,k,_11)). IS_SOME (lookup k
-        spt)) j_nms in
+      let j_nms_used = FILTER (\(_9,(_10,k,_11)). IS_SOME
+        (sptree_lookup k spt)) j_nms in
       let exp3 = ITLIST (\((j,nm),_12) exp.
-          flatLang_Let t (SOME nm) (App t (El j) [x]) exp)
+          flatLang_Let t (SOME nm) (App t (flatLang_El j) [x]) exp)
             j_nms_used exp2 in
-      let spt2 = if NULL j_nms_used then spt else insert k one spt
-        in
+      let spt2 = if NULL j_nms_used then spt else sptree_insert k
+        one spt in
       (spt2,exp3))`;
    `compile_pat_bindings t i (((Pas p v:pattern_semantics_pat),k,x) ::
   m) exp = (
       let nm = enc_num_to_name (i + 1) in
       let (spt,exp2) = compile_pat_bindings t (i + 2)
-                        ((p,i + 1,Var_local t nm) :: m) exp in
-      (insert k one spt,Let t (SOME v) x
-                              (Let t (SOME nm) (Var_local t v)
-                                exp2)))`;
+                        ((p,i + 1,flatLang_Var_local t nm) :: m) exp
+                          in
+      (sptree_insert k one spt,Let t (SOME v) x
+                              (Let t (SOME nm)
+                                (flatLang_Var_local t v) exp2)))`;
    `compile_pat_bindings t i (((Pref p:pattern_semantics_pat),k,x) :: m)
   exp = (
       let nm = enc_num_to_name (i + 1) in
       let (spt,exp2) = compile_pat_bindings t (i + 2)
-          ((p,i + 1,Var_local t nm) :: m) exp in
-      (insert k one spt,Let t (SOME nm) (App t (El 0) [x]) exp2))`];;
+          ((p,i + 1,flatLang_Var_local t nm) :: m) exp in
+      (sptree_insert k one spt,Let t (SOME nm) (App t
+        (flatLang_El 0) [x]) exp2))`];;
 
 let compile_pat_rhs_def = cake_define
   `compile_pat_rhs t i v (p,exp) =
@@ -98,61 +100,69 @@ let compile_pat_rhs_def = cake_define
 
 let decode_pos_def = cake_define_list
   [`decode_pos t v EmptyPos = v`;
-   `decode_pos t v (Pos i pos) = decode_pos t (App t (El i) [v]) pos`];;
+   `decode_pos t v (Pos i pos) = decode_pos t (App t (flatLang_El i)
+  [v]) pos`];;
 
 let decode_test_def = cake_define_list
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
   (TagLenEq tag l) [v]`;
-   `flat_pattern_decode_test t (LitEq lit) v = App t (Src Equality)
-  [v; Lit t lit]`];;
-hol4_overload "decode_test" "flat_pattern_decode_test";;
+   `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v = App
+  t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
 
 let simp_guard_def = cake_define
   `simp_guard x =
       match x with
-        Conj x y ->
+        pattern_semantics_Conj x y ->
      (let v = simp_guard x in
       let w = simp_guard y in
-      if v = Not True \/ w = Not True then
-        Not True else if v = True then w else if w = True then v else
-          Conj v w)
-      | (Disj x y) ->
+      if v = Not pattern_semantics_True \/ w = Not
+        pattern_semantics_True then
+        Not pattern_semantics_True else if v = pattern_semantics_True
+          then w else if w = pattern_semantics_True then v else
+          pattern_semantics_Conj v w)
+      | (pattern_semantics_Disj x y) ->
      (let v = simp_guard x in
       let w = simp_guard y in
-      if v = True \/ w = True then
-        True else if v = Not True then w else if w = Not True then v
-          else Disj v w)
+      if v = pattern_semantics_True \/ w = pattern_semantics_True
+        then
+        pattern_semantics_True else if v = Not pattern_semantics_True
+          then w else if w = Not pattern_semantics_True then v else
+          pattern_semantics_Disj v w)
       | (Not x) ->
      (let v = simp_guard x in
       match v with
-        Not True -> True | Not w -> w | _13 -> Not v)
+        Not pattern_semantics_True -> pattern_semantics_True | Not w
+          -> w | _13 -> Not v)
       | x -> x`;;
 
 let decode_guard_def = cake_define_list
-  [`decode_guard t v (Not gd:dGuard) = App t (Src Equality)
-  [decode_guard t v gd; Bool t F]`;
-   `decode_guard t v (Conj gd1 gd2) = SmartIf t (decode_guard t v gd1)
-      (decode_guard t v gd2) (Bool t F)`;
-   `decode_guard t v (Disj gd1 gd2) = SmartIf t (decode_guard t v gd1)
-  (Bool t T)
+  [`decode_guard t v (Not gd:dGuard) = App t (flatLang_Src
+  ast_Equality) [decode_guard t v gd; flatLang_Bool t F]`;
+   `decode_guard t v (pattern_semantics_Conj gd1 gd2) = SmartIf t
+  (decode_guard t v gd1)
+      (decode_guard t v gd2) (flatLang_Bool t F)`;
+   `decode_guard t v (pattern_semantics_Disj gd1 gd2) = SmartIf t
+  (decode_guard t v gd1) (flatLang_Bool t T)
       (decode_guard t v gd2)`;
-   `decode_guard t v True = Bool t T`;
-   `decode_guard t v (PosTest pos test) = decode_test t test
-  (decode_pos t v pos)`];;
+   `decode_guard t v pattern_semantics_True = flatLang_Bool t T`;
+   `decode_guard t v (pattern_semantics_PosTest pos test) =
+  flat_pattern_decode_test t test (decode_pos t v pos)`];;
 
 let decode_dtree_def = cake_define
   `decode_dtree t br_spt v df pattern_semantics$Fail =
       match pattern_semantics$Fail with
-        Leaf n -> (match lookup n br_spt with SOME br -> br | NONE ->
-          df)
+        pattern_semantics_Leaf n -> (match sptree_lookup n br_spt
+          with SOME br -> br | NONE -> df)
       | pattern_semantics_Fail -> df
-      | TypeFail -> Var_local t (implode "impossible-case")
+      | pattern_semantics_TypeFail -> flatLang_Var_local t (implode
+        "impossible-case")
       | (If guard dt1 dt2) ->
    (let guard = simp_guard guard in
    let dec1 = decode_dtree t br_spt v df dt1 in
    let dec2 = decode_dtree t br_spt v df dt2 in
-   if guard = True then dec1 else if guard = Not True then dec2
-     else SmartIf t (decode_guard t v guard) dec1 dec2)`;;
+   if guard = pattern_semantics_True then dec1 else if guard = Not
+     pattern_semantics_True then dec2 else SmartIf t (decode_guard t
+     v guard) dec1 dec2)`;;
 
 let _ = size_thms "pat";;
 (* HOL4 termination: \\ rw [pat1_size] \\ fs [MEM_SPLIT, SUM_APPEND] *)
@@ -162,13 +172,13 @@ let encode_pat_def = cake_define_wf
       match x1 with
         flatLang_Pany -> pattern_semantics_Any
       | (Plit l) -> Lit l
-      | (Pvar _14) -> Any
+      | (Pvar _14) -> pattern_semantics_Any
       | (flatLang_Pcon stmp ps) -> Cons
      (match stmp with NONE -> NONE | SOME (i,NONE) -> SOME (i,NONE) |
        SOME (i,SOME (ty,ctors)) -> SOME (i,SOME ctors))
      (MAP encode_pat ps)
       | (Pas p v) -> encode_pat p
-      | (Pref p) -> Ref (encode_pat p)`;;
+      | (Pref p) -> pattern_semantics_Ref (encode_pat p)`;;
 
 let _ = size_thms "pat";;
 (* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw []
@@ -177,24 +187,24 @@ let naive_pattern_match_def = cake_define_wf
   `MEASURE (\x. SUM (MAP (pat_size o FST) (SND x)) + LENGTH (SND x))`
   `naive_pattern_match t x2 =
       match x2 with
-        [] -> Bool t T
+        [] -> flatLang_Bool t T
       | ((flatLang_Pany,_15) :: mats) -> naive_pattern_match t mats
       | ((Pvar _16,_17) :: mats) -> naive_pattern_match t mats
       | ((Plit l,v) :: mats) -> SmartIf t
-     (App t (Src Equality) [v; Lit t l]) (naive_pattern_match t mats)
-       (Bool t F)
+     (App t (flatLang_Src ast_Equality) [v; Lit t l])
+       (naive_pattern_match t mats) (flatLang_Bool t F)
       | ((Pcon NONE ps,v) :: mats) ->
-     naive_pattern_match t (MAPi (\i p. (p,App t (El i) [v])) ps ++
-       mats)
+     naive_pattern_match t (MAPi (\i p. (p,App t (flatLang_El i)
+       [v])) ps ++ mats)
       | ((Pas p i,v) :: mats) ->
      naive_pattern_match t ((p,v) :: mats)
       | ((Pcon (SOME stmp) ps,v) :: mats) ->
      SmartIf t (App t (TagLenEq (FST stmp) (LENGTH ps)) [v])
-       (naive_pattern_match t (MAPi (\i p. (p,App t (El i) [v])) ps
-         ++ mats))
-       (Bool t F)
+       (naive_pattern_match t (MAPi (\i p. (p,App t (flatLang_El i)
+         [v])) ps ++ mats))
+       (flatLang_Bool t F)
       | ((Pref p,v) :: mats) ->
-     naive_pattern_match t ((p,App t (El 0) [v]) :: mats)`;;
+     naive_pattern_match t ((p,App t (flatLang_El 0) [v]) :: mats)`;;
 
 let naive_pattern_matches_def = cake_define_list
   [`naive_pattern_matches t v [] dflt_x = dflt_x`;
@@ -219,12 +229,12 @@ let max_dec_name_def = cake_define_list
 let op_sets_globals_def = cake_define
   `op_sets_globals x1 =
       match x1 with
-        GlobalVarInit n -> T
+        flatLang_GlobalVarInit n -> T
       | _19 -> F`;;
 
 let compile_exp_def = cake_define_list
-  [`flat_pattern_compile_exp cfg (Var_local t vid) =
-        (dec_name_to_num vid,F,Var_local t vid)`;
+  [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
+        (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
         (let (i,sg,y) = flat_pattern_compile_exp cfg x in
         (i,sg,Raise t y))`;
@@ -233,7 +243,7 @@ let compile_exp_def = cake_define_list
         let (j,sgp,ps2) = compile_match cfg ps in
         let k = MAX i j + 2 in
         let nm = enc_num_to_name k in
-        let v = Var_local t nm in
+        let v = flatLang_Var_local t nm in
         let r = Raise t v in
         let exp = compile_pats cfg sgp t k v r ps2 in
         (k,(sgx \/ sgp),Handle t y [(Pvar nm,exp)]))`;
@@ -253,7 +263,7 @@ let compile_exp_def = cake_define_list
         let (j,sgp,ps2) = compile_match cfg ps in
         let k = MAX i j + 2 in
         let nm = enc_num_to_name k in
-        let v = Var_local t nm in
+        let v = flatLang_Var_local t nm in
         let r = Raise t (Con t (SOME (bind_tag,NONE)) []) in
         let exp = compile_pats cfg sgp t k v r ps2 in
         (k,(sgx \/ sgp),Let t (SOME nm) y exp))`;
@@ -288,8 +298,6 @@ let compile_exp_def = cake_define_list
         let j = max_dec_name (pat_bindings p) in
         let (k,sgp,ps2) = compile_match cfg ps in
         (MAX i (MAX j k),(sgx \/ sgp),((p,y) :: ps2)))`];;
-hol4_overload "compile_exp" "flat_pattern_compile_exp";;
-hol4_overload "compile_exps" "flat_pattern_compile_exps";;
 
 let compile_dec_def = cake_define
-  `compile_dec cfg exp = SND (SND (compile_exp cfg exp))`;;
+  `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;

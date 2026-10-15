@@ -157,22 +157,22 @@ let good_neg_pref_def = cake_define
 (* Checking that the bijection produced is correct *)
 
 let in_clash_tree_def = cake_define_list
-  [`in_clash_tree (Delta w r) x <=> MEM x w \/ MEM x r`;
-   `in_clash_tree (Set names) x <=> x IN domain names`;
-   `in_clash_tree (Branch name_opt t1 t2) x <=>
+  [`in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r`;
+   `in_clash_tree (reg_alloc_Set names) x <=> x IN domain names`;
+   `in_clash_tree (reg_alloc_Branch name_opt t1 t2) x <=>
         in_clash_tree t1 x \/
         in_clash_tree t2 x \/
         (match name_opt with
           SOME names -> x IN domain names | NONE -> F)`;
-   `in_clash_tree (Seq t t') x <=> in_clash_tree t x \/ in_clash_tree
-  t' x`];;
+   `in_clash_tree (reg_alloc_Seq t t') x <=> in_clash_tree t x \/
+  in_clash_tree t' x`];;
 
 (*g inverts f as an sptree *)
 let sp_inverts_def = cake_define
   `sp_inverts f g <=>
    (!m fm.
-     lookup m f = SOME fm ==>
-     lookup fm g = SOME m)`;;
+     sptree_lookup m f = SOME fm ==>
+     sptree_lookup fm g = SOME m)`;;
 
 (* HOL4 ML code, not ported:
 val list_remap_bij = Q.prove(`
@@ -265,7 +265,6 @@ let is_subgraph_def = cake_define
 (* TODO quick sanity check: move to proof file when done *)
 let hide_def = cake_define
   `reg_allocProof_hide x = x`;;
-hol4_overload "hide" "reg_allocProof_hide";;
 
 (* From here onwards we stop characterizing s'.adj_ls exactly
    although it could be done

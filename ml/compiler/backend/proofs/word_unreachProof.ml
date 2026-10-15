@@ -12,7 +12,6 @@ needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_unreach.ml";;
-needs "lib/sptree.ml";;
 
 (* HOL4 ML code, not ported:
 val s = ``s:('a,'c,'ffi) wordSem$state``
@@ -23,9 +22,8 @@ val s = ``s:('a,'c,'ffi) wordSem$state``
 let copy_vars_def = cake_define_list
   [`word_unreachProof_copy_vars [] from to = to`;
    `word_unreachProof_copy_vars ((l,r) :: rest) from to =
-      insert l (THE (lookup r from)) (word_unreachProof_copy_vars
-        rest from to)`];;
-hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
+      sptree_insert l (THE (sptree_lookup r from))
+        (word_unreachProof_copy_vars rest from to)`];;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_Seq_assoc_right_lemma[Loop]:

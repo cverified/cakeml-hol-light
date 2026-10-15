@@ -182,15 +182,12 @@ let tenv_val_exp_INDUCT,tenv_val_exp_RECURSION = define_datatype
   "tenv_val_exp = typeSystem_Empty | typeSystem_Bind_tvar (num) \
    (tenv_val_exp) | typeSystem_Bind_name (mlstring) (num) (t) \
    (tenv_val_exp)";;
-hol4_overload "Empty" "typeSystem_Empty";;
-hol4_overload "Bind_tvar" "typeSystem_Bind_tvar";;
-hol4_overload "Bind_name" "typeSystem_Bind_name";;
 
 
 (*val bind_tvar : nat -> tenv_val_exp -> tenv_val_exp*)
 let bind_tvar_def = cake_define
   `((bind_tvar:num->tenv_val_exp->tenv_val_exp) tvs tenvE = (if tvs =
-  (0:num) then tenvE else Bind_tvar tvs tenvE))`;;
+  (0:num) then tenvE else typeSystem_Bind_tvar tvs tenvE))`;;
 
 
 (*val opt_bind_name : maybe varN -> nat -> t -> tenv_val_exp ->
@@ -199,17 +196,18 @@ let opt_bind_name_def = cake_define
   `((opt_bind_name:mlstring option->num->t->tenv_val_exp->tenv_val_exp)
   n tvs t tenvE =
      ((match n with
-        NONE -> tenvE | SOME n' -> Bind_name n' tvs t tenvE)))`;;
+        NONE -> tenvE | SOME n' -> typeSystem_Bind_name n' tvs t
+          tenvE)))`;;
 
 
 (*val tveLookup : varN -> nat -> tenv_val_exp -> maybe (nat * t)*)
 let tveLookup_def = cake_define_list
   [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  Empty = NONE`;
+  typeSystem_Empty = NONE`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
+  (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (Bind_name n' tvs t tenvE) =
+  (typeSystem_Bind_name n' tvs t tenvE) =
        (if n' = n then
         SOME (tvs,deBruijn_inc tvs inc t) else
         tveLookup n inc tenvE)`];;
@@ -254,11 +252,11 @@ let lookup_var_def = cake_define
 
 (*val num_tvs : tenv_val_exp -> nat*)
 let num_tvs_def = cake_define_list
-  [`(num_tvs:tenv_val_exp->num) Empty = ((0:num))`;
-   `(num_tvs:tenv_val_exp->num) (Bind_tvar tvs tenvE) = (tvs +
-  num_tvs tenvE)`;
-   `(num_tvs:tenv_val_exp->num) (Bind_name n tvs t tenvE) = (num_tvs
-  tenvE)`];;
+  [`(num_tvs:tenv_val_exp->num) typeSystem_Empty = ((0:num))`;
+   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
+  (tvs + num_tvs tenvE)`;
+   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t tenvE)
+  = (num_tvs tenvE)`];;
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp ->
@@ -268,7 +266,8 @@ let bind_var_list_def = cake_define_list
   list->tenv_val_exp->tenv_val_exp) tvs [] tenvE = tenvE`;
    `(bind_var_list:num->(mlstring#t) list->tenv_val_exp->tenv_val_exp)
   tvs ((n,t) :: binds) tenvE =
-     (Bind_name n tvs t (bind_var_list tvs binds tenvE))`];;
+     (typeSystem_Bind_name n tvs t (bind_var_list tvs binds
+       tenvE))`];;
 
 
 (* A pattern matches values of a certain type and extends the type
@@ -302,51 +301,53 @@ let bind_var_list_def = cake_define_list
 let t_of_def = cake_define
   `t_of x1 =
       match x1 with
-        BoolT -> Tbool
-      | IntT -> Tint
-      | CharT -> Tchar
-      | StrT -> Tstring
-      | (WordT W8) -> Tword8
-      | (WordT W64) -> Tword64
-      | Float64T -> Tdouble`;;
+        ast_BoolT -> Tbool
+      | ast_IntT -> Tint
+      | ast_CharT -> Tchar
+      | ast_StrT -> Tstring
+      | (ast_WordT ast_W8) -> Tword8
+      | (ast_WordT ast_W64) -> Tword64
+      | ast_Float64T -> Tdouble`;;
 
 let supported_test_def = cake_define
   `supported_test x1 ty =
       match x1 with
         Equal -> T
-      | (Compare _2) -> MEM ty [IntT; CharT; WordT W8; Float64T;
-        StrT]
-      | _3 -> (ty = StrT)`;;
+      | (ast_Compare _2) -> MEM ty [ast_IntT; ast_CharT; ast_WordT
+        ast_W8; ast_Float64T; ast_StrT]
+      | _3 -> (ty = ast_StrT)`;;
 
 let supported_arith_def = cake_define
   `supported_arith a x2 =
         match x2 with
-          IntT ->
-        (if MEM a [Add; Sub; Mul; Div; Mod] then SOME (2:num) else
-          NONE)
-        | Float64T ->
-        (if MEM a [Abs; Neg; Sqrt] then SOME 1 else
-        if MEM a [Add; Sub; Mul; Div] then SOME 2 else
-        if MEM a [FMA] then SOME 3 else NONE)
-        | (WordT _4) ->
-        (if MEM a [Add; Sub; And; Or; Xor] then SOME 2 else NONE)
-        | BoolT ->
-        (if MEM a [Not] then SOME 1 else NONE)
+          ast_IntT ->
+        (if MEM a [ast_Add; ast_Sub; ast_Mul; ast_Div; ast_Mod] then
+          SOME (2:num) else NONE)
+        | ast_Float64T ->
+        (if MEM a [ast_Abs; ast_Neg; ast_Sqrt] then SOME 1 else
+        if MEM a [ast_Add; ast_Sub; ast_Mul; ast_Div] then SOME 2
+          else
+        if MEM a [ast_FMA] then SOME 3 else NONE)
+        | (ast_WordT _4) ->
+        (if MEM a [ast_Add; ast_Sub; ast_And; ast_Or; ast_Xor] then
+          SOME 2 else NONE)
+        | ast_BoolT ->
+        (if MEM a [ast_Not] then SOME 1 else NONE)
         | (ty:prim_type) -> NONE`;;
 
 let supported_conversion_def = cake_define
   `supported_conversion x1 x2 =
         match (x1,x2) with
-          (WordT W8,IntT) -> T
-        | ((WordT W64),IntT) -> T
-        | (IntT,(WordT W8)) -> T
-        | (IntT,(WordT W64)) -> T
-        | (CharT,IntT) -> T
-        | (IntT,CharT) -> T
-        | (CharT,(WordT W8)) -> T
-        | ((WordT W8),CharT) -> T
-        | (Float64T,(WordT W64)) -> T
-        | ((WordT W64),Float64T) -> T
+          (ast_WordT ast_W8,ast_IntT) -> T
+        | ((ast_WordT ast_W64),ast_IntT) -> T
+        | (ast_IntT,(ast_WordT ast_W8)) -> T
+        | (ast_IntT,(ast_WordT ast_W64)) -> T
+        | (ast_CharT,ast_IntT) -> T
+        | (ast_IntT,ast_CharT) -> T
+        | (ast_CharT,(ast_WordT ast_W8)) -> T
+        | ((ast_WordT ast_W8),ast_CharT) -> T
+        | (ast_Float64T,(ast_WordT ast_W64)) -> T
+        | ((ast_WordT ast_W64),ast_Float64T) -> T
         | ((from_ty:prim_type),(to_ty:prim_type)) -> F`;;
 
 (* Check that the operator can have type (t1 -> ... -> tn -> t) *)
@@ -354,58 +355,62 @@ let supported_conversion_def = cake_define
 let type_op_def = cake_define
   `(type_op:ast_op->t list->t->bool) op ts t =
      (match (op,ts) with
-        (Opapp,[t1; t2]) -> t1 = Tfn t2 t | (Shift W8 _5 _6,[t1]) ->
-          (t1 = Tword8) /\ (t = Tword8) | (Shift W64 _7 _8,[t1]) -> (t1
-          = Tword64) /\ (t = Tword64) | (Equality,[t1; t2]) -> (t1 = t2)
-          /\ (t = Tbool) | (Arith a ty,ts) -> EVERY (\arg. arg = t_of
-          ty) ts /\ (t = t_of ty) /\
+        (ast_Opapp,[t1; t2]) -> t1 = Tfn t2 t | (ast_Shift ast_W8 _5
+          _6,[t1]) -> (t1 = Tword8) /\ (t = Tword8) | (ast_Shift ast_W64
+          _7 _8,[t1]) -> (t1 = Tword64) /\ (t = Tword64) |
+          (ast_Equality,[t1; t2]) -> (t1 = t2) /\ (t = Tbool) |
+          (ast_Arith a ty,ts) -> EVERY (\arg. arg = t_of ty) ts /\ (t =
+          t_of ty) /\
                             supported_arith a ty = SOME (LENGTH ts) |
-                              (FromTo ty1 ty2,[t1]) -> (t1 = t_of ty1)
-                              /\ (t = t_of ty2) /\
-                              supported_conversion ty1 ty2 | (Test
-                                test ty,[t1; t2]) -> (t1 = t2) /\ (t =
-                                Tbool) /\ (t1 = t_of ty) /\
-                              supported_test test ty | (Opassign,[t1;
-                                t2]) -> (t1 = Tref t2) /\ (t = Ttup [])
-                                | (Opref,[t1]) -> t = Tref t1 |
-                                (Opderef,[t1]) -> t1 = Tref t |
-                                (Aw8alloc,[t1; t2]) -> (t1 = Tint) /\
-                                (t2 = Tword8) /\ (t = Tword8array) |
-                                (Aw8sub,[t1; t2]) -> (t1 = Tword8array)
-                                /\ (t2 = Tint) /\ (t = Tword8) |
-                                (Aw8length,[t1]) -> (t1 = Tword8array)
-                                /\ (t = Tint) | (Aw8update,[t1; t2; t3])
-                                -> (t1 = Tword8array) /\ (t2 = Tint) /\
-                                (t3 = Tword8) /\ (t = Ttup []) |
-                                (CopyStrStr,[t1; t2; t3]) -> (t1 =
+                              (ast_FromTo ty1 ty2,[t1]) -> (t1 = t_of
+                              ty1) /\ (t = t_of ty2) /\
+                              supported_conversion ty1 ty2 |
+                                (ast_Test test ty,[t1; t2]) -> (t1 = t2)
+                                /\ (t = Tbool) /\ (t1 = t_of ty) /\
+                              supported_test test ty |
+                                (ast_Opassign,[t1; t2]) -> (t1 = Tref
+                                t2) /\ (t = Ttup []) | (ast_Opref,[t1])
+                                -> t = Tref t1 | (ast_Opderef,[t1]) ->
+                                t1 = Tref t | (ast_Aw8alloc,[t1; t2]) ->
+                                (t1 = Tint) /\ (t2 = Tword8) /\ (t =
+                                Tword8array) | (ast_Aw8sub,[t1; t2]) ->
+                                (t1 = Tword8array) /\ (t2 = Tint) /\ (t
+                                = Tword8) | (ast_Aw8length,[t1]) -> (t1
+                                = Tword8array) /\ (t = Tint) |
+                                (ast_Aw8update,[t1; t2; t3]) -> (t1 =
+                                Tword8array) /\ (t2 = Tint) /\ (t3 =
+                                Tword8) /\ (t = Ttup []) |
+                                (ast_CopyStrStr,[t1; t2; t3]) -> (t1 =
                                 Tstring) /\ (t2 = Tint) /\ (t3 = Tint)
-                                /\ (t = Tstring) | (CopyStrAw8,[t1; t2;
-                                t3; t4; t5]) ->
+                                /\ (t = Tstring) | (ast_CopyStrAw8,[t1;
+                                t2; t3; t4; t5]) ->
         (t1 = Tstring) /\ (t2 = Tint) /\ (t3 = Tint) /\ (t4 =
           Tword8array) /\ (t5 = Tint) /\ (t = Ttup []) |
-          (CopyAw8Str,[t1; t2; t3]) -> (t1 = Tword8array) /\ (t2 = Tint)
-          /\ (t3 = Tint) /\ (t = Tstring) | (CopyAw8Aw8,[t1; t2; t3; t4;
-          t5]) ->
+          (ast_CopyAw8Str,[t1; t2; t3]) -> (t1 = Tword8array) /\ (t2 =
+          Tint) /\ (t3 = Tint) /\ (t = Tstring) | (ast_CopyAw8Aw8,[t1;
+          t2; t3; t4; t5]) ->
         (t1 = Tword8array) /\ (t2 = Tint) /\ (t3 = Tint) /\ (t4 =
           Tword8array) /\ (t5 = Tint) /\ (t = Ttup []) |
-          (Implode,[t1]) -> (t1 = Tlist Tchar) /\ (t = Tstring) |
-          (Explode,[t1]) -> (t1 = Tstring) /\ (t = Tlist Tchar) |
-          (Strsub,[t1; t2]) -> (t1 = Tstring) /\ (t2 = Tint) /\ (t =
-          Tchar) | (Strlen,[t1]) -> (t1 = Tstring) /\ (t = Tint) |
-          (Strcat,[t1]) -> (t1 = Tlist Tstring) /\ (t = Tstring) |
-          (VfromList,[Tapp [t1] ctor]) -> (ctor = Tlist_num) /\ (t =
-          Tvector t1) | (Vsub,[t1; t2]) -> (t2 = Tint) /\ (Tvector t
-          = t1) | (Vlength,[Tapp [t1] ctor]) -> (ctor = Tvector_num)
-          /\ (t = Tint) | (Aalloc,[t1; t2]) -> (t1 = Tint) /\ (t =
-          Tarray t2) | (AallocEmpty,[t1]) -> (t1 = Ttup []) /\ (?t2.
-          t = Tarray t2) | (Asub,[t1; t2]) -> (t2 = Tint) /\ (Tarray
-          t = t1) | (Alength,[Tapp [t1] ctor]) -> (ctor = Tarray_num)
-          /\ (t = Tint) | (Aupdate,[t1; t2; t3]) -> (t1 = Tarray t3)
-          /\ (t2 = Tint) /\ (t = Ttup []) | (ConfigGC,[t1; t2]) ->
-          (t1 = Tint) /\ (t2 = Tint) /\ (t = Ttup []) | (FFI n,[t1;
-          t2]) -> (t1 = Tstring) /\ (t2 = Tword8array) /\ (t = Ttup
-          []) | (ListAppend,[Tapp [t1] ctor; t2]) -> (ctor =
-          Tlist_num) /\ (t2 = Tapp [t1] ctor) /\ (t = t2) | _9 -> F)`;;
+          (ast_Implode,[t1]) -> (t1 = Tlist Tchar) /\ (t = Tstring) |
+          (ast_Explode,[t1]) -> (t1 = Tstring) /\ (t = Tlist Tchar) |
+          (ast_Strsub,[t1; t2]) -> (t1 = Tstring) /\ (t2 = Tint) /\
+          (t = Tchar) | (ast_Strlen,[t1]) -> (t1 = Tstring) /\ (t =
+          Tint) | (ast_Strcat,[t1]) -> (t1 = Tlist Tstring) /\ (t =
+          Tstring) | (ast_VfromList,[Tapp [t1] ctor]) -> (ctor =
+          Tlist_num) /\ (t = Tvector t1) | (ast_Vsub,[t1; t2]) -> (t2
+          = Tint) /\ (Tvector t = t1) | (ast_Vlength,[Tapp [t1]
+          ctor]) -> (ctor = Tvector_num) /\ (t = Tint) |
+          (ast_Aalloc,[t1; t2]) -> (t1 = Tint) /\ (t = Tarray t2) |
+          (ast_AallocEmpty,[t1]) -> (t1 = Ttup []) /\ (?t2. t =
+          Tarray t2) | (ast_Asub,[t1; t2]) -> (t2 = Tint) /\ (Tarray
+          t = t1) | (ast_Alength,[Tapp [t1] ctor]) -> (ctor =
+          Tarray_num) /\ (t = Tint) | (ast_Aupdate,[t1; t2; t3]) ->
+          (t1 = Tarray t3) /\ (t2 = Tint) /\ (t = Ttup []) |
+          (ast_ConfigGC,[t1; t2]) -> (t1 = Tint) /\ (t2 = Tint) /\ (t
+          = Ttup []) | (ast_FFI n,[t1; t2]) -> (t1 = Tstring) /\ (t2
+          = Tword8array) /\ (t = Ttup []) | (ast_ListAppend,[Tapp
+          [t1] ctor; t2]) -> (ctor = Tlist_num) /\ (t2 = Tapp [t1]
+          ctor) /\ (t = t2) | _9 -> F)`;;
 
 let check_type_names_def = cake_define_list
   [`(check_type_names:(mlstring,mlstring,mlstring
@@ -489,59 +494,59 @@ let build_ctor_tenv_def = cake_define
 let is_value_def = cake_define
   `is_value x1 =
         match x1 with
-          Lit _17 -> T
-        | (Con _18 es) -> (EVERY is_value es)
-        | (Var _19) -> T
-        | (Fun _20 _21) -> T
-        | (Tannot e _22) -> (is_value e)
-        | (Lannot e _23) -> (is_value e)
+          ast_Lit _17 -> T
+        | (ast_Con _18 es) -> (EVERY is_value es)
+        | (ast_Var _19) -> T
+        | (ast_Fun _20 _21) -> T
+        | (ast_Tannot e _22) -> (is_value e)
+        | (ast_Lannot e _23) -> (is_value e)
         | _24 -> F`;;
 
 let type_p = cake_inductive
   `(!tvs tenv t.
    (check_freevars tvs [] t) ==>
-   type_p tvs tenv Pany t []) /\
+   type_p tvs tenv ast_Pany t []) /\
    (!tvs tenv n t.
    (check_freevars tvs [] t) ==>
-   type_p tvs tenv (Pvar n) t [(n,t)]) /\
+   type_p tvs tenv (ast_Pvar n) t [(n,t)]) /\
    (!tvs tenv n.
    T ==>
-   type_p tvs tenv (Plit (IntLit n)) Tint []) /\
+   type_p tvs tenv (ast_Plit (ast_IntLit n)) Tint []) /\
    (!tvs tenv c.
    T ==>
-   type_p tvs tenv (Plit (Char c)) Tchar []) /\
+   type_p tvs tenv (ast_Plit (ast_Char c)) Tchar []) /\
    (!tvs tenv s.
    T ==>
-   type_p tvs tenv (Plit (StrLit s)) Tstring []) /\
+   type_p tvs tenv (ast_Plit (ast_StrLit s)) Tstring []) /\
    (!tvs tenv w.
    T ==>
-   type_p tvs tenv (Plit (Word8 w)) Tword8 []) /\
+   type_p tvs tenv (ast_Plit (ast_Word8 w)) Tword8 []) /\
    (!tvs tenv w.
    T ==>
-   type_p tvs tenv (Plit (Word64 w)) Tword64 []) /\
+   type_p tvs tenv (ast_Plit (ast_Word64 w)) Tword64 []) /\
    (!tvs tenv cn ps ts tvs' tn ts' bindings.
    (EVERY (check_freevars tvs []) ts' /\
    (LENGTH ts' = LENGTH tvs') /\
    type_ps tvs tenv ps (MAP (type_subst (alist_to_fmap (ZIP tvs'
      ts'))) ts) bindings /\
    (nsLookup (?_c tenv) cn = SOME (tvs',ts,tn))) ==>
-   type_p tvs tenv (Pcon (SOME cn) ps) (Tapp ts' tn) bindings) /\
+   type_p tvs tenv (ast_Pcon (SOME cn) ps) (Tapp ts' tn) bindings) /\
    (!tvs tenv ps ts bindings.
    (type_ps tvs tenv ps ts bindings) ==>
-   type_p tvs tenv (Pcon NONE ps) (Ttup ts) bindings) /\
+   type_p tvs tenv (ast_Pcon NONE ps) (Ttup ts) bindings) /\
    (!tvs tenv p t bindings.
    (type_p tvs tenv p t bindings) ==>
-   type_p tvs tenv (Pref p) (Tref t) bindings) /\
+   type_p tvs tenv (ast_Pref p) (Tref t) bindings) /\
    (!tvs tenv pat v t bindings.
    (type_p tvs tenv pat t bindings) ==>
-   type_p tvs tenv (Pas pat v) t (bindings ++ [(v,t)])) /\
+   type_p tvs tenv (ast_Pas pat v) t (bindings ++ [(v,t)])) /\
    (!tvs tenv p t bindings.
    (check_freevars_ast [] t /\
    check_type_names (type_env_t tenv) t /\
    type_p tvs tenv p (type_name_subst (type_env_t tenv) t) bindings)
      ==>
-   type_p tvs tenv (Ptannot p t) (type_name_subst (type_env_t tenv)
-     t) bindings) /\
+   type_p tvs tenv (ast_Ptannot p t) (type_name_subst (type_env_t
+     tenv) t) bindings) /\
    (!tvs tenv.
    T ==>
    type_ps tvs tenv [] [] []) /\ (!tvs tenv p ps t ts bindings
@@ -553,91 +558,92 @@ let type_p = cake_inductive
 let type_e = cake_inductive
   `(!tenv tenvE n.
    T ==>
-   type_e tenv tenvE (Lit (IntLit n)) Tint) /\
+   type_e tenv tenvE (ast_Lit (ast_IntLit n)) Tint) /\
    (!tenv tenvE c.
    T ==>
-   type_e tenv tenvE (Lit (Char c)) Tchar) /\
+   type_e tenv tenvE (ast_Lit (ast_Char c)) Tchar) /\
    (!tenv tenvE s.
    T ==>
-   type_e tenv tenvE (Lit (StrLit s)) Tstring) /\
+   type_e tenv tenvE (ast_Lit (ast_StrLit s)) Tstring) /\
    (!tenv tenvE w.
    T ==>
-   type_e tenv tenvE (Lit (Word8 w)) Tword8) /\
+   type_e tenv tenvE (ast_Lit (ast_Word8 w)) Tword8) /\
    (!tenv tenvE w.
    T ==>
-   type_e tenv tenvE (Lit (Word64 w)) Tword64) /\
+   type_e tenv tenvE (ast_Lit (ast_Word64 w)) Tword64) /\
    (!tenv tenvE w.
    T ==>
-   type_e tenv tenvE (Lit (Float64 w)) Tdouble) /\
+   type_e tenv tenvE (ast_Lit (ast_Float64 w)) Tdouble) /\
    (!tenv tenvE e t.
    (check_freevars (num_tvs tenvE) [] t /\
    type_e tenv tenvE e Texn) ==>
-   type_e tenv tenvE (Raise e) t) /\
+   type_e tenv tenvE (ast_Raise e) t) /\
    (!tenv tenvE e pes t.
    (type_e tenv tenvE e t /\ ~(pes = []) /\
    (!((p,e) :: LIST_TO_SET pes). ?bindings.
-      ALL_DISTINCT (pat_bindings p) /\
+      ALL_DISTINCT (ast_pat_bindings p) /\
       type_p (num_tvs tenvE) tenv p Texn bindings /\
       type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t)) ==>
-   type_e tenv tenvE (Handle e pes) t) /\
+   type_e tenv tenvE (ast_Handle e pes) t) /\
    (!tenv tenvE cn es tvs tn ts' ts.
    (EVERY (check_freevars (num_tvs tenvE) []) ts' /\
    (LENGTH tvs = LENGTH ts') /\
    type_es tenv tenvE es (MAP (type_subst (alist_to_fmap (ZIP tvs
      ts'))) ts) /\
    (nsLookup (?_c tenv) cn = SOME (tvs,ts,tn))) ==>
-   type_e tenv tenvE (Con (SOME cn) es) (Tapp ts' tn)) /\
+   type_e tenv tenvE (ast_Con (SOME cn) es) (Tapp ts' tn)) /\
    (!tenv tenvE es ts.
    (type_es tenv tenvE es ts) ==>
-   type_e tenv tenvE (Con NONE es) (Ttup ts)) /\
+   type_e tenv tenvE (ast_Con NONE es) (Ttup ts)) /\
    (!tenv tenvE n t targs tvs.
    ((tvs = LENGTH targs) /\
    EVERY (check_freevars (num_tvs tenvE) []) targs /\
    (lookup_var n tenvE tenv = SOME (tvs,t))) ==>
-   type_e tenv tenvE (Var n) (deBruijn_subst ((0:num)) targs t)) /\
+   type_e tenv tenvE (ast_Var n) (deBruijn_subst ((0:num)) targs t))
+     /\
    (!tenv tenvE n e t1 t2.
    (check_freevars (num_tvs tenvE) [] t1 /\
-   type_e tenv (Bind_name n ((0:num)) t1 tenvE) e t2) ==>
-   type_e tenv tenvE (Fun n e) (Tfn t1 t2)) /\
+   type_e tenv (typeSystem_Bind_name n ((0:num)) t1 tenvE) e t2) ==>
+   type_e tenv tenvE (ast_Fun n e) (Tfn t1 t2)) /\
    (!tenv tenvE op es ts t.
    (type_es tenv tenvE es ts /\
    type_op op ts t /\
    check_freevars (num_tvs tenvE) [] t) ==>
-   type_e tenv tenvE (App op es) t) /\
+   type_e tenv tenvE (ast_App op es) t) /\
    (!tenv tenvE l e1 e2.
    (type_e tenv tenvE e1 Tbool /\
    type_e tenv tenvE e2 Tbool) ==>
-   type_e tenv tenvE (Log l e1 e2) Tbool) /\
+   type_e tenv tenvE (ast_Log l e1 e2) Tbool) /\
    (!tenv tenvE e1 e2 e3 t.
    (type_e tenv tenvE e1 Tbool /\
    type_e tenv tenvE e2 t /\
    type_e tenv tenvE e3 t) ==>
-   type_e tenv tenvE (If e1 e2 e3) t) /\
+   type_e tenv tenvE (ast_If e1 e2 e3) t) /\
    (!tenv tenvE e pes t1 t2.
    (type_e tenv tenvE e t1 /\ ~(pes = []) /\
    (!((p,e) :: LIST_TO_SET pes). ?bindings.
-      ALL_DISTINCT (pat_bindings p) /\
+      ALL_DISTINCT (ast_pat_bindings p) /\
       type_p (num_tvs tenvE) tenv p t1 bindings /\
       type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t2)) ==>
-   type_e tenv tenvE (Mat e pes) t2) /\
+   type_e tenv tenvE (ast_Mat e pes) t2) /\
    (!tenv tenvE n e1 e2 t1 t2.
    (type_e tenv tenvE e1 t1 /\
    type_e tenv (opt_bind_name n ((0:num)) t1 tenvE) e2 t2) ==>
-   type_e tenv tenvE (Let n e1 e2) t2) /\
+   type_e tenv tenvE (ast_Let n e1 e2) t2) /\
    (!tenv tenvE funs e t bindings.
    (type_funs tenv (bind_var_list ((0:num)) bindings tenvE) funs
      bindings /\
    type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t) ==>
-   type_e tenv tenvE (Letrec funs e) t) /\
+   type_e tenv tenvE (ast_Letrec funs e) t) /\
    (!tenv tenvE e t.
    (check_freevars_ast [] t /\
    check_type_names (type_env_t tenv) t /\
    type_e tenv tenvE e (type_name_subst (type_env_t tenv) t)) ==>
-   type_e tenv tenvE (Tannot e t) (type_name_subst (type_env_t tenv)
-     t)) /\
+   type_e tenv tenvE (ast_Tannot e t) (type_name_subst (type_env_t
+     tenv) t)) /\
    (!tenv tenvE e l t.
    (type_e tenv tenvE e t) ==>
-   type_e tenv tenvE (Lannot e l) t) /\
+   type_e tenv tenvE (ast_Lannot e l) t) /\
    (!tenv tenvE.
    T ==>
    type_es tenv tenvE [] []) /\
@@ -650,7 +656,7 @@ let type_e = cake_inductive
    type_funs tenv tenvE [] []) /\ (!tenv tenvE fn n e funs bindings
      t1 t2.
    (check_freevars (num_tvs tenvE) [] (Tfn t1 t2) /\
-   type_e tenv (Bind_name n ((0:num)) t1 tenvE) e t2 /\
+   type_e tenv (typeSystem_Bind_name n ((0:num)) t1 tenvE) e t2 /\
    type_funs tenv tenvE funs bindings /\
    (ALOOKUP bindings fn = NONE)) ==>
    type_funs tenv tenvE ((fn,n,e) :: funs) ((fn,Tfn t1 t2) ::
@@ -693,13 +699,13 @@ let tenvLift_def = cake_define
 let type_d = cake_inductive
   `(!extra_checks tvs tenv p e t bindings locs.
    (is_value e /\
-   ALL_DISTINCT (pat_bindings p) /\
+   ALL_DISTINCT (ast_pat_bindings p) /\
    type_p tvs tenv p t bindings /\
-   type_e tenv (bind_tvar tvs Empty) e t /\
+   type_e tenv (bind_tvar tvs typeSystem_Empty) e t /\
    (extra_checks ==>
      (!tvs' bindings' t'.
        (type_p tvs' tenv p t' bindings' /\
-       type_e tenv (bind_tvar tvs' Empty) e t') ==>
+       type_e tenv (bind_tvar tvs' typeSystem_Empty) e t') ==>
          EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
            (MAP SND (tenv_add_tvs tvs bindings))))) ==>
    type_d extra_checks tenv (Dlet locs p e)
@@ -708,21 +714,21 @@ let type_d = cake_inductive
        nsEmpty)) /\
    (!extra_checks tenv p e t bindings locs.
    (
-   (extra_checks ==> (~(is_value e) /\ type_pe_determ tenv Empty p
-     e)) /\
-   ALL_DISTINCT (pat_bindings p) /\
+   (extra_checks ==> (~(is_value e) /\ type_pe_determ tenv
+     typeSystem_Empty p e)) /\
+   ALL_DISTINCT (ast_pat_bindings p) /\
    type_p ((0:num)) tenv p t bindings /\
-   type_e tenv Empty e t) ==>
+   type_e tenv typeSystem_Empty e t) ==>
    type_d extra_checks tenv (Dlet locs p e)
      {} (mk_? (alist_to_ns (tenv_add_tvs ((0:num)) bindings)) nsEmpty
        nsEmpty)) /\
    (!extra_checks tenv funs bindings tvs locs.
    (type_funs tenv (bind_var_list ((0:num)) bindings (bind_tvar tvs
-     Empty)) funs bindings /\
+     typeSystem_Empty)) funs bindings /\
    (extra_checks ==>
      (!tvs' bindings'.
        type_funs tenv (bind_var_list ((0:num)) bindings' (bind_tvar
-         tvs' Empty)) funs bindings' ==>
+         tvs' typeSystem_Empty)) funs bindings' ==>
          EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs' bindings'))
            (MAP SND (tenv_add_tvs tvs bindings))))) ==>
    type_d extra_checks tenv (Dletrec locs funs)

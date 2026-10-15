@@ -58,13 +58,14 @@ let mk_init_eval_state_def = cake_define
    like the no-oracle semantics *)
 
 let v_to_nat_def = cake_define
-  `v_to_nat v = (match v with (Litv (IntLit i)) -> (if 0 <= i then
-  SOME (num_of_int i) else NONE) | _1 -> NONE)`;;
+  `v_to_nat v = (match v with (semanticPrimitives_Litv (ast_IntLit
+  i)) -> (if 0 <= i then SOME (num_of_int i) else NONE) | _1 -> NONE)`;;
 
 let v_to_env_id_def = cake_define
-  `v_to_env_id v = (match v with Conv NONE [gen_id_v; id_v] -> (match
-  (v_to_nat gen_id_v,v_to_nat id_v) with (SOME gen_id,SOME id') ->
-  SOME (gen_id,id') | _2 -> NONE) | _3 -> NONE)`;;
+  `v_to_env_id v = (match v with semanticPrimitives_Conv NONE
+  [gen_id_v; id_v] -> (match (v_to_nat gen_id_v,v_to_nat id_v) with
+  (SOME gen_id,SOME id') -> SOME (gen_id,id') | _2 -> NONE) | _3 ->
+  NONE)`;;
 
 let do_eval_record_def = cake_define
   `do_eval_record ci vs (orac:num->(num#num)#semanticPrimitives_v#dec
@@ -90,7 +91,6 @@ let env_rel_def = cake_define
      (!nm x y. nsLookup (?_v env) nm = SOME x /\ nsLookup (?_v env')
        nm = SOME y ==>
          v_rel' x y)`;;
-hol4_overload "env_rel" "source_evalProof_env_rel";;
 
 (* HOL4 ML code, not ported:
 val _ = IndDefLib.add_mono_thm env_rel_mono_rel;
@@ -112,18 +112,24 @@ val s = mk_var ("s", ``: 'ffi semanticPrimitives$state``);
 
 let v_rel = cake_inductive
   `(!env'. v_to_env_id v = SOME id /\ lookup_env es id = SOME env' /\
-         env_rel (v_rel es) env env' ==>
-     v_rel es (Env env id) v) /\
+         source_evalProof_env_rel (v_rel es) env env' ==>
+     v_rel es (semanticPrimitives_Env env id) v) /\
    (LIST_REL (v_rel es) xs ys ==>
-     v_rel es (Vectorv xs) (Vectorv ys)) /\
+     v_rel es (semanticPrimitives_Vectorv xs)
+       (semanticPrimitives_Vectorv ys)) /\
    (LIST_REL (v_rel es) xs ys ==>
-     v_rel es (Conv stmp xs) (Conv stmp ys)) /\
-   (env_rel (v_rel es) env env' ==>
-     v_rel es (Closure env nm x) (Closure env' nm x)) /\
-   (env_rel (v_rel es) env env' ==>
-     v_rel es (Recclosure env funs nm) (Recclosure env' funs nm)) /\
-   (v_rel es (Litv l) (Litv l)) /\
-   (v_rel es (Loc br n) (Loc br n))`;;
+     v_rel es (semanticPrimitives_Conv stmp xs)
+       (semanticPrimitives_Conv stmp ys)) /\
+   (source_evalProof_env_rel (v_rel es) env env' ==>
+     v_rel es (semanticPrimitives_Closure env nm x)
+       (semanticPrimitives_Closure env' nm x)) /\
+   (source_evalProof_env_rel (v_rel es) env env' ==>
+     v_rel es (semanticPrimitives_Recclosure env funs nm)
+       (semanticPrimitives_Recclosure env' funs nm)) /\
+   (v_rel es (semanticPrimitives_Litv l) (semanticPrimitives_Litv l))
+     /\
+   (v_rel es (semanticPrimitives_Loc br n) (semanticPrimitives_Loc
+     br n))`;;
 
 (* HOL4 ML code, not ported:
 val _ = bossLib.augment_srw_ss [rewrites [v_rel_l_simps, v_rel_Boolv]];
@@ -201,7 +207,6 @@ let match_result_rel_def = cake_define
   `source_evalProof_match_result_rel nerr R mr1 mr2 <=> (match mr1
   with No_match -> mr2 = No_match | Match_type_error -> nerr \/ mr2 =
   Match_type_error | Match x -> (?y. mr2 = Match y /\ R x y))`;;
-hol4_overload "match_result_rel" "source_evalProof_match_result_rel";;
 
 (* HOL4 ML code, not ported:
 val ci = mk_var ("ci", ``: 'cfg compiler_instance``);
@@ -210,7 +215,6 @@ val ci = mk_var ("ci", ``: 'cfg compiler_instance``);
 let abort_def = cake_define
   `source_evalProof_abort r <=> (match r with Rerr (Rabort a) -> T |
   _9 -> F)`;;
-hol4_overload "abort" "source_evalProof_abort";;
 
 (* case splits for evaluate proofs *)
 (* HOL4 ML code, not ported:
@@ -770,12 +774,12 @@ Finalise insert_oracle_correct;
 let extract_oracle_def = cake_define
   `extract_oracle s env decs n =
      (match (OLEAST (\k. ?s' res.
-       evaluate_decs (semanticPrimitives_state_clock_fupd (K k) s)
-         env decs = (s',res) /\
+       evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K
+         k) s) env decs = (s',res) /\
          n < FST (FST (?_oracle (orac_s
            (semanticPrimitives_state_eval_state s')) 0)))) with NONE ->
            NONE | SOME k ->
-       (let (s',_18) = evaluate_decs
+       (let (s',_18) = evaluate_evaluate_decs
          (semanticPrimitives_state_clock_fupd (K k) s) env decs in
          SOME (?_oracle (orac_s
            (semanticPrimitives_state_eval_state s')) (n + 1))))`;;

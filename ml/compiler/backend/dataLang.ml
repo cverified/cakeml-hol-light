@@ -40,33 +40,34 @@ needs "semantics/ast.ml";;
 let op_space_reset_def = cake_define
   `op_space_reset x1 =
         match x1 with
-          IntOp Add -> T
-        | (IntOp Sub) -> T
-        | (IntOp Mult) -> T
-        | (IntOp Div) -> T
-        | (IntOp Mod) -> T
-        | (IntOp Less) -> T
-        | (IntOp LessEq) -> T
-        | (IntOp Greater) -> T
-        | (IntOp GreaterEq) -> T
-        | (BlockOp Equal) -> T
-        | (BlockOp ListAppend) -> T
-        | (BlockOp (FromList _1)) -> T
-        | (MemOp RefArray) -> T
-        | (MemOp (RefByte _2)) -> T
-        | (BlockOp (ConsExtend _3)) -> T
-        | (MemOp (CopyByte new_flag)) -> new_flag
-        | (MemOp ConfigGC) -> T
+          closLang_IntOp Add -> T
+        | (closLang_IntOp Sub) -> T
+        | (closLang_IntOp closLang_Mult) -> T
+        | (closLang_IntOp Div) -> T
+        | (closLang_IntOp Mod) -> T
+        | (closLang_IntOp Less) -> T
+        | (closLang_IntOp closLang_LessEq) -> T
+        | (closLang_IntOp Greater) -> T
+        | (closLang_IntOp closLang_GreaterEq) -> T
+        | (closLang_BlockOp Equal) -> T
+        | (closLang_BlockOp ListAppend) -> T
+        | (closLang_BlockOp (closLang_FromList _1)) -> T
+        | (closLang_MemOp closLang_RefArray) -> T
+        | (closLang_MemOp (closLang_RefByte _2)) -> T
+        | (closLang_BlockOp (closLang_ConsExtend _3)) -> T
+        | (closLang_MemOp (closLang_CopyByte new_flag)) -> new_flag
+        | (closLang_MemOp ConfigGC) -> T
         | (FFI _4) -> T
         | _5 -> F`;;
 
 let op_requires_names_def = cake_define
   `op_requires_names op = (op_space_reset op \/ (?n. op = FFI n) \/
-                          (?new_flag. op = (MemOp (CopyByte
-                            new_flag))) \/
-                          (op = MemOp XorByte) \/
-                          (?b cmp. op = MemOp (StringCmp b cmp)) \/
-                          (op = Install))`;;
+                          (?new_flag. op = (closLang_MemOp
+                            (closLang_CopyByte new_flag))) \/
+                          (op = closLang_MemOp closLang_XorByte) \/
+                          (?b cmp. op = closLang_MemOp
+                            (closLang_StringCmp b cmp)) \/
+                          (op = closLang_Install))`;;
 
 let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
   "dataLang_prog = dataLang_Skip | dataLang_Move (num) (num) | \
@@ -77,17 +78,11 @@ let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
    (dataLang_prog) | dataLang_MakeSpace (num) (1 spt) | \
    dataLang_Raise (num) | dataLang_Return (num list) | dataLang_Tick \
    | dataLang_Force ((num#1 spt) option) (num) (num)";;
-hol4_overload "Skip" "dataLang_Skip";;
-hol4_overload "Move" "dataLang_Move";;
 hol4_overload "Call" "dataLang_Call";;
-hol4_overload "Assign" "dataLang_Assign";;
-hol4_overload "Seq" "dataLang_Seq";;
 hol4_overload "If" "dataLang_If";;
-hol4_overload "MakeSpace" "dataLang_MakeSpace";;
 hol4_overload "Raise" "dataLang_Raise";;
-hol4_overload "Return" "dataLang_Return";;
 hol4_overload "Tick" "dataLang_Tick";;
 hol4_overload "Force" "dataLang_Force";;
 
 let mk_ticks_def = cake_define
-  `mk_ticks n e = FUNPOW (Seq Tick) n e`;;
+  `mk_ticks n e = FUNPOW (dataLang_Seq Tick) n e`;;

@@ -9,7 +9,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
@@ -48,17 +47,17 @@ let store_list_def = cake_define
                  Temp (n2w 25); Temp (n2w 26); Temp (n2w 27); Temp
                    (n2w 28); Temp (n2w 29);
                  Temp (n2w 30); Temp (n2w 31)]`;;
-hol4_overload "store_list" "stack_remove_store_list";;
 
 let store_pos_def = cake_define
   `store_pos name =
-     (match INDEX_FIND 0 (\n. n = name) store_list with NONE -> 0
-       | SOME (i,_1) -> i + 1)`;;
+     (match INDEX_FIND 0 (\n. n = name) stack_remove_store_list
+       with NONE -> 0 | SOME (i,_1) -> i + 1)`;;
 
 let store_length_def = cake_define
   `store_length =
-     (if EVEN (LENGTH store_list) then LENGTH store_list else
-       LENGTH store_list + 1)`;;
+     (if EVEN (LENGTH stack_remove_store_list) then LENGTH
+       stack_remove_store_list else LENGTH stack_remove_store_list +
+       1)`;;
 
 let store_offset_def = cake_define
   `store_offset name = (n2w 0) - word_offset (store_pos name)`;;
@@ -67,7 +66,8 @@ let stack_err_lab_def = cake_define
   `stack_err_lab = 2`;;
 
 let halt_inst_def = cake_define
-  `halt_inst w = Seq ((\r w. Inst (Const r w)) 1 w) (Halt 1)`;;
+  `halt_inst w = stackLang_Seq ((\r w. Inst (asm_Const r w)) 1 w)
+  (stackLang_Halt 1)`;;
 
 (*
     k is stack pointer register
@@ -78,10 +78,13 @@ let halt_inst_def = cake_define
 let single_stack_alloc_def = cake_define
   `single_stack_alloc jump k n =
      (if jump then
-       Seq (Inst (Arith (Binop Sub k k (Imm (word_offset n)))))
-           (JumpLower k (k + 1) stack_err_lab) else
-        Seq (Inst (Arith (Binop Sub k k (Imm (word_offset n)))))
-           (If Lower k (Reg (k + 1)) (halt_inst (n2w 2)) Skip))`;;
+       stackLang_Seq (Inst (Arith (asm_Binop Sub k k (Imm
+         (word_offset n)))))
+           (stackLang_JumpLower k (k + 1) stack_err_lab) else
+        stackLang_Seq (Inst (Arith (asm_Binop Sub k k (Imm
+          (word_offset n)))))
+           (If asm_Lower k (Reg (k + 1)) (halt_inst (n2w 2))
+             Skip))`;;
 
 (* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
 let stack_alloc_def = cake_define_wf
@@ -89,12 +92,12 @@ let stack_alloc_def = cake_define_wf
   `stack_alloc jump k n =
      (if n = 0 then Skip else
      if n <= max_stack_alloc then single_stack_alloc jump k n else
-       Seq (single_stack_alloc jump k max_stack_alloc)
+       stackLang_Seq (single_stack_alloc jump k max_stack_alloc)
            (stack_alloc jump k (n - max_stack_alloc)))`;;
 
 let single_stack_free_def = cake_define
   `single_stack_free k n =
-     Inst (Arith (Binop Add k k (Imm (word_offset n))))`;;
+     Inst (Arith (asm_Binop Add k k (Imm (word_offset n))))`;;
 
 (* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
 let stack_free_def = cake_define_wf
@@ -102,9 +105,8 @@ let stack_free_def = cake_define_wf
   `stack_remove_stack_free k n =
      (if n = 0 then Skip else
      if n <= max_stack_alloc then single_stack_free k n else
-       Seq (single_stack_free k max_stack_alloc)
+       stackLang_Seq (single_stack_free k max_stack_alloc)
            (stack_remove_stack_free k (n - max_stack_alloc)))`;;
-hol4_overload "stack_free" "stack_remove_stack_free";;
 
 (* upshift the stack pointer *)
 (* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
@@ -112,10 +114,10 @@ let upshift_def = cake_define_wf
   `MEASURE SND`
   `upshift r n =
      (if n <= max_stack_alloc then
-       (Inst (Arith (Binop Add r r (Imm (word_offset n))))):'a
+       (Inst (Arith (asm_Binop Add r r (Imm (word_offset n))))):'a
          stackLang_prog else
-       Seq (Inst (Arith (Binop Add r r (Imm (word_offset
-         max_stack_alloc)))))
+       stackLang_Seq (Inst (Arith (asm_Binop Add r r (Imm
+         (word_offset max_stack_alloc)))))
        (upshift r (n - max_stack_alloc)))`;;
 
 (* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
@@ -123,150 +125,169 @@ let downshift_def = cake_define_wf
   `MEASURE SND`
   `downshift r n =
      (if n <= max_stack_alloc then
-       (Inst (Arith (Binop Sub r r (Imm (word_offset n))))):'a
+       (Inst (Arith (asm_Binop Sub r r (Imm (word_offset n))))):'a
          stackLang_prog else
-       Seq (Inst (Arith (Binop Sub r r (Imm (word_offset
-         max_stack_alloc)))))
+       stackLang_Seq (Inst (Arith (asm_Binop Sub r r (Imm
+         (word_offset max_stack_alloc)))))
        (downshift r (n - max_stack_alloc)))`;;
 
 (* Shifts k up and down to store r into n*)
 let stack_store_def = cake_define
   `stack_store k r n =
-      Seq (upshift k n)
-     (Seq (Inst (Mem Store r (Addr k (n2w 0)))) (downshift k n))`;;
+      stackLang_Seq (upshift k n)
+     (stackLang_Seq (Inst (asm_Mem asm_Store r (Addr k (n2w 0))))
+       (downshift k n))`;;
 
 let stack_load_def = cake_define
   `stack_load r n =
-     (Seq (upshift r n) (Inst (Mem Load r (Addr r (n2w 0)))):'a
-       stackLang_prog)`;;
+     (stackLang_Seq (upshift r n) (Inst (asm_Mem asm_Load r (Addr
+       r (n2w 0)))):'a stackLang_prog)`;;
 
 let copy_each_def = cake_define
   `copy_each t1 t2 =
-     (\cmp r ri c. Loop (If cmp r ri c (Break 0))) NotEqual 1 (Imm
-       (n2w 1))
-       (list_Seq [(\r a. Inst (Mem Load r (Addr a (n2w 0)))) t1 t2;
-                  (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+     (\cmp r ri c. stackLang_Loop (If cmp r ri c (stackLang_Break
+       0))) asm_NotEqual 1 (Imm (n2w 1))
+       (stackLang_list_Seq [(\r a. Inst (asm_Mem asm_Load r (Addr a
+         (n2w 0)))) t1 t2;
+                  (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                     (bytes_in_word))))) t2;
                   If Test 1 (Imm (n2w 1)) Skip ((\r1 r2. Inst (Arith
-                    (Binop Add r1 r1 (Reg r2)))) t1 3);
+                    (asm_Binop Add r1 r1 (Reg r2)))) t1 3);
                   (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v)))))
                     1 1;
-                  (\r a. Inst (Mem Store r (Addr a (n2w 0)))) t1 2;
-                  (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+                  (\r a. Inst (asm_Mem asm_Store r (Addr a (n2w 0))))
+                    t1 2;
+                  (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                     (bytes_in_word))))) 2])`;;
 
 let copy_loop_def = cake_define
   `copy_loop t1 t2 =
-     list_Seq [(\r a. Inst (Mem Load r (Addr a (n2w 0)))) 1 t2;
-               (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+     stackLang_list_Seq [(\r a. Inst (asm_Mem asm_Load r (Addr a (n2w
+       0)))) 1 t2;
+               (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                  (bytes_in_word))))) t2;
-               (\cmp r ri c. Loop (If cmp r ri c (Break 0))) Less 1
-                 (Imm (n2w 0))
-                 (list_Seq [copy_each t1 t2;
-                            (\r a. Inst (Mem Load r (Addr a (n2w
-                              0)))) 1 t2;
-                            (\r1. Inst (Arith (Binop Add r1 r1 (Imm
-                              (bytes_in_word))))) t2]);
+               (\cmp r ri c. stackLang_Loop (If cmp r ri c
+                 (stackLang_Break 0))) Less 1 (Imm (n2w 0))
+                 (stackLang_list_Seq [copy_each t1 t2;
+                            (\r a. Inst (asm_Mem asm_Load r (Addr a
+                              (n2w 0)))) 1 t2;
+                            (\r1. Inst (Arith (asm_Binop Add r1 r1
+                              (Imm (bytes_in_word))))) t2]);
                copy_each t1 t2]`;;
 
 let comp_def = cake_define
   `stack_remove_comp jump off k (p:'a stackLang_prog) =
-     (match p with Get r name ->
-         (if name = CurrHeap then (\dest src. Inst (Arith (Binop Or
-           dest src (Reg src)))) r (k + 2) else Inst (Mem Load r (Addr
-           (k + 1) (store_offset name)))) | Set name r ->
-         (if name = CurrHeap then (\dest src. Inst (Arith (Binop Or
-           dest src (Reg src)))) (k + 2) r else Inst (Mem Store r (Addr
-           (k + 1) (store_offset name)))) | OpCurrHeap op r n ->
-         Inst (Arith (Binop op r n (Reg (k + 2)))) | StackFree n ->
-           stack_free k n | StackAlloc n -> stack_alloc jump k n |
-           StackStore r n ->
+     (match p with stackLang_Get r name ->
+         (if name = CurrHeap then (\dest src. Inst (Arith (asm_Binop
+           Or dest src (Reg src)))) r (k + 2) else Inst (asm_Mem
+           asm_Load r (Addr (k + 1) (store_offset name)))) |
+           stackLang_Set name r ->
+         (if name = CurrHeap then (\dest src. Inst (Arith (asm_Binop
+           Or dest src (Reg src)))) (k + 2) r else Inst (asm_Mem
+           asm_Store r (Addr (k + 1) (store_offset name)))) |
+           stackLang_OpCurrHeap op r n ->
+         Inst (Arith (asm_Binop op r n (Reg (k + 2)))) |
+           stackLang_StackFree n -> stack_remove_stack_free k n |
+           stackLang_StackAlloc n -> stack_alloc jump k n |
+           stackLang_StackStore r n ->
        (let w = word_offset n in
-       if offset_ok 0 off w then
-         Inst (Mem Store r (Addr k w)) else
-         stack_store k r n) | StackLoad r n ->
+       if asm_offset_ok 0 off w then
+         Inst (asm_Mem asm_Store r (Addr k w)) else
+         stack_store k r n) | stackLang_StackLoad r n ->
        (let w = word_offset n in
-       if offset_ok 0 off w then
-         Inst (Mem Load r (Addr k w)) else
-         Seq ((\dest src. Inst (Arith (Binop Or dest src (Reg src))))
-           r k) (stack_load r n)) | DataBufferWrite r1 r2 -> Inst (Mem
-           Store r2 (Addr r1 (n2w 0))) | StackLoadAny r i -> Seq (Seq
-           ((\dest src. Inst (Arith (Binop Or dest src (Reg src)))) r i)
-           ((\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) r k))
-                              (Inst (Mem Load r (Addr r (n2w 0)))) |
-                                StackStoreAny r i -> Seq (Inst (Arith
-                                (Binop Add k k (Reg i))))
-                           (Seq (Inst (Mem Store r (Addr k (n2w 0))))
-                              (Inst (Arith (Binop Sub k k (Reg i)))))
-                                | StackGetSize r -> Seq (Seq ((\dest
-                                src. Inst (Arith (Binop Or dest src (Reg
-                                src)))) r k) ((\r1 r2. Inst (Arith
-                                (Binop Sub r1 r1 (Reg r2)))) r (k + 1)))
+       if asm_offset_ok 0 off w then
+         Inst (asm_Mem asm_Load r (Addr k w)) else
+         stackLang_Seq ((\dest src. Inst (Arith (asm_Binop Or dest
+           src (Reg src)))) r k) (stack_load r n)) |
+           stackLang_DataBufferWrite r1 r2 -> Inst (asm_Mem asm_Store r2
+           (Addr r1 (n2w 0))) | stackLang_StackLoadAny r i ->
+           stackLang_Seq (stackLang_Seq ((\dest src. Inst (Arith
+           (asm_Binop Or dest src (Reg src)))) r i) ((\r1 r2. Inst
+           (Arith (asm_Binop Add r1 r1 (Reg r2)))) r k))
+                              (Inst (asm_Mem asm_Load r (Addr r (n2w
+                                0)))) | stackLang_StackStoreAny r i ->
+                                stackLang_Seq (Inst (Arith (asm_Binop
+                                Add k k (Reg i))))
+                           (stackLang_Seq (Inst (asm_Mem asm_Store r
+                             (Addr k (n2w 0))))
+                              (Inst (Arith (asm_Binop Sub k k (Reg
+                                i))))) | stackLang_StackGetSize r ->
+                                stackLang_Seq (stackLang_Seq ((\dest
+                                src. Inst (Arith (asm_Binop Or dest src
+                                (Reg src)))) r k) ((\r1 r2. Inst (Arith
+                                (asm_Binop Sub r1 r1 (Reg r2)))) r (k +
+                                1)))
                              ((\r v. Inst (Arith (Shift Lsr r r (Imm
-                               (n2w v))))) r (word_shift (:'a))) |
-                               StackSetSize r -> Seq ((\r v. Inst (Arith
-                               (Shift Lsl r r (Imm (n2w v))))) r
-                               (word_shift (:'a)))
-                             (Seq ((\dest src. Inst (Arith (Binop Or
-                               dest src (Reg src)))) k (k + 1)) ((\r1
-                               r2. Inst (Arith (Binop Add r1 r1 (Reg
-                               r2)))) k r)) | BitmapLoad r v ->
-         list_Seq [Inst (Mem Load r (Addr (k + 1) (store_offset
-           BitmapBase)));
-                   (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2))))
-                     r v;
+                               (n2w v))))) r (backend_common_word_shift
+                               (:'a))) | stackLang_StackSetSize r ->
+                               stackLang_Seq ((\r v. Inst (Arith (Shift
+                               Lsl r r (Imm (n2w v))))) r
+                               (backend_common_word_shift (:'a)))
+                             (stackLang_Seq ((\dest src. Inst (Arith
+                               (asm_Binop Or dest src (Reg src)))) k (k
+                               + 1)) ((\r1 r2. Inst (Arith (asm_Binop
+                               Add r1 r1 (Reg r2)))) k r)) |
+                               stackLang_BitmapLoad r v ->
+         stackLang_list_Seq [Inst (asm_Mem asm_Load r (Addr (k + 1)
+           (store_offset BitmapBase)));
+                   (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                     r2)))) r v;
                    (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v)))))
-                     r (word_shift (:'a));
-                   Inst (Mem Load r (Addr r (n2w 0)))] | StoreConsts
-                     t1 t2 _2 ->
-         list_Seq [Inst (Mem Load t2 (Addr (k + 1) (store_offset
-           BitmapBase)));
-                   (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2))))
-                     t2 1;
+                     r (backend_common_word_shift (:'a));
+                   Inst (asm_Mem asm_Load r (Addr r (n2w 0)))] |
+                     stackLang_StoreConsts t1 t2 _2 ->
+         stackLang_list_Seq [Inst (asm_Mem asm_Load t2 (Addr (k + 1)
+           (store_offset BitmapBase)));
+                   (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                     r2)))) t2 1;
                    (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v)))))
-                     t2 (word_shift (:'a));
+                     t2 (backend_common_word_shift (:'a));
                    copy_loop t1 t2;
-                   (\dest src. Inst (Arith (Binop Or dest src (Reg
-                     src)))) t1 1;
-                   (\dest src. Inst (Arith (Binop Or dest src (Reg
-                     src)))) t2 1] | Seq p1 p2 -> Seq (stack_remove_comp
-                     jump off k p1) (stack_remove_comp jump off k p2) |
-                     If c r ri p1 p2 -> If c r ri (stack_remove_comp
-                     jump off k p1) (stack_remove_comp jump off k p2) |
-                     Loop p1 -> Loop (stack_remove_comp jump off k p1) |
-                     Call ret dest exc ->
+                   (\dest src. Inst (Arith (asm_Binop Or dest src
+                     (Reg src)))) t1 1;
+                   (\dest src. Inst (Arith (asm_Binop Or dest src
+                     (Reg src)))) t2 1] | stackLang_Seq p1 p2 ->
+                     stackLang_Seq (stack_remove_comp jump off k p1)
+                     (stack_remove_comp jump off k p2) | If c r ri p1 p2
+                     -> If c r ri (stack_remove_comp jump off k p1)
+                     (stack_remove_comp jump off k p2) | stackLang_Loop
+                     p1 -> stackLang_Loop (stack_remove_comp jump off k
+                     p1) | Call ret dest exc ->
          Call (match ret with NONE -> NONE | SOME (p1,lr,l1,l2) ->
            SOME (stack_remove_comp jump off k p1,lr,l1,l2))
            dest (match exc with NONE -> NONE | SOME (p2,l1,l2) ->
              SOME (stack_remove_comp jump off k p2,l1,l2)) | p -> p)`;;
-hol4_overload "comp" "stack_remove_comp";;
 
 let prog_comp_def = cake_define
-  `stack_remove_prog_comp jump off k (n,p) = (n,comp jump off k p)`;;
-hol4_overload "prog_comp" "stack_remove_prog_comp";;
+  `stack_remove_prog_comp jump off k (n,p) = (n,stack_remove_comp
+  jump off k p)`;;
 
 (* -- init code -- *)
 
 let store_list_code_def = cake_define_list
   [`store_list_code a t [] = Skip`;
    `store_list_code a t (INL w :: xs) =
-        Seq (list_Seq [(\r w. Inst (Const r w)) t w; (\r a. Inst
-          (Mem Store r (Addr a (n2w 0)))) t a; (\r1. Inst (Arith (Binop
-          Add r1 r1 (Imm (bytes_in_word))))) a])
+        stackLang_Seq (stackLang_list_Seq [(\r w. Inst (asm_Const r
+          w)) t w; (\r a. Inst (asm_Mem asm_Store r (Addr a (n2w 0)))) t
+          a; (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
+          (bytes_in_word))))) a])
             (store_list_code a t xs)`;
    `store_list_code a t (INR i :: xs) =
-        Seq (list_Seq [(\r a. Inst (Mem Store r (Addr a (n2w 0)))) i
-          a; (\r1. Inst (Arith (Binop Add r1 r1 (Imm (bytes_in_word)))))
-          a])
+        stackLang_Seq (stackLang_list_Seq [(\r a. Inst (asm_Mem
+          asm_Store r (Addr a (n2w 0)))) i a; (\r1. Inst (Arith
+          (asm_Binop Add r1 r1 (Imm (bytes_in_word))))) a])
             (store_list_code a t xs)`];;
 
 (* k+1 is base, k is stack pointer, discards 0 *)
 let init_memory_def = cake_define
   `init_memory k xs =
-     list_Seq [(\r w. Inst (Const r w)) 0 bytes_in_word;
-               (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) k 0;
-               (\r w. Inst (Const r w)) 0 (n2w 0);
-               (\r a. Inst (Mem Store r (Addr a (n2w 0)))) 0 k;
+     stackLang_list_Seq [(\r w. Inst (asm_Const r w)) 0
+       bytes_in_word;
+               (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
+                 k 0;
+               (\r w. Inst (asm_Const r w)) 0 (n2w 0);
+               (\r a. Inst (asm_Mem asm_Store r (Addr a (n2w 0)))) 0
+                 k;
                store_list_code (k + 1) 0 xs]`;;
 
 let store_init_def = cake_define
@@ -296,90 +317,94 @@ let init_code_def = cake_define
      (let max_heap = (if max_heap * w2n (bytes_in_word:'a word) <
        dimword (:'a) then n2w max_heap * bytes_in_word else (n2w 0) -
        (n2w 1)) in
-       list_Seq [
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+       stackLang_list_Seq [
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) 0 4;
-                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 0
-                   2;
+                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
+                   r2)))) 0 2;
                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 0
-                   (1 + word_shift (:'a));
+                   (1 + backend_common_word_shift (:'a));
                  (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 0
-                   (word_shift (:'a));
-                 (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) 0
-                   2;
-                 (\r w. Inst (Const r w)) 5 (n2w max_stack_alloc *
-                   (bytes_in_word:'a word));
-                 (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) 2
-                   5;
-                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 4
-                   5;
-                 If Lower 3 (Reg 2) ((\dest src. Inst (Arith (Binop
-                   Or dest src (Reg src)))) 3 0)
-                   (If Lower 4 (Reg 3) ((\dest src. Inst (Arith
-                     (Binop Or dest src (Reg src)))) 3 0) Skip);
-                 (\r w. Inst (Const r w)) 0 (n2w max_stack_alloc *
-                   (bytes_in_word:'a word));
-                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 2
-                   0;
-                 (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) 4
-                   0;
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+                   (backend_common_word_shift (:'a));
+                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                   r2)))) 0 2;
+                 (\r w. Inst (asm_Const r w)) 5 (n2w max_stack_alloc
+                   * (bytes_in_word:'a word));
+                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                   r2)))) 2 5;
+                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
+                   r2)))) 4 5;
+                 If asm_Lower 3 (Reg 2) ((\dest src. Inst (Arith
+                   (asm_Binop Or dest src (Reg src)))) 3 0)
+                   (If asm_Lower 4 (Reg 3) ((\dest src. Inst (Arith
+                     (asm_Binop Or dest src (Reg src)))) 3 0) Skip);
+                 (\r w. Inst (asm_Const r w)) 0 (n2w max_stack_alloc
+                   * (bytes_in_word:'a word));
+                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
+                   r2)))) 2 0;
+                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                   r2)))) 4 0;
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) 0 3;
-                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 0
-                   2;
-                 (\r w. Inst (Const r w)) 5 max_heap;
-                 If Lower 5 (Reg 0) (Seq ((\dest src. Inst (Arith
-                   (Binop Or dest src (Reg src)))) 3 2) ((\r1 r2. Inst
-                   (Arith (Binop Add r1 r1 (Reg r2)))) 3 5)) Skip;
-                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 3
-                   2;
+                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
+                   r2)))) 0 2;
+                 (\r w. Inst (asm_Const r w)) 5 max_heap;
+                 If asm_Lower 5 (Reg 0) (stackLang_Seq ((\dest src.
+                   Inst (Arith (asm_Binop Or dest src (Reg src)))) 3 2)
+                   ((\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                   r2)))) 3 5)) Skip;
+                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
+                   r2)))) 3 2;
                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 3
-                   (word_shift (:'a) + 1);
+                   (backend_common_word_shift (:'a) + 1);
                  (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 3
-                   (word_shift (:'a) + 1);
-                 (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) 3
-                   2;
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+                   (backend_common_word_shift (:'a) + 1);
+                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                   r2)))) 3 2;
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) 5 3;
-                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 5
-                   2;
+                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
+                   r2)))) 5 2;
                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 5
                    1;
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) (k + 2) 2;
-                 (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) 2
-                   5;
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg
+                   r2)))) 2 5;
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) k 4;
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) (k + 1) 3;
-                 (\r a. Inst (Mem Load r (Addr a (n2w 0)))) 3 (k +
-                   2);
+                 (\r a. Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 3
+                   (k + 2);
                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 3
-                   (word_shift (:'a));
-                 (\dest src. Inst (Arith (Binop Or dest src (Reg
+                   (backend_common_word_shift (:'a));
+                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                    src)))) 0 (k + 2);
-                 (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+                 (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 0;
-                 (\r a. Inst (Mem Load r (Addr a (n2w 0)))) 4 0;
-                 (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+                 (\r a. Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 4
+                   0;
+                 (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 0;
-                 (\r a. Inst (Mem Load r (Addr a (n2w 0)))) 6 0;
-                 (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+                 (\r a. Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 6
+                   0;
+                 (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 0;
-                 (\r a. Inst (Mem Load r (Addr a (n2w 0)))) 7 0;
-                 (\r1. Inst (Arith (Binop Add r1 r1 (Imm
+                 (\r a. Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 7
+                   0;
+                 (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 0;
-                 (\r a. Inst (Mem Load r (Addr a (n2w 0)))) 1 0;
+                 (\r a. Inst (asm_Mem asm_Load r (Addr a (n2w 0)))) 1
+                   0;
                  init_memory k (MAP (store_init gen_gc' k) (REVERSE
-                   store_list));
-                 LocValue 0 1 0])`;;
-hol4_overload "init_code" "stack_remove_init_code";;
+                   stack_remove_store_list));
+                 stackLang_LocValue 0 1 0])`;;
 
 let init_stubs_def = cake_define
   `init_stubs gen_gc' max_heap k start =
-     [(0,Seq (init_code gen_gc' max_heap k) (Call NONE (INL start)
-       NONE));
+     [(0,stackLang_Seq (stack_remove_init_code gen_gc' max_heap k)
+       (Call NONE (INL start) NONE));
       (1,halt_inst (n2w 0));
       (2,halt_inst (n2w 2))]`;;
 
@@ -388,12 +413,10 @@ let stub_names_def = cake_define
      (0,implode "_Init");
      (1,implode "_Halt0");
      (2,implode "_Halt2")]`;;
-hol4_overload "stub_names" "stack_remove_stub_names";;
 
 (* -- full compiler -- *)
 
 let compile_def = cake_define
   `stack_remove_compile jump off gen_gc' max_heap k start prog =
      init_stubs gen_gc' max_heap k start ++
-     MAP (prog_comp jump off k) prog`;;
-hol4_overload "compile" "stack_remove_compile";;
+     MAP (stack_remove_prog_comp jump off k) prog`;;

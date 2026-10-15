@@ -96,26 +96,24 @@ QED
 let eval_sim_def = cake_define
   `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel allow_fail =
      (!k res1 s2.
-       evaluate_decs (initial_state ffi k ec) ds1 =
+       evaluate_decs (flatSem_initial_state ffi k ec) ds1 =
          (s2,res1) /\
        (allow_fail \/ ~(res1 = SOME (Rabort Rtype_error))) /\
        rel ds1 ds2 ==>
        (?ck res2 t2.
-         evaluate_decs (initial_state ffi (k + ck) ec2) ds2 =
+         evaluate_decs (flatSem_initial_state ffi (k + ck) ec2) ds2 =
            (t2,res2) /\ ?_ffi
          s2 = ?_ffi t2 /\
          (res1 = NONE ==> res2 = NONE) /\
          (!v. res1 = SOME (Rraise v) ==> (?v1. res2 = SOME (Rraise
            v1))) /\
          (!a. res1 = SOME (Rabort a) ==> res2 = SOME (Rabort a))))`;;
-hol4_overload "eval_sim" "flatProps_eval_sim";;
 
 let op_gbag_def = cake_define
   `flatProps_op_gbag x1 =
       match x1 with
-        GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
+        flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
       | _1 -> EMPTY_BAG`;;
-hol4_overload "op_gbag" "flatProps_op_gbag";;
 
 let set_globals_def = cake_define_list
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
@@ -127,7 +125,7 @@ let set_globals_def = cake_define_list
    `flatProps_set_globals (Fun t v e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (App t op es:flatLang_exp) = BAG_UNION
-  (flatProps_elist_globals es) (op_gbag op)`;
+  (flatProps_elist_globals es) (flatProps_op_gbag op)`;
    `flatProps_set_globals (If t e1 e2 e3:flatLang_exp) = BAG_UNION
   (BAG_UNION
         (flatProps_set_globals e1) (flatProps_set_globals e2))
@@ -143,8 +141,6 @@ let set_globals_def = cake_define_list
    `flatProps_elist_globals [] = EMPTY_BAG`;
    `flatProps_elist_globals (e :: es) = BAG_UNION
   (flatProps_set_globals e) (flatProps_elist_globals es)`];;
-hol4_overload "elist_globals" "flatProps_elist_globals";;
-hol4_overload "set_globals" "flatProps_set_globals";;
 
 
 let _ = size_thms "exp";;
@@ -160,7 +156,7 @@ let esgc_free_def = cake_define_wf
        flatProps_esgc_free e /\ EVERY flatProps_esgc_free (MAP SND
          pes)
         | (Con t id es) -> EVERY flatProps_esgc_free es
-        | (Fun t v e) -> set_globals e = EMPTY_BAG
+        | (Fun t v e) -> flatProps_set_globals e = EMPTY_BAG
         | (App t op es) -> EVERY flatProps_esgc_free es
         | (If t e1 e2 e3) ->
        flatProps_esgc_free e1 /\ flatProps_esgc_free e2 /\
@@ -170,10 +166,9 @@ let esgc_free_def = cake_define_wf
         | (Let t v e1 e2) -> flatProps_esgc_free e1 /\
           flatProps_esgc_free e2
         | (Letrec t fs e) ->
-       flatProps_esgc_free e /\ elist_globals (MAP (SND o SND) fs) =
-         EMPTY_BAG
+       flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o
+         SND) fs) = EMPTY_BAG
         | _3 -> T`;;
-hol4_overload "esgc_free" "flatProps_esgc_free";;
 
 (* generic proof support for most val_rel/state_rel examples *)
 
@@ -212,7 +207,6 @@ let simple_val_rel_def = cake_define
        ~isClosure v1 ==> vr v1 v2 = (
          simple_basic_val_rel v1 v2 /\ LIST_REL vr (v_container_xs
            v1) (v_container_xs v2))))`;;
-hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 
 let simple_state_rel_def = cake_define
   `flatProps_simple_state_rel vr sr <=>
@@ -230,7 +224,6 @@ let simple_state_rel_def = cake_define
      (!s t sffi tffi.
          sr s t /\ sffi = tffi ==> sr (?_ffi_fupd (K sffi) s)
            (?_ffi_fupd (K tffi) t))`;;
-hol4_overload "simple_state_rel" "flatProps_simple_state_rel";;
 
 (* HOL4 ML code, not ported:
 val sv_rel_cases = semanticPrimitivesPropsTheory.sv_rel_cases;
@@ -266,10 +259,10 @@ end
 *)
 
 let store_v_vs_def = cake_define_list
-  [`flatProps_store_v_vs (Varray vs) = vs`;
-   `flatProps_store_v_vs (Refv v) = [v]`;
-   `flatProps_store_v_vs (Thunk m v) = [v]`;
-   `flatProps_store_v_vs (W8array xs) = []`];;
+  [`flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;
+   `flatProps_store_v_vs (semanticPrimitives_Refv v) = [v]`;
+   `flatProps_store_v_vs (semanticPrimitives_Thunk m v) = [v]`;
+   `flatProps_store_v_vs (semanticPrimitives_W8array xs) = []`];;
 hol4_overload "store_v_vs" "flatProps_store_v_vs";;
 
 let result_vs_def = cake_define
@@ -282,7 +275,7 @@ let result_vs_def = cake_define
 let no_Mat_def = cake_define_list
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
-   `no_Mat (Var_local t v) <=> T`;
+   `no_Mat (flatLang_Var_local t v) <=> T`;
    `no_Mat (Con t n es:flatLang_exp) <=> EVERY no_Mat es`;
    `no_Mat (App t op es:flatLang_exp) <=> EVERY no_Mat es`;
    `no_Mat (Fun t v e:flatLang_exp) <=> no_Mat e`;
@@ -303,4 +296,3 @@ let no_Mat_decs_def = cake_define_list
 let mk_flat_install_conf_def = cake_define
   `flatProps_mk_flat_install_conf cc co =
      (mk_install_config cc co:'c install_config)`;;
-hol4_overload "mk_flat_install_conf" "flatProps_mk_flat_install_conf";;

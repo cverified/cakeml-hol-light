@@ -16,7 +16,6 @@ needs "compiler/backend/pattern_matching/pattern_comp.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: unifProps unifDef walk walkstar
    collapse subst rmfmap tcallUnif transfer cps *)
 
@@ -35,14 +34,14 @@ let encode_infer_t_def = cake_define_list
       Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
         (encode_infer_ts ts))`;
    `encode_infer_t (Infer_Tuvar n) =
-      Var n`;
+      ast_Var n`;
    `encode_infer_ts [] =
       Const Null_tag`;
    `encode_infer_ts (t :: ts) =
       Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
 let decode_infer_t_def = cake_define_list
-  [`decode_infer_t (Var n) =
+  [`decode_infer_t (ast_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (Const (DB_tag n)) =
       Infer_Tvar_db n`;
@@ -61,11 +60,11 @@ let RKC_def = cake_define
   `RKC rkt ct <=> encode_infer_t ct = rkt`;;
 
 let substR_def = cake_define
-  `substR fm sp <=> wfs fm /\ wf sp /\ fm = encode_infer_t o_f sp2fm
-  sp`;;
+  `substR fm sp <=> wfs fm /\ sptree_wf sp /\ fm = encode_infer_t o_f
+  sp2fm sp`;;
 
 let cwfs_def = cake_define
-  `cwfs s <=> swfs (map encode_infer_t s) /\ wf s`;;
+  `cwfs s <=> swfs (sptree_map encode_infer_t s) /\ sptree_wf s`;;
 
 (*
 Theorem RKC_FORALL[transfer_rule]:
@@ -76,10 +75,11 @@ QED
 *)
 
 let cvwalk_def = cake_define
-  `cvwalk s n = decode_infer_t (svwalk (map encode_infer_t s) n)`;;
+  `cvwalk s n = decode_infer_t (svwalk (sptree_map encode_infer_t s)
+  n)`;;
 
 let cwalk_def = cake_define
-  `cwalk s it = decode_infer_t (swalk (map encode_infer_t s)
+  `cwalk s it = decode_infer_t (swalk (sptree_map encode_infer_t s)
   (encode_infer_t it))`;;
 
 (* HOL4 ML code, not ported:
@@ -88,26 +88,27 @@ val cwfs = ASSUME “cwfs s” |> SRULE[cwfs_def] |> cj 1
 *)
 
 let coc_def = cake_define
-  `coc s it n = soc (map encode_infer_t s) (encode_infer_t it) n`;;
+  `coc s it n = soc (sptree_map encode_infer_t s) (encode_infer_t it)
+  n`;;
 
 let t_vars_def = cake_define
   `t_vars t = vars (encode_infer_t t)`;;
 
 let cunify_def = cake_define
-  `cunify s t1 t2 = OPTION_MAP (map decode_infer_t)
-                              (sunify (map encode_infer_t s)
+  `cunify s t1 t2 = OPTION_MAP (sptree_map decode_infer_t)
+                              (sunify (sptree_map encode_infer_t s)
                                 (encode_infer_t t1)
                               (encode_infer_t t2))`;;
 
 let cunifyl_def = cake_define
   `cunifyl s ts1 ts2 =
-   OPTION_MAP (map decode_infer_t)
-              (sunify (map encode_infer_t s)
+   OPTION_MAP (sptree_map decode_infer_t)
+              (sunify (sptree_map encode_infer_t s)
                       (encode_infer_ts ts1)
                       (encode_infer_ts ts2))`;;
 
 let capply_subst_def = cake_define_list
-  [`capply_subst s (Infer_Tuvar n) = (match lookup n s with
+  [`capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with
                               NONE -> Infer_Tuvar n | SOME it ->
                                 it)`;
    `capply_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (capply_subst
@@ -201,8 +202,8 @@ let kcocwl_code_def = cake_define
 
 let kcocwlR_def = cake_define
   `kcocwlR (s:infer_t spt) (n:num) =
-   inv_image (mlt1 (walkstarR (sp2fm (map encode_infer_t s))) LEX
-     (<))
+   inv_image (mlt1 (walkstarR (sp2fm (sptree_map encode_infer_t s)))
+     LEX (<))
              (\(ts:(infer_t list) list).
                 (BAG_OF_LIST (MAP encode_infer_t (FLAT ts)),LENGTH
                   ts))`;;
@@ -350,7 +351,7 @@ let kcunifywlR_def = cake_define
      substvars (encode_infer_t o_f sp2fm s) UNION cplist_vars wl
        SUBSET
      substvars (encode_infer_t o_f sp2fm s0) UNION cplist_vars wl0 /\
-     (mlt (walkstarR (sp2fm (map encode_infer_t s))) LEX (<))
+     (mlt (walkstarR (sp2fm (sptree_map encode_infer_t s))) LEX (<))
           (PFLAT wl,LENGTH wl)
           (PFLAT wl0,LENGTH wl0)`;;
 

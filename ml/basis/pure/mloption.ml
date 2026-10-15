@@ -15,11 +15,9 @@ let getOpt_def = cake_define_list
 
 let filter_def = cake_define
   `mloption_filter f a = (if f a then SOME (a) else NONE)`;;
-hol4_overload "filter" "mloption_filter";;
 
 let mapPartial_def = cake_define
   `mloption_mapPartial f opt = OPTION_BIND opt f`;;
-hol4_overload "mapPartial" "mloption_mapPartial";;
 
 let compose_def = cake_define
   `compose f g a = (match g a with
@@ -34,4 +32,3 @@ let compare_def = cake_define
      (match x with NONE -> (match y with NONE -> EQUAL | _1 ->
        LESS) | SOME vx -> (match y with NONE -> GREATER | SOME vy ->
        f vx vy))`;;
-hol4_overload "compare" "mloption_compare";;

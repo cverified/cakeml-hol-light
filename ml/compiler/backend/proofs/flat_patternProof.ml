@@ -101,15 +101,17 @@ let v_rel = cake_inductive
      v_rel v v') /\
    (!N env1 n x env2 cfg.
       env_rel N env1 env2 /\
-      FST (compile_exp cfg x) < N ==>
+      FST (flat_pattern_compile_exp cfg x) < N ==>
       v_rel (Closure env1 n x)
-        (Closure env2 n (SND (SND (compile_exp cfg x))))) /\
+        (Closure env2 n (SND (SND (flat_pattern_compile_exp cfg
+          x))))) /\
    (!N env1 fs x env2 cfg.
       env_rel N env1 env2 /\
-      EVERY (\(n,m,e). FST (compile_exp cfg e) < N) fs ==>
+      EVERY (\(n,m,e). FST (flat_pattern_compile_exp cfg e) < N) fs
+        ==>
       v_rel (Recclosure env1 fs x) (Recclosure env2
-          (MAP (\(n,m,e). (n,m,SND (SND (compile_exp cfg e)))) fs)
-            x)) /\
+          (MAP (\(n,m,e). (n,m,SND (SND (flat_pattern_compile_exp cfg
+            e)))) fs) x)) /\
    (!N env1 env2.
       ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel (?_v env1) (?_v
         env2) ==>
@@ -159,17 +161,17 @@ let encode_val_def = cake_define_wf
   `encode_val others =
       match others with
         (Litv l:flatSem_v) -> Litv l
-      | (Conv stmp xs) -> Term
+      | (Conv stmp xs) -> pattern_semantics_Term
      (match stmp with NONE -> NONE | SOME (i,_3) -> SOME i)
      (MAP encode_val xs)
-      | (Loc _4 n) -> RefPtr n
-      | others -> Other`;;
+      | (Loc _4 n) -> pattern_semantics_RefPtr n
+      | others -> pattern_semantics_Other`;;
 
 let encode_refs_def = cake_define
   `encode_refs s = FUN_FMAP (\i. encode_val (match EL i (?_refs s) with
-  Refv v -> v))
+  semanticPrimitives_Refv v -> v))
      (count (LENGTH (?_refs s)) INTER {i | ?v. EL i (?_refs s) =
-       Refv v})`;;
+       semanticPrimitives_Refv v})`;;
 
 (* HOL4 ML code, not ported:
 val evaluate_ind2 = induct_tweakLib.list_single_induct evaluate_ind;

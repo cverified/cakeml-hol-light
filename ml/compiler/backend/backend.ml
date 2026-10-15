@@ -214,7 +214,7 @@ let to_target_def = cake_define
 let prim_src_config_def = cake_define
   `prim_src_config =
      (let (_11,next,env,_12,_13) = compile_decs [] 1 (?_next
-       empty_config) empty_env
+       empty_config) source_to_flat_empty_env
          ARB prim_types_program in
      (source_to_flat_config_mod_env_fupd (K env) (?_next_fupd (K
        next) empty_config)))`;;
@@ -488,7 +488,7 @@ let compile_inc_progs_def = cake_define
        (backend_config_word_conf c) in
      let (p,fs,bm) = compile_word_to_stack asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c))
-       reg_count1 p (Nil,bm0) in
+       reg_count1 p (misc_Nil,bm0) in
      let cur_bm = append (FST bm) in
      let c = backend_config_word_conf_fupd (K
        (word_to_stack_config_bitmaps_length_fupd (K (SND bm))

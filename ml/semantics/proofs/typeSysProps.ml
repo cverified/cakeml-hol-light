@@ -83,7 +83,7 @@ let type_pes_def = cake_define
   `type_pes tvs tvs' tenv tenvE pes t1 t2 <=>
      (RES_FORALL (set_of_list pes) (\(p,e).
        ?bindings.
-         ALL_DISTINCT (pat_bindings p) /\
+         ALL_DISTINCT (ast_pat_bindings p) /\
          type_p tvs tenv p t1 bindings /\
          type_e tenv (bind_var_list tvs' bindings tenvE) e t2))`;;
 
@@ -102,21 +102,22 @@ let type_pes_def = cake_define
 (* ---------- tenv_val_exp stuff ---------- *)
 
 let deBruijn_subst_tenvE_def = cake_define_list
-  [`deBruijn_subst_tenvE targs Empty = Empty`;
-   `deBruijn_subst_tenvE targs (Bind_tvar tvs env) =
-      Bind_tvar tvs (deBruijn_subst_tenvE targs env)`;
-   `deBruijn_subst_tenvE targs (Bind_name x tvs t env) =
-      Bind_name x tvs (deBruijn_subst (tvs + num_tvs env)
+  [`deBruijn_subst_tenvE targs typeSystem_Empty = typeSystem_Empty`;
+   `deBruijn_subst_tenvE targs (typeSystem_Bind_tvar tvs env) =
+      typeSystem_Bind_tvar tvs (deBruijn_subst_tenvE targs env)`;
+   `deBruijn_subst_tenvE targs (typeSystem_Bind_name x tvs t env) =
+      typeSystem_Bind_name x tvs (deBruijn_subst (tvs + num_tvs env)
                               (MAP (deBruijn_inc 0 (tvs + num_tvs
                                 env)) targs)
                               t)
            (deBruijn_subst_tenvE targs env)`];;
 
 let db_merge_def = cake_define_list
-  [`db_merge Empty e = e`;
-   `db_merge (Bind_tvar tvs e1) e2 = Bind_tvar tvs (db_merge e1 e2)`;
-   `db_merge (Bind_name x tvs t e1) e2 = Bind_name x tvs t (db_merge
-  e1 e2)`];;
+  [`db_merge typeSystem_Empty e = e`;
+   `db_merge (typeSystem_Bind_tvar tvs e1) e2 = typeSystem_Bind_tvar
+  tvs (db_merge e1 e2)`;
+   `db_merge (typeSystem_Bind_name x tvs t e1) e2 =
+  typeSystem_Bind_name x tvs t (db_merge e1 e2)`];;
 
 (* ---------- type_op ---------- *)
 

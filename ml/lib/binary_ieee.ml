@@ -179,13 +179,6 @@ let fp_op_INDUCT,fp_op_RECURSION = define_datatype
    binary_ieee_FP_MulAdd (rounding) (('t,'w)float) (('t,'w)float) \
    (('t,'w)float) | binary_ieee_FP_MulSub (rounding) (('t,'w)float) \
    (('t,'w)float) (('t,'w)float)";;
-hol4_overload "FP_Sqrt" "binary_ieee_FP_Sqrt";;
-hol4_overload "FP_Add" "binary_ieee_FP_Add";;
-hol4_overload "FP_Sub" "binary_ieee_FP_Sub";;
-hol4_overload "FP_Mul" "binary_ieee_FP_Mul";;
-hol4_overload "FP_Div" "binary_ieee_FP_Div";;
-hol4_overload "FP_MulAdd" "binary_ieee_FP_MulAdd";;
-hol4_overload "FP_MulSub" "binary_ieee_FP_MulSub";;
 
 let float_some_qnan_def = cake_define
   `float_some_qnan (fp_op:('t,'w)fp_op) =
@@ -243,26 +236,29 @@ let float_sqrt_def = cake_define
   `float_sqrt mode (x:('t,'w)float) =
       (if float_Sign x = (n2w 0) then
          match float_value x with
-            NaN -> (check_for_signalling [x],float_some_qnan (FP_Sqrt
-              mode x)) | Infinity -> (clear_flags,float_plus_infinity
-              (:'t#'w)) | Float r -> (float_round_with_flags mode F
-              (sqrt r)) else if x = float_minus_zero (:'t#'w) then
+            NaN -> (check_for_signalling [x],float_some_qnan
+              (binary_ieee_FP_Sqrt mode x)) | Infinity ->
+              (clear_flags,float_plus_infinity (:'t#'w)) | Float r ->
+              (float_round_with_flags mode F (sqrt r)) else if x =
+              float_minus_zero (:'t#'w) then
         (clear_flags,float_minus_zero (:'t#'w)) else
-        (invalidop_flags,float_some_qnan (FP_Sqrt mode x)))`;;
+        (invalidop_flags,float_some_qnan (binary_ieee_FP_Sqrt mode
+          x)))`;;
 
 let float_add_def = cake_define
   `float_add mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_7) -> (check_for_signalling [x; y],
-                    float_some_qnan (FP_Add mode x y)) | (_8,NaN) ->
-                      (check_for_signalling [y],
-                    float_some_qnan (FP_Add mode x y)) |
+                    float_some_qnan (binary_ieee_FP_Add mode x y)) |
+                      (_8,NaN) -> (check_for_signalling [y],
+                    float_some_qnan (binary_ieee_FP_Add mode x y)) |
                       (Infinity,Infinity) ->
             (if float_Sign x = float_Sign y then
                (clear_flags,x) else
-               (invalidop_flags,float_some_qnan (FP_Add mode x y))) |
-                 (Infinity,_9) -> (clear_flags,x) | (_10,Infinity) ->
-                 (clear_flags,y) | (Float r1,Float r2) ->
+               (invalidop_flags,float_some_qnan (binary_ieee_FP_Add
+                 mode x y))) | (Infinity,_9) -> (clear_flags,x) |
+                 (_10,Infinity) -> (clear_flags,y) | (Float r1,Float r2)
+                 ->
             float_round_with_flags mode
                (if (r1 = (&0)) /\ (r2 = (&0)) /\ (float_Sign x =
                  float_Sign y) then float_Sign
@@ -273,13 +269,13 @@ let float_sub_def = cake_define
   `float_sub mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_11) -> (check_for_signalling [x; y],
-                    float_some_qnan (FP_Sub mode x y)) | (_12,NaN) ->
-                      (check_for_signalling [y],
-                    float_some_qnan (FP_Sub mode x y)) |
+                    float_some_qnan (binary_ieee_FP_Sub mode x y)) |
+                      (_12,NaN) -> (check_for_signalling [y],
+                    float_some_qnan (binary_ieee_FP_Sub mode x y)) |
                       (Infinity,Infinity) ->
             (if float_Sign x = float_Sign y then
-               (invalidop_flags,float_some_qnan (FP_Sub mode x y))
-                 else
+               (invalidop_flags,float_some_qnan (binary_ieee_FP_Sub
+                 mode x y)) else
                (clear_flags,x)) | (Infinity,_13) -> (clear_flags,x) |
                  (_14,Infinity) -> (clear_flags,float_negate y) | (Float
                  r1,Float r2) ->
@@ -293,21 +289,21 @@ let float_mul_def = cake_define
   `float_mul mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_15) -> (check_for_signalling [x; y],
-                    float_some_qnan (FP_Mul mode x y)) | (_16,NaN) ->
-                      (check_for_signalling [y],
-                    float_some_qnan (FP_Mul mode x y)) |
+                    float_some_qnan (binary_ieee_FP_Mul mode x y)) |
+                      (_16,NaN) -> (check_for_signalling [y],
+                    float_some_qnan (binary_ieee_FP_Mul mode x y)) |
                       (Infinity,Float r) ->
             (if r = (&0) then
-               (invalidop_flags,float_some_qnan (FP_Mul mode x y))
-                 else
+               (invalidop_flags,float_some_qnan (binary_ieee_FP_Mul
+                 mode x y)) else
                (clear_flags,
                 (if float_Sign x = float_Sign y then
                    float_plus_infinity (:'t#'w) else
                      float_minus_infinity (:'t#'w)))) | (Float
                      r,Infinity) ->
             (if r = (&0) then
-               (invalidop_flags,float_some_qnan (FP_Mul mode x y))
-                 else
+               (invalidop_flags,float_some_qnan (binary_ieee_FP_Mul
+                 mode x y)) else
                (clear_flags,
                 (if float_Sign x = float_Sign y then
                    float_plus_infinity (:'t#'w) else
@@ -325,12 +321,12 @@ let float_div_def = cake_define
   `float_div mode (x:('t,'w)float) (y:('t,'w)float) =
       (match (float_value x,float_value y) with (
          NaN,_17) -> (check_for_signalling [x; y],
-                    float_some_qnan (FP_Div mode x y)) | (_18,NaN) ->
-                      (check_for_signalling [y],
-                    float_some_qnan (FP_Div mode x y)) |
+                    float_some_qnan (binary_ieee_FP_Div mode x y)) |
+                      (_18,NaN) -> (check_for_signalling [y],
+                    float_some_qnan (binary_ieee_FP_Div mode x y)) |
                       (Infinity,Infinity) ->
-            (invalidop_flags,float_some_qnan (FP_Div mode x y)) |
-              (Infinity,_19) ->
+            (invalidop_flags,float_some_qnan (binary_ieee_FP_Div mode
+              x y)) | (Infinity,_19) ->
             (clear_flags,
              (if float_Sign x = float_Sign y then
                 float_plus_infinity (:'t#'w) else
@@ -340,8 +336,8 @@ let float_div_def = cake_define
                 float_plus_zero (:'t#'w) else float_minus_zero
                   (:'t#'w))) | (Float r1,Float r2) ->
             (if r2 = (&0) then if r1 = (&0) then
-                       (invalidop_flags,float_some_qnan (FP_Div mode
-                         x y)) else
+                       (invalidop_flags,float_some_qnan
+                         (binary_ieee_FP_Div mode x y)) else
                        (dividezero_flags,
                         (if float_Sign x = float_Sign y then
                            float_plus_infinity (:'t#'w) else
@@ -357,14 +353,14 @@ let float_mul_add_def = cake_define
       let infP = (float_is_infinite x \/ float_is_infinite y) in
          if float_is_nan x \/ float_is_nan y \/ float_is_nan z then
             (check_for_signalling [x; y; z],
-             float_some_qnan (FP_MulAdd mode x y z)) else if
-               float_is_infinite x /\ float_is_zero y \/
+             float_some_qnan (binary_ieee_FP_MulAdd mode x y z)) else
+               if float_is_infinite x /\ float_is_zero y \/
                  float_is_zero x /\ float_is_infinite y \/
                  float_is_infinite z /\ infP /\ ~(signP = float_Sign
                    z) then
-            (invalidop_flags,float_some_qnan (FP_MulAdd mode x y z))
-              else if float_is_infinite z /\ (float_Sign z = (n2w 0)) \/
-              infP /\ (signP = (n2w 0)) then
+            (invalidop_flags,float_some_qnan (binary_ieee_FP_MulAdd
+              mode x y z)) else if float_is_infinite z /\ (float_Sign z
+              = (n2w 0)) \/ infP /\ (signP = (n2w 0)) then
               (clear_flags,float_plus_infinity (:'t#'w)) else if
               float_is_infinite z /\ (float_Sign z = (n2w 1)) \/ infP /\
               (signP = (n2w 1)) then (clear_flags,float_minus_infinity

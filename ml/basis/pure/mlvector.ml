@@ -39,7 +39,6 @@ let update_def = cake_define
 
 let concat_def = cake_define
   `mlvector_concat l = Vector (FLAT (MAP mlvector_toList l))`;;
-hol4_overload "concat" "mlvector_concat";;
 
 let map_def = cake_define
   `mlvector_map vec f = Vector (MAP f (mlvector_toList vec))`;;
@@ -131,12 +130,12 @@ let collate_aux_def = cake_define_list
         (if f (sub vec1 n) (sub vec2 n) = EQUAL then
           mlvector_collate_aux f vec1 vec2 (n + 1) ord len else f
           (sub vec1 n) (sub vec2 n))`];;
-hol4_overload "collate_aux" "mlvector_collate_aux";;
 
 let collate_def = cake_define
   `mlvector_collate f vec1 vec2 =
-   (if (length vec1) < (length vec2) then collate_aux f vec1 vec2
-     0 LESS (length vec1) else if (length vec2) < (length vec1) then
-     collate_aux f vec1 vec2 0 GREATER (length vec2) else collate_aux
-     f vec1 vec2 0 EQUAL (length vec2))`;;
+   (if (length vec1) < (length vec2) then mlvector_collate_aux f
+     vec1 vec2 0 LESS (length vec1) else if (length vec2) < (length
+     vec1) then mlvector_collate_aux f vec1 vec2 0 GREATER (length
+     vec2) else mlvector_collate_aux f vec1 vec2 0 EQUAL (length
+     vec2))`;;
 hol4_overload "collate" "mlvector_collate";;

@@ -7,7 +7,6 @@
   Properties about BVI and its semantics
 *)
 
-needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
@@ -68,9 +67,9 @@ let get_code_labels_def = cake_define_list
    `bviProps_get_code_labels (Op op es:flatLang_exp) =
   assign_get_code_label op UNION BIGUNION (set_of_list (MAP
   bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (Return es) = BIGUNION (set_of_list (MAP
-  bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (LetCall _3 _4 d es y) =
+   `bviProps_get_code_labels (bvi_Return es) = BIGUNION (set_of_list
+  (MAP bviProps_get_code_labels es))`;
+   `bviProps_get_code_labels (bvi_LetCall _3 _4 d es y) =
         {d} UNION bviProps_get_code_labels y UNION BIGUNION
           (set_of_list (MAP bviProps_get_code_labels es))`];;
 hol4_overload "get_code_labels" "bviProps_get_code_labels";;
@@ -79,7 +78,6 @@ let good_code_labels_def = cake_define
   `bviProps_good_code_labels p elabs <=>
      BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) p))
        SUBSET set_of_list (MAP FST p) UNION elabs`;;
-hol4_overload "good_code_labels" "bviProps_good_code_labels";;
 
 (* --- switching a compiler pass off
    --------------------------------------
@@ -106,4 +104,3 @@ let adj_orac_rel_def = cake_define
   `bviProps_adj_orac_rel cc f (s1:('a,'ffi)bviSem_state)
   (s2:('b,'ffi)bviSem_state) <=>
      adj_orac_ok cc f s1 /\ s2 = adj_orac cc f s1`;;
-hol4_overload "adj_orac_rel" "bviProps_adj_orac_rel";;

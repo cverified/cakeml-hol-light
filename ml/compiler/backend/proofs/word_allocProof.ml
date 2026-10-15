@@ -63,21 +63,22 @@ let colouring_ok_def = cake_define
         | (If cmp r1 ri e2 e3) ->
        (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
-       let union_live = union e2_live e3_live in
-       let merged = match ri with Reg r2 -> insert r2 one (insert r1
-         one union_live) | _1 -> insert r1 one union_live in
+       let union_live = sptree_union e2_live e3_live in
+       let merged = match ri with Reg r2 -> sptree_insert r2 one
+         (sptree_insert r1 one union_live) | _1 -> sptree_insert r1 one
+         union_live in
          INJ f (domain merged) UNIV /\
          colouring_ok f e2 live lt /\ colouring_ok f e3 live lt)
         | (Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) ->
        (let args_set = numset_list_insert args LN in
-       let all_names = union (SND cutset) (FST cutset) in
-       INJ f (domain (union all_names args_set)) UNIV /\
+       let all_names = sptree_union (SND cutset) (FST cutset) in
+       INJ f (domain (sptree_union all_names args_set)) UNIV /\
        INJ f (domain (numset_list_insert v all_names)) UNIV /\
        colouring_ok f ret_handler live lt /\
        (match h with NONE -> T | SOME (v,prog,l1,l2) ->
-           INJ f (domain (insert v one all_names)) UNIV /\
+           INJ f (domain (sptree_insert v one all_names)) UNIV /\
            colouring_ok f prog live lt))
-        | (MustTerminate p) ->
+        | (wordLang_MustTerminate p) ->
        colouring_ok f p live lt
         | (Loop names body exit_names) ->
        (INJ f (domain names) UNIV /\
@@ -85,7 +86,7 @@ let colouring_ok_def = cake_define
        colouring_ok f body names ((names,exit_names) :: lt))
         | prog ->
        (let lset = get_live prog live lt in
-       let iset = union (get_writes prog) live in
+       let iset = sptree_union (get_writes prog) live in
          INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV)`;;
 
 (*Equivalence on everything except permutation and locals*)
@@ -125,8 +126,8 @@ let word_state_eq_rel_def = cake_define
 let strong_locals_rel_def = cake_define
   `strong_locals_rel f ls slocs tlocs <=>
    (!n v.
-     n IN ls /\ lookup n slocs = SOME v ==>
-     lookup (f n) tlocs = SOME v)`;;
+     n IN ls /\ sptree_lookup n slocs = SOME v ==>
+     sptree_lookup (f n) tlocs = SOME v)`;;
 
 (* HOL4 ML code, not ported:
 val size_tac= (full_simp_tac(srw_ss())[prog_size_def]>>DECIDE_TAC);
@@ -1880,9 +1881,9 @@ let live_store_rel_def = cake_define
 let nlive_store_def = cake_define
   `nlive_store nlive x2 =
         match x2 with
-          Op _2 ls ->
+          wordLang_Op _2 ls ->
          EVERY (nlive_store nlive) ls
-        | (Lookup s) -> ~(
+        | (wordLang_Lookup s) -> ~(
        s IN set_of_list nlive)
         | (Load e) ->
        nlive_store nlive e
@@ -2484,10 +2485,10 @@ val size_tac2 = impl_tac>-
   restrictive on the ssa_mapping*)
 let ssa_locals_rel_def = cake_define
   `ssa_locals_rel na ssa st_locs cst_locs =
-   ((!x y. lookup x ssa = SOME y ==> y IN domain cst_locs) /\
-   (!x y. lookup x st_locs = SOME y ==>
+   ((!x y. sptree_lookup x ssa = SOME y ==> y IN domain cst_locs) /\
+   (!x y. sptree_lookup x st_locs = SOME y ==>
      x IN domain ssa /\
-     lookup (THE (lookup x ssa)) cst_locs = SOME y /\
+     sptree_lookup (THE (sptree_lookup x ssa)) cst_locs = SOME y /\
      (is_alloc_var x ==> x < na)))`;;
 
 (*ssa_map_ok specifies the form of ssa_maps we care about
@@ -2496,7 +2497,7 @@ let ssa_locals_rel_def = cake_define
 *)
 let ssa_map_ok_def = cake_define
   `ssa_map_ok na ssa =
-   (!x y. lookup x ssa = SOME y ==>
+   (!x y. sptree_lookup x ssa = SOME y ==>
      ~is_phy_var y /\ y < na)`;;
 
 (* HOL4 ML code, not ported:

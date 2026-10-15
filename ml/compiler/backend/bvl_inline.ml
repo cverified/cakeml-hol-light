@@ -42,7 +42,7 @@ let tick_inline_def = cake_define_list
    `tick_inline cs [(Call ticks dest xs:bvl_exp)] =
          (match dest with NONE -> [Call ticks dest (tick_inline cs
            xs)] | SOME n ->
-         (match lookup n cs with NONE -> [Call ticks dest
+         (match sptree_lookup n cs with NONE -> [Call ticks dest
            (tick_inline cs xs)] | SOME (arity,code) -> [Let
            (tick_inline cs xs) (mk_tick (SUC ticks) code)]))`];;
 
@@ -68,7 +68,7 @@ let tick_inline_sing_def = cake_define_list
    `tick_inline_sing cs (Call ticks dest xs:bvl_exp) =
          (match dest with NONE -> Call ticks dest (tick_inline_list
            cs xs) | SOME n ->
-         (match lookup n cs with NONE -> Call ticks dest
+         (match sptree_lookup n cs with NONE -> Call ticks dest
            (tick_inline_list cs xs) | SOME (arity,code) ->
              Let (tick_inline_list cs xs) (mk_tick (SUC ticks)
                code)))`;
@@ -167,7 +167,6 @@ let is_rec_def = cake_define_list
    `bvl_inline_is_rec n [(Force _5 _6:bvl_exp)] = F`;
    `bvl_inline_is_rec n [(Call ticks dest xs:bvl_exp)] =
          (if dest = SOME n then T else bvl_inline_is_rec n xs)`];;
-hol4_overload "is_rec" "bvl_inline_is_rec";;
 
 let is_rec_sing_def = cake_define_list
   [`is_rec_sing n (Var v:bvl_exp) = F`;
@@ -194,13 +193,14 @@ let is_rec_sing_def = cake_define_list
 
 let must_inline_def = cake_define
   `must_inline name limit e =
-     (if is_small limit e then ~(is_rec name [e]) else F)`;;
+     (if is_small limit e then ~(bvl_inline_is_rec name [e]) else
+       F)`;;
 
 let tick_inline_all_def = cake_define_list
   [`tick_inline_all limit cs [] aux = (cs,REVERSE aux)`;
    `tick_inline_all limit cs ((n,(arity:num),e1) :: xs) aux =
          (let e2 = HD (tick_inline cs [e1]) in
-         let cs2 = if must_inline n limit e2 then insert n
+         let cs2 = if must_inline n limit e2 then sptree_insert n
            (arity,e2) cs else cs in
            tick_inline_all limit cs2 xs ((n,arity,e2) :: aux))`];;
 
@@ -234,7 +234,6 @@ let remove_ticks_def = cake_define_list
    `bvl_inline_remove_ticks [(Force m n:bvl_exp)] = [Force m n]`;
    `bvl_inline_remove_ticks [(Call ticks dest xs:bvl_exp)] =
          [Call 0 dest (bvl_inline_remove_ticks xs)]`];;
-hol4_overload "remove_ticks" "bvl_inline_remove_ticks";;
 
 let remove_ticks_sing_def = cake_define_list
   [`bvl_inline_remove_ticks_sing (Var v:bvl_exp) = Var v`;
@@ -261,8 +260,6 @@ let remove_ticks_sing_def = cake_define_list
    `bvl_inline_remove_ticks_list (x :: xs) =
          (bvl_inline_remove_ticks_sing x) ::
            bvl_inline_remove_ticks_list xs`];;
-hol4_overload "remove_ticks_list" "bvl_inline_remove_ticks_list";;
-hol4_overload "remove_ticks_sing" "bvl_inline_remove_ticks_sing";;
 
 (* let_op -- a function that optimises Let [...] (Op op [Var ...]) *)
 
@@ -273,15 +270,13 @@ let var_list_def = cake_define
       | ((bvl_Var m :: xs),(y :: ys)) -> (m = n /\
         bvl_inline_var_list (n + 1) xs ys)
       | (_9,_10) -> F`;;
-hol4_overload "var_list" "bvl_inline_var_list";;
 
 let dest_op_def = cake_define
   `bvl_inline_dest_op x1 args =
       match x1 with
-        bvl_Op op xs -> (if var_list 0 xs args then SOME op else
-          NONE)
+        bvl_Op op xs -> (if bvl_inline_var_list 0 xs args then SOME
+          op else NONE)
       | _11 -> NONE`;;
-hol4_overload "dest_op" "bvl_inline_dest_op";;
 
 let let_op_def = cake_define_list
   [`bvl_inline_let_op [] = []`;
@@ -296,8 +291,8 @@ let let_op_def = cake_define_list
    `bvl_inline_let_op [(Let xs x2:bvl_exp)] =
          (let xs = bvl_inline_let_op xs in
          let x2 = HD (bvl_inline_let_op [x2]) in
-           match dest_op x2 xs with SOME op -> [Op op xs] | NONE
-             -> [Let xs x2])`;
+           match bvl_inline_dest_op x2 xs with SOME op -> [Op op
+             xs] | NONE -> [Let xs x2])`;
    `bvl_inline_let_op [(Raise x1:bvl_exp)] =
          [Raise (HD (bvl_inline_let_op [x1]))]`;
    `bvl_inline_let_op [(Handle x1 x2:bvl_exp)] =
@@ -310,7 +305,6 @@ let let_op_def = cake_define_list
    `bvl_inline_let_op [(Force m n:bvl_exp)] = [Force m n]`;
    `bvl_inline_let_op [(Call ticks dest xs:bvl_exp)] = [Call ticks
   dest (bvl_inline_let_op xs)]`];;
-hol4_overload "let_op" "bvl_inline_let_op";;
 
 let let_op_one_def = cake_define_list
   [`let_op_one (Var v:bvl_exp) = Var v`;
@@ -321,8 +315,8 @@ let let_op_one_def = cake_define_list
    `let_op_one (Let xs x2:bvl_exp) =
          (let xs = bvl_inline_let_op_list xs in
          let x2 = let_op_one x2 in
-           match dest_op x2 xs with SOME op -> Op op xs | NONE ->
-             Let xs x2)`;
+           match bvl_inline_dest_op x2 xs with SOME op -> Op op
+             xs | NONE -> Let xs x2)`;
    `let_op_one (Raise x1:bvl_exp) =
          Raise (let_op_one x1)`;
    `let_op_one (Handle x1 x2:bvl_exp) =
@@ -337,27 +331,23 @@ let let_op_one_def = cake_define_list
    `bvl_inline_let_op_list [] = []`;
    `bvl_inline_let_op_list ((x:bvl_exp) :: xs) =
          (let_op_one x) :: bvl_inline_let_op_list xs`];;
-hol4_overload "let_op_list" "bvl_inline_let_op_list";;
 
 let let_op_sing_def = cake_define
   `bvl_inline_let_op_sing x =
-     (match let_op [x] with (y :: ys) -> y | _12 -> Op (IntOp
-       (Const (&0))) [])`;;
-hol4_overload "let_op_sing" "bvl_inline_let_op_sing";;
+     (match bvl_inline_let_op [x] with (y :: ys) -> y | _12 -> Op
+       (closLang_IntOp (closLang_Const (&0))) [])`;;
 
 let optimise_def = cake_define
   `bvl_inline_optimise split_seq cut_size (name,arity,exp) =
      (name,arity,compile_any split_seq cut_size arity
-                   (let_op_sing (HD (remove_ticks [exp]))))`;;
-hol4_overload "optimise" "bvl_inline_optimise";;
+                   (bvl_inline_let_op_sing (HD
+                     (bvl_inline_remove_ticks [exp]))))`;;
 
 let compile_inc_def = cake_define
   `bvl_inline_compile_inc limit split_seq cut_size cs prog =
      (let (cs,prog1) = tick_compile_prog limit cs prog in
-       (cs,MAP (optimise split_seq cut_size) prog1))`;;
-hol4_overload "compile_inc" "bvl_inline_compile_inc";;
+       (cs,MAP (bvl_inline_optimise split_seq cut_size) prog1))`;;
 
 let compile_prog_def = cake_define
   `bvl_inline_compile_prog limit split_seq cut_size prog =
-     compile_inc limit split_seq cut_size LN prog`;;
-hol4_overload "compile_prog" "bvl_inline_compile_prog";;
+     bvl_inline_compile_inc limit split_seq cut_size LN prog`;;

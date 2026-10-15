@@ -17,8 +17,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 
 let shift_interfer_def = cake_define
-  `shift_interfer k s = machine_config_next_interfer_fupd (K (shift_seq
-  k (machine_config_next_interfer s)))
+  `shift_interfer k s = machine_config_next_interfer_fupd (K
+  (misc_shift_seq k (machine_config_next_interfer s)))
      s`;;
 
 let ffi_entry_pcs_disjoint_def = cake_define

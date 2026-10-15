@@ -29,11 +29,11 @@ let is_hidden_def = cake_define
         | (Handle t e pes) -> F
         | (Lit t l) -> T
         | (Con t id_option es) -> EVERY is_hidden es
-        | (Var_local t str) -> T
+        | (flatLang_Var_local t str) -> T
         | (Fun t name body) -> T
-        | (App t (Src Opapp) l) -> F
-        | (App t (GlobalVarInit g) [e]) -> is_hidden e
-        | (App t (GlobalVarLookup g) [e]) -> F
+        | (App t (flatLang_Src ast_Opapp) l) -> F
+        | (App t (flatLang_GlobalVarInit g) [e]) -> is_hidden e
+        | (App t (flatLang_GlobalVarLookup g) [e]) -> F
         | (If t e1 e2 e3) -> (is_hidden e1 /\ is_hidden e2 /\
           is_hidden e3)
         | (Mat t e1 [p,e2]) -> (is_hidden e1 /\ is_hidden e2)
@@ -65,9 +65,10 @@ let is_pure_def = cake_define_wf
           (Handle t e pes:flatLang_exp) -> flat_elim_is_pure e
         | (Lit t l) -> T
         | (Con t id_option es) -> EVERY flat_elim_is_pure es
-        | (Var_local t str) -> T
+        | (flatLang_Var_local t str) -> T
         | (Fun t name body) -> T
-        | (App t (GlobalVarInit g) es) -> EVERY flat_elim_is_pure es
+        | (App t (flatLang_GlobalVarInit g) es) -> EVERY
+          flat_elim_is_pure es
         | (If t e1 e2 e3) -> (flat_elim_is_pure e1 /\
           flat_elim_is_pure e2 /\ flat_elim_is_pure e3)
         | (Mat t e1 pes) ->
@@ -77,11 +78,10 @@ let is_pure_def = cake_define_wf
           flat_elim_is_pure e2)
         | (Letrec t funs e) -> flat_elim_is_pure e
         | _5 -> F`;;
-hol4_overload "is_pure" "flat_elim_is_pure";;
 
 let has_Eval_def = cake_define_list
-  [`has_Eval (App t op es:flatLang_exp) <=> op = Src Eval \/
-  has_Eval_list es`;
+  [`has_Eval (App t op es:flatLang_exp) <=> op = flatLang_Src
+  ast_Eval \/ has_Eval_list es`;
    `has_Eval (Mat _6 e pes:flatLang_exp) <=> has_Eval e \/
   has_Eval_pats pes`;
    `has_Eval (Letrec _7 funs e:flatLang_exp) <=> has_Eval e \/
@@ -107,78 +107,79 @@ let has_Eval_def = cake_define_list
 let dest_GlobalVarInit_def = cake_define
   `dest_GlobalVarInit x1 =
     match x1 with
-      GlobalVarInit n -> SOME n
+      flatLang_GlobalVarInit n -> SOME n
     | _20 -> NONE`;;
 
 let dest_GlobalVarLookup_def = cake_define
   `dest_GlobalVarLookup x1 =
     match x1 with
-      GlobalVarLookup n -> SOME n
+      flatLang_GlobalVarLookup n -> SOME n
     | _21 -> NONE`;;
 
 let find_loc_def = cake_define_list
   [`find_loc ((Raise _22 er):flatLang_exp) = find_loc er`;
    `find_loc (Handle _23 eh p_es:flatLang_exp) =
-            union (find_loc eh) (find_locL (MAP SND p_es))`;
+            sptree_union (find_loc eh) (find_locL (MAP SND p_es))`;
    `find_loc (Lit _24 _25:flatLang_exp) = (LN:1 spt)`;
    `find_loc (Con _26 _27 es:flatLang_exp) = find_locL es`;
-   `find_loc (Var_local _28 _29) = LN`;
+   `find_loc (flatLang_Var_local _28 _29) = LN`;
    `find_loc (Fun _30 _31 ef:flatLang_exp) = find_loc ef`;
    `find_loc (App _32 op es:flatLang_exp) = (match
-  (dest_GlobalVarInit op) with SOME n -> (insert n one (find_locL
-  es)) | NONE -> find_locL es)`;
+  (dest_GlobalVarInit op) with SOME n -> (sptree_insert n one
+  (find_locL es)) | NONE -> find_locL es)`;
    `find_loc (If _33 ei1 ei2 ei3:flatLang_exp) =
-            union (find_loc ei1) (union (find_loc ei2) (find_loc
-              ei3))`;
+            sptree_union (find_loc ei1) (sptree_union (find_loc
+              ei2) (find_loc ei3))`;
    `find_loc (Mat _34 em p_es:flatLang_exp) =
-            union (find_loc em) (find_locL (MAP SND p_es))`;
-   `find_loc (Let _35 _36 el1 el2:flatLang_exp) = union (find_loc
-  el1) (find_loc el2)`;
+            sptree_union (find_loc em) (find_locL (MAP SND p_es))`;
+   `find_loc (Let _35 _36 el1 el2:flatLang_exp) = sptree_union
+  (find_loc el1) (find_loc el2)`;
    `find_loc (Letrec _37 vv_es elr1:flatLang_exp) =
-            union (find_locL (MAP (SND o SND) vv_es)) (find_loc
-              elr1)`;
+            sptree_union (find_locL (MAP (SND o SND) vv_es))
+              (find_loc elr1)`;
    `find_locL [] = LN`;
-   `find_locL (e :: es) = union (find_loc e) (find_locL es)`];;
+   `find_locL (e :: es) = sptree_union (find_loc e) (find_locL es)`];;
 
 let find_lookups_def = cake_define_list
   [`find_lookups (Raise _38 er:flatLang_exp) = find_lookups er`;
    `find_lookups (Handle _39 eh p_es:flatLang_exp) =
-            union (find_lookups eh) (find_lookupsL (MAP SND
-              p_es))`;
+            sptree_union (find_lookups eh) (find_lookupsL (MAP
+              SND p_es))`;
    `find_lookups (Lit _40 _41:flatLang_exp) = LN`;
    `find_lookups (Con _42 _43 es:flatLang_exp) = find_lookupsL es`;
-   `find_lookups (Var_local _44 _45) = LN`;
+   `find_lookups (flatLang_Var_local _44 _45) = LN`;
    `find_lookups (Fun _46 _47 ef:flatLang_exp) = find_lookups ef`;
    `find_lookups (App _48 op es:flatLang_exp) = (match
-  (dest_GlobalVarLookup op) with SOME n -> (insert n one
+  (dest_GlobalVarLookup op) with SOME n -> (sptree_insert n one
   (find_lookupsL es)) | NONE -> find_lookupsL es)`;
    `find_lookups (If _49 ei1 ei2 ei3:flatLang_exp) =
-            union (find_lookups ei1)
-                (union (find_lookups ei2) (find_lookups ei3))`;
+            sptree_union (find_lookups ei1)
+                (sptree_union (find_lookups ei2) (find_lookups
+                  ei3))`;
    `find_lookups (Mat _50 em p_es:flatLang_exp) =
-            union (find_lookups em) (find_lookupsL (MAP SND
-              p_es))`;
+            sptree_union (find_lookups em) (find_lookupsL (MAP
+              SND p_es))`;
    `find_lookups (Let _51 _52 el1 el2:flatLang_exp) =
-            union (find_lookups el1) (find_lookups el2)`;
+            sptree_union (find_lookups el1) (find_lookups el2)`;
    `find_lookups (Letrec _53 vv_es elr1:flatLang_exp) =
-            union (find_lookupsL (MAP (SND o SND) vv_es))
+            sptree_union (find_lookupsL (MAP (SND o SND) vv_es))
               (find_lookups elr1)`;
    `find_lookupsL [] = LN`;
-   `find_lookupsL (e :: es) = union (find_lookups e) (find_lookupsL
-  es)`];;
+   `find_lookupsL (e :: es) = sptree_union (find_lookups e)
+  (find_lookupsL es)`];;
 
 let analyse_exp_def = cake_define
   `analyse_exp e = (let locs = (find_loc e) in let lookups =
   (find_lookups e) in
-       if is_pure e then (
-           if (is_hidden e) then (LN,map (K lookups) locs) else
-             (locs,map (K lookups) locs)) else (
-           (union locs lookups,(map (K LN) (union locs
-             lookups)))))`;;
+       if flat_elim_is_pure e then (
+           if (is_hidden e) then (LN,sptree_map (K lookups) locs)
+             else (locs,sptree_map (K lookups) locs)) else (
+           (sptree_union locs lookups,(sptree_map (K LN)
+             (sptree_union locs lookups)))))`;;
 
 let code_analysis_union_def = cake_define
   `code_analysis_union (r1,t1) (r2,t2) =
-       ((union r1 r2),(num_set_tree_union t1 t2))`;;
+       ((sptree_union r1 r2),(num_set_tree_union t1 t2))`;;
 
 let analyse_code_def = cake_define_list
   [`analyse_code [] = (LN,LN)`;
@@ -192,7 +193,7 @@ let analyse_code_def = cake_define_list
 let keep_def = cake_define
   `keep reachable e =
        (if (\t. t = LN) (inter (find_loc e) reachable) then
-         (~(is_pure e)) else T)`;;
+         (~(flat_elim_is_pure e)) else T)`;;
 
 let remove_unreachable_def = cake_define
   `remove_unreachable reachable l = FILTER (keep reachable) l`;;

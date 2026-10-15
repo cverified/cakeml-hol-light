@@ -86,7 +86,8 @@ let flat_def = cake_define
           (((Env _1 env:stack) :: xs),(StackFrame _2 _3 vs _4 :: ys))
             ->
         join_env env vs ++ flat xs ys
-        | ((Exc _5 env _6 :: xs),(StackFrame _7 _8 vs _9 :: ys)) ->
+        | ((dataSem_Exc _5 env _6 :: xs),(StackFrame _7 _8 vs _9 ::
+          ys)) ->
         join_env env vs ++ flat xs ys
         | (_10,_11) -> []`;;
 
@@ -139,8 +140,9 @@ let ends_with_refs_def = cake_define
 
 let do_partial_def = cake_define
   `do_partial c s =
-     (match data_to_word_config_gc_kind c with Generational l ->
-       word_gen_gc_can_do_partial l s | _14 -> F)`;;
+     (match data_to_word_config_gc_kind c with
+       data_to_word_Generational l -> word_gen_gc_can_do_partial l s
+       | _14 -> F)`;;
 
 let alloc_size_def = cake_define
   `alloc_size k = ((if k * (dimindex (:'a) DIV 8) < dimword (:'ga) then
@@ -173,11 +175,11 @@ let stack_rel_def = cake_define
         ALL_DISTINCT (MAP FST vs) /\
         (!n. IS_SOME (sptree_lookup n env) <=>
             IS_SOME (sptree_lookup (adjust_var n) (fromAList vs)))
-        | ((Exc s1 env n),(StackFrame s2 ws vs (SOME (x1,x2,x3)))) ->
+        | ((dataSem_Exc s1 env n),(StackFrame s2 ws vs (SOME
+          (x1,x2,x3)))) ->
         data_to_word_gcProof_stack_rel (Env s1 env) (StackFrame s2 ws
           vs NONE) /\ (x1 = n)
         | (_15,_16) -> F`;;
-hol4_overload "stack_rel" "data_to_word_gcProof_stack_rel";;
 
 let the_global_def = cake_define
   `the_global g = the (Number (&0)) (OPTION_MAP (RefPtr T) g)`;;
@@ -232,8 +234,8 @@ val s = ``(s:('c,'ffi) dataSem$state)``
 
 let state_rel_thm = cake_define
   `(\x y. strcat x y)
-     (state_rel c l1 l2) (s (t:('a,'c,'ffi)wordSem_state) v1 locs)
-       <=>
+     (word_bignumProof_state_rel c l1 l2) (s
+       (t:('a,'c,'ffi)wordSem_state) v1 locs) <=>
        (?_ffi t = ?_ffi s) /\
        (?_clock t = ?_clock s) /\
        (?_handler t = ?_handler s) /\
@@ -251,7 +253,8 @@ let state_rel_thm = cake_define
          l2)) /\
        (!n. IS_SOME (sptree_lookup n (?_locals s)) ==>
             IS_SOME (sptree_lookup (adjust_var n) (?_locals t))) /\
-       EVERY2 stack_rel (?_stack s) (?_stack t) /\
+       EVERY2 data_to_word_gcProof_stack_rel (?_stack s) (?_stack t)
+         /\
        EVERY2 contains_loc (?_stack t) locs /\
        option_le (OPTION_MAP2 (+) (stack_size (?_stack t))
          (?_locals_size t)) (?_stack_max t) /\
@@ -294,8 +297,8 @@ let init_store_ok_def = cake_define
          SOME (Word (curr + bytes_in_word * n2w limit)) /\
        FLOOKUP store TriggerGC =
          SOME (Word (match data_to_word_config_gc_kind c with
-           Generational _21 -> curr | _22 -> curr + bytes_in_word * n2w
-           limit)) /\
+           data_to_word_Generational _21 -> curr | _22 -> curr +
+           bytes_in_word * n2w limit)) /\
        FLOOKUP store HeapLength =
          SOME (Word (bytes_in_word * n2w limit)) /\
        FLOOKUP store CodeBuffer = SOME (Word (buffer_position
@@ -364,11 +367,11 @@ let traverse_heap = cake_inductive
       traverse_heap heap p1 [Data d] p1) /\
    (!heap p1 n t.
       MEM n p1 ==>
-      traverse_heap heap p1 [Pointer n t] p1) /\
+      traverse_heap heap p1 [gc_shared_Pointer n t] p1) /\
    (!heap p1 n t p2 xs l d.
       heap_lookup n heap = SOME (DataElement xs l d) /\
       traverse_heap heap (n :: p1) xs p2 ==>
-      traverse_heap heap p1 [Pointer n t] p2)`;;
+      traverse_heap heap p1 [gc_shared_Pointer n t] p2)`;;
 
 (* Root-set-generalised alloc chain: the _gen theorems bound the
    NotEnoughSpace

@@ -188,7 +188,7 @@ let v_to_char_list_def = cake_define
           (Conv (SOME (cid,tid)) []:flatSem_v) ->
      (if cid = nil_tag /\ tid = SOME list_id then
        SOME [] else NONE)
-        | (Conv (SOME (cid,tid)) [Litv (Char c); v]) ->
+        | (Conv (SOME (cid,tid)) [Litv (ast_Char c); v]) ->
      (if cid = cons_tag /\ tid = SOME list_id then
        (match flatSem_v_to_char_list v with SOME cs -> SOME (c :: cs)
          | NONE -> NONE) else NONE)
@@ -199,7 +199,7 @@ let vs_to_string_def = cake_define
   `flatSem_vs_to_string x1 =
         match x1 with
           [] -> SOME (implode "")
-        | (Litv (StrLit s1) :: vs) ->
+        | (Litv (ast_StrLit s1) :: vs) ->
       (match flatSem_vs_to_string vs with SOME s2 -> SOME ((\x y.
         strcat x y) s1 s2) | _36 -> NONE)
         | _37 -> NONE`;;
@@ -207,24 +207,22 @@ hol4_overload "vs_to_string" "flatSem_vs_to_string";;
 
 let v_to_bytes_def = cake_define
   `flatSem_v_to_bytes lv = some (\ns. v_to_list lv = SOME (MAP (Litv
-  o Word8) ns))`;;
-hol4_overload "v_to_bytes" "flatSem_v_to_bytes";;
+  o ast_Word8) ns))`;;
 
 let v_to_words_def = cake_define
   `flatSem_v_to_words lv = some (\ns. v_to_list lv = SOME (MAP (Litv
-  o Word64) ns))`;;
-hol4_overload "v_to_words" "flatSem_v_to_words";;
+  o ast_Word64) ns))`;;
 
 let check_type_def = cake_define
   `flatSem_check_type x1 v =
       match x1 with
-        BoolT -> (v = Boolv T \/ v = Boolv F)
-      | IntT -> (?i. v = Litv (IntLit i))
-      | CharT -> (?c. v = Litv (Char c))
-      | StrT -> (?s. v = Litv (StrLit s))
-      | (WordT W8) -> (?w. v = Litv (Word8 w))
-      | (WordT W64) -> (?w. v = Litv (Word64 w))
-      | Float64T -> (?w. v = Litv (Float64 w))`;;
+        ast_BoolT -> (v = Boolv T \/ v = Boolv F)
+      | ast_IntT -> (?i. v = Litv (ast_IntLit i))
+      | ast_CharT -> (?c. v = Litv (ast_Char c))
+      | ast_StrT -> (?s. v = Litv (ast_StrLit s))
+      | (ast_WordT ast_W8) -> (?w. v = Litv (ast_Word8 w))
+      | (ast_WordT ast_W64) -> (?w. v = Litv (ast_Word64 w))
+      | ast_Float64T -> (?w. v = Litv (ast_Float64 w))`;;
 hol4_overload "check_type" "flatSem_check_type";;
 
 let dest_Litv_def = cake_define
@@ -235,28 +233,30 @@ let dest_Litv_def = cake_define
 hol4_overload "dest_Litv" "flatSem_dest_Litv";;
 
 let the_Litv_Float64_def = cake_define
-  `flatSem_the_Litv_Float64 (Litv (Float64 w):flatSem_v) = w`;;
+  `flatSem_the_Litv_Float64 (Litv (ast_Float64 w):flatSem_v) = w`;;
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
 let do_test_def = cake_define_list
   [`flatSem_do_test Equal ty v1 v2 =
       (if check_type ty v1 /\ check_type ty v2 then
-         (if ty = Float64T then Eq_val (fp64_equal
+         (if ty = ast_Float64T then Eq_val (fp64_equal
            (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
            v2) else Eq_type_error)`;
-   `flatSem_do_test (Compare cmp) ty v1 v2 =
-      (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
-        (IntLit i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) |
-        (CharT,SOME (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp
-        (ORD c) (ORD d)) | (WordT W8,SOME (Word8 w),SOME (Word8 v))
-        -> Eq_val (num_cmp cmp (w2n w) (w2n v)) | (Float64T,SOME
-        (Float64 w),SOME (Float64 v)) -> Eq_val (fp_cmp cmp w v) |
-        (StrT,SOME (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp F
-        cmp s t) | _41 -> Eq_type_error)`;
-   `flatSem_do_test (AltCompare cmp) ty v1 v2 =
-      (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME
-        (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) |
-        _42 -> Eq_type_error)`];;
+   `flatSem_do_test (ast_Compare cmp) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (ast_IntT,SOME
+        (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val
+        (semanticPrimitives_int_cmp cmp i j) | (ast_CharT,SOME
+        (ast_Char c),SOME (ast_Char d)) -> Eq_val (num_cmp cmp (ORD
+        c) (ORD d)) | (ast_WordT ast_W8,SOME (ast_Word8 w),SOME
+        (ast_Word8 v)) -> Eq_val (num_cmp cmp (w2n w) (w2n v)) |
+        (ast_Float64T,SOME (ast_Float64 w),SOME (ast_Float64 v)) ->
+        Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME (ast_StrLit s),SOME
+        (ast_StrLit t)) -> Eq_val (str_cmp F cmp s t) | _41 ->
+        Eq_type_error)`;
+   `flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
+        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp
+        s t) | _42 -> Eq_type_error)`];;
 hol4_overload "do_test" "flatSem_do_test";;
 
 let v_to_flat_def = cake_define
@@ -289,10 +289,10 @@ let dest_thunk_def = cake_define
   `flatSem_dest_thunk vs st =
       match vs with
         [(Loc b n:flatSem_v)] ->
-     (match store_lookup n st with NONE -> BadRef | SOME (Thunk
-       Evaluated v) ->
-          (if b then BadRef else IsThunk Evaluated v) | SOME (Thunk
-            NotEvaluated v) ->
+     (match store_lookup n st with NONE -> BadRef | SOME
+       (semanticPrimitives_Thunk Evaluated v) ->
+          (if b then BadRef else IsThunk Evaluated v) | SOME
+            (semanticPrimitives_Thunk NotEvaluated v) ->
           (if b then BadRef else IsThunk NotEvaluated v) | SOME _45
             -> NotThunk)
       | vs -> NotThunk`;;
@@ -302,8 +302,8 @@ let update_thunk_def = cake_define
   `flatSem_update_thunk x1 st x3 =
       match (x1,x3) with
         ([(Loc F n:flatSem_v)],[v]) ->
-     (match dest_thunk [v] st with NotThunk -> store_assign n (Thunk
-       Evaluated v) st | _46 -> NONE)
+     (match dest_thunk [v] st with NotThunk -> store_assign n
+       (semanticPrimitives_Thunk Evaluated v) st | _46 -> NONE)
       | (_47,_48) -> NONE`;;
 hol4_overload "update_thunk" "flatSem_update_thunk";;
 
@@ -314,252 +314,283 @@ hol4_overload "bad_thunk_update" "flatSem_bad_thunk_update";;
 
 let do_app_def = cake_define
   `flatSem_do_app s op (vs:flatSem_v list) =
-   (match (op,vs) with (Src (Shift wz sh n),[Litv w]) ->
+   (match (op,vs) with (flatLang_Src (ast_Shift wz sh n),[Litv w]) ->
        (match do_shift sh n wz w with NONE -> NONE | SOME w -> SOME
-         (s,Rval (Litv w))) | (Src Equality,[v1; v2]) ->
+         (s,Rval (Litv w))) | (flatLang_Src ast_Equality,[v1; v2]) ->
      (match do_eq v1 v2 with Eq_type_error -> NONE | Eq_val b -> SOME
-       (s,Rval (Boolv b))) | (Src (Test test test_ty),[v1; v2]) ->
+       (s,Rval (Boolv b))) | (flatLang_Src (ast_Test test test_ty),[v1;
+       v2]) ->
      (match do_test test test_ty v1 v2 with Eq_type_error -> NONE |
-       Eq_val b -> SOME (s,Rval (Boolv b))) | (Src (Arith a ty),vs) ->
+       Eq_val b -> SOME (s,Rval (Boolv b))) | (flatLang_Src (ast_Arith a
+       ty),vs) ->
      (let vs = MAP flat_to_v vs in
         if EVERY (check_type ty) vs then
           (match do_arith a ty vs with SOME (INR res) -> SOME (s,Rval
             (v_to_flat res)) | SOME (INL exn) -> SOME (s,Rerr (Rraise
-            div_exn_v)) | NONE -> NONE) else NONE) | (Src (FromTo ty1
-            ty2),[v]) ->
+            div_exn_v)) | NONE -> NONE) else NONE) | (flatLang_Src
+            (ast_FromTo ty1 ty2),[v]) ->
      (let v = flat_to_v v in
         if check_type ty1 v then
           (match do_conversion v ty1 ty2 with SOME (INR res) -> SOME
             (s,Rval (v_to_flat res)) | SOME (INL exn) -> SOME (s,Rerr
-            (Rraise chr_exn_v)) | NONE -> NONE) else NONE) | (Src
-            Opassign,[Loc _49 lnum; v]) ->
-     (match store_assign lnum (Refv v) (?_refs s) with SOME s' ->
-       SOME (?_refs_fupd (K s') s,Rval Unitv) | NONE -> NONE) | (Src
-       Opref,[v]) ->
-     (let (s',n) = (store_alloc (Refv v) (?_refs s)) in
-       SOME (?_refs_fupd (K s') s,Rval (Loc T n))) | (Src
-         Aw8alloc,[Litv (IntLit n); Litv (Word8 w)]) ->
+            (Rraise chr_exn_v)) | NONE -> NONE) else NONE) |
+            (flatLang_Src ast_Opassign,[Loc _49 lnum; v]) ->
+     (match store_assign lnum (semanticPrimitives_Refv v) (?_refs s)
+       with SOME s' -> SOME (?_refs_fupd (K s') s,Rval Unitv) | NONE ->
+       NONE) | (flatLang_Src ast_Opref,[v]) ->
+     (let (s',n) = (store_alloc (semanticPrimitives_Refv v) (?_refs
+       s)) in
+       SOME (?_refs_fupd (K s') s,Rval (Loc T n))) | (flatLang_Src
+         ast_Aw8alloc,[Litv (ast_IntLit n); Litv (ast_Word8 w)]) ->
      (if n < 0 then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let (s',lnum) =
-         store_alloc (W8array (REPLICATE (num_of_int (abs n)) w))
-           (?_refs s) in
-         SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) | (Src
-           Aw8sub,[Loc _50 lnum; Litv (IntLit i)]) ->
-     (match store_lookup lnum (?_refs s) with SOME (W8array ws) ->
+         store_alloc (semanticPrimitives_W8array (REPLICATE
+           (num_of_int (abs n)) w)) (?_refs s) in
+         SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) |
+           (flatLang_Src ast_Aw8sub,[Loc _50 lnum; Litv (ast_IntLit i)])
+           ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_W8array ws) ->
         (if i < 0 then
           SOME (s,Rerr (Rraise subscript_exn_v)) else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
               SOME (s,Rerr (Rraise subscript_exn_v)) else
-              SOME (s,Rval (Litv (Word8 (EL n ws))))) | _51 -> NONE)
-                | (Src Aw8sub_unsafe,[Loc _52 lnum; Litv (IntLit i)]) ->
-     (match store_lookup lnum (?_refs s) with SOME (W8array ws) ->
+              SOME (s,Rval (Litv (ast_Word8 (EL n ws))))) | _51 ->
+                NONE) | (flatLang_Src ast_Aw8sub_unsafe,[Loc _52 lnum;
+                Litv (ast_IntLit i)]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_W8array ws) ->
         (if i < 0 then
           NONE else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
               NONE else
-              SOME (s,Rval (Litv (Word8 (EL n ws))))) | _53 -> NONE)
-                | (Src Aw8length,[Loc _54 n]) ->
-     (match store_lookup n (?_refs s) with SOME (W8array ws) ->
-        SOME (s,Rval (Litv (IntLit (int_of_num (LENGTH ws))))) | _55
-          -> NONE) | (Src Aw8update,[Loc _56 lnum; Litv (IntLit i); Litv
-          (Word8 w)]) ->
-     (match store_lookup lnum (?_refs s) with SOME (W8array ws) ->
+              SOME (s,Rval (Litv (ast_Word8 (EL n ws))))) | _53 ->
+                NONE) | (flatLang_Src ast_Aw8length,[Loc _54 n]) ->
+     (match store_lookup n (?_refs s) with SOME
+       (semanticPrimitives_W8array ws) ->
+        SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH ws))))) |
+          _55 -> NONE) | (flatLang_Src ast_Aw8update,[Loc _56 lnum; Litv
+          (ast_IntLit i); Litv (ast_Word8 w)]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_W8array ws) ->
         (if i < 0 then
           SOME (s,Rerr (Rraise subscript_exn_v)) else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
               SOME (s,Rerr (Rraise subscript_exn_v)) else
-              (match store_assign lnum (W8array (LUPDATE w n ws))
-                (?_refs s) with NONE -> NONE | SOME s' -> SOME
-                (?_refs_fupd (K s') s,Rval Unitv))) | _57 -> NONE) |
-                (Src Aw8update_unsafe,[Loc _58 lnum; Litv (IntLit i);
-                Litv (Word8 w)]) ->
-     (match store_lookup lnum (?_refs s) with SOME (W8array ws) ->
+              (match store_assign lnum (semanticPrimitives_W8array
+                (LUPDATE w n ws)) (?_refs s) with NONE -> NONE | SOME s'
+                -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _57 ->
+                NONE) | (flatLang_Src ast_Aw8update_unsafe,[Loc _58
+                lnum; Litv (ast_IntLit i); Litv (ast_Word8 w)]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_W8array ws) ->
         (if i < 0 then
           NONE else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
               NONE else
-              (match store_assign lnum (W8array (LUPDATE w n ws))
-                (?_refs s) with NONE -> NONE | SOME s' -> SOME
-                (?_refs_fupd (K s') s,Rval Unitv))) | _59 -> NONE) |
-                (Src CopyStrStr,[Litv (StrLit str); Litv (IntLit off);
-                Litv (IntLit len)]) ->
+              (match store_assign lnum (semanticPrimitives_W8array
+                (LUPDATE w n ws)) (?_refs s) with NONE -> NONE | SOME s'
+                -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _59 ->
+                NONE) | (flatLang_Src ast_CopyStrStr,[Litv (ast_StrLit
+                str); Litv (ast_IntLit off); Litv (ast_IntLit len)]) ->
        SOME (s,
        (match copy_array (explode str,off) len NONE with
          NONE -> Rerr (Rraise subscript_exn_v) | SOME cs -> Rval
-           (Litv (StrLit (implode cs))))) | (Src CopyStrAw8,[Litv
-           (StrLit str); Litv (IntLit off); Litv (IntLit len);
-                   Loc _60 dst; Litv (IntLit dstoff)]) ->
+           (Litv (ast_StrLit (implode cs))))) | (flatLang_Src
+           ast_CopyStrAw8,[Litv (ast_StrLit str); Litv (ast_IntLit off);
+           Litv (ast_IntLit len);
+                   Loc _60 dst; Litv (ast_IntLit dstoff)]) ->
        (match store_lookup dst (?_refs s) with
-         SOME (W8array ws) ->
+         SOME (semanticPrimitives_W8array ws) ->
            (match copy_array (explode str,off) len (SOME (ws_to_chars
              ws,dstoff)) with
              NONE -> SOME (s,Rerr (Rraise subscript_exn_v)) | SOME cs
                ->
-             (match store_assign dst (W8array (chars_to_ws cs))
-               (?_refs s) with
+             (match store_assign dst (semanticPrimitives_W8array
+               (chars_to_ws cs)) (?_refs s) with
                SOME s' -> SOME (?_refs_fupd (K s') s,Rval Unitv) |
-                 _61 -> NONE)) | _62 -> NONE) | (Src CopyAw8Str,[Loc _63
-                 src; Litv (IntLit off); Litv (IntLit len)]) ->
+                 _61 -> NONE)) | _62 -> NONE) | (flatLang_Src
+                 ast_CopyAw8Str,[Loc _63 src; Litv (ast_IntLit off);
+                 Litv (ast_IntLit len)]) ->
      (match store_lookup src (?_refs s) with
-       SOME (W8array ws) ->
+       SOME (semanticPrimitives_W8array ws) ->
        SOME (s,
          (match copy_array (ws,off) len NONE with
            NONE -> Rerr (Rraise subscript_exn_v) | SOME ws -> Rval
-             (Litv (StrLit (implode (ws_to_chars ws)))))) | _64 -> NONE)
-             | (Src CopyAw8Aw8,[Loc _65 src; Litv (IntLit off); Litv
-             (IntLit len);
-                   Loc _66 dst; Litv (IntLit dstoff)]) ->
+             (Litv (ast_StrLit (implode (ws_to_chars ws)))))) | _64 ->
+             NONE) | (flatLang_Src ast_CopyAw8Aw8,[Loc _65 src; Litv
+             (ast_IntLit off); Litv (ast_IntLit len);
+                   Loc _66 dst; Litv (ast_IntLit dstoff)]) ->
      (match (store_lookup src (?_refs s),store_lookup dst (?_refs s))
        with
-       (SOME (W8array ws),SOME (W8array ds)) ->
+       (SOME (semanticPrimitives_W8array ws),SOME
+         (semanticPrimitives_W8array ds)) ->
          (match copy_array (ws,off) len (SOME (ds,dstoff)) with
            NONE -> SOME (s,Rerr (Rraise subscript_exn_v)) | SOME ws
              ->
-             (match store_assign dst (W8array ws) (?_refs s) with
+             (match store_assign dst (semanticPrimitives_W8array ws)
+               (?_refs s) with
                SOME s' -> SOME (?_refs_fupd (K s') s,Rval Unitv) |
-                 _67 -> NONE)) | _68 -> NONE) | (Src
-                 XorAw8Str_unsafe,[Loc _69 dst; Litv (StrLit str_arg)])
-                 ->
-     (match store_lookup dst (?_refs s) with SOME (W8array ds) ->
+                 _67 -> NONE)) | _68 -> NONE) | (flatLang_Src
+                 ast_XorAw8Str_unsafe,[Loc _69 dst; Litv (ast_StrLit
+                 str_arg)]) ->
+     (match store_lookup dst (?_refs s) with SOME
+       (semanticPrimitives_W8array ds) ->
           (match xor_bytes (MAP (n2w o ORD) (explode str_arg)) ds
             with NONE -> NONE | SOME new_bs ->
-               (match store_assign dst (W8array new_bs) (?_refs s)
-                 with NONE -> NONE | SOME s' -> SOME (?_refs_fupd (K s')
-                 s,Rval Unitv))) | _70 -> NONE) | (Src Implode,[v]) ->
+               (match store_assign dst (semanticPrimitives_W8array
+                 new_bs) (?_refs s) with NONE -> NONE | SOME s' -> SOME
+                 (?_refs_fupd (K s') s,Rval Unitv))) | _70 -> NONE) |
+                 (flatLang_Src ast_Implode,[v]) ->
      (match v_to_char_list v with SOME ls ->
-        SOME (s,Rval (Litv (StrLit (implode ls)))) | NONE -> NONE) |
-          (Src Explode,[Litv (StrLit str)]) ->
-     (SOME (s,Rval (list_to_v (MAP (\c. Litv (Char c)) (explode
-       str))))) | (Src Strsub,[Litv (StrLit str); Litv (IntLit i)]) ->
+        SOME (s,Rval (Litv (ast_StrLit (implode ls)))) | NONE ->
+          NONE) | (flatLang_Src ast_Explode,[Litv (ast_StrLit str)]) ->
+     (SOME (s,Rval (list_to_v (MAP (\c. Litv (ast_Char c)) (explode
+       str))))) | (flatLang_Src ast_Strsub,[Litv (ast_StrLit str); Litv
+       (ast_IntLit i)]) ->
      (if i < 0 then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let n = (num_of_int (abs i)) in
          if n >= strlen str then
            SOME (s,Rerr (Rraise subscript_exn_v)) else
-           SOME (s,Rval (Litv (Char (strsub str n))))) | (Src
-             Strlen,[Litv (StrLit str)]) ->
-     SOME (s,Rval (Litv (IntLit (int_of_num (strlen str))))) | (Src
-       Strcat,[v]) ->
+           SOME (s,Rval (Litv (ast_Char (strsub str n))))) |
+             (flatLang_Src ast_Strlen,[Litv (ast_StrLit str)]) ->
+     SOME (s,Rval (Litv (ast_IntLit (int_of_num (strlen str))))) |
+       (flatLang_Src ast_Strcat,[v]) ->
        (match v_to_list v with
          SOME vs ->
            (match vs_to_string vs with
              SOME str ->
-               SOME (s,Rval (Litv (StrLit str))) | _71 -> NONE) | _72
-                 -> NONE) | (Src VfromList,[v]) ->
+               SOME (s,Rval (Litv (ast_StrLit str))) | _71 -> NONE) |
+                 _72 -> NONE) | (flatLang_Src ast_VfromList,[v]) ->
      (match v_to_list v with SOME vs ->
-        SOME (s,Rval (Vectorv vs)) | NONE -> NONE) | (Src
-          Vsub,[Vectorv vs; Litv (IntLit i)]) ->
+        SOME (s,Rval (Vectorv vs)) | NONE -> NONE) | (flatLang_Src
+          ast_Vsub,[Vectorv vs; Litv (ast_IntLit i)]) ->
      (if i < 0 then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let n = (num_of_int (abs i)) in
          if n >= LENGTH vs then
            SOME (s,Rerr (Rraise subscript_exn_v)) else
-           SOME (s,Rval (EL n vs))) | (Src Vsub_unsafe,[Vectorv vs;
-             Litv (IntLit i)]) ->
+           SOME (s,Rval (EL n vs))) | (flatLang_Src
+             ast_Vsub_unsafe,[Vectorv vs; Litv (ast_IntLit i)]) ->
      (if 0 <= i /\ num_of_int i < LENGTH vs then
        SOME (s,Rval (EL (num_of_int i) vs)) else
-       NONE) | (Src Vlength,[Vectorv vs]) ->
-     SOME (s,Rval (Litv (IntLit (int_of_num (LENGTH vs))))) | (Src
-       Aalloc,[Litv (IntLit n); v]) ->
+       NONE) | (flatLang_Src ast_Vlength,[Vectorv vs]) ->
+     SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH vs))))) |
+       (flatLang_Src ast_Aalloc,[Litv (ast_IntLit n); v]) ->
      (if n < 0 then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let (s',lnum) =
-         store_alloc (Varray (REPLICATE (num_of_int (abs n)) v))
-           (?_refs s) in
-         SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) | (Src
-           AallocFixed,vs) ->
+         store_alloc (semanticPrimitives_Varray (REPLICATE
+           (num_of_int (abs n)) v)) (?_refs s) in
+         SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) |
+           (flatLang_Src ast_AallocFixed,vs) ->
      (let (s',lnum) =
-       store_alloc (Varray vs) (?_refs s) in
-       SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) | (Src
-         Asub,[Loc _73 lnum; Litv (IntLit i)]) ->
-     (match store_lookup lnum (?_refs s) with SOME (Varray vs) ->
+       store_alloc (semanticPrimitives_Varray vs) (?_refs s) in
+       SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) | (flatLang_Src
+         ast_Asub,[Loc _73 lnum; Litv (ast_IntLit i)]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_Varray vs) ->
       (if i < 0 then
         SOME (s,Rerr (Rraise subscript_exn_v)) else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
             SOME (s,Rerr (Rraise subscript_exn_v)) else
-            SOME (s,Rval (EL n vs))) | _74 -> NONE) | (Src
-              Asub_unsafe,[Loc _75 lnum; Litv (IntLit i)]) ->
-     (match store_lookup lnum (?_refs s) with SOME (Varray vs) ->
+            SOME (s,Rval (EL n vs))) | _74 -> NONE) | (flatLang_Src
+              ast_Asub_unsafe,[Loc _75 lnum; Litv (ast_IntLit i)]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_Varray vs) ->
       (if i < 0 then
         NONE else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
             NONE else
-            SOME (s,Rval (EL n vs))) | _76 -> NONE) | (Src
-              Alength,[Loc _77 n]) ->
-       (match store_lookup n (?_refs s) with SOME (Varray ws) ->
-          SOME (s,Rval (Litv (IntLit (int_of_num (LENGTH ws))))) |
-            _78 -> NONE) | (Src Aupdate,[Loc _79 lnum; Litv (IntLit i);
-            v]) ->
-     (match store_lookup lnum (?_refs s) with SOME (Varray vs) ->
+            SOME (s,Rval (EL n vs))) | _76 -> NONE) | (flatLang_Src
+              ast_Alength,[Loc _77 n]) ->
+       (match store_lookup n (?_refs s) with SOME
+         (semanticPrimitives_Varray ws) ->
+          SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH ws)))))
+            | _78 -> NONE) | (flatLang_Src ast_Aupdate,[Loc _79 lnum;
+            Litv (ast_IntLit i); v]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_Varray vs) ->
       (if i < 0 then
         SOME (s,Rerr (Rraise subscript_exn_v)) else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
             SOME (s,Rerr (Rraise subscript_exn_v)) else
-            (match store_assign lnum (Varray (LUPDATE v n vs))
-              (?_refs s) with NONE -> NONE | SOME s' -> SOME
-              (?_refs_fupd (K s') s,Rval Unitv))) | _80 -> NONE) | (Src
-              Aupdate_unsafe,[Loc _81 lnum; Litv (IntLit i); v]) ->
-     (match store_lookup lnum (?_refs s) with SOME (Varray vs) ->
+            (match store_assign lnum (semanticPrimitives_Varray
+              (LUPDATE v n vs)) (?_refs s) with NONE -> NONE | SOME s'
+              -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _80 -> NONE)
+              | (flatLang_Src ast_Aupdate_unsafe,[Loc _81 lnum; Litv
+              (ast_IntLit i); v]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_Varray vs) ->
       (if i < 0 then
         NONE else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
             NONE else
-            (match store_assign lnum (Varray (LUPDATE v n vs))
-              (?_refs s) with NONE -> NONE | SOME s' -> SOME
-              (?_refs_fupd (K s') s,Rval Unitv))) | _82 -> NONE) | (Src
-              ListAppend,[x1; x2]) ->
+            (match store_assign lnum (semanticPrimitives_Varray
+              (LUPDATE v n vs)) (?_refs s) with NONE -> NONE | SOME s'
+              -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _82 -> NONE)
+              | (flatLang_Src ast_ListAppend,[x1; x2]) ->
      (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys) ->
-       SOME (s,Rval (list_to_v (xs ++ ys))) | _83 -> NONE) | (Src
-       ConfigGC,[Litv (IntLit n1); Litv (IntLit n2)]) ->
-        SOME (s,Rval Unitv) | (Src (FFI n),[Litv (StrLit conf); Loc
-          _84 lnum]) ->
-     (match store_lookup lnum (?_refs s) with SOME (W8array ws) ->
+       SOME (s,Rval (list_to_v (xs ++ ys))) | _83 -> NONE) |
+       (flatLang_Src ast_ConfigGC,[Litv (ast_IntLit n1); Litv
+       (ast_IntLit n2)]) ->
+        SOME (s,Rval Unitv) | (flatLang_Src (ast_FFI n),[Litv
+          (ast_StrLit conf); Loc _84 lnum]) ->
+     (match store_lookup lnum (?_refs s) with SOME
+       (semanticPrimitives_W8array ws) ->
         (match call_FFI (?_ffi s) (ExtCall n) (MAP (\c. n2w (ORD c))
           (explode conf)) ws with FFI_final outcome -> SOME (s,Rerr
           (Rabort (Rffi_error outcome))) | FFI_return t' ws' ->
-           (match store_assign lnum (W8array ws') (?_refs s) with
-             SOME s' -> SOME (?_ffi_fupd (K t') (?_refs_fupd (K s')
-             s),Rval Unitv) | NONE -> NONE)) | _85 -> NONE) | (Src
-             Opapp,_86) -> NONE | (Src Eval,_87) -> NONE | (Src (ThunkOp
-             th_op),vs) ->
+           (match store_assign lnum (semanticPrimitives_W8array ws')
+             (?_refs s) with SOME s' -> SOME (?_ffi_fupd (K t')
+             (?_refs_fupd (K s') s),Rval Unitv) | NONE -> NONE)) | _85
+             -> NONE) | (flatLang_Src ast_Opapp,_86) -> NONE |
+             (flatLang_Src ast_Eval,_87) -> NONE | (flatLang_Src
+             (ast_ThunkOp th_op),vs) ->
       (match (th_op,vs) with (AllocThunk m,[v]) ->
            (if bad_thunk_update m v (?_refs s) then NONE else
-            let (r,n) = store_alloc (Thunk m v) (?_refs s) in
+            let (r,n) = store_alloc (semanticPrimitives_Thunk m v)
+              (?_refs s) in
               SOME (?_refs_fupd (K r) s,Rval (Loc F n))) |
                 (UpdateThunk m,[Loc F lnum; v]) ->
            (if bad_thunk_update m v (?_refs s) then NONE else
-            match store_assign lnum (Thunk m v) (?_refs s) with SOME
-              r -> SOME (?_refs_fupd (K r) s,Rval (Conv NONE [])) | NONE
-              -> NONE) | _88 -> NONE) | (Src _89,_90) -> NONE |
-              (GlobalVarAlloc n,[]) ->
+            match store_assign lnum (semanticPrimitives_Thunk m v)
+              (?_refs s) with SOME r -> SOME (?_refs_fupd (K r) s,Rval
+              (Conv NONE [])) | NONE -> NONE) | _88 -> NONE) |
+              (flatLang_Src _89,_90) -> NONE | (flatLang_GlobalVarAlloc
+              n,[]) ->
      SOME (flatSem_state_globals_fupd (K (flatSem_state_globals s ++
-       REPLICATE n NONE)) s,Rval Unitv) | (GlobalVarInit n,[v]) ->
+       REPLICATE n NONE)) s,Rval Unitv) | (flatLang_GlobalVarInit n,[v])
+       ->
      (if n < LENGTH (flatSem_state_globals s) /\ IS_NONE (EL n
        (flatSem_state_globals s)) then
        SOME (flatSem_state_globals_fupd (K (LUPDATE (SOME v) n
          (flatSem_state_globals s))) s,Rval Unitv) else
-       NONE) | (GlobalVarLookup n,[]) ->
+       NONE) | (flatLang_GlobalVarLookup n,[]) ->
      (if n < LENGTH (flatSem_state_globals s) /\ IS_SOME (EL n
        (flatSem_state_globals s)) then
        SOME (s,Rval (THE (EL n (flatSem_state_globals s)))) else
-       NONE) | (TagLenEq n l,[Conv (SOME (tag,_91)) xs]) ->
-     SOME (s,Rval (Boolv (tag = n /\ LENGTH xs = l))) | (LenEq
-       l,[Conv _92 xs]) ->
-     SOME (s,Rval (Boolv (LENGTH xs = l))) | (El n,[Conv _93 vs]) ->
-     (if n < LENGTH vs then SOME (s,Rval (EL n vs)) else NONE) | (El
-       n,[Loc _94 p]) ->
+       NONE) | (flatLang_TagLenEq n l,[Conv (SOME (tag,_91)) xs]) ->
+     SOME (s,Rval (Boolv (tag = n /\ LENGTH xs = l))) |
+       (flatLang_LenEq l,[Conv _92 xs]) ->
+     SOME (s,Rval (Boolv (LENGTH xs = l))) | (flatLang_El n,[Conv _93
+       vs]) ->
+     (if n < LENGTH vs then SOME (s,Rval (EL n vs)) else NONE) |
+       (flatLang_El n,[Loc _94 p]) ->
      (if ~(n = 0) then NONE else
-        match store_lookup p (?_refs s) with SOME (Refv v) -> SOME
-          (s,Rval v) | _95 -> NONE) | (Id,[v1]) ->
+        match store_lookup p (?_refs s) with SOME
+          (semanticPrimitives_Refv v) -> SOME (s,Rval v) | _95 -> NONE)
+          | (flatLang_Id,[v1]) ->
      SOME (s,Rval v1) | _96 -> NONE)`;;
 hol4_overload "do_app" "flatSem_do_app";;
 
@@ -606,8 +637,9 @@ let pmatch_def = cake_define_list
         flatSem_pmatch s p v ((i,v) :: bindings)`;
    `flatSem_pmatch s (Pref p:flatLang_pat) (Loc _97 lnum:flatSem_v)
   bindings =
-        (match store_lookup lnum (?_refs s) with SOME (Refv v) ->
-          flatSem_pmatch s p v bindings | _98 -> Match_type_error)`;
+        (match store_lookup lnum (?_refs s) with SOME
+          (semanticPrimitives_Refv v) -> flatSem_pmatch s p v
+          bindings | _98 -> Match_type_error)`;
    `flatSem_pmatch _99 _100 _101 bindings = Match_type_error`;
    `flatSem_pmatch_list s [] [] bindings = Match bindings`;
    `flatSem_pmatch_list s (p :: ps) (v :: vs) bindings =
@@ -642,12 +674,12 @@ hol4_overload "fix_clock" "flatSem_fix_clock";;
 let do_eval_def = cake_define
   `flatSem_do_eval (vs:flatSem_v list) eval_config =
    (match vs with [v1; v2] ->
-       (match (v_to_bytes v1,v_to_words v2) with (SOME bytes,SOME
-         data) ->
+       (match (flatSem_v_to_bytes v1,flatSem_v_to_words v2) with
+         (SOME bytes,SOME data) ->
           (let (st,decs) = install_config_compile_oracle eval_config
             0 in
-          let new_oracle = shift_seq 1 (install_config_compile_oracle
-            eval_config) in
+          let new_oracle = misc_shift_seq 1
+            (install_config_compile_oracle eval_config) in
           (match install_config_compile eval_config st decs with SOME
             (bytes',data',st') ->
              (if bytes = bytes' /\ data = data' /\ ~(decs = []) /\
@@ -658,9 +690,8 @@ let do_eval_def = cake_define
 hol4_overload "do_eval" "flatSem_do_eval";;
 
 let AppUnit_def = cake_define
-  `flatSem_AppUnit x = flatLang_App None (Src Opapp) [x; Con None
-  NONE []]`;;
-hol4_overload "AppUnit" "flatSem_AppUnit";;
+  `flatSem_AppUnit x = flatLang_App backend_common_None (flatLang_Src
+  ast_Opapp) [x; Con backend_common_None NONE []]`;;
 
 let exp_alt_size_def = cake_define_list
   [`flatSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
@@ -675,14 +706,14 @@ let exp_alt_size_def = cake_define_list
     (tra_size a0 +
      (option_size (pair_size (\x. x) (option_size (\x. x))) a1 +
       exp6_alt_size a2))`;
-   `flatSem_exp_alt_size (Var_local a0 a1) = 1 + (tra_size a0 +
-  mlstring_size a1)`;
+   `flatSem_exp_alt_size (flatLang_Var_local a0 a1) = 1 + (tra_size
+  a0 + mlstring_size a1)`;
    `flatSem_exp_alt_size (Fun a0 a1 a2:flatLang_exp) =
     1 + (mlstring_size a0 + (mlstring_size a1 +
       flatSem_exp_alt_size a2))`;
    `flatSem_exp_alt_size (App a0 a1 a2:flatLang_exp) =
     1 + (tra_size a0 + (op_size a1 + exp6_alt_size a2)) + (if a1
-      = Src (ThunkOp ForceThunk) then 100 else 0)`;
+      = flatLang_Src (ast_ThunkOp ForceThunk) then 100 else 0)`;
    `flatSem_exp_alt_size (If a0 a1 a2 a3:flatLang_exp) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 +
       (flatSem_exp_alt_size a2 + flatSem_exp_alt_size a3)))`;
@@ -712,13 +743,9 @@ let exp_alt_size_def = cake_define_list
    `exp6_alt_size [] = 0`;
    `exp6_alt_size (a0 :: a1) = 1 + (flatSem_exp_alt_size a0 +
   exp6_alt_size a1)`];;
-hol4_overload "exp1_alt_size" "flatSem_exp1_alt_size";;
-hol4_overload "exp2_alt_size" "flatSem_exp2_alt_size";;
-hol4_overload "exp3_alt_size" "flatSem_exp3_alt_size";;
-hol4_overload "exp_alt_size" "flatSem_exp_alt_size";;
 
 let dec_alt_size_def = cake_define
-  `dec_alt_size a = 1 + exp_alt_size a`;;
+  `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
 
 let evaluate_def = cake_define_list
   [`(\x y. strcat x y) (flatSem_evaluate (env:flatSem_v
@@ -751,7 +778,7 @@ let evaluate_def = cake_define_list
    `flatSem_evaluate env s [(Con _114 (SOME cn) es:flatLang_exp)] =
         (match flatSem_evaluate env s (REVERSE es) with (s,Rval
           vs) -> (s,Rval [Conv (SOME cn) (REVERSE vs)]) | res -> res)`;
-   `flatSem_evaluate env s [Var_local _115 n] = (s,
+   `flatSem_evaluate env s [flatLang_Var_local _115 n] = (s,
        (match ALOOKUP (?_v env) n with SOME v -> Rval [v] | NONE
          -> Rerr (Rabort Rtype_error)))`;
    `flatSem_evaluate env s [(Fun _116 n e:flatLang_exp)] = (s,Rval
@@ -759,14 +786,14 @@ let evaluate_def = cake_define_list
    `flatSem_evaluate env s [(App _117 op es:flatLang_exp)] =
        (match fix_clock s (flatSem_evaluate env s (REVERSE es)) with
          (s,Rval vs) ->
-           (if op = Src Opapp then
+           (if op = flatLang_Src ast_Opapp then
              (match flatSem_do_opapp (REVERSE vs) with SOME (env',e)
                ->
                 (if ?_clock s = 0 then
                   (s,Rerr (Rabort Rtimeout_error)) else
                   flatSem_evaluate env' (dec_clock s) [e]) | NONE ->
-                    (s,Rerr (Rabort Rtype_error))) else if op = Src Eval
-                    then
+                    (s,Rerr (Rabort Rtype_error))) else if op =
+                    flatLang_Src ast_Eval then
              (match do_eval (REVERSE vs) (flatSem_state_eval_config
                s) with SOME (decs,eval_config,retv) ->
                   (let s = flatSem_state_eval_config_fupd (K
@@ -776,16 +803,17 @@ let evaluate_def = cake_define_list
                       flatSem_evaluate_decs (dec_clock s) decs with
                       (s,NONE) -> (s,Rval [retv]) | (s,SOME e) ->
                       (s,Rerr e))) | NONE -> (s,Rerr (Rabort
-                      Rtype_error))) else if op = Src (ThunkOp
-                      ForceThunk) then
+                      Rtype_error))) else if op = flatLang_Src
+                      (ast_ThunkOp ForceThunk) then
              (match dest_thunk vs (?_refs s) with BadRef -> (s,Rerr
                (Rabort Rtype_error)) | NotThunk -> (s,Rerr (Rabort
                Rtype_error)) | IsThunk Evaluated v -> (s,Rval [v]) |
                IsThunk NotEvaluated f ->
                  (match flatSem_evaluate (mk_? [((implode "f"),f)])
                    s
-                        [AppUnit (Var_local None (implode "f"))]
-                          with (s,Rval vs2) ->
+                        [flatSem_AppUnit (flatLang_Var_local
+                          backend_common_None (implode "f"))] with
+                          (s,Rval vs2) ->
                       (match update_thunk vs (?_refs s) vs2 with
                         NONE -> (s,Rerr (Rabort Rtype_error)) | SOME
                         refs -> (?_refs_fupd (K refs) s,Rval vs2)) |
@@ -842,27 +870,27 @@ val eqs = LIST_CONJ (map TypeBase.case_eq_of
 let initial_state_def = cake_define
   `flatSem_initial_state ffi k ec =
      (mk_? k [] ffi [] ec:('c,'ffi)flatSem_state)`;;
-hol4_overload "initial_state" "flatSem_initial_state";;
 
 let semantics_def = cake_define
   `flatSem_semantics (ec:'c install_config) (ffi:'ffi ffi_state) prog =
      (if ?k.
-            SND (evaluate_decs (initial_state ffi k ec) prog) = SOME
-              (Rabort Rtype_error) then Fail else
+            SND (evaluate_decs (flatSem_initial_state ffi k ec) prog)
+              = SOME (Rabort Rtype_error) then ffi_Fail else
      match some (\res.
        ?k s r outcome.
-         evaluate_decs (initial_state ffi k ec) prog = (s,r) /\
+         evaluate_decs (flatSem_initial_state ffi k ec) prog = (s,r)
+           /\
          (match r with SOME (Rabort (Rffi_error e)) -> outcome =
-           FFI_outcome e | SOME (Rabort _122) -> F | _123 -> outcome =
-           Success) /\
-         res = Terminate outcome (ffi_state_io_events (?_ffi s)))
+           ffi_FFI_outcome e | SOME (Rabort _122) -> F | _123 -> outcome
+           = ffi_Success) /\
+         res = ffi_Terminate outcome (ffi_state_io_events (?_ffi s)))
            with SOME res -> res | NONE ->
-        Diverge
+        ffi_Diverge
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (?_ffi
-              (FST (evaluate_decs (initial_state ffi k ec) prog)))))
+              (FST (evaluate_decs (flatSem_initial_state ffi k ec)
+                prog)))))
                 UNIV)))`;;
-hol4_overload "semantics" "flatSem_semantics";;
 
 (* HOL4 ML code, not ported:
 val _ = map (can delete_const)

@@ -128,7 +128,8 @@ let abs_stack_def = cake_define
   `abs_stack bitmaps x2 stack x4 =
         match (bitmaps,x2,stack,x4) with
           ((bitmaps:('a word) list),[],stack,[]) ->
-       (if stack = [Word ((n2w 0):'a word)] then SOME [] else NONE)
+       (if stack = [wordLang_Word ((n2w 0):'a word)] then SOME []
+         else NONE)
         | (bitmaps,((StackFrame n l0 l NONE) :: xs),(w :: stack),(len
           :: lens)) ->
        (match full_read_bitmap bitmaps w with NONE -> NONE | SOME
@@ -141,7 +142,7 @@ let abs_stack_def = cake_define
                  | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
         | (bitmaps,((StackFrame n l0 l (SOME _1)) :: xs),(w ::
           stack),(len :: lens)) ->
-       (if ~(w = Word (n2w 1)) then NONE else
+       (if ~(w = wordLang_Word (n2w 1)) then NONE else
          (match stack with loc :: hv :: w :: stack ->
             (match full_read_bitmap bitmaps w with NONE -> NONE |
               SOME bits ->
@@ -200,7 +201,8 @@ let stack_rel_aux_def = cake_define
           (loc,hv),bits,frame) :: stack)) ->
        (h1 < LENGTH stack /\
        is_handler_frame (EL (LENGTH stack - (h1 + 1)) xs) ==>
-       hv = Word (n2w (len - handler_val (LASTN (h1 + 1) stack)))) /\
+       hv = wordLang_Word (n2w (len - handler_val (LASTN (h1 + 1)
+         stack)))) /\
        loc = Loc l1 l2 /\
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
@@ -229,10 +231,9 @@ let stack_rel_def = cake_define
        s_handler < LENGTH s_stack /\
        is_handler_frame (EL (LENGTH s_stack - (s_handler + 1))
          s_stack) ==>
-       t_handler = SOME (Word (n2w (t_stack_length - handler_val
-         (LASTN (s_handler + 1) stack))))) /\
+       t_handler = SOME (wordLang_Word (n2w (t_stack_length -
+         handler_val (LASTN (s_handler + 1) stack))))) /\
        stack_rel_aux k t_stack_length s_stack stack)`;;
-hol4_overload "stack_rel" "word_to_stackProof_stack_rel";;
 
 (*f is the size of the current frame + 1 most of the time
   (extra word for the bitmap pointer)
@@ -275,14 +276,14 @@ let state_rel_def = cake_define
      t = ?_code_buffer s /\ ?_compile
      s = (\(bm0,cfg) progs.
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
-         (Nil,bm0) in
+         (misc_Nil,bm0) in
        OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
          bm,cfg)))
          (?_compile t cfg progs)) /\ ?_compile_oracle
      t = (\n.
        let ((bm0,cfg),progs) = ?_compile_oracle s n in
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
-         (Nil,bm0) in
+         (misc_Nil,bm0) in
          (cfg,progs,append (FST bm))) /\
      (!n. let ((bm0,cfg),progs) = ?_compile_oracle s n in
          EVERY (post_alloc_conventions k o SND o SND) progs /\
@@ -294,7 +295,7 @@ let state_rel_def = cake_define
                        store_consts_stub_location INSERT domain
                          (?_code s) /\
      (!n word_prog arg_count.
-        (lookup n (?_code s) = SOME (arg_count,word_prog)) ==>
+        (sptree_lookup n (?_code s) = SOME (arg_count,word_prog)) ==>
         post_alloc_conventions k word_prog /\
         flat_exp_conventions word_prog /\
         (?bs i bs2 i2 f stack_prog.
@@ -304,11 +305,12 @@ let state_rel_def = cake_define
             (stackSem_state_bitmaps t) /\
           isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
             (stackSem_state_bitmaps t)) /\
-          (lookup n (?_code t) = SOME stack_prog) /\
-          the f (lookup n (wordSem_state_stack_size s)) = f)) /\
-     (lookup raise_stub_location (?_code t) = SOME (raise_stub F k))
-       /\
-     (lookup store_consts_stub_location (?_code t) = SOME
+          (sptree_lookup n (?_code t) = SOME stack_prog) /\
+          the f (sptree_lookup n (wordSem_state_stack_size s)) = f))
+            /\
+     (sptree_lookup raise_stub_location (?_code t) = SOME (raise_stub
+       F k)) /\
+     (sptree_lookup store_consts_stub_location (?_code t) = SOME
        (store_consts_stub k)) /\
      good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
@@ -329,18 +331,17 @@ let state_rel_def = cake_define
        (?_stack t) in
      let current_frame = TAKE f stack in
      let rest_of_stack = DROP f stack in
-       stack_rel k (wordSem_state_handler s) (?_stack s) (FLOOKUP
-         (?_store t) Handler)
+       word_to_stackProof_stack_rel k (wordSem_state_handler s)
+         (?_stack s) (FLOOKUP (?_store t) Handler)
          rest_of_stack (LENGTH (?_stack t)) (stackSem_state_bitmaps
            t) lens /\
        (!n v.
-         (lookup n (wordSem_state_locals s) = SOME v) ==>
+         (sptree_lookup n (wordSem_state_locals s) = SOME v) ==>
          EVEN n /\
          (if n DIV 2 < k then (FLOOKUP (stackSem_state_regs t) (n DIV
            2) = SOME v) else ((\l n. oEL n l) current_frame (f - 1 - (n
            DIV 2 - k)) = SOME v) /\
               n DIV 2 < k + f')))`;;
-hol4_overload "state_rel" "word_to_stackProof_state_rel";;
 
 (* correctness proof *)
 
@@ -396,7 +397,8 @@ let compile_result_def = cake_define_list
    `compile_result (Exception w1 w2:word_to_stackProof_result) =
   Exception w1`;
    `compile_result TimeOut = TimeOut`;
-   `compile_result NotEnoughSpace = Halt (Word (n2w 1))`;
+   `compile_result wordSem_NotEnoughSpace = Halt (wordLang_Word (n2w
+  1))`;
    `compile_result (FinalFFI f:word_to_stackProof_result) = FinalFFI
   f`;
    `compile_result (Break k:word_to_stackProof_result) = Break k`;
@@ -661,11 +663,12 @@ Theorem wStackLoad_thm3 =
 let map_var_def = cake_define_list
   [`map_var f (wordLang_Var num') = Var (f num')`;
    `map_var f (wordLang_Load exp) = Load (map_var f exp)`;
-   `map_var f (Op wop ls) = Op wop (MAP (map_var f) ls)`;
+   `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f)
+  ls)`;
    `map_var f (wordLang_Shift sh e1 e2) = Shift sh (map_var f e1)
   (map_var f e2)`;
    `map_var f (wordLang_Const c) = Const c`;
-   `map_var f (Lookup v) = Lookup v`];;
+   `map_var f (wordLang_Lookup v) = wordLang_Lookup v`];;
 (*
 Theorem word_exp_thm1:
    ∀s e x. word_exp s e = SOME (Word x) ∧
@@ -4690,8 +4693,8 @@ let init_state_ok_def = cake_define
        LENGTH (stackSem_state_bitmaps t) + 1 < dimword (:'a) /\
        [(n2w 4)] <<= stackSem_state_bitmaps t /\
        LENGTH (?_stack t) < dimword (:'a) /\
-       DROP (stackSem_state_stack_space t) (?_stack t) = [Word (n2w
-         0)] /\
+       DROP (stackSem_state_stack_space t) (?_stack t) =
+         [wordLang_Word (n2w 0)] /\
        Handler IN FDOM (?_store t) /\
        LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
          (?_data_buffer t)) + buffer_space_left (?_data_buffer
@@ -4699,7 +4702,7 @@ let init_state_ok_def = cake_define
        t = (\n.
          let ((bm0,cfg),progs) = coracle n in
          let (progs,fs,bm) = compile_word_to_stack ac F k progs
-           (Nil,bm0) in
+           (misc_Nil,bm0) in
            (cfg,progs,append (FST bm))) /\
        (!n. let ((bm0,cfg),progs) = coracle n in
            EVERY (post_alloc_conventions k o SND o SND) progs /\
@@ -4711,14 +4714,14 @@ let init_state_ok_def = cake_define
 let make_init_def = cake_define
   `(\x y. strcat x y)
      (make_init ac k) (t code coracle) =
-       mk_wordSem_state (insert 0 (Loc 1 0) LN) (SOME 0) (?_fp_regs
-         t) (?_store t \\ Handler) [] (LENGTH (?_stack t)) (stack_size
-         ([]:('a stack_frame) list)) (mapi (\n (arg_count,prog). FST
-         (SND (compile_prog ac F prog arg_count k (Nil,0)))) code)
-         (?_memory t) (?_mdomain t) (?_sh_mdomain t) (K I) (\(bm0,cfg)
-         progs.
+       mk_wordSem_state (sptree_insert 0 (Loc 1 0) LN) (SOME 0)
+         (?_fp_regs t) (?_store t \\ Handler) [] (LENGTH (?_stack t))
+         (stack_size ([]:('a stack_frame) list)) (mapi (\n
+         (arg_count,prog). FST (SND (word_to_stack_compile_prog ac F
+         prog arg_count k (misc_Nil,0)))) code) (?_memory t) (?_mdomain
+         t) (?_sh_mdomain t) (K I) (\(bm0,cfg) progs.
          let (progs,fs,bm) = compile_word_to_stack ac F k progs
-           (Nil,bm0) in
+           (misc_Nil,bm0) in
          OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
            bm,cfg)))
            (?_compile t cfg progs)) coracle (?_code_buffer t)

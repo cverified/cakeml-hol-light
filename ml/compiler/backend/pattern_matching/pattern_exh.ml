@@ -65,7 +65,7 @@ let ctor_arity_def = cake_define_list
 
 let anys_def = cake_define_list
   [`anys 0 = []`;
-   `anys (SUC n) = Any :: anys n`];;
+   `anys (SUC n) = pattern_semantics_Any :: anys n`];;
 
 
 (* --------------------------------------------------------------------
@@ -88,18 +88,20 @@ let mk_prods_def = cake_define_list
 
 let mk_refs_def = cake_define_list
   [`mk_refs [] = []`;
-   `mk_refs (p :: ps) = Ref p :: mk_refs ps`];;
+   `mk_refs (p :: ps) = pattern_semantics_Ref p :: mk_refs ps`];;
 
 let mk_conses_def = cake_define_list
   [`mk_conses t [] = []`;
-   `mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`];;
+   `mk_conses t (ps :: pss) = pattern_semantics_Cons t ps ::
+  mk_conses t pss`];;
 
 let expand_def = cake_define_list
-  [`expand Any = [Any]`;
+  [`expand pattern_semantics_Any = [pattern_semantics_Any]`;
    `expand (Lit l:pattern_semantics_pat) = [Lit l]`;
    `expand (Or p q:pattern_semantics_pat) = expand p ++ expand q`;
-   `expand (Ref p) = mk_refs (expand p)`;
-   `expand (Cons t ps) = mk_conses t (expand_list ps)`;
+   `expand (pattern_semantics_Ref p) = mk_refs (expand p)`;
+   `expand (pattern_semantics_Cons t ps) = mk_conses t (expand_list
+  ps)`;
    `expand_list [] = [[]]`;
    `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
 
@@ -135,13 +137,13 @@ let ctor_nub_def = cake_define_list
 let ctors_of_def = cake_define
   `ctors_of x1 =
       match x1 with
-        Any -> NONE
+        pattern_semantics_Any -> NONE
       | (Lit _1) -> NONE
       | (Or _2 _3) -> NONE
-      | (Ref _4) -> SOME [RefC]
-      | (Cons NONE qs) -> SOME [TupC (LENGTH qs)]
-      | (Cons (SOME (t,NONE)) qs) -> NONE
-      | (Cons (SOME (t,SOME sibs)) qs) ->
+      | (pattern_semantics_Ref _4) -> SOME [RefC]
+      | (pattern_semantics_Cons NONE qs) -> SOME [TupC (LENGTH qs)]
+      | (pattern_semantics_Cons (SOME (t,NONE)) qs) -> NONE
+      | (pattern_semantics_Cons (SOME (t,SOME sibs)) qs) ->
      SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
 
 let ctor_keep_def = cake_define_list
@@ -180,12 +182,14 @@ let spec_row_def = cake_define
   `spec_row c x2 =
       match x2 with
         [] -> []
-      | (Any :: rest) -> [anys (ctor_arity c) ++ rest]
-      | ((Cons NONE qs) :: rest) ->
+      | (pattern_semantics_Any :: rest) -> [anys (ctor_arity c) ++
+        rest]
+      | ((pattern_semantics_Cons NONE qs) :: rest) ->
      (if c = TupC (LENGTH qs) then [qs ++ rest] else [])
-      | ((Cons (SOME ts) qs) :: rest) ->
+      | ((pattern_semantics_Cons (SOME ts) qs) :: rest) ->
      (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else [])
-      | ((Ref q) :: rest) -> (if c = RefC then [q :: rest] else [])
+      | ((pattern_semantics_Ref q) :: rest) -> (if c = RefC then [q
+        :: rest] else [])
       | ((Lit l) :: rest) -> []
       | ((Or p q) :: rest) -> []`;;
 
@@ -200,7 +204,7 @@ let spec_mats_def = cake_define_list
 let default_row_def = cake_define
   `default_row x1 =
       match x1 with
-        (Any :: rest) -> [rest]
+        (pattern_semantics_Any :: rest) -> [rest]
       | _6 -> []`;;
 
 let default_mat_def = cake_define_list
@@ -222,12 +226,12 @@ let default_mat_def = cake_define_list
    *)
 
 let pat_weight_def = cake_define_list
-  [`pat_weight Any = (0:num)`;
+  [`pat_weight pattern_semantics_Any = (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = 0`;
    `pat_weight (Or p q:pattern_semantics_pat) = 1 + pat_weight p +
   pat_weight q`;
-   `pat_weight (Ref p) = 1 + pat_weight p`;
-   `pat_weight (Cons t ps) = 1 + pats_weight ps`;
+   `pat_weight (pattern_semantics_Ref p) = 1 + pat_weight p`;
+   `pat_weight (pattern_semantics_Cons t ps) = 1 + pats_weight ps`;
    `pats_weight [] = 0`;
    `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 
@@ -383,12 +387,14 @@ let pand_def = cake_define_list
 let dest_val_def = cake_define
   `dest_val refs x2 =
       match x2 with
-        Term (SOME t) vs -> SOME (TagC t (LENGTH vs),vs)
-      | (Term NONE vs) -> SOME (TupC (LENGTH vs),vs)
-      | (RefPtr r) -> (match FLOOKUP refs r with NONE -> NONE | SOME
-        w -> SOME (RefC,[w]))
+        pattern_semantics_Term (SOME t) vs -> SOME (TagC t (LENGTH
+          vs),vs)
+      | (pattern_semantics_Term NONE vs) -> SOME (TupC (LENGTH
+        vs),vs)
+      | (pattern_semantics_RefPtr r) -> (match FLOOKUP refs r with
+        NONE -> NONE | SOME w -> SOME (RefC,[w]))
       | (Litv l) -> NONE
-      | Other -> NONE`;;
+      | pattern_semantics_Other -> NONE`;;
 
 (* A head pattern that reports a constructor set really does confine a
    value that it does not type-fail on to that set. *)

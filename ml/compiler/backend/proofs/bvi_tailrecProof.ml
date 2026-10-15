@@ -67,10 +67,10 @@ fun cases_on_op q = Cases_on q
 *)
 
 let op_id_val_def = cake_define_list
-  [`op_id_val Plus = Number (&0)`;
-   `op_id_val Times = Number (&1)`;
+  [`op_id_val bvi_tailrec_Plus = Number (&0)`;
+   `op_id_val bvi_tailrec_Times = Number (&1)`;
    `op_id_val Append = Block nil_tag []`;
-   `op_id_val Noop = Number (&6333)`];;
+   `op_id_val bvi_tailrec_Noop = Number (&6333)`];;
 
 let env_rel_def = cake_define
   `bvi_tailrecProof_env_rel ty opt acc env1 env2 <=>
@@ -80,8 +80,8 @@ let env_rel_def = cake_define
        LENGTH env2 > acc /\
        (match ty with
          Int -> (?k. EL acc env2 = Number k) | List -> (?ys.
-           v_to_list (EL acc env2) = SOME ys) | Any -> F))`;;
-hol4_overload "env_rel" "bvi_tailrecProof_env_rel";;
+           v_to_list (EL acc env2) = SOME ys) | bvi_tailrec_Any ->
+           F))`;;
 
 (* HOL4 overload (expanded in the port):
      in_ns_2 = λn. n MOD bvl_to_bvi_namespaces = 2 *)
@@ -89,29 +89,27 @@ hol4_overload "env_rel" "bvi_tailrecProof_env_rel";;
 let code_rel_def = cake_define
   `bvi_tailrecProof_code_rel c1 c2 <=>
      (!loc arity exp op.
-       lookup loc c1 = SOME (arity,exp) ==>
+       sptree_lookup loc c1 = SOME (arity,exp) ==>
        (check_exp loc arity exp = NONE ==>
-         lookup loc c2 = SOME (arity,exp)) /\
+         sptree_lookup loc c2 = SOME (arity,exp)) /\
        (check_exp loc arity exp = SOME op ==>
          (?n.
            !exp_aux exp_opt.
            compile_exp loc n arity exp = SOME (exp_aux,exp_opt) ==>
-             lookup loc c2 = SOME (arity,exp_aux) /\
-             lookup n c2 = SOME (arity + 1,exp_opt))))`;;
-hol4_overload "code_rel" "bvi_tailrecProof_code_rel";;
+             sptree_lookup loc c2 = SOME (arity,exp_aux) /\
+             sptree_lookup n c2 = SOME (arity + 1,exp_opt))))`;;
 
 let optimized_code_def = cake_define
   `optimized_code loc arity exp n c op =
      (?exp_aux exp_opt.
          compile_exp loc n arity exp = SOME (exp_aux,exp_opt) /\
          check_exp loc arity exp = SOME op /\
-         lookup loc c = SOME (arity,exp_aux) /\
-         lookup n c = SOME (arity + 1,exp_opt))`;;
+         sptree_lookup loc c = SOME (arity,exp_aux) /\
+         sptree_lookup n c = SOME (arity + 1,exp_opt))`;;
 
 let free_names_def = cake_define
   `bvi_tailrecProof_free_names n (name:num) <=> (!k. ~(n +
   bvl_to_bvi_namespaces * k = name))`;;
-hol4_overload "free_names" "bvi_tailrecProof_free_names";;
 
 let namespace_rel_def = cake_define
   `bvi_tailrecProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
@@ -121,17 +119,15 @@ let namespace_rel_def = cake_define
      (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 2) n)) /\
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
-hol4_overload "namespace_rel" "bvi_tailrecProof_namespace_rel";;
 
 let input_condition_def = cake_define
   `bvi_tailrecProof_input_condition next prog <=>
-     EVERY (free_names next o FST) prog /\
+     EVERY (bvi_tailrecProof_free_names next o FST) prog /\
     ALL_DISTINCT (MAP FST prog) /\
     EVERY ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST) (FILTER
       ((<=) bvl_num_stubs o FST) prog) /\
     bvl_num_stubs <= next /\ (\n. n MOD bvl_to_bvi_namespaces = 2)
       next`;;
-hol4_overload "input_condition" "bvi_tailrecProof_input_condition";;
 
 let state_rel_def = cake_define
   `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> ?_refs
@@ -139,16 +135,16 @@ let state_rel_def = cake_define
      t = ?_clock s /\ bviSem_state_global
      t = bviSem_state_global s /\ ?_ffi
      t = ?_ffi s /\ ?_compile_oracle
-     t = state_co compile_each (?_compile_oracle s) /\ ?_compile
-     s = state_cc compile_each (?_compile t) /\
-     code_rel (?_code s) (?_code t) /\
-     namespace_rel (?_code s) (?_code t) /\
+     t = state_co bvi_tailrec_compile_each (?_compile_oracle s) /\
+       ?_compile
+     s = state_cc bvi_tailrec_compile_each (?_compile t) /\
+     bvi_tailrecProof_code_rel (?_code s) (?_code t) /\
+     bvi_tailrecProof_namespace_rel (?_code s) (?_code t) /\
      (!n. let ((next,cfg),prog) = ?_compile_oracle s n in
-             input_condition next prog) /\
+             bvi_tailrecProof_input_condition next prog) /\
      (!n. n IN domain (?_code t) /\ (\n. n MOD
        bvl_to_bvi_namespaces = 2) n ==> n < FST (FST
        (?_compile_oracle s 0)))`;;
-hol4_overload "state_rel" "bvi_tailrecProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_rewrite_tail[NIL]:

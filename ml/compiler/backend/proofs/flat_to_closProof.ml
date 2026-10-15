@@ -21,7 +21,6 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
-needs "lib/indexedLists.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -29,37 +28,37 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 let v_rel = cake_inductive
-  `(!n b. v_rel (Loc b n) (RefPtr b n)) /\
-   (!i. v_rel (Litv (IntLit i)) (Number i)) /\
-   (!c. v_rel (Litv (Char c)) (Number (&(ORD c)))) /\
-   (!s. v_rel (Litv (StrLit s)) (ByteVector (MAP (n2w o ORD) (explode
-     s)))) /\
-   (!b. v_rel (Litv (Word8 b)) (Number (&(w2n b)))) /\
+  `(!n b. v_rel (Loc b n) (closSem_RefPtr b n)) /\
+   (!i. v_rel (Litv (ast_IntLit i)) (closSem_Number i)) /\
+   (!c. v_rel (Litv (ast_Char c)) (closSem_Number (&(ORD c)))) /\
+   (!s. v_rel (Litv (ast_StrLit s)) (closSem_ByteVector (MAP (n2w o
+     ORD) (explode s)))) /\
+   (!b. v_rel (Litv (ast_Word8 b)) (closSem_Number (&(w2n b)))) /\
    (!w. v_rel (Litv (Word64 w)) (Word64 w)) /\
-   (!f. v_rel (Litv (Float64 f)) (Word64 f)) /\
-   (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Conv NONE vs) (Block 0
-     ws)) /\
+   (!f. v_rel (Litv (ast_Float64 f)) (Word64 f)) /\
+   (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Conv NONE vs)
+     (closSem_Block 0 ws)) /\
    (!vs ws t r. LIST_REL v_rel vs ws ==> v_rel (Conv (SOME (t,r)) vs)
-     (Block t ws)) /\
-   (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Vectorv vs) (Block 0 ws))
-     /\
+     (closSem_Block t ws)) /\
+   (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Vectorv vs)
+     (closSem_Block 0 ws)) /\
    (!env m db.
      (!n x. ALOOKUP (?_v env) n = SOME x ==>
-            findi (SOME n) m < LENGTH db /\
-            v_rel x (EL (findi (SOME n) m) db)) ==>
+            indexedLists_findi (SOME n) m < LENGTH db /\
+            v_rel x (EL (indexedLists_findi (SOME n) m) db)) ==>
       env_rel env (m:(mlstring option) list) (db:closSem_v list)) /\
    (!env m db n e.
       env_rel env m db /\ no_Mat e ==>
       v_rel (Closure env n e)
-            (Closure NONE [] db 1 (HD (compile (SOME n :: m) [e]))))
-              /\
+            (Closure NONE [] db 1 (HD (flat_to_clos_compile (SOME n
+              :: m) [e])))) /\
    (!funs n env m db.
      n < LENGTH funs /\ env_rel env m db /\ ALL_DISTINCT (MAP FST
        funs) /\
      EVERY no_Mat (MAP (SND o SND) funs) ==>
       v_rel (Recclosure env funs (FST (EL n funs)))
        (Recclosure NONE [] db (MAP
-             (\(f,v,x). (1,HD (compile
+             (\(f,v,x). (1,HD (flat_to_clos_compile
                         (SOME v :: (MAP (\n. SOME (FST n)) funs ++
                           m))
                         [x]))) funs) n))`;;
@@ -67,17 +66,20 @@ let v_rel = cake_inductive
 let store_rel_def = cake_define
   `store_rel refs t_refs =
      (!i. if LENGTH refs <= i then FLOOKUP t_refs i = NONE else
-           match EL i refs with Refv v -> (?x. FLOOKUP t_refs i =
-             SOME (ValueArray [x]) /\ v_rel v x) | Thunk m v -> (?x.
-             FLOOKUP t_refs i = SOME (Thunk m x) /\ v_rel v x) | Varray
-             vs -> (?xs. FLOOKUP t_refs i = SOME (ValueArray xs) /\
-                              LIST_REL v_rel vs xs) | W8array bs
-                                -> FLOOKUP t_refs i = SOME (ByteArray
-                                bs))`;;
+           match EL i refs with semanticPrimitives_Refv v -> (?x.
+             FLOOKUP t_refs i = SOME (closSem_ValueArray [x]) /\ v_rel v
+             x) | Thunk m v -> (?x. FLOOKUP t_refs i = SOME (Thunk m x)
+             /\ v_rel v x) | semanticPrimitives_Varray vs -> (?xs.
+             FLOOKUP t_refs i = SOME (closSem_ValueArray xs) /\
+                              LIST_REL v_rel vs xs) |
+                                semanticPrimitives_W8array bs ->
+                                FLOOKUP t_refs i = SOME
+                                (closSem_ByteArray bs))`;;
 
 let inc_compile_decs'_def = cake_define
-  `inc_compile_decs' decs = (compile_decs decs ++
-     compile_decs [Con None NONE []],[])`;;
+  `inc_compile_decs' decs = (flat_to_clos_compile_decs decs ++
+     flat_to_clos_compile_decs [Con backend_common_None NONE
+       []],[])`;;
 
 let install_config_rel'_def = cake_define
   `install_config_rel' ic co cc = (
@@ -103,7 +105,8 @@ let initial_state'_def = cake_define
   `initial_state' b ffi ma code co cc k =
      mk_closSem_state [SOME (if b then
                             Closure NONE [] [] 1 clos_interpreter
-                              else Unit)] FEMPTY ffi k cc co code ma`;;
+                              else closSem_Unit)] FEMPTY ffi k cc co
+                              code ma`;;
 
 (* HOL4 ML code, not ported:
 val s = ``s:('c, 'ffi) flatSem$state``;

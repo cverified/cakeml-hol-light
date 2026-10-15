@@ -1082,8 +1082,15 @@ class Printer:
     if k == 'paren':
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'typed':
-      return self.paren(self.pr(e.e, 1) + ':' + self.pr_type(e.ty),
-                        0, prec)
+      ty = self.pr_type(e.ty)
+      # a numeral of type int or real is &n in HOL Light
+      oldint = self.ctx.intnums
+      if ty in ('int', 'real'): self.ctx.intnums = True
+      try:
+        body = self.pr(e.e, 1)
+      finally:
+        self.ctx.intnums = oldint
+      return self.paren(body + ':' + ty, 0, prec)
     if k == 'app':
       hop, args = strip_app(e)
       old = self.numctx

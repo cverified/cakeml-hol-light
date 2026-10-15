@@ -358,6 +358,20 @@ class Db:
     self._overloaded = out
     return out
 
+  def overloaded_for(self, thy):
+    """the names that this theory writes without a prefix: the ones
+       that more than one theory in its scope defines.  Where only
+       one theory in scope has the name, HOL4 resolves it to that
+       one, so the port writes the name of that constant"""
+    anc = self.ancestors(thy) | {thy}
+    tykinds = ('type', 'tyabbrev')
+    out = set()
+    for nm in self.overloaded():
+      ts = set(t for t, k in self.defs.get(nm, [])
+               if t in anc and k not in tykinds)
+      if len(ts) > 1: out.add(nm)
+    return out
+
   def names_for(self, thy, types=False):
     """the name mapping to use when translating theory thy; with
        types it is the mapping of the type names, which is a

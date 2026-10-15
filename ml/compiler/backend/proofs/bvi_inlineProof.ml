@@ -10,7 +10,6 @@
   their bodies and arities agree with the compiled code table.
 *)
 
-needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvi_inline.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -50,12 +49,13 @@ let exp_rel = cake_inductive
         (bvi_Call ticks dest ys handler1)) /\
    (!c rets ticks dest xs ys x y.
       LIST_REL (exp_rel c) xs ys /\ exp_rel c x y ==>
-      exp_rel c (LetCall rets ticks dest xs x)
-        (LetCall rets ticks dest ys y)) /\
+      exp_rel c (bvi_LetCall rets ticks dest xs x)
+        (bvi_LetCall rets ticks dest ys y)) /\
    (!c xs ys. LIST_REL (exp_rel c) xs ys ==>
-      exp_rel c (Return xs) (Return ys)) /\
+      exp_rel c (bvi_Return xs) (bvi_Return ys)) /\
    (!c ticks n xs ys arity body.
-      LIST_REL (exp_rel c) xs ys /\ lookup n c = SOME (arity,body) /\
+      LIST_REL (exp_rel c) xs ys /\ sptree_lookup n c = SOME
+        (arity,body) /\
       LENGTH ys = arity ==>
       exp_rel c (bvi_Call ticks (SOME n) xs NONE)
         (Let ys (bvi_mk_tick (SUC ticks) body)))`;;
@@ -66,7 +66,6 @@ let in_cc_def = cake_define
         let (cs1,prog1) = inline_all cs prog in
           match cc cfg prog1 with NONE -> NONE | SOME
             (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
-hol4_overload "in_cc" "bvi_inlineProof_in_cc";;
 
 let in_co_def = cake_define
   `bvi_inlineProof_in_co co =
@@ -74,7 +73,6 @@ let in_co_def = cake_define
         let ((cs,cfg),prog) = co n in
         let (cs1,prog1) = inline_all cs prog in
           (cfg,prog1))`;;
-hol4_overload "in_co" "bvi_inlineProof_in_co";;
 
 let in_state_rel_def = cake_define
   `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=> ?_refs
@@ -82,16 +80,15 @@ let in_state_rel_def = cake_define
      t = ?_clock s /\ bviSem_state_global
      t = bviSem_state_global s /\ ?_ffi
      t = ?_ffi s /\ ?_compile_oracle
-     t = in_co (?_compile_oracle s) /\
+     t = bvi_inlineProof_in_co (?_compile_oracle s) /\
      subspt (FST (FST (?_compile_oracle s 0))) (?_code t) /\
        ?_compile
-     s = in_cc (?_compile t) /\
+     s = bvi_inlineProof_in_cc (?_compile t) /\
      domain (?_code t) = domain (?_code s) /\
      (!k arity exp.
-        lookup k (?_code s) = SOME (arity,exp) ==>
-        (?exp1. lookup k (?_code t) = SOME (arity,exp1) /\
+        sptree_lookup k (?_code s) = SOME (arity,exp) ==>
+        (?exp1. sptree_lookup k (?_code t) = SOME (arity,exp1) /\
                exp_rel (?_code t) exp exp1))`;;
-hol4_overload "in_state_rel" "bvi_inlineProof_in_state_rel";;
 
 (* Inversion of [exp_rel] on each source constructor. [~inline] is why
    the
@@ -470,20 +467,20 @@ let clean_prog_def = cake_define
 let remove_ticks_cc_def = cake_define
   `bvi_inlineProof_remove_ticks_cc cc = (\cfg prog. cc cfg
   (clean_prog prog))`;;
-hol4_overload "remove_ticks_cc" "bvi_inlineProof_remove_ticks_cc";;
 
 let remove_ticks_co_def = cake_define
   `bvi_inlineProof_remove_ticks_co = (I ## clean_prog)`;;
-hol4_overload "remove_ticks_co" "bvi_inlineProof_remove_ticks_co";;
 
 let remove_state_rel_def = cake_define
   `remove_state_rel (s:('c,'ffi)bviSem_state) (t:('c,'ffi)bviSem_state)
   <=> ?_refs
      t = ?_refs s /\ ?_clock t = ?_clock s /\ bviSem_state_global t =
        bviSem_state_global s /\ ?_ffi t = ?_ffi s /\ ?_code
-     t = map (I ## remove_ticks_exp) (?_code s) /\ ?_compile_oracle
-     t = remove_ticks_co o ?_compile_oracle s /\ ?_compile
-     s = remove_ticks_cc (?_compile t)`;;
+     t = sptree_map (I ## remove_ticks_exp) (?_code s) /\
+       ?_compile_oracle
+     t = bvi_inlineProof_remove_ticks_co o ?_compile_oracle s /\
+       ?_compile
+     s = bvi_inlineProof_remove_ticks_cc (?_compile t)`;;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_remove_ticks_mutual[Var]:

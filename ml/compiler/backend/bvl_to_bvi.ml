@@ -42,8 +42,9 @@ val large_int = ``268435457:int``; (* 2**28-1 *)
 
 let compile_int_def = cake_define
   `compile_int (i:int) =
-     bvi_Op (if --large_int <= i /\ i <= large_int then IntOp
-       (Const i) else BlockOp (Build [Int i])) []`;;
+     bvi_Op (if --large_int <= i /\ i <= large_int then
+       closLang_IntOp (closLang_Const i) else closLang_BlockOp
+       (closLang_Build [Int i])) []`;;
 
 let alloc_glob_count_def = cake_define
   `alloc_glob_count x1 =
@@ -65,8 +66,8 @@ let alloc_glob_count_def = cake_define
         | [Let xs x] -> alloc_glob_count (x :: xs)
         | [Call _3 _4 xs] -> alloc_glob_count xs
         | [Op op xs] ->
-        (if op = GlobOp AllocGlobal then 1 + alloc_glob_count xs else
-          alloc_glob_count xs)
+        (if op = closLang_GlobOp AllocGlobal then 1 +
+          alloc_glob_count xs else alloc_glob_count xs)
         | [_5] -> 0`;;
 
 let global_count_sing_def = cake_define_list
@@ -85,8 +86,8 @@ let global_count_sing_def = cake_define_list
          global_count_sing x + global_count_list xs`;
    `global_count_sing (Call _7 _8 xs:bvl_exp) = global_count_list xs`;
    `global_count_sing (Op op xs:bvl_exp) =
-         (if op = GlobOp AllocGlobal then 1 + global_count_list
-           xs else global_count_list xs)`;
+         (if op = closLang_GlobOp AllocGlobal then 1 +
+           global_count_list xs else global_count_list xs)`;
    `global_count_list [] = (0:num)`;
    `global_count_list (x :: xs) =
          global_count_sing x + global_count_list xs`];;
@@ -110,28 +111,32 @@ let ConcatByte_location_def = cake_define
 
 let AllocGlobal_code_def = cake_define
   `AllocGlobal_code = ((1:num),
-     Let [Op (GlobOp GlobalsPtr) []] (
-     Let [Op (MemOp El) [Op (IntOp (Const (&0))) []; Var 0]] (
-     Let [Op (IntOp Add) [Var 0; Var 2]] (
-     Let [Op (MemOp Length) [Var 2]] (
-     Let [Op (MemOp Update) [Var 1; Op (IntOp (Const (&0))) []; Var
-       3]]
-       (If (Op (IntOp Less) [Var 1; Var 2]) (Var 0)
-          (Let [Op (MemOp RefArray) [Op (IntOp (Const (&0))) []; Op
-            (IntOp Add) [Var 2; Var 2]]] (
-           Let [Op (GlobOp SetGlobalsPtr) [Var 0]]
+     Let [Op (closLang_GlobOp GlobalsPtr) []] (
+     Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+       (closLang_Const (&0))) []; Var 0]] (
+     Let [Op (closLang_IntOp Add) [Var 0; Var 2]] (
+     Let [Op (closLang_MemOp closLang_Length) [Var 2]] (
+     Let [Op (closLang_MemOp closLang_Update) [Var 1; Op
+       (closLang_IntOp (closLang_Const (&0))) []; Var 3]]
+       (If (Op (closLang_IntOp Less) [Var 1; Var 2]) (Var 0)
+          (Let [Op (closLang_MemOp closLang_RefArray) [Op
+            (closLang_IntOp (closLang_Const (&0))) []; Op
+            (closLang_IntOp Add) [Var 2; Var 2]]] (
+           Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 0]]
              (Call 0 (SOME CopyGlobals_location)
-               [Var 1; Var 6; Op (IntOp Sub) [Op (IntOp (Const
-                 (&1))) []; Var 3]] NONE)))))))))`;;
+               [Var 1; Var 6; Op (closLang_IntOp Sub) [Op
+                 (closLang_IntOp (closLang_Const (&1))) []; Var 3]]
+                 NONE)))))))))`;;
 
 let CopyGlobals_code_def = cake_define
   `CopyGlobals_code = ((3:num),
-     Let [Op (MemOp Update) [Op (MemOp El) [Var 2; Var 1]; Var 2; Var
-       0]]
-       (If (Op (BlockOp Equal) [Op (IntOp (Const (&0))) []; Var 3])
-         (Var 0)
+     Let [Op (closLang_MemOp closLang_Update) [Op (closLang_MemOp
+       closLang_El) [Var 2; Var 1]; Var 2; Var 0]]
+       (If (Op (closLang_BlockOp Equal) [Op (closLang_IntOp
+         (closLang_Const (&0))) []; Var 3]) (Var 0)
          (Call 0 (SOME CopyGlobals_location) [Var 1; Var 2; Op
-           (IntOp Sub) [Op (IntOp (Const (&1))) []; Var 3]] NONE)))`;;
+           (closLang_IntOp Sub) [Op (closLang_IntOp (closLang_Const
+           (&1))) []; Var 3]] NONE)))`;;
 
 let InitGlobals_max_def = cake_define
   `InitGlobals_max = 10000`;;
@@ -139,62 +144,78 @@ let InitGlobals_max_def = cake_define
 let InitGlobals_code_def = cake_define
   `InitGlobals_code start n = ((0:num),
      (let n = MIN (MAX n 1) InitGlobals_max in
-       Let [Op (MemOp RefArray) [Op (IntOp (Const (&0))) []; Op
-         (IntOp (Const (&n))) []]]
-         (Let [Op (MemOp Update) [Op (IntOp (Const (&1))) []; Op
-           (IntOp (Const (&0))) []; Var 0]]
-           (Let [Op (GlobOp SetGlobalsPtr) [Var 1]]
+       Let [Op (closLang_MemOp closLang_RefArray) [Op (closLang_IntOp
+         (closLang_Const (&0))) []; Op (closLang_IntOp (closLang_Const
+         (&n))) []]]
+         (Let [Op (closLang_MemOp closLang_Update) [Op
+           (closLang_IntOp (closLang_Const (&1))) []; Op (closLang_IntOp
+           (closLang_Const (&0))) []; Var 0]]
+           (Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 1]]
               (Call 0 (SOME start) [] (SOME (Var 0)))))))`;;
 
 let ListLength_code_def = cake_define
   `ListLength_code = (2,
-     If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0])
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
        (Var 1) (Call 0 (SOME ListLength_location)
-                 [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 0];
-                  Op (IntOp Add) [Var 1; Op (IntOp (Const (&1)))
-                    []]] NONE))`;;
+                 [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+                   (closLang_Const (&1))) []; Var 0];
+                  Op (closLang_IntOp Add) [Var 1; Op
+                    (closLang_IntOp (closLang_Const (&1))) []]]
+                    NONE))`;;
 
 let FromListByte_code_def = cake_define
   `FromListByte_code = (3,
-     If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0]) (Var 2)
-       (Let [Op (MemOp UpdateByte) [Op (MemOp El) [Op (IntOp (Const
-         (&0))) []; Var 0]; Var 1; Var 2]]
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
+       (Var 2)
+       (Let [Op (closLang_MemOp closLang_UpdateByte) [Op
+         (closLang_MemOp closLang_El) [Op (closLang_IntOp
+         (closLang_Const (&0))) []; Var 0]; Var 1; Var 2]]
          (Call 0 (SOME FromListByte_location)
-           [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 1];
-            Op (IntOp Add) [Var 2; Op (IntOp (Const (&1))) []];
+           [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+             (closLang_Const (&1))) []; Var 1];
+            Op (closLang_IntOp Add) [Var 2; Op (closLang_IntOp
+              (closLang_Const (&1))) []];
             Var 3] NONE)))`;;
 
 let ToListByte_code_def = cake_define
   `ToListByte_code = (3,
-     If (Op (BlockOp (EqualConst (Int (&0)))) [Var 1]) (Var 0)
-       (Let [Op (IntOp Sub) [Op (IntOp (Const (&1))) []; Var 1]]
-       (Let [Op (MemOp DerefByte) [Var 0; Var 3]]
+     If (Op (closLang_BlockOp (closLang_EqualConst (Int (&0)))) [Var
+       1]) (Var 0)
+       (Let [Op (closLang_IntOp Sub) [Op (closLang_IntOp
+         (closLang_Const (&1))) []; Var 1]]
+       (Let [Op (closLang_MemOp closLang_DerefByte) [Var 0; Var 3]]
          (Call 0 (SOME ToListByte_location)
-           [Op (BlockOp (Cons 0)) [Var 2; Var 0];
+           [Op (closLang_BlockOp (Cons 0)) [Var 2; Var 0];
             Var 1;
             Var 4] NONE))))`;;
 
 let SumListLength_code_def = cake_define
   `SumListLength_code = (2,
-     If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0])
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
        (Var 1)
        (Call 0 (SOME SumListLength_location)
-          [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 0];
-           Op (IntOp Add) [Var 1; Op (MemOp LengthByte)
-                            [Op (MemOp El) [Op (IntOp (Const
-                              (&0))) []; Var 0]]]] NONE))`;;
+          [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+            (closLang_Const (&1))) []; Var 0];
+           Op (closLang_IntOp Add) [Var 1; Op (closLang_MemOp
+             closLang_LengthByte)
+                            [Op (closLang_MemOp closLang_El) [Op
+                              (closLang_IntOp (closLang_Const (&0)))
+                              []; Var 0]]]] NONE))`;;
 
 let ConcatByte_code_def = cake_define
   `ConcatByte_code = (3,
-     If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0]) (Var 2)
-       (Let [Op (MemOp El) [Op (IntOp (Const (&0))) []; Var 0]]
-         (Let [Op (MemOp LengthByte) [Var 0]]
-           (Let [Op (MemOp (CopyByte F))
-                   [Var 3; Var 4; Var 0; Op (IntOp (Const (&0))) [];
-                     Var 1]]
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
+       (Var 2)
+       (Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+         (closLang_Const (&0))) []; Var 0]]
+         (Let [Op (closLang_MemOp closLang_LengthByte) [Var 0]]
+           (Let [Op (closLang_MemOp (closLang_CopyByte F))
+                   [Var 3; Var 4; Var 0; Op (closLang_IntOp
+                     (closLang_Const (&0))) []; Var 1]]
              (Call 0 (SOME ConcatByte_location)
-               [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 3];
-                Op (IntOp Add) [Var 4; Var 1];
+               [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+                 (closLang_Const (&1))) []; Var 3];
+                Op (closLang_IntOp Add) [Var 4; Var 1];
                 Var 5] NONE)))))`;;
 
 let stubs_def = cake_define
@@ -206,7 +227,6 @@ let stubs_def = cake_define
                     (ToListByte_location,ToListByte_code);
                     (SumListLength_location,SumListLength_code);
                     (ConcatByte_location,ConcatByte_code)]`;;
-hol4_overload "stubs" "bvl_to_bvi_stubs";;
 
 (* HOL4 overload (expanded in the port):
      num_stubs = backend_common$bvl_num_stubs *)
@@ -300,13 +320,13 @@ let compile_aux_def = cake_define
        1,args,bvi_let_compile_exp p)]`;;
 
 let compile_exps_def = cake_define_list
-  [`bvl_to_bvi_compile_exps n [] = ([],Nil,n)`;
+  [`bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)`;
    `bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
            (c1 ++ c2,aux1 ++ aux2,n2))`;
    `bvl_to_bvi_compile_exps n [(Var v:bvl_exp)] = ([(Var
-  v):bvi_exp],Nil,n)`;
+  v):bvi_exp],misc_Nil,n)`;
    `bvl_to_bvi_compile_exps n [(If x1 x2 x3:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
@@ -334,7 +354,7 @@ let compile_exps_def = cake_define_list
            ([Tick (HD c1)],aux1,n1))`;
    `bvl_to_bvi_compile_exps n [(Force loc v:bvl_exp)] =
          ([Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
-           v],Nil,n)`;
+           v],misc_Nil,n)`;
    `bvl_to_bvi_compile_exps n [(Op op xs:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
            ([compile_op op c1],aux1,n1))`;
@@ -354,10 +374,10 @@ let compile_exps_def = cake_define_list
                   (match dest with NONE -> NONE | SOME n -> SOME
                     (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
                     NONE],aux1,n1))`];;
-hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let compile_exps_sing_def = cake_define_list
-  [`compile_exps_sing n (Var v:bvl_exp) = (((Var v):bvi_exp),Nil,n)`;
+  [`compile_exps_sing n (Var v:bvl_exp) = (((Var
+  v):bvi_exp),misc_Nil,n)`;
    `compile_exps_sing n (If x1 x2 x3:bvl_exp) =
          (let (c1,aux1,n1) = compile_exps_sing n x1 in
          let (c2,aux2,n2) = compile_exps_sing n1 x2 in
@@ -384,7 +404,7 @@ let compile_exps_sing_def = cake_define_list
            (Tick c1,aux1,n1))`;
    `compile_exps_sing n (Force loc v:bvl_exp) =
          (Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
-           v,Nil,n)`;
+           v,misc_Nil,n)`;
    `compile_exps_sing n (Op op xs:bvl_exp) =
          (let (c1,aux1,n1) = compile_exps_list n xs in
            (compile_op op c1,aux1,n1))`;
@@ -404,7 +424,7 @@ let compile_exps_sing_def = cake_define_list
                   (match dest with NONE -> NONE | SOME n -> SOME
                     (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
                     NONE),aux1,n1))`;
-   `compile_exps_list n [] = ([],Nil,n)`;
+   `compile_exps_list n [] = ([],misc_Nil,n)`;
    `compile_exps_list n ((x:bvl_exp) :: xs) =
          (let (c1,aux1,n1) = compile_exps_sing n x in
          let (c2,aux2,n2) = compile_exps_list n1 xs in
@@ -412,16 +432,15 @@ let compile_exps_sing_def = cake_define_list
 
 let compile_single_def = cake_define
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
-     (let (c,aux,n1) = compile_exps n [exp] in
+     (let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
        (
          List [(bvl_num_stubs + bvl_to_bvi_namespaces *
            name,arg_count,bvi_let_compile_exp (HD c))] ++ aux,n1))`;;
-hol4_overload "compile_single" "bvl_to_bvi_compile_single";;
 
 let compile_list_def = cake_define_list
   [`bvl_to_bvi_compile_list n [] = (List [],n)`;
    `bvl_to_bvi_compile_list n (p :: progs) =
-         (let (code1,n1) = compile_single n p in
+         (let (code1,n1) = bvl_to_bvi_compile_single n p in
          let (code2,n2) = bvl_to_bvi_compile_list n1 progs in
            (code1 ++ code2,n2))`];;
 hol4_overload "compile_list" "bvl_to_bvi_compile_list";;
@@ -456,7 +475,6 @@ let default_config_def = cake_define
   `bvl_to_bvi_default_config =
      mk_bvl_to_bvi_config 10 1000 T (bvl_num_stubs + 1)
        (bvl_num_stubs + 2) (bvl_num_stubs + 3) T T LN LN`;;
-hol4_overload "default_config" "bvl_to_bvi_default_config";;
 
 let get_names_def = cake_define
   `bvl_to_bvi_get_names final_nums old_names =
@@ -474,12 +492,11 @@ let get_names_def = cake_define
          let k = n - bvl_num_stubs in
          let kd = k DIV bvl_to_bvi_namespaces in
          let km = k MOD bvl_to_bvi_namespaces in
-         let n = (match lookup kd old_names with NONE -> implode
-           "bvi_unmapped" | SOME name -> name) in
+         let n = (match sptree_lookup kd old_names with NONE ->
+           implode "bvi_unmapped" | SOME name -> name) in
          let aux = (if km = 0 then implode "" else implode
            "_bvi_aux") in (\x y. strcat x y)
            n aux))) final_nums)`;;
-hol4_overload "get_names" "bvl_to_bvi_get_names";;
 
 let compile_def = cake_define
   `bvl_to_bvi_compile start c names prog =
@@ -494,7 +511,7 @@ let compile_def = cake_define
        c) (bvl_num_stubs + 3) code' in
      let (bvi_inlines,code') = bvi_inline_compile_prog code' in
        (loc,code',inlines,bvi_inlines,n1,n2,n3,
-        get_names (MAP FST code') names))`;;
+        bvl_to_bvi_get_names (MAP FST code') names))`;;
 hol4_overload "compile" "bvl_to_bvi_compile";;
 
 let bvl_to_bvi_compile_inc_all_def = cake_define

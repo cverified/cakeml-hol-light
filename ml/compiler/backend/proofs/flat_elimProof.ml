@@ -74,15 +74,15 @@ let find_v_globals_def = cake_define_list
   [`find_v_globals (Conv _1 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _2 e:flatSem_v) =
-            union (find_v_globalsL (MAP SND (?_v env)))
+            sptree_union (find_v_globalsL (MAP SND (?_v env)))
               (find_lookups e)`;
    `find_v_globals (Recclosure env vves _3:flatSem_v) =
-            union (find_v_globalsL (MAP SND (?_v env)))
+            sptree_union (find_v_globalsL (MAP SND (?_v env)))
                 (find_lookupsL (MAP (SND o SND) vves))`;
    `find_v_globals (Vectorv vl:flatSem_v) = find_v_globalsL vl`;
    `find_v_globals _4 = LN`;
    `find_v_globalsL [] = LN`;
-   `find_v_globalsL (h :: t) = union (find_v_globals h)
+   `find_v_globalsL (h :: t) = sptree_union (find_v_globals h)
   (find_v_globalsL t)`];;
 
 (* HOL4 ML code, not ported:
@@ -92,12 +92,12 @@ val find_v_globals_ind = theorem "find_v_globals_ind";
 let find_refs_globals_def = cake_define
   `find_refs_globals x1 =
         match x1 with
-          (Refv a :: t) ->
-           union (find_v_globals a) (find_refs_globals t)
-        | (Varray l :: t) ->
-           union (find_v_globalsL l) (find_refs_globals t)
-        | (Thunk _5 a :: t) ->
-           union (find_v_globals a) (find_refs_globals t)
+          (semanticPrimitives_Refv a :: t) ->
+           sptree_union (find_v_globals a) (find_refs_globals t)
+        | (semanticPrimitives_Varray l :: t) ->
+           sptree_union (find_v_globalsL l) (find_refs_globals t)
+        | (semanticPrimitives_Thunk _5 a :: t) ->
+           sptree_union (find_v_globals a) (find_refs_globals t)
         | (_6 :: t) -> find_refs_globals t
         | [] -> LN`;;
 

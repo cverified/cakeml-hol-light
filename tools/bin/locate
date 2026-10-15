@@ -1,16 +1,17 @@
 #!/bin/sh
 # locate <session> <mlfile> : load an ml file of the port in a
-# session with a marker before every phrase, and report the last
-# marker before the failure (the phrase that fails)
+# session with a marker before every phrase; the last marker in
+# tmp/mark.txt is the phrase that fails
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s="$1"
 f="$2"
 case "$f" in /*) ;; *) f="$C/ml/$f";; esac
 python3 -I $C/tools/locate.py "$f" $C/tmp/locate.ml > /dev/null
+: > $C/tmp/mark.txt
 TIMEOUT=${TIMEOUT:-1800} repl-step $s "#use \"$C/tmp/locate.ml\";;" \
   > /dev/null 2>&1
+tail -2 $C/tmp/mark.txt
 tmux capture-pane -p -J -S - -t hol-$s |
   sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
-  grep -E '^@@|^(cake_define [a-zA-Z_0-9]* failed|Exception|Error)' |
-  tail -6
+  grep -E '^(cake_define [a-zA-Z_0-9]* failed|Exception|Error)' | tail -3

@@ -21,7 +21,7 @@ let split16_def = cake_define_wf
   `MEASURE (LENGTH o SND)`
   `split16 f xs =
         match xs with
-          [] -> Nil
+          [] -> misc_Nil
         | xs ->
         (let xs1 = TAKE 16 xs in
         let xs2 = DROP 16 xs in
@@ -136,7 +136,7 @@ let comma_cat_def = cake_define
 
 let words_line_def = cake_define
   `words_line word_directive to_string ls =
-     List (word_directive :: comma_cat to_string ls)`;;
+     misc_List (word_directive :: comma_cat to_string ls)`;;
 
 let word_to_string_def = cake_define
   `word_to_string w = toString (w2n w)`;;

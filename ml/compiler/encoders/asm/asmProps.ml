@@ -26,19 +26,19 @@ let offset_monotonic_def = cake_define
 let enc_ok_def = cake_define
   `enc_ok (c:'a asm_config) <=>
      (2 EXP asm_config_code_alignment c = LENGTH (asm_config_encode c
-       (Inst Skip))) /\
+       (asm_Inst asm_Skip))) /\
      (!w. (LENGTH (asm_config_encode c w) MOD 2 EXP
        asm_config_code_alignment c = 0) /\ ~(
            LENGTH (asm_config_encode c w) = 0)) /\
-     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2 (Jump
-       w1) (Jump w2)) /\
+     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
+       (asm_Jump w1) (asm_Jump w2)) /\
      (!cmp r ri w1 w2.
         offset_monotonic (asm_config_encode c) c w1 w2
-           (JumpCmp cmp r ri w1) (JumpCmp cmp r ri w2)) /\
-     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2 (Call
-       w1) (Call w2)) /\
+           (asm_JumpCmp cmp r ri w1) (asm_JumpCmp cmp r ri w2)) /\
+     (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
+       (asm_Call w1) (asm_Call w2)) /\
      (!w1 w2 r. offset_monotonic (asm_config_encode c) c w1 w2
-       (Loc r w1) (Loc r w2))`;;
+       (asm_Loc r w1) (asm_Loc r w2))`;;
 
 (* -- correctness property to be proved for each backend -- *)
 

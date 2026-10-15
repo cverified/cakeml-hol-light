@@ -46,8 +46,8 @@ let approx_of_def = cake_define_wf
           vs) ->
             approx_of lims vs (delete r refs) + LENGTH vs + 1 | SOME
               (Thunk _5 v) ->
-            approx_of lims [v] (delete r refs) + 2 | SOME (MutBlock
-              tg fin ls c rs) ->
+            approx_of lims [v] (delete r refs) + 2 | SOME
+              (bvlSem_MutBlock tg fin ls c rs) ->
             approx_of lims (ls ++ [c] ++ rs) (delete r refs) +
             LENGTH ls + LENGTH rs + 2)
         | [Block ts tag []] -> 0
@@ -219,14 +219,12 @@ let get_code_labels_def = cake_define
           dataProps_get_code_labels p2
         | (Assign _11 op _12 _13) -> assign_get_code_label op
         | _14 -> {}`;;
-hol4_overload "get_code_labels" "dataProps_get_code_labels";;
 
 let good_code_labels_def = cake_define
   `dataProps_good_code_labels p elabs <=>
-     (BIGUNION (set_of_list (MAP (\(n,m,pp). (get_code_labels pp))
-       p))) SUBSET
+     (BIGUNION (set_of_list (MAP (\(n,m,pp).
+       (dataProps_get_code_labels pp)) p))) SUBSET
      (set_of_list (MAP FST p)) UNION elabs`;;
-hol4_overload "good_code_labels" "dataProps_good_code_labels";;
 
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 
@@ -248,7 +246,7 @@ val trivial_tac = qpat_x_assum `evaluate _ = (_,_)` (strip_assume_tac o
 let stack_frame_size_rel_def = cake_define
   `stack_frame_size_rel x1 x2 =
         match (x1,x2) with
-          (Exc opt spt num,Exc opt' spt' num') ->
+          (dataSem_Exc opt spt num,dataSem_Exc opt' spt' num') ->
        spt = spt' /\ num = num'
         | ((Env opt spt),(Env opt' spt')) ->
        spt = spt'

@@ -112,12 +112,14 @@ INT_NUMERALS = set([
   ('bvl_const', 'SmartOp2_def'),
   ('clos_op', 'int_op_def'),
   ('integer_word', 'fromString_def'),
+  ('semanticPrimitives', 'copy_array_def'),
 ])
 
 # definitions in which a prefix ~ is the complement of a word, not
 # the negation of a proposition
 WORD_NOT = set([
   ('binary_ieee', 'float_negate_def'),
+  ('wordLang', 'word_op_def'),
 ])
 
 # definitions in which the same variable name has different types in

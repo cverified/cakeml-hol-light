@@ -11,7 +11,6 @@
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/typeSound.ml";;
 needs "semantics/proofs/typeSoundInvariants.ml";;
@@ -46,10 +45,10 @@ let state_invariant_def = cake_define
 let extend_with_resource_limit_def = cake_define
   `extend_with_resource_limit behaviours =
    behaviours UNION
-   {Terminate' Resource_limit_hit io_list | io_list | ?t l.
+   {Terminate' ffi_Resource_limit_hit io_list | io_list | ?t l.
      Terminate' t l IN behaviours /\ io_list <<= l} UNION
-   {Terminate' Resource_limit_hit io_list | io_list | ?ll. Diverge
-     ll IN behaviours /\ LPREFIX (fromList io_list) ll}`;;
+   {Terminate' ffi_Resource_limit_hit io_list | io_list | ?ll.
+     ffi_Diverge ll IN behaviours /\ LPREFIX (fromList io_list) ll}`;;
 
 let extend_with_resource_limit'_def = cake_define
   `extend_with_resource_limit' precise behaviours =
@@ -58,8 +57,8 @@ let extend_with_resource_limit'_def = cake_define
 
 let implements_def = cake_define
   `implements x y <=>
-     (~(Fail IN y) ==> x SUBSET extend_with_resource_limit y)`;;
+     (~(ffi_Fail IN y) ==> x SUBSET extend_with_resource_limit y)`;;
 
 let implements'_def = cake_define
-  `implements' precise x y <=> ~(Fail IN y) ==> x SUBSET
+  `implements' precise x y <=> ~(ffi_Fail IN y) ==> x SUBSET
   extend_with_resource_limit' precise y`;;

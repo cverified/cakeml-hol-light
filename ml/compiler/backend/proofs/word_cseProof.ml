@@ -88,18 +88,19 @@ let sem_inv_def = cake_define
      (!n c v.
         balanced_map_lookup listCmp (instToNumList (Const n c))
           (knowledge_instrs_mem data) = SOME v ==>
-        lookup v (wordSem_state_locals s) = SOME (Word c)) /\
+        lookup v (wordSem_state_locals s) = SOME (wordLang_Word c))
+          /\
      (!(a:'a asm_arith) v.
         balanced_map_lookup listCmp (instToNumList (Arith a))
           (knowledge_instrs_mem data) = SOME v ==>
         (?w. get_var v s = SOME w /\
-            evaluate (Inst (Arith a),s) = (NONE,set_var
+            wordSem_evaluate (Inst (Arith a),s) = (NONE,set_var
               (firstRegOfArith a) w s))) /\
      (!op src v.
         balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
           (knowledge_instrs_mem data) = SOME v ==>
-        (?w. word_exp s (Op op [Var src; Lookup CurrHeap]) = SOME w
-          /\
+        (?w. wordSem_word_exp s (wordLang_Op op [Var src;
+          wordLang_Lookup CurrHeap]) = SOME w /\
             get_var v s = SOME w)) /\
      (!l v.
         balanced_map_lookup listCmp [48; l] (knowledge_instrs_mem
@@ -114,8 +115,8 @@ let sem_inv_def = cake_define
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==>
         (?w. get_var v s = SOME w /\
-            (!r. evaluate (Inst (Mem op r (Addr a ofs)),s) =
-              (NONE,set_var r w s))))`;;
+            (!r. wordSem_evaluate (Inst (asm_Mem op r (Addr a
+              ofs)),s) = (NONE,set_var r w s))))`;;
 
 let data_inv_def = cake_define
   `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>

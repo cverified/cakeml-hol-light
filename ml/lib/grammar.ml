@@ -9,15 +9,12 @@ needs "lib/location.ml";;
 (* HOL4 ancestors outside the port: list pred_set finite_map relation *)
 let grammar_symbol_INDUCT,grammar_symbol_RECURSION = define_datatype
   "grammar_symbol = grammar_TOK ('a) | grammar_NT ('b+num)";;
-hol4_overload "TOK" "grammar_TOK";;
-hol4_overload "NT" "grammar_NT";;
 
 let destTOK_def = cake_define
   `grammar_destTOK x1 =
         match x1 with
-          (TOK tk,_1) -> SOME tk
+          (grammar_TOK tk,_1) -> SOME tk
         | _2 -> NONE`;;
-hol4_overload "destTOK" "grammar_destTOK";;
 
 let grammar_FIELDS = define_record "grammar"
   ["start","'b+num";
@@ -36,7 +33,7 @@ let ptree_list_loc_def = cake_define
 
 let ptree_head_def = cake_define_list
   [`ptree_head (Lf (tok',l)) = tok'`;
-   `ptree_head (Nd (nt',l) children) = NT nt'`];;
+   `ptree_head (Nd (nt',l) children) = grammar_NT nt'`];;
 
 let valid_ptree_def = cake_define_list
   [`valid_ptree G (Lf _6) <=> T`;
@@ -60,8 +57,8 @@ let valid_lptree_def = cake_define
 
 let derive_def = cake_define
   `derive G sf1 sf2 <=>
-     (?p sym rhs s. sf1 = p ++ [NT sym] ++ s /\ sf2 = p ++ rhs ++ s
-       /\
+     (?p sym rhs s. sf1 = p ++ [grammar_NT sym] ++ s /\ sf2 = p ++
+       rhs ++ s /\
                    sym IN FDOM (grammar_rules G) /\ rhs IN FAPPLY
                      (grammar_rules G) sym)`;;
 

@@ -105,7 +105,7 @@ let v_rel = cake_inductive
      LIST_REL (v_rel genv) vs vs' ==>
      v_rel genv (Conv NONE vs) (Conv NONE vs')) /\
    (!genv comp_map env env_v_local x e env_v_local' t ts.
-     env_rel genv env_v_local (?_v env_v_local') /\
+     source_evalProof_env_rel genv env_v_local (?_v env_v_local') /\
      global_env_inv genv comp_map (set_of_list (MAP FST (?_v
        env_v_local'))) env /\
      LENGTH ts = LENGTH (?_v env_v_local') + 1 ==>
@@ -118,7 +118,7 @@ let v_rel = cake_inductive
              env_v_local')) (?_v comp_map))) comp_map)
            e))) /\
    (!genv comp_map env env_v_local funs x env_v_local' t ts.
-     env_rel genv env_v_local (?_v env_v_local') /\
+     source_evalProof_env_rel genv env_v_local (?_v env_v_local') /\
      global_env_inv genv comp_map (set_of_list (MAP FST (?_v
        env_v_local'))) env /\
      LENGTH ts = LENGTH funs + LENGTH (?_v env_v_local') ==>
@@ -158,11 +158,12 @@ let v_rel = cake_inductive
      LIST_REL (v_rel genv) vs vs' ==>
      v_rel genv (Vectorv vs) (Vectorv vs')) /\
    (!genv.
-     env_rel genv nsEmpty []) /\
+     source_evalProof_env_rel genv nsEmpty []) /\
    (!genv x v env env' v'.
-     env_rel genv env env' /\
+     source_evalProof_env_rel genv env env' /\
      v_rel genv v v' ==>
-     env_rel genv (nsBind x v env) ((x,v') :: env')) /\
+     source_evalProof_env_rel genv (nsBind x v env) ((x,v') :: env'))
+       /\
    (!genv comp_map shadowers env.
      (!x v.
         ~(
@@ -269,15 +270,19 @@ let result_rel = cake_inductive
 let sv_rel = cake_inductive
   `(!genv v v'.
      v_rel genv v v' ==>
-     sv_rel genv (Refv v) (Refv v')) /\
+     sv_rel genv (semanticPrimitives_Refv v) (semanticPrimitives_Refv
+       v')) /\
    (!genv w.
-     sv_rel genv (W8array w) (W8array w)) /\
+     sv_rel genv (semanticPrimitives_W8array w)
+       (semanticPrimitives_W8array w)) /\
    (!genv vs vs'.
      LIST_REL (v_rel genv) vs vs' ==>
-     sv_rel genv (Varray vs) (Varray vs')) /\
+     sv_rel genv (semanticPrimitives_Varray vs)
+       (semanticPrimitives_Varray vs')) /\
    (!genv m v v'.
      v_rel genv v v' ==>
-     sv_rel genv (Thunk m v) (Thunk m v'))`;;
+     sv_rel genv (semanticPrimitives_Thunk m v)
+       (semanticPrimitives_Thunk m v'))`;;
 
 let s_rel = cake_inductive
   `(!genv s s'.
@@ -291,7 +296,7 @@ let env_all_rel = cake_inductive
   `(!genv map' env_v_local env env' locals.
      (?l. env_v_local = alist_to_ns l /\ MAP FST l = locals) /\
      global_env_inv genv map' (set_of_list locals) env /\
-     env_rel genv env_v_local env' ==>
+     source_evalProof_env_rel genv env_v_local env' ==>
      env_all_rel genv map'
        (mk_? (?_c env) (nsAppend env_v_local (?_v env)))
        (mk_? env')
@@ -301,8 +306,8 @@ let match_result_rel_def = cake_define
   `source_to_flatProof_match_result_rel genv env' x3 x4 =
         match (x3,x4) with
           (Match env,Match env_i1) ->
-        (?env''. env = env'' ++ env' /\ env_rel genv (alist_to_ns
-          env'') env_i1)
+        (?env''. env = env'' ++ env' /\ source_evalProof_env_rel genv
+          (alist_to_ns env'') env_i1)
         | (No_match,No_match) -> T
         | (Match_type_error,_1) -> T
         | (_2,_3) -> F`;;
@@ -445,9 +450,9 @@ let src_orac_env_invs_def = cake_define
        (!g_id id'. g_id < LENGTH (?_envs s) /\ id' < LENGTH (EL g_id
          (?_envs s)) ==>
          (?comp_map_gen comp_map.
-         lookup g_id (environment_store_env_gens (?_envs c)) = SOME
-           comp_map_gen /\
-         lookup id' comp_map_gen = SOME comp_map /\
+         sptree_lookup g_id (environment_store_env_gens (?_envs c)) =
+           SOME comp_map_gen /\
+         sptree_lookup id' comp_map_gen = SOME comp_map /\
          global_env_inv genv comp_map {} (EL id' (EL g_id (?_envs
            s)))))) | _10 -> F)`;;
 
@@ -479,7 +484,7 @@ let env_gen_future_rel_def = cake_define
   `env_gen_future_rel interp gen eval_state =
      (match src_orac_next_cfg interp eval_state with SOME c ->
        (?gen_final.
-         lookup (?_generation gen) (environment_store_env_gens
+         sptree_lookup (?_generation gen) (environment_store_env_gens
            (?_envs c)) = SOME gen_final /\
          subspt (?_envs gen) gen_final) | NONE -> T)`;;
 
@@ -530,7 +535,7 @@ let fin_idx_match_def = cake_define
 let eval_ref_inv_def = cake_define
   `eval_ref_inv first_global first_ref <=>
    first_global = [SOME (Loc T 0)] /\
-   (?v. first_ref = [Refv v])`;;
+   (?v. first_ref = [semanticPrimitives_Refv v])`;;
 
 let invariant_def = cake_define
   `source_to_flatProof_invariant interp g gen genv idxs s s_i1 <=>
@@ -553,7 +558,6 @@ let invariant_def = cake_define
        idxs))
          (src_orac_next_cfg interp
            (semanticPrimitives_state_eval_state s))`;;
-hol4_overload "invariant" "source_to_flatProof_invariant";;
 
 (* subsequent oracle config will still have the previous envs in store
    *)
@@ -2005,7 +2009,8 @@ let precondition1_def = cake_define
      eval_conf /\
    (match src_orac_next_cfg interp
      (semanticPrimitives_state_eval_state s1) with NONE -> T | SOME cfg
-     -> cfg = FST (compile_prog conf prog)) /\ next_indices_vidx (?_next
+     -> cfg = FST (source_to_flat_compile_prog conf prog)) /\
+     next_indices_vidx (?_next
    conf) = 0 /\ ?_refs
    s1 = [] /\
    init_global_env_inv init_genv (source_to_flat_config_mod_env conf)

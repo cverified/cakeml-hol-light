@@ -34,7 +34,6 @@ let code_rel_def = cake_define
        (lookup n bvi_code = SOME (arg_count,exp)) ==>
        (lookup n data_code = SOME (arg_count,compile_exp arg_count
          exp)))`;;
-hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
 
 (* Projection from `dataSem$v` into `bvlSem$v` that basically gets rid
    of
@@ -59,16 +58,16 @@ let data_to_bvi_ref_def = cake_define_list
   data_to_bvi_v l)`;
    `data_to_bvi_ref (bvlSem_ByteArray b bl) = ByteArray b bl`;
    `data_to_bvi_ref (bvlSem_Thunk m v) = Thunk m (data_to_bvi_v v)`;
-   `data_to_bvi_ref (MutBlock tg fin ls c rs) =
-        MutBlock tg fin (MAP data_to_bvi_v ls) (data_to_bvi_v c)
-          (MAP data_to_bvi_v rs)`];;
+   `data_to_bvi_ref (bvlSem_MutBlock tg fin ls c rs) =
+        bvlSem_MutBlock tg fin (MAP data_to_bvi_v ls)
+          (data_to_bvi_v c) (MAP data_to_bvi_v rs)`];;
 
 (* State relation *)
 let state_rel_def = cake_define
   `bvi_to_dataProof_state_rel (s:('c,'ffi)bviSem_state)
   (t:('c,'ffi)dataSem_state) <=>
      (?_clock s = ?_clock t) /\
-     code_rel (?_code s) (?_code t) /\
+     bvi_to_dataProof_code_rel (?_code s) (?_code t) /\
      (?_compile_oracle t = ((I ## bvi_to_data_compile_prog) o
        ?_compile_oracle s)) /\
      (?_compile s = (\cfg prog. ?_compile t cfg

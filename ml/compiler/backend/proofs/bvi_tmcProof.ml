@@ -8,7 +8,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvi_tmc.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -41,7 +40,7 @@ let v_rel = cake_inductive
      LIST_REL (v_rel f) xs ys ==>
      v_rel f (Block n xs) (Block n ys) /\
    (!f n.
-   v_rel f (CodePtr n) (CodePtr n) /\
+   v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n) /\
    (!f n m b.
      FLOOKUP f n = SOME m ==>
      v_rel f (RefPtr b n) (RefPtr b m)))))`;;
@@ -64,10 +63,10 @@ let env_rel_def = cake_define
          EL 0 ys = RefPtr F hole_ptr /\
          EL 1 ys = Number hole_idx /\
          small_enough_int hole_idx)))`;;
-hol4_overload "env_rel" "bvi_tmcProof_env_rel";;
 
 let no_mutcons_op_def = cake_define
-  `no_mutcons_op op <=> (!tag i. ~(op = MemOp (MutCons tag i)))`;;
+  `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
+  (closLang_MutCons tag i)))`;;
 
 let no_mutcons_def = cake_define_list
   [`no_mutcons (Var n:flatLang_exp) <=> T`;
@@ -81,30 +80,28 @@ let no_mutcons_def = cake_define_list
          EVERY no_mutcons xs /\ (match handler with NONE -> T |
            SOME x -> no_mutcons x)`;
    `no_mutcons (Force loc n:flatLang_exp) <=> T`;
-   `no_mutcons (LetCall rets ticks dest xs y) <=> EVERY no_mutcons xs
-  /\ no_mutcons y`;
-   `no_mutcons (Return xs) <=> EVERY no_mutcons xs`;
+   `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> EVERY
+  no_mutcons xs /\ no_mutcons y`;
+   `no_mutcons (bvi_Return xs) <=> EVERY no_mutcons xs`;
    `no_mutcons (Op op xs:flatLang_exp) <=> no_mutcons_op op /\ EVERY
   no_mutcons xs`];;
 
 let code_rel_def = cake_define
   `bvi_tmcProof_code_rel c1 c2 <=>
      (!loc arity exp.
-       lookup loc c1 = SOME (arity,exp) ==>
+       sptree_lookup loc c1 = SOME (arity,exp) ==>
        no_mutcons exp /\
        (?n.
          (compile_exp loc n arity exp = NONE ==>
-          lookup loc c2 = SOME (arity,exp)) /\
+          sptree_lookup loc c2 = SOME (arity,exp)) /\
          (!wrap work.
            compile_exp loc n arity exp = SOME (wrap,work) ==>
-           lookup loc c2 = SOME (arity,wrap) /\
-           lookup n c2 = SOME (arity + 2,work))))`;;
-hol4_overload "code_rel" "bvi_tmcProof_code_rel";;
+           sptree_lookup loc c2 = SOME (arity,wrap) /\
+           sptree_lookup n c2 = SOME (arity + 2,work))))`;;
 
 let free_names_def = cake_define
   `bvi_tmcProof_free_names n (name:num) <=> (!k. ~(n +
   bvl_to_bvi_namespaces * k = name))`;;
-hol4_overload "free_names" "bvi_tmcProof_free_names";;
 
 let namespace_rel_def = cake_define
   `bvi_tmcProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
@@ -114,19 +111,17 @@ let namespace_rel_def = cake_define
      (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 3) n)) /\
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
-hol4_overload "namespace_rel" "bvi_tmcProof_namespace_rel";;
 
 (* This should say: expression in prog satisfies no-mutblock property *)
 let input_condition_def = cake_define
   `bvi_tmcProof_input_condition next prog <=>
-     EVERY (free_names next o FST) prog /\
+     EVERY (bvi_tmcProof_free_names next o FST) prog /\
      EVERY (no_mutcons o SND o SND) prog /\
      ALL_DISTINCT (MAP FST prog) /\
      EVERY ((~) o (\n. n MOD bvl_to_bvi_namespaces = 3) o FST)
        (FILTER ((<=) bvl_num_stubs o FST) prog) /\
      bvl_num_stubs <= next /\ (\n. n MOD bvl_to_bvi_namespaces =
        3) next`;;
-hol4_overload "input_condition" "bvi_tmcProof_input_condition";;
 
 let state_ref_rel_def = cake_define
   `state_ref_rel f (s_refs:(num,bvlSem_v bvlSem_ref)fmap)
@@ -150,16 +145,16 @@ let state_rel_def = cake_define
      OPTREL (\p p'. FLOOKUP f p = SOME p') (bviSem_state_global s)
        (bviSem_state_global t) /\ ?_ffi
      t = ?_ffi s /\ ?_compile_oracle
-     t = state_co compile_each (?_compile_oracle s) /\ ?_compile
-     s = state_cc compile_each (?_compile t) /\
-     code_rel (?_code s) (?_code t) /\
-     namespace_rel (?_code s) (?_code t) /\
+     t = state_co bvi_tmc_compile_each (?_compile_oracle s) /\
+       ?_compile
+     s = state_cc bvi_tmc_compile_each (?_compile t) /\
+     bvi_tmcProof_code_rel (?_code s) (?_code t) /\
+     bvi_tmcProof_namespace_rel (?_code s) (?_code t) /\
      (!n. let ((next,cfg),prog) = ?_compile_oracle s n in
-             input_condition next prog) /\
+             bvi_tmcProof_input_condition next prog) /\
      (!n. n IN domain (?_code t) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 3) n ==> n < FST (FST (?_compile_oracle s 0))) /\
      fmap_inj f`;;
-hol4_overload "state_rel" "bvi_tmcProof_state_rel";;
 
 (* Structural facts about compile_each and the namespace allocation.
    These follow bvi_tailrecProof; they only depend on the recursion
@@ -191,24 +186,25 @@ let hole_has_val_def = cake_define
      env2 = Number (&(LENGTH left)) /\
      small_enough_int (&(LENGTH left)) /\ ~(
      hole_ptr IN FRANGE f) /\
-     FLOOKUP refs hole_ptr = SOME (MutBlock tag finalised left c
-       right))`;;
+     FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag finalised
+       left c right))`;;
 
 let holes_unchanged_except_def = cake_define
   `holes_unchanged_except f refs refs' changed <=>
      (!ptr tag finalised left child right. ~(
         ptr IN FRANGE f) /\
-        FLOOKUP refs ptr = SOME (MutBlock tag finalised left child
-          right) ==>
+        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag finalised left
+          child right) ==>
         (?finalised' child'.
-          FLOOKUP refs' ptr = SOME (MutBlock tag finalised' left
-            child' right) /\
+          FLOOKUP refs' ptr = SOME (bvlSem_MutBlock tag finalised'
+            left child' right) /\
           (~(ptr IN changed) ==> child = child')))`;;
 
 let hole_not_finalised_def = cake_define
   `hole_not_finalised refs ptr <=>
      (?tag left child right.
-       FLOOKUP refs ptr = SOME (MutBlock tag F left child right))`;;
+       FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left child
+         right))`;;
 
 let holes_still_not_finalised_def = cake_define
   `holes_still_not_finalised f (refs:('gb,'gc bvlSem_ref)fmap)
@@ -237,8 +233,8 @@ let mb_rel_def = cake_define
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag
             xs:bvlSem_v),(RefPtr b ptr:bvlSem_v)) ->
       (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else
-        match FLOOKUP refs ptr with SOME (MutBlock tag' fin' left'
-          child' right') ->
+        match FLOOKUP refs ptr with SOME (bvlSem_MutBlock tag' fin'
+          left' child' right') ->
             (tag = tag' /\
              fin' = F /\
              (?left child right.
@@ -982,14 +978,14 @@ Finalise do_app_op_rel;
 let is_block_op_cons_def = cake_define
   `is_block_op_cons op <=>
      (?block_tag.
-       op = BlockOp (Cons block_tag))`;;
+       op = closLang_BlockOp (Cons block_tag))`;;
 
 let optimised_code_def = cake_define
   `optimised_code loc loc_opt c1 c2 <=>
      (?arity body body_wrap body_work.
-       lookup loc c1 = SOME (arity,body) /\
-       lookup loc c2 = SOME (arity,body_wrap) /\
-       lookup loc_opt c2 = SOME (arity + 2,body_work) /\
+       sptree_lookup loc c1 = SOME (arity,body) /\
+       sptree_lookup loc c2 = SOME (arity,body_wrap) /\
+       sptree_lookup loc_opt c2 = SOME (arity + 2,body_work) /\
        rewrite_wrapper loc loc_opt arity body = SOME body_wrap /\
        rewrite_worker loc loc_opt arity (arity + 1) arity body =
          body_work)`;;
@@ -1080,17 +1076,17 @@ let hypothesis_def = cake_define
    s'' < clock ==>
    (!env1' r' t' opt' f' s'³' env2' loc'.
              evaluate (xs',env1',s'') = (r',t') /\
-             env_rel opt' f' env1' env2' /\ EVERY (\x. no_mutcons x)
-               xs' /\
-             state_rel f' s'' s'³' /\
+             bvi_tmcProof_env_rel opt' f' env1' env2' /\ EVERY (\x.
+               no_mutcons x) xs' /\
+             bvi_tmcProof_state_rel f' s'' s'³' /\
              (opt' ==> LENGTH xs' = 1) /\ ~(
              r' = Rerr (Rabort Rtype_error)) ==>
              (?t'' f'' r''.
                evaluate (xs',env2',s'³') = (r'',t'') /\
                result_rel (LIST_REL (v_rel f'')) (eor_rel f'') r' r''
                  /\
-               state_rel f'' t' t'' /\ f' SUBMAP f'' /\ only_fresh f'
-                 f'' (?_refs s'³') /\
+               bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f'' /\
+                 only_fresh f' f'' (?_refs s'³') /\
                holes_unchanged_except f' (?_refs s'³') (?_refs t'')
                  {} /\
                holes_still_not_finalised f' (?_refs s'³') (?_refs
@@ -1107,8 +1103,8 @@ let hypothesis_def = cake_define
                         /\
                       result_rel (LIST_REL (v_rel f_wrap)) (eor_rel
                         f_wrap) r'
-                        r_wrap /\ state_rel f_wrap t' t_wrap /\ f'
-                          SUBMAP f_wrap /\
+                        r_wrap /\ bvi_tmcProof_state_rel f_wrap t'
+                          t_wrap /\ f' SUBMAP f_wrap /\
                       only_fresh f' f_wrap (?_refs s'³') /\
                       holes_unchanged_except f' (?_refs s'³') (?_refs
                         t_wrap) {} /\
@@ -1128,8 +1124,8 @@ let hypothesis_def = cake_define
                               xs')],env2',s'³') =
                       (r_work,t_work) /\ opt_res_rel f_work r' r_work
                         /\
-                      state_rel f_work t' t_work /\ f' SUBMAP f_work
-                        /\
+                      bvi_tmcProof_state_rel f_work t' t_work /\ f'
+                        SUBMAP f_work /\
                       only_fresh f' f_work (?_refs s'³') /\
                       holes_unchanged_except f' (?_refs s'³') (?_refs
                         t_work) {hole_ptr} /\
@@ -1151,7 +1147,8 @@ let alloc_hole_has_val_def = cake_define
        c_idx = LENGTH left /\
        small_enough_int (&(LENGTH left)) /\ ~(
        hole_ptr IN FRANGE f) /\
-       FLOOKUP refs hole_ptr = SOME (MutBlock tag F left c right))`;;
+       FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag F left c
+         right))`;;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_rewrite_tmc[call_block]:

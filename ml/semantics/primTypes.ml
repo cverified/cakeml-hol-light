@@ -40,7 +40,7 @@ let prim_types_program_def = cake_define
 
 let add_to_sem_env_def = cake_define
   `add_to_sem_env ((st:'ffi semanticPrimitives_state),env) prog =
-   (match evaluate_decs st env prog with
+   (match evaluate_evaluate_decs st env prog with
      (st,Rval env') -> SOME (st,extend_dec_env env' env) |
        (st,Rerr _1) -> NONE)`;;
 

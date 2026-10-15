@@ -1,18 +1,22 @@
 """write an ml file of the port with a marker before every phrase,
-   so that the output of loading it says which phrase fails"""
+   so that tmp/mark.txt says which phrase fails"""
 import sys, re
 
 src, out = sys.argv[1], sys.argv[2]
 text = open(src).read()
 # the phrases of a file of the port end in ";;" at the end of a line
 parts = re.split(r'(?<=;;)\n', text)
-res = []
+res = ["""let cake_mark s =
+  let o = open_out_gen [Open_append; Open_creat] 0o644
+            "/home/freek/claude/hol-light/cakeml/tmp/mark.txt" in
+  output_string o (s ^ "\\n"); close_out o;;
+"""]
 n = 0
 for p in parts:
   if not p.strip():
     res.append(p); continue
   n += 1
-  res.append('print_string "@@%d:%s@@\\n";;\n%s'
+  res.append('cake_mark "%d: %s";;\n%s'
              % (n, p.strip().split('\n')[0][:60].replace('"', "'"), p))
 open(out, 'w').write('\n'.join(res))
 print(n)

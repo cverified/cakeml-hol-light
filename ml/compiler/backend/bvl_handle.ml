@@ -136,10 +136,11 @@ let SmartLet_def = cake_define
 let LetLet_def = cake_define
   `LetLet env_length fvs (body:bvl_exp) =
      (let xs = GENLIST I env_length in
-     let zs = FILTER (\n. IS_SOME (lookup n fvs)) xs in
+     let zs = FILTER (\n. IS_SOME (sptree_lookup n fvs)) xs in
      let ys = MAPi (\i x. (x,i)) zs in
      let long_list = GENLIST (\n. match ALOOKUP ys n with NONE -> Op
-       (IntOp (Const (&0))) [] | SOME k -> Var k) env_length in
+       (closLang_IntOp (closLang_Const (&0))) [] | SOME k -> Var k)
+       env_length in
        Let (MAP Var zs) (SmartLet long_list body))`;;
 
 let OptionalLetLet_def = cake_define
@@ -157,13 +158,14 @@ let OptionalLetLet_sing_def = cake_define
          ((Let [] (LetLet env_size fvs e)),flat_live,0,nr))`;;
 
 let compile_def = cake_define_list
-  [`bvl_handle_compile l n [] = (([]:bvl_exp list),Empty,0,T)`;
+  [`bvl_handle_compile l n [] = (([]:bvl_exp list),db_vars_Empty,0,T)`;
    `bvl_handle_compile l n (x :: y :: xs) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x] in
          let (dy,ly,s2,nr2) = bvl_handle_compile l n (y :: xs) in
            (dx ++ dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
    `bvl_handle_compile l n [(Var v:bvl_exp)] = (if v < n then ([Var
-  v],Var v,1,T) else ([Op (IntOp (Const (&0))) []],Empty,1,T))`;
+  v],Var v,1,T) else ([Op (closLang_IntOp (closLang_Const (&0)))
+  []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(If x1 x2 x3:bvl_exp)] =
          (let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
          let (x2,l2,s2,nr2) = bvl_handle_compile l n [x2] in
@@ -200,8 +202,8 @@ let compile_def = cake_define_list
          (let (y,lx,s1,nr1) = bvl_handle_compile l n [x] in
            ([Tick (HD y)],lx,s1,nr1))`;
    `bvl_handle_compile l n [(Force m v:bvl_exp)] = (if v < n then
-  ([Force m v],Var v,1,F) else ([Op (IntOp (Const (&0)))
-  []],Empty,1,T))`;
+  ([Force m v],Var v,1,F) else ([Op (closLang_IntOp (closLang_Const
+  (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(Call t dest xs:bvl_exp)] =
          (let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
            OptionalLetLet (Call t dest ys) n lx (s1 + 1) l F)`];;
@@ -213,7 +215,8 @@ val compile_ind = theorem"compile_ind";
 
 let compile_sing_def = cake_define_list
   [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
-  v,Var v,1,T) else (Op (IntOp (Const (&0))) [],Empty,1,T))`;
+  v,Var v,1,T) else (Op (closLang_IntOp (closLang_Const (&0)))
+  [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (If x1 x2 x3:bvl_exp) =
          (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
          let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in
@@ -251,12 +254,14 @@ let compile_sing_def = cake_define_list
          (let (y,lx,s1,nr1) = bvl_handle_compile_sing l n x in
            (Tick y,lx,s1,nr1))`;
    `bvl_handle_compile_sing l n (Force m v:bvl_exp) = (if v < n then
-  (Force m v,Var v,1,F) else (Op (IntOp (Const (&0))) [],Empty,1,T))`;
+  (Force m v,Var v,1,F) else (Op (closLang_IntOp (closLang_Const
+  (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (Call t dest xs:bvl_exp) =
          (let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
            OptionalLetLet_sing (Call t dest ys) n lx (s1 + 1) l
              F)`;
-   `bvl_handle_compile_list l n [] = (([]:bvl_exp list),Empty,0,T)`;
+   `bvl_handle_compile_list l n [] = (([]:bvl_exp
+  list),db_vars_Empty,0,T)`;
    `bvl_handle_compile_list l n (x :: xs) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile_sing l n x in
          let (dy,ly,s2,nr2) = bvl_handle_compile_list l n xs in

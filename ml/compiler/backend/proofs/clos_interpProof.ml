@@ -43,7 +43,6 @@ let state_rel_def = cake_define
        s /\
      oHD (closSem_state_globals s) = SOME (SOME (Closure NONE []
        [] 1 clos_interpreter))`;;
-hol4_overload "state_rel" "clos_interpProof_state_rel";;
 
 let state_rel_1_def = cake_define
   `state_rel_1 (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>
@@ -66,22 +65,22 @@ let interp_assum_def = cake_define
   `interp_assum (:'c) (:'ffi) c <=>
      (!xs s1 env (t1:('c,'ffi)closSem_state) res s2. ?_clock
        s1 <= c /\
-       evaluate (xs,env,s1) = (res,s2) /\ ~(
+       closSem_evaluate (xs,env,s1) = (res,s2) /\ ~(
        res = Rerr (Rabort Rtype_error)) ==>
-       state_rel s1 t1 ==>
+       clos_interpProof_state_rel s1 t1 ==>
        (?ck t2.
-         evaluate (xs,env,?_clock_fupd (K (ck + ?_clock t1)) t1) =
-           (res,t2) /\
-         state_rel s2 t2)) /\
+         closSem_evaluate (xs,env,?_clock_fupd (K (ck + ?_clock t1))
+           t1) = (res,t2) /\
+         clos_interpProof_state_rel s2 t2)) /\
      (!args s1 loc f (t1:('c,'ffi)closSem_state) res s2. ?_clock
        s1 <= c /\
        evaluate_app loc f args s1 = (res,s2) /\ ~(
        res = Rerr (Rabort Rtype_error)) ==>
-       state_rel s1 t1 ==>
+       clos_interpProof_state_rel s1 t1 ==>
        (?ck t2.
          evaluate_app loc f args (?_clock_fupd (K (ck + ?_clock t1))
            t1) =
-         (res,t2) /\ state_rel s2 t2))`;;
+         (res,t2) /\ clos_interpProof_state_rel s2 t2))`;;
 
 (* HOL4 ML code, not ported:
 val evaluate_If =
@@ -122,11 +121,11 @@ val init_tac =
    ---- *)
 
 let v_ok_def = cake_define_list
-  [`v_ok (Number i) <=> T`;
+  [`v_ok (closSem_Number i) <=> T`;
    `v_ok (Word64 w:closSem_v) <=> T`;
-   `v_ok (Block n vs) <=> EVERY v_ok vs`;
-   `v_ok (ByteVector ws) <=> T`;
-   `v_ok (RefPtr b n) <=> T`;
+   `v_ok (closSem_Block n vs) <=> EVERY v_ok vs`;
+   `v_ok (closSem_ByteVector ws) <=> T`;
+   `v_ok (closSem_RefPtr b n) <=> T`;
    `v_ok (Closure loco vs1 env1 n bod1:closSem_v) <=>
         ~has_install bod1 /\ EVERY v_ok env1 /\ EVERY v_ok vs1`;
    `v_ok (Recclosure loco vs1 env1 fns1 i:closSem_v) <=>
@@ -153,8 +152,8 @@ let state_rel'_def = cake_define
      s = closSem_state_globals t /\ EVERY (OPTION_ALL v_ok)
        (closSem_state_globals t) /\ ?_refs
      s = ?_refs t /\
-     FEVERY (\(k,v). !vs. v = ValueArray vs ==> EVERY v_ok vs)
-       (?_refs t) /\
+     FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> EVERY v_ok
+       vs) (?_refs t) /\
      FEVERY (\(k,v). !m w. v = Thunk m w ==> v_ok w) (?_refs t) /\
        closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\

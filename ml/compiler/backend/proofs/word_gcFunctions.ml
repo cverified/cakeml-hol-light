@@ -59,12 +59,13 @@ let decode_length_def = cake_define
 let word_gc_move_def = cake_define_list
   [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) = (Loc l1
   l2,i,pa,m,(l2 = 0))`;
-   `word_gc_move conf (Word w,i,pa,old,m,dm) =
-         (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
+   `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
+         (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word
+           w,i,pa,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
              if is_fwd_ptr v then
-               (Word (update_addr conf (theWord v >>> 2)
+               (wordLang_Word (update_addr conf (theWord v >>> 2)
                  w),i,pa,m,c) else
                let header_addr = ptr_to_addr conf old w in
                let c = (c /\ header_addr IN dm /\ isWord (m
@@ -75,22 +76,26 @@ let word_gc_move_def = cake_define_list
                let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr
                  pa m dm in
                let c = (c /\ header_addr IN dm /\ c1) in
-               let m1 = (header_addr =+ Word (i << 2)) m1 in
-                 (Word (update_addr conf i w),v,pa1,m1,c))`];;
+               let m1 = (header_addr =+ wordLang_Word (i << 2)) m1
+                 in
+                 (wordLang_Word (update_addr conf i
+                   w),v,pa1,m1,c))`];;
 
 let word_gen_gc_partial_move_def = cake_define_list
   [`word_gen_gc_partial_move conf (wordLang_Loc l1
   l2,i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))`;
-   `word_gen_gc_partial_move conf (Word w,i,pa,old,m,dm,gs,rs) =
-       (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
+   `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs)
+  =
+       (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word w,i,pa,m,T)
+         else
          let header_addr = ptr_to_addr conf old w in
          let tmp = header_addr - old in
            if tmp <+ gs \/ rs <=+ tmp then
-             (Word w,i,pa,m,T) else
+             (wordLang_Word w,i,pa,m,T) else
              let c = (ptr_to_addr conf old w IN dm) in
              let v = m (ptr_to_addr conf old w) in
                if is_fwd_ptr v then
-                 (Word (update_addr conf (theWord v >>> 2)
+                 (wordLang_Word (update_addr conf (theWord v >>> 2)
                    w),i,pa,m,c) else
                  let c = (c /\ header_addr IN dm /\ isWord (m
                    header_addr)) in
@@ -100,8 +105,10 @@ let word_gen_gc_partial_move_def = cake_define_list
                  let (pa1,m1,c1) = memcpy (len + (n2w 1))
                    header_addr pa m dm in
                  let c = (c /\ header_addr IN dm /\ c1) in
-                 let m1 = (header_addr =+ Word (i << 2)) m1 in
-                   (Word (update_addr conf i w),v,pa1,m1,c))`];;
+                 let m1 = (header_addr =+ wordLang_Word (i << 2)) m1
+                   in
+                   (wordLang_Word (update_addr conf i
+                     w),v,pa1,m1,c))`];;
 
 let word_gc_move_roots_def = cake_define_list
   [`word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)`;
@@ -283,14 +290,14 @@ let is_ref_header_def = cake_define
 let word_gen_gc_move_def = cake_define_list
   [`word_gen_gc_move conf (wordLang_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
          (Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))`;
-   `word_gen_gc_move conf (Word w,i,pa,ib,pb,old,m,dm) =
-         (if ((n2w 1) && w) = (n2w 0) then (Word w,i,pa,ib,pb,m,T)
-           else
+   `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
+         (if ((n2w 1) && w) = (n2w 0) then (wordLang_Word
+           w,i,pa,ib,pb,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
            let c = (c /\ isWord v) in
              if is_fwd_ptr v then
-               (Word (update_addr conf (theWord v >>> 2)
+               (wordLang_Word (update_addr conf (theWord v >>> 2)
                  w),i,pa,ib,pb,m,c) else
                let header_addr = ptr_to_addr conf old w in
                let c = (c /\ header_addr IN dm /\ isWord (m
@@ -303,15 +310,17 @@ let word_gen_gc_move_def = cake_define_list
                    let (_5,m1,c1) = memcpy (len + (n2w 1))
                      header_addr pb1 m dm in
                    let c = (c /\ header_addr IN dm /\ c1) in
-                   let m1 = (header_addr =+ Word (v << 2)) m1 in
-                     (Word (update_addr conf v w),i,pa,v,pb1,m1,c)
-                       else
+                   let m1 = (header_addr =+ wordLang_Word (v << 2))
+                     m1 in
+                     (wordLang_Word (update_addr conf v
+                       w),i,pa,v,pb1,m1,c) else
                   let v = i + len + (n2w 1) in
                   let (pa1,m1,c1) = memcpy (len + (n2w 1))
                     header_addr pa m dm in
                   let c = (c /\ header_addr IN dm /\ c1) in
-                  let m1 = (header_addr =+ Word (i << 2)) m1 in
-                    (Word (update_addr conf i
+                  let m1 = (header_addr =+ wordLang_Word (i << 2))
+                    m1 in
+                    (wordLang_Word (update_addr conf i
                       w),v,pa1,ib,pb,m1,c))`];;
 
 let word_gen_gc_move_roots_def = cake_define_list
@@ -409,8 +418,8 @@ let word_gen_gc_def = cake_define
 let glob_real_def = cake_define
   `glob_real c curr w =
         match w with
-          Word (w:'a word) ->
-        Word (curr + (w >>> (shift_length c) <<
+          wordLang_Word (w:'a word) ->
+        wordLang_Word (curr + (w >>> (shift_length c) <<
           backend_common_word_shift (:'ga)))
         | w -> w`;;
 
@@ -425,22 +434,22 @@ let word_gc_fun_def = cake_define
       let len = theWord (FAPPLY s HeapLength) in
       let all_roots = FAPPLY s Globals :: roots in
         match data_to_word_config_gc_kind conf with None ->
-         (let s1 = s |++ [(NextFree,Word old);
-                          (TriggerGC,Word old);
-                          (EndOfHeap,Word old)] in
+         (let s1 = s |++ [(NextFree,wordLang_Word old);
+                          (TriggerGC,wordLang_Word old);
+                          (EndOfHeap,wordLang_Word old)] in
             if c1 then SOME (roots,m,s1) else NONE) | Simple ->
          (let (roots1,i1,pa1,m1,c2) =
             word_full_gc conf (all_roots,new,old,m,dm) in
-          let s1 = s |++ [(CurrHeap,Word new);
-                          (OtherHeap,Word old);
-                          (NextFree,Word pa1);
-                          (TriggerGC,Word (new + len));
-                          (EndOfHeap,Word (new + len));
+          let s1 = s |++ [(CurrHeap,wordLang_Word new);
+                          (OtherHeap,wordLang_Word old);
+                          (NextFree,wordLang_Word pa1);
+                          (TriggerGC,wordLang_Word (new + len));
+                          (EndOfHeap,wordLang_Word (new + len));
                           (Globals,HD roots1);
                           (GlobReal,glob_real conf new (HD roots1))]
                             in
             if c1 /\ c2 then SOME (TL roots1,m1,s1) else NONE) |
-              Generational gen_sizes ->
+              data_to_word_Generational gen_sizes ->
          (if ~c1 then NONE else
          if word_gen_gc_can_do_partial gen_sizes s then
            (let gs = theWord (FAPPLY s GenStart) in
@@ -452,40 +461,40 @@ let word_gc_fun_def = cake_define
               word_gen_gc_partial_full conf
                 (all_roots,old,new,len,m,dm,gs,rs) in
             let a = theWord (FAPPLY s AllocSize) in
-            let s1 = s |++ [(CurrHeap,Word old);
-                            (OtherHeap,Word new);
-                            (NextFree,Word pa1);
-                            (GenStart,Word (pa1 - old));
-                            (TriggerGC,Word (pa1 + new_trig (endh -
-                              pa1) a gen_sizes));
+            let s1 = s |++ [(CurrHeap,wordLang_Word old);
+                            (OtherHeap,wordLang_Word new);
+                            (NextFree,wordLang_Word pa1);
+                            (GenStart,wordLang_Word (pa1 - old));
+                            (TriggerGC,wordLang_Word (pa1 + new_trig
+                              (endh - pa1) a gen_sizes));
                             (Globals,HD roots1);
                             (GlobReal,glob_real conf old (HD
                               roots1));
-                            (Temp (n2w 0),Word (n2w 0));
-                            (Temp (n2w 1),Word (n2w 0))] in
+                            (Temp (n2w 0),wordLang_Word (n2w 0));
+                            (Temp (n2w 1),wordLang_Word (n2w 0))] in
             let c3 = (a <=+ endh - pa1 /\ a <=+ new_trig (endh - pa1)
               a gen_sizes) in
               if c2 /\ c3 then SOME (TL roots1,m1,s1) else NONE) else
            (let (roots1,i1,pa1,ib1,pb1,m1,c2) =
               word_gen_gc conf (all_roots,old,new,len,m,dm) in
             let a = theWord (FAPPLY s AllocSize) in
-            let s1 = s |++ [(CurrHeap,Word new);
-                            (OtherHeap,Word old);
-                            (NextFree,Word pa1);
-                            (GenStart,Word (pa1 - new));
-                            (TriggerGC,Word (pa1 + new_trig (pb1 -
-                              pa1) a gen_sizes));
-                            (EndOfHeap,Word pb1);
+            let s1 = s |++ [(CurrHeap,wordLang_Word new);
+                            (OtherHeap,wordLang_Word old);
+                            (NextFree,wordLang_Word pa1);
+                            (GenStart,wordLang_Word (pa1 - new));
+                            (TriggerGC,wordLang_Word (pa1 + new_trig
+                              (pb1 - pa1) a gen_sizes));
+                            (EndOfHeap,wordLang_Word pb1);
                             (Globals,HD roots1);
                             (GlobReal,glob_real conf new (HD
                               roots1));
-                            (Temp (n2w 0),Word (n2w 0));
-                            (Temp (n2w 1),Word (n2w 0));
-                            (Temp (n2w 2),Word (n2w 0));
-                            (Temp (n2w 3),Word (n2w 0));
-                            (Temp (n2w 4),Word (n2w 0));
-                            (Temp (n2w 5),Word (n2w 0));
-                            (Temp (n2w 6),Word (n2w 0))] in
+                            (Temp (n2w 0),wordLang_Word (n2w 0));
+                            (Temp (n2w 1),wordLang_Word (n2w 0));
+                            (Temp (n2w 2),wordLang_Word (n2w 0));
+                            (Temp (n2w 3),wordLang_Word (n2w 0));
+                            (Temp (n2w 4),wordLang_Word (n2w 0));
+                            (Temp (n2w 5),wordLang_Word (n2w 0));
+                            (Temp (n2w 6),wordLang_Word (n2w 0))] in
               if c2 then SOME (TL roots1,m1,s1) else NONE)))`;;
 
 (* lemmas about has_fp_ops *)

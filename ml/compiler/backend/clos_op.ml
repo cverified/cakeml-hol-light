@@ -21,53 +21,54 @@ needs "semantics/ast.ml";;
 let dest_Const_def = cake_define
   `dest_Const x1 =
       match x1 with
-        IntOp (Const i) -> SOME i
+        closLang_IntOp (closLang_Const i) -> SOME i
       | _1 -> NONE`;;
 
 let dest_Constant_def = cake_define
   `clos_op_dest_Constant x1 =
       match x1 with
-        BlockOp (Constant (ConstStr c)) -> SOME (Str c)
-      | (BlockOp (Constant (ConstInt c))) -> SOME (Int c)
-      | (BlockOp (Constant (ConstWord64 c))) -> SOME (W64 c)
+        closLang_BlockOp (closLang_Constant (ConstStr c)) -> SOME
+          (closLang_Str c)
+      | (closLang_BlockOp (closLang_Constant (ConstInt c))) -> SOME
+        (closLang_Int c)
+      | (closLang_BlockOp (closLang_Constant (ConstWord64 c))) ->
+        SOME (W64 c)
       | _2 -> NONE`;;
-hol4_overload "dest_Constant" "clos_op_dest_Constant";;
 
 let dest_Cons_def = cake_define
   `clos_op_dest_Cons x1 =
       match x1 with
-        BlockOp (Cons i) -> SOME i
+        closLang_BlockOp (Cons i) -> SOME i
       | _3 -> NONE`;;
-hol4_overload "dest_Cons" "clos_op_dest_Cons";;
 
 let dest_ElemAt_def = cake_define
   `dest_ElemAt x1 =
       match x1 with
-        BlockOp (ElemAt i) -> SOME i
+        closLang_BlockOp (closLang_ElemAt i) -> SOME i
       | _4 -> NONE`;;
 
 let dest_TagEq_def = cake_define
   `dest_TagEq x1 =
       match x1 with
-        BlockOp (TagEq i) -> SOME i
+        closLang_BlockOp (closLang_TagEq i) -> SOME i
       | _5 -> NONE`;;
 
 let dest_LenEq_def = cake_define
   `dest_LenEq x1 =
       match x1 with
-        BlockOp (LenEq i) -> SOME i
+        closLang_BlockOp (closLang_LenEq i) -> SOME i
       | _6 -> NONE`;;
 
 let dest_TagLenEq_def = cake_define
   `dest_TagLenEq x1 =
       match x1 with
-        BlockOp (TagLenEq i j) -> SOME (i,j)
+        closLang_BlockOp (closLang_TagLenEq i j) -> SOME (i,j)
       | _7 -> NONE`;;
 
 let dest_Op_def = cake_define
   `dest_Op f x2 =
       match x2 with
-        Op t op xs ->
+        closLang_Op t op xs ->
      (match f op with NONE -> NONE | SOME i -> SOME (i,xs))
       | _8 -> NONE`;;
 
@@ -92,39 +93,46 @@ let dest_Op_Consts_def = cake_define
          j -> SOME (i,j)))`;;
 
 let MakeBool_def = cake_define
-  `MakeBool b = closLang_Op None (BlockOp (Cons (if b then 1 else
-  0))) []`;;
+  `MakeBool b = closLang_Op backend_common_None (closLang_BlockOp
+  (Cons (if b then 1 else 0))) []`;;
 
 let MakeInt_def = cake_define
-  `MakeInt i = Op None (IntOp (Const i)) []`;;
+  `MakeInt i = closLang_Op backend_common_None (closLang_IntOp
+  (closLang_Const i)) []`;;
 
 let int_op_def = cake_define
   `clos_op_int_op op i j =
-     (if op = IntOp Add then SOME (MakeInt (j + i)) else
-     if op = IntOp Sub then SOME (MakeInt (j - i)) else
-     if op = IntOp Mult then SOME (MakeInt (j * i)) else
-     if op = IntOp Div then SOME (MakeInt (if i = (&0) then (&0) else
-       j / i)) else
-     if op = IntOp Mod then SOME (MakeInt (if i = (&0) then (&0) else
-       j % i)) else
-     if op = IntOp Less then SOME (MakeBool (j < i)) else
-     if op = IntOp LessEq then SOME (MakeBool (j <= i)) else
-     if op = IntOp Greater then SOME (MakeBool (i < j)) else
-     if op = IntOp GreaterEq then SOME (MakeBool (i <= j)) else
-     if op = BlockOp Equal then SOME (MakeBool (j = i)) else NONE)`;;
-hol4_overload "int_op" "clos_op_int_op";;
+     (if op = closLang_IntOp Add then SOME (MakeInt (j + i)) else
+     if op = closLang_IntOp Sub then SOME (MakeInt (j - i)) else
+     if op = closLang_IntOp closLang_Mult then SOME (MakeInt (j * i))
+       else
+     if op = closLang_IntOp Div then SOME (MakeInt (if i = (&0) then
+       (&0) else j / i)) else
+     if op = closLang_IntOp Mod then SOME (MakeInt (if i = (&0) then
+       (&0) else j % i)) else
+     if op = closLang_IntOp Less then SOME (MakeBool (j < i)) else
+     if op = closLang_IntOp closLang_LessEq then SOME (MakeBool (j <=
+       i)) else
+     if op = closLang_IntOp Greater then SOME (MakeBool (i < j)) else
+     if op = closLang_IntOp closLang_GreaterEq then SOME (MakeBool (i
+       <= j)) else
+     if op = closLang_BlockOp Equal then SOME (MakeBool (j = i))
+       else NONE)`;;
 
 let cons_op_def = cake_define
   `cons_op op t xs =
      (match dest_ElemAt op with SOME n -> (if n < LENGTH xs then
-                    SOME (Let None xs (Var None (LENGTH xs - (n +
-                      1)))) else NONE) | NONE ->
-     (match dest_TagLenEq op with SOME (n,l) -> SOME (Let None xs
-       (MakeBool (n = t /\ LENGTH xs = l))) | NONE ->
-     (match dest_TagEq op with SOME n -> SOME (Let None xs (MakeBool
-       (n = t))) | NONE ->
-     (match dest_LenEq op with SOME l -> SOME (Let None xs
-       (MakeBool (LENGTH xs = l))) | NONE -> NONE))))`;;
+                    SOME (Let backend_common_None xs (Var
+                      backend_common_None (LENGTH xs - (n + 1)))) else
+                      NONE) | NONE ->
+     (match dest_TagLenEq op with SOME (n,l) -> SOME (Let
+       backend_common_None xs (MakeBool (n = t /\ LENGTH xs = l))) |
+       NONE ->
+     (match dest_TagEq op with SOME n -> SOME (Let
+       backend_common_None xs (MakeBool (n = t))) | NONE ->
+     (match dest_LenEq op with SOME l -> SOME (Let
+       backend_common_None xs (MakeBool (LENGTH xs = l))) | NONE ->
+       NONE))))`;;
 
 let is_Var_def = cake_define
   `is_Var x1 =
@@ -134,30 +142,37 @@ let is_Var_def = cake_define
 
 let eq_direct_nil_def = cake_define
   `eq_direct_nil x y =
-     (match (dest_Op_Nil dest_Cons) x with SOME i ->
-         (match (dest_Op_Nil dest_Cons) y with SOME j -> SOME
-           (MakeBool (i = j)) | NONE -> SOME (Op None (BlockOp (TagLenEq
-           i 0)) [y])) | NONE ->
-         (match (dest_Op_Nil dest_Cons) y with SOME i -> SOME (Op
-           None (BlockOp (TagLenEq i 0)) [x]) | NONE -> NONE))`;;
+     (match (dest_Op_Nil clos_op_dest_Cons) x with SOME i ->
+         (match (dest_Op_Nil clos_op_dest_Cons) y with SOME j -> SOME
+           (MakeBool (i = j)) | NONE -> SOME (closLang_Op
+           backend_common_None (closLang_BlockOp (closLang_TagLenEq i
+           0)) [y])) | NONE ->
+         (match (dest_Op_Nil clos_op_dest_Cons) y with SOME i ->
+           SOME (closLang_Op backend_common_None (closLang_BlockOp
+           (closLang_TagLenEq i 0)) [x]) | NONE -> NONE))`;;
 
 let eq_direct_const_def = cake_define
   `eq_direct_const x y =
      (match (dest_Op_Nil dest_Const) x with SOME i ->
          (match (dest_Op_Nil dest_Const) y with SOME j -> SOME
-           (MakeBool (i = j)) | NONE -> SOME (Op None (BlockOp
-           (EqualConst (Int i))) [y])) | NONE ->
-         (match (dest_Op_Nil dest_Const) y with SOME i -> SOME (Op
-           None (BlockOp (EqualConst (Int i))) [x]) | NONE -> NONE))`;;
+           (MakeBool (i = j)) | NONE -> SOME (closLang_Op
+           backend_common_None (closLang_BlockOp (closLang_EqualConst
+           (closLang_Int i))) [y])) | NONE ->
+         (match (dest_Op_Nil dest_Const) y with SOME i -> SOME
+           (closLang_Op backend_common_None (closLang_BlockOp
+           (closLang_EqualConst (closLang_Int i))) [x]) | NONE ->
+           NONE))`;;
 
 let eq_direct_constant_def = cake_define
   `eq_direct_constant x y =
-     (match (dest_Op_Nil dest_Constant) x with SOME p ->
-         (match (dest_Op_Nil dest_Constant) y with SOME q -> SOME
-           (MakeBool (q = p)) | NONE -> SOME (Op None (BlockOp
-           (EqualConst p)) [y])) | NONE ->
-         (match (dest_Op_Nil dest_Constant) y with SOME p -> SOME
-           (Op None (BlockOp (EqualConst p)) [x]) | NONE -> NONE))`;;
+     (match (dest_Op_Nil clos_op_dest_Constant) x with SOME p ->
+         (match (dest_Op_Nil clos_op_dest_Constant) y with SOME q ->
+           SOME (MakeBool (q = p)) | NONE -> SOME (closLang_Op
+           backend_common_None (closLang_BlockOp (closLang_EqualConst
+           p)) [y])) | NONE ->
+         (match (dest_Op_Nil clos_op_dest_Constant) y with SOME p
+           -> SOME (closLang_Op backend_common_None (closLang_BlockOp
+           (closLang_EqualConst p)) [x]) | NONE -> NONE))`;;
 
 let eq_direct_def = cake_define
   `eq_direct x y =
@@ -173,8 +188,8 @@ let _ = size_thms "exp";;
 let cons_measure_def = cake_define_wf
   `MEASURE exp_size`
   `cons_measure x =
-     (match (dest_Op dest_Cons) x with NONE -> 0 | SOME (_12,xs)
-       -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;
+     (match (dest_Op clos_op_dest_Cons) x with NONE -> 0 | SOME
+       (_12,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;
 
 (* HOL4 termination: \\ reverse (rpt strip_tac) \\ fs [] THEN1
    (imp_res_tac cons_measure_lemma \\ fs [cons_measure_lemma]) THEN1
@@ -196,29 +211,33 @@ let eq_pure_list_def = cake_define_wf
                                 then 1 else 0)))`
   `eq_pure_list x1 =
       match x1 with
-        [] -> Nil
+        [] -> misc_Nil
       | [(x,y)] ->
-    (match eq_direct x y with SOME z -> List [z] | NONE ->
-       (match ((dest_Op dest_Cons) x,(dest_Op dest_Cons) y) with
-         (NONE,NONE) -> List [Op None (BlockOp Equal) [x; y]] | (SOME
-         (t1,xs),SOME (t2,ys)) ->
-            (if ~(t1 = t2) \/ ~(LENGTH xs = LENGTH ys) then List
+    (match eq_direct x y with SOME z -> misc_List [z] | NONE ->
+       (match ((dest_Op clos_op_dest_Cons) x,(dest_Op
+         clos_op_dest_Cons) y) with (NONE,NONE) -> misc_List
+         [closLang_Op backend_common_None (closLang_BlockOp Equal) [x;
+         y]] | (SOME (t1,xs),SOME (t2,ys)) ->
+            (if ~(t1 = t2) \/ ~(LENGTH xs = LENGTH ys) then misc_List
               [MakeBool F] else eq_pure_list (ZIP (REVERSE xs) (REVERSE
               ys))) | (SOME (t1,xs),NONE) ->
-            Append (List [Op None (BlockOp (TagLenEq t1 (LENGTH xs)))
+            misc_Append (misc_List [closLang_Op backend_common_None
+              (closLang_BlockOp (closLang_TagLenEq t1 (LENGTH xs)))
               [y]])
-                   (eq_pure_list (MAPi (\i x. (x,Op None (BlockOp
-                     (ElemAt i)) [y])) (REVERSE xs))) | (NONE,SOME
-                     (t1,ys)) -> eq_pure_list [(y,x)]))
-      | (xy :: xys) -> Append (eq_pure_list [xy]) (eq_pure_list
-        xys)`;;
+                   (eq_pure_list (MAPi (\i x. (x,closLang_Op
+                     backend_common_None (closLang_BlockOp
+                     (closLang_ElemAt i)) [y])) (REVERSE xs))) |
+                     (NONE,SOME (t1,ys)) -> eq_pure_list [(y,x)]))
+      | (xy :: xys) -> misc_Append (eq_pure_list [xy])
+        (eq_pure_list xys)`;;
 
 let ConjList_def = cake_define
   `ConjList x1 =
       match x1 with
         [] -> MakeBool T
       | [x] -> x
-      | (x :: xs) -> If None x (ConjList xs) (MakeBool F)`;;
+      | (x :: xs) -> If backend_common_None x (ConjList xs)
+        (MakeBool F)`;;
 
 let eq_pure_def = cake_define
   `eq_pure x y = ConjList (append (eq_pure_list [(x,y)]))`;;
@@ -226,29 +245,31 @@ let eq_pure_def = cake_define
 let dont_lift_def = cake_define
   `dont_lift x =
      (match (dest_Op_Nil dest_Const) x with SOME i -> T | NONE ->
-       (match (dest_Op_Nil dest_Cons) x with SOME t -> T | NONE ->
-         (match (dest_Op_Nil dest_Constant) x with SOME t -> T |
-           NONE -> F)))`;;
+       (match (dest_Op_Nil clos_op_dest_Cons) x with SOME t -> T |
+         NONE ->
+         (match (dest_Op_Nil clos_op_dest_Constant) x with SOME t
+           -> T | NONE -> F)))`;;
 
 let lift_exps_def = cake_define_list
   [`lift_exps [] n binds = ([],n,binds)`;
    `lift_exps (x :: xs) n binds =
       (if dont_lift x then
         (let (xs,n,binds) = lift_exps xs n binds in
-           (x :: xs,n,binds)) else match (dest_Op dest_Cons) x with
-             SOME (t,ys) ->
+           (x :: xs,n,binds)) else match (dest_Op clos_op_dest_Cons)
+             x with SOME (t,ys) ->
               (let (ys,n,binds) = lift_exps ys n binds in
                let (xs,n,binds) = lift_exps xs n binds in
-                 (Op None (BlockOp (Cons t)) ys :: xs,n,binds)) |
-                   NONE ->
+                 (closLang_Op backend_common_None (closLang_BlockOp
+                   (Cons t)) ys :: xs,n,binds)) | NONE ->
               (let (xs,n1,binds) = lift_exps xs (n + 1) (binds ++
                 [x]) in
-                (Var None n :: xs,n1,binds)))`];;
+                (Var backend_common_None n :: xs,n1,binds)))`];;
 
 let eq_any_def = cake_define
   `eq_any x y =
      (match lift_exps [x; y] 0 [] with (x :: y :: _13,_14,binds)
-       -> SOME (Let None binds (eq_pure x y)) | _15 -> NONE)`;;
+       -> SOME (Let backend_common_None binds (eq_pure x y)) | _15 ->
+       NONE)`;;
 
 let eq_op_def = cake_define
   `eq_op x y =
@@ -261,14 +282,13 @@ let eq_op_def = cake_define
 let SmartOp'_def = cake_define
   `SmartOp' tra op xs =
      (match xs with [x] ->
-       (match (dest_Op dest_Cons) x with SOME (t,xs) -> cons_op op t
-         xs | NONE -> NONE) | [x; y] ->
-       (match dest_Op_Consts x y with SOME (i,j) -> int_op op i j
-         | NONE -> (if op = BlockOp Equal then eq_op x y else NONE))
-         | _16 -> NONE)`;;
+       (match (dest_Op clos_op_dest_Cons) x with SOME (t,xs) ->
+         cons_op op t xs | NONE -> NONE) | [x; y] ->
+       (match dest_Op_Consts x y with SOME (i,j) -> clos_op_int_op
+         op i j | NONE -> (if op = closLang_BlockOp Equal then eq_op
+         x y else NONE)) | _16 -> NONE)`;;
 
 let SmartOp_def = cake_define
   `clos_op_SmartOp tra op xs =
      (match SmartOp' tra op xs with NONE -> closLang_Op tra op xs
        | SOME x -> x)`;;
-hol4_overload "SmartOp" "clos_op_SmartOp";;

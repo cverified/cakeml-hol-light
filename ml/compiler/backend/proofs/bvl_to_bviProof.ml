@@ -45,7 +45,7 @@ let adjust_bv_def = cake_define_list
   [`adjust_bv b (Number i:bvlSem_v) = Number i`;
    `adjust_bv b (Word64 w:bvlSem_v) = Word64 w`;
    `adjust_bv b (RefPtr l r:bvlSem_v) = RefPtr l (b r)`;
-   `adjust_bv b (CodePtr c) = CodePtr (bvl_num_stubs +
+   `adjust_bv b (bvlSem_CodePtr c) = bvlSem_CodePtr (bvl_num_stubs +
   bvl_to_bvi_namespaces * c)`;
    `adjust_bv b (Block tag vs:bvlSem_v) = Block tag (MAP (adjust_bv
   b) vs)`];;
@@ -76,7 +76,6 @@ let names_ok_def = cake_define
               MOD bvl_to_bvi_namespaces = 0) n /\
                  (n - bvl_num_stubs) DIV bvl_to_bvi_namespaces IN
                    domain s_code)))`;;
-hol4_overload "names_ok" "bvl_to_bviProof_names_ok";;
 
 let state_rel_def = cake_define
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state)
@@ -103,26 +102,27 @@ let state_rel_def = cake_define
      (?_clock s = ?_clock t) /\ ?_compile_oracle
      t = state_co compile_inc (?_compile_oracle s) /\ ?_compile
      s = state_cc compile_inc (?_compile t) /\
-     (lookup AllocGlobal_location (?_code t) = SOME AllocGlobal_code)
-       /\
-     (lookup CopyGlobals_location (?_code t) = SOME CopyGlobals_code)
-       /\
-     (lookup ListLength_location (?_code t) = SOME ListLength_code)
-       /\
-     (lookup FromListByte_location (?_code t) = SOME
+     (sptree_lookup AllocGlobal_location (?_code t) = SOME
+       AllocGlobal_code) /\
+     (sptree_lookup CopyGlobals_location (?_code t) = SOME
+       CopyGlobals_code) /\
+     (sptree_lookup ListLength_location (?_code t) = SOME
+       ListLength_code) /\
+     (sptree_lookup FromListByte_location (?_code t) = SOME
        FromListByte_code) /\
-     (lookup ToListByte_location (?_code t) = SOME ToListByte_code)
-       /\
-     (lookup SumListLength_location (?_code t) = SOME
+     (sptree_lookup ToListByte_location (?_code t) = SOME
+       ToListByte_code) /\
+     (sptree_lookup SumListLength_location (?_code t) = SOME
        SumListLength_code) /\
-     (lookup ConcatByte_location (?_code t) = SOME ConcatByte_code)
-       /\
-     names_ok (?_code s) (?_code t) (?_compile_oracle s) /\
+     (sptree_lookup ConcatByte_location (?_code t) = SOME
+       ConcatByte_code) /\
+     bvl_to_bviProof_names_ok (?_code s) (?_code t) (?_compile_oracle
+       s) /\
      (!name arity exp.
-        (lookup name (?_code s) = SOME (arity,exp)) ==>
+        (sptree_lookup name (?_code s) = SOME (arity,exp)) ==>
         (?n. let (c1,aux1,n1) = compile_exps n [exp] in
-              (lookup (bvl_num_stubs + bvl_to_bvi_namespaces * name)
-                (?_code t) =
+              (sptree_lookup (bvl_num_stubs + bvl_to_bvi_namespaces *
+                name) (?_code t) =
                  SOME (arity,bvi_let_compile_exp (HD c1))) /\
               aux_code_installed (append aux1) (?_code t) /\
               handle_ok [exp]))`;;
@@ -152,7 +152,6 @@ let state_ok_def = cake_define
      (!k. match FLOOKUP (?_refs s) k with SOME (ValueArray vs) ->
        EVERY (bv_ok (?_refs s)) vs | SOME (Thunk _2 v) -> bv_ok
        (?_refs s) v | _3 -> T)`;;
-hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* evaluate preserves state_ok *)
 

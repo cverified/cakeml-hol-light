@@ -23,7 +23,6 @@ let v_rel_def = cake_define
        (x = y) /\
        (!(s:('c,'ffi)bvlSem_state) env. evaluate ([a],env,s) =
          (Rval [x],s)) | _3 -> F)`;;
-hol4_overload "v_rel" "bvl_constProof_v_rel";;
 
 let env_rel_def = cake_define
   `bvl_constProof_env_rel x1 x2 x3 e1 e2 =
@@ -32,7 +31,6 @@ let env_rel_def = cake_define
         | ((:'c),(:'ffi),(NONE :: rest),(x :: e1),(y :: e2)) ->
         (x = y) /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
         | ((:'c),(:'ffi),(SOME a :: rest),(x :: e1),(y :: e2)) ->
-        v_rel (:'c) (:'ffi) a x y (x :: e1) (y :: e2) /\
-          bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
+        bvl_constProof_v_rel (:'c) (:'ffi) a x y (x :: e1) (y :: e2)
+          /\ bvl_constProof_env_rel (:'c) (:'ffi) rest e1 e2
         | (_4,_5,_6,_7,_8) -> F`;;
-hol4_overload "env_rel" "bvl_constProof_env_rel";;

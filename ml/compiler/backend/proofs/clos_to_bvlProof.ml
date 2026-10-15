@@ -20,7 +20,6 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
@@ -42,7 +41,6 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
@@ -72,20 +70,20 @@ let global_table_def = cake_define
   `global_table max_app =
      Block tuple_tag
        (FLAT (GENLIST (\tot. GENLIST
-         (\prev. CodePtr (partial_app_fn_location max_app tot
-           prev)) tot) max_app))`;;
+         (\prev. bvlSem_CodePtr (partial_app_fn_location max_app
+           tot prev)) tot) max_app))`;;
 
 let unpack_closure = cake_inductive
   `(
     total_args >= 0 ==>
-    unpack_closure (Block closure_tag (CodePtr l :: Number total_args
-      :: fvs))
-          ([],num_of_int total_args,Block closure_tag (CodePtr l ::
-            Number total_args :: fvs))) /\
+    unpack_closure (Block closure_tag (bvlSem_CodePtr l :: Number
+      total_args :: fvs))
+          ([],num_of_int total_args,Block closure_tag (bvlSem_CodePtr
+            l :: Number total_args :: fvs))) /\
    (
     ~(prev_args = []) /\
     rem_args >= 0 ==>
-    unpack_closure (Block partial_app_tag (CodePtr l :: Number
+    unpack_closure (Block partial_app_tag (bvlSem_CodePtr l :: Number
       rem_args :: clo :: prev_args))
           (prev_args,num_of_int rem_args + LENGTH prev_args,clo))`;;
 
@@ -95,9 +93,8 @@ let unpack_closure = cake_inductive
 
 let code_installed_def = cake_define
   `clos_to_bvlProof_code_installed aux code =
-     EVERY (\(n,num_args,exp). lookup n code = SOME
+     EVERY (\(n,num_args,exp). sptree_lookup n code = SOME
        (num_args,exp)) aux`;;
-hol4_overload "code_installed" "clos_to_bvlProof_code_installed";;
 
 let closure_code_installed_def = cake_define
   `closure_code_installed max_app code exps_ps (env:closSem_v list) =
@@ -105,10 +102,10 @@ let closure_code_installed_def = cake_define
        n <= max_app /\ ~(
        n = 0) /\
        (?aux c aux1.
-         (compile_exps max_app [exp] aux = ([c],aux1)) /\
-         (lookup p code = SOME (n + 1,SND (code_for_recc_case (LENGTH
-           env + LENGTH exps_ps) n c))) /\
-         code_installed aux1 code)) exps_ps`;;
+         (clos_to_bvl_compile_exps max_app [exp] aux = ([c],aux1)) /\
+         (sptree_lookup p code = SOME (n + 1,SND (code_for_recc_case
+           (LENGTH env + LENGTH exps_ps) n c))) /\
+         clos_to_bvlProof_code_installed aux1 code)) exps_ps`;;
 
 let cl_rel = cake_inductive
   `(
@@ -116,35 +113,35 @@ let cl_rel = cake_inductive
      num_args = 0) /\
      every_Fn_SOME [x] /\
      every_Fn_vs_SOME [x] /\
-     (compile_exps max_app [x] aux = ([c],aux1)) /\
-     code_installed aux1 code /\
-     (lookup (p + (num_stubs max_app)) code =
+     (clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1)) /\
+     clos_to_bvlProof_code_installed aux1 code /\
+     (sptree_lookup (p + (num_stubs max_app)) code =
        SOME (num_args + (1:num),Let (GENLIST Var num_args ++ free_let
          (Var num_args) (LENGTH env)) c)) ==>
     cl_rel max_app fs refs code
            (env,ys)
            (Closure (SOME p) [] env num_args x)
-           (Block closure_tag (CodePtr (p + (num_stubs max_app)) ::
-             Number (&(num_args - (&1))) :: ys))) /\
+           (Block closure_tag (bvlSem_CodePtr (p + (num_stubs
+             max_app)) :: Number (&(num_args - (&1))) :: ys))) /\
    (
      num_args <= max_app /\ ~(
      num_args = 0) /\
      every_Fn_SOME [x] /\
      every_Fn_vs_SOME [x] /\
-     compile_exps max_app [x] aux = ([c],aux1) /\
-     code_installed aux1 code /\
-     lookup (p + (num_stubs max_app)) code =
+     clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1) /\
+     clos_to_bvlProof_code_installed aux1 code /\
+     sptree_lookup (p + (num_stubs max_app)) code =
        SOME (num_args + (1:num),Let (GENLIST Var (num_args + 1) ++
          free_let (Var num_args) (LENGTH env)) c) ==>
      cl_rel max_app fs refs code (env,ys)
             (Recclosure (SOME p) [] env [(num_args,x)] 0)
-            (Block closure_tag (CodePtr (p + (num_stubs max_app)) ::
-              Number (&(num_args - (&1))) :: ys))) /\
+            (Block closure_tag (bvlSem_CodePtr (p + (num_stubs
+              max_app)) :: Number (&(num_args - (&1))) :: ys))) /\
      ((exps = MAP FST exps_ps) /\
       (ps = MAP SND exps_ps) /\ (ps = GENLIST (\n. loc + (num_stubs
         max_app) + 2 * n) (LENGTH exps_ps)) /\
-      (rs = MAP (\((n,e),p). Block closure_tag [CodePtr p; Number
-        (&(n - (&1))); RefPtr T r]) exps_ps) /\
+      (rs = MAP (\((n,e),p). Block closure_tag [bvlSem_CodePtr p;
+        Number (&(n - (&1))); RefPtr T r]) exps_ps) /\
       ~(r IN fs) /\
       (FLOOKUP refs r = SOME (ValueArray (rs ++ ys))) /\
       1 < LENGTH exps /\ k < LENGTH exps /\
@@ -179,22 +176,23 @@ let v_rel = cake_inductive
     v_rel max_app f refs code (Block t xs) (Block (clos_tag_shift t)
       ys)) /\
    (FLOOKUP refs p = SOME (ByteArray T bs) /\ ~(p IN FRANGE f) ==>
-    v_rel max_app f refs code (ByteVector bs) (RefPtr T p)) /\
+    v_rel max_app f refs code (closSem_ByteVector bs) (RefPtr T p))
+      /\
    ((FLOOKUP f r1 = SOME r2) ==>
     v_rel max_app f refs code (RefPtr b r1) (RefPtr b r2)) /\
    (
     EVERY2 (v_rel max_app f refs code) env fvs /\
     cl_rel max_app (FRANGE f) refs code (env,fvs) cl (Block
-      closure_tag (CodePtr p :: Number n :: ys)) ==>
-    v_rel max_app f refs code cl (Block closure_tag (CodePtr p ::
-      Number n :: ys))) /\
+      closure_tag (bvlSem_CodePtr p :: Number n :: ys)) ==>
+    v_rel max_app f refs code cl (Block closure_tag (bvlSem_CodePtr p
+      :: Number n :: ys))) /\
    (
     EVERY2 (v_rel max_app f refs code) env fvs /\
     EVERY2 (v_rel max_app f refs code) arg_env ys /\ ~(
     arg_env = []) /\
     LENGTH arg_env < num_args /\
-    (lookup (partial_app_fn_location max_app (num_args - 1) (LENGTH
-      ys - 1)) code =
+    (sptree_lookup (partial_app_fn_location max_app (num_args - 1)
+      (LENGTH ys - 1)) code =
       SOME (num_args - LENGTH arg_env +
         1,generate_partial_app_closure_fn (num_args - 1) (LENGTH ys -
         1))) /\
@@ -203,9 +201,9 @@ let v_rel = cake_inductive
     cl_rel max_app (FRANGE f) refs code (env,fvs) cl cl' ==>
     v_rel max_app f refs code cl_app
                         (Block partial_app_tag
-                              (CodePtr (partial_app_fn_location
-                                max_app (num_args - 1) (LENGTH ys - 1))
-                                ::
+                              (bvlSem_CodePtr
+                                (partial_app_fn_location max_app
+                                (num_args - 1) (LENGTH ys - 1)) ::
                               Number (&(num_args - (&1) - LENGTH
                                 arg_env)) :: cl' :: ys)))`;;
 
@@ -218,7 +216,6 @@ let env_rel_def = cake_define
         | ((x :: xs),(y :: ys)) ->
         v_rel max_app f refs code x y /\ clos_to_bvlProof_env_rel
           max_app f refs code xs ys`;;
-hol4_overload "env_rel" "clos_to_bvlProof_env_rel";;
 
 (* HOL4 ML code, not ported:
 val env_rel_IMP_EL =
@@ -247,15 +244,15 @@ End
 let nth_code_def = cake_define_list
   [`nth_code t_co 0 = LN`;
    `nth_code t_co (SUC n) =
-      union (fromAList (SND (t_co 0))) (nth_code (shift_seq 1
-        t_co) n)`];;
+      sptree_union (fromAList (SND (t_co 0))) (nth_code
+        (misc_shift_seq 1 t_co) n)`];;
 
 let compile_oracle_inv_def = cake_define
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
       s_cc = pure_cc (compile_inc max_app) t_cc /\
       t_co = pure_co (compile_inc max_app) o s_co /\
       (!n cfg ps. t_co n = (cfg,ps) ==> ALL_DISTINCT (MAP FST ps)) /\
-      (!n. DISJOINT (domain (union t_code (nth_code t_co n)))
+      (!n. DISJOINT (domain (sptree_union t_code (nth_code t_co n)))
              (set_of_list (MAP FST (SND (t_co n))))) /\
       (!n cfg e ps.
         s_co n = (cfg,e,ps) ==>
@@ -302,13 +299,13 @@ let state_rel_def = cake_define
                   ref_rel (v_rel (?_max_app s) f (?_refs t) (?_code
                     t)) x y)) /\
      (!n. n < ?_max_app s ==>
-          lookup (generic_app_fn_location n) (?_code t) = SOME (n +
-            2,generate_generic_app (?_max_app s) n)) /\
+          sptree_lookup (generic_app_fn_location n) (?_code t) = SOME
+            (n + 2,generate_generic_app (?_max_app s) n)) /\
      (!tot n. tot < ?_max_app s /\ n < tot ==>
-       lookup (partial_app_fn_location (?_max_app s) tot n) (?_code
-         t) = SOME (tot - n + 1,generate_partial_app_closure_fn tot n))
-         /\
-     lookup (num_stubs (?_max_app s) - 2) (?_code t) = SOME
+       sptree_lookup (partial_app_fn_location (?_max_app s) tot n)
+         (?_code t) = SOME (tot - n + 1,generate_partial_app_closure_fn
+         tot n)) /\
+     sptree_lookup (num_stubs (?_max_app s) - 2) (?_code t) = SOME
        (2,force_thunk_code) /\
      compile_oracle_inv (?_max_app s) (?_code s) (?_compile s)
        (?_compile_oracle s) (?_code
@@ -317,11 +314,11 @@ let state_rel_def = cake_define
      (!name arity c.
        (FLOOKUP (?_code s) name = SOME (arity,c)) ==>
        (?aux1 c2 aux2.
-         (compile_exps (?_max_app s) [c] aux1 = ([c2],aux2)) /\
-         (lookup (name + (num_stubs (?_max_app s))) (?_code t) = SOME
-           (arity,c2)) /\
-         code_installed aux2 (?_code t)))`;;
-hol4_overload "state_rel" "clos_to_bvlProof_state_rel";;
+         (clos_to_bvl_compile_exps (?_max_app s) [c] aux1 =
+           ([c2],aux2)) /\
+         (sptree_lookup (name + (num_stubs (?_max_app s))) (?_code t)
+           = SOME (arity,c2)) /\
+         clos_to_bvlProof_code_installed aux2 (?_code t)))`;;
 
 (* HOL4 ML code, not ported:
 val v_rel_SUBMAP = Q.prove(
@@ -933,27 +930,30 @@ let init_code_def = cake_define
   `clos_to_bvlProof_init_code code1 code2 max_app <=>
      (!n.
         n < max_app ==>
-        lookup (generic_app_fn_location n) code2 =
+        sptree_lookup (generic_app_fn_location n) code2 =
         SOME (n + 2,generate_generic_app max_app n)) /\
      (!tot prev.
         tot < max_app /\ prev < tot ==>
-        lookup (partial_app_fn_location max_app tot prev) code2 =
+        sptree_lookup (partial_app_fn_location max_app tot prev)
+          code2 =
         SOME ((tot + 1) - prev,generate_partial_app_closure_fn tot
           prev)) /\
      (!name arity c.
        FLOOKUP code1 name = SOME (arity,c) ==>
        (?aux1 c2 aux2.
-         compile_exps max_app [c] aux1 = ([c2],aux2) /\
-         lookup (name + num_stubs max_app) code2 = SOME (arity,c2) /\
-         code_installed aux2 code2))`;;
+         clos_to_bvl_compile_exps max_app [c] aux1 = ([c2],aux2) /\
+         sptree_lookup (name + num_stubs max_app) code2 = SOME
+           (arity,c2) /\
+         clos_to_bvlProof_code_installed aux2 code2))`;;
 hol4_overload "init_code" "clos_to_bvlProof_init_code";;
 
 let chain_installed_def = cake_define
   `chain_installed start (es:closLang_exp list) code <=>
      (!i. i < LENGTH es ==> closSem_find_code (start + i)
        ([]:closSem_v list) code =
-          SOME ([],(if i + 1 < LENGTH es then Let None [EL i es]
-            (Call None 0 (start + i + 1) []) else EL i es)))`;;
+          SOME ([],(if i + 1 < LENGTH es then Let
+            backend_common_None [EL i es] (Call backend_common_None 0
+            (start + i + 1) []) else EL i es)))`;;
 
 (*
 Theorem ALOOKUP_compile_prog_main:
@@ -1130,8 +1130,9 @@ let syntax_oracle_ok_def = cake_define
                       co)))) /\
     (IS_SOME (clos_to_bvl_config_known_conf c) ==>
         1 <= ?_max_app c /\ every_Fn_vs_NONE es /\
-        oracle_monotonic (SET_OF_BAG o elist_globals o FST o SND) (<)
-            (SET_OF_BAG (elist_globals es)) co /\
+        oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST
+          o SND) (<)
+            (SET_OF_BAG (closProps_elist_globals es)) co /\
         is_state_oracle (clos_known_compile_inc (THE
           (clos_to_bvl_config_known_conf c)))
             ((\x y. strcat x y) pure_co (fvs_inc o
@@ -1139,8 +1140,9 @@ let syntax_oracle_ok_def = cake_define
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c) (?_max_app c)) o
                       co))) /\
-        (!n'. BAG_ALL_DISTINCT (elist_globals (FST (SND (co n')))) /\
-                EVERY esgc_free (FST (SND (co n'))))) /\
+        (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
+          n')))) /\
+                EVERY closProps_esgc_free (FST (SND (co n'))))) /\
     ~contains_App_SOME (?_max_app c) es /\ syntax_ok es /\
     (!n. ~contains_App_SOME (?_max_app c) (FST (SND (co n))) /\
             every_Fn_vs_NONE (FST (SND (co n)))) /\
@@ -1167,7 +1169,8 @@ let req_compile_inc_addrs_def = cake_define
 
 let can_extract_def = cake_define
   `can_extract exps = (?t n exps'.
-         exps = Op t (IntOp (Const (&n))) [] :: exps')`;;
+         exps = Op t (closLang_IntOp (closLang_Const (&n))) [] ::
+           exps')`;;
 
 (* HOL4 ML code, not ported:
 fun mk_to_oracle t xsq = let

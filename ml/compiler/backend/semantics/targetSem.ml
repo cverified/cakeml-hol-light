@@ -13,7 +13,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
@@ -55,7 +54,7 @@ let machine_config_FIELDS = define_record "machine_config"
 
 let apply_oracle_def = cake_define
   `apply_oracle oracle x =
-     (oracle (0:num) x,shift_seq 1 oracle)`;;
+     (oracle (0:num) x,misc_shift_seq 1 oracle)`;;
 
 let encoded_bytes_in_mem_def = cake_define
   `encoded_bytes_in_mem c pc m md <=>
@@ -87,32 +86,32 @@ let is_valid_mapped_read_def = cake_define
   `is_valid_mapped_read pc (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
        (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
-         (Mem Load8 r ad)))
+         (asm_Mem asm_Load8 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 0) then
        (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
-         (Mem Load r ad)))
+         (asm_Mem Load r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 2) then
        (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
-         (Mem Load16 r ad)))
+         (asm_Mem asm_Load16 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 4) then
        (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
-         (Mem Load32 r ad)))
+         (asm_Mem asm_Load32 r ad)))
          (target_get_byte t ms) md) else F)`;;
 
 let is_valid_mapped_write_def = cake_define
   `is_valid_mapped_write pc (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
          (bytes_in_memory pc (asm_config_encode (target_config t)
-           (Inst (Mem Store8 r ad)))
+           (Inst (asm_Mem asm_Store8 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 0) then
          (bytes_in_memory pc (asm_config_encode (target_config t)
-           (Inst (Mem Store r ad)))
+           (Inst (asm_Mem Store r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 2) then
          (bytes_in_memory pc (asm_config_encode (target_config t)
-           (Inst (Mem Store16 r ad)))
+           (Inst (asm_Mem asm_Store16 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 4) then
          (bytes_in_memory pc (asm_config_encode (target_config t)
-           (Inst (Mem Store32 r ad)))
+           (Inst (asm_Mem asm_Store32 r ad)))
            (target_get_byte t ms) md) else F)`;;
 
 let evaluate_def = cake_define
@@ -144,10 +143,10 @@ let evaluate_def = cake_define
                  target_get_pc (machine_config_target mc) ms =
                  machine_config_halt_pc mc then
          ((if target_get_reg (machine_config_target mc) ms
-           (machine_config_ptr_reg mc) = (n2w 0) then Halt Success else
-           Halt Resource_limit_hit),ms,ffi) else if target_get_pc
-           (machine_config_target mc) ms = machine_config_ccache_pc mc
-           then
+           (machine_config_ptr_reg mc) = (n2w 0) then Halt ffi_Success
+           else Halt ffi_Resource_limit_hit),ms,ffi) else if
+           target_get_pc (machine_config_target mc) ms =
+           machine_config_ccache_pc mc then
          let (ms1,new_oracle) =
            apply_oracle (machine_config_ccache_interfer mc)
              (target_get_reg (machine_config_target mc) ms
@@ -183,8 +182,8 @@ let evaluate_def = cake_define
                                 (?_ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome ->
-                              (Halt (FFI_outcome outcome),ms,ffi) |
-                                FFI_return new_ffi new_bytes ->
+                              (Halt (ffi_FFI_outcome outcome),ms,ffi)
+                                | FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -216,8 +215,8 @@ let evaluate_def = cake_define
                                 else word_to_bytes_aux (w2n nb) w F) ++
                                 (word_to_bytes ad F)) with FFI_final
                                 outcome ->
-                              (Halt (FFI_outcome outcome),ms,ffi) |
-                                FFI_return new_ffi new_bytes ->
+                              (Halt (ffi_FFI_outcome outcome),ms,ffi)
+                                | FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -233,9 +232,9 @@ let evaluate_def = cake_define
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
                               (?_ffi_names mc)) bytes bytes2 with
-                              FFI_final outcome -> (Halt (FFI_outcome
-                              outcome),ms,ffi) | FFI_return new_ffi
-                              new_bytes ->
+                              FFI_final outcome -> (Halt
+                              (ffi_FFI_outcome outcome),ms,ffi) |
+                              FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -248,19 +247,19 @@ let evaluate_def = cake_define
 hol4_overload "evaluate" "targetSem_evaluate";;
 
 let machine_sem_def = cake_define_list
-  [`machine_sem mc st ms (Terminate t io_list) <=>
+  [`machine_sem mc st ms (ffi_Terminate t io_list) <=>
          (?k ms' st'.
            evaluate mc st k ms = (Halt t,ms',st') /\
              ffi_state_io_events
            st' = io_list)`;
-   `machine_sem mc st ms (Diverge io_trace) <=>
+   `machine_sem mc st ms (ffi_Diverge io_trace) <=>
          (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE
              (\k. fromList (ffi_state_io_events (SND (SND (evaluate
                mc st k ms))))) UNIV)
            io_trace`;
-   `machine_sem mc st ms Fail <=>
+   `machine_sem mc st ms ffi_Fail <=>
          (?k. FST (evaluate mc st k ms) = Error)`];;
 
 (* define what it means for code to be loaded and ready to run *)
@@ -526,7 +525,7 @@ let good_init_state_def = cake_define
      (!a. ?w. asm_state_mem
        t a = get_byte a w (asm_config_big_endian (target_config
          (machine_config_target mc_conf))) /\
-       m (byte_align a) = Word w) /\
+       m (byte_align a) = wordLang_Word w) /\
      (!n. n < cbspace ==>
        n2w (n + LENGTH bytes) + asm_state_pc t IN
          asm_state_mem_domain t /\ ~(
@@ -556,19 +555,20 @@ let installed_def = cake_define
        (n2w 1024) * bytes_in_word <=+ asm_state_regs t r2 -
          asm_state_regs t r1 /\
        DISJOINT heap_stack_dm bitmaps_dm /\
-       m (asm_state_regs t r1) = Word bitmap_ptr /\
+       m (asm_state_regs t r1) = wordLang_Word bitmap_ptr /\
        m (asm_state_regs t r1 + bytes_in_word) =
-         Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps)) /\
+         wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
+           bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 2) * bytes_in_word) =
-         Word (bitmap_ptr + bytes_in_word * n2w data_sp +
+         wordLang_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
                bytes_in_word * n2w (LENGTH bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 3) * bytes_in_word) =
-         Word (target_get_pc (machine_config_target mc_conf) ms + n2w
-           (LENGTH bytes)) /\
+         wordLang_Word (target_get_pc (machine_config_target mc_conf)
+           ms + n2w (LENGTH bytes)) /\
        m (asm_state_regs t r1 + (n2w 4) * bytes_in_word) =
-         Word (target_get_pc (machine_config_target mc_conf) ms + n2w
-           cbspace + n2w (LENGTH bytes)) /\
-       (word_list bitmap_ptr (MAP Word bitmaps) *
+         wordLang_Word (target_get_pc (machine_config_target mc_conf)
+           ms + n2w cbspace + n2w (LENGTH bytes)) /\
+       (misc_word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
          word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
            bitmaps)) data_sp)
         (fun2set (m,byte_aligned INTER bitmaps_dm)) /\

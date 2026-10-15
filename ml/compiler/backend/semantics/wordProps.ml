@@ -218,7 +218,7 @@ let s_key_eq_def = cake_define
 (* Locals extend lemma *)
 let locals_rel_def = cake_define
   `locals_rel temp (s:('a word_loc) spt) t <=> (!x. x < temp ==>
-  lookup x s = lookup x t)`;;
+  sptree_lookup x s = sptree_lookup x t)`;;
 
 (*Extra temporaries not mentioned in program
   do not affect evaluation
@@ -549,19 +549,19 @@ MOVE THIS to backend props.*)
 let inc_clock_def = cake_define
   `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) = ?_clock_fupd
   (K (?_clock t + n)) t`;;
-hol4_overload "inc_clock" "wordProps_inc_clock";;
 
 let no_alloc_code_def = cake_define
   `no_alloc_code (code:(num#'a wordLang_prog) spt) <=>
-   (!k n p. lookup k code = SOME (n,p) ==> no_alloc p)`;;
+   (!k n p. sptree_lookup k code = SOME (n,p) ==> no_alloc p)`;;
 
 let no_install_code_def = cake_define
   `no_install_code (code:(num#'a wordLang_prog) spt) <=>
-       (!k n p. lookup k code = SOME (n,p) ==> no_install p)`;;
+       (!k n p. sptree_lookup k code = SOME (n,p) ==>
+         wordConvs_no_install p)`;;
 
 let no_mt_code_def = cake_define
   `no_mt_code (code:(num#'a wordLang_prog) spt) <=>
-   (!k n p. lookup k code = SOME (n,p) ==> no_mt p)`;;
+   (!k n p. sptree_lookup k code = SOME (n,p) ==> no_mt p)`;;
 
 
 (*** permute_swap for no_install & no_alloc ***)

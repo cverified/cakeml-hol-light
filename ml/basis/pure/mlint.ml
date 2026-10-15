@@ -148,7 +148,6 @@ let fromNatString_def = cake_define
 let int_cmp_def = cake_define
   `mlint_int_cmp i (j:int) = (if i < j then LESS else
                        if j < i then GREATER else EQUAL)`;;
-hol4_overload "int_cmp" "mlint_int_cmp";;
 
 let num_gcd_def = cake_define
   `mlint_num_gcd a b = (if a = 0 then b else mlint_num_gcd (b MOD a)

@@ -79,7 +79,6 @@ let code_installed_def = cake_define_list
          stack_to_labProof_code_installed n xs code else
          asm_fetch_aux n code = SOME x /\
          stack_to_labProof_code_installed (n + 1) xs code)`];;
-hol4_overload "code_installed" "stack_to_labProof_code_installed";;
 
 (* TODO: these may already be proved in lab_filter or lab_to_target,
          they ought to move into labProps
@@ -137,7 +136,7 @@ let state_rel_def = cake_define
      (!n prog. lookup n (?_code s) = SOME prog ==>
        call_args prog (?_ptr_reg t) (?_len_reg t) (?_ptr2_reg t)
          (?_len2_reg t) (?_link_reg t) /\
-       (?pc. code_installed pc
+       (?pc. stack_to_labProof_code_installed pc
               (append (FST (flatten T prog n (next_lab prog 2) []
                 []))) (?_code t) /\
             loc_to_pc n 0 (?_code t) = SOME pc)) /\
@@ -198,14 +197,14 @@ let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
           backend_passes_Word (n2w 0) -> Halt Success
-        | (Word _11) -> Halt Resource_limit_hit
+        | (Word _11) -> Halt ffi_Resource_limit_hit
         | _12 -> Error`;;
 
 let halt_view_def = cake_define
   `halt_view x1 =
         match x1 with
           SOME (Halt w) -> SOME (halt_word_view w)
-        | (SOME (FinalFFI outcome)) -> SOME (Halt (FFI_outcome
+        | (SOME (FinalFFI outcome)) -> SOME (Halt (ffi_FFI_outcome
           outcome))
         | _13 -> NONE`;;
 
@@ -471,8 +470,8 @@ let complex_get_code_labels_def = cake_define
                (l1,l2) INSERT complex_get_code_labels r)))
         | (Loop p) -> complex_get_code_labels p
         | (LocValue i l1 l2) -> {(l1,l2)}
-        | (RawCall l) -> {(l,1)}
-        | (JumpLower n m l) -> {(l,0)}
+        | (stackLang_RawCall l) -> {(l,1)}
+        | (stackLang_JumpLower n m l) -> {(l,0)}
         | _19 -> {}`;;
 
 (* TODO: move these when the actual needed theorem is clearer...

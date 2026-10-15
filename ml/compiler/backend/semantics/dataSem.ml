@@ -65,7 +65,6 @@ let stack_INDUCT,stack_RECURSION = define_datatype
   "stack = dataSem_Env (num option) (dataSem_v spt) | dataSem_Exc \
    (num option) (dataSem_v spt) (num)";;
 hol4_overload "Env" "dataSem_Env";;
-hol4_overload "Exc" "dataSem_Exc";;
 
 let limits_FIELDS = define_record "limits"
   ["heap_limit","num";
@@ -144,8 +143,8 @@ let size_of_def = cake_define_list
                               (n + LENGTH vs + 1,refs,seen)) | SOME
                                 (Thunk _5 v) -> (let (n,refs,seen) =
                                 size_of lims [v] (delete r refs) seen in
-                              (n + 2,refs,seen)) | SOME (MutBlock tg
-                                fin ls c rs) ->
+                              (n + 2,refs,seen)) | SOME
+                                (bvlSem_MutBlock tg fin ls c rs) ->
              (let (n,refs,seen) = size_of lims (ls ++ [c] ++ rs)
                (delete r refs) seen in
                (n + LENGTH ls + LENGTH rs + 2,refs,seen)))`;
@@ -158,7 +157,7 @@ let size_of_def = cake_define_list
 
 let extract_stack_def = cake_define_list
   [`extract_stack (Env _6 env:stack) = mlvector_toList env`;
-   `extract_stack (Exc _7 env _8) = mlvector_toList env`];;
+   `extract_stack (dataSem_Exc _7 env _8) = mlvector_toList env`];;
 
 let global_to_vs_def = cake_define_list
   [`global_to_vs NONE = []`;
@@ -233,7 +232,7 @@ let consume_space_def = cake_define
 (* Determines which operations are safe for space *)
 let allowed_op_def = cake_define
   `allowed_op op _13 = (~(op = closLang_Install) /\ (!t i. ~(op =
-  MemOp (MutCons t i))))`;;
+  closLang_MemOp (closLang_MutCons t i))))`;;
 
 let v_to_list_def = cake_define
   `dataSem_v_to_list x1 =
@@ -255,19 +254,20 @@ hol4_overload "v_to_list" "dataSem_v_to_list";;
 
 (* Gives an upper bound to the memory consuption of an operation *)
 let space_consumed_def = cake_define_list
-  [`(\x y. strcat x y) space_consumed (s (BlockOp (ConsExtend tag))
-  (Block _16 _17 xs' :: Number lower :: Number len :: Number tot :: xs))
-  =
+  [`(\x y. strcat x y) space_consumed (s (closLang_BlockOp
+  (closLang_ConsExtend tag)) (Block _16 _17 xs' :: Number lower ::
+  Number len :: Number tot :: xs)) =
        LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
          lower) xs')) + 1`;
-   `space_consumed s (MemOp RefArray) [(Number len:dataSem_v); _18] =
-  num_of_int len + 1`;
-   `space_consumed s (MemOp (RefByte _19)) [(Number len:dataSem_v);
-  _20] = num_of_int len DIV (arch_size (dataSem_state_limits s) DIV
-  8) + 2`;
-   `space_consumed s (BlockOp (FromList n)) [(Number len:dataSem_v);
-  lv] = num_of_int len + 1`;
-   `space_consumed s (IntOp Add) [(Number i1:dataSem_v); Number i2] =
+   `space_consumed s (closLang_MemOp closLang_RefArray) [(Number
+  len:dataSem_v); _18] = num_of_int len + 1`;
+   `space_consumed s (closLang_MemOp (closLang_RefByte _19)) [(Number
+  len:dataSem_v); _20] = num_of_int len DIV (arch_size
+  (dataSem_state_limits s) DIV 8) + 2`;
+   `space_consumed s (closLang_BlockOp (closLang_FromList n))
+  [(Number len:dataSem_v); lv] = num_of_int len + 1`;
+   `space_consumed s (closLang_IntOp Add) [(Number i1:dataSem_v); Number
+  i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -279,7 +279,8 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Sub) [(Number i1:dataSem_v); Number i2] =
+   `space_consumed s (closLang_IntOp Sub) [(Number i1:dataSem_v); Number
+  i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -291,7 +292,8 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Mult) [(Number i1:dataSem_v); Number i2] =
+   `space_consumed s (closLang_IntOp closLang_Mult) [(Number
+  i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\ 0 <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -303,7 +305,8 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Div) [(Number i1:dataSem_v); Number i2] =
+   `space_consumed s (closLang_IntOp Div) [(Number i1:dataSem_v); Number
+  i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\ 0 <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -315,7 +318,8 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Mod) [(Number i1:dataSem_v); Number i2] =
+   `space_consumed s (closLang_IntOp Mod) [(Number i1:dataSem_v); Number
+  i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\ 0 <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -327,7 +331,7 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (BlockOp ListAppend) [lv1; lv2] =
+   `space_consumed s (closLang_BlockOp ListAppend) [lv1; lv2] =
        (match v_to_list lv1 with
         SOME l -> SUC (LENGTH l) * 3 | NONE -> 0)`;
    `space_consumed s (op:closLang_op) (vs:dataSem_v list) = (0:num)`];;
@@ -357,37 +361,37 @@ let eq_code_stack_max_def = cake_define
 let stack_consumed_def = cake_define
   `stack_consumed sfs lims p vs =
         match (p,vs) with
-          (MemOp (CopyByte _23),vs) ->
+          (closLang_MemOp (closLang_CopyByte _23),vs) ->
        OPTION_MAP2 MAX
         (sptree_lookup ByteCopy_location sfs)
         (OPTION_MAP2 MAX
            (lookup ByteCopyAdd_location sfs)
            (lookup ByteCopySub_location sfs))
-        | ((MemOp (RefByte _24)),vs) ->
+        | ((closLang_MemOp (closLang_RefByte _24)),vs) ->
        OPTION_MAP2 MAX
         (lookup RefByte_location sfs)
         (lookup Replicate_location sfs)
-        | ((MemOp (RefArray)),vs) ->
+        | ((closLang_MemOp (closLang_RefArray)),vs) ->
        OPTION_MAP2 MAX
         (lookup RefArray_location sfs)
         (lookup Replicate_location sfs)
-        | ((MemOp XorByte),vs) ->
+        | ((closLang_MemOp closLang_XorByte),vs) ->
        lookup XorLoop_location sfs
-        | ((MemOp (StringCmp b cmp)),vs) ->
+        | ((closLang_MemOp (closLang_StringCmp b cmp)),vs) ->
        lookup StringCmpLoop_location sfs
-        | ((BlockOp (ConsExtend _25)),vs) ->
+        | ((closLang_BlockOp (closLang_ConsExtend _25)),vs) ->
        lookup MemCopy_location sfs
-        | ((BlockOp (FromList _26)),vs) ->
+        | ((closLang_BlockOp (closLang_FromList _26)),vs) ->
        OPTION_MAP2 MAX
         (lookup FromList_location sfs)
         (lookup FromList1_location sfs)
-        | ((BlockOp ListAppend),vs) ->
+        | ((closLang_BlockOp ListAppend),vs) ->
        OPTION_MAP2 MAX
         (lookup Append_location sfs)
         (OPTION_MAP2 MAX
           (lookup AppendLenLoop_location sfs)
           (lookup AppendMainLoop_location sfs))
-        | ((IntOp Div),[Number n1; Number n2]) ->
+        | ((closLang_IntOp Div),[Number n1; Number n2]) ->
        (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 / n2) then
@@ -396,7 +400,7 @@ let stack_consumed_def = cake_define
            (lookup LongDiv1_location sfs) else
          OPTION_MAP2 MAX (lookup Div_location sfs)
            (max_depth sfs AnyArith_call_tree))
-        | ((IntOp Mod),[Number n1; Number n2]) ->
+        | ((closLang_IntOp Mod),[Number n1; Number n2]) ->
        (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 % n2) then
@@ -405,35 +409,35 @@ let stack_consumed_def = cake_define
            (lookup LongDiv1_location sfs) else
          OPTION_MAP2 MAX (lookup Mod_location sfs)
            (max_depth sfs AnyArith_call_tree))
-        | ((IntOp Mult),[Number n1; Number n2]) ->
+        | ((closLang_IntOp closLang_Mult),[Number n1; Number n2]) ->
        (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 * n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Mul_location sfs)
            (max_depth sfs AnyArith_call_tree))
-        | ((BlockOp Equal),[v1; v2]) ->
+        | ((closLang_BlockOp Equal),[v1; v2]) ->
       (eq_code_stack_max (MIN (vs_depth v1 + 1) (vs_depth v2 + 1))
         sfs)
-        | ((IntOp Sub),[Number n1; Number n2]) ->
+        | ((closLang_IntOp Sub),[Number n1; Number n2]) ->
        (if small_num (limits_arch_64_bit lims) n1 /\
           small_num (limits_arch_64_bit lims) n2 /\
           small_num (limits_arch_64_bit lims) (n1 - n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Sub_location sfs)
            (max_depth sfs AnyArith_call_tree))
-        | ((IntOp Add),[Number n1; Number n2]) ->
+        | ((closLang_IntOp Add),[Number n1; Number n2]) ->
        (if small_num (limits_arch_64_bit lims) n1 /\
           small_num (limits_arch_64_bit lims) n2 /\
           small_num (limits_arch_64_bit lims) (n1 + n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Add_location sfs)
            (max_depth sfs AnyArith_call_tree))
-        | ((IntOp LessEq),vs) ->
+        | ((closLang_IntOp closLang_LessEq),vs) ->
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
-        | ((IntOp Less),vs) ->
+        | ((closLang_IntOp Less),vs) ->
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
@@ -466,7 +470,8 @@ let do_space_def = cake_define
 
 let size_of_stack_frame_def = cake_define_list
   [`size_of_stack_frame (Env n _27:stack) = n`;
-   `size_of_stack_frame (Exc n _28 _29) = OPTION_MAP ((+) 3) n`];;
+   `size_of_stack_frame (dataSem_Exc n _28 _29) = OPTION_MAP ((+) 3)
+  n`];;
 
 let size_of_stack_def = cake_define
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame)
@@ -556,8 +561,8 @@ let do_install_def = cake_define
                      vl2 = Number (&(LENGTH data))) then Rerr (Rabort
                        Rtype_error) else
                   let (cfg,progs) = ?_compile_oracle s 0 in
-                  let new_oracle = shift_seq 1 (?_compile_oracle s)
-                    in
+                  let new_oracle = misc_shift_seq 1 (?_compile_oracle
+                    s) in
                     (match (?_compile s cfg progs,progs) with (SOME
                       (bytes',data',cfg'),(k,prog) :: _67) ->
                          (if bytes = bytes' /\ data = data' /\ FST
@@ -617,20 +622,20 @@ let lim_safe_part_def = cake_define_list
 let lim_safe_def = cake_define
   `lim_safe lims x2 xs =
         match (x2,xs) with
-          (BlockOp (Cons tag),xs) ->
+          (closLang_BlockOp (Cons tag),xs) ->
        (if xs = [] then tag < 2 EXP (arch_size lims) DIV 16 else
          LENGTH xs < 2 EXP limits_length_limit lims /\
          LENGTH xs < 2 EXP (arch_size lims - 4) /\
          4 * tag < 2 EXP (arch_size lims) DIV 16 /\
          4 * tag < 2 EXP (arch_size lims - limits_length_limit lims -
            2))
-        | ((MemOp (MutCons tag i)),xs) ->
+        | ((closLang_MemOp (closLang_MutCons tag i)),xs) ->
          (LENGTH xs < 2 EXP limits_length_limit lims /\
           LENGTH xs < 2 EXP (arch_size lims - 4) /\
           4 * tag < 2 EXP (arch_size lims) DIV 16 /\
           4 * tag < 2 EXP (arch_size lims - limits_length_limit lims
             - 2))
-        | ((BlockOp (FromList tag)),xs) ->
+        | ((closLang_BlockOp (closLang_FromList tag)),xs) ->
       (match xs with [len; lv] ->
          (match v_to_list lv with SOME n ->
              (if len = Number (&(LENGTH n)) then small_num
@@ -641,13 +646,13 @@ let lim_safe_def = cake_define
                     limits_length_limit lims - 2) /\
                   4 * tag < 2 EXP (arch_size lims) DIV 16 else T) |
                     _71 -> T) | _72 -> T)
-        | ((BlockOp ListAppend),[x1; x2]) ->
+        | ((closLang_BlockOp ListAppend),[x1; x2]) ->
       (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys) ->
            1 < limits_length_limit lims /\
            3 * (SUC (LENGTH xs)) < 2 EXP (arch_size lims) DIV 8 | _73
              -> T)
-        | ((BlockOp (ConsExtend tag)),(Block _74 _75 xs' :: Number
-          lower :: Number len :: Number tot :: xs)) ->
+        | ((closLang_BlockOp (closLang_ConsExtend tag)),(Block _74
+          _75 xs' :: Number lower :: Number len :: Number tot :: xs)) ->
            (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
               tot = 0 \/ ~(tot = &(LENGTH xs) + len) then T else
                 LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
@@ -657,76 +662,77 @@ let lim_safe_def = cake_define
                 4 * tag < 2 EXP (arch_size lims) DIV 16 /\
                 4 * tag < 2 EXP (arch_size lims - limits_length_limit
                   lims - 2))
-        | ((IntOp Add),[Number i1; Number i2]) ->
+        | ((closLang_IntOp Add),[Number i1; Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\
           small_num (limits_arch_64_bit lims) i2 /\
           small_num (limits_arch_64_bit lims) (i1 + i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-        | ((IntOp Sub),[Number i1; Number i2]) ->
+        | ((closLang_IntOp Sub),[Number i1; Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\
           small_num (limits_arch_64_bit lims) i2 /\
           small_num (limits_arch_64_bit lims) (i1 - i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-        | ((IntOp Mult),[Number i1; Number i2]) ->
+        | ((closLang_IntOp closLang_Mult),[Number i1; Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\ 0 <= i1 /\
           small_num (limits_arch_64_bit lims) i2 /\ 0 <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 * i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-        | ((IntOp Div),[Number i1; Number i2]) ->
+        | ((closLang_IntOp Div),[Number i1; Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\ 0 <= i1 /\
           small_num (limits_arch_64_bit lims) i2 /\ 0 <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 / i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-        | ((IntOp Mod),[Number i1; Number i2]) ->
+        | ((closLang_IntOp Mod),[Number i1; Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\ 0 <= i1 /\
           small_num (limits_arch_64_bit lims) i2 /\ 0 <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 % i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
-        | ((MemOp RefArray),[Number i; v]) ->
+        | ((closLang_MemOp closLang_RefArray),[Number i; v]) ->
       (0 <= i /\
        num_of_int i < 2 EXP (arch_size lims) DIV 16 /\
        num_of_int i < 2 EXP limits_length_limit lims)
-        | ((MemOp (RefByte _76)),(Number i :: xs)) ->
+        | ((closLang_MemOp (closLang_RefByte _76)),(Number i :: xs))
+          ->
       (0 <= i /\
        num_of_int i DIV (arch_size lims DIV 8) < 2 EXP (arch_size
          lims) DIV arch_size lims /\
        num_of_int i DIV (arch_size lims DIV 8) + 1 < 2 EXP
          limits_length_limit lims /\
        small_num (limits_arch_64_bit lims) i)
-        | ((MemOp Ref),xs) ->
+        | ((closLang_MemOp Ref),xs) ->
       (LENGTH xs < 2 EXP limits_length_limit lims /\
        LENGTH xs < 2 EXP arch_size lims DIV 16)
-        | ((BlockOp (Build parts)),_77) ->
+        | ((closLang_BlockOp (closLang_Build parts)),_77) ->
       EVERY (lim_safe_part lims) parts
-        | ((WordOp WordToInt),_78) ->
+        | ((closLang_WordOp WordToInt),_78) ->
       (1 < limits_length_limit lims)
-        | ((WordOp WordFromInt),_79) ->
+        | ((closLang_WordOp WordFromInt),_79) ->
       (1 < limits_length_limit lims)
-        | ((WordOp (WordOpw W64 _80)),_81) ->
+        | ((closLang_WordOp (WordOpw W64 _80)),_81) ->
       (1 < limits_length_limit lims)
-        | ((WordOp (WordShift W64 _82 _83)),_84) ->
+        | ((closLang_WordOp (WordShift W64 _82 _83)),_84) ->
       (1 < limits_length_limit lims)
-        | ((WordOp (WordFromWord _85)),_86) ->
+        | ((closLang_WordOp (WordFromWord _85)),_86) ->
       (1 < limits_length_limit lims)
-        | ((WordOp (FP_cmp _87)),_88) -> ?_has_fp_ops
+        | ((closLang_WordOp (FP_cmp _87)),_88) -> ?_has_fp_ops
       lims
-        | ((WordOp (FP_uop _89)),_90) ->
+        | ((closLang_WordOp (FP_uop _89)),_90) ->
       (?_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
-        | ((WordOp (FP_bop _91)),_92) ->
+        | ((closLang_WordOp (FP_bop _91)),_92) ->
       (?_has_fp_ops lims /\ (limits_arch_64_bit lims \/ 1 <
         limits_length_limit lims))
-        | ((WordOp (FP_top _93)),_94) ->
+        | ((closLang_WordOp (FP_top _93)),_94) ->
       (?_has_fp_ops lims /\ limits_has_fp_tops lims /\
         (limits_arch_64_bit lims \/ 1 < limits_length_limit lims))
         | (_95,_96) -> T`;;
@@ -778,17 +784,19 @@ let do_int_app_def = cake_define
      (if small_enough_int n then SOME (Number n) else NONE)
       | ((Add),[Number n1; Number n2]) -> SOME (Number (n1 + n2))
       | ((Sub),[Number n1; Number n2]) -> SOME (Number (n1 - n2))
-      | ((Mult),[Number n1; Number n2]) -> SOME (Number (n1 * n2))
+      | ((closLang_Mult),[Number n1; Number n2]) -> SOME (Number (n1
+        * n2))
       | ((Div),[Number n1; Number n2]) ->
        (if n2 = 0 then NONE else SOME (Number (n1 / n2)))
       | ((Mod),[Number n1; Number n2]) ->
        (if n2 = 0 then NONE else SOME (Number (n1 % n2)))
       | ((Less),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
-      | ((LessEq),[Number n1; Number n2]) -> SOME (Boolv (n1 <= n2))
+      | ((closLang_LessEq),[Number n1; Number n2]) -> SOME (Boolv (n1
+        <= n2))
       | ((Greater),[Number n1; Number n2]) -> SOME (Boolv (n1 > n2))
-      | ((GreaterEq),[Number n1; Number n2]) -> SOME (Boolv (n1 >=
-        n2))
-      | ((LessConstSmall n),[Number i]) ->
+      | ((closLang_GreaterEq),[Number n1; Number n2]) -> SOME (Boolv
+        (n1 >= n2))
+      | ((closLang_LessConstSmall n),[Number i]) ->
          (if 0 <= i /\ i <= 1000000 /\ n < 1000000 then
            SOME (Boolv (i < &n)) else NONE)
       | ((op:closLang_int_op),(vs:dataSem_v list)) -> NONE`;;
@@ -797,18 +805,19 @@ hol4_overload "do_int_app" "dataSem_do_int_app";;
 let do_word_app_def = cake_define
   `dataSem_do_word_app x1 ws =
         match (x1,ws) with
-          (WordOpw W8 opw,[(Number n1:dataSem_v); Number n2]) ->
+          (WordOpw ast_W8 opw,[(Number n1:dataSem_v); Number n2]) ->
           (match some (\((w1:word8),(w2:word8)). n1 = &(w2n w1) /\ n2
             = &(w2n w2)) with NONE -> NONE | SOME (w1,w2) -> SOME
             (Number (&(w2n (opw_lookup opw w1 w2)))))
         | ((WordOpw W64 opw),[Word64 w1; Word64 w2]) ->
            SOME (Word64 (opw_lookup opw w1 w2))
-        | ((WordTest W8 test),[Number n1; Number n2]) ->
+        | ((WordTest ast_W8 test),[Number n1; Number n2]) ->
           (if 0 <= n1 /\ n1 < 256 /\ 0 <= n2 /\ n2 < 256 then
              (match test with Equal -> SOME (Boolv (n1 = n2)) |
-               Compare Lt -> SOME (Boolv (n1 < n2)) | Compare Leq ->
-               SOME (Boolv (n1 <= n2)) | _97 -> NONE) else NONE)
-        | ((WordShift W8 sh n),[Number i]) ->
+               ast_Compare Lt -> SOME (Boolv (n1 < n2)) | ast_Compare
+               ast_Leq -> SOME (Boolv (n1 <= n2)) | _97 -> NONE) else
+               NONE)
+        | ((WordShift ast_W8 sh n),[Number i]) ->
           (match some (\(w:word8). i = &(w2n w)) with NONE -> NONE |
             SOME w -> SOME (Number (&(w2n (shift_lookup sh w n)))))
         | ((WordShift W64 sh n),[Word64 w]) ->
@@ -882,14 +891,15 @@ let finalise_cons_def = cake_define_wf
   `dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr:dataSem_v) ->
-       (match lookup ptr refs with SOME (MutBlock tag finalised l c
-         r) ->
+       (match lookup ptr refs with SOME (bvlSem_MutBlock tag
+         finalised l c r) ->
            (if ~finalised then
              (match dataSem_finalise_cons c (delete ptr refs) ts with
                SOME (c',refs',ts') ->
                   SOME (Block (match ts' with NONE -> 0 | SOME n ->
                     n) tag (l ++ [c'] ++ r),
-                        insert ptr (MutBlock tag T l c r) refs',
+                        insert ptr (bvlSem_MutBlock tag T l c r)
+                          refs',
                         OPTION_MAP SUC ts') | NONE -> NONE) else
                           NONE) | SOME res -> SOME (RefPtr b
                           ptr,refs,ts) | NONE -> NONE)
@@ -906,14 +916,14 @@ let do_app_aux_def = cake_define
                         #string+dataSem_v#string)) | _105 -> ((Rerr
                         (Rabort
                         Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                        #string+dataSem_v#string)) | (GlobOp
+                        #string+dataSem_v#string)) | (closLang_GlobOp
                         GlobalsPtr,xs) ->
            (match xs with [] -> (match dataSem_state_global s with
              SOME p -> Rval (RefPtr T p,s) | NONE -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
              +dataSem_v#string)) | _106 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (GlobOp (Global n),xs) ->
+             +dataSem_v#string)) | (closLang_GlobOp (Global n),xs) ->
            (match xs with [] -> (match dataSem_state_global s with
              SOME ptr ->
                          (match sptree_lookup ptr (?_refs s) with
@@ -931,7 +941,8 @@ let do_app_aux_def = cake_define
                                 #string)) | _108 -> ((Rerr (Rabort
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
-                                #string)) | (GlobOp (SetGlobal n),xs) ->
+                                #string)) | (closLang_GlobOp (SetGlobal
+                                n),xs) ->
            (match xs with [x] -> (match dataSem_state_global s with
              SOME ptr ->
                           (match lookup ptr (?_refs s) with SOME
@@ -951,13 +962,14 @@ let do_app_aux_def = cake_define
                                 #string)) | _110 -> ((Rerr (Rabort
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
-                                #string)) | (GlobOp (SetGlobalsPtr),xs)
-                                ->
+                                #string)) | (closLang_GlobOp
+                                (SetGlobalsPtr),xs) ->
            (match xs with [RefPtr T p] -> Rval
              (Unit,dataSem_state_global_fupd (K (SOME p)) s) | _111 ->
              ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (BlockOp (FromList n),xs) ->
+             +dataSem_v#string)) | (closLang_BlockOp (closLang_FromList
+             n),xs) ->
            (match xs with [len; lv] ->
                (match v_to_list lv with SOME [] -> (if len = Number
                  (&0) then Rval (Block 0 n [],s) else ((Rerr (Rabort
@@ -975,7 +987,8 @@ let do_app_aux_def = cake_define
                                 #string)) | _113 -> ((Rerr (Rabort
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
-                                #string)) | (MemOp (RefByte f),xs) ->
+                                #string)) | (closLang_MemOp
+                                (closLang_RefByte f),xs) ->
            (match xs with [Number i; Number b] ->
                (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
                  let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs
@@ -983,23 +996,25 @@ let do_app_aux_def = cake_define
                    Rval (RefPtr T ptr,?_refs_fupd (K (insert ptr
                      (ByteArray f (REPLICATE (num_of_int i) (i2w b)))
                        (?_refs s))) s) else Rerr (Rabort Rtype_error)) |
-                       _114 -> Rerr (Rabort Rtype_error)) | (GlobOp
-                       AllocGlobal,_115) -> Rerr (Rabort Rtype_error) |
-                       (MemOp FromListByte,_116) -> Rerr (Rabort
-                       Rtype_error) | (MemOp ConcatByteVec,_117) -> Rerr
-                       (Rabort Rtype_error) | (MemOp (CopyByte T),_118)
-                       -> Rerr (Rabort Rtype_error) | (BlockOp (Build
-                       parts),[]) ->
+                       _114 -> Rerr (Rabort Rtype_error)) |
+                       (closLang_GlobOp AllocGlobal,_115) -> Rerr
+                       (Rabort Rtype_error) | (closLang_MemOp
+                       closLang_FromListByte,_116) -> Rerr (Rabort
+                       Rtype_error) | (closLang_MemOp
+                       closLang_ConcatByteVec,_117) -> Rerr (Rabort
+                       Rtype_error) | (closLang_MemOp (closLang_CopyByte
+                       T),_118) -> Rerr (Rabort Rtype_error) |
+                       (closLang_BlockOp (closLang_Build parts),[]) ->
            (match do_build_const parts (?_refs s)
              (dataSem_state_tstamps s) with (v,s1,ts1) -> Rval
              (v,dataSem_state_tstamps_fupd (K ts1) (?_refs_fupd (K s1)
-             s))) | (BlockOp (Cons tag),xs) -> (if xs = [] then Rval
-             (Block 0 tag [],s) else with_fresh_ts s 1
+             s))) | (closLang_BlockOp (Cons tag),xs) -> (if xs = [] then
+             Rval (Block 0 tag [],s) else with_fresh_ts s 1
                               (\ts s'. Rval (Block ts tag xs,
-                              check_lim s' (LENGTH xs)))) | (BlockOp
-                                (ConsExtend tag),Block x y xs' :: Number
-                                lower :: Number len :: Number tot :: xs)
-                                ->
+                              check_lim s' (LENGTH xs)))) |
+                                (closLang_BlockOp (closLang_ConsExtend
+                                tag),Block x y xs' :: Number lower ::
+                                Number len :: Number tot :: xs) ->
            (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
               tot = 0 \/ ~(tot = &(LENGTH xs) + len) then
              ((Rerr (Rabort
@@ -1009,46 +1024,49 @@ let do_app_aux_def = cake_define
                               let l = (xs ++ TAKE (num_of_int len)
                                 (DROP (num_of_int lower) xs')) in Rval
                                 (Block ts tag l,
-                              check_lim s' (LENGTH l)))) | (BlockOp
-                                (ConsExtend tag),_119) -> ((Rerr (Rabort
+                              check_lim s' (LENGTH l)))) |
+                                (closLang_BlockOp (closLang_ConsExtend
+                                tag),_119) -> ((Rerr (Rabort
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
-                                #string) | (MemOp El,[Block _120 tag xs;
-                                Number i]) ->
+                                #string) | (closLang_MemOp El,[Block
+                                _120 tag xs; Number i]) ->
            (if 0 <= i /\ num_of_int i < LENGTH xs then Rval (EL
              (num_of_int i) xs,s) else ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (MemOp El,[RefPtr _121 ptr; Number
-             i]) ->
+             +dataSem_v#string)) | (closLang_MemOp El,[RefPtr _121 ptr;
+             Number i]) ->
            (match lookup ptr (?_refs s) with SOME (ValueArray xs) ->
                (if 0 <= i /\ i < &(LENGTH xs) then Rval (EL
                  (num_of_int i) xs,s) else ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                  +dataSem_v#string)) | _122 -> ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-                 +dataSem_v#string)) | (BlockOp (ElemAt n),[Block _123
-                 tag xs]) ->
+                 +dataSem_v#string)) | (closLang_BlockOp
+                 (closLang_ElemAt n),[Block _123 tag xs]) ->
            (if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr
              (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (BlockOp (ElemAt n),[RefPtr _124
-             ptr]) ->
+             +dataSem_v#string)) | (closLang_BlockOp (closLang_ElemAt
+             n),[RefPtr _124 ptr]) ->
            (match lookup ptr (?_refs s) with SOME (ValueArray xs) ->
                (if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr
                  (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                  +dataSem_v#string)) | _125 -> ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-                 +dataSem_v#string)) | (BlockOp (BoolTest test),[v1;
-                 v2]) ->
+                 +dataSem_v#string)) | (closLang_BlockOp
+                 (closLang_BoolTest test),[v1; v2]) ->
            (match (dest_Boolv v1,dest_Boolv v2) with (SOME b1,SOME
              b2) -> Rval (Boolv (b1 = b2),s) | _126 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (BlockOp BoolNot,[v1]) ->
+             +dataSem_v#string)) | (closLang_BlockOp
+             closLang_BoolNot,[v1]) ->
            (match dest_Boolv v1 with SOME b1 -> Rval (Boolv (~b1),s)
              | _127 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (BlockOp ListAppend,[x1; x2]) ->
+             +dataSem_v#string)) | (closLang_BlockOp ListAppend,[x1;
+             x2]) ->
            (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys)
              -> (\x y. strcat x y)
                 with_fresh_ts (s (LENGTH xs)
@@ -1057,23 +1075,24 @@ let do_app_aux_def = cake_define
                                 (Rabort
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
-                                #string)) | (BlockOp LengthBlock,[Block
-                                _129 tag xs]) ->
-           Rval (Number (&(LENGTH xs)),s) | (MemOp Length,[RefPtr
-             _130 ptr]) ->
+                                #string)) | (closLang_BlockOp
+                                closLang_LengthBlock,[Block _129 tag
+                                xs]) ->
+           Rval (Number (&(LENGTH xs)),s) | (closLang_MemOp
+             closLang_Length,[RefPtr _130 ptr]) ->
            (match lookup ptr (?_refs s) with SOME (ValueArray xs) ->
                  Rval (Number (&(LENGTH xs)),s) | _131 -> ((Rerr
                    (Rabort
                    Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                   #string+dataSem_v#string)) | (MemOp
-                   LengthByte,[RefPtr _132 ptr]) ->
+                   #string+dataSem_v#string)) | (closLang_MemOp
+                   closLang_LengthByte,[RefPtr _132 ptr]) ->
            (match lookup ptr (?_refs s) with SOME (ByteArray _133 xs)
              ->
                  Rval (Number (&(LENGTH xs)),s) | _134 -> ((Rerr
                    (Rabort
                    Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                   #string+dataSem_v#string)) | (MemOp RefArray,[Number
-                   i; v]) ->
+                   #string+dataSem_v#string)) | (closLang_MemOp
+                   closLang_RefArray,[Number i; v]) ->
            (if 0 <= i then
              let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs s)))) in
                Rval (RefPtr T ptr,?_refs_fupd (K (insert ptr
@@ -1081,8 +1100,9 @@ let do_app_aux_def = cake_define
                                 v)) (?_refs s)))
                      s) else ((Rerr (Rabort
                        Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                       #string+dataSem_v#string)) | (MemOp
-                       DerefByte,[RefPtr _135 ptr; Number i]) ->
+                       #string+dataSem_v#string)) | (closLang_MemOp
+                       closLang_DerefByte,[RefPtr _135 ptr; Number i])
+                       ->
            (match lookup ptr (?_refs s) with SOME (ByteArray _136 ws)
              ->
                (if 0 <= i /\ i < &(LENGTH ws) then Rval (Number
@@ -1090,8 +1110,9 @@ let do_app_aux_def = cake_define
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                  +dataSem_v#string)) | _137 -> ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-                 +dataSem_v#string)) | (MemOp UpdateByte,[RefPtr _138
-                 ptr; Number i; Number b]) ->
+                 +dataSem_v#string)) | (closLang_MemOp
+                 closLang_UpdateByte,[RefPtr _138 ptr; Number i; Number
+                 b]) ->
            (match lookup ptr (?_refs s) with SOME (ByteArray f bs) ->
                (if 0 <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b =
                  &(w2n w)) then
@@ -1102,8 +1123,9 @@ let do_app_aux_def = cake_define
                       #string+dataSem_v#string)) | _139 -> ((Rerr
                       (Rabort
                       Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                      #string+dataSem_v#string)) | (MemOp
-                      XorByte,[RefPtr _140 dst; RefPtr _141 src]) ->
+                      #string+dataSem_v#string)) | (closLang_MemOp
+                      closLang_XorByte,[RefPtr _140 dst; RefPtr _141
+                      src]) ->
            (match (lookup src (?_refs s),lookup dst (?_refs s)) with
              (SOME (ByteArray _142 ws),SOME (ByteArray f ds)) ->
               (match xor_bytes ws ds with SOME ds1 -> Rval
@@ -1112,8 +1134,9 @@ let do_app_aux_def = cake_define
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                 +dataSem_v#string)) | _143 -> ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-                +dataSem_v#string)) | (MemOp (StringCmp b cmp),[RefPtr
-                _144 s1; RefPtr _145 s2]) ->
+                +dataSem_v#string)) | (closLang_MemOp
+                (closLang_StringCmp b cmp),[RefPtr _144 s1; RefPtr _145
+                s2]) ->
            (match (lookup s1 (?_refs s),lookup s2 (?_refs s)) with
              (SOME (ByteArray _146 ws1),SOME (ByteArray _147 ws2)) ->
                 (let s1 = implode (MAP (CHR o w2n) ws1) in
@@ -1121,9 +1144,10 @@ let do_app_aux_def = cake_define
                    Rval (Boolv (str_cmp b cmp s1 s2),s)) | _148 ->
                      ((Rerr (Rabort
                      Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                     #string+dataSem_v#string)) | (MemOp (CopyByte
-                     F),[RefPtr _149 src; Number srcoff; Number len;
-                     RefPtr _150 dst; Number dstoff]) ->
+                     #string+dataSem_v#string)) | (closLang_MemOp
+                     (closLang_CopyByte F),[RefPtr _149 src; Number
+                     srcoff; Number len; RefPtr _150 dst; Number
+                     dstoff]) ->
            (match (lookup src (?_refs s),lookup dst (?_refs s)) with
              (SOME (ByteArray _151 ws),SOME (ByteArray fl ds)) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff))
@@ -1133,14 +1157,14 @@ let do_app_aux_def = cake_define
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                 +dataSem_v#string)) | _152 -> ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-                +dataSem_v#string)) | (BlockOp (TagEq n),[Block _153 tag
-                xs]) ->
-           Rval (Boolv (tag = n),s) | (BlockOp (LenEq l),[Block _154
-             tag xs]) ->
-           Rval (Boolv (LENGTH xs = l),s) | (BlockOp (TagLenEq n
-             l),[Block _155 tag xs]) ->
-           Rval (Boolv (tag = n /\ LENGTH xs = l),s) | (BlockOp
-             (EqualConst p),[x1]) ->
+                +dataSem_v#string)) | (closLang_BlockOp (closLang_TagEq
+                n),[Block _153 tag xs]) ->
+           Rval (Boolv (tag = n),s) | (closLang_BlockOp (LenEq
+             l),[Block _154 tag xs]) ->
+           Rval (Boolv (LENGTH xs = l),s) | (closLang_BlockOp
+             (TagLenEq n l),[Block _155 tag xs]) ->
+           Rval (Boolv (tag = n /\ LENGTH xs = l),s) |
+             (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
            (match p with Int i -> (match x1 with Number j -> Rval
              (Boolv (i = j),s) | _156 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
@@ -1161,15 +1185,16 @@ let do_app_aux_def = cake_define
                                #string)) | _161 -> ((Rerr (Rabort
                                Rtype_error)):(dataSem_v#('c
                                ,'ffi)dataSem_state)#string+dataSem_v
-                               #string)) | (BlockOp Equal,[x1; x2]) ->
+                               #string)) | (closLang_BlockOp Equal,[x1;
+                               x2]) ->
            (match do_eq (?_refs s) x1 x2 with Eq_val b -> Rval (Boolv
              b,s) | _162 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (MemOp Ref,xs) ->
+             +dataSem_v#string)) | (closLang_MemOp Ref,xs) ->
            (let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs s)))) in
              Rval (RefPtr T ptr,?_refs_fupd (K (insert ptr
-               (ValueArray xs) (?_refs s))) s)) | (MemOp Update,[RefPtr
-               _163 ptr; Number i; x]) ->
+               (ValueArray xs) (?_refs s))) s)) | (closLang_MemOp
+               closLang_Update,[RefPtr _163 ptr; Number i; x]) ->
            (match lookup ptr (?_refs s) with SOME (ValueArray xs) ->
                (if 0 <= i /\ i < &(LENGTH xs) then Rval
                  (Unit,?_refs_fupd (K (insert ptr
@@ -1180,8 +1205,8 @@ let do_app_aux_def = cake_define
                                 #string)) | _164 -> ((Rerr (Rabort
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state)#string+dataSem_v
-                                #string)) | (MemOp (MutCons tag i),xs)
-                                ->
+                                #string)) | (closLang_MemOp
+                                (closLang_MutCons tag i),xs) ->
            (let ptr = (LEAST (\ptr. ~(ptr IN domain (?_refs s)))) in
               if i >= LENGTH xs then ((Rerr (Rabort
                 Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
@@ -1190,30 +1215,33 @@ let do_app_aux_def = cake_define
                 let c = EL i xs in
                 let r = DROP (i + 1) xs in
                   Rval (RefPtr F ptr,?_refs_fupd (K (insert ptr
-                    (MutBlock tag F l c r) (?_refs s)))
-                        s)) | (MemOp UpdateCons,[RefPtr _165 ptr;
-                          Number i; x]) ->
-           (match lookup ptr (?_refs s) with SOME (MutBlock tag
-             finalised l c r) ->
+                    (bvlSem_MutBlock tag F l c r) (?_refs s)))
+                        s)) | (closLang_MemOp
+                          closLang_UpdateCons,[RefPtr _165 ptr; Number
+                          i; x]) ->
+           (match lookup ptr (?_refs s) with SOME (bvlSem_MutBlock
+             tag finalised l c r) ->
                 (if ~(i = &(LENGTH l)) \/ finalised then ((Rerr
                   (Rabort
                   Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                   #string+dataSem_v#string) else
-                  Rval (Unit,?_refs_fupd (K (insert ptr (MutBlock tag
-                    F l x r) (?_refs s))) s)) | _166 -> ((Rerr (Rabort
+                  Rval (Unit,?_refs_fupd (K (insert ptr
+                    (bvlSem_MutBlock tag F l x r) (?_refs s))) s)) |
+                    _166 -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                    #string+dataSem_v#string)) | (MemOp
-                    FinaliseCons,[x]) ->
+                    #string+dataSem_v#string)) | (closLang_MemOp
+                    closLang_FinaliseCons,[x]) ->
            (match finalise_cons x (?_refs s) (dataSem_state_tstamps
              s) with SOME (v,refs',ts') ->
                 Rval (v,dataSem_state_tstamps_fupd (K ts')
                   (?_refs_fupd (K refs') s)) | NONE -> ((Rerr (Rabort
                   Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                  #string+dataSem_v#string)) | (IntOp intop,vs) ->
+                  #string+dataSem_v#string)) | (closLang_IntOp intop,vs)
+                  ->
            (match do_int_app intop vs with SOME res -> Rval (res,s) |
              _167 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
-             +dataSem_v#string)) | (WordOp wordop,vs) ->
+             +dataSem_v#string)) | (closLang_WordOp wordop,vs) ->
            (match do_word_app wordop vs with SOME res -> Rval (res,s)
              | _168 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
@@ -1229,14 +1257,14 @@ let do_app_aux_def = cake_define
                    Rerr (Rabort (Rffi_error outcome))) | _171 ->
                      ((Rerr (Rabort
                      Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                     #string+dataSem_v#string)) | (BlockOp
-                     BoundsCheckBlock,xs) ->
+                     #string+dataSem_v#string)) | (closLang_BlockOp
+                     closLang_BoundsCheckBlock,xs) ->
            (match xs with [Block _172 tag ys; Number i] ->
                   Rval (Boolv (0 <= i /\ i < &(LENGTH ys)),s) | _173
                     -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                    #string+dataSem_v#string)) | (MemOp (BoundsCheckByte
-                    loose),xs) ->
+                    #string+dataSem_v#string)) | (closLang_MemOp
+                    (closLang_BoundsCheckByte loose),xs) ->
            (match xs with [RefPtr _174 ptr; Number i] ->
              (match lookup ptr (?_refs s) with SOME (ByteArray _175
                ws) ->
@@ -1245,8 +1273,8 @@ let do_app_aux_def = cake_define
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                     #string+dataSem_v#string)) | _177 -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                    #string+dataSem_v#string)) | (MemOp
-                    BoundsCheckArray,xs) ->
+                    #string+dataSem_v#string)) | (closLang_MemOp
+                    closLang_BoundsCheckArray,xs) ->
            (match xs with [RefPtr _178 ptr; Number i] ->
              (match lookup ptr (?_refs s) with SOME (ValueArray ws)
                ->
@@ -1255,9 +1283,9 @@ let do_app_aux_def = cake_define
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                     #string+dataSem_v#string)) | _180 -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
-                    #string+dataSem_v#string)) | (MemOp ConfigGC,[Number
-                    _181; Number _182]) -> (Rval (Unit,s)) | (ThunkOp
-                    th_op,vs) ->
+                    #string+dataSem_v#string)) | (closLang_MemOp
+                    ConfigGC,[Number _181; Number _182]) -> (Rval
+                    (Unit,s)) | (ThunkOp th_op,vs) ->
            (match (th_op,vs) with (AllocThunk m,[v]) ->
                 (if bad_thunk_update m v (?_refs s) then ((Rerr
                   (Rabort
@@ -1304,11 +1332,12 @@ let do_app_aux_def = cake_define
 
 let do_app_def = cake_define
   `(\x y. strcat x y)
-     (do_app op vs) s =
+     (semanticPrimitives_do_app op vs) s =
        (if op = Install then do_install vs
          (dataSem_state_stack_frame_sizes_fupd (K LN)
          (dataSem_state_stack_max_fupd (K NONE) s)) else
-       if MEM op [IntOp Greater; IntOp GreaterEq] then ((Rerr (Rabort
+       if MEM op [closLang_IntOp Greater; closLang_IntOp
+         closLang_GreaterEq] then ((Rerr (Rabort
          Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
          +dataSem_v#string) else
        match do_space op vs s with NONE -> ((Rerr (Rabort
@@ -1326,12 +1355,10 @@ let get_vars_def = cake_define_list
          (match get_var v s with NONE -> NONE | SOME x -> (match
            dataSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME
            (x :: xs)))`];;
-hol4_overload "get_vars" "dataSem_get_vars";;
 
 let set_var_def = cake_define
   `dataSem_set_var v x s = (dataSem_state_locals_fupd (K (insert v x
   (dataSem_state_locals s))) s)`;;
-hol4_overload "set_var" "dataSem_set_var";;
 
 let dec_clock_def = cake_define
   `dataSem_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
@@ -1382,7 +1409,7 @@ let push_env_def = cake_define
              (dataSem_state_stack_max_fupd (K stack_max) (?_stack_fupd
              (K stack) s)))
         |  ->
-      (let stack = Exc (dataSem_state_locals_size s) env
+      (let stack = dataSem_Exc (dataSem_state_locals_size s) env
         (dataSem_state_handler s) :: ?_stack s in let
           stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
             (size_of_stack stack) in let
@@ -1399,8 +1426,8 @@ let pop_env_def = cake_define
      pop_env s =
        (match ?_stack s with (Env ss e :: xs) ->
            SOME (dataSem_state_locals_size_fupd (K ss) (?_stack_fupd
-             (K xs) (dataSem_state_locals_fupd (K e) s))) | (Exc ss e n
-             :: xs) ->
+             (K xs) (dataSem_state_locals_fupd (K e) s))) | (dataSem_Exc
+             ss e n :: xs) ->
            SOME (dataSem_state_handler_fupd (K n)
              (dataSem_state_locals_size_fupd (K ss) (?_stack_fupd (K
              xs) (dataSem_state_locals_fupd (K e) s)))) | _187 ->
@@ -1411,7 +1438,7 @@ let jump_exc_def = cake_define
      jump_exc s =
        (if dataSem_state_handler s < LENGTH (?_stack s) then
          match LASTN (dataSem_state_handler s + 1) (?_stack s) with
-           Exc ss e n :: xs ->
+           dataSem_Exc ss e n :: xs ->
              SOME (dataSem_state_locals_size_fupd (K ss)
                (?_stack_fupd (K xs) (dataSem_state_locals_fupd (K e)
                (dataSem_state_handler_fupd (K n) s)))) | _188 -> NONE
@@ -1421,14 +1448,13 @@ let cut_env_def = cake_define
   `dataSem_cut_env (name_set:1 spt) env =
      (if domain name_set SUBSET domain env then SOME (mk_wf (inter
        env name_set)) else NONE)`;;
-hol4_overload "cut_env" "dataSem_cut_env";;
 
 let cut_state_def = cake_define
   `(\x y. strcat x y)
      (cut_state names) s =
-       (match cut_env names (dataSem_state_locals s) with NONE ->
-         NONE | SOME env -> SOME (dataSem_state_locals_fupd (K env)
-         s))`;;
+       (match dataSem_cut_env names (dataSem_state_locals s) with
+         NONE -> NONE | SOME env -> SOME (dataSem_state_locals_fupd
+         (K env) s))`;;
 
 let cut_state_opt_def = cake_define
   `cut_state_opt names s =
@@ -1472,26 +1498,27 @@ let evaluate_def = cake_define_list
    `dataSem_evaluate ((Move dest src:labLang_prog),s) =
          (match get_var src (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME v ->
-           (NONE,set_var dest v s))`;
+           (NONE,dataSem_set_var dest v s))`;
    `dataSem_evaluate ((Assign dest op args names_opt:labLang_prog),s) =
          (if op_requires_names op = IS_NONE names_opt then
            (SOME (Rerr (Rabort Rtype_error)),s) else
-           match get_vars args (dataSem_state_locals s) with NONE ->
-             (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
+           match dataSem_get_vars args (dataSem_state_locals s) with
+             NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
                (match cut_state_opt names_opt s with NONE -> (SOME
                  (Rerr (Rabort Rtype_error)),s) | SOME s ->
-                   (match do_app op xs s with Rerr e -> (SOME (Rerr
-                     e),flush_state T (install_sfs op s)) | Rval (v,s)
-                     ->
-                       (NONE,set_var dest v (install_sfs op
-                         s)))))`;
+                   (match semanticPrimitives_do_app op xs s with
+                     Rerr e -> (SOME (Rerr e),flush_state T (install_sfs
+                     op s)) | Rval (v,s) ->
+                       (NONE,dataSem_set_var dest v (install_sfs
+                         op s)))))`;
    `dataSem_evaluate (Tick,s) =
          (if ?_clock s = 0 then (SOME (Rerr (Rabort
            Rtimeout_error)),flush_state T s) else (NONE,dec_clock s))`;
-   `dataSem_evaluate (MakeSpace k names,s) =
-         (match cut_env names (dataSem_state_locals s) with NONE
-           -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME env ->
-           (NONE,add_space (dataSem_state_locals_fupd (K env) s) k))`;
+   `dataSem_evaluate (dataLang_MakeSpace k names,s) =
+         (match dataSem_cut_env names (dataSem_state_locals s)
+           with NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
+           env -> (NONE,add_space (dataSem_state_locals_fupd (K env)
+           s) k))`;
    `dataSem_evaluate ((Raise n:labLang_prog),s) =
          (match get_var n (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME x ->
@@ -1499,9 +1526,9 @@ let evaluate_def = cake_define_list
              Rtype_error)),s) | SOME s -> (SOME (Rerr (Rraise
              x)),s)))`;
    `dataSem_evaluate ((Return ns:labLang_prog),s) =
-         (match get_vars ns (dataSem_state_locals s) with NONE ->
-           (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs -> (SOME
-           (Rval xs),flush_state F s))`;
+         (match dataSem_get_vars ns (dataSem_state_locals s) with
+           NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
+           (SOME (Rval xs),flush_state F s))`;
    `dataSem_evaluate ((Seq c1 c2:labLang_prog),s) =
          (let (res,s1) = fix_clock s (dataSem_evaluate (c1,s)) in
            if res = NONE then dataSem_evaluate (c2,s1) else
@@ -1520,9 +1547,9 @@ let evaluate_def = cake_define_list
              (Rabort Rtype_error)),s) | IsThunk Evaluated v ->
               (match ret with NONE -> (SOME (Rval [v]),flush_state F
                 s) | SOME (dest,names) ->
-                 (match cut_env names (dataSem_state_locals s) with
-                   NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
-                   env -> (NONE,set_var dest v
+                 (match dataSem_cut_env names (dataSem_state_locals
+                   s) with NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
+                   | SOME env -> (NONE,dataSem_set_var dest v
                    (dataSem_state_locals_fupd (K env) s)))) | IsThunk
                    NotEvaluated f ->
                (match find_code (SOME loc) [thunk_v; f] (?_code s)
@@ -1540,9 +1567,9 @@ let evaluate_def = cake_define_list
                            (SOME (Rerr (Rabort Rtype_error)),s) | (SOME
                            res,s) -> (SOME res,s))) | SOME (dest,names)
                            ->
-                     (match cut_env names (dataSem_state_locals s)
-                       with NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
-                       | SOME env ->
+                     (match dataSem_cut_env names
+                       (dataSem_state_locals s) with NONE -> (SOME (Rerr
+                       (Rabort Rtype_error)),s) | SOME env ->
                           (let s1 = call_env args1 ss (push_env env
                             F (dec_clock s)) in
                             if ?_clock s = 0 then
@@ -1556,15 +1583,15 @@ let evaluate_def = cake_define_list
                               (if LENGTH xs = 1 then
                               match pop_env s2 with NONE -> (SOME
                                 (Rerr (Rabort Rtype_error)),s2) | SOME
-                                s1 -> (NONE,set_var dest (HD xs) s1)
-                                else
+                                s1 -> (NONE,dataSem_set_var dest (HD xs)
+                                s1) else
                               (SOME (Rerr (Rabort
                                 Rtype_error)),s2)) | (NONE,s) ->
                                 (SOME (Rerr (Rabort Rtype_error)),s)
                                 | res -> res)))))))`;
    `dataSem_evaluate ((Call ret dest args handler:labLang_prog),s) =
-         (match get_vars args (dataSem_state_locals s) with NONE ->
-           (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
+         (match dataSem_get_vars args (dataSem_state_locals s) with
+           NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
            (match find_code dest xs (?_code s)
              (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
              (Rerr (Rabort Rtype_error)),s) | SOME (args1,prog,ss) ->
@@ -1580,9 +1607,9 @@ let evaluate_def = cake_define_list
                        Rtype_error)),s)) | SOME (ns,names) ->
                  (if ~ALL_DISTINCT ns then (SOME (Rerr (Rabort
                    Rtype_error)),s) else
-                 (match cut_env names (dataSem_state_locals s) with
-                   NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
-                   env ->
+                 (match dataSem_cut_env names (dataSem_state_locals
+                   s) with NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
+                   | SOME env ->
                     (let s1 = call_env args1 ss
                             (push_env env (IS_SOME handler)
                               (dec_clock s)) in if ?_clock s = 0 then
@@ -1600,9 +1627,10 @@ let evaluate_def = cake_define_list
                                 | (SOME (Rerr (Rraise x)),s2) ->
                               (match handler with NONE -> (SOME
                                 (Rerr (Rraise x)),s2) | SOME (n,h) ->
-                                dataSem_evaluate (h,set_var n x s2))
-                                | (NONE,s) -> (SOME (Rerr (Rabort
-                                Rtype_error)),s) | res -> res)))))))`];;
+                                dataSem_evaluate (h,dataSem_set_var n
+                                x s2)) | (NONE,s) -> (SOME (Rerr
+                                (Rabort Rtype_error)),s) | res ->
+                                res)))))))`];;
 hol4_overload "evaluate" "dataSem_evaluate";;
 
 (* HOL4 ML code, not ported:
@@ -1642,11 +1670,11 @@ let semantics_def = cake_define
        ?k s r outcome.
          evaluate (p,init k) = (SOME r,s) /\
          (match r with Rerr (Rabort (Rffi_error e)) -> outcome =
-           FFI_outcome e | Rval _192 -> outcome = Success | _193 -> F)
-           /\
-         res = Terminate outcome (ffi_state_io_events (?_ffi s)))
+           ffi_FFI_outcome e | Rval _192 -> outcome = Success | _193 ->
+           F) /\
+         res = ffi_Terminate outcome (ffi_state_io_events (?_ffi s)))
            with SOME res -> res | NONE ->
-        Diverge
+        ffi_Diverge
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (?_ffi (SND
               (evaluate (p,init k)))))) UNIV)))`;;

@@ -24,7 +24,7 @@ let remove_must_terminate_def = cake_define
         | (If cmp r1 ri e2 e3) ->
        If cmp r1 ri (remove_must_terminate e2) (remove_must_terminate
          e3)
-        | (MustTerminate p) -> remove_must_terminate p
+        | (wordLang_MustTerminate p) -> remove_must_terminate p
         | (Call ret dest args h) ->
        (let ret = match ret with NONE -> NONE | SOME
          (v,cutset,ret_handler,l1,l2) ->

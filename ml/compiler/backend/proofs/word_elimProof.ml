@@ -35,10 +35,10 @@ let dest_word_loc_def = cake_define
 let dest_result_loc_def = cake_define
   `dest_result_loc x1 =
         match x1 with
-          SOME (Result w ns) ->
+          SOME (wordSem_Result w ns) ->
        BIGUNION (set_of_list (MAP (\x. match (dest_word_loc x) with
          NONE -> {} | SOME x -> {x}) ns))
-        | (SOME (Exception w (Loc n n0))) -> {n}
+        | (SOME (wordSem_Exception w (Loc n n0))) -> {n}
         | _3 -> {}`;;
 
 (* TODO could do alt def using toAList -
@@ -46,12 +46,14 @@ let dest_result_loc_def = cake_define
 let get_locals_def = cake_define_list
   [`get_locals (LN:('a word_loc) spt) = LN`;
    `get_locals (LS a) = (match (dest_word_loc a) with SOME n ->
-  insert n one LN | NONE -> LN)`;
-   `get_locals (BN t1 t2) = union (get_locals t1) (get_locals t2)`;
+  sptree_insert n one LN | NONE -> LN)`;
+   `get_locals (BN t1 t2) = sptree_union (get_locals t1) (get_locals
+  t2)`;
    `get_locals (BS t1 a t2) =
-            (let t = (union (get_locals t1) (get_locals t2)) in
-                match (dest_word_loc a) with SOME n -> insert n
-                  one t | NONE -> t)`];;
+            (let t = (sptree_union (get_locals t1) (get_locals t2))
+              in
+                match (dest_word_loc a) with SOME n ->
+                  sptree_insert n one t | NONE -> t)`];;
 
 (*TODO fix conflict with get_store in WordSem*)
 let get_store_def = cake_define
@@ -59,18 +61,18 @@ let get_store_def = cake_define
        (let locSet = SET_TO_LIST (FRANGE st) in
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in
-       FOLDL (\acc loc. insert loc one acc) LN locList)`;;
+       FOLDL (\acc loc. sptree_insert loc one acc) LN locList)`;;
 
 let get_num_wordloc_alist_def = cake_define
   `get_num_wordloc_alist (l:(num#'a word_loc) list) =
        (let locs = MAP THE (FILTER IS_SOME (MAP (dest_word_loc o SND)
          l)) in
-       FOLDL (\acc loc. insert loc one acc) LN locs)`;;
+       FOLDL (\acc loc. sptree_insert loc one acc) LN locs)`;;
 
 let get_stack_def = cake_define_list
   [`get_stack [] = (LN:1 spt)`;
    `get_stack (StackFrame lsz e0 e _4 :: xs) =
-            union (union (get_num_wordloc_alist e0)
+            sptree_union (sptree_union (get_num_wordloc_alist e0)
               (get_num_wordloc_alist e)) (get_stack xs)`];;
 
 (* HOL4 ML code, not ported:
@@ -82,7 +84,7 @@ let get_memory_def = cake_define
        (let locSet = SET_TO_LIST (IMAGE mem mdom) in
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in
-       FOLDL (\acc loc. insert loc one acc) LN locList)`;;
+       FOLDL (\acc loc. sptree_insert loc one acc) LN locList)`;;
 
 let find_loc_state_def = cake_define
   `find_loc_state s =
@@ -91,14 +93,13 @@ let find_loc_state_def = cake_define
        let sta = (get_stack (?_stack s)) in
        let mem = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
-       union (union loc sto) (union sta mem))`;;
+       sptree_union (sptree_union loc sto) (sptree_union sta mem))`;;
 
 let code_rel_def = cake_define
   `word_elimProof_code_rel (reachable:1 spt) s_code (t_code:(num#'a
   wordLang_prog) spt) =
        (!n. n IN domain reachable ==>
-           lookup n s_code = lookup n t_code)`;;
-hol4_overload "code_rel" "word_elimProof_code_rel";;
+           sptree_lookup n s_code = sptree_lookup n t_code)`;;
 
 let code_closed_def = cake_define
   `code_closed reachable c1 <=> (?code1. c1 = fromAList code1 /\
@@ -111,8 +112,9 @@ let gc_no_new_locs_def = cake_define
   word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a
   word->'a word_loc)#(store_name,'a word_loc)fmap) option) <=> (!sta mem
   mdom sto wl mem1 sto1 sta1.
-       (g (enc_stack sta,mem,mdom,sto) = SOME (wl,mem1,sto1)) /\
-        dec_stack wl sta = SOME sta1 ==>
+       (g (wordSem_enc_stack sta,mem,mdom,sto) = SOME (wl,mem1,sto1))
+         /\
+        wordSem_dec_stack wl sta = SOME sta1 ==>
        domain (get_stack sta1) SUBSET domain (get_stack sta) /\
        domain (get_memory mem1 mdom) SUBSET domain (get_memory mem
          mdom) /\
@@ -143,8 +145,8 @@ let word_state_rel_def = cake_define
        s = wordSem_state_stack_max t /\ wordSem_state_stack_limit
        s = wordSem_state_stack_limit t /\ wordSem_state_stack_size
        s = wordSem_state_stack_size t /\
-       code_rel reachable (wordSem_state_code s) (wordSem_state_code
-         t) /\
+       word_elimProof_code_rel reachable (wordSem_state_code s)
+         (wordSem_state_code t) /\
        domain (find_loc_state t) SUBSET domain (reachable)`;;
 
 

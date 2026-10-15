@@ -19,8 +19,6 @@ let live_tree_INDUCT,live_tree_RECURSION = define_datatype
   "live_tree = linear_scan_Writes (num list) | linear_scan_Reads (num \
    list) | linear_scan_Branch (live_tree) (live_tree) | \
    linear_scan_Seq (live_tree) (live_tree)";;
-hol4_overload "Writes" "linear_scan_Writes";;
-hol4_overload "Reads" "linear_scan_Reads";;
 hol4_overload "Branch" "linear_scan_Branch";;
 hol4_overload "Seq" "linear_scan_Seq";;
 
@@ -28,40 +26,39 @@ hol4_overload "Seq" "linear_scan_Seq";;
 let numset_list_insert_def = cake_define_list
   [`linear_scan_numset_list_insert [] t = t`;
    `linear_scan_numset_list_insert (x :: xs) t =
-  linear_scan_numset_list_insert xs (insert x one t)`];;
-hol4_overload "numset_list_insert" "linear_scan_numset_list_insert";;
+  linear_scan_numset_list_insert xs (sptree_insert x one t)`];;
 
 let numset_list_insert_nottailrec_def = cake_define_list
   [`numset_list_insert_nottailrec [] t = t`;
-   `numset_list_insert_nottailrec (x :: xs) t = insert x one
+   `numset_list_insert_nottailrec (x :: xs) t = sptree_insert x one
   (numset_list_insert_nottailrec xs t)`];;
 
 let get_live_tree_def = cake_define_list
   [`get_live_tree (reg_alloc_Delta wr rd) =
-      Seq (Reads rd) (Writes wr)`;
+      Seq (linear_scan_Reads rd) (linear_scan_Writes wr)`;
    `get_live_tree (reg_alloc_Set cutset) =
       (let cutlist = MAP FST (toAList cutset) in
-      Reads cutlist)`;
+      linear_scan_Reads cutlist)`;
    `get_live_tree (reg_alloc_Branch optcutset ct1 ct2) =
       (let lt1 = get_live_tree ct1 in
       let lt2 = get_live_tree ct2 in
       match optcutset with SOME cutset ->
           (let cutlist = MAP FST (toAList cutset) in
-          Seq (Reads cutlist) (Branch lt1 lt2)) | NONE -> (Branch
-            lt1 lt2))`;
+          Seq (linear_scan_Reads cutlist) (Branch lt1 lt2)) |
+            NONE -> (Branch lt1 lt2))`;
    `get_live_tree (reg_alloc_Seq ct1 ct2) =
       (let lt2 = get_live_tree ct2 in
       let lt1 = get_live_tree ct1 in
       Seq lt1 lt2)`];;
 
 let check_live_tree_def = cake_define_list
-  [`check_live_tree f (Writes l) live flive =
+  [`check_live_tree f (linear_scan_Writes l) live flive =
       (match check_partial_col f l live flive with NONE -> NONE |
         SOME _2 ->
       (let livein = numset_list_delete l live in
       let flivein = numset_list_delete (MAP f l) flive in
       SOME (livein,flivein)))`;
-   `check_live_tree f (Reads l) live flive =
+   `check_live_tree f (linear_scan_Reads l) live flive =
       check_partial_col f l live flive`;
    `check_live_tree f (Branch lt1 lt2:live_tree) live flive =
       (match check_live_tree f lt1 live flive with NONE -> NONE |
@@ -76,31 +73,31 @@ let check_live_tree_def = cake_define_list
         check_live_tree f lt1 livein2 flivein2)`];;
 
 let get_live_backward_def = cake_define_list
-  [`get_live_backward (Writes l) live =
+  [`get_live_backward (linear_scan_Writes l) live =
       numset_list_delete l live`;
-   `get_live_backward (Reads l) live =
-      numset_list_insert l live`;
+   `get_live_backward (linear_scan_Reads l) live =
+      linear_scan_numset_list_insert l live`;
    `get_live_backward (Branch lt1 lt2:live_tree) live =
       (let live1 = get_live_backward lt1 live in
       let live2 = get_live_backward lt2 live in
-      numset_list_insert (MAP FST (toAList (difference live2
-        live1))) live1)`;
+      linear_scan_numset_list_insert (MAP FST (toAList
+        (difference live2 live1))) live1)`;
    `get_live_backward (Seq lt1 lt2:live_tree) live =
       get_live_backward lt1 (get_live_backward lt2 live)`];;
 
 let fix_domination_def = cake_define
   `fix_domination lt =
        (let live = get_live_backward lt LN in
-       if live = LN then lt else Seq (Writes (MAP FST (toAList
-         live))) lt)`;;
+       if live = LN then lt else Seq (linear_scan_Writes (MAP FST
+         (toAList live))) lt)`;;
 
 let numset_list_add_if_def = cake_define_list
   [`numset_list_add_if [] (v:int) s P = s`;
    `numset_list_add_if (x :: xs) v s P =
-      (match lookup x s with (SOME v') ->
-          (if P v v' then numset_list_add_if xs v (insert x v s) P
-            else numset_list_add_if xs v s P) | NONE ->
-          numset_list_add_if xs v (insert x v s) P)`];;
+      (match sptree_lookup x s with (SOME v') ->
+          (if P v v' then numset_list_add_if xs v (sptree_insert x v
+            s) P else numset_list_add_if xs v s P) | NONE ->
+          numset_list_add_if xs v (sptree_insert x v s) P)`];;
 
 let numset_list_add_if_lt_def = cake_define
   `numset_list_add_if_lt l (v:int) s = numset_list_add_if l v s (<=)`;;
@@ -110,20 +107,20 @@ let numset_list_add_if_gt_def = cake_define
   b. b <= a)`;;
 
 let size_of_live_tree_def = cake_define_list
-  [`size_of_live_tree (Writes l) =
-      (1:int)`;
-   `size_of_live_tree (Reads l) =
-      (1:int)`;
+  [`size_of_live_tree (linear_scan_Writes l) =
+      ((&1):int)`;
+   `size_of_live_tree (linear_scan_Reads l) =
+      ((&1):int)`;
    `size_of_live_tree (Branch lt1 lt2:live_tree) =
       size_of_live_tree lt1 + size_of_live_tree lt2`;
    `size_of_live_tree (Seq lt1 lt2:live_tree) =
       size_of_live_tree lt1 + size_of_live_tree lt2`];;
 
 let get_intervals_def = cake_define_list
-  [`get_intervals (Writes l) (n:int) int_beg int_end =
+  [`get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
       (n - 1,numset_list_add_if_lt l n
         int_beg,numset_list_add_if_gt l n int_end)`;
-   `get_intervals (Reads l) (n:int) int_beg int_end =
+   `get_intervals (linear_scan_Reads l) (n:int) int_beg int_end =
       (n - 1,int_beg,numset_list_add_if_gt l n int_end)`;
    `get_intervals (Branch lt1 lt2:live_tree) (n:int) int_beg int_end =
       (let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg
@@ -140,10 +137,12 @@ let get_intervals_def = cake_define_list
    domain beg_in (as stated by the `get_intervals_withlive_live_intbeg`
    theorem *)
 let get_intervals_withlive_def = cake_define_list
-  [`get_intervals_withlive (Writes l) (n:int) int_beg int_end live =
+  [`get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg
+  int_end live =
       (n - 1,numset_list_add_if_lt l n
         int_beg,numset_list_add_if_gt l n int_end)`;
-   `get_intervals_withlive (Reads l) (n:int) int_beg int_end live =
+   `get_intervals_withlive (linear_scan_Reads l) (n:int) int_beg int_end
+  live =
       (n - 1,numset_list_delete l int_beg,numset_list_add_if_gt l
         n int_end)`;
    `get_intervals_withlive (Branch lt1 lt2:live_tree) (n:int) int_beg
@@ -152,8 +151,8 @@ let get_intervals_withlive_def = cake_define_list
         int_beg int_end live in
       let (n1,int_beg1,int_end1) = get_intervals_withlive lt1 n2
         (difference int_beg2 live) int_end2 live in
-      (n1,difference int_beg1 (union (get_live_backward lt1 live)
-        (get_live_backward lt2 live)),int_end1))`;
+      (n1,difference int_beg1 (sptree_union (get_live_backward
+        lt1 live) (get_live_backward lt2 live)),int_end1))`;
    `get_intervals_withlive (Seq lt1 lt2:live_tree) (n:int) int_beg
   int_end live =
       (let (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n
@@ -163,13 +162,14 @@ let get_intervals_withlive_def = cake_define_list
       (n1,int_beg1,int_end1))`];;
 
 let check_number_property_def = cake_define_list
-  [`check_number_property (P:int->1 spt->bool) (Writes l) n live =
+  [`check_number_property (P:int->1 spt->bool) (linear_scan_Writes l) n
+  live =
         (let n_out = n - 1 in
         let live_out = numset_list_delete l live in
         P n_out live_out)`;
-   `check_number_property P (Reads l) n live =
+   `check_number_property P (linear_scan_Reads l) n live =
         (let n_out = n - 1 in
-        let live_out = numset_list_insert l live in
+        let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
    `check_number_property P (Branch lt1 lt2:live_tree) n live =
         (let r2 = check_number_property P lt2 n live in
@@ -183,14 +183,14 @@ let check_number_property_def = cake_define_list
         r1 /\ r2)`];;
 
 let check_number_property_strong_def = cake_define_list
-  [`check_number_property_strong (P:int->1 spt->bool) (Writes l) n live
-  =
+  [`check_number_property_strong (P:int->1 spt->bool)
+  (linear_scan_Writes l) n live =
         (let n_out = n - 1 in
         let live_out = numset_list_delete l live in
         P n_out live_out)`;
-   `check_number_property_strong P (Reads l) n live =
+   `check_number_property_strong P (linear_scan_Reads l) n live =
         (let n_out = n - 1 in
-        let live_out = numset_list_insert l live in
+        let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
    `check_number_property_strong P (Branch lt1 lt2:live_tree) n live =
         (let r2 = check_number_property_strong P lt2 n live in
@@ -205,11 +205,12 @@ let check_number_property_strong_def = cake_define_list
         r1 /\ r2)`];;
 
 let check_startlive_prop_def = cake_define_list
-  [`check_startlive_prop (Writes l) n beg end ndef =
-        (!r. MEM r l ==> (option_CASE (lookup r beg) ndef (\x. x) <=
-          n /\
-                        (?v. lookup r end = SOME v /\ n <= v)))`;
-   `check_startlive_prop (Reads l) n beg end ndef =
+  [`check_startlive_prop (linear_scan_Writes l) n beg end ndef =
+        (!r. MEM r l ==> (option_CASE (sptree_lookup r beg) ndef
+          (\x. x) <= n /\
+                        (?v. sptree_lookup r end = SOME v /\ n <=
+                          v)))`;
+   `check_startlive_prop (linear_scan_Reads l) n beg end ndef =
         T`;
    `check_startlive_prop (Branch lt1 lt2:live_tree) n beg end ndef =
         (let r2 = check_startlive_prop lt2 n beg end ndef in
@@ -223,8 +224,8 @@ let check_startlive_prop_def = cake_define_list
         r1 /\ r2)`];;
 
 let live_tree_registers_def = cake_define_list
-  [`live_tree_registers (Writes l) = set_of_list l`;
-   `live_tree_registers (Reads l) = set_of_list l`;
+  [`live_tree_registers (linear_scan_Writes l) = set_of_list l`;
+   `live_tree_registers (linear_scan_Reads l) = set_of_list l`;
    `live_tree_registers (Branch lt1 lt2:live_tree) =
   live_tree_registers lt1 UNION live_tree_registers lt2`;
    `live_tree_registers (Seq lt1 lt2:live_tree) = live_tree_registers
@@ -240,8 +241,9 @@ let point_inside_interval_def = cake_define
 let check_intervals_def = cake_define
   `check_intervals f int_beg int_end = (!r1 r2.
      r1 IN domain int_beg /\ r2 IN domain int_beg /\
-     interval_intersect (THE (lookup r1 int_beg),THE (lookup r1
-       int_end)) (THE (lookup r2 int_beg),THE (lookup r2 int_end)) /\
+     interval_intersect (THE (sptree_lookup r1 int_beg),THE
+       (sptree_lookup r1 int_end)) (THE (sptree_lookup r2 int_beg),THE
+       (sptree_lookup r2 int_end)) /\
      f r1 = f r2 ==>
      r1 = r2)`;;
 
@@ -250,22 +252,24 @@ let get_intervals_ct_aux_def = cake_define_list
   live =
       (n - 2,numset_list_add_if_lt wr n
         int_beg,numset_list_add_if_gt rd (n - 1)
-        (numset_list_add_if_gt wr n int_end),numset_list_insert rd
+        (numset_list_add_if_gt wr n
+        int_end),linear_scan_numset_list_insert rd
         (numset_list_delete wr live))`;
    `get_intervals_ct_aux (reg_alloc_Set cutset) (n:int) int_beg int_end
   live =
       (n - 1,int_beg,numset_list_add_if_gt (MAP FST (toAList
-        cutset)) n int_end,union cutset live)`;
+        cutset)) n int_end,sptree_union cutset live)`;
    `get_intervals_ct_aux (reg_alloc_Branch optcutset ct1 ct2) (n:int)
   int_beg int_end live =
       (let (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n
         int_beg int_end live in
       let (n1,int_beg1,int_end1,live1) = get_intervals_ct_aux ct1 n2
         int_beg2 int_end2 live in
-      match optcutset with NONE -> (n1,int_beg1,int_end1,union
-        live1 live2) | SOME cutset -> (n1 -
-        1,int_beg1,numset_list_add_if_gt (MAP FST (toAList cutset))
-        n1 int_end1,union cutset (union live1 live2)))`;
+      match optcutset with NONE ->
+        (n1,int_beg1,int_end1,sptree_union live1 live2) | SOME cutset
+        -> (n1 - 1,int_beg1,numset_list_add_if_gt (MAP FST (toAList
+        cutset)) n1 int_end1,sptree_union cutset (sptree_union live1
+        live2)))`;
    `get_intervals_ct_aux (reg_alloc_Seq ct1 ct2) (n:int) int_beg int_end
   live =
       (let (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n
@@ -419,25 +423,25 @@ let get_intervals_ct_monad_aux_def = cake_define_list
         (numset_list_add_if_lt_monad wr n) (st_ex_ignore_bind
         (numset_list_add_if_gt_monad wr n) (st_ex_ignore_bind
         (numset_list_add_if_gt_monad rd (n - 1)) (
-        st_ex_return (n - 2,numset_list_insert rd
+        st_ex_return (n - 2,linear_scan_numset_list_insert rd
           (numset_list_delete wr live)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Set cutset) (n:int) live =
       st_ex_ignore_bind
         (numset_list_add_if_gt_monad (MAP FST (toAList cutset)) n) (
-        st_ex_return (n - 1,union cutset live))`;
+        st_ex_return (n - 1,sptree_union cutset live))`;
    `get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2)
   (n:int) live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
         (n2,live2). st_ex_bind (get_intervals_ct_monad_aux ct1 n2
           live) (\
         (n1,live1).
-        match optcutset with NONE -> st_ex_return (n1,union live1
-          live2) | SOME cutset ->
+        match optcutset with NONE -> st_ex_return (n1,sptree_union
+          live1 live2) | SOME cutset ->
           st_ex_ignore_bind
             (numset_list_add_if_gt_monad (MAP FST (toAList cutset))
               n1) (
-            st_ex_return (n1 - 1,union cutset (union live1
-              live2)))))`;
+            st_ex_return (n1 - 1,sptree_union cutset
+              (sptree_union live1 live2)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Seq ct1 ct2) (n:int) live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
         (n2,live2).
@@ -476,7 +480,7 @@ let add_active_interval_def = cake_define_list
 let find_color_in_list_def = cake_define_list
   [`find_color_in_list [] (forbidden:1 spt) = NONE`;
    `find_color_in_list (r :: rs) forbidden =
-        (if lookup r forbidden = NONE then
+        (if sptree_lookup r forbidden = NONE then
           SOME (r,rs) else
           match find_color_in_list rs forbidden with NONE -> NONE
             | SOME (col,rest) -> SOME (col,r :: rest))`];;
@@ -507,8 +511,8 @@ let color_register_def = cake_define
      st_ex_ignore_bind
        (update_colors reg col) (
        if is_phy_var reg then
-         st_ex_return (linear_scan_state_phyregs_fupd (insert col
-           one) (linear_scan_state_active_fupd (add_active_interval
+         st_ex_return (linear_scan_state_phyregs_fupd (sptree_insert
+           col one) (linear_scan_state_active_fupd (add_active_interval
            (rend,reg))
            st)) else
          st_ex_return (linear_scan_state_active_fupd
@@ -524,8 +528,8 @@ let find_last_stealable_def = cake_define_list
           (steal,x :: rest)) | NONE -> (
             st_ex_bind (colors_sub (SND x)) (\
               xcol.
-              if ~(is_phy_var (SND x)) /\ (lookup xcol forbidden =
-                NONE) then
+              if ~(is_phy_var (SND x)) /\ (sptree_lookup xcol
+                forbidden = NONE) then
                 st_ex_return (SOME (x,xs)) else
                 st_ex_return NONE)))`];;
 
@@ -565,20 +569,20 @@ let linear_reg_alloc_step_pass1_def = cake_define
        st'.
        if is_stack_var reg then
          spill_register st' reg else
-         st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg
+         st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup reg
            forced))) (\
            forced_forbidden_list.
            let forced_forbidden = fromAList (MAP (\c. (c,one))
              forced_forbidden_list) in
            if is_phy_var reg then
              if reg < 2 * (linear_scan_state_colormax st') then
-               let forbidden = union (linear_scan_state_phyregs st')
-                 forced_forbidden in
+               let forbidden = sptree_union
+                 (linear_scan_state_phyregs st') forced_forbidden in
                linear_reg_alloc_step_aux st' forbidden [] reg rend T
                  else
                spill_register st' reg else
-             st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg
-               moves))) (\
+             st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup
+               reg moves))) (\
                moves_preferred.
                linear_reg_alloc_step_aux st' forced_forbidden
                  moves_preferred reg rend F)))))`;;
@@ -588,15 +592,15 @@ let linear_reg_alloc_step_pass2_def = cake_define
      st_ex_bind (int_beg_sub reg) (\
        rbeg. st_ex_bind (int_end_sub reg) (\
        rend. st_ex_bind (remove_inactive_intervals rbeg st) (\
-       st'. st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg
-         forced))) (\
+       st'. st_ex_bind (st_ex_MAP colors_sub (the [] (sptree_lookup
+         reg forced))) (\
        forced_forbidden_list. st_ex_bind (st_ex_return (fromAList
          (MAP (\c. (c,one)) forced_forbidden_list))) (\
        forced_forbidden. st_ex_bind (st_ex_MAP colors_sub (the []
-         (lookup reg moves))) (\
+         (sptree_lookup reg moves))) (\
        moves_preferred.
        if is_phy_var reg then
-         let forbidden = union (linear_scan_state_phyregs st')
+         let forbidden = sptree_union (linear_scan_state_phyregs st')
            forced_forbidden in
            linear_reg_alloc_step_aux st' forbidden [] reg rend F else
          linear_reg_alloc_step_aux st' forced_forbidden
@@ -617,12 +621,13 @@ let find_reg_exchange_def = cake_define_list
       st_ex_bind (colors_sub r) (\
         col1.
         let fcol1 = r DIV 2 in
-        let col2 = option_CASE (lookup fcol1 invexch) fcol1 (\x. x)
-          in
-        let fcol2 = option_CASE (lookup col1 exch) col1 (\x. x) in
-        find_reg_exchange rs (insert col1 fcol1 (insert col2
-          fcol2 exch)) (insert fcol1 col1 (insert fcol2 col2
-          invexch)))`];;
+        let col2 = option_CASE (sptree_lookup fcol1 invexch) fcol1
+          (\x. x) in
+        let fcol2 = option_CASE (sptree_lookup col1 exch) col1 (\x.
+          x) in
+        find_reg_exchange rs (sptree_insert col1 fcol1
+          (sptree_insert col2 fcol2 exch)) (sptree_insert fcol1 col1
+          (sptree_insert fcol2 col2 invexch)))`];;
 
 let MAP_colors_def = cake_define_list
   [`MAP_colors f 0 = st_ex_return one`;
@@ -637,8 +642,8 @@ let apply_reg_exchange_def = cake_define
      st_ex_bind (find_reg_exchange phyregs LN LN) (\
        (exch,invexch). st_ex_bind colors_length (\
        col_size.
-       MAP_colors (\c. option_CASE (lookup c exch) c (\x. x))
-         col_size))`;;
+       MAP_colors (\c. option_CASE (sptree_lookup c exch) c (\x.
+         x)) col_size))`;;
 
 let st_ex_FOLDL_def = cake_define_list
   [`st_ex_FOLDL f e [] = st_ex_return e`;
@@ -668,10 +673,10 @@ let edges_to_adjlist_def = cake_define_list
           bega. st_ex_bind (int_beg_sub b) (\
           begb.
           if bega < begb \/ (bega = begb /\ a <= b) then
-            edges_to_adjlist abs' (insert b (a :: (the [] (lookup b
-              acc))) acc) else
-            edges_to_adjlist abs' (insert a (b :: (the [] (lookup
-              a acc))) acc))))`];;
+            edges_to_adjlist abs' (sptree_insert b (a :: (the []
+              (sptree_lookup b acc))) acc) else
+            edges_to_adjlist abs' (sptree_insert a (b :: (the []
+              (sptree_lookup a acc))) acc))))`];;
 
 let sort_moves_rev_def = cake_define
   `sort_moves_rev ls =
@@ -832,10 +837,11 @@ let linear_reg_alloc_intervals_def = cake_define
            (\
          st_init_pass2. st_ex_bind (st_ex_return (fromAList (MAP (\r.
            (r,one)) stacklist))) (\
-         stackset. st_ex_bind (st_ex_return (map (FILTER (\r.
-           ~(lookup r stackset = NONE))) forced_adjlist)) (\
-         forced_adjlist'. st_ex_bind (st_ex_return (map (FILTER (\r.
-           ~(lookup r stackset = NONE))) moves_adjlist)) (\
+         stackset. st_ex_bind (st_ex_return (sptree_map (FILTER (\r.
+           ~(sptree_lookup r stackset = NONE))) forced_adjlist)) (\
+         forced_adjlist'. st_ex_bind (st_ex_return (sptree_map
+           (FILTER (\r. ~(sptree_lookup r stackset = NONE)))
+           moves_adjlist)) (\
          moves_adjlist'. st_ex_bind (st_ex_FOLDL
            (linear_reg_alloc_step_pass2 forced_adjlist' moves_adjlist')
            st_init_pass2 stacklist) (\
@@ -847,8 +853,8 @@ let extract_coloration_def = cake_define_list
    `extract_coloration invbij (r :: rs) acc =
       st_ex_bind (colors_sub r) (\
         col.
-        extract_coloration invbij rs (insert (the 0 (lookup r
-          invbij)) col acc))`];;
+        extract_coloration invbij rs (sptree_insert (the 0
+          (sptree_lookup r invbij)) col acc))`];;
 
 let bijection_state_FIELDS = define_record "bijection_state"
   ["bij","num spt";
@@ -863,34 +869,34 @@ let find_bijection_init_def = cake_define
 
 let find_bijection_step_def = cake_define
   `find_bijection_step state r =
-     (if ~(lookup r (bijection_state_bij state) = NONE) then
+     (if ~(sptree_lookup r (bijection_state_bij state) = NONE) then
        state else if is_phy_var r then bijection_state_nmax_fupd (K
          (MAX r (bijection_state_nmax state)))
-         (bijection_state_invbij_fupd (K (insert r r
+         (bijection_state_invbij_fupd (K (sptree_insert r r
          (bijection_state_invbij state))) (bijection_state_bij_fupd (K
-         (insert r r (bijection_state_bij state)))
+         (sptree_insert r r (bijection_state_bij state)))
        state)) else if is_stack_var r then
          bijection_state_nstack_fupd (K (bijection_state_nstack state +
          4)) (bijection_state_nmax_fupd (K (MAX (bijection_state_nstack
          state) (bijection_state_nmax state)))
-         (bijection_state_invbij_fupd (K (insert (bijection_state_nstack
-         state) r (bijection_state_invbij state)))
-         (bijection_state_bij_fupd (K (insert r (bijection_state_nstack
-         state) (bijection_state_bij state)))
+         (bijection_state_invbij_fupd (K (sptree_insert
+         (bijection_state_nstack state) r (bijection_state_invbij
+         state))) (bijection_state_bij_fupd (K (sptree_insert r
+         (bijection_state_nstack state) (bijection_state_bij state)))
        state))) else bijection_state_nalloc_fupd (K
          (bijection_state_nalloc state + 4)) (bijection_state_nmax_fupd
          (K (MAX (bijection_state_nalloc state) (bijection_state_nmax
-         state))) (bijection_state_invbij_fupd (K (insert
+         state))) (bijection_state_invbij_fupd (K (sptree_insert
          (bijection_state_nalloc state) r (bijection_state_invbij
-         state))) (bijection_state_bij_fupd (K (insert r
+         state))) (bijection_state_bij_fupd (K (sptree_insert r
          (bijection_state_nalloc state) (bijection_state_bij state)))
        state))))`;;
 
 let find_bijection_clash_tree_def = cake_define_list
-  [`find_bijection_clash_tree state (Delta wr rd) =
+  [`find_bijection_clash_tree state (reg_alloc_Delta wr rd) =
       FOLDL find_bijection_step (FOLDL find_bijection_step state
         rd) wr`;
-   `find_bijection_clash_tree state (Set cutset) =
+   `find_bijection_clash_tree state (reg_alloc_Set cutset) =
       foldi (\r v acc. find_bijection_step acc r) 0 state cutset`;
    `find_bijection_clash_tree state (Branch optcutset ct1
   ct2:clash_tree) =
@@ -905,8 +911,8 @@ let find_bijection_clash_tree_def = cake_define_list
 
 let apply_bijection_def = cake_define
   `apply_bijection bij (interval:int spt) =
-       foldi (\r i acc. insert (the 0 (lookup r bij)) i acc) 0 LN
-         interval`;;
+       foldi (\r i acc. sptree_insert (the 0 (sptree_lookup r
+         bij)) i acc) 0 LN interval`;;
 
 (* HOL4 ML code, not ported:
 val array_fields_names = ["colors", "int_beg", "int_end", "sorted_regs",
@@ -926,9 +932,9 @@ let linear_reg_alloc_and_extract_coloration_def = cake_define
        extract_coloration invbij reglist_unsorted LN))`;;
 
 let size_of_clash_tree_def = cake_define_list
-  [`size_of_clash_tree (Delta wr rd) =
+  [`size_of_clash_tree (reg_alloc_Delta wr rd) =
       (&2)`;
-   `size_of_clash_tree (Set cutset) =
+   `size_of_clash_tree (reg_alloc_Set cutset) =
       (&1)`;
    `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) =
       (if IS_SOME optcutset then 1 else 0) + size_of_clash_tree
@@ -946,16 +952,17 @@ let run_linear_reg_alloc_intervals_def = cake_define
            (nmax + 1,1) (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 
 let apply_bij_on_clash_tree_def = cake_define_list
-  [`apply_bij_on_clash_tree (Delta wr rd) bij =
-      Delta (MAP (\r. the 0 (lookup r bij)) wr) (MAP (\r. the 0
-        (lookup r bij)) rd)`;
-   `apply_bij_on_clash_tree (Set cutset) bij =
-      Set (foldi (\r _7 acc. insert (the 0 (lookup r bij)) one
-        acc) 0 LN cutset)`;
+  [`apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
+      reg_alloc_Delta (MAP (\r. the 0 (sptree_lookup r bij)) wr)
+        (MAP (\r. the 0 (sptree_lookup r bij)) rd)`;
+   `apply_bij_on_clash_tree (reg_alloc_Set cutset) bij =
+      reg_alloc_Set (foldi (\r _7 acc. sptree_insert (the 0
+        (sptree_lookup r bij)) one acc) 0 LN cutset)`;
    `apply_bij_on_clash_tree (Branch optcutset ct1 ct2:clash_tree) bij =
-      Branch (OPTION_MAP (foldi (\r _8 acc. insert (the 0 (lookup
-        r bij)) one acc) 0 LN) optcutset) (apply_bij_on_clash_tree
-        ct1 bij) (apply_bij_on_clash_tree ct2 bij)`;
+      Branch (OPTION_MAP (foldi (\r _8 acc. sptree_insert (the 0
+        (sptree_lookup r bij)) one acc) 0 LN) optcutset)
+        (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree
+        ct2 bij)`;
    `apply_bij_on_clash_tree (Seq ct1 ct2:clash_tree) bij =
       Seq (apply_bij_on_clash_tree ct1 bij)
         (apply_bij_on_clash_tree ct2 bij)`];;
@@ -967,11 +974,11 @@ let linear_scan_reg_alloc_def = cake_define
          ct in
        let ct' = apply_bij_on_clash_tree ct (bijection_state_bij
          bijstate) in
-       let forced' = MAP (\(r1,r2). (the 0 (lookup r1
-         (bijection_state_bij bijstate)),the 0 (lookup r2
+       let forced' = MAP (\(r1,r2). (the 0 (sptree_lookup r1
+         (bijection_state_bij bijstate)),the 0 (sptree_lookup r2
          (bijection_state_bij bijstate)))) forced in
-       let moves' = MAP (\(p,(r1,r2)). (p,(the 0 (lookup r1
-         (bijection_state_bij bijstate)),the 0 (lookup r2
+       let moves' = MAP (\(p,(r1,r2)). (p,(the 0 (sptree_lookup r1
+         (bijection_state_bij bijstate)),the 0 (sptree_lookup r2
          (bijection_state_bij bijstate))))) moves in
        let reglist_unsorted = (MAP SND (toAList (bijection_state_bij
          bijstate))) in

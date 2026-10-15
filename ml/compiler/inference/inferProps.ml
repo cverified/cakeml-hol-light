@@ -272,4 +272,3 @@ let remap_tenv_def = cake_define
 
 let hide_def = cake_define
   `inferProps_hide x = x`;;
-hol4_overload "hide" "inferProps_hide";;

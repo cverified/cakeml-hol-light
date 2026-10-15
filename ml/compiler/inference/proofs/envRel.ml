@@ -152,9 +152,8 @@ let env_rel_def = cake_define
     tenv_ok tenv /\
     (!x. nsLookupMod (inf_env_inf_v ienv) x = NONE <=> nsLookupMod
       (?_v tenv) x = NONE) /\
-    env_rel_sound FEMPTY ienv tenv Empty /\
-    env_rel_complete FEMPTY ienv tenv Empty`;;
-hol4_overload "env_rel" "envRel_env_rel";;
+    env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
+    env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
 
 let ienv_to_tenv_def = cake_define
   `ienv_to_tenv ienv =

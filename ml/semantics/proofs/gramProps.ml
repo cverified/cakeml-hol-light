@@ -248,7 +248,7 @@ val rank_assum =
 
 let fringe_lengths_def = cake_define
   `fringe_lengths G sf = {LENGTH' i | (\G. RTC (derive G)) G sf (MAP
-  TOK i)}`;;
+  grammar_TOK i)}`;;
 
 (* HOL4 ML code, not ported:
 val RTC_R_I = relationTheory.RTC_RULES |> SPEC_ALL |> CONJUNCT2 |>

@@ -74,14 +74,14 @@ let next_sym_alt_def = cake_define_list
              SOME (OtherS n,
                    Locs loc (next_loc (LENGTH n - 1) loc),
                    rest) else if c = (CHR 34) then
-           let (t,loc',rest) = read_string str "" (next_loc 1 loc)
-             in
+           let (t,loc',rest) = lexer_fun_read_string str ""
+             (next_loc 1 loc) in
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
                str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
              isPREFIX "#\"" (c :: str) then
-           let (t,loc',rest) = read_string (TL str) "" (next_loc 2
-             loc) in
+           let (t,loc',rest) = lexer_fun_read_string (TL str) ""
+             (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
                "#(" (c :: str) then
            let (t,loc',rest) =
@@ -107,22 +107,22 @@ let lex_aux_def = cake_define_wf
        SOME (token,Locs loc' loc'',rest) ->
          (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in
-           if token = SemicolonT /\ (d = 0) then SOME (REVERSE
+           if token = tokens_SemicolonT /\ (d = 0) then SOME (REVERSE
              new_acc,newloc,rest) else
-             if token = LetT then lexer_impl_lex_aux new_acc (d +
-               1) rest newloc else if token = StructT then
+             if token = tokens_LetT then lexer_impl_lex_aux
+               new_acc (d + 1) rest newloc else if token =
+               tokens_StructT then lexer_impl_lex_aux new_acc (d + 1)
+               rest newloc else if token = tokens_SigT then
                lexer_impl_lex_aux new_acc (d + 1) rest newloc else if
-               token = SigT then lexer_impl_lex_aux new_acc (d + 1)
-               rest newloc else if token = LparT then
-               lexer_impl_lex_aux new_acc (d + 1) rest newloc else if
-               token = EndT then lexer_impl_lex_aux new_acc (d - 1)
-               rest newloc else if token = RparT then
-               lexer_impl_lex_aux new_acc (d - 1) rest newloc else
-               lexer_impl_lex_aux new_acc d rest newloc))`;;
-hol4_overload "lex_aux" "lexer_impl_lex_aux";;
+               token = tokens_LparT then lexer_impl_lex_aux new_acc
+               (d + 1) rest newloc else if token = tokens_EndT then
+               lexer_impl_lex_aux new_acc (d - 1) rest newloc else if
+               token = tokens_RparT then lexer_impl_lex_aux new_acc
+               (d - 1) rest newloc else lexer_impl_lex_aux new_acc d
+               rest newloc))`;;
 
 let lex_until_toplevel_semicolon_def = cake_define
-  `lex_until_toplevel_semicolon input = lex_aux [] 0 input`;;
+  `lex_until_toplevel_semicolon input = lexer_impl_lex_aux [] 0 input`;;
 
 (* lex_until_toplevel_semicolon_alt *)
 
@@ -187,19 +187,19 @@ let lex_aux_tokens_def = cake_define
       (match input with
         [] -> NONE | (token,locs) :: rest ->
           (let new_acc = (token,locs) :: acc in
-            if token = SemicolonT /\ (d = 0) then
+            if token = tokens_SemicolonT /\ (d = 0) then
               SOME (REVERSE (new_acc),rest) else
-              if token = LetT then
+              if token = tokens_LetT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  StructT then
+                  tokens_StructT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  SigT then
+                  tokens_SigT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  LparT then
+                  tokens_LparT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  EndT then
+                  tokens_EndT then
                 lex_aux_tokens new_acc (d - 1) rest else if token =
-                  RparT then
+                  tokens_RparT then
                 lex_aux_tokens new_acc (d - 1) rest else
                   lex_aux_tokens new_acc d rest))`;;
 

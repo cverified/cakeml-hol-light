@@ -356,7 +356,6 @@ let is_safe_for_space_def = cake_define
            InitGlobals_location /\ ~(data_to_word_config_gc_kind
            (backend_config_data_conf
        c) = None))`;;
-hol4_overload "is_safe_for_space" "backendProof_is_safe_for_space";;
 
 (* TODO: MOVE *)
 
@@ -373,7 +372,6 @@ let read_limits_def = cake_define
           (machine_config_target
         mc) ms (tlookup (stack_to_lab_config_reg_names
           (backend_config_stack_conf c)) 4):'a word))`;;
-hol4_overload "read_limits" "backendProof_read_limits";;
 
 let add_eval_state_def = cake_define_list
   [`add_eval_state NONE s0 = s0`;
@@ -416,7 +414,7 @@ let backend_from_data_tuple_cc_def = cake_define
             (compile_word_to_stack asm_conf F
              ((asm_config_reg_count asm_conf - (LENGTH
                (asm_config_avoid_regs asm_conf) + 3)) - 2) progs
-               (Nil,bm0)))
+               (misc_Nil,bm0)))
                cfg (MAP (\p. full_compile_single
                  (asm_config_two_reg_arith asm_conf)
                  (asm_config_reg_count asm_conf - (LENGTH

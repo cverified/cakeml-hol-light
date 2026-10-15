@@ -12,19 +12,17 @@ needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
-needs "semantics/evaluate.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 let parse_def = cake_define
   `semantics_parse toks =
-     (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt = NT
-       ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
-                   real_fringe pt = MAP (TOK ## I) toks) with NONE
-                     -> NONE | SOME p -> ptree_TopLevelDecs p)`;;
-hol4_overload "parse" "semantics_parse";;
+     (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt =
+       grammar_NT ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
+                   real_fringe pt = MAP (grammar_TOK ## I) toks)
+                     with NONE -> NONE | SOME p -> ptree_TopLevelDecs
+                     p)`;;
 
 let semantics_state_FIELDS = define_record "semantics_state"
   ["tenv","type_env";
@@ -42,19 +40,19 @@ let can_type_prog_def = cake_define
 let evaluate_prog_with_clock_def = cake_define
   `evaluate_prog_with_clock st env k prog =
      (let (st',r) =
-       evaluate_decs (semanticPrimitives_state_clock_fupd (K k)
-         st) env prog in (semanticPrimitives_state_ffi st',r))`;;
+       evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd
+         (K k) st) env prog in (semanticPrimitives_state_ffi st',r))`;;
 
 let semantics_prog_def = cake_define_list
-  [`semantics_prog st env prog (Terminate outcome io_list) <=>
+  [`semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
         (?k ffi r.
           evaluate_prog_with_clock st env k prog = (ffi,r) /\
           (match r with Rerr (Rabort (Rffi_error outcome')) ->
-             outcome = FFI_outcome (outcome') | r -> ~(r = Rerr
-               (Rabort Rtimeout_error)) /\ outcome = Success) /\
+             outcome = ffi_FFI_outcome (outcome') | r -> ~(r = Rerr
+               (Rabort Rtimeout_error)) /\ outcome = ffi_Success) /\
           (io_list = ffi_state_io_events ffi) /\
           (~(r = Rerr (Rabort Rtype_error))))`;
-   `semantics_prog st env prog (Diverge io_trace) <=>
+   `semantics_prog st env prog (ffi_Diverge io_trace) <=>
         (!k. ?ffi.
           (evaluate_prog_with_clock st env k prog =
               (ffi,Rerr (Rabort Rtimeout_error)))) /\
@@ -64,7 +62,7 @@ let semantics_prog_def = cake_define_list
                (evaluate_prog_with_clock st env k prog))))
              UNIV)
            io_trace`;
-   `semantics_prog st env prog Fail <=>
+   `semantics_prog st env prog ffi_Fail <=>
         (?k.
           SND (evaluate_prog_with_clock st env k prog) = Rerr
             (Rabort Rtype_error))`];;
@@ -74,8 +72,8 @@ let semantics_INDUCT,semantics_RECURSION = define_datatype
 
 let semantics_def = cake_define
   `semantics state prelude input =
-     (match parse (lexer_fun input) with NONE -> CannotParse | SOME
-       prog ->
+     (match semantics_parse (lexer_fun input) with NONE ->
+       CannotParse | SOME prog ->
        (if can_type_prog state (prelude ++ prog) then Execute
          (semantics_prog (semantics_state_sem_st state)
          (semantics_state_sem_env state) (prelude ++ prog)) else

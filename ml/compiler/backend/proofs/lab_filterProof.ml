@@ -30,12 +30,12 @@ let adjust_pc_def = cake_define
 (*All skips for the next k*)
 let all_skips_def = cake_define
   `all_skips pc code k <=>
-   (!x y. ~(asm_fetch_aux (pc + k) code = SOME (Asm (Asmi (Inst
-     Skip)) x y))) /\
+   (!x y. ~(asm_fetch_aux (pc + k) code = SOME (labLang_Asm (Asmi
+     (Inst Skip)) x y))) /\
    (!i. i < k ==>
      (?x y.
-     asm_fetch_aux (pc + i) code = SOME (Asm (Asmi (Inst Skip)) x
-       y)))`;;
+     asm_fetch_aux (pc + i) code = SOME (labLang_Asm (Asmi (Inst
+       Skip)) x y)))`;;
 
 (*
 Proof plan:
@@ -72,7 +72,6 @@ let state_rel_def = cake_define
         (filter_skip (?_code t1))) t1))) /\ ?_compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
      ~?_failed t1`;;
-hol4_overload "state_rel" "lab_filterProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 val all_skips_evaluate_0 = all_skips_evaluate |>SIMP_RULE std_ss

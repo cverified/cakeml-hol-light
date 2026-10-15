@@ -54,30 +54,29 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
    backend_passes_Stack ((num#'ga stackLang_prog) list) (mlstring \
    sptree_num_map) | backend_passes_Lab (('ga sec) list) (mlstring \
    sptree_num_map)";;
-hol4_overload "Source" "backend_passes_Source";;
-hol4_overload "Flat" "backend_passes_Flat";;
 hol4_overload "Clos" "backend_passes_Clos";;
-hol4_overload "Bvl" "backend_passes_Bvl";;
-hol4_overload "Bvi" "backend_passes_Bvi";;
-hol4_overload "Data" "backend_passes_Data";;
 hol4_overload "Word" "backend_passes_Word";;
-hol4_overload "Stack" "backend_passes_Stack";;
 hol4_overload "Lab" "backend_passes_Lab";;
 
 let to_flat_all_def = cake_define
   `to_flat_all (c:backend_config) p =
      (let ps = [] in
-     let ps = ps ++ [((implode "original source code"),Source p)] in
+     let ps = ps ++ [((implode
+       "original source code"),backend_passes_Source p)] in
      let p = source_let_compile_decs p in
-     let ps = ps ++ [((implode "after source_let"),Source p)] in
+     let ps = ps ++ [((implode
+       "after source_let"),backend_passes_Source p)] in
      let (c',p) = source_to_flat_compile_prog
        (backend_config_source_conf c) p in
-     let ps = ps ++ [((implode "after source_to_flat"),Flat p)] in
+     let ps = ps ++ [((implode
+       "after source_to_flat"),backend_passes_Flat p)] in
      let p = remove_flat_prog p in
-     let ps = ps ++ [((implode "after remove_flat"),Flat p)] in
+     let ps = ps ++ [((implode
+       "after remove_flat"),backend_passes_Flat p)] in
      let p = MAP (compile_dec (source_to_flat_config_pattern_cfg c'))
        p in
-     let ps = ps ++ [((implode "after flat_pattern"),Flat p)] in
+     let ps = ps ++ [((implode
+       "after flat_pattern"),backend_passes_Flat p)] in
      let c = backend_config_source_conf_fupd (K c') c in
        ((ps:(mlstring#'a any_prog) list),c,p))`;;
 
@@ -132,8 +131,8 @@ let to_bvl_all_def = cake_define
                (clos_to_bvl_config_max_app c1))
                (clos_to_bvl_config_next_loc
                c0) (LENGTH es0) in
-     let ps = ps ++ [((implode "after clos_to_bvl"),Bvl prog'
-       func_names)] in
+     let ps = ps ++ [((implode
+       "after clos_to_bvl"),backend_passes_Bvl prog' func_names)] in
      let c2 = clos_to_bvl_config_start_fupd (K (num_stubs
        (clos_to_bvl_config_max_app c1) - 1)) c1 in
      let p = code_sort prog' in
@@ -153,16 +152,17 @@ let to_bvi_all_def = cake_define
      let prog = MAP (\(name,arity,exp). (name,arity,HD (remove_ticks
        [exp]))) prog1 in
      let ps = ps ++ [((implode
-       "after bvl_inline and remove_ticks"),Bvl prog names)] in
+       "after bvl_inline and remove_ticks"),backend_passes_Bvl prog
+       names)] in
      let prog = MAP (\(name,arity,exp). (name,arity,let_op_sing exp))
        prog in
-     let ps = ps ++ [((implode "after let_op_sing"),Bvl prog names)]
-       in
+     let ps = ps ++ [((implode
+       "after let_op_sing"),backend_passes_Bvl prog names)] in
      let prog = MAP (\(name,arity,exp). (name,arity,
                         compile_any split_seq cut_size arity exp))
                           prog in
-     let ps = ps ++ [((implode "after bvl_handle"),Bvl prog names)]
-       in
+     let ps = ps ++ [((implode "after bvl_handle"),backend_passes_Bvl
+       prog names)] in
      let (loc,code,n1) = bvl_to_bvi_compile_prog start 0 prog in
      let (n2,code2) = bvi_tailrec_compile_prog
        (bvl_to_bvi_config_do_tailrec c0) (bvl_num_stubs + 2) code in
@@ -176,13 +176,14 @@ let to_bvi_all_def = cake_define
        ++
        word_to_stack_stub_names one ++ stack_alloc_stub_names one ++
        stack_remove_stub_names one)) names in
-     let ps = ps ++ [((implode "after bvl_to_bvi"),Bvi code names)]
-       in
-     let ps = ps ++ [((implode "after bvi_tailrec"),Bvi code2 names)]
-       in
-     let ps = ps ++ [((implode "after bvi_tmc"),Bvi code3 names)] in
-     let ps = ps ++ [((implode "after bvi_inline"),Bvi code' names)]
-       in
+     let ps = ps ++ [((implode "after bvl_to_bvi"),backend_passes_Bvi
+       code names)] in
+     let ps = ps ++ [((implode
+       "after bvi_tailrec"),backend_passes_Bvi code2 names)] in
+     let ps = ps ++ [((implode "after bvi_tmc"),backend_passes_Bvi
+       code3 names)] in
+     let ps = ps ++ [((implode "after bvi_inline"),backend_passes_Bvi
+       code' names)] in
      let c = backend_config_clos_conf_fupd (\c.
        clos_to_bvl_config_start_fupd (K s) c) c in
      let c = backend_config_bvl_conf_fupd
@@ -198,13 +199,17 @@ let to_data_all_def = cake_define
      (let (ps,c,p,names) = to_bvi_all c p in
      let p = MAP (\(a,n,e). (a,n,FST (compile n (COUNT_LIST n) T []
        [e]))) p in
-     let ps = ps ++ [((implode "after bvi_to_data"),Data p names)] in
+     let ps = ps ++ [((implode
+       "after bvi_to_data"),backend_passes_Data p names)] in
      let p = MAP (\(a,n,e). (a,n,FST (data_live_compile e LN))) p in
-     let ps = ps ++ [((implode "after data_live"),Data p names)] in
+     let ps = ps ++ [((implode "after data_live"),backend_passes_Data
+       p names)] in
      let p = MAP (\(a,n,e). (a,n,simp e Skip)) p in
-     let ps = ps ++ [((implode "after data_simp"),Data p names)] in
+     let ps = ps ++ [((implode "after data_simp"),backend_passes_Data
+       p names)] in
      let p = MAP (\(a,n,e). (a,n,data_space_compile e)) p in
-     let ps = ps ++ [((implode "after data_space"),Data p names)] in
+     let ps = ps ++ [((implode
+       "after data_space"),backend_passes_Data p names)] in
        ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
 (* NOTE: this definition is meant to minimize code duplication
@@ -289,8 +294,8 @@ let to_stack_all_def = cake_define
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
        in
-     let ps = ps ++ [((implode "after word_to_stack"),Stack p names)]
-       in
+     let ps = ps ++ [((implode
+       "after word_to_stack"),backend_passes_Stack p names)] in
      let c = backend_config_word_conf_fupd (K c') c in
        ((ps:(mlstring#'a any_prog) list),bm,c,p,names))`;;
 
@@ -305,21 +310,21 @@ let to_lab_all_def = cake_define
        (asm_config_avoid_regs asm_conf) + 3) in
      let offset = asm_config_addr_offset asm_conf in
      let prog = stack_rawcall_compile p in
-     let ps = ps ++ [((implode "after stack_rawcall"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_rawcall"),backend_passes_Stack prog names)] in
      let prog = stack_alloc_compile data_conf prog in
-     let ps = ps ++ [((implode "after stack_alloc"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_alloc"),backend_passes_Stack prog names)] in
      let prog = stack_remove_compile (stack_to_lab_config_jump
        stack_conf) offset (is_gen_gc (data_to_word_config_gc_kind
        data_conf))
                   max_heap sp InitGlobals_location prog in
-     let ps = ps ++ [((implode "after stack_remove"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_remove"),backend_passes_Stack prog names)] in
      let prog = stack_names_compile (stack_to_lab_config_reg_names
        stack_conf) prog in
-     let ps = ps ++ [((implode "after stack_names"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_names"),backend_passes_Stack prog names)] in
      let p = MAP prog_to_section prog in
      let ps = ps ++ [((implode "after stack_to_lab"),Lab p names)] in
        ((ps:(mlstring#'a any_prog) list),(bm:('a word)
@@ -354,21 +359,21 @@ let from_stack_all_def = cake_define
        (asm_config_avoid_regs asm_conf) + 3) in
      let offset = asm_config_addr_offset asm_conf in
      let prog = stack_rawcall_compile p in
-     let ps = ps ++ [((implode "after stack_rawcall"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_rawcall"),backend_passes_Stack prog names)] in
      let prog = stack_alloc_compile data_conf prog in
-     let ps = ps ++ [((implode "after stack_alloc"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_alloc"),backend_passes_Stack prog names)] in
      let prog = stack_remove_compile (stack_to_lab_config_jump
        stack_conf) offset (is_gen_gc (data_to_word_config_gc_kind
        data_conf))
                   max_heap sp InitGlobals_location prog in
-     let ps = ps ++ [((implode "after stack_remove"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_remove"),backend_passes_Stack prog names)] in
      let prog = stack_names_compile (stack_to_lab_config_reg_names
        stack_conf) prog in
-     let ps = ps ++ [((implode "after stack_names"),Stack prog
-       names)] in
+     let ps = ps ++ [((implode
+       "after stack_names"),backend_passes_Stack prog names)] in
      let p = MAP prog_to_section prog in
      let ps = ps ++ [((implode "after stack_to_lab"),Lab p names)] in
        from_lab_all ps asm_conf c names p bm)`;;
@@ -378,8 +383,8 @@ let from_word_all_def = cake_define
      (let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
        in
-     let ps = ps ++ [((implode "after word_to_stack"),Stack p names)]
-       in
+     let ps = ps ++ [((implode
+       "after word_to_stack"),backend_passes_Stack p names)] in
      let c = backend_config_word_conf_fupd (K c') c in
        from_stack_all ps asm_conf c names p bm)`;;
 
@@ -420,12 +425,13 @@ let from_data_all_def = cake_define
        from_word_0_all ps asm_conf c names p)`;;
 
 let any_prog_pp_def = cake_define
-  `any_prog_pp p = (match p with Source p -> source_to_strs p | Flat
-  p -> flat_to_strs p | Clos decs funs -> clos_to_strs (decs,funs) |
-  Bvl p names -> bvl_to_strs names p | Bvi p names -> bvi_to_strs
-  names p | Data p names -> data_to_strs names p | Word p names ->
-  word_to_strs names p | Stack p names -> stack_to_strs names p | Lab
-  p names -> lab_to_strs names p)`;;
+  `any_prog_pp p = (match p with backend_passes_Source p ->
+  source_to_strs p | backend_passes_Flat p -> flat_to_strs p | Clos
+  decs funs -> clos_to_strs (decs,funs) | backend_passes_Bvl p names
+  -> bvl_to_strs names p | backend_passes_Bvi p names -> bvi_to_strs
+  names p | backend_passes_Data p names -> data_to_strs names p |
+  Word p names -> word_to_strs names p | backend_passes_Stack p names
+  -> stack_to_strs names p | Lab p names -> lab_to_strs names p)`;;
 
 let pp_with_title_def = cake_define
   `pp_with_title pp (title,p) acc =
@@ -436,5 +442,5 @@ let compile_tap_def = cake_define
   `compile_tap asm_conf (c:backend_config) p =
      (if tap_config_explore_flag (backend_config_tap_conf c) then
        let (ps,out) = to_target_all asm_conf c p in
-         (out,ITLIST (pp_with_title any_prog_pp) ps Nil) else
-           (compile asm_conf c p,Nil))`;;
+         (out,ITLIST (pp_with_title any_prog_pp) ps misc_Nil) else
+           (compile asm_conf c p,misc_Nil))`;;

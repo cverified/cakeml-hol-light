@@ -42,9 +42,10 @@ let tenv_ok_def = cake_define
      tenv_abbrev_ok (type_env_t tenv)`;;
 
 let tenv_val_exp_ok_def = cake_define_list
-  [`tenv_val_exp_ok Empty <=> T`;
-   `tenv_val_exp_ok (Bind_tvar n tenv) <=> tenv_val_exp_ok tenv`;
-   `tenv_val_exp_ok (Bind_name x tvs t tenv) <=>
+  [`tenv_val_exp_ok typeSystem_Empty <=> T`;
+   `tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok
+  tenv`;
+   `tenv_val_exp_ok (typeSystem_Bind_name x tvs t tenv) <=>
         check_freevars (tvs + num_tvs tenv) [] t /\
         tenv_val_exp_ok tenv`];;
 
@@ -80,24 +81,31 @@ let type_ctor_def = cake_define
      LENGTH ts = n`;;
 
 let add_tenvE_def = cake_define_list
-  [`add_tenvE Empty tenvV = tenvV`;
-   `add_tenvE (Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE tenvV`;
-   `add_tenvE (Bind_name x tvs t tenvE) tenvV = nsBind x (tvs,t)
-  (add_tenvE tenvE tenvV)`];;
+  [`add_tenvE typeSystem_Empty tenvV = tenvV`;
+   `add_tenvE (typeSystem_Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE
+  tenvV`;
+   `add_tenvE (typeSystem_Bind_name x tvs t tenvE) tenvV = nsBind x
+  (tvs,t) (add_tenvE tenvE tenvV)`];;
 
 let type_v = cake_inductive
   `(!tvs ctMap tenvS n.
-     type_v tvs ctMap tenvS (Litv (IntLit n)) Tint) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_IntLit n))
+       Tint) /\
    (!tvs ctMap tenvS c.
-     type_v tvs ctMap tenvS (Litv (Char c)) Tchar) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_Char c))
+       Tchar) /\
    (!tvs ctMap tenvS s.
-     type_v tvs ctMap tenvS (Litv (StrLit s)) Tstring) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_StrLit s))
+       Tstring) /\
    (!tvs ctMap tenvS w.
-     type_v tvs ctMap tenvS (Litv (Word8 w)) Tword8) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_Word8 w))
+       Tword8) /\
    (!tvs ctMap tenvS w.
-     type_v tvs ctMap tenvS (Litv (Word64 w)) Tword64) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_Word64 w))
+       Tword64) /\
    (!tvs ctMap tenvS w.
-     type_v tvs ctMap tenvS (Litv (Float64 w)) Tdouble) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Litv (ast_Float64 w))
+       Tdouble) /\
    (!tvs ctMap tenvS vs tvs' stamp ts' ts ti.
      EVERY (check_freevars tvs []) ts' /\
      LENGTH tvs' = LENGTH ts' /\
@@ -105,10 +113,12 @@ let type_v = cake_inductive
        vs (MAP (type_subst (FUPDATE_LIST FEMPTY (REVERSE (ZIP tvs'
          ts')))) ts) /\
      FLOOKUP ctMap stamp = SOME (tvs',ts,ti) ==>
-     type_v tvs ctMap tenvS (Conv (SOME stamp) vs) (Tapp ts' ti)) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Conv (SOME stamp) vs)
+       (Tapp ts' ti)) /\
    (!tvs ctMap tenvS vs ts.
      LIST_REL (type_v tvs ctMap tenvS) vs ts ==>
-     type_v tvs ctMap tenvS (Conv NONE vs) (Ttup ts)) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Conv NONE vs) (Ttup
+       ts)) /\
    (!tvs ctMap tenvS env tenv tenvE n e t1 t2.
      tenv_ok tenv /\
      tenv_val_exp_ok tenvE /\
@@ -117,8 +127,10 @@ let type_v = cake_inductive
      nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t) (?_v env)
        (add_tenvE tenvE (?_v tenv)) /\
      check_freevars tvs [] t1 /\
-     type_e tenv (Bind_name n 0 t1 (bind_tvar tvs tenvE)) e t2 ==>
-     type_v tvs ctMap tenvS (Closure env n e) (Tfn t1 t2)) /\
+     type_e tenv (typeSystem_Bind_name n 0 t1 (bind_tvar tvs tenvE))
+       e t2 ==>
+     type_v tvs ctMap tenvS (semanticPrimitives_Closure env n e) (Tfn
+       t1 t2)) /\
    (!tvs ctMap tenvS env funs n t tenv tenvE bindings.
      tenv_ok tenv /\
      tenv_val_exp_ok tenvE /\
@@ -131,29 +143,34 @@ let type_v = cake_inductive
      ALOOKUP bindings n = SOME t /\
      ALL_DISTINCT (MAP FST funs) /\
      MEM n (MAP FST funs) ==>
-     type_v tvs ctMap tenvS (Recclosure env funs n) t) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Recclosure env funs
+       n) t) /\
    (!tvs ctMap tenvS n t.
      check_freevars 0 [] t /\
      FLOOKUP tenvS n = SOME (Ref_t t) ==>
-     type_v tvs ctMap tenvS (Loc T n) (Tref t)) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Loc T n) (Tref t)) /\
    (!tvs ctMap tenvS n.
      FLOOKUP tenvS n = SOME W8array_t ==>
-     type_v tvs ctMap tenvS (Loc T n) Tword8array) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Loc T n) Tword8array)
+       /\
    (!tvs ctMap tenvS n t.
      check_freevars 0 [] t /\
      FLOOKUP tenvS n = SOME (Varray_t t) ==>
-     type_v tvs ctMap tenvS (Loc T n) (Tarray t)) /\
+     type_v tvs ctMap tenvS (semanticPrimitives_Loc T n) (Tarray t))
+       /\
    (!tvs ctMap tenvS vs t.
      check_freevars 0 [] t /\
      EVERY (\v. type_v tvs ctMap tenvS v t) vs ==>
-     type_v tvs ctMap tenvS (Vectorv vs) (Tvector t))`;;
+     type_v tvs ctMap tenvS (semanticPrimitives_Vectorv vs)
+       (Tvector t))`;;
 
 let type_sv_def = cake_define
   `type_sv ctMap tenvS x3 x4 =
         match (x3,x4) with
-          (Refv v,Ref_t t) -> type_v 0 ctMap tenvS v t
-        | ((W8array v),W8array_t) -> T
-        | ((Varray vs),(Varray_t t)) ->
+          (semanticPrimitives_Refv v,Ref_t t) -> type_v 0 ctMap tenvS
+            v t
+        | ((semanticPrimitives_W8array v),W8array_t) -> T
+        | ((semanticPrimitives_Varray vs),(Varray_t t)) ->
        EVERY (\v. type_v 0 ctMap tenvS v t) vs
         | (_4,_5) -> F`;;
 

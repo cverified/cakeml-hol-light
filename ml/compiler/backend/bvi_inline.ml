@@ -14,7 +14,6 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "lib/sptree.ml";;
 
 let bvi_mk_tick_def = cake_define
@@ -28,7 +27,7 @@ let canonical_wrapper_def = cake_define
   `canonical_wrapper name arity x3 =
         match x3 with
           bvi_LetCall rets ticks worker args
-           (bvi_Op (BlockOp (Cons tag)) rvs) -> ~(
+           (bvi_Op (closLang_BlockOp (Cons tag)) rvs) -> ~(
         worker = name) /\
         args = GENLIST bvi_Var arity /\
         rvs = REVERSE (GENLIST bvi_Var rets)
@@ -56,8 +55,9 @@ let inline_exp_def = cake_define_list
              (inline_exp cs h)) | NONE ->
                (match dest with NONE -> bvi_Call ticks NONE xs NONE
                  | SOME name ->
-                   (match lookup name cs with NONE -> bvi_Call ticks
-                     (SOME name) xs NONE | SOME (arity,body) ->
+                   (match sptree_lookup name cs with NONE ->
+                     bvi_Call ticks (SOME name) xs NONE | SOME
+                     (arity,body) ->
                        (if LENGTH xs = arity then
                          bvi_Let xs (bvi_mk_tick (SUC ticks)
                            body) else bvi_Call ticks (SOME name) xs
@@ -76,7 +76,7 @@ let inline_all_def = cake_define_list
    `inline_all cs ((name,arity,body) :: prog) =
          (let body = inline_exp cs body in
          let cs1 = if wrapper_ok name arity body then
-                     insert name (arity,body) cs else cs in
+                     sptree_insert name (arity,body) cs else cs in
          let (cs2,prog2) = inline_all cs1 prog in
            (cs2,(name,arity,body) :: prog2))`];;
 
@@ -109,8 +109,6 @@ let compile_inc_def = cake_define
      (let (cs1,prog1) = inline_all cs prog in
        (cs1,MAP (\(name,arity,body).
                    (name,arity,remove_ticks_exp body)) prog1))`;;
-hol4_overload "compile_inc" "bvi_inline_compile_inc";;
 
 let compile_prog_def = cake_define
-  `bvi_inline_compile_prog prog = compile_inc LN prog`;;
-hol4_overload "compile_prog" "bvi_inline_compile_prog";;
+  `bvi_inline_compile_prog prog = bvi_inline_compile_inc LN prog`;;

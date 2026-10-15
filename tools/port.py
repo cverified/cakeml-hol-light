@@ -119,7 +119,7 @@ class Porter:
     self.abbrevs = db.abbrevs_for(thy)
     self.ctx = hterm.Ctx(names=names, fields=flds,
                          tynames=db.names_for(thy, True),
-                         overloaded=db.overloaded(),
+                         overloaded=db.overloaded_for(thy),
                          recs=db.recs_for(thy), thy=thy,
                          accessors=overrides.ACCESSORS.get(thy, {}),
                          cons=db.cons_for(thy), abbrevs=self.abbrevs,

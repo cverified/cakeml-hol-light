@@ -44,8 +44,8 @@ let code_rel_def = cake_define
   `word_to_wordProof_code_rel stc ttc <=>
    (!n v. lookup n stc = SOME v ==>
           (?col t k a c.
-          lookup n ttc = SOME (SND (compile_single t k a c
-            ((n,v),col)))))`;;
+          lookup n ttc = SOME (SND (word_to_word_compile_single t
+            k a c ((n,v),col)))))`;;
 hol4_overload "code_rel" "word_to_wordProof_code_rel";;
 
 (* HOL4 ML code, not ported:

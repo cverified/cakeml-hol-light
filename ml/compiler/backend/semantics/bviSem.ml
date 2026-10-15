@@ -19,9 +19,7 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* HOL4 overload (expanded in the port):
@@ -49,8 +47,8 @@ hol4_overload "dec_clock" "bviSem_dec_clock";;
 
 let bvi_to_bvl_def = cake_define
   `(bvi_to_bvl:('c,'ffi)bviSem_state->('c,'ffi)bvlSem_state) s =
-     mk_? (?_refs s) (?_clock s) (map (K ARB) (?_code s)) (?_ffi
-       s)`;;
+     mk_? (?_refs s) (?_clock s) (sptree_map (K ARB) (?_code s))
+       (?_ffi s)`;;
 
 let bvl_to_bvi_def = cake_define
   `(bvl_to_bvi:('c,'ffi)bvlSem_state->('c,'ffi)bviSem_state->('c
@@ -69,15 +67,15 @@ let finalise_cons_def = cake_define
   `bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->
-       (match FLOOKUP refs ptr with SOME (MutBlock tag finalised l c
-         r) ->
+       (match FLOOKUP refs ptr with SOME (bvlSem_MutBlock tag
+         finalised l c r) ->
            (if ~finalised then
              (match bviSem_finalise_cons c (refs \\ ptr) with SOME
                (c',refs') -> SOME (Block tag (l ++ [c'] ++ r),refs' |+
-               (ptr,MutBlock tag T l c r)) | NONE -> NONE) else NONE) |
-               SOME res -> SOME (RefPtr b ptr,refs) | NONE -> NONE)
+               (ptr,bvlSem_MutBlock tag T l c r)) | NONE -> NONE) else
+               NONE) | SOME res -> SOME (RefPtr b ptr,refs) | NONE ->
+               NONE)
         | v -> SOME (v,refs)`;;
-hol4_overload "finalise_cons" "bviSem_finalise_cons";;
 
 (* HOL4 ML code, not ported:
 val s = ``(s:('c,'ffi) bviSem$state)``;
@@ -86,26 +84,28 @@ val s = ``(s:('c,'ffi) bviSem$state)``;
 let do_app_aux_def = cake_define
   `(\x y. strcat x y)
      (do_app_aux op (vs:bvlSem_v list)) s =
-       (match (op,vs) with (IntOp (Const i),xs) ->
+       (match (op,vs) with (closLang_IntOp (closLang_Const i),xs) ->
          (if small_enough_int i /\ NULL xs then
-           SOME (SOME (Number i,s)) else NONE) | (Label l,xs) ->
-             (match xs with [] -> (if l IN domain (?_code s) then
-                              SOME (SOME (CodePtr l,s)) else NONE) |
-                                _1 -> NONE) | (GlobOp GlobalsPtr,xs) ->
+           SOME (SOME (Number i,s)) else NONE) | (closLang_Label
+             l,xs) -> (match xs with [] -> (if l IN domain (?_code s)
+             then
+                              SOME (SOME (bvlSem_CodePtr l,s)) else
+                                NONE) | _1 -> NONE) | (closLang_GlobOp
+                                GlobalsPtr,xs) ->
            (match xs with [] -> (match bviSem_state_global s with
              SOME p -> SOME (SOME (RefPtr T p,s)) | NONE -> NONE) | _2
-             -> NONE) | (GlobOp SetGlobalsPtr,xs) ->
+             -> NONE) | (closLang_GlobOp SetGlobalsPtr,xs) ->
            (match xs with [RefPtr T p] -> SOME (SOME
              (Unit,bviSem_state_global_fupd (K (SOME p)) s)) | _3 ->
-             NONE) | (GlobOp (Global n),xs) ->
+             NONE) | (closLang_GlobOp (Global n),xs) ->
            (match xs with [] -> (match bviSem_state_global s with
              SOME ptr ->
                           (match FLOOKUP (?_refs s) ptr with SOME
                             (ValueArray xs) ->
                               (if n < LENGTH xs then SOME (SOME (EL n
                                 xs,s)) else NONE) | _4 -> NONE) | NONE
-                                -> NONE) | _5 -> NONE) | (GlobOp
-                                (SetGlobal n),xs) ->
+                                -> NONE) | _5 -> NONE) |
+                                (closLang_GlobOp (SetGlobal n),xs) ->
            (match xs with [x] -> (match bviSem_state_global s with
              SOME ptr ->
                           (match FLOOKUP (?_refs s) ptr with SOME
@@ -114,13 +114,13 @@ let do_app_aux_def = cake_define
                                 (Unit,?_refs_fupd (K (?_refs s |+
                               (ptr,ValueArray (LUPDATE x n xs)))) s))
                                 else NONE) | _6 -> NONE) | NONE -> NONE)
-                                | _7 -> NONE) | (BlockOp (FromList
-                                n),xs) ->
+                                | _7 -> NONE) | (closLang_BlockOp
+                                (closLang_FromList n),xs) ->
            (match xs with [len; lv] ->
                (match v_to_list lv with SOME vs -> (if len = Number
                  (&(LENGTH vs)) then SOME (SOME (Block n vs,s)) else
-                 NONE) | _8 -> NONE) | _9 -> NONE) | (MemOp (RefByte
-                 f),xs) ->
+                 NONE) | _8 -> NONE) | _9 -> NONE) | (closLang_MemOp
+                 (closLang_RefByte f),xs) ->
            (match xs with [Number i; Number b] ->
                (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
                  let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
@@ -128,29 +128,33 @@ let do_app_aux_def = cake_define
                    SOME (SOME (RefPtr T ptr,?_refs_fupd (K (?_refs s
                      |+
                      (ptr,ByteArray f (REPLICATE (num_of_int i) (i2w
-                       b))))) s)) else NONE) | _10 -> NONE) | (MemOp
-                       (MutCons tag i),xs) ->
+                       b))))) s)) else NONE) | _10 -> NONE) |
+                       (closLang_MemOp (closLang_MutCons tag i),xs) ->
            (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
               if i >= LENGTH xs then NONE else
                 let l = TAKE i xs in
                 let c = EL i xs in
                 let r = DROP (i + 1) xs in
-                let b = MutBlock tag F l c r in
+                let b = bvlSem_MutBlock tag F l c r in
                   SOME (SOME (RefPtr F ptr,(?_refs_fupd (K (?_refs s
-                    |+ (ptr,b))) s)))) | (MemOp UpdateCons,[RefPtr _11
-                    ptr; Number i; x]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (MutBlock tag
-             finalised l c r) ->
+                    |+ (ptr,b))) s)))) | (closLang_MemOp
+                    closLang_UpdateCons,[RefPtr _11 ptr; Number i; x])
+                    ->
+           (match FLOOKUP (?_refs s) ptr with SOME (bvlSem_MutBlock
+             tag finalised l c r) ->
                 (if ~(i = &(LENGTH l)) \/ finalised then NONE else
                   SOME (SOME (Unit,?_refs_fupd (K (?_refs s |+
-                    (ptr,MutBlock tag F l x r))) s))) | _12 -> NONE) |
-                    (MemOp FinaliseCons,[x]) ->
-           (match finalise_cons x (?_refs s) with SOME (v,refs')
-             -> SOME (SOME (v,?_refs_fupd (K refs') s)) | NONE ->
-             NONE) | (GlobOp AllocGlobal,_13) -> NONE | (MemOp
-             FromListByte,_14) -> NONE | (MemOp ToListByte,_15) ->
-             NONE | (MemOp ConcatByteVec,_16) -> NONE | (MemOp
-             (CopyByte T),_17) -> NONE | _18 -> SOME NONE)`;;
+                    (ptr,bvlSem_MutBlock tag F l x r))) s))) | _12 ->
+                    NONE) | (closLang_MemOp closLang_FinaliseCons,[x])
+                    ->
+           (match bviSem_finalise_cons x (?_refs s) with SOME
+             (v,refs') -> SOME (SOME (v,?_refs_fupd (K refs') s)) |
+             NONE -> NONE) | (closLang_GlobOp AllocGlobal,_13) ->
+             NONE | (closLang_MemOp closLang_FromListByte,_14) ->
+             NONE | (closLang_MemOp closLang_ToListByte,_15) -> NONE
+             | (closLang_MemOp closLang_ConcatByteVec,_16) -> NONE |
+             (closLang_MemOp (closLang_CopyByte T),_17) -> NONE | _18
+             -> SOME NONE)`;;
 
 let do_install_def = cake_define
   `(\x y. strcat x y)
@@ -162,8 +166,8 @@ let do_install_def = cake_define
                      vl2 = Number (&(LENGTH data))) then Rerr (Rabort
                        Rtype_error) else
                   let (cfg,progs) = ?_compile_oracle s 0 in
-                  let new_oracle = shift_seq 1 (?_compile_oracle s)
-                    in
+                  let new_oracle = misc_shift_seq 1 (?_compile_oracle
+                    s) in
                     if DISJOINT (domain (?_code s)) (set_of_list (MAP
                       FST progs)) /\ ALL_DISTINCT (MAP FST progs) then
                     (match (?_compile s cfg progs,progs) with (SOME
@@ -171,20 +175,20 @@ let do_install_def = cake_define
                          (if bytes = bytes' /\ data = data' /\ FST
                            (new_oracle 0) = cfg' then
                            let s' = ?_compile_oracle_fupd (K
-                             new_oracle) (?_code_fupd (K (union (?_code
-                             s) (fromAList progs)))
+                             new_oracle) (?_code_fupd (K (sptree_union
+                             (?_code s) (fromAList progs)))
                              s) in
-                             Rval (CodePtr k,s') else Rerr (Rabort
-                               Rtype_error)) | _20 -> Rerr (Rabort
-                               Rtype_error)) else Rerr (Rabort
-                               Rtype_error)) | _21 -> Rerr (Rabort
-                               Rtype_error)) | _22 -> Rerr (Rabort
-                               Rtype_error))`;;
+                             Rval (bvlSem_CodePtr k,s') else Rerr
+                               (Rabort Rtype_error)) | _20 -> Rerr
+                               (Rabort Rtype_error)) else Rerr
+                               (Rabort Rtype_error)) | _21 -> Rerr
+                               (Rabort Rtype_error)) | _22 -> Rerr
+                               (Rabort Rtype_error))`;;
 
 let do_app_def = cake_define
   `(\x y. strcat x y)
-     (do_app op vs) s =
-       (if op = Install then do_install vs s else
+     (semanticPrimitives_do_app op vs) s =
+       (if op = closLang_Install then do_install vs s else
        match do_app_aux op vs s with NONE -> Rerr (Rabort
          Rtype_error) | SOME (SOME (v,t)) -> Rval (v,t) | SOME NONE
          -> (match semanticPrimitives_do_app op vs (bvi_to_bvl s)
@@ -253,14 +257,15 @@ let evaluate_def = cake_define_list
    `bviSem_evaluate ([(Raise x1:flatLang_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
-   `bviSem_evaluate ([Return xs],env,s) =
+   `bviSem_evaluate ([bvi_Return xs],env,s) =
          (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Ret vs)),s) | res -> res)`;
    `bviSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
            vs,s) ->
-             (match do_app op (REVERSE vs) s with Rerr e -> (Rerr
-               e,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)`;
+             (match semanticPrimitives_do_app op (REVERSE vs) s
+               with Rerr e -> (Rerr e,s) | Rval (v,s) -> (Rval
+               [v],s)) | res -> res)`;
    `bviSem_evaluate ([(Tick x:flatLang_exp)],env,s) =
          (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
            else
@@ -305,7 +310,7 @@ let evaluate_def = cake_define_list
                                 (Rraise _26),s) -> (Rerr (Rabort
                                 Rtype_error),s) | res -> res)) | res
                                 -> res)`;
-   `bviSem_evaluate ([LetCall rets ticks dest xs y],env,s1) =
+   `bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
          (match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with
            (Rval vs,s) ->
              (match find_code (SOME dest) vs (?_code s) with NONE ->
@@ -346,15 +351,16 @@ let semantics_def = cake_define
    let init = initial_state init_ffi code co cc in
      if ?k e. FST (evaluate (es,[],init k)) = Rerr e /\
         ~(e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error
-          f))) then Fail else
+          f))) then ffi_Fail else
      match some (\res.
        ?k s r outcome.
          evaluate (es,[],init k) = (r,s) /\
          (match r with Rerr (Rabort (Rffi_error e)) -> outcome =
-           FFI_outcome e | Rval _28 -> outcome = Success | _29 -> F) /\
-         res = Terminate outcome (ffi_state_io_events (?_ffi s)))
+           ffi_FFI_outcome e | Rval _28 -> outcome = ffi_Success | _29
+           -> F) /\
+         res = ffi_Terminate outcome (ffi_state_io_events (?_ffi s)))
            with SOME res -> res | NONE ->
-        Diverge
+        ffi_Diverge
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (?_ffi (SND
                (evaluate (es,[],init k)))))) UNIV)))`;;

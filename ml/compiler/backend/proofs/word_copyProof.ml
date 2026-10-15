@@ -21,14 +21,14 @@ val s = ``s:('a,'c,'ffi) wordSem$state``
 
 let CPstate_inv_def = cake_define
   `CPstate_inv cs = (
-    (!v c. lookup v (copy_state_to_eq cs) = SOME c ==> c <
+    (!v c. sptree_lookup v (copy_state_to_eq cs) = SOME c ==> c <
       copy_state_next cs) /\
     (!c. c IN domain (copy_state_from_eq cs) ==> c < copy_state_next
       cs) /\
     (!s c. ALOOKUP (copy_state_store_to_eq cs) s = SOME c ==> c <
       copy_state_next cs) /\
-    (!c v. lookup c (copy_state_from_eq cs) = SOME v ==>
-      lookup v (copy_state_to_eq cs) = SOME c))`;;
+    (!c v. sptree_lookup c (copy_state_from_eq cs) = SOME v ==>
+      sptree_lookup v (copy_state_to_eq cs) = SOME c))`;;
 
 (* As a corollary, different classes have different representatives *)
 (* unused *)
@@ -41,14 +41,14 @@ let both_alloc_vars_def = cake_define
 let CPstate_models_def = cake_define
   `CPstate_models cs S <=>
    (!v c vrep.
-     lookup v (copy_state_to_eq cs) = SOME c ==>
-     lookup c (copy_state_from_eq cs) = SOME vrep ==>
-     lookup v (wordSem_state_locals S) = lookup vrep
+     sptree_lookup v (copy_state_to_eq cs) = SOME c ==>
+     sptree_lookup c (copy_state_from_eq cs) = SOME vrep ==>
+     sptree_lookup v (wordSem_state_locals S) = sptree_lookup vrep
        (wordSem_state_locals S)) /\
    (!s c vrep.
      ALOOKUP (copy_state_store_to_eq cs) s = SOME c ==>
-     lookup c (copy_state_from_eq cs) = SOME vrep ==>
-     FLOOKUP (wordSem_state_store S) s = lookup vrep
+     sptree_lookup c (copy_state_from_eq cs) = SOME vrep ==>
+     FLOOKUP (wordSem_state_store S) s = sptree_lookup vrep
        (wordSem_state_locals S))`;;
 
 (* unused *)

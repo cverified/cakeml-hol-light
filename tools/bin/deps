@@ -1,0 +1,15 @@
+#!/bin/sh
+# deps <session> <mlfile> : load only the files that an ml file of
+# the port needs, so that the file itself can be tried phrase by
+# phrase in that session
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+s="$1"
+f="$2"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+grep '^needs "' "$f" > $C/tmp/deps.ml
+TIMEOUT=${TIMEOUT:-1800} repl-step $s "#use \"$C/tmp/deps.ml\";;" \
+  > /dev/null 2>&1
+tmux capture-pane -p -J -S - -t hol-$s |
+  sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
+  grep -cE '^(Exception|Error)' | sed 's/^/errors=/'

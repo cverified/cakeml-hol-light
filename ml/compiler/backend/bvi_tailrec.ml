@@ -22,63 +22,63 @@ let is_rec_def = cake_define
         match x2 with
           bvi_Call _1 d _2 NONE -> d = SOME name
         | _3 -> F`;;
-hol4_overload "is_rec" "bvi_tailrec_is_rec";;
 
 let is_const_def = cake_define
   `bvi_tailrec_is_const x1 =
         match x1 with
-          IntOp (Const i) -> small_enough_int i
+          closLang_IntOp (closLang_Const i) -> small_enough_int i
         | _4 -> F`;;
-hol4_overload "is_const" "bvi_tailrec_is_const";;
 
 let assoc_op_INDUCT,assoc_op_RECURSION = define_datatype
   "assoc_op = bvi_tailrec_Plus | bvi_tailrec_Times | \
    bvi_tailrec_Append | bvi_tailrec_Noop";;
-hol4_overload "Plus" "bvi_tailrec_Plus";;
-hol4_overload "Times" "bvi_tailrec_Times";;
 hol4_overload "Append" "bvi_tailrec_Append";;
-hol4_overload "Noop" "bvi_tailrec_Noop";;
 
 let v_ty_INDUCT,v_ty_RECURSION = define_datatype
   "v_ty = bvi_tailrec_Int | bvi_tailrec_List | bvi_tailrec_Any";;
 hol4_overload "Int" "bvi_tailrec_Int";;
 hol4_overload "List" "bvi_tailrec_List";;
-hol4_overload "Any" "bvi_tailrec_Any";;
 
 let op_type_def = cake_define
   `op_type x1 =
       match x1 with
         Append -> List
-      | Noop -> Any
+      | bvi_tailrec_Noop -> bvi_tailrec_Any
       | _5 -> Int`;;
 
 let to_op_def = cake_define_list
-  [`to_op Plus = IntOp Add`;
-   `to_op Times = IntOp Mult`;
-   `to_op Append = BlockOp ListAppend`;
-   `to_op Noop = IntOp Mod`];;
+  [`to_op bvi_tailrec_Plus = closLang_IntOp Add`;
+   `to_op bvi_tailrec_Times = closLang_IntOp closLang_Mult`;
+   `to_op Append = closLang_BlockOp ListAppend`;
+   `to_op bvi_tailrec_Noop = closLang_IntOp Mod`];;
 
 let from_op_def = cake_define
   `from_op op =
-     (if op = IntOp Add then Plus else if op = IntOp Mult then
-       Times else if op = BlockOp ListAppend then Append else Noop)`;;
+     (if op = closLang_IntOp Add then bvi_tailrec_Plus else if op
+       = closLang_IntOp closLang_Mult then bvi_tailrec_Times else if
+       op = closLang_BlockOp ListAppend then Append else
+       bvi_tailrec_Noop)`;;
 
 let op_eq_def = cake_define
   `op_eq x1 x2 =
         match (x1,x2) with
-          (Plus,(Op op xs:bvi_exp)) -> op = IntOp Add
-        | (Times,(Op op xs)) -> op = IntOp Mult
-        | (Append,(Op op xs)) -> op = BlockOp ListAppend
+          (bvi_tailrec_Plus,(Op op xs:bvi_exp)) -> op =
+            closLang_IntOp Add
+        | (bvi_tailrec_Times,(Op op xs)) -> op = closLang_IntOp
+          closLang_Mult
+        | (Append,(Op op xs)) -> op = closLang_BlockOp ListAppend
         | (_6,_7) -> F`;;
 
 let apply_op_def = cake_define
   `apply_op op e1 e2 = Op (to_op op) [e1; e2]`;;
 
 let id_from_op_def = cake_define_list
-  [`id_from_op Plus = bvi_Op (IntOp (Const (&0))) []`;
-   `id_from_op Times = bvi_Op (IntOp (Const (&1))) []`;
-   `id_from_op Append = bvi_Op (BlockOp (Cons nil_tag)) []`;
-   `id_from_op Noop = dummy`];;
+  [`id_from_op bvi_tailrec_Plus = bvi_Op (closLang_IntOp
+  (closLang_Const (&0))) []`;
+   `id_from_op bvi_tailrec_Times = bvi_Op (closLang_IntOp
+  (closLang_Const (&1))) []`;
+   `id_from_op Append = bvi_Op (closLang_BlockOp (Cons nil_tag)) []`;
+   `id_from_op bvi_tailrec_Noop = dummy`];;
 
 let index_of_def = cake_define
   `index_of x1 =
@@ -105,7 +105,7 @@ let try_update_def = cake_define_list
   [`try_update vty NONE ts = ts`;
    `try_update vty (SOME n) ts =
         (if n < LENGTH ts then
-          if EL n ts = Any then
+          if EL n ts = bvi_tailrec_Any then
             TAKE n ts ++ [vty] ++ DROP (n + 1) ts else ts else
               ts)`];;
 
@@ -114,14 +114,15 @@ let try_update_def = cake_define_list
 let is_arith_def = cake_define
   `is_arith op =
      (match op with
-       IntOp Add -> T | IntOp Sub -> T | IntOp Mult -> T | _12 ->
-         F)`;;
+       closLang_IntOp Add -> T | closLang_IntOp Sub -> T |
+         closLang_IntOp closLang_Mult -> T | _12 -> F)`;;
 
 let is_rel_def = cake_define
   `is_rel op =
      (match op with
-       IntOp Less -> T | IntOp LessEq -> T | IntOp Greater -> T |
-         IntOp GreaterEq -> T | _13 -> F)`;;
+       closLang_IntOp Less -> T | closLang_IntOp closLang_LessEq
+         -> T | closLang_IntOp Greater -> T | closLang_IntOp
+         closLang_GreaterEq -> T | _13 -> F)`;;
 
 let _ = size_thms "exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
@@ -133,8 +134,9 @@ let term_ok_int_def = cake_define_wf
        Var i -> (if i < LENGTH ts then EL i ts = Int else F) | Op op
          xs ->
          (match get_bin_args expr with
-           NONE -> xs = [] /\ is_const op | SOME (x,y) -> is_arith
-             op /\ term_ok_int ts x /\ term_ok_int ts y) | _14 -> F)`;;
+           NONE -> xs = [] /\ bvi_tailrec_is_const op | SOME (x,y)
+             -> is_arith op /\ term_ok_int ts x /\ term_ok_int ts y)
+             | _14 -> F)`;;
 
 let _ = size_thms "exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
@@ -148,13 +150,13 @@ let term_ok_any_def = cake_define_wf
          ts = List else F)
         | (Op op xs) ->
        (match get_bin_args (Op op xs) with
-         NONE -> xs = [] /\ (if list then op = BlockOp (Cons 0) else
-           is_const op) | SOME (x,y) ->
-           (if op = BlockOp ListAppend then term_ok_any ts T x /\
-             term_ok_any ts T y else if ~list /\ is_arith op then
+         NONE -> xs = [] /\ (if list then op = closLang_BlockOp (Cons
+           0) else bvi_tailrec_is_const op) | SOME (x,y) ->
+           (if op = closLang_BlockOp ListAppend then term_ok_any ts T
+             x /\ term_ok_any ts T y else if ~list /\ is_arith op then
              term_ok_int ts x /\ term_ok_int ts y else if ~list /\
              is_rel op then term_ok_int ts x /\ term_ok_int ts y else if
-             op = BlockOp (Cons 0) then term_ok_any ts T x /\
+             op = closLang_BlockOp (Cons 0) then term_ok_any ts T x /\
              term_ok_any ts F y else F))
         | expr -> F`;;
 
@@ -190,8 +192,8 @@ QED
 let term_ok_def = cake_define
   `term_ok ts ty expr =
      (match ty with
-       Any -> term_ok_any ts F expr | Int -> term_ok_int ts expr |
-         List -> term_ok_any ts T expr)`;;
+       bvi_tailrec_Any -> term_ok_any ts F expr | Int ->
+         term_ok_int ts expr | List -> term_ok_any ts T expr)`;;
 
 (* --- Simple tail checking before rewriting --- *)
 
@@ -203,14 +205,16 @@ let try_swap_def = cake_define
         | opr ->
        (match opbinargs opr exp with
          NONE -> exp | SOME (l,r) ->
-           (if is_rec loc l then apply_op opr r l else exp))`;;
+           (if bvi_tailrec_is_rec loc l then apply_op opr r l else
+             exp))`;;
 
 (* Check if ok to lift xs into accumulator *)
 let check_op_def = cake_define
   `check_op ts opr loc exp =
      (match opbinargs opr (try_swap loc opr exp) with
        NONE -> NONE | SOME (xs,f) ->
-         (if is_rec loc f /\ term_ok ts (op_type opr) xs then
+         (if bvi_tailrec_is_rec loc f /\ term_ok ts (op_type opr) xs
+           then
            SOME (apply_op opr xs f) else
            NONE))`;;
 
@@ -221,7 +225,7 @@ let decide_ty_def = cake_define
         match (x1,x2) with
           (Int,Int) -> Int
         | (List,List) -> List
-        | (_15,_16) -> Any`;;
+        | (_15,_16) -> bvi_tailrec_Any`;;
 
 let LAST1_def = cake_define
   `LAST1 x1 =
@@ -237,33 +241,34 @@ let update_context_def = cake_define
 let arg_ty_def = cake_define
   `arg_ty x1 =
       match x1 with
-        IntOp (Const i) -> (if small_enough_int i then Int else Any)
-      | (IntOp Add) -> Int
-      | (IntOp Sub) -> Int
-      | (IntOp Mult) -> Int
-      | (IntOp Div) -> Int
-      | (IntOp Mod) -> Int
-      | (IntOp LessEq) -> Int
-      | (IntOp Less) -> Int
-      | (IntOp Greater) -> Int
-      | (IntOp GreaterEq) -> Int
-      | (BlockOp ListAppend) -> List
-      | _17 -> Any`;;
+        closLang_IntOp (closLang_Const i) -> (if small_enough_int i
+          then Int else bvi_tailrec_Any)
+      | (closLang_IntOp Add) -> Int
+      | (closLang_IntOp Sub) -> Int
+      | (closLang_IntOp closLang_Mult) -> Int
+      | (closLang_IntOp Div) -> Int
+      | (closLang_IntOp Mod) -> Int
+      | (closLang_IntOp closLang_LessEq) -> Int
+      | (closLang_IntOp Less) -> Int
+      | (closLang_IntOp Greater) -> Int
+      | (closLang_IntOp closLang_GreaterEq) -> Int
+      | (closLang_BlockOp ListAppend) -> List
+      | _17 -> bvi_tailrec_Any`;;
 
 let op_ty_def = cake_define
   `op_ty x1 =
         match x1 with
-          IntOp Add -> Int
-        | (IntOp Sub) -> Int
-        | (IntOp Mult) -> Int
-        | (IntOp Div) -> Int
-        | (IntOp Mod) -> Int
-        | (BlockOp ListAppend) -> List
-        | (BlockOp (Cons tag)) -> (if tag = nil_tag \/ tag = cons_tag
-          then List else Any)
-        | (IntOp (Const i)) -> (if small_enough_int i then Int else
-          Any)
-        | _18 -> Any`;;
+          closLang_IntOp Add -> Int
+        | (closLang_IntOp Sub) -> Int
+        | (closLang_IntOp closLang_Mult) -> Int
+        | (closLang_IntOp Div) -> Int
+        | (closLang_IntOp Mod) -> Int
+        | (closLang_BlockOp ListAppend) -> List
+        | (closLang_BlockOp (Cons tag)) -> (if tag = nil_tag \/ tag =
+          cons_tag then List else bvi_tailrec_Any)
+        | (closLang_IntOp (closLang_Const i)) -> (if small_enough_int
+          i then Int else bvi_tailrec_Any)
+        | _18 -> bvi_tailrec_Any`;;
 
 (* Gather information about expressions:
 
@@ -285,7 +290,8 @@ let scan_expr_def = cake_define_list
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
           (tx,ty,r,op) :: scan_expr tx loc (y :: xs))`;
    `scan_expr ts loc [(Var n:bvi_exp)] =
-        (let ty = if n < LENGTH ts then EL n ts else Any in
+        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
+          in
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(If xi xt xe:bvi_exp)] =
         (let (ti,tyi,_19,oi) = HD (scan_expr ts loc [xi]) in
@@ -303,42 +309,49 @@ let scan_expr_def = cake_define_list
           in
         let (tu,ty,_23,op) = HD (scan_expr (tt ++ tr) loc [x]) in
           [(DROP (LENGTH ys) tu,ty,F,op)])`;
-   `scan_expr ts loc [(Raise x:bvi_exp)] = [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [(Raise x:bvi_exp)] =
+  [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(Tick x:bvi_exp)] = scan_expr ts loc [x]`;
    `scan_expr ts loc [(Force _24 n:bvi_exp)] =
-        (let ty = if n < LENGTH ts then EL n ts else Any in
+        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
+          in
           [(ts,ty,F,NONE)])`;
-   `scan_expr ts loc [(Call t d xs h:bvi_exp)] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [Return xs] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [LetCall rets t d xs y] = [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [(Call t d xs h:bvi_exp)] =
+  [(ts,bvi_tailrec_Any,F,NONE)]`;
+   `scan_expr ts loc [bvi_Return xs] = [(ts,bvi_tailrec_Any,F,NONE)]`;
+   `scan_expr ts loc [bvi_LetCall rets t d xs y] =
+  [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(Op op xs:bvi_exp)] =
         (let opr = from_op op in
         let opt = op_type opr in
           match opr with
-            Noop ->
+            bvi_tailrec_Noop ->
               (if arg_ty op = Int then
                 match get_bin_args (Op op xs) with
                   NONE ->
-                    (if is_const op then
+                    (if bvi_tailrec_is_const op then
                       [(ts,Int,F,NONE)] else
-                      [(ts,Any,F,NONE)]) | SOME (x,y) ->
-                    (if ~is_const op then
-                      [(update_context Int ts x y,Any,F,NONE)] else
-                      [(ts,Any,F,NONE)]) else if op = BlockOp (Cons
-                        0) /\ xs = [] then
+                      [(ts,bvi_tailrec_Any,F,NONE)]) | SOME (x,y) ->
+                    (if ~bvi_tailrec_is_const op then
+                      [(update_context Int ts x
+                        y,bvi_tailrec_Any,F,NONE)] else
+                      [(ts,bvi_tailrec_Any,F,NONE)]) else if op =
+                        closLang_BlockOp (Cons 0) /\ xs = [] then
                 [(ts,List,F,NONE)] else
-                [(ts,Any,F,NONE)]) | _25 ->
+                [(ts,bvi_tailrec_Any,F,NONE)]) | _25 ->
               (if IS_SOME (check_op ts opr loc (Op op xs)) then
                 [(ts,opt,F,SOME opr)] else if term_ok ts opt (Op op
                   xs) then
                 match get_bin_args (Op op xs) with
-                  NONE -> [(ts,Any,F,NONE)] | SOME (x,y) ->
+                  NONE -> [(ts,bvi_tailrec_Any,F,NONE)] | SOME (x,y)
+                    ->
                     [(update_context opt ts x y,opt,F,NONE)] else
-                [(ts,Any,F,NONE)]))`];;
+                [(ts,bvi_tailrec_Any,F,NONE)]))`];;
 
 let scan_expr_sing_def = cake_define_list
   [`scan_expr_sing ts loc (Var n:bvi_exp) =
-        (let ty = if n < LENGTH ts then EL n ts else Any in
+        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
+          in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (If xi xt xe:bvi_exp) =
         (let (ti,tyi,_26,oi) = scan_expr_sing ts loc xi in
@@ -356,38 +369,45 @@ let scan_expr_sing_def = cake_define_list
           in
         let (tu,ty,_30,op) = scan_expr_sing (tt ++ tr) loc x in
           (DROP (LENGTH ys) tu,ty,F,op))`;
-   `scan_expr_sing ts loc (Raise x:bvi_exp) = (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (Raise x:bvi_exp) =
+  (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (Tick x:bvi_exp) = scan_expr_sing ts loc x`;
    `scan_expr_sing ts loc (Force _31 n:bvi_exp) =
-        (let ty = if n < LENGTH ts then EL n ts else Any in
+        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
+          in
           (ts,ty,F,NONE))`;
-   `scan_expr_sing ts loc (Call t d xs h:bvi_exp) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (Return xs) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (LetCall rets t d xs y) = (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (Call t d xs h:bvi_exp) =
+  (ts,bvi_tailrec_Any,F,NONE)`;
+   `scan_expr_sing ts loc (bvi_Return xs) =
+  (ts,bvi_tailrec_Any,F,NONE)`;
+   `scan_expr_sing ts loc (bvi_LetCall rets t d xs y) =
+  (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (Op op xs:bvi_exp) =
         (let opr = from_op op in
         let opt = op_type opr in
           match opr with
-            Noop ->
+            bvi_tailrec_Noop ->
               (if arg_ty op = Int then
                 match get_bin_args (Op op xs) with
                   NONE ->
-                    (if is_const op then
+                    (if bvi_tailrec_is_const op then
                       (ts,Int,F,NONE) else
-                      (ts,Any,F,NONE)) | SOME (x,y) ->
-                    (if ~is_const op then
-                      (update_context Int ts x y,Any,F,NONE) else
-                      (ts,Any,F,NONE)) else if op = BlockOp (Cons 0)
-                        /\ xs = [] then
+                      (ts,bvi_tailrec_Any,F,NONE)) | SOME (x,y) ->
+                    (if ~bvi_tailrec_is_const op then
+                      (update_context Int ts x
+                        y,bvi_tailrec_Any,F,NONE) else
+                      (ts,bvi_tailrec_Any,F,NONE)) else if op =
+                        closLang_BlockOp (Cons 0) /\ xs = [] then
                 (ts,List,F,NONE) else
-                (ts,Any,F,NONE)) | _32 ->
+                (ts,bvi_tailrec_Any,F,NONE)) | _32 ->
               (if IS_SOME (check_op ts opr loc (Op op xs)) then
                 (ts,opt,F,SOME opr) else if term_ok ts opt (Op op
                   xs) then
                 match get_bin_args (Op op xs) with
-                  NONE -> (ts,Any,F,NONE) | SOME (x,y) ->
+                  NONE -> (ts,bvi_tailrec_Any,F,NONE) | SOME (x,y)
+                    ->
                     (update_context opt ts x y,opt,F,NONE) else
-                (ts,Any,F,NONE)))`;
+                (ts,bvi_tailrec_Any,F,NONE)))`;
    `scan_expr_list ts loc [] = []`;
    `scan_expr_list ts loc (x :: xs) =
         (let (tx,ty,r,op) = scan_expr_sing ts loc x in
@@ -444,7 +464,8 @@ let has_rec_def = cake_define
         | [Let xs x] -> has_rec loc [x]
         | [Tick x] -> has_rec loc [x]
         | [Op op xs] ->
-       (if EXISTS (is_rec loc) xs then T else has_rec loc xs)
+       (if EXISTS (bvi_tailrec_is_rec loc) xs then T else has_rec loc
+         xs)
         | [x] -> F`;;
 
 let has_rec1_def = cake_define
@@ -456,8 +477,8 @@ let has_rec_sing_def = cake_define_list
    `has_rec_sing loc (Let xs x:bvi_exp) = has_rec_sing loc x`;
    `has_rec_sing loc (Tick x:bvi_exp) = has_rec_sing loc x`;
    `has_rec_sing loc (Op op xs:bvi_exp) =
-        (if EXISTS (is_rec loc) xs then T else has_rec_list loc
-          xs)`;
+        (if EXISTS (bvi_tailrec_is_rec loc) xs then T else
+          has_rec_list loc xs)`;
    `has_rec_sing loc x = F`;
    `has_rec_list loc [] = F`;
    `has_rec_list loc (x :: xs) =
@@ -474,7 +495,7 @@ val test2_tm = ``Op (IntOp Add) [Call 0 (SOME 0) [] NONE; Var 0]``
 let check_exp_def = cake_define
   `check_exp loc arity exp =
      (if ~has_rec1 loc exp then NONE else
-       let context = REPLICATE arity Any in
+       let context = REPLICATE arity bvi_tailrec_Any in
          match scan_expr context loc [exp] with
            [] -> NONE | (ts,ty,r,opr) :: _34 ->
              (match opr with
@@ -493,28 +514,27 @@ let compile_exp_def = cake_define
   `bvi_tailrec_compile_exp loc next arity exp =
      (match check_exp loc arity exp with
        NONE -> NONE | SOME op ->
-       (let context = REPLICATE arity Any in
+       (let context = REPLICATE arity bvi_tailrec_Any in
        let (r,opt) = rewrite loc next op arity context exp in
        let aux = let_wrap arity (id_from_op op) opt in
          SOME (aux,opt)))`;;
-hol4_overload "compile_exp" "bvi_tailrec_compile_exp";;
 
 let compile_each_def = cake_define_list
   [`bvi_tailrec_compile_each next [] = (next,[])`;
    `bvi_tailrec_compile_each next ((loc,arity,exp) :: xs) =
-        (match compile_exp loc next arity exp with NONE ->
+        (match bvi_tailrec_compile_exp loc next arity exp with NONE
+          ->
             (let (n,ys) = bvi_tailrec_compile_each next xs in
               (n,(loc,arity,exp) :: ys)) | SOME (exp_aux,exp_opt) ->
             (let (n,ys) = bvi_tailrec_compile_each (next +
               bvl_to_bvi_namespaces) xs in
             (n,(loc,arity,exp_aux) :: (next,arity + 1,exp_opt) ::
               ys)))`];;
-hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
 let compile_prog_def = cake_define
   `bvi_tailrec_compile_prog do_it next xs =
-     (if do_it then compile_each next xs else (next,xs))`;;
-hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
+     (if do_it then bvi_tailrec_compile_each next xs else
+       (next,xs))`;;
 
 (* --- Test rewriting --- *)
 

@@ -108,7 +108,6 @@ val (move_related, get_move_related_def, set_move_related_def) =
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
   "state_exn = reg_alloc_Fail (string) | reg_alloc_Subscript";;
 hol4_overload "Fail" "reg_alloc_Fail";;
-hol4_overload "Subscript" "reg_alloc_Subscript";;
 
 (* Monadic functions to handle the exceptions *)
 (* HOL4 ML code, not ported:
@@ -306,7 +305,6 @@ let split_degree_def = cake_define
 let sort_moves_def = cake_define
   `reg_alloc_sort_moves ls =
      sort (\((p:num),x,p',x'). p > p') ls`;;
-hol4_overload "sort_moves" "reg_alloc_sort_moves";;
 
 (* merge two sorted lists *)
 let smerge_def = cake_define
@@ -331,7 +329,7 @@ let revive_moves_def = cake_define
      let (rev,unavail) = PARTITION
        (\(_1,(x,y)). EXISTS (sorted_mem x) nbs \/ EXISTS (sorted_mem
          y) nbs) uam in
-     let sorted = smerge (sort_moves rev) am in
+     let sorted = smerge (reg_alloc_sort_moves rev) am in
      st_ex_ignore_bind
        (set_avail_moves_wl sorted) (
        set_unavail_moves_wl unavail))))`;;
@@ -872,16 +870,12 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
   "clash_tree = reg_alloc_Delta (num list) (num list) | reg_alloc_Set \
    (1 spt) | reg_alloc_Branch ((1 spt) option) (clash_tree) \
    (clash_tree) | reg_alloc_Seq (clash_tree) (clash_tree)";;
-hol4_overload "Delta" "reg_alloc_Delta";;
-hol4_overload "Set" "reg_alloc_Set";;
-hol4_overload "Branch" "reg_alloc_Branch";;
-hol4_overload "Seq" "reg_alloc_Seq";;
 
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def = cake_define_list
   [`numset_list_delete [] (t:'a spt) = t`;
-   `numset_list_delete (x :: xs) t = numset_list_delete xs (delete x
-  t)`];;
+   `numset_list_delete (x :: xs) t = numset_list_delete xs
+  (sptree_delete x t)`];;
 
 (*Check that a numset is injective over the clash sets in an interpreted
    tree*)
@@ -894,24 +888,24 @@ let check_col_def = cake_define
 let check_partial_col_def = cake_define_list
   [`check_partial_col f [] t ft = SOME (t,ft)`;
    `check_partial_col f (x :: xs) t ft =
-        (match lookup x t with
+        (match sptree_lookup x t with
           SOME one -> check_partial_col f xs t ft | NONE ->
-        (match lookup (f x) ft with
-          NONE -> check_partial_col f xs (insert x one t) (insert
-            (f x) one ft) | SOME one -> NONE))`];;
+        (match sptree_lookup (f x) ft with
+          NONE -> check_partial_col f xs (sptree_insert x one t)
+            (sptree_insert (f x) one ft) | SOME one -> NONE))`];;
 
 (* The checking function, used by oracle, and also used as part of the
    correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
 let check_clash_tree_def = cake_define_list
-  [`check_clash_tree f (Delta w r) live flive =
+  [`check_clash_tree f (reg_alloc_Delta w r) live flive =
         (match check_partial_col f w live flive with
           NONE -> NONE | SOME _14 ->
         (let del_w = (numset_list_delete w live) in
         let fdel_w = (numset_list_delete (MAP f w) flive) in
         check_partial_col f r del_w fdel_w))`;
-   `check_clash_tree f (Set t) live flive = check_col f t`;
-   `check_clash_tree f (Branch topt t1 t2) live flive =
+   `check_clash_tree f (reg_alloc_Set t) live flive = check_col f t`;
+   `check_clash_tree f (reg_alloc_Branch topt t1 t2) live flive =
         (match check_clash_tree f t1 live flive with
           NONE -> NONE | SOME (t1_out,ft1_out) ->
         (match check_clash_tree f t2 live flive with
@@ -921,7 +915,7 @@ let check_clash_tree_def = cake_define_list
             check_partial_col f (MAP FST (toAList (difference
               t2_out t1_out))) t1_out ft1_out | SOME t -> check_col f
               t)))`;
-   `check_clash_tree f (Seq t1 t2) live flive =
+   `check_clash_tree f (reg_alloc_Seq t1 t2) live flive =
         (match check_clash_tree f t2 live flive with
           NONE -> NONE | SOME (t2_out,ft2_out) ->
           check_clash_tree f t1 t2_out ft2_out)`];;
@@ -942,21 +936,22 @@ The second remap is probably not necessary?
 let list_remap_def = cake_define_list
   [`list_remap [] (ta,fa,nv) = (ta,fa,nv)`;
    `list_remap (x :: xs) (ta,fa,nv) =
-        (match lookup x ta with
+        (match sptree_lookup x ta with
           SOME v -> list_remap xs (ta,fa,nv) | NONE ->
-          list_remap xs (insert x nv ta,insert nv x fa,nv + 1))`];;
+          list_remap xs (sptree_insert x nv ta,sptree_insert nv x
+            fa,nv + 1))`];;
 
 let mk_bij_aux_def = cake_define_list
-  [`mk_bij_aux (Delta writes reads) tfn =
+  [`mk_bij_aux (reg_alloc_Delta writes reads) tfn =
         list_remap writes (list_remap reads tfn)`;
-   `mk_bij_aux (Set t) tfn =
+   `mk_bij_aux (reg_alloc_Set t) tfn =
         list_remap (MAP FST (toAList t)) tfn`;
-   `mk_bij_aux (Branch topt t1 t2) tfn =
+   `mk_bij_aux (reg_alloc_Branch topt t1 t2) tfn =
          (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
          match topt with
            NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList
              ts)) tfn')`;
-   `mk_bij_aux (Seq t1 t2) tfn =
+   `mk_bij_aux (reg_alloc_Seq t1 t2) tfn =
         mk_bij_aux t1 (mk_bij_aux t2 tfn)`];;
 
 let mk_bij_def = cake_define
@@ -988,7 +983,7 @@ let mk_tags_def = cake_define
        let v = fa i in
        let remainder = v MOD 4 in
        if remainder = 1 then
-         (match lookup v fs with
+         (match sptree_lookup v fs with
            NONE -> update_node_tag i Atemp | SOME one ->
              update_node_tag i Stemp) else if remainder = 3 then
          update_node_tag i Stemp else
@@ -997,7 +992,7 @@ let mk_tags_def = cake_define
 (* Initializes the clash_graph using a clash_tree and a remapping
    bijection *)
 let mk_graph_def = cake_define_list
-  [`mk_graph ta (Delta w r) liveout =
+  [`mk_graph ta (reg_alloc_Delta w r) liveout =
         st_ex_bind (st_ex_return (MAP ta w)) (\
           wta. st_ex_bind (st_ex_return (MAP ta r)) (\
           rta. st_ex_bind (extend_clique wta liveout) (\
@@ -1006,12 +1001,12 @@ let mk_graph_def = cake_define_list
           live. st_ex_bind (extend_clique rta live) (\
           livein.
           st_ex_return livein)))))`;
-   `mk_graph ta (Set t) liveout =
+   `mk_graph ta (reg_alloc_Set t) liveout =
         st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t)))) (\
           live. st_ex_ignore_bind
           (clique_insert_edge live) (
           st_ex_return live))`;
-   `mk_graph ta (Branch topt t1 t2) liveout =
+   `mk_graph ta (reg_alloc_Branch topt t1 t2) liveout =
         st_ex_bind (mk_graph ta t1 liveout) (\
           t1_live. st_ex_bind (mk_graph ta t2 liveout) (\
           t2_live.
@@ -1025,15 +1020,15 @@ let mk_graph_def = cake_define_list
               clashes. st_ex_ignore_bind
               (clique_insert_edge clashes) (
               st_ex_return clashes)))))`;
-   `mk_graph ta (Seq t1 t2) liveout =
+   `mk_graph ta (reg_alloc_Seq t1 t2) liveout =
         st_ex_bind (mk_graph ta t2 liveout) (\
           live.
           mk_graph ta t1 live)`];;
 
 let sp_default_def = cake_define
   `sp_default t i =
-   (match lookup i t with NONE -> (if is_phy_var i then i DIV 2
-     else 0) | SOME x -> x)`;;
+   (match sptree_lookup i t with NONE -> (if is_phy_var i then i
+     DIV 2 else 0) | SOME x -> x)`;;
 
 let extend_graph_def = cake_define_list
   [`extend_graph ta [] = st_ex_return one`;
@@ -1078,7 +1073,8 @@ let init_alloc1_heu_def = cake_define
          fills.
          update_degrees i (LENGTH fills))))) (st_ex_ignore_bind
      (st_ex_FOREACH ds do_upd_coalesce) (st_ex_ignore_bind
-     (set_avail_moves_wl (sort_moves moves)) (st_ex_ignore_bind
+     (set_avail_moves_wl (reg_alloc_sort_moves moves))
+       (st_ex_ignore_bind
      (reset_move_related moves) (st_ex_bind (st_ex_PARTITION
        (split_degree d k) allocs [] []) (\
      (ltk,gtk). st_ex_bind (st_ex_PARTITION (move_related_sub) ltk []
@@ -1113,10 +1109,10 @@ let extract_tag_def = cake_define
 
 let pri_move_insert_def = cake_define
   `pri_move_insert p x y acc =
-   (match lookup x acc with
+   (match sptree_lookup x acc with
      NONE ->
-       insert x [(p,y)] acc | SOME ls ->
-       insert x ((p,y) :: ls) acc)`;;
+       sptree_insert x [(p,y)] acc | SOME ls ->
+       sptree_insert x ((p,y) :: ls) acc)`;;
 
 let undir_move_insert_def = cake_define
   `undir_move_insert p x y acc =
@@ -1131,12 +1127,11 @@ let moves_to_sp_def = cake_define_list
 (*Do a consistency sort after setting up the sptree of moves*)
 let resort_moves_def = cake_define
   `resort_moves acc =
-   map (\ls. MAP SND (sort_moves ls)) acc`;;
+   sptree_map (\ls. MAP SND (reg_alloc_sort_moves ls)) acc`;;
 
 let algorithm_INDUCT,algorithm_RECURSION = define_datatype
   "algorithm = reg_alloc_Simple | reg_alloc_IRC";;
 hol4_overload "Simple" "reg_alloc_Simple";;
-hol4_overload "IRC" "reg_alloc_IRC";;
 
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref
@@ -1160,8 +1155,8 @@ let biased_pref_def = cake_define
      if n < d then
      st_ex_bind (coalesce_root n) (\
        v.
-       let vs = match lookup n mtable with NONE -> [] | SOME vs -> vs
-         in
+       let vs = match sptree_lookup n mtable with NONE -> [] | SOME
+         vs -> vs in
        handle_Subscript (first_match_col ks (v :: vs)) (st_ex_return
          NONE)) else
        st_ex_return NONE)`;;
@@ -1210,8 +1205,8 @@ let neg_biased_pref_def = cake_define
    st_ex_bind get_dim (\
      d.
      if n < d then
-       let vs = match lookup n mtable with NONE -> [] | SOME vs -> vs
-         in
+       let vs = match sptree_lookup n mtable with NONE -> [] | SOME
+         vs -> vs in
        handle_Subscript (neg_first_match_col k bads vs) (st_ex_return
          NONE) else
        st_ex_return NONE)`;;

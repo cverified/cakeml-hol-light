@@ -17,7 +17,6 @@ needs "compiler/backend/clos_interp.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/comparison.ml";;
-needs "lib/indexedLists.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
@@ -30,23 +29,23 @@ let dest_pat_def = cake_define
 let compile_lit_def = cake_define
   `compile_lit t l =
      closLang_Op t
-      (match l with IntLit i -> IntOp (Const i) | Char c -> IntOp
-        (Const (&(ORD c))) | StrLit s -> BlockOp (Constant (ConstStr
-        s)) | Word8 b -> IntOp (Const (&(w2n b))) | Word64 w ->
-        BlockOp (Constant (ConstWord64 w)) | Float64 w -> BlockOp
-        (Constant (ConstWord64 w))) []`;;
+      (match l with ast_IntLit i -> closLang_IntOp (closLang_Const
+        i) | ast_Char c -> closLang_IntOp (closLang_Const (&(ORD c)))
+        | ast_StrLit s -> closLang_BlockOp (closLang_Constant
+        (ConstStr s)) | ast_Word8 b -> closLang_IntOp (closLang_Const
+        (&(w2n b))) | ast_Word64 w -> closLang_BlockOp
+        (closLang_Constant (ConstWord64 w)) | ast_Float64 w ->
+        closLang_BlockOp (closLang_Constant (ConstWord64 w))) []`;;
 
 let arg1_def = cake_define
   `flat_to_clos_arg1 xs f =
-     (match xs with [x] -> f x | _2 -> closLang_Let None xs (Var
-       None 0))`;;
-hol4_overload "arg1" "flat_to_clos_arg1";;
+     (match xs with [x] -> f x | _2 -> closLang_Let
+       backend_common_None xs (Var backend_common_None 0))`;;
 
 let arg2_def = cake_define
   `flat_to_clos_arg2 xs f =
-     (match xs with [x; y] -> f x y | _3 -> closLang_Let None xs
-       (Var None 0))`;;
-hol4_overload "arg2" "flat_to_clos_arg2";;
+     (match xs with [x; y] -> f x y | _3 -> closLang_Let
+       backend_common_None xs (Var backend_common_None 0))`;;
 
 (* HOL4 ML code, not ported:
 fun var_fun m n = ``closLang$Var t ^(numSyntax.term_of_int(m-n))``;
@@ -88,162 +87,256 @@ let CopyByteAw8_def = cake_define
 
 let compile_arith_def = cake_define
   `compile_arith t (a:ast_arith) ty xs =
-     (match ty with IntT -> (match a with Add -> Op t (IntOp Add) xs
-       | Sub -> Op t (IntOp Sub) xs | Mul -> Op t (IntOp Mult) xs | Div
-       -> Let t xs (If t (Op t (BlockOp Equal) [Var t 0; Op t (IntOp
-       (Const (&0))) []])
-                              (Raise t (Op t (BlockOp (Cons div_tag))
-                                []))
-                              (Op t (IntOp closLang_Div) [Var t 0;
-                                Var t 1])) | Mod -> Let t xs (If t (Op t
-                                (BlockOp Equal) [Var t 0; Op t (IntOp
-                                (Const (&0))) []])
-                              (Raise t (Op t (BlockOp (Cons div_tag))
-                                []))
-                              (Op t (IntOp closLang_Mod) [Var t 0;
-                                Var t 1])) | _4 -> Let None xs (Var
-                                None 0)) | Float64T -> (match a with
-                                Abs -> Op t (WordOp (FP_uop FP_Abs))
-                                xs | Neg -> Op t (WordOp (FP_uop
-                                FP_Neg)) xs | Sqrt -> Op t (WordOp
-                                (FP_uop FP_Sqrt)) xs | Add -> Op t
-                                (WordOp (FP_bop FP_Add)) xs | Sub ->
-                                Op t (WordOp (FP_bop FP_Sub)) xs |
-                                Mul -> Op t (WordOp (FP_bop FP_Mul))
-                                xs | Div -> Op t (WordOp (FP_bop
-                                FP_Div)) xs | FMA -> Op t (WordOp
-                                (FP_top FP_Fma)) xs | _5 -> Let None
-                                xs (Var None 0)) | WordT ws -> (match
-                                a with Add -> Op t (WordOp (WordOpw
-                                ws Add)) xs | Sub -> Op t (WordOp
-                                (WordOpw ws Sub)) xs | And -> Op t
-                                (WordOp (WordOpw ws Andw)) xs | Or ->
-                                Op t (WordOp (WordOpw ws Orw)) xs |
-                                Xor -> Op t (WordOp (WordOpw ws Xor))
-                                xs | _6 -> Let None xs (Var None 0))
-                                | BoolT -> Op t (BlockOp BoolNot) xs
-                                | _7 -> Let None xs (Var None 0))`;;
+     (match ty with ast_IntT -> (match a with Add -> closLang_Op t
+       (closLang_IntOp Add) xs | Sub -> closLang_Op t (closLang_IntOp
+       Sub) xs | ast_Mul -> closLang_Op t (closLang_IntOp closLang_Mult)
+       xs | Div -> Let t xs (If t (closLang_Op t (closLang_BlockOp
+       Equal) [Var t 0; closLang_Op t (closLang_IntOp (closLang_Const
+       (&0))) []])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons div_tag)) []))
+                              (closLang_Op t (closLang_IntOp
+                                closLang_Div) [Var t 0; Var t 1])) | Mod
+                                -> Let t xs (If t (closLang_Op t
+                                (closLang_BlockOp Equal) [Var t 0;
+                                closLang_Op t (closLang_IntOp
+                                (closLang_Const (&0))) []])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons div_tag)) []))
+                              (closLang_Op t (closLang_IntOp
+                                closLang_Mod) [Var t 0; Var t 1])) |
+                                _4 -> Let backend_common_None xs (Var
+                                backend_common_None 0)) |
+                                ast_Float64T -> (match a with ast_Abs
+                                -> closLang_Op t (closLang_WordOp
+                                (FP_uop fpSem_FP_Abs)) xs | ast_Neg
+                                -> closLang_Op t (closLang_WordOp
+                                (FP_uop fpSem_FP_Neg)) xs | ast_Sqrt
+                                -> closLang_Op t (closLang_WordOp
+                                (FP_uop FP_Sqrt)) xs | Add ->
+                                closLang_Op t (closLang_WordOp
+                                (FP_bop FP_Add)) xs | Sub ->
+                                closLang_Op t (closLang_WordOp
+                                (FP_bop FP_Sub)) xs | ast_Mul ->
+                                closLang_Op t (closLang_WordOp
+                                (FP_bop FP_Mul)) xs | Div ->
+                                closLang_Op t (closLang_WordOp
+                                (FP_bop FP_Div)) xs | ast_FMA ->
+                                closLang_Op t (closLang_WordOp
+                                (FP_top FP_Fma)) xs | _5 -> Let
+                                backend_common_None xs (Var
+                                backend_common_None 0)) | ast_WordT
+                                ws -> (match a with Add ->
+                                closLang_Op t (closLang_WordOp
+                                (WordOpw ws Add)) xs | Sub ->
+                                closLang_Op t (closLang_WordOp
+                                (WordOpw ws Sub)) xs | ast_And ->
+                                closLang_Op t (closLang_WordOp
+                                (WordOpw ws backend_common_Andw)) xs
+                                | ast_Or -> closLang_Op t
+                                (closLang_WordOp (WordOpw ws
+                                backend_common_Orw)) xs | Xor ->
+                                closLang_Op t (closLang_WordOp
+                                (WordOpw ws Xor)) xs | _6 -> Let
+                                backend_common_None xs (Var
+                                backend_common_None 0)) | ast_BoolT
+                                -> closLang_Op t (closLang_BlockOp
+                                closLang_BoolNot) xs | _7 -> Let
+                                backend_common_None xs (Var
+                                backend_common_None 0))`;;
 
 let compile_op_def = cake_define
   `flat_to_clos_compile_op t op xs =
-     (match op with TagLenEq tag n -> closLang_Op t (BlockOp
-       (TagLenEq tag n)) xs | LenEq n -> closLang_Op t (BlockOp (LenEq
-       n)) xs | El n -> arg1 xs (\x. Op t (MemOp El) [Op None (IntOp
-       (Const (&n))) []; x]) | GlobalVarAlloc n -> Let t xs (Op t
-       (GlobOp AllocGlobal) [Op t (IntOp (Const (&n))) []]) |
-       GlobalVarInit n -> Op t (GlobOp (SetGlobal (n + 1))) xs |
-       GlobalVarLookup n -> Op t (GlobOp (Global (n + 1))) xs | Id ->
-       arg1 xs (\x. x) | Src Opapp -> arg2 xs (\x f. closLang_App t NONE
-       f [x]) | Src Opassign -> arg2 xs (\x y. Op t (MemOp Update) [x;
-       Op None (IntOp (Const (&0))) []; y]) | Src Opref -> Op t (MemOp
-       Ref) xs | Src ConfigGC -> Op t (MemOp ConfigGC) xs | Src Equality
-       -> Op t (BlockOp Equal) xs | Src (FFI n) -> Op t (FFI n) xs | Src
-       ListAppend -> Op t (BlockOp ListAppend) xs | Src Vlength -> Op t
-       (BlockOp LengthBlock) xs | Src Alength -> Op t (MemOp Length) xs
-       | Src Implode -> Op t (MemOp FromListByte) xs | Src Explode -> Op
-       t (MemOp ToListByte) xs | Src Strlen -> Op t (MemOp
-       LengthByteVec) xs | Src Strcat -> Op t (MemOp ConcatByteVec) xs |
-       Src CopyStrStr -> Let t xs (CopyByteStr t) | Src CopyStrAw8 ->
-       Let t xs (CopyByteAw8 t) | Src CopyAw8Str -> Let t xs
-       (CopyByteStr t) | Src CopyAw8Aw8 -> Let t xs (CopyByteAw8 t) |
-       Src XorAw8Str_unsafe -> Op t (MemOp XorByte) xs | Src VfromList
-       -> Op t (BlockOp (FromList 0)) xs | Src (Test test test_ty) ->
-          (match test_ty with BoolT -> Op t (BlockOp (BoolTest test))
-            xs | CharT -> Op t (WordOp (WordTest W8 test)) xs | WordT W8
-            -> Op t (WordOp (WordTest W8 test)) xs | IntT -> (match test
-            with Compare Lt -> Op t (IntOp Less) xs | Compare Leq -> Op
-            t (IntOp LessEq) xs | Compare Gt -> Op t (IntOp Greater) xs
-            | Compare Geq -> Op t (IntOp GreaterEq) xs | _8 -> Op t
-            (BlockOp Equal) xs) | Float64T -> (match test with Compare
-            Lt -> Op t (WordOp (FP_cmp FP_Less)) xs | Compare Leq -> Op
-            t (WordOp (FP_cmp FP_LessEqual)) xs | Compare Gt -> Op t
-            (WordOp (FP_cmp FP_Greater)) xs | Compare Geq -> Op t
-            (WordOp (FP_cmp FP_GreaterEqual)) xs | _9 -> Op t (WordOp
-            (FP_cmp FP_Equal)) xs) | StrT -> (match test with Compare
-            opb -> Op t (MemOp (StringCmp F opb)) xs | AltCompare opb ->
-            Op t (MemOp (StringCmp T opb)) xs | _10 -> Op t (BlockOp
-            Equal) xs) | _11 -> Op t (BlockOp Equal) xs) | Src Aw8length
-            -> Op t (MemOp LengthByte) xs | Src AallocFixed -> Op t
-            (MemOp Ref) xs | Src Aalloc -> Let t xs (If t (Op t (IntOp
-            Less) [Op t (IntOp (Const (&0))) []; Var t 1])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))
-                              (Op t (MemOp RefArray) [Var t 0; Var t
-                                1])) | Src Aw8alloc -> Let t xs (If t
-                                (Op t (IntOp Less) [Op t (IntOp (Const
-                                (&0))) []; Var t 1])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))
-                              (Op t (MemOp (RefByte F)) [Var t 0; Var
-                                t 1])) | Src Vsub -> Let t xs (If t (Op
-                                t (BlockOp BoundsCheckBlock) [Var t 0;
+     (match op with TagLenEq tag n -> closLang_Op t (closLang_BlockOp
+       (TagLenEq tag n)) xs | LenEq n -> closLang_Op t (closLang_BlockOp
+       (LenEq n)) xs | El n -> flat_to_clos_arg1 xs (\x. closLang_Op t
+       (closLang_MemOp El) [closLang_Op backend_common_None
+       (closLang_IntOp (closLang_Const (&n))) []; x]) |
+       flatLang_GlobalVarAlloc n -> Let t xs (closLang_Op t
+       (closLang_GlobOp AllocGlobal) [closLang_Op t (closLang_IntOp
+       (closLang_Const (&n))) []]) | flatLang_GlobalVarInit n ->
+       closLang_Op t (closLang_GlobOp (SetGlobal (n + 1))) xs |
+       flatLang_GlobalVarLookup n -> closLang_Op t (closLang_GlobOp
+       (Global (n + 1))) xs | flatLang_Id -> flat_to_clos_arg1 xs (\x.
+       x) | flatLang_Src ast_Opapp -> flat_to_clos_arg2 xs (\x f.
+       closLang_App t NONE f [x]) | flatLang_Src ast_Opassign ->
+       flat_to_clos_arg2 xs (\x y. closLang_Op t (closLang_MemOp
+       closLang_Update) [x; closLang_Op backend_common_None
+       (closLang_IntOp (closLang_Const (&0))) []; y]) | flatLang_Src
+       ast_Opref -> closLang_Op t (closLang_MemOp closLang_Ref) xs |
+       flatLang_Src ConfigGC -> closLang_Op t (closLang_MemOp ConfigGC)
+       xs | flatLang_Src ast_Equality -> closLang_Op t (closLang_BlockOp
+       Equal) xs | flatLang_Src (FFI n) -> closLang_Op t (FFI n) xs |
+       flatLang_Src ListAppend -> closLang_Op t (closLang_BlockOp
+       ListAppend) xs | flatLang_Src ast_Vlength -> closLang_Op t
+       (closLang_BlockOp closLang_LengthBlock) xs | flatLang_Src
+       ast_Alength -> closLang_Op t (closLang_MemOp closLang_Length) xs
+       | flatLang_Src ast_Implode -> closLang_Op t (closLang_MemOp
+       closLang_FromListByte) xs | flatLang_Src ast_Explode ->
+       closLang_Op t (closLang_MemOp closLang_ToListByte) xs |
+       flatLang_Src ast_Strlen -> closLang_Op t (closLang_MemOp
+       closLang_LengthByteVec) xs | flatLang_Src ast_Strcat ->
+       closLang_Op t (closLang_MemOp closLang_ConcatByteVec) xs |
+       flatLang_Src ast_CopyStrStr -> Let t xs (CopyByteStr t) |
+       flatLang_Src ast_CopyStrAw8 -> Let t xs (CopyByteAw8 t) |
+       flatLang_Src ast_CopyAw8Str -> Let t xs (CopyByteStr t) |
+       flatLang_Src ast_CopyAw8Aw8 -> Let t xs (CopyByteAw8 t) |
+       flatLang_Src ast_XorAw8Str_unsafe -> closLang_Op t
+       (closLang_MemOp closLang_XorByte) xs | flatLang_Src ast_VfromList
+       -> closLang_Op t (closLang_BlockOp (closLang_FromList 0)) xs |
+       flatLang_Src (ast_Test test test_ty) ->
+          (match test_ty with ast_BoolT -> closLang_Op t
+            (closLang_BlockOp (closLang_BoolTest test)) xs | ast_CharT
+            -> closLang_Op t (closLang_WordOp (WordTest ast_W8 test)) xs
+            | ast_WordT ast_W8 -> closLang_Op t (closLang_WordOp
+            (WordTest ast_W8 test)) xs | ast_IntT -> (match test with
+            ast_Compare ast_Lt -> closLang_Op t (closLang_IntOp Less) xs
+            | ast_Compare ast_Leq -> closLang_Op t (closLang_IntOp
+            closLang_LessEq) xs | ast_Compare ast_Gt -> closLang_Op t
+            (closLang_IntOp Greater) xs | ast_Compare ast_Geq ->
+            closLang_Op t (closLang_IntOp closLang_GreaterEq) xs | _8 ->
+            closLang_Op t (closLang_BlockOp Equal) xs) | ast_Float64T ->
+            (match test with ast_Compare ast_Lt -> closLang_Op t
+            (closLang_WordOp (FP_cmp FP_Less)) xs | ast_Compare ast_Leq
+            -> closLang_Op t (closLang_WordOp (FP_cmp FP_LessEqual)) xs
+            | ast_Compare ast_Gt -> closLang_Op t (closLang_WordOp
+            (FP_cmp FP_Greater)) xs | ast_Compare ast_Geq -> closLang_Op
+            t (closLang_WordOp (FP_cmp FP_GreaterEqual)) xs | _9 ->
+            closLang_Op t (closLang_WordOp (FP_cmp FP_Equal)) xs) |
+            ast_StrT -> (match test with ast_Compare opb -> closLang_Op
+            t (closLang_MemOp (closLang_StringCmp F opb)) xs |
+            ast_AltCompare opb -> closLang_Op t (closLang_MemOp
+            (closLang_StringCmp T opb)) xs | _10 -> closLang_Op t
+            (closLang_BlockOp Equal) xs) | _11 -> closLang_Op t
+            (closLang_BlockOp Equal) xs) | flatLang_Src ast_Aw8length ->
+            closLang_Op t (closLang_MemOp closLang_LengthByte) xs |
+            flatLang_Src ast_AallocFixed -> closLang_Op t
+            (closLang_MemOp closLang_Ref) xs | flatLang_Src ast_Aalloc
+            -> Let t xs (If t (closLang_Op t (closLang_IntOp Less)
+            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+            Var t 1])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))
+                              (closLang_Op t (closLang_MemOp
+                                closLang_RefArray) [Var t 0; Var t 1]))
+                                | flatLang_Src ast_Aw8alloc -> Let t xs
+                                (If t (closLang_Op t (closLang_IntOp
+                                Less) [closLang_Op t (closLang_IntOp
+                                (closLang_Const (&0))) []; Var t 1])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))
+                              (closLang_Op t (closLang_MemOp
+                                (closLang_RefByte F)) [Var t 0; Var t
+                                1])) | flatLang_Src ast_Vsub -> Let t xs
+                                (If t (closLang_Op t (closLang_BlockOp
+                                closLang_BoundsCheckBlock) [Var t 0; Var
+                                t 1])
+                              (closLang_Op t (closLang_MemOp El) [Var
+                                t 0; Var t 1])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))) | flatLang_Src ast_Vsub_unsafe ->
+                                closLang_Op t (closLang_MemOp El) xs |
+                                flatLang_Src ast_Asub -> Let t xs (If t
+                                (closLang_Op t (closLang_MemOp
+                                closLang_BoundsCheckArray) [Var t 0; Var
+                                t 1])
+                              (closLang_Op t (closLang_MemOp El) [Var
+                                t 0; Var t 1])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))) | flatLang_Src ast_Asub_unsafe ->
+                                closLang_Op t (closLang_MemOp El) xs |
+                                flatLang_Src ast_Aupdate -> Let t xs (If
+                                t (closLang_Op t (closLang_MemOp
+                                closLang_BoundsCheckArray) [Var t 1; Var
+                                t 2])
+                              (closLang_Op t (closLang_MemOp
+                                closLang_Update) [Var t 0; Var t 1; Var
+                                t 2])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))) | flatLang_Src ast_Aupdate_unsafe
+                                -> closLang_Op t (closLang_MemOp
+                                closLang_Update) xs | flatLang_Src
+                                ast_Aw8sub -> Let t xs (If t
+                                (closLang_Op t (closLang_MemOp
+                                (closLang_BoundsCheckByte F)) [Var t 0;
                                 Var t 1])
-                              (Op t (MemOp El) [Var t 0; Var t 1])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))) | Src Vsub_unsafe
-                                -> Op t (MemOp El) xs | Src Asub -> Let
-                                t xs (If t (Op t (MemOp
-                                BoundsCheckArray) [Var t 0; Var t 1])
-                              (Op t (MemOp El) [Var t 0; Var t 1])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))) | Src Asub_unsafe
-                                -> Op t (MemOp El) xs | Src Aupdate ->
-                                Let t xs (If t (Op t (MemOp
-                                BoundsCheckArray) [Var t 1; Var t 2])
-                              (Op t (MemOp Update) [Var t 0; Var t 1;
+                              (closLang_Op t (closLang_MemOp
+                                closLang_DerefByte) [Var t 0; Var t 1])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))) | flatLang_Src ast_Aw8sub_unsafe
+                                -> closLang_Op t (closLang_MemOp
+                                closLang_DerefByte) xs | flatLang_Src
+                                ast_Aw8update -> Let t xs (If t
+                                (closLang_Op t (closLang_MemOp
+                                (closLang_BoundsCheckByte F)) [Var t 1;
                                 Var t 2])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))) | Src
-                                Aupdate_unsafe -> Op t (MemOp Update) xs
-                                | Src Aw8sub -> Let t xs (If t (Op t
-                                (MemOp (BoundsCheckByte F)) [Var t 0;
+                              (closLang_Op t (closLang_MemOp
+                                closLang_UpdateByte) [Var t 0; Var t 1;
+                                Var t 2])
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))) | flatLang_Src
+                                ast_Aw8update_unsafe -> closLang_Op t
+                                (closLang_MemOp closLang_UpdateByte) xs
+                                | flatLang_Src ast_Strsub -> Let t xs
+                                (If t (closLang_Op t (closLang_MemOp
+                                (closLang_BoundsCheckByte F)) [Var t 0;
                                 Var t 1])
-                              (Op t (MemOp DerefByte) [Var t 0; Var t
+                              (closLang_Op t (closLang_MemOp
+                                closLang_DerefByteVec) [Var t 0; Var t
                                 1])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))) | Src
-                                Aw8sub_unsafe -> Op t (MemOp DerefByte)
-                                xs | Src Aw8update -> Let t xs (If t (Op
-                                t (MemOp (BoundsCheckByte F)) [Var t 1;
-                                Var t 2])
-                              (Op t (MemOp UpdateByte) [Var t 0; Var
-                                t 1; Var t 2])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))) | Src
-                                Aw8update_unsafe -> Op t (MemOp
-                                UpdateByte) xs | Src Strsub -> Let t xs
-                                (If t (Op t (MemOp (BoundsCheckByte F))
-                                [Var t 0; Var t 1])
-                              (Op t (MemOp DerefByteVec) [Var t 0;
-                                Var t 1])
-                              (Raise t (Op t (BlockOp (Cons
-                                subscript_tag)) []))) | Src (Shift x1 x2
-                                x3) -> Op t (WordOp (WordShift x1 x2
-                                x3)) xs | Src Eval -> Op t Install xs |
-                                Src (ThunkOp op) -> Op t (ThunkOp op) xs
-                                | Src (Arith a ty) -> compile_arith t a
-                                ty xs | Src (FromTo (WordT W8) IntT) ->
-                                arg1 xs (\x. x) | Src (FromTo (WordT
-                                W64) IntT) -> Op t (WordOp WordToInt) xs
-                                | Src (FromTo IntT (WordT W8)) -> arg1
-                                xs (\x. Op t (IntOp Mod) [Op t (IntOp
-                                (Const (&256))) []; x]) | Src (FromTo
-                                IntT (WordT W64)) -> Op t (WordOp
-                                WordFromInt) xs | Src (FromTo IntT
-                                CharT) -> Let t xs (If t (Op t (IntOp
-                                Less) [Op None (IntOp (Const (&0))) [];
-                                Var t 0])
-                         (Raise t (Op t (BlockOp (Cons chr_tag)) []))
-                         (If t (Op t (IntOp Less) [Var t 0; Op None
-                           (IntOp (Const (&255))) []])
-                           (Raise t (Op t (BlockOp (Cons chr_tag))
-                             []))
-                           (Var t 0))) | Src (FromTo Float64T
-                             (WordT W64)) -> Let None xs (Var None 0)
-                             | Src (FromTo (WordT W64) Float64T) ->
-                             Let None xs (Var None 0) | Src _12 ->
-                             Let None xs (Var None 0))`;;
-hol4_overload "compile_op" "flat_to_clos_compile_op";;
+                              (Raise t (closLang_Op t
+                                (closLang_BlockOp (Cons subscript_tag))
+                                []))) | flatLang_Src (ast_Shift x1 x2
+                                x3) -> closLang_Op t (closLang_WordOp
+                                (WordShift x1 x2 x3)) xs | flatLang_Src
+                                ast_Eval -> closLang_Op t
+                                closLang_Install xs | flatLang_Src
+                                (ThunkOp op) -> closLang_Op t (ThunkOp
+                                op) xs | flatLang_Src (ast_Arith a ty)
+                                -> compile_arith t a ty xs |
+                                flatLang_Src (ast_FromTo (ast_WordT
+                                ast_W8) ast_IntT) -> flat_to_clos_arg1
+                                xs (\x. x) | flatLang_Src (ast_FromTo
+                                (ast_WordT W64) ast_IntT) -> closLang_Op
+                                t (closLang_WordOp WordToInt) xs |
+                                flatLang_Src (ast_FromTo ast_IntT
+                                (ast_WordT ast_W8)) -> flat_to_clos_arg1
+                                xs (\x. closLang_Op t (closLang_IntOp
+                                Mod) [closLang_Op t (closLang_IntOp
+                                (closLang_Const (&256))) []; x]) |
+                                flatLang_Src (ast_FromTo ast_IntT
+                                (ast_WordT W64)) -> closLang_Op t
+                                (closLang_WordOp WordFromInt) xs |
+                                flatLang_Src (ast_FromTo ast_IntT
+                                ast_CharT) -> Let t xs (If t
+                                (closLang_Op t (closLang_IntOp Less)
+                                [closLang_Op backend_common_None
+                                (closLang_IntOp (closLang_Const (&0)))
+                                []; Var t 0])
+                         (Raise t (closLang_Op t (closLang_BlockOp
+                           (Cons chr_tag)) []))
+                         (If t (closLang_Op t (closLang_IntOp Less)
+                           [Var t 0; closLang_Op backend_common_None
+                           (closLang_IntOp (closLang_Const (&255))) []])
+                           (Raise t (closLang_Op t (closLang_BlockOp
+                             (Cons chr_tag)) []))
+                           (Var t 0))) | flatLang_Src (ast_FromTo
+                             ast_Float64T (ast_WordT W64)) -> Let
+                             backend_common_None xs (Var
+                             backend_common_None 0) | flatLang_Src
+                             (ast_FromTo (ast_WordT W64)
+                             ast_Float64T) -> Let backend_common_None
+                             xs (Var backend_common_None 0) |
+                             flatLang_Src _12 -> Let
+                             backend_common_None xs (Var
+                             backend_common_None 0))`;;
 
 let join_strings_def = cake_define
   `join_strings (x:mlstring) y =
@@ -252,36 +345,42 @@ let join_strings_def = cake_define
 
 let dest_nop_def = cake_define
   `dest_nop op e =
-     (if op = Src (FromTo IntT (WordT W8)) then
-       (match e with [App _13 op1 [x]] -> (if op1 = Src (FromTo CharT
-         IntT) then SOME x else NONE) | _14 -> NONE) else if op = Src
-         (FromTo IntT CharT) then
-       (match e with [App _15 op1 [x]] -> (if op1 = Src (FromTo
-         (WordT W8) IntT) then SOME x else NONE) | _16 -> NONE) else
-         NONE)`;;
+     (if op = flatLang_Src (ast_FromTo ast_IntT (ast_WordT ast_W8))
+       then
+       (match e with [App _13 op1 [x]] -> (if op1 = flatLang_Src
+         (ast_FromTo ast_CharT ast_IntT) then SOME x else NONE) | _14 ->
+         NONE) else if op = flatLang_Src (ast_FromTo ast_IntT ast_CharT)
+         then
+       (match e with [App _15 op1 [x]] -> (if op1 = flatLang_Src
+         (ast_FromTo (ast_WordT ast_W8) ast_IntT) then SOME x else
+         NONE) | _16 -> NONE) else NONE)`;;
 
 let dest_Constant_def = cake_define
   `flat_to_clos_dest_Constant x1 =
       match x1 with
-        Op t (BlockOp (Constant c)) [] -> SOME c
-      | (Op t (IntOp (Const i)) []) -> SOME (ConstInt i)
-      | (Op t (BlockOp (Cons n)) []) -> SOME (ConstCons n [])
+        closLang_Op t (closLang_BlockOp (closLang_Constant c)) [] ->
+          SOME c
+      | (closLang_Op t (closLang_IntOp (closLang_Const i)) []) ->
+        SOME (ConstInt i)
+      | (closLang_Op t (closLang_BlockOp (Cons n)) []) -> SOME
+        (ConstCons n [])
       | _17 -> NONE`;;
-hol4_overload "dest_Constant" "flat_to_clos_dest_Constant";;
 
 let dest_Constants_def = cake_define_list
   [`dest_Constants [] = SOME []`;
    `dest_Constants (c :: cs) =
-      (match dest_Constant c with NONE -> NONE | SOME x -> (match
-        dest_Constants cs with NONE -> NONE | SOME xs -> SOME (x ::
-        xs)))`];;
+      (match flat_to_clos_dest_Constant c with NONE -> NONE |
+        SOME x -> (match dest_Constants cs with NONE -> NONE | SOME
+        xs -> SOME (x :: xs)))`];;
 
 let SmartCons_def = cake_define
   `SmartCons t tag xs =
-     (if NULL xs then Op t (BlockOp (Cons tag)) [] else
-     match dest_Constants xs with NONE -> Op t (BlockOp (Cons
-       tag)) xs | SOME cs -> Op t (BlockOp (Constant (ConstCons tag
-       (REVERSE cs)))) [])`;;
+     (if NULL xs then closLang_Op t (closLang_BlockOp (Cons tag)) []
+       else
+     match dest_Constants xs with NONE -> closLang_Op t
+       (closLang_BlockOp (Cons tag)) xs | SOME cs -> closLang_Op t
+       (closLang_BlockOp (closLang_Constant (ConstCons tag (REVERSE
+       cs)))) [])`;;
 
 let compile_def = cake_define_list
   [`flat_to_clos_compile m [] = []`;
@@ -291,19 +390,20 @@ let compile_def = cake_define_list
   (HD (flat_to_clos_compile m [e]))]`;
    `flat_to_clos_compile m [(Lit t l:flatLang_exp)] = [compile_lit t
   l]`;
-   `flat_to_clos_compile m [Var_local t v] = [Var t (findi (SOME v)
-  m)]`;
+   `flat_to_clos_compile m [flatLang_Var_local t v] = [Var t
+  (indexedLists_findi (SOME v) m)]`;
    `flat_to_clos_compile m [(Con t n es:flatLang_exp)] =
          (let tag = (match n with SOME (t,_18) -> t | _19 -> 0) in
            [SmartCons t tag (flat_to_clos_compile m (REVERSE
              es))])`;
    `flat_to_clos_compile m [(App t op es:flatLang_exp)] =
          (match dest_nop op es with SOME e ->
-           flat_to_clos_compile m [e] | NONE -> [compile_op t op
-           (flat_to_clos_compile m (REVERSE es))])`;
+           flat_to_clos_compile m [e] | NONE ->
+           [flat_to_clos_compile_op t op (flat_to_clos_compile m
+           (REVERSE es))])`;
    `flat_to_clos_compile m [(Fun t v e:flatLang_exp)] =
-         [Fn t NONE NONE 1 (HD (flat_to_clos_compile (SOME v ::
-           m) [e]))]`;
+         [closLang_Fn t NONE NONE 1 (HD (flat_to_clos_compile
+           (SOME v :: m) [e]))]`;
    `flat_to_clos_compile m [(If t x1 x2 x3:flatLang_exp)] =
          [If t (HD (flat_to_clos_compile m [x1]))
                (HD (flat_to_clos_compile m [x2]))
@@ -311,8 +411,8 @@ let compile_def = cake_define_list
    `flat_to_clos_compile m [(Let t vo e1 e2:flatLang_exp)] =
          [Let t (flat_to_clos_compile m [e1]) (HD
            (flat_to_clos_compile (vo :: m) [e2]))]`;
-   `flat_to_clos_compile m [(Mat t e pes:flatLang_exp)] = [Op t
-  (IntOp (Const (&0))) []]`;
+   `flat_to_clos_compile m [(Mat t e pes:flatLang_exp)] =
+  [closLang_Op t (closLang_IntOp (closLang_Const (&0))) []]`;
    `flat_to_clos_compile m [(Handle t e pes:flatLang_exp)] =
          (match dest_pat pes with SOME (v,h) -> [Handle t (HD
            (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile
@@ -323,21 +423,18 @@ let compile_def = cake_define_list
               (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (SOME v ::
                 new_m) [x]))) funs)
               (HD (flat_to_clos_compile new_m [e]))])`];;
-hol4_overload "compile" "flat_to_clos_compile";;
 
 let compile_decs_def = cake_define_list
   [`flat_to_clos_compile_decs [] = []`;
-   `flat_to_clos_compile_decs (e :: xs) = compile [] [e] ++
-  flat_to_clos_compile_decs xs`];;
-hol4_overload "compile_decs" "flat_to_clos_compile_decs";;
+   `flat_to_clos_compile_decs (e :: xs) = flat_to_clos_compile [] [e]
+  ++ flat_to_clos_compile_decs xs`];;
 
 let compile_prog_def = cake_define
   `flat_to_clos_compile_prog xs =
-     attach_interpreter (compile_decs xs)`;;
-hol4_overload "compile_prog" "flat_to_clos_compile_prog";;
+     attach_interpreter (flat_to_clos_compile_decs xs)`;;
 
 let inc_compile_decs_def = cake_define
   `inc_compile_decs decs =
-     (let xs = compile_decs decs ++ compile_decs [Con None NONE []]
-       in
+     (let xs = flat_to_clos_compile_decs decs ++
+       flat_to_clos_compile_decs [Con backend_common_None NONE []] in
        (insert_interp xs,[]))`;;

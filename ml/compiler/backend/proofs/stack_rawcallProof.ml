@@ -40,20 +40,19 @@ let state_ok_def = cake_define
   `stack_rawcallProof_state_ok i code <=>
      (!n v.
        sptree_lookup n i = SOME v ==>
-       (?p. sptree_lookup n code = SOME (Seq (StackAlloc v) p)))`;;
-hol4_overload "state_ok" "stack_rawcallProof_state_ok";;
+       (?p. sptree_lookup n code = SOME (Seq (stackLang_StackAlloc
+         v) p)))`;;
 
 let state_rel_def = cake_define
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
        domain c = domain (?_code s) /\
        t = ?_code_fupd (K c) s /\
-       state_ok i (?_code s) /\
+       stack_rawcallProof_state_ok i (?_code s) /\
        (!n b.
          sptree_lookup n (?_code s) = SOME b ==>
-         (?i. state_ok i (?_code s) /\
+         (?i. stack_rawcallProof_state_ok i (?_code s) /\
              lookup n c = SOME (comp_top i b))))`;;
-hol4_overload "state_rel" "stack_rawcallProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 val simple_case =

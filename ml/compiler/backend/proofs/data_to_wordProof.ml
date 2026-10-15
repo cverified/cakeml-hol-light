@@ -1098,7 +1098,7 @@ Finalise data_compile_correct;
 let state_rel_ext_def = cake_define
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
-       state_rel c l1 l2 s t NONE [] /\
+       word_bignumProof_state_rel c l1 l2 s t NONE [] /\
        domain (?_code t) = domain l /\ wordSem_state_termdep
        t > 1 /\
        (?tt kk aa co. ?_compile_oracle

@@ -15,8 +15,6 @@ needs "lib/integer_word.ml";;
 
 let heap_address_INDUCT,heap_address_RECURSION = define_datatype
   "heap_address = gc_shared_Pointer (num) ('a) | gc_shared_Data ('a)";;
-hol4_overload "Pointer" "gc_shared_Pointer";;
-hol4_overload "Data" "gc_shared_Data";;
 
 let heap_element_INDUCT,heap_element_RECURSION = define_datatype
   "heap_element = Unused (num) | ForwardPointer (num) ('a) (num) | \
@@ -107,8 +105,8 @@ let isSomeDataOrForward_def = cake_define
 
 let roots_ok_def = cake_define
   `roots_ok roots heap =
-     (!ptr u. MEM (Pointer ptr u) roots ==> isSomeDataElement
-       (heap_lookup ptr heap))`;;
+     (!ptr u. MEM (gc_shared_Pointer ptr u) roots ==>
+       isSomeDataElement (heap_lookup ptr heap))`;;
 
 let isForwardPointer_def = cake_define
   `isForwardPointer x1 =
@@ -120,8 +118,8 @@ let heap_ok_def = cake_define
   `heap_ok heap limit = (
      (heap_length heap = limit) /\
      (FILTER isForwardPointer heap = []) /\
-     (!xs l d ptr u. MEM (DataElement xs l d) heap /\ MEM (Pointer
-       ptr u) xs ==>
+     (!xs l d ptr u. MEM (DataElement xs l d) heap /\ MEM
+       (gc_shared_Pointer ptr u) xs ==>
                      isSomeDataElement (heap_lookup ptr heap)))`;;
 
 let gc_forward_ptr_def = cake_define_list
@@ -177,12 +175,14 @@ let heap_addresses_def = cake_define_list
 
 let ADDR_MAP_def = cake_define_list
   [`ADDR_MAP f [] = []`;
-   `ADDR_MAP f (Data x :: xs) = Data x :: ADDR_MAP f xs`;
-   `ADDR_MAP f (Pointer a d :: xs) = Pointer (f a) d :: ADDR_MAP f xs`];;
+   `ADDR_MAP f (gc_shared_Data x :: xs) = gc_shared_Data x ::
+  ADDR_MAP f xs`;
+   `ADDR_MAP f (gc_shared_Pointer a d :: xs) = gc_shared_Pointer (f
+  a) d :: ADDR_MAP f xs`];;
 
 let ADDR_APPLY_def = cake_define_list
-  [`ADDR_APPLY f (Pointer x d) = Pointer (f x) d`;
-   `ADDR_APPLY f (Data y) = Data y`];;
+  [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
+   `ADDR_APPLY f (gc_shared_Data y) = gc_shared_Data y`];;
 
 (* HOL4 ML code, not ported:
 val _ = augment_srw_ss [rewrites [LIST_REL_def]];
@@ -206,18 +206,20 @@ let gc_related_def = cake_define
          d)) ==>
        (heap_lookup (FAPPLY f i) heap2 = SOME (DataElement (ADDR_MAP
          (FAPPLY f) xs) l d)) /\
-       (!ptr u. MEM (Pointer ptr u) xs ==> ptr IN FDOM f)))`;;
+       (!ptr u. MEM (gc_shared_Pointer ptr u) xs ==> ptr IN FDOM
+         f)))`;;
 
 (* an edge in the heap *)
 
 let gc_edge_def = cake_define
   `gc_edge heap x y <=>
      (?xs l d t. (heap_lookup x heap = SOME (DataElement xs l d)) /\
-                MEM (Pointer y t) xs)`;;
+                MEM (gc_shared_Pointer y t) xs)`;;
 
 let reachable_addresses_def = cake_define
   `reachable_addresses roots heap y =
-     (?t x. MEM (Pointer x t) roots /\ RTC (gc_edge heap) x y)`;;
+     (?t x. MEM (gc_shared_Pointer x t) roots /\ RTC (gc_edge
+       heap) x y)`;;
 
 let heap_filter_aux_def = cake_define_list
   [`heap_filter_aux n P [] = []`;

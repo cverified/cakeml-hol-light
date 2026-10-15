@@ -130,7 +130,7 @@ let ThunkBlock_def = cake_define
 let ref_ptr_annot_def = cake_define
   `ref_ptr_annot conf x2 =
       match x2 with
-        SOME (MutBlock tg fin l c r) ->
+        SOME (bvlSem_MutBlock tg fin l c r) ->
      (Word (ptr_bits conf tg (LENGTH l + 1 + LENGTH r)):'a word_loc)
       | _1 -> Word (n2w 0)`;;
 
@@ -143,22 +143,22 @@ let v_inv_ck = cake_inductive
                   /\
    ~small_int (:'a) i /\
    heap_lookup ptr heap = SOME (Bignum i) ==>
-     v_inv_ck ck conf (Number i) refs (Pointer ptr (Word (n2w
-       0)),f,tf,(heap:(('a word_loc,num#('a word_loc) list)heap_element)
-       list)) /\
+     v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr (Word
+       (n2w 0)),f,tf,(heap:(('a word_loc,num#('a word_loc)
+       list)heap_element) list)) /\
    heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
-     v_inv_ck ck conf (Word64 w) refs (Pointer ptr (Word (n2w
-       0)),f,tf,(heap:(('a word_loc,num#('a word_loc) list)heap_element)
-       list)) /\
+     v_inv_ck ck conf (Word64 w) refs (gc_shared_Pointer ptr (Word
+       (n2w 0)),f,tf,(heap:(('a word_loc,num#('a word_loc)
+       list)heap_element) list)) /\
    v_inv_ck ck conf (CodePtr n) refs (Data (Loc n 0),f,tf,(heap:(('a
      word_loc,num#('a word_loc) list)heap_element) list)) /\
    n IN FDOM f /\
    (!ev v. ~(lookup n refs = SOME (Thunk ev v))) /\
-   (!tg fin l c r. lookup n refs = SOME (MutBlock tg fin l c r) ==>
-     ~b) ==>
+   (!tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg fin l c
+     r) ==> ~b) ==>
      v_inv_ck ck conf (RefPtr b n) refs
-                (Pointer (FAPPLY f n) (ref_ptr_annot conf (lookup n
-                  refs)),
+                (gc_shared_Pointer (FAPPLY f n) (ref_ptr_annot conf
+                  (lookup n refs)),
                  f,tf,(heap:(('a word_loc,num#('a word_loc)
                    list)heap_element) list)) /\
    lookup n refs = SOME (Thunk ev v) /\
@@ -168,9 +168,9 @@ let v_inv_ck = cake_inductive
    (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap))
      ==>
      v_inv_ck ck conf (RefPtr F n) refs
-                (Pointer (FAPPLY f n) (Word (n2w 0)),f,tf,(heap:(('a
-                  word_loc,num#('a word_loc) list)heap_element) list))
-                  /\
+                (gc_shared_Pointer (FAPPLY f n) (Word (n2w
+                  0)),f,tf,(heap:(('a word_loc,num#('a word_loc)
+                  list)heap_element) list)) /\
    lookup n refs = SOME (Thunk Evaluated v) /\
    dest_thunk v refs = NotThunk /\
    (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
@@ -189,7 +189,8 @@ let v_inv_ck = cake_inductive
    FLOOKUP tf ts = SOME ptr /\
    heap_lookup ptr heap = SOME (BlockRep n xs) ==>
      v_inv_ck ck conf (Block ts n vs) refs
-                (Pointer ptr (Word (ptr_bits conf n (LENGTH xs))),
+                (gc_shared_Pointer ptr (Word (ptr_bits conf n (LENGTH
+                  xs))),
                  f,tf,(heap:(('a word_loc,num#('a word_loc)
                    list)heap_element) list))`;;
 
@@ -212,8 +213,9 @@ let ref_edge_def = cake_define
   `ref_edge refs x res =
      (match lookup x refs with SOME (ValueArray ys) -> MEM res
        (get_refs (Block 0 ARB ys)) | SOME (Thunk _8 v) -> MEM res
-       (get_refs (Block 0 ARB [v])) | SOME (MutBlock _9 _10 l c r) ->
-       MEM res (get_refs (Block 0 ARB (l ++ [c] ++ r))) | _11 -> F)`;;
+       (get_refs (Block 0 ARB [v])) | SOME (bvlSem_MutBlock _9 _10 l
+       c r) -> MEM res (get_refs (Block 0 ARB (l ++ [c] ++ r))) | _11
+       -> F)`;;
 
 let reachable_refs_def = cake_define
   `reachable_refs roots refs t =
@@ -239,10 +241,10 @@ let bc_ref_inv_def = cake_define
          (?(z:('ga word_loc) heap_address).
             heap_lookup x heap = SOME (ThunkBlock ev z) /\
             (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
-            v_inv conf v refs (z,f,tf,heap)) | (SOME x,SOME (MutBlock
-              tg fin l c r)) ->
-         (!gs. ~(data_to_word_config_gc_kind conf = Generational gs))
-           /\
+            v_inv conf v refs (z,f,tf,heap)) | (SOME x,SOME
+              (bvlSem_MutBlock tg fin l c r)) ->
+         (!gs. ~(data_to_word_config_gc_kind conf =
+           data_to_word_Generational gs)) /\
          (~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
          (?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\
                EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
@@ -264,7 +266,7 @@ let find_ref_def = cake_define
       match x1 with
         bvlSem_ValueArray l -> MEM x l
       | (Thunk m v) -> (v = x)
-      | (MutBlock tg fin l c r) -> MEM x (l ++ [c] ++ r)
+      | (bvlSem_MutBlock tg fin l c r) -> MEM x (l ++ [c] ++ r)
       | _15 -> F`;;
 
 (* TODO: MOVE *)
@@ -291,8 +293,8 @@ let all_vs_def = cake_define
        (v_all_vs l)} UNION
      {v | ?n ev x. lookup n refs = SOME (Thunk ev x) /\ MEM v
        (v_all_vs [x])} UNION
-     {v | ?n tg fin l c r. lookup n refs = SOME (MutBlock tg fin l c
-       r) /\
+     {v | ?n tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg
+       fin l c r) /\
                             MEM v (v_all_vs (l ++ [c] ++ r))} UNION
      {v | MEM v (v_all_vs stack)}`;;
 
@@ -346,7 +348,8 @@ let gen_start_ok_def = cake_define
      (?h1 h2.
        heap_split gen_start heap = SOME (h1,h2) /\
        (!xs l d p e.
-         MEM (DataElement xs l d) h1 /\ MEM (Pointer p e) xs ==>
+         MEM (DataElement xs l d) h1 /\ MEM (gc_shared_Pointer p e)
+           xs ==>
          p < gen_start \/ refs_start <= p))`;;
 
 let gen_state_ok_def = cake_define
@@ -357,7 +360,7 @@ let gen_state_ok_def = cake_define
 let gc_kind_inv_def = cake_define
   `gc_kind_inv c a sp sp1 (gens:gen_state) heap <=>
      (match data_to_word_config_gc_kind c with None -> (sp1 = 0) |
-       Simple -> (sp1 = 0) | Generational sizes ->
+       Simple -> (sp1 = 0) | data_to_word_Generational sizes ->
          gen_state_ok a (a + sp + sp1) heap gens /\
          (?h1 h2. (heap_split (a + sp + sp1) heap = SOME (h1,h2)) /\
                  EVERY (\x. ~isRef x) h1 /\ EVERY isRef h2))`;;
@@ -416,7 +419,7 @@ let gc_inline_rel = cake_inductive
   `[~(unchanged:)] gc_inline_rel inline h1 x x /\
      heap_lookup p h1 = SOME block /\
      inline block x ==>
-       gc_inline_rel inline h1 (Pointer p u) x`;;
+       gc_inline_rel inline h1 (gc_shared_Pointer p u) x`;;
 
 let gc_heap_inline_rel = cake_inductive
   `[~(unchanged:)] gc_heap_inline_rel inline h1 x x /\
@@ -433,7 +436,7 @@ let gc_related_roots_heap_def = cake_define
   `gc_related_roots_heap f (r1,h1) (r2,h2) <=>
      gc_related f h1 h2 /\
      r2 = ADDR_MAP ((FAPPLY) f) r1 /\
-     (!ptr u. MEM (Pointer ptr u) r1 ==> ptr IN FDOM f)`;;
+     (!ptr u. MEM (gc_shared_Pointer ptr u) r1 ==> ptr IN FDOM f)`;;
 
 let gc_inline_related_def = cake_define
   `gc_inline_related inline f (r1,h1) (r2,h2) =
@@ -452,8 +455,9 @@ let make_gc_conf_def = cake_define
 
 let reset_gens_def = cake_define
   `reset_gens conf a =
-     (match data_to_word_config_gc_kind conf with Generational
-       sizes -> GenState 0 (MAP (K a) sizes) | _18 -> GenState 0 [])`;;
+     (match data_to_word_config_gc_kind conf with
+       data_to_word_Generational sizes -> GenState 0 (MAP (K a)
+       sizes) | _18 -> GenState 0 [])`;;
 
 let has_gen_def = cake_define
   `has_gen (GenState _19 xs) <=> ~(xs = [])`;;
@@ -522,8 +526,8 @@ let list_to_BlockReps_def = cake_define_list
       (match l with
         [] -> [BlockRep cons_tag [h; t]] | _21 ->
           BlockRep cons_tag
-            [h; Pointer (a + 3) (Word (ptr_bits conf cons_tag 2))]
-              ::
+            [h; gc_shared_Pointer (a + 3) (Word (ptr_bits conf
+              cons_tag 2))] ::
               list_to_BlockReps conf t (a + 3) l)`];;
 
 (* HOL4 ML code, not ported:
@@ -679,7 +683,7 @@ let thunk_deref_def = cake_define
 let heap_el_def = cake_define
   `heap_el x1 n heap =
         match x1 with
-          Pointer a u ->
+          gc_shared_Pointer a u ->
        (match heap_lookup a heap with SOME (DataElement xs l d) ->
            (if n < LENGTH xs then (EL n xs,T) else (ARB,F)) | _24 ->
              (ARB,F))
@@ -739,7 +743,7 @@ let word_addr_def = cake_define
         match x2 with
           gc_shared_Data (Loc l1 l2) -> Loc l1 0
         | (Data (Word v)) -> Word (v && (--(n2w 1)))
-        | (Pointer n w) -> Word (get_addr conf n w)`;;
+        | (gc_shared_Pointer n w) -> Word (get_addr conf n w)`;;
 
 let thunk_tag_to_bits_def = cake_define_list
   [`thunk_tag_to_bits Evaluated = (n2w 1)`;
@@ -805,7 +809,7 @@ let gen_starts_in_store_def = cake_define
       match (x2,x3) with
         (GenState _27 gen_starts,SOME (Word w)) ->
      (!gen_sizes. data_to_word_config_gc_kind
-        c = Generational gen_sizes ==>
+        c = data_to_word_Generational gen_sizes ==>
         LENGTH gen_starts = LENGTH gen_sizes /\
         (!x xs. gen_starts = x :: xs ==>
                w = (bytes_in_word * n2w x)))
@@ -1437,7 +1441,8 @@ let walk_def = cake_define
        match some (\p.
          ?x y.
          heap_lookup ptr heap = SOME (BlockRep cons_tag [x; y]) /\
-         y = Pointer p (Word (ptr_bits conf cons_tag 2))) with
+         y = gc_shared_Pointer p (Word (ptr_bits conf cons_tag 2)))
+           with
          NONE -> [] | SOME p ->
            ptr :: data_to_word_memoryProof_walk conf heap p (n -
              1))`;;

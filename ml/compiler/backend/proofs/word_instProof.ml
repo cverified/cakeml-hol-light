@@ -46,9 +46,9 @@ needs "semantics/ast.ml";;
 let pull_ops_simp_def = cake_define_list
   [`pull_ops_simp op [] = []`;
    `pull_ops_simp op (x :: xs) =
-        (match x with (Op op' ls) -> (if op = op' then ls ++
-          (pull_ops_simp op xs) else x :: (pull_ops_simp op xs)) | _2
-          -> x :: (pull_ops_simp op xs))`];;
+        (match x with (wordLang_Op op' ls) -> (if op = op' then
+          ls ++ (pull_ops_simp op xs) else x :: (pull_ops_simp op
+          xs)) | _2 -> x :: (pull_ops_simp op xs))`];;
 
 (* TODO: Maybe move to props, if these are needed elsewhere *)
 
@@ -81,9 +81,9 @@ let binary_branch_exp_def = cake_define_wf
   `MEASURE (exp_size ARB)`
   `binary_branch_exp exp =
         match exp with
-          Op Sub exps -> EVERY (binary_branch_exp) exps
-        | (Op op xs) -> (LENGTH xs = 2 /\ EVERY (binary_branch_exp)
-          xs)
+          wordLang_Op Sub exps -> EVERY (binary_branch_exp) exps
+        | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ EVERY
+          (binary_branch_exp) xs)
         | (Load exp) -> binary_branch_exp exp
         | (Shift backend_common_word_shift exp nexp) ->
           (binary_branch_exp exp /\ binary_branch_exp nexp)

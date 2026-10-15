@@ -34,7 +34,7 @@ val msimps = [st_ex_bind_def,st_ex_ignore_bind_def,st_ex_return_def];
 *)
 
 let lookup_default_id_def = cake_define
-  `lookup_default_id s x = option_CASE (lookup x s) x (\x. x)`;;
+  `lookup_default_id s x = option_CASE (sptree_lookup x s) x (\x. x)`;;
 
 let find_reg_exchange_step_def = cake_define
   `find_reg_exchange_step colors r (exch,invexch) =
@@ -42,12 +42,12 @@ let find_reg_exchange_step_def = cake_define
        let fcol1 = r DIV 2 in
        let col2 = lookup_default_id invexch fcol1 in
        let fcol2 = lookup_default_id exch col1 in
-       (insert col1 fcol1 (insert col2 fcol2 exch),insert fcol1
-         col1 (insert fcol2 col2 invexch)))`;;
+       (sptree_insert col1 fcol1 (sptree_insert col2 fcol2
+         exch),sptree_insert fcol1 col1 (sptree_insert fcol2 col2
+         invexch)))`;;
 
 let id_def = cake_define
   `linear_scanProof_id x = x`;;
-hol4_overload "id" "linear_scanProof_id";;
 
 let less_FST_def = cake_define
   `less_FST (x:int#num) y = (FST x <= FST y)`;;
@@ -138,8 +138,8 @@ let edges_to_adjlist_step_def = cake_define
        acc else if ((<) LEX (<=)) (EL a
          (linear_scan_hidden_state_int_beg sth),a) (EL b
          (linear_scan_hidden_state_int_beg sth),b) then
-       insert b (a :: (the [] (lookup b acc))) acc else
-       insert a (b :: (the [] (lookup a acc))) acc)`;;
+       sptree_insert b (a :: (the [] (sptree_lookup b acc))) acc else
+       sptree_insert a (b :: (the [] (sptree_lookup a acc))) acc)`;;
 
 let forbidden_is_from_forced_def = cake_define
   `forbidden_is_from_forced forced (int_beg:int list) reg forbidden =
@@ -192,11 +192,11 @@ let good_bijection_state_def = cake_define
          sp_inverts (bijection_state_invbij st) (bijection_state_bij
            st)) /\ (
          (!r. r IN regset ==> (is_stack_var r <=> is_stack_var (the 0
-           (lookup r (bijection_state_bij st))))) /\
+           (sptree_lookup r (bijection_state_bij st))))) /\
          (!r. r IN regset ==> (is_alloc_var r <=> is_alloc_var (the 0
-           (lookup r (bijection_state_bij st))))) /\
-         (!r. r IN regset /\ is_phy_var r ==> r = (the 0 (lookup r
-           (bijection_state_bij st))))) /\
+           (sptree_lookup r (bijection_state_bij st))))) /\
+         (!r. r IN regset /\ is_phy_var r ==> r = (the 0
+           (sptree_lookup r (bijection_state_bij st))))) /\
        (!r. r IN domain (bijection_state_invbij st) /\ is_stack_var r
          ==> r < bijection_state_nstack st) /\
        (!r. r IN domain (bijection_state_invbij st) /\ is_alloc_var r
@@ -204,13 +204,13 @@ let good_bijection_state_def = cake_define
        (
          is_stack_var (bijection_state_nstack st) /\
          is_alloc_var (bijection_state_nalloc st)) /\
-       (!r. the 0 (lookup r (bijection_state_bij st)) <=
+       (!r. the 0 (sptree_lookup r (bijection_state_bij st)) <=
          bijection_state_nmax st))`;;
 
 let sptree_eq_list_def = cake_define
   `sptree_eq_list (s:int spt) l = (!i.
      i < LENGTH l ==>
-     (0 < EL i l <=> lookup i s = NONE) /\
-     (EL i l <= 0 <=> lookup i s = SOME (EL i l)))`;;
+     (0 < EL i l <=> sptree_lookup i s = NONE) /\
+     (EL i l <= 0 <=> sptree_lookup i s = SOME (EL i l)))`;;
 
 (* TODO: move *)

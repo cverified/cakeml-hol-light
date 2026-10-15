@@ -55,12 +55,12 @@ let type_pe_determ_canon_def = cake_define
 let type_d_canon = cake_inductive
   `(!n tvs tenv p e t bindings locs.
      (is_value e /\
-     ALL_DISTINCT (pat_bindings p) /\
+     ALL_DISTINCT (ast_pat_bindings p) /\
      type_p tvs tenv p t bindings /\
-     type_e tenv (bind_tvar tvs Empty) e t /\
+     type_e tenv (bind_tvar tvs typeSystem_Empty) e t /\
      (!tvs' bindings' t'.
      (type_p tvs' tenv p t' bindings' /\
-     type_e tenv (bind_tvar tvs' Empty) e t' /\
+     type_e tenv (bind_tvar tvs' typeSystem_Empty) e t' /\
      EVERY (\(k,t). set_tids_subset (count n) t) bindings') ==>
            EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs'
              bindings')) (MAP SND (tenv_add_tvs tvs bindings)))) ==>
@@ -69,19 +69,20 @@ let type_d_canon = cake_inductive
        (mk_? (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
          nsEmpty)) /\
    (!n tenv p e t bindings locs.
-     ((~(is_value e) /\ type_pe_determ_canon n tenv Empty p e) /\
-     ALL_DISTINCT (pat_bindings p) /\
+     ((~(is_value e) /\ type_pe_determ_canon n tenv typeSystem_Empty
+       p e) /\
+     ALL_DISTINCT (ast_pat_bindings p) /\
      type_p ((0:num)) tenv p t bindings /\
-     type_e tenv Empty e t) ==>
+     type_e tenv typeSystem_Empty e t) ==>
      type_d_canon n tenv (Dlet locs p e)
        0 (mk_? (alist_to_ns (tenv_add_tvs ((0:num)) bindings))
          nsEmpty nsEmpty)) /\
    (!n tenv funs bindings tvs locs.
      (type_funs tenv (bind_var_list ((0:num)) bindings (bind_tvar tvs
-       Empty)) funs bindings /\
+       typeSystem_Empty)) funs bindings /\
      (!tvs' bindings'.
          type_funs tenv (bind_var_list ((0:num)) bindings' (bind_tvar
-           tvs' Empty)) funs bindings' /\
+           tvs' typeSystem_Empty)) funs bindings' /\
          EVERY (\(k,t). set_tids_subset (count n) t) bindings' ==>
            EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs'
              bindings')) (MAP SND (tenv_add_tvs tvs bindings)))) ==>
@@ -228,10 +229,11 @@ val ast_t_ind = ast_t_induction
 (* TODO: this is only true up to equivalence on tenvs *)
 
 let remap_tenvE_def = cake_define_list
-  [`remap_tenvE f Empty = Empty`;
-   `remap_tenvE f (Bind_tvar n e) = Bind_tvar n (remap_tenvE f e)`;
-   `remap_tenvE f (Bind_name s n t e) = Bind_name s n (ts_tid_rename
-  f t) (remap_tenvE f e)`];;
+  [`remap_tenvE f typeSystem_Empty = typeSystem_Empty`;
+   `remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
+  (remap_tenvE f e)`;
+   `remap_tenvE f (typeSystem_Bind_name s n t e) =
+  typeSystem_Bind_name s n (ts_tid_rename f t) (remap_tenvE f e)`];;
 
 let LINVI_def = cake_define
   `LINVI f s y = (match LINV_OPT f s y with SOME x -> x | NONE -> f

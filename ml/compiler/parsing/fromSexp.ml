@@ -213,35 +213,35 @@ let sexptype_alt_def = cake_define_list
 
 let sexplit_def = cake_define
   `sexplit s =
-     OPTION_MAP (IntLit o (&)) (odestSXNUM s) ++
-     OPTION_MAP StrLit (odestSEXSTR s) ++
+     OPTION_MAP (ast_IntLit o (&)) (odestSXNUM s) ++
+     OPTION_MAP ast_StrLit (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args). OPTION_IGNORE_BIND
        (assert (LENGTH args = 1)) (
        (\b m. monad_unitbind (assert b) m) (nm = "-")
              (OPTION_BIND (odestSXNUM (HD args))
-                          (\n. if n = 0 then NONE else SOME (IntLit
-                            (--&n)))) ++
+                          (\n. if n = 0 then NONE else SOME
+                            (ast_IntLit (--&n)))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "char")
              (OPTION_BIND (odestSEXSTR (HD args)) (\
                cs. OPTION_IGNORE_BIND
                (assert (strlen cs = 1)) (
-               SOME (Char (strsub cs 0))))) ++
+               SOME (ast_Char (strsub cs 0))))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "word8")
              (OPTION_BIND (odestSXNUM (HD args)) (\
                n. OPTION_IGNORE_BIND
                (assert (n < 256)) (
-               SOME (Word8 (n2w n))))) ++
+               SOME (ast_Word8 (n2w n))))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "word64")
              (OPTION_BIND (odestSXNUM (HD args)) (\
                n. OPTION_IGNORE_BIND
                (assert (n < 2 EXP 64)) (
-               SOME (Word64 (n2w n))))) ++
+               SOME (ast_Word64 (n2w n))))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "float64")
              (OPTION_BIND (odestSXNUM (HD args)) (\
                n. OPTION_IGNORE_BIND
                (assert (n < 2 EXP 64)) (
-               SOME (Float64 (n2w n)))))))`;;
+               SOME (ast_Float64 (n2w n)))))))`;;
 
 (* don't require Pvar constructors; bare strings can be pattern
    variables.
@@ -260,49 +260,51 @@ let _ = size_thms "sexp";;
 let sexppat_def = cake_define_wf
   `MEASURE sexp_size`
   `sexppat s =
-     OPTION_MAP Pvar (odestSEXSTR s) ++
+     OPTION_MAP ast_Pvar (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
        (\b m. monad_unitbind (assert b) m) (nm = "Pany" /\ LENGTH
          args = 0)
-             (SOME Pany) ++
+             (SOME ast_Pany) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Plit" /\ LENGTH
          args = 1)
-             (OPTION_MAP Plit (sexplit (EL 0 args))) ++
+             (OPTION_MAP ast_Plit (sexplit (EL 0 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Pcon" /\ LENGTH
          args = 2)
-             (lift2 Pcon (sexpopt (sexpid odestSEXSTR) (EL 0 args))
+             (lift2 ast_Pcon (sexpopt (sexpid odestSEXSTR) (EL 0
+               args))
                          (sexplist sexppat (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Pas" /\ LENGTH args
          = 2)
-             (lift2 Pas (sexppat (EL 0 args))
+             (lift2 ast_Pas (sexppat (EL 0 args))
                         (odestSEXSTR (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Pref" /\ LENGTH
-         args = 1) (OPTION_MAP Pref (sexppat (EL 0 args))) ++
+         args = 1) (OPTION_MAP ast_Pref (sexppat (EL 0 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Ptannot" /\ LENGTH
          args = 2)
-             (lift2 Ptannot (sexppat (EL 0 args)) (sexptype (EL 1
-               args))))`;;
+             (lift2 ast_Ptannot (sexppat (EL 0 args)) (sexptype
+               (EL 1 args))))`;;
 
 (* translator friendly version for bootstrapping *)
 let sexppat_alt_def = cake_define_list
   [`sexppat_alt s =
-        OPTION_MAP Pvar (odestSEXSTR s) ++
+        OPTION_MAP ast_Pvar (odestSEXSTR s) ++
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Pany" /\ LENGTH args = 0 then
-            SOME Pany else if nm = "Plit" /\ LENGTH args = 1 then
-            OPTION_MAP Plit (sexplit (EL 0 args)) else if nm =
+            SOME ast_Pany else if nm = "Plit" /\ LENGTH args = 1
+              then
+            OPTION_MAP ast_Plit (sexplit (EL 0 args)) else if nm =
               "Pcon" /\ LENGTH args = 2 then
-            OPTION_MAP2 Pcon (sexpopt (sexpid odestSEXSTR) (EL 0
+            OPTION_MAP2 ast_Pcon (sexpopt (sexpid odestSEXSTR) (EL 0
               args))
               (sexppat_list (EL 1 args)) else if nm = "Pas" /\
                 LENGTH args = 2 then
-            OPTION_MAP2 Pas (sexppat_alt (EL 0 args))
+            OPTION_MAP2 ast_Pas (sexppat_alt (EL 0 args))
                             (odestSEXSTR (EL 1 args)) else if nm =
                               "Pref" /\ LENGTH args = 1 then
-            OPTION_MAP Pref (sexppat_alt (EL 0 args)) else if nm =
-              "Ptannot" /\ LENGTH args = 2 then
-            OPTION_MAP2 Ptannot (sexppat_alt (EL 0 args))
+            OPTION_MAP ast_Pref (sexppat_alt (EL 0 args)) else if nm
+              = "Ptannot" /\ LENGTH args = 2 then
+            OPTION_MAP2 ast_Ptannot (sexppat_alt (EL 0 args))
               (sexptype_alt (EL 1 args)) else NONE))`;
    `sexppat_list s =
         (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
@@ -329,47 +331,47 @@ let decode_test_def = cake_define
       match x1 with
         SX_SYM s ->
      (if s = "Equal" then SOME Equal else
-      if s = "Less" then SOME (Compare Lt) else
-      if s = "LessEq" then SOME (Compare Leq) else
-      if s = "Greater" then SOME (Compare Gt) else
-      if s = "GreaterEq" then SOME (Compare Geq) else
-      if s = "AltLess" then SOME (AltCompare Lt) else
-      if s = "AltLessEq" then SOME (AltCompare Leq) else
-      if s = "AltGreater" then SOME (AltCompare Gt) else
-      if s = "AltGreaterEq" then SOME (AltCompare Geq) else NONE)
+      if s = "Less" then SOME (ast_Compare ast_Lt) else
+      if s = "LessEq" then SOME (ast_Compare ast_Leq) else
+      if s = "Greater" then SOME (ast_Compare ast_Gt) else
+      if s = "GreaterEq" then SOME (ast_Compare ast_Geq) else
+      if s = "AltLess" then SOME (ast_AltCompare ast_Lt) else
+      if s = "AltLessEq" then SOME (ast_AltCompare ast_Leq) else
+      if s = "AltGreater" then SOME (ast_AltCompare ast_Gt) else
+      if s = "AltGreaterEq" then SOME (ast_AltCompare ast_Geq) else
+        NONE)
       | _11 -> NONE`;;
-hol4_overload "decode_test" "fromSexp_decode_test";;
 
 let decode_prim_type_def = cake_define
   `decode_prim_type x1 =
       match x1 with
         SX_SYM s ->
-     (if s = "BoolT" then SOME BoolT else
-      if s = "IntT" then SOME IntT else
-      if s = "CharT" then SOME CharT else
-      if s = "StrT" then SOME StrT else
-      if s = "Word8T" then SOME (WordT W8) else
-      if s = "Word64T" then SOME (WordT W64) else
-      if s = "Float64T" then SOME Float64T else NONE)
+     (if s = "BoolT" then SOME ast_BoolT else
+      if s = "IntT" then SOME ast_IntT else
+      if s = "CharT" then SOME ast_CharT else
+      if s = "StrT" then SOME ast_StrT else
+      if s = "Word8T" then SOME (ast_WordT ast_W8) else
+      if s = "Word64T" then SOME (ast_WordT ast_W64) else
+      if s = "Float64T" then SOME ast_Float64T else NONE)
       | _12 -> NONE`;;
 
 let sexparith_def = cake_define
   `sexparith x1 =
       match x1 with
         SX_SYM s ->
-     (if s = "Add" then SOME Add else
-      if s = "Sub" then SOME Sub else
-      if s = "Mul" then SOME Mul else
-      if s = "Div" then SOME Div else
-      if s = "Mod" then SOME Mod else
-      if s = "Neg" then SOME Neg else
-      if s = "Abs" then SOME Abs else
-      if s = "And" then SOME And else
-      if s = "Xor" then SOME Xor else
-      if s = "Or" then SOME Or else
-      if s = "Not" then SOME Not else
-      if s = "Sqrt" then SOME Sqrt else
-      if s = "FMA" then SOME FMA else NONE)
+     (if s = "Add" then SOME ast_Add else
+      if s = "Sub" then SOME ast_Sub else
+      if s = "Mul" then SOME ast_Mul else
+      if s = "Div" then SOME ast_Div else
+      if s = "Mod" then SOME ast_Mod else
+      if s = "Neg" then SOME ast_Neg else
+      if s = "Abs" then SOME ast_Abs else
+      if s = "And" then SOME ast_And else
+      if s = "Xor" then SOME ast_Xor else
+      if s = "Or" then SOME ast_Or else
+      if s = "Not" then SOME ast_Not else
+      if s = "Sqrt" then SOME ast_Sqrt else
+      if s = "FMA" then SOME ast_FMA else NONE)
       | _13 -> NONE`;;
 
 let sexplog_def = cake_define
@@ -384,73 +386,74 @@ let sexpop_def = cake_define
   `sexpop x1 =
         match x1 with
           SX_SYM s ->
-     (if s = "Equality" then SOME Equality else
-     if s = "Opapp" then SOME Opapp else
-     if s = "Opassign" then SOME Opassign else
-     if s = "Opref" then SOME Opref else
-     if s = "Opderef" then SOME Opderef else
-     if s = "Aw8alloc" then SOME Aw8alloc else
-     if s = "Aw8sub" then SOME Aw8sub else
-     if s = "Aw8length" then SOME Aw8length else
-     if s = "Aw8update" then SOME Aw8update else
-     if s = "Aw8subunsafe" then SOME Aw8sub_unsafe else
-     if s = "Aw8updateunsafe" then SOME Aw8update_unsafe else
-     if s = "CopyStrStr" then SOME CopyStrStr else
-     if s = "CopyStrAw8" then SOME CopyStrAw8 else
-     if s = "CopyAw8Str" then SOME CopyAw8Str else
-     if s = "CopyAw8Aw8" then SOME CopyAw8Aw8 else
-     if s = "XorAw8Strunsafe" then SOME XorAw8Str_unsafe else
-     if s = "Implode" then SOME Implode else
-     if s = "Explode" then SOME Explode else
-     if s = "Strsub" then SOME Strsub else
-     if s = "Strlen" then SOME Strlen else
-     if s = "Strcat" then SOME Strcat else
-     if s = "VfromList" then SOME VfromList else
-     if s = "Vsub" then SOME Vsub else
-     if s = "Vsubunsafe" then SOME Vsub_unsafe else
-     if s = "Vlength" then SOME Vlength else
-     if s = "ListAppend" then SOME ListAppend else
-     if s = "Aalloc" then SOME Aalloc else
-     if s = "AallocEmpty" then SOME AallocEmpty else
-     if s = "AallocFixed" then SOME AallocFixed else
-     if s = "Asub" then SOME Asub else
-     if s = "Alength" then SOME Alength else
-     if s = "Aupdate" then SOME Aupdate else
-     if s = "Asubunsafe" then SOME Asub_unsafe else
-     if s = "Aupdateunsafe" then SOME Aupdate_unsafe else
-     if s = "ForceThunk" then SOME (ThunkOp ForceThunk) else
-     if s = "ConfigGC" then SOME ConfigGC else
-     if s = "Eval" then SOME Eval else
-     if s = "Envid" then SOME Env_id else NONE)
+     (if s = "Equality" then SOME ast_Equality else
+     if s = "Opapp" then SOME ast_Opapp else
+     if s = "Opassign" then SOME ast_Opassign else
+     if s = "Opref" then SOME ast_Opref else
+     if s = "Opderef" then SOME ast_Opderef else
+     if s = "Aw8alloc" then SOME ast_Aw8alloc else
+     if s = "Aw8sub" then SOME ast_Aw8sub else
+     if s = "Aw8length" then SOME ast_Aw8length else
+     if s = "Aw8update" then SOME ast_Aw8update else
+     if s = "Aw8subunsafe" then SOME ast_Aw8sub_unsafe else
+     if s = "Aw8updateunsafe" then SOME ast_Aw8update_unsafe else
+     if s = "CopyStrStr" then SOME ast_CopyStrStr else
+     if s = "CopyStrAw8" then SOME ast_CopyStrAw8 else
+     if s = "CopyAw8Str" then SOME ast_CopyAw8Str else
+     if s = "CopyAw8Aw8" then SOME ast_CopyAw8Aw8 else
+     if s = "XorAw8Strunsafe" then SOME ast_XorAw8Str_unsafe else
+     if s = "Implode" then SOME ast_Implode else
+     if s = "Explode" then SOME ast_Explode else
+     if s = "Strsub" then SOME ast_Strsub else
+     if s = "Strlen" then SOME ast_Strlen else
+     if s = "Strcat" then SOME ast_Strcat else
+     if s = "VfromList" then SOME ast_VfromList else
+     if s = "Vsub" then SOME ast_Vsub else
+     if s = "Vsubunsafe" then SOME ast_Vsub_unsafe else
+     if s = "Vlength" then SOME ast_Vlength else
+     if s = "ListAppend" then SOME ast_ListAppend else
+     if s = "Aalloc" then SOME ast_Aalloc else
+     if s = "AallocEmpty" then SOME ast_AallocEmpty else
+     if s = "AallocFixed" then SOME ast_AallocFixed else
+     if s = "Asub" then SOME ast_Asub else
+     if s = "Alength" then SOME ast_Alength else
+     if s = "Aupdate" then SOME ast_Aupdate else
+     if s = "Asubunsafe" then SOME ast_Asub_unsafe else
+     if s = "Aupdateunsafe" then SOME ast_Aupdate_unsafe else
+     if s = "ForceThunk" then SOME (ast_ThunkOp ForceThunk) else
+     if s = "ConfigGC" then SOME ast_ConfigGC else
+     if s = "Eval" then SOME ast_Eval else
+     if s = "Envid" then SOME ast_Env_id else NONE)
         | (SX_CONS (SX_SYM s) (SX_STR s')) ->
-        (if s = "FFI" then OPTION_MAP (FFI o implode) (decode_control
-          s') else NONE)
+        (if s = "FFI" then OPTION_MAP (ast_FFI o implode)
+          (decode_control s') else NONE)
         | (SX_CONS (SX_SYM s) (SX_SYM t)) ->
         (match decode_thunk_mode t with NONE -> NONE | SOME m ->
-            (if s = "AllocThunk" then SOME (ThunkOp (AllocThunk m))
-              else
-            if s = "UpdateThunk" then SOME (ThunkOp (UpdateThunk m))
-              else NONE))
+            (if s = "AllocThunk" then SOME (ast_ThunkOp (AllocThunk
+              m)) else
+            if s = "UpdateThunk" then SOME (ast_ThunkOp (UpdateThunk
+              m)) else NONE))
         | (SX_CONS (SX_SYM s) (SX_NUM n)) ->
-       (if s = "Shift8Lsl" then SOME (Shift W8 Lsl n) else
-       if s = "Shift8Lsr" then SOME (Shift W8 Lsr n) else
-       if s = "Shift8Asr" then SOME (Shift W8 Asr n) else
-       if s = "Shift8Ror" then SOME (Shift W8 Ror n) else
-       if s = "Shift64Lsl" then SOME (Shift W64 Lsl n) else
-       if s = "Shift64Lsr" then SOME (Shift W64 Lsr n) else
-       if s = "Shift64Asr" then SOME (Shift W64 Asr n) else
-       if s = "Shift64Ror" then SOME (Shift W64 Ror n) else NONE)
+       (if s = "Shift8Lsl" then SOME (ast_Shift ast_W8 Lsl n) else
+       if s = "Shift8Lsr" then SOME (ast_Shift ast_W8 Lsr n) else
+       if s = "Shift8Asr" then SOME (ast_Shift ast_W8 Asr n) else
+       if s = "Shift8Ror" then SOME (ast_Shift ast_W8 Ror n) else
+       if s = "Shift64Lsl" then SOME (ast_Shift ast_W64 Lsl n) else
+       if s = "Shift64Lsr" then SOME (ast_Shift ast_W64 Lsr n) else
+       if s = "Shift64Asr" then SOME (ast_Shift ast_W64 Asr n) else
+       if s = "Shift64Ror" then SOME (ast_Shift ast_W64 Ror n) else
+         NONE)
         | (SX_CONS (SX_SYM s) (SX_CONS x y)) ->
        (if s = "Arith" then
          (match (sexparith x,decode_prim_type y) with (SOME a,SOME
-           prim_type) -> SOME (Arith a prim_type) | _15 -> NONE) else if
-           s = "FromTo" then
+           prim_type) -> SOME (ast_Arith a prim_type) | _15 -> NONE)
+           else if s = "FromTo" then
          (match (decode_prim_type x,decode_prim_type y) with (SOME
-           ty1,SOME ty2) -> SOME (FromTo ty1 ty2) | _16 -> NONE) else if
-           s = "Test" then
-         (match (decode_test x,decode_prim_type y) with (SOME
-           test,SOME prim_type) -> SOME (Test test prim_type) | _17 ->
-           NONE) else NONE)
+           ty1,SOME ty2) -> SOME (ast_FromTo ty1 ty2) | _16 -> NONE)
+           else if s = "Test" then
+         (match (fromSexp_decode_test x,decode_prim_type y) with
+           (SOME test,SOME prim_type) -> SOME (ast_Test test prim_type)
+           | _17 -> NONE) else NONE)
         | _18 -> NONE`;;
 
 let sexplocpt_def = cake_define
@@ -487,66 +490,67 @@ let sexpexp_def = cake_define_wf
        (nm,args).
        (\b m. monad_unitbind (assert b) m) (nm = "Raise" /\ LENGTH
          args = 1)
-             (OPTION_MAP Raise (sexpexp (EL 0 args))) ++
+             (OPTION_MAP ast_Raise (sexpexp (EL 0 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Handle" /\ LENGTH
          args = 2)
-             (lift2 Handle
+             (lift2 ast_Handle
                     (sexpexp (EL 0 args))
                     (sexplist (sexppair sexppat sexpexp) (EL 1
                       args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Lit" /\ LENGTH args
          = 1)
-             (OPTION_MAP Lit (sexplit (EL 0 args))) ++
+             (OPTION_MAP ast_Lit (sexplit (EL 0 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Con" /\ LENGTH args
          = 2)
-             (lift2 Con
+             (lift2 ast_Con
                     (sexpopt (sexpid odestSEXSTR) (EL 0 args))
                     (sexplist sexpexp (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Var" /\ LENGTH args
          = 1)
-             (OPTION_MAP Var (sexpid odestSEXSTR (EL 0 args))) ++
+             (OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Fun" /\ LENGTH args
          = 2)
-             (lift2 Fun (odestSEXSTR (EL 0 args)) (sexpexp (EL 1
+             (lift2 ast_Fun (odestSEXSTR (EL 0 args)) (sexpexp (EL 1
                args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "App" /\ LENGTH args
          = 2)
-             (lift2 App (sexpop (EL 0 args)) (sexplist sexpexp (EL 1
-               args))) ++
+             (lift2 ast_App (sexpop (EL 0 args)) (sexplist sexpexp
+               (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Log" /\ LENGTH args
          = 3)
-             (OPTION_MAP Log (sexplog (EL 0 args)) <*>
+             (OPTION_MAP ast_Log (sexplog (EL 0 args)) <*>
                        (sexpexp (EL 1 args)) <*>
                        (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "If" /\ LENGTH args
          = 3)
-             (OPTION_MAP If (sexpexp (EL 0 args)) <*>
+             (OPTION_MAP ast_If (sexpexp (EL 0 args)) <*>
                       (sexpexp (EL 1 args)) <*>
                       (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Mat" /\ LENGTH args
          = 2)
-             (lift2 Mat
+             (lift2 ast_Mat
                (sexpexp (EL 0 args))
                (sexplist (sexppair sexppat sexpexp) (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Let" /\ LENGTH args
          = 3)
-             (OPTION_MAP Let (sexpopt odestSEXSTR (EL 0 args)) <*>
+             (OPTION_MAP ast_Let (sexpopt odestSEXSTR (EL 0 args))
+               <*>
                        (sexpexp (EL 1 args)) <*>
                        (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Letrec" /\ LENGTH
          args = 2)
-             (lift2 Letrec
+             (lift2 ast_Letrec
                (sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
                  sexpexp)) (EL 0 args))
                (sexpexp (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Tannot" /\ LENGTH
          args = 2)
-             (lift2 Tannot
+             (lift2 ast_Tannot
                (sexpexp (EL 0 args))
                (sexptype (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Lannot" /\ LENGTH
          args = 2)
-             (lift2 Lannot
+             (lift2 ast_Lannot
                (sexpexp (EL 0 args))
                (sexplocn (EL 1 args))))`;;
 
@@ -555,50 +559,50 @@ let sexpexp_alt_def = cake_define_list
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
-                 OPTION_MAP Raise (sexpexp_alt (EL 0 args)) else
+                 OPTION_MAP ast_Raise (sexpexp_alt (EL 0 args)) else
               if nm = "Handle" /\ LENGTH args = 2 then
-                 OPTION_MAP2 Handle (sexpexp_alt (EL 0 args))
+                 OPTION_MAP2 ast_Handle (sexpexp_alt (EL 0 args))
                    (sexppes (EL 1 args)) else
               if nm = "Lit" /\ LENGTH args = 1 then
-                 OPTION_MAP Lit (sexplit (EL 0 args)) else
+                 OPTION_MAP ast_Lit (sexplit (EL 0 args)) else
               if nm = "Con" /\ LENGTH args = 2 then
-                 OPTION_MAP2 Con (sexpopt (sexpid odestSEXSTR) (EL 0
-                   args))
+                 OPTION_MAP2 ast_Con (sexpopt (sexpid odestSEXSTR)
+                   (EL 0 args))
                    (sexpexp_list (EL 1 args)) else
               if nm = "Var" /\ LENGTH args = 1 then
-                 OPTION_MAP Var (sexpid odestSEXSTR (EL 0 args))
+                 OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args))
                    else
               if nm = "Fun" /\ LENGTH args = 2 then
-                 OPTION_MAP2 Fun (odestSEXSTR (EL 0 args))
+                 OPTION_MAP2 ast_Fun (odestSEXSTR (EL 0 args))
                    (sexpexp_alt (EL 1 args)) else
               if nm = "App" /\ LENGTH args = 2 then
-                 OPTION_MAP2 App (sexpop (EL 0 args))
+                 OPTION_MAP2 ast_App (sexpop (EL 0 args))
                    (sexpexp_list (EL 1 args)) else
               if nm = "Log" /\ LENGTH args = 3 then
-                 OPTION_MAP Log (sexplog (EL 0 args)) <*>
+                 OPTION_MAP ast_Log (sexplog (EL 0 args)) <*>
                    sexpexp_alt (EL 1 args) <*>
                  sexpexp_alt (EL 2 args) else
               if nm = "If" /\ LENGTH args = 3 then
-                 OPTION_MAP If (sexpexp_alt (EL 0 args)) <*>
+                 OPTION_MAP ast_If (sexpexp_alt (EL 0 args)) <*>
                    sexpexp_alt (EL 1 args) <*>
                  sexpexp_alt (EL 2 args) else
               if nm = "Mat" /\ LENGTH args = 2 then
-                 OPTION_MAP2 Mat (sexpexp_alt (EL 0 args))
+                 OPTION_MAP2 ast_Mat (sexpexp_alt (EL 0 args))
                    (sexppes (EL 1 args)) else
               if nm = "Let" /\ LENGTH args = 3 then
-                 OPTION_MAP Let (sexpopt odestSEXSTR (EL 0 args))
-                   <*>
+                 OPTION_MAP ast_Let (sexpopt odestSEXSTR (EL 0
+                   args)) <*>
                  sexpexp_alt (EL 1 args) <*> sexpexp_alt (EL 2 args)
                    else
               if nm = "Letrec" /\ LENGTH args = 2 then
-                 OPTION_MAP2 Letrec
+                 OPTION_MAP2 ast_Letrec
                    (sexpfuns (EL 0 args))
                    (sexpexp_alt (EL 1 args)) else
               if nm = "Tannot" /\ LENGTH args = 2 then
-                 OPTION_MAP2 Tannot (sexpexp_alt (EL 0 args))
+                 OPTION_MAP2 ast_Tannot (sexpexp_alt (EL 0 args))
                    (sexptype_alt (EL 1 args)) else
               if nm = "Lannot" /\ LENGTH args = 2 then
-                OPTION_MAP2 Lannot (sexpexp_alt (EL 0 args))
+                OPTION_MAP2 ast_Lannot (sexpexp_alt (EL 0 args))
                   (sexplocn (EL 1 args)) else NONE))`;
    `sexpexp_list s =
           (match s with SX_SYM nm -> (if nm = "nil" then SOME []
@@ -748,133 +752,139 @@ let typesexp_def = cake_define_list
   typesexp ts); idsexp tc]`];;
 
 let litsexp_def = cake_define_list
-  [`litsexp (IntLit i) =
+  [`litsexp (ast_IntLit i) =
        (if i < 0 then listsexp [SX_SYM "-"; SX_NUM (num_of_int
          (--i))] else SX_NUM (num_of_int i))`;
-   `litsexp (Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
-   `litsexp (StrLit s) = SEXSTR (explode s)`;
-   `litsexp (Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
-   `litsexp (Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n w)]`;
-   `litsexp (Float64 w) = listsexp [SX_SYM "float64"; SX_NUM (w2n w)]`];;
+   `litsexp (ast_Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
+   `litsexp (ast_StrLit s) = SEXSTR (explode s)`;
+   `litsexp (ast_Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
+   `litsexp (ast_Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n
+  w)]`;
+   `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM (w2n
+  w)]`];;
 
 let patsexp_def = cake_define_list
-  [`patsexp Pany = listsexp [SX_SYM "Pany"]`;
-   `patsexp (Pvar s) = SEXSTR (explode s)`;
-   `patsexp (Plit l) = listsexp [SX_SYM "Plit"; litsexp l]`;
-   `patsexp (Pcon cn ps) = listsexp [SX_SYM "Pcon"; optsexp
+  [`patsexp ast_Pany = listsexp [SX_SYM "Pany"]`;
+   `patsexp (ast_Pvar s) = SEXSTR (explode s)`;
+   `patsexp (ast_Plit l) = listsexp [SX_SYM "Plit"; litsexp l]`;
+   `patsexp (ast_Pcon cn ps) = listsexp [SX_SYM "Pcon"; optsexp
   (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
-   `patsexp (Pas p i) = listsexp [SX_SYM "Pas"; patsexp p; SEXSTR
+   `patsexp (ast_Pas p i) = listsexp [SX_SYM "Pas"; patsexp p; SEXSTR
   (explode i)]`;
-   `patsexp (Pref p) = listsexp [SX_SYM "Pref"; patsexp p]`;
-   `patsexp (Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp p;
-  typesexp t]`];;
+   `patsexp (ast_Pref p) = listsexp [SX_SYM "Pref"; patsexp p]`;
+   `patsexp (ast_Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp
+  p; typesexp t]`];;
 
 let testsexp_def = cake_define
   `testsexp x1 =
       match x1 with
         Equal -> SX_SYM "Equal"
-      | (Compare Lt) -> SX_SYM "Less"
-      | (Compare Leq) -> SX_SYM "LessEq"
-      | (Compare Gt) -> SX_SYM "Greater"
-      | (Compare Geq) -> SX_SYM "GreaterEq"
-      | (AltCompare Lt) -> SX_SYM "AltLess"
-      | (AltCompare Leq) -> SX_SYM "AltLessEq"
-      | (AltCompare Gt) -> SX_SYM "AltGreater"
-      | (AltCompare Geq) -> SX_SYM "AltGreaterEq"`;;
+      | (ast_Compare ast_Lt) -> SX_SYM "Less"
+      | (ast_Compare ast_Leq) -> SX_SYM "LessEq"
+      | (ast_Compare ast_Gt) -> SX_SYM "Greater"
+      | (ast_Compare ast_Geq) -> SX_SYM "GreaterEq"
+      | (ast_AltCompare ast_Lt) -> SX_SYM "AltLess"
+      | (ast_AltCompare ast_Leq) -> SX_SYM "AltLessEq"
+      | (ast_AltCompare ast_Gt) -> SX_SYM "AltGreater"
+      | (ast_AltCompare ast_Geq) -> SX_SYM "AltGreaterEq"`;;
 
 let arithsexp_def = cake_define_list
-  [`arithsexp Add = SX_SYM "Add"`;
-   `arithsexp Sub = SX_SYM "Sub"`;
-   `arithsexp Mul = SX_SYM "Mul"`;
-   `arithsexp Div = SX_SYM "Div"`;
-   `arithsexp Mod = SX_SYM "Mod"`;
-   `arithsexp And = SX_SYM "And"`;
-   `arithsexp Xor = SX_SYM "Xor"`;
-   `arithsexp Or = SX_SYM "Or"`;
-   `arithsexp Not = SX_SYM "Not"`;
-   `arithsexp Neg = SX_SYM "Neg"`;
-   `arithsexp Abs = SX_SYM "Abs"`;
-   `arithsexp Sqrt = SX_SYM "Sqrt"`;
-   `arithsexp FMA = SX_SYM "FMA"`];;
+  [`arithsexp ast_Add = SX_SYM "Add"`;
+   `arithsexp ast_Sub = SX_SYM "Sub"`;
+   `arithsexp ast_Mul = SX_SYM "Mul"`;
+   `arithsexp ast_Div = SX_SYM "Div"`;
+   `arithsexp ast_Mod = SX_SYM "Mod"`;
+   `arithsexp ast_And = SX_SYM "And"`;
+   `arithsexp ast_Xor = SX_SYM "Xor"`;
+   `arithsexp ast_Or = SX_SYM "Or"`;
+   `arithsexp ast_Not = SX_SYM "Not"`;
+   `arithsexp ast_Neg = SX_SYM "Neg"`;
+   `arithsexp ast_Abs = SX_SYM "Abs"`;
+   `arithsexp ast_Sqrt = SX_SYM "Sqrt"`;
+   `arithsexp ast_FMA = SX_SYM "FMA"`];;
 
 let prim_typesexp_def = cake_define
   `prim_typesexp x1 =
       match x1 with
-        BoolT -> SX_SYM "BoolT"
-      | IntT -> SX_SYM "IntT"
-      | CharT -> SX_SYM "CharT"
-      | StrT -> SX_SYM "StrT"
-      | (WordT W8) -> SX_SYM "Word8T"
-      | (WordT W64) -> SX_SYM "Word64T"
-      | Float64T -> SX_SYM "Float64T"`;;
+        ast_BoolT -> SX_SYM "BoolT"
+      | ast_IntT -> SX_SYM "IntT"
+      | ast_CharT -> SX_SYM "CharT"
+      | ast_StrT -> SX_SYM "StrT"
+      | (ast_WordT ast_W8) -> SX_SYM "Word8T"
+      | (ast_WordT ast_W64) -> SX_SYM "Word64T"
+      | ast_Float64T -> SX_SYM "Float64T"`;;
 
 let opsexp_def = cake_define
   `opsexp x1 =
         match x1 with
-          Shift W8 Lsl n -> SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM n)
-        | (Shift W8 Lsr n) -> SX_CONS (SX_SYM "Shift8Lsr") (SX_NUM n)
-        | (Shift W8 Asr n) -> SX_CONS (SX_SYM "Shift8Asr") (SX_NUM n)
-        | (Shift W8 Ror n) -> SX_CONS (SX_SYM "Shift8Ror") (SX_NUM n)
-        | (Shift W64 Lsl n) -> SX_CONS (SX_SYM "Shift64Lsl") (SX_NUM
-          n)
-        | (Shift W64 Lsr n) -> SX_CONS (SX_SYM "Shift64Lsr") (SX_NUM
-          n)
-        | (Shift W64 Asr n) -> SX_CONS (SX_SYM "Shift64Asr") (SX_NUM
-          n)
-        | (Shift W64 Ror n) -> SX_CONS (SX_SYM "Shift64Ror") (SX_NUM
-          n)
-        | Equality -> SX_SYM "Equality"
-        | Opapp -> SX_SYM "Opapp"
-        | Opassign -> SX_SYM "Opassign"
-        | Opref -> SX_SYM "Opref"
-        | Opderef -> SX_SYM "Opderef"
-        | Aw8alloc -> SX_SYM "Aw8alloc"
-        | Aw8sub -> SX_SYM "Aw8sub"
-        | Aw8length -> SX_SYM "Aw8length"
-        | Aw8update -> SX_SYM "Aw8update"
-        | Aw8sub_unsafe -> SX_SYM "Aw8subunsafe"
-        | Aw8update_unsafe -> SX_SYM "Aw8updateunsafe"
-        | CopyStrStr -> SX_SYM "CopyStrStr"
-        | CopyStrAw8 -> SX_SYM "CopyStrAw8"
-        | CopyAw8Str -> SX_SYM "CopyAw8Str"
-        | CopyAw8Aw8 -> SX_SYM "CopyAw8Aw8"
-        | XorAw8Str_unsafe -> SX_SYM "XorAw8Strunsafe"
-        | Implode -> SX_SYM "Implode"
-        | Explode -> SX_SYM "Explode"
-        | Strsub -> SX_SYM "Strsub"
-        | Strlen -> SX_SYM "Strlen"
-        | Strcat -> SX_SYM "Strcat"
-        | VfromList -> SX_SYM "VfromList"
-        | Vsub -> SX_SYM "Vsub"
-        | Vsub_unsafe -> SX_SYM "Vsubunsafe"
-        | Vlength -> SX_SYM "Vlength"
-        | ListAppend -> SX_SYM "ListAppend"
-        | Aalloc -> SX_SYM "Aalloc"
-        | AallocEmpty -> SX_SYM "AallocEmpty"
-        | AallocFixed -> SX_SYM "AallocFixed"
-        | Asub -> SX_SYM "Asub"
-        | Alength -> SX_SYM "Alength"
-        | Aupdate -> SX_SYM "Aupdate"
-        | Asub_unsafe -> SX_SYM "Asubunsafe"
-        | Aupdate_unsafe -> SX_SYM "Aupdateunsafe"
-        | ConfigGC -> SX_SYM "ConfigGC"
-        | Eval -> SX_SYM "Eval"
-        | Env_id -> SX_SYM "Envid"
-        | (FFI s) -> SX_CONS (SX_SYM "FFI") (SEXSTR (explode s))
-        | (ThunkOp ForceThunk) -> SX_SYM "ForceThunk"
-        | (ThunkOp (AllocThunk m)) ->
+          ast_Shift ast_W8 Lsl n -> SX_CONS (SX_SYM "Shift8Lsl")
+            (SX_NUM n)
+        | (ast_Shift ast_W8 Lsr n) -> SX_CONS (SX_SYM "Shift8Lsr")
+          (SX_NUM n)
+        | (ast_Shift ast_W8 Asr n) -> SX_CONS (SX_SYM "Shift8Asr")
+          (SX_NUM n)
+        | (ast_Shift ast_W8 Ror n) -> SX_CONS (SX_SYM "Shift8Ror")
+          (SX_NUM n)
+        | (ast_Shift ast_W64 Lsl n) -> SX_CONS (SX_SYM "Shift64Lsl")
+          (SX_NUM n)
+        | (ast_Shift ast_W64 Lsr n) -> SX_CONS (SX_SYM "Shift64Lsr")
+          (SX_NUM n)
+        | (ast_Shift ast_W64 Asr n) -> SX_CONS (SX_SYM "Shift64Asr")
+          (SX_NUM n)
+        | (ast_Shift ast_W64 Ror n) -> SX_CONS (SX_SYM "Shift64Ror")
+          (SX_NUM n)
+        | ast_Equality -> SX_SYM "Equality"
+        | ast_Opapp -> SX_SYM "Opapp"
+        | ast_Opassign -> SX_SYM "Opassign"
+        | ast_Opref -> SX_SYM "Opref"
+        | ast_Opderef -> SX_SYM "Opderef"
+        | ast_Aw8alloc -> SX_SYM "Aw8alloc"
+        | ast_Aw8sub -> SX_SYM "Aw8sub"
+        | ast_Aw8length -> SX_SYM "Aw8length"
+        | ast_Aw8update -> SX_SYM "Aw8update"
+        | ast_Aw8sub_unsafe -> SX_SYM "Aw8subunsafe"
+        | ast_Aw8update_unsafe -> SX_SYM "Aw8updateunsafe"
+        | ast_CopyStrStr -> SX_SYM "CopyStrStr"
+        | ast_CopyStrAw8 -> SX_SYM "CopyStrAw8"
+        | ast_CopyAw8Str -> SX_SYM "CopyAw8Str"
+        | ast_CopyAw8Aw8 -> SX_SYM "CopyAw8Aw8"
+        | ast_XorAw8Str_unsafe -> SX_SYM "XorAw8Strunsafe"
+        | ast_Implode -> SX_SYM "Implode"
+        | ast_Explode -> SX_SYM "Explode"
+        | ast_Strsub -> SX_SYM "Strsub"
+        | ast_Strlen -> SX_SYM "Strlen"
+        | ast_Strcat -> SX_SYM "Strcat"
+        | ast_VfromList -> SX_SYM "VfromList"
+        | ast_Vsub -> SX_SYM "Vsub"
+        | ast_Vsub_unsafe -> SX_SYM "Vsubunsafe"
+        | ast_Vlength -> SX_SYM "Vlength"
+        | ast_ListAppend -> SX_SYM "ListAppend"
+        | ast_Aalloc -> SX_SYM "Aalloc"
+        | ast_AallocEmpty -> SX_SYM "AallocEmpty"
+        | ast_AallocFixed -> SX_SYM "AallocFixed"
+        | ast_Asub -> SX_SYM "Asub"
+        | ast_Alength -> SX_SYM "Alength"
+        | ast_Aupdate -> SX_SYM "Aupdate"
+        | ast_Asub_unsafe -> SX_SYM "Asubunsafe"
+        | ast_Aupdate_unsafe -> SX_SYM "Aupdateunsafe"
+        | ast_ConfigGC -> SX_SYM "ConfigGC"
+        | ast_Eval -> SX_SYM "Eval"
+        | ast_Env_id -> SX_SYM "Envid"
+        | (ast_FFI s) -> SX_CONS (SX_SYM "FFI") (SEXSTR (explode s))
+        | (ast_ThunkOp ForceThunk) -> SX_SYM "ForceThunk"
+        | (ast_ThunkOp (AllocThunk m)) ->
        SX_CONS (SX_SYM "AllocThunk") (SX_SYM (encode_thunk_mode m))
-        | (ThunkOp (UpdateThunk m)) ->
+        | (ast_ThunkOp (UpdateThunk m)) ->
        SX_CONS (SX_SYM "UpdateThunk") (SX_SYM (encode_thunk_mode m))
-        | (Arith a prim_type) ->
+        | (ast_Arith a prim_type) ->
        SX_CONS (SX_SYM "Arith")
        (SX_CONS (arithsexp a)
                (prim_typesexp prim_type))
-        | (FromTo ty1 ty2) ->
+        | (ast_FromTo ty1 ty2) ->
        SX_CONS (SX_SYM "FromTo")
        (SX_CONS (prim_typesexp ty1)
                (prim_typesexp ty2))
-        | (Test test prim_type) ->
+        | (ast_Test test prim_type) ->
        SX_CONS (SX_SYM "Test")
        (SX_CONS (testsexp test)
                (prim_typesexp prim_type))`;;
@@ -892,41 +902,42 @@ let locssexp_def = cake_define
   `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
 
 let expsexp_def = cake_define_list
-  [`expsexp (Raise e) = (SX_SYM "Raise"; expsexp e)`;
-   `expsexp (Handle e pes) =
+  [`expsexp (ast_Raise e) = (SX_SYM "Raise"; expsexp e)`;
+   `expsexp (ast_Handle e pes) =
       (SX_SYM "Handle"; expsexp e;
        listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
          pes))`;
-   `expsexp (Lit l) = listsexp [SX_SYM "Lit"; litsexp l]`;
-   `expsexp (Con cn es) =
+   `expsexp (ast_Lit l) = listsexp [SX_SYM "Lit"; litsexp l]`;
+   `expsexp (ast_Con cn es) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                 listsexp (MAP expsexp es)]`;
-   `expsexp (Var id') = listsexp [SX_SYM "Var"; idsexp id']`;
-   `expsexp (Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode x);
-  expsexp e]`;
-   `expsexp (App op es) =
+   `expsexp (ast_Var id') = listsexp [SX_SYM "Var"; idsexp id']`;
+   `expsexp (ast_Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode
+  x); expsexp e]`;
+   `expsexp (ast_App op es) =
       listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
         es)]`;
-   `expsexp (Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp e1;
-  expsexp e2)`;
-   `expsexp (If e1 e2 e3) = (SX_SYM "If"; expsexp e1; expsexp e2;
+   `expsexp (ast_Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp
+  e1; expsexp e2)`;
+   `expsexp (ast_If e1 e2 e3) = (SX_SYM "If"; expsexp e1; expsexp e2;
   expsexp e3)`;
-   `expsexp (Mat e pes) =
+   `expsexp (ast_Mat e pes) =
       (SX_SYM "Mat"; expsexp e;
        listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
          pes))`;
-   `expsexp (Let so e1 e2) =
+   `expsexp (ast_Let so e1 e2) =
       (SX_SYM "Let"; optsexp (OPTION_MAP (SEXSTR ∘ explode) so);
         expsexp e1; expsexp e2)`;
-   `expsexp (Letrec funs e) =
+   `expsexp (ast_Letrec funs e) =
     (SX_SYM "Letrec";
      listsexp (MAP (λ(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp
                                 z))) funs);
      expsexp e)`;
-   `expsexp (Tannot e t) = (SX_SYM "Tannot"; expsexp e; typesexp t)`;
-   `expsexp (Lannot e loc) = (SX_SYM "Lannot"; expsexp e; locssexp
-  loc)`];;
+   `expsexp (ast_Tannot e t) = (SX_SYM "Tannot"; expsexp e; typesexp
+  t)`;
+   `expsexp (ast_Lannot e loc) = (SX_SYM "Lannot"; expsexp e;
+  locssexp loc)`];;
 
 let type_defsexp_def = cake_define
   `type_defsexp = listsexp o

@@ -22,7 +22,6 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
-needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: tailrec mc_multiword *)
 
@@ -48,14 +47,16 @@ let eval_exp_def = cake_define_list
   [`eval_exp s (wordLang_Const w) = w`;
    `eval_exp s (wordLang_Var v) = FAPPLY (word_bignumProof_state_regs
   s) v`;
-   `eval_exp s (Op Add [x1; x2]) = eval_exp s x1 + eval_exp s x2`;
-   `eval_exp s (Op Sub [x1; x2]) = eval_exp s x1 - eval_exp s x2`;
-   `eval_exp s (Op And [x1; x2]) = word_and (eval_exp s x1) (eval_exp
-  s x2)`;
-   `eval_exp s (Op Or [x1; x2]) = word_or (eval_exp s x1) (eval_exp s
-  x2)`;
-   `eval_exp s (Op Xor [x1; x2]) = word_xor (eval_exp s x1) (eval_exp
-  s x2)`;
+   `eval_exp s (wordLang_Op Add [x1; x2]) = eval_exp s x1 + eval_exp
+  s x2`;
+   `eval_exp s (wordLang_Op Sub [x1; x2]) = eval_exp s x1 - eval_exp
+  s x2`;
+   `eval_exp s (wordLang_Op And [x1; x2]) = word_and (eval_exp s x1)
+  (eval_exp s x2)`;
+   `eval_exp s (wordLang_Op Or [x1; x2]) = word_or (eval_exp s x1)
+  (eval_exp s x2)`;
+   `eval_exp s (wordLang_Op Xor [x1; x2]) = word_xor (eval_exp s x1)
+  (eval_exp s x2)`;
    `eval_exp s (wordLang_Shift Lsl x1 x2) = eval_exp s x1 << (w2n
   (eval_exp s x2))`;
    `eval_exp s (wordLang_Shift Asr x1 x2) = eval_exp s x1 >> (w2n
@@ -70,7 +71,8 @@ let eval_exp_pre_def = cake_define
         match x2 with
           wordLang_Const w -> T
         | (Var v) -> v IN FDOM (word_bignumProof_state_regs s)
-        | (Op _1 [x; y]) -> eval_exp_pre s x /\ eval_exp_pre s y
+        | (wordLang_Op _1 [x; y]) -> eval_exp_pre s x /\ eval_exp_pre
+          s y
         | (Shift sh x1 x2) ->
         eval_exp_pre s x1 /\ eval_exp_pre s x2 /\ (w2n (eval_exp s
           x2) < 32)
@@ -87,7 +89,6 @@ let eval_ri_def = cake_define_list
 
 let dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
-hol4_overload "dec_clock" "word_bignumProof_dec_clock";;
 
 let reg_write_def = cake_define
   `reg_write v NONE (s:'a word_bignumProof_state) =
@@ -112,39 +113,38 @@ let copy_vars_def = cake_define_list
    `word_bignumProof_copy_vars (n :: ns) s t =
          (match FLOOKUP s n with NONE -> NONE | SOME x ->
            word_bignumProof_copy_vars ns s (reg_write n (SOME x) t))`];;
-hol4_overload "copy_vars" "word_bignumProof_copy_vars";;
 
 let eval = cake_inductive
-  `(!r s. Eval r s Skip (INR (s:'a word_bignumProof_state))) /\
-   (!r s. Eval r s Continue (INL s)) /\
-   (!r vs s. Eval r s (Delete vs) (INR (delete_vars vs (s:'a
-     word_bignumProof_state)))) /\
+  `(!r s. ast_Eval r s Skip (INR (s:'a word_bignumProof_state))) /\
+   (!r s. ast_Eval r s Continue (INL s)) /\
+   (!r vs s. ast_Eval r s (word_bignum_Delete vs) (INR (delete_vars
+     vs (s:'a word_bignumProof_state)))) /\
    (!r s x n.
       eval_exp_pre s x ==>
-      Eval r s (Assign n x) (INR (reg_write n (SOME (eval_exp s x))
-        s))) /\
+      ast_Eval r s (Assign n x) (INR (reg_write n (SOME (eval_exp s
+        x)) s))) /\
    (!r s1 s2 s3 p1 p2.
-      Eval r s1 p1 (INR s2) /\ Eval r s2 p2 s3 ==>
-      Eval r s1 (Seq p1 p2) s3) /\
+      ast_Eval r s1 p1 (INR s2) /\ ast_Eval r s2 p2 s3 ==>
+      ast_Eval r s1 (Seq p1 p2) s3) /\
    (!rec s1 c r ri p1 p2 s2.
       r IN FDOM (word_bignumProof_state_regs s1) /\ eval_ri_pre s1 ri
         /\
-      Eval rec s1 (if word_cmp c (eval_exp s1 (Var r)) (eval_ri s1
-        ri) then p1 else p2) s2 ==>
-      Eval rec s1 (If c r ri p1 p2) s2) /\
+      ast_Eval rec s1 (if word_cmp c (eval_exp s1 (Var r)) (eval_ri
+        s1 ri) then p1 else p2) s2 ==>
+      ast_Eval rec s1 (If c r ri p1 p2) s2) /\
    (!rec s r i a w.
       (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\
       w2n w < LENGTH (word_bignumProof_state_arrays s a) ==>
-      Eval rec s (Load r i a) (INR (reg_write r (SOME (EL (w2n w)
+      ast_Eval rec s (Load r i a) (INR (reg_write r (SOME (EL (w2n w)
         (word_bignumProof_state_arrays s a))) s))) /\
    (!rec s r i w wr.
       (FLOOKUP (word_bignumProof_state_regs s) i = SOME w) /\
         (FLOOKUP (word_bignumProof_state_regs s) r = SOME wr) /\
       w2n w < LENGTH (word_bignumProof_state_arrays s Out) ==>
-      Eval rec s (Store r i) (INR (array_write Out (LUPDATE wr (w2n
-        w) (word_bignumProof_state_arrays s Out)) s))) /\
+      ast_Eval rec s (Store r i) (INR (array_write Out (LUPDATE wr
+        (w2n w) (word_bignumProof_state_arrays s Out)) s))) /\
    (!r s.
-      Eval r s Swap (INR (array_write In1
+      ast_Eval r s word_bignum_Swap (INR (array_write In1
         (word_bignumProof_state_arrays s In2)
                        (array_write In2
                          (word_bignumProof_state_arrays s In1) s)))) /\
@@ -155,7 +155,7 @@ let eval = cake_inductive
         = n2) /\
       (single_add_word (FAPPLY (word_bignumProof_state_regs s) n3)
         (eval_ri s n4) (eval_ri s n5) = (r1,r2)) ==>
-      Eval r s (Add n1 n2 n3 n4 n5)
+      ast_Eval r s (Add n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4 n5 r1 r2.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ eval_ri_pre s n4
@@ -164,12 +164,12 @@ let eval = cake_inductive
         = n2) /\
       (single_sub_word (FAPPLY (word_bignumProof_state_regs s) n3)
         (eval_ri s n4) (eval_ri s n5) = (r1,r2)) ==>
-      Eval r s (Sub n1 n2 n3 n4 n5)
+      ast_Eval r s (Sub n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME r1) (reg_write n2 (SOME r2) s)))) /\
    (!r s n1 n2 n3 n4.
       n3 IN FDOM (word_bignumProof_state_regs s) /\ n4 IN FDOM
         (word_bignumProof_state_regs s) /\ ~(n1 = n2) ==>
-      Eval r s (Mul n1 n2 n3 n4)
+      ast_Eval r s (Mul n1 n2 n3 n4)
        (INR (reg_write n1 (SOME (FST (single_mul (FAPPLY
          (word_bignumProof_state_regs s) n3) (FAPPLY
          (word_bignumProof_state_regs s) n4) (n2w 0))))
@@ -183,7 +183,7 @@ let eval = cake_inductive
       single_div_pre (FAPPLY (word_bignumProof_state_regs s) n3)
         (FAPPLY (word_bignumProof_state_regs s) n4) (FAPPLY
         (word_bignumProof_state_regs s) n5) ==>
-      Eval r s (Div n1 n2 n3 n4 n5)
+      ast_Eval r s (Div n1 n2 n3 n4 n5)
        (INR (reg_write n1 (SOME (FST (single_div (FAPPLY
          (word_bignumProof_state_regs s) n3) (FAPPLY
          (word_bignumProof_state_regs s) n4) (FAPPLY
@@ -193,24 +193,26 @@ let eval = cake_inductive
               (word_bignumProof_state_regs s) n4) (FAPPLY
               (word_bignumProof_state_regs s) n5)))) s)))) /\
    (!r s1 p vs s2 rec.
-      Eval (if rec then SOME p else NONE) (delete_vars vs (dec_clock
-        s1))
-        (LoopBody p) (INR s2) /\ ~(?_clock s1 = 0) ==>
-      Eval r s1 (Loop rec vs p) (INR s2)) /\
+      ast_Eval (if rec then SOME p else NONE) (delete_vars vs
+        (word_bignumProof_dec_clock s1))
+        (word_bignum_LoopBody p) (INR s2) /\ ~(?_clock s1 = 0) ==>
+      ast_Eval r s1 (Loop rec vs p) (INR s2)) /\
    (!s1 save_regs vs p s2 s3.
-      Eval (SOME p) (delete_vars vs (dec_clock s1)) (LoopBody p) (INR
-        s2) /\
-      copy_vars save_regs (word_bignumProof_state_regs s1) s2 = SOME
-        s3 /\ ~(?_clock
+      ast_Eval (SOME p) (delete_vars vs (word_bignumProof_dec_clock
+        s1)) (word_bignum_LoopBody p) (INR s2) /\
+      word_bignumProof_copy_vars save_regs
+        (word_bignumProof_state_regs s1) s2 = SOME s3 /\ ~(?_clock
       s1 = 0) ==>
-      Eval (SOME p) s1 (Rec save_regs vs) (INR s3)) /\
+      ast_Eval (SOME p) s1 (word_bignum_Rec save_regs vs) (INR s3))
+        /\
    (!r s1 p s2.
-      Eval r s1 p (INR s2) ==>
-      Eval r s1 (LoopBody p) (INR s2)) /\
+      ast_Eval r s1 p (INR s2) ==>
+      ast_Eval r s1 (word_bignum_LoopBody p) (INR s2)) /\
    (!r s1 s2 s3 p.
-      Eval r s1 p (INL s2) /\ ~(?_clock s2 = 0) /\
-      Eval r (dec_clock s2) (LoopBody p) (INR s3) ==>
-      Eval r s1 (LoopBody p) (INR s3))`;;
+      ast_Eval r s1 p (INL s2) /\ ~(?_clock s2 = 0) /\
+      ast_Eval r (word_bignumProof_dec_clock s2)
+        (word_bignum_LoopBody p) (INR s3) ==>
+      ast_Eval r s1 (word_bignum_LoopBody p) (INR s3))`;;
 
 (* HOL4 ML code, not ported:
 val raw_eval_cases = eval_cases;
@@ -243,17 +245,17 @@ val eval_cases =
 let array_rel_def = cake_define
   `array_rel arr v1 v2 v3 m dm frame =
      (?a1 a2 a3 rest1 rest2.
-       v1 = SOME (Word a1) /\
-       v2 = SOME (Word a2) /\
-       v3 = SOME (Word a3) /\
-       (word_list a1 (MAP Word (arr In1)) *
-        word_list a3 (MAP Word (arr Out)) * rest1) (fun2set (m,dm))
-          /\
-       (word_list a2 (MAP Word (arr In2)) *
-        word_list a3 (MAP Word (arr Out)) * rest2) (fun2set (m,dm))
-          /\
-       (word_list a3 (MAP Word (arr Out)) * frame) (fun2set
-         (m,dm)))`;;
+       v1 = SOME (wordLang_Word a1) /\
+       v2 = SOME (wordLang_Word a2) /\
+       v3 = SOME (wordLang_Word a3) /\
+       (misc_word_list a1 (MAP wordLang_Word (arr In1)) *
+        misc_word_list a3 (MAP wordLang_Word (arr Out)) * rest1)
+          (fun2set (m,dm)) /\
+       (misc_word_list a2 (MAP wordLang_Word (arr In2)) *
+        misc_word_list a3 (MAP wordLang_Word (arr Out)) * rest2)
+          (fun2set (m,dm)) /\
+       (misc_word_list a3 (MAP wordLang_Word (arr Out)) * frame)
+         (fun2set (m,dm)))`;;
 
 let code_subset_def = cake_define
   `code_subset (n1,cs1) (n2,cs2) <=>
@@ -264,10 +266,9 @@ let code_rel_def = cake_define
      (!prog n p2.
         ALOOKUP (SND cs) prog = SOME (n,p2) ==>
         (?cs1 l2 i2 cs2.
-          compile n 2 1 cs1 prog = (p2,l2,i2,cs2) /\
-          lookup n code = SOME (1,Seq p2 (Return 0 [0])) /\
+          word_bignum_compile n 2 1 cs1 prog = (p2,l2,i2,cs2) /\
+          sptree_lookup n code = SOME (1,Seq p2 (Return 0 [0])) /\
           code_subset cs2 cs))`;;
-hol4_overload "code_rel" "word_bignumProof_code_rel";;
 
 let div_code_assum_def = cake_define
   `div_code_assum (:'ffi) (:'c) code =
@@ -278,17 +279,18 @@ let div_code_assum_def = cake_define
        t1 = code /\ ~(wordSem_state_termdep t1 = 0) /\
        get_var 0 t1 = SOME ret_val /\ single_div_pre w3 w4 w5 ==>
        (?max'.
-         evaluate
+         wordSem_evaluate
            (DivCode n l i0 i1 i2 i3 i4,wordSem_state_locals_fupd (K
-                 (insert i2 (Word w3) (insert i3 (Word w4) (insert i4
-                   (Word w5) (wordSem_state_locals
+                 (sptree_insert i2 (wordLang_Word w3) (sptree_insert
+                   i3 (wordLang_Word w4) (sptree_insert i4
+                   (wordLang_Word w5) (wordSem_state_locals
                    t1)))))
             t1) =
          (NONE,
            (let (w1,w2) = single_div w3 w4 w5 in
-             (set_var 0 ret_val o set_var i1 (Word w2) o
-              set_var i0 (Word w1) o set_store (Temp (n2w 28)) (Word
-                w2)) (
+             (set_var 0 ret_val o set_var i1 (wordLang_Word w2) o
+              set_var i0 (wordLang_Word w1) o set_store (Temp (n2w
+                28)) (wordLang_Word w2)) (
              wordSem_state_stack_max_fupd (K max')
                (wordSem_state_locals_fupd (K LN)
                (wordSem_state_permute_fupd (K (\n.
@@ -310,9 +312,9 @@ let state_rel_def = cake_define
      (!a v.
         FLOOKUP (word_bignumProof_state_regs s) a = SOME v ==>
         a < 25 /\
-        FLOOKUP (wordSem_state_store t) (Temp (n2w a)) = SOME (Word
-          v)) /\
-     code_rel cs (wordSem_state_code t) /\
+        FLOOKUP (wordSem_state_store t) (Temp (n2w a)) = SOME
+          (wordLang_Word v)) /\
+     word_bignumProof_code_rel cs (wordSem_state_code t) /\
      div_code_assum (:'ffi) (:'c) (wordSem_state_code t) /\
        ~(wordSem_state_termdep
      t = 0) /\ wordSem_state_gc_fun
@@ -332,14 +334,13 @@ let state_rel_def = cake_define
        (wordSem_state_store t0) TempOut /\
      (!n. (!r. ~(n = Temp r)) ==> FLOOKUP (wordSem_state_store t)
        n = FLOOKUP (wordSem_state_store t0) n)`;;
-hol4_overload "state_rel" "word_bignumProof_state_rel";;
 
 let exp_ok_def = cake_define
   `exp_ok x1 =
         match x1 with
           wordLang_Const _3 -> T
         | (Var i) -> i < (25)
-        | (Op _4 [x; y]) -> exp_ok x /\ exp_ok y
+        | (wordLang_Op _4 [x; y]) -> exp_ok x /\ exp_ok y
         | (Shift sh e n) -> exp_ok e
         | _5 -> F`;;
 
@@ -347,7 +348,7 @@ let syntax_ok_aux_def = cake_define
   `syntax_ok_aux x1 =
       match x1 with
         word_bignum_Loop r vs body -> syntax_ok_aux body
-      | (LoopBody body) -> F
+      | (word_bignum_LoopBody body) -> F
       | (Seq p1 p2) -> syntax_ok_aux p1 /\ syntax_ok_aux p2
       | (Assign t1 e) -> t1 < (25) /\ exp_ok e
       | (Load t1 t2 _6) -> t1 < (25) /\ t2 < (25)
@@ -369,21 +370,22 @@ let syntax_ok_aux_def = cake_define
       | (Div n1 n2 n3 n4 n5) ->
       n1 < (25) /\ n2 < (25) /\
       n3 < (25) /\ n4 < (25) /\ n5 < (25)
-      | (Rec save_regs _7) ->
+      | (word_bignum_Rec save_regs _7) ->
       EVERY (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs
       | _8 -> T`;;
 
 let syntax_ok_def = cake_define
   `syntax_ok p =
       match p with
-        LoopBody body -> syntax_ok_aux body
+        word_bignum_LoopBody body -> syntax_ok_aux body
       | p -> syntax_ok_aux p`;;
 (*Is this worth the hassle*)
 let list_update_def = cake_define_list
   [`list_update [] ys t = t`;
-   `list_update (x :: xs) (y :: ys) t = insert x y (list_update xs ys
-  t)`;
-   `list_update (x :: xs) [] t = insert x ARB (list_update xs [] t)`];;
+   `list_update (x :: xs) (y :: ys) t = sptree_insert x y
+  (list_update xs ys t)`;
+   `list_update (x :: xs) [] t = sptree_insert x ARB (list_update xs
+  [] t)`];;
 
 let list_store_def = cake_define_list
   [`list_store [] ys s = s`;
@@ -404,9 +406,8 @@ let good_code_def = cake_define
      (!prog n p2.
        MEM (prog,n,p2) (SND cs3) ==>
        (?cs1 l2' i2 cs2.
-         compile n 2 1 cs1 prog = (p2,l2',i2,cs2) /\ code_subset
-           cs2 cs3))`;;
-hol4_overload "good_code" "word_bignumProof_good_code";;
+         word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2) /\
+           code_subset cs2 cs3))`;;
 
 
 (* correctenss judgement *)
@@ -417,17 +418,17 @@ val all_corrs = ref (tl [TRUTH]);
 
 let corr_def = cake_define
   `Corr prog (s:'a word_bignumProof_state) s1 p <=>
-     (p ==> Eval NONE s prog s1)`;;
+     (p ==> ast_Eval NONE s prog s1)`;;
 
 let loop_app_def = cake_define
   `loop_app f g x =
-     (match f x with INL s -> (INL (dec_clock s),(g x /\ ~(?_clock
-       s = 0))) | INR s -> (INR s,g x))`;;
+     (match f x with INL s -> (INL (word_bignumProof_dec_clock
+       s),(g x /\ ~(?_clock s = 0))) | INR s -> (INR s,g x))`;;
 
 let tick_before_def = cake_define
   `tick_before vs f s =
      (if ?_clock s = 0 then (s,F) else f (delete_vars vs
-       (dec_clock s)))`;;
+       (word_bignumProof_dec_clock s)))`;;
 
 (* HOL4 ML code, not ported:
 val Corr_Loop = MATCH_MP Corr_Loop_lemma (Corr_LoopBody |> UNDISCH) |>
