@@ -435,14 +435,27 @@ class Porter:
     else:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
+
+    def size_prelude(text):
+      """a measure that uses the size function of a datatype needs
+         it to be there; the port makes the size functions when a
+         definition first needs one, which is too late for the
+         measure itself"""
+      out = ''
+      for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+)_size\b",
+                                      text))):
+        out += 'let _ = size_thms "%s";;\n' % ty
+      return out
+
+    sizes = size_prelude(rel) if rel else ''
     if term is None and rel is not None:
-      text = ('(* the termination relation is not in the HOL4 '
+      text = (sizes + '(* the termination relation is not in the HOL4 '
               'source *)\nlet %s = cake_define_list_wf\n  `%s`\n'
               '  %s;;' % (name, rel, clauses))
     elif term is None:
       text = ('let %s = cake_define_list\n  %s;;' % (name, clauses))
     elif rel is not None:
-      text = ('(* the termination relation is not in the HOL4 '
+      text = (sizes + '(* the termination relation is not in the HOL4 '
               'source *)\nlet %s = cake_define_wf\n  `%s`\n'
               '  `%s`;;' % (name, rel, term))
     elif b.extra is None:
@@ -454,11 +467,13 @@ class Porter:
         text = (shorten('(* TERMINATION: %s *)' % b.extra.strip()) +
                 '\nlet %s = cake_define\n  `%s`;;' % (name, term))
       else:
-        text = (shorten('\n'.join(
+        wftext = fmt(self.term(wf), last=1)
+        text = (size_prelude(wftext) +
+                shorten('\n'.join(
                   fill('(* HOL4 termination:', rest.split(), 69))
                 + ' *)') +
                 '\nlet %s = cake_define_wf\n  `%s`\n  `%s`;;'
-                % (name, fmt(self.term(wf), last=1), term))
+                % (name, wftext, term))
     # the definition is followed by the overloads of HOL4, where the
     # name it gives a constant is one that other theories use too
     overloads = self.overloads_of(sorted(self.ctx.defining))

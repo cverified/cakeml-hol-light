@@ -305,6 +305,7 @@ let spts_to_alist_aux_def = cake_define
            acc_left)
          T))`;;
 
+let _ = size_thms "spt";;
 (* HOL4 termination: \\ rw [] \\ first_x_assum (assume_tac o GSYM) \\
    drule_then mp_tac spts_to_alist_aux_size \\ simp
    [combinTheory.o_DEF] *)

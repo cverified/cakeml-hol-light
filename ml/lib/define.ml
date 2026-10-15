@@ -392,34 +392,44 @@ let define_single wfs tm =
   let cls = map (close_clause fs) (conjuncts(snd(strip_forall tm))) in
   let existence cls =
     let etm = mk_exists(f,list_mk_conj cls) in
-    if wfs = [] then prove_general_recursive_function_exists etm else
+    if wfs = [] then
+      (* HOL Light leaves the conditions it cannot prove as
+         assumptions, and then this form is not the one to use *)
+      let th = prove_general_recursive_function_exists etm in
+      if hyp th = [] then th else failwith "existence"
+    else
     let th = pure_prove_recursive_function_exists etm in
     if hyp th = [] then th
     else tryfind (fun rt -> discharge_conditions rt th) wfs in
-  let plain () =
-    let dth = new_specification [name] (existence cls) in
-    CONJUNCTS dth,dth in
-  (* where a recursive call is under a lambda with a pattern, or
-     under ALL or EX, HOL Light's machinery gives a condition that
-     is not provable (it asks for every element of the type, not
-     for every element of the list), so the clauses are rewritten
-     with MAP, which it does know, and the clauses as they were
-     given are derived from the result *)
-  let cls' = map (fun cl -> mapify [f] (depair cl)) cls in
-  if cls' = cls then plain () else
-  let mapped () =
-    let dth = new_specification [name] (existence cls') in
-    let c = mk_mconst(name,type_of f) in
-    let dths = CONJUNCTS dth in
-    let derive cl =
-      prove(vsubst [c,f] cl,
-            REPEAT GEN_TAC THEN
-            CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV) THEN
-            REWRITE_TAC[IN_SET_OF_LIST; ALL_MEM; ALL_MAPIFY;
-                        EX_MAPIFY; ETA_AX] THEN
-            FIRST (map MATCH_ACCEPT_TAC dths)) in
-    map derive cls,dth in
-  try mapped () with Failure _ -> plain ();;
+  (* HOL Light's machinery cannot always take the clauses as they
+     are: a lambda with a pattern has to be taken apart with FST and
+     SND, and where a recursive call is under an ALL or an EX it
+     asks for a condition on every element of the type instead of
+     on every element of the list, which cannot be proved; the
+     clauses rewritten with MAP give the condition it can use.  The
+     existence theorem is proved with the first form that works
+     (proving it defines nothing yet), and the clauses as they were
+     given are derived from the definition that it makes. *)
+  let clsd = map depair cls in
+  let clsm = map (mapify [f]) clsd in
+  let forms = cls :: (if clsd = cls then [] else [clsd]) @
+                     (if clsm = clsd then [] else [clsm]) in
+  let dth = new_specification [name] (tryfind existence forms) in
+  let dths = CONJUNCTS dth in
+  let c = mk_mconst(name,type_of f) in
+  let norm = [IN_SET_OF_LIST; ALL_MEM; ALL_MAPIFY; EX_MAPIFY;
+              ETA_AX; FST; SND] in
+  let derive cl =
+    prove(vsubst [c,f] cl,
+          REPEAT GEN_TAC THEN
+          (FIRST (map MATCH_ACCEPT_TAC dths) ORELSE
+           (CONV_TAC(ONCE_DEPTH_CONV DEPAIR_CONV) THEN
+            REWRITE_TAC norm THEN
+            FIRST (map MATCH_ACCEPT_TAC dths)) ORELSE
+           (REWRITE_TAC dths THEN
+            CONV_TAC(DEPTH_CONV GEN_BETA_CONV) THEN
+            REWRITE_TAC norm))) in
+  map derive cls,dth;;
 
 (* ------------------------------------------------------------------ *)
 (* Definition of a family of mutually recursive functions.            *)
@@ -1222,6 +1232,8 @@ let candidate_measures tm =
         (setify cands);;
 
 let size_thms tyname =
+  if not (can (assoc tyname) (!the_size_thms))
+  then (ignore(define_size tyname) : unit);
   let a,b = assoc tyname (!the_size_thms) in a @ b;;
 
 (* The definition functions that the port uses.                       *)
@@ -1253,12 +1265,17 @@ let cake_define_gen wf tm =
               ths @ l,th')
            fs ([],TRUTH))
     else
-      (try define_prim_rec tm with Failure _ ->
-       try define_nested tm with Failure _ ->
+      (* an attempt that fails after it has made the constant
+         cannot be followed by another one *)
+      (let declared () =
+         exists (fun g -> can get_const_type (fst(dest_var g))) fs in
+       try define_prim_rec tm with Failure _ when not (declared ()) ->
+       try define_nested tm with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in
-       try attempt cands with Failure _ -> attempt []) in
+       try attempt cands
+       with Failure _ when not (declared ()) -> attempt []) in
   end_itlist CONJ ths;;
 
 (* with cake_timing set, every definition reports how long it took *)
