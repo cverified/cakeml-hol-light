@@ -1818,6 +1818,16 @@ let the_cheats = ref ([]:string list);;
 
 let cake_cheats () = rev (!the_cheats);;
 
+(* a constant whose value HOL4 computes with ML code that the port
+   cannot run: the constant is declared and nothing is known about
+   it (which adds no axiom), and it is recorded as a cheat *)
+
+let cake_declare name ty =
+  new_constant(name,ty);
+  the_cheats := name :: !the_cheats;
+  print_string ("\ncake_declare " ^ name ^ " (no value)\n");
+  flush stdout;;
+
 let cake_cheat tm =
   let fs = definition_heads tm in
   do_list (fun f ->

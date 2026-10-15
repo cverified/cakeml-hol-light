@@ -346,6 +346,19 @@ TYPE_TEXT = {
 # definitions that HOL4 generates with ML code, so that there is no
 # Definition block to translate; the port has them by hand, and they
 # are put just after the needs of the file
+# EXTRA_BEFORE: text that the port writes before a definition
+EXTRA_BEFORE = {
+  ('word_bignum', 'generated_bignum_stubs_def'): r'''
+(* HOL4 generates the deep embedding of the bignum routines with ML
+   code (to_deep of this file), which runs the shallow definitions
+   through a translator of its own.  The port cannot run it, so it
+   declares the constant that the rest of the file uses and says
+   nothing about its value.  *)
+
+cake_declare "mc_iop_code" `:(A)mini`;;
+''',
+}
+
 EXTRA_HEAD = {
   'machine_ieee': r'''
 (* HOL4 generates the definitions of the fp16, fp32 and fp64

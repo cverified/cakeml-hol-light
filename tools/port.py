@@ -483,6 +483,8 @@ class Porter:
                       % (overrides.NOT_YET[key], shorten(b.text.strip())))
       return
     key = (self.thy, name)
+    if key in overrides.EXTRA_BEFORE:
+      self.out.append(overrides.EXTRA_BEFORE[key].strip() + '\n')
     if key in overrides.REPLACE:
       self.out.append(overrides.REPLACE[key].strip())
       return

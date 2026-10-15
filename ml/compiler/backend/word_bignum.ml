@@ -698,6 +698,14 @@ hol4_overload "compile" "word_bignum_compile";;
 val _ = (max_print_depth := 25);
 *)
 
+(* HOL4 generates the deep embedding of the bignum routines with ML
+   code (to_deep of this file), which runs the shallow definitions
+   through a translator of its own.  The port cannot run it, so it
+   declares the constant that the rest of the file uses and says
+   nothing about its value.  *)
+
+cake_declare "mc_iop_code" `:(A)mini`;;
+
 let generated_bignum_stubs_def = cake_define
   `generated_bignum_stubs n =
      (let (x1,_4,_5,(_6,cs)) = word_bignum_compile n 2 1 (n + 1,[])
