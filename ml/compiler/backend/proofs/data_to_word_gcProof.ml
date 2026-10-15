@@ -8,7 +8,6 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
@@ -35,7 +34,6 @@ needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/location.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
@@ -234,48 +232,47 @@ val s = ``(s:('c,'ffi) dataSem$state)``
 *)
 
 let state_rel_thm = cake_define
-  `(\x y. strcat x y)
-     (word_bignumProof_state_rel c l1 l2) (s
-       (t:('a,'c,'ffi)wordSem_state) v1 locs) <=>
-       (state_ffi t = state_ffi s) /\
-       (state_clock t = state_clock s) /\
-       (state_handler t = state_handler s) /\
-       (wordSem_state_gc_fun t = word_gc_fun c) /\
-       code_rel c (state_code s) (state_code t) /\
-       code_oracle_rel c (compile s) (compile_oracle s)
-         (wordSem_state_store t) (compile
-         t) (compile_oracle t) (state_code_buffer t)
-           (wordSem_state_data_buffer t) /\
-       good_dimindex (:'a) /\
-       shift_length c < dimindex (:'a) /\
-       IS_SOME (dataSem_state_tstamps s) /\
-       EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
-       (v1 = NONE ==> sptree_lookup 0 (state_locals t) = SOME (Loc l1
-         l2)) /\
-       (!n. IS_SOME (sptree_lookup n (state_locals s)) ==>
-            IS_SOME (sptree_lookup (adjust_var n) (state_locals t)))
-              /\
-       EVERY2 data_to_word_gcProof_stack_rel (stack s) (stack t) /\
-       EVERY2 contains_loc (stack t) locs /\
-       option_le (OPTION_MAP2 (+) (stack_size (stack t))
-         (state_locals_size t)) (state_stack_max t) /\
-       option_le (state_stack_max t) (state_stack_max s) /\
-         wordSem_state_stack_size
-       t = dataSem_state_stack_frame_sizes s /\ state_locals_size
-       t = state_locals_size s /\
-       limits_inv (dataSem_state_limits s) (FLOOKUP
-         (wordSem_state_store t) HeapLength) (stack_limit t)
-         (data_to_word_config_len_size c) (has_fp_ops c)
-         (data_to_word_config_has_fp_tern c) /\
-       memory_rel c (be t) (THE (dataSem_state_tstamps s))
-         (state_refs s) (dataSem_state_space s) (wordSem_state_store t)
-         (wordSem_state_memory t) (wordSem_state_mdomain t)
-         ((match v1 with NONE -> [] | SOME vs -> vs) ++
-          join_env (state_locals s) (toAList (inter (state_locals t)
-            (adjust_set (state_locals s)))) ++
-          [(the_global (dataSem_state_global s),FAPPLY
-            (wordSem_state_store t) Globals)] ++
-          flat (stack s) (stack t))`;;
+  `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
+  (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
+     (state_ffi t = state_ffi s) /\
+     (state_clock t = state_clock s) /\
+     (state_handler t = state_handler s) /\
+     (wordSem_state_gc_fun t = word_gc_fun c) /\
+     code_rel c (state_code s) (state_code t) /\
+     code_oracle_rel c (compile s) (compile_oracle s)
+       (wordSem_state_store t) (compile
+       t) (compile_oracle t) (state_code_buffer t)
+         (wordSem_state_data_buffer t) /\
+     good_dimindex (:'a) /\
+     shift_length c < dimindex (:'a) /\
+     IS_SOME (dataSem_state_tstamps s) /\
+     EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
+     (v1 = NONE ==> sptree_lookup 0 (state_locals t) = SOME (Loc l1
+       l2)) /\
+     (!n. IS_SOME (sptree_lookup n (state_locals s)) ==>
+          IS_SOME (sptree_lookup (adjust_var n) (state_locals t))) /\
+     EVERY2 data_to_word_gcProof_stack_rel (stack s) (stack t) /\
+     EVERY2 contains_loc (stack t) locs /\
+     option_le (OPTION_MAP2 (+) (stack_size (stack t))
+       (state_locals_size t)) (state_stack_max t) /\
+     option_le (state_stack_max t) (state_stack_max s) /\
+       wordSem_state_stack_size
+     t = dataSem_state_stack_frame_sizes s /\ state_locals_size
+     t = state_locals_size s /\
+     limits_inv (dataSem_state_limits s) (FLOOKUP
+       (wordSem_state_store t) HeapLength) (stack_limit t)
+       (data_to_word_config_len_size c) (has_fp_ops c)
+       (data_to_word_config_has_fp_tern c) /\
+     memory_rel c (be t) (THE (dataSem_state_tstamps s)) (state_refs
+       s) (dataSem_state_space s) (wordSem_state_store t)
+       (wordSem_state_memory t) (wordSem_state_mdomain t)
+       ((match v1 with NONE -> [] | SOME vs -> vs) ++
+        join_env (state_locals s) (toAList (inter (state_locals t)
+          (adjust_set (state_locals s)))) ++
+        [(the_global (dataSem_state_global s),FAPPLY
+          (wordSem_state_store t) Globals)] ++
+        flat (stack s) (stack t))`;;
+hol4_overload "state_rel" "data_to_word_gcProof_state_rel";;
 
 (* the relation places no constraint on the FP registers *)
 

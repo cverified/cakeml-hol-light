@@ -55,11 +55,12 @@ let get_locals_def = cake_define_list
 
 (*TODO fix conflict with get_store in WordSem*)
 let get_store_def = cake_define
-  `get_store (st:(store_name,'a word_loc)fmap) =
+  `word_elimProof_get_store (st:(store_name,'a word_loc)fmap) =
        (let locSet = SET_TO_LIST (FRANGE st) in
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in
        FOLDL (\acc loc. sptree_insert loc one acc) LN locList)`;;
+hol4_overload "get_store" "word_elimProof_get_store";;
 
 let get_num_wordloc_alist_def = cake_define
   `get_num_wordloc_alist (l:(num#'a word_loc) list) =

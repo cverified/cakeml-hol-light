@@ -13,7 +13,6 @@ needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/bvi_letProof.ml";;
-needs "compiler/backend/proofs/data_liveProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
@@ -22,7 +21,6 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: bag *)
 
 (* HOL4 ML code, not ported:
@@ -132,16 +130,17 @@ let install_conf_rel_def = cake_define
        pat_cfg)) (install_config_compile ic2))`;;
 
 let state_rel_def = cake_define
-  `(\x y. strcat x y) ((\x y. strcat x y)
-     (state_rel cfg) s) t <=> state_clock
-       t = state_clock s /\
-       LIST_REL (sv_rel v_rel) (state_refs s) (state_refs t) /\
-         state_ffi
-       t = state_ffi s /\
-       LIST_REL (OPTREL v_rel) (flatSem_state_globals s)
-         (flatSem_state_globals t) /\
-       install_conf_rel cfg (flatSem_state_eval_config s)
-         (flatSem_state_eval_config t)`;;
+  `flat_patternProof_state_rel cfg (s:('c,'ffi)flatSem_state)
+  (t:('c,'ffi)flatSem_state) <=> state_clock
+     t = state_clock s /\
+     LIST_REL (sv_rel v_rel) (state_refs s) (state_refs t) /\
+       state_ffi
+     t = state_ffi s /\
+     LIST_REL (OPTREL v_rel) (flatSem_state_globals s)
+       (flatSem_state_globals t) /\
+     install_conf_rel cfg (flatSem_state_eval_config s)
+       (flatSem_state_eval_config t)`;;
+hol4_overload "state_rel" "flat_patternProof_state_rel";;
 
 (* HOL4 overload (expanded in the port):
      nv_rel = \N. ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel *)

@@ -245,6 +245,9 @@ class Porter:
             hterm.add_infix(tok, prec, ass)
           if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
           self.enable_monad(b.text)
+          # the ML values that the file antiquotes into its terms
+          for nm, v in hol4.ml_terms(b.text):
+            hterm.ANTIQ[nm] = v
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')

@@ -13,6 +13,7 @@ needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "lib/integer_word.ml";;
+needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
 (* HOL4 termination: \\ fs [listTheory.LENGTH_DROP] *)
@@ -81,7 +82,56 @@ val preamble_tm =
        ""])`` |> EVAL |> rconc;
 *)
 let preamble_def = cake_define
-  `preamble = preamble_tm`;;
+  `preamble = ((MAP (\n. implode (n ++ "\n"))
+       ["/* Preprocessor to get around Mac OS, Windows, and Linux differences in naming and calling conventions */";
+        "";
+        "#if defined(__APPLE__)";
+        "# define cdecl(s) _##s";
+        "#else";
+        "# define cdecl(s) s";
+        "#endif";
+        "";
+        "#if defined(__APPLE__)";
+        "# define wcdecl(s) _##s";
+        "#elif defined(__WIN32)";
+        "# define wcdecl(s) windows_##s";
+        "#else";
+        "# define wcdecl(s) s";
+        "#endif";
+        "";
+        "#if defined(__APPLE__)";
+        "# define wcml(s) s";
+        "#elif defined(__WIN32)";
+        "# define wcml(s) windows_##s";
+        "#else";
+        "# define wcml(s) s";
+        "#endif";
+        "";
+        "#if defined(__APPLE__)";
+        ".macro _makesym name, base, len";
+        ".set \\name, cake_main+\\base";
+        ".endm";
+        "# define makesym(name,base,len) _makesym name, base, len";
+        "#elif defined(__WIN32)";
+        ".macro _makesym name, base, len";
+        ".set \\name, cake_main+\\base";
+        ".endm";
+        "# define makesym(name,base,len) _makesym name, base, len";
+        "#else";
+        ".macro _makesym name, base, len";
+        ".local \\name";
+        ".set \\name, cake_main+\\base";
+        ".size \\name, \\len";
+        ".type \\name, function";
+        ".endm";
+        "# define makesym(name,base,len) _makesym name, base, len";
+        "#endif";
+        "";
+        "#define DATA_BUFFER_SIZE    65536";
+        "#define CODE_BUFFER_SIZE  5242880";
+        "";
+        "     .file        \"cake.S\"";
+        ""]))`;;
 
 let data_section_def = cake_define
   `data_section word_directive ret =

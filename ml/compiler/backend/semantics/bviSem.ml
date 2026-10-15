@@ -7,7 +7,6 @@
   The formal semantics of BVI
 *)
 
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -97,123 +96,116 @@ val s = ``(s:('c,'ffi) bviSem$state)``;
 *)
 
 let do_app_aux_def = cake_define
-  `(\x y. strcat x y)
-     (do_app_aux op (vs:bvlSem_v list)) s =
-       (match (op,vs) with (closLang_IntOp (closLang_Const i),xs) ->
-         (if small_enough_int i /\ NULL xs then
-           SOME (SOME (Number i,s)) else NONE) | (closLang_Label
-             l,xs) -> (match xs with [] -> (if l IN domain (state_code
-             s) then
+  `bviSem_do_app_aux op (vs:bvlSem_v list) (s:('c,'ffi)bviSem_state) =
+     (match (op,vs) with (closLang_IntOp (closLang_Const i),xs) ->
+       (if small_enough_int i /\ NULL xs then
+         SOME (SOME (Number i,s)) else NONE) | (closLang_Label l,xs)
+           -> (match xs with [] -> (if l IN domain (state_code s) then
                               SOME (SOME (bvlSem_CodePtr l,s)) else
                                 NONE) | _1 -> NONE) | (closLang_GlobOp
                                 GlobalsPtr,xs) ->
-           (match xs with [] -> (match bviSem_state_global s with
-             SOME p -> SOME (SOME (RefPtr T p,s)) | NONE -> NONE) | _2
-             -> NONE) | (closLang_GlobOp SetGlobalsPtr,xs) ->
-           (match xs with [RefPtr T p] -> SOME (SOME
-             (Unit,bviSem_state_global_fupd (K (SOME p)) s)) | _3 ->
-             NONE) | (closLang_GlobOp (Global n),xs) ->
-           (match xs with [] -> (match bviSem_state_global s with
-             SOME ptr ->
-                          (match FLOOKUP (state_refs s) ptr with SOME
-                            (ValueArray xs) ->
-                              (if n < LENGTH xs then SOME (SOME (EL n
-                                xs,s)) else NONE) | _4 -> NONE) | NONE
-                                -> NONE) | _5 -> NONE) |
-                                (closLang_GlobOp (SetGlobal n),xs) ->
-           (match xs with [x] -> (match bviSem_state_global s with
-             SOME ptr ->
-                          (match FLOOKUP (state_refs s) ptr with SOME
-                            (ValueArray xs) ->
-                              (if n < LENGTH xs then SOME (SOME
-                                (Unit,state_refs_fupd (K (state_refs s
-                                |+
+         (match xs with [] -> (match bviSem_state_global s with SOME
+           p -> SOME (SOME (RefPtr T p,s)) | NONE -> NONE) | _2 -> NONE)
+           | (closLang_GlobOp SetGlobalsPtr,xs) ->
+         (match xs with [RefPtr T p] -> SOME (SOME
+           (Unit,bviSem_state_global_fupd (K (SOME p)) s)) | _3 -> NONE)
+           | (closLang_GlobOp (Global n),xs) ->
+         (match xs with [] -> (match bviSem_state_global s with SOME
+           ptr ->
+                        (match FLOOKUP (state_refs s) ptr with SOME
+                          (ValueArray xs) ->
+                             (if n < LENGTH xs then SOME (SOME (EL n
+                               xs,s)) else NONE) | _4 -> NONE) | NONE ->
+                               NONE) | _5 -> NONE) | (closLang_GlobOp
+                               (SetGlobal n),xs) ->
+         (match xs with [x] -> (match bviSem_state_global s with SOME
+           ptr ->
+                        (match FLOOKUP (state_refs s) ptr with SOME
+                          (ValueArray xs) ->
+                             (if n < LENGTH xs then SOME (SOME
+                               (Unit,state_refs_fupd (K (state_refs s |+
                               (ptr,ValueArray (LUPDATE x n xs)))) s))
                                 else NONE) | _6 -> NONE) | NONE -> NONE)
                                 | _7 -> NONE) | (closLang_BlockOp
                                 (closLang_FromList n),xs) ->
-           (match xs with [len; lv] ->
-               (match v_to_list lv with SOME vs -> (if len = Number
-                 (&(LENGTH vs)) then SOME (SOME (Block n vs,s)) else
-                 NONE) | _8 -> NONE) | _9 -> NONE) | (closLang_MemOp
-                 (closLang_RefByte f),xs) ->
-           (match xs with [Number i; Number b] ->
-               (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs
-                   s)))) in
-                   SOME (SOME (RefPtr T ptr,state_refs_fupd (K
-                     (state_refs s |+
-                     (ptr,ByteArray f (REPLICATE (num_of_int i) (i2w
-                       b))))) s)) else NONE) | _10 -> NONE) |
-                       (closLang_MemOp (closLang_MutCons tag i),xs) ->
-           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s))))
-             in
-              if i >= LENGTH xs then NONE else
-                let l = TAKE i xs in
-                let c = EL i xs in
-                let r = DROP (i + 1) xs in
-                let b = bvlSem_MutBlock tag F l c r in
-                  SOME (SOME (RefPtr F ptr,(state_refs_fupd (K
-                    (state_refs s |+ (ptr,b))) s)))) | (closLang_MemOp
-                    closLang_UpdateCons,[RefPtr _11 ptr; Number i; x])
-                    ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (bvlSem_MutBlock tag finalised l c r) ->
-                (if ~(i = &(LENGTH l)) \/ finalised then NONE else
-                  SOME (SOME (Unit,state_refs_fupd (K (state_refs s
-                    |+ (ptr,bvlSem_MutBlock tag F l x r))) s))) | _12 ->
-                    NONE) | (closLang_MemOp closLang_FinaliseCons,[x])
-                    ->
-           (match bviSem_finalise_cons x (state_refs s) with SOME
-             (v,refs') -> SOME (SOME (v,state_refs_fupd (K refs') s))
-             | NONE -> NONE) | (closLang_GlobOp AllocGlobal,_13) ->
-             NONE | (closLang_MemOp closLang_FromListByte,_14) ->
-             NONE | (closLang_MemOp closLang_ToListByte,_15) -> NONE
-             | (closLang_MemOp closLang_ConcatByteVec,_16) -> NONE |
-             (closLang_MemOp (closLang_CopyByte T),_17) -> NONE | _18
-             -> SOME NONE)`;;
+         (match xs with [len; lv] ->
+             (match v_to_list lv with SOME vs -> (if len = Number
+               (&(LENGTH vs)) then SOME (SOME (Block n vs,s)) else NONE)
+               | _8 -> NONE) | _9 -> NONE) | (closLang_MemOp
+               (closLang_RefByte f),xs) ->
+         (match xs with [Number i; Number b] ->
+             (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
+               let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs
+                 s)))) in
+                 SOME (SOME (RefPtr T ptr,state_refs_fupd (K
+                   (state_refs s |+
+                   (ptr,ByteArray f (REPLICATE (num_of_int i) (i2w
+                     b))))) s)) else NONE) | _10 -> NONE) |
+                     (closLang_MemOp (closLang_MutCons tag i),xs) ->
+         (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s)))) in
+            if i >= LENGTH xs then NONE else
+              let l = TAKE i xs in
+              let c = EL i xs in
+              let r = DROP (i + 1) xs in
+              let b = bvlSem_MutBlock tag F l c r in
+                SOME (SOME (RefPtr F ptr,(state_refs_fupd (K
+                  (state_refs s |+ (ptr,b))) s)))) | (closLang_MemOp
+                  closLang_UpdateCons,[RefPtr _11 ptr; Number i; x]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME (bvlSem_MutBlock
+           tag finalised l c r) ->
+              (if ~(i = &(LENGTH l)) \/ finalised then NONE else
+                SOME (SOME (Unit,state_refs_fupd (K (state_refs s |+
+                  (ptr,bvlSem_MutBlock tag F l x r))) s))) | _12 ->
+                  NONE) | (closLang_MemOp closLang_FinaliseCons,[x]) ->
+         (match bviSem_finalise_cons x (state_refs s) with SOME
+           (v,refs') -> SOME (SOME (v,state_refs_fupd (K refs') s)) |
+           NONE -> NONE) | (closLang_GlobOp AllocGlobal,_13) -> NONE
+           | (closLang_MemOp closLang_FromListByte,_14) -> NONE |
+           (closLang_MemOp closLang_ToListByte,_15) -> NONE |
+           (closLang_MemOp closLang_ConcatByteVec,_16) -> NONE |
+           (closLang_MemOp (closLang_CopyByte T),_17) -> NONE | _18
+           -> SOME NONE)`;;
+hol4_overload "do_app_aux" "bviSem_do_app_aux";;
 
 let do_install_def = cake_define
-  `(\x y. strcat x y)
-     (do_install vs) s =
-         (match vs with [v1; v2; vl1; vl2] ->
-              (match (v_to_bytes v1,v_to_words v2) with (SOME
-                bytes,SOME data) ->
-                  (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(
-                     vl2 = Number (&(LENGTH data))) then Rerr (Rabort
-                       Rtype_error) else
-                  let (cfg,progs) = compile_oracle s 0 in
-                  let new_oracle = misc_shift_seq 1 (compile_oracle
-                    s) in
-                    if DISJOINT (domain (state_code s)) (set_of_list
-                      (MAP FST progs)) /\ ALL_DISTINCT (MAP FST progs)
-                      then
-                    (match (compile s cfg progs,progs) with (SOME
-                      (bytes',data',cfg'),(k,prog) :: _19) ->
-                         (if bytes = bytes' /\ data = data' /\ FST
-                           (new_oracle 0) = cfg' then
-                           let s' = compile_oracle_fupd (K
-                             new_oracle) (state_code_fupd (K
-                             (sptree_union (state_code s) (fromAList
-                             progs)))
-                             s) in
-                             Rval (bvlSem_CodePtr k,s') else Rerr
-                               (Rabort Rtype_error)) | _20 -> Rerr
-                               (Rabort Rtype_error)) else Rerr
-                               (Rabort Rtype_error)) | _21 -> Rerr
-                               (Rabort Rtype_error)) | _22 -> Rerr
-                               (Rabort Rtype_error))`;;
+  `bviSem_do_install vs (s:('c,'ffi)bviSem_state) =
+       (match vs with [v1; v2; vl1; vl2] ->
+            (match (v_to_bytes v1,v_to_words v2) with (SOME
+              bytes,SOME data) ->
+                (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(
+                   vl2 = Number (&(LENGTH data))) then Rerr (Rabort
+                     Rtype_error) else
+                let (cfg,progs) = compile_oracle s 0 in
+                let new_oracle = misc_shift_seq 1 (compile_oracle s)
+                  in
+                  if DISJOINT (domain (state_code s)) (set_of_list
+                    (MAP FST progs)) /\ ALL_DISTINCT (MAP FST progs)
+                    then
+                  (match (compile s cfg progs,progs) with (SOME
+                    (bytes',data',cfg'),(k,prog) :: _19) ->
+                       (if bytes = bytes' /\ data = data' /\ FST
+                         (new_oracle 0) = cfg' then
+                         let s' = compile_oracle_fupd (K new_oracle)
+                           (state_code_fupd (K (sptree_union (state_code
+                           s) (fromAList progs)))
+                           s) in
+                           Rval (bvlSem_CodePtr k,s') else Rerr
+                             (Rabort Rtype_error)) | _20 -> Rerr
+                             (Rabort Rtype_error)) else Rerr (Rabort
+                             Rtype_error)) | _21 -> Rerr (Rabort
+                             Rtype_error)) | _22 -> Rerr (Rabort
+                             Rtype_error))`;;
+hol4_overload "do_install" "bviSem_do_install";;
 
 let do_app_def = cake_define
-  `(\x y. strcat x y)
-     (semanticPrimitives_do_app op vs) s =
-       (if op = closLang_Install then do_install vs s else
-       match do_app_aux op vs s with NONE -> Rerr (Rabort
-         Rtype_error) | SOME (SOME (v,t)) -> Rval (v,t) | SOME NONE
-         -> (match semanticPrimitives_do_app op vs (bvi_to_bvl s)
-         with Rval (v,t) -> Rval (v,bvl_to_bvi t s) | Rerr (Rabort a)
-         -> Rerr (Rabort a) | Rerr (Rraise v) -> Rerr (Rraise (Exn
-         v))))`;;
+  `bviSem_do_app op vs (s:('c,'ffi)bviSem_state) =
+     (if op = closLang_Install then do_install vs s else
+     match bviSem_do_app_aux op vs s with NONE -> Rerr (Rabort
+       Rtype_error) | SOME (SOME (v,t)) -> Rval (v,t) | SOME NONE ->
+       (match bvlSem_do_app op vs (bvi_to_bvl s) with Rval (v,t) ->
+       Rval (v,bvl_to_bvi t s) | Rerr (Rabort a) -> Rerr (Rabort a) |
+       Rerr (Rraise v) -> Rerr (Rraise (Exn v))))`;;
+hol4_overload "do_app" "bviSem_do_app";;
 
 let bviSem_dest_thunk_ret_INDUCT,bviSem_dest_thunk_ret_RECURSION =
   define_datatype
@@ -282,9 +274,8 @@ let evaluate_def = cake_define_list
    `bviSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
            vs,s) ->
-             (match semanticPrimitives_do_app op (REVERSE vs) s
-               with Rerr e -> (Rerr e,s) | Rval (v,s) -> (Rval
-               [v],s)) | res -> res)`;
+             (match do_app op (REVERSE vs) s with Rerr e -> (Rerr
+               e,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)`;
    `bviSem_evaluate ([(Tick x:flatLang_exp)],env,s) =
          (if state_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
            else

@@ -215,7 +215,7 @@ val help_string_tm =
 *)
 
 let help_string_def = cake_define
-  `help_string = (\x y. strcat x y) implode help_string_tm`;;
+  `help_string = implode help_string_tm`;;
 
 let compile_error_INDUCT,compile_error_RECURSION = define_datatype
   "compile_error = ParseError (mlstring) | TypeError (mlstring) | \

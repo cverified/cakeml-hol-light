@@ -7,7 +7,6 @@
   Correctness proof for flatLang dead code elimination
 *)
 
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
@@ -178,16 +177,13 @@ let decs_closed_def = cake_define
 
 (* s = state, t = removed state *)
 let flat_state_rel_def = cake_define
-  `(\x y. strcat x y) ((\x y. strcat x y)
-       (flat_state_rel reachable) s) t <=> state_clock
-         s = state_clock t /\ state_refs s = state_refs t /\
-           state_ffi
-         s = state_ffi t /\ globals_rel reachable
-           (flatSem_state_globals s) (flatSem_state_globals t) /\
-         domain (find_refs_globals (state_refs s)) SUBSET domain
-           reachable /\
-         EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs
-           s)`;;
+  `flat_state_rel reachable (s:('c,'ffi)flatSem_state) t <=> state_clock
+     s = state_clock t /\ state_refs s = state_refs t /\ state_ffi
+     s = state_ffi t /\ globals_rel reachable (flatSem_state_globals
+       s) (flatSem_state_globals t) /\
+     domain (find_refs_globals (state_refs s)) SUBSET domain
+       reachable /\
+     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs s)`;;
 
 (**************************** FLATLANG LEMMAS
    *****************************)

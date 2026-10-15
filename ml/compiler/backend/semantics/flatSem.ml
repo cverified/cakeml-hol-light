@@ -770,8 +770,8 @@ let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
 
 let evaluate_def = cake_define_list
-  [`(\x y. strcat x y) (flatSem_evaluate (env:flatSem_v
-  flatSem_environment)) (s ([]:flatLang_exp list)) =
+  [`flatSem_evaluate (env:flatSem_v flatSem_environment)
+  (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;
    `flatSem_evaluate env s (e1 :: e2 :: es) =
         (match fix_clock s (flatSem_evaluate env s [e1]) with

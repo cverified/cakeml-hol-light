@@ -42,9 +42,9 @@ val large_int = ``268435457:int``; (* 2**28-1 *)
 
 let compile_int_def = cake_define
   `compile_int (i:int) =
-     bvi_Op (if --large_int <= i /\ i <= large_int then
-       closLang_IntOp (closLang_Const i) else closLang_BlockOp
-       (closLang_Build [Int i])) []`;;
+     bvi_Op (if --((&268435457):int) <= i /\ i <=
+       ((&268435457):int) then closLang_IntOp (closLang_Const i) else
+       closLang_BlockOp (closLang_Build [Int i])) []`;;
 
 let alloc_glob_count_def = cake_define
   `alloc_glob_count x1 =

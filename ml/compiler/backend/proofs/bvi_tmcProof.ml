@@ -17,7 +17,7 @@ needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "compiler/backend/semantics/stackSem.ml";;
+needs "compiler/backend/semantics/wordSem.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;

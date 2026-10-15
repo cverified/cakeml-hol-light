@@ -17,7 +17,6 @@ needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
@@ -164,39 +163,39 @@ val s = ``s:('c,'ffi)closSem$state``;
 *)
 
 let do_install_def = cake_define
-  `(\x y. strcat x y)
-     (do_install vs) s =
-         (match vs with [v1; v2] ->
-              (match (closSem_v_to_bytes v1,closSem_v_to_words v2)
-                with (SOME bytes,SOME data) ->
-                  (let (cfg,progs) = closSem_state_compile_oracle s 0
-                    in
-                  let new_oracle = misc_shift_seq 1
-                    (closSem_state_compile_oracle s) in
-                   (if DISJOINT (FDOM (closSem_state_code s))
-                     (set_of_list (MAP FST (SND progs))) /\
-                       ALL_DISTINCT (MAP FST (SND progs)) then
-                    (match (closSem_state_compile s cfg progs,progs)
-                      with (SOME (bytes',data',cfg'),(exps,aux)) ->
-                         (if bytes = bytes' /\ data = data' /\
-                            FST (new_oracle 0) = cfg' /\ ~(exps = [])
-                              then
-                          (let s' = state_clock_fupd (K (state_clock
-                            s - 1)) (closSem_state_compile_oracle_fupd
-                            (K new_oracle) (closSem_state_code_fupd (K
-                            (closSem_state_code s |++ aux))
-                             s)) in
-                             if state_clock s = 0 then (Rerr
-                               (Rabort Rtimeout_error),s') else (Rval
-                               exps,s')) else ((Rerr (Rabort
-                               Rtype_error):(closLang_exp
-                               list
-                               ,closSem_v)semanticPrimitives_result)
-                               ,s)) | _19 -> (Rerr (Rabort
-                               Rtype_error),s)) else (Rerr (Rabort
-                               Rtype_error),s))) | _20 -> (Rerr
-                               (Rabort Rtype_error),s)) | _21 ->
-                               (Rerr (Rabort Rtype_error),s))`;;
+  `closSem_do_install vs (s:('c,'ffi)closSem_state) =
+       (match vs with [v1; v2] ->
+            (match (closSem_v_to_bytes v1,closSem_v_to_words v2) with
+              (SOME bytes,SOME data) ->
+                (let (cfg,progs) = closSem_state_compile_oracle s 0
+                  in
+                let new_oracle = misc_shift_seq 1
+                  (closSem_state_compile_oracle s) in
+                 (if DISJOINT (FDOM (closSem_state_code s))
+                   (set_of_list (MAP FST (SND progs))) /\
+                     ALL_DISTINCT (MAP FST (SND progs)) then
+                  (match (closSem_state_compile s cfg progs,progs)
+                    with (SOME (bytes',data',cfg'),(exps,aux)) ->
+                       (if bytes = bytes' /\ data = data' /\
+                          FST (new_oracle 0) = cfg' /\ ~(exps = [])
+                            then
+                        (let s' = state_clock_fupd (K (state_clock s
+                          - 1)) (closSem_state_compile_oracle_fupd (K
+                          new_oracle) (closSem_state_code_fupd (K
+                          (closSem_state_code s |++ aux))
+                           s)) in
+                           if state_clock s = 0 then (Rerr (Rabort
+                             Rtimeout_error),s') else (Rval exps,s'))
+                             else ((Rerr (Rabort
+                             Rtype_error):(closLang_exp
+                             list
+                             ,closSem_v)semanticPrimitives_result)
+                             ,s)) | _19 -> (Rerr (Rabort
+                             Rtype_error),s)) else (Rerr (Rabort
+                             Rtype_error),s))) | _20 -> (Rerr (Rabort
+                             Rtype_error),s)) | _21 -> (Rerr (Rabort
+                             Rtype_error),s))`;;
+hol4_overload "do_install" "closSem_do_install";;
 
 let make_const_def = cake_define_list
   [`make_const (ConstInt i) = closSem_Number i`;
@@ -331,292 +330,283 @@ let bad_thunk_update_def = cake_define
 hol4_overload "bad_thunk_update" "closSem_bad_thunk_update";;
 
 let do_app_def = cake_define
-  `(\x y. strcat x y)
-     (semanticPrimitives_do_app (op:closLang_op) (vs:closSem_v list))
-       s =
-       (match (op,vs) with (closLang_GlobOp (Global n),([]:closSem_v
-         list)) ->
-           (match get_global n (closSem_state_globals s) with SOME
-             (SOME v) -> (Rval (v,s)) | _33 -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_GlobOp
-             (Global _34),[closSem_Number i]) ->
-           (if i < 0 then ((Rerr (Rabort
+  `closSem_do_app (op:closLang_op) (vs:closSem_v list)
+  (s:('c,'ffi)closSem_state) =
+     (match (op,vs) with (closLang_GlobOp (Global n),([]:closSem_v
+       list)) ->
+         (match get_global n (closSem_state_globals s) with SOME
+           (SOME v) -> (Rval (v,s)) | _33 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_GlobOp
+           (Global _34),[closSem_Number i]) ->
+         (if i < 0 then ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result) else
+          match get_global (num_of_int i) (closSem_state_globals s)
+            with SOME (SOME v) -> (Rval (v,s)) | _35 -> ((Rerr (Rabort
+            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+            ,closSem_v)semanticPrimitives_result)) | (closLang_GlobOp
+            (SetGlobal n),[v]) ->
+         (match get_global n (closSem_state_globals s) with SOME NONE
+           -> Rval (closSem_Unit,closSem_state_globals_fupd (K (LUPDATE
+           (SOME v) n (closSem_state_globals s)))
+              s) | _36 -> ((Rerr (Rabort
+                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                ,closSem_v)semanticPrimitives_result)) |
+                (closLang_GlobOp AllocGlobal,[closSem_Number i]) ->
+         (if i < 0 then ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result) else Rval
+           (closSem_Unit,closSem_state_globals_fupd (K
+           (closSem_state_globals s ++ REPLICATE (num_of_int i) NONE))
+           s)) | (closLang_BlockOp (closLang_Constant c),[]) -> Rval
+           (make_const c,s) | (closLang_BlockOp (Cons tag),xs) -> Rval
+           (closSem_Block tag xs,s) | (closLang_BlockOp
+           (closLang_ConsExtend tag),closSem_Block _37 xs' ::
+           closSem_Number lower :: closSem_Number len :: closSem_Number
+           tot :: xs) ->
+         (if lower < (&0) \/ len < (&0) \/ &(LENGTH xs') < lower +
+           len \/
+            tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
+           ((Rerr (Rabort
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result) else
-            match get_global (num_of_int i) (closSem_state_globals s)
-              with SOME (SOME v) -> (Rval (v,s)) | _35 -> ((Rerr (Rabort
-              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-              ,closSem_v)semanticPrimitives_result)) | (closLang_GlobOp
-              (SetGlobal n),[v]) ->
-           (match get_global n (closSem_state_globals s) with SOME
-             NONE -> Rval (closSem_Unit,closSem_state_globals_fupd (K
-             (LUPDATE (SOME v) n (closSem_state_globals s)))
-                s) | _36 -> ((Rerr (Rabort
+           Rval (closSem_Block tag (xs ++ TAKE (num_of_int len) (DROP
+             (num_of_int lower) xs')),s)) | (closLang_BlockOp
+             (closLang_ConsExtend tag),_38) -> ((Rerr (Rabort
+             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+             ,closSem_v)semanticPrimitives_result) | (closLang_MemOp
+             El,[closSem_Block tag xs; closSem_Number i]) ->
+         (if 0 <= i /\ num_of_int i < LENGTH xs then Rval (EL
+           (num_of_int i) xs,s) else ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+           El,[closSem_RefPtr _39 ptr; closSem_Number i]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ValueArray xs) ->
+             (if 0 <= i /\ i < &(LENGTH xs) then Rval (EL (num_of_int
+               i) xs,s) else ((Rerr (Rabort
+               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+               ,closSem_v)semanticPrimitives_result)) | _40 -> ((Rerr
+               (Rabort
+               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+               ,closSem_v)semanticPrimitives_result)) |
+               (closLang_BlockOp (closLang_BoolTest test),[v1; v2]) ->
+         (if (~(v1 = Boolv T) /\ ~(v1 = Boolv F)) then ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result) else
+          if (~(v2 = Boolv T) /\ ~(v2 = Boolv F)) then ((Rerr (Rabort
+            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+            ,closSem_v)semanticPrimitives_result) else
+            Rval (Boolv (v1 = v2),s)) | (closLang_BlockOp
+              closLang_BoolNot,[v1]) ->
+         (if v1 = Boolv T then Rval (Boolv F,s) else
+          if v1 = Boolv F then Rval (Boolv T,s) else ((Rerr (Rabort
+            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+            ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
+            (closLang_ElemAt n),[closSem_Block tag xs]) ->
+         (if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
+           ListAppend,[x1; x2]) ->
+         (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys) ->
+           Rval (list_to_v (xs ++ ys),s) | _41 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
+           closLang_LengthBlock,[closSem_Block tag xs]) ->
+         Rval (closSem_Number (&(LENGTH xs)),s) | (closLang_MemOp
+           closLang_Length,[closSem_RefPtr _42 ptr]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ValueArray xs) ->
+               Rval (closSem_Number (&(LENGTH xs)),s) | _43 -> ((Rerr
+                 (Rabort
+                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                 ,closSem_v)semanticPrimitives_result)) |
+                 (closLang_MemOp closLang_LengthByte,[closSem_RefPtr _44
+                 ptr]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ByteArray xs) ->
+               Rval (closSem_Number (&(LENGTH xs)),s) | _45 -> ((Rerr
+                 (Rabort
+                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                 ,closSem_v)semanticPrimitives_result)) |
+                 (closLang_MemOp (closLang_RefByte F),[closSem_Number i;
+                 closSem_Number b]) ->
+          (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
+            let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s))))
+              in
+              Rval (closSem_RefPtr T ptr,state_refs_fupd (K
+                (state_refs s |+
+                (ptr,closSem_ByteArray (REPLICATE (num_of_int i) (i2w
+                  b))))) s) else ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                   ,closSem_v)semanticPrimitives_result)) |
-                  (closLang_GlobOp AllocGlobal,[closSem_Number i]) ->
-           (if i < 0 then ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result) else Rval
-             (closSem_Unit,closSem_state_globals_fupd (K
-             (closSem_state_globals s ++ REPLICATE (num_of_int i) NONE))
-             s)) | (closLang_BlockOp (closLang_Constant c),[]) -> Rval
-             (make_const c,s) | (closLang_BlockOp (Cons tag),xs) -> Rval
-             (closSem_Block tag xs,s) | (closLang_BlockOp
-             (closLang_ConsExtend tag),closSem_Block _37 xs' ::
-             closSem_Number lower :: closSem_Number len ::
-             closSem_Number tot :: xs) ->
-           (if lower < (&0) \/ len < (&0) \/ &(LENGTH xs') < lower +
-             len \/
-              tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
-             ((Rerr (Rabort
-               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-               ,closSem_v)semanticPrimitives_result) else
-             Rval (closSem_Block tag (xs ++ TAKE (num_of_int len)
-               (DROP (num_of_int lower) xs')),s)) | (closLang_BlockOp
-               (closLang_ConsExtend tag),_38) -> ((Rerr (Rabort
-               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-               ,closSem_v)semanticPrimitives_result) | (closLang_MemOp
-               El,[closSem_Block tag xs; closSem_Number i]) ->
-           (if 0 <= i /\ num_of_int i < LENGTH xs then Rval (EL
-             (num_of_int i) xs,s) else ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-             El,[closSem_RefPtr _39 ptr; closSem_Number i]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ValueArray xs) ->
-               (if 0 <= i /\ i < &(LENGTH xs) then Rval (EL
-                 (num_of_int i) xs,s) else ((Rerr (Rabort
-                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                 ,closSem_v)semanticPrimitives_result)) | _40 -> ((Rerr
-                 (Rabort
+                  (closLang_MemOp closLang_RefArray,[closSem_Number i;
+                  v]) ->
+         (if 0 <= i then
+           let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s)))) in
+             Rval (closSem_RefPtr T ptr,state_refs_fupd (K
+               (state_refs s |+
+               (ptr,closSem_ValueArray (REPLICATE (num_of_int i)
+                 v)))) s) else ((Rerr (Rabort
                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                  ,closSem_v)semanticPrimitives_result)) |
-                 (closLang_BlockOp (closLang_BoolTest test),[v1; v2]) ->
-           (if (~(v1 = Boolv T) /\ ~(v1 = Boolv F)) then ((Rerr
-             (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result) else
-            if (~(v2 = Boolv T) /\ ~(v2 = Boolv F)) then ((Rerr
-              (Rabort
-              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-              ,closSem_v)semanticPrimitives_result) else
-              Rval (Boolv (v1 = v2),s)) | (closLang_BlockOp
-                closLang_BoolNot,[v1]) ->
-           (if v1 = Boolv T then Rval (Boolv F,s) else
-            if v1 = Boolv F then Rval (Boolv T,s) else ((Rerr (Rabort
-              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-              ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-              (closLang_ElemAt n),[closSem_Block tag xs]) ->
-           (if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr
-             (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-             ListAppend,[x1; x2]) ->
-           (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys)
-             -> Rval (list_to_v (xs ++ ys),s) | _41 -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-             closLang_LengthBlock,[closSem_Block tag xs]) ->
-           Rval (closSem_Number (&(LENGTH xs)),s) | (closLang_MemOp
-             closLang_Length,[closSem_RefPtr _42 ptr]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ValueArray xs) ->
-                 Rval (closSem_Number (&(LENGTH xs)),s) | _43 ->
-                   ((Rerr (Rabort
-                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                   ,closSem_v)semanticPrimitives_result)) |
-                   (closLang_MemOp closLang_LengthByte,[closSem_RefPtr
-                   _44 ptr]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ByteArray xs) ->
-                 Rval (closSem_Number (&(LENGTH xs)),s) | _45 ->
-                   ((Rerr (Rabort
-                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                   ,closSem_v)semanticPrimitives_result)) |
-                   (closLang_MemOp (closLang_RefByte F),[closSem_Number
-                   i; closSem_Number b]) ->
-            (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-              let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s))))
-                in
-                Rval (closSem_RefPtr T ptr,state_refs_fupd (K
-                  (state_refs s |+
-                  (ptr,closSem_ByteArray (REPLICATE (num_of_int i)
-                    (i2w b))))) s) else ((Rerr (Rabort
+                 (closLang_MemOp closLang_DerefByte,[closSem_RefPtr _46
+                 ptr; closSem_Number i]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ByteArray ws) ->
+             (if 0 <= i /\ i < &(LENGTH ws) then Rval (closSem_Number
+               (&(w2n (EL (num_of_int i) ws))),s) else ((Rerr (Rabort
+               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+               ,closSem_v)semanticPrimitives_result)) | _47 -> ((Rerr
+               (Rabort
+               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+               ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+               closLang_UpdateByte,[closSem_RefPtr _48 ptr;
+               closSem_Number i; closSem_Number b]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ByteArray bs) ->
+             (if 0 <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b = &(w2n
+               w)) then
+                Rval (closSem_Unit,state_refs_fupd (K (state_refs s
+                  |+
+                  (ptr,closSem_ByteArray (LUPDATE (i2w b) (num_of_int
+                    i) bs)))) s) else ((Rerr (Rabort
+                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                    ,closSem_v)semanticPrimitives_result)) | _49 ->
+                    ((Rerr (Rabort
                     Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                     ,closSem_v)semanticPrimitives_result)) |
-                    (closLang_MemOp closLang_RefArray,[closSem_Number i;
-                    v]) ->
-           (if 0 <= i then
-             let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s))))
-               in
-               Rval (closSem_RefPtr T ptr,state_refs_fupd (K
-                 (state_refs s |+
-                 (ptr,closSem_ValueArray (REPLICATE (num_of_int i)
-                   v)))) s) else ((Rerr (Rabort
-                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                   ,closSem_v)semanticPrimitives_result)) |
-                   (closLang_MemOp closLang_DerefByte,[closSem_RefPtr
-                   _46 ptr; closSem_Number i]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ByteArray ws) ->
-               (if 0 <= i /\ i < &(LENGTH ws) then Rval
-                 (closSem_Number (&(w2n (EL (num_of_int i) ws))),s) else
-                 ((Rerr (Rabort
-                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                 ,closSem_v)semanticPrimitives_result)) | _47 -> ((Rerr
-                 (Rabort
-                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                 ,closSem_v)semanticPrimitives_result)) |
-                 (closLang_MemOp closLang_UpdateByte,[closSem_RefPtr _48
-                 ptr; closSem_Number i; closSem_Number b]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ByteArray bs) ->
-               (if 0 <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b =
-                 &(w2n w)) then
-                  Rval (closSem_Unit,state_refs_fupd (K (state_refs s
-                    |+
-                    (ptr,closSem_ByteArray (LUPDATE (i2w b)
-                      (num_of_int i) bs)))) s) else ((Rerr (Rabort
-                      Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                      ,closSem_v)semanticPrimitives_result)) | _49 ->
-                      ((Rerr (Rabort
-                      Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                      ,closSem_v)semanticPrimitives_result)) |
-                      (closLang_MemOp closLang_ConcatByteVec,[lv]) ->
-           (match (some (\wss. v_to_list lv = SOME (MAP
-             closSem_ByteVector wss))) with SOME wss -> Rval
-             (closSem_ByteVector (FLAT wss),s) | _50 -> ((Rerr (Rabort
+                    (closLang_MemOp closLang_ConcatByteVec,[lv]) ->
+         (match (some (\wss. v_to_list lv = SOME (MAP
+           closSem_ByteVector wss))) with SOME wss -> Rval
+           (closSem_ByteVector (FLAT wss),s) | _50 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
+           (closLang_FromList n),[lv]) ->
+         (match v_to_list lv with SOME vs -> Rval (closSem_Block n
+           vs,s) | _51 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+           closLang_FromListByte,[lv]) ->
+         (match some (\ns. v_to_list lv = SOME (MAP (closSem_Number o
+           (&)) ns) /\ EVERY (\n. n < 256) ns) with SOME ns -> Rval
+           (closSem_ByteVector (MAP n2w ns),s) | NONE -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+           closLang_ToListByte,[closSem_ByteVector bs]) ->
+         (Rval (list_to_v (MAP (\b. closSem_Number (&(w2n b)))
+           bs),s)) | (closLang_MemOp
+           closLang_LengthByteVec,[closSem_ByteVector bs]) ->
+         (Rval (closSem_Number (&(LENGTH bs)),s)) | (closLang_MemOp
+           closLang_DerefByteVec,[closSem_ByteVector bs; closSem_Number
+           i]) ->
+         (if 0 <= i /\ i < &(LENGTH bs) then
+            Rval (closSem_Number (&(w2n (EL (num_of_int i) bs))),s)
+              else ((Rerr (Rabort
+              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+              (closLang_CopyByte F),[closSem_ByteVector ws;
+              closSem_Number srcoff; closSem_Number len; closSem_RefPtr
+              _52 dst; closSem_Number dstoff]) ->
+         (match FLOOKUP (state_refs s) dst with SOME
+           (closSem_ByteArray ds) ->
+            (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
+              SOME ds -> Rval (closSem_Unit,state_refs_fupd (K
+              (state_refs s |+ (dst,closSem_ByteArray ds))) s) | NONE ->
+              ((Rerr (Rabort
+              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+              ,closSem_v)semanticPrimitives_result)) | _53 -> ((Rerr
+              (Rabort
+              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+              (closLang_CopyByte F),[closSem_RefPtr _54 src;
+              closSem_Number srcoff; closSem_Number len; closSem_RefPtr
+              _55 dst; closSem_Number dstoff]) ->
+         (match (FLOOKUP (state_refs s) src,FLOOKUP (state_refs s)
+           dst) with (SOME (closSem_ByteArray ws),SOME
+           (closSem_ByteArray ds)) ->
+            (match copy_array (ws,srcoff) len (SOME (ds,dstoff)) with
+              SOME ds -> Rval (closSem_Unit,state_refs_fupd (K
+              (state_refs s |+ (dst,closSem_ByteArray ds))) s) | NONE ->
+              ((Rerr (Rabort
+              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+              ,closSem_v)semanticPrimitives_result)) | _56 -> ((Rerr
+              (Rabort
+              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+              (closLang_CopyByte T),[closSem_ByteVector ws;
+              closSem_Number srcoff; closSem_Number len]) ->
+        (match copy_array (ws,srcoff) len NONE with SOME ds -> Rval
+          (closSem_ByteVector ds,s) | _57 -> ((Rerr (Rabort
+          Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+          ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+          (closLang_CopyByte T),[closSem_RefPtr _58 src; closSem_Number
+          srcoff; closSem_Number len]) ->
+        (match FLOOKUP (state_refs s) src with SOME
+          (closSem_ByteArray ws) ->
+           (match copy_array (ws,srcoff) len NONE with SOME ds ->
+             Rval (closSem_ByteVector ds,s) | _59 -> ((Rerr (Rabort
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-             (closLang_FromList n),[lv]) ->
-           (match v_to_list lv with SOME vs -> Rval (closSem_Block n
-             vs,s) | _51 -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-             closLang_FromListByte,[lv]) ->
-           (match some (\ns. v_to_list lv = SOME (MAP (closSem_Number
-             o (&)) ns) /\ EVERY (\n. n < 256) ns) with SOME ns -> Rval
-             (closSem_ByteVector (MAP n2w ns),s) | NONE -> ((Rerr
+             ,closSem_v)semanticPrimitives_result)) | _60 -> ((Rerr
              (Rabort
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-             closLang_ToListByte,[closSem_ByteVector bs]) ->
-           (Rval (list_to_v (MAP (\b. closSem_Number (&(w2n b)))
-             bs),s)) | (closLang_MemOp
-             closLang_LengthByteVec,[closSem_ByteVector bs]) ->
-           (Rval (closSem_Number (&(LENGTH bs)),s)) | (closLang_MemOp
-             closLang_DerefByteVec,[closSem_ByteVector bs;
-             closSem_Number i]) ->
-           (if 0 <= i /\ i < &(LENGTH bs) then
-              Rval (closSem_Number (&(w2n (EL (num_of_int i) bs))),s)
-                else ((Rerr (Rabort
-                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-                (closLang_CopyByte F),[closSem_ByteVector ws;
-                closSem_Number srcoff; closSem_Number len;
-                closSem_RefPtr _52 dst; closSem_Number dstoff]) ->
-           (match FLOOKUP (state_refs s) dst with SOME
-             (closSem_ByteArray ds) ->
-              (match copy_array (ws,srcoff) len (SOME (ds,dstoff))
-                with SOME ds -> Rval (closSem_Unit,state_refs_fupd (K
-                (state_refs s |+ (dst,closSem_ByteArray ds))) s) | NONE
-                -> ((Rerr (Rabort
-                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                ,closSem_v)semanticPrimitives_result)) | _53 -> ((Rerr
-                (Rabort
-                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-                (closLang_CopyByte F),[closSem_RefPtr _54 src;
-                closSem_Number srcoff; closSem_Number len;
-                closSem_RefPtr _55 dst; closSem_Number dstoff]) ->
-           (match (FLOOKUP (state_refs s) src,FLOOKUP (state_refs s)
-             dst) with (SOME (closSem_ByteArray ws),SOME
-             (closSem_ByteArray ds)) ->
-              (match copy_array (ws,srcoff) len (SOME (ds,dstoff))
-                with SOME ds -> Rval (closSem_Unit,state_refs_fupd (K
-                (state_refs s |+ (dst,closSem_ByteArray ds))) s) | NONE
-                -> ((Rerr (Rabort
-                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                ,closSem_v)semanticPrimitives_result)) | _56 -> ((Rerr
-                (Rabort
-                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-                (closLang_CopyByte T),[closSem_ByteVector ws;
-                closSem_Number srcoff; closSem_Number len]) ->
-          (match copy_array (ws,srcoff) len NONE with SOME ds -> Rval
-            (closSem_ByteVector ds,s) | _57 -> ((Rerr (Rabort
-            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-            ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-            (closLang_CopyByte T),[closSem_RefPtr _58 src;
-            closSem_Number srcoff; closSem_Number len]) ->
-          (match FLOOKUP (state_refs s) src with SOME
-            (closSem_ByteArray ws) ->
-             (match copy_array (ws,srcoff) len NONE with SOME ds ->
-               Rval (closSem_ByteVector ds,s) | _59 -> ((Rerr (Rabort
-               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-               ,closSem_v)semanticPrimitives_result)) | _60 -> ((Rerr
-               (Rabort
-               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-               ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-               closLang_XorByte,[closSem_RefPtr _61 dst;
-               closSem_ByteVector ws]) ->
-          (match FLOOKUP (state_refs s) dst with SOME
-            (closSem_ByteArray ds) ->
-             (match xor_bytes ws ds with SOME ds1 -> Rval
+             closLang_XorByte,[closSem_RefPtr _61 dst;
+             closSem_ByteVector ws]) ->
+        (match FLOOKUP (state_refs s) dst with SOME
+          (closSem_ByteArray ds) ->
+           (match xor_bytes ws ds with SOME ds1 -> Rval
+             (closSem_Unit,state_refs_fupd (K (state_refs s |+
+             (dst,closSem_ByteArray ds1))) s) | _62 -> ((Rerr (Rabort
+             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+             ,closSem_v)semanticPrimitives_result)) | _63 -> ((Rerr
+             (Rabort
+             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+             ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+             (closLang_StringCmp b cmp),[closSem_ByteVector b1;
+             closSem_ByteVector b2]) ->
+        (let s1 = implode (MAP (CHR o w2n) b1) in
+         let s2 = implode (MAP (CHR o w2n) b2) in
+           Rval (Boolv (str_cmp b cmp s1 s2),s)) | (closLang_BlockOp
+             (closLang_TagEq n),[closSem_Block tag xs]) ->
+         Rval (Boolv (tag = n),s) | (closLang_BlockOp (LenEq
+           l),[closSem_Block tag xs]) ->
+         Rval (Boolv (LENGTH xs = l),s) | (closLang_BlockOp (TagLenEq
+           n l),[closSem_Block tag xs]) ->
+         Rval (Boolv (tag = n /\ LENGTH xs = l),s) |
+           (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
+         (match p with closLang_Int i -> (match x1 with
+           closSem_Number j -> Rval (Boolv (i = j),s) | _64 -> ((Rerr
+           (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | W64 i -> (match x1
+           with Word64 j -> Rval (Boolv (i = j),s) | _65 -> ((Rerr
+           (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | closLang_Str i ->
+           (match x1 with closSem_ByteVector j -> Rval (Boolv (j = MAP
+           (n2w o ORD) (explode i)),s) | _66 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | _67 -> ((Rerr
+           (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
+           Equal,[x1; x2]) ->
+         (match do_eq x1 x2 with Eq_val b -> Rval (Boolv b,s) | _68
+           -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+           closLang_Ref,xs) ->
+         (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s)))) in
+           Rval (closSem_RefPtr T ptr,state_refs_fupd (K (state_refs
+             s |+ (ptr,closSem_ValueArray xs))) s)) | (closLang_MemOp
+             closLang_Update,[closSem_RefPtr _69 ptr; closSem_Number i;
+             x]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ValueArray xs) ->
+             (if 0 <= i /\ i < &(LENGTH xs) then Rval
                (closSem_Unit,state_refs_fupd (K (state_refs s |+
-               (dst,closSem_ByteArray ds1))) s) | _62 -> ((Rerr (Rabort
-               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-               ,closSem_v)semanticPrimitives_result)) | _63 -> ((Rerr
-               (Rabort
-               Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-               ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-               (closLang_StringCmp b cmp),[closSem_ByteVector b1;
-               closSem_ByteVector b2]) ->
-          (let s1 = implode (MAP (CHR o w2n) b1) in
-           let s2 = implode (MAP (CHR o w2n) b2) in
-             Rval (Boolv (str_cmp b cmp s1 s2),s)) |
-               (closLang_BlockOp (closLang_TagEq n),[closSem_Block tag
-               xs]) ->
-           Rval (Boolv (tag = n),s) | (closLang_BlockOp (LenEq
-             l),[closSem_Block tag xs]) ->
-           Rval (Boolv (LENGTH xs = l),s) | (closLang_BlockOp
-             (TagLenEq n l),[closSem_Block tag xs]) ->
-           Rval (Boolv (tag = n /\ LENGTH xs = l),s) |
-             (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
-           (match p with closLang_Int i -> (match x1 with
-             closSem_Number j -> Rval (Boolv (i = j),s) | _64 -> ((Rerr
-             (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | W64 i -> (match x1
-             with Word64 j -> Rval (Boolv (i = j),s) | _65 -> ((Rerr
-             (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | closLang_Str i ->
-             (match x1 with closSem_ByteVector j -> Rval (Boolv (j = MAP
-             (n2w o ORD) (explode i)),s) | _66 -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | _67 -> ((Rerr
-             (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-             Equal,[x1; x2]) ->
-           (match do_eq x1 x2 with Eq_val b -> Rval (Boolv b,s) | _68
-             -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-             closLang_Ref,xs) ->
-           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs s))))
-             in
-             Rval (closSem_RefPtr T ptr,state_refs_fupd (K
-               (state_refs s |+ (ptr,closSem_ValueArray xs))) s)) |
-               (closLang_MemOp closLang_Update,[closSem_RefPtr _69 ptr;
-               closSem_Number i; x]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ValueArray xs) ->
-               (if 0 <= i /\ i < &(LENGTH xs) then Rval
-                 (closSem_Unit,state_refs_fupd (K (state_refs s |+
                               (ptr,closSem_ValueArray (LUPDATE x
                                 (num_of_int i) xs)))) s) else ((Rerr
                                 (Rabort
@@ -628,87 +618,87 @@ let do_app_def = cake_define
                                 ,'ffi)closSem_state
                                 ,closSem_v)semanticPrimitives_result)) |
                                 (closLang_IntOp int_op',vs) ->
-           (match closSem_do_int_app int_op' vs with SOME res -> Rval
-             (res,s) | _71 -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (closLang_WordOp
-             word_op',vs) ->
-           (match closSem_do_word_app word_op' vs with SOME res ->
-             Rval (res,s) | _72 -> ((Rerr (Rabort
-             Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-             ,closSem_v)semanticPrimitives_result)) | (FFI
-             n,[closSem_ByteVector conf; closSem_RefPtr _73 ptr]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ByteArray ws) ->
-              (match call_FFI (state_ffi s) (ExtCall n) conf ws with
-                FFI_return ffi' ws' ->
-                   Rval (closSem_Unit,state_ffi_fupd (K ffi')
-                     (state_refs_fupd (K (state_refs s |+
-                     (ptr,closSem_ByteArray ws')))
-                         s)) | FFI_final outcome ->
-                   Rerr (Rabort (Rffi_error outcome))) | _74 ->
-                     ((Rerr (Rabort
-                     Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                     ,closSem_v)semanticPrimitives_result)) |
-                     (closLang_BlockOp
-                     closLang_BoundsCheckBlock,[closSem_Block tag ys;
-                     closSem_Number i]) ->
-           Rval (Boolv (0 <= i /\ i < &(LENGTH ys)),s) |
-             (closLang_MemOp (closLang_BoundsCheckByte
-             loose),[closSem_ByteVector bs; closSem_Number i]) ->
-           Rval (Boolv (0 <= i /\ (if loose then (<=) else (<)) i
-             (&(LENGTH bs))),s) | (closLang_MemOp
-             (closLang_BoundsCheckByte loose),[closSem_RefPtr _75 ptr;
-             closSem_Number i]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ByteArray ws) ->
-                Rval (Boolv (0 <= i /\ (if loose then (<=) else (<))
-                  i (&(LENGTH ws))),s) | _76 -> ((Rerr (Rabort
-                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                  ,closSem_v)semanticPrimitives_result)) |
-                  (closLang_MemOp
-                  closLang_BoundsCheckArray,[closSem_RefPtr _77 ptr;
-                  closSem_Number i]) ->
-           (match FLOOKUP (state_refs s) ptr with SOME
-             (closSem_ValueArray ws) ->
-                Rval (Boolv (0 <= i /\ i < &(LENGTH ws)),s) | _78 ->
-                  ((Rerr (Rabort
-                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                  ,closSem_v)semanticPrimitives_result)) |
-                  (closLang_MemOp ConfigGC,[closSem_Number _79;
-                  closSem_Number _80]) -> (Rval (closSem_Unit,s)) |
-                  (ThunkOp th_op,vs) ->
-           (match (th_op,vs) with (AllocThunk m,[v]) ->
-                (if bad_thunk_update m v (state_refs s) then ((Rerr
-                  (Rabort
-                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                  ,closSem_v)semanticPrimitives_result) else
-                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs
-                   s)))) in
-                   Rval (closSem_RefPtr F ptr,state_refs_fupd (K
-                     (state_refs s |+ (ptr,Thunk m v))) s)) |
-                     (UpdateThunk m,[closSem_RefPtr F ptr; v]) ->
-                (if bad_thunk_update m v (state_refs s) then ((Rerr
-                  (Rabort
-                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                  ,closSem_v)semanticPrimitives_result) else
-                 match FLOOKUP (state_refs s) ptr with SOME (Thunk
-                   NotEvaluated _81) ->
-                    Rval (closSem_Unit,state_refs_fupd (K
-                      (state_refs s |+ (ptr,Thunk m v))) s) | _82 ->
-                      ((Rerr (Rabort
-                      Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                      ,closSem_v)semanticPrimitives_result)) | _83 ->
-                      ((Rerr (Rabort
-                      Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                      ,closSem_v)semanticPrimitives_result)) | _84 ->
-                      ((Rerr (Rabort
-                      Rtype_error)):(closSem_v#('c,'ffi)closSem_state
-                      ,closSem_v)semanticPrimitives_result))`;;
+         (match closSem_do_int_app int_op' vs with SOME res -> Rval
+           (res,s) | _71 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (closLang_WordOp
+           word_op',vs) ->
+         (match closSem_do_word_app word_op' vs with SOME res -> Rval
+           (res,s) | _72 -> ((Rerr (Rabort
+           Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+           ,closSem_v)semanticPrimitives_result)) | (FFI
+           n,[closSem_ByteVector conf; closSem_RefPtr _73 ptr]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ByteArray ws) ->
+            (match call_FFI (state_ffi s) (ExtCall n) conf ws with
+              FFI_return ffi' ws' ->
+                 Rval (closSem_Unit,state_ffi_fupd (K ffi')
+                   (state_refs_fupd (K (state_refs s |+
+                   (ptr,closSem_ByteArray ws')))
+                       s)) | FFI_final outcome ->
+                 Rerr (Rabort (Rffi_error outcome))) | _74 -> ((Rerr
+                   (Rabort
+                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                   ,closSem_v)semanticPrimitives_result)) |
+                   (closLang_BlockOp
+                   closLang_BoundsCheckBlock,[closSem_Block tag ys;
+                   closSem_Number i]) ->
+         Rval (Boolv (0 <= i /\ i < &(LENGTH ys)),s) |
+           (closLang_MemOp (closLang_BoundsCheckByte
+           loose),[closSem_ByteVector bs; closSem_Number i]) ->
+         Rval (Boolv (0 <= i /\ (if loose then (<=) else (<)) i
+           (&(LENGTH bs))),s) | (closLang_MemOp
+           (closLang_BoundsCheckByte loose),[closSem_RefPtr _75 ptr;
+           closSem_Number i]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ByteArray ws) ->
+              Rval (Boolv (0 <= i /\ (if loose then (<=) else (<)) i
+                (&(LENGTH ws))),s) | _76 -> ((Rerr (Rabort
+                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+                closLang_BoundsCheckArray,[closSem_RefPtr _77 ptr;
+                closSem_Number i]) ->
+         (match FLOOKUP (state_refs s) ptr with SOME
+           (closSem_ValueArray ws) ->
+              Rval (Boolv (0 <= i /\ i < &(LENGTH ws)),s) | _78 ->
+                ((Rerr (Rabort
+                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
+                ConfigGC,[closSem_Number _79; closSem_Number _80]) ->
+                (Rval (closSem_Unit,s)) | (ThunkOp th_op,vs) ->
+         (match (th_op,vs) with (AllocThunk m,[v]) ->
+              (if bad_thunk_update m v (state_refs s) then ((Rerr
+                (Rabort
+                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                ,closSem_v)semanticPrimitives_result) else
+               let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs
+                 s)))) in
+                 Rval (closSem_RefPtr F ptr,state_refs_fupd (K
+                   (state_refs s |+ (ptr,Thunk m v))) s)) | (UpdateThunk
+                   m,[closSem_RefPtr F ptr; v]) ->
+              (if bad_thunk_update m v (state_refs s) then ((Rerr
+                (Rabort
+                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                ,closSem_v)semanticPrimitives_result) else
+               match FLOOKUP (state_refs s) ptr with SOME (Thunk
+                 NotEvaluated _81) ->
+                  Rval (closSem_Unit,state_refs_fupd (K
+                    (state_refs s |+ (ptr,Thunk m v))) s) | _82 ->
+                    ((Rerr (Rabort
+                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                    ,closSem_v)semanticPrimitives_result)) | _83 ->
+                    ((Rerr (Rabort
+                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                    ,closSem_v)semanticPrimitives_result)) | _84 ->
+                    ((Rerr (Rabort
+                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
+                    ,closSem_v)semanticPrimitives_result))`;;
+hol4_overload "do_app" "closSem_do_app";;
 
 let dec_clock_def = cake_define
-  `(\x y. strcat x y)
-     (dec_clock n) s = state_clock_fupd (K (state_clock s - n)) s`;;
+  `closSem_dec_clock n (s:('c,'ffi)closSem_state) = state_clock_fupd
+  (K (state_clock s - n)) s`;;
+hol4_overload "dec_clock" "closSem_dec_clock";;
 
 let find_code_def = cake_define
   `closSem_find_code p args code =
@@ -845,7 +835,8 @@ hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
 
 let evaluate_def = cake_define_list
-  [`closSem_evaluate ([],(env:closSem_v list),s) = (Rval [],s)`;
+  [`closSem_evaluate ([],(env:closSem_v
+  list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =
          (match closSem_fix_clock s (closSem_evaluate ([x],env,s))
            with (Rval v1,s1) ->
@@ -878,7 +869,8 @@ let evaluate_def = cake_define_list
          (match closSem_fix_clock s (closSem_evaluate (xs,env,s))
            with (Rval vs,s) ->
            (if op = closLang_Install then
-           (match do_install (REVERSE vs) s with (Rval es,s) ->
+           (match closSem_do_install (REVERSE vs) s with (Rval es,s)
+             ->
                 (match closSem_evaluate (es,[],s) with (Rval vs,s)
                   -> (Rval [LAST vs],s) | res -> res) | (Rerr err,s) ->
                   (Rerr err,s)) else if op = ThunkOp ForceThunk then
@@ -892,9 +884,8 @@ let evaluate_def = cake_define_list
                        NONE -> (Rerr (Rabort Rtype_error),s) | SOME refs
                        -> (Rval vs2,state_refs_fupd (K refs) s)) | (Rerr
                        e,s) -> (Rerr e,s))) else
-           (match semanticPrimitives_do_app op (REVERSE vs) s
-             with Rerr err -> (Rerr err,s) | Rval (v,s) -> (Rval
-             [v],s))) | res -> res)`;
+           (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
+             err,s) | Rval (v,s) -> (Rval [v],s))) | res -> res)`;
    `closSem_evaluate ([closLang_Fn _92 loc vsopt num_args exp],env,s) =
          (if num_args <= closSem_state_max_app s /\ ~(num_args = 0)
            then
@@ -931,7 +922,7 @@ let evaluate_def = cake_define_list
    `closSem_evaluate ([closLang_Tick _95 x],env,s) =
          (if state_clock s = 0 then (Rerr (Rabort
            Rtimeout_error),s) else closSem_evaluate
-           ([x],env,dec_clock 1 s))`;
+           ([x],env,closSem_dec_clock 1 s))`;
    `closSem_evaluate ([closLang_Call _96 ticks dest xs],env,s1) =
          (match closSem_fix_clock s1 (closSem_evaluate (xs,env,s1))
            with (Rval vs,s) ->
@@ -940,8 +931,9 @@ let evaluate_def = cake_define_list
                (args,exp) ->
                   (if (state_clock s < ticks + 1) then (Rerr (Rabort
                     Rtimeout_error),state_clock_fupd (K 0) s) else
-                      closSem_evaluate ([exp],args,dec_clock
-                        (ticks + 1) s))) | res -> res)`;
+                      closSem_evaluate
+                        ([exp],args,closSem_dec_clock (ticks + 1)
+                        s))) | res -> res)`;
    `evaluate_app loc_opt f [] s = (Rval [f],s)`;
    `evaluate_app loc_opt f args s =
          (match dest_closure (closSem_state_max_app s) loc_opt f
@@ -949,16 +941,16 @@ let evaluate_def = cake_define_list
            (Partial_app v) ->
              (if state_clock s < LENGTH args then (Rerr (Rabort
                Rtimeout_error),state_clock_fupd (K 0) s) else (Rval
-               [v],dec_clock (LENGTH args) s)) | SOME (Full_app exp env
-               rest_args) ->
+               [v],closSem_dec_clock (LENGTH args) s)) | SOME (Full_app
+               exp env rest_args) ->
              (if state_clock s < (LENGTH args - LENGTH rest_args)
                then (Rerr (Rabort Rtimeout_error),state_clock_fupd (K 0)
                s) else
-                 match closSem_fix_clock (dec_clock (LENGTH args -
-                   LENGTH rest_args) s)
-                        (closSem_evaluate ([exp],env,dec_clock
-                          (LENGTH args - LENGTH rest_args) s)) with
-                          (Rval [v],s1) ->
+                 match closSem_fix_clock (closSem_dec_clock (LENGTH
+                   args - LENGTH rest_args) s)
+                        (closSem_evaluate
+                          ([exp],env,closSem_dec_clock (LENGTH args -
+                          LENGTH rest_args) s)) with (Rval [v],s1) ->
                    evaluate_app loc_opt v rest_args s1 | res ->
                      res))`];;
 hol4_overload "evaluate" "closSem_evaluate";;

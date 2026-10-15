@@ -7,7 +7,6 @@
   Properties about closLang and its semantics
 *)
 
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -640,20 +639,18 @@ hol4_overload "esgc_free" "closProps_esgc_free";;
 
 (* state is setglobal-closure free *)
 let ssgc_free_def = cake_define
-  `(\x y. strcat x y)
-     ssgc_free s <=>
-       (!n m e. FLOOKUP (closSem_state_code s) n = SOME (m,e) ==>
-         closProps_set_globals e = EMPTY_BAG) /\
-       (!n vl. FLOOKUP (state_refs s) n = SOME (closSem_ValueArray
-         vl) ==> EVERY vsgc_free vl) /\
-       (!n m v. FLOOKUP (state_refs s) n = SOME (Thunk m v) ==>
-         vsgc_free v) /\
-       (!v. MEM (SOME v) (closSem_state_globals s) ==> vsgc_free v)
-         /\
-       (!n exp aux. SND (closSem_state_compile_oracle s n) =
-         (exp,aux) ==> EVERY closProps_esgc_free exp /\
-            closProps_elist_globals (MAP (SND o SND) aux) =
-              EMPTY_BAG)`;;
+  `ssgc_free (s:('c,'ffi)closSem_state) <=>
+     (!n m e. FLOOKUP (closSem_state_code s) n = SOME (m,e) ==>
+       closProps_set_globals e = EMPTY_BAG) /\
+     (!n vl. FLOOKUP (state_refs s) n = SOME (closSem_ValueArray vl)
+       ==> EVERY vsgc_free vl) /\
+     (!n m v. FLOOKUP (state_refs s) n = SOME (Thunk m v) ==>
+       vsgc_free v) /\
+     (!v. MEM (SOME v) (closSem_state_globals s) ==> vsgc_free v) /\
+     (!n exp aux. SND (closSem_state_compile_oracle s n) = (exp,aux)
+       ==> EVERY closProps_esgc_free exp /\
+          closProps_elist_globals (MAP (SND o SND) aux) =
+            EMPTY_BAG)`;;
 
 (* generic do_app compile proof *)
 

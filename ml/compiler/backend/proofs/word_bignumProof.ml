@@ -9,9 +9,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
-needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -201,13 +198,13 @@ let eval = cake_inductive
               (word_bignumProof_state_regs s) n5)))) s)))) /\
    (!r s1 p vs s2 rec.
       ast_Eval (if rec then SOME p else NONE) (delete_vars vs
-        (word_bignumProof_dec_clock s1))
+        (dec_clock s1))
         (word_bignum_LoopBody p) (INR s2) /\ ~(state_clock s1 = 0)
           ==>
       ast_Eval r s1 (Loop rec vs p) (INR s2)) /\
    (!s1 save_regs vs p s2 s3.
-      ast_Eval (SOME p) (delete_vars vs (word_bignumProof_dec_clock
-        s1)) (word_bignum_LoopBody p) (INR s2) /\
+      ast_Eval (SOME p) (delete_vars vs (dec_clock s1))
+        (word_bignum_LoopBody p) (INR s2) /\
       word_bignumProof_copy_vars save_regs
         (word_bignumProof_state_regs s1) s2 = SOME s3 /\ ~(state_clock
       s1 = 0) ==>
@@ -218,8 +215,7 @@ let eval = cake_inductive
       ast_Eval r s1 (word_bignum_LoopBody p) (INR s2)) /\
    (!r s1 s2 s3 p.
       ast_Eval r s1 p (INL s2) /\ ~(state_clock s2 = 0) /\
-      ast_Eval r (word_bignumProof_dec_clock s2)
-        (word_bignum_LoopBody p) (INR s3) ==>
+      ast_Eval r (dec_clock s2) (word_bignum_LoopBody p) (INR s3) ==>
       ast_Eval r s1 (word_bignum_LoopBody p) (INR s3))`;;
 
 (* HOL4 ML code, not ported:
@@ -286,7 +282,8 @@ let div_code_assum_def = cake_define
        0 < i0 /\ 0 < i1 /\ 0 < i2 /\ 0 < i3 /\ 0 < i4 /\
        ALL_DISTINCT [i0; i1; i2; i3; i4] /\ wordSem_state_code
        t1 = code /\ ~(wordSem_state_termdep t1 = 0) /\
-       get_var 0 t1 = SOME ret_val /\ single_div_pre w3 w4 w5 ==>
+       wordSem_get_var 0 t1 = SOME ret_val /\ single_div_pre w3 w4 w5
+         ==>
        (?max'.
          wordSem_evaluate
            (DivCode n l i0 i1 i2 i3 i4,wordSem_state_locals_fupd (K
@@ -297,9 +294,10 @@ let div_code_assum_def = cake_define
             t1) =
          (NONE,
            (let (w1,w2) = single_div w3 w4 w5 in
-             (set_var 0 ret_val o set_var i1 (wordLang_Word w2) o
-              set_var i0 (wordLang_Word w1) o set_store (Temp (n2w
-                28)) (wordLang_Word w2)) (
+             (wordSem_set_var 0 ret_val o wordSem_set_var i1
+               (wordLang_Word w2) o
+              wordSem_set_var i0 (wordLang_Word w1) o
+                wordSem_set_store (Temp (n2w 28)) (wordLang_Word w2)) (
              wordSem_state_stack_max_fupd (K max')
                (wordSem_state_locals_fupd (K LN)
                (wordSem_state_permute_fupd (K (\n.
@@ -433,13 +431,13 @@ let corr_def = cake_define
 
 let loop_app_def = cake_define
   `loop_app f g x =
-     (match f x with INL s -> (INL (word_bignumProof_dec_clock
-       s),(g x /\ ~(state_clock s = 0))) | INR s -> (INR s,g x))`;;
+     (match f x with INL s -> (INL (dec_clock s),(g x /\
+       ~(state_clock s = 0))) | INR s -> (INR s,g x))`;;
 
 let tick_before_def = cake_define
   `tick_before vs f s =
      (if state_clock s = 0 then (s,F) else f (delete_vars vs
-       (word_bignumProof_dec_clock s)))`;;
+       (dec_clock s)))`;;
 
 (* HOL4 ML code, not ported:
 val Corr_Loop = MATCH_MP Corr_Loop_lemma (Corr_LoopBody |> UNDISCH) |>

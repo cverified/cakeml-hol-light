@@ -7,7 +7,6 @@
   Correctness proof for clos_to_bvl
 *)
 
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -27,7 +26,6 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -1137,11 +1135,13 @@ let syntax_oracle_ok_def = cake_define
             (SET_OF_BAG (closProps_elist_globals es)) co /\
         is_state_oracle (clos_known_compile_inc (THE
           (clos_to_bvl_config_known_conf c)))
-            ((\x y. strcat x y) pure_co (fvs_inc o
+            (pure_co (clos_fvs_compile_inc:closLang_exp
+              list#(num#num#closLang_exp) list->closLang_exp
+              list#(num#num#closLang_exp) list) o
                 state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c)
-                      (closSem_state_max_app c)) o co))) /\
+                      (closSem_state_max_app c)) o co)) /\
         (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
           n')))) /\
                 EVERY closProps_esgc_free (FST (SND (co n'))))) /\

@@ -90,6 +90,25 @@ def tokenize(s):
       toks.append(Tok('key' if t in KEYWORDS else 'sym', t, start,
                       nl, icol))
       i += n2; col += n2; nl = 0; continue
+    if c == '^' and i + 1 < n and (s[i+1].isalpha() or
+                                   s[i+1] in '_('):
+      # HOL4's quotation filter reads ^ followed at once by a name
+      # or a parenthesis as an antiquotation, and the ML value that
+      # it splices in is in ANTIQ (a ^ b with the spaces is the
+      # infix of mlstring)
+      j = i + 1
+      while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
+      nm = s[i+1:j]
+      if nm in ANTIQ:
+        toks.append(Tok('sym', '(', start, nl, icol))
+        toks += [x for x in tokenize(ANTIQ[nm]) if x.kind != 'eof']
+        toks.append(Tok('sym', ')', start, 0, icol))
+        i = j; col += j - i; nl = 0; continue
+      if nm:
+        toks.append(Tok('id', nm, start, nl, icol))
+        i = j; col += j - i; nl = 0; continue
+      # ^( : the parenthesis that follows does the grouping
+      i += 1; col += 1; continue
     if c == '«':
       j = s.index('»', i)
       toks.append(Tok('mlstr', s[i+1:j], start, nl, icol))
@@ -993,6 +1012,7 @@ def reset_grammar():
   INFIX.clear(); INFIX.update(BASE_INFIX)
   OWN_INFIX.clear()
   MONAD[0] = None
+  ANTIQ.clear()
   SYMS[:] = BASE_SYMS
   PMATCH[0] = False
 
@@ -1009,6 +1029,7 @@ def add_infix(tok, prec, assoc):
 
 OWN_INFIX = set()      # the infixes a CakeML source declares itself
 MONAD = [None]         # the monad that a source has enabled
+ANTIQ = {}             # the ML values that a source antiquotes
 
 
 def set_monad(m):

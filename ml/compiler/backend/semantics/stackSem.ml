@@ -165,8 +165,8 @@ let word_exp_def = cake_define_list
            (wordLang_Word w) -> SOME w | _11 -> NONE)`;
    `stackSem_word_exp s (wordLang_Load addr') =
          (match stackSem_word_exp s addr' with SOME w -> (match
-           stackSem_mem_load w s with SOME (wordLang_Word w) -> SOME
-           w | _12 -> NONE) | _13 -> NONE)`;
+           mem_load w s with SOME (wordLang_Word w) -> SOME w | _12
+           -> NONE) | _13 -> NONE)`;
    `stackSem_word_exp s (wordLang_Op op wexps) =
          (let ws = MAP (stackSem_word_exp s) wexps in
            if EVERY IS_SOME ws then wordLang_word_op op (MAP THE
@@ -185,9 +185,9 @@ hol4_overload "get_var" "stackSem_get_var";;
 let get_vars_def = cake_define_list
   [`stackSem_get_vars [] s = SOME []`;
    `stackSem_get_vars (v :: vs) s =
-         (match stackSem_get_var v s with NONE -> NONE | SOME x
-           -> (match stackSem_get_vars vs s with NONE -> NONE |
-           SOME xs -> SOME (x :: xs)))`];;
+         (match get_var v s with NONE -> NONE | SOME x ->
+           (match stackSem_get_vars vs s with NONE -> NONE | SOME
+           xs -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "stackSem_get_vars";;
 
 let get_fp_var_def = cake_define
@@ -207,8 +207,9 @@ let set_fp_var_def = cake_define
 hol4_overload "set_fp_var" "stackSem_set_fp_var";;
 
 let set_store_def = cake_define
-  `set_store v x (s:('a,'c,'ffi)stackSem_state) = (state_store_fupd
-  (K (state_store s |+ (v,x))) s)`;;
+  `stackSem_set_store v x (s:('a,'c,'ffi)stackSem_state) =
+  (state_store_fupd (K (state_store s |+ (v,x))) s)`;;
+hol4_overload "set_store" "stackSem_set_store";;
 
 let empty_env_def = cake_define
   `stackSem_empty_env (s:('a,'c,'ffi)stackSem_state) = stack_fupd (K
@@ -216,9 +217,10 @@ let empty_env_def = cake_define
 hol4_overload "empty_env" "stackSem_empty_env";;
 
 let sh_mem_store_def = cake_define
-  `(sh_mem_store r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
-   (match stackSem_get_var r s with
+  `(stackSem_sh_mem_store r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
+   (match get_var r s with
       SOME (wordLang_Word w) ->
         (if a IN state_sh_mdomain s then
           (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
@@ -229,10 +231,12 @@ let sh_mem_store_def = cake_define
                FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
                (K new_ffi) s)) else (SOME Error,s)) | _15 -> (SOME
                Error,s))`;;
+hol4_overload "sh_mem_store" "stackSem_sh_mem_store";;
 
 let sh_mem_load_def = cake_define
-  `(sh_mem_load r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
+  `(stackSem_sh_mem_load r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
    (if a IN state_sh_mdomain s then
      (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
        0):word8]
@@ -243,11 +247,13 @@ let sh_mem_load_def = cake_define
             (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
             F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
+hol4_overload "sh_mem_load" "stackSem_sh_mem_load";;
 
 let sh_mem_store_byte_def = cake_define
-  `(sh_mem_store_byte r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
-   (match stackSem_get_var r s with
+  `(stackSem_sh_mem_store_byte r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
+   (match get_var r s with
       SOME (wordLang_Word w) ->
         (if byte_align a IN state_sh_mdomain s then
           (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
@@ -258,11 +264,13 @@ let sh_mem_store_byte_def = cake_define
                FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
                (K new_ffi) s)) else (SOME Error,s)) | _16 -> (SOME
                Error,s))`;;
+hol4_overload "sh_mem_store_byte" "stackSem_sh_mem_store_byte";;
 
 let sh_mem_store16_def = cake_define
-  `(sh_mem_store16 r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
-   (match stackSem_get_var r s with
+  `(stackSem_sh_mem_store16 r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
+   (match get_var r s with
       SOME (wordLang_Word w) ->
         (if byte_align a IN state_sh_mdomain s then
           (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
@@ -273,11 +281,13 @@ let sh_mem_store16_def = cake_define
                FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
                (K new_ffi) s)) else (SOME Error,s)) | _17 -> (SOME
                Error,s))`;;
+hol4_overload "sh_mem_store16" "stackSem_sh_mem_store16";;
 
 let sh_mem_store32_def = cake_define
-  `(sh_mem_store32 r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
-   (match stackSem_get_var r s with
+  `(stackSem_sh_mem_store32 r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
+   (match get_var r s with
       SOME (wordLang_Word w) ->
         (if byte_align a IN state_sh_mdomain s then
           (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
@@ -288,10 +298,12 @@ let sh_mem_store32_def = cake_define
                FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
                (K new_ffi) s)) else (SOME Error,s)) | _18 -> (SOME
                Error,s))`;;
+hol4_overload "sh_mem_store32" "stackSem_sh_mem_store32";;
 
 let sh_mem_load_byte_def = cake_define
-  `(sh_mem_load_byte r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
+  `(stackSem_sh_mem_load_byte r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
    (if byte_align a IN state_sh_mdomain s then
      (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
        1):word8] (word_to_bytes a F) with
@@ -301,10 +313,12 @@ let sh_mem_load_byte_def = cake_define
             (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
             F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
+hol4_overload "sh_mem_load_byte" "stackSem_sh_mem_load_byte";;
 
 let sh_mem_load16_def = cake_define
-  `(sh_mem_load16 r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
+  `(stackSem_sh_mem_load16 r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
    (if byte_align a IN state_sh_mdomain s then
      (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
        2):word8] (word_to_bytes a F) with
@@ -314,10 +328,12 @@ let sh_mem_load16_def = cake_define
             (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
             F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
+hol4_overload "sh_mem_load16" "stackSem_sh_mem_load16";;
 
 let sh_mem_load32_def = cake_define
-  `(sh_mem_load32 r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
-  stackSem_result) option#('a,'c,'ffi)stackSem_state) =
+  `(stackSem_sh_mem_load32 r (a:'a word)
+  (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
+  option#('a,'c,'ffi)stackSem_state) =
    (if byte_align a IN state_sh_mdomain s then
      (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
        4):word8] (word_to_bytes a F) with
@@ -327,6 +343,7 @@ let sh_mem_load32_def = cake_define
             (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
             F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
+hol4_overload "sh_mem_load32" "stackSem_sh_mem_load32";;
 
 let sh_mem_op_def = cake_define_list
   [`sh_mem_op Load r ad (s:('a,'c,'ffi)stackSem_state) = sh_mem_load
@@ -375,7 +392,7 @@ let dec_stack_def = cake_define_list
 hol4_overload "dec_stack" "stackSem_dec_stack";;
 
 let gc_def = cake_define
-  `gc s =
+  `stackSem_gc s =
      (if LENGTH (stack s) < stackSem_state_stack_space s then NONE
        else
        let unused = TAKE (stackSem_state_stack_space s) (stack s) in
@@ -392,16 +409,18 @@ let gc_def = cake_define
                    (stackSem_state_regs_fupd (K FEMPTY)
                    (state_store_fupd (K st) (stack_fupd (K (unused ++
                    stack')) s)))))))`;;
+hol4_overload "gc" "stackSem_gc";;
 
 let has_space_def = cake_define
-  `has_space wl store =
+  `stackSem_has_space wl store =
      (match (wl,FLOOKUP store NextFree,FLOOKUP store TriggerGC)
        with (wordLang_Word w,SOME (wordLang_Word n),SOME
        (wordLang_Word l)) -> SOME (w2n w <= w2n (l - n)) | _21 ->
        NONE)`;;
+hol4_overload "has_space" "stackSem_has_space";;
 
 let alloc_def = cake_define
-  `alloc (w:'a word) (s:('a,'c,'ffi)stackSem_state) =
+  `stackSem_alloc (w:'a word) (s:('a,'c,'ffi)stackSem_state) =
        (match gc (set_store AllocSize (wordLang_Word w) s) with NONE
          -> (SOME Error,s) | SOME s ->
           (match FLOOKUP (state_store s) AllocSize with NONE -> (SOME
@@ -411,66 +430,63 @@ let alloc_def = cake_define
                          (NONE,s) | SOME F ->
                          (SOME (Halt (wordLang_Word ((n2w 1):'a
                            word))),stackSem_empty_env s))))`;;
+hol4_overload "alloc" "stackSem_alloc";;
 
 let assign_def = cake_define
   `stackSem_assign reg exp s =
      (match word_exp s exp with NONE -> NONE | SOME w -> SOME
-       (stackSem_set_var reg (wordLang_Word w) s))`;;
+       (set_var reg (wordLang_Word w) s))`;;
 hol4_overload "assign" "stackSem_assign";;
 
 let inst_def = cake_define
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
-     (match i with Skip -> SOME s | Const reg w -> stackSem_assign
-       reg (Const w) s | Arith (asm_Binop bop r1 r2 ri) ->
+     (match i with Skip -> SOME s | Const reg w -> assign reg (Const
+       w) s | Arith (asm_Binop bop r1 r2 ri) ->
          (if bop = Or /\ ri = Reg r2 then
            match FLOOKUP (stackSem_state_regs s) r2 with NONE -> NONE
-             | SOME w -> SOME (stackSem_set_var r1 w s) else
-           stackSem_assign r1
+             | SOME w -> SOME (set_var r1 w s) else
+           assign r1
              (wordLang_Op bop [Var r2; match ri with Reg r3 -> Var r3
                | Imm w -> Const w]) s) | Arith (Shift sh r1 r2 ri) ->
-         stackSem_assign r1
+         assign r1
            (Shift sh (Var r2) (match ri with Reg r3 -> Var r3 | Imm w
              -> Const w)) s | Arith (Div r1 r2 r3) ->
         (let vs = get_vars [r3; r2] s in
         match vs with
         SOME [wordLang_Word q; wordLang_Word w2] ->
           (if ~(q = (n2w 0)) then
-            SOME (stackSem_set_var r1 (wordLang_Word (w2 / q)) s)
-              else NONE) | _22 -> NONE) | Arith (asm_AddCarry r1 r2 r3
-              r4) ->
+            SOME (set_var r1 (wordLang_Word (w2 / q)) s) else NONE) |
+              _22 -> NONE) | Arith (asm_AddCarry r1 r2 r3 r4) ->
          (let vs = get_vars [r2; r3; r4] s in
          match vs with
          SOME [wordLang_Word l; wordLang_Word r; wordLang_Word c] ->
            (let res = w2n l + w2n r + (if c = ((n2w 0):'a word) then
              0 else 1) in
-             SOME (stackSem_set_var r4 (wordLang_Word (if dimword
-               (:'a) <= res then ((n2w 1):'a word) else (n2w 0)))
-                  (stackSem_set_var r1 (wordLang_Word (n2w res)) s)))
-                    | _23 -> NONE) | Arith (asm_AddOverflow r1 r2 r3 r4)
-                    ->
+             SOME (set_var r4 (wordLang_Word (if dimword (:'a) <= res
+               then ((n2w 1):'a word) else (n2w 0)))
+                  (set_var r1 (wordLang_Word (n2w res)) s))) | _23 ->
+                    NONE) | Arith (asm_AddOverflow r1 r2 r3 r4) ->
          (let vs = get_vars [r2; r3] s in
          match vs with
          SOME [wordLang_Word w2; wordLang_Word w3] ->
-           SOME (stackSem_set_var r4 (wordLang_Word (if ~(w2i (w2 +
-             w3) = w2i w2 + w2i w3) then (n2w 1) else (n2w 0)))
-                  (stackSem_set_var r1 (wordLang_Word (w2 + w3)) s))
-                    | _24 -> NONE) | Arith (asm_SubOverflow r1 r2 r3 r4)
-                    ->
+           SOME (set_var r4 (wordLang_Word (if ~(w2i (w2 + w3) = w2i
+             w2 + w2i w3) then (n2w 1) else (n2w 0)))
+                  (set_var r1 (wordLang_Word (w2 + w3)) s)) | _24 ->
+                    NONE) | Arith (asm_SubOverflow r1 r2 r3 r4) ->
          (let vs = get_vars [r2; r3] s in
          match vs with
          SOME [wordLang_Word w2; wordLang_Word w3] ->
-           SOME (stackSem_set_var r4 (wordLang_Word (if ~(w2i (w2 -
-             w3) = w2i w2 - w2i w3) then (n2w 1) else (n2w 0)))
-                  (stackSem_set_var r1 (wordLang_Word (w2 - w3)) s))
-                    | _25 -> NONE) | Arith (asm_LongMul r1 r2 r3 r4) ->
+           SOME (set_var r4 (wordLang_Word (if ~(w2i (w2 - w3) = w2i
+             w2 - w2i w3) then (n2w 1) else (n2w 0)))
+                  (set_var r1 (wordLang_Word (w2 - w3)) s)) | _25 ->
+                    NONE) | Arith (asm_LongMul r1 r2 r3 r4) ->
          (let vs = get_vars [r3; r4] s in
          match vs with
          SOME [wordLang_Word w3; wordLang_Word w4] ->
           (let r = w2n w3 * w2n w4 in
-            SOME (stackSem_set_var r2 (wordLang_Word (n2w r))
-              (stackSem_set_var r1 (wordLang_Word (n2w (r DIV dimword
-              (:'a)))) s))) | _26 -> NONE) | Arith (asm_LongDiv r1 r2 r3
-              r4 r5) ->
+            SOME (set_var r2 (wordLang_Word (n2w r)) (set_var r1
+              (wordLang_Word (n2w (r DIV dimword (:'a)))) s))) | _26 ->
+              NONE) | Arith (asm_LongDiv r1 r2 r3 r4 r5) ->
         (let vs = get_vars [r3; r4; r5] s in
         match vs with
         SOME [wordLang_Word w3; wordLang_Word w4; wordLang_Word w5]
@@ -479,61 +495,57 @@ let inst_def = cake_define
           let d = w2n w5 in
           let q = n DIV d in
           if (~(d = 0) /\ q < dimword (:'a)) then
-            SOME (stackSem_set_var r1 (wordLang_Word (n2w q))
-              (stackSem_set_var r2 (wordLang_Word (n2w (n MOD d))) s))
-              else NONE) | _27 -> NONE) | asm_Mem Load r (Addr a w) ->
+            SOME (set_var r1 (wordLang_Word (n2w q)) (set_var r2
+              (wordLang_Word (n2w (n MOD d))) s)) else NONE) | _27 ->
+              NONE) | asm_Mem Load r (Addr a w) ->
         (match word_exp s (wordLang_Op Add [Var a; Const w]) with
           NONE -> NONE | SOME w ->
-             (match stackSem_mem_load w s with NONE -> NONE | SOME w
-               -> SOME (stackSem_set_var r w s))) | asm_Mem asm_Load8 r
-               (Addr a w) ->
+             (match mem_load w s with NONE -> NONE | SOME w -> SOME
+               (set_var r w s))) | asm_Mem asm_Load8 r (Addr a w) ->
         (match word_exp s (wordLang_Op Add [Var a; Const w]) with
           SOME w ->
             (match mem_load_byte_aux (state_memory s) (state_mdomain
-              s) (be s) w with NONE -> NONE | SOME w -> SOME
-              (stackSem_set_var r (wordLang_Word (w2w w)) s)) | _28 ->
-              NONE) | asm_Mem asm_Load16 _29 _30 -> NONE | asm_Mem
-              asm_Load32 r (Addr a w) ->
+              s) (be s) w with NONE -> NONE | SOME w -> SOME (set_var r
+              (wordLang_Word (w2w w)) s)) | _28 -> NONE) | asm_Mem
+              asm_Load16 _29 _30 -> NONE | asm_Mem asm_Load32 r (Addr a
+              w) ->
         (match word_exp s (wordLang_Op Add [Var a; Const w]) with
           SOME w ->
             (match mem_load_32 (state_memory s) (state_mdomain s) (be
-              s) w with NONE -> NONE | SOME w -> SOME (stackSem_set_var
-              r (wordLang_Word (w2w w)) s)) | _31 -> NONE) | asm_Mem
-              Store r (Addr a w) ->
-        (match (word_exp s (wordLang_Op Add [Var a; Const
-          w]),stackSem_get_var r s) with (SOME a,SOME w) ->
-             (match stackSem_mem_store a w s with SOME s1 -> SOME s1
-               | NONE -> NONE) | _32 -> NONE) | asm_Mem asm_Store8 r
-               (Addr a w) ->
-        (match (word_exp s (wordLang_Op Add [Var a; Const
-          w]),stackSem_get_var r s) with (SOME a,SOME (wordLang_Word w))
-          ->
+              s) w with NONE -> NONE | SOME w -> SOME (set_var r
+              (wordLang_Word (w2w w)) s)) | _31 -> NONE) | asm_Mem Store
+              r (Addr a w) ->
+        (match (word_exp s (wordLang_Op Add [Var a; Const w]),get_var
+          r s) with (SOME a,SOME w) ->
+             (match mem_store a w s with SOME s1 -> SOME s1 | NONE ->
+               NONE) | _32 -> NONE) | asm_Mem asm_Store8 r (Addr a w) ->
+        (match (word_exp s (wordLang_Op Add [Var a; Const w]),get_var
+          r s) with (SOME a,SOME (wordLang_Word w)) ->
              (match mem_store_byte_aux (state_memory s)
                (state_mdomain s) (be s) a (w2w w) with SOME new_m ->
                SOME (state_memory_fupd (K new_m) s) | NONE -> NONE) |
                _33 -> NONE) | asm_Mem asm_Store16 _34 _35 -> NONE |
                asm_Mem asm_Store32 r (Addr a w) ->
-        (match (word_exp s (wordLang_Op Add [Var a; Const
-          w]),stackSem_get_var r s) with (SOME a,SOME (wordLang_Word w))
-          ->
+        (match (word_exp s (wordLang_Op Add [Var a; Const w]),get_var
+          r s) with (SOME a,SOME (wordLang_Word w)) ->
              (match mem_store_32 (state_memory s) (state_mdomain s)
                (be s) a (w2w w) with SOME new_m -> SOME
                (state_memory_fupd (K new_m) s) | NONE -> NONE) | _36 ->
                NONE) | asm_FP (FPLess r d1 d2) ->
        (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
          f2) ->
-         SOME (stackSem_set_var r
+         SOME (set_var r
            (wordLang_Word (if fp64_lessThan f1 f2 then (n2w 1) else
              (n2w 0))) s) | _37 -> NONE) | asm_FP (FPLessEqual r d1 d2)
              ->
        (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
          f2) ->
-         SOME (stackSem_set_var r
+         SOME (set_var r
            (wordLang_Word (if fp64_lessEqual f1 f2 then (n2w 1) else
              (n2w 0))) s) | _38 -> NONE) | asm_FP (FPEqual r d1 d2) ->
        (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
          f2) ->
-         SOME (stackSem_set_var r
+         SOME (set_var r
            (wordLang_Word (if fp64_equal f1 f2 then (n2w 1) else (n2w
              0))) s) | _39 -> NONE) | asm_FP (FPMov d1 d2) ->
        (match get_fp_var d2 s with SOME f ->
@@ -570,15 +582,15 @@ let inst_def = cake_define
            asm_FP (FPMovToReg r1 r2 d) ->
        (match get_fp_var d s with SOME v ->
          (if dimindex (:'a) = 64 then
-           SOME (stackSem_set_var r1 (wordLang_Word (w2w v)) s) else
-           SOME (stackSem_set_var r2 (wordLang_Word ((63 >< 32) v))
-             (stackSem_set_var r1 (wordLang_Word ((31 >< 0) v)) s))) |
-             _49 -> NONE) | asm_FP (FPMovFromReg d r1 r2) ->
+           SOME (set_var r1 (wordLang_Word (w2w v)) s) else
+           SOME (set_var r2 (wordLang_Word ((63 >< 32) v)) (set_var
+             r1 (wordLang_Word ((31 >< 0) v)) s))) | _49 -> NONE) |
+             asm_FP (FPMovFromReg d r1 r2) ->
        (if dimindex (:'a) = 64 then
-         match stackSem_get_var r1 s with
+         match get_var r1 s with
            SOME (wordLang_Word w1) -> SOME (set_fp_var d (w2w w1) s)
              | _50 -> NONE else
-         match (stackSem_get_var r1 s,stackSem_get_var r2 s) with
+         match (get_var r1 s,get_var r2 s) with
            (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) -> SOME
              (set_fp_var d (w2 @@ w1) s) | _51 -> NONE) | asm_FP
              (FPToInt d1 d2) ->
@@ -609,8 +621,7 @@ let inst_def = cake_define
 hol4_overload "inst" "stackSem_inst";;
 
 let get_var_imm_def = cake_define_list
-  [`stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s =
-  stackSem_get_var n s`;
+  [`stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s = get_var n s`;
    `stackSem_get_var_imm (Imm w) s = SOME (wordLang_Word w)`];;
 hol4_overload "get_var_imm" "stackSem_get_var_imm";;
 
@@ -681,26 +692,26 @@ let copy_words_def = cake_define_wf
                SOME (a1,m1)))`;;
 
 let unset_var_def = cake_define
-  `unset_var v (s:('a,'c,'ffi)stackSem_state) =
+  `stackSem_unset_var v (s:('a,'c,'ffi)stackSem_state) =
   stackSem_state_regs_fupd (K (stackSem_state_regs s \\ v)) s`;;
+hol4_overload "unset_var" "stackSem_unset_var";;
 
 let store_const_sem_def = cake_define
   `store_const_sem t1 t2 (s:('a,'c,'ffi)stackSem_state) =
      (if ~ALL_DISTINCT [0; 1; 2; 3; t1; t2] then (SOME Error,s) else
-       match (stackSem_get_var 1 s,stackSem_get_var 2
-         s,stackSem_get_var 3 s) with (SOME (wordLang_Word i),SOME
-         (wordLang_Word a),SOME (wordLang_Word off)) ->
+       match (get_var 1 s,get_var 2 s,get_var 3 s) with (SOME
+         (wordLang_Word i),SOME (wordLang_Word a),SOME (wordLang_Word
+         off)) ->
            (match copy_words (w2n i) a off (stackSem_state_bitmaps s)
              (state_mdomain s) (state_memory s) with NONE -> (SOME
              Error,s) | SOME (a,m) -> (NONE,
                (if stackSem_state_use_alloc s then unset_var 0 else
                  I)
-                 (stackSem_set_var t1 (wordLang_Word (n2w 1))
-                   (stackSem_set_var t2 (wordLang_Word (n2w 1))
-                   (stackSem_set_var 1 (wordLang_Word (n2w 1))
-                     (stackSem_set_var 2 (wordLang_Word a)
-                     (state_memory_fupd (K m) s))))))) | _60 -> (SOME
-                     Error,s))`;;
+                 (set_var t1 (wordLang_Word (n2w 1)) (set_var t2
+                   (wordLang_Word (n2w 1))
+                   (set_var 1 (wordLang_Word (n2w 1)) (set_var 2
+                     (wordLang_Word a) (state_memory_fupd (K m)
+                     s))))))) | _60 -> (SOME Error,s))`;;
 
 let check_store_consts_opt_def = cake_define_list
   [`check_store_consts_opt t1 t2 NONE _61 = T`;
@@ -745,12 +756,12 @@ let evaluate_def = cake_define_list
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackSem_Halt v,s) =
-         (match stackSem_get_var v s with SOME w -> (SOME (Halt
+         (match get_var v s with SOME w -> (SOME (Halt
            w),stackSem_empty_env s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Alloc n,s) =
          (if ~stackSem_state_use_alloc s then (SOME Error,s) else
-         match stackSem_get_var n s with SOME (wordLang_Word w)
-           -> alloc w s | _69 -> (SOME Error,s))`;
+         match get_var n s with SOME (wordLang_Word w) -> alloc w
+           s | _69 -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_StoreConsts t1 t2 stub_opt,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          if ~stackSem_state_use_alloc s /\ IS_SOME stub_opt then
@@ -759,41 +770,39 @@ let evaluate_def = cake_define_list
            then (SOME Error,s) else
            store_const_sem t1 t2 s)`;
    `stackSem_evaluate (wordLang_Inst i,s) =
-         (match stackSem_inst i s with SOME s1 -> (NONE,s1) |
-           NONE -> (SOME Error,s))`;
+         (match inst i s with SOME s1 -> (NONE,s1) | NONE ->
+           (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Get v name,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match FLOOKUP (state_store s) name with SOME x ->
-           (NONE,stackSem_set_var v x s) | NONE -> (SOME Error,s))`;
+           (NONE,set_var v x s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Set name v,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
-         match stackSem_get_var v s with SOME w ->
-           (NONE,set_store name w s) | NONE -> (SOME Error,s))`;
+         match get_var v s with SOME w -> (NONE,set_store name w
+           s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_OpCurrHeap binop v src,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match word_exp s (wordLang_Op binop [Var src;
-           wordLang_Lookup CurrHeap]) with SOME w ->
-           (NONE,stackSem_set_var v (wordLang_Word w) s) | _70 ->
-           (SOME Error,s))`;
+           wordLang_Lookup CurrHeap]) with SOME w -> (NONE,set_var v
+           (wordLang_Word w) s) | _70 -> (SOME Error,s))`;
    `stackSem_evaluate (Tick,s) =
          (if state_clock s = 0 then (SOME
-           TimeOut,stackSem_empty_env s) else
-           (NONE,stackSem_dec_clock s))`;
+           TimeOut,stackSem_empty_env s) else (NONE,dec_clock s))`;
    `stackSem_evaluate (wordLang_Seq c1 c2,s) =
          (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
            if res = NONE then stackSem_evaluate (c2,s1) else
              (res,s1))`;
    `stackSem_evaluate (wordLang_Return n,s) =
-         (match stackSem_get_var n s with SOME (Loc l1 l2) ->
-           (SOME (Result (Loc l1 l2)),s) | _71 -> (SOME Error,s))`;
+         (match get_var n s with SOME (Loc l1 l2) -> (SOME
+           (Result (Loc l1 l2)),s) | _71 -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Raise n,s) =
-         (match stackSem_get_var n s with SOME (Loc l1 l2) ->
-           (SOME (Exception (Loc l1 l2)),s) | _72 -> (SOME Error,s))`;
+         (match get_var n s with SOME (Loc l1 l2) -> (SOME
+           (Exception (Loc l1 l2)),s) | _72 -> (SOME Error,s))`;
    `stackSem_evaluate (stackSem_Break n,s) = (SOME (Break n),s)`;
    `stackSem_evaluate (stackSem_Continue n,s) = (SOME (Continue n),s)`;
    `stackSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
-        (match (stackSem_get_var r1 s,get_var_imm ri s) with (SOME
-          x,SOME y) ->
+        (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y)
+          ->
          (match wordSem_word_cmp cmp x y with SOME T ->
            stackSem_evaluate (c1,s) | SOME F -> stackSem_evaluate
            (c2,s) | NONE -> (SOME Error,s)) | _73 -> (SOME Error,s))`;
@@ -802,33 +811,30 @@ let evaluate_def = cake_define_list
            if cont_loop res then
              (if state_clock s1 = 0 then (SOME
                TimeOut,stackSem_empty_env s1) else
-                stackSem_evaluate (STOP (Loop
-                  c1),stackSem_dec_clock s1)) else (exit_loop
-                  res,s1))`;
+                stackSem_evaluate (STOP (Loop c1),dec_clock s1))
+                  else (exit_loop res,s1))`;
    `stackSem_evaluate (stackLang_JumpLower r1 r2 dest,s) =
-        (match (stackSem_get_var r1 s,stackSem_get_var r2 s) with
-          (SOME (wordLang_Word x),SOME (wordLang_Word y)) ->
+        (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
+          x),SOME (wordLang_Word y)) ->
           (if word_cmp asm_Lower x y then
            (match find_code (INL dest) (stackSem_state_regs s)
              (state_code s) with NONE -> (SOME Error,s) | SOME prog ->
                (if state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
-                 (match stackSem_evaluate
-                   (prog,stackSem_dec_clock s) with (res,s) -> (if
-                   bad_fun_return res then (SOME Error,s) else
-                   (res,s))))) else (NONE,s)) | _74 -> (SOME
-                   Error,s))`;
+                 (match stackSem_evaluate (prog,dec_clock s) with
+                   (res,s) -> (if bad_fun_return res then (SOME
+                   Error,s) else (res,s))))) else (NONE,s)) | _74 ->
+                   (SOME Error,s))`;
    `stackSem_evaluate (stackLang_RawCall dest,s) =
         (match sptree_lookup dest (state_code s) with NONE -> (SOME
           Error,s) | SOME prog ->
            (match stackSem_dest_Seq prog with SOME (_75,body) ->
                (if state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
-                 (match stackSem_evaluate
-                   (body,stackSem_dec_clock s) with (res,s) -> (if
-                   bad_fun_return res then (SOME Error,s) else
-                   (res,s)))) | _76 -> (SOME Error,s)) | _77 -> (SOME
-                   Error,s))`;
+                 (match stackSem_evaluate (body,dec_clock s) with
+                   (res,s) -> (if bad_fun_return res then (SOME
+                   Error,s) else (res,s)))) | _76 -> (SOME Error,s))
+                   | _77 -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Call ret dest handler,s) =
          (match ret with NONE ->
            (match find_code dest (stackSem_state_regs s) (state_code
@@ -836,21 +842,20 @@ let evaluate_def = cake_define_list
                (if ~(handler = NONE) then (SOME Error,s) else
                if state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
-                 (match fix_clock (stackSem_dec_clock s)
-                   (stackSem_evaluate (prog,stackSem_dec_clock s)) with
-                   (res,s) -> (if bad_fun_return res then (SOME Error,s)
-                   else (res,s))))) | SOME (ret_handler,link_reg',l1,l2)
-                   ->
+                 (match fix_clock (dec_clock s) (stackSem_evaluate
+                   (prog,dec_clock s)) with (res,s) -> (if
+                   bad_fun_return res then (SOME Error,s) else
+                   (res,s))))) | SOME (ret_handler,link_reg',l1,l2) ->
            (match find_code dest (stackSem_state_regs s \\
              link_reg') (state_code s) with NONE -> (SOME Error,s) |
              SOME prog ->
                (if state_clock s = 0 then (SOME
                  TimeOut,stackSem_empty_env s) else
-                 (match fix_clock (stackSem_dec_clock
-                   (stackSem_set_var link_reg' (Loc l1 l2) s))
-                 (stackSem_evaluate (prog,stackSem_dec_clock
-                   (stackSem_set_var link_reg' (Loc l1 l2) s))) with
-                   (SOME (Result x),s2) ->
+                 (match fix_clock (dec_clock (set_var link_reg' (Loc
+                   l1 l2) s))
+                 (stackSem_evaluate (prog,dec_clock (set_var
+                   link_reg' (Loc l1 l2) s))) with (SOME (Result x),s2)
+                   ->
                       (if ~(x = Loc l1 l2) then (SOME Error,s2) else
                         stackSem_evaluate (ret_handler,s2)) | (SOME
                         (Exception x),s2) ->
@@ -864,10 +869,9 @@ let evaluate_def = cake_define_list
                               (Continue _79),s) -> (SOME Error,s) |
                               (res,s) -> (res,s)))))`;
    `stackSem_evaluate (wordLang_Install ptr len dptr dlen ret,s) =
-        (match (stackSem_get_var ptr s,stackSem_get_var len
-          s,stackSem_get_var dptr s,stackSem_get_var dlen s) with (SOME
-          (wordLang_Word w1),SOME (wordLang_Word w2),SOME (wordLang_Word
-          w3),SOME (wordLang_Word w4)) ->
+        (match (get_var ptr s,get_var len s,get_var dptr s,get_var
+          dlen s) with (SOME (wordLang_Word w1),SOME (wordLang_Word
+          w2),SOME (wordLang_Word w3),SOME (wordLang_Word w4)) ->
             (let (cfg,progs,bm) = compile_oracle s 0 in
            (match (buffer_flush (state_code_buffer s) w1 w2,
                   (if stackSem_state_use_stack s then buffer_flush
@@ -897,28 +901,27 @@ let evaluate_def = cake_define_list
           SOME a ->
              (if state_clock s = 0 then (SOME
                TimeOut,stackSem_empty_env s) else
-               sh_mem_op op r a (stackSem_dec_clock s)) | _84 ->
-                 (SOME Error,s))`;
+               sh_mem_op op r a (dec_clock s)) | _84 -> (SOME
+                 Error,s))`;
    `stackSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
-        (match (stackSem_get_var r1 s,stackSem_get_var r2 s) with
-          (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) ->
+        (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
+          w1),SOME (wordLang_Word w2)) ->
               (match buffer_write (state_code_buffer s) w1 (w2w w2)
                 with SOME new_cb ->
                 (NONE,state_code_buffer_fupd (K new_cb) s) | _85
                   -> (SOME Error,s)) | _86 -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_DataBufferWrite r1 r2,s) =
         (if ~stackSem_state_use_stack s then (SOME Error,s) else
-        (match (stackSem_get_var r1 s,stackSem_get_var r2 s) with
-          (SOME (wordLang_Word w1),SOME (wordLang_Word w2)) ->
+        (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
+          w1),SOME (wordLang_Word w2)) ->
               (match buffer_write (state_data_buffer s) w1 w2 with
                 SOME new_db ->
                 (NONE,state_data_buffer_fupd (K new_db) s) | _87
                   -> (SOME Error,s)) | _88 -> (SOME Error,s)))`;
    `stackSem_evaluate (wordLang_FFI ffi_index ptr len ptr2 len2 ret,s) =
-       (match (stackSem_get_var len s,stackSem_get_var ptr
-         s,stackSem_get_var len2 s,stackSem_get_var ptr2 s) with (SOME
-         (wordLang_Word w),SOME (wordLang_Word w2),SOME (wordLang_Word
-         w3),SOME (wordLang_Word w4)) ->
+       (match (get_var len s,get_var ptr s,get_var len2 s,get_var
+         ptr2 s) with (SOME (wordLang_Word w),SOME (wordLang_Word
+         w2),SOME (wordLang_Word w3),SOME (wordLang_Word w4)) ->
              (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
                (state_memory s) (state_mdomain s) (be s)),
                     read_bytearray w4 (w2n w3) (mem_load_byte_aux
@@ -939,8 +942,7 @@ let evaluate_def = cake_define_list
                           -> (SOME Error,s)) | res -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_LocValue r l1 l2,s) =
          (if loc_check (state_code s) (l1,l2) then
-           (NONE,stackSem_set_var r (Loc l1 l2) s) else (SOME
-             Error,s))`;
+           (NONE,set_var r (Loc l1 l2) s) else (SOME Error,s))`;
    `stackSem_evaluate (stackLang_StackAlloc n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if stackSem_state_stack_space s < n then (SOME (Halt
@@ -956,33 +958,32 @@ let evaluate_def = cake_define_list
    `stackSem_evaluate (stackLang_StackLoad r n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if stackSem_state_stack_space s + n < LENGTH (stack s)
-           then (NONE,stackSem_set_var r (EL
-           (stackSem_state_stack_space s + n) (stack s)) s) else
-           (SOME Error,stackSem_empty_env s))`;
+           then (NONE,set_var r (EL (stackSem_state_stack_space s +
+           n) (stack s)) s) else (SOME Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackLoadAny r rn,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
-           match stackSem_get_var rn s with SOME (wordLang_Word
-             (w:'a word)) ->
+           match get_var rn s with SOME (wordLang_Word (w:'a word))
+             ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
                backend_common_word_shift (:'a)) in
                if i < LENGTH (stack s) /\
                   ((w >>> backend_common_word_shift (:'a)) <<
                     backend_common_word_shift (:'a) = w) then
-                    (NONE,stackSem_set_var r (EL i (stack s)) s) else
-                    (SOME Error,stackSem_empty_env s)) | _90 -> (SOME
+                    (NONE,set_var r (EL i (stack s)) s) else (SOME
+                    Error,stackSem_empty_env s)) | _90 -> (SOME
                     Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackStore r n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if LENGTH (stack s) <= stackSem_state_stack_space s + n
            then (SOME Error,stackSem_empty_env s) else
-           match stackSem_get_var r s with NONE -> (SOME
+           match get_var r s with NONE -> (SOME
              Error,stackSem_empty_env s) | SOME v -> (NONE,stack_fupd
              (K (LUPDATE v (stackSem_state_stack_space s + n) (stack
              s))) s))`;
    `stackSem_evaluate (stackLang_StackStoreAny r rn,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
-           match (stackSem_get_var r s,stackSem_get_var rn s) with
-             (SOME v,SOME (wordLang_Word (w:'a word))) ->
+           match (get_var r s,get_var rn s) with (SOME v,SOME
+             (wordLang_Word (w:'a word))) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
                backend_common_word_shift (:'a)) in
                if i < LENGTH (stack s) /\
@@ -993,23 +994,22 @@ let evaluate_def = cake_define_list
                     (SOME Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackGetSize r,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
-         (NONE,stackSem_set_var r (wordLang_Word (n2w
+         (NONE,set_var r (wordLang_Word (n2w
            (stackSem_state_stack_space s))) s))`;
    `stackSem_evaluate (stackLang_StackSetSize r,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
-         match stackSem_get_var r s with SOME (wordLang_Word (w:'a
-           word)) ->
+         match get_var r s with SOME (wordLang_Word (w:'a word)) ->
              (if LENGTH (stack s) <= w2n w then (SOME
-               Error,stackSem_empty_env s) else (NONE,stackSem_set_var r
+               Error,stackSem_empty_env s) else (NONE,set_var r
                (wordLang_Word (w << backend_common_word_shift (:'a)))
                            (stackSem_state_stack_space_fupd (K
                              (w2n w)) s))) | _92 -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_BitmapLoad r v,s) =
          (if ~stackSem_state_use_stack s \/ r = v then (SOME
            Error,s) else
-         match stackSem_get_var v s with SOME (wordLang_Word w) ->
+         match get_var v s with SOME (wordLang_Word w) ->
              (if LENGTH (stackSem_state_bitmaps s) <= w2n w
-               then (SOME Error,s) else (NONE,stackSem_set_var r
+               then (SOME Error,s) else (NONE,set_var r
                (wordLang_Word (EL (w2n w) (stackSem_state_bitmaps
                s))) s)) | _93 -> (SOME Error,s))`];;
 hol4_overload "evaluate" "stackSem_evaluate";;

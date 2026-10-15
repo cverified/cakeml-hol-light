@@ -83,6 +83,17 @@ def monad_enabled(text):
   return m.group(1) if m else None
 
 
+ML_TERM = re.compile(r"val\s+([A-Za-z0-9_']+)\s*=\s*"
+                     r"(?:``|\u201c)(.*?)(?:``|\u201d)", re.S)
+
+
+def ml_terms(text):
+  """the terms that an ML block keeps in a value, which the source
+     may antiquote into a definition (dataSem's ^s)"""
+  return [(m.group(1), m.group(2).strip())
+          for m in ML_TERM.finditer(text)]
+
+
 def hol_reln(text):
   """the name and the rules of an ML block that calls Hol_reln"""
   m = HOL_RELN.match(text.strip())

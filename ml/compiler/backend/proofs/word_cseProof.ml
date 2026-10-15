@@ -7,9 +7,7 @@
   Correctness proof for word_cse
 *)
 
-needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -81,10 +79,10 @@ let sem_inv_def = cake_define
   `sem_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      (!r v.
         lookup r (knowledge_to_canonical data) = SOME v ==>
-        get_var r s = get_var v s) /\
+        wordSem_get_var r s = wordSem_get_var v s) /\
      (!r v.
         lookup r (knowledge_to_latest data) = SOME v ==>
-        get_var r s = get_var v s) /\
+        wordSem_get_var r s = wordSem_get_var v s) /\
      (!n c v.
         balanced_map_lookup listCmp (instToNumList (Const n c))
           (knowledge_instrs_mem data) = SOME v ==>
@@ -93,30 +91,30 @@ let sem_inv_def = cake_define
      (!(a:'a asm_arith) v.
         balanced_map_lookup listCmp (instToNumList (Arith a))
           (knowledge_instrs_mem data) = SOME v ==>
-        (?w. get_var v s = SOME w /\
-            wordSem_evaluate (Inst (Arith a),s) = (NONE,set_var
-              (firstRegOfArith a) w s))) /\
+        (?w. wordSem_get_var v s = SOME w /\
+            wordSem_evaluate (Inst (Arith a),s) =
+              (NONE,wordSem_set_var (firstRegOfArith a) w s))) /\
      (!op src v.
         balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
           (knowledge_instrs_mem data) = SOME v ==>
         (?w. wordSem_word_exp s (wordLang_Op op [Var src;
           wordLang_Lookup CurrHeap]) = SOME w /\
-            get_var v s = SOME w)) /\
+            wordSem_get_var v s = SOME w)) /\
      (!l v.
         balanced_map_lookup listCmp [48; l] (knowledge_instrs_mem
           data) = SOME v ==>
         lookup v (wordSem_state_locals s) = SOME (Loc l 0)) /\
      (!x v.
         ALOOKUP (knowledge_gets_mem data) x = SOME v ==>
-        (?w. FLOOKUP (wordSem_state_store s) x = SOME w /\ get_var v
-          s = SOME w)) /\
+        (?w. FLOOKUP (wordSem_state_store s) x = SOME w /\
+          wordSem_get_var v s = SOME w)) /\
      (!op a ofs v.
         ~is_store op /\
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==>
-        (?w. get_var v s = SOME w /\
+        (?w. wordSem_get_var v s = SOME w /\
             (!r. wordSem_evaluate (Inst (asm_Mem op r (Addr a
-              ofs)),s) = (NONE,set_var r w s))))`;;
+              ofs)),s) = (NONE,wordSem_set_var r w s))))`;;
 
 let data_inv_def = cake_define
   `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
