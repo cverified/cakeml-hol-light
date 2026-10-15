@@ -189,6 +189,10 @@ INT_NUMERALS = set([
   ('clos_op', 'int_op_def'),
   ('integer_word', 'fromString_def'),
   ('semanticPrimitives', 'copy_array_def'),
+  # the number of the instruction that the intervals start from
+  # is the integer 0
+  ('linear_scan', 'get_intervals_ct_def'),
+  ('linear_scan', 'get_intervals_ct_monad_def'),
   # the IntT arm compares the integer v2 with 0
   ('semanticPrimitives', 'do_arith_def'),
 ])
@@ -326,6 +330,11 @@ CON_OF = {
   # patterns are the constructors of ast, which has the same
   # names ('*' is every constructor name of that theory)
   ('source_to_flat', 'compile_exp_def'): {'*': 'flatLang'},
+  # these build wordLang programs, whose constructor names
+  # linear_scan's live trees and word_bignum's language have too
+  ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},
+  ('word_alloc', 'apply_colour_def'): {'*': 'wordLang'},
+  ('word_alloc', 'full_ssa_cc_trans_def'): {'*': 'wordLang'},
 }
 
 # definitions whose patterns need the type of their constructor on
