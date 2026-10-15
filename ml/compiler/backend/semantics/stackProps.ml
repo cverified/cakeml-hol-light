@@ -19,7 +19,7 @@ needs "semantics/typeSystem.ml";;
 let clock_neutral_def = cake_define
   `clock_neutral r =
         match r with
-          wordLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
+          stackLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
         | (LocValue _1 _2 _3) -> T
         | (Halt _4) -> T
         | (Inst _5) -> T
@@ -423,7 +423,7 @@ let call_args_def = cake_define
 let stack_get_handler_labels_def = cake_define
   `stack_get_handler_labels n x2 =
         match x2 with
-          asm_Call r d h ->
+          wordLang_Call r d h ->
        (match r with SOME (x,_75,_76) -> stack_get_handler_labels n x
          UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
@@ -439,7 +439,7 @@ let stack_get_handler_labels_def = cake_define
 let get_code_labels_def = cake_define
   `stackProps_get_code_labels x1 =
         match x1 with
-          asm_Call r d h ->
+          stackLang_Call r d h ->
        (match d with INL x -> {(x,0)} | _83 -> {}) UNION
        (match r with SOME (x,_84,_85) -> stackProps_get_code_labels x
          | _86 -> {}) UNION
@@ -480,7 +480,7 @@ let stack_good_handler_labels_def = cake_define
 let no_install_def = cake_define
   `stackProps_no_install x1 =
         match x1 with
-          asm_Call r d h ->
+          wordLang_Call r d h ->
        ((match r with SOME (x,_99,_100) -> stackProps_no_install x |
          _101 -> T) /\
         (match h with SOME (x,_102,_103) -> stackProps_no_install x |
@@ -497,7 +497,7 @@ hol4_overload "no_install" "stackProps_no_install";;
 let no_shmemop_def = cake_define
   `no_shmemop x1 =
         match x1 with
-          asm_Call r d h ->
+          stackLang_Call r d h ->
        ((match r with SOME (x,_114,_115) -> no_shmemop x | _116 -> T)
          /\
         (match h with SOME (x,_117,_118) -> no_shmemop x | _119 ->

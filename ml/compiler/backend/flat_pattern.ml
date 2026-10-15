@@ -52,7 +52,7 @@ let enc_num_to_name_def = cake_define
 
 let compile_pat_bindings_def = cake_define_list
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
-   `compile_pat_bindings t i ((Pany,_3,_4) :: m) exp =
+   `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;
    `compile_pat_bindings t i (((Pvar s:flatLang_pat),k,x) :: m) exp = (
       let (spt,exp2) = compile_pat_bindings t i m exp in

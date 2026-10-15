@@ -114,7 +114,7 @@ let every_var_imm_def = cake_define
 let every_var_inst_def = cake_define
   `every_var_inst P inst =
         match inst with
-          wordLang_Const reg w -> P reg
+          asm_Const reg w -> P reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)
         | (Arith (Shift backend_common_word_shift r1 r2 ri)) -> (P r1
@@ -241,7 +241,7 @@ let max_var_exp_def = cake_define
 let max_var_inst_def = cake_define
   `max_var_inst x1 =
         match x1 with
-          Skip -> 0
+          asm_Skip -> 0
         | (Const reg w) -> reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2)
@@ -281,7 +281,7 @@ let cutsets_max_def = cake_define
 let max_var_def = cake_define
   `max_var p =
         match p with
-          Skip -> 0
+          wordLang_Skip -> 0
         | (wordLang_Move pri ls) ->
        MAX_LIST (MAP FST ls ++ MAP SND ls)
         | (Inst i) -> max_var_inst i

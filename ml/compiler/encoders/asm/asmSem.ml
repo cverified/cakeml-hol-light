@@ -78,12 +78,14 @@ let reg_imm_def = cake_define_list
 hol4_overload "reg_imm" "asmSem_reg_imm";;
 
 let binop_upd_def = cake_define_list
-  [`asmSem_binop_upd r Add w1 w2 = asmSem_upd_reg r (w1 + w2)`;
-   `asmSem_binop_upd r Sub w1 w2 = asmSem_upd_reg r (w1 - w2)`;
-   `asmSem_binop_upd r And w1 w2 = asmSem_upd_reg r (word_and w1 w2)`;
-   `asmSem_binop_upd r Or w1 w2 = asmSem_upd_reg r (word_or w1 w2)`;
-   `asmSem_binop_upd r Xor w1 w2 = asmSem_upd_reg r (word_xor w1
-  w2)`];;
+  [`asmSem_binop_upd r (Add:binop) w1 w2 = asmSem_upd_reg r (w1 + w2)`;
+   `asmSem_binop_upd r (Sub:binop) w1 w2 = asmSem_upd_reg r (w1 - w2)`;
+   `asmSem_binop_upd r (And:binop) w1 w2 = asmSem_upd_reg r (word_and
+  w1 w2)`;
+   `asmSem_binop_upd r (Or:binop) w1 w2 = asmSem_upd_reg r (word_or
+  w1 w2)`;
+   `asmSem_binop_upd r (Xor:binop) w1 w2 = asmSem_upd_reg r
+  (word_xor w1 w2)`];;
 hol4_overload "binop_upd" "asmSem_binop_upd";;
 
 let is_test_def = cake_define

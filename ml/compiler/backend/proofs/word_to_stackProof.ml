@@ -384,7 +384,7 @@ let abs_frame_eq_def = cake_define
 let compile_result_def = cake_define_list
   [`compile_result (stackSem_Result w1 w2) = Result w1`;
    `compile_result (stackSem_Exception w1 w2) = Exception w1`;
-   `compile_result TimeOut = TimeOut`;
+   `compile_result stackSem_TimeOut = (TimeOut:'w stackSem_result)`;
    `compile_result wordSem_NotEnoughSpace = Halt (wordLang_Word (n2w
   1))`;
    `compile_result (stackSem_FinalFFI f) = (FinalFFI f:'w
@@ -392,7 +392,7 @@ let compile_result_def = cake_define_list
    `compile_result (stackSem_Break k) = (Break k:'w stackSem_result)`;
    `compile_result (stackSem_Continue k) = (Continue k:'w
   stackSem_result)`;
-   `compile_result Error = Error`];;
+   `compile_result stackSem_Error = (Error:'w stackSem_result)`];;
 
 (* HOL4 ML code, not ported:
 val stack_evaluate_add_clock_NONE =

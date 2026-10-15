@@ -236,9 +236,9 @@ hol4_overload "do_int_app" "closSem_do_int_app";;
 let opw_lookup_def = cake_define_list
   [`opw_lookup backend_common_Andw = word_and`;
    `opw_lookup backend_common_Orw = word_or`;
-   `opw_lookup Xor = word_xor`;
-   `opw_lookup Add = word_add`;
-   `opw_lookup Sub = word_sub`];;
+   `opw_lookup (Xor:opw) = word_xor`;
+   `opw_lookup (Add:closLang_int_op) = word_add`;
+   `opw_lookup (Sub:closLang_int_op) = word_sub`];;
 
 let do_word_app_def = cake_define
   `closSem_do_word_app x1 ws =

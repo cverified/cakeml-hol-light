@@ -178,9 +178,9 @@ let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
 let lookup_word_op_def = cake_define_list
   [`lookup_word_op backend_common_Andw = Bitwise And`;
    `lookup_word_op backend_common_Orw = Bitwise Or`;
-   `lookup_word_op Xor = Bitwise Xor`;
-   `lookup_word_op Add = Carried Add`;
-   `lookup_word_op Sub = Carried Sub`];;
+   `lookup_word_op (Xor:binop) = Bitwise (Xor:binop)`;
+   `lookup_word_op (Add:binop) = Carried (Add:binop)`;
+   `lookup_word_op (Sub:binop) = Carried (Sub:binop)`];;
 
 let FromList_location_def = cake_define
   `FromList_location = word_num_stubs`;;

@@ -141,7 +141,7 @@ let fix_inconsistencies_def = cake_define
 let ssa_cc_trans_inst_def = cake_define
   `ssa_cc_trans_inst x ssa na =
         match x with
-          Skip -> (Skip,ssa,na)
+          asm_Skip -> (Skip,ssa,na)
         | (Const reg w) ->
        (let (reg',ssa',na') = next_var_rename reg ssa na in
          (Inst (Const reg' w),ssa',na'))
@@ -354,7 +354,8 @@ let loop_setup_def = cake_define
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
 let ssa_cc_trans_def = cake_define_list
-  [`ssa_cc_trans Skip ssa na lt = (Skip,ssa,na)`;
+  [`ssa_cc_trans wordLang_Skip ssa na lt = ((Skip:'a
+  wordLang_prog),ssa,na)`;
    `ssa_cc_trans (wordLang_Move pri ls) ssa na lt =
         (let ls_1 = MAP FST ls in
         let ls_2 = MAP SND ls in
@@ -434,7 +435,8 @@ let ssa_cc_trans_def = cake_define_list
         let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
         let mov = wordLang_Move 0 (ZIP rets nums') in
         (Seq mov (Return num' rets),ssa,na))`;
-   `ssa_cc_trans Tick ssa na lt = (Tick,ssa,na)`;
+   `ssa_cc_trans wordLang_Tick ssa na lt = ((Tick:'a
+  wordLang_prog),ssa,na)`;
    `ssa_cc_trans (wordLang_Set n exp) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         (Set n exp',ssa,na))`;
@@ -607,7 +609,7 @@ let apply_colour_imm_def = cake_define
 let apply_colour_inst_def = cake_define
   `apply_colour_inst f x =
         match x with
-          Skip -> Skip
+          asm_Skip -> Skip
         | (Const reg w) -> Const (f reg) w
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f ri))
@@ -652,7 +654,7 @@ let apply_colour_inst_def = cake_define
 let apply_colour_def = cake_define
   `apply_colour f p =
         match p with
-          Skip -> Skip
+          wordLang_Skip -> Skip
         | (wordLang_Move pri ls) ->
        wordLang_Move pri (ZIP (MAP (f o FST) ls) (MAP (f o SND) ls))
         | (Inst i) -> Inst (apply_colour_inst f i)
@@ -711,7 +713,7 @@ let apply_colour_def = cake_define
 let get_writes_inst_def = cake_define
   `get_writes_inst inst =
         match inst with
-          wordLang_Const reg w -> sptree_insert reg one LN
+          asm_Const reg w -> sptree_insert reg one LN
         | (Arith (asm_Binop bop r1 r2 ri)) -> sptree_insert r1 one LN
         | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
           sptree_insert r1 one LN
@@ -742,7 +744,7 @@ let get_writes_inst_def = cake_define
 let get_live_inst_def = cake_define
   `get_live_inst x live =
         match x with
-          Skip -> live
+          asm_Skip -> live
         | (Const reg w) -> sptree_delete reg live
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert
@@ -816,7 +818,7 @@ hol4_overload "numset_list_insert" "word_alloc_numset_list_insert";;
 let get_live_def = cake_define
   `get_live x1 live lt =
         match x1 with
-          Skip -> live
+          wordLang_Skip -> live
         | (wordLang_Move pri ls) ->
        (let killed = ITLIST sptree_delete (MAP FST ls) live in
          numset_list_insert (MAP SND ls) killed)
@@ -884,7 +886,7 @@ let get_live_def = cake_define
 let remove_dead_inst_def = cake_define
   `remove_dead_inst x live =
         match (x,live) with
-          (Skip,(live:1 spt)) -> T
+          (asm_Skip,(live:1 spt)) -> T
         | ((Const reg w),live) -> (sptree_lookup reg live = NONE)
         | ((Arith (asm_Binop bop r1 r2 ri)),live) -> (sptree_lookup
           r1 live = NONE)
@@ -1094,7 +1096,7 @@ let get_writes_def = cake_define
 let get_delta_inst_def = cake_define
   `get_delta_inst x =
         match x with
-          Skip -> reg_alloc_Delta [] []
+          asm_Skip -> reg_alloc_Delta [] []
         | (Const reg w) -> reg_alloc_Delta [reg] []
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _27
@@ -1145,7 +1147,7 @@ let get_reads_exp_def = cake_define
         | expr -> []`;;
 
 let get_clash_tree_def = cake_define_list
-  [`get_clash_tree Skip lt = reg_alloc_Delta [] []`;
+  [`get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_Move pri ls) lt =
         reg_alloc_Delta (MAP FST ls) (MAP SND ls)`;
    `get_clash_tree (wordLang_Inst i) lt = get_delta_inst i`;
@@ -1185,7 +1187,7 @@ let get_clash_tree_def = cake_define_list
   [num']`;
    `get_clash_tree (wordLang_Return num1 nums) lt = reg_alloc_Delta
   [] (num1 :: nums)`;
-   `get_clash_tree Tick lt = reg_alloc_Delta [] []`;
+   `get_clash_tree wordLang_Tick lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_LocValue r l1) lt = reg_alloc_Delta [r]
   []`;
    `get_clash_tree (wordLang_Set n exp) lt = reg_alloc_Delta []
@@ -1301,7 +1303,7 @@ let add1_rhs_mem_def = cake_define
 let get_heu_inst_def = cake_define
   `get_heu_inst x tup =
         match x with
-          Skip -> tup
+          asm_Skip -> tup
         | (Const reg w) ->
        (add1_lhs_const reg tup)
         | (Arith (asm_Binop bop r1 r2 ri)) ->

@@ -1537,7 +1537,8 @@ let set_vars_def = cake_define
 hol4_overload "set_vars" "dataSem_set_vars";;
 
 let evaluate_def = cake_define_list
-  [`dataSem_evaluate (Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
+  [`dataSem_evaluate
+  ((Skip:dataLang_prog),((s:('c,'ffi)dataSem_state))) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =
          (match get_var src (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME v ->
@@ -1554,7 +1555,7 @@ let evaluate_def = cake_define_list
                      (v,s) ->
                        (NONE,dataSem_set_var dest v (install_sfs
                          op s)))))`;
-   `dataSem_evaluate (Tick,s) =
+   `dataSem_evaluate ((Tick:dataLang_prog),s) =
          (if state_clock s = 0 then (SOME (Rerr (Rabort
            Rtimeout_error)),dataSem_flush_state T s) else
            (NONE,dec_clock s))`;

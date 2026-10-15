@@ -35,10 +35,10 @@ let compile_jump_def = cake_define_list
   (Asmi a)) (Asmi a)) (asm_JumpReg r) [] 0`];;
 
 let negate_def = cake_define_list
-  [`negate Less = asm_NotLess`;
-   `negate Equal = asm_NotEqual`;
+  [`negate (Less:cmp) = asm_NotLess`;
+   `negate (Equal:cmp) = asm_NotEqual`;
    `negate asm_Lower = asm_NotLower`;
-   `negate Test = asm_NotTest`;
+   `negate (Test:cmp) = asm_NotTest`;
    `negate asm_NotLess = Less`;
    `negate asm_NotEqual = Equal`;
    `negate asm_NotLower = asm_Lower`;

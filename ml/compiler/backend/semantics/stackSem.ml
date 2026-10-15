@@ -346,9 +346,9 @@ let sh_mem_load32_def = cake_define
 hol4_overload "sh_mem_load32" "stackSem_sh_mem_load32";;
 
 let sh_mem_op_def = cake_define_list
-  [`sh_mem_op Load r ad (s:('a,'c,'ffi)stackSem_state) = sh_mem_load
-  r ad s`;
-   `sh_mem_op Store r ad s = sh_mem_store r ad s`;
+  [`sh_mem_op (Load:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_load r ad s`;
+   `sh_mem_op (Store:memop) r ad s = sh_mem_store r ad s`;
    `sh_mem_op asm_Load8 r ad s = sh_mem_load_byte r ad s`;
    `sh_mem_op asm_Store8 r ad s = sh_mem_store_byte r ad s`;
    `sh_mem_op asm_Load16 r ad s = sh_mem_load16 r ad s`;
@@ -645,7 +645,7 @@ hol4_overload "STOP" "stackSem_STOP";;
 let get_labels_def = cake_define
   `stackSem_get_labels x1 =
         match x1 with
-          wordLang_Seq p1 p2 -> stackSem_get_labels p1 UNION
+          stackLang_Seq p1 p2 -> stackSem_get_labels p1 UNION
             stackSem_get_labels p2
         | (If _61 _62 _63 p1 p2) -> stackSem_get_labels p1 UNION
           stackSem_get_labels p2
@@ -785,7 +785,7 @@ let evaluate_def = cake_define_list
          match word_exp s (wordLang_Op binop [Var src;
            wordLang_Lookup CurrHeap]) with SOME w -> (NONE,set_var v
            (wordLang_Word w) s) | _82 -> (SOME Error,s))`;
-   `stackSem_evaluate (Tick,s) =
+   `stackSem_evaluate (wordLang_Tick,s) =
          (if state_clock s = 0 then (SOME
            TimeOut,stackSem_empty_env s) else (NONE,dec_clock s))`;
    `stackSem_evaluate (wordLang_Seq c1 c2,s) =

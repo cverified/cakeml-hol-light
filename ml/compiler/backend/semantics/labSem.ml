@@ -130,15 +130,15 @@ let reg_imm_def = cake_define_list
 hol4_overload "reg_imm" "labSem_reg_imm";;
 
 let binop_upd_def = cake_define_list
-  [`labSem_binop_upd r Add w1 w2 = upd_reg r (wordLang_Word (w1 +
-  w2))`;
-   `labSem_binop_upd r Sub w1 w2 = upd_reg r (wordLang_Word (w1 -
-  w2))`;
-   `labSem_binop_upd r And w1 w2 = upd_reg r (wordLang_Word (word_and
-  w1 w2))`;
-   `labSem_binop_upd r Or w1 w2 = upd_reg r (wordLang_Word (word_or
-  w1 w2))`;
-   `labSem_binop_upd r Xor w1 w2 = upd_reg r (wordLang_Word
+  [`labSem_binop_upd r (Add:binop) w1 w2 = upd_reg r (wordLang_Word
+  (w1 + w2))`;
+   `labSem_binop_upd r (Sub:binop) w1 w2 = upd_reg r (wordLang_Word
+  (w1 - w2))`;
+   `labSem_binop_upd r (And:binop) w1 w2 = upd_reg r (wordLang_Word
+  (word_and w1 w2))`;
+   `labSem_binop_upd r (Or:binop) w1 w2 = upd_reg r (wordLang_Word
+  (word_or w1 w2))`;
+   `labSem_binop_upd r (Xor:binop) w1 w2 = upd_reg r (wordLang_Word
   (word_xor w1 w2))`];;
 hol4_overload "binop_upd" "labSem_binop_upd";;
 
@@ -293,7 +293,7 @@ hol4_overload "addr" "labSem_addr";;
 let is_Loc_def = cake_define
   `is_Loc x1 =
         match x1 with
-          asm_Loc _34 _35 -> T
+          (Loc _34 _35:semanticPrimitives_v) -> T
         | _36 -> F`;;
 
 let mem_store_def = cake_define
@@ -343,8 +343,8 @@ let mem_store_byte_def = cake_define
               -> assert F s) | _38 -> assert F s))`;;
 
 let mem_op_def = cake_define_list
-  [`labSem_mem_op Load r a = mem_load r a`;
-   `labSem_mem_op Store r a = mem_store r a`;
+  [`labSem_mem_op (Load:memop) r a = mem_load r a`;
+   `labSem_mem_op (Store:memop) r a = mem_store r a`;
    `labSem_mem_op asm_Load32 r a = mem_load32 r a`;
    `labSem_mem_op asm_Store32 r a = mem_store32 r a`;
    `labSem_mem_op asm_Load8 r a = mem_load_byte r a`;
@@ -354,7 +354,7 @@ let mem_op_def = cake_define_list
 hol4_overload "mem_op" "labSem_mem_op";;
 
 let asm_inst_def = cake_define_list
-  [`asm_inst Skip s = (s:('a,'c,'ffi)labSem_state)`;
+  [`asm_inst asm_Skip s = (s:('a,'c,'ffi)labSem_state)`;
    `asm_inst (asm_Const r imm) s = upd_reg r (wordLang_Word imm) s`;
    `asm_inst (asm_Arith x) s = arith_upd x s`;
    `asm_inst (asm_Mem m r a) s = mem_op m r a s`;
@@ -453,11 +453,11 @@ let share_mem_store_def = cake_define
                       s)))) else NONE)) | _40 -> NONE)`;;
 
 let share_mem_op_def = cake_define_list
-  [`share_mem_op Load r ad (s:('a,'c,'ffi)labSem_state) =
+  [`share_mem_op (Load:memop) r ad (s:('a,'c,'ffi)labSem_state) =
         share_mem_load r ad s 0`;
    `share_mem_op asm_Load8 r ad s = share_mem_load r ad s 1`;
    `share_mem_op asm_Load16 r ad s = share_mem_load r ad s 2`;
-   `share_mem_op Store r ad s = share_mem_store r ad s 0`;
+   `share_mem_op (Store:memop) r ad s = share_mem_store r ad s 0`;
    `share_mem_op asm_Store8 r ad s = share_mem_store r ad s 1`;
    `share_mem_op asm_Store16 r ad s = share_mem_store r ad s 2`;
    `share_mem_op asm_Load32 r ad s = share_mem_load r ad s 4`;

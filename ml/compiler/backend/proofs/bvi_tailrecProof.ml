@@ -68,7 +68,7 @@ fun cases_on_op q = Cases_on q
 let op_id_val_def = cake_define_list
   [`op_id_val bvi_tailrec_Plus = Number (&0)`;
    `op_id_val bvi_tailrec_Times = Number (&1)`;
-   `op_id_val Append = Block nil_tag []`;
+   `op_id_val (Append:assoc_op) = Block nil_tag []`;
    `op_id_val bvi_tailrec_Noop = Number (&6333)`];;
 
 let env_rel_def = cake_define

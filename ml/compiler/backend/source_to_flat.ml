@@ -63,7 +63,7 @@ let compile_var_def = cake_define_list
 
 let compile_pat_def = cake_define_list
   [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
-   `compile_pat env Pany = Pany`;
+   `compile_pat env (Pany:ast_pat) = (Pany:ast_pat)`;
    `compile_pat env (Plit l:ast_pat) = (Plit l:ast_pat)`;
    `compile_pat env (ast_Pcon id' ps) =
         flatLang_Pcon

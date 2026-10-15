@@ -173,7 +173,7 @@ let dt_eval_guard_def = cake_define_list
 let dt_eval_def = cake_define_list
   [`dt_eval refs _14 (pattern_semantics_Leaf k) = SOME (MatchSuccess
   k)`;
-   `dt_eval refs _15 Fail = SOME (MatchFailure)`;
+   `dt_eval refs _15 (Fail:dTree) = SOME (MatchFailure)`;
    `dt_eval refs _16 pattern_semantics_TypeFail = NONE`;
    `dt_eval refs v (If guard' dt1 dt2:dTree) =
          (match dt_eval_guard refs v guard' with NONE -> NONE |

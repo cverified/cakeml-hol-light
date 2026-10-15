@@ -234,11 +234,11 @@ let shiftToNum_def = cake_define_list
    `shiftToNum Ror = 43`];;
 
 let arithOpToNum_def = cake_define_list
-  [`arithOpToNum Add = (35:num)`;
-   `arithOpToNum Sub = 36`;
-   `arithOpToNum And = 37`;
-   `arithOpToNum Or = 38`;
-   `arithOpToNum Xor = 39`];;
+  [`arithOpToNum (Add:binop) = (35:num)`;
+   `arithOpToNum (Sub:binop) = 36`;
+   `arithOpToNum (And:binop) = 37`;
+   `arithOpToNum (Or:binop) = 38`;
+   `arithOpToNum (Xor:binop) = 39`];;
 
 let regImmToNumList_def = cake_define_list
   [`regImmToNumList (Reg r) = [33; r + 100]`;
@@ -262,11 +262,11 @@ let arithToNumList_def = cake_define_list
   r3 + 100]`];;
 
 let memOpToNum_def = cake_define_list
-  [`memOpToNum Load = (21:num)`;
+  [`memOpToNum (Load:memop) = (21:num)`;
    `memOpToNum asm_Load8 = 22`;
    `memOpToNum asm_Load16 = 46`;
    `memOpToNum asm_Load32 = 44`;
-   `memOpToNum Store = 23`;
+   `memOpToNum (Store:memop) = 23`;
    `memOpToNum asm_Store8 = 47`;
    `memOpToNum asm_Store16 = 24`;
    `memOpToNum asm_Store32 = 45`];;
@@ -451,11 +451,11 @@ let can_mem_arith_def = cake_define
       | _92 -> F`;;
 
 let is_store_def = cake_define_list
-  [`is_store Load = F`;
+  [`is_store (Load:memop) = F`;
    `is_store asm_Load8 = F`;
    `is_store asm_Load16 = F`;
    `is_store asm_Load32 = F`;
-   `is_store Store = T`;
+   `is_store (Store:memop) = T`;
    `is_store asm_Store8 = T`;
    `is_store asm_Store16 = T`;
    `is_store asm_Store32 = T`];;
@@ -463,7 +463,7 @@ let is_store_def = cake_define_list
 let word_cseInst_def = cake_define
   `word_cseInst data x2 =
         match (data,x2) with
-          ((data:knowledge),Skip) -> (data,Inst Skip)
+          ((data:knowledge),asm_Skip) -> (data,Inst Skip)
         | (data,(Const r w)) ->
         (let data = invalidate_data data r in
           if EVEN r then (data,Inst (Const r w)) else
@@ -620,7 +620,7 @@ let word_cse_def = cake_define_list
         (let data = invalidate_data data r in
           add_to_data_aux data r [48; l] ((LocValue r l:'a
             wordLang_prog)))`;
-   `word_cse data Skip = (data,Skip)`;
+   `word_cse data wordLang_Skip = (data,(Skip:'a wordLang_prog))`;
    `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
   balanced_map_empty) data,(Store e r:'a wordLang_prog))`;
    `word_cse data (wordLang_Assign r e) = (data,wordLang_Assign r e)`;
@@ -628,7 +628,7 @@ let word_cse_def = cake_define_list
   wordLang_prog))`;
    `word_cse data (wordLang_Return r1 r2) = (data,(Return r1 r2:'a
   wordLang_prog))`;
-   `word_cse data Tick = (data,Tick)`;
+   `word_cse data wordLang_Tick = (data,(Tick:'a wordLang_prog))`;
    `word_cse data (wordLang_Alloc r m) = (empty_data,(Alloc r m:'a
   wordLang_prog))`;
    `word_cse data (wordLang_Install p l dp dl m) =

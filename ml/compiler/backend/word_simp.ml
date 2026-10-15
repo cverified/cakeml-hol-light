@@ -25,7 +25,7 @@ let SmartSeq_def = cake_define
 let seq_assoc_def = cake_define
   `Seq_assoc p1 other =
         match other with
-          Skip -> p1
+          wordLang_Skip -> p1
         | (Seq q1 q2) -> Seq_assoc (Seq_assoc p1 q1) q2
         | (If v n r q1 q2) ->
         SmartSeq p1 (If v n r (Seq_assoc Skip q1) (Seq_assoc Skip
@@ -149,7 +149,7 @@ let const_fp_move_cs_def = cake_define_list
 let const_fp_inst_cs_def = cake_define
   `const_fp_inst_cs x1 cs =
         match x1 with
-          wordLang_Const r _14 -> sptree_delete r cs
+          asm_Const r _14 -> sptree_delete r cs
         | (Arith (asm_Binop _15 r _16 _17)) -> sptree_delete r cs
         | (Arith (Shift _18 r _19 _20)) -> sptree_delete r cs
         | (Arith (asm_AddCarry r1 _21 _22 r2)) -> sptree_delete r2

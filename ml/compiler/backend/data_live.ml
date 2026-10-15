@@ -73,7 +73,8 @@ let compile_def = cake_define_list
          (let (d2,l2) = data_live_compile c2 live in
          let (d1,l1) = data_live_compile c1 l2 in
            (dataLang_Seq d1 d2,l1))`;
-   `data_live_compile Tick live = (Tick,live)`;
+   `data_live_compile (Tick:dataLang_prog) live =
+  ((Tick:dataLang_prog),live)`;
    `data_live_compile (dataLang_MakeSpace k names) live =
          (let l1 = inter names live in (dataLang_MakeSpace k
            l1,l1))`;

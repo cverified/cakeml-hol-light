@@ -662,8 +662,10 @@ class Porter:
     def go(p):
       if done[0]: return p
       while p.kind == 'paren': p = p.e
-      if p.kind == 'app':
-        h, args0 = hterm.strip_app(p)
+      if p.kind in ('app', 'id'):
+        # a constructor without arguments is a pattern of its own
+        h, args0 = (hterm.strip_app(p) if p.kind == 'app'
+                    else (p, []))
         if h.kind == 'id' and (h.name in self.ctx.cons or
                                '$' in h.name):
           if ambiguous and not self.ambiguous_con(h.name):
@@ -1088,6 +1090,11 @@ class Porter:
                         not iscon(args[i].name)
                         for _, args, _ in cls)]
     pr = hterm.Printer(self.ctx)
+    # the theories that can provide the constructors of every
+    # pattern, so that an ambiguous one is resolved as HOL4 does
+    # (word_copy's 'copy_prop_inst Skip cs = (Skip,cs)' matches on
+    # the Skip of asm and gives back the Skip of wordLang)
+    self.clause_clash(body)
     arms = []
     for _, args, r in cls:
       sub = {args[i].name: names[i] for i in range(n)
@@ -1543,6 +1550,14 @@ def port(thy, db=None):
 
 if __name__ == '__main__':
   db = dbmod.Db()
+  # what a theory's port looks like depends on what the port of
+  # its ancestors made of them (the type parameters of a datatype,
+  # for one), so the ancestors go first, as in a whole run
+  want = set(sys.argv[1:])
+  anc = set()
+  for thy in want: anc |= db.ancestors(thy)
+  for thy, _, _ in dbmod.load_order():
+    if thy in anc - want: port(thy, db)
   for thy in sys.argv[1:]:
     path, warn, amb = port(thy, db)
     print('wrote', path)

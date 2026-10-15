@@ -1,11 +1,12 @@
 #!/bin/sh
 # check <mlfile> : load an ml file of the port in a session cloned
 # from hol-template-cakeml; print the time, the number of axioms and
-# the first failure
+# the first failure.  S=<name> uses another session, so that several
+# checks can run at the same time
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 f="$1"
 case "$f" in /*) ;; *) f="/home/freek/claude/hol-light/cakeml/ml/$f";; esac
-s=chk
+s=${S:-chk}
 repl-kill $s > /dev/null 2>&1
 rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
 repl-clone hol-template-cakeml $s > /dev/null 2>&1 || exit 1

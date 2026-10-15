@@ -11,7 +11,6 @@ needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
@@ -20,7 +19,6 @@ needs "compiler/backend/proofs/stack_namesProof.ml";;
 needs "compiler/backend/proofs/stack_rawcallProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/proofs/word_to_stackProof.ml";;
-needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
@@ -456,7 +454,7 @@ val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
 let complex_get_code_labels_def = cake_define
   `complex_get_code_labels x1 =
         match x1 with
-          (Seq p1 p2:live_tree) -> complex_get_code_labels p1 UNION
+          stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION
             complex_get_code_labels p2
         | (If _14 _15 _16 p1 p2) -> complex_get_code_labels p1 UNION
           complex_get_code_labels p2

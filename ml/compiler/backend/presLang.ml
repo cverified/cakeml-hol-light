@@ -141,7 +141,8 @@ let fp_top_to_display_def = cake_define
 
 let word_size_to_display_def = cake_define_list
   [`word_size_to_display ast_W8 = empty_item (implode "W8")`;
-   `word_size_to_display W64 = empty_item (implode "W64")`];;
+   `word_size_to_display (W64:word_size) = empty_item (implode
+  "W64")`];;
 
 let opb_to_display_def = cake_define_list
   [`opb_to_display ast_Lt = empty_item (implode "Lt")`;
@@ -152,9 +153,9 @@ let opb_to_display_def = cake_define_list
 let opw_to_display_def = cake_define_list
   [`opw_to_display backend_common_Andw = empty_item (implode "Andw")`;
    `opw_to_display backend_common_Orw = empty_item (implode "Orw")`;
-   `opw_to_display Xor = empty_item (implode "Xor")`;
-   `opw_to_display Add = empty_item (implode "Add")`;
-   `opw_to_display Sub = empty_item (implode "Sub")`];;
+   `opw_to_display (Xor:binop) = empty_item (implode "Xor")`;
+   `opw_to_display (Add:binop) = empty_item (implode "Add")`;
+   `opw_to_display (Sub:binop) = empty_item (implode "Sub")`];;
 
 let shift_to_display_def = cake_define_list
   [`shift_to_display Lsl = empty_item (implode "Lsl")`;
@@ -179,23 +180,25 @@ let thunk_op_to_display_def = cake_define_list
   "ForceThunk")`];;
 
 let test_to_display_def = cake_define_list
-  [`test_to_display Equal = empty_item (implode "Equal")`;
+  [`test_to_display (Equal:test) = empty_item (implode "Equal")`;
    `test_to_display (ast_Compare cmp) = displayLang_Item NONE
   (implode "Compare") [opb_to_display cmp]`;
    `test_to_display (ast_AltCompare cmp) = displayLang_Item NONE
   (implode "AltCompare") [opb_to_display cmp]`];;
 
 let arith_to_display_def = cake_define_list
-  [`arith_to_display Add = empty_item (implode "Add")`;
-   `arith_to_display Sub = empty_item (implode "Sub")`;
+  [`arith_to_display (Add:binop) = empty_item (implode "Add")`;
+   `arith_to_display (Sub:binop) = empty_item (implode "Sub")`;
    `arith_to_display ast_Mul = empty_item (implode "Mul")`;
-   `arith_to_display Div = empty_item (implode "Div")`;
-   `arith_to_display Mod = empty_item (implode "Mod")`;
-   `arith_to_display And = empty_item (implode "And")`;
-   `arith_to_display Xor = empty_item (implode "Xor")`;
-   `arith_to_display Or = empty_item (implode "Or")`;
+   `arith_to_display (Div:closLang_int_op) = empty_item (implode
+  "Div")`;
+   `arith_to_display (Mod:closLang_int_op) = empty_item (implode
+  "Mod")`;
+   `arith_to_display (And:binop) = empty_item (implode "And")`;
+   `arith_to_display (Xor:binop) = empty_item (implode "Xor")`;
+   `arith_to_display (Or:binop) = empty_item (implode "Or")`;
    `arith_to_display ast_Neg = empty_item (implode "Neg")`;
-   `arith_to_display Not = empty_item (implode "Not")`;
+   `arith_to_display (Not:ast_arith) = empty_item (implode "Not")`;
    `arith_to_display ast_Abs = empty_item (implode "Abs")`;
    `arith_to_display ast_Sqrt = empty_item (implode "Sqrt")`;
    `arith_to_display ast_FMA = empty_item (implode "FMA")`];;
@@ -1185,8 +1188,8 @@ let stack_prog_to_display_def = cake_define_list
   displayLang_Item NONE (implode "ffi")
          (string_imp nm :: MAP num_to_display [cp; cl; ap; al;
            ra])`;
-   `stack_prog_to_display (SUC k) ns Tick = empty_item (implode
-  "tick")`;
+   `stack_prog_to_display (SUC k) ns stackLang_Tick = empty_item
+  (implode "tick")`;
    `stack_prog_to_display (SUC k) ns (stackLang_LocValue n1 n2 n3) =
       displayLang_Item NONE (implode "loc_value") [num_to_display
         n1;
@@ -1335,8 +1338,8 @@ let num_sets_to_display_def = cake_define
 
 let word_prog_to_display_def = cake_define_list
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
-   `word_prog_to_display (SUC k) ns Skip = empty_item (implode
-  "skip")`;
+   `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
+  (implode "skip")`;
    `word_prog_to_display (SUC k) ns (wordLang_Move n mvs) =
   displayLang_Item NONE (implode "move")
         [num_to_display n; displayLang_Tuple (MAP (\(n1,n2). Tuple
@@ -1416,8 +1419,8 @@ let word_prog_to_display_def = cake_define_list
          displayLang_Item NONE (implode "return")
            [num_to_display n;
             Tuple (MAP num_to_display vs)]`;
-   `word_prog_to_display (SUC k) ns Tick = empty_item (implode
-  "tick")`;
+   `word_prog_to_display (SUC k) ns wordLang_Tick = empty_item
+  (implode "tick")`;
    `word_prog_to_display (SUC k) ns (wordLang_LocValue n1 n2) =
         displayLang_Item NONE (implode "loc_value") [String
           (attach_name ns (SOME n1)); num_to_display n2]`;

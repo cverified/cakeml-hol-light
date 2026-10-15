@@ -48,14 +48,14 @@ hol4_overload "Any" "bvi_tailrec_Any";;
 let op_type_def = cake_define
   `op_type x1 =
       match x1 with
-        Append -> List
+        (Append:assoc_op) -> List
       | bvi_tailrec_Noop -> bvi_tailrec_Any
       | _5 -> Int`;;
 
 let to_op_def = cake_define_list
   [`to_op bvi_tailrec_Plus = closLang_IntOp Add`;
    `to_op bvi_tailrec_Times = closLang_IntOp closLang_Mult`;
-   `to_op Append = closLang_BlockOp ListAppend`;
+   `to_op (Append:assoc_op) = closLang_BlockOp ListAppend`;
    `to_op bvi_tailrec_Noop = closLang_IntOp Mod`];;
 
 let from_op_def = cake_define
@@ -83,7 +83,8 @@ let id_from_op_def = cake_define_list
   (closLang_Const (&0))) []`;
    `id_from_op bvi_tailrec_Times = bvi_Op (closLang_IntOp
   (closLang_Const (&1))) []`;
-   `id_from_op Append = bvi_Op (closLang_BlockOp (Cons nil_tag)) []`;
+   `id_from_op (Append:assoc_op) = bvi_Op (closLang_BlockOp (Cons
+  nil_tag)) []`;
    `id_from_op bvi_tailrec_Noop = dummy`];;
 
 let index_of_def = cake_define
@@ -207,7 +208,7 @@ let term_ok_def = cake_define
 let try_swap_def = cake_define
   `try_swap loc opr exp =
         match opr with
-          Append -> exp
+          (Append:assoc_op) -> exp
         | opr ->
        (match opbinargs opr exp with
          NONE -> exp | SOME (l,r) ->
@@ -229,7 +230,7 @@ let check_op_def = cake_define
 let decide_ty_def = cake_define
   `decide_ty x1 x2 =
         match (x1,x2) with
-          (Int,Int) -> Int
+          ((Int:v_ty),(Int:v_ty)) -> Int
         | (List,List) -> List
         | (_15,_16) -> bvi_tailrec_Any`;;
 

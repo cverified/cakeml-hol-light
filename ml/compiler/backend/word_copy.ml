@@ -89,7 +89,7 @@ let remove_eqs_def = cake_define_list
 let copy_prop_inst_def = cake_define
   `copy_prop_inst x1 cs =
         match x1 with
-          Skip -> (Skip,cs)
+          asm_Skip -> (Skip,cs)
         | (Const reg w) ->
        (Inst (Const reg w),remove_eq cs reg)
         | (Arith (asm_Binop bop r1 r2 ri)) ->

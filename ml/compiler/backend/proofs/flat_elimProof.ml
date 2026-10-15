@@ -140,7 +140,7 @@ let v_has_Eval_def1 = cake_define_wf
   `MEASURE flatSem_v_size`
   `v_has_Eval x1 =
         match x1 with
-          (Closure env _12 e:semanticPrimitives_v) -> (has_Eval e \/
+          (Closure env _12 e:flatSem_v) -> (has_Eval e \/
        EXISTS v_has_Eval (MAP SND (semanticPrimitives_sem_env_v
          env)))
         | (Conv _13 vl) -> EXISTS v_has_Eval vl

@@ -58,7 +58,7 @@ hol4_overload "Pas" "flatLang_Pas";;
 hol4_overload "Pref" "flatLang_Pref";;
 
 let pat_bindings_def = cake_define_list
-  [`flatLang_pat_bindings Pany = []`;
+  [`flatLang_pat_bindings (Pany:flatLang_pat) = []`;
    `flatLang_pat_bindings (Pvar n:flatLang_pat) = [n]`;
    `flatLang_pat_bindings (Plit l:flatLang_pat) = []`;
    `flatLang_pat_bindings (Pcon _2 ps:flatLang_pat) =

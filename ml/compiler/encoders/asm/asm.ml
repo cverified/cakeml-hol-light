@@ -344,10 +344,10 @@ let asm_ok_def = cake_define_list
   (asm_config_code_alignment c) (asm_config_loc_offset c)) c w`];;
 
 let word_cmp_def = cake_define_list
-  [`asm_word_cmp Equal w1 w2 = (w1 = w2)`;
+  [`asm_word_cmp (Equal:cmp) w1 w2 = (w1 = w2)`;
    `asm_word_cmp Less w1 w2 = (w1 < w2)`;
    `asm_word_cmp asm_Lower w1 w2 = (w1 <+ w2)`;
-   `asm_word_cmp Test w1 w2 = ((w1 && w2) = (n2w 0))`;
+   `asm_word_cmp (Test:cmp) w1 w2 = ((w1 && w2) = (n2w 0))`;
    `asm_word_cmp asm_NotEqual w1 w2 = (~(w1 = w2))`;
    `asm_word_cmp asm_NotLess w1 w2 = ~(w1 < w2)`;
    `asm_word_cmp asm_NotLower w1 w2 = ~(w1 <+ w2)`;

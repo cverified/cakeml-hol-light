@@ -27,7 +27,7 @@ let make_partial_conf_def = cake_define
 let gc_combined_def = cake_define
   `gc_combined conf x2 x3 =
       match (x2,x3) with
-        (None,(roots,heap,(gs:gen_state),_2,_3)) ->
+        ((None:gc_kind),(roots,heap,(gs:gen_state),_2,_3)) ->
      (roots,heap,0,0,gs,T)
       | (Simple,(roots,heap,gs,_4,_5)) ->
      (let (roots,heap,a,c) = full_gc (roots,heap,limit conf) in

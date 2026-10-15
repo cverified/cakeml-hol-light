@@ -42,7 +42,7 @@ let is_hidden_def = cake_define
         | _1 -> F`;;
 
 let total_pat_def = cake_define_list
-  [`total_pat Pany = T`;
+  [`total_pat (Pany:flatLang_pat) = T`;
    `total_pat (Pvar _3:flatLang_pat) = T`;
    `total_pat (Pcon NONE xs:flatLang_pat) = total_pat_list xs`;
    `total_pat (Pas p _5:flatLang_pat) = total_pat p`;

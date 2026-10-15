@@ -622,7 +622,7 @@ let SaveRegs_def = cake_define_list
 let compile_def = cake_define
   `word_bignum_compile n l i cs x5 =
         match x5 with
-          Skip -> (wordLang_Skip,l,i,cs)
+          word_bignum_Skip -> (wordLang_Skip,l,i,cs)
         | Continue -> (Call NONE (SOME n) [0] NONE,l,i,cs)
         | (word_bignum_Rec save_regs names) ->
         (LoadRegs save_regs

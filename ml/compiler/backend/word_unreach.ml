@@ -46,7 +46,7 @@ let SimpSeq_def = cake_define
 let seq_assoc_right_def = cake_define
   `Seq_assoc_right p1 acc =
         match p1 with
-          Skip -> acc
+          wordLang_Skip -> acc
         | (Seq q1 q2) ->
         Seq_assoc_right q1 (Seq_assoc_right q2 acc)
         | (If v n r q1 q2) ->

@@ -54,7 +54,7 @@ let convert_sub_def = cake_define
 let op_consts_def = cake_define
   `op_consts x1 =
         match x1 with
-          And -> Const (--(n2w 0))
+          (And:binop) -> Const (--(n2w 0))
         | _5 -> Const (n2w 0)`;;
 
 (* Returns a definite value *)

@@ -53,7 +53,7 @@ hol4_overload "hide" "word_allocProof_hide";;
 let colouring_ok_def = cake_define
   `colouring_ok f prog live lt =
         match prog with
-          (Seq s1 s2:live_tree) ->
+          wordLang_Seq s1 s2 ->
        (let s2_live = get_live s2 live lt in
        let s1_live = get_live s1 s2_live lt in
          INJ f (domain s1_live) UNIV /\
