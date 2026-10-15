@@ -29,14 +29,13 @@ with ML code of its own that the port cannot run:
 |---|---|
 | `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds.  The port declares the constant (`cake_declare`, which adds no axiom) and says nothing about its value |
 
-Two definitions of the first pass are not ported at all, because
-HOL4 makes them from a theorem that the second pass has to prove
-first (`new_specification` of a Skolem form):
+One definition of the first pass is not ported, because HOL4
+makes it from a theorem that the second pass has to prove first
+(`new_specification` of a Skolem form):
 
 | definition | what HOL4 does |
 |---|---|
-| `pegComplete$fFail` (`fFAIL1`, `fFAIL2`) | the Skolem functions of `peg_respects_firstSets` |
-| `state_transformer$MWHILE` | the fixpoint of the while loop of the state monad (not used by the port) |
+| `pegComplete$fFail` (`fFAIL1`, `fFAIL2`) | the Skolem functions of `peg_respects_firstSets`, which say where the parser fails on a token outside the first set.  Only the proofs of `pegComplete` use them |
 
 One definition is proved to exist by hand, because HOL Light
 cannot find the termination argument that HOL4 gives:
