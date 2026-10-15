@@ -23,6 +23,11 @@ repl-step template-cakeml 'loadt "<cakeml>/ml/lib/preamble.ml";;'
 (`tools/bin/retemplate` does that, and makes `hol-base` again
 when it is gone.)
 
+**Always rebuild the template after changing `ml/lib/`**: a
+working session is a clone of it, so a session made before the
+change has the old library (a run of `tools/bin/checkseq` with an
+old template fails on everything that the change adds).
+
 ## Interrupting and killing
 
 A clone is forked from another HOL Light process, so it is not a
