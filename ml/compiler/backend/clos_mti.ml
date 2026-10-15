@@ -53,7 +53,7 @@ let intro_multi_def = cake_define_wf
         | (e1 :: e2 :: es) ->
        HD (intro_multi max_app [e1]) :: HD (intro_multi max_app [e2])
          :: intro_multi max_app es
-        | [Var t n] -> [Var t n]
+        | [(Var t n:closLang_exp)] -> [Var t n]
         | [If t e1 e2 e3] ->
       [If t (HD (intro_multi max_app [e1]))
             (HD (intro_multi max_app [e2]))

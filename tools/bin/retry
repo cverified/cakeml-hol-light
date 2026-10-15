@@ -26,8 +26,12 @@ repl-kill try > /dev/null 2>&1
 rm -f /home/freek/claude/hol-light/bin/fifo/hol-try
 repl-clone hol-$s try > /dev/null 2>&1 || {
   echo "retry: cannot clone hol-$s"; exit 1; }
+# PRE=<file> loads something first (a definition that the file
+# needs and that the session of the run does not have yet)
+[ -n "$PRE" ] && TIMEOUT=${TIMEOUT:-600} repl-step try \
+  "loadt \"$PRE\";;" > /dev/null 2>&1
 TIMEOUT=${TIMEOUT:-600} repl-step try "loadt \"$C/tmp/retry.ml\";;" \
-  2>&1 | grep -E '^(cake_|Exception|Error|Warning [0-9])' |
-  head -${TAIL:-4}
+  2>&1 | grep -A 3 -E '^(cake_|Exception|Error|Warning [0-9])' |
+  tr '\n' ' ' | fold -w 160 | head -${TAIL:-6}
 TIMEOUT=60 repl-step try 'length(axioms());;' 2>&1 |
   grep -E '^val it' | sed 's/^/axioms: /'

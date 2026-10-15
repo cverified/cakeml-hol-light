@@ -59,8 +59,8 @@ let word_gc_move_def = cake_define_list
   [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) = ((Loc l1
   l2:'a word_loc),i,pa,m,(l2 = 0))`;
    `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
-         (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word
-           w,i,pa,m,T) else
+         (if (w && (n2w 1)) = (n2w 0) then ((wordLang_Word w:'a
+           word_loc),i,pa,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
              if is_fwd_ptr v then
@@ -290,8 +290,8 @@ let word_gen_gc_move_def = cake_define_list
   [`word_gen_gc_move conf (wordLang_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
          ((Loc l1 l2:'a word_loc),i,pa,ib,pb,m,(l2 = 0))`;
    `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
-         (if ((n2w 1) && w) = (n2w 0) then (wordLang_Word
-           w,i,pa,ib,pb,m,T) else
+         (if ((n2w 1) && w) = (n2w 0) then ((wordLang_Word w:'a
+           word_loc),i,pa,ib,pb,m,T) else
            let c = (ptr_to_addr conf old w IN dm) in
            let v = m (ptr_to_addr conf old w) in
            let c = (c /\ isWord v) in
@@ -306,7 +306,7 @@ let word_gen_gc_move_def = cake_define_list
                  if is_ref_header (theWord v) then
                    let v = ib - (len + (n2w 1)) in
                    let pb1 = pb - (len + (n2w 1)) * bytes_in_word in
-                   let (_5,m1,c1) = memcpy (len + (n2w 1))
+                   let (_7,m1,c1) = memcpy (len + (n2w 1))
                      header_addr pb1 m dm in
                    let c = (c /\ header_addr IN dm /\ c1) in
                    let m1 = (header_addr =+ wordLang_Word (v << 2))

@@ -20,13 +20,13 @@ needs "semantics/evaluate.ml";;
 let dest_Let_def = cake_define
   `dest_Let x1 =
       match x1 with
-        ast_Let opt x y -> SOME (opt,x,y)
+        (ast_Let opt x y:ast_exp) -> SOME (opt,x,y)
       | _1 -> NONE`;;
 
 let dest_Letrec_def = cake_define
   `dest_Letrec x1 =
       match x1 with
-        ast_Letrec funs x -> SOME (funs,x)
+        (ast_Letrec funs x:ast_exp) -> SOME (funs,x)
       | _2 -> NONE`;;
 
 let lift_let_def = cake_define

@@ -1878,15 +1878,15 @@ let live_store_rel_def = cake_define
 let nlive_store_def = cake_define
   `nlive_store nlive x2 =
         match x2 with
-          wordLang_Op _2 ls ->
+          wordLang_Op _3 ls ->
          EVERY (nlive_store nlive) ls
         | (wordLang_Lookup s) -> ~(
        s IN set_of_list nlive)
         | (Load e) ->
        nlive_store nlive e
-        | (Shift _3 e1 e2) ->
+        | (Shift _4 e1 e2) ->
        nlive_store nlive e1 /\ nlive_store nlive e2
-        | _4 -> T`;;
+        | _5 -> T`;;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_remove_dead[Move]:

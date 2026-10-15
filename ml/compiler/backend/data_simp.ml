@@ -32,7 +32,7 @@ let pSeq_def = cake_define
 let simp_def = cake_define
   `simp c1 c =
         match c1 with
-          dataLang_Skip -> c
+          (dataLang_Skip:dataLang_prog) -> c
         | (dataLang_Return n) -> dataLang_Return n
         | (Raise n) -> Raise n
         | (dataLang_Seq c1 c2) -> simp c1 (simp c2 c)

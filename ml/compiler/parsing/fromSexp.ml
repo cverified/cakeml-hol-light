@@ -101,25 +101,25 @@ let SEXSTR_def = cake_define
 let odestSEXSTR_def = cake_define
   `odestSEXSTR x1 =
         match x1 with
-          SX_STR s -> OPTION_MAP implode (decode_control s)
+          (SX_STR s) -> OPTION_MAP implode (decode_control s)
         | _3 -> NONE`;;
 
 let odestSXSTR_def = cake_define
   `odestSXSTR x1 =
         match x1 with
-          SX_STR s -> SOME (implode s)
+          (SX_STR s) -> SOME (implode s)
         | _4 -> NONE`;;
 
 let odestSXSYM_def = cake_define
   `odestSXSYM x1 =
         match x1 with
-          SX_SYM s -> SOME (implode s)
+          (SX_SYM s) -> SOME (implode s)
         | _5 -> NONE`;;
 
 let odestSXNUM_def = cake_define
   `odestSXNUM x1 =
         match x1 with
-          SX_NUM n -> SOME n
+          (SX_NUM n) -> SOME n
         | _6 -> NONE`;;
 
 let sexpopt_def = cake_define
@@ -327,7 +327,7 @@ let encode_thunk_mode_def = cake_define_list
 let decode_test_def = cake_define
   `fromSexp_decode_test x1 =
       match x1 with
-        SX_SYM s ->
+        (SX_SYM s) ->
      (if s = "Equal" then SOME Equal else
       if s = "Less" then SOME (ast_Compare ast_Lt) else
       if s = "LessEq" then SOME (ast_Compare ast_Leq) else
@@ -344,7 +344,7 @@ hol4_overload "decode_test" "fromSexp_decode_test";;
 let decode_prim_type_def = cake_define
   `decode_prim_type x1 =
       match x1 with
-        SX_SYM s ->
+        (SX_SYM s) ->
      (if s = "BoolT" then SOME ast_BoolT else
       if s = "IntT" then SOME ast_IntT else
       if s = "CharT" then SOME ast_CharT else
@@ -357,7 +357,7 @@ let decode_prim_type_def = cake_define
 let sexparith_def = cake_define
   `sexparith x1 =
       match x1 with
-        SX_SYM s ->
+        (SX_SYM s) ->
      (if s = "Add" then SOME ast_Add else
       if s = "Sub" then SOME ast_Sub else
       if s = "Mul" then SOME ast_Mul else
@@ -376,7 +376,7 @@ let sexparith_def = cake_define
 let sexplog_def = cake_define
   `sexplog x1 =
       match x1 with
-        SX_SYM s ->
+        (SX_SYM s) ->
      (if s = "Andalso" then SOME Andalso else
       if s = "Orelse" then SOME Orelse else NONE)
       | _14 -> NONE`;;
@@ -384,7 +384,7 @@ let sexplog_def = cake_define
 let sexpop_def = cake_define
   `sexpop x1 =
         match x1 with
-          SX_SYM s ->
+          (SX_SYM s) ->
      (if s = "Equality" then SOME ast_Equality else
      if s = "Opapp" then SOME ast_Opapp else
      if s = "Opassign" then SOME ast_Opassign else
@@ -458,7 +458,7 @@ let sexpop_def = cake_define
 let sexplocpt_def = cake_define
   `sexplocpt s =
         match s with
-          SX_SYM s ->
+          (SX_SYM s) ->
        (if s = "unk" then SOME UNKNOWNpt else if s = "eof" then SOME
          EOFpt else NONE)
         | s ->
@@ -756,27 +756,29 @@ let litsexp_def = cake_define_list
    `litsexp (ast_Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
    `litsexp (ast_StrLit s) = SEXSTR (explode s)`;
    `litsexp (ast_Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
-   `litsexp (ast_Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n
-  w)]`;
+   `litsexp (ast_Word64 w:lit) = listsexp [SX_SYM "word64"; SX_NUM
+  (w2n w)]`;
    `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM
   (w2n w)]`];;
 
 let patsexp_def = cake_define_list
-  [`patsexp ast_Pany = listsexp [SX_SYM "Pany"]`;
-   `patsexp (ast_Pvar s) = SEXSTR (explode s)`;
-   `patsexp (ast_Plit l) = listsexp [SX_SYM "Plit"; litsexp l]`;
-   `patsexp (ast_Pcon cn ps) = listsexp [SX_SYM "Pcon"; optsexp
-  (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
-   `patsexp (ast_Pas p i) = listsexp [SX_SYM "Pas"; patsexp p; SEXSTR
-  (explode i)]`;
-   `patsexp (ast_Pref p) = listsexp [SX_SYM "Pref"; patsexp p]`;
+  [`patsexp (ast_Pany:ast_pat) = listsexp [SX_SYM "Pany"]`;
+   `patsexp (ast_Pvar s:ast_pat) = SEXSTR (explode s)`;
+   `patsexp (ast_Plit l:ast_pat) = listsexp [SX_SYM "Plit"; litsexp
+  l]`;
+   `patsexp (ast_Pcon cn ps:ast_pat) = listsexp [SX_SYM "Pcon";
+  optsexp (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
+   `patsexp (ast_Pas p i:ast_pat) = listsexp [SX_SYM "Pas"; patsexp
+  p; SEXSTR (explode i)]`;
+   `patsexp (ast_Pref p:ast_pat) = listsexp [SX_SYM "Pref"; patsexp
+  p]`;
    `patsexp (ast_Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp
   p; typesexp t]`];;
 
 let testsexp_def = cake_define
   `testsexp x1 =
       match x1 with
-        Equal -> SX_SYM "Equal"
+        (Equal:test) -> SX_SYM "Equal"
       | (ast_Compare ast_Lt) -> SX_SYM "Less"
       | (ast_Compare ast_Leq) -> SX_SYM "LessEq"
       | (ast_Compare ast_Gt) -> SX_SYM "Greater"
@@ -787,15 +789,15 @@ let testsexp_def = cake_define
       | (ast_AltCompare ast_Geq) -> SX_SYM "AltGreaterEq"`;;
 
 let arithsexp_def = cake_define_list
-  [`arithsexp ast_Add = SX_SYM "Add"`;
-   `arithsexp ast_Sub = SX_SYM "Sub"`;
-   `arithsexp ast_Mul = SX_SYM "Mul"`;
-   `arithsexp ast_Div = SX_SYM "Div"`;
-   `arithsexp ast_Mod = SX_SYM "Mod"`;
-   `arithsexp ast_And = SX_SYM "And"`;
-   `arithsexp ast_Xor = SX_SYM "Xor"`;
-   `arithsexp ast_Or = SX_SYM "Or"`;
-   `arithsexp ast_Not = SX_SYM "Not"`;
+  [`arithsexp (ast_Add:ast_arith) = SX_SYM "Add"`;
+   `arithsexp (ast_Sub:ast_arith) = SX_SYM "Sub"`;
+   `arithsexp (ast_Mul:ast_arith) = SX_SYM "Mul"`;
+   `arithsexp (ast_Div:ast_arith) = SX_SYM "Div"`;
+   `arithsexp (ast_Mod:ast_arith) = SX_SYM "Mod"`;
+   `arithsexp (ast_And:ast_arith) = SX_SYM "And"`;
+   `arithsexp (ast_Xor:ast_arith) = SX_SYM "Xor"`;
+   `arithsexp (ast_Or:ast_arith) = SX_SYM "Or"`;
+   `arithsexp (ast_Not:ast_arith) = SX_SYM "Not"`;
    `arithsexp ast_Neg = SX_SYM "Neg"`;
    `arithsexp ast_Abs = SX_SYM "Abs"`;
    `arithsexp ast_Sqrt = SX_SYM "Sqrt"`;
@@ -815,8 +817,8 @@ let prim_typesexp_def = cake_define
 let opsexp_def = cake_define
   `opsexp x1 =
         match x1 with
-          ast_Shift ast_W8 Lsl n -> SX_CONS (SX_SYM "Shift8Lsl")
-            (SX_NUM n)
+          (ast_Shift ast_W8 Lsl n:ast_op) -> SX_CONS (SX_SYM
+            "Shift8Lsl") (SX_NUM n)
         | (ast_Shift ast_W8 Lsr n) -> SX_CONS (SX_SYM "Shift8Lsr")
           (SX_NUM n)
         | (ast_Shift ast_W8 Asr n) -> SX_CONS (SX_SYM "Shift8Asr")
@@ -900,33 +902,34 @@ let locssexp_def = cake_define
   `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
 
 let expsexp_def = cake_define_list
-  [`expsexp (ast_Raise e) = (SX_SYM "Raise"; expsexp e)`;
-   `expsexp (ast_Handle e pes) =
+  [`expsexp (ast_Raise e:ast_exp) = (SX_SYM "Raise"; expsexp e)`;
+   `expsexp (ast_Handle e pes:ast_exp) =
       (SX_SYM "Handle"; expsexp e;
        listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
          pes))`;
-   `expsexp (ast_Lit l) = listsexp [SX_SYM "Lit"; litsexp l]`;
-   `expsexp (ast_Con cn es) =
+   `expsexp (ast_Lit l:ast_exp) = listsexp [SX_SYM "Lit"; litsexp l]`;
+   `expsexp (ast_Con cn es:ast_exp) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                 listsexp (MAP expsexp es)]`;
-   `expsexp (ast_Var id') = listsexp [SX_SYM "Var"; idsexp id']`;
-   `expsexp (ast_Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode
-  x); expsexp e]`;
-   `expsexp (ast_App op es) =
+   `expsexp (ast_Var id':ast_exp) = listsexp [SX_SYM "Var"; idsexp
+  id']`;
+   `expsexp (ast_Fun x e:ast_exp) = listsexp [SX_SYM "Fun"; SEXSTR
+  (explode x); expsexp e]`;
+   `expsexp (ast_App op es:ast_exp) =
       listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
         es)]`;
    `expsexp (ast_Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp
   e1; expsexp e2)`;
-   `expsexp (ast_If e1 e2 e3) = (SX_SYM "If"; expsexp e1; expsexp e2;
-  expsexp e3)`;
-   `expsexp (ast_Mat e pes) =
+   `expsexp (ast_If e1 e2 e3:ast_exp) = (SX_SYM "If"; expsexp e1;
+  expsexp e2; expsexp e3)`;
+   `expsexp (ast_Mat e pes:ast_exp) =
       (SX_SYM "Mat"; expsexp e;
        listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
          pes))`;
-   `expsexp (ast_Let so e1 e2) =
+   `expsexp (ast_Let so e1 e2:ast_exp) =
       (SX_SYM "Let"; optsexp (OPTION_MAP (SEXSTR ∘ explode) so);
         expsexp e1; expsexp e2)`;
-   `expsexp (ast_Letrec funs e) =
+   `expsexp (ast_Letrec funs e:ast_exp) =
     (SX_SYM "Letrec";
      listsexp (MAP (λ(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp

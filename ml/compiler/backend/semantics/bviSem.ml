@@ -268,7 +268,7 @@ let evaluate_def = cake_define_list
    `bviSem_evaluate ([(Raise x1:bvi_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
-   `bviSem_evaluate ([bvi_Return xs],env,s) =
+   `bviSem_evaluate ([(bvi_Return xs:bvi_exp)],env,s) =
          (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Ret vs)),s) | res -> res)`;
    `bviSem_evaluate ([(Op op xs:bvi_exp)],env,s) =

@@ -101,7 +101,7 @@ let lit_to_display_def = cake_define_list
    `lit_to_display (ast_Word8 w) =
         displayLang_Item NONE (implode "Word8") [word_to_display
           w]`;
-   `lit_to_display (ast_Word64 w) =
+   `lit_to_display (ast_Word64 w:lit) =
         displayLang_Item NONE (implode "Word64") [word_to_display
           w]`;
    `lit_to_display (ast_Float64 w) =
@@ -145,7 +145,7 @@ let word_size_to_display_def = cake_define_list
   "W64")`];;
 
 let opb_to_display_def = cake_define_list
-  [`opb_to_display ast_Lt = empty_item (implode "Lt")`;
+  [`opb_to_display (ast_Lt:opb) = empty_item (implode "Lt")`;
    `opb_to_display ast_Gt = empty_item (implode "Gt")`;
    `opb_to_display ast_Leq = empty_item (implode "Leq")`;
    `opb_to_display ast_Geq = empty_item (implode "Geq")`];;
@@ -189,7 +189,7 @@ let test_to_display_def = cake_define_list
 let arith_to_display_def = cake_define_list
   [`arith_to_display (Add:ast_arith) = empty_item (implode "Add")`;
    `arith_to_display (Sub:ast_arith) = empty_item (implode "Sub")`;
-   `arith_to_display ast_Mul = empty_item (implode "Mul")`;
+   `arith_to_display (ast_Mul:ast_arith) = empty_item (implode "Mul")`;
    `arith_to_display (Div:ast_arith) = empty_item (implode "Div")`;
    `arith_to_display (Mod:ast_arith) = empty_item (implode "Mod")`;
    `arith_to_display (And:ast_arith) = empty_item (implode "And")`;

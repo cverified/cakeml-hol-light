@@ -121,8 +121,8 @@ let code_similar_def = cake_define
   `code_similar x1 x2 =
         match (x1,x2) with
           ([],[]) -> T
-        | (((Section s1 lines1) :: rest1),((Section s2 lines2) ::
-          rest2)) ->
+        | ((Section s1 lines1 :: rest1),(Section s2 lines2 :: rest2))
+          ->
         code_similar rest1 rest2 /\
         EVERY2 line_similar lines1 lines2 /\ (s1 = s2)
         | (_3,_4) -> F`;;
@@ -157,7 +157,7 @@ let word_loc_val_byte_def = cake_define
 let line_ok_def = cake_define
   `line_ok c labs ffis pos x5 =
         match (c,x5) with
-          ((c:'a asm_config),labLang_Label _9 _10 l) ->
+          ((c:'a asm_config),labLang_Label _11 _12 l) ->
         EVEN pos /\ (l = 0)
         | (c,(labLang_Asm b bytes l)) ->
         enc_with_nop (asm_config_encode c) (cbw_to_asm b) bytes /\
@@ -243,7 +243,7 @@ hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 let num_pcs_def = cake_define_list
   [`num_pcs [] = (0:num)`;
-   `num_pcs (Section _11 [] :: rest) = num_pcs rest`;
+   `num_pcs (Section _13 [] :: rest) = num_pcs rest`;
    `num_pcs (Section k (x :: xs) :: rest) = (if is_Label x then
   num_pcs ((Section k xs) :: rest) else 1 + num_pcs ((Section k xs)
   :: rest))`];;
@@ -625,9 +625,9 @@ val list_add_if_fresh_simp = Q.SPECL [`n`,`s`] list_add_if_fresh_simp
 (* annotated line length *)
 
 let line_len_def = cake_define_list
-  [`line_len (labLang_Label _12 _13 l) = l`;
-   `line_len (labLang_Asm _14 _15 l) = l`;
-   `line_len (labLang_LabAsm _16 _17 _18 l) = l`];;
+  [`line_len (labLang_Label _16 _17 l) = l`;
+   `line_len (labLang_Asm _18 _19 l) = l`;
+   `line_len (labLang_LabAsm _20 _21 _22 l) = l`];;
 
 (* annotated section length *)
 
@@ -651,7 +651,7 @@ let enc_lines_again_simp_def = cake_define_list
   =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
           enc xs in
-        (labLang_Label k1 k2 l :: rest,ok))`;
+        ((labLang_Label k1 k2 l:'a line) :: rest,ok))`;
    `enc_lines_again_simp labs ffis pos enc (labLang_Asm x1 x2 l :: xs) =
         (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
           enc xs in
@@ -687,10 +687,10 @@ let line_encd0_def = cake_define
         | (labLang_LabAsm l w bytes len) ->
         enc (lab_inst w l) = bytes /\ LENGTH bytes <= len /\
         (?w'. len = LENGTH (enc (lab_inst w' l)))
-        | _19 -> T`;;
+        | _23 -> T`;;
 
 let sec_encd0_def = cake_define
-  `sec_encd0 enc (Section _20 ls) = EVERY (line_encd0 enc) ls`;;
+  `sec_encd0 enc (Section _24 ls) = EVERY (line_encd0 enc) ls`;;
 
 (* HOL4 overload (expanded in the port):
      all_encd0 = λenc l. EVERY (sec_encd0 enc) l *)
@@ -706,14 +706,14 @@ let sec_encd0_def = cake_define
 let line_length_leq_def = cake_define
   `line_length_leq x1 =
         match x1 with
-          labLang_LabAsm _21 _22 bytes l ->
+          labLang_LabAsm _25 _26 bytes l ->
        LENGTH bytes <= l
-        | (labLang_Asm _23 bytes l) ->
+        | (labLang_Asm _27 bytes l) ->
        LENGTH bytes <= l
-        | _24 -> T`;;
+        | _28 -> T`;;
 
 let sec_length_leq_def = cake_define
-  `sec_length_leq (Section _25 ls) = EVERY line_length_leq ls`;;
+  `sec_length_leq (Section _29 ls) = EVERY line_length_leq ls`;;
 
 (* HOL4 overload (expanded in the port):
      all_length_leq = λl. EVERY sec_length_leq l *)
@@ -723,11 +723,11 @@ let sec_length_leq_def = cake_define
 let label_one_def = cake_define
   `label_one x1 =
         match x1 with
-          labLang_Label _26 _27 n -> n <= 1
-        | _28 -> T`;;
+          labLang_Label _32 _33 n -> n <= 1
+        | _34 -> T`;;
 
 let sec_label_one_def = cake_define
-  `sec_label_one (Section _29 ls) = EVERY label_one ls`;;
+  `sec_label_one (Section _35 ls) = EVERY label_one ls`;;
 
 (* establishing label_one *)
 
@@ -742,30 +742,30 @@ let line_encd_def = cake_define
         match x5 with
           labLang_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
-        | (labLang_LabAsm Halt _30 bytes len) ->
+        | (labLang_LabAsm Halt _36 bytes len) ->
        enc (Jump (--n2w (pos + ffi_offset))) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm Install _31 bytes len) ->
+        | (labLang_LabAsm Install _37 bytes len) ->
        enc (Jump (--n2w (pos + 2 * ffi_offset))) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (labLang_CallFFI s) _32 bytes len) ->
+        | (labLang_LabAsm (labLang_CallFFI s) _38 bytes len) ->
        enc (Jump (--n2w (pos + (get_ffi_index ffis (ExtCall s) + 3) *
          ffi_offset))) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (Jump l) _33 bytes len) ->
+        | (labLang_LabAsm (Jump l) _39 bytes len) ->
        enc (Jump (n2w (find_pos l labs) + --n2w pos)) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (JumpCmp a b c l) _34 bytes len) ->
+        | (labLang_LabAsm (JumpCmp a b c l) _40 bytes len) ->
        enc (JumpCmp a b c (n2w (find_pos l labs) + --n2w pos)) =
          bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (LocValue k l) _35 bytes len) ->
+        | (labLang_LabAsm (LocValue k l) _41 bytes len) ->
        enc (Loc k (n2w (find_pos l labs) + --n2w pos)) = bytes /\
        LENGTH bytes <= len
-        | (labLang_LabAsm (Call l) _36 bytes len) ->
+        | (labLang_LabAsm (Call l) _42 bytes len) ->
        enc (Call (n2w (find_pos l labs) + --n2w pos)) = bytes /\
        LENGTH bytes <= len
-        | _37 -> T`;;
+        | _43 -> T`;;
 
 (* HOL4 ML code, not ported:
 val line_encd_ind = theorem"line_encd_ind";
@@ -793,7 +793,7 @@ let line_length_ok_def = cake_define
   `line_length_ok l <=> LENGTH (line_bytes l) = line_len l`;;
 
 let sec_length_ok_def = cake_define
-  `sec_length_ok (Section _38 ls) = EVERY line_length_ok ls`;;
+  `sec_length_ok (Section _44 ls) = EVERY line_length_ok ls`;;
 
 (* simple consequences of length_ok *)
 
@@ -802,11 +802,11 @@ let sec_length_ok_def = cake_define
 let label_zero_def = cake_define
   `label_zero x1 =
         match x1 with
-          labLang_Label _39 _40 n -> n = 0
-        | _41 -> T`;;
+          labLang_Label _47 _48 n -> n = 0
+        | _49 -> T`;;
 
 let sec_label_zero_def = cake_define
-  `sec_label_zero (Section _42 ls) = EVERY label_zero ls`;;
+  `sec_label_zero (Section _50 ls) = EVERY label_zero ls`;;
 
 (* label_zero preservation *)
 
@@ -820,7 +820,7 @@ let line_aligned_def = cake_define
      line_length l MOD m = 0`;;
 
 let sec_aligned_def = cake_define
-  `sec_aligned noplen (Section _43 ls) = EVERY (line_aligned noplen)
+  `sec_aligned noplen (Section _51 ls) = EVERY (line_aligned noplen)
   ls`;;
 
 (* establishing aligned *)
@@ -850,31 +850,31 @@ let line_enc_with_nop_def = cake_define
         match x5 with
           labLang_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
-        | (labLang_LabAsm Halt _44 bytes len) ->
+        | (labLang_LabAsm Halt _52 bytes len) ->
        enc_with_nop enc (Jump (--n2w (pos + ffi_offset))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm Install _45 bytes len) ->
+        | (labLang_LabAsm Install _53 bytes len) ->
        enc_with_nop enc (Jump (--n2w (pos + 2 * ffi_offset))) bytes
          /\
        LENGTH bytes = len
-        | (labLang_LabAsm (labLang_CallFFI s) _46 bytes len) ->
+        | (labLang_LabAsm (labLang_CallFFI s) _54 bytes len) ->
        enc_with_nop enc (Jump (--n2w (pos + (get_ffi_index ffis
          (ExtCall s) + 3) * ffi_offset))) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (Jump l) _47 bytes len) ->
+        | (labLang_LabAsm (Jump l) _55 bytes len) ->
        enc_with_nop enc (Jump (n2w (find_pos l labs) + --n2w pos))
          bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (JumpCmp a b c l) _48 bytes len) ->
+        | (labLang_LabAsm (JumpCmp a b c l) _56 bytes len) ->
        enc_with_nop enc (JumpCmp a b c (n2w (find_pos l labs) + --n2w
          pos)) bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm (LocValue k l) _49 bytes len) ->
+        | (labLang_LabAsm (LocValue k l) _57 bytes len) ->
        enc_with_nop enc (Loc k (n2w (find_pos l labs) + --n2w pos))
          bytes /\
        LENGTH bytes = len
-        | (labLang_LabAsm _50 _51 bytes len) -> LENGTH bytes = len
-        | (labLang_Label _52 _53 len) -> len = 0`;;
+        | (labLang_LabAsm _58 _59 bytes len) -> LENGTH bytes = len
+        | (labLang_Label _60 _61 len) -> len = 0`;;
 
 (* HOL4 ML code, not ported:
 val line_enc_with_nop_ind = theorem"line_enc_with_nop_ind";
@@ -913,9 +913,9 @@ val all_enc_with_nop_ind = theorem"all_enc_with_nop_ind";
 let line_lab_len_pos_ok_def = cake_define
   `line_lab_len_pos_ok pos x2 =
         match x2 with
-          labLang_Label _54 _55 l ->
+          labLang_Label _64 _65 l ->
         (if EVEN pos then l = 0 else l = 1)
-        | _56 -> T`;;
+        | _66 -> T`;;
 
 let lab_len_pos_ok_def = cake_define_list
   [`lab_len_pos_ok pos [] <=> T`;
@@ -924,7 +924,7 @@ let lab_len_pos_ok_def = cake_define_list
          lab_len_pos_ok (pos + line_len l) ls`];;
 
 let all_lab_len_pos_ok_def = cake_define_list
-  [`all_lab_len_pos_ok _57 [] <=> T`;
+  [`all_lab_len_pos_ok _67 [] <=> T`;
    `all_lab_len_pos_ok pos (Section k ls :: ss) <=>
        lab_len_pos_ok pos ls /\
        all_lab_len_pos_ok (pos + sec_length ls 0) ss`];;
@@ -942,9 +942,9 @@ val all_lab_len_pos_ok_ind = theorem"all_lab_len_pos_ok_ind";
 let line_offset_ok_def = cake_define
   `line_offset_ok labs ffis pos x4 =
         match x4 with
-          labLang_LabAsm a w bytes _58 ->
+          labLang_LabAsm a w bytes _68 ->
        w = get_jump_offset a ffis labs pos
-        | _59 -> T`;;
+        | _69 -> T`;;
 
 let lines_offset_ok_def = cake_define_list
   [`lines_offset_ok labs ffis pos [] <=> T`;
@@ -973,17 +973,17 @@ val offset_ok_ind = theorem"offset_ok_ind";
 let line_labs_exist_def = cake_define
   `line_labs_exist labs x2 =
         match x2 with
-          labLang_LabAsm a _60 _61 _62 ->
+          labLang_LabAsm a _70 _71 _72 ->
        (!n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs =
          NONE))
-        | _63 -> T`;;
+        | _73 -> T`;;
 
 (* HOL4 ML code, not ported:
 val line_labs_exist_ind = theorem "line_labs_exist_ind";
 *)
 
 let sec_labs_exist_def = cake_define
-  `sec_labs_exist labs (Section _64 ls) <=> EVERY (line_labs_exist
+  `sec_labs_exist labs (Section _74 ls) <=> EVERY (line_labs_exist
   labs) ls`;;
 
 (* HOL4 overload (expanded in the port):
@@ -999,7 +999,7 @@ let sec_labs_exist_def = cake_define
 
 let even_labels_def = cake_define_list
   [`even_labels pos [] <=> T`;
-   `even_labels pos (Section _65 [] :: ls) <=> even_labels pos ls`;
+   `even_labels pos (Section _75 [] :: ls) <=> even_labels pos ls`;
    `even_labels pos (Section k (y :: ys) :: ls) <=>
        (is_Label y ==> EVEN pos) /\
        even_labels (pos + line_len y) (Section k ys :: ls)`];;
@@ -1016,7 +1016,7 @@ let lines_even_labels_def = cake_define_list
 
 let even_labels_strong_def = cake_define_list
   [`even_labels_strong pos [] <=> T`;
-   `even_labels_strong pos (Section _66 [] :: ls) <=>
+   `even_labels_strong pos (Section _76 [] :: ls) <=>
         EVEN pos /\ even_labels_strong pos ls`;
    `even_labels_strong pos (Section k (y :: ys) :: ls) <=>
        (is_Label y ==> EVEN pos) /\
@@ -3407,7 +3407,7 @@ let make_init_def = cake_define
        coracle (mk_buffer cbpos [] cbspace) 0 F (ptr_reg mc_conf)
        (len_reg mc_conf) (ptr2_reg mc_conf) (len2_reg mc_conf) (match
        link_reg (target_config (machine_config_target mc_conf)) with
-       SOME n -> n | _67 -> 0)`;;
+       SOME n -> n | _77 -> 0)`;;
 hol4_overload "make_init" "lab_to_targetProof_make_init";;
 
 (* HOL4 ML code, not ported:
@@ -3454,7 +3454,7 @@ let line_to_info_def = cake_define
        [(SharedMem name,
         mk_shmem_info_num (pos_val (FST x) p secs) nb (match ad
           with Addr r off -> r) (match ad with Addr r off -> w2n off)
-          r (pos_val (FST x) p secs + LENGTH bytes))]) | _68 -> [])`;;
+          r (pos_val (FST x) p secs + LENGTH bytes))]) | _78 -> [])`;;
 
 (* This is set up for the very first compile call *)
 

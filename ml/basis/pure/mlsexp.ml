@@ -192,8 +192,8 @@ let get_next_size_def = cake_define
       | _7 -> 0`;;
 
 let annotate_def = cake_define_list
-  [`mlsexp_annotate (mlsexp_String s) = mlsexp_Size (strlen s)
-  (mlsexp_String s)`;
+  [`mlsexp_annotate (mlsexp_String s:pretty) = mlsexp_Size (strlen s)
+  ((mlsexp_String s:pretty))`;
    `mlsexp_annotate (mlsexp_Parenthesis b) =
       (let b = mlsexp_annotate b in
          mlsexp_Size (mlsexp_get_size b + 2) (mlsexp_Parenthesis
@@ -209,7 +209,7 @@ hol4_overload "annotate" "mlsexp_annotate";;
 let remove_all_def = cake_define_list
   [`remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis
   (remove_all v)`;
-   `remove_all (mlsexp_String v1) = mlsexp_String v1`;
+   `remove_all (mlsexp_String v1:pretty) = (mlsexp_String v1:pretty)`;
    `remove_all (Append v2 _9 v3:pretty) = Append (remove_all v2) F
   (remove_all v3)`;
    `remove_all (mlsexp_Size v4 v5) = remove_all v5`];;
@@ -219,7 +219,8 @@ let smart_remove_def = cake_define_list
       (if k + n < 70 then remove_all b else smart_remove i k b)`;
    `smart_remove i k (mlsexp_Parenthesis v) = mlsexp_Parenthesis
   (smart_remove (i + 1) (k + 1) v)`;
-   `smart_remove i k (mlsexp_String v1) = mlsexp_String v1`;
+   `smart_remove i k (mlsexp_String v1:pretty) = (mlsexp_String
+  v1:pretty)`;
    `smart_remove i k (Append v2 b v3:pretty) =
       (let n2 = mlsexp_get_size v2 in
       let n3 = get_next_size v3 in
@@ -234,7 +235,7 @@ let flatten_def = cake_define_list
    `mlsexp_flatten indent (mlsexp_Parenthesis p) s =
       (implode "(") :: mlsexp_flatten (mlstring_concat [indent;
         (implode "   ")]) p ((implode ")") :: s)`;
-   `mlsexp_flatten indent (mlsexp_String t) s = t :: s`;
+   `mlsexp_flatten indent (mlsexp_String t:pretty) s = t :: s`;
    `mlsexp_flatten indent (Append p1 b p2:pretty) s =
       mlsexp_flatten indent p1 ((if b then indent else (implode
         " ")) :: mlsexp_flatten indent p2 s)`];;

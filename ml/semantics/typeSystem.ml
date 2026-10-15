@@ -205,7 +205,7 @@ let opt_bind_name_def = cake_define
 (*val tveLookup : varN -> nat -> tenv_val_exp -> maybe (nat * t)*)
 let tveLookup_def = cake_define_list
   [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  typeSystem_Empty = NONE`;
+  (typeSystem_Empty:tenv_val_exp) = NONE`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
   (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
@@ -255,7 +255,8 @@ let lookup_var_def = cake_define
 
 (*val num_tvs : tenv_val_exp -> nat*)
 let num_tvs_def = cake_define_list
-  [`(num_tvs:tenv_val_exp->num) typeSystem_Empty = ((0:num))`;
+  [`(num_tvs:tenv_val_exp->num) (typeSystem_Empty:tenv_val_exp) =
+  ((0:num))`;
    `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
   (tvs + num_tvs tenvE)`;
    `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t
@@ -315,7 +316,7 @@ let t_of_def = cake_define
 let supported_test_def = cake_define
   `supported_test x1 ty =
       match x1 with
-        Equal -> T
+        (Equal:test) -> T
       | (ast_Compare _2) -> MEM ty [ast_IntT; ast_CharT; ast_WordT
         ast_W8; ast_Float64T; ast_StrT]
       | _3 -> (ty = ast_StrT)`;;
@@ -323,7 +324,7 @@ let supported_test_def = cake_define
 let supported_arith_def = cake_define
   `supported_arith a x2 =
         match x2 with
-          ast_IntT ->
+          (ast_IntT:prim_type) ->
         (if MEM a [ast_Add; ast_Sub; ast_Mul; ast_Div; ast_Mod] then
           SOME (2:num) else NONE)
         | ast_Float64T ->
@@ -341,7 +342,7 @@ let supported_arith_def = cake_define
 let supported_conversion_def = cake_define
   `supported_conversion x1 x2 =
         match (x1,x2) with
-          (ast_WordT ast_W8,ast_IntT) -> T
+          ((ast_WordT ast_W8:prim_type),(ast_IntT:prim_type)) -> T
         | ((ast_WordT ast_W64),ast_IntT) -> T
         | (ast_IntT,(ast_WordT ast_W8)) -> T
         | (ast_IntT,(ast_WordT ast_W64)) -> T
@@ -498,13 +499,13 @@ let build_ctor_tenv_def = cake_define
 let is_value_def = cake_define
   `is_value x1 =
         match x1 with
-          ast_Lit _17 -> T
-        | (ast_Con _18 es) -> (EVERY is_value es)
-        | (ast_Var _19) -> T
-        | (ast_Fun _20 _21) -> T
-        | (ast_Tannot e _22) -> (is_value e)
-        | (ast_Lannot e _23) -> (is_value e)
-        | _24 -> F`;;
+          (ast_Lit _18:ast_exp) -> T
+        | (ast_Con _19 es) -> (EVERY is_value es)
+        | (ast_Var _20) -> T
+        | (ast_Fun _21 _22) -> T
+        | (ast_Tannot e _23) -> (is_value e)
+        | (ast_Lannot e _24) -> (is_value e)
+        | _25 -> F`;;
 
 let type_p = cake_inductive
   `(!tvs tenv t.
@@ -900,7 +901,7 @@ let weak_tenvT n (tvs_spec, t_spec) (tvs_impl, t_impl) =
    *)
 
 let tscheme_inst2_def = cake_define
-  `((tscheme_inst2:'a->num#t->num#t->bool) _25 ts1 ts2 =
+  `((tscheme_inst2:'a->num#t->num#t->bool) _26 ts1 ts2 =
   (tscheme_inst ts1 ts2))`;;
 
 
@@ -909,7 +910,7 @@ let weak_tenv_def = cake_define
   `((weak_tenv:type_env->type_env->bool) tenv_impl tenv_spec =
      (nsSub tscheme_inst2 (type_env_v tenv_spec) (type_env_v
        tenv_impl) /\
-    nsSub (\i x y. (match (i,x,y) with (_26,x,y) -> x = y))
+    nsSub (\i x y. (match (i,x,y) with (_27,x,y) -> x = y))
       (type_env_c tenv_spec) (type_env_c tenv_impl)))`;;
 (* &&
   nsSub weak_tenvT tenv_spec.t tenv_impl.t*)

@@ -176,14 +176,15 @@ let heap_addresses_def = cake_define_list
 
 let ADDR_MAP_def = cake_define_list
   [`ADDR_MAP f [] = []`;
-   `ADDR_MAP f (gc_shared_Data x :: xs) = gc_shared_Data x ::
-  ADDR_MAP f xs`;
+   `ADDR_MAP f (gc_shared_Data x :: xs) = (gc_shared_Data x:'a
+  heap_address) :: ADDR_MAP f xs`;
    `ADDR_MAP f (gc_shared_Pointer a d :: xs) = gc_shared_Pointer (f
   a) d :: ADDR_MAP f xs`];;
 
 let ADDR_APPLY_def = cake_define_list
   [`ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d`;
-   `ADDR_APPLY f (gc_shared_Data y) = gc_shared_Data y`];;
+   `ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a
+  heap_address)`];;
 
 (* HOL4 ML code, not ported:
 val _ = augment_srw_ss [rewrites [LIST_REL_def]];

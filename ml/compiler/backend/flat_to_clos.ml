@@ -361,8 +361,8 @@ let dest_nop_def = cake_define
 let dest_Constant_def = cake_define
   `flat_to_clos_dest_Constant x1 =
       match x1 with
-        closLang_Op t (closLang_BlockOp (closLang_Constant c)) [] ->
-          SOME c
+        (closLang_Op t (closLang_BlockOp (closLang_Constant c))
+          []:closLang_exp) -> SOME c
       | (closLang_Op t (closLang_IntOp (closLang_Const i)) []) ->
         SOME (ConstInt i)
       | (closLang_Op t (closLang_BlockOp (Cons n)) []) -> SOME

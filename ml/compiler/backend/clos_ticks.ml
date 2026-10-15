@@ -33,11 +33,12 @@ let remove_ticks_def = cake_define_list
    `clos_ticks_remove_ticks [(Handle t x1 x2:closLang_exp)] =
          [Handle t (HD (clos_ticks_remove_ticks [x1]))
                    (HD (clos_ticks_remove_ticks [x2]))]`;
-   `clos_ticks_remove_ticks [closLang_Op t op xs] =
+   `clos_ticks_remove_ticks [(closLang_Op t op xs:closLang_exp)] =
          [closLang_Op t op (clos_ticks_remove_ticks xs)]`;
-   `clos_ticks_remove_ticks [closLang_Tick t x1] =
+   `clos_ticks_remove_ticks [(closLang_Tick t x1:closLang_exp)] =
   clos_ticks_remove_ticks [x1]`;
-   `clos_ticks_remove_ticks [closLang_Call t ticks dest xs] =
+   `clos_ticks_remove_ticks [(closLang_Call t ticks dest
+  xs:closLang_exp)] =
          [closLang_Call t 0 dest (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [(App t loc_opt x1 xs:closLang_exp)] =
          [App t loc_opt (HD (clos_ticks_remove_ticks [x1]))
@@ -68,11 +69,12 @@ let remove_ticks_sing_def = cake_define_list
    `clos_ticks_remove_ticks_sing (Handle t x1 x2:closLang_exp) =
          (Handle t ((clos_ticks_remove_ticks_sing (x1)))
                    ((clos_ticks_remove_ticks_sing (x2))))`;
-   `clos_ticks_remove_ticks_sing (closLang_Op t op xs) =
+   `clos_ticks_remove_ticks_sing (closLang_Op t op xs:closLang_exp) =
          (closLang_Op t op (clos_ticks_remove_ticks_list xs))`;
-   `clos_ticks_remove_ticks_sing (closLang_Tick t x1) =
+   `clos_ticks_remove_ticks_sing (closLang_Tick t x1:closLang_exp) =
   clos_ticks_remove_ticks_sing (x1)`;
-   `clos_ticks_remove_ticks_sing (closLang_Call t ticks dest xs) =
+   `clos_ticks_remove_ticks_sing (closLang_Call t ticks dest
+  xs:closLang_exp) =
          (closLang_Call t 0 dest (clos_ticks_remove_ticks_list
            xs))`;
    `clos_ticks_remove_ticks_sing (App t loc_opt x1 xs:closLang_exp) =

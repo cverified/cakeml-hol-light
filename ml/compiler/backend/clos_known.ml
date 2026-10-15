@@ -53,11 +53,12 @@ let get_size_sc_aux_def = cake_define_list
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
            get_size_sc_aux n [x2])`;
-   `get_size_sc_aux n [closLang_Op t op xs] =
+   `get_size_sc_aux n [(closLang_Op t op xs:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n xs)`;
-   `get_size_sc_aux n [closLang_Tick t x] = get_size_sc_aux n [x]`;
-   `get_size_sc_aux n [closLang_Call t ticks dest xs] =
+   `get_size_sc_aux n [(closLang_Tick t x:closLang_exp)] =
+  get_size_sc_aux n [x]`;
+   `get_size_sc_aux n [(closLang_Call t ticks dest xs:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n xs)`;
    `get_size_sc_aux n [closLang_Fn t loc_opt ws_opt num_args x1] =
@@ -92,11 +93,11 @@ let get_size_aux_def = cake_define_list
          1 + get_size_aux [x1]`;
    `get_size_aux [(Handle t x1 x2:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux [x2]`;
-   `get_size_aux [closLang_Op t op xs] =
+   `get_size_aux [(closLang_Op t op xs:closLang_exp)] =
          1 + get_size_aux xs`;
-   `get_size_aux [closLang_Tick t x] =
+   `get_size_aux [(closLang_Tick t x:closLang_exp)] =
          get_size_aux [x]`;
-   `get_size_aux [closLang_Call t ticks dest xs] =
+   `get_size_aux [(closLang_Call t ticks dest xs:closLang_exp)] =
          1 + get_size_aux xs`;
    `get_size_aux [closLang_Fn t loc_opt ws_opt num_args x1] =
          1 + get_size_aux [x1]`;
@@ -135,10 +136,10 @@ let free_def = cake_define_list
    `clos_known_free [(Raise t x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
            ([Raise t (HD c1)],l1))`;
-   `clos_known_free [closLang_Tick t x1] =
+   `clos_known_free [(closLang_Tick t x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
            ([closLang_Tick t (HD c1)],l1))`;
-   `clos_known_free [closLang_Op t op xs] =
+   `clos_known_free [(closLang_Op t op xs:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
            ([closLang_Op t op c1],l1))`;
    `clos_known_free [(App t loc_opt x1 xs2:closLang_exp)] =
@@ -163,7 +164,7 @@ let free_def = cake_define_list
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in
            ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
-   `clos_known_free [closLang_Call t ticks dest xs] =
+   `clos_known_free [(closLang_Call t ticks dest xs:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_known_free";;
@@ -238,10 +239,12 @@ let contains_closures_def = cake_define_list
    `contains_closures [(Handle t x1 x2:closLang_exp)] =
          (if contains_closures [x1] then T else
            contains_closures [x2])`;
-   `contains_closures [closLang_Op t op xs] = contains_closures xs`;
-   `contains_closures [closLang_Tick t x] = contains_closures [x]`;
-   `contains_closures [closLang_Call t ticks dest xs] =
+   `contains_closures [(closLang_Op t op xs:closLang_exp)] =
   contains_closures xs`;
+   `contains_closures [(closLang_Tick t x:closLang_exp)] =
+  contains_closures [x]`;
+   `contains_closures [(closLang_Call t ticks dest xs:closLang_exp)]
+  = contains_closures xs`;
    `contains_closures [closLang_Fn t loc_opt ws_opt num_args x1] = T`;
    `contains_closures [(Letrec t loc_opt ws_opt fns x1:closLang_exp)]
   = T`;
@@ -486,7 +489,7 @@ let known_def = cake_define_list
          (let (ea1,g) = known c [x1] vs g in
          let (e1,a1) = HD ea1 in
            ([(Raise t e1,clos_known_Impossible)],g))`;
-   `known c [closLang_Tick t x1] vs g =
+   `known c [(closLang_Tick t x1:closLang_exp)] vs g =
          (let (ea1,g) = known c [x1] vs g in
          let (e1,a1) = HD ea1 in
            ([(closLang_Tick t e1,a1)],g))`;
@@ -496,11 +499,11 @@ let known_def = cake_define_list
          let (e1,a1) = HD ea1 in
          let (e2,a2) = HD ea2 in
            ([(Handle t e1 e2,merge a1 a2)],g))`;
-   `known c [closLang_Call t ticks dest xs] vs g =
+   `known c [(closLang_Call t ticks dest xs:closLang_exp)] vs g =
          (let (ea1,g) = known c xs vs g in
            ([(closLang_Call t ticks dest (MAP FST
              ea1),clos_known_Other)],g))`;
-   `known c [closLang_Op t op xs] vs g =
+   `known c [(closLang_Op t op xs:closLang_exp)] vs g =
          (let (ea1,g) = known c xs vs g in
          let (a,g) = known_op op (REVERSE (MAP SND ea1)) g in
          let e =

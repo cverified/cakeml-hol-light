@@ -10,6 +10,7 @@
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -61,7 +62,7 @@ let semantics_prog_def = cake_define_list
                (evaluate_prog_with_clock st env k prog))))
              UNIV)
            io_trace`;
-   `semantics_prog st env prog ffi_Fail <=>
+   `semantics_prog st env prog (ffi_Fail:behaviour) <=>
         (?k.
           SND (evaluate_prog_with_clock st env k prog) = Rerr
             (Rabort Rtype_error))`];;

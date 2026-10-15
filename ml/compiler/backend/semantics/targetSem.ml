@@ -266,7 +266,7 @@ let machine_sem_def = cake_define_list
              (\k. sptree_fromList (ffi_state_io_events (SND (SND
                (evaluate mc st k ms))))) UNIV)
            io_trace`;
-   `machine_sem mc st ms ffi_Fail <=>
+   `machine_sem mc st ms (ffi_Fail:behaviour) <=>
          (?k. FST (evaluate mc st k ms) = Error)`];;
 
 (* define what it means for code to be loaded and ready to run *)

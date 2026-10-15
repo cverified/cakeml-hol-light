@@ -1348,7 +1348,7 @@ let small_int_def = cake_define
        8):int)`;;
 
 let part_to_words_def = cake_define_list
-  [`part_to_words c m (closLang_Int i) offset =
+  [`part_to_words c m (closLang_Int i:const_part) offset =
       (if small_int (:'a) i then SOME ((F,wordLang_Word (Smallnum
         i)),[]) else let (sign,ws) = i2mw i in
               match encode_header c (if sign then 7 else 3) (LENGTH
@@ -1376,7 +1376,7 @@ let part_to_words_def = cake_define_list
            (LENGTH ws))),
                             MAP (\w. (F,wordLang_Word w)) (hd ::
                               ws)))`;
-   `part_to_words c m (closLang_Str s) offset =
+   `part_to_words c m (closLang_Str s:const_part) offset =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
@@ -3000,7 +3000,7 @@ let AnyArith_call_tree_def = cake_define
 let structure_le_def = cake_define
   `structure_le x1 x2 =
       match (x1,x2) with
-        (word_depth_Leaf,_32) -> T
+        ((word_depth_Leaf:call_tree),_32) -> T
       | (_33,word_depth_Unknown) -> T
       | ((Const k1 t1),(Const k2 t2)) ->
      (k1 <= k2 /\ structure_le t1 t2)

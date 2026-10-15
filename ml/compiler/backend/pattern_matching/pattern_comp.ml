@@ -23,21 +23,22 @@ needs "semantics/semanticPrimitives.ml";;
 let is_const_row_def = cake_define
   `is_const_row x1 =
       match x1 with
-        (pattern_semantics_Cons _1 pats,x) -> NULL pats
-      | _2 -> F`;;
+        ((pattern_semantics_Cons _2 pats:pattern_semantics_pat),x) ->
+          NULL pats
+      | _3 -> F`;;
 
 let is_Any_def = cake_define
   `is_Any x1 =
       match x1 with
-        pattern_semantics_Any -> T
+        (pattern_semantics_Any:pattern_semantics_pat) -> T
       | (Or p1 p2) -> (is_Any p1 \/ is_Any p2)
-      | _3 -> F`;;
+      | _4 -> F`;;
 
 let is_Or_row_def = cake_define
   `is_Or_row x1 =
       match x1 with
-        ((Or p1 p2:pattern_semantics_pat),_4) -> T
-      | _5 -> F`;;
+        ((Or p1 p2:pattern_semantics_pat),_5) -> T
+      | _6 -> F`;;
 
 let take_until_Any_def = cake_define_list
   [`take_until_Any [] = []`;
@@ -59,7 +60,7 @@ let insert_Any_def = cake_define
   `insert_Any x1 =
       match x1 with
         [] -> []
-      | [(p,x)] -> [(pattern_semantics_Any,x)]
+      | [p,x] -> [(pattern_semantics_Any,x)]
       | (x :: xs) -> x :: insert_Any xs`;;
 
 
@@ -69,7 +70,7 @@ let is_True_def = cake_define
   `is_True x1 =
       match x1 with
         pattern_semantics_True -> T
-      | _6 -> F`;;
+      | _7 -> F`;;
 
 let mk_Disj_def = cake_define
   `mk_Disj p q = (if is_True p \/ is_True q then
@@ -88,20 +89,22 @@ let get_pos_def = cake_define_list
    `get_pos (n :: ns) = Pos n (get_pos ns)`];;
 
 let pat_to_guard_def = cake_define_list
-  [`pat_to_guard l pattern_semantics_Any = pattern_semantics_True`;
+  [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
+  pattern_semantics_True`;
    `pat_to_guard l (Lit r:pattern_semantics_pat) =
   pattern_semantics_PosTest (get_pos (REVERSE l))
   (pattern_semantics_LitEq r)`;
-   `pat_to_guard l (pattern_semantics_Cons NONE pats) = pats_to_guard
-  l 0 pats`;
-   `pat_to_guard l (pattern_semantics_Cons (SOME (t,_7)) pats) =
+   `pat_to_guard l (pattern_semantics_Cons NONE
+  pats:pattern_semantics_pat) = pats_to_guard l 0 pats`;
+   `pat_to_guard l (pattern_semantics_Cons (SOME (t,_9))
+  pats:pattern_semantics_pat) =
       mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
         (pattern_semantics_TagLenEq t (LENGTH pats)))
           (pats_to_guard l 0 pats)`;
    `pat_to_guard l (Or p1 p2:pattern_semantics_pat) = mk_Disj
   (pat_to_guard l p1) (pat_to_guard l p2)`;
-   `pat_to_guard l (pattern_semantics_Ref p) = pat_to_guard (0 :: l)
-  p`;
+   `pat_to_guard l (pattern_semantics_Ref p:pattern_semantics_pat) =
+  pat_to_guard (0 :: l) p`;
    `pats_to_guard l k [] = pattern_semantics_True`;
    `pats_to_guard l k [p] = pat_to_guard (k :: l) p`;
    `pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
@@ -120,14 +123,14 @@ let walk_def = cake_define_list
         xs then pattern_comp_walk ns (EL n xs) refs else NONE) |
         (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
                         match FLOOKUP refs p with SOME y ->
-                          pattern_comp_walk ns y refs | _10 ->
-                          NONE) | _11 -> NONE)`];;
+                          pattern_comp_walk ns y refs | _12 ->
+                          NONE) | _13 -> NONE)`];;
 hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = cake_define
   `walk_list ns x refs =
      (match pattern_comp_walk ns x refs with SOME
-       (pattern_semantics_Term _12 vs) -> SOME vs | _13 -> NONE)`;;
+       (pattern_semantics_Term _14 vs) -> SOME vs | _15 -> NONE)`;;
 
 
 (* plug all the parts together *)

@@ -21,7 +21,7 @@ let extract_labels_def = cake_define
   `labProps_extract_labels x1 =
         match x1 with
           [] -> []
-        | ((labLang_Label l1 l2 _1) :: xs) -> (l1,l2) ::
+        | (labLang_Label l1 l2 _2 :: xs) -> (l1,l2) ::
           labProps_extract_labels xs
         | (x :: xs) -> labProps_extract_labels xs`;;
 hol4_overload "extract_labels" "labProps_extract_labels";;
@@ -33,19 +33,19 @@ val extract_labels_ind = theorem"extract_labels_ind";
 let labs_of_def = cake_define
   `labs_of x1 =
       match x1 with
-        labLang_LocValue _3 (labLang_Lab n1 n2) -> {(n1,n2)}
+        labLang_LocValue _4 (labLang_Lab n1 n2) -> {(n1,n2)}
       | (Jump (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | (JumpCmp _4 _5 _6 (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | _7 -> {}`;;
+      | (JumpCmp _5 _6 _7 (labLang_Lab n1 n2)) -> {(n1,n2)}
+      | _8 -> {}`;;
 
 let line_get_labels_def = cake_define
   `line_get_labels x1 =
       match x1 with
-        labLang_LabAsm a _8 _9 _10 -> labs_of a
-      | _11 -> {}`;;
+        labLang_LabAsm a _9 _10 _11 -> labs_of a
+      | _12 -> {}`;;
 
 let sec_get_labels_def = cake_define
-  `sec_get_labels (Section _12 lines) =
+  `sec_get_labels (Section _13 lines) =
      BIGUNION (IMAGE line_get_labels (set_of_list lines))`;;
 
 let get_labels_def = cake_define
@@ -56,8 +56,8 @@ hol4_overload "get_labels" "labProps_get_labels";;
 let line_get_code_labels_def = cake_define
   `line_get_code_labels x1 =
       match x1 with
-        labLang_Label _13 l _14 -> {l}
-      | _15 -> {}`;;
+        labLang_Label _16 l _17 -> {l}
+      | _18 -> {}`;;
 
 let sec_get_code_labels_def = cake_define
   `sec_get_code_labels (Section n1 lines) =
@@ -71,7 +71,7 @@ let get_code_labels_def = cake_define
 hol4_overload "get_code_labels" "labProps_get_code_labels";;
 
 let sec_ends_with_label_def = cake_define
-  `sec_ends_with_label (Section _16 ls) <=>
+  `sec_ends_with_label (Section _19 ls) <=>
      ~NULL ls /\ is_Label (LAST ls)`;;
 
 let line_length_def = cake_define_list
@@ -97,7 +97,7 @@ let line_ok_pre_def = cake_define
         match (c,x2) with
           ((c:'a asm_config),labLang_Asm b bytes l) -> asm_ok
             (cbw_to_asm b) c
-        | (c,_17) -> T`;;
+        | (c,_20) -> T`;;
 
 let sec_ok_pre_def = cake_define
   `sec_ok_pre c (Section k ls) <=>
@@ -112,7 +112,7 @@ let sec_label_ok_def = cake_define
   `sec_label_ok k x2 =
         match x2 with
           labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
-        | _18 -> T`;;
+        | _21 -> T`;;
 
 let sec_labels_ok_def = cake_define
   `sec_labels_ok (Section k ls) <=> EVERY (sec_label_ok k) ls`;;

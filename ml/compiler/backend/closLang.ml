@@ -166,17 +166,18 @@ let has_install_def = cake_define_list
   has_install e2 \/ has_install e3)`;
    `has_install (Let t es e:closLang_exp) = (has_install e \/
   has_install_list es)`;
-   `has_install (closLang_Op t p es) = (p = closLang_Install \/
-  has_install_list es)`;
+   `has_install (closLang_Op t p es:closLang_exp) = (p =
+  closLang_Install \/ has_install_list es)`;
    `has_install (Raise t e:closLang_exp) = has_install e`;
-   `has_install (closLang_Tick t e) = has_install e`;
+   `has_install (closLang_Tick t e:closLang_exp) = has_install e`;
    `has_install (closLang_Fn _1 _2 _3 _4 e) = has_install e`;
    `has_install (Handle t e1 e2:closLang_exp) = (has_install e1 \/
   has_install e2)`;
-   `has_install (closLang_Call _5 _6 _7 es) = has_install_list es`;
-   `has_install (App _10 _11 e es:closLang_exp) = (has_install e \/
+   `has_install (closLang_Call _8 _9 _10 es:closLang_exp) =
+  has_install_list es`;
+   `has_install (App _13 _14 e es:closLang_exp) = (has_install e \/
   has_install_list es)`;
-   `has_install (Letrec _15 _16 _17 fns e:closLang_exp) =
+   `has_install (Letrec _18 _19 _20 fns e:closLang_exp) =
   (has_install_list (MAP SND fns) \/ has_install e)`;
    `has_install_list [] = F`;
    `has_install_list (x :: xs) = (has_install x \/ has_install_list
@@ -185,31 +186,31 @@ let has_install_def = cake_define_list
 let pure_op_def = cake_define
   `closLang_pure_op op <=>
      (match op with
-       FFI _18 -> F | closLang_GlobOp (SetGlobal _19) -> F |
+       FFI _21 -> F | closLang_GlobOp (SetGlobal _22) -> F |
          closLang_GlobOp AllocGlobal -> F | closLang_MemOp
-         (closLang_RefByte _20) -> F | closLang_MemOp
+         (closLang_RefByte _23) -> F | closLang_MemOp
          closLang_RefArray -> F | closLang_MemOp closLang_UpdateByte
          -> F | closLang_MemOp (closLang_CopyByte F) -> F |
          closLang_MemOp closLang_XorByte -> F | closLang_MemOp
          closLang_Ref -> F | closLang_MemOp closLang_Update -> F |
-         closLang_Install -> F | ThunkOp _21 -> F | _22 -> T)`;;
+         closLang_Install -> F | ThunkOp _24 -> F | _25 -> T)`;;
 hol4_overload "pure_op" "closLang_pure_op";;
 
 (* pure e means e can neither raise an exception nor side-effect the
    state *)
 let pure_def = cake_define_list
-  [`pure (Var _25 _26:closLang_exp) <=> T`;
-   `pure (If _28 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\
+  [`pure (Var _28 _29:closLang_exp) <=> T`;
+   `pure (If _31 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\
   pure e3`;
-   `pure (Let _30 es e2:closLang_exp) <=> EVERY pure es /\ pure e2`;
-   `pure (Raise _33 _34:closLang_exp) <=> F`;
-   `pure (Handle _36 e1 e2:closLang_exp) <=> pure e1`;
-   `pure (closLang_Tick _37 _38) <=> F`;
-   `pure (closLang_Call _39 _40 _41 _42) <=> F`;
-   `pure (App _47 _48 _49 _50:closLang_exp) <=> F`;
-   `pure (closLang_Fn _51 _52 _53 _54 _55) <=> T`;
-   `pure (Letrec _60 _61 _62 _63 x:closLang_exp) <=> pure x`;
-   `pure (closLang_Op _64 opn es) <=> EVERY pure es /\
+   `pure (Let _33 es e2:closLang_exp) <=> EVERY pure es /\ pure e2`;
+   `pure (Raise _36 _37:closLang_exp) <=> F`;
+   `pure (Handle _39 e1 e2:closLang_exp) <=> pure e1`;
+   `pure (closLang_Tick _42 _43:closLang_exp) <=> F`;
+   `pure (closLang_Call _48 _49 _50 _51:closLang_exp) <=> F`;
+   `pure (App _56 _57 _58 _59:closLang_exp) <=> F`;
+   `pure (closLang_Fn _60 _61 _62 _63 _64) <=> T`;
+   `pure (Letrec _69 _70 _71 _72 x:closLang_exp) <=> pure x`;
+   `pure (closLang_Op _74 opn es:closLang_exp) <=> EVERY pure es /\
   closLang_pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)

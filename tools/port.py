@@ -670,12 +670,18 @@ class Porter:
     return None
 
   def ambiguous_con(self, nm):
-    """is this the name of a constructor of more than one theory in
-       scope, so that only the type says which one it is?"""
+    """is this the name of a constructor of more than one theory of
+       the port, so that only the type says which one it is?  The
+       theories need not be in scope: HOL4 resolves a name in the
+       scope of the theory, HOL Light in the one namespace of the
+       whole port, where the overload of a theory that is loaded
+       before this one but is not an ancestor of it is in the way
+       (word_simp's strip_const matches on the Const of wordLang,
+       and word_depth, which is not an ancestor of it, has a Const
+       of its own)"""
     if '$' in nm: return False
-    anc = self.db.ancestors(self.thy) | {self.thy}
     return len([x for x, k in self.db.defs.get(nm, [])
-                if k == 'con' and x in anc]) > 1
+                if k == 'con']) > 1
 
   def annotate_pat(self, p, ambiguous=False):
     """the pattern with the type of its constructor on it"""
@@ -1126,16 +1132,20 @@ class Porter:
     # the Skip of asm and gives back the Skip of wordLang)
     self.clause_clash(body)
     arms = []
+    done = False
     for _, args, r in cls:
       sub = {args[i].name: names[i] for i in range(n)
              if i not in pats and args[i].kind == 'id'
              and not iscon(args[i].name)}
-      # the pattern of the first arm carries the type, so that an
-      # ambiguous constructor in it is resolved as HOL4 does
-      if not arms:
+      # the first pattern that has a constructor in it carries the
+      # type, so that an ambiguous constructor is resolved as HOL4
+      # does; an arm whose pattern is a variable or an empty list
+      # (word_simp's strip_const matches on [] first) says nothing
+      if not done and any(has_con(args[i]) for i in pats):
         args = list(args)
         for i in pats:
           args[i] = self.annotate_pat(args[i], True)
+        done = True
       pat = ','.join(pr.pr(args[i], 60) for i in pats)
       if len(pats) > 1: pat = '(' + pat + ')'
       # the body of an arm needs its parentheses: a match, a let
@@ -1398,6 +1408,20 @@ def iscon(n):
   """is this the name of a constructor?  A CakeML source may write
      it with the name of its theory (fpSem$FP_Add)"""
   return n.split('$')[-1] in CONS
+
+
+def has_con(p):
+  """is there a constructor in this pattern?  An arm whose pattern
+     is a variable or an empty list says nothing about the type"""
+  while p.kind in ('paren', 'typed'): p = p.e
+  if p.kind == 'id': return iscon(p.name)
+  if p.kind == 'app':
+    h, args = hterm.strip_app(p)
+    return ((h.kind == 'id' and iscon(h.name)) or
+            any(has_con(a) for a in args))
+  if p.kind == 'list': return bool(p.items)
+  if p.kind == 'infix': return has_con(p.l) or has_con(p.r)
+  return False
 
 
 def is_var_pat(p):

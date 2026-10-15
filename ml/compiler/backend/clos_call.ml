@@ -38,10 +38,10 @@ let free_def = cake_define_list
    `clos_call_free [(Raise t x1:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
            ([Raise t (HD c1)],l1))`;
-   `clos_call_free [closLang_Tick t x1] =
+   `clos_call_free [(closLang_Tick t x1:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
            ([closLang_Tick t (HD c1)],l1))`;
-   `clos_call_free [closLang_Op t op xs] =
+   `clos_call_free [(closLang_Op t op xs:closLang_exp)] =
          (let (c1,l1) = clos_call_free xs in
            ([closLang_Op t op c1],l1))`;
    `clos_call_free [(App t loc_opt x1 xs2:closLang_exp)] =
@@ -66,7 +66,7 @@ let free_def = cake_define_list
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
            ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
-   `clos_call_free [closLang_Call t ticks dest xs] =
+   `clos_call_free [(closLang_Call t ticks dest xs:closLang_exp)] =
          (let (c1,l1) = clos_call_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_call_free";;
@@ -89,10 +89,10 @@ let free_sing_def = cake_define_list
    `free_sing (Raise t x1:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
            (Raise t c1,l1))`;
-   `free_sing (closLang_Tick t x1) =
+   `free_sing (closLang_Tick t x1:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
            (closLang_Tick t c1,l1))`;
-   `free_sing (closLang_Op t op xs) =
+   `free_sing (closLang_Op t op xs:closLang_exp) =
          (let (c1,l1) = free_list xs in
            (closLang_Op t op c1,l1))`;
    `free_sing (App t loc_opt x1 xs2:closLang_exp) =
@@ -117,7 +117,7 @@ let free_sing_def = cake_define_list
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
            (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
-   `free_sing (closLang_Call t ticks dest xs) =
+   `free_sing (closLang_Call t ticks dest xs:closLang_exp) =
          (let (c1,l1) = free_list xs in
            (closLang_Call t ticks dest c1,l1))`;
    `free_list [] = ([],db_vars_Empty)`;
@@ -188,7 +188,7 @@ let calls_def = cake_define_list
          (let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
            ([Raise t e1],g))`;
-   `calls [closLang_Tick t x1] g =
+   `calls [(closLang_Tick t x1:closLang_exp)] g =
          (let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
            ([closLang_Tick t e1],g))`;
@@ -198,10 +198,10 @@ let calls_def = cake_define_list
          let e1 = HD e1 in
          let e2 = HD e2 in
            ([Handle t e1 e2],g))`;
-   `calls [closLang_Call t ticks dest xs] g =
+   `calls [(closLang_Call t ticks dest xs:closLang_exp)] g =
          (let (xs,g) = calls xs g in
-           ([closLang_Call t ticks dest xs],g))`;
-   `calls [closLang_Op t op xs] g =
+           ([(closLang_Call t ticks dest xs:closLang_exp)],g))`;
+   `calls [(closLang_Op t op xs:closLang_exp)] g =
          (let (e1,g) = calls xs g in
            ([closLang_Op t op e1],g))`;
    `calls [(App t loc_opt x xs:closLang_exp)] g =
@@ -265,17 +265,17 @@ let calls_sing_def = cake_define_list
    `calls_sing (Raise t x1:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
            (Raise t e1,g))`;
-   `calls_sing (closLang_Tick t x1) g =
+   `calls_sing (closLang_Tick t x1:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
            (closLang_Tick t e1,g))`;
    `calls_sing (Handle t x1 x2:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in
            (Handle t e1 e2,g))`;
-   `calls_sing (closLang_Call t ticks dest xs) g =
+   `calls_sing (closLang_Call t ticks dest xs:closLang_exp) g =
          (let (xs,g) = calls_sing_list xs g in
-           (closLang_Call t ticks dest xs,g))`;
-   `calls_sing (closLang_Op t op xs) g =
+           ((closLang_Call t ticks dest xs:closLang_exp),g))`;
+   `calls_sing (closLang_Op t op xs:closLang_exp) g =
          (let (e1,g) = calls_sing_list xs g in
            (closLang_Op t op e1,g))`;
    `calls_sing (App t loc_opt x xs:closLang_exp) g =

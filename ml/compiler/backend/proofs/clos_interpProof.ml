@@ -121,11 +121,11 @@ val init_tac =
    ---- *)
 
 let v_ok_def = cake_define_list
-  [`v_ok (closSem_Number i) <=> T`;
+  [`v_ok (closSem_Number i:closSem_v) <=> T`;
    `v_ok (Word64 w:closSem_v) <=> T`;
-   `v_ok (closSem_Block n vs) <=> EVERY v_ok vs`;
+   `v_ok (closSem_Block n vs:closSem_v) <=> EVERY v_ok vs`;
    `v_ok (closSem_ByteVector ws) <=> T`;
-   `v_ok (closSem_RefPtr b n) <=> T`;
+   `v_ok (closSem_RefPtr b n:closSem_v) <=> T`;
    `v_ok (Closure loco vs1 env1 n bod1:closSem_v) <=>
         ~has_install bod1 /\ EVERY v_ok env1 /\ EVERY v_ok vs1`;
    `v_ok (Recclosure loco vs1 env1 fns1 i:closSem_v) <=>

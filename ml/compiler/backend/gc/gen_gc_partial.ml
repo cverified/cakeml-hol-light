@@ -29,7 +29,7 @@ hol4_overload "isRef_fupd" "gen_gc_partial_conf_isRef_fupd";;
 
 let gc_move_def = cake_define_list
   [`gen_gc_partial_gc_move conf state (gc_shared_Data d) =
-  (gc_shared_Data d,state)`;
+  ((gc_shared_Data d:'a heap_address),state)`;
    `gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
          (let ok = (gc_state_ok state /\ (ptr < heap_length
            (gc_state_heap state))) in

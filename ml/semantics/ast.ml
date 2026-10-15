@@ -230,12 +230,13 @@ let dec_INDUCT,dec_RECURSION = define_datatype
 
 (* Computes the bindings of a pattern *)
 let pat_bindings_def = cake_define_list
-  [`ast_pat_bindings ast_Pany = []`;
-   `ast_pat_bindings (ast_Pvar n) = [n]`;
-   `ast_pat_bindings (ast_Plit l) = []`;
-   `ast_pat_bindings (ast_Pcon v0 ps) = ast_pats_bindings ps`;
-   `ast_pat_bindings (ast_Pref p) = ast_pat_bindings p`;
-   `ast_pat_bindings (ast_Pas p i) = ast_pat_bindings p ++ [i]`;
+  [`ast_pat_bindings (ast_Pany:ast_pat) = []`;
+   `ast_pat_bindings (ast_Pvar n:ast_pat) = [n]`;
+   `ast_pat_bindings (ast_Plit l:ast_pat) = []`;
+   `ast_pat_bindings (ast_Pcon v0 ps:ast_pat) = ast_pats_bindings ps`;
+   `ast_pat_bindings (ast_Pref p:ast_pat) = ast_pat_bindings p`;
+   `ast_pat_bindings (ast_Pas p i:ast_pat) = ast_pat_bindings p ++
+  [i]`;
    `ast_pat_bindings (ast_Ptannot p v1) = ast_pat_bindings p`;
    `ast_pats_bindings [] = []`;
    `ast_pats_bindings (p :: ps) = ast_pats_bindings ps ++
@@ -244,40 +245,42 @@ hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
 let every_exp_def = cake_define_list
-  [`every_exp p (ast_Raise e) <=>
-                 p (ast_Raise e) /\ every_exp p e`;
-   `every_exp p (ast_Handle e pes) <=>
-                 p (ast_Handle e pes) /\ every_exp p e /\ EVERY
-                   (\(pat,e). every_exp p e) pes`;
+  [`every_exp p (ast_Raise e:ast_exp) <=>
+                 p ((ast_Raise e:ast_exp)) /\ every_exp p e`;
+   `every_exp p (ast_Handle e pes:ast_exp) <=>
+                 p ((ast_Handle e pes:ast_exp)) /\ every_exp p e
+                   /\ EVERY (\(pat,e). every_exp p e) pes`;
    `every_exp p (ast_Lit l) <=>
                  p (ast_Lit l)`;
-   `every_exp p (ast_Con cn es) <=>
-                 p (ast_Con cn es) /\ EVERY (every_exp p) es`;
-   `every_exp p (ast_Var v) <=>
-                 p (ast_Var v)`;
-   `every_exp p (ast_Fun x e) <=>
-                 p (ast_Fun x e) /\ every_exp p e`;
-   `every_exp p (ast_App op es) <=>
-                 p (ast_App op es) /\ EVERY (every_exp p) es`;
+   `every_exp p (ast_Con cn es:ast_exp) <=>
+                 p ((ast_Con cn es:ast_exp)) /\ EVERY (every_exp
+                   p) es`;
+   `every_exp p (ast_Var v:ast_exp) <=>
+                 p ((ast_Var v:ast_exp))`;
+   `every_exp p (ast_Fun x e:ast_exp) <=>
+                 p ((ast_Fun x e:ast_exp)) /\ every_exp p e`;
+   `every_exp p (ast_App op es:ast_exp) <=>
+                 p ((ast_App op es:ast_exp)) /\ EVERY (every_exp
+                   p) es`;
    `every_exp p (ast_Log lop e1 e2) <=>
                  p (ast_Log lop e1 e2) /\ every_exp p e1 /\
                    every_exp p e2`;
-   `every_exp p (ast_If e1 e2 e3) <=>
-                 p (ast_If e1 e2 e3) /\ every_exp p e1 /\
-                   every_exp p e2 /\ every_exp p e3`;
-   `every_exp p (ast_Mat e pes) <=>
-                 p (ast_Mat e pes) /\ every_exp p e /\ EVERY
-                   (\(pat,e). every_exp p e) pes`;
-   `every_exp p (ast_Let x e1 e2) <=>
-                 p (ast_Let x e1 e2) /\ every_exp p e1 /\
-                   every_exp p e2`;
+   `every_exp p (ast_If e1 e2 e3:ast_exp) <=>
+                 p ((ast_If e1 e2 e3:ast_exp)) /\ every_exp p e1
+                   /\ every_exp p e2 /\ every_exp p e3`;
+   `every_exp p (ast_Mat e pes:ast_exp) <=>
+                 p ((ast_Mat e pes:ast_exp)) /\ every_exp p e /\
+                   EVERY (\(pat,e). every_exp p e) pes`;
+   `every_exp p (ast_Let x e1 e2:ast_exp) <=>
+                 p ((ast_Let x e1 e2:ast_exp)) /\ every_exp p e1
+                   /\ every_exp p e2`;
    `every_exp p (ast_Tannot e a) <=>
                  p (ast_Tannot e a) /\ every_exp p e`;
    `every_exp p (ast_Lannot e a) <=>
                  p (ast_Lannot e a) /\ every_exp p e`;
-   `every_exp p (ast_Letrec funs e) <=>
-                 p (ast_Letrec funs e) /\ every_exp p e /\
-                   EVERY (\(n,v,e). every_exp p e) funs`];;
+   `every_exp p (ast_Letrec funs e:ast_exp) <=>
+                 p ((ast_Letrec funs e:ast_exp)) /\ every_exp p
+                   e /\ EVERY (\(n,v,e). every_exp p e) funs`];;
 
 let seqs_def = cake_define_list
   [`ast_Seqs [] = ast_Con NONE []`;

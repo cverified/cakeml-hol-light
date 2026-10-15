@@ -135,7 +135,7 @@ let store_v_vs_def = cake_define_list
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_W8array
   _13) = []`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk
-  _14 v) = [v]`];;
+  _15 v) = [v]`];;
 hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
 let store_vs_def = cake_define
@@ -148,31 +148,31 @@ let map_match_def = cake_define
         | x -> x`;;
 
 let ctors_of_tdef_def = cake_define
-  `ctors_of_tdef (_15,_16,condefs) = MAP FST condefs`;;
+  `ctors_of_tdef (_16,_17,condefs) = MAP FST condefs`;;
 
 let ctors_of_dec_def = cake_define
   `ctors_of_dec x1 =
       match x1 with
         Dtype locs tds -> FLAT (MAP ctors_of_tdef tds)
-      | (Dexn locs s _17) -> [s]
-      | _18 -> []`;;
+      | (Dexn locs s _18) -> [s]
+      | _19 -> []`;;
 
 (* free vars *)
 
 let FV_def = cake_define_list
-  [`FV (ast_Raise e) = FV e`;
-   `FV (ast_Handle e pes) = FV e UNION FV_pes pes`;
-   `FV (ast_Lit _19) = {}`;
-   `FV (ast_Con _20 ls) = FV_list ls`;
-   `FV (ast_Var id') = {id'}`;
-   `FV (ast_Fun x e) = FV e DIFF {Short x}`;
-   `FV (ast_App _21 es) = FV_list es`;
-   `FV (ast_Log _22 e1 e2) = FV e1 UNION FV e2`;
-   `FV (ast_If e1 e2 e3) = FV e1 UNION FV e2 UNION FV e3`;
-   `FV (ast_Mat e pes) = FV e UNION FV_pes pes`;
-   `FV (ast_Let xo e b) = FV e UNION (FV b DIFF (match xo with NONE
-  -> {} | SOME x -> {Short x}))`;
-   `FV (ast_Letrec defs b) = (FV_defs defs UNION FV b) DIFF
+  [`FV (ast_Raise e:ast_exp) = FV e`;
+   `FV (ast_Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
+   `FV (ast_Lit _21:ast_exp) = {}`;
+   `FV (ast_Con _23 ls:ast_exp) = FV_list ls`;
+   `FV (ast_Var id':ast_exp) = {id'}`;
+   `FV (ast_Fun x e:ast_exp) = FV e DIFF {Short x}`;
+   `FV (ast_App _25 es:ast_exp) = FV_list es`;
+   `FV (ast_Log _26 e1 e2) = FV e1 UNION FV e2`;
+   `FV (ast_If e1 e2 e3:ast_exp) = FV e1 UNION FV e2 UNION FV e3`;
+   `FV (ast_Mat e pes:ast_exp) = FV e UNION FV_pes pes`;
+   `FV (ast_Let xo e b:ast_exp) = FV e UNION (FV b DIFF (match xo
+  with NONE -> {} | SOME x -> {Short x}))`;
+   `FV (ast_Letrec defs b:ast_exp) = (FV_defs defs UNION FV b) DIFF
   set_of_list (MAP (Short o FST) defs)`;
    `FV (ast_Tannot e t) = FV e`;
    `FV (ast_Lannot e l) = FV e`;
@@ -183,7 +183,7 @@ let FV_def = cake_define_list
          (FV e DIFF (IMAGE Short (set_of_list (ast_pat_bindings
            p)))) UNION FV_pes pes`;
    `FV_defs [] = {}`;
-   `FV_defs ((_23,x,e) :: defs) =
+   `FV_defs ((_27,x,e) :: defs) =
          (FV e DIFF {Short x}) UNION FV_defs defs`];;
 
 (* HOL4 overload (expanded in the port):
@@ -192,6 +192,6 @@ let FV_def = cake_define_list
 let FV_dec_def = cake_define_list
   [`FV_dec (Dlet locs p e) = FV (ast_Mat e [(p,ast_Lit ARB)])`;
    `FV_dec (Dletrec locs defs) = FV (ast_Letrec defs (ast_Lit ARB))`;
-   `FV_dec (Dtype _24 _25) = {}`;
-   `FV_dec (Dtabbrev _26 _27 _28 _29) = {}`;
-   `FV_dec (Dexn _30 _31 _32) = {}`];;
+   `FV_dec (Dtype _28 _29) = {}`;
+   `FV_dec (Dtabbrev _30 _31 _32 _33) = {}`;
+   `FV_dec (Dexn _34 _35 _36) = {}`];;

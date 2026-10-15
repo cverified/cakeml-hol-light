@@ -110,7 +110,7 @@ let strip_const_def = cake_define
   `strip_const x1 =
         match x1 with
           [] -> SOME []
-        | (Const w :: cs) ->
+        | (wordLang_Const w :: cs) ->
         (match strip_const cs with SOME ws -> SOME (w :: ws) | _4 ->
           NONE)
         | _5 -> NONE`;;

@@ -66,8 +66,8 @@ let get_code_labels_def = cake_define_list
    `bviProps_get_code_labels (Op op es:bvi_exp) =
   assign_get_code_label op UNION BIGUNION (set_of_list (MAP
   bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (bvi_Return es) = BIGUNION (set_of_list
-  (MAP bviProps_get_code_labels es))`;
+   `bviProps_get_code_labels (bvi_Return es:bvi_exp) = BIGUNION
+  (set_of_list (MAP bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_LetCall _5 _6 d es y) =
         {d} UNION bviProps_get_code_labels y UNION BIGUNION
           (set_of_list (MAP bviProps_get_code_labels es))`];;

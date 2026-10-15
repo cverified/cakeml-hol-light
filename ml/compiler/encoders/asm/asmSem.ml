@@ -261,10 +261,10 @@ let mem_store_def = cake_define
 hol4_overload "mem_store" "asmSem_mem_store";;
 
 let mem_op_def = cake_define_list
-  [`asmSem_mem_op asm_Load r a = asmSem_mem_load (dimindex (:'a) DIV
-  8) r a`;
-   `asmSem_mem_op asm_Store r a = asmSem_mem_store (dimindex (:'a)
-  DIV 8) r a`;
+  [`asmSem_mem_op (asm_Load:memop) r a = asmSem_mem_load (dimindex
+  (:'a) DIV 8) r a`;
+   `asmSem_mem_op (asm_Store:memop) r a = asmSem_mem_store (dimindex
+  (:'a) DIV 8) r a`;
    `asmSem_mem_op asm_Load8 r a = asmSem_mem_load 1 r a`;
    `asmSem_mem_op asm_Store8 r a = asmSem_mem_store 1 r a`;
    `asmSem_mem_op asm_Load16 r a = asmSem_mem_load 2 r a`;

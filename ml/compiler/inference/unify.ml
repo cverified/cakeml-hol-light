@@ -40,7 +40,7 @@ let encode_infer_t_def = cake_define_list
       Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
 let decode_infer_t_def = cake_define_list
-  [`decode_infer_t (ast_Var n) =
+  [`decode_infer_t (ast_Var n:ast_exp) =
       Infer_Tuvar n`;
    `decode_infer_t (Const (DB_tag n)) =
       Infer_Tvar_db n`;

@@ -477,8 +477,8 @@ let isConstructor_def = cake_define
 let EtoPat_def = cake_define
   `EtoPat x1 =
         match x1 with
-          ast_Con x args -> (if NULL args then SOME (ast_Pcon x [])
-            else NONE)
+          (ast_Con x args:ast_exp) -> (if NULL args then SOME
+            (ast_Pcon x []) else NONE)
         | (ast_Var (Short n)) -> SOME (ast_Pvar n)
         | (ast_Var (Long str n)) -> SOME (ast_Pcon (SOME (Long str
           n)) [])
@@ -525,7 +525,8 @@ let papply_def = cake_define
 let maybe_handleRef_def = cake_define
   `maybe_handleRef p =
       match p with
-        ast_Pcon (SOME (Short (implode "Ref"))) [pat] -> ast_Pref pat
+        (ast_Pcon (SOME (Short (implode "Ref"))) [pat]:ast_pat) ->
+          ast_Pref pat
       | p -> p`;;
 
 let ptree_Pattern_def = cake_define_list
@@ -675,13 +676,13 @@ let eseq_encode_def = cake_define
 let dest_Conk_def = cake_define
   `dest_Conk x1 k v =
         match x1 with
-          ast_Con x y -> k x y
+          (ast_Con x y:ast_exp) -> k x y
         | _72 -> v`;;
 
 let destFFIop_def = cake_define
   `destFFIop x1 =
         match x1 with
-          ast_FFI s -> SOME s
+          (ast_FFI s:ast_op) -> SOME s
         | _73 -> NONE`;;
 
 let strip_loc_expr_def = cake_define
@@ -722,7 +723,7 @@ let mkAst_App_def = cake_define
 let dePat_def = cake_define
   `dePat p b =
         match p with
-          ast_Pvar v -> (v,b)
+          (ast_Pvar v:ast_pat) -> (v,b)
         | p -> ((implode ""),ast_Mat (ast_Var (Short (implode
           ""))) [(p,b)])`;;
 

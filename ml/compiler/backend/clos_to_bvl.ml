@@ -76,7 +76,7 @@ needs "semantics/ast.ml";;
 let part_hash_def = cake_define_list
   [`part_hash (Int i:const_part) = num_of_int (abs i) MOD
   (999983:num)`;
-   `part_hash (closLang_Str s) =
+   `part_hash (closLang_Str s:const_part) =
       (strlen s + 3 * SUM (MAP ORD (explode s))) MOD (999983:num)`;
    `part_hash (W64 w:const_part) = (17 + w2n w) MOD (999983:num)`;
    `part_hash (Con t ns:const_part) = (18 + 5 * t + 7 * SUM ns) MOD

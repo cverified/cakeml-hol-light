@@ -102,7 +102,8 @@ let type_pes_def = cake_define
 (* ---------- tenv_val_exp stuff ---------- *)
 
 let deBruijn_subst_tenvE_def = cake_define_list
-  [`deBruijn_subst_tenvE targs typeSystem_Empty = typeSystem_Empty`;
+  [`deBruijn_subst_tenvE targs (typeSystem_Empty:tenv_val_exp) =
+  (typeSystem_Empty:tenv_val_exp)`;
    `deBruijn_subst_tenvE targs (typeSystem_Bind_tvar tvs env) =
       typeSystem_Bind_tvar tvs (deBruijn_subst_tenvE targs env)`;
    `deBruijn_subst_tenvE targs (typeSystem_Bind_name x tvs t env) =
@@ -113,7 +114,7 @@ let deBruijn_subst_tenvE_def = cake_define_list
            (deBruijn_subst_tenvE targs env)`];;
 
 let db_merge_def = cake_define_list
-  [`db_merge typeSystem_Empty e = e`;
+  [`db_merge (typeSystem_Empty:tenv_val_exp) e = e`;
    `db_merge (typeSystem_Bind_tvar tvs e1) e2 = typeSystem_Bind_tvar
   tvs (db_merge e1 e2)`;
    `db_merge (typeSystem_Bind_name x tvs t e1) e2 =

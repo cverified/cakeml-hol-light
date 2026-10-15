@@ -110,15 +110,16 @@ let numset_list_add_if_gt_def = cake_define
   `numset_list_add_if_gt l (v:int) s = numset_list_add_if l v s (\a
   b. b <= a)`;;
 
-let size_of_live_tree_def = cake_define_list
-  [`size_of_live_tree (linear_scan_Writes l) =
-      ((&1):int)`;
-   `size_of_live_tree (linear_scan_Reads l) =
-      ((&1):int)`;
-   `size_of_live_tree (Branch lt1 lt2:live_tree) =
-      size_of_live_tree lt1 + size_of_live_tree lt2`;
-   `size_of_live_tree (Seq lt1 lt2:live_tree) =
-      size_of_live_tree lt1 + size_of_live_tree lt2`];;
+let size_of_live_tree_def = cake_define
+  `(
+     size_of_live_tree (linear_scan_Writes l) =
+       ((&1):int)) /\ (
+     size_of_live_tree (linear_scan_Reads l) =
+       ((&1):int)) /\ (
+     size_of_live_tree (Branch lt1 lt2) =
+       size_of_live_tree lt1 + size_of_live_tree lt2) /\ (
+     size_of_live_tree (Seq lt1 lt2) =
+       size_of_live_tree lt1 + size_of_live_tree lt2)`;;
 
 let get_intervals_def = cake_define_list
   [`get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
@@ -1043,7 +1044,7 @@ let find_bijection_clash_tree_def = cake_define_list
   [`find_bijection_clash_tree state (reg_alloc_Delta wr rd) =
       FOLDL find_bijection_step (FOLDL find_bijection_step state
         rd) wr`;
-   `find_bijection_clash_tree state (reg_alloc_Set cutset) =
+   `find_bijection_clash_tree state (reg_alloc_Set cutset:clash_tree) =
       foldi (\r v acc. find_bijection_step acc r) 0 state cutset`;
    `find_bijection_clash_tree state (Branch optcutset ct1
   ct2:clash_tree) =
@@ -1099,7 +1100,7 @@ let linear_reg_alloc_and_extract_coloration_def = cake_define
 let size_of_clash_tree_def = cake_define_list
   [`size_of_clash_tree (reg_alloc_Delta wr rd) =
       (&2)`;
-   `size_of_clash_tree (reg_alloc_Set cutset) =
+   `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
       (&1)`;
    `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) =
       (if IS_SOME optcutset then 1 else 0) + size_of_clash_tree
@@ -1120,11 +1121,11 @@ let apply_bij_on_clash_tree_def = cake_define_list
   [`apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
       reg_alloc_Delta (MAP (\r. the 0 (sptree_lookup r bij)) wr)
         (MAP (\r. the 0 (sptree_lookup r bij)) rd)`;
-   `apply_bij_on_clash_tree (reg_alloc_Set cutset) bij =
-      reg_alloc_Set (foldi (\r _7 acc. sptree_insert (the 0
+   `apply_bij_on_clash_tree (reg_alloc_Set cutset:clash_tree) bij =
+      reg_alloc_Set (foldi (\r _19 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN cutset)`;
    `apply_bij_on_clash_tree (Branch optcutset ct1 ct2:clash_tree) bij =
-      Branch (OPTION_MAP (foldi (\r _26 acc. sptree_insert (the 0
+      Branch (OPTION_MAP (foldi (\r _38 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN) optcutset)
         (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree
         ct2 bij)`;

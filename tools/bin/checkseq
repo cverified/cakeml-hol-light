@@ -12,7 +12,7 @@ log=/home/freek/claude/hol-light/cakeml/tools/checkseq.log
   rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
   repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
     echo "checkseq: cannot clone the template"; exit 1; }
-  : > $log; }
+  : > $log; : > $C/tools/conjfail.log; }
 for f in "$@"; do
   case "$f" in /*) g="$f";; *) g="$ML/$f";; esac
   repl-step $s "let cake_t0 = Sys.time();; print_string \"CHECKSEQ\";;" \
@@ -57,6 +57,11 @@ for f in "$@"; do
       python3 -I $C/tools/cserr.py "$h")
   [ "$MARK" = 1 ] && [ -n "$e" ] && \
     e="$e [at $(tail -1 $C/tmp/mark.txt) of $nph]"
+  # the clauses that did not fit together are a bug of the port,
+  # so they are logged (the report only has room for the first
+  # failure of a file)
+  printf '%s' "$out" | grep '^cake_conj_list failed' |
+    sed "s|^|$f: |" >> $C/tools/conjfail.log
   [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
 done

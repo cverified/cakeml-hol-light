@@ -28,8 +28,8 @@ hol4_overload "isRef" "gen_gc_conf_isRef";;
 hol4_overload "isRef_fupd" "gen_gc_conf_isRef_fupd";;
 
 let gc_move_def = cake_define_list
-  [`gen_gc_gc_move conf state (gc_shared_Data d) = (gc_shared_Data
-  d,state)`;
+  [`gen_gc_gc_move conf state (gc_shared_Data d) = ((gc_shared_Data
+  d:'a heap_address),state)`;
    `gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
          (match heap_lookup ptr (gc_state_heap state) with SOME
            (ForwardPointer ptr _3 l) -> (gc_shared_Pointer ptr d,state)

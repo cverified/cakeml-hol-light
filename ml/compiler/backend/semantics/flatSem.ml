@@ -211,7 +211,7 @@ let vs_to_string_def = cake_define
   `flatSem_vs_to_string x1 =
         match x1 with
           [] -> SOME (implode "")
-        | (Litv (ast_StrLit s1) :: vs) ->
+        | ((Litv (ast_StrLit s1):flatSem_v) :: vs) ->
       (match flatSem_vs_to_string vs with SOME s2 -> SOME ((\x y.
         strcat x y) s1 s2) | _60 -> NONE)
         | _61 -> NONE`;;
@@ -251,7 +251,7 @@ let the_Litv_Float64_def = cake_define
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
 let do_test_def = cake_define_list
-  [`flatSem_do_test Equal ty v1 v2 =
+  [`flatSem_do_test (Equal:test) ty v1 v2 =
       (if check_type ty v1 /\ check_type ty v2 then
          (if ty = ast_Float64T then Eq_val (fp64_equal
            (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1

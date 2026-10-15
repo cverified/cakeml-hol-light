@@ -1098,8 +1098,10 @@ let check_clash_tree_def = cake_define_list
         (let del_w = (numset_list_delete w live) in
         let fdel_w = (numset_list_delete (MAP f w) flive) in
         check_partial_col f r del_w fdel_w))`;
-   `check_clash_tree f (reg_alloc_Set t) live flive = check_col f t`;
-   `check_clash_tree f (reg_alloc_Branch topt t1 t2) live flive =
+   `check_clash_tree f (reg_alloc_Set t:clash_tree) live flive =
+  check_col f t`;
+   `check_clash_tree f (reg_alloc_Branch topt t1 t2:clash_tree) live
+  flive =
         (match check_clash_tree f t1 live flive with
           NONE -> NONE | SOME (t1_out,ft1_out) ->
         (match check_clash_tree f t2 live flive with
@@ -1109,7 +1111,7 @@ let check_clash_tree_def = cake_define_list
             check_partial_col f (MAP FST (toAList (difference
               t2_out t1_out))) t1_out ft1_out | SOME t -> check_col f
               t)))`;
-   `check_clash_tree f (reg_alloc_Seq t1 t2) live flive =
+   `check_clash_tree f (reg_alloc_Seq t1 t2:clash_tree) live flive =
         (match check_clash_tree f t2 live flive with
           NONE -> NONE | SOME (t2_out,ft2_out) ->
           check_clash_tree f t1 t2_out ft2_out)`];;
@@ -1138,14 +1140,14 @@ let list_remap_def = cake_define_list
 let mk_bij_aux_def = cake_define_list
   [`mk_bij_aux (reg_alloc_Delta writes reads) tfn =
         list_remap writes (list_remap reads tfn)`;
-   `mk_bij_aux (reg_alloc_Set t) tfn =
+   `mk_bij_aux (reg_alloc_Set t:clash_tree) tfn =
         list_remap (MAP FST (toAList t)) tfn`;
-   `mk_bij_aux (reg_alloc_Branch topt t1 t2) tfn =
+   `mk_bij_aux (reg_alloc_Branch topt t1 t2:clash_tree) tfn =
          (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
          match topt with
            NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList
              ts)) tfn')`;
-   `mk_bij_aux (reg_alloc_Seq t1 t2) tfn =
+   `mk_bij_aux (reg_alloc_Seq t1 t2:clash_tree) tfn =
         mk_bij_aux t1 (mk_bij_aux t2 tfn)`];;
 
 let mk_bij_def = cake_define
@@ -1195,12 +1197,12 @@ let mk_graph_def = cake_define_list
           live. st_ex_bind (extend_clique rta live) (\
           livein.
           st_ex_return livein)))))`;
-   `mk_graph ta (reg_alloc_Set t) liveout =
+   `mk_graph ta (reg_alloc_Set t:clash_tree) liveout =
         st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t)))) (\
           live. st_ex_ignore_bind
           (clique_insert_edge live) (
           st_ex_return live))`;
-   `mk_graph ta (reg_alloc_Branch topt t1 t2) liveout =
+   `mk_graph ta (reg_alloc_Branch topt t1 t2:clash_tree) liveout =
         st_ex_bind (mk_graph ta t1 liveout) (\
           t1_live. st_ex_bind (mk_graph ta t2 liveout) (\
           t2_live.
@@ -1214,7 +1216,7 @@ let mk_graph_def = cake_define_list
               clashes. st_ex_ignore_bind
               (clique_insert_edge clashes) (
               st_ex_return clashes)))))`;
-   `mk_graph ta (reg_alloc_Seq t1 t2) liveout =
+   `mk_graph ta (reg_alloc_Seq t1 t2:clash_tree) liveout =
         st_ex_bind (mk_graph ta t2 liveout) (\
           live.
           mk_graph ta t1 live)`];;

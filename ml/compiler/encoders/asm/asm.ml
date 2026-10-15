@@ -345,7 +345,7 @@ let asm_ok_def = cake_define_list
 
 let word_cmp_def = cake_define_list
   [`asm_word_cmp (Equal:cmp) w1 w2 = (w1 = w2)`;
-   `asm_word_cmp Less w1 w2 = (w1 < w2)`;
+   `asm_word_cmp (Less:cmp) w1 w2 = (w1 < w2)`;
    `asm_word_cmp asm_Lower w1 w2 = (w1 <+ w2)`;
    `asm_word_cmp (Test:cmp) w1 w2 = ((w1 && w2) = (n2w 0))`;
    `asm_word_cmp asm_NotEqual w1 w2 = (~(w1 = w2))`;
@@ -357,7 +357,7 @@ hol4_overload "word_cmp" "asm_word_cmp";;
 let is_load_def = cake_define
   `is_load x1 =
         match x1 with
-          asm_Load -> T
+          (asm_Load:memop) -> T
         | asm_Load8 -> T
         | asm_Load16 -> T
         | asm_Load32 -> T

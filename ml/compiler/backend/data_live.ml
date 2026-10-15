@@ -61,15 +61,16 @@ let is_pure_def = cake_define
 hol4_overload "is_pure" "data_live_is_pure";;
 
 let compile_def = cake_define_list
-  [`data_live_compile dataLang_Skip live = (dataLang_Skip,live)`;
-   `data_live_compile (dataLang_Return ns) live = (dataLang_Return
-  ns,list_insert ns LN)`;
+  [`data_live_compile (dataLang_Skip:dataLang_prog) live =
+  ((dataLang_Skip:dataLang_prog),live)`;
+   `data_live_compile (dataLang_Return ns:dataLang_prog) live =
+  ((dataLang_Return ns:dataLang_prog),list_insert ns LN)`;
    `data_live_compile (Raise n:dataLang_prog) live = ((Raise
   n:dataLang_prog),sptree_insert n one LN)`;
-   `data_live_compile (dataLang_Move n1 n2) live =
-        (dataLang_Move n1 n2,sptree_insert n2 one (sptree_delete
-          n1 live))`;
-   `data_live_compile (dataLang_Seq c1 c2) live =
+   `data_live_compile (dataLang_Move n1 n2:dataLang_prog) live =
+        ((dataLang_Move n1 n2:dataLang_prog),sptree_insert n2 one
+          (sptree_delete n1 live))`;
+   `data_live_compile (dataLang_Seq c1 c2:dataLang_prog) live =
          (let (d2,l2) = data_live_compile c2 live in
          let (d1,l1) = data_live_compile c1 l2 in
            (dataLang_Seq d1 d2,l1))`;
@@ -78,12 +79,14 @@ let compile_def = cake_define_list
    `data_live_compile (dataLang_MakeSpace k names) live =
          (let l1 = inter names live in (dataLang_MakeSpace k
            l1,l1))`;
-   `data_live_compile (dataLang_Assign v op vs NONE) live =
+   `data_live_compile (dataLang_Assign v op vs NONE:dataLang_prog) live
+  =
          (if IS_NONE (sptree_lookup v live) /\ data_live_is_pure op
            then (dataLang_Skip,live) else
            let l1 = list_insert vs (sptree_delete v live) in
-             (dataLang_Assign v op vs NONE,l1))`;
-   `data_live_compile (dataLang_Assign v op vs (SOME names)) live =
+             ((dataLang_Assign v op vs NONE:dataLang_prog),l1))`;
+   `data_live_compile (dataLang_Assign v op vs (SOME
+  names):dataLang_prog) live =
          (let l1 = inter names (sptree_delete v live) in
            (dataLang_Assign v op vs (SOME l1),list_insert vs l1))`;
    `data_live_compile (If n c2 c3:dataLang_prog) live =

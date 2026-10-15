@@ -121,7 +121,7 @@ let compile_exp_def = cake_define_list
           (type_group_id_type o nsLookup (source_to_flat_environment_c
           env)) cn))
               (source_to_flat_compile_exps t env es)`;
-   `source_to_flat_compile_exp t env (ast_Var x) =
+   `source_to_flat_compile_exp t env (ast_Var x:ast_exp) =
         (match nsLookup (source_to_flat_environment_v env) x with
           NONE -> flatLang_Var_local backend_common_None (implode "")
           | SOME x -> compile_var backend_common_None x)`;

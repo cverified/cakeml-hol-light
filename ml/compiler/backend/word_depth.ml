@@ -28,11 +28,11 @@ hol4_overload "Branch" "word_depth_Branch";;
 (* computing the max stack depth *)
 
 let max_depth_def = cake_define_list
-  [`max_depth frame_sizes word_depth_Leaf = SOME 0`;
+  [`max_depth frame_sizes (word_depth_Leaf:call_tree) = SOME 0`;
    `max_depth frame_sizes word_depth_Unknown = NONE`;
    `max_depth frame_sizes (Const n t:call_tree) =
       OPTION_MAP ((+) n) (max_depth frame_sizes t)`;
-   `max_depth frame_sizes (word_depth_Branch t1 t2) =
+   `max_depth frame_sizes (word_depth_Branch t1 t2:call_tree) =
       OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth
         frame_sizes t2)`;
    `max_depth frame_sizes (Call n t:call_tree) =

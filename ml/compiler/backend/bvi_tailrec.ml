@@ -325,7 +325,8 @@ let scan_expr_def = cake_define_list
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(Call t d xs h:bvi_exp)] =
   [(ts,bvi_tailrec_Any,F,NONE)]`;
-   `scan_expr ts loc [bvi_Return xs] = [(ts,bvi_tailrec_Any,F,NONE)]`;
+   `scan_expr ts loc [(bvi_Return xs:bvi_exp)] =
+  [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [bvi_LetCall rets t d xs y] =
   [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(Op op xs:bvi_exp)] =
@@ -385,7 +386,7 @@ let scan_expr_sing_def = cake_define_list
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (Call t d xs h:bvi_exp) =
   (ts,bvi_tailrec_Any,F,NONE)`;
-   `scan_expr_sing ts loc (bvi_Return xs) =
+   `scan_expr_sing ts loc (bvi_Return xs:bvi_exp) =
   (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (bvi_LetCall rets t d xs y) =
   (ts,bvi_tailrec_Any,F,NONE)`;
@@ -466,7 +467,7 @@ let has_rec_def = cake_define
           [] -> F
         | (x :: y :: xs) ->
        (if has_rec loc [x] then T else has_rec loc (y :: xs))
-        | [If x1 x2 x3] ->
+        | [(If x1 x2 x3:bvi_exp)] ->
        (if has_rec loc [x2] then T else has_rec loc [x3])
         | [Let xs x] -> has_rec loc [x]
         | [Tick x] -> has_rec loc [x]

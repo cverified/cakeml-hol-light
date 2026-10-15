@@ -15,7 +15,7 @@ needs "lib/integer_word.ml";;
 
 let gc_move_def = cake_define_list
   [`copying_gc_gc_move (gc_shared_Data d,h2,a,n,heap,c,limit') =
-  (gc_shared_Data d,h2,a,n,heap,c)`;
+  ((gc_shared_Data d:'a heap_address),h2,a,n,heap,c)`;
    `copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit') =
          (match heap_lookup ptr heap with SOME (DataElement xs l dd)
            ->

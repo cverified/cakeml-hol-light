@@ -77,23 +77,24 @@ let is_sibling_def = cake_define_list
    `is_sibling x (SOME l) = MEM x l`];;
 
 let pmatch_def = cake_define_list
-  [`pattern_semantics_pmatch refs pattern_semantics_Any t =
-  PMatchSuccess`;
+  [`pattern_semantics_pmatch refs
+  (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
   l':term) =
          (if ~lit_same_type l l' then PTypeFailure else
          if l = l' then PMatchSuccess else PMatchFailure)`;
    `pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME
-  (tag,siblings)) pargs) (pattern_semantics_Term (SOME t) targs) =
+  (tag,siblings)) pargs:pattern_semantics_pat) (pattern_semantics_Term
+  (SOME t) targs) =
         (if tag = t /\ LENGTH pargs = LENGTH targs then
           pattern_semantics_pmatch_list refs pargs targs else
         if is_sibling (t,LENGTH targs) siblings then
           PMatchFailure else PTypeFailure)`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Cons NONE pargs)
-  (pattern_semantics_Term NONE targs) =
+   `pattern_semantics_pmatch refs (pattern_semantics_Cons NONE
+  pargs:pattern_semantics_pat) (pattern_semantics_Term NONE targs) =
         pattern_semantics_pmatch_list refs pargs targs`;
-   `pattern_semantics_pmatch refs (pattern_semantics_Ref p)
-  (pattern_semantics_RefPtr r) =
+   `pattern_semantics_pmatch refs (pattern_semantics_Ref
+  p:pattern_semantics_pat) (pattern_semantics_RefPtr r:term) =
         (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v
           -> pattern_semantics_pmatch refs p v)`;
    `pattern_semantics_pmatch refs (Or p1 p2:pattern_semantics_pat) t =
@@ -134,8 +135,8 @@ let match_def = cake_define_list
 let dt_test_def = cake_define
   `dt_test x1 x2 =
       match (x1,x2) with
-        (pattern_semantics_TagLenEq t l,pattern_semantics_Term (SOME
-          c) args) ->
+        ((pattern_semantics_TagLenEq t
+          l:dTest),pattern_semantics_Term (SOME c) args) ->
      SOME (t = c /\ l = LENGTH args)
       | ((pattern_semantics_LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
@@ -171,8 +172,8 @@ let dt_eval_guard_def = cake_define_list
            SOME T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
 let dt_eval_def = cake_define_list
-  [`dt_eval refs _14 (pattern_semantics_Leaf k) = SOME (MatchSuccess
-  k)`;
+  [`dt_eval refs _14 (pattern_semantics_Leaf k:dTree) = SOME
+  (MatchSuccess k)`;
    `dt_eval refs _15 (Fail:dTree) = SOME (MatchFailure)`;
    `dt_eval refs _16 pattern_semantics_TypeFail = NONE`;
    `dt_eval refs v (If guard' dt1 dt2:dTree) =

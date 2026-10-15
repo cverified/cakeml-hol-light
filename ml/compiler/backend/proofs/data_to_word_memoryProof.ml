@@ -468,7 +468,7 @@ let data_pointers_def = cake_define
   `data_pointers x1 =
         match x1 with
           [] -> []
-        | ((DataElement x y z) :: rest) ->
+        | (DataElement x y z :: rest) ->
         0 :: MAP (\n. n + el_length (DataElement x y z))
           (data_pointers rest)
         | (x :: rest) ->
@@ -1461,7 +1461,7 @@ let block_drop_def = cake_define
   `block_drop x1 v =
       match (x1,v) with
         (0,v) -> SOME v
-      | ((SUC n),(Block ts tag [h; vl])) -> block_drop n vl
+      | (SUC n,(Block ts tag [h; vl]:dataSem_v)) -> block_drop n vl
       | (_89,_90) -> NONE`;;
 
 (* ---------------------------------------------------------------------

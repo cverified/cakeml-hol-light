@@ -34,17 +34,17 @@ let approx_of_def = cake_define_wf
           [] -> 0
         | (x :: y :: ys) ->
        approx_of lims [x] refs + approx_of lims (y :: ys) refs
-        | [Word64 _1] -> 3
+        | [(Word64 _2:dataSem_v)] -> 3
         | [Number i] ->
        (if small_num (limits_arch_64_bit lims) i then 0 else
          bignum_size (limits_arch_64_bit lims) i)
-        | [CodePtr _2] -> 0
-        | [RefPtr _3 r] ->
-        (match lookup r refs with NONE -> 0 | SOME (ByteArray _4 bs)
+        | [CodePtr _3] -> 0
+        | [RefPtr _4 r] ->
+        (match lookup r refs with NONE -> 0 | SOME (ByteArray _5 bs)
           -> LENGTH bs DIV (arch_size lims DIV 8) + 2 | SOME (ValueArray
           vs) ->
             approx_of lims vs (delete r refs) + LENGTH vs + 1 | SOME
-              (Thunk _5 v) ->
+              (Thunk _6 v) ->
             approx_of lims [v] (delete r refs) + 2 | SOME
               (bvlSem_MutBlock tg fin ls c rs) ->
             approx_of lims (ls ++ [c] ++ rs) (delete r refs) +
@@ -208,16 +208,16 @@ let get_code_labels_def = cake_define
   `dataProps_get_code_labels x1 =
         match x1 with
           (Call r d a h:dataLang_prog) ->
-       (match d with SOME x -> {x} | _6 -> {}) UNION
-       (match h with SOME (n,p) -> dataProps_get_code_labels p | _7
+       (match d with SOME x -> {x} | _7 -> {}) UNION
+       (match h with SOME (n,p) -> dataProps_get_code_labels p | _8
          -> {})
-        | (Force _8 loc _9) -> {loc}
+        | (Force _9 loc _10) -> {loc}
         | (Seq p1 p2) -> dataProps_get_code_labels p1 UNION
           dataProps_get_code_labels p2
-        | (If _10 p1 p2) -> dataProps_get_code_labels p1 UNION
+        | (If _11 p1 p2) -> dataProps_get_code_labels p1 UNION
           dataProps_get_code_labels p2
-        | (Assign _11 op _12 _13) -> assign_get_code_label op
-        | _14 -> {}`;;
+        | (Assign _12 op _13 _14) -> assign_get_code_label op
+        | _15 -> {}`;;
 hol4_overload "get_code_labels" "dataProps_get_code_labels";;
 
 let good_code_labels_def = cake_define
@@ -251,7 +251,7 @@ let stack_frame_size_rel_def = cake_define
        spt = spt' /\ num' = num'
         | ((Env opt spt),(Env opt' spt')) ->
        spt = spt'
-        | (_15,_16) -> F`;;
+        | (_16,_17) -> F`;;
 
 (* HOL4 ML code, not ported:
 val basics_tac = fs [evaluate_def]

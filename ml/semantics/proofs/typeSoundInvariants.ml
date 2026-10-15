@@ -42,7 +42,7 @@ let tenv_ok_def = cake_define
      tenv_abbrev_ok (type_env_t tenv)`;;
 
 let tenv_val_exp_ok_def = cake_define_list
-  [`tenv_val_exp_ok typeSystem_Empty <=> T`;
+  [`tenv_val_exp_ok (typeSystem_Empty:tenv_val_exp) <=> T`;
    `tenv_val_exp_ok (typeSystem_Bind_tvar n tenv) <=> tenv_val_exp_ok
   tenv`;
    `tenv_val_exp_ok (typeSystem_Bind_name x tvs t tenv) <=>
@@ -81,7 +81,7 @@ let type_ctor_def = cake_define
      LENGTH ts = n`;;
 
 let add_tenvE_def = cake_define_list
-  [`add_tenvE typeSystem_Empty tenvV = tenvV`;
+  [`add_tenvE (typeSystem_Empty:tenv_val_exp) tenvV = tenvV`;
    `add_tenvE (typeSystem_Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE
   tenvV`;
    `add_tenvE (typeSystem_Bind_name x tvs t tenvE) tenvV = nsBind x

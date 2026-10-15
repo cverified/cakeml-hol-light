@@ -70,7 +70,7 @@ let dest_TagLenEq_def = cake_define
 let dest_Op_def = cake_define
   `dest_Op f x2 =
       match x2 with
-        closLang_Op t op xs ->
+        (closLang_Op t op xs:closLang_exp) ->
      (match f op with NONE -> NONE | SOME i -> SOME (i,xs))
       | _8 -> NONE`;;
 
@@ -215,7 +215,7 @@ let eq_pure_list_def = cake_define_wf
   `eq_pure_list x1 =
       match x1 with
         [] -> misc_Nil
-      | [(x,y)] ->
+      | [x,y] ->
     (match eq_direct x y with SOME z -> misc_List [z] | NONE ->
        (match ((dest_Op clos_op_dest_Cons) x,(dest_Op
          clos_op_dest_Cons) y) with (NONE,NONE) -> misc_List

@@ -118,8 +118,8 @@ let abs_stack_def = cake_define
           ((bitmaps:('a word) list),[],stack',[]) ->
        (if stack' = [wordLang_Word ((n2w 0):'a word)] then SOME []
          else NONE)
-        | (bitmaps,((StackFrame n l0 l NONE) :: xs),(w ::
-          stack'),(len :: lens)) ->
+        | (bitmaps,(StackFrame n l0 l NONE :: xs),(w :: stack'),(len
+          :: lens)) ->
        (match full_read_bitmap bitmaps w with NONE -> NONE | SOME
          bits ->
            (if ~(LENGTH bits = len) then NONE else
@@ -173,7 +173,7 @@ let stack_rel_aux_def = cake_define
   `stack_rel_aux k len x3 x4 =
         match (x3,x4) with
           ([],[]) -> T
-        | (((StackFrame n l0 l NONE) :: xs),((NONE,bits,frame) ::
+        | ((StackFrame n l0 l NONE :: xs),((NONE,bits,frame) ::
           stack')) ->
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>

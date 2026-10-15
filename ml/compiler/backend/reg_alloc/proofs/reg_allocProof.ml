@@ -157,14 +157,15 @@ let good_neg_pref_def = cake_define
 
 let in_clash_tree_def = cake_define_list
   [`in_clash_tree (reg_alloc_Delta w r) x <=> MEM x w \/ MEM x r`;
-   `in_clash_tree (reg_alloc_Set names) x <=> x IN domain names`;
-   `in_clash_tree (reg_alloc_Branch name_opt t1 t2) x <=>
+   `in_clash_tree (reg_alloc_Set names:clash_tree) x <=> x IN domain
+  names`;
+   `in_clash_tree (reg_alloc_Branch name_opt t1 t2:clash_tree) x <=>
         in_clash_tree t1 x \/
         in_clash_tree t2 x \/
         (match name_opt with
           SOME names -> x IN domain names | NONE -> F)`;
-   `in_clash_tree (reg_alloc_Seq t t') x <=> in_clash_tree t x \/
-  in_clash_tree t' x`];;
+   `in_clash_tree (reg_alloc_Seq t t':clash_tree) x <=>
+  in_clash_tree t x \/ in_clash_tree t' x`];;
 
 (*g inverts f as an sptree *)
 let sp_inverts_def = cake_define

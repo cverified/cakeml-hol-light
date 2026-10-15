@@ -96,13 +96,15 @@ let mk_conses_def = cake_define_list
   mk_conses t pss`];;
 
 let expand_def = cake_define_list
-  [`expand pattern_semantics_Any = [pattern_semantics_Any]`;
+  [`expand (pattern_semantics_Any:pattern_semantics_pat) =
+  [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
   l:pattern_semantics_pat)]`;
    `expand (Or p q:pattern_semantics_pat) = expand p ++ expand q`;
-   `expand (pattern_semantics_Ref p) = mk_refs (expand p)`;
-   `expand (pattern_semantics_Cons t ps) = mk_conses t (expand_list
-  ps)`;
+   `expand (pattern_semantics_Ref p:pattern_semantics_pat) = mk_refs
+  (expand p)`;
+   `expand (pattern_semantics_Cons t ps:pattern_semantics_pat) =
+  mk_conses t (expand_list ps)`;
    `expand_list [] = [[]]`;
    `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
 
@@ -138,7 +140,7 @@ let ctor_nub_def = cake_define_list
 let ctors_of_def = cake_define
   `ctors_of x1 =
       match x1 with
-        pattern_semantics_Any -> NONE
+        (pattern_semantics_Any:pattern_semantics_pat) -> NONE
       | (Lit _1) -> NONE
       | (Or _2 _3) -> NONE
       | (pattern_semantics_Ref _4) -> SOME [RefC]
@@ -183,8 +185,8 @@ let spec_row_def = cake_define
   `spec_row c x2 =
       match x2 with
         [] -> []
-      | (pattern_semantics_Any :: rest) -> [anys (ctor_arity c) ++
-        rest]
+      | ((pattern_semantics_Any:pattern_semantics_pat) :: rest) ->
+        [anys (ctor_arity c) ++ rest]
       | ((pattern_semantics_Cons NONE qs) :: rest) ->
      (if c = TupC (LENGTH qs) then [qs ++ rest] else [])
       | ((pattern_semantics_Cons (SOME ts) qs) :: rest) ->
@@ -205,7 +207,8 @@ let spec_mats_def = cake_define_list
 let default_row_def = cake_define
   `default_row x1 =
       match x1 with
-        (pattern_semantics_Any :: rest) -> [rest]
+        ((pattern_semantics_Any:pattern_semantics_pat) :: rest) ->
+          [rest]
       | _6 -> []`;;
 
 let default_mat_def = cake_define_list
@@ -227,12 +230,15 @@ let default_mat_def = cake_define_list
    *)
 
 let pat_weight_def = cake_define_list
-  [`pat_weight pattern_semantics_Any = (0:num)`;
+  [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
+  (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = 0`;
    `pat_weight (Or p q:pattern_semantics_pat) = 1 + pat_weight p +
   pat_weight q`;
-   `pat_weight (pattern_semantics_Ref p) = 1 + pat_weight p`;
-   `pat_weight (pattern_semantics_Cons t ps) = 1 + pats_weight ps`;
+   `pat_weight (pattern_semantics_Ref p:pattern_semantics_pat) = 1 +
+  pat_weight p`;
+   `pat_weight (pattern_semantics_Cons t ps:pattern_semantics_pat) =
+  1 + pats_weight ps`;
    `pats_weight [] = 0`;
    `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 

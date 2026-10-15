@@ -555,7 +555,7 @@ Signification of the terms:
 let word_cse_def = cake_define_list
   [`word_cse data (wordLang_Move r rs) =
         (let data' = canonicalMoveRegs data rs in
-          (data',wordLang_Move r rs))`;
+          (data',(wordLang_Move r rs:'a wordLang_prog)))`;
    `word_cse data (wordLang_Inst i) =
         (let (data',p) = word_cseInst data i in
           (data',p))`;
@@ -623,7 +623,8 @@ let word_cse_def = cake_define_list
    `word_cse data wordLang_Skip = (data,(Skip:'a wordLang_prog))`;
    `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
   balanced_map_empty) data,(Store e r:'a wordLang_prog))`;
-   `word_cse data (wordLang_Assign r e) = (data,wordLang_Assign r e)`;
+   `word_cse data (wordLang_Assign r e) = (data,(wordLang_Assign r
+  e:'a wordLang_prog))`;
    `word_cse data (wordLang_Raise r) = (data,(Raise r:'a
   wordLang_prog))`;
    `word_cse data (wordLang_Return r1 r2) = (data,(Return r1 r2:'a

@@ -31,12 +31,12 @@ let remove_fvs_def = cake_define_list
    `remove_fvs fvs [(Handle t x1 x2:closLang_exp)] =
          [Handle t (HD (remove_fvs fvs [x1]))
                   (HD (remove_fvs (fvs + 1) [x2]))]`;
-   `remove_fvs fvs [closLang_Op t op xs] =
+   `remove_fvs fvs [(closLang_Op t op xs:closLang_exp)] =
          [closLang_Op t op (remove_fvs fvs xs)]`;
-   `remove_fvs fvs [closLang_Tick t x] = [closLang_Tick t (HD
-  (remove_fvs fvs [x]))]`;
-   `remove_fvs fvs [closLang_Call t ticks dest xs] = [closLang_Call t
-  ticks dest (remove_fvs fvs xs)]`;
+   `remove_fvs fvs [(closLang_Tick t x:closLang_exp)] =
+  [closLang_Tick t (HD (remove_fvs fvs [x]))]`;
+   `remove_fvs fvs [(closLang_Call t ticks dest xs:closLang_exp)] =
+  [closLang_Call t ticks dest (remove_fvs fvs xs)]`;
    `remove_fvs fvs [(App t loc_opt x1 xs:closLang_exp)] = [App t
   loc_opt (HD (remove_fvs fvs [x1])) (remove_fvs fvs xs)]`;
    `remove_fvs fvs [(Letrec t loc_opt vs fns x1:closLang_exp)] =
@@ -72,11 +72,11 @@ let remove_fvs_sing_def = cake_define_list
    `remove_fvs_sing fvs (Handle t x1 x2:closLang_exp) =
          Handle t (remove_fvs_sing fvs x1)
                   (remove_fvs_sing (fvs + 1) x2)`;
-   `remove_fvs_sing fvs (closLang_Op t op xs) =
+   `remove_fvs_sing fvs (closLang_Op t op xs:closLang_exp) =
          closLang_Op t op (remove_fvs_list fvs xs)`;
-   `remove_fvs_sing fvs (closLang_Tick t x) = closLang_Tick t
-  (remove_fvs_sing fvs x)`;
-   `remove_fvs_sing fvs (closLang_Call t ticks dest xs) =
+   `remove_fvs_sing fvs (closLang_Tick t x:closLang_exp) =
+  closLang_Tick t (remove_fvs_sing fvs x)`;
+   `remove_fvs_sing fvs (closLang_Call t ticks dest xs:closLang_exp) =
         closLang_Call t ticks dest (remove_fvs_list fvs xs)`;
    `remove_fvs_sing fvs (App t loc_opt x1 xs:closLang_exp) =
         App t loc_opt (remove_fvs_sing fvs x1) (remove_fvs_list

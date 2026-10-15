@@ -30,18 +30,18 @@ let can_interpret_def = cake_define_list
       (can_interpret e1 /\ can_interpret e2 /\ can_interpret e3)`;
    `can_interpret (Let t es e:closLang_exp) = (can_interpret e /\
   can_interpret_list es)`;
-   `can_interpret (closLang_Op t p es) =
+   `can_interpret (closLang_Op t p es:closLang_exp) =
       (can_interpret_op p (LENGTH es) /\ can_interpret_list es)`;
    `can_interpret (Raise t e:closLang_exp) = can_interpret e`;
-   `can_interpret (closLang_Tick t e) = can_interpret e`;
+   `can_interpret (closLang_Tick t e:closLang_exp) = can_interpret e`;
    `can_interpret (closLang_Fn _2 _3 _4 _5 e) = F`;
    `can_interpret (Handle t e1 e2:closLang_exp) = (can_interpret e1
   /\ can_interpret e2)`;
-   `can_interpret (closLang_Call _6 _7 _8 es) = F`;
-   `can_interpret (App _10 opt e es:closLang_exp) =
+   `can_interpret (closLang_Call _9 _10 _11 es:closLang_exp) = F`;
+   `can_interpret (App _13 opt e es:closLang_exp) =
       (IS_NONE opt /\ can_interpret e /\ can_interpret_list es /\
         LENGTH es = 1)`;
-   `can_interpret (Letrec _14 _15 _16 fns e:closLang_exp) = F`;
+   `can_interpret (Letrec _17 _18 _19 fns e:closLang_exp) = F`;
    `can_interpret_list [] = T`;
    `can_interpret_list (x :: xs) = (can_interpret x /\
   can_interpret_list xs)`];;
@@ -55,7 +55,7 @@ let check_size_op_def = cake_define
           - (1:num))
       | (closLang_IntOp (closLang_Const i)) -> (k:num)
       | (closLang_GlobOp (Global n)) -> k
-      | _17 -> k - 1`;;
+      | _20 -> k - 1`;;
 
 let check_size_def = cake_define_list
   [`check_size k ((Var t n):closLang_exp) = (k:num)`;
@@ -66,20 +66,20 @@ let check_size_def = cake_define_list
    `check_size k (Let t es e:closLang_exp) =
       (let k = check_size_list k es in if k = 0 then 0 else
          check_size k e)`;
-   `check_size k (closLang_Op t p es) =
+   `check_size k (closLang_Op t p es:closLang_exp) =
       (let k = check_size_op k p (LENGTH es) in if k = 0 then 0 else
          check_size_list k es)`;
    `check_size k (Raise t e:closLang_exp) = check_size k e`;
-   `check_size k (closLang_Tick t e) = check_size k e`;
-   `check_size k (closLang_Fn _18 _19 _20 _21 e) = k`;
+   `check_size k (closLang_Tick t e:closLang_exp) = check_size k e`;
+   `check_size k (closLang_Fn _21 _22 _23 _24 e) = k`;
    `check_size k (Handle t e1 e2:closLang_exp) =
       (let k = check_size k e1 in if k = 0 then 0 else
          check_size k e2)`;
-   `check_size k (closLang_Call _22 _23 _24 es) = k`;
-   `check_size k (App _27 _28 e es:closLang_exp) =
+   `check_size k (closLang_Call _28 _29 _30 es:closLang_exp) = k`;
+   `check_size k (App _33 _34 e es:closLang_exp) =
       (let k = check_size (k - 1) e in if k = 0 then 0 else
          check_size_list k es)`;
-   `check_size k (Letrec _32 _33 _34 fns e:closLang_exp) = k`;
+   `check_size k (Letrec _38 _39 _40 fns e:closLang_exp) = k`;
    `check_size_list k [] = k`;
    `check_size_list k (x :: xs) =
       (let k = check_size k x in if k = 0 then 0 else
@@ -99,29 +99,31 @@ let to_constant_op_def = cake_define
       | (closLang_BlockOp (Cons tag)) ->
      (if l = 0 then ConstCons 1 [ConstCons tag []] else ConstCons
        (tag + 5) [cs])
-      | _35 -> ConstInt (&0)`;;
+      | _41 -> ConstInt (&0)`;;
 
 let to_constant_def = cake_define_list
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
-   `to_constant (App _42 _43 e es:closLang_exp) =
+   `to_constant (App _48 _49 e es:closLang_exp) =
       ConstCons 0 [to_constant e; match es with [] -> ConstInt
-        (&0) | (e1 :: _44) -> to_constant e1]`;
+        (&0) | (e1 :: _50) -> to_constant e1]`;
    `to_constant (If t e1 e2 e3:closLang_exp) =
       ConstCons 0 [to_constant e1; to_constant e2; to_constant
         e3]`;
    `to_constant (Let t es e:closLang_exp) = ConstCons 1
   [to_constant_list es; to_constant e]`;
-   `to_constant (closLang_Op t p es) = to_constant_op p (LENGTH es)
-  (to_constant_list es)`;
+   `to_constant (closLang_Op t p es:closLang_exp) = to_constant_op p
+  (LENGTH es) (to_constant_list es)`;
    `to_constant (Raise t e:closLang_exp) = ConstCons 3 [to_constant
   e]`;
-   `to_constant (closLang_Tick t e) = ConstCons 4 [to_constant e]`;
+   `to_constant (closLang_Tick t e:closLang_exp) = ConstCons 4
+  [to_constant e]`;
    `to_constant (Handle t e1 e2:closLang_exp) = ConstCons 2
   [to_constant e1; to_constant e2]`;
-   `to_constant (closLang_Fn _45 _46 _47 _48 e) = ConstInt (&0)`;
-   `to_constant (closLang_Call _49 _50 _51 es) = ConstInt (&0)`;
-   `to_constant (Letrec _55 _56 _57 fns e:closLang_exp) = ConstInt
+   `to_constant (closLang_Fn _51 _52 _53 _54 e) = ConstInt (&0)`;
+   `to_constant (closLang_Call _58 _59 _60 es:closLang_exp) =
+  ConstInt (&0)`;
+   `to_constant (Letrec _64 _65 _66 fns e:closLang_exp) = ConstInt
   (&0)`;
    `to_constant_list [] = ConstCons 0 []`;
    `to_constant_list (x :: xs) = ConstCons 0 [to_constant x;
@@ -413,7 +415,7 @@ let insert_interp1_def = cake_define
   `insert_interp1 e =
      (match opt_interp e with SOME x -> x | NONE ->
          (match e with Let t ys y -> Let backend_common_None (MAP
-           opt_interp1 ys) y | _58 -> e))`;;
+           opt_interp1 ys) y | _67 -> e))`;;
 
 let compile_init_def = cake_define
   `compile_init b =

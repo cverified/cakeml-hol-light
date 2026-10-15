@@ -231,7 +231,8 @@ val ast_t_ind = ast_t_induction
 (* TODO: this is only true up to equivalence on tenvs *)
 
 let remap_tenvE_def = cake_define_list
-  [`remap_tenvE f typeSystem_Empty = typeSystem_Empty`;
+  [`remap_tenvE f (typeSystem_Empty:tenv_val_exp) =
+  (typeSystem_Empty:tenv_val_exp)`;
    `remap_tenvE f (typeSystem_Bind_tvar n e) = typeSystem_Bind_tvar n
   (remap_tenvE f e)`;
    `remap_tenvE f (typeSystem_Bind_name s n t e) =

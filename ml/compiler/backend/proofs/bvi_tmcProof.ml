@@ -82,7 +82,7 @@ let no_mutcons_def = cake_define_list
    `no_mutcons (Force loc n:bvi_exp) <=> T`;
    `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> EVERY
   no_mutcons xs /\ no_mutcons y`;
-   `no_mutcons (bvi_Return xs) <=> EVERY no_mutcons xs`;
+   `no_mutcons (bvi_Return xs:bvi_exp) <=> EVERY no_mutcons xs`;
    `no_mutcons (Op op xs:bvi_exp) <=> no_mutcons_op op /\ EVERY
   no_mutcons xs`];;
 

@@ -148,8 +148,8 @@ let decode_guard_def = cake_define_list
 let decode_dtree_def = cake_define
   `decode_dtree t br_spt v df x5 =
       match x5 with
-        pattern_semantics_Leaf n -> (match sptree_lookup n br_spt
-          with SOME br -> br | NONE -> df)
+        (pattern_semantics_Leaf n:dTree) -> (match sptree_lookup n
+          br_spt with SOME br -> br | NONE -> df)
       | pattern_semantics_Fail -> df
       | pattern_semantics_TypeFail -> flatLang_Var_local t (implode
         "impossible-case")

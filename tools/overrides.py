@@ -255,6 +255,9 @@ ONE_QUOTATION = set([
   # the other clauses say (db_vars has a Var of its own, and it is
   # the one that HOL Light takes in a clause of its own)
   ('bvl_handle', 'handle_adj_vars_def'),
+  # the Writes clause gives an integer, which is what says that
+  # the + of the Branch clause is the one of the integers
+  ('linear_scan', 'size_of_live_tree_def'),
 ])
 
 # definitions whose patterns need the type of their constructor on
