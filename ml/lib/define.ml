@@ -765,9 +765,14 @@ let define_prim_rec tm =
                    mk_mconst(name,type_of f)) fs in
   let derive cl =
     let gcl = close_clause [] (vsubst (zip fcs fs) cl) in
-    prove(gcl,
-          REPEAT GEN_TAC THEN REWRITE_TAC fdefs THEN
-          REWRITE_TAC[spec]) in
+    try prove(gcl,
+              REPEAT GEN_TAC THEN REWRITE_TAC fdefs THEN
+              REWRITE_TAC[spec])
+    with Failure e ->
+      (if !cake_debug then
+         (print_string "[prim_rec] cannot derive "; print_term gcl;
+          print_newline(); flush stdout);
+       failwith e) in
   map derive (conjuncts(snd(strip_forall tm))),spec;;
 
 (* ------------------------------------------------------------------ *)
@@ -1116,6 +1121,233 @@ let define_nested tm =
   map derive cls0,spec;;
 
 (* ------------------------------------------------------------------ *)
+(* Definitions by nested patterns.  HOL Light's recursion theorem   *)
+(* gives a function by cases on one constructor, so a pattern       *)
+(* inside a pattern needs a function of its own; the family of the  *)
+(* recursion theorem has the types of the arguments of the          *)
+(* constructors in it, so those functions can be defined with it.   *)
+(* The port compiles the clauses into such functions and derives    *)
+(* the clauses as they were given (which only holds when they do    *)
+(* not overlap; otherwise the derivation fails and the definition   *)
+(* is made in another way).                                         *)
+(* ------------------------------------------------------------------ *)
+
+let define_cases tm =
+  let fs = definition_heads tm in
+  let cls = definition_clauses tm in
+  (* the constructors of a type, with the types of their arguments *)
+  let constructors ty =
+    if is_prod_type ty then
+      (* HOL Light's pair is not a type of define_type *)
+      let ty1,ty2 = dest_prod_type ty in
+      [mk_mconst(",",mk_fun_ty ty1 (mk_fun_ty ty2 ty)),
+       [mk_var("x",ty1); mk_var("y",ty2)]]
+    else
+    let ths = CONJUNCTS (cases (fst(dest_type ty))) in
+    let tyof th = type_of(fst(dest_forall(concl th))) in
+    let th = try find (fun th -> tyof th = ty) ths
+             with Failure _ ->
+               find (fun th -> can (type_match (tyof th) ty) []) ths in
+    let th = INST_TYPE (type_match (tyof th) ty []) th in
+    let _,bod = dest_forall(concl th) in
+    map (fun dj -> let _,eq = strip_exists dj in
+                   strip_comb(rhs eq))
+        (disjuncts bod) in
+  (* the types of the family of the recursion theorem of the
+     function, which are the ones a function of its own can be
+     defined on *)
+  let f0 = hd fs in
+  let pos0 =
+    let mycls = filter (fun (g,_,_) -> g = f0) cls in
+    pattern_position f0 (map (fun (g,args,r) -> g,args,r) mycls) in
+  let mainty =
+    let tys,_ = splitlist dest_fun_ty (type_of f0) in el pos0 tys in
+  let family =
+    let _,fns,_ = rec_thm_clauses (rec_thm_of_type mainty) in
+    map (fun fn -> fst(dest_fun_ty(type_of fn))) fns in
+  let in_family ty =
+    exists (fun t -> can (type_match t ty) []) family in
+  let name0 = fst(dest_var f0) in
+  let used = ref ([]:string list) in
+  let new_name () =
+    let rec go i =
+      let s = name0 ^ "_case" ^ (if i = 0 then "" else string_of_int i)
+        in
+      if can get_const_type s || mem s !used then go (i + 1)
+      else (used := s :: !used; s) in
+    go 0 in
+  let newcls = ref ([]:term list) in
+  let auxs = ref ([]:term list) in
+  (* the variables of the compiled clauses, which all need a name of
+     their own, and one that the clauses do not use (nor a0, a1,
+     ..., which define_prim_rec takes from the recursion theorem) *)
+  let avoid = itlist (fun (_,args,r) l -> union (freesl (r :: args)) l)
+                     cls [] in
+  let vcount = ref 0 in
+  let rec fresh_var ty =
+    (incr vcount;
+     let s = "y" ^ string_of_int !vcount in
+     if exists (fun w -> fst(dest_var w) = s) avoid then fresh_var ty
+     else mk_var(s,ty)) in
+  (* the body of a function with these arguments for these clauses:
+     a pattern on a type of the family becomes a function of its
+     own (the recursion can be under it), a pattern on a pair is
+     taken apart with FST and SND, and a pattern on an option
+     becomes a conditional *)
+  let rec compile_body gargs clauses =
+    let pats = filter (fun i -> exists (fun (ps,_) ->
+                                          not (is_var (el i ps)))
+                                       clauses)
+                      (0--(length gargs - 1)) in
+    let fampats = filter (fun i -> in_family (type_of (el i gargs)))
+                         pats in
+    if pats = [] then
+      (let ps,r = hd clauses in vsubst (zip gargs ps) r)
+    else if fampats <> [] then
+      let p = hd fampats in
+      let rty = type_of (snd(hd clauses)) in
+      let aux = mk_var(new_name (),
+                       itlist (fun a t -> mk_fun_ty (type_of a) t)
+                              gargs rty) in
+      (auxs := !auxs @ [aux];
+       do_list (fun (con,cargs) ->
+                  let vs = map (fun a -> fresh_var (type_of a)) cargs in
+                  let sub = constructor_clauses clauses p con vs in
+                  if sub = [] then () else
+                  let newargs = fst(chop_list p gargs) @ vs @
+                                snd(chop_list (p + 1) gargs) in
+                  let gpat = fst(chop_list p gargs) @
+                             [list_mk_comb(con,vs)] @
+                             snd(chop_list (p + 1) gargs) in
+                  newcls := !newcls @
+                    [mk_eq(list_mk_comb(aux,gpat),
+                           compile_body newargs sub)])
+               (constructors (type_of (el p gargs)));
+       list_mk_comb(aux,gargs))
+    else
+      let p = hd pats in
+      let ty = type_of (el p gargs) in
+      let v = el p gargs in
+      if is_prod_type ty then
+        (* every clause binds the two components *)
+        let vs = [mk_fst v; mk_snd v] in
+        let sub = constructor_clauses clauses p
+                    (fst(strip_comb(fst(hd(constructors ty))))) vs in
+        let sub = if sub = [] then failwith "define_cases" else sub in
+        let newargs = fst(chop_list p gargs) @ vs @
+                      snd(chop_list (p + 1) gargs) in
+        compile_body newargs sub
+      else if fst(dest_type ty) = "option" then
+        let cons = constructors ty in
+        let branch (con,cargs) =
+          let vs = map (fun a ->
+                          if cargs = [] then a
+                          else mk_comb(mk_mconst("THE",
+                                 mk_fun_ty ty (type_of a)),v))
+                       cargs in
+          let sub = constructor_clauses clauses p con vs in
+          if sub = [] then None else
+          let newargs = fst(chop_list p gargs) @ vs @
+                        snd(chop_list (p + 1) gargs) in
+          Some (compile_body newargs sub) in
+        let nonec = find (fun (c,a) -> a = []) cons in
+        let somec = find (fun (c,a) -> a <> []) cons in
+        (match branch nonec,branch somec with
+           Some a,Some b ->
+             mk_cond(mk_eq(v,fst nonec),a,b)
+         | Some a,None -> a
+         | None,Some b -> b
+         | None,None -> failwith "define_cases")
+      else failwith "define_cases: cannot take the pattern apart"
+  (* the clauses that match a constructor at a position, with the
+     arguments of the constructor in its place *)
+  and constructor_clauses clauses p con vs =
+    mapfilter
+      (fun (ps,r) ->
+         let q = el p ps in
+         if is_var q then
+           (fst(chop_list p ps) @ map (fun v -> v) vs @
+            snd(chop_list (p + 1) ps)),
+           vsubst [list_mk_comb(con,vs),q] r
+         else
+           let c,qs = strip_comb q in
+           if c <> con then fail() else
+           (fst(chop_list p ps) @ qs @ snd(chop_list (p + 1) ps)),r)
+      clauses in
+  (* the clauses of the functions themselves *)
+  do_list
+    (fun f ->
+       let mycls = filter (fun (g,_,_) -> g = f) cls in
+       let _,args0,_ = hd mycls in
+       let n = length args0 in
+       if exists (fun (_,args,_) -> length args <> n) mycls
+       then failwith "define_cases: varying arity" else
+       let tys,_ = splitlist dest_fun_ty (type_of f) in
+       let gargs = map (fun i -> fresh_var (el i tys)) (0--(n-1)) in
+       let clauses = map (fun (_,args,r) -> args,r) mycls in
+       let p = pattern_position f (map (fun (g,a,r) -> g,a,r) mycls) in
+       let ty = el p tys in
+       do_list
+         (fun (con,cargs) ->
+            let vs = map (fun a -> fresh_var (type_of a)) cargs in
+            let sub = constructor_clauses clauses p con vs in
+            if sub = [] then () else
+            let newargs = fst(chop_list p gargs) @ vs @
+                          snd(chop_list (p + 1) gargs) in
+            let gpat = fst(chop_list p gargs) @
+                       [list_mk_comb(con,vs)] @
+                       snd(chop_list (p + 1) gargs) in
+            newcls := !newcls @
+              [mk_eq(list_mk_comb(f,gpat),
+                     compile_body newargs sub)])
+         (constructors ty))
+    fs;
+  if forall (fun cl -> exists (fun cl0 -> aconv cl cl0)
+                              (map (snd o strip_forall)
+                                   (conjuncts(snd(strip_forall tm)))))
+            !newcls
+  then failwith "define_cases: nothing to compile" else
+  let ths,spec =
+    define_prim_rec (list_mk_conj
+      (map (close_clause (fs @ !auxs)) !newcls)) in
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   (fs @ !auxs) in
+  let rws = ths @ [THE; distinctness "option";
+                   injectivity "option"; FST; SND] in
+  (* a clause that is more general than the cases of the compiled
+     definition (it has a variable where the definition takes the
+     constructors apart) needs the case analysis *)
+  let case_split v =
+    let ty = type_of v in
+    if is_prod_type ty then STRUCT_CASES_TAC (ISPEC v PAIR_SURJECTIVE)
+    else if fst(dest_type ty) = "num" then failwith "case_split" else
+    let cths = CONJUNCTS (cases (fst(dest_type ty))) in
+    let tyof th = type_of(fst(dest_forall(concl th))) in
+    let th = find (fun th -> can (type_match (tyof th) ty) []) cths in
+    STRUCT_CASES_TAC (ISPEC v th) in
+  (* the variables of an option or a pair are taken apart, as deep
+     as they go (the types get smaller, so this stops) *)
+  let rec SPLIT_TAC (asl,w as gl) =
+    let vs = filter (fun v ->
+                       let ty = type_of v in
+                       is_prod_type ty ||
+                       (is_type ty && fst(dest_type ty) = "option"))
+                    (frees w) in
+    if vs = [] then ALL_TAC gl
+    else (MAP_EVERY case_split vs THEN SPLIT_TAC) gl in
+  let derive cl =
+    let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
+    try tryfind (fun tac -> prove(gcl,tac))
+          [REPEAT GEN_TAC THEN REWRITE_TAC rws;
+           REPEAT GEN_TAC THEN SPLIT_TAC THEN REWRITE_TAC rws]
+    with Failure e ->
+      (if !cake_debug then
+         (print_string "[cases] cannot derive "; print_term gcl;
+          print_newline(); flush stdout);
+       failwith e) in
+  map derive (conjuncts(snd(strip_forall tm))),spec;;
+
+(* ------------------------------------------------------------------ *)
 (* A definition whose clauses overlap is written with a match (HOL4   *)
 (* takes the first clause that matches, and so does HOL Light's       *)
 (* match), and then HOL Light's machinery for a recursion does not    *)
@@ -1293,6 +1525,7 @@ register_rec_thm option_RECURSION;;
 register_rec_thm num_RECURSION;;
 register_rec_thm sum_RECURSION;;
 register_rec_thm char_RECURSION;;
+register_rec_thm pair_RECURSION;;
 
 (* ================================================================== *)
 
@@ -1572,6 +1805,7 @@ let cake_define_gen wf tm =
     else
       (try define_prim_rec tm with Failure _ when not (declared ()) ->
        try define_nested tm with Failure _ when not (declared ()) ->
+       try define_cases tm with Failure _ when not (declared ()) ->
        try define_match tm with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
