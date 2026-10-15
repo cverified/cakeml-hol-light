@@ -13,10 +13,12 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
+needs "lib/peg.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/primTypes.ml";;
+needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: namespaceProps string *)
@@ -32,9 +34,10 @@ let loc_err_info_FIELDS = define_record "loc_err_info"
 let failwith_def = cake_define
   `(infer_failwith) l msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
+hol4_overload "failwith" "infer_failwith";;
 
 let guard_def = cake_define
-  `guard P l msg = (if P then return one else infer_failwith l msg)`;;
+  `guard P l msg = (if P then return one else failwith l msg)`;;
 
 let read_def = cake_define
   `(read) =
@@ -110,7 +113,7 @@ let add_constraints_def = cake_define
         one.
         return one))
         | (_1,_2) ->
-     infer_failwith l ((implode
+     failwith l ((implode
        "Internal error: Bad call to add_constraints"))`;;
 
 let get_next_uvar_def = cake_define
@@ -293,7 +296,7 @@ let check_dups_def = cake_define
   `(check_dups l f [] = return one) /\
    (check_dups l f (h :: t) =
       (if MEM h t then
-        infer_failwith l (f h) else
+        failwith l (f h) else
         check_dups l f t))`;;
 
 let check_ctor_types_def = cake_define
@@ -345,19 +348,18 @@ let infer_p_def = cake_define_list
    `infer_p l ienv Pany =
         monad_bind fresh_uvar (\t.
            return (t,[]))`;
-   `infer_p l ienv (Plit (ast_IntLit i)) =
+   `infer_p l ienv (Plit (IntLit i)) =
         return (Infer_Tapp [] Tint_num,[])`;
-   `infer_p l ienv (Plit (ast_Char s)) =
+   `infer_p l ienv (Plit (Char s)) =
         return (Infer_Tapp [] Tchar_num,[])`;
-   `infer_p l ienv (Plit (ast_StrLit s)) =
+   `infer_p l ienv (Plit (StrLit s)) =
         return (Infer_Tapp [] Tstring_num,[])`;
-   `infer_p l ienv (Plit (ast_Word8 w)) =
+   `infer_p l ienv (Plit (Word8 w)) =
         return (Infer_Tapp [] Tword8_num,[])`;
    `infer_p l ienv (Plit (Word64 w)) =
         return (Infer_Tapp [] Tword64_num,[])`;
-   `infer_p l ienv (Plit (ast_Float64 f)) =
-        infer_failwith l (implode
-          "Floats cannot be used in patterns")`;
+   `infer_p l ienv (Plit (Float64 f)) =
+        failwith l (implode "Floats cannot be used in patterns")`;
    `infer_p l ienv (Pcon cn_opt ps) =
         (match cn_opt with NONE ->
               monad_bind (infer_ps l ienv ps) (\(ts,tenv).
@@ -385,7 +387,7 @@ let infer_p_def = cake_define_list
    `infer_p l ienv (Pas p v) =
         monad_bind (infer_p l ienv p) (\(t,tenv).
           return (t,tenv ++ [(v,t)]))`;
-   `infer_p l ienv (ast_Ptannot p t) =
+   `infer_p l ienv (Ptannot p t) =
        monad_bind (infer_p l ienv p) (\(t',tenv). monad_bind
          (type_name_check_subst l
                   (\tv. concat [(implode "Type variable "); tv;
@@ -408,57 +410,55 @@ let infer_p_def = cake_define_list
            return (t :: ts,tenv' ++ tenv)))`];;
 
 let word_tc_def = cake_define
-  `(word_tc ast_W8 = Tword8_num) /\
+  `(word_tc W8 = Tword8_num) /\
    (word_tc W64 = Tword64_num)`;;
 
 let op_to_string_def = cake_define
   `(op_to_string (Shift _3 _4 _5) = ((implode "Shift"),1)) /\
-   (op_to_string ast_Equality = ((implode "Equality"),2)) /\
+   (op_to_string Equality = ((implode "Equality"),2)) /\
    (op_to_string (Arith a ty) =
       ((implode "Arith"),
        (match supported_arith a ty with SOME n -> (n:num) | NONE ->
          0))) /\
-   (op_to_string (ast_FromTo _6 _7) = ((implode "FromTo"),1)) /\
+   (op_to_string (FromTo _6 _7) = ((implode "FromTo"),1)) /\
    (op_to_string (Test _8 _9) = ((implode "Test"),2)) /\
-   (op_to_string ast_Opapp = ((implode "Opapp"),2)) /\
-   (op_to_string ast_Opassign = ((implode "Opassign"),2)) /\
-   (op_to_string ast_Opref = ((implode "Opref"),1)) /\
-   (op_to_string ast_Opderef = ((implode "Opderef"),1)) /\
-   (op_to_string ast_Aw8alloc = ((implode "Aw8alloc"),2)) /\
-   (op_to_string ast_Aw8sub = ((implode "Aw8sub"),2)) /\
-   (op_to_string ast_Aw8length = ((implode "Aw8length"),1)) /\
-   (op_to_string ast_Aw8update = ((implode "Aw8update"),3)) /\
-   (op_to_string ast_Aw8sub_unsafe = ((implode "Aw8sub_unsafe"),2))
+   (op_to_string Opapp = ((implode "Opapp"),2)) /\
+   (op_to_string Opassign = ((implode "Opassign"),2)) /\
+   (op_to_string Opref = ((implode "Opref"),1)) /\
+   (op_to_string Opderef = ((implode "Opderef"),1)) /\
+   (op_to_string Aw8alloc = ((implode "Aw8alloc"),2)) /\
+   (op_to_string Aw8sub = ((implode "Aw8sub"),2)) /\
+   (op_to_string Aw8length = ((implode "Aw8length"),1)) /\
+   (op_to_string Aw8update = ((implode "Aw8update"),3)) /\
+   (op_to_string Aw8sub_unsafe = ((implode "Aw8sub_unsafe"),2)) /\
+   (op_to_string Aw8update_unsafe = ((implode "Aw8update_unsafe"),3))
      /\
-   (op_to_string ast_Aw8update_unsafe = ((implode
-     "Aw8update_unsafe"),3)) /\
-   (op_to_string ast_XorAw8Str_unsafe = ((implode
-     "XorAw8Str_unsafe"),2)) /\
-   (op_to_string ast_CopyStrStr = ((implode "CopyStrStr"),3)) /\
-   (op_to_string ast_CopyStrAw8 = ((implode "CopyStrAw8"),5)) /\
-   (op_to_string ast_CopyAw8Str = ((implode "CopyAw8Str"),3)) /\
-   (op_to_string ast_CopyAw8Aw8 = ((implode "CopyAw8Aw8"),5)) /\
-   (op_to_string ast_Strsub = ((implode "Strsub"),2)) /\
-   (op_to_string ast_Implode = ((implode "Implode"),1)) /\
-   (op_to_string ast_Explode = ((implode "Explode"),1)) /\
-   (op_to_string ast_Strlen = ((implode "Strlen"),1)) /\
-   (op_to_string ast_Strcat = ((implode "Strcat"),1)) /\
-   (op_to_string ast_VfromList = ((implode "VfromList"),1)) /\
-   (op_to_string ast_Vsub = ((implode "Vsub"),2)) /\
-   (op_to_string ast_Vsub_unsafe = ((implode "Vsub_unsafe"),2)) /\
-   (op_to_string ast_Vlength = ((implode "Vlength"),1)) /\
-   (op_to_string ast_Aalloc = ((implode "Aalloc"),2)) /\
-   (op_to_string ast_AallocEmpty = ((implode "AallocEmpty"),1)) /\
-   (op_to_string ast_AallocFixed = ((implode "AallocFixed"),1)) /\
-   (op_to_string ast_Asub = ((implode "Asub"),2)) /\
-   (op_to_string ast_Alength = ((implode "Alength"),1)) /\
-   (op_to_string ast_Aupdate = ((implode "Aupdate"),3)) /\
-   (op_to_string ast_Asub_unsafe = ((implode "Asub_unsafe"),2)) /\
-   (op_to_string ast_Aupdate_unsafe = ((implode "Aupdate_unsafe"),3))
+   (op_to_string XorAw8Str_unsafe = ((implode "XorAw8Str_unsafe"),2))
      /\
+   (op_to_string CopyStrStr = ((implode "CopyStrStr"),3)) /\
+   (op_to_string CopyStrAw8 = ((implode "CopyStrAw8"),5)) /\
+   (op_to_string CopyAw8Str = ((implode "CopyAw8Str"),3)) /\
+   (op_to_string CopyAw8Aw8 = ((implode "CopyAw8Aw8"),5)) /\
+   (op_to_string Strsub = ((implode "Strsub"),2)) /\
+   (op_to_string Implode = ((implode "Implode"),1)) /\
+   (op_to_string Explode = ((implode "Explode"),1)) /\
+   (op_to_string Strlen = ((implode "Strlen"),1)) /\
+   (op_to_string Strcat = ((implode "Strcat"),1)) /\
+   (op_to_string VfromList = ((implode "VfromList"),1)) /\
+   (op_to_string Vsub = ((implode "Vsub"),2)) /\
+   (op_to_string Vsub_unsafe = ((implode "Vsub_unsafe"),2)) /\
+   (op_to_string Vlength = ((implode "Vlength"),1)) /\
+   (op_to_string Aalloc = ((implode "Aalloc"),2)) /\
+   (op_to_string AallocEmpty = ((implode "AallocEmpty"),1)) /\
+   (op_to_string AallocFixed = ((implode "AallocFixed"),1)) /\
+   (op_to_string Asub = ((implode "Asub"),2)) /\
+   (op_to_string Alength = ((implode "Alength"),1)) /\
+   (op_to_string Aupdate = ((implode "Aupdate"),3)) /\
+   (op_to_string Asub_unsafe = ((implode "Asub_unsafe"),2)) /\
+   (op_to_string Aupdate_unsafe = ((implode "Aupdate_unsafe"),3)) /\
    (op_to_string ConfigGC = ((implode "ConfigGC"),2)) /\
-   (op_to_string ast_Eval = ((implode "Eval"),6)) /\
-   (op_to_string ast_Env_id = ((implode "Env_id"),1)) /\
+   (op_to_string Eval = ((implode "Eval"),6)) /\
+   (op_to_string Env_id = ((implode "Env_id"),1)) /\
    (op_to_string ListAppend = ((implode "ListAppend"),2)) /\
    (op_to_string (FFI _10) = ((implode "FFI"),2)) /\
    (op_to_string (ThunkOp ForceThunk) = ((implode "ForceThunk"),1))
@@ -472,13 +472,13 @@ let op_to_string_def = cake_define
      Tem = Infer_Tapp [] *)
 
 let t_num_of_def = cake_define
-  `t_num_of ast_BoolT = Tbool_num /\
+  `t_num_of BoolT = Tbool_num /\
    t_num_of IntT = Tint_num /\
    t_num_of CharT = Tchar_num /\
-   t_num_of ast_StrT = Tstring_num /\
-   t_num_of (WordT ast_W8) = Tword8_num /\
+   t_num_of StrT = Tstring_num /\
+   t_num_of (WordT W8) = Tword8_num /\
    t_num_of (WordT W64) = Tword64_num /\
-   t_num_of ast_Float64T = Tdouble_num`;;
+   t_num_of Float64T = Tdouble_num`;;
 
 let op_simple_constraints_def = cake_define
   `op_simple_constraints op =
@@ -486,7 +486,7 @@ let op_simple_constraints_def = cake_define
        NONE -> (F,[],(Infer_Tapp []) Tbool_num) | SOME arity ->
                           (T,REPLICATE arity ((Infer_Tapp [])
                             (t_num_of ty)),(Infer_Tapp []) (t_num_of
-                            ty))) | ast_FromTo ty1 ty2 ->
+                            ty))) | FromTo ty1 ty2 ->
                             (supported_conversion ty1 ty2,
                            [(Infer_Tapp []) (t_num_of ty1)],
                            (Infer_Tapp []) (t_num_of ty2)) | Test
@@ -495,45 +495,44 @@ let op_simple_constraints_def = cake_define
                            []) (t_num_of ty)],
                          (Infer_Tapp []) Tbool_num) | Shift wz _13
                            _14 -> (T,[(Infer_Tapp []) (word_tc
-                           wz)],(Infer_Tapp []) (word_tc wz)) |
-                           ast_Aw8alloc -> (T,[(Infer_Tapp []) Tint_num;
-                           (Infer_Tapp []) Tword8_num],(Infer_Tapp [])
-                           Tword8array_num) | ast_Aw8sub ->
-                           (T,[(Infer_Tapp []) Tword8array_num;
-                           (Infer_Tapp []) Tint_num],(Infer_Tapp [])
-                           Tword8_num) | ast_Aw8length ->
-                           (T,[(Infer_Tapp [])
+                           wz)],(Infer_Tapp []) (word_tc wz)) | Aw8alloc
+                           -> (T,[(Infer_Tapp []) Tint_num; (Infer_Tapp
+                           []) Tword8_num],(Infer_Tapp [])
+                           Tword8array_num) | Aw8sub -> (T,[(Infer_Tapp
+                           []) Tword8array_num; (Infer_Tapp [])
+                           Tint_num],(Infer_Tapp []) Tword8_num) |
+                           Aw8length -> (T,[(Infer_Tapp [])
                            Tword8array_num],(Infer_Tapp []) Tint_num) |
-                           ast_Aw8update -> (T,[(Infer_Tapp [])
+                           Aw8update -> (T,[(Infer_Tapp [])
                            Tword8array_num; (Infer_Tapp []) Tint_num;
                            (Infer_Tapp []) Tword8_num],
-           (Infer_Tapp []) Ttup_num) | ast_CopyStrStr ->
-             (T,[(Infer_Tapp []) Tstring_num; (Infer_Tapp []) Tint_num;
-             (Infer_Tapp []) Tint_num],
-           (Infer_Tapp []) Tstring_num) | ast_CopyStrAw8 ->
+           (Infer_Tapp []) Ttup_num) | CopyStrStr -> (T,[(Infer_Tapp
+             []) Tstring_num; (Infer_Tapp []) Tint_num; (Infer_Tapp [])
+             Tint_num],
+           (Infer_Tapp []) Tstring_num) | CopyStrAw8 ->
              (T,[(Infer_Tapp []) Tstring_num; (Infer_Tapp []) Tint_num;
              (Infer_Tapp []) Tint_num;
                (Infer_Tapp []) Tword8array_num; (Infer_Tapp [])
-                 Tint_num],(Infer_Tapp []) Ttup_num) | ast_CopyAw8Str ->
+                 Tint_num],(Infer_Tapp []) Ttup_num) | CopyAw8Str ->
                  (T,[(Infer_Tapp []) Tword8array_num; (Infer_Tapp [])
                  Tint_num; (Infer_Tapp []) Tint_num],
-           (Infer_Tapp []) Tstring_num) | ast_CopyAw8Aw8 ->
+           (Infer_Tapp []) Tstring_num) | CopyAw8Aw8 ->
              (T,[(Infer_Tapp []) Tword8array_num; (Infer_Tapp [])
              Tint_num; (Infer_Tapp []) Tint_num;
                (Infer_Tapp []) Tword8array_num; (Infer_Tapp [])
-                 Tint_num],(Infer_Tapp []) Ttup_num) | ast_Strsub ->
+                 Tint_num],(Infer_Tapp []) Ttup_num) | Strsub ->
                  (T,[(Infer_Tapp []) Tstring_num; (Infer_Tapp [])
-                 Tint_num],(Infer_Tapp []) Tchar_num) | ast_Strlen ->
+                 Tint_num],(Infer_Tapp []) Tchar_num) | Strlen ->
                  (T,[(Infer_Tapp []) Tstring_num],(Infer_Tapp [])
                  Tint_num) | ConfigGC -> (T,[(Infer_Tapp []) Tint_num;
                  (Infer_Tapp []) Tint_num],(Infer_Tapp []) Ttup_num) |
                  FFI _15 -> (T,[(Infer_Tapp []) Tstring_num; (Infer_Tapp
                  []) Tword8array_num],(Infer_Tapp []) Ttup_num) |
-                 ast_Implode -> (T,[Infer_Tapp [Infer_Tapp [] Tchar_num]
+                 Implode -> (T,[Infer_Tapp [Infer_Tapp [] Tchar_num]
                  Tlist_num],
-           (Infer_Tapp []) Tstring_num) | ast_Explode ->
+           (Infer_Tapp []) Tstring_num) | Explode ->
              (T,[(Infer_Tapp []) Tstring_num],Infer_Tapp [(Infer_Tapp
-             []) Tchar_num] Tlist_num) | ast_Strcat -> (T,[Infer_Tapp
+             []) Tchar_num] Tlist_num) | Strcat -> (T,[Infer_Tapp
              [(Infer_Tapp []) Tstring_num] Tlist_num],(Infer_Tapp [])
              Tstring_num) | _16 -> (F,[],(Infer_Tapp []) Tbool_num))`;;
 
@@ -548,62 +547,62 @@ let constrain_op_def = cake_define
   `constrain_op l op ts s =
      (let (simple,op_arg_ts,op_ret_t) = op_simple_constraints op in
      if simple then
-       if ~(LENGTH ts = LENGTH op_arg_ts) then infer_failwith l
+       if ~(LENGTH ts = LENGTH op_arg_ts) then failwith l
          (op_n_args_msg op (LENGTH ts)) s else monad_bind
          (add_constraints l ts (MAP I op_arg_ts)) (\one.
-         return op_ret_t) s else match (op,ts) with
-           (ast_Equality,[t1; t2]) ->
+         return op_ret_t) s else match (op,ts) with (Equality,[t1;
+           t2]) ->
           monad_bind (add_constraint l t1 t2) (\one.
-             return (Infer_Tapp [] Tbool_num)) s | (ast_Opapp,[t1;
-               t2]) ->
+             return (Infer_Tapp [] Tbool_num)) s | (Opapp,[t1; t2])
+               ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t1 (Infer_Tapp [t2; uvar] Tfn_num)) (\
              one.
-             return uvar)) s | (ast_Opassign,[t1; t2]) ->
+             return uvar)) s | (Opassign,[t1; t2]) ->
           monad_bind (add_constraint l t1 (Infer_Tapp [t2] Tref_num))
             (\one.
-             return (Infer_Tapp [] Ttup_num)) s | (ast_Opref,[t]) ->
-               return (Infer_Tapp [t] Tref_num) s | (ast_Opderef,[t]) ->
+             return (Infer_Tapp [] Ttup_num)) s | (Opref,[t]) ->
+               return (Infer_Tapp [t] Tref_num) s | (Opderef,[t]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t (Infer_Tapp [uvar] Tref_num)) (\
              one.
-             return uvar)) s | (ast_VfromList,[t]) ->
+             return uvar)) s | (VfromList,[t]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t (Infer_Tapp [uvar] Tlist_num)) (\
              one.
-             return (Infer_Tapp [uvar] Tvector_num))) s |
-               (ast_Vsub,[t1; t2]) ->
+             return (Infer_Tapp [uvar] Tvector_num))) s | (Vsub,[t1;
+               t2]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t1 (Infer_Tapp [uvar] Tvector_num)) (\
              one. monad_bind (add_constraint l t2 (Infer_Tapp []
                Tint_num)) (\
              one.
-             return uvar))) s | (ast_Vlength,[t]) ->
+             return uvar))) s | (Vlength,[t]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t (Infer_Tapp [uvar] Tvector_num)) (\
              one.
-             return (Infer_Tapp [] Tint_num))) s | (ast_Aalloc,[t1;
-               t2]) ->
+             return (Infer_Tapp [] Tint_num))) s | (Aalloc,[t1; t2])
+               ->
           monad_bind (add_constraint l t1 (Infer_Tapp [] Tint_num))
             (\one.
              return (Infer_Tapp [t2] Tarray_num)) s |
-               (ast_AallocEmpty,[t1]) ->
+               (AallocEmpty,[t1]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t1 (Infer_Tapp [] Ttup_num)) (\
              one.
-             return (Infer_Tapp [uvar] Tarray_num))) s |
-               (ast_Asub,[t1; t2]) ->
+             return (Infer_Tapp [uvar] Tarray_num))) s | (Asub,[t1;
+               t2]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t1 (Infer_Tapp [uvar] Tarray_num)) (\
              one. monad_bind (add_constraint l t2 (Infer_Tapp []
                Tint_num)) (\
              one.
-             return uvar))) s | (ast_Alength,[t]) ->
+             return uvar))) s | (Alength,[t]) ->
           monad_bind fresh_uvar (\uvar. monad_bind (add_constraint l
             t (Infer_Tapp [uvar] Tarray_num)) (\
              one.
-             return (Infer_Tapp [] Tint_num))) s | (ast_Aupdate,[t1;
-               t2; t3]) ->
+             return (Infer_Tapp [] Tint_num))) s | (Aupdate,[t1; t2;
+               t3]) ->
           monad_bind (add_constraint l t1 (Infer_Tapp [t3]
             Tarray_num)) (\one. monad_bind (add_constraint l t2
             (Infer_Tapp [] Tint_num)) (\
@@ -616,31 +615,29 @@ let constrain_op_def = cake_define
                Tlist_num)) (\
              one.
              return (Infer_Tapp [uvar] Tlist_num)))) s |
-               (ast_Vsub_unsafe,_17) -> infer_failwith l ((implode
+               (Vsub_unsafe,_17) -> failwith l ((implode
                "Unsafe ops do not have a type")) s |
-               (ast_Asub_unsafe,_18) -> infer_failwith l ((implode
+               (Asub_unsafe,_18) -> failwith l ((implode
                "Unsafe ops do not have a type")) s |
-               (ast_Aupdate_unsafe,_19) -> infer_failwith l ((implode
+               (Aupdate_unsafe,_19) -> failwith l ((implode
                "Unsafe ops do not have a type")) s |
-               (ast_Aw8sub_unsafe,_20) -> infer_failwith l ((implode
+               (Aw8sub_unsafe,_20) -> failwith l ((implode
                "Unsafe ops do not have a type")) s |
-               (ast_Aw8update_unsafe,_21) -> infer_failwith l
-               ((implode "Unsafe ops do not have a type")) s |
-               (ast_XorAw8Str_unsafe,_22) -> infer_failwith l
-               ((implode "Unsafe ops do not have a type")) s |
-               (ast_AallocFixed,_23) -> infer_failwith l ((implode
-               "Unsafe ops do not have a type")) s | (ast_Eval,_24)
-               -> infer_failwith l ((implode
-               "Unsafe ops do not have a type")) s | (ast_Env_id,_25)
-               -> infer_failwith l ((implode
+               (Aw8update_unsafe,_21) -> failwith l ((implode
+               "Unsafe ops do not have a type")) s |
+               (XorAw8Str_unsafe,_22) -> failwith l ((implode
+               "Unsafe ops do not have a type")) s |
+               (AallocFixed,_23) -> failwith l ((implode
+               "Unsafe ops do not have a type")) s | (Eval,_24) ->
+               failwith l ((implode "Unsafe ops do not have a type"))
+               s | (Env_id,_25) -> failwith l ((implode
                "Unsafe ops do not have a type")) s | (ThunkOp
-               _26,_27) -> infer_failwith l ((implode
+               _26,_27) -> failwith l ((implode
                "Thunk ops do not have a type")) s | (Arith _28
-               _29,_30) -> infer_failwith l ((implode
-               "Type mismatch")) s | (ast_FromTo _31 _32,_33) ->
-               infer_failwith l ((implode "Type mismatch")) s | (Test
-               _34 _35,_36) -> infer_failwith l ((implode
-               "Type mismatch")) s | _37 -> infer_failwith l
+               _29,_30) -> failwith l ((implode "Type mismatch")) s |
+               (FromTo _31 _32,_33) -> failwith l ((implode
+               "Type mismatch")) s | (Test _34 _35,_36) -> failwith l
+               ((implode "Type mismatch")) s | _37 -> failwith l
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
 (* HOL4 termination: >> rw [] *)
@@ -659,22 +656,22 @@ let infer_e_def = cake_define_wf
         return t1)))) /\
    (infer_e l ienv (Handle e pes) =
      (if pes = [] then
-       infer_failwith l ((implode "No patterns in handle")) else
+       failwith l ((implode "No patterns in handle")) else
        monad_bind (infer_e l ienv e) (\t1. monad_bind (infer_pes l
          ienv pes (Infer_Tapp [] Texn_num) t1) (\
           one.
           return t1)))) /\
-   (infer_e l ienv (Lit (ast_IntLit i)) =
+   (infer_e l ienv (Lit (IntLit i)) =
      return (Infer_Tapp [] Tint_num)) /\
-   (infer_e l ienv (Lit (ast_Char c)) =
+   (infer_e l ienv (Lit (Char c)) =
      return (Infer_Tapp [] Tchar_num)) /\
-   (infer_e l ienv (Lit (ast_StrLit s)) =
+   (infer_e l ienv (Lit (StrLit s)) =
      return (Infer_Tapp [] Tstring_num)) /\
-   (infer_e l ienv (Lit (ast_Word8 w)) =
+   (infer_e l ienv (Lit (Word8 w)) =
      return (Infer_Tapp [] Tword8_num)) /\
    (infer_e l ienv (Lit (Word64 _38)) =
      return (Infer_Tapp [] Tword64_num)) /\
-   (infer_e l ienv (Lit (ast_Float64 _39)) =
+   (infer_e l ienv (Lit (Float64 _39)) =
      return (Infer_Tapp [] Tdouble_num)) /\
    (infer_e l ienv (Var id) =
      monad_bind (lookup_st_ex l (implode "variable") id
@@ -713,7 +710,7 @@ let infer_e_def = cake_define_wf
        op ts) (\
         t.
         return t))) /\
-   (infer_e l ienv (ast_Log log e1 e2) =
+   (infer_e l ienv (Log log e1 e2) =
      monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l ienv
        e2) (\
         t2. monad_bind (add_constraint l t1 (Infer_Tapp []
@@ -732,7 +729,7 @@ let infer_e_def = cake_define_wf
         return t2)))))) /\
    (infer_e l ienv (Mat e pes) =
      (if pes = [] then
-       infer_failwith l ((implode "No patterns in case")) else
+       failwith l ((implode "No patterns in case")) else
        monad_bind (infer_e l ienv e) (\t1. monad_bind fresh_uvar (\
           t2. monad_bind (infer_pes l ienv pes t1 t2) (\
           one.
@@ -762,7 +759,7 @@ let infer_e_def = cake_define_wf
           e) (\
         t.
         return t))))))) /\
-   (infer_e l ienv (ast_Tannot e t) =
+   (infer_e l ienv (Tannot e t) =
      monad_bind (infer_e l ienv e) (\t'. monad_bind
        (type_name_check_subst l
                (\tv. concat [(implode "Type variable "); tv; (implode
@@ -776,7 +773,7 @@ let infer_e_def = cake_define_wf
           t'')) (\
         one.
         return t')))) /\
-   (infer_e l ienv (ast_Lannot e new_l) =
+   (infer_e l ienv (Lannot e new_l) =
      infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e) /\
    (infer_es l ienv [] =
      return []) /\
@@ -909,7 +906,7 @@ let infer_d_def = cake_define
        return (mk_inf_env nsEmpty (nsSing cn ([],ts',Texn_num))
          nsEmpty))) /\
    (infer_d ienv (Denv n) =
-     infer_failwith (mk_loc_err_info NONE (inf_env_inf_t ienv))
+     failwith (mk_loc_err_info NONE (inf_env_inf_t ienv))
        ((implode "Env declaration (Denv) is not supported."))) /\
    (infer_d ienv (Dmod mn ds) =
      monad_bind (infer_ds ienv ds) (\ienv'.

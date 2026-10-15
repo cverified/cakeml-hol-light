@@ -106,19 +106,18 @@ let lex_aux_def = cake_define_wf
        SOME (token,Locs loc' loc'',rest) ->
          (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in
-           if token = tokens_SemicolonT /\ (d = 0) then SOME (REVERSE
+           if token = SemicolonT /\ (d = 0) then SOME (REVERSE
              new_acc,newloc,rest) else
-             if token = tokens_LetT then lexer_impl_lex_aux
-               new_acc (d + 1) rest newloc else if token =
-               tokens_StructT then lexer_impl_lex_aux new_acc (d + 1)
-               rest newloc else if token = tokens_SigT then
+             if token = LetT then lexer_impl_lex_aux new_acc (d +
+               1) rest newloc else if token = StructT then
                lexer_impl_lex_aux new_acc (d + 1) rest newloc else if
-               token = tokens_LparT then lexer_impl_lex_aux new_acc
-               (d + 1) rest newloc else if token = tokens_EndT then
-               lexer_impl_lex_aux new_acc (d - 1) rest newloc else if
-               token = tokens_RparT then lexer_impl_lex_aux new_acc
-               (d - 1) rest newloc else lexer_impl_lex_aux new_acc d
-               rest newloc))`;;
+               token = SigT then lexer_impl_lex_aux new_acc (d + 1)
+               rest newloc else if token = LparT then
+               lexer_impl_lex_aux new_acc (d + 1) rest newloc else if
+               token = EndT then lexer_impl_lex_aux new_acc (d - 1)
+               rest newloc else if token = RparT then
+               lexer_impl_lex_aux new_acc (d - 1) rest newloc else
+               lexer_impl_lex_aux new_acc d rest newloc))`;;
 hol4_overload "lex_aux" "lexer_impl_lex_aux";;
 
 let lex_until_toplevel_semicolon_def = cake_define
@@ -187,19 +186,19 @@ let lex_aux_tokens_def = cake_define
       (match input with
         [] -> NONE | (token,locs) :: rest ->
           (let new_acc = (token,locs) :: acc in
-            if token = tokens_SemicolonT /\ (d = 0) then
+            if token = SemicolonT /\ (d = 0) then
               SOME (REVERSE (new_acc),rest) else
-              if token = tokens_LetT then
+              if token = LetT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  tokens_StructT then
+                  StructT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  tokens_SigT then
+                  SigT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  tokens_LparT then
+                  LparT then
                 lex_aux_tokens new_acc (d + 1) rest else if token =
-                  tokens_EndT then
+                  EndT then
                 lex_aux_tokens new_acc (d - 1) rest else if token =
-                  tokens_RparT then
+                  RparT then
                 lex_aux_tokens new_acc (d - 1) rest else
                   lex_aux_tokens new_acc d rest))`;;
 

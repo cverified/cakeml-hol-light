@@ -11,6 +11,7 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "lib/location.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;

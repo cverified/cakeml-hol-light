@@ -22,15 +22,14 @@ let JumpList_def = cake_define_wf
   `MEASURE (LENGTH o SND)`
   `(JumpList n xs =
       (let l = LENGTH xs in
-        if l = 0 then Op (closLang_IntOp (Const 0)) [] else
+        if l = 0 then Op (IntOp (Const 0)) [] else
         if l = 1 then HD xs else
           let k = l DIV 2 in
           let ys = TAKE k xs in
           let zs = DROP k xs in
           let lt = (if n + l < 1000000 /\ n + k < 1000000 then Op
-            (closLang_IntOp (closLang_LessConstSmall (n + k))) [Var 0]
-            else Op (closLang_IntOp (LESS)) [Op (closLang_IntOp (Const
-            (&(n + k)))) []; Var 0]) in
+            (IntOp (LessConstSmall (n + k))) [Var 0] else Op (IntOp
+            (LESS)) [Op (IntOp (Const (&(n + k)))) []; Var 0]) in
             If lt (JumpList n ys) (JumpList (n + k) zs)))`;;
 
 let jump_def = cake_define

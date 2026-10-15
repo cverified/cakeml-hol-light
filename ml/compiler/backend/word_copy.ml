@@ -90,12 +90,12 @@ let copy_prop_inst_def = cake_define
           Skip -> (Skip,cs)
         | (Const reg w) ->
        (Inst (Const reg w),remove_eq cs reg)
-        | (Arith (asm_Binop bop r1 r2 ri)) ->
+        | (Arith (Binop bop r1 r2 ri)) ->
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let ri' = lookup_eq_imm cs ri in
        let ri'' = if ri' = Reg r1 then ri else ri' in
-       (Inst (Arith (asm_Binop bop r1 r2' ri'')),cs')
+       (Inst (Arith (Binop bop r1 r2' ri'')),cs')
         | (Arith (Shift (backend_common_word_shift) r1 r2 n)) ->
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
@@ -108,86 +108,86 @@ let copy_prop_inst_def = cake_define
        let r3' = lookup_eq cs r3 in
        (Inst (Arith (Div r1 r2' r3')),
            remove_eq cs r1)
-        | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
+        | (Arith (AddCarry r1 r2 r3 r4)) ->
        let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = if r3' = r1 then r3 else r3' in
-       (Inst (Arith (asm_AddCarry r1 r2' r3'' r4)),cs')
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
+       (Inst (Arith (AddCarry r1 r2' r3'' r4)),cs')
+        | (Arith (AddOverflow r1 r2 r3 r4)) ->
        let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = if r3' = r1 then r3 else r3' in
-       (Inst (Arith (asm_AddOverflow r1 r2' r3'' r4)),cs')
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) ->
+       (Inst (Arith (AddOverflow r1 r2' r3'' r4)),cs')
+        | (Arith (SubOverflow r1 r2 r3 r4)) ->
        let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = if r3' = r1 then r3 else r3' in
-       (Inst (Arith (asm_SubOverflow r1 r2' r3'' r4)),cs')
-        | (Arith (asm_LongMul r1 r2 r3 r4)) ->
+       (Inst (Arith (SubOverflow r1 r2' r3'' r4)),cs')
+        | (Arith (LongMul r1 r2 r3 r4)) ->
        let r3' = lookup_eq cs r3 in
        let r4' = lookup_eq cs r4 in
-       (Inst (Arith (asm_LongMul r1 r2 r3 r4)),
+       (Inst (Arith (LongMul r1 r2 r3 r4)),
            remove_eqs cs [r1; r2])
-        | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
+        | (Arith (LongDiv r1 r2 r3 r4 r5)) ->
        let r3' = lookup_eq cs r3 in
        let r4' = lookup_eq cs r4 in
        let r5' = lookup_eq cs r5 in
-       (Inst (Arith (asm_LongDiv r1 r2 r3' r4' r5')),
+       (Inst (Arith (LongDiv r1 r2 r3' r4' r5')),
            remove_eqs cs [r2; r1])
-        | (asm_Mem Load r (Addr a w)) ->
+        | (Mem Load r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (Inst (asm_Mem Load r (Addr a' w)),
+         (Inst (Mem Load r (Addr a' w)),
            remove_eq cs r)
-        | (asm_Mem Store r (Addr a w)) ->
+        | (Mem Store r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (Inst (asm_Mem Store r' (Addr a' w)),cs)
-        | (asm_Mem asm_Load8 r (Addr a w)) ->
+         (Inst (Mem Store r' (Addr a' w)),cs)
+        | (Mem Load8 r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (Inst (asm_Mem asm_Load8 r (Addr a' w)),
+         (Inst (Mem Load8 r (Addr a' w)),
            remove_eq cs r)
-        | (asm_Mem asm_Store8 r (Addr a w)) ->
-       let a' = lookup_eq cs a in
-       let r' = lookup_eq cs r in
-         (Inst (asm_Mem asm_Store8 r' (Addr a' w)),cs)
-        | (asm_Mem asm_Load16 r (Addr a w)) ->
-       let a' = lookup_eq cs a in
-         (Inst (asm_Mem asm_Load16 r (Addr a' w)),
-           remove_eq cs r)
-        | (asm_Mem asm_Store16 r (Addr a w)) ->
+        | (Mem Store8 r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (Inst (asm_Mem asm_Store16 r' (Addr a' w)),cs)
-        | (asm_Mem asm_Load32 r (Addr a w)) ->
+         (Inst (Mem Store8 r' (Addr a' w)),cs)
+        | (Mem Load16 r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (Inst (asm_Mem asm_Load32 r (Addr a' w)),
+         (Inst (Mem Load16 r (Addr a' w)),
            remove_eq cs r)
-        | (asm_Mem asm_Store32 r (Addr a w)) ->
+        | (Mem Store16 r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (Inst (asm_Mem asm_Store32 r' (Addr a' w)),cs)
-        | (asm_FP (FPLess r f1 f2)) ->
-         (Inst (asm_FP (FPLess r f1 f2)),
+         (Inst (Mem Store16 r' (Addr a' w)),cs)
+        | (Mem Load32 r (Addr a w)) ->
+       let a' = lookup_eq cs a in
+         (Inst (Mem Load32 r (Addr a' w)),
            remove_eq cs r)
-        | (asm_FP (FPLessEqual r f1 f2)) ->
-         (Inst (asm_FP (FPLessEqual r f1 f2)),
+        | (Mem Store32 r (Addr a w)) ->
+       let a' = lookup_eq cs a in
+       let r' = lookup_eq cs r in
+         (Inst (Mem Store32 r' (Addr a' w)),cs)
+        | (FP (FPLess r f1 f2)) ->
+         (Inst (FP (FPLess r f1 f2)),
            remove_eq cs r)
-        | (asm_FP (FPEqual r f1 f2)) ->
-         (Inst (asm_FP (FPEqual r f1 f2)),
+        | (FP (FPLessEqual r f1 f2)) ->
+         (Inst (FP (FPLessEqual r f1 f2)),
            remove_eq cs r)
-        | (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) ->
-         (Inst (asm_FP (FPMovToReg r1 r2 d)),
+        | (FP (FPEqual r f1 f2)) ->
+         (Inst (FP (FPEqual r f1 f2)),
+           remove_eq cs r)
+        | (FP (FPMovToReg r1 r2 d):'a asm_inst) ->
+         (Inst (FP (FPMovToReg r1 r2 d)),
            remove_eqs cs [r1; r2])
-        | (asm_FP (FPMovFromReg d r1 r2)) ->
+        | (FP (FPMovFromReg d r1 r2)) ->
          let r1' = lookup_eq cs r1 in
          let r2' = lookup_eq cs r2 in
          let (r1'',r2'') = if r1' = r2' then (r1,r2) else (r1',r2')
            in
-         (Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs)
-        | (asm_FP x) -> (Inst (asm_FP x),cs)
+         (Inst (FP (FPMovFromReg d r1'' r2'')),cs)
+        | (FP x) -> (Inst (FP x),cs)
         | _2 -> ARB`;;
 
 (* handle x := y by making x the new
@@ -292,9 +292,9 @@ let copy_prop_prog_def = cake_define
          (OpCurrHeap b dst src'',
             remove_eq cs dst)
         | Tick -> (Tick,cs)
-        | (wordLang_MustTerminate p1) ->
+        | (MustTerminate p1) ->
        let (p1',cs') = copy_prop_prog p1 cs in
-       (wordLang_MustTerminate p1',cs')
+       (MustTerminate p1',cs')
         | (Seq p1 p2) ->
         let (q1,cs') = copy_prop_prog p1 cs in
         let (q2,cs'') = copy_prop_prog p2 cs' in
@@ -341,9 +341,9 @@ let copy_prop_prog_def = cake_define
         (DataBufferWrite r1' r2',cs)
         | (FFI i r1 r2 r3 r4 live) ->
        (FFI i r1 r2 r3 r4 live,empty_eq)
-        | (wordLang_ShareInst op v exp) ->
+        | (ShareInst op v exp) ->
        let exp' = copy_prop_share exp cs in
-       (wordLang_ShareInst op v exp',
+       (ShareInst op v exp',
          remove_eq cs v)
         | (Loop names c exit_names) ->
         let (c',_5) = copy_prop_prog c empty_eq in

@@ -34,19 +34,18 @@ let part_space_req_def = cake_define_list
 let op_space_req_def = cake_define
   `op_space_req x1 l =
         match x1 with
-          (closLang_MemOp Ref) -> l + 1
-        | (closLang_MemOp (closLang_MutCons tag k)) -> l + 1
-        | (closLang_BlockOp (Cons _1)) -> if l = 0 then 0 else l + 1
-        | (closLang_BlockOp (closLang_Build parts)) -> SUM (MAP
-          part_space_req parts)
-        | (closLang_WordOp (WordOpw W64 _2)) -> 3
-        | (closLang_WordOp (WordShift W64 _3 _4)) -> 3
-        | (closLang_WordOp WordFromInt) -> 3
-        | (closLang_WordOp WordToInt) -> 3
-        | (closLang_WordOp (WordFromWord F)) -> 3
-        | (closLang_WordOp (FP_uop _5)) -> 3
-        | (closLang_WordOp (FP_bop _6)) -> 3
-        | (closLang_WordOp (FP_top _7)) -> 3
+          (MemOp Ref) -> l + 1
+        | (MemOp (MutCons tag k)) -> l + 1
+        | (BlockOp (Cons _1)) -> if l = 0 then 0 else l + 1
+        | (BlockOp (Build parts)) -> SUM (MAP part_space_req parts)
+        | (WordOp (WordOpw W64 _2)) -> 3
+        | (WordOp (WordShift W64 _3 _4)) -> 3
+        | (WordOp WordFromInt) -> 3
+        | (WordOp WordToInt) -> 3
+        | (WordOp (WordFromWord F)) -> 3
+        | (WordOp (FP_uop _5)) -> 3
+        | (WordOp (FP_bop _6)) -> 3
+        | (WordOp (FP_top _7)) -> 3
         | (ThunkOp (AllocThunk _8)) -> l + 1
         | _9 -> 0`;;
 
@@ -74,23 +73,22 @@ QED
 
 let pMakeSpace_def = cake_define
   `(pMakeSpace (INL c) = c) /\
-   (pMakeSpace (INR (k,names,c)) = Seq (dataLang_MakeSpace k
-     names) c)`;;
+   (pMakeSpace (INR (k,names,c)) = Seq (MakeSpace k names) c)`;;
 
 let space_def = cake_define
   `space c =
         match c with
-          (dataLang_MakeSpace k names) -> INR (k,names,Skip)
+          (MakeSpace k names) -> INR (k,names,Skip)
         | (Seq c1 c2) ->
         let d1 = pMakeSpace (space c1) in
         let x2 = space c2 in
           match x2 with INL c4 ->
-             (match c1 with dataLang_MakeSpace k names -> INR
-               (k,names,c4) | Skip -> INL c4 | _10 -> INL (Seq d1 c4)) |
-               INR (k2,names2,c4) ->
-             (match c1 with Skip -> INR (k2,names2,c4) |
-               dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
-               names2,c4) | Move dest src ->
+             (match c1 with MakeSpace k names -> INR (k,names,c4) |
+               Skip -> INL c4 | _10 -> INL (Seq d1 c4)) | INR
+               (k2,names2,c4) ->
+             (match c1 with Skip -> INR (k2,names2,c4) | MakeSpace k1
+               names1 -> INR (k2,inter names1 names2,c4) | Move dest src
+               ->
                   INR (k2,insert src one (delete dest names2),
                        Seq (Move dest src) c4) | Assign dest op args
                          NONE ->

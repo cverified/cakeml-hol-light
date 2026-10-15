@@ -70,6 +70,7 @@ let path_def = cake_define
   `(parmove_path [] <=> T) /\ (parmove_path [_1] <=> T) /\
    (parmove_path ((c,b') :: (b,a) :: p) <=>
       (b = b') /\ parmove_path ((b,a) :: p))`;;
+hol4_overload "path" "parmove_path";;
 
 let wf_def = cake_define
   `parmove_wf ('gk,'gq,'gr) <=>
@@ -78,7 +79,7 @@ let wf_def = cake_define
      EVERY IS_SOME (MAP SND 'gk) /\
      (~NULL 'gq ==> EVERY IS_SOME (MAP SND (FRONT 'gq))) /\
      EVERY IS_SOME (MAP FST 'gq) /\
-     parmove_path 'gq`;;
+     path 'gq`;;
 hol4_overload "wf" "parmove_wf";;
 (* HOL4 overload (expanded in the port):
      None =  *)

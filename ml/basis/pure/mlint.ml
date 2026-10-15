@@ -8,6 +8,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: gcd *)
 
 let toChar_def = cake_define
@@ -53,11 +54,11 @@ let int_to_string_def = cake_define
        i)) 0 0 []))`;;
 
 let toString_def1 = cake_define
-  `(num_to_str) i = int_to_string (CHR 126) i`;;
+  `mlint_toString i = int_to_string (CHR 126) i`;;
 hol4_overload "toString" "mlint_toString";;
 
 let num_to_str_def = cake_define
-  `num_to_str (n:num) = (num_to_str) (&n)`;;
+  `num_to_str (n:num) = toString (&n)`;;
 
 (* HOL4 overload (expanded in the port):
      toString = num_to_str *)

@@ -39,23 +39,22 @@ val _ = add_strliteral_form{inj=“implode”, ldelim = "«"};
      strlit = implode *)
 
 let strlen_def = cake_define
-  `strlen ((implode) s) = LENGTH s`;;
+  `strlen (strlit s) = LENGTH s`;;
 
 let strsub_def = cake_define
-  `strsub ((implode) s) n = EL n s`;;
+  `strsub (strlit s) n = EL n s`;;
 
 (* the test here is because underspecification is annoying (and SEG is
    underspecified) *)
 (* the underlying primitive (CopyStrStr) raises an exception if the test
    is false *)
 let substring_def = cake_define
-  `substring ((implode) s) off len = (implode) (if off + len <=
-  LENGTH s then SEG len off s else if off <= LENGTH s then DROP off s
-  else "")`;;
+  `substring (strlit s) off len = strlit (if off + len <= LENGTH s
+  then SEG len off s else if off <= LENGTH s then DROP off s else "")`;;
 
 let concat_def = cake_define
-  `mlstring_concat l = (implode) (FLAT (MAP (\s. match s with
-  (implode) x -> x) l))`;;
+  `mlstring_concat l = strlit (FLAT (MAP (\s. match s with strlit x
+  -> x) l))`;;
 hol4_overload "concat" "mlstring_concat";;
 
 let explode_aux_def = cake_define
@@ -313,10 +312,10 @@ hol4_overload "collate" "mlstring_collate";;
 
 let char_escape_seq_def = cake_define
   `char_escape_seq c =
-     (if c = (CHR 9) then SOME (implode "\\t") else if c = (CHR
-       10) then SOME (implode "\\n") else if c = (CHR 92) then SOME
-       (implode "\\\\") else if c = (CHR 34) then SOME ((implode)
-       "\\\"") else NONE)`;;
+     (if c = (CHR 9) then SOME (strlit "\\t") else if c = (CHR 10)
+       then SOME (strlit "\\n") else if c = (CHR 92) then SOME
+       (strlit "\\\\") else if c = (CHR 34) then SOME (strlit "\\\"")
+       else NONE)`;;
 
 let char_escaped_def = cake_define
   `char_escaped c = (match char_escape_seq c with
@@ -344,7 +343,7 @@ let sum_sizes_def = cake_define
 
 let make_app_list_ann_def = cake_define
   `make_app_list_ann input =
-     (match input with misc_Nil -> (Small input,0) | Append l1 l2 ->
+     (match input with Nil -> (Small input,0) | Append l1 l2 ->
          (let (x1,n1) = make_app_list_ann l1 in
           let (x2,n2) = make_app_list_ann l2 in
           let n = n1 + n2 in

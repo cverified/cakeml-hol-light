@@ -21,6 +21,7 @@ let call_tree_INDUCT,call_tree_RECURSION = define_datatype
    word_depth_Const (num) (call_tree) | word_depth_Call (num) \
    (call_tree) | word_depth_Branch (call_tree) (call_tree)";;
 hol4_overload "Leaf" "word_depth_Leaf";;
+hol4_overload "Unknown" "word_depth_Unknown";;
 hol4_overload "Const" "word_depth_Const";;
 hol4_overload "Call" "word_depth_Call";;
 hol4_overload "Branch" "word_depth_Branch";;
@@ -29,7 +30,7 @@ hol4_overload "Branch" "word_depth_Branch";;
 
 let max_depth_def = cake_define
   `max_depth frame_sizes Leaf = SOME 0 /\
-   max_depth frame_sizes word_depth_Unknown = NONE /\
+   max_depth frame_sizes Unknown = NONE /\
    max_depth frame_sizes (Const n t) =
      OPTION_MAP ((+) n) (max_depth frame_sizes t) /\
    max_depth frame_sizes (Branch t1 t2) =
@@ -46,8 +47,8 @@ let mk_Branch_def = cake_define
      (if t1 = t2 then t1 else
      if t1 = Leaf then t2 else
      if t2 = Leaf then t1 else
-     if t1 = word_depth_Unknown then t1 else
-     if t2 = word_depth_Unknown then t2 else
+     if t1 = Unknown then t1 else
+     if t2 = Unknown then t2 else
        Branch t1 t2)`;;
 
 (* HOL4 termination: \\ rpt strip_tac \\ fs [size_delete] \\
@@ -65,9 +66,9 @@ let call_graph_def = cake_define_wf
         mk_Branch (call_graph funs n ns total p1) (call_graph funs n
           ns total p2)
         | (Call ret dest args handler) ->
-        match dest with NONE -> word_depth_Unknown | SOME d ->
+        match dest with NONE -> Unknown | SOME d ->
           (if MEM d ns /\ ret = NONE then Leaf else
-          match lookup d funs with NONE -> word_depth_Unknown | SOME
+          match lookup d funs with NONE -> Unknown | SOME
             ((a:num),body) ->
             (match ret with NONE ->
               (if LENGTH ns < total then
@@ -87,16 +88,16 @@ let call_graph_def = cake_define_wf
                    (mk_Branch (call_graph funs n ns total p)
                               (call_graph funs n ns total
                                 ret_prog))))))
-        | (wordLang_MustTerminate p) -> call_graph funs n ns total p
+        | (MustTerminate p) -> call_graph funs n ns total p
         | (Alloc _11 _12) -> Call n Leaf
-        | (Install _13 _14 _15 _16 _17) -> word_depth_Unknown
+        | (Install _13 _14 _15 _16 _17) -> Unknown
         | (Loop _18 body _19) -> call_graph funs n ns total body
         | _20 -> Leaf`;;
 
 let full_call_graph_def = cake_define
   `full_call_graph n funs =
-     (match lookup n funs with NONE -> word_depth_Unknown | SOME
-       (a,prog) -> Branch (Call n Leaf)
+     (match lookup n funs with NONE -> Unknown | SOME (a,prog) ->
+       Branch (Call n Leaf)
                               (call_graph funs n [n] (size funs)
                                 prog))`;;
 

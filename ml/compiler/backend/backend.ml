@@ -488,7 +488,7 @@ let compile_inc_progs_def = cake_define
        (backend_config_word_conf c) in
      let (p,fs,bm) = compile_word_to_stack asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c))
-       reg_count1 p (misc_Nil,bm0) in
+       reg_count1 p (Nil,bm0) in
      let cur_bm = append (FST bm) in
      let c = backend_config_word_conf_fupd (K
        (word_to_stack_config_bitmaps_length_fupd (K (SND bm))

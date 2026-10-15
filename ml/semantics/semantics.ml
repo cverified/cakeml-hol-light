@@ -20,11 +20,10 @@ needs "semantics/semanticPrimitives.ml";;
 
 let parse_def = cake_define
   `semantics_parse toks =
-     (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt =
-       grammar_NT ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
-                   real_fringe pt = MAP (grammar_TOK ## I) toks)
-                     with NONE -> NONE | SOME p -> ptree_TopLevelDecs
-                     p)`;;
+     (match some (\pt. valid_lptree cmlG pt /\ ptree_head pt = NT
+       ((INL:MMLnonT->MMLnonT+num) nTopLevelDecs) /\
+                   real_fringe pt = MAP (TOK ## I) toks) with NONE
+                     -> NONE | SOME p -> ptree_TopLevelDecs p)`;;
 hol4_overload "parse" "semantics_parse";;
 
 let semantics_state_FIELDS = define_record "semantics_state"
@@ -47,15 +46,15 @@ let evaluate_prog_with_clock_def = cake_define
          st) env prog in (semanticPrimitives_state_ffi st',r))`;;
 
 let semantics_prog_def = cake_define
-  `(semantics_prog st env prog (ffi_Terminate outcome io_list) <=>
+  `(semantics_prog st env prog (Terminate outcome io_list) <=>
      (?k ffi r.
        evaluate_prog_with_clock st env k prog = (ffi,r) /\
        (match r with Rerr (Rabort (Rffi_error outcome')) ->
-          outcome = ffi_FFI_outcome (outcome') | r -> ~(r = Rerr
-            (Rabort Rtimeout_error)) /\ outcome = Success) /\
+          outcome = FFI_outcome (outcome') | r -> ~(r = Rerr (Rabort
+            Rtimeout_error)) /\ outcome = Success) /\
        (io_list = ffi_state_io_events ffi) /\
        (~(r = Rerr (Rabort Rtype_error))))) /\
-   (semantics_prog st env prog (ffi_Diverge io_trace) <=>
+   (semantics_prog st env prog (Diverge io_trace) <=>
      (!k. ?ffi.
        (evaluate_prog_with_clock st env k prog =
            (ffi,Rerr (Rabort Rtimeout_error)))) /\

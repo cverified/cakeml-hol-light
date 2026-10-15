@@ -33,8 +33,7 @@ let gc_combined_def = cake_define
      (let (roots,heap,a,c) = full_gc (roots,heap,?_limit conf) in
         (roots,heap ++ heap_expand (?_limit conf - a),a,?_limit conf
           - a,gs,c))
-      | ((data_to_word_Generational
-        limits),(roots,heap,gs,rs,do_partial)) ->
+      | ((Generational limits),(roots,heap,gs,rs,do_partial)) ->
      if do_partial then
        (let partial_conf = make_partial_conf conf gs rs in
         let (roots,state) = partial_gc partial_conf (roots,heap) in

@@ -10,6 +10,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
@@ -137,14 +138,15 @@ let store_v_INDUCT,store_v_RECURSION = define_datatype
    semanticPrimitives_W8array (word8 list) | \
    semanticPrimitives_Varray ('a list) | semanticPrimitives_Thunk \
    (thunk_mode) ('a)";;
+hol4_overload "Refv" "semanticPrimitives_Refv";;
+hol4_overload "W8array" "semanticPrimitives_W8array";;
+hol4_overload "Varray" "semanticPrimitives_Varray";;
 hol4_overload "Thunk" "semanticPrimitives_Thunk";;
 
 let store_v_same_type_def = cake_define
   `store_v_same_type v1 v2 =
-     (match ((v1:'a store_v),(v2:'a store_v)) with
-       (semanticPrimitives_Refv _1,semanticPrimitives_Refv _2) -> T |
-       (semanticPrimitives_W8array _3,semanticPrimitives_W8array _4)
-       -> T | (semanticPrimitives_Varray _5,semanticPrimitives_Varray
+     (match ((v1:'a store_v),(v2:'a store_v)) with (Refv _1,Refv
+       _2) -> T | (W8array _3,W8array _4) -> T | (Varray _5,Varray
        _6) -> T | (Thunk NotEvaluated _7,Thunk _8 _9) -> T | _10 ->
        F)`;;
 
@@ -241,11 +243,10 @@ let build_conv_def = cake_define
 
 let lit_same_type_def = cake_define
   `lit_same_type l1 l2 <=>
-      (match (l1,l2) with (ast_IntLit _12,ast_IntLit _13) -> T |
-        (ast_Char _14,ast_Char _15) -> T | (ast_StrLit _16,ast_StrLit
-        _17) -> T | (ast_Word8 _18,ast_Word8 _19) -> T | (Word64
-        _20,Word64 _21) -> T | (ast_Float64 _22,ast_Float64 _23) -> T
-        | _24 -> F)`;;
+      (match (l1,l2) with (IntLit _12,IntLit _13) -> T | (Char
+        _14,Char _15) -> T | (StrLit _16,StrLit _17) -> T | (Word8
+        _18,Word8 _19) -> T | (Word64 _20,Word64 _21) -> T | (Float64
+        _22,Float64 _23) -> T | _24 -> F)`;;
 
 let match_result_INDUCT,match_result_RECURSION = define_datatype
   "match_result = No_match | Match_type_error | Match ('a)";;
@@ -312,13 +313,12 @@ let pmatch_def = cake_define_wf
      s ps vs env else Match_type_error)
       | ((Pref p),(Loc _28 lnum)) ->
    (match store_lookup lnum s with
-      NONE -> Match_type_error | SOME (semanticPrimitives_Refv v) ->
+      NONE -> Match_type_error | SOME (Refv v) ->
         semanticPrimitives_pmatch envC s p v env | SOME _29 ->
         Match_type_error)
       | ((Pas p i),v) -> semanticPrimitives_pmatch envC s p v ((i,v)
         :: env)
-      | ((ast_Ptannot p t),v) -> semanticPrimitives_pmatch envC s p v
-        env
+      | ((Ptannot p t),v) -> semanticPrimitives_pmatch envC s p v env
       | (_30,_31) -> Match_type_error
       | ([],[]) -> Match env
       | ((p :: ps),(v :: vs)) ->
@@ -443,7 +443,7 @@ let v_to_char_list_def = cake_define
         (Conv (SOME stamp) []) ->
      (if stamp = TypeStamp (implode "[]") list_type_num then SOME ""
        else NONE)
-      | (Conv (SOME stamp) [Litv (ast_Char c); v]) ->
+      | (Conv (SOME stamp) [Litv (Char c); v]) ->
      (if stamp = TypeStamp (implode "::") list_type_num then
         match semanticPrimitives_v_to_char_list v with NONE -> NONE |
           SOME cs -> SOME (STRING c cs) else NONE)
@@ -454,7 +454,7 @@ let vs_to_string_def = cake_define
   `semanticPrimitives_vs_to_string x1 =
       match x1 with
         [] -> SOME (implode "")
-      | (Litv (ast_StrLit s1) :: vs) ->
+      | (Litv (StrLit s1) :: vs) ->
      (match semanticPrimitives_vs_to_string vs with NONE -> NONE |
        SOME s2 -> SOME (strcat s1 s2))
       | (_41 :: v1) -> NONE`;;
@@ -469,17 +469,17 @@ let maybe_to_v_def = cake_define
 let v_to_id_def = cake_define
   `v_to_id x1 =
       match x1 with
-        (Conv (SOME stamp) [Litv (ast_StrLit s)]) ->
+        (Conv (SOME stamp) [Litv (StrLit s)]) ->
       (if stamp = TypeStamp (implode "Short") id_type_num then
          SOME (Short s) else NONE)
-      | (Conv (SOME stamp) [Litv (ast_StrLit s); v]) ->
+      | (Conv (SOME stamp) [Litv (StrLit s); v]) ->
       (if stamp = TypeStamp (implode "Long") id_type_num then
          match v_to_id v with NONE -> NONE | SOME id -> SOME (Long s
            id) else NONE)
       | _42 -> NONE`;;
 
 let nat_to_v_def = cake_define
-  `nat_to_v n = Litv (ast_IntLit (&n))`;;
+  `nat_to_v n = Litv (IntLit (&n))`;;
 
 let maybe_all_list_def = cake_define
   `maybe_all_list v =
@@ -490,7 +490,7 @@ let maybe_all_list_def = cake_define
 
 let v_to_word8_def = cake_define
   `v_to_word8 v =
-     (match v with Litv (ast_Word8 w) -> SOME w | _43 -> NONE)`;;
+     (match v with Litv (Word8 w) -> SOME w | _43 -> NONE)`;;
 
 let v_to_word8_list_def = cake_define
   `v_to_word8_list v =
@@ -777,22 +777,22 @@ let thunk_op_def = cake_define
           match store_assign lnum (Thunk m v) s with SOME s' ->
             SOME ((s',t),Rval (Conv NONE [])) | NONE -> NONE) | _57
             -> NONE)`;;
+hol4_overload "thunk_op" "semanticPrimitives_thunk_op";;
 
 let check_type_def = cake_define
-  `semanticPrimitives_check_type ast_BoolT v = (v = Boolv T \/ v = Boolv
-  F) /\
-   semanticPrimitives_check_type IntT v = (?i. v = Litv (ast_IntLit
-     i)) /\
-   semanticPrimitives_check_type CharT v = (?c. v = Litv (ast_Char
-     c)) /\
-   semanticPrimitives_check_type ast_StrT v = (?s. v = Litv
-     (ast_StrLit s)) /\
-   semanticPrimitives_check_type (WordT ast_W8) v = (?w. v = Litv
-     (ast_Word8 w)) /\
+  `semanticPrimitives_check_type BoolT v = (v = Boolv T \/ v = Boolv F)
+  /\
+   semanticPrimitives_check_type IntT v = (?i. v = Litv (IntLit i))
+     /\
+   semanticPrimitives_check_type CharT v = (?c. v = Litv (Char c)) /\
+   semanticPrimitives_check_type StrT v = (?s. v = Litv (StrLit s))
+     /\
+   semanticPrimitives_check_type (WordT W8) v = (?w. v = Litv (Word8
+     w)) /\
    semanticPrimitives_check_type (WordT W64) v = (?w. v = Litv
      (Word64 w)) /\
-   semanticPrimitives_check_type ast_Float64T v = (?w. v = Litv
-     (ast_Float64 w))`;;
+   semanticPrimitives_check_type Float64T v = (?w. v = Litv
+     (Float64 w))`;;
 hol4_overload "check_type" "semanticPrimitives_check_type";;
 
 let dest_Litv_def = cake_define
@@ -803,106 +803,103 @@ let dest_Litv_def = cake_define
 hol4_overload "dest_Litv" "semanticPrimitives_dest_Litv";;
 
 let the_Litv_IntLit_def = cake_define
-  `the_Litv_IntLit (Litv (ast_IntLit i)) = i`;;
+  `the_Litv_IntLit (Litv (IntLit i)) = i`;;
 
 let the_Litv_Word8_def = cake_define
-  `the_Litv_Word8 (Litv (ast_Word8 w)) = w`;;
+  `the_Litv_Word8 (Litv (Word8 w)) = w`;;
 
 let the_Litv_Word64_def = cake_define
   `the_Litv_Word64 (Litv (Word64 w)) = w`;;
 
 let the_Litv_Float64_def = cake_define
-  `semanticPrimitives_the_Litv_Float64 (Litv (ast_Float64 w)) = w`;;
+  `semanticPrimitives_the_Litv_Float64 (Litv (Float64 w)) = w`;;
 hol4_overload "the_Litv_Float64" "semanticPrimitives_the_Litv_Float64";;
 
 let the_Litv_Char_def = cake_define
-  `the_Litv_Char (Litv (ast_Char c)) = c`;;
+  `the_Litv_Char (Litv (Char c)) = c`;;
 
 let the_Boolv_def = cake_define
   `the_Boolv v = (v = Boolv T)`;;
 
 let num_cmp_def = cake_define
-  `(num_compare) Lt i j = (i < (j:num)) /\
-   (num_compare) ast_Leq i j = (i <= j) /\
-   (num_compare) ast_Gt i j = (i > j) /\
-   (num_compare) ast_Geq i j = (i >= j)`;;
+  `semanticPrimitives_num_cmp Lt i j = (i < (j:num)) /\
+   semanticPrimitives_num_cmp Leq i j = (i <= j) /\
+   semanticPrimitives_num_cmp Gt i j = (i > j) /\
+   semanticPrimitives_num_cmp Geq i j = (i >= j)`;;
+hol4_overload "num_cmp" "semanticPrimitives_num_cmp";;
 
 let int_cmp_def = cake_define
   `semanticPrimitives_int_cmp Lt i j = (i < (j:int)) /\
-   semanticPrimitives_int_cmp ast_Leq i j = (i <= j) /\
-   semanticPrimitives_int_cmp ast_Gt i j = (i > j) /\
-   semanticPrimitives_int_cmp ast_Geq i j = (i >= j)`;;
+   semanticPrimitives_int_cmp Leq i j = (i <= j) /\
+   semanticPrimitives_int_cmp Gt i j = (i > j) /\
+   semanticPrimitives_int_cmp Geq i j = (i >= j)`;;
 hol4_overload "int_cmp" "semanticPrimitives_int_cmp";;
 
 let str_cmp_def = cake_define
   `str_cmp x1 x2 i j =
       match (x1,x2) with
         (F,Lt) -> mlstring_lt i j
-      | (F,ast_Leq) -> mlstring_le i j
-      | (F,ast_Gt) -> mlstring_gt i j
-      | (F,ast_Geq) -> mlstring_ge i j
+      | (F,Leq) -> mlstring_le i j
+      | (F,Gt) -> mlstring_gt i j
+      | (F,Geq) -> mlstring_ge i j
       | (T,Lt) -> fast_lt i j
-      | (T,ast_Leq) -> fast_le i j
-      | (T,ast_Gt) -> fast_gt i j
-      | (T,ast_Geq) -> fast_ge i j`;;
+      | (T,Leq) -> fast_le i j
+      | (T,Gt) -> fast_gt i j
+      | (T,Geq) -> fast_ge i j`;;
 
 let do_test_def = cake_define
   `semanticPrimitives_do_test (EQUAL) ty v1 v2 =
      (if check_type ty v1 /\ check_type ty v2 then
-        (if ty = ast_Float64T then Eq_val (fp64_equal
-          (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1 v2)
-          else Eq_type_error) /\
-   semanticPrimitives_do_test (ast_Compare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
-       (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val (int_cmp cmp i j) |
-       (CharT,SOME (ast_Char c),SOME (ast_Char d)) -> Eq_val
-       ((num_compare) cmp (ORD c) (ORD d)) | (WordT ast_W8,SOME
-       (ast_Word8 w),SOME (ast_Word8 v)) -> Eq_val ((num_compare) cmp
-       (w2n w) (w2n v)) | (ast_Float64T,SOME (ast_Float64 w),SOME
-       (ast_Float64 v)) -> Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME
-       (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp F cmp s t)
-       | _61 -> Eq_type_error) /\
-   semanticPrimitives_do_test (ast_AltCompare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
-       (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp s
-       t) | _62 -> Eq_type_error)`;;
+        (if ty = Float64T then Eq_val (fp64_equal (the_Litv_Float64
+          v1) (the_Litv_Float64 v2)) else do_eq v1 v2) else
+          Eq_type_error) /\
+   semanticPrimitives_do_test (Compare cmp) ty v1 v2 =
+     (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME (IntLit
+       i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) | (CharT,SOME
+       (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp (ORD c) (ORD d)) |
+       (WordT W8,SOME (Word8 w),SOME (Word8 v)) -> Eq_val (num_cmp cmp
+       (w2n w) (w2n v)) | (Float64T,SOME (Float64 w),SOME (Float64 v))
+       -> Eq_val (fp_cmp cmp w v) | (StrT,SOME (StrLit s),SOME (StrLit
+       t)) -> Eq_val (str_cmp F cmp s t) | _61 -> Eq_type_error) /\
+   semanticPrimitives_do_test (AltCompare cmp) ty v1 v2 =
+     (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME (StrLit
+       s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) | _62 ->
+       Eq_type_error)`;;
 hol4_overload "do_test" "semanticPrimitives_do_test";;
 
 let do_arith_def = cake_define
   `do_arith a x2 vals =
         match x2 with
-          ast_Float64T ->
-        match (a,MAP the_Litv_Float64 vals) with (ast_Abs,[v1]) ->
-          SOME (INR (Litv (ast_Float64 (fp64_abs v1)))) | (ast_Neg,[v1])
-          -> SOME (INR (Litv (ast_Float64 (fp64_negate v1)))) |
-          (ast_Sqrt,[v1]) -> SOME (INR (Litv (ast_Float64 (fp64_sqrt
-          roundTiesToEven v1)))) | (Add,[v1; v2]) -> SOME (INR (Litv
-          (ast_Float64 (fp64_add roundTiesToEven v1 v2)))) | (Sub,[v1;
-          v2]) -> SOME (INR (Litv (ast_Float64 (fp64_sub roundTiesToEven
-          v1 v2)))) | (Mul,[v1; v2]) -> SOME (INR (Litv (ast_Float64
-          (fp64_mul roundTiesToEven v1 v2)))) | (Div,[v1; v2]) -> SOME
-          (INR (Litv (ast_Float64 (fp64_div roundTiesToEven v1 v2)))) |
-          (ast_FMA,[v1; v2; v3]) -> SOME (INR (Litv (ast_Float64
+          Float64T ->
+        match (a,MAP the_Litv_Float64 vals) with (Abs,[v1]) -> SOME
+          (INR (Litv (Float64 (fp64_abs v1)))) | (Neg,[v1]) -> SOME (INR
+          (Litv (Float64 (fp64_negate v1)))) | (Sqrt,[v1]) -> SOME (INR
+          (Litv (Float64 (fp64_sqrt roundTiesToEven v1)))) | (Add,[v1;
+          v2]) -> SOME (INR (Litv (Float64 (fp64_add roundTiesToEven v1
+          v2)))) | (Sub,[v1; v2]) -> SOME (INR (Litv (Float64 (fp64_sub
+          roundTiesToEven v1 v2)))) | (Mul,[v1; v2]) -> SOME (INR (Litv
+          (Float64 (fp64_mul roundTiesToEven v1 v2)))) | (Div,[v1; v2])
+          -> SOME (INR (Litv (Float64 (fp64_div roundTiesToEven v1
+          v2)))) | (FMA,[v1; v2; v3]) -> SOME (INR (Litv (Float64
           (fp64_mul_add roundTiesToEven v2 v3 v1)))) | _63 -> NONE
         | IntT ->
         match (a,MAP the_Litv_IntLit vals) with (Add,[v1; v2]) ->
-          SOME (INR (Litv (ast_IntLit (v1 + v2)))) | (Sub,[v1; v2]) ->
-          SOME (INR (Litv (ast_IntLit (v1 - v2)))) | (Mul,[v1; v2]) ->
-          SOME (INR (Litv (ast_IntLit (v1 * v2)))) | (Div,[v1; v2]) ->
-          SOME (if v2 = 0 then INL div_exn_v else
-                              INR (Litv (ast_IntLit (v1 / v2)))) |
+          SOME (INR (Litv (IntLit (v1 + v2)))) | (Sub,[v1; v2]) -> SOME
+          (INR (Litv (IntLit (v1 - v2)))) | (Mul,[v1; v2]) -> SOME (INR
+          (Litv (IntLit (v1 * v2)))) | (Div,[v1; v2]) -> SOME (if v2 = 0
+          then INL div_exn_v else
+                              INR (Litv (IntLit (v1 / v2)))) |
                                 (Mod,[v1; v2]) -> SOME (if v2 = 0 then
                                 INL div_exn_v else
-                              INR (Litv (ast_IntLit (v1 % v2)))) |
-                                _64 -> NONE
-        | (WordT ast_W8) ->
+                              INR (Litv (IntLit (v1 % v2)))) | _64 ->
+                                NONE
+        | (WordT W8) ->
         match (a,MAP the_Litv_Word8 vals) with (Add,[v1; v2]) -> SOME
-          (INR (Litv (ast_Word8 (word_add v1 v2)))) | (Sub,[v1; v2]) ->
-          SOME (INR (Litv (ast_Word8 (word_sub v1 v2)))) | (And,[v1;
-          v2]) -> SOME (INR (Litv (ast_Word8 (word_and v1 v2)))) |
-          (Or,[v1; v2]) -> SOME (INR (Litv (ast_Word8 (word_or v1 v2))))
-          | (Xor,[v1; v2]) -> SOME (INR (Litv (ast_Word8 (word_xor v1
-          v2)))) | _65 -> NONE
+          (INR (Litv (Word8 (word_add v1 v2)))) | (Sub,[v1; v2]) -> SOME
+          (INR (Litv (Word8 (word_sub v1 v2)))) | (And,[v1; v2]) -> SOME
+          (INR (Litv (Word8 (word_and v1 v2)))) | (Or,[v1; v2]) -> SOME
+          (INR (Litv (Word8 (word_or v1 v2)))) | (Xor,[v1; v2]) -> SOME
+          (INR (Litv (Word8 (word_xor v1 v2)))) | _65 -> NONE
         | (WordT W64) ->
         match (a,MAP the_Litv_Word64 vals) with (Add,[v1; v2]) ->
           SOME (INR (Litv (Word64 (word_add v1 v2)))) | (Sub,[v1; v2])
@@ -911,7 +908,7 @@ let do_arith_def = cake_define
           v2]) -> SOME (INR (Litv (Word64 (word_or v1 v2)))) | (Xor,[v1;
           v2]) -> SOME (INR (Litv (Word64 (word_xor v1 v2)))) | _66 ->
           NONE
-        | ast_BoolT ->
+        | BoolT ->
         match (a,vals) with (Not,[v1]) -> SOME (INR (Boolv
           (~(the_Boolv v1)))) | _67 -> NONE
         | _68 -> NONE`;;
@@ -919,30 +916,28 @@ let do_arith_def = cake_define
 let do_conversion_def = cake_define
   `do_conversion v x2 x3 =
         match (x2,x3) with
-          ((WordT ast_W8),IntT) ->
-        SOME (INR (Litv (ast_IntLit (&(w2n (the_Litv_Word8 v))))))
+          ((WordT W8),IntT) ->
+        SOME (INR (Litv (IntLit (&(w2n (the_Litv_Word8 v))))))
         | ((WordT W64),IntT) ->
-        SOME (INR (Litv (ast_IntLit (&(w2n (the_Litv_Word64 v))))))
-        | (IntT,(WordT ast_W8)) ->
-        SOME (INR (Litv (ast_Word8 (i2w (the_Litv_IntLit v)))))
+        SOME (INR (Litv (IntLit (&(w2n (the_Litv_Word64 v))))))
+        | (IntT,(WordT W8)) ->
+        SOME (INR (Litv (Word8 (i2w (the_Litv_IntLit v)))))
         | (IntT,(WordT W64)) ->
         SOME (INR (Litv (Word64 (i2w (the_Litv_IntLit v)))))
         | (CharT,IntT) ->
-        SOME (INR (Litv (ast_IntLit (&(ORD (the_Litv_Char v))))))
+        SOME (INR (Litv (IntLit (&(ORD (the_Litv_Char v))))))
         | (IntT,CharT) ->
         let i = the_Litv_IntLit v in
           if i < 0 \/ i > 255 then SOME (INL chr_exn_v) else SOME
-            (INR (Litv (ast_Char (CHR (num_of_int (abs i))))))
-        | (CharT,(WordT ast_W8)) ->
-        SOME (INR (Litv (ast_Word8 (char_to_word8 (the_Litv_Char
-          v)))))
-        | ((WordT ast_W8),CharT) ->
-        SOME (INR (Litv (ast_Char (word8_to_char (the_Litv_Word8
-          v)))))
-        | (ast_Float64T,(WordT W64)) ->
+            (INR (Litv (Char (CHR (num_of_int (abs i))))))
+        | (CharT,(WordT W8)) ->
+        SOME (INR (Litv (Word8 (char_to_word8 (the_Litv_Char v)))))
+        | ((WordT W8),CharT) ->
+        SOME (INR (Litv (Char (word8_to_char (the_Litv_Word8 v)))))
+        | (Float64T,(WordT W64)) ->
         SOME (INR (Litv (Word64 (the_Litv_Float64 v))))
-        | ((WordT W64),ast_Float64T) ->
-        SOME (INR (Litv (ast_Float64 (the_Litv_Word64 v))))
+        | ((WordT W64),Float64T) ->
+        SOME (INR (Litv (Float64 (the_Litv_Word64 v))))
         | (_69,_70) -> NONE`;;
 
 let do_app_def = cake_define
@@ -952,258 +947,244 @@ let do_app_def = cake_define
        (ListAppend,[x1; x2]) ->
        (match (v_to_list x1,v_to_list x2) with
            (SOME xs,SOME ys) -> SOME ((s,t),Rval (list_to_v (xs ++
-             ys))) | _71 -> NONE) | (Shift ast_W8 op n,[Litv (ast_Word8
-             w)]) ->
-         SOME ((s,t),Rval (Litv (ast_Word8 (shift8_lookup op w n))))
-           | (Shift W64 op n,[Litv (Word64 w)]) ->
+             ys))) | _71 -> NONE) | (Shift W8 op n,[Litv (Word8 w)]) ->
+         SOME ((s,t),Rval (Litv (Word8 (shift8_lookup op w n)))) |
+           (Shift W64 op n,[Litv (Word64 w)]) ->
          SOME ((s,t),Rval (Litv (Word64 (shift64_lookup op w n)))) |
-           (ast_Equality,[v1; v2]) ->
+           (Equality,[v1; v2]) ->
          (match do_eq v1 v2 with
              Eq_type_error -> NONE | Eq_val b -> SOME ((s,t),Rval
-               (Boolv b))) | (ast_Opassign,[Loc b lnum; v]) ->
-         (match store_assign lnum (semanticPrimitives_Refv v) s with
+               (Boolv b))) | (Opassign,[Loc b lnum; v]) ->
+         (match store_assign lnum (Refv v) s with
              SOME s' -> SOME ((s',t),Rval (Conv NONE [])) | NONE ->
-               NONE) | (ast_Opref,[v]) ->
-         (let (s',n) = (store_alloc (semanticPrimitives_Refv v) s) in
-           SOME ((s',t),Rval (Loc T n))) | (ast_Opderef,[Loc b n]) ->
+               NONE) | (Opref,[v]) ->
+         (let (s',n) = (store_alloc (Refv v) s) in
+           SOME ((s',t),Rval (Loc T n))) | (Opderef,[Loc b n]) ->
          (match store_lookup n s with
-             SOME (semanticPrimitives_Refv v) -> SOME ((s,t),Rval v)
-               | _72 -> NONE) | (ast_Aw8alloc,[Litv (ast_IntLit n); Litv
-               (ast_Word8 w)]) ->
+             SOME (Refv v) -> SOME ((s,t),Rval v) | _72 -> NONE) |
+               (Aw8alloc,[Litv (IntLit n); Litv (Word8 w)]) ->
          (if n < (0:int) then
            SOME ((s,t),Rerr (Rraise sub_exn_v)) else
            let (s',lnum) =
-             (store_alloc (semanticPrimitives_W8array (REPLICATE
-               (num_of_int (abs (I n))) w)) s) in
-             SOME ((s',t),Rval (Loc T lnum))) | (ast_Aw8sub,[Loc _73
-               lnum; Litv (ast_IntLit i)]) ->
+             (store_alloc (W8array (REPLICATE (num_of_int (abs (I
+               n))) w)) s) in
+             SOME ((s',t),Rval (Loc T lnum))) | (Aw8sub,[Loc _73
+               lnum; Litv (IntLit i)]) ->
          (match store_lookup lnum s with
-             SOME (semanticPrimitives_W8array ws) ->
+             SOME (W8array ws) ->
                (if i < (0:int) then
                  SOME ((s,t),Rerr (Rraise sub_exn_v)) else
                  let n = (num_of_int (abs (I i))) in
                    if n >= LENGTH ws then
                      SOME ((s,t),Rerr (Rraise sub_exn_v)) else
-                     SOME ((s,t),Rval (Litv (ast_Word8 (EL n ws)))))
-                       | _74 -> NONE) | (ast_Aw8sub_unsafe,[Loc _75
-                       lnum; Litv (ast_IntLit i)]) ->
+                     SOME ((s,t),Rval (Litv (Word8 (EL n ws))))) |
+                       _74 -> NONE) | (Aw8sub_unsafe,[Loc _75 lnum; Litv
+                       (IntLit i)]) ->
          (match store_lookup lnum s with
-             SOME (semanticPrimitives_W8array ws) ->
+             SOME (W8array ws) ->
                (if i < (0:int) then
                  NONE else
                  let n = (num_of_int (abs (I i))) in
                    if n >= LENGTH ws then
                      NONE else
-                     SOME ((s,t),Rval (Litv (ast_Word8 (EL n ws)))))
-                       | _76 -> NONE) | (ast_Aw8length,[Loc _77 n]) ->
+                     SOME ((s,t),Rval (Litv (Word8 (EL n ws))))) |
+                       _76 -> NONE) | (Aw8length,[Loc _77 n]) ->
          (match store_lookup n s with
-             SOME (semanticPrimitives_W8array ws) ->
-               SOME ((s,t),Rval (Litv (ast_IntLit (int_of_num (LENGTH
-                 ws))))) | _78 -> NONE) | (ast_Aw8update,[Loc _79 lnum;
-                 Litv (ast_IntLit i); Litv (ast_Word8 w)]) ->
+             SOME (W8array ws) ->
+               SOME ((s,t),Rval (Litv (IntLit (int_of_num (LENGTH
+                 ws))))) | _78 -> NONE) | (Aw8update,[Loc _79 lnum; Litv
+                 (IntLit i); Litv (Word8 w)]) ->
          (match store_lookup lnum s with
-           SOME (semanticPrimitives_W8array ws) ->
+           SOME (W8array ws) ->
              (if i < (0:int) then
                SOME ((s,t),Rerr (Rraise sub_exn_v)) else
                let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH ws then
                    SOME ((s,t),Rerr (Rraise sub_exn_v)) else
-                   (match store_assign lnum
-                     (semanticPrimitives_W8array (LUPDATE w n ws)) s
-                     with
+                   (match store_assign lnum (W8array (LUPDATE w n
+                     ws)) s with
                        NONE -> NONE | SOME s' -> SOME ((s',t),Rval
                          (Conv NONE [])))) | _80 -> NONE) |
-                         (ast_Aw8update_unsafe,[Loc _81 lnum; Litv
-                         (ast_IntLit i); Litv (ast_Word8 w)]) ->
+                         (Aw8update_unsafe,[Loc _81 lnum; Litv (IntLit
+                         i); Litv (Word8 w)]) ->
          (match store_lookup lnum s with
-           SOME (semanticPrimitives_W8array ws) ->
+           SOME (W8array ws) ->
              (if i < (0:int) then
                NONE else
                let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH ws then
                    NONE else
-                   (match store_assign lnum
-                     (semanticPrimitives_W8array (LUPDATE w n ws)) s
-                     with
+                   (match store_assign lnum (W8array (LUPDATE w n
+                     ws)) s with
                        NONE -> NONE | SOME s' -> SOME ((s',t),Rval
                          (Conv NONE [])))) | _82 -> NONE) |
-                         (ast_CopyStrStr,[Litv (ast_StrLit str); Litv
-                         (ast_IntLit off); Litv (ast_IntLit len)]) ->
+                         (CopyStrStr,[Litv (StrLit str); Litv (IntLit
+                         off); Litv (IntLit len)]) ->
          SOME ((s,t),
          (match copy_array (explode str,off) len NONE with
            NONE -> Rerr (Rraise sub_exn_v) | SOME cs -> Rval (Litv
-             (ast_StrLit (implode (cs)))))) | (ast_CopyStrAw8,[Litv
-             (ast_StrLit str); Litv (ast_IntLit off); Litv (ast_IntLit
-             len);
-                     Loc _83 dst; Litv (ast_IntLit dstoff)]) ->
+             (StrLit (implode (cs)))))) | (CopyStrAw8,[Litv (StrLit
+             str); Litv (IntLit off); Litv (IntLit len);
+                     Loc _83 dst; Litv (IntLit dstoff)]) ->
          (match store_lookup dst s with
-           SOME (semanticPrimitives_W8array ws) ->
+           SOME (W8array ws) ->
              (match copy_array (explode str,off) len (SOME
                (ws_to_chars ws,dstoff)) with
                NONE -> SOME ((s,t),Rerr (Rraise sub_exn_v)) | SOME cs
                  ->
-               (match store_assign dst (semanticPrimitives_W8array
-                 (chars_to_ws cs)) s with
+               (match store_assign dst (W8array (chars_to_ws cs)) s
+                 with
                  SOME s' -> SOME ((s',t),Rval (Conv NONE [])) | _84
-                   -> NONE)) | _85 -> NONE) | (ast_CopyAw8Str,[Loc _86
-                   src; Litv (ast_IntLit off); Litv (ast_IntLit len)])
-                   ->
+                   -> NONE)) | _85 -> NONE) | (CopyAw8Str,[Loc _86 src;
+                   Litv (IntLit off); Litv (IntLit len)]) ->
        (match store_lookup src s with
-         SOME (semanticPrimitives_W8array ws) ->
+         SOME (W8array ws) ->
          SOME ((s,t),
                (match copy_array (ws,off) len NONE with
                   NONE -> Rerr (Rraise sub_exn_v) | SOME ws -> Rval
-                    (Litv (ast_StrLit (implode (ws_to_chars ws)))))) |
-                    _87 -> NONE) | (ast_CopyAw8Aw8,[Loc _88 src; Litv
-                    (ast_IntLit off); Litv (ast_IntLit len);
-                     Loc _89 dst; Litv (ast_IntLit dstoff)]) ->
+                    (Litv (StrLit (implode (ws_to_chars ws)))))) | _87
+                    -> NONE) | (CopyAw8Aw8,[Loc _88 src; Litv (IntLit
+                    off); Litv (IntLit len);
+                     Loc _89 dst; Litv (IntLit dstoff)]) ->
        (match (store_lookup src s,store_lookup dst s) with
-         (SOME (semanticPrimitives_W8array ws),SOME
-           (semanticPrimitives_W8array ds)) ->
+         (SOME (W8array ws),SOME (W8array ds)) ->
            (match copy_array (ws,off) len (SOME (ds,dstoff)) with
              NONE -> SOME ((s,t),Rerr (Rraise sub_exn_v)) | SOME ws
                ->
-               (match store_assign dst (semanticPrimitives_W8array
-                 ws) s with
+               (match store_assign dst (W8array ws) s with
                  SOME s' -> SOME ((s',t),Rval (Conv NONE [])) | _90
-                   -> NONE)) | _91 -> NONE) | (ast_XorAw8Str_unsafe,[Loc
-                   _92 dst; Litv (ast_StrLit str_arg)]) ->
+                   -> NONE)) | _91 -> NONE) | (XorAw8Str_unsafe,[Loc _92
+                   dst; Litv (StrLit str_arg)]) ->
          (match store_lookup dst s with
-           SOME (semanticPrimitives_W8array bs) ->
+           SOME (W8array bs) ->
              (match xor_bytes (MAP (n2w o ORD) (explode str_arg)) bs
                with NONE -> NONE | SOME new_bs ->
-                 (match store_assign dst (semanticPrimitives_W8array
-                   new_bs) s with NONE -> NONE | SOME s' -> SOME
-                   ((s',t),Rval (Conv NONE [])))) | _93 -> NONE) |
-                   (ast_Implode,[v]) ->
+                 (match store_assign dst (W8array new_bs) s with NONE
+                   -> NONE | SOME s' -> SOME ((s',t),Rval (Conv NONE
+                   [])))) | _93 -> NONE) | (Implode,[v]) ->
            (match v_to_char_list v with
              SOME ls ->
-               SOME ((s,t),Rval (Litv (ast_StrLit (implode ls)))) |
-                 NONE -> NONE) | (ast_Explode,[v]) ->
+               SOME ((s,t),Rval (Litv (StrLit (implode ls)))) | NONE
+                 -> NONE) | (Explode,[v]) ->
            (match v with
-             Litv (ast_StrLit str) ->
-               SOME ((s,t),Rval (list_to_v (MAP (\c. Litv (ast_Char
-                 c)) (explode str)))) | _94 -> NONE) | (ast_Strsub,[Litv
-                 (ast_StrLit str); Litv (ast_IntLit i)]) ->
+             Litv (StrLit str) ->
+               SOME ((s,t),Rval (list_to_v (MAP (\c. Litv (Char c))
+                 (explode str)))) | _94 -> NONE) | (Strsub,[Litv (StrLit
+                 str); Litv (IntLit i)]) ->
          (if i < (0:int) then
            SOME ((s,t),Rerr (Rraise sub_exn_v)) else
            let n = (num_of_int (abs (I i))) in
              if n >= strlen str then
                SOME ((s,t),Rerr (Rraise sub_exn_v)) else
-               SOME ((s,t),Rval (Litv (ast_Char (EL n (explode
-                 str)))))) | (ast_Strlen,[Litv (ast_StrLit str)]) ->
-         SOME ((s,t),Rval (Litv (ast_IntLit (int_of_num (strlen
-           str))))) | (ast_Strcat,[v]) ->
+               SOME ((s,t),Rval (Litv (Char (EL n (explode str))))))
+                 | (Strlen,[Litv (StrLit str)]) ->
+         SOME ((s,t),Rval (Litv (IntLit (int_of_num (strlen str)))))
+           | (Strcat,[v]) ->
          (match v_to_list v with
            SOME vs ->
              (match vs_to_string vs with
                SOME str ->
-                 SOME ((s,t),Rval (Litv (ast_StrLit str))) | _95 ->
-                   NONE) | _96 -> NONE) | (ast_VfromList,[v]) ->
+                 SOME ((s,t),Rval (Litv (StrLit str))) | _95 -> NONE)
+                   | _96 -> NONE) | (VfromList,[v]) ->
            (match v_to_list v with
                SOME vs ->
                  SOME ((s,t),Rval (Vectorv vs)) | NONE -> NONE) |
-                   (ast_Vsub_unsafe,[Vectorv vs; Litv (ast_IntLit i)])
-                   ->
+                   (Vsub_unsafe,[Vectorv vs; Litv (IntLit i)]) ->
          (if (0:int) <= i /\ num_of_int i < LENGTH vs then
            SOME ((s,t),Rval (EL (num_of_int i) vs)) else
-           NONE) | (ast_Vsub,[Vectorv vs; Litv (ast_IntLit i)]) ->
+           NONE) | (Vsub,[Vectorv vs; Litv (IntLit i)]) ->
          (if i < (0:int) then
            SOME ((s,t),Rerr (Rraise sub_exn_v)) else
            let n = (num_of_int (abs (I i))) in
              if n >= LENGTH vs then
                SOME ((s,t),Rerr (Rraise sub_exn_v)) else
-               SOME ((s,t),Rval (EL n vs))) | (ast_Vlength,[Vectorv
-                 vs]) ->
-         SOME ((s,t),Rval (Litv (ast_IntLit (int_of_num (LENGTH
-           vs))))) | (ast_Aalloc,[Litv (ast_IntLit n); v]) ->
+               SOME ((s,t),Rval (EL n vs))) | (Vlength,[Vectorv vs])
+                 ->
+         SOME ((s,t),Rval (Litv (IntLit (int_of_num (LENGTH vs))))) |
+           (Aalloc,[Litv (IntLit n); v]) ->
          (if n < (0:int) then
            SOME ((s,t),Rerr (Rraise sub_exn_v)) else
            let (s',lnum) =
-             (store_alloc (semanticPrimitives_Varray (REPLICATE
-               (num_of_int (abs (I n))) v)) s) in
-             SOME ((s',t),Rval (Loc T lnum))) |
-               (ast_AallocEmpty,[Conv NONE []]) ->
-         (let (s',lnum) = (store_alloc (semanticPrimitives_Varray [])
-           s) in
-           SOME ((s',t),Rval (Loc T lnum))) | (ast_AallocFixed,vs) ->
+             (store_alloc (Varray (REPLICATE (num_of_int (abs (I n)))
+               v)) s) in
+             SOME ((s',t),Rval (Loc T lnum))) | (AallocEmpty,[Conv
+               NONE []]) ->
+         (let (s',lnum) = (store_alloc (Varray []) s) in
+           SOME ((s',t),Rval (Loc T lnum))) | (AallocFixed,vs) ->
          (let (s',lnum) =
-           (store_alloc (semanticPrimitives_Varray vs) s) in
-           SOME ((s',t),Rval (Loc T lnum))) | (ast_Asub,[Loc _97
-             lnum; Litv (ast_IntLit i)]) ->
+           (store_alloc (Varray vs) s) in
+           SOME ((s',t),Rval (Loc T lnum))) | (Asub,[Loc _97 lnum;
+             Litv (IntLit i)]) ->
          (match store_lookup lnum s with
-             SOME (semanticPrimitives_Varray vs) ->
+             SOME (Varray vs) ->
                (if i < (0:int) then
                  SOME ((s,t),Rerr (Rraise sub_exn_v)) else
                  let n = (num_of_int (abs (I i))) in
                    if n >= LENGTH vs then
                      SOME ((s,t),Rerr (Rraise sub_exn_v)) else
                      SOME ((s,t),Rval (EL n vs))) | _98 -> NONE) |
-                       (ast_Asub_unsafe,[Loc _99 lnum; Litv (ast_IntLit
-                       i)]) ->
+                       (Asub_unsafe,[Loc _99 lnum; Litv (IntLit i)]) ->
          (match store_lookup lnum s with
-             SOME (semanticPrimitives_Varray vs) ->
+             SOME (Varray vs) ->
                (if i < (0:int) then
                  NONE else
                  let n = (num_of_int (abs (I i))) in
                    if n >= LENGTH vs then
                      NONE else
                      SOME ((s,t),Rval (EL n vs))) | _100 -> NONE) |
-                       (ast_Alength,[Loc _101 n]) ->
+                       (Alength,[Loc _101 n]) ->
          (match store_lookup n s with
-             SOME (semanticPrimitives_Varray ws) ->
-               SOME ((s,t),Rval (Litv (ast_IntLit (int_of_num (LENGTH
-                 ws))))) | _102 -> NONE) | (ast_Aupdate,[Loc _103 lnum;
-                 Litv (ast_IntLit i); v]) ->
+             SOME (Varray ws) ->
+               SOME ((s,t),Rval (Litv (IntLit (int_of_num (LENGTH
+                 ws))))) | _102 -> NONE) | (Aupdate,[Loc _103 lnum; Litv
+                 (IntLit i); v]) ->
          (match store_lookup lnum s with
-           SOME (semanticPrimitives_Varray vs) ->
+           SOME (Varray vs) ->
              (if i < (0:int) then
                SOME ((s,t),Rerr (Rraise sub_exn_v)) else
                let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH vs then
                    SOME ((s,t),Rerr (Rraise sub_exn_v)) else
-                   (match store_assign lnum
-                     (semanticPrimitives_Varray (LUPDATE v n vs)) s with
+                   (match store_assign lnum (Varray (LUPDATE v n vs))
+                     s with
                        NONE -> NONE | SOME s' -> SOME ((s',t),Rval
                          (Conv NONE [])))) | _104 -> NONE) |
-                         (ast_Aupdate_unsafe,[Loc _105 lnum; Litv
-                         (ast_IntLit i); v]) ->
+                         (Aupdate_unsafe,[Loc _105 lnum; Litv (IntLit
+                         i); v]) ->
          (match store_lookup lnum s with
-           SOME (semanticPrimitives_Varray vs) ->
+           SOME (Varray vs) ->
              (if i < (0:int) then
                NONE else
                let n = (num_of_int (abs (I i))) in
                  if n >= LENGTH vs then
                    NONE else
-                   (match store_assign lnum
-                     (semanticPrimitives_Varray (LUPDATE v n vs)) s with
+                   (match store_assign lnum (Varray (LUPDATE v n vs))
+                     s with
                        NONE -> NONE | SOME s' -> SOME ((s',t),Rval
                          (Conv NONE [])))) | _106 -> NONE) |
-                         (ConfigGC,[Litv (ast_IntLit i); Litv
-                         (ast_IntLit j)]) ->
-         SOME ((s,t),Rval (Conv NONE [])) | (FFI n,[Litv (ast_StrLit
+                         (ConfigGC,[Litv (IntLit i); Litv (IntLit j)])
+                         ->
+         SOME ((s,t),Rval (Conv NONE [])) | (FFI n,[Litv (StrLit
            conf); Loc _107 lnum]) ->
          (match store_lookup lnum s with
-           SOME (semanticPrimitives_W8array ws) ->
+           SOME (W8array ws) ->
              (match call_FFI t (ExtCall n) (MAP (n2w o ORD) (explode
                conf)) ws with
                FFI_return t' ws' ->
-                (match store_assign lnum (semanticPrimitives_W8array
-                  ws') s with
+                (match store_assign lnum (W8array ws') s with
                   SOME s' -> SOME ((s',t'),Rval (Conv NONE [])) |
                     NONE -> NONE) | FFI_final outcome ->
                 SOME ((s,t),Rerr (Rabort (Rffi_error outcome)))) |
-                  _108 -> NONE) | (ast_Env_id,[Env env (gen,id)]) ->
-                  SOME ((s,t),
+                  _108 -> NONE) | (Env_id,[Env env (gen,id)]) -> SOME
+                  ((s,t),
              Rval (Conv NONE [nat_to_v gen; nat_to_v id])) |
-               (ast_Env_id,[Conv NONE [gen; id]]) -> SOME ((s,t),
+               (Env_id,[Conv NONE [gen; id]]) -> SOME ((s,t),
              Rval (Conv NONE [gen; id])) | (ThunkOp th_op,vs) ->
-               semanticPrimitives_thunk_op (s,t) th_op vs | (Arith a
-               ty,vs) ->
+               thunk_op (s,t) th_op vs | (Arith a ty,vs) ->
          (if EVERY (check_type ty) vs then
             (match do_arith a ty vs with SOME (INR res) -> SOME
               ((s,t),Rval res) | SOME (INL exn) -> SOME ((s,t),Rerr
-              (Rraise exn)) | NONE -> NONE) else NONE) | (ast_FromTo ty1
+              (Rraise exn)) | NONE -> NONE) else NONE) | (FromTo ty1
               ty2,[v]) ->
          (if check_type ty1 v then
             (match do_conversion v ty1 ty2 with SOME (INR res) ->

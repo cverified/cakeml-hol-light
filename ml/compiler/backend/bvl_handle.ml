@@ -145,7 +145,7 @@ let LetLet_def = cake_define
      let zs = FILTER (\n. IS_SOME (lookup n fvs)) xs in
      let ys = MAPi (\i x. (x,i)) zs in
      let long_list = GENLIST (\n. match ALOOKUP ys n with NONE -> Op
-       (closLang_IntOp (Const 0)) [] | SOME k -> Var k) env_length in
+       (IntOp (Const 0)) [] | SOME k -> Var k) env_length in
        Let (MAP Var zs) (SmartLet long_list body))`;;
 
 let OptionalLetLet_def = cake_define
@@ -169,7 +169,7 @@ let compile_def = cake_define
       let (dy,ly,s2,nr2) = bvl_handle_compile l n (y :: xs) in
         (dx ++ dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))) /\
    (bvl_handle_compile l n [Var v] = (if v < n then ([Var v],Var
-     v,1,T) else ([Op (closLang_IntOp (Const 0)) []],Empty,1,T))) /\
+     v,1,T) else ([Op (IntOp (Const 0)) []],Empty,1,T))) /\
    (bvl_handle_compile l n [If x1 x2 x3] =
       (let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
       let (x2,l2,s2,nr2) = bvl_handle_compile l n [x2] in
@@ -205,8 +205,7 @@ let compile_def = cake_define
       (let (y,lx,s1,nr1) = bvl_handle_compile l n [x] in
         ([Tick (HD y)],lx,s1,nr1))) /\
    (bvl_handle_compile l n [Force m v] = (if v < n then ([Force m
-     v],Var v,1,F) else ([Op (closLang_IntOp (Const 0)) []],Empty,1,T)))
-     /\
+     v],Var v,1,F) else ([Op (IntOp (Const 0)) []],Empty,1,T))) /\
    (bvl_handle_compile l n [Call t dest xs] =
       (let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
         OptionalLetLet (Call t dest ys) n lx (s1 + 1) l F))`;;
@@ -218,7 +217,7 @@ val compile_ind = theorem"compile_ind";
 
 let compile_sing_def = cake_define
   `(bvl_handle_compile_sing l n (Var v) = (if v < n then (Var v,Var
-  v,1,T) else (Op (closLang_IntOp (Const 0)) [],Empty,1,T))) /\
+  v,1,T) else (Op (IntOp (Const 0)) [],Empty,1,T))) /\
    (bvl_handle_compile_sing l n (If x1 x2 x3) =
       (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
       let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in
@@ -255,7 +254,7 @@ let compile_sing_def = cake_define
       (let (y,lx,s1,nr1) = bvl_handle_compile_sing l n x in
         (Tick y,lx,s1,nr1))) /\
    (bvl_handle_compile_sing l n (Force m v) = (if v < n then (Force m
-     v,Var v,1,F) else (Op (closLang_IntOp (Const 0)) [],Empty,1,T))) /\
+     v,Var v,1,F) else (Op (IntOp (Const 0)) [],Empty,1,T))) /\
    (bvl_handle_compile_sing l n (Call t dest xs) =
       (let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
         OptionalLetLet_sing (Call t dest ys) n lx (s1 + 1) l F)) /\

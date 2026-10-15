@@ -339,8 +339,8 @@ hol4_overload "let_op_list" "bvl_inline_let_op_list";;
 
 let let_op_sing_def = cake_define
   `bvl_inline_let_op_sing x =
-     (match let_op [x] with (y :: ys) -> y | _12 -> Op
-       (closLang_IntOp (Const 0)) [])`;;
+     (match let_op [x] with (y :: ys) -> y | _12 -> Op (IntOp
+       (Const 0)) [])`;;
 hol4_overload "let_op_sing" "bvl_inline_let_op_sing";;
 
 let optimise_def = cake_define

@@ -19,13 +19,13 @@ let pure_op_def = cake_define
         match (x1,x2) with
           ((Label _1),_2) -> F
         | ((FFI _3),_4) -> F
-        | ((closLang_IntOp (Const n)),[]) -> small_enough_int n
-        | ((closLang_IntOp _5),_6) -> F
-        | ((closLang_WordOp _7),_8) -> F
-        | ((closLang_BlockOp (Cons _9)),_10) -> T
-        | ((closLang_BlockOp _11),_12) -> F
-        | ((closLang_GlobOp _13),_14) -> F
-        | ((closLang_MemOp _15),_16) -> F
+        | ((IntOp (Const n)),[]) -> small_enough_int n
+        | ((IntOp _5),_6) -> F
+        | ((WordOp _7),_8) -> F
+        | ((BlockOp (Cons _9)),_10) -> T
+        | ((BlockOp _11),_12) -> F
+        | ((GlobOp _13),_14) -> F
+        | ((MemOp _15),_16) -> F
         | (Install,_17) -> F
         | ((ThunkOp _18),_19) -> F`;;
 hol4_overload "pure_op" "bvi_tmc_pure_op";;
@@ -41,7 +41,7 @@ let pure_exp_def = cake_define_wf
    (pure_exp n (Tick e) = F) /\
    (pure_exp n (Call _21 _22 _23 _24) = F) /\
    (pure_exp n (Force _25 _26) = F) /\
-   (pure_exp n (bvi_LetCall _27 _28 _29 _30 _31) = F) /\
+   (pure_exp n (LetCall _27 _28 _29 _30 _31) = F) /\
    (pure_exp n (Return _32) = F) /\
    (pure_exp n (Op op args) = (pure_op op args /\ pure_exps n args))
      /\
@@ -58,7 +58,7 @@ let pure_exp_def = cake_define_wf
 let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
       match x1 with
-        (closLang_BlockOp (Cons block_tag)) -> SOME block_tag
+        (BlockOp (Cons block_tag)) -> SOME block_tag
       | _35 -> NONE`;;
 hol4_overload "dest_Cons" "bvi_tmc_dest_Cons";;
 
@@ -178,7 +178,7 @@ let cb_to_bvi_def = cake_define
       (let l' = MAP (\n. Var n) l in
       let child' = cb_to_bvi loc child in
       let r' = MAP (\n. Var n) r in
-        Op (closLang_BlockOp (Cons tag)) (l' ++ [child'] ++ r'))) /\
+        Op (BlockOp (Cons tag)) (l' ++ [child'] ++ r'))) /\
    (cb_to_bvi loc (RCall ts args) =
       (let args' = MAP (\n. Var n) args in
         bvi_Call ts (SOME loc) args' NONE))`;;
@@ -188,20 +188,19 @@ let cb_to_bvi_def = cake_define
 let mut_cons_def = cake_define
   `mut_cons t l r =
      (let l' = MAP (\n. Var n) l in
-     let hole' = Op (closLang_IntOp (Const 0)) [] in
+     let hole' = Op (IntOp (Const 0)) [] in
      let r' = MAP (\n. Var n) r in
      let i = LENGTH r in
-     Op (closLang_MemOp (closLang_MutCons t i)) (l' ++ [hole'] ++
-       r'))`;;
+     Op (MemOp (MutCons t i)) (l' ++ [hole'] ++ r'))`;;
 
 let finalise_cons_def = cake_define
-  `bvi_tmc_finalise_cons i_top_ptr = Op (closLang_MemOp
-  closLang_FinaliseCons) [Var i_top_ptr]`;;
+  `bvi_tmc_finalise_cons i_top_ptr = Op (MemOp FinaliseCons) [Var
+  i_top_ptr]`;;
 hol4_overload "finalise_cons" "bvi_tmc_finalise_cons";;
 
 let fill_hole_def = cake_define
-  `fill_hole i_ptr i_idx exp = Op (closLang_MemOp
-  closLang_UpdateCons) [exp; Var i_idx; Var i_ptr]`;;
+  `fill_hole i_ptr i_idx exp = Op (MemOp UpdateCons) [exp; Var i_idx;
+  Var i_ptr]`;;
 
 let optimise_call_def = cake_define
   `optimise_call call_ts loc_opt call_args exp_ptr exp_idx =
@@ -209,8 +208,8 @@ let optimise_call_def = cake_define
      Call call_ts (SOME loc_opt) args NONE)`;;
 
 let update_cons_def = cake_define
-  `update_cons exp_ptr exp_idx exp_val = Op (closLang_MemOp
-  closLang_UpdateCons) [exp_val; exp_idx; exp_ptr]`;;
+  `update_cons exp_ptr exp_idx exp_val = Op (MemOp UpdateCons)
+  [exp_val; exp_idx; exp_ptr]`;;
 
 let cb_size_def = cake_define
   `cb_size x1 =
@@ -222,13 +221,13 @@ let cb_size_def = cake_define
 let cb_to_bvi_worker_aux_def = cake_define_wf
   `MEASURE (cb_size o FST)`
   `(cb_to_bvi_worker_aux (RCall call_ts call_args) loc_opt ptr idx =
-    optimise_call call_ts loc_opt call_args (Var ptr) (Op
-      (closLang_IntOp (Const (&idx))) [])) /\
+    optimise_call call_ts loc_opt call_args (Var ptr) (Op (IntOp
+      (Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux (CallBlock tag left child right) loc_opt ptr
      idx =
     Let [mut_cons tag left right] (
-    Let [update_cons (Var (ptr + 1)) (Op (closLang_IntOp (Const
-      (&idx))) []) (Var 0)]
+    Let [update_cons (Var (ptr + 1)) (Op (IntOp (Const (&idx))) [])
+      (Var 0)]
       (cb_to_bvi_worker_aux (shift_cb 2 child) loc_opt 1 (LENGTH
         right))))`;;
 
@@ -241,12 +240,12 @@ let cb_to_bvi_worker_aux_alt_def = cake_define
   `(cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args) loc_opt ptr
   idx =
     optimise_call call_ts loc_opt (shift_vars sh call_args) (Var ptr)
-      (Op (closLang_IntOp (Const (&idx))) [])) /\
+      (Op (IntOp (Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux_alt sh (CallBlock tag left child right)
      loc_opt ptr idx =
     Let [mut_cons tag (shift_vars sh left) (shift_vars sh right)] (
-    Let [update_cons (Var (ptr + 1)) (Op (closLang_IntOp (Const
-      (&idx))) []) (Var 0)]
+    Let [update_cons (Var (ptr + 1)) (Op (IntOp (Const (&idx))) [])
+      (Var 0)]
       (cb_to_bvi_worker_aux_alt (sh + 2) child loc_opt 1 (LENGTH
         right))))`;;
 

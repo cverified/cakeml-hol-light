@@ -70,6 +70,7 @@ class Db:
     self.abbrevs = {}          # (thy,name) -> (params, type text)
     self.overloads = {}        # (thy,name) -> term text
     self.con_argty = {}        # (constructor,index) -> {type texts}
+    self._overloaded = None
     self.thy_of_file = {}
     self.kind_of_thy = {}
     self.scan()
@@ -316,14 +317,19 @@ class Db:
     return seen
 
   def overloaded(self):
-    """the names that several theories of the port define as a
-       constant: HOL4 overloads them and resolves them by the type,
-       and the port does the same"""
+    """the names of the port's constants that HOL4 writes without a
+       prefix: the port declares them as overloads of the constants
+       it renamed, which is what HOL4 does with a name that several
+       theories define (it resolves it by the type)"""
+    if self._overloaded is not None: return self._overloaded
+    tykinds = ('type', 'tyabbrev')
     out = set()
-    for nm, v in self.defs.items():
-      ts = set(t for t, k in v if k in ('def', 'con', 'rel'))
-      if len(ts) > 1 and nm not in self.hl and nm not in self.provided:
-        out.add(nm)
+    for (thy, nm), new in self.rename.items():
+      kinds = [k for t, k in self.defs.get(nm, []) if t == thy]
+      if kinds and all(k in tykinds for k in kinds): continue
+      if nm in self.hl or nm in self.provided: continue
+      out.add(nm)
+    self._overloaded = out
     return out
 
   def names_for(self, thy, types=False):

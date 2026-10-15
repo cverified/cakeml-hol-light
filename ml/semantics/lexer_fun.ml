@@ -252,80 +252,79 @@ let init_loc_def = cake_define
 
 let processIdent_def = cake_define
   `processIdent s =
-     (match s with "" -> tokens_LexErrorT | c :: s ->
+     (match s with "" -> LexErrorT | c :: s ->
             (if isAlpha c then
-              tokens_AlphaT (implode (c :: s)) else
-              tokens_SymbolT (implode (c :: s))))`;;
+              AlphaT (implode (c :: s)) else
+              SymbolT (implode (c :: s))))`;;
 
 let get_token_def = cake_define
   `get_token s =
-     (if s = "#" then tokens_HashT else
-     if s = "(" then tokens_LparT else
-     if s = ")" then tokens_RparT else
-     if s = "*" then tokens_StarT else
-     if s = "," then tokens_CommaT else
-     if s = "->" then tokens_ArrowT else
-     if s = "..." then tokens_DotsT else
-     if s = ":" then tokens_ColonT else
-     if s = ":>" then tokens_SealT else
-     if s = ";" then tokens_SemicolonT else
-     if s = "=" then tokens_EqualsT else
-     if s = "=>" then tokens_DarrowT else
-     if s = "[" then tokens_LbrackT else
-     if s = "]" then tokens_RbrackT else
-     if s = "_" then tokens_UnderbarT else
-     if s = "{" then tokens_LbraceT else
-     if s = "}" then tokens_RbraceT else
-     if s = "|" then tokens_BarT else
-     if s = "and" then tokens_AndT else
-     if s = "andalso" then tokens_AndalsoT else
-     if s = "as" then tokens_AsT else
-     if s = "case" then tokens_CaseT else
-     if s = "datatype" then tokens_DatatypeT else
-     if s = "else" then tokens_ElseT else
-     if s = "end" then tokens_EndT else
-     if s = "eqtype" then tokens_EqtypeT else
-     if s = "exception" then tokens_ExceptionT else
-     if s = "fn" then tokens_FnT else
-     if s = "fun" then tokens_FunT else
-     if s = "handle" then tokens_HandleT else
-     if s = "if" then tokens_IfT else
-     if s = "in" then tokens_InT else
-     if s = "include" then tokens_IncludeT else
-     if s = "let" then tokens_LetT else
-     if s = "local" then tokens_LocalT else
-     if s = "of" then tokens_OfT else
-     if s = "op" then tokens_OpT else
-     if s = "open" then tokens_OpenT else
-     if s = "orelse" then tokens_OrelseT else
-     if s = "raise" then tokens_RaiseT else
-     if s = "rec" then tokens_RecT else
-     if s = "sharing" then tokens_SharingT else
-     if s = "sig" then tokens_SigT else
-     if s = "signature" then tokens_SignatureT else
-     if s = "struct" then tokens_StructT else
-     if s = "structure" then tokens_StructureT else
-     if s = "then" then tokens_ThenT else
-     if s = "type" then tokens_TypeT else
-     if s = "val" then tokens_ValT else
-     if s = "where" then tokens_WhereT else
-     if s = "with" then tokens_WithT else
-     if s = "withtype" then tokens_WithtypeT else
-     if ~(s = "") /\ HD s = (CHR 39) then tokens_TyvarT (implode s)
-       else
+     (if s = "#" then HashT else
+     if s = "(" then LparT else
+     if s = ")" then RparT else
+     if s = "*" then StarT else
+     if s = "," then CommaT else
+     if s = "->" then ArrowT else
+     if s = "..." then DotsT else
+     if s = ":" then ColonT else
+     if s = ":>" then SealT else
+     if s = ";" then SemicolonT else
+     if s = "=" then EqualsT else
+     if s = "=>" then DarrowT else
+     if s = "[" then LbrackT else
+     if s = "]" then RbrackT else
+     if s = "_" then UnderbarT else
+     if s = "{" then LbraceT else
+     if s = "}" then RbraceT else
+     if s = "|" then BarT else
+     if s = "and" then AndT else
+     if s = "andalso" then AndalsoT else
+     if s = "as" then AsT else
+     if s = "case" then CaseT else
+     if s = "datatype" then DatatypeT else
+     if s = "else" then ElseT else
+     if s = "end" then EndT else
+     if s = "eqtype" then EqtypeT else
+     if s = "exception" then ExceptionT else
+     if s = "fn" then FnT else
+     if s = "fun" then FunT else
+     if s = "handle" then HandleT else
+     if s = "if" then IfT else
+     if s = "in" then InT else
+     if s = "include" then IncludeT else
+     if s = "let" then LetT else
+     if s = "local" then LocalT else
+     if s = "of" then OfT else
+     if s = "op" then OpT else
+     if s = "open" then OpenT else
+     if s = "orelse" then OrelseT else
+     if s = "raise" then RaiseT else
+     if s = "rec" then RecT else
+     if s = "sharing" then SharingT else
+     if s = "sig" then SigT else
+     if s = "signature" then SignatureT else
+     if s = "struct" then StructT else
+     if s = "structure" then StructureT else
+     if s = "then" then ThenT else
+     if s = "type" then TypeT else
+     if s = "val" then ValT else
+     if s = "where" then WhereT else
+     if s = "with" then WithT else
+     if s = "withtype" then WithtypeT else
+     if ~(s = "") /\ HD s = (CHR 39) then TyvarT (implode s) else
      processIdent s)`;;
 
 let to_path_def = cake_define
-  `to_path [] = tokens_End /\
+  `to_path [] = End /\
    to_path (x :: xs) = Mod x (to_path xs)`;;
 
 let token_of_sym_def = cake_define
   `token_of_sym s =
-     (match s with ErrorS -> tokens_LexErrorT | StringS s ->
-       tokens_StringT (implode s) | CharS c -> CharT c | NumberS i ->
-       IntT i | WordS n -> WordT n | LongS xs s -> tokens_LongidT
-       (to_path (MAP implode xs)) (implode s) | FFIS s -> tokens_FFIT
-       (implode s) | OtherS s -> get_token s)`;;
+     (match s with ErrorS -> LexErrorT | StringS s -> StringT
+       (implode s) | CharS c -> CharT c | NumberS i -> IntT i | WordS
+       n -> WordT n | LongS xs s -> LongidT (to_path (MAP implode
+       xs)) (implode s) | FFIS s -> FFIT (implode s) | OtherS s ->
+       get_token s)`;;
 
 let next_token_def = cake_define
   `next_token input loc =
@@ -366,14 +365,14 @@ let lexer_fun_def = cake_define
 let toplevel_semi_dex_def = cake_define
   `(toplevel_semi_dex (i:num) (d:num) [] = NONE) /\
    (toplevel_semi_dex i d ((h,l) :: t) =
-     (if h = tokens_SemicolonT /\ (d = 0) then SOME (i + 1) else
-       if h = tokens_LetT then toplevel_semi_dex (i + 1) (d + 1) t
-       else if h = tokens_StructT then toplevel_semi_dex (i + 1) (d +
-       1) t else if h = tokens_SigT then toplevel_semi_dex (i + 1) (d
-       + 1) t else if h = tokens_LparT then toplevel_semi_dex (i + 1)
-       (d + 1) t else if h = tokens_EndT then toplevel_semi_dex (i +
-       1) (d - 1) t else if h = tokens_RparT then toplevel_semi_dex
-       (i + 1) (d - 1) t else toplevel_semi_dex (i + 1) d t))`;;
+     (if h = SemicolonT /\ (d = 0) then SOME (i + 1) else if h =
+       LetT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+       StructT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+       SigT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+       LparT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+       EndT then toplevel_semi_dex (i + 1) (d - 1) t else if h =
+       RparT then toplevel_semi_dex (i + 1) (d - 1) t else
+       toplevel_semi_dex (i + 1) d t))`;;
 
 (* TERMINATION: wf_rel_tac `measure LENGTH` >>
   rw [] >>

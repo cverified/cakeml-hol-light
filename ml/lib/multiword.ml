@@ -30,6 +30,8 @@ hol4_overload "Mul" "multiword_Mul";;
 hol4_overload "Div" "multiword_Div";;
 hol4_overload "Mod" "multiword_Mod";;
 hol4_overload "Lt" "multiword_Lt";;
+hol4_overload "Eq" "multiword_Eq";;
+hol4_overload "Dec" "multiword_Dec";;
 
 let int_op_def = cake_define
   `(multiword_int_op Add i j = i + j) /\
@@ -38,7 +40,6 @@ let int_op_def = cake_define
    (multiword_int_op Div i j = i / j) /\
    (multiword_int_op Mod i j = i % j) /\
    (multiword_int_op Lt i j = (if i < j then (&1) else (&0))) /\
-   (multiword_int_op multiword_Eq i j = (if i = j then (&1) else
-     (&0):int)) /\
-   (multiword_int_op multiword_Dec i j = (&0))`;;
+   (multiword_int_op Eq i j = (if i = j then (&1) else (&0):int)) /\
+   (multiword_int_op Dec i j = (&0))`;;
 hol4_overload "int_op" "multiword_int_op";;

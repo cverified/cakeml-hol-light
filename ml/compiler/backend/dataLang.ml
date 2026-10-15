@@ -40,33 +40,32 @@ needs "semantics/ast.ml";;
 let op_space_reset_def = cake_define
   `op_space_reset x1 =
         match x1 with
-          (closLang_IntOp Add) -> T
-        | (closLang_IntOp Sub) -> T
-        | (closLang_IntOp closLang_Mult) -> T
-        | (closLang_IntOp Div) -> T
-        | (closLang_IntOp Mod) -> T
-        | (closLang_IntOp (LESS)) -> T
-        | (closLang_IntOp closLang_LessEq) -> T
-        | (closLang_IntOp (GREATER)) -> T
-        | (closLang_IntOp closLang_GreaterEq) -> T
-        | (closLang_BlockOp (EQUAL)) -> T
-        | (closLang_BlockOp ListAppend) -> T
-        | (closLang_BlockOp (closLang_FromList _1)) -> T
-        | (closLang_MemOp closLang_RefArray) -> T
-        | (closLang_MemOp (closLang_RefByte _2)) -> T
-        | (closLang_BlockOp (closLang_ConsExtend _3)) -> T
-        | (closLang_MemOp (closLang_CopyByte new_flag)) -> new_flag
-        | (closLang_MemOp ConfigGC) -> T
+          (IntOp Add) -> T
+        | (IntOp Sub) -> T
+        | (IntOp Mult) -> T
+        | (IntOp Div) -> T
+        | (IntOp Mod) -> T
+        | (IntOp (LESS)) -> T
+        | (IntOp LessEq) -> T
+        | (IntOp (GREATER)) -> T
+        | (IntOp GreaterEq) -> T
+        | (BlockOp (EQUAL)) -> T
+        | (BlockOp ListAppend) -> T
+        | (BlockOp (FromList _1)) -> T
+        | (MemOp RefArray) -> T
+        | (MemOp (RefByte _2)) -> T
+        | (BlockOp (ConsExtend _3)) -> T
+        | (MemOp (CopyByte new_flag)) -> new_flag
+        | (MemOp ConfigGC) -> T
         | (FFI _4) -> T
         | _5 -> F`;;
 
 let op_requires_names_def = cake_define
   `op_requires_names op = (op_space_reset op \/ (?n. op = FFI n) \/
-                          (?new_flag. op = (closLang_MemOp
-                            (closLang_CopyByte new_flag))) \/
-                          (op = closLang_MemOp closLang_XorByte) \/
-                          (?b cmp. op = closLang_MemOp
-                            (closLang_StringCmp b cmp)) \/
+                          (?new_flag. op = (MemOp (CopyByte
+                            new_flag))) \/
+                          (op = MemOp XorByte) \/
+                          (?b cmp. op = MemOp (StringCmp b cmp)) \/
                           (op = Install))`;;
 
 let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
@@ -84,6 +83,7 @@ hol4_overload "Call" "dataLang_Call";;
 hol4_overload "Assign" "dataLang_Assign";;
 hol4_overload "Seq" "dataLang_Seq";;
 hol4_overload "If" "dataLang_If";;
+hol4_overload "MakeSpace" "dataLang_MakeSpace";;
 hol4_overload "Raise" "dataLang_Raise";;
 hol4_overload "Return" "dataLang_Return";;
 hol4_overload "Tick" "dataLang_Tick";;

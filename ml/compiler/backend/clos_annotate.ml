@@ -20,7 +20,7 @@ needs "semantics/ast.ml";;
    lets with dummies *)
 
 let const_0_def = cake_define
-  `const_0 t = Op t (closLang_IntOp (Const 0)) []`;;
+  `const_0 t = Op t (IntOp (Const 0)) []`;;
 
 let no_overlap_def = cake_define
   `(no_overlap 0 l <=> T) /\
@@ -61,11 +61,11 @@ let alt_free_def = cake_define
       (let (c1,l1) = alt_free [x1] in
       let (c2,l2) = alt_free xs2 in
         ([App t loc_opt (HD c1) c2],mk_Union l1 l2))) /\
-   (alt_free [closLang_Fn t loc _1 num_args x1] =
+   (alt_free [Fn t loc _1 num_args x1] =
       (let (c1,l1) = alt_free [x1] in
       let l2 = Shift num_args l1 in
-        ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args (HD
-          c1)],l2))) /\
+        ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)))
+          /\
    (alt_free [Letrec t loc _2 fns x1] =
       (let m = LENGTH fns in
       let (c2,l2) = alt_free [x1] in
@@ -114,11 +114,10 @@ let alt_free_sing_def = cake_define_wf
       (let (c1,l1) = alt_free_sing x1 in
       let (c2,l2) = alt_free_list xs2 in
         (App t loc_opt c1 c2,mk_Union l1 l2))) /\
-   (alt_free_sing (closLang_Fn t loc _3 num_args x1) =
+   (alt_free_sing (Fn t loc _3 num_args x1) =
       (let (c1,l1) = alt_free_sing x1 in
       let l2 = Shift num_args l1 in
-        (closLang_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2)))
-          /\
+        (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))) /\
    (alt_free_sing (Letrec t loc _4 fns x1) =
       (let m = LENGTH fns in
       let (c2,l2) = alt_free_sing x1 in
@@ -186,15 +185,14 @@ let shift_def = cake_define
       (let c1 = clos_annotate_shift [x1] m l i in
       let c2 = clos_annotate_shift xs2 m l i in
         ([App t loc_opt (HD c1) c2]))) /\
-   (clos_annotate_shift [closLang_Fn t loc vs_opt num_args x1] m l i
-     =
+   (clos_annotate_shift [Fn t loc vs_opt num_args x1] m l i =
       (let k = m + l in
       let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
       let live = FILTER (\n. n < k) vs in
       let vars = MAP (get_var m l i) live in
       let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
         live) in
-        ([closLang_Fn t loc (SOME vars) num_args (HD c1)]))) /\
+        ([Fn t loc (SOME vars) num_args (HD c1)]))) /\
    (clos_annotate_shift [Letrec t loc vsopt fns x1] m l i =
       (let vs = match vsopt with NONE -> [] | SOME x -> x in
       let k = m + l in
@@ -214,6 +212,7 @@ let shift_def = cake_define
    (clos_annotate_shift [Call t ticks dest xs] m l i =
       (let c1 = clos_annotate_shift xs m l i in
         ([Call t ticks dest c1])))`;;
+hol4_overload "shift" "clos_annotate_shift";;
 
 (* HOL4 termination: *)
 let shift_sing_def = cake_define_wf
@@ -246,13 +245,13 @@ let shift_sing_def = cake_define_wf
         let c1 = shift_sing x1 m l i in
         let c2 = shift_list xs2 m l i in
           (App t loc_opt c1 c2)
-        | ((closLang_Fn t loc vs_opt num_args x1),m,l,i) ->
+        | ((Fn t loc vs_opt num_args x1),m,l,i) ->
         let k = m + l in
         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
         let live = FILTER (\n. n < k) vs in
         let vars = MAP (get_var m l i) live in
         let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
-          (closLang_Fn t loc (SOME vars) num_args c1)
+          (Fn t loc (SOME vars) num_args c1)
         | ((Letrec t loc vsopt fns x1),m,l,i) ->
         let vs = match vsopt with NONE -> [] | SOME x -> x in
         let k = m + l in
@@ -283,8 +282,8 @@ let shift_sing_def = cake_define_wf
 (* main functions *)
 
 let annotate_def = cake_define
-  `clos_annotate_annotate arity xs = clos_annotate_shift (FST
-  (alt_free xs)) 0 arity LN`;;
+  `clos_annotate_annotate arity xs = shift (FST (alt_free xs)) 0
+  arity LN`;;
 hol4_overload "annotate" "clos_annotate_annotate";;
 
 let compile_def = cake_define

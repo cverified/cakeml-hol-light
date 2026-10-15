@@ -38,13 +38,18 @@ let dTest_INDUCT,dTest_RECURSION = define_datatype
   "dTest = pattern_semantics_TagLenEq (num) (num) | \
    pattern_semantics_LitEq (lit)";;
 hol4_overload "TagLenEq" "pattern_semantics_TagLenEq";;
+hol4_overload "LitEq" "pattern_semantics_LitEq";;
 
 let dGuard_INDUCT,dGuard_RECURSION = define_datatype
   "dGuard = pattern_semantics_PosTest (position) (dTest) | \
    pattern_semantics_Not (dGuard) | pattern_semantics_Conj (dGuard) \
    (dGuard) | pattern_semantics_Disj (dGuard) (dGuard) | \
    pattern_semantics_True";;
+hol4_overload "PosTest" "pattern_semantics_PosTest";;
 hol4_overload "Not" "pattern_semantics_Not";;
+hol4_overload "Conj" "pattern_semantics_Conj";;
+hol4_overload "Disj" "pattern_semantics_Disj";;
+hol4_overload "True" "pattern_semantics_True";;
 
 let dTree_INDUCT,dTree_RECURSION = define_datatype
   "dTree = pattern_semantics_Leaf (num) | pattern_semantics_Fail | \
@@ -52,6 +57,7 @@ let dTree_INDUCT,dTree_RECURSION = define_datatype
    (dTree)";;
 hol4_overload "Leaf" "pattern_semantics_Leaf";;
 hol4_overload "Fail" "pattern_semantics_Fail";;
+hol4_overload "TypeFail" "pattern_semantics_TypeFail";;
 hol4_overload "If" "pattern_semantics_If";;
 
 (* semantic values *)
@@ -60,6 +66,7 @@ let term_INDUCT,term_RECURSION = define_datatype
   "term = pattern_semantics_Term (num option) (term list) | \
    pattern_semantics_Litv (lit) | pattern_semantics_RefPtr (num) | \
    pattern_semantics_Other";;
+hol4_overload "Term" "pattern_semantics_Term";;
 hol4_overload "Litv" "pattern_semantics_Litv";;
 hol4_overload "RefPtr" "pattern_semantics_RefPtr";;
 hol4_overload "Other" "pattern_semantics_Other";;
@@ -79,13 +86,13 @@ let pmatch_def = cake_define_wf
         | ((Lit l),(Litv l')) ->
         if ~lit_same_type l l' then PTypeFailure else
         if l = l' then PMatchSuccess else PMatchFailure
-        | ((Cons (SOME (tag,siblings)) pargs),(pattern_semantics_Term
-          (SOME t) targs)) ->
+        | ((Cons (SOME (tag,siblings)) pargs),(Term (SOME t) targs))
+          ->
        if tag = t /\ LENGTH pargs = LENGTH targs then
          pattern_semantics_pmatch_list refs pargs targs else
        if is_sibling (t,LENGTH targs) siblings then PMatchFailure
          else PTypeFailure
-        | ((Cons NONE pargs),(pattern_semantics_Term NONE targs)) ->
+        | ((Cons NONE pargs),(Term NONE targs)) ->
        pattern_semantics_pmatch_list refs pargs targs
         | ((Ref p),(RefPtr r)) ->
        match FLOOKUP refs r with NONE -> PTypeFailure | SOME v ->
@@ -128,9 +135,9 @@ let match_def = cake_define
 let dt_test_def = cake_define
   `dt_test x1 x2 =
       match (x1,x2) with
-        ((TagLenEq t l),(pattern_semantics_Term (SOME c) args)) ->
+        ((TagLenEq t l),(Term (SOME c) args)) ->
      SOME (t = c /\ l = LENGTH args)
-      | ((pattern_semantics_LitEq l1),(Litv l2)) ->
+      | ((LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
       | (_9,_10) -> NONE`;;
 
@@ -141,32 +148,31 @@ let app_pos_def = cake_define
         | ((Pos 0 pos),(RefPtr r)) ->
         match FLOOKUP refs r with NONE -> NONE | SOME v -> app_pos
           refs pos v
-        | ((Pos 0 pos),(pattern_semantics_Term c (x :: xs))) ->
-          app_pos refs pos x
-        | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs))) ->
-       app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
+        | ((Pos 0 pos),(Term c (x :: xs))) -> app_pos refs pos x
+        | ((Pos (SUC n) pos),(Term c (x :: xs))) ->
+       app_pos refs (Pos n pos) (Term c xs)
         | ((Pos _11 _12),_13) -> NONE`;;
 
 let dt_eval_guard_def = cake_define
-  `(dt_eval_guard refs v pattern_semantics_True =
+  `(dt_eval_guard refs v True =
       SOME T) /\
-   (dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
+   (dt_eval_guard refs v (PosTest pos test) =
       (match app_pos refs pos v with NONE -> NONE | SOME x -> dt_test
         test x)) /\
    (dt_eval_guard refs v (Not g) =
       (match dt_eval_guard refs v g with NONE -> NONE | SOME b ->
         SOME (~b))) /\
-   (dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
+   (dt_eval_guard refs v (Conj g1 g2) =
       (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
         dt_eval_guard refs v g2 | SOME F -> SOME F)) /\
-   (dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
+   (dt_eval_guard refs v (Disj g1 g2) =
       (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
         SOME T | SOME F -> dt_eval_guard refs v g2))`;;
 
 let dt_eval_def = cake_define
   `(dt_eval refs _14 (Leaf k) = SOME (MatchSuccess k)) /\
    (dt_eval refs _15 Fail = SOME (MatchFailure)) /\
-   (dt_eval refs _16 pattern_semantics_TypeFail = NONE) /\
+   (dt_eval refs _16 TypeFail = NONE) /\
    (dt_eval refs v (If guard' dt1 dt2) =
       (match dt_eval_guard refs v guard' with NONE -> NONE | SOME
         b -> dt_eval refs v (if b then dt1 else dt2)))`;;

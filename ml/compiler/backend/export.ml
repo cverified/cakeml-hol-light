@@ -11,6 +11,7 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
+needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "misc/misc.ml";;
 
@@ -19,7 +20,7 @@ let split16_def = cake_define_wf
   `MEASURE (LENGTH o SND)`
   `split16 f xs =
         match xs with
-          [] -> misc_Nil
+          [] -> Nil
         | xs ->
         let xs1 = TAKE 16 xs in
         let xs2 = DROP 16 xs in

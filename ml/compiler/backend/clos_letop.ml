@@ -64,9 +64,8 @@ let let_op_def = cake_define
         (clos_letop_let_op [x]))) fns in
       [Letrec t loc_opt vs new_fns (HD (clos_letop_let_op [x1]))]))
         /\
-   (clos_letop_let_op [closLang_Fn t loc_opt vs num_args x1] =
-     [closLang_Fn t loc_opt vs num_args (HD (clos_letop_let_op
-     [x1]))])`;;
+   (clos_letop_let_op [Fn t loc_opt vs num_args x1] = [Fn t
+     loc_opt vs num_args (HD (clos_letop_let_op [x1]))])`;;
 hol4_overload "let_op" "clos_letop_let_op";;
 
 (* HOL4 ML code, not ported:
@@ -106,8 +105,8 @@ let let_op_sing_def = cake_define
         | (Letrec t loc_opt vs fns x1) ->
         let new_fns = let_op_let fns in
         (Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing (x1))))
-        | (closLang_Fn t loc_opt vs num_args x1) -> (closLang_Fn t
-          loc_opt vs num_args ((clos_letop_let_op_sing (x1))))
+        | (Fn t loc_opt vs num_args x1) -> (Fn t loc_opt vs num_args
+          ((clos_letop_let_op_sing (x1))))
         | [] -> []
         | ((x:closLang_exp) :: xs) ->
       clos_letop_let_op_sing x :: clos_letop_let_op_list xs

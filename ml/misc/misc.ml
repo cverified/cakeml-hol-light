@@ -95,9 +95,10 @@ let app_list_INDUCT,app_list_RECURSION = define_datatype
    | misc_Nil";;
 hol4_overload "List" "misc_List";;
 hol4_overload "Append" "misc_Append";;
+hol4_overload "Nil" "misc_Nil";;
 
 let append_aux_def = cake_define
-  `(append_aux misc_Nil aux = aux) /\
+  `(append_aux Nil aux = aux) /\
    (append_aux (List xs) aux = xs ++ aux) /\
    (append_aux (Append l1 l2) aux = append_aux l1 (append_aux l2
      aux))`;;
@@ -108,8 +109,8 @@ let append_def = cake_define
 let SmartAppend_def = cake_define
   `SmartAppend l1 l2 =
         match (l1,l2) with
-          (misc_Nil,l2) -> l2
-        | (l1,misc_Nil) -> l1
+          (Nil,l2) -> l2
+        | (l1,Nil) -> l1
         | (l1,l2) -> Append l1 l2`;;
 
 (* instant derivation from LIST_EQ_REWRITE *)

@@ -413,10 +413,8 @@ let pand_def = cake_define
    - *)
 
 let dest_val_def = cake_define
-  `dest_val refs (pattern_semantics_Term (SOME t) vs) = SOME (TagC t
-  (LENGTH vs),vs) /\
-   dest_val refs (pattern_semantics_Term NONE vs) = SOME (TupC
-     (LENGTH vs),vs) /\
+  `dest_val refs (Term (SOME t) vs) = SOME (TagC t (LENGTH vs),vs) /\
+   dest_val refs (Term NONE vs) = SOME (TupC (LENGTH vs),vs) /\
    dest_val refs (RefPtr r) = (match FLOOKUP refs r with NONE -> NONE
      | SOME w -> SOME (RefC,[w])) /\
    dest_val refs (Litv l) = NONE /\

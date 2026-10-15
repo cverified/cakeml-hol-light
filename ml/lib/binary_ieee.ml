@@ -184,6 +184,8 @@ hol4_overload "FP_Add" "binary_ieee_FP_Add";;
 hol4_overload "FP_Sub" "binary_ieee_FP_Sub";;
 hol4_overload "FP_Mul" "binary_ieee_FP_Mul";;
 hol4_overload "FP_Div" "binary_ieee_FP_Div";;
+hol4_overload "FP_MulAdd" "binary_ieee_FP_MulAdd";;
+hol4_overload "FP_MulSub" "binary_ieee_FP_MulSub";;
 
 let float_some_qnan_def = cake_define
   `float_some_qnan (fp_op:('t,'w)fp_op) =
@@ -355,14 +357,14 @@ let float_mul_add_def = cake_define
       let infP = (float_is_infinite x \/ float_is_infinite y) in
          if float_is_nan x \/ float_is_nan y \/ float_is_nan z then
             (check_for_signalling [x; y; z],
-             float_some_qnan (binary_ieee_FP_MulAdd mode x y z)) else
-               if float_is_infinite x /\ float_is_zero y \/
+             float_some_qnan (FP_MulAdd mode x y z)) else if
+               float_is_infinite x /\ float_is_zero y \/
                  float_is_zero x /\ float_is_infinite y \/
                  float_is_infinite z /\ infP /\ ~(signP = float_Sign
                    z) then
-            (invalidop_flags,float_some_qnan (binary_ieee_FP_MulAdd
-              mode x y z)) else if float_is_infinite z /\ (float_Sign z
-              = (n2w 0)) \/ infP /\ (signP = (n2w 0)) then
+            (invalidop_flags,float_some_qnan (FP_MulAdd mode x y z))
+              else if float_is_infinite z /\ (float_Sign z = (n2w 0)) \/
+              infP /\ (signP = (n2w 0)) then
               (clear_flags,float_plus_infinity (:'t#'w)) else if
               float_is_infinite z /\ (float_Sign z = (n2w 1)) \/ infP /\
               (signP = (n2w 1)) then (clear_flags,float_minus_infinity

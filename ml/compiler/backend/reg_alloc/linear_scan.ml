@@ -19,6 +19,8 @@ let live_tree_INDUCT,live_tree_RECURSION = define_datatype
   "live_tree = linear_scan_Writes (num list) | linear_scan_Reads (num \
    list) | linear_scan_Branch (live_tree) (live_tree) | \
    linear_scan_Seq (live_tree) (live_tree)";;
+hol4_overload "Writes" "linear_scan_Writes";;
+hol4_overload "Reads" "linear_scan_Reads";;
 hol4_overload "Branch" "linear_scan_Branch";;
 hol4_overload "Seq" "linear_scan_Seq";;
 
@@ -37,17 +39,17 @@ let numset_list_insert_nottailrec_def = cake_define
 let get_live_tree_def = cake_define
   `(
      get_live_tree (reg_alloc_Delta wr rd) =
-       Seq (linear_scan_Reads rd) (linear_scan_Writes wr)) /\ (
+       Seq (Reads rd) (Writes wr)) /\ (
      get_live_tree (reg_alloc_Set cutset) =
        (let cutlist = MAP FST (toAList cutset) in
-       linear_scan_Reads cutlist)) /\ (
+       Reads cutlist)) /\ (
      get_live_tree (reg_alloc_Branch optcutset ct1 ct2) =
        (let lt1 = get_live_tree ct1 in
        let lt2 = get_live_tree ct2 in
        match optcutset with SOME cutset ->
            (let cutlist = MAP FST (toAList cutset) in
-           Seq (linear_scan_Reads cutlist) (Branch lt1 lt2)) | NONE
-             -> (Branch lt1 lt2))) /\ (
+           Seq (Reads cutlist) (Branch lt1 lt2)) | NONE -> (Branch
+             lt1 lt2))) /\ (
      get_live_tree (reg_alloc_Seq ct1 ct2) =
        (let lt2 = get_live_tree ct2 in
        let lt1 = get_live_tree ct1 in
@@ -55,13 +57,13 @@ let get_live_tree_def = cake_define
 
 let check_live_tree_def = cake_define
   `(
-     check_live_tree f (linear_scan_Writes l) live flive =
+     check_live_tree f (Writes l) live flive =
        (match check_partial_col f l live flive with NONE -> NONE |
          SOME _2 ->
        (let livein = numset_list_delete l live in
        let flivein = numset_list_delete (MAP f l) flive in
        SOME (livein,flivein)))) /\ (
-     check_live_tree f (linear_scan_Reads l) live flive =
+     check_live_tree f (Reads l) live flive =
        check_partial_col f l live flive) /\ (
      check_live_tree f (Branch lt1 lt2) live flive =
        (match check_live_tree f lt1 live flive with NONE -> NONE |
@@ -77,9 +79,9 @@ let check_live_tree_def = cake_define
 
 let get_live_backward_def = cake_define
   `(
-     get_live_backward (linear_scan_Writes l) live =
+     get_live_backward (Writes l) live =
        numset_list_delete l live) /\ (
-     get_live_backward (linear_scan_Reads l) live =
+     get_live_backward (Reads l) live =
        numset_list_insert l live) /\ (
      get_live_backward (Branch lt1 lt2) live =
        (let live1 = get_live_backward lt1 live in
@@ -92,8 +94,8 @@ let get_live_backward_def = cake_define
 let fix_domination_def = cake_define
   `fix_domination lt =
        (let live = get_live_backward lt LN in
-       if live = LN then lt else Seq (linear_scan_Writes (MAP FST
-         (toAList live))) lt)`;;
+       if live = LN then lt else Seq (Writes (MAP FST (toAList
+         live))) lt)`;;
 
 let numset_list_add_if_def = cake_define
   `(
@@ -113,9 +115,9 @@ let numset_list_add_if_gt_def = cake_define
 
 let size_of_live_tree_def = cake_define
   `(
-     size_of_live_tree (linear_scan_Writes l) =
+     size_of_live_tree (Writes l) =
        (1:int)) /\ (
-     size_of_live_tree (linear_scan_Reads l) =
+     size_of_live_tree (Reads l) =
        (1:int)) /\ (
      size_of_live_tree (Branch lt1 lt2) =
        size_of_live_tree lt1 + size_of_live_tree lt2) /\ (
@@ -124,10 +126,10 @@ let size_of_live_tree_def = cake_define
 
 let get_intervals_def = cake_define
   `(
-     get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
+     get_intervals (Writes l) (n:int) int_beg int_end =
        (n - 1,numset_list_add_if_lt l n int_beg,numset_list_add_if_gt
          l n int_end)) /\ (
-     get_intervals (linear_scan_Reads l) (n:int) int_beg int_end =
+     get_intervals (Reads l) (n:int) int_beg int_end =
        (n - 1,int_beg,numset_list_add_if_gt l n int_end)) /\ (
      get_intervals (Branch lt1 lt2) (n:int) int_beg int_end =
        (let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg
@@ -145,12 +147,10 @@ let get_intervals_def = cake_define
    theorem *)
 let get_intervals_withlive_def = cake_define
   `(
-     get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg
-       int_end live =
+     get_intervals_withlive (Writes l) (n:int) int_beg int_end live =
        (n - 1,numset_list_add_if_lt l n int_beg,numset_list_add_if_gt
          l n int_end)) /\ (
-     get_intervals_withlive (linear_scan_Reads l) (n:int) int_beg
-       int_end live =
+     get_intervals_withlive (Reads l) (n:int) int_beg int_end live =
        (n - 1,numset_list_delete l int_beg,numset_list_add_if_gt l n
          int_end)) /\ (
      get_intervals_withlive (Branch lt1 lt2) (n:int) int_beg int_end
@@ -171,12 +171,11 @@ let get_intervals_withlive_def = cake_define
 
 let check_number_property_def = cake_define
   `(
-     check_number_property (P:int->one spt->bool) (linear_scan_Writes
-       l) n live =
+     check_number_property (P:int->one spt->bool) (Writes l) n live =
          (let n_out = n - 1 in
          let live_out = numset_list_delete l live in
          P n_out live_out)) /\ (
-     check_number_property P (linear_scan_Reads l) n live =
+     check_number_property P (Reads l) n live =
          (let n_out = n - 1 in
          let live_out = numset_list_insert l live in
          P n_out live_out)) /\ (
@@ -193,12 +192,12 @@ let check_number_property_def = cake_define
 
 let check_number_property_strong_def = cake_define
   `(
-     check_number_property_strong (P:int->one spt->bool)
-       (linear_scan_Writes l) n live =
+     check_number_property_strong (P:int->one spt->bool) (Writes l) n
+       live =
          (let n_out = n - 1 in
          let live_out = numset_list_delete l live in
          P n_out live_out)) /\ (
-     check_number_property_strong P (linear_scan_Reads l) n live =
+     check_number_property_strong P (Reads l) n live =
          (let n_out = n - 1 in
          let live_out = numset_list_insert l live in
          P n_out live_out)) /\ (
@@ -216,12 +215,12 @@ let check_number_property_strong_def = cake_define
 
 let check_startlive_prop_def = cake_define
   `(
-     check_startlive_prop (linear_scan_Writes l) n beg end ndef =
+     check_startlive_prop (Writes l) n beg end ndef =
          (!r. MEM r l ==> (option_CASE (lookup r beg) ndef (\x. x) <=
            n /\
                          (?v. lookup r end = SOME v /\ n <= v)))) /\
                            (
-     check_startlive_prop (linear_scan_Reads l) n beg end ndef =
+     check_startlive_prop (Reads l) n beg end ndef =
          T) /\ (
      check_startlive_prop (Branch lt1 lt2) n beg end ndef =
          (let r2 = check_startlive_prop lt2 n beg end ndef in
@@ -235,8 +234,8 @@ let check_startlive_prop_def = cake_define
          r1 /\ r2))`;;
 
 let live_tree_registers_def = cake_define
-  `(live_tree_registers (linear_scan_Writes l) = set_of_list l) /\
-   (live_tree_registers (linear_scan_Reads l) = set_of_list l) /\
+  `(live_tree_registers (Writes l) = set_of_list l) /\
+   (live_tree_registers (Reads l) = set_of_list l) /\
    (live_tree_registers (Branch lt1 lt2) = live_tree_registers lt1
      UNION live_tree_registers lt2) /\
    (live_tree_registers (Seq lt1 lt2) = live_tree_registers lt1
@@ -917,7 +916,7 @@ let find_bijection_step_def = cake_define
 
 let find_bijection_clash_tree_def = cake_define
   `(
-     find_bijection_clash_tree state (reg_alloc_Delta wr rd) =
+     find_bijection_clash_tree state (Delta wr rd) =
        FOLDL find_bijection_step (FOLDL find_bijection_step state rd)
          wr) /\ (
      find_bijection_clash_tree state (Set cutset) =
@@ -957,7 +956,7 @@ let linear_reg_alloc_and_extract_coloration_def = cake_define
 
 let size_of_clash_tree_def = cake_define
   `(
-     size_of_clash_tree (reg_alloc_Delta wr rd) =
+     size_of_clash_tree (Delta wr rd) =
        (&2)) /\ (
      size_of_clash_tree (Set cutset) =
        (&1)) /\ (
@@ -978,9 +977,9 @@ let run_linear_reg_alloc_intervals_def = cake_define
 
 let apply_bij_on_clash_tree_def = cake_define
   `(
-     apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
-       reg_alloc_Delta (MAP (\r. the 0 (lookup r bij)) wr) (MAP (\r.
-         the 0 (lookup r bij)) rd)) /\ (
+     apply_bij_on_clash_tree (Delta wr rd) bij =
+       Delta (MAP (\r. the 0 (lookup r bij)) wr) (MAP (\r. the 0
+         (lookup r bij)) rd)) /\ (
      apply_bij_on_clash_tree (Set cutset) bij =
        Set (foldi (\r _7 acc. insert (the 0 (lookup r bij)) one acc)
          0 LN cutset)) /\ (

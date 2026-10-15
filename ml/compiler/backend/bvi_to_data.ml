@@ -25,23 +25,20 @@ let iAssign_def = cake_define
   `iAssign n1 op vs live env =
      (if op_requires_names op then
        let xs = SOME (list_to_num_set (vs ++ live ++ env)) in
-         if op = closLang_IntOp (GREATER) then
-           Assign n1 (closLang_IntOp (LESS)) (REVERSE vs) xs else if
-             op = closLang_IntOp closLang_GreaterEq then
-           Assign n1 (closLang_IntOp closLang_LessEq) (REVERSE vs) xs
-             else
+         if op = IntOp (GREATER) then
+           Assign n1 (IntOp (LESS)) (REVERSE vs) xs else if op =
+             IntOp GreaterEq then
+           Assign n1 (IntOp LessEq) (REVERSE vs) xs else
            Assign n1 op vs xs else
        let k = op_space_req op (LENGTH vs) in
          if k = 0 then
-           (if op = closLang_WordOp (WordTest ast_W8 (ast_Compare
-             ast_Gt)) then
-              Assign n1 (closLang_WordOp (WordTest ast_W8
-                (ast_Compare Lt))) (REVERSE vs) NONE else if op =
-                closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Geq))
+           (if op = WordOp (WordTest W8 (Compare Gt)) then
+              Assign n1 (WordOp (WordTest W8 (Compare Lt))) (REVERSE
+                vs) NONE else if op = WordOp (WordTest W8 (Compare Geq))
                 then
-              Assign n1 (closLang_WordOp (WordTest ast_W8
-                (ast_Compare ast_Leq))) (REVERSE vs) NONE else
-              Assign n1 op vs NONE) else Seq (dataLang_MakeSpace k
+              Assign n1 (WordOp (WordTest W8 (Compare Leq))) (REVERSE
+                vs) NONE else
+              Assign n1 op vs NONE) else Seq (MakeSpace k
                 (list_to_num_set (vs ++ live ++ env)))
                   (Assign n1 op vs NONE))`;;
 
@@ -104,8 +101,8 @@ let compile_def = cake_define
       let c3 = (if tail then Return [n2] else Skip) in
         (Seq c1 (mk_ticks ticks (Seq (Call ret dest vs (SOME (n1,Seq
           c2 (Move n2 (HD v))))) c3)),[n2],n2 + 1))) /\
-   (bvi_to_data_compile n env tail live [bvi_LetCall rets ticks dest
-     xs y] =
+   (bvi_to_data_compile n env tail live [LetCall rets ticks dest xs
+     y] =
       (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
         if y = Return (GENLIST Var rets) then
           (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs
@@ -176,8 +173,8 @@ let compile_sing_def = cake_define_list
               (Seq (Call ret dest vs (SOME (n1,Seq c2 (Move n2 v))))
                 c3)),
             n2,n2 + 1))`;
-   `bvi_to_data_compile_sing n env tail live (bvi_LetCall rets ticks
-  dest xs y) =
+   `bvi_to_data_compile_sing n env tail live (LetCall rets ticks dest xs
+  y) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
            if y = Return (GENLIST Var rets) then
              (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs

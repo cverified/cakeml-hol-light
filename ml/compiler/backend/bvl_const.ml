@@ -25,22 +25,20 @@ needs "semantics/ast.ml";;
 let dest_simple_def = cake_define
   `dest_simple x1 =
         match x1 with
-          (bvl_Op (closLang_IntOp (Const i)) xs) -> if NULL xs then
-            SOME i else NONE
+          (bvl_Op (IntOp (Const i)) xs) -> if NULL xs then SOME i
+            else NONE
         | _1 -> NONE`;;
 
 let case_op_const_def = cake_define
   `case_op_const exp =
-       (match exp with (Op op [x1; Op (closLang_IntOp (Const n2))
-         l]) -> (if NULL l then SOME (op,x1,n2) else NONE) | _2 ->
-         NONE)`;;
+       (match exp with (Op op [x1; Op (IntOp (Const n2)) l]) ->
+         (if NULL l then SOME (op,x1,n2) else NONE) | _2 -> NONE)`;;
 
 let SmartOp_flip_def = cake_define
   `SmartOp_flip op x1 x2 =
      (match (dest_simple x1) with (SOME i) ->
-         (if MEM op [closLang_IntOp Add; closLang_IntOp
-           closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
-           Sub then (closLang_IntOp Add,x2,Op (closLang_IntOp (Const
+         (if MEM op [IntOp Add; IntOp Mult] then (op,x2,x1) else
+           if op = IntOp Sub then (IntOp Add,x2,Op (IntOp (Const
            (--i))) []) else (op,x1,x2)) | _3 -> (op,x1,x2))`;;
 
 (* HOL4 ML code, not ported:
@@ -187,7 +185,7 @@ end
 let dest_EqualInt_def = cake_define
   `dest_EqualInt x1 =
       match x1 with
-        (closLang_BlockOp (closLang_EqualConst (Int i))) -> SOME i
+        (BlockOp (EqualConst (Int i))) -> SOME i
       | _4 -> NONE`;;
 
 let SmartOp1_def = cake_define
@@ -208,11 +206,9 @@ let extract_def = cake_define
         match x1 with
           ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys +
             1)):bvl_exp)
-        | (Op (closLang_IntOp (Const i)) xs) -> SOME (Op
-          (closLang_IntOp (Const i)) [])
-        | (Op (closLang_BlockOp (Cons t)) xs) ->
-       if NULL xs then SOME (Op (closLang_BlockOp (Cons t)) []) else
-         NONE
+        | (Op (IntOp (Const i)) xs) -> SOME (Op (IntOp (Const i)) [])
+        | (Op (BlockOp (Cons t)) xs) ->
+       if NULL xs then SOME (Op (BlockOp (Cons t)) []) else NONE
         | _6 -> NONE`;;
 hol4_overload "extract" "bvl_const_extract";;
 
@@ -225,7 +221,7 @@ hol4_overload "extract_list" "bvl_const_extract_list";;
 let delete_var_def = cake_define
   `bvl_const_delete_var x =
         match x with
-          ((Var n):bvl_exp) -> Op (closLang_IntOp (Const 0)) []
+          ((Var n):bvl_exp) -> Op (IntOp (Const 0)) []
         | x -> x`;;
 hol4_overload "delete_var" "bvl_const_delete_var";;
 

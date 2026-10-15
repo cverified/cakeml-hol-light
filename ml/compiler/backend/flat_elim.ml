@@ -29,11 +29,11 @@ let is_hidden_def = cake_define
         | (Handle t e pes) -> F
         | (Lit t l) -> T
         | (Con t id_option es) -> EVERY is_hidden es
-        | (flatLang_Var_local t str) -> T
+        | (Var_local t str) -> T
         | (Fun t name body) -> T
-        | (App t (flatLang_Src ast_Opapp) l) -> F
-        | (App t (flatLang_GlobalVarInit g) [e]) -> is_hidden e
-        | (App t (flatLang_GlobalVarLookup g) [e]) -> F
+        | (App t (Src Opapp) l) -> F
+        | (App t (GlobalVarInit g) [e]) -> is_hidden e
+        | (App t (GlobalVarLookup g) [e]) -> F
         | (If t e1 e2 e3) -> (is_hidden e1 /\ is_hidden e2 /\
           is_hidden e3)
         | (Mat t e1 [p,e2]) -> (is_hidden e1 /\ is_hidden e2)
@@ -66,10 +66,9 @@ let is_pure_def = cake_define_wf
           (Handle t e pes) -> flat_elim_is_pure e
         | (Lit t l) -> T
         | (Con t id_option es) -> EVERY flat_elim_is_pure es
-        | (flatLang_Var_local t str) -> T
+        | (Var_local t str) -> T
         | (Fun t name body) -> T
-        | (App t (flatLang_GlobalVarInit g) es) -> EVERY
-          flat_elim_is_pure es
+        | (App t (GlobalVarInit g) es) -> EVERY flat_elim_is_pure es
         | (If t e1 e2 e3) -> (flat_elim_is_pure e1 /\
           flat_elim_is_pure e2 /\ flat_elim_is_pure e3)
         | (Mat t e1 pes) ->
@@ -84,8 +83,7 @@ hol4_overload "is_pure" "flat_elim_is_pure";;
 let has_Eval_def = cake_define
   `has_Eval x1 =
         match x1 with
-          (App t op es) -> op = flatLang_Src ast_Eval \/
-            has_Eval_list es
+          (App t op es) -> op = Src Eval \/ has_Eval_list es
         | (Mat _6 e pes) -> has_Eval e \/ has_Eval_pats pes
         | (Letrec _7 funs e) -> has_Eval e \/ has_Eval_funs funs
         | (Raise _8 e) -> has_Eval e
@@ -106,13 +104,13 @@ let has_Eval_def = cake_define
 let dest_GlobalVarInit_def = cake_define
   `dest_GlobalVarInit x1 =
     match x1 with
-      (flatLang_GlobalVarInit n) -> SOME n
+      (GlobalVarInit n) -> SOME n
     | _20 -> NONE`;;
 
 let dest_GlobalVarLookup_def = cake_define
   `dest_GlobalVarLookup x1 =
     match x1 with
-      (flatLang_GlobalVarLookup n) -> SOME n
+      (GlobalVarLookup n) -> SOME n
     | _21 -> NONE`;;
 
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
@@ -124,7 +122,7 @@ let find_loc_def = cake_define_wf
        union (find_loc eh) (find_locL (MAP SND p_es))) /\
    (find_loc (Lit _24 _25) = (LN:one spt)) /\
    (find_loc (Con _26 _27 es) = find_locL es) /\
-   (find_loc (flatLang_Var_local _28 _29) = LN) /\
+   (find_loc (Var_local _28 _29) = LN) /\
    (find_loc (Fun _30 _31 ef) = find_loc ef) /\
    (find_loc (App _32 op es) = (match (dest_GlobalVarInit op) with
      SOME n -> (insert n one (find_locL es)) | NONE -> find_locL es)) /\
@@ -149,7 +147,7 @@ let find_lookups_def = cake_define_wf
        union (find_lookups eh) (find_lookupsL (MAP SND p_es))) /\
    (find_lookups (Lit _40 _41) = LN) /\
    (find_lookups (Con _42 _43 es) = find_lookupsL es) /\
-   (find_lookups (flatLang_Var_local _44 _45) = LN) /\
+   (find_lookups (Var_local _44 _45) = LN) /\
    (find_lookups (Fun _46 _47 ef) = find_lookups ef) /\
    (find_lookups (App _48 op es) = (match (dest_GlobalVarLookup op)
      with SOME n -> (insert n one (find_lookupsL es)) | NONE ->

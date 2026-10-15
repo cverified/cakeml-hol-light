@@ -108,6 +108,7 @@ val (move_related, get_move_related_def, set_move_related_def) =
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
   "state_exn = reg_alloc_Fail (string) | reg_alloc_Subscript";;
 hol4_overload "Fail" "reg_alloc_Fail";;
+hol4_overload "Subscript" "reg_alloc_Subscript";;
 
 (* Monadic functions to handle the exceptions *)
 (* HOL4 ML code, not ported:
@@ -867,6 +868,7 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
   "clash_tree = reg_alloc_Delta (num list) (num list) | reg_alloc_Set \
    (one spt) | reg_alloc_Branch ((one spt) option) (clash_tree) \
    (clash_tree) | reg_alloc_Seq (clash_tree) (clash_tree)";;
+hol4_overload "Delta" "reg_alloc_Delta";;
 hol4_overload "Set" "reg_alloc_Set";;
 hol4_overload "Branch" "reg_alloc_Branch";;
 hol4_overload "Seq" "reg_alloc_Seq";;
@@ -898,7 +900,7 @@ let check_partial_col_def = cake_define
    correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
 let check_clash_tree_def = cake_define
-  `(check_clash_tree f (reg_alloc_Delta w r) live flive =
+  `(check_clash_tree f (Delta w r) live flive =
      (match check_partial_col f w live flive with
        NONE -> NONE | SOME _14 ->
      (let del_w = (numset_list_delete w live) in
@@ -940,7 +942,7 @@ let list_remap_def = cake_define
        list_remap xs (insert x nv ta,insert nv x fa,nv + 1)))`;;
 
 let mk_bij_aux_def = cake_define
-  `(mk_bij_aux (reg_alloc_Delta writes reads) tfn =
+  `(mk_bij_aux (Delta writes reads) tfn =
      list_remap writes (list_remap reads tfn)) /\
    (mk_bij_aux (Set t) tfn =
      list_remap (MAP FST (toAList t)) tfn) /\
@@ -990,7 +992,7 @@ let mk_tags_def = cake_define
 (* Initializes the clash_graph using a clash_tree and a remapping
    bijection *)
 let mk_graph_def = cake_define
-  `(mk_graph ta (reg_alloc_Delta w r) liveout =
+  `(mk_graph ta (Delta w r) liveout =
      monad_bind (return (MAP ta w)) (\
        wta. monad_bind (return (MAP ta r)) (\
        rta. monad_bind (extend_clique wta liveout) (\
@@ -1127,6 +1129,7 @@ let resort_moves_def = cake_define
 let algorithm_INDUCT,algorithm_RECURSION = define_datatype
   "algorithm = reg_alloc_Simple | reg_alloc_IRC";;
 hol4_overload "Simple" "reg_alloc_Simple";;
+hol4_overload "IRC" "reg_alloc_IRC";;
 
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref

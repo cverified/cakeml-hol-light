@@ -13,15 +13,19 @@
 
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "lib/balanced_map.ml";;
 needs "misc/misc.ml";;
 
 let obj_INDUCT,obj_RECURSION = define_datatype
   "obj = jsonLang_Object ((mlstring#obj) list) | jsonLang_Array (obj \
    list) | jsonLang_String (mlstring) | jsonLang_Int (int) | \
    jsonLang_Bool (bool) | jsonLang_Null";;
+hol4_overload "Object" "jsonLang_Object";;
+hol4_overload "Array" "jsonLang_Array";;
 hol4_overload "String" "jsonLang_String";;
 hol4_overload "Int" "jsonLang_Int";;
 hol4_overload "Bool" "jsonLang_Bool";;
+hol4_overload "Null" "jsonLang_Null";;
 
 (* HOL4 overload (expanded in the port):
      None =  *)
@@ -59,19 +63,18 @@ let json_to_mlstring_def = cake_define
   `json_to_mlstring obj =
         match  with
            ->
-       match obj with jsonLang_Object mems -> List [(implode "{")] ++
+       match obj with Object mems -> List [(implode "{")] ++
                    concat_with (MAP mem_to_string mems) (List
                      [(implode ",")]) ++
-                   List [(implode "}")] | jsonLang_Array obs -> List
-                     [(implode "[")] ++
+                   List [(implode "}")] | Array obs -> List [(implode
+                     "[")] ++
                    concat_with (MAP json_to_mlstring obs) (List
                      [(implode ",")]) ++
                    List [(implode "]")] | String s -> List
                      ([(implode) "\""; encode_str T s; (implode) "\""])
                      | Int i -> List [(num_to_str) i] | Bool b -> (if b
                      then List [(implode "true")] else List [(implode
-                     "false")]) | jsonLang_Null -> List [(implode
-                     "null")]
+                     "false")]) | Null -> List [(implode "null")]
         |  -> let (n,obj) = obj in
            List [(implode) "\""; n; (implode) "\":"] ++
              json_to_mlstring obj`;;

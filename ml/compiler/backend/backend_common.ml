@@ -16,6 +16,8 @@ needs "lib/sptree.ml";;
 let opw_INDUCT,opw_RECURSION = define_datatype
   "opw = backend_common_Andw | backend_common_Orw | \
    backend_common_Xor | backend_common_Add | backend_common_Sub";;
+hol4_overload "Andw" "backend_common_Andw";;
+hol4_overload "Orw" "backend_common_Orw";;
 hol4_overload "Xor" "backend_common_Xor";;
 hol4_overload "Add" "backend_common_Add";;
 hol4_overload "Sub" "backend_common_Sub";;
@@ -66,6 +68,7 @@ let tra_INDUCT,tra_RECURSION = define_datatype
   "tra = backend_common_SourceLoc (num) (num) (num) (num) | \
    backend_common_Cons (tra) (num) | backend_common_Union (tra) (tra) \
    | backend_common_None";;
+hol4_overload "SourceLoc" "backend_common_SourceLoc";;
 hol4_overload "Cons" "backend_common_Cons";;
 hol4_overload "Union" "backend_common_Union";;
 hol4_overload "None" "backend_common_None";;
@@ -92,7 +95,7 @@ val _ = set_fixity "▷" (Infixl 480);
 * source, since the always start with four Cons, indicating source
   position. *)
 let orphan_trace_def = cake_define
-  `orphan_trace = backend_common_SourceLoc 2 2 1 1`;;
+  `orphan_trace = SourceLoc 2 2 1 1`;;
 
 (* Create new Cons trace, unless original trace is `None`, indicating
    traces are

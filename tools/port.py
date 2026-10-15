@@ -56,27 +56,33 @@ def fill(pre, words, width=70):
 NEEDS = '(*__NEEDS__*)'
 
 
-def strip_ml(text):
-  """the text without its comments and strings, which is what the
-     needs of a file have to be computed from"""
+def strip_ml(text, strings=True):
+  """the text without its comments (and, with strings, without its
+     strings), which is what the needs of a file are computed from;
+     a quotation is code, and a (* in one is not a comment"""
   out = []
   i = 0
-  depth = 0
   n = len(text)
+  depth = 0
   while i < n:
+    c = text[i]
+    if depth:
+      if text.startswith('(*', i): depth += 1; i += 2
+      elif text.startswith('*)', i): depth -= 1; i += 2
+      else: i += 1
+      continue
     if text.startswith('(*', i):
-      depth += 1; i += 2
-    elif text.startswith('*)', i) and depth:
-      depth -= 1; i += 2
-    elif depth:
-      i += 1
-    elif text[i] == '"':
+      depth = 1; i += 2; continue
+    if c == '`':
+      j = text.find('`', i + 1)
+      if j < 0: j = n
+      out.append(text[i+1:j]); i = j + 1; continue
+    if c == '"' and strings:
       i += 1
       while i < n and text[i] != '"':
         i += 2 if text[i] == '\\' else 1
-      i += 1
-    else:
-      out.append(text[i]); i += 1
+      i += 1; continue
+    out.append(c); i += 1
   return ''.join(out)
 
 
@@ -121,7 +127,11 @@ class Porter:
     self.head = None
     self.deps = []
     self.bound = set()
-    raw = db.overloads_for(thy)
+    # an overload of an ancestor does not shadow a constant that
+    # this theory defines itself (semanticPrimitives defines
+    # num_cmp, which comparison has as an overload of num_compare)
+    raw = {nm: txt for nm, txt in db.overloads_for(thy).items()
+           if not any(t == thy for t, _ in db.defs.get(nm, []))}
     for _ in range(3):
       for nm, txt in raw.items():
         try: self.ctx.overloads[nm] = self.term(txt)

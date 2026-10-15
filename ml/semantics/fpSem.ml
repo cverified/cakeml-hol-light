@@ -19,6 +19,8 @@ let fp_cmp_INDUCT,fp_cmp_RECURSION = define_datatype
 
 let fp_uop_INDUCT,fp_uop_RECURSION = define_datatype
   "fp_uop = fpSem_FP_Abs | fpSem_FP_Neg | fpSem_FP_Sqrt";;
+hol4_overload "FP_Abs" "fpSem_FP_Abs";;
+hol4_overload "FP_Neg" "fpSem_FP_Neg";;
 hol4_overload "FP_Sqrt" "fpSem_FP_Sqrt";;
 
 let fp_bop_INDUCT,fp_bop_RECURSION = define_datatype
@@ -33,8 +35,8 @@ let fp_top_INDUCT,fp_top_RECURSION = define_datatype
 
 let fp_cmp_def = cake_define
   `fp_cmp cmp =
-   (match cmp with Lt -> fp64_lessThan | ast_Leq -> fp64_lessEqual
-     | ast_Gt -> fp64_greaterThan | ast_Geq -> fp64_greaterEqual)`;;
+   (match cmp with Lt -> fp64_lessThan | Leq -> fp64_lessEqual |
+     Gt -> fp64_greaterThan | Geq -> fp64_greaterEqual)`;;
 
 let fp_cmp_comp_def = cake_define
   `fp_cmp_comp fop =
@@ -46,8 +48,8 @@ let fp_cmp_comp_def = cake_define
 let fp_uop_comp_def = cake_define
   `fp_uop_comp fop =
    (match fop with
-     fpSem_FP_Abs -> fp64_abs | fpSem_FP_Neg -> fp64_negate |
-       FP_Sqrt -> fp64_sqrt roundTiesToEven)`;;
+     FP_Abs -> fp64_abs | FP_Neg -> fp64_negate | FP_Sqrt ->
+       fp64_sqrt roundTiesToEven)`;;
 
 let fp_bop_comp_def = cake_define
   `fp_bop_comp fop =

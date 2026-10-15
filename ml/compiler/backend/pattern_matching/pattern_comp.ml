@@ -67,17 +67,16 @@ let insert_Any_def = cake_define
 let is_True_def = cake_define
   `is_True x1 =
       match x1 with
-        pattern_semantics_True -> T
+        True -> T
       | _6 -> F`;;
 
 let mk_Disj_def = cake_define
-  `mk_Disj p q = (if is_True p \/ is_True q then
-  pattern_semantics_True else pattern_semantics_Disj p q)`;;
+  `mk_Disj p q = (if is_True p \/ is_True q then True else Disj p q)`;;
 
 let mk_Conj_def = cake_define
   `mk_Conj p q =
      (if is_True p then q else
-     if is_True q then p else pattern_semantics_Conj p q)`;;
+     if is_True q then p else Conj p q)`;;
 
 let mk_If_def = cake_define
   `mk_If g p q = (if is_True g then p else If g p q)`;;
@@ -90,17 +89,17 @@ let get_pos_def = cake_define
 let pat_to_guard_def = cake_define_wf
   `MEASURE (\x. match x with INL (_8,p) -> pat_size p | INR (_9,k,p) ->
   list_size pat_size p)`
-  `pat_to_guard l Any = pattern_semantics_True /\
-   pat_to_guard l (Lit r) = pattern_semantics_PosTest (get_pos
-     (REVERSE l)) (pattern_semantics_LitEq r) /\
+  `pat_to_guard l Any = True /\
+   pat_to_guard l (Lit r) = PosTest (get_pos (REVERSE l)) (LitEq r)
+     /\
    pat_to_guard l (Cons NONE pats) = pats_to_guard l 0 pats /\
    pat_to_guard l (Cons (SOME (t,_7)) pats) =
-     mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
+     mk_Conj (PosTest (get_pos (REVERSE l))
        (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats) /\
    pat_to_guard l (Or p1 p2) = mk_Disj (pat_to_guard l p1)
      (pat_to_guard l p2) /\
    pat_to_guard l (Ref p) = pat_to_guard (0 :: l) p /\
-   pats_to_guard l k [] = pattern_semantics_True /\
+   pats_to_guard l k [] = True /\
    pats_to_guard l k [p] = pat_to_guard (k :: l) p /\
    pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
      (pats_to_guard l (k + 1) ps)`;;
@@ -113,16 +112,15 @@ let pats_to_code_def = cake_define
 let walk_def = cake_define
   `walk [] x refs = SOME x /\
    walk (n :: ns) x refs =
-     (match x with (pattern_semantics_Term t xs) -> (if n < LENGTH xs
-       then walk ns (EL n xs) refs else NONE) | (RefPtr p) -> (if ~(n =
-       0) then NONE else
+     (match x with (Term t xs) -> (if n < LENGTH xs then walk ns (EL
+       n xs) refs else NONE) | (RefPtr p) -> (if ~(n = 0) then NONE else
                        match FLOOKUP refs p with SOME y -> walk ns
                          y refs | _12 -> NONE) | _13 -> NONE)`;;
 
 let walk_list_def = cake_define
   `walk_list ns x refs =
-     (match walk ns x refs with SOME (pattern_semantics_Term _14
-       vs) -> SOME vs | _15 -> NONE)`;;
+     (match walk ns x refs with SOME (Term _14 vs) -> SOME vs |
+       _15 -> NONE)`;;
 
 
 (* plug all the parts together *)

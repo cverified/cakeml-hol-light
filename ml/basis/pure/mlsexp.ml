@@ -9,6 +9,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "lib/peg.ml";;
 needs "misc/misc.ml";;
 
 (*--------------------------------------------------------------*
@@ -150,13 +151,17 @@ let str_tree_INDUCT,str_tree_RECURSION = define_datatype
   "str_tree = mlsexp_Str (mlstring) | mlsexp_Trees (str_tree list) | \
    mlsexp_GrabLine (str_tree)";;
 hol4_overload "Str" "mlsexp_Str";;
+hol4_overload "Trees" "mlsexp_Trees";;
+hol4_overload "GrabLine" "mlsexp_GrabLine";;
 
 let pretty_INDUCT,pretty_RECURSION = define_datatype
   "pretty = mlsexp_Parenthesis (pretty) | mlsexp_String (mlstring) | \
    mlsexp_Append (pretty) (bool) (pretty) | mlsexp_Size (num) \
    (pretty)";;
+hol4_overload "Parenthesis" "mlsexp_Parenthesis";;
 hol4_overload "String" "mlsexp_String";;
 hol4_overload "Append" "mlsexp_Append";;
+hol4_overload "Size" "mlsexp_Size";;
 
 let newlines_def = cake_define
   `newlines x1 =
@@ -169,9 +174,8 @@ let v2pretty_def = cake_define
   `v2pretty v =
         match  with
            ->
-        match v with Str s -> String s | mlsexp_GrabLine w ->
-          mlsexp_Size 100000 (v2pretty w) | mlsexp_Trees l ->
-          mlsexp_Parenthesis (newlines (vs2pretty l))
+        match v with Str s -> String s | GrabLine w -> Size 100000
+          (v2pretty w) | Trees l -> Parenthesis (newlines (vs2pretty l))
         |  ->
         match v with [] -> [] | (v :: v) -> v2pretty v ::
           vs2pretty v`;;
@@ -179,46 +183,44 @@ let v2pretty_def = cake_define
 let get_size_def = cake_define
   `mlsexp_get_size x1 =
       match x1 with
-        (mlsexp_Size n x) -> n
+        (Size n x) -> n
       | (Append x _4 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
-      | (mlsexp_Parenthesis x) -> mlsexp_get_size x + 2
+      | (Parenthesis x) -> mlsexp_get_size x + 2
       | _5 -> 0`;;
 hol4_overload "get_size" "mlsexp_get_size";;
 
 let get_next_size_def = cake_define
   `get_next_size x1 =
       match x1 with
-        (mlsexp_Size n x) -> n
+        (Size n x) -> n
       | (Append x _6 y) -> get_next_size x
-      | (mlsexp_Parenthesis x) -> get_next_size x + 2
+      | (Parenthesis x) -> get_next_size x + 2
       | _7 -> 0`;;
 
 let annotate_def = cake_define
-  `mlsexp_annotate (String s) = mlsexp_Size (strlen s) (String s) /\
-   mlsexp_annotate (mlsexp_Parenthesis b) =
+  `mlsexp_annotate (String s) = Size (strlen s) (String s) /\
+   mlsexp_annotate (Parenthesis b) =
      (let b = mlsexp_annotate b in
-        mlsexp_Size (get_size b + 2) (mlsexp_Parenthesis b)) /\
+        Size (get_size b + 2) (Parenthesis b)) /\
    mlsexp_annotate (Append b1 n b2) =
      (let b1 = mlsexp_annotate b1 in
       let b2 = mlsexp_annotate b2 in
          (Append b1 n b2)) /\
-   mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n
-     (mlsexp_annotate b)`;;
+   mlsexp_annotate (Size n b) = Size n (mlsexp_annotate b)`;;
 hol4_overload "annotate" "mlsexp_annotate";;
 
 let remove_all_def = cake_define
-  `remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis (remove_all v)
-  /\
+  `remove_all (Parenthesis v) = Parenthesis (remove_all v) /\
    remove_all (String v1) = String v1 /\
    remove_all (Append v2 _8 v3) = Append (remove_all v2) F
      (remove_all v3) /\
-   remove_all (mlsexp_Size v4 v5) = remove_all v5`;;
+   remove_all (Size v4 v5) = remove_all v5`;;
 
 let smart_remove_def = cake_define
-  `smart_remove i k (mlsexp_Size n b) =
+  `smart_remove i k (Size n b) =
      (if k + n < 70 then remove_all b else smart_remove i k b) /\
-   smart_remove i k (mlsexp_Parenthesis v) = mlsexp_Parenthesis
-     (smart_remove (i + 1) (k + 1) v) /\
+   smart_remove i k (Parenthesis v) = Parenthesis (smart_remove (i +
+     1) (k + 1) v) /\
    smart_remove i k (String v1) = String v1 /\
    smart_remove i k (Append v2 b v3) =
      (let n2 = get_size v2 in
@@ -229,8 +231,8 @@ let smart_remove_def = cake_define
          Append (smart_remove i k v2) T (smart_remove i i v3))`;;
 
 let flatten_def = cake_define
-  `flatten indent (mlsexp_Size n p) s = flatten indent p s /\
-   flatten indent (mlsexp_Parenthesis p) s =
+  `flatten indent (Size n p) s = flatten indent p s /\
+   flatten indent (Parenthesis p) s =
      (implode "(") :: flatten (concat [indent; (implode "   ")]) p
        ((implode ")") :: s) /\
    flatten indent (String t) s = t :: s /\
@@ -262,7 +264,7 @@ let make_str_safe_def = cake_define
 
 let sexp2tree_def = cake_define
   `sexp2tree (Atom s) = Str (make_str_safe s) /\
-   sexp2tree (Expr l) = mlsexp_Trees (sexp2trees l) /\
+   sexp2tree (Expr l) = Trees (sexp2trees l) /\
    sexp2trees [] = [] /\
    sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`;;
 

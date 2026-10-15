@@ -14,6 +14,7 @@
 *)
 
 needs "basis/pure/mlint.ml";;
+needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
@@ -28,6 +29,7 @@ needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
+needs "lib/pegexec.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
@@ -310,14 +312,14 @@ let locs_to_string_def = cake_define
 let parse_sexp_input_def = cake_define
   `parse_sexp_input input =
      (let err = (implode "Parsing of sexp syntax failed") in
-       match parse_sexp ((MAP (\c. (c,unknown_loc))) input) with
-         NONE -> INL err | SOME x -> (match sexplist sexpdec x with
-         NONE -> INL err | SOME x -> INR x))`;;
+       match parse_sexp (add_locs input) with NONE -> INL err |
+         SOME x -> (match sexplist sexpdec x with NONE -> INL err |
+         SOME x -> INR x))`;;
 
 let parse_cml_input_def = cake_define
   `parse_cml_input input =
-     (match parse_prog (lexer_fun input) with peg_Failure l _5 ->
-       INL (^ (implode "Parsing failed at ") (locs_to_string (implode
+     (match parse_prog (lexer_fun input) with Failure l _5 -> INL
+       (^ (implode "Parsing failed at ") (locs_to_string (implode
        input) (SOME l))) | Success _6 x _7 -> INR x)`;;
 
 let compile_def = cake_define
@@ -326,7 +328,7 @@ let compile_def = cake_define
      match
        (if compiler_config_input_is_sexp c then parse_sexp_input
          input else parse_cml_input input) with INL msg -> (M_failure
-         (ParseError msg),misc_Nil) | INR prog ->
+         (ParseError msg),Nil) | INR prog ->
         (let _9 = empty_ffi (implode "finished: lexing and parsing")
           in
         let full_prog = if compiler_config_exclude_prelude c then
@@ -337,18 +339,18 @@ let compile_def = cake_define
             (compiler_config_inferencer_config c) full_prog) with
             M_failure (locs,msg) ->
             (M_failure (TypeError (concat [msg; (implode " at ");
-                locs_to_string (implode input) locs])),misc_Nil) |
+                locs_to_string (implode input) locs])),Nil) |
                   M_success ic ->
            (let _10 = empty_ffi (implode "finished: type inference")
              in
            if compiler_config_only_print_types c then
              (M_failure (TypeError (concat ([(implode "\n")] ++
                               inf_env_to_types_string ic ++
-                              [(implode "\n")]))),misc_Nil) else if
+                              [(implode "\n")]))),Nil) else if
                                 compiler_config_only_print_sexp c then
              (M_failure (TypeError (implode
                 ("\n" ++ print_sexp (listsexp (MAP decsexp
-                  full_prog))))),misc_Nil) else
+                  full_prog))))),Nil) else
            match compile_tap (compiler_config_asm_config c)
              (compiler_config_backend_config c) full_prog with
              (NONE,td) -> (M_failure AssembleError,td) | (SOME
@@ -363,10 +365,10 @@ let compile_pancake_def = cake_define
         (MAP (\(msg,loc). concat [msg; (implode " at ");
                               locs_to_string (implode input) (SOME
                                 loc); (implode "\n")])
-            errs)))),misc_Nil,[]) | INL funs ->
-       (match static_check funs with (peg_error e,warns) ->
-         (M_failure (StaticError e),misc_Nil,MAP StaticError warns) |
-         (return one,warns) ->
+            errs)))),Nil,[]) | INL funs ->
+       (match static_check funs with (error e,warns) -> (M_failure
+         (StaticError e),Nil,MAP StaticError warns) | (return one,warns)
+         ->
            (let _12 = empty_ffi (implode
              "finished: lexing and parsing") in
            match pan_compile_tap asm_conf c funs with (NONE,td) ->
@@ -577,7 +579,7 @@ let parse_gc_def = cake_define
        "gen") rest then
        match parse_nums (extract rest (strlen (implode "gen")) NONE)
          with
-         INL ls -> INL (data_to_word_Generational ls) | INR s ->
+         INL ls -> INL (Generational ls) | INR s ->
          INR (concat [(implode "Error parsing GenGC argument: ");
            s]) else INR (concat [(implode
            "Unrecognized GC option: "); rest])))`;;
@@ -753,7 +755,7 @@ let format_compiler_result_def = cake_define
    right now. *)
 let add_tap_output_def = cake_define
   `add_tap_output td out =
-     (if td = misc_Nil then out else td:mlstring app_list)`;;
+     (if td = Nil then out else td:mlstring app_list)`;;
 
 (* The top-level compiler with everything instantiated except it doesn't
    do exporting *)

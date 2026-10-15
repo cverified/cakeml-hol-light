@@ -51,8 +51,8 @@ let seq_assoc_right_def = cake_define
         | (If v n r q1 q2) ->
         SimpSeq (If v n r (Seq_assoc_right q1 Skip) (Seq_assoc_right
           q2 Skip)) acc
-        | (wordLang_MustTerminate q) ->
-        SimpSeq (wordLang_MustTerminate (Seq_assoc_right q Skip)) acc
+        | (MustTerminate q) ->
+        SimpSeq (MustTerminate (Seq_assoc_right q Skip)) acc
         | (Call ret_prog dest args handler) ->
         match ret_prog with NONE -> Call ret_prog dest args handler |
           SOME (x1,x2,q1,x3,x4) ->

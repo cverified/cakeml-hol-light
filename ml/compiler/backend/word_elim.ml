@@ -28,7 +28,7 @@ let find_word_loc_def = cake_define
 let find_word_ref_def = cake_define
   `find_word_ref x1 =
         match x1 with
-          (wordLang_MustTerminate p) -> find_word_ref p
+          (MustTerminate p) -> find_word_ref p
         | (Call ret target _3 handler) -> union
            (match target with NONE -> LN | SOME n -> (insert n one
              LN))

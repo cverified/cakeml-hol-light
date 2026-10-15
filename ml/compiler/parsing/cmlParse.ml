@@ -16,7 +16,6 @@ needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
-needs "semantics/typeSystem.ml";;
 
 (* HOL4 overload (expanded in the port):
      cmlpegexec = λn t. peg_exec cmlPEG (pnt n) t [] NONE [] done failed
@@ -27,9 +26,9 @@ let destResult_def = cake_define
       match x1 with
         (Result (Success [] x eo)) -> Success [] x eo
       | (Result (Success ((_1,l) :: _2) _3 _4)) ->
-   peg_Failure l "Expected to be at EOF"
-      | (Result (peg_Failure fl fe)) -> peg_Failure fl fe
-      | _5 -> peg_Failure unknown_loc
+   Failure l "Expected to be at EOF"
+      | (Result (Failure fl fe)) -> Failure fl fe
+      | _5 -> Failure unknown_loc
         "Something catastrophic happened"`;;
 hol4_overload "destResult" "cmlParse_destResult";;
 
@@ -40,8 +39,8 @@ let pegresult_bind_def = cake_define
   `pegresult_bind (f) (g) =
    (\toks.
      match f toks with
-       Success toks' x eo -> g x toks' | peg_Failure fl fe ->
-         peg_Failure fl fe)`;;
+       Success toks' x eo -> g x toks' | Failure fl fe -> Failure
+         fl fe)`;;
 
 let pegresult_choice_def = cake_define
   `pegresult_choice (f) (g) =
@@ -56,17 +55,15 @@ let toks_to_loc_def = cake_define
 let pegresult_guard_def = cake_define
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)
   list,one,string)pegresult) =
-   (\toks. if b then Success toks one NONE else peg_Failure
+   (\toks. if b then Success toks one NONE else Failure
      (toks_to_loc toks) "Assert failure")`;;
 
 let optlift_def = cake_define
-  `optlift NONE = (\toks. peg_Failure (toks_to_loc toks)
-  "Option = NONE") /\
+  `optlift NONE = (\toks. Failure (toks_to_loc toks) "Option = NONE") /\
    optlift (SOME a) = (\toks. Success toks a NONE)`;;
 
 let cmlParseExpr_def = cake_define
-  `cmlParseExpr = monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt
-  n) t [] NONE [] done failed) nE) (\
+  `cmlParseExpr = monad_bind (destResult o cmlpegexec nE) (\
      pts. monad_bind (optlift (oHD pts)) (\
      pt. monad_bind (optlift (ptree_Expr nE pt)) (\
      ast.
@@ -74,8 +71,7 @@ let cmlParseExpr_def = cake_define
 
 let parse_prog_def = cake_define
   `parse_prog =
-     monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt n) t []
-       NONE [] done failed) nTopLevelDecs) (\
+     monad_bind (destResult o cmlpegexec nTopLevelDecs) (\
        pts. monad_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;

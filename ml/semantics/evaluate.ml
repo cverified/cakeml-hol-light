@@ -102,7 +102,7 @@ let evaluate_def = cake_define_wf
     (match fix_clock st (evaluate st env (REVERSE es)) with
      (st',Rval vs) ->
      (match (getOpClass op) with
-       ast_FunApp ->
+       FunApp ->
          (match do_opapp (REVERSE vs) with
            SOME (env',e) ->
              (if semanticPrimitives_state_clock st' = 0 then
@@ -126,7 +126,7 @@ let evaluate_def = cake_define_wf
                            (semanticPrimitives_state_refs_fupd (K refs)
                            st2,Rval vs2)) | (st2,Rerr e) -> (st2,Rerr
                            e))) | NONE -> (st',Rerr (Rabort
-                           Rtype_error)))) | ast_EvalOp ->
+                           Rtype_error)))) | EvalOp ->
          (match fix_clock st' (do_eval_res (REVERSE vs) st') with
            (st1,Rval (env1,decs)) ->
              (if semanticPrimitives_state_clock st1 = 0 then
@@ -157,7 +157,7 @@ let evaluate_def = cake_define_wf
              ((semanticPrimitives_state_ffi_fupd (K ffi)
                (semanticPrimitives_state_refs_fupd (K refs)
                st')),list_result r))) | res -> res) /\
-   evaluate st env [ast_Log lop e1 e2] =
+   evaluate st env [Log lop e1 e2] =
      (match fix_clock st (evaluate st env [e1]) with
         (st',Rval v1) ->
           (match do_log lop (HD v1) e2 with
@@ -191,8 +191,8 @@ let evaluate_def = cake_define_wf
         evaluate st (sem_env_v_fupd (K (build_rec_env funs env
           (sem_env_v env))) env) [e] else (st,Rerr (Rabort
           Rtype_error))) /\
-   evaluate st env [ast_Tannot e t] = evaluate st env [e] /\
-   evaluate st env [ast_Lannot e l] = evaluate st env [e] /\
+   evaluate st env [Tannot e t] = evaluate st env [e] /\
+   evaluate st env [Lannot e l] = evaluate st env [e] /\
    evaluate_match st env v [] err_v = (st,Rerr (Rraise err_v)) /\
    evaluate_match st env v ((p,e) :: pes) err_v =
      (if ALL_DISTINCT (pat_bindings p) then

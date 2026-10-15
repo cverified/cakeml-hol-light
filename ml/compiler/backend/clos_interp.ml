@@ -18,10 +18,10 @@ needs "semantics/ast.ml";;
 let can_interpret_op_def = cake_define
   `can_interpret_op x1 l =
       match x1 with
-        (closLang_BlockOp (Cons tag)) -> (l = 0 \/ tag < 3)
-      | (closLang_IntOp (Const i)) -> (l = 0)
-      | (closLang_GlobOp (Global n)) -> (l = 0)
-      | (closLang_BlockOp (closLang_Constant c)) -> (l = 0)
+        (BlockOp (Cons tag)) -> (l = 0 \/ tag < 3)
+      | (IntOp (Const i)) -> (l = 0)
+      | (GlobOp (Global n)) -> (l = 0)
+      | (BlockOp (Constant c)) -> (l = 0)
       | _1 -> F`;;
 
 let can_interpret_def = cake_define
@@ -34,7 +34,7 @@ let can_interpret_def = cake_define
      (can_interpret_op p (LENGTH es) /\ can_interpret_list es) /\
    can_interpret (Raise t e) = can_interpret e /\
    can_interpret (Tick t e) = can_interpret e /\
-   can_interpret (closLang_Fn _2 _3 _4 _5 e) = F /\
+   can_interpret (Fn _2 _3 _4 _5 e) = F /\
    can_interpret (Handle t e1 e2) = (can_interpret e1 /\
      can_interpret e2) /\
    can_interpret (Call _6 _7 _8 es) = F /\
@@ -51,10 +51,10 @@ let can_interpret_def = cake_define
 let check_size_op_def = cake_define
   `check_size_op k x2 l =
       match x2 with
-        (closLang_BlockOp (Cons tag)) -> (if l = (0:num) then k else
-          k - (1:num))
-      | (closLang_IntOp (Const i)) -> (k:num)
-      | (closLang_GlobOp (Global n)) -> k
+        (BlockOp (Cons tag)) -> (if l = (0:num) then k else k -
+          (1:num))
+      | (IntOp (Const i)) -> (k:num)
+      | (GlobOp (Global n)) -> k
       | _13 -> k - 1`;;
 
 let check_size_def = cake_define
@@ -71,7 +71,7 @@ let check_size_def = cake_define
         check_size_list k es) /\
    check_size k (Raise t e) = check_size k e /\
    check_size k (Tick t e) = check_size k e /\
-   check_size k (closLang_Fn _14 _15 _16 _17 e) = k /\
+   check_size k (Fn _14 _15 _16 _17 e) = k /\
    check_size k (Handle t e1 e2) =
      (let k = check_size k e1 in if k = 0 then 0 else
         check_size k e2) /\
@@ -93,10 +93,10 @@ let nontrivial_size_def = cake_define
 let to_constant_op_def = cake_define
   `to_constant_op x1 l cs =
       match x1 with
-        (closLang_IntOp (Const i)) -> ConstCons 1 [ConstInt i]
-      | (closLang_BlockOp (closLang_Constant c)) -> ConstCons 1 [c]
-      | (closLang_GlobOp (Global n)) -> ConstCons 2 [ConstInt (&n)]
-      | (closLang_BlockOp (Cons tag)) ->
+        (IntOp (Const i)) -> ConstCons 1 [ConstInt i]
+      | (BlockOp (Constant c)) -> ConstCons 1 [c]
+      | (GlobOp (Global n)) -> ConstCons 2 [ConstInt (&n)]
+      | (BlockOp (Cons tag)) ->
      (if l = 0 then ConstCons 1 [ConstCons tag []] else ConstCons
        (tag + 5) [cs])
       | _26 -> ConstInt 0`;;
@@ -120,7 +120,7 @@ let to_constant_def = cake_define_wf
    to_constant (Tick t e) = ConstCons 4 [to_constant e] /\
    to_constant (Handle t e1 e2) = ConstCons 2 [to_constant e1;
      to_constant e2] /\
-   to_constant (closLang_Fn _31 _32 _33 _34 e) = ConstInt 0 /\
+   to_constant (Fn _31 _32 _33 _34 e) = ConstInt 0 /\
    to_constant (Call _35 _36 _37 es) = ConstInt 0 /\
    to_constant (Letrec _38 _39 _40 fns e) = ConstInt 0 /\
    to_constant_list [] = ConstCons 0 [] /\
@@ -151,154 +151,146 @@ let to_constant_def = cake_define_wf
 
 let clos_interp_el_def = cake_define
   `clos_interp_el =
-     If None (Op None (closLang_BlockOp (closLang_EqualConst (Int
-       0))) [(Var None) 1])
-       ((\n x. Op None (closLang_BlockOp (closLang_ElemAt n)) [x]) 0
-         ((Var None) 0))
+     If None (Op None (BlockOp (EqualConst (Int 0))) [(Var None) 1])
+       ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var None) 0))
      (App None NONE (App None NONE ((Var None) 2)
-       [Op None (closLang_IntOp Sub) [Op None (closLang_IntOp
-         (Const 1)) []; (Var None) 1]]) [(\n x. Op None
-         (closLang_BlockOp (closLang_ElemAt n)) [x]) 1 ((Var None)
-         0)])`;;
+       [Op None (IntOp Sub) [Op None (IntOp (Const 1)) []; (Var
+         None) 1]]) [(\n x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var
+         None) 0)])`;;
 
 let clos_interp_rev_def = cake_define
   `clos_interp_rev =
-     If None (Op None (closLang_BlockOp (LenEq 0)) [(Var None) 1])
+     If None (Op None (BlockOp (LenEq 0)) [(Var None) 1])
        ((Var None) 0)
      (App None NONE (App None NONE ((Var None) 2)
-       [(\n x. Op None (closLang_BlockOp (closLang_ElemAt n)) [x])
-         1 ((Var None) 1)]) [Op None (closLang_BlockOp (Cons 0))
-         [(Var None) 0; (\n x. Op None (closLang_BlockOp
-         (closLang_ElemAt n)) [x]) 0 ((Var None) 1)]])`;;
+       [(\n x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var None)
+         1)]) [Op None (BlockOp (Cons 0)) [(Var None) 0; (\n x. Op
+         None (BlockOp (ElemAt n)) [x]) 0 ((Var None) 1)]])`;;
 
 let clos_interpreter_body_def = cake_define
   `clos_interpreter_body =
        If None ((Var None) 1)
-         (If None (Op None (closLang_BlockOp (LenEq 0)) [(Var None)
-           0]) ((Var None) 0) (
+         (If None (Op None (BlockOp (LenEq 0)) [(Var None) 0]) ((Var
+           None) 0) (
             Let None [(\env x. App None NONE (App None NONE (App None
-              NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0));
+              NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0));
                       (\env x. App None NONE (App None NONE (App None
-                        NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 1)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((Var None) 0))]
-              (Op None (closLang_BlockOp (Cons 0)) [(Var None) 1;
-                (Var None) 0]))) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 0 2
+                        NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 1)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var
+               None) 0))]
+              (Op None (BlockOp (Cons 0)) [(Var None) 1; (Var None)
+                0]))) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 0 2
          (App None NONE ((\env x. App None NONE (App None NONE (App
-           None NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0)))
+           None NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0)))
                         [(\env x. App None NONE (App None NONE (App
-                          None NONE (Op None (closLang_GlobOp (Global
-                          0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((Var None) 0))]) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 1 1
-         ((\n x. Op None (closLang_BlockOp (closLang_ElemAt n)) [x])
-           0 ((Var None) 0)) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 2 1
-         (Op None (closLang_GlobOp (Global 0)) [(\n x. Op None
-           (closLang_BlockOp (closLang_ElemAt n)) [x]) 0 ((Var None)
-           0)]) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 0 1
+                          None NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var
+               None) 0))]) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 1 1
+         ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var None) 0))
+           (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 2 1
+         (Op None (GlobOp (Global 0)) [(\n x. Op None (BlockOp
+           (ElemAt n)) [x]) 0 ((Var None) 0)]) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 0 1
          (Letrec [] NONE NONE
-            [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_el)]
+            [(1,Fn (implode "") NONE NONE 1 clos_interp_el)]
             (App None NONE (App None NONE ((Var None) 0) [(\n x. Op
-              None (closLang_BlockOp (closLang_ElemAt n)) [x]) 0 ((Var
-              None) 1)]) [(Var None) 3])) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 1 2
+              None (BlockOp (ElemAt n)) [x]) 0 ((Var None) 1)]) [(Var
+              None) 3])) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 1 2
          (Let None [(\env x. App None NONE (App None NONE (App None
-           NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 1)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0))]
+           NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 1)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0))]
             ((\env x. App None NONE (App None NONE (App None NONE (Op
-              None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               (Op None (closLang_BlockOp ListAppend) [(Var None) 3;
-               (Var None) 0]) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((Var None) 1)))) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 2 2
+              None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) (Op None
+               (BlockOp ListAppend) [(Var None) 3; (Var None) 0]) ((\n
+               x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var None) 1))))
+               (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 2 2
          (Handle None ((\env x. App None NONE (App None NONE (App
-           None NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0)))
+           None NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0)))
             ((\env x. App None NONE (App None NONE (App None NONE (Op
-              None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               (Op None (closLang_BlockOp (Cons 0)) [(Var None) 3; (Var
-               None) 0]) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((Var None) 1)))) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 0 3
+              None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) (Op None
+               (BlockOp (Cons 0)) [(Var None) 3; (Var None) 0]) ((\n x.
+               Op None (BlockOp (ElemAt n)) [x]) 1 ((Var None) 1)))) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 0 3
          (If None ((\env x. App None NONE (App None NONE (App None
-           NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0)))
+           NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0)))
                   ((\env x. App None NONE (App None NONE (App None
-                    NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 1 ((Var None) 0)))
+                    NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var
+               None) 0)))
                   ((\env x. App None NONE (App None NONE (App None
-                    NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 2 ((Var None) 0)))) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 3 1
+                    NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 2 ((Var
+               None) 0)))) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 3 1
          (Raise None ((\env x. App None NONE (App None NONE (App None
-           NONE (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0)))) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 4 1
+           NONE (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0)))) (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 4 1
          ((\env x. App None NONE (App None NONE (App None NONE (Op
-           None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0))) (
+           None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0))) (
        Let None [(\env x. App None NONE (App None NONE (App None NONE
-         (Op None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 1)) []]) [x])
-               ((Var None) 2) ((\n x. Op None (closLang_BlockOp
-               (closLang_ElemAt n)) [x]) 0 ((Var None) 0))] (
+         (Op None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 1)) []]) [x]) ((Var None)
+               2) ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var
+               None) 0))] (
        Letrec [] NONE NONE
-         [(1,closLang_Fn (implode "") NONE NONE 1 clos_interp_rev)] (
+         [(1,Fn (implode "") NONE NONE 1 clos_interp_rev)] (
        Let None [App None NONE (App None NONE ((Var None) 0) [(Var
-         None) 1]) [Op None (closLang_BlockOp (Cons 0)) []]] (
+         None) 1]) [Op None (BlockOp (Cons 0)) []]] (
        Let None [(Var None) 3] (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 5 1 (Op None (closLang_BlockOp
-         (closLang_FromList 0)) [(Var None) 1]) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 6 1 (Op None (closLang_BlockOp
-         (closLang_FromList 1)) [(Var None) 1]) (
-       (\tag len. If None (Op None (closLang_BlockOp (TagLenEq tag
-         len)) [(Var None) 0])) 7 1 (Op None (closLang_BlockOp
-         (closLang_FromList 2)) [(Var None) 1])
-       (Op None (closLang_BlockOp (Cons 0)) [])))))))))))))))))`;;
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 5 1 (Op None (BlockOp (FromList 0)) [(Var None) 1])
+         (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 6 1 (Op None (BlockOp (FromList 1)) [(Var None) 1])
+         (
+       (\tag len. If None (Op None (BlockOp (TagLenEq tag len)) [(Var
+         None) 0])) 7 1 (Op None (BlockOp (FromList 2)) [(Var None) 1])
+       (Op None (BlockOp (Cons 0)) [])))))))))))))))))`;;
 
 let clos_interpreter_def = cake_define
   `clos_interpreter =
-     closLang_Fn (implode "env") NONE NONE 1 (
-     closLang_Fn (implode "exp") NONE NONE 1
+     Fn (implode "env") NONE NONE 1 (
+     Fn (implode "exp") NONE NONE 1
        clos_interpreter_body)`;;
 
 (* functions that insert calls to interpreter *)
@@ -307,11 +299,10 @@ let opt_interp_def = cake_define
   `opt_interp e =
      (if can_interpret e /\ nontrivial_size e then
        SOME ((\env x. App None NONE (App None NONE (App None NONE (Op
-         None (closLang_GlobOp (Global 0)) [])
-             [env]) [Op None (closLang_BlockOp (Cons 0)) []]) [x])
-               (Op None (closLang_BlockOp (Cons 0)) []) (Op None
-               (closLang_BlockOp (closLang_Constant (to_constant e)))
-               [])) else NONE)`;;
+         None (GlobOp (Global 0)) [])
+             [env]) [Op None (BlockOp (Cons 0)) []]) [x]) (Op None
+               (BlockOp (Cons 0)) []) (Op None (BlockOp (Constant
+               (to_constant e))) [])) else NONE)`;;
 
 let opt_interp1_def = cake_define
   `opt_interp1 e =
@@ -325,13 +316,13 @@ let insert_interp1_def = cake_define
 
 let compile_init_def = cake_define
   `compile_init b =
-     Let None [Op None (closLang_GlobOp AllocGlobal) [Op None
-       (closLang_IntOp (Const 1)) []];
+     Let None [Op None (GlobOp AllocGlobal) [Op None (IntOp (Const
+       1)) []];
                if b then
-                 closLang_Fn (implode "clos_interpreter") NONE NONE 1
+                 Fn (implode "clos_interpreter") NONE NONE 1
                    clos_interpreter else
-                 Op None (closLang_BlockOp (Cons 0)) []]
-       (Op None (closLang_GlobOp (SetGlobal 0)) [Var None 1])`;;
+                 Op None (BlockOp (Cons 0)) []]
+       (Op None (GlobOp (SetGlobal 0)) [Var None 1])`;;
 
 let attach_interpreter_def = cake_define
   `attach_interpreter xs =

@@ -16,6 +16,14 @@ let pegsym_INDUCT,pegsym_RECURSION = define_datatype
    ('c+'c->'c) | peg_rpt (pegsym) ('c list->'c) | peg_not (pegsym) \
    ('c) | peg_error ('e)";;
 hol4_overload "empty" "peg_empty";;
+hol4_overload "any" "peg_any";;
+hol4_overload "tok" "peg_tok";;
+hol4_overload "nt" "peg_nt";;
+hol4_overload "seq" "peg_seq";;
+hol4_overload "choice" "peg_choice";;
+hol4_overload "rpt" "peg_rpt";;
+hol4_overload "not" "peg_not";;
+hol4_overload "error" "peg_error";;
 
 let peg_FIELDS = define_record "peg"
   ["start","('a,'b,'c,'e)pegsym";
@@ -29,6 +37,7 @@ let pegresult_INDUCT,pegresult_RECURSION = define_datatype
   "pegresult = peg_Success ('a) ('c) ((locs#'e) option) | peg_Failure \
    (locs) ('e)";;
 hol4_overload "Success" "peg_Success";;
+hol4_overload "Failure" "peg_Failure";;
 
 let MAXerr_def = cake_define
   `MAXerr (fl1,fe1) (fl2,fe2) =
@@ -48,11 +57,11 @@ let sloc_def = cake_define
   `sloc [] = (Locs EOFpt EOFpt) /\
    sloc (h :: t) = SND h`;;
 let pegf_def = cake_define
-  `peg_pegf sym f = peg_seq sym (empty ARB) (\l1 l2. f l1)`;;
+  `peg_pegf sym f = seq sym (empty ARB) (\l1 l2. f l1)`;;
 hol4_overload "pegf" "peg_pegf";;
 
 let choicel_def = cake_define
-  `(peg_choicel [] = peg_not (empty ARB) ARB) /\
-   (peg_choicel (h :: t) = peg_choice h (peg_choicel t) (\s.
-     sum_CASE s I I))`;;
+  `(peg_choicel [] = not (empty ARB) ARB) /\
+   (peg_choicel (h :: t) = choice h (peg_choicel t) (\s. sum_CASE
+     s I I))`;;
 hol4_overload "choicel" "peg_choicel";;

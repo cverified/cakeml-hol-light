@@ -31,6 +31,7 @@ hol4_overload "Jump" "labLang_Jump";;
 hol4_overload "JumpCmp" "labLang_JumpCmp";;
 hol4_overload "Call" "labLang_Call";;
 hol4_overload "LocValue" "labLang_LocValue";;
+hol4_overload "CallFFI" "labLang_CallFFI";;
 hol4_overload "Install" "labLang_Install";;
 hol4_overload "Halt" "labLang_Halt";;
 
@@ -44,6 +45,8 @@ let line_INDUCT,line_RECURSION = define_datatype
    asm_or_cbw) (word8 list) (num) | labLang_LabAsm ('a asm_with_lab) \
    ('a word) (word8 list) (num)";;
 hol4_overload "Label" "labLang_Label";;
+hol4_overload "Asm" "labLang_Asm";;
+hol4_overload "LabAsm" "labLang_LabAsm";;
                                   (* position, encoded instruction,
                                      length *)
 

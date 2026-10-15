@@ -12,6 +12,7 @@
 needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -29,20 +30,19 @@ needs "semantics/ast.ml";;
      Asm = λa. Asm (Asmi a) *)
 
 let compile_jump_def = cake_define
-  `(compile_jump (INL n) = labLang_LabAsm (Jump (Lab n 0)) (n2w 0) [] 0)
-  /\
-   (compile_jump (INR r) = (\a. (\a. (\a. labLang_Asm (Asmi a))
-     (Asmi a)) (Asmi a)) (asm_JumpReg r) [] 0)`;;
+  `(compile_jump (INL n) = LabAsm (Jump (Lab n 0)) (n2w 0) [] 0) /\
+   (compile_jump (INR r) = (\a. (\a. (\a. Asm (Asmi a)) (Asmi a))
+     (Asmi a)) (JumpReg r) [] 0)`;;
 
 let negate_def = cake_define
-  `(negate (LESS) = asm_NotLess) /\
-   (negate (EQUAL) = asm_NotEqual) /\
-   (negate asm_Lower = asm_NotLower) /\
-   (negate Test = asm_NotTest) /\
-   (negate asm_NotLess = (LESS)) /\
-   (negate asm_NotEqual = (EQUAL)) /\
-   (negate asm_NotLower = asm_Lower) /\
-   (negate asm_NotTest = Test)`;;
+  `(negate (LESS) = NotLess) /\
+   (negate (EQUAL) = NotEqual) /\
+   (negate Lower = NotLower) /\
+   (negate Test = NotTest) /\
+   (negate NotLess = (LESS)) /\
+   (negate NotEqual = (EQUAL)) /\
+   (negate NotLower = Lower) /\
+   (negate NotTest = Test)`;;
 
 let find_lab_def = cake_define
   `find_lab n labs =
@@ -151,7 +151,7 @@ let prog_to_section_def = cake_define
 let is_gen_gc_def = cake_define
   `is_gen_gc x1 =
         match x1 with
-          (data_to_word_Generational l) -> T
+          (Generational l) -> T
         | _3 -> F`;;
 
 let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"

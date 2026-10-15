@@ -46,6 +46,7 @@ let upd_mem_def = cake_define
 hol4_overload "upd_mem" "asmSem_upd_mem";;
 let read_reg_def = cake_define
   `asmSem_read_reg r s = asm_state_regs s r`;;
+hol4_overload "read_reg" "asmSem_read_reg";;
 let read_fp_reg_def = cake_define
   `asmSem_read_fp_reg r s = asm_state_fp_regs s r`;;
 hol4_overload "read_fp_reg" "asmSem_read_fp_reg";;
@@ -58,7 +59,7 @@ let assert_def = cake_define
 hol4_overload "assert" "asmSem_assert";;
 
 let reg_imm_def = cake_define
-  `(asmSem_reg_imm (Reg r) s = asmSem_read_reg r s) /\
+  `(asmSem_reg_imm (Reg r) s = read_reg r s) /\
    (asmSem_reg_imm (Imm w) s = w)`;;
 hol4_overload "reg_imm" "asmSem_reg_imm";;
 
@@ -71,7 +72,7 @@ let binop_upd_def = cake_define
 hol4_overload "binop_upd" "asmSem_binop_upd";;
 
 let is_test_def = cake_define
-  `is_test c <=> (c = Test) \/ (c = asm_NotTest)`;;
+  `is_test c <=> (c = Test) \/ (c = NotTest)`;;
 
 let word_shift_def = cake_define
   `(asmSem_word_shift Lsl w n = w << n) /\
@@ -81,44 +82,42 @@ let word_shift_def = cake_define
 hol4_overload "word_shift" "asmSem_word_shift";;
 
 let arith_upd_def = cake_define
-  `(asmSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) s =
-      binop_upd r1 b (asmSem_read_reg r2 s) (reg_imm ri s) s) /\
+  `(asmSem_arith_upd (Binop b r1 r2 (ri:'a asm_reg_imm)) s =
+      binop_upd r1 b (read_reg r2 s) (reg_imm ri s) s) /\
    (asmSem_arith_upd (Shift l r1 r2 ri) s =
-      assert (match ri with Reg r -> w2n (asmSem_read_reg r s) <
-        dimindex (:'a) | _2 -> T)
-        (upd_reg r1 (word_shift l (asmSem_read_reg r2 s) (w2n
-          (reg_imm ri s))) s)) /\
+      assert (match ri with Reg r -> w2n (read_reg r s) < dimindex
+        (:'a) | _2 -> T)
+        (upd_reg r1 (word_shift l (read_reg r2 s) (w2n (reg_imm ri
+          s))) s)) /\
    (asmSem_arith_upd (Div r1 r2 r3) s =
-      (let q = asmSem_read_reg r3 s in
-        assert (~(q = (n2w 0))) (upd_reg r1 (asmSem_read_reg r2 s /
-          q) s))) /\
-   (asmSem_arith_upd (asm_LongMul r1 r2 r3 r4) (s:'a asm_state) =
-      (let r = w2n (asmSem_read_reg r3 s) * w2n (asmSem_read_reg r4
-        s) in
+      (let q = read_reg r3 s in
+        assert (~(q = (n2w 0))) (upd_reg r1 (read_reg r2 s / q) s)))
+          /\
+   (asmSem_arith_upd (LongMul r1 r2 r3 r4) (s:'a asm_state) =
+      (let r = w2n (read_reg r3 s) * w2n (read_reg r4 s) in
         upd_reg r2 (n2w r) (upd_reg r1 (n2w (r DIV dimword (:'a)))
           s))) /\
-   (asmSem_arith_upd (asm_LongDiv r1 r2 r3 r4 r5) (s:'a asm_state) =
-      (let n = w2n (asmSem_read_reg r3 s) * dimword (:'a) + w2n
-        (asmSem_read_reg r4 s) in
-      let d = w2n (asmSem_read_reg r5 s) in
+   (asmSem_arith_upd (LongDiv r1 r2 r3 r4 r5) (s:'a asm_state) =
+      (let n = w2n (read_reg r3 s) * dimword (:'a) + w2n (read_reg r4
+        s) in
+      let d = w2n (read_reg r5 s) in
       let q = n DIV d in
         assert (~(d = 0) /\ q < dimword (:'a))
           (upd_reg r1 (n2w q) (upd_reg r2 (n2w (n MOD d)) s)))) /\
-   (asmSem_arith_upd (asm_AddCarry r1 r2 r3 r4) (s:'a asm_state) =
-      (let r = w2n (asmSem_read_reg r2 s) + w2n (asmSem_read_reg r3
-        s) +
-              (if asmSem_read_reg r4 s = (n2w 0) then 0 else 1) in
+   (asmSem_arith_upd (AddCarry r1 r2 r3 r4) (s:'a asm_state) =
+      (let r = w2n (read_reg r2 s) + w2n (read_reg r3 s) +
+              (if read_reg r4 s = (n2w 0) then 0 else 1) in
         upd_reg r4 (if dimword (:'a) <= r then (n2w 1) else (n2w 0))
           (upd_reg r1 (n2w r) s))) /\
-   (asmSem_arith_upd (asm_AddOverflow r1 r2 r3 r4) (s:'a asm_state) =
-      (let w2 = asmSem_read_reg r2 s in
-      let w3 = asmSem_read_reg r3 s in
+   (asmSem_arith_upd (AddOverflow r1 r2 r3 r4) (s:'a asm_state) =
+      (let w2 = read_reg r2 s in
+      let w3 = read_reg r3 s in
         upd_reg r4 (if ~(w2i (w2 + w3) = w2i w2 + w2i w3) then (n2w
           1) else (n2w 0))
           (upd_reg r1 (w2 + w3) s))) /\
-   (asmSem_arith_upd (asm_SubOverflow r1 r2 r3 r4) (s:'a asm_state) =
-      (let w2 = asmSem_read_reg r2 s in
-      let w3 = asmSem_read_reg r3 s in
+   (asmSem_arith_upd (SubOverflow r1 r2 r3 r4) (s:'a asm_state) =
+      (let w2 = read_reg r2 s in
+      let w3 = read_reg r3 s in
         upd_reg r4 (if ~(w2i (w2 - w3) = w2i w2 - w2i w3) then (n2w
           1) else (n2w 0))
           (upd_reg r1 (w2 - w3) s)))`;;
@@ -171,8 +170,8 @@ let fp_upd_def = cake_define
    (asmSem_fp_upd (FPMovFromReg d r1 r2) (s:'a asm_state) =
       upd_fp_reg d
         (if dimindex (:'a) = 64 then
-           w2w (asmSem_read_reg r1 s) else
-           asmSem_read_reg r2 s @@ asmSem_read_reg r1 s) s) /\
+           w2w (read_reg r1 s) else
+           read_reg r2 s @@ read_reg r1 s) s) /\
    (asmSem_fp_upd (FPToInt d1 d2) (s:'a asm_state) =
       (match fp64_to_int roundTiesToEven (read_fp_reg d2 s) with
           SOME i ->
@@ -194,7 +193,7 @@ let fp_upd_def = cake_define
 hol4_overload "fp_upd" "asmSem_fp_upd";;
 
 let addr_def = cake_define
-  `asmSem_addr (Addr r offset) s = asmSem_read_reg r s + offset`;;
+  `asmSem_addr (Addr r offset) s = read_reg r s + offset`;;
 hol4_overload "addr" "asmSem_addr";;
 
 let read_mem_word_def = cake_define
@@ -225,7 +224,7 @@ let write_mem_word_def = cake_define
 let mem_store_def = cake_define
   `asmSem_mem_store n r a s =
      (let a = addr a s in
-     let w = asmSem_read_reg r s in
+     let w = read_reg r s in
      let s = write_mem_word (if asm_state_be s then a + n2w (n - 1)
        else a) n w s in
        assert (alignment_aligned (LOG2 n) a) s)`;;
@@ -235,20 +234,20 @@ let mem_op_def = cake_define
   `(asmSem_mem_op Load r a = mem_load (dimindex (:'a) DIV 8) r a) /\
    (asmSem_mem_op Store r a = mem_store (dimindex (:'a) DIV 8) r a)
      /\
-   (asmSem_mem_op asm_Load8 r a = mem_load 1 r a) /\
-   (asmSem_mem_op asm_Store8 r a = mem_store 1 r a) /\
-   (asmSem_mem_op asm_Load16 r a = mem_load 2 r a) /\
-   (asmSem_mem_op asm_Store16 r a = mem_store 2 r a) /\
-   (asmSem_mem_op asm_Load32 r (a:'a asm_addr) = mem_load 4 r a) /\
-   (asmSem_mem_op asm_Store32 r (a:'a asm_addr) = mem_store 4 r a)`;;
+   (asmSem_mem_op Load8 r a = mem_load 1 r a) /\
+   (asmSem_mem_op Store8 r a = mem_store 1 r a) /\
+   (asmSem_mem_op Load16 r a = mem_load 2 r a) /\
+   (asmSem_mem_op Store16 r a = mem_store 2 r a) /\
+   (asmSem_mem_op Load32 r (a:'a asm_addr) = mem_load 4 r a) /\
+   (asmSem_mem_op Store32 r (a:'a asm_addr) = mem_store 4 r a)`;;
 hol4_overload "mem_op" "asmSem_mem_op";;
 
 let inst_def = cake_define
   `(asmSem_inst Skip s = s) /\
    (asmSem_inst (Const r imm) s = upd_reg r imm s) /\
    (asmSem_inst (Arith x) s = arith_upd x s) /\
-   (asmSem_inst (asm_Mem m r a) s = mem_op m r a s) /\
-   (asmSem_inst (asm_FP fp) s = fp_upd fp s)`;;
+   (asmSem_inst (Mem m r a) s = mem_op m r a s) /\
+   (asmSem_inst (FP fp) s = fp_upd fp s)`;;
 hol4_overload "inst" "asmSem_inst";;
 
 let jump_to_offset_def = cake_define
@@ -258,15 +257,16 @@ let asm_def = cake_define
   `(asmSem_asm (Inst i) pc s = upd_pc pc (inst i s)) /\
    (asmSem_asm (Jump l) pc s = jump_to_offset l s) /\
    (asmSem_asm (JumpCmp cmp r ri l) pc s =
-      (if word_cmp cmp (asmSem_read_reg r s) (reg_imm ri s) then
+      (if word_cmp cmp (read_reg r s) (reg_imm ri s) then
         jump_to_offset l s else upd_pc pc s)) /\
    (asmSem_asm (Call l) pc s = jump_to_offset l (upd_reg
      (asm_state_lr s) pc s)) /\
-   (asmSem_asm (asm_JumpReg r) pc s =
-      (let a = asmSem_read_reg r s in upd_pc a (assert
-        (alignment_aligned (asm_state_align s) a) s))) /\
+   (asmSem_asm (JumpReg r) pc s =
+      (let a = read_reg r s in upd_pc a (assert (alignment_aligned
+        (asm_state_align s) a) s))) /\
    (asmSem_asm (Loc r l) pc s = upd_pc pc (upd_reg r (asm_state_pc
      s + l) s))`;;
+hol4_overload "asm" "asmSem_asm";;
 
 let asm_step_def = cake_define
   `asm_step c s1 i s2 <=>
@@ -276,6 +276,6 @@ let asm_step_def = cake_define
        | NONE -> T) /\
      (asm_state_be s1 = asm_config_big_endian c) /\
      (asm_state_align s1 = asm_config_code_alignment c) /\
-     (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode
-       c i))) s1 = s2) /\
+     (asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode c i)))
+       s1 = s2) /\
      ~asm_state_failed s2 /\ asm_ok i c`;;

@@ -46,11 +46,11 @@ let free_def = cake_define
       (let (c1,l1) = clos_call_free [x1] in
       let (c2,l2) = clos_call_free xs2 in
         ([App t loc_opt (HD c1) c2],mk_Union l1 l2))) /\
-   (clos_call_free [closLang_Fn t loc _1 num_args x1] =
+   (clos_call_free [Fn t loc _1 num_args x1] =
       (let (c1,l1) = clos_call_free [x1] in
       let l2 = Shift num_args l1 in
-        ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args (HD
-          c1)],l2))) /\
+        ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)))
+          /\
    (clos_call_free [Letrec t loc _2 fns x1] =
       (let m = LENGTH fns in
       let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
@@ -97,11 +97,10 @@ let free_sing_def = cake_define
       (let (c1,l1) = free_sing x1 in
       let (c2,l2) = free_list xs2 in
         (App t loc_opt c1 c2,mk_Union l1 l2))) /\
-   (free_sing (closLang_Fn t loc _3 num_args x1) =
+   (free_sing (Fn t loc _3 num_args x1) =
       (let (c1,l1) = free_sing x1 in
       let l2 = Shift num_args l1 in
-        (closLang_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2)))
-          /\
+        (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))) /\
    (free_sing (Letrec t loc _4 fns x1) =
       (let m = LENGTH fns in
       let res = MAP (\(n,x). let (c,l) = free_sing x in
@@ -216,24 +215,24 @@ let calls_def = cake_define_wf
             ([Let (§ t 0) (SNOC e1 es)
                (Call (§ t 1) (LENGTH es) (loc + 1) (GENLIST_Var None
                  2 (LENGTH es)))],g) else ([App t loc_opt e1 es],g))) /\
-   (calls [closLang_Fn t loc_opt ws num_args x1] g =
+   (calls [Fn t loc_opt ws num_args x1] g =
       (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
       let new_g = insert_each loc 1 g in
       let (e1,new_g) = calls [x1] new_g in
       let new_g = (FST new_g,(loc + 1,num_args,HD e1) :: SND new_g)
         in
-        if closed (closLang_Fn t loc_opt ws num_args (HD e1)) then
-          ([closLang_Fn t loc_opt ws num_args
+        if closed (Fn t loc_opt ws num_args (HD e1)) then
+          ([Fn t loc_opt ws num_args
               (Call None 0 (loc + 1) (GENLIST_Var None 1
                 num_args))],new_g) else
           let (e1,g) = calls [x1] g in
-            ([closLang_Fn t loc_opt ws num_args (HD e1)],g))) /\
+            ([Fn t loc_opt ws num_args (HD e1)],g))) /\
    (calls [Letrec t loc_opt ws fns x1] g =
       (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
       let new_g = insert_each loc (LENGTH fns) g in
       let (fns1,new_g) = calls (MAP SND fns) new_g in
-        if EVERY2 (\(n,_6) p. closed (closLang_Fn (implode "") NONE
-          NONE n p)) fns fns1 then
+        if EVERY2 (\(n,_6) p. closed (Fn (implode "") NONE NONE n p))
+          fns fns1 then
           let new_g = code_list loc (ZIP (MAP FST fns,fns1)) new_g in
           let (e1,g) = calls [x1] new_g in
             ([Letrec t loc_opt ws (calls_list None 1 loc fns) (HD
@@ -284,23 +283,23 @@ let calls_sing_def = cake_define_wf
             (Let (§ t 0) (SNOC e1 es)
                (Call (§ t 1) (LENGTH es) (loc + 1) (GENLIST_Var None
                  2 (LENGTH es))),g) else (App t loc_opt e1 es,g))) /\
-   (calls_sing (closLang_Fn t loc_opt ws num_args x1) g =
+   (calls_sing (Fn t loc_opt ws num_args x1) g =
       (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
       let new_g = insert_each loc 1 g in
       let (e1,new_g) = calls_sing x1 new_g in
       let new_g = (FST new_g,(loc + 1,num_args,e1) :: SND new_g) in
-        if closed (closLang_Fn t loc_opt ws num_args e1) then
-          (closLang_Fn t loc_opt ws num_args
+        if closed (Fn t loc_opt ws num_args e1) then
+          (Fn t loc_opt ws num_args
               (Call None 0 (loc + 1) (GENLIST_Var None 1
                 num_args)),new_g) else
           let (e1,g) = calls_sing x1 g in
-            (closLang_Fn t loc_opt ws num_args e1,g))) /\
+            (Fn t loc_opt ws num_args e1,g))) /\
    (calls_sing (Letrec t loc_opt ws fns x1) g =
       (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
       let new_g = insert_each loc (LENGTH fns) g in
       let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
-        if EVERY2 (\(n,_7) p. closed (closLang_Fn (implode "") NONE
-          NONE n p)) fns fns1 then
+        if EVERY2 (\(n,_7) p. closed (Fn (implode "") NONE NONE n p))
+          fns fns1 then
           let new_g = code_list loc (ZIP (MAP FST fns,fns1)) new_g in
           let (e1,g) = calls_sing x1 new_g in
             (Letrec t loc_opt ws (calls_list None 1 loc fns) e1,g)

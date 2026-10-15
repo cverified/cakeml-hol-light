@@ -23,38 +23,38 @@ let isInt_def = cake_define
 let isString_def = cake_define
   `isString x1 =
       match x1 with
-        (tokens_StringT _2) -> T
+        (StringT _2) -> T
       | _3 -> F`;;
 
 let isAlphaT_def = cake_define
   `isAlphaT x1 =
       match x1 with
-        (tokens_AlphaT s) -> T
+        (AlphaT s) -> T
       | _4 -> F`;;
 
 let isSymbolT_def = cake_define
   `isSymbolT x1 =
       match x1 with
-        (tokens_SymbolT s) -> T
+        (SymbolT s) -> T
       | _5 -> F`;;
 
 let isAlphaSym_def = cake_define
   `isAlphaSym x1 =
       match x1 with
-        (tokens_AlphaT _6) -> T
-      | (tokens_SymbolT _7) -> T
+        (AlphaT _6) -> T
+      | (SymbolT _7) -> T
       | _8 -> F`;;
 
 let isTyvarT_def = cake_define
   `isTyvarT x1 =
       match x1 with
-        (tokens_TyvarT _9) -> T
+        (TyvarT _9) -> T
       | _10 -> F`;;
 
 let isWhitespaceT_def = cake_define
   `isWhitespaceT x1 =
         match x1 with
-          (tokens_WhitespaceT _11) -> T
+          (WhitespaceT _11) -> T
         | _12 -> F`;;
 
 let isCharT_def = cake_define
@@ -72,19 +72,19 @@ let isWordT_def = cake_define
 let isLongidT_def = cake_define
   `isLongidT x1 =
         match x1 with
-          (tokens_LongidT _17 _18) -> T
+          (LongidT _17 _18) -> T
         | _19 -> F`;;
 
 let destLongidT_def = cake_define
   `destLongidT x1 =
         match x1 with
-          (tokens_LongidT str s) -> SOME (str,s)
+          (LongidT str s) -> SOME (str,s)
         | _20 -> NONE`;;
 
 let destTyvarPT_def = cake_define
   `destTyvarPT x1 =
         match x1 with
-          (Lf (grammar_TOK (tokens_TyvarT s),_21)) -> SOME s
+          (Lf (TOK (TyvarT s),_21)) -> SOME s
         | _22 -> NONE`;;
 
 let destLf_def = cake_define
@@ -96,20 +96,20 @@ let destLf_def = cake_define
 let destTOK_def = cake_define
   `tokenUtils_destTOK x1 =
         match x1 with
-          (grammar_TOK t) -> SOME t
+          (TOK t) -> SOME t
         | _25 -> NONE`;;
 hol4_overload "destTOK" "tokenUtils_destTOK";;
 
 let destAlphaT_def = cake_define
   `destAlphaT x1 =
         match x1 with
-          (tokens_AlphaT s) -> SOME s
+          (AlphaT s) -> SOME s
         | _26 -> NONE`;;
 
 let destSymbolT_def = cake_define
   `destSymbolT x1 =
         match x1 with
-          (tokens_SymbolT s) -> SOME s
+          (SymbolT s) -> SOME s
         | _27 -> NONE`;;
 
 let destIntT_def = cake_define
@@ -127,7 +127,7 @@ let destCharT_def = cake_define
 let destStringT_def = cake_define
   `destStringT x1 =
         match x1 with
-          (tokens_StringT s) -> SOME s
+          (StringT s) -> SOME s
         | _30 -> NONE`;;
 
 let destWordT_def = cake_define
@@ -139,11 +139,11 @@ let destWordT_def = cake_define
 let destFFIT_def = cake_define
   `destFFIT x1 =
         match x1 with
-          (tokens_FFIT s) -> SOME s
+          (FFIT s) -> SOME s
         | _32 -> NONE`;;
 
 let destREPLIDT_def = cake_define
   `destREPLIDT x1 =
         match x1 with
-          (tokens_REPLIDT s) -> SOME s
+          (REPLIDT s) -> SOME s
         | _33 -> NONE`;;

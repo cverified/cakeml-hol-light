@@ -55,6 +55,7 @@ hol4_overload "Call" "stackLang_Call";;
 hol4_overload "Seq" "stackLang_Seq";;
 hol4_overload "If" "stackLang_If";;
 hol4_overload "Loop" "stackLang_Loop";;
+hol4_overload "JumpLower" "stackLang_JumpLower";;
 hol4_overload "Alloc" "stackLang_Alloc";;
 hol4_overload "StoreConsts" "stackLang_StoreConsts";;
 hol4_overload "Raise" "stackLang_Raise";;
@@ -65,8 +66,19 @@ hol4_overload "FFI" "stackLang_FFI";;
 hol4_overload "Tick" "stackLang_Tick";;
 hol4_overload "LocValue" "stackLang_LocValue";;
 hol4_overload "Install" "stackLang_Install";;
+hol4_overload "ShMemOp" "stackLang_ShMemOp";;
 hol4_overload "CodeBufferWrite" "stackLang_CodeBufferWrite";;
 hol4_overload "DataBufferWrite" "stackLang_DataBufferWrite";;
+hol4_overload "RawCall" "stackLang_RawCall";;
+hol4_overload "StackAlloc" "stackLang_StackAlloc";;
+hol4_overload "StackFree" "stackLang_StackFree";;
+hol4_overload "StackStore" "stackLang_StackStore";;
+hol4_overload "StackStoreAny" "stackLang_StackStoreAny";;
+hol4_overload "StackLoad" "stackLang_StackLoad";;
+hol4_overload "StackLoadAny" "stackLang_StackLoadAny";;
+hol4_overload "StackGetSize" "stackLang_StackGetSize";;
+hol4_overload "StackSetSize" "stackLang_StackSetSize";;
+hol4_overload "BitmapLoad" "stackLang_BitmapLoad";;
 hol4_overload "Halt" "stackLang_Halt";;
 
 (* HOL4 overload (expanded in the port):

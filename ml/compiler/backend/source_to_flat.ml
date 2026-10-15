@@ -50,8 +50,8 @@ let environment_store_FIELDS = define_record "environment_store"
    sptree_num_map"];;
 
 let compile_var_def = cake_define
-  `compile_var t (Glob _1 i) = App t (flatLang_GlobalVarLookup i) [] /\
-   compile_var t (Local _2 s) = flatLang_Var_local t s`;;
+  `compile_var t (Glob _1 i) = App t (GlobalVarLookup i) [] /\
+   compile_var t (Local _2 s) = Var_local t s`;;
 
 (* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
    SUM_APPEND] *)
@@ -66,7 +66,7 @@ let compile_pat_def = cake_define_wf
        (MAP (compile_pat env) ps)) /\
    (compile_pat env (Pref p) = Pref (compile_pat env p)) /\
    (compile_pat env (Pas p i) = Pas (compile_pat env p) i) /\
-   (compile_pat env (ast_Ptannot p t) = compile_pat env p)`;;
+   (compile_pat env (Ptannot p t) = compile_pat env p)`;;
 
 let pat_tups_def = cake_define
   `(pat_tups t [] = []) /\
@@ -76,8 +76,8 @@ let pat_tups_def = cake_define
 
 let astOp_to_flatOp_def = cake_define
   `(astOp_to_flatOp (op:ast_op):flatLang_op) =
-   (match op with ast_Opderef -> flatLang_El 0 | _3 ->
-     flatLang_Src op)`;;
+   (match op with Opderef -> flatLang_El 0 | _3 -> flatLang_Src
+     op)`;;
 
 let type_group_id_type_def = cake_define
   `type_group_id_type NONE = NONE /\
@@ -121,39 +121,37 @@ let compile_exp_def = cake_define_wf
          nsLookup (?_c env)) cn))
              (source_to_flat_compile_exps t env es)
         | (t,env,(Var x)) ->
-       match nsLookup (?_v env) x with NONE -> flatLang_Var_local
-         None (implode "") | SOME x -> compile_var None x
+       match nsLookup (?_v env) x with NONE -> Var_local None
+         (implode "") | SOME x -> compile_var None x
         | (t,env,(Fun x e)) ->
        Fun (join_all_names t) x
          (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x (Local
            None x) (?_v env))) env) e)
         | (t,env,(ast_App op es)) ->
-       if op = ast_AallocEmpty then
+       if op = AallocEmpty then
          ITLIST (Let None NONE)
            (REVERSE (source_to_flat_compile_exps t env es))
-             (flatLang_App None (flatLang_Src ast_Aalloc) [Lit None
-             (ast_IntLit (&0));
-                              Lit None (ast_IntLit (&0))]) else
-       if op = ast_Eval then
+             (flatLang_App None (Src Aalloc) [Lit None (IntLit (&0));
+                              Lit None (IntLit (&0))]) else
+       if op = Eval then
          flatLang_Mat None (Con None NONE
            (source_to_flat_compile_exps t env es))
            [(Pcon NONE [Pany; Pany; Pany; Pany; Pvar (implode
              "bytes"); Pvar (implode "words")],
-               flatLang_Let None NONE (flatLang_App None
-                 (flatLang_Src ast_Eval)
-                       (MAP (flatLang_Var_local None) [(implode
-                         "bytes"); (implode "words")]))
+               flatLang_Let None NONE (flatLang_App None (Src Eval)
+                       (MAP (Var_local None) [(implode "bytes");
+                         (implode "words")]))
                    (Let None (SOME (implode "r")) (App None
-                     (flatLang_GlobalVarLookup 0) [])
-                       (flatLang_App None (El 0) [flatLang_Var_local
-                         None (implode "r")])))] else
-       if op = ast_Env_id then (match es with [_7] -> (match
+                     (GlobalVarLookup 0) [])
+                       (flatLang_App None (El 0) [Var_local None
+                         (implode "r")])))] else
+       if op = Env_id then (match es with [_7] -> (match
          source_to_flat_compile_exps t env es with x :: xs -> x | _8 ->
-         flatLang_Var_local None (implode "")) | _9 -> App None (El 0)
+         Var_local None (implode "")) | _9 -> App None (El 0)
          (source_to_flat_compile_exps t env es)) else
          flatLang_App None (astOp_to_flatOp op)
            (source_to_flat_compile_exps t env es)
-        | (t,env,(ast_Log lop e1 e2)) ->
+        | (t,env,(Log lop e1 e2)) ->
          match lop with Andalso ->
            If None
               (source_to_flat_compile_exp t env e1)
@@ -187,9 +185,9 @@ let compile_exp_def = cake_define_wf
            (K new_env) env) funs)
                   (source_to_flat_compile_exp t (?_v_fupd (K new_env)
                     env) e)
-        | (t,env,(ast_Tannot e _10)) -> source_to_flat_compile_exp t
-          env e
-        | (t,env,(ast_Lannot e (Locs st en))) ->
+        | (t,env,(Tannot e _10)) -> source_to_flat_compile_exp t env
+          e
+        | (t,env,(Lannot e (Locs st en))) ->
           source_to_flat_compile_exp t env e
         | (t,env,[]) -> []
         | (t,env,(e :: es)) ->
@@ -221,11 +219,10 @@ let make_varls_def = cake_define
   `make_varls n t idx x4 =
         match (t,x4) with
           (t,[]) -> Con None NONE []
-        | (t,[x]) -> App None (flatLang_GlobalVarInit idx)
-          [flatLang_Var_local None x]
+        | (t,[x]) -> App None (GlobalVarInit idx) [Var_local None x]
         | ((t:tra),(x :: xs)) ->
-         Let None NONE (App None (flatLang_GlobalVarInit idx)
-           [flatLang_Var_local None x])
+         Let None NONE (App None (GlobalVarInit idx) [Var_local None
+           x])
            (make_varls (n + 1) None (idx + 1) xs):flatLang_exp`;;
 
 let empty_env_def = cake_define
@@ -266,7 +263,7 @@ let alloc_tags_def = cake_define
 
 let env_id_tuple_def = cake_define
   `env_id_tuple gen id = Con None NONE
-     [Lit None (ast_IntLit (&gen)); Lit None (ast_IntLit (&id))]`;;
+     [Lit None (IntLit (&gen)); Lit None (IntLit (&id))]`;;
 
 let simple_dlet_def = cake_define
   `simple_dlet p e =
@@ -347,8 +344,7 @@ let compile_decs_def = cake_define_wf
              nsEmpty) nsEmpty,?_envs_fupd (K (insert (?_next envs) env
              (?_envs envs))) (?_next_fupd (K (?_next envs + 1))
            envs),
-           [(App None (flatLang_GlobalVarInit (next_indices_vidx
-             next))
+           [(App None (GlobalVarInit (next_indices_vidx next))
                [env_id_tuple (?_generation envs) (?_next envs)])])
         | (t,[]) ->
        (n,next,empty_env,envs,[])
@@ -380,13 +376,13 @@ let glob_alloc_def = cake_define
   `glob_alloc next c =
        (Let om_tra NONE
          (App om_tra
-           (flatLang_GlobalVarAlloc (next_indices_vidx next -
+           (GlobalVarAlloc (next_indices_vidx next -
              next_indices_vidx (?_next c))) [])
          (flatLang_Con om_tra NONE []))`;;
 
 let alloc_env_ref_def = cake_define
-  `alloc_env_ref = (App None (flatLang_GlobalVarInit 0)
-     [App None (flatLang_Src ast_Opref) [Con None NONE []]])`;;
+  `alloc_env_ref = (App None (GlobalVarInit 0)
+     [App None (Src Opref) [Con None NONE []]])`;;
 
 let compile_prog_def = cake_define
   `source_to_flat_compile_prog c p =
@@ -411,9 +407,9 @@ let lookup_env_id_def = cake_define
 let store_env_id_def = cake_define
   `store_env_id gen id =
      Let None (SOME (implode "r")) (flatLang_App None
-       (flatLang_GlobalVarLookup 0) [])
-       (App None (flatLang_Src ast_Opassign) [flatLang_Var_local
-         None (implode "r"); env_id_tuple gen id])`;;
+       (GlobalVarLookup 0) [])
+       (App None (Src Opassign) [Var_local None (implode "r");
+         env_id_tuple gen id])`;;
 
 let inc_compile_prog_def = cake_define
   `inc_compile_prog env_id c p =

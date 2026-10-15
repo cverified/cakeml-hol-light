@@ -36,9 +36,14 @@ let closLang_int_op_INDUCT,closLang_int_op_RECURSION = define_datatype
 hol4_overload "Const" "closLang_Const";;
 hol4_overload "Add" "closLang_Add";;
 hol4_overload "Sub" "closLang_Sub";;
+hol4_overload "Mult" "closLang_Mult";;
 hol4_overload "Div" "closLang_Div";;
 hol4_overload "Mod" "closLang_Mod";;
 hol4_overload "Less" "closLang_Less";;
+hol4_overload "LessEq" "closLang_LessEq";;
+hol4_overload "Greater" "closLang_Greater";;
+hol4_overload "GreaterEq" "closLang_GreaterEq";;
+hol4_overload "LessConstSmall" "closLang_LessConstSmall";;
 
 let closLang_word_op_INDUCT,closLang_word_op_RECURSION = define_datatype
   "closLang_word_op = WordOpw (word_size) (opw) | WordShift \
@@ -56,10 +61,21 @@ let block_op_INDUCT,block_op_RECURSION = define_datatype
    closLang_EqualConst (const_part) | closLang_Build (const_part \
    list)";;
 hol4_overload "Cons" "closLang_Cons";;
+hol4_overload "ElemAt" "closLang_ElemAt";;
 hol4_overload "TagLenEq" "closLang_TagLenEq";;
 hol4_overload "LenEq" "closLang_LenEq";;
+hol4_overload "TagEq" "closLang_TagEq";;
+hol4_overload "LengthBlock" "closLang_LengthBlock";;
+hol4_overload "BoolTest" "closLang_BoolTest";;
+hol4_overload "BoolNot" "closLang_BoolNot";;
+hol4_overload "BoundsCheckBlock" "closLang_BoundsCheckBlock";;
+hol4_overload "ConsExtend" "closLang_ConsExtend";;
+hol4_overload "FromList" "closLang_FromList";;
 hol4_overload "ListAppend" "closLang_ListAppend";;
+hol4_overload "Constant" "closLang_Constant";;
 hol4_overload "Equal" "closLang_Equal";;
+hol4_overload "EqualConst" "closLang_EqualConst";;
+hol4_overload "Build" "closLang_Build";;
 
 let glob_op_INDUCT,glob_op_RECURSION = define_datatype
   "glob_op = Global (num) | SetGlobal (num) | AllocGlobal | \
@@ -77,7 +93,27 @@ let closLang_mem_op_INDUCT,closLang_mem_op_RECURSION = define_datatype
    closLang_MutCons (num) (num) | closLang_UpdateCons | \
    closLang_FinaliseCons | closLang_ConfigGC";;
 hol4_overload "Ref" "closLang_Ref";;
+hol4_overload "Update" "closLang_Update";;
 hol4_overload "El" "closLang_El";;
+hol4_overload "Length" "closLang_Length";;
+hol4_overload "LengthByte" "closLang_LengthByte";;
+hol4_overload "RefByte" "closLang_RefByte";;
+hol4_overload "RefArray" "closLang_RefArray";;
+hol4_overload "DerefByte" "closLang_DerefByte";;
+hol4_overload "UpdateByte" "closLang_UpdateByte";;
+hol4_overload "ConcatByteVec" "closLang_ConcatByteVec";;
+hol4_overload "CopyByte" "closLang_CopyByte";;
+hol4_overload "FromListByte" "closLang_FromListByte";;
+hol4_overload "ToListByte" "closLang_ToListByte";;
+hol4_overload "LengthByteVec" "closLang_LengthByteVec";;
+hol4_overload "DerefByteVec" "closLang_DerefByteVec";;
+hol4_overload "StringCmp" "closLang_StringCmp";;
+hol4_overload "XorByte" "closLang_XorByte";;
+hol4_overload "BoundsCheckArray" "closLang_BoundsCheckArray";;
+hol4_overload "BoundsCheckByte" "closLang_BoundsCheckByte";;
+hol4_overload "MutCons" "closLang_MutCons";;
+hol4_overload "UpdateCons" "closLang_UpdateCons";;
+hol4_overload "FinaliseCons" "closLang_FinaliseCons";;
 hol4_overload "ConfigGC" "closLang_ConfigGC";;
 
 let closLang_op_INDUCT,closLang_op_RECURSION = define_datatype
@@ -88,6 +124,11 @@ let closLang_op_INDUCT,closLang_op_RECURSION = define_datatype
    closLang_ThunkOp (ast_thunk_op)";;
 hol4_overload "Label" "closLang_Label";;
 hol4_overload "FFI" "closLang_FFI";;
+hol4_overload "IntOp" "closLang_IntOp";;
+hol4_overload "WordOp" "closLang_WordOp";;
+hol4_overload "BlockOp" "closLang_BlockOp";;
+hol4_overload "GlobOp" "closLang_GlobOp";;
+hol4_overload "MemOp" "closLang_MemOp";;
 hol4_overload "Install" "closLang_Install";;
 hol4_overload "ThunkOp" "closLang_ThunkOp";;
 
@@ -111,6 +152,7 @@ hol4_overload "Handle" "closLang_Handle";;
 hol4_overload "Tick" "closLang_Tick";;
 hol4_overload "Call" "closLang_Call";;
 hol4_overload "App" "closLang_App";;
+hol4_overload "Fn" "closLang_Fn";;
 hol4_overload "Letrec" "closLang_Letrec";;
 hol4_overload "Op" "closLang_Op";;
 
@@ -133,7 +175,7 @@ let has_install_def = cake_define_wf
    has_install (Op t p es) = (p = Install \/ has_install_list es) /\
    has_install (Raise t e) = has_install e /\
    has_install (Tick t e) = has_install e /\
-   has_install (closLang_Fn _1 _2 _3 _4 e) = has_install e /\
+   has_install (Fn _1 _2 _3 _4 e) = has_install e /\
    has_install (Handle t e1 e2) = (has_install e1 \/ has_install e2)
      /\
    has_install (Call _5 _6 _7 es) = has_install_list es /\
@@ -148,14 +190,11 @@ let has_install_def = cake_define_wf
 let pure_op_def = cake_define
   `closLang_pure_op op <=>
      (match op with
-       FFI _13 -> F | closLang_GlobOp (SetGlobal _14) -> F |
-         closLang_GlobOp AllocGlobal -> F | closLang_MemOp
-         (closLang_RefByte _15) -> F | closLang_MemOp
-         closLang_RefArray -> F | closLang_MemOp closLang_UpdateByte
-         -> F | closLang_MemOp (closLang_CopyByte F) -> F |
-         closLang_MemOp closLang_XorByte -> F | closLang_MemOp Ref ->
-         F | closLang_MemOp closLang_Update -> F | Install -> F |
-         ThunkOp _16 -> F | _17 -> T)`;;
+       FFI _13 -> F | GlobOp (SetGlobal _14) -> F | GlobOp
+         AllocGlobal -> F | MemOp (RefByte _15) -> F | MemOp RefArray
+         -> F | MemOp UpdateByte -> F | MemOp (CopyByte F) -> F |
+         MemOp XorByte -> F | MemOp Ref -> F | MemOp Update -> F |
+         Install -> F | ThunkOp _16 -> F | _17 -> T)`;;
 hol4_overload "pure_op" "closLang_pure_op";;
 
 (* pure e means e can neither raise an exception nor side-effect the
@@ -169,7 +208,7 @@ let pure_def = cake_define
    (pure (Tick _25 _26) <=> F) /\
    (pure (Call _27 _28 _29 _30) <=> F) /\
    (pure (App _31 _32 _33 _34) <=> F) /\
-   (pure (closLang_Fn _35 _36 _37 _38 _39) <=> T) /\
+   (pure (Fn _35 _36 _37 _38 _39) <=> T) /\
    (pure (Letrec _40 _41 _42 _43 x) <=> pure x) /\
    (pure (Op _44 opn es) <=> EVERY pure es /\ pure_op opn)`;;
 

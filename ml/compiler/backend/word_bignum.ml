@@ -35,16 +35,20 @@ let mini_INDUCT,mini_RECURSION = define_datatype
    (num list) (num list) | word_bignum_LoopBody (mini)";;
 hol4_overload "Skip" "word_bignum_Skip";;
 hol4_overload "Assign" "word_bignum_Assign";;
+hol4_overload "Delete" "word_bignum_Delete";;
 hol4_overload "Seq" "word_bignum_Seq";;
 hol4_overload "Load" "word_bignum_Load";;
 hol4_overload "Store" "word_bignum_Store";;
 hol4_overload "If" "word_bignum_If";;
+hol4_overload "Swap" "word_bignum_Swap";;
 hol4_overload "Add" "word_bignum_Add";;
 hol4_overload "Sub" "word_bignum_Sub";;
 hol4_overload "Mul" "word_bignum_Mul";;
 hol4_overload "Div" "word_bignum_Div";;
 hol4_overload "Loop" "word_bignum_Loop";;
 hol4_overload "Continue" "word_bignum_Continue";;
+hol4_overload "Rec" "word_bignum_Rec";;
+hol4_overload "LoopBody" "word_bignum_LoopBody";;
 
 
 (* syntax helper funs *)
@@ -556,7 +560,7 @@ let compile_exp_def = cake_define
       match x1 with
         (Op b [x1; x2]) -> Op b [word_bignum_compile_exp x1;
           word_bignum_compile_exp x2]
-      | (Var n) -> wordLang_Lookup (Temp (n2w n))
+      | (Var n) -> Lookup (Temp (n2w n))
       | (Const w) -> Const w
       | (Shift sh x y) -> Shift sh (word_bignum_compile_exp x)
         (word_bignum_compile_exp y)
@@ -571,8 +575,7 @@ let TempOut_def = cake_define
   `TempOut = Temp (n2w 29)`;;
 
 let SeqTemp_def = cake_define
-  `SeqTemp i r p = Seq (wordLang_Assign i (wordLang_Lookup (Temp (n2w
-  r)))) p`;;
+  `SeqTemp i r p = Seq (wordLang_Assign i (Lookup (Temp (n2w r)))) p`;;
 
 let SeqTempImm_def = cake_define
   `SeqTempImm i (Reg r) p = SeqTemp i r p /\
@@ -589,21 +592,20 @@ let SeqIndex_def = cake_define
   `SeqIndex i r arr p =
      (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
        -> TempIn1) in
-       Seq (Assign i (Op Add [wordLang_Lookup t;
-            (\sh e n. Shift sh e (Const (n2w n))) Lsl
-              (wordLang_Lookup (Temp (n2w r)))
-              ((backend_common_word_shift) (:'a))])) p:'a
-              wordLang_prog)`;;
+       Seq (Assign i (Op Add [Lookup t;
+            (\sh e n. Shift sh e (Const (n2w n))) Lsl (Lookup
+              (Temp (n2w r))) ((backend_common_word_shift) (:'a))]))
+              p:'a wordLang_prog)`;;
 
 let div_location_def = cake_define
   `div_location = 23`;;
 
 let DivCode_def = cake_define
   `DivCode l1 l2 n1 n2 n3 n4 n5 =
-     wordLang_MustTerminate
+     MustTerminate
        (Seq (Call (SOME ([n1],(LS one,LN),Skip,l1,l2)) (SOME
          div_location) [n3; n4; n5] NONE)
-            (Assign n2 (wordLang_Lookup (Temp (n2w 28)))))`;;
+            (Assign n2 (Lookup (Temp (n2w 28)))))`;;
 
 let LoadRegs_def = cake_define
   `(LoadRegs [] p = (p:'a wordLang_prog)) /\
@@ -620,7 +622,7 @@ let compile_def = cake_define
         match x5 with
           Skip -> (wordLang_Skip,l,i,cs)
         | Continue -> (Call NONE (SOME n) [0] NONE,l,i,cs)
-        | (word_bignum_Rec save_regs names) ->
+        | (Rec save_regs names) ->
         (LoadRegs save_regs
           (Call (SOME ([1],(LS one,list_insert (MAP (\n. n + 2)
             save_regs) LN),
@@ -634,7 +636,7 @@ let compile_def = cake_define
               (Call (SOME ([i],(LS one,LN),Skip,n,l)) (SOME
                 new_index) [] NONE,l + 1,i + 1,
                install (body,new_index,new_code) cs))
-        | (word_bignum_LoopBody b) -> word_bignum_compile n l i cs b
+        | (LoopBody b) -> word_bignum_compile n l i cs b
         | (Seq p1 p2) ->
         let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
@@ -649,10 +651,10 @@ let compile_def = cake_define
         | (Assign j e) ->
         (Seq (Assign i (compile_exp e)) (Set (Temp (n2w j)) (Var
           i)),l,i + 1,cs)
-        | (word_bignum_Delete _2) -> ((Skip:'a wordLang_prog),l,i,cs)
-        | word_bignum_Swap ->
-        (Seq (Assign i (wordLang_Lookup (TempIn1)))
-        (Seq (Set (TempIn1) (wordLang_Lookup (TempIn2)))
+        | (Delete _2) -> ((Skip:'a wordLang_prog),l,i,cs)
+        | Swap ->
+        (Seq (Assign i (Lookup (TempIn1)))
+        (Seq (Set (TempIn1) (Lookup (TempIn2)))
              (Set (TempIn2) (Var i))),l,i + 1,cs)
         | (Store r1 r2) ->
         (SeqTemp i r1
@@ -665,21 +667,20 @@ let compile_def = cake_define
         | (Add r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImm (i + 3) r3 (SeqTemp (i +
           2) r2
-        (Seq (Inst (Arith (asm_AddCarry (i + 1) (i + 2) (i + 3) (i +
+        (Seq (Inst (Arith (AddCarry (i + 1) (i + 2) (i + 3) (i +
           4))))
         (Seq (Set (Temp (n2w r0)) (Var (i + 1)))
              (Set (Temp (n2w r1)) (Var (i + 4))))))),l,i + 5,cs)
         | (Sub r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImmNot (i + 3) r3 (SeqTemp (i
           + 2) r2
-        (Seq (Inst (Arith (asm_AddCarry (i + 1) (i + 2) (i + 3) (i +
+        (Seq (Inst (Arith (AddCarry (i + 1) (i + 2) (i + 3) (i +
           4))))
         (Seq (Set (Temp (n2w r0)) (Var (i + 1)))
              (Set (Temp (n2w r1)) (Var (i + 4))))))),l,i + 5,cs)
         | (Mul r0 r1 r2 r3) ->
         (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
-        (Seq (Inst (Arith (asm_LongMul (i + 0) (i + 1) (i + 2) (i +
-          3))))
+        (Seq (Inst (Arith (LongMul (i + 0) (i + 1) (i + 2) (i + 3))))
         (Seq (Set (Temp (n2w r1)) (Var (i + 0)))
              (Set (Temp (n2w r0)) (Var (i + 1)))))),l,i + 4,cs)
         | (Div r0 r1 r2 r3 r4) ->

@@ -14,6 +14,7 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
+needs "compiler/backend/closLang.ml";;
 needs "lib/sptree.ml";;
 
 let bvi_mk_tick_def = cake_define
@@ -27,7 +28,7 @@ let canonical_wrapper_def = cake_define
   `canonical_wrapper name arity x3 =
         match x3 with
         (bvi_LetCall rets ticks worker args
-           (bvi_Op (closLang_BlockOp (Cons tag)) rvs)) -> ~(
+           (bvi_Op (BlockOp (Cons tag)) rvs)) -> ~(
         worker = name) /\
         args = GENLIST bvi_Var arity /\
         rvs = REVERSE (GENLIST bvi_Var rets)

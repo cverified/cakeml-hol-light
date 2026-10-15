@@ -15,8 +15,7 @@ let remove_fvs_def = cake_define
    (remove_fvs fvs ((x:closLang_exp) :: y :: xs) =
       HD (remove_fvs fvs [x]) :: remove_fvs fvs (y :: xs)) /\
    (remove_fvs fvs [Var t v] =
-     (if v < fvs then [Var t v] else [Op t (closLang_MemOp El) []]))
-       /\
+     (if v < fvs then [Var t v] else [Op t (MemOp El) []])) /\
    (remove_fvs fvs [If t x1 x2 x3] =
       [If t (HD (remove_fvs fvs [x1]))
             (HD (remove_fvs fvs [x2]))
@@ -48,14 +47,14 @@ let remove_fvs_def = cake_define
             fns in
       [Letrec t loc_opt vs new_fns (HD (remove_fvs (m + fvs)
         [x1]))])) /\
-   (remove_fvs fvs [closLang_Fn t loc_opt vs num_args x1] =
+   (remove_fvs fvs [Fn t loc_opt vs num_args x1] =
      (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
-     [closLang_Fn t loc_opt vs num_args (HD (remove_fvs (num_args
-       + fvs) [x1]))]))`;;
+     [Fn t loc_opt vs num_args (HD (remove_fvs (num_args + fvs)
+       [x1]))]))`;;
 
 let remove_fvs_sing_def = cake_define_list
   [`remove_fvs_sing fvs (Var t v) =
-        (if v < fvs then Var t v else Op t (closLang_MemOp El) [])`;
+        (if v < fvs then Var t v else Op t (MemOp El) [])`;
    `remove_fvs_sing fvs (If t x1 x2 x3) =
          If t (remove_fvs_sing fvs x1)
               (remove_fvs_sing fvs x2)
@@ -85,10 +84,10 @@ let remove_fvs_sing_def = cake_define_list
          let new_fns = remove_fvs_let m new_fvs fns in
          Letrec t loc_opt vs new_fns (remove_fvs_sing (m + fvs)
            x1))`;
-   `remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
+   `remove_fvs_sing fvs (Fn t loc_opt vs num_args x1) =
         (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
-        closLang_Fn t loc_opt vs num_args (remove_fvs_sing
-          (num_args + fvs) x1))`;
+        Fn t loc_opt vs num_args (remove_fvs_sing (num_args + fvs)
+          x1))`;
    `remove_fvs_list fvs [] = []`;
    `remove_fvs_list fvs ((x:closLang_exp) :: xs) =
          remove_fvs_sing fvs x :: remove_fvs_list fvs xs`;

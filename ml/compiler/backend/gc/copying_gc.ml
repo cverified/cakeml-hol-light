@@ -17,16 +17,15 @@ needs "lib/integer_word.ml";;
 let gc_move_def = cake_define
   `(copying_gc_gc_move (Data d,h2,a,n,heap,c,limit) = (Data
   d,h2,a,n,heap,c)) /\
-   (copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit)
-     =
+   (copying_gc_gc_move (Pointer ptr d,h2,a,n,heap,c,limit) =
       (match heap_lookup ptr heap with SOME (DataElement xs l dd) ->
           (let c = c /\ l + 1 <= n /\ (a + n = limit) in
           let n = n - (l + 1) in
           let h2 = h2 ++ [DataElement xs l dd] in
           let (heap,c) = gc_forward_ptr ptr heap a d c in
-            (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c)) |
-              SOME (ForwardPointer ptr _3 l) -> (gc_shared_Pointer
-              ptr d,h2,a,n,heap,c) | _4 -> (ARB,h2,a,n,heap,F)))`;;
+            (Pointer a d,h2,a + (l + 1),n,heap,c)) | SOME
+              (ForwardPointer ptr _3 l) -> (Pointer ptr
+              d,h2,a,n,heap,c) | _4 -> (ARB,h2,a,n,heap,F)))`;;
 hol4_overload "gc_move" "copying_gc_gc_move";;
 
 let gc_move_list_def = cake_define
@@ -97,7 +96,7 @@ let gc_inv_def = cake_define
                               ADDR_MAP (heap_map1 heap) xs else xs) l
                                 d)) /\
                     reachable_addresses roots0 heap0 i /\
-                    (!ptr d. MEM (gc_shared_Pointer ptr d) xs /\ j <
+                    (!ptr d. MEM (Pointer ptr d) xs /\ j <
                       heap_length h1 ==>
                             ptr IN FDOM (heap_map 0 heap)))))`;;
 hol4_overload "gc_inv" "copying_gc_gc_inv";;

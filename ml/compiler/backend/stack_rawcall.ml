@@ -22,8 +22,7 @@ needs "lib/sptree.ml";;
 
 let seq_stack_alloc_def = cake_define
   `seq_stack_alloc (p:'a stackLang_prog) =
-     (match p with Seq (stackLang_StackAlloc k) _1 -> SOME k | _2
-       -> NONE)`;;
+     (match p with Seq (StackAlloc k) _1 -> SOME k | _2 -> NONE)`;;
 
 let collect_info_def = cake_define
   `(collect_info [] f = f) /\
@@ -35,19 +34,18 @@ let collect_info_def = cake_define
 
 let dest_case_def = cake_define
   `dest_case (p1:'a stackLang_prog) (p2:'a stackLang_prog) =
-     (match p1 with stackLang_StackFree k -> (match p2 with Call
-       NONE (INL d) NONE -> SOME (k,d) | _3 -> NONE) | _4 -> NONE)`;;
+     (match p1 with StackFree k -> (match p2 with Call NONE (INL
+       d) NONE -> SOME (k,d) | _3 -> NONE) | _4 -> NONE)`;;
 
 let comp_seq_def = cake_define
   `comp_seq (p1:'a stackLang_prog) (p2:'a stackLang_prog) i (default:'a
   stackLang_prog) =
    (match dest_case p1 p2 with SOME (k,dest) ->
        (match lookup dest i with NONE -> default | SOME l ->
-            (if l = k then stackLang_RawCall dest else
-            if l < k then Seq (stackLang_StackFree (k - l))
-              (stackLang_RawCall dest) else
-                Seq Tick (Seq (stackLang_StackAlloc (l - k))
-                  (stackLang_RawCall dest)))) | _5 -> default)`;;
+            (if l = k then RawCall dest else
+            if l < k then Seq (StackFree (k - l)) (RawCall dest) else
+                Seq Tick (Seq (StackAlloc (l - k)) (RawCall
+                  dest)))) | _5 -> default)`;;
 
 (* HOL4 ML code, not ported:
 local

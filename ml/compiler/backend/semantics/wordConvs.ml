@@ -37,16 +37,16 @@ let flat_exp_conventions_def = cake_define
         | (Store exp num) -> F
         | (Set store_name (Var r)) -> T
         | (Set store_name _1) -> F
-        | (wordLang_ShareInst op v (Var r)) -> T
-        | (wordLang_ShareInst op v (Op Add [Var r; Const c])) -> T
-        | (wordLang_ShareInst op v _2) -> F
+        | (ShareInst op v (Var r)) -> T
+        | (ShareInst op v (Op Add [Var r; Const c])) -> T
+        | (ShareInst op v _2) -> F
         | (Seq p1 p2) ->
        flat_exp_conventions p1 /\ flat_exp_conventions p2
         | (Loop names c exit_names) ->
        flat_exp_conventions c
         | (If cmp r1 ri e2 e3) ->
        flat_exp_conventions e2 /\ flat_exp_conventions e3
-        | (wordLang_MustTerminate p) -> flat_exp_conventions p
+        | (MustTerminate p) -> flat_exp_conventions p
         | (Call ret dest args h) ->
        ((match ret with
          NONE -> T | SOME (v,cutset,ret_handler,l1,l2) ->
@@ -61,75 +61,71 @@ let flat_exp_conventions_def = cake_define
 let inst_ok_less_def = cake_define
   `inst_ok_less c x2 =
         match (c,x2) with
-          ((c:'a asm_config),(Arith (asm_Binop b r1 r2 (Imm w)))) ->
+          ((c:'a asm_config),(Arith (Binop b r1 r2 (Imm w)))) ->
             asm_config_valid_imm
        c (INL b) w
         | (c,(Arith (Shift l r1 r2 (Imm i)))) ->
        (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i < dimindex (:'a))
         | (c,(Arith (Div r1 r2 r3))) ->
        (asm_config_ISA c IN {ARMv8,MIPS,RISC_V})
-        | (c,(Arith (asm_LongMul r1 r2 r3 r4))) ->
+        | (c,(Arith (LongMul r1 r2 r3 r4))) ->
        ((asm_config_ISA c = ARMv7 ==> ~(r1 = r2)) /\
        (asm_config_ISA c = ARMv8 \/ asm_config_ISA c = RISC_V \/
          asm_config_ISA c = Ag32 ==> ~(r1 = r3) /\ ~(r1 = r4)))
-        | (c,(Arith (asm_LongDiv r1 r2 r3 r4 r5))) ->
+        | (c,(Arith (LongDiv r1 r2 r3 r4 r5))) ->
        (asm_config_ISA c = x86_64)
-        | (c,(Arith (asm_AddCarry r1 r2 r3 r4))) ->
+        | (c,(Arith (AddCarry r1 r2 r3 r4))) ->
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3) /\ ~(r1 = r4))
-        | (c,(Arith (asm_AddOverflow r1 r2 r3 r4))) ->
+        | (c,(Arith (AddOverflow r1 r2 r3 r4))) ->
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3))
-        | (c,(Arith (asm_SubOverflow r1 r2 r3 r4))) ->
+        | (c,(Arith (SubOverflow r1 r2 r3 r4))) ->
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3))
-        | (c,(asm_Mem m r (Addr r' w))) ->
-        if m IN
-          {Load,Store,asm_Load16,asm_Store16,asm_Load32,asm_Store32}
-          then (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if
-          m IN {asm_Load16,asm_Store16} then (\c. offset_ok 0
-          (asm_config_hw_offset c)) c w else (\c. offset_ok 0
-          (asm_config_byte_offset c)) c w
-        | (c,(asm_FP (FPLess r d1 d2))) -> fp_reg_ok d1 c /\
+        | (c,(Mem m r (Addr r' w))) ->
+        if m IN {Load,Store,Load16,Store16,Load32,Store32} then (\c.
+          offset_ok 0 (asm_config_addr_offset c)) c w else if m IN
+          {Load16,Store16} then (\c. offset_ok 0 (asm_config_hw_offset
+          c)) c w else (\c. offset_ok 0 (asm_config_byte_offset c)) c w
+        | (c,(FP (FPLess r d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok d2
+          c
+        | (c,(FP (FPLessEqual r d1 d2))) -> fp_reg_ok d1 c /\
           fp_reg_ok d2 c
-        | (c,(asm_FP (FPLessEqual r d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
-        | (c,(asm_FP (FPEqual r d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
-        | (c,(asm_FP (FPAbs d1 d2))) ->
-       (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
-         c /\ fp_reg_ok d2 c
-        | (c,(asm_FP (FPNeg d1 d2))) ->
-       (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
-         c /\ fp_reg_ok d2 c
-        | (c,(asm_FP (FPSqrt d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok
+        | (c,(FP (FPEqual r d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok
           d2 c
-        | (c,(asm_FP (FPAdd d1 d2 d3))) ->
+        | (c,(FP (FPAbs d1 d2))) ->
+       (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
+         c /\ fp_reg_ok d2 c
+        | (c,(FP (FPNeg d1 d2))) ->
+       (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
+         c /\ fp_reg_ok d2 c
+        | (c,(FP (FPSqrt d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok d2 c
+        | (c,(FP (FPAdd d1 d2 d3))) ->
        (asm_config_two_reg_arith c ==> (d1 = d2)) /\
        fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c
-        | (c,(asm_FP (FPSub d1 d2 d3))) ->
+        | (c,(FP (FPSub d1 d2 d3))) ->
        (asm_config_two_reg_arith c ==> (d1 = d2)) /\
        fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c
-        | (c,(asm_FP (FPMul d1 d2 d3))) ->
+        | (c,(FP (FPMul d1 d2 d3))) ->
        (asm_config_two_reg_arith c ==> (d1 = d2)) /\
        fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c
-        | (c,(asm_FP (FPDiv d1 d2 d3))) ->
+        | (c,(FP (FPDiv d1 d2 d3))) ->
        (asm_config_two_reg_arith c ==> (d1 = d2)) /\
        fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c
-        | (c,(asm_FP (FPFma d1 d2 d3))) ->
+        | (c,(FP (FPFma d1 d2 d3))) ->
        (asm_config_ISA c = ARMv7) /\
        2 < asm_config_fp_reg_count c /\
        fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c
-        | (c,(asm_FP (FPMov d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok
-          d2 c
-        | (c,(asm_FP (FPMovToReg r1 r2 d))) ->
+        | (c,(FP (FPMov d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok d2 c
+        | (c,(FP (FPMovToReg r1 r2 d))) ->
          ((dimindex (:'a) = 32) ==> ~(r1 = r2)) /\ fp_reg_ok d c
-        | (c,(asm_FP (FPMovFromReg d r1 r2))) ->
+        | (c,(FP (FPMovFromReg d r1 r2))) ->
          ((dimindex (:'a) = 32) ==> ~(r1 = r2)) /\ fp_reg_ok d c
-        | (c,(asm_FP (FPToInt d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok
+        | (c,(FP (FPToInt d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok d2
+          c
+        | (c,(FP (FPFromInt d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok
           d2 c
-        | (c,(asm_FP (FPFromInt d1 d2))) -> fp_reg_ok d1 c /\
-          fp_reg_ok d2 c
         | (_4,_5) -> T`;;
 
 (*** Instructions have distinct targets and read vars -- set by SSA form
@@ -137,12 +133,11 @@ let inst_ok_less_def = cake_define
 let distinct_tar_reg_def = cake_define
   `distinct_tar_reg x1 =
         match x1 with
-          (Arith (asm_Binop bop r1 r2 ri)) -> ~(ri = Reg r1)
+          (Arith (Binop bop r1 r2 ri)) -> ~(ri = Reg r1)
         | (Arith (Shift l r1 r2 ri)) -> ~(ri = Reg r1)
-        | (Arith (asm_AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\ ~(r1 =
-          r4)
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
+        | (Arith (AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\ ~(r1 = r4)
+        | (Arith (AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
+        | (Arith (SubOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
         | _6 -> T`;;
 
 (***
@@ -151,11 +146,11 @@ let distinct_tar_reg_def = cake_define
 let two_reg_inst_def = cake_define
   `two_reg_inst x1 =
         match x1 with
-          (Arith (asm_Binop bop r1 r2 ri)) -> (r1 = r2)
+          (Arith (Binop bop r1 r2 ri)) -> (r1 = r2)
         | (Arith (Shift l r1 r2 ri)) -> (r1 = r2)
-        | (Arith (asm_AddCarry r1 r2 r3 r4)) -> (r1 = r2)
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> (r1 = r2)
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> (r1 = r2)
+        | (Arith (AddCarry r1 r2 r3 r4)) -> (r1 = r2)
+        | (Arith (AddOverflow r1 r2 r3 r4)) -> (r1 = r2)
+        | (Arith (SubOverflow r1 r2 r3 r4)) -> (r1 = r2)
         | _7 -> T`;;
 
 (*** Recursor over instructions ***)
@@ -167,9 +162,9 @@ let every_inst_def = cake_define
         | (Loop names c exit_names) ->
        every_inst P c
         | (If cmp r1 ri c1 c2) -> every_inst P c1 /\ every_inst P c2
-        | (OpCurrHeap bop r1 r2) -> P (Arith (asm_Binop bop r1 r2
-          (Reg r2)))
-        | (wordLang_MustTerminate p) -> every_inst P p
+        | (OpCurrHeap bop r1 r2) -> P (Arith (Binop bop r1 r2 (Reg
+          r2)))
+        | (MustTerminate p) -> every_inst P p
         | (Call ret dest args handler) -> (match ret with
            NONE -> T | SOME (n,names,ret_handler,l1,l2) -> every_inst
              P ret_handler /\
@@ -188,19 +183,19 @@ let full_inst_ok_less_def = cake_define
        (full_inst_ok_less c p)
         | (If cmp r1 ri c1 c2) ->
        (full_inst_ok_less c c1 /\ full_inst_ok_less c c2)
-        | (wordLang_MustTerminate p) -> full_inst_ok_less c p
+        | (MustTerminate p) -> full_inst_ok_less c p
         | (Call ret dest args handler) -> (match ret with
            NONE -> T | SOME (n,names,ret_handler,l1,l2) ->
              full_inst_ok_less c ret_handler /\
          (match handler with
            NONE -> T | SOME (n,h,l1,l2) -> full_inst_ok_less c h))
-        | (wordLang_ShareInst op r ad) ->
+        | (ShareInst op r ad) ->
        match exp_to_addr ad with SOME (Addr _8 w) ->
-         (if op IN {Load,Store,asm_Load32,asm_Store32} then (\c.
-           offset_ok 0 (asm_config_addr_offset c)) c w else if op IN
-           {asm_Load16,asm_Store16} then (\c. offset_ok 0
-           (asm_config_hw_offset c)) c w else (\c. offset_ok 0
-           (asm_config_byte_offset c)) c w) | NONE -> F
+         (if op IN {Load,Store,Load32,Store32} then (\c. offset_ok 0
+           (asm_config_addr_offset c)) c w else if op IN
+           {Load16,Store16} then (\c. offset_ok 0 (asm_config_hw_offset
+           c)) c w else (\c. offset_ok 0 (asm_config_byte_offset c)) c
+           w) | NONE -> F
         | prog -> T`;;
 
 (*** All cutsets are well-formed ***)
@@ -222,7 +217,7 @@ let wf_cutsets_def = cake_define
            NONE -> T | SOME (v,prog,l1,l2) ->
            wf_cutsets prog))
         | (FFI x1 y1 x2 y2 z args) -> wf_names args
-        | (wordLang_MustTerminate s) -> wf_cutsets s
+        | (MustTerminate s) -> wf_cutsets s
         | (Seq s1 s2) ->
        (wf_cutsets s1 /\ wf_cutsets s2)
         | (Loop names p exit_names) ->
@@ -236,14 +231,14 @@ let wf_cutsets_def = cake_define
 let inst_arg_convention_def = cake_define
   `inst_arg_convention x1 =
         match x1 with
-          (Arith (asm_AddCarry r1 r2 r3 r4)) -> r4 = 0
+          (Arith (AddCarry r1 r2 r3 r4)) -> r4 = 0
         | (Arith (Shift _14 _15 _16 (Reg r))) -> r = 8
-        | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> r4 = 0
-        | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> r4 = 0
-        | (Arith (asm_LongMul r1 r2 r3 r4)) -> r1 = 6 /\ r2 = 0 /\ r3
-          = 0 /\ r4 = 4
-        | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> r1 = 0 /\ r2 = 6 /\
-          r3 = 6 /\ r4 = 0
+        | (Arith (AddOverflow r1 r2 r3 r4)) -> r4 = 0
+        | (Arith (SubOverflow r1 r2 r3 r4)) -> r4 = 0
+        | (Arith (LongMul r1 r2 r3 r4)) -> r1 = 6 /\ r2 = 0 /\ r3 = 0
+          /\ r4 = 4
+        | (Arith (LongDiv r1 r2 r3 r4 r5)) -> r1 = 0 /\ r2 = 6 /\ r3
+          = 6 /\ r4 = 0
         | _17 -> T`;;
 
 (*** Calling conventions ***)
@@ -271,7 +266,7 @@ let call_arg_convention_def = cake_define
        (match h with
          NONE -> T | SOME (v,prog,l1,l2) ->
          (v = 2) /\ call_arg_convention prog))
-        | (wordLang_MustTerminate s1) ->
+        | (MustTerminate s1) ->
        call_arg_convention s1
         | (Seq s1 s2) ->
        (call_arg_convention s1 /\ call_arg_convention s2)
@@ -308,7 +303,7 @@ let extract_labels_def = cake_define
          NONE -> [(l1,l2)] ++ ret_rest | SOME (v,prog,l1',l2') ->
          (let h_rest = extract_labels prog in
          [(l1,l2); (l1',l2')] ++ ret_rest ++ h_rest))))
-        | (wordLang_MustTerminate s1) -> extract_labels s1
+        | (MustTerminate s1) -> extract_labels s1
         | (Seq s1 s2) ->
        extract_labels s1 ++ extract_labels s2
         | (Loop names p exit_names) ->
@@ -333,7 +328,7 @@ let get_code_labels_def = cake_define
         | (Loop names p exit_names) -> get_code_labels p
         | (If _30 _31 _32 p1 p2) -> get_code_labels p1 UNION
           get_code_labels p2
-        | (wordLang_MustTerminate p) -> get_code_labels p
+        | (MustTerminate p) -> get_code_labels p
         | (LocValue _33 l1) -> {l1}
         | _34 -> {}`;;
 
@@ -352,7 +347,7 @@ let good_handlers_def = cake_define
         | (Loop names p exit_names) -> good_handlers n p
         | (If _42 _43 _44 p1 p2) -> good_handlers n p1 /\
           good_handlers n p2
-        | (wordLang_MustTerminate p) -> good_handlers n p
+        | (MustTerminate p) -> good_handlers n p
         | _45 -> T`;;
 
 let good_code_labels_def = cake_define
@@ -370,8 +365,8 @@ let good_code_labels_def = cake_define
 let not_created_subprogs_def = cake_define
   `not_created_subprogs P x2 =
       match x2 with
-        (wordLang_MustTerminate p:'a wordLang_prog) ->
-     (P (wordLang_MustTerminate (Skip:'a wordLang_prog)) /\
+        (MustTerminate p:'a wordLang_prog) ->
+     (P (MustTerminate (Skip:'a wordLang_prog)) /\
        not_created_subprogs P p)
       | (Seq p1 p2) -> (not_created_subprogs P p1 /\
      not_created_subprogs P p2)
@@ -388,8 +383,7 @@ let not_created_subprogs_def = cake_define
          not_created_subprogs P p))
       | (Alloc _54 _55) -> P (Alloc 0 (LN,LN))
       | (LocValue _56 l) -> P (LocValue 0 l)
-      | (wordLang_ShareInst _57 _58 _59) -> P (wordLang_ShareInst ARB
-        0 (Var 0))
+      | (ShareInst _57 _58 _59) -> P (ShareInst ARB 0 (Var 0))
       | (Install _60 _61 _62 _63 _64) -> P (Install 0 0 0 0 (LN,LN))
       | _65 -> T`;;
 

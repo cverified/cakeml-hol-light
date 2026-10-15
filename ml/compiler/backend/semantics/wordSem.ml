@@ -76,16 +76,16 @@ let word_cmp_def = cake_define
         match (x1,x2,x3) with
           ((EQUAL),(Word w1),(Word w2)) -> SOME (w1 = w2)
         | ((LESS),(Word w1),(Word w2)) -> SOME (w1 < w2)
-        | (asm_Lower,(Word w1),(Word w2)) -> SOME (w1 <+ w2)
+        | (Lower,(Word w1),(Word w2)) -> SOME (w1 <+ w2)
         | (Test,(Word w1),(Word w2)) -> SOME ((w1 && w2) = (n2w 0))
         | (Test,(Loc _3 n),(Word w2)) -> if ~(n = 0) then NONE else
           if w2 = (n2w 1) then SOME T else NONE
-        | (asm_NotEqual,(Word w1),(Word w2)) -> SOME (~(w1 = w2))
-        | (asm_NotLess,(Word w1),(Word w2)) -> SOME (~(w1 < w2))
-        | (asm_NotLower,(Word w1),(Word w2)) -> SOME (~(w1 <+ w2))
-        | (asm_NotTest,(Word w1),(Word w2)) -> SOME (~((w1 && w2) =
-          (n2w 0)))
-        | (asm_NotTest,(Loc _4 n),(Word w2)) -> if ~(n = 0) then NONE
+        | (NotEqual,(Word w1),(Word w2)) -> SOME (~(w1 = w2))
+        | (NotLess,(Word w1),(Word w2)) -> SOME (~(w1 < w2))
+        | (NotLower,(Word w1),(Word w2)) -> SOME (~(w1 <+ w2))
+        | (NotTest,(Word w1),(Word w2)) -> SOME (~((w1 && w2) = (n2w
+          0)))
+        | (NotTest,(Loc _4 n),(Word w2)) -> if ~(n = 0) then NONE
           else if w2 = (n2w 1) then SOME F else NONE
         | (_5,_6,_7) -> NONE`;;
 hol4_overload "word_cmp" "wordSem_word_cmp";;
@@ -199,6 +199,7 @@ hol4_overload "Exception" "wordSem_Exception";;
 hol4_overload "Break" "wordSem_Break";;
 hol4_overload "Continue" "wordSem_Continue";;
 hol4_overload "TimeOut" "wordSem_TimeOut";;
+hol4_overload "NotEnoughSpace" "wordSem_NotEnoughSpace";;
 hol4_overload "FinalFFI" "wordSem_FinalFFI";;
 hol4_overload "Error" "wordSem_Error";;
 
@@ -305,13 +306,13 @@ let word_exp_def = cake_define_wf
   `MEASURE (exp_size ARB o SND)`
   `(^ wordSem_word_exp (s (Const w)) = SOME (Word w)) /\
    (wordSem_word_exp s (Var v) = get_var v s) /\
-   (wordSem_word_exp s (wordLang_Lookup name) = get_store name s) /\
+   (wordSem_word_exp s (Lookup name) = get_store name s) /\
    (wordSem_word_exp s (Load addr') =
       (match wordSem_word_exp s addr' with SOME (Word w) -> mem_load
         w s | _27 -> NONE)) /\
    (wordSem_word_exp s (Op op wexps) =
       (match the_words (MAP (wordSem_word_exp s) wexps) with SOME ws
-        -> (OPTION_MAP Word (wordLang_word_op op ws)) | _28 -> NONE)) /\
+        -> (OPTION_MAP Word (word_op op ws)) | _28 -> NONE)) /\
    (wordSem_word_exp s (Shift sh wexp wexp1) =
       (match (wordSem_word_exp s wexp,wordSem_word_exp s wexp1)
         with (SOME (Word w),SOME (Word w1)) -> OPTION_MAP Word
@@ -425,20 +426,20 @@ let sh_mem_set_var_def = cake_define
 
 let share_inst_def = cake_define
   `(share_inst Load v ad s = sh_mem_set_var (sh_mem_load ad s) v s) /\
-   (share_inst asm_Load8 v ad s = sh_mem_set_var (sh_mem_load_byte ad
-     s) v s) /\
-   (share_inst asm_Load16 v ad s = sh_mem_set_var (sh_mem_load16 ad
-     s) v s) /\
-   (share_inst asm_Load32 v ad s = sh_mem_set_var (sh_mem_load32 ad
-     s) v s) /\
+   (share_inst Load8 v ad s = sh_mem_set_var (sh_mem_load_byte ad s)
+     v s) /\
+   (share_inst Load16 v ad s = sh_mem_set_var (sh_mem_load16 ad s) v
+     s) /\
+   (share_inst Load32 v ad s = sh_mem_set_var (sh_mem_load32 ad s) v
+     s) /\
    (share_inst Store v ad s = (match get_var v s with SOME (Word v)
      -> sh_mem_store ad v s | _37 -> (SOME Error,s))) /\
-   (share_inst asm_Store8 v ad s = (match get_var v s with SOME (Word
-     v) -> sh_mem_store_byte ad v s | _38 -> (SOME Error,s))) /\
-   (share_inst asm_Store16 v ad s = (match get_var v s with SOME
-     (Word v) -> sh_mem_store16 ad v s | _39 -> (SOME Error,s))) /\
-   (share_inst asm_Store32 v ad s = (match get_var v s with SOME
-     (Word v) -> sh_mem_store32 ad v s | _40 -> (SOME Error,s)))`;;
+   (share_inst Store8 v ad s = (match get_var v s with SOME (Word v)
+     -> sh_mem_store_byte ad v s | _38 -> (SOME Error,s))) /\
+   (share_inst Store16 v ad s = (match get_var v s with SOME (Word v)
+     -> sh_mem_store16 ad v s | _39 -> (SOME Error,s))) /\
+   (share_inst Store32 v ad s = (match get_var v s with SOME (Word
+     v) -> sh_mem_store32 ad v s | _40 -> (SOME Error,s)))`;;
 
 let call_env_def = cake_define
   `^
@@ -635,8 +636,7 @@ let alloc_def = cake_define
               (match has_space w s with NONE -> (SOME Error,s) | SOME
                 T ->
                            (NONE,s) | SOME F ->
-                           (SOME
-                             wordSem_NotEnoughSpace,flush_state T
+                           (SOME NotEnoughSpace,flush_state T
                              s))))))`;;
 
 let assign_def = cake_define
@@ -660,7 +660,7 @@ let inst_def = cake_define
   `^
      (inst i) s =
        (match i with Skip -> SOME s | Const reg w -> assign reg
-         (Const w) s | Arith (asm_Binop bop r1 r2 ri) ->
+         (Const w) s | Arith (Binop bop r1 r2 ri) ->
            assign r1
              (Op bop [Var r2; match ri with Reg r3 -> Var r3 | Imm w
                -> Const w]) s | Arith (Shift sh r1 r2 ri) ->
@@ -672,34 +672,34 @@ let inst_def = cake_define
           SOME [Word q; Word w2] ->
             (if ~(q = (n2w 0)) then
               SOME (set_var r1 (Word (w2 / q)) s) else NONE) | _53 ->
-                NONE) | Arith (asm_AddCarry r1 r2 r3 r4) ->
+                NONE) | Arith (AddCarry r1 r2 r3 r4) ->
            (let vs = get_vars [r2; r3; r4] s in
            match vs with
            SOME [Word l; Word r; Word c] ->
              (let (res,co) = word_add_carry l r c in
                SOME (set_var r4 (Word co) (set_var r1 (Word res) s)))
-                 | _54 -> NONE) | Arith (asm_AddOverflow r1 r2 r3 r4) ->
+                 | _54 -> NONE) | Arith (AddOverflow r1 r2 r3 r4) ->
            (let vs = get_vars [r2; r3] s in
            match vs with
            SOME [Word w2; Word w3] ->
              SOME (set_var r4 (Word (if ~(w2i (w2 + w3) = w2i w2 +
                w2i w3) then (n2w 1) else (n2w 0)))
                     (set_var r1 (Word (w2 + w3)) s)) | _55 -> NONE) |
-                      Arith (asm_SubOverflow r1 r2 r3 r4) ->
+                      Arith (SubOverflow r1 r2 r3 r4) ->
            (let vs = get_vars [r2; r3] s in
            match vs with
            SOME [Word w2; Word w3] ->
              SOME (set_var r4 (Word (if ~(w2i (w2 - w3) = w2i w2 -
                w2i w3) then (n2w 1) else (n2w 0)))
                     (set_var r1 (Word (w2 - w3)) s)) | _56 -> NONE) |
-                      Arith (asm_LongMul r1 r2 r3 r4) ->
+                      Arith (LongMul r1 r2 r3 r4) ->
            (let vs = get_vars [r3; r4] s in
            match vs with
            SOME [Word w3; Word w4] ->
             (let r = w2n w3 * w2n w4 in
               SOME (set_var r2 (Word (n2w r)) (set_var r1 (Word (n2w
                 (r DIV dimword (:'a)))) s))) | _57 -> NONE) | Arith
-                (asm_LongDiv r1 r2 r3 r4 r5) ->
+                (LongDiv r1 r2 r3 r4 r5) ->
           (let vs = get_vars [r3; r4; r5] s in
           match vs with
           SOME [Word w3; Word w4; Word w5] ->
@@ -708,106 +708,104 @@ let inst_def = cake_define
             let q = n DIV d in
             if (~(d = 0) /\ q < dimword (:'a)) then
               SOME (set_var r1 (Word (n2w q)) (set_var r2 (Word (n2w
-                (n MOD d))) s)) else NONE) | _58 -> NONE) | asm_Mem Load
-                r (Addr a w) ->
+                (n MOD d))) s)) else NONE) | _58 -> NONE) | Mem Load r
+                (Addr a w) ->
           (match word_exp s (Op Add [Var a; Const w]) with SOME (Word
             w) ->
               (match mem_load w s with NONE -> NONE | SOME w -> SOME
-                (set_var r w s)) | _59 -> NONE) | asm_Mem asm_Load8 r
-                (Addr a w) ->
+                (set_var r w s)) | _59 -> NONE) | Mem Load8 r (Addr a w)
+                ->
           (match word_exp s (Op Add [Var a; Const w]) with SOME (Word
             w) ->
               (match mem_load_byte_aux (wordSem_state_memory s)
                 (wordSem_state_mdomain s) (wordSem_state_be s) w with
                 NONE -> NONE | SOME w -> SOME (set_var r (Word (w2w w))
-                s)) | _60 -> NONE) | asm_Mem asm_Load16 _61 _62 -> NONE
-                | asm_Mem asm_Load32 r (Addr a w) ->
+                s)) | _60 -> NONE) | Mem Load16 _61 _62 -> NONE | Mem
+                Load32 r (Addr a w) ->
           (match word_exp s (Op Add [Var a; Const w]) with SOME (Word
             w) ->
               (match mem_load_32 (wordSem_state_memory s)
                 (wordSem_state_mdomain s) (wordSem_state_be s) w with
                 NONE -> NONE | SOME w -> SOME (set_var r (Word (w2w w))
-                s)) | _63 -> NONE) | asm_Mem Store r (Addr a w) ->
+                s)) | _63 -> NONE) | Mem Store r (Addr a w) ->
           (match (word_exp s (Op Add [Var a; Const w]),get_var r s)
             with (SOME (Word a),SOME w) ->
                (match mem_store a w s with SOME s1 -> SOME s1 | NONE
-                 -> NONE) | _64 -> NONE) | asm_Mem asm_Store8 r (Addr a
-                 w) ->
+                 -> NONE) | _64 -> NONE) | Mem Store8 r (Addr a w) ->
           (match (word_exp s (Op Add [Var a; Const w]),get_var r s)
             with (SOME (Word a),SOME (Word w)) ->
                (match mem_store_byte_aux (wordSem_state_memory s)
                  (wordSem_state_mdomain s) (wordSem_state_be s) a (w2w
                  w) with SOME new_m -> SOME (wordSem_state_memory_fupd
-                 (K new_m) s) | NONE -> NONE) | _65 -> NONE) | asm_Mem
-                 asm_Store16 _66 _67 -> NONE | asm_Mem asm_Store32 r
-                 (Addr a w) ->
+                 (K new_m) s) | NONE -> NONE) | _65 -> NONE) | Mem
+                 Store16 _66 _67 -> NONE | Mem Store32 r (Addr a w) ->
           (match (word_exp s (Op Add [Var a; Const w]),get_var r s)
             with (SOME (Word a),SOME (Word w)) ->
                (match mem_store_32 (wordSem_state_memory s)
                  (wordSem_state_mdomain s) (wordSem_state_be s) a (w2w
                  w) with SOME new_m -> SOME (wordSem_state_memory_fupd
-                 (K new_m) s) | NONE -> NONE) | _68 -> NONE) | asm_FP
+                 (K new_m) s) | NONE -> NONE) | _68 -> NONE) | FP
                  (FPLess r d1 d2) ->
          (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
            f2) ->
            SOME (set_var r
              (Word (if fp64_lessThan f1 f2 then (n2w 1) else (n2w
-               0))) s) | _69 -> NONE) | asm_FP (FPLessEqual r d1 d2) ->
+               0))) s) | _69 -> NONE) | FP (FPLessEqual r d1 d2) ->
          (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
            f2) ->
            SOME (set_var r
              (Word (if fp64_lessEqual f1 f2 then (n2w 1) else (n2w
-               0))) s) | _70 -> NONE) | asm_FP (FPEqual r d1 d2) ->
+               0))) s) | _70 -> NONE) | FP (FPEqual r d1 d2) ->
          (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
            f2) ->
            SOME (set_var r
              (Word (if fp64_equal f1 f2 then (n2w 1) else (n2w 0)))
-               s) | _71 -> NONE) | asm_FP (FPMov d1 d2) ->
+               s) | _71 -> NONE) | FP (FPMov d1 d2) ->
          (match get_fp_var d2 s with SOME f ->
-           SOME (set_fp_var d1 f s) | _72 -> NONE) | asm_FP (FPAbs d1
-             d2) ->
+           SOME (set_fp_var d1 f s) | _72 -> NONE) | FP (FPAbs d1 d2)
+             ->
          (match get_fp_var d2 s with SOME f ->
-           SOME (set_fp_var d1 (fp64_abs f) s) | _73 -> NONE) |
-             asm_FP (FPNeg d1 d2) ->
+           SOME (set_fp_var d1 (fp64_abs f) s) | _73 -> NONE) | FP
+             (FPNeg d1 d2) ->
          (match get_fp_var d2 s with SOME f ->
-           SOME (set_fp_var d1 (fp64_negate f) s) | _74 -> NONE) |
-             asm_FP (FPSqrt d1 d2) ->
+           SOME (set_fp_var d1 (fp64_negate f) s) | _74 -> NONE) | FP
+             (FPSqrt d1 d2) ->
          (match get_fp_var d2 s with SOME f ->
            SOME (set_fp_var d1 (fp64_sqrt roundTiesToEven f) s) | _75
-             -> NONE) | asm_FP (FPAdd d1 d2 d3) ->
+             -> NONE) | FP (FPAdd d1 d2 d3) ->
          (match (get_fp_var d2 s,get_fp_var d3 s) with (SOME f1,SOME
            f2) ->
            SOME (set_fp_var d1 (fp64_add roundTiesToEven f1 f2) s) |
-             _76 -> NONE) | asm_FP (FPSub d1 d2 d3) ->
+             _76 -> NONE) | FP (FPSub d1 d2 d3) ->
          (match (get_fp_var d2 s,get_fp_var d3 s) with (SOME f1,SOME
            f2) ->
            SOME (set_fp_var d1 (fp64_sub roundTiesToEven f1 f2) s) |
-             _77 -> NONE) | asm_FP (FPMul d1 d2 d3) ->
+             _77 -> NONE) | FP (FPMul d1 d2 d3) ->
          (match (get_fp_var d2 s,get_fp_var d3 s) with (SOME f1,SOME
            f2) ->
            SOME (set_fp_var d1 (fp64_mul roundTiesToEven f1 f2) s) |
-             _78 -> NONE) | asm_FP (FPDiv d1 d2 d3) ->
+             _78 -> NONE) | FP (FPDiv d1 d2 d3) ->
          (match (get_fp_var d2 s,get_fp_var d3 s) with (SOME f1,SOME
            f2) ->
            SOME (set_fp_var d1 (fp64_div roundTiesToEven f1 f2) s) |
-             _79 -> NONE) | asm_FP (FPFma d1 d2 d3) ->
+             _79 -> NONE) | FP (FPFma d1 d2 d3) ->
          (match (get_fp_var d1 s,get_fp_var d2 s,get_fp_var d3 s)
            with (SOME f1,SOME f2,SOME f3) ->
            SOME (set_fp_var d1 (fpfma f1 f2 f3) s) | _80 -> NONE) |
-             asm_FP (FPMovToReg r1 r2 d) ->
+             FP (FPMovToReg r1 r2 d) ->
          (match get_fp_var d s with SOME v ->
            (if dimindex (:'a) = 64 then
              SOME (set_var r1 (Word (w2w v)) s) else
              SOME (set_var r2 (Word ((63 >< 32) v)) (set_var r1 (Word
-               ((31 >< 0) v)) s))) | _81 -> NONE) | asm_FP (FPMovFromReg
-               d r1 r2) ->
+               ((31 >< 0) v)) s))) | _81 -> NONE) | FP (FPMovFromReg d
+               r1 r2) ->
          (if dimindex (:'a) = 64 then
            match get_var r1 s with
              SOME (Word w1) -> SOME (set_fp_var d (w2w w1) s) | _82
                -> NONE else
            match (get_var r1 s,get_var r2 s) with
              (SOME (Word w1),SOME (Word w2)) -> SOME (set_fp_var d
-               (w2 @@ w1) s) | _83 -> NONE) | asm_FP (FPToInt d1 d2) ->
+               (w2 @@ w1) s) | _83 -> NONE) | FP (FPToInt d1 d2) ->
          (match get_fp_var d2 s with
            NONE -> NONE | SOME f ->
          (match fp64_to_int roundTiesToEven f with
@@ -821,7 +819,7 @@ let inst_def = cake_define
                 (let (h,l) = if ODD d1 then (63,32) else (31,0) in
                      SOME (set_fp_var (d1 DIV 2) (bit_field_insert h
                        l w f) s))) else
-             NONE))) | asm_FP (FPFromInt d1 d2) ->
+             NONE))) | FP (FPFromInt d1 d2) ->
          (if dimindex (:'a) = 64 then
            match get_fp_var d2 s with SOME f ->
              (let i = w2i ((31 >< 0) f:word32) in
@@ -945,9 +943,8 @@ let evaluate_def = cake_define_wf
       match word_exp s exp with NONE -> (SOME Error,s) | SOME w ->
         (NONE,set_store v w s))) /\
    (wordSem_evaluate (OpCurrHeap b dst src,s) =
-      (match word_exp s (Op b [Var src; wordLang_Lookup CurrHeap])
-        with NONE -> (SOME Error,s) | SOME w -> (NONE,set_var dst w s)))
-        /\
+      (match word_exp s (Op b [Var src; Lookup CurrHeap]) with NONE
+        -> (SOME Error,s) | SOME w -> (NONE,set_var dst w s))) /\
    (wordSem_evaluate (Store exp v,s) =
       (match (word_exp s exp,get_var v s) with (SOME (Word a),SOME w)
         ->
@@ -956,7 +953,7 @@ let evaluate_def = cake_define_wf
    (wordSem_evaluate (Tick,s) =
       (if wordSem_state_clock s = 0 then (SOME TimeOut,flush_state T
         s) else (NONE,dec_clock s))) /\
-   (wordSem_evaluate (wordLang_MustTerminate p,s) =
+   (wordSem_evaluate (MustTerminate p,s) =
       (if wordSem_state_termdep s = 0 then (SOME Error,s) else
         let (res,s1) = wordSem_evaluate (p,wordSem_state_termdep_fupd
           (K (wordSem_state_termdep s - 1)) (wordSem_state_clock_fupd (K
@@ -1069,7 +1066,7 @@ let evaluate_def = cake_define_wf
                      (wordSem_state_locals_fupd (K env)
                      (wordSem_state_memory_fupd (K new_m) s)))))) | _119
                      -> (SOME Error,s))) | res -> (SOME Error,s))) /\
-   (wordSem_evaluate (wordLang_ShareInst op v exp,s) =
+   (wordSem_evaluate (ShareInst op v exp,s) =
      (match word_exp s exp with SOME (Word ad) -> share_inst op v ad
        s | _120 -> (SOME Error,s))) /\
    (wordSem_evaluate (Call ret dest args handler,s) =
@@ -1150,13 +1147,13 @@ let semantics_def = cake_define
          ?k t r outcome.
            evaluate (prog,wordSem_state_clock_fupd (K k) s) = (r,t)
              /\
-           (match r with (SOME (FinalFFI e)) -> outcome =
-             ffi_FFI_outcome e | (SOME (Result _127 _128)) -> outcome =
-             Success | (SOME wordSem_NotEnoughSpace) -> outcome =
-             ffi_Resource_limit_hit | _129 -> F) /\
-           res = ffi_Terminate outcome (ffi_state_io_events
+           (match r with (SOME (FinalFFI e)) -> outcome = FFI_outcome
+             e | (SOME (Result _127 _128)) -> outcome = Success | (SOME
+             NotEnoughSpace) -> outcome = Resource_limit_hit | _129 ->
+             F) /\
+           res = Terminate outcome (ffi_state_io_events
              (wordSem_state_ffi t))) with SOME res -> res | NONE ->
-         ffi_Diverge
+         Diverge
             (build_lprefix_lub
               (IMAGE (\k. fromList (ffi_state_io_events
                 (wordSem_state_ffi

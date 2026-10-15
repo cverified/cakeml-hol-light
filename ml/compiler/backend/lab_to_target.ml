@@ -31,23 +31,22 @@ let lab_inst_def = cake_define
    (lab_inst w (LocValue r _4) = Loc r (w:'a word)) /\
    (lab_inst w (Halt) = Jump w) /\
    (lab_inst w (Install) = Jump w) /\
-   (lab_inst w (labLang_CallFFI n) = Jump w)`;;
+   (lab_inst w (CallFFI n) = Jump w)`;;
 
 let cbw_to_asm_def = cake_define
   `cbw_to_asm a =
    (match a with
-     Asmi a -> a | Cbw r1 r2 -> Inst (asm_Mem asm_Store8 r2 (Addr
-       r1 (n2w 0))) | ShareMem m r ad -> Inst (asm_Mem m r ad))`;;
+     Asmi a -> a | Cbw r1 r2 -> Inst (Mem Store8 r2 (Addr r1 (n2w
+       0))) | ShareMem m r ad -> Inst (Mem m r ad))`;;
 
 
 let enc_line_def = cake_define
   `(enc_line enc skip_len (Label n1 n2 n3) = Label n1 n2 skip_len) /\
-   (enc_line enc skip_len (labLang_Asm a _5 _6) =
-      (let bs = enc (cbw_to_asm a) in labLang_Asm a bs (LENGTH bs)))
-        /\
-   (enc_line enc skip_len (labLang_LabAsm l _7 _8 _9) =
+   (enc_line enc skip_len (Asm a _5 _6) =
+      (let bs = enc (cbw_to_asm a) in Asm a bs (LENGTH bs))) /\
+   (enc_line enc skip_len (LabAsm l _7 _8 _9) =
       (let bs = enc (lab_inst (n2w 0) l) in
-        labLang_LabAsm l (n2w 0) bs (LENGTH bs)))`;;
+        LabAsm l (n2w 0) bs (LENGTH bs)))`;;
 
 let enc_sec_def = cake_define
   `enc_sec enc skip_len (Section k xs) =
@@ -66,9 +65,9 @@ let section_labels_def = cake_define
       (if l2 = 0 then
         section_labels (pos + len) xs labs else
         section_labels (pos + len) xs ((l2,pos + len) :: labs))) /\
-   (section_labels pos (labLang_Asm _11 _12 len :: xs) labs =
+   (section_labels pos (Asm _11 _12 len :: xs) labs =
       section_labels (pos + len) xs labs) /\
-   (section_labels pos (labLang_LabAsm _13 _14 _15 len :: xs) labs =
+   (section_labels pos (LabAsm _13 _14 _15 len :: xs) labs =
       section_labels (pos + len) xs labs)`;;
 
 let compute_labels_alt_def = cake_define
@@ -104,7 +103,7 @@ let get_ffi_index_def = cake_define
 let get_jump_offset_def = cake_define
   `get_jump_offset a ffis labs pos =
         match a with
-          (labLang_CallFFI s) ->
+          (CallFFI s) ->
         (n2w 0) - n2w (pos + (3 + get_ffi_index ffis (ExtCall s)) *
           ffi_offset)
         | Install ->
@@ -121,21 +120,20 @@ let enc_lines_again_def = cake_define
      (acc,ok) =
       enc_lines_again labs ffis (pos + l) enc xs ((Label k1 k2 l) ::
         acc,ok)) /\
-   (enc_lines_again labs ffis pos enc ((labLang_Asm x1 x2 l) :: xs)
+   (enc_lines_again labs ffis pos enc ((Asm x1 x2 l) :: xs) (acc,ok)
+     =
+      enc_lines_again labs ffis (pos + l) enc xs ((Asm x1 x2 l) ::
+        acc,ok)) /\
+   (enc_lines_again labs ffis pos enc ((LabAsm a w bytes l) :: xs)
      (acc,ok) =
-      enc_lines_again labs ffis (pos + l) enc xs ((labLang_Asm x1 x2
-        l) :: acc,ok)) /\
-   (enc_lines_again labs ffis pos enc ((labLang_LabAsm a w bytes l)
-     :: xs) (acc,ok) =
       (let w1 = get_jump_offset a ffis labs pos in
         if w = w1 then
-          enc_lines_again labs ffis (pos + l) enc xs ((labLang_LabAsm
-            a w bytes l) :: acc,ok) else
+          enc_lines_again labs ffis (pos + l) enc xs ((LabAsm a w
+            bytes l) :: acc,ok) else
           let bs = enc (lab_inst w1 a) in
           let l1 = MAX (LENGTH bs) l in
             enc_lines_again labs ffis (pos + l1) enc xs
-              ((labLang_LabAsm a w1 bs l1) :: acc,(ok /\ (l1 =
-                l)))))`;;
+              ((LabAsm a w1 bs l1) :: acc,(ok /\ (l1 = l)))))`;;
 
 let enc_secs_again_def = cake_define
   `(enc_secs_again pos labs ffis enc [] = ([],T)) /\
@@ -153,12 +151,11 @@ let lines_upd_lab_len_def = cake_define
       (let l1 = if EVEN pos then 0 else 1 in
         lines_upd_lab_len (pos + l1) xs ((Label k1 k2 l1 :: acc))))
           /\
-   (lines_upd_lab_len pos ((labLang_Asm x1 x2 l) :: xs) acc =
-      lines_upd_lab_len (pos + l) xs ((labLang_Asm x1 x2 l) :: acc))
-        /\
-   (lines_upd_lab_len pos ((labLang_LabAsm a w bytes l) :: xs) acc =
-      lines_upd_lab_len (pos + l) xs ((labLang_LabAsm a w bytes l)
-        :: acc))`;;
+   (lines_upd_lab_len pos ((Asm x1 x2 l) :: xs) acc =
+      lines_upd_lab_len (pos + l) xs ((Asm x1 x2 l) :: acc)) /\
+   (lines_upd_lab_len pos ((LabAsm a w bytes l) :: xs) acc =
+      lines_upd_lab_len (pos + l) xs ((LabAsm a w bytes l) ::
+        acc))`;;
 
 let upd_lab_len_def = cake_define
   `(upd_lab_len pos [] = []) /\
@@ -173,16 +170,16 @@ let line_ok_light_def = cake_define
   `line_ok_light c x2 =
         match (c,x2) with
           ((c:'a asm_config),(Label _17 _18 l)) -> T
-        | (c,(labLang_Asm b bytes l)) -> T
-        | (c,(labLang_LabAsm Halt w bytes l)) ->
+        | (c,(Asm b bytes l)) -> T
+        | (c,(LabAsm Halt w bytes l)) ->
         asm_ok (Jump w) c
-        | (c,(labLang_LabAsm Install w bytes l)) ->
+        | (c,(LabAsm Install w bytes l)) ->
         asm_ok (Jump w) c
-        | (c,(labLang_LabAsm (labLang_CallFFI index) w bytes l)) ->
+        | (c,(LabAsm (CallFFI index) w bytes l)) ->
         asm_ok (Jump w) c
-        | (c,(labLang_LabAsm (Call v24) w bytes l)) ->
+        | (c,(LabAsm (Call v24) w bytes l)) ->
         F
-        | (c,(labLang_LabAsm a w bytes l)) ->
+        | (c,(LabAsm a w bytes l)) ->
         asm_ok (lab_inst w a) c`;;
 
 let sec_ok_light_def = cake_define
@@ -204,22 +201,22 @@ let add_nop_def = cake_define
   `(add_nop nop [] = []) /\
    (add_nop nop ((Label l1 l2 len) :: xs) =
      (Label l1 l2 len) :: add_nop nop xs) /\
-   (add_nop nop ((labLang_Asm x bytes len) :: xs) =
-     labLang_Asm x (bytes ++ nop) (len + 1) :: xs) /\
-   (add_nop nop ((labLang_LabAsm y w bytes len) :: xs) =
-     labLang_LabAsm y w (bytes ++ nop) (len + 1) :: xs)`;;
+   (add_nop nop ((Asm x bytes len) :: xs) =
+     Asm x (bytes ++ nop) (len + 1) :: xs) /\
+   (add_nop nop ((LabAsm y w bytes len) :: xs) =
+     LabAsm y w (bytes ++ nop) (len + 1) :: xs)`;;
 
 let pad_section_def = cake_define
   `(pad_section nop [] aux = REVERSE aux) /\
    (pad_section nop ((Label l1 l2 len) :: xs) aux =
       pad_section nop xs ((Label l1 l2 0) ::
       (if len = 0 then aux else add_nop nop aux))) /\
-   (pad_section nop ((labLang_Asm x bytes len) :: xs) aux =
-      pad_section nop xs (labLang_Asm x (pad_bytes bytes len nop) len
-        :: aux)) /\
-   (pad_section nop ((labLang_LabAsm y w bytes len) :: xs) aux =
-      pad_section nop xs (labLang_LabAsm y w (pad_bytes bytes len
-        nop) len :: aux))`;;
+   (pad_section nop ((Asm x bytes len) :: xs) aux =
+      pad_section nop xs (Asm x (pad_bytes bytes len nop) len ::
+        aux)) /\
+   (pad_section nop ((LabAsm y w bytes len) :: xs) aux =
+      pad_section nop xs (LabAsm y w (pad_bytes bytes len nop) len
+        :: aux))`;;
 
 let pad_code_def = cake_define
   `(pad_code nop [] = []) /\
@@ -230,10 +227,9 @@ let sec_length_def = cake_define
   `(sec_length [] k = k) /\
    (sec_length ((Label _19 _20 l) :: xs) k = sec_length xs (k + l))
      /\
-   (sec_length ((labLang_Asm x1 x2 l) :: xs) k = sec_length xs (k +
-     l)) /\
-   (sec_length ((labLang_LabAsm a w bytes l) :: xs) k = sec_length
-     xs (k + l))`;;
+   (sec_length ((Asm x1 x2 l) :: xs) k = sec_length xs (k + l)) /\
+   (sec_length ((LabAsm a w bytes l) :: xs) k = sec_length xs (k +
+     l))`;;
 
 let get_symbols_def = cake_define
   `(get_symbols pos [] = []) /\
@@ -257,7 +253,7 @@ let zero_labs_acc_of_def = cake_define
 let line_get_zero_labs_acc_def = cake_define
   `line_get_zero_labs_acc x1 acc =
       match x1 with
-        (labLang_LabAsm a _26 _27 _28) -> zero_labs_acc_of a acc
+        (LabAsm a _26 _27 _28) -> zero_labs_acc_of a acc
       | _29 -> acc`;;
 
 let sec_get_zero_labs_acc_def = cake_define
@@ -289,8 +285,7 @@ let remove_labels_loop_def = cake_define
            (asm_config_encode c) sec_list in
          let sec_list = pad_code (asm_config_encode c (Inst Skip))
            sec_list in
-           if done' /\ (\c ls. EVERY (sec_ok_light c) ls) c sec_list
-             /\
+           if done' /\ all_enc_ok_light c sec_list /\
               zero_labs_acc_exist labs sec_list then SOME
                 (sec_list,labs) else NONE else
          if clock = (0:num) then NONE else
@@ -306,8 +301,8 @@ let remove_labels_def = cake_define
 
 let line_bytes_def = cake_define
   `(line_bytes (Label _32 _33 _34) = []) /\
-   (line_bytes (labLang_Asm _35 bytes _36) = bytes) /\
-   (line_bytes (labLang_LabAsm _37 _38 bytes _39) = bytes)`;;
+   (line_bytes (Asm _35 bytes _36) = bytes) /\
+   (line_bytes (LabAsm _37 _38 bytes _39) = bytes)`;;
 
 let prog_to_bytes_def = cake_define
   `(prog_to_bytes [] = []) /\
@@ -347,20 +342,20 @@ let find_ffi_names_def = cake_define
    (find_ffi_names (Section k [] :: rest) =
       find_ffi_names rest) /\
    (find_ffi_names (Section k (x :: xs) :: rest) =
-    (match x with labLang_LabAsm (labLang_CallFFI s) _40 _41 _42 ->
+    (match x with LabAsm (CallFFI s) _40 _41 _42 ->
         list_add_if_fresh (ExtCall s) (find_ffi_names (Section k
           xs :: rest)) | _43 -> find_ffi_names (Section k xs ::
           rest)))`;;
 
 let get_memop_info_def = cake_define
   `get_memop_info Load = (MappedRead,((n2w 0):word8)) /\
-   get_memop_info asm_Load32 = (MappedRead,(n2w 4)) /\
-   get_memop_info asm_Load16 = (MappedRead,(n2w 2)) /\
-   get_memop_info asm_Load8 = (MappedRead,(n2w 1)) /\
+   get_memop_info Load32 = (MappedRead,(n2w 4)) /\
+   get_memop_info Load16 = (MappedRead,(n2w 2)) /\
+   get_memop_info Load8 = (MappedRead,(n2w 1)) /\
    get_memop_info Store = (MappedWrite,(n2w 0)) /\
-   get_memop_info asm_Store32 = (MappedWrite,(n2w 4)) /\
-   get_memop_info asm_Store16 = (MappedWrite,(n2w 2)) /\
-   get_memop_info asm_Store8 = (MappedWrite,(n2w 1))`;;
+   get_memop_info Store32 = (MappedWrite,(n2w 4)) /\
+   get_memop_info Store16 = (MappedWrite,(n2w 2)) /\
+   get_memop_info Store8 = (MappedWrite,(n2w 1))`;;
 
 (* produce a list of ffi_names for shared memory instructions and
   a list of shmem_infos (e.g. pc of the shared memory instruction) *)
@@ -374,8 +369,8 @@ let get_shmem_info_def = cake_define
         | ((Section k ((Label _44 _45 _46) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) pos ffi_names shmem_info
-        | ((Section k ((labLang_Asm (ShareMem m r ad) bytes _47) ::
-          xs) :: rest),shmem_info) ->
+        | ((Section k ((Asm (ShareMem m r ad) bytes _47) :: xs) ::
+          rest),shmem_info) ->
        let (name,nb) = get_memop_info m in
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          (ffi_names ++ [SharedMem name])
@@ -384,11 +379,11 @@ let get_shmem_info_def = cake_define
            mk_shmem_info_num pos nb (match ad with Addr r off -> r)
              (match ad with Addr r off -> w2n off) r (pos + LENGTH
              bytes)])
-        | ((Section k ((labLang_LabAsm _48 _49 bytes _50) :: xs) ::
+        | ((Section k ((LabAsm _48 _49 bytes _50) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          ffi_names shmem_info
-        | ((Section k ((labLang_Asm _51 bytes _52) :: xs) ::
+        | ((Section k ((Asm _51 bytes _52) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          ffi_names shmem_info`;;

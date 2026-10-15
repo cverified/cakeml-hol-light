@@ -43,9 +43,9 @@ let renumber_code_locs_def = cake_define_list
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs_list n x2 in
            (n,App t NONE x1 x2))`;
-   `renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
+   `renumber_code_locs n (Fn t loc vs num_args x1) =
          (let (n,x1) = renumber_code_locs n x1 in
-           (n + 2,closLang_Fn t (SOME n) vs num_args x1))`;
+           (n + 2,Fn t (SOME n) vs num_args x1))`;
    `renumber_code_locs n (Letrec t loc vs fns x1) =
          (let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
          let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
@@ -56,7 +56,7 @@ let renumber_code_locs_def = cake_define_list
            (n,Handle t x1 x2))`;
    `renumber_code_locs n (Call t ticks dest xs) =
          (let (n,xs) = renumber_code_locs_list n xs in
-           (n,Op t (closLang_IntOp Add) xs))`];;
+           (n,Op t (IntOp Add) xs))`];;
 
 (* HOL4 ML code, not ported:
 val renumber_code_locs_ind = theorem"renumber_code_locs_ind";
@@ -66,8 +66,7 @@ let compile_inc_def = cake_define
   `clos_number_compile_inc n xs =
      (let n1 = make_even (n + MAX (LENGTH xs) 1) in
      let (m,ys) = renumber_code_locs_list n1 xs in
-       (m,Op backend_common_None (closLang_IntOp (Const (&n))) []
-         :: ys))`;;
+       (m,Op backend_common_None (IntOp (Const (&n))) [] :: ys))`;;
 hol4_overload "compile_inc" "clos_number_compile_inc";;
 
 let ignore_table_def = cake_define
