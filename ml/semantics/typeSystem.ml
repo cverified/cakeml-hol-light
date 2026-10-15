@@ -239,19 +239,20 @@ let extend_dec_tenv_def = cake_define
 
 (*val lookup_varE : id modN varN -> tenv_val_exp -> maybe (nat * t)*)
 let lookup_varE_def = cake_define
-  `((lookup_varE:(mlstring,mlstring)id->tenv_val_exp->(num#t) option) id
-  tenvE =
-     ((match id with
+  `((lookup_varE:(mlstring,mlstring)namespace_id->tenv_val_exp->(num#t)
+  option) id' tenvE =
+     ((match id' with
       Short x -> tveLookup x ((0:num)) tenvE | _1 -> NONE)))`;;
 
 
 (*val lookup_var : id modN varN -> tenv_val_exp -> type_env -> maybe
    (nat * t)*)
 let lookup_var_def = cake_define
-  `((lookup_var:(mlstring,mlstring)id->tenv_val_exp->type_env->(num#t)
-  option) id tenvE tenv =
-     ((match lookup_varE id tenvE with
-      SOME x -> SOME x | NONE -> nsLookup (?_v tenv) id)))`;;
+  `((lookup_var:(mlstring
+  ,mlstring)namespace_id->tenv_val_exp->type_env->(num#t) option) id'
+  tenvE tenv =
+     ((match lookup_varE id' tenvE with
+      SOME x -> SOME x | NONE -> nsLookup (?_v tenv) id')))`;;
 
 
 (*val num_tvs : tenv_val_exp -> nat*)
@@ -302,13 +303,15 @@ let bind_var_list_def = cake_define
  * - the environment of new stuff declared here *)
 
 let t_of_def = cake_define
-  `t_of BoolT = Tbool /\
-   t_of IntT = Tint /\
-   t_of CharT = Tchar /\
-   t_of StrT = Tstring /\
-   t_of (WordT W8) = Tword8 /\
-   t_of (WordT W64) = Tword64 /\
-   t_of Float64T = Tdouble`;;
+  `t_of x1 =
+      match x1 with
+        BoolT -> Tbool
+      | IntT -> Tint
+      | CharT -> Tchar
+      | StrT -> Tstring
+      | (WordT W8) -> Tword8
+      | (WordT W64) -> Tword64
+      | Float64T -> Tdouble`;;
 
 let supported_test_def = cake_define
   `supported_test x1 ty =

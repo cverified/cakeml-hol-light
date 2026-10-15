@@ -43,76 +43,76 @@ let iAssign_def = cake_define
                   (Assign n1 op vs NONE))`;;
 
 let compile_def = cake_define
-  `(bvi_to_data_compile (n:num) (env:num list) tail live [] =
-     (Skip,([]:num list),n)) /\
-   (bvi_to_data_compile n env tail live (x :: y :: xs) =
-      (let (c1,v1,n1) = bvi_to_data_compile n env F live [x] in
-      let (c2,vs,n2) = bvi_to_data_compile n1 env F (HD v1 :: live)
-        (y :: xs) in
-        (Seq c1 c2,HD v1 :: vs,n2))) /\
-   (bvi_to_data_compile n env tail live [(Var v):bvi_exp] =
-      (let var = any_el v env 0 in
-      if tail then (Return [var],[n],n + 1) else (Skip,[var],MAX n
-        (var + 1)))) /\
-   (bvi_to_data_compile n env tail live [If x1 x2 x3] =
-      (let (c1,v1,n1) = bvi_to_data_compile n env F live [x1] in
-      let (c2,v2,n2) = bvi_to_data_compile n1 env tail live [x2] in
-      let (c3,v3,n3) = bvi_to_data_compile n2 env tail live [x3] in
-        if tail then
-          (Seq c1 (If (HD v1) c2 c3),[n3],n3 + 1) else
-          (Seq c1 (If (HD v1) (Seq c2 (Move n3 (HD v2)))
+  `bvi_to_data_compile n env tail live x5 =
+        match (n,env,x5) with
+          ((n:num),(env:num list),[]) ->
+       (Skip,([]:num list),n)
+        | (n,env,(x :: y :: xs)) ->
+        let (c1,v1,n1) = bvi_to_data_compile n env F live [x] in
+        let (c2,vs,n2) = bvi_to_data_compile n1 env F (HD v1 :: live)
+          (y :: xs) in
+          (Seq c1 c2,HD v1 :: vs,n2)
+        | (n,env,[(Var v):bvi_exp]) ->
+        let var = any_el v env 0 in
+        if tail then (Return [var],[n],n + 1) else (Skip,[var],MAX n
+          (var + 1))
+        | (n,env,[If x1 x2 x3]) ->
+        let (c1,v1,n1) = bvi_to_data_compile n env F live [x1] in
+        let (c2,v2,n2) = bvi_to_data_compile n1 env tail live [x2] in
+        let (c3,v3,n3) = bvi_to_data_compile n2 env tail live [x3] in
+          if tail then
+            (Seq c1 (If (HD v1) c2 c3),[n3],n3 + 1) else
+            (Seq c1 (If (HD v1) (Seq c2 (Move n3 (HD v2)))
                               (Seq c3 (Move n3 (HD v3)))),[n3],n3 +
-                                1))) /\
-   (bvi_to_data_compile n env tail live [Let xs x2] =
-      (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-      let (c2,v2,n2) = bvi_to_data_compile n1 (vs ++ env) tail live
-        [x2] in
-        (Seq c1 c2,v2,n2))) /\
-   (bvi_to_data_compile n env tail live [Raise x1] =
-      (let (c1,v1,n1) = bvi_to_data_compile n env F live [x1] in
-        (Seq c1 (Raise (HD v1)),v1,n1))) /\
-   (bvi_to_data_compile n env tail live [Return xs] =
-      (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-        (Seq c1 (Return vs),[n1],n1 + 1))) /\
-   (bvi_to_data_compile n env tail live [Op op xs] =
-      (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-      let c2 = Seq c1 (iAssign n1 op (REVERSE vs) live env) in
-        (if tail then Seq c2 (Return [n1]) else c2,[n1],n1 + 1))) /\
-   (bvi_to_data_compile n env tail live [Tick x1] =
-      (let (c1,v1,n1) = bvi_to_data_compile n env tail live [x1] in
-        (Seq Tick c1,v1,n1))) /\
-   (bvi_to_data_compile n env tail live [Force loc v] =
-      (let var = any_el v env 0 in
-      let ret = (if tail then NONE else SOME (n,list_to_num_set (live
-        ++ env))) in
-        (Force ret loc var,[n],MAX (n + 1) (var + 1)))) /\
-   (bvi_to_data_compile n env tail live [Call ticks dest xs NONE] =
-      (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-      let ret = (if tail then NONE else SOME ([n1],list_to_num_set
-        (live ++ env))) in
-        (Seq c1 (mk_ticks ticks (Call ret dest vs NONE)),[n1],n1 +
-          1))) /\
-   (bvi_to_data_compile n env tail live [Call ticks dest xs (SOME
-     handler)] =
-      (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-      let (c2,v,n2) = bvi_to_data_compile (n1 + 1) (n1 :: env) F live
-        [handler] in
-      let ret = SOME ([n2],list_to_num_set (live ++ env)) in
-      let c3 = (if tail then Return [n2] else Skip) in
-        (Seq c1 (mk_ticks ticks (Seq (Call ret dest vs (SOME (n1,Seq
-          c2 (Move n2 (HD v))))) c3)),[n2],n2 + 1))) /\
-   (bvi_to_data_compile n env tail live [LetCall rets ticks dest xs
-     y] =
-      (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-        if y = Return (GENLIST Var rets) then
-          (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs
-            NONE)),[n1],n1 + 1) else
-          let rs = GENLIST (\i. n1 + i) rets in
-          let (c2,v,n2) = bvi_to_data_compile (n1 + rets) (rs ++ env)
-            tail live [y] in
-          let ret = (SOME (rs,list_to_num_set (live ++ env))) in
-            (Seq (Seq c1 (mk_ticks ticks (Call ret (SOME dest) vs
-              NONE))) c2,v,n2)))`;;
+                                1)
+        | (n,env,[Let xs x2]) ->
+        let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
+        let (c2,v2,n2) = bvi_to_data_compile n1 (vs ++ env) tail live
+          [x2] in
+          (Seq c1 c2,v2,n2)
+        | (n,env,[Raise x1]) ->
+        let (c1,v1,n1) = bvi_to_data_compile n env F live [x1] in
+          (Seq c1 (Raise (HD v1)),v1,n1)
+        | (n,env,[Return xs]) ->
+        let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
+          (Seq c1 (Return vs),[n1],n1 + 1)
+        | (n,env,[Op op xs]) ->
+        let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
+        let c2 = Seq c1 (iAssign n1 op (REVERSE vs) live env) in
+          (if tail then Seq c2 (Return [n1]) else c2,[n1],n1 + 1)
+        | (n,env,[Tick x1]) ->
+        let (c1,v1,n1) = bvi_to_data_compile n env tail live [x1] in
+          (Seq Tick c1,v1,n1)
+        | (n,env,[Force loc v]) ->
+        let var = any_el v env 0 in
+        let ret = (if tail then NONE else SOME (n,list_to_num_set
+          (live ++ env))) in
+          (Force ret loc var,[n],MAX (n + 1) (var + 1))
+        | (n,env,[Call ticks dest xs NONE]) ->
+        let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
+        let ret = (if tail then NONE else SOME ([n1],list_to_num_set
+          (live ++ env))) in
+          (Seq c1 (mk_ticks ticks (Call ret dest vs NONE)),[n1],n1 +
+            1)
+        | (n,env,[Call ticks dest xs (SOME handler)]) ->
+        let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
+        let (c2,v,n2) = bvi_to_data_compile (n1 + 1) (n1 :: env) F
+          live [handler] in
+        let ret = SOME ([n2],list_to_num_set (live ++ env)) in
+        let c3 = (if tail then Return [n2] else Skip) in
+          (Seq c1 (mk_ticks ticks (Seq (Call ret dest vs (SOME
+            (n1,Seq c2 (Move n2 (HD v))))) c3)),[n2],n2 + 1)
+        | (n,env,[LetCall rets ticks dest xs y]) ->
+        let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
+          if y = Return (GENLIST Var rets) then
+            (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs
+              NONE)),[n1],n1 + 1) else
+            let rs = GENLIST (\i. n1 + i) rets in
+            let (c2,v,n2) = bvi_to_data_compile (n1 + rets) (rs ++
+              env) tail live [y] in
+            let ret = (SOME (rs,list_to_num_set (live ++ env))) in
+              (Seq (Seq c1 (mk_ticks ticks (Call ret (SOME dest)
+                vs NONE))) c2,v,n2)`;;
 hol4_overload "compile" "bvi_to_data_compile";;
 
 let compile_sing_def = cake_define_list

@@ -92,11 +92,13 @@ hol4_overload "merge_moves" "word_alloc_merge_moves";;
   F, INR <- right side
 *)
 let priority_def = cake_define
-  `(priority NONE b = 1) /\
-   (priority (SOME (INL one)) b =
-     (if b then 2 else 1)) /\
-   (priority (SOME (INR one)) b =
-     (if b then 1 else 2))`;;
+  `priority x1 b =
+        match x1 with
+          NONE -> 1
+        | (SOME (INL one)) ->
+       if b then 2 else 1
+        | (SOME (INR one)) ->
+       if b then 1 else 2`;;
 
 (*Separately do the fake moves*)
 let fake_moves_def = cake_define
@@ -331,7 +333,7 @@ let ssa_reconcile_def = cake_define
    emit a real Move; for vars not in ssa we allocate fresh ssa entries
    and fake_move-initialise the corresponding target registers. *)
 let loop_setup_def = cake_define
-  `loop_setup (names:one spt) (exit_names:one spt) ssa na =
+  `loop_setup (names:1 spt) (exit_names:1 spt) ssa na =
      (let all_vars_ls = MAP FST (toAList (union names exit_names)) in
      let extend_ls = FILTER (\v. lookup v ssa = NONE) all_vars_ls in
      let refresh_ls = FILTER (\v. IS_SOME (lookup v ssa)) all_vars_ls
@@ -862,7 +864,7 @@ let get_live_def = cake_define
 let remove_dead_inst_def = cake_define
   `remove_dead_inst x live =
         match (x,live) with
-          (Skip,(live:one spt)) -> T
+          (Skip,(live:1 spt)) -> T
         | ((Const reg w),live) -> (lookup reg live = NONE)
         | ((Arith (Binop bop r1 r2 ri)),live) -> (lookup r1 live =
           NONE)
@@ -1318,13 +1320,13 @@ let heu_max_all_def = cake_define
        NONE -> v | SOME v' -> heu_max v v') t2))`;;
 
 let heu_merge_call_def = cake_define
-  `heu_merge_call (t1:one spt) t2 =
+  `heu_merge_call (t1:1 spt) t2 =
    union t1 t2`;;
 
 (* We use "lr" to approximate any new vars not already tracked in calls
    *)
 let add_call_def = cake_define
-  `(add_call lr calls':one spt) =
+  `(add_call lr calls':1 spt) =
    union (map (\v. one) lr) calls'`;;
 
 let get_heu_def = cake_define
@@ -1350,7 +1352,7 @@ let get_heu_def = cake_define
        let (lr2,calls2) = get_heu fc e2 lr in
        let (lr3,calls3) = get_heu fc e3 lr in
        let lr = heu_max_all lr2 lr3 in
-       let calls = heu_merge_call (calls2:one spt) calls3 in
+       let calls = heu_merge_call (calls2:1 spt) calls3 in
        ((match ri with
          Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _38 ->
          add1_rhs_reg r1 lr),calls)

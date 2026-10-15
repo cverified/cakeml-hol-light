@@ -22,6 +22,7 @@ needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_pattern.ml";;
+needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
@@ -288,22 +289,24 @@ let get_nth_line_def = cake_define
        get_nth_line (k - (1:num)) s (find_next_newline n s + 1))`;;
 
 let locs_to_string_def = cake_define
-  `(locs_to_string input NONE = implode "unknown location") /\
-   (locs_to_string input (SOME (Locs startl endl)) =
-     (match startl with POSN r c ->
-        (let line = get_nth_line r input 0 in
-         let len = strlen line in
-         let stop =
-           (match endl with POSN r1 c1 -> (if r1 = r then c1 else
-             len) | _3 -> len) in
-         let underline =
-           concat (REPLICATE c (implode " ") ++ REPLICATE ((stop - c)
-             + 1) ((implode) [CHR 94])) in
-           concat [(implode "line "); (num_to_str) (r + 1); (implode
-             "\n\n");
-                   line; (implode "\n");
-                   underline; (implode "\n")]) | _4 -> implode
-                     "unknown location"))`;;
+  `locs_to_string input x2 =
+        match x2 with
+          NONE -> implode "unknown location"
+        | (SOME (Locs startl endl)) ->
+       match startl with POSN r c ->
+          (let line = get_nth_line r input 0 in
+           let len = strlen line in
+           let stop =
+             (match endl with POSN r1 c1 -> (if r1 = r then c1 else
+               len) | _3 -> len) in
+           let underline =
+             concat (REPLICATE c (implode " ") ++ REPLICATE ((stop -
+               c) + 1) ((implode) [CHR 94])) in
+             concat [(implode "line "); (num_to_str) (r + 1);
+               (implode "\n\n");
+                     line; (implode "\n");
+                     underline; (implode "\n")]) | _4 -> implode
+                       "unknown location"`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
 (* HOL4 overload (expanded in the port):

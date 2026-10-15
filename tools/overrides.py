@@ -9,7 +9,6 @@ FIELD_OF: the record type of a field name where several record
 # HOL4 names of notions that HOL Light has under another name
 NAME_MAP = {
   'measure': 'MEASURE',
-  'unit': 'one',
   'set': 'set_of_list',
   '()': 'one',
   'Num': 'num_of_int',
@@ -21,6 +20,15 @@ NAME_MAP = {
   'UINT_MAXw': 'word_T',
   'UNCURRY': 'UNCURRY',
   'I': 'I',
+}
+
+# HOL4 type names of types that HOL Light has under another name
+TYPE_MAP = {
+  # HOL4's one (and its abbreviation unit) is the type with one
+  # element, which HOL Light calls 1 (its element is one, as in
+  # HOL4)
+  'one': '1',
+  'unit': '1',
 }
 
 ACCESSORS = {
@@ -90,6 +98,7 @@ INT_NUMERALS = set([
   ('binary_ieee', 'float_div_def'),
   ('binary_ieee', 'float_mul_add_def'),
   ('integer_word', 'toString_def'),
+  ('backend_common', 'small_enough_int_def'),
   ('integer_word', 'fromString_def'),
 ])
 

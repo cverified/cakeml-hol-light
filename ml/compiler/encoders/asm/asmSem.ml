@@ -51,7 +51,8 @@ let read_fp_reg_def = cake_define
   `asmSem_read_fp_reg r s = asm_state_fp_regs s r`;;
 hol4_overload "read_fp_reg" "asmSem_read_fp_reg";;
 let read_mem_def = cake_define
-  `read_mem a s = asm_state_mem s a`;;
+  `asmSem_read_mem a s = asm_state_mem s a`;;
+hol4_overload "read_mem" "asmSem_read_mem";;
 
 let assert_def = cake_define
   `asmSem_assert b s = asm_state_failed_fupd (K (~b \/

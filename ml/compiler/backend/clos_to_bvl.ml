@@ -355,97 +355,95 @@ let _ = size_thms "exp3";;
    (qspec_then `v7` assume_tac) >> decide_tac *)
 let compile_exps_def = cake_define_wf
   `MEASURE (exp3_size o FST o SND)`
-  `(clos_to_bvl_compile_exps max_app [] aux = ([],aux)) /\
-   (clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs)
-     aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux in
-      let (c2,aux2) = clos_to_bvl_compile_exps max_app (y :: xs) aux1
-        in
-        (c1 ++ c2,aux2))) /\
-   (clos_to_bvl_compile_exps max_app [Var t v] aux = ([(Var
-     v):bvl_exp],aux)) /\
-   (clos_to_bvl_compile_exps max_app [If t x1 x2 x3] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-      let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
-      let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2 in
-        ([If (HD c1) (HD c2) (HD c3)],aux3))) /\
-   (clos_to_bvl_compile_exps max_app [Let t xs x2] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-      let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
-        ([Let c1 (HD c2)],aux2))) /\
-   (clos_to_bvl_compile_exps max_app [Raise t x1] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-        ([Raise (HD c1)],aux1))) /\
-   (clos_to_bvl_compile_exps max_app [Tick t x1] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-        ([Tick (HD c1)],aux1))) /\
-   (clos_to_bvl_compile_exps max_app [Op t op xs] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-      (
-      [if op = Install then
-          Call 0 NONE [Op Install c1] else if op = ThunkOp ForceThunk
-            then
-          Let c1 (Force (num_stubs max_app - 2) 0) else
-          Op (compile_op op) c1],aux1))) /\
-   (clos_to_bvl_compile_exps max_app [App t loc_opt x1 xs2] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-      let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1 in
-        ([match loc_opt with NONE ->
-              Let (c2 ++ c1) (mk_cl_call (Var (LENGTH c2)) (GENLIST
-                Var (LENGTH c2))) | SOME loc ->
-              (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
-                max_app))) (c2 ++ c1))],
-         aux2))) /\
-   (clos_to_bvl_compile_exps max_app [Fn t loc_opt vs_opt num_args
-     x1] aux =
-      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-      let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
-      let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-      let c2 =
-        Let (GENLIST Var num_args ++ free_let (Var num_args) (LENGTH
-          vs))
-            (HD c1) in
-        ([Op (BlockOp (Cons closure_tag))
-             (REVERSE (mk_label (loc + num_stubs max_app) :: mk_const
-               (num_args - 1) :: MAP Var vs))],
-         (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))) /\
-   (clos_to_bvl_compile_exps max_app [Letrec t loc_opt vsopt fns x1]
-     aux =
-      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-      let vs = match vsopt with NONE -> [] | SOME x -> x in
-      match fns with [] -> clos_to_bvl_compile_exps max_app [x1] aux
-        | [(num_args,exp)] ->
-          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp] aux
-            in
-          let c3 = Let (GENLIST Var num_args ++ [Var num_args] ++
-            free_let (Var num_args) (LENGTH vs)) (HD c1) in
-          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1] ((loc
-            + (num_stubs max_app),num_args + 1,c3) :: aux1) in
-          let c4 =
-            Op (BlockOp (Cons closure_tag))
-               (REVERSE (mk_label (loc + (num_stubs max_app)) ::
-                 mk_const (num_args - 1) :: MAP Var vs)) in
-            ([Let [c4] (HD c2)],aux2)) | _2 ->
-          (let fns_l = LENGTH fns in
-          let l = fns_l + LENGTH vs in
-          let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP SND
-            fns) aux in
-          let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
-          let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1
-            aux1 in
-          let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1] aux2
-            in
-          let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
-            max_app)) fns_l (HD c3) in
-            ([c4],aux3)))) /\
-   (clos_to_bvl_compile_exps max_app [Handle t x1 x2] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-      let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
-        ([Handle (HD c1) (HD c2)],aux2))) /\
-   (clos_to_bvl_compile_exps max_app [Call t ticks dest xs] aux =
-      (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-        ([Call ticks (SOME (dest + (num_stubs max_app)))
-          c1],aux1)))`;;
+  `clos_to_bvl_compile_exps max_app x2 aux =
+        match x2 with
+          [] -> ([],aux)
+        | ((x:closLang_exp) :: y :: xs) ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux in
+        let (c2,aux2) = clos_to_bvl_compile_exps max_app (y :: xs)
+          aux1 in
+          (c1 ++ c2,aux2)
+        | [Var t v] -> ([(Var v):bvl_exp],aux)
+        | [If t x1 x2 x3] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+        let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+        let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2 in
+          ([If (HD c1) (HD c2) (HD c3)],aux3)
+        | [Let t xs x2] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+        let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+          ([Let c1 (HD c2)],aux2)
+        | [Raise t x1] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+          ([Raise (HD c1)],aux1)
+        | [Tick t x1] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+          ([Tick (HD c1)],aux1)
+        | [Op t op xs] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+        (
+        [if op = Install then
+            Call 0 NONE [Op Install c1] else if op = ThunkOp
+              ForceThunk then
+            Let c1 (Force (num_stubs max_app - 2) 0) else
+            Op (compile_op op) c1],aux1)
+        | [App t loc_opt x1 xs2] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+        let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1 in
+          ([match loc_opt with NONE ->
+                Let (c2 ++ c1) (mk_cl_call (Var (LENGTH c2)) (GENLIST
+                  Var (LENGTH c2))) | SOME loc ->
+                (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
+                  max_app))) (c2 ++ c1))],
+           aux2)
+        | [Fn t loc_opt vs_opt num_args x1] ->
+        let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+        let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+        let c2 =
+          Let (GENLIST Var num_args ++ free_let (Var num_args)
+            (LENGTH vs))
+              (HD c1) in
+          ([Op (BlockOp (Cons closure_tag))
+               (REVERSE (mk_label (loc + num_stubs max_app) ::
+                 mk_const (num_args - 1) :: MAP Var vs))],
+           (loc + (num_stubs max_app),num_args + 1,c2) :: aux1)
+        | [Letrec t loc_opt vsopt fns x1] ->
+        let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+        let vs = match vsopt with NONE -> [] | SOME x -> x in
+        match fns with [] -> clos_to_bvl_compile_exps max_app [x1]
+          aux | [(num_args,exp)] ->
+            (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
+              aux in
+            let c3 = Let (GENLIST Var num_args ++ [Var num_args] ++
+              free_let (Var num_args) (LENGTH vs)) (HD c1) in
+            let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1]
+              ((loc + (num_stubs max_app),num_args + 1,c3) :: aux1) in
+            let c4 =
+              Op (BlockOp (Cons closure_tag))
+                 (REVERSE (mk_label (loc + (num_stubs max_app)) ::
+                   mk_const (num_args - 1) :: MAP Var vs)) in
+              ([Let [c4] (HD c2)],aux2)) | _2 ->
+            (let fns_l = LENGTH fns in
+            let l = fns_l + LENGTH vs in
+            let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP SND
+              fns) aux in
+            let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
+            let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1
+              aux1 in
+            let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1]
+              aux2 in
+            let c4 = build_recc_lets (MAP FST fns) vs (loc +
+              (num_stubs max_app)) fns_l (HD c3) in
+              ([c4],aux3))
+        | [Handle t x1 x2] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
+        let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
+          ([Handle (HD c1) (HD c2)],aux2)
+        | [Call t ticks dest xs] ->
+        let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+          ([Call ticks (SOME (dest + (num_stubs max_app)))
+            c1],aux1)`;;
 hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 (* HOL4 ML code, not ported:
@@ -558,7 +556,7 @@ let clos_to_bvl_config_FIELDS = define_record "clos_to_bvl_config"
    "do_mti","bool";
    "known_conf","clos_known_config option";
    "do_call","bool";
-   "call_state","one spt#(num#num#closLang_exp) list";
+   "call_state","1 spt#(num#num#closLang_exp) list";
    "max_app","num"];;
 
 let default_config_def = cake_define

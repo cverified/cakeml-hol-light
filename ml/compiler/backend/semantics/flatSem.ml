@@ -19,8 +19,8 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
+needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
-(* HOL4 ancestors outside the port: semanticPrimitivesProps *)
 
 (* The values of flatLang differ from source semantic values in that
  * the closures do not carry environments for global definitions.
@@ -216,13 +216,15 @@ let v_to_words_def = cake_define
 hol4_overload "v_to_words" "flatSem_v_to_words";;
 
 let check_type_def = cake_define
-  `flatSem_check_type BoolT v = (v = Boolv T \/ v = Boolv F) /\
-   flatSem_check_type IntT v = (?i. v = Litv (IntLit i)) /\
-   flatSem_check_type CharT v = (?c. v = Litv (Char c)) /\
-   flatSem_check_type StrT v = (?s. v = Litv (StrLit s)) /\
-   flatSem_check_type (WordT W8) v = (?w. v = Litv (Word8 w)) /\
-   flatSem_check_type (WordT W64) v = (?w. v = Litv (Word64 w)) /\
-   flatSem_check_type Float64T v = (?w. v = Litv (Float64 w))`;;
+  `flatSem_check_type x1 v =
+      match x1 with
+        BoolT -> (v = Boolv T \/ v = Boolv F)
+      | IntT -> (?i. v = Litv (IntLit i))
+      | CharT -> (?c. v = Litv (Char c))
+      | StrT -> (?s. v = Litv (StrLit s))
+      | (WordT W8) -> (?w. v = Litv (Word8 w))
+      | (WordT W64) -> (?w. v = Litv (Word64 w))
+      | Float64T -> (?w. v = Litv (Float64 w))`;;
 hol4_overload "check_type" "flatSem_check_type";;
 
 let dest_Litv_def = cake_define

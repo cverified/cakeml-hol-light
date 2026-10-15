@@ -138,13 +138,15 @@ let ctor_nub_def = cake_define
      ctor_nub xs)`;;
 
 let ctors_of_def = cake_define
-  `ctors_of Any = NONE /\
-   ctors_of (Lit _1) = NONE /\
-   ctors_of (Or _2 _3) = NONE /\
-   ctors_of (Ref _4) = SOME [RefC] /\
-   ctors_of (Cons NONE qs) = SOME [TupC (LENGTH qs)] /\
-   ctors_of (Cons (SOME (t,NONE)) qs) = NONE /\
-   ctors_of (Cons (SOME (t,SOME sibs)) qs) =
+  `ctors_of x1 =
+      match x1 with
+        Any -> NONE
+      | (Lit _1) -> NONE
+      | (Or _2 _3) -> NONE
+      | (Ref _4) -> SOME [RefC]
+      | (Cons NONE qs) -> SOME [TupC (LENGTH qs)]
+      | (Cons (SOME (t,NONE)) qs) -> NONE
+      | (Cons (SOME (t,SOME sibs)) qs) ->
      SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
 
 let ctor_keep_def = cake_define
@@ -179,16 +181,17 @@ let col_ctors_def = cake_define
    *)
 
 let spec_row_def = cake_define
-  `spec_row c [] = [] /\
-   spec_row c (Any :: rest) = [anys (ctor_arity c) ++ rest] /\
-   spec_row c ((Cons NONE qs) :: rest) =
-     (if c = TupC (LENGTH qs) then [qs ++ rest] else []) /\
-   spec_row c ((Cons (SOME ts) qs) :: rest) =
-     (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else []) /\
-   spec_row c ((Ref q) :: rest) = (if c = RefC then [q :: rest] else
-     []) /\
-   spec_row c ((Lit l) :: rest) = [] /\
-   spec_row c ((Or p q) :: rest) = []`;;
+  `spec_row c x2 =
+      match x2 with
+        [] -> []
+      | (Any :: rest) -> [anys (ctor_arity c) ++ rest]
+      | ((Cons NONE qs) :: rest) ->
+     (if c = TupC (LENGTH qs) then [qs ++ rest] else [])
+      | ((Cons (SOME ts) qs) :: rest) ->
+     (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else [])
+      | ((Ref q) :: rest) -> (if c = RefC then [q :: rest] else [])
+      | ((Lit l) :: rest) -> []
+      | ((Or p q) :: rest) -> []`;;
 
 let spec_mat_def = cake_define
   `spec_mat c [] = [] /\
@@ -417,12 +420,14 @@ let pand_def = cake_define
    - *)
 
 let dest_val_def = cake_define
-  `dest_val refs (Term (SOME t) vs) = SOME (TagC t (LENGTH vs),vs) /\
-   dest_val refs (Term NONE vs) = SOME (TupC (LENGTH vs),vs) /\
-   dest_val refs (RefPtr r) = (match FLOOKUP refs r with NONE -> NONE
-     | SOME w -> SOME (RefC,[w])) /\
-   dest_val refs (Litv l) = NONE /\
-   dest_val refs Other = NONE`;;
+  `dest_val refs x2 =
+      match x2 with
+        (Term (SOME t) vs) -> SOME (TagC t (LENGTH vs),vs)
+      | (Term NONE vs) -> SOME (TupC (LENGTH vs),vs)
+      | (RefPtr r) -> (match FLOOKUP refs r with NONE -> NONE | SOME
+        w -> SOME (RefC,[w]))
+      | (Litv l) -> NONE
+      | Other -> NONE`;;
 
 (* A head pattern that reports a constructor set really does confine a
    value that it does not type-fail on to that set. *)

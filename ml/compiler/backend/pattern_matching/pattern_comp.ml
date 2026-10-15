@@ -112,12 +112,15 @@ let pats_to_code_def = cake_define
      mk_If (pat_to_guard [] p) (Leaf x) (pats_to_code rows)`;;
 
 let walk_def = cake_define
-  `walk [] x refs = SOME x /\
-   walk (n :: ns) x refs =
-     (match x with (Term t xs) -> (if n < LENGTH xs then walk ns (EL
-       n xs) refs else NONE) | (RefPtr p) -> (if ~(n = 0) then NONE else
-                       match FLOOKUP refs p with SOME y -> walk ns
-                         y refs | _12 -> NONE) | _13 -> NONE)`;;
+  `pattern_comp_walk [] x refs = SOME x /\
+   pattern_comp_walk (n :: ns) x refs =
+     (match x with (Term t xs) -> (if n < LENGTH xs then
+       pattern_comp_walk ns (EL n xs) refs else NONE) | (RefPtr p) ->
+       (if ~(n = 0) then NONE else
+                       match FLOOKUP refs p with SOME y ->
+                         pattern_comp_walk ns y refs | _12 -> NONE) |
+                         _13 -> NONE)`;;
+hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = cake_define
   `walk_list ns x refs =

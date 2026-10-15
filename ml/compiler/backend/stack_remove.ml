@@ -29,7 +29,8 @@ let word_offset_def = cake_define
   `word_offset n = (n2w (dimindex (:'a) DIV 8 * n):'a word)`;;
 
 let store_list_def = cake_define
-  `store_list = [NextFree; EndOfHeap; HeapLength; OtherHeap; TriggerGC;
+  `stack_remove_store_list = [NextFree; EndOfHeap; HeapLength;
+  OtherHeap; TriggerGC;
                  AllocSize; Handler; Globals; GlobReal; ProgStart;
                    BitmapBase;
                  GenStart; CodeBuffer; CodeBufferEnd; BitmapBuffer;
@@ -47,6 +48,7 @@ let store_list_def = cake_define
                  Temp (n2w 25); Temp (n2w 26); Temp (n2w 27); Temp
                    (n2w 28); Temp (n2w 29);
                  Temp (n2w 30); Temp (n2w 31)]`;;
+hol4_overload "store_list" "stack_remove_store_list";;
 
 let store_pos_def = cake_define
   `store_pos name =

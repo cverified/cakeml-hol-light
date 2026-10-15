@@ -291,9 +291,10 @@ let cmp_ok_def = cake_define
   c`;;
 
 let offset_ok_def = cake_define
-  `offset_ok a offset w =
-   (let (min,max) = offset in min <= w /\ w <= max /\
+  `asm_offset_ok a offset w =
+   (let (min',max') = offset in min' <= w /\ w <= max' /\
      alignment_aligned a w)`;;
+hol4_overload "offset_ok" "asm_offset_ok";;
 
 (* HOL4 overload (expanded in the port):
      addr_offset_ok = λc. offset_ok 0 c.addr_offset *)
@@ -309,18 +310,20 @@ let offset_ok_def = cake_define
      loc_offset_ok = λc. offset_ok c.code_alignment c.loc_offset *)
 
 let inst_ok_def = cake_define
-  `(inst_ok Skip c = T) /\
-   (inst_ok (Const r w) c = reg_ok r c) /\
-   (inst_ok (Arith x) c = arith_ok x c) /\
-   (inst_ok (FP x) c = fp_ok x c) /\
-   (inst_ok (Mem m r1 (Addr r2 w):'a asm_inst) c <=>
-      reg_ok r1 c /\ reg_ok r2 c /\
-      (if m IN {Load,Store,Load32,Store32} then
-         (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if m
-           IN {Load16,Store16} then
-         (\c. offset_ok 0 (asm_config_hw_offset c)) c w /\
-           ~(asm_config_ISA c = Ag32) else
-         (\c. offset_ok 0 (asm_config_byte_offset c)) c w))`;;
+  `inst_ok x1 c =
+        match x1 with
+          Skip -> T
+        | (Const r w) -> reg_ok r c
+        | (Arith x) -> arith_ok x c
+        | (FP x) -> fp_ok x c
+        | (Mem m r1 (Addr r2 w):'a asm_inst) ->
+        reg_ok r1 c /\ reg_ok r2 c /\
+        (if m IN {Load,Store,Load32,Store32} then
+           (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if m
+             IN {Load16,Store16} then
+           (\c. offset_ok 0 (asm_config_hw_offset c)) c w /\
+             ~(asm_config_ISA c = Ag32) else
+           (\c. offset_ok 0 (asm_config_byte_offset c)) c w)`;;
 
 let asm_ok_def = cake_define
   `(asm_ok (Inst i) c <=> inst_ok i c) /\

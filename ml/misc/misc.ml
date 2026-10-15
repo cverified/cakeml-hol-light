@@ -70,7 +70,8 @@ let read_bytearray_def = cake_define
 (* HOL to have OPT_MMAP f l1 = SOME l2 ==> (LENGTH l2 = LENGTH l1) *)
 
 let shift_seq_def = cake_define
-  `shift_seq k s = (\i. s (i + (k:num)))`;;
+  `misc_shift_seq k s = (\i. s (i + (k:num)))`;;
+hol4_overload "shift_seq" "misc_shift_seq";;
 
 (* TODO: Used once in all of CakeML: could probably be pushed back to
    use-site*)
@@ -190,7 +191,7 @@ val anub_ind = theorem"anub_ind"
 
 (* terrible rewrite *)
 
-new_type_abbrev("misc_num_set",`: one spt`);;
+new_type_abbrev("misc_num_set",`: 1 spt`);;
 (* HOL4 type abbreviation (expanded in the port):
      num_map = 'a spt *)
 

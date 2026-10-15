@@ -17,6 +17,7 @@ needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
@@ -34,7 +35,7 @@ needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 (* HOL4 ancestors outside the port: (* TODO: immoral, shouldn't
-   depend on *) backendProps *)
+   depend on *) *)
 
 let dataSem_v_INDUCT,dataSem_v_RECURSION = define_datatype
   "dataSem_v = dataSem_Number (int) | dataSem_Word64 (word64) | \
@@ -1410,7 +1411,7 @@ let jump_exc_def = cake_define
                else NONE)`;;
 
 let cut_env_def = cake_define
-  `dataSem_cut_env (name_set:one spt) env =
+  `dataSem_cut_env (name_set:1 spt) env =
      (if domain name_set SUBSET domain env then SOME (mk_wf (inter
        env name_set)) else NONE)`;;
 hol4_overload "cut_env" "dataSem_cut_env";;
@@ -1648,7 +1649,7 @@ let data_lang_safe_for_space_def = cake_define
        let p = Call NONE (SOME start) [] NONE in
        let init = initial_state init_ffi code ARB ARB T lims ss in
        let (res,s) = dataSem_evaluate (p,((init
-         ck):(one,'ffi)dataSem_state)) in dataSem_state_safe_for_space
+         ck):(1,'ffi)dataSem_state)) in dataSem_state_safe_for_space
          s)`;;
 
 let compute_limits_def = cake_define

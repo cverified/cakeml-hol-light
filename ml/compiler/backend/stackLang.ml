@@ -119,10 +119,11 @@ hol4_overload "Halt" "stackLang_Halt";;
      store_inst = λr a. Inst (Mem Store r (Addr a 0w)) *)
 
 let list_Seq_def = cake_define
-  `(stackLang_list_Seq [] = Skip) /\
-   (stackLang_list_Seq [x] = x) /\
-   (stackLang_list_Seq (x :: y :: xs) = Seq x (stackLang_list_Seq
-     (y :: xs)))`;;
+  `stackLang_list_Seq x1 =
+        match x1 with
+          [] -> Skip
+        | [x] -> x
+        | (x :: y :: xs) -> Seq x (stackLang_list_Seq (y :: xs))`;;
 hol4_overload "list_Seq" "stackLang_list_Seq";;
 
 let gc_stub_location_def = cake_define

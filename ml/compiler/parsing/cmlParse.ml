@@ -55,7 +55,7 @@ let toks_to_loc_def = cake_define
 
 let pegresult_guard_def = cake_define
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)
-  list,one,string)pegresult) =
+  list,1,string)pegresult) =
    (\toks. if b then Success toks one NONE else Failure
      (toks_to_loc toks) "Assert failure")`;;
 

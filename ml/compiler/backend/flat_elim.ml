@@ -123,7 +123,7 @@ let find_loc_def = cake_define_wf
   `(find_loc ((Raise _22 er):flatLang_exp) = find_loc er) /\
    (find_loc (Handle _23 eh p_es) =
        union (find_loc eh) (find_locL (MAP SND p_es))) /\
-   (find_loc (Lit _24 _25) = (LN:one spt)) /\
+   (find_loc (Lit _24 _25) = (LN:1 spt)) /\
    (find_loc (Con _26 _27 es) = find_locL es) /\
    (find_loc (Var_local _28 _29) = LN) /\
    (find_loc (Fun _30 _31 ef) = find_loc ef) /\

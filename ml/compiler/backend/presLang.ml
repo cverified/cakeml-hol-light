@@ -193,15 +193,15 @@ let arith_to_display_def = cake_define
    arith_to_display FMA = empty_item (implode "FMA")`;;
 
 let prim_type_to_display_def = cake_define
-  `prim_type_to_display BoolT = empty_item (implode "BoolT") /\
-   prim_type_to_display IntT = empty_item (implode "IntT") /\
-   prim_type_to_display CharT = empty_item (implode "CharT") /\
-   prim_type_to_display StrT = empty_item (implode "StrT") /\
-   prim_type_to_display Float64T = empty_item (implode "Float64T") /\
-   prim_type_to_display (WordT W8) = empty_item (implode "WordT_W8")
-     /\
-   prim_type_to_display (WordT W64) = empty_item (implode
-     "WordT_W64")`;;
+  `prim_type_to_display x1 =
+      match x1 with
+        BoolT -> empty_item (implode "BoolT")
+      | IntT -> empty_item (implode "IntT")
+      | CharT -> empty_item (implode "CharT")
+      | StrT -> empty_item (implode "StrT")
+      | Float64T -> empty_item (implode "Float64T")
+      | (WordT W8) -> empty_item (implode "WordT_W8")
+      | (WordT W64) -> empty_item (implode "WordT_W64")`;;
 
 let lop_to_display_def = cake_define
   `lop_to_display Andalso = empty_item (implode "Andalso") /\

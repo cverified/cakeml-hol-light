@@ -1357,13 +1357,23 @@ let cake_define_gen wf tm =
   let attempt wfs =
     if length fs = 1 then define_single wfs tm else define_mutual wfs tm
       in
+  (* an attempt that fails after it has made the constant cannot be
+     followed by another one *)
+  let declared () =
+    exists (fun g -> can get_const_type (fst(dest_var g))) fs in
   let ths,_ =
     if not recursive then
       (if length fs = 1 then
          (if length cls = 1
           then (try [new_definition tm],TRUTH
                 with Failure _ -> define_single [] tm)
-          else define_single [] tm)
+          else
+            (* a definition by cases on one argument is an instance
+               of the recursion theorem of the type, which is much
+               faster than HOL Light's machinery for patterns *)
+            (try define_prim_rec tm
+             with Failure _ when not (declared ()) ->
+             define_single [] tm))
        else
          itlist
            (fun f (l,th) ->
@@ -1375,11 +1385,7 @@ let cake_define_gen wf tm =
               ths @ l,th')
            fs ([],TRUTH))
     else
-      (* an attempt that fails after it has made the constant
-         cannot be followed by another one *)
-      (let declared () =
-         exists (fun g -> can get_const_type (fst(dest_var g))) fs in
-       try define_prim_rec tm with Failure _ when not (declared ()) ->
+      (try define_prim_rec tm with Failure _ when not (declared ()) ->
        try define_nested tm with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)

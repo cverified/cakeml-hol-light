@@ -14,6 +14,7 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
@@ -25,7 +26,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: (* for closure_tag and
-   num_added_globals *) backendProps *)
+   num_added_globals *) *)
 
 (* --- Semantics of BVL --- *)
 
@@ -702,64 +703,66 @@ let _ = size_thms "list";;
 let evaluate_def = cake_define_wf
   `(inv_image (MEASURE I LEX MEASURE (list_size exp_size))
                             (\(xs,env,s). (?_clock s,xs)))`
-  `(bvlSem_evaluate ([],env,s) = (Rval [],s)) /\
-   (bvlSem_evaluate (x :: y :: xs,env,s) =
-      (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
-        v1,s1) ->
-          (match bvlSem_evaluate (y :: xs,env,s1) with (Rval vs,s2)
-            -> (Rval (HD v1 :: vs),s2) | res -> res) | res -> res)) /\
-   (bvlSem_evaluate ([Var n],env,s) =
-      (if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
-        Rtype_error),s))) /\
-   (bvlSem_evaluate ([If x1 x2 x3],env,s) =
-      (match fix_clock s (bvlSem_evaluate ([x1],env,s)) with (Rval
-        vs,s1) ->
-           (if Boolv T = HD vs then bvlSem_evaluate ([x2],env,s1)
-             else
-           if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1) else
-             (Rerr (Rabort Rtype_error),s1)) | res -> res)) /\
-   (bvlSem_evaluate ([Let xs x2],env,s) =
-      (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
-        vs,s1) -> bvlSem_evaluate ([x2],vs ++ env,s1) | res -> res)) /\
-   (bvlSem_evaluate ([Raise x1],env,s) =
-      (match bvlSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
-        (Rraise (HD vs)),s) | res -> res)) /\
-   (bvlSem_evaluate ([Handle x1 x2],env,s1) =
-      (match fix_clock s1 (bvlSem_evaluate ([x1],env,s1)) with (Rerr
-        (Rraise v),s) -> bvlSem_evaluate ([x2],v :: env,s) | res ->
-        res)) /\
-   (bvlSem_evaluate ([Op op xs],env,s) =
-      (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
-        vs,s) ->
-          (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
-            err,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)) /\
-   (bvlSem_evaluate ([Tick x],env,s) =
-      (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s) else
-        bvlSem_evaluate ([x],env,dec_clock 1 s))) /\
-   (bvlSem_evaluate ([Force force_loc n],env,s) =
-      (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s) else
-        let thunk_v = EL n env in
-          match dest_thunk thunk_v (?_refs s) with BadRef -> (Rerr
-            (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
-            Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
-            IsThunk NotEvaluated f ->
-              (match find_code (SOME force_loc) [thunk_v; f] (?_code
-                s) with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
-                (args,exp) ->
-                   (if ?_clock s = 0 then
-                     (Rerr (Rabort Rtimeout_error),?_clock_fupd (K 0)
-                       s) else
-                     bvlSem_evaluate ([exp],args,dec_clock 1 s)))))
-                       /\
-   (bvlSem_evaluate ([Call ticks dest xs],env,s1) =
-      (match fix_clock s1 (bvlSem_evaluate (xs,env,s1)) with (Rval
-        vs,s) ->
-          (match find_code dest vs (?_code s) with NONE -> (Rerr
-            (Rabort Rtype_error),s) | SOME (args,exp) ->
-               (if ?_clock s < ticks + 1 then (Rerr (Rabort
-                 Rtimeout_error),?_clock_fupd (K 0) s) else
-                   bvlSem_evaluate ([exp],args,dec_clock (ticks +
-                     1) s))) | res -> res))`;;
+  `bvlSem_evaluate x1 =
+        match x1 with
+          ([],env,s) -> (Rval [],s)
+        | (x :: y :: xs,env,s) ->
+        match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
+          v1,s1) ->
+            (match bvlSem_evaluate (y :: xs,env,s1) with (Rval vs,s2)
+              -> (Rval (HD v1 :: vs),s2) | res -> res) | res -> res
+        | ([Var n],env,s) ->
+        if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
+          Rtype_error),s)
+        | ([If x1 x2 x3],env,s) ->
+        match fix_clock s (bvlSem_evaluate ([x1],env,s)) with (Rval
+          vs,s1) ->
+             (if Boolv T = HD vs then bvlSem_evaluate ([x2],env,s1)
+               else
+             if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1)
+               else
+               (Rerr (Rabort Rtype_error),s1)) | res -> res
+        | ([Let xs x2],env,s) ->
+        match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
+          vs,s1) -> bvlSem_evaluate ([x2],vs ++ env,s1) | res -> res
+        | ([Raise x1],env,s) ->
+        match bvlSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
+          (Rraise (HD vs)),s) | res -> res
+        | ([Handle x1 x2],env,s1) ->
+        match fix_clock s1 (bvlSem_evaluate ([x1],env,s1)) with (Rerr
+          (Rraise v),s) -> bvlSem_evaluate ([x2],v :: env,s) | res ->
+          res
+        | ([Op op xs],env,s) ->
+        match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
+          vs,s) ->
+            (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
+              err,s) | Rval (v,s) -> (Rval [v],s)) | res -> res
+        | ([Tick x],env,s) ->
+        if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s) else
+          bvlSem_evaluate ([x],env,dec_clock 1 s)
+        | ([Force force_loc n],env,s) ->
+        if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s) else
+          let thunk_v = EL n env in
+            match dest_thunk thunk_v (?_refs s) with BadRef -> (Rerr
+              (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
+              Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
+              IsThunk NotEvaluated f ->
+                (match find_code (SOME force_loc) [thunk_v; f]
+                  (?_code s) with NONE -> (Rerr (Rabort Rtype_error),s)
+                  | SOME (args,exp) ->
+                     (if ?_clock s = 0 then
+                       (Rerr (Rabort Rtimeout_error),?_clock_fupd (K
+                         0) s) else
+                       bvlSem_evaluate ([exp],args,dec_clock 1 s)))
+        | ([Call ticks dest xs],env,s1) ->
+        match fix_clock s1 (bvlSem_evaluate (xs,env,s1)) with (Rval
+          vs,s) ->
+            (match find_code dest vs (?_code s) with NONE -> (Rerr
+              (Rabort Rtype_error),s) | SOME (args,exp) ->
+                 (if ?_clock s < ticks + 1 then (Rerr (Rabort
+                   Rtimeout_error),?_clock_fupd (K 0) s) else
+                     bvlSem_evaluate ([exp],args,dec_clock (ticks
+                       + 1) s))) | res -> res`;;
 hol4_overload "evaluate" "bvlSem_evaluate";;
 
 (* HOL4 ML code, not ported:

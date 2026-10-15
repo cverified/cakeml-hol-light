@@ -159,62 +159,64 @@ let shifted_env_def = cake_define
      1) xs))`;;
 
 let shift_def = cake_define
-  `(clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []) /\
-   (clos_annotate_shift ((x:closLang_exp) :: y :: xs) m l i =
-      (let c1 = clos_annotate_shift [x] m l i in
-      let c2 = clos_annotate_shift (y :: xs) m l i in
-        (c1 ++ (c2:closLang_exp list)))) /\
-   (clos_annotate_shift [Var t v] m l i =
-      [Var t (get_var m l i v)]) /\
-   (clos_annotate_shift [If t x1 x2 x3] m l i =
-      (let c1 = clos_annotate_shift [x1] m l i in
-      let c2 = clos_annotate_shift [x2] m l i in
-      let c3 = clos_annotate_shift [x3] m l i in
-        ([If t (HD c1) (HD c2) (HD c3)]))) /\
-   (clos_annotate_shift [Let t xs x2] m l i =
-      (let c1 = clos_annotate_shift xs m l i in
-      let c2 = clos_annotate_shift [x2] m (l + LENGTH xs) i in
-        ([Let t c1 (HD c2)]))) /\
-   (clos_annotate_shift [Raise t x1] m l i =
-      (let (c1) = clos_annotate_shift [x1] m l i in
-        ([Raise t (HD c1)]))) /\
-   (clos_annotate_shift [Tick t x1] m l i =
-      (let c1 = clos_annotate_shift [x1] m l i in
-        ([Tick t (HD c1)]))) /\
-   (clos_annotate_shift [Op t op xs] m l i =
-      (let c1 = clos_annotate_shift xs m l i in
-        ([Op t op c1]))) /\
-   (clos_annotate_shift [App t loc_opt x1 xs2] m l i =
-      (let c1 = clos_annotate_shift [x1] m l i in
-      let c2 = clos_annotate_shift xs2 m l i in
-        ([App t loc_opt (HD c1) c2]))) /\
-   (clos_annotate_shift [Fn t loc vs_opt num_args x1] m l i =
-      (let k = m + l in
-      let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
-      let live = FILTER (\n. n < k) vs in
-      let vars = MAP (get_var m l i) live in
-      let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
-        live) in
-        ([Fn t loc (SOME vars) num_args (HD c1)]))) /\
-   (clos_annotate_shift [Letrec t loc vsopt fns x1] m l i =
-      (let vs = match vsopt with NONE -> [] | SOME x -> x in
-      let k = m + l in
-      let live = FILTER (\n. n < k) vs in
-      let vars = MAP (get_var m l i) live in
-      let new_i = shifted_env 0 live in
-      let fns_len = LENGTH fns in
-      let cs = MAP (\(n,x). let c = clos_annotate_shift [x] k (n +
-        fns_len) new_i in
+  `clos_annotate_shift x1 m l i =
+        match (x1,m,l,i) with
+          ([],(m:num),(l:num),(i:num spt)) -> []
+        | (((x:closLang_exp) :: y :: xs),m,l,i) ->
+        let c1 = clos_annotate_shift [x] m l i in
+        let c2 = clos_annotate_shift (y :: xs) m l i in
+          (c1 ++ (c2:closLang_exp list))
+        | ([Var t v],m,l,i) ->
+        [Var t (get_var m l i v)]
+        | ([If t x1 x2 x3],m,l,i) ->
+        let c1 = clos_annotate_shift [x1] m l i in
+        let c2 = clos_annotate_shift [x2] m l i in
+        let c3 = clos_annotate_shift [x3] m l i in
+          ([If t (HD c1) (HD c2) (HD c3)])
+        | ([Let t xs x2],m,l,i) ->
+        let c1 = clos_annotate_shift xs m l i in
+        let c2 = clos_annotate_shift [x2] m (l + LENGTH xs) i in
+          ([Let t c1 (HD c2)])
+        | ([Raise t x1],m,l,i) ->
+        let (c1) = clos_annotate_shift [x1] m l i in
+          ([Raise t (HD c1)])
+        | ([Tick t x1],m,l,i) ->
+        let c1 = clos_annotate_shift [x1] m l i in
+          ([Tick t (HD c1)])
+        | ([Op t op xs],m,l,i) ->
+        let c1 = clos_annotate_shift xs m l i in
+          ([Op t op c1])
+        | ([App t loc_opt x1 xs2],m,l,i) ->
+        let c1 = clos_annotate_shift [x1] m l i in
+        let c2 = clos_annotate_shift xs2 m l i in
+          ([App t loc_opt (HD c1) c2])
+        | ([Fn t loc vs_opt num_args x1],m,l,i) ->
+        let k = m + l in
+        let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+        let live = FILTER (\n. n < k) vs in
+        let vars = MAP (get_var m l i) live in
+        let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
+          live) in
+          ([Fn t loc (SOME vars) num_args (HD c1)])
+        | ([Letrec t loc vsopt fns x1],m,l,i) ->
+        let vs = match vsopt with NONE -> [] | SOME x -> x in
+        let k = m + l in
+        let live = FILTER (\n. n < k) vs in
+        let vars = MAP (get_var m l i) live in
+        let new_i = shifted_env 0 live in
+        let fns_len = LENGTH fns in
+        let cs = MAP (\(n,x). let c = clos_annotate_shift [x] k (n +
+          fns_len) new_i in
                               (n,HD c)) fns in
-      let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
-        ([Letrec t loc (SOME vars) cs (HD c1)]))) /\
-   (clos_annotate_shift [Handle t x1 x2] m l i =
-      (let c1 = clos_annotate_shift [x1] m l i in
-      let c2 = clos_annotate_shift [x2] m (l + 1) i in
-        ([Handle t (HD c1) (HD c2)]))) /\
-   (clos_annotate_shift [Call t ticks dest xs] m l i =
-      (let c1 = clos_annotate_shift xs m l i in
-        ([Call t ticks dest c1])))`;;
+        let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
+          ([Letrec t loc (SOME vars) cs (HD c1)])
+        | ([Handle t x1 x2],m,l,i) ->
+        let c1 = clos_annotate_shift [x1] m l i in
+        let c2 = clos_annotate_shift [x2] m (l + 1) i in
+          ([Handle t (HD c1) (HD c2)])
+        | ([Call t ticks dest xs],m,l,i) ->
+        let c1 = clos_annotate_shift xs m l i in
+          ([Call t ticks dest c1])`;;
 hol4_overload "shift" "clos_annotate_shift";;
 
 let _ = size_thms "exp";;

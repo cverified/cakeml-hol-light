@@ -341,16 +341,18 @@ let arithWrites_def = cake_define
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
 let arithReads_def = cake_define
-  `arithReads (Binop _45 _46 r2 (Reg r3)) = [r2; r3] /\
-   arithReads (Binop _47 _48 r2 (Imm _49)) = [r2] /\
-   arithReads (Shift _50 _51 r2 (Reg r3)) = [r2; r3] /\
-   arithReads (Shift _52 _53 r2 (Imm _54)) = [r2] /\
-   arithReads (Div _55 r2 r3) = [r2; r3] /\
-   arithReads (LongMul _56 _57 r3 r4) = [r3; r4] /\
-   arithReads (LongDiv _58 _59 r3 r4 r5) = [r3; r4; r5] /\
-   arithReads (AddCarry _60 r2 r3 r4) = [r2; r3; r4] /\
-   arithReads (AddOverflow _61 r2 r3 _62) = [r2; r3] /\
-   arithReads (SubOverflow _63 r2 r3 _64) = [r2; r3]`;;
+  `arithReads x1 =
+      match x1 with
+        (Binop _45 _46 r2 (Reg r3)) -> [r2; r3]
+      | (Binop _47 _48 r2 (Imm _49)) -> [r2]
+      | (Shift _50 _51 r2 (Reg r3)) -> [r2; r3]
+      | (Shift _52 _53 r2 (Imm _54)) -> [r2]
+      | (Div _55 r2 r3) -> [r2; r3]
+      | (LongMul _56 _57 r3 r4) -> [r3; r4]
+      | (LongDiv _58 _59 r3 r4 r5) -> [r3; r4; r5]
+      | (AddCarry _60 r2 r3 r4) -> [r2; r3; r4]
+      | (AddOverflow _61 r2 r3 _62) -> [r2; r3]
+      | (SubOverflow _63 r2 r3 _64) -> [r2; r3]`;;
 
 (* The general-purpose registers an fp instruction writes. Most write
    only
@@ -455,33 +457,35 @@ let is_store_def = cake_define
    (is_store Store32 = T)`;;
 
 let word_cseInst_def = cake_define
-  `(word_cseInst (data:knowledge) Skip = (data,Inst Skip)) /\
-   (word_cseInst data (Const r w) =
-      (let data = invalidate_data data r in
-        if EVEN r then (data,Inst (Const r w)) else
-          add_to_data_const data r w)) /\
-   (word_cseInst data (Arith a) =
-      (let r = firstRegOfArith a in
-      let data = invalidate_regs data (arithWrites a) in
-      let a' = canonicalArith data a in
-      let rds = arithReads a' in
-        if can_mem_arith a' /\ ~MEM r rds then
-          add_to_data (register_reads data rds) r (Arith a') (Arith
-            a) else
-          (data,Inst (Arith a)))) /\
-   (word_cseInst data (Mem op r (Addr a ofs)) =
-      (if is_store op then
-        (knowledge_loads_mem_fupd (K empty) data,Inst (Mem op r (Addr
-          a ofs))) else
+  `word_cseInst data x2 =
+        match (data,x2) with
+          ((data:knowledge),Skip) -> (data,Inst Skip)
+        | (data,(Const r w)) ->
         let data = invalidate_data data r in
-          if EVEN r \/ EVEN a \/ a = r then (data,Inst (Mem op r
+          if EVEN r then (data,Inst (Const r w)) else
+            add_to_data_const data r w
+        | (data,(Arith a)) ->
+        let r = firstRegOfArith a in
+        let data = invalidate_regs data (arithWrites a) in
+        let a' = canonicalArith data a in
+        let rds = arithReads a' in
+          if can_mem_arith a' /\ ~MEM r rds then
+            add_to_data (register_reads data rds) r (Arith a') (Arith
+              a) else
+            (data,Inst (Arith a))
+        | (data,(Mem op r (Addr a ofs))) ->
+        if is_store op then
+          (knowledge_loads_mem_fupd (K empty) data,Inst (Mem op r
             (Addr a ofs))) else
-            let a' = canonicalRegs' r data a in
-              add_to_load_aux (register_read data a') r
-                (loadToNumList op a' ofs)
-                              (Inst (Mem op r (Addr a ofs))))) /\
-   (word_cseInst data (FP fp:'a asm_inst) =
-      (invalidate_regs data (fpWrites fp),Inst (FP fp)))`;;
+          let data = invalidate_data data r in
+            if EVEN r \/ EVEN a \/ a = r then (data,Inst (Mem op r
+              (Addr a ofs))) else
+              let a' = canonicalRegs' r data a in
+                add_to_load_aux (register_read data a') r
+                  (loadToNumList op a' ofs)
+                              (Inst (Mem op r (Addr a ofs)))
+        | (data,(FP fp:'a asm_inst)) ->
+        (invalidate_regs data (fpWrites fp),Inst (FP fp))`;;
 
 let dest_Var_def = cake_define
   `dest_Var x1 =
@@ -647,10 +651,11 @@ let word_common_subexp_elim_def = cake_define
 (* tests *)
 
 let seqs_def = cake_define
-  `(word_cse_Seqs [] = wordLang_Skip) /\
-   (word_cse_Seqs [x] = x) /\
-   (word_cse_Seqs (x :: y :: xs) = Seq x (word_cse_Seqs (y ::
-     xs)))`;;
+  `word_cse_Seqs x1 =
+        match x1 with
+          [] -> wordLang_Skip
+        | [x] -> x
+        | (x :: y :: xs) -> Seq x (word_cse_Seqs (y :: xs))`;;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
 (* Concrete word type: the load-fact keys compare distinct offsets,

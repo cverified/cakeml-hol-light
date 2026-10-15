@@ -15,6 +15,7 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
@@ -23,7 +24,7 @@ needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
-(* HOL4 ancestors outside the port: evaluateProps asmProps *)
+needs "semantics/proofs/evaluateProps.ml";;
 
 (* -- execute target machine with interference from environment -- *)
 
@@ -67,12 +68,13 @@ let encoded_bytes_in_mem_def = cake_define
 
 let read_ffi_bytearray_def = cake_define
   `read_ffi_bytearray mc ptr_reg len_reg ms =
-     read_bytearray (?_get_reg (machine_config_target mc) ms ptr_reg)
-       (w2n (?_get_reg (machine_config_target mc) ms len_reg))
+     read_bytearray (target_get_reg (machine_config_target mc) ms
+       ptr_reg)
+       (w2n (target_get_reg (machine_config_target mc) ms len_reg))
        (\a.
          if a IN machine_config_prog_addresses mc then
-           SOME (?_get_byte (machine_config_target mc) ms a) else
-             NONE)`;;
+           SOME (target_get_byte (machine_config_target mc) ms a)
+             else NONE)`;;
 
 let read_ffi_bytearrays_def = cake_define
   `read_ffi_bytearrays mc ms =
@@ -84,78 +86,80 @@ let read_ffi_bytearrays_def = cake_define
 let is_valid_mapped_read_def = cake_define
   `is_valid_mapped_read pc (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
-       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst (Mem
-         Load8 r ad)))
-         (?_get_byte t ms) md) else if nb = (n2w 0) then
-       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst (Mem
-         Load r ad)))
-         (?_get_byte t ms) md) else if nb = (n2w 2) then
-       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst (Mem
-         Load16 r ad)))
-         (?_get_byte t ms) md) else if nb = (n2w 4) then
-       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst (Mem
-         Load32 r ad)))
-         (?_get_byte t ms) md) else F)`;;
+       (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
+         (Mem Load8 r ad)))
+         (target_get_byte t ms) md) else if nb = (n2w 0) then
+       (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
+         (Mem Load r ad)))
+         (target_get_byte t ms) md) else if nb = (n2w 2) then
+       (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
+         (Mem Load16 r ad)))
+         (target_get_byte t ms) md) else if nb = (n2w 4) then
+       (bytes_in_memory pc (asm_config_encode (target_config t) (Inst
+         (Mem Load32 r ad)))
+         (target_get_byte t ms) md) else F)`;;
 
 let is_valid_mapped_write_def = cake_define
   `is_valid_mapped_write pc (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
-         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
-           (Mem Store8 r ad)))
-           (?_get_byte t ms) md) else if nb = (n2w 0) then
-         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
-           (Mem Store r ad)))
-           (?_get_byte t ms) md) else if nb = (n2w 2) then
-         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
-           (Mem Store16 r ad)))
-           (?_get_byte t ms) md) else if nb = (n2w 4) then
-         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
-           (Mem Store32 r ad)))
-           (?_get_byte t ms) md) else F)`;;
+         (bytes_in_memory pc (asm_config_encode (target_config t)
+           (Inst (Mem Store8 r ad)))
+           (target_get_byte t ms) md) else if nb = (n2w 0) then
+         (bytes_in_memory pc (asm_config_encode (target_config t)
+           (Inst (Mem Store r ad)))
+           (target_get_byte t ms) md) else if nb = (n2w 2) then
+         (bytes_in_memory pc (asm_config_encode (target_config t)
+           (Inst (Mem Store16 r ad)))
+           (target_get_byte t ms) md) else if nb = (n2w 4) then
+         (bytes_in_memory pc (asm_config_encode (target_config t)
+           (Inst (Mem Store32 r ad)))
+           (target_get_byte t ms) md) else F)`;;
 
 let evaluate_def = cake_define
   `targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state)
   k (ms:'a) =
      (if k = 0 then (TimeOut,ms,ffi) else
-       if (?_get_pc (machine_config_target mc) ms) IN
+       if (target_get_pc (machine_config_target mc) ms) IN
          (machine_config_prog_addresses mc DIFF (set_of_list
          (machine_config_ffi_entry_pcs mc))) then
-         if encoded_bytes_in_mem (?_config (machine_config_target
-             mc)) (?_get_pc (machine_config_target mc) ms)
-             (?_get_byte (machine_config_target mc) ms)
+         if encoded_bytes_in_mem (target_config
+           (machine_config_target
+             mc)) (target_get_pc (machine_config_target mc) ms)
+             (target_get_byte (machine_config_target mc) ms)
                (machine_config_prog_addresses mc) then
-           let ms1 = ?_next (machine_config_target mc) ms in
+           let ms1 = target_next (machine_config_target mc) ms in
            let (ms2,new_oracle) = apply_oracle
              (machine_config_next_interfer mc) ms1 in
            let mc = machine_config_next_interfer_fupd (K new_oracle)
              mc in
-             if EVERY (?_state_ok (machine_config_target mc)) [ms;
-               ms1; ms2] /\
+             if EVERY (target_state_ok (machine_config_target mc))
+               [ms; ms1; ms2] /\
                 (!x. ~(x IN machine_config_prog_addresses mc) ==>
-                  ?_get_byte (machine_config_target
-                    mc) ms1 x = ?_get_byte (machine_config_target
+                  target_get_byte (machine_config_target
+                    mc) ms1 x = target_get_byte
+                      (machine_config_target
                     mc) ms x) then
                targetSem_evaluate mc ffi (k - 1) ms2 else
-               (Error,ms,ffi) else (Error,ms,ffi) else if ?_get_pc
-                 (machine_config_target mc) ms = machine_config_halt_pc
-                 mc then
-         (if ?_get_reg (machine_config_target mc) ms
+               (Error,ms,ffi) else (Error,ms,ffi) else if
+                 target_get_pc (machine_config_target mc) ms =
+                 machine_config_halt_pc mc then
+         (if target_get_reg (machine_config_target mc) ms
            (machine_config_ptr_reg mc) = (n2w 0) then Halt Success else
-           Halt Resource_limit_hit,ms,ffi) else if ?_get_pc
+           Halt Resource_limit_hit,ms,ffi) else if target_get_pc
            (machine_config_target mc) ms = machine_config_ccache_pc mc
            then
          let (ms1,new_oracle) =
            apply_oracle (machine_config_ccache_interfer mc)
-             (?_get_reg (machine_config_target mc) ms
-               (machine_config_ptr_reg mc),?_get_reg
+             (target_get_reg (machine_config_target mc) ms
+               (machine_config_ptr_reg mc),target_get_reg
                (machine_config_target
               mc) ms (machine_config_len_reg mc),
               ms) in
          let mc = machine_config_ccache_interfer_fupd (K new_oracle)
            mc in
            targetSem_evaluate mc ffi (k - 1) ms1 else
-         match find_index (?_get_pc (machine_config_target mc) ms)
-           (machine_config_ffi_entry_pcs mc) 0 with NONE ->
+         match find_index (target_get_pc (machine_config_target mc)
+           ms) (machine_config_ffi_entry_pcs mc) 0 with NONE ->
            (Error,ms,ffi) | SOME ffi_index ->
              (match EL ffi_index (?_ffi_names mc) with SharedMem op
                ->
@@ -164,13 +168,13 @@ let evaluate_def = cake_define
                     (nb,a,reg,pc') ->
                        (match op with MappedRead ->
                               (match a with Addr r off ->
-                              (let ad = ?_get_reg
+                              (let ad = target_get_reg
                                 (machine_config_target mc) ms r + off in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
                               (ad IN machine_config_shared_addresses
                                 mc) /\
-                              is_valid_mapped_read (?_get_pc
+                              is_valid_mapped_read (target_get_pc
                                 (machine_config_target mc) ms) nb a reg
                                 pc' (machine_config_target
                               mc) ms (machine_config_prog_addresses
@@ -191,14 +195,14 @@ let evaluate_def = cake_define
                                 (1:num)) ms1)) else (Error,ms,ffi)))) |
                                 MappedWrite ->
                               (match a with Addr r off ->
-                              (let ad = (?_get_reg
+                              (let ad = (target_get_reg
                                 (machine_config_target mc) ms r) + off
                                 in
                               (if (if nb = (n2w 0) then (w2n ad MOD
                                 (dimindex (:'b) DIV 8)) = 0 else T) /\
                               (ad IN machine_config_shared_addresses
                                 mc) /\
-                              is_valid_mapped_write (?_get_pc
+                              is_valid_mapped_write (target_get_pc
                                 (machine_config_target mc) ms) nb a reg
                                 pc' (machine_config_target
                               mc) ms (machine_config_prog_addresses
@@ -206,7 +210,7 @@ let evaluate_def = cake_define
                               (match call_FFI ffi (EL ffi_index
                                 (?_ffi_names mc)) [nb]
                               (
-                              (let w = ?_get_reg
+                              (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
                                 else word_to_bytes_aux (w2n nb) w F) ++
@@ -262,24 +266,25 @@ let machine_sem_def = cake_define
 
 let code_loaded_def = cake_define
   `code_loaded (bytes:word8 list) (mc) (ms) <=>
-     read_bytearray (?_get_pc (machine_config_target mc) ms) (LENGTH
-       bytes)
+     read_bytearray (target_get_pc (machine_config_target mc) ms)
+       (LENGTH bytes)
        (\a. if a IN machine_config_prog_addresses mc then SOME
-         (?_get_byte (machine_config_target mc) ms a) else NONE) =
-         SOME bytes`;;
+         (target_get_byte (machine_config_target mc) ms a) else NONE)
+         = SOME bytes`;;
 
 (* target_configured: target and mc_conf are compatible
    will be proved at the top-level by creating an appropriate t *)
 let target_configured_def = cake_define
   `target_configured (t:'a asm_state) mc_conf <=>
      ~asm_state_failed t /\ ?_be
-     t = asm_config_big_endian (?_config (machine_config_target
+     t = asm_config_big_endian (target_config (machine_config_target
        mc_conf)) /\ asm_state_align
-     t = asm_config_code_alignment (?_config (machine_config_target
-       mc_conf)) /\ asm_state_mem_domain
+     t = asm_config_code_alignment (target_config
+       (machine_config_target mc_conf)) /\ asm_state_mem_domain
      t = machine_config_prog_addresses mc_conf /\
-     (match asm_config_link_reg (?_config (machine_config_target
-       mc_conf)) with NONE -> T | SOME r -> asm_state_lr t = r)`;;
+     (match asm_config_link_reg (target_config
+       (machine_config_target mc_conf)) with NONE -> T | SOME r ->
+       asm_state_lr t = r)`;;
 
 let get_reg_value_def = cake_define
   `(get_reg_value NONE w f = w) /\
@@ -360,29 +365,30 @@ let ffi_interfer_ok_def = cake_define
             target_state_rel (machine_config_target mc_conf)
               (asm_state_pc_fupd (K (--n2w ((3 + index) * ffi_offset)
                 + pc)) t1) ms2 /\
-            alignment_aligned (asm_config_code_alignment (?_config
-              (machine_config_target mc_conf)))
-             (asm_state_regs t1 (match asm_config_link_reg (?_config
-               (machine_config_target mc_conf)) with NONE -> 0 | SOME n
-               -> n)) ==>
+            alignment_aligned (asm_config_code_alignment
+              (target_config (machine_config_target mc_conf)))
+             (asm_state_regs t1 (match asm_config_link_reg
+               (target_config (machine_config_target mc_conf)) with NONE
+               -> 0 | SOME n -> n)) ==>
          (let ms' = machine_config_ffi_interfer mc_conf k
-           (index,new_bytes,ms2) in ?_state_ok (machine_config_target
-            mc_conf) ms' /\ ?_get_pc (machine_config_target
+           (index,new_bytes,ms2) in target_state_ok
+           (machine_config_target
+            mc_conf) ms' /\ target_get_pc (machine_config_target
             mc_conf) ms' = asm_state_regs
-              t1 (match asm_config_link_reg (?_config
+              t1 (match asm_config_link_reg (target_config
                 (machine_config_target mc_conf)) with NONE -> 0 | SOME n
                 -> n) /\
-            (!a. a IN asm_state_mem_domain t1 ==> ?_get_byte
+            (!a. a IN asm_state_mem_domain t1 ==> target_get_byte
               (machine_config_target
                  mc_conf) ms' a =
                  asm_write_bytearray (asm_state_regs t1
                    (machine_config_ptr2_reg mc_conf)) new_bytes
                    (asm_state_mem t1) a) /\
             (!r. MEM r (machine_config_callee_saved_regs mc_conf) /\
-                 r < asm_config_reg_count (?_config
+                 r < asm_config_reg_count (target_config
                    (machine_config_target mc_conf)) /\
-                 ~MEM r (asm_config_avoid_regs (?_config
-                   (machine_config_target mc_conf))) ==> ?_get_reg
+                 ~MEM r (asm_config_avoid_regs (target_config
+                   (machine_config_target mc_conf))) ==> target_get_reg
                    (machine_config_target
                  mc_conf) ms' r = asm_state_regs t1 r))) /\
           (i <= index /\
@@ -418,26 +424,26 @@ let ccache_interfer_ok_def = cake_define
         target_state_rel (machine_config_target mc_conf)
           (asm_state_pc_fupd (K (--n2w (2 * ffi_offset) + pc)) t1)
         ms2 /\
-        alignment_aligned (asm_config_code_alignment (?_config
+        alignment_aligned (asm_config_code_alignment (target_config
           (machine_config_target mc_conf))) (asm_state_regs t1 (match
-          asm_config_link_reg (?_config (machine_config_target mc_conf))
-          with NONE -> 0 | SOME n -> n)) ==>
+          asm_config_link_reg (target_config (machine_config_target
+          mc_conf)) with NONE -> 0 | SOME n -> n)) ==>
         (let ms' = machine_config_ccache_interfer mc_conf k
-          (a1,a2,ms2) in ?_state_ok (machine_config_target
-           mc_conf) ms' /\ ?_get_pc (machine_config_target
+          (a1,a2,ms2) in target_state_ok (machine_config_target
+           mc_conf) ms' /\ target_get_pc (machine_config_target
            mc_conf) ms' = asm_state_regs
-             t1 (match asm_config_link_reg (?_config
+             t1 (match asm_config_link_reg (target_config
                (machine_config_target mc_conf)) with NONE -> 0 | SOME n
                -> n) /\
-           (!a. a IN asm_state_mem_domain t1 ==> ?_get_byte
+           (!a. a IN asm_state_mem_domain t1 ==> target_get_byte
              (machine_config_target
                 mc_conf) ms' a = asm_state_mem t1 a) /\
            (!r. (MEM r (machine_config_callee_saved_regs mc_conf) \/
              r = machine_config_ptr_reg mc_conf) /\
-                r < asm_config_reg_count (?_config
+                r < asm_config_reg_count (target_config
                   (machine_config_target mc_conf)) /\
-                ~MEM r (asm_config_avoid_regs (?_config
-                  (machine_config_target mc_conf))) ==> ?_get_reg
+                ~MEM r (asm_config_avoid_regs (target_config
+                  (machine_config_target mc_conf))) ==> target_get_reg
                   (machine_config_target
                 mc_conf) ms' r = asm_state_regs t1 r)))`;;
 
@@ -448,19 +454,19 @@ let post_ffi_asm_def = cake_define
   `post_ffi_asm (mc_conf:('a,'state,'b)machine_config) (t1:'a asm_state)
                 new_bytes (ms':'state) = asm_state_pc_fupd (K
                   (asm_state_regs t1 (match asm_config_link_reg
-                  (?_config (machine_config_target mc_conf)) with NONE
-                  -> 0 | SOME n -> n))) (asm_state_mem_fupd (K
+                  (target_config (machine_config_target mc_conf)) with
+                  NONE -> 0 | SOME n -> n))) (asm_state_mem_fupd (K
                   (asm_write_bytearray (asm_state_regs t1
                   (machine_config_ptr2_reg mc_conf)) new_bytes
                   (asm_state_mem t1))) (?_fp_regs_fupd (K (\i.
-                  ?_get_fp_reg (machine_config_target mc_conf) ms' i))
-                  (asm_state_regs_fupd (K (\a. if MEM a
+                  target_get_fp_reg (machine_config_target mc_conf) ms'
+                  i)) (asm_state_regs_fupd (K (\a. if MEM a
                   (machine_config_callee_saved_regs mc_conf) \/
-                         ~(a < asm_config_reg_count (?_config
+                         ~(a < asm_config_reg_count (target_config
                            (machine_config_target mc_conf))) \/
-                         MEM a (asm_config_avoid_regs (?_config
+                         MEM a (asm_config_avoid_regs (target_config
                            (machine_config_target mc_conf))) then
-                           asm_state_regs t1 a else ?_get_reg
+                           asm_state_regs t1 a else target_get_reg
                            (machine_config_target mc_conf) ms' a))
      t1)))`;;
 
@@ -469,17 +475,17 @@ let post_ccache_asm_def = cake_define
   asm_state)
                    (ms':'state) = asm_state_pc_fupd (K
                      (asm_state_regs t1 (match asm_config_link_reg
-                     (?_config (machine_config_target mc_conf)) with
-                     NONE -> 0 | SOME n -> n))) (?_fp_regs_fupd (K (\i.
-                     ?_get_fp_reg (machine_config_target mc_conf) ms'
-                     i)) (asm_state_regs_fupd (K (\a. if MEM a
-                     (machine_config_callee_saved_regs mc_conf) \/
+                     (target_config (machine_config_target mc_conf))
+                     with NONE -> 0 | SOME n -> n))) (?_fp_regs_fupd (K
+                     (\i. target_get_fp_reg (machine_config_target
+                     mc_conf) ms' i)) (asm_state_regs_fupd (K (\a. if
+                     MEM a (machine_config_callee_saved_regs mc_conf) \/
                          a = machine_config_ptr_reg mc_conf \/
-                         ~(a < asm_config_reg_count (?_config
+                         ~(a < asm_config_reg_count (target_config
                            (machine_config_target mc_conf))) \/
-                         MEM a (asm_config_avoid_regs (?_config
+                         MEM a (asm_config_avoid_regs (target_config
                            (machine_config_target mc_conf))) then
-                           asm_state_regs t1 a else ?_get_reg
+                           asm_state_regs t1 a else target_get_reg
                            (machine_config_target mc_conf) ms' a))
      t1))`;;
 
@@ -500,13 +506,13 @@ let good_init_state_def = cake_define
      t m dm sdm <=>
      target_state_rel (machine_config_target mc_conf) t ms /\
      target_configured t mc_conf /\ asm_state_pc
-     t = ?_get_pc (machine_config_target mc_conf) ms /\
+     t = target_get_pc (machine_config_target mc_conf) ms /\
      start_pc_ok mc_conf (asm_state_pc t) /\
      (n2w (2 EXP asm_state_align t - 1) && asm_state_pc t) = (n2w 0)
        /\
-     interference_ok (machine_config_next_interfer mc_conf) (?_proj
-       (machine_config_target mc_conf) (machine_config_prog_addresses
-       mc_conf)) /\
+     interference_ok (machine_config_next_interfer mc_conf)
+       (target_proj (machine_config_target mc_conf)
+       (machine_config_prog_addresses mc_conf)) /\
      ffi_interfer_ok (asm_state_pc t) mc_conf /\
      ccache_interfer_ok (asm_state_pc t) mc_conf /\
      code_loaded bytes mc_conf ms /\
@@ -519,7 +525,7 @@ let good_init_state_def = cake_define
      DISJOINT (machine_config_prog_addresses mc_conf)
        (machine_config_shared_addresses mc_conf) /\
      (!a. ?w. asm_state_mem
-       t a = get_byte a w (asm_config_big_endian (?_config
+       t a = get_byte a w (asm_config_big_endian (target_config
          (machine_config_target mc_conf))) /\
        m (byte_align a) = Word w) /\
      (!n. n < cbspace ==>
@@ -558,10 +564,10 @@ let installed_def = cake_define
          Word (bitmap_ptr + bytes_in_word * n2w data_sp +
                bytes_in_word * n2w (LENGTH bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 3) * bytes_in_word) =
-         Word (?_get_pc (machine_config_target mc_conf) ms + n2w
+         Word (target_get_pc (machine_config_target mc_conf) ms + n2w
            (LENGTH bytes)) /\
        m (asm_state_regs t r1 + (n2w 4) * bytes_in_word) =
-         Word (?_get_pc (machine_config_target mc_conf) ms + n2w
+         Word (target_get_pc (machine_config_target mc_conf) ms + n2w
            cbspace + n2w (LENGTH bytes)) /\
        (word_list bitmap_ptr (MAP Word bitmaps) *
          word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
@@ -569,8 +575,8 @@ let installed_def = cake_define
         (fun2set (m,byte_aligned INTER bitmaps_dm)) /\
        ffi_names = SOME (?_ffi_names mc_conf) /\
     (!i. mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i ==>
-      MAP (\rec. w2n (?_get_pc (machine_config_target mc_conf) ms) +
-        shmem_info_num_entry_pc rec) shmem_extra =
+      MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
+        ms) + shmem_info_num_entry_pc rec) shmem_extra =
         DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
           machine_config_mmio_info
       mc_conf = ZIP (GENLIST (\index. index + i) (LENGTH
@@ -580,8 +586,8 @@ let installed_def = cake_define
                                 (shmem_info_num_addr_off
                                 rec)),shmem_info_num_reg rec,
                               n2w (shmem_info_num_exit_pc rec) +
-                                ?_get_pc (machine_config_target mc_conf)
-                                ms))
+                                target_get_pc (machine_config_target
+                                mc_conf) ms))
                               shmem_extra)) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword
        (:'a)))`;;

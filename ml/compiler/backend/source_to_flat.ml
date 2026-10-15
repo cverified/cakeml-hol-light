@@ -61,9 +61,9 @@ let compile_pat_def = cake_define_wf
   `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
    (compile_pat env Pany = Pany) /\
    (compile_pat env (Plit l) = Plit l) /\
-   (compile_pat env (ast_Pcon id ps) =
+   (compile_pat env (ast_Pcon id' ps) =
      flatLang_Pcon
-       (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id))
+       (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id'))
        (MAP (compile_pat env) ps)) /\
    (compile_pat env (Pref p) = Pref (compile_pat env p)) /\
    (compile_pat env (Pas p i) = Pas (compile_pat env p) i) /\
@@ -81,10 +81,11 @@ let astOp_to_flatOp_def = cake_define
      op)`;;
 
 let type_group_id_type_def = cake_define
-  `type_group_id_type NONE = NONE /\
-   type_group_id_type (SOME (cn,NONE)) = SOME (cn,NONE) /\
-   type_group_id_type (SOME (cn,(SOME (ty_id,ctors)))) = SOME
-     (cn,SOME ty_id)`;;
+  `type_group_id_type x1 =
+      match x1 with
+        NONE -> NONE
+      | (SOME (cn,NONE)) -> SOME (cn,NONE)
+      | (SOME (cn,(SOME (ty_id,ctors)))) -> SOME (cn,SOME ty_id)`;;
 
 let str_sep_def = cake_define
   `str_sep = (implode "_")`;;
@@ -268,8 +269,8 @@ let alloc_tags_def = cake_define
      (nsMap (\tag. (tag,data)) con_ns,cid_spt))`;;
 
 let env_id_tuple_def = cake_define
-  `env_id_tuple gen id = Con None NONE
-     [Lit None (IntLit (&gen)); Lit None (IntLit (&id))]`;;
+  `env_id_tuple gen id' = Con None NONE
+     [Lit None (IntLit (&gen)); Lit None (IntLit (&id'))]`;;
 
 let simple_dlet_def = cake_define
   `simple_dlet p e =
@@ -413,11 +414,11 @@ let lookup_env_id_def = cake_define
   -> env))`;;
 
 let store_env_id_def = cake_define
-  `store_env_id gen id =
+  `store_env_id gen id' =
      Let None (SOME (implode "r")) (flatLang_App None
        (GlobalVarLookup 0) [])
        (App None (Src Opassign) [Var_local None (implode "r");
-         env_id_tuple gen id])`;;
+         env_id_tuple gen id'])`;;
 
 let inc_compile_prog_def = cake_define
   `inc_compile_prog env_id c p =

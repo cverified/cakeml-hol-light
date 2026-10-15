@@ -226,40 +226,40 @@ let delete_var_def = cake_define
 hol4_overload "delete_var" "bvl_const_delete_var";;
 
 let compile_def = cake_define
-  `(bvl_const_compile env [] = []) /\
-   (bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
-     ++ bvl_const_compile env (y :: xs)) /\
-   (bvl_const_compile env [Var v] =
-      (match (\l n. oEL n l) env v with NONE -> [Var v] | SOME NONE
-        -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] | SOME (SOME
-        x) -> [x])) /\
-   (bvl_const_compile env [If x1 x2 x3] =
-      (let y1 = HD (bvl_const_compile env [x1]) in
-      let y2 = HD (bvl_const_compile env [x2]) in
-      let y3 = HD (bvl_const_compile env [x3]) in
-        if y1 = Bool T then [y2] else
-        if y1 = Bool F then [y3] else
-          [If y1 y2 y3])) /\
-   (bvl_const_compile env [Let xs x2] =
-      (let ys = bvl_const_compile env xs in
-        [Let (MAP delete_var ys)
-             (HD (bvl_const_compile (extract_list ys ++ env)
-               [x2]))])) /\
-   (bvl_const_compile env [Handle x1 x2] =
-      [Handle (HD (bvl_const_compile env [x1])) (HD
-        (bvl_const_compile (NONE :: env) [x2]))]) /\
-   (bvl_const_compile env [Raise x1] =
-      [Raise (HD (bvl_const_compile env [x1]))]) /\
-   (bvl_const_compile env [Op op xs] = [SmartOp op (bvl_const_compile
-     env xs)]) /\
-   (bvl_const_compile env [Tick x] = [Tick (HD (bvl_const_compile env
-     [x]))]) /\
-   (bvl_const_compile env [Force loc v] =
-      (match (\l n. oEL n l) env v with NONE -> [Force loc v] | SOME
-        NONE -> [Force loc v] | SOME (SOME (Var i)) -> [Force loc (v +
-        i)] | SOME (SOME x) -> [Force loc v])) /\
-   (bvl_const_compile env [Call t dest xs] = [Call t dest
-     (bvl_const_compile env xs)])`;;
+  `bvl_const_compile env x2 =
+        match x2 with
+          [] -> []
+        | (x :: y :: xs) -> bvl_const_compile env [x] ++
+          bvl_const_compile env (y :: xs)
+        | [Var v] ->
+        match (\l n. oEL n l) env v with NONE -> [Var v] | SOME NONE
+          -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] | SOME (SOME
+          x) -> [x]
+        | [If x1 x2 x3] ->
+        let y1 = HD (bvl_const_compile env [x1]) in
+        let y2 = HD (bvl_const_compile env [x2]) in
+        let y3 = HD (bvl_const_compile env [x3]) in
+          if y1 = Bool T then [y2] else
+          if y1 = Bool F then [y3] else
+            [If y1 y2 y3]
+        | [Let xs x2] ->
+        let ys = bvl_const_compile env xs in
+          [Let (MAP delete_var ys)
+               (HD (bvl_const_compile (extract_list ys ++ env)
+                 [x2]))]
+        | [Handle x1 x2] ->
+        [Handle (HD (bvl_const_compile env [x1])) (HD
+          (bvl_const_compile (NONE :: env) [x2]))]
+        | [Raise x1] ->
+        [Raise (HD (bvl_const_compile env [x1]))]
+        | [Op op xs] -> [SmartOp op (bvl_const_compile env xs)]
+        | [Tick x] -> [Tick (HD (bvl_const_compile env [x]))]
+        | [Force loc v] ->
+        match (\l n. oEL n l) env v with NONE -> [Force loc v] | SOME
+          NONE -> [Force loc v] | SOME (SOME (Var i)) -> [Force loc (v +
+          i)] | SOME (SOME x) -> [Force loc v]
+        | [Call t dest xs] -> [Call t dest (bvl_const_compile env
+          xs)]`;;
 hol4_overload "compile" "bvl_const_compile";;
 
 let compile_sing_def = cake_define

@@ -115,7 +115,6 @@ let exists_aux_def = cake_define
 
 let exists_def = cake_define
   `mlvector_exists f vec = exists_aux f vec 0 (length vec)`;;
-hol4_overload "exists" "mlvector_exists";;
 
 let all_aux_def = cake_define
   `(all_aux f vec n 0 = T) /\

@@ -177,9 +177,10 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    "ffi","'ffi ffi_state"];;
 
 let stack_size_frame_def = cake_define
-  `stack_size_frame (StackFrame n _14 _15 NONE) = n /\
-   stack_size_frame (StackFrame n _16 _17 (SOME _18)) = OPTION_MAP
-     ((+) 3) n`;;
+  `stack_size_frame x1 =
+      match x1 with
+        (StackFrame n _14 _15 NONE) -> n
+      | (StackFrame n _16 _17 (SOME _18)) -> OPTION_MAP ((+) 3) n`;;
 
 let stack_size_def = cake_define
   `stack_size = FOLDR (OPTION_MAP2 (+) o stack_size_frame) (SOME 1)`;;
@@ -204,16 +205,18 @@ hol4_overload "FinalFFI" "wordSem_FinalFFI";;
 hol4_overload "Error" "wordSem_Error";;
 
 let isResult_def = cake_define
-  `isResult x1 =
+  `wordSem_isResult x1 =
         match x1 with
           (Result a b) -> T
         | _19 -> F`;;
+hol4_overload "isResult" "wordSem_isResult";;
 
 let isException_def = cake_define
-  `isException x1 =
+  `wordSem_isException x1 =
         match x1 with
           (Exception a b) -> T
         | _20 -> F`;;
+hol4_overload "isException" "wordSem_isException";;
 
 (* HOL4 ML code, not ported:
 val s = ``(s:('a,'c,'ffi) wordSem$state)``
@@ -544,13 +547,13 @@ let cut_names_def = cake_define
          name_set) else NONE)`;;
 
 let cut_envs_def = cake_define
-  `cut_envs (name_sets:one spt#one spt) env =
+  `cut_envs (name_sets:1 spt#1 spt) env =
      (match (cut_names (FST name_sets) env,cut_names (SND
        name_sets) env) with (SOME e1,SOME e2) -> SOME (e1,e2) | _47
        -> NONE)`;;
 
 let cut_env_def = cake_define
-  `wordSem_cut_env (name_sets:one spt#one spt) env =
+  `wordSem_cut_env (name_sets:1 spt#1 spt) env =
      (match cut_envs name_sets env with SOME (e1,e2) -> SOME
        (union e2 e1) | _48 -> NONE)`;;
 hol4_overload "cut_env" "wordSem_cut_env";;
@@ -584,9 +587,11 @@ let find_code_def = cake_define
 hol4_overload "find_code" "wordSem_find_code";;
 
 let enc_stack_def = cake_define
-  `(wordSem_enc_stack [] = []) /\
-   (wordSem_enc_stack ((StackFrame n _49 l handler :: st)) = MAP
-     SND l ++ wordSem_enc_stack st)`;;
+  `wordSem_enc_stack x1 =
+        match x1 with
+          [] -> []
+        | ((StackFrame n _49 l handler :: st)) -> MAP SND l ++
+          wordSem_enc_stack st`;;
 hol4_overload "enc_stack" "wordSem_enc_stack";;
 
 let dec_stack_def = cake_define
@@ -1167,7 +1172,7 @@ let word_lang_safe_for_space_def = cake_define
      (let prog = Call NONE (SOME start) [0] NONE in
        (!k res t. wordSem_evaluate (prog,wordSem_state_clock_fupd (K
          k) s) = (res,t) ==>
-         (?max. wordSem_state_stack_max t = SOME max /\ max <=
+         (?max'. wordSem_state_stack_max t = SOME max' /\ max' <=
            wordSem_state_stack_limit t)))`;;
 
 (* clean up *)

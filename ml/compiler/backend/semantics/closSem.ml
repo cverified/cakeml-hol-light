@@ -21,9 +21,10 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
+needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
-(* HOL4 ancestors outside the port: semanticPrimitivesProps (* for
-   opw_lookup_def and others *) *)
+(* HOL4 ancestors outside the port: (* for opw_lookup_def and others
+   *) *)
 
 (* differs from store_v by removing the single value Refv,
    also, adds flag to ByteArray for equality semantics *)

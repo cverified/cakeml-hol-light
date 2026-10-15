@@ -33,7 +33,7 @@ hol4_overload "Shift" "wordLang_Shift";;
 (* HOL4 overload (expanded in the port):
      ShiftN = λsh e n. Shift sh e (Const (n2w n)) *)
 
-new_type_abbrev("cutsets",`: one spt#one spt`);;
+new_type_abbrev("cutsets",`: 1 spt#1 spt`);;
 
 let wordLang_prog_INDUCT,wordLang_prog_RECURSION = define_datatype
   "wordLang_prog = wordLang_Skip | wordLang_Move (num) ((num#num) \
@@ -41,20 +41,20 @@ let wordLang_prog_INDUCT,wordLang_prog_RECURSION = define_datatype
    wordLang_exp) | wordLang_Get (num) (store_name) | wordLang_Set \
    (store_name) ('a wordLang_exp) | wordLang_Store ('a wordLang_exp) \
    (num) | wordLang_MustTerminate (wordLang_prog) | wordLang_Call \
-   ((num list#(one spt#one spt)#wordLang_prog#num#num) option) (num \
+   ((num list#(1 spt#1 spt)#wordLang_prog#num#num) option) (num \
    option) (num list) ((num#wordLang_prog#num#num) option) | \
    wordLang_Seq (wordLang_prog) (wordLang_prog) | wordLang_If (cmp) \
    (num) ('a asm_reg_imm) (wordLang_prog) (wordLang_prog) | \
-   wordLang_Loop (one spt) (wordLang_prog) (one spt) | wordLang_Alloc \
-   (num) (one spt#one spt) | wordLang_StoreConsts (num) (num) (num) \
-   (num) ((bool#'a word) list) | wordLang_Raise (num) | \
-   wordLang_Return (num) (num list) | wordLang_Break (num) | \
-   wordLang_Continue (num) | wordLang_Tick | wordLang_OpCurrHeap \
-   (binop) (num) (num) | wordLang_LocValue (num) (num) | \
-   wordLang_Install (num) (num) (num) (num) (one spt#one spt) | \
-   wordLang_CodeBufferWrite (num) (num) | wordLang_DataBufferWrite \
-   (num) (num) | wordLang_FFI (mlstring) (num) (num) (num) (num) (one \
-   spt#one spt) | wordLang_ShareInst (memop) (num) ('a wordLang_exp)";;
+   wordLang_Loop (1 spt) (wordLang_prog) (1 spt) | wordLang_Alloc \
+   (num) (1 spt#1 spt) | wordLang_StoreConsts (num) (num) (num) (num) \
+   ((bool#'a word) list) | wordLang_Raise (num) | wordLang_Return \
+   (num) (num list) | wordLang_Break (num) | wordLang_Continue (num) \
+   | wordLang_Tick | wordLang_OpCurrHeap (binop) (num) (num) | \
+   wordLang_LocValue (num) (num) | wordLang_Install (num) (num) (num) \
+   (num) (1 spt#1 spt) | wordLang_CodeBufferWrite (num) (num) | \
+   wordLang_DataBufferWrite (num) (num) | wordLang_FFI (mlstring) \
+   (num) (num) (num) (num) (1 spt#1 spt) | wordLang_ShareInst (memop) \
+   (num) ('a wordLang_exp)";;
 hol4_overload "Skip" "wordLang_Skip";;
 hol4_overload "Move" "wordLang_Move";;
 hol4_overload "Inst" "wordLang_Inst";;
@@ -270,7 +270,7 @@ let max_var_inst_def = cake_define
         | _10 -> 0`;;
 
 let cutsets_max_def = cake_define
-  `cutsets_max (c:one spt#one spt) =
+  `cutsets_max (c:1 spt#1 spt) =
      MAX (MAX_LIST (MAP FST (toAList (FST c)))) (MAX_LIST (MAP FST
        (toAList (SND c))))`;;
 

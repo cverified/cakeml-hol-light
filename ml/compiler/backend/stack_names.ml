@@ -111,8 +111,9 @@ hol4_overload "compile" "stack_names_compile";;
 (* some defaults *)
 
 let names_ok_def = cake_define
-  `names_ok names reg_count avoid_regs =
+  `stack_names_names_ok names reg_count avoid_regs =
      (let xs = GENLIST ((tlookup) names) (reg_count - LENGTH
        avoid_regs) in
        ALL_DISTINCT xs /\
        EVERY (\x. x < reg_count /\ ~(MEM x avoid_regs)) xs)`;;
+hol4_overload "names_ok" "stack_names_names_ok";;

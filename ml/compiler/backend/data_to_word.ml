@@ -57,11 +57,11 @@ let adjust_var_def = cake_define
 let adjust_set_def = cake_define
   `adjust_set (names:'a spt) =
      ((fromAList (MAP (\(n,k). (adjust_var n,one)) (toAList
-       names))):one spt)`;;
+       names))):1 spt)`;;
 
 let adjust_sets_def = cake_define
   `adjust_sets (names:'a spt) =
-     ((LS one,adjust_set names):one spt#one spt)`;;
+     ((LS one,adjust_set names):1 spt#1 spt)`;;
 
 let unit_def = cake_define
   `data_to_word_Unit = Const (n2w 2)`;;
@@ -69,7 +69,7 @@ hol4_overload "Unit" "data_to_word_Unit";;
 
 let GiveUp_def = cake_define
   `GiveUp = (Seq (Assign 1 (Const (--(n2w 1))))
-                (Alloc 1 (adjust_sets (LN:one spt))):'a
+                (Alloc 1 (adjust_sets (LN:1 spt))):'a
                   wordLang_prog)`;;
 
 let BignumHalt_def = cake_define
@@ -95,10 +95,12 @@ let encode_header_def = cake_define
           ((make_header conf (n2w tag) len):'a word) else NONE)`;;
 
 let list_Seq_def = cake_define
-  `(data_to_word_list_Seq [] = wordLang_Skip) /\
-   (data_to_word_list_Seq [x] = x) /\
-   (data_to_word_list_Seq (x :: y :: xs) = Seq x
-     (data_to_word_list_Seq (y :: xs)))`;;
+  `data_to_word_list_Seq x1 =
+        match x1 with
+          [] -> wordLang_Skip
+        | [x] -> x
+        | (x :: y :: xs) -> Seq x (data_to_word_list_Seq (y ::
+          xs))`;;
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
 let StoreEach_def = cake_define
@@ -257,7 +259,7 @@ let SilentFFI_def = cake_define
                  FFI (implode "") 7 n 9 n names] else Skip)`;;
 
 let AllocVar_def = cake_define
-  `AllocVar c (limit:num) (names:one spt) =
+  `AllocVar c (limit:num) (names:1 spt) =
      list_Seq [Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
        (Var 1) 2);
                If Lower 1 (Imm (n2w limit))
@@ -928,10 +930,10 @@ let LoadWord64_def = cake_define
        bytes_in_word])):'a wordLang_prog)`;;
 
 let LoadBignum_def = cake_define
-  `LoadBignum c header word1 k = (list_Seq [
-     Assign word1 (real_addr c k);
-     Assign header (Load (Var word1));
-     Assign word1 (Load (Op Add [Var word1; Const
+  `LoadBignum c header word1' k = (list_Seq [
+     Assign word1' (real_addr c k);
+     Assign header (Load (Var word1'));
+     Assign word1' (Load (Op Add [Var word1'; Const
        bytes_in_word]))]:'a wordLang_prog)`;;
 
 let WriteWord64_def = cake_define
@@ -2667,7 +2669,7 @@ val def = assign_Define `
 let assign_def = cake_define
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (op:closLang_op)
-     (args:num list) (names:(one spt) option) =
+     (args:num list) (names:(1 spt) option) =
      (match op with IntOp (Const i) -> assign_Const i l dest | GlobOp
        GlobalsPtr -> (Assign (adjust_var dest) (Lookup Globals),l) |
        GlobOp SetGlobalsPtr -> arg1 args (assign_SetGlobalsPtr c l dest)

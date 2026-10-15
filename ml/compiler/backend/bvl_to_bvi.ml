@@ -311,55 +311,58 @@ let _ = size_thms "exp1";;
    [destLet_def] \\ SRW_TAC [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
 let compile_exps_def = cake_define_wf
   `MEASURE (exp1_size o SND)`
-  `(bvl_to_bvi_compile_exps n [] = ([],Nil,n)) /\
-   (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
-      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
-      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
-        (c1 ++ c2,aux1 ++ aux2,n2))) /\
-   (bvl_to_bvi_compile_exps n [Var v] = ([(Var v):bvi_exp],Nil,n)) /\
-   (bvl_to_bvi_compile_exps n [If x1 x2 x3] =
-      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-      let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
-        ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++ aux3,n3))) /\
-   (bvl_to_bvi_compile_exps n [Let xs x2] =
-      (if NULL xs then
-        let (args,x0) = destLet x2 in
+  `bvl_to_bvi_compile_exps n x2 =
+        match x2 with
+          [] -> ([],Nil,n)
+        | ((x:bvl_exp) :: y :: xs) ->
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
+        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
+          (c1 ++ c2,aux1 ++ aux2,n2)
+        | [Var v] -> ([(Var v):bvi_exp],Nil,n)
+        | [If x1 x2 x3] ->
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
+        let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
+          ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++ aux3,n3)
+        | [Let xs x2] ->
+        if NULL xs then
+          let (args,x0) = destLet x2 in
+          let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
+          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
+          let n3 = n2 + 1 in
+            ([Call 0 (SOME ((bvl_num_stubs) + nss * n2 + 1)) c1
+              NONE],
+             aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
+               else
+          let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
+            ([Let c1 (HD c2)],aux1 ++ aux2,n2)
+        | [Raise x1] ->
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+          ([Raise (HD c1)],aux1,n1)
+        | [Tick x1] ->
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+          ([Tick (HD c1)],aux1,n1)
+        | [Force loc v] ->
+        ([Force ((bvl_num_stubs) + nss * loc) v],Nil,n)
+        | [Op op xs] ->
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+          ([compile_op op c1],aux1,n1)
+        | [Handle x1 x2] ->
+        let (args,x0) = destLet x1 in
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
-        let n3 = n2 + 1 in
-          ([Call 0 (SOME ((bvl_num_stubs) + nss * n2 + 1)) c1 NONE],
-           aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
-             else
+        let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
+        let aux4 = compile_aux (n3,LENGTH args,HD c2) in
+        let n4 = n3 + 1 in
+          ([Call 0 (SOME ((bvl_num_stubs) + nss * n3 + 1)) c1 (SOME
+            (HD c3))],
+           aux1 ++ aux2 ++ aux3 ++ aux4,n4)
+        | [Call ticks dest xs] ->
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-          ([Let c1 (HD c2)],aux1 ++ aux2,n2))) /\
-   (bvl_to_bvi_compile_exps n [Raise x1] =
-      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-        ([Raise (HD c1)],aux1,n1))) /\
-   (bvl_to_bvi_compile_exps n [Tick x1] =
-      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-        ([Tick (HD c1)],aux1,n1))) /\
-   (bvl_to_bvi_compile_exps n [Force loc v] =
-      ([Force ((bvl_num_stubs) + nss * loc) v],Nil,n)) /\
-   (bvl_to_bvi_compile_exps n [Op op xs] =
-      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-        ([compile_op op c1],aux1,n1))) /\
-   (bvl_to_bvi_compile_exps n [Handle x1 x2] =
-      (let (args,x0) = destLet x1 in
-      let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
-      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
-      let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
-      let aux4 = compile_aux (n3,LENGTH args,HD c2) in
-      let n4 = n3 + 1 in
-        ([Call 0 (SOME ((bvl_num_stubs) + nss * n3 + 1)) c1 (SOME (HD
-          c3))],
-         aux1 ++ aux2 ++ aux3 ++ aux4,n4))) /\
-   (bvl_to_bvi_compile_exps n [Call ticks dest xs] =
-      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-        ([Call ticks
-               (match dest with NONE -> NONE | SOME n -> SOME
-                 ((bvl_num_stubs) + nss * n)) c1 NONE],aux1,n1)))`;;
+          ([Call ticks
+                 (match dest with NONE -> NONE | SOME n -> SOME
+                   ((bvl_num_stubs) + nss * n)) c1 NONE],aux1,n1)`;;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "exp";;

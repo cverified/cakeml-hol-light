@@ -16,7 +16,7 @@ UNI = {
   '∅': '{}', '⧺': '++', '∘': 'o', '−': '-', '×': '*', '≼': '<<=',
   '⊂': 'PSUBSET', '≥': '>=', '⊕': 'XOR',
   '⊌': 'FUNION', '⊑': 'SUBMAP', '≪': '<<', '≫': '>>', '⋙': '>>>',
-  '‖': '||', '↦': '|->',
+  '‖': '||', '↦': '|->', '⊎': 'BAG_UNION',
 }
 
 GREEK = dict(zip('αβγδεζηθ'
@@ -29,6 +29,7 @@ KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
 
 # symbols, longest first
 SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '&&',
+        '{|', '|}', '❲', '❳',
         '##',
         "''", '--', '%%',
         '??', '|->', '<|', '|>', ':=', '<-', '->', '=>', '::', '++',
@@ -213,6 +214,7 @@ INFIX = {
   'o':     (800, 'r', 'o',      26),
   '##':    (490, 'r', '##',     20),
   'FUNION':(500, 'l', 'FUNION', None),
+  'BAG_UNION':(500, 'l', 'BAG_UNION', None),
   'SUBMAP':(450, 'n', 'SUBMAP', 12),
   '$':     (460,  'r', '$',      0),
   "'":     (2000, 'l', 'FAPPLY', 0),
@@ -255,6 +257,13 @@ STOP = {')', ']', '}', '|', ';', '=>', 'of', 'then', 'else', 'in',
 TYPE_STOP = (STOP - {'->'}) | {'=', '<=>', '==>', '/\\', '\\/', '<',
         '>', '<=', '>=', '~', '::', '++', '*', '@', '$', '!', '?',
         '\\', '&', '%%', "'", "''", '--', '|+', '|++'}
+
+
+def mk_app(name, args, tok=None):
+  e = Node('id', tok=tok, name=name)
+  for a in args:
+    e = Node('app', tok=tok, fn=e, arg=a)
+  return e
 
 
 class Parser:
@@ -335,7 +344,7 @@ class Parser:
         # $+ is the function form of an operator, f $ x is an
         # application with a low precedence
         return self.peek(1).pos == t.pos + 1
-      if t.text in ('(', '[', '{', '&', '<|', '«', '⟪',
+      if t.text in ('(', '[', '{', '{|', '{}', '&', '<|', '«', '⟪',
                     '𝕌'):
         return True
       if t.text == '~': return True
@@ -344,6 +353,12 @@ class Parser:
 
   def parse_atoms(self):
     e = self.parse_fields(self.parse_atom())
+    # R^* is RTC R and R^+ is TC R (relationTheory)
+    while self.peek().text == '^' and \
+          self.peek(1).text in ('*', '+') and \
+          self.peek(1).pos == self.peek().pos + 1:
+      self.next()
+      e = mk_app('RTC' if self.next().text == '*' else 'TC', [e])
     while self.starts_atom(True):
       a = self.parse_fields(self.parse_atom())
       e = Node('app', tok=e.tok, fn=e, arg=a)
@@ -355,9 +370,25 @@ class Parser:
     return e
 
   def parse_fields(self, e):
-    while self.peek().text == '.' and self.peek(1).kind == 'id':
-      t = self.next(); fld = self.next()
-      e = Node('field', tok=t, e=e, fld=fld.text)
+    while True:
+      t = self.peek()
+      if t.text == '.' and self.peek(1).kind == 'id':
+        self.next(); fld = self.next()
+        e = Node('field', tok=t, e=e, fld=fld.text)
+      # l❲i❳ is EL i l and l❲i ↦ v❳ is LUPDATE v i l (the list
+      # syntax of HOL4's combinpp)
+      elif t.text == '❲':
+        self.next()
+        i = self.parse(0)
+        if self.at('|->'):
+          self.next()
+          v = self.parse(0)
+          e = mk_app('LUPDATE', [v, i, e], t)
+        else:
+          e = mk_app('EL', [i, e], t)
+        self.expect('❳')
+      else:
+        break
     return e
 
   def parse_postfix(self, e):
@@ -429,6 +460,9 @@ class Parser:
         vs.append(v)
       else:
         raise SyntaxError(f'binder expected at {t.pos}: {t.text!r}')
+      if self.at('::'):
+        self.next()
+        vs[-1].res = self.parse(0)
     self.expect('.')
     if paired and len(vs) > 1:
       e = vs[-1]
@@ -456,6 +490,22 @@ class Parser:
     arms = []
     if self.at('|'): self.next()
     while True:
+      # HOL4 allows parentheses around an alternative, which is how
+      # a case inside one is kept apart from the alternatives after
+      # it
+      if self.at('('):
+        save = self.i
+        try:
+          self.next()
+          pat = self.parse(50)
+          self.expect('=>')
+          b = self.parse(60)
+          self.expect(')')
+          arms.append((pat, b))
+          if self.at('|'): self.next(); continue
+          break
+        except SyntaxError:
+          self.i = save
       # a pattern may be a tuple (HOL4 writes a case on several
       # values as "case x, y of p, q => ...")
       pat = self.parse(50)
@@ -601,6 +651,17 @@ class Parser:
           items.append(self.parse(50))
         self.expect('}')
         return Node('set', tok=t, items=items)
+      # the bag of HOL4's bagTheory
+      if t.text == '{|':
+        items = []
+        if not self.at('|}'):
+          while True:
+            items.append(self.parse(50))
+            if self.at(';'): self.next()
+            else: break
+            if self.at('|}'): break
+        self.expect('|}')
+        return Node('bag', tok=t, items=items)
       if t.text == '<|':
         upds = self.parse_updates()
         self.expect('|>')
@@ -611,6 +672,19 @@ class Parser:
           self.next(); q = '?!'
         vs = self.parse_binders()
         b = self.parse(0)
+        # a binder of HOL4 may be restricted (!x::s. P is
+        # RES_FORALL s (\x. P), of res_quanTheory)
+        if any(getattr(v, 'res', None) is not None for v in vs):
+          run = []
+          for v in reversed(vs):
+            r = getattr(v, 'res', None)
+            if r is None:
+              run.insert(0, v); continue
+            if run:
+              b = Node('quant', tok=t, q=q, vs=run, body=b); run = []
+            b = Node('resq', tok=t, q=q, v=v, s=r, body=b)
+          if run: b = Node('quant', tok=t, q=q, vs=run, body=b)
+          return b
         return Node('quant', tok=t, q=q, vs=vs, body=b)
       if t.text == '~':
         e = self.parse_atoms()
@@ -656,6 +730,7 @@ for k, v in INFIX.items():
 
 
 NAME_MAP = {}          # set by the porter, from tools/overrides.py
+TYPE_MAP = {}          # the same, for the type names
 
 
 ARGPERM = {
@@ -725,6 +800,8 @@ def bound_names(e, cons, defn=False):
     k = e.kind
     if k in ('quant', 'some'):
       for v in e.vs: out.update(pattern_vars(v, cons, True))
+    elif k == 'resq':
+      out.update(pattern_vars(e.v, cons, True))
     elif k == 'let':
       for p, _ in e.binds: out.update(pattern_vars(p, cons, True))
     elif k == 'case':
@@ -781,7 +858,9 @@ class Ctx:
   def tyname(self, n):
     if '$' in n:
       thy, n2 = n.split('$')
+      if n2 in TYPE_MAP: return TYPE_MAP[n2]
       return self.tynames.get((thy, n2), self.tynames.get(n2, n2))
+    if n in TYPE_MAP: return TYPE_MAP[n]
     if n in NAME_MAP: return NAME_MAP[n]
     return self.tynames.get((self.thy, n),
                             self.tynames.get(n, n))
@@ -851,7 +930,7 @@ BINDERS = set(['minimal'])
 # the binders of HOL4 that the port writes as a constant applied to
 # an abstraction, and whether the pmatch syntax of the patternMatches
 # library is enabled in this file
-HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'SEP_EXISTS'])
+HOL4_BINDERS = set(['LEAST', 'LEAST_INT', 'SEP_EXISTS', 'OLEAST'])
 PMATCH = [False]
 
 
@@ -1090,6 +1169,17 @@ class Printer:
                         PRE_APP, prec)
     if k == 'list':
       return '[' + '; '.join(self.pr(i, 0) for i in e.items) + ']'
+    if k == 'bag':
+      s = self.ctx.name('EMPTY_BAG')
+      for i in reversed(e.items):
+        s = (self.ctx.name('BAG_INSERT') + ' ' + self.pr(i, APP) +
+             ' (' + s + ')')
+      return self.paren(s, PRE_APP, prec) if e.items else s
+    if k == 'resq':
+      nm = 'RES_FORALL' if e.q == '!' else 'RES_EXISTS'
+      return self.paren(self.ctx.name(nm) + ' ' + self.pr(e.s, APP) +
+                        ' (\\' + self.pr(e.v, APP) + '. ' +
+                        self.pr(e.body, 0) + ')', PRE_APP, prec)
     if k == 'set':
       if not e.items: return '{}'
       return '{' + ','.join(self.pr(i, 0) for i in e.items) + '}'

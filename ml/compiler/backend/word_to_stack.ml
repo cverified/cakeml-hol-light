@@ -266,7 +266,7 @@ let insert_bitmap_def = cake_define
        ((Append data (List ws),data_len + l),data_len))`;;
 
 let wLive_def = cake_define
-  `wLive (live:one spt#one spt) (bitmaps:('a word) app_list#num)
+  `wLive (live:1 spt#1 spt) (bitmaps:('a word) app_list#num)
   (k,(f:num),(f':num)) =
      (if f = 0 then (Skip,bitmaps) else
        let (new_bitmaps,i) = insert_bitmap (write_bitmap (SND live) k

@@ -61,47 +61,48 @@ let is_pure_def = cake_define
 hol4_overload "is_pure" "data_live_is_pure";;
 
 let compile_def = cake_define
-  `(data_live_compile Skip live = (Skip,live)) /\
-   (data_live_compile (Return ns) live = (Return ns,list_insert ns
-     LN)) /\
-   (data_live_compile (Raise n) live = (Raise n,insert n one LN)) /\
-   (data_live_compile (Move n1 n2) live =
-     (Move n1 n2,insert n2 one (delete n1 live))) /\
-   (data_live_compile (Seq c1 c2) live =
-      (let (d2,l2) = data_live_compile c2 live in
-      let (d1,l1) = data_live_compile c1 l2 in
-        (Seq d1 d2,l1))) /\
-   (data_live_compile Tick live = (Tick,live)) /\
-   (data_live_compile (MakeSpace k names) live =
-      (let l1 = inter names live in (MakeSpace k l1,l1))) /\
-   (data_live_compile (Assign v op vs NONE) live =
-      (if IS_NONE (lookup v live) /\ is_pure op then (Skip,live) else
-        let l1 = list_insert vs (delete v live) in
-          (Assign v op vs NONE,l1))) /\
-   (data_live_compile (Assign v op vs (SOME names)) live =
-      (let l1 = inter names (delete v live) in
-        (Assign v op vs (SOME l1),list_insert vs l1))) /\
-   (data_live_compile (If n c2 c3) live =
-      (let (d3,l3) = data_live_compile c3 live in
-      let (d2,l2) = data_live_compile c2 live in
-        (If n d2 d3,insert n one (union l2 l3)))) /\
-   (data_live_compile (Force NONE loc src) live =
-      (Force NONE loc src,insert src one LN)) /\
-   (data_live_compile (Force (SOME (n,names)) loc src) live =
-      (let l1 = inter names (delete n live) in
-      let l2 = insert src one l1 in
-        (Force (SOME (n,l1)) loc src,l2))) /\
-   (data_live_compile (Call NONE dest vs handler) live =
-      (Call NONE dest vs handler,list_to_num_set vs)) /\
-   (data_live_compile (Call (SOME (ns,names)) dest vs NONE) live =
-      (let l1 = inter names (list_delete ns live) in
-      let l2 = list_insert vs l1 in
-        (Call (SOME (ns,l1)) dest vs NONE,l2))) /\
-   (data_live_compile (Call (SOME (ns,names)) dest vs (SOME (v,c)))
-     live =
-      (let (d,l3) = data_live_compile c live in
-      let l0 = union (list_delete ns live) (delete v l3) in
-      let l1 = inter names l0 in
-      let l2 = list_insert vs l1 in
-        (Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2)))`;;
+  `data_live_compile x1 live =
+        match x1 with
+          Skip -> (Skip,live)
+        | (Return ns) -> (Return ns,list_insert ns LN)
+        | (Raise n) -> (Raise n,insert n one LN)
+        | (Move n1 n2) ->
+       (Move n1 n2,insert n2 one (delete n1 live))
+        | (Seq c1 c2) ->
+        let (d2,l2) = data_live_compile c2 live in
+        let (d1,l1) = data_live_compile c1 l2 in
+          (Seq d1 d2,l1)
+        | Tick -> (Tick,live)
+        | (MakeSpace k names) ->
+        let l1 = inter names live in (MakeSpace k l1,l1)
+        | (Assign v op vs NONE) ->
+        if IS_NONE (lookup v live) /\ is_pure op then (Skip,live)
+          else
+          let l1 = list_insert vs (delete v live) in
+            (Assign v op vs NONE,l1)
+        | (Assign v op vs (SOME names)) ->
+        let l1 = inter names (delete v live) in
+          (Assign v op vs (SOME l1),list_insert vs l1)
+        | (If n c2 c3) ->
+        let (d3,l3) = data_live_compile c3 live in
+        let (d2,l2) = data_live_compile c2 live in
+          (If n d2 d3,insert n one (union l2 l3))
+        | (Force NONE loc src) ->
+        (Force NONE loc src,insert src one LN)
+        | (Force (SOME (n,names)) loc src) ->
+        let l1 = inter names (delete n live) in
+        let l2 = insert src one l1 in
+          (Force (SOME (n,l1)) loc src,l2)
+        | (Call NONE dest vs handler) ->
+        (Call NONE dest vs handler,list_to_num_set vs)
+        | (Call (SOME (ns,names)) dest vs NONE) ->
+        let l1 = inter names (list_delete ns live) in
+        let l2 = list_insert vs l1 in
+          (Call (SOME (ns,l1)) dest vs NONE,l2)
+        | (Call (SOME (ns,names)) dest vs (SOME (v,c))) ->
+        let (d,l3) = data_live_compile c live in
+        let l0 = union (list_delete ns live) (delete v l3) in
+        let l1 = inter names l0 in
+        let l2 = list_insert vs l1 in
+          (Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2)`;;
 hol4_overload "compile" "data_live_compile";;

@@ -590,18 +590,21 @@ let STOP_def = cake_define
 hol4_overload "STOP" "stackSem_STOP";;
 
 let get_labels_def = cake_define
-  `get_labels x1 =
+  `stackSem_get_labels x1 =
         match x1 with
-          (Seq p1 p2) -> get_labels p1 UNION get_labels p2
-        | (If _54 _55 _56 p1 p2) -> get_labels p1 UNION get_labels p2
-        | (Loop p) -> get_labels p
+          (Seq p1 p2) -> stackSem_get_labels p1 UNION
+            stackSem_get_labels p2
+        | (If _54 _55 _56 p1 p2) -> stackSem_get_labels p1 UNION
+          stackSem_get_labels p2
+        | (Loop p) -> stackSem_get_labels p
         | (Call ret _57 handler) ->
         (match ret with NONE -> {} | SOME (r,_58,l1,l2) -> (l1,l2)
-          INSERT (get_labels r UNION
+          INSERT (stackSem_get_labels r UNION
              (match handler with NONE -> {} | SOME (r,l1,l2) ->
-               (l1,l2) INSERT get_labels r)))
+               (l1,l2) INSERT stackSem_get_labels r)))
         | (Halt _59) -> {}
         | _60 -> {}`;;
+hol4_overload "get_labels" "stackSem_get_labels";;
 
 let loc_check_def = cake_define
   `loc_check code (l1,l2) <=>
@@ -701,245 +704,247 @@ let evaluate_def = cake_define_wf
   `(inv_image (MEASURE I LEX MEASURE (prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
                                 (?_clock s,xs)))`
-  `(stackSem_evaluate ((Skip:'a stackLang_prog),s) =
-  (NONE,(s:('a,'c,'ffi)stackSem_state))) /\
-   (stackSem_evaluate (Halt v,s) =
-      (match get_var v s with SOME w -> (SOME (Halt w),empty_env s) |
-        NONE -> (SOME Error,s))) /\
-   (stackSem_evaluate (Alloc n,s) =
-      (if ~stackSem_state_use_alloc s then (SOME Error,s) else
-      match get_var n s with SOME (Word w) -> alloc w s | _93 ->
-        (SOME Error,s))) /\
-   (stackSem_evaluate (StoreConsts t1 t2 stub_opt,s) =
-      (if ~stackSem_state_use_store s then (SOME Error,s) else
-      if ~stackSem_state_use_alloc s /\ IS_SOME stub_opt then (SOME
-        Error,s) else
-      if ~check_store_consts_opt t1 t2 stub_opt (?_code s) then (SOME
-        Error,s) else
-        store_const_sem t1 t2 s)) /\
-   (stackSem_evaluate (Inst i,s) =
-      (match inst i s with SOME s1 -> (NONE,s1) | NONE -> (SOME
-        Error,s))) /\
-   (stackSem_evaluate (Get v name,s) =
-      (if ~stackSem_state_use_store s then (SOME Error,s) else
-      match FLOOKUP (?_store s) name with SOME x -> (NONE,set_var v x
-        s) | NONE -> (SOME Error,s))) /\
-   (stackSem_evaluate (Set name v,s) =
-      (if ~stackSem_state_use_store s then (SOME Error,s) else
-      match get_var v s with SOME w -> (NONE,set_store name w s) |
-        NONE -> (SOME Error,s))) /\
-   (stackSem_evaluate (OpCurrHeap binop v src,s) =
-      (if ~stackSem_state_use_store s then (SOME Error,s) else
-      match word_exp s (Op binop [Var src; Lookup CurrHeap]) with
-        SOME w -> (NONE,set_var v (Word w) s) | _94 -> (SOME Error,s)))
-        /\
-   (stackSem_evaluate (Tick,s) =
-      (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
-        (NONE,dec_clock s))) /\
-   (stackSem_evaluate (Seq c1 c2,s) =
-      (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
-        if res = NONE then stackSem_evaluate (c2,s1) else (res,s1)))
-          /\
-   (stackSem_evaluate (Return n,s) =
-      (match get_var n s with SOME (Loc l1 l2) -> (SOME (Result (Loc
-        l1 l2)),s) | _95 -> (SOME Error,s))) /\
-   (stackSem_evaluate (Raise n,s) =
-      (match get_var n s with SOME (Loc l1 l2) -> (SOME (Exception
-        (Loc l1 l2)),s) | _96 -> (SOME Error,s))) /\
-   (stackSem_evaluate (Break n,s) = (SOME (Break n),s)) /\
-   (stackSem_evaluate (Continue n,s) = (SOME (Continue n),s)) /\
-   (stackSem_evaluate (If cmp r1 ri c1 c2,s) =
-     (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y) ->
-      (match wordSem_word_cmp cmp x y with SOME T ->
-        stackSem_evaluate (c1,s) | SOME F -> stackSem_evaluate (c2,s) |
-        NONE -> (SOME Error,s)) | _97 -> (SOME Error,s))) /\
-   (stackSem_evaluate (Loop c1,s) =
-     (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
-        if cont_loop res then
-          (if ?_clock s1 = 0 then (SOME TimeOut,empty_env s1) else
-             stackSem_evaluate (STOP (Loop c1),dec_clock s1)) else
-               (exit_loop res,s1))) /\
-   (stackSem_evaluate (JumpLower r1 r2 dest,s) =
-     (match (get_var r1 s,get_var r2 s) with (SOME (Word x),SOME
-       (Word y)) ->
-       (if word_cmp Lower x y then
-        (match find_code (INL dest) (stackSem_state_regs s) (?_code
-          s) with NONE -> (SOME Error,s) | SOME prog ->
+  `stackSem_evaluate x1 =
+        match x1 with
+          ((Skip:'a stackLang_prog),s) ->
+            (NONE,(s:('a,'c,'ffi)stackSem_state))
+        | (Halt v,s) ->
+        match get_var v s with SOME w -> (SOME (Halt w),empty_env s)
+          | NONE -> (SOME Error,s)
+        | (Alloc n,s) ->
+        if ~stackSem_state_use_alloc s then (SOME Error,s) else
+        match get_var n s with SOME (Word w) -> alloc w s | _93 ->
+          (SOME Error,s)
+        | (StoreConsts t1 t2 stub_opt,s) ->
+        if ~stackSem_state_use_store s then (SOME Error,s) else
+        if ~stackSem_state_use_alloc s /\ IS_SOME stub_opt then (SOME
+          Error,s) else
+        if ~check_store_consts_opt t1 t2 stub_opt (?_code s) then
+          (SOME Error,s) else
+          store_const_sem t1 t2 s
+        | (Inst i,s) ->
+        match inst i s with SOME s1 -> (NONE,s1) | NONE -> (SOME
+          Error,s)
+        | (Get v name,s) ->
+        if ~stackSem_state_use_store s then (SOME Error,s) else
+        match FLOOKUP (?_store s) name with SOME x -> (NONE,set_var v
+          x s) | NONE -> (SOME Error,s)
+        | (Set name v,s) ->
+        if ~stackSem_state_use_store s then (SOME Error,s) else
+        match get_var v s with SOME w -> (NONE,set_store name w s) |
+          NONE -> (SOME Error,s)
+        | (OpCurrHeap binop v src,s) ->
+        if ~stackSem_state_use_store s then (SOME Error,s) else
+        match word_exp s (Op binop [Var src; Lookup CurrHeap]) with
+          SOME w -> (NONE,set_var v (Word w) s) | _94 -> (SOME Error,s)
+        | (Tick,s) ->
+        if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
+          (NONE,dec_clock s)
+        | (Seq c1 c2,s) ->
+        let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
+          if res = NONE then stackSem_evaluate (c2,s1) else (res,s1)
+        | (Return n,s) ->
+        match get_var n s with SOME (Loc l1 l2) -> (SOME (Result (Loc
+          l1 l2)),s) | _95 -> (SOME Error,s)
+        | (Raise n,s) ->
+        match get_var n s with SOME (Loc l1 l2) -> (SOME (Exception
+          (Loc l1 l2)),s) | _96 -> (SOME Error,s)
+        | (Break n,s) -> (SOME (Break n),s)
+        | (Continue n,s) -> (SOME (Continue n),s)
+        | (If cmp r1 ri c1 c2,s) ->
+       (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y) ->
+        (match wordSem_word_cmp cmp x y with SOME T ->
+          stackSem_evaluate (c1,s) | SOME F -> stackSem_evaluate (c2,s)
+          | NONE -> (SOME Error,s)) | _97 -> (SOME Error,s))
+        | (Loop c1,s) ->
+       (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
+          if cont_loop res then
+            (if ?_clock s1 = 0 then (SOME TimeOut,empty_env s1) else
+               stackSem_evaluate (STOP (Loop c1),dec_clock s1)) else
+                 (exit_loop res,s1))
+        | (JumpLower r1 r2 dest,s) ->
+       match (get_var r1 s,get_var r2 s) with (SOME (Word x),SOME
+         (Word y)) ->
+         (if word_cmp Lower x y then
+          (match find_code (INL dest) (stackSem_state_regs s) (?_code
+            s) with NONE -> (SOME Error,s) | SOME prog ->
+              (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
+                (match stackSem_evaluate (prog,dec_clock s) with
+                  (res,s) -> (if bad_fun_return res then (SOME Error,s)
+                  else (res,s))))) else (NONE,s)) | _98 -> (SOME
+                  Error,s)
+        | (RawCall dest,s) ->
+       match sptree_lookup dest (?_code s) with NONE -> (SOME
+         Error,s) | SOME prog ->
+          (match dest_Seq prog with SOME (_99,body) ->
+              (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
+                (match stackSem_evaluate (body,dec_clock s) with
+                  (res,s) -> (if bad_fun_return res then (SOME Error,s)
+                  else (res,s)))) | _100 -> (SOME Error,s)) | _101 ->
+                  (SOME Error,s)
+        | (Call ret dest handler,s) ->
+        match ret with NONE ->
+          (match find_code dest (stackSem_state_regs s) (?_code s)
+            with NONE -> (SOME Error,s) | SOME prog ->
+              (if ~(handler = NONE) then (SOME Error,s) else
+              if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
+                (match fix_clock (dec_clock s) (stackSem_evaluate
+                  (prog,dec_clock s)) with (res,s) -> (if bad_fun_return
+                  res then (SOME Error,s) else (res,s))))) | SOME
+                  (ret_handler,link_reg,l1,l2) ->
+          (match find_code dest (stackSem_state_regs s \\ link_reg)
+            (?_code s) with NONE -> (SOME Error,s) | SOME prog ->
+              (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
+                (match fix_clock (dec_clock (set_var link_reg (Loc l1
+                  l2) s))
+                (stackSem_evaluate (prog,dec_clock (set_var link_reg
+                  (Loc l1 l2) s))) with (SOME (Result x),s2) ->
+                     (if ~(x = Loc l1 l2) then (SOME Error,s2) else
+                       stackSem_evaluate (ret_handler,s2)) | (SOME
+                       (Exception x),s2) ->
+                     (match handler with NONE -> (SOME (Exception
+                       x),s2) | SOME (h,l1,l2) ->
+                         (if ~(x = Loc l1 l2) then (SOME Error,s2)
+                           else
+                           stackSem_evaluate (h,s2))) | (NONE,s) ->
+                             (SOME Error,s) | (SOME (Break _102),s) ->
+                             (SOME Error,s) | (SOME (Continue _103),s)
+                             -> (SOME Error,s) | (res,s) -> (res,s))))
+        | (Install ptr len dptr dlen ret,s) ->
+       match (get_var ptr s,get_var len s,get_var dptr s,get_var dlen
+         s) with (SOME (Word w1),SOME (Word w2),SOME (Word w3),SOME
+         (Word w4)) ->
+           (let (cfg,progs,bm) = ?_compile_oracle s 0 in
+          (match (buffer_flush (?_code_buffer s) w1 w2,
+                 (if stackSem_state_use_stack s then buffer_flush
+                   (?_data_buffer s) w3 w4 else SOME (bm,?_data_buffer
+                   s))) with (
+            SOME (bytes,cb),SOME (data,db)) ->
+           (let new_oracle = shift_seq 1 (?_compile_oracle s) in
+           (match (?_compile s cfg progs,progs) with (SOME
+             (bytes',cfg'),(k,prog) :: _104) ->
+               (if bytes = bytes' /\ data = bm /\ FST (new_oracle 0)
+                 = cfg' then
+               let s' = ?_compile_oracle_fupd (K new_oracle)
+                 (?_fp_regs_fupd (K FEMPTY) (stackSem_state_regs_fupd (K
+                 ((DRESTRICT (stackSem_state_regs s)
+                 (stackSem_state_ffi_save_regs s)) |+ (ptr,Loc k 0)))
+                 (?_code_fupd (K (union (?_code s) (fromAList progs)))
+                 (?_data_buffer_fupd (K db) (?_code_buffer_fupd (K cb)
+                 (stackSem_state_bitmaps_fupd (K (stackSem_state_bitmaps
+                 s ++ bm))
+                   s)))))) in
+                 (NONE,s') else (SOME Error,s)) | _105 -> (SOME
+                   Error,s))) | _106 -> (SOME Error,s))) | _107 -> (SOME
+                   Error,s)
+        | (ShMemOp op r (Addr a w),s) ->
+       (match word_exp s (Op Add [Var a; Const w]) with SOME a ->
             (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
-              (match stackSem_evaluate (prog,dec_clock s) with
-                (res,s) -> (if bad_fun_return res then (SOME Error,s)
-                else (res,s))))) else (NONE,s)) | _98 -> (SOME
-                Error,s))) /\
-   (stackSem_evaluate (RawCall dest,s) =
-     (match sptree_lookup dest (?_code s) with NONE -> (SOME Error,s)
-       | SOME prog ->
-        (match dest_Seq prog with SOME (_99,body) ->
-            (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
-              (match stackSem_evaluate (body,dec_clock s) with
-                (res,s) -> (if bad_fun_return res then (SOME Error,s)
-                else (res,s)))) | _100 -> (SOME Error,s)) | _101 ->
-                (SOME Error,s))) /\
-   (stackSem_evaluate (Call ret dest handler,s) =
-      (match ret with NONE ->
-        (match find_code dest (stackSem_state_regs s) (?_code s) with
-          NONE -> (SOME Error,s) | SOME prog ->
-            (if ~(handler = NONE) then (SOME Error,s) else
-            if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
-              (match fix_clock (dec_clock s) (stackSem_evaluate
-                (prog,dec_clock s)) with (res,s) -> (if bad_fun_return
-                res then (SOME Error,s) else (res,s))))) | SOME
-                (ret_handler,link_reg,l1,l2) ->
-        (match find_code dest (stackSem_state_regs s \\ link_reg)
-          (?_code s) with NONE -> (SOME Error,s) | SOME prog ->
-            (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
-              (match fix_clock (dec_clock (set_var link_reg (Loc l1
-                l2) s))
-              (stackSem_evaluate (prog,dec_clock (set_var link_reg
-                (Loc l1 l2) s))) with (SOME (Result x),s2) ->
-                   (if ~(x = Loc l1 l2) then (SOME Error,s2) else
-                     stackSem_evaluate (ret_handler,s2)) | (SOME
-                     (Exception x),s2) ->
-                   (match handler with NONE -> (SOME (Exception
-                     x),s2) | SOME (h,l1,l2) ->
-                       (if ~(x = Loc l1 l2) then (SOME Error,s2) else
-                         stackSem_evaluate (h,s2))) | (NONE,s) ->
-                           (SOME Error,s) | (SOME (Break _102),s) ->
-                           (SOME Error,s) | (SOME (Continue _103),s) ->
-                           (SOME Error,s) | (res,s) -> (res,s)))))) /\
-   (stackSem_evaluate (Install ptr len dptr dlen ret,s) =
-     (match (get_var ptr s,get_var len s,get_var dptr s,get_var dlen
-       s) with (SOME (Word w1),SOME (Word w2),SOME (Word w3),SOME (Word
-       w4)) ->
-         (let (cfg,progs,bm) = ?_compile_oracle s 0 in
-        (match (buffer_flush (?_code_buffer s) w1 w2,
-               (if stackSem_state_use_stack s then buffer_flush
-                 (?_data_buffer s) w3 w4 else SOME (bm,?_data_buffer
-                 s))) with (
-          SOME (bytes,cb),SOME (data,db)) ->
-         (let new_oracle = shift_seq 1 (?_compile_oracle s) in
-         (match (?_compile s cfg progs,progs) with (SOME
-           (bytes',cfg'),(k,prog) :: _104) ->
-             (if bytes = bytes' /\ data = bm /\ FST (new_oracle 0) =
-               cfg' then
-             let s' = ?_compile_oracle_fupd (K new_oracle)
-               (?_fp_regs_fupd (K FEMPTY) (stackSem_state_regs_fupd (K
-               ((DRESTRICT (stackSem_state_regs s)
-               (stackSem_state_ffi_save_regs s)) |+ (ptr,Loc k 0)))
-               (?_code_fupd (K (union (?_code s) (fromAList progs)))
-               (?_data_buffer_fupd (K db) (?_code_buffer_fupd (K cb)
-               (stackSem_state_bitmaps_fupd (K (stackSem_state_bitmaps s
-               ++ bm))
-                 s)))))) in
-               (NONE,s') else (SOME Error,s)) | _105 -> (SOME
-                 Error,s))) | _106 -> (SOME Error,s))) | _107 -> (SOME
-                 Error,s))) /\
-   (stackSem_evaluate (ShMemOp op r (Addr a w),s) =
-     (match word_exp s (Op Add [Var a; Const w]) with SOME a ->
-          (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
-            sh_mem_op op r a (dec_clock s)) | _108 -> (SOME
-              Error,s))) /\
-   (stackSem_evaluate (CodeBufferWrite r1 r2,s) =
-     (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
-       (Word w2)) ->
-           (match buffer_write (?_code_buffer s) w1 (w2w w2) with
-             SOME new_cb ->
-             (NONE,?_code_buffer_fupd (K new_cb) s) | _109 -> (SOME
-               Error,s)) | _110 -> (SOME Error,s))) /\
-   (stackSem_evaluate (DataBufferWrite r1 r2,s) =
-     (if ~stackSem_state_use_stack s then (SOME Error,s) else
-     (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
-       (Word w2)) ->
-           (match buffer_write (?_data_buffer s) w1 w2 with SOME
-             new_db ->
-             (NONE,?_data_buffer_fupd (K new_db) s) | _111 -> (SOME
-               Error,s)) | _112 -> (SOME Error,s)))) /\
-   (stackSem_evaluate (FFI ffi_index ptr len ptr2 len2 ret,s) =
-    (match (get_var len s,get_var ptr s,get_var len2 s,get_var ptr2
-      s) with (SOME (Word w),SOME (Word w2),SOME (Word w3),SOME (Word
-      w4)) ->
-          (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
-            (?_memory s) (?_mdomain s) (?_be s)),
-                 read_bytearray w4 (w2n w3) (mem_load_byte_aux
-                   (?_memory s) (?_mdomain s) (?_be s))) with (SOME
-                   bytes,SOME bytes2) ->
-              (match call_FFI (?_ffi s) (ExtCall ffi_index) bytes
-                bytes2 with FFI_final outcome -> (SOME (FinalFFI
-                outcome),s) | FFI_return new_ffi new_bytes ->
-                   (let new_m = write_bytearray w4 new_bytes
-                     (?_memory s) (?_mdomain s) (?_be s) in
-                     (NONE,?_ffi_fupd (K new_ffi) (?_fp_regs_fupd (K
-                       FEMPTY) (stackSem_state_regs_fupd (K (DRESTRICT
-                       (stackSem_state_regs s)
-                       (stackSem_state_ffi_save_regs s))) (?_memory_fupd
-                       (K new_m) s)))))) | _113 -> (SOME Error,s)) | res
-                       -> (SOME Error,s))) /\
-   (stackSem_evaluate (LocValue r l1 l2,s) =
-      (if loc_check (?_code s) (l1,l2) then
-        (NONE,set_var r (Loc l1 l2) s) else (SOME Error,s))) /\
-   (stackSem_evaluate (StackAlloc n,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-      if stackSem_state_stack_space s < n then (SOME (Halt (Word (n2w
-        2))),empty_env s) else
-        (NONE,stackSem_state_stack_space_fupd (K
-          (stackSem_state_stack_space s - n)) s))) /\
-   (stackSem_evaluate (StackFree n,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-      if LENGTH (?_stack s) < stackSem_state_stack_space s + n then
-        (SOME Error,empty_env s) else
-        (NONE,stackSem_state_stack_space_fupd (K
-          (stackSem_state_stack_space s + n)) s))) /\
-   (stackSem_evaluate (StackLoad r n,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-      if stackSem_state_stack_space s + n < LENGTH (?_stack s) then
-        (NONE,set_var r (EL (stackSem_state_stack_space s + n) (?_stack
-        s)) s) else (SOME Error,empty_env s))) /\
-   (stackSem_evaluate (StackLoadAny r rn,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-        match get_var rn s with SOME (Word (w:'a word)) ->
-          (let i = stackSem_state_stack_space s + w2n (w >>>
-            word_shift (:'a)) in
-            if i < LENGTH (?_stack s) /\
-               ((w >>> word_shift (:'a)) << word_shift (:'a) = w)
-                 then (NONE,set_var r (EL i (?_stack s)) s) else (SOME
-                 Error,empty_env s)) | _114 -> (SOME Error,empty_env
-                 s))) /\
-   (stackSem_evaluate (StackStore r n,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-      if LENGTH (?_stack s) <= stackSem_state_stack_space s + n then
-        (SOME Error,empty_env s) else
-        match get_var r s with NONE -> (SOME Error,empty_env s) |
-          SOME v -> (NONE,?_stack_fupd (K (LUPDATE v
-          (stackSem_state_stack_space s + n) (?_stack s))) s))) /\
-   (stackSem_evaluate (StackStoreAny r rn,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-        match (get_var r s,get_var rn s) with (SOME v,SOME (Word
-          (w:'a word))) ->
-          (let i = stackSem_state_stack_space s + w2n (w >>>
-            word_shift (:'a)) in
-            if i < LENGTH (?_stack s) /\
-               ((w >>> word_shift (:'a)) << word_shift (:'a) = w)
-                 then (NONE,?_stack_fupd (K (LUPDATE v i (?_stack s)))
-                 s) else (SOME Error,empty_env s)) | _115 -> (SOME
-                 Error,empty_env s))) /\
-   (stackSem_evaluate (StackGetSize r,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-      (NONE,set_var r (Word (n2w (stackSem_state_stack_space s)))
-        s))) /\
-   (stackSem_evaluate (StackSetSize r,s) =
-      (if ~stackSem_state_use_stack s then (SOME Error,s) else
-      match get_var r s with SOME (Word (w:'a word)) ->
-          (if LENGTH (?_stack s) <= w2n w then (SOME Error,empty_env
-            s) else (NONE,set_var r (Word (w << word_shift (:'a)))
-                        (stackSem_state_stack_space_fupd (K (w2n w))
-                          s))) | _116 -> (SOME Error,s))) /\
-   (stackSem_evaluate (BitmapLoad r v,s) =
-      (if ~stackSem_state_use_stack s \/ r = v then (SOME Error,s)
-        else
-      match get_var v s with SOME (Word w) ->
-          (if LENGTH (stackSem_state_bitmaps s) <= w2n w then
-            (SOME Error,s) else (NONE,set_var r (Word (EL (w2n w)
-            (stackSem_state_bitmaps s))) s)) | _117 -> (SOME
-            Error,s)))`;;
+              sh_mem_op op r a (dec_clock s)) | _108 -> (SOME
+                Error,s))
+        | (CodeBufferWrite r1 r2,s) ->
+       (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
+         (Word w2)) ->
+             (match buffer_write (?_code_buffer s) w1 (w2w w2) with
+               SOME new_cb ->
+               (NONE,?_code_buffer_fupd (K new_cb) s) | _109 -> (SOME
+                 Error,s)) | _110 -> (SOME Error,s))
+        | (DataBufferWrite r1 r2,s) ->
+       if ~stackSem_state_use_stack s then (SOME Error,s) else
+       (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
+         (Word w2)) ->
+             (match buffer_write (?_data_buffer s) w1 w2 with SOME
+               new_db ->
+               (NONE,?_data_buffer_fupd (K new_db) s) | _111 -> (SOME
+                 Error,s)) | _112 -> (SOME Error,s))
+        | (FFI ffi_index ptr len ptr2 len2 ret,s) ->
+      (match (get_var len s,get_var ptr s,get_var len2 s,get_var ptr2
+        s) with (SOME (Word w),SOME (Word w2),SOME (Word w3),SOME (Word
+        w4)) ->
+            (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
+              (?_memory s) (?_mdomain s) (?_be s)),
+                   read_bytearray w4 (w2n w3) (mem_load_byte_aux
+                     (?_memory s) (?_mdomain s) (?_be s))) with (SOME
+                     bytes,SOME bytes2) ->
+                (match call_FFI (?_ffi s) (ExtCall ffi_index) bytes
+                  bytes2 with FFI_final outcome -> (SOME (FinalFFI
+                  outcome),s) | FFI_return new_ffi new_bytes ->
+                     (let new_m = write_bytearray w4 new_bytes
+                       (?_memory s) (?_mdomain s) (?_be s) in
+                       (NONE,?_ffi_fupd (K new_ffi) (?_fp_regs_fupd
+                         (K FEMPTY) (stackSem_state_regs_fupd (K
+                         (DRESTRICT (stackSem_state_regs s)
+                         (stackSem_state_ffi_save_regs s)))
+                         (?_memory_fupd (K new_m) s)))))) | _113 ->
+                         (SOME Error,s)) | res -> (SOME Error,s))
+        | (LocValue r l1 l2,s) ->
+        if loc_check (?_code s) (l1,l2) then
+          (NONE,set_var r (Loc l1 l2) s) else (SOME Error,s)
+        | (StackAlloc n,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+        if stackSem_state_stack_space s < n then (SOME (Halt (Word
+          (n2w 2))),empty_env s) else
+          (NONE,stackSem_state_stack_space_fupd (K
+            (stackSem_state_stack_space s - n)) s)
+        | (StackFree n,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+        if LENGTH (?_stack s) < stackSem_state_stack_space s + n then
+          (SOME Error,empty_env s) else
+          (NONE,stackSem_state_stack_space_fupd (K
+            (stackSem_state_stack_space s + n)) s)
+        | (StackLoad r n,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+        if stackSem_state_stack_space s + n < LENGTH (?_stack s) then
+          (NONE,set_var r (EL (stackSem_state_stack_space s + n)
+          (?_stack s)) s) else (SOME Error,empty_env s)
+        | (StackLoadAny r rn,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+          match get_var rn s with SOME (Word (w:'a word)) ->
+            (let i = stackSem_state_stack_space s + w2n (w >>>
+              word_shift (:'a)) in
+              if i < LENGTH (?_stack s) /\
+                 ((w >>> word_shift (:'a)) << word_shift (:'a) = w)
+                   then (NONE,set_var r (EL i (?_stack s)) s) else (SOME
+                   Error,empty_env s)) | _114 -> (SOME Error,empty_env
+                   s)
+        | (StackStore r n,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+        if LENGTH (?_stack s) <= stackSem_state_stack_space s + n
+          then (SOME Error,empty_env s) else
+          match get_var r s with NONE -> (SOME Error,empty_env s) |
+            SOME v -> (NONE,?_stack_fupd (K (LUPDATE v
+            (stackSem_state_stack_space s + n) (?_stack s))) s)
+        | (StackStoreAny r rn,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+          match (get_var r s,get_var rn s) with (SOME v,SOME (Word
+            (w:'a word))) ->
+            (let i = stackSem_state_stack_space s + w2n (w >>>
+              word_shift (:'a)) in
+              if i < LENGTH (?_stack s) /\
+                 ((w >>> word_shift (:'a)) << word_shift (:'a) = w)
+                   then (NONE,?_stack_fupd (K (LUPDATE v i (?_stack s)))
+                   s) else (SOME Error,empty_env s)) | _115 -> (SOME
+                   Error,empty_env s)
+        | (StackGetSize r,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+        (NONE,set_var r (Word (n2w (stackSem_state_stack_space s)))
+          s)
+        | (StackSetSize r,s) ->
+        if ~stackSem_state_use_stack s then (SOME Error,s) else
+        match get_var r s with SOME (Word (w:'a word)) ->
+            (if LENGTH (?_stack s) <= w2n w then (SOME
+              Error,empty_env s) else (NONE,set_var r (Word (w <<
+              word_shift (:'a)))
+                          (stackSem_state_stack_space_fupd (K (w2n
+                            w)) s))) | _116 -> (SOME Error,s)
+        | (BitmapLoad r v,s) ->
+        if ~stackSem_state_use_stack s \/ r = v then (SOME Error,s)
+          else
+        match get_var v s with SOME (Word w) ->
+            (if LENGTH (stackSem_state_bitmaps s) <= w2n w then
+              (SOME Error,s) else (NONE,set_var r (Word (EL (w2n w)
+              (stackSem_state_bitmaps s))) s)) | _117 -> (SOME
+              Error,s)`;;
 hol4_overload "evaluate" "stackSem_evaluate";;
 
 (* We prove that the clock never increases. *)

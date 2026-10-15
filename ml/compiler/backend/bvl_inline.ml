@@ -145,27 +145,29 @@ let is_small_def = cake_define
   `is_small limit e = ~(is_small_aux limit [e] = 0)`;;
 
 let is_rec_def = cake_define
-  `(bvl_inline_is_rec n [] = F) /\
-   (bvl_inline_is_rec n (x :: y :: xs) =
-      (if bvl_inline_is_rec n [x] then T else
-        bvl_inline_is_rec n (y :: xs))) /\
-   (bvl_inline_is_rec n [Var v] = F) /\
-   (bvl_inline_is_rec n [If x1 x2 x3] =
-      (if bvl_inline_is_rec n [x1] then T else
-      if bvl_inline_is_rec n [x2] then T else
-        bvl_inline_is_rec n [x3])) /\
-   (bvl_inline_is_rec n [Let xs x2] =
-      (if bvl_inline_is_rec n xs then T else
-        bvl_inline_is_rec n [x2])) /\
-   (bvl_inline_is_rec n [Raise x1] = bvl_inline_is_rec n [x1]) /\
-   (bvl_inline_is_rec n [Handle x1 x2] =
-      (if bvl_inline_is_rec n [x1] then T else
-        bvl_inline_is_rec n [x2])) /\
-   (bvl_inline_is_rec n [Op op xs] = bvl_inline_is_rec n xs) /\
-   (bvl_inline_is_rec n [Tick x] = bvl_inline_is_rec n [x]) /\
-   (bvl_inline_is_rec n [Force _5 _6] = F) /\
-   (bvl_inline_is_rec n [Call ticks dest xs] =
-      (if dest = SOME n then T else bvl_inline_is_rec n xs))`;;
+  `bvl_inline_is_rec n x2 =
+        match x2 with
+          [] -> F
+        | (x :: y :: xs) ->
+        if bvl_inline_is_rec n [x] then T else
+          bvl_inline_is_rec n (y :: xs)
+        | [Var v] -> F
+        | [If x1 x2 x3] ->
+        if bvl_inline_is_rec n [x1] then T else
+        if bvl_inline_is_rec n [x2] then T else
+          bvl_inline_is_rec n [x3]
+        | [Let xs x2] ->
+        if bvl_inline_is_rec n xs then T else
+          bvl_inline_is_rec n [x2]
+        | [Raise x1] -> bvl_inline_is_rec n [x1]
+        | [Handle x1 x2] ->
+        if bvl_inline_is_rec n [x1] then T else
+          bvl_inline_is_rec n [x2]
+        | [Op op xs] -> bvl_inline_is_rec n xs
+        | [Tick x] -> bvl_inline_is_rec n [x]
+        | [Force _5 _6] -> F
+        | [Call ticks dest xs] ->
+        if dest = SOME n then T else bvl_inline_is_rec n xs`;;
 hol4_overload "is_rec" "bvl_inline_is_rec";;
 
 let is_rec_sing_def = cake_define
@@ -209,30 +211,31 @@ let tick_compile_prog_def = cake_define
 (* remove_ticks -- a function that removes Ticks *)
 
 let remove_ticks_def = cake_define
-  `(bvl_inline_remove_ticks [] = []) /\
-   (bvl_inline_remove_ticks (x :: y :: xs) =
-      HD (bvl_inline_remove_ticks [x]) :: bvl_inline_remove_ticks (y
-        :: xs)) /\
-   (bvl_inline_remove_ticks [Var v] = [Var v]) /\
-   (bvl_inline_remove_ticks [If x1 x2 x3] =
-      [If (HD (bvl_inline_remove_ticks [x1]))
-          (HD (bvl_inline_remove_ticks [x2]))
-          (HD (bvl_inline_remove_ticks [x3]))]) /\
-   (bvl_inline_remove_ticks [Let xs x2] =
-      [Let (bvl_inline_remove_ticks xs) (HD (bvl_inline_remove_ticks
-        [x2]))]) /\
-   (bvl_inline_remove_ticks [Raise x1] =
-      [Raise (HD (bvl_inline_remove_ticks [x1]))]) /\
-   (bvl_inline_remove_ticks [Handle x1 x2] =
-      [Handle (HD (bvl_inline_remove_ticks [x1]))
-              (HD (bvl_inline_remove_ticks [x2]))]) /\
-   (bvl_inline_remove_ticks [Op op xs] =
-      [Op op (bvl_inline_remove_ticks xs)]) /\
-   (bvl_inline_remove_ticks [Tick x] = bvl_inline_remove_ticks [x])
-     /\
-   (bvl_inline_remove_ticks [Force m n] = [Force m n]) /\
-   (bvl_inline_remove_ticks [Call ticks dest xs] =
-      [Call 0 dest (bvl_inline_remove_ticks xs)])`;;
+  `bvl_inline_remove_ticks x1 =
+        match x1 with
+          [] -> []
+        | (x :: y :: xs) ->
+        HD (bvl_inline_remove_ticks [x]) :: bvl_inline_remove_ticks
+          (y :: xs)
+        | [Var v] -> [Var v]
+        | [If x1 x2 x3] ->
+        [If (HD (bvl_inline_remove_ticks [x1]))
+            (HD (bvl_inline_remove_ticks [x2]))
+            (HD (bvl_inline_remove_ticks [x3]))]
+        | [Let xs x2] ->
+        [Let (bvl_inline_remove_ticks xs) (HD
+          (bvl_inline_remove_ticks [x2]))]
+        | [Raise x1] ->
+        [Raise (HD (bvl_inline_remove_ticks [x1]))]
+        | [Handle x1 x2] ->
+        [Handle (HD (bvl_inline_remove_ticks [x1]))
+                (HD (bvl_inline_remove_ticks [x2]))]
+        | [Op op xs] ->
+        [Op op (bvl_inline_remove_ticks xs)]
+        | [Tick x] -> bvl_inline_remove_ticks [x]
+        | [Force m n] -> [Force m n]
+        | [Call ticks dest xs] ->
+        [Call 0 dest (bvl_inline_remove_ticks xs)]`;;
 hol4_overload "remove_ticks" "bvl_inline_remove_ticks";;
 
 let remove_ticks_sing_def = cake_define
@@ -283,31 +286,32 @@ let dest_op_def = cake_define
 hol4_overload "dest_op" "bvl_inline_dest_op";;
 
 let let_op_def = cake_define
-  `(bvl_inline_let_op [] = []) /\
-   (bvl_inline_let_op ((x:bvl_exp) :: y :: xs) =
-      HD (bvl_inline_let_op [x]) :: bvl_inline_let_op (y :: xs)) /\
-   (bvl_inline_let_op [Var v] = [Var v]) /\
-   (bvl_inline_let_op [If x1 x2 x3] =
-      [If (HD (bvl_inline_let_op [x1]))
-          (HD (bvl_inline_let_op [x2]))
-          (HD (bvl_inline_let_op [x3]))]) /\
-   (bvl_inline_let_op [Let xs x2] =
-      (let xs = bvl_inline_let_op xs in
-      let x2 = HD (bvl_inline_let_op [x2]) in
-        match dest_op x2 xs with SOME op -> [Op op xs] | NONE -> [Let
-          xs x2])) /\
-   (bvl_inline_let_op [Raise x1] =
-      [Raise (HD (bvl_inline_let_op [x1]))]) /\
-   (bvl_inline_let_op [Handle x1 x2] =
-      [Handle (HD (bvl_inline_let_op [x1]))
-               (HD (bvl_inline_let_op [x2]))]) /\
-   (bvl_inline_let_op [Op op xs] =
-      [Op op (bvl_inline_let_op xs)]) /\
-   (bvl_inline_let_op [Tick x] = [Tick (HD (bvl_inline_let_op [x]))])
-     /\
-   (bvl_inline_let_op [Force m n] = [Force m n]) /\
-   (bvl_inline_let_op [Call ticks dest xs] = [Call ticks dest
-     (bvl_inline_let_op xs)])`;;
+  `bvl_inline_let_op x1 =
+        match x1 with
+          [] -> []
+        | ((x:bvl_exp) :: y :: xs) ->
+        HD (bvl_inline_let_op [x]) :: bvl_inline_let_op (y :: xs)
+        | [Var v] -> [Var v]
+        | [If x1 x2 x3] ->
+        [If (HD (bvl_inline_let_op [x1]))
+            (HD (bvl_inline_let_op [x2]))
+            (HD (bvl_inline_let_op [x3]))]
+        | [Let xs x2] ->
+        let xs = bvl_inline_let_op xs in
+        let x2 = HD (bvl_inline_let_op [x2]) in
+          match dest_op x2 xs with SOME op -> [Op op xs] | NONE ->
+            [Let xs x2]
+        | [Raise x1] ->
+        [Raise (HD (bvl_inline_let_op [x1]))]
+        | [Handle x1 x2] ->
+        [Handle (HD (bvl_inline_let_op [x1]))
+                 (HD (bvl_inline_let_op [x2]))]
+        | [Op op xs] ->
+        [Op op (bvl_inline_let_op xs)]
+        | [Tick x] -> [Tick (HD (bvl_inline_let_op [x]))]
+        | [Force m n] -> [Force m n]
+        | [Call ticks dest xs] -> [Call ticks dest
+          (bvl_inline_let_op xs)]`;;
 hol4_overload "let_op" "bvl_inline_let_op";;
 
 let let_op_one_def = cake_define

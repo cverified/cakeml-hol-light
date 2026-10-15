@@ -866,7 +866,7 @@ let first_match_col_def = cake_define
 
 let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
   "clash_tree = reg_alloc_Delta (num list) (num list) | reg_alloc_Set \
-   (one spt) | reg_alloc_Branch ((one spt) option) (clash_tree) \
+   (1 spt) | reg_alloc_Branch ((1 spt) option) (clash_tree) \
    (clash_tree) | reg_alloc_Seq (clash_tree) (clash_tree)";;
 hol4_overload "Delta" "reg_alloc_Delta";;
 hol4_overload "Set" "reg_alloc_Set";;

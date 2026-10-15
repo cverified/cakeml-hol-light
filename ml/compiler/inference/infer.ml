@@ -18,10 +18,11 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/primTypes.ml";;
+needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
-(* HOL4 ancestors outside the port: namespaceProps string *)
+(* HOL4 ancestors outside the port: string *)
 
 
 new_type_abbrev("err_var",`: (mlstring,mlstring,mlstring
@@ -48,10 +49,10 @@ let write_def = cake_define
    (\s. (M_success one,v))`;;
 
 let lookup_st_ex_def = cake_define
-  `lookup_st_ex l err id ienv st =
-     (match nsLookup ienv id with NONE -> (M_failure
+  `lookup_st_ex l err id' ienv st =
+     (match nsLookup ienv id' with NONE -> (M_failure
        (loc_err_info_loc l,concat [(implode "Undefined "); err;
-       (implode ": "); id_to_string id]),st) | SOME v -> (M_success
+       (implode ": "); id_to_string id']),st) | SOME v -> (M_success
        v,st))`;;
 
 let infer_st_FIELDS = define_record "infer_st"
@@ -414,71 +415,71 @@ let word_tc_def = cake_define
    (word_tc W64 = Tword64_num)`;;
 
 let op_to_string_def = cake_define
-  `(op_to_string (Shift _3 _4 _5) = ((implode "Shift"),1)) /\
-   (op_to_string Equality = ((implode "Equality"),2)) /\
-   (op_to_string (Arith a ty) =
-      ((implode "Arith"),
-       (match supported_arith a ty with SOME n -> (n:num) | NONE ->
-         0))) /\
-   (op_to_string (FromTo _6 _7) = ((implode "FromTo"),1)) /\
-   (op_to_string (Test _8 _9) = ((implode "Test"),2)) /\
-   (op_to_string Opapp = ((implode "Opapp"),2)) /\
-   (op_to_string Opassign = ((implode "Opassign"),2)) /\
-   (op_to_string Opref = ((implode "Opref"),1)) /\
-   (op_to_string Opderef = ((implode "Opderef"),1)) /\
-   (op_to_string Aw8alloc = ((implode "Aw8alloc"),2)) /\
-   (op_to_string Aw8sub = ((implode "Aw8sub"),2)) /\
-   (op_to_string Aw8length = ((implode "Aw8length"),1)) /\
-   (op_to_string Aw8update = ((implode "Aw8update"),3)) /\
-   (op_to_string Aw8sub_unsafe = ((implode "Aw8sub_unsafe"),2)) /\
-   (op_to_string Aw8update_unsafe = ((implode "Aw8update_unsafe"),3))
-     /\
-   (op_to_string XorAw8Str_unsafe = ((implode "XorAw8Str_unsafe"),2))
-     /\
-   (op_to_string CopyStrStr = ((implode "CopyStrStr"),3)) /\
-   (op_to_string CopyStrAw8 = ((implode "CopyStrAw8"),5)) /\
-   (op_to_string CopyAw8Str = ((implode "CopyAw8Str"),3)) /\
-   (op_to_string CopyAw8Aw8 = ((implode "CopyAw8Aw8"),5)) /\
-   (op_to_string Strsub = ((implode "Strsub"),2)) /\
-   (op_to_string Implode = ((implode "Implode"),1)) /\
-   (op_to_string Explode = ((implode "Explode"),1)) /\
-   (op_to_string Strlen = ((implode "Strlen"),1)) /\
-   (op_to_string Strcat = ((implode "Strcat"),1)) /\
-   (op_to_string VfromList = ((implode "VfromList"),1)) /\
-   (op_to_string Vsub = ((implode "Vsub"),2)) /\
-   (op_to_string Vsub_unsafe = ((implode "Vsub_unsafe"),2)) /\
-   (op_to_string Vlength = ((implode "Vlength"),1)) /\
-   (op_to_string Aalloc = ((implode "Aalloc"),2)) /\
-   (op_to_string AallocEmpty = ((implode "AallocEmpty"),1)) /\
-   (op_to_string AallocFixed = ((implode "AallocFixed"),1)) /\
-   (op_to_string Asub = ((implode "Asub"),2)) /\
-   (op_to_string Alength = ((implode "Alength"),1)) /\
-   (op_to_string Aupdate = ((implode "Aupdate"),3)) /\
-   (op_to_string Asub_unsafe = ((implode "Asub_unsafe"),2)) /\
-   (op_to_string Aupdate_unsafe = ((implode "Aupdate_unsafe"),3)) /\
-   (op_to_string ConfigGC = ((implode "ConfigGC"),2)) /\
-   (op_to_string Eval = ((implode "Eval"),6)) /\
-   (op_to_string Env_id = ((implode "Env_id"),1)) /\
-   (op_to_string ListAppend = ((implode "ListAppend"),2)) /\
-   (op_to_string (FFI _10) = ((implode "FFI"),2)) /\
-   (op_to_string (ThunkOp ForceThunk) = ((implode "ForceThunk"),1))
-     /\
-   (op_to_string (ThunkOp (AllocThunk _11)) = ((implode
-     "AllocThunk"),1)) /\
-   (op_to_string (ThunkOp (UpdateThunk _12)) = ((implode
-     "UpdateThunk"),2))`;;
+  `op_to_string x1 =
+        match x1 with
+          (Shift _3 _4 _5) -> ((implode "Shift"),1)
+        | Equality -> ((implode "Equality"),2)
+        | (Arith a ty) ->
+        ((implode "Arith"),
+         (match supported_arith a ty with SOME n -> (n:num) | NONE ->
+           0))
+        | (FromTo _6 _7) -> ((implode "FromTo"),1)
+        | (Test _8 _9) -> ((implode "Test"),2)
+        | Opapp -> ((implode "Opapp"),2)
+        | Opassign -> ((implode "Opassign"),2)
+        | Opref -> ((implode "Opref"),1)
+        | Opderef -> ((implode "Opderef"),1)
+        | Aw8alloc -> ((implode "Aw8alloc"),2)
+        | Aw8sub -> ((implode "Aw8sub"),2)
+        | Aw8length -> ((implode "Aw8length"),1)
+        | Aw8update -> ((implode "Aw8update"),3)
+        | Aw8sub_unsafe -> ((implode "Aw8sub_unsafe"),2)
+        | Aw8update_unsafe -> ((implode "Aw8update_unsafe"),3)
+        | XorAw8Str_unsafe -> ((implode "XorAw8Str_unsafe"),2)
+        | CopyStrStr -> ((implode "CopyStrStr"),3)
+        | CopyStrAw8 -> ((implode "CopyStrAw8"),5)
+        | CopyAw8Str -> ((implode "CopyAw8Str"),3)
+        | CopyAw8Aw8 -> ((implode "CopyAw8Aw8"),5)
+        | Strsub -> ((implode "Strsub"),2)
+        | Implode -> ((implode "Implode"),1)
+        | Explode -> ((implode "Explode"),1)
+        | Strlen -> ((implode "Strlen"),1)
+        | Strcat -> ((implode "Strcat"),1)
+        | VfromList -> ((implode "VfromList"),1)
+        | Vsub -> ((implode "Vsub"),2)
+        | Vsub_unsafe -> ((implode "Vsub_unsafe"),2)
+        | Vlength -> ((implode "Vlength"),1)
+        | Aalloc -> ((implode "Aalloc"),2)
+        | AallocEmpty -> ((implode "AallocEmpty"),1)
+        | AallocFixed -> ((implode "AallocFixed"),1)
+        | Asub -> ((implode "Asub"),2)
+        | Alength -> ((implode "Alength"),1)
+        | Aupdate -> ((implode "Aupdate"),3)
+        | Asub_unsafe -> ((implode "Asub_unsafe"),2)
+        | Aupdate_unsafe -> ((implode "Aupdate_unsafe"),3)
+        | ConfigGC -> ((implode "ConfigGC"),2)
+        | Eval -> ((implode "Eval"),6)
+        | Env_id -> ((implode "Env_id"),1)
+        | ListAppend -> ((implode "ListAppend"),2)
+        | (FFI _10) -> ((implode "FFI"),2)
+        | (ThunkOp ForceThunk) -> ((implode "ForceThunk"),1)
+        | (ThunkOp (AllocThunk _11)) -> ((implode "AllocThunk"),1)
+        | (ThunkOp (UpdateThunk _12)) -> ((implode
+          "UpdateThunk"),2)`;;
 
 (* HOL4 overload (expanded in the port):
      Tem = Infer_Tapp [] *)
 
 let t_num_of_def = cake_define
-  `t_num_of BoolT = Tbool_num /\
-   t_num_of IntT = Tint_num /\
-   t_num_of CharT = Tchar_num /\
-   t_num_of StrT = Tstring_num /\
-   t_num_of (WordT W8) = Tword8_num /\
-   t_num_of (WordT W64) = Tword64_num /\
-   t_num_of Float64T = Tdouble_num`;;
+  `t_num_of x1 =
+      match x1 with
+        BoolT -> Tbool_num
+      | IntT -> Tint_num
+      | CharT -> Tchar_num
+      | StrT -> Tstring_num
+      | (WordT W8) -> Tword8_num
+      | (WordT W64) -> Tword64_num
+      | Float64T -> Tdouble_num`;;
 
 let op_simple_constraints_def = cake_define
   `op_simple_constraints op =
@@ -678,8 +679,8 @@ let infer_e_def = cake_define_wf
      return (Infer_Tapp [] Tword64_num)) /\
    (infer_e l ienv (Lit (Float64 _39)) =
      return (Infer_Tapp [] Tdouble_num)) /\
-   (infer_e l ienv (Var id) =
-     monad_bind (lookup_st_ex l (implode "variable") id
+   (infer_e l ienv (Var id') =
+     monad_bind (lookup_st_ex l (implode "variable") id'
        (inf_env_inf_v ienv)) (\(tvs,t). monad_bind (n_fresh_uvar tvs) (\
         uvs.
         return (infer_deBruijn_subst uvs t)))) /\

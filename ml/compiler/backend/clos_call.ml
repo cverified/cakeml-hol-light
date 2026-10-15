@@ -17,56 +17,57 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
 let free_def = cake_define
-  `(clos_call_free [] = ([],Empty)) /\
-   (clos_call_free ((x:closLang_exp) :: y :: xs) =
-      (let (c1,l1) = clos_call_free [x] in
-      let (c2,l2) = clos_call_free (y :: xs) in
-        (c1 ++ c2,mk_Union l1 l2))) /\
-   (clos_call_free [Var t v] = ([Var t v],Var v)) /\
-   (clos_call_free [If t x1 x2 x3] =
-      (let (c1,l1) = clos_call_free [x1] in
-      let (c2,l2) = clos_call_free [x2] in
-      let (c3,l3) = clos_call_free [x3] in
-        ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union l2
-          l3)))) /\
-   (clos_call_free [Let t xs x2] =
-      (let (c1,l1) = clos_call_free xs in
-      let (c2,l2) = clos_call_free [x2] in
-        ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs) l2)))) /\
-   (clos_call_free [Raise t x1] =
-      (let (c1,l1) = clos_call_free [x1] in
-        ([Raise t (HD c1)],l1))) /\
-   (clos_call_free [Tick t x1] =
-      (let (c1,l1) = clos_call_free [x1] in
-        ([Tick t (HD c1)],l1))) /\
-   (clos_call_free [Op t op xs] =
-      (let (c1,l1) = clos_call_free xs in
-        ([Op t op c1],l1))) /\
-   (clos_call_free [App t loc_opt x1 xs2] =
-      (let (c1,l1) = clos_call_free [x1] in
-      let (c2,l2) = clos_call_free xs2 in
-        ([App t loc_opt (HD c1) c2],mk_Union l1 l2))) /\
-   (clos_call_free [Fn t loc _1 num_args x1] =
-      (let (c1,l1) = clos_call_free [x1] in
-      let l2 = Shift num_args l1 in
-        ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)))
-          /\
-   (clos_call_free [Letrec t loc _2 fns x1] =
-      (let m = LENGTH fns in
-      let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
+  `clos_call_free x1 =
+        match x1 with
+          [] -> ([],Empty)
+        | ((x:closLang_exp) :: y :: xs) ->
+        let (c1,l1) = clos_call_free [x] in
+        let (c2,l2) = clos_call_free (y :: xs) in
+          (c1 ++ c2,mk_Union l1 l2)
+        | [Var t v] -> ([Var t v],Var v)
+        | [If t x1 x2 x3] ->
+        let (c1,l1) = clos_call_free [x1] in
+        let (c2,l2) = clos_call_free [x2] in
+        let (c3,l3) = clos_call_free [x3] in
+          ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union l2
+            l3))
+        | [Let t xs x2] ->
+        let (c1,l1) = clos_call_free xs in
+        let (c2,l2) = clos_call_free [x2] in
+          ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs) l2))
+        | [Raise t x1] ->
+        let (c1,l1) = clos_call_free [x1] in
+          ([Raise t (HD c1)],l1)
+        | [Tick t x1] ->
+        let (c1,l1) = clos_call_free [x1] in
+          ([Tick t (HD c1)],l1)
+        | [Op t op xs] ->
+        let (c1,l1) = clos_call_free xs in
+          ([Op t op c1],l1)
+        | [App t loc_opt x1 xs2] ->
+        let (c1,l1) = clos_call_free [x1] in
+        let (c2,l2) = clos_call_free xs2 in
+          ([App t loc_opt (HD c1) c2],mk_Union l1 l2)
+        | [Fn t loc _1 num_args x1] ->
+        let (c1,l1) = clos_call_free [x1] in
+        let l2 = Shift num_args l1 in
+          ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)
+        | [Letrec t loc _2 fns x1] ->
+        let m = LENGTH fns in
+        let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
-      let c1 = MAP FST res in
-      let l1 = list_mk_Union (MAP SND res) in
-      let (c2,l2) = clos_call_free [x1] in
-        ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-         mk_Union l1 (Shift (LENGTH fns) l2)))) /\
-   (clos_call_free [Handle t x1 x2] =
-      (let (c1,l1) = clos_call_free [x1] in
-      let (c2,l2) = clos_call_free [x2] in
-        ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))) /\
-   (clos_call_free [Call t ticks dest xs] =
-      (let (c1,l1) = clos_call_free xs in
-        ([Call t ticks dest c1],l1)))`;;
+        let c1 = MAP FST res in
+        let l1 = list_mk_Union (MAP SND res) in
+        let (c2,l2) = clos_call_free [x1] in
+          ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
+           mk_Union l1 (Shift (LENGTH fns) l2))
+        | [Handle t x1 x2] ->
+        let (c1,l1) = clos_call_free [x1] in
+        let (c2,l2) = clos_call_free [x2] in
+          ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2))
+        | [Call t ticks dest xs] ->
+        let (c1,l1) = clos_call_free xs in
+          ([Call t ticks dest c1],l1)`;;
 hol4_overload "free" "clos_call_free";;
 
 (* HOL4 ML code, not ported:

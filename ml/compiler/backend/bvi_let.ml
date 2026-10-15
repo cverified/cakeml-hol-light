@@ -75,46 +75,45 @@ let _ = size_thms "exp2";;
    [exp2_size_APPEND,SNOC_APPEND,exp_size_def] *)
 let compile_def = cake_define_wf
   `MEASURE (exp2_size o SND o SND)`
-  `(bvi_let_compile env d [] = []) /\
-   (bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
-     ++ bvi_let_compile env d (y :: xs)) /\
-   (bvi_let_compile env d [(Var v):bvi_exp] =
-      (match (\l n. oEL n l) env v with SOME n -> [Var (v + n)] | _4
-        -> [Var (v + d)])) /\
-   (bvi_let_compile env d [If x1 x2 x3] =
-      [If (HD (bvi_let_compile env d [x1]))
-          (HD (bvi_let_compile env d [x2]))
-          (HD (bvi_let_compile env d [x3]))]) /\
-   (bvi_let_compile env d [Let xs x2] =
-      (let l = LENGTH xs in
-        if l = 0 then bvi_let_compile env d [x2] else
-          let k = l - 1 in
-            if x2 = Var k then
-              let ys = bvi_let_compile env d (BUTLAST xs) in
-                [Let ys (HD (bvi_let_compile (MAP ((+) k) env) (d +
-                  k) [LAST xs]))] else
-              let ys = bvi_let_compile env d xs in
-                [Let (MAP delete_var ys)
-                  (HD (bvi_let_compile (extract_list ys ++ env) d
-                    [x2]))])) /\
-   (bvi_let_compile env d [Raise x1] =
-      [Raise (HD (bvi_let_compile env d [x1]))]) /\
-   (bvi_let_compile env d [Op op xs] = [Op op (bvi_let_compile env d
-     xs)]) /\
-   (bvi_let_compile env d [Tick x] = [Tick (HD (bvi_let_compile env d
-     [x]))]) /\
-   (bvi_let_compile env d [Force loc v] =
-      (match (\l n. oEL n l) env v with SOME n -> [Force loc (v + n)]
-        | _5 -> [Force loc (v + d)])) /\
-   (bvi_let_compile env d [Call t dest xs h] =
-      [Call t dest (bvi_let_compile env d xs)
-          (match h with NONE -> NONE | SOME e -> SOME (HD
-            (bvi_let_compile (0 :: env) d [e])))]) /\
-   (bvi_let_compile env d [Return xs] = [Return (bvi_let_compile env
-     d xs)]) /\
-   (bvi_let_compile env d [LetCall rets t dest xs y] =
-      [LetCall rets t dest (bvi_let_compile env d xs)
-         (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d [y]))])`;;
+  `bvi_let_compile env d x3 =
+        match x3 with
+          [] -> []
+        | (x :: y :: xs) -> bvi_let_compile env d [x] ++
+          bvi_let_compile env d (y :: xs)
+        | [(Var v):bvi_exp] ->
+        match (\l n. oEL n l) env v with SOME n -> [Var (v + n)] | _4
+          -> [Var (v + d)]
+        | [If x1 x2 x3] ->
+        [If (HD (bvi_let_compile env d [x1]))
+            (HD (bvi_let_compile env d [x2]))
+            (HD (bvi_let_compile env d [x3]))]
+        | [Let xs x2] ->
+        let l = LENGTH xs in
+          if l = 0 then bvi_let_compile env d [x2] else
+            let k = l - 1 in
+              if x2 = Var k then
+                let ys = bvi_let_compile env d (BUTLAST xs) in
+                  [Let ys (HD (bvi_let_compile (MAP ((+) k) env) (d +
+                    k) [LAST xs]))] else
+                let ys = bvi_let_compile env d xs in
+                  [Let (MAP delete_var ys)
+                    (HD (bvi_let_compile (extract_list ys ++ env) d
+                      [x2]))]
+        | [Raise x1] ->
+        [Raise (HD (bvi_let_compile env d [x1]))]
+        | [Op op xs] -> [Op op (bvi_let_compile env d xs)]
+        | [Tick x] -> [Tick (HD (bvi_let_compile env d [x]))]
+        | [Force loc v] ->
+        match (\l n. oEL n l) env v with SOME n -> [Force loc (v +
+          n)] | _5 -> [Force loc (v + d)]
+        | [Call t dest xs h] ->
+        [Call t dest (bvi_let_compile env d xs)
+            (match h with NONE -> NONE | SOME e -> SOME (HD
+              (bvi_let_compile (0 :: env) d [e])))]
+        | [Return xs] -> [Return (bvi_let_compile env d xs)]
+        | [LetCall rets t dest xs y] ->
+        [LetCall rets t dest (bvi_let_compile env d xs)
+           (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d [y]))]`;;
 hol4_overload "compile" "bvi_let_compile";;
 
 let _ = size_thms "exp";;

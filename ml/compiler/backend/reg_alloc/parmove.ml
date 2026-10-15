@@ -67,9 +67,12 @@ let windmill_def = cake_define
   `windmill (moves:('a#'a) list) = ALL_DISTINCT (MAP FST moves)`;;
 
 let path_def = cake_define
-  `(parmove_path [] <=> T) /\ (parmove_path [_1] <=> T) /\
-   (parmove_path ((c,b') :: (b,a) :: p) <=>
-      (b = b') /\ parmove_path ((b,a) :: p))`;;
+  `parmove_path x1 =
+        match x1 with
+          [] -> T
+        | [_1] -> T
+        | ((c,b') :: (b,a) :: p) ->
+        (b = b') /\ parmove_path ((b,a) :: p)`;;
 hol4_overload "path" "parmove_path";;
 
 let wf_def = cake_define

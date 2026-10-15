@@ -22,8 +22,8 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
 
 let id_to_string_def = cake_define
   `(id_to_string (Short s) = s) /\
-   (id_to_string (Long x id) =
-     concat [x; implode "."; id_to_string id])`;;
+   (id_to_string (Long x id') =
+     concat [x; implode "."; id_to_string id'])`;;
 
 let get_tyname_def = cake_define
   `get_tyname n (Bind [] []) = NONE /\

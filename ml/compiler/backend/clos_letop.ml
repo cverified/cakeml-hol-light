@@ -33,39 +33,39 @@ let dest_op_def = cake_define
 hol4_overload "dest_op" "clos_letop_dest_op";;
 
 let let_op_def = cake_define
-  `(clos_letop_let_op [] = []) /\
-   (clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
-      HD (clos_letop_let_op [x]) :: clos_letop_let_op (y :: xs)) /\
-   (clos_letop_let_op [Var t v] = [Var t v]) /\
-   (clos_letop_let_op [If t x1 x2 x3] =
-      [If t (HD (clos_letop_let_op [x1]))
-            (HD (clos_letop_let_op [x2]))
-            (HD (clos_letop_let_op [x3]))]) /\
-   (clos_letop_let_op [Let t xs x2] =
-      (let xs = clos_letop_let_op xs in
-      let x2 = HD (clos_letop_let_op [x2]) in
-        match dest_op x2 xs with SOME op -> [Op t op xs] | NONE ->
-          [Let t xs x2])) /\
-   (clos_letop_let_op [Raise t x1] =
-      [Raise t (HD (clos_letop_let_op [x1]))]) /\
-   (clos_letop_let_op [Handle t x1 x2] =
-      [Handle t (HD (clos_letop_let_op [x1]))
-               (HD (clos_letop_let_op [x2]))]) /\
-   (clos_letop_let_op [Op t op xs] =
-      [Op t op (clos_letop_let_op xs)]) /\
-   (clos_letop_let_op [Tick t x] = [Tick t (HD (clos_letop_let_op
-     [x]))]) /\
-   (clos_letop_let_op [Call t ticks dest xs] = [Call t ticks dest
-     (clos_letop_let_op xs)]) /\
-   (clos_letop_let_op [App t loc_opt x1 xs] = [App t loc_opt (HD
-     (clos_letop_let_op [x1])) (clos_letop_let_op xs)]) /\
-   (clos_letop_let_op [Letrec t loc_opt vs fns x1] =
-      (let new_fns = MAP (\(num_args,x). (num_args,HD
-        (clos_letop_let_op [x]))) fns in
-      [Letrec t loc_opt vs new_fns (HD (clos_letop_let_op [x1]))]))
-        /\
-   (clos_letop_let_op [Fn t loc_opt vs num_args x1] = [Fn t
-     loc_opt vs num_args (HD (clos_letop_let_op [x1]))])`;;
+  `clos_letop_let_op x1 =
+        match x1 with
+          [] -> []
+        | ((x:closLang_exp) :: y :: xs) ->
+        HD (clos_letop_let_op [x]) :: clos_letop_let_op (y :: xs)
+        | [Var t v] -> [Var t v]
+        | [If t x1 x2 x3] ->
+        [If t (HD (clos_letop_let_op [x1]))
+              (HD (clos_letop_let_op [x2]))
+              (HD (clos_letop_let_op [x3]))]
+        | [Let t xs x2] ->
+        let xs = clos_letop_let_op xs in
+        let x2 = HD (clos_letop_let_op [x2]) in
+          match dest_op x2 xs with SOME op -> [Op t op xs] | NONE ->
+            [Let t xs x2]
+        | [Raise t x1] ->
+        [Raise t (HD (clos_letop_let_op [x1]))]
+        | [Handle t x1 x2] ->
+        [Handle t (HD (clos_letop_let_op [x1]))
+                 (HD (clos_letop_let_op [x2]))]
+        | [Op t op xs] ->
+        [Op t op (clos_letop_let_op xs)]
+        | [Tick t x] -> [Tick t (HD (clos_letop_let_op [x]))]
+        | [Call t ticks dest xs] -> [Call t ticks dest
+          (clos_letop_let_op xs)]
+        | [App t loc_opt x1 xs] -> [App t loc_opt (HD
+          (clos_letop_let_op [x1])) (clos_letop_let_op xs)]
+        | [Letrec t loc_opt vs fns x1] ->
+        let new_fns = MAP (\(num_args,x). (num_args,HD
+          (clos_letop_let_op [x]))) fns in
+        [Letrec t loc_opt vs new_fns (HD (clos_letop_let_op [x1]))]
+        | [Fn t loc_opt vs num_args x1] -> [Fn t loc_opt vs
+          num_args (HD (clos_letop_let_op [x1]))]`;;
 hol4_overload "let_op" "clos_letop_let_op";;
 
 (* HOL4 ML code, not ported:

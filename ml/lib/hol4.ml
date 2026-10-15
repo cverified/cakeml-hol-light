@@ -559,6 +559,20 @@ parse_as_infix("##",(20,"right"));;
 override_interface("##",`PAIR_MAP:(A->C)->(B->D)->A#B->C#D`);;
 
 (* ------------------------------------------------------------------ *)
+(* HOL4's OLEAST (WhileTheory): the least number that satisfies the
+   predicate when there is one *)
+
+let OLEAST = new_definition
+  `OLEAST (P:num->bool) = if ?n. P n then SOME (LEAST P) else NONE`;;
+
+(* HOL4's restricted quantifiers (boolTheory) *)
+
+let RES_FORALL = new_definition
+  `RES_FORALL p (m:A->bool) <=> !x. x IN p ==> m x`;;
+
+let RES_EXISTS = new_definition
+  `RES_EXISTS p (m:A->bool) <=> ?x. x IN p /\ m x`;;
+
 (* HOL4's LEAST_INT (integerTheory) and the floor and the ceiling of a*)
 (* real number as an integer (intrealTheory).                         *)
 (* ------------------------------------------------------------------ *)

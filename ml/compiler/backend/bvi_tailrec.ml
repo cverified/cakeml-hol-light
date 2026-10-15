@@ -482,12 +482,12 @@ let check_exp_def = cake_define
                  (if ~(ty = op_type op) then NONE else opr)))`;;
 
 let let_wrap_def = cake_define
-  `let_wrap arity id exp =
-     Let ((GENLIST (\i. Var i) arity) ++ [id]) exp`;;
+  `let_wrap arity id' exp =
+     Let ((GENLIST (\i. Var i) arity) ++ [id']) exp`;;
 
 let mk_aux_call_def = cake_define
-  `mk_aux_call loc arity id =
-     Call 0 (SOME loc) (id :: GENLIST (\i. Var i) arity) NONE`;;
+  `mk_aux_call loc arity id' =
+     Call 0 (SOME loc) (id' :: GENLIST (\i. Var i) arity) NONE`;;
 
 let compile_exp_def = cake_define
   `bvi_tailrec_compile_exp loc next arity exp =

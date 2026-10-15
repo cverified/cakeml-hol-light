@@ -812,15 +812,17 @@ let patsexp_def = cake_define_wf
      typesexp t])`;;
 
 let testsexp_def = cake_define
-  `testsexp (EQUAL) = SX_SYM "Equal" /\
-   testsexp (Compare Lt) = SX_SYM "Less" /\
-   testsexp (Compare Leq) = SX_SYM "LessEq" /\
-   testsexp (Compare Gt) = SX_SYM "Greater" /\
-   testsexp (Compare Geq) = SX_SYM "GreaterEq" /\
-   testsexp (AltCompare Lt) = SX_SYM "AltLess" /\
-   testsexp (AltCompare Leq) = SX_SYM "AltLessEq" /\
-   testsexp (AltCompare Gt) = SX_SYM "AltGreater" /\
-   testsexp (AltCompare Geq) = SX_SYM "AltGreaterEq"`;;
+  `testsexp x1 =
+      match x1 with
+        (EQUAL) -> SX_SYM "Equal"
+      | (Compare Lt) -> SX_SYM "Less"
+      | (Compare Leq) -> SX_SYM "LessEq"
+      | (Compare Gt) -> SX_SYM "Greater"
+      | (Compare Geq) -> SX_SYM "GreaterEq"
+      | (AltCompare Lt) -> SX_SYM "AltLess"
+      | (AltCompare Leq) -> SX_SYM "AltLessEq"
+      | (AltCompare Gt) -> SX_SYM "AltGreater"
+      | (AltCompare Geq) -> SX_SYM "AltGreaterEq"`;;
 
 let arithsexp_def = cake_define
   `arithsexp Add = SX_SYM "Add" /\
@@ -838,87 +840,86 @@ let arithsexp_def = cake_define
    arithsexp FMA = SX_SYM "FMA"`;;
 
 let prim_typesexp_def = cake_define
-  `prim_typesexp BoolT = SX_SYM "BoolT" /\
-   prim_typesexp IntT = SX_SYM "IntT" /\
-   prim_typesexp CharT = SX_SYM "CharT" /\
-   prim_typesexp StrT = SX_SYM "StrT" /\
-   prim_typesexp (WordT W8) = SX_SYM "Word8T" /\
-   prim_typesexp (WordT W64) = SX_SYM "Word64T" /\
-   prim_typesexp Float64T = SX_SYM "Float64T"`;;
+  `prim_typesexp x1 =
+      match x1 with
+        BoolT -> SX_SYM "BoolT"
+      | IntT -> SX_SYM "IntT"
+      | CharT -> SX_SYM "CharT"
+      | StrT -> SX_SYM "StrT"
+      | (WordT W8) -> SX_SYM "Word8T"
+      | (WordT W64) -> SX_SYM "Word64T"
+      | Float64T -> SX_SYM "Float64T"`;;
 
 let opsexp_def = cake_define
-  `(opsexp (Shift W8 Lsl n) = SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM n))
-  /\
-   (opsexp (Shift W8 Lsr n) = SX_CONS (SX_SYM "Shift8Lsr") (SX_NUM
-     n)) /\
-   (opsexp (Shift W8 Asr n) = SX_CONS (SX_SYM "Shift8Asr") (SX_NUM
-     n)) /\
-   (opsexp (Shift W8 Ror n) = SX_CONS (SX_SYM "Shift8Ror") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Lsl n) = SX_CONS (SX_SYM "Shift64Lsl") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Lsr n) = SX_CONS (SX_SYM "Shift64Lsr") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Asr n) = SX_CONS (SX_SYM "Shift64Asr") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Ror n) = SX_CONS (SX_SYM "Shift64Ror") (SX_NUM
-     n)) /\
-   (opsexp Equality = SX_SYM "Equality") /\
-   (opsexp Opapp = SX_SYM "Opapp") /\
-   (opsexp Opassign = SX_SYM "Opassign") /\
-   (opsexp Opref = SX_SYM "Opref") /\
-   (opsexp Opderef = SX_SYM "Opderef") /\
-   (opsexp Aw8alloc = SX_SYM "Aw8alloc") /\
-   (opsexp Aw8sub = SX_SYM "Aw8sub") /\
-   (opsexp Aw8length = SX_SYM "Aw8length") /\
-   (opsexp Aw8update = SX_SYM "Aw8update") /\
-   (opsexp Aw8sub_unsafe = SX_SYM "Aw8subunsafe") /\
-   (opsexp Aw8update_unsafe = SX_SYM "Aw8updateunsafe") /\
-   (opsexp CopyStrStr = SX_SYM "CopyStrStr") /\
-   (opsexp CopyStrAw8 = SX_SYM "CopyStrAw8") /\
-   (opsexp CopyAw8Str = SX_SYM "CopyAw8Str") /\
-   (opsexp CopyAw8Aw8 = SX_SYM "CopyAw8Aw8") /\
-   (opsexp XorAw8Str_unsafe = SX_SYM "XorAw8Strunsafe") /\
-   (opsexp Implode = SX_SYM "Implode") /\
-   (opsexp Explode = SX_SYM "Explode") /\
-   (opsexp Strsub = SX_SYM "Strsub") /\
-   (opsexp Strlen = SX_SYM "Strlen") /\
-   (opsexp Strcat = SX_SYM "Strcat") /\
-   (opsexp VfromList = SX_SYM "VfromList") /\
-   (opsexp Vsub = SX_SYM "Vsub") /\
-   (opsexp Vsub_unsafe = SX_SYM "Vsubunsafe") /\
-   (opsexp Vlength = SX_SYM "Vlength") /\
-   (opsexp ListAppend = SX_SYM "ListAppend") /\
-   (opsexp Aalloc = SX_SYM "Aalloc") /\
-   (opsexp AallocEmpty = SX_SYM "AallocEmpty") /\
-   (opsexp AallocFixed = SX_SYM "AallocFixed") /\
-   (opsexp Asub = SX_SYM "Asub") /\
-   (opsexp Alength = SX_SYM "Alength") /\
-   (opsexp Aupdate = SX_SYM "Aupdate") /\
-   (opsexp Asub_unsafe = SX_SYM "Asubunsafe") /\
-   (opsexp Aupdate_unsafe = SX_SYM "Aupdateunsafe") /\
-   (opsexp ConfigGC = SX_SYM "ConfigGC") /\
-   (opsexp Eval = SX_SYM "Eval") /\
-   (opsexp Env_id = SX_SYM "Envid") /\
-   (opsexp (FFI s) = SX_CONS (SX_SYM "FFI") (SEXSTR (explode s))) /\
-   (opsexp (ThunkOp ForceThunk) = SX_SYM "ForceThunk") /\
-   (opsexp (ThunkOp (AllocThunk m)) =
-     SX_CONS (SX_SYM "AllocThunk") (SX_SYM (encode_thunk_mode m))) /\
-   (opsexp (ThunkOp (UpdateThunk m)) =
-     SX_CONS (SX_SYM "UpdateThunk") (SX_SYM (encode_thunk_mode m)))
-       /\
-   (opsexp (Arith a prim_type) =
-     SX_CONS (SX_SYM "Arith")
-     (SX_CONS (arithsexp a)
-             (prim_typesexp prim_type))) /\
-   (opsexp (FromTo ty1 ty2) =
-     SX_CONS (SX_SYM "FromTo")
-     (SX_CONS (prim_typesexp ty1)
-             (prim_typesexp ty2))) /\
-   (opsexp (Test test prim_type) =
-     SX_CONS (SX_SYM "Test")
-     (SX_CONS (testsexp test)
-             (prim_typesexp prim_type)))`;;
+  `opsexp x1 =
+        match x1 with
+          (Shift W8 Lsl n) -> SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM n)
+        | (Shift W8 Lsr n) -> SX_CONS (SX_SYM "Shift8Lsr") (SX_NUM n)
+        | (Shift W8 Asr n) -> SX_CONS (SX_SYM "Shift8Asr") (SX_NUM n)
+        | (Shift W8 Ror n) -> SX_CONS (SX_SYM "Shift8Ror") (SX_NUM n)
+        | (Shift W64 Lsl n) -> SX_CONS (SX_SYM "Shift64Lsl") (SX_NUM
+          n)
+        | (Shift W64 Lsr n) -> SX_CONS (SX_SYM "Shift64Lsr") (SX_NUM
+          n)
+        | (Shift W64 Asr n) -> SX_CONS (SX_SYM "Shift64Asr") (SX_NUM
+          n)
+        | (Shift W64 Ror n) -> SX_CONS (SX_SYM "Shift64Ror") (SX_NUM
+          n)
+        | Equality -> SX_SYM "Equality"
+        | Opapp -> SX_SYM "Opapp"
+        | Opassign -> SX_SYM "Opassign"
+        | Opref -> SX_SYM "Opref"
+        | Opderef -> SX_SYM "Opderef"
+        | Aw8alloc -> SX_SYM "Aw8alloc"
+        | Aw8sub -> SX_SYM "Aw8sub"
+        | Aw8length -> SX_SYM "Aw8length"
+        | Aw8update -> SX_SYM "Aw8update"
+        | Aw8sub_unsafe -> SX_SYM "Aw8subunsafe"
+        | Aw8update_unsafe -> SX_SYM "Aw8updateunsafe"
+        | CopyStrStr -> SX_SYM "CopyStrStr"
+        | CopyStrAw8 -> SX_SYM "CopyStrAw8"
+        | CopyAw8Str -> SX_SYM "CopyAw8Str"
+        | CopyAw8Aw8 -> SX_SYM "CopyAw8Aw8"
+        | XorAw8Str_unsafe -> SX_SYM "XorAw8Strunsafe"
+        | Implode -> SX_SYM "Implode"
+        | Explode -> SX_SYM "Explode"
+        | Strsub -> SX_SYM "Strsub"
+        | Strlen -> SX_SYM "Strlen"
+        | Strcat -> SX_SYM "Strcat"
+        | VfromList -> SX_SYM "VfromList"
+        | Vsub -> SX_SYM "Vsub"
+        | Vsub_unsafe -> SX_SYM "Vsubunsafe"
+        | Vlength -> SX_SYM "Vlength"
+        | ListAppend -> SX_SYM "ListAppend"
+        | Aalloc -> SX_SYM "Aalloc"
+        | AallocEmpty -> SX_SYM "AallocEmpty"
+        | AallocFixed -> SX_SYM "AallocFixed"
+        | Asub -> SX_SYM "Asub"
+        | Alength -> SX_SYM "Alength"
+        | Aupdate -> SX_SYM "Aupdate"
+        | Asub_unsafe -> SX_SYM "Asubunsafe"
+        | Aupdate_unsafe -> SX_SYM "Aupdateunsafe"
+        | ConfigGC -> SX_SYM "ConfigGC"
+        | Eval -> SX_SYM "Eval"
+        | Env_id -> SX_SYM "Envid"
+        | (FFI s) -> SX_CONS (SX_SYM "FFI") (SEXSTR (explode s))
+        | (ThunkOp ForceThunk) -> SX_SYM "ForceThunk"
+        | (ThunkOp (AllocThunk m)) ->
+       SX_CONS (SX_SYM "AllocThunk") (SX_SYM (encode_thunk_mode m))
+        | (ThunkOp (UpdateThunk m)) ->
+       SX_CONS (SX_SYM "UpdateThunk") (SX_SYM (encode_thunk_mode m))
+        | (Arith a prim_type) ->
+       SX_CONS (SX_SYM "Arith")
+       (SX_CONS (arithsexp a)
+               (prim_typesexp prim_type))
+        | (FromTo ty1 ty2) ->
+       SX_CONS (SX_SYM "FromTo")
+       (SX_CONS (prim_typesexp ty1)
+               (prim_typesexp ty2))
+        | (Test test prim_type) ->
+       SX_CONS (SX_SYM "Test")
+       (SX_CONS (testsexp test)
+               (prim_typesexp prim_type))`;;
 
 let logsexp_def = cake_define
   `logsexp Andalso = SX_SYM "Andalso" /\
@@ -942,7 +943,7 @@ let expsexp_def = cake_define
    expsexp (Con cn es) =
      listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                listsexp (MAP expsexp es)] /\
-   expsexp (Var id) = listsexp [SX_SYM "Var"; idsexp id] /\
+   expsexp (Var id') = listsexp [SX_SYM "Var"; idsexp id'] /\
    expsexp (Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode x);
      expsexp e] /\
    expsexp (App op es) =

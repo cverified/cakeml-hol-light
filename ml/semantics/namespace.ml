@@ -15,8 +15,8 @@
      alist = ('k # 'v) list *)
 
 (* Identifiers *)
-let id_INDUCT,id_RECURSION = define_datatype
-  "id = Short ('n) | Long ('m) (id)";;
+let namespace_id_INDUCT,namespace_id_RECURSION = define_datatype
+  "namespace_id = Short ('n) | Long ('m) (namespace_id)";;
 
 let mk_id_def = cake_define
   `mk_id [] n = Short n /\
@@ -24,11 +24,11 @@ let mk_id_def = cake_define
 
 let id_to_n_def = cake_define
   `id_to_n (Short n) = n /\
-   id_to_n (Long _1 id) = id_to_n id`;;
+   id_to_n (Long _1 id') = id_to_n id'`;;
 
 let id_to_mods_def = cake_define
   `id_to_mods (Short _2) = [] /\
-   id_to_mods (Long mn id) = mn :: id_to_mods id`;;
+   id_to_mods (Long mn id') = mn :: id_to_mods id'`;;
 
 let namespace_INDUCT,namespace_RECURSION = define_datatype
   "namespace = Bind (('n#'v) list) (('m#namespace) list)";;
@@ -36,9 +36,9 @@ let namespace_INDUCT,namespace_RECURSION = define_datatype
 let nsLookup_def = cake_define
   `nsLookup ((Bind v m):('m,'n,'v)namespace) (Short n) =
      ALOOKUP v n /\
-   nsLookup (Bind v m) (Long mn id) =
+   nsLookup (Bind v m) (Long mn id') =
      (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookup
-       env id)`;;
+       env id')`;;
 
 let nsLookupMod_def = cake_define
   `nsLookupMod e [] = SOME (e:('m,'n,'v)namespace) /\
@@ -73,14 +73,14 @@ let nsSing_def = cake_define
 
 let nsSub_def = cake_define
   `nsSub r env1 env2 <=>
-      (!id v1.
-         nsLookup env1 id = SOME v1 ==>
-         (?v2. nsLookup env2 id = SOME v2 /\ r id v1 v2)) /\
+      (!id' v1.
+         nsLookup env1 id' = SOME v1 ==>
+         (?v2. nsLookup env2 id' = SOME v2 /\ r id' v1 v2)) /\
       (!path'. nsLookupMod env2 path' = NONE ==> nsLookupMod env1
         path' = NONE)`;;
 
 let nsAll_def = cake_define
-  `nsAll f env <=> (!id v. nsLookup env id = SOME v ==> f id v)`;;
+  `nsAll f env <=> (!id' v. nsLookup env id' = SOME v ==> f id' v)`;;
 
 let nsAll2_def = cake_define
   `nsAll2 r env1 env2 <=>

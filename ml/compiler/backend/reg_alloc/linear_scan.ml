@@ -171,7 +171,7 @@ let get_intervals_withlive_def = cake_define
 
 let check_number_property_def = cake_define
   `(
-     check_number_property (P:int->one spt->bool) (Writes l) n live =
+     check_number_property (P:int->1 spt->bool) (Writes l) n live =
          (let n_out = n - 1 in
          let live_out = numset_list_delete l live in
          P n_out live_out)) /\ (
@@ -192,7 +192,7 @@ let check_number_property_def = cake_define
 
 let check_number_property_strong_def = cake_define
   `(
-     check_number_property_strong (P:int->one spt->bool) (Writes l) n
+     check_number_property_strong (P:int->1 spt->bool) (Writes l) n
        live =
          (let n_out = n - 1 in
          let live_out = numset_list_delete l live in
@@ -295,7 +295,7 @@ let get_intervals_ct_def = cake_define
 let linear_scan_state_FIELDS = define_record "linear_scan_state"
   ["active","(int#num) list";
    "colorpool","num list";
-   "phyregs","one spt";
+   "phyregs","1 spt";
    "colornum","num";
    "colormax","num";
    "stacknum","num"];;
@@ -494,7 +494,7 @@ let add_active_interval_def = cake_define
 
 let find_color_in_list_def = cake_define
   `(
-     find_color_in_list [] (forbidden:one spt) = NONE) /\ (
+     find_color_in_list [] (forbidden:1 spt) = NONE) /\ (
      find_color_in_list (r :: rs) forbidden =
          (if lookup r forbidden = NONE then
            SOME (r,rs) else
@@ -502,7 +502,7 @@ let find_color_in_list_def = cake_define
              | SOME (col,rest) -> SOME (col,r :: rest)))`;;
 
 let find_color_in_colornum_def = cake_define
-  `find_color_in_colornum st (forbidden:one spt) =
+  `find_color_in_colornum st (forbidden:1 spt) =
        (if linear_scan_state_colormax st <=
          linear_scan_state_colornum st then
          (st,NONE) else
@@ -510,7 +510,7 @@ let find_color_in_colornum_def = cake_define
            (linear_scan_state_colornum st)))`;;
 
 let find_color_def = cake_define
-  `find_color st (forbidden:one spt) =
+  `find_color st (forbidden:1 spt) =
        (match find_color_in_list (linear_scan_state_colorpool st)
          forbidden with SOME (col,rest) ->
          (linear_scan_state_colorpool_fupd (K rest) st,SOME col) |
@@ -536,7 +536,7 @@ let color_register_def = cake_define
 
 let find_last_stealable_def = cake_define
   `(
-     find_last_stealable [] (forbidden:one spt) =
+     find_last_stealable [] (forbidden:1 spt) =
          return NONE) /\ (
      find_last_stealable (x :: xs) forbidden =
        monad_bind (find_last_stealable xs forbidden) (\
@@ -551,7 +551,7 @@ let find_last_stealable_def = cake_define
                  return NONE))))`;;
 
 let find_spill_def = cake_define
-  `find_spill st (forbidden:one spt) reg rend force =
+  `find_spill st (forbidden:1 spt) reg rend force =
      monad_bind (find_last_stealable (linear_scan_state_active st)
        forbidden) (\
        stealable.
@@ -567,7 +567,7 @@ let find_spill_def = cake_define
            spill_register st reg))`;;
 
 let linear_reg_alloc_step_aux_def = cake_define
-  `linear_reg_alloc_step_aux st (forbidden:one spt) preferred reg rend
+  `linear_reg_alloc_step_aux st (forbidden:1 spt) preferred reg rend
   force =
      (let preferred_filtered = FILTER (\c. MEM c
        (linear_scan_state_colorpool st)) preferred in
@@ -687,16 +687,16 @@ let st_ex_FILTER_good_def = cake_define
 let edges_to_adjlist_def = cake_define
   `(
      edges_to_adjlist [] acc = return acc) /\ (
-     edges_to_adjlist ((a,b) :: abs) acc =
+     edges_to_adjlist ((a,b) :: abs') acc =
        (if a = b then
-         edges_to_adjlist abs acc else
+         edges_to_adjlist abs' acc else
          monad_bind (int_beg_sub a) (\
            bega. monad_bind (int_beg_sub b) (\
            begb.
            if bega < begb \/ (bega = begb /\ a <= b) then
-             edges_to_adjlist abs (insert b (a :: (the [] (lookup b
+             edges_to_adjlist abs' (insert b (a :: (the [] (lookup b
                acc))) acc) else
-             edges_to_adjlist abs (insert a (b :: (the [] (lookup
+             edges_to_adjlist abs' (insert a (b :: (the [] (lookup
                a acc))) acc)))))`;;
 
 let sort_moves_rev_def = cake_define

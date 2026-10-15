@@ -19,7 +19,9 @@ for f in "$@"; do
   TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$g\";;" > /dev/null 2>&1
   TIMEOUT=120 repl-step $s \
     "(Sys.time() -. cake_t0,length(axioms()));;" > /dev/null 2>&1
-  out=$(tmux capture-pane -p -S - -t hol-$s |
+  # -J joins the lines that the pane wrapped, so that a long path
+  # in an error message is not cut in two
+  out=$(tmux capture-pane -p -J -S - -t hol-$s |
         sed -e 's/\x1b\[[0-9;?]*[a-zA-Z]//g' -e 's/\r//g' |
         sed -n '/CHECKSEQ/,$p')
   r=$(printf '%s' "$out" |

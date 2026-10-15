@@ -25,7 +25,7 @@ needs "semantics/tokens.ml";;
    implemented *)
 let PCstate0_FIELDS = define_record "PCstate0"
   ["fixities","(mlstring,num option)fmap";
-   "ctr_arities","((mlstring,mlstring)id,num)fmap"];;
+   "ctr_arities","((mlstring,mlstring)namespace_id,num)fmap"];;
 (* recording a fixity of NONE is what you have to do to represent an
    explicit nonfix declaration *)
 
@@ -36,7 +36,7 @@ let empty_PCstate0_def = cake_define
   `empty_PCstate0 = mk_PCstate0 FEMPTY FEMPTY`;;
 
 let mpushPC_scope_def = cake_define
-  `(mpushPC_scope:PCstate0 list->(one#PCstate0 list) option) = (\pcs.
+  `(mpushPC_scope:PCstate0 list->(1#PCstate0 list) option) = (\pcs.
   SOME (one,empty_PCstate0 :: pcs))`;;
 
 let fixity_lookup_def = cake_define
@@ -62,18 +62,18 @@ let mFUPD_HD_def = cake_define
 
 (* msetfix : mlstring -> num option -> unit M *)
 let msetfix_def = cake_define
-  `(msetfix nm fix:PCstate0 list->(one#PCstate0 list) option) =
+  `(msetfix nm fix:PCstate0 list->(1#PCstate0 list) option) =
      mFUPD_HD (\s0. PCstate0_fixities_fupd (\fm. fm |+ (nm,fix))
        s0)`;;
 
 (* mpop_anonscope : unit M *)
 let mpop_anonscope_def = cake_define
-  `(mpopscope:PCstate0 list->(one#PCstate0 list) option) = (\pcs.
+  `(mpopscope:PCstate0 list->(1#PCstate0 list) option) = (\pcs.
      match pcs with
        [] -> NONE | _1 :: t -> SOME (one,t))`;;
 
 let mpop_namedscope_def = cake_define
-  `(mpop_namedscope (s:mlstring):PCstate0 list->(one#PCstate0 list)
+  `(mpop_namedscope (s:mlstring):PCstate0 list->(1#PCstate0 list)
   option) = (\pcs.
      match pcs with
        [] -> NONE | [_2] -> NONE | curr :: next :: rest -> SOME

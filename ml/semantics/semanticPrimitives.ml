@@ -121,11 +121,13 @@ let dec_type_num_def = cake_define
   `dec_type_num = 25`;;
 
 (* The result of evaluation *)
-let abort_INDUCT,abort_RECURSION = define_datatype
-  "abort = Rtype_error | Rtimeout_error | Rffi_error (final_event)";;
+let semanticPrimitives_abort_INDUCT,semanticPrimitives_abort_RECURSION =
+  define_datatype
+  "semanticPrimitives_abort = Rtype_error | Rtimeout_error | \
+   Rffi_error (final_event)";;
 
 let error_result_INDUCT,error_result_RECURSION = define_datatype
-  "error_result = Rraise ('a) | Rabort (abort)";;
+  "error_result = Rraise ('a) | Rabort (semanticPrimitives_abort)";;
 
 let semanticPrimitives_result_INDUCT,
     semanticPrimitives_result_RECURSION =
@@ -236,8 +238,8 @@ let one_con_check_def = cake_define
 let build_conv_def = cake_define
   `build_conv (envC:(mlstring,mlstring,num#stamp)namespace) cn vs =
    (match cn with
-     NONE -> SOME (Conv NONE vs) | SOME id ->
-       (match nsLookup envC id with
+     NONE -> SOME (Conv NONE vs) | SOME id' ->
+       (match nsLookup envC id' with
          NONE -> NONE | SOME (len,stamp) -> SOME (Conv (SOME
            stamp) vs)))`;;
 
@@ -583,7 +585,7 @@ let compiler_agrees_def = cake_define
 (* get the declarations to be evaluated in the various Eval semantics *)
 let do_eval_def = cake_define
   `semanticPrimitives_do_eval vs es =
-     (match (es,vs) with (SOME (EvalDecs s),[Env env id; st_v;
+     (match (es,vs) with (SOME (EvalDecs s),[Env env id'; st_v;
        decs_v; st_v2; bs_v; ws_v]) ->
        (match eval_decs_state_decode_decs s decs_v with
           NONE -> NONE | SOME decs ->
@@ -591,7 +593,7 @@ let do_eval_def = cake_define
             st_v = eval_decs_state_compiler_state s /\ concrete_v
               decs_v /\
             compiler_agrees (eval_decs_state_compiler s)
-              (id,st_v,decs) (st_v2,bs_v,ws_v) then
+              (id',st_v,decs) (st_v2,bs_v,ws_v) then
             SOME
               (env,decs,
                SOME
@@ -786,19 +788,15 @@ let thunk_op_def = cake_define
 hol4_overload "thunk_op" "semanticPrimitives_thunk_op";;
 
 let check_type_def = cake_define
-  `semanticPrimitives_check_type BoolT v = (v = Boolv T \/ v = Boolv F)
-  /\
-   semanticPrimitives_check_type IntT v = (?i. v = Litv (IntLit i))
-     /\
-   semanticPrimitives_check_type CharT v = (?c. v = Litv (Char c)) /\
-   semanticPrimitives_check_type StrT v = (?s. v = Litv (StrLit s))
-     /\
-   semanticPrimitives_check_type (WordT W8) v = (?w. v = Litv (Word8
-     w)) /\
-   semanticPrimitives_check_type (WordT W64) v = (?w. v = Litv
-     (Word64 w)) /\
-   semanticPrimitives_check_type Float64T v = (?w. v = Litv
-     (Float64 w))`;;
+  `semanticPrimitives_check_type x1 v =
+      match x1 with
+        BoolT -> (v = Boolv T \/ v = Boolv F)
+      | IntT -> (?i. v = Litv (IntLit i))
+      | CharT -> (?c. v = Litv (Char c))
+      | StrT -> (?s. v = Litv (StrLit s))
+      | (WordT W8) -> (?w. v = Litv (Word8 w))
+      | (WordT W64) -> (?w. v = Litv (Word64 w))
+      | Float64T -> (?w. v = Litv (Float64 w))`;;
 hol4_overload "check_type" "semanticPrimitives_check_type";;
 
 let dest_Litv_def = cake_define
@@ -1181,11 +1179,11 @@ let do_app_def = cake_define
                   SOME s' -> SOME ((s',t'),Rval (Conv NONE [])) |
                     NONE -> NONE) | FFI_final outcome ->
                 SOME ((s,t),Rerr (Rabort (Rffi_error outcome)))) |
-                  _108 -> NONE) | (Env_id,[Env env (gen,id)]) -> SOME
+                  _108 -> NONE) | (Env_id,[Env env (gen,id')]) -> SOME
                   ((s,t),
-             Rval (Conv NONE [nat_to_v gen; nat_to_v id])) |
-               (Env_id,[Conv NONE [gen; id]]) -> SOME ((s,t),
-             Rval (Conv NONE [gen; id])) | (ThunkOp th_op,vs) ->
+             Rval (Conv NONE [nat_to_v gen; nat_to_v id'])) |
+               (Env_id,[Conv NONE [gen; id']]) -> SOME ((s,t),
+             Rval (Conv NONE [gen; id'])) | (ThunkOp th_op,vs) ->
                thunk_op (s,t) th_op vs | (Arith a ty,vs) ->
          (if EVERY (check_type ty) vs then
             (match do_arith a ty vs with SOME (INR res) -> SOME

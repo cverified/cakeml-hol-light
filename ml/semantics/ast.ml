@@ -168,13 +168,13 @@ let getOpClass_def = cake_define
 (* Types used in type annotations *)
 let ast_t_INDUCT,ast_t_RECURSION = define_datatype
   "ast_t = Atvar (mlstring) | Atfun (ast_t) (ast_t) | Attup (ast_t \
-   list) | Atapp (ast_t list) ((mlstring,mlstring)id)";;
+   list) | Atapp (ast_t list) ((mlstring,mlstring)namespace_id)";;
 
 (* Patterns *)
 let ast_pat_INDUCT,ast_pat_RECURSION = define_datatype
   "ast_pat = ast_Pany | ast_Pvar (mlstring) | ast_Plit (lit) | \
-   ast_Pcon (((mlstring,mlstring)id) option) (ast_pat list) | \
-   ast_Pref (ast_pat) | ast_Pas (ast_pat) (mlstring) | ast_Ptannot \
+   ast_Pcon (((mlstring,mlstring)namespace_id) option) (ast_pat list) \
+   | ast_Pref (ast_pat) | ast_Pas (ast_pat) (mlstring) | ast_Ptannot \
    (ast_pat) (ast_t)";;
 hol4_overload "Pany" "ast_Pany";;
 hol4_overload "Pvar" "ast_Pvar";;
@@ -192,14 +192,14 @@ let lop_INDUCT,lop_RECURSION = define_datatype
 let ast_exp_INDUCT,ast_exp_RECURSION = define_datatype
   "ast_exp = ast_Raise (ast_exp) | ast_Handle (ast_exp) \
    ((ast_pat#ast_exp) list) | ast_Lit (lit) | ast_Con \
-   (((mlstring,mlstring)id) option) (ast_exp list) | ast_Var \
-   ((mlstring,mlstring)id) | ast_Fun (mlstring) (ast_exp) | ast_App \
-   (ast_op) (ast_exp list) | ast_Log (lop) (ast_exp) (ast_exp) | \
-   ast_If (ast_exp) (ast_exp) (ast_exp) | ast_Mat (ast_exp) \
-   ((ast_pat#ast_exp) list) | ast_Let (mlstring option) (ast_exp) \
-   (ast_exp) | ast_Letrec ((mlstring#mlstring#ast_exp) list) \
-   (ast_exp) | ast_Tannot (ast_exp) (ast_t) | ast_Lannot (ast_exp) \
-   (locs)";;
+   (((mlstring,mlstring)namespace_id) option) (ast_exp list) | \
+   ast_Var ((mlstring,mlstring)namespace_id) | ast_Fun (mlstring) \
+   (ast_exp) | ast_App (ast_op) (ast_exp list) | ast_Log (lop) \
+   (ast_exp) (ast_exp) | ast_If (ast_exp) (ast_exp) (ast_exp) | \
+   ast_Mat (ast_exp) ((ast_pat#ast_exp) list) | ast_Let (mlstring \
+   option) (ast_exp) (ast_exp) | ast_Letrec \
+   ((mlstring#mlstring#ast_exp) list) (ast_exp) | ast_Tannot \
+   (ast_exp) (ast_t) | ast_Lannot (ast_exp) (locs)";;
 hol4_overload "Raise" "ast_Raise";;
 hol4_overload "Handle" "ast_Handle";;
 hol4_overload "Lit" "ast_Lit";;

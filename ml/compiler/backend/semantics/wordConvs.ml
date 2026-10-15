@@ -293,44 +293,47 @@ let post_alloc_conventions_def = cake_define
 (*** This is for label preservation -- wordLang shouldn't need to
    inspect the labels explicitly. ***)
 let extract_labels_def = cake_define
-  `extract_labels x1 =
+  `wordConvs_extract_labels x1 =
         match x1 with
           (Call ret dest args h) ->
        (match ret with
          NONE -> [] | SOME (v,cutset,ret_handler,l1,l2) ->
-         (let ret_rest = extract_labels ret_handler in
+         (let ret_rest = wordConvs_extract_labels ret_handler in
        (match h with
          NONE -> [(l1,l2)] ++ ret_rest | SOME (v,prog,l1',l2') ->
-         (let h_rest = extract_labels prog in
+         (let h_rest = wordConvs_extract_labels prog in
          [(l1,l2); (l1',l2')] ++ ret_rest ++ h_rest))))
-        | (MustTerminate s1) -> extract_labels s1
+        | (MustTerminate s1) -> wordConvs_extract_labels s1
         | (Seq s1 s2) ->
-       extract_labels s1 ++ extract_labels s2
+       wordConvs_extract_labels s1 ++ wordConvs_extract_labels s2
         | (Loop names p exit_names) ->
-       extract_labels p
+       wordConvs_extract_labels p
         | (If cmp r1 ri e2 e3) ->
-       (extract_labels e2 ++ extract_labels e3)
+       (wordConvs_extract_labels e2 ++ wordConvs_extract_labels e3)
         | _21 -> []`;;
+hol4_overload "extract_labels" "wordConvs_extract_labels";;
 
 (*** Property on max_var ***)
 
 (*** code_labels ***)
 let get_code_labels_def = cake_define
-  `get_code_labels x1 =
+  `wordConvs_get_code_labels x1 =
         match x1 with
           (Call r d a h) ->
        (match d with SOME x -> {x} | _22 -> {}) UNION
-       (match r with SOME (_23,_24,x,_25,_26) -> get_code_labels x |
-         _27 -> {}) UNION
-       (match h with SOME (_28,x,l1,l2) -> get_code_labels x | _29 ->
-         {})
-        | (Seq p1 p2) -> get_code_labels p1 UNION get_code_labels p2
-        | (Loop names p exit_names) -> get_code_labels p
-        | (If _30 _31 _32 p1 p2) -> get_code_labels p1 UNION
-          get_code_labels p2
-        | (MustTerminate p) -> get_code_labels p
+       (match r with SOME (_23,_24,x,_25,_26) ->
+         wordConvs_get_code_labels x | _27 -> {}) UNION
+       (match h with SOME (_28,x,l1,l2) -> wordConvs_get_code_labels
+         x | _29 -> {})
+        | (Seq p1 p2) -> wordConvs_get_code_labels p1 UNION
+          wordConvs_get_code_labels p2
+        | (Loop names p exit_names) -> wordConvs_get_code_labels p
+        | (If _30 _31 _32 p1 p2) -> wordConvs_get_code_labels p1
+          UNION wordConvs_get_code_labels p2
+        | (MustTerminate p) -> wordConvs_get_code_labels p
         | (LocValue _33 l1) -> {l1}
         | _34 -> {}`;;
+hol4_overload "get_code_labels" "wordConvs_get_code_labels";;
 
 (*** TODO: This seems like it must have been established before
   handler labels point only within the current table entry
@@ -351,11 +354,12 @@ let good_handlers_def = cake_define
         | _45 -> T`;;
 
 let good_code_labels_def = cake_define
-  `good_code_labels p elabs <=>
+  `wordConvs_good_code_labels p elabs <=>
    EVERY (\(n,m,pp). good_handlers n pp) p /\
    (BIGUNION (set_of_list (MAP (\(n,m,pp). (get_code_labels pp)) p)))
      SUBSET
    (set_of_list (MAP FST p) UNION elabs)`;;
+hol4_overload "good_code_labels" "wordConvs_good_code_labels";;
 
 (*** not_created_subprogs ***)
 
@@ -401,7 +405,8 @@ val no_install_P = ``((<>) (Install 0 0 0 0 (LN,LN)))``
 *)
 
 let no_install_subprogs_def = cake_define
-  `no_install p = ^ not_created_subprogs (no_install_P p)`;;
+  `wordConvs_no_install p = ^ not_created_subprogs (no_install_P p)`;;
+hol4_overload "no_install" "wordConvs_no_install";;
 
 (****** no_mt : no MustTerminate ******)
 

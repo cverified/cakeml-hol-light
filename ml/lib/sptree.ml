@@ -14,7 +14,7 @@ let spt_INDUCT,spt_RECURSION = define_datatype
 
 (* HOL4 type abbreviation (expanded in the port):
      num_map = 'a spt *)
-new_type_abbrev("sptree_num_set",`: one spt`);;
+new_type_abbrev("sptree_num_set",`: 1 spt`);;
 
 (* HOL4 overload (expanded in the port):
      isEmpty = \t. t = LN *)

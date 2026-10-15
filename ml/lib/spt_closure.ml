@@ -9,7 +9,7 @@ needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: pred_set arithmetic relation *)
 
 let num_set_tree_union_def = cake_define_list
-  [`num_set_tree_union LN t2 = (t2:(one spt) spt)`;
+  [`num_set_tree_union LN t2 = (t2:(1 spt) spt)`;
    `num_set_tree_union (LS a) t =
        (match t with LN -> LS a | LS b -> LS (union a b) | BN t1
          t2 -> BS t1 a t2 | BS t1 b t2 -> BS t1 (union a b) t2)`;
@@ -35,7 +35,7 @@ let num_set_tree_union_def = cake_define_list
    goal_assum (drule_at Any) >> qexists_tac `k` >> simp[] *)
 let closure_spt_def = cake_define_wf
   `MEASURE (\(r,t). size (difference (spt_fold union LN t) r))`
-  `closure_spt (reachable:one spt) tree =
+  `closure_spt (reachable:1 spt) tree =
      (let sets = inter tree reachable in
      let nodes = spt_fold union LN sets in
      if subspt nodes reachable then reachable else closure_spt

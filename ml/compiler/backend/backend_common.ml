@@ -24,7 +24,8 @@ hol4_overload "Sub" "backend_common_Sub";;
 
 (* Small general definition *)
 let small_enough_int_def = cake_define
-  `small_enough_int i <=> --268435457 <= i /\ i <= (268435457:int)`;;
+  `small_enough_int i <=> --(&268435457) <= i /\ i <=
+  ((&268435457):int)`;;
 
 (* these must match what the prim_types_program generates *)
 

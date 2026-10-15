@@ -87,9 +87,9 @@ let evaluate_def = cake_define_wf
         (st',Rval v7) -> (st',Rval v7) | (st',Rerr (Rraise v)) ->
         (if can_pmatch_all (sem_env_c env)
           (semanticPrimitives_state_refs st') (MAP FST pes) v then
-          evaluate_match st' env v pes v else (st',Rerr (Rabort
-            Rtype_error))) | (st',Rerr (Rabort v12)) -> (st',Rerr
-            (Rabort v12))) /\
+          evaluate_evaluate_match st' env v pes v else (st',Rerr
+            (Rabort Rtype_error))) | (st',Rerr (Rabort v12)) ->
+            (st',Rerr (Rabort v12))) /\
    evaluate st env [Con cn es] =
      (if do_con_check (sem_env_c env) cn (LENGTH es) then
         match evaluate st env (REVERSE es) with
@@ -182,8 +182,8 @@ let evaluate_def = cake_define_wf
           (if can_pmatch_all (sem_env_c env)
             (semanticPrimitives_state_refs st') (MAP FST pes) (HD v)
             then
-            evaluate_match st' env (HD v) pes bind_exn_v else
-              (st',Rerr (Rabort Rtype_error))) | (st',Rerr v8) ->
+            evaluate_evaluate_match st' env (HD v) pes bind_exn_v
+              else (st',Rerr (Rabort Rtype_error))) | (st',Rerr v8) ->
               (st',Rerr v8)) /\
    evaluate st env [Let xo e1 e2] =
      (match fix_clock st (evaluate st env [e1]) with
@@ -198,12 +198,13 @@ let evaluate_def = cake_define_wf
           Rtype_error))) /\
    evaluate st env [Tannot e t] = evaluate st env [e] /\
    evaluate st env [Lannot e l] = evaluate st env [e] /\
-   evaluate_match st env v [] err_v = (st,Rerr (Rraise err_v)) /\
-   evaluate_match st env v ((p,e) :: pes) err_v =
+   evaluate_evaluate_match st env v [] err_v = (st,Rerr (Rraise
+     err_v)) /\
+   evaluate_evaluate_match st env v ((p,e) :: pes) err_v =
      (if ALL_DISTINCT (pat_bindings p) then
         match pmatch (sem_env_c env) (semanticPrimitives_state_refs
           st) p v [] with
-          No_match -> evaluate_match st env v pes err_v |
+          No_match -> evaluate_evaluate_match st env v pes err_v |
             Match_type_error -> (st,Rerr (Rabort Rtype_error)) | Match
             env_v' ->
           evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns
@@ -275,6 +276,7 @@ let evaluate_def = cake_define_wf
          (extend_dec_env env1 env) ds | (st1,Rerr v7) -> (st1,Rerr
          v7))`;;
 hol4_overload "evaluate_decs" "evaluate_evaluate_decs";;
+hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 
 (* tidy up evalute_def and evaluate_ind *)
 

@@ -248,6 +248,17 @@ def parse(path):
     attrs = (mm.group(2) or '')[1:-1].split(',') if mm.group(2) else []
     body = '\n'.join([mm.group(3)] + lines[i+1:j])
     extra = None
+    # the rules of an Inductive may be labelled ([~Number:] on a
+    # line of its own), which is a name for the rule, not syntax
+    if kind in ('Inductive', 'CoInductive'):
+      out = []
+      for l in body.split('\n'):
+        if re.match(r"^\s*\[[~^]?[A-Za-z0-9_']*:\]\s*$", l):
+          # the label also separates the rules
+          if any(x.strip() for x in out): out.append('/\\')
+        else:
+          out.append(l)
+      body = '\n'.join(out)
     if kind == 'Definition':
       k = body.find('\nTermination')
       if k >= 0:

@@ -8,6 +8,7 @@ import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides
 hterm.NAME_MAP = overrides.NAME_MAP
+hterm.TYPE_MAP = overrides.TYPE_MAP
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 ML = T + '../ml/'
@@ -545,8 +546,9 @@ class Porter:
 
   def multi_pattern(self, body):
     """does a definition that is not recursive match on more than
-       one argument?  HOL Light's machinery for a definition by
-       patterns is very slow for those, and a match is not"""
+       one argument, or with a pattern inside a constructor?  HOL
+       Light's machinery for a definition by patterns is very slow
+       for those, and a match is not"""
     try:
       toks = hterm.tokenize(hol4.strip_comments(body))
       e = hterm.Parser(toks, self.ctx).parse()
@@ -569,6 +571,7 @@ class Porter:
     posns = 0
     for i in range(n):
       if any(not is_var_pat(a[i]) for a in pats): posns += 1
+      if any(nested_pat(a[i]) for a in pats): return True
     return posns >= 2
 
   def overlapping(self, body):
@@ -675,6 +678,35 @@ def is_var_pat(p):
   """is this pattern a variable?"""
   while p.kind in ('paren', 'typed'): p = p.e
   return p.kind == 'id' and p.name not in CONS
+
+
+def vars_pat(p):
+  """is this pattern a variable or a tuple of variables, which is
+     what the argument of a constructor pattern can be without
+     making the pattern a nested one?"""
+  while p.kind in ('paren', 'typed'): p = p.e
+  if p.kind == 'infix' and p.op == ',':
+    return vars_pat(p.l) and vars_pat(p.r)
+  return is_var_pat(p)
+
+
+def nested_pat(p):
+  """has this pattern a pattern inside a constructor?  HOL Light's
+     machinery for a definition by patterns compiles those into a
+     decision tree, which takes minutes where a match takes no
+     time at all"""
+  while p.kind in ('paren', 'typed'): p = p.e
+  if p.kind == 'infix' and p.op == ',':
+    return nested_pat(p.l) or nested_pat(p.r)
+  if p.kind == 'infix' and p.op == '::':
+    args = [p.l, p.r]
+  elif p.kind == 'list':
+    # [x] is CONS x NIL and [x; y] is CONS x (CONS y NIL)
+    return len(p.items) > 1 or any(not vars_pat(a) for a in p.items)
+  else:
+    h, args = hterm.strip_app(p)
+    if not (h.kind == 'id' and h.name in CONS): return False
+  return any(not vars_pat(a) for a in args)
 
 
 def overlap(p, q):

@@ -96,10 +96,10 @@ let shift_cb_def = cake_define
       CallBlock tag l' c' r'))`;;
 
 let call_to_cb_def = cake_define
-  `call_to_cb loc call_ts call_loc call_args call_h =
+  `call_to_cb loc call_ts call_loc call_args' call_h =
    (if call_loc = SOME loc /\ call_h = NONE then
-     match bind 0 call_args with (vs,_37) ->
-         SOME (call_args,RCall call_ts vs) else NONE)`;;
+     match bind 0 call_args' with (vs,_37) ->
+         SOME (call_args',RCall call_ts vs) else NONE)`;;
 
 (* Attempts to build a CallBlock from the tag and args of a BlockOp
    Cons.
@@ -207,8 +207,8 @@ let fill_hole_def = cake_define
   Var i_ptr]`;;
 
 let optimise_call_def = cake_define
-  `optimise_call call_ts loc_opt call_args exp_ptr exp_idx =
-   (let args = MAP (\n. Var n) call_args ++ [exp_ptr; exp_idx] in
+  `optimise_call call_ts loc_opt call_args' exp_ptr exp_idx =
+   (let args = MAP (\n. Var n) call_args' ++ [exp_ptr; exp_idx] in
      Call call_ts (SOME loc_opt) args NONE)`;;
 
 let update_cons_def = cake_define
@@ -225,8 +225,8 @@ let _ = size_thms "cb";;
 (* HOL4 termination: \\ rw [call_block_size_shift, cb_size_def] *)
 let cb_to_bvi_worker_aux_def = cake_define_wf
   `MEASURE (cb_size o FST)`
-  `(cb_to_bvi_worker_aux (RCall call_ts call_args) loc_opt ptr idx =
-    optimise_call call_ts loc_opt call_args (Var ptr) (Op (IntOp
+  `(cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
+    optimise_call call_ts loc_opt call_args' (Var ptr) (Op (IntOp
       (Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux (CallBlock tag left child right) loc_opt ptr
      idx =
@@ -242,9 +242,10 @@ let cb_to_bvi_worker_aux_def = cake_define_wf
      version is
    the one used by the cv translation. *)
 let cb_to_bvi_worker_aux_alt_def = cake_define
-  `(cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args) loc_opt ptr
+  `(cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args') loc_opt ptr
   idx =
-    optimise_call call_ts loc_opt (shift_vars sh call_args) (Var ptr)
+    optimise_call call_ts loc_opt (shift_vars sh call_args') (Var
+      ptr)
       (Op (IntOp (Const (&idx))) [])) /\
    (cb_to_bvi_worker_aux_alt sh (CallBlock tag left child right)
      loc_opt ptr idx =
@@ -255,8 +256,8 @@ let cb_to_bvi_worker_aux_alt_def = cake_define
         right))))`;;
 
 let cb_to_bvi_worker_def = cake_define
-  `(cb_to_bvi_worker (RCall call_ts call_args) loc_opt ptr idx =
-    optimise_call call_ts loc_opt call_args (Var ptr) (Var idx)) /\
+  `(cb_to_bvi_worker (RCall call_ts call_args') loc_opt ptr idx =
+    optimise_call call_ts loc_opt call_args' (Var ptr) (Var idx)) /\
    (cb_to_bvi_worker (CallBlock tag left child right) loc_opt ptr idx
      =
     Let [mut_cons tag left right] (
