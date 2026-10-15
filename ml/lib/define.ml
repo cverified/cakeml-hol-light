@@ -1132,9 +1132,7 @@ let define_nested tm =
 (* is made in another way).                                         *)
 (* ------------------------------------------------------------------ *)
 
-let define_cases tm =
-  let fs = definition_heads tm in
-  let cls = definition_clauses tm in
+let compile_cases fs cls =
   (* the constructors of a type, with the types of their arguments *)
   let constructors ty =
     if is_prod_type ty then
@@ -1302,16 +1300,17 @@ let define_cases tm =
                      compile_body newargs sub)])
          (constructors ty))
     fs;
-  if forall (fun cl -> exists (fun cl0 -> aconv cl cl0)
-                              (map (snd o strip_forall)
-                                   (conjuncts(snd(strip_forall tm)))))
-            !newcls
-  then failwith "define_cases: nothing to compile" else
+  !newcls,!auxs;;
+
+(* the definition that the compiled clauses make, with the lemmas
+   that the derivation of the clauses as they were given needs *)
+
+let define_compiled fs newcls auxs =
   let ths,spec =
     define_prim_rec (list_mk_conj
-      (map (close_clause (fs @ !auxs)) !newcls)) in
+      (map (close_clause (fs @ auxs)) newcls)) in
   let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
-                   (fs @ !auxs) in
+                   (fs @ auxs) in
   let rws = ths @ [THE; distinctness "option";
                    injectivity "option"; FST; SND] in
   (* a clause that is more general than the cases of the compiled
@@ -1335,6 +1334,20 @@ let define_cases tm =
                     (frees w) in
     if vs = [] then ALL_TAC gl
     else (MAP_EVERY case_split vs THEN SPLIT_TAC) gl in
+  spec,consts,rws,SPLIT_TAC,ths;;
+
+(* a definition by clauses with patterns inside patterns *)
+
+let define_cases tm =
+  let fs = definition_heads tm in
+  let cls = definition_clauses tm in
+  let newcls,auxs = compile_cases fs cls in
+  if forall (fun cl -> exists (fun cl0 -> aconv cl cl0)
+                              (map (snd o strip_forall)
+                                   (conjuncts(snd(strip_forall tm)))))
+            newcls
+  then failwith "define_cases: nothing to compile" else
+  let spec,consts,rws,SPLIT_TAC,_ = define_compiled fs newcls auxs in
   let derive cl =
     let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
     try tryfind (fun tac -> prove(gcl,tac))
@@ -1358,6 +1371,35 @@ let define_cases tm =
 
 let MATCH_REDUCE_CONV = REPEATC (CHANGED_CONV MATCH_CONV);;
 
+(* the arms of a match of HOL Light, which is
+   _MATCH x (_SEQPATTERN arm1 (_SEQPATTERN arm2 ...)) with an arm
+   \u v. ?vs. _UNGUARDED_PATTERN (GEQ pat u) (GEQ body v) *)
+
+let dest_match_arms =
+  let dest_arm a =
+    let _,b1 = dest_abs a in
+    let _,b2 = dest_abs b1 in
+    let vs,bod = strip_exists b2 in
+    if not (is_comb bod && is_comb(rator bod) &&
+            is_const(rator(rator bod)) &&
+            fst(dest_const(rator(rator bod))) = "_UNGUARDED_PATTERN")
+    then failwith "dest_match_arms: a guarded pattern" else
+    let p1 = rand(rator bod) and p2 = rand bod in
+    vs,rand(rator p1),rand(rator p2) in
+  let rec arms tm =
+    if is_comb tm && is_comb(rator tm) &&
+       is_const(rator(rator tm)) &&
+       fst(dest_const(rator(rator tm))) = "_SEQPATTERN"
+    then dest_arm (rand(rator tm)) :: arms (rand tm)
+    else [dest_arm tm] in
+  arms;;
+
+(* A definition with a match: the clauses that its arms give are
+   compiled like the clauses of a definition that has patterns
+   inside patterns, and the definition as it was given is derived
+   from them (HOL Light's match takes the first arm that matches,
+   as HOL4's clauses do). *)
+
 let define_match tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
@@ -1371,35 +1413,32 @@ let define_match tm =
   let scrut = hd margs in
   if not (is_var scrut && mem scrut args) then failwith "define_match"
   else
-  let ty = type_of scrut in
+  let p = index scrut args in
+  let arms = dest_match_arms (last margs) in
+  let clauses =
+    map (fun (_,pat,bdy) ->
+          (fst(chop_list p args) @ [pat] @
+           snd(chop_list (p + 1) args)),bdy)
+        arms in
+  let newcls,auxs = compile_cases fs (map (fun (ps,r) -> f,ps,r)
+                                          clauses) in
+  let spec,consts,rws,SPLIT_TAC,_ = define_compiled fs newcls auxs in
   (* the cases theorem of a family is the conjunction of the ones
      of its types *)
+  let ty = type_of scrut in
   let casth =
     let ths = CONJUNCTS (cases (fst(dest_type ty))) in
     let th = try find (fun th ->
                          type_of(fst(dest_forall(concl th))) = ty) ths
              with Failure _ -> find (can (ISPEC scrut)) ths in
     ISPEC scrut th in
-  let others = subtract (freesl (bod :: args)) [scrut] in
-  let clause dj =
-    let vs,eq = strip_exists dj in
-    let vs' = map (fun v -> variant others v) vs in
-    let pat = vsubst (zip vs' vs) (rhs eq) in
-    let sub = [pat,scrut] in
-    let th = try MATCH_REDUCE_CONV (vsubst sub bod)
-             with Failure _ -> failwith "define_match: no match" in
-    mk_eq(list_mk_comb(f,map (vsubst sub) args),rand(concl th)) in
-  let newcls = map clause (disjuncts(concl casth)) in
-  let ths,spec =
-    define_prim_rec (list_mk_conj (map (close_clause [f]) newcls)) in
-  let c = mk_mconst(fst(dest_var f),type_of f) in
-  let gcl = close_clause [] (vsubst [c,f] (snd(strip_forall
+  let gcl = close_clause [] (vsubst consts (snd(strip_forall
               (hd(conjuncts(snd(strip_forall tm))))))) in
   [prove(gcl,
-         REPEAT GEN_TAC THEN
-         STRUCT_CASES_TAC casth THEN REWRITE_TAC ths THEN
+         REPEAT GEN_TAC THEN STRUCT_CASES_TAC casth THEN
+         SPLIT_TAC THEN REWRITE_TAC rws THEN
          CONV_TAC (ONCE_DEPTH_CONV MATCH_REDUCE_CONV) THEN
-         REWRITE_TAC[])],spec;;
+         REWRITE_TAC rws)],spec;;
 
 (* ------------------------------------------------------------------ *)
 
