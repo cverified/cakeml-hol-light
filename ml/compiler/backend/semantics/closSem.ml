@@ -60,6 +60,23 @@ let closSem_state_FIELDS = define_record "closSem_state"
    list";
    "code","(num,num#closLang_exp)fmap";
    "max_app","num"];;
+hol4_overload "globals" "closSem_state_globals";;
+hol4_overload "globals_fupd" "closSem_state_globals_fupd";;
+hol4_overload "refs" "closSem_state_refs";;
+hol4_overload "refs_fupd" "closSem_state_refs_fupd";;
+hol4_overload "ffi" "closSem_state_ffi";;
+hol4_overload "ffi_fupd" "closSem_state_ffi_fupd";;
+hol4_overload "clock" "closSem_state_clock";;
+hol4_overload "clock_fupd" "closSem_state_clock_fupd";;
+hol4_overload "compile" "closSem_state_compile";;
+hol4_overload "compile_fupd" "closSem_state_compile_fupd";;
+hol4_overload "compile_oracle" "closSem_state_compile_oracle";;
+hol4_overload "compile_oracle_fupd"
+  "closSem_state_compile_oracle_fupd";;
+hol4_overload "code" "closSem_state_code";;
+hol4_overload "code_fupd" "closSem_state_code_fupd";;
+hol4_overload "max_app" "closSem_state_max_app";;
+hol4_overload "max_app_fupd" "closSem_state_max_app_fupd";;
 
 (* helper functions *)
 
@@ -158,12 +175,12 @@ let do_install_def = cake_define
                          (if bytes = bytes' /\ data = data' /\
                             FST (new_oracle 0) = cfg' /\ ~(exps = [])
                               then
-                          (let s' = ?_clock_fupd (K (?_clock s - 1))
+                          (let s' = clock_fupd (K (clock s - 1))
                             (closSem_state_compile_oracle_fupd (K
                             new_oracle) (closSem_state_code_fupd (K
                             (closSem_state_code s |++ aux))
                              s)) in
-                             if ?_clock s = 0 then (Rerr (Rabort
+                             if clock s = 0 then (Rerr (Rabort
                                Rtimeout_error),s') else (Rval
                                exps,s')) else ((Rerr (Rabort
                                Rtype_error):(closLang_exp
@@ -356,8 +373,8 @@ let do_app_def = cake_define
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
              El,[closSem_RefPtr _39 ptr; closSem_Number i]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME
-             (closSem_ValueArray xs) ->
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ValueArray
+             xs) ->
                (if 0 <= i /\ i < &(LENGTH xs) then Rval (EL
                  (num_of_int i) xs,s) else ((Rerr (Rabort
                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -393,15 +410,15 @@ let do_app_def = cake_define
              closLang_LengthBlock,[closSem_Block tag xs]) ->
            Rval (closSem_Number (&(LENGTH xs)),s) | (closLang_MemOp
              closLang_Length,[closSem_RefPtr _42 ptr]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME
-             (closSem_ValueArray xs) ->
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ValueArray
+             xs) ->
                  Rval (closSem_Number (&(LENGTH xs)),s) | _43 ->
                    ((Rerr (Rabort
                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                    ,closSem_v)semanticPrimitives_result)) |
                    (closLang_MemOp closLang_LengthByte,[closSem_RefPtr
                    _44 ptr]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (closSem_ByteArray
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ByteArray
              xs) ->
                  Rval (closSem_Number (&(LENGTH xs)),s) | _45 ->
                    ((Rerr (Rabort
@@ -410,9 +427,8 @@ let do_app_def = cake_define
                    (closLang_MemOp (closLang_RefByte F),[closSem_Number
                    i; closSem_Number b]) ->
             (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
-              let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
-                Rval (closSem_RefPtr T ptr,?_refs_fupd (K (?_refs s
-                  |+
+              let ptr = (LEAST (\ptr. ~(ptr IN FDOM (refs s)))) in
+                Rval (closSem_RefPtr T ptr,refs_fupd (K (refs s |+
                   (ptr,closSem_ByteArray (REPLICATE (num_of_int i)
                     (i2w b))))) s) else ((Rerr (Rabort
                     Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -420,15 +436,15 @@ let do_app_def = cake_define
                     (closLang_MemOp closLang_RefArray,[closSem_Number i;
                     v]) ->
            (if 0 <= i then
-             let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
-               Rval (closSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
+             let ptr = (LEAST (\ptr. ~(ptr IN FDOM (refs s)))) in
+               Rval (closSem_RefPtr T ptr,refs_fupd (K (refs s |+
                  (ptr,closSem_ValueArray (REPLICATE (num_of_int i)
                    v)))) s) else ((Rerr (Rabort
                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                    ,closSem_v)semanticPrimitives_result)) |
                    (closLang_MemOp closLang_DerefByte,[closSem_RefPtr
                    _46 ptr; closSem_Number i]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (closSem_ByteArray
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ByteArray
              ws) ->
                (if 0 <= i /\ i < &(LENGTH ws) then Rval
                  (closSem_Number (&(w2n (EL (num_of_int i) ws))),s) else
@@ -440,11 +456,11 @@ let do_app_def = cake_define
                  ,closSem_v)semanticPrimitives_result)) |
                  (closLang_MemOp closLang_UpdateByte,[closSem_RefPtr _48
                  ptr; closSem_Number i; closSem_Number b]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (closSem_ByteArray
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ByteArray
              bs) ->
                (if 0 <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b =
                  &(w2n w)) then
-                  Rval (closSem_Unit,?_refs_fupd (K (?_refs s |+
+                  Rval (closSem_Unit,refs_fupd (K (refs s |+
                     (ptr,closSem_ByteArray (LUPDATE (i2w b)
                       (num_of_int i) bs)))) s) else ((Rerr (Rabort
                       Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -485,12 +501,12 @@ let do_app_def = cake_define
                 (closLang_CopyByte F),[closSem_ByteVector ws;
                 closSem_Number srcoff; closSem_Number len;
                 closSem_RefPtr _52 dst; closSem_Number dstoff]) ->
-           (match FLOOKUP (?_refs s) dst with SOME (closSem_ByteArray
+           (match FLOOKUP (refs s) dst with SOME (closSem_ByteArray
              ds) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff))
-                with SOME ds -> Rval (closSem_Unit,?_refs_fupd (K
-                (?_refs s |+ (dst,closSem_ByteArray ds))) s) | NONE ->
-                ((Rerr (Rabort
+                with SOME ds -> Rval (closSem_Unit,refs_fupd (K (refs s
+                |+ (dst,closSem_ByteArray ds))) s) | NONE -> ((Rerr
+                (Rabort
                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                 ,closSem_v)semanticPrimitives_result)) | _53 -> ((Rerr
                 (Rabort
@@ -499,13 +515,13 @@ let do_app_def = cake_define
                 (closLang_CopyByte F),[closSem_RefPtr _54 src;
                 closSem_Number srcoff; closSem_Number len;
                 closSem_RefPtr _55 dst; closSem_Number dstoff]) ->
-           (match (FLOOKUP (?_refs s) src,FLOOKUP (?_refs s) dst)
-             with (SOME (closSem_ByteArray ws),SOME (closSem_ByteArray
-             ds)) ->
+           (match (FLOOKUP (refs s) src,FLOOKUP (refs s) dst) with
+             (SOME (closSem_ByteArray ws),SOME (closSem_ByteArray ds))
+             ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff))
-                with SOME ds -> Rval (closSem_Unit,?_refs_fupd (K
-                (?_refs s |+ (dst,closSem_ByteArray ds))) s) | NONE ->
-                ((Rerr (Rabort
+                with SOME ds -> Rval (closSem_Unit,refs_fupd (K (refs s
+                |+ (dst,closSem_ByteArray ds))) s) | NONE -> ((Rerr
+                (Rabort
                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                 ,closSem_v)semanticPrimitives_result)) | _56 -> ((Rerr
                 (Rabort
@@ -519,7 +535,7 @@ let do_app_def = cake_define
             ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
             (closLang_CopyByte T),[closSem_RefPtr _58 src;
             closSem_Number srcoff; closSem_Number len]) ->
-          (match FLOOKUP (?_refs s) src with SOME (closSem_ByteArray
+          (match FLOOKUP (refs s) src with SOME (closSem_ByteArray
             ws) ->
              (match copy_array (ws,srcoff) len NONE with SOME ds ->
                Rval (closSem_ByteVector ds,s) | _59 -> ((Rerr (Rabort
@@ -530,10 +546,10 @@ let do_app_def = cake_define
                ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
                closLang_XorByte,[closSem_RefPtr _61 dst;
                closSem_ByteVector ws]) ->
-          (match FLOOKUP (?_refs s) dst with SOME (closSem_ByteArray
+          (match FLOOKUP (refs s) dst with SOME (closSem_ByteArray
             ds) ->
              (match xor_bytes ws ds with SOME ds1 -> Rval
-               (closSem_Unit,?_refs_fupd (K (?_refs s |+
+               (closSem_Unit,refs_fupd (K (refs s |+
                (dst,closSem_ByteArray ds1))) s) | _62 -> ((Rerr (Rabort
                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                ,closSem_v)semanticPrimitives_result)) | _63 -> ((Rerr
@@ -575,15 +591,15 @@ let do_app_def = cake_define
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
              closLang_Ref,xs) ->
-           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
-             Rval (closSem_RefPtr T ptr,?_refs_fupd (K (?_refs s |+
+           (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (refs s)))) in
+             Rval (closSem_RefPtr T ptr,refs_fupd (K (refs s |+
                (ptr,closSem_ValueArray xs))) s)) | (closLang_MemOp
                closLang_Update,[closSem_RefPtr _69 ptr; closSem_Number
                i; x]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME
-             (closSem_ValueArray xs) ->
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ValueArray
+             xs) ->
                (if 0 <= i /\ i < &(LENGTH xs) then Rval
-                 (closSem_Unit,?_refs_fupd (K (?_refs s |+
+                 (closSem_Unit,refs_fupd (K (refs s |+
                               (ptr,closSem_ValueArray (LUPDATE x
                                 (num_of_int i) xs)))) s) else ((Rerr
                                 (Rabort
@@ -605,13 +621,12 @@ let do_app_def = cake_define
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result)) | (FFI
              n,[closSem_ByteVector conf; closSem_RefPtr _73 ptr]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (closSem_ByteArray
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ByteArray
              ws) ->
-              (match call_FFI (?_ffi s) (ExtCall n) conf ws with
+              (match call_FFI (ffi s) (ExtCall n) conf ws with
                 FFI_return ffi' ws' ->
-                   Rval (closSem_Unit,?_ffi_fupd (K ffi')
-                     (?_refs_fupd (K (?_refs s |+ (ptr,closSem_ByteArray
-                     ws')))
+                   Rval (closSem_Unit,ffi_fupd (K ffi') (refs_fupd (K
+                     (refs s |+ (ptr,closSem_ByteArray ws')))
                          s)) | FFI_final outcome ->
                    Rerr (Rabort (Rffi_error outcome))) | _74 ->
                      ((Rerr (Rabort
@@ -627,7 +642,7 @@ let do_app_def = cake_define
              (&(LENGTH bs))),s) | (closLang_MemOp
              (closLang_BoundsCheckByte loose),[closSem_RefPtr _75 ptr;
              closSem_Number i]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (closSem_ByteArray
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ByteArray
              ws) ->
                 Rval (Boolv (0 <= i /\ (if loose then (<=) else (<))
                   i (&(LENGTH ws))),s) | _76 -> ((Rerr (Rabort
@@ -636,8 +651,8 @@ let do_app_def = cake_define
                   (closLang_MemOp
                   closLang_BoundsCheckArray,[closSem_RefPtr _77 ptr;
                   closSem_Number i]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME
-             (closSem_ValueArray ws) ->
+           (match FLOOKUP (refs s) ptr with SOME (closSem_ValueArray
+             ws) ->
                 Rval (Boolv (0 <= i /\ i < &(LENGTH ws)),s) | _78 ->
                   ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -646,22 +661,19 @@ let do_app_def = cake_define
                   closSem_Number _80]) -> (Rval (closSem_Unit,s)) |
                   (ThunkOp th_op,vs) ->
            (match (th_op,vs) with (AllocThunk m,[v]) ->
-                (if bad_thunk_update m v (?_refs s) then ((Rerr
-                  (Rabort
+                (if bad_thunk_update m v (refs s) then ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                   ,closSem_v)semanticPrimitives_result) else
-                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
-                   in
-                   Rval (closSem_RefPtr F ptr,?_refs_fupd (K (?_refs
-                     s |+ (ptr,Thunk m v))) s)) | (UpdateThunk
+                 let ptr = (LEAST (\ptr. ~(ptr IN FDOM (refs s)))) in
+                   Rval (closSem_RefPtr F ptr,refs_fupd (K (refs s |+
+                     (ptr,Thunk m v))) s)) | (UpdateThunk
                      m,[closSem_RefPtr F ptr; v]) ->
-                (if bad_thunk_update m v (?_refs s) then ((Rerr
-                  (Rabort
+                (if bad_thunk_update m v (refs s) then ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                   ,closSem_v)semanticPrimitives_result) else
-                 match FLOOKUP (?_refs s) ptr with SOME (Thunk
+                 match FLOOKUP (refs s) ptr with SOME (Thunk
                    NotEvaluated _81) ->
-                    Rval (closSem_Unit,?_refs_fupd (K (?_refs s |+
+                    Rval (closSem_Unit,refs_fupd (K (refs s |+
                       (ptr,Thunk m v))) s) | _82 -> ((Rerr (Rabort
                       Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                       ,closSem_v)semanticPrimitives_result)) | _83 ->
@@ -674,7 +686,7 @@ let do_app_def = cake_define
 
 let dec_clock_def = cake_define
   `(\x y. strcat x y)
-     (dec_clock n) s = ?_clock_fupd (K (?_clock s - n)) s`;;
+     (dec_clock n) s = clock_fupd (K (clock s - n)) s`;;
 
 let find_code_def = cake_define
   `closSem_find_code p args code =
@@ -690,8 +702,8 @@ let find_code_def = cake_define
    of fix_clock. *)
 
 let fix_clock_def = cake_define
-  `closSem_fix_clock s (res,s1) = (res,?_clock_fupd (K (MIN (?_clock
-  s) (?_clock s1))) s1)`;;
+  `closSem_fix_clock s (res,s1) = (res,clock_fupd (K (MIN (clock s)
+  (clock s1))) s1)`;;
 
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
@@ -840,16 +852,16 @@ let evaluate_def = cake_define_list
                 (match closSem_evaluate (es,[],s) with (Rval vs,s)
                   -> (Rval [LAST vs],s) | res -> res) | (Rerr err,s) ->
                   (Rerr err,s)) else if op = ThunkOp ForceThunk then
-             (match dest_thunk vs (?_refs s) with BadRef -> (Rerr
+             (match dest_thunk vs (refs s) with BadRef -> (Rerr
                (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
                Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
                IsThunk NotEvaluated f ->
                  (match closSem_evaluate ([closSem_AppUnit (Var
                    backend_common_None 0)],[f],s) with (Rval vs2,s) ->
-                     (match update_thunk vs (?_refs s) vs2 with NONE
+                     (match update_thunk vs (refs s) vs2 with NONE
                        -> (Rerr (Rabort Rtype_error),s) | SOME refs ->
-                       (Rval vs2,?_refs_fupd (K refs) s)) | (Rerr e,s)
-                       -> (Rerr e,s))) else
+                       (Rval vs2,refs_fupd (K refs) s)) | (Rerr e,s) ->
+                       (Rerr e,s))) else
            (match semanticPrimitives_do_app op (REVERSE vs) s
              with Rerr err -> (Rerr err,s) | Rval (v,s) -> (Rval
              [v],s))) | res -> res)`;
@@ -887,7 +899,7 @@ let evaluate_def = cake_define_list
                 (HD y1) y2 s2 | res -> res) | res -> res) else
            (Rerr (Rabort Rtype_error),s))`;
    `closSem_evaluate ([closLang_Tick _95 x],env,s) =
-         (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
+         (if clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
            else closSem_evaluate ([x],env,dec_clock 1 s))`;
    `closSem_evaluate ([closLang_Call _96 ticks dest xs],env,s1) =
          (match closSem_fix_clock s1 (closSem_evaluate (xs,env,s1))
@@ -895,8 +907,8 @@ let evaluate_def = cake_define_list
              (match closSem_find_code dest vs (closSem_state_code s)
                with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
                (args,exp) ->
-                  (if (?_clock s < ticks + 1) then (Rerr (Rabort
-                    Rtimeout_error),?_clock_fupd (K 0) s) else
+                  (if (clock s < ticks + 1) then (Rerr (Rabort
+                    Rtimeout_error),clock_fupd (K 0) s) else
                       closSem_evaluate ([exp],args,dec_clock
                         (ticks + 1) s))) | res -> res)`;
    `evaluate_app loc_opt f [] s = (Rval [f],s)`;
@@ -904,12 +916,12 @@ let evaluate_def = cake_define_list
          (match dest_closure (closSem_state_max_app s) loc_opt f
            args with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
            (Partial_app v) ->
-             (if ?_clock s < LENGTH args then (Rerr (Rabort
-               Rtimeout_error),?_clock_fupd (K 0) s) else (Rval
+             (if clock s < LENGTH args then (Rerr (Rabort
+               Rtimeout_error),clock_fupd (K 0) s) else (Rval
                [v],dec_clock (LENGTH args) s)) | SOME (Full_app exp env
                rest_args) ->
-             (if ?_clock s < (LENGTH args - LENGTH rest_args) then
-               (Rerr (Rabort Rtimeout_error),?_clock_fupd (K 0) s) else
+             (if clock s < (LENGTH args - LENGTH rest_args) then
+               (Rerr (Rabort Rtimeout_error),clock_fupd (K 0) s) else
                  match closSem_fix_clock (dec_clock (LENGTH args -
                    LENGTH rest_args) s)
                         (closSem_evaluate ([exp],env,dec_clock
@@ -940,9 +952,9 @@ let semantics_def = cake_define
            (match r with Rerr (Rabort Rtimeout_error) -> F | Rerr
              (Rabort (Rffi_error e)) -> outcome = ffi_FFI_outcome e |
              _97 -> outcome = ffi_Success) /\
-           res = ffi_Terminate outcome (ffi_state_io_events (?_ffi
-             s))) with SOME res -> res | NONE ->
+           res = ffi_Terminate outcome (ffi_state_io_events (ffi s)))
+             with SOME res -> res | NONE ->
           ffi_Diverge
             (build_lprefix_lub
-              (IMAGE (\k. fromList (ffi_state_io_events (?_ffi
+              (IMAGE (\k. fromList (ffi_state_io_events (ffi
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;

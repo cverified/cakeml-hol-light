@@ -23,6 +23,10 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
    "isRef","'a->bool";
    "gen_start","num";
    "refs_start","num"];;
+hol4_overload "limit" "gen_gc_partial_conf_limit";;
+hol4_overload "limit_fupd" "gen_gc_partial_conf_limit_fupd";;
+hol4_overload "isRef" "gen_gc_partial_conf_isRef";;
+hol4_overload "isRef_fupd" "gen_gc_partial_conf_isRef_fupd";;
 
 let gc_move_def = cake_define_list
   [`gen_gc_partial_gc_move conf state (gc_shared_Data d) =
@@ -36,7 +40,7 @@ let gc_move_def = cake_define_list
               else
           match heap_lookup ptr (gc_state_heap state) with SOME
             (DataElement xs l dd) ->
-              (let ok = ok /\ l + 1 <= gc_state_n state /\ ~(?_isRef
+              (let ok = ok /\ l + 1 <= gc_state_n state /\ ~(isRef
                 conf dd) in
                let n = gc_state_n state - (l + 1) in
                let h2 = gc_state_h2 state ++ [DataElement xs l dd]
@@ -66,12 +70,12 @@ hol4_overload "gc_move_list" "gen_gc_partial_gc_move_list";;
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
 let gc_move_data_def = cake_define_wf
-  `MEASURE (\(conf,state). ?_limit conf - heap_length (gc_state_h1
+  `MEASURE (\(conf,state). limit conf - heap_length (gc_state_h1
   state))`
   `(gen_gc_partial_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
-       (if ?_limit conf < heap_length (gc_state_h1 state ++ (h ::
-         h2)) then gc_state_ok_fupd (K F) state else
+       (if limit conf < heap_length (gc_state_h1 state ++ (h :: h2))
+         then gc_state_ok_fupd (K F) state else
         match h with DataElement xs l d ->
           (let (xs,state) = gc_move_list conf state xs in
           let h1 = gc_state_h1 state ++ [DataElement xs l d] in
@@ -116,7 +120,7 @@ let heap_gen_ok_def = cake_define
   `heap_gen_ok heap conf <=>
      (?old current refs. gen_gc_partial_conf_gen_start
        conf <= gen_gc_partial_conf_refs_start conf /\
-         gen_gc_partial_conf_refs_start conf <= ?_limit conf /\
+         gen_gc_partial_conf_refs_start conf <= limit conf /\
        EVERY isDataElement old /\
        EVERY isDataElement refs /\
        (SOME (old,current,refs) = heap_segment
@@ -126,12 +130,10 @@ let heap_gen_ok_def = cake_define
          (gc_shared_Pointer ptr u) xs ==>
          (ptr < gen_gc_partial_conf_gen_start conf \/
            gen_gc_partial_conf_refs_start conf <= ptr)) /\
-       (!xs l d. MEM (DataElement xs l d) old ==> ~(?_isRef conf d))
-         /\
-       (!xs l d. MEM (DataElement xs l d) current ==> ~(?_isRef conf
+       (!xs l d. MEM (DataElement xs l d) old ==> ~(isRef conf d)) /\
+       (!xs l d. MEM (DataElement xs l d) current ==> ~(isRef conf
          d)) /\
-       (!xs l d. MEM (DataElement xs l d) refs ==> ?_isRef conf
-         d))`;;
+       (!xs l d. MEM (DataElement xs l d) refs ==> isRef conf d))`;;
 
 let data_sort_INDUCT,data_sort_RECURSION = define_datatype
   "data_sort = Protected ('a) | Real ('b)";;
@@ -149,9 +151,9 @@ let to_gen_heap_address_def = cake_define_list
 
 let to_gen_conf_def = cake_define
   `to_gen_conf (conf:'a gen_gc_partial_conf) =
-     (mk_? (?_limit conf - gen_gc_partial_conf_gen_start conf -
-       (?_limit conf - gen_gc_partial_conf_refs_start conf)) (?_isRef
-       conf):'a gen_gc_conf)`;;
+     (mk_gen_gc_conf (limit conf - gen_gc_partial_conf_gen_start
+       conf - (limit conf - gen_gc_partial_conf_refs_start conf))
+       (isRef conf):'a gen_gc_conf)`;;
 
 let to_gen_heap_element_def = cake_define_list
   [`to_gen_heap_element conf (Unused n) = Unused n`;
@@ -234,7 +236,7 @@ last step: need a relation <---
 let heap_element_is_ref_def = cake_define
   `heap_element_is_ref conf x2 =
         match x2 with
-          DataElement xs l d -> ?_isRef conf d
+          DataElement xs l d -> isRef conf d
         | _12 -> F`;;
 
 let gen_inv_def = cake_define
@@ -242,7 +244,7 @@ let gen_inv_def = cake_define
   (gen_gc_partial_conf_gen_start
      conf <= gen_gc_partial_conf_refs_start conf /\
        gen_gc_partial_conf_refs_start
-     conf <= ?_limit conf /\
+     conf <= limit conf /\
      (?heap_old heap_current heap_refs.
        (heap_segment (gen_gc_partial_conf_gen_start
          conf,gen_gc_partial_conf_refs_start conf) heap =
@@ -335,11 +337,11 @@ let similar_data_def = cake_define
 let has_bad_ref_def = cake_define
   `has_bad_ref c s <=>
      (?xs l d. MEM (DataElement xs l d) (gc_state_h1 s ++ gc_state_h2
-       s) /\ ?_isRef c d) \/
+       s) /\ isRef c d) \/
      (?xs l d n. gen_gc_partial_conf_gen_start
        c <= n /\ n < gen_gc_partial_conf_refs_start c /\
        (heap_lookup n (gc_state_heap s) = SOME (DataElement xs l
-         d)) /\ ?_isRef c d)`;;
+         d)) /\ isRef c d)`;;
 
 let balanced_state_def = cake_define
   `balanced_state c s <=>

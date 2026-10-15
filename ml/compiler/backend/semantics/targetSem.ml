@@ -51,6 +51,16 @@ let machine_config_FIELDS = define_record "machine_config"
    "ccache_interfer","num->'a word#'a word#'b->'b";
    "target","('a,'b,'c)target";
    "mmio_info","(num#word8#'a asm_addr#num#'a word) list"];;
+hol4_overload "ffi_names" "machine_config_ffi_names";;
+hol4_overload "ffi_names_fupd" "machine_config_ffi_names_fupd";;
+hol4_overload "ptr_reg" "machine_config_ptr_reg";;
+hol4_overload "ptr_reg_fupd" "machine_config_ptr_reg_fupd";;
+hol4_overload "len_reg" "machine_config_len_reg";;
+hol4_overload "len_reg_fupd" "machine_config_len_reg_fupd";;
+hol4_overload "ptr2_reg" "machine_config_ptr2_reg";;
+hol4_overload "ptr2_reg_fupd" "machine_config_ptr2_reg_fupd";;
+hol4_overload "len2_reg" "machine_config_len2_reg";;
+hol4_overload "len2_reg_fupd" "machine_config_len2_reg_fupd";;
 
 let apply_oracle_def = cake_define
   `apply_oracle oracle x =
@@ -160,8 +170,7 @@ let evaluate_def = cake_define
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE ->
            (Error,ms,ffi) | SOME ffi_index ->
-             (match EL ffi_index (?_ffi_names mc) with SharedMem op
-               ->
+             (match EL ffi_index (ffi_names mc) with SharedMem op ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with NONE -> (Error,ms,ffi) | SOME
                     (nb,a,reg,pc') ->
@@ -179,7 +188,7 @@ let evaluate_def = cake_define
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (?_ffi_names mc)) [nb]
+                                (ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome ->
                               (Halt (ffi_FFI_outcome outcome),ms,ffi)
@@ -207,7 +216,7 @@ let evaluate_def = cake_define
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (?_ffi_names mc)) [nb]
+                                (ffi_names mc)) [nb]
                               (
                               (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
@@ -231,7 +240,7 @@ let evaluate_def = cake_define
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
-                              (?_ffi_names mc)) bytes bytes2 with
+                              (ffi_names mc)) bytes bytes2 with
                               FFI_final outcome -> (Halt
                               (ffi_FFI_outcome outcome),ms,ffi) |
                               FFI_return new_ffi new_bytes ->
@@ -277,7 +286,7 @@ let code_loaded_def = cake_define
    will be proved at the top-level by creating an appropriate t *)
 let target_configured_def = cake_define
   `target_configured (t:'a asm_state) mc_conf <=>
-     ~asm_state_failed t /\ ?_be
+     ~asm_state_failed t /\ be
      t = asm_config_big_endian (target_config (machine_config_target
        mc_conf)) /\ asm_state_align
      t = asm_config_code_alignment (target_config
@@ -314,7 +323,7 @@ let start_pc_ok_def = cake_define
      pc - n2w ffi_offset = machine_config_halt_pc mc_conf /\
      pc - n2w (2 * ffi_offset) = machine_config_ccache_pc mc_conf /\
      ((n2w 1) && pc) = (n2w 0) /\
-     (?i. mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
+     (?i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
      (!index.
         index < i ==> ~(
         pc - n2w ((3 + index) * ffi_offset) IN
@@ -333,13 +342,13 @@ let start_pc_ok_def = cake_define
             (machine_config_ffi_entry_pcs
           mc_conf) 0 = SOME index) /\
      (!index.
-       index < LENGTH (?_ffi_names mc_conf) /\ i <= index ==>
+       index < LENGTH (ffi_names mc_conf) /\ i <= index ==>
          ~(machine_config_halt_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf)))
          /\ ~(machine_config_ccache_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf))))
          /\
-     LENGTH (?_ffi_names mc_conf) = LENGTH
+     LENGTH (ffi_names mc_conf) = LENGTH
        (machine_config_ffi_entry_pcs mc_conf))`;;
 
 (* ffi_interfer_ok: the FFI interference oracle is ok:
@@ -353,16 +362,16 @@ let start_pc_ok_def = cake_define
 let ffi_interfer_ok_def = cake_define
   `ffi_interfer_ok pc mc_conf <=>
      (!ms2 k index new_bytes t1 bytes bytes2 i.
-        index < LENGTH (?_ffi_names mc_conf) /\
-        mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
+        index < LENGTH (ffi_names mc_conf) /\
+        mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
           machine_config_prog_addresses
         mc_conf = asm_state_mem_domain t1 ==>
           (index < i ==>
             read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME
               bytes2) /\
             LENGTH new_bytes = LENGTH bytes2 /\
-            (EL index (?_ffi_names mc_conf) = ExtCall (implode "")
-              ==> new_bytes = bytes2) /\
+            (EL index (ffi_names mc_conf) = ExtCall (implode "") ==>
+              new_bytes = bytes2) /\
             target_state_rel (machine_config_target mc_conf)
               (asm_state_pc_fupd (K (--n2w ((3 + index) * ffi_offset)
                 + pc)) t1) ms2 /\
@@ -398,8 +407,8 @@ let ffi_interfer_ok_def = cake_define
                (machine_config_ffi_entry_pcs mc_conf))) t1) ms2 ==>
                (?info. ALOOKUP (machine_config_mmio_info mc_conf)
                  index = SOME info /\
-                (EL index (?_ffi_names mc_conf) = SharedMem
-                  MappedRead ==>
+                (EL index (ffi_names mc_conf) = SharedMem MappedRead
+                  ==>
                 (!new_bytes.
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_regs_fupd (K (\n. if n = FST (SND (SND
@@ -409,8 +418,8 @@ let ffi_interfer_ok_def = cake_define
                          (SND (SND (SND info)))) t1))
                    (machine_config_ffi_interfer mc_conf k
                      (index,new_bytes,ms2)))) /\
-                (EL index (?_ffi_names mc_conf) = SharedMem
-                  MappedWrite ==>
+                (EL index (ffi_names mc_conf) = SharedMem MappedWrite
+                  ==>
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_pc_fupd (K (SND (SND (SND info)))) t1)
                   (machine_config_ffi_interfer mc_conf k
@@ -459,7 +468,7 @@ let post_ffi_asm_def = cake_define
                   NONE -> 0 | SOME n -> n))) (asm_state_mem_fupd (K
                   (asm_write_bytearray (asm_state_regs t1
                   (machine_config_ptr2_reg mc_conf)) new_bytes
-                  (asm_state_mem t1))) (?_fp_regs_fupd (K (\i.
+                  (asm_state_mem t1))) (fp_regs_fupd (K (\i.
                   target_get_fp_reg (machine_config_target mc_conf) ms'
                   i)) (asm_state_regs_fupd (K (\a. if MEM a
                   (machine_config_callee_saved_regs mc_conf) \/
@@ -475,7 +484,7 @@ let post_ccache_asm_def = cake_define
   `post_ccache_asm (mc_conf:('a,'state,'b)machine_config) (t1:'a
   asm_state) (ms':'state) = asm_state_pc_fupd (K (asm_state_regs t1
   (match asm_config_link_reg (target_config (machine_config_target
-  mc_conf)) with NONE -> 0 | SOME n -> n))) (?_fp_regs_fupd (K (\i.
+  mc_conf)) with NONE -> 0 | SOME n -> n))) (fp_regs_fupd (K (\i.
   target_get_fp_reg (machine_config_target mc_conf) ms' i))
   (asm_state_regs_fupd (K (\a. if MEM a
   (machine_config_callee_saved_regs mc_conf) \/
@@ -572,8 +581,8 @@ let installed_def = cake_define
          word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
            bitmaps)) data_sp)
         (fun2set (m,byte_aligned INTER bitmaps_dm)) /\
-       ffi_names = SOME (?_ffi_names mc_conf) /\
-    (!i. mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i ==>
+       ffi_names = SOME (ffi_names mc_conf) /\
+    (!i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i ==>
       MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
         ms) + shmem_info_num_entry_pc rec) shmem_extra =
         DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\

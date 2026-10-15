@@ -547,8 +547,8 @@ let gc_fun_ok_def = cake_define
 MOVE THIS to backend props.*)
 
 let inc_clock_def = cake_define
-  `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) = ?_clock_fupd
-  (K (?_clock t + n)) t`;;
+  `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) = clock_fupd
+  (K (clock t + n)) t`;;
 
 let no_alloc_code_def = cake_define
   `no_alloc_code (code:(num#'a wordLang_prog) spt) <=>

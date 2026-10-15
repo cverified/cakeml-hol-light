@@ -130,21 +130,20 @@ let input_condition_def = cake_define
       next`;;
 
 let state_rel_def = cake_define
-  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> ?_refs
-     t = ?_refs s /\ ?_clock
-     t = ?_clock s /\ bviSem_state_global
-     t = bviSem_state_global s /\ ?_ffi
-     t = ?_ffi s /\ ?_compile_oracle
-     t = state_co bvi_tailrec_compile_each (?_compile_oracle s) /\
-       ?_compile
-     s = state_cc bvi_tailrec_compile_each (?_compile t) /\
-     bvi_tailrecProof_code_rel (?_code s) (?_code t) /\
-     bvi_tailrecProof_namespace_rel (?_code s) (?_code t) /\
-     (!n. let ((next,cfg),prog) = ?_compile_oracle s n in
+  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> refs
+     t = refs s /\ clock
+     t = clock s /\ bviSem_state_global
+     t = bviSem_state_global s /\ ffi
+     t = ffi s /\ compile_oracle
+     t = state_co bvi_tailrec_compile_each (compile_oracle s) /\
+       compile
+     s = state_cc bvi_tailrec_compile_each (compile t) /\
+     bvi_tailrecProof_code_rel (code s) (code t) /\
+     bvi_tailrecProof_namespace_rel (code s) (code t) /\
+     (!n. let ((next,cfg),prog) = compile_oracle s n in
              bvi_tailrecProof_input_condition next prog) /\
-     (!n. n IN domain (?_code t) /\ (\n. n MOD
-       bvl_to_bvi_namespaces = 2) n ==> n < FST (FST
-       (?_compile_oracle s 0)))`;;
+     (!n. n IN domain (code t) /\ (\n. n MOD bvl_to_bvi_namespaces
+       = 2) n ==> n < FST (FST (compile_oracle s 0)))`;;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_rewrite_tail[NIL]:

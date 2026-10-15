@@ -1099,32 +1099,32 @@ let state_rel_ext_def = cake_define
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
        word_bignumProof_state_rel c l1 l2 s t NONE [] /\
-       domain (?_code t) = domain l /\ wordSem_state_termdep
+       domain (code t) = domain l /\ wordSem_state_termdep
        t > 1 /\
-       (?tt kk aa co. ?_compile_oracle
+       (?tt kk aa co. compile_oracle
           u =
             (I ## MAP (\p. full_compile_single tt kk aa co (p,NONE)))
-              o ?_compile_oracle
-              t /\ ?_compile
-          t = (\conf progs. ?_compile u conf
+              o compile_oracle
+              t /\ compile
+          t = (\conf progs. compile u conf
             (MAP (\p. full_compile_single tt kk aa co (p,NONE))
               progs))) /\
-       (!n v. lookup n (?_code t) = SOME v ==>
+       (!n v. lookup n (code t) = SOME v ==>
               (?t' k' a' c' col.
               lookup n l = SOME (SND (full_compile_single t' k' a' c'
                 ((n,v),col))))) /\
-       u = ?_compile_oracle_fupd (K (?_compile_oracle u))
-         (?_compile_fupd (K (?_compile u))
-         (wordSem_state_termdep_fupd (K 0) (?_code_fupd (K l) t))))`;;
+       u = compile_oracle_fupd (K (compile_oracle u))
+         (compile_fupd (K (compile u)) (wordSem_state_termdep_fupd (K
+         0) (code_fupd (K l) t))))`;;
 
 (* observational semantics preservation *)
 
 let get_limits_def = cake_define
   `get_limits c (t:('a,'c,'ffi)wordSem_state) =
-     mk_? (?_stack_limit t) (w2n (theWord (FAPPLY
-       (wordSem_state_store t) HeapLength)) DIV (dimindex (:'a) DIV
-       8)) (data_to_word_config_len_size c) (dimindex (:'a) = 64)
-       (?_has_fp_ops c) (data_to_word_config_has_fp_tern c)`;;
+     mk_limits (w2n (theWord (FAPPLY (wordSem_state_store t)
+       HeapLength)) DIV (dimindex (:'a) DIV 8))
+       (data_to_word_config_len_size c) (stack_limit t) (dimindex
+       (:'a) = 64) (has_fp_ops c) (data_to_word_config_has_fp_tern c)`;;
 
 (* HOL4 ML code, not ported:
 val _ = (max_print_depth := 15);

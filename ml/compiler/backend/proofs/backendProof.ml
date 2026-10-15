@@ -63,7 +63,7 @@ let backend_config_ok_def = cake_define
   `backend_config_ok (asm_conf:'a asm_config) (c:compiler_config) <=>
   backend_config_source_conf
      c = prim_src_config /\
-     0 < ?_max_app (backend_config_clos_conf c) /\
+     0 < max_app (backend_config_clos_conf c) /\
        bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
      c) = bvl_num_stubs + 2 /\
      LENGTH (asm_config_avoid_regs asm_conf) + 13 <=
@@ -82,7 +82,7 @@ let backend_config_ok_def = cake_define
      (data_to_word_config_has_fp_tern (backend_config_data_conf c)
        <=> asm_config_ISA
          asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf) /\
-     (?_has_fp_ops (backend_config_data_conf c) <=> 1 <
+     (has_fp_ops (backend_config_data_conf c) <=> 1 <
        asm_config_fp_reg_count asm_conf) /\
      max_stack_alloc <= 2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1 /\
@@ -96,7 +96,7 @@ let backend_config_ok_def = cake_define
      asm_conf (INL Add) (n2w 4) /\ asm_config_valid_imm
      asm_conf (INL Add) (n2w 1) /\ asm_config_valid_imm
      asm_conf (INL Sub) (n2w 1) /\
-     OPTION_ALL (EVERY (\x. ?s. x = ExtCall s)) (?_ffi_names
+     OPTION_ALL (EVERY (\x. ?s. x = ExtCall s)) (ffi_names
        (backend_config_lab_conf c)) /\
      tlookup (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) PERMUTES UNIV /\
@@ -123,28 +123,28 @@ let mc_init_ok_def = cake_define
      (asm_config_avoid_regs (target_config (machine_config_target mc)))
      + 5))) (machine_config_callee_saved_regs mc)) [2; 3; 4] /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 4 = ?_len2_reg mc /\
+     c)) 4 = len2_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 3 = ?_ptr2_reg mc /\
+     c)) 3 = ptr2_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 2 = ?_len_reg mc /\
+     c)) 2 = len_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
-     c)) 1 = ?_ptr_reg mc /\
+     c)) 1 = ptr_reg mc /\
    tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
      c)) 0 =
-     (match ?_link_reg (target_config (machine_config_target mc))
-       with NONE -> 0 | SOME n -> n) /\ ?_be (backend_config_data_conf
+     (match link_reg (target_config (machine_config_target mc)) with
+       NONE -> 0 | SOME n -> n) /\ be (backend_config_data_conf
    c) = asm_config_big_endian (target_config (machine_config_target
      mc)) /\ ~(
-   (match ?_link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = ?_len_reg mc) /\ ~(
-   (match ?_link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = ?_ptr_reg mc) /\ ~(
-   (match ?_link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = ?_len2_reg mc) /\ ~(
-   (match ?_link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = ?_ptr2_reg mc) /\
-   ~MEM (match ?_link_reg (target_config (machine_config_target mc))
+   (match link_reg (target_config (machine_config_target mc)) with
+     NONE -> 0 | SOME n -> n) = len_reg mc) /\ ~(
+   (match link_reg (target_config (machine_config_target mc)) with
+     NONE -> 0 | SOME n -> n) = ptr_reg mc) /\ ~(
+   (match link_reg (target_config (machine_config_target mc)) with
+     NONE -> 0 | SOME n -> n) = len2_reg mc) /\ ~(
+   (match link_reg (target_config (machine_config_target mc)) with
+     NONE -> 0 | SOME n -> n) = ptr2_reg mc) /\
+   ~MEM (match link_reg (target_config (machine_config_target mc))
      with NONE -> 0 | SOME n -> n) (machine_config_callee_saved_regs mc)
      /\
     asm_conf = target_config (machine_config_target mc)`;;
@@ -348,8 +348,8 @@ let is_safe_for_space_def = cake_define
        prog)) in
        data_lang_safe_for_space ffi (fromAList data_prog)
          (compute_limits (data_to_word_config_len_size
-           (backend_config_data_conf c)) (is_64_bits (:'a))
-           (?_has_fp_ops (backend_config_data_conf c))
+           (backend_config_data_conf c)) (is_64_bits (:'a)) (has_fp_ops
+           (backend_config_data_conf c))
            (data_to_word_config_has_fp_tern (backend_config_data_conf
            c)) stack_heap_limit)
          (compute_stack_frame_sizes asm_conf word_prog)
@@ -430,7 +430,7 @@ let backend_from_flat_tuple_cc_def = cake_define
   `backend_from_flat_tuple_cc asm_conf (c:compiler_config) =
      pure_cc inc_compile_decs
        (compile_common_inc (backend_config_clos_conf c)
-          (pure_cc (clos_to_bvl_compile_inc (?_max_app
+          (pure_cc (clos_to_bvl_compile_inc (max_app
             (backend_config_clos_conf c)))
             (full_cc (backend_config_bvl_conf c) (pure_cc
               bvi_to_data_compile_prog

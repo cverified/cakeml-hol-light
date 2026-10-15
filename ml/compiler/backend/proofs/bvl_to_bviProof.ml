@@ -80,51 +80,50 @@ let names_ok_def = cake_define
 let state_rel_def = cake_define
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state)
   <=>
-     INJ b (FDOM (?_refs s)) (FDOM (?_refs t)) /\
-     (!k. match FLOOKUP (?_refs s) k with NONE -> T | SOME
-       (ValueArray vs) ->
-              (FLOOKUP (?_refs t) (b k) = SOME (ValueArray (MAP
+     INJ b (FDOM (refs s)) (FDOM (refs t)) /\
+     (!k. match FLOOKUP (refs s) k with NONE -> T | SOME (ValueArray
+       vs) ->
+              (FLOOKUP (refs t) (b k) = SOME (ValueArray (MAP
                 (adjust_bv b) vs))) | SOME (Thunk m v) ->
-              (FLOOKUP (?_refs t) (b k) = SOME (Thunk m (adjust_bv b
-                v))) | SOME res -> (FLOOKUP (?_refs t) (b k) = SOME
-                res)) /\
-     (?_ffi s = ?_ffi t) /\
+              (FLOOKUP (refs t) (b k) = SOME (Thunk m (adjust_bv b
+                v))) | SOME res -> (FLOOKUP (refs t) (b k) = SOME res))
+                /\
+     (ffi s = ffi t) /\
      (!p. bviSem_state_global t = SOME p ==> ~(
-            p IN IMAGE b (FDOM (?_refs s))) /\
-            (?z. FLOOKUP (?_refs t) p =
+            p IN IMAGE b (FDOM (refs s))) /\
+            (?z. FLOOKUP (refs t) p =
                   SOME (ValueArray
-                    ((Number (&(SUC (LENGTH (?_globals s))))) ::
+                    ((Number (&(SUC (LENGTH (globals s))))) ::
                      (MAP (the (Number (&0)) o OPTION_MAP (adjust_bv
-                       b)) (?_globals s) ++
-                     REPLICATE (z - (SUC (LENGTH (?_globals s))))
+                       b)) (globals s) ++
+                     REPLICATE (z - (SUC (LENGTH (globals s))))
                        (Number (&0))))) /\
-                SUC (LENGTH (?_globals s)) <= z)) /\
-     (?_clock s = ?_clock t) /\ ?_compile_oracle
-     t = state_co compile_inc (?_compile_oracle s) /\ ?_compile
-     s = state_cc compile_inc (?_compile t) /\
-     (sptree_lookup AllocGlobal_location (?_code t) = SOME
+                SUC (LENGTH (globals s)) <= z)) /\
+     (clock s = clock t) /\ compile_oracle
+     t = state_co compile_inc (compile_oracle s) /\ compile
+     s = state_cc compile_inc (compile t) /\
+     (sptree_lookup AllocGlobal_location (code t) = SOME
        AllocGlobal_code) /\
-     (sptree_lookup CopyGlobals_location (?_code t) = SOME
+     (sptree_lookup CopyGlobals_location (code t) = SOME
        CopyGlobals_code) /\
-     (sptree_lookup ListLength_location (?_code t) = SOME
+     (sptree_lookup ListLength_location (code t) = SOME
        ListLength_code) /\
-     (sptree_lookup FromListByte_location (?_code t) = SOME
+     (sptree_lookup FromListByte_location (code t) = SOME
        FromListByte_code) /\
-     (sptree_lookup ToListByte_location (?_code t) = SOME
+     (sptree_lookup ToListByte_location (code t) = SOME
        ToListByte_code) /\
-     (sptree_lookup SumListLength_location (?_code t) = SOME
+     (sptree_lookup SumListLength_location (code t) = SOME
        SumListLength_code) /\
-     (sptree_lookup ConcatByte_location (?_code t) = SOME
+     (sptree_lookup ConcatByte_location (code t) = SOME
        ConcatByte_code) /\
-     bvl_to_bviProof_names_ok (?_code s) (?_code t) (?_compile_oracle
-       s) /\
+     bvl_to_bviProof_names_ok (code s) (code t) (compile_oracle s) /\
      (!name arity exp.
-        (sptree_lookup name (?_code s) = SOME (arity,exp)) ==>
+        (sptree_lookup name (code s) = SOME (arity,exp)) ==>
         (?n. let (c1,aux1,n1) = compile_exps n [exp] in
               (sptree_lookup (bvl_num_stubs + bvl_to_bvi_namespaces *
-                name) (?_code t) =
+                name) (code t) =
                  SOME (arity,bvi_let_compile_exp (HD c1))) /\
-              aux_code_installed (append aux1) (?_code t) /\
+              aux_code_installed (append aux1) (code t) /\
               handle_ok [exp]))`;;
 hol4_overload "state_rel" "bvl_to_bviProof_state_rel";;
 
@@ -147,11 +146,11 @@ val bv_ok_ind = theorem"bv_ok_ind";
 
 let state_ok_def = cake_define
   `bvl_to_bviProof_state_ok (s:('c,'ffi)bvlSem_state) <=>
-     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok (?_refs s)
-       v) (?_globals s) /\
-     (!k. match FLOOKUP (?_refs s) k with SOME (ValueArray vs) ->
-       EVERY (bv_ok (?_refs s)) vs | SOME (Thunk _2 v) -> bv_ok
-       (?_refs s) v | _3 -> T)`;;
+     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok (refs s) v)
+       (globals s) /\
+     (!k. match FLOOKUP (refs s) k with SOME (ValueArray vs) ->
+       EVERY (bv_ok (refs s)) vs | SOME (Thunk _2 v) -> bv_ok (refs
+       s) v | _3 -> T)`;;
 
 (* evaluate preserves state_ok *)
 

@@ -50,6 +50,8 @@ let ffi_state_FIELDS = define_record "ffi_state"
   ["oracle","ffiname->'ffi->word8 list->word8 list->'ffi oracle_result";
    "ffi_state","'ffi";
    "io_events","io_event list"];;
+hol4_overload "oracle" "ffi_state_oracle";;
+hol4_overload "oracle_fupd" "ffi_state_oracle_fupd";;
 
 let initial_ffi_state_def = cake_define
   `initial_ffi_state oc (ffi:'ffi) =

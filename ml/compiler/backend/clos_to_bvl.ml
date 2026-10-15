@@ -585,6 +585,10 @@ let clos_to_bvl_config_FIELDS = define_record "clos_to_bvl_config"
    "do_call","bool";
    "call_state","1 spt#(num#num#closLang_exp) list";
    "max_app","num"];;
+hol4_overload "start" "clos_to_bvl_config_start";;
+hol4_overload "start_fupd" "clos_to_bvl_config_start_fupd";;
+hol4_overload "max_app" "clos_to_bvl_config_max_app";;
+hol4_overload "max_app_fupd" "clos_to_bvl_config_max_app_fupd";;
 
 let default_config_def = cake_define
   `clos_to_bvl_default_config = mk_clos_to_bvl_config 0 1 T (SOME

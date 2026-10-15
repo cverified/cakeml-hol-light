@@ -315,7 +315,7 @@ let bc_stack_ref_inv_def = cake_define
        INJ (FAPPLY tf) (FDOM tf) {a | isSomeDataElement (heap_lookup
          a heap)} /\
        FDOM tf SUBSET (all_ts refs stack) /\
-       FDOM tf SUBSET {n | n < ts} /\ be_ok (?_be conf) be /\
+       FDOM tf SUBSET {n | n < ts} /\ be_ok (be conf) be /\
        blocks_unique ts (all_vs refs stack) /\
        EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) stack roots /\
        (!n.
@@ -338,7 +338,7 @@ let isMutTag_def = cake_define
   `isMutTag t <=> t = RefTag \/ (?ev. t = ThunkTag ev)`;;
 
 let isRef_def = cake_define
-  `isRef x1 =
+  `data_to_word_memoryProof_isRef x1 =
       match x1 with
         DataElement ys l (tag,qs) -> isMutTag tag
       | _16 -> F`;;
@@ -363,7 +363,8 @@ let gc_kind_inv_def = cake_define
        Simple -> (sp1 = 0) | data_to_word_Generational sizes ->
          gen_state_ok a (a + sp + sp1) heap gens /\
          (?h1 h2. (heap_split (a + sp + sp1) heap = SOME (h1,h2)) /\
-                 EVERY (\x. ~isRef x) h1 /\ EVERY isRef h2))`;;
+                 EVERY (\x. ~data_to_word_memoryProof_isRef x) h1
+                   /\ EVERY data_to_word_memoryProof_isRef h2))`;;
 
 let abs_ml_inv_def = cake_define
   `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts <=>
@@ -451,7 +452,7 @@ let all_reachable_from_roots_def = cake_define
 
 let make_gc_conf_def = cake_define
   `make_gc_conf limit =
-     (mk_? limit (isMutTag o FST):(num#'a) gen_gc_conf)`;;
+     (mk_gen_gc_conf limit (isMutTag o FST):(num#'a) gen_gc_conf)`;;
 
 let reset_gens_def = cake_define
   `reset_gens conf a =
@@ -1485,7 +1486,7 @@ let build_part_words_def = cake_define_list
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
        let ws = write_bytes bytes (REPLICATE (byte_len (:'ga) n)
-         (n2w 0)) (?_be c) in
+         (n2w 0)) (be c) in
          if byte_len (:'ga) n < 2 EXP (dimindex (:'ga) - 4) /\
             byte_len (:'ga) n < 2 EXP
               data_to_word_config_len_size c then SOME (make_ptr c

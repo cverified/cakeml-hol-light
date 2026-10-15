@@ -157,6 +157,8 @@ let asm_config_FIELDS = define_record "asm_config"
    "jump_offset","'a word#'a word";
    "cjump_offset","'a word#'a word";
    "loc_offset","'a word#'a word"];;
+hol4_overload "link_reg" "asm_config_link_reg";;
+hol4_overload "link_reg_fupd" "asm_config_link_reg_fupd";;
 
 let reg_ok_def = cake_define
   `reg_ok r c <=> r < asm_config_reg_count c /\ ~MEM r

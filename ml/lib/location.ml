@@ -11,8 +11,13 @@ let locn_INDUCT,locn_RECURSION = define_datatype
 let locnrow_def = cake_define
   `locnrow (POSN r c) = r`;;
 
+let locn_rowupdate_def = cake_define
+  `locn_rowupdate f (POSN r c) = POSN (f r) c`;;
+
 let locncol_def = cake_define
   `locncol (POSN r c) = c`;;
+let locn_colupdate_def = cake_define
+  `locn_colupdate f (POSN r c) = POSN r (f c)`;;
 
 let locs_INDUCT,locs_RECURSION = define_datatype
   "locs = Locs (locn) (locn)";;

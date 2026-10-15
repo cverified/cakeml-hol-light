@@ -26,7 +26,6 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: (* for extend_with_resource_limit
    *) (* for list_Seq *) (* for extract_labels *) (* for
    word_add_carry_def *) *)
@@ -50,7 +49,6 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (* Set up ML bindings *)
 (* HOL4 ML code, not ported:
@@ -260,42 +258,41 @@ let state_rel_def = cake_define
   `word_to_stackProof_state_rel ac k f f'
   (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state) lens
   extra <=>
-     (?_clock s = ?_clock t) /\ (?_gc_fun s = ?_gc_fun t) /\
+     (clock s = clock t) /\ (gc_fun s = gc_fun t) /\
        (wordSem_state_permute s = K I) /\
-     (?_ffi t = ?_ffi s) /\ stackSem_state_use_stack t /\
+     (ffi t = ffi s) /\ stackSem_state_use_stack t /\
        stackSem_state_use_store t /\ stackSem_state_use_alloc t /\
-     (?_memory t = ?_memory s) /\ (?_mdomain t = ?_mdomain s) /\ 4 <
-       k /\
-     (?_sh_mdomain t = ?_sh_mdomain s) /\
-     (?_store s = ?_store t \\ Handler) /\ gc_fun_ok (?_gc_fun t) /\
-       wordSem_state_termdep s = 0 /\ ?_be
-     t = ?_be s /\ ?_ffi t = ?_ffi s /\ Handler IN FDOM (?_store t)
-       /\ ?_fp_regs
-     t = ?_fp_regs s /\ ?_data_buffer
-     t = ?_data_buffer s /\ ?_code_buffer
-     t = ?_code_buffer s /\ ?_compile
+     (memory t = memory s) /\ (mdomain t = mdomain s) /\ 4 < k /\
+     (sh_mdomain t = sh_mdomain s) /\
+     (store s = store t \\ Handler) /\ gc_fun_ok (gc_fun t) /\
+       wordSem_state_termdep s = 0 /\ be
+     t = be s /\ ffi t = ffi s /\ Handler IN FDOM (store t) /\
+       fp_regs
+     t = fp_regs s /\ data_buffer
+     t = data_buffer s /\ code_buffer
+     t = code_buffer s /\ compile
      s = (\(bm0,cfg) progs.
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
          (misc_Nil,bm0) in
        OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
          bm,cfg)))
-         (?_compile t cfg progs)) /\ ?_compile_oracle
+         (compile t cfg progs)) /\ compile_oracle
      t = (\n.
-       let ((bm0,cfg),progs) = ?_compile_oracle s n in
+       let ((bm0,cfg),progs) = compile_oracle s n in
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
          (misc_Nil,bm0) in
          (cfg,progs,append (FST bm))) /\
-     (!n. let ((bm0,cfg),progs) = ?_compile_oracle s n in
+     (!n. let ((bm0,cfg),progs) = compile_oracle s n in
          EVERY (post_alloc_conventions k o SND o SND) progs /\
          EVERY (flat_exp_conventions o SND o SND) progs /\
          EVERY ((<>) raise_stub_location o FST) progs /\
          EVERY ((<>) store_consts_stub_location o FST) progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
-     domain (?_code t) = raise_stub_location INSERT
-                       store_consts_stub_location INSERT domain
-                         (?_code s) /\
+     domain (code t) = raise_stub_location INSERT
+                       store_consts_stub_location INSERT domain (code
+                         s) /\
      (!n word_prog arg_count.
-        (sptree_lookup n (?_code s) = SOME (arg_count,word_prog)) ==>
+        (sptree_lookup n (code s) = SOME (arg_count,word_prog)) ==>
         post_alloc_conventions k word_prog /\
         flat_exp_conventions word_prog /\
         (?bs i bs2 i2 f stack_prog.
@@ -305,36 +302,35 @@ let state_rel_def = cake_define
             (stackSem_state_bitmaps t) /\
           isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
             (stackSem_state_bitmaps t)) /\
-          (sptree_lookup n (?_code t) = SOME stack_prog) /\
+          (sptree_lookup n (code t) = SOME stack_prog) /\
           the f (sptree_lookup n (wordSem_state_stack_size s)) = f))
             /\
-     (sptree_lookup raise_stub_location (?_code t) = SOME (raise_stub
-       F k)) /\
-     (sptree_lookup store_consts_stub_location (?_code t) = SOME
+     (sptree_lookup raise_stub_location (code t) = SOME (raise_stub F
+       k)) /\
+     (sptree_lookup store_consts_stub_location (code t) = SOME
        (store_consts_stub k)) /\
      good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-       (?_data_buffer s)) + buffer_space_left (?_data_buffer s) + 1 <
+       (data_buffer s)) + buffer_space_left (data_buffer s) + 1 <
        dimword (:'ga) /\
      1 <= LENGTH (stackSem_state_bitmaps t) /\ HD
        (stackSem_state_bitmaps t) = (n2w 4) /\
        stackSem_state_stack_space
-     t + f <= LENGTH (?_stack t) /\ LENGTH (?_stack t) < dimword
-       (:'a) /\
+     t + f <= LENGTH (stack t) /\ LENGTH (stack t) < dimword (:'a) /\
      (if f' = 0 then f = 0 else (f = f' + 1)) /\
      wf (wordSem_state_locals s) /\
      stack_size_rel f (wordSem_state_locals_size s)
-       (wordSem_state_stack_limit s) (wordSem_state_stack_max s)
-       (?_stack s) (?_stack
+       (wordSem_state_stack_limit s) (wordSem_state_stack_max s) (stack
+       s) (stack
        t) (stackSem_state_stack_space t) (extra:num) /\
-     (let stack = DROP (stackSem_state_stack_space t + extra)
-       (?_stack t) in
+     (let stack = DROP (stackSem_state_stack_space t + extra) (stack
+       t) in
      let current_frame = TAKE f stack in
      let rest_of_stack = DROP f stack in
        word_to_stackProof_stack_rel k (wordSem_state_handler s)
-         (?_stack s) (FLOOKUP (?_store t) Handler)
-         rest_of_stack (LENGTH (?_stack t)) (stackSem_state_bitmaps
-           t) lens /\
+         (stack s) (FLOOKUP (store t) Handler)
+         rest_of_stack (LENGTH (stack t)) (stackSem_state_bitmaps t)
+           lens /\
        (!n v.
          (sptree_lookup n (wordSem_state_locals s) = SOME v) ==>
          EVEN n /\
@@ -413,8 +409,8 @@ val stack_evaluate_add_clock_NONE =
 *)
 
 let push_locals_def = cake_define
-  `push_locals l0 l s = ?_stack_fupd (K (StackFrame
-  (wordSem_state_locals_size s) l0 l NONE :: ?_stack s))
+  `push_locals l0 l s = stack_fupd (K (StackFrame
+  (wordSem_state_locals_size s) l0 l NONE :: stack s))
   (wordSem_state_locals_size_fupd (K (SOME 0))
   (wordSem_state_locals_fupd (K LN) s))`;;
 
@@ -4687,18 +4683,18 @@ let init_state_ok_def = cake_define
        4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
          stackSem_state_use_stack
        t /\ stackSem_state_use_store t /\ stackSem_state_use_alloc t
-         /\ gc_fun_ok (?_gc_fun t) /\ stackSem_state_stack_space
-       t <= LENGTH (?_stack t) /\
+         /\ gc_fun_ok (gc_fun t) /\ stackSem_state_stack_space
+       t <= LENGTH (stack t) /\
        FLOOKUP (stackSem_state_regs t) 0 = SOME (Loc 1 0) /\
        LENGTH (stackSem_state_bitmaps t) + 1 < dimword (:'a) /\
        [(n2w 4)] <<= stackSem_state_bitmaps t /\
-       LENGTH (?_stack t) < dimword (:'a) /\
-       DROP (stackSem_state_stack_space t) (?_stack t) =
-         [wordLang_Word (n2w 0)] /\
-       Handler IN FDOM (?_store t) /\
+       LENGTH (stack t) < dimword (:'a) /\
+       DROP (stackSem_state_stack_space t) (stack t) = [wordLang_Word
+         (n2w 0)] /\
+       Handler IN FDOM (store t) /\
        LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-         (?_data_buffer t)) + buffer_space_left (?_data_buffer
-          t) + 1 < dimword (:'a) /\ ?_compile_oracle
+         (data_buffer t)) + buffer_space_left (data_buffer
+          t) + 1 < dimword (:'a) /\ compile_oracle
        t = (\n.
          let ((bm0,cfg),progs) = coracle n in
          let (progs,fs,bm) = compile_word_to_stack ac F k progs
@@ -4715,18 +4711,18 @@ let make_init_def = cake_define
   `(\x y. strcat x y)
      (make_init ac k) (t code coracle) =
        mk_wordSem_state (sptree_insert 0 (Loc 1 0) LN) (SOME 0)
-         (?_fp_regs t) (?_store t \\ Handler) [] (LENGTH (?_stack t))
+         (fp_regs t) (store t \\ Handler) [] (LENGTH (stack t))
          (stack_size ([]:('a stack_frame) list)) (mapi (\n
          (arg_count,prog). FST (SND (word_to_stack_compile_prog ac F
-         prog arg_count k (misc_Nil,0)))) code) (?_memory t) (?_mdomain
-         t) (?_sh_mdomain t) (K I) (\(bm0,cfg) progs.
+         prog arg_count k (misc_Nil,0)))) code) (memory t) (mdomain t)
+         (sh_mdomain t) (K I) (\(bm0,cfg) progs.
          let (progs,fs,bm) = compile_word_to_stack ac F k progs
            (misc_Nil,bm0) in
          OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
            bm,cfg)))
-           (?_compile t cfg progs)) coracle (?_code_buffer t)
-             (?_data_buffer t) (?_gc_fun t) 0 (?_clock t) 0 code
-             (?_be t) (?_ffi t)`;;
+           (compile t cfg progs)) coracle (code_buffer t)
+             (data_buffer t) (gc_fun t) 0 (clock t) 0 code (be t)
+             (ffi t)`;;
 
 (* HOL4 ML code, not ported:
 val init_state_ok_semantics =

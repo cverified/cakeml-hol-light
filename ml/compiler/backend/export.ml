@@ -101,7 +101,7 @@ let data_section_def = cake_define
          "cake_bitmaps:"])`;;
 
 let data_buffer_def = cake_define
-  `data_buffer =
+  `export_data_buffer =
       MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_bitmaps_buffer_begin)";
          "cdecl(cake_bitmaps_buffer_begin):";
@@ -112,7 +112,7 @@ let data_buffer_def = cake_define
          "cdecl(cake_bitmaps_buffer_end):"]`;;
 
 let code_buffer_def = cake_define
-  `code_buffer =
+  `export_code_buffer =
       MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_codebuffer_begin)";
          "cdecl(cake_codebuffer_begin):";

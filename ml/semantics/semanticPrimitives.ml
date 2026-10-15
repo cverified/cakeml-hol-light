@@ -29,6 +29,10 @@ let stamp_INDUCT,stamp_RECURSION = define_datatype
 let sem_env_FIELDS = define_record "sem_env"
   ["v","(mlstring,mlstring,'v)namespace";
    "c","(mlstring,mlstring,num#stamp)namespace"];;
+hol4_overload "v" "sem_env_v";;
+hol4_overload "v_fupd" "sem_env_v_fupd";;
+hol4_overload "c" "sem_env_c";;
+hol4_overload "c_fupd" "sem_env_c_fupd";;
 
 (* Value forms *)
 let semanticPrimitives_v_INDUCT,semanticPrimitives_v_RECURSION =
@@ -197,6 +201,12 @@ let eval_oracle_state_FIELDS = define_record "eval_oracle_state"
    list)#dec list) option";
    "envs","((semanticPrimitives_v sem_env) list) list";
    "generation","num"];;
+hol4_overload "oracle" "eval_oracle_state_oracle";;
+hol4_overload "oracle_fupd" "eval_oracle_state_oracle_fupd";;
+hol4_overload "envs" "eval_oracle_state_envs";;
+hol4_overload "envs_fupd" "eval_oracle_state_envs_fupd";;
+hol4_overload "generation" "eval_oracle_state_generation";;
+hol4_overload "generation_fupd" "eval_oracle_state_generation_fupd";;
 
 let eval_state_INDUCT,eval_state_RECURSION = define_datatype
   "eval_state = EvalDecs (eval_decs_state) | EvalOracle \
@@ -210,6 +220,12 @@ let semanticPrimitives_state_FIELDS =
    "next_type_stamp","num";
    "next_exn_stamp","num";
    "eval_state","eval_state option"];;
+hol4_overload "clock" "semanticPrimitives_state_clock";;
+hol4_overload "clock_fupd" "semanticPrimitives_state_clock_fupd";;
+hol4_overload "refs" "semanticPrimitives_state_refs";;
+hol4_overload "refs_fupd" "semanticPrimitives_state_refs_fupd";;
+hol4_overload "ffi" "semanticPrimitives_state_ffi";;
+hol4_overload "ffi_fupd" "semanticPrimitives_state_ffi_fupd";;
 
 (* Other primitives *)
 (* Check that a constructor is properly applied *)
@@ -583,15 +599,14 @@ let do_eval_def = cake_define
                     (add_decs_generation
                       (eval_decs_state_compiler_state_fupd (K st_v2)
                       s)))) else NONE)) | (SOME (EvalOracle s'),vs) ->
-       (match eval_oracle_state_custom_do_eval s' vs (?_oracle s')
-         with
+       (match eval_oracle_state_custom_do_eval s' vs (oracle s') with
           NONE -> NONE | SOME (env_id,oracle,decs) ->
             (match lookup_env s' env_id with
               NONE -> NONE | SOME env ->
                 SOME
                 (env,decs,
                  SOME
-                 (EvalOracle (add_env_generation (?_oracle_fupd (K
+                 (EvalOracle (add_env_generation (oracle_fupd (K
                    oracle) s')))))) | _51 -> NONE)`;;
 
 (* conclude an Eval generation *)

@@ -14,7 +14,6 @@ needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/reg_alloc/proofs/linear_scanProof.ml";;
 needs "compiler/backend/reg_alloc/proofs/reg_allocProof.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -99,8 +98,8 @@ let word_state_eq_rel_def = cake_define
   (t:('a,'c,'ffi)wordSem_state) <=> wordSem_state_fp_regs
    t = wordSem_state_fp_regs s /\ wordSem_state_store
    t = wordSem_state_store s /\ wordSem_state_locals_size
-   t = wordSem_state_locals_size s /\ ?_stack
-   t = ?_stack s /\ wordSem_state_stack_limit
+   t = wordSem_state_locals_size s /\ stack
+   t = stack s /\ wordSem_state_stack_limit
    t = wordSem_state_stack_limit s /\ wordSem_state_stack_max
    t = wordSem_state_stack_max s /\ wordSem_state_stack_size
    t = wordSem_state_stack_size s /\ wordSem_state_memory
@@ -108,10 +107,10 @@ let word_state_eq_rel_def = cake_define
    t = wordSem_state_mdomain s /\ wordSem_state_sh_mdomain
    t = wordSem_state_sh_mdomain s /\ wordSem_state_gc_fun
    t = wordSem_state_gc_fun s /\ wordSem_state_handler
-   t = wordSem_state_handler s /\ ?_clock
-   t = ?_clock s /\ wordSem_state_code
-   t = wordSem_state_code s /\ ?_ffi
-   t = ?_ffi s /\ wordSem_state_be
+   t = wordSem_state_handler s /\ clock
+   t = clock s /\ wordSem_state_code
+   t = wordSem_state_code s /\ ffi
+   t = ffi s /\ wordSem_state_be
    t = wordSem_state_be s /\ wordSem_state_termdep
    t = wordSem_state_termdep s /\ wordSem_state_compile
    t = wordSem_state_compile s /\ wordSem_state_compile_oracle

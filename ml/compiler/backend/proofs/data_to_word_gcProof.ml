@@ -83,8 +83,8 @@ let join_env_def = cake_define
 let flat_def = cake_define
   `flat x1 x2 =
         match (x1,x2) with
-          (((Env _1 env:stack) :: xs),(StackFrame _2 _3 vs _4 :: ys))
-            ->
+          (((Env _1 env:dataSem_stack) :: xs),(StackFrame _2 _3 vs _4
+            :: ys)) ->
         join_env env vs ++ flat xs ys
         | ((dataSem_Exc _5 env _6 :: xs),(StackFrame _7 _8 vs _9 ::
           ys)) ->
@@ -136,7 +136,8 @@ let partial_len_inv_def = cake_define
 
 let ends_with_refs_def = cake_define
   `ends_with_refs rs heap =
-     (?h1 h2. heap_split rs heap = SOME (h1,h2) /\ EVERY isRef h2)`;;
+     (?h1 h2. heap_split rs heap = SOME (h1,h2) /\ EVERY
+       data_to_word_memoryProof_isRef h2)`;;
 
 let do_partial_def = cake_define
   `do_partial c s =
@@ -169,7 +170,7 @@ hol4_overload "code_rel" "data_to_word_gcProof_code_rel";;
 let stack_rel_def = cake_define
   `data_to_word_gcProof_stack_rel x1 x2 =
         match (x1,x2) with
-          ((Env s1 env:stack),StackFrame s2 ws vs NONE) ->
+          ((Env s1 env:dataSem_stack),StackFrame s2 ws vs NONE) ->
         EVERY (\(x1,x2). ~(x1 = 0) /\ EVEN x1) vs /\ s1 = s2 /\
         EVERY (\(x1,x2). x1 = 0) ws /\
         ALL_DISTINCT (MAP FST vs) /\
@@ -217,14 +218,13 @@ let code_oracle_rel_def = cake_define
 
 let limits_inv_def = cake_define
   `limits_inv (lims:limits) heaplength t_stack_limit c_len_size
-  c_has_fp_ops c_has_fp_tern <=> ?_stack_limit
+  c_has_fp_ops c_has_fp_tern <=> stack_limit
      lims = t_stack_limit /\ limits_length_limit
      lims = c_len_size /\ limits_arch_64_bit
      lims = (dimindex (:'a) = 64) /\
      heaplength = SOME (Word (bytes_in_word * (n2w (limits_heap_limit
        lims):'a word))) /\ limits_heap_limit
-     lims * w2n (bytes_in_word:'a word) < dimword (:'a) /\
-       ?_has_fp_ops
+     lims * w2n (bytes_in_word:'a word) < dimword (:'a) /\ has_fp_ops
      lims = c_has_fp_ops /\ limits_has_fp_tops
      lims = c_has_fp_tern`;;
 
@@ -236,45 +236,44 @@ let state_rel_thm = cake_define
   `(\x y. strcat x y)
      (word_bignumProof_state_rel c l1 l2) (s
        (t:('a,'c,'ffi)wordSem_state) v1 locs) <=>
-       (?_ffi t = ?_ffi s) /\
-       (?_clock t = ?_clock s) /\
-       (?_handler t = ?_handler s) /\
+       (ffi t = ffi s) /\
+       (clock t = clock s) /\
+       (handler t = handler s) /\
        (wordSem_state_gc_fun t = word_gc_fun c) /\
-       code_rel c (?_code s) (?_code t) /\
-       code_oracle_rel c (?_compile s) (?_compile_oracle s)
-         (wordSem_state_store t) (?_compile
-         t) (?_compile_oracle t) (?_code_buffer t)
+       code_rel c (code s) (code t) /\
+       code_oracle_rel c (compile s) (compile_oracle s)
+         (wordSem_state_store t) (compile
+         t) (compile_oracle t) (code_buffer t)
            (wordSem_state_data_buffer t) /\
        good_dimindex (:'a) /\
        shift_length c < dimindex (:'a) /\
        IS_SOME (dataSem_state_tstamps s) /\
        EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
-       (v1 = NONE ==> sptree_lookup 0 (?_locals t) = SOME (Loc l1
-         l2)) /\
-       (!n. IS_SOME (sptree_lookup n (?_locals s)) ==>
-            IS_SOME (sptree_lookup (adjust_var n) (?_locals t))) /\
-       EVERY2 data_to_word_gcProof_stack_rel (?_stack s) (?_stack t)
+       (v1 = NONE ==> sptree_lookup 0 (locals t) = SOME (Loc l1 l2))
          /\
-       EVERY2 contains_loc (?_stack t) locs /\
-       option_le (OPTION_MAP2 (+) (stack_size (?_stack t))
-         (?_locals_size t)) (?_stack_max t) /\
-       option_le (?_stack_max t) (?_stack_max s) /\
+       (!n. IS_SOME (sptree_lookup n (locals s)) ==>
+            IS_SOME (sptree_lookup (adjust_var n) (locals t))) /\
+       EVERY2 data_to_word_gcProof_stack_rel (stack s) (stack t) /\
+       EVERY2 contains_loc (stack t) locs /\
+       option_le (OPTION_MAP2 (+) (stack_size (stack t)) (locals_size
+         t)) (stack_max t) /\
+       option_le (stack_max t) (stack_max s) /\
          wordSem_state_stack_size
-       t = dataSem_state_stack_frame_sizes s /\ ?_locals_size
-       t = ?_locals_size s /\
+       t = dataSem_state_stack_frame_sizes s /\ locals_size
+       t = locals_size s /\
        limits_inv (dataSem_state_limits s) (FLOOKUP
-         (wordSem_state_store t) HeapLength) (?_stack_limit t)
-         (data_to_word_config_len_size c) (?_has_fp_ops c)
+         (wordSem_state_store t) HeapLength) (stack_limit t)
+         (data_to_word_config_len_size c) (has_fp_ops c)
          (data_to_word_config_has_fp_tern c) /\
-       memory_rel c (?_be t) (THE (dataSem_state_tstamps s)) (?_refs
-         s) (dataSem_state_space s) (wordSem_state_store t)
+       memory_rel c (be t) (THE (dataSem_state_tstamps s)) (refs s)
+         (dataSem_state_space s) (wordSem_state_store t)
          (wordSem_state_memory t) (wordSem_state_mdomain t)
          ((match v1 with NONE -> [] | SOME vs -> vs) ++
-          join_env (?_locals s) (toAList (inter (?_locals t)
-            (adjust_set (?_locals s)))) ++
+          join_env (locals s) (toAList (inter (locals t) (adjust_set
+            (locals s)))) ++
           [(the_global (dataSem_state_global s),FAPPLY
             (wordSem_state_store t) Globals)] ++
-          flat (?_stack s) (?_stack t))`;;
+          flat (stack s) (stack t))`;;
 
 (* the relation places no constraint on the FP registers *)
 
@@ -330,7 +329,7 @@ val s1 = mk_var("s1",type_of s);
 
 let inc_clock_def = cake_define
   `data_to_word_gcProof_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
-  ?_clock_fupd (K (?_clock t + n)) t`;;
+  clock_fupd (K (clock t + n)) t`;;
 hol4_overload "inc_clock" "data_to_word_gcProof_inc_clock";;
 
 (* HOL4 ML code, not ported:
@@ -385,8 +384,8 @@ let traverse_heap = cake_inductive
 
 let cut_locals_def = cake_define
   `cut_locals names (s:('a,'b)dataSem_state) =
-     (match dataSem_cut_env names (?_locals s) with SOME env ->
-       ?_locals_fupd (K env) s | NONE -> ?_locals_fupd (K LN) s)`;;
+     (match dataSem_cut_env names (locals s) with SOME env ->
+       locals_fupd (K env) s | NONE -> locals_fupd (K LN) s)`;;
 
 (* HOL4 ML code, not ported:
 val do_app = LIST_CONJ [dataSemTheory.do_app_def,do_space_def,

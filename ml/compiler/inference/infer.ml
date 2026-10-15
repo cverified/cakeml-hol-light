@@ -968,7 +968,7 @@ let infertype_prog_inc_def = cake_define
 
 let init_config_def = cake_define
   `(infer_init_config:inf_env) =
-     mk_inf_env nsEmpty (?_c prim_tenv) (type_env_t prim_tenv)`;;
+     mk_inf_env nsEmpty (c prim_tenv) (type_env_t prim_tenv)`;;
 
 (* The following aren't needed to run the inferencer, but are useful in
    the proofs

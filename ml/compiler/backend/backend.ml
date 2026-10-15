@@ -213,10 +213,10 @@ let to_target_def = cake_define
 
 let prim_src_config_def = cake_define
   `prim_src_config =
-     (let (_11,next,env,_12,_13) = compile_decs [] 1 (?_next
+     (let (_11,next,env,_12,_13) = compile_decs [] 1 (next
        empty_config) source_to_flat_empty_env
          ARB prim_types_program in
-     (source_to_flat_config_mod_env_fupd (K env) (?_next_fupd (K
+     (source_to_flat_config_mod_env_fupd (K env) (next_fupd (K
        next) empty_config)))`;;
 
 let prim_config_def = cake_define

@@ -67,14 +67,14 @@ let enc_with_nop_def = cake_define
 
 let asm_step_nop_def = cake_define
   `asm_step_nop bytes c s1 i s2 <=>
-     bytes_in_memory (?_pc s1) bytes (?_mem s1) (?_mem_domain s1) /\
+     bytes_in_memory (pc s1) bytes (mem s1) (mem_domain s1) /\
      enc_with_nop (asm_config_encode c) i bytes /\
-     (match ?_link_reg c with NONE -> T | SOME r -> asm_state_lr s1 =
+     (match link_reg c with NONE -> T | SOME r -> asm_state_lr s1 =
        r) /\
-     (?_be s1 <=> asm_config_big_endian c) /\ asm_state_align s1 =
+     (be s1 <=> asm_config_big_endian c) /\ asm_state_align s1 =
        asm_config_code_alignment c /\
-     asmSem_asm i (?_pc s1 + n2w (LENGTH bytes)) s1 = s2 /\ ~?_failed
-       s2 /\
+     asmSem_asm i (pc s1 + n2w (LENGTH bytes)) s1 = s2 /\ ~failed s2
+       /\
      asm_ok i c`;;
 
 (* HOL4 ML code, not ported:
@@ -255,14 +255,14 @@ let share_mem_domain_code_rel_def = cake_define
      (!pc op re a inst' len i.
          (asm_fetch_aux pc code2 = SOME (labLang_Asm (ShareMem op re
            a) inst' len) /\
-         mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i) ==>
+         mmio_pcs_min_index (ffi_names mc_conf) = SOME i) ==>
          (?index.
            i <= index /\
            find_index (p + n2w (pos_val pc 0 code2))
              (machine_config_ffi_entry_pcs mc_conf) 0 =
              SOME index /\
            (let (name,nb) = get_memop_info op in
-             EL index (?_ffi_names mc_conf) = SharedMem name /\
+             EL index (ffi_names mc_conf) = SharedMem name /\
              (
               ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
                 (nb,a,re,p + n2w (pos_val pc 0 code2 + len)))))) /\
@@ -283,18 +283,18 @@ let share_mem_state_rel_def = cake_define
   `share_mem_state_rel mc_conf
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
       (!ms2 k index new_bytes t1 nb ad offs re pc' ad' st new_st i.
-       mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
-       i <= index /\ index < LENGTH (?_ffi_names mc_conf) /\ RTC
-       call_FFI_rel (?_ffi s1) st /\
+       mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+       i <= index /\ index < LENGTH (ffi_names mc_conf) /\ RTC
+       call_FFI_rel (ffi s1) st /\
        ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
          (nb,Addr ad offs,re,pc') /\
-       (machine_config_prog_addresses mc_conf = ?_mem_domain t1) /\
+       (machine_config_prog_addresses mc_conf = mem_domain t1) /\
        ad' = target_get_reg (machine_config_target mc_conf) ms2 ad +
          offs /\
        target_state_rel (machine_config_target mc_conf)
-         (?_pc_fupd (K (EL index (machine_config_ffi_entry_pcs
+         (pc_fupd (K (EL index (machine_config_ffi_entry_pcs
            mc_conf))) t1) ms2 ==>
-       (?op. EL index (?_ffi_names mc_conf) = SharedMem op /\
+       (?op. EL index (ffi_names mc_conf) = SharedMem op /\
           (match op with MappedRead ->
           ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
             = 0 else T) /\
@@ -308,9 +308,9 @@ let share_mem_state_rel_def = cake_define
             (word_to_bytes ad' F) =
             FFI_return new_st new_bytes ==>
            target_state_rel (machine_config_target mc_conf)
-             (?_regs_fupd (K (\n. if n = re then
-                    (word_of_bytes F (n2w 0) new_bytes) else ?_regs
-                      t1 n)) (?_pc_fupd (K pc') t1))
+             (regs_fupd (K (\n. if n = re then
+                    (word_of_bytes F (n2w 0) new_bytes) else regs t1
+                      n)) (pc_fupd (K pc') t1))
                (machine_config_ffi_interfer mc_conf k
                  (index,new_bytes,ms2))) | MappedWrite ->
           ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
@@ -330,11 +330,11 @@ let share_mem_state_rel_def = cake_define
                  F)) =
            FFI_return new_st new_bytes ==>
            target_state_rel (machine_config_target mc_conf)
-             (?_pc_fupd (K pc') t1)
+             (pc_fupd (K pc') t1)
              (machine_config_ffi_interfer mc_conf k
                (index,new_bytes,ms2)))))) /\
-    (!index i. mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
-       index < LENGTH (?_ffi_names mc_conf) /\ i <= index ==>
+    (!index i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+       index < LENGTH (ffi_names mc_conf) /\ i <= index ==>
          ~(machine_config_halt_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf)))
          /\ ~(machine_config_ccache_pc
@@ -358,13 +358,13 @@ let no_install_or_no_share_mem_def = cake_define
 let oracle_tie_def = cake_define
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
   (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
-     s1 = target_io_regs mc_conf (?_ffi s1) ms /\
+     s1 = target_io_regs mc_conf (ffi s1) ms /\
        labSem_state_io_fp_regs
-     s1 = target_io_fp_regs mc_conf (?_ffi s1) ms /\
+     s1 = target_io_fp_regs mc_conf (ffi s1) ms /\
        labSem_state_cc_regs
-     s1 = target_cc_regs mc_conf (?_ffi s1) ms /\
+     s1 = target_cc_regs mc_conf (ffi s1) ms /\
        labSem_state_cc_fp_regs
-     s1 = target_cc_fp_regs mc_conf (?_ffi s1) ms`;;
+     s1 = target_cc_fp_regs mc_conf (ffi s1) ms`;;
 
 (* The code buffer is set-up to immediately follow the current code:
   |---code---|---cb---|
@@ -374,174 +374,170 @@ let state_rel_def = cake_define
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
      target_state_rel (machine_config_target mc_conf) t1 ms1 /\
        good_dimindex (:'a) /\
-     (machine_config_prog_addresses mc_conf = ?_mem_domain t1) /\
+     (machine_config_prog_addresses mc_conf = mem_domain t1) /\
      ~(machine_config_halt_pc mc_conf IN
        machine_config_prog_addresses mc_conf) /\
      ~(machine_config_ccache_pc mc_conf IN
        machine_config_prog_addresses mc_conf) /\
-     reg_ok (?_ptr_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (?_ptr_reg mc_conf = ?_ptr_reg s1) /\
-     reg_ok (?_len_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (?_len_reg mc_conf = ?_len_reg s1) /\
-     reg_ok (?_ptr2_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (?_ptr2_reg mc_conf = ?_ptr2_reg s1) /\
-     reg_ok (?_len2_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (?_len2_reg mc_conf = ?_len2_reg s1) /\
-     reg_ok (?_link_reg s1) (target_config (machine_config_target
+     reg_ok (ptr_reg s1) (target_config (machine_config_target
+       mc_conf)) /\ (ptr_reg mc_conf = ptr_reg s1) /\
+     reg_ok (len_reg s1) (target_config (machine_config_target
+       mc_conf)) /\ (len_reg mc_conf = len_reg s1) /\
+     reg_ok (ptr2_reg s1) (target_config (machine_config_target
+       mc_conf)) /\ (ptr2_reg mc_conf = ptr2_reg s1) /\
+     reg_ok (len2_reg s1) (target_config (machine_config_target
+       mc_conf)) /\ (len2_reg mc_conf = len2_reg s1) /\
+     reg_ok (link_reg s1) (target_config (machine_config_target
        mc_conf)) /\
-     (?i. mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
-          (!index. if i <= index /\ index < LENGTH (?_ffi_names
+     (?i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+          (!index. if i <= index /\ index < LENGTH (ffi_names
             mc_conf) then ?info. ALOOKUP (machine_config_mmio_info
             mc_conf) index = SOME info else ALOOKUP
             (machine_config_mmio_info mc_conf) index = NONE)) /\
      (!ms2 k index new_bytes t1 bytes bytes2 st new_st i.
-        mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
+        mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
         index < i /\
         read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
           RTC
-        call_FFI_rel (?_ffi s1) st /\
-        call_FFI st (EL index (?_ffi_names mc_conf)) bytes bytes2 =
+        call_FFI_rel (ffi s1) st /\
+        call_FFI st (EL index (ffi_names mc_conf)) bytes bytes2 =
           FFI_return new_st new_bytes /\
-        (machine_config_prog_addresses mc_conf = ?_mem_domain t1) /\
+        (machine_config_prog_addresses mc_conf = mem_domain t1) /\
         target_state_rel (machine_config_target mc_conf)
-          (?_pc_fupd (K (p - n2w ((3 + index) * ffi_offset))) t1) ms2
+          (pc_fupd (K (p - n2w ((3 + index) * ffi_offset))) t1) ms2
             /\
         alignment_aligned (asm_config_code_alignment (target_config
-          (machine_config_target mc_conf))) (?_regs t1 (?_link_reg s1))
-          ==>
+          (machine_config_target mc_conf))) (regs t1 (link_reg s1)) ==>
         (let ms' = machine_config_ffi_interfer mc_conf k
           (index,new_bytes,ms2) in
            target_state_rel (machine_config_target mc_conf)
-             (?_pc_fupd (K (?_regs t1 (?_link_reg s1))) (?_mem_fupd
-               (K (asm_write_bytearray (?_regs t1 (?_ptr2_reg s1))
-               new_bytes (?_mem t1))) (?_fp_regs_fupd (K (\n.
-               target_get_fp_reg (machine_config_target mc_conf) ms' n))
-               (?_regs_fupd (K (\a. if MEM a
-               (machine_config_callee_saved_regs mc_conf) \/
+             (pc_fupd (K (regs t1 (link_reg s1))) (mem_fupd (K
+               (asm_write_bytearray (regs t1 (ptr2_reg s1)) new_bytes
+               (mem t1))) (fp_regs_fupd (K (\n. target_get_fp_reg
+               (machine_config_target mc_conf) ms' n)) (regs_fupd (K
+               (\a. if MEM a (machine_config_callee_saved_regs mc_conf)
+               \/
                               ~(a < asm_config_reg_count
                                 (target_config (machine_config_target
                                 mc_conf))) \/
                               MEM a (asm_config_avoid_regs
                                 (target_config (machine_config_target
-                                mc_conf))) then ?_regs t1 a else
+                                mc_conf))) then regs t1 a else
                                 target_get_reg (machine_config_target
                                 mc_conf) ms' a)) t1))))
              ms')) /\
      (!ms2 t1 k a1 a2.
        target_state_rel (machine_config_target mc_conf)
-         (?_pc_fupd (K (p - n2w ((2 * ffi_offset)))) t1) ms2 /\
+         (pc_fupd (K (p - n2w ((2 * ffi_offset)))) t1) ms2 /\
        alignment_aligned (asm_config_code_alignment (target_config
-         (machine_config_target mc_conf))) (?_regs t1 (?_link_reg s1))
-         ==>
+         (machine_config_target mc_conf))) (regs t1 (link_reg s1)) ==>
        (let ms' = machine_config_ccache_interfer mc_conf k
          (a1,a2,ms2) in
           target_state_rel (machine_config_target mc_conf)
-            (?_pc_fupd (K (?_regs t1 (?_link_reg s1)))
-              (?_fp_regs_fupd (K (\n. target_get_fp_reg
-              (machine_config_target mc_conf) ms' n)) (?_regs_fupd (K
-              (\a. if MEM a (machine_config_callee_saved_regs mc_conf)
-              \/
-                              a = ?_ptr_reg s1 \/
+            (pc_fupd (K (regs t1 (link_reg s1))) (fp_regs_fupd (K
+              (\n. target_get_fp_reg (machine_config_target mc_conf) ms'
+              n)) (regs_fupd (K (\a. if MEM a
+              (machine_config_callee_saved_regs mc_conf) \/
+                              a = ptr_reg s1 \/
                               ~(a < asm_config_reg_count
                                 (target_config (machine_config_target
                                 mc_conf))) \/
                               MEM a (asm_config_avoid_regs
                                 (target_config (machine_config_target
-                                mc_conf))) then ?_regs t1 a else
+                                mc_conf))) then regs t1 a else
                                 target_get_reg (machine_config_target
                                 mc_conf) ms' a)) t1)))
-            ms')) /\ ?_compile
+            ms')) /\ compile
      s1 = compile_lab (target_config (machine_config_target mc_conf))
        /\
      (no_share_mem_inst code2 ==> (!k. let (cfg,code) =
-       ?_compile_oracle s1 k in
+       compile_oracle s1 k in
              lab_to_targetProof_good_code (target_config
                (machine_config_target mc_conf))
                (lab_to_target_config_labels cfg) code /\
              no_share_mem_inst code /\
              (k = 0 ==> lab_to_target_config_labels
              cfg = labs /\ lab_to_target_config_pos
-             cfg = LENGTH (prog_to_bytes code2) /\ ?_ffi_names
-             cfg = SOME (?_ffi_names mc_conf)))) /\
+             cfg = LENGTH (prog_to_bytes code2) /\ ffi_names
+             cfg = SOME (ffi_names mc_conf)))) /\
      (!l1 l2 x.
         (lab_lookup l1 l2 labs = SOME x) ==> EVEN x) /\
      (((n2w 1) && p) = (n2w 0)) /\
      (list_subset
-       (FILTER (\x. ?s. x = ExtCall s) (find_ffi_names (?_code s1)))
-         (?_ffi_names
+       (FILTER (\x. ?s. x = ExtCall s) (find_ffi_names (code s1)))
+         (ffi_names
        mc_conf)) /\
      EVEN (LENGTH (prog_to_bytes code2)) /\
      (!name i.
-         MEM name (?_ffi_names mc_conf) /\
-         mmio_pcs_min_index (?_ffi_names mc_conf) = SOME i /\
-         get_ffi_index (?_ffi_names mc_conf) name < i ==>
+         MEM name (ffi_names mc_conf) /\
+         mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+         get_ffi_index (ffi_names mc_conf) name < i ==>
          (?s. name = ExtCall s) /\
-        ~(p - n2w ((3 + get_ffi_index (?_ffi_names mc_conf) name) *
+        ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
           ffi_offset) IN machine_config_prog_addresses mc_conf) /\
-        ~(p - n2w ((3 + get_ffi_index (?_ffi_names mc_conf) name) *
+        ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
           ffi_offset) = machine_config_halt_pc mc_conf) /\
-        ~(p - n2w ((3 + get_ffi_index (?_ffi_names mc_conf) name) *
+        ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
           ffi_offset) = machine_config_ccache_pc mc_conf) /\
-        (find_index (p - n2w ((3 + get_ffi_index (?_ffi_names
-          mc_conf) name) * ffi_offset)) (machine_config_ffi_entry_pcs
-                    mc_conf) 0 = SOME (get_ffi_index (?_ffi_names
+        (find_index (p - n2w ((3 + get_ffi_index (ffi_names mc_conf)
+          name) * ffi_offset)) (machine_config_ffi_entry_pcs
+                    mc_conf) 0 = SOME (get_ffi_index (ffi_names
                       mc_conf) name))) /\
      (p - n2w ffi_offset = machine_config_halt_pc mc_conf) /\
      (p - n2w (2 * ffi_offset) = machine_config_ccache_pc mc_conf) /\
      interference_ok (machine_config_next_interfer mc_conf)
-       (target_proj (machine_config_target mc_conf) (?_mem_domain t1))
-       /\
+       (target_proj (machine_config_target mc_conf) (mem_domain t1)) /\
      (!l1 l2 x2.
-        (loc_to_pc l1 l2 (?_code s1) = SOME x2) ==>
+        (loc_to_pc l1 l2 (code s1) = SOME x2) ==>
         (lab_lookup l1 l2 labs = SOME (pos_val x2 0 code2))) /\
-     (!r. ?_fp_regs s1 r = ?_fp_regs t1 r) /\
-     (!r. word_loc_val p labs (?_regs s1 r) = SOME (?_regs t1 r)) /\
-     (!a. byte_align a IN ?_mem_domain s1 ==>
-          a IN ?_mem_domain t1 /\ a IN ?_mem_domain s1 /\
-          (word_loc_val_byte p labs (?_mem s1) a (?_be s1) = SOME
-            (?_mem t1 a))) /\
+     (!r. fp_regs s1 r = fp_regs t1 r) /\
+     (!r. word_loc_val p labs (regs s1 r) = SOME (regs t1 r)) /\
+     (!a. byte_align a IN mem_domain s1 ==>
+          a IN mem_domain t1 /\ a IN mem_domain s1 /\
+          (word_loc_val_byte p labs (mem s1) a (be s1) = SOME (mem t1
+            a))) /\
      (!n.
-       n < buffer_space_left (?_code_buffer s1) ==>
-       (let addr' = buffer_position (?_code_buffer s1) + n2w (LENGTH
-         (buffer_buffer (?_code_buffer s1)) + n) in
-       addr' IN ?_mem_domain t1 /\ ~(
-       addr' IN ?_mem_domain s1))) /\
-     bytes_in_mem p (prog_to_bytes code2) (?_mem
-       t1) (?_mem_domain t1) (?_mem_domain s1) /\ buffer_position
-         (?_code_buffer
+       n < buffer_space_left (code_buffer s1) ==>
+       (let addr' = buffer_position (code_buffer s1) + n2w (LENGTH
+         (buffer_buffer (code_buffer s1)) + n) in
+       addr' IN mem_domain t1 /\ ~(
+       addr' IN mem_domain s1))) /\
+     bytes_in_mem p (prog_to_bytes code2) (mem
+       t1) (mem_domain t1) (mem_domain s1) /\ buffer_position
+         (code_buffer
      s1) = p + n2w (LENGTH (prog_to_bytes code2)) /\
-     bytes_in_mem (buffer_position (?_code_buffer s1)) (buffer_buffer
-       (?_code_buffer s1)) (?_mem
-       t1) (?_mem_domain t1) (?_mem_domain s1) /\
+     bytes_in_mem (buffer_position (code_buffer s1)) (buffer_buffer
+       (code_buffer s1)) (mem
+       t1) (mem_domain t1) (mem_domain s1) /\
      LENGTH (prog_to_bytes code2) + LENGTH (buffer_buffer
-       (?_code_buffer s1)) + buffer_space_left (?_code_buffer s1) <
-       dimword (:'a) /\
+       (code_buffer s1)) + buffer_space_left (code_buffer s1) < dimword
+       (:'a) /\
      (!bn.
-       bn < LENGTH (buffer_buffer (?_code_buffer s1)) +
-         buffer_space_left (?_code_buffer s1) ==>
-       ~MEM (buffer_position (?_code_buffer s1) + n2w bn)
+       bn < LENGTH (buffer_buffer (code_buffer s1)) +
+         buffer_space_left (code_buffer s1) ==>
+       ~MEM (buffer_position (code_buffer s1) + n2w bn)
          (machine_config_ffi_entry_pcs mc_conf)) /\
-     ~?_failed s1 /\ ~?_failed t1 /\ (?_be s1 = ?_be t1) /\
-     (?_pc t1 = p + n2w (pos_val (?_pc s1) 0 code2)) /\
+     ~failed s1 /\ ~failed t1 /\ (be s1 = be t1) /\
+     (pc t1 = p + n2w (pos_val (pc s1) 0 code2)) /\
      ((p && n2w (2 EXP asm_state_align t1 - 1)) = (n2w 0)) /\
-     (match ?_link_reg (target_config (machine_config_target
-       mc_conf)) with NONE -> T | SOME r -> asm_state_lr t1 = r) /\
-     (?_be t1 <=> asm_config_big_endian (target_config
+     (match link_reg (target_config (machine_config_target mc_conf))
+       with NONE -> T | SOME r -> asm_state_lr t1 = r) /\
+     (be t1 <=> asm_config_big_endian (target_config
        (machine_config_target mc_conf))) /\
      (asm_state_align t1 = asm_config_code_alignment (target_config
        (machine_config_target mc_conf))) /\
      (enc_ok (target_config (machine_config_target mc_conf))) /\
      all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (TAKE (THE (mmio_pcs_min_index (?_ffi_names mc_conf)))
-         (?_ffi_names mc_conf)) 0 code2 /\
+       (TAKE (THE (mmio_pcs_min_index (ffi_names mc_conf)))
+         (ffi_names mc_conf)) 0 code2 /\
      EVERY sec_labels_ok code2 /\
-     code_similar (?_code s1) code2 /\
+     code_similar (code s1) code2 /\
      share_mem_state_rel mc_conf s1 t1 ms1 /\
      share_mem_domain_code_rel mc_conf p code2
        (labSem_state_shared_mem_domain s1) /\
-     LENGTH (?_ffi_names mc_conf) = LENGTH
+     LENGTH (ffi_names mc_conf) = LENGTH
        (machine_config_ffi_entry_pcs mc_conf) /\
-     no_install_or_no_share_mem code2 (?_ffi_names mc_conf)`;;
+     no_install_or_no_share_mem code2 (ffi_names mc_conf)`;;
 hol4_overload "state_rel" "lab_to_targetProof_state_rel";;
 
 (* bytes_in_memory lemmas *)
@@ -3402,15 +3398,15 @@ let make_init_def = cake_define
   `lab_to_targetProof_make_init mc_conf (ffi:'ffi ffi_state) t m dm sdm
   (ms:'state) code
      comp' cbpos cbspace coracle =
-     mk_? (\k. wordLang_Word ((?_regs t k):'a word)) (?_fp_regs t)
-       m dm sdm 0 (asm_config_big_endian (target_config
+     mk_labSem_state (\k. wordLang_Word ((regs t k):'a word))
+       (fp_regs t) m dm sdm 0 (asm_config_big_endian (target_config
        (machine_config_target mc_conf))) ffi (target_io_regs mc_conf
-       ffi ms) (target_io_fp_regs mc_conf ffi ms) (target_cc_regs
-       mc_conf ffi ms) (target_cc_fp_regs mc_conf ffi ms) code 0 F
-       (?_ptr_reg mc_conf) (?_len_reg mc_conf) (?_ptr2_reg mc_conf)
-       (?_len2_reg mc_conf) (match ?_link_reg (target_config
-       (machine_config_target mc_conf)) with SOME n -> n | _67 -> 0)
-       comp' (mk_buffer cbpos [] cbspace) coracle`;;
+       ffi ms) (target_cc_regs mc_conf ffi ms) (target_io_fp_regs
+       mc_conf ffi ms) (target_cc_fp_regs mc_conf ffi ms) code comp'
+       coracle (mk_buffer cbpos [] cbspace) 0 F (ptr_reg mc_conf)
+       (len_reg mc_conf) (ptr2_reg mc_conf) (len2_reg mc_conf) (match
+       link_reg (target_config (machine_config_target mc_conf)) with
+       SOME n -> n | _67 -> 0)`;;
 
 (* HOL4 ML code, not ported:
 val IMP_LEMMA = METIS_PROVE [] ``(a ==> b) ==> (b ==> c) ==> (a ==> c)``
@@ -3424,7 +3420,7 @@ let compiler_oracle_ok_def = cake_define
        no_share_mem_inst code) /\
      (let (cfg,code) = coracle 0 in lab_to_target_config_labels
          cfg = init_labs /\ lab_to_target_config_pos
-         cfg = init_pos /\ ?_ffi_names
+         cfg = init_pos /\ ffi_names
          cfg = SOME ffis)`;;
 
 (* mc_conf_ok: conditions on the machine configuration
@@ -3435,15 +3431,15 @@ let mc_conf_ok_def = cake_define
   `mc_conf_ok (mc_conf:('a,'b,'c)machine_config) <=>
      good_dimindex (:'a) /\
      encoder_correct (machine_config_target mc_conf) /\
-     reg_ok (?_ptr_reg mc_conf) (target_config (machine_config_target
+     reg_ok (ptr_reg mc_conf) (target_config (machine_config_target
        mc_conf)) /\
-     reg_ok (?_len_reg mc_conf) (target_config (machine_config_target
+     reg_ok (len_reg mc_conf) (target_config (machine_config_target
        mc_conf)) /\
-     reg_ok (?_ptr2_reg mc_conf) (target_config
-       (machine_config_target mc_conf)) /\
-     reg_ok (?_len2_reg mc_conf) (target_config
-       (machine_config_target mc_conf)) /\
-     reg_ok (match ?_link_reg (target_config (machine_config_target
+     reg_ok (ptr2_reg mc_conf) (target_config (machine_config_target
+       mc_conf)) /\
+     reg_ok (len2_reg mc_conf) (target_config (machine_config_target
+       mc_conf)) /\
+     reg_ok (match link_reg (target_config (machine_config_target
        mc_conf)) with NONE -> 0 | SOME n -> n) (target_config
        (machine_config_target
        mc_conf)) /\

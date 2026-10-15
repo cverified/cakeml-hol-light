@@ -79,7 +79,7 @@ let line_length_def = cake_define_list
 
 let align_dm_def = cake_define
   `align_dm (s:('a,'c,'ffi)labSem_state) =
-     (?_mem_domain_fupd (K (?_mem_domain s INTER byte_aligned)) s)`;;
+     (mem_domain_fupd (K (mem_domain s INTER byte_aligned)) s)`;;
 
 (** align_sdm **)
 

@@ -35,10 +35,28 @@ ACCESSORS = {
   'location': {'row': 'locnrow', 'col': 'locncol'},
 }
 
+# UPDATERS: the field updates that HOL4 declares with ML code
+# (add_record_fupdate)
+UPDATERS = {
+  'location': {'row': 'locn_rowupdate', 'col': 'locn_colupdate'},
+  'lexer_fun': {'row': 'locn_rowupdate', 'col': 'locn_colupdate'},
+}
+
+# RECORD_OF: the record type of a literal of a definition where the
+# fields that it gives do not say which record type it is
+RECORD_OF = {
+  ('bviSem', 'bvi_to_bvl_def'): 'bvlSem_state',
+}
+
 FIELD_OF = {
   # both grammar and peg have a field rules
   'pegexec': {'rules': 'peg'},
   'peg': {'rules': 'peg'},
+  # source_to_flat's environment has the fields of sem_env
+  'source_to_flat': {'v': 'source_to_flat_environment',
+                     'c': 'source_to_flat_environment'},
+  'source_to_flatProof': {'v': 'source_to_flat_environment',
+                          'c': 'source_to_flat_environment'},
 }
 
 # names in the HOL4 libraries that the port does not really need:
@@ -84,6 +102,8 @@ ALSO_NEEDED = set([
   # comparison's num_cmp is an overload of ternaryComparisons'
   # num_compare, which HOL4 reaches through toto
   ('ternaryComparisons', 'num_compare'),
+  # HOL4 declares the field updates of locn with ML code
+  ('location', 'locn_rowupdate'), ('location', 'locn_colupdate'),
 ])
 
 # the HOL Light constant that an infix of HOL4 means where no

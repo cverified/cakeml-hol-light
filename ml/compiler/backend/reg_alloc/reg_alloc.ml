@@ -72,6 +72,8 @@ let ra_state_FIELDS = define_record "ra_state"
    "coalesced","num list";
    "move_related","bool list";
    "stack","num list"];;
+hol4_overload "stack" "ra_state_stack";;
+hol4_overload "stack_fupd" "ra_state_stack_fupd";;
 
 (* HOL4 ML code, not ported:
 val accessors = define_monad_access_funs ``:ra_state``;

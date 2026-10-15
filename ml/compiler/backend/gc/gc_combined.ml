@@ -22,7 +22,8 @@ let gen_state_INDUCT,gen_state_RECURSION = define_datatype
 
 let make_partial_conf_def = cake_define
   `make_partial_conf (conf:'a gen_gc_conf) (GenState _1 gen_starts) rs =
-     mk_? (?_limit conf) (?_isRef conf) (HD gen_starts) rs`;;
+     mk_gen_gc_partial_conf (limit conf) (isRef conf) (HD
+       gen_starts) rs`;;
 
 let gc_combined_def = cake_define
   `gc_combined conf x2 x3 =
@@ -30,9 +31,9 @@ let gc_combined_def = cake_define
         (None,(roots,heap,(gs:gen_state),_2,_3)) ->
      (roots,heap,0,0,gs,T)
       | (Simple,(roots,heap,gs,_4,_5)) ->
-     (let (roots,heap,a,c) = full_gc (roots,heap,?_limit conf) in
-        (roots,heap ++ heap_expand (?_limit conf - a),a,?_limit conf
-          - a,gs,c))
+     (let (roots,heap,a,c) = full_gc (roots,heap,limit conf) in
+        (roots,heap ++ heap_expand (limit conf - a),a,limit conf -
+          a,gs,c))
       | ((data_to_word_Generational
         limits),(roots,heap,gs,rs,do_partial)) ->
      (if do_partial then

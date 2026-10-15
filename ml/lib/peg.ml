@@ -23,6 +23,10 @@ let peg_FIELDS = define_record "peg"
    "tokEOF","'e";
    "notFAIL","'e";
    "rules","('b+num,('a,'b,'c,'e)pegsym)fmap"];;
+hol4_overload "start" "peg_start";;
+hol4_overload "start_fupd" "peg_start_fupd";;
+hol4_overload "rules" "peg_rules";;
+hol4_overload "rules_fupd" "peg_rules_fupd";;
 
 let pegresult_INDUCT,pegresult_RECURSION = define_datatype
   "pegresult = peg_Success ('a) ('c) ((locs#'e) option) | peg_Failure \

@@ -9,7 +9,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -80,8 +79,8 @@ Proof
 QED*)
 
 let get_above_handler_def = cake_define
-  `get_above_handler s = (match EL (LENGTH (?_stack s) -
-  (wordSem_state_handler s + 1)) (?_stack s) with StackFrame _5 _6 _7
+  `get_above_handler s = (match EL (LENGTH (stack s) -
+  (wordSem_state_handler s + 1)) (stack s) with StackFrame _5 _6 _7
   (SOME (h,_8,_9)) -> h)`;;
 
 (*TODO move*)

@@ -17,8 +17,8 @@ let compile_state_def = cake_define
   (wordSem_state_compile_oracle_fupd (K ((I ## (MAP (I ## I ##
   remove_must_terminate))) o wordSem_state_compile_oracle s))
   (wordSem_state_code_fupd (K (sptree_map (I ## remove_must_terminate)
-  (wordSem_state_code s))) (wordSem_state_termdep_fupd (K 0)
-  (?_clock_fupd (K (?_clock s + clk))
+  (wordSem_state_code s))) (wordSem_state_termdep_fupd (K 0) (clock_fupd
+  (K (clock s + clk))
      s))))`;;
 
 (* HOL4 ML code, not ported:

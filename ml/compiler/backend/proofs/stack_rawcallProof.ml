@@ -46,12 +46,12 @@ let state_ok_def = cake_define
 let state_rel_def = cake_define
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
-       domain c = domain (?_code s) /\
-       t = ?_code_fupd (K c) s /\
-       stack_rawcallProof_state_ok i (?_code s) /\
+       domain c = domain (code s) /\
+       t = code_fupd (K c) s /\
+       stack_rawcallProof_state_ok i (code s) /\
        (!n b.
-         sptree_lookup n (?_code s) = SOME b ==>
-         (?i. stack_rawcallProof_state_ok i (?_code s) /\
+         sptree_lookup n (code s) = SOME b ==>
+         (?i. stack_rawcallProof_state_ok i (code s) /\
              lookup n c = SOME (comp_top i b))))`;;
 
 (* HOL4 ML code, not ported:

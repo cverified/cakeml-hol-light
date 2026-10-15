@@ -25,12 +25,11 @@ needs "semantics/ast.ml";;
 let state_rel_def = cake_define
   `bvl_inlineProof_state_rel (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
-     t = ?_compile_oracle_fupd (K ((I ##
-       MAP (I ## I ## (\x. HD (remove_ticks [x])))) o
-         ?_compile_oracle s)) (?_compile_fupd (K (?_compile t))
-         (?_code_fupd (K (sptree_map (I ## (\x. HD (remove_ticks [x])))
-         (?_code s))) s)) /\ ?_compile
-     s = (\cfg prog. ?_compile t cfg
+     t = compile_oracle_fupd (K ((I ##
+       MAP (I ## I ## (\x. HD (remove_ticks [x])))) o compile_oracle
+         s)) (compile_fupd (K (compile t)) (code_fupd (K (sptree_map (I
+         ## (\x. HD (remove_ticks [x]))) (code s))) s)) /\ compile
+     s = (\cfg prog. compile t cfg
                     (MAP (I ## I ## (\x. HD (remove_ticks [x])))
                       prog))`;;
 
@@ -116,23 +115,22 @@ let in_cc_def = cake_define
              (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
 
 let in_state_rel_def = cake_define
-  `bvl_inlineProof_in_state_rel limit s t <=> ?_globals
-     t = ?_globals s /\ ?_refs
-     t = ?_refs s /\ ?_clock
-     t = ?_clock s /\ ?_ffi
-     t = ?_ffi s /\ ?_compile_oracle
+  `bvl_inlineProof_in_state_rel limit s t <=> globals
+     t = globals s /\ refs
+     t = refs s /\ clock
+     t = clock s /\ ffi
+     t = ffi s /\ compile_oracle
      t = (\n.
-       let ((cs,cfg),progs) = ?_compile_oracle s n in
+       let ((cs,cfg),progs) = compile_oracle s n in
        let (cs1,progs) = tick_compile_prog limit cs progs in
          (cfg,progs)) /\
-     subspt (FST (FST (?_compile_oracle s 0))) (?_code t) /\
-       ?_compile
-     s = bvl_inlineProof_in_cc limit (?_compile t) /\
-     domain (?_code t) = domain (?_code s) /\
+     subspt (FST (FST (compile_oracle s 0))) (code t) /\ compile
+     s = bvl_inlineProof_in_cc limit (compile t) /\
+     domain (code t) = domain (code s) /\
      (!k arity exp.
-        sptree_lookup k (?_code s) = SOME (arity,exp) ==>
-        (?exp2. sptree_lookup k (?_code t) = SOME (arity,exp2) /\
-               exp_rel (?_code s) [exp] [exp2]))`;;
+        sptree_lookup k (code s) = SOME (arity,exp) ==>
+        (?exp2. sptree_lookup k (code t) = SOME (arity,exp2) /\
+               exp_rel (code s) [exp] [exp2]))`;;
 
 (* HOL4 ML code, not ported:
 val tick_inline_all_acc = prove(
@@ -580,11 +578,11 @@ let let_opt_def = cake_define
 let let_state_rel_def = cake_define
   `let_state_rel split_seq cut_size (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
-     t = ?_compile_oracle_fupd (K ((I ##
-       MAP (I ## let_opt split_seq cut_size)) o ?_compile_oracle s))
-         (?_compile_fupd (K (?_compile t)) (?_code_fupd (K (sptree_map
-         (let_opt split_seq cut_size) (?_code s))) s)) /\ ?_compile
-     s = (\cfg prog. ?_compile t cfg (MAP (I ## let_opt split_seq
+     t = compile_oracle_fupd (K ((I ##
+       MAP (I ## let_opt split_seq cut_size)) o compile_oracle s))
+         (compile_fupd (K (compile t)) (code_fupd (K (sptree_map
+         (let_opt split_seq cut_size) (code s))) s)) /\ compile
+     s = (\cfg prog. compile t cfg (MAP (I ## let_opt split_seq
        cut_size) prog))`;;
 
 (* HOL4 ML code, not ported:

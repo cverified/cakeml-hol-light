@@ -66,12 +66,12 @@ This is probably the wrong direction*)
 let state_rel_def = cake_define
   `lab_filterProof_state_rel (s1:('a,'c,'ffi)labSem_state) t1 <=>
      (?s1compile.
-      s1 = ?_compile_fupd (K s1compile) (?_compile_oracle_fupd (K
-        (\n. (\(a,b). (a,filter_skip b)) (?_compile_oracle t1 n)))
-        (?_pc_fupd (K (adjust_pc (?_pc t1) (?_code t1))) (?_code_fupd (K
-        (filter_skip (?_code t1))) t1))) /\ ?_compile
+      s1 = compile_fupd (K s1compile) (compile_oracle_fupd (K (\n.
+        (\(a,b). (a,filter_skip b)) (compile_oracle t1 n))) (pc_fupd (K
+        (adjust_pc (pc t1) (code t1))) (code_fupd (K (filter_skip (code
+        t1))) t1))) /\ compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
-     ~?_failed t1`;;
+     ~failed t1`;;
 
 (* HOL4 ML code, not ported:
 val all_skips_evaluate_0 = all_skips_evaluate |>SIMP_RULE std_ss

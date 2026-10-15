@@ -184,6 +184,47 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    "code","(num#'a wordLang_prog) spt";
    "be","bool";
    "ffi","'ffi ffi_state"];;
+hol4_overload "locals" "wordSem_state_locals";;
+hol4_overload "locals_fupd" "wordSem_state_locals_fupd";;
+hol4_overload "locals_size" "wordSem_state_locals_size";;
+hol4_overload "locals_size_fupd" "wordSem_state_locals_size_fupd";;
+hol4_overload "fp_regs" "wordSem_state_fp_regs";;
+hol4_overload "fp_regs_fupd" "wordSem_state_fp_regs_fupd";;
+hol4_overload "store" "wordSem_state_store";;
+hol4_overload "store_fupd" "wordSem_state_store_fupd";;
+hol4_overload "stack" "wordSem_state_stack";;
+hol4_overload "stack_fupd" "wordSem_state_stack_fupd";;
+hol4_overload "stack_limit" "wordSem_state_stack_limit";;
+hol4_overload "stack_limit_fupd" "wordSem_state_stack_limit_fupd";;
+hol4_overload "stack_max" "wordSem_state_stack_max";;
+hol4_overload "stack_max_fupd" "wordSem_state_stack_max_fupd";;
+hol4_overload "memory" "wordSem_state_memory";;
+hol4_overload "memory_fupd" "wordSem_state_memory_fupd";;
+hol4_overload "mdomain" "wordSem_state_mdomain";;
+hol4_overload "mdomain_fupd" "wordSem_state_mdomain_fupd";;
+hol4_overload "sh_mdomain" "wordSem_state_sh_mdomain";;
+hol4_overload "sh_mdomain_fupd" "wordSem_state_sh_mdomain_fupd";;
+hol4_overload "compile" "wordSem_state_compile";;
+hol4_overload "compile_fupd" "wordSem_state_compile_fupd";;
+hol4_overload "compile_oracle" "wordSem_state_compile_oracle";;
+hol4_overload "compile_oracle_fupd"
+  "wordSem_state_compile_oracle_fupd";;
+hol4_overload "code_buffer" "wordSem_state_code_buffer";;
+hol4_overload "code_buffer_fupd" "wordSem_state_code_buffer_fupd";;
+hol4_overload "data_buffer" "wordSem_state_data_buffer";;
+hol4_overload "data_buffer_fupd" "wordSem_state_data_buffer_fupd";;
+hol4_overload "gc_fun" "wordSem_state_gc_fun";;
+hol4_overload "gc_fun_fupd" "wordSem_state_gc_fun_fupd";;
+hol4_overload "handler" "wordSem_state_handler";;
+hol4_overload "handler_fupd" "wordSem_state_handler_fupd";;
+hol4_overload "clock" "wordSem_state_clock";;
+hol4_overload "clock_fupd" "wordSem_state_clock_fupd";;
+hol4_overload "code" "wordSem_state_code";;
+hol4_overload "code_fupd" "wordSem_state_code_fupd";;
+hol4_overload "be" "wordSem_state_be";;
+hol4_overload "be_fupd" "wordSem_state_be_fupd";;
+hol4_overload "ffi" "wordSem_state_ffi";;
+hol4_overload "ffi_fupd" "wordSem_state_ffi_fupd";;
 
 let stack_size_frame_def = cake_define
   `stack_size_frame x1 =

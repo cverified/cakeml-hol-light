@@ -43,7 +43,7 @@ let v_rel = cake_inductive
    (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Vectorv vs)
      (closSem_Block 0 ws)) /\
    (!env m db.
-     (!n x. ALOOKUP (?_v env) n = SOME x ==>
+     (!n x. ALOOKUP (v env) n = SOME x ==>
             indexedLists_findi (SOME n) m < LENGTH db /\
             v_rel x (EL (indexedLists_findi (SOME n) m) db)) ==>
       env_rel env (m:(mlstring option) list) (db:closSem_v list)) /\
@@ -83,22 +83,21 @@ let inc_compile_decs'_def = cake_define
 
 let install_config_rel'_def = cake_define
   `install_config_rel' ic co cc = (
-     (!i. no_Mat_decs (SND (?_compile_oracle ic i))) /\
-     co = pure_co inc_compile_decs' o ?_compile_oracle ic /\
-       ?_compile
+     (!i. no_Mat_decs (SND (compile_oracle ic i))) /\
+     co = pure_co inc_compile_decs' o compile_oracle ic /\ compile
      ic = pure_cc inc_compile_decs' cc)`;;
 
 let state_rel_def = cake_define
   `flat_to_closProof_state_rel (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     1 <= closSem_state_max_app t /\ ?_ffi
-     s = ?_ffi t /\ ?_clock
-     s = ?_clock t /\
-     store_rel (?_refs s) (?_refs t) /\ ~(
-     LENGTH (?_globals t) = 0) /\
-     LIST_REL (OPTREL v_rel) (?_globals s) (TL (?_globals t)) /\
+     1 <= closSem_state_max_app t /\ ffi
+     s = ffi t /\ clock
+     s = clock t /\
+     store_rel (refs s) (refs t) /\ ~(
+     LENGTH (globals t) = 0) /\
+     LIST_REL (OPTREL v_rel) (globals s) (TL (globals t)) /\
      install_config_rel' (flatSem_state_eval_config s)
-       (?_compile_oracle t) (?_compile t)`;;
+       (compile_oracle t) (compile t)`;;
 hol4_overload "state_rel" "flat_to_closProof_state_rel";;
 
 let initial_state'_def = cake_define
@@ -597,8 +596,8 @@ Finalise compile_correct;
 
 let install_config_rel_def = cake_define
   `install_config_rel ic co cc <=>
-     (!i. no_Mat_decs (SND (?_compile_oracle ic i))) /\
-     co = pure_co inc_compile_decs o ?_compile_oracle ic /\ ?_compile
+     (!i. no_Mat_decs (SND (compile_oracle ic i))) /\
+     co = pure_co inc_compile_decs o compile_oracle ic /\ compile
      ic = pure_cc inc_compile_decs cc`;;
 
 (* HOL4 ML code, not ported:

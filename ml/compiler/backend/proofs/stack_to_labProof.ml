@@ -124,46 +124,43 @@ let labels_ok_def = cake_define
 let state_rel_def = cake_define
   `stack_to_labProof_state_rel (s:('a,'c,'ffi)stackSem_state)
   (t:('a,'c,'ffi)labSem_state) <=>
-     (!n v. FLOOKUP (?_regs s) n = SOME v ==> ?_regs t n = v) /\
-     (!n v. FLOOKUP (?_fp_regs s) n = SOME v ==> ?_fp_regs t n = v)
-       /\ ?_mem
-     t = ?_memory s /\ ?_mem_domain
-     t = ?_mdomain s /\ labSem_state_shared_mem_domain
-     t = ?_sh_mdomain s /\ ?_be
-     t = ?_be s /\ ?_ffi
-     t = ?_ffi s /\ ?_clock
-     t = ?_clock s /\
-     (!n prog. lookup n (?_code s) = SOME prog ==>
-       call_args prog (?_ptr_reg t) (?_len_reg t) (?_ptr2_reg t)
-         (?_len2_reg t) (?_link_reg t) /\
+     (!n v. FLOOKUP (regs s) n = SOME v ==> regs t n = v) /\
+     (!n v. FLOOKUP (fp_regs s) n = SOME v ==> fp_regs t n = v) /\
+       mem
+     t = memory s /\ mem_domain
+     t = mdomain s /\ labSem_state_shared_mem_domain
+     t = sh_mdomain s /\ be
+     t = be s /\ ffi
+     t = ffi s /\ clock
+     t = clock s /\
+     (!n prog. lookup n (code s) = SOME prog ==>
+       call_args prog (ptr_reg t) (len_reg t) (ptr2_reg t) (len2_reg
+         t) (link_reg t) /\
        (?pc. stack_to_labProof_code_installed pc
               (append (FST (flatten T prog n (next_lab prog 2) []
-                []))) (?_code t) /\
-            loc_to_pc n 0 (?_code t) = SOME pc)) /\
-     domain (?_code s) = set_of_list (MAP Section_num (?_code t)) /\
-     EVERY sec_labels_ok (?_code t) /\
-     ~?_failed t /\ ~(?_link_reg
-     t = ?_len_reg t) /\ ~(?_link_reg t = ?_ptr_reg t) /\
-       ~(?_link_reg
-     t = ?_len2_reg t) /\ ~(?_link_reg t = ?_ptr2_reg t) /\
-     ~(?_link_reg t IN stackSem_state_ffi_save_regs s) /\
+                []))) (code t) /\
+            loc_to_pc n 0 (code t) = SOME pc)) /\
+     domain (code s) = set_of_list (MAP Section_num (code t)) /\
+     EVERY sec_labels_ok (code t) /\
+     ~failed t /\ ~(link_reg
+     t = len_reg t) /\ ~(link_reg t = ptr_reg t) /\ ~(link_reg
+     t = len2_reg t) /\ ~(link_reg t = ptr2_reg t) /\
+     ~(link_reg t IN stackSem_state_ffi_save_regs s) /\
      (!k i n. k IN stackSem_state_ffi_save_regs s ==>
        labSem_state_io_regs t n i k = NONE) /\
      (!k n. k IN stackSem_state_ffi_save_regs s ==>
        labSem_state_cc_regs t n k = NONE) /\
-     (!x. x IN ?_mdomain s ==> w2n x MOD (dimindex (:'a) DIV 8) = 0)
-       /\
-     (!x. x IN ?_sh_mdomain s ==> w2n x MOD (dimindex (:'a) DIV 8) =
-       0) /\ ?_code_buffer
-     s = ?_code_buffer t /\ ?_compile
-     s = (\c p. ?_compile t c (MAP prog_to_section p)) /\
-     (?_compile_oracle t = (\n. let (c,p,_8) = ?_compile_oracle s n
-       in
+     (!x. x IN mdomain s ==> w2n x MOD (dimindex (:'a) DIV 8) = 0) /\
+     (!x. x IN sh_mdomain s ==> w2n x MOD (dimindex (:'a) DIV 8) = 0)
+       /\ code_buffer
+     s = code_buffer t /\ compile
+     s = (\c p. compile t c (MAP prog_to_section p)) /\
+     (compile_oracle t = (\n. let (c,p,_8) = compile_oracle s n in
                             (c,MAP prog_to_section p))) /\
-     (!k. let (c,ps,_9) = ?_compile_oracle s k in
+     (!k. let (c,ps,_9) = compile_oracle s k in
        EVERY (\(n,p).
-         call_args p (?_ptr_reg t) (?_len_reg t) (?_ptr2_reg t)
-           (?_len2_reg t) (?_link_reg t) /\
+         call_args p (ptr_reg t) (len_reg t) (ptr2_reg t) (len2_reg
+           t) (link_reg t) /\
          EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
            (extract_labels p) /\
          ALL_DISTINCT (extract_labels p)) ps /\
@@ -275,19 +272,20 @@ val sextract_labels_def = stackPropsTheory.extract_labels_def
 let halt_assum_def = cake_define
   `halt_assum (:'ffi#'c) code <=>
     (!(s:('ga,'c,'ffi)stackSem_state).
-      subspt code (?_code s) /\ ~(?_clock s = 0) ==>
+      subspt code (code s) /\ ~(clock s = 0) ==>
       (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt (Word
-        (n2w 0))),t) /\ ?_ffi
-          t = ?_ffi s /\ ?_clock t = ?_clock s - 1))`;;
+        (n2w 0))),t) /\ ffi
+          t = ffi s /\ clock t = clock s - 1))`;;
 
 let make_init_def = cake_define
   `stack_to_labProof_make_init code coracle regs save_regs
   (s:('a,'c,'ffi)labSem_state) =
-     (mk_? (FEMPTY |++ (MAP (\r. r,(\r s. ?_regs s r) r s) regs))
-       FEMPTY (?_mem s) (?_mem_domain s)
-       (labSem_state_shared_mem_domain s) F F F (\c p. ?_compile s c
-       (MAP prog_to_section p)) coracle (?_code_buffer s) (?_clock s)
-       code (?_ffi s) save_regs (?_be s):('ga,'c,'ffi)stackSem_state)`;;
+     (mk_stackSem_state (FEMPTY |++ (MAP (\r. r,(\r s. regs s r) r
+       s) regs)) FEMPTY ARB ARB ARB (mem s) (mem_domain s)
+       (labSem_state_shared_mem_domain s) ARB (\c p. compile s c (MAP
+       prog_to_section p)) coracle (code_buffer s) ARB ARB F F F
+       (clock s) code (ffi s) save_regs (be
+       s):('ga,'c,'ffi)stackSem_state)`;;
 hol4_overload "make_init" "stack_to_labProof_make_init";;
 
 (* HOL4 ML code, not ported:
@@ -337,22 +335,22 @@ let full_make_init_def = cake_define
 let memory_assumption_def = cake_define
   `memory_assumption rnames (bitmaps:('a word) list) data_sp t =
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       (\r s. ?_regs s r) (tlookup rnames 2) t = Word ptr2 /\
-       (\r s. ?_regs s r) (tlookup rnames 3) t = Word ptr3 /\
-       (\r s. ?_regs s r) (tlookup rnames 4) t = Word ptr4 /\ ?_mem
-       t ptr2 = Word bitmap_ptr /\ ?_mem
+       (\r s. regs s r) (tlookup rnames 2) t = Word ptr2 /\
+       (\r s. regs s r) (tlookup rnames 3) t = Word ptr3 /\
+       (\r s. regs s r) (tlookup rnames 4) t = Word ptr4 /\ mem
+       t ptr2 = Word bitmap_ptr /\ mem
        t (ptr2 + bytes_in_word) =
            Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
-             /\ ?_mem
+             /\ mem
        t (ptr2 + (n2w 2) * bytes_in_word) =
            Word (bitmap_ptr + bytes_in_word * n2w data_sp +
-                 bytes_in_word * n2w (LENGTH bitmaps)) /\ ?_mem
+                 bytes_in_word * n2w (LENGTH bitmaps)) /\ mem
        t (ptr2 + (n2w 3) * bytes_in_word) = Word (buffer_position
-         (?_code_buffer t)) /\ ?_mem
+         (code_buffer t)) /\ mem
        t (ptr2 + (n2w 4) * bytes_in_word) =
-           Word (buffer_position (?_code_buffer t) + n2w
-             (buffer_space_left (?_code_buffer t))) /\ buffer_buffer
-             (?_code_buffer
+           Word (buffer_position (code_buffer t) + n2w
+             (buffer_space_left (code_buffer t))) /\ buffer_buffer
+             (code_buffer
        t) = [] /\
        ptr2 <=+ ptr4 /\ byte_aligned ptr2 /\
        byte_aligned ptr4 /\ byte_aligned bitmap_ptr /\
@@ -363,7 +361,7 @@ let memory_assumption_def = cake_define
        word_list_exists ptr2
          (w2n (--(n2w 1) * ptr2 + ptr4) DIV w2n (bytes_in_word:'a
            word)))
-        (fun2set (?_mem t,?_mem_domain t)))`;;
+        (fun2set (mem t,mem_domain t)))`;;
 
 (* HOL4 ML code, not ported:
 val sextract_labels_def = stackPropsTheory.extract_labels_def

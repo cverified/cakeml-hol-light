@@ -12,7 +12,6 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
@@ -85,11 +84,11 @@ let do_eval_record_def = cake_define
 
 let env_rel_def = cake_define
   `source_evalProof_env_rel v_rel' (env:semanticPrimitives_v sem_env)
-  env' <=> ?_c
-     env = ?_c env' /\ nsDom (?_v env) = nsDom (?_v env') /\
-     nsDomMod (?_v env) = nsDomMod (?_v env') /\
-     (!nm x y. nsLookup (?_v env) nm = SOME x /\ nsLookup (?_v env')
-       nm = SOME y ==>
+  env' <=> c
+     env = c env' /\ nsDom (v env) = nsDom (v env') /\
+     nsDomMod (v env) = nsDomMod (v env') /\
+     (!nm x y. nsLookup (v env) nm = SOME x /\ nsLookup (v env') nm =
+       SOME y ==>
          v_rel' x y)`;;
 
 (* HOL4 ML code, not ported:
@@ -154,17 +153,17 @@ let s_rel_def = cake_define
      s) refs' /\ semanticPrimitives_state_eval_state
    s = SOME (EvalDecs dec_s) /\ eval_oracle_state_custom_do_eval
    orac_s' = do_eval_record ci /\ eval_decs_state_compiler_state
-   dec_s = (FST (SND (?_oracle orac_s' 0))) /\
+   dec_s = (FST (SND (oracle orac_s' 0))) /\
      eval_decs_state_decode_decs
    dec_s = v_fun_abs (compiler_instance_decs_dom ci)
      (compiler_instance_decs_v ci) /\ eval_decs_state_compiler
    dec_s = mk_compiler_fun_from_ci ci /\
-   (0 = FST (FST (?_oracle orac_s' 0)) ==>
+   (0 = FST (FST (oracle orac_s' 0)) ==>
      eval_decs_state_compiler_state
      dec_s = compiler_instance_config_v ci
        (compiler_instance_init_state ci)) /\
-   (0 < FST (FST (?_oracle orac_s' 0)) ==>
-     FST (SND (?_oracle orac_s' 1)) = compiler_instance_config_v ci
+   (0 < FST (FST (oracle orac_s' 0)) ==>
+     FST (SND (oracle orac_s' 1)) = compiler_instance_config_v ci
        (compiler_instance_init_state ci)) /\
        eval_decs_state_env_id_counter
    dec_s = (eval_oracle_state_generation orac_s',
@@ -173,8 +172,7 @@ let s_rel_def = cake_define
            (eval_oracle_state_envs orac_s')) /\
            eval_oracle_state_generation
    orac_s' < LENGTH (eval_oracle_state_envs orac_s') /\
-   recorded_orac_wf (mk_compiler_fun_from_ci ci) (?_oracle
-     orac_s'))`;;
+   recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle orac_s'))`;;
 
 let orac_s_def = cake_define
   `orac_s x1 =
@@ -636,8 +634,8 @@ let do_eval_oracle_def = cake_define
 
 let insert_gen_oracle_def = cake_define
   `insert_gen_oracle ci g shift_f orac es = (match es with SOME
-  (EvalOracle s) -> SOME (EvalOracle (?_oracle_fupd (K
-  (misc_shift_seq (shift_f (?_oracle s 0)) orac))
+  (EvalOracle s) -> SOME (EvalOracle (oracle_fupd (K (misc_shift_seq
+  (shift_f (oracle s 0)) orac))
   (eval_oracle_state_custom_do_eval_fupd (K (do_eval_oracle
   (mk_compiler_fun_from_ci ci) g)) s))) | _12 -> es)`;;
 
@@ -646,8 +644,8 @@ let insert_gen_oracle_def = cake_define
 
 let orac_agrees_def = cake_define
   `orac_agrees orac es = (match es with SOME (EvalOracle s) ->
-       (!j. j < FST (FST (?_oracle s 0)) ==> orac j = ?_oracle s
-         (j + 1)) | _13 -> F)`;;
+       (!j. j < FST (FST (oracle s 0)) ==> orac j = oracle s (j +
+         1)) | _13 -> F)`;;
 
 (* the infinite extension of an oracle is still well-formed with
    respect to the compiler function *)
@@ -659,9 +657,9 @@ let orac_extended_wf_def = cake_define
 let record_forward_def = cake_define
   `record_forward es es' = (match es with SOME (EvalOracle s) -> (?s'.
   es' = SOME (EvalOracle s') /\
-         (FST (FST (?_oracle s 0)) <= FST (FST (?_oracle s' 0))) /\
-         (!j. 0 < j /\ j < FST (FST (?_oracle s 0)) + 1 ==> ?_oracle
-             s' j = ?_oracle s j)) | _14 -> (match es' with SOME
+         (FST (FST (oracle s 0)) <= FST (FST (oracle s' 0))) /\
+         (!j. 0 < j /\ j < FST (FST (oracle s 0)) + 1 ==> oracle
+             s' j = oracle s j)) | _14 -> (match es' with SOME
                (EvalOracle _15) -> F | _16 -> T))`;;
 
 let is_record_def = cake_define
@@ -776,17 +774,17 @@ let extract_oracle_def = cake_define
      (match (OLEAST (\k. ?s' res.
        evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K
          k) s) env decs = (s',res) /\
-         n < FST (FST (?_oracle (orac_s
+         n < FST (FST (oracle (orac_s
            (semanticPrimitives_state_eval_state s')) 0)))) with NONE ->
            NONE | SOME k ->
        (let (s',_18) = evaluate_evaluate_decs
          (semanticPrimitives_state_clock_fupd (K k) s) env decs in
-         SOME (?_oracle (orac_s
-           (semanticPrimitives_state_eval_state s')) (n + 1))))`;;
+         SOME (oracle (orac_s (semanticPrimitives_state_eval_state
+           s')) (n + 1))))`;;
 
 let get_oracle_def = cake_define
   `get_oracle ci s env decs =
-     (let es_record = EvalOracle (mk_? (K
+     (let es_record = EvalOracle (mk_eval_oracle_state (K
        ((0,0),compiler_instance_config_v ci
        (compiler_instance_init_state ci),[])) (do_eval_record ci) [[]]
        0) in
@@ -796,8 +794,9 @@ let get_oracle_def = cake_define
 let put_oracle_def = cake_define
   `put_oracle ci orac = ((\ci. insert_gen_oracle ci I (FST o FST)) ci
   orac
-     (SOME (EvalOracle (mk_? (K ((0,0),compiler_instance_config_v
-       ci (compiler_instance_init_state ci),[])) (do_eval_record ci)
+     (SOME (EvalOracle (mk_eval_oracle_state (K
+       ((0,0),compiler_instance_config_v ci
+       (compiler_instance_init_state ci),[])) (do_eval_record ci)
        [[]] 0))))`;;
 
 let precond_eval_state_def = cake_define

@@ -89,8 +89,7 @@ let find_next_interference_def = cake_define
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE -> NONE |
            SOME ffi_index ->
-             (match EL ffi_index (?_ffi_names mc) with SharedMem op
-               ->
+             (match EL ffi_index (ffi_names mc) with SharedMem op ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with NONE -> NONE | SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
@@ -107,7 +106,7 @@ let find_next_interference_def = cake_define
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (?_ffi_names mc)) [nb]
+                                (ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome -> NONE | FFI_return new_ffi
                                 new_bytes ->
@@ -134,7 +133,7 @@ let find_next_interference_def = cake_define
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (?_ffi_names mc)) [nb]
+                                (ffi_names mc)) [nb]
                               (
                               (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
@@ -157,7 +156,7 @@ let find_next_interference_def = cake_define
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
-                              (?_ffi_names mc)) bytes bytes2 with
+                              (ffi_names mc)) bytes bytes2 with
                               FFI_final outcome -> NONE | FFI_return
                               new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle

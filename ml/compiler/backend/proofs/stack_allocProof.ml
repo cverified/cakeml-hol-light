@@ -325,8 +325,8 @@ val _ = augment_srw_ss[rewrites[with_same_regs_lemma]];
 
 (* TODO: does this have to initialize the data_buffer to empty? *)
 let make_init_def = cake_define
-  `stack_allocProof_make_init c code oracle s = ?_compile_oracle_fupd (K
-  oracle) (?_compile_fupd (K (\c. ?_compile s c o (MAP prog_comp)))
-  (?_gc_fun_fupd (K (word_gc_fun c)) (stackSem_state_use_stack_fupd (K
-  T) (stackSem_state_use_alloc_fupd (K T) (?_code_fupd (K code)
+  `stack_allocProof_make_init c code oracle s = compile_oracle_fupd (K
+  oracle) (compile_fupd (K (\c. compile s c o (MAP prog_comp)))
+  (gc_fun_fupd (K (word_gc_fun c)) (stackSem_state_use_stack_fupd (K T)
+  (stackSem_state_use_alloc_fupd (K T) (code_fupd (K code)
      s)))))`;;

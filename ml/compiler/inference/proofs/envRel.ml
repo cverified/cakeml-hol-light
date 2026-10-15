@@ -124,7 +124,7 @@ let tscheme_approx_def = cake_define
 let env_rel_sound_def = cake_define
   `env_rel_sound s ienv tenv tenvE <=> inf_env_inf_t
      ienv = type_env_t tenv /\ inf_env_inf_c
-     ienv = ?_c tenv /\
+     ienv = c tenv /\
      (!x ts.
        nsLookup (inf_env_inf_v ienv) x = SOME ts ==>
        (?tvs' t'.
@@ -136,7 +136,7 @@ let env_rel_sound_def = cake_define
 let env_rel_complete_def = cake_define
   `env_rel_complete s ienv tenv tenvE <=> inf_env_inf_t
      ienv = type_env_t tenv /\ inf_env_inf_c
-     ienv = ?_c tenv /\
+     ienv = c tenv /\
      (!x tvs t.
        lookup_var x tenvE tenv = SOME (tvs,t) ==>
        (?n. check_freevars n [] t) /\
@@ -150,17 +150,18 @@ let env_rel_def = cake_define
   `envRel_env_rel tenv ienv <=>
     ienv_ok {} ienv /\
     tenv_ok tenv /\
-    (!x. nsLookupMod (inf_env_inf_v ienv) x = NONE <=> nsLookupMod
-      (?_v tenv) x = NONE) /\
+    (!x. nsLookupMod (inf_env_inf_v ienv) x = NONE <=> nsLookupMod (v
+      tenv) x = NONE) /\
     env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
 
 let ienv_to_tenv_def = cake_define
   `ienv_to_tenv ienv =
-     mk_? (nsMap (\(tvs,t). (tvs,convert_t t)) (inf_env_inf_v
-       ienv)) (inf_env_inf_c ienv) (inf_env_inf_t ienv)`;;
+     mk_type_env (nsMap (\(tvs,t). (tvs,convert_t t))
+       (inf_env_inf_v ienv)) (inf_env_inf_c ienv) (inf_env_inf_t
+       ienv)`;;
 
 let tenv_to_ienv_def = cake_define
   `tenv_to_ienv tenv =
-     mk_inf_env (nsMap (\(tvs,t). (tvs,unconvert_t t)) (?_v tenv))
-       (?_c tenv) (type_env_t tenv)`;;
+     mk_inf_env (nsMap (\(tvs,t). (tvs,unconvert_t t)) (v tenv))
+       (c tenv) (type_env_t tenv)`;;

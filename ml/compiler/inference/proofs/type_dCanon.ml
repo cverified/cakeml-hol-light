@@ -23,8 +23,8 @@ let tenv_equiv_def = cake_define
   `tenv_equiv tenv1 tenv2 <=>
       nsAll2 (\i v1 v2. v1 = v2) (type_env_t tenv1) (type_env_t
         tenv2) /\
-      nsAll2 (\i v1 v2. v1 = v2) (?_c tenv1) (?_c tenv2) /\
-      nsAll2 (\i v1 v2. v1 = v2) (?_v tenv1) (?_v tenv2)`;;
+      nsAll2 (\i v1 v2. v1 = v2) (c tenv1) (c tenv2) /\
+      nsAll2 (\i v1 v2. v1 = v2) (v tenv1) (v tenv2)`;;
 
 (* -- *)
 
@@ -33,8 +33,8 @@ let set_tids_tenv_def = cake_define
   `set_tids_tenv tids tenv <=>
    nsAll (\i (ls,t). set_tids_subset tids t) (type_env_t tenv) /\
    nsAll (\i (ls,ts,tid). EVERY (\t. set_tids_subset tids t) ts /\
-     tid IN tids) (?_c tenv) /\
-   nsAll (\i (n,t). set_tids_subset tids t) (?_v tenv)`;;
+     tid IN tids) (c tenv) /\
+   nsAll (\i (n,t). set_tids_subset tids t) (v tenv)`;;
 
 let type_pe_determ_canon_def = cake_define
   `type_pe_determ_canon n tenv tenvE p e <=>
@@ -66,7 +66,7 @@ let type_d_canon = cake_inductive
              bindings')) (MAP SND (tenv_add_tvs tvs bindings)))) ==>
      type_d_canon n tenv (Dlet locs p e)
        0
-       (mk_? (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
+       (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
          nsEmpty)) /\
    (!n tenv p e t bindings locs.
      ((~(is_value e) /\ type_pe_determ_canon n tenv typeSystem_Empty
@@ -75,7 +75,7 @@ let type_d_canon = cake_inductive
      type_p ((0:num)) tenv p t bindings /\
      type_e tenv typeSystem_Empty e t) ==>
      type_d_canon n tenv (Dlet locs p e)
-       0 (mk_? (alist_to_ns (tenv_add_tvs ((0:num)) bindings))
+       0 (mk_type_env (alist_to_ns (tenv_add_tvs ((0:num)) bindings))
          nsEmpty nsEmpty)) /\
    (!n tenv funs bindings tvs locs.
      (type_funs tenv (bind_var_list ((0:num)) bindings (bind_tvar tvs
@@ -87,7 +87,7 @@ let type_d_canon = cake_inductive
            EVERY2 tscheme_inst (MAP SND (tenv_add_tvs tvs'
              bindings')) (MAP SND (tenv_add_tvs tvs bindings)))) ==>
      type_d_canon n tenv (Dletrec locs funs)
-     0 (mk_? (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
+     0 (mk_type_env (alist_to_ns (tenv_add_tvs tvs bindings)) nsEmpty
        nsEmpty)) /\
    (!n type_identities tenv tdefs tenvT locs.
      (ITLIST MAX (Tlist_num :: (Tbool_num :: prim_type_nums)) 0 < n
@@ -100,23 +100,23 @@ let type_d_canon = cake_inductive
                            tdefs type_identities))) ==>
      type_d_canon n tenv (Dtype locs tdefs)
        (LENGTH tdefs)
-       (mk_? nsEmpty (build_ctor_tenv (nsAppend tenvT (type_env_t
-         tenv)) tdefs type_identities) tenvT)) /\
+       (mk_type_env nsEmpty (build_ctor_tenv (nsAppend tenvT
+         (type_env_t tenv)) tdefs type_identities) tenvT)) /\
    (!n tenv tvs tn t locs.
      (check_freevars_ast tvs t /\
      check_type_names (type_env_t tenv) t /\
      ALL_DISTINCT tvs) ==>
      type_d_canon n tenv (Dtabbrev locs tvs tn t)
        0
-       (mk_? nsEmpty nsEmpty (nsSing tn (tvs,type_name_subst
+       (mk_type_env nsEmpty nsEmpty (nsSing tn (tvs,type_name_subst
          (type_env_t tenv) t)))) /\
    (!n tenv cn ts locs.
      (EVERY (check_freevars_ast []) ts /\
      EVERY (check_type_names (type_env_t tenv)) ts) ==>
      type_d_canon n tenv (Dexn locs cn ts)
        0
-       (mk_? nsEmpty (nsSing cn ([],MAP (type_name_subst (type_env_t
-         tenv)) ts,Texn_num)) nsEmpty)) /\
+       (mk_type_env nsEmpty (nsSing cn ([],MAP (type_name_subst
+         (type_env_t tenv)) ts,Texn_num)) nsEmpty)) /\
    (!n tenv mn ds decls tenv'.
      (type_ds_canon n tenv ds decls tenv') ==>
      type_d_canon n tenv (Dmod mn ds) decls (tenvLift mn tenv')) /\
@@ -129,7 +129,7 @@ let type_d_canon = cake_inductive
      T ==>
      type_ds_canon n tenv []
        0
-       (mk_? nsEmpty nsEmpty nsEmpty)) /\
+       (mk_type_env nsEmpty nsEmpty nsEmpty)) /\
    (!n tenv d ds tenv1 tenv2 decls1 decls2.
      (type_d_canon n tenv d decls1 tenv1 /\
      type_ds_canon (n + decls1) (extend_dec_tenv tenv1 tenv) ds

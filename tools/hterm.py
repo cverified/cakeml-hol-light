@@ -843,6 +843,7 @@ class Ctx:
 
   def __init__(self, names=None, fields=None, recs=None, thy='',
                overloads=None, accessors=None, cons=None,
+               ambfields=None, updaters=None,
                abbrevs=None, tynames=None, overloaded=None,
                con_argty=None):
     self.names = names or {}     # cakeml name -> hol light name
@@ -852,8 +853,11 @@ class Ctx:
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
+    self.ambfields = ambfields or set()  # fields of several types
+    self.reclit = None           # the record type of a literal
     self.overloads = overloads or {}   # name -> hol light term text
     self.accessors = accessors or {}   # field name -> accessor name
+    self.updaters = updaters or {}     # field name -> update name
     self.cons = cons or set()          # the constructor names
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.intnums = False               # are numerals integers here?
@@ -888,9 +892,18 @@ class Ctx:
   def field(self, f):
     """the accessor of a record field, without its argument"""
     if f in self.accessors: return self.accessors[f]
+    # the name of a field that several record types have is an
+    # overload of their accessors, which HOL Light resolves by the
+    # type of the record, as HOL4 does
+    if f in self.ambfields and f not in self.fields: return f
     if f in self.fields: return self.fields[f] + '_' + f
     self.warn.append(f'unknown record field {f}')
     return '?_' + f
+
+  def fupd(self, f):
+    """the update of a record field, without its arguments"""
+    if f in self.updaters: return self.updaters[f]
+    return self.field(f) + '_fupd'
 
   def fresh(self):
     self.wild += 1
@@ -1083,6 +1096,20 @@ class Printer:
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'typed':
       ty = self.pr_type(e.ty)
+      # a record literal may say its type, which is the only thing
+      # that tells which record type it is where several of them
+      # have the fields that it gives
+      inner = e.e
+      while inner.kind == 'paren': inner = inner.e
+      if inner.kind == 'reclit':
+        head = re.sub(r'^.*\)', '', ty).strip()
+        if head in self.ctx.recs:
+          old = self.ctx.reclit
+          self.ctx.reclit = head
+          try:
+            return self.paren(self.pr(e.e, 1) + ':' + ty, 0, prec)
+          finally:
+            self.ctx.reclit = old
       # a numeral of type int or real is &n in HOL Light
       oldint = self.ctx.intnums
       if ty in ('int', 'real'): self.ctx.intnums = True
@@ -1218,14 +1245,24 @@ class Printer:
     if k == 'recupd':
       s = self.pr(e.e, APP)
       for i, (fld, v, fn) in enumerate(e.upds):
-        s = (self.ctx.field(fld) + '_fupd ' +
+        s = (self.ctx.fupd(fld) + ' ' +
              (self.pr(v, APP) if fn else '(K ' + self.pr(v, APP) + ')')
              + ' ' + s)
         if i < len(e.upds) - 1: s = '(' + s + ')'
       return self.paren(s, PRE_APP, prec)
     if k == 'reclit':
       flds = [f for f, _, _ in e.upds]
-      rty = self.ctx.fields.get(flds[0], '?')
+      # the record type of a literal is the one whose fields are
+      # exactly the ones of the literal; a field name on its own may
+      # be one of several record types
+      exact = [ty for ty, fs in self.ctx.recs.items()
+               if set(fs) == set(flds)]
+      part = [ty for ty, fs in self.ctx.recs.items()
+              if set(flds) <= set(fs)]
+      cand = exact or part
+      rty = (self.ctx.reclit if self.ctx.reclit in part
+             else cand[0] if len(cand) == 1
+             else self.ctx.fields.get(flds[0], '?'))
       order = self.ctx.recs.get(rty, flds)
       vals = []
       for f in order:

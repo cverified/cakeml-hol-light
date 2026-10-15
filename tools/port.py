@@ -122,7 +122,9 @@ class Porter:
                          overloaded=db.overloaded_for(thy),
                          recs=db.recs_for(thy), thy=thy,
                          accessors=overrides.ACCESSORS.get(thy, {}),
+                         updaters=overrides.UPDATERS.get(thy, {}),
                          cons=db.cons_for(thy), abbrevs=self.abbrevs,
+                         ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy))
     self.out = []
     self.warn = []
@@ -427,6 +429,18 @@ class Porter:
       head = ('let %s_FIELDS =\n  define_record "%s"'
               % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
     self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
+    # the accessor and the update of a field that several record
+    # types have become overloads of the name of the field
+    amb = self.db.ambiguous_fields()
+    for f, _ in flds:
+      if f not in amb: continue
+      for n in (f, f + '_fupd'):
+        text = ('hol4_overload "%s" "%s_%s";;'
+                % (n, self.tnm(ty), n))
+        if len(text) > 72:
+          text = ('hol4_overload "%s"\n  "%s_%s";;'
+                  % (n, self.tnm(ty), n))
+        self.out.append(text)
 
   def overloads_of(self, names):
     """the declarations that make the names of a block the overloads
@@ -469,6 +483,7 @@ class Porter:
     body = b.body
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
+    self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
     if key in overrides.CLAUSE_FORM:
       term = None

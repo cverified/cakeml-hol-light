@@ -75,20 +75,19 @@ let in_co_def = cake_define
           (cfg,prog1))`;;
 
 let in_state_rel_def = cake_define
-  `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=> ?_refs
-     t = ?_refs s /\ ?_clock
-     t = ?_clock s /\ bviSem_state_global
-     t = bviSem_state_global s /\ ?_ffi
-     t = ?_ffi s /\ ?_compile_oracle
-     t = bvi_inlineProof_in_co (?_compile_oracle s) /\
-     subspt (FST (FST (?_compile_oracle s 0))) (?_code t) /\
-       ?_compile
-     s = bvi_inlineProof_in_cc (?_compile t) /\
-     domain (?_code t) = domain (?_code s) /\
+  `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=> refs
+     t = refs s /\ clock
+     t = clock s /\ bviSem_state_global
+     t = bviSem_state_global s /\ ffi
+     t = ffi s /\ compile_oracle
+     t = bvi_inlineProof_in_co (compile_oracle s) /\
+     subspt (FST (FST (compile_oracle s 0))) (code t) /\ compile
+     s = bvi_inlineProof_in_cc (compile t) /\
+     domain (code t) = domain (code s) /\
      (!k arity exp.
-        sptree_lookup k (?_code s) = SOME (arity,exp) ==>
-        (?exp1. sptree_lookup k (?_code t) = SOME (arity,exp1) /\
-               exp_rel (?_code t) exp exp1))`;;
+        sptree_lookup k (code s) = SOME (arity,exp) ==>
+        (?exp1. sptree_lookup k (code t) = SOME (arity,exp1) /\
+               exp_rel (code t) exp exp1))`;;
 
 (* Inversion of [exp_rel] on each source constructor. [~inline] is why
    the
@@ -473,14 +472,14 @@ let remove_ticks_co_def = cake_define
 
 let remove_state_rel_def = cake_define
   `remove_state_rel (s:('c,'ffi)bviSem_state) (t:('c,'ffi)bviSem_state)
-  <=> ?_refs
-     t = ?_refs s /\ ?_clock t = ?_clock s /\ bviSem_state_global t =
-       bviSem_state_global s /\ ?_ffi t = ?_ffi s /\ ?_code
-     t = sptree_map (I ## remove_ticks_exp) (?_code s) /\
-       ?_compile_oracle
-     t = bvi_inlineProof_remove_ticks_co o ?_compile_oracle s /\
-       ?_compile
-     s = bvi_inlineProof_remove_ticks_cc (?_compile t)`;;
+  <=> refs
+     t = refs s /\ clock t = clock s /\ bviSem_state_global t =
+       bviSem_state_global s /\ ffi t = ffi s /\ code
+     t = sptree_map (I ## remove_ticks_exp) (code s) /\
+       compile_oracle
+     t = bvi_inlineProof_remove_ticks_co o compile_oracle s /\
+       compile
+     s = bvi_inlineProof_remove_ticks_cc (compile t)`;;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_remove_ticks_mutual[Var]:

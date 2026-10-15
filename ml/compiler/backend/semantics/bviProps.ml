@@ -42,8 +42,8 @@ val evaluate_LENGTH = Q.prove(
 *)
 
 let inc_clock_def = cake_define
-  `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = ?_clock_fupd (K
-  (?_clock s + n)) s`;;
+  `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = clock_fupd (K
+  (clock s + n)) s`;;
 hol4_overload "inc_clock" "bviProps_inc_clock";;
 
 let get_code_labels_def = cake_define_list
@@ -92,13 +92,13 @@ let good_code_labels_def = cake_define
 
 let adj_orac_def = cake_define
   `(adj_orac cc f (s:('a,'ffi)bviSem_state):('b,'ffi)bviSem_state) =
-     mk_? (?_refs s) (?_clock s) (bviSem_state_global s) (?_code
-       s) (?_ffi s) cc ((f ## I) o ?_compile_oracle s)`;;
+     mk_bviSem_state (refs s) (clock s) (bviSem_state_global s) cc
+       ((f ## I) o compile_oracle s) (code s) (ffi s)`;;
 
 let adj_orac_ok_def = cake_define
   `adj_orac_ok cc f (s:('a,'ffi)bviSem_state) <=>
-     (!n x y. ?_compile_oracle s n = (x,y) ==>
-       OPTION_MAP (I ## (I ## f)) (?_compile s x y) = cc (f x) y)`;;
+     (!n x y. compile_oracle s n = (x,y) ==>
+       OPTION_MAP (I ## (I ## f)) (compile s x y) = cc (f x) y)`;;
 
 let adj_orac_rel_def = cake_define
   `bviProps_adj_orac_rel cc f (s1:('a,'ffi)bviSem_state)

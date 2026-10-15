@@ -14,15 +14,15 @@ needs "lib/sptree.ml";;
 
 let state_rel_def = cake_define
   `data_liveProof_state_rel (s1:('a,'ffi)dataSem_state)
-  (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> ?_code
-     s1 = ?_code t1 /\ ?_clock s1 = ?_clock t1 /\ dataSem_state_space
-       s1 = dataSem_state_space t1 /\ ?_ffi
-     s1 = ?_ffi t1 /\ ?_refs s1 = ?_refs t1 /\ dataSem_state_global
-       s1 = dataSem_state_global t1 /\ dataSem_state_handler
-     s1 = dataSem_state_handler t1 /\ (LENGTH (?_stack s1) = LENGTH
-       (?_stack t1)) /\ ?_compile
-     s1 = ?_compile t1 /\ ?_compile_oracle s1 = ?_compile_oracle t1
-       /\ dataSem_state_tstamps
+  (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> code
+     s1 = code t1 /\ clock s1 = clock t1 /\ dataSem_state_space s1 =
+       dataSem_state_space t1 /\ ffi
+     s1 = ffi t1 /\ refs s1 = refs t1 /\ dataSem_state_global s1 =
+       dataSem_state_global t1 /\ dataSem_state_handler
+     s1 = dataSem_state_handler t1 /\ (LENGTH (stack s1) = LENGTH
+       (stack t1)) /\ compile
+     s1 = compile t1 /\ compile_oracle s1 = compile_oracle t1 /\
+       dataSem_state_tstamps
      s1 = dataSem_state_tstamps t1 /\ dataSem_state_limits
      s1 = dataSem_state_limits t1 /\ dataSem_state_stack_frame_sizes
      s1 = dataSem_state_stack_frame_sizes t1 /\

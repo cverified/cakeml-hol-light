@@ -265,8 +265,8 @@ val let_tac =
 
 let remap_tenv_def = cake_define
   `remap_tenv f tenv =
-   mk_type_env (nsMap (\(n,t). (n,ts_tid_rename f t)) (?_v tenv))
-     (nsMap (\(ls,ts,tid). (ls,MAP (ts_tid_rename f) ts,f tid)) (?_c
+   mk_type_env (nsMap (\(n,t). (n,ts_tid_rename f t)) (v tenv))
+     (nsMap (\(ls,ts,tid). (ls,MAP (ts_tid_rename f) ts,f tid)) (c
      tenv)) (nsMap (\(ls,t). (ls,ts_tid_rename f t)) (type_env_t
      tenv))`;;
 

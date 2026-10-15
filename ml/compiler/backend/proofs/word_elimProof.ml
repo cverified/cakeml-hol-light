@@ -9,7 +9,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -90,7 +89,7 @@ let find_loc_state_def = cake_define
   `find_loc_state s =
        (let loc = (get_locals (wordSem_state_locals s)) in
        let sto = (get_store (wordSem_state_store s)) in
-       let sta = (get_stack (?_stack s)) in
+       let sta = (get_stack (stack s)) in
        let mem = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
        sptree_union (sptree_union loc sto) (sptree_union sta mem))`;;
@@ -124,8 +123,8 @@ let word_state_rel_def = cake_define
   `word_state_rel (reachable:1 spt) t s <=> wordSem_state_locals
        s = wordSem_state_locals t /\ wordSem_state_fp_regs
        s = wordSem_state_fp_regs t /\ wordSem_state_store
-       s = wordSem_state_store t /\ ?_stack
-       s = ?_stack t /\ wordSem_state_memory
+       s = wordSem_state_store t /\ stack
+       s = stack t /\ wordSem_state_memory
        s = wordSem_state_memory t /\ wordSem_state_mdomain
        s = wordSem_state_mdomain t /\ wordSem_state_sh_mdomain
        s = wordSem_state_sh_mdomain t /\ wordSem_state_permute
@@ -136,11 +135,11 @@ let word_state_rel_def = cake_define
        s = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
        s = wordSem_state_data_buffer t /\ wordSem_state_gc_fun
        s = wordSem_state_gc_fun t /\ wordSem_state_handler
-       s = wordSem_state_handler t /\ ?_clock
-       s = ?_clock t /\ wordSem_state_termdep
+       s = wordSem_state_handler t /\ clock
+       s = clock t /\ wordSem_state_termdep
        s = wordSem_state_termdep t /\ wordSem_state_be
-       s = wordSem_state_be t /\ ?_ffi
-       s = ?_ffi t /\ wordSem_state_locals_size
+       s = wordSem_state_be t /\ ffi
+       s = ffi t /\ wordSem_state_locals_size
        s = wordSem_state_locals_size t /\ wordSem_state_stack_max
        s = wordSem_state_stack_max t /\ wordSem_state_stack_limit
        s = wordSem_state_stack_limit t /\ wordSem_state_stack_size

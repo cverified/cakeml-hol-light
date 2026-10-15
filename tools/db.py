@@ -81,6 +81,7 @@ class Db:
     self.con_argty = {}        # (constructor,index) -> {type texts}
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
+    self._ambflds = None
     self.ty_params = {}        # (thy,type) -> the type parameters
     self.monads = {'option': {'bind': 'OPTION_BIND',
                               'unit': 'SOME',
@@ -209,6 +210,9 @@ class Db:
     """compute the HOL4 -> HOL Light name mapping"""
     multi = {nm for nm, v in self.defs.items()
              if len({t for t, _ in v}) > 1}
+    # the name of a record field that several record types have is
+    # an overloaded name, so a constant of that name is renamed
+    multi |= self.ambiguous_fields()
     self.rename = {}          # (thy,name) -> new name
     # which datatypes have to be renamed as a whole
     bad_types = set()
@@ -390,6 +394,19 @@ class Db:
         out[nm] = new
       out[(t, nm)] = new
     return out
+
+  def ambiguous_fields(self):
+    """the names of the record fields that more than one record
+       type of the port has: HOL4 resolves such a name by the type
+       of the record, so the port declares the accessors of those
+       fields as overloads of the name"""
+    if self._ambflds is not None: return self._ambflds
+    out = collections.defaultdict(set)
+    for (t, ty), flds in self.recs.items():
+      for f in flds:
+        out[f].add((t, ty))
+    self._ambflds = {f for f, tys in out.items() if len(tys) > 1}
+    return self._ambflds
 
   def fields_for(self, thy):
     """field name -> record type, for the records in scope"""

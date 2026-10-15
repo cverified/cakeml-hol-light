@@ -48,11 +48,11 @@ let prim_sem_env_def = cake_define
   `prim_sem_env (ffi:'ffi ffi_state) =
    add_to_sem_env
    (mk_semanticPrimitives_state 0 [] ffi 0 0 NONE,
-    mk_? nsEmpty nsEmpty) prim_types_program`;;
+    mk_sem_env nsEmpty nsEmpty) prim_types_program`;;
 
 let prim_tenv_def = cake_define
   `prim_tenv =
-      mk_?
+      mk_type_env nsEmpty
           (alist_to_ns
             (REVERSE
                [((implode "Bind"),[],[],Texn_num); ((implode
@@ -64,7 +64,6 @@ let prim_tenv_def = cake_define
                 ((implode "[]"),[(implode "'a")],[],Tlist_num);
                 ((implode "::"),[(implode "'a")],[Tvar (implode
                   "'a"); Tlist (Tvar (implode "'a"))],Tlist_num)]))
-                  nsEmpty
           (alist_to_ns
             (REVERSE
                [((implode "array"),[(implode "'a")],Tapp [Tvar

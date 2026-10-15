@@ -131,11 +131,13 @@ let read_REPLcommand_def = cake_define_list
   [`read_REPLcommand "" acc loc = (ErrorS,loc,"")`;
    `read_REPLcommand (c :: s0) acc loc =
           (if c = (CHR 125) then
-            (FFIS (REVERSE acc),?_col_fupd ((+) 2) loc,s0) else if c
-              = (CHR 10) then (ErrorS,loc,s0) else if isSpace c then
-            read_REPLcommand s0 acc (?_col_fupd ((+) 1) loc) else
-            read_REPLcommand s0 (c :: acc) (?_col_fupd ((+) 1)
-              loc))`];;
+            (FFIS (REVERSE acc),locn_colupdate ((+) 2) loc,s0) else
+              if c = (CHR 10) then (ErrorS,loc,s0) else if isSpace c
+              then
+            read_REPLcommand s0 acc (locn_colupdate ((+) 1) loc)
+              else
+            read_REPLcommand s0 (c :: acc) (locn_colupdate ((+)
+              1) loc))`];;
 
 let isAlphaNumPrime_def = cake_define
   `isAlphaNumPrime c <=> isAlphaNum c \/ (c = (CHR 39)) \/ (c = (CHR

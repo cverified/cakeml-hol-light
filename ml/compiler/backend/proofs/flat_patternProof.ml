@@ -113,8 +113,8 @@ let v_rel = cake_inductive
           (MAP (\(n,m,e). (n,m,SND (SND (flat_pattern_compile_exp cfg
             e)))) fs) x)) /\
    (!N env1 env2.
-      ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel (?_v env1) (?_v
-        env2) ==>
+      ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel (v env1) (v env2)
+        ==>
       env_rel N env1 env2)`;;
 
 (* HOL4 ML code, not ported:
@@ -132,10 +132,10 @@ let install_conf_rel_def = cake_define
 
 let state_rel_def = cake_define
   `(\x y. strcat x y) ((\x y. strcat x y)
-     (state_rel cfg) s) t <=> ?_clock
-       t = ?_clock s /\
-       LIST_REL (sv_rel v_rel) (?_refs s) (?_refs t) /\ ?_ffi
-       t = ?_ffi s /\
+     (state_rel cfg) s) t <=> clock
+       t = clock s /\
+       LIST_REL (sv_rel v_rel) (refs s) (refs t) /\ ffi
+       t = ffi s /\
        LIST_REL (OPTREL v_rel) (flatSem_state_globals s)
          (flatSem_state_globals t) /\
        install_conf_rel cfg (flatSem_state_eval_config s)
@@ -168,9 +168,9 @@ let encode_val_def = cake_define_wf
       | others -> pattern_semantics_Other`;;
 
 let encode_refs_def = cake_define
-  `encode_refs s = FUN_FMAP (\i. encode_val (match EL i (?_refs s) with
+  `encode_refs s = FUN_FMAP (\i. encode_val (match EL i (refs s) with
   semanticPrimitives_Refv v -> v))
-     (count (LENGTH (?_refs s)) INTER {i | ?v. EL i (?_refs s) =
+     (count (LENGTH (refs s)) INTER {i | ?v. EL i (refs s) =
        semanticPrimitives_Refv v})`;;
 
 (* HOL4 ML code, not ported:

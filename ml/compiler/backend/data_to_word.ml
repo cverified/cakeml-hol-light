@@ -48,6 +48,10 @@ let data_to_word_config_FIELDS = define_record "data_to_word_config"
    "be","bool";
    "call_empty_ffi","bool";
    "gc_kind","gc_kind"];;
+hol4_overload "has_fp_ops" "data_to_word_config_has_fp_ops";;
+hol4_overload "has_fp_ops_fupd" "data_to_word_config_has_fp_ops_fupd";;
+hol4_overload "be" "data_to_word_config_be";;
+hol4_overload "be_fupd" "data_to_word_config_be_fupd";;
 
 let adjust_var_def = cake_define
   `adjust_var n = 2 * n + (2:num)`;;

@@ -640,9 +640,9 @@ let ssgc_free_def = cake_define
      ssgc_free s <=>
        (!n m e. FLOOKUP (closSem_state_code s) n = SOME (m,e) ==>
          closProps_set_globals e = EMPTY_BAG) /\
-       (!n vl. FLOOKUP (?_refs s) n = SOME (closSem_ValueArray vl)
-         ==> EVERY vsgc_free vl) /\
-       (!n m v. FLOOKUP (?_refs s) n = SOME (Thunk m v) ==> vsgc_free
+       (!n vl. FLOOKUP (refs s) n = SOME (closSem_ValueArray vl) ==>
+         EVERY vsgc_free vl) /\
+       (!n m v. FLOOKUP (refs s) n = SOME (Thunk m v) ==> vsgc_free
          v) /\
        (!v. MEM (SOME v) (closSem_state_globals s) ==> vsgc_free v)
          /\
@@ -677,44 +677,43 @@ let simple_val_rel_def = cake_define
 
 let simple_state_rel_def = cake_define
   `closProps_simple_state_rel vr sr <=>
-     (!s t ptr. FLOOKUP (?_refs t) ptr = NONE /\ sr s t ==>
-                FLOOKUP (?_refs s) ptr = NONE) /\
+     (!s t ptr. FLOOKUP (refs t) ptr = NONE /\ sr s t ==>
+                FLOOKUP (refs s) ptr = NONE) /\
      (!w t s ptr.
-       FLOOKUP (?_refs t) ptr = SOME (closSem_ByteArray w) /\ sr s t
+       FLOOKUP (refs t) ptr = SOME (closSem_ByteArray w) /\ sr s t
          ==>
-       FLOOKUP (?_refs s) ptr = SOME (closSem_ByteArray w)) /\
+       FLOOKUP (refs s) ptr = SOME (closSem_ByteArray w)) /\
      (!w (t:('c,'ffi)closSem_state) (s:('d,'ffi)closSem_state) ptr.
-       FLOOKUP (?_refs t) ptr = SOME (closSem_ValueArray w) /\ sr s t
+       FLOOKUP (refs t) ptr = SOME (closSem_ValueArray w) /\ sr s t
          ==>
        (?w1.
-         FLOOKUP (?_refs s) ptr = SOME (closSem_ValueArray w1) /\
+         FLOOKUP (refs s) ptr = SOME (closSem_ValueArray w1) /\
          LIST_REL vr w1 w)) /\
      (!m v t s ptr.
-       FLOOKUP (?_refs t) ptr = SOME (Thunk m v) /\ sr s t ==>
+       FLOOKUP (refs t) ptr = SOME (Thunk m v) /\ sr s t ==>
        (?w.
-         FLOOKUP (?_refs s) ptr = SOME (Thunk m w) /\
+         FLOOKUP (refs s) ptr = SOME (Thunk m w) /\
          vr w v)) /\
-     (!s t. sr s t ==> ?_ffi s = ?_ffi t /\ FDOM (?_refs s) = FDOM
-       (?_refs t) /\
+     (!s t. sr s t ==> ffi s = ffi t /\ FDOM (refs s) = FDOM (refs t)
+       /\
                        LIST_REL (OPTREL vr) (closSem_state_globals s)
                          (closSem_state_globals t)) /\
      (!f s t.
-       sr s t ==> sr (?_ffi_fupd (K f) s)
-                     (?_ffi_fupd (K f) t)) /\
+       sr s t ==> sr (ffi_fupd (K f) s)
+                     (ffi_fupd (K f) t)) /\
      (!bs s t p.
-       sr s t ==> sr (?_refs_fupd (K (?_refs s |+
-         (p,closSem_ByteArray bs))) s)
-                     (?_refs_fupd (K (?_refs t |+
-                       (p,closSem_ByteArray bs))) t)) /\
+       sr s t ==> sr (refs_fupd (K (refs s |+ (p,closSem_ByteArray
+         bs))) s)
+                     (refs_fupd (K (refs t |+ (p,closSem_ByteArray
+                       bs))) t)) /\
      (!s t p xs ys.
        sr s t /\ LIST_REL vr xs ys ==>
-       sr (?_refs_fupd (K (?_refs s |+ (p,closSem_ValueArray xs))) s)
-          (?_refs_fupd (K (?_refs t |+ (p,closSem_ValueArray ys)))
-            t)) /\
+       sr (refs_fupd (K (refs s |+ (p,closSem_ValueArray xs))) s)
+          (refs_fupd (K (refs t |+ (p,closSem_ValueArray ys))) t)) /\
      (!s t p m v w.
        sr s t /\ vr v w ==>
-       sr (?_refs_fupd (K (?_refs s |+ (p,Thunk m v))) s)
-          (?_refs_fupd (K (?_refs t |+ (p,Thunk m w))) t)) /\
+       sr (refs_fupd (K (refs s |+ (p,Thunk m v))) s)
+          (refs_fupd (K (refs t |+ (p,Thunk m w))) t)) /\
      (!s t xs ys.
        sr s t /\ LIST_REL (OPTREL vr) xs ys ==>
        sr (closSem_state_globals_fupd (K xs) s)
@@ -741,8 +740,8 @@ let simple_compile_state_rel_def = cake_define
   `simple_compile_state_rel vr sr comp' cr <=>
      closProps_simple_state_rel vr sr /\
      (!(s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state).
-         sr s t ==> ?_clock
-         t = ?_clock s /\ closSem_state_compile s = pure_cc comp'
+         sr s t ==> clock
+         t = clock s /\ closSem_state_compile s = pure_cc comp'
            (closSem_state_compile t) /\ closSem_state_compile_oracle
          t = pure_co comp' o closSem_state_compile_oracle s /\
          (!n exps res p aux. SND (closSem_state_compile_oracle s n) =
@@ -754,12 +753,12 @@ let simple_compile_state_rel_def = cake_define
            (closSem_state_compile_oracle_fupd (K
                          (misc_shift_seq 1
                            (closSem_state_compile_oracle s)))
-                           (?_clock_fupd (K n) s)))
+                           (clock_fupd (K n) s)))
               (closSem_state_code_fupd (K (closSem_state_code t))
                 (closSem_state_compile_oracle_fupd (K
                          (misc_shift_seq 1
                            (closSem_state_compile_oracle t)))
-                           (?_clock_fupd (K n) t)))))`;;
+                           (clock_fupd (K n) t)))))`;;
 
 (* HOL4 ML code, not ported:
 fun first_term f tm = f (find_term (can f) tm);
@@ -796,8 +795,8 @@ let eval_sim_def = cake_define
          closSem_evaluate (es2,[],
            closSem_initial_state ffi max_app code2 co2 cc2 (k + ck))
              = (res2,t2) /\
-         result_rel (\x y. T) (\x y. T) res1 res2 /\ ?_ffi s2 =
-           ?_ffi t2))`;;
+         result_rel (\x y. T) (\x y. T) res1 res2 /\ ffi s2 = ffi
+           t2))`;;
 
 (* HOL4 ML code, not ported:
 val evaluate_add_to_clock_io_events_mono_alt =
@@ -812,8 +811,8 @@ let adj_orac_rel_def = cake_define
       (!n x y. closSem_state_compile_oracle s1 n = (x,y) ==>
          OPTION_MAP (I ## (I ## f)) (closSem_state_compile s1 x y) =
            cc (f x) y) /\
-      s2 = mk_closSem_state (closSem_state_globals s1) (?_refs s1)
-        (?_ffi s1) (?_clock s1) cc ((f ## I) o
+      s2 = mk_closSem_state (closSem_state_globals s1) (refs s1)
+        (ffi s1) (clock s1) cc ((f ## I) o
         closSem_state_compile_oracle s1) (closSem_state_code s1)
         (closSem_state_max_app s1)`;;
 
