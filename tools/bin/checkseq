@@ -3,7 +3,8 @@
 # session and report the time, the axioms and the first failure of
 # each; the session hol-seq stays, so a run can be continued
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
-ML=/home/freek/claude/hol-light/cakeml/ml
+C=/home/freek/claude/hol-light/cakeml
+ML=$C/ml
 s=seq
 log=/home/freek/claude/hol-light/cakeml/tools/checkseq.log
 [ "$KEEP" = 1 ] && tmux has -t hol-$s 2> /dev/null || {
@@ -16,10 +17,17 @@ for f in "$@"; do
   case "$f" in /*) g="$f";; *) g="$ML/$f";; esac
   repl-step $s "let cake_t0 = Sys.time();; print_string \"CHECKSEQ\";;" \
     > /dev/null 2>&1
+  # with MARK=1 the file is loaded with a marker before every
+  # phrase, so that the report says which phrase fails
+  h="$g"
+  [ "$MARK" = 1 ] && {
+    python3 -I $C/tools/locate.py "$g" $C/tmp/locate.ml > /dev/null
+    : > $C/tmp/mark.txt
+    h=$C/tmp/locate.ml; }
   # a file that takes too long is interrupted, so that the session
   # is free for the files after it
   slow=
-  TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$g\";;" 2>&1 |
+  TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$h\";;" 2>&1 |
     grep -qi timeout && slow=yes
   [ -n "$slow" ] && { repl-int $s > /dev/null 2>&1; sleep 1; }
   TIMEOUT=120 repl-step $s \
@@ -34,7 +42,9 @@ for f in "$@"; do
   # an error of a file that this one needs was reported when that
   # file was checked, so only the errors of this file are kept
   e=$(printf '%s' "$out" |
-      python3 -I /home/freek/claude/hol-light/cakeml/tools/cserr.py "$g")
+      python3 -I $C/tools/cserr.py "$h")
+  [ "$MARK" = 1 ] && [ -n "$e" ] && \
+    e="$e [at $(tail -1 $C/tmp/mark.txt)]"
   [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
 done
