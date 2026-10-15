@@ -46,7 +46,7 @@ let environment_generation_store_FIELDS =
   define_record "environment_generation_store"
   ["next","num";
    "generation","num";
-   "envs","source_to_flat_environment sptree_num_map"];;
+   "envs","source_to_flat_environment spt"];;
 hol4_overload "next" "environment_generation_store_next";;
 hol4_overload "next_fupd" "environment_generation_store_next_fupd";;
 hol4_overload "generation" "environment_generation_store_generation";;
@@ -57,8 +57,7 @@ hol4_overload "envs_fupd" "environment_generation_store_envs_fupd";;
 
 let environment_store_FIELDS = define_record "environment_store"
   ["next","num";
-   "env_gens","(source_to_flat_environment sptree_num_map) \
-   sptree_num_map"];;
+   "env_gens","(source_to_flat_environment spt) spt"];;
 hol4_overload "next" "environment_store_next";;
 hol4_overload "next_fupd" "environment_store_next_fupd";;
 

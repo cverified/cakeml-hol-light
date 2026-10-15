@@ -18,6 +18,7 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
 needs "compiler/backend/jsonLang.ml";;
+needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/presLang.ml";;
@@ -117,7 +118,7 @@ let compile_def = cake_define
      let _9 = empty_ffi (implode "finished: stack_to_lab") in
      let res = attach_bitmaps names c bm
        (lab_to_target_compile asm_conf (backend_config_lab_conf c)
-         (p:'a labLang_prog)) in
+         (p:('a sec) list)) in
      let _10 = empty_ffi (implode "finished: lab_to_target") in
        res)`;;
 hol4_overload "compile" "backend_compile";;
@@ -202,7 +203,7 @@ let to_lab_def = cake_define
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   (bm,c,(p:'a labLang_prog),names))`;;
+   (bm,c,(p:('a sec) list),names))`;;
 
 let to_target_def = cake_define
   `to_target asm_conf c p =
@@ -238,7 +239,7 @@ let from_stack_def = cake_define
      (asm_config_reg_count asm_conf - (LENGTH (asm_config_avoid_regs
        asm_conf) + 3))
      (asm_config_addr_offset asm_conf) p in
-   from_lab asm_conf c names (p:'a labLang_prog) bm)`;;
+   from_lab asm_conf c names (p:('a sec) list) bm)`;;
 
 let from_word_def = cake_define
   `from_word asm_conf c names p =
@@ -504,7 +505,7 @@ let compile_inc_progs_def = cake_define
          reg_count2 p in
      let ps = backend_progs_lab_prog_fupd (K (keep_progs k p)) ps in
      let target = lab_to_target_compile asm_conf
-       (backend_config_lab_conf c) (p:'a labLang_prog) in
+       (backend_config_lab_conf c) (p:('a sec) list) in
      let ps = backend_progs_target_prog_fupd (K (OPTION_MAP
          (\(bytes,_16). (bytes,cur_bm)) target)) ps in
      let c = backend_config_lab_conf_fupd (match target with NONE ->

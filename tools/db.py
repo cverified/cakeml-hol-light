@@ -460,7 +460,10 @@ class Db:
     out = {'set': (["'a"], hterm.parse_type_text("'a -> bool"))}
     for (t, nm), (params, txt) in self.abbrevs.items():
       if t in anc:
-        out[nm] = (params, hterm.parse_type_text(txt))
+        ty = hterm.parse_type_text(txt)
+        out[nm] = (params, ty)
+        # a CakeML source may qualify the name (sptree$num_map)
+        out[t + '$' + nm] = (params, ty)
     return out
 
 

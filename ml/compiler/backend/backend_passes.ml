@@ -23,6 +23,7 @@ needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/flat_pattern.ml";;
+needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
@@ -46,14 +47,13 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
   "any_prog = backend_passes_Source (dec list) | backend_passes_Flat \
    (flatLang_exp list) | backend_passes_Clos (closLang_exp list) \
    ((num#num#closLang_exp) list) | backend_passes_Bvl \
-   ((num#num#bvl_exp) list) (mlstring sptree_num_map) | \
-   backend_passes_Bvi ((num#num#bvi_exp) list) (mlstring \
-   sptree_num_map) | backend_passes_Data ((num#num#dataLang_prog) \
-   list) (mlstring sptree_num_map) | backend_passes_Word \
-   ((num#num#'ga wordLang_prog) list) (mlstring sptree_num_map) | \
-   backend_passes_Stack ((num#'ga stackLang_prog) list) (mlstring \
-   sptree_num_map) | backend_passes_Lab (('ga sec) list) (mlstring \
-   sptree_num_map)";;
+   ((num#num#bvl_exp) list) (mlstring spt) | backend_passes_Bvi \
+   ((num#num#bvi_exp) list) (mlstring spt) | backend_passes_Data \
+   ((num#num#dataLang_prog) list) (mlstring spt) | \
+   backend_passes_Word ((num#num#'ga wordLang_prog) list) (mlstring \
+   spt) | backend_passes_Stack ((num#'ga stackLang_prog) list) \
+   (mlstring spt) | backend_passes_Lab (('ga sec) list) (mlstring \
+   spt)";;
 hol4_overload "Clos" "backend_passes_Clos";;
 hol4_overload "Word" "backend_passes_Word";;
 hol4_overload "Lab" "backend_passes_Lab";;
@@ -328,7 +328,7 @@ let to_lab_all_def = cake_define
      let p = MAP prog_to_section prog in
      let ps = ps ++ [((implode "after stack_to_lab"),Lab p names)] in
        ((ps:(mlstring#'a any_prog) list),(bm:('a word)
-         list),c,(p:'a labLang_prog),names))`;;
+         list),c,(p:('a sec) list),names))`;;
 
 let to_target_all_def = cake_define
   `to_target_all asm_conf (c:backend_config) p =

@@ -861,6 +861,7 @@ class Ctx:
     self.cons = cons or set()          # the constructor names
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.intnums = False               # are numerals integers here?
+    self.intneg = False                # is $~ the negation of an int?
     self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
     self.thy = thy
@@ -1293,6 +1294,12 @@ class Printer:
               self.pr(e.p2, 0) + '}')
     if k == 'dollar':
       n = e.name
+      # HOL4's ~ is the negation of a proposition, of a number and
+      # the complement of a word
+      if n == '~':
+        if self.ctx.wordnot: return 'word_not'
+        return ('(--)' if self.ctx.intnums or self.ctx.intneg
+                else '(~)')
       if n in INFIX: return '(' + INFIX[n][2] + ')'
       # an operator that is not an identifier needs its parentheses
       if not n[0].isalpha() and n[0] != '_':

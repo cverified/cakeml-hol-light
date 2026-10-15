@@ -44,9 +44,9 @@ let labSem_state_FIELDS = define_record "labSem_state"
    "cc_regs","num->num->('a word) option";
    "io_fp_regs","num->num->word64";
    "cc_fp_regs","num->num->word64";
-   "code","'a labLang_prog";
-   "compile","'c->'a labLang_prog->(word8 list#'c) option";
-   "compile_oracle","num->'c#'a labLang_prog";
+   "code","('a sec) list";
+   "compile","'c->('a sec) list->(word8 list#'c) option";
+   "compile_oracle","num->'c#('a sec) list";
    "code_buffer","('a,8)buffer";
    "clock","num";
    "failed","bool";

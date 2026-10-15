@@ -483,6 +483,7 @@ class Porter:
     body = b.body
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
+    self.ctx.intneg = key in overrides.INT_NEG
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
     if key in overrides.CLAUSE_FORM:
@@ -550,6 +551,7 @@ class Porter:
                     text + '\n' + '\n'.join(overloads))
     self.ctx.intnums = False
     self.ctx.wordnot = False
+    self.ctx.intneg = False
     self.ctx.defining = set()
 
   def con_thy(self, nm, kinds=('con',)):

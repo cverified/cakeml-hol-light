@@ -135,6 +135,12 @@ INT_NUMERALS = set([
   ('semanticPrimitives', 'copy_array_def'),
 ])
 
+# definitions in which a ~ without an argument ($~) is the negation
+# of an integer, which HOL Light writes --
+INT_NEG = set([
+  ('mlint', 'fromString_def'),
+])
+
 # definitions in which a prefix ~ is the complement of a word, not
 # the negation of a proposition
 WORD_NOT = set([

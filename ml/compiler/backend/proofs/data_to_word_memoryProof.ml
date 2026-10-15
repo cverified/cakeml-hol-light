@@ -136,8 +136,7 @@ let ref_ptr_annot_def = cake_define
 
 let v_inv_ck = cake_inductive
   `small_int (:'a) i ==>
-     v_inv_ck ck conf (Number i) (refs:(dataSem_v bvlSem_ref)
-       sptree_num_map)
+     v_inv_ck ck conf (Number i) (refs:(dataSem_v bvlSem_ref) spt)
                 (Data (Word (Smallnum i)),f,tf,(heap:(('a
                   word_loc,num#('a word_loc) list)heap_element) list))
                   /\
