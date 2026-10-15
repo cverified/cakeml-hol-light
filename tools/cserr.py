@@ -15,9 +15,12 @@ n = len(lines)
 while i < n:
   if start.match(lines[i]):
     msg = [lines[i]]
-    # the toplevel may break a long exception over lines
+    # the toplevel breaks a long exception over lines, and the
+    # continuation is not always indented
     j = i + 1
-    while j < n and lines[j].startswith(' ') and lines[j].strip():
+    while (j < n and lines[j].strip() and j - i < 6
+           and not start.match(lines[j])
+           and not lines[j].startswith('Error in included')):
       msg.append(lines[j].strip()); j += 1
     # the first 'Error in included file' after it says which file
     k = j
