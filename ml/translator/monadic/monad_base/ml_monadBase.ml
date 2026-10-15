@@ -8,8 +8,6 @@
   proof-producing monadic translator.
 *)
 
-needs "lib/set_sep.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* 'a is the type of the state, 'b is the type of successful

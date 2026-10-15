@@ -62,7 +62,7 @@ let compile_decs_def = cake_define
                source_let_compile_decs ds | Dlocal ds1 ds2 ->
              Dlocal (source_let_compile_decs ds1)
                (source_let_compile_decs ds2) ::
-               source_let_compile_decs ds | _5 -> d ::
+               source_let_compile_decs ds | _6 -> d ::
                source_let_compile_decs ds)))`;;
 hol4_overload "compile_decs" "source_let_compile_decs";;
 

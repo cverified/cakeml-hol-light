@@ -9,11 +9,9 @@
 
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/backend/word_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (* function that makes all Seq associate to the right *)
 

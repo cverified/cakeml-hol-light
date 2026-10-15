@@ -11,7 +11,6 @@
   by several optimisations.
 *)
 
-needs "compiler/backend/bvl_inline.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 

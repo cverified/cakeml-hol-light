@@ -13,7 +13,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
@@ -23,11 +22,7 @@ needs "lib/lprefix_lub.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
-needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: evaluateProps asmProps *)
 
 (* -- execute target machine with interference from environment -- *)

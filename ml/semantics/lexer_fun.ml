@@ -7,13 +7,11 @@
   A functional specification of lexing from strings to token lists.
 *)
 
-needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: string list *)
 
 (* This script defines the functional spec for the assembly

@@ -7,7 +7,6 @@
 
 needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
-needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
@@ -33,8 +32,8 @@ let bin_def = cake_define
 let lookup_def = cake_define
   `balanced_map_lookup cmp k Tip = NONE /\
    balanced_map_lookup cmp k (Bin s k' v l r) =
-     (match cmp k k' with Less' -> balanced_map_lookup cmp k l |
-       Greater' -> balanced_map_lookup cmp k r | Equal' -> SOME v)`;;
+     (match cmp k k' with (LESS) -> balanced_map_lookup cmp k l |
+       (GREATER) -> balanced_map_lookup cmp k r | (EQUAL) -> SOME v)`;;
 hol4_overload "lookup" "balanced_map_lookup";;
 
 let empty_def = cake_define
@@ -45,87 +44,92 @@ let singleton_def = cake_define
   `singleton k x = Bin 1 k x Tip Tip`;;
 
 let balanceL_def = cake_define
-  `(balanceL k x Tip Tip =
-     Bin 1 k x Tip Tip) /\
-   (balanceL k x (Bin s' k' v' Tip Tip) Tip =
-     Bin 2 k x (Bin s' k' v' Tip Tip) Tip) /\
-   (balanceL k x (Bin _1 lk lx Tip (Bin _2 lrk lrx _3 _4)) Tip =
-     Bin 3 lrk lrx (Bin 1 lk lx Tip Tip) (Bin 1 k x Tip Tip)) /\
-   (balanceL k x (Bin _5 lk lx (Bin s' k' v' l' r') Tip) Tip =
-     Bin 3 lk lx (Bin s' k' v' l' r') (Bin 1 k x Tip Tip)) /\
-   (balanceL k x (Bin ls lk lx (Bin lls k' v' l' r') (Bin lrs lrk lrx
-     lrl lrr)) Tip =
-     (if lrs < ratio * lls then
+  `balanceL k x x3 x4 =
+        match (x3,x4) with
+          (Tip,Tip) ->
+     Bin 1 k x Tip Tip
+        | ((Bin s' k' v' Tip Tip),Tip) ->
+     Bin 2 k x (Bin s' k' v' Tip Tip) Tip
+        | ((Bin _7 lk lx Tip (Bin _8 lrk lrx _9 _10)),Tip) ->
+     Bin 3 lrk lrx (Bin 1 lk lx Tip Tip) (Bin 1 k x Tip Tip)
+        | ((Bin _11 lk lx (Bin s' k' v' l' r') Tip),Tip) ->
+     Bin 3 lk lx (Bin s' k' v' l' r') (Bin 1 k x Tip Tip)
+        | ((Bin ls lk lx (Bin lls k' v' l' r') (Bin lrs lrk lrx lrl
+          lrr)),Tip) ->
+     if lrs < ratio * lls then
        Bin (1 + ls) lk lx (Bin lls k' v' l' r')
                         (Bin (1 + lrs) k x (Bin lrs lrk lrx lrl lrr)
                           Tip) else
        Bin (1 + ls) lrk lrx (Bin (1 + lls + size lrl) lk lx (Bin lls
          k' v' l' r') lrl)
-                          (Bin (1 + size lrr) k x lrr Tip))) /\
-   (balanceL k x Tip (Bin rs k' v' l' r') =
-     Bin (1 + rs) k x Tip (Bin rs k' v' l' r')) /\
-   (balanceL k x (Bin ls lk lx ll lr) (Bin rs k' v' l' r') =
-     (if ls > delta * rs then
-       match (ll,lr) with (Bin lls _6 _7 _8 _9,Bin lrs lrk lrx lrl
-         lrr) ->
+                          (Bin (1 + size lrr) k x lrr Tip)
+        | (Tip,(Bin rs k' v' l' r')) ->
+     Bin (1 + rs) k x Tip (Bin rs k' v' l' r')
+        | ((Bin ls lk lx ll lr),(Bin rs k' v' l' r')) ->
+     if ls > delta * rs then
+       match (ll,lr) with (Bin lls _12 _13 _14 _15,Bin lrs lrk lrx
+         lrl lrr) ->
               (if lrs < ratio * lls then
                 Bin (1 + ls + rs) lk lx ll (Bin (1 + rs + lrs) k x lr
                   (Bin rs k' v' l' r')) else
                 Bin (1 + ls + rs) lrk lrx (Bin (1 + lls + size lrl)
                   lk lx ll lrl)
                               (Bin (1 + rs + size lrr) k x lrr (Bin
-                                rs k' v' l' r'))) | (_10,_11) -> Tip
+                                rs k' v' l' r'))) | (_16,_17) -> Tip
                                 else
        Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l'
-         r')))`;;
+         r')`;;
 
 let balanceR_def = cake_define
-  `(balanceR k x Tip Tip =
-     Bin 1 k x Tip Tip) /\
-   (balanceR k x Tip (Bin s' k' v' Tip Tip) =
-     Bin 2 k x Tip (Bin s' k' v' Tip Tip)) /\
-   (balanceR k x Tip (Bin _12 rk rx Tip (Bin s' k' v' l' r')) =
-     Bin 3 rk rx (Bin 1 k x Tip Tip) (Bin s' k' v' l' r')) /\
-   (balanceR k x Tip (Bin _13 rk rx (Bin _14 rlk rlx _15 _16) Tip) =
-     Bin 3 rlk rlx (Bin 1 k x Tip Tip) (Bin 1 rk rx Tip Tip)) /\
-   (balanceR k x Tip (Bin rs rk rx (Bin rls rlk rlx rll rlr) (Bin rrs
-     k' v' l' r')) =
-     (if rls < ratio * rrs then
+  `balanceR k x x3 x4 =
+        match (x3,x4) with
+          (Tip,Tip) ->
+     Bin 1 k x Tip Tip
+        | (Tip,(Bin s' k' v' Tip Tip)) ->
+     Bin 2 k x Tip (Bin s' k' v' Tip Tip)
+        | (Tip,(Bin _24 rk rx Tip (Bin s' k' v' l' r'))) ->
+     Bin 3 rk rx (Bin 1 k x Tip Tip) (Bin s' k' v' l' r')
+        | (Tip,(Bin _25 rk rx (Bin _26 rlk rlx _27 _28) Tip)) ->
+     Bin 3 rlk rlx (Bin 1 k x Tip Tip) (Bin 1 rk rx Tip Tip)
+        | (Tip,(Bin rs rk rx (Bin rls rlk rlx rll rlr) (Bin rrs k' v'
+          l' r'))) ->
+     if rls < ratio * rrs then
        Bin (1 + rs) rk rx (Bin (1 + rls) k x Tip (Bin rls rlk rlx rll
          rlr)) (Bin rrs k' v' l' r') else
        Bin (1 + rs) rlk rlx (Bin (1 + size rll) k x Tip rll)
                           (Bin (1 + rrs + size rlr) rk rx rlr (Bin
-                            rrs k' v' l' r')))) /\
-   (balanceR k x (Bin ls k' v' l' r') Tip =
-     Bin (1 + ls) k x (Bin ls k' v' l' r') Tip) /\
-   (balanceR k x (Bin ls k' v' l' r') (Bin rs rk rx rl rr) =
-     (if rs > delta * ls then
-       match (rl,rr) with (Bin rls rlk rlx rll rlr,Bin rrs _17 _18
-         _19 _20) ->
+                            rrs k' v' l' r'))
+        | ((Bin ls k' v' l' r'),Tip) ->
+     Bin (1 + ls) k x (Bin ls k' v' l' r') Tip
+        | ((Bin ls k' v' l' r'),(Bin rs rk rx rl rr)) ->
+     if rs > delta * ls then
+       match (rl,rr) with (Bin rls rlk rlx rll rlr,Bin rrs _29 _30
+         _31 _32) ->
               (if rls < ratio * rrs then
                 Bin (1 + ls + rs) rk rx (Bin (1 + ls + rls) k x (Bin
                   ls k' v' l' r') rl) rr else
                 Bin (1 + ls + rs) rlk rlx (Bin (1 + ls + size rll) k
                   x (Bin ls k' v' l' r') rll)
                               (Bin (1 + rrs + size rlr) rk rx rlr
-                                rr)) | (_21,_22) -> Tip else
+                                rr)) | (_33,_34) -> Tip else
        Bin (1 + ls + rs) k x (Bin ls k' v' l' r') (Bin rs rk rx rl
-         rr)))`;;
+         rr)`;;
 
 let insert_def = cake_define
   `(balanced_map_insert cmp k v Tip = singleton k v) /\
    (balanced_map_insert cmp k v (Bin s k' v' l r) =
-     (match cmp k k' with Less' -> balanceL k' v'
-       (balanced_map_insert cmp k v l) r | Greater' -> balanceR k' v'
-       l (balanced_map_insert cmp k v r) | Equal' -> Bin s k v l r))`;;
+     (match cmp k k' with (LESS) -> balanceL k' v'
+       (balanced_map_insert cmp k v l) r | (GREATER) -> balanceR k'
+       v' l (balanced_map_insert cmp k v r) | (EQUAL) -> Bin s k v l
+       r))`;;
 hol4_overload "insert" "balanced_map_insert";;
 
 let insertR_def = cake_define
   `(insertR cmp k v Tip = singleton k v) /\
    (insertR cmp k v (Bin s k' v' l r) =
-     (match cmp k k' with Less' -> balanceL k' v' (insertR cmp k v
-       l) r | Greater' -> balanceR k' v' l (insertR cmp k v r) |
-       Equal' -> Bin s k' v' l r))`;;
+     (match cmp k k' with (LESS) -> balanceL k' v' (insertR cmp k
+       v l) r | (GREATER) -> balanceR k' v' l (insertR cmp k v r) |
+       (EQUAL) -> Bin s k' v' l r))`;;
 
 let insertMax_def = cake_define
   `(insertMax k v Tip = singleton k v) /\
@@ -172,8 +176,8 @@ let glue_def = cake_define
 let delete_def = cake_define
   `(balanced_map_delete cmp k Tip = Tip) /\
    (balanced_map_delete cmp k (Bin s k' v l r) =
-     (match cmp k k' with Less' -> balanceR k' v
-       (balanced_map_delete cmp k l) r | Greater' -> balanceL k' v l
+     (match cmp k k' with (LESS) -> balanceR k' v
+       (balanced_map_delete cmp k l) r | (GREATER) -> balanceL k' v l
        (balanced_map_delete cmp k r) | Eq' -> glue l r))`;;
 hol4_overload "delete" "balanced_map_delete";;
 
@@ -191,20 +195,22 @@ let trim_help_lesser_def = cake_define
        Bin s' k v' l r')) /\
    (trim_help_lesser cmp lo Tip = Tip)`;;
 
-let trim_help_middle_def = cake_define
-  `(trim_help_middle cmp lo hi (Bin s' k v' l r) =
-     (if cmp k lo = (LESS) \/ cmp k lo = (EQUAL) then
-       trim_help_middle cmp lo hi r else if cmp k hi = (GREATER) \/
-         cmp k hi = (EQUAL) then
-       trim_help_middle cmp lo hi l else
-       Bin s' k v' l r)) /\
-   (trim_help_middle lo cmp hi Tip = Tip)`;;
+let trim_help_middle_def = cake_define_list
+  [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
+      (if cmp k lo = (LESS) \/ cmp k lo = (EQUAL) then
+        trim_help_middle cmp lo hi r else if cmp k hi = (GREATER) \/
+          cmp k hi = (EQUAL) then
+        trim_help_middle cmp lo hi l else
+        Bin s' k v' l r)`;
+   `trim_help_middle lo cmp hi Tip = Tip`];;
 
 let trim_def = cake_define
-  `(trim cmp NONE NONE t = t) /\
-   (trim cmp (SOME lk) NONE t = trim_help_greater cmp lk t) /\
-   (trim cmp NONE (SOME hk) t = trim_help_lesser cmp hk t) /\
-   (trim cmp (SOME lk) (SOME hk) t = trim_help_middle cmp lk hk t)`;;
+  `trim cmp x2 x3 t =
+        match (x2,x3) with
+          (NONE,NONE) -> t
+        | ((SOME lk),NONE) -> trim_help_greater cmp lk t
+        | (NONE,(SOME hk)) -> trim_help_lesser cmp hk t
+        | ((SOME lk),(SOME hk)) -> trim_help_middle cmp lk hk t`;;
 
 let link_def = cake_define
   `link k v l r =
@@ -221,8 +227,9 @@ let link_def = cake_define
 let filterLt_help_def = cake_define
   `(filterLt_help cmp b Tip = Tip) /\
    (filterLt_help cmp b' (Bin s kx x l r) =
-     (match cmp kx b' with Less' -> link kx x l (filterLt_help cmp
-       b' r) | Equal' -> l | Greater' -> filterLt_help cmp b' l))`;;
+     (match cmp kx b' with (LESS) -> link kx x l (filterLt_help
+       cmp b' r) | (EQUAL) -> l | (GREATER) -> filterLt_help cmp b'
+       l))`;;
 
 let filterLt_def = cake_define
   `(filterLt cmp NONE t = t) /\
@@ -231,8 +238,8 @@ let filterLt_def = cake_define
 let filterGt_help_def = cake_define
   `(filterGt_help cmp b Tip = Tip) /\
    (filterGt_help cmp b' (Bin s kx x l r) =
-     (match cmp b' kx with Less' -> link kx x (filterGt_help cmp
-       b' l) r | Equal' -> r | Greater' -> filterGt_help cmp b' r))`;;
+     (match cmp b' kx with (LESS) -> link kx x (filterGt_help cmp
+       b' l) r | (EQUAL) -> r | (GREATER) -> filterGt_help cmp b' r))`;;
 
 let filterGt_def = cake_define
   `(filterGt cmp NONE t = t) /\
@@ -242,9 +249,9 @@ let hedgeUnion_def = cake_define
   `hedgeUnion cmp blo bhi t1 t2 =
         match (t1,t2) with
           (t1,Tip) -> t1
-        | (Tip,(Bin _23 kx x l r)) ->
+        | (Tip,(Bin _35 kx x l r)) ->
      link kx x (filterGt cmp blo l) (filterLt cmp bhi r)
-        | (t1,(Bin _24 kx x Tip Tip)) -> insertR cmp kx x t1
+        | (t1,(Bin _36 kx x Tip Tip)) -> insertR cmp kx x t1
         | ((Bin s kx x l r),t2) ->
      link kx x (hedgeUnion cmp blo (SOME kx) l (trim cmp blo (SOME
        kx) t2))

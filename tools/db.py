@@ -252,7 +252,7 @@ class Db:
                 (thy, nm) in overrides.ALSO_NEEDED) and
                (thy, nm) not in overrides.NOT_NEEDED for nm in names)
 
-  def providers(self, thy, text):
+  def providers(self, thy, text, bound=()):
     """the ported theories that define a name the text uses; the
      needs of a file of the port are these, not only the ancestors
      that HOL4 lists (an ancestor provides what its own ancestors
@@ -260,13 +260,20 @@ class Db:
     used = set(re.findall(r"[A-Za-z][A-Za-z0-9_']*", text))
     rank = dict((t, i) for i, (t, _, _) in enumerate(self.order))
     anc = self.ancestors(thy) - {thy}
+    over = self.overloaded()
     out = set()
     for nm in used:
+      if nm in bound: continue
+      # a name that this theory defines itself needs nothing, and
+      # neither does one that the text would not write this way
+      # (because the port renamed the constant)
+      if any(t == thy for t, _ in self.defs.get(nm, [])): continue
       # a name can be defined in several theories; the one to take
       # is an ancestor, and otherwise the first one of the order
       ts = [t for t, _ in self.defs.get(nm, [])
             if t in self.thy_of_file and
-               rank.get(t, 0) < rank.get(thy, 0)]
+               rank.get(t, 0) < rank.get(thy, 0) and
+               (nm in over or self.rename.get((t, nm), nm) == nm)]
       if not ts: continue
       good = [t for t in ts if t in anc]
       out.add(min(good if good else ts, key=lambda t: rank[t]))

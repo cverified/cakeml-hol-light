@@ -14,16 +14,13 @@
 *)
 
 needs "basis/pure/mlint.ml";;
-needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/clos_known.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_pattern.ml";;
-needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
@@ -31,7 +28,6 @@ needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
-needs "lib/set_sep.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
@@ -297,14 +293,14 @@ let locs_to_string_def = cake_define
          let len = strlen line in
          let stop =
            (match endl with POSN r1 c1 -> (if r1 = r then c1 else
-             len) | _1 -> len) in
+             len) | _3 -> len) in
          let underline =
            concat (REPLICATE c (implode " ") ++ REPLICATE ((stop - c)
              + 1) ((implode) [CHR 94])) in
            concat [(implode "line "); (num_to_str) (r + 1); (implode
              "\n\n");
                    line; (implode "\n");
-                   underline; (implode "\n")]) | _2 -> implode
+                   underline; (implode "\n")]) | _4 -> implode
                      "unknown location"))`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
@@ -320,18 +316,18 @@ let parse_sexp_input_def = cake_define
 
 let parse_cml_input_def = cake_define
   `parse_cml_input input =
-     (match parse_prog (lexer_fun input) with peg_Failure l _3 ->
+     (match parse_prog (lexer_fun input) with peg_Failure l _5 ->
        INL (^ (implode "Parsing failed at ") (locs_to_string (implode
-       input) (SOME l))) | Success _4 x _5 -> INR x)`;;
+       input) (SOME l))) | Success _6 x _7 -> INR x)`;;
 
 let compile_def = cake_define
   `compiler_compile c prelude input =
-     (let _6 = empty_ffi (implode "finished: start up") in
+     (let _8 = empty_ffi (implode "finished: start up") in
      match
        (if compiler_config_input_is_sexp c then parse_sexp_input
          input else parse_cml_input input) with INL msg -> (M_failure
          (ParseError msg),misc_Nil) | INR prog ->
-        (let _7 = empty_ffi (implode "finished: lexing and parsing")
+        (let _9 = empty_ffi (implode "finished: lexing and parsing")
           in
         let full_prog = if compiler_config_exclude_prelude c then
           prog else prelude ++ prog in
@@ -343,7 +339,7 @@ let compile_def = cake_define
             (M_failure (TypeError (concat [msg; (implode " at ");
                 locs_to_string (implode input) locs])),misc_Nil) |
                   M_success ic ->
-           (let _8 = empty_ffi (implode "finished: type inference")
+           (let _10 = empty_ffi (implode "finished: type inference")
              in
            if compiler_config_only_print_types c then
              (M_failure (TypeError (concat ([(implode "\n")] ++
@@ -361,7 +357,7 @@ hol4_overload "compile" "compiler_compile";;
 
 let compile_pancake_def = cake_define
   `compile_pancake asm_conf c input =
-   (let _9 = empty_ffi (implode "finished: start up") in
+   (let _11 = empty_ffi (implode "finished: start up") in
    match parse_topdecs_to_ast input with INR errs ->
      ((M_failure (ParseError (concat
         (MAP (\(msg,loc). concat [msg; (implode " at ");
@@ -371,7 +367,7 @@ let compile_pancake_def = cake_define
        (match static_check funs with (peg_error e,warns) ->
          (M_failure (StaticError e),misc_Nil,MAP StaticError warns) |
          (return one,warns) ->
-           (let _10 = empty_ffi (implode
+           (let _12 = empty_ffi (implode
              "finished: lexing and parsing") in
            match pan_compile_tap asm_conf c funs with (NONE,td) ->
              (M_failure AssembleError,td,MAP StaticError warns) |
@@ -379,27 +375,28 @@ let compile_pancake_def = cake_define
              (bytes,data,c),td,MAP StaticError warns))))`;;
 
 (* The top-level compiler *)
-let error_to_str_def = cake_define
-  `(error_to_str (ParseError s) =
-      concat [(implode "### ERROR: parse error\n"); s; (implode
-        "\n")]) /\
-   (error_to_str (TypeError s) =
-      (if (if strlen s = 0 then T else
-          if strsub s 0 = (CHR 10) then F else T) then
-        concat [(implode "### ERROR: type error\n"); s; (implode
-          "\n")] else s)) /\
-   (error_to_str (ConfigError s) = concat [(implode
-     "### ERROR: config error\n"); s; (implode "\n")]) /\
-   (error_to_str AssembleError = (implode
-     "### ERROR: assembly error\n")) /\
-   (error_to_str (StaticError e) =
-     (match e with
-       ScopeErr s -> concat [(implode "### ERROR: scope error\n");
-         s; (implode "\n")] | WarningErr s -> concat [(implode
-         "# WARNING:\n"); s; (implode "\n")] | GenErr s -> concat
-         [(implode "### ERROR: static error\n"); s; (implode "\n")] |
-         ShapeErr s -> concat [(implode "### ERROR: shape error\n");
-         s; (implode "\n")]))`;;
+let error_to_str_def = cake_define_list
+  [`error_to_str (ParseError s) =
+         concat [(implode "### ERROR: parse error\n"); s; (implode
+           "\n")]`;
+   `error_to_str (TypeError s) =
+         (if (if strlen s = 0 then T else
+             if strsub s 0 = (CHR 10) then F else T) then
+           concat [(implode "### ERROR: type error\n"); s;
+             (implode "\n")] else s)`;
+   `error_to_str (ConfigError s) = concat [(implode
+  "### ERROR: config error\n"); s; (implode "\n")]`;
+   `error_to_str AssembleError = (implode
+  "### ERROR: assembly error\n")`;
+   `error_to_str (StaticError e) =
+        (match e with
+          ScopeErr s -> concat [(implode
+            "### ERROR: scope error\n"); s; (implode "\n")] |
+            WarningErr s -> concat [(implode "# WARNING:\n"); s;
+            (implode "\n")] | GenErr s -> concat [(implode
+            "### ERROR: static error\n"); s; (implode "\n")] |
+            ShapeErr s -> concat [(implode
+            "### ERROR: shape error\n"); s; (implode "\n")])`];;
 
 let is_error_msg_def = cake_define
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -458,9 +455,9 @@ let find_num_def = cake_define
        "Unable to parse as num: "); rest; (implode " for flag: ");
        flag])))`;;
 
-let get_err_str_def = cake_define
-  `(get_err_str (INL n) = (implode "")) /\
-   (get_err_str (INR n) = concat [n; (implode "\n")])`;;
+let get_err_str_def = cake_define_list
+  [`get_err_str (INL n) = (implode "")`;
+   `get_err_str (INR n) = concat [n; (implode "\n")]`];;
 
 (* All the numbers must parse *)
 let parse_num_list_def = cake_define
@@ -522,13 +519,13 @@ let parse_clos_conf_def = cake_define
          (clos_to_bvl_config_max_app_fupd (K n)
            (clos_to_bvl_config_do_call_fupd (K c)
            (clos_to_bvl_config_known_conf_fupd (K (SOME (mk_config x
-           i))) (clos_to_bvl_config_do_mti_fupd (K m) clos)))) | _11 ->
+           i))) (clos_to_bvl_config_do_mti_fupd (K m) clos)))) | _13 ->
            INR (concat [get_err_str max_body_size])) else
      (INL
        (clos_to_bvl_config_max_app_fupd (K n)
          (clos_to_bvl_config_do_call_fupd (K c)
          (clos_to_bvl_config_known_conf_fupd (K NONE)
-         (clos_to_bvl_config_do_mti_fupd (K m) clos)))))) | _12 ->
+         (clos_to_bvl_config_do_mti_fupd (K m) clos)))))) | _14 ->
      INR (concat [get_err_str multi;
                   get_err_str known';
                   get_err_str inline_factor;
@@ -555,7 +552,7 @@ let parse_bvl_conf_def = cake_define
          (bvl_to_bvi_config_do_tmc_fupd (K do_tmc)
          (bvl_to_bvi_config_split_main_at_seq_fupd (K m)
          (bvl_to_bvi_config_exp_cut_fupd (K e)
-         (bvl_to_bvi_config_inline_size_limit_fupd (K i) bvl))))) | _13
+         (bvl_to_bvi_config_inline_size_limit_fupd (K i) bvl))))) | _15
          ->
      INR (concat [get_err_str inlinesz;
                   get_err_str expcut;
@@ -620,7 +617,7 @@ let parse_data_conf_def = cake_define
          (data_to_word_config_len_size_fupd (K ls)
          (data_to_word_config_pad_bits_fupd (K pb)
          (data_to_word_config_len_bits_fupd (K lb)
-         (data_to_word_config_tag_bits_fupd (K tb) data)))))) | _14 ->
+         (data_to_word_config_tag_bits_fupd (K tb) data)))))) | _16 ->
       INR (concat [get_err_str tag_bits;
                    get_err_str len_bits;
                    get_err_str pad_bits;
@@ -637,8 +634,8 @@ let parse_stack_conf_def = cake_define
      (stack_to_lab_config_perf_calls stack) in
    match (jump,perf) with
      (INL j,INL p) -> INL (stack_to_lab_config_perf_calls_fupd (K
-       p) (stack_to_lab_config_jump_fupd (K j) stack)) | (INR s,_15)
-       -> INR s | (_16,INR s) -> INR s)`;;
+       p) (stack_to_lab_config_jump_fupd (K j) stack)) | (INR s,_17)
+       -> INR s | (_18,INR s) -> INR s)`;;
 
 (* tap *)
 let parse_tap_conf_def = cake_define
@@ -673,7 +670,7 @@ let extend_conf_def = cake_define
          (backend_config_data_conf_fupd (K data)
          (backend_config_word_to_word_conf_fupd (K wtw)
          (backend_config_bvl_conf_fupd (K bvl)
-         (backend_config_clos_conf_fupd (K clos) conf))))))) | _17 ->
+         (backend_config_clos_conf_fupd (K clos) conf))))))) | _19 ->
        INR (concat [get_err_str clos;
                 get_err_str bvl;
                 get_err_str wtw;
@@ -725,7 +722,7 @@ let parse_top_config_def = cake_define
      (INL sexp,INL prelude,INL typeinference,INL mainreturn) ->
        INL
          (sexp,prelude,typeinference,onlyprinttypes,sexpprint,mainreturn
-         ,nowarnings) | _18 -> INR (concat [
+         ,nowarnings) | _20 -> INR (concat [
                 get_err_str sexp;
                 get_err_str prelude;
                 get_err_str typeinference;
@@ -790,7 +787,7 @@ let compile_64_def = cake_define
                implode "") | (M_failure err,td) -> (add_tap_output td
                  (List []),error_to_str err))) | INR err ->
      (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
-       _19 ->
+       _21 ->
      (List [],error_to_str (ConfigError (concat [get_err_str
        confexp; get_err_str topconf]))))`;;
 
@@ -867,7 +864,7 @@ let compile_32_def = cake_define
                implode "") | (M_failure err,td) -> (List
                  [],error_to_str err))) | INR err ->
      (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
-       _20 ->
+       _22 ->
      (List [],error_to_str (ConfigError (concat [get_err_str
        confexp; get_err_str topconf]))))`;;
 

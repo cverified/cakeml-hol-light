@@ -12,7 +12,6 @@
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
-needs "semantics/typeSystem.ml";;
 
 
 (* HOL4 ML code, not ported:

@@ -8,10 +8,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/db_vars.ml";;
-needs "compiler/backend/pattern_matching/pattern_exh.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "lib/location.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
@@ -137,17 +134,15 @@ let check_freevars_def = cake_define
    ((check_freevars:num->mlstring list->t->bool) dbmax tvs
      (Tvar_db n) = (n < dbmax))`;;
 
-let check_freevars_ast_def = cake_define
-  `((check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
-      (MEM tv tvs)) /\
-   ((check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
-      (EVERY (check_freevars_ast tvs) ts)) /\
-   ((check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1 t2)
-     =
-      (check_freevars_ast tvs t1 /\ check_freevars_ast tvs t2)) /\
-   ((check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts tn)
-     =
-      (EVERY (check_freevars_ast tvs) ts))`;;
+let check_freevars_ast_def = cake_define_list
+  [`(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
+       (MEM tv tvs)`;
+   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
+       (EVERY (check_freevars_ast tvs) ts)`;
+   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1 t2) =
+       (check_freevars_ast tvs t1 /\ check_freevars_ast tvs t2)`;
+   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts tn) =
+       (EVERY (check_freevars_ast tvs) ts)`];;
 
 (* Simultaneous substitution of types for type variables in a type *)
 let type_subst_def = cake_define
@@ -208,17 +203,16 @@ let opt_bind_name_def = cake_define
 
 
 (*val tveLookup : varN -> nat -> tenv_val_exp -> maybe (nat * t)*)
-let tveLookup_def = cake_define
-  `((tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc Empty
-  = NONE) /\
-   ((tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-     (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE))
-     /\
-   ((tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-     (typeSystem_Bind_name n' tvs t tenvE) =
-      (if n' = n then
-       SOME (tvs,deBruijn_inc tvs inc t) else
-       tveLookup n inc tenvE))`;;
+let tveLookup_def = cake_define_list
+  [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
+  Empty = NONE`;
+   `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
+  (typeSystem_Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
+   `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
+  (typeSystem_Bind_name n' tvs t tenvE) =
+       (if n' = n then
+        SOME (tvs,deBruijn_inc tvs inc t) else
+        tveLookup n inc tenvE)`];;
 
 
 new_type_abbrev("tenv_abbrev",`: (mlstring,mlstring,mlstring
@@ -258,12 +252,12 @@ let lookup_var_def = cake_define
 
 
 (*val num_tvs : tenv_val_exp -> nat*)
-let num_tvs_def = cake_define
-  `((num_tvs:tenv_val_exp->num) Empty = ((0:num))) /\
-   ((num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
-     (tvs + num_tvs tenvE)) /\
-   ((num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t
-     tenvE) = (num_tvs tenvE))`;;
+let num_tvs_def = cake_define_list
+  [`(num_tvs:tenv_val_exp->num) Empty = ((0:num))`;
+   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
+  (tvs + num_tvs tenvE)`;
+   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t tenvE) =
+  (num_tvs tenvE)`];;
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp ->
@@ -414,38 +408,38 @@ let type_op_def = cake_define
           ctor; t2]) -> (ctor = Tlist_num) /\ (t2 = Tapp [t1] ctor)
           /\ (t = t2) | _9 -> F)`;;
 
-let check_type_names_def = cake_define
-  `((check_type_names:(mlstring,mlstring,mlstring
+let check_type_names_def = cake_define_list
+  [`(check_type_names:(mlstring,mlstring,mlstring
   list#t)namespace->ast_t->bool) tenvT (Atvar tv) =
-      T) /\
-   ((check_type_names:(mlstring,mlstring,mlstring
-     list#t)namespace->ast_t->bool) tenvT (Attup ts) =
-      (EVERY (check_type_names tenvT) ts)) /\
-   ((check_type_names:(mlstring,mlstring,mlstring
-     list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
-      (check_type_names tenvT t1 /\ check_type_names tenvT t2)) /\
-   ((check_type_names:(mlstring,mlstring,mlstring
-     list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
-      ((match nsLookup tenvT tn with
-       SOME (tvs,_10) -> LENGTH tvs = LENGTH ts | NONE -> F) /\
-     EVERY (check_type_names tenvT) ts))`;;
+       T`;
+   `(check_type_names:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->bool) tenvT (Attup ts) =
+       (EVERY (check_type_names tenvT) ts)`;
+   `(check_type_names:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
+       (check_type_names tenvT t1 /\ check_type_names tenvT t2)`;
+   `(check_type_names:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
+       ((match nsLookup tenvT tn with
+        SOME (tvs,_10) -> LENGTH tvs = LENGTH ts | NONE -> F) /\
+      EVERY (check_type_names tenvT) ts)`];;
 
 (* Substitution of type names for the type they abbreviate *)
-let type_name_subst_def = cake_define
-  `((type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)) /\
-   ((type_name_subst:(mlstring,mlstring,mlstring
-     list#t)namespace->ast_t->t) tenvT (Attup ts) =
-      (Ttup (MAP (type_name_subst tenvT) ts))) /\
-   ((type_name_subst:(mlstring,mlstring,mlstring
-     list#t)namespace->ast_t->t) tenvT (Atfun t1 t2) =
-      (Tfn (type_name_subst tenvT t1) (type_name_subst tenvT t2))) /\
-   ((type_name_subst:(mlstring,mlstring,mlstring
-     list#t)namespace->ast_t->t) tenvT (Atapp ts tc) =
-      (let args = (MAP (type_name_subst tenvT) ts) in
-     (match nsLookup tenvT tc with
-       SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP (tvs,args)))
-         t | NONE -> Ttup args)))`;;
+let type_name_subst_def = cake_define_list
+  [`(type_name_subst:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)`;
+   `(type_name_subst:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->t) tenvT (Attup ts) =
+       (Ttup (MAP (type_name_subst tenvT) ts))`;
+   `(type_name_subst:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->t) tenvT (Atfun t1 t2) =
+       (Tfn (type_name_subst tenvT t1) (type_name_subst tenvT t2))`;
+   `(type_name_subst:(mlstring,mlstring,mlstring
+  list#t)namespace->ast_t->t) tenvT (Atapp ts tc) =
+       (let args = (MAP (type_name_subst tenvT) ts) in
+      (match nsLookup tenvT tc with
+        SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP
+          (tvs,args))) t | NONE -> Ttup args))`];;
 
 (* Check that a type definition defines no already defined types or
    duplicate
@@ -470,7 +464,7 @@ let check_ctor_tenv_def = cake_define
         (check_type_names tenvT) ts)
       ctors /\
     ~(MEM tn (MAP (\p.
-    (match (p) with ((_11,tn,_12)) -> tn)) tds)) /\
+    (match (p) with ((_13,tn,_14)) -> tn)) tds)) /\
     check_ctor_tenv tenvT tds))`;;
 
 
@@ -488,20 +482,20 @@ let build_ctor_tenv_def = cake_define
            (MAP
              (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT) ts,id)))
              ctors))))
-        | (_13,_14) -> (alist_to_ns [])`;;
+        | (_15,_16) -> (alist_to_ns [])`;;
 
 
 (* For the value restriction on let-based polymorphism *)
 let is_value_def = cake_define
   `is_value x1 =
         match x1 with
-          (Lit _15) -> T
-        | (Con _16 es) -> (EVERY is_value es)
-        | (Var _17) -> T
-        | (Fun _18 _19) -> T
-        | (ast_Tannot e _20) -> (is_value e)
-        | (ast_Lannot e _21) -> (is_value e)
-        | _22 -> F`;;
+          (Lit _17) -> T
+        | (Con _18 es) -> (EVERY is_value es)
+        | (Var _19) -> T
+        | (Fun _20 _21) -> T
+        | (ast_Tannot e _22) -> (is_value e)
+        | (ast_Lannot e _23) -> (is_value e)
+        | _24 -> F`;;
 
 let type_p = cake_inductive
   `(!tvs tenv t.
@@ -896,7 +890,7 @@ let weak_tenvT n (tvs_spec, t_spec) (tvs_impl, t_impl) =
    *)
 
 let tscheme_inst2_def = cake_define
-  `((tscheme_inst2:'a->num#t->num#t->bool) _23 ts1 ts2 =
+  `((tscheme_inst2:'a->num#t->num#t->bool) _25 ts1 ts2 =
   (tscheme_inst ts1 ts2))`;;
 
 
@@ -904,7 +898,7 @@ let tscheme_inst2_def = cake_define
 let weak_tenv_def = cake_define
   `((weak_tenv:type_env->type_env->bool) tenv_impl tenv_spec =
      (nsSub tscheme_inst2 (?_v tenv_spec) (?_v tenv_impl) /\
-    nsSub (\i x y. (match (i,x,y) with (_24,x,y) -> x = y)) (?_c
+    nsSub (\i x y. (match (i,x,y) with (_26,x,y) -> x = y)) (?_c
       tenv_spec) (?_c tenv_impl)))`;;
 (* &&
   nsSub weak_tenvT tenv_spec.t tenv_impl.t*)

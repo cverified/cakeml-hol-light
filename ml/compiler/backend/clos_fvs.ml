@@ -8,7 +8,6 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/data_live.ml";;
 needs "semantics/ast.ml";;
 
 let remove_fvs_def = cake_define
@@ -54,52 +53,49 @@ let remove_fvs_def = cake_define
      [closLang_Fn t loc_opt vs num_args (HD (remove_fvs (num_args
        + fvs) [x1]))]))`;;
 
-(* HOL4 termination: *)
-let remove_fvs_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_1,e) -> exp_size e | INR (INL
-  (_2,es)) -> list_size exp_size es | INR (INR (_3,_4,es)) -> list_size
-  (pair_size (\x. x) exp_size) es)`
-  `(remove_fvs_sing fvs (Var t v) =
-     (if v < fvs then Var t v else Op t (closLang_MemOp El) [])) /\
-   (remove_fvs_sing fvs (If t x1 x2 x3) =
-      If t (remove_fvs_sing fvs x1)
-           (remove_fvs_sing fvs x2)
-           (remove_fvs_sing fvs x3)) /\
-   (remove_fvs_sing fvs (Let t xs x2) =
-      (let xs = remove_fvs_list fvs xs in
-      let n = LENGTH xs in
-      let x2 = remove_fvs_sing (fvs + n) x2 in
-        Let t xs x2)) /\
-   (remove_fvs_sing fvs (Raise t x1) =
-      Raise t (remove_fvs_sing fvs x1)) /\
-   (remove_fvs_sing fvs (Handle t x1 x2) =
-      Handle t (remove_fvs_sing fvs x1)
-               (remove_fvs_sing (fvs + 1) x2)) /\
-   (remove_fvs_sing fvs (Op t op xs) =
-      Op t op (remove_fvs_list fvs xs)) /\
-   (remove_fvs_sing fvs (Tick t x) = Tick t (remove_fvs_sing fvs x))
-     /\
-   (remove_fvs_sing fvs (Call t ticks dest xs) =
-     Call t ticks dest (remove_fvs_list fvs xs)) /\
-   (remove_fvs_sing fvs (App t loc_opt x1 xs) =
-     App t loc_opt (remove_fvs_sing fvs x1) (remove_fvs_list fvs xs))
-       /\
-   (remove_fvs_sing fvs (Letrec t loc_opt vs fns x1) =
-      (let m = LENGTH fns in
-      let new_fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
-      let new_fns = remove_fvs_let m new_fvs fns in
-      Letrec t loc_opt vs new_fns (remove_fvs_sing (m + fvs) x1))) /\
-   (remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
-     (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
-     closLang_Fn t loc_opt vs num_args (remove_fvs_sing (num_args +
-       fvs) x1))) /\
-   (remove_fvs_list fvs [] = []) /\
-   (remove_fvs_list fvs ((x:closLang_exp) :: xs) =
-      remove_fvs_sing fvs x :: remove_fvs_list fvs xs) /\
-   (remove_fvs_let m fvs [] = []) /\
-   (remove_fvs_let m new_fvs ((num_args,x) :: xs) =
-      (num_args,remove_fvs_sing (num_args + m + new_fvs) x) ::
-        remove_fvs_let m new_fvs xs)`;;
+let remove_fvs_sing_def = cake_define_list
+  [`remove_fvs_sing fvs (Var t v) =
+        (if v < fvs then Var t v else Op t (closLang_MemOp El) [])`;
+   `remove_fvs_sing fvs (If t x1 x2 x3) =
+         If t (remove_fvs_sing fvs x1)
+              (remove_fvs_sing fvs x2)
+              (remove_fvs_sing fvs x3)`;
+   `remove_fvs_sing fvs (Let t xs x2) =
+         (let xs = remove_fvs_list fvs xs in
+         let n = LENGTH xs in
+         let x2 = remove_fvs_sing (fvs + n) x2 in
+           Let t xs x2)`;
+   `remove_fvs_sing fvs (Raise t x1) =
+         Raise t (remove_fvs_sing fvs x1)`;
+   `remove_fvs_sing fvs (Handle t x1 x2) =
+         Handle t (remove_fvs_sing fvs x1)
+                  (remove_fvs_sing (fvs + 1) x2)`;
+   `remove_fvs_sing fvs (Op t op xs) =
+         Op t op (remove_fvs_list fvs xs)`;
+   `remove_fvs_sing fvs (Tick t x) = Tick t (remove_fvs_sing fvs x)`;
+   `remove_fvs_sing fvs (Call t ticks dest xs) =
+        Call t ticks dest (remove_fvs_list fvs xs)`;
+   `remove_fvs_sing fvs (App t loc_opt x1 xs) =
+        App t loc_opt (remove_fvs_sing fvs x1) (remove_fvs_list
+          fvs xs)`;
+   `remove_fvs_sing fvs (Letrec t loc_opt vs fns x1) =
+         (let m = LENGTH fns in
+         let new_fvs = match vs with NONE -> fvs | SOME x -> LENGTH
+           x in
+         let new_fns = remove_fvs_let m new_fvs fns in
+         Letrec t loc_opt vs new_fns (remove_fvs_sing (m + fvs)
+           x1))`;
+   `remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
+        (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
+        closLang_Fn t loc_opt vs num_args (remove_fvs_sing
+          (num_args + fvs) x1))`;
+   `remove_fvs_list fvs [] = []`;
+   `remove_fvs_list fvs ((x:closLang_exp) :: xs) =
+         remove_fvs_sing fvs x :: remove_fvs_list fvs xs`;
+   `remove_fvs_let m fvs [] = []`;
+   `remove_fvs_let m new_fvs ((num_args,x) :: xs) =
+         (num_args,remove_fvs_sing (num_args + m + new_fvs) x) ::
+           remove_fvs_let m new_fvs xs`];;
 
 let compile_def = cake_define
   `clos_fvs_compile exps = remove_fvs 0 exps`;;

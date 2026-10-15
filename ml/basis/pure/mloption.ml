@@ -8,7 +8,6 @@
 *)
 
 needs "lib/ternaryComparisons.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 let getOpt_def = cake_define
   `(getOpt (SOME v) a = v) /\

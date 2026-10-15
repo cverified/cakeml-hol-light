@@ -35,10 +35,12 @@ let MAXerr_def = cake_define
    (if locsle fl1 fl2 then (fl2,fe2) else (fl1,fe1))`;;
 
 let optmax_def = cake_define
-  `optmax f NONE NONE = NONE /\
-   optmax f NONE (SOME x) = SOME x /\
-   optmax f (SOME x) NONE = SOME x /\
-   optmax f (SOME x) (SOME y) = SOME (f x y)`;;
+  `optmax f x2 x3 =
+      match (x2,x3) with
+        (NONE,NONE) -> NONE
+      | (NONE,(SOME x)) -> SOME x
+      | ((SOME x),NONE) -> SOME x
+      | ((SOME x),(SOME y)) -> SOME (f x y)`;;
 
 (* HOL4 overload (expanded in the port):
      EOF = Locs EOFpt EOFpt *)

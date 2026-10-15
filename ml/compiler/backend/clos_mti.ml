@@ -11,7 +11,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi_inline.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 

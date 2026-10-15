@@ -1029,8 +1029,13 @@ let define_size tyname =
   let names =
     map (fun fn ->
           let ty = fst(dest_fun_ty(type_of fn)) in
-          if fst(dest_type ty) = tyname then tyname ^ "_size"
-          else (k := !k + 1; tyname ^ "_size" ^ string_of_int !k))
+          (* the name a CakeML theory gives a constant can be the
+             one of the size function of its own type (balanced_map
+             does that), so the name has to be a free one *)
+          if fst(dest_type ty) = tyname
+          then fresh_const_name (tyname ^ "_size")
+          else (k := !k + 1;
+                fresh_const_name (tyname ^ "_size" ^ string_of_int !k)))
         ifns in
   let svars =
     map2 (fun fn nm ->
@@ -1297,7 +1302,27 @@ let cake_define tm =
    in which the same variable name has different types in different
    clauses (HOL4 typechecks every clause on its own) *)
 
-let cake_define_list cls = cake_define (list_mk_conj cls);;
+let cake_define_list cls =
+  (* every clause is typechecked on its own, so the function that
+     they define can have a different (more or less general) type in
+     each of them; here they are made the same again *)
+  let head cl = fst(strip_comb(lhs(snd(strip_forall cl)))) in
+  let names = setify (map (fun cl -> fst(dest_var(head cl))) cls) in
+  let unify cls nm =
+    let tys = map type_of
+                  (filter (fun h -> fst(dest_var h) = nm)
+                          (map head cls)) in
+    try
+      let ty = find (fun t -> forall (fun t' -> can (type_match t' t) [])
+                                     tys)
+                    tys in
+      map (fun cl ->
+             if fst(dest_var(head cl)) <> nm then cl else
+             inst (type_match (type_of (head cl)) ty []) cl)
+          cls
+    with Failure _ -> cls in
+  cake_define (list_mk_conj (itlist (fun nm cls -> unify cls nm)
+                                    names cls));;
 
 let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm

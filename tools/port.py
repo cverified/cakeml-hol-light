@@ -116,15 +116,17 @@ class Porter:
                          recs=db.recs_for(thy), thy=thy,
                          accessors=overrides.ACCESSORS.get(thy, {}),
                          cons=db.cons_for(thy), abbrevs=self.abbrevs)
+    self.out = []
+    self.warn = []
+    self.head = None
+    self.deps = []
+    self.bound = set()
     raw = db.overloads_for(thy)
     for _ in range(3):
       for nm, txt in raw.items():
         try: self.ctx.overloads[nm] = self.term(txt)
         except Exception: pass
-    self.out = []
-    self.warn = []
-    self.head = None
-    self.deps = []
+    self.bound = set()
 
   # -- helpers ---------------------------------------------------
 
@@ -155,7 +157,13 @@ class Porter:
     """HOL4 lets a variable shadow a constant, HOL Light does not,
        so a bound variable whose name is a constant of the port or of
        HOL Light is renamed"""
-    names = hterm.bound_names(e, self.ctx.cons, True)
+    # an overload of HOL4 is a constant, not a variable, where it
+    # occurs in a pattern
+    names = hterm.bound_names(e, self.ctx.cons | set(self.ctx.overloads),
+                              True)
+    # a bound variable is not a reference to a constant, so it does
+    # not make the file need the theory of a constant of that name
+    self.bound |= names
     return {n: n + "'" for n in names if self.is_const(n)}
 
   def is_const(self, n):
@@ -204,7 +212,8 @@ class Porter:
     text = (self.head + '\n' + text if self.head else text) + '\n'
     # the files that the translation needs
     deps = sorted(set(self.deps) |
-                  self.db.providers(self.thy, strip_ml(text)))
+                  self.db.providers(self.thy, strip_ml(text),
+                                    self.bound))
     needs = sorted(set('needs "%s";;' % self.db.mlpath_of(d)
                        for d in deps if d in self.db.thy_of_file))
     return text.replace(NEEDS, '\n'.join(needs) if needs else
@@ -401,8 +410,14 @@ class Porter:
     if key in overrides.CLAUSE_FORM:
       term = None
       clauses = self.clause_form(body)
-    elif key in overrides.MATCH_FORM or self.overlapping(body):
+    elif (key in overrides.MATCH_FORM or self.overlapping(body) or
+          self.multi_pattern(body)):
+      # one clause with a match, which HOL Light handles far better
+      # than a definition by patterns on several arguments
       term = fmt(self.match_form(body))
+    elif self.clause_clash(body):
+      term = None
+      clauses = self.clause_form(body)
     else:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
@@ -453,6 +468,67 @@ class Porter:
     return '[`' + '`;\n   `'.join(cls) + '`]'
 
   # -- a definition as one clause with a match -------------------
+
+  def clause_clash(self, body):
+    """does a variable of a definition occur in two clauses in
+       places where its type can differ (as x does in ast's
+       every_exp, where one clause has Fun x e and another one
+       Let x e1 e2)?  HOL4 typechecks every clause on its own, so
+       the port then writes the clauses as separate quotations"""
+    try:
+      toks = hterm.tokenize(hol4.strip_comments(body))
+      e = hterm.Parser(toks, self.ctx).parse()
+      cls = hterm.clauses_of(e)
+    except Exception:
+      return False
+    if len(cls) < 2: return False
+    global CONS
+    CONS = self.ctx.cons
+    where = {}
+    def walk(p, path):
+      while p.kind in ('paren', 'typed'): p = p.e
+      if p.kind == 'id':
+        if p.name in CONS or p.name in hterm.HLCONS: return
+        where.setdefault(p.name, set()).add(path)
+        return
+      if p.kind == 'app':
+        h, args = hterm.strip_app(p)
+        nm = h.name if h.kind == 'id' else '?'
+        for j, a in enumerate(args): walk(a, path + (nm, j))
+        return
+      if p.kind == 'infix':
+        walk(p.l, path + (p.op, 0)); walk(p.r, path + (p.op, 1))
+    for _, args, _ in cls:
+      for i, a in enumerate(args): walk(a, (i,))
+    return any(len(v) > 1 for v in where.values())
+
+  def multi_pattern(self, body):
+    """does a definition that is not recursive match on more than
+       one argument?  HOL Light's machinery for a definition by
+       patterns is very slow for those, and a match is not"""
+    try:
+      toks = hterm.tokenize(hol4.strip_comments(body))
+      e = hterm.Parser(toks, self.ctx).parse()
+      cls = hterm.clauses_of(e)
+    except Exception:
+      return False
+    if len(cls) < 2: return False
+    heads = set(h.name for h, _, _ in cls if h.kind == 'id')
+    # a recursive definition keeps its clauses: the termination
+    # machinery does not look inside a match
+    for _, _, r in cls:
+      if any(nm in heads
+             for nm in re.findall(r"[A-Za-z][A-Za-z0-9_']*",
+                                  hterm.Printer(self.ctx).pr(r, 0))):
+        return False
+    global CONS
+    CONS = self.ctx.cons
+    pats = [args for _, args, _ in cls]
+    n = min(len(a) for a in pats)
+    posns = 0
+    for i in range(n):
+      if any(not is_var_pat(a[i]) for a in pats): posns += 1
+    return posns >= 2
 
   def overlapping(self, body):
     """do the clauses of a definition overlap, so that they rely on
@@ -551,6 +627,12 @@ class Porter:
 
 
 CONS = set()           # the constructors in scope, set by the porter
+
+
+def is_var_pat(p):
+  """is this pattern a variable?"""
+  while p.kind in ('paren', 'typed'): p = p.e
+  return p.kind == 'id' and p.name not in CONS
 
 
 def overlap(p, q):

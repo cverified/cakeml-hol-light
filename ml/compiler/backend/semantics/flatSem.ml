@@ -9,12 +9,8 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
@@ -24,7 +20,6 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: semanticPrimitivesProps *)
 
 (* The values of flatLang differ from source semantic values in that
@@ -243,26 +238,26 @@ let the_Litv_Float64_def = cake_define
   `flatSem_the_Litv_Float64 (Litv (ast_Float64 w)) = w`;;
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
-let do_test_def = cake_define
-  `flatSem_do_test (EQUAL) ty v1 v2 =
-     (if check_type ty v1 /\ check_type ty v2 then
-        (if ty = ast_Float64T then Eq_val (fp64_equal
-          (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1 v2)
-          else Eq_type_error) /\
-   flatSem_do_test (ast_Compare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
-       (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val (int_cmp cmp i j) |
-       (CharT,SOME (ast_Char c),SOME (ast_Char d)) -> Eq_val
-       ((num_compare) cmp (ORD c) (ORD d)) | (WordT ast_W8,SOME
-       (ast_Word8 w),SOME (ast_Word8 v)) -> Eq_val ((num_compare) cmp
-       (w2n w) (w2n v)) | (ast_Float64T,SOME (ast_Float64 w),SOME
-       (ast_Float64 v)) -> Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME
-       (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp F cmp s t)
-       | _39 -> Eq_type_error) /\
-   flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
-       (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp s
-       t) | _40 -> Eq_type_error)`;;
+let do_test_def = cake_define_list
+  [`flatSem_do_test (EQUAL) ty v1 v2 =
+      (if check_type ty v1 /\ check_type ty v2 then
+         (if ty = ast_Float64T then Eq_val (fp64_equal
+           (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
+           v2) else Eq_type_error)`;
+   `flatSem_do_test (ast_Compare cmp) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
+        (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val (int_cmp cmp i
+        j) | (CharT,SOME (ast_Char c),SOME (ast_Char d)) -> Eq_val
+        ((num_compare) cmp (ORD c) (ORD d)) | (WordT ast_W8,SOME
+        (ast_Word8 w),SOME (ast_Word8 v)) -> Eq_val ((num_compare) cmp
+        (w2n w) (w2n v)) | (ast_Float64T,SOME (ast_Float64 w),SOME
+        (ast_Float64 v)) -> Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME
+        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp F cmp s
+        t) | _41 -> Eq_type_error)`;
+   `flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
+        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp s
+        t) | _42 -> Eq_type_error)`];;
 hol4_overload "do_test" "flatSem_do_test";;
 
 let v_to_flat_def = cake_define
@@ -272,7 +267,7 @@ let v_to_flat_def = cake_define
       | (Conv x y) ->
      (if Conv x y = Boolv T then Boolv T else
       if Conv x y = Boolv F then Boolv F else Vectorv [])
-      | _41 -> Vectorv []`;;
+      | _43 -> Vectorv []`;;
 
 let flat_to_v_def = cake_define
   `flat_to_v x1 =
@@ -281,7 +276,7 @@ let flat_to_v_def = cake_define
       | (Conv x y) ->
      (if Conv x y = Boolv T then Boolv T else
       if Conv x y = Boolv F then Boolv F else Vectorv [])
-      | _42 -> Vectorv []`;;
+      | _44 -> Vectorv []`;;
 
 let flatSem_dest_thunk_ret_INDUCT,flatSem_dest_thunk_ret_RECURSION =
   define_datatype
@@ -299,7 +294,7 @@ let dest_thunk_def = cake_define
        Evaluated v) ->
           (if b then BadRef else IsThunk Evaluated v) | SOME (Thunk
             NotEvaluated v) ->
-          (if b then BadRef else IsThunk NotEvaluated v) | SOME _43
+          (if b then BadRef else IsThunk NotEvaluated v) | SOME _45
             -> NotThunk)
       | vs -> NotThunk`;;
 hol4_overload "dest_thunk" "flatSem_dest_thunk";;
@@ -309,8 +304,8 @@ let update_thunk_def = cake_define
       match (x1,x3) with
         ([Loc F n],[v]) ->
      (match dest_thunk [v] st with NotThunk -> store_assign n (Thunk
-       Evaluated v) st | _44 -> NONE)
-      | (_45,_46) -> NONE`;;
+       Evaluated v) st | _46 -> NONE)
+      | (_47,_48) -> NONE`;;
 hol4_overload "update_thunk" "flatSem_update_thunk";;
 
 let bad_thunk_update_def = cake_define
@@ -340,7 +335,7 @@ let do_app_def = cake_define
           (match do_conversion v ty1 ty2 with SOME (INR res) -> SOME
             (s,Rval (v_to_flat res)) | SOME (INL exn) -> SOME (s,Rerr
             (Rraise chr_exn_v)) | NONE -> NONE) else NONE) |
-            (flatLang_Src ast_Opassign,[Loc _47 lnum; v]) ->
+            (flatLang_Src ast_Opassign,[Loc _49 lnum; v]) ->
      (match store_assign lnum (semanticPrimitives_Refv v) (?_refs s)
        with SOME s' -> SOME (?_refs_fupd (K s') s,Rval Unitv) | NONE ->
        NONE) | (flatLang_Src ast_Opref,[v]) ->
@@ -354,7 +349,7 @@ let do_app_def = cake_define
          store_alloc (semanticPrimitives_W8array (REPLICATE
            (num_of_int (abs n)) w)) (?_refs s) in
          SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) |
-           (flatLang_Src ast_Aw8sub,[Loc _48 lnum; Litv (ast_IntLit i)])
+           (flatLang_Src ast_Aw8sub,[Loc _50 lnum; Litv (ast_IntLit i)])
            ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
@@ -363,8 +358,8 @@ let do_app_def = cake_define
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
               SOME (s,Rerr (Rraise subscript_exn_v)) else
-              SOME (s,Rval (Litv (ast_Word8 (EL n ws))))) | _49 ->
-                NONE) | (flatLang_Src ast_Aw8sub_unsafe,[Loc _50 lnum;
+              SOME (s,Rval (Litv (ast_Word8 (EL n ws))))) | _51 ->
+                NONE) | (flatLang_Src ast_Aw8sub_unsafe,[Loc _52 lnum;
                 Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
@@ -373,12 +368,12 @@ let do_app_def = cake_define
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
               NONE else
-              SOME (s,Rval (Litv (ast_Word8 (EL n ws))))) | _51 ->
-                NONE) | (flatLang_Src ast_Aw8length,[Loc _52 n]) ->
+              SOME (s,Rval (Litv (ast_Word8 (EL n ws))))) | _53 ->
+                NONE) | (flatLang_Src ast_Aw8length,[Loc _54 n]) ->
      (match store_lookup n (?_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
         SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH ws))))) |
-          _53 -> NONE) | (flatLang_Src ast_Aw8update,[Loc _54 lnum; Litv
+          _55 -> NONE) | (flatLang_Src ast_Aw8update,[Loc _56 lnum; Litv
           (ast_IntLit i); Litv (ast_Word8 w)]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
@@ -389,8 +384,8 @@ let do_app_def = cake_define
               SOME (s,Rerr (Rraise subscript_exn_v)) else
               (match store_assign lnum (semanticPrimitives_W8array
                 (LUPDATE w n ws)) (?_refs s) with NONE -> NONE | SOME s'
-                -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _55 ->
-                NONE) | (flatLang_Src ast_Aw8update_unsafe,[Loc _56
+                -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _57 ->
+                NONE) | (flatLang_Src ast_Aw8update_unsafe,[Loc _58
                 lnum; Litv (ast_IntLit i); Litv (ast_Word8 w)]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
@@ -401,7 +396,7 @@ let do_app_def = cake_define
               NONE else
               (match store_assign lnum (semanticPrimitives_W8array
                 (LUPDATE w n ws)) (?_refs s) with NONE -> NONE | SOME s'
-                -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _57 ->
+                -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _59 ->
                 NONE) | (flatLang_Src ast_CopyStrStr,[Litv (ast_StrLit
                 str); Litv (ast_IntLit off); Litv (ast_IntLit len)]) ->
        SOME (s,
@@ -410,7 +405,7 @@ let do_app_def = cake_define
            (Litv (ast_StrLit (implode cs))))) | (flatLang_Src
            ast_CopyStrAw8,[Litv (ast_StrLit str); Litv (ast_IntLit off);
            Litv (ast_IntLit len);
-                   Loc _58 dst; Litv (ast_IntLit dstoff)]) ->
+                   Loc _60 dst; Litv (ast_IntLit dstoff)]) ->
        (match store_lookup dst (?_refs s) with
          SOME (semanticPrimitives_W8array ws) ->
            (match copy_array (explode str,off) len (SOME (ws_to_chars
@@ -420,18 +415,18 @@ let do_app_def = cake_define
              (match store_assign dst (semanticPrimitives_W8array
                (chars_to_ws cs)) (?_refs s) with
                SOME s' -> SOME (?_refs_fupd (K s') s,Rval Unitv) |
-                 _59 -> NONE)) | _60 -> NONE) | (flatLang_Src
-                 ast_CopyAw8Str,[Loc _61 src; Litv (ast_IntLit off);
+                 _61 -> NONE)) | _62 -> NONE) | (flatLang_Src
+                 ast_CopyAw8Str,[Loc _63 src; Litv (ast_IntLit off);
                  Litv (ast_IntLit len)]) ->
      (match store_lookup src (?_refs s) with
        SOME (semanticPrimitives_W8array ws) ->
        SOME (s,
          (match copy_array (ws,off) len NONE with
            NONE -> Rerr (Rraise subscript_exn_v) | SOME ws -> Rval
-             (Litv (ast_StrLit (implode (ws_to_chars ws)))))) | _62 ->
-             NONE) | (flatLang_Src ast_CopyAw8Aw8,[Loc _63 src; Litv
+             (Litv (ast_StrLit (implode (ws_to_chars ws)))))) | _64 ->
+             NONE) | (flatLang_Src ast_CopyAw8Aw8,[Loc _65 src; Litv
              (ast_IntLit off); Litv (ast_IntLit len);
-                   Loc _64 dst; Litv (ast_IntLit dstoff)]) ->
+                   Loc _66 dst; Litv (ast_IntLit dstoff)]) ->
      (match (store_lookup src (?_refs s),store_lookup dst (?_refs s))
        with
        (SOME (semanticPrimitives_W8array ws),SOME
@@ -442,8 +437,8 @@ let do_app_def = cake_define
              (match store_assign dst (semanticPrimitives_W8array ws)
                (?_refs s) with
                SOME s' -> SOME (?_refs_fupd (K s') s,Rval Unitv) |
-                 _65 -> NONE)) | _66 -> NONE) | (flatLang_Src
-                 ast_XorAw8Str_unsafe,[Loc _67 dst; Litv (ast_StrLit
+                 _67 -> NONE)) | _68 -> NONE) | (flatLang_Src
+                 ast_XorAw8Str_unsafe,[Loc _69 dst; Litv (ast_StrLit
                  str_arg)]) ->
      (match store_lookup dst (?_refs s) with SOME
        (semanticPrimitives_W8array ds) ->
@@ -451,7 +446,7 @@ let do_app_def = cake_define
             with NONE -> NONE | SOME new_bs ->
                (match store_assign dst (semanticPrimitives_W8array
                  new_bs) (?_refs s) with NONE -> NONE | SOME s' -> SOME
-                 (?_refs_fupd (K s') s,Rval Unitv))) | _68 -> NONE) |
+                 (?_refs_fupd (K s') s,Rval Unitv))) | _70 -> NONE) |
                  (flatLang_Src ast_Implode,[v]) ->
      (match v_to_char_list v with SOME ls ->
         SOME (s,Rval (Litv (ast_StrLit (implode ls)))) | NONE ->
@@ -472,8 +467,8 @@ let do_app_def = cake_define
          SOME vs ->
            (match vs_to_string vs with
              SOME str ->
-               SOME (s,Rval (Litv (ast_StrLit str))) | _69 -> NONE) |
-                 _70 -> NONE) | (flatLang_Src ast_VfromList,[v]) ->
+               SOME (s,Rval (Litv (ast_StrLit str))) | _71 -> NONE) |
+                 _72 -> NONE) | (flatLang_Src ast_VfromList,[v]) ->
      (match v_to_list v with SOME vs ->
         SOME (s,Rval (Vectorv vs)) | NONE -> NONE) | (flatLang_Src
           ast_Vsub,[Vectorv vs; Litv (ast_IntLit i)]) ->
@@ -499,7 +494,7 @@ let do_app_def = cake_define
      (let (s',lnum) =
        store_alloc (semanticPrimitives_Varray vs) (?_refs s) in
        SOME (?_refs_fupd (K s') s,Rval (Loc T lnum))) | (flatLang_Src
-         ast_Asub,[Loc _71 lnum; Litv (ast_IntLit i)]) ->
+         ast_Asub,[Loc _73 lnum; Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_Varray vs) ->
       (if i < 0 then
@@ -507,8 +502,8 @@ let do_app_def = cake_define
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
             SOME (s,Rerr (Rraise subscript_exn_v)) else
-            SOME (s,Rval (EL n vs))) | _72 -> NONE) | (flatLang_Src
-              ast_Asub_unsafe,[Loc _73 lnum; Litv (ast_IntLit i)]) ->
+            SOME (s,Rval (EL n vs))) | _74 -> NONE) | (flatLang_Src
+              ast_Asub_unsafe,[Loc _75 lnum; Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_Varray vs) ->
       (if i < 0 then
@@ -516,12 +511,12 @@ let do_app_def = cake_define
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
             NONE else
-            SOME (s,Rval (EL n vs))) | _74 -> NONE) | (flatLang_Src
-              ast_Alength,[Loc _75 n]) ->
+            SOME (s,Rval (EL n vs))) | _76 -> NONE) | (flatLang_Src
+              ast_Alength,[Loc _77 n]) ->
        (match store_lookup n (?_refs s) with SOME
          (semanticPrimitives_Varray ws) ->
           SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH ws)))))
-            | _76 -> NONE) | (flatLang_Src ast_Aupdate,[Loc _77 lnum;
+            | _78 -> NONE) | (flatLang_Src ast_Aupdate,[Loc _79 lnum;
             Litv (ast_IntLit i); v]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_Varray vs) ->
@@ -532,8 +527,8 @@ let do_app_def = cake_define
             SOME (s,Rerr (Rraise subscript_exn_v)) else
             (match store_assign lnum (semanticPrimitives_Varray
               (LUPDATE v n vs)) (?_refs s) with NONE -> NONE | SOME s'
-              -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _78 -> NONE)
-              | (flatLang_Src ast_Aupdate_unsafe,[Loc _79 lnum; Litv
+              -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _80 -> NONE)
+              | (flatLang_Src ast_Aupdate_unsafe,[Loc _81 lnum; Litv
               (ast_IntLit i); v]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_Varray vs) ->
@@ -544,14 +539,14 @@ let do_app_def = cake_define
             NONE else
             (match store_assign lnum (semanticPrimitives_Varray
               (LUPDATE v n vs)) (?_refs s) with NONE -> NONE | SOME s'
-              -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _80 -> NONE)
+              -> SOME (?_refs_fupd (K s') s,Rval Unitv))) | _82 -> NONE)
               | (flatLang_Src ListAppend,[x1; x2]) ->
      (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys) ->
-       SOME (s,Rval (list_to_v (xs ++ ys))) | _81 -> NONE) |
+       SOME (s,Rval (list_to_v (xs ++ ys))) | _83 -> NONE) |
        (flatLang_Src ConfigGC,[Litv (ast_IntLit n1); Litv (ast_IntLit
        n2)]) ->
         SOME (s,Rval Unitv) | (flatLang_Src (FFI n),[Litv (ast_StrLit
-          conf); Loc _82 lnum]) ->
+          conf); Loc _84 lnum]) ->
      (match store_lookup lnum (?_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
         (match call_FFI (?_ffi s) (ExtCall n) (MAP (\c. n2w (ORD c))
@@ -559,9 +554,9 @@ let do_app_def = cake_define
           (Rabort (Rffi_error outcome))) | FFI_return t' ws' ->
            (match store_assign lnum (semanticPrimitives_W8array ws')
              (?_refs s) with SOME s' -> SOME (?_ffi_fupd (K t')
-             (?_refs_fupd (K s') s),Rval Unitv) | NONE -> NONE)) | _83
-             -> NONE) | (flatLang_Src ast_Opapp,_84) -> NONE |
-             (flatLang_Src ast_Eval,_85) -> NONE | (flatLang_Src
+             (?_refs_fupd (K s') s),Rval Unitv) | NONE -> NONE)) | _85
+             -> NONE) | (flatLang_Src ast_Opapp,_86) -> NONE |
+             (flatLang_Src ast_Eval,_87) -> NONE | (flatLang_Src
              (ThunkOp th_op),vs) ->
       (match (th_op,vs) with (AllocThunk m,[v]) ->
            (if bad_thunk_update m v (?_refs s) then NONE else
@@ -571,7 +566,7 @@ let do_app_def = cake_define
            (if bad_thunk_update m v (?_refs s) then NONE else
             match store_assign lnum (Thunk m v) (?_refs s) with SOME
               r -> SOME (?_refs_fupd (K r) s,Rval (Conv NONE [])) | NONE
-              -> NONE) | _86 -> NONE) | (flatLang_Src _87,_88) -> NONE |
+              -> NONE) | _88 -> NONE) | (flatLang_Src _89,_90) -> NONE |
               (flatLang_GlobalVarAlloc n,[]) ->
      SOME (flatSem_state_globals_fupd (K (flatSem_state_globals s ++
        REPLICATE n NONE)) s,Rval Unitv) | (flatLang_GlobalVarInit n,[v])
@@ -584,17 +579,17 @@ let do_app_def = cake_define
      (if n < LENGTH (flatSem_state_globals s) /\ IS_SOME (EL n
        (flatSem_state_globals s)) then
        SOME (s,Rval (THE (EL n (flatSem_state_globals s)))) else
-       NONE) | (TagLenEq n l,[Conv (SOME (tag,_89)) xs]) ->
+       NONE) | (TagLenEq n l,[Conv (SOME (tag,_91)) xs]) ->
      SOME (s,Rval (Boolv (tag = n /\ LENGTH xs = l))) | (LenEq
-       l,[Conv _90 xs]) ->
-     SOME (s,Rval (Boolv (LENGTH xs = l))) | (El n,[Conv _91 vs]) ->
+       l,[Conv _92 xs]) ->
+     SOME (s,Rval (Boolv (LENGTH xs = l))) | (El n,[Conv _93 vs]) ->
      (if n < LENGTH vs then SOME (s,Rval (EL n vs)) else NONE) | (El
-       n,[Loc _92 p]) ->
+       n,[Loc _94 p]) ->
      (if ~(n = 0) then NONE else
         match store_lookup p (?_refs s) with SOME
-          (semanticPrimitives_Refv v) -> SOME (s,Rval v) | _93 -> NONE)
+          (semanticPrimitives_Refv v) -> SOME (s,Rval v) | _95 -> NONE)
           | (flatLang_Id,[v1]) ->
-     SOME (s,Rval v1) | _94 -> NONE)`;;
+     SOME (s,Rval v1) | _96 -> NONE)`;;
 hol4_overload "do_app" "flatSem_do_app";;
 
 let do_if_def = cake_define
@@ -640,19 +635,19 @@ let pmatch_def = cake_define_wf
          No_match
         | ((Pas p i),v) ->
        flatSem_pmatch s p v ((i,v) :: bindings)
-        | ((Pref p),(Loc _95 lnum)) ->
+        | ((Pref p),(Loc _97 lnum)) ->
        match store_lookup lnum (?_refs s) with SOME
          (semanticPrimitives_Refv v) -> flatSem_pmatch s p v bindings |
-         _96 -> Match_type_error
-        | (_97,_98) -> Match_type_error
+         _98 -> Match_type_error
+        | (_99,_100) -> Match_type_error
         | ([],[]) -> Match bindings
         | ((p :: ps),(v :: vs)) ->
        match flatSem_pmatch s p v bindings with Match_type_error ->
          Match_type_error | Match bindings' -> flatSem_pmatch_list s ps
          vs bindings' | No_match ->
          (match flatSem_pmatch_list s ps vs bindings with
-           Match_type_error -> Match_type_error | _99 -> No_match)
-        | (_100,_101) -> Match_type_error`;;
+           Match_type_error -> Match_type_error | _101 -> No_match)
+        | (_102,_103) -> Match_type_error`;;
 hol4_overload "pmatch" "flatSem_pmatch";;
 hol4_overload "pmatch_list" "flatSem_pmatch_list";;
 
@@ -662,7 +657,7 @@ let pmatch_rows_def = cake_define
      (match pmatch s p v [] with Match_type_error -> Match_type_error
        | No_match -> pmatch_rows pes s v | Match env ->
         (match pmatch_rows pes s v with Match_type_error ->
-          Match_type_error | _102 -> Match (env,p,e)))`;;
+          Match_type_error | _105 -> Match (env,p,e)))`;;
 
 let dec_clock_def = cake_define
   `flatSem_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
@@ -688,8 +683,8 @@ let do_eval_def = cake_define
              (if bytes = bytes' /\ data = data' /\ ~(decs = []) /\
                  FST (new_oracle 0) = st' then
                SOME (decs,install_config_compile_oracle_fupd (K
-                 new_oracle) eval_config,Unitv) else NONE) | _103 ->
-                 NONE)) | _104 -> NONE) | _105 -> NONE)`;;
+                 new_oracle) eval_config,Unitv) else NONE) | _106 ->
+                 NONE)) | _107 -> NONE) | _108 -> NONE)`;;
 hol4_overload "do_eval" "flatSem_do_eval";;
 
 let AppUnit_def = cake_define
@@ -752,120 +747,110 @@ hol4_overload "exp_alt_size" "flatSem_exp_alt_size";;
 let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + exp_alt_size a`;;
 
-(* TERMINATION: wf_rel_tac `inv_image ($< LEX $<)
-    (\x. case x of
-        | INL (env,s,exps) => (s.clock, SUM (MAP exp_alt_size exps) +
-          LENGTH exps)
-        | (INR(INL(s,d))) => (s.clock,dec_alt_size d + 1)
-        | (INR(INR(s,ds))) => (s.clock,SUM (MAP dec_alt_size ds) +
-          LENGTH ds + 1))`
-  \\ simp [dec_clock_def]
-  \\ rw []
-  \\ imp_res_tac fix_clock_IMP
-  \\ imp_res_tac do_if_either_or
-  \\ imp_res_tac pmatch_rows_Match_exp_alt_size
-  \\ fs []
-  \\ simp [MAP_REVERSE, SUM_REVERSE, exp6_alt_size, AppUnit_def,
-    char_size_def] *)
-let evaluate_def = cake_define
-  `(^ (flatSem_evaluate (env:flatSem_v flatSem_environment)) (s
+let evaluate_def = cake_define_list
+  [`^ (flatSem_evaluate (env:flatSem_v flatSem_environment)) (s
   ([]:flatLang_exp list)) =
-     (s,Rval [])) /\
-   (flatSem_evaluate env s (e1 :: e2 :: es) =
-     (match fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval v)
-       ->
-         (match flatSem_evaluate env s (e2 :: es) with (s,Rval vs) ->
-           (s,Rval (HD v :: vs)) | res -> res) | res -> res)) /\
-   (flatSem_evaluate env s [Lit _106 l] = (s,Rval [Litv l])) /\
-   (flatSem_evaluate env s [Raise _107 e] =
-    (match flatSem_evaluate env s [e] with (s,Rval v) -> (s,Rerr
-      (Rraise (HD v))) | res -> res)) /\
-   (flatSem_evaluate env s [Handle _108 e pes] =
-    (match fix_clock s (flatSem_evaluate env s [e]) with (s,Rerr
-      (Rraise v)) ->
-        (match pmatch_rows pes s v with Match_type_error -> (s,Rerr
-          (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise v)) |
-          Match (env',p',e') ->
-            (if ALL_DISTINCT (pat_bindings p') then flatSem_evaluate
-              (?_v_fupd (K (env' ++ ?_v env)) env) s [e'] else (s,Rerr
-              (Rabort Rtype_error)))) | res -> res)) /\
-   (flatSem_evaluate env s [Con _109 NONE es] =
-     (match flatSem_evaluate env s (REVERSE es) with (s,Rval vs) ->
-       (s,Rval [Conv NONE (REVERSE vs)]) | res -> res)) /\
-   (flatSem_evaluate env s [Con _110 (SOME cn) es] =
-     (match flatSem_evaluate env s (REVERSE es) with (s,Rval vs) ->
-       (s,Rval [Conv (SOME cn) (REVERSE vs)]) | res -> res)) /\
-   (flatSem_evaluate env s [flatLang_Var_local _111 n] = (s,
-    (match ALOOKUP (?_v env) n with SOME v -> Rval [v] | NONE -> Rerr
-      (Rabort Rtype_error)))) /\
-   (flatSem_evaluate env s [Fun _112 n e] = (s,Rval [Closure env n
-     e])) /\
-   (flatSem_evaluate env s [App _113 op es] =
-    (match fix_clock s (flatSem_evaluate env s (REVERSE es)) with
-      (s,Rval vs) ->
-        (if op = flatLang_Src ast_Opapp then
-          (match flatSem_do_opapp (REVERSE vs) with SOME (env',e) ->
-             (if ?_clock s = 0 then
-               (s,Rerr (Rabort Rtimeout_error)) else
-               flatSem_evaluate env' (dec_clock s) [e]) | NONE ->
-                 (s,Rerr (Rabort Rtype_error))) else if op =
-                 flatLang_Src ast_Eval then
-          (match do_eval (REVERSE vs) (flatSem_state_eval_config s)
-            with SOME (decs,eval_config,retv) ->
-               (let s = flatSem_state_eval_config_fupd (K
-                 eval_config) s in
-               if ?_clock s = 0 then
-                 (s,Rerr (Rabort Rtimeout_error)) else (match
-                   flatSem_evaluate_decs (dec_clock s) decs with
-                   (s,NONE) -> (s,Rval [retv]) | (s,SOME e) -> (s,Rerr
-                   e))) | NONE -> (s,Rerr (Rabort Rtype_error))) else if
-                   op = flatLang_Src (ThunkOp ForceThunk) then
-          (match dest_thunk vs (?_refs s) with BadRef -> (s,Rerr
-            (Rabort Rtype_error)) | NotThunk -> (s,Rerr (Rabort
-            Rtype_error)) | IsThunk Evaluated v -> (s,Rval [v]) |
-            IsThunk NotEvaluated f ->
-              (match flatSem_evaluate (mk_? [((implode "f"),f)]) s
-                     [AppUnit (flatLang_Var_local None (implode
-                       "f"))] with (s,Rval vs2) ->
-                   (match update_thunk vs (?_refs s) vs2 with NONE ->
-                     (s,Rerr (Rabort Rtype_error)) | SOME refs ->
-                     (?_refs_fupd (K refs) s,Rval vs2)) | (s,Rerr e) ->
-                     (s,Rerr e))) else
-         (match (do_app s op (REVERSE vs)) with NONE -> (s,Rerr
-           (Rabort Rtype_error)) | SOME (s',r) -> (s',list_result r))) |
-           res -> res)) /\
-   (flatSem_evaluate env s [If _114 e1 e2 e3] =
-    (match fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval vs)
-      ->
-      (match do_if (HD vs) e2 e3 with SOME e -> flatSem_evaluate env
-        s [e] | NONE -> (s,Rerr (Rabort Rtype_error))) | res -> res)) /\
-   (flatSem_evaluate env s [Mat _115 e pes] =
-    (match fix_clock s (flatSem_evaluate env s [e]) with (s,Rval v)
-      ->
-        (match pmatch_rows pes s (HD v) with Match_type_error ->
-          (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise
-          bind_exn_v)) | Match (env',p',e') ->
-            (if ALL_DISTINCT (pat_bindings p') then flatSem_evaluate
-              (?_v_fupd (K (env' ++ ?_v env)) env) s [e'] else (s,Rerr
-              (Rabort Rtype_error)))) | res -> res)) /\
-   (flatSem_evaluate env s [Let _116 n e1 e2] =
-    (match fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval vs)
-      -> flatSem_evaluate (?_v_fupd (opt_bind n (HD vs)) env) s [e2] |
-      res -> res)) /\
-   (flatSem_evaluate env s [Letrec _117 funs e] =
-    (if ALL_DISTINCT (MAP FST funs) then flatSem_evaluate (?_v_fupd
-      (K (build_rec_env funs env (?_v env))) env) s [e] else (s,Rerr
-      (Rabort Rtype_error)))) /\
-   (evaluate_dec s e =
-    (match flatSem_evaluate (mk_? []) s [e] with (s,Rval x) ->
-      (if x = [Unitv] then
-        (s,NONE) else
-        (s,SOME (Rabort Rtype_error))) | (s,Rerr e) -> (s,SOME e)))
-          /\
-   (flatSem_evaluate_decs s [] = (s,NONE)) /\
-   (flatSem_evaluate_decs s (d :: ds) =
-    (match fix_clock s (evaluate_dec s d) with (s,NONE) ->
-      flatSem_evaluate_decs s ds | (s,SOME e) -> (s,SOME e)))`;;
+        (s,Rval [])`;
+   `flatSem_evaluate env s (e1 :: e2 :: es) =
+        (match fix_clock s (flatSem_evaluate env s [e1]) with
+          (s,Rval v) ->
+            (match flatSem_evaluate env s (e2 :: es) with (s,Rval
+              vs) -> (s,Rval (HD v :: vs)) | res -> res) | res -> res)`;
+   `flatSem_evaluate env s [Lit _109 l] = (s,Rval [Litv l])`;
+   `flatSem_evaluate env s [Raise _110 e] =
+       (match flatSem_evaluate env s [e] with (s,Rval v) ->
+         (s,Rerr (Rraise (HD v))) | res -> res)`;
+   `flatSem_evaluate env s [Handle _111 e pes] =
+       (match fix_clock s (flatSem_evaluate env s [e]) with (s,Rerr
+         (Rraise v)) ->
+           (match pmatch_rows pes s v with Match_type_error ->
+             (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise
+             v)) | Match (env',p',e') ->
+               (if ALL_DISTINCT (pat_bindings p') then
+                 flatSem_evaluate (?_v_fupd (K (env' ++ ?_v env)) env)
+                 s [e'] else (s,Rerr (Rabort Rtype_error)))) | res ->
+                 res)`;
+   `flatSem_evaluate env s [Con _112 NONE es] =
+        (match flatSem_evaluate env s (REVERSE es) with (s,Rval
+          vs) -> (s,Rval [Conv NONE (REVERSE vs)]) | res -> res)`;
+   `flatSem_evaluate env s [Con _113 (SOME cn) es] =
+        (match flatSem_evaluate env s (REVERSE es) with (s,Rval
+          vs) -> (s,Rval [Conv (SOME cn) (REVERSE vs)]) | res -> res)`;
+   `flatSem_evaluate env s [flatLang_Var_local _114 n] = (s,
+       (match ALOOKUP (?_v env) n with SOME v -> Rval [v] | NONE
+         -> Rerr (Rabort Rtype_error)))`;
+   `flatSem_evaluate env s [Fun _115 n e] = (s,Rval [Closure env n e])`;
+   `flatSem_evaluate env s [App _116 op es] =
+       (match fix_clock s (flatSem_evaluate env s (REVERSE es)) with
+         (s,Rval vs) ->
+           (if op = flatLang_Src ast_Opapp then
+             (match flatSem_do_opapp (REVERSE vs) with SOME (env',e)
+               ->
+                (if ?_clock s = 0 then
+                  (s,Rerr (Rabort Rtimeout_error)) else
+                  flatSem_evaluate env' (dec_clock s) [e]) | NONE ->
+                    (s,Rerr (Rabort Rtype_error))) else if op =
+                    flatLang_Src ast_Eval then
+             (match do_eval (REVERSE vs) (flatSem_state_eval_config
+               s) with SOME (decs,eval_config,retv) ->
+                  (let s = flatSem_state_eval_config_fupd (K
+                    eval_config) s in
+                  if ?_clock s = 0 then
+                    (s,Rerr (Rabort Rtimeout_error)) else (match
+                      flatSem_evaluate_decs (dec_clock s) decs with
+                      (s,NONE) -> (s,Rval [retv]) | (s,SOME e) ->
+                      (s,Rerr e))) | NONE -> (s,Rerr (Rabort
+                      Rtype_error))) else if op = flatLang_Src (ThunkOp
+                      ForceThunk) then
+             (match dest_thunk vs (?_refs s) with BadRef -> (s,Rerr
+               (Rabort Rtype_error)) | NotThunk -> (s,Rerr (Rabort
+               Rtype_error)) | IsThunk Evaluated v -> (s,Rval [v]) |
+               IsThunk NotEvaluated f ->
+                 (match flatSem_evaluate (mk_? [((implode "f"),f)])
+                   s
+                        [AppUnit (flatLang_Var_local None (implode
+                          "f"))] with (s,Rval vs2) ->
+                      (match update_thunk vs (?_refs s) vs2 with
+                        NONE -> (s,Rerr (Rabort Rtype_error)) | SOME
+                        refs -> (?_refs_fupd (K refs) s,Rval vs2)) |
+                        (s,Rerr e) -> (s,Rerr e))) else
+            (match (do_app s op (REVERSE vs)) with NONE -> (s,Rerr
+              (Rabort Rtype_error)) | SOME (s',r) -> (s',list_result
+              r))) | res -> res)`;
+   `flatSem_evaluate env s [If _117 e1 e2 e3] =
+       (match fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval
+         vs) ->
+         (match do_if (HD vs) e2 e3 with SOME e ->
+           flatSem_evaluate env s [e] | NONE -> (s,Rerr (Rabort
+           Rtype_error))) | res -> res)`;
+   `flatSem_evaluate env s [Mat _118 e pes] =
+       (match fix_clock s (flatSem_evaluate env s [e]) with (s,Rval
+         v) ->
+           (match pmatch_rows pes s (HD v) with Match_type_error ->
+             (s,Rerr (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise
+             bind_exn_v)) | Match (env',p',e') ->
+               (if ALL_DISTINCT (pat_bindings p') then
+                 flatSem_evaluate (?_v_fupd (K (env' ++ ?_v env)) env)
+                 s [e'] else (s,Rerr (Rabort Rtype_error)))) | res ->
+                 res)`;
+   `flatSem_evaluate env s [Let _119 n e1 e2] =
+       (match fix_clock s (flatSem_evaluate env s [e1]) with
+         (s,Rval vs) -> flatSem_evaluate (?_v_fupd (opt_bind n (HD
+         vs)) env) s [e2] | res -> res)`;
+   `flatSem_evaluate env s [Letrec _120 funs e] =
+       (if ALL_DISTINCT (MAP FST funs) then flatSem_evaluate
+         (?_v_fupd (K (build_rec_env funs env (?_v env))) env) s [e]
+         else (s,Rerr (Rabort Rtype_error)))`;
+   `evaluate_dec s e =
+       (match flatSem_evaluate (mk_? []) s [e] with (s,Rval x) ->
+         (if x = [Unitv] then
+           (s,NONE) else
+           (s,SOME (Rabort Rtype_error))) | (s,Rerr e) -> (s,SOME
+             e))`;
+   `flatSem_evaluate_decs s [] = (s,NONE)`;
+   `flatSem_evaluate_decs s (d :: ds) =
+       (match fix_clock s (evaluate_dec s d) with (s,NONE) ->
+         flatSem_evaluate_decs s ds | (s,SOME e) -> (s,SOME e))`];;
 hol4_overload "evaluate" "flatSem_evaluate";;
 hol4_overload "evaluate_decs" "flatSem_evaluate_decs";;
 
@@ -892,7 +877,7 @@ let semantics_def = cake_define
        ?k s r outcome.
          evaluate_decs (initial_state ffi k ec) prog = (s,r) /\
          (match r with SOME (Rabort (Rffi_error e)) -> outcome =
-           ffi_FFI_outcome e | SOME (Rabort _118) -> F | _119 -> outcome
+           ffi_FFI_outcome e | SOME (Rabort _121) -> F | _122 -> outcome
            = Success) /\
          res = ffi_Terminate outcome (ffi_state_io_events (?_ffi s)))
            with SOME res -> res | NONE ->

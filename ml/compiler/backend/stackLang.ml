@@ -12,7 +12,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: (* for bytes_in_word *) *)

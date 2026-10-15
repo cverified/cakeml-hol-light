@@ -8,7 +8,6 @@
   Maximal Munch strategy.
 *)
 
-needs "compiler/backend/bvi_tailrec.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
@@ -29,21 +28,21 @@ let pull_ops_def = cake_define
   `(pull_ops op [] acc = acc) /\
    (pull_ops op (x :: xs) acc =
      (match x with (Op op' ls) -> (if op = op' then pull_ops op xs
-       (ls ++ acc) else pull_ops op xs (x :: acc)) | _1 -> pull_ops
+       (ls ++ acc) else pull_ops op xs (x :: acc)) | _2 -> pull_ops
        op xs (x :: acc)))`;;
 
 let is_const_def = cake_define
   `word_inst_is_const x1 =
         match x1 with
           (Const w) -> T
-        | _2 -> F`;;
+        | _3 -> F`;;
 hol4_overload "is_const" "word_inst_is_const";;
 
 let rm_const_def = cake_define
   `rm_const x1 =
         match x1 with
           (Const w) -> w
-        | _3 -> (n2w 0)`;;
+        | _4 -> (n2w 0)`;;
 
 let convert_sub_def = cake_define
   `convert_sub ls =
@@ -56,7 +55,7 @@ let op_consts_def = cake_define
   `op_consts x1 =
         match x1 with
           And -> Const (--(n2w 0))
-        | _4 -> Const (n2w 0)`;;
+        | _5 -> Const (n2w 0)`;;
 
 (* Returns a definite value *)
 let reduce_const_def = cake_define
@@ -64,7 +63,7 @@ let reduce_const_def = cake_define
    (if w = (n2w 0) then
      if op = Add \/ op = Or \/ op = Xor then
        match rest with
-         [] -> Const w | [x] -> x | _5 -> Op op rest else if op = And
+         [] -> Const w | [x] -> x | _6 -> Op op rest else if op = And
            then
        Const (n2w 0) else Op op (Const w :: rest) else Op op
          (Const w :: rest))`;;
@@ -73,7 +72,7 @@ let optimize_consts_def = cake_define
   `optimize_consts op ls =
    (let (const_ls,nconst_ls) = PARTITION is_const ls in
      match const_ls with
-       [] -> Op op nconst_ls | _6 ->
+       [] -> Op op nconst_ls | _7 ->
        (let w = THE (wordLang_word_op op (MAP rm_const const_ls)) in
        reduce_const op w nconst_ls))`;;
 
@@ -161,7 +160,7 @@ let is_Lookup_CurrHeap_def = cake_define
   `is_Lookup_CurrHeap x1 =
       match x1 with
         (wordLang_Lookup CurrHeap) -> T
-      | _7 -> F`;;
+      | _8 -> F`;;
 
 (*
   Maximal Munch instruction selection on (binary) expressions
@@ -191,7 +190,7 @@ let inst_select_exp_def = cake_define_wf
              Seq prog (Inst (asm_Mem Load tar (Addr temp w))) else
            let prog = inst_select_exp c temp temp exp in
              Seq prog (Inst (asm_Mem Load tar (Addr temp ((n2w
-               0)))))) | _8 ->
+               0)))))) | _9 ->
          (let prog = inst_select_exp c temp temp exp in
          Seq prog (Inst (asm_Mem Load tar (Addr temp ((n2w 0))))))
         | (c,(tar:num),(temp:num),(Const w)) -> (Inst (Const tar w))
@@ -215,7 +214,7 @@ let inst_select_exp_def = cake_define_wf
              else
            let p2 = Inst (Const (temp + 1) w) in
            Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
-             (temp + 1))))))) | _9 ->
+             (temp + 1))))))) | _10 ->
          (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
          Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
            (temp + 1)))))))
@@ -228,12 +227,12 @@ let inst_select_exp_def = cake_define_wf
                    Seq prog (Move 0 [tar,temp]) else
                     Seq prog (Inst (Arith (Shift sh tar temp (Imm
                       (n2w n)))))) else
-               Inst (Const tar (n2w 0))) | _10 ->
+               Inst (Const tar (n2w 0))) | _11 ->
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
          Seq p (Seq p1 (Inst (Arith (Shift sh tar temp (Reg (temp +
            1)))))))
-        | (_11,_12,_13,_14) -> Skip`;;
+        | (_12,_13,_14,_15) -> Skip`;;
 
 (*
 
@@ -267,7 +266,7 @@ let inst_select_def = cake_define
              Seq prog (Inst (asm_Mem Store var (Addr temp w))) else
            let prog = inst_select_exp c temp temp exp in
              Seq prog (Inst (asm_Mem Store var (Addr temp ((n2w
-               0)))))) | _15 ->
+               0)))))) | _16 ->
          (let prog = inst_select_exp c temp temp exp in
          Seq prog (Inst (asm_Mem Store var (Addr temp ((n2w 0))))))
         | (Seq p1 p2) ->
@@ -289,7 +288,7 @@ let inst_select_def = cake_define
              Seq prog (wordLang_ShareInst op v (Op Add [Var temp;
                Const w])) else
            let prog = inst_select_exp c temp temp exp in
-             Seq prog (wordLang_ShareInst op v (Var temp))) | _16 ->
+             Seq prog (wordLang_ShareInst op v (Var temp))) | _17 ->
          (let prog = inst_select_exp c temp temp exp in
          Seq prog (wordLang_ShareInst op v (Var temp)))
         | (If cmp r1 ri c1 c2) ->

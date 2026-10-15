@@ -21,10 +21,8 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 let memcpy_code_def = cake_define
   `memcpy_code =

@@ -19,11 +19,9 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/flat_pattern.ml";;
-needs "compiler/backend/flat_to_clos.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/location.ml";;
@@ -31,7 +29,6 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/namespace.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 let var_name_INDUCT,var_name_RECURSION = define_datatype
   "var_name = Glob (tra) (num) | Local (tra) (mlstring)";;
@@ -52,24 +49,21 @@ let environment_store_FIELDS = define_record "environment_store"
    "env_gens","(source_to_flat_environment sptree_num_map) \
    sptree_num_map"];;
 
-let compile_var_def = cake_define
-  `compile_var t (Glob _1 i) = App t (flatLang_GlobalVarLookup i) [] /\
-   compile_var t (Local _2 s) = flatLang_Var_local t s`;;
+let compile_var_def = cake_define_list
+  [`compile_var t (Glob _1 i) = App t (flatLang_GlobalVarLookup i) []`;
+   `compile_var t (Local _2 s) = flatLang_Var_local t s`];;
 
-(* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
-   SUM_APPEND] *)
-let compile_pat_def = cake_define_wf
-  `MEASURE (pat_size o SND)`
-  `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
-   (compile_pat env Pany = Pany) /\
-   (compile_pat env (Plit l) = Plit l) /\
-   (compile_pat env (ast_Pcon id ps) =
-     flatLang_Pcon
-       (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id))
-       (MAP (compile_pat env) ps)) /\
-   (compile_pat env (Pref p) = Pref (compile_pat env p)) /\
-   (compile_pat env (Pas p i) = Pas (compile_pat env p) i) /\
-   (compile_pat env (ast_Ptannot p t) = compile_pat env p)`;;
+let compile_pat_def = cake_define_list
+  [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
+   `compile_pat env Pany = Pany`;
+   `compile_pat env (Plit l) = Plit l`;
+   `compile_pat env (ast_Pcon id ps) =
+        flatLang_Pcon
+          (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id))
+          (MAP (compile_pat env) ps)`;
+   `compile_pat env (Pref p) = Pref (compile_pat env p)`;
+   `compile_pat env (Pas p i) = Pas (compile_pat env p) i`;
+   `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
 
 let pat_tups_def = cake_define
   `(pat_tups t [] = []) /\
@@ -94,12 +88,12 @@ let str_sep_def = cake_define
 let join_all_names_aux_def = cake_define
   `join_all_names_aux [] ys = ys /\
    join_all_names_aux (x :: xs) ys =
-     (match ys with [] -> join_all_names_aux xs (x :: ys) | _4 ->
+     (match ys with [] -> join_all_names_aux xs (x :: ys) | _5 ->
        join_all_names_aux xs (x :: str_sep :: ys))`;;
 
 let join_all_names_def = cake_define
   `join_all_names xs =
-     (match xs with [x] -> x | _5 -> concat (join_all_names_aux xs
+     (match xs with [x] -> x | _6 -> concat (join_all_names_aux xs
        []))`;;
 
 (* HOL4 termination: *)
@@ -150,9 +144,9 @@ let compile_exp_def = cake_define_wf
                      (flatLang_GlobalVarLookup 0) [])
                        (flatLang_App None (El 0) [flatLang_Var_local
                          None (implode "r")])))] else
-       if op = ast_Env_id then (match es with [_6] -> (match
-         source_to_flat_compile_exps t env es with x :: xs -> x | _7 ->
-         flatLang_Var_local None (implode "")) | _8 -> App None (El 0)
+       if op = ast_Env_id then (match es with [_7] -> (match
+         source_to_flat_compile_exps t env es with x :: xs -> x | _8 ->
+         flatLang_Var_local None (implode "")) | _9 -> App None (El 0)
          (source_to_flat_compile_exps t env es)) else
          flatLang_App None (astOp_to_flatOp op)
            (source_to_flat_compile_exps t env es)
@@ -190,7 +184,7 @@ let compile_exp_def = cake_define_wf
            (K new_env) env) funs)
                   (source_to_flat_compile_exp t (?_v_fupd (K new_env)
                     env) e)
-        | (t,env,(ast_Tannot e _9)) -> source_to_flat_compile_exp t
+        | (t,env,(ast_Tannot e _10)) -> source_to_flat_compile_exp t
           env e
         | (t,env,(ast_Lannot e (Locs st en))) ->
           source_to_flat_compile_exp t env e
@@ -274,7 +268,7 @@ let env_id_tuple_def = cake_define
 let simple_dlet_def = cake_define
   `simple_dlet p e =
      (match p with ast_Pvar pv -> (match e with ast_Var v -> SOME
-       (pv,v) | _10 -> NONE) | _11 -> NONE)`;;
+       (pv,v) | _11 -> NONE) | _12 -> NONE)`;;
 
 (* HOL4 termination: *)
 let compile_decs_def = cake_define_wf
@@ -285,7 +279,7 @@ let compile_decs_def = cake_define_wf
         match simple_dlet p e with SOME (pv,v) ->
             (match nsLookup (?_v env) v with SOME (Glob t i) ->
                     (n,next,mk_? (alist_to_ns [(pv,Glob t i)])
-                      nsEmpty,envs,[]) | _12 -> (n,next,mk_? nsEmpty
+                      nsEmpty,envs,[]) | _13 -> (n,next,mk_? nsEmpty
                       nsEmpty,envs,[])) | NONE ->
             (let n' = n + 4 in
             let xs = REVERSE (pat_bindings p) in
@@ -316,7 +310,7 @@ let compile_decs_def = cake_define_wf
               (make_varls 0 None (next_indices_vidx next) (REVERSE
                 fun_names)))])
         | (t,[Dtype locs type_def]) ->
-       let new_env = MAPi (\tid (_13,_14,constrs). alloc_tags
+       let new_env = MAPi (\tid (_14,_15,constrs). alloc_tags
          (next_indices_tidx next + tid) constrs) type_def in
         (n,(next_indices_tidx_fupd (K (next_indices_tidx next +
           LENGTH type_def)) next),
@@ -324,7 +318,7 @@ let compile_decs_def = cake_define_wf
            new_env),
          envs,
          [])
-        | (_15,[Dtabbrev locs tvs tn t]) ->
+        | (_16,[Dtabbrev locs tvs tn t]) ->
         (n,next,empty_env,envs,[])
         | (t,[Dexn locs cn ts]) ->
         (n,(next_indices_eidx_fupd (K (next_indices_eidx next + 1))
@@ -396,7 +390,7 @@ let compile_prog_def = cake_define
      (let next = next_indices_vidx_fupd (K (next_indices_vidx (?_next
        c) + 1)) (?_next c) in
      let envs = mk_? 0 (?_next (?_envs c)) LN in
-     let (_16,next,e,gen,p') = compile_decs [] 1 next
+     let (_17,next,e,gen,p') = compile_decs [] 1 next
        (source_to_flat_config_mod_env c) envs p in
      let envs2 = mk_? (?_next (?_envs c) + 1) (insert (?_next (?_envs
        c)) (?_envs gen) (environment_store_env_gens (?_envs c))) in
@@ -422,7 +416,7 @@ let inc_compile_prog_def = cake_define
   `inc_compile_prog env_id c p =
      (let env = lookup_env_id env_id (?_envs c) in
      let envs = mk_? 0 (?_next (?_envs c)) LN in
-     let (_17,next,e,gen,p') = compile_decs [] 1 (?_next c) env envs
+     let (_18,next,e,gen,p') = compile_decs [] 1 (?_next c) env envs
        p in
      let gen_envs = insert (?_next gen) (extend_env e env) (?_envs
        gen) in

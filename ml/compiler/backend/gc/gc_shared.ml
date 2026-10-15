@@ -7,10 +7,8 @@
   Types, functions and lemmas that are shared between GC definitions
 *)
 
-needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: finite_map words *)
 
 (* The ML heap is represented as a list of heap_elements. *)
@@ -44,10 +42,10 @@ let empty_state_def = cake_define
 
 (* The heap is accessed using the following lookup function. *)
 
-let el_length_def = cake_define
-  `(el_length (Unused l) = l + 1) /\
-   (el_length (ForwardPointer n d l) = l + 1) /\
-   (el_length (DataElement xs l data) = l + 1)`;;
+let el_length_def = cake_define_list
+  [`el_length (Unused l) = l + 1`;
+   `el_length (ForwardPointer n d l) = l + 1`;
+   `el_length (DataElement xs l data) = l + 1`];;
 
 let heap_length_def = cake_define
   `heap_length heap = SUM (MAP el_length heap)`;;

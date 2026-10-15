@@ -15,7 +15,6 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (* function that makes all Seq associate to the left *)
 
@@ -137,45 +136,45 @@ let const_fp_exp_def = cake_define
         | e -> e`;;
 
 let const_fp_move_cs_def = cake_define
-  `(const_fp_move_cs [] _10 cs = cs) /\
+  `(const_fp_move_cs [] _11 cs = cs) /\
    (const_fp_move_cs (m :: ms) ocs ncs =
      (let v = FST m in
      let nncs =
-       (match lookup (SND m) ocs with SOME c -> insert v c ncs | _11
+       (match lookup (SND m) ocs with SOME c -> insert v c ncs | _12
          -> delete v ncs) in
          const_fp_move_cs ms ocs nncs))`;;
 
 let const_fp_inst_cs_def = cake_define
   `const_fp_inst_cs x1 cs =
         match x1 with
-          (Const r _12) -> delete r cs
-        | (Arith (asm_Binop _13 r _14 _15)) -> delete r cs
-        | (Arith (Shift _16 r _17 _18)) -> delete r cs
-        | (Arith (asm_AddCarry r1 _19 _20 r2)) -> delete r2 (delete
+          (Const r _13) -> delete r cs
+        | (Arith (asm_Binop _14 r _15 _16)) -> delete r cs
+        | (Arith (Shift _17 r _18 _19)) -> delete r cs
+        | (Arith (asm_AddCarry r1 _20 _21 r2)) -> delete r2 (delete
           r1 cs)
-        | (Arith (asm_AddOverflow r1 _21 _22 r2)) -> delete r2
+        | (Arith (asm_AddOverflow r1 _22 _23 r2)) -> delete r2
           (delete r1 cs)
-        | (Arith (asm_SubOverflow r1 _23 _24 r2)) -> delete r2
+        | (Arith (asm_SubOverflow r1 _24 _25 r2)) -> delete r2
           (delete r1 cs)
-        | (Arith (asm_LongMul r1 r2 _25 _26)) -> delete r1 (delete r2
+        | (Arith (asm_LongMul r1 r2 _26 _27)) -> delete r1 (delete r2
           cs)
-        | (Arith (asm_LongDiv r1 r2 _27 _28 _29)) -> delete r1
+        | (Arith (asm_LongDiv r1 r2 _28 _29 _30)) -> delete r1
           (delete r2 cs)
-        | (Arith (Div r1 _30 _31)) -> delete r1 cs
-        | (asm_Mem Load r _32) -> delete r cs
-        | (asm_Mem asm_Load32 r _33) -> delete r cs
-        | (asm_Mem asm_Load8 r _34) -> delete r cs
+        | (Arith (Div r1 _31 _32)) -> delete r1 cs
+        | (asm_Mem Load r _33) -> delete r cs
+        | (asm_Mem asm_Load32 r _34) -> delete r cs
+        | (asm_Mem asm_Load8 r _35) -> delete r cs
         | (asm_FP (FPLess r f1 f2)) -> delete r cs
         | (asm_FP (FPLessEqual r f1 f2)) -> delete r cs
         | (asm_FP (FPEqual r f1 f2)) -> delete r cs
         | ((asm_FP (FPMovToReg r1 r2 d)):'a asm_inst) ->
        if dimindex (:'a) = 64 then delete r1 cs else delete r2
          (delete r1 cs)
-        | _35 -> cs`;;
+        | _36 -> cs`;;
 
 let get_var_imm_cs_def = cake_define
   `(get_var_imm_cs (Reg r) cs = lookup r cs) /\
-   (get_var_imm_cs (Imm i) _36 = SOME i)`;;
+   (get_var_imm_cs (Imm i) _37 = SOME i)`;;
 
 let is_gc_const_def = cake_define
   `is_gc_const c = ((c && (n2w 1)) = (n2w 0))`;;
@@ -203,7 +202,7 @@ let const_fp_loop_def = cake_define
         | (Assign v e) ->
         let const_fp_e = const_fp_exp e cs in
           match const_fp_e with Const c -> (Assign v
-            const_fp_e,insert v c cs) | _37 -> (Assign v
+            const_fp_e,insert v c cs) | _38 -> (Assign v
             const_fp_e,delete v cs)
         | (Get v name) -> (Get v name,delete v cs)
         | (OpCurrHeap b v w) -> (OpCurrHeap b v w,delete v cs)
@@ -218,7 +217,7 @@ let const_fp_loop_def = cake_define
        match (lookup lhs cs,get_var_imm_cs rhs cs) with (SOME
          clhs,SOME crhs) ->
            (if asm_word_cmp cmp clhs crhs then const_fp_loop p1 cs
-             else const_fp_loop p2 cs) | _38 -> (let (p1',p1cs) =
+             else const_fp_loop p2 cs) | _39 -> (let (p1',p1cs) =
              const_fp_loop p1 cs in
                  let (p2',p2cs) = const_fp_loop p2 cs in
                   (wordLang_If cmp lhs rhs p1' p2',inter_eq p1cs
@@ -317,11 +316,11 @@ let rewrite_duplicate_if_max_reassoc_def = cake_define
   `rewrite_duplicate_if_max_reassoc = 8`;;
 
 let dest_Raise_num_pmatch_def = cake_define
-  `dest_Raise_num p = (match p with wordLang_Raise n -> n | _39 -> 0)`;;
+  `dest_Raise_num p = (match p with wordLang_Raise n -> n | _40 -> 0)`;;
 
 let is_simple_pmatch_def = cake_define
-  `is_simple p = (match p with Tick -> T | Skip -> T | Move _40 _41
-  -> T | Assign _42 _43 -> T | _44 -> F)`;;
+  `is_simple p = (match p with Tick -> T | Skip -> T | Move _41 _42
+  -> T | Assign _43 _44 -> T | _45 -> F)`;;
 
 let try_if_hoist2_def = cake_define
   `try_if_hoist2 N p1 interm dummy' p2 = (if N = 0 then NONE else match
@@ -344,11 +343,11 @@ let try_if_hoist2_def = cake_define
          (If cmp lhs rhs (Seq (Seq br1 interm) p2)
            (Seq (Seq br2 interm) p2))))) | NONE ->
        (if is_simple p4 then try_if_hoist2 (N - 1) p3 (Seq p4
-         interm) dummy' p2 else NONE)) | _45 -> NONE)`;;
+         interm) dummy' p2 else NONE)) | _46 -> NONE)`;;
 
 let try_if_hoist1_def = cake_define
   `try_if_hoist1 p1 p2 = (match dest_If p2 with NONE -> NONE | SOME
-  (cmp,lhs,rhs,_46,_47) -> (
+  (cmp,lhs,rhs,_47,_48) -> (
      let dummy' = wordLang_If cmp lhs rhs (Raise 1) (Raise 2) in
      try_if_hoist2 rewrite_duplicate_if_max_reassoc p1 Skip dummy'
        p2))`;;
@@ -369,7 +368,7 @@ let simp_duplicate_if_def = cake_define
          p2x = simp_duplicate_if p2 in
      match try_if_hoist1 p1x p2x with NONE -> Seq p1x p2x | SOME p3
        -> Seq_assoc Skip p3) | Loop names body exit_names ->
-     Loop names (simp_duplicate_if body) exit_names | _48 -> p)`;;
+     Loop names (simp_duplicate_if body) exit_names | _49 -> p)`;;
 
 (*Optimize pairs where one side is known to terminate due to a Raise or
    a Return
@@ -379,8 +378,8 @@ the flag is T when its known to halt and F otherwise
 let push_out_if_aux_def = cake_define
   `push_out_if_aux p = (match p with wordLang_MustTerminate q ->
      (match (push_out_if_aux q) with (c,b) -> (wordLang_MustTerminate
-       c,b)) | Return _49 _50 -> (p,T) | Raise _51 -> (p,T) | Call NONE
-       _52 _53 _54 -> (p,T) | If cmp r1 ri c1 c2 -> (match
+       c,b)) | Return _50 _51 -> (p,T) | Raise _52 -> (p,T) | Call NONE
+       _53 _54 _55 -> (p,T) | If cmp r1 ri c1 c2 -> (match
        (push_out_if_aux c1,push_out_if_aux c2) with ((c1',T),(c2',T)) ->
        (If cmp r1 ri c1' c2',T) | ((c1',F),(c2',T)) -> (Seq (If cmp r1
        ri Skip c2') c1',F) | ((c1',T),(c2',F)) -> (Seq (If cmp r1 ri c1'
@@ -390,7 +389,7 @@ let push_out_if_aux_def = cake_define
                        (match (push_out_if_aux c2) with (c2',b) ->
                          (Seq c1' c2',b))) | Loop names body exit_names
                          ->
-     (Loop names (FST (push_out_if_aux body)) exit_names,F) | _55
+     (Loop names (FST (push_out_if_aux body)) exit_names,F) | _56
        -> (p,F))`;;
 
 let push_out_if_def = cake_define

@@ -13,22 +13,15 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/bvi_to_data.ml";;
-needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/pegexec.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
 
 (* bitmaps_length stores the current length of the bitmaps *)
 let word_to_stack_config_FIELDS = define_record "word_to_stack_config"
@@ -210,46 +203,48 @@ let wInst_def = cake_define
         | _1 -> Inst Skip`;;
 
 let wShareInst_def = cake_define
-  `(wShareInst Load v (Addr ad offset) kf =
-     (let (l,n2) = wReg1 ad kf in
-     wStackLoad l
-       (wRegWrite1 (\r. stackLang_ShMemOp Load r (Addr n2 offset)) v
-         kf))) /\
-   (wShareInst asm_Load8 v (Addr ad offset) kf =
-     (let (l,n2) = wReg1 ad kf in
-     wStackLoad l
-       (wRegWrite1 (\r. stackLang_ShMemOp asm_Load8 r (Addr n2
-         offset)) v kf))) /\
-   (wShareInst asm_Load16 v (Addr ad offset) kf =
-     (let (l,n2) = wReg1 ad kf in
-     wStackLoad l
-       (wRegWrite1 (\r. stackLang_ShMemOp asm_Load16 r (Addr n2
-         offset)) v kf))) /\
-   (wShareInst asm_Load32 v (Addr ad offset) kf =
-     (let (l,n2) = wReg1 ad kf in
-     wStackLoad l
-       (wRegWrite1 (\r. stackLang_ShMemOp asm_Load32 r (Addr n2
-         offset)) v kf))) /\
-   (wShareInst Store v (Addr ad offset) kf =
-     (let (l1,n2) = wReg1 ad kf in
-     let (l2,n1) = wReg2 v kf in
-     wStackLoad (l1 ++ l2)
-       (stackLang_ShMemOp Store n1 (Addr n2 offset)))) /\
-   (wShareInst asm_Store8 v (Addr ad offset) kf =
-     (let (l1,n2) = wReg1 ad kf in
-     let (l2,n1) = wReg2 v kf in
-     wStackLoad (l1 ++ l2)
-       (stackLang_ShMemOp asm_Store8 n1 (Addr n2 offset)))) /\
-   (wShareInst asm_Store16 v (Addr ad offset) kf =
-     (let (l1,n2) = wReg1 ad kf in
-     let (l2,n1) = wReg2 v kf in
-     wStackLoad (l1 ++ l2)
-       (stackLang_ShMemOp asm_Store16 n1 (Addr n2 offset)))) /\
-   (wShareInst asm_Store32 v (Addr ad offset) kf =
-     (let (l1,n2) = wReg1 ad kf in
-     let (l2,n1) = wReg2 v kf in
-     wStackLoad (l1 ++ l2)
-       (stackLang_ShMemOp asm_Store32 n1 (Addr n2 offset))))`;;
+  `wShareInst x1 v x3 kf =
+        match (x1,x3) with
+          (Load,(Addr ad offset)) ->
+       let (l,n2) = wReg1 ad kf in
+       wStackLoad l
+         (wRegWrite1 (\r. stackLang_ShMemOp Load r (Addr n2 offset))
+           v kf)
+        | (asm_Load8,(Addr ad offset)) ->
+       let (l,n2) = wReg1 ad kf in
+       wStackLoad l
+         (wRegWrite1 (\r. stackLang_ShMemOp asm_Load8 r (Addr n2
+           offset)) v kf)
+        | (asm_Load16,(Addr ad offset)) ->
+       let (l,n2) = wReg1 ad kf in
+       wStackLoad l
+         (wRegWrite1 (\r. stackLang_ShMemOp asm_Load16 r (Addr n2
+           offset)) v kf)
+        | (asm_Load32,(Addr ad offset)) ->
+       let (l,n2) = wReg1 ad kf in
+       wStackLoad l
+         (wRegWrite1 (\r. stackLang_ShMemOp asm_Load32 r (Addr n2
+           offset)) v kf)
+        | (Store,(Addr ad offset)) ->
+       let (l1,n2) = wReg1 ad kf in
+       let (l2,n1) = wReg2 v kf in
+       wStackLoad (l1 ++ l2)
+         (stackLang_ShMemOp Store n1 (Addr n2 offset))
+        | (asm_Store8,(Addr ad offset)) ->
+       let (l1,n2) = wReg1 ad kf in
+       let (l2,n1) = wReg2 v kf in
+       wStackLoad (l1 ++ l2)
+         (stackLang_ShMemOp asm_Store8 n1 (Addr n2 offset))
+        | (asm_Store16,(Addr ad offset)) ->
+       let (l1,n2) = wReg1 ad kf in
+       let (l2,n1) = wReg2 v kf in
+       wStackLoad (l1 ++ l2)
+         (stackLang_ShMemOp asm_Store16 n1 (Addr n2 offset))
+        | (asm_Store32,(Addr ad offset)) ->
+       let (l1,n2) = wReg1 ad kf in
+       let (l2,n1) = wReg2 v kf in
+       wStackLoad (l1 ++ l2)
+         (stackLang_ShMemOp asm_Store32 n1 (Addr n2 offset))`;;
 
 let bits_to_word_def = cake_define
   `(bits_to_word [] = (n2w 0)) /\

@@ -58,10 +58,10 @@ needs "semantics/semanticPrimitives.ml";;
 let ctor_INDUCT,ctor_RECURSION = define_datatype
   "ctor = TagC (num) (num) | TupC (num) | RefC";;
 
-let ctor_arity_def = cake_define
-  `ctor_arity (TagC t a) = a /\
-   ctor_arity (TupC a) = a /\
-   ctor_arity RefC = 1`;;
+let ctor_arity_def = cake_define_list
+  [`ctor_arity (TagC t a) = a`;
+   `ctor_arity (TupC a) = a`;
+   `ctor_arity RefC = 1`];;
 
 let anys_def = cake_define
   `anys 0 = [] /\
@@ -94,17 +94,14 @@ let mk_conses_def = cake_define
   `mk_conses t [] = [] /\
    mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`;;
 
-(* HOL4 termination: *)
-let expand_def = cake_define_wf
-  `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
-  pat_size ps)`
-  `expand Any = [Any] /\
-   expand (Lit l) = [Lit l] /\
-   expand (Or p q) = expand p ++ expand q /\
-   expand (Ref p) = mk_refs (expand p) /\
-   expand (Cons t ps) = mk_conses t (expand_list ps) /\
-   expand_list [] = [[]] /\
-   expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`;;
+let expand_def = cake_define_list
+  [`expand Any = [Any]`;
+   `expand (Lit l) = [Lit l]`;
+   `expand (Or p q) = expand p ++ expand q`;
+   `expand (Ref p) = mk_refs (expand p)`;
+   `expand (Cons t ps) = mk_conses t (expand_list ps)`;
+   `expand_list [] = [[]]`;
+   `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
 
 let mk_rows_def = cake_define
   `mk_rows [] = [] /\
@@ -135,15 +132,15 @@ let ctor_nub_def = cake_define
    ctor_nub (x :: xs) = (if MEM x xs then ctor_nub xs else x ::
      ctor_nub xs)`;;
 
-let ctors_of_def = cake_define
-  `ctors_of Any = NONE /\
-   ctors_of (Lit _1) = NONE /\
-   ctors_of (Or _2 _3) = NONE /\
-   ctors_of (Ref _4) = SOME [RefC] /\
-   ctors_of (Cons NONE qs) = SOME [TupC (LENGTH qs)] /\
-   ctors_of (Cons (SOME (t,NONE)) qs) = NONE /\
-   ctors_of (Cons (SOME (t,SOME sibs)) qs) =
-     SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
+let ctors_of_def = cake_define_list
+  [`ctors_of Any = NONE`;
+   `ctors_of (Lit _1) = NONE`;
+   `ctors_of (Or _2 _3) = NONE`;
+   `ctors_of (Ref _4) = SOME [RefC]`;
+   `ctors_of (Cons NONE qs) = SOME [TupC (LENGTH qs)]`;
+   `ctors_of (Cons (SOME (t,NONE)) qs) = NONE`;
+   `ctors_of (Cons (SOME (t,SOME sibs)) qs) =
+      SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`];;
 
 let ctor_keep_def = cake_define
   `ctor_keep [] ys = [] /\
@@ -176,17 +173,17 @@ let col_ctors_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-let spec_row_def = cake_define
-  `spec_row c [] = [] /\
-   spec_row c (Any :: rest) = [anys (ctor_arity c) ++ rest] /\
-   spec_row c ((Cons NONE qs) :: rest) =
-     (if c = TupC (LENGTH qs) then [qs ++ rest] else []) /\
-   spec_row c ((Cons (SOME ts) qs) :: rest) =
-     (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else []) /\
-   spec_row c ((Ref q) :: rest) = (if c = RefC then [q :: rest] else
-     []) /\
-   spec_row c ((Lit l) :: rest) = [] /\
-   spec_row c ((Or p q) :: rest) = []`;;
+let spec_row_def = cake_define_list
+  [`spec_row c [] = []`;
+   `spec_row c (Any :: rest) = [anys (ctor_arity c) ++ rest]`;
+   `spec_row c ((Cons NONE qs) :: rest) =
+      (if c = TupC (LENGTH qs) then [qs ++ rest] else [])`;
+   `spec_row c ((Cons (SOME ts) qs) :: rest) =
+      (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else [])`;
+   `spec_row c ((Ref q) :: rest) = (if c = RefC then [q :: rest] else
+  [])`;
+   `spec_row c ((Lit l) :: rest) = []`;
+   `spec_row c ((Or p q) :: rest) = []`];;
 
 let spec_mat_def = cake_define
   `spec_mat c [] = [] /\
@@ -220,17 +217,14 @@ let default_mat_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-(* HOL4 termination: *)
-let pat_weight_def = cake_define_wf
-  `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
-  pat_size ps)`
-  `pat_weight Any = (0:num) /\
-   pat_weight (Lit l) = 0 /\
-   pat_weight (Or p q) = 1 + pat_weight p + pat_weight q /\
-   pat_weight (Ref p) = 1 + pat_weight p /\
-   pat_weight (Cons t ps) = 1 + pats_weight ps /\
-   pats_weight [] = 0 /\
-   pats_weight (p :: ps) = pat_weight p + pats_weight ps`;;
+let pat_weight_def = cake_define_list
+  [`pat_weight Any = (0:num)`;
+   `pat_weight (Lit l) = 0`;
+   `pat_weight (Or p q) = 1 + pat_weight p + pat_weight q`;
+   `pat_weight (Ref p) = 1 + pat_weight p`;
+   `pat_weight (Cons t ps) = 1 + pats_weight ps`;
+   `pats_weight [] = 0`;
+   `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 
 let mat_weight_def = cake_define
   `mat_weight [] = 0 /\

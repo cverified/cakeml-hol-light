@@ -13,7 +13,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
@@ -24,7 +23,6 @@ needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: simpleSexp quantHeuristics *)
 
 (* TODO: this is duplicated in parserProgTheory *)
@@ -94,7 +92,7 @@ let decode_control_def = cake_define
            (isAlpha d2 ==> isUpper d2) /\ ~isPrint (CHR
              (num_from_hex_string [d1; d2]))))
         (OPTION_MAP (CONS (CHR (num_from_hex_string [d1; d2])))
-          (decode_control cs)) | _1 -> NONE else OPTION_IGNORE_BIND
+          (decode_control cs)) | _2 -> NONE else OPTION_IGNORE_BIND
           (OPTION_GUARD (isPrint c)) (OPTION_MAP (CONS c)
           (decode_control cs))))`;;
 
@@ -105,25 +103,25 @@ let odestSEXSTR_def = cake_define
   `odestSEXSTR x1 =
         match x1 with
           (SX_STR s) -> OPTION_MAP implode (decode_control s)
-        | _2 -> NONE`;;
+        | _3 -> NONE`;;
 
 let odestSXSTR_def = cake_define
   `odestSXSTR x1 =
         match x1 with
           (SX_STR s) -> SOME (implode s)
-        | _3 -> NONE`;;
+        | _4 -> NONE`;;
 
 let odestSXSYM_def = cake_define
   `odestSXSYM x1 =
         match x1 with
           (SX_SYM s) -> SOME (implode s)
-        | _4 -> NONE`;;
+        | _5 -> NONE`;;
 
 let odestSXNUM_def = cake_define
   `odestSXNUM x1 =
         match x1 with
           (SX_NUM n) -> SOME n
-        | _5 -> NONE`;;
+        | _6 -> NONE`;;
 
 let sexpopt_def = cake_define
   `sexpopt p s =
@@ -144,12 +142,12 @@ let sexplist_def = cake_define
            ph. monad_bind (sexplist p t) (\
            pt.
            return (ph :: pt))) | SX_SYM s -> (if s = "nil" then
-             return [] else fail) | _6 -> fail)`;;
+             return [] else fail) | _7 -> fail)`;;
 
 let sexppair_def = cake_define
   `sexppair p1 p2 s =
      (match s with
-       SX_CONS s1 s2 -> lift2 (,) (p1 s1) (p2 s2) | _7 -> fail)`;;
+       SX_CONS s1 s2 -> lift2 (,) (p1 s1) (p2 s2) | _8 -> fail)`;;
 
 (* HOL4 overload (expanded in the port):
      guard = λb m. monad_unitbind (assert b) m *)
@@ -217,7 +215,7 @@ let sexptype_alt_def = cake_define
          NONE) | SX_CONS a d ->
          (match sexptype_alt a with NONE -> NONE | SOME h ->
           (match sexptype_list d with NONE -> NONE | SOME t ->
-            SOME (h :: t))) | _8 -> NONE`;;
+            SOME (h :: t))) | _9 -> NONE`;;
 
 let sexplit_def = cake_define
   `sexplit s =
@@ -322,7 +320,7 @@ let sexppat_alt_def = cake_define
          NONE) | SX_CONS a d ->
          (match sexppat_alt a with NONE -> NONE | SOME h ->
           (match sexppat_list d with NONE -> NONE | SOME t -> SOME
-            (h :: t))) | _9 -> NONE`;;
+            (h :: t))) | _10 -> NONE`;;
 
 (* HOL4 ML code, not ported:
 val sexppat_alt_ind = theorem"sexppat_alt_ind";
@@ -351,7 +349,7 @@ let decode_test_def = cake_define
       if s = "AltGreater" then SOME (ast_AltCompare ast_Gt) else
       if s = "AltGreaterEq" then SOME (ast_AltCompare ast_Geq) else
         NONE)
-      | _10 -> NONE`;;
+      | _11 -> NONE`;;
 hol4_overload "decode_test" "fromSexp_decode_test";;
 
 let decode_prim_type_def = cake_define
@@ -365,7 +363,7 @@ let decode_prim_type_def = cake_define
       if s = "Word8T" then SOME (WordT ast_W8) else
       if s = "Word64T" then SOME (WordT W64) else
       if s = "Float64T" then SOME ast_Float64T else NONE)
-      | _11 -> NONE`;;
+      | _12 -> NONE`;;
 
 let sexparith_def = cake_define
   `sexparith x1 =
@@ -384,7 +382,7 @@ let sexparith_def = cake_define
       if s = "Not" then SOME Not else
       if s = "Sqrt" then SOME ast_Sqrt else
       if s = "FMA" then SOME ast_FMA else NONE)
-      | _12 -> NONE`;;
+      | _13 -> NONE`;;
 
 let sexplog_def = cake_define
   `sexplog x1 =
@@ -392,7 +390,7 @@ let sexplog_def = cake_define
         (SX_SYM s) ->
      (if s = "Andalso" then SOME Andalso else
       if s = "Orelse" then SOME Orelse else NONE)
-      | _13 -> NONE`;;
+      | _14 -> NONE`;;
 
 let sexpop_def = cake_define
   `sexpop x1 =
@@ -457,15 +455,15 @@ let sexpop_def = cake_define
         | (SX_CONS (SX_SYM s) (SX_CONS x y)) ->
        if s = "Arith" then
          (match (sexparith x,decode_prim_type y) with (SOME a,SOME
-           prim_type) -> SOME (Arith a prim_type) | _14 -> NONE) else if
+           prim_type) -> SOME (Arith a prim_type) | _15 -> NONE) else if
            s = "FromTo" then
          (match (decode_prim_type x,decode_prim_type y) with (SOME
-           ty1,SOME ty2) -> SOME (ast_FromTo ty1 ty2) | _15 -> NONE)
+           ty1,SOME ty2) -> SOME (ast_FromTo ty1 ty2) | _16 -> NONE)
            else if s = "Test" then
          (match (decode_test x,decode_prim_type y) with (SOME
-           test,SOME prim_type) -> SOME (Test test prim_type) | _16 ->
+           test,SOME prim_type) -> SOME (Test test prim_type) | _17 ->
            NONE) else NONE
-        | _17 -> NONE`;;
+        | _18 -> NONE`;;
 
 let sexplocpt_def = cake_define
   `sexplocpt s =
@@ -630,29 +628,29 @@ let sexpexp_alt_def = cake_define
            NONE) | SX_CONS a d ->
            (match sexpexp_alt a with NONE -> NONE | SOME h ->
             (match sexpexp_list d with NONE -> NONE | SOME t -> SOME
-              (h :: t))) | _18 -> NONE
+              (h :: t))) | _19 -> NONE
         |  ->
       match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
         NONE) | SX_CONS a d ->
         (match sexppatexp a with NONE -> NONE | SOME h ->
          (match sexppes d with NONE -> NONE | SOME t -> SOME (h ::
-           t))) | _19 -> NONE
+           t))) | _20 -> NONE
         |  ->
       match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
         NONE) | SX_CONS a d ->
         (match sexpfun a with NONE -> NONE | SOME h ->
          (match sexpfuns d with NONE -> NONE | SOME t -> SOME (h ::
-           t))) | _20 -> NONE
+           t))) | _21 -> NONE
         |  ->
        match s with SX_CONS a d ->
          (match (sexppat_alt a,sexpexp_alt d) with (SOME p,SOME e) ->
-           SOME (p,e) | _21 -> NONE) | _22 -> NONE
+           SOME (p,e) | _22 -> NONE) | _23 -> NONE
         |  ->
         match s with SX_CONS a d ->
           (match d with SX_CONS b d ->
           (match (odestSEXSTR a,odestSEXSTR b,sexpexp_alt d) with
-            (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _23 -> NONE) |
-            _24 -> NONE) | _25 -> NONE`;;
+            (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _24 -> NONE) |
+            _25 -> NONE) | _26 -> NONE`;;
 
 let sexptype_def_def = cake_define
   `sexptype_def =
@@ -749,7 +747,7 @@ let sexpdec_alt_def = cake_define
            NONE) | SX_CONS a d ->
            (match sexpdec_alt a with NONE -> NONE | SOME h ->
             (match sexpdec_list d with NONE -> NONE | SOME t ->
-              SOME (h :: t))) | _26 -> NONE`;;
+              SOME (h :: t))) | _27 -> NONE`;;
 
 (* HOL4 ML code, not ported:
 val sexpdec_alt_ind = theorem"sexpdec_alt_ind";
@@ -764,52 +762,42 @@ let optsexp_def = cake_define
   `(optsexp NONE = SX_SYM "NONE") /\
    (optsexp (SOME x) = listsexp [SX_SYM "SOME"; x])`;;
 
-let idsexp_def = cake_define
-  `(idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]) /\
-   (idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
-     ns); idsexp n])`;;
+let idsexp_def = cake_define_list
+  [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
+   `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode ns);
+  idsexp n]`];;
 
-(* HOL4 termination: >> rw[] \\ Induct_on`ts` >> simp[ast_t_size_def]
-   >> rw[] >> res_tac >> simp[] *)
-let typesexp_def = cake_define_wf
-  `MEASURE ast_t_size`
-  `(typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode s)])
-  /\
-   (typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
-     typesexp t2]) /\
-   (typesexp (Attup ts) = listsexp [SX_SYM "Attup"; listsexp (MAP
-     typesexp ts)]) /\
-   (typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp
-     (MAP typesexp ts); idsexp tc])`;;
+let typesexp_def = cake_define_list
+  [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode s)]`;
+   `typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
+  typesexp t2]`;
+   `typesexp (Attup ts) = listsexp [SX_SYM "Attup"; listsexp (MAP
+  typesexp ts)]`;
+   `typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp (MAP
+  typesexp ts); idsexp tc]`];;
 
-let litsexp_def = cake_define
-  `(litsexp (ast_IntLit i) =
-    (if i < 0 then listsexp [SX_SYM "-"; SX_NUM (num_of_int (--i))]
-      else SX_NUM (num_of_int i))) /\
-   (litsexp (ast_Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]) /\
-   (litsexp (ast_StrLit s) = SEXSTR (explode s)) /\
-   (litsexp (ast_Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n
-     w)]) /\
-   (litsexp (Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n w)])
-     /\
-   (litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM
-     (w2n w)])`;;
+let litsexp_def = cake_define_list
+  [`litsexp (ast_IntLit i) =
+       (if i < 0 then listsexp [SX_SYM "-"; SX_NUM (num_of_int
+         (--i))] else SX_NUM (num_of_int i))`;
+   `litsexp (ast_Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
+   `litsexp (ast_StrLit s) = SEXSTR (explode s)`;
+   `litsexp (ast_Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
+   `litsexp (Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n w)]`;
+   `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM (w2n
+  w)]`];;
 
-(* HOL4 termination: >> simp [] >> Induct_on`ps`>>simp[pat_size_def]
-   >> rw[] >> simp[] >> res_tac >>
-   first_x_assum(qspec_then`cn`strip_assume_tac)>> decide_tac *)
-let patsexp_def = cake_define_wf
-  `MEASURE pat_size`
-  `(patsexp Pany = listsexp [SX_SYM "Pany"]) /\
-   (patsexp (Pvar s) = SEXSTR (explode s)) /\
-   (patsexp (Plit l) = listsexp [SX_SYM "Plit"; litsexp l]) /\
-   (patsexp (Pcon cn ps) = listsexp [SX_SYM "Pcon"; optsexp
-     (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]) /\
-   (patsexp (Pas p i) = listsexp [SX_SYM "Pas"; patsexp p; SEXSTR
-     (explode i)]) /\
-   (patsexp (Pref p) = listsexp [SX_SYM "Pref"; patsexp p]) /\
-   (patsexp (ast_Ptannot p t) = listsexp [SX_SYM "Ptannot";
-     patsexp p; typesexp t])`;;
+let patsexp_def = cake_define_list
+  [`patsexp Pany = listsexp [SX_SYM "Pany"]`;
+   `patsexp (Pvar s) = SEXSTR (explode s)`;
+   `patsexp (Plit l) = listsexp [SX_SYM "Plit"; litsexp l]`;
+   `patsexp (Pcon cn ps) = listsexp [SX_SYM "Pcon"; optsexp
+  (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
+   `patsexp (Pas p i) = listsexp [SX_SYM "Pas"; patsexp p; SEXSTR
+  (explode i)]`;
+   `patsexp (Pref p) = listsexp [SX_SYM "Pref"; patsexp p]`;
+   `patsexp (ast_Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp p;
+  typesexp t]`];;
 
 let testsexp_def = cake_define
   `testsexp (EQUAL) = SX_SYM "Equal" /\
@@ -846,79 +834,80 @@ let prim_typesexp_def = cake_define
    prim_typesexp (WordT W64) = SX_SYM "Word64T" /\
    prim_typesexp ast_Float64T = SX_SYM "Float64T"`;;
 
-let opsexp_def = cake_define
-  `(opsexp (Shift ast_W8 Lsl n) = SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM
-  n)) /\
-   (opsexp (Shift ast_W8 Lsr n) = SX_CONS (SX_SYM "Shift8Lsr")
-     (SX_NUM n)) /\
-   (opsexp (Shift ast_W8 Asr n) = SX_CONS (SX_SYM "Shift8Asr")
-     (SX_NUM n)) /\
-   (opsexp (Shift ast_W8 Ror n) = SX_CONS (SX_SYM "Shift8Ror")
-     (SX_NUM n)) /\
-   (opsexp (Shift W64 Lsl n) = SX_CONS (SX_SYM "Shift64Lsl") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Lsr n) = SX_CONS (SX_SYM "Shift64Lsr") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Asr n) = SX_CONS (SX_SYM "Shift64Asr") (SX_NUM
-     n)) /\
-   (opsexp (Shift W64 Ror n) = SX_CONS (SX_SYM "Shift64Ror") (SX_NUM
-     n)) /\
-   (opsexp ast_Equality = SX_SYM "Equality") /\
-   (opsexp ast_Opapp = SX_SYM "Opapp") /\
-   (opsexp ast_Opassign = SX_SYM "Opassign") /\
-   (opsexp ast_Opref = SX_SYM "Opref") /\
-   (opsexp ast_Opderef = SX_SYM "Opderef") /\
-   (opsexp ast_Aw8alloc = SX_SYM "Aw8alloc") /\
-   (opsexp ast_Aw8sub = SX_SYM "Aw8sub") /\
-   (opsexp ast_Aw8length = SX_SYM "Aw8length") /\
-   (opsexp ast_Aw8update = SX_SYM "Aw8update") /\
-   (opsexp ast_Aw8sub_unsafe = SX_SYM "Aw8subunsafe") /\
-   (opsexp ast_Aw8update_unsafe = SX_SYM "Aw8updateunsafe") /\
-   (opsexp ast_CopyStrStr = SX_SYM "CopyStrStr") /\
-   (opsexp ast_CopyStrAw8 = SX_SYM "CopyStrAw8") /\
-   (opsexp ast_CopyAw8Str = SX_SYM "CopyAw8Str") /\
-   (opsexp ast_CopyAw8Aw8 = SX_SYM "CopyAw8Aw8") /\
-   (opsexp ast_XorAw8Str_unsafe = SX_SYM "XorAw8Strunsafe") /\
-   (opsexp ast_Implode = SX_SYM "Implode") /\
-   (opsexp ast_Explode = SX_SYM "Explode") /\
-   (opsexp ast_Strsub = SX_SYM "Strsub") /\
-   (opsexp ast_Strlen = SX_SYM "Strlen") /\
-   (opsexp ast_Strcat = SX_SYM "Strcat") /\
-   (opsexp ast_VfromList = SX_SYM "VfromList") /\
-   (opsexp ast_Vsub = SX_SYM "Vsub") /\
-   (opsexp ast_Vsub_unsafe = SX_SYM "Vsubunsafe") /\
-   (opsexp ast_Vlength = SX_SYM "Vlength") /\
-   (opsexp ListAppend = SX_SYM "ListAppend") /\
-   (opsexp ast_Aalloc = SX_SYM "Aalloc") /\
-   (opsexp ast_AallocEmpty = SX_SYM "AallocEmpty") /\
-   (opsexp ast_AallocFixed = SX_SYM "AallocFixed") /\
-   (opsexp ast_Asub = SX_SYM "Asub") /\
-   (opsexp ast_Alength = SX_SYM "Alength") /\
-   (opsexp ast_Aupdate = SX_SYM "Aupdate") /\
-   (opsexp ast_Asub_unsafe = SX_SYM "Asubunsafe") /\
-   (opsexp ast_Aupdate_unsafe = SX_SYM "Aupdateunsafe") /\
-   (opsexp ConfigGC = SX_SYM "ConfigGC") /\
-   (opsexp ast_Eval = SX_SYM "Eval") /\
-   (opsexp ast_Env_id = SX_SYM "Envid") /\
-   (opsexp (FFI s) = SX_CONS (SX_SYM "FFI") (SEXSTR (explode s))) /\
-   (opsexp (ThunkOp ForceThunk) = SX_SYM "ForceThunk") /\
-   (opsexp (ThunkOp (AllocThunk m)) =
-     SX_CONS (SX_SYM "AllocThunk") (SX_SYM (encode_thunk_mode m))) /\
-   (opsexp (ThunkOp (UpdateThunk m)) =
-     SX_CONS (SX_SYM "UpdateThunk") (SX_SYM (encode_thunk_mode m)))
-       /\
-   (opsexp (Arith a prim_type) =
-     SX_CONS (SX_SYM "Arith")
-     (SX_CONS (arithsexp a)
-             (prim_typesexp prim_type))) /\
-   (opsexp (ast_FromTo ty1 ty2) =
-     SX_CONS (SX_SYM "FromTo")
-     (SX_CONS (prim_typesexp ty1)
-             (prim_typesexp ty2))) /\
-   (opsexp (Test test prim_type) =
-     SX_CONS (SX_SYM "Test")
-     (SX_CONS (testsexp test)
-             (prim_typesexp prim_type)))`;;
+let opsexp_def = cake_define_list
+  [`opsexp (Shift ast_W8 Lsl n) = SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM
+  n)`;
+   `opsexp (Shift ast_W8 Lsr n) = SX_CONS (SX_SYM "Shift8Lsr") (SX_NUM
+  n)`;
+   `opsexp (Shift ast_W8 Asr n) = SX_CONS (SX_SYM "Shift8Asr") (SX_NUM
+  n)`;
+   `opsexp (Shift ast_W8 Ror n) = SX_CONS (SX_SYM "Shift8Ror") (SX_NUM
+  n)`;
+   `opsexp (Shift W64 Lsl n) = SX_CONS (SX_SYM "Shift64Lsl") (SX_NUM
+  n)`;
+   `opsexp (Shift W64 Lsr n) = SX_CONS (SX_SYM "Shift64Lsr") (SX_NUM
+  n)`;
+   `opsexp (Shift W64 Asr n) = SX_CONS (SX_SYM "Shift64Asr") (SX_NUM
+  n)`;
+   `opsexp (Shift W64 Ror n) = SX_CONS (SX_SYM "Shift64Ror") (SX_NUM
+  n)`;
+   `opsexp ast_Equality = SX_SYM "Equality"`;
+   `opsexp ast_Opapp = SX_SYM "Opapp"`;
+   `opsexp ast_Opassign = SX_SYM "Opassign"`;
+   `opsexp ast_Opref = SX_SYM "Opref"`;
+   `opsexp ast_Opderef = SX_SYM "Opderef"`;
+   `opsexp ast_Aw8alloc = SX_SYM "Aw8alloc"`;
+   `opsexp ast_Aw8sub = SX_SYM "Aw8sub"`;
+   `opsexp ast_Aw8length = SX_SYM "Aw8length"`;
+   `opsexp ast_Aw8update = SX_SYM "Aw8update"`;
+   `opsexp ast_Aw8sub_unsafe = SX_SYM "Aw8subunsafe"`;
+   `opsexp ast_Aw8update_unsafe = SX_SYM "Aw8updateunsafe"`;
+   `opsexp ast_CopyStrStr = SX_SYM "CopyStrStr"`;
+   `opsexp ast_CopyStrAw8 = SX_SYM "CopyStrAw8"`;
+   `opsexp ast_CopyAw8Str = SX_SYM "CopyAw8Str"`;
+   `opsexp ast_CopyAw8Aw8 = SX_SYM "CopyAw8Aw8"`;
+   `opsexp ast_XorAw8Str_unsafe = SX_SYM "XorAw8Strunsafe"`;
+   `opsexp ast_Implode = SX_SYM "Implode"`;
+   `opsexp ast_Explode = SX_SYM "Explode"`;
+   `opsexp ast_Strsub = SX_SYM "Strsub"`;
+   `opsexp ast_Strlen = SX_SYM "Strlen"`;
+   `opsexp ast_Strcat = SX_SYM "Strcat"`;
+   `opsexp ast_VfromList = SX_SYM "VfromList"`;
+   `opsexp ast_Vsub = SX_SYM "Vsub"`;
+   `opsexp ast_Vsub_unsafe = SX_SYM "Vsubunsafe"`;
+   `opsexp ast_Vlength = SX_SYM "Vlength"`;
+   `opsexp ListAppend = SX_SYM "ListAppend"`;
+   `opsexp ast_Aalloc = SX_SYM "Aalloc"`;
+   `opsexp ast_AallocEmpty = SX_SYM "AallocEmpty"`;
+   `opsexp ast_AallocFixed = SX_SYM "AallocFixed"`;
+   `opsexp ast_Asub = SX_SYM "Asub"`;
+   `opsexp ast_Alength = SX_SYM "Alength"`;
+   `opsexp ast_Aupdate = SX_SYM "Aupdate"`;
+   `opsexp ast_Asub_unsafe = SX_SYM "Asubunsafe"`;
+   `opsexp ast_Aupdate_unsafe = SX_SYM "Aupdateunsafe"`;
+   `opsexp ConfigGC = SX_SYM "ConfigGC"`;
+   `opsexp ast_Eval = SX_SYM "Eval"`;
+   `opsexp ast_Env_id = SX_SYM "Envid"`;
+   `opsexp (FFI s) = SX_CONS (SX_SYM "FFI") (SEXSTR (explode s))`;
+   `opsexp (ThunkOp ForceThunk) = SX_SYM "ForceThunk"`;
+   `opsexp (ThunkOp (AllocThunk m)) =
+        SX_CONS (SX_SYM "AllocThunk") (SX_SYM (encode_thunk_mode
+          m))`;
+   `opsexp (ThunkOp (UpdateThunk m)) =
+        SX_CONS (SX_SYM "UpdateThunk") (SX_SYM (encode_thunk_mode
+          m))`;
+   `opsexp (Arith a prim_type) =
+        SX_CONS (SX_SYM "Arith")
+        (SX_CONS (arithsexp a)
+                (prim_typesexp prim_type))`;
+   `opsexp (ast_FromTo ty1 ty2) =
+        SX_CONS (SX_SYM "FromTo")
+        (SX_CONS (prim_typesexp ty1)
+                (prim_typesexp ty2))`;
+   `opsexp (Test test prim_type) =
+        SX_CONS (SX_SYM "Test")
+        (SX_CONS (testsexp test)
+                (prim_typesexp prim_type))`];;
 
 let logsexp_def = cake_define
   `logsexp Andalso = SX_SYM "Andalso" /\
@@ -932,42 +921,43 @@ let locnsexp_def = cake_define
 let locssexp_def = cake_define
   `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
 
-let expsexp_def = cake_define
-  `expsexp (Raise e) = (SX_SYM "Raise"; expsexp e) /\
-   expsexp (Handle e pes) =
-     (SX_SYM "Handle"; expsexp e;
-      listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e)) pes))
-        /\
-   expsexp (Lit l) = listsexp [SX_SYM "Lit"; litsexp l] /\
-   expsexp (Con cn es) =
-     listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
-               listsexp (MAP expsexp es)] /\
-   expsexp (Var id) = listsexp [SX_SYM "Var"; idsexp id] /\
-   expsexp (Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode x);
-     expsexp e] /\
-   expsexp (App op es) =
-     listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp es)] /\
-   expsexp (ast_Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp
-     e1; expsexp e2) /\
-   expsexp (If e1 e2 e3) = (SX_SYM "If"; expsexp e1; expsexp e2;
-     expsexp e3) /\
-   expsexp (Mat e pes) =
-     (SX_SYM "Mat"; expsexp e;
-      listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e)) pes))
-        /\
-   expsexp (Let so e1 e2) =
-     (SX_SYM "Let"; optsexp (OPTION_MAP (SEXSTR ∘ explode) so);
-       expsexp e1; expsexp e2) /\
-   expsexp (Letrec funs e) =
-   (SX_SYM "Letrec";
-    listsexp (MAP (λ(x,y,z). SX_CONS (SEXSTR (explode x))
+let expsexp_def = cake_define_list
+  [`expsexp (Raise e) = (SX_SYM "Raise"; expsexp e)`;
+   `expsexp (Handle e pes) =
+      (SX_SYM "Handle"; expsexp e;
+       listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
+         pes))`;
+   `expsexp (Lit l) = listsexp [SX_SYM "Lit"; litsexp l]`;
+   `expsexp (Con cn es) =
+      listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
+                listsexp (MAP expsexp es)]`;
+   `expsexp (Var id) = listsexp [SX_SYM "Var"; idsexp id]`;
+   `expsexp (Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode x);
+  expsexp e]`;
+   `expsexp (App op es) =
+      listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
+        es)]`;
+   `expsexp (ast_Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp
+  e1; expsexp e2)`;
+   `expsexp (If e1 e2 e3) = (SX_SYM "If"; expsexp e1; expsexp e2;
+  expsexp e3)`;
+   `expsexp (Mat e pes) =
+      (SX_SYM "Mat"; expsexp e;
+       listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
+         pes))`;
+   `expsexp (Let so e1 e2) =
+      (SX_SYM "Let"; optsexp (OPTION_MAP (SEXSTR ∘ explode) so);
+        expsexp e1; expsexp e2)`;
+   `expsexp (Letrec funs e) =
+    (SX_SYM "Letrec";
+     listsexp (MAP (λ(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp
                                 z))) funs);
-    expsexp e) /\
-   expsexp (ast_Tannot e t) = (SX_SYM "Tannot"; expsexp e; typesexp
-     t) /\
-   expsexp (ast_Lannot e loc) = (SX_SYM "Lannot"; expsexp e;
-     locssexp loc)`;;
+     expsexp e)`;
+   `expsexp (ast_Tannot e t) = (SX_SYM "Tannot"; expsexp e; typesexp
+  t)`;
+   `expsexp (ast_Lannot e loc) = (SX_SYM "Lannot"; expsexp e; locssexp
+  loc)`];;
 
 let type_defsexp_def = cake_define
   `type_defsexp = listsexp o
@@ -977,32 +967,32 @@ let type_defsexp_def = cake_define
            (listsexp (MAP (\(y,ts). SX_CONS (SEXSTR (explode y))
              (listsexp (MAP typesexp ts))) ls))))`;;
 
-let decsexp_def = cake_define
-  `decsexp (Dlet locs p e) =
-     (SX_SYM "Dlet"; locssexp locs; patsexp p; expsexp e) /\
-   decsexp (Dletrec locs funs) =
-      listsexp [
-          SX_SYM "Dletrec";
-          locssexp locs;
-          listsexp
-            (MAP (\(f,x,e). SX_CONS (SEXSTR (explode f)) (SX_CONS
-              (SEXSTR (explode x)) (expsexp e)))
-             funs)] /\
-   decsexp (Dtype locs td) = (SX_SYM "Dtype"; locssexp locs;
-     type_defsexp td) /\
-   decsexp (Dtabbrev locs ns x t) = (SX_SYM "Dtabbrev"; locssexp
-     locs; listsexp (MAP (SEXSTR ∘ explode) ns); SEXSTR (explode x);
-     typesexp t) /\
-   decsexp (Denv name) = (SX_SYM "Denv"; SEXSTR (explode name)) /\
-   decsexp (Dexn locs x ts) =
-     (SX_SYM "Dexn"; locssexp locs; SEXSTR (explode x); listsexp (MAP
-       typesexp ts)) /\
-   decsexp (Dmod name decs) =
-     (SX_SYM "Dmod"; SEXSTR (explode name); listsexp (MAP decsexp
-       decs)) /\
-   decsexp (Dlocal ldecs decs) =
-     listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
-               listsexp (MAP decsexp decs)]`;;
+let decsexp_def = cake_define_list
+  [`decsexp (Dlet locs p e) =
+      (SX_SYM "Dlet"; locssexp locs; patsexp p; expsexp e)`;
+   `decsexp (Dletrec locs funs) =
+       listsexp [
+           SX_SYM "Dletrec";
+           locssexp locs;
+           listsexp
+             (MAP (\(f,x,e). SX_CONS (SEXSTR (explode f)) (SX_CONS
+               (SEXSTR (explode x)) (expsexp e)))
+              funs)]`;
+   `decsexp (Dtype locs td) = (SX_SYM "Dtype"; locssexp locs;
+  type_defsexp td)`;
+   `decsexp (Dtabbrev locs ns x t) = (SX_SYM "Dtabbrev"; locssexp
+  locs; listsexp (MAP (SEXSTR ∘ explode) ns); SEXSTR (explode x);
+  typesexp t)`;
+   `decsexp (Denv name) = (SX_SYM "Denv"; SEXSTR (explode name))`;
+   `decsexp (Dexn locs x ts) =
+      (SX_SYM "Dexn"; locssexp locs; SEXSTR (explode x); listsexp
+        (MAP typesexp ts))`;
+   `decsexp (Dmod name decs) =
+      (SX_SYM "Dmod"; SEXSTR (explode name); listsexp (MAP decsexp
+        decs))`;
+   `decsexp (Dlocal ldecs decs) =
+      listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
+                listsexp (MAP decsexp decs)]`];;
 
 (* round trip *)
 

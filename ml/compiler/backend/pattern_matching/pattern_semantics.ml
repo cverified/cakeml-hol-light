@@ -8,14 +8,8 @@
   pattern-match compiler.
 *)
 
-needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi_tailrec.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/word_depth.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 new_type_abbrev("kind",`: num`);;
@@ -125,7 +119,7 @@ let match_def = cake_define
      (match pmatch refs p v with
         PMatchSuccess ->
           (match match refs rows v with
-            NONE -> NONE | SOME _7 -> SOME (MatchSuccess e)) |
+            NONE -> NONE | SOME _8 -> SOME (MatchSuccess e)) |
               PMatchFailure -> match refs rows v | PTypeFailure ->
               NONE))`;;
 
@@ -138,7 +132,7 @@ let dt_test_def = cake_define
      SOME (t = c /\ l = LENGTH args)
       | ((pattern_semantics_LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
-      | (_8,_9) -> NONE`;;
+      | (_9,_10) -> NONE`;;
 
 let app_pos_def = cake_define
   `app_pos refs x2 v =
@@ -151,28 +145,28 @@ let app_pos_def = cake_define
           app_pos refs pos x
         | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs))) ->
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
-        | ((Pos _10 _11),_12) -> NONE`;;
+        | ((Pos _11 _12),_13) -> NONE`;;
 
-let dt_eval_guard_def = cake_define
-  `(dt_eval_guard refs v pattern_semantics_True =
-      SOME T) /\
-   (dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
-      (match app_pos refs pos v with NONE -> NONE | SOME x -> dt_test
-        test x)) /\
-   (dt_eval_guard refs v (Not g) =
-      (match dt_eval_guard refs v g with NONE -> NONE | SOME b ->
-        SOME (~b))) /\
-   (dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
-      (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
-        dt_eval_guard refs v g2 | SOME F -> SOME F)) /\
-   (dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
-      (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
-        SOME T | SOME F -> dt_eval_guard refs v g2))`;;
+let dt_eval_guard_def = cake_define_list
+  [`dt_eval_guard refs v pattern_semantics_True =
+         SOME T`;
+   `dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
+         (match app_pos refs pos v with NONE -> NONE | SOME x ->
+           dt_test test x)`;
+   `dt_eval_guard refs v (Not g) =
+         (match dt_eval_guard refs v g with NONE -> NONE | SOME b
+           -> SOME (~b))`;
+   `dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
+         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T
+           -> dt_eval_guard refs v g2 | SOME F -> SOME F)`;
+   `dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
+         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T
+           -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
 let dt_eval_def = cake_define
-  `(dt_eval refs _13 (Leaf k) = SOME (MatchSuccess k)) /\
-   (dt_eval refs _14 Fail = SOME (MatchFailure)) /\
-   (dt_eval refs _15 pattern_semantics_TypeFail = NONE) /\
+  `(dt_eval refs _14 (Leaf k) = SOME (MatchSuccess k)) /\
+   (dt_eval refs _15 Fail = SOME (MatchFailure)) /\
+   (dt_eval refs _16 pattern_semantics_TypeFail = NONE) /\
    (dt_eval refs v (If guard' dt1 dt2) =
       (match dt_eval_guard refs v guard' with NONE -> NONE | SOME
         b -> dt_eval refs v (if b then dt1 else dt2)))`;;

@@ -13,7 +13,6 @@
 
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "misc/misc.ml";;
-needs "semantics/typeSystem.ml";;
 
 (* Non-deterministic algorithm *)
 

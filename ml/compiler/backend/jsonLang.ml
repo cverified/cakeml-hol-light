@@ -13,8 +13,6 @@
 
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/bvl.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "misc/misc.ml";;
 
 let obj_INDUCT,obj_RECURSION = define_datatype

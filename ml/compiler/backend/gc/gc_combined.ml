@@ -13,9 +13,9 @@ needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
+needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 let gen_state_INDUCT,gen_state_RECURSION = define_datatype
   "gen_state = GenState (num) (num list)";;
@@ -25,15 +25,17 @@ let make_partial_conf_def = cake_define
      mk_? (?_limit conf) (?_isRef conf) (HD gen_starts) rs`;;
 
 let gc_combined_def = cake_define
-  `gc_combined conf None (roots,heap,(gs:gen_state),_2,_3) =
-     (roots,heap,0,0,gs,T) /\
-   gc_combined conf Simple (roots,heap,gs,_4,_5) =
+  `gc_combined conf x2 x3 =
+      match (x2,x3) with
+        (None,(roots,heap,(gs:gen_state),_2,_3)) ->
+     (roots,heap,0,0,gs,T)
+      | (Simple,(roots,heap,gs,_4,_5)) ->
      (let (roots,heap,a,c) = full_gc (roots,heap,?_limit conf) in
         (roots,heap ++ heap_expand (?_limit conf - a),a,?_limit conf
-          - a,gs,c)) /\
-   gc_combined conf (data_to_word_Generational limits)
-     (roots,heap,gs,rs,do_partial) =
-     (if do_partial then
+          - a,gs,c))
+      | ((data_to_word_Generational
+        limits),(roots,heap,gs,rs,do_partial)) ->
+     if do_partial then
        (let partial_conf = make_partial_conf conf gs rs in
         let (roots,state) = partial_gc partial_conf (roots,heap) in
           (roots,gc_state_old state ++ gc_state_h1 state ++
@@ -45,4 +47,4 @@ let gc_combined_def = cake_define
           (roots,gc_state_h1 state ++ heap_expand (gc_state_n state)
             ++ gc_state_r1 state,gc_state_a
            state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
-             state)) limits),gc_state_ok state)))`;;
+             state)) limits),gc_state_ok state))`;;

@@ -14,18 +14,12 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
-needs "compiler/backend/clos_op.ml";;
-needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/data_live.ml";;
-needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flatLang.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 let dest_pat_def = cake_define
   `dest_pat x1 =
@@ -362,7 +356,7 @@ let compile_def = cake_define_wf
    (flat_to_clos_compile m [flatLang_Var_local t v] = [Var t (findi
      (SOME v) m)]) /\
    (flat_to_clos_compile m [Con t n es] =
-      (let tag = (match n with SOME (t,_18) -> t | _19 -> 0) in
+      (let tag = (match n with SOME (t,_21) -> t | _22 -> 0) in
         [SmartCons t tag (flat_to_clos_compile m (REVERSE es))])) /\
    (flat_to_clos_compile m [App t op es] =
       (match dest_nop op es with SOME e -> flat_to_clos_compile m [e]
@@ -383,7 +377,7 @@ let compile_def = cake_define_wf
    (flat_to_clos_compile m [Handle t e pes] =
       (match dest_pat pes with SOME (v,h) -> [Handle t (HD
         (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile (SOME v
-        :: m) [h]))] | _20 -> flat_to_clos_compile m [e])) /\
+        :: m) [h]))] | _23 -> flat_to_clos_compile m [e])) /\
    (flat_to_clos_compile m [Letrec t funs e] =
       (let new_m = MAP (\n. SOME (FST n)) funs ++ m in
         [Letrec (MAP (\n. join_strings t (FST n)) funs) NONE NONE

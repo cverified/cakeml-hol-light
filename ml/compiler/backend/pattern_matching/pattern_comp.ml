@@ -86,24 +86,21 @@ let get_pos_def = cake_define
   `get_pos [] = EmptyPos /\
    get_pos (n :: ns) = Pos n (get_pos ns)`;;
 
-(* HOL4 termination: *)
-let pat_to_guard_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_8,p) -> pat_size p | INR (_9,k,p) ->
-  list_size pat_size p)`
-  `pat_to_guard l Any = pattern_semantics_True /\
-   pat_to_guard l (Lit r) = pattern_semantics_PosTest (get_pos
-     (REVERSE l)) (pattern_semantics_LitEq r) /\
-   pat_to_guard l (Cons NONE pats) = pats_to_guard l 0 pats /\
-   pat_to_guard l (Cons (SOME (t,_7)) pats) =
-     mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
-       (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats) /\
-   pat_to_guard l (Or p1 p2) = mk_Disj (pat_to_guard l p1)
-     (pat_to_guard l p2) /\
-   pat_to_guard l (Ref p) = pat_to_guard (0 :: l) p /\
-   pats_to_guard l k [] = pattern_semantics_True /\
-   pats_to_guard l k [p] = pat_to_guard (k :: l) p /\
-   pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
-     (pats_to_guard l (k + 1) ps)`;;
+let pat_to_guard_def = cake_define_list
+  [`pat_to_guard l Any = pattern_semantics_True`;
+   `pat_to_guard l (Lit r) = pattern_semantics_PosTest (get_pos
+  (REVERSE l)) (pattern_semantics_LitEq r)`;
+   `pat_to_guard l (Cons NONE pats) = pats_to_guard l 0 pats`;
+   `pat_to_guard l (Cons (SOME (t,_7)) pats) =
+      mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
+        (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats)`;
+   `pat_to_guard l (Or p1 p2) = mk_Disj (pat_to_guard l p1)
+  (pat_to_guard l p2)`;
+   `pat_to_guard l (Ref p) = pat_to_guard (0 :: l) p`;
+   `pats_to_guard l k [] = pattern_semantics_True`;
+   `pats_to_guard l k [p] = pat_to_guard (k :: l) p`;
+   `pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
+  (pats_to_guard l (k + 1) ps)`];;
 
 let pats_to_code_def = cake_define
   `pats_to_code [] = Fail /\

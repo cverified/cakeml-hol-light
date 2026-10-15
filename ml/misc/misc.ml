@@ -27,9 +27,9 @@ needs "lib/ternaryComparisons.ml";;
    relation toto bit words string address path res_quan *)
 
 (* Total version of THE *)
-let the_def = cake_define
-  `the _1 (SOME x) = x /\
-   the x NONE = x`;;
+let the_def = cake_define_list
+  [`the _1 (SOME x) = x`;
+   `the x NONE = x`];;
 
 let opt_bind_def = cake_define
   `opt_bind n v e =
@@ -215,10 +215,10 @@ let UPDATE_LIST_def = cake_define
      None =  *)
 
 (* should be using indexedLists$findi, or INDEX_OF *)
-let find_index_def = cake_define
-  `(find_index _2 [] _3 = NONE) /\
-   (find_index y (x :: xs) n = (if x = y then SOME n else
-     find_index y xs (n + 1)))`;;
+let find_index_def = cake_define_list
+  [`find_index _2 [] _3 = NONE`;
+   `find_index y (x :: xs) n = (if x = y then SOME n else find_index y
+  xs (n + 1))`];;
 
 (* HOL4 ML code, not ported:
 val ALOOKUP_find_index_SOME = Q.prove(
@@ -539,29 +539,29 @@ let eq_shape_def = cake_define
         t2 u2)
       | (_8,_9) -> F`;;
 
-let copy_shape_def = cake_define
-  `copy_shape LN LN = LN /\
-   copy_shape LN (LS y) = LN /\
-   copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN
-     t2) /\
-   copy_shape LN (BS t1 y t2) = LN /\
-   copy_shape (LS x) LN = LS x /\
-   copy_shape (LS x) (LS y) = LS x /\
-   copy_shape (LS x) (BN t1 t2) = LS x /\
-   copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x
-     (copy_shape LN t2) /\
-   copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else
-     BN u1 u2) /\
-   copy_shape (BN u1 u2) (LS y) = BN u1 u2 /\
-   copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1)
-     (copy_shape u2 t2) /\
-   copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2 /\
-   copy_shape (BS u1 x u2) LN = BS u1 x u2 /\
-   copy_shape (BS u1 x u2) (LS y) =
-      (if domain (BN u1 u2) = {} then LS x else BS u1 x u2) /\
-   copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2 /\
-   copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
-     (copy_shape u2 t2)`;;
+let copy_shape_def = cake_define_list
+  [`copy_shape LN LN = LN`;
+   `copy_shape LN (LS y) = LN`;
+   `copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN
+  t2)`;
+   `copy_shape LN (BS t1 y t2) = LN`;
+   `copy_shape (LS x) LN = LS x`;
+   `copy_shape (LS x) (LS y) = LS x`;
+   `copy_shape (LS x) (BN t1 t2) = LS x`;
+   `copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x
+  (copy_shape LN t2)`;
+   `copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else
+  BN u1 u2)`;
+   `copy_shape (BN u1 u2) (LS y) = BN u1 u2`;
+   `copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1)
+  (copy_shape u2 t2)`;
+   `copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2`;
+   `copy_shape (BS u1 x u2) LN = BS u1 x u2`;
+   `copy_shape (BS u1 x u2) (LS y) =
+       (if domain (BN u1 u2) = {} then LS x else BS u1 x u2)`;
+   `copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2`;
+   `copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
+  (copy_shape u2 t2)`];;
 
 (* / TODO *)
 

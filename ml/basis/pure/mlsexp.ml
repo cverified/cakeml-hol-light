@@ -9,12 +9,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/clos_known.ml";;
-needs "compiler/backend/jsonLang.ml";;
 needs "misc/misc.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (*--------------------------------------------------------------*
    Definition of s-expression
@@ -198,17 +193,17 @@ let get_next_size_def = cake_define
       | (mlsexp_Parenthesis x) -> get_next_size x + 2
       | _7 -> 0`;;
 
-let annotate_def = cake_define
-  `mlsexp_annotate (String s) = mlsexp_Size (strlen s) (String s) /\
-   mlsexp_annotate (mlsexp_Parenthesis b) =
-     (let b = mlsexp_annotate b in
-        mlsexp_Size (get_size b + 2) (mlsexp_Parenthesis b)) /\
-   mlsexp_annotate (Append b1 n b2) =
-     (let b1 = mlsexp_annotate b1 in
-      let b2 = mlsexp_annotate b2 in
-         (Append b1 n b2)) /\
-   mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n
-     (mlsexp_annotate b)`;;
+let annotate_def = cake_define_list
+  [`mlsexp_annotate (String s) = mlsexp_Size (strlen s) (String s)`;
+   `mlsexp_annotate (mlsexp_Parenthesis b) =
+      (let b = mlsexp_annotate b in
+         mlsexp_Size (get_size b + 2) (mlsexp_Parenthesis b))`;
+   `mlsexp_annotate (Append b1 n b2) =
+      (let b1 = mlsexp_annotate b1 in
+       let b2 = mlsexp_annotate b2 in
+          (Append b1 n b2))`;
+   `mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n (mlsexp_annotate
+  b)`];;
 hol4_overload "annotate" "mlsexp_annotate";;
 
 let remove_all_def = cake_define
@@ -219,29 +214,29 @@ let remove_all_def = cake_define
      (remove_all v3) /\
    remove_all (mlsexp_Size v4 v5) = remove_all v5`;;
 
-let smart_remove_def = cake_define
-  `smart_remove i k (mlsexp_Size n b) =
-     (if k + n < 70 then remove_all b else smart_remove i k b) /\
-   smart_remove i k (mlsexp_Parenthesis v) = mlsexp_Parenthesis
-     (smart_remove (i + 1) (k + 1) v) /\
-   smart_remove i k (String v1) = String v1 /\
-   smart_remove i k (Append v2 b v3) =
-     (let n2 = get_size v2 in
-     let n3 = get_next_size v3 in
-       if k + n2 + n3 < 50 then
-         Append (smart_remove i k v2) F (smart_remove i (k + n2) v3)
-           else
-         Append (smart_remove i k v2) T (smart_remove i i v3))`;;
+let smart_remove_def = cake_define_list
+  [`smart_remove i k (mlsexp_Size n b) =
+      (if k + n < 70 then remove_all b else smart_remove i k b)`;
+   `smart_remove i k (mlsexp_Parenthesis v) = mlsexp_Parenthesis
+  (smart_remove (i + 1) (k + 1) v)`;
+   `smart_remove i k (String v1) = String v1`;
+   `smart_remove i k (Append v2 b v3) =
+      (let n2 = get_size v2 in
+      let n3 = get_next_size v3 in
+        if k + n2 + n3 < 50 then
+          Append (smart_remove i k v2) F (smart_remove i (k + n2)
+            v3) else
+          Append (smart_remove i k v2) T (smart_remove i i v3))`];;
 
-let flatten_def = cake_define
-  `flatten indent (mlsexp_Size n p) s = flatten indent p s /\
-   flatten indent (mlsexp_Parenthesis p) s =
-     (implode "(") :: flatten (concat [indent; (implode "   ")]) p
-       ((implode ")") :: s) /\
-   flatten indent (String t) s = t :: s /\
-   flatten indent (Append p1 b p2) s =
-     flatten indent p1 ((if b then indent else (implode " ")) ::
-       flatten indent p2 s)`;;
+let flatten_def = cake_define_list
+  [`flatten indent (mlsexp_Size n p) s = flatten indent p s`;
+   `flatten indent (mlsexp_Parenthesis p) s =
+      (implode "(") :: flatten (concat [indent; (implode "   ")])
+        p ((implode ")") :: s)`;
+   `flatten indent (String t) s = t :: s`;
+   `flatten indent (Append p1 b p2) s =
+      flatten indent p1 ((if b then indent else (implode " ")) ::
+        flatten indent p2 s)`];;
 
 let str_tree_to_strs_def = cake_define
   `str_tree_to_strs end v = flatten (implode "\n") (smart_remove 0 0

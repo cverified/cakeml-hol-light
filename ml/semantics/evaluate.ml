@@ -7,7 +7,6 @@
   Functional big-step semantics for evaluation of CakeML programs.
 *)
 
-needs "lib/location.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;

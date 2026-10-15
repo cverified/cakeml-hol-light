@@ -15,7 +15,6 @@ needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
-needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/dataLang.ml";;
@@ -24,7 +23,6 @@ needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/flat_pattern.ml";;
-needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
@@ -39,10 +37,8 @@ needs "compiler/backend/word_remove.ml";;
 needs "compiler/backend/word_to_word.ml";;
 needs "compiler/backend/word_unreach.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 
 let any_prog_INDUCT,any_prog_RECURSION = define_datatype

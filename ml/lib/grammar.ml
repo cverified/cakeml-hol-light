@@ -25,16 +25,16 @@ let parsetree_INDUCT,parsetree_RECURSION = define_datatype
   "parsetree = Lf (('a,'b)grammar_symbol#'locs) | Nd (('b+num)#'locs) \
    (parsetree list)";;
 
-let ptree_loc_def = cake_define
-  `ptree_loc (Lf (_3,l)) = l /\
-   ptree_loc (Nd (_4,l) _5) = l`;;
+let ptree_loc_def = cake_define_list
+  [`ptree_loc (Lf (_3,l)) = l`;
+   `ptree_loc (Nd (_4,l) _5) = l`];;
 
 let ptree_list_loc_def = cake_define
   `ptree_list_loc l = merge_list_locs (MAP ptree_loc l)`;;
 
-let ptree_head_def = cake_define
-  `(ptree_head (Lf (tok',l)) = tok') /\
-   (ptree_head (Nd (nt',l) children) = grammar_NT nt')`;;
+let ptree_head_def = cake_define_list
+  [`ptree_head (Lf (tok',l)) = tok'`;
+   `ptree_head (Nd (nt',l) children) = grammar_NT nt'`];;
 
 let valid_ptree_def = cake_define
   `(valid_ptree G (Lf _6) <=> T) /\
@@ -47,11 +47,11 @@ let real_fringe_def = cake_define
   `(real_fringe (Lf t) = [t]) /\
    (real_fringe (Nd n ptl) = FLAT (MAP real_fringe ptl))`;;
 
-let valid_locs_def = cake_define
-  `(valid_locs (Lf _7) <=> T) /\
-   (valid_locs (Nd (_8,l) children) <=>
-      l = merge_list_locs (MAP ptree_loc children) /\
-      (!pt. MEM pt children ==> valid_locs pt))`;;
+let valid_locs_def = cake_define_list
+  [`valid_locs (Lf _7) <=> T`;
+   `valid_locs (Nd (_8,l) children) <=>
+         l = merge_list_locs (MAP ptree_loc children) /\
+         (!pt. MEM pt children ==> valid_locs pt)`];;
 
 let valid_lptree_def = cake_define
   `valid_lptree G pt <=> valid_locs pt /\ valid_ptree G pt`;;

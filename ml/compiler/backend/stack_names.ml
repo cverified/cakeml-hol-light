@@ -11,7 +11,6 @@
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/stack_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;

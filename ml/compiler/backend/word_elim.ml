@@ -17,11 +17,9 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/typeSystem.ml";;
 
 
 let find_word_loc_def = cake_define

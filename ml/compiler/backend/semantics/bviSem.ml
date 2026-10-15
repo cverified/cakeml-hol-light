@@ -9,12 +9,9 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
-needs "compiler/backend/bvi_tmc.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/integer_word.ml";;
@@ -24,7 +21,6 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: backendProps *)
 
 (* HOL4 overload (expanded in the port):
@@ -288,7 +284,7 @@ let evaluate_def = cake_define_wf
                      (Rerr (Rabort Rtimeout_error),?_clock_fupd (K 0)
                        s) else
                      (match bviSem_evaluate ([exp],args,dec_clock 1
-                       s) with (Rerr (Rraise (Ret _24)),s1) -> (Rerr
+                       s) with (Rerr (Rraise (Ret _28)),s1) -> (Rerr
                        (Rabort Rtype_error),s1) | res -> res))))) /\
    (bviSem_evaluate ([Call ticks dest xs handler],env,s1) =
       (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
@@ -304,10 +300,10 @@ let evaluate_def = cake_define_wf
                    s)) with (Rerr (Rraise (Exn v)),s) ->
                       (match handler with SOME x ->
                            (match bviSem_evaluate ([x],v :: env,s)
-                             with (Rerr (Rraise (Ret _25)),s1) -> (Rerr
+                             with (Rerr (Rraise (Ret _29)),s1) -> (Rerr
                              (Rabort Rtype_error),s1) | res -> res) |
                              NONE -> (Rerr (Rraise (Exn v)),s)) | (Rerr
-                             (Rraise _26),s) -> (Rerr (Rabort
+                             (Rraise _30),s) -> (Rerr (Rabort
                              Rtype_error),s) | res -> res)) | res ->
                              res)) /\
    (bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
@@ -319,7 +315,7 @@ let evaluate_def = cake_define_wf
                  Rtimeout_error),?_clock_fupd (K 0) s) else
                  match fix_clock (dec_clock (ticks + 1) s)
                    (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
-                   s)) with (Rval _27,s) -> (Rerr (Rabort
+                   s)) with (Rval _31,s) -> (Rerr (Rabort
                    Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s) ->
                      (if LENGTH ret_vs = rets then bviSem_evaluate
                        ([y],ret_vs ++ env,s) else (Rerr (Rabort
@@ -354,7 +350,7 @@ let semantics_def = cake_define
        ?k s r outcome.
          evaluate (es,[],init k) = (r,s) /\
          (match r with Rerr (Rabort (Rffi_error e)) -> outcome =
-           ffi_FFI_outcome e | Rval _28 -> outcome = Success | _29 -> F)
+           ffi_FFI_outcome e | Rval _32 -> outcome = Success | _33 -> F)
            /\
          res = ffi_Terminate outcome (ffi_state_io_events (?_ffi s)))
            with SOME res -> res | NONE ->

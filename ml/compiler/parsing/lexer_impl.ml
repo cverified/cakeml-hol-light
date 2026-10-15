@@ -10,14 +10,12 @@
   structures, signatures, and between parentheses).
 *)
 
-needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
 needs "misc/misc.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: rich_list *)
 
 (* HOL4 ML code, not ported:

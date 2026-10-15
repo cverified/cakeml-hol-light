@@ -14,19 +14,15 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* for arity-2 Const *) *)
 
@@ -83,7 +79,7 @@ let merge_moves_def = cake_define
          let Rmove = (na',Ly) in
          (Lmove :: seqL,Rmove :: seqR,na' + 4,
                               insert x na' ssa_L',insert x na'
-                                ssa_R')) | _1 ->
+                                ssa_R')) | _2 ->
                                 (seqL,seqR,na',ssa_L',ssa_R')))`;;
 hol4_overload "merge_moves" "word_alloc_merge_moves";;
 
@@ -95,12 +91,12 @@ hol4_overload "merge_moves" "word_alloc_merge_moves";;
   T, INL <- left side
   F, INR <- right side
 *)
-let priority_def = cake_define
-  `(priority NONE b = 1) /\
-   (priority (SOME (INL one)) b =
-     (if b then 2 else 1)) /\
-   (priority (SOME (INR one)) b =
-     (if b then 1 else 2))`;;
+let priority_def = cake_define_list
+  [`priority NONE b = 1`;
+   `priority (SOME (INL one)) b =
+        (if b then 2 else 1)`;
+   `priority (SOME (INR one)) b =
+        (if b then 1 else 2)`];;
 
 (*Separately do the fake moves*)
 let fake_moves_def = cake_define
@@ -120,7 +116,7 @@ let fake_moves_def = cake_define
          (let Lmove = Seq seqL (Move (priority prio T) [(na',Lx)]) in
          let Rmove = Seq seqR (fake_move na') in
          (Lmove,Rmove,na' + 4,insert x na' ssa_L',insert x na'
-           ssa_R')) | _2 -> (seqL,seqR,na',ssa_L',ssa_R')))`;;
+           ssa_R')) | _4 -> (seqL,seqR,na',ssa_L',ssa_R')))`;;
 
 let fix_inconsistencies_def = cake_define
   `fix_inconsistencies prio ssa_L ssa_R na =
@@ -150,7 +146,7 @@ let ssa_cc_trans_inst_def = cake_define
          let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Inst (Arith (asm_Binop bop r1' r2' (Reg r3'))),ssa',na'))
-             | _3 ->
+             | _5 ->
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Inst (Arith (asm_Binop bop r1' r2' ri)),ssa',na'))
@@ -162,7 +158,7 @@ let ssa_cc_trans_inst_def = cake_define
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Seq mov_in (Inst (Arith (Shift
              (backend_common_word_shift) r1' r2' (Reg 8)))),ssa',na')) |
-             _4 ->
+             _6 ->
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Inst (Arith (Shift (backend_common_word_shift) r1' r2'
@@ -349,229 +345,234 @@ let loop_setup_def = cake_define
        list_next_var_rename_move ssa_ext na_ext refresh_ls in
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
-let ssa_cc_trans_def = cake_define
-  `(ssa_cc_trans Skip ssa na lt = (Skip,ssa,na)) /\
-   (ssa_cc_trans (Move pri ls) ssa na lt =
-     (let ls_1 = MAP FST ls in
-     let ls_2 = MAP SND ls in
-     let ren_ls2 = MAP (option_lookup ssa) ls_2 in
-     let (ren_ls1,ssa',na') = list_next_var_rename ls_1 ssa na in
-     let force =
-       FILTER (\(x,y). ~MEM x ls_1) (ZIP (ls_2,ren_ls1)) in
-       (Move pri (ZIP (ren_ls1,ren_ls2)),force_rename force
-         ssa',na'))) /\
-   (ssa_cc_trans (StoreConsts a b c d ws) ssa na lt =
-     (let c1 = option_lookup ssa c in
-     let d1 = option_lookup ssa d in
-     let (d2,ssa',na') = next_var_rename d ssa na in
-     let (c2,ssa'',na'') = next_var_rename c ssa' na' in
-     let prog = Seq ((Move 1) [(4,c1); (6,d1)])
-       (Seq (StoreConsts 0 2 4 6 ws)
-            ((Move 1) [(c2,4); (d2,6)])) in
-     (prog,ssa'',na''))) /\
-   (ssa_cc_trans (Inst i) ssa na lt =
-     (let (i',ssa',na') = ssa_cc_trans_inst i ssa na in
-       (i',ssa',na'))) /\
-   (ssa_cc_trans (Assign num' exp) ssa na lt =
-     (let exp' = ssa_cc_trans_exp ssa exp in
-     let (num',ssa',na') = next_var_rename num' ssa na in
-       (Assign num' exp',ssa',na'))) /\
-   (ssa_cc_trans (Get num' store) ssa na lt =
-     (let (num',ssa',na') = next_var_rename num' ssa na in
-       (Get num' store,ssa',na'))) /\
-   (ssa_cc_trans (Store exp num') ssa na lt =
-     (let exp' = ssa_cc_trans_exp ssa exp in
-     let num' = option_lookup ssa num' in
-       (Store exp' num',ssa,na))) /\
-   (ssa_cc_trans (Seq s1 s2) ssa na lt =
-     (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
-     let (s2',ssa'',na'') = ssa_cc_trans s2 ssa' na' lt in
-       (Seq s1' s2',ssa'',na''))) /\
-   (ssa_cc_trans (wordLang_MustTerminate s1) ssa na lt =
-     (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
-       (wordLang_MustTerminate s1',ssa',na'))) /\
-   (ssa_cc_trans (If cmp r1 ri e2 e3) ssa na lt =
-     (let r1' = option_lookup ssa r1 in
-     let ri' = match ri with Reg r -> Reg (option_lookup ssa r) | Imm
-       v -> Imm v in
-     let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
-     let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
-     let prio = mk_prio e2' e3' in
-     let (e2_cons,e3_cons,na_fin,ssa_fin) =
-       fix_inconsistencies prio ssa2 ssa3 na3 in
-     (If cmp r1' ri' (Seq e2' e2_cons) (Seq e3'
-       e3_cons),ssa_fin,na_fin))) /\
-   (ssa_cc_trans (Alloc num' numset) ssa na lt =
-     (let all_names' = union (FST numset) (SND numset) in
-     let ls = MAP FST (toAList all_names') in
-     let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na +
-       2) ls in
-     let num' = option_lookup ssa' num' in
-     let stack_set = apply_nummaps_key (option_lookup ssa') numset in
-     let ssa_cut = inter ssa' all_names' in
-     let (ret_mov,ssa'',na'') =
-       list_next_var_rename_move ssa_cut (na' + 2) ls in
-     let prog = (Seq (stack_mov)
-                (Seq ((Move 1) [(2,num')])
-                (Seq (Alloc 2 stack_set) (ret_mov)))) in
-     (prog,ssa'',na''))) /\
-   (ssa_cc_trans (Raise num') ssa na lt =
-     (let num' = option_lookup ssa num' in
-     let mov = (Move 1) [(2,num')] in
-     (Seq mov (Raise 2),ssa,na))) /\
-   (ssa_cc_trans (OpCurrHeap b dst src) ssa na lt =
-     (let src' = option_lookup ssa src in
-     let (dst',ssa',na') = next_var_rename dst ssa na in
-       (OpCurrHeap b dst' src',ssa',na'))) /\
-   (ssa_cc_trans (Return num' nums) ssa na lt =
-     (let num' = option_lookup ssa num' in
-     let nums' = MAP (option_lookup ssa) nums in
-     let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
-     let mov = Move 0 (ZIP (rets,nums')) in
-     (Seq mov (Return num' rets),ssa,na))) /\
-   (ssa_cc_trans Tick ssa na lt = (Tick,ssa,na)) /\
-   (ssa_cc_trans (Set n exp) ssa na lt =
-     (let exp' = ssa_cc_trans_exp ssa exp in
-     (Set n exp',ssa,na))) /\
-   (ssa_cc_trans (LocValue r l1) ssa na lt =
-     (let (r',ssa',na') = next_var_rename r ssa na in
-       (LocValue r' l1,ssa',na'))) /\
-   (ssa_cc_trans (Install ptr len dptr dlen numset) ssa na lt =
-     (let all_names' = union (FST numset) (SND numset) in
-     let ls = MAP FST (toAList all_names') in
-     let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na +
-       2) ls in
-     let stack_set = apply_nummaps_key (option_lookup ssa') numset in
-     let ptr' = option_lookup ssa' ptr in
-     let len' = option_lookup ssa' len in
-     let dptr' = option_lookup ssa' dptr in
-     let dlen' = option_lookup ssa' dlen in
-     let ssa_cut = inter ssa' all_names' in
-     let (ptr'',ssa'',na'') = next_var_rename ptr ssa_cut (na' + 2)
-       in
-     let (ret_mov,ssa''',na''') =
-       list_next_var_rename_move ssa'' na'' ls in
-     let prog = (Seq (stack_mov)
-                (Seq ((Move 1) [(2,ptr'); (4,len')])
-                (Seq (Install 2 4 dptr' dlen' stack_set)
-                (Seq ((Move 1) [(ptr'',2)]) ret_mov)))) in
-     (prog,ssa''',na'''))) /\
-   (ssa_cc_trans (CodeBufferWrite r1 r2) ssa na lt =
-     (let r1' = option_lookup ssa r1 in
-     let r2' = option_lookup ssa r2 in
-     (CodeBufferWrite r1' r2',ssa,na))) /\
-   (ssa_cc_trans (DataBufferWrite r1 r2) ssa na lt =
-     (let r1' = option_lookup ssa r1 in
-     let r2' = option_lookup ssa r2 in
-     (DataBufferWrite r1' r2',ssa,na))) /\
-   (ssa_cc_trans (FFI ffi_index ptr1 len1 ptr2 len2 numset) ssa na lt
-     =
-     (let all_names' = union (FST numset) (SND numset) in
-     let ls = MAP FST (toAList all_names') in
-     let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na +
-       2) ls in
-     let stack_set = apply_nummaps_key (option_lookup ssa') numset in
-     let cptr1 = option_lookup ssa' ptr1 in
-     let clen1 = option_lookup ssa' len1 in
-     let cptr2 = option_lookup ssa' ptr2 in
-     let clen2 = option_lookup ssa' len2 in
-     let ssa_cut = inter ssa' all_names' in
-     let (ret_mov,ssa'',na'') =
-       list_next_var_rename_move ssa_cut (na' + 2) ls in
-     let prog = (Seq (stack_mov)
-                (Seq ((Move 1) [(2,cptr1); (4,clen1); (6,cptr2);
-                  (8,clen2)])
-                (Seq (FFI ffi_index 2 4 6 8 stack_set) (ret_mov))))
-                  in
-     (prog,ssa'',na''))) /\
-   (ssa_cc_trans (Call NONE dest args h) ssa na lt =
-     (let names = MAP (option_lookup ssa) args in
-     let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
-     let move_args = ((Move 1) (ZIP (conv_args,names))) in
-     let prog = Seq move_args (Call NONE dest conv_args h) in
-       (prog,ssa,na))) /\
-   (ssa_cc_trans (Call (SOME (ret,numset,ret_handler,l1,l2)) dest
-     args h) ssa na lt =
-     (let all_names' = union (FST numset) (SND numset) in
-     let ls = MAP FST (toAList all_names') in
-     let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na +
-       2) ls in
-     let stack_set = apply_nummaps_key (option_lookup ssa') numset in
-     let names = MAP (option_lookup ssa) args in
-     let conv_args = GENLIST (\x. 2 * (x + 1)) (LENGTH names) in
-     let move_args = ((Move 1) (ZIP (conv_args,names))) in
-     let ssa_cut = inter ssa' all_names' in
-     let (ret_mov,ssa'',na'') =
-       list_next_var_rename_move ssa_cut (na' + 2) ls in
-     let (ret',ssa_2_p,na_2_p) = list_next_var_rename ret ssa'' na''
-       in
-     let (ren_ret_handler,ssa_2,na_2) =
-       ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
-     let regs = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
-     let mov_ret_handler =
-         (Seq ret_mov (Seq ((Move 1) (ZIP (ret',regs)))
-           (ren_ret_handler))) in
-     (match h with
-       NONE ->
-         (let prog =
-           (Seq stack_mov (Seq move_args
-           (Call (SOME (regs,stack_set,mov_ret_handler,l1,l2))
-                 dest conv_args NONE))) in
-         (prog,ssa_2,na_2)) | SOME (n,h,l1',l2') ->
-         (let (n',ssa_3_p,na_3_p) = next_var_rename n ssa'' na_2 in
-         let (ren_exc_handler,ssa_3,na_3) =
-             (ssa_cc_trans h ssa_3_p na_3_p lt) in
-         let mov_exc_handler =
-             (Seq ret_mov (Seq ((Move 1) [n',2]) (ren_exc_handler)))
-               in
-         let prio = mk_prio mov_ret_handler mov_exc_handler in
-         let (ret_cons,exc_cons,na_fin,ssa_fin) =
-             fix_inconsistencies prio ssa_2 ssa_3 na_3 in
-         let cons_ret_handler = Seq mov_ret_handler ret_cons in
-         let cons_exc_handler = Seq mov_exc_handler exc_cons in
-         let prog =
-             (Seq stack_mov (Seq move_args
-             (Call (SOME (regs,stack_set,cons_ret_handler,l1,l2))
-                dest conv_args (SOME (2,cons_exc_handler,l1',l2')))))
-                  in
-         (prog,ssa_fin,na_fin))))) /\
-   (ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
-     (let exp' = ssa_cc_trans_exp ssa exp in
-       if op = Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
-         asm_Store32 then
-         (wordLang_ShareInst op (option_lookup ssa v) exp',ssa,na)
-           else
-         let (v',ssa',na') = next_var_rename v ssa na in
-           (wordLang_ShareInst op v' exp',ssa',na'))) /\
-   (ssa_cc_trans (Loop names body exit_names) ssa na lt =
-     (let (setup_prog,ssa_refreshed,na_refreshed) =
-       loop_setup names exit_names ssa na in
-     let ssa_names = apply_nummap_key (option_lookup ssa_refreshed)
-       names in
-     let ssa_exit = apply_nummap_key (option_lookup ssa_refreshed)
-       exit_names in
-     let ssa_body = inter ssa_refreshed names in
-     let (body',ssa',na') =
-       ssa_cc_trans body ssa_body na_refreshed
-         ((ssa_refreshed,names,exit_names) :: lt) in
-     let back_moves = ssa_reconcile ssa' ssa_refreshed names in
-     let body_final = if back_moves = Skip then body' else Seq body'
-       back_moves in
-     (Seq setup_prog (Loop ssa_names body_final ssa_exit),
-      inter ssa_refreshed exit_names,na'))) /\
-   (ssa_cc_trans (Break n) ssa na lt =
-     (match oEL n lt with
-       NONE -> (Break n,ssa,na) | SOME (tgt_ssa,names,exit_names) ->
-         (let moves = ssa_reconcile ssa tgt_ssa exit_names in
-         (if moves = Skip then Break n else Seq moves (Break
-           n),ssa,na)))) /\
-   (ssa_cc_trans (Continue n) ssa na lt =
-     (match oEL n lt with
-       NONE -> (Continue n,ssa,na) | SOME (tgt_ssa,names,exit_names)
-         ->
-         (let moves = ssa_reconcile ssa tgt_ssa names in
-         (if moves = Skip then Continue n else Seq moves (Continue
-           n),ssa,na))))`;;
+let ssa_cc_trans_def = cake_define_list
+  [`ssa_cc_trans Skip ssa na lt = (Skip,ssa,na)`;
+   `ssa_cc_trans (Move pri ls) ssa na lt =
+        (let ls_1 = MAP FST ls in
+        let ls_2 = MAP SND ls in
+        let ren_ls2 = MAP (option_lookup ssa) ls_2 in
+        let (ren_ls1,ssa',na') = list_next_var_rename ls_1 ssa na in
+        let force =
+          FILTER (\(x,y). ~MEM x ls_1) (ZIP (ls_2,ren_ls1)) in
+          (Move pri (ZIP (ren_ls1,ren_ls2)),force_rename force
+            ssa',na'))`;
+   `ssa_cc_trans (StoreConsts a b c d ws) ssa na lt =
+        (let c1 = option_lookup ssa c in
+        let d1 = option_lookup ssa d in
+        let (d2,ssa',na') = next_var_rename d ssa na in
+        let (c2,ssa'',na'') = next_var_rename c ssa' na' in
+        let prog = Seq ((Move 1) [(4,c1); (6,d1)])
+          (Seq (StoreConsts 0 2 4 6 ws)
+               ((Move 1) [(c2,4); (d2,6)])) in
+        (prog,ssa'',na''))`;
+   `ssa_cc_trans (Inst i) ssa na lt =
+        (let (i',ssa',na') = ssa_cc_trans_inst i ssa na in
+          (i',ssa',na'))`;
+   `ssa_cc_trans (Assign num' exp) ssa na lt =
+        (let exp' = ssa_cc_trans_exp ssa exp in
+        let (num',ssa',na') = next_var_rename num' ssa na in
+          (Assign num' exp',ssa',na'))`;
+   `ssa_cc_trans (Get num' store) ssa na lt =
+        (let (num',ssa',na') = next_var_rename num' ssa na in
+          (Get num' store,ssa',na'))`;
+   `ssa_cc_trans (Store exp num') ssa na lt =
+        (let exp' = ssa_cc_trans_exp ssa exp in
+        let num' = option_lookup ssa num' in
+          (Store exp' num',ssa,na))`;
+   `ssa_cc_trans (Seq s1 s2) ssa na lt =
+        (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
+        let (s2',ssa'',na'') = ssa_cc_trans s2 ssa' na' lt in
+          (Seq s1' s2',ssa'',na''))`;
+   `ssa_cc_trans (wordLang_MustTerminate s1) ssa na lt =
+        (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
+          (wordLang_MustTerminate s1',ssa',na'))`;
+   `ssa_cc_trans (If cmp r1 ri e2 e3) ssa na lt =
+        (let r1' = option_lookup ssa r1 in
+        let ri' = match ri with Reg r -> Reg (option_lookup ssa r) |
+          Imm v -> Imm v in
+        let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
+        let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
+        let prio = mk_prio e2' e3' in
+        let (e2_cons,e3_cons,na_fin,ssa_fin) =
+          fix_inconsistencies prio ssa2 ssa3 na3 in
+        (If cmp r1' ri' (Seq e2' e2_cons) (Seq e3'
+          e3_cons),ssa_fin,na_fin))`;
+   `ssa_cc_trans (Alloc num' numset) ssa na lt =
+        (let all_names' = union (FST numset) (SND numset) in
+        let ls = MAP FST (toAList all_names') in
+        let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
+          + 2) ls in
+        let num' = option_lookup ssa' num' in
+        let stack_set = apply_nummaps_key (option_lookup ssa')
+          numset in
+        let ssa_cut = inter ssa' all_names' in
+        let (ret_mov,ssa'',na'') =
+          list_next_var_rename_move ssa_cut (na' + 2) ls in
+        let prog = (Seq (stack_mov)
+                   (Seq ((Move 1) [(2,num')])
+                   (Seq (Alloc 2 stack_set) (ret_mov)))) in
+        (prog,ssa'',na''))`;
+   `ssa_cc_trans (Raise num') ssa na lt =
+        (let num' = option_lookup ssa num' in
+        let mov = (Move 1) [(2,num')] in
+        (Seq mov (Raise 2),ssa,na))`;
+   `ssa_cc_trans (OpCurrHeap b dst src) ssa na lt =
+        (let src' = option_lookup ssa src in
+        let (dst',ssa',na') = next_var_rename dst ssa na in
+          (OpCurrHeap b dst' src',ssa',na'))`;
+   `ssa_cc_trans (Return num' nums) ssa na lt =
+        (let num' = option_lookup ssa num' in
+        let nums' = MAP (option_lookup ssa) nums in
+        let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
+        let mov = Move 0 (ZIP (rets,nums')) in
+        (Seq mov (Return num' rets),ssa,na))`;
+   `ssa_cc_trans Tick ssa na lt = (Tick,ssa,na)`;
+   `ssa_cc_trans (Set n exp) ssa na lt =
+        (let exp' = ssa_cc_trans_exp ssa exp in
+        (Set n exp',ssa,na))`;
+   `ssa_cc_trans (LocValue r l1) ssa na lt =
+        (let (r',ssa',na') = next_var_rename r ssa na in
+          (LocValue r' l1,ssa',na'))`;
+   `ssa_cc_trans (Install ptr len dptr dlen numset) ssa na lt =
+        (let all_names' = union (FST numset) (SND numset) in
+        let ls = MAP FST (toAList all_names') in
+        let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
+          + 2) ls in
+        let stack_set = apply_nummaps_key (option_lookup ssa')
+          numset in
+        let ptr' = option_lookup ssa' ptr in
+        let len' = option_lookup ssa' len in
+        let dptr' = option_lookup ssa' dptr in
+        let dlen' = option_lookup ssa' dlen in
+        let ssa_cut = inter ssa' all_names' in
+        let (ptr'',ssa'',na'') = next_var_rename ptr ssa_cut (na' +
+          2) in
+        let (ret_mov,ssa''',na''') =
+          list_next_var_rename_move ssa'' na'' ls in
+        let prog = (Seq (stack_mov)
+                   (Seq ((Move 1) [(2,ptr'); (4,len')])
+                   (Seq (Install 2 4 dptr' dlen' stack_set)
+                   (Seq ((Move 1) [(ptr'',2)]) ret_mov)))) in
+        (prog,ssa''',na'''))`;
+   `ssa_cc_trans (CodeBufferWrite r1 r2) ssa na lt =
+        (let r1' = option_lookup ssa r1 in
+        let r2' = option_lookup ssa r2 in
+        (CodeBufferWrite r1' r2',ssa,na))`;
+   `ssa_cc_trans (DataBufferWrite r1 r2) ssa na lt =
+        (let r1' = option_lookup ssa r1 in
+        let r2' = option_lookup ssa r2 in
+        (DataBufferWrite r1' r2',ssa,na))`;
+   `ssa_cc_trans (FFI ffi_index ptr1 len1 ptr2 len2 numset) ssa na lt =
+        (let all_names' = union (FST numset) (SND numset) in
+        let ls = MAP FST (toAList all_names') in
+        let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
+          + 2) ls in
+        let stack_set = apply_nummaps_key (option_lookup ssa')
+          numset in
+        let cptr1 = option_lookup ssa' ptr1 in
+        let clen1 = option_lookup ssa' len1 in
+        let cptr2 = option_lookup ssa' ptr2 in
+        let clen2 = option_lookup ssa' len2 in
+        let ssa_cut = inter ssa' all_names' in
+        let (ret_mov,ssa'',na'') =
+          list_next_var_rename_move ssa_cut (na' + 2) ls in
+        let prog = (Seq (stack_mov)
+                   (Seq ((Move 1) [(2,cptr1); (4,clen1); (6,cptr2);
+                     (8,clen2)])
+                   (Seq (FFI ffi_index 2 4 6 8 stack_set)
+                     (ret_mov)))) in
+        (prog,ssa'',na''))`;
+   `ssa_cc_trans (Call NONE dest args h) ssa na lt =
+        (let names = MAP (option_lookup ssa) args in
+        let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
+        let move_args = ((Move 1) (ZIP (conv_args,names))) in
+        let prog = Seq move_args (Call NONE dest conv_args h) in
+          (prog,ssa,na))`;
+   `ssa_cc_trans (Call (SOME (ret,numset,ret_handler,l1,l2)) dest args
+  h) ssa na lt =
+        (let all_names' = union (FST numset) (SND numset) in
+        let ls = MAP FST (toAList all_names') in
+        let (stack_mov,ssa',na') = list_next_var_rename_move ssa (na
+          + 2) ls in
+        let stack_set = apply_nummaps_key (option_lookup ssa')
+          numset in
+        let names = MAP (option_lookup ssa) args in
+        let conv_args = GENLIST (\x. 2 * (x + 1)) (LENGTH names) in
+        let move_args = ((Move 1) (ZIP (conv_args,names))) in
+        let ssa_cut = inter ssa' all_names' in
+        let (ret_mov,ssa'',na'') =
+          list_next_var_rename_move ssa_cut (na' + 2) ls in
+        let (ret',ssa_2_p,na_2_p) = list_next_var_rename ret ssa''
+          na'' in
+        let (ren_ret_handler,ssa_2,na_2) =
+          ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
+        let regs = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
+        let mov_ret_handler =
+            (Seq ret_mov (Seq ((Move 1) (ZIP (ret',regs)))
+              (ren_ret_handler))) in
+        (match h with
+          NONE ->
+            (let prog =
+              (Seq stack_mov (Seq move_args
+              (Call (SOME (regs,stack_set,mov_ret_handler,l1,l2))
+                    dest conv_args NONE))) in
+            (prog,ssa_2,na_2)) | SOME (n,h,l1',l2') ->
+            (let (n',ssa_3_p,na_3_p) = next_var_rename n ssa'' na_2
+              in
+            let (ren_exc_handler,ssa_3,na_3) =
+                (ssa_cc_trans h ssa_3_p na_3_p lt) in
+            let mov_exc_handler =
+                (Seq ret_mov (Seq ((Move 1) [n',2])
+                  (ren_exc_handler))) in
+            let prio = mk_prio mov_ret_handler mov_exc_handler in
+            let (ret_cons,exc_cons,na_fin,ssa_fin) =
+                fix_inconsistencies prio ssa_2 ssa_3 na_3 in
+            let cons_ret_handler = Seq mov_ret_handler ret_cons in
+            let cons_exc_handler = Seq mov_exc_handler exc_cons in
+            let prog =
+                (Seq stack_mov (Seq move_args
+                (Call (SOME (regs,stack_set,cons_ret_handler,l1,l2))
+                   dest conv_args (SOME
+                     (2,cons_exc_handler,l1',l2'))))) in
+            (prog,ssa_fin,na_fin))))`;
+   `ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
+        (let exp' = ssa_cc_trans_exp ssa exp in
+          if op = Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op
+            = asm_Store32 then
+            (wordLang_ShareInst op (option_lookup ssa v)
+              exp',ssa,na) else
+            let (v',ssa',na') = next_var_rename v ssa na in
+              (wordLang_ShareInst op v' exp',ssa',na'))`;
+   `ssa_cc_trans (Loop names body exit_names) ssa na lt =
+        (let (setup_prog,ssa_refreshed,na_refreshed) =
+          loop_setup names exit_names ssa na in
+        let ssa_names = apply_nummap_key (option_lookup
+          ssa_refreshed) names in
+        let ssa_exit = apply_nummap_key (option_lookup
+          ssa_refreshed) exit_names in
+        let ssa_body = inter ssa_refreshed names in
+        let (body',ssa',na') =
+          ssa_cc_trans body ssa_body na_refreshed
+            ((ssa_refreshed,names,exit_names) :: lt) in
+        let back_moves = ssa_reconcile ssa' ssa_refreshed names in
+        let body_final = if back_moves = Skip then body' else Seq
+          body' back_moves in
+        (Seq setup_prog (Loop ssa_names body_final ssa_exit),
+         inter ssa_refreshed exit_names,na'))`;
+   `ssa_cc_trans (Break n) ssa na lt =
+        (match oEL n lt with
+          NONE -> (Break n,ssa,na) | SOME (tgt_ssa,names,exit_names)
+            ->
+            (let moves = ssa_reconcile ssa tgt_ssa exit_names in
+            (if moves = Skip then Break n else Seq moves (Break
+              n),ssa,na)))`;
+   `ssa_cc_trans (Continue n) ssa na lt =
+        (match oEL n lt with
+          NONE -> (Continue n,ssa,na) | SOME
+            (tgt_ssa,names,exit_names) ->
+            (let moves = ssa_reconcile ssa tgt_ssa names in
+            (if moves = Skip then Continue n else Seq moves
+              (Continue n),ssa,na)))`];;
 
 (*Recursively applying colours to a program*)
 
@@ -734,10 +735,10 @@ let get_live_inst_def = cake_define
         | (Const reg w) -> delete reg live
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        match ri with Reg r3 -> insert r2 one (insert r3 one (delete
-         r1 live)) | _5 -> insert r2 one (delete r1 live)
+         r1 live)) | _7 -> insert r2 one (delete r1 live)
         | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
        match ri with Reg r3 -> insert r2 one (insert r3 one (delete
-         r1 live)) | _6 -> insert r2 one (delete r1 live)
+         r1 live)) | _8 -> insert r2 one (delete r1 live)
         | (Arith (Div r1 r2 r3)) ->
        (insert r3 one (insert r2 one (delete r1 live)))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
@@ -817,7 +818,7 @@ let get_live_def = cake_define
        let e3_live = get_live e3 live lt in
        let union_live = union e2_live e3_live in
           match ri with Reg r2 -> insert r2 one (insert r1 one
-            union_live) | _7 -> insert r1 one union_live
+            union_live) | _9 -> insert r1 one union_live
         | (Alloc num numset) -> insert num one (union (FST numset)
           (SND numset))
         | (StoreConsts a b c d ws) ->
@@ -854,7 +855,7 @@ let get_live_def = cake_define
        match oEL n lt with
          NONE -> LN | SOME (names,exit_names) -> names
         | (Call NONE dest args h) -> numset_list_insert args LN
-        | (Call (SOME (_8,cutset,_9)) dest args h) ->
+        | (Call (SOME (_10,cutset,_11)) dest args h) ->
        union (union (FST cutset) (SND cutset)) (numset_list_insert
          args LN)`;;
 
@@ -932,7 +933,7 @@ let remove_dead_def = cake_define
          (if MEM store_name nlive then
            (Skip,live,nlive) else
            (Set store_name (Var r),insert r one live,store_name ::
-             nlive)) | _10 ->
+             nlive)) | _12 ->
          (let prog = Set store_name exp in
            (prog,get_live prog live lt,[]))
         | (Seq s1 s2) ->
@@ -952,7 +953,7 @@ let remove_dead_def = cake_define
        let union_live = union e2_live e3_live in
        let liveset =
           match ri with Reg r2 -> insert r2 one (insert r1 one
-            union_live) | _11 -> insert r1 one union_live in
+            union_live) | _13 -> insert r1 one union_live in
        let nliveset = FILTER (\s. MEM s e3_nlive) e2_nlive in
        let prog =
          if e2 = Skip /\ e3 = Skip then Skip else If cmp r1 ri e2 e3
@@ -962,7 +963,7 @@ let remove_dead_def = cake_define
        let args_set = numset_list_insert args LN in
        let cutset = union (FST cutsets) (SND cutsets) in
        let live_set = union cutset args_set in
-       let (ret_handler,_12) = remove_dead ret_handler live nlive lt
+       let (ret_handler,_14) = remove_dead ret_handler live nlive lt
          in
        let h =
          (match h with
@@ -984,7 +985,7 @@ let remove_dead_def = cake_define
          (prog,get_live prog live lt,[])
         | (Loop names body exit_names) ->
        let lt' = (names,exit_names) :: lt in
-       let (body',_13,_14) = remove_dead body names [] lt' in
+       let (body',_15,_16) = remove_dead body names [] lt' in
        (Loop names body' exit_names,names,[])
         | (Break n) ->
        let prog = Break n in
@@ -1006,14 +1007,14 @@ let get_writes_def = cake_define
         | (Assign num exp) -> insert num one LN
         | (Get num store) -> insert num one LN
         | (LocValue r l1) -> insert r one LN
-        | (Install r1 _15 _16 _17 _18) -> insert r1 one LN
-        | (OpCurrHeap b r1 _19) -> insert r1 one LN
-        | (StoreConsts a b c d _20) -> insert a one (insert b one
+        | (Install r1 _17 _18 _19 _20) -> insert r1 one LN
+        | (OpCurrHeap b r1 _21) -> insert r1 one LN
+        | (StoreConsts a b c d _22) -> insert a one (insert b one
           (insert c one (insert d one LN)))
-        | (wordLang_ShareInst Load v _21) -> insert v one LN
-        | (wordLang_ShareInst asm_Load8 v _22) -> insert v one LN
-        | (wordLang_ShareInst asm_Load16 v _23) -> insert v one LN
-        | (wordLang_ShareInst asm_Load32 v _24) -> insert v one LN
+        | (wordLang_ShareInst Load v _23) -> insert v one LN
+        | (wordLang_ShareInst asm_Load8 v _24) -> insert v one LN
+        | (wordLang_ShareInst asm_Load16 v _25) -> insert v one LN
+        | (wordLang_ShareInst asm_Load32 v _26) -> insert v one LN
         | prog -> LN`;;
 
 (* Old representation *)
@@ -1063,10 +1064,10 @@ let get_delta_inst_def = cake_define
           Skip -> reg_alloc_Delta [] []
         | (Const reg w) -> reg_alloc_Delta [reg] []
         | (Arith (asm_Binop bop r1 r2 ri)) ->
-       match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _25 ->
+       match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _27 ->
          reg_alloc_Delta [r1] [r2]
         | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
-       match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _26 ->
+       match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _28 ->
          reg_alloc_Delta [r1] [r2]
         | (Arith (Div r1 r2 r3)) -> reg_alloc_Delta [r1] [r3; r2]
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> reg_alloc_Delta [r1;
@@ -1110,84 +1111,83 @@ let get_reads_exp_def = cake_define
           nexp
         | expr -> []`;;
 
-let get_clash_tree_def = cake_define
-  `(get_clash_tree Skip lt = reg_alloc_Delta [] []) /\
-   (get_clash_tree (Move pri ls) lt =
-     reg_alloc_Delta (MAP FST ls) (MAP SND ls)) /\
-   (get_clash_tree (Inst i) lt = get_delta_inst i) /\
-   (get_clash_tree (Assign num' exp) lt = reg_alloc_Delta [num']
-     (get_reads_exp exp)) /\
-   (get_clash_tree (Get num' store) lt = reg_alloc_Delta [num'] [])
-     /\
-   (get_clash_tree (Store exp num') lt = reg_alloc_Delta [] (num' ::
-     get_reads_exp exp)) /\
-   (get_clash_tree (Seq s1 s2) lt = Seq (get_clash_tree s1 lt)
-     (get_clash_tree s2 lt)) /\
-   (get_clash_tree (If cmp r1 ri e2 e3) lt =
-     (let e2t = get_clash_tree e2 lt in
-     let e3t = get_clash_tree e3 lt in
-     match ri with
-       Reg r2 -> Seq (reg_alloc_Delta [] [r1; r2]) (Branch NONE e2t
-         e3t) | _27 -> Seq (reg_alloc_Delta [] [r1]) (Branch NONE e2t
-         e3t))) /\
-   (get_clash_tree (wordLang_MustTerminate s) lt =
-     get_clash_tree s lt) /\
-   (get_clash_tree (Alloc num' numset) lt =
-     Seq (reg_alloc_Delta [] [num']) (Set (union (FST numset) (SND
-       numset)))) /\
-   (get_clash_tree (Install r1 r2 r3 r4 numset) lt =
-     Seq (reg_alloc_Delta [] [r4; r3; r2; r1]) (Seq (Set (union (FST
-       numset) (SND numset))) (reg_alloc_Delta [r1] []))) /\
-   (get_clash_tree (CodeBufferWrite r1 r2) lt =
-     reg_alloc_Delta [] [r2; r1]) /\
-   (get_clash_tree (DataBufferWrite r1 r2) lt =
-     reg_alloc_Delta [] [r2; r1]) /\
-   (get_clash_tree (FFI ffi_index ptr1 len1 ptr2 len2 numset) lt =
-     Seq (reg_alloc_Delta [] [ptr1; len1; ptr2; len2]) (Set (union
-       (FST numset) (SND numset)))) /\
-   (get_clash_tree (Raise num') lt = reg_alloc_Delta [] [num']) /\
-   (get_clash_tree (Return num1 nums) lt = reg_alloc_Delta [] (num1
-     :: nums)) /\
-   (get_clash_tree Tick lt = reg_alloc_Delta [] []) /\
-   (get_clash_tree (LocValue r l1) lt = reg_alloc_Delta [r] []) /\
-   (get_clash_tree (Set n exp) lt = reg_alloc_Delta [] (get_reads_exp
-     exp)) /\
-   (get_clash_tree (OpCurrHeap b dst src) lt = reg_alloc_Delta [dst]
-     [src]) /\
-   (get_clash_tree (StoreConsts a b c d ws) lt = reg_alloc_Delta [a;
-     b; c; d] [c; d]) /\
-   (get_clash_tree (wordLang_ShareInst op v exp) lt = (if op = Store
-     \/ op = asm_Store8 \/ op = asm_Store16 \/ op = asm_Store32 then
-     reg_alloc_Delta [] (v :: get_reads_exp exp) else reg_alloc_Delta
-     [v] (get_reads_exp exp))) /\
-   (get_clash_tree (Loop names body exit_names) lt =
-     Seq (Set names)
-       (Seq (Set exit_names)
-         (Seq (get_clash_tree body ((names,exit_names) :: lt))
-           (Set names)))) /\
-   (get_clash_tree (Break n) lt =
-     (match oEL n lt with
-       NONE -> Set LN | SOME (names,exit_names) -> Set exit_names))
-         /\
-   (get_clash_tree (Continue n) lt =
-     (match oEL n lt with
-       NONE -> Set LN | SOME (names,exit_names) -> Set names)) /\
-   (get_clash_tree (Call ret dest args h) lt =
-     (let args_set = numset_list_insert args LN in
-     match ret with
-       NONE -> Set args_set | SOME (vs,cutsets,ret_handler,_28,_29)
-         ->
-       (let cutset = union (FST cutsets) (SND cutsets) in
-       let live_set = union cutset args_set in
-       let ret_tree = Seq (Set (numset_list_insert vs cutset))
-         (get_clash_tree ret_handler lt) in
-       match h with
-         NONE -> Seq (Set live_set) ret_tree | SOME (v',prog,_30,_31)
-           ->
-         (let handler_tree =
-           Seq (Set (insert v' one cutset)) (get_clash_tree prog lt)
-             in
-         Branch (SOME live_set) ret_tree handler_tree))))`;;
+let get_clash_tree_def = cake_define_list
+  [`get_clash_tree Skip lt = reg_alloc_Delta [] []`;
+   `get_clash_tree (Move pri ls) lt =
+        reg_alloc_Delta (MAP FST ls) (MAP SND ls)`;
+   `get_clash_tree (Inst i) lt = get_delta_inst i`;
+   `get_clash_tree (Assign num' exp) lt = reg_alloc_Delta [num']
+  (get_reads_exp exp)`;
+   `get_clash_tree (Get num' store) lt = reg_alloc_Delta [num'] []`;
+   `get_clash_tree (Store exp num') lt = reg_alloc_Delta [] (num' ::
+  get_reads_exp exp)`;
+   `get_clash_tree (Seq s1 s2) lt = Seq (get_clash_tree s1 lt)
+  (get_clash_tree s2 lt)`;
+   `get_clash_tree (If cmp r1 ri e2 e3) lt =
+        (let e2t = get_clash_tree e2 lt in
+        let e3t = get_clash_tree e3 lt in
+        match ri with
+          Reg r2 -> Seq (reg_alloc_Delta [] [r1; r2]) (Branch NONE
+            e2t e3t) | _29 -> Seq (reg_alloc_Delta [] [r1]) (Branch
+            NONE e2t e3t))`;
+   `get_clash_tree (wordLang_MustTerminate s) lt =
+        get_clash_tree s lt`;
+   `get_clash_tree (Alloc num' numset) lt =
+        Seq (reg_alloc_Delta [] [num']) (Set (union (FST numset)
+          (SND numset)))`;
+   `get_clash_tree (Install r1 r2 r3 r4 numset) lt =
+        Seq (reg_alloc_Delta [] [r4; r3; r2; r1]) (Seq (Set (union
+          (FST numset) (SND numset))) (reg_alloc_Delta [r1] []))`;
+   `get_clash_tree (CodeBufferWrite r1 r2) lt =
+        reg_alloc_Delta [] [r2; r1]`;
+   `get_clash_tree (DataBufferWrite r1 r2) lt =
+        reg_alloc_Delta [] [r2; r1]`;
+   `get_clash_tree (FFI ffi_index ptr1 len1 ptr2 len2 numset) lt =
+        Seq (reg_alloc_Delta [] [ptr1; len1; ptr2; len2]) (Set
+          (union (FST numset) (SND numset)))`;
+   `get_clash_tree (Raise num') lt = reg_alloc_Delta [] [num']`;
+   `get_clash_tree (Return num1 nums) lt = reg_alloc_Delta [] (num1 ::
+  nums)`;
+   `get_clash_tree Tick lt = reg_alloc_Delta [] []`;
+   `get_clash_tree (LocValue r l1) lt = reg_alloc_Delta [r] []`;
+   `get_clash_tree (Set n exp) lt = reg_alloc_Delta [] (get_reads_exp
+  exp)`;
+   `get_clash_tree (OpCurrHeap b dst src) lt = reg_alloc_Delta [dst]
+  [src]`;
+   `get_clash_tree (StoreConsts a b c d ws) lt = reg_alloc_Delta [a;
+  b; c; d] [c; d]`;
+   `get_clash_tree (wordLang_ShareInst op v exp) lt = (if op = Store
+  \/ op = asm_Store8 \/ op = asm_Store16 \/ op = asm_Store32 then
+  reg_alloc_Delta [] (v :: get_reads_exp exp) else reg_alloc_Delta [v]
+  (get_reads_exp exp))`;
+   `get_clash_tree (Loop names body exit_names) lt =
+        Seq (Set names)
+          (Seq (Set exit_names)
+            (Seq (get_clash_tree body ((names,exit_names) :: lt))
+              (Set names)))`;
+   `get_clash_tree (Break n) lt =
+        (match oEL n lt with
+          NONE -> Set LN | SOME (names,exit_names) -> Set
+            exit_names)`;
+   `get_clash_tree (Continue n) lt =
+        (match oEL n lt with
+          NONE -> Set LN | SOME (names,exit_names) -> Set names)`;
+   `get_clash_tree (Call ret dest args h) lt =
+        (let args_set = numset_list_insert args LN in
+        match ret with
+          NONE -> Set args_set | SOME
+            (vs,cutsets,ret_handler,_30,_31) ->
+          (let cutset = union (FST cutsets) (SND cutsets) in
+          let live_set = union cutset args_set in
+          let ret_tree = Seq (Set (numset_list_insert vs cutset))
+            (get_clash_tree ret_handler lt) in
+          match h with
+            NONE -> Seq (Set live_set) ret_tree | SOME
+              (v',prog,_32,_33) ->
+            (let handler_tree =
+              Seq (Set (insert v' one cutset)) (get_clash_tree prog
+                lt) in
+            Branch (SOME live_set) ret_tree handler_tree)))`];;
 
 (* Preference edges
   The allocator tries hard to coalesce these edges
@@ -1265,14 +1265,14 @@ let get_heu_inst_def = cake_define
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
-           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _32 ->
+           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _34 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
-           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _33 ->
+           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _35 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (Div r1 r2 r3)) ->
@@ -1351,9 +1351,9 @@ let get_heu_def = cake_define
         | ((Inst i),(lr,calls)) -> (get_heu_inst i lr,calls)
         | ((Get num store),(lr,calls)) ->
        (add1_lhs_mem num lr,calls)
-        | ((Set _34 exp),(lr,calls)) ->
+        | ((Set _36 exp),(lr,calls)) ->
        (match exp with (Var r) ->
-          (add1_rhs_mem r lr,calls) | _35 -> (lr,calls))
+          (add1_rhs_mem r lr,calls) | _37 -> (lr,calls))
         | ((OpCurrHeap b dst src),(lr,calls)) ->
        (add1_lhs_reg dst (add1_rhs_reg src lr),calls)
         | ((LocValue r l1),(lr,calls)) ->
@@ -1366,37 +1366,37 @@ let get_heu_def = cake_define
        let lr = heu_max_all lr2 lr3 in
        let calls = heu_merge_call (calls2:one spt) calls3 in
        ((match ri with
-         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _36 ->
+         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _38 ->
          add1_rhs_reg r1 lr),calls)
         | ((Call NONE dest args h),(lr,calls)) ->
        match dest with
          NONE -> (lr,calls) | SOME p ->
          (if p = fc then (lr,add_call lr calls) else (lr,calls))
-        | ((Call (SOME (_37,_38,e2,_39,_40)) dest args h),(lr,calls))
+        | ((Call (SOME (_39,_40,e2,_41,_42)) dest args h),(lr,calls))
           ->
        let calls =
          match dest with NONE -> calls | SOME p ->
            (if p = fc then (add_call lr calls) else calls) in
        let (lr2,calls2) = (get_heu fc e2 (lr,calls)) in
        match h with
-         NONE -> (lr2,calls) | SOME (_41,e3,_42,_43) ->
+         NONE -> (lr2,calls) | SOME (_43,e3,_44,_45) ->
          (let (lr3,calls3) = get_heu fc e3 (lr,calls) in
          (heu_max_all lr2 lr3,heu_merge_call calls2 calls3))
-        | ((wordLang_ShareInst Load r _44),(lr,calls)) ->
+        | ((wordLang_ShareInst Load r _46),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Load8 r _45),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Load8 r _47),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Load16 r _46),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Load16 r _48),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Load32 r _47),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Load32 r _49),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst Store r _48),(lr,calls)) ->
+        | ((wordLang_ShareInst Store r _50),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Store8 r _49),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Store8 r _51),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Store16 r _50),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Store16 r _52),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Store32 r _51),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Store32 r _53),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
         | ((Loop names body exit_names),lr) -> get_heu fc body lr
         | (f,lrc) -> lrc`;;
@@ -1432,7 +1432,7 @@ let get_forced_def = cake_define
            (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
              []) ++ acc | asm_FP (FPMovFromReg d r1 r2) ->
            (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-             []) ++ acc | _52 -> acc
+             []) ++ acc | _54 -> acc
         | (c,(wordLang_MustTerminate s1)) ->
        get_forced c s1 acc
         | (c,(Seq s1 s2)) ->
@@ -1590,16 +1590,16 @@ let get_stack_only_aux_def = cake_define
        let tfsR = get_stack_only_aux tfs e3 in
        let tfsM = merge_stack_sets tfs tfsL tfsR in
          match ri with
-           Reg r2 -> remove_temp_stack [r1; r2] tfsM | _53 ->
+           Reg r2 -> remove_temp_stack [r1; r2] tfsM | _55 ->
              remove_temp_stack [r1] tfsM
         | (wordLang_MustTerminate s) ->
        get_stack_only_aux tfs s
         | (Call ret dest args h) ->
        (match ret with
-         NONE -> tfs | SOME (v,cutset,ret_handler,_54,_55) ->
+         NONE -> tfs | SOME (v,cutset,ret_handler,_56,_57) ->
          (let rettfs = get_stack_only_aux tfs ret_handler in
          match h with
-           NONE -> rettfs | SOME (v',handler,_56,_57) ->
+           NONE -> rettfs | SOME (v',handler,_58,_59) ->
            (let handlertfs =
              get_stack_only_aux tfs handler in
            merge_stack_sets tfs rettfs handlertfs)))
@@ -1608,7 +1608,7 @@ let get_stack_only_aux_def = cake_define
         | prog ->
        match get_clash_tree prog [] with
          reg_alloc_Delta ws rs -> remove_temp_stack (ws ++ rs) tfs
-           | _58 -> tfs`;;
+           | _60 -> tfs`;;
 
 let get_stack_only_def = cake_define
   `get_stack_only prog = SND (get_stack_only_aux (LN,LN) prog)`;;
@@ -1636,7 +1636,7 @@ let word_alloc_def = cake_define
        (match select_reg_alloc alg spillcosts k heu_moves tree forced
          fs with
          M_success col ->
-           apply_colour (total_colour col) prog | M_failure _59 ->
+           apply_colour (total_colour col) prog | M_failure _61 ->
              prog)) | SOME col_prog ->
        col_prog)`;;
 

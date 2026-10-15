@@ -11,7 +11,6 @@ needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
-needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 ML code, not ported:
@@ -25,31 +24,33 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
    "gen_start","num";
    "refs_start","num"];;
 
-let gc_move_def = cake_define
-  `(gen_gc_partial_gc_move conf state (Data d) = (Data d,state)) /\
-   (gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
-      (let ok = (gc_state_ok state /\ (ptr < heap_length
-        (gc_state_heap state))) in
-      (if ptr < gen_gc_partial_conf_gen_start conf \/
-        gen_gc_partial_conf_refs_start conf <= ptr then
-         (gc_shared_Pointer ptr d,gc_state_ok_fupd (K ok) state) else
-       match heap_lookup ptr (gc_state_heap state) with SOME
-         (DataElement xs l dd) ->
-           (let ok = ok /\ l + 1 <= gc_state_n state /\ ~(?_isRef
-             conf dd) in
-            let n = gc_state_n state - (l + 1) in
-            let h2 = gc_state_h2 state ++ [DataElement xs l dd] in
-            let (heap,ok) = gc_forward_ptr ptr (gc_state_heap state)
-              (gc_state_a state) d ok in
-            let a = gc_state_a state + l + 1 in
-              (
-              gc_shared_Pointer (gc_state_a state)
-                d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K
-                heap) (gc_state_a_fupd (K a) (gc_state_n_fupd (K n)
-                (gc_state_h2_fupd (K h2) state)))))) | SOME
-                (ForwardPointer ptr _1 l) -> (gc_shared_Pointer ptr
-                d,state) | _2 -> (gc_shared_Pointer ptr
-                d,gc_state_ok_fupd (K F) state))))`;;
+let gc_move_def = cake_define_list
+  [`gen_gc_partial_gc_move conf state (Data d) = (Data d,state)`;
+   `gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
+         (let ok = (gc_state_ok state /\ (ptr < heap_length
+           (gc_state_heap state))) in
+         (if ptr < gen_gc_partial_conf_gen_start conf \/
+           gen_gc_partial_conf_refs_start conf <= ptr then
+            (gc_shared_Pointer ptr d,gc_state_ok_fupd (K ok) state)
+              else
+          match heap_lookup ptr (gc_state_heap state) with SOME
+            (DataElement xs l dd) ->
+              (let ok = ok /\ l + 1 <= gc_state_n state /\ ~(?_isRef
+                conf dd) in
+               let n = gc_state_n state - (l + 1) in
+               let h2 = gc_state_h2 state ++ [DataElement xs l dd]
+                 in
+               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
+                 state) (gc_state_a state) d ok in
+               let a = gc_state_a state + l + 1 in
+                 (
+                 gc_shared_Pointer (gc_state_a state)
+                   d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K
+                   heap) (gc_state_a_fupd (K a) (gc_state_n_fupd (K n)
+                   (gc_state_h2_fupd (K h2) state)))))) | SOME
+                   (ForwardPointer ptr _3 l) -> (gc_shared_Pointer ptr
+                   d,state) | _4 -> (gc_shared_Pointer ptr
+                   d,gc_state_ok_fupd (K F) state)))`];;
 hol4_overload "gc_move" "gen_gc_partial_gc_move";;
 
 let gc_move_list_def = cake_define
@@ -77,7 +78,7 @@ let gc_move_data_def = cake_define_wf
             (HD (gc_state_h2 state) = h) in
             gen_gc_partial_gc_move_data conf (gc_state_ok_fupd (K
               ok) (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
-              state)))) | _3 -> gc_state_ok_fupd (K F) state)))`;;
+              state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;
 hol4_overload "gc_move_data" "gen_gc_partial_gc_move_data";;
 
 let gc_move_ref_list_def = cake_define
@@ -133,15 +134,15 @@ let heap_gen_ok_def = cake_define
 let data_sort_INDUCT,data_sort_RECURSION = define_datatype
   "data_sort = Protected ('a) | Real ('b)";;
 
-let to_gen_heap_address_def = cake_define
-  `(to_gen_heap_address conf (Data a) = Data (Real a)) /\
-   (to_gen_heap_address conf (gc_shared_Pointer ptr a) =
-     (if ptr < gen_gc_partial_conf_gen_start conf then
-       Data (Protected (gc_shared_Pointer ptr a)) else if
-         gen_gc_partial_conf_refs_start conf <= ptr then
-       Data (Protected (gc_shared_Pointer ptr a)) else
-       gc_shared_Pointer (ptr - gen_gc_partial_conf_gen_start
-         conf) (Real a)))`;;
+let to_gen_heap_address_def = cake_define_list
+  [`to_gen_heap_address conf (Data a) = Data (Real a)`;
+   `to_gen_heap_address conf (gc_shared_Pointer ptr a) =
+        (if ptr < gen_gc_partial_conf_gen_start conf then
+          Data (Protected (gc_shared_Pointer ptr a)) else if
+            gen_gc_partial_conf_refs_start conf <= ptr then
+          Data (Protected (gc_shared_Pointer ptr a)) else
+          gc_shared_Pointer (ptr - gen_gc_partial_conf_gen_start
+            conf) (Real a))`];;
 
 let to_gen_conf_def = cake_define
   `to_gen_conf (conf:'a gen_gc_partial_conf) =
@@ -149,13 +150,13 @@ let to_gen_conf_def = cake_define
        (?_limit conf - gen_gc_partial_conf_refs_start conf)) (?_isRef
        conf):'a gen_gc_conf)`;;
 
-let to_gen_heap_element_def = cake_define
-  `(to_gen_heap_element conf (Unused n) = Unused n) /\
-   (to_gen_heap_element conf (ForwardPointer ptr a l) =
-     ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf) (Real
-       a) l) /\
-   (to_gen_heap_element conf (DataElement ptrs l d) =
-     DataElement (MAP (to_gen_heap_address conf) ptrs) l d)`;;
+let to_gen_heap_element_def = cake_define_list
+  [`to_gen_heap_element conf (Unused n) = Unused n`;
+   `to_gen_heap_element conf (ForwardPointer ptr a l) =
+        ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf)
+          (Real a) l`;
+   `to_gen_heap_element conf (DataElement ptrs l d) =
+        DataElement (MAP (to_gen_heap_address conf) ptrs) l d`];;
 
 let to_gen_heap_list_def = cake_define
   `to_gen_heap_list conf heap =
@@ -187,9 +188,9 @@ let refs_to_roots_def = cake_define
   `refs_to_roots conf x2 =
         match x2 with
           [] -> []
-        | (DataElement ptrs _4 _5 :: refs) ->
+        | (DataElement ptrs _6 _7 :: refs) ->
        MAP (to_gen_heap_address conf) ptrs ++ refs_to_roots conf refs
-        | (_6 :: refs) -> refs_to_roots conf refs`;;
+        | (_8 :: refs) -> refs_to_roots conf refs`;;
 
 let RootsRefs = cake_inductive
   `(RootsRefs [] []) /\
@@ -209,7 +210,7 @@ let RootsRefs = cake_inductive
       RootsRefs (Unused n :: refs) roots) /\
    (!refs roots.
       RootsRefs refs roots ==>
-      RootsRefs (ForwardPointer _7 _8 _9 :: refs) roots)`;;
+      RootsRefs (ForwardPointer _9 _10 _11 :: refs) roots)`;;
 
 (* HOL4 ML code, not ported:
 val RootsRefs_def = RootsRefs_rules;
@@ -231,7 +232,7 @@ let heap_element_is_ref_def = cake_define
   `heap_element_is_ref conf x2 =
         match x2 with
           (DataElement xs l d) -> ?_isRef conf d
-        | _10 -> F`;;
+        | _12 -> F`;;
 
 let gen_inv_def = cake_define
   `gen_inv (conf:'b gen_gc_partial_conf) heap =

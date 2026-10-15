@@ -118,32 +118,24 @@ hol4_overload "Op" "closLang_Op";;
 val exp_size_def = definition"exp_size_def";
 *)
 
-(* HOL4 termination: \\ rw [] \\ qsuff_tac ‘list_size exp_size (MAP
-   SND fns) ≤ list_size (pair_size (λx. x) exp_size) fns’ >- fs [] \\
-   Induct_on ‘fns’ \\ fs [] \\ fs [list_size_def,FORALL_PROD] \\ rw
-   [] \\ fs [basicSizeTheory.pair_size_def] *)
-let has_install_def = cake_define_wf
-  `MEASURE (\x. match x with INL e -> exp_size e | INR es -> list_size
-  exp_size es)`
-  `has_install ((Var t n):closLang_exp) = F /\
-   has_install (If t e1 e2 e3) = (has_install e1 \/ has_install e2 \/
-     has_install e3) /\
-   has_install (Let t es e) = (has_install e \/ has_install_list es)
-     /\
-   has_install (Op t p es) = (p = Install \/ has_install_list es) /\
-   has_install (Raise t e) = has_install e /\
-   has_install (Tick t e) = has_install e /\
-   has_install (closLang_Fn _1 _2 _3 _4 e) = has_install e /\
-   has_install (Handle t e1 e2) = (has_install e1 \/ has_install e2)
-     /\
-   has_install (Call _5 _6 _7 es) = has_install_list es /\
-   has_install (App _8 _9 e es) = (has_install e \/ has_install_list
-     es) /\
-   has_install (Letrec _10 _11 _12 fns e) = (has_install_list (MAP
-     SND fns) \/ has_install e) /\
-   has_install_list [] = F /\
-   has_install_list (x :: xs) = (has_install x \/ has_install_list
-     xs)`;;
+let has_install_def = cake_define_list
+  [`has_install ((Var t n):closLang_exp) = F`;
+   `has_install (If t e1 e2 e3) = (has_install e1 \/ has_install e2 \/
+  has_install e3)`;
+   `has_install (Let t es e) = (has_install e \/ has_install_list es)`;
+   `has_install (Op t p es) = (p = Install \/ has_install_list es)`;
+   `has_install (Raise t e) = has_install e`;
+   `has_install (Tick t e) = has_install e`;
+   `has_install (closLang_Fn _1 _2 _3 _4 e) = has_install e`;
+   `has_install (Handle t e1 e2) = (has_install e1 \/ has_install e2)`;
+   `has_install (Call _5 _6 _7 es) = has_install_list es`;
+   `has_install (App _8 _9 e es) = (has_install e \/ has_install_list
+  es)`;
+   `has_install (Letrec _10 _11 _12 fns e) = (has_install_list (MAP
+  SND fns) \/ has_install e)`;
+   `has_install_list [] = F`;
+   `has_install_list (x :: xs) = (has_install x \/ has_install_list
+  xs)`];;
 
 let pure_op_def = cake_define
   `closLang_pure_op op <=>
@@ -160,18 +152,18 @@ hol4_overload "pure_op" "closLang_pure_op";;
 
 (* pure e means e can neither raise an exception nor side-effect the
    state *)
-let pure_def = cake_define
-  `(pure (Var _18 _19) <=> T) /\
-   (pure (If _20 e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3) /\
-   (pure (Let _21 es e2) <=> EVERY pure es /\ pure e2) /\
-   (pure (Raise _22 _23) <=> F) /\
-   (pure (Handle _24 e1 e2) <=> pure e1) /\
-   (pure (Tick _25 _26) <=> F) /\
-   (pure (Call _27 _28 _29 _30) <=> F) /\
-   (pure (App _31 _32 _33 _34) <=> F) /\
-   (pure (closLang_Fn _35 _36 _37 _38 _39) <=> T) /\
-   (pure (Letrec _40 _41 _42 _43 x) <=> pure x) /\
-   (pure (Op _44 opn es) <=> EVERY pure es /\ pure_op opn)`;;
+let pure_def = cake_define_list
+  [`pure (Var _18 _19) <=> T`;
+   `pure (If _20 e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3`;
+   `pure (Let _21 es e2) <=> EVERY pure es /\ pure e2`;
+   `pure (Raise _22 _23) <=> F`;
+   `pure (Handle _24 e1 e2) <=> pure e1`;
+   `pure (Tick _25 _26) <=> F`;
+   `pure (Call _27 _28 _29 _30) <=> F`;
+   `pure (App _31 _32 _33 _34) <=> F`;
+   `pure (closLang_Fn _35 _36 _37 _38 _39) <=> T`;
+   `pure (Letrec _40 _41 _42 _43 x) <=> pure x`;
+   `pure (Op _44 opn es) <=> EVERY pure es /\ pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
 let assign_get_code_label_def = cake_define

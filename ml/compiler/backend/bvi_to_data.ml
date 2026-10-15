@@ -118,86 +118,85 @@ let compile_def = cake_define
               NONE))) c2,v,n2)))`;;
 hol4_overload "compile" "bvi_to_data_compile";;
 
-(* HOL4 termination: \\ simp[] *)
-let compile_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (n,env,t,l,x) -> exp_size x | INR
-  (n,env,l,xs) -> list_size exp_size xs)`
-  `(bvi_to_data_compile_sing n env tail live ((Var v):bvi_exp) =
-      (let var = any_el v env 0 in
-      if tail then (Return [var],n,n + 1) else (Skip,var,MAX n (var +
-        1)))) /\
-   (bvi_to_data_compile_sing n env tail live (If x1 x2 x3) =
-      (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x1 in
-      let (c2,v2,n2) = bvi_to_data_compile_sing n1 env tail live x2
-        in
-      let (c3,v3,n3) = bvi_to_data_compile_sing n2 env tail live x3
-        in
-        if tail then
-          (Seq c1 (If v1 c2 c3),n3,n3 + 1) else
-          (Seq c1 (If v1 (Seq c2 (Move n3 v2))
-                            (Seq c3 (Move n3 v3))),n3,n3 + 1))) /\
-   (bvi_to_data_compile_sing n env tail live (Let xs x2) =
-      (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-      let (c2,v2,n2) = bvi_to_data_compile_sing n1 (vs ++ env) tail
-        live x2 in
-        (Seq c1 c2,v2,n2))) /\
-   (bvi_to_data_compile_sing n env tail live (Raise x1) =
-      (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x1 in
-        (Seq c1 (Raise v1),v1,n1))) /\
-   (bvi_to_data_compile_sing n env tail live (Return xs) =
-      (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-        (Seq c1 (Return vs),n1,n1 + 1))) /\
-   (bvi_to_data_compile_sing n env tail live (Op op xs) =
-      (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-      let c2 = Seq c1 (iAssign n1 op (REVERSE vs) live env) in
-        (if tail then Seq c2 (Return [n1]) else c2,n1,n1 + 1))) /\
-   (bvi_to_data_compile_sing n env tail live (Tick x1) =
-      (let (c1,v1,n1) = bvi_to_data_compile_sing n env tail live x1
-        in
-        (Seq Tick c1,v1,n1))) /\
-   (bvi_to_data_compile_sing n env tail live (Force loc v) =
-      (let var = any_el v env 0 in
-      let ret = (if tail then NONE else SOME (n,list_to_num_set (live
-        ++ env))) in
-        (Force ret loc var,n,MAX (n + 1) (var + 1)))) /\
-   (bvi_to_data_compile_sing n env tail live (Call ticks dest xs
-     NONE) =
-      (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-      let ret = (if tail then NONE else SOME ([n1],list_to_num_set
-        (live ++ env))) in
-        (Seq c1 (mk_ticks ticks (Call ret dest vs NONE)),n1,n1 + 1)))
-          /\
-   (bvi_to_data_compile_sing n env tail live (Call ticks dest xs
-     (SOME handler)) =
-      (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-      let (c2,v,n2) = bvi_to_data_compile_sing (n1 + 1) (n1 :: env) F
-        live handler in
-      let ret = SOME ([n2],list_to_num_set (live ++ env)) in
-      let c3 = (if tail then Return [n2] else Skip) in
-        (Seq c1 (mk_ticks ticks
-           (Seq (Call ret dest vs (SOME (n1,Seq c2 (Move n2 v))))
-             c3)),
-         n2,n2 + 1))) /\
-   (bvi_to_data_compile_sing n env tail live (bvi_LetCall rets ticks
-     dest xs y) =
-      (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-        if y = Return (GENLIST Var rets) then
-          (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs
-            NONE)),n1,n1 + 1) else
-          let rs = GENLIST (\i. n1 + i) rets in
-          let (c2,v,n2) = bvi_to_data_compile_sing (n1 + rets) (rs ++
-            env) tail live y in
-          let ret = (SOME (rs,list_to_num_set (live ++ env))) in
-            (Seq (Seq c1 (mk_ticks ticks (Call ret (SOME dest) vs
-              NONE))) c2,v,n2))) /\
-   (bvi_to_data_compile_list (n:num) (env:num list) live [] =
-     (Skip,([]:num list),n)) /\
-   (bvi_to_data_compile_list n env live (x :: xs) =
-      (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x in
-        if NULL xs then (c1,[v1],n1) else
-          let (c2,vs,n2) = bvi_to_data_compile_list n1 env (v1 ::
-            live) xs in
-            (Seq c1 c2,v1 :: vs,n2)))`;;
+let compile_sing_def = cake_define_list
+  [`bvi_to_data_compile_sing n env tail live ((Var v):bvi_exp) =
+         (let var = any_el v env 0 in
+         if tail then (Return [var],n,n + 1) else (Skip,var,MAX n
+           (var + 1)))`;
+   `bvi_to_data_compile_sing n env tail live (If x1 x2 x3) =
+         (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x1
+           in
+         let (c2,v2,n2) = bvi_to_data_compile_sing n1 env tail live
+           x2 in
+         let (c3,v3,n3) = bvi_to_data_compile_sing n2 env tail live
+           x3 in
+           if tail then
+             (Seq c1 (If v1 c2 c3),n3,n3 + 1) else
+             (Seq c1 (If v1 (Seq c2 (Move n3 v2))
+                              (Seq c3 (Move n3 v3))),n3,n3 + 1))`;
+   `bvi_to_data_compile_sing n env tail live (Let xs x2) =
+         (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
+         let (c2,v2,n2) = bvi_to_data_compile_sing n1 (vs ++ env)
+           tail live x2 in
+           (Seq c1 c2,v2,n2))`;
+   `bvi_to_data_compile_sing n env tail live (Raise x1) =
+         (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x1
+           in
+           (Seq c1 (Raise v1),v1,n1))`;
+   `bvi_to_data_compile_sing n env tail live (Return xs) =
+         (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
+           (Seq c1 (Return vs),n1,n1 + 1))`;
+   `bvi_to_data_compile_sing n env tail live (Op op xs) =
+         (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
+         let c2 = Seq c1 (iAssign n1 op (REVERSE vs) live env) in
+           (if tail then Seq c2 (Return [n1]) else c2,n1,n1 + 1))`;
+   `bvi_to_data_compile_sing n env tail live (Tick x1) =
+         (let (c1,v1,n1) = bvi_to_data_compile_sing n env tail live
+           x1 in
+           (Seq Tick c1,v1,n1))`;
+   `bvi_to_data_compile_sing n env tail live (Force loc v) =
+         (let var = any_el v env 0 in
+         let ret = (if tail then NONE else SOME (n,list_to_num_set
+           (live ++ env))) in
+           (Force ret loc var,n,MAX (n + 1) (var + 1)))`;
+   `bvi_to_data_compile_sing n env tail live (Call ticks dest xs NONE) =
+         (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
+         let ret = (if tail then NONE else SOME
+           ([n1],list_to_num_set (live ++ env))) in
+           (Seq c1 (mk_ticks ticks (Call ret dest vs NONE)),n1,n1
+             + 1))`;
+   `bvi_to_data_compile_sing n env tail live (Call ticks dest xs (SOME
+  handler)) =
+         (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
+         let (c2,v,n2) = bvi_to_data_compile_sing (n1 + 1) (n1 ::
+           env) F live handler in
+         let ret = SOME ([n2],list_to_num_set (live ++ env)) in
+         let c3 = (if tail then Return [n2] else Skip) in
+           (Seq c1 (mk_ticks ticks
+              (Seq (Call ret dest vs (SOME (n1,Seq c2 (Move n2 v))))
+                c3)),
+            n2,n2 + 1))`;
+   `bvi_to_data_compile_sing n env tail live (bvi_LetCall rets ticks
+  dest xs y) =
+         (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
+           if y = Return (GENLIST Var rets) then
+             (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs
+               NONE)),n1,n1 + 1) else
+             let rs = GENLIST (\i. n1 + i) rets in
+             let (c2,v,n2) = bvi_to_data_compile_sing (n1 + rets)
+               (rs ++ env) tail live y in
+             let ret = (SOME (rs,list_to_num_set (live ++ env))) in
+               (Seq (Seq c1 (mk_ticks ticks (Call ret (SOME dest)
+                 vs NONE))) c2,v,n2))`;
+   `bvi_to_data_compile_list (n:num) (env:num list) live [] =
+        (Skip,([]:num list),n)`;
+   `bvi_to_data_compile_list n env live (x :: xs) =
+         (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x
+           in
+           if NULL xs then (c1,[v1],n1) else
+             let (c2,vs,n2) = bvi_to_data_compile_list n1 env (v1 ::
+               live) xs in
+               (Seq c1 c2,v1 :: vs,n2))`];;
 hol4_overload "compile_list" "bvi_to_data_compile_list";;
 hol4_overload "compile_sing" "bvi_to_data_compile_sing";;
 

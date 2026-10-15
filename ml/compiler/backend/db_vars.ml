@@ -8,10 +8,7 @@
   are live when traversing a language using dB vars.
 *)
 
-needs "compiler/backend/backend_common.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 let db_var_set_INDUCT,db_var_set_RECURSION = define_datatype
   "db_var_set = db_vars_Empty | db_vars_Var (num) | db_vars_Shift \

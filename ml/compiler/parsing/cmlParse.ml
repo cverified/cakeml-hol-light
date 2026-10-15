@@ -15,7 +15,6 @@ needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
-needs "lib/set_sep.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/typeSystem.ml";;
 

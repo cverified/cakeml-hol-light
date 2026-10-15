@@ -11,8 +11,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/bvl_to_bvi.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
 needs "compiler/backend/word_copy.ml";;

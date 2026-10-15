@@ -13,10 +13,8 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/grammar.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
-needs "lib/set_sep.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/tokenUtils.ml";;
-needs "semantics/typeSystem.ml";;
 
 (* HOL4 overload (expanded in the port):
      monad_bind = OPTION_BIND *)

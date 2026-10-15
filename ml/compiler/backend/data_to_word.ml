@@ -13,11 +13,8 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi_to_data.ml";;
-needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
@@ -27,12 +24,10 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/multiword.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
   "gc_kind = data_to_word_None | data_to_word_Simple | \
@@ -1312,31 +1307,25 @@ val def = assign_Define `
 let getWords_def = cake_define
   `getWords [] aux = (REVERSE aux,[]) /\
    getWords (c :: cs) aux =
-     (match c with (b,Word w) -> getWords cs ((b,w) :: aux) | _5
+     (match c with (b,Word w) -> getWords cs ((b,w) :: aux) | _6
        -> (REVERSE aux,c :: cs))`;;
 
-(* HOL4 termination: \\ fs [getWords_def] \\ rw [] \\ qsuff_tac ‘∀ws
-   aux (ws1:(bool # 'a word) list) vs1. (ws1,vs1) = getWords ws aux ⇒
-   LENGTH vs1 ≤ LENGTH ws’ THEN1 (rw [] \\ res_tac \\ fs []) \\
-   once_rewrite_tac [EQ_SYM_EQ] \\ Induct \\ fs [getWords_def] \\ fs
-   [AllCaseEqs()] \\ rw[] \\ res_tac \\ fs [getWords_def] *)
-let StoreAnyConsts_def = cake_define_wf
-  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`
-  `StoreAnyConsts r1 r2 r3 [] v =
-     Seq (Set NextFree (Var r2))
-         (match SND v with Loc n _6 -> LocValue r1 n | Word w ->
-           Assign r1 (if FST v then Op Add [Const w; Var r3] else (Const
-           w))) /\
-   StoreAnyConsts r1 r2 r3 (v :: vs) w =
-     (match ((SND v):'a word_loc) with Loc n _7 -> list_Seq [LocValue
-       r1 n;
-                            Store (Var r2) r1;
-                            Assign r2 (Op Add [Var r2; Const
-                              bytes_in_word]);
-                            StoreAnyConsts r1 r2 r3 vs w] | _8 ->
-                              (let (ws,vs1) = getWords (v :: vs) [] in
-              Seq (StoreConsts r2 r3 r2 r3 ws)
-                  (StoreAnyConsts r1 r2 r3 vs1 w)))`;;
+let StoreAnyConsts_def = cake_define_list
+  [`StoreAnyConsts r1 r2 r3 [] v =
+      Seq (Set NextFree (Var r2))
+          (match SND v with Loc n _10 -> LocValue r1 n | Word w ->
+            Assign r1 (if FST v then Op Add [Const w; Var r3] else
+            (Const w)))`;
+   `StoreAnyConsts r1 r2 r3 (v :: vs) w =
+      (match ((SND v):'a word_loc) with Loc n _11 -> list_Seq
+        [LocValue r1 n;
+                             Store (Var r2) r1;
+                             Assign r2 (Op Add [Var r2; Const
+                               bytes_in_word]);
+                             StoreAnyConsts r1 r2 r3 vs w] | _12 ->
+                               (let (ws,vs1) = getWords (v :: vs) [] in
+               Seq (StoreConsts r2 r3 r2 r3 ws)
+                   (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
 
 let lookup_mem_def = cake_define
   `lookup_mem m a =
@@ -1362,7 +1351,7 @@ let get_lowerbits_def = cake_define
         match x2 with
           (Word w) ->
         (((word_bits (small_shift_length conf - 1) 0) w) || (n2w 1))
-        | _9 -> (n2w 1)`;;
+        | _13 -> (n2w 1)`;;
 
 let make_cons_ptr_def = cake_define
   `make_cons_ptr conf nf tag len =
@@ -1445,7 +1434,7 @@ let get_Word_def = cake_define
   `get_Word x1 =
       match x1 with
         (Word w) -> w
-      | _10 -> (n2w 0)`;;
+      | _14 -> (n2w 0)`;;
 
 (* HOL4 ML code, not ported:
 val def = assign_Define `
@@ -2697,7 +2686,7 @@ let assign_def = cake_define
        (Skip,l) | closLang_BlockOp ListAppend -> arg2 args
        (assign_ListAppend c secn l dest names) (Skip,l) |
        closLang_BlockOp (Cons tag) -> assign_Cons c l dest tag args |
-       closLang_MemOp (closLang_MutCons tag _11) -> assign_MutCons c l
+       closLang_MemOp (closLang_MutCons tag _15) -> assign_MutCons c l
        dest tag args | closLang_MemOp ConfigGC -> arg2 args
        (assign_ConfigGC c secn l dest names) (Skip,l) | closLang_BlockOp
        (closLang_Build parts) -> assign_Build c secn l dest names parts
@@ -2777,7 +2766,7 @@ let assign_def = cake_define
            (FP_bop fpb) -> arg2 args (assign_FP_bop fpb c secn l dest
            names) (Skip,l) | closLang_WordOp (FP_uop fpu) -> arg1
            args (assign_FP_uop fpu c secn l dest names) (Skip,l) |
-           _12 -> (Skip,l))`;;
+           _16 -> (Skip,l))`;;
 hol4_overload "assign" "data_to_word_assign";;
 
 let force_thunk_def = cake_define
@@ -2786,7 +2775,7 @@ let force_thunk_def = cake_define
        SOME (header:'a word) ->
       If Test (adjust_var v1) (Imm (n2w 1))
         (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-          (dest,_13) -> Assign (adjust_var dest) (Var (adjust_var v1)))
+          (dest,_17) -> Assign (adjust_var dest) (Var (adjust_var v1)))
         (list_Seq
            [Assign 1 (real_addr c (adjust_var v1));
             Assign 3 (Op And [Load (Var 1); Const (n2w 0b111100)]);
@@ -2795,13 +2784,13 @@ let force_thunk_def = cake_define
                   list_Seq
                     [Assign 1 (Load (Op Add [Var 1; Const
                       bytes_in_word]));
-                     Return 0 [1]] | SOME (dest,_14) ->
+                     Return 0 [1]] | SOME (dest,_18) ->
                    Assign (adjust_var dest)
                           (Load (Op Add [Var 1; Const
                             bytes_in_word])))
             (If asm_NotEqual 3 (Imm (n2w ((0 + 6) * 4)))
               (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-                (dest,_15) -> Assign (adjust_var dest) (Var (adjust_var
+                (dest,_19) -> Assign (adjust_var dest) (Var (adjust_var
                 v1)))
               (list_Seq
                  [Assign 5 (Load (Op Add [Var 1; Const
@@ -3099,12 +3088,12 @@ End
 let structure_le_def = cake_define
   `structure_le x1 x2 =
       match (x1,x2) with
-        (Leaf,_16) -> T
-      | (_17,word_depth_Unknown) -> T
+        (Leaf,_20) -> T
+      | (_21,word_depth_Unknown) -> T
       | ((Const k1 t1),(Const k2 t2)) ->
      (k1 <= k2 /\ structure_le t1 t2)
       | ((Call n1 t2),(Call m1 u2)) ->
      (n1 = m1 /\ structure_le t2 u2)
       | ((Branch t1 t2),(Branch u1 u2)) ->
      (structure_le t1 u1 /\ structure_le t2 u2)
-      | (_18,_19) -> F`;;
+      | (_22,_23) -> F`;;

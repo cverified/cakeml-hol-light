@@ -10,20 +10,13 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
-needs "compiler/backend/stack_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
 
 

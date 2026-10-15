@@ -7,10 +7,7 @@
   The top-level semantics of CakeML programs.
 *)
 
-needs "basis/pure/mlsexp.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;

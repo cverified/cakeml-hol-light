@@ -8,7 +8,6 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "basis/pure/mlstring.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;

@@ -12,8 +12,6 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "lib/balanced_map.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: toto *)

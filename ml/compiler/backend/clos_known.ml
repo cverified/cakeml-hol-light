@@ -16,13 +16,11 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/clos_fvs.ml";;
 needs "compiler/backend/clos_letop.ml";;
 needs "compiler/backend/clos_op.ml";;
 needs "compiler/backend/clos_ticks.ml";;
 needs "compiler/backend/db_vars.ml";;
-needs "lib/mergesort.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;

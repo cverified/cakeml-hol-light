@@ -10,7 +10,6 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/bvi_tmc.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/ternaryComparisons.ml";;

@@ -13,22 +13,17 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
-needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: (* for closure_tag and
    num_added_globals *) backendProps *)
 
@@ -179,15 +174,15 @@ let do_install_def = cake_define
                                Rtype_error)) | _29 -> Rerr (Rabort
                                Rtype_error))`;;
 
-let do_part_def = cake_define
-  `bvlSem_do_part m (Int i) refs = (Number i,refs) /\
-   bvlSem_do_part m (W64 w) refs = (Word64 w,refs) /\
-   bvlSem_do_part m (Con t ns) refs = (Block t (MAP m ns),refs) /\
-   bvlSem_do_part m (Str t) refs =
-     (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
-     let bytes = MAP (n2w o ORD) (explode t) in
-       (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
-         bvlSem_ref))))`;;
+let do_part_def = cake_define_list
+  [`bvlSem_do_part m (Int i) refs = (Number i,refs)`;
+   `bvlSem_do_part m (W64 w) refs = (Word64 w,refs)`;
+   `bvlSem_do_part m (Con t ns) refs = (Block t (MAP m ns),refs)`;
+   `bvlSem_do_part m (Str t) refs =
+      (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
+      let bytes = MAP (n2w o ORD) (explode t) in
+        (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
+          bvlSem_ref))))`];;
 hol4_overload "do_part" "bvlSem_do_part";;
 
 let do_build_def = cake_define

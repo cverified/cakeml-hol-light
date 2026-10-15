@@ -5,29 +5,28 @@
     CakeML port needs are ported.  *)
 (* ======================================================== *)
 
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: pred_set arithmetic relation *)
 
-let num_set_tree_union_def = cake_define
-  `(num_set_tree_union LN t2 = (t2:(one spt) spt)) /\
-   (num_set_tree_union (LS a) t =
-    (match t with LN -> LS a | LS b -> LS (union a b) | BN t1 t2 ->
-      BS t1 a t2 | BS t1 b t2 -> BS t1 (union a b) t2)) /\
-   (num_set_tree_union (BN t1 t2) t =
-      (match t with LN -> BN t1 t2 | LS a -> BS t1 a t2 | BN t1' t2'
-        ->
-             BN (num_set_tree_union t1 t1') (num_set_tree_union t2
-               t2') | BS t1' a t2' ->
-         BS (num_set_tree_union t1 t1') a (num_set_tree_union t2
-           t2'))) /\
-   (num_set_tree_union (BS t1 a t2) t =
-      (match t with LN -> BS t1 a t2 | LS b -> BS t1 (union a b) t2 |
-        BN t1' t2' ->
-             BS (num_set_tree_union t1 t1') a (num_set_tree_union t2
-               t2') | BS t1' b t2' ->
-             BS (num_set_tree_union t1 t1') (union a b)
-                 (num_set_tree_union t2 t2')))`;;
+let num_set_tree_union_def = cake_define_list
+  [`num_set_tree_union LN t2 = (t2:(one spt) spt)`;
+   `num_set_tree_union (LS a) t =
+       (match t with LN -> LS a | LS b -> LS (union a b) | BN t1
+         t2 -> BS t1 a t2 | BS t1 b t2 -> BS t1 (union a b) t2)`;
+   `num_set_tree_union (BN t1 t2) t =
+         (match t with LN -> BN t1 t2 | LS a -> BS t1 a t2 | BN t1'
+           t2' ->
+                BN (num_set_tree_union t1 t1') (num_set_tree_union
+                  t2 t2') | BS t1' a t2' ->
+            BS (num_set_tree_union t1 t1') a (num_set_tree_union
+              t2 t2'))`;
+   `num_set_tree_union (BS t1 a t2) t =
+         (match t with LN -> BS t1 a t2 | LS b -> BS t1 (union a b)
+           t2 | BN t1' t2' ->
+                BS (num_set_tree_union t1 t1') a (num_set_tree_union
+                  t2 t2') | BS t1' b t2' ->
+                BS (num_set_tree_union t1 t1') (union a b)
+                    (num_set_tree_union t2 t2'))`];;
 
 (* HOL4 termination: >> rw[] >> gvs[subspt_domain, SUBSET_DEF] >>
    irule size_diff_less >> gvs[domain_union, domain_spt_fold_union,

@@ -22,9 +22,7 @@
 *)
 
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/namespace.ml";;
 
 (* Most ops are inherited from ast$op via the Src wrapper.
  * GlobalVar ops, TagLenEq, LenEq, El, and Id are flatLang-specific. *)
@@ -54,18 +52,16 @@ hol4_overload "Pcon" "flatLang_Pcon";;
 hol4_overload "Pas" "flatLang_Pas";;
 hol4_overload "Pref" "flatLang_Pref";;
 
-let pat_bindings_def = cake_define
-  `(flatLang_pat_bindings Pany = []) /\
-   (flatLang_pat_bindings (Pvar n) = [n]) /\
-   (flatLang_pat_bindings (Plit l) = []) /\
-   (flatLang_pat_bindings (Pcon _1 ps) = flatLang_pats_bindings ps)
-     /\
-   (flatLang_pat_bindings (Pas p i) = flatLang_pat_bindings p ++ [i])
-     /\
-   (flatLang_pat_bindings (Pref p) = flatLang_pat_bindings p) /\
-   (flatLang_pats_bindings [] = []) /\
-   (flatLang_pats_bindings (p :: ps) = flatLang_pats_bindings ps
-     ++ flatLang_pat_bindings p)`;;
+let pat_bindings_def = cake_define_list
+  [`flatLang_pat_bindings Pany = []`;
+   `flatLang_pat_bindings (Pvar n) = [n]`;
+   `flatLang_pat_bindings (Plit l) = []`;
+   `flatLang_pat_bindings (Pcon _1 ps) = flatLang_pats_bindings ps`;
+   `flatLang_pat_bindings (Pas p i) = flatLang_pat_bindings p ++ [i]`;
+   `flatLang_pat_bindings (Pref p) = flatLang_pat_bindings p`;
+   `flatLang_pats_bindings [] = []`;
+   `flatLang_pats_bindings (p :: ps) = flatLang_pats_bindings ps ++
+  flatLang_pat_bindings p`];;
 hol4_overload "pat_bindings" "flatLang_pat_bindings";;
 hol4_overload "pats_bindings" "flatLang_pats_bindings";;
 

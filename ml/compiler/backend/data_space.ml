@@ -14,7 +14,6 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
@@ -23,14 +22,14 @@ let num_size_def = cake_define
      (if n < 2 EXP 32 then 2:num else 1 + data_space_num_size (n
        DIV 2 EXP 32))`;;
 
-let part_space_req_def = cake_define
-  `part_space_req (W64 s) = 3 /\
-   part_space_req (Int i) =
-     (if num_of_int (abs i) < 2 EXP 29 then 0 else
-       data_space_num_size (num_of_int (abs i))) /\
-   part_space_req (Str s) = strlen s DIV 4 + 2 /\
-   part_space_req (Con t ns) =
-     (let l = LENGTH ns in if l = 0 then 0 else l + 1)`;;
+let part_space_req_def = cake_define_list
+  [`part_space_req (W64 s) = 3`;
+   `part_space_req (Int i) =
+      (if num_of_int (abs i) < 2 EXP 29 then 0 else
+        data_space_num_size (num_of_int (abs i)))`;
+   `part_space_req (Str s) = strlen s DIV 4 + 2`;
+   `part_space_req (Con t ns) =
+      (let l = LENGTH ns in if l = 0 then 0 else l + 1)`];;
 
 let op_space_req_def = cake_define
   `op_space_req x1 l =
@@ -73,10 +72,9 @@ Proof
 QED
 *)
 
-let pMakeSpace_def = cake_define
-  `(pMakeSpace (INL c) = c) /\
-   (pMakeSpace (INR (k,names,c)) = Seq (dataLang_MakeSpace k
-     names) c)`;;
+let pMakeSpace_def = cake_define_list
+  [`pMakeSpace (INL c) = c`;
+   `pMakeSpace (INR (k,names,c)) = Seq (dataLang_MakeSpace k names) c`];;
 
 let space_def = cake_define
   `space c =
