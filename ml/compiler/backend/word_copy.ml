@@ -79,10 +79,10 @@ let remove_eq_def = cake_define
       else
         cs with to_eq := to_eq) *)
 
-let remove_eqs_def = cake_define
-  `(remove_eqs cs [] = cs) /\
-   (remove_eqs cs (v :: vs) =
-     remove_eqs (remove_eq cs v) vs)`;;
+let remove_eqs_def = cake_define_list
+  [`remove_eqs cs [] = cs`;
+   `remove_eqs cs (v :: vs) =
+        remove_eqs (remove_eq cs v) vs`];;
 
 let copy_prop_inst_def = cake_define
   `copy_prop_inst x1 cs =
@@ -253,13 +253,13 @@ let merge_eqs_def = cake_define
                            (copy_state_next cs) (copy_state_next ds))`;;
 
 (* shouldn't matter whether we put y or y' in set_eq? *)
-let copy_prop_move_def = cake_define
-  `(copy_prop_move [] cs = ([],cs)) /\
-   (copy_prop_move ((x,y) :: xs) cs =
-     (let y' = lookup_eq cs y in
-     let (ms,cs') = copy_prop_move xs cs in
-     let cs'' = set_eq (remove_eq cs' x) x y in
-     ((x,y') :: ms,cs'')))`;;
+let copy_prop_move_def = cake_define_list
+  [`copy_prop_move [] cs = ([],cs)`;
+   `copy_prop_move ((x,y) :: xs) cs =
+        (let y' = lookup_eq cs y in
+        let (ms,cs') = copy_prop_move xs cs in
+        let cs'' = set_eq (remove_eq cs' x) x y in
+        ((x,y') :: ms,cs''))`];;
 
 let copy_prop_share_def = cake_define
   `copy_prop_share exp cs =

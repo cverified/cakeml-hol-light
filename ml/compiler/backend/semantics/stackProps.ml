@@ -91,9 +91,10 @@ let reg_name_def = cake_define
 
 (* inst requirements just before stack_names *)
 
-let reg_imm_name_def = cake_define
-  `(reg_imm_name b (Reg r) c <=> reg_name r c) /\
-   (reg_imm_name b (Imm w) c <=> asm_config_valid_imm c b w)`;;
+let reg_imm_name_def = cake_define_list
+  [`reg_imm_name b (Reg r:asm_reg_imm) c <=> reg_name r c`;
+   `reg_imm_name b (Imm w:asm_reg_imm) c <=> asm_config_valid_imm c b
+  w`];;
 
 let arith_name_def = cake_define
   `arith_name x1 c =
@@ -146,49 +147,48 @@ let arith_name_def = cake_define
 (* We could actually almost use fp_ok, except this needs to check reg_ok
    for
    some registers as well *)
-let fp_name_def = cake_define
-  `(fp_name (FPLess r d1 d2) c <=>
-       reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPLessEqual r d1 d2) c <=>
-       reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPEqual r d1 d2) c <=>
-       reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPAbs d1 d2) c <=>
-       (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
-         c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPNeg d1 d2) c <=>
-       (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\ fp_reg_ok d1
-         c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPSqrt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPAdd d1 d2 d3) c <=>
-       (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-       fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
-   (fp_name (FPSub d1 d2 d3) c <=>
-       (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-       fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
-   (fp_name (FPMul d1 d2 d3) c <=>
-       (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-       fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
-   (fp_name (FPDiv d1 d2 d3) c <=>
-       (asm_config_two_reg_arith c ==> (d1 = d2)) /\
-       fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
-   (fp_name (FPFma d1 d2 d3) c <=>
-       (asm_config_ISA c = ARMv7) /\
-       2 < asm_config_fp_reg_count c /\
-       fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c) /\
-   (fp_name (FPMov d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c) /\
-   (fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
-       reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
-         reg_name r2 c) /\
-       fp_reg_ok d c) /\
-   (fp_name (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
-       reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
-         reg_name r2 c) /\
-       fp_reg_ok d c) /\
-   (fp_name (FPToInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c)
-     /\
-   (fp_name (FPFromInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2
-     c)`;;
+let fp_name_def = cake_define_list
+  [`fp_name (FPLess r d1 d2:fp) c <=>
+          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPLessEqual r d1 d2:fp) c <=>
+          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPEqual r d1 d2:fp) c <=>
+          reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPAbs d1 d2:fp) c <=>
+          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
+            fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPNeg d1 d2:fp) c <=>
+          (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
+            fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPSqrt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPAdd d1 d2 d3:fp) c <=>
+          (asm_config_two_reg_arith c ==> (d1 = d2)) /\
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
+   `fp_name (FPSub d1 d2 d3:fp) c <=>
+          (asm_config_two_reg_arith c ==> (d1 = d2)) /\
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
+   `fp_name (FPMul d1 d2 d3:fp) c <=>
+          (asm_config_two_reg_arith c ==> (d1 = d2)) /\
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
+   `fp_name (FPDiv d1 d2 d3:fp) c <=>
+          (asm_config_two_reg_arith c ==> (d1 = d2)) /\
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
+   `fp_name (FPFma d1 d2 d3:fp) c <=>
+          (asm_config_ISA c = ARMv7) /\
+          2 < asm_config_fp_reg_count c /\
+          fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
+   `fp_name (FPMov d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPMovToReg r1 r2 d:fp) (c:'a asm_config) <=>
+          reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
+            reg_name r2 c) /\
+          fp_reg_ok d c`;
+   `fp_name (FPMovFromReg d r1 r2:fp) (c:'a asm_config) <=>
+          reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
+            reg_name r2 c) /\
+          fp_reg_ok d c`;
+   `fp_name (FPToInt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPFromInt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2
+  c`];;
 
 let addr_name_def = cake_define
   `addr_name m (Addr r w) c <=>

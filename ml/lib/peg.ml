@@ -53,15 +53,15 @@ let optmax_def = cake_define
 
 (* HOL4 overload (expanded in the port):
      EOF = Locs EOFpt EOFpt *)
-let sloc_def = cake_define
-  `sloc [] = (Locs EOFpt EOFpt) /\
-   sloc (h :: t) = SND h`;;
+let sloc_def = cake_define_list
+  [`sloc [] = (Locs EOFpt EOFpt)`;
+   `sloc (h :: t) = SND h`];;
 let pegf_def = cake_define
   `peg_pegf sym f = seq sym (empty ARB) (\l1 l2. f l1)`;;
 hol4_overload "pegf" "peg_pegf";;
 
-let choicel_def = cake_define
-  `(peg_choicel [] = not (empty ARB) ARB) /\
-   (peg_choicel (h :: t) = choice h (peg_choicel t) (\s. sum_CASE
-     s I I))`;;
+let choicel_def = cake_define_list
+  [`peg_choicel [] = not (empty ARB) ARB`;
+   `peg_choicel (h :: t) = choice h (peg_choicel t) (\s. sum_CASE s I
+  I)`];;
 hol4_overload "choicel" "peg_choicel";;

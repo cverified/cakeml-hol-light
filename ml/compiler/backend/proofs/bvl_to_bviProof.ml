@@ -41,28 +41,24 @@ val handle_ok_def = bvl_handleProofTheory.handle_ok_def;
 (* HOL4 overload (expanded in the port):
      nss = bvl_to_bvi_namespaces *)
 
-let _ = size_thms "v";;
-(* HOL4 termination: \\ Induct_on `vs` \\ full_simp_tac(srw_ss())[]
-   \\ SRW_TAC [] [v_size_def] \\ RES_TAC \\ FIRST_X_ASSUM (ASSUME_TAC
-   o SPEC_ALL) \\ DECIDE_TAC *)
-let adjust_bv_def = cake_define_wf
-  `MEASURE (v_size o SND)`
-  `(adjust_bv b (Number i:bvlSem_v) = Number i) /\
-   (adjust_bv b (Word64 w) = Word64 w) /\
-   (adjust_bv b (RefPtr l r) = RefPtr l (b r)) /\
-   (adjust_bv b (CodePtr c) = CodePtr ((bvl_num_stubs) +
-     (bvl_to_bvi_namespaces) * c)) /\
-   (adjust_bv b (Block tag vs) = Block tag (MAP (adjust_bv b) vs))`;;
+let adjust_bv_def = cake_define_list
+  [`adjust_bv b (Number i:bvlSem_v) = Number i`;
+   `adjust_bv b (Word64 w:bvlSem_v) = Word64 w`;
+   `adjust_bv b (RefPtr l r:bvlSem_v) = RefPtr l (b r)`;
+   `adjust_bv b (CodePtr c:bvlSem_v) = CodePtr ((bvl_num_stubs) +
+  (bvl_to_bvi_namespaces) * c)`;
+   `adjust_bv b (Block tag vs:bvlSem_v) = Block tag (MAP (adjust_bv
+  b) vs)`];;
 
 (* HOL4 ML code, not ported:
 val adjust_bv_ind = theorem"adjust_bv_ind";
 *)
 
-let aux_code_installed_def = cake_define
-  `(aux_code_installed [] t <=> T) /\
-   (aux_code_installed ((name,arg_count,body) :: rest) t <=>
-      (sptree_lookup name t = SOME (arg_count,body)) /\
-      aux_code_installed rest t)`;;
+let aux_code_installed_def = cake_define_list
+  [`aux_code_installed [] t <=> T`;
+   `aux_code_installed ((name,arg_count,body) :: rest) t <=>
+         (sptree_lookup name t = SOME (arg_count,body)) /\
+         aux_code_installed rest t`];;
 
 (* HOL4 overload (expanded in the port):
      in_ns_0 = λn. n MOD bvl_to_bvi_namespaces = 0 *)

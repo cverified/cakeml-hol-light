@@ -45,29 +45,29 @@ let evaluate_prog_with_clock_def = cake_define
        evaluate_decs (semanticPrimitives_state_clock_fupd (K k)
          st) env prog in (semanticPrimitives_state_ffi st',r))`;;
 
-let semantics_prog_def = cake_define
-  `(semantics_prog st env prog (Terminate outcome io_list) <=>
-     (?k ffi r.
-       evaluate_prog_with_clock st env k prog = (ffi,r) /\
-       (match r with Rerr (Rabort (Rffi_error outcome')) ->
-          outcome = FFI_outcome (outcome') | r -> ~(r = Rerr (Rabort
-            Rtimeout_error)) /\ outcome = Success) /\
-       (io_list = ffi_state_io_events ffi) /\
-       (~(r = Rerr (Rabort Rtype_error))))) /\
-   (semantics_prog st env prog (Diverge io_trace) <=>
-     (!k. ?ffi.
-       (evaluate_prog_with_clock st env k prog =
-           (ffi,Rerr (Rabort Rtimeout_error)))) /\
-      lprefix_lub
-        (IMAGE
-          (\k. fromList (ffi_state_io_events (FST
-            (evaluate_prog_with_clock st env k prog))))
-          UNIV)
-        io_trace) /\
-   (semantics_prog st env prog Fail <=>
-     (?k.
-       SND (evaluate_prog_with_clock st env k prog) = Rerr (Rabort
-         Rtype_error)))`;;
+let semantics_prog_def = cake_define_list
+  [`semantics_prog st env prog (Terminate outcome io_list:behaviour) <=>
+        (?k ffi r.
+          evaluate_prog_with_clock st env k prog = (ffi,r) /\
+          (match r with Rerr (Rabort (Rffi_error outcome')) ->
+             outcome = FFI_outcome (outcome') | r -> ~(r = Rerr
+               (Rabort Rtimeout_error)) /\ outcome = Success) /\
+          (io_list = ffi_state_io_events ffi) /\
+          (~(r = Rerr (Rabort Rtype_error))))`;
+   `semantics_prog st env prog (Diverge io_trace:behaviour) <=>
+        (!k. ?ffi.
+          (evaluate_prog_with_clock st env k prog =
+              (ffi,Rerr (Rabort Rtimeout_error)))) /\
+         lprefix_lub
+           (IMAGE
+             (\k. fromList (ffi_state_io_events (FST
+               (evaluate_prog_with_clock st env k prog))))
+             UNIV)
+           io_trace`;
+   `semantics_prog st env prog Fail <=>
+        (?k.
+          SND (evaluate_prog_with_clock st env k prog) = Rerr
+            (Rabort Rtype_error))`];;
 
 let semantics_INDUCT,semantics_RECURSION = define_datatype
   "semantics = CannotParse | IllTyped | Execute (behaviour->bool)";;

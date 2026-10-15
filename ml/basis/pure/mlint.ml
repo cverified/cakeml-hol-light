@@ -33,19 +33,11 @@ val exp_thm = EVAL ``10n ** exp_for_dec_enc``
 val exp_tm = rhs (concl exp_thm)
 *)
 
-(* HOL4 termination: \\ simp [GSYM DIVISION, GSYM exp_thm] \\ rw
-   [exp_for_dec_enc_def] \\ simp [EXP] \\ irule (Q.prove (`a <= d /\
-   b <= c /\ (a < d \/ b < c) ==> (a : num) + b < c + d`, simp []))
-   \\ simp [arithmeticTheory.DIV_LESS_EQ] \\ Cases_on `i = 0` \\ fs
-   [] *)
-let num_to_chars_def = cake_define_wf
-  `inv_image (MEASURE I LEX MEASURE I)
-       (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`
-  `num_to_chars i 0 k acc = num_to_chars (i DIV exp_tm)
-         exp_for_dec_enc ((i MOD exp_tm) + k) acc /\
-   num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then toChar
-     k :: acc else num_to_chars i j (k DIV 10) (toChar (k MOD 10) ::
-     acc))`;;
+let num_to_chars_def = cake_define_list
+  [`num_to_chars i 0 k acc = num_to_chars (i DIV exp_tm)
+          exp_for_dec_enc ((i MOD exp_tm) + k) acc`;
+   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then toChar k
+  :: acc else num_to_chars i j (k DIV 10) (toChar (k MOD 10) :: acc))`];;
 
 let int_to_string_def = cake_define
   `int_to_string neg_char i =
@@ -71,22 +63,22 @@ let fromChar_def = cake_define
      (match char' with (CHR 48) -> SOME 0 | (CHR 49) -> SOME 1 |
        (CHR 50) -> SOME 2 | (CHR 51) -> SOME 3 | (CHR 52) -> SOME 4 |
        (CHR 53) -> SOME 5 | (CHR 54) -> SOME 6 | (CHR 55) -> SOME 7 |
-       (CHR 56) -> SOME 8 | (CHR 57) -> SOME 9 | _2 -> NONE)`;;
+       (CHR 56) -> SOME 8 | (CHR 57) -> SOME 9 | _1 -> NONE)`;;
 
 (* Equivalence between the safe and unsafe versions of fromChar *)
 
-let fromChars_range_unsafe_def = cake_define
-  `fromChars_range_unsafe l 0 str = 0 /\
-   fromChars_range_unsafe l (SUC n) str =
-     fromChars_range_unsafe l n str * 10 + fromChar_unsafe (strsub
-       str (l + n))`;;
+let fromChars_range_unsafe_def = cake_define_list
+  [`fromChars_range_unsafe l 0 str = 0`;
+   `fromChars_range_unsafe l (SUC n) str =
+      fromChars_range_unsafe l n str * 10 + fromChar_unsafe
+        (strsub str (l + n))`];;
 
-let fromChars_range_def = cake_define
-  `fromChars_range l 0 str = SOME 0 /\
-   fromChars_range l (SUC n) str =
-     (let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
-         head = fromChar (strsub str (l + n)) in OPTION_MAP2 (+)
-           rest head)`;;
+let fromChars_range_def = cake_define_list
+  [`fromChars_range l 0 str = SOME 0`;
+   `fromChars_range l (SUC n) str =
+      (let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
+          head = fromChar (strsub str (l + n)) in OPTION_MAP2 (+)
+            rest head)`];;
 
 (* TERMINATION: wf_rel_tac `measure FST` \\ rw [padLen_DEC_eq] *)
 let fromChars_unsafe_def = cake_define

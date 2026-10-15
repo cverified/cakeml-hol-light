@@ -125,13 +125,12 @@ end
 
 (* TODO: this should be part of the standard library, but I couldn't
    find it *)
-let IS_SPARSE_SUBLIST_def = cake_define
-  `(
-     IS_SPARSE_SUBLIST [] l2 = T) /\ (
-     IS_SPARSE_SUBLIST (x :: xs) [] = F) /\ (
-     IS_SPARSE_SUBLIST (x :: xs) (y :: ys) =
-       ((x = y /\ IS_SPARSE_SUBLIST xs ys) \/ IS_SPARSE_SUBLIST (x
-         :: xs) ys))`;;
+let IS_SPARSE_SUBLIST_def = cake_define_list
+  [`IS_SPARSE_SUBLIST [] l2 = T`;
+   `IS_SPARSE_SUBLIST (x :: xs) [] = F`;
+   `IS_SPARSE_SUBLIST (x :: xs) (y :: ys) =
+      ((x = y /\ IS_SPARSE_SUBLIST xs ys) \/ IS_SPARSE_SUBLIST (x
+        :: xs) ys)`];;
 
 let edges_to_adjlist_step_def = cake_define
   `edges_to_adjlist_step sth (a,b) acc =

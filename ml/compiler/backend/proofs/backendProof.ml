@@ -375,21 +375,21 @@ let read_limits_def = cake_define
           (backend_config_stack_conf c)) 4):'a word))`;;
 hol4_overload "read_limits" "backendProof_read_limits";;
 
-let add_eval_state_def = cake_define
-  `add_eval_state NONE s0 = s0 /\
-   add_eval_state (SOME ci) s0 =
-     semanticPrimitives_state_eval_state_fupd (K (SOME
-     (mk_init_eval_state ci)))
-     s0`;;
+let add_eval_state_def = cake_define_list
+  [`add_eval_state NONE s0 = s0`;
+   `add_eval_state (SOME ci) s0 =
+  semanticPrimitives_state_eval_state_fupd (K (SOME (mk_init_eval_state
+  ci)))
+      s0`];;
 
 
-let opt_eval_config_wf_def = cake_define
-  `opt_eval_config_wf asm_conf c' (SOME ci) =
+let opt_eval_config_wf_def = cake_define_list
+  [`opt_eval_config_wf asm_conf c' (SOME ci) =
   (compiler_instance_compiler_fun
-     ci = compile_inc_progs_for_eval asm_conf /\
-     INJ (compiler_instance_config_v ci) UNIV UNIV /\
-       compiler_instance_init_state ci = c') /\
-   opt_eval_config_wf asm_conf c' NONE = T`;;
+      ci = compile_inc_progs_for_eval asm_conf /\
+      INJ (compiler_instance_config_v ci) UNIV UNIV /\
+        compiler_instance_init_state ci = c')`;
+   `opt_eval_config_wf asm_conf c' NONE = T`];;
 
 let backend_from_data_tuple_cc_def = cake_define
   `backend_from_data_tuple_cc asm_conf (c:compiler_config) cfg =
@@ -439,7 +439,7 @@ let backend_from_flat_tuple_cc_def = cake_define
               (backend_from_data_tuple_cc asm_conf c)))))`;;
 
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     mk_flat_install_conf = flatProps$mk_flat_install_conf *)
 
 (* HOL4 ML code, not ported:
 val mk_flat_install_conf_def = flatPropsTheory.mk_flat_install_conf_def;

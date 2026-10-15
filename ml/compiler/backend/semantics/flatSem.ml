@@ -175,11 +175,11 @@ let v_to_list_def = cake_define
         | _34 -> NONE`;;
 hol4_overload "v_to_list" "flatSem_v_to_list";;
 
-let list_to_v_def = cake_define
-  `(flatSem_list_to_v [] = Conv (SOME (nil_tag,SOME list_id)) []) /\
-   (flatSem_list_to_v (x :: xs) =
-     Conv (SOME (cons_tag,SOME list_id)) [x; flatSem_list_to_v
-       xs])`;;
+let list_to_v_def = cake_define_list
+  [`flatSem_list_to_v [] = Conv (SOME (nil_tag,SOME list_id)) []`;
+   `flatSem_list_to_v (x :: xs) =
+        Conv (SOME (cons_tag,SOME list_id)) [x; flatSem_list_to_v
+          xs]`];;
 hol4_overload "list_to_v" "flatSem_list_to_v";;
 
 let v_to_char_list_def = cake_define
@@ -200,8 +200,8 @@ let vs_to_string_def = cake_define
         match x1 with
           [] -> SOME (implode "")
         | (Litv (StrLit s1) :: vs) ->
-      (match flatSem_vs_to_string vs with SOME s2 -> SOME (^ s1 s2) |
-        _36 -> NONE)
+      (match flatSem_vs_to_string vs with SOME s2 -> SOME ((\x y.
+        strcat x y) s1 s2) | _36 -> NONE)
         | _37 -> NONE`;;
 hol4_overload "vs_to_string" "flatSem_vs_to_string";;
 
@@ -238,24 +238,25 @@ let the_Litv_Float64_def = cake_define
   `flatSem_the_Litv_Float64 (Litv (Float64 w):flatSem_v) = w`;;
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
-let do_test_def = cake_define
-  `flatSem_do_test Equal ty v1 v2 =
-     (if check_type ty v1 /\ check_type ty v2 then
-        (if ty = Float64T then Eq_val (fp64_equal (the_Litv_Float64
-          v1) (the_Litv_Float64 v2)) else do_eq v1 v2) else
-          Eq_type_error) /\
-   flatSem_do_test (Compare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME (IntLit
-       i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) | (CharT,SOME
-       (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp (ORD c) (ORD d)) |
-       (WordT W8,SOME (Word8 w),SOME (Word8 v)) -> Eq_val (num_cmp cmp
-       (w2n w) (w2n v)) | (Float64T,SOME (Float64 w),SOME (Float64 v))
-       -> Eq_val (fp_cmp cmp w v) | (StrT,SOME (StrLit s),SOME (StrLit
-       t)) -> Eq_val (str_cmp F cmp s t) | _41 -> Eq_type_error) /\
-   flatSem_do_test (AltCompare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME (StrLit
-       s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) | _42 ->
-       Eq_type_error)`;;
+let do_test_def = cake_define_list
+  [`flatSem_do_test Equal ty v1 v2 =
+      (if check_type ty v1 /\ check_type ty v2 then
+         (if ty = Float64T then Eq_val (fp64_equal
+           (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
+           v2) else Eq_type_error)`;
+   `flatSem_do_test (Compare cmp:test) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
+        (IntLit i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) |
+        (CharT,SOME (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp
+        (ORD c) (ORD d)) | (WordT W8,SOME (Word8 w),SOME (Word8 v))
+        -> Eq_val (num_cmp cmp (w2n w) (w2n v)) | (Float64T,SOME
+        (Float64 w),SOME (Float64 v)) -> Eq_val (fp_cmp cmp w v) |
+        (StrT,SOME (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp F
+        cmp s t) | _41 -> Eq_type_error)`;
+   `flatSem_do_test (AltCompare cmp:test) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME
+        (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) |
+        _42 -> Eq_type_error)`];;
 hol4_overload "do_test" "flatSem_do_test";;
 
 let v_to_flat_def = cake_define
@@ -582,51 +583,51 @@ let pmatch_stamps_ok = cake_inductive
    (
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
-let _ = size_thms "list";;
-let _ = size_thms "pat";;
-(* HOL4 termination: \\ simp [] *)
-let pmatch_def = cake_define_wf
-  `inv_image (<) (\x. match x with INL (x,p,y,z) -> pat_size p | INR
-  (x,ps,y,z) -> list_size pat_size ps)`
-  `(flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
-     (Match ((x,v') :: bindings))) /\
-   (flatSem_pmatch s flatLang_Pany v' bindings = Match bindings) /\
-   (flatSem_pmatch s (Plit l) (Litv l') bindings =
-     (if l = l' then
-       Match bindings else if lit_same_type l l' then
-       No_match else
-       Match_type_error)) /\
-   (flatSem_pmatch s (Pcon stmp ps) (Conv stmp' vs) bindings =
-     (if ~pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs) then
-       Match_type_error else if OPTION_MAP FST stmp = OPTION_MAP FST
-         stmp' /\
-        LENGTH ps = LENGTH vs then
-       flatSem_pmatch_list s ps vs bindings else
-       No_match)) /\
-   (flatSem_pmatch s (Pas p i) v bindings =
-     flatSem_pmatch s p v ((i,v) :: bindings)) /\
-   (flatSem_pmatch s (Pref p) (Loc _97 lnum) bindings =
-     (match store_lookup lnum (?_refs s) with SOME (Refv v) ->
-       flatSem_pmatch s p v bindings | _98 -> Match_type_error)) /\
-   (flatSem_pmatch _99 _100 _101 bindings = Match_type_error) /\
-   (flatSem_pmatch_list s [] [] bindings = Match bindings) /\
-   (flatSem_pmatch_list s (p :: ps) (v :: vs) bindings =
-     (match flatSem_pmatch s p v bindings with Match_type_error ->
-       Match_type_error | Match bindings' -> flatSem_pmatch_list s ps vs
-       bindings' | No_match ->
-       (match flatSem_pmatch_list s ps vs bindings with
-         Match_type_error -> Match_type_error | _102 -> No_match))) /\
-   (flatSem_pmatch_list s _103 _104 bindings = Match_type_error)`;;
+let pmatch_def = cake_define_list
+  [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
+        (Match ((x,v') :: bindings))`;
+   `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
+   `flatSem_pmatch s (Plit l:flatLang_pat) (Litv l':flatSem_v) bindings
+  =
+        (if l = l' then
+          Match bindings else if lit_same_type l l' then
+          No_match else
+          Match_type_error)`;
+   `flatSem_pmatch s (Pcon stmp ps:flatLang_pat) (Conv stmp'
+  vs:flatSem_v) bindings =
+        (if ~pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs)
+          then
+          Match_type_error else if OPTION_MAP FST stmp = OPTION_MAP
+            FST stmp' /\
+           LENGTH ps = LENGTH vs then
+          flatSem_pmatch_list s ps vs bindings else
+          No_match)`;
+   `flatSem_pmatch s (Pas p i:flatLang_pat) v bindings =
+        flatSem_pmatch s p v ((i,v) :: bindings)`;
+   `flatSem_pmatch s (Pref p:flatLang_pat) (Loc _97 lnum:flatSem_v)
+  bindings =
+        (match store_lookup lnum (?_refs s) with SOME (Refv v) ->
+          flatSem_pmatch s p v bindings | _98 -> Match_type_error)`;
+   `flatSem_pmatch _99 _100 _101 bindings = Match_type_error`;
+   `flatSem_pmatch_list s [] [] bindings = Match bindings`;
+   `flatSem_pmatch_list s (p :: ps) (v :: vs) bindings =
+        (match flatSem_pmatch s p v bindings with Match_type_error
+          -> Match_type_error | Match bindings' -> flatSem_pmatch_list s
+          ps vs bindings' | No_match ->
+          (match flatSem_pmatch_list s ps vs bindings with
+            Match_type_error -> Match_type_error | _102 -> No_match))`;
+   `flatSem_pmatch_list s _103 _104 bindings = Match_type_error`];;
 hol4_overload "pmatch" "flatSem_pmatch";;
 hol4_overload "pmatch_list" "flatSem_pmatch_list";;
 
-let pmatch_rows_def = cake_define
-  `pmatch_rows [] s v = No_match /\
-   pmatch_rows ((p,e) :: pes) s v =
-     (match pmatch s p v [] with Match_type_error -> Match_type_error
-       | No_match -> pmatch_rows pes s v | Match env ->
-        (match pmatch_rows pes s v with Match_type_error ->
-          Match_type_error | _106 -> Match (env,p,e)))`;;
+let pmatch_rows_def = cake_define_list
+  [`pmatch_rows [] s v = No_match`;
+   `pmatch_rows ((p,e) :: pes) s v =
+      (match pmatch s p v [] with Match_type_error ->
+        Match_type_error | No_match -> pmatch_rows pes s v | Match env
+        ->
+         (match pmatch_rows pes s v with Match_type_error ->
+           Match_type_error | _106 -> Match (env,p,e)))`];;
 
 let dec_clock_def = cake_define
   `flatSem_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
@@ -720,8 +721,8 @@ let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + exp_alt_size a`;;
 
 let evaluate_def = cake_define_list
-  [`^ (flatSem_evaluate (env:flatSem_v flatSem_environment)) (s
-  ([]:flatLang_exp list)) =
+  [`(\x y. strcat x y) (flatSem_evaluate (env:flatSem_v
+  flatSem_environment)) (s ([]:flatLang_exp list)) =
         (s,Rval [])`;
    `flatSem_evaluate env s (e1 :: e2 :: es) =
         (match fix_clock s (flatSem_evaluate env s [e1]) with

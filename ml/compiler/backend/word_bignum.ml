@@ -577,16 +577,17 @@ let TempOut_def = cake_define
 let SeqTemp_def = cake_define
   `SeqTemp i r p = Seq (wordLang_Assign i (Lookup (Temp (n2w r)))) p`;;
 
-let SeqTempImm_def = cake_define
-  `SeqTempImm i (Reg r) p = SeqTemp i r p /\
-   SeqTempImm i (Imm w) p = Seq (wordLang_Assign i (Const w)) p`;;
+let SeqTempImm_def = cake_define_list
+  [`SeqTempImm i (Reg r:asm_reg_imm) p = SeqTemp i r p`;
+   `SeqTempImm i (Imm w:asm_reg_imm) p = Seq (wordLang_Assign i
+  (Const w)) p`];;
 
-let SeqTempImmNot_def = cake_define
-  `SeqTempImmNot i (Reg r) p =
-     SeqTemp i r (Seq (Assign i (Op Xor [Var i; Const (--(n2w 0))]))
-       p) /\
-   SeqTempImmNot i (Imm w) p = Seq (wordLang_Assign i (Const
-     (~w))) p`;;
+let SeqTempImmNot_def = cake_define_list
+  [`SeqTempImmNot i (Reg r:asm_reg_imm) p =
+      SeqTemp i r (Seq (Assign i (Op Xor [Var i; Const (--(n2w
+        0))])) p)`;
+   `SeqTempImmNot i (Imm w:asm_reg_imm) p = Seq (wordLang_Assign i
+  (Const (~w))) p`];;
 
 let SeqIndex_def = cake_define
   `SeqIndex i r arr p =
@@ -607,15 +608,15 @@ let DivCode_def = cake_define
          div_location) [n3; n4; n5] NONE)
             (Assign n2 (Lookup (Temp (n2w 28)))))`;;
 
-let LoadRegs_def = cake_define
-  `(LoadRegs [] p = (p:'a wordLang_prog)) /\
-   (LoadRegs (n :: ns) p = Seq (Get (n + 2) (Temp (n2w n)))
-     (LoadRegs ns p))`;;
+let LoadRegs_def = cake_define_list
+  [`LoadRegs [] p = (p:'a wordLang_prog)`;
+   `LoadRegs (n :: ns) p = Seq (Get (n + 2) (Temp (n2w n))) (LoadRegs
+  ns p)`];;
 
-let SaveRegs_def = cake_define
-  `(SaveRegs [] = (Skip:'a wordLang_prog)) /\
-   (SaveRegs (n :: ns) = Seq (Set (Temp (n2w n)) (Var (n + 2)))
-     (SaveRegs ns))`;;
+let SaveRegs_def = cake_define_list
+  [`SaveRegs [] = (Skip:'a wordLang_prog)`;
+   `SaveRegs (n :: ns) = Seq (Set (Temp (n2w n)) (Var (n + 2)))
+  (SaveRegs ns)`];;
 
 let compile_def = cake_define
   `word_bignum_compile n l i cs x5 =

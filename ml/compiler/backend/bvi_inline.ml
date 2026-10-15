@@ -73,14 +73,14 @@ let inline_exp_def = cake_define_list
    `inline_exps cs [] = []`;
    `inline_exps cs (x :: xs) = inline_exp cs x :: inline_exps cs xs`];;
 
-let inline_all_def = cake_define
-  `(inline_all cs [] = (cs,[])) /\
-   (inline_all cs ((name,arity,body) :: prog) =
-      (let body = inline_exp cs body in
-      let cs1 = if wrapper_ok name arity body then
-                  insert name (arity,body) cs else cs in
-      let (cs2,prog2) = inline_all cs1 prog in
-        (cs2,(name,arity,body) :: prog2)))`;;
+let inline_all_def = cake_define_list
+  [`inline_all cs [] = (cs,[])`;
+   `inline_all cs ((name,arity,body) :: prog) =
+         (let body = inline_exp cs body in
+         let cs1 = if wrapper_ok name arity body then
+                     insert name (arity,body) cs else cs in
+         let (cs2,prog2) = inline_all cs1 prog in
+           (cs2,(name,arity,body) :: prog2))`];;
 
 let remove_ticks_exp_def = cake_define_list
   [`remove_ticks_exp (bvi_Var n:bvi_exp) = bvi_Var n`;

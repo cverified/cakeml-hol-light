@@ -20,19 +20,20 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
   "infer_t = Infer_Tvar_db (num) | Infer_Tapp (infer_t list) (num) | \
    Infer_Tuvar (num)";;
 
-let id_to_string_def = cake_define
-  `(id_to_string (Short s) = s) /\
-   (id_to_string (Long x id') =
-     concat [x; implode "."; id_to_string id'])`;;
+let id_to_string_def = cake_define_list
+  [`id_to_string (Short s:namespace_id) = s`;
+   `id_to_string (Long x id':namespace_id) =
+        concat [x; implode "."; id_to_string id']`];;
 
-let get_tyname_def = cake_define
-  `get_tyname n (Bind [] []) = NONE /\
-   get_tyname n (Bind [] ((m,ys) :: xs)) =
-     (match get_tyname n ys with NONE -> get_tyname n (Bind [] xs) |
-       SOME x -> SOME (^ (^ m (implode ".")) x)) /\
-   get_tyname n (Bind ((tyname,_1,t) :: xs) m) =
-     (if (match t with Tapp _2 m -> m = n | _3 -> F) then
-       SOME tyname else get_tyname n (Bind xs m))`;;
+let get_tyname_def = cake_define_list
+  [`get_tyname n (Bind [] []:namespace) = NONE`;
+   `get_tyname n (Bind [] ((m,ys) :: xs):namespace) =
+      (match get_tyname n ys with NONE -> get_tyname n (Bind []
+        xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x y)
+        m (implode ".")) x))`;
+   `get_tyname n (Bind ((tyname,_1,t) :: xs) m:namespace) =
+      (if (match t with Tapp _2 m -> m = n | _3 -> F) then
+        SOME tyname else get_tyname n (Bind xs m))`];;
 
 let type_ident_to_string_def = cake_define
   `type_ident_to_string tys ti =
@@ -71,43 +72,40 @@ let add_parens_def = cake_define
      (if threshold' < (n:num) then concat [(implode "("); x;
        (implode ")")] else x)`;;
 
-let _ = size_thms "infer_t";;
-let _ = size_thms "list";;
-(* HOL4 termination: *)
-let inf_type_to_string_rec_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
-  -> list_size infer_t_size ts)`
-  `(inf_type_to_string_rec tys (Infer_Tuvar n) =
-     (concat [(implode "_"); mlint_toString (&n)],0)) /\
-   (inf_type_to_string_rec tys (Infer_Tvar_db n) =
-     (concat [ty_var_name n],0)) /\
-   (inf_type_to_string_rec tys (Infer_Tapp ts ti) =
-     (if ti = Tfn_num then
-      (match ts with [t1; t2] ->
-         (concat [add_parens 2 (inf_type_to_string_rec tys t1);
-           (implode " -> ");
-                  add_parens 3 (inf_type_to_string_rec tys t2)],3) |
-                    _4 -> (implode "<bad function type>",0)) else if ti
-                    = Ttup_num then
-      (match ts with [] -> ((implode "unit"),0) | [t] ->
-        inf_type_to_string_rec tys t | _5 -> (concat (commas (implode
-        " * ")
-                (MAP (add_parens 1) (inf_type_to_string_rec_list tys
-                  ts))),2)) else
-       match ts with [] -> (type_ident_to_string tys ti,0) | [t] ->
-         (concat [add_parens 1 (inf_type_to_string_rec tys t);
-           (implode " ");
-                  type_ident_to_string tys ti],1) | _6 ->
-         (concat ([(implode "(")] ++
-                  commas (implode ", ")
-                    (MAP (add_parens 5) (inf_type_to_string_rec_list
-                      tys ts)) ++
-                  [(implode ") "); type_ident_to_string tys ti]),1)))
-                    /\
-   inf_type_to_string_rec_list tys [] = [] /\
-   inf_type_to_string_rec_list tys (t :: ts) =
-     inf_type_to_string_rec tys t ::
-     inf_type_to_string_rec_list tys ts`;;
+let inf_type_to_string_rec_def = cake_define_list
+  [`inf_type_to_string_rec tys (Infer_Tuvar n:infer_t) =
+        (concat [(implode "_"); mlint_toString (&n)],0)`;
+   `inf_type_to_string_rec tys (Infer_Tvar_db n:infer_t) =
+        (concat [ty_var_name n],0)`;
+   `inf_type_to_string_rec tys (Infer_Tapp ts ti:infer_t) =
+        (if ti = Tfn_num then
+         (match ts with [t1; t2] ->
+            (concat [add_parens 2 (inf_type_to_string_rec tys t1);
+              (implode " -> ");
+                     add_parens 3 (inf_type_to_string_rec tys
+                       t2)],3) | _4 -> (implode
+                       "<bad function type>",0)) else if ti = Ttup_num
+                       then
+         (match ts with [] -> ((implode "unit"),0) | [t] ->
+           inf_type_to_string_rec tys t | _5 -> (concat (commas (implode
+           " * ")
+                   (MAP (add_parens 1) (inf_type_to_string_rec_list
+                     tys ts))),2)) else
+          match ts with [] -> (type_ident_to_string tys ti,0) | [t]
+            ->
+            (concat [add_parens 1 (inf_type_to_string_rec tys t);
+              (implode " ");
+                     type_ident_to_string tys ti],1) | _6 ->
+            (concat ([(implode "(")] ++
+                     commas (implode ", ")
+                       (MAP (add_parens 5)
+                         (inf_type_to_string_rec_list tys ts)) ++
+                     [(implode ") "); type_ident_to_string tys
+                       ti]),1))`;
+   `inf_type_to_string_rec_list tys [] = []`;
+   `inf_type_to_string_rec_list tys (t :: ts) =
+      inf_type_to_string_rec tys t ::
+      inf_type_to_string_rec_list tys ts`];;
 
 let inf_type_to_string_def = cake_define
   `inf_type_to_string tys t = FST (inf_type_to_string_rec tys t)`;;

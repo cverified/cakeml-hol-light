@@ -7,6 +7,7 @@
   Correctness proof for clos_to_bvl
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -28,6 +29,7 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -242,11 +244,11 @@ Definition compile_inc_def:
 End
 *)
 
-let nth_code_def = cake_define
-  `nth_code t_co 0 = LN /\
-   nth_code t_co (SUC n) =
-     union (fromAList (SND (t_co 0))) (nth_code (shift_seq 1 t_co)
-       n)`;;
+let nth_code_def = cake_define_list
+  [`nth_code t_co 0 = LN`;
+   `nth_code t_co (SUC n) =
+      union (fromAList (SND (t_co 0))) (nth_code (shift_seq 1
+        t_co) n)`];;
 
 let compile_oracle_inv_def = cake_define
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
@@ -574,11 +576,11 @@ val bEvalOp_def = bvlSemTheory.do_app_def;
 
 (* Differs from check_loc and dest_closure by not checking that max_app
    *)
-let check_loc'_def = cake_define
-  `(check_loc' NONE loc num_params num_args so_far <=> T) /\
-   (check_loc' (SOME p) loc num_params num_args so_far <=>
-     (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME p =
-       loc))`;;
+let check_loc'_def = cake_define_list
+  [`check_loc' NONE loc num_params num_args so_far <=> T`;
+   `check_loc' (SOME p) loc num_params num_args so_far <=>
+        (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME p
+          = loc)`];;
 
 let dest_closure'_def = cake_define
   `dest_closure' loc_opt f args =
@@ -1132,7 +1134,7 @@ let syntax_oracle_ok_def = cake_define
             (SET_OF_BAG (elist_globals es)) co /\
         is_state_oracle (clos_known_compile_inc (THE
           (clos_to_bvl_config_known_conf c)))
-            (^ pure_co (fvs_inc o
+            ((\x y. strcat x y) pure_co (fvs_inc o
                 state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c) (?_max_app c)) o

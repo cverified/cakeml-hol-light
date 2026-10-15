@@ -7,6 +7,7 @@
   Correctness proof for word_to_stack
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/export.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
@@ -30,6 +31,7 @@ needs "semantics/semanticPrimitives.ml";;
    *) (* for list_Seq *) (* for extract_labels *) (* for
    word_add_carry_def *) *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/export.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
@@ -99,9 +101,9 @@ val t = ``t:('a,'c,'ffi) stackSem$state``
 val the_eqn = backendPropsTheory.the_eqn
 *)
 
-let index_list_def = cake_define
-  `(index_list [] n = []) /\
-   (index_list (x :: xs) n = (n + LENGTH xs,x) :: index_list xs n)`;;
+let index_list_def = cake_define_list
+  [`index_list [] n = []`;
+   `index_list (x :: xs) n = (n + LENGTH xs,x) :: index_list xs n`];;
 
 (*TODO This should use GENLIST instead of MAP _ (COUNT_LIST _)*)
 
@@ -109,10 +111,10 @@ let index_list_def = cake_define
 
 (*MEM to an EL characterization for index lists*)
 
-let list_LUPDATE_def = cake_define
-  `(list_LUPDATE [] n ys = ys) /\
-   (list_LUPDATE (x :: xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE
-     x n ys))`;;
+let list_LUPDATE_def = cake_define_list
+  [`list_LUPDATE [] n ys = ys`;
+   `list_LUPDATE (x :: xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE x
+  n ys)`];;
 
 (* move to stackProps? *)
 
@@ -164,12 +166,12 @@ let adjust_names_def = cake_define
   `adjust_names n = n DIV 2`;;
 
 (*handler_val counts the total number of words in the list of frames*)
-let handler_val_def = cake_define
-  `(handler_val [] = 1) /\
-   (handler_val ((NONE,_6,frame) :: stack) =
-     1 + LENGTH frame + handler_val stack) /\
-   (handler_val ((SOME _7,_8,frame) :: stack) =
-     4 + LENGTH frame + handler_val stack)`;;
+let handler_val_def = cake_define_list
+  [`handler_val [] = 1`;
+   `handler_val ((NONE,_6,frame) :: stack) =
+        1 + LENGTH frame + handler_val stack`;
+   `handler_val ((SOME _7,_8,frame) :: stack) =
+        4 + LENGTH frame + handler_val stack`];;
 
 let is_handler_frame_def = cake_define
   `is_handler_frame x1 =
@@ -656,18 +658,14 @@ Theorem wStackLoad_thm3 =
  |> Q.INST [`t`|->`set_var v1 v2 t`]
  |> PURE_REWRITE_RULE[wordPropsTheory.set_var_const,set_var_const]
 *)
-let _ = size_thms "exp";;
-(* HOL4 termination: \\ simp[] \\ Induct \\ simp[] \\ rw[] \\
-   EVAL_TAC \\ simp[] \\ res_tac \\ simp[] *)
-let map_var_def = cake_define_wf
-  `MEASURE (exp_size ARB o SND)`
-  `(map_var f (Var num':wordLang_exp) = Var (f num')) /\
-   (map_var f (Load exp) = Load (map_var f exp)) /\
-   (map_var f (Op wop ls) = Op wop (MAP (map_var f) ls)) /\
-   (map_var f (Shift sh e1 e2) = Shift sh (map_var f e1) (map_var f
-     e2)) /\
-   (map_var f (Const c) = Const c) /\
-   (map_var f (Lookup v) = Lookup v)`;;
+let map_var_def = cake_define_list
+  [`map_var f (Var num':wordLang_exp) = Var (f num')`;
+   `map_var f (Load exp:wordLang_exp) = Load (map_var f exp)`;
+   `map_var f (Op wop ls:wordLang_exp) = Op wop (MAP (map_var f) ls)`;
+   `map_var f (Shift sh e1 e2:wordLang_exp) = Shift sh (map_var f e1)
+  (map_var f e2)`;
+   `map_var f (Const c:wordLang_exp) = Const c`;
+   `map_var f (Lookup v:wordLang_exp) = Lookup v`];;
 (*
 Theorem word_exp_thm1:
    ∀s e x. word_exp s e = SOME (Word x) ∧
@@ -4681,7 +4679,7 @@ fun drule0 th =
 *)
 
 let init_state_ok_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (init_state_ok ac k) (t coracle) <=>
        4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
          stackSem_state_use_stack
@@ -4711,7 +4709,7 @@ let init_state_ok_def = cake_define
            (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
 let make_init_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (make_init ac k) (t code coracle) =
        mk_wordSem_state (insert 0 (Loc 1 0) LN) (SOME 0) (?_fp_regs
          t) (?_store t \\ Handler) [] (LENGTH (?_stack t)) (stack_size

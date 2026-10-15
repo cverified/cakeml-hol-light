@@ -71,13 +71,13 @@ let knowledge_FIELDS = define_record "knowledge"
 
 (* LIST COMPARISON *)
 
-let listCmp_def = cake_define
-  `(listCmp ((hd1:num) :: tl1) ((hd2:num) :: tl2) =
-    (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then Greater
-      else Less)) /\
-   (listCmp [] [] = Equal) /\
-   (listCmp (hd1 :: tl1) [] = Greater) /\
-   (listCmp [] (hd2 :: tl2) = Less)`;;
+let listCmp_def = cake_define_list
+  [`listCmp ((hd1:num) :: tl1) ((hd2:num) :: tl2) =
+       (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then
+         Greater else Less)`;
+   `listCmp [] [] = Equal`;
+   `listCmp (hd1 :: tl1) [] = Greater`;
+   `listCmp [] (hd2 :: tl2) = Less`];;
 
 let empty_data_def = cake_define
   `empty_data = mk_knowledge LN LN [] empty empty`;;
@@ -95,10 +95,10 @@ let invalidate_data_def = cake_define
 
 (* Invalidate after writing each register in a list (e.g. multi-output
   instructions); empties the data if any of them is tracked. *)
-let invalidate_regs_def = cake_define
-  `invalidate_regs data [] = data /\
-   invalidate_regs data (r :: rs) = invalidate_regs
-     (invalidate_data data r) rs`;;
+let invalidate_regs_def = cake_define_list
+  [`invalidate_regs data [] = data`;
+   `invalidate_regs data (r :: rs) = invalidate_regs (invalidate_data
+  data r) rs`];;
 
 (* Enter an odd register that a stored fact reads into the tracked set
    as a
@@ -111,10 +111,10 @@ let register_read_def = cake_define
        knowledge_to_canonical_fupd (K (insert r r
        (knowledge_to_canonical data))) data else data)`;;
 
-let register_reads_def = cake_define
-  `register_reads data [] = data /\
-   register_reads data (r :: rs) = register_reads (register_read
-     data r) rs`;;
+let register_reads_def = cake_define_list
+  [`register_reads data [] = data`;
+   `register_reads data (r :: rs) = register_reads (register_read
+  data r) rs`];;
 
 (* REGISTER TRANSFORMATIONS *)
 
@@ -127,23 +127,24 @@ let canonicalRegs'_def = cake_define
      (let n = canonicalRegs (data:knowledge) (r:num) in
        if n = avoid then r else n)`;;
 
-let canonicalImmReg_def = cake_define
-  `canonicalImmReg data (Reg r) = Reg (canonicalRegs data r) /\
-   canonicalImmReg data (Imm w) = Imm w`;;
+let canonicalImmReg_def = cake_define_list
+  [`canonicalImmReg data (Reg r:asm_reg_imm) = Reg (canonicalRegs
+  data r)`;
+   `canonicalImmReg data (Imm w:asm_reg_imm) = Imm w`];;
 
-let canonicalImmReg'_def = cake_define
-  `canonicalImmReg' avoid data (Reg r) = Reg (canonicalRegs' avoid data
-  r) /\
-   canonicalImmReg' avoid data (Imm w) = Imm w`;;
+let canonicalImmReg'_def = cake_define_list
+  [`canonicalImmReg' avoid data (Reg r:asm_reg_imm) = Reg
+  (canonicalRegs' avoid data r)`;
+   `canonicalImmReg' avoid data (Imm w:asm_reg_imm) = Imm w`];;
 
 let canonicalMultRegs_def = cake_define
   `canonicalMultRegs (data:knowledge) (regs:num list) = MAP
   (canonicalRegs data) regs`;;
 
-let map_insert_def = cake_define
-  `map_insert [] m = m /\
-   map_insert ((x,y) :: xs) m =
-     insert x y (map_insert xs m)`;;
+let map_insert_def = cake_define_list
+  [`map_insert [] m = m`;
+   `map_insert ((x,y) :: xs) m =
+      insert x y (map_insert xs m)`];;
 
 let canonicalMoveRegs_def = cake_define
   `canonicalMoveRegs data moves =
@@ -226,48 +227,50 @@ let canonicalFp_def = cake_define_list
 let wordToNum_def = cake_define
   `wordToNum w = w2n w`;;
 
-let shiftToNum_def = cake_define
-  `shiftToNum Lsl = (40:num) /\
-   shiftToNum Lsr = 41 /\
-   shiftToNum Asr = 42 /\
-   shiftToNum Ror = 43`;;
+let shiftToNum_def = cake_define_list
+  [`shiftToNum Lsl = (40:num)`;
+   `shiftToNum Lsr = 41`;
+   `shiftToNum Asr = 42`;
+   `shiftToNum Ror = 43`];;
 
-let arithOpToNum_def = cake_define
-  `arithOpToNum Add = (35:num) /\
-   arithOpToNum Sub = 36 /\
-   arithOpToNum And = 37 /\
-   arithOpToNum Or = 38 /\
-   arithOpToNum Xor = 39`;;
+let arithOpToNum_def = cake_define_list
+  [`arithOpToNum Add = (35:num)`;
+   `arithOpToNum Sub = 36`;
+   `arithOpToNum And = 37`;
+   `arithOpToNum Or = 38`;
+   `arithOpToNum Xor = 39`];;
 
-let regImmToNumList_def = cake_define
-  `regImmToNumList (Reg r) = [33; r + 100] /\
-   regImmToNumList (Imm w) = [34; wordToNum w]`;;
+let regImmToNumList_def = cake_define_list
+  [`regImmToNumList (Reg r:asm_reg_imm) = [33; r + 100]`;
+   `regImmToNumList (Imm w:asm_reg_imm) = [34; wordToNum w]`];;
 
-let arithToNumList_def = cake_define
-  `arithToNumList (Binop op r1 r2 ri) = [25; arithOpToNum op; r2 + 100]
-  ++ regImmToNumList ri /\
-   arithToNumList (LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 + 100] /\
-   arithToNumList (LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 + 100;
-     r5 + 100] /\
-   arithToNumList (Shift s r1 r2 ri) = [28; shiftToNum s; r2 + 100]
-     ++ regImmToNumList ri /\
-   arithToNumList (Div r1 r2 r3) = [29; r2 + 100; r3 + 100] /\
-   arithToNumList (AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 + 100]
-     /\
-   arithToNumList (AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3 +
-     100] /\
-   arithToNumList (SubOverflow r1 r2 r3 r4) = [32; r2 + 100; r3 +
-     100]`;;
+let arithToNumList_def = cake_define_list
+  [`arithToNumList (Binop op r1 r2 ri:asm_arith) = [25; arithOpToNum
+  op; r2 + 100] ++ regImmToNumList ri`;
+   `arithToNumList (LongMul r1 r2 r3 r4:asm_arith) = [26; r3 + 100;
+  r4 + 100]`;
+   `arithToNumList (LongDiv r1 r2 r3 r4 r5:asm_arith) = [27; r3 +
+  100; r4 + 100; r5 + 100]`;
+   `arithToNumList (Shift s r1 r2 ri:asm_arith) = [28; shiftToNum s;
+  r2 + 100] ++ regImmToNumList ri`;
+   `arithToNumList (Div r1 r2 r3:asm_arith) = [29; r2 + 100; r3 +
+  100]`;
+   `arithToNumList (AddCarry r1 r2 r3 r4:asm_arith) = [30; r2 + 100;
+  r3 + 100]`;
+   `arithToNumList (AddOverflow r1 r2 r3 r4:asm_arith) = [31; r2 +
+  100; r3 + 100]`;
+   `arithToNumList (SubOverflow r1 r2 r3 r4:asm_arith) = [32; r2 +
+  100; r3 + 100]`];;
 
-let memOpToNum_def = cake_define
-  `memOpToNum Load = (21:num) /\
-   memOpToNum Load8 = 22 /\
-   memOpToNum Load16 = 46 /\
-   memOpToNum Load32 = 44 /\
-   memOpToNum Store = 23 /\
-   memOpToNum Store8 = 47 /\
-   memOpToNum Store16 = 24 /\
-   memOpToNum Store32 = 45`;;
+let memOpToNum_def = cake_define_list
+  [`memOpToNum Load = (21:num)`;
+   `memOpToNum Load8 = 22`;
+   `memOpToNum Load16 = 46`;
+   `memOpToNum Load32 = 44`;
+   `memOpToNum Store = 23`;
+   `memOpToNum Store8 = 47`;
+   `memOpToNum Store16 = 24`;
+   `memOpToNum Store32 = 45`];;
 
 (* Key for a load fact (kept in the separate loads_mem map): the memop
    head
@@ -316,28 +319,28 @@ let OpCurrHeapToNumList_def = cake_define
 
 (* WORD CSE FUNCTIONS *)
 
-let firstRegOfArith_def = cake_define
-  `firstRegOfArith (Binop _2 r _3 _4) = r /\
-   firstRegOfArith (Shift _5 r _6 _7) = r /\
-   firstRegOfArith (Div r _8 _9) = r /\
-   firstRegOfArith (LongMul r _10 _11 _12) = r /\
-   firstRegOfArith (LongDiv r _13 _14 _15 _16) = r /\
-   firstRegOfArith (AddCarry r _17 _18 _19) = r /\
-   firstRegOfArith (AddOverflow r _20 _21 _22) = r /\
-   firstRegOfArith (SubOverflow r _23 _24 _25) = r`;;
+let firstRegOfArith_def = cake_define_list
+  [`firstRegOfArith (Binop _2 r _3 _4:asm_arith) = r`;
+   `firstRegOfArith (Shift _5 r _6 _7:asm_arith) = r`;
+   `firstRegOfArith (Div r _8 _9:asm_arith) = r`;
+   `firstRegOfArith (LongMul r _10 _11 _12:asm_arith) = r`;
+   `firstRegOfArith (LongDiv r _13 _14 _15 _16:asm_arith) = r`;
+   `firstRegOfArith (AddCarry r _17 _18 _19:asm_arith) = r`;
+   `firstRegOfArith (AddOverflow r _20 _21 _22:asm_arith) = r`;
+   `firstRegOfArith (SubOverflow r _23 _24 _25:asm_arith) = r`];;
 
 (* All registers an arith instruction writes (multi-output ops write
    two), so
   that every written register is invalidated. *)
-let arithWrites_def = cake_define
-  `arithWrites (Binop _26 r _27 _28) = [r] /\
-   arithWrites (Shift _29 r _30 _31) = [r] /\
-   arithWrites (Div r _32 _33) = [r] /\
-   arithWrites (LongMul r1 r2 _34 _35) = [r1; r2] /\
-   arithWrites (LongDiv r1 r2 _36 _37 _38) = [r1; r2] /\
-   arithWrites (AddCarry r1 _39 _40 r4) = [r1; r4] /\
-   arithWrites (AddOverflow r1 _41 _42 r4) = [r1; r4] /\
-   arithWrites (SubOverflow r1 _43 _44 r4) = [r1; r4]`;;
+let arithWrites_def = cake_define_list
+  [`arithWrites (Binop _26 r _27 _28:asm_arith) = [r]`;
+   `arithWrites (Shift _29 r _30 _31:asm_arith) = [r]`;
+   `arithWrites (Div r _32 _33:asm_arith) = [r]`;
+   `arithWrites (LongMul r1 r2 _34 _35:asm_arith) = [r1; r2]`;
+   `arithWrites (LongDiv r1 r2 _36 _37 _38:asm_arith) = [r1; r2]`;
+   `arithWrites (AddCarry r1 _39 _40 r4:asm_arith) = [r1; r4]`;
+   `arithWrites (AddOverflow r1 _41 _42 r4:asm_arith) = [r1; r4]`;
+   `arithWrites (SubOverflow r1 _43 _44 r4:asm_arith) = [r1; r4]`];;
 
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
@@ -447,15 +450,15 @@ let can_mem_arith_def = cake_define
       | (Shift _79 _80 r (Imm _81)) -> ODD r
       | _82 -> F`;;
 
-let is_store_def = cake_define
-  `(is_store Load = F) /\
-   (is_store Load8 = F) /\
-   (is_store Load16 = F) /\
-   (is_store Load32 = F) /\
-   (is_store Store = T) /\
-   (is_store Store8 = T) /\
-   (is_store Store16 = T) /\
-   (is_store Store32 = T)`;;
+let is_store_def = cake_define_list
+  [`is_store Load = F`;
+   `is_store Load8 = F`;
+   `is_store Load16 = F`;
+   `is_store Load32 = F`;
+   `is_store Store = T`;
+   `is_store Store8 = T`;
+   `is_store Store16 = T`;
+   `is_store Store32 = T`];;
 
 let word_cseInst_def = cake_define
   `word_cseInst data x2 =
@@ -502,13 +505,13 @@ let dest_Var_def = cake_define
 (* First-order equality-intersection for the instruction map (written
   without higher-order functions so it can be translated by cv_trans).
     *)
-let bm_inter_eq_acc_def = cake_define
-  `bm_inter_eq_acc m2 Tip acc = acc /\
-   bm_inter_eq_acc m2 (Bin n k v l r) acc =
-     bm_inter_eq_acc m2 l
-       (bm_inter_eq_acc m2 r
-         (if balanced_map_lookup listCmp k m2 = SOME v then
-           balanced_map_insert listCmp k v acc else acc))`;;
+let bm_inter_eq_acc_def = cake_define_list
+  [`bm_inter_eq_acc m2 Tip acc = acc`;
+   `bm_inter_eq_acc m2 (Bin n k v l r:balanced_map) acc =
+      bm_inter_eq_acc m2 l
+        (bm_inter_eq_acc m2 r
+          (if balanced_map_lookup listCmp k m2 = SOME v then
+            balanced_map_insert listCmp k v acc else acc))`];;
 
 let bm_inter_eq_def = cake_define
   `bm_inter_eq m1 m2 = bm_inter_eq_acc m2 m1 empty`;;
@@ -651,11 +654,10 @@ let word_common_subexp_elim_def = cake_define
 
 (* tests *)
 
-let seqs_def = cake_define
-  `(word_cse_Seqs [] = wordLang_Skip) /\
-   (word_cse_Seqs [x] = x) /\
-   (word_cse_Seqs (x :: y :: xs) = Seq x (word_cse_Seqs (y ::
-     xs)))`;;
+let seqs_def = cake_define_list
+  [`word_cse_Seqs [] = wordLang_Skip`;
+   `word_cse_Seqs [x] = x`;
+   `word_cse_Seqs (x :: y :: xs) = Seq x (word_cse_Seqs (y :: xs))`];;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
 (* Concrete word type: the load-fact keys compare distinct offsets,

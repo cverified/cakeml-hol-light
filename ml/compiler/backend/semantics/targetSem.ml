@@ -247,20 +247,21 @@ let evaluate_def = cake_define
                                 (Error,ms,ffi)))))`;;
 hol4_overload "evaluate" "targetSem_evaluate";;
 
-let machine_sem_def = cake_define
-  `(machine_sem mc st ms (Terminate t io_list) <=>
-      (?k ms' st'.
-        evaluate mc st k ms = (Halt t,ms',st') /\ ffi_state_io_events
-        st' = io_list)) /\
-   (machine_sem mc st ms (Diverge io_trace) <=>
-      (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
-      lprefix_lub
-        (IMAGE
-          (\k. fromList (ffi_state_io_events (SND (SND (evaluate mc
-            st k ms))))) UNIV)
-        io_trace) /\
-   (machine_sem mc st ms Fail <=>
-      (?k. FST (evaluate mc st k ms) = Error))`;;
+let machine_sem_def = cake_define_list
+  [`machine_sem mc st ms (Terminate t io_list:behaviour) <=>
+         (?k ms' st'.
+           evaluate mc st k ms = (Halt t,ms',st') /\
+             ffi_state_io_events
+           st' = io_list)`;
+   `machine_sem mc st ms (Diverge io_trace:behaviour) <=>
+         (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
+         lprefix_lub
+           (IMAGE
+             (\k. fromList (ffi_state_io_events (SND (SND (evaluate
+               mc st k ms))))) UNIV)
+           io_trace`;
+   `machine_sem mc st ms Fail <=>
+         (?k. FST (evaluate mc st k ms) = Error)`];;
 
 (* define what it means for code to be loaded and ready to run *)
 
@@ -287,9 +288,9 @@ let target_configured_def = cake_define
        (machine_config_target mc_conf)) with NONE -> T | SOME r ->
        asm_state_lr t = r)`;;
 
-let get_reg_value_def = cake_define
-  `(get_reg_value NONE w f = w) /\
-   (get_reg_value (SOME v) _4 f = f v)`;;
+let get_reg_value_def = cake_define_list
+  [`get_reg_value NONE w f = w`;
+   `get_reg_value (SOME v) _4 f = f v`];;
 
 let mmio_pcs_min_index_def = cake_define
   `mmio_pcs_min_index ffi_names =
@@ -578,7 +579,7 @@ let installed_def = cake_define
         DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
           machine_config_mmio_info
       mc_conf = ZIP (GENLIST (\index. index + i) (LENGTH
-        shmem_extra),
+        shmem_extra))
                               (MAP (\rec. (shmem_info_num_nbytes rec,
                               Addr (shmem_info_num_addr_reg rec) (n2w
                                 (shmem_info_num_addr_off
@@ -586,6 +587,6 @@ let installed_def = cake_define
                               n2w (shmem_info_num_exit_pc rec) +
                                 target_get_pc (machine_config_target
                                 mc_conf) ms))
-                              shmem_extra)) /\
+                              shmem_extra) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword
        (:'a)))`;;

@@ -41,37 +41,28 @@ hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
    timestamp information (note this make the function non-injective)
 *)
 
-(* TERMINATION: wf_rel_tac `measure v_size`
-\\ `∀l. v1_size l = SUM (MAP (λx. v_size x + 1) l)`
-   by (Induct >> rw [v_size_def])
-\\ rw []
-\\ IMP_RES_TAC SUM_MAP_MEM_bound
-\\ ho_match_mp_tac LESS_EQ_LESS_TRANS
-\\ Q.EXISTS_TAC `SUM (MAP (λx. v_size x + 1) l)`
-\\ rw []
-\\ ho_match_mp_tac LESS_EQ_TRANS
-\\ Q.EXISTS_TAC `v_size a + 1`
-\\ rw [] *)
-let data_to_bvi_v_def = cake_define
-  `data_to_bvi_v (Number i:dataSem_v) = bvlSem_Number i /\
-   data_to_bvi_v (Word64 w) = bvlSem_Word64 w /\
-   data_to_bvi_v (CodePtr p) = bvlSem_CodePtr p /\
-   data_to_bvi_v (RefPtr b r) = bvlSem_RefPtr b r /\ data_to_bvi_v
-     (Block _1 tag l) = bvlSem_Block tag (MAP data_to_bvi_v l)`;;
+let data_to_bvi_v_def = cake_define_list
+  [`data_to_bvi_v (Number i:dataSem_v) = bvlSem_Number i`;
+   `data_to_bvi_v (Word64 w:dataSem_v) = bvlSem_Word64 w`;
+   `data_to_bvi_v (CodePtr p:dataSem_v) = bvlSem_CodePtr p`;
+   `data_to_bvi_v (RefPtr b r:dataSem_v) = bvlSem_RefPtr b r`;
+   `data_to_bvi_v (Block _1 tag l:dataSem_v) = bvlSem_Block tag (MAP
+  data_to_bvi_v l)`];;
 
 (* Projection for Unit constant *)
 
 (* Projection for Boolv constant *)
 
 (* Projection for references, non-injective for value arrays *)
-let data_to_bvi_ref_def = cake_define
-  `data_to_bvi_ref (ValueArray l:bvlSem_ref) = ValueArray (MAP
-  data_to_bvi_v l) /\
-   data_to_bvi_ref (ByteArray b bl) = ByteArray b bl /\
-   data_to_bvi_ref (Thunk m v) = Thunk m (data_to_bvi_v v) /\
-     data_to_bvi_ref (MutBlock tg fin ls c rs) =
-     MutBlock tg fin (MAP data_to_bvi_v ls) (data_to_bvi_v c) (MAP
-       data_to_bvi_v rs)`;;
+let data_to_bvi_ref_def = cake_define_list
+  [`data_to_bvi_ref (ValueArray l:bvlSem_ref) = ValueArray (MAP
+  data_to_bvi_v l)`;
+   `data_to_bvi_ref (ByteArray b bl:bvlSem_ref) = ByteArray b bl`;
+   `data_to_bvi_ref (Thunk m v:bvlSem_ref) = Thunk m (data_to_bvi_v
+  v)`;
+   `data_to_bvi_ref (MutBlock tg fin ls c rs:bvlSem_ref) =
+        MutBlock tg fin (MAP data_to_bvi_v ls) (data_to_bvi_v c)
+          (MAP data_to_bvi_v rs)`];;
 
 (* State relation *)
 let state_rel_def = cake_define

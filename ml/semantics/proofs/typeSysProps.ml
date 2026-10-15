@@ -101,23 +101,23 @@ let type_pes_def = cake_define
 
 (* ---------- tenv_val_exp stuff ---------- *)
 
-let deBruijn_subst_tenvE_def = cake_define
-  `(deBruijn_subst_tenvE targs Empty = Empty) /\
-   (deBruijn_subst_tenvE targs (Bind_tvar tvs env) =
-     Bind_tvar tvs (deBruijn_subst_tenvE targs env)) /\
-   (deBruijn_subst_tenvE targs (Bind_name x tvs t env) =
-     Bind_name x tvs (deBruijn_subst (tvs + num_tvs env)
+let deBruijn_subst_tenvE_def = cake_define_list
+  [`deBruijn_subst_tenvE targs Empty = Empty`;
+   `deBruijn_subst_tenvE targs (Bind_tvar tvs env:tenv_val_exp) =
+      Bind_tvar tvs (deBruijn_subst_tenvE targs env)`;
+   `deBruijn_subst_tenvE targs (Bind_name x tvs t env:tenv_val_exp) =
+      Bind_name x tvs (deBruijn_subst (tvs + num_tvs env)
                               (MAP (deBruijn_inc 0 (tvs + num_tvs
                                 env)) targs)
                               t)
-          (deBruijn_subst_tenvE targs env))`;;
+           (deBruijn_subst_tenvE targs env)`];;
 
-let db_merge_def = cake_define
-  `(db_merge Empty e = e) /\
-   (db_merge (Bind_tvar tvs e1) e2 = Bind_tvar tvs (db_merge e1 e2))
-     /\
-   (db_merge (Bind_name x tvs t e1) e2 = Bind_name x tvs t
-     (db_merge e1 e2))`;;
+let db_merge_def = cake_define_list
+  [`db_merge Empty e = e`;
+   `db_merge (Bind_tvar tvs e1:tenv_val_exp) e2 = Bind_tvar tvs
+  (db_merge e1 e2)`;
+   `db_merge (Bind_name x tvs t e1:tenv_val_exp) e2 = Bind_name x tvs
+  t (db_merge e1 e2)`];;
 
 (* ---------- type_op ---------- *)
 
@@ -183,16 +183,16 @@ QED
 (* ---------- ctMap stuff ---------- *)
 
 
-let type_def_to_ctMap_def = cake_define
-  `(type_def_to_ctMap tenvT next_stamp [] [] = []) /\
-   (type_def_to_ctMap tenvT next_stamp ((tvs,tn,ctors) :: tds) (id'
-     :: ids) =
-     type_def_to_ctMap tenvT (next_stamp + 1) tds ids ++
-     REVERSE
-       (MAP (\(cn,ts).
-         (TypeStamp cn next_stamp,(tvs,MAP (type_name_subst tenvT)
-           ts,id')))
-         ctors))`;;
+let type_def_to_ctMap_def = cake_define_list
+  [`type_def_to_ctMap tenvT next_stamp [] [] = []`;
+   `type_def_to_ctMap tenvT next_stamp ((tvs,tn,ctors) :: tds) (id' ::
+  ids) =
+        type_def_to_ctMap tenvT (next_stamp + 1) tds ids ++
+        REVERSE
+          (MAP (\(cn,ts).
+            (TypeStamp cn next_stamp,(tvs,MAP (type_name_subst
+              tenvT) ts,id')))
+            ctors)`];;
 
 
  (*

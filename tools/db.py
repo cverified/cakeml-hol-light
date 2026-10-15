@@ -92,6 +92,7 @@ class Db:
   def read_fixities(self):
     """the infixes that each source declares itself"""
     self.fix = {}
+    self.ovl_infix = {}  # a symbolic infix -> the constant it means
     for thy, path, kind in self.order:
       try:
         text = open(path, encoding='utf-8').read()
@@ -125,6 +126,9 @@ class Db:
           for tok, prec, ass, _ in hol4.fixities(b.text):
             hterm.add_infix(tok, prec, ass)
           if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
+        if (b.kind == 'Overload' and b.name and
+            not b.name[0].isalpha()):
+          self.ovl_infix[b.name] = strip_quote(b.body).strip()
         if b.kind == 'Ancestors':
           anc = [w for w in b.body.split()]
           self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))
@@ -171,6 +175,10 @@ class Db:
           self.abbrevs[(thy, b.name)] = (params, txt)
           self.defs[b.name].append((thy, 'tyabbrev'))
         elif b.kind == 'ML':
+          r = hol4.hol_reln(b.text)
+          if r:
+            for nm in definition_names(r[1]):
+              self.defs[nm].append((thy, 'rel'))
           for m in re.finditer(r'(?:temp_)?type_abbrev\s*\(\s*"([^"]+)"'
                                r'\s*,\s*(?:``|\u201c)\s*:(.*?)'
                                r'(?:``|\u201d)', b.text, re.S):

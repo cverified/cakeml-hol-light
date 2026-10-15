@@ -269,12 +269,12 @@ let dest_Constant_def = cake_define
       | _17 -> NONE`;;
 hol4_overload "dest_Constant" "flat_to_clos_dest_Constant";;
 
-let dest_Constants_def = cake_define
-  `dest_Constants [] = SOME [] /\
-   dest_Constants (c :: cs) =
-     (match dest_Constant c with NONE -> NONE | SOME x -> (match
-       dest_Constants cs with NONE -> NONE | SOME xs -> SOME (x ::
-       xs)))`;;
+let dest_Constants_def = cake_define_list
+  [`dest_Constants [] = SOME []`;
+   `dest_Constants (c :: cs) =
+      (match dest_Constant c with NONE -> NONE | SOME x -> (match
+        dest_Constants cs with NONE -> NONE | SOME xs -> SOME (x ::
+        xs)))`];;
 
 let SmartCons_def = cake_define
   `SmartCons t tag xs =
@@ -325,10 +325,10 @@ let compile_def = cake_define_list
               (HD (flat_to_clos_compile new_m [e]))])`];;
 hol4_overload "compile" "flat_to_clos_compile";;
 
-let compile_decs_def = cake_define
-  `flat_to_clos_compile_decs [] = [] /\
-   flat_to_clos_compile_decs (e :: xs) = compile [] [e] ++
-     flat_to_clos_compile_decs xs`;;
+let compile_decs_def = cake_define_list
+  [`flat_to_clos_compile_decs [] = []`;
+   `flat_to_clos_compile_decs (e :: xs) = compile [] [e] ++
+  flat_to_clos_compile_decs xs`];;
 hol4_overload "compile_decs" "flat_to_clos_compile_decs";;
 
 let compile_prog_def = cake_define

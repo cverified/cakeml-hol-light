@@ -29,7 +29,7 @@ hol4_overload "Bool" "jsonLang_Bool";;
 hol4_overload "Null" "jsonLang_Null";;
 
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     ++ = Append *)
 
 let concat_with_def = cake_define
   `concat_with x1 c =
@@ -47,10 +47,10 @@ let num_to_hex_digit_def = cake_define
      (if n < 10 then [CHR (48 + n)] else
      if n < 16 then [CHR (55 + n)] else [])`;;
 
-let n_rev_hex_digs = cake_define
-  `n_rev_hex_digs 0 x = [] /\
-   n_rev_hex_digs (SUC n) x = (num_to_hex_digit (x MOD 16) ++
-     n_rev_hex_digs n (x DIV 16))`;;
+let n_rev_hex_digs = cake_define_list
+  [`n_rev_hex_digs 0 x = []`;
+   `n_rev_hex_digs (SUC n) x = (num_to_hex_digit (x MOD 16) ++
+      n_rev_hex_digs n (x DIV 16))`];;
 
 let encode_str_def = cake_define
   `encode_str unicode s =
@@ -60,20 +60,21 @@ let encode_str_def = cake_define
      REVERSE (n_rev_hex_digs 4 (ORD c))) else concat [(implode "\\");
      toString (ORD c)]) s2))`;;
 
-let json_to_mlstring_def = cake_define
-  `(json_to_mlstring obj =
-     (match obj with Object mems -> List [(implode "{")] ++
-                 concat_with (MAP mem_to_string mems) (List [(implode
-                   ",")]) ++
-                 List [(implode "}")] | Array obs -> List [(implode
-                   "[")] ++
-                 concat_with (MAP json_to_mlstring obs) (List
-                   [(implode ",")]) ++
-                 List [(implode "]")] | String s -> List ([(implode)
-                   "\""; encode_str T s; (implode) "\""]) | Int i ->
-                   List [toString i] | Bool b -> (if b then List
-                   [(implode "true")] else List [(implode "false")]) |
-                   Null -> List [(implode "null")])) /\
-   (mem_to_string n_obj = (let (n,obj) = n_obj in
-         List [(implode) "\""; n; (implode) "\":"] ++
-           json_to_mlstring obj))`;;
+let json_to_mlstring_def = cake_define_list
+  [`json_to_mlstring obj =
+        (match obj with Object mems -> List [(implode "{")] ++
+                    concat_with (MAP mem_to_string mems) (List
+                      [(implode ",")]) ++
+                    List [(implode "}")] | Array obs -> List
+                      [(implode "[")] ++
+                    concat_with (MAP json_to_mlstring obs) (List
+                      [(implode ",")]) ++
+                    List [(implode "]")] | String s -> List
+                      ([(implode) "\""; encode_str T s; (implode)
+                      "\""]) | Int i -> List [toString i] | Bool b ->
+                      (if b then List [(implode "true")] else List
+                      [(implode "false")]) | Null -> List [(implode
+                      "null")])`;
+   `mem_to_string n_obj = (let (n,obj) = n_obj in
+            List [(implode) "\""; n; (implode) "\":"] ++
+              json_to_mlstring obj)`];;

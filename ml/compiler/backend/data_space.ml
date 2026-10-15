@@ -71,9 +71,9 @@ Proof
 QED
 *)
 
-let pMakeSpace_def = cake_define
-  `(pMakeSpace (INL c) = c) /\
-   (pMakeSpace (INR (k,names,c)) = Seq (MakeSpace k names) c)`;;
+let pMakeSpace_def = cake_define_list
+  [`pMakeSpace (INL c) = c`;
+   `pMakeSpace (INR (k,names,c)) = Seq (MakeSpace k names) c`];;
 
 let space_def = cake_define
   `space c =

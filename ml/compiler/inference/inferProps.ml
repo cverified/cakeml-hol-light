@@ -177,15 +177,10 @@ val set_tids_ind = theorem"set_tids_ind";
 let set_tids_subset_def = cake_define
   `set_tids_subset tids t <=> set_tids t SUBSET tids`;;
 
-(* TERMINATION: wf_rel_tac `measure t_size` >>
- rw [] >>
- induct_on `ts` >>
- rw [t_size_def] >>
- full_simp_tac (srw_ss()++ARITH_ss) [] *)
-let unconvert_t_def = cake_define
-  `(unconvert_t (Tvar_db n) = Infer_Tvar_db n) /\
-   (unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc) /\
-   (unconvert_t (Tvar v) = Infer_Tuvar ARB)`;;
+let unconvert_t_def = cake_define_list
+  [`unconvert_t (Tvar_db n:t) = Infer_Tvar_db n`;
+   `unconvert_t (Tapp ts tc:t) = Infer_Tapp (MAP unconvert_t ts) tc`;
+   `unconvert_t (Tvar v:t) = Infer_Tuvar ARB`];;
 
 (* HOL4 ML code, not ported:
 val unconvert_t_ind = theorem"unconvert_t_ind"

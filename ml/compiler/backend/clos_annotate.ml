@@ -22,10 +22,10 @@ needs "semantics/ast.ml";;
 let const_0_def = cake_define
   `const_0 t = Op t (IntOp (Const (&0))) []`;;
 
-let no_overlap_def = cake_define
-  `(no_overlap 0 l <=> T) /\
-   (no_overlap (SUC n) l <=>
-      (if has_var n l then F else no_overlap n l))`;;
+let no_overlap_def = cake_define_list
+  [`no_overlap 0 l <=> T`;
+   `no_overlap (SUC n) l <=>
+         (if has_var n l then F else no_overlap n l)`];;
 
 let alt_free_def = cake_define_list
   [`alt_free [] = ([],Empty)`;
@@ -147,10 +147,10 @@ let get_var_def = cake_define
      (if v < l then v else l + zlookup i (v - l))`;;
 hol4_overload "get_var" "clos_annotate_get_var";;
 
-let shifted_env_def = cake_define
-  `(shifted_env n [] = LN) /\
-   (shifted_env n (x :: xs) = insert x (n:num) (shifted_env (n +
-     1) xs))`;;
+let shifted_env_def = cake_define_list
+  [`shifted_env n [] = LN`;
+   `shifted_env n (x :: xs) = insert x (n:num) (shifted_env (n + 1)
+  xs)`];;
 
 let shift_def = cake_define_list
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;

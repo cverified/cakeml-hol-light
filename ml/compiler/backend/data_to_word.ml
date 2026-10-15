@@ -93,18 +93,18 @@ let encode_header_def = cake_define
         len < 2 EXP data_to_word_config_len_size conf then SOME
           ((make_header conf (n2w tag) len):'a word) else NONE)`;;
 
-let list_Seq_def = cake_define
-  `(data_to_word_list_Seq [] = wordLang_Skip) /\
-   (data_to_word_list_Seq [x] = x) /\
-   (data_to_word_list_Seq (x :: y :: xs) = Seq x
-     (data_to_word_list_Seq (y :: xs)))`;;
+let list_Seq_def = cake_define_list
+  [`data_to_word_list_Seq [] = wordLang_Skip`;
+   `data_to_word_list_Seq [x] = x`;
+   `data_to_word_list_Seq (x :: y :: xs) = Seq x
+  (data_to_word_list_Seq (y :: xs))`];;
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
-let StoreEach_def = cake_define
-  `(StoreEach v [] offset = Skip) /\
-   (StoreEach v (x :: xs) (offset:'a word) =
-      Seq (Store (Op Add [Var v; Const offset]) x)
-          (StoreEach v xs (offset + bytes_in_word)))`;;
+let StoreEach_def = cake_define_list
+  [`StoreEach v [] offset = Skip`;
+   `StoreEach v (x :: xs) (offset:'a word) =
+         Seq (Store (Op Add [Var v; Const offset]) x)
+             (StoreEach v xs (offset + bytes_in_word))`];;
 
 let small_shift_length_def = cake_define
   `small_shift_length conf = data_to_word_config_len_bits conf +
@@ -172,12 +172,12 @@ let real_byte_offset_def = cake_define
 let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
   "word_op_type = Bitwise (binop) | Carried (binop)";;
 
-let lookup_word_op_def = cake_define
-  `(lookup_word_op Andw = Bitwise And) /\
-   (lookup_word_op Orw = Bitwise Or) /\
-   (lookup_word_op Xor = Bitwise Xor) /\
-   (lookup_word_op Add = Carried Add) /\
-   (lookup_word_op Sub = Carried Sub)`;;
+let lookup_word_op_def = cake_define_list
+  [`lookup_word_op Andw = Bitwise And`;
+   `lookup_word_op Orw = Bitwise Or`;
+   `lookup_word_op Xor = Bitwise Xor`;
+   `lookup_word_op Add = Carried Add`;
+   `lookup_word_op Sub = Carried Sub`];;
 
 let FromList_location_def = cake_define
   `FromList_location = word_num_stubs`;;
@@ -916,9 +916,9 @@ let StringCmpLoop_code_def = cake_define
            Call NONE (SOME StringCmpLoop_location) [0; 2; 4; 6; 8;
              10] NONE]):'a wordLang_prog)`;;
 
-let get_names_def = cake_define
-  `(data_to_word_get_names NONE = LN) /\
-   (data_to_word_get_names (SOME x) = x)`;;
+let get_names_def = cake_define_list
+  [`data_to_word_get_names NONE = LN`;
+   `data_to_word_get_names (SOME x) = x`];;
 hol4_overload "get_names" "data_to_word_get_names";;
 
 let LoadWord64_def = cake_define
@@ -1045,26 +1045,26 @@ let smallnum_def = cake_define
 (* HOL4 overload (expanded in the port):
      TRUE_CONST = Const (n2w 18:'a word) *)
 
-let MemEqList_def = cake_define
-  `(MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
-  wordLang_prog)) /\
-   (MemEqList a (w :: ws) =
-      Seq (Assign 5 (Load (Op Add [Var 3; Const a])))
-          (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word) ws)
-            Skip))`;;
+let MemEqList_def = cake_define_list
+  [`MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
+  wordLang_prog)`;
+   `MemEqList a (w :: ws) =
+         Seq (Assign 5 (Load (Op Add [Var 3; Const a])))
+             (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word)
+               ws) Skip)`];;
 
-let get_gen_size_def = cake_define
-  `(get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)) /\
-   (get_gen_size (x :: xs) =
-      (if w2n (bytes_in_word:'a word) * x < dimword (:'a) then
-        bytes_in_word * n2w x else bytes_in_word * (--(n2w 1))))`;;
+let get_gen_size_def = cake_define_list
+  [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
+   `get_gen_size (x :: xs) =
+         (if w2n (bytes_in_word:'a word) * x < dimword (:'a) then
+           bytes_in_word * n2w x else bytes_in_word * (--(n2w 1)))`];;
 
-let fp_cmp_inst_def = cake_define
-  `fp_cmp_inst FP_Less = FPLess 3 0 1 /\
-   fp_cmp_inst FP_LessEqual = FPLessEqual 3 0 1 /\
-   fp_cmp_inst FP_Greater = FPLess 3 1 0 /\
-   fp_cmp_inst FP_GreaterEqual = FPLessEqual 3 1 0 /\
-   fp_cmp_inst FP_Equal = FPEqual 3 0 1`;;
+let fp_cmp_inst_def = cake_define_list
+  [`fp_cmp_inst FP_Less = FPLess 3 0 1`;
+   `fp_cmp_inst FP_LessEqual = FPLessEqual 3 0 1`;
+   `fp_cmp_inst FP_Greater = FPLess 3 1 0`;
+   `fp_cmp_inst FP_GreaterEqual = FPLessEqual 3 1 0`;
+   `fp_cmp_inst FP_Equal = FPEqual 3 0 1`];;
 
 let fp_top_inst_def = cake_define
   `fp_top_inst FP_Fma = FPFma 0 1 2`;;
@@ -1299,34 +1299,28 @@ val def = assign_Define `
       : 'a wordLang$prog # num`;
 *)
 
-let getWords_def = cake_define
-  `getWords [] aux = (REVERSE aux,[]) /\
-   getWords (c :: cs) aux =
-     (match c with (b,Word w) -> getWords cs ((b,w) :: aux) | _6
-       -> (REVERSE aux,c :: cs))`;;
+let getWords_def = cake_define_list
+  [`getWords [] aux = (REVERSE aux,[])`;
+   `getWords (c :: cs) aux =
+      (match c with (b,Word w) -> getWords cs ((b,w) :: aux) | _6
+        -> (REVERSE aux,c :: cs))`];;
 
-(* HOL4 termination: \\ fs [getWords_def] \\ rw [] \\ qsuff_tac ‘∀ws
-   aux (ws1:(bool # 'a word) list) vs1. (ws1,vs1) = getWords ws aux ⇒
-   LENGTH vs1 ≤ LENGTH ws’ THEN1 (rw [] \\ res_tac \\ fs []) \\
-   once_rewrite_tac [EQ_SYM_EQ] \\ Induct \\ fs [getWords_def] \\ fs
-   [AllCaseEqs()] \\ rw[] \\ res_tac \\ fs [getWords_def] *)
-let StoreAnyConsts_def = cake_define_wf
-  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`
-  `StoreAnyConsts r1 r2 r3 [] v =
-     Seq (Set NextFree (Var r2))
-         (match SND v with Loc n _10 -> LocValue r1 n | Word w ->
-           Assign r1 (if FST v then Op Add [Const w; Var r3] else (Const
-           w))) /\
-   StoreAnyConsts r1 r2 r3 (v :: vs) w =
-     (match ((SND v):'a word_loc) with Loc n _11 -> list_Seq
-       [LocValue r1 n;
-                            Store (Var r2) r1;
-                            Assign r2 (Op Add [Var r2; Const
-                              bytes_in_word]);
-                            StoreAnyConsts r1 r2 r3 vs w] | _12 ->
-                              (let (ws,vs1) = getWords (v :: vs) [] in
-              Seq (StoreConsts r2 r3 r2 r3 ws)
-                  (StoreAnyConsts r1 r2 r3 vs1 w)))`;;
+let StoreAnyConsts_def = cake_define_list
+  [`StoreAnyConsts r1 r2 r3 [] v =
+      Seq (Set NextFree (Var r2))
+          (match SND v with Loc n _10 -> LocValue r1 n | Word w
+            -> Assign r1 (if FST v then Op Add [Const w; Var r3] else
+            (Const w)))`;
+   `StoreAnyConsts r1 r2 r3 (v :: vs) w =
+      (match ((SND v):'a word_loc) with Loc n _11 -> list_Seq
+        [LocValue r1 n;
+                             Store (Var r2) r1;
+                             Assign r2 (Op Add [Var r2; Const
+                               bytes_in_word]);
+                             StoreAnyConsts r1 r2 r3 vs w] | _12 ->
+                               (let (ws,vs1) = getWords (v :: vs) [] in
+               Seq (StoreConsts r2 r3 r2 r3 ws)
+                   (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
 
 let lookup_mem_def = cake_define
   `lookup_mem m a =
@@ -1367,65 +1361,66 @@ let make_ptr_def = cake_define
      Word (nf << (shift_length conf - (backend_common_word_shift)
        (:'a)) || ((n2w 1):'a word))`;;
 
-let write_bytes_def = cake_define
-  `(write_bytes bs [] be = []) /\
-   (write_bytes bs ((w:'a word) :: ws) be =
-      (let k = dimindex (:'a) DIV 8 in
-        bytes_to_word k (n2w 0) bs w be :: write_bytes (DROP k bs)
-          ws be))`;;
+let write_bytes_def = cake_define_list
+  [`write_bytes bs [] be = []`;
+   `write_bytes bs ((w:'a word) :: ws) be =
+         (let k = dimindex (:'a) DIV 8 in
+           bytes_to_word k (n2w 0) bs w be :: write_bytes (DROP k
+             bs) ws be)`];;
 
 let small_int_def = cake_define
   `small_int (:'a) i <=>
      --&(dimword (:'a) DIV 8) <= i /\ i < (&(dimword (:'a) DIV
        8):int)`;;
 
-let part_to_words_def = cake_define
-  `part_to_words c m (Int i) offset =
-     (if small_int (:'a) i then SOME ((F,Word (Smallnum i)),[]) else
-       let (sign,ws) = i2mw i in
-             match encode_header c (if sign then 7 else 3) (LENGTH
-               ws) with NONE -> NONE | SOME hd -> SOME ((T,(make_ptr c
-               offset ((n2w 0):'a word) (LENGTH ws))),
-                              MAP (\w. (F,Word w)) (hd :: ws))) /\
-   part_to_words c m (closLang_Con t ns) (offset:'a word) =
-     (if NULL ns then
-        if t < dimword (:'a) DIV 16 then SOME ((F,Word (n2w (16 * t +
-          2))),[]) else NONE else
-        match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE |
-          SOME hd -> SOME ((T,Word
+let part_to_words_def = cake_define_list
+  [`part_to_words c m (Int i:const_part) offset =
+      (if small_int (:'a) i then SOME ((F,Word (Smallnum i)),[])
+        else let (sign,ws) = i2mw i in
+              match encode_header c (if sign then 7 else 3) (LENGTH
+                ws) with NONE -> NONE | SOME hd -> SOME ((T,(make_ptr c
+                offset ((n2w 0):'a word) (LENGTH ws))),
+                              MAP (\w. (F,Word w)) (hd :: ws)))`;
+   `part_to_words c m (closLang_Con t ns:const_part) (offset:'a word) =
+      (if NULL ns then
+         if t < dimword (:'a) DIV 16 then SOME ((F,Word (n2w (16 * t
+           + 2))),[]) else NONE else
+         match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
+           | SOME hd -> SOME ((T,Word
                               (offset << (shift_length c -
                                 (backend_common_word_shift) (:'ga)) +
                               (ptr_bits c t (LENGTH ns) || (n2w
                                 1)))),
-                           (F,Word hd) :: (MAP (lookup_mem m) ns)))
-                             /\
-   part_to_words c m (W64 w) offset =
-     (let ws = (if dimindex (:'ga) < 64 then [((63 >< 32) w); ((31 ><
-       0) w)] else [((63 >< 0) w):'a word]) in
-        match encode_header c 3 (LENGTH ws) with NONE -> NONE | SOME
-          hd -> SOME ((T,(make_ptr c offset ((n2w 0):'a word) (LENGTH
-          ws))),
-                           MAP (\w. (F,Word w)) (hd :: ws))) /\
-   part_to_words c m (Str s) offset =
-     (let bytes = MAP (n2w o ORD) (explode s) in
-      let n = LENGTH bytes in
-      let hd = make_byte_header c T n in
-      let k = byte_len (:'ga) n in
-      let ws = write_bytes bytes (REPLICATE k (n2w 0))
-        (data_to_word_config_be c) in
-        if k < 2 EXP (dimindex (:'ga) - 4) /\ k < 2 EXP
-          data_to_word_config_len_size c then SOME ((T,(make_ptr c
-          offset ((n2w 0):'a word) k)),
-                   MAP (\w. (F,Word w)) (hd :: ws)) else NONE)`;;
+                            (F,Word hd) :: (MAP (lookup_mem m)
+                              ns)))`;
+   `part_to_words c m (W64 w:const_part) offset =
+      (let ws = (if dimindex (:'ga) < 64 then [((63 >< 32) w); ((31
+        >< 0) w)] else [((63 >< 0) w):'a word]) in
+         match encode_header c 3 (LENGTH ws) with NONE -> NONE |
+           SOME hd -> SOME ((T,(make_ptr c offset ((n2w 0):'a word)
+           (LENGTH ws))),
+                            MAP (\w. (F,Word w)) (hd :: ws)))`;
+   `part_to_words c m (Str s:const_part) offset =
+      (let bytes = MAP (n2w o ORD) (explode s) in
+       let n = LENGTH bytes in
+       let hd = make_byte_header c T n in
+       let k = byte_len (:'ga) n in
+       let ws = write_bytes bytes (REPLICATE k (n2w 0))
+         (data_to_word_config_be c) in
+         if k < 2 EXP (dimindex (:'ga) - 4) /\ k < 2 EXP
+           data_to_word_config_len_size c then SOME ((T,(make_ptr c
+           offset ((n2w 0):'a word) k)),
+                    MAP (\w. (F,Word w)) (hd :: ws)) else NONE)`];;
 
-let parts_to_words_def = cake_define
-  `parts_to_words c m i [] off = SOME (lookup_mem m (i - (1:num)),[]) /\
-   parts_to_words c m i (x :: parts) (off:'a word) =
-     (match part_to_words c m x off with NONE -> NONE | SOME (w,xs)
-       ->
-       (match parts_to_words c (insert i w m) (i + 1) parts
-                (off + bytes_in_word * n2w (LENGTH xs)) with NONE
-                  -> NONE | SOME (r,ys) -> SOME (r,xs ++ ys)))`;;
+let parts_to_words_def = cake_define_list
+  [`parts_to_words c m i [] off = SOME (lookup_mem m (i -
+  (1:num)),[])`;
+   `parts_to_words c m i (x :: parts) (off:'a word) =
+      (match part_to_words c m x off with NONE -> NONE | SOME (w,xs)
+        ->
+        (match parts_to_words c (insert i w m) (i + 1) parts
+                 (off + bytes_in_word * n2w (LENGTH xs)) with
+                   NONE -> NONE | SOME (r,ys) -> SOME (r,xs ++ ys)))`];;
 
 let const_parts_to_words_def = cake_define
   `const_parts_to_words c parts =
@@ -1584,14 +1579,14 @@ let SetBool_def = cake_define
       (Assign dest (Const (n2w 18:'a word)))
       (Assign dest (Const (n2w 2:'a word))):'a wordLang_prog)`;;
 
-let AssignCmp_def = cake_define
-  `AssignCmp dest (Lt:opb) v1 v2 = (SetBool dest Lower v1 (Reg v2):'a
-  wordLang_prog) /\
-   AssignCmp dest (Gt:opb) v1 v2 = SetBool dest Lower v2 (Reg v1) /\
-   AssignCmp dest (Leq:opb) v1 v2 = SetBool dest NotLower v2 (Reg v1)
-     /\
-   AssignCmp dest (Geq:opb) v1 v2 = SetBool dest NotLower v1 (Reg
-     v2)`;;
+let AssignCmp_def = cake_define_list
+  [`AssignCmp dest (Lt:opb) v1 v2 = (SetBool dest Lower v1 (Reg
+  v2):'a wordLang_prog)`;
+   `AssignCmp dest (Gt:opb) v1 v2 = SetBool dest Lower v2 (Reg v1)`;
+   `AssignCmp dest (Leq:opb) v1 v2 = SetBool dest NotLower v2 (Reg
+  v1)`;
+   `AssignCmp dest (Geq:opb) v1 v2 = SetBool dest NotLower v1 (Reg
+  v2)`];;
 
 (* HOL4 ML code, not ported:
 val def = assign_Define `

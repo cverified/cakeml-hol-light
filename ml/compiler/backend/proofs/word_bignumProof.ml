@@ -44,25 +44,28 @@ let word_bignumProof_state_FIELDS =
    "arrays","address->('a word) list";
    "clock","num"];;
 
-let eval_exp_def = cake_define
-  `eval_exp s (Const w:wordLang_exp) = w /\
-   eval_exp s (Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
-   eval_exp s (Op Add [x1; x2]) = eval_exp s x1 + eval_exp s x2 /\
-   eval_exp s (Op Sub [x1; x2]) = eval_exp s x1 - eval_exp s x2 /\
-   eval_exp s (Op And [x1; x2]) = word_and (eval_exp s x1) (eval_exp
-     s x2) /\
-   eval_exp s (Op Or [x1; x2]) = word_or (eval_exp s x1) (eval_exp s
-     x2) /\
-   eval_exp s (Op Xor [x1; x2]) = word_xor (eval_exp s x1) (eval_exp
-     s x2) /\
-   eval_exp s (Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp s
-     x2)) /\
-   eval_exp s (Shift Asr x1 x2) = eval_exp s x1 >> (w2n (eval_exp s
-     x2)) /\
-   eval_exp s (Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n (eval_exp s
-     x2)) /\
-   eval_exp s (Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
-     (eval_exp s x2))`;;
+let eval_exp_def = cake_define_list
+  [`eval_exp s (Const w:wordLang_exp) = w`;
+   `eval_exp s (Var v:wordLang_exp) = FAPPLY
+  (word_bignumProof_state_regs s) v`;
+   `eval_exp s (Op Add [x1; x2]:wordLang_exp) = eval_exp s x1 +
+  eval_exp s x2`;
+   `eval_exp s (Op Sub [x1; x2]:wordLang_exp) = eval_exp s x1 -
+  eval_exp s x2`;
+   `eval_exp s (Op And [x1; x2]:wordLang_exp) = word_and (eval_exp s
+  x1) (eval_exp s x2)`;
+   `eval_exp s (Op Or [x1; x2]:wordLang_exp) = word_or (eval_exp s
+  x1) (eval_exp s x2)`;
+   `eval_exp s (Op Xor [x1; x2]:wordLang_exp) = word_xor (eval_exp s
+  x1) (eval_exp s x2)`;
+   `eval_exp s (Shift Lsl x1 x2:wordLang_exp) = eval_exp s x1 << (w2n
+  (eval_exp s x2))`;
+   `eval_exp s (Shift Asr x1 x2:wordLang_exp) = eval_exp s x1 >> (w2n
+  (eval_exp s x2))`;
+   `eval_exp s (Shift Lsr x1 x2:wordLang_exp) = eval_exp s x1 >>>
+  (w2n (eval_exp s x2))`;
+   `eval_exp s (Shift Ror x1 x2:wordLang_exp) = word_ror (eval_exp s
+  x1) (w2n (eval_exp s x2))`];;
 
 let eval_exp_pre_def = cake_define
   `eval_exp_pre s x2 =
@@ -75,14 +78,14 @@ let eval_exp_pre_def = cake_define
           x2) < 32)
         | _2 -> F`;;
 
-let eval_ri_pre_def = cake_define
-  `(eval_ri_pre s (Reg r) <=> eval_exp_pre (s:'a word_bignumProof_state)
-  ((Var r):'a wordLang_exp)) /\
-     (eval_ri_pre s (Imm (w:'a word)) <=> T)`;;
+let eval_ri_pre_def = cake_define_list
+  [`eval_ri_pre s (Reg r:asm_reg_imm) <=> eval_exp_pre (s:'a
+  word_bignumProof_state) ((Var r):'a wordLang_exp)`;
+   `eval_ri_pre s (Imm (w:'a word):asm_reg_imm) <=> T`];;
 
-let eval_ri_def = cake_define
-  `eval_ri s (Reg r) = eval_exp s (Var r) /\
-   eval_ri s (Imm w) = w`;;
+let eval_ri_def = cake_define_list
+  [`eval_ri s (Reg r:asm_reg_imm) = eval_exp s (Var r)`;
+   `eval_ri s (Imm w:asm_reg_imm) = w`];;
 
 let dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = ?_clock_fupd (K (?_clock s - 1)) s`;;
@@ -95,9 +98,9 @@ let reg_write_def = cake_define
    reg_write n (SOME v) s = word_bignumProof_state_regs_fupd (K
      (word_bignumProof_state_regs s |+ (n,v))) s)) s`;;
 
-let delete_vars_def = cake_define
-  `delete_vars [] s = s /\
-   delete_vars (v :: vs) s = reg_write v NONE (delete_vars vs s)`;;
+let delete_vars_def = cake_define_list
+  [`delete_vars [] s = s`;
+   `delete_vars (v :: vs) s = reg_write v NONE (delete_vars vs s)`];;
 
 let array_write_def = cake_define
   `array_write n v s = word_bignumProof_state_arrays_fupd (K ((n =+
@@ -106,11 +109,11 @@ let array_write_def = cake_define
 let clock_write_def = cake_define
   `clock_write l s = ?_clock_fupd (K l) s`;;
 
-let copy_vars_def = cake_define
-  `(word_bignumProof_copy_vars [] s t = SOME t) /\
-   (word_bignumProof_copy_vars (n :: ns) s t =
-      (match FLOOKUP s n with NONE -> NONE | SOME x ->
-        word_bignumProof_copy_vars ns s (reg_write n (SOME x) t)))`;;
+let copy_vars_def = cake_define_list
+  [`word_bignumProof_copy_vars [] s t = SOME t`;
+   `word_bignumProof_copy_vars (n :: ns) s t =
+         (match FLOOKUP s n with NONE -> NONE | SOME x ->
+           word_bignumProof_copy_vars ns s (reg_write n (SOME x) t))`];;
 hol4_overload "copy_vars" "word_bignumProof_copy_vars";;
 
 let eval = cake_inductive
@@ -378,16 +381,16 @@ let syntax_ok_def = cake_define
         LoopBody body -> syntax_ok_aux body
       | p -> syntax_ok_aux p`;;
 (*Is this worth the hassle*)
-let list_update_def = cake_define
-  `list_update [] ys t = t /\
-   list_update (x :: xs) (y :: ys) t = insert x y (list_update xs ys
-     t) /\
-   list_update (x :: xs) [] t = insert x ARB (list_update xs [] t)`;;
+let list_update_def = cake_define_list
+  [`list_update [] ys t = t`;
+   `list_update (x :: xs) (y :: ys) t = insert x y (list_update xs ys
+  t)`;
+   `list_update (x :: xs) [] t = insert x ARB (list_update xs [] t)`];;
 
-let list_store_def = cake_define
-  `list_store [] ys s = s /\
-   list_store (x :: xs) ys s = (list_store xs (TL ys) s) |+ (Temp
-     (n2w x),HD ys)`;;
+let list_store_def = cake_define_list
+  [`list_store [] ys s = s`;
+   `list_store (x :: xs) ys s = (list_store xs (TL ys) s) |+ (Temp
+  (n2w x),HD ys)`];;
 
 (* HOL4 ML code, not ported:
 fun uncurry_case_rand x = x

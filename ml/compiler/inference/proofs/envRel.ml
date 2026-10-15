@@ -22,13 +22,9 @@ needs "semantics/typeSystem.ml";;
 (* ---------- Converting infer types and envs to type system ones
    ---------- *)
 
-let _ = size_thms "infer_t";;
-(* HOL4 termination: >> rw [] >> induct_on `ts` >> rw
-   [infer_tTheory.infer_t_size_def] >> res_tac >> decide_tac *)
-let convert_t_def = cake_define_wf
-  `MEASURE infer_t_size`
-  `(convert_t (Infer_Tvar_db n) = Tvar_db n) /\
-   (convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc)`;;
+let convert_t_def = cake_define_list
+  [`convert_t (Infer_Tvar_db n:infer_t) = Tvar_db n`;
+   `convert_t (Infer_Tapp ts tc:infer_t) = Tapp (MAP convert_t ts) tc`];;
 
 let convert_env_def = cake_define
   `convert_env s env = MAP (\(x,t). (x,convert_t (t_walkstar s t)))

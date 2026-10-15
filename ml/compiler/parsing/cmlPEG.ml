@@ -38,9 +38,9 @@ in
 end
 *)
 
-let sumID_def = cake_define
-  `sumID (INL x) = x /\
-   sumID (INR y) = y`;;
+let sumID_def = cake_define_list
+  [`sumID (INL x) = x`;
+   `sumID (INR y) = y`];;
 
 let mktokLf_def = cake_define
   `mktokLf t = [Lf
@@ -57,17 +57,17 @@ let bindNT0_def = cake_define
 let bindNT_def = cake_define
   `bindNT ntnm l = [bindNT0 ntnm l]`;;
 
-let mk_linfix_def = cake_define
-  `mk_linfix tgt acc [] = acc /\
-   mk_linfix tgt acc [t] = acc /\
-   mk_linfix tgt acc (opt :: t :: rest) =
-    mk_linfix tgt (mkNd tgt [acc; opt; t]) rest`;;
+let mk_linfix_def = cake_define_list
+  [`mk_linfix tgt acc [] = acc`;
+   `mk_linfix tgt acc [t] = acc`;
+   `mk_linfix tgt acc (opt :: t :: rest) =
+     mk_linfix tgt (mkNd tgt [acc; opt; t]) rest`];;
 
-let mk_rinfix_def = cake_define
-  `mk_rinfix tgt [] = mkNd tgt [] /\
-   mk_rinfix tgt [t] = mkNd tgt [t] /\
-   mk_rinfix tgt (t :: opt :: rest) = mkNd tgt [t; opt; mk_rinfix
-     tgt rest]`;;
+let mk_rinfix_def = cake_define_list
+  [`mk_rinfix tgt [] = mkNd tgt []`;
+   `mk_rinfix tgt [t] = mkNd tgt [t]`;
+   `mk_rinfix tgt (t :: opt :: rest) = mkNd tgt [t; opt; mk_rinfix
+  tgt rest]`];;
 
 let peg_linfix_def = cake_define
   `peg_linfix tgtnt rptsym opsym =
@@ -81,9 +81,9 @@ let peg_linfix_def = cake_define
    Logically, the ARBs are harmless, but they completely mess with the
    translator
 *)
-let choicel_def = cake_define
-  `cmlPEG_choicel [] = not (empty []) [] /\
-   cmlPEG_choicel (h :: t) = choice h (cmlPEG_choicel t) sumID`;;
+let choicel_def = cake_define_list
+  [`cmlPEG_choicel [] = not (empty []) []`;
+   `cmlPEG_choicel (h :: t) = choice h (cmlPEG_choicel t) sumID`];;
 hol4_overload "choicel" "cmlPEG_choicel";;
 
 let pegf_def = cake_define

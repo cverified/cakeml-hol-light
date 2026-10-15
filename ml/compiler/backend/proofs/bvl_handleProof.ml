@@ -23,30 +23,27 @@ let let_ok_def = cake_define
             (LENGTH xs) [b]
         | _1 -> F`;;
 
-let _ = size_thms "exp1";;
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ SRW_TAC
-   [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
-let handle_ok_def = cake_define_wf
-  `MEASURE (exp1_size)`
-  `(handle_ok [] <=> T) /\
-   (handle_ok ((x:bvl_exp) :: y :: xs) <=>
-      handle_ok [x] /\ handle_ok (y :: xs)) /\
-   (handle_ok [Var v] <=> T) /\
-   (handle_ok [If x1 x2 x3] <=>
-      handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]) /\
-   (handle_ok [Let xs x2] <=>
-      (if LENGTH xs = 0 then
-        let_ok x2 /\ (!ys y. x2 = Let ys y ==> handle_ok [y]) else
-        handle_ok xs /\ handle_ok [x2])) /\
-   (handle_ok [Raise x1] <=> handle_ok [x1]) /\
-   (handle_ok [Tick x1] <=> handle_ok [x1]) /\
-   (handle_ok [Op op xs] <=> handle_ok xs) /\
-   (handle_ok [Handle x1 x2] <=>
-      (match x1 with Let xs b ->
-          EVERY isVar xs /\ bVarBound (LENGTH xs) [b] /\
-          handle_ok [b] /\ handle_ok [x2] | _2 -> F)) /\
-   (handle_ok [Force loc n] <=> T) /\
-   (handle_ok [Call ticks dest xs] <=> handle_ok xs)`;;
+let handle_ok_def = cake_define_list
+  [`handle_ok [] <=> T`;
+   `handle_ok ((x:bvl_exp) :: y :: xs) <=>
+         handle_ok [x] /\ handle_ok (y :: xs)`;
+   `handle_ok [(Var v:flatLang_exp)] <=> T`;
+   `handle_ok [(If x1 x2 x3:flatLang_exp)] <=>
+         handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]`;
+   `handle_ok [(Let xs x2:flatLang_exp)] <=>
+         (if LENGTH xs = 0 then
+           let_ok x2 /\ (!ys y. x2 = Let ys y ==> handle_ok [y])
+             else
+           handle_ok xs /\ handle_ok [x2])`;
+   `handle_ok [(Raise x1:flatLang_exp)] <=> handle_ok [x1]`;
+   `handle_ok [(Tick x1:flatLang_exp)] <=> handle_ok [x1]`;
+   `handle_ok [(Op op xs:flatLang_exp)] <=> handle_ok xs`;
+   `handle_ok [(Handle x1 x2:flatLang_exp)] <=>
+         (match x1 with Let xs b ->
+             EVERY isVar xs /\ bVarBound (LENGTH xs) [b] /\
+             handle_ok [b] /\ handle_ok [x2] | _2 -> F)`;
+   `handle_ok [(Force loc n:flatLang_exp)] <=> T`;
+   `handle_ok [(Call ticks dest xs:flatLang_exp)] <=> handle_ok xs`];;
 
 let env_rel_def = cake_define
   `bvl_handleProof_env_rel l env env1 =

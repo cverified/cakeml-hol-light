@@ -79,8 +79,6 @@ hol4_overload "None" "backend_common_None";;
 (* HOL4 ML code, not ported:
 val _ = set_fixity "▷" (Infixl 480);
 *)
-(* HOL4 overload (expanded in the port):
-     None =  *)
 
 (* An "orphan" expression is one that originates directly from a
    declaration.
@@ -108,8 +106,6 @@ let mk_cons_def = cake_define
 (* HOL4 ML code, not ported:
 val _ = set_fixity "§" (Infixl 480);
 *)
-(* HOL4 overload (expanded in the port):
-     None =  *)
 
 (* Create new Cons trace, unless any of the original traces are `None`,
 * indicating traces are turned off. *)
@@ -157,6 +153,6 @@ let word_add_carry_def = cake_define
 (* TODO: prefer this over `FOLDR delete`? Consider upstreaming this and
    its associated lemmas (e.g. `domain_list_delete` in loop_liveProof).
      *)
-let list_delete_def = cake_define
-  `list_delete [] s = s /\
-   list_delete (v :: vs) s = list_delete vs (delete v s)`;;
+let list_delete_def = cake_define_list
+  [`list_delete [] s = s`;
+   `list_delete (v :: vs) s = list_delete vs (delete v s)`];;

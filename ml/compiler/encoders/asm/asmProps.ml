@@ -85,11 +85,11 @@ let all_pcs_def = cake_define
         | n -> a INSERT all_pcs (n - (2 EXP k)) (a + n2w (2 EXP
           k)) k`;;
 
-let asserts_def = cake_define
-  `(asserts 0 next ms _1 Q <=> Q (next 0 ms)) /\
-   (asserts (SUC n) next ms P Q <=>
-      (let ms' = next (SUC n) ms in P ms' /\ asserts n next ms' P
-        Q))`;;
+let asserts_def = cake_define_list
+  [`asserts 0 next ms _1 Q <=> Q (next 0 ms)`;
+   `asserts (SUC n) next ms P Q <=>
+         (let ms' = next (SUC n) ms in P ms' /\ asserts n next
+           ms' P Q)`];;
 
 let asserts2_def = cake_define
   `(asserts2 n fi fc ms P =

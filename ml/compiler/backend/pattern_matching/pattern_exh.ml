@@ -58,14 +58,14 @@ needs "semantics/semanticPrimitives.ml";;
 let ctor_INDUCT,ctor_RECURSION = define_datatype
   "ctor = TagC (num) (num) | TupC (num) | RefC";;
 
-let ctor_arity_def = cake_define
-  `ctor_arity (TagC t a) = a /\
-   ctor_arity (TupC a) = a /\
-   ctor_arity RefC = 1`;;
+let ctor_arity_def = cake_define_list
+  [`ctor_arity (TagC t a:ctor) = a`;
+   `ctor_arity (TupC a:ctor) = a`;
+   `ctor_arity RefC = 1`];;
 
-let anys_def = cake_define
-  `anys 0 = [] /\
-   anys (SUC n) = Any :: anys n`;;
+let anys_def = cake_define_list
+  [`anys 0 = []`;
+   `anys (SUC n) = Any :: anys n`];;
 
 
 (* --------------------------------------------------------------------
@@ -78,43 +78,39 @@ let anys_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-let add_head_def = cake_define
-  `add_head x [] = [] /\
-   add_head x (ys :: yss) = (x :: ys) :: add_head x yss`;;
+let add_head_def = cake_define_list
+  [`add_head x [] = []`;
+   `add_head x (ys :: yss) = (x :: ys) :: add_head x yss`];;
 
-let mk_prods_def = cake_define
-  `mk_prods [] ys = [] /\
-   mk_prods (x :: xs) ys = add_head x ys ++ mk_prods xs ys`;;
+let mk_prods_def = cake_define_list
+  [`mk_prods [] ys = []`;
+   `mk_prods (x :: xs) ys = add_head x ys ++ mk_prods xs ys`];;
 
-let mk_refs_def = cake_define
-  `mk_refs [] = [] /\
-   mk_refs (p :: ps) = Ref p :: mk_refs ps`;;
+let mk_refs_def = cake_define_list
+  [`mk_refs [] = []`;
+   `mk_refs (p :: ps) = Ref p :: mk_refs ps`];;
 
-let mk_conses_def = cake_define
-  `mk_conses t [] = [] /\
-   mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`;;
+let mk_conses_def = cake_define_list
+  [`mk_conses t [] = []`;
+   `mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`];;
 
-let _ = size_thms "list";;
-let _ = size_thms "pat";;
-(* HOL4 termination: *)
-let expand_def = cake_define_wf
-  `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
-  pat_size ps)`
-  `expand Any = [Any] /\
-   expand (Lit l) = [Lit l] /\
-   expand (Or p q) = expand p ++ expand q /\
-   expand (Ref p) = mk_refs (expand p) /\
-   expand (Cons t ps) = mk_conses t (expand_list ps) /\
-   expand_list [] = [[]] /\
-   expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`;;
+let expand_def = cake_define_list
+  [`expand Any = [Any]`;
+   `expand (Lit l:pattern_semantics_pat) = [Lit l]`;
+   `expand (Or p q:pattern_semantics_pat) = expand p ++ expand q`;
+   `expand (Ref p:pattern_semantics_pat) = mk_refs (expand p)`;
+   `expand (Cons t ps:pattern_semantics_pat) = mk_conses t
+  (expand_list ps)`;
+   `expand_list [] = [[]]`;
+   `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
 
-let mk_rows_def = cake_define
-  `mk_rows [] = [] /\
-   mk_rows (p :: ps) = [p] :: mk_rows ps`;;
+let mk_rows_def = cake_define_list
+  [`mk_rows [] = []`;
+   `mk_rows (p :: ps) = [p] :: mk_rows ps`];;
 
-let or_rows_def = cake_define
-  `or_rows [] = [] /\
-   or_rows ((p,e) :: rows) = mk_rows (expand p) ++ or_rows rows`;;
+let or_rows_def = cake_define_list
+  [`or_rows [] = []`;
+   `or_rows ((p,e) :: rows) = mk_rows (expand p) ++ or_rows rows`];;
 
 
 (* --------------------------------------------------------------------
@@ -128,14 +124,14 @@ let or_rows_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-let tag_ctors_def = cake_define
-  `tag_ctors [] = [] /\
-   tag_ctors ((t,a) :: sibs) = TagC t a :: tag_ctors sibs`;;
+let tag_ctors_def = cake_define_list
+  [`tag_ctors [] = []`;
+   `tag_ctors ((t,a) :: sibs) = TagC t a :: tag_ctors sibs`];;
 
-let ctor_nub_def = cake_define
-  `ctor_nub [] = [] /\
-   ctor_nub (x :: xs) = (if MEM x xs then ctor_nub xs else x ::
-     ctor_nub xs)`;;
+let ctor_nub_def = cake_define_list
+  [`ctor_nub [] = []`;
+   `ctor_nub (x :: xs) = (if MEM x xs then ctor_nub xs else x ::
+  ctor_nub xs)`];;
 
 let ctors_of_def = cake_define
   `ctors_of x1 =
@@ -149,10 +145,11 @@ let ctors_of_def = cake_define
       | (Cons (SOME (t,SOME sibs)) qs) ->
      SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
 
-let ctor_keep_def = cake_define
-  `ctor_keep [] ys = [] /\
-   ctor_keep (x :: xs) ys =
-     (if MEM x ys then x :: ctor_keep xs ys else ctor_keep xs ys)`;;
+let ctor_keep_def = cake_define_list
+  [`ctor_keep [] ys = []`;
+   `ctor_keep (x :: xs) ys =
+      (if MEM x ys then x :: ctor_keep xs ys else ctor_keep xs
+        ys)`];;
 
 let ctor_inter_def = cake_define
   `ctor_inter xs ys =
@@ -161,11 +158,11 @@ let ctor_inter_def = cake_define
       | (xs,NONE) -> xs
       | ((SOME xs),(SOME ys)) -> SOME (ctor_keep xs ys)`;;
 
-let col_ctors_def = cake_define
-  `col_ctors [] = NONE /\
-   col_ctors ([] :: rows) = col_ctors rows /\
-   col_ctors ((p :: _5) :: rows) = ctor_inter (ctors_of p)
-     (col_ctors rows)`;;
+let col_ctors_def = cake_define_list
+  [`col_ctors [] = NONE`;
+   `col_ctors ([] :: rows) = col_ctors rows`;
+   `col_ctors ((p :: _5) :: rows) = ctor_inter (ctors_of p)
+  (col_ctors rows)`];;
 
 
 (* --------------------------------------------------------------------
@@ -193,13 +190,13 @@ let spec_row_def = cake_define
       | ((Lit l) :: rest) -> []
       | ((Or p q) :: rest) -> []`;;
 
-let spec_mat_def = cake_define
-  `spec_mat c [] = [] /\
-   spec_mat c (r :: rows) = spec_row c r ++ spec_mat c rows`;;
+let spec_mat_def = cake_define_list
+  [`spec_mat c [] = []`;
+   `spec_mat c (r :: rows) = spec_row c r ++ spec_mat c rows`];;
 
-let spec_mats_def = cake_define
-  `spec_mats [] rows = [] /\
-   spec_mats (c :: cs) rows = spec_mat c rows :: spec_mats cs rows`;;
+let spec_mats_def = cake_define_list
+  [`spec_mats [] rows = []`;
+   `spec_mats (c :: cs) rows = spec_mat c rows :: spec_mats cs rows`];;
 
 let default_row_def = cake_define
   `default_row x1 =
@@ -207,9 +204,9 @@ let default_row_def = cake_define
         (Any :: rest) -> [rest]
       | _6 -> []`;;
 
-let default_mat_def = cake_define
-  `default_mat [] = [] /\
-   default_mat (r :: rows) = default_row r ++ default_mat rows`;;
+let default_mat_def = cake_define_list
+  [`default_mat [] = []`;
+   `default_mat (r :: rows) = default_row r ++ default_mat rows`];;
 
 
 (* --------------------------------------------------------------------
@@ -225,35 +222,31 @@ let default_mat_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-let _ = size_thms "list";;
-let _ = size_thms "pat";;
-(* HOL4 termination: *)
-let pat_weight_def = cake_define_wf
-  `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
-  pat_size ps)`
-  `pat_weight Any = (0:num) /\
-   pat_weight (Lit l) = 0 /\
-   pat_weight (Or p q) = 1 + pat_weight p + pat_weight q /\
-   pat_weight (Ref p) = 1 + pat_weight p /\
-   pat_weight (Cons t ps) = 1 + pats_weight ps /\
-   pats_weight [] = 0 /\
-   pats_weight (p :: ps) = pat_weight p + pats_weight ps`;;
+let pat_weight_def = cake_define_list
+  [`pat_weight Any = (0:num)`;
+   `pat_weight (Lit l:pattern_semantics_pat) = 0`;
+   `pat_weight (Or p q:pattern_semantics_pat) = 1 + pat_weight p +
+  pat_weight q`;
+   `pat_weight (Ref p:pattern_semantics_pat) = 1 + pat_weight p`;
+   `pat_weight (Cons t ps:pattern_semantics_pat) = 1 + pats_weight ps`;
+   `pats_weight [] = 0`;
+   `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 
-let mat_weight_def = cake_define
-  `mat_weight [] = 0 /\
-   mat_weight (r :: rows) = pats_weight r + mat_weight rows`;;
+let mat_weight_def = cake_define_list
+  [`mat_weight [] = 0`;
+   `mat_weight (r :: rows) = pats_weight r + mat_weight rows`];;
 
-let mat_len_def = cake_define
-  `mat_len [] = 0 /\
-   mat_len (r :: rows) = LENGTH r + mat_len rows`;;
+let mat_len_def = cake_define_list
+  [`mat_len [] = 0`;
+   `mat_len (r :: rows) = LENGTH r + mat_len rows`];;
 
-let mats_weight_def = cake_define
-  `mats_weight [] = 0 /\
-   mats_weight (m :: ms) = MAX (mat_weight m) (mats_weight ms)`;;
+let mats_weight_def = cake_define_list
+  [`mats_weight [] = 0`;
+   `mats_weight (m :: ms) = MAX (mat_weight m) (mats_weight ms)`];;
 
-let mats_len_def = cake_define
-  `mats_len [] = 0 /\
-   mats_len (m :: ms) = MAX (mat_len m) (mats_len ms)`;;
+let mats_len_def = cake_define_list
+  [`mats_len [] = 0`;
+   `mats_len (m :: ms) = MAX (mat_len m) (mats_len ms)`];;
 
 
 (* --------------------------------------------------------------------
@@ -262,27 +255,15 @@ let mats_len_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-(* HOL4 termination: \\ rw
-   [mats_weight_def,mats_len_def,arithmeticTheory.MAX_DEF] >-
-   (imp_res_tac mats_weight_spec_mats \\ fs []) \\ ‘mat_weight
-   (default_mat (r::rows)) <= mat_weight (r::rows)’ by fs
-   [mat_weight_default_mat] \\ Cases_on ‘mat_weight (default_mat
-   (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
-   (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
-   fs [] *)
-let exh_matrix_def = cake_define_wf
-  `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`
-  `exh_matrix [] = F /\
-   exh_matrix (r :: rows) =
-     (if NULL r then T else
-        match col_ctors (r :: rows) with NONE -> exh_matrix
-          (default_mat (r :: rows)) | SOME cs -> exh_mats (spec_mats cs
-          (r :: rows))) /\
-   exh_mats [] = T /\
-   exh_mats (m :: ms) = (exh_matrix m /\ exh_mats ms)`;;
+let exh_matrix_def = cake_define_list
+  [`exh_matrix [] = F`;
+   `exh_matrix (r :: rows) =
+      (if NULL r then T else
+         match col_ctors (r :: rows) with NONE -> exh_matrix
+           (default_mat (r :: rows)) | SOME cs -> exh_mats (spec_mats
+           cs (r :: rows)))`;
+   `exh_mats [] = T`;
+   `exh_mats (m :: ms) = (exh_matrix m /\ exh_mats ms)`];;
 
 let exh_rows_def = cake_define
   `exh_rows rows = exh_matrix (or_rows rows)`;;
@@ -306,39 +287,24 @@ let exh_rows_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-(* HOL4 termination: \\ rw
-   [mats_weight_def,mats_len_def,arithmeticTheory.MAX_DEF] THEN1
-   (imp_res_tac mats_weight_spec_mats \\ fs []) \\ ‘mat_weight
-   (default_mat (r::rows)) <= mat_weight (r::rows)’ by fs
-   [mat_weight_default_mat] \\ Cases_on ‘mat_weight (default_mat
-   (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
-   (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
-   fs [] *)
-let exh_steps_def = cake_define_wf
-  `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`
-  `exh_steps [] = (1:num) /\
-   exh_steps (r :: rows) =
-     (if NULL r then 1 else
-        match col_ctors (r :: rows) with NONE -> 1 + exh_steps
-          (default_mat (r :: rows)) | SOME cs -> 1 + exh_steps_list
-          (spec_mats cs (r :: rows))) /\
-   exh_steps_list [] = 0 /\
-   exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`;;
+let exh_steps_def = cake_define_list
+  [`exh_steps [] = (1:num)`;
+   `exh_steps (r :: rows) =
+      (if NULL r then 1 else
+         match col_ctors (r :: rows) with NONE -> 1 + exh_steps
+           (default_mat (r :: rows)) | SOME cs -> 1 + exh_steps_list
+           (spec_mats cs (r :: rows)))`;
+   `exh_steps_list [] = 0`;
+   `exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`];;
 
-(* HOL4 termination: \\ rw [exh_steps_def,exh_steps_list_append] \\
-   simp [Once exh_steps_def] *)
-let exh_all_def = cake_define_wf
-  `MEASURE exh_steps_list`
-  `exh_all [] = T /\
-   exh_all ([] :: ms) = F /\
-   exh_all ((r :: rows) :: ms) =
-     (if NULL r then exh_all ms else
-        match col_ctors (r :: rows) with NONE -> exh_all
-          (default_mat (r :: rows) :: ms) | SOME cs -> exh_all
-          (spec_mats cs (r :: rows) ++ ms))`;;
+let exh_all_def = cake_define_list
+  [`exh_all [] = T`;
+   `exh_all ([] :: ms) = F`;
+   `exh_all ((r :: rows) :: ms) =
+      (if NULL r then exh_all ms else
+         match col_ctors (r :: rows) with NONE -> exh_all
+           (default_mat (r :: rows) :: ms) | SOME cs -> exh_all
+           (spec_mats cs (r :: rows) ++ ms))`];;
 
 
 (* =====================================================================
@@ -369,11 +335,11 @@ let exh_all_def = cake_define_wf
  * ---------------------------------------------------------------------
    - *)
 
-let pand_def = cake_define
-  `pand PMatchSuccess y = y /\
-   pand PMatchFailure y = (if y = PTypeFailure then PTypeFailure else
-     PMatchFailure) /\
-   pand PTypeFailure y = PTypeFailure`;;
+let pand_def = cake_define_list
+  [`pand PMatchSuccess y = y`;
+   `pand PMatchFailure y = (if y = PTypeFailure then PTypeFailure
+  else PMatchFailure)`;
+   `pand PTypeFailure y = PTypeFailure`];;
 
 (* From here on pmatch_list is only ever unfolded through these four
    rewrites, never through pmatch_def, the raw clauses of pmatch_def

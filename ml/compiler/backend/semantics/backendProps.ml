@@ -68,10 +68,10 @@ let is_state_oracle_def = cake_define
 let syntax_to_full_oracle_def = cake_define
   `syntax_to_full_oracle mk progs i = (mk progs i,progs i)`;;
 
-let state_orac_states_def = cake_define
-  `state_orac_states f st progs 0 = st /\
-   state_orac_states f st progs (SUC n) =
-     FST (f (state_orac_states f st progs n) (progs n))`;;
+let state_orac_states_def = cake_define_list
+  [`state_orac_states f st progs 0 = st`;
+   `state_orac_states f st progs (SUC n) =
+      FST (f (state_orac_states f st progs n) (progs n))`];;
 
 let state_co_progs_def = cake_define
   `state_co_progs f st orac = (let

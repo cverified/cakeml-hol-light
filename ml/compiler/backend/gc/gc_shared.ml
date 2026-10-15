@@ -43,29 +43,29 @@ let empty_state_def = cake_define
 
 (* The heap is accessed using the following lookup function. *)
 
-let el_length_def = cake_define
-  `(el_length (Unused l) = l + 1) /\
-   (el_length (ForwardPointer n d l) = l + 1) /\
-   (el_length (DataElement xs l data) = l + 1)`;;
+let el_length_def = cake_define_list
+  [`el_length (Unused l:heap_element) = l + 1`;
+   `el_length (ForwardPointer n d l:heap_element) = l + 1`;
+   `el_length (DataElement xs l data:heap_element) = l + 1`];;
 
 let heap_length_def = cake_define
   `heap_length heap = SUM (MAP el_length heap)`;;
 
-let heap_lookup_def = cake_define
-  `(heap_lookup a [] = NONE) /\
-   (heap_lookup a (x :: xs) =
-      (if a = 0 then SOME x else
-      if a < el_length x then NONE else heap_lookup (a - el_length
-        x) xs))`;;
+let heap_lookup_def = cake_define_list
+  [`heap_lookup a [] = NONE`;
+   `heap_lookup a (x :: xs) =
+         (if a = 0 then SOME x else
+         if a < el_length x then NONE else heap_lookup (a -
+           el_length x) xs)`];;
 
-let heap_split_def = cake_define
-  `(heap_split a [] = (if a = 0 then SOME ([],[]) else NONE)) /\
-   (heap_split a (el :: heap) =
-     (if a = 0 then SOME ([],el :: heap) else
-     if a < el_length el then NONE else
-     match heap_split (a - el_length el) heap with NONE -> NONE |
-       SOME (h1,h2) ->
-       SOME (el :: h1,h2)))`;;
+let heap_split_def = cake_define_list
+  [`heap_split a [] = (if a = 0 then SOME ([],[]) else NONE)`;
+   `heap_split a (el :: heap) =
+        (if a = 0 then SOME ([],el :: heap) else
+        if a < el_length el then NONE else
+        match heap_split (a - el_length el) heap with NONE -> NONE |
+          SOME (h1,h2) ->
+          SOME (el :: h1,h2))`];;
 
 let heap_drop_def = cake_define
   `heap_drop n (heap:(('a,'b)heap_element) list) =
@@ -124,15 +124,16 @@ let heap_ok_def = cake_define
        ptr u) xs ==>
                      isSomeDataElement (heap_lookup ptr heap)))`;;
 
-let gc_forward_ptr_def = cake_define
-  `(gc_forward_ptr a [] ptr d ok = ([],F)) /\
-   (gc_forward_ptr a (x :: xs) ptr d ok =
-      (if a = 0 then
-        (ForwardPointer ptr d ((el_length x) - 1) ::
-          xs,(isDataElement x /\ ok)) else
-      if a < el_length x then (x :: xs,F) else
-        let (xs,ok) = gc_forward_ptr (a - el_length x) xs ptr d ok in
-          (x :: xs,ok)))`;;
+let gc_forward_ptr_def = cake_define_list
+  [`gc_forward_ptr a [] ptr d ok = ([],F)`;
+   `gc_forward_ptr a (x :: xs) ptr d ok =
+         (if a = 0 then
+           (ForwardPointer ptr d ((el_length x) - 1) ::
+             xs,(isDataElement x /\ ok)) else
+         if a < el_length x then (x :: xs,F) else
+           let (xs,ok) = gc_forward_ptr (a - el_length x) xs ptr d
+             ok in
+             (x :: xs,ok))`];;
 
 (*Theorem gc_forward_ptr_ok:
    !heap n a ok x. (gc_forward_ptr n heap a d ok = (x,T)) ==> ok
@@ -169,20 +170,21 @@ let heap_map_def = cake_define
 let heap_map1_def = cake_define
   `heap_map1 heap = (\a. FAPPLY (heap_map 0 heap) a)`;;
 
-let heap_addresses_def = cake_define
-  `(heap_addresses a [] = {}) /\
-   (heap_addresses a (x :: xs) = a INSERT heap_addresses (a +
-     el_length x) xs)`;;
+let heap_addresses_def = cake_define_list
+  [`heap_addresses a [] = {}`;
+   `heap_addresses a (x :: xs) = a INSERT heap_addresses (a +
+  el_length x) xs`];;
 
-let ADDR_MAP_def = cake_define
-  `(ADDR_MAP f [] = []) /\
-   (ADDR_MAP f (Data x :: xs) = Data x :: ADDR_MAP f xs) /\
-   (ADDR_MAP f (Pointer a d :: xs) = Pointer (f a) d :: ADDR_MAP f
-     xs)`;;
+let ADDR_MAP_def = cake_define_list
+  [`ADDR_MAP f [] = []`;
+   `ADDR_MAP f ((Data x:heap_address) :: xs) = Data x :: ADDR_MAP f
+  xs`;
+   `ADDR_MAP f ((Pointer a d:heap_address) :: xs) = Pointer (f a) d
+  :: ADDR_MAP f xs`];;
 
-let ADDR_APPLY_def = cake_define
-  `(ADDR_APPLY f (Pointer x d) = Pointer (f x) d) /\
-   (ADDR_APPLY f (Data y) = Data y)`;;
+let ADDR_APPLY_def = cake_define_list
+  [`ADDR_APPLY f (Pointer x d:heap_address) = Pointer (f x) d`;
+   `ADDR_APPLY f (Data y:heap_address) = Data y`];;
 
 (* HOL4 ML code, not ported:
 val _ = augment_srw_ss [rewrites [LIST_REL_def]];
@@ -219,11 +221,11 @@ let reachable_addresses_def = cake_define
   `reachable_addresses roots heap y =
      (?t x. MEM (Pointer x t) roots /\ RTC (gc_edge heap) x y)`;;
 
-let heap_filter_aux_def = cake_define
-  `(heap_filter_aux n P [] = []) /\
-   (heap_filter_aux n P (x :: xs) =
-      (if n IN P then [x] else []) ++ heap_filter_aux (n +
-        el_length x) P xs)`;;
+let heap_filter_aux_def = cake_define_list
+  [`heap_filter_aux n P [] = []`;
+   `heap_filter_aux n P (x :: xs) =
+         (if n IN P then [x] else []) ++ heap_filter_aux (n +
+           el_length x) P xs`];;
 
 let heap_filter_def = cake_define
   `heap_filter = heap_filter_aux 0`;;

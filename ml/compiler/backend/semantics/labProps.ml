@@ -75,10 +75,10 @@ let sec_ends_with_label_def = cake_define
   `sec_ends_with_label (Section _15 ls) <=>
      ~NULL ls /\ is_Label (LAST ls)`;;
 
-let line_length_def = cake_define
-  `(line_length (Label k1 k2 l) = (if l = 0 then 0 else 1)) /\
-   (line_length (Asm b bytes l) = LENGTH bytes) /\
-   (line_length (LabAsm a w bytes l) = LENGTH bytes)`;;
+let line_length_def = cake_define_list
+  [`line_length (Label k1 k2 l:line) = (if l = 0 then 0 else 1)`;
+   `line_length (Asm b bytes l:line) = LENGTH bytes`;
+   `line_length (LabAsm a w bytes l:line) = LENGTH bytes`];;
 
 let align_dm_def = cake_define
   `align_dm (s:('a,'c,'ffi)labSem_state) =

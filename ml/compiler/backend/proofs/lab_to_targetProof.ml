@@ -97,12 +97,12 @@ let labs_domain_def = cake_define
   `labs_domain labs = {(n1,n2) | ~(lab_lookup n1 n2 labs = NONE)}`;;
 
 
-let has_odd_inst_def = cake_define
-  `(has_odd_inst [] = F) /\
-   (has_odd_inst ((Section k []) :: xs) = has_odd_inst xs) /\
-   (has_odd_inst ((Section k (y :: ys)) :: xs) <=>
-      ~EVEN (line_length y) \/ has_odd_inst ((Section k ys) ::
-        xs))`;;
+let has_odd_inst_def = cake_define_list
+  [`has_odd_inst [] = F`;
+   `has_odd_inst ((Section k []:sec) :: xs) = has_odd_inst xs`;
+   `has_odd_inst ((Section k (y :: ys):sec) :: xs) <=>
+         ~EVEN (line_length y) \/ has_odd_inst ((Section k ys) ::
+           xs)`];;
 
 let line_similar_def = cake_define
   `line_similar x1 x2 =
@@ -131,20 +131,20 @@ let code_similar_def = cake_define
 val code_similar_ind = theorem "code_similar_ind";
 *)
 
-let word_loc_val_def = cake_define
-  `(word_loc_val p labs (Word w) = SOME w) /\
-   (word_loc_val p labs (Loc k1 k2) =
-      (match lab_lookup k1 k2 labs with NONE -> NONE | SOME q ->
-        SOME (p + n2w q)))`;;
+let word_loc_val_def = cake_define_list
+  [`word_loc_val p labs (Word w:word_loc) = SOME w`;
+   `word_loc_val p labs (Loc k1 k2:word_loc) =
+         (match lab_lookup k1 k2 labs with NONE -> NONE | SOME q
+           -> SOME (p + n2w q))`];;
 
-let has_io_name_def = cake_define
-  `(has_io_name index [] = F) /\
-   (has_io_name index ((Section k []) :: xs) = has_io_name index xs)
-     /\
-   (has_io_name index ((Section k (y :: ys)) :: xs) <=>
-      has_io_name index ((Section k ys) :: xs) \/
-      (match y with LabAsm (CallFFI i) _5 _6 _7 -> (i = index) |
-        _8 -> F))`;;
+let has_io_name_def = cake_define_list
+  [`has_io_name index [] = F`;
+   `has_io_name index ((Section k []:sec) :: xs) = has_io_name index
+  xs`;
+   `has_io_name index ((Section k (y :: ys):sec) :: xs) <=>
+         has_io_name index ((Section k ys) :: xs) \/
+         (match y with LabAsm (CallFFI i) _5 _6 _7 -> (i = index)
+           | _8 -> F)`];;
 
 (* HOL4 ML code, not ported:
 val has_io_name_ind = theorem"has_io_name_ind"
@@ -190,44 +190,45 @@ let line_ok_def = cake_define
 val line_ok_ind = theorem"line_ok_ind";
 *)
 
-let lines_ok_def = cake_define
-  `(lines_ok c labs ffis pos [] = T) /\
-   (lines_ok c labs ffis pos (y :: ys) <=>
-    line_ok c labs ffis pos y /\
-    lines_ok c labs ffis (pos + line_length y) ys)`;;
+let lines_ok_def = cake_define_list
+  [`lines_ok c labs ffis pos [] = T`;
+   `lines_ok c labs ffis pos (y :: ys) <=>
+       line_ok c labs ffis pos y /\
+       lines_ok c labs ffis (pos + line_length y) ys`];;
 
-let all_enc_ok_def = cake_define
-  `(all_enc_ok c labs ffis pos [] = T) /\
-   (all_enc_ok c labs ffis pos ((Section k []) :: xs) <=>
-      EVEN pos /\ all_enc_ok c labs ffis pos xs) /\
-   (all_enc_ok c labs ffis pos ((Section k (y :: ys)) :: xs) <=>
-      line_ok c labs ffis pos y /\
-      all_enc_ok c labs ffis (pos + line_length y) ((Section k ys)
-        :: xs))`;;
+let all_enc_ok_def = cake_define_list
+  [`all_enc_ok c labs ffis pos [] = T`;
+   `all_enc_ok c labs ffis pos ((Section k []:sec) :: xs) <=>
+         EVEN pos /\ all_enc_ok c labs ffis pos xs`;
+   `all_enc_ok c labs ffis pos ((Section k (y :: ys):sec) :: xs) <=>
+         line_ok c labs ffis pos y /\
+         all_enc_ok c labs ffis (pos + line_length y) ((Section k
+           ys) :: xs)`];;
 
 (* HOL4 ML code, not ported:
 val all_enc_ok_ind = theorem"all_enc_ok_ind";
 *)
 
-let pos_val_def = cake_define
-  `(pos_val i pos [] = (pos:num)) /\
-   (pos_val i pos ((Section k []) :: xs) = pos_val i pos xs) /\
-   (pos_val i pos ((Section k (y :: ys)) :: xs) =
-      (if is_Label y then pos_val i (pos + line_length y)
-        ((Section k ys) :: xs) else if i = (0:num) then pos else
-        pos_val (i - 1) (pos + line_length y) ((Section k ys) ::
-        xs)))`;;
+let pos_val_def = cake_define_list
+  [`pos_val i pos [] = (pos:num)`;
+   `pos_val i pos ((Section k []:sec) :: xs) = pos_val i pos xs`;
+   `pos_val i pos ((Section k (y :: ys):sec) :: xs) =
+         (if is_Label y then pos_val i (pos + line_length y)
+           ((Section k ys) :: xs) else if i = (0:num) then pos else
+           pos_val (i - 1) (pos + line_length y) ((Section k ys) ::
+           xs))`];;
 
 (* HOL4 ML code, not ported:
 val pos_val_ind = theorem"pos_val_ind";
 *)
 
-let sec_pos_val_def = cake_define
-  `(sec_pos_val i pos [] = NONE) /\
-   (sec_pos_val i pos (y :: ys) =
-    (if is_Label y then
-      sec_pos_val i (pos + line_length y) ys else if i = 0 then
-        SOME pos else sec_pos_val (i - 1) (pos + line_length y) ys))`;;
+let sec_pos_val_def = cake_define_list
+  [`sec_pos_val i pos [] = NONE`;
+   `sec_pos_val i pos (y :: ys) =
+       (if is_Label y then
+         sec_pos_val i (pos + line_length y) ys else if i = 0
+           then SOME pos else sec_pos_val (i - 1) (pos + line_length
+           y) ys)`];;
 
 let good_code_def = cake_define
   `lab_to_targetProof_good_code c labs code <=>
@@ -241,12 +242,12 @@ let good_code_def = cake_define
     (\c ls. EVERY (sec_ok_pre c) ls) c code`;;
 hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
-let num_pcs_def = cake_define
-  `num_pcs [] = (0:num) /\
-   num_pcs ((Section _11 []) :: rest) = num_pcs rest /\
-   num_pcs ((Section k (x :: xs)) :: rest) = (if is_Label x then
-     num_pcs ((Section k xs) :: rest) else 1 + num_pcs ((Section k
-     xs) :: rest))`;;
+let num_pcs_def = cake_define_list
+  [`num_pcs [] = (0:num)`;
+   `num_pcs ((Section _11 []:sec) :: rest) = num_pcs rest`;
+   `num_pcs ((Section k (x :: xs):sec) :: rest) = (if is_Label x then
+  num_pcs ((Section k xs) :: rest) else 1 + num_pcs ((Section k xs)
+  :: rest))`];;
 
 let share_mem_domain_code_rel_def = cake_define
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a
@@ -627,37 +628,38 @@ val list_add_if_fresh_simp = Q.SPECL [`n`,`s`] list_add_if_fresh_simp
 
 (* annotated line length *)
 
-let line_len_def = cake_define
-  `(line_len (Label _12 _13 l) = l) /\
-   (line_len (Asm _14 _15 l) = l) /\
-   (line_len (LabAsm _16 _17 _18 l) = l)`;;
+let line_len_def = cake_define_list
+  [`line_len (Label _12 _13 l:line) = l`;
+   `line_len (Asm _14 _15 l:line) = l`;
+   `line_len (LabAsm _16 _17 _18 l:line) = l`];;
 
 (* annotated section length *)
 
 (* simple syntactic properties of compiler functions *)
 
-let enc_lines_again_simp_def = cake_define
-  `(enc_lines_again_simp labs ffis pos enc [] = ([],T)) /\
-   (enc_lines_again_simp labs ffis pos enc (LabAsm a w bytes l :: xs)
-     =
-     (let w1 = get_jump_offset a ffis labs pos in
-       if w = w1 then
-         let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc
-           xs in
-           (LabAsm a w bytes l :: rest,ok) else
-         let bs = enc (lab_inst w1 a) in
-         let l1 = MAX (LENGTH bs) l in
-         let (rest,ok) = enc_lines_again_simp labs ffis (pos + l1)
-           enc xs in
-           (LabAsm a w1 bs l1 :: rest,(l1 = l /\ ok)))) /\
-   (enc_lines_again_simp labs ffis pos enc (Label k1 k2 l :: xs) =
-     (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs
-       in
-     (Label k1 k2 l :: rest,ok))) /\
-   (enc_lines_again_simp labs ffis pos enc (Asm x1 x2 l :: xs) =
-     (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l) enc xs
-       in
-     (Asm x1 x2 l :: rest,ok)))`;;
+let enc_lines_again_simp_def = cake_define_list
+  [`enc_lines_again_simp labs ffis pos enc [] = ([],T)`;
+   `enc_lines_again_simp labs ffis pos enc ((LabAsm a w bytes l:line) ::
+  xs) =
+        (let w1 = get_jump_offset a ffis labs pos in
+          if w = w1 then
+            let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
+              enc xs in
+              (LabAsm a w bytes l :: rest,ok) else
+            let bs = enc (lab_inst w1 a) in
+            let l1 = MAX (LENGTH bs) l in
+            let (rest,ok) = enc_lines_again_simp labs ffis (pos +
+              l1) enc xs in
+              (LabAsm a w1 bs l1 :: rest,(l1 = l /\ ok)))`;
+   `enc_lines_again_simp labs ffis pos enc ((Label k1 k2 l:line) :: xs)
+  =
+        (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
+          enc xs in
+        (Label k1 k2 l :: rest,ok))`;
+   `enc_lines_again_simp labs ffis pos enc ((Asm x1 x2 l:line) :: xs) =
+        (let (rest,ok) = enc_lines_again_simp labs ffis (pos + l)
+          enc xs in
+        (Asm x1 x2 l :: rest,ok))`];;
 
 (* HOL4 ML code, not ported:
 val enc_lines_again_simp_ind = theorem"enc_lines_again_simp_ind";
@@ -773,17 +775,17 @@ let line_encd_def = cake_define
 val line_encd_ind = theorem"line_encd_ind";
 *)
 
-let lines_encd_def = cake_define
-  `(lines_encd enc labs ffis pos [] <=> T) /\
-   (lines_encd enc labs ffis pos (l :: ls) <=>
-    line_encd enc labs ffis pos l /\
-    lines_encd enc labs ffis (pos + line_len l) ls)`;;
+let lines_encd_def = cake_define_list
+  [`lines_encd enc labs ffis pos [] <=> T`;
+   `lines_encd enc labs ffis pos (l :: ls) <=>
+       line_encd enc labs ffis pos l /\
+       lines_encd enc labs ffis (pos + line_len l) ls`];;
 
-let all_encd_def = cake_define
-  `(all_encd enc labs ffis pos [] <=> T) /\
-   (all_encd enc labs ffis pos (Section k ls :: ss) <=>
-    lines_encd enc labs ffis pos ls /\
-    all_encd enc labs ffis (pos + SUM (MAP line_len ls)) ss)`;;
+let all_encd_def = cake_define_list
+  [`all_encd enc labs ffis pos [] <=> T`;
+   `all_encd enc labs ffis pos ((Section k ls:sec) :: ss) <=>
+       lines_encd enc labs ffis pos ls /\
+       all_encd enc labs ffis (pos + SUM (MAP line_len ls)) ss`];;
 
 (* length_leq follows from encd *)
 
@@ -882,21 +884,21 @@ let line_enc_with_nop_def = cake_define
 val line_enc_with_nop_ind = theorem"line_enc_with_nop_ind";
 *)
 
-let lines_enc_with_nop_def = cake_define
-  `(lines_enc_with_nop enc labs ffis pos [] <=> T) /\
-   (lines_enc_with_nop enc labs ffis pos (l :: ls) <=>
-    line_enc_with_nop enc labs ffis pos l /\
-    lines_enc_with_nop enc labs ffis (pos + line_length l) ls)`;;
+let lines_enc_with_nop_def = cake_define_list
+  [`lines_enc_with_nop enc labs ffis pos [] <=> T`;
+   `lines_enc_with_nop enc labs ffis pos (l :: ls) <=>
+       line_enc_with_nop enc labs ffis pos l /\
+       lines_enc_with_nop enc labs ffis (pos + line_length l) ls`];;
 
-let all_enc_with_nop_def = cake_define
-  `(all_enc_with_nop enc labs ffis pos [] <=> T) /\
-   (all_enc_with_nop enc labs ffis pos (Section k [] :: xs) <=>
-    all_enc_with_nop enc labs ffis pos xs) /\
-   (all_enc_with_nop enc labs ffis pos (Section k (y :: ys) :: xs)
-     <=>
-    line_enc_with_nop enc labs ffis pos y /\
-    all_enc_with_nop enc labs ffis (pos + line_length y) (Section
-      k ys :: xs))`;;
+let all_enc_with_nop_def = cake_define_list
+  [`all_enc_with_nop enc labs ffis pos [] <=> T`;
+   `all_enc_with_nop enc labs ffis pos ((Section k []:sec) :: xs) <=>
+       all_enc_with_nop enc labs ffis pos xs`;
+   `all_enc_with_nop enc labs ffis pos ((Section k (y :: ys):sec) :: xs)
+  <=>
+       line_enc_with_nop enc labs ffis pos y /\
+       all_enc_with_nop enc labs ffis (pos + line_length y)
+         (Section k ys :: xs)`];;
 
 (* HOL4 ML code, not ported:
 val all_enc_with_nop_ind = theorem"all_enc_with_nop_ind";
@@ -919,17 +921,17 @@ let line_lab_len_pos_ok_def = cake_define
         (if EVEN pos then l = 0 else l = 1)
         | _56 -> T`;;
 
-let lab_len_pos_ok_def = cake_define
-  `(lab_len_pos_ok pos [] <=> T) /\
-   (lab_len_pos_ok pos (l :: ls) <=>
-      line_lab_len_pos_ok pos l /\
-      lab_len_pos_ok (pos + line_len l) ls)`;;
+let lab_len_pos_ok_def = cake_define_list
+  [`lab_len_pos_ok pos [] <=> T`;
+   `lab_len_pos_ok pos (l :: ls) <=>
+         line_lab_len_pos_ok pos l /\
+         lab_len_pos_ok (pos + line_len l) ls`];;
 
-let all_lab_len_pos_ok_def = cake_define
-  `(all_lab_len_pos_ok _57 [] <=> T) /\
-   (all_lab_len_pos_ok pos (Section k ls :: ss) <=>
-    lab_len_pos_ok pos ls /\
-    all_lab_len_pos_ok (pos + sec_length ls 0) ss)`;;
+let all_lab_len_pos_ok_def = cake_define_list
+  [`all_lab_len_pos_ok _57 [] <=> T`;
+   `all_lab_len_pos_ok pos ((Section k ls:sec) :: ss) <=>
+       lab_len_pos_ok pos ls /\
+       all_lab_len_pos_ok (pos + sec_length ls 0) ss`];;
 
 (* HOL4 ML code, not ported:
 val all_lab_len_pos_ok_ind = theorem"all_lab_len_pos_ok_ind";
@@ -948,19 +950,19 @@ let line_offset_ok_def = cake_define
        w = get_jump_offset a ffis labs pos
         | _59 -> T`;;
 
-let lines_offset_ok_def = cake_define
-  `(lines_offset_ok labs ffis pos [] <=> T) /\
-   (lines_offset_ok labs ffis pos (l :: ls) <=>
-    line_offset_ok labs ffis pos l /\
-    lines_offset_ok labs ffis (pos + line_len l) ls)`;;
+let lines_offset_ok_def = cake_define_list
+  [`lines_offset_ok labs ffis pos [] <=> T`;
+   `lines_offset_ok labs ffis pos (l :: ls) <=>
+       line_offset_ok labs ffis pos l /\
+       lines_offset_ok labs ffis (pos + line_len l) ls`];;
 
-let offset_ok_def = cake_define
-  `(lab_to_targetProof_offset_ok labs ffis pos [] <=> T) /\
-   (lab_to_targetProof_offset_ok labs ffis pos (Section k ls :: ss)
-     <=>
-    lines_offset_ok labs ffis pos ls /\
-    lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
-      line_len ls)) ss)`;;
+let offset_ok_def = cake_define_list
+  [`lab_to_targetProof_offset_ok labs ffis pos [] <=> T`;
+   `lab_to_targetProof_offset_ok labs ffis pos ((Section k ls:sec) ::
+  ss) <=>
+       lines_offset_ok labs ffis pos ls /\
+       lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
+         line_len ls)) ss`];;
 hol4_overload "offset_ok" "lab_to_targetProof_offset_ok";;
 
 (* HOL4 ML code, not ported:
@@ -1000,30 +1002,31 @@ let sec_labs_exist_def = cake_define
 
 (* invariant: labels aligned at even positions *)
 
-let even_labels_def = cake_define
-  `(even_labels pos [] <=> T) /\
-   (even_labels pos (Section _65 [] :: ls) <=> even_labels pos ls) /\
-   (even_labels pos (Section k (y :: ys) :: ls) <=>
-    (is_Label y ==> EVEN pos) /\
-    even_labels (pos + line_len y) (Section k ys :: ls))`;;
+let even_labels_def = cake_define_list
+  [`even_labels pos [] <=> T`;
+   `even_labels pos ((Section _65 []:sec) :: ls) <=> even_labels pos
+  ls`;
+   `even_labels pos ((Section k (y :: ys):sec) :: ls) <=>
+       (is_Label y ==> EVEN pos) /\
+       even_labels (pos + line_len y) (Section k ys :: ls)`];;
 
 (* HOL4 ML code, not ported:
 val even_labels_ind = theorem"even_labels_ind";
 *)
 
-let lines_even_labels_def = cake_define
-  `(lines_even_labels pos [] <=> T) /\
-   (lines_even_labels pos (y :: ys) <=>
-    (is_Label y ==> EVEN pos) /\
-    lines_even_labels (pos + line_len y) ys)`;;
+let lines_even_labels_def = cake_define_list
+  [`lines_even_labels pos [] <=> T`;
+   `lines_even_labels pos (y :: ys) <=>
+       (is_Label y ==> EVEN pos) /\
+       lines_even_labels (pos + line_len y) ys`];;
 
-let even_labels_strong_def = cake_define
-  `(even_labels_strong pos [] <=> T) /\
-   (even_labels_strong pos (Section _66 [] :: ls) <=>
-     EVEN pos /\ even_labels_strong pos ls) /\
-   (even_labels_strong pos (Section k (y :: ys) :: ls) <=>
-    (is_Label y ==> EVEN pos) /\
-    even_labels_strong (pos + line_len y) (Section k ys :: ls))`;;
+let even_labels_strong_def = cake_define_list
+  [`even_labels_strong pos [] <=> T`;
+   `even_labels_strong pos ((Section _66 []:sec) :: ls) <=>
+        EVEN pos /\ even_labels_strong pos ls`;
+   `even_labels_strong pos ((Section k (y :: ys):sec) :: ls) <=>
+       (is_Label y ==> EVEN pos) /\
+       even_labels_strong (pos + line_len y) (Section k ys :: ls)`];;
 
 (*
 val tm = ``[Label 0 1 0; Label 0 2 1; Label 0 3 0; Label 0 4 1]``;
@@ -3382,10 +3385,10 @@ val () = PolyML.SaveState.loadState "lab_to_target_syntactic";
 
 (* introducing make_init *)
 
-let set_bytes_def = cake_define
-  `(set_bytes a be [] = (n2w 0)) /\
-   (set_bytes a be (b :: bs) = set_byte a b (set_bytes (a + (n2w
-     1)) be bs) be)`;;
+let set_bytes_def = cake_define_list
+  [`set_bytes a be [] = (n2w 0)`;
+   `set_bytes a be (b :: bs) = set_byte a b (set_bytes (a + (n2w 1))
+  be bs) be`];;
 
 let make_word_def = cake_define
   `make_word be m (a:'a word) =

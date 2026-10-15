@@ -28,9 +28,9 @@ val s = ``s:('a,'c,'ffi) wordSem$state``
 
 (* gc *)
 
-let is_gc_word_const_def = cake_define
-  `is_gc_word_const (Loc _1 _2:word_loc) = T /\
-   is_gc_word_const (Word w) = is_gc_const w`;;
+let is_gc_word_const_def = cake_define_list
+  [`is_gc_word_const (Loc _1 _2:word_loc) = T`;
+   `is_gc_word_const (Word w:word_loc) = is_gc_const w`];;
 
 let gc_fun_const_ok_def = cake_define
   `gc_fun_const_ok (f:('a word_loc) list#('a word->'a word_loc)#('a

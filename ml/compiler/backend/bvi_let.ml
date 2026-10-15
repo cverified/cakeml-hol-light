@@ -55,10 +55,10 @@ let extract_def = cake_define
         | _1 -> 0`;;
 hol4_overload "extract" "bvi_let_extract";;
 
-let extract_list_def = cake_define
-  `(bvi_let_extract_list [] = []) /\
-   (bvi_let_extract_list (x :: xs) = extract x xs ::
-     bvi_let_extract_list xs)`;;
+let extract_list_def = cake_define_list
+  [`bvi_let_extract_list [] = []`;
+   `bvi_let_extract_list (x :: xs) = extract x xs ::
+  bvi_let_extract_list xs`];;
 hol4_overload "extract_list" "bvi_let_extract_list";;
 
 let delete_var_def = cake_define

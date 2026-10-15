@@ -51,10 +51,10 @@ let find_word_ref_def = cake_define
 val find_word_ref_ind = theorem "find_word_ref_ind";
 *)
 
-let analyse_word_code_def = cake_define
-  `(analyse_word_code [] = (LN:(1 spt) spt)) /\
-   (analyse_word_code ((n,args,prog) :: t) =
-       insert n (find_word_ref prog) (analyse_word_code t))`;;
+let analyse_word_code_def = cake_define_list
+  [`analyse_word_code [] = (LN:(1 spt) spt)`;
+   `analyse_word_code ((n,args,prog) :: t) =
+            insert n (find_word_ref prog) (analyse_word_code t)`];;
 
 let remove_word_code_def = cake_define
   `remove_word_code reachable l =

@@ -39,11 +39,11 @@ val word_shift_def = backend_commonTheory.word_shift_def
 let memory_def = cake_define
   `memory m dm = (\s. s = fun2set (m,dm))`;;
 
-let word_list_rev_def = cake_define
-  `(word_list_rev a [] = emp) /\
-   (word_list_rev a (x :: xs) =
-      set_sep_one (a - bytes_in_word,x) * word_list_rev (a -
-        bytes_in_word) xs)`;;
+let word_list_rev_def = cake_define_list
+  [`word_list_rev a [] = emp`;
+   `word_list_rev a (x :: xs) =
+         set_sep_one (a - bytes_in_word,x) * word_list_rev (a -
+           bytes_in_word) xs`];;
 
 let word_store_def = cake_define
   `word_store base store =
@@ -153,9 +153,9 @@ val tac1 = simp [Once
        wordLangTheory.word_sh_def,halt_inst_def]
 *)
 
-let mem_val_def = cake_define
-  `(mem_val regs (INL w) = Word w) /\
-   (mem_val (regs:(num,'a word_loc)fmap) (INR n) = FAPPLY regs n)`;;
+let mem_val_def = cake_define_list
+  [`mem_val regs (INL w) = Word w`;
+   `mem_val (regs:(num,'a word_loc)fmap) (INR n) = FAPPLY regs n`];;
 
 (* HOL4 ML code, not ported:
 val halt_tac =
@@ -163,16 +163,16 @@ val halt_tac =
   \\ rw [] \\ fs [dimword_def]
 *)
 
-let read_mem_def = cake_define
-  `(stack_removeProof_read_mem a m 0 = []) /\
-   (stack_removeProof_read_mem a m (SUC n) =
-      m a :: stack_removeProof_read_mem (a + bytes_in_word) m n)`;;
+let read_mem_def = cake_define_list
+  [`stack_removeProof_read_mem a m 0 = []`;
+   `stack_removeProof_read_mem a m (SUC n) =
+         m a :: stack_removeProof_read_mem (a + bytes_in_word) m
+           n`];;
 hol4_overload "read_mem" "stack_removeProof_read_mem";;
 
-let addresses_def = cake_define
-  `(addresses a 0 = {}) /\
-   (addresses a (SUC n) = a INSERT addresses (a + bytes_in_word)
-     n)`;;
+let addresses_def = cake_define_list
+  [`addresses a 0 = {}`;
+   `addresses a (SUC n) = a INSERT addresses (a + bytes_in_word) n`];;
 
 let init_reduce_def = cake_define
   `init_reduce gen_gc' jump off k code bitmaps data_sp coracle

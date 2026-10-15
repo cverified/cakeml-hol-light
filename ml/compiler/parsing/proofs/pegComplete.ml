@@ -140,19 +140,19 @@ val fFail_def = new_specification(
   SKRULE peg_respects_firstSets);
 *)
 
-let sym2peg_def = cake_define
-  `sym2peg (TOK tk) = tokeq tk /\
-   sym2peg (NT N) = nt N I`;;
+let sym2peg_def = cake_define_list
+  [`sym2peg (TOK tk:grammar_symbol) = tokeq tk`;
+   `sym2peg (NT N:grammar_symbol) = nt N I`];;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
-let left_insert1_def = cake_define
-  `(left_insert1 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l))
-  /\
-   (left_insert1 pt (Nd (n,l0) subs) =
-      (match subs with
-          [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [x] ->
-            mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n (left_insert1
-            pt x :: xs)))`;;
+let left_insert1_def = cake_define_list
+  [`left_insert1 pt (Lf (tk,l):parsetree) = Lf (tk,merge_locs
+  (ptree_loc pt) l)`;
+   `left_insert1 pt (Nd (n,l0) subs:parsetree) =
+         (match subs with
+             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [x]
+               -> mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n
+               (left_insert1 pt x :: xs))`];;
 
 (* HOL4 ML code, not ported:
 val _ = export_rewrites ["grammar.ptree_loc_def"]
@@ -190,23 +190,23 @@ let rightLoc_def = cake_define
    former into the latter gives us back what we started with.
 *)
 
-let leftmost_def = cake_define
-  `leftmost (Lf s) = Lf s /\
-   leftmost (Nd (n,l) args) =
-     (if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then
-       HD args else
-       match args with
-           [] -> Nd (n,l) args | h :: _4 -> leftmost h)`;;
+let leftmost_def = cake_define_list
+  [`leftmost (Lf s:parsetree) = Lf s`;
+   `leftmost (Nd (n,l) args:parsetree) =
+      (if ~(args = []) /\ n = (INL:MMLnonT->MMLnonT+num) nTbase then
+        HD args else
+        match args with
+            [] -> Nd (n,l) args | h :: _4 -> leftmost h)`];;
 
 (* pt is a Tbase, and n will be DType all the way down *)
-let left_insert2_def = cake_define
-  `(left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l))
-  /\
-   (left_insert2 pt (Nd (n,l0) subs) =
-      (match subs with
-          [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [Nd _6
-            [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x :: ys -> mkNd n
-            (left_insert2 pt x :: ys)))`;;
+let left_insert2_def = cake_define_list
+  [`left_insert2 pt (Lf (tk,l):parsetree) = Lf (tk,merge_locs
+  (ptree_loc pt) l)`;
+   `left_insert2 pt (Nd (n,l0) subs:parsetree) =
+         (match subs with
+             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [Nd
+               _6 [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x :: ys ->
+               mkNd n (left_insert2 pt x :: ys))`];;
 
 (* the situation with DType is similar to that with Eapp and Ebase.
 
@@ -252,15 +252,16 @@ let left_insert2_def = cake_define
 *)
 
 
-let left_insert_def = cake_define
-  `(left_insert (Lf (tk,l)) p sep c = Lf (tk,merge_locs (ptree_loc c)
-  l)) /\
-   (left_insert (Nd (n,l) subs) p sep c =
-      (if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs else
-        match subs with
-            [c0] -> mkNd p [mkNd p [c]; sep; c0] | [p'; s'; c'] ->
-              mkNd p [left_insert p' p sep c; s'; c'] | _8 -> Nd
-              (n,merge_locs (ptree_loc c) l) subs))`;;
+let left_insert_def = cake_define_list
+  [`left_insert (Lf (tk,l):parsetree) p sep c = Lf (tk,merge_locs
+  (ptree_loc c) l)`;
+   `left_insert (Nd (n,l) subs:parsetree) p sep c =
+         (if ~(n = p) then Nd (n,merge_locs (ptree_loc c) l) subs
+           else
+           match subs with
+               [c0] -> mkNd p [mkNd p [c]; sep; c0] | [p'; s';
+                 c'] -> mkNd p [left_insert p' p sep c; s'; c'] | _8
+                 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
 
 (* HOL4 ML code, not ported:
 fun has_const c = assert (Lib.can (find_term (same_const c)) o concl)

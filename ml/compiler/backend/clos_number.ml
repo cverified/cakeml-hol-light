@@ -49,7 +49,7 @@ let renumber_code_locs_def = cake_define_list
    `renumber_code_locs n (Letrec t loc vs fns x1:closLang_exp) =
          (let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
          let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
-           (n,Letrec t (SOME m) vs (ZIP (MAP FST fns,fns')) x1))`;
+           (n,Letrec t (SOME m) vs (ZIP (MAP FST fns) fns') x1))`;
    `renumber_code_locs n (Handle t x1 x2:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in

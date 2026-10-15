@@ -29,12 +29,12 @@ needs "semantics/namespace.ml";;
 
 (* -------------- nsSub ---------------- *)
 
-let alist_rel_restr_def = cake_define
-  `(alist_rel_restr R l1 l2 [] <=> T) /\
-   (alist_rel_restr R l1 l2 (k1 :: keys) <=>
-     (match ALOOKUP l1 k1 with NONE -> F | SOME v1 ->
-       (match ALOOKUP l2 k1 with NONE -> F | SOME v2 -> R k1 v1 v2
-         /\ alist_rel_restr R l1 l2 keys)))`;;
+let alist_rel_restr_def = cake_define_list
+  [`alist_rel_restr R l1 l2 [] <=> T`;
+   `alist_rel_restr R l1 l2 (k1 :: keys) <=>
+        (match ALOOKUP l1 k1 with NONE -> F | SOME v1 ->
+          (match ALOOKUP l2 k1 with NONE -> F | SOME v2 -> R k1
+            v1 v2 /\ alist_rel_restr R l1 l2 keys))`];;
 
 let alistSub_def = cake_define
   `alistSub R e1 e2 <=> alist_rel_restr R e1 e2 (MAP FST e1)`;;

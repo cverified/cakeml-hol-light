@@ -228,17 +228,17 @@ let dec_INDUCT,dec_RECURSION = define_datatype
    | Denv (mlstring)";;
 
 (* Computes the bindings of a pattern *)
-let pat_bindings_def = cake_define
-  `ast_pat_bindings Pany = [] /\
-   ast_pat_bindings (Pvar n) = [n] /\
-   ast_pat_bindings (Plit l) = [] /\
-   ast_pat_bindings (Pcon v0 ps) = ast_pats_bindings ps /\
-   ast_pat_bindings (Pref p) = ast_pat_bindings p /\
-   ast_pat_bindings (Pas p i) = ast_pat_bindings p ++ [i] /\
-   ast_pat_bindings (Ptannot p v1) = ast_pat_bindings p /\
-   ast_pats_bindings [] = [] /\
-   ast_pats_bindings (p :: ps) = ast_pats_bindings ps ++
-     ast_pat_bindings p`;;
+let pat_bindings_def = cake_define_list
+  [`ast_pat_bindings Pany = []`;
+   `ast_pat_bindings (Pvar n:ast_pat) = [n]`;
+   `ast_pat_bindings (Plit l:ast_pat) = []`;
+   `ast_pat_bindings (Pcon v0 ps:ast_pat) = ast_pats_bindings ps`;
+   `ast_pat_bindings (Pref p:ast_pat) = ast_pat_bindings p`;
+   `ast_pat_bindings (Pas p i:ast_pat) = ast_pat_bindings p ++ [i]`;
+   `ast_pat_bindings (Ptannot p v1:ast_pat) = ast_pat_bindings p`;
+   `ast_pats_bindings [] = []`;
+   `ast_pats_bindings (p :: ps) = ast_pats_bindings ps ++
+  ast_pat_bindings p`];;
 hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
@@ -278,15 +278,15 @@ let every_exp_def = cake_define_list
                  p (Letrec funs e) /\ every_exp p e /\ EVERY
                    (\(n,v,e). every_exp p e) funs`];;
 
-let seqs_def = cake_define
-  `ast_Seqs [] = Con NONE [] /\
-   ast_Seqs (x :: xs) = Let NONE x (ast_Seqs xs)`;;
+let seqs_def = cake_define_list
+  [`ast_Seqs [] = Con NONE []`;
+   `ast_Seqs (x :: xs) = Let NONE x (ast_Seqs xs)`];;
 hol4_overload "Seqs" "ast_Seqs";;
 
-let apps_def = cake_define
-  `Apps f [] = f /\
-   Apps f (x :: xs) = Apps (App Opapp [f; x]) xs`;;
+let apps_def = cake_define_list
+  [`Apps f [] = f`;
+   `Apps f (x :: xs) = Apps (App Opapp [f; x]) xs`];;
 
-let funs_def = cake_define
-  `Funs [] e = e /\
-   Funs (x :: xs) e = Fun x (Funs xs e)`;;
+let funs_def = cake_define_list
+  [`Funs [] e = e`;
+   `Funs (x :: xs) e = Fun x (Funs xs e)`];;

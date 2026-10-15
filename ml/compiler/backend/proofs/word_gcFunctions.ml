@@ -56,59 +56,62 @@ let decode_length_def = cake_define
   `decode_length conf (w:'a word) = w >>> (dimindex (:'a) -
   data_to_word_config_len_size conf)`;;
 
-let word_gc_move_def = cake_define
-  `(word_gc_move conf ((Loc l1 l2:word_loc),i,pa,old,m,dm) = (Loc l1
-  l2,i,pa,m,(l2 = 0))) /\
-   (word_gc_move conf (Word w,i,pa,old,m,dm) =
-      (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
-        let c = (ptr_to_addr conf old w IN dm) in
-        let v = m (ptr_to_addr conf old w) in
-          if is_fwd_ptr v then
-            (Word (update_addr conf (theWord v >>> 2) w),i,pa,m,c)
-              else
-            let header_addr = ptr_to_addr conf old w in
-            let c = (c /\ header_addr IN dm /\ isWord (m
-              header_addr)) in
-            let len = decode_length conf (theWord (m header_addr)) in
-            let v = i + len + (n2w 1) in
-            let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr pa m
-              dm in
-            let c = (c /\ header_addr IN dm /\ c1) in
-            let m1 = (header_addr =+ Word (i << 2)) m1 in
-              (Word (update_addr conf i w),v,pa1,m1,c)))`;;
+let word_gc_move_def = cake_define_list
+  [`word_gc_move conf ((Loc l1 l2:word_loc),i,pa,old,m,dm) = (Loc l1
+  l2,i,pa,m,(l2 = 0))`;
+   `word_gc_move conf ((Word w:word_loc),i,pa,old,m,dm) =
+         (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
+           let c = (ptr_to_addr conf old w IN dm) in
+           let v = m (ptr_to_addr conf old w) in
+             if is_fwd_ptr v then
+               (Word (update_addr conf (theWord v >>> 2)
+                 w),i,pa,m,c) else
+               let header_addr = ptr_to_addr conf old w in
+               let c = (c /\ header_addr IN dm /\ isWord (m
+                 header_addr)) in
+               let len = decode_length conf (theWord (m
+                 header_addr)) in
+               let v = i + len + (n2w 1) in
+               let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr
+                 pa m dm in
+               let c = (c /\ header_addr IN dm /\ c1) in
+               let m1 = (header_addr =+ Word (i << 2)) m1 in
+                 (Word (update_addr conf i w),v,pa1,m1,c))`];;
 
-let word_gen_gc_partial_move_def = cake_define
-  `(word_gen_gc_partial_move conf ((Loc l1
-  l2:word_loc),i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))) /\
-   (word_gen_gc_partial_move conf (Word w,i,pa,old,m,dm,gs,rs) =
-    (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
-      let header_addr = ptr_to_addr conf old w in
-      let tmp = header_addr - old in
-        if tmp <+ gs \/ rs <=+ tmp then
-          (Word w,i,pa,m,T) else
-          let c = (ptr_to_addr conf old w IN dm) in
-          let v = m (ptr_to_addr conf old w) in
-            if is_fwd_ptr v then
-              (Word (update_addr conf (theWord v >>> 2) w),i,pa,m,c)
-                else
-              let c = (c /\ header_addr IN dm /\ isWord (m
-                header_addr)) in
-              let len = decode_length conf (theWord (m header_addr))
-                in
-              let v = i + len + (n2w 1) in
-              let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr pa
-                m dm in
-              let c = (c /\ header_addr IN dm /\ c1) in
-              let m1 = (header_addr =+ Word (i << 2)) m1 in
-                (Word (update_addr conf i w),v,pa1,m1,c)))`;;
+let word_gen_gc_partial_move_def = cake_define_list
+  [`word_gen_gc_partial_move conf ((Loc l1
+  l2:word_loc),i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))`;
+   `word_gen_gc_partial_move conf ((Word
+  w:word_loc),i,pa,old,m,dm,gs,rs) =
+       (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
+         let header_addr = ptr_to_addr conf old w in
+         let tmp = header_addr - old in
+           if tmp <+ gs \/ rs <=+ tmp then
+             (Word w,i,pa,m,T) else
+             let c = (ptr_to_addr conf old w IN dm) in
+             let v = m (ptr_to_addr conf old w) in
+               if is_fwd_ptr v then
+                 (Word (update_addr conf (theWord v >>> 2)
+                   w),i,pa,m,c) else
+                 let c = (c /\ header_addr IN dm /\ isWord (m
+                   header_addr)) in
+                 let len = decode_length conf (theWord (m
+                   header_addr)) in
+                 let v = i + len + (n2w 1) in
+                 let (pa1,m1,c1) = memcpy (len + (n2w 1))
+                   header_addr pa m dm in
+                 let c = (c /\ header_addr IN dm /\ c1) in
+                 let m1 = (header_addr =+ Word (i << 2)) m1 in
+                   (Word (update_addr conf i w),v,pa1,m1,c))`];;
 
-let word_gc_move_roots_def = cake_define
-  `(word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)) /\
-   (word_gc_move_roots conf (w :: ws,i,pa,old,m,dm) =
-      (let (w1,i1,pa1,m1,c1) = word_gc_move conf (w,i,pa,old,m,dm) in
-      let (ws2,i2,pa2,m2,c2) = word_gc_move_roots conf
-        (ws,i1,pa1,old,m1,dm) in
-        (w1 :: ws2,i2,pa2,m2,(c1 /\ c2))))`;;
+let word_gc_move_roots_def = cake_define_list
+  [`word_gc_move_roots conf ([],i,pa,old,m,dm) = ([],i,pa,m,T)`;
+   `word_gc_move_roots conf (w :: ws,i,pa,old,m,dm) =
+         (let (w1,i1,pa1,m1,c1) = word_gc_move conf
+           (w,i,pa,old,m,dm) in
+         let (ws2,i2,pa2,m2,c2) = word_gc_move_roots conf
+           (ws,i1,pa1,old,m1,dm) in
+           (w1 :: ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
 let word_gc_move_list_def = cake_define
   `word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
@@ -121,16 +124,15 @@ let word_gc_move_list_def = cake_define
         bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm) in
         (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`;;
 
-let word_gen_gc_partial_move_roots_def = cake_define
-  `(word_gen_gc_partial_move_roots conf ([],i,pa,old,m,dm,gs,rs) =
-  ([],i,pa,m,T)) /\
-   (word_gen_gc_partial_move_roots conf (w :: ws,i,pa,old,m,dm,gs,rs)
-     =
-      (let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
-        (w,i,pa,old,m,dm,gs,rs) in
-      let (ws2,i2,pa2,m2,c2) = word_gen_gc_partial_move_roots conf
-        (ws,i1,pa1,old,m1,dm,gs,rs) in
-        (w1 :: ws2,i2,pa2,m2,(c1 /\ c2))))`;;
+let word_gen_gc_partial_move_roots_def = cake_define_list
+  [`word_gen_gc_partial_move_roots conf ([],i,pa,old,m,dm,gs,rs) =
+  ([],i,pa,m,T)`;
+   `word_gen_gc_partial_move_roots conf (w :: ws,i,pa,old,m,dm,gs,rs) =
+         (let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
+           (w,i,pa,old,m,dm,gs,rs) in
+         let (ws2,i2,pa2,m2,c2) = word_gen_gc_partial_move_roots
+           conf (ws,i1,pa1,old,m1,dm,gs,rs) in
+           (w1 :: ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
 let word_gen_gc_partial_move_list_def = cake_define
   `word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
@@ -279,45 +281,49 @@ let is_ref_header_def = cake_define
   `is_ref_header (v:'a word) <=> ((v && (n2w 0b1100)) = (n2w
   0b01000))`;;
 
-let word_gen_gc_move_def = cake_define
-  `(word_gen_gc_move conf ((Loc l1 l2:word_loc),i,pa,ib,pb,old,m,dm) =
-      (Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))) /\
-   (word_gen_gc_move conf (Word w,i,pa,ib,pb,old,m,dm) =
-      (if ((n2w 1) && w) = (n2w 0) then (Word w,i,pa,ib,pb,m,T) else
-        let c = (ptr_to_addr conf old w IN dm) in
-        let v = m (ptr_to_addr conf old w) in
-        let c = (c /\ isWord v) in
-          if is_fwd_ptr v then
-            (Word (update_addr conf (theWord v >>> 2)
-              w),i,pa,ib,pb,m,c) else
-            let header_addr = ptr_to_addr conf old w in
-            let c = (c /\ header_addr IN dm /\ isWord (m
-              header_addr)) in
-            let len = decode_length conf (theWord (m header_addr)) in
-              if is_ref_header (theWord v) then
-                let v = ib - (len + (n2w 1)) in
-                let pb1 = pb - (len + (n2w 1)) * bytes_in_word in
-                let (_5,m1,c1) = memcpy (len + (n2w 1)) header_addr
-                  pb1 m dm in
-                let c = (c /\ header_addr IN dm /\ c1) in
-                let m1 = (header_addr =+ Word (v << 2)) m1 in
-                  (Word (update_addr conf v w),i,pa,v,pb1,m1,c) else
-               let v = i + len + (n2w 1) in
-               let (pa1,m1,c1) = memcpy (len + (n2w 1)) header_addr
-                 pa m dm in
-               let c = (c /\ header_addr IN dm /\ c1) in
-               let m1 = (header_addr =+ Word (i << 2)) m1 in
-                 (Word (update_addr conf i w),v,pa1,ib,pb,m1,c)))`;;
+let word_gen_gc_move_def = cake_define_list
+  [`word_gen_gc_move conf ((Loc l1 l2:word_loc),i,pa,ib,pb,old,m,dm) =
+         (Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))`;
+   `word_gen_gc_move conf ((Word w:word_loc),i,pa,ib,pb,old,m,dm) =
+         (if ((n2w 1) && w) = (n2w 0) then (Word w,i,pa,ib,pb,m,T)
+           else
+           let c = (ptr_to_addr conf old w IN dm) in
+           let v = m (ptr_to_addr conf old w) in
+           let c = (c /\ isWord v) in
+             if is_fwd_ptr v then
+               (Word (update_addr conf (theWord v >>> 2)
+                 w),i,pa,ib,pb,m,c) else
+               let header_addr = ptr_to_addr conf old w in
+               let c = (c /\ header_addr IN dm /\ isWord (m
+                 header_addr)) in
+               let len = decode_length conf (theWord (m
+                 header_addr)) in
+                 if is_ref_header (theWord v) then
+                   let v = ib - (len + (n2w 1)) in
+                   let pb1 = pb - (len + (n2w 1)) * bytes_in_word in
+                   let (_5,m1,c1) = memcpy (len + (n2w 1))
+                     header_addr pb1 m dm in
+                   let c = (c /\ header_addr IN dm /\ c1) in
+                   let m1 = (header_addr =+ Word (v << 2)) m1 in
+                     (Word (update_addr conf v w),i,pa,v,pb1,m1,c)
+                       else
+                  let v = i + len + (n2w 1) in
+                  let (pa1,m1,c1) = memcpy (len + (n2w 1))
+                    header_addr pa m dm in
+                  let c = (c /\ header_addr IN dm /\ c1) in
+                  let m1 = (header_addr =+ Word (i << 2)) m1 in
+                    (Word (update_addr conf i
+                      w),v,pa1,ib,pb,m1,c))`];;
 
-let word_gen_gc_move_roots_def = cake_define
-  `(word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
-  ([],i,pa,ib,pb,m,T)) /\
-   (word_gen_gc_move_roots conf (w :: ws,i,pa,ib,pb,old,m,dm) =
-      (let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
-        (w,i,pa,ib,pb,old,m,dm) in
-      let (ws2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_roots conf
-        (ws,i1,pa1,ib,pb,old,m1,dm) in
-        (w1 :: ws2,i2,pa2,ib,pb,m2,(c1 /\ c2))))`;;
+let word_gen_gc_move_roots_def = cake_define_list
+  [`word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
+  ([],i,pa,ib,pb,m,T)`;
+   `word_gen_gc_move_roots conf (w :: ws,i,pa,ib,pb,old,m,dm) =
+         (let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
+           (w,i,pa,ib,pb,old,m,dm) in
+         let (ws2,i2,pa2,ib,pb,m2,c2) = word_gen_gc_move_roots conf
+           (ws,i1,pa1,ib,pb,old,m1,dm) in
+           (w1 :: ws2,i2,pa2,ib,pb,m2,(c1 /\ c2)))`];;
 
 let word_gen_gc_move_list_def = cake_define
   `word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a

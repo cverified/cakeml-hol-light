@@ -32,13 +32,15 @@ let interference_app_INDUCT,interference_app_RECURSION = define_datatype
   "interference_app = FfiApp (num) (word8 list) ('state) ('state) | \
    CcApp ('a word) ('a word) ('state) ('state)";;
 
-let is_ffi_app_def = cake_define
-  `(is_ffi_app (FfiApp index new_bytes ms_pre ms_post) = T) /\
-   (is_ffi_app (CcApp a1 a2 ms_pre ms_post) = F)`;;
+let is_ffi_app_def = cake_define_list
+  [`is_ffi_app (FfiApp index new_bytes ms_pre
+  ms_post:interference_app) = T`;
+   `is_ffi_app (CcApp a1 a2 ms_pre ms_post:interference_app) = F`];;
 
-let app_post_def = cake_define
-  `(app_post (FfiApp index new_bytes ms_pre ms_post) = ms_post) /\
-   (app_post (CcApp a1 a2 ms_pre ms_post) = ms_post)`;;
+let app_post_def = cake_define_list
+  [`app_post (FfiApp index new_bytes ms_pre ms_post:interference_app)
+  = ms_post`;
+   `app_post (CcApp a1 a2 ms_pre ms_post:interference_app) = ms_post`];;
 
 (* clocked clone of evaluate that stops at the first interference
    application (FFI, shared-memory or cache-clear) and returns its data
@@ -176,20 +178,20 @@ let next_interference_def = cake_define
        res)`;;
 
 (* the sequence of interference applications of a run *)
-let interference_app_seq_def = cake_define
-  `(interference_app_seq mc ffi ms 0 = next_interference mc ffi ms) /\
-   (interference_app_seq mc ffi ms (SUC n) =
-      (match next_interference mc ffi ms with NONE -> NONE | SOME
-        (app,mc',ffi') -> interference_app_seq mc' ffi' (app_post
-        app) n))`;;
+let interference_app_seq_def = cake_define_list
+  [`interference_app_seq mc ffi ms 0 = next_interference mc ffi ms`;
+   `interference_app_seq mc ffi ms (SUC n) =
+         (match next_interference mc ffi ms with NONE -> NONE |
+           SOME (app,mc',ffi') -> interference_app_seq mc' ffi'
+           (app_post app) n)`];;
 
 (* number of applications satisfying P among the first n applications *)
-let interference_count_def = cake_define
-  `(interference_count P mc ffi ms 0 = 0) /\
-   (interference_count P mc ffi ms (SUC n) =
-      interference_count P mc ffi ms n +
-      (match interference_app_seq mc ffi ms n with SOME
-        (app,mc',ffi') -> (if P app then 1 else 0) | NONE -> 0))`;;
+let interference_count_def = cake_define_list
+  [`interference_count P mc ffi ms 0 = 0`;
+   `interference_count P mc ffi ms (SUC n) =
+         interference_count P mc ffi ms n +
+         (match interference_app_seq mc ffi ms n with SOME
+           (app,mc',ffi') -> (if P app then 1 else 0) | NONE -> 0)`];;
 
 (* position in the application sequence of the k-th application
    satisfying P *)

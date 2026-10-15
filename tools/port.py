@@ -217,6 +217,11 @@ class Porter:
   def run(self):
     blocks = hol4.parse(self.path)
     self.db.base_grammar(self.thy)
+    # an infix that an ancestor overloads with a constant is written
+    # as an application of that constant
+    for tok, txt in self.db.ovl_infix.items():
+      if tok in hterm.OWN_INFIX and IDENT.match(txt):
+        hterm.set_infix_name(tok, self.ctx.name(txt))
     chunks = []                 # (blank lines before, text)
     for b in blocks:
       before = len(self.out)
@@ -316,6 +321,8 @@ class Porter:
       pass
     elif k == 'ML':
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
+        return
+      if self.hol_reln(b):
         return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
       self.out.append('(* HOL4 ML code, not ported:\n' +
@@ -454,7 +461,10 @@ class Porter:
       # one clause with a match, which HOL Light handles far better
       # than a definition by patterns on several arguments
       term = fmt(self.match_form(body))
-    elif self.clause_clash(body):
+    elif self.several_clauses(body):
+      # HOL4 typechecks every clause of a definition on its own, so
+      # the port writes them as separate quotations, with the type
+      # of the pattern on each
       term = None
       clauses = self.clause_form(body)
     elif key in overrides.ANNOTATE:
@@ -598,6 +608,21 @@ class Porter:
     return '[`' + '`;\n   `'.join(cls) + '`]'
 
   # -- a definition as one clause with a match -------------------
+
+  def several_clauses(self, body):
+    """has this definition more than one clause?  Then the clauses
+       are quotations of their own, as in HOL4, where each of them
+       is typechecked separately"""
+    try:
+      toks = hterm.tokenize(hol4.strip_comments(body))
+      e = hterm.Parser(toks, self.ctx).parse()
+      cls = hterm.clauses_of(e)
+    except Exception:
+      return False
+    global CONS
+    CONS = self.ctx.cons
+    self.clause_clash(body)      # sets contys for the annotations
+    return len(cls) > 1
 
   def clause_clash(self, body):
     """does a variable of a definition occur in two clauses in
@@ -824,16 +849,30 @@ class Porter:
       c = self.ctx.name(txt.strip())
       self.out.append('hol4_overload "%s" "%s";;' % (b.name, c))
       return
+    # an overload of a symbolic infix the source declared itself is
+    # written as an application of the constant it stands for
+    if b.name in hterm.OWN_INFIX and IDENT.match(txt.strip()):
+      hterm.set_infix_name(b.name, self.ctx.name(txt.strip()))
+      return
     self.warn.append('Overload %s' % b.name)
     self.out.append(shorten(
       '(* HOL4 overload (expanded in the port):\n'
       '     %s = %s *)' % (b.name, txt)))
+
+  def hol_reln(self, b):
+    r = hol4.hol_reln(b.text)
+    if not r: return False
+    name, body = r
+    self.inductive(hol4.Block('Inductive', name + '_rules', [], body))
+    return True
 
   def inductive(self, b):
     term = fmt(self.term(b.body))
     self.out.append('let %s = cake_inductive\n  `%s`;;'
                     % (ocaml_name(b.name), term))
 
+
+IDENT = re.compile(r"^(\w+\$)?[A-Za-z_][A-Za-z0-9_']*$")
 
 CONS = set()           # the constructors in scope, set by the porter
 

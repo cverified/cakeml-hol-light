@@ -39,10 +39,10 @@ let is_Or_row_def = cake_define
         ((Or p1 p2:pattern_semantics_pat),_4) -> T
       | _5 -> F`;;
 
-let take_until_Any_def = cake_define
-  `take_until_Any [] = [] /\
-   take_until_Any ((p,x) :: xs) =
-     (if is_Any p then [(p,x)] else (p,x) :: take_until_Any xs)`;;
+let take_until_Any_def = cake_define_list
+  [`take_until_Any [] = []`;
+   `take_until_Any ((p,x) :: xs) =
+      (if is_Any p then [(p,x)] else (p,x) :: take_until_Any xs)`];;
 
 let move_const_up_def = cake_define
   `move_const_up rows =
@@ -81,51 +81,48 @@ let mk_Conj_def = cake_define
 let mk_If_def = cake_define
   `mk_If g p q = (if is_True g then p else If g p q)`;;
 
-let get_pos_def = cake_define
-  `get_pos [] = EmptyPos /\
-   get_pos (n :: ns) = Pos n (get_pos ns)`;;
+let get_pos_def = cake_define_list
+  [`get_pos [] = EmptyPos`;
+   `get_pos (n :: ns) = Pos n (get_pos ns)`];;
 
-let _ = size_thms "list";;
-let _ = size_thms "pat";;
-(* HOL4 termination: *)
-let pat_to_guard_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_8,p) -> pat_size p | INR (_9,k,p) ->
-  list_size pat_size p)`
-  `pat_to_guard l Any = True /\
-   pat_to_guard l (Lit r) = PosTest (get_pos (REVERSE l)) (LitEq r)
-     /\
-   pat_to_guard l (Cons NONE pats) = pats_to_guard l 0 pats /\
-   pat_to_guard l (Cons (SOME (t,_7)) pats) =
-     mk_Conj (PosTest (get_pos (REVERSE l))
-       (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats) /\
-   pat_to_guard l (Or p1 p2) = mk_Disj (pat_to_guard l p1)
-     (pat_to_guard l p2) /\
-   pat_to_guard l (Ref p) = pat_to_guard (0 :: l) p /\
-   pats_to_guard l k [] = True /\
-   pats_to_guard l k [p] = pat_to_guard (k :: l) p /\
-   pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
-     (pats_to_guard l (k + 1) ps)`;;
+let pat_to_guard_def = cake_define_list
+  [`pat_to_guard l Any = True`;
+   `pat_to_guard l (Lit r:pattern_semantics_pat) = PosTest (get_pos
+  (REVERSE l)) (LitEq r)`;
+   `pat_to_guard l (Cons NONE pats:pattern_semantics_pat) =
+  pats_to_guard l 0 pats`;
+   `pat_to_guard l (Cons (SOME (t,_7)) pats:pattern_semantics_pat) =
+      mk_Conj (PosTest (get_pos (REVERSE l))
+        (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats)`;
+   `pat_to_guard l (Or p1 p2:pattern_semantics_pat) = mk_Disj
+  (pat_to_guard l p1) (pat_to_guard l p2)`;
+   `pat_to_guard l (Ref p:pattern_semantics_pat) = pat_to_guard (0 ::
+  l) p`;
+   `pats_to_guard l k [] = True`;
+   `pats_to_guard l k [p] = pat_to_guard (k :: l) p`;
+   `pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
+  (pats_to_guard l (k + 1) ps)`];;
 
-let pats_to_code_def = cake_define
-  `pats_to_code [] = Fail /\
-   pats_to_code ((p,x) :: rows) =
-     mk_If (pat_to_guard [] p) (Leaf x) (pats_to_code rows)`;;
+let pats_to_code_def = cake_define_list
+  [`pats_to_code [] = Fail`;
+   `pats_to_code ((p,x) :: rows) =
+      mk_If (pat_to_guard [] p) (Leaf x) (pats_to_code rows)`];;
 
-let walk_def = cake_define
-  `pattern_comp_walk [] x refs = SOME x /\
-   pattern_comp_walk (n :: ns) x refs =
-     (match x with (Term t xs) -> (if n < LENGTH xs then
-       pattern_comp_walk ns (EL n xs) refs else NONE) | (RefPtr p) ->
-       (if ~(n = 0) then NONE else
-                       match FLOOKUP refs p with SOME y ->
-                         pattern_comp_walk ns y refs | _12 -> NONE) |
-                         _13 -> NONE)`;;
+let walk_def = cake_define_list
+  [`pattern_comp_walk [] x refs = SOME x`;
+   `pattern_comp_walk (n :: ns) x refs =
+      (match x with (Term t xs) -> (if n < LENGTH xs then
+        pattern_comp_walk ns (EL n xs) refs else NONE) | (RefPtr p) ->
+        (if ~(n = 0) then NONE else
+                        match FLOOKUP refs p with SOME y ->
+                          pattern_comp_walk ns y refs | _10 -> NONE)
+                          | _11 -> NONE)`];;
 hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = cake_define
   `walk_list ns x refs =
-     (match walk ns x refs with SOME (Term _14 vs) -> SOME vs |
-       _15 -> NONE)`;;
+     (match walk ns x refs with SOME (Term _12 vs) -> SOME vs |
+       _13 -> NONE)`;;
 
 
 (* plug all the parts together *)

@@ -216,8 +216,9 @@ val date_tm = Term `strlit^(stringSyntax.fromMLstring date_str)`
 let print_option_def = cake_define
   `print_option h x =
      (match x with
-       NONE -> (implode "") | SOME y -> ^ (^ (^ h (implode " "))
-         y) (implode "\n"))`;;
+       NONE -> (implode "") | SOME y -> (\x y. strcat x y) ((\x y.
+         strcat x y) ((\x y. strcat x y) h (implode " ")) y) (implode
+         "\n"))`;;
 
 (* HOL4 ML code, not ported:
 val current_build_info_str_tm = EVAL ``
@@ -261,7 +262,7 @@ val help_string_tm =
 *)
 
 let help_string_def = cake_define
-  `help_string = ^ (implode) help_string_tm`;;
+  `help_string = (\x y. strcat x y) (implode) help_string_tm`;;
 
 let compile_error_INDUCT,compile_error_RECURSION = define_datatype
   "compile_error = ParseError (mlstring) | TypeError (mlstring) | \
@@ -323,8 +324,9 @@ let parse_sexp_input_def = cake_define
 let parse_cml_input_def = cake_define
   `parse_cml_input input =
      (match parse_prog (lexer_fun input) with Failure l _5 -> INL
-       (^ (implode "Parsing failed at ") (locs_to_string (implode
-       input) (SOME l))) | Success _6 x _7 -> INR x)`;;
+       ((\x y. strcat x y) (implode "Parsing failed at ")
+       (locs_to_string (implode input) (SOME l))) | Success _6 x _7
+       -> INR x)`;;
 
 let compile_def = cake_define
   `compiler_compile c prelude input =
@@ -381,27 +383,28 @@ let compile_pancake_def = cake_define
              (bytes,data,c),td,MAP StaticError warns))))`;;
 
 (* The top-level compiler *)
-let error_to_str_def = cake_define
-  `(error_to_str (ParseError s) =
-      concat [(implode "### ERROR: parse error\n"); s; (implode
-        "\n")]) /\
-   (error_to_str (TypeError s) =
-      (if (if strlen s = 0 then T else
-          if strsub s 0 = (CHR 10) then F else T) then
-        concat [(implode "### ERROR: type error\n"); s; (implode
-          "\n")] else s)) /\
-   (error_to_str (ConfigError s) = concat [(implode
-     "### ERROR: config error\n"); s; (implode "\n")]) /\
-   (error_to_str AssembleError = (implode
-     "### ERROR: assembly error\n")) /\
-   (error_to_str (StaticError e) =
-     (match e with
-       ScopeErr s -> concat [(implode "### ERROR: scope error\n");
-         s; (implode "\n")] | WarningErr s -> concat [(implode
-         "# WARNING:\n"); s; (implode "\n")] | GenErr s -> concat
-         [(implode "### ERROR: static error\n"); s; (implode "\n")] |
-         ShapeErr s -> concat [(implode "### ERROR: shape error\n");
-         s; (implode "\n")]))`;;
+let error_to_str_def = cake_define_list
+  [`error_to_str (ParseError s:compile_error) =
+         concat [(implode "### ERROR: parse error\n"); s;
+           (implode "\n")]`;
+   `error_to_str (TypeError s:compile_error) =
+         (if (if strlen s = 0 then T else
+             if strsub s 0 = (CHR 10) then F else T) then
+           concat [(implode "### ERROR: type error\n"); s;
+             (implode "\n")] else s)`;
+   `error_to_str (ConfigError s:compile_error) = concat [(implode
+  "### ERROR: config error\n"); s; (implode "\n")]`;
+   `error_to_str AssembleError = (implode
+  "### ERROR: assembly error\n")`;
+   `error_to_str (StaticError e:compile_error) =
+        (match e with
+          ScopeErr s -> concat [(implode
+            "### ERROR: scope error\n"); s; (implode "\n")] |
+            WarningErr s -> concat [(implode "# WARNING:\n"); s;
+            (implode "\n")] | GenErr s -> concat [(implode
+            "### ERROR: static error\n"); s; (implode "\n")] |
+            ShapeErr s -> concat [(implode
+            "### ERROR: shape error\n"); s; (implode "\n")])`];;
 
 let is_error_msg_def = cake_define
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -422,21 +425,21 @@ let parse_bool_def = cake_define
 
 (* Finds the first occurence of the flag and
   returns the rest of the string after it *)
-let find_str_def = cake_define
-  `(find_str flag [] = NONE) /\
-   (find_str flag (x :: xs) =
-     (if isPrefix flag x then
-       SOME (extract x (strlen flag) NONE) else
-       find_str flag xs))`;;
+let find_str_def = cake_define_list
+  [`find_str flag [] = NONE`;
+   `find_str flag (x :: xs) =
+        (if isPrefix flag x then
+          SOME (extract x (strlen flag) NONE) else
+          find_str flag xs)`];;
 
 (* Finds all occurences of the flag as a prefix, returning
    the remainder in each occurence. *)
-let find_strs_def = cake_define
-  `(find_strs flag [] = []) /\
-   (find_strs flag (x :: xs) =
-     (if isPrefix flag x then
-       (extract x (strlen flag) NONE) :: find_strs flag xs else
-       find_strs flag xs))`;;
+let find_strs_def = cake_define_list
+  [`find_strs flag [] = []`;
+   `find_strs flag (x :: xs) =
+        (if isPrefix flag x then
+          (extract x (strlen flag) NONE) :: find_strs flag xs else
+          find_strs flag xs)`];;
 
 (* If flag is not present then F, else if it is present then
    we should not get any config string afterwards *)
@@ -460,28 +463,28 @@ let find_num_def = cake_define
        "Unable to parse as num: "); rest; (implode " for flag: ");
        flag])))`;;
 
-let get_err_str_def = cake_define
-  `(get_err_str (INL n) = (implode "")) /\
-   (get_err_str (INR n) = concat [n; (implode "\n")])`;;
+let get_err_str_def = cake_define_list
+  [`get_err_str (INL n) = (implode "")`;
+   `get_err_str (INR n) = concat [n; (implode "\n")]`];;
 
 (* All the numbers must parse *)
-let parse_num_list_def = cake_define
-  `(parse_num_list [] = INL []) /\
-   (parse_num_list (x :: xs) =
-      (match parse_num x with
-        NONE -> INR (concat [(implode "Unable to parse as num: ");
-          x]) | SOME n ->
-        (match parse_num_list xs with
-          INR s -> INR s | INL ns -> INL (n :: ns))))`;;
+let parse_num_list_def = cake_define_list
+  [`parse_num_list [] = INL []`;
+   `parse_num_list (x :: xs) =
+         (match parse_num x with
+           NONE -> INR (concat [(implode
+             "Unable to parse as num: "); x]) | SOME n ->
+           (match parse_num_list xs with
+             INR s -> INR s | INL ns -> INL (n :: ns)))`];;
 
-let comma_tokens_def = cake_define
-  `(comma_tokens acc xs [] = (if NULL xs then acc else acc ++ [implode
-  xs])) /\
-   (comma_tokens acc (xs:string) (c :: (cs:string)) =
-     (if c = (CHR 44) then
-       comma_tokens (acc ++ (if NULL xs then [] else [implode xs]))
-         [] cs else
-       comma_tokens acc (STRCAT xs [c]) cs))`;;
+let comma_tokens_def = cake_define_list
+  [`comma_tokens acc xs [] = (if NULL xs then acc else acc ++
+  [implode xs])`;
+   `comma_tokens acc (xs:string) (c :: (cs:string)) =
+        (if c = (CHR 44) then
+          comma_tokens (acc ++ (if NULL xs then [] else [implode
+            xs])) [] cs else
+          comma_tokens acc (STRCAT xs [c]) cs)`];;
 
 
 let parse_nums_def = cake_define
@@ -745,14 +748,13 @@ let has_help_flag_def = cake_define
 let has_pancake_flag_def = cake_define
   `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
 
-let format_compiler_result_def = cake_define
-  `format_compiler_result bytes_export (M_failure err) =
-     ((List []:mlstring app_list),error_to_str err) /\
-   format_compiler_result bytes_export
-     (M_success ((bytes:word8 list),(data:('a word)
-       list),(c:backend_config))) =
-     (bytes_export (the [] (lab_to_target_config_ffi_names
-       (backend_config_lab_conf c))) bytes data,implode "")`;;
+let format_compiler_result_def = cake_define_list
+  [`format_compiler_result bytes_export (M_failure err:exc) =
+      ((List []:mlstring app_list),error_to_str err)`;
+   `format_compiler_result bytes_export (M_success ((bytes:word8
+  list),(data:('a word) list),(c:backend_config)):exc) =
+      (bytes_export (the [] (lab_to_target_config_ffi_names
+        (backend_config_lab_conf c))) bytes data,implode "")`];;
 
 (* FIXME TODO: this is an awful workaround to avoid implementing a file
    writer

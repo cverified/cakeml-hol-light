@@ -100,6 +100,7 @@ INT_NUMERALS = set([
   ('integer_word', 'toString_def'),
   ('backend_common', 'small_enough_int_def'),
   ('bvl_const', 'SmartOp2_def'),
+  ('clos_op', 'int_op_def'),
   ('integer_word', 'fromString_def'),
 ])
 
@@ -115,6 +116,10 @@ WORD_NOT = set([
 # clauses as separate quotations
 CLAUSE_FORM = set([
   ('ast', 'every_exp_def'),
+  # a variable of these has one type in the clauses of one of the
+  # functions and another in those of the next, which only shows
+  # in the right hand sides, where clause_clash does not look
+  ('bvi_tmc', 'bvi_to_cb_aux_def'),
 ])
 
 # definitions whose clauses overlap, so that they depend on HOL4's

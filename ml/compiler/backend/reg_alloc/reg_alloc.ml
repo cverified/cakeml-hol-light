@@ -144,53 +144,54 @@ val move_related_manip = el 5 arr_manip;
 (* Helper functions for defining the allocator *)
 
 (* Monadic list functions -- doesn't care about order *)
-let st_ex_FOREACH_def = cake_define
-  `(st_ex_FOREACH [] a = return one) /\
-   (st_ex_FOREACH (x :: xs) a =
-   monad_ignore_bind
-     (a x) (
-     st_ex_FOREACH xs a))`;;
+let st_ex_FOREACH_def = cake_define_list
+  [`st_ex_FOREACH [] a = return one`;
+   `st_ex_FOREACH (x :: xs) a =
+      monad_ignore_bind
+        (a x) (
+        st_ex_FOREACH xs a)`];;
 
-let st_ex_MAP_def = cake_define
-  `(st_ex_MAP f [] = return []) /\
-   (st_ex_MAP f (x :: xs) =
-   monad_bind (f x) (\
-     fx. monad_bind (st_ex_MAP f xs) (\
-     fxs.
-     return (fx :: fxs))))`;;
+let st_ex_MAP_def = cake_define_list
+  [`st_ex_MAP f [] = return []`;
+   `st_ex_MAP f (x :: xs) =
+      monad_bind (f x) (\
+        fx. monad_bind (st_ex_MAP f xs) (\
+        fxs.
+        return (fx :: fxs)))`];;
 
-let st_ex_PARTITION_def = cake_define
-  `(st_ex_PARTITION P [] tt ff = return (tt,ff)) /\
-   (st_ex_PARTITION P (x :: xs) tt ff =
-   monad_bind (P x) (\
-     Px.
-     if Px then
-       st_ex_PARTITION P xs (x :: tt) ff else
-       st_ex_PARTITION P xs tt (x :: ff)))`;;
+let st_ex_PARTITION_def = cake_define_list
+  [`st_ex_PARTITION P [] tt ff = return (tt,ff)`;
+   `st_ex_PARTITION P (x :: xs) tt ff =
+      monad_bind (P x) (\
+        Px.
+        if Px then
+          st_ex_PARTITION P xs (x :: tt) ff else
+          st_ex_PARTITION P xs tt (x :: ff))`];;
 
-let st_ex_FILTER_def = cake_define
-  `(st_ex_FILTER P [] acc = return acc) /\
-   (st_ex_FILTER P (x :: xs) acc =
-   monad_bind (P x) (\
-     Px.
-     if Px then
-       st_ex_FILTER P xs (x :: acc) else
-       st_ex_FILTER P xs acc))`;;
+let st_ex_FILTER_def = cake_define_list
+  [`st_ex_FILTER P [] acc = return acc`;
+   `st_ex_FILTER P (x :: xs) acc =
+      monad_bind (P x) (\
+        Px.
+        if Px then
+          st_ex_FILTER P xs (x :: acc) else
+          st_ex_FILTER P xs acc)`];;
 
 (* Keep adjacency lists sorted by > *)
 
 (* Insert an undirect edge into the adj list representation *)
-let sorted_insert_def = cake_define
-  `(sorted_insert (x:num) acc [] = REVERSE (x :: acc)) /\
-   (sorted_insert x acc (y :: ys) =
-     (if x = y then REVERSE acc ++ (y :: ys) else if x > y then
-       REVERSE acc ++ (x :: y :: ys) else sorted_insert x (y :: acc)
-       ys))`;;
+let sorted_insert_def = cake_define_list
+  [`sorted_insert (x:num) acc [] = REVERSE (x :: acc)`;
+   `sorted_insert x acc (y :: ys) =
+        (if x = y then REVERSE acc ++ (y :: ys) else if x > y
+          then REVERSE acc ++ (x :: y :: ys) else sorted_insert x (y
+          :: acc) ys)`];;
 
-let sorted_mem_def = cake_define
-  `(sorted_mem (x:num) [] = F) /\
-   (sorted_mem x (y :: ys) =
-     (if x = y then T else if x > y then F else sorted_mem x ys))`;;
+let sorted_mem_def = cake_define_list
+  [`sorted_mem (x:num) [] = F`;
+   `sorted_mem x (y :: ys) =
+        (if x = y then T else if x > y then F else sorted_mem x
+          ys)`];;
 
 let insert_edge_def = cake_define
   `insert_edge x y =
@@ -202,31 +203,31 @@ let insert_edge_def = cake_define
        update_adj_ls y (sorted_insert x [] adjy))))`;;
 
 (* insert a list of edges all adjacent to one node *)
-let list_insert_edge_def = cake_define
-  `(list_insert_edge x [] = return one) /\
-   (list_insert_edge x (y :: ys) =
-     monad_ignore_bind
-       (insert_edge x y) (
-       list_insert_edge x ys))`;;
+let list_insert_edge_def = cake_define_list
+  [`list_insert_edge x [] = return one`;
+   `list_insert_edge x (y :: ys) =
+        monad_ignore_bind
+          (insert_edge x y) (
+          list_insert_edge x ys)`];;
 
-let clique_insert_edge_def = cake_define
-  `(clique_insert_edge [] = return one) /\
-   (clique_insert_edge (x :: xs) =
-   monad_ignore_bind
-     (list_insert_edge x xs) (
-     clique_insert_edge xs))`;;
+let clique_insert_edge_def = cake_define_list
+  [`clique_insert_edge [] = return one`;
+   `clique_insert_edge (x :: xs) =
+      monad_ignore_bind
+        (list_insert_edge x xs) (
+        clique_insert_edge xs)`];;
 
 (* assuming vertices in cli already forms a clique,
    extend it with new members
 *)
-let extend_clique_def = cake_define
-  `(extend_clique [] cli = return cli) /\
-   (extend_clique (x :: xs) cli =
-     (if MEM x cli then
-       extend_clique xs cli else
-     monad_ignore_bind
-       (list_insert_edge x cli) (
-       extend_clique xs (x :: cli))))`;;
+let extend_clique_def = cake_define_list
+  [`extend_clique [] cli = return cli`;
+   `extend_clique (x :: xs) cli =
+        (if MEM x cli then
+          extend_clique xs cli else
+        monad_ignore_bind
+          (list_insert_edge x cli) (
+          extend_clique xs (x :: cli)))`];;
 
 (* The allocator heuristics, designed to minimize proof at the
    cost of some extra computation *)
@@ -540,23 +541,23 @@ let canonize_move_def = cake_define
   not necessary? -- 2) canonize the move to put fixed register in front
   3) returns the first bg_ok move that is also consistent
 *)
-let st_ex_FIRST_def = cake_define
-  `(st_ex_FIRST P Q [] unavail = return (NONE,unavail)) /\
-   (st_ex_FIRST P Q (m :: ms) unavail =
-     (let (p,(x,y)) = m in
-     monad_bind (coalesce_parent x) (\
-       x. monad_bind (coalesce_parent y) (\
-       y. monad_bind (P x y) (\
-       b1.
-       if ~b1 then
-         st_ex_FIRST P Q ms unavail else
-       monad_bind (canonize_move x y) (\
-         (x,y). monad_bind (Q x y) (\
-         optb2.
-         match optb2 with
-           NONE -> st_ex_FIRST P Q ms ((p,(x,y)) :: unavail) | SOME
-             pr ->
-           return (SOME ((x,y),pr,ms),unavail))))))))`;;
+let st_ex_FIRST_def = cake_define_list
+  [`st_ex_FIRST P Q [] unavail = return (NONE,unavail)`;
+   `st_ex_FIRST P Q (m :: ms) unavail =
+        (let (p,(x,y)) = m in
+        monad_bind (coalesce_parent x) (\
+          x. monad_bind (coalesce_parent y) (\
+          y. monad_bind (P x y) (\
+          b1.
+          if ~b1 then
+            st_ex_FIRST P Q ms unavail else
+          monad_bind (canonize_move x y) (\
+            (x,y). monad_bind (Q x y) (\
+            optb2.
+            match optb2 with
+              NONE -> st_ex_FIRST P Q ms ((p,(x,y)) :: unavail) |
+                SOME pr ->
+              return (SOME ((x,y),pr,ms),unavail)))))))`];;
 
 let respill_def = cake_define
   `respill k x =
@@ -664,29 +665,29 @@ let do_freeze_def = cake_define
 let safe_div_def = cake_define
   `safe_div x v = (if v = 0 then 0 else x DIV v)`;;
 
-let st_ex_list_MIN_cost_def = cake_define
-  `(st_ex_list_MIN_cost scost [] d k v acc = return (k,acc)) /\
-   (st_ex_list_MIN_cost scost (x :: xs) d k v acc =
-   (if x < d then
-     monad_bind (degrees_sub x) (\
-       xv. monad_bind (return (safe_div (lookup_any x scost 0) xv))
-         (\
-       cost.
-       if v > cost then
-         st_ex_list_MIN_cost scost xs d x cost (k :: acc) else
-         st_ex_list_MIN_cost scost xs d k v (x :: acc))) else
-     st_ex_list_MIN_cost scost xs d k v acc))`;;
+let st_ex_list_MIN_cost_def = cake_define_list
+  [`st_ex_list_MIN_cost scost [] d k v acc = return (k,acc)`;
+   `st_ex_list_MIN_cost scost (x :: xs) d k v acc =
+      (if x < d then
+        monad_bind (degrees_sub x) (\
+          xv. monad_bind (return (safe_div (lookup_any x scost 0)
+            xv)) (\
+          cost.
+          if v > cost then
+            st_ex_list_MIN_cost scost xs d x cost (k :: acc) else
+            st_ex_list_MIN_cost scost xs d k v (x :: acc))) else
+        st_ex_list_MIN_cost scost xs d k v acc)`];;
 
-let st_ex_list_MAX_deg_def = cake_define
-  `(st_ex_list_MAX_deg [] d k v acc = return (k,acc)) /\
-   (st_ex_list_MAX_deg (x :: xs) d k v acc =
-   (if x < d then
-     monad_bind (degrees_sub x) (\
-       xv.
-       if v < xv then
-         st_ex_list_MAX_deg xs d x xv (k :: acc) else
-         st_ex_list_MAX_deg xs d k v (x :: acc)) else
-   st_ex_list_MAX_deg xs d k v acc))`;;
+let st_ex_list_MAX_deg_def = cake_define_list
+  [`st_ex_list_MAX_deg [] d k v acc = return (k,acc)`;
+   `st_ex_list_MAX_deg (x :: xs) d k v acc =
+      (if x < d then
+        monad_bind (degrees_sub x) (\
+          xv.
+          if v < xv then
+            st_ex_list_MAX_deg xs d x xv (k :: acc) else
+            st_ex_list_MAX_deg xs d k v (x :: acc)) else
+      st_ex_list_MAX_deg xs d k v acc)`];;
 
 let do_spill_def = cake_define
   `do_spill scostopt k =
@@ -726,12 +727,12 @@ let do_step_def = cake_define
                b.
                return b)))))`;;
 
-let rpt_do_step_def = cake_define
-  `(rpt_do_step scost k 0 = return one) /\
-   (rpt_do_step scost k (SUC c) =
-   monad_bind (do_step scost k) (\
-     b.
-     if b then rpt_do_step scost k c else return one))`;;
+let rpt_do_step_def = cake_define_list
+  [`rpt_do_step scost k 0 = return one`;
+   `rpt_do_step scost k (SUC c) =
+      monad_bind (do_step scost k) (\
+        b.
+        if b then rpt_do_step scost k c else return one)`];;
 
 (*
   The coloring functions
@@ -801,13 +802,13 @@ let tag_col_def = cake_define
 (* Find the first available in k,k+1,...
    assuming input is sorted
 *)
-let unbound_colour_def = cake_define
-  `(unbound_colour col [] = col) /\
-   (unbound_colour col ((x:num) :: xs) =
-     (if col < x then
-       col else if x = col then
-       unbound_colour (col + 1) xs else
-       unbound_colour col xs))`;;
+let unbound_colour_def = cake_define_list
+  [`unbound_colour col [] = col`;
+   `unbound_colour col ((x:num) :: xs) =
+        (if col < x then
+          col else if x = col then
+          unbound_colour (col + 1) xs else
+          unbound_colour col xs)`];;
 
 (* Second colouring -- turns all Stemps into Fixed ≥ k *)
 let assign_Stemp_tag_def = cake_define
@@ -838,15 +839,16 @@ let assign_Stemps_def = cake_define
      st_ex_FOREACH cs (assign_Stemp_tag k prefs)))`;;
 
 (* Monadic biased selection oracle, finds the first matching color *)
-let first_match_col_def = cake_define
-  `(first_match_col ks [] = return NONE) /\
-   (first_match_col ks (x :: xs) =
-     monad_bind (node_tag_sub x) (\
-       c.
-       match c with
-         Fixed m ->
-           (if MEM m ks then return (SOME m) else first_match_col
-             ks xs) | _12 -> first_match_col ks xs))`;;
+let first_match_col_def = cake_define_list
+  [`first_match_col ks [] = return NONE`;
+   `first_match_col ks (x :: xs) =
+        monad_bind (node_tag_sub x) (\
+          c.
+          match c with
+            Fixed m ->
+              (if MEM m ks then return (SOME m) else
+                first_match_col ks xs) | _12 -> first_match_col ks
+                xs)`];;
 
 (* Clash tree representation of a program -- this is designed as an
    interface:
@@ -873,10 +875,10 @@ hol4_overload "Branch" "reg_alloc_Branch";;
 hol4_overload "Seq" "reg_alloc_Seq";;
 
 (* --- clash_tree oracle checks --- *)
-let numset_list_delete_def = cake_define
-  `(numset_list_delete [] (t:'a spt) = t) /\
-   (numset_list_delete (x :: xs) t = numset_list_delete xs (delete
-     x t))`;;
+let numset_list_delete_def = cake_define_list
+  [`numset_list_delete [] (t:'a spt) = t`;
+   `numset_list_delete (x :: xs) t = numset_list_delete xs (delete x
+  t)`];;
 
 (*Check that a numset is injective over the clash sets in an interpreted
    tree*)
@@ -886,39 +888,40 @@ let check_col_def = cake_define
      if ALL_DISTINCT names then
        SOME (t,fromAList (MAP (\x. (x,one)) names)) else NONE)`;;
 
-let check_partial_col_def = cake_define
-  `(check_partial_col f [] t ft = SOME (t,ft)) /\
-   (check_partial_col f (x :: xs) t ft =
-     (match lookup x t with
-       SOME one -> check_partial_col f xs t ft | NONE ->
-     (match lookup (f x) ft with
-       NONE -> check_partial_col f xs (insert x one t) (insert (f
-         x) one ft) | SOME one -> NONE)))`;;
+let check_partial_col_def = cake_define_list
+  [`check_partial_col f [] t ft = SOME (t,ft)`;
+   `check_partial_col f (x :: xs) t ft =
+        (match lookup x t with
+          SOME one -> check_partial_col f xs t ft | NONE ->
+        (match lookup (f x) ft with
+          NONE -> check_partial_col f xs (insert x one t) (insert
+            (f x) one ft) | SOME one -> NONE))`];;
 
 (* The checking function, used by oracle, and also used as part of the
    correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
-let check_clash_tree_def = cake_define
-  `(check_clash_tree f (Delta w r) live flive =
-     (match check_partial_col f w live flive with
-       NONE -> NONE | SOME _14 ->
-     (let del_w = (numset_list_delete w live) in
-     let fdel_w = (numset_list_delete (MAP f w) flive) in
-     check_partial_col f r del_w fdel_w))) /\
-   (check_clash_tree f (Set t) live flive = check_col f t) /\
-   (check_clash_tree f (Branch topt t1 t2) live flive =
-     (match check_clash_tree f t1 live flive with
-       NONE -> NONE | SOME (t1_out,ft1_out) ->
-     (match check_clash_tree f t2 live flive with
-       NONE -> NONE | SOME (t2_out,ft2_out) ->
-     (match topt with
-       NONE ->
-         check_partial_col f (MAP FST (toAList (difference t2_out
-           t1_out))) t1_out ft1_out | SOME t -> check_col f t)))) /\
-   (check_clash_tree f (Seq t1 t2) live flive =
-     (match check_clash_tree f t2 live flive with
-       NONE -> NONE | SOME (t2_out,ft2_out) ->
-       check_clash_tree f t1 t2_out ft2_out))`;;
+let check_clash_tree_def = cake_define_list
+  [`check_clash_tree f (Delta w r:clash_tree) live flive =
+        (match check_partial_col f w live flive with
+          NONE -> NONE | SOME _14 ->
+        (let del_w = (numset_list_delete w live) in
+        let fdel_w = (numset_list_delete (MAP f w) flive) in
+        check_partial_col f r del_w fdel_w))`;
+   `check_clash_tree f (Set t:clash_tree) live flive = check_col f t`;
+   `check_clash_tree f (Branch topt t1 t2:clash_tree) live flive =
+        (match check_clash_tree f t1 live flive with
+          NONE -> NONE | SOME (t1_out,ft1_out) ->
+        (match check_clash_tree f t2 live flive with
+          NONE -> NONE | SOME (t2_out,ft2_out) ->
+        (match topt with
+          NONE ->
+            check_partial_col f (MAP FST (toAList (difference
+              t2_out t1_out))) t1_out ft1_out | SOME t -> check_col f
+              t)))`;
+   `check_clash_tree f (Seq t1 t2:clash_tree) live flive =
+        (match check_clash_tree f t2 live flive with
+          NONE -> NONE | SOME (t2_out,ft2_out) ->
+          check_clash_tree f t1 t2_out ft2_out)`];;
 
 (* --
 compile clash_trees into a register allocator state
@@ -933,25 +936,25 @@ The second remap is probably not necessary?
   fa = from allocator
   nv = next fresh name
 *)
-let list_remap_def = cake_define
-  `(list_remap [] (ta,fa,nv) = (ta,fa,nv)) /\
-   (list_remap (x :: xs) (ta,fa,nv) =
-     (match lookup x ta with
-       SOME v -> list_remap xs (ta,fa,nv) | NONE ->
-       list_remap xs (insert x nv ta,insert nv x fa,nv + 1)))`;;
+let list_remap_def = cake_define_list
+  [`list_remap [] (ta,fa,nv) = (ta,fa,nv)`;
+   `list_remap (x :: xs) (ta,fa,nv) =
+        (match lookup x ta with
+          SOME v -> list_remap xs (ta,fa,nv) | NONE ->
+          list_remap xs (insert x nv ta,insert nv x fa,nv + 1))`];;
 
-let mk_bij_aux_def = cake_define
-  `(mk_bij_aux (Delta writes reads) tfn =
-     list_remap writes (list_remap reads tfn)) /\
-   (mk_bij_aux (Set t) tfn =
-     list_remap (MAP FST (toAList t)) tfn) /\
-   (mk_bij_aux (Branch topt t1 t2) tfn =
-      (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
-      match topt with
-        NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList ts))
-          tfn')) /\
-   (mk_bij_aux (Seq t1 t2) tfn =
-     mk_bij_aux t1 (mk_bij_aux t2 tfn))`;;
+let mk_bij_aux_def = cake_define_list
+  [`mk_bij_aux (Delta writes reads:clash_tree) tfn =
+        list_remap writes (list_remap reads tfn)`;
+   `mk_bij_aux (Set t:clash_tree) tfn =
+        list_remap (MAP FST (toAList t)) tfn`;
+   `mk_bij_aux (Branch topt t1 t2:clash_tree) tfn =
+         (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
+         match topt with
+           NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList
+             ts)) tfn')`;
+   `mk_bij_aux (Seq t1 t2:clash_tree) tfn =
+        mk_bij_aux t1 (mk_bij_aux t2 tfn)`];;
 
 let mk_bij_def = cake_define
   `mk_bij t =
@@ -990,49 +993,50 @@ let mk_tags_def = cake_define
 
 (* Initializes the clash_graph using a clash_tree and a remapping
    bijection *)
-let mk_graph_def = cake_define
-  `(mk_graph ta (Delta w r) liveout =
-     monad_bind (return (MAP ta w)) (\
-       wta. monad_bind (return (MAP ta r)) (\
-       rta. monad_bind (extend_clique wta liveout) (\
-       live. monad_bind (return (FILTER (\x. ~MEM x wta) live)) (\
-       live. monad_bind (extend_clique rta live) (\
-       livein.
-       return livein)))))) /\
-   (mk_graph ta (Set t) liveout =
-     monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
-       live. monad_ignore_bind
-       (clique_insert_edge live) (
-       return live))) /\
-   (mk_graph ta (Branch topt t1 t2) liveout =
-     monad_bind (mk_graph ta t1 liveout) (\
-       t1_live. monad_bind (mk_graph ta t2 liveout) (\
-       t2_live.
-       (match topt with
-         NONE ->
-         monad_bind (extend_clique t1_live t2_live) (\
-           livein.
-           return livein) | SOME t ->
-         monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
-           clashes. monad_ignore_bind
-           (clique_insert_edge clashes) (
-           return clashes)))))) /\
-   (mk_graph ta (Seq t1 t2) liveout =
-     monad_bind (mk_graph ta t2 liveout) (\
-       live.
-       mk_graph ta t1 live))`;;
+let mk_graph_def = cake_define_list
+  [`mk_graph ta (Delta w r:clash_tree) liveout =
+        monad_bind (return (MAP ta w)) (\
+          wta. monad_bind (return (MAP ta r)) (\
+          rta. monad_bind (extend_clique wta liveout) (\
+          live. monad_bind (return (FILTER (\x. ~MEM x wta) live))
+            (\
+          live. monad_bind (extend_clique rta live) (\
+          livein.
+          return livein)))))`;
+   `mk_graph ta (Set t:clash_tree) liveout =
+        monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
+          live. monad_ignore_bind
+          (clique_insert_edge live) (
+          return live))`;
+   `mk_graph ta (Branch topt t1 t2:clash_tree) liveout =
+        monad_bind (mk_graph ta t1 liveout) (\
+          t1_live. monad_bind (mk_graph ta t2 liveout) (\
+          t2_live.
+          (match topt with
+            NONE ->
+            monad_bind (extend_clique t1_live t2_live) (\
+              livein.
+              return livein) | SOME t ->
+            monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
+              clashes. monad_ignore_bind
+              (clique_insert_edge clashes) (
+              return clashes)))))`;
+   `mk_graph ta (Seq t1 t2:clash_tree) liveout =
+        monad_bind (mk_graph ta t2 liveout) (\
+          live.
+          mk_graph ta t1 live)`];;
 
 let sp_default_def = cake_define
   `sp_default t i =
    (match lookup i t with NONE -> (if is_phy_var i then i DIV 2
      else 0) | SOME x -> x)`;;
 
-let extend_graph_def = cake_define
-  `(extend_graph ta [] = return one) /\
-   (extend_graph ta ((x,y) :: xs) =
-   monad_ignore_bind
-     (insert_edge (ta x) (ta y)) (
-     extend_graph ta xs))`;;
+let extend_graph_def = cake_define_list
+  [`extend_graph ta [] = return one`;
+   `extend_graph ta ((x,y) :: xs) =
+      monad_ignore_bind
+        (insert_edge (ta x) (ta y)) (
+        extend_graph ta xs)`];;
 
 (* sets up the register allocator init state with the clash_tree input
   TODO: should the sptrees be hidden right away?
@@ -1114,11 +1118,11 @@ let undir_move_insert_def = cake_define
   `undir_move_insert p x y acc =
      pri_move_insert p x y (pri_move_insert p y x acc)`;;
 
-let moves_to_sp_def = cake_define
-  `(moves_to_sp [] acc = acc) /\
-   (moves_to_sp (move' :: xs) acc =
-     (let (p,x,y) = move' in
-     moves_to_sp xs (undir_move_insert p x y acc)))`;;
+let moves_to_sp_def = cake_define_list
+  [`moves_to_sp [] acc = acc`;
+   `moves_to_sp (move' :: xs) acc =
+        (let (p,x,y) = move' in
+        moves_to_sp xs (undir_move_insert p x y acc))`];;
 
 (*Do a consistency sort after setting up the sptree of moves*)
 let resort_moves_def = cake_define
@@ -1185,16 +1189,16 @@ let update_move_def = cake_define
      (p,(spy,spx)))`;;
 
 (* These behave in reverse to their other versions *)
-let neg_first_match_col_def = cake_define
-  `(neg_first_match_col k bads [] = return NONE) /\
-   (neg_first_match_col k bads (x :: xs) =
-     monad_bind (node_tag_sub x) (\
-       c.
-       match c with
-         Fixed m ->
-           (if MEM m bads \/ m < k then neg_first_match_col k bads
-             xs else return (SOME m)) | _17 -> neg_first_match_col k
-             bads xs))`;;
+let neg_first_match_col_def = cake_define_list
+  [`neg_first_match_col k bads [] = return NONE`;
+   `neg_first_match_col k bads (x :: xs) =
+        monad_bind (node_tag_sub x) (\
+          c.
+          match c with
+            Fixed m ->
+              (if MEM m bads \/ m < k then neg_first_match_col k
+                bads xs else return (SOME m)) | _17 ->
+                neg_first_match_col k bads xs)`];;
 
 let neg_biased_pref_def = cake_define
   `neg_biased_pref k mtable n bads =

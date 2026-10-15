@@ -24,38 +24,41 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
    "gen_start","num";
    "refs_start","num"];;
 
-let gc_move_def = cake_define
-  `(gen_gc_partial_gc_move conf state (Data d) = (Data d,state)) /\
-   (gen_gc_partial_gc_move conf state (Pointer ptr d) =
-      (let ok = (gc_state_ok state /\ (ptr < heap_length
-        (gc_state_heap state))) in
-      (if ptr < gen_gc_partial_conf_gen_start conf \/
-        gen_gc_partial_conf_refs_start conf <= ptr then
-         (Pointer ptr d,gc_state_ok_fupd (K ok) state) else
-       match heap_lookup ptr (gc_state_heap state) with SOME
-         (DataElement xs l dd) ->
-           (let ok = ok /\ l + 1 <= gc_state_n state /\ ~(?_isRef
-             conf dd) in
-            let n = gc_state_n state - (l + 1) in
-            let h2 = gc_state_h2 state ++ [DataElement xs l dd] in
-            let (heap,ok) = gc_forward_ptr ptr (gc_state_heap state)
-              (gc_state_a state) d ok in
-            let a = gc_state_a state + l + 1 in
-              (
-              Pointer (gc_state_a state) d,gc_state_ok_fupd (K ok)
-                (gc_state_heap_fupd (K heap) (gc_state_a_fupd (K a)
-                (gc_state_n_fupd (K n) (gc_state_h2_fupd (K h2)
-                state)))))) | SOME (ForwardPointer ptr _3 l) ->
-                (Pointer ptr d,state) | _4 -> (Pointer ptr
-                d,gc_state_ok_fupd (K F) state))))`;;
+let gc_move_def = cake_define_list
+  [`gen_gc_partial_gc_move conf state (Data d:heap_address) = (Data
+  d,state)`;
+   `gen_gc_partial_gc_move conf state (Pointer ptr d:heap_address) =
+         (let ok = (gc_state_ok state /\ (ptr < heap_length
+           (gc_state_heap state))) in
+         (if ptr < gen_gc_partial_conf_gen_start conf \/
+           gen_gc_partial_conf_refs_start conf <= ptr then
+            (Pointer ptr d,gc_state_ok_fupd (K ok) state) else
+          match heap_lookup ptr (gc_state_heap state) with SOME
+            (DataElement xs l dd) ->
+              (let ok = ok /\ l + 1 <= gc_state_n state /\ ~(?_isRef
+                conf dd) in
+               let n = gc_state_n state - (l + 1) in
+               let h2 = gc_state_h2 state ++ [DataElement xs l dd]
+                 in
+               let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
+                 state) (gc_state_a state) d ok in
+               let a = gc_state_a state + l + 1 in
+                 (
+                 Pointer (gc_state_a state) d,gc_state_ok_fupd (K
+                   ok) (gc_state_heap_fupd (K heap) (gc_state_a_fupd
+                   (K a) (gc_state_n_fupd (K n) (gc_state_h2_fupd (K
+                   h2) state)))))) | SOME (ForwardPointer ptr _3 l)
+                   -> (Pointer ptr d,state) | _4 -> (Pointer ptr
+                   d,gc_state_ok_fupd (K F) state)))`];;
 hol4_overload "gc_move" "gen_gc_partial_gc_move";;
 
-let gc_move_list_def = cake_define
-  `(gen_gc_partial_gc_move_list conf state [] = ([],state)) /\
-   (gen_gc_partial_gc_move_list conf state (x :: xs) =
-     (let (x,state) = gc_move conf state x in
-     let (xs,state) = gen_gc_partial_gc_move_list conf state xs in
-       (x :: xs,state)))`;;
+let gc_move_list_def = cake_define_list
+  [`gen_gc_partial_gc_move_list conf state [] = ([],state)`;
+   `gen_gc_partial_gc_move_list conf state (x :: xs) =
+        (let (x,state) = gc_move conf state x in
+        let (xs,state) = gen_gc_partial_gc_move_list conf state xs
+          in
+          (x :: xs,state))`];;
 hol4_overload "gc_move_list" "gen_gc_partial_gc_move_list";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
@@ -131,15 +134,15 @@ let heap_gen_ok_def = cake_define
 let data_sort_INDUCT,data_sort_RECURSION = define_datatype
   "data_sort = Protected ('a) | Real ('b)";;
 
-let to_gen_heap_address_def = cake_define
-  `(to_gen_heap_address conf (Data a) = Data (Real a)) /\
-   (to_gen_heap_address conf (Pointer ptr a) =
-     (if ptr < gen_gc_partial_conf_gen_start conf then
-       Data (Protected (Pointer ptr a)) else if
-         gen_gc_partial_conf_refs_start conf <= ptr then
-       Data (Protected (Pointer ptr a)) else
-       Pointer (ptr - gen_gc_partial_conf_gen_start conf) (Real
-         a)))`;;
+let to_gen_heap_address_def = cake_define_list
+  [`to_gen_heap_address conf (Data a:heap_address) = Data (Real a)`;
+   `to_gen_heap_address conf (Pointer ptr a:heap_address) =
+        (if ptr < gen_gc_partial_conf_gen_start conf then
+          Data (Protected (Pointer ptr a)) else if
+            gen_gc_partial_conf_refs_start conf <= ptr then
+          Data (Protected (Pointer ptr a)) else
+          Pointer (ptr - gen_gc_partial_conf_gen_start conf)
+            (Real a))`];;
 
 let to_gen_conf_def = cake_define
   `to_gen_conf (conf:'a gen_gc_partial_conf) =
@@ -147,13 +150,13 @@ let to_gen_conf_def = cake_define
        (?_limit conf - gen_gc_partial_conf_refs_start conf)) (?_isRef
        conf):'a gen_gc_conf)`;;
 
-let to_gen_heap_element_def = cake_define
-  `(to_gen_heap_element conf (Unused n) = Unused n) /\
-   (to_gen_heap_element conf (ForwardPointer ptr a l) =
-     ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf) (Real
-       a) l) /\
-   (to_gen_heap_element conf (DataElement ptrs l d) =
-     DataElement (MAP (to_gen_heap_address conf) ptrs) l d)`;;
+let to_gen_heap_element_def = cake_define_list
+  [`to_gen_heap_element conf (Unused n:heap_element) = Unused n`;
+   `to_gen_heap_element conf (ForwardPointer ptr a l:heap_element) =
+        ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf)
+          (Real a) l`;
+   `to_gen_heap_element conf (DataElement ptrs l d:heap_element) =
+        DataElement (MAP (to_gen_heap_address conf) ptrs) l d`];;
 
 let to_gen_heap_list_def = cake_define
   `to_gen_heap_list conf heap =

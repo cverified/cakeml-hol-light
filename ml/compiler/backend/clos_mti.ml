@@ -103,9 +103,9 @@ let intro_multi_def = cake_define_wf
 val intro_multi_ind = theorem "intro_multi_ind";
 *)
 
-let compile_def = cake_define
-  `clos_mti_compile F max_app exps = exps /\
-   clos_mti_compile T max_app exps = intro_multi max_app exps`;;
+let compile_def = cake_define_list
+  [`clos_mti_compile F max_app exps = exps`;
+   `clos_mti_compile T max_app exps = intro_multi max_app exps`];;
 hol4_overload "compile" "clos_mti_compile";;
 
 let compile_inc_def = cake_define

@@ -52,11 +52,11 @@ let op_type_def = cake_define
       | Noop -> Any
       | _5 -> Int`;;
 
-let to_op_def = cake_define
-  `to_op Plus = IntOp Add /\
-   to_op Times = IntOp Mult /\
-   to_op Append = BlockOp ListAppend /\
-   to_op Noop = IntOp Mod`;;
+let to_op_def = cake_define_list
+  [`to_op Plus = IntOp Add`;
+   `to_op Times = IntOp Mult`;
+   `to_op Append = BlockOp ListAppend`;
+   `to_op Noop = IntOp Mod`];;
 
 let from_op_def = cake_define
   `from_op op =
@@ -74,11 +74,11 @@ let op_eq_def = cake_define
 let apply_op_def = cake_define
   `apply_op op e1 e2 = Op (to_op op) [e1; e2]`;;
 
-let id_from_op_def = cake_define
-  `id_from_op Plus = bvi_Op (IntOp (Const (&0))) [] /\
-   id_from_op Times = bvi_Op (IntOp (Const (&1))) [] /\
-   id_from_op Append = bvi_Op (BlockOp (Cons nil_tag)) [] /\
-   id_from_op Noop = dummy`;;
+let id_from_op_def = cake_define_list
+  [`id_from_op Plus = bvi_Op (IntOp (Const (&0))) []`;
+   `id_from_op Times = bvi_Op (IntOp (Const (&1))) []`;
+   `id_from_op Append = bvi_Op (BlockOp (Cons nil_tag)) []`;
+   `id_from_op Noop = dummy`];;
 
 let index_of_def = cake_define
   `index_of x1 =
@@ -101,12 +101,13 @@ let opbinargs_def = cake_define
   `opbinargs opr exp = (if ~op_eq opr exp then NONE else get_bin_args
   exp)`;;
 
-let try_update_def = cake_define
-  `(try_update vty NONE ts = ts) /\
-   (try_update vty (SOME n) ts =
-     (if n < LENGTH ts then
-       if EL n ts = Any then
-         TAKE n ts ++ [vty] ++ DROP (n + 1) ts else ts else ts))`;;
+let try_update_def = cake_define_list
+  [`try_update vty NONE ts = ts`;
+   `try_update vty (SOME n) ts =
+        (if n < LENGTH ts then
+          if EL n ts = Any then
+            TAKE n ts ++ [vty] ++ DROP (n + 1) ts else ts else
+              ts)`];;
 
 (* --- Checking termination guarantees --- *)
 
@@ -500,16 +501,16 @@ let compile_exp_def = cake_define
          SOME (aux,opt)))`;;
 hol4_overload "compile_exp" "bvi_tailrec_compile_exp";;
 
-let compile_each_def = cake_define
-  `(bvi_tailrec_compile_each next [] = (next,[])) /\
-   (bvi_tailrec_compile_each next ((loc,arity,exp) :: xs) =
-     (match compile_exp loc next arity exp with NONE ->
-         (let (n,ys) = bvi_tailrec_compile_each next xs in
-           (n,(loc,arity,exp) :: ys)) | SOME (exp_aux,exp_opt) ->
-         (let (n,ys) = bvi_tailrec_compile_each (next +
-           bvl_to_bvi_namespaces) xs in
-         (n,(loc,arity,exp_aux) :: (next,arity + 1,exp_opt) ::
-           ys))))`;;
+let compile_each_def = cake_define_list
+  [`bvi_tailrec_compile_each next [] = (next,[])`;
+   `bvi_tailrec_compile_each next ((loc,arity,exp) :: xs) =
+        (match compile_exp loc next arity exp with NONE ->
+            (let (n,ys) = bvi_tailrec_compile_each next xs in
+              (n,(loc,arity,exp) :: ys)) | SOME (exp_aux,exp_opt) ->
+            (let (n,ys) = bvi_tailrec_compile_each (next +
+              bvl_to_bvi_namespaces) xs in
+            (n,(loc,arity,exp_aux) :: (next,arity + 1,exp_opt) ::
+              ys)))`];;
 hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
 let compile_prog_def = cake_define

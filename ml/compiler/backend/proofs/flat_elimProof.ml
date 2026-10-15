@@ -7,6 +7,7 @@
   Correctness proof for flatLang dead code elimination
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_elim.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
@@ -69,27 +70,20 @@ QED
 
 (************************** DEFINITIONS ***************************)
 
-let _ = size_thms "list";;
-let _ = size_thms "v";;
-(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
-   Cases_on ‘env’ \\ gvs [environment_size_def] \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
-let find_v_globals_def = cake_define_wf
-  `MEASURE (\e. match e with INL x -> v_size x | INR y -> list_size
-  v_size y)`
-  `(find_v_globals (Conv _1 vl:flatSem_v) = ((find_v_globalsL vl):1
-  spt)) /\
-   (find_v_globals (Closure env _2 e) =
-       union (find_v_globalsL (MAP SND (?_v env))) (find_lookups e))
-         /\
-   (find_v_globals (Recclosure env vves _3) =
-       union (find_v_globalsL (MAP SND (?_v env)))
-           (find_lookupsL (MAP (SND o SND) vves))) /\
-   (find_v_globals (Vectorv vl) = find_v_globalsL vl) /\
-   (find_v_globals _4 = LN) /\
-   (find_v_globalsL [] = LN) /\
-   (find_v_globalsL (h :: t) = union (find_v_globals h)
-     (find_v_globalsL t))`;;
+let find_v_globals_def = cake_define_list
+  [`find_v_globals (Conv _1 vl:flatSem_v) = ((find_v_globalsL vl):1
+  spt)`;
+   `find_v_globals (Closure env _2 e:flatSem_v) =
+            union (find_v_globalsL (MAP SND (?_v env)))
+              (find_lookups e)`;
+   `find_v_globals (Recclosure env vves _3:flatSem_v) =
+            union (find_v_globalsL (MAP SND (?_v env)))
+                (find_lookupsL (MAP (SND o SND) vves))`;
+   `find_v_globals (Vectorv vl:flatSem_v) = find_v_globalsL vl`;
+   `find_v_globals _4 = LN`;
+   `find_v_globalsL [] = LN`;
+   `find_v_globalsL (h :: t) = union (find_v_globals h)
+  (find_v_globalsL t)`];;
 
 (* HOL4 ML code, not ported:
 val find_v_globals_ind = theorem "find_v_globals_ind";
@@ -182,7 +176,7 @@ let decs_closed_def = cake_define
 
 (* s = state, t = removed state *)
 let flat_state_rel_def = cake_define
-  `^ (^
+  `(\x y. strcat x y) ((\x y. strcat x y)
        (flat_state_rel reachable) s) t <=> ?_clock
          s = ?_clock t /\ ?_refs s = ?_refs t /\ ?_ffi
          s = ?_ffi t /\ globals_rel reachable (flatSem_state_globals

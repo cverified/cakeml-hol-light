@@ -17,9 +17,9 @@ needs "semantics/ast.ml";;
 (* HOL4 overload (expanded in the port):
      find_name = tlookup *)
 
-let ri_find_name_def = cake_define
-  `(ri_find_name f (Reg r) = Reg ((tlookup) f r)) /\
-   (ri_find_name f (Imm w) = Imm w)`;;
+let ri_find_name_def = cake_define_list
+  [`ri_find_name f (Reg r:asm_reg_imm) = Reg ((tlookup) f r)`;
+   `ri_find_name f (Imm w:asm_reg_imm) = Imm w`];;
 
 let inst_find_name_def = cake_define
   `inst_find_name f i =

@@ -9,8 +9,9 @@ needs "lib/ASCIInumbers.ml";;
 (* HOL4 ancestors outside the port: pred_set res_quan arithmetic
    words bit pair list rich_list relation pair integer fcp *)
 
-let b2n_def = cake_define
-  `(b2n T = 1) /\ (b2n F = (0:num))`;;
+let b2n_def = cake_define_list
+  [`b2n T = 1`;
+   `b2n F = (0:num)`];;
 let b2w_def = cake_define
   `b2w c = n2w (b2n c)`;;
 
@@ -38,13 +39,13 @@ hol4_overload "Lt" "multiword_Lt";;
 hol4_overload "Eq" "multiword_Eq";;
 hol4_overload "Dec" "multiword_Dec";;
 
-let int_op_def = cake_define
-  `(multiword_int_op Add i j = i + j) /\
-   (multiword_int_op Sub i j = i - j) /\
-   (multiword_int_op Mul i j = i * j) /\
-   (multiword_int_op Div i j = i / j) /\
-   (multiword_int_op Mod i j = i % j) /\
-   (multiword_int_op Lt i j = (if i < j then (&1) else (&0))) /\
-   (multiword_int_op Eq i j = (if i = j then (&1) else (&0):int)) /\
-   (multiword_int_op Dec i j = (&0))`;;
+let int_op_def = cake_define_list
+  [`multiword_int_op Add i j = i + j`;
+   `multiword_int_op Sub i j = i - j`;
+   `multiword_int_op Mul i j = i * j`;
+   `multiword_int_op Div i j = i / j`;
+   `multiword_int_op Mod i j = i % j`;
+   `multiword_int_op Lt i j = (if i < j then (&1) else (&0))`;
+   `multiword_int_op Eq i j = (if i = j then (&1) else (&0):int)`;
+   `multiword_int_op Dec i j = (&0)`];;
 hol4_overload "int_op" "multiword_int_op";;

@@ -147,84 +147,86 @@ let inf_env_FIELDS = define_record "inf_env"
  * Return how many were generalised, the generalised type, and a
    substitution
  * that describes the generalisation *)
-let generalise_def = cake_define
-  `(generalise m n s (Infer_Tapp ts tc) =
-     (let (num_gen,s',ts') = generalise_list m n s ts in
-       (num_gen,s',Infer_Tapp ts' tc))) /\
-   (generalise m n s (Infer_Tuvar uv) =
-     (match FLOOKUP s uv with SOME n -> (0,s,Infer_Tvar_db n) | NONE
-       ->
-           (if m <= uv then
-             (1,s |+ (uv,n),Infer_Tvar_db n) else
-             (0,s,Infer_Tuvar uv)))) /\
-   (generalise m n s (Infer_Tvar_db k) =
-       (0,s,Infer_Tvar_db k)) /\
-   (generalise_list m n s [] =
-     (0,s,[])) /\
-   (generalise_list m n s (t :: ts) =
-     (let (num_gen,s',t') = generalise m n s t in
-     let (num_gen',s'',ts') = generalise_list m (num_gen + n) s' ts
-       in
-       (num_gen + num_gen',s'',t' :: ts')))`;;
+let generalise_def = cake_define_list
+  [`generalise m n s (Infer_Tapp ts tc:infer_t) =
+      (let (num_gen,s',ts') = generalise_list m n s ts in
+        (num_gen,s',Infer_Tapp ts' tc))`;
+   `generalise m n s (Infer_Tuvar uv:infer_t) =
+      (match FLOOKUP s uv with SOME n -> (0,s,Infer_Tvar_db n) |
+        NONE ->
+            (if m <= uv then
+              (1,s |+ (uv,n),Infer_Tvar_db n) else
+              (0,s,Infer_Tuvar uv)))`;
+   `generalise m n s (Infer_Tvar_db k:infer_t) =
+        (0,s,Infer_Tvar_db k)`;
+   `generalise_list m n s [] =
+      (0,s,[])`;
+   `generalise_list m n s (t :: ts) =
+      (let (num_gen,s',t') = generalise m n s t in
+      let (num_gen',s'',ts') = generalise_list m (num_gen + n) s' ts
+        in
+        (num_gen + num_gen',s'',t' :: ts'))`];;
 
-let infer_type_subst_def = cake_define
-  `(infer_type_subst s (Tvar tv) =
-     (match ALOOKUP s tv with SOME t -> t | NONE -> Infer_Tvar_db 0))
-       /\
-   (infer_type_subst s (Tvar_db n) =
-     Infer_Tvar_db n) /\
-   (infer_type_subst s (Tapp ts tn) =
-     Infer_Tapp (infer_type_subst_list s ts) tn) /\
-   (infer_type_subst_list s [] = []) /\
-   (infer_type_subst_list s (x :: xs) =
-     infer_type_subst s x :: infer_type_subst_list s xs)`;;
+let infer_type_subst_def = cake_define_list
+  [`infer_type_subst s (Tvar tv:t) =
+      (match ALOOKUP s tv with SOME t -> t | NONE ->
+        Infer_Tvar_db 0)`;
+   `infer_type_subst s (Tvar_db n:t) =
+      Infer_Tvar_db n`;
+   `infer_type_subst s (Tapp ts tn:t) =
+      Infer_Tapp (infer_type_subst_list s ts) tn`;
+   `infer_type_subst_list s [] = []`;
+   `infer_type_subst_list s (x :: xs) =
+      infer_type_subst s x :: infer_type_subst_list s xs`];;
 
-let infer_deBruijn_subst_def = cake_define
-  `(infer_deBruijn_subst s (Infer_Tvar_db n) =
-     (if n < LENGTH s then
-       EL n s else
-       Infer_Tvar_db (n - LENGTH s))) /\
-   (infer_deBruijn_subst s (Infer_Tapp ts tn) =
-     Infer_Tapp (infer_deBruijn_subst_list s ts) tn) /\
-   (infer_deBruijn_subst s (Infer_Tuvar n) =
-     Infer_Tuvar n) /\
-   (infer_deBruijn_subst_list s [] = []) /\
-   (infer_deBruijn_subst_list s (t :: ts) =
-     infer_deBruijn_subst s t :: infer_deBruijn_subst_list s ts)`;;
+let infer_deBruijn_subst_def = cake_define_list
+  [`infer_deBruijn_subst s (Infer_Tvar_db n:infer_t) =
+      (if n < LENGTH s then
+        EL n s else
+        Infer_Tvar_db (n - LENGTH s))`;
+   `infer_deBruijn_subst s (Infer_Tapp ts tn:infer_t) =
+      Infer_Tapp (infer_deBruijn_subst_list s ts) tn`;
+   `infer_deBruijn_subst s (Infer_Tuvar n:infer_t) =
+      Infer_Tuvar n`;
+   `infer_deBruijn_subst_list s [] = []`;
+   `infer_deBruijn_subst_list s (t :: ts) =
+      infer_deBruijn_subst s t :: infer_deBruijn_subst_list s ts`];;
 
-let type_name_check_subst_def = cake_define
-  `(type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
-     monad_ignore_bind
-       (guard (MEM tv fvs) l (err_string_f tv)) (
-       return (Tvar tv))) /\
-   (type_name_check_subst l f tenvT fvs (Attup ts) =
-     monad_bind (type_name_check_subst_list l f tenvT fvs ts) (\
-       ts'.
-       return (Ttup ts'))) /\
-   (type_name_check_subst l f tenvT fvs (Atfun t1 t2) =
-     monad_bind (type_name_check_subst l f tenvT fvs t1) (\
-       t1'. monad_bind (type_name_check_subst l f tenvT fvs t2) (\
-       t2'.
-       return (Tfn t1' t2')))) /\
-   (type_name_check_subst l f tenvT fvs (Atapp ts tc) =
-     monad_bind (type_name_check_subst_list l f tenvT fvs ts) (\
-       ts'. monad_bind (lookup_st_ex l (implode "type constructor")
-         tc tenvT) (\
-       (tvs',t'). monad_ignore_bind
-       (guard (LENGTH tvs' = LENGTH ts) l
-                  (concat [(implode "Type constructor ");
-                    id_to_string tc; (implode " given ");
-                           toString (&LENGTH ts); (implode
-                             " arguments, but expected ");
-                           toString (&LENGTH tvs')])) (
-       return (type_subst (alist_to_fmap (ZIP (tvs',ts'))) t'))))) /\
-   (type_name_check_subst_list l f tenvT fvs [] = return []) /\
-   (type_name_check_subst_list l f tenvT fvs (t :: ts) =
-     monad_bind (type_name_check_subst l f tenvT fvs t) (\
-       t'. monad_bind (type_name_check_subst_list l f tenvT fvs ts)
-         (\
-       ts'.
-       return (t' :: ts'))))`;;
+let type_name_check_subst_def = cake_define_list
+  [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv:ast_t) =
+        monad_ignore_bind
+          (guard (MEM tv fvs) l (err_string_f tv)) (
+          return (Tvar tv))`;
+   `type_name_check_subst l f tenvT fvs (Attup ts:ast_t) =
+        monad_bind (type_name_check_subst_list l f tenvT fvs ts) (\
+          ts'.
+          return (Ttup ts'))`;
+   `type_name_check_subst l f tenvT fvs (Atfun t1 t2:ast_t) =
+        monad_bind (type_name_check_subst l f tenvT fvs t1) (\
+          t1'. monad_bind (type_name_check_subst l f tenvT fvs t2)
+            (\
+          t2'.
+          return (Tfn t1' t2')))`;
+   `type_name_check_subst l f tenvT fvs (Atapp ts tc:ast_t) =
+        monad_bind (type_name_check_subst_list l f tenvT fvs ts) (\
+          ts'. monad_bind (lookup_st_ex l (implode
+            "type constructor") tc tenvT) (\
+          (tvs',t'). monad_ignore_bind
+          (guard (LENGTH tvs' = LENGTH ts) l
+                     (concat [(implode "Type constructor ");
+                       id_to_string tc; (implode " given ");
+                              toString (&LENGTH ts); (implode
+                                " arguments, but expected ");
+                              toString (&LENGTH tvs')])) (
+          return (type_subst (alist_to_fmap (ZIP tvs' ts'))
+            t'))))`;
+   `type_name_check_subst_list l f tenvT fvs [] = return []`;
+   `type_name_check_subst_list l f tenvT fvs (t :: ts) =
+        monad_bind (type_name_check_subst l f tenvT fvs t) (\
+          t'. monad_bind (type_name_check_subst_list l f tenvT fvs
+            ts) (\
+          ts'.
+          return (t' :: ts')))`];;
 
 (* HOL4 ML code, not ported:
 val type_name_check_subst_alt =
@@ -235,101 +237,106 @@ val type_name_check_subst_alt =
             st_ex_return_def];
 *)
 
-let type_name_check_sub_def = cake_define
-  `(type_name_check_sub l tenvT fvs (Atvar tv) =
-        (\s. if MEM tv fvs then (M_success (Tvar tv),s) else
-          (M_failure (loc_err_info_loc l,INR tv),s))) /\
-   (type_name_check_sub l tenvT fvs (Attup ts) =
-        (\s. match type_name_check_sub_list l tenvT fvs ts s with
-               (M_success ts',s) -> (M_success (Ttup ts'),s) |
-                 (M_failure x,s) -> (M_failure x,s))) /\
-   (type_name_check_sub l tenvT fvs (Atfun t1 t2) =
-        (\s. match type_name_check_sub l tenvT fvs t1 s with
-               (M_success t1',s) ->
-                 (match type_name_check_sub l tenvT fvs t2 s with
-                    (M_success t2',s) -> (M_success (Tfn t1' t2'),s)
-                      | (M_failure x,s) -> (M_failure x,s)) | (M_failure
-                      x,s) -> (M_failure x,s))) /\
-   (type_name_check_sub l tenvT fvs (Atapp ts tc) =
-        (\s. match type_name_check_sub_list l tenvT fvs ts s with
-               (M_success ts',s) ->
-                 (match
-                    (match nsLookup tenvT tc with
-                      NONE ->
-                        (M_failure
-                           (loc_err_info_loc l,INL
-                            (concat
+let type_name_check_sub_def = cake_define_list
+  [`type_name_check_sub l tenvT fvs (Atvar tv:ast_t) =
+            (\s. if MEM tv fvs then (M_success (Tvar tv),s) else
+              (M_failure (loc_err_info_loc l,INR tv),s))`;
+   `type_name_check_sub l tenvT fvs (Attup ts:ast_t) =
+            (\s. match type_name_check_sub_list l tenvT fvs ts s
+              with
+                   (M_success ts',s) -> (M_success (Ttup ts'),s)
+                     | (M_failure x,s) -> (M_failure x,s))`;
+   `type_name_check_sub l tenvT fvs (Atfun t1 t2:ast_t) =
+            (\s. match type_name_check_sub l tenvT fvs t1 s with
+                   (M_success t1',s) ->
+                     (match type_name_check_sub l tenvT fvs t2 s
+                       with
+                        (M_success t2',s) -> (M_success (Tfn t1'
+                          t2'),s) | (M_failure x,s) -> (M_failure
+                          x,s)) | (M_failure x,s) -> (M_failure x,s))`;
+   `type_name_check_sub l tenvT fvs (Atapp ts tc:ast_t) =
+            (\s. match type_name_check_sub_list l tenvT fvs ts s
+              with
+                   (M_success ts',s) ->
+                     (match
+                        (match nsLookup tenvT tc with
+                          NONE ->
+                            (M_failure
+                              (loc_err_info_loc l,INL
+                              (concat
                               [(implode "Undefined ");
                               (implode "type constructor"); (implode
                                 ": ");
                               id_to_string tc])),s) | SOME v ->
                                 (M_success v,s)) with
-                    (M_success (y,z),s) ->
-                      (if LENGTH y = LENGTH ts then
-                        (M_success (type_subst (alist_to_fmap (ZIP
-                          (y,ts'))) z),
-                         s) else
-                        (M_failure
-                           (loc_err_info_loc l,INL
-                            (concat
+                        (M_success (y,z),s) ->
+                          (if LENGTH y = LENGTH ts then
+                            (M_success (type_subst (alist_to_fmap
+                              (ZIP y ts')) z),
+                             s) else
+                            (M_failure
+                              (loc_err_info_loc l,INL
+                              (concat
                               [(implode "Type constructor ");
                                 id_to_string tc;
                               (implode " given "); toString (LENGTH
                                 ts);
                               (implode " arguments, but expected ");
-                              toString (LENGTH y)])),s)) | (M_failure
-                                x,s) -> (M_failure x,s)) | (M_failure
-                                x,s) -> (M_failure x,s))) /\
-   (type_name_check_sub_list l tenvT fvs [] = (\s. (M_success [],s)))
-     /\
-   (type_name_check_sub_list l tenvT fvs (t :: ts) =
-       (\s. match type_name_check_sub l tenvT fvs t s with
-              (M_success t',s) ->
-                (match type_name_check_sub_list l tenvT fvs ts s with
-                   (M_success ts',s) -> (M_success (t' :: ts'),s)
-                     | (M_failure x,s) -> (M_failure x,s)) |
-                     (M_failure x,s) -> (M_failure x,s)))`;;
+                              toString (LENGTH y)])),s)) |
+                                (M_failure x,s) -> (M_failure x,s)) |
+                                (M_failure x,s) -> (M_failure x,s))`;
+   `type_name_check_sub_list l tenvT fvs [] = (\s. (M_success [],s))`;
+   `type_name_check_sub_list l tenvT fvs (t :: ts) =
+           (\s. match type_name_check_sub l tenvT fvs t s with
+                  (M_success t',s) ->
+                    (match type_name_check_sub_list l tenvT fvs ts s
+                      with
+                       (M_success ts',s) -> (M_success (t' ::
+                         ts'),s) | (M_failure x,s) -> (M_failure
+                         x,s)) | (M_failure x,s) -> (M_failure x,s))`];;
 
-let find_dup_def = cake_define
-  `find_dup [] = NONE /\
-   find_dup (x :: xs) = (if MEM x xs then SOME x else find_dup xs)`;;
+let find_dup_def = cake_define_list
+  [`find_dup [] = NONE`;
+   `find_dup (x :: xs) = (if MEM x xs then SOME x else find_dup xs)`];;
 
-let check_dups_def = cake_define
-  `(check_dups l f [] = return one) /\
-   (check_dups l f (h :: t) =
-      (if MEM h t then
-        failwith l (f h) else
-        check_dups l f t))`;;
+let check_dups_def = cake_define_list
+  [`check_dups l f [] = return one`;
+   `check_dups l f (h :: t) =
+         (if MEM h t then
+           failwith l (f h) else
+           check_dups l f t)`];;
 
-let check_ctor_types_def = cake_define
-  `(check_ctor_types l tenvT tvs [] = return one) /\
-   (check_ctor_types l tenvT tvs ((cn,ts) :: ctors) =
-     monad_ignore_bind
-       (type_name_check_subst_list l
-             (\tv. concat [(implode "Unbound type variable "); tv;
-                           (implode
-                             " in type definition with constructor ");
-                             cn])
-             tenvT tvs ts) (
-       check_ctor_types l tenvT tvs ctors))`;;
+let check_ctor_types_def = cake_define_list
+  [`check_ctor_types l tenvT tvs [] = return one`;
+   `check_ctor_types l tenvT tvs ((cn,ts) :: ctors) =
+        monad_ignore_bind
+          (type_name_check_subst_list l
+                (\tv. concat [(implode "Unbound type variable ");
+                  tv;
+                              (implode
 
-let check_ctors_def = cake_define
-  `(check_ctors l tenvT [] = return one) /\
-   (check_ctors l tenvT ((tvs,tn,ctors) :: tds) =
-     monad_ignore_bind
-       (check_dups l
-                  (\n. concat [(implode "Duplicate constructor "); n;
+      " in type definition with constructor "); cn])
+                tenvT tvs ts) (
+          check_ctor_types l tenvT tvs ctors)`];;
+
+let check_ctors_def = cake_define_list
+  [`check_ctors l tenvT [] = return one`;
+   `check_ctors l tenvT ((tvs,tn,ctors) :: tds) =
+        monad_ignore_bind
+          (check_dups l
+                     (\n. concat [(implode
+                       "Duplicate constructor "); n;
                               (implode
                                 " in the definition of type "); tn])
-                  (MAP FST ctors)) (monad_ignore_bind
-       (check_dups l
-                  (\n. concat [(implode
-                    "Duplicate type variable binding "); n;
+                     (MAP FST ctors)) (monad_ignore_bind
+          (check_dups l
+                     (\n. concat [(implode
+                       "Duplicate type variable binding "); n;
                               (implode
                                 " in the definition of type "); tn])
-                  tvs) (monad_ignore_bind
-       (check_ctor_types l tenvT tvs ctors) (
-       check_ctors l tenvT tds))))`;;
+                     tvs) (monad_ignore_bind
+          (check_ctor_types l tenvT tvs ctors) (
+          check_ctors l tenvT tds)))`];;
 
 let check_type_definition_def = cake_define
   `check_type_definition l tenvT tds =
@@ -379,7 +386,7 @@ let infer_p_def = cake_define_list
                                 " arguments, but expected ");
                               toString (&LENGTH ts)])) (monad_bind
                                 (add_constraints l ts'' (MAP
-                                (infer_type_subst (ZIP (tvs',ts'))) ts))
+                                (infer_type_subst (ZIP tvs' ts')) ts))
                                 (\
                  one.
                  return (Infer_Tapp ts' tn,tenv)))))))`;
@@ -411,9 +418,9 @@ let infer_p_def = cake_define_list
            (ts,tenv').
            return (t :: ts,tenv' ++ tenv)))`];;
 
-let word_tc_def = cake_define
-  `(word_tc W8 = Tword8_num) /\
-   (word_tc W64 = Tword64_num)`;;
+let word_tc_def = cake_define_list
+  [`word_tc W8 = Tword8_num`;
+   `word_tc W64 = Tword64_num`];;
 
 let op_to_string_def = cake_define
   `op_to_string x1 =
@@ -691,7 +698,7 @@ let infer_e_def = cake_define_list
                                 " arguments, but expected ");
                               toString (&LENGTH ts)])) (monad_bind
                                 (add_constraints l ts'' (MAP
-                                (infer_type_subst (ZIP (tvs',ts'))) ts))
+                                (infer_type_subst (ZIP tvs' ts')) ts))
                                 (\
                 one.
                 return (Infer_Tapp ts' tn)))))))`;
@@ -815,111 +822,116 @@ let lift_ienv_def = cake_define
      mk_inf_env (nsLift mn (inf_env_inf_v ienv)) (nsLift mn
        (inf_env_inf_c ienv)) (nsLift mn (inf_env_inf_t ienv))`;;
 
-let infer_d_def = cake_define
-  `(infer_d ienv (Dlet locs p e) =
-     monad_bind init_state (\one. monad_bind get_next_uvar (\
-        n. monad_bind (infer_e (mk_loc_err_info (SOME locs)
-          (inf_env_inf_t ienv)) ienv e) (\
-        t1. monad_bind (infer_p (mk_loc_err_info (SOME locs)
-          (inf_env_inf_t ienv)) ienv p) (\
-        (t2,env'). monad_ignore_bind
-        (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
-          ienv))
-                      (\n. concat [(implode "Duplicate variable ");
-                        n;
+let infer_d_def = cake_define_list
+  [`infer_d ienv (Dlet locs p e:dec) =
+      monad_bind init_state (\one. monad_bind get_next_uvar (\
+         n. monad_bind (infer_e (mk_loc_err_info (SOME locs)
+           (inf_env_inf_t ienv)) ienv e) (\
+         t1. monad_bind (infer_p (mk_loc_err_info (SOME locs)
+           (inf_env_inf_t ienv)) ienv p) (\
+         (t2,env'). monad_ignore_bind
+         (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
+           ienv))
+                       (\n. concat [(implode "Duplicate variable ");
+                         n;
                               (implode
 
       " in the left-hand side of a definition")])
-                   (MAP FST env')) (monad_bind (add_constraint
-                     (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
-                     t1 t2) (\
-        one. monad_bind (apply_subst_list (MAP SND env')) (\
-        ts. monad_bind (return (generalise_list n 0 FEMPTY ts)) (\
-        (num_tvs,s,ts'). monad_bind (guard (num_tvs = 0 \/ is_value
-          e) (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
-                    ((implode "Value restriction violated"))) (\
-        one.
-        return (mk_inf_env (alist_to_ns (ZIP (MAP FST env',MAP (\t.
-          (num_tvs,t)) ts'))) nsEmpty nsEmpty))))))))))) /\
-   (infer_d ienv (Dletrec locs funs) =
-     monad_ignore_bind
-       (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
-          (\n. concat [(implode "Duplicate function name "); n;
-               (implode
-                 " a mutually recursive function definition")])
-                  (MAP FST funs)) (monad_bind init_state (\
-        one. monad_bind get_next_uvar (\
-        next. monad_bind (n_fresh_uvar (LENGTH funs)) (\
-        uvars. monad_bind (return (nsAppend (alist_to_ns (MAP2
-          (\(f,x,e) uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v
-          ienv))) (\
-        env'. monad_bind (infer_funs (mk_loc_err_info (SOME locs)
-          (inf_env_inf_t ienv))
+                    (MAP FST env')) (monad_bind (add_constraint
+                      (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
+                      t1 t2) (\
+         one. monad_bind (apply_subst_list (MAP SND env')) (\
+         ts. monad_bind (return (generalise_list n 0 FEMPTY ts)) (\
+         (num_tvs,s,ts'). monad_bind (guard (num_tvs = 0 \/ is_value
+           e) (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
+                     ((implode "Value restriction violated"))) (\
+         one.
+         return (mk_inf_env (alist_to_ns (ZIP (MAP FST env') (MAP
+           (\t. (num_tvs,t)) ts'))) nsEmpty nsEmpty))))))))))`;
+   `infer_d ienv (Dletrec locs funs:dec) =
+      monad_ignore_bind
+        (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
+          ienv))
+           (\n. concat [(implode "Duplicate function name "); n;
+                (implode
+                  " a mutually recursive function definition")])
+                   (MAP FST funs)) (monad_bind init_state (\
+         one. monad_bind get_next_uvar (\
+         next. monad_bind (n_fresh_uvar (LENGTH funs)) (\
+         uvars. monad_bind (return (nsAppend (alist_to_ns (MAP2
+           (\(f,x,e) uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v
+           ienv))) (\
+         env'. monad_bind (infer_funs (mk_loc_err_info (SOME locs)
+           (inf_env_inf_t ienv))
                               (inf_env_inf_v_fupd (K env') ienv)
                                 funs) (\
-        funs_ts. monad_bind (add_constraints (mk_loc_err_info (SOME
-          locs) (inf_env_inf_t ienv)) uvars funs_ts) (\
-        one. monad_bind (apply_subst_list uvars) (\
-        ts. monad_bind (return (generalise_list next 0 FEMPTY ts)) (\
-        (num_gen,s,ts').
-        return (mk_inf_env (alist_to_ns (MAP2 (\(f,x,e) t.
-          (f,(num_gen,t))) funs ts')) nsEmpty nsEmpty))))))))))) /\
-   (infer_d ienv (Dtype locs tdefs) =
-     monad_bind (n_fresh_id (LENGTH tdefs)) (\
-        tids. monad_bind (return (alist_to_ns (MAP2 (\(tvs,tn,ctors)
-          i. (tn,(tvs,Tapp (MAP Tvar tvs) i))) tdefs tids))) (\
-        ienvT1. monad_bind (return (nsAppend ienvT1 (inf_env_inf_t
-          ienv))) (\
-        ienvT2. monad_ignore_bind
-        (check_type_definition (mk_loc_err_info (SOME locs)
-          (inf_env_inf_t ienv)) ienvT2 tdefs) (
-        return (mk_inf_env nsEmpty (build_ctor_tenv ienvT2 tdefs
-          tids) ienvT1)))))) /\
-   (infer_d ienv (Dtabbrev locs tvs tn t) =
-     monad_ignore_bind
-       (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
-          (\n. concat [(implode
-            "Duplicate type variable bindings for ");
-                       n; (implode " in type abbreviation ");
-                       tn])
-                 tvs) (monad_bind (type_name_check_subst
-                   (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
-               (\tv. concat [(implode "Unbound type variable "); tv;
-                 (implode " in type abbreviation "); tn]) (inf_env_inf_t
-               ienv) tvs t) (\
-        t'.
-        return (mk_inf_env nsEmpty nsEmpty (nsSing tn (tvs,t'))))))
-          /\
-   (infer_d ienv (Dexn locs cn ts) =
-     monad_bind (type_name_check_subst_list (mk_loc_err_info (SOME
-       locs) (inf_env_inf_t ienv))
-               (\tv. concat [(implode "Type variable "); tv; (implode
-                 " found in declaration of exception "); cn;
-                             (implode
+         funs_ts. monad_bind (add_constraints (mk_loc_err_info (SOME
+           locs) (inf_env_inf_t ienv)) uvars funs_ts) (\
+         one. monad_bind (apply_subst_list uvars) (\
+         ts. monad_bind (return (generalise_list next 0 FEMPTY ts))
+           (\
+         (num_gen,s,ts').
+         return (mk_inf_env (alist_to_ns (MAP2 (\(f,x,e) t.
+           (f,(num_gen,t))) funs ts')) nsEmpty nsEmpty))))))))))`;
+   `infer_d ienv (Dtype locs tdefs:dec) =
+      monad_bind (n_fresh_id (LENGTH tdefs)) (\
+         tids. monad_bind (return (alist_to_ns (MAP2
+           (\(tvs,tn,ctors) i. (tn,(tvs,Tapp (MAP Tvar tvs) i))) tdefs
+           tids))) (\
+         ienvT1. monad_bind (return (nsAppend ienvT1 (inf_env_inf_t
+           ienv))) (\
+         ienvT2. monad_ignore_bind
+         (check_type_definition (mk_loc_err_info (SOME locs)
+           (inf_env_inf_t ienv)) ienvT2 tdefs) (
+         return (mk_inf_env nsEmpty (build_ctor_tenv ienvT2 tdefs
+           tids) ienvT1)))))`;
+   `infer_d ienv (Dtabbrev locs tvs tn t:dec) =
+      monad_ignore_bind
+        (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
+          ienv))
+           (\n. concat [(implode
+             "Duplicate type variable bindings for ");
+                        n; (implode " in type abbreviation ");
+                        tn])
+                  tvs) (monad_bind (type_name_check_subst
+                    (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
+                (\tv. concat [(implode "Unbound type variable ");
+                  tv; (implode " in type abbreviation "); tn])
+                  (inf_env_inf_t
+                ienv) tvs t) (\
+         t'.
+         return (mk_inf_env nsEmpty nsEmpty (nsSing tn
+           (tvs,t')))))`;
+   `infer_d ienv (Dexn locs cn ts:dec) =
+      monad_bind (type_name_check_subst_list (mk_loc_err_info (SOME
+        locs) (inf_env_inf_t ienv))
+                (\tv. concat [(implode "Type variable "); tv;
+                  (implode " found in declaration of exception "); cn;
+                              (implode
 
       ". Type variables are not allowed in exception declarations.")])
       (inf_env_inf_t
-               ienv) [] ts) (\
-       ts'.
-       return (mk_inf_env nsEmpty (nsSing cn ([],ts',Texn_num))
-         nsEmpty))) /\
-   (infer_d ienv (Denv n) =
-     failwith (mk_loc_err_info NONE (inf_env_inf_t ienv))
-       ((implode "Env declaration (Denv) is not supported."))) /\
-   (infer_d ienv (Dmod mn ds) =
-     monad_bind (infer_ds ienv ds) (\ienv'.
-        return (lift_ienv mn ienv'))) /\
-   (infer_d ienv (Dlocal lds ds) =
-     monad_bind (infer_ds ienv lds) (\ienv'.
-       infer_ds (extend_dec_ienv ienv' ienv) ds)) /\
-   (infer_ds ienv [] =
-     return (mk_inf_env nsEmpty nsEmpty nsEmpty)) /\
-   (infer_ds ienv (d :: ds) =
-     monad_bind (infer_d ienv d) (\
-       ienv'. monad_bind (infer_ds (extend_dec_ienv ienv' ienv) ds)
-         (\
-       ienv''.
-       return (extend_dec_ienv ienv'' ienv'))))`;;
+                ienv) [] ts) (\
+        ts'.
+        return (mk_inf_env nsEmpty (nsSing cn ([],ts',Texn_num))
+          nsEmpty))`;
+   `infer_d ienv (Denv n:dec) =
+      failwith (mk_loc_err_info NONE (inf_env_inf_t ienv))
+        ((implode "Env declaration (Denv) is not supported."))`;
+   `infer_d ienv (Dmod mn ds:dec) =
+      monad_bind (infer_ds ienv ds) (\ienv'.
+         return (lift_ienv mn ienv'))`;
+   `infer_d ienv (Dlocal lds ds:dec) =
+      monad_bind (infer_ds ienv lds) (\ienv'.
+        infer_ds (extend_dec_ienv ienv' ienv) ds)`;
+   `infer_ds ienv [] =
+      return (mk_inf_env nsEmpty nsEmpty nsEmpty)`;
+   `infer_ds ienv (d :: ds) =
+      monad_bind (infer_d ienv d) (\
+        ienv'. monad_bind (infer_ds (extend_dec_ienv ienv' ienv) ds)
+          (\
+        ienv''.
+        return (extend_dec_ienv ienv'' ienv')))`];;
 
 (* The starting Id should be greater than Tlist_num :: (Tbool_num ::
    prim_type_nums) *)
@@ -950,34 +962,34 @@ hol4_overload "init_config" "infer_init_config";;
    the proofs
  * about it *)
 
-let infer_deBruijn_inc_def = cake_define
-  `(infer_deBruijn_inc n (Infer_Tvar_db m) =
-     Infer_Tvar_db (m + n)) /\
-   (infer_deBruijn_inc n (Infer_Tapp ts tn) =
-     Infer_Tapp (MAP (infer_deBruijn_inc n) ts) tn) /\
-   (infer_deBruijn_inc n (Infer_Tuvar m) =
-     Infer_Tuvar m)`;;
+let infer_deBruijn_inc_def = cake_define_list
+  [`infer_deBruijn_inc n (Infer_Tvar_db m:infer_t) =
+        Infer_Tvar_db (m + n)`;
+   `infer_deBruijn_inc n (Infer_Tapp ts tn:infer_t) =
+        Infer_Tapp (MAP (infer_deBruijn_inc n) ts) tn`;
+   `infer_deBruijn_inc n (Infer_Tuvar m:infer_t) =
+        Infer_Tuvar m`];;
 
-let infer_subst_def = cake_define
-  `(infer_subst s (Infer_Tvar_db n) = Infer_Tvar_db n) /\
-   (infer_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (infer_subst
-     s) ts) tc) /\
-   (infer_subst s (Infer_Tuvar n) =
-     (match FLOOKUP s n with
-         NONE -> Infer_Tuvar n | SOME m -> Infer_Tvar_db m))`;;
+let infer_subst_def = cake_define_list
+  [`infer_subst s (Infer_Tvar_db n:infer_t) = Infer_Tvar_db n`;
+   `infer_subst s (Infer_Tapp ts tc:infer_t) = Infer_Tapp (MAP
+  (infer_subst s) ts) tc`;
+   `infer_subst s (Infer_Tuvar n:infer_t) =
+        (match FLOOKUP s n with
+            NONE -> Infer_Tuvar n | SOME m -> Infer_Tvar_db m)`];;
 
-let pure_add_constraints_def = cake_define
-  `(pure_add_constraints s [] s' = (s = s')) /\
-   (pure_add_constraints s1 ((t1,t2) :: rest) s' =
-     (?s2. (t_unify s1 t1 t2 = SOME s2) /\
-          pure_add_constraints s2 rest s'))`;;
+let pure_add_constraints_def = cake_define_list
+  [`pure_add_constraints s [] s' = (s = s')`;
+   `pure_add_constraints s1 ((t1,t2) :: rest) s' =
+      (?s2. (t_unify s1 t1 t2 = SOME s2) /\
+           pure_add_constraints s2 rest s')`];;
 
-let check_t_def = cake_define
-  `(check_t n uvars (Infer_Tuvar v) = (v IN uvars)) /\
-   (check_t n uvars (Infer_Tvar_db n') =
-     (n' < n)) /\
-   (check_t n uvars (Infer_Tapp ts tc) = EVERY (check_t n uvars)
-     ts)`;;
+let check_t_def = cake_define_list
+  [`check_t n uvars (Infer_Tuvar v:infer_t) = (v IN uvars)`;
+   `check_t n uvars (Infer_Tvar_db n':infer_t) =
+        (n' < n)`;
+   `check_t n uvars (Infer_Tapp ts tc:infer_t) = EVERY (check_t n
+  uvars) ts`];;
 
 let ienv_val_ok_def = cake_define
   `ienv_val_ok uvars env =
@@ -1003,26 +1015,25 @@ let sub_completion_def = cake_define
 
 (* printing of types *)
 
-(* HOL4 termination: \\ fs [LESS_EQ,LENGTH_FILTER_LEQ] *)
-let alist_nub_def = cake_define_wf
-  `MEASURE LENGTH`
-  `alist_nub [] = [] /\
-   alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
-     FST t)) xs)`;;
+let alist_nub_def = cake_define_list
+  [`alist_nub [] = []`;
+   `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
+  FST t)) xs)`];;
 
-let ns_nub_def = cake_define
-  `ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub (inner_ns_nubs
-  ys)) /\
-   inner_ns_nubs [] = [] /\
-   inner_ns_nubs ((x,y) :: tl) = (x,ns_nub y) :: inner_ns_nubs tl`;;
+let ns_nub_def = cake_define_list
+  [`ns_nub (Bind xs ys:namespace) = Bind (alist_nub xs) (alist_nub
+  (inner_ns_nubs ys))`;
+   `inner_ns_nubs [] = []`;
+   `inner_ns_nubs ((x,y) :: tl) = (x,ns_nub y) :: inner_ns_nubs tl`];;
 
-let ns_to_alist_def = cake_define
-  `(ns_to_alist (Bind [] []) = []) /\
-   (ns_to_alist (Bind [] ((n,x) :: ms)) =
-     MAP (\(x,y). (^ (^ n (implode ".")) x,y)) (ns_to_alist x) ++
-     ns_to_alist (Bind [] ms)) /\
-   (ns_to_alist (Bind ((s,x) :: xs) m) = (s,x) :: ns_to_alist
-     (Bind xs m))`;;
+let ns_to_alist_def = cake_define_list
+  [`ns_to_alist (Bind [] []:namespace) = []`;
+   `ns_to_alist (Bind [] ((n,x) :: ms):namespace) =
+        MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
+          (implode ".")) x,y)) (ns_to_alist x) ++
+        ns_to_alist (Bind [] ms)`;
+   `ns_to_alist (Bind ((s,x) :: xs) m:namespace) = (s,x) ::
+  ns_to_alist (Bind xs m)`];;
 
 let inf_env_to_types_string_def = cake_define
   `inf_env_to_types_string s =

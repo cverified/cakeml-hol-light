@@ -28,9 +28,9 @@ needs "lib/ternaryComparisons.ml";;
    relation toto bit words string address path res_quan *)
 
 (* Total version of THE *)
-let the_def = cake_define
-  `the _1 (SOME x) = x /\
-   the x NONE = x`;;
+let the_def = cake_define_list
+  [`the _1 (SOME x) = x`;
+   `the x NONE = x`];;
 
 let opt_bind_def = cake_define
   `opt_bind n v e =
@@ -60,12 +60,12 @@ val asm_exists_tac = first_assum(match_exists_tac o concl)
 (* this is
      read_bytearray a c gb = OPT_MMAP gb (GENLIST (λi. a + n2w i) c)
 *)
-let read_bytearray_def = cake_define
-  `(read_bytearray a 0 get_byte' = SOME []) /\
-   (read_bytearray a (SUC n) get_byte' =
-      (match get_byte' a with NONE -> NONE | SOME b -> (match
-        read_bytearray (a + (n2w 1)) n get_byte' with NONE -> NONE |
-        SOME bs -> SOME (b :: bs))))`;;
+let read_bytearray_def = cake_define_list
+  [`read_bytearray a 0 get_byte' = SOME []`;
+   `read_bytearray a (SUC n) get_byte' =
+         (match get_byte' a with NONE -> NONE | SOME b -> (match
+           read_bytearray (a + (n2w 1)) n get_byte' with NONE -> NONE
+           | SOME bs -> SOME (b :: bs)))`];;
 
 (* HOL to have OPT_MMAP f l1 = SOME l2 ==> (LENGTH l2 = LENGTH l1) *)
 
@@ -99,11 +99,11 @@ hol4_overload "List" "misc_List";;
 hol4_overload "Append" "misc_Append";;
 hol4_overload "Nil" "misc_Nil";;
 
-let append_aux_def = cake_define
-  `(append_aux Nil aux = aux) /\
-   (append_aux (List xs) aux = xs ++ aux) /\
-   (append_aux (Append l1 l2) aux = append_aux l1 (append_aux l2
-     aux))`;;
+let append_aux_def = cake_define_list
+  [`append_aux Nil aux = aux`;
+   `append_aux (List xs:app_list) aux = xs ++ aux`;
+   `append_aux (Append l1 l2:app_list) aux = append_aux l1
+  (append_aux l2 aux)`];;
 
 let append_def = cake_define
   `append l = append_aux l []`;;
@@ -152,10 +152,10 @@ let tlookup_def = cake_define
   `tlookup m k = (match lookup k m with NONE -> k | SOME k -> k)`;;
 
 (* should be composition of oEL and as-yet-undefined "THE default" *)
-let any_el_def = cake_define
-  `(any_el n [] d = d) /\
-   (any_el n (x :: xs) d = (if n = 0 then x else any_el (n -
-     (1:num)) xs d))`;;
+let any_el_def = cake_define_list
+  [`any_el n [] d = d`;
+   `any_el n (x :: xs) d = (if n = 0 then x else any_el (n - (1:num))
+  xs d)`];;
 
 let update_resize_def = cake_define
   `update_resize ls default v n =
@@ -179,11 +179,11 @@ let max3_def = cake_define
 (* TODO - candidate for move to HOL, but in simpler form without
    accumulator *)
 (* only used in inferProg *)
-let anub_def = cake_define
-  `(anub [] acc = []) /\
-   (anub ((k,v) :: ls) acc =
-    (if MEM k acc then anub ls acc else
-    (k,v) :: (anub ls (k :: acc))))`;;
+let anub_def = cake_define_list
+  [`anub [] acc = []`;
+   `anub ((k,v) :: ls) acc =
+       (if MEM k acc then anub ls acc else
+       (k,v) :: (anub ls (k :: acc)))`];;
 
 (* HOL4 ML code, not ported:
 val anub_ind = theorem"anub_ind"
@@ -214,14 +214,11 @@ let least_from_def = cake_define
 let UPDATE_LIST_def = cake_define
   `UPDATE_LIST = FOLDL (C (UNCURRY UPDATE))`;;
 
-(* HOL4 overload (expanded in the port):
-     None =  *)
-
 (* should be using indexedLists$findi, or INDEX_OF *)
-let find_index_def = cake_define
-  `(find_index _2 [] _3 = NONE) /\
-   (find_index y (x :: xs) n = (if x = y then SOME n else
-     find_index y xs (n + 1)))`;;
+let find_index_def = cake_define_list
+  [`find_index _2 [] _3 = NONE`;
+   `find_index y (x :: xs) n = (if x = y then SOME n else find_index
+  y xs (n + 1))`];;
 
 (* HOL4 ML code, not ported:
 val ALOOKUP_find_index_SOME = Q.prove(
@@ -323,10 +320,10 @@ Theorem MAP_EQ_MAP_IMP =
 
 (* move into HOL? *)
 
-let word_list_def = cake_define
-  `(misc_word_list a [] = emp) /\
-   (misc_word_list a (x :: xs) = set_sep_one (a,x) *
-     misc_word_list (a + bytes_in_word) xs)`;;
+let word_list_def = cake_define_list
+  [`misc_word_list a [] = emp`;
+   `misc_word_list a (x :: xs) = set_sep_one (a,x) * misc_word_list
+  (a + bytes_in_word) xs`];;
 hol4_overload "word_list" "misc_word_list";;
 
 let word_list_exists_def = cake_define
@@ -334,12 +331,12 @@ let word_list_exists_def = cake_define
      SEP_EXISTS (\xs. word_list a xs * cond (LENGTH xs = n))`;;
 
 (* lookup_vars vs env = OPT_MMAP (\i. oEL i env) vs *)
-let lookup_vars_def = cake_define
-  `(lookup_vars [] env = SOME []) /\
-   (lookup_vars (v :: vs) env =
-      (if v < LENGTH env then
-        match lookup_vars vs env with SOME xs -> SOME (EL v env ::
-          xs) | NONE -> NONE else NONE))`;;
+let lookup_vars_def = cake_define_list
+  [`lookup_vars [] env = SOME []`;
+   `lookup_vars (v :: vs) env =
+         (if v < LENGTH env then
+           match lookup_vars vs env with SOME xs -> SOME (EL v
+             env :: xs) | NONE -> NONE else NONE)`];;
 
 (* TODO - candidate for move to HOL *)
 
@@ -348,9 +345,9 @@ let lookup_vars_def = cake_define
 (* TODO - candidate for move to HOL - though
      enumerate i0 l = MAPi (λx i. (i + i0, x)) l
 *)
-let enumerate_def = cake_define
-  `(enumerate n [] = []) /\
-   (enumerate n (x :: xs) = (n,x) :: enumerate (n + 1) xs)`;;
+let enumerate_def = cake_define_list
+  [`enumerate n [] = []`;
+   `enumerate n (x :: xs) = (n,x) :: enumerate (n + 1) xs`];;
 
 (* TODO - candidate for move to HOL *)
 
@@ -359,9 +356,9 @@ let enumerate_def = cake_define
 
 (* TODO - candidate for move to HOL *)
 
-let option_fold_def = cake_define
-  `(option_fold f x NONE = x) /\
-   (option_fold f x (SOME y) = f y x)`;;
+let option_fold_def = cake_define_list
+  [`option_fold f x NONE = x`;
+   `option_fold f x (SOME y) = f y x`];;
 
 let shift_left_def = cake_define
   `shift_left (a:'a word) n =
@@ -470,12 +467,12 @@ let insert_atI_def = cake_define
 (* TODO - candidate for move to HOL *)
 (* N.B.: there is a different is_subsequence defined in lcsTheory; these
    should be merged *)
-let is_subseq_def = cake_define
-  `(is_subseq ls [] <=> T) /\
-   (is_subseq [] (x :: xs) <=> F) /\
-   (is_subseq (y :: ys) (x :: xs) <=>
-    (x = y /\ is_subseq ys xs) \/
-    (is_subseq ys (x :: xs)))`;;
+let is_subseq_def = cake_define_list
+  [`is_subseq ls [] <=> T`;
+   `is_subseq [] (x :: xs) <=> F`;
+   `is_subseq (y :: ys) (x :: xs) <=>
+       (x = y /\ is_subseq ys xs) \/
+       (is_subseq ys (x :: xs))`];;
 
 (* TODO - candidate for move to HOL *)
 (* HOL4 ML code, not ported:
@@ -511,32 +508,32 @@ val is_subseq_ind = theorem"is_subseq_ind";
 let make_even_def = cake_define
   `make_even n = (if EVEN n then n else n + 1)`;;
 
-let steps_def = cake_define
-  `(steps f x [] = []) /\
-   (steps f x (j :: js) =
-    (let y = f x j in
-    let tr = steps f y js in
-      ((j,y) :: tr)))`;;
+let steps_def = cake_define_list
+  [`steps f x [] = []`;
+   `steps f x (j :: js) =
+       (let y = f x j in
+       let tr = steps f y js in
+         ((j,y) :: tr))`];;
 
-let steps_rel_def = cake_define
-  `(steps_rel R x [] <=> T) /\
-   (steps_rel R x ((j,y) :: tr) <=>
-     R x j y /\
-     steps_rel R y tr)`;;
+let steps_rel_def = cake_define_list
+  [`steps_rel R x [] <=> T`;
+   `steps_rel R x ((j,y) :: tr) <=>
+        R x j y /\
+        steps_rel R y tr`];;
 
 (* HOL4 ML code, not ported:
 val steps_rel_ind = theorem"steps_rel_ind";
 *)
 
-let all_words_def = cake_define
-  `(all_words base 0 = {}) /\
-   (all_words base (SUC n) = base INSERT (all_words (base + (n2w
-     1)) n))`;;
+let all_words_def = cake_define_list
+  [`all_words base 0 = {}`;
+   `all_words base (SUC n) = base INSERT (all_words (base + (n2w 1))
+  n)`];;
 
-let asm_write_bytearray_def = cake_define
-  `(asm_write_bytearray a [] (m:'a word->word8) = m) /\
-   (asm_write_bytearray a (x :: xs) m = (a =+ x)
-     (asm_write_bytearray (a + (n2w 1)) xs m))`;;
+let asm_write_bytearray_def = cake_define_list
+  [`asm_write_bytearray a [] (m:'a word->word8) = m`;
+   `asm_write_bytearray a (x :: xs) m = (a =+ x) (asm_write_bytearray
+  (a + (n2w 1)) xs m)`];;
 
 (* TODO: move to sptTheory *)
 
@@ -550,29 +547,29 @@ let eq_shape_def = cake_define
         t2 u2)
       | (_8,_9) -> F`;;
 
-let copy_shape_def = cake_define
-  `copy_shape LN LN = LN /\
-   copy_shape LN (LS y) = LN /\
-   copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN
-     t2) /\
-   copy_shape LN (BS t1 y t2) = LN /\
-   copy_shape (LS x) LN = LS x /\
-   copy_shape (LS x) (LS y) = LS x /\
-   copy_shape (LS x) (BN t1 t2) = LS x /\
-   copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x
-     (copy_shape LN t2) /\
-   copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN else
-     BN u1 u2) /\
-   copy_shape (BN u1 u2) (LS y) = BN u1 u2 /\
-   copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1)
-     (copy_shape u2 t2) /\
-   copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2 /\
-   copy_shape (BS u1 x u2) LN = BS u1 x u2 /\
-   copy_shape (BS u1 x u2) (LS y) =
-      (if domain (BN u1 u2) = {} then LS x else BS u1 x u2) /\
-   copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2 /\
-   copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
-     (copy_shape u2 t2)`;;
+let copy_shape_def = cake_define_list
+  [`copy_shape LN LN = LN`;
+   `copy_shape LN (LS y:spt) = LN`;
+   `copy_shape LN (BN t1 t2:spt) = BN (copy_shape LN t1) (copy_shape
+  LN t2)`;
+   `copy_shape LN (BS t1 y t2:spt) = LN`;
+   `copy_shape (LS x:spt) LN = LS x`;
+   `copy_shape (LS x:spt) (LS y:spt) = LS x`;
+   `copy_shape (LS x:spt) (BN t1 t2:spt) = LS x`;
+   `copy_shape (LS x:spt) (BS t1 y t2:spt) = BS (copy_shape LN t1) x
+  (copy_shape LN t2)`;
+   `copy_shape (BN u1 u2:spt) LN = (if domain (BN u1 u2) = {} then LN
+  else BN u1 u2)`;
+   `copy_shape (BN u1 u2:spt) (LS y:spt) = BN u1 u2`;
+   `copy_shape (BN u1 u2:spt) (BN t1 t2:spt) = BN (copy_shape u1 t1)
+  (copy_shape u2 t2)`;
+   `copy_shape (BN u1 u2:spt) (BS t1 y t2:spt) = BN u1 u2`;
+   `copy_shape (BS u1 x u2:spt) LN = BS u1 x u2`;
+   `copy_shape (BS u1 x u2:spt) (LS y:spt) =
+       (if domain (BN u1 u2) = {} then LS x else BS u1 x u2)`;
+   `copy_shape (BS u1 x u2:spt) (BN t1 t2:spt) = BS u1 x u2`;
+   `copy_shape (BS u1 x u2:spt) (BS t1 y t2:spt) = BS (copy_shape u1
+  t1) x (copy_shape u2 t2)`];;
 
 (* / TODO *)
 
@@ -587,17 +584,17 @@ let range_def = cake_define
 
 (* see #521 *)
 
-let bytes_in_memory_def = cake_define
-  `(bytes_in_memory a [] m dm <=> T) /\
-   (bytes_in_memory a ((x:word8) :: xs) m dm <=>
-      (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1)) xs m
-        dm)`;;
+let bytes_in_memory_def = cake_define_list
+  [`bytes_in_memory a [] m dm <=> T`;
+   `bytes_in_memory a ((x:word8) :: xs) m dm <=>
+         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1)) xs
+           m dm`];;
 
-let bytes_in_mem_def = cake_define
-  `(bytes_in_mem a [] m md k <=> T) /\
-   (bytes_in_mem a (b :: bs) m md k <=>
-      a IN md /\ ~(a IN k) /\ (m a = b) /\
-      bytes_in_mem (a + (n2w 1)) bs m md k)`;;
+let bytes_in_mem_def = cake_define_list
+  [`bytes_in_mem a [] m md k <=> T`;
+   `bytes_in_mem a (b :: bs) m md k <=>
+         a IN md /\ ~(a IN k) /\ (m a = b) /\
+         bytes_in_mem (a + (n2w 1)) bs m md k`];;
 
 
 let good_dimindex_def = cake_define

@@ -35,65 +35,66 @@ let num_from_dec_string_alt_def = cake_define
 let num_from_hex_string_alt_def = cake_define
   `num_from_hex_string_alt = s2n 16 unhex_alt`;;
 
-(* HOL4 termination: THEN REPEAT STRIP_TAC THEN IMP_RES_TAC (GSYM
-   read_while_thm) THEN IMP_RES_TAC (GSYM read_string_thm) THEN
-   IMP_RES_TAC skip_comment_thm THEN Cases_on `str` THEN
-   FULL_SIMP_TAC (srw_ss()) [LENGTH] THEN DECIDE_TAC *)
-let next_sym_alt_def = cake_define_wf
-  `MEASURE (LENGTH o FST)`
-  `(next_sym_alt "" _1 = NONE) /\
-   (next_sym_alt (c :: str) loc =
-      (if c = (CHR 10) then
-         next_sym_alt str (next_line loc) else if isSpace c then
-        next_sym_alt str (next_loc 1 loc) else if isDigit c then
-        if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
-          if TL str = "" then SOME (ErrorS,Locs loc loc,"") else if
-            isDigit (HD (TL str)) then
-            let (n,rest) = read_while isDigit (TL str) [] in
-              SOME (WordS (num_from_dec_string_alt n),
-                    Locs loc (next_loc (LENGTH n + 1) loc),
-                    rest) else if HD (TL str) = (CHR 120) then
-            let (n,rest) = read_while isHexDigit (TL (TL str)) [] in
-              SOME (WordS (num_from_hex_string_alt n),
-                    Locs loc (next_loc (LENGTH n + 2) loc),
-                    rest) else SOME (ErrorS,Locs loc loc,TL str) else
-          if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120) then
-            let (n,rest) = read_while isHexDigit (TL str) [] in
-              SOME (NumberS (&num_from_hex_string_alt n),
-                    Locs loc (next_loc (LENGTH n) loc),
-                    rest) else
-            let (n,rest) = read_while isDigit str [] in
-              SOME (NumberS (&(num_from_dec_string_alt (c :: n))),
-                    Locs loc (next_loc (LENGTH n) loc),
-                    rest) else if c = (CHR 126) /\ ~(str = "") /\
-                      isDigit (HD str) then
-        let (n,rest) = read_while isDigit str [] in
-          SOME (NumberS ((&0) - &(num_from_dec_string_alt n)),
-                Locs loc (next_loc (LENGTH n + 1) loc),
-                rest) else if c = (CHR 39) then
-        let (n,rest) = read_while isAlphaNumPrime str [c] in
-          SOME (OtherS n,
-                Locs loc (next_loc (LENGTH n - 1) loc),
-                rest) else if c = (CHR 34) then
-        let (t,loc',rest) = read_string str "" (next_loc 1 loc) in
-          SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
-            str) then
-        SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-          isPREFIX "#\"" (c :: str) then
-        let (t,loc',rest) = read_string (TL str) "" (next_loc 2 loc)
-          in
-          SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX "#("
-            (c :: str) then
-        let (t,loc',rest) =
-              read_FFIcall (TL str) "" (next_loc 2 loc) in
-          SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (c ::
-            str) then
-        match skip_comment (TL str) (0:num) (next_loc 2 loc) with
-          NONE -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
-          (rest,loc') -> next_sym_alt rest loc' else if c = (CHR 95)
-          then SOME (OtherS "_",Locs loc loc,str) else
-        let (tok',end_loc,rest) = read_Ident (STRING c str) loc [] in
-          SOME (tok',Locs loc end_loc,rest)))`;;
+let next_sym_alt_def = cake_define_list
+  [`next_sym_alt "" _1 = NONE`;
+   `next_sym_alt (c :: str) loc =
+         (if c = (CHR 10) then
+            next_sym_alt str (next_line loc) else if isSpace c then
+           next_sym_alt str (next_loc 1 loc) else if isDigit c then
+           if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
+             if TL str = "" then SOME (ErrorS,Locs loc loc,"") else
+               if isDigit (HD (TL str)) then
+               let (n,rest) = read_while isDigit (TL str) [] in
+                 SOME (WordS (num_from_dec_string_alt n),
+                       Locs loc (next_loc (LENGTH n + 1) loc),
+                       rest) else if HD (TL str) = (CHR 120) then
+               let (n,rest) = read_while isHexDigit (TL (TL str)) []
+                 in
+                 SOME (WordS (num_from_hex_string_alt n),
+                       Locs loc (next_loc (LENGTH n + 2) loc),
+                       rest) else SOME (ErrorS,Locs loc loc,TL str)
+                         else
+             if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120)
+               then
+               let (n,rest) = read_while isHexDigit (TL str) [] in
+                 SOME (NumberS (&num_from_hex_string_alt n),
+                       Locs loc (next_loc (LENGTH n) loc),
+                       rest) else
+               let (n,rest) = read_while isDigit str [] in
+                 SOME (NumberS (&(num_from_dec_string_alt (c ::
+                   n))),
+                       Locs loc (next_loc (LENGTH n) loc),
+                       rest) else if c = (CHR 126) /\ ~(str = "") /\
+                         isDigit (HD str) then
+           let (n,rest) = read_while isDigit str [] in
+             SOME (NumberS ((&0) - &(num_from_dec_string_alt n)),
+                   Locs loc (next_loc (LENGTH n + 1) loc),
+                   rest) else if c = (CHR 39) then
+           let (n,rest) = read_while isAlphaNumPrime str [c] in
+             SOME (OtherS n,
+                   Locs loc (next_loc (LENGTH n - 1) loc),
+                   rest) else if c = (CHR 34) then
+           let (t,loc',rest) = read_string str "" (next_loc 1 loc)
+             in
+             SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
+               str) then
+           SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
+             isPREFIX "#\"" (c :: str) then
+           let (t,loc',rest) = read_string (TL str) "" (next_loc 2
+             loc) in
+             SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
+               "#(" (c :: str) then
+           let (t,loc',rest) =
+                 read_FFIcall (TL str) "" (next_loc 2 loc) in
+             SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (c ::
+               str) then
+           match skip_comment (TL str) (0:num) (next_loc 2 loc) with
+             NONE -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
+             (rest,loc') -> next_sym_alt rest loc' else if c = (CHR 95)
+             then SOME (OtherS "_",Locs loc loc,str) else
+           let (tok',end_loc,rest) = read_Ident (STRING c str) loc
+             [] in
+             SOME (tok',Locs loc end_loc,rest))`];;
 
 (* lex_until_toplevel_semicolon *)
 

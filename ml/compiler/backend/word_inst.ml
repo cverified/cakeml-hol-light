@@ -24,12 +24,12 @@ needs "semantics/semanticPrimitives.ml";;
 *)
 
 (*Pull all nested arguments with the same op up*)
-let pull_ops_def = cake_define
-  `(pull_ops op [] acc = acc) /\
-   (pull_ops op (x :: xs) acc =
-     (match x with (Op op' ls) -> (if op = op' then pull_ops op xs
-       (ls ++ acc) else pull_ops op xs (x :: acc)) | _2 -> pull_ops
-       op xs (x :: acc)))`;;
+let pull_ops_def = cake_define_list
+  [`pull_ops op [] acc = acc`;
+   `pull_ops op (x :: xs) acc =
+        (match x with (Op op' ls) -> (if op = op' then pull_ops
+          op xs (ls ++ acc) else pull_ops op xs (x :: acc)) | _2 ->
+          pull_ops op xs (x :: acc))`];;
 
 let is_const_def = cake_define
   `word_inst_is_const x1 =

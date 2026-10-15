@@ -247,17 +247,18 @@ hol4_overload "prog_comp" "stack_remove_prog_comp";;
 
 (* -- init code -- *)
 
-let store_list_code_def = cake_define
-  `(store_list_code a t [] = Skip) /\
-   (store_list_code a t (INL w :: xs) =
-     Seq (list_Seq [(\r w. Inst (Const r w)) t w; (\r a. Inst (Mem
-       Store r (Addr a (n2w 0)))) t a; (\r1. Inst (Arith (Binop Add r1
-       r1 (Imm (bytes_in_word))))) a])
-         (store_list_code a t xs)) /\
-   (store_list_code a t (INR i :: xs) =
-     Seq (list_Seq [(\r a. Inst (Mem Store r (Addr a (n2w 0)))) i a;
-       (\r1. Inst (Arith (Binop Add r1 r1 (Imm (bytes_in_word))))) a])
-         (store_list_code a t xs))`;;
+let store_list_code_def = cake_define_list
+  [`store_list_code a t [] = Skip`;
+   `store_list_code a t (INL w :: xs) =
+        Seq (list_Seq [(\r w. Inst (Const r w)) t w; (\r a. Inst
+          (Mem Store r (Addr a (n2w 0)))) t a; (\r1. Inst (Arith (Binop
+          Add r1 r1 (Imm (bytes_in_word))))) a])
+            (store_list_code a t xs)`;
+   `store_list_code a t (INR i :: xs) =
+        Seq (list_Seq [(\r a. Inst (Mem Store r (Addr a (n2w 0)))) i
+          a; (\r1. Inst (Arith (Binop Add r1 r1 (Imm (bytes_in_word)))))
+          a])
+            (store_list_code a t xs)`];;
 
 (* k+1 is base, k is stack pointer, discards 0 *)
 let init_memory_def = cake_define
@@ -269,7 +270,7 @@ let init_memory_def = cake_define
                store_list_code (k + 1) 0 xs]`;;
 
 let store_init_def = cake_define
-  `store_init gen_gc' (k:num) = =++
+  `store_init gen_gc' (k:num) = UPDATE_LIST
      (K (INL (n2w 0)))
        [(CurrHeap,INR (k + 2));
         (GlobReal,INR (k + 2));

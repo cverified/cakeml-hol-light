@@ -77,31 +77,32 @@ let boolv_def = cake_define
   `(closSem_Boolv b = Block (if b then true_tag else false_tag) [])`;;
 hol4_overload "Boolv" "closSem_Boolv";;
 
-let do_eq_def = cake_define
-  `(closSem_do_eq x y =
-      (match x with Number i ->
-          (match y with Number j -> Eq_val (i = j) | _1 ->
-            Eq_type_error) | Word64 v ->
-          (match y with Word64 w -> Eq_val (v = w) | _2 ->
-            Eq_type_error) | Block t1 xs ->
-          (match y with Block t2 ys -> (if (t1 = t2) /\ (LENGTH xs =
-            LENGTH ys) then
-                              closSem_do_eq_list xs ys else Eq_val F)
-                                | _3 -> Eq_type_error) | ByteVector cs
-                                ->
-          (match y with ByteVector ds -> Eq_val (cs = ds) | _4 ->
-            Eq_type_error) | RefPtr bi i ->
-          (match y with RefPtr bj j -> (if bi /\ bj then Eq_val (i =
-            j) else Eq_type_error) | _5 -> Eq_type_error) | _6 ->
-          (match y with Number _7 -> Eq_type_error | Word64 _8 ->
-            Eq_type_error | Block _9 _10 -> Eq_type_error | ByteVector
-            _11 -> Eq_type_error | RefPtr _12 _13 -> Eq_type_error | _14
-            -> Eq_val T))) /\
-   (closSem_do_eq_list [] [] = Eq_val T) /\
-   (closSem_do_eq_list (x :: xs) (y :: ys) =
-      (match closSem_do_eq x y with Eq_val T -> closSem_do_eq_list xs
-        ys | res -> res)) /\
-   (closSem_do_eq_list _15 _16 = Eq_val F)`;;
+let do_eq_def = cake_define_list
+  [`closSem_do_eq x y =
+         (match x with Number i ->
+             (match y with Number j -> Eq_val (i = j) | _1 ->
+               Eq_type_error) | Word64 v ->
+             (match y with Word64 w -> Eq_val (v = w) | _2 ->
+               Eq_type_error) | Block t1 xs ->
+             (match y with Block t2 ys -> (if (t1 = t2) /\ (LENGTH
+               xs = LENGTH ys) then
+                              closSem_do_eq_list xs ys else Eq_val
+                                F) | _3 -> Eq_type_error) | ByteVector
+                                cs ->
+             (match y with ByteVector ds -> Eq_val (cs = ds) | _4 ->
+               Eq_type_error) | RefPtr bi i ->
+             (match y with RefPtr bj j -> (if bi /\ bj then Eq_val
+               (i = j) else Eq_type_error) | _5 -> Eq_type_error) | _6
+               ->
+             (match y with Number _7 -> Eq_type_error | Word64 _8
+               -> Eq_type_error | Block _9 _10 -> Eq_type_error |
+               ByteVector _11 -> Eq_type_error | RefPtr _12 _13 ->
+               Eq_type_error | _14 -> Eq_val T))`;
+   `closSem_do_eq_list [] [] = Eq_val T`;
+   `closSem_do_eq_list (x :: xs) (y :: ys) =
+         (match closSem_do_eq x y with Eq_val T ->
+           closSem_do_eq_list xs ys | res -> res)`;
+   `closSem_do_eq_list _15 _16 = Eq_val F`];;
 hol4_overload "do_eq" "closSem_do_eq";;
 hol4_overload "do_eq_list" "closSem_do_eq_list";;
 
@@ -117,10 +118,10 @@ let v_to_list_def = cake_define
         | _18 -> NONE`;;
 hol4_overload "v_to_list" "closSem_v_to_list";;
 
-let list_to_v_def = cake_define
-  `closSem_list_to_v [] = Block nil_tag [] /\
-   closSem_list_to_v (x :: xs) = Block cons_tag [x;
-     closSem_list_to_v xs]`;;
+let list_to_v_def = cake_define_list
+  [`closSem_list_to_v [] = Block nil_tag []`;
+   `closSem_list_to_v (x :: xs) = Block cons_tag [x;
+  closSem_list_to_v xs]`];;
 hol4_overload "list_to_v" "closSem_list_to_v";;
 
 let unit_def = cake_define
@@ -147,7 +148,7 @@ val s = ``s:('c,'ffi)closSem$state``;
 *)
 
 let do_install_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_install vs) s =
          (match vs with [v1; v2] ->
               (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -181,17 +182,12 @@ let do_install_def = cake_define
                                (Rabort Rtype_error),s)) | _21 ->
                                (Rerr (Rabort Rtype_error),s))`;;
 
-let _ = size_thms "const";;
-(* HOL4 termination: \\ Induct_on ‘cs’ \\ rw [] \\ fs
-   [const_size_def] \\ res_tac \\ pop_assum (qspec_then ‘t’
-   assume_tac) \\ fs [] *)
-let make_const_def = cake_define_wf
-  `MEASURE const_size`
-  `make_const (ConstInt i) = Number i /\
-   make_const (ConstStr s) = ByteVector (MAP (n2w o ORD) (explode s))
-     /\
-   make_const (ConstWord64 w) = Word64 w /\
-   make_const (ConstCons t cs) = Block t (MAP make_const cs)`;;
+let make_const_def = cake_define_list
+  [`make_const (ConstInt i:const) = Number i`;
+   `make_const (ConstStr s:const) = ByteVector (MAP (n2w o ORD)
+  (explode s))`;
+   `make_const (ConstWord64 w:const) = Word64 w`;
+   `make_const (ConstCons t cs:const) = Block t (MAP make_const cs)`];;
 
 let do_int_app_def = cake_define
   `closSem_do_int_app x1 x2 =
@@ -215,12 +211,12 @@ let do_int_app_def = cake_define
       | ((op:closLang_int_op),(vs:closSem_v list)) -> NONE`;;
 hol4_overload "do_int_app" "closSem_do_int_app";;
 
-let opw_lookup_def = cake_define
-  `(opw_lookup Andw = word_and) /\
-   (opw_lookup Orw = word_or) /\
-   (opw_lookup Xor = word_xor) /\
-   (opw_lookup Add = word_add) /\
-   (opw_lookup Sub = word_sub)`;;
+let opw_lookup_def = cake_define_list
+  [`opw_lookup Andw = word_and`;
+   `opw_lookup Orw = word_or`;
+   `opw_lookup Xor = word_xor`;
+   `opw_lookup Add = word_add`;
+   `opw_lookup Sub = word_sub`];;
 
 let do_word_app_def = cake_define
   `closSem_do_word_app x1 ws =
@@ -307,7 +303,7 @@ let bad_thunk_update_def = cake_define
 hol4_overload "bad_thunk_update" "closSem_bad_thunk_update";;
 
 let do_app_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_app (op:closLang_op) (vs:closSem_v list)) s =
        (match (op,vs) with (GlobOp (Global n),([]:closSem_v list)) ->
            (match get_global n (closSem_state_globals s) with SOME
@@ -626,7 +622,7 @@ let do_app_def = cake_define
                       ,closSem_v)semanticPrimitives_result))`;;
 
 let dec_clock_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (dec_clock n) s = ?_clock_fupd (K (?_clock s - n)) s`;;
 
 let find_code_def = cake_define
@@ -652,11 +648,11 @@ hol4_overload "fix_clock" "closSem_fix_clock";;
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of clos_exp expressions. *)
 
-let check_loc_def = cake_define
-  `(check_loc (max_app:num) NONE loc num_params num_args so_far <=>
-     num_args <= max_app) /\
-   (check_loc max_app (SOME p) loc num_params num_args so_far <=>
-     num_params = num_args /\ so_far = (0:num) /\ SOME p = loc)`;;
+let check_loc_def = cake_define_list
+  [`check_loc (max_app:num) NONE loc num_params num_args so_far <=>
+        num_args <= max_app`;
+   `check_loc max_app (SOME p) loc num_params num_args so_far <=>
+        num_params = num_args /\ so_far = (0:num) /\ SOME p = loc`];;
 
 let app_kind_INDUCT,app_kind_RECURSION = define_datatype
   "app_kind = Partial_app (closSem_v) | Full_app (closLang_exp) \

@@ -111,48 +111,49 @@ let mk_binop_def = cake_define
        a1]; a2])`;;
 
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     ' = λf a. OPTION_BIND a f *)
 
 let tokcheck_def = cake_define
   `tokcheck pt tok' <=> (FAPPLY destTOK (destLf pt) = SOME tok')`;;
 
-let ptree_UQTyop_def = cake_define
-  `ptree_UQTyop (Lf _4) = NONE /\
-   ptree_UQTyop (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nUQTyOp) then NONE
-       else
-       match args with
-           [pt] ->
-           monad_bind (destLf pt) (\
-             lf. monad_bind (destTOK lf) (\
-             tk.
-             destSymbolT tk ++ destAlphaT tk)) | _5 -> NONE)`;;
+let ptree_UQTyop_def = cake_define_list
+  [`ptree_UQTyop (Lf _4:parsetree) = NONE`;
+   `ptree_UQTyop (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nUQTyOp) then NONE
+        else
+        match args with
+            [pt] ->
+            monad_bind (destLf pt) (\
+              lf. monad_bind (destTOK lf) (\
+              tk.
+              destSymbolT tk ++ destAlphaT tk)) | _5 -> NONE)`];;
 
-let ptree_TyvarN_def = cake_define
-  `ptree_TyvarN (Lf _7) = NONE /\
-   ptree_TyvarN (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyvarN) then NONE
-       else
-       match args with
-           [tyv] -> destTyvarPT tyv | _8 -> NONE)`;;
+let ptree_TyvarN_def = cake_define_list
+  [`ptree_TyvarN (Lf _7:parsetree) = NONE`;
+   `ptree_TyvarN (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyvarN) then NONE
+        else
+        match args with
+            [tyv] -> destTyvarPT tyv | _8 -> NONE)`];;
 
-let Long_Short_def = cake_define
-  `Long_Short End (s:mlstring) = Short s /\
-   Long_Short (Mod x xs) s = Long x (Long_Short xs s)`;;
+let Long_Short_def = cake_define_list
+  [`Long_Short End (s:mlstring) = Short s`;
+   `Long_Short (Mod x xs:tokens_path) s = Long x (Long_Short xs s)`];;
 
-let ptree_Tyop_def = cake_define
-  `ptree_Tyop (Lf _10) = NONE /\
-   ptree_Tyop (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyOp) then NONE else
-       match args with
-           [pt] ->
-           monad_bind (FAPPLY destLongidT (FAPPLY destTOK (destLf
-             pt))) (\
-             (xs,s).
-             SOME (Long_Short xs s)) ++
-           monad_bind (ptree_UQTyop pt) (\
-             nm.
-             SOME (Short nm)) | _11 -> NONE)`;;
+let ptree_Tyop_def = cake_define_list
+  [`ptree_Tyop (Lf _10:parsetree) = NONE`;
+   `ptree_Tyop (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTyOp) then NONE
+        else
+        match args with
+            [pt] ->
+            monad_bind (FAPPLY destLongidT (FAPPLY destTOK (destLf
+              pt))) (\
+              (xs,s).
+              SOME (Long_Short xs s)) ++
+            monad_bind (ptree_UQTyop pt) (\
+              nm.
+              SOME (Short nm)) | _11 -> NONE)`];;
 
 let tokcheckl_def = cake_define
   `tokcheckl pts toks <=>
@@ -289,14 +290,14 @@ let ptree_TypeName_def = cake_define
              opn.
              return (tyvnms,opn)))) | _26 -> NONE else NONE))`;;
 
-let ptree_UQConstructorName_def = cake_define
-  `ptree_UQConstructorName (Lf _28) = NONE /\
-   ptree_UQConstructorName (Nd nm args) =
-     (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nUQConstructorName)
-       then NONE else
-       match args with
-           [pt] -> FAPPLY destAlphaT (FAPPLY destTOK (destLf pt))
-             | _29 -> NONE)`;;
+let ptree_UQConstructorName_def = cake_define_list
+  [`ptree_UQConstructorName (Lf _28:parsetree) = NONE`;
+   `ptree_UQConstructorName (Nd nm args:parsetree) =
+      (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nUQConstructorName)
+        then NONE else
+        match args with
+            [pt] -> FAPPLY destAlphaT (FAPPLY destTOK (destLf
+              pt)) | _29 -> NONE)`];;
 
 let ptree_ConstructorName_def = cake_define
   `ptree_ConstructorName ast =
@@ -413,47 +414,50 @@ let singleSymP_def = cake_define
                          return (Short s)))
       | _43 -> NONE`;;
 
-let ptree_Op_def = cake_define
-  `ptree_Op (Lf _44) = NONE /\
-   ptree_Op (Nd nt' subs) =
-     (if FST nt' = (INL:MMLnonT->MMLnonT+num) nMultOps then
-       if tokcheckl subs [StarT] then SOME (Short (implode "*")) else
-         if tokcheckl subs [AlphaT (implode "mod")] then SOME (Short
-         (implode "mod")) else if tokcheckl subs [AlphaT (implode
-         "div")] then SOME (Short (implode "div")) else singleSymP
-         (validMultSym o explode) subs else if FST nt' =
-         (INL:MMLnonT->MMLnonT+num) nAddOps then singleSymP (validAddSym
-         o explode) subs else if FST nt' = (INL:MMLnonT->MMLnonT+num)
-         nListOps then singleSymP (validListSym o explode) subs else if
-         FST nt' = (INL:MMLnonT->MMLnonT+num) nRelOps then
-       singleSymP (validRelSym o explode) subs ++
-       monad_ignore_bind (assert (tokcheckl subs [EqualsT])) (return
-         (Short (implode "="))) else if FST nt' =
-         (INL:MMLnonT->MMLnonT+num) nCompOps then
-       if tokcheckl subs [SymbolT (implode ":=")] then SOME (Short
-         (implode ":=")) else if tokcheckl subs [AlphaT (implode
-         "o")] then SOME (Short (implode "o")) else NONE else NONE)`;;
+let ptree_Op_def = cake_define_list
+  [`ptree_Op (Lf _44:parsetree) = NONE`;
+   `ptree_Op (Nd nt' subs:parsetree) =
+      (if FST nt' = (INL:MMLnonT->MMLnonT+num) nMultOps then
+        if tokcheckl subs [StarT] then SOME (Short (implode "*"))
+          else if tokcheckl subs [AlphaT (implode "mod")] then SOME
+          (Short (implode "mod")) else if tokcheckl subs [AlphaT
+          (implode "div")] then SOME (Short (implode "div")) else
+          singleSymP (validMultSym o explode) subs else if FST nt' =
+          (INL:MMLnonT->MMLnonT+num) nAddOps then singleSymP
+          (validAddSym o explode) subs else if FST nt' =
+          (INL:MMLnonT->MMLnonT+num) nListOps then singleSymP
+          (validListSym o explode) subs else if FST nt' =
+          (INL:MMLnonT->MMLnonT+num) nRelOps then
+        singleSymP (validRelSym o explode) subs ++
+        monad_ignore_bind (assert (tokcheckl subs [EqualsT]))
+          (return (Short (implode "="))) else if FST nt' =
+          (INL:MMLnonT->MMLnonT+num) nCompOps then
+        if tokcheckl subs [SymbolT (implode ":=")] then SOME
+          (Short (implode ":=")) else if tokcheckl subs [AlphaT
+          (implode "o")] then SOME (Short (implode "o")) else NONE
+          else NONE)`];;
 
-let ptree_V_def = cake_define
-  `ptree_V (Lf _46) = NONE /\
-   ptree_V (Nd nt' subs) =
-        monad_ignore_bind
-          (assert (FST nt' = (INL:MMLnonT->MMLnonT+num) nV)) (
-          match subs with
-             [pt] -> monad_bind (FAPPLY destTOK (destLf pt)) (\t.
-                        destAlphaT t ++ destSymbolT t) | _47 ->
-                          NONE)`;;
+let ptree_V_def = cake_define_list
+  [`ptree_V (Lf _46:parsetree) = NONE`;
+   `ptree_V (Nd nt' subs:parsetree) =
+         monad_ignore_bind
+           (assert (FST nt' = (INL:MMLnonT->MMLnonT+num) nV)) (
+           match subs with
+              [pt] -> monad_bind (FAPPLY destTOK (destLf pt)) (\t.
+                         destAlphaT t ++ destSymbolT t) | _47 ->
+                           NONE)`];;
 
-let ptree_FQV_def = cake_define
-  `ptree_FQV (Lf _49) = NONE /\
-   ptree_FQV (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nFQV) then NONE else
-       match args with
-           [pt] -> OPTION_MAP Short (ptree_V pt) ++
-                   monad_bind (FAPPLY destLongidT (FAPPLY destTOK
-                     (destLf pt))) (\
-                     (xs,s).
-                     SOME (Long_Short xs s)) | _50 -> NONE)`;;
+let ptree_FQV_def = cake_define_list
+  [`ptree_FQV (Lf _49:parsetree) = NONE`;
+   `ptree_FQV (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nFQV) then NONE
+        else
+        match args with
+            [pt] -> OPTION_MAP Short (ptree_V pt) ++
+                    monad_bind (FAPPLY destLongidT (FAPPLY destTOK
+                      (destLf pt))) (\
+                      (xs,s).
+                      SOME (Long_Short xs s)) | _50 -> NONE)`];;
 
 let isSymbolicConstructor_def = cake_define
   `isSymbolicConstructor s =
@@ -480,35 +484,36 @@ let EtoPat_def = cake_define
         | (Var (Long str n)) -> SOME (Pcon (SOME (Long str n)) [])
         | _51 -> NONE`;;
 
-let ptree_OpID_def = cake_define
-  `ptree_OpID (Lf _54) = NONE /\
-   ptree_OpID (Nd nt' subs) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOpID) then NONE else
-       match subs with
-           [Lf
-             ((TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol)
-             tk,_55)] ->
-           monad_bind (destAlphaT tk) (\
-               s.
-               ifM (isConstructor (explode s))
-                   (return (Con (SOME (Short s)) []))
-                   (return (Var (Short s)))) ++
-           monad_bind (destSymbolT tk) (\
-               s.
-               ifM (isSymbolicConstructor (explode s))
-                   (return (Con (SOME (Short s)) []))
-                   (return (Var (Short s)))) ++
-           monad_bind (destLongidT tk) (\
-               (path,s).
-               ifM (isConstructor (explode s))
-                   (return (Con (SOME (Long_Short path s)) []))
-                   (return (Var (Long_Short path s)))) ++
-           (if tk = StarT then
-              ifM (isSymbolicConstructor "*")
-                  (return (Con (SOME (Short (implode "*"))) []))
-                  (return (Var (Short (implode "*")))) else if tk
-                    = EqualsT then return (Var (Short (implode "=")))
-                    else NONE) | _56 -> NONE)`;;
+let ptree_OpID_def = cake_define_list
+  [`ptree_OpID (Lf _54:parsetree) = NONE`;
+   `ptree_OpID (Nd nt' subs:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOpID) then NONE
+        else
+        match subs with
+            [Lf
+              ((TOK:tokens_token->(tokens_token,MMLnonT)grammar_symbol)
+              tk,_55)] ->
+            monad_bind (destAlphaT tk) (\
+                s.
+                ifM (isConstructor (explode s))
+                    (return (Con (SOME (Short s)) []))
+                    (return (Var (Short s)))) ++
+            monad_bind (destSymbolT tk) (\
+                s.
+                ifM (isSymbolicConstructor (explode s))
+                    (return (Con (SOME (Short s)) []))
+                    (return (Var (Short s)))) ++
+            monad_bind (destLongidT tk) (\
+                (path,s).
+                ifM (isConstructor (explode s))
+                    (return (Con (SOME (Long_Short path s)) []))
+                    (return (Var (Long_Short path s)))) ++
+            (if tk = StarT then
+               ifM (isSymbolicConstructor "*")
+                   (return (Con (SOME (Short (implode "*"))) []))
+                   (return (Var (Short (implode "*")))) else if
+                     tk = EqualsT then return (Var (Short (implode
+                     "="))) else NONE) | _56 -> NONE)`];;
 
 let papply_def = cake_define
   `Papply pat arg =
@@ -522,131 +527,135 @@ val maybe_handleRef_def = PmatchHeuristics.with_classic_heuristic Define
   maybe_handleRef p = p’
 *)
 
-let ptree_Pattern_def = cake_define
-  `(ptree_Pattern nt' (Lf _58) = NONE) /\
-   (ptree_Pattern nt' (Nd nm args) =
-     (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE else if
-       FST nm = (INL:MMLnonT->MMLnonT+num) nPbase then
-       match args with
-           [vic] ->
-           ptree_Pattern nPtuple vic ++
-           monad_bind (ptree_ConstructorName vic) (\
+let ptree_Pattern_def = cake_define_list
+  [`ptree_Pattern nt' (Lf _58:parsetree) = NONE`;
+   `ptree_Pattern nt' (Nd nm args:parsetree) =
+        (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE
+          else if FST nm = (INL:MMLnonT->MMLnonT+num) nPbase then
+          match args with
+              [vic] ->
+              ptree_Pattern nPtuple vic ++
+              monad_bind (ptree_ConstructorName vic) (\
+                 cname.
+                 SOME (Pcon (SOME cname) [])) ++
+              monad_bind (ptree_V vic) (\vname. SOME (Pvar vname))
+                ++
+              monad_bind (destLf vic) (\
+                lf. monad_bind (destTOK lf) (\
+                t.
+                (monad_bind (destIntT t) (\i. return (Plit (IntLit
+                  i))) ++
+                 monad_bind (destStringT t) (\s. return (Plit
+                   (StrLit s))) ++
+                 monad_bind (destCharT t) (\c. return (Plit (Char
+                   c)))))) ++
+              monad_ignore_bind (assert (tokcheck vic UnderbarT))
+                (return Pany) | [lb; rb] ->
+              (if tokcheckl args [LbrackT; RbrackT] then
+                SOME (Pcon (SOME (Short (implode "[]"))) []) else if
+                  tokcheckl [lb] [OpT] then
+                monad_bind (ptree_OpID rb) (\e. EtoPat e) else NONE)
+                  | [lb; plistpt; rb] ->
+              monad_ignore_bind
+                (assert (tokcheckl [lb; rb] [LbrackT; RbrackT]))
+                  (monad_bind (ptree_Plist plistpt) (\
+                plist.
+                SOME (ITLIST (\p a. Pcon (SOME (Short (implode
+                  "::"))) [p; a])
+                            plist
+                            (Pcon (SOME (Short (implode "[]")))
+                              [])))) | _59 -> NONE else if FST nm =
+                              (INL:MMLnonT->MMLnonT+num) nPConApp then
+          match args with
+            [cn] ->
+            monad_bind (ptree_ConstructorName cn) (\
               cname.
-              SOME (Pcon (SOME cname) [])) ++
-           monad_bind (ptree_V vic) (\vname. SOME (Pvar vname)) ++
-           monad_bind (destLf vic) (\
-             lf. monad_bind (destTOK lf) (\
-             t.
-             (monad_bind (destIntT t) (\i. return (Plit (IntLit i)))
-               ++
-              monad_bind (destStringT t) (\s. return (Plit (StrLit
-                s))) ++
-              monad_bind (destCharT t) (\c. return (Plit (Char
-                c)))))) ++
-           monad_ignore_bind (assert (tokcheck vic UnderbarT))
-             (return Pany) | [lb; rb] ->
-           (if tokcheckl args [LbrackT; RbrackT] then
-             SOME (Pcon (SOME (Short (implode "[]"))) []) else if
-               tokcheckl [lb] [OpT] then
-             monad_bind (ptree_OpID rb) (\e. EtoPat e) else NONE) |
-               [lb; plistpt; rb] ->
-           monad_ignore_bind
-             (assert (tokcheckl [lb; rb] [LbrackT; RbrackT]))
-               (monad_bind (ptree_Plist plistpt) (\
-             plist.
-             SOME (ITLIST (\p a. Pcon (SOME (Short (implode "::")))
-               [p; a])
-                         plist
-                         (Pcon (SOME (Short (implode "[]"))) [])))) |
-                           _59 -> NONE else if FST nm =
-                           (INL:MMLnonT->MMLnonT+num) nPConApp then
-       match args with
-         [cn] ->
-         monad_bind (ptree_ConstructorName cn) (\
-           cname.
-           return (Pcon (SOME cname) [])) | [capp_pt; base_pt] ->
-         monad_bind (ptree_Pattern nPConApp capp_pt) (\
-           capp. monad_bind (ptree_Pattern nPbase base_pt) (\
-           base.
-           return (Papply capp base))) | _60 -> fail else if FST nm =
-             (INL:MMLnonT->MMLnonT+num) nPapp then
-       match args with
-           [pb] -> ptree_Pattern nPbase pb | [capp_pt; ppt] ->
-           monad_bind (ptree_Pattern nPConApp capp_pt) (\
-             capp. monad_bind (ptree_Pattern nPbase ppt) (\
-             b.
-             return (maybe_handleRef (Papply capp b)))) | _61 -> NONE
-               else if FST nm = (INL:MMLnonT->MMLnonT+num) nPcons then
-       match args with
-           [papt] -> ptree_Pattern nPapp papt | [papt; cons_t;
-             pcons_pt] ->
-           monad_ignore_bind
-             (assert (tokcheck cons_t (SymbolT (implode "::"))))
-               (monad_bind (ptree_Pattern nPapp papt) (\
-             pa. monad_bind (ptree_Pattern nPcons pcons_pt) (\
-             patt.
-             SOME (Pcon (SOME (Short (implode "::"))) [pa; patt]))))
-               | _62 -> NONE else if FST nm = (INL:MMLnonT->MMLnonT+num)
-               nPas then
-       match args with
-           [papt] -> ptree_Pattern nPcons papt | [vt; as_t; papt] ->
-           monad_ignore_bind
-             (assert (tokcheck as_t AsT)) (monad_bind (ptree_Pattern
-               nPcons papt) (\
-             pa. monad_bind (ptree_V vt) (\
-             vtt.
-             SOME (Pas pa vtt)))) | _63 -> fail else if FST nm =
-               (INL:MMLnonT->MMLnonT+num) nPattern then
-       match args with
-           [pas] -> ptree_Pattern nPas pas | [pas_pt; colon_t;
-             type_pt] ->
-           monad_ignore_bind
-             (assert (tokcheck colon_t ColonT)) (monad_bind
-               (ptree_Pattern nPas pas_pt) (\
-             pc. monad_bind (ptree_Type nType type_pt) (\
-             ty.
-             return (Ptannot pc ty)))) | _64 -> fail else if FST nm =
-               (INL:MMLnonT->MMLnonT+num) nPtuple then
-       match args with
-           [lp; rp] -> monad_ignore_bind (assert (tokcheckl [lp; rp]
-             [LparT; RparT])) (
-                          return (Pcon NONE [])) | [lp; pl_pt; rp] ->
-           monad_ignore_bind
-             (assert (tokcheckl [lp; rp] [LparT; RparT])) (monad_bind
-               (ptree_Plist pl_pt) (\
-             pl.
-             match pl with
-                 [] -> NONE | [p] -> SOME p | _65 -> SOME (Pcon NONE
-                   pl))) | _66 -> NONE else NONE)) /\
-   (ptree_Plist (Lf _67) = NONE) /\
-   (ptree_Plist (Nd nm args) =
-      (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPatternList) then
-        NONE else
-        match args with
-            [p_pt] ->
-            monad_bind (ptree_Pattern nPattern p_pt) (\
-              p.
-              SOME [p]) | [p; ct; pl] ->
-            monad_ignore_bind
-              (assert (tokcheck ct CommaT)) (monad_bind
-                (ptree_Pattern nPattern p) (\
-              hdpat. monad_bind (ptree_Plist pl) (\
-              tlpats.
-              SOME (hdpat :: tlpats)))) | _68 -> NONE))`;;
+              return (Pcon (SOME cname) [])) | [capp_pt; base_pt] ->
+            monad_bind (ptree_Pattern nPConApp capp_pt) (\
+              capp. monad_bind (ptree_Pattern nPbase base_pt) (\
+              base.
+              return (Papply capp base))) | _60 -> fail else if FST
+                nm = (INL:MMLnonT->MMLnonT+num) nPapp then
+          match args with
+              [pb] -> ptree_Pattern nPbase pb | [capp_pt; ppt] ->
+              monad_bind (ptree_Pattern nPConApp capp_pt) (\
+                capp. monad_bind (ptree_Pattern nPbase ppt) (\
+                b.
+                return (maybe_handleRef (Papply capp b)))) | _61 ->
+                  NONE else if FST nm = (INL:MMLnonT->MMLnonT+num)
+                  nPcons then
+          match args with
+              [papt] -> ptree_Pattern nPapp papt | [papt; cons_t;
+                pcons_pt] ->
+              monad_ignore_bind
+                (assert (tokcheck cons_t (SymbolT (implode "::"))))
+                  (monad_bind (ptree_Pattern nPapp papt) (\
+                pa. monad_bind (ptree_Pattern nPcons pcons_pt) (\
+                patt.
+                SOME (Pcon (SOME (Short (implode "::"))) [pa;
+                  patt])))) | _62 -> NONE else if FST nm =
+                  (INL:MMLnonT->MMLnonT+num) nPas then
+          match args with
+              [papt] -> ptree_Pattern nPcons papt | [vt; as_t; papt]
+                ->
+              monad_ignore_bind
+                (assert (tokcheck as_t AsT)) (monad_bind
+                  (ptree_Pattern nPcons papt) (\
+                pa. monad_bind (ptree_V vt) (\
+                vtt.
+                SOME (Pas pa vtt)))) | _63 -> fail else if FST nm =
+                  (INL:MMLnonT->MMLnonT+num) nPattern then
+          match args with
+              [pas] -> ptree_Pattern nPas pas | [pas_pt; colon_t;
+                type_pt] ->
+              monad_ignore_bind
+                (assert (tokcheck colon_t ColonT)) (monad_bind
+                  (ptree_Pattern nPas pas_pt) (\
+                pc. monad_bind (ptree_Type nType type_pt) (\
+                ty.
+                return (Ptannot pc ty)))) | _64 -> fail else if FST
+                  nm = (INL:MMLnonT->MMLnonT+num) nPtuple then
+          match args with
+              [lp; rp] -> monad_ignore_bind (assert (tokcheckl [lp;
+                rp] [LparT; RparT])) (
+                             return (Pcon NONE [])) | [lp; pl_pt;
+                               rp] ->
+              monad_ignore_bind
+                (assert (tokcheckl [lp; rp] [LparT; RparT]))
+                  (monad_bind (ptree_Plist pl_pt) (\
+                pl.
+                match pl with
+                    [] -> NONE | [p] -> SOME p | _65 -> SOME
+                      (Pcon NONE pl))) | _66 -> NONE else NONE)`;
+   `ptree_Plist (Lf _67:parsetree) = NONE`;
+   `ptree_Plist (Nd nm args:parsetree) =
+         (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPatternList)
+           then NONE else
+           match args with
+               [p_pt] ->
+               monad_bind (ptree_Pattern nPattern p_pt) (\
+                 p.
+                 SOME [p]) | [p; ct; pl] ->
+               monad_ignore_bind
+                 (assert (tokcheck ct CommaT)) (monad_bind
+                   (ptree_Pattern nPattern p) (\
+                 hdpat. monad_bind (ptree_Plist pl) (\
+                 tlpats.
+                 SOME (hdpat :: tlpats)))) | _68 -> NONE)`];;
 
 new_type_abbrev("ptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 
-let ptree_PbaseList1_def = cake_define
-  `(ptree_PbaseList1 (Lf _70) = NONE) /\
-   (ptree_PbaseList1 (Nd nm args) =
-      (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPbaseList1) then
-        NONE else
-        match args with
-            [p_pt] -> (OPTION_MAP) SINGL (ptree_Pattern nPbase p_pt)
-              | [p_pt; pl_pt] ->
-                lift2 CONS
-                      (ptree_Pattern nPbase p_pt)
-                      (ptree_PbaseList1 pl_pt) | _71 -> NONE))`;;
+let ptree_PbaseList1_def = cake_define_list
+  [`ptree_PbaseList1 (Lf _70:parsetree) = NONE`;
+   `ptree_PbaseList1 (Nd nm args:parsetree) =
+         (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPbaseList1) then
+           NONE else
+           match args with
+               [p_pt] -> (OPTION_MAP) SINGL (ptree_Pattern nPbase
+                 p_pt) | [p_pt; pl_pt] ->
+                   lift2 CONS
+                         (ptree_Pattern nPbase p_pt)
+                         (ptree_PbaseList1 pl_pt) | _71 -> NONE)`];;
 
 let eseq_encode_def = cake_define
   `Eseq_encode x1 =
@@ -684,9 +693,9 @@ let merge_locsopt_def = cake_define
         (SOME l1,SOME l2) -> SOME (merge_locs l1 l2)
       | (_75,_76) -> NONE`;;
 
-let optLannot_def = cake_define
-  `optLannot NONE e = e /\
-   optLannot (SOME l) e = Lannot e l`;;
+let optLannot_def = cake_define_list
+  [`optLannot NONE e = e`;
+   `optLannot (SOME l) e = Lannot e l`];;
 
 let mkAst_App_def = cake_define
   `mkAst_App a1 a2 =
@@ -714,21 +723,22 @@ let dePat_def = cake_define
 let mkFun_def = cake_define
   `mkFun p b = UNCURRY Fun (dePat p b)`;;
 
-let ptree_Eliteral_def = cake_define
-  `ptree_Eliteral (Lf _78) = NONE /\
-   ptree_Eliteral (Nd nt' subs) =
-     monad_ignore_bind
-       (assert (LENGTH subs = 1 /\ FST nt' =
-         (INL:MMLnonT->MMLnonT+num) nEliteral)) (monad_bind (destLf (HD
-         subs)) (\
-       lf. monad_bind (destTOK lf) (\
-       t.
-       (monad_bind (destIntT t) (\i. return (Lit (IntLit i))) ++
-        monad_bind (destCharT t) (\c. return (Lit (Char c))) ++
-        monad_bind (destStringT t) (\s. return (Lit (StrLit s))) ++
-        monad_bind (destWordT t) (\n. return (Lit (Word64 (n2w n))))
-          ++
-        monad_bind (destFFIT t) (\s. return (App (FFI s) []))))))`;;
+let ptree_Eliteral_def = cake_define_list
+  [`ptree_Eliteral (Lf _78:parsetree) = NONE`;
+   `ptree_Eliteral (Nd nt' subs:parsetree) =
+      monad_ignore_bind
+        (assert (LENGTH subs = 1 /\ FST nt' =
+          (INL:MMLnonT->MMLnonT+num) nEliteral)) (monad_bind (destLf (HD
+          subs)) (\
+        lf. monad_bind (destTOK lf) (\
+        t.
+        (monad_bind (destIntT t) (\i. return (Lit (IntLit i))) ++
+         monad_bind (destCharT t) (\c. return (Lit (Char c))) ++
+         monad_bind (destStringT t) (\s. return (Lit (StrLit s))) ++
+         monad_bind (destWordT t) (\n. return (Lit (Word64 (n2w
+           n)))) ++
+         monad_bind (destFFIT t) (\s. return (App (FFI s)
+           []))))))`];;
 
 let bind_loc_def = cake_define
   `bind_loc e l' =
@@ -1090,145 +1100,153 @@ let ptree_Expr_def = cake_define_list
                 seq.
                 SOME (e :: seq)))) | _122 -> NONE)`];;
 
-let ptree_StructName_def = cake_define
-  `ptree_StructName (Lf _124) = NONE /\
-   ptree_StructName (Nd nm args) =
-     (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nStructName) then NONE
-       else
-       match args with
-           [pt] -> FAPPLY destAlphaT (FAPPLY destTOK (destLf pt))
-             | _125 -> NONE)`;;
+let ptree_StructName_def = cake_define_list
+  [`ptree_StructName (Lf _124:parsetree) = NONE`;
+   `ptree_StructName (Nd nm args:parsetree) =
+      (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nStructName) then
+        NONE else
+        match args with
+            [pt] -> FAPPLY destAlphaT (FAPPLY destTOK (destLf
+              pt)) | _125 -> NONE)`];;
 
-let ptree_OptTypEqn_def = cake_define
-  `ptree_OptTypEqn (Lf _127) = (NONE:(ast_t option) option) /\
-   ptree_OptTypEqn (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOptTypEqn) then NONE
-       else
-       match args with
-           [] -> SOME NONE | [eqtok; typ_pt] ->
-           monad_ignore_bind
-             (assert (tokcheck eqtok EqualsT)) (monad_bind
-               (ptree_Type nType typ_pt) (\
-             typ.
-             SOME (SOME typ))) | _128 -> NONE)`;;
+let ptree_OptTypEqn_def = cake_define_list
+  [`ptree_OptTypEqn (Lf _127:parsetree) = (NONE:(ast_t option)
+  option)`;
+   `ptree_OptTypEqn (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOptTypEqn) then
+        NONE else
+        match args with
+            [] -> SOME NONE | [eqtok; typ_pt] ->
+            monad_ignore_bind
+              (assert (tokcheck eqtok EqualsT)) (monad_bind
+                (ptree_Type nType typ_pt) (\
+              typ.
+              SOME (SOME typ))) | _128 -> NONE)`];;
 
-let ptree_SpecLine_def = cake_define
-  `ptree_SpecLine (Lf _130) = NONE /\
-   ptree_SpecLine (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLine) then NONE
-       else
-       match args with
-           [td_pt] ->
-           monad_bind (ptree_TypeDec td_pt) (\
-             td.
-             SOME one) | [exntok; dcon_pt] ->
-           monad_ignore_bind
-             (assert (tokcheck exntok ExceptionT)) (monad_bind
-               (ptree_Dconstructor dcon_pt) (\
-             (nm,tys).
-             SOME one)) | [typetok; tynm_pt; opteqn_pt] ->
-           monad_ignore_bind
-             (assert (tokcheck typetok TypeT)) (monad_bind
-               (ptree_TypeName tynm_pt) (\
-             (vs,nm). monad_bind (ptree_OptTypEqn opteqn_pt) (\
-             opteqn.
-             SOME one))) | [valtok; vname_pt; coltok; type_pt] ->
-           monad_ignore_bind
-             (assert (tokcheckl [valtok; coltok] [ValT; ColonT]))
-               (monad_bind (ptree_V vname_pt) (\
-             vname. monad_bind (ptree_Type nType type_pt) (\
-             ty.
-             SOME one))) | _131 -> NONE)`;;
+let ptree_SpecLine_def = cake_define_list
+  [`ptree_SpecLine (Lf _130:parsetree) = NONE`;
+   `ptree_SpecLine (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLine) then
+        NONE else
+        match args with
+            [td_pt] ->
+            monad_bind (ptree_TypeDec td_pt) (\
+              td.
+              SOME one) | [exntok; dcon_pt] ->
+            monad_ignore_bind
+              (assert (tokcheck exntok ExceptionT)) (monad_bind
+                (ptree_Dconstructor dcon_pt) (\
+              (nm,tys).
+              SOME one)) | [typetok; tynm_pt; opteqn_pt] ->
+            monad_ignore_bind
+              (assert (tokcheck typetok TypeT)) (monad_bind
+                (ptree_TypeName tynm_pt) (\
+              (vs,nm). monad_bind (ptree_OptTypEqn opteqn_pt) (\
+              opteqn.
+              SOME one))) | [valtok; vname_pt; coltok; type_pt] ->
+            monad_ignore_bind
+              (assert (tokcheckl [valtok; coltok] [ValT; ColonT]))
+                (monad_bind (ptree_V vname_pt) (\
+              vname. monad_bind (ptree_Type nType type_pt) (\
+              ty.
+              SOME one))) | _131 -> NONE)`];;
 
-let ptree_SpeclineList_def = cake_define
-  `ptree_SpeclineList (Lf _133) = NONE /\
-   ptree_SpeclineList (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLineList) then
-       NONE else
-       match args with
-           [] -> SOME one | [sl_pt; sll_pt] ->
-           (if tokcheck sl_pt SemicolonT then ptree_SpeclineList
-             sll_pt else
-             monad_bind (ptree_SpecLine sl_pt) (\
-               sl. monad_bind (ptree_SpeclineList sll_pt) (\
-               sll.
-               SOME one))) | _134 -> NONE)`;;
+let ptree_SpeclineList_def = cake_define_list
+  [`ptree_SpeclineList (Lf _133:parsetree) = NONE`;
+   `ptree_SpeclineList (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLineList) then
+        NONE else
+        match args with
+            [] -> SOME one | [sl_pt; sll_pt] ->
+            (if tokcheck sl_pt SemicolonT then ptree_SpeclineList
+              sll_pt else
+              monad_bind (ptree_SpecLine sl_pt) (\
+                sl. monad_bind (ptree_SpeclineList sll_pt) (\
+                sll.
+                SOME one))) | _134 -> NONE)`];;
 
-let ptree_SignatureValue_def = cake_define
-  `ptree_SignatureValue (Lf _136) = NONE /\
-   ptree_SignatureValue (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSignatureValue) then
-       NONE else
-       match args with
-           [sigtok; sll_pt; endtok] ->
-           monad_ignore_bind
-             (assert (tokcheckl [sigtok; endtok] [SigT; EndT])) (
-             ptree_SpeclineList sll_pt) | _137 -> NONE)`;;
+let ptree_SignatureValue_def = cake_define_list
+  [`ptree_SignatureValue (Lf _136:parsetree) = NONE`;
+   `ptree_SignatureValue (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSignatureValue)
+        then NONE else
+        match args with
+            [sigtok; sll_pt; endtok] ->
+            monad_ignore_bind
+              (assert (tokcheckl [sigtok; endtok] [SigT; EndT])) (
+              ptree_SpeclineList sll_pt) | _137 -> NONE)`];;
 
-let ptree_Decl_def = cake_define
-  `((ptree_Decl pt:dec option) =
-     (match pt with
-        Lf _138 -> NONE | Nd (nt',locs) args ->
-        (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecl) then NONE else
+let ptree_Decl_def = cake_define_list
+  [`(ptree_Decl pt:dec option) =
+        (match pt with
+           Lf _138 -> NONE | Nd (nt',locs) args ->
+           (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecl) then NONE
+             else
+             match args with
+                 [dt] ->
+                 monad_bind (ptree_TypeDec dt) (\
+                   tydec.
+                   SOME (Dtype (locs) tydec)) ++ ptree_TypeAbbrevDec
+                     dt ++ ptree_Structure dt | [funtok; fdecls] ->
+                 monad_ignore_bind
+                   (assert (tokcheck funtok FunT)) (monad_bind
+                     (ptree_AndFDecls fdecls) (\
+                   fdecs.
+                   SOME (Dletrec (locs) fdecs))) ++
+                 monad_ignore_bind
+                   (assert (tokcheck funtok ExceptionT)) (monad_bind
+                     (ptree_Dconstructor fdecls) (\
+                   (enm,etys).
+                   SOME (Dexn (locs) enm etys))) | [valtok; patpt;
+                     eqtok; ept] ->
+                 monad_ignore_bind
+                   (assert (tokcheckl [valtok; eqtok] [ValT;
+                     EqualsT])) (monad_bind (ptree_Pattern nPattern
+                     patpt) (\
+                   pat. monad_bind (ptree_Expr nE ept) (\
+                   e.
+                   SOME (Dlet (locs) pat e)))) | [localtok;
+                     decls1_pt; intok; decls2_pt; endtok] ->
+                 monad_ignore_bind
+                   (assert (tokcheckl [localtok; intok; endtok]
+                     [LocalT; InT; EndT])) (monad_bind (ptree_Decls
+                     decls1_pt) (\
+                   decls1. monad_bind (ptree_Decls decls2_pt) (\
+                   decls2.
+                   return (Dlocal decls1 decls2)))) | _139 ->
+                     NONE))`;
+   `ptree_Decls (Lf _140:parsetree) = NONE`;
+   `ptree_Decls (Nd (nt',_141) args:parsetree) =
+        (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecls) then NONE
+          else
           match args with
-              [dt] ->
-              monad_bind (ptree_TypeDec dt) (\
-                tydec.
-                SOME (Dtype (locs) tydec)) ++ ptree_TypeAbbrevDec dt
-                  ++ ptree_Structure dt | [funtok; fdecls] ->
-              monad_ignore_bind
-                (assert (tokcheck funtok FunT)) (monad_bind
-                  (ptree_AndFDecls fdecls) (\
-                fdecs.
-                SOME (Dletrec (locs) fdecs))) ++
-              monad_ignore_bind
-                (assert (tokcheck funtok ExceptionT)) (monad_bind
-                  (ptree_Dconstructor fdecls) (\
-                (enm,etys).
-                SOME (Dexn (locs) enm etys))) | [valtok; patpt;
-                  eqtok; ept] ->
-              monad_ignore_bind
-                (assert (tokcheckl [valtok; eqtok] [ValT; EqualsT]))
-                  (monad_bind (ptree_Pattern nPattern patpt) (\
-                pat. monad_bind (ptree_Expr nE ept) (\
-                e.
-                SOME (Dlet (locs) pat e)))) | [localtok; decls1_pt;
-                  intok; decls2_pt; endtok] ->
-              monad_ignore_bind
-                (assert (tokcheckl [localtok; intok; endtok] [LocalT;
-                  InT; EndT])) (monad_bind (ptree_Decls decls1_pt) (\
-                decls1. monad_bind (ptree_Decls decls2_pt) (\
-                decls2.
-                return (Dlocal decls1 decls2)))) | _139 -> NONE))) /\
-   ptree_Decls (Lf _140) = NONE /\
-   (ptree_Decls (Nd (nt',_141) args) =
-     (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nDecls) then NONE else
-       match args with
-           [] -> SOME [] | [d_pt; ds_pt] ->
-           (if tokcheck d_pt SemicolonT then ptree_Decls ds_pt else
-             monad_bind (ptree_Decl d_pt) (\
-               d. monad_bind (ptree_Decls ds_pt) (\
-               ds.
-               SOME (d :: ds)))) | _142 -> NONE)) /\
-   ptree_Structure (Lf _143) = NONE /\
-   ptree_Structure (Nd nt' args) =
-     (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nStructure) then NONE
-       else
-       match args with
-           [structuretok; sname_pt; asc_opt; eqtok; structtok; ds_pt;
-             endtok] ->
-           monad_ignore_bind
-             (assert (tokcheckl [structtok; structuretok; eqtok;
-               endtok]
+              [] -> SOME [] | [d_pt; ds_pt] ->
+              (if tokcheck d_pt SemicolonT then ptree_Decls ds_pt
+                else
+                monad_bind (ptree_Decl d_pt) (\
+                  d. monad_bind (ptree_Decls ds_pt) (\
+                  ds.
+                  SOME (d :: ds)))) | _142 -> NONE)`;
+   `ptree_Structure (Lf _143:parsetree) = NONE`;
+   `ptree_Structure (Nd nt' args:parsetree) =
+      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nStructure) then
+        NONE else
+        match args with
+            [structuretok; sname_pt; asc_opt; eqtok; structtok;
+              ds_pt; endtok] ->
+            monad_ignore_bind
+              (assert (tokcheckl [structtok; structuretok; eqtok;
+                endtok]
                               [StructT; StructureT; EqualsT; EndT]))
                                 (monad_bind (ptree_StructName sname_pt)
                                 (\
-             sname. monad_bind (match asc_opt with
-                        Lf _144 -> NONE | Nd nt' args ->
-                          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num)
-                            nOptionalSignatureAscription) then
-                            NONE else
-                            match args with
+              sname. monad_bind (match asc_opt with
+                         Lf _144 -> NONE | Nd nt' args ->
+                           (if ~(FST nt' =
+                             (INL:MMLnonT->MMLnonT+num)
+                             nOptionalSignatureAscription) then
+                             NONE else
+                             match args with
                               [] -> SOME NONE | [sealtok; sig_pt] ->
                               monad_ignore_bind
                               (assert (tokcheck sealtok SealT))
@@ -1236,39 +1254,40 @@ let ptree_Decl_def = cake_define
                                 sig_pt) (\
                               sigv.
                               SOME (SOME sigv))) | _145 -> NONE)) (\
-             asc. monad_bind (ptree_Decls ds_pt) (\
-             ds.
-             SOME (Dmod sname ds))))) | _146 -> NONE)`;;
+              asc. monad_bind (ptree_Decls ds_pt) (\
+              ds.
+              SOME (Dmod sname ds))))) | _146 -> NONE)`];;
 
-let ptree_TopLevelDecs_def = cake_define
-  `ptree_TopLevelDecs (Lf _147) = fail /\
-   (ptree_TopLevelDecs (Nd nt' args) =
-      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs) then
-        fail else
-        match args with
-            [] -> return [] | [td_pt; tds_pt] ->
-            (if tokcheck td_pt SemicolonT then ptree_TopLevelDecs
-              tds_pt else
-              monad_bind (ptree_Decl td_pt) (\
-                td. monad_bind (ptree_NonETopLevelDecs tds_pt) (\
-                tds.
-                return (td :: tds)))) | [e_pt; semitok; tds_pt] ->
-            monad_ignore_bind
-              (assert (tokcheck semitok SemicolonT)) (monad_bind
-                (ptree_Expr nE e_pt) (\
-              e. monad_bind (ptree_TopLevelDecs tds_pt) (\
-              tds.
-              return (Dlet (SND nt') (Pvar (implode "it")) e ::
-                tds)))) | _148 -> NONE)) /\
-   (ptree_NonETopLevelDecs (Lf _149) = fail) /\
-   (ptree_NonETopLevelDecs (Nd nt' args) =
-      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nNonETopLevelDecs)
-        then fail else
-        match args with
-          [] -> return [] | [pt1; pt2] ->
-          (if tokcheck pt1 SemicolonT then ptree_TopLevelDecs pt2
-            else
-            monad_bind (ptree_Decl pt1) (\
-              td. monad_bind (ptree_NonETopLevelDecs pt2) (\
-              tds.
-              return (td :: tds)))) | _150 -> fail))`;;
+let ptree_TopLevelDecs_def = cake_define_list
+  [`ptree_TopLevelDecs (Lf _147:parsetree) = fail`;
+   `ptree_TopLevelDecs (Nd nt' args:parsetree) =
+         (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs)
+           then fail else
+           match args with
+               [] -> return [] | [td_pt; tds_pt] ->
+               (if tokcheck td_pt SemicolonT then ptree_TopLevelDecs
+                 tds_pt else
+                 monad_bind (ptree_Decl td_pt) (\
+                   td. monad_bind (ptree_NonETopLevelDecs tds_pt) (\
+                   tds.
+                   return (td :: tds)))) | [e_pt; semitok; tds_pt]
+                     ->
+               monad_ignore_bind
+                 (assert (tokcheck semitok SemicolonT)) (monad_bind
+                   (ptree_Expr nE e_pt) (\
+                 e. monad_bind (ptree_TopLevelDecs tds_pt) (\
+                 tds.
+                 return (Dlet (SND nt') (Pvar (implode "it")) e
+                   :: tds)))) | _148 -> NONE)`;
+   `ptree_NonETopLevelDecs (Lf _149:parsetree) = fail`;
+   `ptree_NonETopLevelDecs (Nd nt' args:parsetree) =
+         (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num)
+           nNonETopLevelDecs) then fail else
+           match args with
+             [] -> return [] | [pt1; pt2] ->
+             (if tokcheck pt1 SemicolonT then ptree_TopLevelDecs pt2
+               else
+               monad_bind (ptree_Decl pt1) (\
+                 td. monad_bind (ptree_NonETopLevelDecs pt2) (\
+                 tds.
+                 return (td :: tds)))) | _150 -> fail)`];;

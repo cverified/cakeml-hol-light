@@ -51,19 +51,18 @@ let lift_lets_def = cake_define
          (match sofar with [] -> NONE | _4 -> SOME (REVERSE
            sofar,d)) | SOME (d1,d2) -> lift_lets (d1 :: sofar) d2)`;;
 
-(* TERMINATION: wf_rel_tac ‘measure (list_size dec_size)’ *)
-let compile_decs_def = cake_define
-  `(source_let_compile_decs [] = []) /\
-   (source_let_compile_decs (d :: ds) =
-     (match lift_lets [] d with SOME (pre,d) -> Dlocal pre [d] ::
-       source_let_compile_decs ds | NONE ->
-         (match d with Dmod mn ds1 ->
-             Dmod mn (source_let_compile_decs ds1) ::
-               source_let_compile_decs ds | Dlocal ds1 ds2 ->
-             Dlocal (source_let_compile_decs ds1)
-               (source_let_compile_decs ds2) ::
-               source_let_compile_decs ds | _6 -> d ::
-               source_let_compile_decs ds)))`;;
+let compile_decs_def = cake_define_list
+  [`source_let_compile_decs [] = []`;
+   `source_let_compile_decs (d :: ds) =
+        (match lift_lets [] d with SOME (pre,d) -> Dlocal pre [d] ::
+          source_let_compile_decs ds | NONE ->
+            (match d with Dmod mn ds1 ->
+                Dmod mn (source_let_compile_decs ds1) ::
+                  source_let_compile_decs ds | Dlocal ds1 ds2 ->
+                Dlocal (source_let_compile_decs ds1)
+                  (source_let_compile_decs ds2) ::
+                  source_let_compile_decs ds | _6 -> d ::
+                  source_let_compile_decs ds))`];;
 hol4_overload "compile_decs" "source_let_compile_decs";;
 
 (*

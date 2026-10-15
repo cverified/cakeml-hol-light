@@ -139,26 +139,26 @@ let closed_def = cake_define
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (free [x])))`;;
 hol4_overload "closed" "clos_call_closed";;
 
-let insert_each_def = cake_define
-  `(insert_each p 0 g = g) /\
-   (insert_each p (SUC n) (g1,g2) = insert_each (p + 2) n (insert
-     p one g1,g2))`;;
+let insert_each_def = cake_define_list
+  [`insert_each p 0 g = g`;
+   `insert_each p (SUC n) (g1,g2) = insert_each (p + 2) n (insert p
+  one g1,g2)`];;
 
-let code_list_def = cake_define
-  `(code_list loc [] g = g) /\
-   (code_list loc ((n,p) :: xs) (g1,g2) =
-      code_list (loc + 2) xs (g1,(loc + 1,n,p) :: g2))`;;
+let code_list_def = cake_define_list
+  [`code_list loc [] g = g`;
+   `code_list loc ((n,p) :: xs) (g1,g2) =
+         code_list (loc + 2) xs (g1,(loc + 1,n,p) :: g2)`];;
 
 let GENLIST_Var_def = cake_define
   `GENLIST_Var t (i:num) n =
      (if n = 0 then [] else
        GENLIST_Var t (i + 1) (n - (1:num)) ++ [Var t (n - 1)])`;;
 
-let calls_list_def = cake_define
-  `(calls_list t (i:num) loc [] = []) /\
-   (calls_list t i loc ((n,_5) :: xs) =
-      (n,Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
-           calls_list t (i + 1) (loc + 2) xs)`;;
+let calls_list_def = cake_define_list
+  [`calls_list t (i:num) loc [] = []`;
+   `calls_list t i loc ((n,_5) :: xs) =
+         (n,Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
+              calls_list t (i + 1) (loc + 2) xs`];;
 
 let calls_def = cake_define_list
   [`calls [] g = ([],g)`;
@@ -210,8 +210,8 @@ let calls_def = cake_define_list
            if IS_SOME loc_opt /\ IS_SOME (lookup loc (FST g)) then
              if pure x then ([Call t (LENGTH es) (loc + 1) es],g)
                else
-               ([Let (§ t 0) (SNOC e1 es)
-                  (Call (§ t 1) (LENGTH es) (loc + 1)
+               ([Let (mk_cons t 0) (SNOC e1 es)
+                  (Call (mk_cons t 1) (LENGTH es) (loc + 1)
                     (GENLIST_Var None 2 (LENGTH es)))],g) else ([App
                     t loc_opt e1 es],g))`;
    `calls [(Fn t loc_opt ws num_args x1:closLang_exp)] g =
@@ -234,14 +234,14 @@ let calls_def = cake_define_list
          let (fns1,new_g) = calls (MAP SND fns) new_g in
            if EVERY2 (\(n,_6) p. closed (Fn (implode "") NONE NONE n
              p)) fns fns1 then
-             let new_g = code_list loc (ZIP (MAP FST fns,fns1))
+             let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
              let (e1,g) = calls [x1] new_g in
                ([Letrec t loc_opt ws (calls_list None 1 loc fns) (HD
                  e1)],g) else
              let (fns1,g) = calls (MAP SND fns) g in
              let (e1,g) = calls [x1] g in
-               ([Letrec t loc_opt ws (ZIP (MAP FST fns,fns1)) (HD
+               ([Letrec t loc_opt ws (ZIP (MAP FST fns) fns1) (HD
                  e1)],g))`];;
 
 let calls_sing_def = cake_define_list
@@ -279,8 +279,8 @@ let calls_sing_def = cake_define_list
            in
            if IS_SOME loc_opt /\ IS_SOME (lookup loc (FST g)) then
              if pure x then (Call t (LENGTH es) (loc + 1) es,g) else
-               (Let (§ t 0) (SNOC e1 es)
-                  (Call (§ t 1) (LENGTH es) (loc + 1)
+               (Let (mk_cons t 0) (SNOC e1 es)
+                  (Call (mk_cons t 1) (LENGTH es) (loc + 1)
                     (GENLIST_Var None 2 (LENGTH es))),g) else (App t
                     loc_opt e1 es,g))`;
    `calls_sing (Fn t loc_opt ws num_args x1:closLang_exp) g =
@@ -303,14 +303,14 @@ let calls_sing_def = cake_define_list
          let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
            if EVERY2 (\(n,_7) p. closed (Fn (implode "") NONE NONE n
              p)) fns fns1 then
-             let new_g = code_list loc (ZIP (MAP FST fns,fns1))
+             let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
              let (e1,g) = calls_sing x1 new_g in
                (Letrec t loc_opt ws (calls_list None 1 loc fns)
                  e1,g) else
              let (fns1,g) = calls_sing_list (MAP SND fns) g in
              let (e1,g) = calls_sing x1 g in
-               (Letrec t loc_opt ws (ZIP (MAP FST fns,fns1))
+               (Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
                  e1,g))`;
    `calls_sing_list [] g = ([],g)`;
    `calls_sing_list ((x:closLang_exp) :: xs) g =
@@ -318,10 +318,9 @@ let calls_sing_def = cake_define_list
          let (e2,g) = calls_sing_list xs g in
            (e1 :: e2,g))`];;
 
-let compile_def = cake_define
-  `clos_call_compile F x = (x,(LN,[])) /\
-   clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in
-     (xs,g))`;;
+let compile_def = cake_define_list
+  [`clos_call_compile F x = (x,(LN,[]))`;
+   `clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in (xs,g))`];;
 hol4_overload "compile" "clos_call_compile";;
 
 let compile_inc_def = cake_define

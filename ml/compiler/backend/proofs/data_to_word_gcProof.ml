@@ -8,6 +8,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
@@ -230,7 +231,7 @@ val s = ``(s:('c,'ffi) dataSem$state)``
 *)
 
 let state_rel_thm = cake_define
-  `^
+  `(\x y. strcat x y)
      (state_rel c l1 l2) (s (t:('a,'c,'ffi)wordSem_state) v1 locs)
        <=>
        (?_ffi t = ?_ffi s) /\
@@ -343,11 +344,13 @@ let loc_ok_def = cake_define
 val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2``
 *)
 
-let loc_merge_def = cake_define
-  `(loc_merge [] ys = []) /\
-   (loc_merge (Loc l1 l2 :: xs) ys = Loc l1 l2 :: loc_merge xs ys) /\
-   (loc_merge (Word w :: xs) (y :: ys) = y :: loc_merge xs ys) /\
-   (loc_merge (Word w :: xs) [] = Word w :: xs)`;;
+let loc_merge_def = cake_define_list
+  [`loc_merge [] ys = []`;
+   `loc_merge ((Loc l1 l2:word_loc) :: xs) ys = Loc l1 l2 ::
+  loc_merge xs ys`;
+   `loc_merge ((Word w:word_loc) :: xs) (y :: ys) = y :: loc_merge xs
+  ys`;
+   `loc_merge ((Word w:word_loc) :: xs) [] = Word w :: xs`];;
 
 let traverse_heap = cake_inductive
   `(!heap p1.

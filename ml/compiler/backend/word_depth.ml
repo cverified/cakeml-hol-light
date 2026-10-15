@@ -28,17 +28,17 @@ hol4_overload "Branch" "word_depth_Branch";;
 
 (* computing the max stack depth *)
 
-let max_depth_def = cake_define
-  `max_depth frame_sizes Leaf = SOME 0 /\
-   max_depth frame_sizes Unknown = NONE /\
-   max_depth frame_sizes (Const n t) =
-     OPTION_MAP ((+) n) (max_depth frame_sizes t) /\
-   max_depth frame_sizes (Branch t1 t2) =
-     OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth
-       frame_sizes t2) /\
-   max_depth frame_sizes (Call n t) =
-     OPTION_MAP2 (+) (lookup n frame_sizes) (max_depth frame_sizes
-       t)`;;
+let max_depth_def = cake_define_list
+  [`max_depth frame_sizes Leaf = SOME 0`;
+   `max_depth frame_sizes Unknown = NONE`;
+   `max_depth frame_sizes (Const n t:call_tree) =
+      OPTION_MAP ((+) n) (max_depth frame_sizes t)`;
+   `max_depth frame_sizes (Branch t1 t2:call_tree) =
+      OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth
+        frame_sizes t2)`;
+   `max_depth frame_sizes (Call n t:call_tree) =
+      OPTION_MAP2 (+) (lookup n frame_sizes) (max_depth
+        frame_sizes t)`];;
 
 (* computing the call graph *)
 
@@ -102,12 +102,12 @@ let full_call_graph_def = cake_define
                               (call_graph funs n [n] (size funs)
                                 prog))`;;
 
-let max_depth_graphs_def = cake_define
-  `max_depth_graphs ss [] all' funs all_funs = SOME 0 /\
-   max_depth_graphs ss (n :: ns) all' funs all_funs =
-     (match lookup n all_funs with NONE -> NONE | SOME (a,body) ->
-         OPTION_MAP2 MAX (lookup n ss)
-        (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all' (size
-          all_funs) body))
-                         (max_depth_graphs ss ns all' funs
-                           all_funs)))`;;
+let max_depth_graphs_def = cake_define_list
+  [`max_depth_graphs ss [] all' funs all_funs = SOME 0`;
+   `max_depth_graphs ss (n :: ns) all' funs all_funs =
+      (match lookup n all_funs with NONE -> NONE | SOME (a,body) ->
+          OPTION_MAP2 MAX (lookup n ss)
+         (OPTION_MAP2 MAX (max_depth ss (call_graph funs n all'
+           (size all_funs) body))
+                          (max_depth_graphs ss ns all' funs
+                            all_funs)))`];;

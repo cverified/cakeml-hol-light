@@ -291,60 +291,57 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * pattern and value come from the same type.  Match_type_error is
    returned
  * when one of these conditions is violated *)
-let _ = size_thms "list";;
-let _ = size_thms "pat";;
-(* HOL4 termination: *)
-let pmatch_def = cake_define_wf
-  `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> pat_size p | INR
-  (s,a,ps,b,c) -> list_size pat_size ps)`
-  `semanticPrimitives_pmatch envC s Pany v' env = Match env /\
-   semanticPrimitives_pmatch envC s (Pvar x) v' env = Match ((x,v')
-     :: env) /\
-   semanticPrimitives_pmatch envC s (Plit l) (Litv l') env =
-   (if l = l' then Match env else if lit_same_type l l' then No_match
-     else Match_type_error) /\
-   semanticPrimitives_pmatch envC s (Pcon (SOME n) ps) (Conv (SOME
-     stamp') vs) env =
-   (match nsLookup envC n with
-      NONE -> Match_type_error | SOME (l,stamp) ->
-        (if same_type stamp stamp' /\ LENGTH ps = l then
-          if same_ctor stamp stamp' then
-            if LENGTH vs = l then semanticPrimitives_pmatch_list envC
-              s ps vs env else Match_type_error else No_match else
-              Match_type_error)) /\
-   semanticPrimitives_pmatch envC s (Pcon NONE ps) (Conv NONE vs) env
-     =
-   (if LENGTH ps = LENGTH vs then semanticPrimitives_pmatch_list envC
-     s ps vs env else Match_type_error) /\
-   semanticPrimitives_pmatch envC s (Pref p) (Loc _28 lnum) env =
-   (match store_lookup lnum s with
-      NONE -> Match_type_error | SOME (Refv v) ->
-        semanticPrimitives_pmatch envC s p v env | SOME _29 ->
-        Match_type_error) /\
-   semanticPrimitives_pmatch envC s (Pas p i) v env =
-     semanticPrimitives_pmatch envC s p v ((i,v) :: env) /\
-   semanticPrimitives_pmatch envC s (Ptannot p t) v env =
-     semanticPrimitives_pmatch envC s p v env /\
-   semanticPrimitives_pmatch envC s _30 _31 env = Match_type_error /\
-   semanticPrimitives_pmatch_list envC s [] [] env = Match env /\
-   semanticPrimitives_pmatch_list envC s (p :: ps) (v :: vs) env =
-   (match semanticPrimitives_pmatch envC s p v env with
-      No_match ->
-        (match semanticPrimitives_pmatch_list envC s ps vs env with
-           No_match -> No_match | Match_type_error ->
-             Match_type_error | Match v1 -> No_match) | Match_type_error
-             -> Match_type_error | Match env' ->
-             semanticPrimitives_pmatch_list envC s ps vs env') /\
-   semanticPrimitives_pmatch_list envC s _32 _33 env =
-     Match_type_error`;;
+let pmatch_def = cake_define_list
+  [`semanticPrimitives_pmatch envC s Pany v' env = Match env`;
+   `semanticPrimitives_pmatch envC s (Pvar x:ast_pat) v' env = Match
+  ((x,v') :: env)`;
+   `semanticPrimitives_pmatch envC s (Plit l:ast_pat) (Litv
+  l':semanticPrimitives_v) env =
+    (if l = l' then Match env else if lit_same_type l l' then
+      No_match else Match_type_error)`;
+   `semanticPrimitives_pmatch envC s (Pcon (SOME n) ps:ast_pat) (Conv
+  (SOME stamp') vs:semanticPrimitives_v) env =
+    (match nsLookup envC n with
+       NONE -> Match_type_error | SOME (l,stamp) ->
+         (if same_type stamp stamp' /\ LENGTH ps = l then
+           if same_ctor stamp stamp' then
+             if LENGTH vs = l then semanticPrimitives_pmatch_list
+               envC s ps vs env else Match_type_error else No_match
+               else Match_type_error))`;
+   `semanticPrimitives_pmatch envC s (Pcon NONE ps:ast_pat) (Conv NONE
+  vs:semanticPrimitives_v) env =
+    (if LENGTH ps = LENGTH vs then semanticPrimitives_pmatch_list
+      envC s ps vs env else Match_type_error)`;
+   `semanticPrimitives_pmatch envC s (Pref p:ast_pat) (Loc _28
+  lnum:semanticPrimitives_v) env =
+    (match store_lookup lnum s with
+       NONE -> Match_type_error | SOME (Refv v) ->
+         semanticPrimitives_pmatch envC s p v env | SOME _29 ->
+         Match_type_error)`;
+   `semanticPrimitives_pmatch envC s (Pas p i:ast_pat) v env =
+  semanticPrimitives_pmatch envC s p v ((i,v) :: env)`;
+   `semanticPrimitives_pmatch envC s (Ptannot p t:ast_pat) v env =
+  semanticPrimitives_pmatch envC s p v env`;
+   `semanticPrimitives_pmatch envC s _30 _31 env = Match_type_error`;
+   `semanticPrimitives_pmatch_list envC s [] [] env = Match env`;
+   `semanticPrimitives_pmatch_list envC s (p :: ps) (v :: vs) env =
+    (match semanticPrimitives_pmatch envC s p v env with
+       No_match ->
+         (match semanticPrimitives_pmatch_list envC s ps vs env with
+            No_match -> No_match | Match_type_error ->
+              Match_type_error | Match v1 -> No_match) |
+              Match_type_error -> Match_type_error | Match env' ->
+              semanticPrimitives_pmatch_list envC s ps vs env')`;
+   `semanticPrimitives_pmatch_list envC s _32 _33 env =
+  Match_type_error`];;
 hol4_overload "pmatch" "semanticPrimitives_pmatch";;
 hol4_overload "pmatch_list" "semanticPrimitives_pmatch_list";;
 
-let can_pmatch_all_def = cake_define
-  `(can_pmatch_all envC refs [] v <=> T) /\
-   (can_pmatch_all envC refs (p :: ps) v <=>
-      (if pmatch envC refs p v [] = Match_type_error then F else
-        can_pmatch_all envC refs ps v))`;;
+let can_pmatch_all_def = cake_define_list
+  [`can_pmatch_all envC refs [] v <=> T`;
+   `can_pmatch_all envC refs (p :: ps) v <=>
+         (if pmatch envC refs p v [] = Match_type_error then F
+           else can_pmatch_all envC refs ps v)`];;
 
 (* Bind each function of a mutually recursive set of functions to its
    closure *)
@@ -440,12 +437,11 @@ let v_to_list_def = cake_define
       | _39 -> NONE`;;
 hol4_overload "v_to_list" "semanticPrimitives_v_to_list";;
 
-let list_to_v_def = cake_define
-  `semanticPrimitives_list_to_v [] = Conv (SOME (TypeStamp (implode
-  "[]") list_type_num)) [] /\
-   semanticPrimitives_list_to_v (x :: xs) = Conv (SOME (TypeStamp
-     (implode "::") list_type_num)) [x; semanticPrimitives_list_to_v
-     xs]`;;
+let list_to_v_def = cake_define_list
+  [`semanticPrimitives_list_to_v [] = Conv (SOME (TypeStamp (implode
+  "[]") list_type_num)) []`;
+   `semanticPrimitives_list_to_v (x :: xs) = Conv (SOME (TypeStamp
+  (implode "::") list_type_num)) [x; semanticPrimitives_list_to_v xs]`];;
 hol4_overload "list_to_v" "semanticPrimitives_list_to_v";;
 
 let v_to_char_list_def = cake_define
@@ -471,11 +467,11 @@ let vs_to_string_def = cake_define
       | (_41 :: v1) -> NONE`;;
 hol4_overload "vs_to_string" "semanticPrimitives_vs_to_string";;
 
-let maybe_to_v_def = cake_define
-  `maybe_to_v NONE = Conv (SOME (TypeStamp (implode "None")
-  option_type_num)) [] /\
-   maybe_to_v (SOME v) = Conv (SOME (TypeStamp (implode "Some")
-     option_type_num)) [v]`;;
+let maybe_to_v_def = cake_define_list
+  [`maybe_to_v NONE = Conv (SOME (TypeStamp (implode "None")
+  option_type_num)) []`;
+   `maybe_to_v (SOME v) = Conv (SOME (TypeStamp (implode "Some")
+  option_type_num)) [v]`];;
 
 let v_to_id_def = cake_define
   `v_to_id x1 =
@@ -563,19 +559,13 @@ let declare_env_def = cake_define
 (* Concrete, or first-order values, which do not contain code closures
    and
    are unchanged by many compiler phases. *)
-let _ = size_thms "list";;
-let _ = size_thms "v";;
-(* HOL4 termination: *)
-let concrete_v_def = cake_define_wf
-  `MEASURE (\x. match x with INL v -> v_size v | INR vs -> list_size
-  v_size vs)`
-  `(concrete_v v <=>
-      (match v with Loc _45 _46 -> T | Litv _47 -> T | Conv v_ vs ->
-        concrete_v_list vs | Vectorv vs -> concrete_v_list vs | _48 ->
-        F)) /\
-   (concrete_v_list [] <=> T) /\
-   (concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list
-     vs)`;;
+let concrete_v_def = cake_define_list
+  [`concrete_v v <=>
+         (match v with Loc _45 _46 -> T | Litv _47 -> T | Conv v_
+           vs -> concrete_v_list vs | Vectorv vs -> concrete_v_list
+           vs | _48 -> F)`;
+   `concrete_v_list [] <=> T`;
+   `concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list vs`];;
 
 let compiler_agrees_def = cake_define
   `compiler_agrees (f:(num#num)#semanticPrimitives_v#dec
@@ -829,18 +819,18 @@ let the_Litv_Char_def = cake_define
 let the_Boolv_def = cake_define
   `the_Boolv v = (v = Boolv T)`;;
 
-let num_cmp_def = cake_define
-  `semanticPrimitives_num_cmp Lt i j = (i < (j:num)) /\
-   semanticPrimitives_num_cmp Leq i j = (i <= j) /\
-   semanticPrimitives_num_cmp Gt i j = (i > j) /\
-   semanticPrimitives_num_cmp Geq i j = (i >= j)`;;
+let num_cmp_def = cake_define_list
+  [`semanticPrimitives_num_cmp Lt i j = (i < (j:num))`;
+   `semanticPrimitives_num_cmp Leq i j = (i <= j)`;
+   `semanticPrimitives_num_cmp Gt i j = (i > j)`;
+   `semanticPrimitives_num_cmp Geq i j = (i >= j)`];;
 hol4_overload "num_cmp" "semanticPrimitives_num_cmp";;
 
-let int_cmp_def = cake_define
-  `semanticPrimitives_int_cmp Lt i j = (i < (j:int)) /\
-   semanticPrimitives_int_cmp Leq i j = (i <= j) /\
-   semanticPrimitives_int_cmp Gt i j = (i > j) /\
-   semanticPrimitives_int_cmp Geq i j = (i >= j)`;;
+let int_cmp_def = cake_define_list
+  [`semanticPrimitives_int_cmp Lt i j = (i < (j:int))`;
+   `semanticPrimitives_int_cmp Leq i j = (i <= j)`;
+   `semanticPrimitives_int_cmp Gt i j = (i > j)`;
+   `semanticPrimitives_int_cmp Geq i j = (i >= j)`];;
 hol4_overload "int_cmp" "semanticPrimitives_int_cmp";;
 
 let str_cmp_def = cake_define
@@ -855,24 +845,25 @@ let str_cmp_def = cake_define
       | (T,Gt) -> fast_gt i j
       | (T,Geq) -> fast_ge i j`;;
 
-let do_test_def = cake_define
-  `semanticPrimitives_do_test Equal ty v1 v2 =
-     (if check_type ty v1 /\ check_type ty v2 then
-        (if ty = Float64T then Eq_val (fp64_equal (the_Litv_Float64
-          v1) (the_Litv_Float64 v2)) else do_eq v1 v2) else
-          Eq_type_error) /\
-   semanticPrimitives_do_test (Compare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME (IntLit
-       i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) | (CharT,SOME
-       (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp (ORD c) (ORD d)) |
-       (WordT W8,SOME (Word8 w),SOME (Word8 v)) -> Eq_val (num_cmp cmp
-       (w2n w) (w2n v)) | (Float64T,SOME (Float64 w),SOME (Float64 v))
-       -> Eq_val (fp_cmp cmp w v) | (StrT,SOME (StrLit s),SOME (StrLit
-       t)) -> Eq_val (str_cmp F cmp s t) | _61 -> Eq_type_error) /\
-   semanticPrimitives_do_test (AltCompare cmp) ty v1 v2 =
-     (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME (StrLit
-       s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) | _62 ->
-       Eq_type_error)`;;
+let do_test_def = cake_define_list
+  [`semanticPrimitives_do_test Equal ty v1 v2 =
+      (if check_type ty v1 /\ check_type ty v2 then
+         (if ty = Float64T then Eq_val (fp64_equal
+           (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
+           v2) else Eq_type_error)`;
+   `semanticPrimitives_do_test (Compare cmp:test) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
+        (IntLit i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) |
+        (CharT,SOME (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp
+        (ORD c) (ORD d)) | (WordT W8,SOME (Word8 w),SOME (Word8 v))
+        -> Eq_val (num_cmp cmp (w2n w) (w2n v)) | (Float64T,SOME
+        (Float64 w),SOME (Float64 v)) -> Eq_val (fp_cmp cmp w v) |
+        (StrT,SOME (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp F
+        cmp s t) | _61 -> Eq_type_error)`;
+   `semanticPrimitives_do_test (AltCompare cmp:test) ty v1 v2 =
+      (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME
+        (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) |
+        _62 -> Eq_type_error)`];;
 hol4_overload "do_test" "semanticPrimitives_do_test";;
 
 let do_arith_def = cake_define
@@ -1226,13 +1217,14 @@ let build_constrs_def = cake_define
        condefs`;;
 
 (* Build a constructor environment for the type definition tds *)
-let build_tdefs_def = cake_define
-  `build_tdefs next_stamp ([]:(mlstring list#mlstring#(mlstring#ast_t
+let build_tdefs_def = cake_define_list
+  [`build_tdefs next_stamp ([]:(mlstring list#mlstring#(mlstring#ast_t
   list) list) list) =
-     ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace) /\
-   build_tdefs next_stamp ((tvs,tn,condefs) :: tds) =
-     nsAppend (build_tdefs (next_stamp + 1) tds)
-       (alist_to_ns (REVERSE (build_constrs next_stamp condefs)))`;;
+      ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace)`;
+   `build_tdefs next_stamp ((tvs,tn,condefs) :: tds) =
+      nsAppend (build_tdefs (next_stamp + 1) tds)
+        (alist_to_ns (REVERSE (build_constrs next_stamp
+          condefs)))`];;
 
 (* Checks that no constructor is defined twice in a type *)
 let check_dup_ctors_def = cake_define
@@ -1258,5 +1250,3 @@ let extend_dec_env_def = cake_define
 (* HOL4 ML code, not ported:
 val _ = set_fixity "+++" (Infixl 480);
 *)
-(* HOL4 overload (expanded in the port):
-     None =  *)

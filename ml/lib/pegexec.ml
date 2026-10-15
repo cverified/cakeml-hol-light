@@ -19,10 +19,10 @@ let kont_INDUCT,kont_RECURSION = define_datatype
    list->'cvalue) (kont) | listsym (('atok,'bnt,'cvalue,'err)pegsym) \
    ('cvalue list->'cvalue) (kont) | done | failed";;
 
-let poplist_aux_def = cake_define
-  `poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t /\
-   poplist_aux acc (NONE :: t) = (acc,t) /\
-   poplist_aux acc [] = (acc,[])`;;
+let poplist_aux_def = cake_define_list
+  [`poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t`;
+   `poplist_aux acc (NONE :: t) = (acc,t)`;
+   `poplist_aux acc [] = (acc,[])`];;
 
 let poplistval_def = cake_define
   `poplistval f l = (let (values,rest) = poplist_aux [] l in

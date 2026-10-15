@@ -201,16 +201,12 @@ let v_inv_eq = cake_define
    its
    pointer annotation is always 0 *)
 
-let _ = size_thms "v";;
-(* HOL4 termination: \\ rpt strip_tac \\ Induct_on `vs` \\ srw_tac []
-   [v_size_def] \\ res_tac \\ DECIDE_TAC *)
-let get_refs_def = cake_define_wf
-  `MEASURE (v_size)`
-  `(get_refs (Number _2:dataSem_v) = []) /\
-   (get_refs (Word64 _3) = []) /\
-   (get_refs (CodePtr _4) = []) /\
-   (get_refs (RefPtr _5 p) = [p]) /\
-   (get_refs (Block _6 _7 vs) = FLAT (MAP get_refs vs))`;;
+let get_refs_def = cake_define_list
+  [`get_refs (Number _2:dataSem_v) = []`;
+   `get_refs (Word64 _3:dataSem_v) = []`;
+   `get_refs (CodePtr _4:dataSem_v) = []`;
+   `get_refs (RefPtr _5 p:dataSem_v) = [p]`;
+   `get_refs (Block _6 _7 vs:dataSem_v) = FLAT (MAP get_refs vs)`];;
 
 let ref_edge_def = cake_define
   `ref_edge refs x res =
@@ -483,13 +479,13 @@ let data_length_def = cake_define
 
 (* Write to unused heap space is fine, e.g. cons *)
 
-let heap_store_def = cake_define
-  `(heap_store a y [] = ([],F)) /\
-   (heap_store a y (x :: xs) =
-     (if a = 0 then (y ++ xs,(el_length x = heap_length y)) else
-     if a < el_length x then (x :: xs,F) else
-       let (xs,c) = heap_store (a - el_length x) y xs in
-         (x :: xs,c)))`;;
+let heap_store_def = cake_define_list
+  [`heap_store a y [] = ([],F)`;
+   `heap_store a y (x :: xs) =
+        (if a = 0 then (y ++ xs,(el_length x = heap_length y)) else
+        if a < el_length x then (x :: xs,F) else
+          let (xs,c) = heap_store (a - el_length x) y xs in
+            (x :: xs,c))`];;
 
 let isUnused_def = cake_define
   `isUnused x = (?k. x = Unused k)`;;
@@ -520,14 +516,15 @@ let heap_store_rel_def = cake_define
 
 (* --- Allocating multiple cons-elements in one go --- *)
 
-let list_to_BlockReps_def = cake_define
-  `list_to_BlockReps conf t a [] = ARB /\
-   list_to_BlockReps conf t a (h :: l) =
-     (match l with
-       [] -> [BlockRep cons_tag [h; t]] | _21 ->
-         BlockRep cons_tag
-           [h; Pointer (a + 3) (Word (ptr_bits conf cons_tag 2))] ::
-             list_to_BlockReps conf t (a + 3) l)`;;
+let list_to_BlockReps_def = cake_define_list
+  [`list_to_BlockReps conf t a [] = ARB`;
+   `list_to_BlockReps conf t a (h :: l) =
+      (match l with
+        [] -> [BlockRep cons_tag [h; t]] | _21 ->
+          BlockRep cons_tag
+            [h; Pointer (a + 3) (Word (ptr_bits conf cons_tag 2))]
+              ::
+              list_to_BlockReps conf t (a + 3) l)`];;
 
 (* HOL4 ML code, not ported:
 fun unlength_tac thms =
@@ -535,10 +532,10 @@ fun unlength_tac thms =
   \\ fs [GSYM heap_length_def]
 *)
 
-let bind_each_def = cake_define
-  `bind_each tf ts (k:num) i 0 = tf /\
-   bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k +
-     i) i n |+ (ts,k)`;;
+let bind_each_def = cake_define_list
+  [`bind_each tf ts (k:num) i 0 = tf`;
+   `bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k + i)
+  i n |+ (ts,k)`];;
 
 (* A timestamp that is not in the  *)
 
@@ -744,62 +741,68 @@ let word_addr_def = cake_define
         | (Data (Word v)) -> Word (v && (--(n2w 1)))
         | (Pointer n w) -> Word (get_addr conf n w)`;;
 
-let thunk_tag_to_bits_def = cake_define
-  `thunk_tag_to_bits Evaluated = (n2w 1) /\
-   thunk_tag_to_bits NotEvaluated = (n2w 0)`;;
+let thunk_tag_to_bits_def = cake_define_list
+  [`thunk_tag_to_bits Evaluated = (n2w 1)`;
+   `thunk_tag_to_bits NotEvaluated = (n2w 0)`];;
 
-let word_payload_def = cake_define
-  `(word_payload ys l (BlockTag n) qs conf =
-      (make_header conf (n2w n << 2) (LENGTH ys),
-       MAP (word_addr conf) ys,(
-       (qs = []) /\ (LENGTH ys = l) /\
-       encode_header conf (n * 4) (LENGTH ys) =
-         SOME (make_header conf (n2w n << 2) (LENGTH ys):'a word))))
-           /\
-   (word_payload ys l (RefTag) qs conf =
-      (make_header conf (n2w 2) (LENGTH ys),
-       MAP (word_addr conf) ys,(
-       (qs = []) /\ (LENGTH ys = l)))) /\
-   (word_payload ys l (ThunkTag e) qs conf =
-      (make_header conf (thunk_tag_to_bits e << 3 || (n2w 6)) (LENGTH
-        ys),
-       MAP (word_addr conf) ys,(
-       (qs = []) /\ (LENGTH ys = 1) /\ l = 1))) /\
-   (word_payload ys l Word64Tag qs conf =
-      (make_header conf (n2w 3) l,
-       qs,((ys = []) /\ (LENGTH qs = l) /\
-           IS_SOME ((encode_header conf 3 l):('a word) option)))) /\
-   (word_payload ys l (NumTag b) qs conf =
-      (make_header conf (b2w b << 2 || ((n2w 3):'a word)) (LENGTH
-        qs),
-       qs,((ys = []) /\ (LENGTH qs = l) /\
-           IS_SOME ((encode_header conf (w2n (b2w b << 2 || ((n2w
-             3):'a word)))
-                       (LENGTH qs)):('a word) option)))) /\
-   (word_payload ys l (BytesTag fl n) qs conf =
-      (((make_byte_header conf fl n):'a word),
-       qs,((ys = []) /\ (LENGTH qs = l) /\
-           (let k = if dimindex (:'a) = 32 then 2 else 3 in
-           n + 2 EXP k < 2 EXP (data_to_word_config_len_size conf
-             + k)))))`;;
+let word_payload_def = cake_define_list
+  [`word_payload ys l (BlockTag n:data_to_word_memoryProof_tag) qs conf
+  =
+         (make_header conf (n2w n << 2) (LENGTH ys),
+          MAP (word_addr conf) ys,(
+          (qs = []) /\ (LENGTH ys = l) /\
+          encode_header conf (n * 4) (LENGTH ys) =
+            SOME (make_header conf (n2w n << 2) (LENGTH ys):'a
+              word)))`;
+   `word_payload ys l RefTag qs conf =
+         (make_header conf (n2w 2) (LENGTH ys),
+          MAP (word_addr conf) ys,(
+          (qs = []) /\ (LENGTH ys = l)))`;
+   `word_payload ys l (ThunkTag e:data_to_word_memoryProof_tag) qs conf
+  =
+         (make_header conf (thunk_tag_to_bits e << 3 || (n2w 6))
+           (LENGTH ys),
+          MAP (word_addr conf) ys,(
+          (qs = []) /\ (LENGTH ys = 1) /\ l = 1))`;
+   `word_payload ys l Word64Tag qs conf =
+         (make_header conf (n2w 3) l,
+          qs,((ys = []) /\ (LENGTH qs = l) /\
+              IS_SOME ((encode_header conf 3 l):('a word)
+                option)))`;
+   `word_payload ys l (NumTag b:data_to_word_memoryProof_tag) qs conf =
+         (make_header conf (b2w b << 2 || ((n2w 3):'a word)) (LENGTH
+           qs),
+          qs,((ys = []) /\ (LENGTH qs = l) /\
+              IS_SOME ((encode_header conf (w2n (b2w b << 2 || ((n2w
+                3):'a word)))
+                          (LENGTH qs)):('a word) option)))`;
+   `word_payload ys l (BytesTag fl n:data_to_word_memoryProof_tag) qs
+  conf =
+         (((make_byte_header conf fl n):'a word),
+          qs,((ys = []) /\ (LENGTH qs = l) /\
+              (let k = if dimindex (:'a) = 32 then 2 else 3 in
+              n + 2 EXP k < 2 EXP (data_to_word_config_len_size
+                conf + k))))`];;
 
-let word_el_def = cake_define
-  `(word_el a (Unused l) conf = word_list_exists (a:'a word) (l + 1)) /\
-   (word_el a (ForwardPointer n d l) conf =
-      set_sep_one (a,Word (n2w n << 2)) *
-      word_list_exists (a + bytes_in_word) l) /\
-   (word_el a (DataElement ys l (tag,qs)) conf =
-      (let (h,ts,c) = word_payload ys l tag qs conf in
-        word_list a (Word h :: ts) *
-        cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
-              decode_length conf h = n2w (LENGTH ts) /\ c)))`;;
+let word_el_def = cake_define_list
+  [`word_el a (Unused l:heap_element) conf = word_list_exists (a:'a
+  word) (l + 1)`;
+   `word_el a (ForwardPointer n d l:heap_element) conf =
+         set_sep_one (a,Word (n2w n << 2)) *
+         word_list_exists (a + bytes_in_word) l`;
+   `word_el a (DataElement ys l (tag,qs):heap_element) conf =
+         (let (h,ts,c) = word_payload ys l tag qs conf in
+           word_list a (Word h :: ts) *
+           cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
+                 decode_length conf h = n2w (LENGTH ts) /\ c))`];;
 
-let word_heap_def = cake_define
-  `(word_heap a ([]:(('a word_loc,num#('a word_loc) list)heap_element)
-  list) conf = emp) /\
-   (word_heap a (x :: xs) conf =
-      word_el a x conf *
-      word_heap (a + bytes_in_word * n2w (el_length x)) xs conf)`;;
+let word_heap_def = cake_define_list
+  [`word_heap a ([]:(('a word_loc,num#('a word_loc)
+  list)heap_element) list) conf = emp`;
+   `word_heap a (x :: xs) conf =
+         word_el a x conf *
+         word_heap (a + bytes_in_word * n2w (el_length x)) xs
+           conf`];;
 
 let gen_starts_in_store_def = cake_define
   `gen_starts_in_store c x2 x3 =
@@ -888,13 +891,13 @@ let get_real_simple_addr_def = cake_define
    MutBlock is
    the same single memory write as updating a reference's payload *)
 
-let store_list_def = cake_define
-  `(data_to_word_memoryProof_store_list a [] (m:'a word->'a word_loc) dm
-  = SOME m) /\
-   (data_to_word_memoryProof_store_list a (w :: ws) m dm =
-      (if a IN dm then
-        data_to_word_memoryProof_store_list (a + bytes_in_word) ws
-          ((a =+ w) m) dm else NONE))`;;
+let store_list_def = cake_define_list
+  [`data_to_word_memoryProof_store_list a [] (m:'a word->'a word_loc)
+  dm = SOME m`;
+   `data_to_word_memoryProof_store_list a (w :: ws) m dm =
+         (if a IN dm then
+           data_to_word_memoryProof_store_list (a +
+             bytes_in_word) ws ((a =+ w) m) dm else NONE)`];;
 hol4_overload "store_list" "data_to_word_memoryProof_store_list";;
 
 (* mirrors memory_rel_Cons1: a MutBlock is laid out exactly like the
@@ -1057,13 +1060,13 @@ let v_depth_def = cake_define_wf
 val v_depth_ind = theorem"v_depth_ind";
 *)
 
-let elements_list_def = cake_define
-  `(elements_list [] = T) /\
-   (elements_list [v] = T) /\
-   (elements_list (v :: w :: vs) =
-    (?ts t ls1 ls2.
-      w = Block ts t (ls1 ++ [v] ++ ls2) /\
-      elements_list (w :: vs)))`;;
+let elements_list_def = cake_define_list
+  [`elements_list [] = T`;
+   `elements_list [v] = T`;
+   `elements_list (v :: w :: vs) =
+       (?ts t ls1 ls2.
+         w = Block ts t (ls1 ++ [v] ++ ls2) /\
+         elements_list (w :: vs))`];;
 
 (* HOL4 ML code, not ported:
 val elements_list_ind = theorem"elements_list_ind";
@@ -1103,12 +1106,13 @@ let word_header_def = cake_define
          (if ~(a1 IN dm) then NONE else
            match m a1 with Word x1 -> SOME (a1,x1) | _67 -> NONE))`;;
 
-let fix_clock_def = cake_define
-  `data_to_word_memoryProof_fix_clock ck l NONE = NONE /\
-   data_to_word_memoryProof_fix_clock ck (l:num) (SOME
-     (y,(l1:num),(ck1:num))) =
-   (let new_ck = if ck < ck1 then ck else ck1 in let
-       new_l = if l < l1 then l else l1 in SOME (y,new_l,new_ck))`;;
+let fix_clock_def = cake_define_list
+  [`data_to_word_memoryProof_fix_clock ck l NONE = NONE`;
+   `data_to_word_memoryProof_fix_clock ck (l:num) (SOME
+  (y,(l1:num),(ck1:num))) =
+    (let new_ck = if ck < ck1 then ck else ck1 in let
+        new_l = if l < l1 then l else l1 in SOME
+          (y,new_l,new_ck))`];;
 hol4_overload "fix_clock" "data_to_word_memoryProof_fix_clock";;
 
 let word_is_clos_def = cake_define
@@ -1168,23 +1172,23 @@ let word_eq_def = cake_define_wf
 val word_eq_ind = theorem "word_eq_ind";
 *)
 
-let eq_assum_def = cake_define
-  `(eq_assum a m dm [] = T) /\
-   (eq_assum a m dm (v :: vs) <=>
-      a IN dm /\ eq_assum (a + bytes_in_word) m dm vs)`;;
+let eq_assum_def = cake_define_list
+  [`eq_assum a m dm [] = T`;
+   `eq_assum a m dm (v :: vs) <=>
+         a IN dm /\ eq_assum (a + bytes_in_word) m dm vs`];;
 
-let eq_explode_def = cake_define
-  `(eq_explode a m dm [] = []) /\
-   (eq_explode a m dm (v :: vs) = (v,m a) :: eq_explode (a +
-     bytes_in_word) m dm vs)`;;
+let eq_explode_def = cake_define_list
+  [`eq_explode a m dm [] = []`;
+   `eq_explode a m dm (v :: vs) = (v,m a) :: eq_explode (a +
+  bytes_in_word) m dm vs`];;
 
-let word_mem_eq_def = cake_define
-  `(word_mem_eq a [] dm m <=> SOME T) /\
-   (word_mem_eq a (x :: xs) dm m <=>
-      (if ~(a IN dm) then NONE else
-      if ~isWord (m a) then NONE else
-      if ~(m a = Word x) then SOME F else
-        word_mem_eq (a + bytes_in_word) xs dm m))`;;
+let word_mem_eq_def = cake_define_list
+  [`word_mem_eq a [] dm m <=> SOME T`;
+   `word_mem_eq a (x :: xs) dm m <=>
+         (if ~(a IN dm) then NONE else
+         if ~isWord (m a) then NONE else
+         if ~(m a = Word x) then SOME F else
+           word_mem_eq (a + bytes_in_word) xs dm m)`];;
 
 let bignum_words_def = cake_define
   `bignum_words c i =
@@ -1420,14 +1424,14 @@ val memory_rel_copy_array_NONE_lemma =
        LET_THM,LUPDATE_REPLICATE]
 *)
 
-let append_writes_def = cake_define
-  `append_writes c ptr hdr [] l = ARB /\
-   append_writes c ptr (hdr:'a word) (x :: xs) l =
-     Word hdr :: x ::
-       (if xs = [] then [l] else
-         let ptr = ptr + ((n2w 3) << shift_length c) in
-           Word ptr ::
-           append_writes c ptr hdr xs l)`;;
+let append_writes_def = cake_define_list
+  [`append_writes c ptr hdr [] l = ARB`;
+   `append_writes c ptr (hdr:'a word) (x :: xs) l =
+      Word hdr :: x ::
+        (if xs = [] then [l] else
+          let ptr = ptr + ((n2w 3) << shift_length c) in
+            Word ptr ::
+            append_writes c ptr hdr xs l)`];;
 
 (* --- ML lists cannot exceed heap size: --- *)
 
@@ -1453,46 +1457,48 @@ let block_drop_def = cake_define
 (* ---------------------------------------------------------------------
    ---- *)
 
-let build_part_words_def = cake_define
-  `build_part_words c m (Int i:const_part) offset =
-     (if small_int (:'a) i then SOME (Word (Smallnum i),[]) else let
-       (sign,ws) = i2mw i in
-             match encode_header c (w2n (b2w sign << 2 || ((n2w 3):'a
-               word))) (LENGTH ws) with NONE -> NONE | SOME hd -> SOME
-               (make_ptr c offset ((n2w 0):'a word) (LENGTH ws),
-                              MAP Word (hd :: ws))) /\
-   build_part_words c m (Con t ns) (offset:'a word) =
-     (if NULL ns then
-        if t < dimword (:'a) DIV 16 then SOME (Word (n2w (16 * t +
-          2)),[]) else NONE else
-        match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE |
-          SOME hd -> SOME (make_cons_ptr c offset t (LENGTH ns),
-                           Word hd :: (MAP m ns))) /\
-   build_part_words c m (W64 w) offset =
-     (let ws = (if dimindex (:'ga) < 64 then [((63 >< 32) w); ((31 ><
-       0) w)] else [((63 >< 0) w):'a word]) in
-        match encode_header c 3 (LENGTH ws) with NONE -> NONE | SOME
-          hd -> SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH ws),
-                           MAP Word (hd :: ws))) /\
-   build_part_words c m (Str s) offset =
-     (let bytes = MAP (n2w o ORD) (explode s) in
-      let n = LENGTH bytes in
-      let hd = make_byte_header c T n in
-      let ws = write_bytes bytes (REPLICATE (byte_len (:'ga) n) (n2w
-        0)) (?_be c) in
-        if byte_len (:'ga) n < 2 EXP (dimindex (:'ga) - 4) /\
-           byte_len (:'ga) n < 2 EXP data_to_word_config_len_size
-             c then SOME (make_ptr c offset ((n2w 0):'a word)
-             (byte_len (:'ga) n),MAP Word (hd :: ws)) else NONE)`;;
+let build_part_words_def = cake_define_list
+  [`build_part_words c m (Int i:const_part) offset =
+      (if small_int (:'a) i then SOME (Word (Smallnum i),[]) else
+        let (sign,ws) = i2mw i in
+              match encode_header c (w2n (b2w sign << 2 || ((n2w
+                3):'a word))) (LENGTH ws) with NONE -> NONE | SOME hd ->
+                SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH ws),
+                              MAP Word (hd :: ws)))`;
+   `build_part_words c m (Con t ns:const_part) (offset:'a word) =
+      (if NULL ns then
+         if t < dimword (:'a) DIV 16 then SOME (Word (n2w (16 * t +
+           2)),[]) else NONE else
+         match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
+           | SOME hd -> SOME (make_cons_ptr c offset t (LENGTH ns),
+                            Word hd :: (MAP m ns)))`;
+   `build_part_words c m (W64 w:const_part) offset =
+      (let ws = (if dimindex (:'ga) < 64 then [((63 >< 32) w); ((31
+        >< 0) w)] else [((63 >< 0) w):'a word]) in
+         match encode_header c 3 (LENGTH ws) with NONE -> NONE |
+           SOME hd -> SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH
+           ws),
+                            MAP Word (hd :: ws)))`;
+   `build_part_words c m (Str s:const_part) offset =
+      (let bytes = MAP (n2w o ORD) (explode s) in
+       let n = LENGTH bytes in
+       let hd = make_byte_header c T n in
+       let ws = write_bytes bytes (REPLICATE (byte_len (:'ga) n)
+         (n2w 0)) (?_be c) in
+         if byte_len (:'ga) n < 2 EXP (dimindex (:'ga) - 4) /\
+            byte_len (:'ga) n < 2 EXP
+              data_to_word_config_len_size c then SOME (make_ptr c
+              offset ((n2w 0):'a word) (byte_len (:'ga) n),MAP Word
+              (hd :: ws)) else NONE)`];;
 
-let build_words_def = cake_define
-  `build_words c m i [] off = SOME (m (i - (1:num)),[]) /\
-   build_words c m i (x :: parts) (off:'a word) =
-     (match build_part_words c m x off with NONE -> NONE | SOME
-       (w,xs) ->
-       (match build_words c ((i =+ w) m) (i + 1) parts (off +
-         bytes_in_word * n2w (LENGTH xs)) with NONE -> NONE | SOME
-         (r,ys) -> SOME (r,xs ++ ys)))`;;
+let build_words_def = cake_define_list
+  [`build_words c m i [] off = SOME (m (i - (1:num)),[])`;
+   `build_words c m i (x :: parts) (off:'a word) =
+      (match build_part_words c m x off with NONE -> NONE | SOME
+        (w,xs) ->
+        (match build_words c ((i =+ w) m) (i + 1) parts (off +
+          bytes_in_word * n2w (LENGTH xs)) with NONE -> NONE | SOME
+          (r,ys) -> SOME (r,xs ++ ys)))`];;
 
 let word_cond_add_def = cake_define
   `word_cond_add c a x3 =
@@ -1594,7 +1600,7 @@ let word_str_cmp_def = cake_define
                   bytes_in_word) l1 l2 l dm m be (dimword (:'a)))
                   else NONE)`;;
 
-let find_diff_def = cake_define
-  `find_diff [] [] r1 r2 = (r1,r2) /\
-   find_diff (x :: xs) (y :: ys) r1 r2 = (if x = y then find_diff
-     xs ys r1 r2 else (w2w x,w2w y))`;;
+let find_diff_def = cake_define_list
+  [`find_diff [] [] r1 r2 = (r1,r2)`;
+   `find_diff (x :: xs) (y :: ys) r1 r2 = (if x = y then find_diff xs
+  ys r1 r2 else (w2w x,w2w y))`];;

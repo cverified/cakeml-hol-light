@@ -9,9 +9,9 @@
 
 needs "lib/ternaryComparisons.ml";;
 
-let getOpt_def = cake_define
-  `(getOpt (SOME v) a = v) /\
-   (getOpt NONE a = a)`;;
+let getOpt_def = cake_define_list
+  [`getOpt (SOME v) a = v`;
+   `getOpt NONE a = a`];;
 
 let filter_def = cake_define
   `mloption_filter f a = (if f a then SOME (a) else NONE)`;;

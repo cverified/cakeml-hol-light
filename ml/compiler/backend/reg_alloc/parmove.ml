@@ -36,64 +36,66 @@ fun replace_quote from to (QUOTE s) = QUOTE(Portable.replace_string
 val _ = add_infix("step",450,NONASSOC);
 *)
 
-(* HOL4 ML code, not ported:
-val (step_rules,step_ind,step_cases) = (Hol_reln o
-  List.map(replace_quote "\226\150\183" "step"))`
-  ((μ1++[(r,r)]++μ2,σ,τ) ▷ (μ1++μ2,σ,τ)) ∧
-  ((μ1++[(d,s)]++μ2,[],τ) ▷ (μ1++μ2,[(d,s)],τ)) ∧
-  ((μ1++[(r,d)]++μ2,[(d,s)]++σ,τ) ▷ (μ1++μ2,[(r,d);(d,s)]++σ,τ)) ∧
-  ((μ,σ++[(d,s)],τ) ▷ (μ,σ++[(d,NONE)],[(NONE,s)]++τ)) ∧
-  (NoRead μ dn ∧ dn ≠ s0 ⇒
-   (μ,[(dn,sn)]++σ++[(d0,s0)],τ) ▷ (μ,σ++[(d0,s0)],[(dn,sn)]++τ)) ∧
-  (NoRead μ d ⇒
-   (μ,[(d,s)],τ) ▷ (μ,[],[(d,s)]++τ))`;
-*)
+let step_rules = cake_inductive
+  `(step (mu1 ++ [(r,r)] ++ mu2,sigma,tau) (mu1 ++ mu2,sigma,tau)) /\
+   (step (mu1 ++ [(d,s)] ++ mu2,[],tau) (mu1 ++ mu2,[(d,s)],tau)) /\
+   (step (mu1 ++ [(r,d)] ++ mu2,[(d,s)] ++ sigma,tau) (mu1 ++
+     mu2,[(r,d); (d,s)] ++ sigma,tau)) /\
+   (step (mu,sigma ++ [(d,s)],tau) (mu,sigma ++ [(d,NONE)],[(NONE,s)]
+     ++ tau)) /\
+   ((\mu dn. ~MEM dn (MAP SND mu)) mu dn /\ ~(dn = s0) ==> step
+    (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau) (mu,sigma ++
+      [(d0,s0)],[(dn,sn)] ++ tau)) /\
+   ((\mu dn. ~MEM dn (MAP SND mu)) mu d ==> step
+    (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
 (* HOL4 ML code, not ported:
 val _ = set_fixity"\226\150\183"(Infix(NONASSOC,450));
 *)
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     \226\150\183 = $step *)
 
 (* HOL4 ML code, not ported:
 val _ = set_fixity "\226\150\183*" (Infix(NONASSOC,450));
 *)
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     \226\150\183* = RTC $▷ *)
 
 (* invariant on states *)
 
 let windmill_def = cake_define
   `windmill (moves:('a#'a) list) = ALL_DISTINCT (MAP FST moves)`;;
 
-let path_def = cake_define
-  `(parmove_path [] <=> T) /\ (parmove_path [_1] <=> T) /\
-   (parmove_path ((c,b') :: (b,a) :: p) <=>
-      (b = b') /\ parmove_path ((b,a) :: p))`;;
+let path_def = cake_define_list
+  [`parmove_path [] <=> T`;
+   `parmove_path [_1] <=> T`;
+   `parmove_path ((c,b') :: (b,a) :: p) <=>
+         (b = b') /\ parmove_path ((b,a) :: p)`];;
 hol4_overload "path" "parmove_path";;
 
 let wf_def = cake_define
-  `parmove_wf ('gk,'gq,'gr) <=>
-     windmill ('gk ++ 'gq) /\
-     EVERY IS_SOME (MAP FST 'gk) /\
-     EVERY IS_SOME (MAP SND 'gk) /\
-     (~NULL 'gq ==> EVERY IS_SOME (MAP SND (FRONT 'gq))) /\
-     EVERY IS_SOME (MAP FST 'gq) /\
-     path 'gq`;;
+  `parmove_wf (mu,sigma,tau) <=>
+     windmill (mu ++ sigma) /\
+     EVERY IS_SOME (MAP FST mu) /\
+     EVERY IS_SOME (MAP SND mu) /\
+     (~NULL sigma ==> EVERY IS_SOME (MAP SND (FRONT sigma))) /\
+     EVERY IS_SOME (MAP FST sigma) /\
+     path sigma`;;
 hol4_overload "wf" "parmove_wf";;
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     ⊢ = wf *)
 
 (* The invariant is preserved *)
 
 (* semantics of moves *)
 
 let parsem_def = cake_define
-  `parsem 'gk 'gp = =++ 'gp (ZIP (MAP FST 'gk,MAP ('gp o SND) 'gk))`;;
+  `parsem mu rho = UPDATE_LIST rho (ZIP (MAP FST mu) (MAP (rho o SND)
+  mu))`;;
 
-let seqsem_def = cake_define
-  `(seqsem [] 'gp = 'gp) /\
-   (seqsem ((d,s) :: 'gr) 'gp = seqsem 'gr ((d =+ 'gp s) 'gp))`;;
+let seqsem_def = cake_define_list
+  [`seqsem [] rho = rho`;
+   `seqsem ((d,s) :: tau) rho = seqsem tau ((d =+ rho s) rho)`];;
 
 (* HOL4 ML code, not ported:
 val seqsem_ind = theorem"seqsem_ind";
@@ -102,18 +104,18 @@ val seqsem_ind = theorem"seqsem_ind";
 (* semantics of the state *)
 
 let sem_def = cake_define
-  `sem ('gk,'gq,'gr) 'gp = parsem ('gk ++ 'gq) (seqsem (REVERSE 'gr)
-  'gp)`;;
+  `sem (mu,sigma,tau) rho = parsem (mu ++ sigma) (seqsem (REVERSE
+  tau) rho)`;;
 
 (* semantic preservation *)
 
 let eqenv_def = cake_define
-  `eqenv 'gp 1 'gp 2 <=> (!r. IS_SOME r ==> ('gp 1 r = 'gp 2 r))`;;
+  `eqenv rho1 rho2 <=> (!r. IS_SOME r ==> (rho1 r = rho2 r))`;;
 (* HOL4 ML code, not ported:
 val _ = set_fixity"\226\137\161"(Infix(NONASSOC,450));
 *)
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     \226\137\161 = eqenv *)
 
 (* deterministic algorithm *)
 
@@ -121,36 +123,33 @@ val _ = set_fixity"\226\137\161"(Infix(NONASSOC,450));
 val _ = add_infix("dstep",450,NONASSOC);
 *)
 
-(* HOL4 ML code, not ported:
-val (dstep_rules,dstep_ind,dstep_cases) = (Hol_reln o
-  List.map(replace_quote "\226\134\170" "dstep"))`
-  (([(r,r)]++μ,[],τ) ↪ (μ,[],τ)) ∧
-  (s ≠ d ⇒
-   ([(d,s)]++μ,[],τ) ↪ (μ,[(d,s)],τ)) ∧
-  (NoRead μ1 d ⇒
-   (μ1++[(r,d)]++μ2,[(d,s)]++σ,τ) ↪
-   (μ1++μ2,[(r,d);(d,s)]++σ,τ)) ∧
-  (NoRead μ r ⇒
-   (μ,[(r,s)]++σ++[(d,r)],τ) ↪
-   (μ,σ++[(d,NONE)],[(r,s);(NONE,r)]++τ)) ∧
-  (NoRead μ dn ∧ dn ≠ s0 ⇒
-   (μ,[(dn,sn)]++σ++[(d0,s0)],τ) ↪
-   (μ,σ++[(d0,s0)],[(dn,sn)]++τ)) ∧
-  (NoRead μ d ⇒
-   (μ,[(d,s)],τ) ↪ (μ,[],[(d,s)]++τ))`;
-*)
+let dstep_rules = cake_inductive
+  `(dstep ([(r,r)] ++ mu,[],tau) (mu,[],tau)) /\
+   (~(s = d) ==> dstep
+    ([(d,s)] ++ mu,[],tau) (mu,[(d,s)],tau)) /\
+   ((\mu dn. ~MEM dn (MAP SND mu)) mu1 d ==> dstep
+    (mu1 ++ [(r,d)] ++ mu2,[(d,s)] ++ sigma,tau)
+    (mu1 ++ mu2,[(r,d); (d,s)] ++ sigma,tau)) /\
+   ((\mu dn. ~MEM dn (MAP SND mu)) mu r ==> dstep
+    (mu,[(r,s)] ++ sigma ++ [(d,r)],tau)
+    (mu,sigma ++ [(d,NONE)],[(r,s); (NONE,r)] ++ tau)) /\
+   ((\mu dn. ~MEM dn (MAP SND mu)) mu dn /\ ~(dn = s0) ==> dstep
+    (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau)
+    (mu,sigma ++ [(d0,s0)],[(dn,sn)] ++ tau)) /\
+   ((\mu dn. ~MEM dn (MAP SND mu)) mu d ==> dstep
+    (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
 (* HOL4 ML code, not ported:
 val _ = set_fixity"\226\134\170"(Infix(NONASSOC,450));
 *)
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     \226\134\170 = $dstep *)
 
 (* HOL4 ML code, not ported:
 val _ = set_fixity "\226\134\170*" (Infix(NONASSOC,450));
 *)
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     \226\134\170* = RTC $↪ *)
 
 (* ⊢ s1 condition not included in paper;
    not sure if necessary, but couldn't get
@@ -192,7 +191,7 @@ val not_or = METIS_PROVE[]``¬a ∨ b ⇔ a ⇒ b``;
    >> simp[LENGTH_TAKE,ADD1] >> rfs[DROP_CONS_EL] >> rw[] >>
    simp[ADD1] >> metis_tac[]) *)
 let pmov_def = cake_define_wf
-  `MEASURE (\('gk,'gq,'gr). 2 * LENGTH 'gk + LENGTH 'gq)`
+  `MEASURE (\(mu,sigma,tau). 2 * LENGTH mu + LENGTH sigma)`
   `pmov s = (match s with ([],[],_3) -> s | _4 -> pmov (fstep s))`;;
 
 (* HOL4 ML code, not ported:

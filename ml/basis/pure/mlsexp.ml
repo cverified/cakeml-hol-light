@@ -32,30 +32,30 @@ let mlsexp_token_INDUCT,mlsexp_token_RECURSION = define_datatype
 (* HOL4 type abbreviation (expanded in the port):
      result = (α # string) + (β # string) *)
 
-let read_string_aux_def = cake_define
-  `read_string_aux [] acc =
-     INL ((implode
-       "read_string_aux: unterminated string literal"),[]) /\
-   read_string_aux (c :: rest) acc =
-     (if c = (CHR 34) then INR (implode (REVERSE acc),rest) else
-     if c = (CHR 92) then
-       (match rest with [] -> read_string_aux rest acc | (e :: rest)
-         ->
-            (if e = (CHR 92) then read_string_aux rest ((CHR 92) ::
-              acc) else
-             if e = (CHR 34) then read_string_aux rest ((CHR 34) ::
+let read_string_aux_def = cake_define_list
+  [`read_string_aux [] acc =
+      INL ((implode
+        "read_string_aux: unterminated string literal"),[])`;
+   `read_string_aux (c :: rest) acc =
+      (if c = (CHR 34) then INR (implode (REVERSE acc),rest) else
+      if c = (CHR 92) then
+        (match rest with [] -> read_string_aux rest acc | (e ::
+          rest) ->
+             (if e = (CHR 92) then read_string_aux rest ((CHR 92) ::
                acc) else
-             if e = (CHR 48) then read_string_aux rest ((CHR 0) ::
-               acc) else
-             if e = (CHR 110) then read_string_aux rest ((CHR 10) ::
-               acc) else
-             if e = (CHR 114) then read_string_aux rest ((CHR 13) ::
-               acc) else
-             if e = (CHR 116) then read_string_aux rest ((CHR 9) ::
-               acc) else
-               INL ((implode
-                 "read_string_aux: unrecognised escape"),rest))) else
-       read_string_aux rest (c :: acc))`;;
+              if e = (CHR 34) then read_string_aux rest ((CHR 34) ::
+                acc) else
+              if e = (CHR 48) then read_string_aux rest ((CHR 0) ::
+                acc) else
+              if e = (CHR 110) then read_string_aux rest ((CHR 10)
+                :: acc) else
+              if e = (CHR 114) then read_string_aux rest ((CHR 13)
+                :: acc) else
+              if e = (CHR 116) then read_string_aux rest ((CHR 9) ::
+                acc) else
+                INL ((implode
+                  "read_string_aux: unrecognised escape"),rest))) else
+        read_string_aux rest (c :: acc))`];;
 
 (* Returns the string until a closing quote, and the rest of the input.
    Fails with an error message if closing quotes are missing or an
@@ -70,42 +70,36 @@ hol4_overload "read_string" "mlsexp_read_string";;
 
    See usage in lex_aux as to why a "non-aux function" is exposing an
    accumulator. *)
-let read_symbol_def = cake_define
-  `read_symbol [] acc =
-     (implode (REVERSE acc),[]) /\
-   read_symbol (c :: cs) acc =
-     (if c = (CHR 41) \/ isSpace c then (implode (REVERSE acc),(c
-       :: cs)) else read_symbol cs (c :: acc))`;;
+let read_symbol_def = cake_define_list
+  [`read_symbol [] acc =
+      (implode (REVERSE acc),[])`;
+   `read_symbol (c :: cs) acc =
+      (if c = (CHR 41) \/ isSpace c then (implode (REVERSE
+        acc),(c :: cs)) else read_symbol cs (c :: acc))`];;
 
 (* By tracking the depth, we can ensure we only lex one S-expression at
    a
    time. *)
-(* TERMINATION: wf_rel_tac ‘measure $ (λ(_, input, _). LENGTH input)’ \\
-   rw[]
-  \\ imp_res_tac read_string_length \\ fs[]
-  \\ fs[Once read_symbol_def]
-  \\ gvs [AllCaseEqs()]
-  \\ imp_res_tac read_symbol_length \\ fs[] *)
-let lex_aux_def = cake_define
-  `(mlsexp_lex_aux depth [] acc:mlstring#string+mlsexp_token
+let lex_aux_def = cake_define_list
+  [`(mlsexp_lex_aux depth [] acc:mlstring#string+mlsexp_token
   list#string) =
-     (if depth = (0:num) then INR (acc,[]) else INL ((implode
-       "lex_aux: missing closing parenthesis"),[])) /\
-   mlsexp_lex_aux depth (c :: cs) acc =
-     (if isSpace c then mlsexp_lex_aux depth cs acc else if c = (CHR
-       40) then mlsexp_lex_aux (depth + 1) cs (OPEN :: acc) else if c =
-       (CHR 41) then
-       (if depth = 0 then INL ((implode
-         "lex_aux: too many closing parenthesis"),cs) else if depth = 1
-         then INR (CLOSE :: acc,cs) else mlsexp_lex_aux (depth - 1) cs
-         (CLOSE :: acc)) else if c = (CHR 34) then
-       match read_string cs with INL (msg,rest) -> INL (msg,rest) |
-         INR (s,rest) ->
-           (if depth = 0 then INR ([SYMBOL s],rest) else
-             mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)) else
-       match read_symbol cs [c] with (s,rest) ->
-           (if depth = 0 then INR ([SYMBOL s],rest) else
-             mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`;;
+      (if depth = (0:num) then INR (acc,[]) else INL ((implode
+        "lex_aux: missing closing parenthesis"),[]))`;
+   `mlsexp_lex_aux depth (c :: cs) acc =
+      (if isSpace c then mlsexp_lex_aux depth cs acc else if c =
+        (CHR 40) then mlsexp_lex_aux (depth + 1) cs (OPEN :: acc) else
+        if c = (CHR 41) then
+        (if depth = 0 then INL ((implode
+          "lex_aux: too many closing parenthesis"),cs) else if depth = 1
+          then INR (CLOSE :: acc,cs) else mlsexp_lex_aux (depth - 1) cs
+          (CLOSE :: acc)) else if c = (CHR 34) then
+        match read_string cs with INL (msg,rest) -> INL (msg,rest) |
+          INR (s,rest) ->
+            (if depth = 0 then INR ([SYMBOL s],rest) else
+              mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)) else
+        match read_symbol cs [c] with (s,rest) ->
+            (if depth = 0 then INR ([SYMBOL s],rest) else
+              mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`];;
 hol4_overload "lex_aux" "mlsexp_lex_aux";;
 
 (* Tokenizes (at most) one S-expression, and returns the rest of the
@@ -116,14 +110,14 @@ let lex_def = cake_define
   `(lex (input:string):mlstring#string+mlsexp_token list#string) =
      lex_aux 0 input []`;;
 
-let parse_aux_def = cake_define
-  `parse_aux [] xs s = xs /\
-   parse_aux (CLOSE :: rest) xs s = parse_aux rest [] (xs :: s) /\
-   parse_aux (OPEN :: rest) xs s =
-     (match s with [] -> parse_aux rest xs s | (y :: ys) -> parse_aux
-       rest ((Expr xs) :: y) ys) /\
-   parse_aux ((SYMBOL sy) :: rest) xs s = parse_aux rest ((Atom
-     sy) :: xs) s`;;
+let parse_aux_def = cake_define_list
+  [`parse_aux [] xs s = xs`;
+   `parse_aux (CLOSE :: rest) xs s = parse_aux rest [] (xs :: s)`;
+   `parse_aux (OPEN :: rest) xs s =
+      (match s with [] -> parse_aux rest xs s | (y :: ys) ->
+        parse_aux rest ((Expr xs) :: y) ys)`;
+   `parse_aux ((SYMBOL sy:mlsexp_token) :: rest) xs s = parse_aux
+  rest ((Atom sy) :: xs) s`];;
 
 (* Parses (at most) one S-expression, and returns the rest of the input.
    Fails exactly when lexing fails. *)
@@ -170,14 +164,14 @@ let newlines_def = cake_define
       | [x] -> x
       | (x :: xs) -> Append x T (newlines xs)`;;
 
-let v2pretty_def = cake_define
-  `(v2pretty v =
-      (match v with Str s -> String s | GrabLine w -> Size 100000
-        (v2pretty w) | Trees l -> Parenthesis (newlines (vs2pretty l))))
-        /\
-   (vs2pretty vs =
-      (match vs with [] -> [] | (v :: vs) -> v2pretty v ::
-        vs2pretty vs))`;;
+let v2pretty_def = cake_define_list
+  [`v2pretty v =
+         (match v with Str s -> String s | GrabLine w -> Size
+           100000 (v2pretty w) | Trees l -> Parenthesis (newlines
+           (vs2pretty l)))`;
+   `vs2pretty vs =
+         (match vs with [] -> [] | (v :: vs) -> v2pretty v ::
+           vs2pretty vs)`];;
 
 let get_size_def = cake_define
   `mlsexp_get_size x1 =
@@ -208,12 +202,12 @@ let annotate_def = cake_define_list
    `mlsexp_annotate (Size n b:pretty) = Size n (mlsexp_annotate b)`];;
 hol4_overload "annotate" "mlsexp_annotate";;
 
-let remove_all_def = cake_define
-  `remove_all (Parenthesis v) = Parenthesis (remove_all v) /\
-   remove_all (String v1) = String v1 /\
-   remove_all (Append v2 _8 v3) = Append (remove_all v2) F
-     (remove_all v3) /\
-   remove_all (Size v4 v5) = remove_all v5`;;
+let remove_all_def = cake_define_list
+  [`remove_all (Parenthesis v:pretty) = Parenthesis (remove_all v)`;
+   `remove_all (String v1:pretty) = String v1`;
+   `remove_all (Append v2 _8 v3:pretty) = Append (remove_all v2) F
+  (remove_all v3)`;
+   `remove_all (Size v4 v5:pretty) = remove_all v5`];;
 
 let smart_remove_def = cake_define_list
   [`smart_remove i k (Size n b:pretty) =
@@ -229,15 +223,16 @@ let smart_remove_def = cake_define_list
             v3) else
           Append (smart_remove i k v2) T (smart_remove i i v3))`];;
 
-let flatten_def = cake_define
-  `mlsexp_flatten indent (Size n p) s = mlsexp_flatten indent p s /\
-   mlsexp_flatten indent (Parenthesis p) s =
-     (implode "(") :: mlsexp_flatten (concat [indent; (implode
-       "   ")]) p ((implode ")") :: s) /\
-   mlsexp_flatten indent (String t) s = t :: s /\
-   mlsexp_flatten indent (Append p1 b p2) s =
-     mlsexp_flatten indent p1 ((if b then indent else (implode
-       " ")) :: mlsexp_flatten indent p2 s)`;;
+let flatten_def = cake_define_list
+  [`mlsexp_flatten indent (Size n p:pretty) s = mlsexp_flatten indent
+  p s`;
+   `mlsexp_flatten indent (Parenthesis p:pretty) s =
+      (implode "(") :: mlsexp_flatten (concat [indent; (implode
+        "   ")]) p ((implode ")") :: s)`;
+   `mlsexp_flatten indent (String t:pretty) s = t :: s`;
+   `mlsexp_flatten indent (Append p1 b p2:pretty) s =
+      mlsexp_flatten indent p1 ((if b then indent else (implode
+        " ")) :: mlsexp_flatten indent p2 s)`];;
 hol4_overload "flatten" "mlsexp_flatten";;
 
 let str_tree_to_strs_def = cake_define
@@ -262,23 +257,24 @@ let make_str_safe_def = cake_define
      if str_every is_safe_char (strlen s) s then s else escape_str
        s)`;;
 
-let sexp2tree_def = cake_define
-  `sexp2tree (Atom s) = Str (make_str_safe s) /\
-   sexp2tree (Expr l) = Trees (sexp2trees l) /\
-   sexp2trees [] = [] /\
-   sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`;;
+let sexp2tree_def = cake_define_list
+  [`sexp2tree (Atom s:sexp) = Str (make_str_safe s)`;
+   `sexp2tree (Expr l:sexp) = Trees (sexp2trees l)`;
+   `sexp2trees [] = []`;
+   `sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`];;
 
-let sexp_to_app_list_def = cake_define
-  `sexp_to_app_list (Atom s) = List [make_str_safe s] /\
-   sexp_to_app_list (Expr l) =
-     Append (List [(implode "(")])
-            (Append (sexps_to_app_list l) (List [(implode ")")])) /\
-   sexps_to_app_list [] = List [] /\
-   sexps_to_app_list (v :: vs) =
-     (if NULL vs then sexp_to_app_list v else Append
-       (sexp_to_app_list v)
-                 (Append (List [(implode " ")]) (sexps_to_app_list
-                   vs)))`;;
+let sexp_to_app_list_def = cake_define_list
+  [`sexp_to_app_list (Atom s:sexp) = List [make_str_safe s]`;
+   `sexp_to_app_list (Expr l:sexp) =
+      Append (List [(implode "(")])
+             (Append (sexps_to_app_list l) (List [(implode
+               ")")]))`;
+   `sexps_to_app_list [] = List []`;
+   `sexps_to_app_list (v :: vs) =
+      (if NULL vs then sexp_to_app_list v else Append
+        (sexp_to_app_list v)
+                  (Append (List [(implode " ")])
+                    (sexps_to_app_list vs)))`];;
 
 let sexp_to_string_def = cake_define
   `sexp_to_string s = concat (append (sexp_to_app_list s))`;;
@@ -291,7 +287,7 @@ let sexp_to_pretty_string_def = cake_define
    Proofs relating parsing with pretty prniting
  *--------------------------------------------------------------*)
 
-let to_tokens_def = cake_define
-  `to_tokens (Atom a) = [SYMBOL a] /\
-   to_tokens (Expr xs) = [OPEN] ++ FLAT (MAP (\x. to_tokens x) xs)
-     ++ [CLOSE]`;;
+let to_tokens_def = cake_define_list
+  [`to_tokens (Atom a:sexp) = [SYMBOL a]`;
+   `to_tokens (Expr xs:sexp) = [OPEN] ++ FLAT (MAP (\x. to_tokens x)
+  xs) ++ [CLOSE]`];;

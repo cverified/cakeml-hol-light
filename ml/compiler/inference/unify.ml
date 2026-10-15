@@ -28,33 +28,33 @@ val option_bind_thm = oneline optionTheory.OPTION_BIND_def
 let atom_INDUCT,atom_RECURSION = define_datatype
   "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
 
-let encode_infer_t_def = cake_define
-  `(encode_infer_t (Infer_Tvar_db n) =
-     Const (DB_tag n)) /\
-   (encode_infer_t (Infer_Tapp ts tc) =
-     Pair (Const Tapp_tag) (Pair (Const (TC_tag tc)) (encode_infer_ts
-       ts))) /\
-   (encode_infer_t (Infer_Tuvar n) =
-     Var n) /\
-   (encode_infer_ts [] =
-     Const Null_tag) /\
-   (encode_infer_ts (t :: ts) =
-     Pair (encode_infer_t t) (encode_infer_ts ts))`;;
+let encode_infer_t_def = cake_define_list
+  [`encode_infer_t (Infer_Tvar_db n:infer_t) =
+      Const (DB_tag n)`;
+   `encode_infer_t (Infer_Tapp ts tc:infer_t) =
+      Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
+        (encode_infer_ts ts))`;
+   `encode_infer_t (Infer_Tuvar n:infer_t) =
+      Var n`;
+   `encode_infer_ts [] =
+      Const Null_tag`;
+   `encode_infer_ts (t :: ts) =
+      Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
-let decode_infer_t_def = cake_define
-  `(decode_infer_t (Var n) =
-     Infer_Tuvar n) /\
-   (decode_infer_t (Const (DB_tag n)) =
-     Infer_Tvar_db n) /\
-   (decode_infer_t (Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
-     s)) =
-     Infer_Tapp (decode_infer_ts s) tc) /\
-   (decode_infer_t _1 = Infer_Tuvar 5) /\
-   (decode_infer_ts (Const Null_tag) =
-     []) /\
-   (decode_infer_ts (Pair s1 s2) =
-     decode_infer_t s1 :: decode_infer_ts s2) /\
-   (decode_infer_ts _2 = [])`;;
+let decode_infer_t_def = cake_define_list
+  [`decode_infer_t (Var n:ast_exp) =
+      Infer_Tuvar n`;
+   `decode_infer_t (Const (DB_tag n)) =
+      Infer_Tvar_db n`;
+   `decode_infer_t (Pair (Const Tapp_tag) (Pair (Const (TC_tag tc)) s))
+  =
+      Infer_Tapp (decode_infer_ts s) tc`;
+   `decode_infer_t _1 = Infer_Tuvar 5`;
+   `decode_infer_ts (Const Null_tag) =
+      []`;
+   `decode_infer_ts (Pair s1 s2) =
+      decode_infer_t s1 :: decode_infer_ts s2`;
+   `decode_infer_ts _2 = []`];;
 
 (* "Ramana Kumar unification type to CakeML type" relation *)
 let RKC_def = cake_define
@@ -106,16 +106,13 @@ let cunifyl_def = cake_define
                       (encode_infer_ts ts1)
                       (encode_infer_ts ts2))`;;
 
-let _ = size_thms "infer_t";;
-(* HOL4 termination: *)
-let capply_subst_def = cake_define_wf
-  `MEASURE (infer_t_size o SND)`
-  `(capply_subst s (Infer_Tuvar n) = (match lookup n s with
-                              NONE -> Infer_Tuvar n | SOME it -> it))
-                                /\
-   (capply_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (capply_subst
-     s) ts) tc) /\
-   (capply_subst s (Infer_Tvar_db n) = Infer_Tvar_db n)`;;
+let capply_subst_def = cake_define_list
+  [`capply_subst s (Infer_Tuvar n:infer_t) = (match lookup n s with
+                              NONE -> Infer_Tuvar n | SOME it ->
+                                it)`;
+   `capply_subst s (Infer_Tapp ts tc:infer_t) = Infer_Tapp (MAP
+  (capply_subst s) ts) tc`;
+   `capply_subst s (Infer_Tvar_db n:infer_t) = Infer_Tvar_db n`];;
 
 let cwalkstar_def = cake_define
   `cwalkstar s it =
@@ -144,7 +141,7 @@ let cvwalk_code_def = cake_define
   `cvwalk_code s = cvwalk_code`;;
 
 let cvwalkR_def = cake_define
-  `cvwalkR 'gq = (\v v0. vR (encode_infer_t o_f sp2fm 'gq) v v0)`;;
+  `cvwalkR sigma = (\v v0. vR (encode_infer_t o_f sp2fm sigma) v v0)`;;
 
 let tcvwalk_def = cake_define
   `tcvwalk s n = TAILREC (cvwalk_code s) n`;;
@@ -155,9 +152,9 @@ let tcwalk_def = cake_define
                      l n -> Infer_Tapp l n | Infer_Tuvar v -> tcvwalk
                      s v)`;;
 
-let cocl_def = cake_define
-  `(cocl s [] n <=> F) /\
-   (cocl s (i :: is) n <=> coc s i n \/ cocl s is n)`;;
+let cocl_def = cake_define_list
+  [`cocl s [] n <=> F`;
+   `cocl s (i :: is) n <=> coc s i n \/ cocl s is n`];;
 
 let kcoc_def = cake_define
   `kcoc s it n k = cwc (coc s it n) k`;;
@@ -167,11 +164,11 @@ let kcocl_def = cake_define
 
 new_type_abbrev("kcockont",`: (infer_t list) list`);;
 
-let apply_kcockont_def = cake_define
-  `apply_kcockont s n [] b = b /\
-   apply_kcockont s n (ts :: rest) b =
-   (if b then apply_kcockont s n rest T else kcocl s ts n
-     (apply_kcockont s n rest))`;;
+let apply_kcockont_def = cake_define_list
+  [`apply_kcockont s n [] b = b`;
+   `apply_kcockont s n (ts :: rest) b =
+    (if b then apply_kcockont s n rest T else kcocl s ts n
+      (apply_kcockont s n rest))`];;
 
 let dfkcoc_def = cake_define
   `dfkcoc s t n k = kcoc s t n (apply_kcockont s n k)`;;
@@ -222,9 +219,9 @@ let tcocwl_def = cake_define
    ---------------------------------------------------------------------
      - *)
 
-let cwalkstarl_def = cake_define
-  `cwalkstarl s [] = [] /\
-   cwalkstarl s (it :: its) = cwalkstar s it :: cwalkstarl s its`;;
+let cwalkstarl_def = cake_define_list
+  [`cwalkstarl s [] = []`;
+   `cwalkstarl s (it :: its) = cwalkstar s it :: cwalkstarl s its`];;
 
 let kcwalkstar_def = cake_define
   `kcwalkstar s it k = cwc (cwalkstar s it) k`;;
@@ -236,24 +233,24 @@ let kclkont_INDUCT,kclkont_RECURSION = define_datatype
   "kclkont = DBk (num) | APPk (infer_t list) (num) | UVk (num) | \
    CONSk (infer_t list) (num)";;
 
-let apply_kclkont_def = cake_define
-  `apply_kclkont s [] its = its /\
-   apply_kclkont s (DBk n :: k) its = apply_kclkont s k
-     (Infer_Tvar_db n :: its) /\
-   apply_kclkont s (APPk aits n :: k) its =
-     apply_kclkont s k (Infer_Tapp aits n :: its) /\
-   apply_kclkont s (UVk n :: k) its = apply_kclkont s k (Infer_Tuvar
-     n :: its) /\
-   apply_kclkont s (CONSk cits n :: k) its =
-   kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its n
-     :: xk'))`;;
+let apply_kclkont_def = cake_define_list
+  [`apply_kclkont s [] its = its`;
+   `apply_kclkont s ((DBk n:kclkont) :: k) its = apply_kclkont s k
+  (Infer_Tvar_db n :: its)`;
+   `apply_kclkont s ((APPk aits n:kclkont) :: k) its =
+      apply_kclkont s k (Infer_Tapp aits n :: its)`;
+   `apply_kclkont s ((UVk n:kclkont) :: k) its = apply_kclkont s k
+  (Infer_Tuvar n :: its)`;
+   `apply_kclkont s ((CONSk cits n:kclkont) :: k) its =
+    kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its n
+      :: xk'))`];;
 
 let dfkcwalkstarl_def = cake_define
   `dfkcwalkstarl s t k = kcwalkstarl s t (apply_kclkont s k)`;;
 
-let kcwalkstarwl_def = cake_define
-  `kcwalkstarwl s T t k = apply_kclkont s k t /\
-   kcwalkstarwl s F t k = dfkcwalkstarl s t k`;;
+let kcwalkstarwl_def = cake_define_list
+  [`kcwalkstarwl s T t k = apply_kclkont s k t`;
+   `kcwalkstarwl s F t k = dfkcwalkstarl s t k`];;
 
 (* kcwalkstarwl_thm is the target for tailcallification *)
 
@@ -309,11 +306,11 @@ let kcunifyl_def = cake_define
   `kcunifyl s ts us k = cwc (cunifyl s ts us) k`;;
 
 new_type_abbrev("kcunifkont",`: (infer_t list#infer_t list) list`);;
-let apply_cunifk_def = cake_define
-  `apply_cunifk [] x = x /\
-   apply_cunifk ((ts,us) :: k) NONE = apply_cunifk k NONE /\
-   apply_cunifk ((ts,us) :: k) (SOME m) = kcunifyl m ts us
-     (apply_cunifk k)`;;
+let apply_cunifk_def = cake_define_list
+  [`apply_cunifk [] x = x`;
+   `apply_cunifk ((ts,us) :: k) NONE = apply_cunifk k NONE`;
+   `apply_cunifk ((ts,us) :: k) (SOME m) = kcunifyl m ts us
+  (apply_cunifk k)`];;
 
 let dfkcunifyl_def = cake_define
   `dfkcunifyl s ts us k = kcunifyl s ts us (apply_cunifk k)`;;
@@ -328,23 +325,23 @@ val cunify_code = DefnBase.one_line_ify NONE kcunifywl_thm |>
 let cunify_code_def = cake_define
   `cunify_code = cunify_code`;;
 
-let isvars_def = cake_define
-  `isvars [] = {} /\
-   isvars (t :: ts) = vars (encode_infer_t t) UNION isvars ts`;;
+let isvars_def = cake_define_list
+  [`isvars [] = {}`;
+   `isvars (t :: ts) = vars (encode_infer_t t) UNION isvars ts`];;
 
 
-let cplist_vars_def = cake_define
-  `cplist_vars [] = {} /\
-   cplist_vars ((ts,us) :: rest) = isvars ts UNION isvars us UNION
-     cplist_vars rest`;;
+let cplist_vars_def = cake_define_list
+  [`cplist_vars [] = {}`;
+   `cplist_vars ((ts,us) :: rest) = isvars ts UNION isvars us UNION
+  cplist_vars rest`];;
 
-let PFLAT_def = cake_define
-  `PFLAT [] = EMPTY_BAG /\
-   PFLAT (([],[]) :: ps) = PFLAT ps /\
-   PFLAT (([],j :: js) :: ps) =
-     BAG_INSERT (encode_infer_t j) (PFLAT (([],js) :: ps)) /\
-   PFLAT ((i :: is,js) :: ps) =
-     BAG_INSERT (encode_infer_t i) (PFLAT ((is,js) :: ps))`;;
+let PFLAT_def = cake_define_list
+  [`PFLAT [] = EMPTY_BAG`;
+   `PFLAT (([],[]) :: ps) = PFLAT ps`;
+   `PFLAT (([],j :: js) :: ps) =
+      BAG_INSERT (encode_infer_t j) (PFLAT (([],js) :: ps))`;
+   `PFLAT ((i :: is,js) :: ps) =
+      BAG_INSERT (encode_infer_t i) (PFLAT ((is,js) :: ps))`];;
 
 let kcunifywlR_def = cake_define
   `kcunifywlR ((s:infer_t spt),(wl:(infer_t list#infer_t list) list))

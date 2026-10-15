@@ -156,13 +156,14 @@ let all_bytes_def = cake_define
 let escape_sym_char_def = cake_define
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
-        code >= 48 /\ code <= 57 \/ code = 95 then toString ch else ^
-          (^
+        code >= 48 /\ code <= 57 \/ code = 95 then toString ch else
+          (\x y. strcat x y) ((\x y. strcat x y)
      (implode "$") (toString (code))) (implode "_"))`;;
 
 let get_sym_label_def = cake_define
   `get_sym_label (ix,appl) (name,start,len) =
-     (let label = ^ (^ (^
+     (let label = (\x y. strcat x y) ((\x y. strcat x y) ((\x y.
+       strcat x y)
        (implode "cml_") (concat (MAP escape_sym_char (explode
          name))))
        (implode "_")) (toString (ix)) in
@@ -175,8 +176,10 @@ let get_sym_labels_def = cake_define
 let emit_symbol_def = cake_define
   `emit_symbol appl (name,label,start,len) =
      misc_Append appl (misc_List
-       [^ (^ (^ (^ (^ (^ (implode "    makesym(") label) (implode
-         ", ")) (toString (start))) (implode ", "))
+       [(\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
+         ((\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
+         (implode "    makesym(") label) (implode ", ")) (toString
+         (start))) (implode ", "))
        (toString (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = cake_define

@@ -18,33 +18,33 @@
 let namespace_id_INDUCT,namespace_id_RECURSION = define_datatype
   "namespace_id = Short ('n) | Long ('m) (namespace_id)";;
 
-let mk_id_def = cake_define
-  `mk_id [] n = Short n /\
-   mk_id (mn :: mns) n = Long mn (mk_id mns n)`;;
+let mk_id_def = cake_define_list
+  [`mk_id [] n = Short n`;
+   `mk_id (mn :: mns) n = Long mn (mk_id mns n)`];;
 
-let id_to_n_def = cake_define
-  `id_to_n (Short n) = n /\
-   id_to_n (Long _1 id') = id_to_n id'`;;
+let id_to_n_def = cake_define_list
+  [`id_to_n (Short n:namespace_id) = n`;
+   `id_to_n (Long _1 id':namespace_id) = id_to_n id'`];;
 
-let id_to_mods_def = cake_define
-  `id_to_mods (Short _2) = [] /\
-   id_to_mods (Long mn id') = mn :: id_to_mods id'`;;
+let id_to_mods_def = cake_define_list
+  [`id_to_mods (Short _2:namespace_id) = []`;
+   `id_to_mods (Long mn id':namespace_id) = mn :: id_to_mods id'`];;
 
 let namespace_INDUCT,namespace_RECURSION = define_datatype
   "namespace = Bind (('n#'v) list) (('m#namespace) list)";;
 
-let nsLookup_def = cake_define
-  `nsLookup ((Bind v m):('m,'n,'v)namespace) (Short n) =
-     ALOOKUP v n /\
-   nsLookup (Bind v m) (Long mn id') =
-     (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookup
-       env id')`;;
+let nsLookup_def = cake_define_list
+  [`nsLookup ((Bind v m):('m,'n,'v)namespace) (Short n:namespace_id) =
+      ALOOKUP v n`;
+   `nsLookup (Bind v m:namespace) (Long mn id':namespace_id) =
+      (match ALOOKUP m mn with NONE -> NONE | SOME env ->
+        nsLookup env id')`];;
 
-let nsLookupMod_def = cake_define
-  `nsLookupMod e [] = SOME (e:('m,'n,'v)namespace) /\
-   nsLookupMod (Bind v m) (mn :: path') =
-   (match ALOOKUP m mn with NONE -> NONE | SOME env -> nsLookupMod
-     env path')`;;
+let nsLookupMod_def = cake_define_list
+  [`nsLookupMod e [] = SOME (e:('m,'n,'v)namespace)`;
+   `nsLookupMod (Bind v m:namespace) (mn :: path') =
+    (match ALOOKUP m mn with NONE -> NONE | SOME env ->
+      nsLookupMod env path')`];;
 
 let nsEmpty_def = cake_define
   `nsEmpty = Bind [] []`;;

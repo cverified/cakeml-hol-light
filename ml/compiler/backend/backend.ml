@@ -57,14 +57,14 @@ let backend_config_FIELDS = define_record "backend_config"
 val config_component_equality = theorem"config_component_equality";
 *)
 
-let attach_bitmaps_def = cake_define
-  `(attach_bitmaps names c bm (SOME (bytes,c')) =
-     SOME (bytes,bm,backend_config_symbols_fupd (K (MAP (\(n,p,l).
-       (lookup_any n names (implode "NOTFOUND"),p,l))
-       (lab_to_target_config_sec_pos_len c')))
-       (backend_config_lab_conf_fupd (K c')
-           c))) /\
-   (attach_bitmaps names c bm NONE = NONE)`;;
+let attach_bitmaps_def = cake_define_list
+  [`attach_bitmaps names c bm (SOME (bytes,c')) =
+        SOME (bytes,bm,backend_config_symbols_fupd (K (MAP
+          (\(n,p,l). (lookup_any n names (implode "NOTFOUND"),p,l))
+          (lab_to_target_config_sec_pos_len c')))
+          (backend_config_lab_conf_fupd (K c')
+              c))`;
+   `attach_bitmaps names c bm NONE = NONE`];;
 
 let compile_def = cake_define
   `backend_compile asm_conf c p =
@@ -343,7 +343,7 @@ let from_livesets_def = cake_define
    let (n_oracles,col) = next_n_oracle (LENGTH p)
      (word_to_word_config_col_oracle word_conf) in
    let alg = word_to_word_config_reg_alg word_conf in
-   let prog_with_oracles = ZIP (n_oracles,ZIP (data,p)) in
+   let prog_with_oracles = ZIP n_oracles (ZIP data p) in
    let p =
      MAP
        (\(col_opt,((tree,heu_moves,spillcosts,forced,fs),name_num
@@ -518,12 +518,12 @@ let compile_inc_progs_for_eval_def = cake_define
        (backend_progs_target_prog
          ps))`;;
 
-let ffinames_to_string_list_def = cake_define
-  `(ffinames_to_string_list [] = []) /\
-   (ffinames_to_string_list ((ExtCall s) :: rest) =
-     s :: (ffinames_to_string_list rest)) /\
-   (ffinames_to_string_list ((SharedMem _18) :: rest) =
-     ffinames_to_string_list rest)`;;
+let ffinames_to_string_list_def = cake_define_list
+  [`ffinames_to_string_list [] = []`;
+   `ffinames_to_string_list ((ExtCall s:ffiname) :: rest) =
+        s :: (ffinames_to_string_list rest)`;
+   `ffinames_to_string_list ((SharedMem _18:ffiname) :: rest) =
+        ffinames_to_string_list rest`];;
 
 let set_oracle_def = cake_define
   `set_oracle c oracle = backend_config_word_to_word_conf_fupd (K

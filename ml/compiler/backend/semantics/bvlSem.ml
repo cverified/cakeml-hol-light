@@ -85,10 +85,10 @@ let v_to_list_def = cake_define
         | _2 -> NONE`;;
 hol4_overload "v_to_list" "bvlSem_v_to_list";;
 
-let list_to_v_def = cake_define
-  `bvlSem_list_to_v [] = Block nil_tag [] /\
-   bvlSem_list_to_v (v :: vs) = Block cons_tag [v;
-     bvlSem_list_to_v vs]`;;
+let list_to_v_def = cake_define_list
+  [`bvlSem_list_to_v [] = Block nil_tag []`;
+   `bvlSem_list_to_v (v :: vs) = Block cons_tag [v; bvlSem_list_to_v
+  vs]`];;
 hol4_overload "list_to_v" "bvlSem_list_to_v";;
 
 let isClos_def = cake_define
@@ -151,7 +151,7 @@ val s = ``(s:('c,'ffi) bvlSem$state)``
 *)
 
 let do_install_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_install vs) s =
          (match vs with [v1; v2] ->
               (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -189,11 +189,11 @@ let do_part_def = cake_define_list
           bvlSem_ref))))`];;
 hol4_overload "do_part" "bvlSem_do_part";;
 
-let do_build_def = cake_define
-  `bvlSem_do_build m i [] refs = (m (i - 1),refs) /\
-   bvlSem_do_build m i (p :: rest) refs =
-     (let (x,refs1) = do_part m p refs in
-       bvlSem_do_build ((i =+ x) m) (i + 1) rest refs1)`;;
+let do_build_def = cake_define_list
+  [`bvlSem_do_build m i [] refs = (m (i - 1),refs)`;
+   `bvlSem_do_build m i (p :: rest) refs =
+      (let (x,refs1) = do_part m p refs in
+        bvlSem_do_build ((i =+ x) m) (i + 1) rest refs1)`];;
 hol4_overload "do_build" "bvlSem_do_build";;
 
 let do_build_const_def = cake_define
@@ -302,7 +302,7 @@ hol4_overload "bad_thunk_update" "bvlSem_bad_thunk_update";;
     - Label is added *)
 
 let do_app_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_app op vs) s =
        (match (op,vs) with (GlobOp (Global n),[]) ->
            (match get_global n (?_globals s) with SOME (SOME v) ->
@@ -668,16 +668,17 @@ hol4_overload "dec_clock" "bvlSem_dec_clock";;
 
 (* Functions for looking up function definitions *)
 
-let find_code_def = cake_define
-  `(bvlSem_find_code (SOME p) args code =
-      (match lookup p code with NONE -> NONE | SOME (arity,exp) ->
-        (if LENGTH args = arity then SOME (args,exp) else NONE))) /\
-   (bvlSem_find_code NONE args code =
-      (if args = [] then NONE else
-        match LAST args with CodePtr loc ->
-            (match sptree_lookup loc code with NONE -> NONE | SOME
-              (arity,exp) -> (if LENGTH args = arity + 1 then SOME
-              (FRONT args,exp) else NONE)) | other -> NONE))`;;
+let find_code_def = cake_define_list
+  [`bvlSem_find_code (SOME p) args code =
+         (match lookup p code with NONE -> NONE | SOME
+           (arity,exp) -> (if LENGTH args = arity then SOME
+           (args,exp) else NONE))`;
+   `bvlSem_find_code NONE args code =
+         (if args = [] then NONE else
+           match LAST args with CodePtr loc ->
+               (match sptree_lookup loc code with NONE -> NONE |
+                 SOME (arity,exp) -> (if LENGTH args = arity + 1 then
+                 SOME (FRONT args,exp) else NONE)) | other -> NONE)`];;
 hol4_overload "find_code" "bvlSem_find_code";;
 
 (* The evaluation is defined as a clocked functional version of
@@ -697,72 +698,70 @@ hol4_overload "fix_clock" "bvlSem_fix_clock";;
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of exp expressions. *)
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
-   imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\
-   decide_tac *)
-let evaluate_def = cake_define_wf
-  `(inv_image (MEASURE I LEX MEASURE (list_size exp_size))
-                            (\(xs,env,s). (?_clock s,xs)))`
-  `(bvlSem_evaluate ([],env,s) = (Rval [],s)) /\
-   (bvlSem_evaluate (x :: y :: xs,env,s) =
-      (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
-        v1,s1) ->
-          (match bvlSem_evaluate (y :: xs,env,s1) with (Rval vs,s2)
-            -> (Rval (HD v1 :: vs),s2) | res -> res) | res -> res)) /\
-   (bvlSem_evaluate ([Var n],env,s) =
-      (if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
-        Rtype_error),s))) /\
-   (bvlSem_evaluate ([If x1 x2 x3],env,s) =
-      (match fix_clock s (bvlSem_evaluate ([x1],env,s)) with (Rval
-        vs,s1) ->
-           (if Boolv T = HD vs then bvlSem_evaluate ([x2],env,s1)
-             else
-           if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1) else
-             (Rerr (Rabort Rtype_error),s1)) | res -> res)) /\
-   (bvlSem_evaluate ([Let xs x2],env,s) =
-      (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
-        vs,s1) -> bvlSem_evaluate ([x2],vs ++ env,s1) | res -> res)) /\
-   (bvlSem_evaluate ([Raise x1],env,s) =
-      (match bvlSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
-        (Rraise (HD vs)),s) | res -> res)) /\
-   (bvlSem_evaluate ([Handle x1 x2],env,s1) =
-      (match fix_clock s1 (bvlSem_evaluate ([x1],env,s1)) with (Rerr
-        (Rraise v),s) -> bvlSem_evaluate ([x2],v :: env,s) | res ->
-        res)) /\
-   (bvlSem_evaluate ([Op op xs],env,s) =
-      (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
-        vs,s) ->
-          (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
-            err,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)) /\
-   (bvlSem_evaluate ([Tick x],env,s) =
-      (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s) else
-        bvlSem_evaluate ([x],env,dec_clock 1 s))) /\
-   (bvlSem_evaluate ([Force force_loc n],env,s) =
-      (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s) else
-        let thunk_v = EL n env in
-          match dest_thunk thunk_v (?_refs s) with BadRef -> (Rerr
-            (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
-            Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
-            IsThunk NotEvaluated f ->
-              (match find_code (SOME force_loc) [thunk_v; f] (?_code
-                s) with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
-                (args,exp) ->
-                   (if ?_clock s = 0 then
-                     (Rerr (Rabort Rtimeout_error),?_clock_fupd (K 0)
-                       s) else
-                     bvlSem_evaluate ([exp],args,dec_clock 1 s)))))
-                       /\
-   (bvlSem_evaluate ([Call ticks dest xs],env,s1) =
-      (match fix_clock s1 (bvlSem_evaluate (xs,env,s1)) with (Rval
-        vs,s) ->
-          (match find_code dest vs (?_code s) with NONE -> (Rerr
-            (Rabort Rtype_error),s) | SOME (args,exp) ->
-               (if ?_clock s < ticks + 1 then (Rerr (Rabort
-                 Rtimeout_error),?_clock_fupd (K 0) s) else
-                   bvlSem_evaluate ([exp],args,dec_clock (ticks +
-                     1) s))) | res -> res))`;;
+let evaluate_def = cake_define_list
+  [`bvlSem_evaluate ([],env,s) = (Rval [],s)`;
+   `bvlSem_evaluate (x :: y :: xs,env,s) =
+         (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval
+           v1,s1) ->
+             (match bvlSem_evaluate (y :: xs,env,s1) with (Rval
+               vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
+               -> res)`;
+   `bvlSem_evaluate ([(Var n:flatLang_exp)],env,s) =
+         (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
+           (Rabort Rtype_error),s))`;
+   `bvlSem_evaluate ([(If x1 x2 x3:flatLang_exp)],env,s) =
+         (match fix_clock s (bvlSem_evaluate ([x1],env,s)) with
+           (Rval vs,s1) ->
+              (if Boolv T = HD vs then bvlSem_evaluate ([x2],env,s1)
+                else
+              if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1)
+                else
+                (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
+   `bvlSem_evaluate ([(Let xs x2:flatLang_exp)],env,s) =
+         (match fix_clock s (bvlSem_evaluate (xs,env,s)) with
+           (Rval vs,s1) -> bvlSem_evaluate ([x2],vs ++ env,s1) | res
+           -> res)`;
+   `bvlSem_evaluate ([(Raise x1:flatLang_exp)],env,s) =
+         (match bvlSem_evaluate ([x1],env,s) with (Rval vs,s) ->
+           (Rerr (Rraise (HD vs)),s) | res -> res)`;
+   `bvlSem_evaluate ([(Handle x1 x2:flatLang_exp)],env,s1) =
+         (match fix_clock s1 (bvlSem_evaluate ([x1],env,s1)) with
+           (Rerr (Rraise v),s) -> bvlSem_evaluate ([x2],v :: env,s) |
+           res -> res)`;
+   `bvlSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
+         (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
+           vs,s) ->
+             (match do_app op (REVERSE vs) s with Rerr err ->
+               (Rerr err,s) | Rval (v,s) -> (Rval [v],s)) | res ->
+               res)`;
+   `bvlSem_evaluate ([(Tick x:flatLang_exp)],env,s) =
+         (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
+           else bvlSem_evaluate ([x],env,dec_clock 1 s))`;
+   `bvlSem_evaluate ([(Force force_loc n:flatLang_exp)],env,s) =
+         (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
+           else
+           let thunk_v = EL n env in
+             match dest_thunk thunk_v (?_refs s) with BadRef ->
+               (Rerr (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
+               Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
+               IsThunk NotEvaluated f ->
+                 (match find_code (SOME force_loc) [thunk_v; f]
+                   (?_code s) with NONE -> (Rerr (Rabort Rtype_error),s)
+                   | SOME (args,exp) ->
+                      (if ?_clock s = 0 then
+                        (Rerr (Rabort Rtimeout_error),?_clock_fupd
+                          (K 0) s) else
+                        bvlSem_evaluate ([exp],args,dec_clock 1
+                          s))))`;
+   `bvlSem_evaluate ([(Call ticks dest xs:flatLang_exp)],env,s1) =
+         (match fix_clock s1 (bvlSem_evaluate (xs,env,s1)) with
+           (Rval vs,s) ->
+             (match find_code dest vs (?_code s) with NONE -> (Rerr
+               (Rabort Rtype_error),s) | SOME (args,exp) ->
+                  (if ?_clock s < ticks + 1 then (Rerr (Rabort
+                    Rtimeout_error),?_clock_fupd (K 0) s) else
+                      bvlSem_evaluate ([exp],args,dec_clock
+                        (ticks + 1) s))) | res -> res)`];;
 hol4_overload "evaluate" "bvlSem_evaluate";;
 
 (* HOL4 ML code, not ported:

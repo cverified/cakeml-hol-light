@@ -28,10 +28,10 @@ let set_byte_def = cake_define
 let bytes_in_word_def = cake_define
   `bytes_in_word = (n2w (dimindex (:'a) DIV 8):'a word)`;;
 
-let word_of_bytes_def = cake_define
-  `(word_of_bytes be a [] = (n2w 0)) /\
-   (word_of_bytes be a (b :: bs) =
-      set_byte a b (word_of_bytes be (a + (n2w 1)) bs) be)`;;
+let word_of_bytes_def = cake_define_list
+  [`word_of_bytes be a [] = (n2w 0)`;
+   `word_of_bytes be a (b :: bs) =
+         set_byte a b (word_of_bytes be (a + (n2w 1)) bs) be`];;
 
 let bytes_to_word_def = cake_define
   `bytes_to_word k a bs w be =
@@ -39,10 +39,10 @@ let bytes_to_word_def = cake_define
        match bs with [] -> w | (b :: bs) -> set_byte a b
          (bytes_to_word (k - 1) (a + (n2w 1)) bs w be) be)`;;
 
-let word_to_bytes_aux_def = cake_define
-  `word_to_bytes_aux 0 (w:'a word) be = [] /\
-   word_to_bytes_aux (SUC n) w be =
-     (word_to_bytes_aux n w be) ++ [get_byte (n2w n) w be]`;;
+let word_to_bytes_aux_def = cake_define_list
+  [`word_to_bytes_aux 0 (w:'a word) be = []`;
+   `word_to_bytes_aux (SUC n) w be =
+      (word_to_bytes_aux n w be) ++ [get_byte (n2w n) w be]`];;
 
 let word_to_bytes_def = cake_define
   `word_to_bytes (w:'a word) be =

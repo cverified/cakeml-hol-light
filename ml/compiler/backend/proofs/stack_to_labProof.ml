@@ -71,15 +71,15 @@ let dest_to_loc'_def = cake_define
 
 (* -- Lemmas about code_installed, loc_to_pc and asm_fetch_aux -- *)
 
-let code_installed_def = cake_define
-  `(stack_to_labProof_code_installed n [] code = T) /\
-   (stack_to_labProof_code_installed n (x :: xs) code <=>
-    (if is_Label x then
-      (match x with Label l1 l2 _4 -> loc_to_pc l1 l2 code = SOME n)
-        /\
-      stack_to_labProof_code_installed n xs code else
-      asm_fetch_aux n code = SOME x /\
-      stack_to_labProof_code_installed (n + 1) xs code))`;;
+let code_installed_def = cake_define_list
+  [`stack_to_labProof_code_installed n [] code = T`;
+   `stack_to_labProof_code_installed n (x :: xs) code <=>
+       (if is_Label x then
+         (match x with Label l1 l2 _4 -> loc_to_pc l1 l2 code = SOME
+           n) /\
+         stack_to_labProof_code_installed n xs code else
+         asm_fetch_aux n code = SOME x /\
+         stack_to_labProof_code_installed (n + 1) xs code)`];;
 hol4_overload "code_installed" "stack_to_labProof_code_installed";;
 
 (* TODO: these may already be proved in lab_filter or lab_to_target,
@@ -90,19 +90,19 @@ hol4_overload "code_installed" "stack_to_labProof_code_installed";;
 
 (* loc_to_pc on the other side *)
 
-let code_installed'_def = cake_define
-  `(code_installed' n [] code <=> T) /\
-   (code_installed' n (x :: xs) code <=>
-      (if is_Label x then code_installed' n xs code else
-        asm_fetch_aux n code = SOME x /\ code_installed' (n + 1) xs
-        code))`;;
+let code_installed'_def = cake_define_list
+  [`code_installed' n [] code <=> T`;
+   `code_installed' n (x :: xs) code <=>
+         (if is_Label x then code_installed' n xs code else
+           asm_fetch_aux n code = SOME x /\ code_installed' (n + 1)
+           xs code)`];;
 
-let labs_correct_def = cake_define
-  `(labs_correct n [] code <=> T) /\
-   (labs_correct n (x :: xs) code <=>
-      (if is_Label x then labs_correct n xs code /\
-        (match x with Label l1 l2 v2 -> loc_to_pc l1 l2 code =
-          SOME n | _6 -> T) else labs_correct (n + 1) xs code))`;;
+let labs_correct_def = cake_define_list
+  [`labs_correct n [] code <=> T`;
+   `labs_correct n (x :: xs) code <=>
+         (if is_Label x then labs_correct n xs code /\
+           (match x with Label l1 l2 v2 -> loc_to_pc l1 l2 code =
+             SOME n | _6 -> T) else labs_correct (n + 1) xs code)`];;
 
 (* HOL4 ML code, not ported:
 val is_Label_def = labSemTheory.is_Label_def

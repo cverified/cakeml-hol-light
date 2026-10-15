@@ -103,10 +103,10 @@ let int_op_def = cake_define
      (if op = IntOp Add then SOME (MakeInt (j + i)) else
      if op = IntOp Sub then SOME (MakeInt (j - i)) else
      if op = IntOp Mult then SOME (MakeInt (j * i)) else
-     if op = IntOp Div then SOME (MakeInt (if i = 0 then 0 else j /
-       i)) else
-     if op = IntOp Mod then SOME (MakeInt (if i = 0 then 0 else j %
-       i)) else
+     if op = IntOp Div then SOME (MakeInt (if i = (&0) then (&0) else
+       j / i)) else
+     if op = IntOp Mod then SOME (MakeInt (if i = (&0) then (&0) else
+       j % i)) else
      if op = IntOp Less then SOME (MakeBool (j < i)) else
      if op = IntOp LessEq then SOME (MakeBool (j <= i)) else
      if op = IntOp Greater then SOME (MakeBool (i < j)) else
@@ -203,7 +203,7 @@ let eq_pure_list_def = cake_define_wf
          (NONE,NONE) -> List [Op None (BlockOp Equal) [x; y]] | (SOME
          (t1,xs),SOME (t2,ys)) ->
             (if ~(t1 = t2) \/ ~(LENGTH xs = LENGTH ys) then List
-              [MakeBool F] else eq_pure_list (ZIP (REVERSE xs,REVERSE
+              [MakeBool F] else eq_pure_list (ZIP (REVERSE xs) (REVERSE
               ys))) | (SOME (t1,xs),NONE) ->
             Append (List [Op None (BlockOp (TagLenEq t1 (LENGTH xs)))
               [y]])
@@ -230,26 +230,20 @@ let dont_lift_def = cake_define
          (match (dest_Op_Nil dest_Constant) x with SOME t -> T |
            NONE -> F)))`;;
 
-let _ = size_thms "exp3";;
-(* HOL4 termination: \\ rw [] \\ Cases_on ‘x’ \\ fs
-   [dest_Op_def,dest_Cons_def,exp_size_def] \\ rename [‘Op _ oo _’]
-   \\ Cases_on ‘oo’ \\ gvs [dest_Cons_def] \\ Cases_on ‘b’ \\ gvs
-   [dest_Cons_def] *)
-let lift_exps_def = cake_define_wf
-  `MEASURE (\(xs,n,binds). exp3_size xs)`
-  `lift_exps [] n binds = ([],n,binds) /\
-   lift_exps (x :: xs) n binds =
-     (if dont_lift x then
-       (let (xs,n,binds) = lift_exps xs n binds in
-          (x :: xs,n,binds)) else match (dest_Op dest_Cons) x with
-            SOME (t,ys) ->
-             (let (ys,n,binds) = lift_exps ys n binds in
-              let (xs,n,binds) = lift_exps xs n binds in
-                (Op None (BlockOp (Cons t)) ys :: xs,n,binds)) | NONE
-                  ->
-             (let (xs,n1,binds) = lift_exps xs (n + 1) (binds ++ [x])
-               in
-               (Var None n :: xs,n1,binds)))`;;
+let lift_exps_def = cake_define_list
+  [`lift_exps [] n binds = ([],n,binds)`;
+   `lift_exps (x :: xs) n binds =
+      (if dont_lift x then
+        (let (xs,n,binds) = lift_exps xs n binds in
+           (x :: xs,n,binds)) else match (dest_Op dest_Cons) x with
+             SOME (t,ys) ->
+              (let (ys,n,binds) = lift_exps ys n binds in
+               let (xs,n,binds) = lift_exps xs n binds in
+                 (Op None (BlockOp (Cons t)) ys :: xs,n,binds)) |
+                   NONE ->
+              (let (xs,n1,binds) = lift_exps xs (n + 1) (binds ++
+                [x]) in
+                (Var None n :: xs,n1,binds)))`];;
 
 let eq_any_def = cake_define
   `eq_any x y =

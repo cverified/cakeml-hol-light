@@ -49,31 +49,31 @@ let environment_store_FIELDS = define_record "environment_store"
    "env_gens","(source_to_flat_environment sptree_num_map) \
    sptree_num_map"];;
 
-let compile_var_def = cake_define
-  `compile_var t (Glob _1 i) = App t (GlobalVarLookup i) [] /\
-   compile_var t (Local _2 s) = Var_local t s`;;
+let compile_var_def = cake_define_list
+  [`compile_var t (Glob _1 i:var_name) = App t (GlobalVarLookup i) []`;
+   `compile_var t (Local _2 s:var_name) = Var_local t s`];;
 
-let _ = size_thms "pat";;
-(* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
-   SUM_APPEND] *)
-let compile_pat_def = cake_define_wf
-  `MEASURE (pat_size o SND)`
-  `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
-   (compile_pat env Pany = Pany) /\
-   (compile_pat env (Plit l) = Plit l) /\
-   (compile_pat env (ast_Pcon id' ps) =
-     flatLang_Pcon
-       (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id'))
-       (MAP (compile_pat env) ps)) /\
-   (compile_pat env (Pref p) = Pref (compile_pat env p)) /\
-   (compile_pat env (Pas p i) = Pas (compile_pat env p) i) /\
-   (compile_pat env (Ptannot p t) = compile_pat env p)`;;
+let compile_pat_def = cake_define_list
+  [`compile_pat env (ast_Pvar v:pattern_semantics_pat) =
+  flatLang_Pvar v`;
+   `compile_pat env Pany = Pany`;
+   `compile_pat env (Plit l:pattern_semantics_pat) = Plit l`;
+   `compile_pat env (ast_Pcon id' ps:pattern_semantics_pat) =
+        flatLang_Pcon
+          (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id'))
+          (MAP (compile_pat env) ps)`;
+   `compile_pat env (Pref p:pattern_semantics_pat) = Pref
+  (compile_pat env p)`;
+   `compile_pat env (Pas p i:pattern_semantics_pat) = Pas
+  (compile_pat env p) i`;
+   `compile_pat env (Ptannot p t:pattern_semantics_pat) = compile_pat
+  env p`];;
 
-let pat_tups_def = cake_define
-  `(pat_tups t [] = []) /\
-   (pat_tups t (x :: xs) =
-    (let t' = mk_cons t ((LENGTH xs) + 1) in
-      (x,Local t' x) :: pat_tups t xs))`;;
+let pat_tups_def = cake_define_list
+  [`pat_tups t [] = []`;
+   `pat_tups t (x :: xs) =
+       (let t' = mk_cons t ((LENGTH xs) + 1) in
+         (x,Local t' x) :: pat_tups t xs)`];;
 
 let astOp_to_flatOp_def = cake_define
   `(astOp_to_flatOp (op:ast_op):flatLang_op) =
@@ -90,11 +90,11 @@ let type_group_id_type_def = cake_define
 let str_sep_def = cake_define
   `str_sep = (implode "_")`;;
 
-let join_all_names_aux_def = cake_define
-  `join_all_names_aux [] ys = ys /\
-   join_all_names_aux (x :: xs) ys =
-     (match ys with [] -> join_all_names_aux xs (x :: ys) | _5 ->
-       join_all_names_aux xs (x :: str_sep :: ys))`;;
+let join_all_names_aux_def = cake_define_list
+  [`join_all_names_aux [] ys = ys`;
+   `join_all_names_aux (x :: xs) ys =
+      (match ys with [] -> join_all_names_aux xs (x :: ys) | _5
+        -> join_all_names_aux xs (x :: str_sep :: ys))`];;
 
 let join_all_names_def = cake_define
   `join_all_names xs =
@@ -206,10 +206,10 @@ hol4_overload "compile_exps" "source_to_flat_compile_exps";;
 let om_tra_def = cake_define
   `om_tra = Cons orphan_trace 1`;;
 
-let alloc_defs_def = cake_define
-  `(alloc_defs n next [] = []) /\
-   (alloc_defs n next (x :: xs) =
-     (x,Glob om_tra next) :: alloc_defs (n + 1) (next + 1) xs)`;;
+let alloc_defs_def = cake_define_list
+  [`alloc_defs n next [] = []`;
+   `alloc_defs n next (x :: xs) =
+        (x,Glob om_tra next) :: alloc_defs (n + 1) (next + 1) xs`];;
 
 let make_varls_def = cake_define
   `make_varls n t idx x4 =
@@ -243,13 +243,13 @@ let lookup_inc_def = cake_define
      (match sptree_lookup i t with NONE -> (0,sptree_insert i 1 t)
        | SOME n -> (n,sptree_insert i (n + 1) t))`;;
 
-let alloc_tags1_def = cake_define
-  `(alloc_tags1 [] = (nsEmpty,LN,[])) /\
-   (alloc_tags1 ((cn,ts) :: ctors) =
-     (let (ns,cids,tag_list) = alloc_tags1 ctors in
-     let arity = LENGTH ts in
-     let (tag,new_cids) = lookup_inc arity cids in
-       (nsBind cn tag ns,new_cids,(tag,arity) :: tag_list)))`;;
+let alloc_tags1_def = cake_define_list
+  [`alloc_tags1 [] = (nsEmpty,LN,[])`;
+   `alloc_tags1 ((cn,ts) :: ctors) =
+        (let (ns,cids,tag_list) = alloc_tags1 ctors in
+        let arity = LENGTH ts in
+        let (tag,new_cids) = lookup_inc arity cids in
+          (nsBind cn tag ns,new_cids,(tag,arity) :: tag_list))`];;
 
 let alloc_tags_def = cake_define
   `alloc_tags tid ctors =

@@ -58,15 +58,15 @@ let wRegWrite2_def = cake_define
        if r < k then g r else Seq (g (k + 1)) (StackStore (k + 1)
          (f - 1 - (r - k))))`;;
 
-let wStackLoad_def = cake_define
-  `(wStackLoad [] x = x) /\
-   (wStackLoad ((r,i) :: ps) x = Seq (StackLoad r i) (wStackLoad
-     ps x))`;;
+let wStackLoad_def = cake_define_list
+  [`wStackLoad [] x = x`;
+   `wStackLoad ((r,i) :: ps) x = Seq (StackLoad r i) (wStackLoad ps
+  x)`];;
 
-let wStackStore_def = cake_define
-  `(wStackStore [] x = x) /\
-   (wStackStore ((r,i) :: ps) x = Seq (wStackStore ps x)
-     (StackStore r i))`;;
+let wStackStore_def = cake_define_list
+  [`wStackStore [] x = x`;
+   `wStackStore ((r,i) :: ps) x = Seq (wStackStore ps x) (StackStore
+  r i)`];;
 
 let wMoveSingle_def = cake_define
   `wMoveSingle (x,y) (k,f,(f':num)) =
@@ -83,10 +83,9 @@ let wMoveAux_def = cake_define
         | [xy] -> wMoveSingle xy kf
         | (xy :: xys) -> Seq (wMoveSingle xy kf) (wMoveAux xys kf)`;;
 
-let format_var_def = cake_define
-  `(format_var k NONE = INL (k + 1)) /\
-   (format_var k (SOME x) = (if x < (k:num) then INL x else INR
-     x))`;;
+let format_var_def = cake_define_list
+  [`format_var k NONE = INL (k + 1)`;
+   `format_var k (SOME x) = (if x < (k:num) then INL x else INR x)`];;
 
 let wMove_def = cake_define
   `wMove xs (k,(f:num),(f':num)) =
@@ -239,10 +238,10 @@ let wShareInst_def = cake_define
        wStackLoad (l1 ++ l2)
          (ShMemOp Store32 n1 (Addr n2 offset)))`;;
 
-let bits_to_word_def = cake_define
-  `(bits_to_word [] = (n2w 0)) /\
-   (bits_to_word (T :: xs) = (bits_to_word xs << 1 || (n2w 1))) /\
-   (bits_to_word (F :: xs) = (bits_to_word xs << 1))`;;
+let bits_to_word_def = cake_define_list
+  [`bits_to_word [] = (n2w 0)`;
+   `bits_to_word (T :: xs) = (bits_to_word xs << 1 || (n2w 1))`;
+   `bits_to_word (F :: xs) = (bits_to_word xs << 1)`];;
 
 (* HOL4 termination: \\ fs [LENGTH_DROP] \\ DECIDE_TAC *)
 let word_list_def = cake_define_wf
@@ -277,12 +276,13 @@ let wLive_def = cake_define
 let SeqStackFree_def = cake_define
   `SeqStackFree n p = (if n = 0 then p else Seq (StackFree n) p)`;;
 
-let call_dest_def = cake_define
-  `(call_dest (SOME pos) args kf = (Skip,INL pos)) /\
-   (call_dest NONE args kf =
-      (if LENGTH args = 0 then (Skip,INL raise_stub_location) else
-        let (x1,r) = wReg2 (LAST args) kf in
-          (wStackLoad x1 Skip,INR r)))`;;
+let call_dest_def = cake_define_list
+  [`call_dest (SOME pos) args kf = (Skip,INL pos)`;
+   `call_dest NONE args kf =
+         (if LENGTH args = 0 then (Skip,INL raise_stub_location)
+           else
+           let (x1,r) = wReg2 (LAST args) kf in
+             (wStackLoad x1 Skip,INR r))`];;
 
 let stack_arg_count_def = cake_define
   `stack_arg_count dest arg_count k =
@@ -294,12 +294,12 @@ let stack_free_def = cake_define
      f - stack_arg_count dest arg_count k`;;
 hol4_overload "stack_free" "word_to_stack_stack_free";;
 
-let stack_move_def = cake_define
-  `(stack_move 0 start offset i p = p) /\
-   (stack_move (SUC n) start offset i p =
-      Seq (stack_move n (start + 1) offset i p)
-          (Seq (StackLoad i (start + offset)) (StackStore i
-            start)))`;;
+let stack_move_def = cake_define_list
+  [`stack_move 0 start offset i p = p`;
+   `stack_move (SUC n) start offset i p =
+         Seq (stack_move n (start + 1) offset i p)
+             (Seq (StackLoad i (start + offset)) (StackStore i
+               start))`];;
 
 let StackArgs_def = cake_define
   `StackArgs dest arg_count (k,f,(f':num)) =
@@ -376,11 +376,11 @@ let PopHandler_def = cake_define
    (Seq (StackFree (handler_slots perf))
    prog))`;;
 
-let chunk_to_bits_def = cake_define
-  `chunk_to_bits ([]:(bool#'ga word) list) = ((n2w 1):'a word) /\
-   chunk_to_bits ((b,w) :: ws) =
-     (let res = (chunk_to_bits ws) << 1 in
-       if b then res + (n2w 1) else res)`;;
+let chunk_to_bits_def = cake_define_list
+  [`chunk_to_bits ([]:(bool#'ga word) list) = ((n2w 1):'a word)`;
+   `chunk_to_bits ((b,w) :: ws) =
+      (let res = (chunk_to_bits ws) << 1 in
+        if b then res + (n2w 1) else res)`];;
 
 let chunk_to_bitmap_def = cake_define
   `chunk_to_bitmap ws = chunk_to_bits ws :: MAP SND ws`;;
@@ -582,16 +582,15 @@ let compile_prog_def = cake_define
        (Seq (StackAlloc (f - stack_arg_count')) q1,f,bitmaps))`;;
 hol4_overload "compile_prog" "word_to_stack_compile_prog";;
 
-let compile_word_to_stack_def = cake_define
-  `(compile_word_to_stack asm_conf perf k [] bitmaps = ([],[],bitmaps))
-  /\
-   (compile_word_to_stack asm_conf perf k ((i,n,p) :: progs) bitmaps
-     =
-      (let (prog,f,bitmaps) = compile_prog asm_conf perf p n k
-        bitmaps in
-      let (progs,fs,bitmaps) = compile_word_to_stack asm_conf perf k
-        progs bitmaps in
-        ((i,prog) :: progs,f :: fs,bitmaps)))`;;
+let compile_word_to_stack_def = cake_define_list
+  [`compile_word_to_stack asm_conf perf k [] bitmaps =
+  ([],[],bitmaps)`;
+   `compile_word_to_stack asm_conf perf k ((i,n,p) :: progs) bitmaps =
+         (let (prog,f,bitmaps) = compile_prog asm_conf perf p n k
+           bitmaps in
+         let (progs,fs,bitmaps) = compile_word_to_stack asm_conf
+           perf k progs bitmaps in
+           ((i,prog) :: progs,f :: fs,bitmaps))`];;
 
 let compile_def = cake_define
   `word_to_stack_compile asm_conf perf progs =
@@ -601,8 +600,7 @@ let compile_def = cake_define
          if perf then (List [(n2w 16)],1) else (List [(n2w 4)],1) in
      let (progs,fs,bitmaps) = compile_word_to_stack asm_conf perf k
        progs init_bitmaps in
-     let sfs = fromAList (MAP (\((i,_9),n). (i,n)) (ZIP (progs,fs)))
-       in
+     let sfs = fromAList (MAP (\((i,_9),n). (i,n)) (ZIP progs fs)) in
        (append (FST bitmaps),
         mk_word_to_stack_config (SND bitmaps) sfs,0 :: fs,
         (raise_stub_location,raise_stub perf k) ::

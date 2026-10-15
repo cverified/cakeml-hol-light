@@ -129,7 +129,7 @@ let install_conf_rel_def = cake_define
        pat_cfg)) (install_config_compile ic2))`;;
 
 let state_rel_def = cake_define
-  `^ (^
+  `(\x y. strcat x y) ((\x y. strcat x y)
      (state_rel cfg) s) t <=> ?_clock
        t = ?_clock s /\
        LIST_REL (sv_rel v_rel) (?_refs s) (?_refs t) /\ ?_ffi

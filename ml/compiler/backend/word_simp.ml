@@ -135,14 +135,14 @@ let const_fp_exp_def = cake_define
                   const_fp_exp_e const_fp_exp_e1)
         | e -> e`;;
 
-let const_fp_move_cs_def = cake_define
-  `(const_fp_move_cs [] _11 cs = cs) /\
-   (const_fp_move_cs (m :: ms) ocs ncs =
-     (let v = FST m in
-     let nncs =
-       (match lookup (SND m) ocs with SOME c -> insert v c ncs | _12
-         -> delete v ncs) in
-         const_fp_move_cs ms ocs nncs))`;;
+let const_fp_move_cs_def = cake_define_list
+  [`const_fp_move_cs [] _11 cs = cs`;
+   `const_fp_move_cs (m :: ms) ocs ncs =
+        (let v = FST m in
+        let nncs =
+          (match lookup (SND m) ocs with SOME c -> insert v c ncs |
+            _12 -> delete v ncs) in
+            const_fp_move_cs ms ocs nncs)`];;
 
 let const_fp_inst_cs_def = cake_define
   `const_fp_inst_cs x1 cs =
@@ -171,9 +171,9 @@ let const_fp_inst_cs_def = cake_define
          (delete r1 cs))
         | _36 -> cs`;;
 
-let get_var_imm_cs_def = cake_define
-  `(get_var_imm_cs (Reg r) cs = lookup r cs) /\
-   (get_var_imm_cs (Imm i) _37 = SOME i)`;;
+let get_var_imm_cs_def = cake_define_list
+  [`get_var_imm_cs (Reg r:asm_reg_imm) cs = lookup r cs`;
+   `get_var_imm_cs (Imm i:asm_reg_imm) _37 = SOME i`];;
 
 let is_gc_const_def = cake_define
   `is_gc_const c = ((c && (n2w 1)) = (n2w 0))`;;
@@ -186,11 +186,11 @@ let all_names_def = cake_define
      delete_all = λn l. FOLDR delete l n *)
 
 (* We only drop constants that can potentially be in registers *)
-let drop_consts_def = cake_define
-  `drop_consts cs [] = Skip /\
-   drop_consts cs (n :: ns) =
-     (match lookup n cs with NONE -> drop_consts cs ns | SOME w ->
-       SmartSeq (drop_consts cs ns) (Assign n (Const w)))`;;
+let drop_consts_def = cake_define_list
+  [`drop_consts cs [] = Skip`;
+   `drop_consts cs (n :: ns) =
+      (match lookup n cs with NONE -> drop_consts cs ns | SOME w
+        -> SmartSeq (drop_consts cs ns) (Assign n (Const w)))`];;
 
 let const_fp_loop_def = cake_define
   `const_fp_loop p cs =

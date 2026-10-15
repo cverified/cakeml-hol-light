@@ -24,40 +24,41 @@ let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
   ["limit","num";
    "isRef","'a->bool"];;
 
-let gc_move_def = cake_define
-  `(gen_gc_gc_move conf state (Data d) = (Data d,state)) /\
-   (gen_gc_gc_move conf state (Pointer ptr d) =
-      (match heap_lookup ptr (gc_state_heap state) with SOME
-        (ForwardPointer ptr _3 l) -> (Pointer ptr d,state) | SOME
-        (DataElement xs l dd) ->
-        (let ok = gc_state_ok state /\ l + 1 <= gc_state_n state in
-        let n = gc_state_n state - (l + 1) in
-         if gen_gc_conf_isRef conf dd then
-           let r4 = (DataElement xs l dd) :: gc_state_r4 state in
-           let (heap,ok) = gc_forward_ptr ptr (gc_state_heap state)
-             (gc_state_a state + n) d ok in
-             (
-             Pointer (gc_state_a state + n) d,gc_state_ok_fupd (K ok)
-               (gc_state_heap_fupd (K heap) (gc_state_n_fupd (K n)
-               (gc_state_r4_fupd (K r4) state)))) else
-           let h2 = gc_state_h2 state ++ [DataElement xs l dd] in
-           let (heap,ok) = gc_forward_ptr ptr (gc_state_heap state)
-             (gc_state_a state) d ok in
-           let a = gc_state_a state + l + 1 in
-             (
-             Pointer (gc_state_a state) d,gc_state_ok_fupd (K ok)
-               (gc_state_heap_fupd (K heap) (gc_state_a_fupd (K a)
-               (gc_state_n_fupd (K n) (gc_state_h2_fupd (K h2)
-               state)))))) | _4 -> (Pointer ptr d,gc_state_ok_fupd (K
-               F) state)))`;;
+let gc_move_def = cake_define_list
+  [`gen_gc_gc_move conf state (Data d:heap_address) = (Data d,state)`;
+   `gen_gc_gc_move conf state (Pointer ptr d:heap_address) =
+         (match heap_lookup ptr (gc_state_heap state) with SOME
+           (ForwardPointer ptr _3 l) -> (Pointer ptr d,state) | SOME
+           (DataElement xs l dd) ->
+           (let ok = gc_state_ok state /\ l + 1 <= gc_state_n state
+             in
+           let n = gc_state_n state - (l + 1) in
+            if gen_gc_conf_isRef conf dd then
+              let r4 = (DataElement xs l dd) :: gc_state_r4 state in
+              let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
+                state) (gc_state_a state + n) d ok in
+                (
+                Pointer (gc_state_a state + n) d,gc_state_ok_fupd (K
+                  ok) (gc_state_heap_fupd (K heap) (gc_state_n_fupd (K
+                  n) (gc_state_r4_fupd (K r4) state)))) else
+              let h2 = gc_state_h2 state ++ [DataElement xs l dd] in
+              let (heap,ok) = gc_forward_ptr ptr (gc_state_heap
+                state) (gc_state_a state) d ok in
+              let a = gc_state_a state + l + 1 in
+                (
+                Pointer (gc_state_a state) d,gc_state_ok_fupd (K
+                  ok) (gc_state_heap_fupd (K heap) (gc_state_a_fupd
+                  (K a) (gc_state_n_fupd (K n) (gc_state_h2_fupd (K
+                  h2) state)))))) | _4 -> (Pointer ptr
+                  d,gc_state_ok_fupd (K F) state))`];;
 hol4_overload "gc_move" "gen_gc_gc_move";;
 
-let gc_move_list_def = cake_define
-  `(gen_gc_gc_move_list conf state [] = ([],state)) /\
-   (gen_gc_gc_move_list conf state (x :: xs) =
-     (let (x,state) = gc_move conf state x in
-     let (xs,state) = gen_gc_gc_move_list conf state xs in
-       (x :: xs,state)))`;;
+let gc_move_list_def = cake_define_list
+  [`gen_gc_gc_move_list conf state [] = ([],state)`;
+   `gen_gc_gc_move_list conf state (x :: xs) =
+        (let (x,state) = gc_move conf state x in
+        let (xs,state) = gen_gc_gc_move_list conf state xs in
+          (x :: xs,state))`];;
 hol4_overload "gc_move_list" "gen_gc_gc_move_list";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]

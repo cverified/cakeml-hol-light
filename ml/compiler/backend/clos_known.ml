@@ -313,7 +313,7 @@ let merge_tup_def = cake_define_wf
         | (x,Impossible) -> x
         | (Tuple tg1 xs,Tuple tg2 ys) ->
         (if LENGTH xs = LENGTH ys /\ tg1 = tg2 then
-          Tuple tg1 (MAP merge_tup (ZIP (xs,ys))) else Other)
+          Tuple tg1 (MAP merge_tup (ZIP xs ys)) else Other)
         | (ClosNoInline m1 n1,ClosNoInline m2 n2) ->
         (if m1 = m2 /\ n1 = n2 then ClosNoInline m1 n1 else Other)
         | (Clos m1 n1 e1 s1,Clos m2 n2 e2 s2) ->
@@ -373,10 +373,11 @@ let clos_approx_def = cake_define
        loc num_args | SOME body_size -> Clos loc num_args body
        body_size)`;;
 
-let clos_gen_noinline_def = cake_define
-  `(clos_gen_noinline n i [] = []) /\
-   (clos_gen_noinline n i ((a,e) :: xs) =
-     ClosNoInline (n + 2 * i) a :: clos_gen_noinline n (i + 1) xs)`;;
+let clos_gen_noinline_def = cake_define_list
+  [`clos_gen_noinline n i [] = []`;
+   `clos_gen_noinline n i ((a,e) :: xs) =
+        ClosNoInline (n + 2 * i) a :: clos_gen_noinline n (i + 1)
+          xs`];;
 
 let globalOpt_INDUCT,globalOpt_RECURSION = define_datatype
   "globalOpt = gO_Int (int) | gO_NullTuple (num) | gO_None";;
@@ -398,8 +399,8 @@ let gO_destApx_def = cake_define
 (* TERMINATION: wf_rel_tac `measure (FST o SND o SND)` *)
 let mk_Ticks_def = cake_define
   `mk_Ticks t tc n e =
-     (if n = 0 then e else mk_Ticks t (tc + 1) (n - 1) (Tick (§ t
-       tc) e))`;;
+     (if n = 0 then e else mk_Ticks t (tc + 1) (n - 1) (Tick
+       (mk_cons t tc) e))`;;
 
 let inliningDecision_INDUCT,inliningDecision_RECURSION = define_datatype
   "inliningDecision = inlD_Nothing | inlD_Annotate (num) | \
@@ -510,10 +511,10 @@ let known_def = cake_define_list
                    [body] (MAP SND ea2) g in
                  let (ebody,abody) = HD eabody in
                    if pure x then
-                     ([(Let (§ t 0) (MAP FST ea2)
+                     ([(Let (mk_cons t 0) (MAP FST ea2)
                               (mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g) else
-                     ([(Let (§ t 0) (SNOC e1 (MAP FST ea2))
+                     ([(Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
                               (mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g)))`;
    `known c [(Fn t loc_opt ws_opt num_args x1:closLang_exp)] vs g =
@@ -537,14 +538,15 @@ let known_def = cake_define_list
          let (e1,a1) = HD ea1 in
            ([(Letrec t loc_opt NONE new_fns e1,a1)],g))`];;
 
-let compile_def = cake_define
-  `clos_known_compile NONE exps = (NONE,exps) /\
-   clos_known_compile (SOME c) exps =
-     (let exps = clos_fvs_compile exps in
-     let (es,g) = known c exps [] LN in
-     let es1 = remove_ticks (MAP FST es) in
-     let es2 = let_op es1 in
-       (SOME (clos_known_config_val_approx_spt_fupd (K g) c),es2))`;;
+let compile_def = cake_define_list
+  [`clos_known_compile NONE exps = (NONE,exps)`;
+   `clos_known_compile (SOME c) exps =
+      (let exps = clos_fvs_compile exps in
+      let (es,g) = known c exps [] LN in
+      let es1 = remove_ticks (MAP FST es) in
+      let es2 = let_op es1 in
+        (SOME (clos_known_config_val_approx_spt_fupd (K g)
+          c),es2))`];;
 hol4_overload "compile" "clos_known_compile";;
 
 let compile_inc_def = cake_define
@@ -558,25 +560,25 @@ let known_static_conf_def = cake_define
   SOME (clos_known_config_val_approx_spt_fupd (K LN)
   (reset_inline_factor kc)))`;;
 
-let known_compile_inc_def = cake_define
-  `known_compile_inc NONE spt p = (spt,p) /\
-   known_compile_inc (SOME c) spt p =
-     (let (p:closLang_exp list#(num#num#closLang_exp) list) =
-       clos_fvs_compile_inc p in
-     let (spt,p) = clos_known_compile_inc c spt p in
-     let (p:closLang_exp list#(num#num#closLang_exp) list) =
-       clos_ticks_compile_inc p in
-     let p = clos_letop_compile_inc p in
-     (spt,p))`;;
+let known_compile_inc_def = cake_define_list
+  [`known_compile_inc NONE spt p = (spt,p)`;
+   `known_compile_inc (SOME c) spt p =
+      (let (p:closLang_exp list#(num#num#closLang_exp) list) =
+        clos_fvs_compile_inc p in
+      let (spt,p) = clos_known_compile_inc c spt p in
+      let (p:closLang_exp list#(num#num#closLang_exp) list) =
+        clos_ticks_compile_inc p in
+      let p = clos_letop_compile_inc p in
+      (spt,p))`];;
 
 let option_val_approx_spt_def = cake_define
   `option_val_approx_spt kc = (match kc with NONE -> LN | SOME kcfg
   -> clos_known_config_val_approx_spt kcfg)`;;
 
-let option_upd_val_spt_def = cake_define
-  `option_upd_val_spt spt NONE = NONE /\
-   option_upd_val_spt spt (SOME kc) = SOME
-     (clos_known_config_val_approx_spt_fupd (K spt) kc)`;;
+let option_upd_val_spt_def = cake_define_list
+  [`option_upd_val_spt spt NONE = NONE`;
+   `option_upd_val_spt spt (SOME kc) = SOME
+  (clos_known_config_val_approx_spt_fupd (K spt) kc)`];;
 
 (*
 

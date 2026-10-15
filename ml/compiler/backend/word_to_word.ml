@@ -64,7 +64,7 @@ let compile_def = cake_define
        (asm_config_avoid_regs asm_conf))) in
      let (n_oracles,col) = next_n_oracle (LENGTH progs)
        (word_to_word_config_col_oracle word_conf) in
-     let progs = ZIP (progs,n_oracles) in
+     let progs = ZIP progs n_oracles in
      (col,MAP (full_compile_single two_reg_arith reg_count
        (word_to_word_config_reg_alg word_conf) asm_conf) progs))`;;
 hol4_overload "compile" "word_to_word_compile";;

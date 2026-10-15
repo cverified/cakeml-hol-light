@@ -29,6 +29,39 @@ def strip_comments(s):
   return ''.join(out)
 
 
+# a relation that a source defines with ML code: the rules are a
+# quotation in which a symbol stands for the relation, and HOL4
+# replaces it by the name of the relation before parsing
+HOL_RELN = re.compile(
+    r'val\s*\(\s*(\w+)_rules\s*,\s*\w+_ind\s*,\s*\w+_cases'
+    r'\s*\)\s*=(.*?)`(.*)`\s*;?\s*$', re.S)
+REPLACE_QUOTE = re.compile(r'replace_quote\s*"([^"]*)"\s*"([^"]*)"')
+
+
+def unescape_ml(s):
+  """an ML string literal with the decimal escapes that a HOL4
+     source uses for a character outside ASCII"""
+  out = bytearray()
+  i = 0
+  while i < len(s):
+    m = re.match(r'\\(\d{1,3})', s[i:])
+    if m:
+      out.append(int(m.group(1))); i += m.end()
+    else:
+      out += s[i].encode('utf-8'); i += 1
+  return out.decode('utf-8', 'replace')
+
+
+def hol_reln(text):
+  """the name and the rules of an ML block that calls Hol_reln"""
+  m = HOL_RELN.match(text.strip())
+  if not m or 'Hol_reln' not in m.group(2): return None
+  body = m.group(3)
+  for frm, to in REPLACE_QUOTE.findall(m.group(2)):
+    body = body.replace(unescape_ml(frm), to)
+  return m.group(1), body
+
+
 class Block:
   def __init__(self, kind, name, attrs, body, extra=None, text=''):
     self.kind = kind      # Theory Ancestors Libs Datatype Definition
@@ -215,11 +248,14 @@ def parse(path):
           and not lines[j].lstrip().startswith('(*'):
         j += 1
       text = '\n'.join(lines[i:j])
-      mm = re.match(r'^\w+\s+([A-Za-z0-9_\']+)\s*(\[[^\]]*\])?\s*=\s*(.*)$',
-                    text, re.S)
-      name = mm.group(1) if mm else None
-      attrs = (mm.group(2) or '')[1:-1].split(',') if mm and mm.group(2) else []
-      body = mm.group(3) if mm else ''
+      # the name is a word, or any token in quotes (a symbolic
+      # infix the source overloads with a constant)
+      mm = re.match(r'^\w+\s+(?:([A-Za-z0-9_\']+)|"([^"]*)")'
+                    r'\s*(\[[^\]]*\])?\s*=\s*(.*)$', text, re.S)
+      name = (mm.group(1) or mm.group(2)) if mm else None
+      attrs = ((mm.group(3) or '')[1:-1].split(',')
+               if mm and mm.group(3) else [])
+      body = mm.group(4) if mm else ''
       blocks.append(Block(kind, name, attrs, body.strip(), text=text))
       i = j; continue
     # Theorem name = term is a one line form without Proof and QED

@@ -72,64 +72,61 @@ hol4_overload "RefPtr" "pattern_semantics_RefPtr";;
 hol4_overload "Other" "pattern_semantics_Other";;
 
 (* semantics of input *)
-let is_sibling_def = cake_define
-  `is_sibling x NONE = T /\
-   is_sibling x (SOME l) = MEM x l`;;
+let is_sibling_def = cake_define_list
+  [`is_sibling x NONE = T`;
+   `is_sibling x (SOME l) = MEM x l`];;
 
-let _ = size_thms "list";;
-let _ = size_thms "pat";;
-(* HOL4 termination: *)
-let pmatch_def = cake_define_wf
-  `MEASURE (\x. match x with INL (r,p,_5) -> pat_size p | INR (r,ps,_6)
-  -> list_size pat_size ps)`
-  `(pattern_semantics_pmatch refs Any t = PMatchSuccess) /\
-   (pattern_semantics_pmatch refs (Lit l) (Litv l') =
-      (if ~lit_same_type l l' then PTypeFailure else
-      if l = l' then PMatchSuccess else PMatchFailure)) /\
-   (pattern_semantics_pmatch refs (Cons (SOME (tag,siblings)) pargs)
-     (Term (SOME t) targs) =
-     (if tag = t /\ LENGTH pargs = LENGTH targs then
-       pattern_semantics_pmatch_list refs pargs targs else
-     if is_sibling (t,LENGTH targs) siblings then PMatchFailure else
-       PTypeFailure)) /\
-   (pattern_semantics_pmatch refs (Cons NONE pargs) (Term NONE targs)
-     =
-     pattern_semantics_pmatch_list refs pargs targs) /\
-   (pattern_semantics_pmatch refs (Ref p) (RefPtr r) =
-     (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v ->
-       pattern_semantics_pmatch refs p v)) /\
-   (pattern_semantics_pmatch refs (Or p1 p2) t =
-     (match pattern_semantics_pmatch refs p1 t with
-        PMatchSuccess -> (match pattern_semantics_pmatch refs p2 t
-          with
-                            PTypeFailure -> PTypeFailure | _1 ->
-                              PMatchSuccess) | PMatchFailure ->
-                              pattern_semantics_pmatch refs p2 t |
-                              PTypeFailure -> PTypeFailure)) /\
-   (pattern_semantics_pmatch refs _2 _3 = PTypeFailure) /\
-   (pattern_semantics_pmatch_list refs [] [] = PMatchSuccess) /\
-   (pattern_semantics_pmatch_list refs [] ts = PTypeFailure) /\
-   (pattern_semantics_pmatch_list refs ps [] = PTypeFailure) /\
-   (pattern_semantics_pmatch_list refs (p :: ps) (t :: ts) =
-     (match pattern_semantics_pmatch refs p t with
-       PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts |
-         PMatchFailure -> (match pattern_semantics_pmatch_list refs ps
-         ts with
-                            PTypeFailure -> PTypeFailure | _4 ->
-                              PMatchFailure) | PTypeFailure ->
-                              PTypeFailure))`;;
+let pmatch_def = cake_define_list
+  [`pattern_semantics_pmatch refs Any t = PMatchSuccess`;
+   `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
+  l':term) =
+         (if ~lit_same_type l l' then PTypeFailure else
+         if l = l' then PMatchSuccess else PMatchFailure)`;
+   `pattern_semantics_pmatch refs (Cons (SOME (tag,siblings))
+  pargs:pattern_semantics_pat) (Term (SOME t) targs:term) =
+        (if tag = t /\ LENGTH pargs = LENGTH targs then
+          pattern_semantics_pmatch_list refs pargs targs else
+        if is_sibling (t,LENGTH targs) siblings then
+          PMatchFailure else PTypeFailure)`;
+   `pattern_semantics_pmatch refs (Cons NONE
+  pargs:pattern_semantics_pat) (Term NONE targs:term) =
+        pattern_semantics_pmatch_list refs pargs targs`;
+   `pattern_semantics_pmatch refs (Ref p:pattern_semantics_pat) (RefPtr
+  r:term) =
+        (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v
+          -> pattern_semantics_pmatch refs p v)`;
+   `pattern_semantics_pmatch refs (Or p1 p2:pattern_semantics_pat) t =
+        (match pattern_semantics_pmatch refs p1 t with
+           PMatchSuccess -> (match pattern_semantics_pmatch refs p2
+             t with
+                              PTypeFailure -> PTypeFailure | _1
+                                -> PMatchSuccess) | PMatchFailure ->
+                                pattern_semantics_pmatch refs p2 t |
+                                PTypeFailure -> PTypeFailure)`;
+   `pattern_semantics_pmatch refs _2 _3 = PTypeFailure`;
+   `pattern_semantics_pmatch_list refs [] [] = PMatchSuccess`;
+   `pattern_semantics_pmatch_list refs [] ts = PTypeFailure`;
+   `pattern_semantics_pmatch_list refs ps [] = PTypeFailure`;
+   `pattern_semantics_pmatch_list refs (p :: ps) (t :: ts) =
+        (match pattern_semantics_pmatch refs p t with
+          PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
+            | PMatchFailure -> (match pattern_semantics_pmatch_list refs
+            ps ts with
+                              PTypeFailure -> PTypeFailure | _4
+                                -> PMatchFailure) | PTypeFailure ->
+                                PTypeFailure)`];;
 hol4_overload "pmatch" "pattern_semantics_pmatch";;
 hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
-let match_def = cake_define
-  `(match refs [] v = SOME MatchFailure) /\
-   (match refs ((p,e) :: rows) v =
-     (match pmatch refs p v with
-        PMatchSuccess ->
-          (match match refs rows v with
-            NONE -> NONE | SOME _8 -> SOME (MatchSuccess e)) |
-              PMatchFailure -> match refs rows v | PTypeFailure ->
-              NONE))`;;
+let match_def = cake_define_list
+  [`match refs [] v = SOME MatchFailure`;
+   `match refs ((p,e) :: rows) v =
+        (match pmatch refs p v with
+           PMatchSuccess ->
+             (match match refs rows v with
+               NONE -> NONE | SOME _6 -> SOME (MatchSuccess e)) |
+                 PMatchFailure -> match refs rows v | PTypeFailure ->
+                 NONE)`];;
 
 (* semantics of output *)
 
@@ -140,7 +137,7 @@ let dt_test_def = cake_define
      SOME (t = c /\ l = LENGTH args)
       | ((LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
-      | (_9,_10) -> NONE`;;
+      | (_7,_8) -> NONE`;;
 
 let app_pos_def = cake_define
   `app_pos refs x2 v =
@@ -152,28 +149,28 @@ let app_pos_def = cake_define
         | ((Pos 0 pos),(Term c (x :: xs))) -> app_pos refs pos x
         | ((Pos (SUC n) pos),(Term c (x :: xs))) ->
        app_pos refs (Pos n pos) (Term c xs)
-        | ((Pos _11 _12),_13) -> NONE`;;
+        | ((Pos _9 _10),_11) -> NONE`;;
 
-let dt_eval_guard_def = cake_define
-  `(dt_eval_guard refs v True =
-      SOME T) /\
-   (dt_eval_guard refs v (PosTest pos test) =
-      (match app_pos refs pos v with NONE -> NONE | SOME x -> dt_test
-        test x)) /\
-   (dt_eval_guard refs v (Not g) =
-      (match dt_eval_guard refs v g with NONE -> NONE | SOME b ->
-        SOME (~b))) /\
-   (dt_eval_guard refs v (Conj g1 g2) =
-      (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
-        dt_eval_guard refs v g2 | SOME F -> SOME F)) /\
-   (dt_eval_guard refs v (Disj g1 g2) =
-      (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
-        SOME T | SOME F -> dt_eval_guard refs v g2))`;;
+let dt_eval_guard_def = cake_define_list
+  [`dt_eval_guard refs v True =
+         SOME T`;
+   `dt_eval_guard refs v (PosTest pos test:dGuard) =
+         (match app_pos refs pos v with NONE -> NONE | SOME x ->
+           dt_test test x)`;
+   `dt_eval_guard refs v (Not g:dGuard) =
+         (match dt_eval_guard refs v g with NONE -> NONE | SOME b
+           -> SOME (~b))`;
+   `dt_eval_guard refs v (Conj g1 g2:dGuard) =
+         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME
+           T -> dt_eval_guard refs v g2 | SOME F -> SOME F)`;
+   `dt_eval_guard refs v (Disj g1 g2:dGuard) =
+         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME
+           T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
-let dt_eval_def = cake_define
-  `(dt_eval refs _14 (Leaf k) = SOME (MatchSuccess k)) /\
-   (dt_eval refs _15 Fail = SOME (MatchFailure)) /\
-   (dt_eval refs _16 TypeFail = NONE) /\
-   (dt_eval refs v (If guard' dt1 dt2) =
-      (match dt_eval_guard refs v guard' with NONE -> NONE | SOME
-        b -> dt_eval refs v (if b then dt1 else dt2)))`;;
+let dt_eval_def = cake_define_list
+  [`dt_eval refs _12 (Leaf k:dTree) = SOME (MatchSuccess k)`;
+   `dt_eval refs _13 Fail = SOME (MatchFailure)`;
+   `dt_eval refs _14 TypeFail = NONE`;
+   `dt_eval refs v (If guard' dt1 dt2:dTree) =
+         (match dt_eval_guard refs v guard' with NONE -> NONE |
+           SOME b -> dt_eval refs v (if b then dt1 else dt2))`];;

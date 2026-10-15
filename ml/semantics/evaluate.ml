@@ -43,9 +43,9 @@ let do_eval_res_def = cake_define
 (* list_result is equivalent to map_result (\v. [v]) I, where map_result
    is
  * defined in evalPropsTheory *)
-let list_result_def = cake_define
-  `list_result (Rval v) = Rval [v] /\
-   list_result (Rerr e) = Rerr e`;;
+let list_result_def = cake_define_list
+  [`list_result (Rval v:semanticPrimitives_result) = Rval [v]`;
+   `list_result (Rerr e:semanticPrimitives_result) = Rerr e`];;
 
 let sing_env_def = cake_define
   `sing_env n v =

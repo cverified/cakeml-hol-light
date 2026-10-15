@@ -20,11 +20,11 @@ val s = ``s:('a,'c,'ffi) wordSem$state``
 
 (* -- proofs about semantics -- *)
 
-let copy_vars_def = cake_define
-  `word_unreachProof_copy_vars [] from to = to /\
-   word_unreachProof_copy_vars ((l,r) :: rest) from to =
-     insert l (THE (lookup r from)) (word_unreachProof_copy_vars
-       rest from to)`;;
+let copy_vars_def = cake_define_list
+  [`word_unreachProof_copy_vars [] from to = to`;
+   `word_unreachProof_copy_vars ((l,r) :: rest) from to =
+      insert l (THE (lookup r from)) (word_unreachProof_copy_vars
+        rest from to)`];;
 hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
 
 (* HOL4 ML code, not ported:

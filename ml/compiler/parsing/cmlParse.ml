@@ -57,9 +57,9 @@ let pegresult_choice_def = cake_define
      match f toks with
        Success toks' x eo -> Success toks' x eo | _6 -> g toks)`;;
 
-let toks_to_loc_def = cake_define
-  `toks_to_loc [] = unknown_loc /\
-   toks_to_loc ((h,L) :: _7) = L`;;
+let toks_to_loc_def = cake_define_list
+  [`toks_to_loc [] = unknown_loc`;
+   `toks_to_loc ((h,L) :: _7) = L`];;
 
 let pegresult_guard_def = cake_define
   `(pegresult_guard b:(tokens_token#locs) list->((tokens_token#locs)
@@ -67,11 +67,11 @@ let pegresult_guard_def = cake_define
    (\toks. if b then Success toks one NONE else Failure
      (toks_to_loc toks) "Assert failure")`;;
 
-let optlift_def = cake_define
-  `(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
+let optlift_def = cake_define_list
+  [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
   list,'ga,string)pegresult) = (\toks. Failure (toks_to_loc toks)
-  "Option = NONE") /\
-   optlift (SOME a) = (\toks. Success toks a NONE)`;;
+  "Option = NONE")`;
+   `optlift (SOME a) = (\toks. Success toks a NONE)`];;
 
 let cmlParseExpr_def = cake_define
   `cmlParseExpr = monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt

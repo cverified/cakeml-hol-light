@@ -276,7 +276,7 @@ let to_word_all_def = cake_define
                    ((name_num,arg_count,
                     remove_must_terminate
                       (word_alloc name_num asm_conf alg reg_count
-                        prog col_opt)))) (ZIP (p,n_oracles)) in
+                        prog col_opt)))) (ZIP p n_oracles) in
      let ps = ps ++ [((implode
        "after word_alloc (and remove_must_terminate)"),Word p names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
@@ -396,7 +396,7 @@ let from_word_0_all_def = cake_define
                    ((name_num,arg_count,
                     remove_must_terminate
                       (word_alloc name_num asm_conf alg reg_count
-                        prog col_opt)))) (ZIP (p,n_oracles)) in
+                        prog col_opt)))) (ZIP p n_oracles) in
      let ps = ps ++ [((implode
        "after word_alloc (and remove_must_terminate)"),Word p names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.

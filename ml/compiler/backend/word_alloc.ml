@@ -52,35 +52,35 @@ let even_list_def = cake_define
 let next_var_rename_def = cake_define
   `next_var_rename v ssa (na:num) = (na,insert v na ssa,na + 4)`;;
 
-let list_next_var_rename_def = cake_define
-  `(list_next_var_rename [] ssa (na:num) = ([],ssa,na)) /\
-   (list_next_var_rename (x :: xs) ssa na =
-     (let (y,ssa',na') = next_var_rename x ssa na in
-     let (ys,ssa'',na'') = list_next_var_rename xs ssa' na' in
-       (y :: ys,ssa'',na'')))`;;
+let list_next_var_rename_def = cake_define_list
+  [`list_next_var_rename [] ssa (na:num) = ([],ssa,na)`;
+   `list_next_var_rename (x :: xs) ssa na =
+        (let (y,ssa',na') = next_var_rename x ssa na in
+        let (ys,ssa'',na'') = list_next_var_rename xs ssa' na' in
+          (y :: ys,ssa'',na''))`];;
 
 let fake_move_def = cake_define
   `(fake_move v:'ga wordLang_prog) = Inst (Const v (n2w 0))`;;
 
 (*Do the merging moves only*)
-let merge_moves_def = cake_define
-  `(word_alloc_merge_moves [] ssa_L ssa_R (na:num) =
-  ([],[],na,ssa_L,ssa_R)) /\
-   (word_alloc_merge_moves (x :: xs) ssa_L ssa_R na =
-     (let (seqL,seqR,na',ssa_L',ssa_R') =
-       word_alloc_merge_moves xs ssa_L ssa_R na in
-     let optLx = lookup x ssa_L' in
-     let optLy = lookup x ssa_R' in
-     match (optLx,optLy) with
-       (SOME Lx,SOME Ly) ->
-       (if Lx = Ly then
-         (seqL,seqR,na',ssa_L',ssa_R') else
-         let Lmove = (na',Lx) in
-         let Rmove = (na',Ly) in
-         (Lmove :: seqL,Rmove :: seqR,na' + 4,
+let merge_moves_def = cake_define_list
+  [`word_alloc_merge_moves [] ssa_L ssa_R (na:num) =
+  ([],[],na,ssa_L,ssa_R)`;
+   `word_alloc_merge_moves (x :: xs) ssa_L ssa_R na =
+        (let (seqL,seqR,na',ssa_L',ssa_R') =
+          word_alloc_merge_moves xs ssa_L ssa_R na in
+        let optLx = lookup x ssa_L' in
+        let optLy = lookup x ssa_R' in
+        match (optLx,optLy) with
+          (SOME Lx,SOME Ly) ->
+          (if Lx = Ly then
+            (seqL,seqR,na',ssa_L',ssa_R') else
+            let Lmove = (na',Lx) in
+            let Rmove = (na',Ly) in
+            (Lmove :: seqL,Rmove :: seqR,na' + 4,
                               insert x na' ssa_L',insert x na'
                                 ssa_R')) | _2 ->
-                                (seqL,seqR,na',ssa_L',ssa_R')))`;;
+                                (seqL,seqR,na',ssa_L',ssa_R'))`];;
 hol4_overload "merge_moves" "word_alloc_merge_moves";;
 
 (* tracking priority of moves
@@ -101,24 +101,26 @@ let priority_def = cake_define
        (if b then 1 else 2)`;;
 
 (*Separately do the fake moves*)
-let fake_moves_def = cake_define
-  `(fake_moves prio [] ssa_L ssa_R (na:num) = ((Skip:'a
-  wordLang_prog),(Skip:'a wordLang_prog),na,ssa_L,ssa_R)) /\
-   (fake_moves prio (x :: xs) ssa_L ssa_R na =
-     (let (seqL,seqR,na',ssa_L',ssa_R') =
-       fake_moves prio xs ssa_L ssa_R na in
-     let optLx = lookup x ssa_L' in
-     let optLy = lookup x ssa_R' in
-     match (optLx,optLy) with
-       (NONE,SOME Ly) ->
-         (let Lmove = Seq seqL (fake_move na') in
-         let Rmove = Seq seqR (Move (priority prio F) [(na',Ly)]) in
-         (Lmove,Rmove,na' + 4,insert x na' ssa_L',insert x na'
-           ssa_R')) | (SOME Lx,NONE) ->
-         (let Lmove = Seq seqL (Move (priority prio T) [(na',Lx)]) in
-         let Rmove = Seq seqR (fake_move na') in
-         (Lmove,Rmove,na' + 4,insert x na' ssa_L',insert x na'
-           ssa_R')) | _4 -> (seqL,seqR,na',ssa_L',ssa_R')))`;;
+let fake_moves_def = cake_define_list
+  [`fake_moves prio [] ssa_L ssa_R (na:num) = ((Skip:'a
+  wordLang_prog),(Skip:'a wordLang_prog),na,ssa_L,ssa_R)`;
+   `fake_moves prio (x :: xs) ssa_L ssa_R na =
+        (let (seqL,seqR,na',ssa_L',ssa_R') =
+          fake_moves prio xs ssa_L ssa_R na in
+        let optLx = lookup x ssa_L' in
+        let optLy = lookup x ssa_R' in
+        match (optLx,optLy) with
+          (NONE,SOME Ly) ->
+            (let Lmove = Seq seqL (fake_move na') in
+            let Rmove = Seq seqR (Move (priority prio F) [(na',Ly)])
+              in
+            (Lmove,Rmove,na' + 4,insert x na' ssa_L',insert x na'
+              ssa_R')) | (SOME Lx,NONE) ->
+            (let Lmove = Seq seqL (Move (priority prio T)
+              [(na',Lx)]) in
+            let Rmove = Seq seqR (fake_move na') in
+            (Lmove,Rmove,na' + 4,insert x na' ssa_L',insert x na'
+              ssa_R')) | _4 -> (seqL,seqR,na',ssa_L',ssa_R'))`];;
 
 let fix_inconsistencies_def = cake_define
   `fix_inconsistencies prio ssa_L ssa_R na =
@@ -291,14 +293,14 @@ let list_next_var_rename_move_def = cake_define
   `list_next_var_rename_move ssa n ls =
      (let cur_ls = MAP (option_lookup ssa) ls in
      let (new_ls,ssa',n') = list_next_var_rename ls ssa n in
-     ((Move 0) (ZIP (new_ls,cur_ls)),ssa',n'))`;;
+     ((Move 0) (ZIP new_ls cur_ls),ssa',n'))`;;
 
 (* force the renaming map to send x -> y unless
   x is already remapped *)
-let force_rename_def = cake_define
-  `(force_rename [] ssa = ssa) /\
-   (force_rename ((x,y) :: xs) ssa =
-     force_rename xs (insert x y ssa))`;;
+let force_rename_def = cake_define_list
+  [`force_rename [] ssa = ssa`;
+   `force_rename ((x,y) :: xs) ssa =
+        force_rename xs (insert x y ssa)`];;
 
 let mk_prio_def = cake_define
   `mk_prio el er =
@@ -355,8 +357,8 @@ let ssa_cc_trans_def = cake_define_list
         let ren_ls2 = MAP (option_lookup ssa) ls_2 in
         let (ren_ls1,ssa',na') = list_next_var_rename ls_1 ssa na in
         let force =
-          FILTER (\(x,y). ~MEM x ls_1) (ZIP (ls_2,ren_ls1)) in
-          (Move pri (ZIP (ren_ls1,ren_ls2)),force_rename force
+          FILTER (\(x,y). ~MEM x ls_1) (ZIP ls_2 ren_ls1) in
+          (Move pri (ZIP ren_ls1 ren_ls2),force_rename force
             ssa',na'))`;
    `ssa_cc_trans (StoreConsts a b c d ws:wordLang_prog) ssa na lt =
         (let c1 = option_lookup ssa c in
@@ -426,7 +428,7 @@ let ssa_cc_trans_def = cake_define_list
         (let num' = option_lookup ssa num' in
         let nums' = MAP (option_lookup ssa) nums in
         let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
-        let mov = Move 0 (ZIP (rets,nums')) in
+        let mov = Move 0 (ZIP rets nums') in
         (Seq mov (Return num' rets),ssa,na))`;
    `ssa_cc_trans Tick ssa na lt = (Tick,ssa,na)`;
    `ssa_cc_trans (Set n exp:wordLang_prog) ssa na lt =
@@ -489,7 +491,7 @@ let ssa_cc_trans_def = cake_define_list
    `ssa_cc_trans (Call NONE dest args h:wordLang_prog) ssa na lt =
         (let names = MAP (option_lookup ssa) args in
         let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
-        let move_args = ((Move 1) (ZIP (conv_args,names))) in
+        let move_args = ((Move 1) (ZIP conv_args names)) in
         let prog = Seq move_args (Call NONE dest conv_args h) in
           (prog,ssa,na))`;
    `ssa_cc_trans (Call (SOME (ret,numset,ret_handler,l1,l2)) dest args
@@ -502,7 +504,7 @@ let ssa_cc_trans_def = cake_define_list
           numset in
         let names = MAP (option_lookup ssa) args in
         let conv_args = GENLIST (\x. 2 * (x + 1)) (LENGTH names) in
-        let move_args = ((Move 1) (ZIP (conv_args,names))) in
+        let move_args = ((Move 1) (ZIP conv_args names)) in
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
@@ -512,7 +514,7 @@ let ssa_cc_trans_def = cake_define_list
           ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
         let regs = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
         let mov_ret_handler =
-            (Seq ret_mov (Seq ((Move 1) (ZIP (ret',regs)))
+            (Seq ret_mov (Seq ((Move 1) (ZIP ret' regs))
               (ren_ret_handler))) in
         (match h with
           NONE ->
@@ -643,7 +645,7 @@ let apply_colour_inst_def = cake_define
    Definition apply_colour_def [simp]:(apply_colour f Skip = Skip))
      /\
    (apply_colour f (Move pri ls) =
-     Move pri (ZIP (MAP (f o FST) ls,MAP (f o SND) ls))) /\
+     Move pri (ZIP (MAP (f o FST) ls) (MAP (f o SND) ls))) /\
    (apply_colour f (Inst i) = Inst (apply_colour_inst f i)) /\
    (apply_colour f (Assign num exp) = Assign (f num)
      (apply_colour_exp f exp)) /\
@@ -792,10 +794,10 @@ let get_live_exp_def = cake_define
           (get_live_exp nexp)
         | expr -> LN`;;
 
-let numset_list_insert_def = cake_define
-  `(word_alloc_numset_list_insert [] t = t) /\
-   (word_alloc_numset_list_insert (x :: xs) t = insert x one
-     (word_alloc_numset_list_insert xs t))`;;
+let numset_list_insert_def = cake_define_list
+  [`word_alloc_numset_list_insert [] t = t`;
+   `word_alloc_numset_list_insert (x :: xs) t = insert x one
+  (word_alloc_numset_list_insert xs t)`];;
 hol4_overload "numset_list_insert" "word_alloc_numset_list_insert";;
 
 let get_live_def = cake_define
@@ -1443,11 +1445,11 @@ let get_forced_def = cake_define
         | (c,prog) -> acc`;;
 
 (*col is injective over every cut set*)
-let check_colouring_ok_alt_def = cake_define
-  `(check_colouring_ok_alt col [] = T) /\
-   (check_colouring_ok_alt col (x :: xs) <=>
-     (let names = MAP (col o FST) (toAList x) in
-       ALL_DISTINCT names /\ check_colouring_ok_alt col xs))`;;
+let check_colouring_ok_alt_def = cake_define_list
+  [`check_colouring_ok_alt col [] = T`;
+   `check_colouring_ok_alt col (x :: xs) <=>
+        (let names = MAP (col o FST) (toAList x) in
+          ALL_DISTINCT names /\ check_colouring_ok_alt col xs)`];;
 
 let every_even_colour_def = cake_define
   `every_even_colour col <=>
@@ -1488,12 +1490,12 @@ let oracle_colour_ok_def = cake_define
   Then SORT them by lexicographic order, and count
   returns (num, maxpriority, (x,y))
 *)
-let canonize_moves_aux_def = cake_define
-  `(canonize_moves_aux curp curm ctr [] acc = (ctr,curp,curm) :: acc) /\
-   (canonize_moves_aux curp curm ctr ((p,m) :: xs) acc =
-     (if curm = m then
-       canonize_moves_aux (MAX curp p) m (ctr + 1) xs acc else
-       canonize_moves_aux p m 1 xs ((ctr,curp,curm) :: acc)))`;;
+let canonize_moves_aux_def = cake_define_list
+  [`canonize_moves_aux curp curm ctr [] acc = (ctr,curp,curm) :: acc`;
+   `canonize_moves_aux curp curm ctr ((p,m) :: xs) acc =
+        (if curm = m then
+          canonize_moves_aux (MAX curp p) m (ctr + 1) xs acc else
+          canonize_moves_aux p m 1 xs ((ctr,curp,curm) :: acc))`];;
 
 let canonize_moves_def = cake_define
   `canonize_moves ls =
@@ -1640,7 +1642,7 @@ let setup_ssa_def = cake_define
   `setup_ssa n lim (prog:'a wordLang_prog) =
    (let args = even_list n in
    let (new_ls,ssa',n') = list_next_var_rename args LN lim in
-     ((Move 1) (ZIP (new_ls,args)),ssa',n'))`;;
+     ((Move 1) (ZIP new_ls args),ssa',n'))`;;
 
 let limit_var_def = cake_define
   `limit_var prog =

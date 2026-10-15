@@ -107,35 +107,36 @@ let read_string_def = cake_define_wf
                                 str)) | _2 -> (ErrorS,loc,TL str))`;;
 hol4_overload "read_string" "lexer_fun_read_string";;
 
-let skip_comment_def = cake_define
-  `(skip_comment "" d _3 = NONE) /\
-   (skip_comment [x] d _4 = NONE) /\
-   (skip_comment (x :: y :: xs) d loc =
-     (if [x; y] = "(*" then
-       skip_comment xs (d + (1:num)) (next_loc 2 loc) else if [x; y]
-         = "*)" then
-       (if d = 0 then SOME (xs,next_loc 2 loc) else skip_comment xs
-         (d - 1) (next_loc 2 loc)) else if ORD x = 10 then
-       skip_comment (y :: xs) d (next_line loc) else skip_comment
-         (y :: xs) d (next_loc 1 loc)))`;;
+let skip_comment_def = cake_define_list
+  [`skip_comment "" d _3 = NONE`;
+   `skip_comment [x] d _4 = NONE`;
+   `skip_comment (x :: y :: xs) d loc =
+        (if [x; y] = "(*" then
+          skip_comment xs (d + (1:num)) (next_loc 2 loc) else if [x;
+            y] = "*)" then
+          (if d = 0 then SOME (xs,next_loc 2 loc) else skip_comment
+            xs (d - 1) (next_loc 2 loc)) else if ORD x = 10 then
+          skip_comment (y :: xs) d (next_line loc) else
+            skip_comment (y :: xs) d (next_loc 1 loc))`];;
 
-let read_FFIcall_def = cake_define
-  `(read_FFIcall "" acc loc = (ErrorS,loc,"")) /\
-   (read_FFIcall (c :: s0) acc loc =
-       (if c = (CHR 41) then
-         (FFIS (REVERSE acc),next_loc 2 loc,s0) else if c = (CHR 10)
-           then (ErrorS,loc,s0) else if isSpace c then
-         read_FFIcall s0 acc (next_loc 1 loc) else
-         read_FFIcall s0 (c :: acc) (next_loc 1 loc)))`;;
+let read_FFIcall_def = cake_define_list
+  [`read_FFIcall "" acc loc = (ErrorS,loc,"")`;
+   `read_FFIcall (c :: s0) acc loc =
+          (if c = (CHR 41) then
+            (FFIS (REVERSE acc),next_loc 2 loc,s0) else if c = (CHR
+              10) then (ErrorS,loc,s0) else if isSpace c then
+            read_FFIcall s0 acc (next_loc 1 loc) else
+            read_FFIcall s0 (c :: acc) (next_loc 1 loc))`];;
 
-let read_REPLcommand_def = cake_define
-  `(read_REPLcommand "" acc loc = (ErrorS,loc,"")) /\
-   (read_REPLcommand (c :: s0) acc loc =
-       (if c = (CHR 125) then
-         (FFIS (REVERSE acc),?_col_fupd ((+) 2) loc,s0) else if c =
-           (CHR 10) then (ErrorS,loc,s0) else if isSpace c then
-         read_REPLcommand s0 acc (?_col_fupd ((+) 1) loc) else
-         read_REPLcommand s0 (c :: acc) (?_col_fupd ((+) 1) loc)))`;;
+let read_REPLcommand_def = cake_define_list
+  [`read_REPLcommand "" acc loc = (ErrorS,loc,"")`;
+   `read_REPLcommand (c :: s0) acc loc =
+          (if c = (CHR 125) then
+            (FFIS (REVERSE acc),?_col_fupd ((+) 2) loc,s0) else if c
+              = (CHR 10) then (ErrorS,loc,s0) else if isSpace c then
+            read_REPLcommand s0 acc (?_col_fupd ((+) 1) loc) else
+            read_REPLcommand s0 (c :: acc) (?_col_fupd ((+) 1)
+              loc))`];;
 
 let isAlphaNumPrime_def = cake_define
   `isAlphaNumPrime c <=> isAlphaNum c \/ (c = (CHR 39)) \/ (c = (CHR
@@ -147,87 +148,83 @@ let read_Ident_ret_def = cake_define
        (OtherS n,new_loc,rest) else
        (LongS (REVERSE acc) n,new_loc,rest))`;;
 
-(* TERMINATION: wf_rel_tac ‘measure (LENGTH o FST)’ \\ rw []
-  \\ imp_res_tac (GSYM read_while_thm)
-  \\ Cases_on ‘str’ \\ gvs [] *)
-let read_Ident_def = cake_define
-  `read_Ident [] loc acc = (ErrorS,loc,[]) /\
-   read_Ident (c :: str) loc acc =
-     (if is_single_char_symbol c then
-       if NULL acc then
-         (OtherS [c],next_loc 1 loc,str) else
-         (ErrorS,loc,str) else if isSymbol c then
-       let (n,rest) = read_while isSymbol str [c] in
-       let new_loc = next_loc (LENGTH n) loc in
-         read_Ident_ret acc n new_loc rest else if isAlpha c then
-       let (n,rest) = read_while isAlphaNumPrime str [c] in
-       let new_loc = next_loc (LENGTH n) loc in
-         match rest with [] -> read_Ident_ret acc n new_loc rest | c1
-           :: rest1 ->
-           (if c1 = (CHR 46) then read_Ident rest1 new_loc (n :: acc)
-             else read_Ident_ret acc n new_loc rest) else
-       (ErrorS,loc,str))`;;
+let read_Ident_def = cake_define_list
+  [`read_Ident [] loc acc = (ErrorS,loc,[])`;
+   `read_Ident (c :: str) loc acc =
+      (if is_single_char_symbol c then
+        if NULL acc then
+          (OtherS [c],next_loc 1 loc,str) else
+          (ErrorS,loc,str) else if isSymbol c then
+        let (n,rest) = read_while isSymbol str [c] in
+        let new_loc = next_loc (LENGTH n) loc in
+          read_Ident_ret acc n new_loc rest else if isAlpha c then
+        let (n,rest) = read_while isAlphaNumPrime str [c] in
+        let new_loc = next_loc (LENGTH n) loc in
+          match rest with [] -> read_Ident_ret acc n new_loc rest |
+            c1 :: rest1 ->
+            (if c1 = (CHR 46) then read_Ident rest1 new_loc (n ::
+              acc) else read_Ident_ret acc n new_loc rest) else
+        (ErrorS,loc,str))`];;
 
 (* next_sym reads the next symbol from a string, returning NONE if at
    eof *)
-(* TERMINATION: wf_rel_tac ‘measure (LENGTH o FST)’ \\ rw []
-  \\ imp_res_tac (GSYM read_while_thm)
-  \\ imp_res_tac (GSYM read_string_thm)
-  \\ Cases_on ‘str’ \\ gvs []
-  \\ imp_res_tac skip_comment_thm \\ gvs [] *)
-let next_sym_def = cake_define
-  `(next_sym "" _5 = NONE) /\
-   (next_sym (c :: str) loc =
-      (if c = (CHR 10) then
-         next_sym str (next_line loc) else if isSpace c then
-        next_sym str (next_loc 1 loc) else if isDigit c then
-        if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
-          if TL str = "" then SOME (ErrorS,Locs loc loc,"") else if
-            isDigit (HD (TL str)) then
-            let (n,rest) = read_while isDigit (TL str) [] in
-              SOME (WordS (num_from_dec_string n),
-                    Locs loc (next_loc (LENGTH n + 1) loc),
-                    rest) else if HD (TL str) = (CHR 120) then
-            let (n,rest) = read_while isHexDigit (TL (TL str)) [] in
-              SOME (WordS (num_from_hex_string n),
-                    Locs loc (next_loc (LENGTH n + 2) loc),
-                    rest) else SOME (ErrorS,Locs loc loc,TL str) else
-          if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120) then
-            let (n,rest) = read_while isHexDigit (TL str) [] in
-              SOME (NumberS (&(num_from_hex_string n)),
-                    Locs loc (next_loc (LENGTH n) loc),
-                    rest) else
-            let (n,rest) = read_while isDigit str [] in
-              SOME (NumberS (&(num_from_dec_string (c :: n))),
-                    Locs loc (next_loc (LENGTH n) loc),
-                    rest) else if c = (CHR 126) /\ ~(str = "") /\
-                      isDigit (HD str) then
-        let (n,rest) = read_while isDigit str [] in
-          SOME (NumberS ((&0) - &(num_from_dec_string n)),
-                Locs loc (next_loc (LENGTH n + 1) loc),
-                rest) else if c = (CHR 39) then
-        let (n,rest) = read_while isAlphaNumPrime str [c] in
-          SOME (OtherS n,Locs loc (next_loc (LENGTH n - 1) loc),
-                rest) else if c = (CHR 34) then
-        let (t,loc',rest) = read_string str "" (next_loc 1 loc) in
-          SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
-            str) then
-        SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-          isPREFIX "#\"" (c :: str) then
-        let (t,loc',rest) = read_string (TL str) "" (next_loc 2 loc)
-          in
-          SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX "#("
-            (c :: str) then
-        let (t,loc',rest) = read_FFIcall (TL str) "" (next_loc 2 loc)
-          in
-          SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (c ::
-            str) then
-        match skip_comment (TL str) 0 (next_loc 2 loc) with NONE ->
-          SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME (rest,loc')
-          -> next_sym rest loc' else if c = (CHR 95) then SOME (OtherS
-          "_",Locs loc loc,str) else
-        let (tok',end_loc,rest) = read_Ident (c :: str) loc [] in
-          SOME (tok',Locs loc end_loc,rest)))`;;
+let next_sym_def = cake_define_list
+  [`next_sym "" _5 = NONE`;
+   `next_sym (c :: str) loc =
+         (if c = (CHR 10) then
+            next_sym str (next_line loc) else if isSpace c then
+           next_sym str (next_loc 1 loc) else if isDigit c then
+           if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 119) then
+             if TL str = "" then SOME (ErrorS,Locs loc loc,"") else
+               if isDigit (HD (TL str)) then
+               let (n,rest) = read_while isDigit (TL str) [] in
+                 SOME (WordS (num_from_dec_string n),
+                       Locs loc (next_loc (LENGTH n + 1) loc),
+                       rest) else if HD (TL str) = (CHR 120) then
+               let (n,rest) = read_while isHexDigit (TL (TL str)) []
+                 in
+                 SOME (WordS (num_from_hex_string n),
+                       Locs loc (next_loc (LENGTH n + 2) loc),
+                       rest) else SOME (ErrorS,Locs loc loc,TL str)
+                         else
+             if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120)
+               then
+               let (n,rest) = read_while isHexDigit (TL str) [] in
+                 SOME (NumberS (&(num_from_hex_string n)),
+                       Locs loc (next_loc (LENGTH n) loc),
+                       rest) else
+               let (n,rest) = read_while isDigit str [] in
+                 SOME (NumberS (&(num_from_dec_string (c :: n))),
+                       Locs loc (next_loc (LENGTH n) loc),
+                       rest) else if c = (CHR 126) /\ ~(str = "") /\
+                         isDigit (HD str) then
+           let (n,rest) = read_while isDigit str [] in
+             SOME (NumberS ((&0) - &(num_from_dec_string n)),
+                   Locs loc (next_loc (LENGTH n + 1) loc),
+                   rest) else if c = (CHR 39) then
+           let (n,rest) = read_while isAlphaNumPrime str [c] in
+             SOME (OtherS n,Locs loc (next_loc (LENGTH n - 1) loc),
+                   rest) else if c = (CHR 34) then
+           let (t,loc',rest) = read_string str "" (next_loc 1 loc)
+             in
+             SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
+               str) then
+           SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
+             isPREFIX "#\"" (c :: str) then
+           let (t,loc',rest) = read_string (TL str) "" (next_loc 2
+             loc) in
+             SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX
+               "#(" (c :: str) then
+           let (t,loc',rest) = read_FFIcall (TL str) "" (next_loc 2
+             loc) in
+             SOME (t,Locs loc loc',rest) else if isPREFIX "(*" (c ::
+               str) then
+           match skip_comment (TL str) 0 (next_loc 2 loc) with NONE
+             -> SOME (ErrorS,Locs loc (next_loc 2 loc),"") | SOME
+             (rest,loc') -> next_sym rest loc' else if c = (CHR 95) then
+             SOME (OtherS "_",Locs loc loc,str) else
+           let (tok',end_loc,rest) = read_Ident (c :: str) loc [] in
+             SOME (tok',Locs loc end_loc,rest))`];;
 
 (* EVAL “next_sym "  Foo.Bar.<  " (POSN 0 0)” *)
 
@@ -314,9 +311,9 @@ let get_token_def = cake_define
      if ~(s = "") /\ HD s = (CHR 39) then TyvarT (implode s) else
      processIdent s)`;;
 
-let to_path_def = cake_define
-  `to_path [] = End /\
-   to_path (x :: xs) = Mod x (to_path xs)`;;
+let to_path_def = cake_define_list
+  [`to_path [] = End`;
+   `to_path (x :: xs) = Mod x (to_path xs)`];;
 
 let token_of_sym_def = cake_define
   `token_of_sym s =
@@ -362,17 +359,17 @@ let lexer_fun_def = cake_define
 
 (* split a list of tokens at top-level semicolons *)
 
-let toplevel_semi_dex_def = cake_define
-  `(toplevel_semi_dex (i:num) (d:num) [] = NONE) /\
-   (toplevel_semi_dex i d ((h,l) :: t) =
-     (if h = SemicolonT /\ (d = 0) then SOME (i + 1) else if h =
-       LetT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
-       StructT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
-       SigT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
-       LparT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
-       EndT then toplevel_semi_dex (i + 1) (d - 1) t else if h =
-       RparT then toplevel_semi_dex (i + 1) (d - 1) t else
-       toplevel_semi_dex (i + 1) d t))`;;
+let toplevel_semi_dex_def = cake_define_list
+  [`toplevel_semi_dex (i:num) (d:num) [] = NONE`;
+   `toplevel_semi_dex i d ((h,l) :: t) =
+        (if h = SemicolonT /\ (d = 0) then SOME (i + 1) else if h
+          = LetT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+          StructT then toplevel_semi_dex (i + 1) (d + 1) t else if h
+          = SigT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+          LparT then toplevel_semi_dex (i + 1) (d + 1) t else if h =
+          EndT then toplevel_semi_dex (i + 1) (d - 1) t else if h =
+          RparT then toplevel_semi_dex (i + 1) (d - 1) t else
+          toplevel_semi_dex (i + 1) d t)`];;
 
 (* TERMINATION: wf_rel_tac `measure LENGTH` >>
   rw [] >>

@@ -24,6 +24,10 @@ GREEK = dict(zip('αβγδεζηθ'
                  'στυφχψω',
                  ["'g" + c for c in 'abcdefghijklmnopqrstuvw']))
 
+# the Greek letters that a CakeML source uses for a term variable
+# and not for a type variable; HOL Light needs an ASCII name
+GREEK_VAR = {'μ': 'mu', 'σ': 'sigma', 'τ': 'tau', 'ρ': 'rho'}
+
 KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
             'do', 'od', 'with', 'otherwise', 'some']
 
@@ -110,6 +114,11 @@ def tokenize(s):
       j = i
       while j < n and (s[j].isalnum() or s[j] == '_'): j += 1
       toks.append(Tok('num', s[i:j], start, nl, icol))
+      i = j; col += j - i; nl = 0; continue
+    if c in GREEK_VAR:
+      j = i + 1
+      while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
+      toks.append(Tok('id', GREEK_VAR[c] + s[i+1:j], start, nl, icol))
       i = j; col += j - i; nl = 0; continue
     if c in GREEK:
       toks.append(Tok('tyvar', GREEK[c], start, nl, icol))
@@ -740,6 +749,10 @@ ARGPERM = {
   'FOLDR': (3, [0, 2, 1], 'ITLIST'),
 }
 
+# HOL4 functions that take a pair where HOL Light's take two
+# arguments
+UNCURRIED = set(['ZIP'])
+
 
 def dtarg_texts(alt):
   """the texts of the argument types of one alternative of a HOL4
@@ -951,6 +964,7 @@ def reset_grammar():
   """the term grammar of a fresh HOL4 theory: the infixes that a
      CakeML source adds itself do not reach the other files"""
   INFIX.clear(); INFIX.update(BASE_INFIX)
+  OWN_INFIX.clear()
   SYMS[:] = BASE_SYMS
   PMATCH[0] = False
 
@@ -959,9 +973,21 @@ def add_infix(tok, prec, assoc):
   """an infix that a CakeML source declares itself; the port writes
      it as an application of the constant it is overloaded with"""
   INFIX[tok] = (prec, assoc, tok, None)
+  OWN_INFIX.add(tok)
   if tok not in SYMS and not tok[0].isalpha():
     SYMS.append(tok)
     SYMS.sort(key=len, reverse=True)
+
+
+OWN_INFIX = set()      # the infixes a CakeML source declares itself
+
+
+def set_infix_name(tok, name):
+  """a symbolic infix that a CakeML source overloads with a constant
+     is written as an application of that constant"""
+  if tok in INFIX and tok not in BASE_INFIX:
+    prec, assoc, _, hprec = INFIX[tok]
+    INFIX[tok] = (prec, assoc, name, None)
 
 
 def set_equality(loose):
@@ -1068,6 +1094,16 @@ class Printer:
                                          for i in perm)
             self.numctx = old
             return self.paren(s, PRE_APP, prec)
+      # HOL4's ZIP takes the two lists as a pair
+      if hop.kind == 'id' and len(args) == 1 and \
+         self.ctx.name(hop.name) in UNCURRIED:
+        a = args[0]
+        while a.kind == 'paren': a = a.e
+        if a.kind == 'infix' and a.op == ',':
+          self.numctx = old
+          return self.paren(self.ctx.name(hop.name) + ' ' +
+                            self.pr(a.l, APP) + ' ' +
+                            self.pr(a.r, APP), PRE_APP, prec)
       fn = self.pr(e.fn, PRE_APP)
       # a numeral in an argument of a constructor whose type is an
       # integer or a real is written &n

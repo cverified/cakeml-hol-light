@@ -41,12 +41,13 @@ let tenv_ok_def = cake_define
      tenv_ctor_ok (?_c tenv) /\
      tenv_abbrev_ok (type_env_t tenv)`;;
 
-let tenv_val_exp_ok_def = cake_define
-  `(tenv_val_exp_ok Empty <=> T) /\
-   (tenv_val_exp_ok (Bind_tvar n tenv) <=> tenv_val_exp_ok tenv) /\
-   (tenv_val_exp_ok (Bind_name x tvs t tenv) <=>
-     check_freevars (tvs + num_tvs tenv) [] t /\
-     tenv_val_exp_ok tenv)`;;
+let tenv_val_exp_ok_def = cake_define_list
+  [`tenv_val_exp_ok Empty <=> T`;
+   `tenv_val_exp_ok (Bind_tvar n tenv:tenv_val_exp) <=>
+  tenv_val_exp_ok tenv`;
+   `tenv_val_exp_ok (Bind_name x tvs t tenv:tenv_val_exp) <=>
+        check_freevars (tvs + num_tvs tenv) [] t /\
+        tenv_val_exp_ok tenv`];;
 
 (* Global constructor type environments keyed by constructor name and
    type
@@ -79,11 +80,12 @@ let type_ctor_def = cake_define
      FLOOKUP ctMap stamp = SOME (tvs,ts,ti) /\
      LENGTH ts = n`;;
 
-let add_tenvE_def = cake_define
-  `(add_tenvE Empty tenvV = tenvV) /\
-   (add_tenvE (Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE tenvV) /\
-   (add_tenvE (Bind_name x tvs t tenvE) tenvV = nsBind x (tvs,t)
-     (add_tenvE tenvE tenvV))`;;
+let add_tenvE_def = cake_define_list
+  [`add_tenvE Empty tenvV = tenvV`;
+   `add_tenvE (Bind_tvar _3 tenvE:tenv_val_exp) tenvV = add_tenvE
+  tenvE tenvV`;
+   `add_tenvE (Bind_name x tvs t tenvE:tenv_val_exp) tenvV = nsBind x
+  (tvs,t) (add_tenvE tenvE tenvV)`];;
 
 let type_v = cake_inductive
   `(!tvs ctMap tenvS n.
@@ -102,8 +104,8 @@ let type_v = cake_inductive
      EVERY (check_freevars tvs []) ts' /\
      LENGTH tvs' = LENGTH ts' /\
      LIST_REL (type_v tvs ctMap tenvS)
-       vs (MAP (type_subst (FUPDATE_LIST FEMPTY (REVERSE (ZIP
-         (tvs',ts'))))) ts) /\
+       vs (MAP (type_subst (FUPDATE_LIST FEMPTY (REVERSE (ZIP tvs'
+         ts')))) ts) /\
      FLOOKUP ctMap stamp = SOME (tvs',ts,ti) ==>
      type_v tvs ctMap tenvS (Conv (SOME stamp) vs) (Tapp ts' ti)) /\
    (!tvs ctMap tenvS vs ts.

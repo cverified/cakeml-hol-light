@@ -43,12 +43,12 @@ needs "semantics/ast.ml";;
 (*In general, any permutation works*)
 
 (*Remove tail recursion to make proof easier...*)
-let pull_ops_simp_def = cake_define
-  `(pull_ops_simp op [] = []) /\
-   (pull_ops_simp op (x :: xs) =
-     (match x with (Op op' ls) -> (if op = op' then ls ++
-       (pull_ops_simp op xs) else x :: (pull_ops_simp op xs)) | _2 ->
-       x :: (pull_ops_simp op xs)))`;;
+let pull_ops_simp_def = cake_define_list
+  [`pull_ops_simp op [] = []`;
+   `pull_ops_simp op (x :: xs) =
+        (match x with (Op op' ls) -> (if op = op' then ls ++
+          (pull_ops_simp op xs) else x :: (pull_ops_simp op xs)) | _2
+          -> x :: (pull_ops_simp op xs))`];;
 
 (* TODO: Maybe move to props, if these are needed elsewhere *)
 

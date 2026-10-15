@@ -7,6 +7,7 @@
   The formal semantics of BVI
 *)
 
+needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -83,7 +84,7 @@ val s = ``(s:('c,'ffi) bviSem$state)``;
 *)
 
 let do_app_aux_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_app_aux op (vs:bvlSem_v list)) s =
        (match (op,vs) with (IntOp (Const i),xs) ->
          (if small_enough_int i /\ NULL xs then
@@ -152,7 +153,7 @@ let do_app_aux_def = cake_define
              (CopyByte T),_17) -> NONE | _18 -> SOME NONE)`;;
 
 let do_install_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_install vs) s =
          (match vs with [v1; v2; vl1; vl2] ->
               (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -181,7 +182,7 @@ let do_install_def = cake_define
                                Rtype_error))`;;
 
 let do_app_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_app op vs) s =
        (if op = Install then do_install vs s else
        match do_app_aux op vs s with NONE -> Rerr (Rabort

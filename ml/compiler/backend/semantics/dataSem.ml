@@ -156,16 +156,16 @@ let size_of_def = cake_define_list
              seen) in
              (n + LENGTH vs + 1,refs,seen))`];;
 
-let extract_stack_def = cake_define
-  `extract_stack (Env _6 env:stack) = mlvector_toList env /\
-   extract_stack (Exc _7 env _8) = mlvector_toList env`;;
+let extract_stack_def = cake_define_list
+  [`extract_stack (Env _6 env:stack) = mlvector_toList env`;
+   `extract_stack (Exc _7 env _8:stack) = mlvector_toList env`];;
 
-let global_to_vs_def = cake_define
-  `global_to_vs NONE = [] /\
-   global_to_vs (SOME n) = [RefPtr T n]`;;
+let global_to_vs_def = cake_define_list
+  [`global_to_vs NONE = []`;
+   `global_to_vs (SOME n) = [RefPtr T n]`];;
 
 let stack_to_vs_def = cake_define
-  `^
+  `(\x y. strcat x y)
      stack_to_vs s =
        mlvector_toList (dataSem_state_locals s) ++ FLAT (MAP
          extract_stack (?_stack s)) ++ global_to_vs
@@ -175,10 +175,11 @@ let stack_to_vs_def = cake_define
    need
    to fit in wordLang memory (over-approximation) *)
 let size_of_heap_def = cake_define
-  `^
+  `(\x y. strcat x y)
      size_of_heap s =
-       (let (n,_9,_10) = ^ (size_of (dataSem_state_limits s) (^
-         stack_to_vs s)) (?_refs s LN) in
+       (let (n,_9,_10) = (\x y. strcat x y) (size_of
+         (dataSem_state_limits s) ((\x y. strcat x y) stack_to_vs s))
+         (?_refs s LN) in
          n)`;;
 
 let no_thunks_in_refs_def = cake_define
@@ -194,7 +195,7 @@ let no_thunks_in_refs_def = cake_define
      heap_peak = λk ^s. MAX (s.peak_heap_length) (size_of_heap s + k) *)
 
 let add_space_def = cake_define
-  `^
+  `(\x y. strcat x y)
      add_space (s k) = dataSem_state_peak_heap_length_fupd (K
        (heap_peak k s)) (dataSem_state_safe_for_space_fupd (K
        (add_space_safe k s)) (dataSem_state_space_fupd (K k)
@@ -206,10 +207,11 @@ let add_space_def = cake_define
    evaluator hands the state to do_app, is the NARROW cut without args).
      *)
 let size_of_heap_args_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (size_of_heap_args op_args) s =
-       (let (n,_11,_12) = ^ (size_of (dataSem_state_limits s) (^
-         (op_args ++ stack_to_vs) s)) (?_refs s LN) in
+       (let (n,_11,_12) = (\x y. strcat x y) (size_of
+         (dataSem_state_limits s) ((\x y. strcat x y) (op_args ++
+         stack_to_vs) s)) (?_refs s LN) in
          n)`;;
 
 (* HOL4 overload (expanded in the port):
@@ -222,7 +224,7 @@ let size_of_heap_args_def = cake_define
        (size_of_heap_args op_args s + k) *)
 
 let consume_space_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (consume_space k) s =
        (if dataSem_state_space s < k then NONE else SOME
          (dataSem_state_space_fupd (K (dataSem_state_space s - k))
@@ -252,81 +254,88 @@ hol4_overload "v_to_list" "dataSem_v_to_list";;
         2 * il + 2 * jl *)
 
 (* Gives an upper bound to the memory consuption of an operation *)
-let space_consumed_def = cake_define
-  `(^ space_consumed (s (BlockOp (ConsExtend tag)) (Block _16 _17 xs' ::
-  Number lower :: Number len :: Number tot :: xs)) =
-    LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int lower)
-      xs')) + 1) /\
-   (space_consumed s (MemOp RefArray) [(Number len:dataSem_v); _18] =
-     num_of_int len + 1) /\
-   (space_consumed s (MemOp (RefByte _19)) [Number len; _20] =
-     num_of_int len DIV (arch_size (dataSem_state_limits s) DIV 8) + 2)
-     /\
-   (space_consumed s (BlockOp (FromList n)) [Number len; lv] =
-     num_of_int len + 1) /\
-   (space_consumed s (IntOp Add) [Number i1; Number i2] =
-     (if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1
-       /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 +
-          i2) then 0 else (\i1 i2 s.
-       let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i1 in
-       let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i2 in
-         2 * il + 2 * jl) i1 i2 s)) /\
-   (space_consumed s (IntOp Sub) [Number i1; Number i2] =
-     (if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1
-       /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 -
-          i2) then 0 else (\i1 i2 s.
-       let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i1 in
-       let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i2 in
-         2 * il + 2 * jl) i1 i2 s)) /\
-   (space_consumed s (IntOp Mult) [Number i1; Number i2] =
-     (if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1
-       /\ 0 <= i1 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
-          0 <= i2 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 *
-          i2) then 0 else (\i1 i2 s.
-       let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i1 in
-       let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i2 in
-         2 * il + 2 * jl) i1 i2 s)) /\
-   (space_consumed s (IntOp Div) [Number i1; Number i2] =
-     (if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1
-       /\ 0 <= i1 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
-          0 <= i2 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 /
-          i2) then 0 else (\i1 i2 s.
-       let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i1 in
-       let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i2 in
-         2 * il + 2 * jl) i1 i2 s)) /\
-   (space_consumed s (IntOp Mod) [Number i1; Number i2] =
-     (if small_num (limits_arch_64_bit (dataSem_state_limits s)) i1
-       /\ 0 <= i1 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) i2 /\
-          0 <= i2 /\
-        small_num (limits_arch_64_bit (dataSem_state_limits s)) (i1 %
-          i2) then 0 else (\i1 i2 s.
-       let il = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i1 in
-       let jl = bignum_size (limits_arch_64_bit (dataSem_state_limits
-         s)) i2 in
-         2 * il + 2 * jl) i1 i2 s)) /\
-   (space_consumed s (BlockOp ListAppend) [lv1; lv2] =
-    (match v_to_list lv1 with
-     SOME l -> SUC (LENGTH l) * 3 | NONE -> 0)) /\
-   (space_consumed s (op:closLang_op) (vs:dataSem_v list) =
-     (0:num))`;;
+let space_consumed_def = cake_define_list
+  [`(\x y. strcat x y) space_consumed (s (BlockOp (ConsExtend tag))
+  (Block _16 _17 xs' :: Number lower :: Number len :: Number tot :: xs))
+  =
+       LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
+         lower) xs')) + 1`;
+   `space_consumed s (MemOp RefArray:flatLang_op) [(Number
+  len:dataSem_v); _18] = num_of_int len + 1`;
+   `space_consumed s (MemOp (RefByte _19):flatLang_op) [(Number
+  len:dataSem_v); _20] = num_of_int len DIV (arch_size
+  (dataSem_state_limits s) DIV 8) + 2`;
+   `space_consumed s (BlockOp (FromList n):flatLang_op) [(Number
+  len:dataSem_v); lv] = num_of_int len + 1`;
+   `space_consumed s (IntOp Add:flatLang_op) [(Number i1:dataSem_v);
+  Number i2] =
+        (if small_num (limits_arch_64_bit (dataSem_state_limits s))
+          i1 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             i2 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             (i1 + i2) then 0 else (\i1 i2 s.
+          let il = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i1 in
+          let jl = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i2 in
+            2 * il + 2 * jl) i1 i2 s)`;
+   `space_consumed s (IntOp Sub:flatLang_op) [(Number i1:dataSem_v);
+  Number i2] =
+        (if small_num (limits_arch_64_bit (dataSem_state_limits s))
+          i1 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             i2 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             (i1 - i2) then 0 else (\i1 i2 s.
+          let il = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i1 in
+          let jl = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i2 in
+            2 * il + 2 * jl) i1 i2 s)`;
+   `space_consumed s (IntOp Mult:flatLang_op) [(Number i1:dataSem_v);
+  Number i2] =
+        (if small_num (limits_arch_64_bit (dataSem_state_limits s))
+          i1 /\ 0 <= i1 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             i2 /\ 0 <= i2 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             (i1 * i2) then 0 else (\i1 i2 s.
+          let il = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i1 in
+          let jl = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i2 in
+            2 * il + 2 * jl) i1 i2 s)`;
+   `space_consumed s (IntOp Div:flatLang_op) [(Number i1:dataSem_v);
+  Number i2] =
+        (if small_num (limits_arch_64_bit (dataSem_state_limits s))
+          i1 /\ 0 <= i1 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             i2 /\ 0 <= i2 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             (i1 / i2) then 0 else (\i1 i2 s.
+          let il = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i1 in
+          let jl = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i2 in
+            2 * il + 2 * jl) i1 i2 s)`;
+   `space_consumed s (IntOp Mod:flatLang_op) [(Number i1:dataSem_v);
+  Number i2] =
+        (if small_num (limits_arch_64_bit (dataSem_state_limits s))
+          i1 /\ 0 <= i1 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             i2 /\ 0 <= i2 /\
+           small_num (limits_arch_64_bit (dataSem_state_limits s))
+             (i1 % i2) then 0 else (\i1 i2 s.
+          let il = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i1 in
+          let jl = bignum_size (limits_arch_64_bit
+            (dataSem_state_limits s)) i2 in
+            2 * il + 2 * jl) i1 i2 s)`;
+   `space_consumed s (BlockOp ListAppend:flatLang_op) [lv1; lv2] =
+       (match v_to_list lv1 with
+        SOME l -> SUC (LENGTH l) * 3 | NONE -> 0)`;
+   `space_consumed s (op:closLang_op) (vs:dataSem_v list) = (0:num)`];;
 
 let vb_size_def = cake_define
   `vb_size x1 =
@@ -335,12 +344,11 @@ let vb_size_def = cake_define
             LENGTH ls
         | _21 -> 1`;;
 
-let vs_depth_def = cake_define
-  `(vs_depth (Block ts t ls:dataSem_v) = vs_depth_list ls) /\
-   (vs_depth _22 = 0) /\
-   (vs_depth_list [] = 0) /\
-   (vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list
-     xs))`;;
+let vs_depth_def = cake_define_list
+  [`vs_depth (Block ts t ls:dataSem_v) = vs_depth_list ls`;
+   `vs_depth _22 = 0`;
+   `vs_depth_list [] = 0`;
+   `vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list xs)`];;
 
 let eq_code_stack_max_def = cake_define
   `eq_code_stack_max n tsz =
@@ -452,7 +460,7 @@ let stack_consumed_def = cake_define
               else s.peak_heap_length *)
 
 let do_space_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_space op vs) s =
        (if op_space_reset op then SOME
          (dataSem_state_peak_heap_length_fupd (K (do_space_peak op vs
@@ -461,16 +469,16 @@ let do_space_def = cake_define
          op_space_req op (LENGTH vs) = 0 then SOME s else
          consume_space (op_space_req op (LENGTH vs)) s)`;;
 
-let size_of_stack_frame_def = cake_define
-  `size_of_stack_frame (Env n _27:stack) = n /\ size_of_stack_frame
-  (Exc n _28 _29) = OPTION_MAP ((+) 3) n`;;
+let size_of_stack_frame_def = cake_define_list
+  [`size_of_stack_frame (Env n _27:stack) = n`;
+   `size_of_stack_frame (Exc n _28 _29:stack) = OPTION_MAP ((+) 3) n`];;
 
 let size_of_stack_def = cake_define
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame)
   (SOME 1)`;;
 
 let do_stack_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_stack op vs) s =
      (let new_stack = OPTION_MAP2 (+) (stack_consumed
        (dataSem_state_stack_frame_sizes s) (dataSem_state_limits s) op
@@ -544,7 +552,7 @@ hol4_overload "do_eq_list" "dataSem_do_eq_list";;
        dataSem$state, dataSem$v)result *)
 
 let do_install_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_install vs) s =
          (match vs with [v1; v2; vl1; vl2] ->
               (match (v_to_bytes v1,v_to_words v2) with (SOME
@@ -570,45 +578,46 @@ let do_install_def = cake_define
                                Rtype_error)) | _70 -> Rerr (Rabort
                                Rtype_error))`;;
 
-let list_to_v_def = cake_define
-  `dataSem_list_to_v ts t [] = t /\
-   dataSem_list_to_v ts t (h :: l) = Block ts cons_tag [h;
-     dataSem_list_to_v (ts + 1) t l]`;;
+let list_to_v_def = cake_define_list
+  [`dataSem_list_to_v ts t [] = t`;
+   `dataSem_list_to_v ts t (h :: l) = Block ts cons_tag [h;
+  dataSem_list_to_v (ts + 1) t l]`];;
 hol4_overload "list_to_v" "dataSem_list_to_v";;
 
 (* HOL4 overload (expanded in the port):
      Block_nil = Block 0 nil_tag [] *)
 
 let with_fresh_ts_def = cake_define
-  `^
+  `(\x y. strcat x y)
      with_fresh_ts (s n f) = (match dataSem_state_tstamps s with
                               SOME ts -> f ts
                                 (dataSem_state_tstamps_fupd (K (SOME
                                 (ts + n))) s) | NONE -> f 0 s)`;;
 
-let lim_safe_part_def = cake_define
-  `(lim_safe_part lims (Con tag xs:const_part) <=> (if xs = [] then tag
+let lim_safe_part_def = cake_define_list
+  [`lim_safe_part lims (Con tag xs:const_part) <=> (if xs = [] then tag
   < 2 EXP (arch_size lims) DIV 16 else
                               LENGTH xs < 2 EXP limits_length_limit
                                 lims /\
                               LENGTH xs < 2 EXP (arch_size lims - 4)
                                 /\
-                              4 * tag < 2 EXP (arch_size lims) DIV 16
-                                /\
+                              4 * tag < 2 EXP (arch_size lims) DIV
+                                16 /\
                               4 * tag < 2 EXP (arch_size lims -
-                                limits_length_limit lims - 2))) /\
-   (lim_safe_part lims (Int i) <=>
-      (if small_num (limits_arch_64_bit lims) i then T else
-         let il = bignum_size (limits_arch_64_bit lims) i in
-           il <= 2 EXP limits_length_limit lims)) /\
-   (lim_safe_part lims (Str s) <=>
-      (let i = strlen s in
-         i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims) DIV
-           arch_size lims /\
-         i DIV (arch_size lims DIV 8) + 1 < 2 EXP limits_length_limit
-           lims /\
-         small_num (limits_arch_64_bit lims) (&i))) /\
-   (lim_safe_part lims (W64 w) <=> 1 < limits_length_limit lims)`;;
+                                limits_length_limit lims - 2))`;
+   `lim_safe_part lims (Int i:const_part) <=>
+         (if small_num (limits_arch_64_bit lims) i then T else
+            let il = bignum_size (limits_arch_64_bit lims) i in
+              il <= 2 EXP limits_length_limit lims)`;
+   `lim_safe_part lims (Str s:const_part) <=>
+         (let i = strlen s in
+            i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims)
+              DIV arch_size lims /\
+            i DIV (arch_size lims DIV 8) + 1 < 2 EXP
+              limits_length_limit lims /\
+            small_num (limits_arch_64_bit lims) (&i))`;
+   `lim_safe_part lims (W64 w:const_part) <=> 1 < limits_length_limit
+  lims`];;
 
 let lim_safe_def = cake_define
   `lim_safe lims x2 xs =
@@ -728,14 +737,14 @@ let lim_safe_def = cake_define
         | (_95,_96) -> T`;;
 
 let do_lim_safe = cake_define
-  `^
+  `(\x y. strcat x y)
      do_lim_safe (s op vs) = dataSem_state_safe_for_space_fupd (K (
                               lim_safe (dataSem_state_limits s) op vs
                                 /\ dataSem_state_safe_for_space s))
      s`;;
 
 let check_lim_def = cake_define
-  `^
+  `(\x y. strcat x y)
      check_lim (s n) = dataSem_state_safe_for_space_fupd (K (n < 2
        EXP limits_length_limit (dataSem_state_limits s) /\
        dataSem_state_safe_for_space
@@ -755,11 +764,11 @@ let do_part_def = cake_define_list
         (RefPtr T ptr,insert ptr (ByteArray T bytes) s,ts))`];;
 hol4_overload "do_part" "dataSem_do_part";;
 
-let do_build_def = cake_define
-  `dataSem_do_build m i [] s ts = (m (i - 1),s,ts) /\
-   dataSem_do_build m i (p :: rest) s ts =
-     (let (x,s1,ts1) = do_part m p s ts in
-       dataSem_do_build ((i =+ x) m) (i + 1) rest s1 ts1)`;;
+let do_build_def = cake_define_list
+  [`dataSem_do_build m i [] s ts = (m (i - 1),s,ts)`;
+   `dataSem_do_build m i (p :: rest) s ts =
+      (let (x,s1,ts1) = do_part m p s ts in
+        dataSem_do_build ((i =+ x) m) (i + 1) rest s1 ts1)`];;
 hol4_overload "do_build" "dataSem_do_build";;
 
 let do_build_const_def = cake_define
@@ -893,7 +902,7 @@ let finalise_cons_def = cake_define_wf
 hol4_overload "finalise_cons" "dataSem_finalise_cons";;
 
 let do_app_aux_def = cake_define
-  `^ (^
+  `(\x y. strcat x y) ((\x y. strcat x y)
      (do_app_aux op) vs) s =
        (match (op,vs) with (Label l,xs) ->
            (match xs with [] -> (if l IN domain (?_code s) then
@@ -1046,7 +1055,7 @@ let do_app_aux_def = cake_define
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
              +dataSem_v#string)) | (BlockOp ListAppend,[x1; x2]) ->
            (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys)
-             -> ^
+             -> (\x y. strcat x y)
                 with_fresh_ts (s (LENGTH xs)
                 (\ts s'. Rval (list_to_v ts x2 xs,
                               check_lim (s') 2))) | _128 -> ((Rerr
@@ -1298,7 +1307,7 @@ let do_app_aux_def = cake_define
               else do_space_peak op vs s *)
 
 let do_app_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (do_app op vs) s =
        (if op = Install then do_install vs
          (dataSem_state_stack_frame_sizes_fupd (K LN)
@@ -1315,12 +1324,12 @@ let get_var_def = cake_define
   `dataSem_get_var v = sptree_lookup v`;;
 hol4_overload "get_var" "dataSem_get_var";;
 
-let get_vars_def = cake_define
-  `(dataSem_get_vars [] s = SOME []) /\
-   (dataSem_get_vars (v :: vs) s =
-      (match get_var v s with NONE -> NONE | SOME x -> (match
-        dataSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME (x
-        :: xs))))`;;
+let get_vars_def = cake_define_list
+  [`dataSem_get_vars [] s = SOME []`;
+   `dataSem_get_vars (v :: vs) s =
+         (match get_var v s with NONE -> NONE | SOME x -> (match
+           dataSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME
+           (x :: xs)))`];;
 hol4_overload "get_vars" "dataSem_get_vars";;
 
 let set_var_def = cake_define
@@ -1338,7 +1347,7 @@ let fix_clock_def = cake_define
 hol4_overload "fix_clock" "dataSem_fix_clock";;
 
 let flush_state_def = cake_define
-  `^
+  `(\x y. strcat x y)
       (flush_state T) s  =
         match  with
            -> dataSem_state_locals_size_fupd (K (SOME 0))
@@ -1347,7 +1356,7 @@ let flush_state_def = cake_define
           (dataSem_state_locals_fupd (K LN) s)`;;
 
 let call_env_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (call_env args size) s =
        (let new_stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max
          s)
@@ -1363,7 +1372,7 @@ let call_env_def = cake_define
          s))))`;;
 
 let push_env_def = cake_define
-  `^ (push_env env F) s  =
+  `(\x y. strcat x y) (push_env env F) s  =
         match  with
            ->
        (let stack = Env (dataSem_state_locals_size s) env :: ?_stack
@@ -1390,7 +1399,7 @@ let push_env_def = cake_define
             (K stack) s))))`;;
 
 let pop_env_def = cake_define
-  `^
+  `(\x y. strcat x y)
      pop_env s =
        (match ?_stack s with (Env ss e :: xs) ->
            SOME (dataSem_state_locals_size_fupd (K ss) (?_stack_fupd
@@ -1402,7 +1411,7 @@ let pop_env_def = cake_define
              NONE)`;;
 
 let jump_exc_def = cake_define
-  `^
+  `(\x y. strcat x y)
      jump_exc s =
        (if dataSem_state_handler s < LENGTH (?_stack s) then
          match LASTN (dataSem_state_handler s + 1) (?_stack s) with
@@ -1419,7 +1428,7 @@ let cut_env_def = cake_define
 hol4_overload "cut_env" "dataSem_cut_env";;
 
 let cut_state_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (cut_state names) s =
        (match cut_env names (dataSem_state_locals s) with NONE ->
          NONE | SOME env -> SOME (dataSem_state_locals_fupd (K env)
@@ -1430,19 +1439,20 @@ let cut_state_opt_def = cake_define
      (match names with NONE -> SOME s | SOME names -> cut_state
        names s)`;;
 
-let find_code_def = cake_define
-  `(dataSem_find_code (SOME p) args code ssize =
-      (match sptree_lookup p code with NONE -> NONE | SOME
-        (arity,exp) ->
-         (if LENGTH args = arity then SOME (args,exp,lookup p ssize)
-           else NONE))) /\ (dataSem_find_code NONE args code ssize =
-      (if args = [] then NONE else
-        match LAST args with CodePtr loc ->
-            (match sptree_lookup loc code with NONE -> NONE | SOME
-              (arity,exp) ->
-                (if LENGTH args = arity + 1 then SOME (FRONT
-                  args,exp,lookup loc ssize) else NONE)) | other ->
-                  NONE))`;;
+let find_code_def = cake_define_list
+  [`dataSem_find_code (SOME p) args code ssize =
+         (match sptree_lookup p code with NONE -> NONE | SOME
+           (arity,exp) ->
+            (if LENGTH args = arity then SOME (args,exp,lookup p
+              ssize) else NONE))`;
+   `dataSem_find_code NONE args code ssize =
+         (if args = [] then NONE else
+           match LAST args with CodePtr loc ->
+               (match sptree_lookup loc code with NONE -> NONE |
+                 SOME (arity,exp) ->
+                   (if LENGTH args = arity + 1 then SOME (FRONT
+                     args,exp,lookup loc ssize) else NONE)) | other
+                     -> NONE)`];;
 hol4_overload "find_code" "dataSem_find_code";;
 
 let isBool_def = cake_define
@@ -1452,14 +1462,14 @@ let isBool_def = cake_define
       | _190 -> F`;;
 
 let install_sfs_def = cake_define
-  `^
+  `(\x y. strcat x y)
      (install_sfs op) s = dataSem_state_safe_for_space_fupd (K
        (~(op = closLang_Install) /\ dataSem_state_safe_for_space s))
        s`;;
 
 let set_vars_def = cake_define
   `set_vars ns vs s = (dataSem_state_locals_fupd (K (union (fromAList
-  (ZIP (ns,vs))) (dataSem_state_locals s))) s)`;;
+  (ZIP ns vs)) (dataSem_state_locals s))) s)`;;
 
 let evaluate_def = cake_define_list
   [`dataSem_evaluate (Skip,s) = (NONE,s)`;

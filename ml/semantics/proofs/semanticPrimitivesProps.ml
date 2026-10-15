@@ -14,11 +14,11 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-let shift_lookup_def = cake_define
-  `(shift_lookup Lsl = word_lsl) /\
-   (shift_lookup Lsr = word_lsr) /\
-   (shift_lookup Asr = word_asr) /\
-   (shift_lookup Ror = word_ror)`;;
+let shift_lookup_def = cake_define_list
+  [`shift_lookup Lsl = word_lsl`;
+   `shift_lookup Lsr = word_lsr`;
+   `shift_lookup Asr = word_asr`;
+   `shift_lookup Ror = word_ror`];;
 
 let do_shift_def = cake_define
   `do_shift sh n x3 x4 =
@@ -57,13 +57,14 @@ val eqs = LIST_CONJ (map TypeBase.case_eq_of
 
 (* Alternate definition for build_rec_env *)
 
-let map_error_result_def = cake_define
-  `(map_error_result f (Rraise e) = Rraise (f e)) /\
-   (map_error_result f (Rabort a) = Rabort a)`;;
+let map_error_result_def = cake_define_list
+  [`map_error_result f (Rraise e:error_result) = Rraise (f e)`;
+   `map_error_result f (Rabort a:error_result) = Rabort a`];;
 
-let map_result_def = cake_define
-  `(map_result f1 f2 (Rval v) = Rval (f1 v)) /\
-   (map_result f1 f2 (Rerr e) = Rerr (map_error_result f2 e))`;;
+let map_result_def = cake_define_list
+  [`map_result f1 f2 (Rval v:semanticPrimitives_result) = Rval (f1 v)`;
+   `map_result f1 f2 (Rerr e:semanticPrimitives_result) = Rerr
+  (map_error_result f2 e)`];;
 
 let exc_rel_def = cake_define
   `exc_rel R x2 x3 =
@@ -79,19 +80,20 @@ let result_rel_def = cake_define
         | ((Rerr e1),(Rerr e2)) -> exc_rel R2 e1 e2
         | (_5,_6) -> F`;;
 
-let every_error_result_def = cake_define
-  `(every_error_result P (Rraise e) = P e) /\
-   (every_error_result P (Rabort a) = T)`;;
+let every_error_result_def = cake_define_list
+  [`every_error_result P (Rraise e:error_result) = P e`;
+   `every_error_result P (Rabort a:error_result) = T`];;
 
-let every_result_def = cake_define
-  `(every_result P1 P2 (Rval v) = (P1 v)) /\
-   (every_result P1 P2 (Rerr e) = (every_error_result P2 e))`;;
+let every_result_def = cake_define_list
+  [`every_result P1 P2 (Rval v:semanticPrimitives_result) = (P1 v)`;
+   `every_result P1 P2 (Rerr e:semanticPrimitives_result) =
+  (every_error_result P2 e)`];;
 
-let map_sv_def = cake_define
-  `map_sv f (Refv v) = Refv (f v) /\
-   map_sv _7 (W8array w) = (W8array w) /\
-   map_sv f (Varray vs) = (Varray (MAP f vs)) /\
-   map_sv f (Thunk m v) = (Thunk m (f v))`;;
+let map_sv_def = cake_define_list
+  [`map_sv f (Refv v:store_v) = Refv (f v)`;
+   `map_sv _7 (W8array w:store_v) = (W8array w)`;
+   `map_sv f (Varray vs:store_v) = (Varray (MAP f vs))`;
+   `map_sv f (Thunk m v:store_v) = (Thunk m (f v))`];;
 
 let dest_Refv_def = cake_define
   `dest_Refv (Refv v) = v`;;
@@ -118,11 +120,11 @@ let sv_rel_def = cake_define
       | ((Thunk m1 v1),(Thunk m2 v2)) -> (m1 = m2 /\ R v1 v2)
       | (_11,_12) -> F`;;
 
-let store_v_vs_def = cake_define
-  `semanticPrimitivesProps_store_v_vs (Refv v) = [v] /\
-   semanticPrimitivesProps_store_v_vs (Varray vs) = vs /\
-   semanticPrimitivesProps_store_v_vs (W8array _13) = [] /\
-   semanticPrimitivesProps_store_v_vs (Thunk _14 v) = [v]`;;
+let store_v_vs_def = cake_define_list
+  [`semanticPrimitivesProps_store_v_vs (Refv v:store_v) = [v]`;
+   `semanticPrimitivesProps_store_v_vs (Varray vs:store_v) = vs`;
+   `semanticPrimitivesProps_store_v_vs (W8array _13:store_v) = []`;
+   `semanticPrimitivesProps_store_v_vs (Thunk _14 v:store_v) = [v]`];;
 hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
 let store_vs_def = cake_define
@@ -146,39 +148,39 @@ let ctors_of_dec_def = cake_define
 
 (* free vars *)
 
-let FV_def = cake_define
-  `(FV (Raise e) = FV e) /\
-   (FV (Handle e pes) = FV e UNION FV_pes pes) /\
-   (FV (Lit _19) = {}) /\
-   (FV (Con _20 ls) = FV_list ls) /\
-   (FV (Var id') = {id'}) /\
-   (FV (Fun x e) = FV e DIFF {Short x}) /\
-   (FV (App _21 es) = FV_list es) /\
-   (FV (Log _22 e1 e2) = FV e1 UNION FV e2) /\
-   (FV (If e1 e2 e3) = FV e1 UNION FV e2 UNION FV e3) /\
-   (FV (Mat e pes) = FV e UNION FV_pes pes) /\
-   (FV (Let xo e b) = FV e UNION (FV b DIFF (match xo with NONE -> {}
-     | SOME x -> {Short x}))) /\
-   (FV (Letrec defs b) = (FV_defs defs UNION FV b) DIFF set_of_list
-     (MAP (Short o FST) defs)) /\
-   (FV (Tannot e t) = FV e) /\
-   (FV (Lannot e l) = FV e) /\
-   (FV_list [] = {}) /\
-   (FV_list (e :: es) = FV e UNION FV_list es) /\
-   (FV_pes [] = {}) /\
-   (FV_pes ((p,e) :: pes) =
-      (FV e DIFF (IMAGE Short (set_of_list (pat_bindings p)))) UNION
-        FV_pes pes) /\
-   (FV_defs [] = {}) /\
-   (FV_defs ((_23,x,e) :: defs) =
-      (FV e DIFF {Short x}) UNION FV_defs defs)`;;
+let FV_def = cake_define_list
+  [`FV (Raise e:ast_exp) = FV e`;
+   `FV (Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
+   `FV (Lit _19:ast_exp) = {}`;
+   `FV (Con _20 ls:ast_exp) = FV_list ls`;
+   `FV (Var id':ast_exp) = {id'}`;
+   `FV (Fun x e:ast_exp) = FV e DIFF {Short x}`;
+   `FV (App _21 es:ast_exp) = FV_list es`;
+   `FV (Log _22 e1 e2:ast_exp) = FV e1 UNION FV e2`;
+   `FV (If e1 e2 e3:ast_exp) = FV e1 UNION FV e2 UNION FV e3`;
+   `FV (Mat e pes:ast_exp) = FV e UNION FV_pes pes`;
+   `FV (Let xo e b:ast_exp) = FV e UNION (FV b DIFF (match xo with
+  NONE -> {} | SOME x -> {Short x}))`;
+   `FV (Letrec defs b:ast_exp) = (FV_defs defs UNION FV b) DIFF
+  set_of_list (MAP (Short o FST) defs)`;
+   `FV (Tannot e t:ast_exp) = FV e`;
+   `FV (Lannot e l:ast_exp) = FV e`;
+   `FV_list [] = {}`;
+   `FV_list (e :: es) = FV e UNION FV_list es`;
+   `FV_pes [] = {}`;
+   `FV_pes ((p,e) :: pes) =
+         (FV e DIFF (IMAGE Short (set_of_list (pat_bindings p))))
+           UNION FV_pes pes`;
+   `FV_defs [] = {}`;
+   `FV_defs ((_23,x,e) :: defs) =
+         (FV e DIFF {Short x}) UNION FV_defs defs`];;
 
 (* HOL4 overload (expanded in the port):
      SFV = λe. {x | Short x ∈ FV e} *)
 
-let FV_dec_def = cake_define
-  `(FV_dec (Dlet locs p e) = FV (Mat e [(p,Lit ARB)])) /\
-   (FV_dec (Dletrec locs defs) = FV (Letrec defs (Lit ARB))) /\
-   (FV_dec (Dtype _24 _25) = {}) /\
-   (FV_dec (Dtabbrev _26 _27 _28 _29) = {}) /\
-   (FV_dec (Dexn _30 _31 _32) = {})`;;
+let FV_dec_def = cake_define_list
+  [`FV_dec (Dlet locs p e:dec) = FV (Mat e [(p,Lit ARB)])`;
+   `FV_dec (Dletrec locs defs:dec) = FV (Letrec defs (Lit ARB))`;
+   `FV_dec (Dtype _24 _25:dec) = {}`;
+   `FV_dec (Dtabbrev _26 _27 _28 _29:dec) = {}`;
+   `FV_dec (Dexn _30 _31 _32:dec) = {}`];;

@@ -32,47 +32,47 @@ val sExp_size_def = fetch "-" "sExp_size_def";
 *)
 
 (* display_to_json *)
-let trace_to_json_def = cake_define
-  `(trace_to_json (backend_common_Cons tra num') =
-     Object [((implode "name"),String (implode "Cons"));
-       ((implode "num"),String (toString num'));
-       ((implode "trace"),trace_to_json tra)]) /\
-   (trace_to_json (Union tra1 tra2) =
-     Object [((implode "name"),String (implode "Union"));
-       ((implode "trace1"),trace_to_json tra1);
-       ((implode "trace2"),trace_to_json tra2)]) /\
-   (trace_to_json (SourceLoc sr scc er ec) =
-     (let arr = MAP Int (MAP (&) [sr; scc; er; ec]) in
-       Object [((implode "name"),String (implode "SourcePos"));
-         ((implode "pos"),Array arr)])) /\
-   (trace_to_json None = Null)`;;
+let trace_to_json_def = cake_define_list
+  [`trace_to_json (backend_common_Cons tra num':tra) =
+        Object [((implode "name"),String (implode "Cons"));
+          ((implode "num"),String (toString num'));
+          ((implode "trace"),trace_to_json tra)]`;
+   `trace_to_json (Union tra1 tra2:tra) =
+        Object [((implode "name"),String (implode "Union"));
+          ((implode "trace1"),trace_to_json tra1);
+          ((implode "trace2"),trace_to_json tra2)]`;
+   `trace_to_json (SourceLoc sr scc er ec:tra) =
+        (let arr = MAP Int (MAP (&) [sr; scc; er; ec]) in
+          Object [((implode "name"),String (implode "SourcePos"));
+            ((implode "pos"),Array arr)])`;
+   `trace_to_json None = Null`];;
 
 (* Converts a display expression to JSON *)
-let display_to_json_def = cake_define
-  `(display_to_json (Item tra name es) =
-     (let es' = MAP display_to_json es in
-     let props = [((implode "name"),String name); ((implode
-       "args"),Array es')] in
-     let props' = match tra with NONE -> props | SOME t -> ((implode
-       "trace"),trace_to_json t) :: props in
-       Object props')) /\
-   (display_to_json (String s:sExp) = String s) /\
-   (display_to_json (Tuple es) =
-     (let es' = MAP display_to_json es in
-       Object [((implode "isTuple"),Bool T); ((implode
-         "elements"),Array es')])) /\
-    (display_to_json (List es) = Array (MAP display_to_json es))`;;
+let display_to_json_def = cake_define_list
+  [`display_to_json (Item tra name es:sExp) =
+        (let es' = MAP display_to_json es in
+        let props = [((implode "name"),String name); ((implode
+          "args"),Array es')] in
+        let props' = match tra with NONE -> props | SOME t ->
+          ((implode "trace"),trace_to_json t) :: props in
+          Object props')`;
+   `display_to_json (String s:sExp) = String s`;
+   `display_to_json (Tuple es:sExp) =
+        (let es' = MAP display_to_json es in
+          Object [((implode "isTuple"),Bool T); ((implode
+            "elements"),Array es')])`;
+   `display_to_json (List es:sExp) = Array (MAP display_to_json es)`];;
 
-let display_to_str_tree_def = cake_define
-  `(display_to_str_tree (Item tra name es) =
-      Trees (Str name :: display_to_str_tree_list es)) /\
-   (display_to_str_tree (String s:sExp) = Str s) /\
-   (display_to_str_tree (Tuple es) =
-      (if NULL es then Str (implode "()") else Trees
-        (display_to_str_tree_list es))) /\
-   (display_to_str_tree (List es) =
-      (if NULL es then Str (implode "()") else Trees (MAP GrabLine
-        (display_to_str_tree_list es)))) /\
-   (display_to_str_tree_list [] = []) /\
-   (display_to_str_tree_list (x :: xs) =
-     display_to_str_tree x :: display_to_str_tree_list xs)`;;
+let display_to_str_tree_def = cake_define_list
+  [`display_to_str_tree (Item tra name es:sExp) =
+         Trees (Str name :: display_to_str_tree_list es)`;
+   `display_to_str_tree (String s:sExp) = Str s`;
+   `display_to_str_tree (Tuple es:sExp) =
+         (if NULL es then Str (implode "()") else Trees
+           (display_to_str_tree_list es))`;
+   `display_to_str_tree (List es:sExp) =
+         (if NULL es then Str (implode "()") else Trees (MAP
+           GrabLine (display_to_str_tree_list es)))`;
+   `display_to_str_tree_list [] = []`;
+   `display_to_str_tree_list (x :: xs) =
+        display_to_str_tree x :: display_to_str_tree_list xs`];;

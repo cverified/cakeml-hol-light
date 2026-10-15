@@ -30,27 +30,27 @@ needs "semantics/ast.ml";;
 (* HOL4 overload (expanded in the port):
      Asm = λa. Asm (Asmi a) *)
 
-let compile_jump_def = cake_define
-  `(compile_jump (INL n) = LabAsm (Jump (Lab n 0)) (n2w 0) [] 0) /\
-   (compile_jump (INR r) = (\a. (\a. (\a. Asm (Asmi a)) (Asmi a))
-     (Asmi a)) (JumpReg r) [] 0)`;;
+let compile_jump_def = cake_define_list
+  [`compile_jump (INL n) = LabAsm (Jump (Lab n 0)) (n2w 0) [] 0`;
+   `compile_jump (INR r) = (\a. (\a. (\a. Asm (Asmi a)) (Asmi a))
+  (Asmi a)) (JumpReg r) [] 0`];;
 
-let negate_def = cake_define
-  `(negate Less = NotLess) /\
-   (negate Equal = NotEqual) /\
-   (negate Lower = NotLower) /\
-   (negate Test = NotTest) /\
-   (negate NotLess = Less) /\
-   (negate NotEqual = Equal) /\
-   (negate NotLower = Lower) /\
-   (negate NotTest = Test)`;;
+let negate_def = cake_define_list
+  [`negate Less = NotLess`;
+   `negate Equal = NotEqual`;
+   `negate Lower = NotLower`;
+   `negate Test = NotTest`;
+   `negate NotLess = Less`;
+   `negate NotEqual = Equal`;
+   `negate NotLower = Lower`;
+   `negate NotTest = Test`];;
 
 let find_lab_def = cake_define
   `find_lab n labs =
      (match oEL n labs with NONE -> (0:num) | SOME k -> k)`;;
 
 (* HOL4 overload (expanded in the port):
-     None =  *)
+     ++ = misc$Append *)
 
 let flatten_def = cake_define
   `stack_to_lab_flatten t p n m conts breaks =

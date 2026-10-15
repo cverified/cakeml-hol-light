@@ -188,15 +188,15 @@ val v_conss = TypeBase.nchotomy_of ``: v``
   |> map (rhs o snd o strip_exists)
 *)
 
-let simple_basic_val_rel_def = cake_define
-  `(simple_basic_val_rel (Litv l:flatSem_v) v = (v = Litv l)) /\
-   (simple_basic_val_rel (Loc b i) v = (v = Loc b i)) /\
-   (simple_basic_val_rel (Conv stmp vs1) v = (?vs2. v = Conv stmp
-     vs2)) /\
-   (simple_basic_val_rel (Vectorv vs1) v = (?vs2. v = Vectorv vs2))
-     /\
-   (simple_basic_val_rel (Closure vs nm exp) v = F) /\
-   (simple_basic_val_rel (Recclosure vs exps nm) v = F)`;;
+let simple_basic_val_rel_def = cake_define_list
+  [`simple_basic_val_rel (Litv l:flatSem_v) v = (v = Litv l)`;
+   `simple_basic_val_rel (Loc b i:flatSem_v) v = (v = Loc b i)`;
+   `simple_basic_val_rel (Conv stmp vs1:flatSem_v) v = (?vs2. v =
+  Conv stmp vs2)`;
+   `simple_basic_val_rel (Vectorv vs1:flatSem_v) v = (?vs2. v =
+  Vectorv vs2)`;
+   `simple_basic_val_rel (Closure vs nm exp:flatSem_v) v = F`;
+   `simple_basic_val_rel (Recclosure vs exps nm:flatSem_v) v = F`];;
 
 let v_container_xs_def = cake_define_list
   [`v_container_xs (Litv _4:flatSem_v) = []`;
@@ -265,11 +265,11 @@ in
 end
 *)
 
-let store_v_vs_def = cake_define
-  `flatProps_store_v_vs (Varray vs) = vs /\
-   flatProps_store_v_vs (Refv v) = [v] /\
-   flatProps_store_v_vs (Thunk m v) = [v] /\
-   flatProps_store_v_vs (W8array xs) = []`;;
+let store_v_vs_def = cake_define_list
+  [`flatProps_store_v_vs (Varray vs:store_v) = vs`;
+   `flatProps_store_v_vs (Refv v:store_v) = [v]`;
+   `flatProps_store_v_vs (Thunk m v:store_v) = [v]`;
+   `flatProps_store_v_vs (W8array xs:store_v) = []`];;
 hol4_overload "store_v_vs" "flatProps_store_v_vs";;
 
 let result_vs_def = cake_define
@@ -296,10 +296,11 @@ let no_Mat_def = cake_define_list
    `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP (SND
   o SND) funs) /\ no_Mat e`];;
 
-let no_Mat_decs_def = cake_define
-  `no_Mat_decs [] = T /\
-   no_Mat_decs (e :: xs) = (no_Mat e /\ no_Mat_decs xs)`;;
+let no_Mat_decs_def = cake_define_list
+  [`no_Mat_decs [] = T`;
+   `no_Mat_decs (e :: xs) = (no_Mat e /\ no_Mat_decs xs)`];;
 
 let mk_flat_install_conf_def = cake_define
-  `mk_flat_install_conf cc co =
+  `flatProps_mk_flat_install_conf cc co =
      (mk_install_config cc co:'c install_config)`;;
+hol4_overload "mk_flat_install_conf" "flatProps_mk_flat_install_conf";;
