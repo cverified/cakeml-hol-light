@@ -1791,8 +1791,14 @@ let candidate_measures tm =
       (if pats = [] then [] else [pats]) @
       map (fun i -> [i]) (0--(n-1)) @
       [0--(n-1)] in
+    (* setify would sort them, and the order is the order in which
+       they are tried: the arguments that are matched on first *)
+    let rec nub l =
+      match l with
+        [] -> []
+      | h :: t -> h :: nub (filter (fun x -> x <> h) t) in
     map (fun idxs -> mk_measure (measure_of_positions f cls idxs))
-        (setify cands);;
+        (nub cands);;
 
 let size_thms tyname =
   if not (can (assoc tyname) (!the_size_thms))
