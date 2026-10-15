@@ -125,9 +125,11 @@ ALSO_NEEDED = set([
   ('ternaryComparisons', 'num_compare'),
   # HOL4 declares the field updates of locn with ML code
   ('location', 'locn_rowupdate'), ('location', 'locn_colupdate'),
-  # clos_to_bvl's init_code uses sptree$fromList, which the
-  # dependency analysis took for the fromList of llist
+  # clos_to_bvl's init_code uses sptree$fromList and
+  # bvi_inlineProof's cache_code_labels sptree$toList, which the
+  # dependency analysis took for the ones of llist
   ('sptree', 'fromList'),
+  ('sptree', 'toList'),
 ])
 
 # the name that the port gives a constant where the usual rules
@@ -136,6 +138,7 @@ ALSO_NEEDED = set([
 # its own
 RENAME = {
   ('sptree', 'fromList'): 'sptree_fromList',
+  ('sptree', 'toList'): 'sptree_toList',
 }
 
 # the constant that a name means in one theory of the port, where
@@ -143,6 +146,7 @@ RENAME = {
 # fromList of data_to_word and flat_pattern is sptree's, the one
 # of the semantics theories is llist's)
 LOCAL_NAMES = {
+  ('bvi_inlineProof', 'toList'): 'sptree_toList',
   ('data_to_word', 'fromList'): 'sptree_fromList',
   ('flat_pattern', 'fromList'): 'sptree_fromList',
   ('clos_to_bvl', 'fromList'): 'sptree_fromList',
