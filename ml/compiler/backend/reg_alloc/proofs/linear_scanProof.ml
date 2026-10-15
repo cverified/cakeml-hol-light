@@ -92,7 +92,7 @@ let good_linear_scan_state_def = cake_define
          (linear_scan_hidden_state_int_end sth),r)
          (linear_scan_state_active st)))) l /\
        EVERY (\r. ((MEM (EL r (linear_scan_hidden_state_int_end
-         sth),r) (linear_scan_state_active st)) ==> (pos <= 1 + EL r
+         sth),r) (linear_scan_state_active st)) ==> (pos <= (&1) + EL r
          (linear_scan_hidden_state_int_end sth)))) l /\
        (!r1 r2. MEM r1 l /\ MEM r2 l /\
            interval_intersect (EL r1

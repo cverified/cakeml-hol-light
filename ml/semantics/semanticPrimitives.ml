@@ -864,10 +864,10 @@ let num_cmp_def = cake_define_list
 hol4_overload "num_cmp" "semanticPrimitives_num_cmp";;
 
 let int_cmp_def = cake_define_list
-  [`semanticPrimitives_int_cmp ast_Lt i j = (i < (j:int))`;
-   `semanticPrimitives_int_cmp ast_Leq i j = (i <= j)`;
-   `semanticPrimitives_int_cmp ast_Gt i j = (i > j)`;
-   `semanticPrimitives_int_cmp ast_Geq i j = (i >= j)`];;
+  [`semanticPrimitives_int_cmp ast_Lt i (j:int) = (i < (j:int))`;
+   `semanticPrimitives_int_cmp ast_Leq i (j:int) = (i <= j)`;
+   `semanticPrimitives_int_cmp ast_Gt i (j:int) = (i > j)`;
+   `semanticPrimitives_int_cmp ast_Geq i (j:int) = (i >= j)`];;
 hol4_overload "int_cmp" "semanticPrimitives_int_cmp";;
 
 let str_cmp_def = cake_define

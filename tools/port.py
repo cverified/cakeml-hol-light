@@ -513,7 +513,8 @@ class Porter:
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
-    self.intargs = set(overrides.INT_ARGS.get(key, []))
+    self.intargs = (set(overrides.INT_ARGS.get(key, []))
+                    | self.int_annotated(body))
     self.intresult = key in overrides.INT_RESULT
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
@@ -795,6 +796,37 @@ class Porter:
       return set()
     return self.int_vars_node(e)
 
+  def int_annotated(self, body):
+    """the variables that the source annotates with int somewhere
+       in the definition: the clauses are typechecked on their own,
+       so the ones that do not say it have to say it too
+       (semanticPrimitives' int_cmp says it in one clause only)"""
+    try:
+      toks = hterm.tokenize(hol4.strip_comments(body))
+      hterm.Parser(toks, self.ctx).parse()
+    except Exception:
+      return set()
+    out = set()
+    for i, tk in enumerate(toks):
+      # an id with int on it, where the id is not the argument of
+      # an application (there the annotation is of the whole)
+      if not (tk.kind == 'sym' and tk.text == ':' and i >= 2
+              and toks[i-1].kind == 'id'
+              and i + 1 < len(toks) and toks[i+1].kind == 'id'
+              and toks[i+1].text == 'int'):
+        continue
+      before = toks[i-2]
+      if before.kind in ('id', 'num') or before.text in (')', ']'):
+        continue
+      # the type has to be int and nothing more: in (P:int -> bool)
+      # the variable is a predicate, not an integer
+      after = toks[i+2] if i + 2 < len(toks) else None
+      if after is None or after.kind != 'sym' or \
+         after.text not in (')', ',', ']', ';'):
+        continue
+      out.add(toks[i-1].text)
+    return out
+
   def int_vars_node(self, e):
     """the same of a term that is already parsed (the clauses of a
        definition in list form are typechecked on their own, so
@@ -825,6 +857,7 @@ class Porter:
         # sum or a product of it is made of
         if h.kind == 'id' and h.name in hterm.INT_FUNS:
           for a in args: arith_vars(a, out)
+
       for k, v in list(n.__dict__.items()):
         if k == 'tok': continue
         if isinstance(v, hterm.Node): go(v)

@@ -1252,6 +1252,16 @@ class Printer:
       if ((op in NUMCTX or op in ('=', '<>')) and
           (self.intvar(e.l) or self.intvar(e.r))):
         self.ctx.intnums = True
+      # HOL Light's EXP is of natural numbers, so a power of an
+      # integer is &(b EXP n) (dataSem's small_num has 2 ** 61 of
+      # an integer)
+      if op in ('pow', 'EXP', '**') and self.ctx.intnums:
+        self.ctx.intnums = False
+        s = ('&(' + self.pr(e.l, hprec) + ' ' + hop + ' ' +
+             self.pr(e.r, hprec + 1) + ')')
+        self.numctx = old
+        self.ctx.intnums = oldint
+        return self.paren(s, PRE_APP, prec)
       lp = hprec + 1 if assoc != 'l' else hprec
       rp = hprec if assoc == 'r' else hprec + 1
       l = self.pr(e.l, lp)

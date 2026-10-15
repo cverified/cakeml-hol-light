@@ -140,8 +140,8 @@ let check_res_def = cake_define
 
 let small_num_def = cake_define
   `small_num arch64 (i:int) =
-     (if arch64 then --(2 EXP 61) <= i /\ i < (2 EXP 61) else --(2
-       EXP 29) <= i /\ i < (2 EXP 29))`;;
+     (if arch64 then --(&(2 EXP 61)) <= i /\ i < (&(2 EXP 61))
+       else --(&(2 EXP 29)) <= i /\ i < (&(2 EXP 29)))`;;
 
 let bignum_digits_def = cake_define
   `bignum_digits arch64 n =

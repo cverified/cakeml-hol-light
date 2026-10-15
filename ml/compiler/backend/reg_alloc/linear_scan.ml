@@ -97,7 +97,7 @@ let fix_domination_def = cake_define
 
 let numset_list_add_if_def = cake_define_list
   [`numset_list_add_if [] (v:int) s P = s`;
-   `numset_list_add_if (x :: xs) v s P =
+   `numset_list_add_if (x :: xs) (v:int) s P =
       (match sptree_lookup x s with (SOME v') ->
           (if P v v' then numset_list_add_if xs v (sptree_insert x v
             s) P else numset_list_add_if xs v s P) | NONE ->
