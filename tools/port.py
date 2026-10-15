@@ -719,6 +719,8 @@ class Porter:
 
     def count(e):
       if not isinstance(e, hterm.Node): return
+      # a term that the source itself annotates needs nothing
+      if e.kind == 'typed': return
       if e.kind in ('app', 'id'):
         s = pr.pr(e, 0)
         if s in self.annotated: seen[s] = seen.get(s, 0) + 1
@@ -735,6 +737,7 @@ class Porter:
 
     def go(e):
       if not isinstance(e, hterm.Node): return e
+      if e.kind == 'typed': return e
       if e.kind in ('app', 'id'):
         s = pr.pr(e, 0)
         ty = self.annotated.get(s) if seen.get(s) == 1 else None

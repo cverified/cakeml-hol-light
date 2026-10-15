@@ -330,8 +330,8 @@ let compile_exps_def = cake_define_list
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
            (c1 ++ c2,aux1 ++ aux2,n2))`;
-   `bvl_to_bvi_compile_exps n [(Var v:bvl_exp)] = ([((Var
-  v:bvl_exp)):bvi_exp],misc_Nil,n)`;
+   `bvl_to_bvi_compile_exps n [(Var v:bvl_exp)] = ([(Var
+  v):bvi_exp],misc_Nil,n)`;
    `bvl_to_bvi_compile_exps n [(If x1 x2 x3:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
@@ -382,8 +382,8 @@ let compile_exps_def = cake_define_list
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let compile_exps_sing_def = cake_define_list
-  [`compile_exps_sing n (Var v:bvl_exp) = ((((Var
-  v:bvl_exp)):bvi_exp),misc_Nil,n)`;
+  [`compile_exps_sing n (Var v:bvl_exp) = (((Var
+  v):bvi_exp),misc_Nil,n)`;
    `compile_exps_sing n (If x1 x2 x3:bvl_exp) =
          (let (c1,aux1,n1) = compile_exps_sing n x1 in
          let (c2,aux2,n2) = compile_exps_sing n1 x2 in
