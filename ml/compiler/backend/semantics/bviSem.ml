@@ -253,7 +253,7 @@ let evaluate_def = cake_define_list
    `bviSem_evaluate ([(Raise x1:flatLang_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
-   `bviSem_evaluate ([(Return xs:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([Return xs],env,s) =
          (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Ret vs)),s) | res -> res)`;
    `bviSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
@@ -305,8 +305,7 @@ let evaluate_def = cake_define_list
                                 (Rraise _26),s) -> (Rerr (Rabort
                                 Rtype_error),s) | res -> res)) | res
                                 -> res)`;
-   `bviSem_evaluate ([(LetCall rets ticks dest xs
-  y:flatLang_exp)],env,s1) =
+   `bviSem_evaluate ([LetCall rets ticks dest xs y],env,s1) =
          (match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with
            (Rval vs,s) ->
              (match find_code (SOME dest) vs (?_code s) with NONE ->

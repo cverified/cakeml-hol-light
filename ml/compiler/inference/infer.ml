@@ -148,16 +148,16 @@ let inf_env_FIELDS = define_record "inf_env"
    substitution
  * that describes the generalisation *)
 let generalise_def = cake_define_list
-  [`generalise m n s (Infer_Tapp ts tc:infer_t) =
+  [`generalise m n s (Infer_Tapp ts tc) =
       (let (num_gen,s',ts') = generalise_list m n s ts in
         (num_gen,s',Infer_Tapp ts' tc))`;
-   `generalise m n s (Infer_Tuvar uv:infer_t) =
+   `generalise m n s (Infer_Tuvar uv) =
       (match FLOOKUP s uv with SOME n -> (0,s,Infer_Tvar_db n) |
         NONE ->
             (if m <= uv then
               (1,s |+ (uv,n),Infer_Tvar_db n) else
               (0,s,Infer_Tuvar uv)))`;
-   `generalise m n s (Infer_Tvar_db k:infer_t) =
+   `generalise m n s (Infer_Tvar_db k) =
         (0,s,Infer_Tvar_db k)`;
    `generalise_list m n s [] =
       (0,s,[])`;
@@ -168,46 +168,46 @@ let generalise_def = cake_define_list
         (num_gen + num_gen',s'',t' :: ts'))`];;
 
 let infer_type_subst_def = cake_define_list
-  [`infer_type_subst s (Tvar tv:t) =
+  [`infer_type_subst s (Tvar tv) =
       (match ALOOKUP s tv with SOME t -> t | NONE ->
         Infer_Tvar_db 0)`;
-   `infer_type_subst s (Tvar_db n:t) =
+   `infer_type_subst s (Tvar_db n) =
       Infer_Tvar_db n`;
-   `infer_type_subst s (Tapp ts tn:t) =
+   `infer_type_subst s (Tapp ts tn) =
       Infer_Tapp (infer_type_subst_list s ts) tn`;
    `infer_type_subst_list s [] = []`;
    `infer_type_subst_list s (x :: xs) =
       infer_type_subst s x :: infer_type_subst_list s xs`];;
 
 let infer_deBruijn_subst_def = cake_define_list
-  [`infer_deBruijn_subst s (Infer_Tvar_db n:infer_t) =
+  [`infer_deBruijn_subst s (Infer_Tvar_db n) =
       (if n < LENGTH s then
         EL n s else
         Infer_Tvar_db (n - LENGTH s))`;
-   `infer_deBruijn_subst s (Infer_Tapp ts tn:infer_t) =
+   `infer_deBruijn_subst s (Infer_Tapp ts tn) =
       Infer_Tapp (infer_deBruijn_subst_list s ts) tn`;
-   `infer_deBruijn_subst s (Infer_Tuvar n:infer_t) =
+   `infer_deBruijn_subst s (Infer_Tuvar n) =
       Infer_Tuvar n`;
    `infer_deBruijn_subst_list s [] = []`;
    `infer_deBruijn_subst_list s (t :: ts) =
       infer_deBruijn_subst s t :: infer_deBruijn_subst_list s ts`];;
 
 let type_name_check_subst_def = cake_define_list
-  [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv:ast_t) =
+  [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
         monad_ignore_bind
           (guard (MEM tv fvs) l (err_string_f tv)) (
           return (Tvar tv))`;
-   `type_name_check_subst l f tenvT fvs (Attup ts:ast_t) =
+   `type_name_check_subst l f tenvT fvs (Attup ts) =
         monad_bind (type_name_check_subst_list l f tenvT fvs ts) (\
           ts'.
           return (Ttup ts'))`;
-   `type_name_check_subst l f tenvT fvs (Atfun t1 t2:ast_t) =
+   `type_name_check_subst l f tenvT fvs (Atfun t1 t2) =
         monad_bind (type_name_check_subst l f tenvT fvs t1) (\
           t1'. monad_bind (type_name_check_subst l f tenvT fvs t2)
             (\
           t2'.
           return (Tfn t1' t2')))`;
-   `type_name_check_subst l f tenvT fvs (Atapp ts tc:ast_t) =
+   `type_name_check_subst l f tenvT fvs (Atapp ts tc) =
         monad_bind (type_name_check_subst_list l f tenvT fvs ts) (\
           ts'. monad_bind (lookup_st_ex l (implode
             "type constructor") tc tenvT) (\
@@ -238,15 +238,15 @@ val type_name_check_subst_alt =
 *)
 
 let type_name_check_sub_def = cake_define_list
-  [`type_name_check_sub l tenvT fvs (Atvar tv:ast_t) =
+  [`type_name_check_sub l tenvT fvs (Atvar tv) =
             (\s. if MEM tv fvs then (M_success (Tvar tv),s) else
               (M_failure (loc_err_info_loc l,INR tv),s))`;
-   `type_name_check_sub l tenvT fvs (Attup ts:ast_t) =
+   `type_name_check_sub l tenvT fvs (Attup ts) =
             (\s. match type_name_check_sub_list l tenvT fvs ts s
               with
                    (M_success ts',s) -> (M_success (Ttup ts'),s)
                      | (M_failure x,s) -> (M_failure x,s))`;
-   `type_name_check_sub l tenvT fvs (Atfun t1 t2:ast_t) =
+   `type_name_check_sub l tenvT fvs (Atfun t1 t2) =
             (\s. match type_name_check_sub l tenvT fvs t1 s with
                    (M_success t1',s) ->
                      (match type_name_check_sub l tenvT fvs t2 s
@@ -254,7 +254,7 @@ let type_name_check_sub_def = cake_define_list
                         (M_success t2',s) -> (M_success (Tfn t1'
                           t2'),s) | (M_failure x,s) -> (M_failure
                           x,s)) | (M_failure x,s) -> (M_failure x,s))`;
-   `type_name_check_sub l tenvT fvs (Atapp ts tc:ast_t) =
+   `type_name_check_sub l tenvT fvs (Atapp ts tc) =
             (\s. match type_name_check_sub_list l tenvT fvs ts s
               with
                    (M_success ts',s) ->
@@ -351,25 +351,25 @@ let check_type_definition_def = cake_define
        check_ctors l tenvT tds)`;;
 
 let infer_p_def = cake_define_list
-  [`infer_p l ienv (Pvar n:ast_pat) =
+  [`infer_p l ienv (Pvar n) =
         monad_bind fresh_uvar (\t.
            return (t,[(n,t)]))`;
    `infer_p l ienv Pany =
         monad_bind fresh_uvar (\t.
            return (t,[]))`;
-   `infer_p l ienv (Plit (IntLit i):ast_pat) =
+   `infer_p l ienv (Plit (IntLit i)) =
         return (Infer_Tapp [] Tint_num,[])`;
-   `infer_p l ienv (Plit (Char s):ast_pat) =
+   `infer_p l ienv (Plit (Char s)) =
         return (Infer_Tapp [] Tchar_num,[])`;
-   `infer_p l ienv (Plit (StrLit s):ast_pat) =
+   `infer_p l ienv (Plit (StrLit s)) =
         return (Infer_Tapp [] Tstring_num,[])`;
-   `infer_p l ienv (Plit (Word8 w):ast_pat) =
+   `infer_p l ienv (Plit (Word8 w)) =
         return (Infer_Tapp [] Tword8_num,[])`;
-   `infer_p l ienv (Plit (Word64 w):ast_pat) =
+   `infer_p l ienv (Plit (Word64 w)) =
         return (Infer_Tapp [] Tword64_num,[])`;
-   `infer_p l ienv (Plit (Float64 f):ast_pat) =
+   `infer_p l ienv (Plit (Float64 f)) =
         failwith l (implode "Floats cannot be used in patterns")`;
-   `infer_p l ienv (Pcon cn_opt ps:ast_pat) =
+   `infer_p l ienv (Pcon cn_opt ps) =
         (match cn_opt with NONE ->
               monad_bind (infer_ps l ienv ps) (\(ts,tenv).
                  return (Infer_Tapp ts Ttup_num,tenv)) | SOME cn ->
@@ -390,13 +390,13 @@ let infer_p_def = cake_define_list
                                 (\
                  one.
                  return (Infer_Tapp ts' tn,tenv)))))))`;
-   `infer_p l ienv (Pref p:ast_pat) =
+   `infer_p l ienv (Pref p) =
         monad_bind (infer_p l ienv p) (\(t,tenv).
           return (Infer_Tapp [t] Tref_num,tenv))`;
-   `infer_p l ienv (Pas p v:ast_pat) =
+   `infer_p l ienv (Pas p v) =
         monad_bind (infer_p l ienv p) (\(t,tenv).
           return (t,tenv ++ [(v,t)]))`;
-   `infer_p l ienv (Ptannot p t:ast_pat) =
+   `infer_p l ienv (Ptannot p t) =
        monad_bind (infer_p l ienv p) (\(t',tenv). monad_bind
          (type_name_check_subst l
                   (\tv. concat [(implode "Type variable "); tv;
@@ -650,38 +650,38 @@ let constrain_op_def = cake_define
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
 let infer_e_def = cake_define_list
-  [`infer_e l ienv (Raise e:ast_exp) =
+  [`infer_e l ienv (Raise e) =
         monad_bind (infer_e l ienv e) (\t2. monad_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
            one. monad_bind fresh_uvar (\
            t1.
            return t1)))`;
-   `infer_e l ienv (Handle e pes:ast_exp) =
+   `infer_e l ienv (Handle e pes) =
         (if pes = [] then
           failwith l ((implode "No patterns in handle")) else
           monad_bind (infer_e l ienv e) (\t1. monad_bind (infer_pes
             l ienv pes (Infer_Tapp [] Texn_num) t1) (\
              one.
              return t1)))`;
-   `infer_e l ienv (Lit (IntLit i):ast_exp) =
+   `infer_e l ienv (Lit (IntLit i)) =
         return (Infer_Tapp [] Tint_num)`;
-   `infer_e l ienv (Lit (Char c):ast_exp) =
+   `infer_e l ienv (Lit (Char c)) =
         return (Infer_Tapp [] Tchar_num)`;
-   `infer_e l ienv (Lit (StrLit s):ast_exp) =
+   `infer_e l ienv (Lit (StrLit s)) =
         return (Infer_Tapp [] Tstring_num)`;
-   `infer_e l ienv (Lit (Word8 w):ast_exp) =
+   `infer_e l ienv (Lit (Word8 w)) =
         return (Infer_Tapp [] Tword8_num)`;
-   `infer_e l ienv (Lit (Word64 _38):ast_exp) =
+   `infer_e l ienv (Lit (Word64 _38)) =
         return (Infer_Tapp [] Tword64_num)`;
-   `infer_e l ienv (Lit (Float64 _39):ast_exp) =
+   `infer_e l ienv (Lit (Float64 _39)) =
         return (Infer_Tapp [] Tdouble_num)`;
-   `infer_e l ienv (Var id':ast_exp) =
+   `infer_e l ienv (Var id') =
         monad_bind (lookup_st_ex l (implode "variable") id'
           (inf_env_inf_v ienv)) (\(tvs,t). monad_bind (n_fresh_uvar tvs)
           (\
            uvs.
            return (infer_deBruijn_subst uvs t)))`;
-   `infer_e l ienv (Con cn_opt es:ast_exp) =
+   `infer_e l ienv (Con cn_opt es) =
         (match cn_opt with
             NONE ->
              monad_bind (infer_es l ienv es) (\ts.
@@ -702,18 +702,18 @@ let infer_e_def = cake_define_list
                                 (\
                 one.
                 return (Infer_Tapp ts' tn)))))))`;
-   `infer_e l ienv (Fun x e:ast_exp) =
+   `infer_e l ienv (Fun x e) =
         monad_bind fresh_uvar (\t1. monad_bind (infer_e l
           (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v ienv)))
           ienv) e) (\
            t2.
            return (Infer_Tapp [t1; t2] Tfn_num)))`;
-   `infer_e l ienv (App op es:ast_exp) =
+   `infer_e l ienv (App op es) =
         monad_bind (infer_es l ienv es) (\ts. monad_bind
           (constrain_op l op ts) (\
            t.
            return t))`;
-   `infer_e l ienv (Log log e1 e2:ast_exp) =
+   `infer_e l ienv (Log log e1 e2) =
         monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l
           ienv e2) (\
            t2. monad_bind (add_constraint l t1 (Infer_Tapp []
@@ -722,7 +722,7 @@ let infer_e_def = cake_define_list
              Tbool_num)) (\
            one.
            return (Infer_Tapp [] Tbool_num)))))`;
-   `infer_e l ienv (If e1 e2 e3:ast_exp) =
+   `infer_e l ienv (If e1 e2 e3) =
         monad_bind (infer_e l ienv e1) (\t1. monad_bind
           (add_constraint l t1 (Infer_Tapp [] Tbool_num)) (\
            one. monad_bind (infer_e l ienv e2) (\
@@ -730,7 +730,7 @@ let infer_e_def = cake_define_list
            t3. monad_bind (add_constraint l t2 t3) (\
            one.
            return t2)))))`;
-   `infer_e l ienv (Mat e pes:ast_exp) =
+   `infer_e l ienv (Mat e pes) =
         (if pes = [] then
           failwith l ((implode "No patterns in case")) else
           monad_bind (infer_e l ienv e) (\t1. monad_bind fresh_uvar
@@ -738,13 +738,13 @@ let infer_e_def = cake_define_list
              t2. monad_bind (infer_pes l ienv pes t1 t2) (\
              one.
              return t2))))`;
-   `infer_e l ienv (Let x e1 e2:ast_exp) =
+   `infer_e l ienv (Let x e1 e2) =
           monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l
             (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v
             ienv))) ienv) e2) (\
              t2.
              return t2))`;
-   `infer_e l ienv (Letrec funs e:ast_exp) =
+   `infer_e l ienv (Letrec funs e) =
         monad_ignore_bind
           (check_dups l (\n. concat [(implode
             "Duplicate function name "); n;
@@ -763,7 +763,7 @@ let infer_e_def = cake_define_list
              ienv) e) (\
            t.
            return t))))))`;
-   `infer_e l ienv (Tannot e t:ast_exp) =
+   `infer_e l ienv (Tannot e t) =
         monad_bind (infer_e l ienv e) (\t'. monad_bind
           (type_name_check_subst l
                   (\tv. concat [(implode "Type variable "); tv;
@@ -777,7 +777,7 @@ let infer_e_def = cake_define_list
              t'')) (\
            one.
            return t')))`;
-   `infer_e l ienv (Lannot e new_l:ast_exp) =
+   `infer_e l ienv (Lannot e new_l) =
         infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e`;
    `infer_es l ienv [] =
         return []`;
@@ -823,7 +823,7 @@ let lift_ienv_def = cake_define
        (inf_env_inf_c ienv)) (nsLift mn (inf_env_inf_t ienv))`;;
 
 let infer_d_def = cake_define_list
-  [`infer_d ienv (Dlet locs p e:dec) =
+  [`infer_d ienv (Dlet locs p e) =
       monad_bind init_state (\one. monad_bind get_next_uvar (\
          n. monad_bind (infer_e (mk_loc_err_info (SOME locs)
            (inf_env_inf_t ienv)) ienv e) (\
@@ -848,7 +848,7 @@ let infer_d_def = cake_define_list
          one.
          return (mk_inf_env (alist_to_ns (ZIP (MAP FST env') (MAP
            (\t. (num_tvs,t)) ts'))) nsEmpty nsEmpty))))))))))`;
-   `infer_d ienv (Dletrec locs funs:dec) =
+   `infer_d ienv (Dletrec locs funs) =
       monad_ignore_bind
         (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
           ienv))
@@ -873,7 +873,7 @@ let infer_d_def = cake_define_list
          (num_gen,s,ts').
          return (mk_inf_env (alist_to_ns (MAP2 (\(f,x,e) t.
            (f,(num_gen,t))) funs ts')) nsEmpty nsEmpty))))))))))`;
-   `infer_d ienv (Dtype locs tdefs:dec) =
+   `infer_d ienv (Dtype locs tdefs) =
       monad_bind (n_fresh_id (LENGTH tdefs)) (\
          tids. monad_bind (return (alist_to_ns (MAP2
            (\(tvs,tn,ctors) i. (tn,(tvs,Tapp (MAP Tvar tvs) i))) tdefs
@@ -885,7 +885,7 @@ let infer_d_def = cake_define_list
            (inf_env_inf_t ienv)) ienvT2 tdefs) (
          return (mk_inf_env nsEmpty (build_ctor_tenv ienvT2 tdefs
            tids) ienvT1)))))`;
-   `infer_d ienv (Dtabbrev locs tvs tn t:dec) =
+   `infer_d ienv (Dtabbrev locs tvs tn t) =
       monad_ignore_bind
         (check_dups (mk_loc_err_info (SOME locs) (inf_env_inf_t
           ienv))
@@ -902,7 +902,7 @@ let infer_d_def = cake_define_list
          t'.
          return (mk_inf_env nsEmpty nsEmpty (nsSing tn
            (tvs,t')))))`;
-   `infer_d ienv (Dexn locs cn ts:dec) =
+   `infer_d ienv (Dexn locs cn ts) =
       monad_bind (type_name_check_subst_list (mk_loc_err_info (SOME
         locs) (inf_env_inf_t ienv))
                 (\tv. concat [(implode "Type variable "); tv;
@@ -915,13 +915,13 @@ let infer_d_def = cake_define_list
         ts'.
         return (mk_inf_env nsEmpty (nsSing cn ([],ts',Texn_num))
           nsEmpty))`;
-   `infer_d ienv (Denv n:dec) =
+   `infer_d ienv (Denv n) =
       failwith (mk_loc_err_info NONE (inf_env_inf_t ienv))
         ((implode "Env declaration (Denv) is not supported."))`;
-   `infer_d ienv (Dmod mn ds:dec) =
+   `infer_d ienv (Dmod mn ds) =
       monad_bind (infer_ds ienv ds) (\ienv'.
          return (lift_ienv mn ienv'))`;
-   `infer_d ienv (Dlocal lds ds:dec) =
+   `infer_d ienv (Dlocal lds ds) =
       monad_bind (infer_ds ienv lds) (\ienv'.
         infer_ds (extend_dec_ienv ienv' ienv) ds)`;
    `infer_ds ienv [] =
@@ -963,18 +963,18 @@ hol4_overload "init_config" "infer_init_config";;
  * about it *)
 
 let infer_deBruijn_inc_def = cake_define_list
-  [`infer_deBruijn_inc n (Infer_Tvar_db m:infer_t) =
+  [`infer_deBruijn_inc n (Infer_Tvar_db m) =
         Infer_Tvar_db (m + n)`;
-   `infer_deBruijn_inc n (Infer_Tapp ts tn:infer_t) =
+   `infer_deBruijn_inc n (Infer_Tapp ts tn) =
         Infer_Tapp (MAP (infer_deBruijn_inc n) ts) tn`;
-   `infer_deBruijn_inc n (Infer_Tuvar m:infer_t) =
+   `infer_deBruijn_inc n (Infer_Tuvar m) =
         Infer_Tuvar m`];;
 
 let infer_subst_def = cake_define_list
-  [`infer_subst s (Infer_Tvar_db n:infer_t) = Infer_Tvar_db n`;
-   `infer_subst s (Infer_Tapp ts tc:infer_t) = Infer_Tapp (MAP
-  (infer_subst s) ts) tc`;
-   `infer_subst s (Infer_Tuvar n:infer_t) =
+  [`infer_subst s (Infer_Tvar_db n) = Infer_Tvar_db n`;
+   `infer_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (infer_subst
+  s) ts) tc`;
+   `infer_subst s (Infer_Tuvar n) =
         (match FLOOKUP s n with
             NONE -> Infer_Tuvar n | SOME m -> Infer_Tvar_db m)`];;
 
@@ -985,11 +985,10 @@ let pure_add_constraints_def = cake_define_list
            pure_add_constraints s2 rest s')`];;
 
 let check_t_def = cake_define_list
-  [`check_t n uvars (Infer_Tuvar v:infer_t) = (v IN uvars)`;
-   `check_t n uvars (Infer_Tvar_db n':infer_t) =
+  [`check_t n uvars (Infer_Tuvar v) = (v IN uvars)`;
+   `check_t n uvars (Infer_Tvar_db n') =
         (n' < n)`;
-   `check_t n uvars (Infer_Tapp ts tc:infer_t) = EVERY (check_t n
-  uvars) ts`];;
+   `check_t n uvars (Infer_Tapp ts tc) = EVERY (check_t n uvars) ts`];;
 
 let ienv_val_ok_def = cake_define
   `ienv_val_ok uvars env =
@@ -1021,19 +1020,19 @@ let alist_nub_def = cake_define_list
   FST t)) xs)`];;
 
 let ns_nub_def = cake_define_list
-  [`ns_nub (Bind xs ys:('m,'n,'v)namespace) = Bind (alist_nub xs)
-  (alist_nub (inner_ns_nubs ys))`;
+  [`ns_nub (Bind xs ys) = Bind (alist_nub xs) (alist_nub
+  (inner_ns_nubs ys))`;
    `inner_ns_nubs [] = []`;
    `inner_ns_nubs ((x,y) :: tl) = (x,ns_nub y) :: inner_ns_nubs tl`];;
 
 let ns_to_alist_def = cake_define_list
-  [`ns_to_alist (Bind [] []:('m,'n,'v)namespace) = []`;
-   `ns_to_alist (Bind [] ((n,x) :: ms):('m,'n,'v)namespace) =
+  [`ns_to_alist (Bind [] []) = []`;
+   `ns_to_alist (Bind [] ((n,x) :: ms)) =
         MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n
           (implode ".")) x,y)) (ns_to_alist x) ++
         ns_to_alist (Bind [] ms)`;
-   `ns_to_alist (Bind ((s,x) :: xs) m:('m,'n,'v)namespace) = (s,x) ::
-  ns_to_alist (Bind xs m)`];;
+   `ns_to_alist (Bind ((s,x) :: xs) m) = (s,x) :: ns_to_alist (Bind
+  xs m)`];;
 
 let inf_env_to_types_string_def = cake_define
   `inf_env_to_types_string s =

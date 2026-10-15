@@ -44,9 +44,9 @@ let empty_state_def = cake_define
 (* The heap is accessed using the following lookup function. *)
 
 let el_length_def = cake_define_list
-  [`el_length (Unused l:('a,'b)heap_element) = l + 1`;
-   `el_length (ForwardPointer n d l:('a,'b)heap_element) = l + 1`;
-   `el_length (DataElement xs l data:('a,'b)heap_element) = l + 1`];;
+  [`el_length (Unused l) = l + 1`;
+   `el_length (ForwardPointer n d l) = l + 1`;
+   `el_length (DataElement xs l data) = l + 1`];;
 
 let heap_length_def = cake_define
   `heap_length heap = SUM (MAP el_length heap)`;;
@@ -177,14 +177,12 @@ let heap_addresses_def = cake_define_list
 
 let ADDR_MAP_def = cake_define_list
   [`ADDR_MAP f [] = []`;
-   `ADDR_MAP f ((Data x:'a heap_address) :: xs) = Data x :: ADDR_MAP
-  f xs`;
-   `ADDR_MAP f ((Pointer a d:'a heap_address) :: xs) = Pointer (f a)
-  d :: ADDR_MAP f xs`];;
+   `ADDR_MAP f (Data x :: xs) = Data x :: ADDR_MAP f xs`;
+   `ADDR_MAP f (Pointer a d :: xs) = Pointer (f a) d :: ADDR_MAP f xs`];;
 
 let ADDR_APPLY_def = cake_define_list
-  [`ADDR_APPLY f (Pointer x d:'a heap_address) = Pointer (f x) d`;
-   `ADDR_APPLY f (Data y:'a heap_address) = Data y`];;
+  [`ADDR_APPLY f (Pointer x d) = Pointer (f x) d`;
+   `ADDR_APPLY f (Data y) = Data y`];;
 
 (* HOL4 ML code, not ported:
 val _ = augment_srw_ss [rewrites [LIST_REL_def]];

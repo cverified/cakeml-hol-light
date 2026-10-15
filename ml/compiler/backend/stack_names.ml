@@ -18,8 +18,8 @@ needs "semantics/ast.ml";;
      find_name = tlookup *)
 
 let ri_find_name_def = cake_define_list
-  [`ri_find_name f (Reg r:'a asm_reg_imm) = Reg ((tlookup) f r)`;
-   `ri_find_name f (Imm w:'a asm_reg_imm) = Imm w`];;
+  [`ri_find_name f (Reg r) = Reg ((tlookup) f r)`;
+   `ri_find_name f (Imm w) = Imm w`];;
 
 let inst_find_name_def = cake_define
   `inst_find_name f i =

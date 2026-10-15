@@ -116,8 +116,8 @@ let parse_aux_def = cake_define_list
    `parse_aux (OPEN :: rest) xs s =
       (match s with [] -> parse_aux rest xs s | (y :: ys) ->
         parse_aux rest ((Expr xs) :: y) ys)`;
-   `parse_aux ((SYMBOL sy:mlsexp_token) :: rest) xs s = parse_aux
-  rest ((Atom sy) :: xs) s`];;
+   `parse_aux (SYMBOL sy :: rest) xs s = parse_aux rest ((Atom sy) ::
+  xs) s`];;
 
 (* Parses (at most) one S-expression, and returns the rest of the input.
    Fails exactly when lexing fails. *)
@@ -191,30 +191,30 @@ let get_next_size_def = cake_define
       | _7 -> 0`;;
 
 let annotate_def = cake_define_list
-  [`mlsexp_annotate (String s:pretty) = Size (strlen s) (String s)`;
-   `mlsexp_annotate (Parenthesis b:pretty) =
+  [`mlsexp_annotate (String s) = Size (strlen s) (String s)`;
+   `mlsexp_annotate (Parenthesis b) =
       (let b = mlsexp_annotate b in
          Size (get_size b + 2) (Parenthesis b))`;
    `mlsexp_annotate (Append b1 n b2:pretty) =
       (let b1 = mlsexp_annotate b1 in
        let b2 = mlsexp_annotate b2 in
           (Append b1 n b2))`;
-   `mlsexp_annotate (Size n b:pretty) = Size n (mlsexp_annotate b)`];;
+   `mlsexp_annotate (Size n b) = Size n (mlsexp_annotate b)`];;
 hol4_overload "annotate" "mlsexp_annotate";;
 
 let remove_all_def = cake_define_list
-  [`remove_all (Parenthesis v:pretty) = Parenthesis (remove_all v)`;
-   `remove_all (String v1:pretty) = String v1`;
+  [`remove_all (Parenthesis v) = Parenthesis (remove_all v)`;
+   `remove_all (String v1) = String v1`;
    `remove_all (Append v2 _8 v3:pretty) = Append (remove_all v2) F
   (remove_all v3)`;
-   `remove_all (Size v4 v5:pretty) = remove_all v5`];;
+   `remove_all (Size v4 v5) = remove_all v5`];;
 
 let smart_remove_def = cake_define_list
-  [`smart_remove i k (Size n b:pretty) =
+  [`smart_remove i k (Size n b) =
       (if k + n < 70 then remove_all b else smart_remove i k b)`;
-   `smart_remove i k (Parenthesis v:pretty) = Parenthesis
-  (smart_remove (i + 1) (k + 1) v)`;
-   `smart_remove i k (String v1:pretty) = String v1`;
+   `smart_remove i k (Parenthesis v) = Parenthesis (smart_remove (i +
+  1) (k + 1) v)`;
+   `smart_remove i k (String v1) = String v1`;
    `smart_remove i k (Append v2 b v3:pretty) =
       (let n2 = get_size v2 in
       let n3 = get_next_size v3 in
@@ -224,12 +224,11 @@ let smart_remove_def = cake_define_list
           Append (smart_remove i k v2) T (smart_remove i i v3))`];;
 
 let flatten_def = cake_define_list
-  [`mlsexp_flatten indent (Size n p:pretty) s = mlsexp_flatten indent
-  p s`;
-   `mlsexp_flatten indent (Parenthesis p:pretty) s =
+  [`mlsexp_flatten indent (Size n p) s = mlsexp_flatten indent p s`;
+   `mlsexp_flatten indent (Parenthesis p) s =
       (implode "(") :: mlsexp_flatten (concat [indent; (implode
         "   ")]) p ((implode ")") :: s)`;
-   `mlsexp_flatten indent (String t:pretty) s = t :: s`;
+   `mlsexp_flatten indent (String t) s = t :: s`;
    `mlsexp_flatten indent (Append p1 b p2:pretty) s =
       mlsexp_flatten indent p1 ((if b then indent else (implode
         " ")) :: mlsexp_flatten indent p2 s)`];;
@@ -258,14 +257,14 @@ let make_str_safe_def = cake_define
        s)`;;
 
 let sexp2tree_def = cake_define_list
-  [`sexp2tree (Atom s:sexp) = Str (make_str_safe s)`;
-   `sexp2tree (Expr l:sexp) = Trees (sexp2trees l)`;
+  [`sexp2tree (Atom s) = Str (make_str_safe s)`;
+   `sexp2tree (Expr l) = Trees (sexp2trees l)`;
    `sexp2trees [] = []`;
    `sexp2trees (v :: vs) = sexp2tree v :: sexp2trees vs`];;
 
 let sexp_to_app_list_def = cake_define_list
-  [`sexp_to_app_list (Atom s:sexp) = List [make_str_safe s]`;
-   `sexp_to_app_list (Expr l:sexp) =
+  [`sexp_to_app_list (Atom s) = List [make_str_safe s]`;
+   `sexp_to_app_list (Expr l) =
       Append (List [(implode "(")])
              (Append (sexps_to_app_list l) (List [(implode
                ")")]))`;
@@ -288,6 +287,6 @@ let sexp_to_pretty_string_def = cake_define
  *--------------------------------------------------------------*)
 
 let to_tokens_def = cake_define_list
-  [`to_tokens (Atom a:sexp) = [SYMBOL a]`;
-   `to_tokens (Expr xs:sexp) = [OPEN] ++ FLAT (MAP (\x. to_tokens x)
-  xs) ++ [CLOSE]`];;
+  [`to_tokens (Atom a) = [SYMBOL a]`;
+   `to_tokens (Expr xs) = [OPEN] ++ FLAT (MAP (\x. to_tokens x) xs)
+  ++ [CLOSE]`];;

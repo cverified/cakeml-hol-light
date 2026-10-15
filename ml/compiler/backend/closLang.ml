@@ -166,14 +166,13 @@ let has_install_def = cake_define_list
   has_install e2 \/ has_install e3)`;
    `has_install (Let t es e:closLang_exp) = (has_install e \/
   has_install_list es)`;
-   `has_install (Op t p es:closLang_exp) = (p = Install \/
-  has_install_list es)`;
+   `has_install (Op t p es) = (p = Install \/ has_install_list es)`;
    `has_install (Raise t e:closLang_exp) = has_install e`;
-   `has_install (Tick t e:closLang_exp) = has_install e`;
-   `has_install (Fn _1 _2 _3 _4 e:closLang_exp) = has_install e`;
+   `has_install (Tick t e) = has_install e`;
+   `has_install (Fn _1 _2 _3 _4 e) = has_install e`;
    `has_install (Handle t e1 e2:closLang_exp) = (has_install e1 \/
   has_install e2)`;
-   `has_install (Call _5 _6 _7 es:closLang_exp) = has_install_list es`;
+   `has_install (Call _5 _6 _7 es) = has_install_list es`;
    `has_install (App _8 _9 e es:closLang_exp) = (has_install e \/
   has_install_list es)`;
    `has_install (Letrec _10 _11 _12 fns e:closLang_exp) =
@@ -201,13 +200,12 @@ let pure_def = cake_define_list
    `pure (Let _21 es e2:closLang_exp) <=> EVERY pure es /\ pure e2`;
    `pure (Raise _22 _23:closLang_exp) <=> F`;
    `pure (Handle _24 e1 e2:closLang_exp) <=> pure e1`;
-   `pure (Tick _25 _26:closLang_exp) <=> F`;
-   `pure (Call _27 _28 _29 _30:closLang_exp) <=> F`;
+   `pure (Tick _25 _26) <=> F`;
+   `pure (Call _27 _28 _29 _30) <=> F`;
    `pure (App _31 _32 _33 _34:closLang_exp) <=> F`;
-   `pure (Fn _35 _36 _37 _38 _39:closLang_exp) <=> T`;
+   `pure (Fn _35 _36 _37 _38 _39) <=> T`;
    `pure (Letrec _40 _41 _42 _43 x:closLang_exp) <=> pure x`;
-   `pure (Op _44 opn es:closLang_exp) <=> EVERY pure es /\ pure_op
-  opn`];;
+   `pure (Op _44 opn es) <=> EVERY pure es /\ pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)
 let assign_get_code_label_def = cake_define

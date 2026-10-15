@@ -21,17 +21,17 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
    Infer_Tuvar (num)";;
 
 let id_to_string_def = cake_define_list
-  [`id_to_string (Short s:('m,'n)namespace_id) = s`;
-   `id_to_string (Long x id':('m,'n)namespace_id) =
+  [`id_to_string (Short s) = s`;
+   `id_to_string (Long x id') =
         concat [x; implode "."; id_to_string id']`];;
 
 let get_tyname_def = cake_define_list
-  [`get_tyname n (Bind [] []:('m,'n,'v)namespace) = NONE`;
-   `get_tyname n (Bind [] ((m,ys) :: xs):('m,'n,'v)namespace) =
+  [`get_tyname n (Bind [] []) = NONE`;
+   `get_tyname n (Bind [] ((m,ys) :: xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
         xs) | SOME x -> SOME ((\x y. strcat x y) ((\x y. strcat x y)
         m (implode ".")) x))`;
-   `get_tyname n (Bind ((tyname,_1,t) :: xs) m:('m,'n,'v)namespace) =
+   `get_tyname n (Bind ((tyname,_1,t) :: xs) m) =
       (if (match t with Tapp _2 m -> m = n | _3 -> F) then
         SOME tyname else get_tyname n (Bind xs m))`];;
 
@@ -73,11 +73,11 @@ let add_parens_def = cake_define
        (implode ")")] else x)`;;
 
 let inf_type_to_string_rec_def = cake_define_list
-  [`inf_type_to_string_rec tys (Infer_Tuvar n:infer_t) =
+  [`inf_type_to_string_rec tys (Infer_Tuvar n) =
         (concat [(implode "_"); mlint_toString (&n)],0)`;
-   `inf_type_to_string_rec tys (Infer_Tvar_db n:infer_t) =
+   `inf_type_to_string_rec tys (Infer_Tvar_db n) =
         (concat [ty_var_name n],0)`;
-   `inf_type_to_string_rec tys (Infer_Tapp ts ti:infer_t) =
+   `inf_type_to_string_rec tys (Infer_Tapp ts ti) =
         (if ti = Tfn_num then
          (match ts with [t1; t2] ->
             (concat [add_parens 2 (inf_type_to_string_rec tys t1);

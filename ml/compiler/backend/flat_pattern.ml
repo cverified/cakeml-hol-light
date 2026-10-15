@@ -98,14 +98,13 @@ let compile_pat_rhs_def = cake_define
 
 let decode_pos_def = cake_define_list
   [`decode_pos t v EmptyPos = v`;
-   `decode_pos t v (Pos i pos:position) = decode_pos t (App t (El i)
-  [v]) pos`];;
+   `decode_pos t v (Pos i pos) = decode_pos t (App t (El i) [v]) pos`];;
 
 let decode_test_def = cake_define_list
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
   (TagLenEq tag l) [v]`;
-   `flat_pattern_decode_test t (LitEq lit:dTest) v = App t (Src
-  Equality) [v; Lit t lit]`];;
+   `flat_pattern_decode_test t (LitEq lit) v = App t (Src Equality)
+  [v; Lit t lit]`];;
 hol4_overload "decode_test" "flat_pattern_decode_test";;
 
 let simp_guard_def = cake_define
@@ -132,14 +131,13 @@ let simp_guard_def = cake_define
 let decode_guard_def = cake_define_list
   [`decode_guard t v (Not gd:dGuard) = App t (Src Equality)
   [decode_guard t v gd; Bool t F]`;
-   `decode_guard t v (Conj gd1 gd2:dGuard) = SmartIf t (decode_guard t v
-  gd1)
+   `decode_guard t v (Conj gd1 gd2) = SmartIf t (decode_guard t v gd1)
       (decode_guard t v gd2) (Bool t F)`;
-   `decode_guard t v (Disj gd1 gd2:dGuard) = SmartIf t (decode_guard t v
-  gd1) (Bool t T)
+   `decode_guard t v (Disj gd1 gd2) = SmartIf t (decode_guard t v gd1)
+  (Bool t T)
       (decode_guard t v gd2)`;
    `decode_guard t v True = Bool t T`;
-   `decode_guard t v (PosTest pos test:dGuard) = decode_test t test
+   `decode_guard t v (PosTest pos test) = decode_test t test
   (decode_pos t v pos)`];;
 
 let decode_dtree_def = cake_define
@@ -225,7 +223,7 @@ let op_sets_globals_def = cake_define
       | _19 -> F`;;
 
 let compile_exp_def = cake_define_list
-  [`flat_pattern_compile_exp cfg (Var_local t vid:flatLang_exp) =
+  [`flat_pattern_compile_exp cfg (Var_local t vid) =
         (dec_name_to_num vid,F,Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
         (let (i,sg,y) = flat_pattern_compile_exp cfg x in
@@ -265,7 +263,7 @@ let compile_exp_def = cake_define_list
         let k = (match v with NONE -> 0 | SOME vid ->
           dec_name_to_num vid) in
         (MAX i (MAX j k),(sg1 \/ sg2),Let t v y1 y2))`;
-   `flat_pattern_compile_exp cfg (flatLang_Letrec t fs x:flatLang_exp) =
+   `flat_pattern_compile_exp cfg (flatLang_Letrec t fs x) =
         (let ys = MAP (\(a,b,c). (a,b,flat_pattern_compile_exp cfg
           c)) fs in
         let (i,sgx,y) = flat_pattern_compile_exp cfg x in

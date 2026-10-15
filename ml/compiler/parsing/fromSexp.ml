@@ -735,44 +735,41 @@ let optsexp_def = cake_define_list
    `optsexp (SOME x) = listsexp [SX_SYM "SOME"; x]`];;
 
 let idsexp_def = cake_define_list
-  [`idsexp (Short n:('m,'n)namespace_id) = listsexp [SX_SYM "Short";
-  SEXSTR (explode n)]`;
-   `idsexp (Long ns n:('m,'n)namespace_id) = listsexp [SX_SYM "Long";
-  SEXSTR (explode ns); idsexp n]`];;
+  [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
+   `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
+  ns); idsexp n]`];;
 
 let typesexp_def = cake_define_list
-  [`typesexp (Atvar s:ast_t) = listsexp [SX_SYM "Atvar"; SEXSTR
-  (explode s)]`;
-   `typesexp (Atfun t1 t2:ast_t) = listsexp [SX_SYM "Atfun"; typesexp
-  t1; typesexp t2]`;
-   `typesexp (Attup ts:ast_t) = listsexp [SX_SYM "Attup"; listsexp
-  (MAP typesexp ts)]`;
-   `typesexp (Atapp ts tc:ast_t) = listsexp [SX_SYM "Atapp"; listsexp
-  (MAP typesexp ts); idsexp tc]`];;
+  [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode
+  s)]`;
+   `typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
+  typesexp t2]`;
+   `typesexp (Attup ts) = listsexp [SX_SYM "Attup"; listsexp (MAP
+  typesexp ts)]`;
+   `typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp (MAP
+  typesexp ts); idsexp tc]`];;
 
 let litsexp_def = cake_define_list
-  [`litsexp (IntLit i:lit) =
+  [`litsexp (IntLit i) =
        (if i < 0 then listsexp [SX_SYM "-"; SX_NUM (num_of_int
          (--i))] else SX_NUM (num_of_int i))`;
-   `litsexp (Char c:lit) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
-   `litsexp (StrLit s:lit) = SEXSTR (explode s)`;
-   `litsexp (Word8 w:lit) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
-   `litsexp (Word64 w:lit) = listsexp [SX_SYM "word64"; SX_NUM (w2n
-  w)]`;
-   `litsexp (Float64 w:lit) = listsexp [SX_SYM "float64"; SX_NUM (w2n
-  w)]`];;
+   `litsexp (Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
+   `litsexp (StrLit s) = SEXSTR (explode s)`;
+   `litsexp (Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
+   `litsexp (Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n w)]`;
+   `litsexp (Float64 w) = listsexp [SX_SYM "float64"; SX_NUM (w2n w)]`];;
 
 let patsexp_def = cake_define_list
   [`patsexp Pany = listsexp [SX_SYM "Pany"]`;
-   `patsexp (Pvar s:ast_pat) = SEXSTR (explode s)`;
-   `patsexp (Plit l:ast_pat) = listsexp [SX_SYM "Plit"; litsexp l]`;
-   `patsexp (Pcon cn ps:ast_pat) = listsexp [SX_SYM "Pcon"; optsexp
+   `patsexp (Pvar s) = SEXSTR (explode s)`;
+   `patsexp (Plit l) = listsexp [SX_SYM "Plit"; litsexp l]`;
+   `patsexp (Pcon cn ps) = listsexp [SX_SYM "Pcon"; optsexp
   (OPTION_MAP idsexp cn); listsexp (MAP patsexp ps)]`;
-   `patsexp (Pas p i:ast_pat) = listsexp [SX_SYM "Pas"; patsexp p;
-  SEXSTR (explode i)]`;
-   `patsexp (Pref p:ast_pat) = listsexp [SX_SYM "Pref"; patsexp p]`;
-   `patsexp (Ptannot p t:ast_pat) = listsexp [SX_SYM "Ptannot";
-  patsexp p; typesexp t]`];;
+   `patsexp (Pas p i) = listsexp [SX_SYM "Pas"; patsexp p; SEXSTR
+  (explode i)]`;
+   `patsexp (Pref p) = listsexp [SX_SYM "Pref"; patsexp p]`;
+   `patsexp (Ptannot p t) = listsexp [SX_SYM "Ptannot"; patsexp p;
+  typesexp t]`];;
 
 let testsexp_def = cake_define
   `testsexp x1 =
@@ -889,7 +886,7 @@ let logsexp_def = cake_define_list
    `logsexp Orelse = SX_SYM "Orelse"`];;
 
 let locnsexp_def = cake_define_list
-  [`locnsexp (POSN n1 n2:locn) = listsexp (MAP SX_NUM [n1; n2])`;
+  [`locnsexp (POSN n1 n2) = listsexp (MAP SX_NUM [n1; n2])`;
    `locnsexp UNKNOWNpt = SX_SYM "unk"`;
    `locnsexp EOFpt = SX_SYM "eof"`];;
 
@@ -897,42 +894,41 @@ let locssexp_def = cake_define
   `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
 
 let expsexp_def = cake_define_list
-  [`expsexp (Raise e:ast_exp) = (SX_SYM "Raise"; expsexp e)`;
-   `expsexp (Handle e pes:ast_exp) =
+  [`expsexp (Raise e) = (SX_SYM "Raise"; expsexp e)`;
+   `expsexp (Handle e pes) =
       (SX_SYM "Handle"; expsexp e;
        listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
          pes))`;
-   `expsexp (Lit l:ast_exp) = listsexp [SX_SYM "Lit"; litsexp l]`;
-   `expsexp (Con cn es:ast_exp) =
+   `expsexp (Lit l) = listsexp [SX_SYM "Lit"; litsexp l]`;
+   `expsexp (Con cn es) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
                 listsexp (MAP expsexp es)]`;
-   `expsexp (Var id':ast_exp) = listsexp [SX_SYM "Var"; idsexp id']`;
-   `expsexp (Fun x e:ast_exp) = listsexp [SX_SYM "Fun"; SEXSTR
-  (explode x); expsexp e]`;
-   `expsexp (App op es:ast_exp) =
+   `expsexp (Var id') = listsexp [SX_SYM "Var"; idsexp id']`;
+   `expsexp (Fun x e) = listsexp [SX_SYM "Fun"; SEXSTR (explode x);
+  expsexp e]`;
+   `expsexp (App op es) =
       listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
         es)]`;
-   `expsexp (Log lop e1 e2:ast_exp) = (SX_SYM "Log"; logsexp lop;
-  expsexp e1; expsexp e2)`;
-   `expsexp (If e1 e2 e3:ast_exp) = (SX_SYM "If"; expsexp e1; expsexp
-  e2; expsexp e3)`;
-   `expsexp (Mat e pes:ast_exp) =
+   `expsexp (Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp e1;
+  expsexp e2)`;
+   `expsexp (If e1 e2 e3) = (SX_SYM "If"; expsexp e1; expsexp e2;
+  expsexp e3)`;
+   `expsexp (Mat e pes) =
       (SX_SYM "Mat"; expsexp e;
        listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
          pes))`;
-   `expsexp (Let so e1 e2:ast_exp) =
+   `expsexp (Let so e1 e2) =
       (SX_SYM "Let"; optsexp (OPTION_MAP (SEXSTR ∘ explode) so);
         expsexp e1; expsexp e2)`;
-   `expsexp (Letrec funs e:ast_exp) =
+   `expsexp (Letrec funs e) =
     (SX_SYM "Letrec";
      listsexp (MAP (λ(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp
                                 z))) funs);
      expsexp e)`;
-   `expsexp (Tannot e t:ast_exp) = (SX_SYM "Tannot"; expsexp e;
-  typesexp t)`;
-   `expsexp (Lannot e loc:ast_exp) = (SX_SYM "Lannot"; expsexp e;
-  locssexp loc)`];;
+   `expsexp (Tannot e t) = (SX_SYM "Tannot"; expsexp e; typesexp t)`;
+   `expsexp (Lannot e loc) = (SX_SYM "Lannot"; expsexp e; locssexp
+  loc)`];;
 
 let type_defsexp_def = cake_define
   `type_defsexp = listsexp o
@@ -943,9 +939,9 @@ let type_defsexp_def = cake_define
              (listsexp (MAP typesexp ts))) ls))))`;;
 
 let decsexp_def = cake_define_list
-  [`decsexp (Dlet locs p e:dec) =
+  [`decsexp (Dlet locs p e) =
       (SX_SYM "Dlet"; locssexp locs; patsexp p; expsexp e)`;
-   `decsexp (Dletrec locs funs:dec) =
+   `decsexp (Dletrec locs funs) =
        listsexp [
            SX_SYM "Dletrec";
            locssexp locs;
@@ -953,19 +949,19 @@ let decsexp_def = cake_define_list
              (MAP (\(f,x,e). SX_CONS (SEXSTR (explode f)) (SX_CONS
                (SEXSTR (explode x)) (expsexp e)))
               funs)]`;
-   `decsexp (Dtype locs td:dec) = (SX_SYM "Dtype"; locssexp locs;
+   `decsexp (Dtype locs td) = (SX_SYM "Dtype"; locssexp locs;
   type_defsexp td)`;
-   `decsexp (Dtabbrev locs ns x t:dec) = (SX_SYM "Dtabbrev"; locssexp
+   `decsexp (Dtabbrev locs ns x t) = (SX_SYM "Dtabbrev"; locssexp
   locs; listsexp (MAP (SEXSTR ∘ explode) ns); SEXSTR (explode x);
   typesexp t)`;
-   `decsexp (Denv name:dec) = (SX_SYM "Denv"; SEXSTR (explode name))`;
-   `decsexp (Dexn locs x ts:dec) =
+   `decsexp (Denv name) = (SX_SYM "Denv"; SEXSTR (explode name))`;
+   `decsexp (Dexn locs x ts) =
       (SX_SYM "Dexn"; locssexp locs; SEXSTR (explode x); listsexp
         (MAP typesexp ts))`;
-   `decsexp (Dmod name decs:dec) =
+   `decsexp (Dmod name decs) =
       (SX_SYM "Dmod"; SEXSTR (explode name); listsexp (MAP
         decsexp decs))`;
-   `decsexp (Dlocal ldecs decs:dec) =
+   `decsexp (Dlocal ldecs decs) =
       listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
                 listsexp (MAP decsexp decs)]`];;
 

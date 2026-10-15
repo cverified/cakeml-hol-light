@@ -112,7 +112,7 @@ let bEvery_def = cake_define_list
   dest xs) /\ bEvery P xs`];;
 
 let get_code_labels_def = cake_define_list
-  [`bvlProps_get_code_labels (bvl_Var _2:flatLang_exp) = {}`;
+  [`bvlProps_get_code_labels (bvl_Var _2) = {}`;
    `bvlProps_get_code_labels (If e1 e2 e3:flatLang_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION
   bvlProps_get_code_labels e3`;

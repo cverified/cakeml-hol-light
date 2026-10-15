@@ -62,25 +62,25 @@ hol4_overload "is_pure" "data_live_is_pure";;
 
 let compile_def = cake_define_list
   [`data_live_compile Skip live = (Skip,live)`;
-   `data_live_compile (Return ns:dataLang_prog) live = (Return
-  ns,list_insert ns LN)`;
+   `data_live_compile (Return ns) live = (Return ns,list_insert ns
+  LN)`;
    `data_live_compile (Raise n:dataLang_prog) live = (Raise n,insert
   n one LN)`;
-   `data_live_compile (Move n1 n2:dataLang_prog) live =
+   `data_live_compile (Move n1 n2) live =
         (Move n1 n2,insert n2 one (delete n1 live))`;
-   `data_live_compile (Seq c1 c2:dataLang_prog) live =
+   `data_live_compile (Seq c1 c2) live =
          (let (d2,l2) = data_live_compile c2 live in
          let (d1,l1) = data_live_compile c1 l2 in
            (Seq d1 d2,l1))`;
    `data_live_compile Tick live = (Tick,live)`;
-   `data_live_compile (MakeSpace k names:dataLang_prog) live =
+   `data_live_compile (MakeSpace k names) live =
          (let l1 = inter names live in (MakeSpace k l1,l1))`;
-   `data_live_compile (Assign v op vs NONE:dataLang_prog) live =
+   `data_live_compile (Assign v op vs NONE) live =
          (if IS_NONE (lookup v live) /\ is_pure op then (Skip,live)
            else
            let l1 = list_insert vs (delete v live) in
              (Assign v op vs NONE,l1))`;
-   `data_live_compile (Assign v op vs (SOME names):dataLang_prog) live =
+   `data_live_compile (Assign v op vs (SOME names)) live =
          (let l1 = inter names (delete v live) in
            (Assign v op vs (SOME l1),list_insert vs l1))`;
    `data_live_compile (If n c2 c3:dataLang_prog) live =

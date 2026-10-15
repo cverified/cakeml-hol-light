@@ -17,5 +17,5 @@ let not_skip_def = cake_define
 
 let filter_skip_def = cake_define_list
   [`filter_skip [] = []`;
-   `filter_skip ((Section n xs:'a sec) :: rest) =
+   `filter_skip (Section n xs :: rest) =
          Section n (FILTER not_skip xs) :: filter_skip rest`];;

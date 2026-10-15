@@ -89,15 +89,13 @@ let pat_to_guard_def = cake_define_list
   [`pat_to_guard l Any = True`;
    `pat_to_guard l (Lit r:pattern_semantics_pat) = PosTest (get_pos
   (REVERSE l)) (LitEq r)`;
-   `pat_to_guard l (Cons NONE pats:pattern_semantics_pat) =
-  pats_to_guard l 0 pats`;
-   `pat_to_guard l (Cons (SOME (t,_7)) pats:pattern_semantics_pat) =
+   `pat_to_guard l (Cons NONE pats) = pats_to_guard l 0 pats`;
+   `pat_to_guard l (Cons (SOME (t,_7)) pats) =
       mk_Conj (PosTest (get_pos (REVERSE l))
         (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats)`;
    `pat_to_guard l (Or p1 p2:pattern_semantics_pat) = mk_Disj
   (pat_to_guard l p1) (pat_to_guard l p2)`;
-   `pat_to_guard l (Ref p:pattern_semantics_pat) = pat_to_guard (0 ::
-  l) p`;
+   `pat_to_guard l (Ref p) = pat_to_guard (0 :: l) p`;
    `pats_to_guard l k [] = True`;
    `pats_to_guard l k [p] = pat_to_guard (k :: l) p`;
    `pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)

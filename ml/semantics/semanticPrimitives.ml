@@ -293,14 +293,13 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * when one of these conditions is violated *)
 let pmatch_def = cake_define_list
   [`semanticPrimitives_pmatch envC s Pany v' env = Match env`;
-   `semanticPrimitives_pmatch envC s (Pvar x:ast_pat) v' env = Match
-  ((x,v') :: env)`;
-   `semanticPrimitives_pmatch envC s (Plit l:ast_pat) (Litv
-  l':semanticPrimitives_v) env =
+   `semanticPrimitives_pmatch envC s (Pvar x) v' env = Match ((x,v')
+  :: env)`;
+   `semanticPrimitives_pmatch envC s (Plit l) (Litv l') env =
     (if l = l' then Match env else if lit_same_type l l' then
       No_match else Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (Pcon (SOME n) ps:ast_pat) (Conv
-  (SOME stamp') vs:semanticPrimitives_v) env =
+   `semanticPrimitives_pmatch envC s (Pcon (SOME n) ps) (Conv (SOME
+  stamp') vs) env =
     (match nsLookup envC n with
        NONE -> Match_type_error | SOME (l,stamp) ->
          (if same_type stamp stamp' /\ LENGTH ps = l then
@@ -308,19 +307,17 @@ let pmatch_def = cake_define_list
              if LENGTH vs = l then semanticPrimitives_pmatch_list
                envC s ps vs env else Match_type_error else No_match
                else Match_type_error))`;
-   `semanticPrimitives_pmatch envC s (Pcon NONE ps:ast_pat) (Conv NONE
-  vs:semanticPrimitives_v) env =
+   `semanticPrimitives_pmatch envC s (Pcon NONE ps) (Conv NONE vs) env =
     (if LENGTH ps = LENGTH vs then semanticPrimitives_pmatch_list
       envC s ps vs env else Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (Pref p:ast_pat) (Loc _28
-  lnum:semanticPrimitives_v) env =
+   `semanticPrimitives_pmatch envC s (Pref p) (Loc _28 lnum) env =
     (match store_lookup lnum s with
        NONE -> Match_type_error | SOME (Refv v) ->
          semanticPrimitives_pmatch envC s p v env | SOME _29 ->
          Match_type_error)`;
-   `semanticPrimitives_pmatch envC s (Pas p i:ast_pat) v env =
+   `semanticPrimitives_pmatch envC s (Pas p i) v env =
   semanticPrimitives_pmatch envC s p v ((i,v) :: env)`;
-   `semanticPrimitives_pmatch envC s (Ptannot p t:ast_pat) v env =
+   `semanticPrimitives_pmatch envC s (Ptannot p t) v env =
   semanticPrimitives_pmatch envC s p v env`;
    `semanticPrimitives_pmatch envC s _30 _31 env = Match_type_error`;
    `semanticPrimitives_pmatch_list envC s [] [] env = Match env`;
@@ -367,34 +364,27 @@ let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
 let do_eq_def = cake_define_list
-  [`semanticPrimitives_do_eq (Litv l1:semanticPrimitives_v) (Litv
-  l2:semanticPrimitives_v) =
+  [`semanticPrimitives_do_eq (Litv l1) (Litv l2) =
       (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
         Eq_type_error)`;
-   `semanticPrimitives_do_eq (Loc b1 l1:semanticPrimitives_v) (Loc b2
-  l2:semanticPrimitives_v) =
+   `semanticPrimitives_do_eq (Loc b1 l1) (Loc b2 l2) =
       (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)`;
-   `semanticPrimitives_do_eq (Conv cn1 vs1:semanticPrimitives_v) (Conv
-  cn2 vs2:semanticPrimitives_v) =
+   `semanticPrimitives_do_eq (Conv cn1 vs1) (Conv cn2 vs2) =
       (if cn1 = cn2 /\ LENGTH vs1 = LENGTH vs2 then
         semanticPrimitives_do_eq_list vs1 vs2 else if ctor_same_type
         cn1 cn2 then Eq_val F else Eq_type_error)`;
-   `semanticPrimitives_do_eq (Vectorv vs1:semanticPrimitives_v) (Vectorv
-  vs2:semanticPrimitives_v) =
+   `semanticPrimitives_do_eq (Vectorv vs1) (Vectorv vs2) =
       (if LENGTH vs1 = LENGTH vs2 then
         semanticPrimitives_do_eq_list vs1 vs2 else Eq_val F)`;
-   `semanticPrimitives_do_eq (Closure v0 v3 v4:semanticPrimitives_v)
-  (Closure v5 v6 v7:semanticPrimitives_v) = Eq_val T`;
-   `semanticPrimitives_do_eq (Closure v8 v9 v10:semanticPrimitives_v)
-  (Recclosure v11 v12 v13:semanticPrimitives_v) = Eq_val T`;
-   `semanticPrimitives_do_eq (Recclosure v14 v15
-  v16:semanticPrimitives_v) (Closure v17 v18
-  v19:semanticPrimitives_v) = Eq_val T`;
-   `semanticPrimitives_do_eq (Recclosure v20 v21
-  v22:semanticPrimitives_v) (Recclosure v23 v24
-  v25:semanticPrimitives_v) = Eq_val T`;
-   `semanticPrimitives_do_eq (Env v26 (gen1,id1):semanticPrimitives_v)
-  (Env v27 (gen2,id2):semanticPrimitives_v) =
+   `semanticPrimitives_do_eq (Closure v0 v3 v4) (Closure v5 v6 v7) =
+  Eq_val T`;
+   `semanticPrimitives_do_eq (Closure v8 v9 v10) (Recclosure v11 v12
+  v13) = Eq_val T`;
+   `semanticPrimitives_do_eq (Recclosure v14 v15 v16) (Closure v17
+  v18 v19) = Eq_val T`;
+   `semanticPrimitives_do_eq (Recclosure v20 v21 v22) (Recclosure v23
+  v24 v25) = Eq_val T`;
+   `semanticPrimitives_do_eq (Env v26 (gen1,id1)) (Env v27 (gen2,id2)) =
       Eq_val (gen1 = gen2 /\ id1 = id2)`;
    `semanticPrimitives_do_eq _34 _35 = Eq_type_error`;
    `semanticPrimitives_do_eq_list [] [] = Eq_val T`;
@@ -851,7 +841,7 @@ let do_test_def = cake_define_list
          (if ty = Float64T then Eq_val (fp64_equal
            (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
            v2) else Eq_type_error)`;
-   `semanticPrimitives_do_test (Compare cmp:test) ty v1 v2 =
+   `semanticPrimitives_do_test (Compare cmp) ty v1 v2 =
       (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
         (IntLit i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) |
         (CharT,SOME (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp
@@ -860,7 +850,7 @@ let do_test_def = cake_define_list
         (Float64 w),SOME (Float64 v)) -> Eq_val (fp_cmp cmp w v) |
         (StrT,SOME (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp F
         cmp s t) | _61 -> Eq_type_error)`;
-   `semanticPrimitives_do_test (AltCompare cmp:test) ty v1 v2 =
+   `semanticPrimitives_do_test (AltCompare cmp) ty v1 v2 =
       (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME
         (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) |
         _62 -> Eq_type_error)`];;

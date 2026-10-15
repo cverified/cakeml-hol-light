@@ -29,12 +29,12 @@ let atom_INDUCT,atom_RECURSION = define_datatype
   "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
 
 let encode_infer_t_def = cake_define_list
-  [`encode_infer_t (Infer_Tvar_db n:infer_t) =
+  [`encode_infer_t (Infer_Tvar_db n) =
       Const (DB_tag n)`;
-   `encode_infer_t (Infer_Tapp ts tc:infer_t) =
+   `encode_infer_t (Infer_Tapp ts tc) =
       Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
         (encode_infer_ts ts))`;
-   `encode_infer_t (Infer_Tuvar n:infer_t) =
+   `encode_infer_t (Infer_Tuvar n) =
       Var n`;
    `encode_infer_ts [] =
       Const Null_tag`;
@@ -42,7 +42,7 @@ let encode_infer_t_def = cake_define_list
       Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
 let decode_infer_t_def = cake_define_list
-  [`decode_infer_t (Var n:ast_exp) =
+  [`decode_infer_t (Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (Const (DB_tag n)) =
       Infer_Tvar_db n`;
@@ -107,12 +107,12 @@ let cunifyl_def = cake_define
                       (encode_infer_ts ts2))`;;
 
 let capply_subst_def = cake_define_list
-  [`capply_subst s (Infer_Tuvar n:infer_t) = (match lookup n s with
+  [`capply_subst s (Infer_Tuvar n) = (match lookup n s with
                               NONE -> Infer_Tuvar n | SOME it ->
                                 it)`;
-   `capply_subst s (Infer_Tapp ts tc:infer_t) = Infer_Tapp (MAP
-  (capply_subst s) ts) tc`;
-   `capply_subst s (Infer_Tvar_db n:infer_t) = Infer_Tvar_db n`];;
+   `capply_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (capply_subst
+  s) ts) tc`;
+   `capply_subst s (Infer_Tvar_db n) = Infer_Tvar_db n`];;
 
 let cwalkstar_def = cake_define
   `cwalkstar s it =
@@ -235,13 +235,13 @@ let kclkont_INDUCT,kclkont_RECURSION = define_datatype
 
 let apply_kclkont_def = cake_define_list
   [`apply_kclkont s [] its = its`;
-   `apply_kclkont s ((DBk n:kclkont) :: k) its = apply_kclkont s k
+   `apply_kclkont s (DBk n :: k) its = apply_kclkont s k
   (Infer_Tvar_db n :: its)`;
-   `apply_kclkont s ((APPk aits n:kclkont) :: k) its =
+   `apply_kclkont s (APPk aits n :: k) its =
       apply_kclkont s k (Infer_Tapp aits n :: its)`;
-   `apply_kclkont s ((UVk n:kclkont) :: k) its = apply_kclkont s k
-  (Infer_Tuvar n :: its)`;
-   `apply_kclkont s ((CONSk cits n:kclkont) :: k) its =
+   `apply_kclkont s (UVk n :: k) its = apply_kclkont s k (Infer_Tuvar
+  n :: its)`;
+   `apply_kclkont s (CONSk cits n :: k) its =
     kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its n
       :: xk'))`];;
 

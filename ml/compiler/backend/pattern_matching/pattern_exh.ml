@@ -59,8 +59,8 @@ let ctor_INDUCT,ctor_RECURSION = define_datatype
   "ctor = TagC (num) (num) | TupC (num) | RefC";;
 
 let ctor_arity_def = cake_define_list
-  [`ctor_arity (TagC t a:ctor) = a`;
-   `ctor_arity (TupC a:ctor) = a`;
+  [`ctor_arity (TagC t a) = a`;
+   `ctor_arity (TupC a) = a`;
    `ctor_arity RefC = 1`];;
 
 let anys_def = cake_define_list
@@ -98,9 +98,8 @@ let expand_def = cake_define_list
   [`expand Any = [Any]`;
    `expand (Lit l:pattern_semantics_pat) = [Lit l]`;
    `expand (Or p q:pattern_semantics_pat) = expand p ++ expand q`;
-   `expand (Ref p:pattern_semantics_pat) = mk_refs (expand p)`;
-   `expand (Cons t ps:pattern_semantics_pat) = mk_conses t
-  (expand_list ps)`;
+   `expand (Ref p) = mk_refs (expand p)`;
+   `expand (Cons t ps) = mk_conses t (expand_list ps)`;
    `expand_list [] = [[]]`;
    `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
 
@@ -227,8 +226,8 @@ let pat_weight_def = cake_define_list
    `pat_weight (Lit l:pattern_semantics_pat) = 0`;
    `pat_weight (Or p q:pattern_semantics_pat) = 1 + pat_weight p +
   pat_weight q`;
-   `pat_weight (Ref p:pattern_semantics_pat) = 1 + pat_weight p`;
-   `pat_weight (Cons t ps:pattern_semantics_pat) = 1 + pats_weight ps`;
+   `pat_weight (Ref p) = 1 + pat_weight p`;
+   `pat_weight (Cons t ps) = 1 + pats_weight ps`;
    `pats_weight [] = 0`;
    `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 

@@ -82,17 +82,15 @@ let pmatch_def = cake_define_list
   l':term) =
          (if ~lit_same_type l l' then PTypeFailure else
          if l = l' then PMatchSuccess else PMatchFailure)`;
-   `pattern_semantics_pmatch refs (Cons (SOME (tag,siblings))
-  pargs:pattern_semantics_pat) (Term (SOME t) targs:term) =
+   `pattern_semantics_pmatch refs (Cons (SOME (tag,siblings)) pargs)
+  (Term (SOME t) targs) =
         (if tag = t /\ LENGTH pargs = LENGTH targs then
           pattern_semantics_pmatch_list refs pargs targs else
         if is_sibling (t,LENGTH targs) siblings then
           PMatchFailure else PTypeFailure)`;
-   `pattern_semantics_pmatch refs (Cons NONE
-  pargs:pattern_semantics_pat) (Term NONE targs:term) =
+   `pattern_semantics_pmatch refs (Cons NONE pargs) (Term NONE targs) =
         pattern_semantics_pmatch_list refs pargs targs`;
-   `pattern_semantics_pmatch refs (Ref p:pattern_semantics_pat) (RefPtr
-  r:term) =
+   `pattern_semantics_pmatch refs (Ref p) (RefPtr r) =
         (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v
           -> pattern_semantics_pmatch refs p v)`;
    `pattern_semantics_pmatch refs (Or p1 p2:pattern_semantics_pat) t =
@@ -154,21 +152,21 @@ let app_pos_def = cake_define
 let dt_eval_guard_def = cake_define_list
   [`dt_eval_guard refs v True =
          SOME T`;
-   `dt_eval_guard refs v (PosTest pos test:dGuard) =
+   `dt_eval_guard refs v (PosTest pos test) =
          (match app_pos refs pos v with NONE -> NONE | SOME x ->
            dt_test test x)`;
    `dt_eval_guard refs v (Not g:dGuard) =
          (match dt_eval_guard refs v g with NONE -> NONE | SOME b
            -> SOME (~b))`;
-   `dt_eval_guard refs v (Conj g1 g2:dGuard) =
+   `dt_eval_guard refs v (Conj g1 g2) =
          (match dt_eval_guard refs v g1 with NONE -> NONE | SOME
            T -> dt_eval_guard refs v g2 | SOME F -> SOME F)`;
-   `dt_eval_guard refs v (Disj g1 g2:dGuard) =
+   `dt_eval_guard refs v (Disj g1 g2) =
          (match dt_eval_guard refs v g1 with NONE -> NONE | SOME
            T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
 let dt_eval_def = cake_define_list
-  [`dt_eval refs _12 (Leaf k:dTree) = SOME (MatchSuccess k)`;
+  [`dt_eval refs _12 (Leaf k) = SOME (MatchSuccess k)`;
    `dt_eval refs _13 Fail = SOME (MatchFailure)`;
    `dt_eval refs _14 TypeFail = NONE`;
    `dt_eval refs v (If guard' dt1 dt2:dTree) =

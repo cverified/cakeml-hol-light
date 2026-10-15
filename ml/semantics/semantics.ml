@@ -46,7 +46,7 @@ let evaluate_prog_with_clock_def = cake_define
          st) env prog in (semanticPrimitives_state_ffi st',r))`;;
 
 let semantics_prog_def = cake_define_list
-  [`semantics_prog st env prog (Terminate outcome io_list:behaviour) <=>
+  [`semantics_prog st env prog (Terminate outcome io_list) <=>
         (?k ffi r.
           evaluate_prog_with_clock st env k prog = (ffi,r) /\
           (match r with Rerr (Rabort (Rffi_error outcome')) ->
@@ -54,7 +54,7 @@ let semantics_prog_def = cake_define_list
                (Rabort Rtimeout_error)) /\ outcome = Success) /\
           (io_list = ffi_state_io_events ffi) /\
           (~(r = Rerr (Rabort Rtype_error))))`;
-   `semantics_prog st env prog (Diverge io_trace:behaviour) <=>
+   `semantics_prog st env prog (Diverge io_trace) <=>
         (!k. ?ffi.
           (evaluate_prog_with_clock st env k prog =
               (ffi,Rerr (Rabort Rtimeout_error)))) /\

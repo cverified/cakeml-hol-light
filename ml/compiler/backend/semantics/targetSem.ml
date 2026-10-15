@@ -248,12 +248,12 @@ let evaluate_def = cake_define
 hol4_overload "evaluate" "targetSem_evaluate";;
 
 let machine_sem_def = cake_define_list
-  [`machine_sem mc st ms (Terminate t io_list:behaviour) <=>
+  [`machine_sem mc st ms (Terminate t io_list) <=>
          (?k ms' st'.
            evaluate mc st k ms = (Halt t,ms',st') /\
              ffi_state_io_events
            st' = io_list)`;
-   `machine_sem mc st ms (Diverge io_trace:behaviour) <=>
+   `machine_sem mc st ms (Diverge io_trace) <=>
          (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE

@@ -309,9 +309,8 @@ let scan_expr_def = cake_define_list
         (let ty = if n < LENGTH ts then EL n ts else Any in
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(Call t d xs h:bvi_exp)] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [(Return xs:bvi_exp)] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [(LetCall rets t d xs y:bvi_exp)] =
-  [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [Return xs] = [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [LetCall rets t d xs y] = [(ts,Any,F,NONE)]`;
    `scan_expr ts loc [(Op op xs:bvi_exp)] =
         (let opr = from_op op in
         let opt = op_type opr in
@@ -363,9 +362,8 @@ let scan_expr_sing_def = cake_define_list
         (let ty = if n < LENGTH ts then EL n ts else Any in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (Call t d xs h:bvi_exp) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (Return xs:bvi_exp) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (LetCall rets t d xs y:bvi_exp) =
-  (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (Return xs) = (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (LetCall rets t d xs y) = (ts,Any,F,NONE)`;
    `scan_expr_sing ts loc (Op op xs:bvi_exp) =
         (let opr = from_op op in
         let opt = op_type opr in

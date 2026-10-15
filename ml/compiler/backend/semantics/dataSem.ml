@@ -158,7 +158,7 @@ let size_of_def = cake_define_list
 
 let extract_stack_def = cake_define_list
   [`extract_stack (Env _6 env:stack) = mlvector_toList env`;
-   `extract_stack (Exc _7 env _8:stack) = mlvector_toList env`];;
+   `extract_stack (Exc _7 env _8) = mlvector_toList env`];;
 
 let global_to_vs_def = cake_define_list
   [`global_to_vs NONE = []`;
@@ -260,15 +260,14 @@ let space_consumed_def = cake_define_list
   =
        LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
          lower) xs')) + 1`;
-   `space_consumed s (MemOp RefArray:flatLang_op) [(Number
-  len:dataSem_v); _18] = num_of_int len + 1`;
-   `space_consumed s (MemOp (RefByte _19):flatLang_op) [(Number
-  len:dataSem_v); _20] = num_of_int len DIV (arch_size
-  (dataSem_state_limits s) DIV 8) + 2`;
-   `space_consumed s (BlockOp (FromList n):flatLang_op) [(Number
-  len:dataSem_v); lv] = num_of_int len + 1`;
-   `space_consumed s (IntOp Add:flatLang_op) [(Number i1:dataSem_v);
-  Number i2] =
+   `space_consumed s (MemOp RefArray) [(Number len:dataSem_v); _18] =
+  num_of_int len + 1`;
+   `space_consumed s (MemOp (RefByte _19)) [(Number len:dataSem_v);
+  _20] = num_of_int len DIV (arch_size (dataSem_state_limits s) DIV
+  8) + 2`;
+   `space_consumed s (BlockOp (FromList n)) [(Number len:dataSem_v);
+  lv] = num_of_int len + 1`;
+   `space_consumed s (IntOp Add) [(Number i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -280,8 +279,7 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Sub:flatLang_op) [(Number i1:dataSem_v);
-  Number i2] =
+   `space_consumed s (IntOp Sub) [(Number i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -293,8 +291,7 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Mult:flatLang_op) [(Number i1:dataSem_v);
-  Number i2] =
+   `space_consumed s (IntOp Mult) [(Number i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\ 0 <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -306,8 +303,7 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Div:flatLang_op) [(Number i1:dataSem_v);
-  Number i2] =
+   `space_consumed s (IntOp Div) [(Number i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\ 0 <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -319,8 +315,7 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (IntOp Mod:flatLang_op) [(Number i1:dataSem_v);
-  Number i2] =
+   `space_consumed s (IntOp Mod) [(Number i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
           i1 /\ 0 <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
@@ -332,7 +327,7 @@ let space_consumed_def = cake_define_list
           let jl = bignum_size (limits_arch_64_bit
             (dataSem_state_limits s)) i2 in
             2 * il + 2 * jl) i1 i2 s)`;
-   `space_consumed s (BlockOp ListAppend:flatLang_op) [lv1; lv2] =
+   `space_consumed s (BlockOp ListAppend) [lv1; lv2] =
        (match v_to_list lv1 with
         SOME l -> SUC (LENGTH l) * 3 | NONE -> 0)`;
    `space_consumed s (op:closLang_op) (vs:dataSem_v list) = (0:num)`];;
@@ -471,7 +466,7 @@ let do_space_def = cake_define
 
 let size_of_stack_frame_def = cake_define_list
   [`size_of_stack_frame (Env n _27:stack) = n`;
-   `size_of_stack_frame (Exc n _28 _29:stack) = OPTION_MAP ((+) 3) n`];;
+   `size_of_stack_frame (Exc n _28 _29) = OPTION_MAP ((+) 3) n`];;
 
 let size_of_stack_def = cake_define
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame)
@@ -1492,7 +1487,7 @@ let evaluate_def = cake_define_list
    `dataSem_evaluate (Tick,s) =
          (if ?_clock s = 0 then (SOME (Rerr (Rabort
            Rtimeout_error)),flush_state T s) else (NONE,dec_clock s))`;
-   `dataSem_evaluate ((MakeSpace k names:labLang_prog),s) =
+   `dataSem_evaluate (MakeSpace k names,s) =
          (match cut_env names (dataSem_state_locals s) with NONE
            -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME env ->
            (NONE,add_space (dataSem_state_locals_fupd (K env) s) k))`;

@@ -526,23 +526,36 @@ class Porter:
     self.ctx.wordnot = False
     self.ctx.defining = set()
 
-  def con_type(self, nm):
-    """the type of a constructor, as the port writes it.  Where the
-       name is ambiguous it is the one of the theory that comes
-       last among the ones in scope, which is the one HOL4's
-       overload resolution takes"""
+  def con_thy(self, nm):
+    """the theory whose constructor of this name is meant.  Where
+       the name is ambiguous it is the theory that comes last among
+       the ones in scope, which is the one HOL4's overload
+       resolution takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
-    if t:
-      ts = [t]
-    else:
-      anc = self.db.ancestors(self.thy) | {self.thy}
-      ts = [x for x, k in self.db.defs.get(n, [])
-            if k == 'con' and x in anc]
-      if self.contys:
-        ts = [x for x in ts if x in self.contys] or ts
+    if t: return t
+    anc = self.db.ancestors(self.thy) | {self.thy}
+    ts = [x for x, k in self.db.defs.get(n, [])
+          if k == 'con' and x in anc]
+    if self.contys:
+      ts = [x for x in ts if x in self.contys] or ts
     if not ts: return None
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
-    t = max(ts, key=lambda x: rank.get(x, -1))
+    return max(ts, key=lambda x: rank.get(x, -1))
+
+  def con_name(self, nm):
+    """the name that the port gives the constructor that an
+       ambiguous name means; writing it out resolves the overload
+       without a type annotation, which HOL Light cannot leave
+       general (a type variable that the user writes is rigid)"""
+    t = self.con_thy(nm)
+    n = nm.split('$')[-1]
+    return self.ctx.names.get((t, n)) if t else None
+
+  def con_type(self, nm):
+    """the type of a constructor, as the port writes it"""
+    t = self.con_thy(nm)
+    n = nm.split('$')[-1]
+    if not t: return None
     for (t2, ty), (cons, _) in self.db.datatypes.items():
       if t2 == t and n in cons:
         nm = self.ctx.tyname(ty)
@@ -566,10 +579,21 @@ class Porter:
       while p.kind == 'paren': p = p.e
       if p.kind == 'app':
         h, _ = hterm.strip_app(p)
-        if ambiguous and not self.ambiguous_con(h.name): return p
         if h.kind == 'id' and (h.name in self.ctx.cons or
                                '$' in h.name):
+          if ambiguous and not self.ambiguous_con(h.name):
+            return p
           ty = self.con_type(h.name)
+          # a type variable that the port writes is rigid in HOL
+          # Light, so a type with parameters cannot be written in an
+          # annotation; the name of the constructor itself then says
+          # which one it is
+          if ambiguous and ty and ty.startswith('('):
+            nm = self.con_name(h.name)
+            if nm:
+              done[0] = True
+              h.name = nm
+            return p
           if ty:
             done[0] = True
             return hterm.Node('paren', tok=p.tok,
@@ -610,7 +634,7 @@ class Porter:
     self.ctx.vars = self.shadowing(e)
     try:
       p = hterm.Printer(self.ctx)
-      cls = [fmt(p.pr(self.annotate(cl), 0), indent=4, last=3)
+      cls = [fmt(p.pr(self.annotate(cl, True), 0), indent=4, last=3)
              for cl in hterm.conjuncts_of(e)]
     finally:
       self.ctx.vars = old

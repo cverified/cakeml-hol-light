@@ -305,17 +305,16 @@ let set_store_def = cake_define
 
 let word_exp_def = cake_define_list
   [`(\x y. strcat x y) wordSem_word_exp (s (Const w)) = SOME (Word w)`;
-   `wordSem_word_exp s (Var v:'a wordLang_exp) = get_var v s`;
-   `wordSem_word_exp s (Lookup name:'a wordLang_exp) = get_store name
-  s`;
-   `wordSem_word_exp s (Load addr':'a wordLang_exp) =
+   `wordSem_word_exp s (wordLang_Var v) = get_var v s`;
+   `wordSem_word_exp s (Lookup name) = get_store name s`;
+   `wordSem_word_exp s (wordLang_Load addr') =
          (match wordSem_word_exp s addr' with SOME (Word w) ->
            mem_load w s | _25 -> NONE)`;
-   `wordSem_word_exp s (Op op wexps:'a wordLang_exp) =
+   `wordSem_word_exp s (Op op wexps) =
          (match the_words (MAP (wordSem_word_exp s) wexps) with
            SOME ws -> (OPTION_MAP Word (word_op op ws)) | _26 ->
            NONE)`;
-   `wordSem_word_exp s (Shift sh wexp wexp1:'a wordLang_exp) =
+   `wordSem_word_exp s (wordLang_Shift sh wexp wexp1) =
          (match (wordSem_word_exp s wexp,wordSem_word_exp s
            wexp1) with (SOME (Word w),SOME (Word w1)) -> OPTION_MAP
            Word (word_sh sh w (w2n w1)) | _27 -> NONE)`];;
@@ -587,8 +586,8 @@ hol4_overload "find_code" "wordSem_find_code";;
 
 let enc_stack_def = cake_define_list
   [`wordSem_enc_stack [] = []`;
-   `wordSem_enc_stack ((StackFrame n _47 l handler:'a stack_frame) ::
-  st) = MAP SND l ++ wordSem_enc_stack st`];;
+   `wordSem_enc_stack (StackFrame n _47 l handler :: st) = MAP SND l
+  ++ wordSem_enc_stack st`];;
 hol4_overload "enc_stack" "wordSem_enc_stack";;
 
 let dec_stack_def = cake_define
@@ -837,7 +836,7 @@ let inst_def = cake_define
 let get_var_imm_def = cake_define_list
   [`(\x y. strcat x y) (wordSem_get_var_imm ((Reg n):'a asm_reg_imm))
   s = get_var n s`;
-   `wordSem_get_var_imm (Imm w:'a asm_reg_imm) s = SOME (Word w)`];;
+   `wordSem_get_var_imm (Imm w) s = SOME (Word w)`];;
 hol4_overload "get_var_imm" "wordSem_get_var_imm";;
 
 let add_ret_loc_def = cake_define_list
@@ -898,11 +897,10 @@ hol4_overload "exit_loop" "wordSem_exit_loop";;
 
 let evaluate_def = cake_define_list
   [`wordSem_evaluate ((Skip:'a wordLang_prog),s) = (NONE,s)`;
-   `wordSem_evaluate ((Alloc n names:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Alloc n names,s) =
          (match get_var n s with SOME (Word w) -> alloc w names s
            | _90 -> (SOME Error,s))`;
-   `wordSem_evaluate ((StoreConsts t1 t2 addr' offset words:'a
-  wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_StoreConsts t1 t2 addr' offset words,s) =
          (match (get_var addr' s,get_var offset s) with (SOME (Word
            a),SOME (Word off)) ->
             (if ~const_addresses a words (wordSem_state_mdomain s)
@@ -914,28 +912,28 @@ let evaluate_def = cake_define_list
                  (unset_var t2 s)) in
                  (NONE,set_var addr' (Word (a + bytes_in_word *
                    n2w (LENGTH words))) s)) | _91 -> (SOME Error,s))`;
-   `wordSem_evaluate ((Move pri moves:'a wordLang_prog),s) =
+   `wordSem_evaluate (Move pri moves,s) =
          (if ALL_DISTINCT (MAP FST moves) then
            match get_vars (MAP SND moves) s with NONE -> (SOME
              Error,s) | SOME vs -> (NONE,set_vars (MAP FST moves) vs
              s) else (SOME Error,s))`;
-   `wordSem_evaluate ((Inst i:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Inst i,s) =
          (match inst i s with SOME s1 -> (NONE,s1) | NONE ->
            (SOME Error,s))`;
-   `wordSem_evaluate ((Assign v exp:'a wordLang_prog),s) =
+   `wordSem_evaluate (Assign v exp,s) =
          (match word_exp s exp with NONE -> (SOME Error,s) | SOME
            w -> (NONE,set_var v w s))`;
-   `wordSem_evaluate ((Get v name:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Get v name,s) =
          (match get_store name s with NONE -> (SOME Error,s) |
            SOME x -> (NONE,set_var v x s))`;
-   `wordSem_evaluate ((Set v exp:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Set v exp,s) =
          (if v = Handler \/ v = BitmapBase then (SOME Error,s) else
          match word_exp s exp with NONE -> (SOME Error,s) | SOME
            w -> (NONE,set_store v w s))`;
-   `wordSem_evaluate ((OpCurrHeap b dst src:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_OpCurrHeap b dst src,s) =
          (match word_exp s (Op b [Var src; Lookup CurrHeap]) with
            NONE -> (SOME Error,s) | SOME w -> (NONE,set_var dst w s))`;
-   `wordSem_evaluate ((Store exp v:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Store exp v,s) =
          (match (word_exp s exp,get_var v s) with (SOME (Word
            a),SOME w) ->
              (match mem_store a w s with SOME s1 -> (NONE,s1) |
@@ -943,7 +941,7 @@ let evaluate_def = cake_define_list
    `wordSem_evaluate (Tick,s) =
          (if wordSem_state_clock s = 0 then (SOME
            TimeOut,flush_state T s) else (NONE,dec_clock s))`;
-   `wordSem_evaluate ((MustTerminate p:'a wordLang_prog),s) =
+   `wordSem_evaluate (MustTerminate p,s) =
          (if wordSem_state_termdep s = 0 then (SOME Error,s) else
            let (res,s1) = wordSem_evaluate
              (p,wordSem_state_termdep_fupd (K (wordSem_state_termdep s -
@@ -953,29 +951,27 @@ let evaluate_def = cake_define_list
                (res,wordSem_state_termdep_fupd (K
                (wordSem_state_termdep s)) (wordSem_state_clock_fupd
                (K (wordSem_state_clock s)) s1)))`;
-   `wordSem_evaluate ((Seq c1 c2:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Seq c1 c2,s) =
          (let (res,s1) = fix_clock s (wordSem_evaluate (c1,s)) in
            if res = NONE then wordSem_evaluate (c2,s1) else
              (res,s1))`;
-   `wordSem_evaluate ((Return n ms:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Return n ms,s) =
          (match (get_var n s,get_vars ms s) with (SOME (Loc l1
            l2),SOME ys) -> (SOME (Result (Loc l1 l2) ys),flush_state
            F s) | _93 -> (SOME Error,s))`;
-   `wordSem_evaluate ((Raise n:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Raise n,s) =
          (match get_var n s with NONE -> (SOME Error,s) | SOME w ->
            ((match jump_exc s with NONE -> (SOME Error,s) | SOME
              (s,l1,l2) -> (SOME (Exception (Loc l1 l2) w))),s))`;
-   `wordSem_evaluate ((Break k:'a wordLang_prog),s) = (SOME (Break
-  k),s)`;
-   `wordSem_evaluate ((Continue k:'a wordLang_prog),s) = (SOME
-  (Continue k),s)`;
-   `wordSem_evaluate ((If cmp r1 ri c1 c2:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Break k,s) = (SOME (Break k),s)`;
+   `wordSem_evaluate (wordLang_Continue k,s) = (SOME (Continue k),s)`;
+   `wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y)
           ->
          (match word_cmp cmp x y with SOME T -> wordSem_evaluate
            (c1,s) | SOME F -> wordSem_evaluate (c2,s) | NONE -> (SOME
            Error,s)) | _94 -> (SOME Error,s))`;
-   `wordSem_evaluate ((Loop names c exit_names:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Loop names c exit_names,s) =
          (match cut_state (names,LN) s with NONE -> (SOME Error,s) |
            SOME s ->
              (let (res,s1) = fix_clock s (wordSem_evaluate (c,s)) in
@@ -988,11 +984,10 @@ let evaluate_def = cake_define_list
                  match cut_state (exit_names,LN) s1 with NONE ->
                    (SOME Error,s1) | SOME s2 -> (NONE,s2) else
                    (exit_loop res,s1)))`;
-   `wordSem_evaluate ((LocValue r l1:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_LocValue r l1,s) =
          (if l1 IN domain (wordSem_state_code s) then
            (NONE,set_var r (Loc l1 0) s) else (SOME Error,s))`;
-   `wordSem_evaluate ((Install ptr len dptr dlen names:'a
-  wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Install ptr len dptr dlen names,s) =
         (match cut_env names (wordSem_state_locals s) with NONE ->
           (SOME Error,s) | SOME env ->
         (match (get_var ptr s,get_var len s,get_var dptr s,get_var
@@ -1023,7 +1018,7 @@ let evaluate_def = cake_define_list
                   (NONE,s') else (SOME Error,s)) | _96 -> (SOME
                     Error,s))) | _97 -> (SOME Error,s))) | _98 ->
                     (SOME Error,s)))`;
-   `wordSem_evaluate ((CodeBufferWrite r1 r2:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
           (Word w2)) ->
               (match buffer_write (wordSem_state_code_buffer s) w1
@@ -1031,7 +1026,7 @@ let evaluate_def = cake_define_list
                 (NONE,wordSem_state_code_buffer_fupd (K new_cb)
                   s) | _99 -> (SOME Error,s)) | _100 -> (SOME
                   Error,s))`;
-   `wordSem_evaluate ((DataBufferWrite r1 r2:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_DataBufferWrite r1 r2,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
           (Word w2)) ->
               (match buffer_write (wordSem_state_data_buffer s) w1
@@ -1039,8 +1034,8 @@ let evaluate_def = cake_define_list
                 (NONE,wordSem_state_data_buffer_fupd (K new_db)
                   s) | _101 -> (SOME Error,s)) | _102 -> (SOME
                   Error,s))`;
-   `wordSem_evaluate ((FFI ffi_index ptr1 len1 ptr2 len2 names:'a
-  wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_FFI ffi_index ptr1 len1 ptr2 len2
+  names,s) =
         (match (get_var len1 s,get_var ptr1 s,get_var len2 s,get_var
           ptr2 s) with (SOME (Word w),SOME (Word w2),SOME (Word w3),SOME
           (Word w4)) ->
@@ -1066,10 +1061,10 @@ let evaluate_def = cake_define_list
                         (wordSem_state_memory_fupd (K new_m) s))))))
                         | _103 -> (SOME Error,s))) | res -> (SOME
                         Error,s))`;
-   `wordSem_evaluate ((ShareInst op v exp:'a wordLang_prog),s) =
+   `wordSem_evaluate (ShareInst op v exp,s) =
         (match word_exp s exp with SOME (Word ad) -> share_inst
           op v ad s | _104 -> (SOME Error,s))`;
-   `wordSem_evaluate ((Call ret dest args handler:'a wordLang_prog),s) =
+   `wordSem_evaluate (wordLang_Call ret dest args handler,s) =
        (match get_vars args s with NONE -> (SOME Error,s) | SOME xs
          ->
            (if bad_dest_args dest args then (SOME Error,s) else

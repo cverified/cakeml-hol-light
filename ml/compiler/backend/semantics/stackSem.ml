@@ -124,22 +124,22 @@ let dec_clock_def = cake_define
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
 let word_exp_def = cake_define_list
-  [`stackSem_word_exp s (Const w:'a wordLang_exp) = SOME w`;
-   `stackSem_word_exp s (Var v:'a wordLang_exp) =
+  [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
+   `stackSem_word_exp s (wordLang_Var v) =
          (match FLOOKUP (stackSem_state_regs s) v with SOME (Word
            w) -> SOME w | _10 -> NONE)`;
-   `stackSem_word_exp s (Lookup name:'a wordLang_exp) =
+   `stackSem_word_exp s (Lookup name) =
          (match FLOOKUP (?_store s) name with SOME (Word w) ->
            SOME w | _11 -> NONE)`;
-   `stackSem_word_exp s (Load addr':'a wordLang_exp) =
+   `stackSem_word_exp s (wordLang_Load addr') =
          (match stackSem_word_exp s addr' with SOME w -> (match
            mem_load w s with SOME (Word w) -> SOME w | _12 -> NONE) |
            _13 -> NONE)`;
-   `stackSem_word_exp s (Op op wexps:'a wordLang_exp) =
+   `stackSem_word_exp s (Op op wexps) =
          (let ws = MAP (stackSem_word_exp s) wexps in
            if EVERY IS_SOME ws then word_op op (MAP THE ws) else
              NONE)`;
-   `stackSem_word_exp s (Shift sh wexp wexp1:'a wordLang_exp) =
+   `stackSem_word_exp s (wordLang_Shift sh wexp wexp1) =
          (match (stackSem_word_exp s wexp,stackSem_word_exp s
            wexp1) with (SOME w,SOME w1) -> word_sh sh w (w2n w1) |
            _14 -> NONE)`];;
@@ -560,7 +560,7 @@ hol4_overload "inst" "stackSem_inst";;
 
 let get_var_imm_def = cake_define_list
   [`stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s = get_var n s`;
-   `stackSem_get_var_imm (Imm w:'a asm_reg_imm) s = SOME (Word w)`];;
+   `stackSem_get_var_imm (Imm w) s = SOME (Word w)`];;
 hol4_overload "get_var_imm" "stackSem_get_var_imm";;
 
 let find_code_def = cake_define_list
@@ -582,8 +582,8 @@ hol4_overload "STOP" "stackSem_STOP";;
 let get_labels_def = cake_define
   `stackSem_get_labels x1 =
         match x1 with
-          (Seq p1 p2:'a wordLang_prog) -> stackSem_get_labels p1
-            UNION stackSem_get_labels p2
+          wordLang_Seq p1 p2 -> stackSem_get_labels p1 UNION
+            stackSem_get_labels p2
         | (If _53 _54 _55 p1 p2) -> stackSem_get_labels p1 UNION
           stackSem_get_labels p2
         | (Loop p) -> stackSem_get_labels p
@@ -656,8 +656,7 @@ let check_store_consts_opt_def = cake_define_list
 let dest_Seq_def = cake_define
   `stackSem_dest_Seq x1 =
       match x1 with
-        (Seq p1 p2:'a wordLang_prog) -> SOME (p1,(p2:'a
-          stackLang_prog))
+        wordLang_Seq p1 p2 -> SOME (p1,(p2:'a stackLang_prog))
       | _62 -> NONE`;;
 hol4_overload "dest_Seq" "stackSem_dest_Seq";;
 
@@ -690,33 +689,32 @@ hol4_overload "exit_loop" "stackSem_exit_loop";;
 let evaluate_def = cake_define_list
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
-   `stackSem_evaluate ((Halt v:'w stackSem_result),s) =
+   `stackSem_evaluate (stackSem_Halt v,s) =
          (match get_var v s with SOME w -> (SOME (Halt
            w),empty_env s) | NONE -> (SOME Error,s))`;
-   `stackSem_evaluate ((Alloc n:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Alloc n,s) =
          (if ~stackSem_state_use_alloc s then (SOME Error,s) else
          match get_var n s with SOME (Word w) -> alloc w s | _69
            -> (SOME Error,s))`;
-   `stackSem_evaluate ((StoreConsts t1 t2 stub_opt:'a wordLang_prog),s)
-  =
+   `stackSem_evaluate (wordLang_StoreConsts t1 t2 stub_opt,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          if ~stackSem_state_use_alloc s /\ IS_SOME stub_opt then
            (SOME Error,s) else
          if ~check_store_consts_opt t1 t2 stub_opt (?_code s) then
            (SOME Error,s) else
            store_const_sem t1 t2 s)`;
-   `stackSem_evaluate ((Inst i:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Inst i,s) =
          (match inst i s with SOME s1 -> (NONE,s1) | NONE ->
            (SOME Error,s))`;
-   `stackSem_evaluate ((Get v name:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Get v name,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match FLOOKUP (?_store s) name with SOME x ->
            (NONE,set_var v x s) | NONE -> (SOME Error,s))`;
-   `stackSem_evaluate ((Set name v:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Set name v,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match get_var v s with SOME w -> (NONE,set_store name w
            s) | NONE -> (SOME Error,s))`;
-   `stackSem_evaluate ((OpCurrHeap binop v src:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_OpCurrHeap binop v src,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match word_exp s (Op binop [Var src; Lookup CurrHeap])
            with SOME w -> (NONE,set_var v (Word w) s) | _70 -> (SOME
@@ -724,34 +722,32 @@ let evaluate_def = cake_define_list
    `stackSem_evaluate (Tick,s) =
          (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
            (NONE,dec_clock s))`;
-   `stackSem_evaluate ((Seq c1 c2:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Seq c1 c2,s) =
          (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
            if res = NONE then stackSem_evaluate (c2,s1) else
              (res,s1))`;
-   `stackSem_evaluate ((Return n:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Return n,s) =
          (match get_var n s with SOME (Loc l1 l2) -> (SOME
            (Result (Loc l1 l2)),s) | _71 -> (SOME Error,s))`;
-   `stackSem_evaluate ((Raise n:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Raise n,s) =
          (match get_var n s with SOME (Loc l1 l2) -> (SOME
            (Exception (Loc l1 l2)),s) | _72 -> (SOME Error,s))`;
-   `stackSem_evaluate ((Break n:'w stackSem_result),s) = (SOME (Break
-  n),s)`;
-   `stackSem_evaluate ((Continue n:'w stackSem_result),s) = (SOME
-  (Continue n),s)`;
-   `stackSem_evaluate ((If cmp r1 ri c1 c2:'a wordLang_prog),s) =
+   `stackSem_evaluate (stackSem_Break n,s) = (SOME (Break n),s)`;
+   `stackSem_evaluate (stackSem_Continue n,s) = (SOME (Continue n),s)`;
+   `stackSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y)
           ->
          (match wordSem_word_cmp cmp x y with SOME T ->
            stackSem_evaluate (c1,s) | SOME F -> stackSem_evaluate
            (c2,s) | NONE -> (SOME Error,s)) | _73 -> (SOME Error,s))`;
-   `stackSem_evaluate ((Loop c1:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Loop c1,s) =
         (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
            if cont_loop res then
              (if ?_clock s1 = 0 then (SOME TimeOut,empty_env s1)
                else
                 stackSem_evaluate (STOP (Loop c1),dec_clock s1))
                   else (exit_loop res,s1))`;
-   `stackSem_evaluate ((JumpLower r1 r2 dest:wordLang_prog),s) =
+   `stackSem_evaluate (JumpLower r1 r2 dest,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (Word x),SOME
           (Word y)) ->
           (if word_cmp Lower x y then
@@ -763,7 +759,7 @@ let evaluate_def = cake_define_list
                    (res,s) -> (if bad_fun_return res then (SOME
                    Error,s) else (res,s))))) else (NONE,s)) | _74 ->
                    (SOME Error,s))`;
-   `stackSem_evaluate ((RawCall dest:wordLang_prog),s) =
+   `stackSem_evaluate (RawCall dest,s) =
         (match sptree_lookup dest (?_code s) with NONE -> (SOME
           Error,s) | SOME prog ->
            (match dest_Seq prog with SOME (_75,body) ->
@@ -773,7 +769,7 @@ let evaluate_def = cake_define_list
                    (res,s) -> (if bad_fun_return res then (SOME
                    Error,s) else (res,s)))) | _76 -> (SOME Error,s))
                    | _77 -> (SOME Error,s))`;
-   `stackSem_evaluate ((Call ret dest handler:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Call ret dest handler,s) =
          (match ret with NONE ->
            (match find_code dest (stackSem_state_regs s) (?_code s)
              with NONE -> (SOME Error,s) | SOME prog ->
@@ -804,8 +800,7 @@ let evaluate_def = cake_define_list
                               _78),s) -> (SOME Error,s) | (SOME
                               (Continue _79),s) -> (SOME Error,s) |
                               (res,s) -> (res,s)))))`;
-   `stackSem_evaluate ((Install ptr len dptr dlen ret:'a
-  wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_Install ptr len dptr dlen ret,s) =
         (match (get_var ptr s,get_var len s,get_var dptr s,get_var
           dlen s) with (SOME (Word w1),SOME (Word w2),SOME (Word
           w3),SOME (Word w4)) ->
@@ -832,19 +827,19 @@ let evaluate_def = cake_define_list
                   (NONE,s') else (SOME Error,s)) | _81 -> (SOME
                     Error,s))) | _82 -> (SOME Error,s))) | _83 ->
                     (SOME Error,s))`;
-   `stackSem_evaluate ((ShMemOp op r (Addr a w):wordLang_prog),s) =
+   `stackSem_evaluate (ShMemOp op r (Addr a w),s) =
         (match word_exp s (Op Add [Var a; Const w]) with SOME a ->
              (if ?_clock s = 0 then (SOME TimeOut,empty_env s) else
                sh_mem_op op r a (dec_clock s)) | _84 -> (SOME
                  Error,s))`;
-   `stackSem_evaluate ((CodeBufferWrite r1 r2:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
           (Word w2)) ->
               (match buffer_write (?_code_buffer s) w1 (w2w w2) with
                 SOME new_cb ->
                 (NONE,?_code_buffer_fupd (K new_cb) s) | _85 ->
                   (SOME Error,s)) | _86 -> (SOME Error,s))`;
-   `stackSem_evaluate ((DataBufferWrite r1 r2:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_DataBufferWrite r1 r2,s) =
         (if ~stackSem_state_use_stack s then (SOME Error,s) else
         (match (get_var r1 s,get_var r2 s) with (SOME (Word w1),SOME
           (Word w2)) ->
@@ -852,8 +847,7 @@ let evaluate_def = cake_define_list
                 new_db ->
                 (NONE,?_data_buffer_fupd (K new_db) s) | _87 ->
                   (SOME Error,s)) | _88 -> (SOME Error,s)))`;
-   `stackSem_evaluate ((FFI ffi_index ptr len ptr2 len2 ret:'a
-  wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_FFI ffi_index ptr len ptr2 len2 ret,s) =
        (match (get_var len s,get_var ptr s,get_var len2 s,get_var
          ptr2 s) with (SOME (Word w),SOME (Word w2),SOME (Word w3),SOME
          (Word w4)) ->
@@ -874,27 +868,27 @@ let evaluate_def = cake_define_list
                           (stackSem_state_ffi_save_regs s)))
                           (?_memory_fupd (K new_m) s)))))) | _89 ->
                           (SOME Error,s)) | res -> (SOME Error,s))`;
-   `stackSem_evaluate ((LocValue r l1 l2:'a wordLang_prog),s) =
+   `stackSem_evaluate (wordLang_LocValue r l1 l2,s) =
          (if loc_check (?_code s) (l1,l2) then
            (NONE,set_var r (Loc l1 l2) s) else (SOME Error,s))`;
-   `stackSem_evaluate ((StackAlloc n:wordLang_prog),s) =
+   `stackSem_evaluate (StackAlloc n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if stackSem_state_stack_space s < n then (SOME (Halt (Word
            (n2w 2))),empty_env s) else
            (NONE,stackSem_state_stack_space_fupd (K
              (stackSem_state_stack_space s - n)) s))`;
-   `stackSem_evaluate ((StackFree n:wordLang_prog),s) =
+   `stackSem_evaluate (StackFree n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if LENGTH (?_stack s) < stackSem_state_stack_space s + n
            then (SOME Error,empty_env s) else
            (NONE,stackSem_state_stack_space_fupd (K
              (stackSem_state_stack_space s + n)) s))`;
-   `stackSem_evaluate ((StackLoad r n:wordLang_prog),s) =
+   `stackSem_evaluate (StackLoad r n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if stackSem_state_stack_space s + n < LENGTH (?_stack s)
            then (NONE,set_var r (EL (stackSem_state_stack_space s +
            n) (?_stack s)) s) else (SOME Error,empty_env s))`;
-   `stackSem_evaluate ((StackLoadAny r rn:wordLang_prog),s) =
+   `stackSem_evaluate (StackLoadAny r rn,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
            match get_var rn s with SOME (Word (w:'a word)) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
@@ -904,14 +898,14 @@ let evaluate_def = cake_define_list
                     w) then (NONE,set_var r (EL i (?_stack s)) s)
                     else (SOME Error,empty_env s)) | _90 -> (SOME
                     Error,empty_env s))`;
-   `stackSem_evaluate ((StackStore r n:wordLang_prog),s) =
+   `stackSem_evaluate (StackStore r n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          if LENGTH (?_stack s) <= stackSem_state_stack_space s + n
            then (SOME Error,empty_env s) else
            match get_var r s with NONE -> (SOME Error,empty_env
              s) | SOME v -> (NONE,?_stack_fupd (K (LUPDATE v
              (stackSem_state_stack_space s + n) (?_stack s))) s))`;
-   `stackSem_evaluate ((StackStoreAny r rn:wordLang_prog),s) =
+   `stackSem_evaluate (StackStoreAny r rn,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
            match (get_var r s,get_var rn s) with (SOME v,SOME (Word
              (w:'a word))) ->
@@ -922,11 +916,11 @@ let evaluate_def = cake_define_list
                     w) then (NONE,?_stack_fupd (K (LUPDATE v i
                     (?_stack s))) s) else (SOME Error,empty_env s)) |
                     _91 -> (SOME Error,empty_env s))`;
-   `stackSem_evaluate ((StackGetSize r:wordLang_prog),s) =
+   `stackSem_evaluate (StackGetSize r,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          (NONE,set_var r (Word (n2w (stackSem_state_stack_space
            s))) s))`;
-   `stackSem_evaluate ((StackSetSize r:wordLang_prog),s) =
+   `stackSem_evaluate (StackSetSize r,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
          match get_var r s with SOME (Word (w:'a word)) ->
              (if LENGTH (?_stack s) <= w2n w then (SOME
@@ -934,7 +928,7 @@ let evaluate_def = cake_define_list
                word_shift (:'a)))
                            (stackSem_state_stack_space_fupd (K
                              (w2n w)) s))) | _92 -> (SOME Error,s))`;
-   `stackSem_evaluate ((BitmapLoad r v:wordLang_prog),s) =
+   `stackSem_evaluate (BitmapLoad r v,s) =
          (if ~stackSem_state_use_stack s \/ r = v then (SOME
            Error,s) else
          match get_var v s with SOME (Word w) ->

@@ -50,15 +50,14 @@ let environment_store_FIELDS = define_record "environment_store"
    sptree_num_map"];;
 
 let compile_var_def = cake_define_list
-  [`compile_var t (Glob _1 i:var_name) = App t (GlobalVarLookup i) []`;
-   `compile_var t (Local _2 s:var_name) = Var_local t s`];;
+  [`compile_var t (Glob _1 i) = App t (GlobalVarLookup i) []`;
+   `compile_var t (Local _2 s) = Var_local t s`];;
 
 let compile_pat_def = cake_define_list
-  [`compile_pat env (ast_Pvar v:pattern_semantics_pat) =
-  flatLang_Pvar v`;
+  [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
    `compile_pat env Pany = Pany`;
    `compile_pat env (Plit l:pattern_semantics_pat) = Plit l`;
-   `compile_pat env (ast_Pcon id' ps:pattern_semantics_pat) =
+   `compile_pat env (ast_Pcon id' ps) =
         flatLang_Pcon
           (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id'))
           (MAP (compile_pat env) ps)`;
@@ -66,8 +65,7 @@ let compile_pat_def = cake_define_list
   (compile_pat env p)`;
    `compile_pat env (Pas p i:pattern_semantics_pat) = Pas
   (compile_pat env p) i`;
-   `compile_pat env (Ptannot p t:pattern_semantics_pat) = compile_pat
-  env p`];;
+   `compile_pat env (Ptannot p t) = compile_pat env p`];;
 
 let pat_tups_def = cake_define_list
   [`pat_tups t [] = []`;
@@ -108,20 +106,20 @@ let compile_exp_def = cake_define_list
    `source_to_flat_compile_exp t env (Handle e pes:flatLang_exp) =
         Handle None (source_to_flat_compile_exp t env e)
           (compile_pes t env pes)`;
-   `source_to_flat_compile_exp t env (ast_Lit l:flatLang_exp) =
-  flatLang_Lit None l`;
+   `source_to_flat_compile_exp t env (ast_Lit l) = flatLang_Lit None
+  l`;
    `source_to_flat_compile_exp t env (Con cn es:flatLang_exp) =
         Con None (OPTION_JOIN (OPTION_MAP (type_group_id_type o
           nsLookup (?_c env)) cn))
               (source_to_flat_compile_exps t env es)`;
-   `source_to_flat_compile_exp t env (Var x:flatLang_exp) =
+   `source_to_flat_compile_exp t env (Var x) =
         (match nsLookup (?_v env) x with NONE -> Var_local None
           (implode "") | SOME x -> compile_var None x)`;
    `source_to_flat_compile_exp t env (Fun x e:flatLang_exp) =
         Fun (join_all_names t) x
           (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x
             (Local None x) (?_v env))) env) e)`;
-   `source_to_flat_compile_exp t env (ast_App op es:flatLang_exp) =
+   `source_to_flat_compile_exp t env (ast_App op es) =
         (if op = AallocEmpty then
           ITLIST (Let None NONE)
             (REVERSE (source_to_flat_compile_exps t env es))
@@ -146,7 +144,7 @@ let compile_exp_def = cake_define_list
           (source_to_flat_compile_exps t env es)) else
           flatLang_App None (astOp_to_flatOp op)
             (source_to_flat_compile_exps t env es))`;
-   `source_to_flat_compile_exp t env (Log lop e1 e2:flatLang_exp) =
+   `source_to_flat_compile_exp t env (Log lop e1 e2) =
           (match lop with Andalso ->
             If None
                (source_to_flat_compile_exp t env e1)
@@ -172,7 +170,7 @@ let compile_exp_def = cake_define_list
    `source_to_flat_compile_exp t env (Let NONE e1 e2:flatLang_exp) =
         Let None NONE (source_to_flat_compile_exp t env e1)
           (source_to_flat_compile_exp t env e2)`;
-   `source_to_flat_compile_exp t env (ast_Letrec funs e:flatLang_exp) =
+   `source_to_flat_compile_exp t env (ast_Letrec funs e) =
         (let fun_names = MAP FST funs in
         let new_env = nsBindList (MAP (\x. (x,Local None x))
           fun_names) (?_v env) in
@@ -180,10 +178,10 @@ let compile_exp_def = cake_define_list
             (?_v_fupd (K new_env) env) funs)
                    (source_to_flat_compile_exp t (?_v_fupd (K
                      new_env) env) e))`;
-   `source_to_flat_compile_exp t env (Tannot e _10:flatLang_exp) =
+   `source_to_flat_compile_exp t env (Tannot e _10) =
   source_to_flat_compile_exp t env e`;
-   `source_to_flat_compile_exp t env (Lannot e (Locs st
-  en):flatLang_exp) = source_to_flat_compile_exp t env e`;
+   `source_to_flat_compile_exp t env (Lannot e (Locs st en)) =
+  source_to_flat_compile_exp t env e`;
    `source_to_flat_compile_exps t env [] = []`;
    `source_to_flat_compile_exps t env (e :: es) =
          source_to_flat_compile_exp t env e ::

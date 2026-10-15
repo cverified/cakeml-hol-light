@@ -81,9 +81,9 @@ let no_mutcons_def = cake_define_list
          EVERY no_mutcons xs /\ (match handler with NONE -> T |
            SOME x -> no_mutcons x)`;
    `no_mutcons (Force loc n:flatLang_exp) <=> T`;
-   `no_mutcons (LetCall rets ticks dest xs y:flatLang_exp) <=> EVERY
-  no_mutcons xs /\ no_mutcons y`;
-   `no_mutcons (Return xs:flatLang_exp) <=> EVERY no_mutcons xs`;
+   `no_mutcons (LetCall rets ticks dest xs y) <=> EVERY no_mutcons xs
+  /\ no_mutcons y`;
+   `no_mutcons (Return xs) <=> EVERY no_mutcons xs`;
    `no_mutcons (Op op xs:flatLang_exp) <=> no_mutcons_op op /\ EVERY
   no_mutcons xs`];;
 

@@ -45,7 +45,7 @@ let adjust_bv_def = cake_define_list
   [`adjust_bv b (Number i:bvlSem_v) = Number i`;
    `adjust_bv b (Word64 w:bvlSem_v) = Word64 w`;
    `adjust_bv b (RefPtr l r:bvlSem_v) = RefPtr l (b r)`;
-   `adjust_bv b (CodePtr c:bvlSem_v) = CodePtr ((bvl_num_stubs) +
+   `adjust_bv b (CodePtr c) = CodePtr ((bvl_num_stubs) +
   (bvl_to_bvi_namespaces) * c)`;
    `adjust_bv b (Block tag vs:bvlSem_v) = Block tag (MAP (adjust_bv
   b) vs)`];;

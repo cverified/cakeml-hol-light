@@ -355,10 +355,9 @@ let make_app_list_ann_def = cake_define
               (Small input,n) else (BigList ls,n)))`;;
 
 let shrink_def = cake_define_list
-  [`shrink (Small t:'a app_list_ann) = List [concat (append t)]`;
-   `shrink (BigList ls:'a app_list_ann) = List ls`;
-   `shrink (BigAppend l1 l2:'a app_list_ann) = Append (shrink l1)
-  (shrink l2)`];;
+  [`shrink (Small t) = List [concat (append t)]`;
+   `shrink (BigList ls) = List ls`;
+   `shrink (BigAppend l1 l2) = Append (shrink l1) (shrink l2)`];;
 
 let str_app_list_opt_def = cake_define
   `str_app_list_opt l =

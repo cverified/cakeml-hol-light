@@ -55,12 +55,11 @@ let data_to_bvi_v_def = cake_define_list
 
 (* Projection for references, non-injective for value arrays *)
 let data_to_bvi_ref_def = cake_define_list
-  [`data_to_bvi_ref (ValueArray l:'a bvlSem_ref) = ValueArray (MAP
+  [`data_to_bvi_ref (bvlSem_ValueArray l) = ValueArray (MAP
   data_to_bvi_v l)`;
-   `data_to_bvi_ref (ByteArray b bl:'a bvlSem_ref) = ByteArray b bl`;
-   `data_to_bvi_ref (Thunk m v:'a bvlSem_ref) = Thunk m
-  (data_to_bvi_v v)`;
-   `data_to_bvi_ref (MutBlock tg fin ls c rs:'a bvlSem_ref) =
+   `data_to_bvi_ref (bvlSem_ByteArray b bl) = ByteArray b bl`;
+   `data_to_bvi_ref (bvlSem_Thunk m v) = Thunk m (data_to_bvi_v v)`;
+   `data_to_bvi_ref (MutBlock tg fin ls c rs) =
         MutBlock tg fin (MAP data_to_bvi_v ls) (data_to_bvi_v c)
           (MAP data_to_bvi_v rs)`];;
 

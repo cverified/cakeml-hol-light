@@ -38,8 +38,8 @@ let pure_exp_def = cake_define_list
    `pure_exp n (Tick e:bvi_exp) = F`;
    `pure_exp n (Call _21 _22 _23 _24:bvi_exp) = F`;
    `pure_exp n (Force _25 _26:bvi_exp) = F`;
-   `pure_exp n (LetCall _27 _28 _29 _30 _31:bvi_exp) = F`;
-   `pure_exp n (Return _32:bvi_exp) = F`;
+   `pure_exp n (LetCall _27 _28 _29 _30 _31) = F`;
+   `pure_exp n (Return _32) = F`;
    `pure_exp n (Op op args:bvi_exp) = (pure_op op args /\ pure_exps n
   args)`;
    `pure_exps n [] = T`;
@@ -83,9 +83,8 @@ let shift_vars_def = cake_define_list
    `shift_vars (n:num) (h :: t) = (h + (n:num)) :: shift_vars n t`];;
 
 let shift_cb_def = cake_define_list
-  [`shift_cb n (RCall ts args:call_block) = RCall ts (shift_vars n
-  args)`;
-   `shift_cb n (CallBlock tag l c r:call_block) =
+  [`shift_cb n (RCall ts args) = RCall ts (shift_vars n args)`;
+   `shift_cb n (CallBlock tag l c r) =
        (let l' = shift_vars n l in
        let c' = shift_cb n c in
        let r' = shift_vars n r in
@@ -147,9 +146,9 @@ let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
 
 let wf_cb_def = cake_define_list
-  [`wf_cb n (RCall ts args:call_block) =
+  [`wf_cb n (RCall ts args) =
        wf_vars n args`;
-   `wf_cb n (CallBlock tag left child right:call_block) =
+   `wf_cb n (CallBlock tag left child right) =
        (wf_vars n left /\
         wf_cb n child /\
         wf_vars n right /\
@@ -168,12 +167,12 @@ let bvi_to_cb_def = cake_define
 
 (* Convert back to BlockOp Cons for comparing semantics *)
 let cb_to_bvi_def = cake_define_list
-  [`cb_to_bvi loc (CallBlock tag l child r:call_block) =
+  [`cb_to_bvi loc (CallBlock tag l child r) =
          (let l' = MAP (\n. Var n) l in
          let child' = cb_to_bvi loc child in
          let r' = MAP (\n. Var n) r in
            Op (BlockOp (Cons tag)) (l' ++ [child'] ++ r'))`;
-   `cb_to_bvi loc (RCall ts args:call_block) =
+   `cb_to_bvi loc (RCall ts args) =
          (let args' = MAP (\n. Var n) args in
            bvi_Call ts (SOME loc) args' NONE)`];;
 
@@ -212,12 +211,11 @@ let cb_size_def = cake_define
       | _51 -> 0`;;
 
 let cb_to_bvi_worker_aux_def = cake_define_list
-  [`cb_to_bvi_worker_aux (RCall call_ts call_args':call_block) loc_opt
-  ptr idx =
+  [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Op
          (IntOp (Const (&idx))) [])`;
-   `cb_to_bvi_worker_aux (CallBlock tag left child right:call_block)
-  loc_opt ptr idx =
+   `cb_to_bvi_worker_aux (CallBlock tag left child right) loc_opt ptr
+  idx =
        Let [mut_cons tag left right] (
        Let [update_cons (Var (ptr + 1)) (Op (IntOp (Const (&idx)))
          []) (Var 0)]
@@ -230,13 +228,13 @@ let cb_to_bvi_worker_aux_def = cake_define_list
      version is
    the one used by the cv translation. *)
 let cb_to_bvi_worker_aux_alt_def = cake_define_list
-  [`cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args':call_block)
-  loc_opt ptr idx =
+  [`cb_to_bvi_worker_aux_alt sh (RCall call_ts call_args') loc_opt ptr
+  idx =
        optimise_call call_ts loc_opt (shift_vars sh call_args') (Var
          ptr)
          (Op (IntOp (Const (&idx))) [])`;
-   `cb_to_bvi_worker_aux_alt sh (CallBlock tag left child
-  right:call_block) loc_opt ptr idx =
+   `cb_to_bvi_worker_aux_alt sh (CallBlock tag left child right) loc_opt
+  ptr idx =
        Let [mut_cons tag (shift_vars sh left) (shift_vars sh right)]
          (
        Let [update_cons (Var (ptr + 1)) (Op (IntOp (Const (&idx)))
@@ -245,12 +243,10 @@ let cb_to_bvi_worker_aux_alt_def = cake_define_list
            (LENGTH right)))`];;
 
 let cb_to_bvi_worker_def = cake_define_list
-  [`cb_to_bvi_worker (RCall call_ts call_args':call_block) loc_opt ptr
-  idx =
+  [`cb_to_bvi_worker (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Var
          idx)`;
-   `cb_to_bvi_worker (CallBlock tag left child right:call_block) loc_opt
-  ptr idx =
+   `cb_to_bvi_worker (CallBlock tag left child right) loc_opt ptr idx =
        Let [mut_cons tag left right] (
            Let [update_cons (Var (ptr + 1)) (Var (idx + 1)) (Var 0)]
            (cb_to_bvi_worker_aux (shift_cb 2 child) loc_opt 1

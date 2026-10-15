@@ -60,8 +60,8 @@ let assert_def = cake_define
 hol4_overload "assert" "asmSem_assert";;
 
 let reg_imm_def = cake_define_list
-  [`asmSem_reg_imm (Reg r:'a asm_reg_imm) s = read_reg r s`;
-   `asmSem_reg_imm (Imm w:'a asm_reg_imm) s = w`];;
+  [`asmSem_reg_imm (Reg r) s = read_reg r s`;
+   `asmSem_reg_imm (Imm w) s = w`];;
 hol4_overload "reg_imm" "asmSem_reg_imm";;
 
 let binop_upd_def = cake_define_list
@@ -83,47 +83,41 @@ let word_shift_def = cake_define_list
 hol4_overload "word_shift" "asmSem_word_shift";;
 
 let arith_upd_def = cake_define_list
-  [`asmSem_arith_upd (Binop b r1 r2 (ri:'a asm_reg_imm):'a asm_arith) s
-  =
+  [`asmSem_arith_upd (Binop b r1 r2 (ri:'a asm_reg_imm)) s =
          binop_upd r1 b (read_reg r2 s) (reg_imm ri s) s`;
-   `asmSem_arith_upd (Shift l r1 r2 ri:'a asm_arith) s =
+   `asmSem_arith_upd (asm_Shift l r1 r2 ri) s =
          assert (match ri with Reg r -> w2n (read_reg r s) <
            dimindex (:'a) | _2 -> T)
            (upd_reg r1 (word_shift l (read_reg r2 s) (w2n
              (reg_imm ri s))) s)`;
-   `asmSem_arith_upd (Div r1 r2 r3:'a asm_arith) s =
+   `asmSem_arith_upd (asm_Div r1 r2 r3) s =
          (let q = read_reg r3 s in
            assert (~(q = (n2w 0))) (upd_reg r1 (read_reg r2 s /
              q) s))`;
-   `asmSem_arith_upd (LongMul r1 r2 r3 r4:'a asm_arith) (s:'a asm_state)
-  =
+   `asmSem_arith_upd (LongMul r1 r2 r3 r4) (s:'a asm_state) =
          (let r = w2n (read_reg r3 s) * w2n (read_reg r4 s) in
            upd_reg r2 (n2w r) (upd_reg r1 (n2w (r DIV dimword
              (:'a))) s))`;
-   `asmSem_arith_upd (LongDiv r1 r2 r3 r4 r5:'a asm_arith) (s:'a
-  asm_state) =
+   `asmSem_arith_upd (LongDiv r1 r2 r3 r4 r5) (s:'a asm_state) =
          (let n = w2n (read_reg r3 s) * dimword (:'a) + w2n
            (read_reg r4 s) in
          let d = w2n (read_reg r5 s) in
          let q = n DIV d in
            assert (~(d = 0) /\ q < dimword (:'a))
              (upd_reg r1 (n2w q) (upd_reg r2 (n2w (n MOD d)) s)))`;
-   `asmSem_arith_upd (AddCarry r1 r2 r3 r4:'a asm_arith) (s:'a
-  asm_state) =
+   `asmSem_arith_upd (AddCarry r1 r2 r3 r4) (s:'a asm_state) =
          (let r = w2n (read_reg r2 s) + w2n (read_reg r3 s) +
                  (if read_reg r4 s = (n2w 0) then 0 else 1) in
            upd_reg r4 (if dimword (:'a) <= r then (n2w 1) else (n2w
              0))
              (upd_reg r1 (n2w r) s))`;
-   `asmSem_arith_upd (AddOverflow r1 r2 r3 r4:'a asm_arith) (s:'a
-  asm_state) =
+   `asmSem_arith_upd (AddOverflow r1 r2 r3 r4) (s:'a asm_state) =
          (let w2 = read_reg r2 s in
          let w3 = read_reg r3 s in
            upd_reg r4 (if ~(w2i (w2 + w3) = w2i w2 + w2i w3) then
              (n2w 1) else (n2w 0))
              (upd_reg r1 (w2 + w3) s))`;
-   `asmSem_arith_upd (SubOverflow r1 r2 r3 r4:'a asm_arith) (s:'a
-  asm_state) =
+   `asmSem_arith_upd (SubOverflow r1 r2 r3 r4) (s:'a asm_state) =
          (let w2 = read_reg r2 s in
          let w3 = read_reg r3 s in
            upd_reg r4 (if ~(w2i (w2 - w3) = w2i w2 - w2i w3) then
@@ -132,56 +126,56 @@ let arith_upd_def = cake_define_list
 hol4_overload "arith_upd" "asmSem_arith_upd";;
 
 let fp_upd_def = cake_define_list
-  [`asmSem_fp_upd (FPLess r d1 d2:fp) s =
+  [`asmSem_fp_upd (FPLess r d1 d2) s =
          upd_reg r (if fp64_lessThan (read_fp_reg d1 s)
            (read_fp_reg d2 s) then (n2w 1) else (n2w 0)) s`;
-   `asmSem_fp_upd (FPLessEqual r d1 d2:fp) s =
+   `asmSem_fp_upd (FPLessEqual r d1 d2) s =
          upd_reg r (if fp64_lessEqual (read_fp_reg d1 s)
            (read_fp_reg d2 s) then (n2w 1) else (n2w 0)) s`;
-   `asmSem_fp_upd (FPEqual r d1 d2:fp) s =
+   `asmSem_fp_upd (FPEqual r d1 d2) s =
          upd_reg r (if fp64_equal (read_fp_reg d1 s) (read_fp_reg
            d2 s) then (n2w 1) else (n2w 0)) s`;
-   `asmSem_fp_upd (FPMov d1 d2:fp) s = upd_fp_reg d1 (read_fp_reg d2
-  s) s`;
-   `asmSem_fp_upd (FPAbs d1 d2:fp) s = upd_fp_reg d1 (fp64_abs
+   `asmSem_fp_upd (FPMov d1 d2) s = upd_fp_reg d1 (read_fp_reg d2 s)
+  s`;
+   `asmSem_fp_upd (FPAbs d1 d2) s = upd_fp_reg d1 (fp64_abs
   (read_fp_reg d2 s)) s`;
-   `asmSem_fp_upd (FPNeg d1 d2:fp) s = upd_fp_reg d1 (fp64_negate
+   `asmSem_fp_upd (FPNeg d1 d2) s = upd_fp_reg d1 (fp64_negate
   (read_fp_reg d2 s)) s`;
-   `asmSem_fp_upd (FPSqrt d1 d2:fp) s =
+   `asmSem_fp_upd (FPSqrt d1 d2) s =
          upd_fp_reg d1 (fp64_sqrt roundTiesToEven (read_fp_reg d2
            s)) s`;
-   `asmSem_fp_upd (FPAdd d1 d2 d3:fp) s =
+   `asmSem_fp_upd (FPAdd d1 d2 d3) s =
          upd_fp_reg d1
            (fp64_add roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPSub d1 d2 d3:fp) s =
+   `asmSem_fp_upd (FPSub d1 d2 d3) s =
          upd_fp_reg d1
            (fp64_sub roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPMul d1 d2 d3:fp) s =
+   `asmSem_fp_upd (FPMul d1 d2 d3) s =
          upd_fp_reg d1
            (fp64_mul roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPDiv d1 d2 d3:fp) s =
+   `asmSem_fp_upd (FPDiv d1 d2 d3) s =
          upd_fp_reg d1
            (fp64_div roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPFma d1 d2 d3:fp) s =
+   `asmSem_fp_upd (FPFma d1 d2 d3) s =
          upd_fp_reg d1
            (fp64_mul_add roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s) (read_fp_reg d1 s)) s`;
-   `asmSem_fp_upd (FPMovToReg r1 r2 d:fp) (s:'a asm_state) =
+   `asmSem_fp_upd (FPMovToReg r1 r2 d) (s:'a asm_state) =
          (if dimindex (:'a) = 64 then
            upd_reg r1 (w2w (read_fp_reg d s)) s else let v =
              read_fp_reg d s in
            upd_reg r2 ((63 >< 32) v) (upd_reg r1 ((31 >< 0) v)
              s))`;
-   `asmSem_fp_upd (FPMovFromReg d r1 r2:fp) (s:'a asm_state) =
+   `asmSem_fp_upd (FPMovFromReg d r1 r2) (s:'a asm_state) =
          upd_fp_reg d
            (if dimindex (:'a) = 64 then
               w2w (read_reg r1 s) else
               read_reg r2 s @@ read_reg r1 s) s`;
-   `asmSem_fp_upd (FPToInt d1 d2:fp) (s:'a asm_state) =
+   `asmSem_fp_upd (FPToInt d1 d2) (s:'a asm_state) =
          (match fp64_to_int roundTiesToEven (read_fp_reg d2 s) with
              SOME i ->
                (let w = i2w i:word32 in
@@ -192,7 +186,7 @@ let fp_upd_def = cake_define_list
                            (bit_field_insert h l w (read_fp_reg (d1
                              DIV 2) s)))
                     (assert (w2i w = i) s)) | _4 -> assert F s)`;
-   `asmSem_fp_upd (FPFromInt d1 d2:fp) (s:'a asm_state) =
+   `asmSem_fp_upd (FPFromInt d1 d2) (s:'a asm_state) =
          (let i = if dimindex (:'a) = 64 then
                    w2i ((31 >< 0) (read_fp_reg d2 s):word32) else
                      let v = read_fp_reg (d2 DIV 2) s in
@@ -252,28 +246,28 @@ hol4_overload "mem_op" "asmSem_mem_op";;
 
 let inst_def = cake_define_list
   [`asmSem_inst Skip s = s`;
-   `asmSem_inst (Const r imm:'a asm_inst) s = upd_reg r imm s`;
-   `asmSem_inst (Arith x:'a asm_inst) s = arith_upd x s`;
-   `asmSem_inst (Mem m r a:'a asm_inst) s = mem_op m r a s`;
-   `asmSem_inst (FP fp:'a asm_inst) s = fp_upd fp s`];;
+   `asmSem_inst (Const r imm) s = upd_reg r imm s`;
+   `asmSem_inst (asm_Arith x) s = arith_upd x s`;
+   `asmSem_inst (Mem m r a) s = mem_op m r a s`;
+   `asmSem_inst (FP fp) s = fp_upd fp s`];;
 hol4_overload "inst" "asmSem_inst";;
 
 let jump_to_offset_def = cake_define
   `jump_to_offset w s = upd_pc (asm_state_pc s + w) s`;;
 
 let asm_def = cake_define_list
-  [`asmSem_asm (Inst i:'a asm) pc s = upd_pc pc (inst i s)`;
-   `asmSem_asm (Jump l:'a asm) pc s = jump_to_offset l s`;
-   `asmSem_asm (JumpCmp cmp r ri l:'a asm) pc s =
+  [`asmSem_asm (Inst i) pc s = upd_pc pc (inst i s)`;
+   `asmSem_asm (Jump l) pc s = jump_to_offset l s`;
+   `asmSem_asm (JumpCmp cmp r ri l) pc s =
          (if word_cmp cmp (read_reg r s) (reg_imm ri s) then
            jump_to_offset l s else upd_pc pc s)`;
-   `asmSem_asm (Call l:'a asm) pc s = jump_to_offset l (upd_reg
+   `asmSem_asm (Call l) pc s = jump_to_offset l (upd_reg
   (asm_state_lr s) pc s)`;
-   `asmSem_asm (JumpReg r:'a asm) pc s =
+   `asmSem_asm (JumpReg r) pc s =
          (let a = read_reg r s in upd_pc a (assert
            (alignment_aligned (asm_state_align s) a) s))`;
-   `asmSem_asm (Loc r l:'a asm) pc s = upd_pc pc (upd_reg r
-  (asm_state_pc s + l) s)`];;
+   `asmSem_asm (Loc r l) pc s = upd_pc pc (upd_reg r (asm_state_pc s
+  + l) s)`];;
 hol4_overload "asm" "asmSem_asm";;
 
 let asm_step_def = cake_define

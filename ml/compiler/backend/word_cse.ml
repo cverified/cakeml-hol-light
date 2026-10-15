@@ -128,14 +128,13 @@ let canonicalRegs'_def = cake_define
        if n = avoid then r else n)`;;
 
 let canonicalImmReg_def = cake_define_list
-  [`canonicalImmReg data (Reg r:'a asm_reg_imm) = Reg (canonicalRegs
-  data r)`;
-   `canonicalImmReg data (Imm w:'a asm_reg_imm) = Imm w`];;
+  [`canonicalImmReg data (Reg r) = Reg (canonicalRegs data r)`;
+   `canonicalImmReg data (Imm w) = Imm w`];;
 
 let canonicalImmReg'_def = cake_define_list
-  [`canonicalImmReg' avoid data (Reg r:'a asm_reg_imm) = Reg
-  (canonicalRegs' avoid data r)`;
-   `canonicalImmReg' avoid data (Imm w:'a asm_reg_imm) = Imm w`];;
+  [`canonicalImmReg' avoid data (Reg r) = Reg (canonicalRegs' avoid
+  data r)`;
+   `canonicalImmReg' avoid data (Imm w) = Imm w`];;
 
 let canonicalMultRegs_def = cake_define
   `canonicalMultRegs (data:knowledge) (regs:num list) = MAP
@@ -161,65 +160,65 @@ let canonicalMoveRegs_def = cake_define
        data) else empty_data)`;;
 
 let canonicalArith_def = cake_define_list
-  [`canonicalArith data (Binop op r1 r2 r3:'a asm_arith) =
+  [`canonicalArith data (Binop op r1 r2 r3) =
       Binop op r1 (canonicalRegs' r1 data r2) (canonicalImmReg'
         r1 data r3)`;
-   `canonicalArith data (Shift s r1 r2 ri:'a asm_arith) =
+   `canonicalArith data (asm_Shift s r1 r2 ri) =
       Shift s r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
         data ri)`;
-   `canonicalArith data (Div r1 r2 r3:'a asm_arith) =
+   `canonicalArith data (asm_Div r1 r2 r3) =
       Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalArith data (LongMul r1 r2 r3 r4:'a asm_arith) =
+   `canonicalArith data (LongMul r1 r2 r3 r4) =
       LongMul r1 r2 (canonicalRegs data r3) (canonicalRegs data
         r4)`;
-   `canonicalArith data (LongDiv r1 r2 r3 r4 r5:'a asm_arith) =
+   `canonicalArith data (LongDiv r1 r2 r3 r4 r5) =
       LongDiv r1 r2 (canonicalRegs data r3) (canonicalRegs data
         r4) (canonicalRegs data r5)`;
-   `canonicalArith data (AddCarry r1 r2 r3 r4:'a asm_arith) =
+   `canonicalArith data (AddCarry r1 r2 r3 r4) =
       AddCarry r1 (canonicalRegs' r1 data r2) (canonicalRegs' r1
         data r3) r4`;
-   `canonicalArith data (AddOverflow r1 r2 r3 r4:'a asm_arith) =
+   `canonicalArith data (AddOverflow r1 r2 r3 r4) =
       AddOverflow r1 (canonicalRegs' r1 data r2) (canonicalRegs'
         r1 data r3) r4`;
-   `canonicalArith data (SubOverflow r1 r2 r3 r4:'a asm_arith) =
+   `canonicalArith data (SubOverflow r1 r2 r3 r4) =
       SubOverflow r1 (canonicalRegs' r1 data r2) (canonicalRegs'
         r1 data r3) r4`];;
 
 let canonicalFp_def = cake_define_list
-  [`canonicalFp data (FPLess r1 r2 r3:fp) =
+  [`canonicalFp data (FPLess r1 r2 r3) =
       FPLess r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPLessEqual r1 r2 r3:fp) =
+   `canonicalFp data (FPLessEqual r1 r2 r3) =
       FPLessEqual r1 (canonicalRegs data r2) (canonicalRegs data
         r3)`;
-   `canonicalFp data (FPEqual r1 r2 r3:fp) =
+   `canonicalFp data (FPEqual r1 r2 r3) =
       FPEqual r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPAbs r1 r2:fp) =
+   `canonicalFp data (FPAbs r1 r2) =
       FPAbs r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPNeg r1 r2:fp) =
+   `canonicalFp data (FPNeg r1 r2) =
       FPNeg r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPSqrt r1 r2:fp) =
+   `canonicalFp data (FPSqrt r1 r2) =
       FPSqrt r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPAdd r1 r2 r3:fp) =
+   `canonicalFp data (FPAdd r1 r2 r3) =
       FPAdd r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPSub r1 r2 r3:fp) =
+   `canonicalFp data (FPSub r1 r2 r3) =
       FPSub r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPMul r1 r2 r3:fp) =
+   `canonicalFp data (FPMul r1 r2 r3) =
       FPMul r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPDiv r1 r2 r3:fp) =
+   `canonicalFp data (FPDiv r1 r2 r3) =
       FPDiv r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPFma r1 r2 r3:fp) =
+   `canonicalFp data (FPFma r1 r2 r3) =
       FPFma r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
-   `canonicalFp data (FPMov r1 r2:fp) =
+   `canonicalFp data (FPMov r1 r2) =
       FPMov r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPMovToReg r1 r2 r3:fp) =
+   `canonicalFp data (FPMovToReg r1 r2 r3) =
       FPMovToReg r1 (canonicalRegs data r2) (canonicalRegs data
         r3)`;
-   `canonicalFp data (FPMovFromReg r1 r2 r3:fp) =
+   `canonicalFp data (FPMovFromReg r1 r2 r3) =
       FPMovFromReg r1 (canonicalRegs data r2) (canonicalRegs data
         r3)`;
-   `canonicalFp data (FPToInt r1 r2:fp) =
+   `canonicalFp data (FPToInt r1 r2) =
       FPToInt r1 (canonicalRegs data r2)`;
-   `canonicalFp data (FPFromInt r1 r2:fp) =
+   `canonicalFp data (FPFromInt r1 r2) =
       FPFromInt r1 (canonicalRegs data r2)`];;
 
 (* SEEN INSTRUCTIONS MEMORY *)
@@ -241,26 +240,23 @@ let arithOpToNum_def = cake_define_list
    `arithOpToNum Xor = 39`];;
 
 let regImmToNumList_def = cake_define_list
-  [`regImmToNumList (Reg r:'a asm_reg_imm) = [33; r + 100]`;
-   `regImmToNumList (Imm w:'a asm_reg_imm) = [34; wordToNum w]`];;
+  [`regImmToNumList (Reg r) = [33; r + 100]`;
+   `regImmToNumList (Imm w) = [34; wordToNum w]`];;
 
 let arithToNumList_def = cake_define_list
-  [`arithToNumList (Binop op r1 r2 ri:'a asm_arith) = [25;
-  arithOpToNum op; r2 + 100] ++ regImmToNumList ri`;
-   `arithToNumList (LongMul r1 r2 r3 r4:'a asm_arith) = [26; r3 +
-  100; r4 + 100]`;
-   `arithToNumList (LongDiv r1 r2 r3 r4 r5:'a asm_arith) = [27; r3 +
-  100; r4 + 100; r5 + 100]`;
-   `arithToNumList (Shift s r1 r2 ri:'a asm_arith) = [28; shiftToNum
-  s; r2 + 100] ++ regImmToNumList ri`;
-   `arithToNumList (Div r1 r2 r3:'a asm_arith) = [29; r2 + 100; r3 +
+  [`arithToNumList (Binop op r1 r2 ri) = [25; arithOpToNum op; r2 +
+  100] ++ regImmToNumList ri`;
+   `arithToNumList (LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 + 100]`;
+   `arithToNumList (LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 +
+  100; r5 + 100]`;
+   `arithToNumList (asm_Shift s r1 r2 ri) = [28; shiftToNum s; r2 +
+  100] ++ regImmToNumList ri`;
+   `arithToNumList (asm_Div r1 r2 r3) = [29; r2 + 100; r3 + 100]`;
+   `arithToNumList (AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 + 100]`;
+   `arithToNumList (AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3 +
   100]`;
-   `arithToNumList (AddCarry r1 r2 r3 r4:'a asm_arith) = [30; r2 +
-  100; r3 + 100]`;
-   `arithToNumList (AddOverflow r1 r2 r3 r4:'a asm_arith) = [31; r2 +
-  100; r3 + 100]`;
-   `arithToNumList (SubOverflow r1 r2 r3 r4:'a asm_arith) = [32; r2 +
-  100; r3 + 100]`];;
+   `arithToNumList (SubOverflow r1 r2 r3 r4) = [32; r2 + 100; r3 +
+  100]`];;
 
 let memOpToNum_def = cake_define_list
   [`memOpToNum Load = (21:num)`;
@@ -281,28 +277,27 @@ let loadToNumList_def = cake_define
   ofs]`;;
 
 let fpToNumList_def = cake_define_list
-  [`fpToNumList (FPLess r1 r2 r3:fp) = [5; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPLessEqual r1 r2 r3:fp) = [6; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPEqual r1 r2 r3:fp) = [7; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPAbs r1 r2:fp) = [8; r2 + 100]`;
-   `fpToNumList (FPNeg r1 r2:fp) = [9; r2 + 100]`;
-   `fpToNumList (FPSqrt r1 r2:fp) = [10; r2 + 100]`;
-   `fpToNumList (FPAdd r1 r2 r3:fp) = [11; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPSub r1 r2 r3:fp) = [12; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPMul r1 r2 r3:fp) = [13; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPDiv r1 r2 r3:fp) = [14; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPFma r1 r2 r3:fp) = [15; r1 + 100; r2 + 100; r3 +
-  100]`;
-   `fpToNumList (FPMov r1 r2:fp) = [16; r2 + 100]`;
-   `fpToNumList (FPMovToReg r1 r2 r3:fp) = [17; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPMovFromReg r1 r2 r3:fp) = [18; r2 + 100; r3 + 100]`;
-   `fpToNumList (FPToInt r1 r2:fp) = [19; r2 + 100]`;
-   `fpToNumList (FPFromInt r1 r2:fp) = [20; r2 + 100]`];;
+  [`fpToNumList (FPLess r1 r2 r3) = [5; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPLessEqual r1 r2 r3) = [6; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPEqual r1 r2 r3) = [7; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPAbs r1 r2) = [8; r2 + 100]`;
+   `fpToNumList (FPNeg r1 r2) = [9; r2 + 100]`;
+   `fpToNumList (FPSqrt r1 r2) = [10; r2 + 100]`;
+   `fpToNumList (FPAdd r1 r2 r3) = [11; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPSub r1 r2 r3) = [12; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPMul r1 r2 r3) = [13; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPDiv r1 r2 r3) = [14; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPFma r1 r2 r3) = [15; r1 + 100; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPMov r1 r2) = [16; r2 + 100]`;
+   `fpToNumList (FPMovToReg r1 r2 r3) = [17; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPMovFromReg r1 r2 r3) = [18; r2 + 100; r3 + 100]`;
+   `fpToNumList (FPToInt r1 r2) = [19; r2 + 100]`;
+   `fpToNumList (FPFromInt r1 r2) = [20; r2 + 100]`];;
 
 let instToNumList_def = cake_define
   `instToNumList x1 =
       match x1 with
-        (Const r w:'a asm_inst) -> [2; wordToNum w]
+        asm_Const r w -> [2; wordToNum w]
       | (Arith a) -> 3 :: (arithToNumList a)
       | (FP fp) -> 4 :: (fpToNumList fp)
       | _1 -> [1]`;;
@@ -320,27 +315,27 @@ let OpCurrHeapToNumList_def = cake_define
 (* WORD CSE FUNCTIONS *)
 
 let firstRegOfArith_def = cake_define_list
-  [`firstRegOfArith (Binop _2 r _3 _4:'a asm_arith) = r`;
-   `firstRegOfArith (Shift _5 r _6 _7:'a asm_arith) = r`;
-   `firstRegOfArith (Div r _8 _9:'a asm_arith) = r`;
-   `firstRegOfArith (LongMul r _10 _11 _12:'a asm_arith) = r`;
-   `firstRegOfArith (LongDiv r _13 _14 _15 _16:'a asm_arith) = r`;
-   `firstRegOfArith (AddCarry r _17 _18 _19:'a asm_arith) = r`;
-   `firstRegOfArith (AddOverflow r _20 _21 _22:'a asm_arith) = r`;
-   `firstRegOfArith (SubOverflow r _23 _24 _25:'a asm_arith) = r`];;
+  [`firstRegOfArith (Binop _2 r _3 _4) = r`;
+   `firstRegOfArith (asm_Shift _5 r _6 _7) = r`;
+   `firstRegOfArith (asm_Div r _8 _9) = r`;
+   `firstRegOfArith (LongMul r _10 _11 _12) = r`;
+   `firstRegOfArith (LongDiv r _13 _14 _15 _16) = r`;
+   `firstRegOfArith (AddCarry r _17 _18 _19) = r`;
+   `firstRegOfArith (AddOverflow r _20 _21 _22) = r`;
+   `firstRegOfArith (SubOverflow r _23 _24 _25) = r`];;
 
 (* All registers an arith instruction writes (multi-output ops write
    two), so
   that every written register is invalidated. *)
 let arithWrites_def = cake_define_list
-  [`arithWrites (Binop _26 r _27 _28:'a asm_arith) = [r]`;
-   `arithWrites (Shift _29 r _30 _31:'a asm_arith) = [r]`;
-   `arithWrites (Div r _32 _33:'a asm_arith) = [r]`;
-   `arithWrites (LongMul r1 r2 _34 _35:'a asm_arith) = [r1; r2]`;
-   `arithWrites (LongDiv r1 r2 _36 _37 _38:'a asm_arith) = [r1; r2]`;
-   `arithWrites (AddCarry r1 _39 _40 r4:'a asm_arith) = [r1; r4]`;
-   `arithWrites (AddOverflow r1 _41 _42 r4:'a asm_arith) = [r1; r4]`;
-   `arithWrites (SubOverflow r1 _43 _44 r4:'a asm_arith) = [r1; r4]`];;
+  [`arithWrites (Binop _26 r _27 _28) = [r]`;
+   `arithWrites (asm_Shift _29 r _30 _31) = [r]`;
+   `arithWrites (asm_Div r _32 _33) = [r]`;
+   `arithWrites (LongMul r1 r2 _34 _35) = [r1; r2]`;
+   `arithWrites (LongDiv r1 r2 _36 _37 _38) = [r1; r2]`;
+   `arithWrites (AddCarry r1 _39 _40 r4) = [r1; r4]`;
+   `arithWrites (AddOverflow r1 _41 _42 r4) = [r1; r4]`;
+   `arithWrites (SubOverflow r1 _43 _44 r4) = [r1; r4]`];;
 
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
@@ -507,7 +502,7 @@ let dest_Var_def = cake_define
     *)
 let bm_inter_eq_acc_def = cake_define_list
   [`bm_inter_eq_acc m2 Tip acc = acc`;
-   `bm_inter_eq_acc m2 (Bin n k v l r:('k,'v)balanced_map) acc =
+   `bm_inter_eq_acc m2 (Bin n k v l r) acc =
       bm_inter_eq_acc m2 l
         (bm_inter_eq_acc m2 r
           (if balanced_map_lookup listCmp k m2 = SOME v then
@@ -553,13 +548,13 @@ Signification of the terms:
     s -> string
 *)
 let word_cse_def = cake_define_list
-  [`word_cse data (Move r rs:'a wordLang_prog) =
+  [`word_cse data (Move r rs) =
         (let data' = canonicalMoveRegs data rs in
           (data',Move r rs))`;
-   `word_cse data (Inst i:'a wordLang_prog) =
+   `word_cse data (wordLang_Inst i) =
         (let (data',p) = word_cseInst data i in
           (data',p))`;
-   `word_cse data (Get r x:'a wordLang_prog) =
+   `word_cse data (wordLang_Get r x) =
         (let data = invalidate_data data r in
           match ALOOKUP (knowledge_gets_mem data) x with NONE -> (if
             EVEN r then (data,Get r x) else
@@ -578,7 +573,7 @@ let word_cse_def = cake_define_list
                         (knowledge_to_canonical data))) data),
                        Move 1 [(r,lookup_any k
                          (knowledge_to_latest data) k)])))`;
-   `word_cse data (Set x e:'a wordLang_prog) =
+   `word_cse data (wordLang_Set x e) =
         (if x = CurrHeap then
           (empty_data,Set x e) else
           let new_gets_mem = FILTER (\(m,n). ~(m = x))
@@ -594,16 +589,16 @@ let word_cse_def = cake_define_list
                                 ((x,canonicalRegs data v) ::
                                 new_gets_mem)) data),
                            Set x e)))`;
-   `word_cse data (MustTerminate p:'a wordLang_prog) =
+   `word_cse data (MustTerminate p) =
                 (let (data',p') = word_cse data p in
                     (data',MustTerminate p'))`;
-   `word_cse data (Call ret dest args handler:'a wordLang_prog) =
+   `word_cse data (wordLang_Call ret dest args handler) =
                 (empty_data,Call ret dest args handler)`;
-   `word_cse data (Seq p1 p2:'a wordLang_prog) =
+   `word_cse data (wordLang_Seq p1 p2) =
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data1 p2 in
           (data2,Seq p1' p2'))`;
-   `word_cse data (If c r1 r2 p1 p2:'a wordLang_prog) =
+   `word_cse data (wordLang_If c r1 r2 p1 p2) =
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data p2 in
           (merge_data data1 data2,If c r1 r2 p1' p2'))`;
@@ -614,40 +609,38 @@ let word_cse_def = cake_define_list
             let pL = OpCurrHeapToNumList b r2' in
               add_to_data_aux (register_read data r2') r1 pL
                 (OpCurrHeap b r1 r2))`;
-   `word_cse data (LocValue r l:'a wordLang_prog) =
+   `word_cse data (wordLang_LocValue r l) =
         (let data = invalidate_data data r in
           add_to_data_aux data r [48; l] (LocValue r l))`;
    `word_cse data Skip = (data,Skip)`;
-   `word_cse data (Store e r:'a wordLang_prog) =
-  (knowledge_loads_mem_fupd (K empty) data,Store e r)`;
-   `word_cse data (Assign r e:'a wordLang_prog) = (data,Assign r e)`;
-   `word_cse data (Raise r:'a wordLang_prog) = (data,Raise r)`;
-   `word_cse data (Return r1 r2:'a wordLang_prog) = (data,Return r1
-  r2)`;
+   `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
+  empty) data,Store e r)`;
+   `word_cse data (Assign r e) = (data,Assign r e)`;
+   `word_cse data (wordLang_Raise r) = (data,Raise r)`;
+   `word_cse data (wordLang_Return r1 r2) = (data,Return r1 r2)`;
    `word_cse data Tick = (data,Tick)`;
-   `word_cse data (Alloc r m:'a wordLang_prog) = (empty_data,Alloc r
-  m)`;
-   `word_cse data (Install p l dp dl m:'a wordLang_prog) =
+   `word_cse data (wordLang_Alloc r m) = (empty_data,Alloc r m)`;
+   `word_cse data (wordLang_Install p l dp dl m) =
   (empty_data,Install p l dp dl m)`;
-   `word_cse data (CodeBufferWrite r1 r2:'a wordLang_prog) =
+   `word_cse data (wordLang_CodeBufferWrite r1 r2) =
   (data,CodeBufferWrite r1 r2)`;
-   `word_cse data (DataBufferWrite r1 r2:'a wordLang_prog) =
+   `word_cse data (wordLang_DataBufferWrite r1 r2) =
   (data,DataBufferWrite r1 r2)`;
-   `word_cse data (FFI s p1 l1 p2 l2 m:'a wordLang_prog) =
-  (empty_data,FFI s p1 l1 p2 l2 m)`;
-   `word_cse data (StoreConsts r1 r2 r3 r4 payload:'a wordLang_prog) =
+   `word_cse data (wordLang_FFI s p1 l1 p2 l2 m) = (empty_data,FFI s
+  p1 l1 p2 l2 m)`;
+   `word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
          (let data = invalidate_regs data [r1; r2; r3; r4] in
             (knowledge_loads_mem_fupd (K empty) data,StoreConsts
               r1 r2 r3 r4 payload))`;
-   `word_cse data (ShareInst op r exp:'a wordLang_prog) =
+   `word_cse data (ShareInst op r exp) =
          (let data = (if is_store op then data else invalidate_data
            data r) in
            (data,ShareInst op r exp))`;
-   `word_cse data (Loop names c exit_names:'a wordLang_prog) =
+   `word_cse data (wordLang_Loop names c exit_names) =
          (let (_84,c') = word_cse empty_data c in
            (empty_data,Loop names c' exit_names))`;
-   `word_cse data (Break k:'a wordLang_prog) = (data,Break k)`;
-   `word_cse data (Continue k:'a wordLang_prog) = (data,Continue k)`];;
+   `word_cse data (wordLang_Break k) = (data,Break k)`;
+   `word_cse data (wordLang_Continue k) = (data,Continue k)`];;
 
 let word_common_subexp_elim_def = cake_define
   `word_common_subexp_elim prog =

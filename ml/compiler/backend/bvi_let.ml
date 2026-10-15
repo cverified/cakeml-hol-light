@@ -104,9 +104,9 @@ let compile_def = cake_define_list
          [Call t dest (bvi_let_compile env d xs)
              (match h with NONE -> NONE | SOME e -> SOME (HD
                (bvi_let_compile (0 :: env) d [e])))]`;
-   `bvi_let_compile env d [(Return xs:bvi_exp)] = [Return
-  (bvi_let_compile env d xs)]`;
-   `bvi_let_compile env d [(LetCall rets t dest xs y:bvi_exp)] =
+   `bvi_let_compile env d [Return xs] = [Return (bvi_let_compile env
+  d xs)]`;
+   `bvi_let_compile env d [LetCall rets t dest xs y] =
          [LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d
               [y]))]`];;
@@ -145,9 +145,9 @@ let compile_sing_def = cake_define_list
          (Call t dest (bvi_let_compile_list env d xs)
              (match h with NONE -> NONE | SOME e -> SOME
                ((bvi_let_compile_sing (0 :: env) d e))))`;
-   `bvi_let_compile_sing env d (Return xs:bvi_exp) = Return
+   `bvi_let_compile_sing env d (Return xs) = Return
   (bvi_let_compile_list env d xs)`;
-   `bvi_let_compile_sing env d (LetCall rets t dest xs y:bvi_exp) =
+   `bvi_let_compile_sing env d (LetCall rets t dest xs y) =
          LetCall rets t dest (bvi_let_compile_list env d xs)
             (bvi_let_compile_sing (REPLICATE rets 0 ++ env) d y)`;
    `bvi_let_compile_list env d [] = []`;

@@ -15,7 +15,6 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_simp.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 ML code, not ported:
@@ -29,8 +28,8 @@ val s = ``s:('a,'c,'ffi) wordSem$state``
 (* gc *)
 
 let is_gc_word_const_def = cake_define_list
-  [`is_gc_word_const (Loc _1 _2:'a word_loc) = T`;
-   `is_gc_word_const (Word w:'a word_loc) = is_gc_const w`];;
+  [`is_gc_word_const (wordLang_Loc _1 _2) = T`;
+   `is_gc_word_const (Word w) = is_gc_const w`];;
 
 let gc_fun_const_ok_def = cake_define
   `gc_fun_const_ok (f:('a word_loc) list#('a word->'a word_loc)#('a

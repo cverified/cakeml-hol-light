@@ -52,12 +52,12 @@ let let_op_def = cake_define_list
    `clos_letop_let_op [(Handle t x1 x2:closLang_exp)] =
          [Handle t (HD (clos_letop_let_op [x1]))
                   (HD (clos_letop_let_op [x2]))]`;
-   `clos_letop_let_op [(Op t op xs:closLang_exp)] =
+   `clos_letop_let_op [Op t op xs] =
          [Op t op (clos_letop_let_op xs)]`;
-   `clos_letop_let_op [(Tick t x:closLang_exp)] = [Tick t (HD
-  (clos_letop_let_op [x]))]`;
-   `clos_letop_let_op [(Call t ticks dest xs:closLang_exp)] = [Call t
-  ticks dest (clos_letop_let_op xs)]`;
+   `clos_letop_let_op [Tick t x] = [Tick t (HD (clos_letop_let_op
+  [x]))]`;
+   `clos_letop_let_op [Call t ticks dest xs] = [Call t ticks dest
+  (clos_letop_let_op xs)]`;
    `clos_letop_let_op [(App t loc_opt x1 xs:closLang_exp)] = [App t
   loc_opt (HD (clos_letop_let_op [x1])) (clos_letop_let_op xs)]`;
    `clos_letop_let_op [(Letrec t loc_opt vs fns x1:closLang_exp)] =
@@ -65,8 +65,8 @@ let let_op_def = cake_define_list
            (clos_letop_let_op [x]))) fns in
          [Letrec t loc_opt vs new_fns (HD (clos_letop_let_op
            [x1]))])`;
-   `clos_letop_let_op [(Fn t loc_opt vs num_args x1:closLang_exp)] =
-  [Fn t loc_opt vs num_args (HD (clos_letop_let_op [x1]))]`];;
+   `clos_letop_let_op [Fn t loc_opt vs num_args x1] = [Fn t loc_opt
+  vs num_args (HD (clos_letop_let_op [x1]))]`];;
 hol4_overload "let_op" "clos_letop_let_op";;
 
 (* HOL4 ML code, not ported:
@@ -89,12 +89,12 @@ let let_op_sing_def = cake_define_list
    `clos_letop_let_op_sing (Handle t x1 x2:closLang_exp) =
          (Handle t ((clos_letop_let_op_sing (x1)))
                   ((clos_letop_let_op_sing (x2))))`;
-   `clos_letop_let_op_sing (Op t op xs:closLang_exp) =
+   `clos_letop_let_op_sing (Op t op xs) =
          (Op t op (clos_letop_let_op_list xs))`;
-   `clos_letop_let_op_sing (Tick t x:closLang_exp) = (Tick t
+   `clos_letop_let_op_sing (Tick t x) = (Tick t
   ((clos_letop_let_op_sing (x))))`;
-   `clos_letop_let_op_sing (Call t ticks dest xs:closLang_exp) =
-  (Call t ticks dest (clos_letop_let_op_list xs))`;
+   `clos_letop_let_op_sing (Call t ticks dest xs) = (Call t ticks
+  dest (clos_letop_let_op_list xs))`;
    `clos_letop_let_op_sing (App t loc_opt x1 xs:closLang_exp) = (App
   t loc_opt ((clos_letop_let_op_sing (x1))) (clos_letop_let_op_list
   xs))`;
@@ -102,8 +102,8 @@ let let_op_sing_def = cake_define_list
          (let new_fns = let_op_let fns in
          (Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
            (x1)))))`;
-   `clos_letop_let_op_sing (Fn t loc_opt vs num_args x1:closLang_exp)
-  = (Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`;
+   `clos_letop_let_op_sing (Fn t loc_opt vs num_args x1) = (Fn t
+  loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`;
    `clos_letop_let_op_list [] = []`;
    `clos_letop_let_op_list ((x:closLang_exp) :: xs) =
        clos_letop_let_op_sing x :: clos_letop_let_op_list xs`;

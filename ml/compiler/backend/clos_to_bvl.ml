@@ -76,7 +76,7 @@ needs "semantics/ast.ml";;
 let part_hash_def = cake_define_list
   [`part_hash (Int i:const_part) = num_of_int (abs i) MOD
   (999983:num)`;
-   `part_hash (Str s:const_part) =
+   `part_hash (Str s) =
       (strlen s + 3 * SUM (MAP ORD (explode s))) MOD (999983:num)`;
    `part_hash (W64 w:const_part) = (17 + w2n w) MOD (999983:num)`;
    `part_hash (Con t ns:const_part) = (18 + 5 * t + 7 * SUM ns) MOD
@@ -92,13 +92,10 @@ let add_part_def = cake_define
              (n,k,aux,acc)))`;;
 
 let add_parts_def = cake_define_list
-  [`add_parts (ConstInt i:const) n aux acc = add_part n (Int i) aux
-  acc`;
-   `add_parts (ConstStr s:const) n aux acc = add_part n (Str s) aux
-  acc`;
-   `add_parts (ConstWord64 w:const) n aux acc = add_part n (W64 w)
-  aux acc`;
-   `add_parts (ConstCons t cs:const) n aux acc =
+  [`add_parts (ConstInt i) n aux acc = add_part n (Int i) aux acc`;
+   `add_parts (ConstStr s) n aux acc = add_part n (Str s) aux acc`;
+   `add_parts (ConstWord64 w) n aux acc = add_part n (W64 w) aux acc`;
+   `add_parts (ConstCons t cs) n aux acc =
       (let (n,rs,aux,acc) = add_parts_list cs n aux acc in
          add_part n (Con (clos_tag_shift t) rs) aux acc)`;
    `add_parts_list [] n aux acc = (n,[],aux,acc)`;
@@ -108,10 +105,10 @@ let add_parts_def = cake_define_list
         (n,r :: rs,aux,acc))`];;
 
 let compile_const_def = cake_define_list
-  [`compile_const (ConstInt i:const) = IntOp (Const i)`;
-   `compile_const (ConstStr s:const) = BlockOp (Build [Str s])`;
-   `compile_const (ConstWord64 w:const) = BlockOp (Build [W64 w])`;
-   `compile_const (ConstCons t cs:const) =
+  [`compile_const (ConstInt i) = IntOp (Const i)`;
+   `compile_const (ConstStr s) = BlockOp (Build [Str s])`;
+   `compile_const (ConstWord64 w) = BlockOp (Build [W64 w])`;
+   `compile_const (ConstCons t cs) =
       (if NULL cs then BlockOp (Cons (clos_tag_shift t)) else
         let (n,rs,aux,acc) = add_parts_list cs 0 LN [] in
           BlockOp (Build (REVERSE ((Con (clos_tag_shift t) rs) ::
@@ -400,8 +397,8 @@ let compile_exps_def = cake_define_list
                  (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
                    max_app))) (c2 ++ c1))],
             aux2))`;
-   `clos_to_bvl_compile_exps max_app [(Fn t loc_opt vs_opt num_args
-  x1:bvl_exp)] aux =
+   `clos_to_bvl_compile_exps max_app [Fn t loc_opt vs_opt num_args x1]
+  aux =
          (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
          let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
          let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
@@ -494,8 +491,7 @@ let compile_exp_sing_def = cake_define_list
                  (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
                    max_app))) (c2 ++ [c1]))),
             aux2))`;
-   `compile_exp_sing max_app (Fn t loc_opt vs_opt num_args x1:bvl_exp)
-  aux =
+   `compile_exp_sing max_app (Fn t loc_opt vs_opt num_args x1) aux =
          (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
          let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
          let (c1,aux1) = compile_exp_sing max_app x1 aux in
@@ -633,11 +629,11 @@ let get_src_names_def = cake_define_list
   [`get_src_names [] l = l`;
    `get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
   (get_src_names [x] l)`;
-   `get_src_names [(closLang_If _6 x y z:bvl_exp)] l =
+   `get_src_names [closLang_If _6 x y z] l =
       get_src_names [x] (get_src_names [y] (get_src_names [z] l))`;
-   `get_src_names [(closLang_Var _7 _8:bvl_exp)] l = l`;
-   `get_src_names [(closLang_Let _9 xs x:bvl_exp)] l = get_src_names
-  (x :: xs) l`;
+   `get_src_names [closLang_Var _7 _8] l = l`;
+   `get_src_names [closLang_Let _9 xs x] l = get_src_names (x :: xs)
+  l`;
    `get_src_names [(Raise _10 x:bvl_exp)] l = get_src_names [x] l`;
    `get_src_names [(Handle _11 x y:bvl_exp)] l = get_src_names [x]
   (get_src_names [y] l)`;
@@ -647,7 +643,7 @@ let get_src_names_def = cake_define_list
    `get_src_names [(Op _16 _17 xs:bvl_exp)] l = get_src_names xs l`;
    `get_src_names [(App _18 _19 x xs:bvl_exp)] l = get_src_names (x
   :: xs) l`;
-   `get_src_names [(Fn name loc_opt _20 _21 x:bvl_exp)] l =
+   `get_src_names [Fn name loc_opt _20 _21 x] l =
       (let l1 = get_src_names [x] l in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names
            n [name] l1)`;
@@ -658,11 +654,11 @@ let get_src_names_def = cake_define_list
            n names l1)`];;
 
 let get_src_names_sing_def = cake_define_list
-  [`get_src_names_sing (closLang_If _23 x y z:bvl_exp) l =
+  [`get_src_names_sing (closLang_If _23 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;
-   `get_src_names_sing (closLang_Var _24 _25:bvl_exp) l = l`;
-   `get_src_names_sing (closLang_Let _26 xs x:bvl_exp) l =
+   `get_src_names_sing (closLang_Var _24 _25) l = l`;
+   `get_src_names_sing (closLang_Let _26 xs x) l =
       get_src_names_list xs (get_src_names_sing x l)`;
    `get_src_names_sing (Raise _27 x:bvl_exp) l = get_src_names_sing x
   l`;
@@ -676,7 +672,7 @@ let get_src_names_sing_def = cake_define_list
   xs l`;
    `get_src_names_sing (App _35 _36 x xs:bvl_exp) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (Fn name loc_opt _37 _38 x:bvl_exp) l =
+   `get_src_names_sing (Fn name loc_opt _37 _38 x) l =
       (let l1 = get_src_names_sing x l in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names
            n [name] l1)`;

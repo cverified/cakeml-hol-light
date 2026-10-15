@@ -101,9 +101,8 @@ hol4_overload "Nil" "misc_Nil";;
 
 let append_aux_def = cake_define_list
   [`append_aux Nil aux = aux`;
-   `append_aux (List xs:'a app_list) aux = xs ++ aux`;
-   `append_aux (Append l1 l2:'a app_list) aux = append_aux l1
-  (append_aux l2 aux)`];;
+   `append_aux (List xs) aux = xs ++ aux`;
+   `append_aux (Append l1 l2) aux = append_aux l1 (append_aux l2 aux)`];;
 
 let append_def = cake_define
   `append l = append_aux l []`;;
@@ -549,27 +548,27 @@ let eq_shape_def = cake_define
 
 let copy_shape_def = cake_define_list
   [`copy_shape LN LN = LN`;
-   `copy_shape LN (LS y:'a spt) = LN`;
-   `copy_shape LN (BN t1 t2:'a spt) = BN (copy_shape LN t1)
+   `copy_shape LN (LS y) = LN`;
+   `copy_shape LN (BN t1 t2) = BN (copy_shape LN t1) (copy_shape LN
+  t2)`;
+   `copy_shape LN (BS t1 y t2) = LN`;
+   `copy_shape (LS x) LN = LS x`;
+   `copy_shape (LS x) (LS y) = LS x`;
+   `copy_shape (LS x) (BN t1 t2) = LS x`;
+   `copy_shape (LS x) (BS t1 y t2) = BS (copy_shape LN t1) x
   (copy_shape LN t2)`;
-   `copy_shape LN (BS t1 y t2:'a spt) = LN`;
-   `copy_shape (LS x:'a spt) LN = LS x`;
-   `copy_shape (LS x:'a spt) (LS y:'a spt) = LS x`;
-   `copy_shape (LS x:'a spt) (BN t1 t2:'a spt) = LS x`;
-   `copy_shape (LS x:'a spt) (BS t1 y t2:'a spt) = BS (copy_shape LN
-  t1) x (copy_shape LN t2)`;
-   `copy_shape (BN u1 u2:'a spt) LN = (if domain (BN u1 u2) = {} then
-  LN else BN u1 u2)`;
-   `copy_shape (BN u1 u2:'a spt) (LS y:'a spt) = BN u1 u2`;
-   `copy_shape (BN u1 u2:'a spt) (BN t1 t2:'a spt) = BN (copy_shape
-  u1 t1) (copy_shape u2 t2)`;
-   `copy_shape (BN u1 u2:'a spt) (BS t1 y t2:'a spt) = BN u1 u2`;
-   `copy_shape (BS u1 x u2:'a spt) LN = BS u1 x u2`;
-   `copy_shape (BS u1 x u2:'a spt) (LS y:'a spt) =
+   `copy_shape (BN u1 u2) LN = (if domain (BN u1 u2) = {} then LN
+  else BN u1 u2)`;
+   `copy_shape (BN u1 u2) (LS y) = BN u1 u2`;
+   `copy_shape (BN u1 u2) (BN t1 t2) = BN (copy_shape u1 t1)
+  (copy_shape u2 t2)`;
+   `copy_shape (BN u1 u2) (BS t1 y t2) = BN u1 u2`;
+   `copy_shape (BS u1 x u2) LN = BS u1 x u2`;
+   `copy_shape (BS u1 x u2) (LS y) =
        (if domain (BN u1 u2) = {} then LS x else BS u1 x u2)`;
-   `copy_shape (BS u1 x u2:'a spt) (BN t1 t2:'a spt) = BS u1 x u2`;
-   `copy_shape (BS u1 x u2:'a spt) (BS t1 y t2:'a spt) = BS
-  (copy_shape u1 t1) x (copy_shape u2 t2)`];;
+   `copy_shape (BS u1 x u2) (BN t1 t2) = BS u1 x u2`;
+   `copy_shape (BS u1 x u2) (BS t1 y t2) = BS (copy_shape u1 t1) x
+  (copy_shape u2 t2)`];;
 
 (* / TODO *)
 

@@ -266,10 +266,10 @@ end
 *)
 
 let store_v_vs_def = cake_define_list
-  [`flatProps_store_v_vs (Varray vs:'a store_v) = vs`;
-   `flatProps_store_v_vs (Refv v:'a store_v) = [v]`;
-   `flatProps_store_v_vs (Thunk m v:'a store_v) = [v]`;
-   `flatProps_store_v_vs (W8array xs:'a store_v) = []`];;
+  [`flatProps_store_v_vs (Varray vs) = vs`;
+   `flatProps_store_v_vs (Refv v) = [v]`;
+   `flatProps_store_v_vs (Thunk m v) = [v]`;
+   `flatProps_store_v_vs (W8array xs) = []`];;
 hol4_overload "store_v_vs" "flatProps_store_v_vs";;
 
 let result_vs_def = cake_define
@@ -280,9 +280,9 @@ let result_vs_def = cake_define
       | (Rerr (Rabort y)) -> []`;;
 
 let no_Mat_def = cake_define_list
-  [`no_Mat (flatLang_Raise t e:flatLang_exp) <=> no_Mat e`;
+  [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
-   `no_Mat (Var_local t v:flatLang_exp) <=> T`;
+   `no_Mat (Var_local t v) <=> T`;
    `no_Mat (Con t n es:flatLang_exp) <=> EVERY no_Mat es`;
    `no_Mat (App t op es:flatLang_exp) <=> EVERY no_Mat es`;
    `no_Mat (Fun t v e:flatLang_exp) <=> no_Mat e`;

@@ -34,20 +34,20 @@ let pull_ops_def = cake_define_list
 let is_const_def = cake_define
   `word_inst_is_const x1 =
         match x1 with
-          (Const w:'a wordLang_exp) -> T
+          wordLang_Const w -> T
         | _3 -> F`;;
 hol4_overload "is_const" "word_inst_is_const";;
 
 let rm_const_def = cake_define
   `rm_const x1 =
         match x1 with
-          (Const w:'a wordLang_exp) -> w
+          wordLang_Const w -> w
         | _4 -> (n2w 0)`;;
 
 let convert_sub_def = cake_define
   `convert_sub ls =
         match ls with
-          [(Const w1:'a wordLang_exp); Const w2] -> Const (w1 - w2)
+          [wordLang_Const w1; Const w2] -> Const (w1 - w2)
         | [x; Const w] -> Op Add [Const (--w); x]
         | ls -> Op Sub ls`;;
 
@@ -186,8 +186,8 @@ let inst_select_exp_def = cake_define_wf
   `MEASURE (exp_size ARB o SND o SND o SND)`
   `inst_select_exp c tar temp x4 =
         match (c,tar,temp,x4) with
-          ((c:'a asm_config),(tar:num),(temp:num),(Load exp:'a
-            wordLang_exp)) ->
+          ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp)
+            ->
        (match exp with Op Add [exp'; Const w] ->
          (if (\c. offset_ok 0 (asm_config_addr_offset c)) c w then
            let prog = inst_select_exp c temp temp exp' in
@@ -317,7 +317,7 @@ let inst_select_def = cake_define
 let three_to_two_reg_def = cake_define
   `three_to_two_reg prog =
         match prog with
-          (Inst (Arith (Binop bop r1 r2 ri)):'a wordLang_prog) ->
+          wordLang_Inst (Arith (Binop bop r1 r2 ri)) ->
        Seq (Move 0 [r1,r2]) (Inst (Arith (Binop bop r1 r1 ri)))
         | (Inst (Arith (Shift l r1 r2 n))) ->
        Seq (Move 0 [r1,r2]) (Inst (Arith (Shift l r1 r1 n)))

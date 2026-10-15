@@ -43,9 +43,8 @@ let tenv_ok_def = cake_define
 
 let tenv_val_exp_ok_def = cake_define_list
   [`tenv_val_exp_ok Empty <=> T`;
-   `tenv_val_exp_ok (Bind_tvar n tenv:tenv_val_exp) <=>
-  tenv_val_exp_ok tenv`;
-   `tenv_val_exp_ok (Bind_name x tvs t tenv:tenv_val_exp) <=>
+   `tenv_val_exp_ok (Bind_tvar n tenv) <=> tenv_val_exp_ok tenv`;
+   `tenv_val_exp_ok (Bind_name x tvs t tenv) <=>
         check_freevars (tvs + num_tvs tenv) [] t /\
         tenv_val_exp_ok tenv`];;
 
@@ -82,10 +81,9 @@ let type_ctor_def = cake_define
 
 let add_tenvE_def = cake_define_list
   [`add_tenvE Empty tenvV = tenvV`;
-   `add_tenvE (Bind_tvar _3 tenvE:tenv_val_exp) tenvV = add_tenvE
-  tenvE tenvV`;
-   `add_tenvE (Bind_name x tvs t tenvE:tenv_val_exp) tenvV = nsBind x
-  (tvs,t) (add_tenvE tenvE tenvV)`];;
+   `add_tenvE (Bind_tvar _3 tenvE) tenvV = add_tenvE tenvE tenvV`;
+   `add_tenvE (Bind_name x tvs t tenvE) tenvV = nsBind x (tvs,t)
+  (add_tenvE tenvE tenvV)`];;
 
 let type_v = cake_inductive
   `(!tvs ctMap tenvS n.

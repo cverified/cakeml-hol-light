@@ -244,7 +244,7 @@ let do_test_def = cake_define_list
          (if ty = Float64T then Eq_val (fp64_equal
            (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
            v2) else Eq_type_error)`;
-   `flatSem_do_test (Compare cmp:test) ty v1 v2 =
+   `flatSem_do_test (Compare cmp) ty v1 v2 =
       (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
         (IntLit i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) |
         (CharT,SOME (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp
@@ -253,7 +253,7 @@ let do_test_def = cake_define_list
         (Float64 w),SOME (Float64 v)) -> Eq_val (fp_cmp cmp w v) |
         (StrT,SOME (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp F
         cmp s t) | _41 -> Eq_type_error)`;
-   `flatSem_do_test (AltCompare cmp:test) ty v1 v2 =
+   `flatSem_do_test (AltCompare cmp) ty v1 v2 =
       (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME
         (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) |
         _42 -> Eq_type_error)`];;
@@ -675,8 +675,8 @@ let exp_alt_size_def = cake_define_list
     (tra_size a0 +
      (option_size (pair_size (\x. x) (option_size (\x. x))) a1 +
       exp6_alt_size a2))`;
-   `flatSem_exp_alt_size (Var_local a0 a1:flatLang_exp) = 1 +
-  (tra_size a0 + mlstring_size a1)`;
+   `flatSem_exp_alt_size (Var_local a0 a1) = 1 + (tra_size a0 +
+  mlstring_size a1)`;
    `flatSem_exp_alt_size (Fun a0 a1 a2:flatLang_exp) =
     1 + (mlstring_size a0 + (mlstring_size a1 +
       flatSem_exp_alt_size a2))`;
@@ -751,7 +751,7 @@ let evaluate_def = cake_define_list
    `flatSem_evaluate env s [(Con _114 (SOME cn) es:flatLang_exp)] =
         (match flatSem_evaluate env s (REVERSE es) with (s,Rval
           vs) -> (s,Rval [Conv (SOME cn) (REVERSE vs)]) | res -> res)`;
-   `flatSem_evaluate env s [(Var_local _115 n:flatLang_exp)] = (s,
+   `flatSem_evaluate env s [Var_local _115 n] = (s,
        (match ALOOKUP (?_v env) n with SOME v -> Rval [v] | NONE
          -> Rerr (Rabort Rtype_error)))`;
    `flatSem_evaluate env s [(Fun _116 n e:flatLang_exp)] = (s,Rval

@@ -659,14 +659,13 @@ Theorem wStackLoad_thm3 =
  |> PURE_REWRITE_RULE[wordPropsTheory.set_var_const,set_var_const]
 *)
 let map_var_def = cake_define_list
-  [`map_var f (Var num':'a wordLang_exp) = Var (f num')`;
-   `map_var f (Load exp:'a wordLang_exp) = Load (map_var f exp)`;
-   `map_var f (Op wop ls:'a wordLang_exp) = Op wop (MAP (map_var f)
-  ls)`;
-   `map_var f (Shift sh e1 e2:'a wordLang_exp) = Shift sh (map_var f
-  e1) (map_var f e2)`;
-   `map_var f (Const c:'a wordLang_exp) = Const c`;
-   `map_var f (Lookup v:'a wordLang_exp) = Lookup v`];;
+  [`map_var f (wordLang_Var num') = Var (f num')`;
+   `map_var f (wordLang_Load exp) = Load (map_var f exp)`;
+   `map_var f (Op wop ls) = Op wop (MAP (map_var f) ls)`;
+   `map_var f (wordLang_Shift sh e1 e2) = Shift sh (map_var f e1)
+  (map_var f e2)`;
+   `map_var f (wordLang_Const c) = Const c`;
+   `map_var f (Lookup v) = Lookup v`];;
 (*
 Theorem word_exp_thm1:
    ∀s e x. word_exp s e = SOME (Word x) ∧

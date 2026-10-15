@@ -98,7 +98,7 @@ hol4_overload "store_consts_stub_location"
 let every_var_exp_def = cake_define
   `every_var_exp P expr =
         match expr with
-          (Var num:'a wordLang_exp) -> P num
+          wordLang_Var num -> P num
         | (Load exp) -> every_var_exp P exp
         | (Op wop ls) -> EVERY (every_var_exp P) ls
         | (Shift sh e1 e2) -> (every_var_exp P e1 /\ every_var_exp P
@@ -199,7 +199,7 @@ let every_var_def = cake_define
 let every_stack_var_def = cake_define
   `every_stack_var P p =
         match p with
-          (FFI ffi_index cptr clen ptr len names:'a wordLang_prog) ->
+          wordLang_FFI ffi_index cptr clen ptr len names ->
        every_name P names
         | (Install _4 _5 _6 _7 names) ->
        every_name P names
@@ -227,7 +227,7 @@ let every_stack_var_def = cake_define
 let max_var_exp_def = cake_define
   `max_var_exp exp =
         match exp with
-          (Var num:'a wordLang_exp) -> num
+          wordLang_Var num -> num
         | (Load exp) -> max_var_exp exp
         | (Op wop ls) -> MAX_LIST (MAP (max_var_exp) ls)
         | (Shift sh exp1 exp2) -> MAX (max_var_exp exp1) (max_var_exp
@@ -342,7 +342,7 @@ let word_sh_def = cake_define
 let exp_to_addr_def = cake_define
   `exp_to_addr x1 =
         match x1 with
-          (Var ad:'a wordLang_exp) -> SOME (Addr ad (n2w 0))
+          wordLang_Var ad -> SOME (Addr ad (n2w 0))
         | (Op Add [Var ad; Const offset]) -> SOME (Addr ad offset)
         | _14 -> NONE`;;
 

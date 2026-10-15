@@ -1374,14 +1374,14 @@ let small_int_def = cake_define
        8):int)`;;
 
 let part_to_words_def = cake_define_list
-  [`part_to_words c m (Int i:const_part) offset =
+  [`part_to_words c m (Int i) offset =
       (if small_int (:'a) i then SOME ((F,Word (Smallnum i)),[])
         else let (sign,ws) = i2mw i in
               match encode_header c (if sign then 7 else 3) (LENGTH
                 ws) with NONE -> NONE | SOME hd -> SOME ((T,(make_ptr c
                 offset ((n2w 0):'a word) (LENGTH ws))),
                               MAP (\w. (F,Word w)) (hd :: ws)))`;
-   `part_to_words c m (closLang_Con t ns:const_part) (offset:'a word) =
+   `part_to_words c m (closLang_Con t ns) (offset:'a word) =
       (if NULL ns then
          if t < dimword (:'a) DIV 16 then SOME ((F,Word (n2w (16 * t
            + 2))),[]) else NONE else
@@ -1400,7 +1400,7 @@ let part_to_words_def = cake_define_list
            SOME hd -> SOME ((T,(make_ptr c offset ((n2w 0):'a word)
            (LENGTH ws))),
                             MAP (\w. (F,Word w)) (hd :: ws)))`;
-   `part_to_words c m (Str s:const_part) offset =
+   `part_to_words c m (Str s) offset =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in

@@ -30,11 +30,10 @@ let list_mk_Union_def = cake_define_list
 
 let db_to_set_acc_def = cake_define_list
   [`db_to_set_acc (n:num) (Empty:db_var_set) s = s`;
-   `db_to_set_acc n (Var v:db_var_set) s =
+   `db_to_set_acc n (Var v) s =
          (if v < n then s else insert (v - n) one s)`;
-   `db_to_set_acc n (Shift k d:db_var_set) s = db_to_set_acc (n + k)
-  d s`;
-   `db_to_set_acc n (Union v1 v2:db_var_set) s =
+   `db_to_set_acc n (Shift k d) s = db_to_set_acc (n + k) d s`;
+   `db_to_set_acc n (Union v1 v2) s =
          db_to_set_acc n v1 (db_to_set_acc n v2 s)`];;
 
 let db_to_set_def = cake_define
@@ -51,7 +50,6 @@ let vars_flatten_def = cake_define
 
 let has_var_def = cake_define_list
   [`has_var n Empty <=> F`;
-   `has_var n (Var v:db_var_set) <=> (n = v)`;
-   `has_var n (Shift k d:db_var_set) <=> has_var (n + k) d`;
-   `has_var n (Union d1 d2:db_var_set) <=> has_var n d1 \/ has_var n
-  d2`];;
+   `has_var n (Var v) <=> (n = v)`;
+   `has_var n (Shift k d) <=> has_var (n + k) d`;
+   `has_var n (Union d1 d2) <=> has_var n d1 \/ has_var n d2`];;

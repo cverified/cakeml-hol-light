@@ -33,7 +33,7 @@ let max_depth_def = cake_define_list
    `max_depth frame_sizes Unknown = NONE`;
    `max_depth frame_sizes (Const n t:call_tree) =
       OPTION_MAP ((+) n) (max_depth frame_sizes t)`;
-   `max_depth frame_sizes (Branch t1 t2:call_tree) =
+   `max_depth frame_sizes (Branch t1 t2) =
       OPTION_MAP2 MAX (max_depth frame_sizes t1) (max_depth
         frame_sizes t2)`;
    `max_depth frame_sizes (Call n t:call_tree) =
@@ -60,7 +60,7 @@ let call_graph_def = cake_define_wf
            ns,prog_size (K 0) p)))`
   `call_graph funs n ns total x5 =
         match x5 with
-          (Seq p1 p2:'a wordLang_prog) ->
+          wordLang_Seq p1 p2 ->
         mk_Branch (call_graph funs n ns total p1) (call_graph funs n
           ns total p2)
         | (If _1 _2 _3 p1 p2) ->

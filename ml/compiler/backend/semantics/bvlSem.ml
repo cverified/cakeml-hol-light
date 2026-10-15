@@ -97,8 +97,8 @@ let isClos_def = cake_define
 hol4_overload "isClos" "bvlSem_isClos";;
 
 let do_eq_def = cake_define_list
-  [`bvlSem_do_eq _3 (CodePtr _4:bvlSem_v) _5 = Eq_type_error`;
-   `bvlSem_do_eq _6 _7 (CodePtr _8:bvlSem_v) = Eq_type_error`;
+  [`bvlSem_do_eq _3 (CodePtr _4) _5 = Eq_type_error`;
+   `bvlSem_do_eq _6 _7 (CodePtr _8) = Eq_type_error`;
    `bvlSem_do_eq _9 (Number n1:bvlSem_v) (Number n2:bvlSem_v) =
   (Eq_val (n1 = n2))`;
    `bvlSem_do_eq _10 (Number _11:bvlSem_v) _12 = Eq_type_error`;
@@ -182,7 +182,7 @@ let do_part_def = cake_define_list
    `bvlSem_do_part m (W64 w:const_part) refs = (Word64 w,refs)`;
    `bvlSem_do_part m (Con t ns:const_part) refs = (Block t (MAP m
   ns),refs)`;
-   `bvlSem_do_part m (Str t:const_part) refs =
+   `bvlSem_do_part m (Str t) refs =
       (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v

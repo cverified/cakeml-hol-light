@@ -9,7 +9,6 @@
 
 needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
@@ -198,7 +197,7 @@ let result_view_def = cake_define
 let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
-          (Word (n2w 0):'ga any_prog) -> Halt Success
+          backend_passes_Word (n2w 0) -> Halt Success
         | (Word _11) -> Halt Resource_limit_hit
         | _12 -> Error`;;
 

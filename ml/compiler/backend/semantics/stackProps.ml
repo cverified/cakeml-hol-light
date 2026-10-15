@@ -9,7 +9,6 @@
 
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
-needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_names.ml";;
@@ -22,8 +21,7 @@ needs "semantics/typeSystem.ml";;
 let clock_neutral_def = cake_define
   `clock_neutral r =
         match r with
-          (Seq p1 p2:'a wordLang_prog) -> clock_neutral p1 /\
-            clock_neutral p2
+          wordLang_Seq p1 p2 -> clock_neutral p1 /\ clock_neutral p2
         | (LocValue _1 _2 _3) -> T
         | (Halt _4) -> T
         | (Inst _5) -> T
@@ -34,7 +32,7 @@ let clock_neutral_def = cake_define
 let extract_labels_def = cake_define
   `stackProps_extract_labels x1 =
         match x1 with
-          (Call ret dest h:'a wordLang_prog) ->
+          wordLang_Call ret dest h ->
        (match ret with
          NONE -> [] | SOME (ret_handler,_9,l1,l2) ->
          (let ret_rest = stackProps_extract_labels ret_handler in
@@ -92,9 +90,8 @@ let reg_name_def = cake_define
 (* inst requirements just before stack_names *)
 
 let reg_imm_name_def = cake_define_list
-  [`reg_imm_name b (Reg r:'a asm_reg_imm) c <=> reg_name r c`;
-   `reg_imm_name b (Imm w:'a asm_reg_imm) c <=> asm_config_valid_imm
-  c b w`];;
+  [`reg_imm_name b (Reg r) c <=> reg_name r c`;
+   `reg_imm_name b (Imm w) c <=> asm_config_valid_imm c b w`];;
 
 let arith_name_def = cake_define
   `arith_name x1 c =
@@ -148,47 +145,46 @@ let arith_name_def = cake_define
    for
    some registers as well *)
 let fp_name_def = cake_define_list
-  [`fp_name (FPLess r d1 d2:fp) c <=>
+  [`fp_name (FPLess r d1 d2) c <=>
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPLessEqual r d1 d2:fp) c <=>
+   `fp_name (FPLessEqual r d1 d2) c <=>
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPEqual r d1 d2:fp) c <=>
+   `fp_name (FPEqual r d1 d2) c <=>
           reg_name r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPAbs d1 d2:fp) c <=>
+   `fp_name (FPAbs d1 d2) c <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
             fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPNeg d1 d2:fp) c <=>
+   `fp_name (FPNeg d1 d2) c <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
             fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPSqrt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPAdd d1 d2 d3:fp) c <=>
+   `fp_name (FPSqrt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPAdd d1 d2 d3) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPSub d1 d2 d3:fp) c <=>
+   `fp_name (FPSub d1 d2 d3) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPMul d1 d2 d3:fp) c <=>
+   `fp_name (FPMul d1 d2 d3) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPDiv d1 d2 d3:fp) c <=>
+   `fp_name (FPDiv d1 d2 d3) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPFma d1 d2 d3:fp) c <=>
+   `fp_name (FPFma d1 d2 d3) c <=>
           (asm_config_ISA c = ARMv7) /\
           2 < asm_config_fp_reg_count c /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_name (FPMov d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPMovToReg r1 r2 d:fp) (c:'a asm_config) <=>
+   `fp_name (FPMov d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
             reg_name r2 c) /\
           fp_reg_ok d c`;
-   `fp_name (FPMovFromReg d r1 r2:fp) (c:'a asm_config) <=>
+   `fp_name (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
           reg_name r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
             reg_name r2 c) /\
           fp_reg_ok d c`;
-   `fp_name (FPToInt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPFromInt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2
-  c`];;
+   `fp_name (FPToInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_name (FPFromInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`];;
 
 let addr_name_def = cake_define
   `addr_name m (Addr r w) c <=>
@@ -202,7 +198,7 @@ let addr_name_def = cake_define
 let inst_name_def = cake_define
   `inst_name c x2 =
         match x2 with
-          (Const r w:'a asm_inst) -> reg_name r c
+          asm_Const r w -> reg_name r c
         | (Mem m r a) -> reg_name r c /\ addr_name m a c
         | (Arith x) -> arith_name x c
         | (FP f) -> fp_name f c
@@ -279,7 +275,7 @@ let stack_asm_remove_def = cake_define
 let alloc_arg_def = cake_define
   `alloc_arg x1 =
         match x1 with
-          (Alloc v:'a wordLang_prog) -> (v = 1)
+          wordLang_Alloc v -> (v = 1)
         | ((Seq p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
         | ((If c r ri p1 p2):'a stackLang_prog) ->
@@ -302,7 +298,7 @@ let reg_bound_exp_def = cake_define_wf
   `MEASURE ((exp_size ARB) o FST)`
   `reg_bound_exp x1 k =
         match x1 with
-          (Var n:'a wordLang_exp) -> n < k
+          wordLang_Var n -> n < k
         | (Load e) -> reg_bound_exp e k
         | (Shift _45 e1 e2) -> reg_bound_exp e1 k /\ reg_bound_exp e2
           k
@@ -340,7 +336,7 @@ let reg_bound_inst_def = cake_define
 let reg_bound_def = cake_define
   `reg_bound x1 k =
         match x1 with
-          (Halt v1:'w stackSem_result) ->
+          stackSem_Halt v1 ->
         v1 < k
         | (Raise v1) ->
         v1 < k
@@ -423,7 +419,7 @@ let call_args_def = cake_define
 let stack_get_handler_labels_def = cake_define
   `stack_get_handler_labels n x2 =
         match x2 with
-          (Call r d h:'a asm) ->
+          asm_Call r d h ->
        (match r with SOME (x,_75,_76) -> stack_get_handler_labels n x
          UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
@@ -439,7 +435,7 @@ let stack_get_handler_labels_def = cake_define
 let get_code_labels_def = cake_define
   `stackProps_get_code_labels x1 =
         match x1 with
-          (Call r d h:'a asm) ->
+          asm_Call r d h ->
        (match d with INL x -> {(x,0)} | _83 -> {}) UNION
        (match r with SOME (x,_84,_85) -> stackProps_get_code_labels x
          | _86 -> {}) UNION
@@ -479,7 +475,7 @@ let stack_good_handler_labels_def = cake_define
 let no_install_def = cake_define
   `stackProps_no_install x1 =
         match x1 with
-          (Call r d h:'a asm) ->
+          asm_Call r d h ->
        ((match r with SOME (x,_99,_100) -> stackProps_no_install x |
          _101 -> T) /\
         (match h with SOME (x,_102,_103) -> stackProps_no_install x |
@@ -496,7 +492,7 @@ hol4_overload "no_install" "stackProps_no_install";;
 let no_shmemop_def = cake_define
   `no_shmemop x1 =
         match x1 with
-          (Call r d h:'a asm) ->
+          asm_Call r d h ->
        ((match r with SOME (x,_114,_115) -> no_shmemop x | _116 -> T)
          /\
         (match h with SOME (x,_117,_118) -> no_shmemop x | _119 ->

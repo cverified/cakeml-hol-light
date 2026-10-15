@@ -122,7 +122,7 @@ let find_loc_def = cake_define_list
             union (find_loc eh) (find_locL (MAP SND p_es))`;
    `find_loc (Lit _24 _25:flatLang_exp) = (LN:1 spt)`;
    `find_loc (Con _26 _27 es:flatLang_exp) = find_locL es`;
-   `find_loc (Var_local _28 _29:flatLang_exp) = LN`;
+   `find_loc (Var_local _28 _29) = LN`;
    `find_loc (Fun _30 _31 ef:flatLang_exp) = find_loc ef`;
    `find_loc (App _32 op es:flatLang_exp) = (match
   (dest_GlobalVarInit op) with SOME n -> (insert n one (find_locL
@@ -147,7 +147,7 @@ let find_lookups_def = cake_define_list
               p_es))`;
    `find_lookups (Lit _40 _41:flatLang_exp) = LN`;
    `find_lookups (Con _42 _43 es:flatLang_exp) = find_lookupsL es`;
-   `find_lookups (Var_local _44 _45:flatLang_exp) = LN`;
+   `find_lookups (Var_local _44 _45) = LN`;
    `find_lookups (Fun _46 _47 ef:flatLang_exp) = find_lookups ef`;
    `find_lookups (App _48 op es:flatLang_exp) = (match
   (dest_GlobalVarLookup op) with SOME n -> (insert n one

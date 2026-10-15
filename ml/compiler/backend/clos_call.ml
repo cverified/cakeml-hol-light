@@ -37,17 +37,17 @@ let free_def = cake_define_list
    `clos_call_free [(Raise t x1:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
            ([Raise t (HD c1)],l1))`;
-   `clos_call_free [(Tick t x1:closLang_exp)] =
+   `clos_call_free [Tick t x1] =
          (let (c1,l1) = clos_call_free [x1] in
            ([Tick t (HD c1)],l1))`;
-   `clos_call_free [(Op t op xs:closLang_exp)] =
+   `clos_call_free [Op t op xs] =
          (let (c1,l1) = clos_call_free xs in
            ([Op t op c1],l1))`;
    `clos_call_free [(App t loc_opt x1 xs2:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free xs2 in
            ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
-   `clos_call_free [(Fn t loc _1 num_args x1:closLang_exp)] =
+   `clos_call_free [Fn t loc _1 num_args x1] =
          (let (c1,l1) = clos_call_free [x1] in
          let l2 = Shift num_args l1 in
            ([Fn t loc (SOME (vars_to_list l2)) num_args (HD
@@ -65,7 +65,7 @@ let free_def = cake_define_list
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
            ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
-   `clos_call_free [(Call t ticks dest xs:closLang_exp)] =
+   `clos_call_free [Call t ticks dest xs] =
          (let (c1,l1) = clos_call_free xs in
            ([Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_call_free";;
@@ -88,17 +88,17 @@ let free_sing_def = cake_define_list
    `free_sing (Raise t x1:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
            (Raise t c1,l1))`;
-   `free_sing (Tick t x1:closLang_exp) =
+   `free_sing (Tick t x1) =
          (let (c1,l1) = free_sing x1 in
            (Tick t c1,l1))`;
-   `free_sing (Op t op xs:closLang_exp) =
+   `free_sing (Op t op xs) =
          (let (c1,l1) = free_list xs in
            (Op t op c1,l1))`;
    `free_sing (App t loc_opt x1 xs2:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_list xs2 in
            (App t loc_opt c1 c2,mk_Union l1 l2))`;
-   `free_sing (Fn t loc _3 num_args x1:closLang_exp) =
+   `free_sing (Fn t loc _3 num_args x1) =
          (let (c1,l1) = free_sing x1 in
          let l2 = Shift num_args l1 in
            (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))`;
@@ -115,7 +115,7 @@ let free_sing_def = cake_define_list
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
            (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
-   `free_sing (Call t ticks dest xs:closLang_exp) =
+   `free_sing (Call t ticks dest xs) =
          (let (c1,l1) = free_list xs in
            (Call t ticks dest c1,l1))`;
    `free_list [] = ([],Empty)`;
@@ -185,7 +185,7 @@ let calls_def = cake_define_list
          (let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
            ([Raise t e1],g))`;
-   `calls [(Tick t x1:closLang_exp)] g =
+   `calls [Tick t x1] g =
          (let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
            ([Tick t e1],g))`;
@@ -195,10 +195,10 @@ let calls_def = cake_define_list
          let e1 = HD e1 in
          let e2 = HD e2 in
            ([Handle t e1 e2],g))`;
-   `calls [(Call t ticks dest xs:closLang_exp)] g =
+   `calls [Call t ticks dest xs] g =
          (let (xs,g) = calls xs g in
            ([Call t ticks dest xs],g))`;
-   `calls [(Op t op xs:closLang_exp)] g =
+   `calls [Op t op xs] g =
          (let (e1,g) = calls xs g in
            ([Op t op e1],g))`;
    `calls [(App t loc_opt x xs:closLang_exp)] g =
@@ -214,7 +214,7 @@ let calls_def = cake_define_list
                   (Call (mk_cons t 1) (LENGTH es) (loc + 1)
                     (GENLIST_Var None 2 (LENGTH es)))],g) else ([App
                     t loc_opt e1 es],g))`;
-   `calls [(Fn t loc_opt ws num_args x1:closLang_exp)] g =
+   `calls [Fn t loc_opt ws num_args x1] g =
          (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
            in
          let new_g = insert_each loc 1 g in
@@ -259,17 +259,17 @@ let calls_sing_def = cake_define_list
    `calls_sing (Raise t x1:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
            (Raise t e1,g))`;
-   `calls_sing (Tick t x1:closLang_exp) g =
+   `calls_sing (Tick t x1) g =
          (let (e1,g) = calls_sing x1 g in
            (Tick t e1,g))`;
    `calls_sing (Handle t x1 x2:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in
            (Handle t e1 e2,g))`;
-   `calls_sing (Call t ticks dest xs:closLang_exp) g =
+   `calls_sing (Call t ticks dest xs) g =
          (let (xs,g) = calls_sing_list xs g in
            (Call t ticks dest xs,g))`;
-   `calls_sing (Op t op xs:closLang_exp) g =
+   `calls_sing (Op t op xs) g =
          (let (e1,g) = calls_sing_list xs g in
            (Op t op e1,g))`;
    `calls_sing (App t loc_opt x xs:closLang_exp) g =
@@ -283,7 +283,7 @@ let calls_sing_def = cake_define_list
                   (Call (mk_cons t 1) (LENGTH es) (loc + 1)
                     (GENLIST_Var None 2 (LENGTH es))),g) else (App t
                     loc_opt e1 es,g))`;
-   `calls_sing (Fn t loc_opt ws num_args x1:closLang_exp) g =
+   `calls_sing (Fn t loc_opt ws num_args x1) g =
          (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
            in
          let new_g = insert_each loc 1 g in

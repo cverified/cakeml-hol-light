@@ -520,9 +520,9 @@ let compile_inc_progs_for_eval_def = cake_define
 
 let ffinames_to_string_list_def = cake_define_list
   [`ffinames_to_string_list [] = []`;
-   `ffinames_to_string_list ((ExtCall s:ffiname) :: rest) =
+   `ffinames_to_string_list (ExtCall s :: rest) =
         s :: (ffinames_to_string_list rest)`;
-   `ffinames_to_string_list ((SharedMem _18:ffiname) :: rest) =
+   `ffinames_to_string_list (SharedMem _18 :: rest) =
         ffinames_to_string_list rest`];;
 
 let set_oracle_def = cake_define

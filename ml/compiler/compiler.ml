@@ -384,19 +384,19 @@ let compile_pancake_def = cake_define
 
 (* The top-level compiler *)
 let error_to_str_def = cake_define_list
-  [`error_to_str (ParseError s:compile_error) =
+  [`error_to_str (ParseError s) =
          concat [(implode "### ERROR: parse error\n"); s;
            (implode "\n")]`;
-   `error_to_str (TypeError s:compile_error) =
+   `error_to_str (TypeError s) =
          (if (if strlen s = 0 then T else
              if strsub s 0 = (CHR 10) then F else T) then
            concat [(implode "### ERROR: type error\n"); s;
              (implode "\n")] else s)`;
-   `error_to_str (ConfigError s:compile_error) = concat [(implode
+   `error_to_str (ConfigError s) = concat [(implode
   "### ERROR: config error\n"); s; (implode "\n")]`;
    `error_to_str AssembleError = (implode
   "### ERROR: assembly error\n")`;
-   `error_to_str (StaticError e:compile_error) =
+   `error_to_str (StaticError e) =
         (match e with
           ScopeErr s -> concat [(implode
             "### ERROR: scope error\n"); s; (implode "\n")] |
@@ -749,10 +749,10 @@ let has_pancake_flag_def = cake_define
   `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
 
 let format_compiler_result_def = cake_define_list
-  [`format_compiler_result bytes_export (M_failure err:('a,'b)exc) =
+  [`format_compiler_result bytes_export (M_failure err) =
       ((List []:mlstring app_list),error_to_str err)`;
    `format_compiler_result bytes_export (M_success ((bytes:word8
-  list),(data:('a word) list),(c:backend_config)):('a,'b)exc) =
+  list),(data:('a word) list),(c:backend_config))) =
       (bytes_export (the [] (lab_to_target_config_ffi_names
         (backend_config_lab_conf c))) bytes data,implode "")`];;
 

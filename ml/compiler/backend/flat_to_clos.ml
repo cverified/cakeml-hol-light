@@ -287,12 +287,12 @@ let compile_def = cake_define_list
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;
-   `flat_to_clos_compile m [(flatLang_Raise t e:flatLang_exp)] =
-  [closLang_Raise t (HD (flat_to_clos_compile m [e]))]`;
+   `flat_to_clos_compile m [flatLang_Raise t e] = [closLang_Raise t
+  (HD (flat_to_clos_compile m [e]))]`;
    `flat_to_clos_compile m [(Lit t l:flatLang_exp)] = [compile_lit t
   l]`;
-   `flat_to_clos_compile m [(Var_local t v:flatLang_exp)] = [Var t
-  (findi (SOME v) m)]`;
+   `flat_to_clos_compile m [Var_local t v] = [Var t (findi (SOME v)
+  m)]`;
    `flat_to_clos_compile m [(Con t n es:flatLang_exp)] =
          (let tag = (match n with SOME (t,_18) -> t | _19 -> 0) in
            [SmartCons t tag (flat_to_clos_compile m (REVERSE

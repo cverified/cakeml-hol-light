@@ -178,9 +178,9 @@ let set_tids_subset_def = cake_define
   `set_tids_subset tids t <=> set_tids t SUBSET tids`;;
 
 let unconvert_t_def = cake_define_list
-  [`unconvert_t (Tvar_db n:t) = Infer_Tvar_db n`;
-   `unconvert_t (Tapp ts tc:t) = Infer_Tapp (MAP unconvert_t ts) tc`;
-   `unconvert_t (Tvar v:t) = Infer_Tuvar ARB`];;
+  [`unconvert_t (Tvar_db n) = Infer_Tvar_db n`;
+   `unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc`;
+   `unconvert_t (Tvar v) = Infer_Tuvar ARB`];;
 
 (* HOL4 ML code, not ported:
 val unconvert_t_ind = theorem"unconvert_t_ind"

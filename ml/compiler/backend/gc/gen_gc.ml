@@ -25,9 +25,8 @@ let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
    "isRef","'a->bool"];;
 
 let gc_move_def = cake_define_list
-  [`gen_gc_gc_move conf state (Data d:'a heap_address) = (Data
-  d,state)`;
-   `gen_gc_gc_move conf state (Pointer ptr d:'a heap_address) =
+  [`gen_gc_gc_move conf state (Data d) = (Data d,state)`;
+   `gen_gc_gc_move conf state (Pointer ptr d) =
          (match heap_lookup ptr (gc_state_heap state) with SOME
            (ForwardPointer ptr _3 l) -> (Pointer ptr d,state) | SOME
            (DataElement xs l dd) ->

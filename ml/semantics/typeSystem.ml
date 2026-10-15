@@ -126,60 +126,55 @@ let tdouble_def = cake_define
    deBruijn
  * indices are permitted. *)
 let check_freevars_def = cake_define_list
-  [`(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv:t) =
+  [`(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar tv) =
        (MEM tv tvs)`;
-   `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts
-  tn:t) =
+   `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tapp ts tn)
+  =
        (EVERY (check_freevars dbmax tvs) ts)`;
    `(check_freevars:num->mlstring list->t->bool) dbmax tvs (Tvar_db
-  n:t) = (n < dbmax)`];;
+  n) = (n < dbmax)`];;
 
 let check_freevars_ast_def = cake_define_list
-  [`(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv:ast_t)
-  =
+  [`(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atvar tv) =
        (MEM tv tvs)`;
-   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts:ast_t)
-  =
+   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Attup ts) =
        (EVERY (check_freevars_ast tvs) ts)`;
-   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1
-  t2:ast_t) =
+   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atfun t1 t2) =
        (check_freevars_ast tvs t1 /\ check_freevars_ast tvs t2)`;
-   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts
-  tn:ast_t) =
+   `(check_freevars_ast:mlstring list->ast_t->bool) tvs (Atapp ts tn) =
        (EVERY (check_freevars_ast tvs) ts)`];;
 
 (* Simultaneous substitution of types for type variables in a type *)
 let type_subst_def = cake_define_list
-  [`(type_subst:(mlstring,t)fmap->t->t) s (Tvar tv:t) =
+  [`(type_subst:(mlstring,t)fmap->t->t) s (Tvar tv) =
        ((match FLOOKUP s tv with
           NONE -> Tvar tv | SOME (t) -> t))`;
-   `(type_subst:(mlstring,t)fmap->t->t) s (Tapp ts tn:t) =
+   `(type_subst:(mlstring,t)fmap->t->t) s (Tapp ts tn) =
        (Tapp (MAP (type_subst s) ts) tn)`;
-   `(type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n:t) = (Tvar_db n)`];;
+   `(type_subst:(mlstring,t)fmap->t->t) s (Tvar_db n) = (Tvar_db n)`];;
 
 (* Increment the deBruijn indices in a type by n levels, skipping all
    levels
  * less than skip. *)
 let deBruijn_inc_def = cake_define_list
-  [`(deBruijn_inc:num->num->t->t) skip n (Tvar tv:t) = (Tvar tv)`;
-   `(deBruijn_inc:num->num->t->t) skip n (Tvar_db m:t) =
+  [`(deBruijn_inc:num->num->t->t) skip n (Tvar tv) = (Tvar tv)`;
+   `(deBruijn_inc:num->num->t->t) skip n (Tvar_db m) =
        (if m < skip then
         Tvar_db m else
         Tvar_db (m + n))`;
-   `(deBruijn_inc:num->num->t->t) skip n (Tapp ts tn:t) = (Tapp (MAP
+   `(deBruijn_inc:num->num->t->t) skip n (Tapp ts tn) = (Tapp (MAP
   (deBruijn_inc skip n) ts) tn)`];;
 
 (* skip the lowest given indices and replace the next (LENGTH ts) with
    the given types and reduce all the higher ones *)
 let deBruijn_subst_def = cake_define_list
-  [`(deBruijn_subst:num->t list->t->t) skip ts (Tvar tv:t) = (Tvar
-  tv)`;
-   `(deBruijn_subst:num->t list->t->t) skip ts (Tvar_db n:t) =
+  [`(deBruijn_subst:num->t list->t->t) skip ts (Tvar tv) = (Tvar tv)`;
+   `(deBruijn_subst:num->t list->t->t) skip ts (Tvar_db n) =
        (if ~(n < skip) /\ (n < (LENGTH ts + skip)) then
         EL (n - skip) ts else if ~(n < skip) then
         Tvar_db (n - LENGTH ts) else
         Tvar_db n)`;
-   `(deBruijn_subst:num->t list->t->t) skip ts (Tapp ts' tn:t) =
+   `(deBruijn_subst:num->t list->t->t) skip ts (Tapp ts' tn) =
        (Tapp (MAP (deBruijn_subst skip ts) ts') tn)`];;
 
 (* Type environments *)
@@ -212,10 +207,9 @@ let tveLookup_def = cake_define_list
   [`(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
   Empty = NONE`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (Bind_tvar tvs tenvE:tenv_val_exp) = (tveLookup n (inc + tvs)
-  tenvE)`;
+  (Bind_tvar tvs tenvE) = (tveLookup n (inc + tvs) tenvE)`;
    `(tveLookup:mlstring->num->tenv_val_exp->(num#t) option) n inc
-  (Bind_name n' tvs t tenvE:tenv_val_exp) =
+  (Bind_name n' tvs t tenvE) =
        (if n' = n then
         SOME (tvs,deBruijn_inc tvs inc t) else
         tveLookup n inc tenvE)`];;
@@ -261,10 +255,10 @@ let lookup_var_def = cake_define
 (*val num_tvs : tenv_val_exp -> nat*)
 let num_tvs_def = cake_define_list
   [`(num_tvs:tenv_val_exp->num) Empty = ((0:num))`;
-   `(num_tvs:tenv_val_exp->num) (Bind_tvar tvs tenvE:tenv_val_exp) =
-  (tvs + num_tvs tenvE)`;
-   `(num_tvs:tenv_val_exp->num) (Bind_name n tvs t
-  tenvE:tenv_val_exp) = (num_tvs tenvE)`];;
+   `(num_tvs:tenv_val_exp->num) (Bind_tvar tvs tenvE) = (tvs +
+  num_tvs tenvE)`;
+   `(num_tvs:tenv_val_exp->num) (Bind_name n tvs t tenvE) = (num_tvs
+  tenvE)`];;
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp ->
@@ -415,16 +409,16 @@ let type_op_def = cake_define
 
 let check_type_names_def = cake_define_list
   [`(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Atvar tv:ast_t) =
+  list#t)namespace->ast_t->bool) tenvT (Atvar tv) =
        T`;
    `(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Attup ts:ast_t) =
+  list#t)namespace->ast_t->bool) tenvT (Attup ts) =
        (EVERY (check_type_names tenvT) ts)`;
    `(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2:ast_t) =
+  list#t)namespace->ast_t->bool) tenvT (Atfun t1 t2) =
        (check_type_names tenvT t1 /\ check_type_names tenvT t2)`;
    `(check_type_names:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->bool) tenvT (Atapp ts tn:ast_t) =
+  list#t)namespace->ast_t->bool) tenvT (Atapp ts tn) =
        ((match nsLookup tenvT tn with
         SOME (tvs,_10) -> LENGTH tvs = LENGTH ts | NONE -> F) /\
       EVERY (check_type_names tenvT) ts)`];;
@@ -432,16 +426,16 @@ let check_type_names_def = cake_define_list
 (* Substitution of type names for the type they abbreviate *)
 let type_name_subst_def = cake_define_list
   [`(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atvar tv:ast_t) = (Tvar tv)`;
+  list#t)namespace->ast_t->t) tenvT (Atvar tv) = (Tvar tv)`;
    `(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Attup ts:ast_t) =
+  list#t)namespace->ast_t->t) tenvT (Attup ts) =
        (Ttup (MAP (type_name_subst tenvT) ts))`;
    `(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atfun t1 t2:ast_t) =
+  list#t)namespace->ast_t->t) tenvT (Atfun t1 t2) =
        (Tfn (type_name_subst tenvT t1) (type_name_subst tenvT
          t2))`;
    `(type_name_subst:(mlstring,mlstring,mlstring
-  list#t)namespace->ast_t->t) tenvT (Atapp ts tc:ast_t) =
+  list#t)namespace->ast_t->t) tenvT (Atapp ts tc) =
        (let args = (MAP (type_name_subst tenvT) ts) in
       (match nsLookup tenvT tc with
         SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs args))

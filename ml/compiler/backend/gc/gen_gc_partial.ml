@@ -25,9 +25,8 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
    "refs_start","num"];;
 
 let gc_move_def = cake_define_list
-  [`gen_gc_partial_gc_move conf state (Data d:'a heap_address) =
-  (Data d,state)`;
-   `gen_gc_partial_gc_move conf state (Pointer ptr d:'a heap_address) =
+  [`gen_gc_partial_gc_move conf state (Data d) = (Data d,state)`;
+   `gen_gc_partial_gc_move conf state (Pointer ptr d) =
          (let ok = (gc_state_ok state /\ (ptr < heap_length
            (gc_state_heap state))) in
          (if ptr < gen_gc_partial_conf_gen_start conf \/
@@ -135,8 +134,8 @@ let data_sort_INDUCT,data_sort_RECURSION = define_datatype
   "data_sort = Protected ('a) | Real ('b)";;
 
 let to_gen_heap_address_def = cake_define_list
-  [`to_gen_heap_address conf (Data a:'a heap_address) = Data (Real a)`;
-   `to_gen_heap_address conf (Pointer ptr a:'a heap_address) =
+  [`to_gen_heap_address conf (Data a) = Data (Real a)`;
+   `to_gen_heap_address conf (Pointer ptr a) =
         (if ptr < gen_gc_partial_conf_gen_start conf then
           Data (Protected (Pointer ptr a)) else if
             gen_gc_partial_conf_refs_start conf <= ptr then
@@ -151,14 +150,11 @@ let to_gen_conf_def = cake_define
        conf):'a gen_gc_conf)`;;
 
 let to_gen_heap_element_def = cake_define_list
-  [`to_gen_heap_element conf (Unused n:('a,'b)heap_element) = Unused
-  n`;
-   `to_gen_heap_element conf (ForwardPointer ptr a
-  l:('a,'b)heap_element) =
+  [`to_gen_heap_element conf (Unused n) = Unused n`;
+   `to_gen_heap_element conf (ForwardPointer ptr a l) =
         ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf)
           (Real a) l`;
-   `to_gen_heap_element conf (DataElement ptrs l d:('a,'b)heap_element)
-  =
+   `to_gen_heap_element conf (DataElement ptrs l d) =
         DataElement (MAP (to_gen_heap_address conf) ptrs) l d`];;
 
 let to_gen_heap_list_def = cake_define

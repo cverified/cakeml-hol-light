@@ -106,8 +106,7 @@ let compile_def = cake_define_list
          let c3 = (if tail then Return [n2] else Skip) in
            (Seq c1 (mk_ticks ticks (Seq (Call ret dest vs (SOME
              (n1,Seq c2 (Move n2 (HD v))))) c3)),[n2],n2 + 1))`;
-   `bvi_to_data_compile n env tail live [(LetCall rets ticks dest xs
-  y:bvi_exp)] =
+   `bvi_to_data_compile n env tail live [LetCall rets ticks dest xs y] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
            if y = Return (GENLIST Var rets) then
              (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs
@@ -181,7 +180,7 @@ let compile_sing_def = cake_define_list
                 c3)),
             n2,n2 + 1))`;
    `bvi_to_data_compile_sing n env tail live (LetCall rets ticks dest xs
-  y:bvi_exp) =
+  y) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
            if y = Return (GENLIST Var rets) then
              (Seq c1 (mk_ticks ticks (Call NONE (SOME dest) vs

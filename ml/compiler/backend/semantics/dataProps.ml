@@ -10,7 +10,6 @@
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
@@ -209,7 +208,7 @@ let locals_ok_def = cake_define
 let get_code_labels_def = cake_define
   `dataProps_get_code_labels x1 =
         match x1 with
-          (Call r d a h:'a asm_with_lab) ->
+          labLang_Call r d a h ->
        (match d with SOME x -> {x} | _6 -> {}) UNION
        (match h with SOME (n,p) -> dataProps_get_code_labels p | _7
          -> {})

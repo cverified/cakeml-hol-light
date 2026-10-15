@@ -262,7 +262,7 @@ let v_all_ts_def = cake_define_wf
 let find_ref_def = cake_define
   `find_ref x1 x =
       match x1 with
-        (ValueArray l:'a bvlSem_ref) -> MEM x l
+        bvlSem_ValueArray l -> MEM x l
       | (Thunk m v) -> (v = x)
       | (MutBlock tg fin l c r) -> MEM x (l ++ [c] ++ r)
       | _15 -> F`;;
@@ -737,7 +737,7 @@ let get_addr_def = cake_define
 let word_addr_def = cake_define
   `word_addr conf x2 =
         match x2 with
-          (Data (Loc l1 l2):'a heap_address) -> Loc l1 0
+          gc_shared_Data (Loc l1 l2) -> Loc l1 0
         | (Data (Word v)) -> Word (v && (--(n2w 1)))
         | (Pointer n w) -> Word (get_addr conf n w)`;;
 
@@ -746,8 +746,7 @@ let thunk_tag_to_bits_def = cake_define_list
    `thunk_tag_to_bits NotEvaluated = (n2w 0)`];;
 
 let word_payload_def = cake_define_list
-  [`word_payload ys l (BlockTag n:data_to_word_memoryProof_tag) qs conf
-  =
+  [`word_payload ys l (BlockTag n) qs conf =
          (make_header conf (n2w n << 2) (LENGTH ys),
           MAP (word_addr conf) ys,(
           (qs = []) /\ (LENGTH ys = l) /\
@@ -758,8 +757,7 @@ let word_payload_def = cake_define_list
          (make_header conf (n2w 2) (LENGTH ys),
           MAP (word_addr conf) ys,(
           (qs = []) /\ (LENGTH ys = l)))`;
-   `word_payload ys l (ThunkTag e:data_to_word_memoryProof_tag) qs conf
-  =
+   `word_payload ys l (ThunkTag e) qs conf =
          (make_header conf (thunk_tag_to_bits e << 3 || (n2w 6))
            (LENGTH ys),
           MAP (word_addr conf) ys,(
@@ -769,15 +767,14 @@ let word_payload_def = cake_define_list
           qs,((ys = []) /\ (LENGTH qs = l) /\
               IS_SOME ((encode_header conf 3 l):('a word)
                 option)))`;
-   `word_payload ys l (NumTag b:data_to_word_memoryProof_tag) qs conf =
+   `word_payload ys l (NumTag b) qs conf =
          (make_header conf (b2w b << 2 || ((n2w 3):'a word)) (LENGTH
            qs),
           qs,((ys = []) /\ (LENGTH qs = l) /\
               IS_SOME ((encode_header conf (w2n (b2w b << 2 || ((n2w
                 3):'a word)))
                           (LENGTH qs)):('a word) option)))`;
-   `word_payload ys l (BytesTag fl n:data_to_word_memoryProof_tag) qs
-  conf =
+   `word_payload ys l (BytesTag fl n) qs conf =
          (((make_byte_header conf fl n):'a word),
           qs,((ys = []) /\ (LENGTH qs = l) /\
               (let k = if dimindex (:'a) = 32 then 2 else 3 in
@@ -785,12 +782,11 @@ let word_payload_def = cake_define_list
                 conf + k))))`];;
 
 let word_el_def = cake_define_list
-  [`word_el a (Unused l:('a,'b)heap_element) conf = word_list_exists
-  (a:'a word) (l + 1)`;
-   `word_el a (ForwardPointer n d l:('a,'b)heap_element) conf =
+  [`word_el a (Unused l) conf = word_list_exists (a:'a word) (l + 1)`;
+   `word_el a (ForwardPointer n d l) conf =
          set_sep_one (a,Word (n2w n << 2)) *
          word_list_exists (a + bytes_in_word) l`;
-   `word_el a (DataElement ys l (tag,qs):('a,'b)heap_element) conf =
+   `word_el a (DataElement ys l (tag,qs)) conf =
          (let (h,ts,c) = word_payload ys l tag qs conf in
            word_list a (Word h :: ts) *
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\

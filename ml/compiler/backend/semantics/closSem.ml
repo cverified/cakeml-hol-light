@@ -183,11 +183,11 @@ let do_install_def = cake_define
                                (Rerr (Rabort Rtype_error),s))`;;
 
 let make_const_def = cake_define_list
-  [`make_const (ConstInt i:const) = Number i`;
-   `make_const (ConstStr s:const) = ByteVector (MAP (n2w o ORD)
-  (explode s))`;
-   `make_const (ConstWord64 w:const) = Word64 w`;
-   `make_const (ConstCons t cs:const) = Block t (MAP make_const cs)`];;
+  [`make_const (ConstInt i) = Number i`;
+   `make_const (ConstStr s) = ByteVector (MAP (n2w o ORD) (explode
+  s))`;
+   `make_const (ConstWord64 w) = Word64 w`;
+   `make_const (ConstCons t cs) = Block t (MAP make_const cs)`];;
 
 let do_int_app_def = cake_define
   `closSem_do_int_app x1 x2 =
@@ -722,15 +722,15 @@ let exp_alt_size_def = cake_define_list
    `closSem_exp_alt_size (Handle a0 a1 a2:flatLang_exp) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 +
       closSem_exp_alt_size a2))`;
-   `closSem_exp_alt_size (Tick a0 a1:flatLang_exp) = 1 + (tra_size a0
-  + closSem_exp_alt_size a1)`;
-   `closSem_exp_alt_size (Call a0 a1 a2 a3:flatLang_exp) =
+   `closSem_exp_alt_size (Tick a0 a1) = 1 + (tra_size a0 +
+  closSem_exp_alt_size a1)`;
+   `closSem_exp_alt_size (Call a0 a1 a2 a3) =
     1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))`;
    `closSem_exp_alt_size (App a0 a1 a2 a3:flatLang_exp) =
     1 +
     (tra_size a0 + (option_size (\x. x) a1 +
       (closSem_exp_alt_size a2 + closSem_exp3_alt_size a3)))`;
-   `closSem_exp_alt_size (Fn a0 a1 a2 a3 a4:flatLang_exp) =
+   `closSem_exp_alt_size (Fn a0 a1 a2 a3 a4) =
     1 +
     (mlstring_size a0 +
      (option_size (\x. x) a1 +
@@ -742,7 +742,7 @@ let exp_alt_size_def = cake_define_list
      (option_size (\x. x) a1 +
       (option_size (list_size (\x. x)) a2 +
         (closSem_exp1_alt_size a3 + closSem_exp_alt_size a4))))`;
-   `closSem_exp_alt_size (Op a0 a1 a2:flatLang_exp) =
+   `closSem_exp_alt_size (Op a0 a1 a2) =
       1 + (tra_size a0 + (op_size a1 + closSem_exp3_alt_size a2))
         + (if a1 = ThunkOp ForceThunk then 100 else 0)`;
    `closSem_exp1_alt_size [] = 0`;
@@ -788,7 +788,7 @@ let evaluate_def = cake_define_list
          (match fix_clock s1 (closSem_evaluate ([x1],env,s1))
            with (Rerr (Rraise v),s) -> closSem_evaluate ([x2],v ::
            env,s) | res -> res)`;
-   `closSem_evaluate ([(Op _91 op xs:flatLang_exp)],env,s) =
+   `closSem_evaluate ([Op _91 op xs],env,s) =
          (match fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
            vs,s) ->
            (if op = Install then
@@ -808,8 +808,7 @@ let evaluate_def = cake_define_list
                        -> (Rerr e,s))) else
            (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
              err,s) | Rval (v,s) -> (Rval [v],s))) | res -> res)`;
-   `closSem_evaluate ([(Fn _92 loc vsopt num_args
-  exp:flatLang_exp)],env,s) =
+   `closSem_evaluate ([Fn _92 loc vsopt num_args exp],env,s) =
          (if num_args <= closSem_state_max_app s /\ ~(num_args = 0)
            then
            match vsopt with NONE -> (Rval [Closure loc [] env
@@ -842,10 +841,10 @@ let evaluate_def = cake_define_list
                 with (Rval y1,s2) -> evaluate_app loc_opt (HD y1) y2 s2
                 | res -> res) | res -> res) else
            (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([(Tick _95 x:flatLang_exp)],env,s) =
+   `closSem_evaluate ([Tick _95 x],env,s) =
          (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
            else closSem_evaluate ([x],env,dec_clock 1 s))`;
-   `closSem_evaluate ([(Call _96 ticks dest xs:flatLang_exp)],env,s1) =
+   `closSem_evaluate ([Call _96 ticks dest xs],env,s1) =
          (match fix_clock s1 (closSem_evaluate (xs,env,s1)) with
            (Rval vs,s) ->
              (match find_code dest vs (closSem_state_code s) with

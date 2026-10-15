@@ -229,10 +229,9 @@ val ast_t_ind = ast_t_induction
 
 let remap_tenvE_def = cake_define_list
   [`remap_tenvE f Empty = Empty`;
-   `remap_tenvE f (Bind_tvar n e:tenv_val_exp) = Bind_tvar n
-  (remap_tenvE f e)`;
-   `remap_tenvE f (Bind_name s n t e:tenv_val_exp) = Bind_name s n
-  (ts_tid_rename f t) (remap_tenvE f e)`];;
+   `remap_tenvE f (Bind_tvar n e) = Bind_tvar n (remap_tenvE f e)`;
+   `remap_tenvE f (Bind_name s n t e) = Bind_name s n (ts_tid_rename
+  f t) (remap_tenvE f e)`];;
 
 let LINVI_def = cake_define
   `LINVI f s y = (match LINV_OPT f s y with SOME x -> x | NONE -> f
