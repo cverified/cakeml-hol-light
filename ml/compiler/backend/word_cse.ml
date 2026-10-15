@@ -229,16 +229,16 @@ let wordToNum_def = cake_define
 
 let shiftToNum_def = cake_define_list
   [`shiftToNum Lsl = (40:num)`;
-   `shiftToNum Lsr = 41`;
-   `shiftToNum Asr = 42`;
-   `shiftToNum Ror = 43`];;
+   `shiftToNum Lsr = ((41):num)`;
+   `shiftToNum Asr = ((42):num)`;
+   `shiftToNum Ror = ((43):num)`];;
 
 let arithOpToNum_def = cake_define_list
   [`arithOpToNum (Add:binop) = (35:num)`;
-   `arithOpToNum (Sub:binop) = 36`;
-   `arithOpToNum (And:binop) = 37`;
-   `arithOpToNum (Or:binop) = 38`;
-   `arithOpToNum (Xor:binop) = 39`];;
+   `arithOpToNum (Sub:binop) = ((36):num)`;
+   `arithOpToNum (And:binop) = ((37):num)`;
+   `arithOpToNum (Or:binop) = ((38):num)`;
+   `arithOpToNum (Xor:binop) = ((39):num)`];;
 
 let regImmToNumList_def = cake_define_list
   [`regImmToNumList (Reg r) = [33; r + 100]`;
@@ -263,13 +263,13 @@ let arithToNumList_def = cake_define_list
 
 let memOpToNum_def = cake_define_list
   [`memOpToNum (Load:memop) = (21:num)`;
-   `memOpToNum asm_Load8 = 22`;
-   `memOpToNum asm_Load16 = 46`;
-   `memOpToNum asm_Load32 = 44`;
-   `memOpToNum (Store:memop) = 23`;
-   `memOpToNum asm_Store8 = 47`;
-   `memOpToNum asm_Store16 = 24`;
-   `memOpToNum asm_Store32 = 45`];;
+   `memOpToNum asm_Load8 = ((22):num)`;
+   `memOpToNum asm_Load16 = ((46):num)`;
+   `memOpToNum asm_Load32 = ((44):num)`;
+   `memOpToNum (Store:memop) = ((23):num)`;
+   `memOpToNum asm_Store8 = ((47):num)`;
+   `memOpToNum asm_Store16 = ((24):num)`;
+   `memOpToNum asm_Store32 = ((45):num)`];;
 
 (* Key for a load fact (kept in the separate loads_mem map): the memop
    head

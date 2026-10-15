@@ -709,8 +709,8 @@ let apply_colour_def = cake_define
 
 (*Writes made by any inst as a sptree*)
 let get_writes_inst_def = cake_define
-  `get_writes_inst inst =
-        match inst with
+  `get_writes_inst inst' =
+        match inst' with
           asm_Const reg w -> sptree_insert reg one LN
         | (Arith (asm_Binop bop r1 r2 ri)) -> sptree_insert r1 one LN
         | (Arith (Shift shift' r1 r2 ri)) -> sptree_insert r1 one LN

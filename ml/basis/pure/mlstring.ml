@@ -74,8 +74,6 @@ hol4_overload "extract" "mlstring_extract";;
 
 let strcat_def = cake_define
   `strcat s1 s2 = mlstring_concat [s1; s2]`;;
-(* HOL4 overload (expanded in the port):
-     ^ = λx y. strcat x y *)
 
 let concatWith_def = cake_define
   `concatWith s l = mlstring_concat (intersperse s l)`;;
@@ -256,34 +254,30 @@ let mlstring_gt_def = cake_define
 let mlstring_ge_def = cake_define
   `mlstring_ge s1 s2 <=> (~(mlstring_compare s1 s2 = LESS))`;;
 
-(* HOL4 overload (expanded in the port):
-     < = λx y. mlstring_lt x y *)
-(* HOL4 overload (expanded in the port):
-     <= = λx y. mlstring_le x y *)
-(* HOL4 overload (expanded in the port):
-     > = λx y. mlstring_gt x y *)
-(* HOL4 overload (expanded in the port):
-     >= = λx y. mlstring_ge x y *)
+hol4_overload "<" "mlstring_lt";;
+hol4_overload "<=" "mlstring_le";;
+hol4_overload ">" "mlstring_gt";;
+hol4_overload ">=" "mlstring_ge";;
 
 let fast_lt_def = cake_define
   `fast_lt s1 s2 =
-     (if strlen s1 = strlen s2 then mlstring_lt s1 s2 else (\x y.
-       mlstring_lt x y) (strlen s1) (strlen s2))`;;
+     (if strlen s1 = strlen s2 then mlstring_lt s1 s2 else strlen
+       s1 < strlen s2)`;;
 
 let fast_le_def = cake_define
   `fast_le s1 s2 =
-     (if strlen s1 = strlen s2 then mlstring_le s1 s2 else (\x y.
-       mlstring_le x y) (strlen s1) (strlen s2))`;;
+     (if strlen s1 = strlen s2 then mlstring_le s1 s2 else strlen
+       s1 <= strlen s2)`;;
 
 let fast_gt_def = cake_define
   `fast_gt s1 s2 =
-     (if strlen s1 = strlen s2 then mlstring_gt s1 s2 else (\x y.
-       mlstring_gt x y) (strlen s1) (strlen s2))`;;
+     (if strlen s1 = strlen s2 then mlstring_gt s1 s2 else strlen
+       s1 > strlen s2)`;;
 
 let fast_ge_def = cake_define
   `fast_ge s1 s2 =
-     (if strlen s1 = strlen s2 then mlstring_ge s1 s2 else (\x y.
-       mlstring_ge x y) (strlen s1) (strlen s2))`;;
+     (if strlen s1 = strlen s2 then mlstring_ge s1 s2 else strlen
+       s1 >= strlen s2)`;;
 
 (* Properties of string orderings *)
 
@@ -303,9 +297,8 @@ hol4_overload "collate_aux" "mlstring_collate_aux";;
 
 let collate_def = cake_define
   `mlstring_collate f s1 s2 =
-   (if (\x y. mlstring_lt x y) (strlen s1) (strlen s2) then
-     mlstring_collate_aux f s1 s2 LESS 0 (strlen s1) else if (\x y.
-     mlstring_lt x y) (strlen s2) (strlen s1) then
+   (if (strlen s1) < (strlen s2) then mlstring_collate_aux f s1 s2
+     LESS 0 (strlen s1) else if (strlen s2) < (strlen s1) then
      mlstring_collate_aux f s1 s2 GREATER 0 (strlen s2) else
      mlstring_collate_aux f s1 s2 EQUAL 0 (strlen s2))`;;
 hol4_overload "collate" "mlstring_collate";;
@@ -348,11 +341,11 @@ let make_app_list_ann_def = cake_define
          (let (x1,n1) = make_app_list_ann l1 in
           let (x2,n2) = make_app_list_ann l2 in
           let n = n1 + n2 in
-            if (\x y. mlstring_lt x y) n (2048:num) then
+            if n < (2048:num) then
               (Small input,n) else
               (BigAppend x1 x2,n)) | misc_List ls ->
          (let n = sum_sizes ls 0 in
-            if (\x y. mlstring_lt x y) n (2048:num) then
+            if n < (2048:num) then
               (Small input,n) else (BigList ls,n)))`;;
 
 let shrink_def = cake_define_list

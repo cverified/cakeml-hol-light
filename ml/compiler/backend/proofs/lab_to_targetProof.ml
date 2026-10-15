@@ -210,12 +210,12 @@ val all_enc_ok_ind = theorem"all_enc_ok_ind";
 
 let pos_val_def = cake_define_list
   [`pos_val i pos [] = (pos:num)`;
-   `pos_val i pos (Section k [] :: xs) = pos_val i pos xs`;
+   `pos_val i pos (Section k [] :: xs) = ((pos_val i pos xs):num)`;
    `pos_val i pos (Section k (y :: ys) :: xs) =
-         (if is_Label y then pos_val i (pos + line_length y)
+         ((if is_Label y then pos_val i (pos + line_length y)
            ((Section k ys) :: xs) else if i = (0:num) then pos else
            pos_val (i - 1) (pos + line_length y) ((Section k ys) ::
-           xs))`];;
+           xs)):num)`];;
 
 (* HOL4 ML code, not ported:
 val pos_val_ind = theorem"pos_val_ind";
@@ -243,10 +243,10 @@ hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 let num_pcs_def = cake_define_list
   [`num_pcs [] = (0:num)`;
-   `num_pcs (Section _13 [] :: rest) = num_pcs rest`;
-   `num_pcs (Section k (x :: xs) :: rest) = (if is_Label x then
+   `num_pcs (Section _13 [] :: rest) = ((num_pcs rest):num)`;
+   `num_pcs (Section k (x :: xs) :: rest) = ((if is_Label x then
   num_pcs ((Section k xs) :: rest) else 1 + num_pcs ((Section k xs)
-  :: rest))`];;
+  :: rest)):num)`];;
 
 let share_mem_domain_code_rel_def = cake_define
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a

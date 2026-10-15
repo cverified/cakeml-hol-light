@@ -10,7 +10,7 @@ needs "lib/ASCIInumbers.ml";;
    words bit pair list rich_list relation pair integer fcp *)
 
 let b2n_def = cake_define_list
-  [`b2n T = 1`;
+  [`b2n T = ((1):num)`;
    `b2n F = (0:num)`];;
 let b2w_def = cake_define
   `b2w c = n2w (b2n c)`;;

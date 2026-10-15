@@ -71,8 +71,8 @@ let get_num_wordloc_alist_def = cake_define
 let get_stack_def = cake_define_list
   [`get_stack [] = (LN:1 spt)`;
    `get_stack (StackFrame lsz e0 e _5 :: xs) =
-            sptree_union (sptree_union (get_num_wordloc_alist
-              e0) (get_num_wordloc_alist e)) (get_stack xs)`];;
+            ((sptree_union (sptree_union (get_num_wordloc_alist
+              e0) (get_num_wordloc_alist e)) (get_stack xs)):1 spt)`];;
 
 (* HOL4 ML code, not ported:
 val get_stack_ind = theorem "get_stack_ind";

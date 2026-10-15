@@ -72,14 +72,16 @@ let find_v_globals_def = cake_define_list
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _4 e:flatSem_v) =
-            sptree_union (find_v_globalsL (MAP SND
-              (semanticPrimitives_sem_env_v env))) (find_lookups e)`;
+            ((sptree_union (find_v_globalsL (MAP SND
+              (semanticPrimitives_sem_env_v env))) (find_lookups
+              e)):1 spt)`;
    `find_v_globals (Recclosure env vves _6:flatSem_v) =
-            sptree_union (find_v_globalsL (MAP SND
+            ((sptree_union (find_v_globalsL (MAP SND
               (semanticPrimitives_sem_env_v env)))
-                (find_lookupsL (MAP (SND o SND) vves))`;
-   `find_v_globals (Vectorv vl:flatSem_v) = find_v_globalsL vl`;
-   `find_v_globals _7 = LN`;
+                (find_lookupsL (MAP (SND o SND) vves))):1 spt)`;
+   `find_v_globals (Vectorv vl:flatSem_v) = ((find_v_globalsL vl):1
+  spt)`;
+   `find_v_globals _7 = ((LN):1 spt)`;
    `find_v_globalsL [] = LN`;
    `find_v_globalsL (h :: t) = sptree_union (find_v_globals h)
   (find_v_globalsL t)`];;

@@ -96,11 +96,11 @@ let encode_header_def = cake_define
         len < 2 EXP data_to_word_config_len_size conf then SOME
           ((make_header conf (n2w tag) len):'a word) else NONE)`;;
 
-let list_Seq_def = cake_define_list
-  [`data_to_word_list_Seq [] = wordLang_Skip`;
-   `data_to_word_list_Seq [x] = x`;
-   `data_to_word_list_Seq (x :: y :: xs) = Seq x
-  (data_to_word_list_Seq (y :: xs))`];;
+let list_Seq_def = cake_define
+  `(data_to_word_list_Seq [] = wordLang_Skip) /\
+   (data_to_word_list_Seq [x] = x) /\
+   (data_to_word_list_Seq (x :: y :: xs) = Seq x
+     (data_to_word_list_Seq (y :: xs)))`;;
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
 let StoreEach_def = cake_define_list
@@ -1061,9 +1061,9 @@ let MemEqList_def = cake_define_list
   [`MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
   wordLang_prog)`;
    `MemEqList a (w :: ws) =
-         Seq (Assign 5 (Load (Op Add [Var 3; Const a])))
+         ((Seq (Assign 5 (Load (Op Add [Var 3; Const a])))
              (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word)
-               ws) Skip)`];;
+               ws) Skip)):'a wordLang_prog)`];;
 
 let get_gen_size_def = cake_define_list
   [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
@@ -1552,12 +1552,12 @@ let SetBool_def = cake_define
 let AssignCmp_def = cake_define_list
   [`AssignCmp dest (Lt:opb) v1 v2 = (SetBool dest asm_Lower v1 (Reg
   v2):'a wordLang_prog)`;
-   `AssignCmp dest (ast_Gt:opb) v1 v2 = SetBool dest asm_Lower v2
-  (Reg v1)`;
-   `AssignCmp dest (ast_Leq:opb) v1 v2 = SetBool dest asm_NotLower v2
-  (Reg v1)`;
-   `AssignCmp dest (ast_Geq:opb) v1 v2 = SetBool dest asm_NotLower
-  v1 (Reg v2)`];;
+   `AssignCmp dest (ast_Gt:opb) v1 v2 = ((SetBool dest asm_Lower v2
+  (Reg v1)):'a wordLang_prog)`;
+   `AssignCmp dest (ast_Leq:opb) v1 v2 = ((SetBool dest asm_NotLower
+  v2 (Reg v1)):'a wordLang_prog)`;
+   `AssignCmp dest (ast_Geq:opb) v1 v2 = ((SetBool dest
+  asm_NotLower v1 (Reg v2)):'a wordLang_prog)`];;
 
 let assign_StringCmp_def = cake_define
   `assign_StringCmp (c:data_to_word_config) (secn:num) (l:num)
@@ -2226,7 +2226,7 @@ let assign_WordFromInt_def = cake_define
   `assign_WordFromInt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
          (let len = (if dimindex (:'a) < 64 then 2 else 1) in
-         ((match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
+         (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
            (header:'a word) ->
             (if len = 1 then
               Seq
@@ -2276,7 +2276,7 @@ let assign_WordFromInt_def = cake_define
                         Inst (Arith (asm_AddCarry 15 11 5 13));
                         Inst (Arith (asm_AddCarry 19 11 9 13));
                         WriteWord64_on_32 c header dest 15
-                          19]))]))),l):'a wordLang_prog#num)`;;
+                          19]))])),l):'a wordLang_prog#num)`;;
 
 let assign_WordToInt_def = cake_define
   `assign_WordToInt (c:data_to_word_config) (secn:num) (l:num)
@@ -2680,8 +2680,8 @@ hol4_overload "assign" "data_to_word_assign";;
 
 let force_thunk_def = cake_define
   `force_thunk (c:data_to_word_config) secn (l:num) ret loc v1 =
-     (((match encode_header c (8 + 6) 1 with NONE -> (GiveUp,l) |
-       SOME (header:'a word) ->
+     ((match encode_header c (8 + 6) 1 with NONE -> (GiveUp,l) | SOME
+       (header:'a word) ->
       If Test (adjust_var v1) (Imm (n2w 1))
         (match ret with NONE -> Return 0 [adjust_var v1] | SOME
           (dest,_29) -> Assign (adjust_var dest) (Var (adjust_var v1)))
@@ -2708,7 +2708,7 @@ let force_thunk_def = cake_define
                     adjust_var v1; 5] NONE | SOME (r,ns) -> Call (SOME
                     ([adjust_var r],adjust_sets ns,Skip,secn,l))
                               (SOME loc) [adjust_var v1; 5]
-                                NONE)]))])),l + 1):'a
+                                NONE)]))]),l + 1):'a
                                 wordLang_prog#num)`;;
 
 let comp_def = cake_define

@@ -389,8 +389,8 @@ let PopHandler_def = cake_define
 let chunk_to_bits_def = cake_define_list
   [`chunk_to_bits ([]:(bool#'ga word) list) = ((n2w 1):'a word)`;
    `chunk_to_bits ((b,w) :: ws) =
-      (let res = (chunk_to_bits ws) << 1 in
-        if b then res + (n2w 1) else res)`];;
+      ((let res = (chunk_to_bits ws) << 1 in
+        if b then res + (n2w 1) else res):'a word)`];;
 
 let chunk_to_bitmap_def = cake_define
   `chunk_to_bitmap ws = chunk_to_bits ws :: MAP SND ws`;;
@@ -551,9 +551,9 @@ let comp_def = cake_define
         | (FFI i r1 r2 r3 r4 live) -> (FFI i (r1 DIV 2) (r2 DIV 2)
                               (r3 DIV 2) (r4 DIV 2) 0,bs)
         | (wordLang_ShareInst op v exp) ->
-      ((match exp_to_addr exp with
+      (match exp_to_addr exp with
          NONE -> (Skip,bs) | SOME addr' -> wShareInst op v addr'
-           kf),bs)
+           kf,bs)
         | _8 -> (Skip,bs)`;;
 hol4_overload "comp" "word_to_stack_comp";;
 

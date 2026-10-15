@@ -1366,9 +1366,9 @@ let build_tdefs_def = cake_define_list
   list) list) list) =
       ((alist_to_ns []):(mlstring,mlstring,num#stamp)namespace)`;
    `build_tdefs next_stamp ((tvs,tn,condefs) :: tds) =
-      nsAppend (build_tdefs (next_stamp + 1) tds)
+      ((nsAppend (build_tdefs (next_stamp + 1) tds)
         (alist_to_ns (REVERSE (build_constrs next_stamp
-          condefs)))`];;
+          condefs)))):(mlstring,mlstring,num#stamp)namespace)`];;
 
 (* Checks that no constructor is defined twice in a type *)
 let check_dup_ctors_def = cake_define

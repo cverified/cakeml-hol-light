@@ -355,10 +355,14 @@ hol4_overload "mem_op" "labSem_mem_op";;
 
 let asm_inst_def = cake_define_list
   [`asm_inst asm_Skip s = (s:('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Const r imm) s = upd_reg r (wordLang_Word imm) s`;
-   `asm_inst (asm_Arith x) s = arith_upd x s`;
-   `asm_inst (asm_Mem m r a) s = mem_op m r a s`;
-   `asm_inst (asm_FP fp) s = fp_upd fp s`];;
+   `asm_inst (asm_Const r imm) s = ((upd_reg r (wordLang_Word imm)
+  s):('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_Arith x) s = ((arith_upd x
+  s):('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_Mem m r a) s = ((mem_op m r a
+  s):('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_FP fp) s = ((fp_upd fp
+  s):('a,'c,'ffi)labSem_state)`];;
 
 let dec_clock_def = cake_define
   `labSem_dec_clock s = state_clock_fupd (K (state_clock s - 1)) s`;;

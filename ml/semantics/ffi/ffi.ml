@@ -54,8 +54,8 @@ hol4_overload "oracle" "ffi_state_oracle";;
 hol4_overload "oracle_fupd" "ffi_state_oracle_fupd";;
 
 let initial_ffi_state_def = cake_define
-  `initial_ffi_state oc (ffi:'ffi) =
-     mk_ffi_state oc ffi []`;;
+  `initial_ffi_state oc' (ffi:'ffi) =
+     mk_ffi_state oc' ffi []`;;
 
 let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
   "ffi_result = FFI_return ('ffi ffi_state) (word8 list) | FFI_final \

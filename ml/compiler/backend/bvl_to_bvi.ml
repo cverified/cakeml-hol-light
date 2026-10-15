@@ -89,8 +89,8 @@ let global_count_sing_def = cake_define_list
          (if op = closLang_GlobOp AllocGlobal then 1 +
            global_count_list xs else global_count_list xs)`;
    `global_count_list [] = (0:num)`;
-   `global_count_list (x :: xs) =
-         global_count_sing x + global_count_list xs`];;
+   `global_count_list (x :: xs) = ((
+         global_count_sing x + global_count_list xs):num)`];;
 
 let AllocGlobal_location_def = cake_define
   `AllocGlobal_location = data_num_stubs`;;

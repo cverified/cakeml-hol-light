@@ -113,8 +113,8 @@ let list_LUPDATE_def = cake_define_list
 (*Abstracts a stackLang stack w.r.t. wordLang's
   Note: requires assumption on dimindex(:'a) stated in state_rel *)
 let abs_stack_def = cake_define
-  `abs_stack bitmaps x2 stack x4 =
-        match (bitmaps,x2,stack,x4) with
+  `abs_stack bitmaps x2 stack' x4 =
+        match (bitmaps,x2,stack',x4) with
           ((bitmaps:('a word) list),[],stack',[]) ->
        (if stack' = [wordLang_Word ((n2w 0):'a word)] then SOME []
          else NONE)

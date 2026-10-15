@@ -60,26 +60,29 @@ let check_size_op_def = cake_define
 let check_size_def = cake_define_list
   [`check_size k ((Var t n):closLang_exp) = (k:num)`;
    `check_size k (If t e1 e2 e3:closLang_exp) =
-      (let k = check_size k e1 in if k = 0 then 0 else
+      (((let k = check_size k e1 in if k = 0 then 0 else
          let k = check_size k e2 in if k = 0 then 0 else
-           check_size k e3)`;
+           check_size k e3)):num)`;
    `check_size k (Let t es e:closLang_exp) =
-      (let k = check_size_list k es in if k = 0 then 0 else
-         check_size k e)`;
+      (((let k = check_size_list k es in if k = 0 then 0 else
+         check_size k e)):num)`;
    `check_size k (closLang_Op t p es:closLang_exp) =
-      (let k = check_size_op k p (LENGTH es) in if k = 0 then 0 else
-         check_size_list k es)`;
-   `check_size k (Raise t e:closLang_exp) = check_size k e`;
-   `check_size k (closLang_Tick t e:closLang_exp) = check_size k e`;
-   `check_size k (closLang_Fn _21 _22 _23 _24 e) = k`;
+      (((let k = check_size_op k p (LENGTH es) in if k = 0 then 0
+        else
+         check_size_list k es)):num)`;
+   `check_size k (Raise t e:closLang_exp) = ((check_size k e):num)`;
+   `check_size k (closLang_Tick t e:closLang_exp) = ((check_size k
+  e):num)`;
+   `check_size k (closLang_Fn _21 _22 _23 _24 e) = ((k):num)`;
    `check_size k (Handle t e1 e2:closLang_exp) =
-      (let k = check_size k e1 in if k = 0 then 0 else
-         check_size k e2)`;
-   `check_size k (closLang_Call _28 _29 _30 es:closLang_exp) = k`;
+      (((let k = check_size k e1 in if k = 0 then 0 else
+         check_size k e2)):num)`;
+   `check_size k (closLang_Call _28 _29 _30 es:closLang_exp) =
+  ((k):num)`;
    `check_size k (App _33 _34 e es:closLang_exp) =
-      (let k = check_size (k - 1) e in if k = 0 then 0 else
-         check_size_list k es)`;
-   `check_size k (Letrec _38 _39 _40 fns e:closLang_exp) = k`;
+      (((let k = check_size (k - 1) e in if k = 0 then 0 else
+         check_size_list k es)):num)`;
+   `check_size k (Letrec _38 _39 _40 fns e:closLang_exp) = ((k):num)`;
    `check_size_list k [] = k`;
    `check_size_list k (x :: xs) =
       (let k = check_size k x in if k = 0 then 0 else

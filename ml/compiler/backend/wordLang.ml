@@ -112,8 +112,8 @@ let every_var_imm_def = cake_define
         | _1 -> T`;;
 
 let every_var_inst_def = cake_define
-  `every_var_inst P inst =
-        match inst with
+  `every_var_inst P inst' =
+        match inst' with
           asm_Const reg w -> P reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)

@@ -289,7 +289,7 @@ let get_intervals_ct_def = cake_define
        (let (n,int_beg,int_end,live) = get_intervals_ct_aux ct 0 LN
          LN LN in
        let listlive = MAP FST (toAList live) in
-       (n - 1,numset_list_add_if_lt listlive n
+       (n - (&1),numset_list_add_if_lt listlive n
          int_beg,numset_list_add_if_gt listlive n int_end))`;;
 
 let linear_scan_state_FIELDS = define_record "linear_scan_state"

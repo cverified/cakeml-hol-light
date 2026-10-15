@@ -48,7 +48,7 @@ let encode_infer_t_def = cake_define_list
       term_Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
 let decode_infer_t_def = cake_define_list
-  [`decode_infer_t (Var n:ast_exp) =
+  [`decode_infer_t (term_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (term_Const (DB_tag n)) =
       Infer_Tvar_db n`;
@@ -267,13 +267,13 @@ let star_kwork_def = cake_define
   `star_kwork x1 =
       match x1 with
         [] -> EMPTY_BAG
-      | (CONSk its n :: ks) -> BAG_UNION ((FOLDR BAG_INSERT
+      | (CONSk its n :: ks) -> (BAG_UNION) ((FOLDR BAG_INSERT
         EMPTY_BAG) its) (star_kwork ks)
       | (_3 :: ks) -> star_kwork ks`;;
 
 let star_workbag_def = cake_define
   `star_workbag v its k =
-   (if v then star_kwork k else BAG_UNION ((FOLDR BAG_INSERT
+   (if v then star_kwork k else (BAG_UNION) ((FOLDR BAG_INSERT
      EMPTY_BAG) its) (star_kwork k))`;;
 
 let isCONSk_def = cake_define

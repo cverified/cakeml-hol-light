@@ -552,32 +552,34 @@ hol4_overload "op_gbag" "closProps_op_gbag";;
 
 let set_globals_def = cake_define_list
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
-   `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) = BAG_UNION
-  (BAG_UNION
+   `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) = (BAG_UNION)
+  ((BAG_UNION)
         (closProps_set_globals e1) (closProps_set_globals e2))
           (closProps_set_globals e3)`;
-   `closProps_set_globals (Let _217 binds e:closLang_exp) = BAG_UNION
-  (closProps_set_globals e) (closProps_elist_globals binds)`;
+   `closProps_set_globals (Let _217 binds e:closLang_exp) =
+  (BAG_UNION) (closProps_set_globals e) (closProps_elist_globals
+  binds)`;
    `closProps_set_globals (Raise _219 e:closLang_exp) =
   closProps_set_globals e`;
    `closProps_set_globals (Handle _221 e1 e2:closLang_exp) =
-  BAG_UNION (closProps_set_globals e1) (closProps_set_globals e2)`;
+  (BAG_UNION) (closProps_set_globals e1) (closProps_set_globals e2)`;
    `closProps_set_globals (closLang_Tick _223 e:closLang_exp) =
   closProps_set_globals e`;
    `closProps_set_globals (closLang_Call _227 _228 _229
   args:closLang_exp) = closProps_elist_globals args`;
    `closProps_set_globals (App _232 _233 f args:closLang_exp) =
-  BAG_UNION (closProps_set_globals f) (closProps_elist_globals args)`;
+  (BAG_UNION) (closProps_set_globals f) (closProps_elist_globals
+  args)`;
    `closProps_set_globals (closLang_Fn _234 _235 _236 _237 bod) =
   closProps_set_globals bod`;
    `closProps_set_globals (Letrec _241 _242 _243 fbinds
-  bod:closLang_exp) = BAG_UNION
+  bod:closLang_exp) = (BAG_UNION)
         (closProps_set_globals bod) (closProps_elist_globals (MAP
           SND fbinds))`;
    `closProps_set_globals (closLang_Op _245 opn args:closLang_exp) =
-  BAG_UNION (closProps_op_gbag opn) (closProps_elist_globals args)`;
+  (BAG_UNION) (closProps_op_gbag opn) (closProps_elist_globals args)`;
    `closProps_elist_globals [] = EMPTY_BAG`;
-   `closProps_elist_globals (e :: es) = BAG_UNION
+   `closProps_elist_globals (e :: es) = (BAG_UNION)
   (closProps_set_globals e) (closProps_elist_globals es)`];;
 hol4_overload "elist_globals" "closProps_elist_globals";;
 hol4_overload "set_globals" "closProps_set_globals";;

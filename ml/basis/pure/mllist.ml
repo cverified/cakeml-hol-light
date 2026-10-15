@@ -121,7 +121,7 @@ let cpn_to_reln_def = cake_define
 (* from std_preludeLib *)
 let LENGTH_AUX_def = cake_define_list
   [`LENGTH_AUX [] n = (n:num)`;
-   `LENGTH_AUX (x :: xs) n = LENGTH_AUX xs (n + 1)`];;
+   `LENGTH_AUX (x :: xs) n = ((LENGTH_AUX xs (n + 1)):num)`];;
 
 (* tail-recursive MAP *)
 

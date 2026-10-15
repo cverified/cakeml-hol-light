@@ -629,13 +629,13 @@ let DivCode_def = cake_define
 
 let LoadRegs_def = cake_define_list
   [`LoadRegs [] p = (p:'a wordLang_prog)`;
-   `LoadRegs (n :: ns) p = Seq (Get (n + 2) (Temp (n2w n)))
-  (LoadRegs ns p)`];;
+   `LoadRegs (n :: ns) p = ((Seq (Get (n + 2) (Temp (n2w n)))
+  (LoadRegs ns p)):'a wordLang_prog)`];;
 
 let SaveRegs_def = cake_define_list
   [`SaveRegs [] = (Skip:'a wordLang_prog)`;
-   `SaveRegs (n :: ns) = Seq (Set (Temp (n2w n)) (Var (n + 2)))
-  (SaveRegs ns)`];;
+   `SaveRegs (n :: ns) = ((Seq (Set (Temp (n2w n)) (Var (n + 2)))
+  (SaveRegs ns)):'a wordLang_prog)`];;
 
 let compile_def = cake_define
   `word_bignum_compile n l i cs x5 =

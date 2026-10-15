@@ -150,7 +150,7 @@ let _ = size_thms "bvi_exp";;
    fs [] *)
 let term_ok_any_def = cake_define_wf
   `MEASURE (bvi_exp_size o SND o SND)`
-  `term_ok_any ts list expr =
+  `term_ok_any ts list' expr =
         match expr with
           (Var i:bvi_exp) ->
        (if ~list' then i < LENGTH ts else if i < LENGTH ts then EL i
@@ -430,7 +430,7 @@ let push_call_def = cake_define
         | _59 -> dummy`;;
 
 let rewrite_def = cake_define
-  `rewrite loc next opr acc ts exp =
+  `rewrite loc next' opr acc ts exp =
         match exp with
           (Var n:bvi_exp) -> (F,Var n)
         | (If x1 x2 x3) ->

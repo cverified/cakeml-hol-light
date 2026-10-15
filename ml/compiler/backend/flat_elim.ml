@@ -118,26 +118,28 @@ let dest_GlobalVarLookup_def = cake_define
     | _34 -> NONE`;;
 
 let find_loc_def = cake_define_list
-  [`find_loc ((Raise _35 er):flatLang_exp) = find_loc er`;
+  [`find_loc ((Raise _35 er):flatLang_exp) = ((find_loc er):1 spt)`;
    `find_loc (Handle _37 eh p_es:flatLang_exp) =
-            sptree_union (find_loc eh) (find_locL (MAP SND p_es))`;
+            ((sptree_union (find_loc eh) (find_locL (MAP SND
+              p_es))):1 spt)`;
    `find_loc (Lit _40 _41:flatLang_exp) = (LN:1 spt)`;
-   `find_loc (Con _44 _45 es:flatLang_exp) = find_locL es`;
-   `find_loc (flatLang_Var_local _46 _47) = LN`;
-   `find_loc (Fun _50 _51 ef:flatLang_exp) = find_loc ef`;
-   `find_loc (App _53 op es:flatLang_exp) = (match
+   `find_loc (Con _44 _45 es:flatLang_exp) = ((find_locL es):1 spt)`;
+   `find_loc (flatLang_Var_local _46 _47) = ((LN):1 spt)`;
+   `find_loc (Fun _50 _51 ef:flatLang_exp) = ((find_loc ef):1 spt)`;
+   `find_loc (App _53 op es:flatLang_exp) = (((match
   (dest_GlobalVarInit op) with SOME n -> (sptree_insert n one
-  (find_locL es)) | NONE -> find_locL es)`;
+  (find_locL es)) | NONE -> find_locL es)):1 spt)`;
    `find_loc (If _55 ei1 ei2 ei3:flatLang_exp) =
-            sptree_union (find_loc ei1) (sptree_union (find_loc
-              ei2) (find_loc ei3))`;
+            ((sptree_union (find_loc ei1) (sptree_union (find_loc
+              ei2) (find_loc ei3))):1 spt)`;
    `find_loc (Mat _57 em p_es:flatLang_exp) =
-            sptree_union (find_loc em) (find_locL (MAP SND p_es))`;
-   `find_loc (Let _60 _61 el1 el2:flatLang_exp) = sptree_union
-  (find_loc el1) (find_loc el2)`;
+            ((sptree_union (find_loc em) (find_locL (MAP SND
+              p_es))):1 spt)`;
+   `find_loc (Let _60 _61 el1 el2:flatLang_exp) = ((sptree_union
+  (find_loc el1) (find_loc el2)):1 spt)`;
    `find_loc (Letrec _63 vv_es elr1:flatLang_exp) =
-            sptree_union (find_locL (MAP (SND o SND) vv_es))
-              (find_loc elr1)`;
+            ((sptree_union (find_locL (MAP (SND o SND) vv_es))
+              (find_loc elr1)):1 spt)`;
    `find_locL [] = LN`;
    `find_locL (e :: es) = sptree_union (find_loc e) (find_locL es)`];;
 

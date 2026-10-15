@@ -1056,9 +1056,9 @@ let evaluate_def = cake_define_list
    `wordSem_evaluate (wordLang_Raise n,s) =
          (match wordSem_get_var n s with NONE -> (SOME
            wordSem_Error,s) | SOME w ->
-           ((match wordSem_jump_exc s with NONE -> (SOME
+           (match wordSem_jump_exc s with NONE -> (SOME
              wordSem_Error,s) | SOME (s,l1,l2) -> (SOME
-             (wordSem_Exception (Loc l1 l2) w))),s))`;
+             (wordSem_Exception (Loc l1 l2) w)),s))`;
    `wordSem_evaluate (wordLang_Break k,s) = (SOME ((Break k:'a
   wordLang_prog)),s)`;
    `wordSem_evaluate (wordLang_Continue k,s) = (SOME ((Continue k:'a

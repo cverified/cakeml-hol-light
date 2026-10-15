@@ -28,5 +28,5 @@ let vars_def = cake_define_list
 
 let varb_def = cake_define_list
   [`varb (term_Var s) = BAG_INSERT s (EMPTY_BAG)`;
-   `varb (term_Pair t1 t2) = BAG_UNION (varb t1) (varb t2)`;
+   `varb (term_Pair t1 t2) = (BAG_UNION) (varb t1) (varb t2)`;
    `varb (term_Const c) = EMPTY_BAG`];;

@@ -232,13 +232,13 @@ let default_mat_def = cake_define_list
 let pat_weight_def = cake_define_list
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
-   `pat_weight (Lit l:pattern_semantics_pat) = 0`;
-   `pat_weight (Or p q:pattern_semantics_pat) = 1 + pat_weight p +
-  pat_weight q`;
-   `pat_weight (pattern_semantics_Ref p:pattern_semantics_pat) = 1 +
-  pat_weight p`;
+   `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;
+   `pat_weight (Or p q:pattern_semantics_pat) = ((1 + pat_weight p +
+  pat_weight q):num)`;
+   `pat_weight (pattern_semantics_Ref p:pattern_semantics_pat) = ((1
+  + pat_weight p):num)`;
    `pat_weight (pattern_semantics_Cons t ps:pattern_semantics_pat) =
-  1 + pats_weight ps`;
+  ((1 + pats_weight ps):num)`;
    `pats_weight [] = 0`;
    `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
 
@@ -300,10 +300,10 @@ let exh_rows_def = cake_define
 let exh_steps_def = cake_define_list
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
-      (if NULL r then 1 else
+      (((if NULL r then 1 else
          match col_ctors (r :: rows) with NONE -> 1 + exh_steps
            (default_mat (r :: rows)) | SOME cs -> 1 + exh_steps_list
-           (spec_mats cs (r :: rows)))`;
+           (spec_mats cs (r :: rows)))):num)`;
    `exh_steps_list [] = 0`;
    `exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`];;
 

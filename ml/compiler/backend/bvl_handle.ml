@@ -96,7 +96,8 @@ let handle_size_def = cake_define_list
    `handle_size (Force m n:bvl_exp) = 1`;
    `handle_size (Call t dest xs:bvl_exp) = 1 + handle_size1 xs`;
    `handle_size1 [] = (1:num)`;
-   `handle_size1 (x :: xs) = 1 + handle_size x + handle_size1 xs`];;
+   `handle_size1 (x :: xs) = ((1 + handle_size x + handle_size1
+  xs):num)`];;
 
 let handle_simp_def = cake_define_list
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
@@ -112,7 +113,8 @@ let handle_simp_def = cake_define_list
    `handle_simp (Call t dest xs:bvl_exp) = Call t dest
   (handle_simp_list xs)`;
    `handle_simp_list [] = ([]:bvl_exp list)`;
-   `handle_simp_list (x :: xs) = handle_simp x :: handle_simp_list xs`;
+   `handle_simp_list (x :: xs) = ((handle_simp x :: handle_simp_list
+  xs):bvl_exp list)`;
    `make_handle x1 x2 l =
          (match dest_handle_Raise x1 with SOME r -> Let [r]
            (handle_adj_vars 1 l (handle_simp x2)) | NONE ->

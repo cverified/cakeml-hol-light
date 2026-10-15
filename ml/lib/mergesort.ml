@@ -82,8 +82,8 @@ let sort3_tail_def = cake_define
       [z; y; x])`;;
 
 let merge_tail_def = cake_define
-  `merge_tail negate R l x4 acc =
-        match (negate,l,x4) with
+  `merge_tail negate' R l x4 acc =
+        match (negate',l,x4) with
           ((negate':bool),[],[]) -> acc
         | (negate',l,[]) -> REV l acc
         | (negate',[],l) -> REV l acc

@@ -119,28 +119,28 @@ hol4_overload "op_gbag" "flatProps_op_gbag";;
 let set_globals_def = cake_define_list
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
-   `flatProps_set_globals (Handle t e pes:flatLang_exp) = BAG_UNION
+   `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)
   (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
    `flatProps_set_globals (Con t id' es:flatLang_exp) =
   flatProps_elist_globals es`;
    `flatProps_set_globals (Fun t v e:flatLang_exp) =
   flatProps_set_globals e`;
-   `flatProps_set_globals (App t op es:flatLang_exp) = BAG_UNION
+   `flatProps_set_globals (App t op es:flatLang_exp) = (BAG_UNION)
   (flatProps_elist_globals es) (flatProps_op_gbag op)`;
-   `flatProps_set_globals (If t e1 e2 e3:flatLang_exp) = BAG_UNION
-  (BAG_UNION
+   `flatProps_set_globals (If t e1 e2 e3:flatLang_exp) = (BAG_UNION)
+  ((BAG_UNION)
         (flatProps_set_globals e1) (flatProps_set_globals e2))
           (flatProps_set_globals e3)`;
-   `flatProps_set_globals (Mat t e pes:flatLang_exp) = BAG_UNION
+   `flatProps_set_globals (Mat t e pes:flatLang_exp) = (BAG_UNION)
   (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
-   `flatProps_set_globals (Let t v e1 e2:flatLang_exp) = BAG_UNION
+   `flatProps_set_globals (Let t v e1 e2:flatLang_exp) = (BAG_UNION)
   (flatProps_set_globals e1) (flatProps_set_globals e2)`;
-   `flatProps_set_globals (Letrec t fs e:flatLang_exp) = BAG_UNION
+   `flatProps_set_globals (Letrec t fs e:flatLang_exp) = (BAG_UNION)
         (flatProps_set_globals e) (flatProps_elist_globals (MAP
           (SND o SND) fs))`;
    `flatProps_set_globals _2 = EMPTY_BAG`;
    `flatProps_elist_globals [] = EMPTY_BAG`;
-   `flatProps_elist_globals (e :: es) = BAG_UNION
+   `flatProps_elist_globals (e :: es) = (BAG_UNION)
   (flatProps_set_globals e) (flatProps_elist_globals es)`];;
 hol4_overload "elist_globals" "flatProps_elist_globals";;
 hol4_overload "set_globals" "flatProps_set_globals";;

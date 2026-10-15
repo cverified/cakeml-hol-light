@@ -1041,7 +1041,7 @@ let ptree_Expr_def = cake_define_list
                     SOME (INL (p,e))))) | _110 -> NONE))`;
    `ptree_PEs (Lf _111) = (NONE:((ast_pat#ast_exp) list) option)`;
    `ptree_PEs (Nd (nt',_112) args) =
-        (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEs) then NONE else
+        ((if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEs) then NONE else
           match args with
               [pattern_pt; arrow_pt; pe_pt] ->
               OPTION_IGNORE_BIND
@@ -1049,7 +1049,8 @@ let ptree_Expr_def = cake_define_list
                   (OPTION_BIND (ptree_Pattern nPattern pattern_pt) (\
                 pat. OPTION_BIND (ptree_PE pe_pt) (\
                 (e,pes).
-                SOME ((pat,e) :: pes)))) | _113 -> NONE)`;
+                SOME ((pat,e) :: pes)))) | _113 ->
+                  NONE):((ast_pat#ast_exp) list) option)`;
    `ptree_PE (Lf _114) = NONE`;
    `ptree_PE (Nd (nt',_115) args) =
          (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPE) then NONE else
@@ -1133,7 +1134,7 @@ let ptree_StructName_def = cake_define_list
 let ptree_OptTypEqn_def = cake_define_list
   [`ptree_OptTypEqn (Lf _127) = (NONE:(ast_t option) option)`;
    `ptree_OptTypEqn (Nd nt' args) =
-      (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOptTypEqn) then
+      ((if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nOptTypEqn) then
         NONE else
         match args with
             [] -> SOME NONE | [eqtok; typ_pt] ->
@@ -1141,7 +1142,8 @@ let ptree_OptTypEqn_def = cake_define_list
               (assert (tokcheck eqtok tokens_EqualsT)) (OPTION_BIND
                 (ptree_Type nType typ_pt) (\
               typ.
-              SOME (SOME typ))) | _128 -> NONE)`];;
+              SOME (SOME typ))) | _128 -> NONE):(ast_t option)
+                option)`];;
 
 let ptree_SpecLine_def = cake_define_list
   [`ptree_SpecLine (Lf _130) = NONE`;

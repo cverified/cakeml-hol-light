@@ -903,6 +903,37 @@ class Porter:
       return p
     return go(p)
 
+  def result_types(self, cls):
+    """the type that one clause of a function puts on its right
+       hand side is put on the right hand side of its other
+       clauses as well: a clause of its own says nothing else
+       about the type, and an ambiguous constructor in it would
+       be resolved another way (data_to_word's MemEqList gives a
+       wordLang program, which only its first clause says)"""
+    rty = {}
+    for cl in cls:
+      e = cl
+      while e.kind == 'paren': e = e.e
+      if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
+      h, _ = hterm.strip_app(e.l)
+      if h.kind != 'id': continue
+      r = e.r
+      while r.kind == 'paren': r = r.e
+      if r.kind == 'typed': rty.setdefault(h.name, r.ty)
+    if not rty: return
+    for cl in cls:
+      e = cl
+      while e.kind == 'paren': e = e.e
+      if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
+      h, _ = hterm.strip_app(e.l)
+      if h.kind != 'id' or h.name not in rty: continue
+      r = e.r
+      while r.kind == 'paren': r = r.e
+      if r.kind == 'typed': continue
+      e.r = hterm.Node('typed', tok=e.r.tok,
+                       e=hterm.Node('paren', tok=e.r.tok, e=e.r),
+                       ty=rty[h.name])
+
   def pat_types(self, cls):
     """the theories of the types that the source itself puts on a
        pattern, per argument position: those say which theory an
@@ -1206,6 +1237,7 @@ class Porter:
       # in `;, which is what the lines have to leave room for
       all = hterm.conjuncts_of(e)
       atys = self.pat_types(all)
+      self.result_types(all)
       cls = []
       for i, cl in enumerate(all):
         # every clause has its own variables, so also its own ones
