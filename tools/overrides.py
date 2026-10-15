@@ -368,6 +368,12 @@ CON_OF = {
   ('word_cse', 'canonicalArith_def'): {'*': 'asm'},
 }
 
+# NB: the key of an override is (theory, name of the OCaml
+# binding), and the name of the binding lowercases a name that
+# starts with a capital and has no other capital in it: the
+# override of word_cse's Seqs_def is keyed ('word_cse',
+# 'seqs_def').
+
 # definitions whose patterns need the type of their constructor on
 # them: the name is one that several theories in scope have, and
 # the definition does not say which one it is anywhere else
