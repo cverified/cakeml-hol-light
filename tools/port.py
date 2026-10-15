@@ -591,15 +591,26 @@ class Porter:
         cons_of(p.l); cons_of(p.r)
     for _, args, _ in cls:
       for a in args: cons_of(a)
+    # a constructor that the source qualifies (bvi$Call) says the
+    # theory itself
+    def split_con(nm):
+      if '$' in nm:
+        t, n = nm.split('$')
+        return t, n
+      return None, nm
     thys = None
     for nm in cons_in:
-      ts = {t for t, k in self.db.defs.get(nm, []) if k == 'con'}
+      t, n = split_con(nm)
+      ts = ({t} if t else
+            {t for t, k in self.db.defs.get(n, []) if k == 'con'})
       if not ts: continue
       thys = ts if thys is None else thys & ts
     self.contys = thys or set()
     def argty(nm, j):
-      if thys:
-        out = {self.db.con_argty_thy[(t, nm, j)] for t in thys
+      t, nm = split_con(nm)
+      ts = {t} if t else thys
+      if ts:
+        out = {self.db.con_argty_thy[(t, nm, j)] for t in ts
                if (t, nm, j) in self.db.con_argty_thy}
         if out: return out
       return self.db.con_argty.get((nm, j))

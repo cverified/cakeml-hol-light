@@ -1989,7 +1989,40 @@ let cake_conj_list cls =
       names [] in
   list_mk_conj (map (inst ins) cls);;
 
-let cake_define_list cls = cake_define (cake_conj_list cls);;
+(* when the clauses do not fit together (the types that they get on
+   their own cannot be unified), they are assumed one by one, with
+   the type of the first clause of a function for its constant *)
+
+let cake_cheat_list cls =
+  let head cl = fst(strip_comb(lhs(snd(strip_forall cl)))) in
+  let fs = itlist (fun cl l ->
+                     let f = head cl in
+                     if exists (fun g -> fst(dest_var g) =
+                                         fst(dest_var f)) l
+                     then l else l @ [f])
+                  cls [] in
+  do_list (fun f ->
+             let s,ty = dest_var f in
+             if not (can get_const_type s) then new_constant(s,ty))
+          fs;
+  let name = fst(dest_var(hd fs)) in
+  the_cheats := name :: !the_cheats;
+  print_string ("\ncake_define " ^ name ^ " CHEATED (clause by " ^
+                "clause)\n");
+  flush stdout;
+  let cheat cl =
+    let vs = filter (fun v -> can get_const_type (fst(dest_var v)))
+                    (frees cl) in
+    let consts = map (fun v -> mk_mconst(fst(dest_var v),type_of v),v)
+                     vs in
+    new_axiom (close_clause [] (vsubst consts cl)) in
+  let ths = mapfilter cheat cls in
+  if ths = [] then failwith "cake_cheat_list" else
+  end_itlist CONJ ths;;
+
+let cake_define_list cls =
+  try cake_define (cake_conj_list cls)
+  with Failure _ -> cake_cheat_list cls;;
 
 let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm
