@@ -46,6 +46,19 @@ let BAG_DISJOINT = new_definition
 let BAG_ALL_DISTINCT = new_definition
   `BAG_ALL_DISTINCT (b:A->num) <=> !e. b e <= 1`;;
 
+let FINITE_BAG = new_definition
+  `FINITE_BAG (b:A->num) <=> FINITE (SET_OF_BAG b)`;;
+
+(* the multiset order of HOL4's bagTheory, which the measure of
+   the unification algorithm uses *)
+
+let mlt1 = new_definition
+  `mlt1 r (b1:A->num) b2 <=>
+   FINITE_BAG b1 /\ FINITE_BAG b2 /\
+   (?e rep res. b1 = BAG_UNION rep res /\
+                b2 = BAG_UNION res (BAG_INSERT e EMPTY_BAG) /\
+                (!e'. BAG_IN e' rep ==> r e' e))`;;
+
 (* HOL4 writes the union of two bags as an infix *)
 
 parse_as_infix("BAG_UNION",(16,"left"));;

@@ -387,21 +387,26 @@ class Parser:
     return False
 
   def parse_atoms(self, annot=True):
-    e = self.parse_fields(self.parse_atom())
-    # R^* is RTC R and R^+ is TC R (relationTheory)
-    while self.peek().text == '^' and \
-          self.peek(1).text in ('*', '+') and \
-          self.peek(1).pos == self.peek().pos + 1:
-      self.next()
-      e = mk_app('RTC' if self.next().text == '*' else 'TC', [e])
+    e = self.closures(self.parse_fields(self.parse_atom()))
     while self.starts_atom(True):
-      a = self.parse_fields(self.parse_atom())
+      a = self.closures(self.parse_fields(self.parse_atom()))
       e = Node('app', tok=e.tok, fn=e, arg=a)
     e = self.parse_postfix(e)
     if annot and self.at(':'):
       self.next()
       ty = self.parse_type()
       e = Node('typed', tok=e.tok, e=e, ty=ty)
+    return e
+
+  def closures(self, e):
+    """R^* is RTC R and R^+ is TC R (relationTheory); they bind
+       tighter than an application does, so every atom takes
+       them (walkstar's walkstarR has mlt1 (vR s)^+)"""
+    while self.peek().text == '^' and \
+          self.peek(1).text in ('*', '+') and \
+          self.peek(1).pos == self.peek().pos + 1:
+      self.next()
+      e = mk_app('RTC' if self.next().text == '*' else 'TC', [e])
     return e
 
   def parse_fields(self, e):

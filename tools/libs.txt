@@ -22,3 +22,12 @@ grammar	examples/formal-languages/context-free/grammarScript.sml
 spt_closure	examples/algorithms/spt_closureScript.sml
 multiword	examples/machine-code/multiword/multiwordScript.sml
 balanced_map	examples/data-structures/balanced_bst/balanced_mapScript.sml
+term	examples/algorithms/unification/triangular/first-order/termScript.sml
+subst	examples/algorithms/unification/triangular/first-order/substScript.sml
+walk	examples/algorithms/unification/triangular/first-order/walkScript.sml
+walkstar	examples/algorithms/unification/triangular/first-order/walkstarScript.sml
+unifDef	examples/algorithms/unification/triangular/first-order/unifDefScript.sml
+collapse	examples/algorithms/unification/triangular/first-order/collapseScript.sml
+fmsp	src/transfer/examples/fmspScript.sml
+rmfmap	examples/algorithms/unification/triangular/first-order/compilation/rmfmapScript.sml
+tcallUnif	examples/algorithms/unification/triangular/first-order/compilation/tcallUnifScript.sml

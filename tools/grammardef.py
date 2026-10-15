@@ -252,7 +252,9 @@ def generate(rules, info, p, hterm):
     def go(e):
       while e.kind == 'paren': e = e.e
       if e.kind == 'set':
-        return '{' + '; '.join(
+        # the elements of a set are separated by commas, not by
+        # the semicolons of a list
+        return '{' + ','.join(
           '[%s (%s)]' % (p.ctx.name('TOK'), pr(i)) for i in e.items) + '}'
       if e.kind == 'setabs':
         return '{[%s (%s)] | %s}' % (p.ctx.name('TOK'), pr(e.e), pr(e.p))

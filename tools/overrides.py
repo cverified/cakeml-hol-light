@@ -481,6 +481,23 @@ cake_declare "mc_iop_code" `:(A)mini`;;
 }
 
 EXTRA_HEAD = {
+  # HOL4 defines these four with a schema (xDefineSchema, under
+  # the hypothesis that the substitution is wellfounded), which
+  # HOL Light has no counterpart for.  The port declares them and
+  # says nothing about their value, which adds no axiom; only the
+  # theorems of the second pass need what they are.
+  'walk': r'''
+cake_declare "vwalk" `:(num,(A)term)fmap->num->(A)term`;;
+''',
+  'walkstar': r'''
+cake_declare "walkstar" `:(num,(A)term)fmap->(A)term->(A)term`;;
+''',
+  'unifDef': r'''
+cake_declare "oc" `:(num,(A)term)fmap->(A)term->num->bool`;;
+cake_declare "unify"
+  `:(num,(A)term)fmap->(A)term->(A)term->
+      ((num,(A)term)fmap)option`;;
+''',
   'machine_ieee': r'''
 (* HOL4 generates the definitions of the fp16, fp32 and fp64
    encodings of floating point numbers with ML code (the function

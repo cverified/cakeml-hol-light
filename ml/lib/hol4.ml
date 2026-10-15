@@ -275,6 +275,20 @@ let OWHILE = new_definition
 let WHILE = new_definition
   `WHILE G (f:A->A) s = THE (OWHILE G f s)`;;
 
+let ISL = new_recursive_definition sum_RECURSION
+  `(ISL (INL (x:A)) <=> T) /\ (ISL (INR (y:B)) <=> F)`;;
+
+let ISR = new_recursive_definition sum_RECURSION
+  `(ISR (INL (x:A)) <=> F) /\ (ISR (INR (y:B)) <=> T)`;;
+
+(* HOL4's TAILREC of WhileTheory, which it proves to exist from
+   this value (unify's tcvwalk and the other tail recursions of
+   the unification algorithm use it) *)
+
+let TAILREC = new_definition
+  `TAILREC (f:A->A+B) x =
+   OUTR (f (WHILE (ISL o f) (OUTL o f) x))`;;
+
 (* ------------------------------------------------------------------ *)
 (* The case constants of HOL4's datatypes                             *)
 (* ------------------------------------------------------------------ *)
