@@ -1,0 +1,27 @@
+#!/bin/sh
+# parts <session> <mlfile> <phrase> : parse the parts of one phrase
+# of an ml file of the port (the conjuncts of its quotations, or
+# the arms of a match) one by one in a session that has what the
+# phrase needs, and report the ones that do not typecheck
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s="$1"
+f="$2"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+python3 -I $C/tools/parts.py "$f" "$3" $C/tmp/parts.ml > $C/tmp/parts.txt
+: > $C/tmp/mark.txt
+TIMEOUT=${TIMEOUT:-600} repl-step $s "#use \"$C/tmp/parts.ml\";;" \
+  > /dev/null 2>&1
+# the report says which part failed, with the text of that part
+python3 -I - "$C/tmp/mark.txt" "$C/tmp/parts.txt" <<'PY'
+import sys
+bad = {}
+for l in open(sys.argv[1]):
+  if ':' in l:
+    n, e = l.split(':', 1)
+    bad[n.strip()] = e.strip()
+for l in open(sys.argv[2]):
+  n = l.split(':', 1)[0].strip()
+  if n in bad: print(l.rstrip()[:100], '\n    ->', bad[n][:120])
+print(len(bad), 'of', sum(1 for _ in open(sys.argv[2])), 'parts fail')
+PY
