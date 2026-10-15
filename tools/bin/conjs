@@ -1,0 +1,15 @@
+#!/bin/sh
+# conjs <session> <mlfile> : try cake_conj_list on every clause list
+# of an ml file of the port in a session that has the file loaded,
+# and report the ones that fail (which the port has to assume clause
+# by clause); the report is in tmp/mark.txt
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s="$1"
+f="$2"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+python3 -I $C/tools/conjs.py "$f" $C/tmp/conjs.ml > /dev/null
+: > $C/tmp/mark.txt
+TIMEOUT=${TIMEOUT:-600} repl-step $s "#use \"$C/tmp/conjs.ml\";;" \
+  > /dev/null 2>&1
+cat $C/tmp/mark.txt
