@@ -903,6 +903,50 @@ class Porter:
       return p
     return go(p)
 
+  def arg_types(self, cls):
+    """the type that one clause of a function puts on one of its
+       arguments is put on that argument of its other clauses as
+       well, where they have a variable there: a clause of its
+       own says nothing else about the type
+       (semanticPrimitives' num_cmp says (j:num) in one clause,
+       and mlstring overloads < and <= as well)"""
+    aty = {}
+
+    def collect(x):
+      if not isinstance(x, hterm.Node): return
+      if x.kind == 'typed':
+        b = x.e
+        while b.kind == 'paren': b = b.e
+        if b.kind == 'id' and not iscon(b.name):
+          aty.setdefault(b.name, x.ty)
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): collect(v)
+        elif isinstance(v, (list, tuple)):
+          for y in v:
+            if isinstance(y, hterm.Node): collect(y)
+            elif isinstance(y, (list, tuple)):
+              for z in y:
+                if isinstance(z, hterm.Node): collect(z)
+
+    for cl in cls: collect(cl)
+    if not aty: return
+    for cl in cls:
+      e = cl
+      while e.kind == 'paren': e = e.e
+      if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
+      h, args = hterm.strip_app(e.l)
+      if h.kind != 'id': continue
+      e.l = h
+      for i, a in enumerate(args):
+        b = a
+        while b.kind == 'paren': b = b.e
+        if b.kind == 'id' and b.name in aty:
+          a = hterm.Node('paren', tok=b.tok,
+                e=hterm.Node('typed', tok=b.tok, e=b,
+                             ty=aty[b.name]))
+        e.l = hterm.Node('app', tok=e.l.tok, fn=e.l, arg=a)
+
   def result_types(self, cls):
     """the type that one clause of a function puts on its right
        hand side is put on the right hand side of its other
@@ -1238,6 +1282,7 @@ class Porter:
       all = hterm.conjuncts_of(e)
       atys = self.pat_types(all)
       self.result_types(all)
+      self.arg_types(all)
       cls = []
       for i, cl in enumerate(all):
         # every clause has its own variables, so also its own ones
