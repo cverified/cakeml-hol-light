@@ -913,6 +913,7 @@ class Ctx:
     self.intvars = set()               # variables holding integers
     self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
+    self.iffeq = False                 # is <=> plain equality?
     self.thy = thy
     self.wild = 0
     self.warn = []
@@ -1257,6 +1258,11 @@ class Printer:
       if op == '%%':
         return self.paren('word_bit ' + self.pr(e.r, APP) + ' ' +
                           self.pr(e.l, APP), PRE_APP, prec)
+      # HOL4's <=> is its = with another precedence, so a source
+      # may write it where the sides are not of type bool
+      if op == '<=>' and self.ctx is not None and self.ctx.iffeq:
+        return self.paren(self.pr(e.l, 13) + ' = ' + self.pr(e.r, 13),
+                          12, prec)
       _, assoc, hop, hprec = INFIX[op]
       # an infix that HOL Light does not have is written as an
       # application of the constant that HOL4 overloads it with

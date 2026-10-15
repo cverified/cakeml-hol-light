@@ -273,6 +273,34 @@ class Db:
         if nm in multi or nm in self.hl:
           self.rename[(thy, nm)] = prefix(thy, nm)
     self.rename.update(overrides.RENAME)
+    # the prefix can give a constant the name of another one
+    # (clos_to_bvl defines compile_inc as well as
+    # clos_to_bvl_compile_inc); the renamed one then gets a prime
+    # a type and a constant of the same name do not clash (HOL
+    # Light keeps them apart), so the two are looked at on their
+    # own
+    tykinds = ('type', 'tyabbrev')
+
+    def istype(thy, nm):
+      ks = [k for t, k in self.defs.get(nm, []) if t == thy]
+      return bool(ks) and all(k in tykinds for k in ks)
+
+    kept = {True: set(), False: set()}
+    for nm, v in self.defs.items():
+      for t, k in v:
+        if (t, nm) not in self.rename:
+          kept[k in tykinds].add(nm)
+    taken = {True: {}, False: {}}
+    for key in sorted(self.rename):
+      ty = istype(*key)
+      if key in overrides.RENAME:
+        taken[ty][self.rename[key]] = key
+        continue
+      new = self.rename[key]
+      while new in kept[ty] or new in taken[ty]:
+        new += "'"
+      self.rename[key] = new
+      taken[ty][new] = key
 
   # ---------------------------------------------------------------
 

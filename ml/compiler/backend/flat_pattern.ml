@@ -101,7 +101,7 @@ let decode_pos_def = cake_define_list
 
 let decode_test_def = cake_define_list
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
-  ((TagLenEq tag l:dTest)) [v]`;
+  (TagLenEq tag l) [v]`;
    `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v =
   App t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
 hol4_overload "decode_test" "flat_pattern_decode_test";;

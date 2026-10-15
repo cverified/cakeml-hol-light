@@ -770,11 +770,11 @@ let extract_name_def = cake_define_list
         n -> (n,(if xs = [] then [x] else xs)))`];;
 
 let compile_inc_def = cake_define
-  `clos_to_bvl_compile_inc max_app (es,prog) =
+  `clos_to_bvl_compile_inc' max_app (es,prog) =
      (let (n,real_es) = extract_name es in
          clos_to_bvl_compile_prog max_app
            (chain_exps n real_es ++ prog):(num#num#bvl_exp) list)`;;
-hol4_overload "compile_inc" "clos_to_bvl_compile_inc";;
+hol4_overload "compile_inc" "clos_to_bvl_compile_inc'";;
 
 let clos_to_bvl_compile_inc_def = cake_define
   `clos_to_bvl_compile_inc c p =
@@ -793,6 +793,6 @@ let clos_to_bvl_compile_inc_def = cake_define
        c) (FST (clos_to_bvl_config_call_state c)) p in
      let c = clos_to_bvl_config_call_state_fupd (K (c',[])) c in
      let p = clos_annotate_compile_inc p in
-     let p = clos_to_bvl_compile_inc (clos_to_bvl_config_max_app c) p
-       in
+     let p = clos_to_bvl_compile_inc' (clos_to_bvl_config_max_app c)
+       p in
        (c,p))`;;

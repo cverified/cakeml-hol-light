@@ -188,6 +188,11 @@ INT_ARGS = {
   # n is the number of the instruction, an integer; only the
   # type of P, which is applied to n - 1, says so
   ('linear_scan', 'check_number_property_def'): ['n'],
+  ('linear_scan', 'check_number_property_strong_def'): ['n'],
+  # n1 and n are the integers that a do notation binds, which the
+  # annotation of the argument n does not reach
+  ('linear_scan', 'get_intervals_ct_monad_aux_def'): ['n1'],
+  ('linear_scan', 'get_intervals_ct_monad_def'): ['n'],
 }
 
 # definitions whose result is an integer, where no clause of it
@@ -195,6 +200,15 @@ INT_ARGS = {
 # is the &1 of an integer, which HOL Light reads as a real)
 INT_RESULT = set([
   ('multiword', 'int_op_def'),
+])
+
+# definitions whose <=> is plain equality, not the equality of two
+# propositions: HOL4's <=> is its = with another precedence, and a
+# source may write it where the two sides are not of type bool,
+# which HOL Light's <=> does not allow
+IFF_IS_EQ = set([
+  # the two sides are of type (α wordLang$prog) option
+  ('word_alloc', 'oracle_colour_ok_def'),
 ])
 
 # definitions in which a ~ without an argument ($~) is the negation

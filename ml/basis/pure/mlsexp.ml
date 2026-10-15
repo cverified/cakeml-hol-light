@@ -193,7 +193,7 @@ let get_next_size_def = cake_define
 
 let annotate_def = cake_define_list
   [`mlsexp_annotate (mlsexp_String s:pretty) = mlsexp_Size (strlen s)
-  ((mlsexp_String s:pretty))`;
+  (mlsexp_String s)`;
    `mlsexp_annotate (mlsexp_Parenthesis b) =
       (let b = mlsexp_annotate b in
          mlsexp_Size (mlsexp_get_size b + 2) (mlsexp_Parenthesis

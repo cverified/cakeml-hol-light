@@ -194,6 +194,7 @@ class Porter:
     if p.peek().kind != 'eof':
       t = p.peek()
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
+    e = self.lambda_cons(e)
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     # the patterns of the first clause of every function carry the
@@ -589,6 +590,7 @@ class Porter:
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
+    self.ctx.iffeq = key in overrides.IFF_IS_EQ
     if key in overrides.CLAUSE_FORM:
       term = None
       clauses = self.clause_form(body)
@@ -666,6 +668,53 @@ class Porter:
     self.ctx.wordnot = False
     self.ctx.intneg = False
     self.ctx.defining = set()
+
+  def lambda_cons(self, e):
+    """a HOL4 overload whose name is a constructor as well and
+       whose value is a lambda is ambiguous, and HOL4 resolves it
+       by the type: stack_to_lab overloads Asm with
+       \\a. Asm (Asmi a), and writes Asm (ShareMem op r ad), whose
+       argument is an asm_or_cbw already.  Where the argument has
+       the type that the constructor itself takes, the occurrence
+       is the constructor, so the port writes it out"""
+    def go(x):
+      if not isinstance(x, hterm.Node): return
+      if x.kind == 'app':
+        h, args = hterm.strip_app(x)
+        if (h.kind == 'id' and args and '$' not in h.name
+            and h.name in self.ctx.overloads
+            and h.name in self.ctx.cons):
+          txt = self.ctx.overloads[h.name].strip()
+          if txt.startswith('\\'):
+            want = self.ctx.con_argty.get((h.name, 0)) or ''
+            a = args[0]
+            while a.kind in ('paren', 'typed'): a = a.e
+            ah = hterm.strip_app(a)[0] if a.kind == 'app' else a
+            if ah.kind == 'id' and iscon(ah.name):
+              nm = ah.name.split('$')[-1]
+              t2 = self.con_thy(ah.name)
+              base = [ty for (t3, ty), (cs, _)
+                      in self.db.datatypes.items()
+                      if t3 == t2 and nm in cs]
+              try:
+                w = hterm.parse_type_text(want)
+                w = w[1].split('$')[-1] if w[0] == 'op' else None
+              except Exception:
+                w = None
+              if base and w == base[0]:
+                t = self.con_thy(h.name)
+                if t: h.name = t + '$' + h.name
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): go(v)
+        elif isinstance(v, (list, tuple)):
+          for y in v:
+            if isinstance(y, hterm.Node): go(y)
+            elif isinstance(y, (list, tuple)):
+              for z in y:
+                if isinstance(z, hterm.Node): go(z)
+    go(e)
+    return e
 
   def con_thy(self, nm, kinds=('con',), arity=None):
     """the theory whose constant of this name is meant.  Where the
@@ -842,16 +891,38 @@ class Porter:
                 if isinstance(y, hterm.Node): count(y)
     count(e)
 
-    def go(e):
+    def known_head(e):
+      """an argument of a constructor or of a constant of the
+         port is resolved by the type of that argument, so it
+         needs no annotation (data_to_word's lookup_word_op
+         matches on the Xor of backend_common and gives back
+         Bitwise Xor, whose Xor is the one of asm)"""
+      h, args = hterm.strip_app(e)
+      return (bool(args) and h.kind == 'id' and
+              h.name not in self.ctx.defining and
+              (iscon(h.name) or
+               any(k in ('def', 'rel')
+                   for _, k in self.db.defs.get(
+                     h.name.split('$')[-1], []))))
+
+    def go(e, top=True):
       if not isinstance(e, hterm.Node): return e
       if e.kind == 'typed': return e
-      if e.kind in ('app', 'id'):
+      # parentheses do not make an argument a term of its own
+      if e.kind == 'paren':
+        e.e = go(e.e, top)
+        return e
+      if e.kind in ('app', 'id') and top:
         s = pr.pr(e, 0)
         ty = self.annotated.get(s) if seen.get(s) == 1 else None
         if ty:
           return hterm.Node('paren', tok=e.tok,
                    e=hterm.Node('typed', tok=e.tok, e=e,
                                 ty=hterm.tokenize(ty)))
+      if e.kind == 'app' and known_head(e):
+        h, args = hterm.strip_app(e)
+        for a in args: go(a, False)
+        return e
       for k, v in list(e.__dict__.items()):
         if k == 'tok': continue
         if isinstance(v, hterm.Node): setattr(e, k, go(v))
@@ -957,7 +1028,7 @@ class Porter:
        same variable name can have different types in two clauses,
        which one HOL Light quotation cannot"""
     toks = hterm.tokenize(hol4.strip_comments(body))
-    e = hterm.Parser(toks, self.ctx).parse()
+    e = self.lambda_cons(hterm.Parser(toks, self.ctx).parse())
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     try:
@@ -1146,7 +1217,7 @@ class Porter:
     global CONS
     CONS = self.ctx.cons
     toks = hterm.tokenize(hol4.strip_comments(body))
-    e = hterm.Parser(toks, self.ctx).parse()
+    e = self.lambda_cons(hterm.Parser(toks, self.ctx).parse())
     # a bound variable whose name is a constant of the port is
     # renamed here as well (word_copy matches on Shift shift r1 r2
     # n, and shift is the overload of backend_common's word_shift)
@@ -1185,7 +1256,7 @@ class Porter:
     # theory an ambiguous constructor of another arm is from
     # (word_elimProof's dest_word_loc matches on the Loc of
     # wordLang's word_loc, which only its catchall says)
-    atys = set()
+    atys = {}
     for _, args, _ in cls:
       for i in pats:
         a = args[i]
@@ -1198,8 +1269,9 @@ class Porter:
           continue
         if ty[0] != 'op': continue
         nm = ty[1].split('$')[-1]
-        atys |= {t for (t, ty2) in self.db.datatypes if ty2 == nm}
-    if atys: self.contys = atys
+        ts = {t for (t, ty2) in self.db.datatypes if ty2 == nm}
+        if ts: atys[i] = ts | atys.get(i, set())
+    base = self.contys
     arms = []
     done = False
     for _, args, r in cls:
@@ -1213,7 +1285,12 @@ class Porter:
       if not done and any(has_con(args[i]) for i in pats):
         args = list(args)
         for i in pats:
+          # the type that the source puts on a pattern says which
+          # theory the constructors of that argument are from,
+          # and says nothing about the other arguments
+          self.contys = atys.get(i) or base
           args[i] = self.annotate_pat(args[i], True)
+        self.contys = base
         done = True
       pat = ','.join(pr.pr(args[i], 60) for i in pats)
       if len(pats) > 1: pat = '(' + pat + ')'

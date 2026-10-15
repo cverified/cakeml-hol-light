@@ -185,7 +185,8 @@ let inst_select_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB o SND o SND o SND)`
   `inst_select_exp c tar temp x4 =
         match (c,tar,temp,x4) with
-          ((c:'a asm_config),(tar:num),(temp:num),asm_Load exp) ->
+          ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp)
+            ->
        (match exp with wordLang_Op Add [exp'; Const w] ->
          (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
            then

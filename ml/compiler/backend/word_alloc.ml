@@ -1509,7 +1509,7 @@ let total_colour_def = cake_define
 
 (*Check that the oracle provided colour (if it exists) is okay*)
 let oracle_colour_ok_def = cake_define
-  `oracle_colour_ok k col_opt tree prog ls <=>
+  `oracle_colour_ok k col_opt tree prog ls =
    (match col_opt with
      NONE -> NONE | SOME col ->
       (let tcol = total_colour col in
