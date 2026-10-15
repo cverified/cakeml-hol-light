@@ -848,7 +848,6 @@ let define_nested tm =
     | Abs(_,b) -> collect b
     | _ -> () in
   do_list collect cls;
-  if !found = [] then failwith "define_nested" else
   let name0 = fst(dest_var(hd fs)) in
   (* a name for a function of the family that is not in use yet *)
   let used = ref ([]:string list) in
@@ -932,23 +931,130 @@ let define_nested tm =
     [mk_eq(list_mk_comb(aux,vs @ [mk_nil ty]),mk_nil rty);
      mk_eq(list_mk_comb(aux,vs @ [mk_cons p ps]),
            mk_cons elt (list_mk_comb(aux,vs @ [ps])))] @ lvls in
-  let auxclss = map auxcls auxs in
+  (* a call of a function of the block on a mapped list, as in
+     has_install_list (MAP SND fns): the port defines the
+     composition of the two, with the clauses that the function's
+     own clauses give, and derives the call from it.  (Without it
+     the definition is not primitive recursive and HOL Light's
+     machinery for a wellfounded recursion is far too slow.) *)
+  let list_clauses g =
+    let cs = map (fun cl ->
+                    let l,r = dest_eq(snd(strip_forall cl)) in
+                    let f,args = strip_comb l in (f,args,r))
+                 cls in
+    let cs = filter (fun (f,args,_) -> f = g && length args = 1) cs in
+    let isnil (_,args,_) = is_const(hd args) &&
+                           fst(dest_const(hd args)) = "NIL" in
+    let iscons (_,args,_) =
+      is_comb(hd args) && is_comb(rator(hd args)) &&
+      is_const(rator(rator(hd args))) &&
+      fst(dest_const(rator(rator(hd args)))) = "CONS" in
+    let _,_,nilrhs = find isnil cs in
+    let _,cargs,consrhs = find iscons cs in
+    nilrhs,rand(rator(hd cargs)),rand(hd cargs),consrhs in
+  let found2 = ref [] in
+  let rec collect2 tm =
+    match tm with
+      Comb(g,Comb(Comb(Const("MAP",_),h),l))
+        when mem g fs && frees h = [] && can list_clauses g ->
+          (if not (exists (fun (g',h') -> g' = g && aconv h' h)
+                          !found2)
+           then found2 := !found2 @ [g,h]);
+          collect2 l
+    | Comb(s,t) -> (collect2 s; collect2 t)
+    | Abs(_,b) -> collect2 b
+    | _ -> () in
+  do_list collect2 (map repl cls);
+  if !found = [] && !found2 = [] then failwith "define_nested" else
+  let comps0 =
+    map (fun (g,h) ->
+          let ty,_ = dest_fun_ty (type_of h) in
+          let lty = mk_type("list",[ty]) in
+          let _,rty = dest_fun_ty (type_of g) in
+          let nilrhs,x,xs,consrhs = list_clauses g in
+          let p = variant (frees consrhs) (mk_var("p",ty)) in
+          let ps = variant (p :: frees consrhs) (mk_var("ps",lty)) in
+          let aux = mk_var(new_name (name0 ^ "_map"),
+                           mk_fun_ty lty rty) in
+          let mapc = mk_mconst("MAP",
+                       mk_fun_ty (type_of h)
+                         (mk_fun_ty lty (type_of xs))) in
+          let mps = list_mk_comb(mapc,[h; ps]) in
+          let bod = vsubst [mk_comb(h,p),x; mps,xs] consrhs in
+          let rec tail tm =
+            if tm = mk_comb(g,mps) then mk_comb(aux,ps) else
+            match tm with
+              Comb(s,t) -> mk_comb(tail s,tail t)
+            | Abs(v,b) -> mk_abs(v,tail b)
+            | _ -> tm in
+          let bod = simp_pair(beta_normalize(tail bod)) in
+          (* a recursive call on a component of the element needs a
+             function on the element type (see pair_levels) *)
+          let lvls = ref [] and plems = ref [] in
+          let rec fixelem tm =
+            let hop,args = strip_comb tm in
+            if mem hop fs && args <> [] && last args <> p &&
+               vfree_in p (last args) && is_prod_type ty then
+              let pf,pargs,cs =
+                pair_levels [] ty
+                  (fun z -> simp_pair(beta_normalize(vsubst [z,p] tm)))
+                in
+              (lvls := !lvls @ cs;
+               plems := !plems @ [pf,pargs,mk_abs(p,tm)];
+               list_mk_comb(pf,pargs @ [p]))
+            else
+              match tm with
+                Comb(s,t) -> mk_comb(fixelem s,fixelem t)
+              | Abs(v,b) -> mk_abs(v,fixelem b)
+              | _ -> tm in
+          let bod = fixelem bod in
+          (g,h,aux,!plems),
+          [mk_eq(mk_comb(aux,mk_nil ty),nilrhs);
+           mk_eq(mk_comb(aux,mk_cons p ps),bod)] @ !lvls)
+        !found2 in
+  let comps = map fst comps0 and compcls = map snd comps0 in
+  let rec repl2 tm =
+    match tm with
+      Comb(g,Comb(Comb(Const("MAP",_),h),l))
+        when exists (fun (g',h',_,_) -> g' = g && aconv h' h) comps ->
+          let _,_,aux,_ =
+            find (fun (g',h',_,_) -> g' = g && aconv h' h) comps in
+          mk_comb(aux,repl2 l)
+    | Comb(s,t) -> mk_comb(repl2 s,repl2 t)
+    | Abs(v,b) -> mk_abs(v,repl2 b)
+    | _ -> tm in
+  let auxclss = map auxcls auxs @ compcls in
   let allauxcls = itlist (@) auxclss [] in
   let gs = setify (map (fun cl -> fst(strip_comb(lhs cl))) allauxcls) in
   let newcls = map (close_clause (fs @ gs))
-                   (map repl cls @ allauxcls) in
+                   (map (fun cl -> repl2 (repl cl)) cls @ allauxcls) in
   let ths,spec = define_prim_rec (list_mk_conj newcls) in
   let fths,auxths = chop_list (length cls) ths in
   let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
                    (fs @ gs) in
-  (* the theorems of the clauses of each list function *)
+  (* the theorems of the clauses of each function that was added *)
   let groups =
     rev(snd(itlist (fun cls (ths,l) ->
                       let g,ths' = chop_list (length cls) ths in
                       ths',g :: l)
                    (rev auxclss) (auxths,[]))) in
-  (* each list function is the map of the function it belongs to, and
-     a function on a pair is the function of the map itself *)
+  (* the lemma that a function on a pair is the function of the map
+     itself, from the clauses of the levels of the pair *)
+  let pair_lemma lems gths n hk =
+    let lvlths = snd(chop_list n gths) in
+    if lvlths = [] then [] else
+    let ty,_ = dest_fun_ty (type_of hk) in
+    let p = variant (frees hk) (mk_var("p",ty)) in
+    let pf,pargs = strip_comb(lhs(snd(strip_forall
+                     (concl(hd lvlths))))) in
+    let pargs = butlast pargs in
+    [prove(list_mk_forall(pargs @ [p],
+             mk_eq(list_mk_comb(pf,pargs @ [p]),
+                   mk_comb(vsubst consts hk,p))),
+           REPLICATE_TAC (length pargs) GEN_TAC THEN
+           REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
+           REWRITE_TAC (lvlths @ lems) THEN REWRITE_TAC[FST; SND])] in
+  (* each list function is the map of the function it belongs to *)
   let lemma lems ((hk,vs,aux),gths) =
     let ty,rty = dest_fun_ty (type_of hk) in
     let lty = mk_type("list",[ty]) in
@@ -956,26 +1062,47 @@ let define_nested tm =
     let mapc = mk_mconst("MAP",
                  mk_fun_ty (type_of hk)
                    (mk_fun_ty lty (mk_type("list",[rty])))) in
-    let lvlths = snd(chop_list 2 gths) in
-    let pls =
-      if lvlths = [] then [] else
-      let p = variant vs (mk_var("p",ty)) in
-      let pf,pargs = strip_comb(lhs(snd(strip_forall
-                       (concl(hd lvlths))))) in
-      let pargs = butlast pargs in
-      [prove(list_mk_forall(pargs @ [p],
-               mk_eq(list_mk_comb(pf,pargs @ [p]),
-                     mk_comb(vsubst consts hk,p))),
-             REPLICATE_TAC (length pargs) GEN_TAC THEN
-             REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
-             REWRITE_TAC (lvlths @ lems) THEN REWRITE_TAC[FST; SND])] in
+    let pls = pair_lemma lems gths 2 hk in
     lems @ pls @
     [prove(list_mk_forall(vs @ [l],
              mk_eq(list_mk_comb(vsubst consts aux,vs @ [l]),
                    list_mk_comb(mapc,[vsubst consts hk; l]))),
            REPLICATE_TAC (length vs) GEN_TAC THEN LIST_INDUCT_TAC THEN
            ASM_REWRITE_TAC (MAP :: el 0 gths :: el 1 gths :: pls))] in
-  let lems = itlist (fun a l -> lemma l a) (rev (zip auxs groups)) [] in
+  let nmaps = length auxs in
+  let mapgroups,compgroups = chop_list nmaps groups in
+  let lems = itlist (fun a l -> lemma l a)
+                    (rev (zip auxs mapgroups)) [] in
+  (* and each composition is the function of the mapped list *)
+  let comp_lemma lems ((g,h,aux,pfs),gths) =
+    let ty,_ = dest_fun_ty (type_of h) in
+    let lty = mk_type("list",[ty]) in
+    let l = variant [] (mk_var("l",lty)) in
+    let ety = mk_type("list",[snd(dest_fun_ty(type_of h))]) in
+    let mapc = mk_mconst("MAP",
+                 mk_fun_ty (type_of h) (mk_fun_ty lty ety)) in
+    let lvlths = snd(chop_list 2 gths) in
+    let pls =
+      map (fun (pf,pargs,hk) ->
+            let p = variant (frees hk) (mk_var("p",ty)) in
+            prove(list_mk_forall(pargs @ [p],
+                    mk_eq(list_mk_comb(vsubst consts pf,pargs @ [p]),
+                          beta_normalize
+                            (mk_comb(vsubst consts hk,p)))),
+                  REPLICATE_TAC (length pargs) GEN_TAC THEN
+                  REWRITE_TAC[FORALL_PAIR_THM] THEN REPEAT GEN_TAC THEN
+                  REWRITE_TAC (lvlths @ lems) THEN
+                  REWRITE_TAC[FST; SND]))
+          pfs in
+    lems @ pls @
+    [prove(mk_forall(l,
+             mk_eq(mk_comb(vsubst consts aux,l),
+                   mk_comb(vsubst consts g,
+                           list_mk_comb(mapc,[h; l])))),
+           LIST_INDUCT_TAC THEN
+           ASM_REWRITE_TAC (MAP :: (fths @ gths @ pls)))] in
+  let lems = itlist (fun a l -> comp_lemma l a)
+                    (rev (zip comps compgroups)) lems in
   let derive cl =
     let gcl = vsubst consts cl in
     tryfind (fun tac -> prove(gcl,tac))
