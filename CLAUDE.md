@@ -37,11 +37,18 @@ The work has two passes:
   that takes minutes to process is a bug; fix it (or record the
   timing in a comment if there really is no alternative).
 - Lines in `.ml` files are at most 72 characters.
-- The port must not add **any axiom**: after loading everything,
+- The port must not add **any axiom**: at the end,
   `length (axioms())` has to be 3, the three axioms of HOL Light's
   kernel.  So no `mk_thm`, no `new_axiom`, and no cheating: every
   definition goes through `new_definition`, `new_specification` or
   `define_type`.
+
+  _While the first pass is getting every definition in_, a
+  definition that HOL Light's machinery does not make is assumed
+  instead (`cake_cheat`), so that the files after it load and the
+  gap is visible: `ml/CHEATS.md` lists them and
+  `length (axioms())` counts them.  Making them is the rest of the
+  first pass, and no second pass proof may rely on one.
 
 ## Layout of this directory
 
