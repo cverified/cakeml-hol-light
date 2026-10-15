@@ -14,6 +14,31 @@ import hol4, hterm, db as dbmod, port as portmod
 
 KINDS = ('Definition', 'Inductive', 'CoInductive')
 
+
+def arities(text):
+  """constructor -> number of arguments, from a datatype
+     specification of HOL Light (a backslash at the end of a line
+     is the continuation of the string)"""
+  out = {}
+  for part in text.replace('\\\n', ' ').split(';'):
+    if '=' not in part: continue
+    for alt in part.split('=', 1)[1].split('|'):
+      alt = alt.strip()
+      if not alt: continue
+      m = re.match(r"([A-Za-z_][A-Za-z0-9_']*)(.*)$", alt, re.S)
+      if not m: continue
+      # every argument is one parenthesised group, and a type in
+      # it may have parentheses of its own
+      n = d = 0
+      for ch in m.group(2):
+        if ch == '(':
+          if d == 0: n += 1
+          d += 1
+        elif ch == ')':
+          d -= 1
+      out[m.group(1)] = n
+  return out
+
 db = dbmod.Db()
 thys = sys.argv[1:] or [t for t, _, _ in dbmod.load_order()]
 tot = bad = 0
@@ -32,6 +57,35 @@ for thy in thys:
     if b.kind == 'ML':
       for tok, prec, ass, _ in hol4.fixities(b.text):
         hterm.add_infix(tok, prec, ass)
+      continue
+    if b.kind == 'Datatype' and p.wanted(b):
+      # the constructors of the port have the arguments of HOL4's
+      spec = ''
+      for m in re.finditer(r'define_datatype\s*\n?\s*'
+                           r'("(?:[^"\\]|\\.)*")', text, re.S):
+        spec += m.group(1)[1:-1] + ';'
+      got = arities(spec)
+      for ty, cons, flds in hol4.datatype_names(b.body):
+        pass
+      for part in hol4.split_top(hol4.strip_comments(b.body), ';'):
+        if '=' not in part: continue
+        rhs = part.split('=', 1)[1]
+        if rhs.strip().startswith('<|'): continue
+        for alt in hol4.split_top(rhs, '|'):
+          alt = alt.strip()
+          if not alt: continue
+          w = alt.split()
+          c = w[0]
+          try:
+            n = len(hterm.dtarg_texts(alt))
+          except Exception:
+            continue
+          for nm in (p.nm_defined(c), c, p.const_name(c)):
+            if nm in got:
+              if got[nm] != n:
+                print('%-22s %-20s %s: %d arguments, not %d'
+                      % (thy, b.name or ty, nm, got[nm], n))
+              break
       continue
     if b.kind not in KINDS or not p.wanted(b): continue
     body = hol4.strip_comments(b.body)
