@@ -11,7 +11,14 @@ out=/home/freek/claude/hol-light/cakeml/ml/TIMINGS.md
   echo
   echo "| file | seconds | axioms | first failure |"
   echo "|---|---|---|---|"
-  sed -e 's/^\([^ ]*\) *(\([0-9.e-]*\), *\([0-9]*\)) *\(.*\)$/| `\1` | \2 | \3 | \4 |/' \
-      -e 's/|  *|/| |/' "$log"
+  awk '{ f = $1;
+         t = $2; gsub(/[(,]/, "", t);
+         a = $3; gsub(/[),]/, "", a);
+         e = "";
+         for (i = 4; i <= NF; i++) e = e (i > 4 ? " " : "") $i;
+         gsub(/\|/, "", e);
+         tot += t;
+         printf "| `%s` | %.2f | %s | %s |\n", f, t, a, e }
+       END { printf "| **total** | **%.1f** | | |\n", tot }' "$log"
 } > $out
 echo "wrote $out"

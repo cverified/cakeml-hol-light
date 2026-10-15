@@ -37,14 +37,25 @@ sources, and why.
   `mk_ty v ...`, because HOL Light has no record syntax.
 - HOL4's `Overload`s are parse abbreviations; the port expands
   them, so that it does not introduce constants that HOL4 does
-  not have.
+  not have.  An overload of one constant whose name another
+  theory of the port uses for a constant of its own (`Less` of
+  `comparison`, which `closLang` and `asm` have as a
+  constructor) is an exception: expanding it would resolve the
+  name the wrong way in those theories, so the port declares it
+  as an overload of HOL Light instead.
 - HOL4 type abbreviations with parameters (`('a,'b) alist`) are
   expanded as well, as HOL Light has no parameterised type
   abbreviations.
 - Type variables that the CakeML sources write as Greek letters
-  are fresh variables that HOL4 unifies with their context.  HOL
-  Light does not unify type variables that the user writes, so
-  such a type annotation is dropped (the type is then inferred).
+  become `'ga`, `'gb`, ... (HOL Light has no Greek letters).
+- HOL4's `one`, the type with one element, is HOL Light's `1`
+  (its element is `one` in both).
+- A restricted quantifier (`!x::s. P`) is `RES_FORALL s (\x. P)`,
+  as HOL4's `res_quan` defines it; `l❲i❳` is `EL i l` and
+  `l❲i |-> v❳` is `LUPDATE v i l`; `R^*` is `RTC R`.
+- A definition that HOL4 makes in ML from a quotation that it
+  keeps in a value (`SmartOp2` of `bvl_const` and five others) is
+  ported as the definition that the quotation gives.
 
 ## Definitions
 
@@ -69,9 +80,10 @@ sources, and why.
 
 ## Hand written parts of the library layer
 
-HOL Light has no finite maps, no lazy lists and no words with
-HOL4's names, so `ml/lib/finite_map.ml`, `ml/lib/llist.ml` and
-`ml/lib/words4.ml` are written by hand:
+HOL Light has no finite maps, no lazy lists, no bags, no closure
+of a relation and no words with HOL4's names, so
+`ml/lib/finite_map.ml`, `ml/lib/llist.ml`, `ml/lib/bag.ml`,
+`ml/lib/relation.ml` and `ml/lib/words4.ml` are written by hand:
 
 - a finite map is a function to an option type with a finite
   domain, and the operations are HOL4's;
@@ -80,7 +92,10 @@ HOL4's names, so `ml/lib/finite_map.ml`, `ml/lib/llist.ml` and
   coinductive, so the port defines it with a helper
   (`LUNFOLD_state`) that HOL4 does not have;
 - the word operations are HOL Light's, under HOL4's names; the
-  ones HOL Light does not have are defined in terms of them.
+  ones HOL Light does not have are defined in terms of them;
+- a bag is the function that gives the number of times an element
+  occurs in it, and the reflexive transitive closure is the
+  inductive definition that HOL4 has.
 
 HOL4's `pathTheory` is not ported: the dependency analysis found
 it only because CakeML definitions use variables called `el`,

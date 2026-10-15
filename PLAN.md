@@ -1,5 +1,9 @@
 # Plan for the first pass (all definitions)
 
+_State: the port has all 4093 definition blocks of the 203
+theories, which `tools/coverage.py` checks; `tools/bin/checkseq`
+loads them one after the other and reports what still fails._
+
 ## What is ported
 
 The dependency closure of `compilerProofTheory.compile_correct`
@@ -19,12 +23,13 @@ The first pass ports, in the topological order of
 3. the definitions that occur in the proof theories of the
    closure (they are needed to _state_ the correctness
    theorems of the second pass; `backend_config_ok`,
-   `mc_conf_ok`, `env_rel`, ... are of this kind).  Of the 222
-   theories of the closure, 120 are the definition theories of
-   step 2; the other 102 (the proof theories and the excluded
-   target instantiations) have 1063 blocks between them (1022
-   `Definition`, 23 `Inductive`, 9 `Datatype`, 9 `Type`) in 90
-   files, so the whole first pass is about 4200 blocks.
+   `mc_conf_ok`, `env_rel`, ... are of this kind), in the order
+   of `tools/order1b.txt`: 83 theories with 940 blocks, which
+   together with the 3153 blocks of the 120 definition theories
+   and the 24 HOL4 library theories of `ml/lib` make the 4093
+   blocks of the first pass.
+
+`tools/portall.py` translates all of them (in seven seconds).
 
 Not ported (and why):
 
@@ -120,9 +125,16 @@ argument; with patterns on two arguments (`balanced_map`'s
 
 ## Per file
 
-For each file: translate with `tools/port.py`, load it into a
-HOL Light session, fix what fails, keep the loading time of
-the file in `ml/TIMINGS.md`, and commit.  `tools/bin/checkseq`
-loads the files of the port one after the other in one session
-and reports the time, the number of axioms and the first
-failure of each, which is the measure of how far the pass is.
+For each file: translate with `tools/port.py` (or all of them
+with `tools/portall.py`), load it into a HOL Light session, fix
+what fails, keep the loading time of the file in
+`ml/TIMINGS.md`, and commit.  `tools/bin/checkseq` loads the
+files of the port one after the other in one session and
+reports the time, the number of axioms and the first failure of
+each, which is the measure of how far the pass is.
+
+A definition that takes minutes is a bug.  The two that bit so
+far: HOL Light's machinery for a definition by patterns is slow
+(use `define_prim_rec` or a `match`), and a recursive call under
+a map over a list of pairs needs the functions of the recursion
+theorem for the pair as well (`define_nested`).

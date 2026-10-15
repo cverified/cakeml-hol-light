@@ -19,3 +19,21 @@ repl-kill template-cakeml
 repl-clone hol-base template-cakeml
 repl-step template-cakeml 'loadt "<cakeml>/ml/lib/preamble.ml";;'
 ```
+
+(`tools/bin/retemplate` does that, and makes `hol-base` again
+when it is gone.)
+
+## Interrupting and killing
+
+A clone is forked from another HOL Light process, so it is not a
+child of the tmux pane: a `C-c` in the pane goes to the `socat`
+of the session and ends the session, leaving the process (half a
+gigabyte) running.  Therefore
+
+- `repl-int` sends the interrupt to the process itself, whose pid
+  the clone writes to `bin/socket/hol-<name>.pid`;
+- `repl-kill` interrupts the session first (a busy one would not
+  read the `exit`), and kills that process if it is still there.
+
+`tools/bin/holclean` removes what is left of sessions that are
+gone.
