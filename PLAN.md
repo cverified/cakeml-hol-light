@@ -58,10 +58,24 @@ Not ported (and why):
                  `define_record` makes the type, the field
                  accessors `ty_fld`, the updates `ty_fld_fupd`
                  and the literal constructor
-- `define.ml`    HOL4's `Definition` for HOL Light:
-                 `cake_define` (patterns, mutual recursion by
-                 sum encoding, termination by measure),
-                 `cake_inductive`
+- `define.ml`    HOL4's `Definition` for HOL Light.
+                 `cake_define` tries, in this order:
+                 `new_definition` (one clause, not recursive),
+                 `define_prim_rec` (the recursion theorem of the
+                 datatype family, which also defines a family of
+                 functions at once), `define_nested` (a recursive
+                 call under a map, and the composition of a
+                 function of the block with a map),
+                 `define_cases` (patterns inside patterns:
+                 compiled into functions on the types of the
+                 family, with FST/SND for a pair and a
+                 conditional for an option), `define_match` (the
+                 same for a definition written with a match),
+                 and finally HOL Light's wellfounded recursion
+                 with the measure of HOL4's `Termination` or a
+                 guessed one.  Everything but the last derives
+                 the clauses as HOL4 states them.
+                 `cake_inductive` is HOL4's `Inductive`
 - then the HOL4 library theories themselves: `sptree.ml`,
   `finite_map.ml`, `balanced_map.ml`, `words4.ml`,
   `integer_word.ml`, `alignment.ml`, `bitstring.ml`,
