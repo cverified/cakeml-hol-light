@@ -47,32 +47,32 @@ let trace_to_json_def = cake_define
    (trace_to_json None = jsonLang_Null)`;;
 
 (* Converts a display expression to JSON *)
-let display_to_json_def = cake_define_list
-  [`display_to_json (displayLang_Item tra name es) =
-        (let es' = MAP display_to_json es in
-        let props = [((implode "name"),String name); ((implode
-          "args"),jsonLang_Array es')] in
-        let props' = match tra with NONE -> props | SOME t ->
-          ((implode "trace"),trace_to_json t) :: props in
-          jsonLang_Object props')`;
-   `display_to_json (String s:sExp) = String s`;
-   `display_to_json (Tuple es) =
-        (let es' = MAP display_to_json es in
-          jsonLang_Object [((implode "isTuple"),Bool T); ((implode
-            "elements"),jsonLang_Array es')])`;
-   `display_to_json (List es) = jsonLang_Array (MAP display_to_json
-  es)`];;
+let display_to_json_def = cake_define
+  `(display_to_json (displayLang_Item tra name es) =
+     (let es' = MAP display_to_json es in
+     let props = [((implode "name"),String name); ((implode
+       "args"),jsonLang_Array es')] in
+     let props' = match tra with NONE -> props | SOME t -> ((implode
+       "trace"),trace_to_json t) :: props in
+       jsonLang_Object props')) /\
+   (display_to_json (String s:sExp) = String s) /\
+   (display_to_json (Tuple es) =
+     (let es' = MAP display_to_json es in
+       jsonLang_Object [((implode "isTuple"),Bool T); ((implode
+         "elements"),jsonLang_Array es')])) /\
+    (display_to_json (List es) = jsonLang_Array (MAP
+      display_to_json es))`;;
 
-let display_to_str_tree_def = cake_define_list
-  [`display_to_str_tree (displayLang_Item tra name es) =
-         mlsexp_Trees (Str name :: display_to_str_tree_list es)`;
-   `display_to_str_tree (String s:sExp) = Str s`;
-   `display_to_str_tree (Tuple es) =
-         (if NULL es then Str (implode "()") else mlsexp_Trees
-           (display_to_str_tree_list es))`;
-   `display_to_str_tree (List es) =
-         (if NULL es then Str (implode "()") else mlsexp_Trees
-           (MAP mlsexp_GrabLine (display_to_str_tree_list es)))`;
-   `display_to_str_tree_list [] = []`;
-   `display_to_str_tree_list (x :: xs) =
-        display_to_str_tree x :: display_to_str_tree_list xs`];;
+let display_to_str_tree_def = cake_define
+  `(display_to_str_tree (displayLang_Item tra name es) =
+      mlsexp_Trees (Str name :: display_to_str_tree_list es)) /\
+   (display_to_str_tree (String s:sExp) = Str s) /\
+   (display_to_str_tree (Tuple es) =
+      (if NULL es then Str (implode "()") else mlsexp_Trees
+        (display_to_str_tree_list es))) /\
+   (display_to_str_tree (List es) =
+      (if NULL es then Str (implode "()") else mlsexp_Trees (MAP
+        mlsexp_GrabLine (display_to_str_tree_list es)))) /\
+   (display_to_str_tree_list [] = []) /\
+   (display_to_str_tree_list (x :: xs) =
+     display_to_str_tree x :: display_to_str_tree_list xs)`;;

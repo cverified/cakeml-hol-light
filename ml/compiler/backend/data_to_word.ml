@@ -1310,22 +1310,28 @@ let getWords_def = cake_define
      (match c with (b,Word w) -> getWords cs ((b,w) :: aux) | _6
        -> (REVERSE aux,c :: cs))`;;
 
-let StoreAnyConsts_def = cake_define_list
-  [`StoreAnyConsts r1 r2 r3 [] v =
-      Seq (Set NextFree (Var r2))
-          (match SND v with Loc n _10 -> LocValue r1 n | Word w ->
-            Assign r1 (if FST v then Op Add [Const w; Var r3] else
-            (Const w)))`;
-   `StoreAnyConsts r1 r2 r3 (v :: vs) w =
-      (match ((SND v):'a word_loc) with Loc n _11 -> list_Seq
-        [LocValue r1 n;
-                             Store (Var r2) r1;
-                             Assign r2 (Op Add [Var r2; Const
-                               bytes_in_word]);
-                             StoreAnyConsts r1 r2 r3 vs w] | _12 ->
-                               (let (ws,vs1) = getWords (v :: vs) [] in
-               Seq (StoreConsts r2 r3 r2 r3 ws)
-                   (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
+(* HOL4 termination: \\ fs [getWords_def] \\ rw [] \\ qsuff_tac ‘∀ws
+   aux (ws1:(bool # 'a word) list) vs1. (ws1,vs1) = getWords ws aux ⇒
+   LENGTH vs1 ≤ LENGTH ws’ THEN1 (rw [] \\ res_tac \\ fs []) \\
+   once_rewrite_tac [EQ_SYM_EQ] \\ Induct \\ fs [getWords_def] \\ fs
+   [AllCaseEqs()] \\ rw[] \\ res_tac \\ fs [getWords_def] *)
+let StoreAnyConsts_def = cake_define_wf
+  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`
+  `StoreAnyConsts r1 r2 r3 [] v =
+     Seq (Set NextFree (Var r2))
+         (match SND v with Loc n _10 -> LocValue r1 n | Word w ->
+           Assign r1 (if FST v then Op Add [Const w; Var r3] else (Const
+           w))) /\
+   StoreAnyConsts r1 r2 r3 (v :: vs) w =
+     (match ((SND v):'a word_loc) with Loc n _11 -> list_Seq
+       [LocValue r1 n;
+                            Store (Var r2) r1;
+                            Assign r2 (Op Add [Var r2; Const
+                              bytes_in_word]);
+                            StoreAnyConsts r1 r2 r3 vs w] | _12 ->
+                              (let (ws,vs1) = getWords (v :: vs) [] in
+              Seq (StoreConsts r2 r3 r2 r3 ws)
+                  (StoreAnyConsts r1 r2 r3 vs1 w)))`;;
 
 let lookup_mem_def = cake_define
   `lookup_mem m a =
@@ -3079,11 +3085,12 @@ val th_TT = EVAL ``full_call_graph AnyArith_location
                                                        |>)))``
 *)
 
-(* PORT FAILED: Definition AnyArith_call_tree_def: expected ')' but found '|>' at 32
+(* PENDING: the value is the call graph that HOL4 computes with EVAL;
+   the expression that it evaluates has a free variable
+   (data_conf), so the port has to compute the value as well
 Definition AnyArith_call_tree_def:
   AnyArith_call_tree = ^(th_FF |> concl |> rand )
-End
-*)
+End *)
 
 let structure_le_def = cake_define
   `structure_le x1 x2 =

@@ -83,62 +83,66 @@ let alt_free_def = cake_define
       (let (c1,l1) = alt_free xs in
         ([Call t ticks dest c1],l1)))`;;
 
-let alt_free_sing_def = cake_define_list
-  [`alt_free_sing (Var t v) = (Var t v,Var v)`;
-   `alt_free_sing (If t x1 x2 x3) =
-         (let (c1,l1) = alt_free_sing x1 in
-         let (c2,l2) = alt_free_sing x2 in
-         let (c3,l3) = alt_free_sing x3 in
-           (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))`;
-   `alt_free_sing (Let t xs x2) =
-         (let m = LENGTH xs in
-         let (c2,l2) = alt_free_sing x2 in
-           if no_overlap m l2 /\ EVERY pure xs then
-             (Let t (REPLICATE m (const_0 t)) c2,Shift m l2) else
-             let (c1,l1) = alt_free_list xs in
-               (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))`;
-   `alt_free_sing (Raise t x1) =
-         (let (c1,l1) = alt_free_sing x1 in
-           (Raise t c1,l1))`;
-   `alt_free_sing (Tick t x1) =
-         (let (c1,l1) = alt_free_sing x1 in
-           (Tick t c1,l1))`;
-   `alt_free_sing (Op t op xs) =
-         (let (c1,l1) = alt_free_list xs in
-           (Op t op c1,l1))`;
-   `alt_free_sing (App t loc_opt x1 xs2) =
-         (let (c1,l1) = alt_free_sing x1 in
-         let (c2,l2) = alt_free_list xs2 in
-           (App t loc_opt c1 c2,mk_Union l1 l2))`;
-   `alt_free_sing (closLang_Fn t loc _3 num_args x1) =
-         (let (c1,l1) = alt_free_sing x1 in
-         let l2 = Shift num_args l1 in
-           (closLang_Fn t loc (SOME (vars_to_list l2)) num_args
-             c1,l2))`;
-   `alt_free_sing (Letrec t loc _4 fns x1) =
-         (let m = LENGTH fns in
-         let (c2,l2) = alt_free_sing x1 in
-         let res = alt_free_letrec m fns in
-         let c1 = MAP FST res in
-         let l1 = list_mk_Union (MAP SND res) in
-           (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
-            mk_Union l1 (Shift (LENGTH fns) l2)))`;
-   `alt_free_sing (Handle t x1 x2) =
-         (let (c1,l1) = alt_free_sing x1 in
-         let (c2,l2) = alt_free_sing x2 in
-           (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
-   `alt_free_sing (Call t ticks dest xs) =
-         (let (c1,l1) = alt_free_list xs in
-           (Call t ticks dest c1,l1))`;
-   `alt_free_list [] = ([],Empty)`;
-   `alt_free_list ((x:closLang_exp) :: xs) =
-         (let (c1,l1) = alt_free_sing x in
-         let (c2,l2) = alt_free_list xs in
-           (c1 :: c2,mk_Union l1 l2))`;
-   `alt_free_letrec m [] = []`;
-   `alt_free_letrec m ((n,x) :: rest) =
-         (let (c,l) = alt_free_sing x in
-           ((n,c),Shift (n + m) l) :: alt_free_letrec m rest)`];;
+(* HOL4 termination: *)
+let alt_free_sing_def = cake_define_wf
+  `MEASURE (\x. match x with INL e -> exp_size e | INR (INL es) ->
+  list_size exp_size es | INR (INR (_5,fns)) -> list_size (pair_size
+  (\x. x) exp_size) fns)`
+  `(alt_free_sing (Var t v) = (Var t v,Var v)) /\
+   (alt_free_sing (If t x1 x2 x3) =
+      (let (c1,l1) = alt_free_sing x1 in
+      let (c2,l2) = alt_free_sing x2 in
+      let (c3,l3) = alt_free_sing x3 in
+        (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))) /\
+   (alt_free_sing (Let t xs x2) =
+      (let m = LENGTH xs in
+      let (c2,l2) = alt_free_sing x2 in
+        if no_overlap m l2 /\ EVERY pure xs then
+          (Let t (REPLICATE m (const_0 t)) c2,Shift m l2) else
+          let (c1,l1) = alt_free_list xs in
+            (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))) /\
+   (alt_free_sing (Raise t x1) =
+      (let (c1,l1) = alt_free_sing x1 in
+        (Raise t c1,l1))) /\
+   (alt_free_sing (Tick t x1) =
+      (let (c1,l1) = alt_free_sing x1 in
+        (Tick t c1,l1))) /\
+   (alt_free_sing (Op t op xs) =
+      (let (c1,l1) = alt_free_list xs in
+        (Op t op c1,l1))) /\
+   (alt_free_sing (App t loc_opt x1 xs2) =
+      (let (c1,l1) = alt_free_sing x1 in
+      let (c2,l2) = alt_free_list xs2 in
+        (App t loc_opt c1 c2,mk_Union l1 l2))) /\
+   (alt_free_sing (closLang_Fn t loc _3 num_args x1) =
+      (let (c1,l1) = alt_free_sing x1 in
+      let l2 = Shift num_args l1 in
+        (closLang_Fn t loc (SOME (vars_to_list l2)) num_args c1,l2)))
+          /\
+   (alt_free_sing (Letrec t loc _4 fns x1) =
+      (let m = LENGTH fns in
+      let (c2,l2) = alt_free_sing x1 in
+      let res = alt_free_letrec m fns in
+      let c1 = MAP FST res in
+      let l1 = list_mk_Union (MAP SND res) in
+        (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
+         mk_Union l1 (Shift (LENGTH fns) l2)))) /\
+   (alt_free_sing (Handle t x1 x2) =
+      (let (c1,l1) = alt_free_sing x1 in
+      let (c2,l2) = alt_free_sing x2 in
+        (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))) /\
+   (alt_free_sing (Call t ticks dest xs) =
+      (let (c1,l1) = alt_free_list xs in
+        (Call t ticks dest c1,l1))) /\
+   (alt_free_list [] = ([],Empty)) /\
+   (alt_free_list ((x:closLang_exp) :: xs) =
+      (let (c1,l1) = alt_free_sing x in
+      let (c2,l2) = alt_free_list xs in
+        (c1 :: c2,mk_Union l1 l2))) /\
+   (alt_free_letrec m [] = []) /\
+   (alt_free_letrec m ((n,x) :: rest) =
+      (let (c,l) = alt_free_sing x in
+        ((n,c),Shift (n + m) l) :: alt_free_letrec m rest))`;;
 
 (* shift renames variables to use only those in the annotations *)
 
@@ -213,8 +217,8 @@ let shift_def = cake_define
 
 (* HOL4 termination: *)
 let shift_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (e,_5,_6,_7) -> exp_size e | INR (INL
-  (es,_8,_9,_10)) -> list_size exp_size es | INR (INR (_11,_12,_13,l))
+  `MEASURE (\x. match x with INL (e,_6,_7,_8) -> exp_size e | INR (INL
+  (es,_9,_10,_11)) -> list_size exp_size es | INR (INR (_12,_13,_14,l))
   -> list_size (pair_size (\x. x) exp_size) l)`
   `shift_sing fns_len m l i =
         match (fns_len,m,l,i) with

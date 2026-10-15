@@ -243,22 +243,22 @@ let regImmToNumList_def = cake_define
   `regImmToNumList (Reg r) = [33; r + 100] /\
    regImmToNumList (Imm w) = [34; wordToNum w]`;;
 
-let arithToNumList_def = cake_define_list
-  [`arithToNumList (asm_Binop op r1 r2 ri) = [25; arithOpToNum op; r2
-  + 100] ++ regImmToNumList ri`;
-   `arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 +
-  100]`;
-   `arithToNumList (asm_LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 +
-  100; r5 + 100]`;
-   `arithToNumList (Shift s r1 r2 ri) = [28; shiftToNum s; r2 + 100]
-  ++ regImmToNumList ri`;
-   `arithToNumList (Div r1 r2 r3) = [29; r2 + 100; r3 + 100]`;
-   `arithToNumList (asm_AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 +
-  100]`;
-   `arithToNumList (asm_AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3 +
-  100]`;
-   `arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100; r3 +
-  100]`];;
+let arithToNumList_def = cake_define
+  `arithToNumList (asm_Binop op r1 r2 ri) = [25; arithOpToNum op; r2 +
+  100] ++ regImmToNumList ri /\
+   arithToNumList (asm_LongMul r1 r2 r3 r4) = [26; r3 + 100; r4 +
+     100] /\
+   arithToNumList (asm_LongDiv r1 r2 r3 r4 r5) = [27; r3 + 100; r4 +
+     100; r5 + 100] /\
+   arithToNumList (Shift s r1 r2 ri) = [28; shiftToNum s; r2 + 100]
+     ++ regImmToNumList ri /\
+   arithToNumList (Div r1 r2 r3) = [29; r2 + 100; r3 + 100] /\
+   arithToNumList (asm_AddCarry r1 r2 r3 r4) = [30; r2 + 100; r3 +
+     100] /\
+   arithToNumList (asm_AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3 +
+     100] /\
+   arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100;
+     r3 + 100]`;;
 
 let memOpToNum_def = cake_define
   `memOpToNum Load = (21:num) /\
@@ -316,42 +316,42 @@ let OpCurrHeapToNumList_def = cake_define
 
 (* WORD CSE FUNCTIONS *)
 
-let firstRegOfArith_def = cake_define_list
-  [`firstRegOfArith (asm_Binop _2 r _3 _4) = r`;
-   `firstRegOfArith (Shift _5 r _6 _7) = r`;
-   `firstRegOfArith (Div r _8 _9) = r`;
-   `firstRegOfArith (asm_LongMul r _10 _11 _12) = r`;
-   `firstRegOfArith (asm_LongDiv r _13 _14 _15 _16) = r`;
-   `firstRegOfArith (asm_AddCarry r _17 _18 _19) = r`;
-   `firstRegOfArith (asm_AddOverflow r _20 _21 _22) = r`;
-   `firstRegOfArith (asm_SubOverflow r _23 _24 _25) = r`];;
+let firstRegOfArith_def = cake_define
+  `firstRegOfArith (asm_Binop _2 r _3 _4) = r /\
+   firstRegOfArith (Shift _5 r _6 _7) = r /\
+   firstRegOfArith (Div r _8 _9) = r /\
+   firstRegOfArith (asm_LongMul r _10 _11 _12) = r /\
+   firstRegOfArith (asm_LongDiv r _13 _14 _15 _16) = r /\
+   firstRegOfArith (asm_AddCarry r _17 _18 _19) = r /\
+   firstRegOfArith (asm_AddOverflow r _20 _21 _22) = r /\
+   firstRegOfArith (asm_SubOverflow r _23 _24 _25) = r`;;
 
 (* All registers an arith instruction writes (multi-output ops write
    two), so
   that every written register is invalidated. *)
-let arithWrites_def = cake_define_list
-  [`arithWrites (asm_Binop _26 r _27 _28) = [r]`;
-   `arithWrites (Shift _29 r _30 _31) = [r]`;
-   `arithWrites (Div r _32 _33) = [r]`;
-   `arithWrites (asm_LongMul r1 r2 _34 _35) = [r1; r2]`;
-   `arithWrites (asm_LongDiv r1 r2 _36 _37 _38) = [r1; r2]`;
-   `arithWrites (asm_AddCarry r1 _39 _40 r4) = [r1; r4]`;
-   `arithWrites (asm_AddOverflow r1 _41 _42 r4) = [r1; r4]`;
-   `arithWrites (asm_SubOverflow r1 _43 _44 r4) = [r1; r4]`];;
+let arithWrites_def = cake_define
+  `arithWrites (asm_Binop _26 r _27 _28) = [r] /\
+   arithWrites (Shift _29 r _30 _31) = [r] /\
+   arithWrites (Div r _32 _33) = [r] /\
+   arithWrites (asm_LongMul r1 r2 _34 _35) = [r1; r2] /\
+   arithWrites (asm_LongDiv r1 r2 _36 _37 _38) = [r1; r2] /\
+   arithWrites (asm_AddCarry r1 _39 _40 r4) = [r1; r4] /\
+   arithWrites (asm_AddOverflow r1 _41 _42 r4) = [r1; r4] /\
+   arithWrites (asm_SubOverflow r1 _43 _44 r4) = [r1; r4]`;;
 
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
-let arithReads_def = cake_define_list
-  [`arithReads (asm_Binop _45 _46 r2 (Reg r3)) = [r2; r3]`;
-   `arithReads (asm_Binop _47 _48 r2 (Imm _49)) = [r2]`;
-   `arithReads (Shift _50 _51 r2 (Reg r3)) = [r2; r3]`;
-   `arithReads (Shift _52 _53 r2 (Imm _54)) = [r2]`;
-   `arithReads (Div _55 r2 r3) = [r2; r3]`;
-   `arithReads (asm_LongMul _56 _57 r3 r4) = [r3; r4]`;
-   `arithReads (asm_LongDiv _58 _59 r3 r4 r5) = [r3; r4; r5]`;
-   `arithReads (asm_AddCarry _60 r2 r3 r4) = [r2; r3; r4]`;
-   `arithReads (asm_AddOverflow _61 r2 r3 _62) = [r2; r3]`;
-   `arithReads (asm_SubOverflow _63 r2 r3 _64) = [r2; r3]`];;
+let arithReads_def = cake_define
+  `arithReads (asm_Binop _45 _46 r2 (Reg r3)) = [r2; r3] /\
+   arithReads (asm_Binop _47 _48 r2 (Imm _49)) = [r2] /\
+   arithReads (Shift _50 _51 r2 (Reg r3)) = [r2; r3] /\
+   arithReads (Shift _52 _53 r2 (Imm _54)) = [r2] /\
+   arithReads (Div _55 r2 r3) = [r2; r3] /\
+   arithReads (asm_LongMul _56 _57 r3 r4) = [r3; r4] /\
+   arithReads (asm_LongDiv _58 _59 r3 r4 r5) = [r3; r4; r5] /\
+   arithReads (asm_AddCarry _60 r2 r3 r4) = [r2; r3; r4] /\
+   arithReads (asm_AddOverflow _61 r2 r3 _62) = [r2; r3] /\
+   arithReads (asm_SubOverflow _63 r2 r3 _64) = [r2; r3]`;;
 
 (* The general-purpose registers an fp instruction writes. Most write
    only
@@ -455,34 +455,34 @@ let is_store_def = cake_define
    (is_store asm_Store16 = T) /\
    (is_store asm_Store32 = T)`;;
 
-let word_cseInst_def = cake_define_list
-  [`word_cseInst (data:knowledge) Skip = (data,Inst Skip)`;
-   `word_cseInst data (Const r w) =
-         (let data = invalidate_data data r in
-           if EVEN r then (data,Inst (Const r w)) else
-             add_to_data_const data r w)`;
-   `word_cseInst data (Arith a) =
-         (let r = firstRegOfArith a in
-         let data = invalidate_regs data (arithWrites a) in
-         let a' = canonicalArith data a in
-         let rds = arithReads a' in
-           if can_mem_arith a' /\ ~MEM r rds then
-             add_to_data (register_reads data rds) r (Arith a')
-               (Arith a) else
-             (data,Inst (Arith a)))`;
-   `word_cseInst data (asm_Mem op r (Addr a ofs)) =
-         (if is_store op then
-           (knowledge_loads_mem_fupd (K empty) data,Inst (asm_Mem op
-             r (Addr a ofs))) else
-           let data = invalidate_data data r in
-             if EVEN r \/ EVEN a \/ a = r then (data,Inst (asm_Mem
-               op r (Addr a ofs))) else
-               let a' = canonicalRegs' r data a in
-                 add_to_load_aux (register_read data a') r
-                   (loadToNumList op a' ofs)
-                              (Inst (asm_Mem op r (Addr a ofs))))`;
-   `word_cseInst data (asm_FP fp:'a asm_inst) =
-         (invalidate_regs data (fpWrites fp),Inst (asm_FP fp))`];;
+let word_cseInst_def = cake_define
+  `(word_cseInst (data:knowledge) Skip = (data,Inst Skip)) /\
+   (word_cseInst data (Const r w) =
+      (let data = invalidate_data data r in
+        if EVEN r then (data,Inst (Const r w)) else
+          add_to_data_const data r w)) /\
+   (word_cseInst data (Arith a) =
+      (let r = firstRegOfArith a in
+      let data = invalidate_regs data (arithWrites a) in
+      let a' = canonicalArith data a in
+      let rds = arithReads a' in
+        if can_mem_arith a' /\ ~MEM r rds then
+          add_to_data (register_reads data rds) r (Arith a') (Arith
+            a) else
+          (data,Inst (Arith a)))) /\
+   (word_cseInst data (asm_Mem op r (Addr a ofs)) =
+      (if is_store op then
+        (knowledge_loads_mem_fupd (K empty) data,Inst (asm_Mem op r
+          (Addr a ofs))) else
+        let data = invalidate_data data r in
+          if EVEN r \/ EVEN a \/ a = r then (data,Inst (asm_Mem op r
+            (Addr a ofs))) else
+            let a' = canonicalRegs' r data a in
+              add_to_load_aux (register_read data a') r
+                (loadToNumList op a' ofs)
+                              (Inst (asm_Mem op r (Addr a ofs))))) /\
+   (word_cseInst data (asm_FP fp:'a asm_inst) =
+      (invalidate_regs data (fpWrites fp),Inst (asm_FP fp)))`;;
 
 let dest_Var_def = cake_define
   `dest_Var x1 =

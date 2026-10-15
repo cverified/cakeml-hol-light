@@ -24,14 +24,14 @@ let ffi_offset_def = cake_define
 
 (* basic assemble function *)
 
-let lab_inst_def = cake_define_list
-  [`lab_inst w (Jump _1) = Jump w`;
-   `lab_inst w (JumpCmp c r ri _2) = JumpCmp c r ri w`;
-   `lab_inst w (Call _3) = Call w`;
-   `lab_inst w (LocValue r _4) = Loc r (w:'a word)`;
-   `lab_inst w (Halt) = Jump w`;
-   `lab_inst w (Install) = Jump w`;
-   `lab_inst w (labLang_CallFFI n) = Jump w`];;
+let lab_inst_def = cake_define
+  `(lab_inst w (Jump _1) = Jump w) /\
+   (lab_inst w (JumpCmp c r ri _2) = JumpCmp c r ri w) /\
+   (lab_inst w (Call _3) = Call w) /\
+   (lab_inst w (LocValue r _4) = Loc r (w:'a word)) /\
+   (lab_inst w (Halt) = Jump w) /\
+   (lab_inst w (Install) = Jump w) /\
+   (lab_inst w (labLang_CallFFI n) = Jump w)`;;
 
 let cbw_to_asm_def = cake_define
   `cbw_to_asm a =

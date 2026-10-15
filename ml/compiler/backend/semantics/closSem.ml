@@ -779,119 +779,125 @@ hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
 
-let evaluate_def = cake_define_list
-  [`closSem_evaluate ([],(env:closSem_v list),s) = (Rval [],s)`;
-   `closSem_evaluate (x :: y :: xs,env,s) =
-         (match fix_clock s (closSem_evaluate ([x],env,s)) with
-           (Rval v1,s1) ->
-             (match closSem_evaluate (y :: xs,env,s1) with (Rval
-               vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
-               -> res)`;
-   `closSem_evaluate ([Var _86 n],env,s) =
-         (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
-           (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([If _87 x1 x2 x3],env,s) =
-         (match fix_clock s (closSem_evaluate ([x1],env,s)) with
-           (Rval vs,s1) ->
-              (if Boolv T = HD vs then closSem_evaluate
-                ([x2],env,s1) else
-              if Boolv F = HD vs then closSem_evaluate ([x3],env,s1)
-                else
-                (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
-   `closSem_evaluate ([Let _88 xs x2],env,s) =
-         (match fix_clock s (closSem_evaluate (xs,env,s)) with
-           (Rval vs,s1) -> closSem_evaluate ([x2],vs ++ env,s1) | res
-           -> res)`;
-   `closSem_evaluate ([Raise _89 x1],env,s) =
-         (match closSem_evaluate ([x1],env,s) with (Rval vs,s) ->
-           (Rerr (Rraise (HD vs)),s) | res -> res)`;
-   `closSem_evaluate ([Handle _90 x1 x2],env,s1) =
-         (match fix_clock s1 (closSem_evaluate ([x1],env,s1)) with
-           (Rerr (Rraise v),s) -> closSem_evaluate ([x2],v :: env,s) |
-           res -> res)`;
-   `closSem_evaluate ([Op _91 op xs],env,s) =
-         (match fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
-           vs,s) ->
-           (if op = Install then
-           (match do_install (REVERSE vs) s with (Rval es,s) ->
-                (match closSem_evaluate (es,[],s) with (Rval vs,s)
-                  -> (Rval [LAST vs],s) | res -> res) | (Rerr err,s) ->
-                  (Rerr err,s)) else if op = ThunkOp ForceThunk then
-             (match dest_thunk vs (?_refs s) with BadRef -> (Rerr
-               (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
-               Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
-               IsThunk NotEvaluated f ->
-                 (match closSem_evaluate ([AppUnit (Var None
-                   0)],[f],s) with (Rval vs2,s) ->
-                     (match update_thunk vs (?_refs s) vs2 with NONE
-                       -> (Rerr (Rabort Rtype_error),s) | SOME refs ->
-                       (Rval vs2,?_refs_fupd (K refs) s)) | (Rerr e,s)
-                       -> (Rerr e,s))) else
-           (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
-             err,s) | Rval (v,s) -> (Rval [v],s))) | res -> res)`;
-   `closSem_evaluate ([closLang_Fn _92 loc vsopt num_args exp],env,s) =
-         (if num_args <= closSem_state_max_app s /\ ~(num_args = 0)
-           then
-           match vsopt with NONE -> (Rval [Closure loc [] env
-             num_args exp],s) | SOME vs ->
-               (match lookup_vars vs env with NONE -> (Rerr (Rabort
-                 Rtype_error),s) | SOME env' -> (Rval [Closure loc []
-                 env' num_args exp],s)) else
-           (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([Letrec _93 loc namesopt fns exp],env,s) =
-         (if EVERY (\(num_args,e). num_args <= closSem_state_max_app
-           s /\ ~(num_args = 0)) fns then
-           let
-             build_rc e = GENLIST (Recclosure loc [] e fns) (LENGTH
-               fns) in
-           let
-             envdelta =
-               match namesopt with NONE -> SOME (build_rc env) |
-                 SOME names -> OPTION_MAP build_rc (lookup_vars names
-                 env) in
-             match envdelta with
-                 NONE -> (Rerr (Rabort Rtype_error),s) | SOME ed ->
-                   closSem_evaluate ([exp],ed ++ env,s) else
-           (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([App _94 loc_opt x1 args],env,s) =
-         (if LENGTH args > 0 then
-           (match fix_clock s (closSem_evaluate (args,env,s)) with
-             (Rval y2,s1) ->
-              (match fix_clock s1 (closSem_evaluate ([x1],env,s1))
-                with (Rval y1,s2) -> evaluate_app loc_opt (HD y1) y2 s2
-                | res -> res) | res -> res) else
-           (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([Tick _95 x],env,s) =
-         (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
-           else closSem_evaluate ([x],env,dec_clock 1 s))`;
-   `closSem_evaluate ([Call _96 ticks dest xs],env,s1) =
-         (match fix_clock s1 (closSem_evaluate (xs,env,s1)) with
-           (Rval vs,s) ->
-             (match find_code dest vs (closSem_state_code s) with
-               NONE -> (Rerr (Rabort Rtype_error),s) | SOME (args,exp)
-               ->
-                  (if (?_clock s < ticks + 1) then (Rerr (Rabort
-                    Rtimeout_error),?_clock_fupd (K 0) s) else
-                      closSem_evaluate ([exp],args,dec_clock
-                        (ticks + 1) s))) | res -> res)`;
-   `evaluate_app loc_opt f [] s = (Rval [f],s)`;
-   `evaluate_app loc_opt f args s =
-         (match dest_closure (closSem_state_max_app s) loc_opt f
-           args with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
-           (Partial_app v) ->
-             (if ?_clock s < LENGTH args then (Rerr (Rabort
-               Rtimeout_error),?_clock_fupd (K 0) s) else (Rval
-               [v],dec_clock (LENGTH args) s)) | SOME (Full_app exp env
-               rest_args) ->
-             (if ?_clock s < (LENGTH args - LENGTH rest_args) then
-               (Rerr (Rabort Rtimeout_error),?_clock_fupd (K 0) s) else
-                 match fix_clock (dec_clock (LENGTH args - LENGTH
-                   rest_args) s)
-                        (closSem_evaluate ([exp],env,dec_clock
-                          (LENGTH args - LENGTH rest_args) s)) with
-                          (Rval [v],s1) ->
-                   evaluate_app loc_opt v rest_args s1 | res ->
-                     res))`];;
+(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
+   imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\ TRY
+   DECIDE_TAC \\ imp_res_tac do_install_clock \\ imp_res_tac
+   dest_closure_length \\ imp_res_tac LESS_EQ_dec_clock \\
+   FULL_SIMP_TAC (srw_ss()) [] \\ simp [AppUnit_def] \\ IF_CASES_TAC
+   \\ gvs [] *)
+let evaluate_def = cake_define_wf
+  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
+                   (\x. match x with INL (xs,env,s) -> (?_clock
+                     s,list_size exp_alt_size xs,0) | INR (l,f,args,s)
+                     -> (?_clock s,0,LENGTH args)))`
+  `(closSem_evaluate ([],(env:closSem_v list),s) = (Rval [],s)) /\
+   (closSem_evaluate (x :: y :: xs,env,s) =
+      (match fix_clock s (closSem_evaluate ([x],env,s)) with (Rval
+        v1,s1) ->
+          (match closSem_evaluate (y :: xs,env,s1) with (Rval vs,s2)
+            -> (Rval (HD v1 :: vs),s2) | res -> res) | res -> res)) /\
+   (closSem_evaluate ([Var _86 n],env,s) =
+      (if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
+        Rtype_error),s))) /\
+   (closSem_evaluate ([If _87 x1 x2 x3],env,s) =
+      (match fix_clock s (closSem_evaluate ([x1],env,s)) with (Rval
+        vs,s1) ->
+           (if Boolv T = HD vs then closSem_evaluate ([x2],env,s1)
+             else
+           if Boolv F = HD vs then closSem_evaluate ([x3],env,s1)
+             else
+             (Rerr (Rabort Rtype_error),s1)) | res -> res)) /\
+   (closSem_evaluate ([Let _88 xs x2],env,s) =
+      (match fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
+        vs,s1) -> closSem_evaluate ([x2],vs ++ env,s1) | res -> res)) /\
+   (closSem_evaluate ([Raise _89 x1],env,s) =
+      (match closSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
+        (Rraise (HD vs)),s) | res -> res)) /\
+   (closSem_evaluate ([Handle _90 x1 x2],env,s1) =
+      (match fix_clock s1 (closSem_evaluate ([x1],env,s1)) with (Rerr
+        (Rraise v),s) -> closSem_evaluate ([x2],v :: env,s) | res ->
+        res)) /\
+   (closSem_evaluate ([Op _91 op xs],env,s) =
+      (match fix_clock s (closSem_evaluate (xs,env,s)) with (Rval
+        vs,s) ->
+        (if op = Install then
+        (match do_install (REVERSE vs) s with (Rval es,s) ->
+             (match closSem_evaluate (es,[],s) with (Rval vs,s) ->
+               (Rval [LAST vs],s) | res -> res) | (Rerr err,s) -> (Rerr
+               err,s)) else if op = ThunkOp ForceThunk then
+          (match dest_thunk vs (?_refs s) with BadRef -> (Rerr
+            (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
+            Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
+            IsThunk NotEvaluated f ->
+              (match closSem_evaluate ([AppUnit (Var None 0)],[f],s)
+                with (Rval vs2,s) ->
+                  (match update_thunk vs (?_refs s) vs2 with NONE ->
+                    (Rerr (Rabort Rtype_error),s) | SOME refs -> (Rval
+                    vs2,?_refs_fupd (K refs) s)) | (Rerr e,s) -> (Rerr
+                    e,s))) else
+        (match do_app op (REVERSE vs) s with Rerr err -> (Rerr err,s)
+          | Rval (v,s) -> (Rval [v],s))) | res -> res)) /\
+   (closSem_evaluate ([closLang_Fn _92 loc vsopt num_args exp],env,s)
+     =
+      (if num_args <= closSem_state_max_app s /\ ~(num_args = 0) then
+        match vsopt with NONE -> (Rval [Closure loc [] env num_args
+          exp],s) | SOME vs ->
+            (match lookup_vars vs env with NONE -> (Rerr (Rabort
+              Rtype_error),s) | SOME env' -> (Rval [Closure loc [] env'
+              num_args exp],s)) else
+        (Rerr (Rabort Rtype_error),s))) /\
+   (closSem_evaluate ([Letrec _93 loc namesopt fns exp],env,s) =
+      (if EVERY (\(num_args,e). num_args <= closSem_state_max_app s
+        /\ ~(num_args = 0)) fns then
+        let
+          build_rc e = GENLIST (Recclosure loc [] e fns) (LENGTH fns)
+            in
+        let
+          envdelta =
+            match namesopt with NONE -> SOME (build_rc env) | SOME
+              names -> OPTION_MAP build_rc (lookup_vars names env) in
+          match envdelta with
+              NONE -> (Rerr (Rabort Rtype_error),s) | SOME ed ->
+                closSem_evaluate ([exp],ed ++ env,s) else
+        (Rerr (Rabort Rtype_error),s))) /\
+   (closSem_evaluate ([App _94 loc_opt x1 args],env,s) =
+      (if LENGTH args > 0 then
+        (match fix_clock s (closSem_evaluate (args,env,s)) with (Rval
+          y2,s1) ->
+           (match fix_clock s1 (closSem_evaluate ([x1],env,s1)) with
+             (Rval y1,s2) -> evaluate_app loc_opt (HD y1) y2 s2 | res ->
+             res) | res -> res) else
+        (Rerr (Rabort Rtype_error),s))) /\
+   (closSem_evaluate ([Tick _95 x],env,s) =
+      (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s) else
+        closSem_evaluate ([x],env,dec_clock 1 s))) /\
+   (closSem_evaluate ([Call _96 ticks dest xs],env,s1) =
+      (match fix_clock s1 (closSem_evaluate (xs,env,s1)) with (Rval
+        vs,s) ->
+          (match find_code dest vs (closSem_state_code s) with NONE
+            -> (Rerr (Rabort Rtype_error),s) | SOME (args,exp) ->
+               (if (?_clock s < ticks + 1) then (Rerr (Rabort
+                 Rtimeout_error),?_clock_fupd (K 0) s) else
+                   closSem_evaluate ([exp],args,dec_clock (ticks + 1)
+                     s))) | res -> res)) /\
+   (evaluate_app loc_opt f [] s = (Rval [f],s)) /\
+   (evaluate_app loc_opt f args s =
+      (match dest_closure (closSem_state_max_app s) loc_opt f args
+        with NONE -> (Rerr (Rabort Rtype_error),s) | SOME (Partial_app
+        v) ->
+          (if ?_clock s < LENGTH args then (Rerr (Rabort
+            Rtimeout_error),?_clock_fupd (K 0) s) else (Rval
+            [v],dec_clock (LENGTH args) s)) | SOME (Full_app exp env
+            rest_args) ->
+          (if ?_clock s < (LENGTH args - LENGTH rest_args) then (Rerr
+            (Rabort Rtimeout_error),?_clock_fupd (K 0) s) else
+              match fix_clock (dec_clock (LENGTH args - LENGTH
+                rest_args) s)
+                     (closSem_evaluate ([exp],env,dec_clock (LENGTH
+                       args - LENGTH rest_args) s)) with (Rval [v],s1)
+                       ->
+                evaluate_app loc_opt v rest_args s1 | res ->
+                  res)))`;;
 hol4_overload "evaluate" "closSem_evaluate";;
 
 (* We prove that the clock never increases. *)

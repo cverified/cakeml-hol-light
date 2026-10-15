@@ -174,15 +174,15 @@ let do_install_def = cake_define
                                Rtype_error)) | _29 -> Rerr (Rabort
                                Rtype_error))`;;
 
-let do_part_def = cake_define_list
-  [`bvlSem_do_part m (Int i) refs = (Number i,refs)`;
-   `bvlSem_do_part m (W64 w) refs = (Word64 w,refs)`;
-   `bvlSem_do_part m (Con t ns) refs = (Block t (MAP m ns),refs)`;
-   `bvlSem_do_part m (Str t) refs =
-      (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
-      let bytes = MAP (n2w o ORD) (explode t) in
-        (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
-          bvlSem_ref))))`];;
+let do_part_def = cake_define
+  `bvlSem_do_part m (Int i) refs = (Number i,refs) /\
+   bvlSem_do_part m (W64 w) refs = (Word64 w,refs) /\
+   bvlSem_do_part m (Con t ns) refs = (Block t (MAP m ns),refs) /\
+   bvlSem_do_part m (Str t) refs =
+     (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
+     let bytes = MAP (n2w o ORD) (explode t) in
+       (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
+         bvlSem_ref))))`;;
 hol4_overload "do_part" "bvlSem_do_part";;
 
 let do_build_def = cake_define

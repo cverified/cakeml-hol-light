@@ -91,12 +91,12 @@ hol4_overload "merge_moves" "word_alloc_merge_moves";;
   T, INL <- left side
   F, INR <- right side
 *)
-let priority_def = cake_define_list
-  [`priority NONE b = 1`;
-   `priority (SOME (INL one)) b =
-        (if b then 2 else 1)`;
-   `priority (SOME (INR one)) b =
-        (if b then 1 else 2)`];;
+let priority_def = cake_define
+  `(priority NONE b = 1) /\
+   (priority (SOME (INL one)) b =
+     (if b then 2 else 1)) /\
+   (priority (SOME (INR one)) b =
+     (if b then 1 else 2))`;;
 
 (*Separately do the fake moves*)
 let fake_moves_def = cake_define

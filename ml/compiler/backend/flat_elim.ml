@@ -115,53 +115,58 @@ let dest_GlobalVarLookup_def = cake_define
       (flatLang_GlobalVarLookup n) -> SOME n
     | _21 -> NONE`;;
 
-let find_loc_def = cake_define_list
-  [`find_loc ((Raise _22 er):flatLang_exp) = find_loc er`;
-   `find_loc (Handle _23 eh p_es) =
-            union (find_loc eh) (find_locL (MAP SND p_es))`;
-   `find_loc (Lit _24 _25) = (LN:one spt)`;
-   `find_loc (Con _26 _27 es) = find_locL es`;
-   `find_loc (flatLang_Var_local _28 _29) = LN`;
-   `find_loc (Fun _30 _31 ef) = find_loc ef`;
-   `find_loc (App _32 op es) = (match (dest_GlobalVarInit op) with
-  SOME n -> (insert n one (find_locL es)) | NONE -> find_locL es)`;
-   `find_loc (If _33 ei1 ei2 ei3) =
-            union (find_loc ei1) (union (find_loc ei2) (find_loc
-              ei3))`;
-   `find_loc (Mat _34 em p_es) =
-            union (find_loc em) (find_locL (MAP SND p_es))`;
-   `find_loc (Let _35 _36 el1 el2) = union (find_loc el1) (find_loc
-  el2)`;
-   `find_loc (Letrec _37 vv_es elr1) =
-            union (find_locL (MAP (SND o SND) vv_es)) (find_loc
-              elr1)`;
-   `find_locL [] = LN`;
-   `find_locL (e :: es) = union (find_loc e) (find_locL es)`];;
+(* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
+let find_loc_def = cake_define_wf
+  `MEASURE (\e. match e with INL x -> exp_size x | INR y -> list_size
+  exp_size y)`
+  `(find_loc ((Raise _22 er):flatLang_exp) = find_loc er) /\
+   (find_loc (Handle _23 eh p_es) =
+       union (find_loc eh) (find_locL (MAP SND p_es))) /\
+   (find_loc (Lit _24 _25) = (LN:one spt)) /\
+   (find_loc (Con _26 _27 es) = find_locL es) /\
+   (find_loc (flatLang_Var_local _28 _29) = LN) /\
+   (find_loc (Fun _30 _31 ef) = find_loc ef) /\
+   (find_loc (App _32 op es) = (match (dest_GlobalVarInit op) with
+     SOME n -> (insert n one (find_locL es)) | NONE -> find_locL es)) /\
+   (find_loc (If _33 ei1 ei2 ei3) =
+       union (find_loc ei1) (union (find_loc ei2) (find_loc ei3))) /\
+   (find_loc (Mat _34 em p_es) =
+       union (find_loc em) (find_locL (MAP SND p_es))) /\
+   (find_loc (Let _35 _36 el1 el2) = union (find_loc el1) (find_loc
+     el2)) /\
+   (find_loc (Letrec _37 vv_es elr1) =
+       union (find_locL (MAP (SND o SND) vv_es)) (find_loc elr1)) /\
+   (find_locL [] = LN) /\
+   (find_locL (e :: es) = union (find_loc e) (find_locL es))`;;
 
-let find_lookups_def = cake_define_list
-  [`find_lookups (Raise _38 er) = find_lookups er`;
-   `find_lookups (Handle _39 eh p_es) =
-            union (find_lookups eh) (find_lookupsL (MAP SND p_es))`;
-   `find_lookups (Lit _40 _41) = LN`;
-   `find_lookups (Con _42 _43 es) = find_lookupsL es`;
-   `find_lookups (flatLang_Var_local _44 _45) = LN`;
-   `find_lookups (Fun _46 _47 ef) = find_lookups ef`;
-   `find_lookups (App _48 op es) = (match (dest_GlobalVarLookup op)
-  with SOME n -> (insert n one (find_lookupsL es)) | NONE ->
-  find_lookupsL es)`;
-   `find_lookups (If _49 ei1 ei2 ei3) =
-            union (find_lookups ei1)
-                (union (find_lookups ei2) (find_lookups ei3))`;
-   `find_lookups (Mat _50 em p_es) =
-            union (find_lookups em) (find_lookupsL (MAP SND p_es))`;
-   `find_lookups (Let _51 _52 el1 el2) =
-            union (find_lookups el1) (find_lookups el2)`;
-   `find_lookups (Letrec _53 vv_es elr1) =
-            union (find_lookupsL (MAP (SND o SND) vv_es))
-              (find_lookups elr1)`;
-   `find_lookupsL [] = LN`;
-   `find_lookupsL (e :: es) = union (find_lookups e) (find_lookupsL
-  es)`];;
+(* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
+let find_lookups_def = cake_define_wf
+  `MEASURE (\e. match e with INL x -> exp_size x | INR (y:flatLang_exp
+  list) ->
+                 list_size exp_size y)`
+  `(find_lookups (Raise _38 er) = find_lookups er) /\
+   (find_lookups (Handle _39 eh p_es) =
+       union (find_lookups eh) (find_lookupsL (MAP SND p_es))) /\
+   (find_lookups (Lit _40 _41) = LN) /\
+   (find_lookups (Con _42 _43 es) = find_lookupsL es) /\
+   (find_lookups (flatLang_Var_local _44 _45) = LN) /\
+   (find_lookups (Fun _46 _47 ef) = find_lookups ef) /\
+   (find_lookups (App _48 op es) = (match (dest_GlobalVarLookup op)
+     with SOME n -> (insert n one (find_lookupsL es)) | NONE ->
+     find_lookupsL es)) /\
+   (find_lookups (If _49 ei1 ei2 ei3) =
+       union (find_lookups ei1)
+           (union (find_lookups ei2) (find_lookups ei3))) /\
+   (find_lookups (Mat _50 em p_es) =
+       union (find_lookups em) (find_lookupsL (MAP SND p_es))) /\
+   (find_lookups (Let _51 _52 el1 el2) =
+       union (find_lookups el1) (find_lookups el2)) /\
+   (find_lookups (Letrec _53 vv_es elr1) =
+       union (find_lookupsL (MAP (SND o SND) vv_es)) (find_lookups
+         elr1)) /\
+   (find_lookupsL [] = LN) /\
+   (find_lookupsL (e :: es) = union (find_lookups e)
+     (find_lookupsL es))`;;
 
 let analyse_exp_def = cake_define
   `analyse_exp e = (let locs = (find_loc e) in let lookups =

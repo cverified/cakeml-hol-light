@@ -897,28 +897,27 @@ let check_partial_col_def = cake_define
 (* The checking function, used by oracle, and also used as part of the
    correctness proof *)
 (* live = the liveset, flive = the liveset with f applied over it*)
-let check_clash_tree_def = cake_define_list
-  [`check_clash_tree f (reg_alloc_Delta w r) live flive =
-        (match check_partial_col f w live flive with
-          NONE -> NONE | SOME _14 ->
-        (let del_w = (numset_list_delete w live) in
-        let fdel_w = (numset_list_delete (MAP f w) flive) in
-        check_partial_col f r del_w fdel_w))`;
-   `check_clash_tree f (Set t) live flive = check_col f t`;
-   `check_clash_tree f (Branch topt t1 t2) live flive =
-        (match check_clash_tree f t1 live flive with
-          NONE -> NONE | SOME (t1_out,ft1_out) ->
-        (match check_clash_tree f t2 live flive with
-          NONE -> NONE | SOME (t2_out,ft2_out) ->
-        (match topt with
-          NONE ->
-            check_partial_col f (MAP FST (toAList (difference
-              t2_out t1_out))) t1_out ft1_out | SOME t -> check_col f
-              t)))`;
-   `check_clash_tree f (Seq t1 t2) live flive =
-        (match check_clash_tree f t2 live flive with
-          NONE -> NONE | SOME (t2_out,ft2_out) ->
-          check_clash_tree f t1 t2_out ft2_out)`];;
+let check_clash_tree_def = cake_define
+  `(check_clash_tree f (reg_alloc_Delta w r) live flive =
+     (match check_partial_col f w live flive with
+       NONE -> NONE | SOME _14 ->
+     (let del_w = (numset_list_delete w live) in
+     let fdel_w = (numset_list_delete (MAP f w) flive) in
+     check_partial_col f r del_w fdel_w))) /\
+   (check_clash_tree f (Set t) live flive = check_col f t) /\
+   (check_clash_tree f (Branch topt t1 t2) live flive =
+     (match check_clash_tree f t1 live flive with
+       NONE -> NONE | SOME (t1_out,ft1_out) ->
+     (match check_clash_tree f t2 live flive with
+       NONE -> NONE | SOME (t2_out,ft2_out) ->
+     (match topt with
+       NONE ->
+         check_partial_col f (MAP FST (toAList (difference t2_out
+           t1_out))) t1_out ft1_out | SOME t -> check_col f t)))) /\
+   (check_clash_tree f (Seq t1 t2) live flive =
+     (match check_clash_tree f t2 live flive with
+       NONE -> NONE | SOME (t2_out,ft2_out) ->
+       check_clash_tree f t1 t2_out ft2_out))`;;
 
 (* --
 compile clash_trees into a register allocator state
@@ -940,18 +939,18 @@ let list_remap_def = cake_define
        SOME v -> list_remap xs (ta,fa,nv) | NONE ->
        list_remap xs (insert x nv ta,insert nv x fa,nv + 1)))`;;
 
-let mk_bij_aux_def = cake_define_list
-  [`mk_bij_aux (reg_alloc_Delta writes reads) tfn =
-        list_remap writes (list_remap reads tfn)`;
-   `mk_bij_aux (Set t) tfn =
-        list_remap (MAP FST (toAList t)) tfn`;
-   `mk_bij_aux (Branch topt t1 t2) tfn =
-         (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
-         match topt with
-           NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList
-             ts)) tfn')`;
-   `mk_bij_aux (Seq t1 t2) tfn =
-        mk_bij_aux t1 (mk_bij_aux t2 tfn)`];;
+let mk_bij_aux_def = cake_define
+  `(mk_bij_aux (reg_alloc_Delta writes reads) tfn =
+     list_remap writes (list_remap reads tfn)) /\
+   (mk_bij_aux (Set t) tfn =
+     list_remap (MAP FST (toAList t)) tfn) /\
+   (mk_bij_aux (Branch topt t1 t2) tfn =
+      (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
+      match topt with
+        NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList ts))
+          tfn')) /\
+   (mk_bij_aux (Seq t1 t2) tfn =
+     mk_bij_aux t1 (mk_bij_aux t2 tfn))`;;
 
 let mk_bij_def = cake_define
   `mk_bij t =
@@ -990,38 +989,37 @@ let mk_tags_def = cake_define
 
 (* Initializes the clash_graph using a clash_tree and a remapping
    bijection *)
-let mk_graph_def = cake_define_list
-  [`mk_graph ta (reg_alloc_Delta w r) liveout =
-        monad_bind (return (MAP ta w)) (\
-          wta. monad_bind (return (MAP ta r)) (\
-          rta. monad_bind (extend_clique wta liveout) (\
-          live. monad_bind (return (FILTER (\x. ~MEM x wta) live))
-            (\
-          live. monad_bind (extend_clique rta live) (\
-          livein.
-          return livein)))))`;
-   `mk_graph ta (Set t) liveout =
-        monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
-          live. monad_ignore_bind
-          (clique_insert_edge live) (
-          return live))`;
-   `mk_graph ta (Branch topt t1 t2) liveout =
-        monad_bind (mk_graph ta t1 liveout) (\
-          t1_live. monad_bind (mk_graph ta t2 liveout) (\
-          t2_live.
-          (match topt with
-            NONE ->
-            monad_bind (extend_clique t1_live t2_live) (\
-              livein.
-              return livein) | SOME t ->
-            monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
-              clashes. monad_ignore_bind
-              (clique_insert_edge clashes) (
-              return clashes)))))`;
-   `mk_graph ta (Seq t1 t2) liveout =
-        monad_bind (mk_graph ta t2 liveout) (\
-          live.
-          mk_graph ta t1 live)`];;
+let mk_graph_def = cake_define
+  `(mk_graph ta (reg_alloc_Delta w r) liveout =
+     monad_bind (return (MAP ta w)) (\
+       wta. monad_bind (return (MAP ta r)) (\
+       rta. monad_bind (extend_clique wta liveout) (\
+       live. monad_bind (return (FILTER (\x. ~MEM x wta) live)) (\
+       live. monad_bind (extend_clique rta live) (\
+       livein.
+       return livein)))))) /\
+   (mk_graph ta (Set t) liveout =
+     monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
+       live. monad_ignore_bind
+       (clique_insert_edge live) (
+       return live))) /\
+   (mk_graph ta (Branch topt t1 t2) liveout =
+     monad_bind (mk_graph ta t1 liveout) (\
+       t1_live. monad_bind (mk_graph ta t2 liveout) (\
+       t2_live.
+       (match topt with
+         NONE ->
+         monad_bind (extend_clique t1_live t2_live) (\
+           livein.
+           return livein) | SOME t ->
+         monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
+           clashes. monad_ignore_bind
+           (clique_insert_edge clashes) (
+           return clashes)))))) /\
+   (mk_graph ta (Seq t1 t2) liveout =
+     monad_bind (mk_graph ta t2 liveout) (\
+       live.
+       mk_graph ta t1 live))`;;
 
 let sp_default_def = cake_define
   `sp_default t i =

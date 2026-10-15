@@ -94,14 +94,17 @@ let mk_conses_def = cake_define
   `mk_conses t [] = [] /\
    mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`;;
 
-let expand_def = cake_define_list
-  [`expand Any = [Any]`;
-   `expand (Lit l) = [Lit l]`;
-   `expand (Or p q) = expand p ++ expand q`;
-   `expand (Ref p) = mk_refs (expand p)`;
-   `expand (Cons t ps) = mk_conses t (expand_list ps)`;
-   `expand_list [] = [[]]`;
-   `expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`];;
+(* HOL4 termination: *)
+let expand_def = cake_define_wf
+  `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
+  pat_size ps)`
+  `expand Any = [Any] /\
+   expand (Lit l) = [Lit l] /\
+   expand (Or p q) = expand p ++ expand q /\
+   expand (Ref p) = mk_refs (expand p) /\
+   expand (Cons t ps) = mk_conses t (expand_list ps) /\
+   expand_list [] = [[]] /\
+   expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`;;
 
 let mk_rows_def = cake_define
   `mk_rows [] = [] /\
@@ -217,14 +220,17 @@ let default_mat_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-let pat_weight_def = cake_define_list
-  [`pat_weight Any = (0:num)`;
-   `pat_weight (Lit l) = 0`;
-   `pat_weight (Or p q) = 1 + pat_weight p + pat_weight q`;
-   `pat_weight (Ref p) = 1 + pat_weight p`;
-   `pat_weight (Cons t ps) = 1 + pats_weight ps`;
-   `pats_weight [] = 0`;
-   `pats_weight (p :: ps) = pat_weight p + pats_weight ps`];;
+(* HOL4 termination: *)
+let pat_weight_def = cake_define_wf
+  `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
+  pat_size ps)`
+  `pat_weight Any = (0:num) /\
+   pat_weight (Lit l) = 0 /\
+   pat_weight (Or p q) = 1 + pat_weight p + pat_weight q /\
+   pat_weight (Ref p) = 1 + pat_weight p /\
+   pat_weight (Cons t ps) = 1 + pats_weight ps /\
+   pats_weight [] = 0 /\
+   pats_weight (p :: ps) = pat_weight p + pats_weight ps`;;
 
 let mat_weight_def = cake_define
   `mat_weight [] = 0 /\

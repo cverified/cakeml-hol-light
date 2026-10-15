@@ -213,6 +213,11 @@ let isPREFIX = new_recursive_definition list_RECURSION
    (isPREFIX (CONS x xs) l <=>
     ~(l = []) /\ x = HD l /\ isPREFIX xs (TL l))`;;
 
+(* HOL4 writes isPREFIX as an infix as well *)
+
+parse_as_infix("<<=",(12,"right"));;
+override_interface("<<=",`isPREFIX:(A)list->(A)list->bool`);;
+
 let LAST_DEF = new_definition
   `LAST_N n (l:A list) = DROP (LENGTH l - n) l`;;
 

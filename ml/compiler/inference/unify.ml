@@ -28,18 +28,18 @@ val option_bind_thm = oneline optionTheory.OPTION_BIND_def
 let atom_INDUCT,atom_RECURSION = define_datatype
   "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
 
-let encode_infer_t_def = cake_define_list
-  [`encode_infer_t (Infer_Tvar_db n) =
-      Const (DB_tag n)`;
-   `encode_infer_t (Infer_Tapp ts tc) =
-      Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
-        (encode_infer_ts ts))`;
-   `encode_infer_t (Infer_Tuvar n) =
-      Var n`;
-   `encode_infer_ts [] =
-      Const Null_tag`;
-   `encode_infer_ts (t :: ts) =
-      Pair (encode_infer_t t) (encode_infer_ts ts)`];;
+let encode_infer_t_def = cake_define
+  `(encode_infer_t (Infer_Tvar_db n) =
+     Const (DB_tag n)) /\
+   (encode_infer_t (Infer_Tapp ts tc) =
+     Pair (Const Tapp_tag) (Pair (Const (TC_tag tc)) (encode_infer_ts
+       ts))) /\
+   (encode_infer_t (Infer_Tuvar n) =
+     Var n) /\
+   (encode_infer_ts [] =
+     Const Null_tag) /\
+   (encode_infer_ts (t :: ts) =
+     Pair (encode_infer_t t) (encode_infer_ts ts))`;;
 
 let decode_infer_t_def = cake_define
   `decode_infer_t x1 =
@@ -338,13 +338,13 @@ let cplist_vars_def = cake_define
    cplist_vars ((ts,us) :: rest) = isvars ts UNION isvars us UNION
      cplist_vars rest`;;
 
-let PFLAT_def = cake_define_list
-  [`PFLAT [] = EMPTY_BAG`;
-   `PFLAT (([],[]) :: ps) = PFLAT ps`;
-   `PFLAT (([],j :: js) :: ps) =
-      BAG_INSERT (encode_infer_t j) (PFLAT (([],js) :: ps))`;
-   `PFLAT ((i :: is,js) :: ps) =
-      BAG_INSERT (encode_infer_t i) (PFLAT ((is,js) :: ps))`];;
+let PFLAT_def = cake_define
+  `PFLAT [] = EMPTY_BAG /\
+   PFLAT (([],[]) :: ps) = PFLAT ps /\
+   PFLAT (([],j :: js) :: ps) =
+     BAG_INSERT (encode_infer_t j) (PFLAT (([],js) :: ps)) /\
+   PFLAT ((i :: is,js) :: ps) =
+     BAG_INSERT (encode_infer_t i) (PFLAT ((is,js) :: ps))`;;
 
 let kcunifywlR_def = cake_define
   `kcunifywlR ((s:infer_t spt),(wl:(infer_t list#infer_t list) list))

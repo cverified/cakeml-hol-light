@@ -716,85 +716,90 @@ hol4_overload "commas" "presLang_commas";;
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
-let clos_to_display_def = cake_define_list
-  [`clos_to_display ns h (Var t n) =
-        displayLang_Item (SOME t) (implode "var")
-          [display_num_as_varn (h - n - 1)]`;
-   `clos_to_display ns h (If t x1 x2 x3) =
-        displayLang_Item (SOME t) (implode "if") [clos_to_display ns
-          h x1; clos_to_display ns h x2;
-            clos_to_display ns h x3]`;
-   `clos_to_display ns h (closLang_Let t xs x) =
-        separate_lines (implode "let")
-            [Tuple (clos_to_display_lets ns h (LENGTH xs - 1) xs);
-                clos_to_display ns (h + LENGTH xs) x]`;
-   `clos_to_display ns h (Raise t x) =
-        displayLang_Item (SOME t) (implode "raise")
-          [clos_to_display ns h x]`;
-   `clos_to_display ns h (Tick t x) =
-        displayLang_Item (SOME t) (implode "tick")
-          [clos_to_display ns h x]`;
-   `clos_to_display ns h (Handle t x y) =
-        displayLang_Item (SOME t) (implode "handle")
-            [clos_to_display ns h x; display_num_as_varn h;
-                clos_to_display ns (h + 1) y]`;
-   `clos_to_display ns h (Call t ticks dest xs) =
-        displayLang_Item (SOME t) (implode "call")
-          ([num_to_display ticks; String (attach_name ns (SOME
-            dest))] ++
-           (clos_to_display_list ns h xs))`;
-   `clos_to_display ns h (App t opt_n x xs) =
-        displayLang_Item (SOME t) (implode "app")
-            ([(\f opt. match opt with NONE -> empty_item (implode
-              "none") | SOME opt' -> displayLang_Item NONE (implode
-              "some") [f opt']) num_to_display opt_n;
-              clos_to_display ns h x] ++ (clos_to_display_list ns
-                h xs))`;
-   `clos_to_display ns h (closLang_Fn name_hint n1 n2 vn x) =
-        displayLang_Item (SOME None) (add_name_hint (implode "fn")
-          name_hint)
-            [(\f opt. match opt with NONE -> empty_item (implode
-              "none") | SOME opt' -> displayLang_Item NONE (implode
-              "some") [f opt']) num_to_display n1;
-             (\f opt. match opt with NONE -> empty_item (implode
-               "none") | SOME opt' -> displayLang_Item NONE (implode
-               "some") [f opt']) ((\f xs. displayLang_Tuple (MAP f xs))
-               num_to_display) n2;
-             (\f xs. displayLang_Tuple (MAP f xs)) string_imp
-               (num_to_varn_list h vn);
-             clos_to_display ns h x]`;
-   `clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
-        displayLang_Item (SOME None) (add_name_hint (implode
-          "letrec") (commas name_hint))
-            [(\f opt. match opt with NONE -> empty_item (implode
-              "none") | SOME opt' -> displayLang_Item NONE (implode
-              "some") [f opt']) num_to_display n1;
-             (\f opt. match opt with NONE -> empty_item (implode
-               "none") | SOME opt' -> displayLang_Item NONE (implode
-               "some") [f opt']) ((\f xs. displayLang_Tuple (MAP f xs))
-               num_to_display) n2;
-             Tuple (clos_to_display_letrecs ns h (LENGTH es - 1)
-               (LENGTH es) es);
-             clos_to_display ns h e]`;
-   `clos_to_display ns h (Op t op xs) =
-        displayLang_Item (SOME t) (implode "op") (clos_op_to_display
-          LN op ::
-            (clos_to_display_list ns h xs))`;
-   `clos_to_display_list ns h [] = []`;
-   `clos_to_display_list ns h (x :: xs) =
-        clos_to_display ns h x :: clos_to_display_list ns h xs`;
-   `clos_to_display_lets ns h i [] = []`;
-   `clos_to_display_lets ns h i (x :: xs) =
-        Tuple [display_num_as_varn (h + i); String (implode "<-");
-          clos_to_display ns h x] :: clos_to_display_lets ns h (i - 1)
-          xs`;
-   `clos_to_display_letrecs ns h i len [] = []`;
-   `clos_to_display_letrecs ns h i len ((vn,e) :: es) =
-        Tuple [display_num_as_varn (h + i);
-            (\f xs. displayLang_Tuple (MAP f xs)) string_imp
-              (num_to_varn_list ((h + len) - 1) vn);
-            clos_to_display ns (h + len + vn) e] ::
-              clos_to_display_letrecs ns h (i - 1) len es`];;
+(* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
+let clos_to_display_def = cake_define_wf
+  `MEASURE (\x. match x with INL (_8,_9,e) -> exp_size e | INR (INL
+  (_10,_11,e)) -> list_size exp_size e | INR (INR (INL
+  (_12,_13,_14,es))) -> list_size exp_size es | INR (INR (INR
+  (_15,_16,_17,_18,es))) -> list_size (pair_size I exp_size) es)`
+  `(clos_to_display ns h (Var t n) =
+     displayLang_Item (SOME t) (implode "var") [display_num_as_varn
+       (h - n - 1)]) /\
+   (clos_to_display ns h (If t x1 x2 x3) =
+     displayLang_Item (SOME t) (implode "if") [clos_to_display ns h
+       x1; clos_to_display ns h x2;
+         clos_to_display ns h x3]) /\
+   (clos_to_display ns h (closLang_Let t xs x) =
+     separate_lines (implode "let")
+         [Tuple (clos_to_display_lets ns h (LENGTH xs - 1) xs);
+             clos_to_display ns (h + LENGTH xs) x]) /\
+   (clos_to_display ns h (Raise t x) =
+     displayLang_Item (SOME t) (implode "raise") [clos_to_display ns
+       h x]) /\
+   (clos_to_display ns h (Tick t x) =
+     displayLang_Item (SOME t) (implode "tick") [clos_to_display ns h
+       x]) /\
+   (clos_to_display ns h (Handle t x y) =
+     displayLang_Item (SOME t) (implode "handle")
+         [clos_to_display ns h x; display_num_as_varn h;
+             clos_to_display ns (h + 1) y]) /\
+   (clos_to_display ns h (Call t ticks dest xs) =
+     displayLang_Item (SOME t) (implode "call")
+       ([num_to_display ticks; String (attach_name ns (SOME dest))]
+         ++
+        (clos_to_display_list ns h xs))) /\
+   (clos_to_display ns h (App t opt_n x xs) =
+     displayLang_Item (SOME t) (implode "app")
+         ([(\f opt. match opt with NONE -> empty_item (implode
+           "none") | SOME opt' -> displayLang_Item NONE (implode "some")
+           [f opt']) num_to_display opt_n;
+           clos_to_display ns h x] ++ (clos_to_display_list ns h
+             xs))) /\
+   (clos_to_display ns h (closLang_Fn name_hint n1 n2 vn x) =
+     displayLang_Item (SOME None) (add_name_hint (implode "fn")
+       name_hint)
+         [(\f opt. match opt with NONE -> empty_item (implode "none")
+           | SOME opt' -> displayLang_Item NONE (implode "some") [f
+           opt']) num_to_display n1;
+          (\f opt. match opt with NONE -> empty_item (implode "none")
+            | SOME opt' -> displayLang_Item NONE (implode "some") [f
+            opt']) ((\f xs. displayLang_Tuple (MAP f xs))
+            num_to_display) n2;
+          (\f xs. displayLang_Tuple (MAP f xs)) string_imp
+            (num_to_varn_list h vn);
+          clos_to_display ns h x]) /\
+   (clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
+     displayLang_Item (SOME None) (add_name_hint (implode "letrec")
+       (commas name_hint))
+         [(\f opt. match opt with NONE -> empty_item (implode "none")
+           | SOME opt' -> displayLang_Item NONE (implode "some") [f
+           opt']) num_to_display n1;
+          (\f opt. match opt with NONE -> empty_item (implode "none")
+            | SOME opt' -> displayLang_Item NONE (implode "some") [f
+            opt']) ((\f xs. displayLang_Tuple (MAP f xs))
+            num_to_display) n2;
+          Tuple (clos_to_display_letrecs ns h (LENGTH es - 1) (LENGTH
+            es) es);
+          clos_to_display ns h e]) /\
+   (clos_to_display ns h (Op t op xs) =
+     displayLang_Item (SOME t) (implode "op") (clos_op_to_display LN
+       op ::
+         (clos_to_display_list ns h xs))) /\
+   (clos_to_display_list ns h [] = []) /\
+   (clos_to_display_list ns h (x :: xs) =
+     clos_to_display ns h x :: clos_to_display_list ns h xs) /\
+   (clos_to_display_lets ns h i [] = []) /\
+   (clos_to_display_lets ns h i (x :: xs) =
+     Tuple [display_num_as_varn (h + i); String (implode "<-");
+       clos_to_display ns h x] :: clos_to_display_lets ns h (i - 1) xs)
+       /\
+   (clos_to_display_letrecs ns h i len [] = []) /\
+   (clos_to_display_letrecs ns h i len ((vn,e) :: es) =
+     Tuple [display_num_as_varn (h + i);
+         (\f xs. displayLang_Tuple (MAP f xs)) string_imp
+           (num_to_varn_list ((h + len) - 1) vn);
+         clos_to_display ns (h + len + vn) e] ::
+           clos_to_display_letrecs ns h (i - 1) len es)`;;
 
 let clos_fun_to_display_def = cake_define
   `clos_fun_to_display names (n,argc,body) =
@@ -810,48 +815,52 @@ let clos_dec_to_display_def = cake_define
 
 (* bvl to displayLang *)
 
-let bvl_to_display_def = cake_define_list
-  [`bvl_to_display ns h (Var n) =
-        displayLang_Item NONE (implode "var") [display_num_as_varn
-          (h - n - 1)]`;
-   `bvl_to_display ns h (If x1 x2 x3) =
-        displayLang_Item NONE (implode "if") [bvl_to_display ns h
-          x1; bvl_to_display ns h x2;
-            bvl_to_display ns h x3]`;
-   `bvl_to_display ns h (bvl_Let xs x) =
-        separate_lines (implode "let")
-            (bvl_to_display_lets ns h (LENGTH xs - 1) xs ++
-                [bvl_to_display ns (h + LENGTH xs) x])`;
-   `bvl_to_display ns h (Raise x) =
-        displayLang_Item NONE (implode "raise") [bvl_to_display ns
-          h x]`;
-   `bvl_to_display ns h (Tick x) =
-        displayLang_Item NONE (implode "tick") [bvl_to_display ns
-          h x]`;
-   `bvl_to_display ns h (Handle x y) =
-        displayLang_Item NONE (implode "handle")
-            [bvl_to_display ns h x; display_num_as_varn h;
-                bvl_to_display ns (h + 1) y]`;
-   `bvl_to_display ns h (Call ticks dest xs) =
-        displayLang_Item NONE (implode "call")
-             (String (attach_name ns dest) ::
-              (bvl_to_display_list ns h xs))`;
-   `bvl_to_display ns h (Force loc n) =
-        displayLang_Item NONE (implode "force")
-             [display_num_as_varn (h - n - 1); String (attach_name
-               ns (SOME loc))]`;
-   `bvl_to_display ns h (Op op xs) =
-        displayLang_Item NONE (implode "op") (clos_op_to_display ns
-          op ::
-                              (bvl_to_display_list ns h xs))`;
-   `bvl_to_display_list ns h [] = []`;
-   `bvl_to_display_list ns h (x :: xs) =
-        bvl_to_display ns h x :: bvl_to_display_list ns h xs`;
-   `bvl_to_display_lets ns h i [] = []`;
-   `bvl_to_display_lets ns h i (x :: xs) =
-        Tuple [display_num_as_varn (h + i); String (implode "<-");
-          bvl_to_display ns h x] :: bvl_to_display_lets ns h (i - 1)
-          xs`];;
+(* HOL4 termination: *)
+let bvl_to_display_def = cake_define_wf
+  `MEASURE (\x.
+     match x with
+       INL (ns,h,x) -> exp_size x | INR (INL (ns,h,xs)) -> list_size
+         exp_size xs | INR (INR (ns,h,i,xs)) -> list_size exp_size xs)`
+  `(bvl_to_display ns h (Var n) =
+     displayLang_Item NONE (implode "var") [display_num_as_varn (h -
+       n - 1)]) /\
+   (bvl_to_display ns h (If x1 x2 x3) =
+     displayLang_Item NONE (implode "if") [bvl_to_display ns h x1;
+       bvl_to_display ns h x2;
+         bvl_to_display ns h x3]) /\
+   (bvl_to_display ns h (bvl_Let xs x) =
+     separate_lines (implode "let")
+         (bvl_to_display_lets ns h (LENGTH xs - 1) xs ++
+             [bvl_to_display ns (h + LENGTH xs) x])) /\
+   (bvl_to_display ns h (Raise x) =
+     displayLang_Item NONE (implode "raise") [bvl_to_display ns h x])
+       /\
+   (bvl_to_display ns h (Tick x) =
+     displayLang_Item NONE (implode "tick") [bvl_to_display ns h x])
+       /\
+   (bvl_to_display ns h (Handle x y) =
+     displayLang_Item NONE (implode "handle")
+         [bvl_to_display ns h x; display_num_as_varn h;
+             bvl_to_display ns (h + 1) y]) /\
+   (bvl_to_display ns h (Call ticks dest xs) =
+     displayLang_Item NONE (implode "call")
+          (String (attach_name ns dest) ::
+           (bvl_to_display_list ns h xs))) /\
+   (bvl_to_display ns h (Force loc n) =
+     displayLang_Item NONE (implode "force")
+          [display_num_as_varn (h - n - 1); String (attach_name ns
+            (SOME loc))]) /\
+   (bvl_to_display ns h (Op op xs) =
+     displayLang_Item NONE (implode "op") (clos_op_to_display ns op
+       ::
+                              (bvl_to_display_list ns h xs))) /\
+   (bvl_to_display_list ns h [] = []) /\
+   (bvl_to_display_list ns h (x :: xs) =
+     bvl_to_display ns h x :: bvl_to_display_list ns h xs) /\
+   (bvl_to_display_lets ns h i [] = []) /\
+   (bvl_to_display_lets ns h i (x :: xs) =
+     Tuple [display_num_as_varn (h + i); String (implode "<-");
+       bvl_to_display ns h x] :: bvl_to_display_lets ns h (i - 1) xs)`;;
 
 let bvl_fun_to_display_def = cake_define
   `bvl_fun_to_display names (n,argc,body) =
@@ -862,60 +871,64 @@ let bvl_fun_to_display_def = cake_define
 
 (* bvi to displayLang *)
 
-let bvi_to_display_def = cake_define_list
-  [`bvi_to_display ns h (Var n) =
-        displayLang_Item NONE (implode "var") [display_num_as_varn
-          (h - n - 1)]`;
-   `bvi_to_display ns h (If x1 x2 x3) =
-        displayLang_Item NONE (implode "if") [bvi_to_display ns h
-          x1; bvi_to_display ns h x2;
-            bvi_to_display ns h x3]`;
-   `bvi_to_display ns h (bvi_Let xs x) =
-        separate_lines (implode "let")
-            (bvi_to_display_lets ns h (LENGTH xs - 1) xs ++
-                [bvi_to_display ns (h + LENGTH xs) x])`;
-   `bvi_to_display ns h (Raise x) =
-        displayLang_Item NONE (implode "raise") [bvi_to_display ns
-          h x]`;
-   `bvi_to_display ns h (Tick x) =
-        displayLang_Item NONE (implode "tick") [bvi_to_display ns
-          h x]`;
-   `bvi_to_display ns h (Call ticks dest xs handler) =
-        displayLang_Item NONE (implode "call")
-             ((String (attach_name ns dest) ::
-              (bvi_to_display_list ns h xs)) ++
-              (match handler with NONE -> [] | SOME e ->
-                [displayLang_Item NONE (implode "handler")
-                [display_num_as_varn h;
+(* HOL4 termination: *)
+let bvi_to_display_def = cake_define_wf
+  `MEASURE (\x.
+     match x with
+       INL (ns,h,x) -> exp_size x | INR (INL (ns,h,xs)) -> list_size
+         exp_size xs | INR (INR (ns,h,i,xs)) -> list_size exp_size xs)`
+  `(bvi_to_display ns h (Var n) =
+     displayLang_Item NONE (implode "var") [display_num_as_varn (h -
+       n - 1)]) /\
+   (bvi_to_display ns h (If x1 x2 x3) =
+     displayLang_Item NONE (implode "if") [bvi_to_display ns h x1;
+       bvi_to_display ns h x2;
+         bvi_to_display ns h x3]) /\
+   (bvi_to_display ns h (bvi_Let xs x) =
+     separate_lines (implode "let")
+         (bvi_to_display_lets ns h (LENGTH xs - 1) xs ++
+             [bvi_to_display ns (h + LENGTH xs) x])) /\
+   (bvi_to_display ns h (Raise x) =
+     displayLang_Item NONE (implode "raise") [bvi_to_display ns h x])
+       /\
+   (bvi_to_display ns h (Tick x) =
+     displayLang_Item NONE (implode "tick") [bvi_to_display ns h x])
+       /\
+   (bvi_to_display ns h (Call ticks dest xs handler) =
+     displayLang_Item NONE (implode "call")
+          ((String (attach_name ns dest) ::
+           (bvi_to_display_list ns h xs)) ++
+           (match handler with NONE -> [] | SOME e ->
+             [displayLang_Item NONE (implode "handler")
+             [display_num_as_varn h;
                               empty_item (implode "->");
-                              bvi_to_display ns (h + 1) e]]))`;
-   `bvi_to_display ns h (Force loc n) =
-        displayLang_Item NONE (implode "force")
-             [display_num_as_varn (h - n - 1); String (attach_name
-               ns (SOME loc))]`;
-   `bvi_to_display ns h (Op op xs) =
-        displayLang_Item NONE (implode "op") (clos_op_to_display ns
-          op ::
-                              (bvi_to_display_list ns h xs))`;
-   `bvi_to_display ns h (Return xs) =
-        displayLang_Item NONE (implode "return")
-          (bvi_to_display_list ns h xs)`;
-   `bvi_to_display ns h (bvi_LetCall rets ticks dest xs y) =
-        separate_lines (implode "letcall")
-            [displayLang_Item NONE (implode "call")
-               (String (attach_name ns (SOME dest)) ::
-                 bvi_to_display_list ns h xs);
-             Tuple (REVERSE (GENLIST (\i. display_num_as_varn (h +
-               i)) rets));
-             bvi_to_display ns (h + rets) y]`;
-   `bvi_to_display_list ns h [] = []`;
-   `bvi_to_display_list ns h (x :: xs) =
-        bvi_to_display ns h x :: bvi_to_display_list ns h xs`;
-   `bvi_to_display_lets ns h i [] = []`;
-   `bvi_to_display_lets ns h i (x :: xs) =
-        Tuple [display_num_as_varn (h + i); String (implode "<-");
-          bvi_to_display ns h x] :: bvi_to_display_lets ns h (i - 1)
-          xs`];;
+                              bvi_to_display ns (h + 1) e]]))) /\
+   (bvi_to_display ns h (Force loc n) =
+     displayLang_Item NONE (implode "force")
+          [display_num_as_varn (h - n - 1); String (attach_name ns
+            (SOME loc))]) /\
+   (bvi_to_display ns h (Op op xs) =
+     displayLang_Item NONE (implode "op") (clos_op_to_display ns op
+       ::
+                              (bvi_to_display_list ns h xs))) /\
+   (bvi_to_display ns h (Return xs) =
+     displayLang_Item NONE (implode "return") (bvi_to_display_list ns
+       h xs)) /\
+   (bvi_to_display ns h (bvi_LetCall rets ticks dest xs y) =
+     separate_lines (implode "letcall")
+         [displayLang_Item NONE (implode "call")
+            (String (attach_name ns (SOME dest)) ::
+              bvi_to_display_list ns h xs);
+          Tuple (REVERSE (GENLIST (\i. display_num_as_varn (h + i))
+            rets));
+          bvi_to_display ns (h + rets) y]) /\
+   (bvi_to_display_list ns h [] = []) /\
+   (bvi_to_display_list ns h (x :: xs) =
+     bvi_to_display ns h x :: bvi_to_display_list ns h xs) /\
+   (bvi_to_display_lets ns h i [] = []) /\
+   (bvi_to_display_lets ns h i (x :: xs) =
+     Tuple [display_num_as_varn (h + i); String (implode "<-");
+       bvi_to_display ns h x] :: bvi_to_display_lets ns h (i - 1) xs)`;;
 
 let bvi_fun_to_display_def = cake_define
   `bvi_fun_to_display names (n,argc,body) =
@@ -936,13 +949,13 @@ let num_set_to_display_def = cake_define
 let data_seqs_def = cake_define
   `data_seqs z =
      (match z with dataLang_Seq x y -> Append (data_seqs x)
-       (data_seqs y) | _8 -> List [z])`;;
+       (data_seqs y) | _19 -> List [z])`;;
 
 (* HOL4 termination: *)
 let data_prog_to_display_def = cake_define_wf
   `MEASURE (\x.
      match x with
-       INL (k,_9,_10) -> k | INR (k,_11,_12) -> k)`
+       INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`
   `data_prog_to_display k ns prog =
         match (k,prog) with
           (0,prog) -> empty_item (implode "...")
@@ -1140,13 +1153,13 @@ let store_name_to_display_def = cake_define
 let stack_seqs_def = cake_define
   `stack_seqs z =
      (match z with stackLang_Seq x y -> Append (stack_seqs x)
-       (stack_seqs y) | _13 -> List [z])`;;
+       (stack_seqs y) | _24 -> List [z])`;;
 
 (* HOL4 termination: *)
 let stack_prog_to_display_def = cake_define_wf
   `MEASURE (\x.
      match x with
-       INL (k,_15,_16) -> k | INR (k,_17,_18) -> k)`
+       INL (k,_26,_27) -> k | INR (k,_28,_29) -> k)`
   `stack_prog_to_display k ns prog =
       match (k,prog) with
         (0,prog) -> empty_item (implode "...")
@@ -1195,7 +1208,7 @@ let stack_prog_to_display_def = cake_define_wf
       | ((SUC k),(stackLang_JumpLower n1 n2 n3)) ->
       item_with_nums (implode "jump_lower") [n1; n2; n3]
       | ((SUC k),(Alloc n)) -> item_with_num (implode "alloc") n
-      | ((SUC k),(StoreConsts n1 n2 _14)) -> item_with_nums (implode
+      | ((SUC k),(StoreConsts n1 n2 _25)) -> item_with_nums (implode
         "store_consts") [n1; n2]
       | ((SUC k),(Raise n)) -> item_with_num (implode "raise") n
       | ((SUC k),(Return n)) -> item_with_num (implode "return") n
@@ -1311,7 +1324,7 @@ let lab_fun_to_display_def = cake_define
 let word_seqs_def = cake_define
   `word_seqs z =
      (match z with wordLang_Seq x y -> Append (word_seqs x)
-       (word_seqs y) | _19 -> List [z])`;;
+       (word_seqs y) | _30 -> List [z])`;;
 
 (* HOL4 termination: *)
 let word_exp_to_display_def = cake_define_wf
@@ -1357,8 +1370,8 @@ let num_sets_to_display_def = cake_define
 
 (* HOL4 termination: *)
 let word_prog_to_display_def = cake_define_wf
-  `MEASURE (\x. match x with INL (k,_20) -> k | INR (INL (k,_21)) -> k
-  | INR (INR (INL (k,_22))) -> k | INR (INR (INR (k,_23))) -> k)`
+  `MEASURE (\x. match x with INL (k,_31) -> k | INR (INL (k,_32)) -> k
+  | INR (INR (INL (k,_33))) -> k | INR (INR (INR (k,_34))) -> k)`
   `word_prog_to_display k ns x =
         match (k,x) with
           (0,x) -> empty_item (implode "...")

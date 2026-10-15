@@ -454,9 +454,9 @@ let find_num_def = cake_define
        "Unable to parse as num: "); rest; (implode " for flag: ");
        flag])))`;;
 
-let get_err_str_def = cake_define_list
-  [`get_err_str (INL n) = (implode "")`;
-   `get_err_str (INR n) = concat [n; (implode "\n")]`];;
+let get_err_str_def = cake_define
+  `(get_err_str (INL n) = (implode "")) /\
+   (get_err_str (INR n) = concat [n; (implode "\n")])`;;
 
 (* All the numbers must parse *)
 let parse_num_list_def = cake_define

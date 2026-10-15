@@ -14,19 +14,19 @@ needs "lib/integer_word.ml";;
 
 (* The GC is a copying collector which moves elements *)
 
-let gc_move_def = cake_define_list
-  [`copying_gc_gc_move (Data d,h2,a,n,heap,c,limit) = (Data
-  d,h2,a,n,heap,c)`;
-   `copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit) =
-         (match heap_lookup ptr heap with SOME (DataElement xs l dd)
-           ->
-             (let c = c /\ l + 1 <= n /\ (a + n = limit) in
-             let n = n - (l + 1) in
-             let h2 = h2 ++ [DataElement xs l dd] in
-             let (heap,c) = gc_forward_ptr ptr heap a d c in
-               (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c)) |
-                 SOME (ForwardPointer ptr _3 l) -> (gc_shared_Pointer
-                 ptr d,h2,a,n,heap,c) | _4 -> (ARB,h2,a,n,heap,F))`];;
+let gc_move_def = cake_define
+  `(copying_gc_gc_move (Data d,h2,a,n,heap,c,limit) = (Data
+  d,h2,a,n,heap,c)) /\
+   (copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit)
+     =
+      (match heap_lookup ptr heap with SOME (DataElement xs l dd) ->
+          (let c = c /\ l + 1 <= n /\ (a + n = limit) in
+          let n = n - (l + 1) in
+          let h2 = h2 ++ [DataElement xs l dd] in
+          let (heap,c) = gc_forward_ptr ptr heap a d c in
+            (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c)) |
+              SOME (ForwardPointer ptr _3 l) -> (gc_shared_Pointer
+              ptr d,h2,a,n,heap,c) | _4 -> (ARB,h2,a,n,heap,F)))`;;
 hol4_overload "gc_move" "copying_gc_gc_move";;
 
 let gc_move_list_def = cake_define

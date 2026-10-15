@@ -183,47 +183,47 @@ let reg_imm_ok_def = cake_define
 
 
 (* Requires register inequality for some architectures *)
-let arith_ok_def = cake_define_list
-  [`arith_ok (asm_Binop b r1 r2 ri) c <=>
-         (asm_config_two_reg_arith c ==> (r1 = r2) \/ (b = Or) /\
-           (ri = Reg r2)) /\
-         reg_ok r1 c /\ reg_ok r2 c /\ reg_imm_ok (INL b) ri c`;
-   `arith_ok (Shift l r1 r2 ri) (c:'a asm_config) <=>
-         (asm_config_two_reg_arith c ==> (r1 = r2)) /\
-         reg_ok r1 c /\ reg_ok r2 c /\
-         (match ri with Imm i -> (((i = (n2w 0)) ==> (l = Lsl)) /\
-           w2n i < dimindex (:'a)) | Reg r ->
-            reg_ok r c /\
-            (asm_config_ISA c = x86_64 ==> r = 1))`;
-   `arith_ok (Div r1 r2 r3) c <=>
-         reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ asm_config_ISA
-         c IN {ARMv8,MIPS,RISC_V}`;
-   `arith_ok (asm_LongMul r1 r2 r3 r4) c <=>
-         reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         ((asm_config_ISA c = x86_64) ==> (r1 = 2) /\ (r2 = 0) /\
-           (r3 = 0)) /\
-         ((asm_config_ISA c = ARMv7) ==> ~(r1 = r2)) /\
-         (asm_config_ISA c IN {ARMv8,RISC_V,Ag32} ==> ~(r1 = r3)
-           /\ ~(r1 = r4))`;
-   `arith_ok (asm_LongDiv r1 r2 r3 r4 r5) c <=>
-         (asm_config_ISA c = x86_64) /\ (r1 = 0) /\ (r2 = 2) /\ (r3
-           = 2) /\ (r4 = 0) /\
-         reg_ok r5 c`;
-   `arith_ok (asm_AddCarry r1 r2 r3 r4) c <=>
-         (asm_config_two_reg_arith c ==> (r1 = r2)) /\
-         reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
-           RISC_V)) ==> ~(r1 = r3) /\ ~(r1 = r4))`;
-   `arith_ok (asm_AddOverflow r1 r2 r3 r4) c <=>
-         (asm_config_two_reg_arith c ==> (r1 = r2)) /\
-         reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
-           RISC_V)) ==> ~(r1 = r3))`;
-   `arith_ok (asm_SubOverflow r1 r2 r3 r4) c <=>
-         (asm_config_two_reg_arith c ==> (r1 = r2)) /\
-         reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
-         (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c =
-           RISC_V)) ==> ~(r1 = r3))`];;
+let arith_ok_def = cake_define
+  `(arith_ok (asm_Binop b r1 r2 ri) c <=>
+      (asm_config_two_reg_arith c ==> (r1 = r2) \/ (b = Or) /\ (ri =
+        Reg r2)) /\
+      reg_ok r1 c /\ reg_ok r2 c /\ reg_imm_ok (INL b) ri c) /\
+   (arith_ok (Shift l r1 r2 ri) (c:'a asm_config) <=>
+      (asm_config_two_reg_arith c ==> (r1 = r2)) /\
+      reg_ok r1 c /\ reg_ok r2 c /\
+      (match ri with Imm i -> (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i
+        < dimindex (:'a)) | Reg r ->
+         reg_ok r c /\
+         (asm_config_ISA c = x86_64 ==> r = 1))) /\
+   (arith_ok (Div r1 r2 r3) c <=>
+      reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ asm_config_ISA
+      c IN {ARMv8,MIPS,RISC_V}) /\
+   (arith_ok (asm_LongMul r1 r2 r3 r4) c <=>
+      reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
+      ((asm_config_ISA c = x86_64) ==> (r1 = 2) /\ (r2 = 0) /\ (r3 =
+        0)) /\
+      ((asm_config_ISA c = ARMv7) ==> ~(r1 = r2)) /\
+      (asm_config_ISA c IN {ARMv8,RISC_V,Ag32} ==> ~(r1 = r3) /\ ~(r1
+        = r4))) /\
+   (arith_ok (asm_LongDiv r1 r2 r3 r4 r5) c <=>
+      (asm_config_ISA c = x86_64) /\ (r1 = 0) /\ (r2 = 2) /\ (r3 = 2)
+        /\ (r4 = 0) /\
+      reg_ok r5 c) /\
+   (arith_ok (asm_AddCarry r1 r2 r3 r4) c <=>
+      (asm_config_two_reg_arith c ==> (r1 = r2)) /\
+      reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
+      (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V)) ==>
+        ~(r1 = r3) /\ ~(r1 = r4))) /\
+   (arith_ok (asm_AddOverflow r1 r2 r3 r4) c <=>
+      (asm_config_two_reg_arith c ==> (r1 = r2)) /\
+      reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
+      (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V)) ==>
+        ~(r1 = r3))) /\
+   (arith_ok (asm_SubOverflow r1 r2 r3 r4) c <=>
+      (asm_config_two_reg_arith c ==> (r1 = r2)) /\
+      reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ reg_ok r4 c /\
+      (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
+        ==> ~(r1 = r3)))`;;
 
 let fp_ok_def = cake_define_list
   [`fp_ok (FPLess r d1 d2) c <=>
@@ -289,35 +289,35 @@ let offset_ok_def = cake_define
 (* HOL4 overload (expanded in the port):
      loc_offset_ok = λc. offset_ok c.code_alignment c.loc_offset *)
 
-let inst_ok_def = cake_define_list
-  [`inst_ok Skip c = T`;
-   `inst_ok (Const r w) c = reg_ok r c`;
-   `inst_ok (Arith x) c = arith_ok x c`;
-   `inst_ok (asm_FP x) c = fp_ok x c`;
-   `inst_ok (asm_Mem m r1 (Addr r2 w):'a asm_inst) c <=>
-         reg_ok r1 c /\ reg_ok r2 c /\
-         (if m IN {Load,Store,asm_Load32,asm_Store32} then
-            (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if
-              m IN {asm_Load16,asm_Store16} then
-            (\c. offset_ok 0 (asm_config_hw_offset c)) c w /\
-              ~(asm_config_ISA c = Ag32) else
-            (\c. offset_ok 0 (asm_config_byte_offset c)) c w)`];;
+let inst_ok_def = cake_define
+  `(inst_ok Skip c = T) /\
+   (inst_ok (Const r w) c = reg_ok r c) /\
+   (inst_ok (Arith x) c = arith_ok x c) /\
+   (inst_ok (asm_FP x) c = fp_ok x c) /\
+   (inst_ok (asm_Mem m r1 (Addr r2 w):'a asm_inst) c <=>
+      reg_ok r1 c /\ reg_ok r2 c /\
+      (if m IN {Load,Store,asm_Load32,asm_Store32} then
+         (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if m
+           IN {asm_Load16,asm_Store16} then
+         (\c. offset_ok 0 (asm_config_hw_offset c)) c w /\
+           ~(asm_config_ISA c = Ag32) else
+         (\c. offset_ok 0 (asm_config_byte_offset c)) c w))`;;
 
-let asm_ok_def = cake_define_list
-  [`asm_ok (Inst i) c <=> inst_ok i c`;
-   `asm_ok (Jump w) c <=> (\c. offset_ok (asm_config_code_alignment c)
-  (asm_config_jump_offset c)) c w`;
-   `asm_ok (JumpCmp cmp r ri w) c <=>
-         (\c. offset_ok (asm_config_code_alignment c)
-           (asm_config_cjump_offset c)) c w /\ cmp_ok cmp r ri c`;
-   `asm_ok (Call w) c <=>
-         (match asm_config_link_reg c with SOME r -> reg_ok r c |
-           NONE -> F) /\
-         (\c. offset_ok (asm_config_code_alignment c)
-           (asm_config_jump_offset c)) c w`;
-   `asm_ok (asm_JumpReg r) c <=> reg_ok r c`;
-   `asm_ok (Loc r w) c <=> reg_ok r c /\ (\c. offset_ok
-  (asm_config_code_alignment c) (asm_config_loc_offset c)) c w`];;
+let asm_ok_def = cake_define
+  `(asm_ok (Inst i) c <=> inst_ok i c) /\
+   (asm_ok (Jump w) c <=> (\c. offset_ok (asm_config_code_alignment
+     c) (asm_config_jump_offset c)) c w) /\
+   (asm_ok (JumpCmp cmp r ri w) c <=>
+      (\c. offset_ok (asm_config_code_alignment c)
+        (asm_config_cjump_offset c)) c w /\ cmp_ok cmp r ri c) /\
+   (asm_ok (Call w) c <=>
+      (match asm_config_link_reg c with SOME r -> reg_ok r c | NONE
+        -> F) /\
+      (\c. offset_ok (asm_config_code_alignment c)
+        (asm_config_jump_offset c)) c w) /\
+   (asm_ok (asm_JumpReg r) c <=> reg_ok r c) /\
+   (asm_ok (Loc r w) c <=> reg_ok r c /\ (\c. offset_ok
+     (asm_config_code_alignment c) (asm_config_loc_offset c)) c w)`;;
 
 let word_cmp_def = cake_define
   `(asm_word_cmp (EQUAL) w1 w2 = (w1 = w2)) /\
