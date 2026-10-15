@@ -154,7 +154,7 @@ let ssa_cc_trans_inst_def = cake_define
        match ri with Reg r3 ->
          (let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
-         let mov_in = Move1 [(8,r3')] in
+         let mov_in = (Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Seq mov_in (Inst (Arith (Shift
              (backend_common_word_shift) r1' r2' (Reg 8)))),ssa',na')) |
@@ -173,9 +173,9 @@ let ssa_cc_trans_inst_def = cake_define
        let r3' = option_lookup ssa r3 in
        let r4' = option_lookup ssa r4 in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
-       let mov_in = Move1 [(0,r4')] in
+       let mov_in = (Move 1) [(0,r4')] in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
-       let mov_out = Move1 [(r4'',0)] in
+       let mov_out = (Move 1) [(r4'',0)] in
          (Seq mov_in (Seq (Inst (Arith (AddCarry r1' r2' r3' 0)))
            mov_out),ssa'',na'')
         | (Arith (AddOverflow r1 r2 r3 r4)) ->
@@ -183,7 +183,7 @@ let ssa_cc_trans_inst_def = cake_define
        let r3' = option_lookup ssa r3 in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
-       let mov_out = Move1 [(r4'',0)] in
+       let mov_out = (Move 1) [(r4'',0)] in
          (Seq (Inst (Arith (AddOverflow r1' r2' r3' 0)))
            mov_out,ssa'',na'')
         | (Arith (SubOverflow r1 r2 r3 r4)) ->
@@ -191,26 +191,26 @@ let ssa_cc_trans_inst_def = cake_define
        let r3' = option_lookup ssa r3 in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r4'',ssa'',na'') = next_var_rename r4 ssa' na' in
-       let mov_out = Move1 [(r4'',0)] in
+       let mov_out = (Move 1) [(r4'',0)] in
          (Seq (Inst (Arith (SubOverflow r1' r2' r3' 0)))
            mov_out,ssa'',na'')
         | (Arith (LongMul r1 r2 r3 r4)) ->
        let r3' = option_lookup ssa r3 in
        let r4' = option_lookup ssa r4 in
-       let mov_in = Move1 [(0,r3'); (4,r4')] in
+       let mov_in = (Move 1) [(0,r3'); (4,r4')] in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
        let (r2',ssa'',na'') = next_var_rename r2 ssa' na' in
-       let mov_out = Move1 [(r2',0); (r1',6)] in
+       let mov_out = (Move 1) [(r2',0); (r1',6)] in
          (Seq mov_in (Seq (Inst (Arith (LongMul 6 0 0 4)))
            mov_out),ssa'',na'')
         | (Arith (LongDiv r1 r2 r3 r4 r5)) ->
        let r3' = option_lookup ssa r3 in
        let r4' = option_lookup ssa r4 in
        let r5' = option_lookup ssa r5 in
-       let mov_in = Move1 [(6,r3'); (0,r4')] in
+       let mov_in = (Move 1) [(6,r3'); (0,r4')] in
        let (r2',ssa',na') = next_var_rename r2 ssa na in
        let (r1',ssa'',na'') = next_var_rename r1 ssa' na' in
-       let mov_out = Move1 [(r2',6); (r1',0)] in
+       let mov_out = (Move 1) [(r2',6); (r1',0)] in
          (Seq mov_in (Seq (Inst (Arith (LongDiv 0 6 6 0 r5')))
            mov_out),ssa'',na'')
         | (Mem Load r (Addr a w)) ->
@@ -261,7 +261,7 @@ let ssa_cc_trans_inst_def = cake_define
          let r2' = option_lookup ssa r2 in
          if r1' = r2' then
            let (r2'',ssa',na') = next_var_rename r2 ssa na in
-           let mov_in = Move0 [(r2'',r2')] in
+           let mov_in = (Move 0) [(r2'',r2')] in
            (Seq mov_in (Inst (FP (FPMovFromReg d r1' r2''))),
            ssa',na') else
            (Inst (FP (FPMovFromReg d r1' r2')),ssa,na)
@@ -289,7 +289,7 @@ let list_next_var_rename_move_def = cake_define
   `list_next_var_rename_move ssa n ls =
      (let cur_ls = MAP (option_lookup ssa) ls in
      let (new_ls,ssa',n') = list_next_var_rename ls ssa n in
-     (Move0 (ZIP (new_ls,cur_ls)),ssa',n'))`;;
+     ((Move 0) (ZIP (new_ls,cur_ls)),ssa',n'))`;;
 
 (* force the renaming map to send x -> y unless
   x is already remapped *)
@@ -361,9 +361,9 @@ let ssa_cc_trans_def = cake_define_list
         let d1 = option_lookup ssa d in
         let (d2,ssa',na') = next_var_rename d ssa na in
         let (c2,ssa'',na'') = next_var_rename c ssa' na' in
-        let prog = Seq (Move1 [(4,c1); (6,d1)])
+        let prog = Seq ((Move 1) [(4,c1); (6,d1)])
           (Seq (StoreConsts 0 2 4 6 ws)
-               (Move1 [(c2,4); (d2,6)])) in
+               ((Move 1) [(c2,4); (d2,6)])) in
         (prog,ssa'',na''))`;
    `ssa_cc_trans (Inst i) ssa na lt =
         (let (i',ssa',na') = ssa_cc_trans_inst i ssa na in
@@ -409,12 +409,12 @@ let ssa_cc_trans_def = cake_define_list
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
         let prog = (Seq (stack_mov)
-                   (Seq (Move1 [(2,num')])
+                   (Seq ((Move 1) [(2,num')])
                    (Seq (Alloc 2 stack_set) (ret_mov)))) in
         (prog,ssa'',na''))`;
    `ssa_cc_trans (Raise num') ssa na lt =
         (let num' = option_lookup ssa num' in
-        let mov = Move1 [(2,num')] in
+        let mov = (Move 1) [(2,num')] in
         (Seq mov (Raise 2),ssa,na))`;
    `ssa_cc_trans (OpCurrHeap b dst src) ssa na lt =
         (let src' = option_lookup ssa src in
@@ -450,9 +450,9 @@ let ssa_cc_trans_def = cake_define_list
         let (ret_mov,ssa''',na''') =
           list_next_var_rename_move ssa'' na'' ls in
         let prog = (Seq (stack_mov)
-                   (Seq (Move1 [(2,ptr'); (4,len')])
+                   (Seq ((Move 1) [(2,ptr'); (4,len')])
                    (Seq (Install 2 4 dptr' dlen' stack_set)
-                   (Seq (Move1 [(ptr'',2)]) ret_mov)))) in
+                   (Seq ((Move 1) [(ptr'',2)]) ret_mov)))) in
         (prog,ssa''',na'''))`;
    `ssa_cc_trans (CodeBufferWrite r1 r2) ssa na lt =
         (let r1' = option_lookup ssa r1 in
@@ -477,7 +477,7 @@ let ssa_cc_trans_def = cake_define_list
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
         let prog = (Seq (stack_mov)
-                   (Seq (Move1 [(2,cptr1); (4,clen1); (6,cptr2);
+                   (Seq ((Move 1) [(2,cptr1); (4,clen1); (6,cptr2);
                      (8,clen2)])
                    (Seq (FFI ffi_index 2 4 6 8 stack_set)
                      (ret_mov)))) in
@@ -485,7 +485,7 @@ let ssa_cc_trans_def = cake_define_list
    `ssa_cc_trans (Call NONE dest args h) ssa na lt =
         (let names = MAP (option_lookup ssa) args in
         let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
-        let move_args = (Move1 (ZIP (conv_args,names))) in
+        let move_args = ((Move 1) (ZIP (conv_args,names))) in
         let prog = Seq move_args (Call NONE dest conv_args h) in
           (prog,ssa,na))`;
    `ssa_cc_trans (Call (SOME (ret,numset,ret_handler,l1,l2)) dest args
@@ -498,7 +498,7 @@ let ssa_cc_trans_def = cake_define_list
           numset in
         let names = MAP (option_lookup ssa) args in
         let conv_args = GENLIST (\x. 2 * (x + 1)) (LENGTH names) in
-        let move_args = (Move1 (ZIP (conv_args,names))) in
+        let move_args = ((Move 1) (ZIP (conv_args,names))) in
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
@@ -508,7 +508,7 @@ let ssa_cc_trans_def = cake_define_list
           ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
         let regs = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
         let mov_ret_handler =
-            (Seq ret_mov (Seq (Move1 (ZIP (ret',regs)))
+            (Seq ret_mov (Seq ((Move 1) (ZIP (ret',regs)))
               (ren_ret_handler))) in
         (match h with
           NONE ->
@@ -522,8 +522,8 @@ let ssa_cc_trans_def = cake_define_list
             let (ren_exc_handler,ssa_3,na_3) =
                 (ssa_cc_trans h ssa_3_p na_3_p lt) in
             let mov_exc_handler =
-                (Seq ret_mov (Seq (Move1 [n',2]) (ren_exc_handler)))
-                  in
+                (Seq ret_mov (Seq ((Move 1) [n',2])
+                  (ren_exc_handler))) in
             let prio = mk_prio mov_ret_handler mov_exc_handler in
             let (ret_cons,exc_cons,na_fin,ssa_fin) =
                 fix_inconsistencies prio ssa_2 ssa_3 na_3 in
@@ -1631,7 +1631,7 @@ let setup_ssa_def = cake_define
   `setup_ssa n lim (prog:'a wordLang_prog) =
    (let args = even_list n in
    let (new_ls,ssa',n') = list_next_var_rename args LN lim in
-     (Move1 (ZIP (new_ls,args)),ssa',n'))`;;
+     ((Move 1) (ZIP (new_ls,args)),ssa',n'))`;;
 
 let limit_var_def = cake_define
   `limit_var prog =

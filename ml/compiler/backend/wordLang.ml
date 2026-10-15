@@ -114,8 +114,8 @@ let every_var_inst_def = cake_define
   `(every_var_inst P (Const reg w) = P reg) /\
    (every_var_inst P (Arith (Binop bop r1 r2 ri)) =
      (P r1 /\ P r2 /\ every_var_imm P ri)) /\
-   (every_var_inst P (Arith (Shift shift r1 r2 ri)) = (P r1 /\ P r2
-     /\ every_var_imm P ri)) /\
+   (every_var_inst P (Arith (Shift (backend_common_word_shift) r1 r2
+     ri)) = (P r1 /\ P r2 /\ every_var_imm P ri)) /\
    (every_var_inst P (Arith (Div r1 r2 r3)) = (P r1 /\ P r2 /\ P r3))
      /\
    (every_var_inst P (Arith (AddCarry r1 r2 r3 r4)) = (P r1 /\ P r2
@@ -240,7 +240,7 @@ let max_var_inst_def = cake_define
         | (Const reg w) -> reg
         | (Arith (Binop bop r1 r2 ri)) ->
        match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2
-        | (Arith (Shift shift r1 r2 n)) ->
+        | (Arith (Shift (backend_common_word_shift) r1 r2 n)) ->
        match n with Reg r -> max3 r1 r2 r | _9 -> MAX r1 r2
         | (Arith (Div r1 r2 r3)) -> max3 r1 r2 r3
         | (Arith (AddCarry r1 r2 r3 r4)) -> MAX (MAX r1 r2) (MAX r3

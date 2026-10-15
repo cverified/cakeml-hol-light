@@ -316,21 +316,27 @@ let inst_ok_def = cake_define
    (inst_ok (Mem m r1 (Addr r2 w):'a asm_inst) c <=>
       reg_ok r1 c /\ reg_ok r2 c /\
       (if m IN {Load,Store,Load32,Store32} then
-         addr_offset_ok c w else if m IN {Load16,Store16} then
-         hw_offset_ok c w /\ ~(asm_config_ISA c = Ag32) else
-         byte_offset_ok c w))`;;
+         (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if m
+           IN {Load16,Store16} then
+         (\c. offset_ok 0 (asm_config_hw_offset c)) c w /\
+           ~(asm_config_ISA c = Ag32) else
+         (\c. offset_ok 0 (asm_config_byte_offset c)) c w))`;;
 
 let asm_ok_def = cake_define
   `(asm_ok (Inst i) c <=> inst_ok i c) /\
-   (asm_ok (Jump w) c <=> jump_offset_ok c w) /\
+   (asm_ok (Jump w) c <=> (\c. offset_ok (asm_config_code_alignment
+     c) (asm_config_jump_offset c)) c w) /\
    (asm_ok (JumpCmp cmp r ri w) c <=>
-      cjump_offset_ok c w /\ cmp_ok cmp r ri c) /\
+      (\c. offset_ok (asm_config_code_alignment c)
+        (asm_config_cjump_offset c)) c w /\ cmp_ok cmp r ri c) /\
    (asm_ok (Call w) c <=>
       (match asm_config_link_reg c with SOME r -> reg_ok r c | NONE
         -> F) /\
-      jump_offset_ok c w) /\
+      (\c. offset_ok (asm_config_code_alignment c)
+        (asm_config_jump_offset c)) c w) /\
    (asm_ok (JumpReg r) c <=> reg_ok r c) /\
-   (asm_ok (Loc r w) c <=> reg_ok r c /\ loc_offset_ok c w)`;;
+   (asm_ok (Loc r w) c <=> reg_ok r c /\ (\c. offset_ok
+     (asm_config_code_alignment c) (asm_config_loc_offset c)) c w)`;;
 
 let word_cmp_def = cake_define
   `(asm_word_cmp Equal w1 w2 = (w1 = w2)) /\

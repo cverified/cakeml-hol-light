@@ -285,7 +285,8 @@ let remove_labels_loop_def = cake_define
            (asm_config_encode c) sec_list in
          let sec_list = pad_code (asm_config_encode c (Inst Skip))
            sec_list in
-           if done' /\ all_enc_ok_light c sec_list /\
+           if done' /\ (\c ls. EVERY (sec_ok_light c) ls) c sec_list
+             /\
               zero_labs_acc_exist labs sec_list then SOME
                 (sec_list,labs) else NONE else
          if clock = (0:num) then NONE else

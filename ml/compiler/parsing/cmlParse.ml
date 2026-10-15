@@ -16,6 +16,7 @@ needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
+needs "semantics/typeSystem.ml";;
 
 (* HOL4 overload (expanded in the port):
      cmlpegexec = λn t. peg_exec cmlPEG (pnt n) t [] NONE [] done failed
@@ -63,7 +64,8 @@ let optlift_def = cake_define
    optlift (SOME a) = (\toks. Success toks a NONE)`;;
 
 let cmlParseExpr_def = cake_define
-  `cmlParseExpr = monad_bind (destResult o cmlpegexec nE) (\
+  `cmlParseExpr = monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt
+  n) t [] NONE [] done failed) nE) (\
      pts. monad_bind (optlift (oHD pts)) (\
      pt. monad_bind (optlift (ptree_Expr nE pt)) (\
      ast.
@@ -71,7 +73,8 @@ let cmlParseExpr_def = cake_define
 
 let parse_prog_def = cake_define
   `parse_prog =
-     monad_bind (destResult o cmlpegexec nTopLevelDecs) (\
+     monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt n) t []
+       NONE [] done failed) nTopLevelDecs) (\
        pts. monad_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;

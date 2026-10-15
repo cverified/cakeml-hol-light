@@ -22,10 +22,10 @@ new_type_abbrev("sptree_num_set",`: one spt`);;
 let wf_def = cake_define
   `(sptree_wf LN <=> T) /\
    (sptree_wf (LS a) <=> T) /\
-   (sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
-     ~(isEmpty t1 /\ isEmpty t2)) /\
+   (sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t. t
+     = LN) t1 /\ (\t. t = LN) t2)) /\
    (sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
-     ~(isEmpty t1 /\ isEmpty t2))`;;
+     ~((\t. t = LN) t1 /\ (\t. t = LN) t2))`;;
 hol4_overload "wf" "sptree_wf";;
 
 (* HOL4 termination: >> simp[DIV_LT_X] *)
@@ -294,7 +294,8 @@ let spts_to_alist_aux_def = cake_define
   `spts_to_alist_aux i xs acc_cent acc_right acc_left repeat =
      (match xs with [] -> (i,REVERSE acc_right ++ REVERSE
        acc_left,acc_cent,repeat) | (j,spt) :: ys ->
-       (if isEmpty spt then spts_to_alist_aux (i + j) ys acc_cent
+       (if (\t. t = LN) spt then spts_to_alist_aux (i + j) ys
+         acc_cent
          ((spts_to_alist_add_pause) j acc_right)
            ((spts_to_alist_add_pause) j acc_left)
          repeat else spts_to_alist_aux (i + j) ys

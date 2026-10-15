@@ -93,7 +93,7 @@ let assert_def = cake_define
 hol4_overload "assert" "labSem_assert";;
 
 let reg_imm_def = cake_define
-  `(labSem_reg_imm (Reg r) s = read_reg r s) /\
+  `(labSem_reg_imm (Reg r) s = (\r s. ?_regs s r) r s) /\
    (labSem_reg_imm (Imm w) s = Word w)`;;
 hol4_overload "reg_imm" "labSem_reg_imm";;
 
@@ -110,33 +110,36 @@ hol4_overload "binop_upd" "labSem_binop_upd";;
 
 let arith_upd_def = cake_define
   `(labSem_arith_upd (Binop b r1 r2 (ri:'a asm_reg_imm)) s =
-      (match (read_reg r2 s,reg_imm ri s) with (Word w1,Word w2) ->
-        binop_upd r1 b w1 w2 s | (x,_13) -> (if b = Or /\ ri = Reg r2
-        then upd_reg r1 x s else assert F s))) /\
+      (match ((\r s. ?_regs s r) r2 s,reg_imm ri s) with (Word
+        w1,Word w2) -> binop_upd r1 b w1 w2 s | (x,_13) -> (if b = Or /\
+        ri = Reg r2 then upd_reg r1 x s else assert F s))) /\
    (labSem_arith_upd (Shift l r1 r2 ri) s =
-      (match (read_reg r2 s,reg_imm ri s) with (Word w1,Word w2) ->
+      (match ((\r s. ?_regs s r) r2 s,reg_imm ri s) with (Word
+        w1,Word w2) ->
           assert (w2n w2 < dimindex (:'a)) (upd_reg r1 (Word
             (word_shift l w1 (w2n w2))) s) | _14 -> assert F s)) /\
    (labSem_arith_upd (Div r1 r2 r3) s =
-      (match (read_reg r3 s,read_reg r2 s) with (Word q,Word w2) ->
+      (match ((\r s. ?_regs s r) r3 s,(\r s. ?_regs s r) r2 s) with
+        (Word q,Word w2) ->
         assert (~(q = (n2w 0))) (upd_reg r1 (Word (w2 / q)) s) | _15
           -> assert F s)) /\
    (labSem_arith_upd (AddCarry r1 r2 r3 r4) s =
-      (match (read_reg r2 s,read_reg r3 s,read_reg r4 s) with (Word
-        w2,Word w3,Word w4) ->
+      (match ((\r s. ?_regs s r) r2 s,(\r s. ?_regs s r) r3 s,(\r s.
+        ?_regs s r) r4 s) with (Word w2,Word w3,Word w4) ->
         (let r = w2n w2 + w2n w3 + (if w4 = (n2w 0) then 0 else 1) in
           upd_reg r4 (Word (if dimword (:'a) <= r then (n2w 1) else
             (n2w 0)))
              (upd_reg r1 (Word (n2w r)) s)) | _16 -> assert F s)) /\
    (labSem_arith_upd (LongMul r1 r2 r3 r4) s =
-      (match (read_reg r3 s,read_reg r4 s) with (Word w3,Word w4) ->
+      (match ((\r s. ?_regs s r) r3 s,(\r s. ?_regs s r) r4 s) with
+        (Word w3,Word w4) ->
         (let r = w2n w3 * w2n w4 in
        upd_reg r2 (Word (n2w r))
         (upd_reg r1 (Word (n2w (r DIV dimword (:'a)))) s)) | _17 ->
           assert F s)) /\
    (labSem_arith_upd (LongDiv r1 r2 r3 r4 r5) s =
-      (match (read_reg r3 s,read_reg r4 s,read_reg r5 s) with (Word
-        w3,Word w4,Word w5) ->
+      (match ((\r s. ?_regs s r) r3 s,(\r s. ?_regs s r) r4 s,(\r s.
+        ?_regs s r) r5 s) with (Word w3,Word w4,Word w5) ->
         (let n = w2n w3 * dimword (:'a) + w2n w4 in
         let d = w2n w5 in
         let q = n DIV d in
@@ -144,12 +147,14 @@ let arith_upd_def = cake_define
           (upd_reg r1 (Word (n2w q)) (upd_reg r2 (Word (n2w (n MOD
             d))) s))) | _18 -> assert F s)) /\
    (labSem_arith_upd (AddOverflow r1 r2 r3 r4) s =
-      (match (read_reg r2 s,read_reg r3 s) with (Word w2,Word w3) ->
+      (match ((\r s. ?_regs s r) r2 s,(\r s. ?_regs s r) r3 s) with
+        (Word w2,Word w3) ->
           upd_reg r4 (Word (if ~(w2i (w2 + w3) = w2i w2 + w2i w3)
             then (n2w 1) else (n2w 0)))
              (upd_reg r1 (Word (w2 + w3)) s) | _19 -> assert F s)) /\
    (labSem_arith_upd (SubOverflow r1 r2 r3 r4) s =
-      (match (read_reg r2 s,read_reg r3 s) with (Word w2,Word w3) ->
+      (match ((\r s. ?_regs s r) r2 s,(\r s. ?_regs s r) r3 s) with
+        (Word w2,Word w3) ->
           upd_reg r4 (Word (if ~(w2i (w2 - w3) = w2i w2 - w2i w3)
             then (n2w 1) else (n2w 0)))
              (upd_reg r1 (Word (w2 - w3)) s) | _20 -> assert F s))`;;
@@ -210,9 +215,9 @@ let fp_upd_def = cake_define
           v)) s))) /\
    (labSem_fp_upd (FPMovFromReg d r1 r2) s =
       (if dimindex (:'a) = 64 then
-        match read_reg r1 s with
+        match (\r s. ?_regs s r) r1 s with
           Word w1 -> upd_fp_reg d (w2w w1) s | _24 -> assert F s else
-        match (read_reg r1 s,read_reg r2 s) with
+        match ((\r s. ?_regs s r) r1 s,(\r s. ?_regs s r) r2 s) with
           (Word w1,Word w2) -> upd_fp_reg d (w2 @@ w1) s | _25 ->
             assert F s)) /\
    (labSem_fp_upd (FPToInt d1 d2) s =
@@ -237,8 +242,8 @@ hol4_overload "fp_upd" "labSem_fp_upd";;
 
 let addr_def = cake_define
   `labSem_addr (Addr r offset) s =
-     (match read_reg r s with Word w -> SOME (w + offset) | _27 ->
-       NONE)`;;
+     (match (\r s. ?_regs s r) r s with Word w -> SOME (w +
+       offset) | _27 -> NONE)`;;
 hol4_overload "addr" "labSem_addr";;
 
 let is_Loc_def = cake_define
@@ -252,7 +257,7 @@ let mem_store_def = cake_define
      (match addr a s with NONE -> assert F s | SOME w -> assert ((w2n
        w MOD (dimindex (:'a) DIV 8) = 0) /\
                          w IN ?_mem_domain s)
-                   (upd_mem w (read_reg r s) s))`;;
+                   (upd_mem w ((\r s. ?_regs s r) r s) s))`;;
 hol4_overload "mem_store" "labSem_mem_store";;
 
 let mem_load_def = cake_define
@@ -273,7 +278,7 @@ let mem_load32_def = cake_define
 let mem_store32_def = cake_define
   `mem_store32 r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w ->
-         (match read_reg r s with Word b ->
+         (match (\r s. ?_regs s r) r s with Word b ->
             (match mem_store_32 (?_mem s) (?_mem_domain s) (?_be
               s) w (w2w b) with SOME m -> (?_mem_fupd (K m) s) | NONE
               -> assert F s) | _31 -> assert F s))`;;
@@ -288,7 +293,7 @@ let mem_load_byte_def = cake_define
 let mem_store_byte_def = cake_define
   `mem_store_byte r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w ->
-         (match read_reg r s with Word b ->
+         (match (\r s. ?_regs s r) r s with Word b ->
             (match mem_store_byte_aux (?_mem s) (?_mem_domain s)
               (?_be s) w (w2w b) with SOME m -> (?_mem_fupd (K m) s)
               | NONE -> assert F s) | _32 -> assert F s))`;;
@@ -426,13 +431,14 @@ let evaluate_def = cake_define_wf
              (let s1 = asm_inst i s in
                 if ?_failed s1 then (Error,s) else labSem_evaluate
                   (inc_pc (dec_clock s1))) | JumpReg r ->
-             (match read_reg r s with Loc n1 n2 ->
+             (match (\r s. ?_regs s r) r s with Loc n1 n2 ->
                   (match loc_to_pc n1 n2 (?_code s) with NONE ->
                     (Error,s) | SOME p ->
                        labSem_evaluate (upd_pc p (dec_clock s))) |
                          _37 -> (Error,s)) | _38 -> (Error,s)) | SOME
                          (Asm (Cbw r1 r2) _39 _40) ->
-       (match (read_reg r1 s,read_reg r2 s) with (Word w1,Word w2) ->
+       (match ((\r s. ?_regs s r) r1 s,(\r s. ?_regs s r) r2 s) with
+         (Word w1,Word w2) ->
          (match buffer_write (?_code_buffer s) w1 (w2w w2) with SOME
            new_cb ->
            labSem_evaluate (inc_pc (dec_clock (?_code_buffer_fupd (K
@@ -456,9 +462,9 @@ let evaluate_def = cake_define_wf
         (match get_pc_value l s with NONE -> (Error,s) | SOME p ->
           labSem_evaluate (upd_pc p (dec_clock s))) | SOME (LabAsm
           (JumpCmp c r ri l) _58 _59 _60) ->
-        (match word_cmp c (read_reg r s) (reg_imm ri s) with NONE ->
-          (Error,s) | SOME F -> labSem_evaluate (inc_pc (dec_clock s)) |
-          SOME T ->
+        (match word_cmp c ((\r s. ?_regs s r) r s) (reg_imm ri s)
+          with NONE -> (Error,s) | SOME F -> labSem_evaluate (inc_pc
+          (dec_clock s)) | SOME T ->
           (match get_pc_value l s with NONE -> (Error,s) | SOME p ->
             labSem_evaluate (upd_pc p (dec_clock s)))) | SOME (LabAsm
             (Call l) _61 _62 _63) ->

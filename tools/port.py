@@ -131,7 +131,8 @@ class Porter:
     # this theory defines itself (semanticPrimitives defines
     # num_cmp, which comparison has as an overload of num_compare)
     raw = {nm: txt for nm, txt in db.overloads_for(thy).items()
-           if not any(t == thy for t, _ in db.defs.get(nm, []))}
+           if not any(t == thy and k in ('def', 'con', 'rel')
+                      for t, k in db.defs.get(nm, []))}
     for _ in range(3):
       for nm, txt in raw.items():
         try: self.ctx.overloads[nm] = self.term(txt)

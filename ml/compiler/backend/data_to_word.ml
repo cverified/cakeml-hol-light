@@ -1047,7 +1047,8 @@ let smallnum_def = cake_define
      TRUE_CONST = Const (n2w 18:'a word) *)
 
 let MemEqList_def = cake_define
-  `(MemEqList a [] = (Assign 1 TRUE_CONST:'a wordLang_prog)) /\
+  `(MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
+  wordLang_prog)) /\
    (MemEqList a (w :: ws) =
       Seq (Assign 5 (Load (Op Add [Var 3; Const a])))
           (If (EQUAL) 5 (Imm w) (MemEqList (a + bytes_in_word) ws)
@@ -1581,8 +1582,8 @@ val def = assign_Define `
 let SetBool_def = cake_define
   `SetBool dest cmp r ri =
    (wordLang_If cmp r ri
-      (Assign dest TRUE_CONST)
-      (Assign dest FALSE_CONST):'a wordLang_prog)`;;
+      (Assign dest (Const (n2w 18:'a word)))
+      (Assign dest (Const (n2w 2:'a word))):'a wordLang_prog)`;;
 
 let AssignCmp_def = cake_define
   `AssignCmp dest (Lt:opb) v1 v2 = (SetBool dest Lower v1 (Reg v2):'a

@@ -312,9 +312,9 @@ let locs_to_string_def = cake_define
 let parse_sexp_input_def = cake_define
   `parse_sexp_input input =
      (let err = (implode "Parsing of sexp syntax failed") in
-       match parse_sexp (add_locs input) with NONE -> INL err |
-         SOME x -> (match sexplist sexpdec x with NONE -> INL err |
-         SOME x -> INR x))`;;
+       match parse_sexp ((MAP (\c. (c,unknown_loc))) input) with
+         NONE -> INL err | SOME x -> (match sexplist sexpdec x with
+         NONE -> INL err | SOME x -> INR x))`;;
 
 let parse_cml_input_def = cake_define
   `parse_cml_input input =

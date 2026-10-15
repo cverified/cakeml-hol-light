@@ -306,8 +306,9 @@ let pat_to_display_def = cake_define_wf
      match c with Pany -> Item NONE (implode "Pany") [] | Pvar v ->
        Item NONE (implode "Pvar") [String v] | Plit l -> Item NONE
        (implode "Plit") [lit_to_display l] | Pcon opt_id pats ->
-         Item NONE (implode "Pcon") [option_to_display id_to_display
-           opt_id;
+         Item NONE (implode "Pcon") [(\f opt. match opt with NONE ->
+           empty_item (implode "none") | SOME opt' -> Item NONE (implode
+           "some") [f opt']) id_to_display opt_id;
                            Tuple (pat_to_display_list pats)] | Pas t
                              v -> Item NONE (implode "Pas")
                              [pat_to_display t; String v] | Pref t ->
@@ -325,8 +326,9 @@ let exp_to_display_def = cake_define
           (c:ast_exp) ->
      match c with Lit l -> Item NONE (implode "Lit") [lit_to_display
        l] | Raise e -> Item NONE (implode "Raise") [exp_to_display e] |
-       Con opt_id es -> Item NONE (implode "Con") [option_to_display
-       id_to_display opt_id;
+       Con opt_id es -> Item NONE (implode "Con") [(\f opt. match opt
+       with NONE -> empty_item (implode "none") | SOME opt' -> Item NONE
+       (implode "some") [f opt']) id_to_display opt_id;
                               Tuple (exp_to_display_list es)] | Var
                                 id -> Item NONE (implode "Var")
                                 [id_to_display id] | Fun n e -> Item
@@ -344,7 +346,9 @@ let exp_to_display_def = cake_define
                               exp_to_display e2;
                               exp_to_display e3] | Let n_opt e1 e2 ->
                                 Item NONE (implode "Let")
-         [option_to_display String n_opt;
+         [(\f opt. match opt with NONE -> empty_item (implode "none")
+           | SOME opt' -> Item NONE (implode "some") [f opt']) String
+           n_opt;
           exp_to_display e1;
           exp_to_display e2] | Mat e pats ->
          Item NONE (implode "Mat")
@@ -480,8 +484,9 @@ let flat_to_display_def = cake_define
        Item (SOME tra) (implode "mat") (
            flat_to_display exp :: pat_flat_to_display_list pes)
         | (Let tra varN_opt exp1 exp2) ->
-       Item (SOME tra) (implode "let") [option_to_display string_imp
-         varN_opt;
+       Item (SOME tra) (implode "let") [(\f opt. match opt with NONE
+         -> empty_item (implode "none") | SOME opt' -> Item NONE
+         (implode "some") [f opt']) string_imp varN_opt;
            flat_to_display exp1; flat_to_display exp2]
         | (Letrec name_hint funs exp) ->
        Item (SOME None) (add_name_hint (implode "letrec") name_hint)
@@ -687,20 +692,31 @@ let clos_to_display_def = cake_define_wf
         (clos_to_display_list ns h xs))) /\
    (clos_to_display ns h (App t opt_n x xs) =
      Item (SOME t) (implode "app")
-         ([option_to_display num_to_display opt_n;
+         ([(\f opt. match opt with NONE -> empty_item (implode
+           "none") | SOME opt' -> Item NONE (implode "some") [f opt'])
+           num_to_display opt_n;
            clos_to_display ns h x] ++ (clos_to_display_list ns h
              xs))) /\
    (clos_to_display ns h (Fn name_hint n1 n2 vn x) =
      Item (SOME None) (add_name_hint (implode "fn") name_hint)
-         [option_to_display num_to_display n1;
-          option_to_display (list_to_display num_to_display) n2;
-          list_to_display string_imp (num_to_varn_list h vn);
+         [(\f opt. match opt with NONE -> empty_item (implode "none")
+           | SOME opt' -> Item NONE (implode "some") [f opt'])
+           num_to_display n1;
+          (\f opt. match opt with NONE -> empty_item (implode "none")
+            | SOME opt' -> Item NONE (implode "some") [f opt']) ((\f xs.
+            displayLang_Tuple (MAP f xs)) num_to_display) n2;
+          (\f xs. displayLang_Tuple (MAP f xs)) string_imp
+            (num_to_varn_list h vn);
           clos_to_display ns h x]) /\
    (clos_to_display ns h (closLang_Letrec name_hint n1 n2 es e) =
      Item (SOME None) (add_name_hint (implode "letrec") (commas
        name_hint))
-         [option_to_display num_to_display n1;
-          option_to_display (list_to_display num_to_display) n2;
+         [(\f opt. match opt with NONE -> empty_item (implode "none")
+           | SOME opt' -> Item NONE (implode "some") [f opt'])
+           num_to_display n1;
+          (\f opt. match opt with NONE -> empty_item (implode "none")
+            | SOME opt' -> Item NONE (implode "some") [f opt']) ((\f xs.
+            displayLang_Tuple (MAP f xs)) num_to_display) n2;
           Tuple (clos_to_display_letrecs ns h (LENGTH es - 1) (LENGTH
             es) es);
           clos_to_display ns h e]) /\
@@ -718,8 +734,8 @@ let clos_to_display_def = cake_define_wf
    (clos_to_display_letrecs ns h i len [] = []) /\
    (clos_to_display_letrecs ns h i len ((vn,e) :: es) =
      Tuple [display_num_as_varn (h + i);
-         list_to_display string_imp (num_to_varn_list ((h + len) - 1)
-           vn);
+         (\f xs. displayLang_Tuple (MAP f xs)) string_imp
+           (num_to_varn_list ((h + len) - 1) vn);
          clos_to_display ns (h + len + vn) e] ::
            clos_to_display_letrecs ns h (i - 1) len es)`;;
 
@@ -877,31 +893,43 @@ let data_prog_to_display_def = cake_define_wf
            [num_to_display x; String (implode ":="); num_to_display
              y] | Call rets target args NONE -> Item NONE (implode
              "call")
-           [option_to_display (\(x,y). Tuple
-                   [list_to_display num_to_display x;
+           [(\f opt. match opt with NONE -> empty_item (implode
+             "none") | SOME opt' -> Item NONE (implode "some") [f opt'])
+             (\(x,y). Tuple
+                   [(\f xs. displayLang_Tuple (MAP f xs))
+                     num_to_display x;
                     num_set_to_display y]) rets;
                String (attach_name ns target);
-               list_to_display num_to_display args;
+               (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
+                 args;
                empty_item (implode "none")] | Call rets target args
                  (SOME (v,handler)) -> Item NONE (implode "call")
-           [option_to_display (\(x,y). Tuple
-                   [list_to_display num_to_display x;
+           [(\f opt. match opt with NONE -> empty_item (implode
+             "none") | SOME opt' -> Item NONE (implode "some") [f opt'])
+             (\(x,y). Tuple
+                   [(\f xs. displayLang_Tuple (MAP f xs))
+                     num_to_display x;
                     num_set_to_display y]) rets;
                String (attach_name ns target);
-               list_to_display num_to_display args;
+               (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
+                 args;
                Item NONE (implode "some") [Tuple [num_to_display v;
                    data_prog_to_display k ns handler]]] | Force ret
                      loc src -> Item NONE (implode "force")
-           [option_to_display (\(x,y). Tuple
+           [(\f opt. match opt with NONE -> empty_item (implode
+             "none") | SOME opt' -> Item NONE (implode "some") [f opt'])
+             (\(x,y). Tuple
                    [num_to_display x; num_set_to_display y]) ret;
             num_to_display loc;
             num_to_display src] | Assign n op args n_set -> Tuple
            [num_to_display n;
             String (implode ":=");
             clos_op_to_display ns op;
-               list_to_display num_to_display args;
-               option_to_display num_set_to_display n_set] | Seq x y
-                 ->
+               (\f xs. displayLang_Tuple (MAP f xs)) num_to_display
+                 args;
+               (\f opt. match opt with NONE -> empty_item (implode
+                 "none") | SOME opt' -> Item NONE (implode "some") [f
+                 opt']) num_set_to_display n_set] | Seq x y ->
            (let xs = append (Append (data_seqs x) (data_seqs y)) in
               separate_lines (implode "seq")
                 (data_prog_to_display_list k ns xs)) | If n x y -> Item
@@ -911,8 +939,9 @@ let data_prog_to_display_def = cake_define_wf
              (implode "make_space")
            [num_to_display n; num_set_to_display ns] | Raise n ->
              Item NONE (implode "raise") [num_to_display n] | Return ns
-             -> Item NONE (implode "return") [list_to_display
-             num_to_display ns] | Tick -> empty_item (implode "tick")
+             -> Item NONE (implode "return") [(\f xs. displayLang_Tuple
+             (MAP f xs)) num_to_display ns] | Tick -> empty_item
+             (implode "tick")
         | (k,[]) -> []
         | (k,(x :: xs)) ->
        match k with
@@ -1293,8 +1322,10 @@ let word_prog_to_display_def = cake_define_wf
        [word_prog_to_display k ns prog]
         | ((SUC k),(Call a b c d)) -> Item NONE (implode "call")
        [word_prog_to_display_ret k ns a;
-        option_to_display (\n. String (attach_name ns (SOME n))) b;
-        list_to_display num_to_display c;
+        (\f opt. match opt with NONE -> empty_item (implode "none") |
+          SOME opt' -> Item NONE (implode "some") [f opt']) (\n. String
+          (attach_name ns (SOME n))) b;
+        (\f xs. displayLang_Tuple (MAP f xs)) num_to_display c;
         word_prog_to_display_handler k ns d]
         | ((SUC k),(OpCurrHeap b n1 n2)) -> Tuple
        [num_to_display n1; String (implode ":="); String (implode
