@@ -16,10 +16,15 @@ The first pass ports, in the topological order of
 2. all `Datatype`, `Type`, `Overload`, `Definition` and
    `Inductive` blocks of the 139 definition theories
    (`ml/<same path as in cakeml-src>`);
-3. the definitions that occur in the 83 proof theories of the
+3. the definitions that occur in the proof theories of the
    closure (they are needed to _state_ the correctness
    theorems of the second pass; `backend_config_ok`,
-   `mc_conf_ok`, `env_rel`, ... are of this kind).
+   `mc_conf_ok`, `env_rel`, ... are of this kind).  Of the 222
+   theories of the closure, 120 are the definition theories of
+   step 2; the other 102 (the proof theories and the excluded
+   target instantiations) have 1063 blocks between them (1022
+   `Definition`, 23 `Inductive`, 9 `Datatype`, 9 `Type`) in 90
+   files, so the whole first pass is about 4200 blocks.
 
 Not ported (and why):
 
