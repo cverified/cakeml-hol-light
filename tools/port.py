@@ -1319,7 +1319,10 @@ class Porter:
       if nm is None:
         nm = 'x' + str(i + 1)
         while nm in names: nm += "'"
-      names.append(nm)
+      # a variable whose name is a constant is renamed, and the
+      # head of the definition has to use the new name as well
+      # (lab_to_target's get_shmem_info takes an ffi_names)
+      names.append(self.ctx.vars.get(nm, nm))
     pats = [i for i in range(n)
             if any(args[i].kind != 'id' or iscon(args[i].name)
                    for _, args, _ in cls)

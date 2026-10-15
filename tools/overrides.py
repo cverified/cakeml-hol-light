@@ -293,6 +293,9 @@ ONE_QUOTATION = set([
   # clause says (the patterns are the constructors of ast, whose
   # names flatLang has as well)
   ('source_to_flat', 'compile_exp_def'),
+  # the Jump of the right hand side is the one of asm, which
+  # only the LocValue clause says (it annotates the word)
+  ('lab_to_target', 'lab_inst_def'),
 ])
 
 # the theory whose constructor a name means in one definition,
