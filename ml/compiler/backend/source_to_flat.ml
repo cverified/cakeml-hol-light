@@ -136,9 +136,9 @@ let compile_exp_def = cake_define_list
           ITLIST (Let backend_common_None NONE)
             (REVERSE (source_to_flat_compile_exps t env es))
               (flatLang_App backend_common_None (flatLang_Src
-              ast_Aalloc) [Lit backend_common_None (ast_IntLit (&(&0)));
+              ast_Aalloc) [Lit backend_common_None (ast_IntLit (&0));
                               Lit backend_common_None (ast_IntLit
-                                (&(&0)))]) else
+                                (&0))]) else
         if op = ast_Eval then
           flatLang_Mat backend_common_None (Con backend_common_None
             NONE (source_to_flat_compile_exps t env es))

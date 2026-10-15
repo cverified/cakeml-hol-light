@@ -1343,7 +1343,7 @@ let write_bytes_def = cake_define_list
 let small_int_def = cake_define
   `small_int (:'a) i <=>
      --&(dimword (:'a) DIV 8) <= i /\ i < (&(dimword (:'a) DIV
-       (&8)):int)`;;
+       8):int)`;;
 
 let part_to_words_def = cake_define_list
   [`part_to_words c m (closLang_Int i) offset =

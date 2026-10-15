@@ -119,7 +119,7 @@ let cl_rel = cake_inductive
            (env,ys)
            (Closure (SOME p) [] env num_args x)
            (Block closure_tag (bvlSem_CodePtr (p + (num_stubs
-             max_app)) :: Number (&(num_args - (&1))) :: ys))) /\
+             max_app)) :: Number (&(num_args - 1)) :: ys))) /\
    (
      num_args <= max_app /\ ~(
      num_args = 0) /\
@@ -133,12 +133,12 @@ let cl_rel = cake_inductive
      cl_rel max_app fs refs code (env,ys)
             (Recclosure (SOME p) [] env [(num_args,x)] 0)
             (Block closure_tag (bvlSem_CodePtr (p + (num_stubs
-              max_app)) :: Number (&(num_args - (&1))) :: ys))) /\
+              max_app)) :: Number (&(num_args - 1)) :: ys))) /\
      ((exps = MAP FST exps_ps) /\
       (ps = MAP SND exps_ps) /\ (ps = GENLIST (\n. loc + (num_stubs
         max_app) + 2 * n) (LENGTH exps_ps)) /\
       (rs = MAP (\((n,e),p). Block closure_tag [bvlSem_CodePtr p;
-        Number (&(n - (&1))); RefPtr T r]) exps_ps) /\
+        Number (&(n - 1)); RefPtr T r]) exps_ps) /\
       ~(r IN fs) /\
       (FLOOKUP refs r = SOME (ValueArray (rs ++ ys))) /\
       1 < LENGTH exps /\ k < LENGTH exps /\
@@ -201,7 +201,7 @@ let v_rel = cake_inductive
                               (bvlSem_CodePtr
                                 (partial_app_fn_location max_app
                                 (num_args - 1) (LENGTH ys - 1)) ::
-                              Number (&(num_args - (&1) - LENGTH
+                              Number (&(num_args - 1 - LENGTH
                                 arg_env)) :: cl' :: ys)))`;;
 
 let env_rel_def = cake_define

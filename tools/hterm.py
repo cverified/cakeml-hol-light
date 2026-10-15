@@ -1294,7 +1294,14 @@ class Printer:
       if e.op == '-':
         return self.paren('--' + self.pr(e.e, PRE_APP), PRE_APP, prec)
       if e.op == '&':
-        return self.paren('&' + self.pr(e.e, APP), PRE_APP, prec)
+        # the argument of HOL4's & is a natural number, also in a
+        # definition whose other numerals are integers or reals
+        # (clos_to_bvlProof's cl_rel has Number (&(num_args - 1)))
+        oldint = self.ctx.intnums
+        self.ctx.intnums = False
+        s = '&' + self.pr(e.e, APP)
+        self.ctx.intnums = oldint
+        return self.paren(s, PRE_APP, prec)
     if k == 'some':
       vs = ' '.join(self.pr(v, APP) for v in e.vs)
       return self.paren(self.ctx.name(e.name) + ' (\\' + vs + '. ' +
