@@ -133,10 +133,10 @@ let flatten_def = cake_define
          [] 0;
        labLang_LabAsm Install (n2w 0) [] 0;
        Label n m 0],F,m + 1) | stackLang_ShMemOp op r ad -> (List
-         [(\a. labLang_Asm (Asmi a)) (ShareMem op r ad) [] 0],F,m) |
-         CodeBufferWrite r1 r2 ->
-       (List [(\a. labLang_Asm (Asmi a)) (Cbw r1 r2) [] 0],F,m) |
-         _11 -> (List [],F,m))`;;
+         [labLang_Asm (ShareMem op r ad) [] 0],F,m) | CodeBufferWrite r1
+         r2 ->
+       (List [labLang_Asm (Cbw r1 r2) [] 0],F,m) | _11 -> (List
+         [],F,m))`;;
 hol4_overload "flatten" "stack_to_lab_flatten";;
 
 let is_Seq_def = cake_define

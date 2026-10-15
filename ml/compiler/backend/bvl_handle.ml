@@ -221,7 +221,7 @@ let compile_sing_def = cake_define_list
          (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
          let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in
          let (x3,l3,s3,nr3) = bvl_handle_compile_sing l n x3 in
-           OptionalLetLet_sing (If x1 x2 x3) n
+           OptionalLetLet_sing ((If x1 x2 x3:bvl_exp)) n
              (mk_Union l1 (mk_Union l2 l3)) (s1 + s2 + s3 + 1) l
              (nr1 /\ nr2 /\ nr3))`;
    `bvl_handle_compile_sing l n (Let xs x2:bvl_exp) =
@@ -231,7 +231,7 @@ let compile_sing_def = cake_define_list
            let (xs,l1,s1,nr1) = bvl_handle_compile_list l n xs in
            let (x2,l2,s2,nr2) = bvl_handle_compile_sing l (n + k) x2
              in
-             OptionalLetLet_sing (Let xs x2) n
+             OptionalLetLet_sing ((Let xs x2:bvl_exp)) n
                (mk_Union l1 (Shift k l2)) (s1 + s2 + 1) l (nr1 /\
                  nr2))`;
    `bvl_handle_compile_sing l n (Handle x1 x2:bvl_exp) =

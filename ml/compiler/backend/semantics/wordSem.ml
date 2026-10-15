@@ -1231,9 +1231,9 @@ let evaluate_def = cake_define_list
                                 n y s2) else (SOME
                                 wordSem_Error,s2)))) | (NONE,s) ->
                                 (SOME wordSem_Error,s) | (SOME
-                                (Break _151),s) -> (SOME
+                                (Break _149),s) -> (SOME
                                 wordSem_Error,s) | (SOME (Continue
-                                _152),s) -> (SOME wordSem_Error,s)
+                                _150),s) -> (SOME wordSem_Error,s)
                                 | res -> res)))))))`];;
 hol4_overload "evaluate" "wordSem_evaluate";;
 
@@ -1248,17 +1248,17 @@ let semantics_def = cake_define
   `wordSem_semantics (s:('a,'c,'ffi)wordSem_state) start' =
    (let prog = Call NONE (SOME start') [0] NONE in
    if ?k. match FST (wordSem_evaluate (prog,wordSem_state_clock_fupd
-     (K k) s)) with SOME (wordSem_Exception _153 _154) -> T | SOME
-     (wordSem_Result ret _155) -> ~(ret = Loc 1 0) | SOME wordSem_Error
-     -> T | NONE -> T | _156 -> F then ffi_Fail else
+     (K k) s)) with SOME (wordSem_Exception _151 _152) -> T | SOME
+     (wordSem_Result ret _153) -> ~(ret = Loc 1 0) | SOME wordSem_Error
+     -> T | NONE -> T | _154 -> F then ffi_Fail else
      match some (\res.
        ?k t r outcome.
          wordSem_evaluate (prog,wordSem_state_clock_fupd (K k) s) =
            (r,t) /\
          (match r with (SOME (wordSem_FinalFFI e)) -> outcome =
-           ffi_FFI_outcome e | (SOME (wordSem_Result _157 _158)) ->
+           ffi_FFI_outcome e | (SOME (wordSem_Result _155 _156)) ->
            outcome = ffi_Success | (SOME wordSem_NotEnoughSpace) ->
-           outcome = ffi_Resource_limit_hit | _159 -> F) /\
+           outcome = ffi_Resource_limit_hit | _157 -> F) /\
          res = ffi_Terminate outcome (ffi_state_io_events
            (wordSem_state_ffi t))) with SOME res -> res | NONE ->
        ffi_Diverge

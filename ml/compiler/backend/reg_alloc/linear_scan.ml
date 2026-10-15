@@ -1123,10 +1123,10 @@ let apply_bij_on_clash_tree_def = cake_define_list
       reg_alloc_Delta (MAP (\r. the 0 (sptree_lookup r bij)) wr)
         (MAP (\r. the 0 (sptree_lookup r bij)) rd)`;
    `apply_bij_on_clash_tree (reg_alloc_Set cutset:clash_tree) bij =
-      reg_alloc_Set (foldi (\r _15 acc. sptree_insert (the 0
+      reg_alloc_Set (foldi (\r _18 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN cutset)`;
    `apply_bij_on_clash_tree (Branch optcutset ct1 ct2:clash_tree) bij =
-      Branch (OPTION_MAP (foldi (\r _29 acc. sptree_insert (the 0
+      Branch (OPTION_MAP (foldi (\r _34 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN) optcutset)
         (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree
         ct2 bij)`;

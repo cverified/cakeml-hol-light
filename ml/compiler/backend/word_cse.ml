@@ -618,7 +618,8 @@ let word_cse_def = cake_define_list
                 (OpCurrHeap b r1 r2))`;
    `word_cse data (wordLang_LocValue r l) =
         (let data = invalidate_data data r in
-          add_to_data_aux data r [48; l] (LocValue r l))`;
+          add_to_data_aux data r [48; l] ((LocValue r l:'a
+            wordLang_prog)))`;
    `word_cse data wordLang_Skip = (data,(Skip:'a wordLang_prog))`;
    `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
   balanced_map_empty) data,(Store e r:'a wordLang_prog))`;

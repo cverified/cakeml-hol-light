@@ -13,7 +13,6 @@ needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/clos_known.ml";;
-needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
@@ -431,7 +430,7 @@ let backend_from_flat_tuple_cc_def = cake_define
   `backend_from_flat_tuple_cc asm_conf (c:compiler_config) =
      pure_cc inc_compile_decs
        (compile_common_inc (backend_config_clos_conf c)
-          (pure_cc (clos_to_bvl_compile_inc (closSem_state_max_app
+          (pure_cc (clos_to_bvl_compile_inc' (closSem_state_max_app
             (backend_config_clos_conf c)))
             (full_cc (backend_config_bvl_conf c) (pure_cc
               bvi_to_data_compile_prog

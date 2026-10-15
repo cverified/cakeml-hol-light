@@ -891,19 +891,24 @@ class Porter:
                 if isinstance(y, hterm.Node): count(y)
     count(e)
 
-    def known_head(e):
-      """an argument of a constructor or of a constant of the
-         port is resolved by the type of that argument, so it
-         needs no annotation (data_to_word's lookup_word_op
-         matches on the Xor of backend_common and gives back
-         Bitwise Xor, whose Xor is the one of asm)"""
-      h, args = hterm.strip_app(e)
-      return (bool(args) and h.kind == 'id' and
-              h.name not in self.ctx.defining and
-              (iscon(h.name) or
-               any(k in ('def', 'rel')
-                   for _, k in self.db.defs.get(
-                     h.name.split('$')[-1], []))))
+    def resolved(h, i, n):
+      """is the ith argument of this constructor of a type that
+         says what the argument is?  Then it needs no annotation
+         (data_to_word's lookup_word_op gives back Bitwise Xor,
+         whose Xor is the one of asm).  A type variable says
+         nothing (the k of wordSem's SOME (Break k))"""
+      if h.kind != 'id' or h.name in self.ctx.defining: return False
+      if not iscon(h.name): return False
+      nm = h.name.split('$')[-1]
+      t = self.con_thy(h.name, arity=n)
+      ty = (self.db.con_argty_thy.get((t, nm, i)) if t else None) or \
+           self.ctx.con_argty.get((nm, i))
+      if not ty: return False
+      try:
+        t = hterm.parse_type_text(ty)
+      except Exception:
+        return False
+      return t[0] == 'op'
 
     def go(e, top=True):
       if not isinstance(e, hterm.Node): return e
@@ -919,10 +924,12 @@ class Porter:
           return hterm.Node('paren', tok=e.tok,
                    e=hterm.Node('typed', tok=e.tok, e=e,
                                 ty=hterm.tokenize(ty)))
-      if e.kind == 'app' and known_head(e):
+      if e.kind == 'app':
         h, args = hterm.strip_app(e)
-        for a in args: go(a, False)
-        return e
+        if h.kind == 'id' and iscon(h.name):
+          for i, a in enumerate(args):
+            go(a, not resolved(h, i, len(args)))
+          return e
       for k, v in list(e.__dict__.items()):
         if k == 'tok': continue
         if isinstance(v, hterm.Node): setattr(e, k, go(v))

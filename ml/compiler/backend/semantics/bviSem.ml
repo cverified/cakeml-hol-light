@@ -296,7 +296,7 @@ let evaluate_def = cake_define_list
                           Rtimeout_error),state_clock_fupd (K 0) s) else
                         (match bviSem_evaluate
                           ([exp],args,dec_clock 1 s) with (Rerr
-                          (Rraise (Ret _32)),s1) -> (Rerr (Rabort
+                          (Rraise (Ret _30)),s1) -> (Rerr (Rabort
                           Rtype_error),s1) | res -> res))))`;
    `bviSem_evaluate ([(Call ticks dest xs handler:bvi_exp)],env,s1) =
          (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
@@ -313,10 +313,10 @@ let evaluate_def = cake_define_list
                          (match handler with SOME x ->
                               (match bviSem_evaluate ([x],v ::
                                 env,s) with (Rerr (Rraise (Ret
-                                _47)),s1) -> (Rerr (Rabort
+                                _42)),s1) -> (Rerr (Rabort
                                 Rtype_error),s1) | res -> res) | NONE
                                 -> (Rerr (Rraise (Exn v)),s)) | (Rerr
-                                (Rraise _48),s) -> (Rerr (Rabort
+                                (Rraise _43),s) -> (Rerr (Rabort
                                 Rtype_error),s) | res -> res)) | res
                                 -> res)`;
    `bviSem_evaluate ([bvi_LetCall rets ticks dest xs y],env,s1) =
@@ -329,7 +329,7 @@ let evaluate_def = cake_define_list
                     Rtimeout_error),state_clock_fupd (K 0) s) else
                     match fix_clock (dec_clock (ticks + 1) s)
                       (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
-                      s)) with (Rval _49,s) -> (Rerr (Rabort
+                      s)) with (Rval _44,s) -> (Rerr (Rabort
                       Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s)
                       ->
                         (if LENGTH ret_vs = rets then
@@ -366,7 +366,7 @@ let semantics_def = cake_define
        ?k s r outcome.
          evaluate (es,[],init k) = (r,s) /\
          (match r with Rerr (Rabort (Rffi_error e)) -> outcome =
-           ffi_FFI_outcome e | Rval _50 -> outcome = ffi_Success | _51
+           ffi_FFI_outcome e | Rval _45 -> outcome = ffi_Success | _46
            -> F) /\
          res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
            s))) with SOME res -> res | NONE ->

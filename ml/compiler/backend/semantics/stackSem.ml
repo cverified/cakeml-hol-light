@@ -868,8 +868,8 @@ let evaluate_def = cake_define_list
                             else
                             stackSem_evaluate (h,s2))) | (NONE,s)
                               -> (SOME Error,s) | (SOME (Break
-                              _108),s) -> (SOME Error,s) | (SOME
-                              (Continue _109),s) -> (SOME Error,s) |
+                              _106),s) -> (SOME Error,s) | (SOME
+                              (Continue _107),s) -> (SOME Error,s) |
                               (res,s) -> (res,s)))))`;
    `stackSem_evaluate (wordLang_Install ptr len dptr dlen ret,s) =
         (match (get_var ptr s,get_var len s,get_var dptr s,get_var
@@ -883,7 +883,7 @@ let evaluate_def = cake_define_list
              SOME (bytes,cb),SOME (data,db)) ->
             (let new_oracle = misc_shift_seq 1 (compile_oracle s) in
             (match (compile s cfg progs,progs) with (SOME
-              (bytes',cfg'),(k,prog) :: _118) ->
+              (bytes',cfg'),(k,prog) :: _116) ->
                 (if bytes = bytes' /\ data = bm /\ FST (new_oracle
                   0) = cfg' then
                 let s' = compile_oracle_fupd (K new_oracle)
@@ -896,31 +896,31 @@ let evaluate_def = cake_define_list
                   (stackSem_state_bitmaps_fupd (K
                   (stackSem_state_bitmaps s ++ bm))
                     s)))))) in
-                  (NONE,s') else (SOME Error,s)) | _119 -> (SOME
-                    Error,s))) | _120 -> (SOME Error,s))) | _121 ->
+                  (NONE,s') else (SOME Error,s)) | _117 -> (SOME
+                    Error,s))) | _118 -> (SOME Error,s))) | _119 ->
                     (SOME Error,s))`;
    `stackSem_evaluate (stackLang_ShMemOp op r (Addr a w),s) =
         (match word_exp s (wordLang_Op Add [Var a; Const w]) with
           SOME a ->
              (if state_clock s = 0 then (SOME
                TimeOut,stackSem_empty_env s) else
-               sh_mem_op op r a (dec_clock s)) | _122 -> (SOME
+               sh_mem_op op r a (dec_clock s)) | _120 -> (SOME
                  Error,s))`;
    `stackSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
           w1),SOME (wordLang_Word w2)) ->
               (match buffer_write (state_code_buffer s) w1 (w2w w2)
                 with SOME new_cb ->
-                (NONE,state_code_buffer_fupd (K new_cb) s) | _127
-                  -> (SOME Error,s)) | _128 -> (SOME Error,s))`;
+                (NONE,state_code_buffer_fupd (K new_cb) s) | _125
+                  -> (SOME Error,s)) | _126 -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_DataBufferWrite r1 r2,s) =
         (if ~stackSem_state_use_stack s then (SOME Error,s) else
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
           w1),SOME (wordLang_Word w2)) ->
               (match buffer_write (state_data_buffer s) w1 w2 with
                 SOME new_db ->
-                (NONE,state_data_buffer_fupd (K new_db) s) | _133
-                  -> (SOME Error,s)) | _134 -> (SOME Error,s)))`;
+                (NONE,state_data_buffer_fupd (K new_db) s) | _131
+                  -> (SOME Error,s)) | _132 -> (SOME Error,s)))`;
    `stackSem_evaluate (wordLang_FFI ffi_index ptr len ptr2 len2 ret,s) =
        (match (get_var len s,get_var ptr s,get_var len2 s,get_var
          ptr2 s) with (SOME (wordLang_Word w),SOME (wordLang_Word
@@ -941,7 +941,7 @@ let evaluate_def = cake_define_list
                           (stackSem_state_regs_fupd (K (DRESTRICT
                           (stackSem_state_regs s)
                           (stackSem_state_ffi_save_regs s)))
-                          (state_memory_fupd (K new_m) s)))))) | _137
+                          (state_memory_fupd (K new_m) s)))))) | _135
                           -> (SOME Error,s)) | res -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_LocValue r l1 l2,s) =
          (if loc_check (state_code s) (l1,l2) then
@@ -973,7 +973,7 @@ let evaluate_def = cake_define_list
                   ((w >>> backend_common_word_shift (:'a)) <<
                     backend_common_word_shift (:'a) = w) then
                     (NONE,set_var r (EL i (stack s)) s) else (SOME
-                    Error,stackSem_empty_env s)) | _138 -> (SOME
+                    Error,stackSem_empty_env s)) | _136 -> (SOME
                     Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackStore r n,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
@@ -993,7 +993,7 @@ let evaluate_def = cake_define_list
                   ((w >>> backend_common_word_shift (:'a)) <<
                     backend_common_word_shift (:'a) = w) then
                     (NONE,stack_fupd (K (LUPDATE v i (stack s))) s)
-                    else (SOME Error,stackSem_empty_env s)) | _139 ->
+                    else (SOME Error,stackSem_empty_env s)) | _137 ->
                     (SOME Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackGetSize r,s) =
          (if ~stackSem_state_use_stack s then (SOME Error,s) else
@@ -1006,7 +1006,7 @@ let evaluate_def = cake_define_list
                Error,stackSem_empty_env s) else (NONE,set_var r
                (wordLang_Word (w << backend_common_word_shift (:'a)))
                            (stackSem_state_stack_space_fupd (K
-                             (w2n w)) s))) | _140 -> (SOME Error,s))`;
+                             (w2n w)) s))) | _138 -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_BitmapLoad r v,s) =
          (if ~stackSem_state_use_stack s \/ r = v then (SOME
            Error,s) else
@@ -1014,7 +1014,7 @@ let evaluate_def = cake_define_list
              (if LENGTH (stackSem_state_bitmaps s) <= w2n w
                then (SOME Error,s) else (NONE,set_var r
                (wordLang_Word (EL (w2n w) (stackSem_state_bitmaps
-               s))) s)) | _141 -> (SOME Error,s))`];;
+               s))) s)) | _139 -> (SOME Error,s))`];;
 hol4_overload "evaluate" "stackSem_evaluate";;
 
 (* We prove that the clock never increases. *)
@@ -1035,8 +1035,8 @@ let semantics_def = cake_define
          evaluate (prog,state_clock_fupd (K k) s) = (SOME r,t) /\
          (match r with FinalFFI e -> outcome = ffi_FFI_outcome e |
            Halt w -> outcome = (if w = wordLang_Word (n2w 0) then
-           ffi_Success else ffi_Resource_limit_hit) | Result _142 ->
-           outcome = ffi_Success | _143 -> F) /\
+           ffi_Success else ffi_Resource_limit_hit) | Result _140 ->
+           outcome = ffi_Success | _141 -> F) /\
          res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
            t))) with SOME res -> res | NONE ->
        ffi_Diverge
