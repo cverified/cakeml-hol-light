@@ -19,10 +19,14 @@ UNI = {
   '‖': '||', '↦': '|->', '⊎': 'BAG_UNION',
 }
 
+# HOL4 prints the type variable 'a as α, 'b as β and so on, so
+# the port maps them back (a source writes both, and they are the
+# same variable: data_to_word's compile has stubs (:α) and
+# (asm_conf:'a asm_config))
 GREEK = dict(zip('αβγδεζηθ'
                  'ικμνξοπρ'
                  'στυφχψω',
-                 ["'g" + c for c in 'abcdefghijklmnopqrstuvw']))
+                 ["'" + c for c in 'abcdefghijklmnopqrstuvw']))
 
 # the Greek letters that a CakeML source uses for a term variable
 # and not for a type variable; HOL Light needs an ASCII name
