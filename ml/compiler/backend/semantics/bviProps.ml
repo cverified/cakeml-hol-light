@@ -47,36 +47,28 @@ let inc_clock_def = cake_define
   (?_clock s + n)) s`;;
 hol4_overload "inc_clock" "bviProps_inc_clock";;
 
-(* TERMINATION: wf_rel_tac`measure exp_size`
-  \\ simp[bviTheory.exp_size_def]
-  \\ rpt conj_tac \\ rpt gen_tac
-  \\ Induct_on`es`
-  \\ rw[bviTheory.exp_size_def]
-  \\ simp[] \\ res_tac \\ simp[] *)
-let get_code_labels_def = cake_define
-  `(bviProps_get_code_labels (Var _1) = {}) /\
-   (bviProps_get_code_labels (If e1 e2 e3) = bviProps_get_code_labels
-     e1 UNION bviProps_get_code_labels e2 UNION bviProps_get_code_labels
-     e3) /\
-   (bviProps_get_code_labels (Let es e) = BIGUNION (set_of_list (MAP
-     bviProps_get_code_labels es)) UNION bviProps_get_code_labels e) /\
-   (bviProps_get_code_labels (Raise e) = bviProps_get_code_labels e)
-     /\
-   (bviProps_get_code_labels (Tick e) = bviProps_get_code_labels e)
-     /\
-   (bviProps_get_code_labels (Force loc v) = {loc}) /\
-   (bviProps_get_code_labels (Call _2 d es h) =
-     (match d with NONE -> {} | SOME n -> {n}) UNION
-     (match h with NONE -> {} | SOME e -> bviProps_get_code_labels e)
-       UNION
-     BIGUNION (set_of_list (MAP bviProps_get_code_labels es))) /\
-   (bviProps_get_code_labels (Op op es) = assign_get_code_label op
-     UNION BIGUNION (set_of_list (MAP bviProps_get_code_labels es))) /\
-   (bviProps_get_code_labels (Return es) = BIGUNION (set_of_list (MAP
-     bviProps_get_code_labels es))) /\
-   (bviProps_get_code_labels (LetCall _3 _4 d es y) =
-     {d} UNION bviProps_get_code_labels y UNION BIGUNION
-       (set_of_list (MAP bviProps_get_code_labels es)))`;;
+let get_code_labels_def = cake_define_list
+  [`bviProps_get_code_labels (Var _1) = {}`;
+   `bviProps_get_code_labels (If e1 e2 e3) = bviProps_get_code_labels
+  e1 UNION bviProps_get_code_labels e2 UNION bviProps_get_code_labels
+  e3`;
+   `bviProps_get_code_labels (Let es e) = BIGUNION (set_of_list (MAP
+  bviProps_get_code_labels es)) UNION bviProps_get_code_labels e`;
+   `bviProps_get_code_labels (Raise e) = bviProps_get_code_labels e`;
+   `bviProps_get_code_labels (Tick e) = bviProps_get_code_labels e`;
+   `bviProps_get_code_labels (Force loc v) = {loc}`;
+   `bviProps_get_code_labels (Call _2 d es h) =
+        (match d with NONE -> {} | SOME n -> {n}) UNION
+        (match h with NONE -> {} | SOME e ->
+          bviProps_get_code_labels e) UNION
+        BIGUNION (set_of_list (MAP bviProps_get_code_labels es))`;
+   `bviProps_get_code_labels (Op op es) = assign_get_code_label op
+  UNION BIGUNION (set_of_list (MAP bviProps_get_code_labels es))`;
+   `bviProps_get_code_labels (Return es) = BIGUNION (set_of_list (MAP
+  bviProps_get_code_labels es))`;
+   `bviProps_get_code_labels (LetCall _3 _4 d es y) =
+        {d} UNION bviProps_get_code_labels y UNION BIGUNION
+          (set_of_list (MAP bviProps_get_code_labels es))`];;
 hol4_overload "get_code_labels" "bviProps_get_code_labels";;
 
 let good_code_labels_def = cake_define

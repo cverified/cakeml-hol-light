@@ -565,15 +565,15 @@ let ssa_cc_trans_def = cake_define_list
           NONE -> (Break n,ssa,na) | SOME (tgt_ssa,names,exit_names)
             ->
             (let moves = ssa_reconcile ssa tgt_ssa exit_names in
-            (if moves = Skip then Break n else Seq moves (Break
-              n),ssa,na)))`;
+            ((if moves = Skip then Break n else Seq moves (Break
+              n)),ssa,na)))`;
    `ssa_cc_trans (Continue n) ssa na lt =
         (match oEL n lt with
           NONE -> (Continue n,ssa,na) | SOME
             (tgt_ssa,names,exit_names) ->
             (let moves = ssa_reconcile ssa tgt_ssa names in
-            (if moves = Skip then Continue n else Seq moves
-              (Continue n),ssa,na)))`];;
+            ((if moves = Skip then Continue n else Seq moves
+              (Continue n)),ssa,na)))`];;
 
 (*Recursively applying colours to a program*)
 

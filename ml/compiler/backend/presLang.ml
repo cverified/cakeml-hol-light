@@ -820,60 +820,56 @@ let bvl_fun_to_display_def = cake_define
 
 (* bvi to displayLang *)
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: *)
-let bvi_to_display_def = cake_define_wf
-  `MEASURE (\x.
-     match x with
-       INL (ns,h,x) -> exp_size x | INR (INL (ns,h,xs)) -> list_size
-         exp_size xs | INR (INR (ns,h,i,xs)) -> list_size exp_size xs)`
-  `(bvi_to_display ns h (Var n) =
-     Item NONE (implode "var") [display_num_as_varn (h - n - 1)]) /\
-   (bvi_to_display ns h (If x1 x2 x3) =
-     Item NONE (implode "if") [bvi_to_display ns h x1; bvi_to_display
-       ns h x2;
-         bvi_to_display ns h x3]) /\
-   (bvi_to_display ns h (bvi_Let xs x) =
-     separate_lines (implode "let")
-         (bvi_to_display_lets ns h (LENGTH xs - 1) xs ++
-             [bvi_to_display ns (h + LENGTH xs) x])) /\
-   (bvi_to_display ns h (Raise x) =
-     Item NONE (implode "raise") [bvi_to_display ns h x]) /\
-   (bvi_to_display ns h (Tick x) =
-     Item NONE (implode "tick") [bvi_to_display ns h x]) /\
-   (bvi_to_display ns h (Call ticks dest xs handler) =
-     Item NONE (implode "call")
-          ((String (attach_name ns dest) ::
-           (bvi_to_display_list ns h xs)) ++
-           (match handler with NONE -> [] | SOME e -> [Item NONE
-             (implode "handler") [display_num_as_varn h;
+let bvi_to_display_def = cake_define_list
+  [`bvi_to_display ns h (Var n) =
+        Item NONE (implode "var") [display_num_as_varn (h - n -
+          1)]`;
+   `bvi_to_display ns h (If x1 x2 x3) =
+        Item NONE (implode "if") [bvi_to_display ns h x1;
+          bvi_to_display ns h x2;
+            bvi_to_display ns h x3]`;
+   `bvi_to_display ns h (bvi_Let xs x) =
+        separate_lines (implode "let")
+            (bvi_to_display_lets ns h (LENGTH xs - 1) xs ++
+                [bvi_to_display ns (h + LENGTH xs) x])`;
+   `bvi_to_display ns h (Raise x) =
+        Item NONE (implode "raise") [bvi_to_display ns h x]`;
+   `bvi_to_display ns h (Tick x) =
+        Item NONE (implode "tick") [bvi_to_display ns h x]`;
+   `bvi_to_display ns h (Call ticks dest xs handler) =
+        Item NONE (implode "call")
+             ((String (attach_name ns dest) ::
+              (bvi_to_display_list ns h xs)) ++
+              (match handler with NONE -> [] | SOME e -> [Item NONE
+                (implode "handler") [display_num_as_varn h;
                               empty_item (implode "->");
-                              bvi_to_display ns (h + 1) e]]))) /\
-   (bvi_to_display ns h (Force loc n) =
-     Item NONE (implode "force")
-          [display_num_as_varn (h - n - 1); String (attach_name ns
-            (SOME loc))]) /\
-   (bvi_to_display ns h (Op op xs) =
-     Item NONE (implode "op") (clos_op_to_display ns op ::
-                              (bvi_to_display_list ns h xs))) /\
-   (bvi_to_display ns h (Return xs) =
-     Item NONE (implode "return") (bvi_to_display_list ns h xs)) /\
-   (bvi_to_display ns h (LetCall rets ticks dest xs y) =
-     separate_lines (implode "letcall")
-         [Item NONE (implode "call")
-            (String (attach_name ns (SOME dest)) ::
-              bvi_to_display_list ns h xs);
-          Tuple (REVERSE (GENLIST (\i. display_num_as_varn (h + i))
-            rets));
-          bvi_to_display ns (h + rets) y]) /\
-   (bvi_to_display_list ns h [] = []) /\
-   (bvi_to_display_list ns h (x :: xs) =
-     bvi_to_display ns h x :: bvi_to_display_list ns h xs) /\
-   (bvi_to_display_lets ns h i [] = []) /\
-   (bvi_to_display_lets ns h i (x :: xs) =
-     Tuple [display_num_as_varn (h + i); String (implode "<-");
-       bvi_to_display ns h x] :: bvi_to_display_lets ns h (i - 1) xs)`;;
+                              bvi_to_display ns (h + 1) e]]))`;
+   `bvi_to_display ns h (Force loc n) =
+        Item NONE (implode "force")
+             [display_num_as_varn (h - n - 1); String
+               (attach_name ns (SOME loc))]`;
+   `bvi_to_display ns h (Op op xs) =
+        Item NONE (implode "op") (clos_op_to_display ns op ::
+                              (bvi_to_display_list ns h xs))`;
+   `bvi_to_display ns h (Return xs) =
+        Item NONE (implode "return") (bvi_to_display_list ns h
+          xs)`;
+   `bvi_to_display ns h (LetCall rets ticks dest xs y) =
+        separate_lines (implode "letcall")
+            [Item NONE (implode "call")
+               (String (attach_name ns (SOME dest)) ::
+                 bvi_to_display_list ns h xs);
+             Tuple (REVERSE (GENLIST (\i. display_num_as_varn (h +
+               i)) rets));
+             bvi_to_display ns (h + rets) y]`;
+   `bvi_to_display_list ns h [] = []`;
+   `bvi_to_display_list ns h (x :: xs) =
+        bvi_to_display ns h x :: bvi_to_display_list ns h xs`;
+   `bvi_to_display_lets ns h i [] = []`;
+   `bvi_to_display_lets ns h i (x :: xs) =
+        Tuple [display_num_as_varn (h + i); String (implode
+          "<-"); bvi_to_display ns h x] :: bvi_to_display_lets ns h
+          (i - 1) xs`];;
 
 let bvi_fun_to_display_def = cake_define
   `bvi_fun_to_display names (n,argc,body) =

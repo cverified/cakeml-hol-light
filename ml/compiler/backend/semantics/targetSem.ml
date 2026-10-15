@@ -143,9 +143,9 @@ let evaluate_def = cake_define
                (Error,ms,ffi) else (Error,ms,ffi) else if
                  target_get_pc (machine_config_target mc) ms =
                  machine_config_halt_pc mc then
-         (if target_get_reg (machine_config_target mc) ms
+         ((if target_get_reg (machine_config_target mc) ms
            (machine_config_ptr_reg mc) = (n2w 0) then Halt Success else
-           Halt Resource_limit_hit,ms,ffi) else if target_get_pc
+           Halt Resource_limit_hit),ms,ffi) else if target_get_pc
            (machine_config_target mc) ms = machine_config_ccache_pc mc
            then
          let (ms1,new_oracle) =

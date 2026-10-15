@@ -542,9 +542,12 @@ class Parser:
       return Node('id', tok=t, name=t.text)
     if t.kind == 'key':
       if t.text == 'if':
+        # the branches of a conditional of HOL4 stop at a comma:
+        # (if b then x else y, z) is the pair of the conditional
+        # and z
         c = self.parse(0); self.expect('then')
-        a = self.parse(0); self.expect('else')
-        b = self.parse(0)
+        a = self.parse(51); self.expect('else')
+        b = self.parse(51)
         return Node('cond', tok=t, c=c, a=a, b=b)
       if t.text == 'let':
         binds = []

@@ -475,10 +475,10 @@ let compile_exp_sing_def = cake_define_list
            (Tick c1,aux1))`;
    `compile_exp_sing max_app (Op t op xs) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
-         (if op = Install then Call 0 NONE [Op Install c1] else if
-           op = ThunkOp ForceThunk then Let c1 (Force (num_stubs max_app
-           - 2) 0) else
-         Op (compile_op op) c1,aux1))`;
+         (
+         (if op = Install then Call 0 NONE [Op Install c1] else
+           if op = ThunkOp ForceThunk then Let c1 (Force (num_stubs
+           max_app - 2) 0) else Op (compile_op op) c1),aux1))`;
    `compile_exp_sing max_app (App t loc_opt x1 xs2) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_list max_app xs2 aux1 in

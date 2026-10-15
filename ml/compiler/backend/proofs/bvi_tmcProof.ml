@@ -69,25 +69,21 @@ hol4_overload "env_rel" "bvi_tmcProof_env_rel";;
 let no_mutcons_op_def = cake_define
   `no_mutcons_op op <=> (!tag i. ~(op = MemOp (MutCons tag i)))`;;
 
-let _ = size_thms "exp";;
-(* HOL4 termination: *)
-let no_mutcons_def = cake_define_wf
-  `MEASURE exp_size`
-  `(no_mutcons (Var n) <=> T) /\
-   (no_mutcons (If x1 x2 x3) <=> no_mutcons x1 /\ no_mutcons x2 /\
-     no_mutcons x3) /\
-   (no_mutcons (Let xs x) <=> EVERY no_mutcons xs /\ no_mutcons x) /\
-   (no_mutcons (Raise x) <=> no_mutcons x) /\
-   (no_mutcons (Tick x) <=> no_mutcons x) /\
-   (no_mutcons (Call ticks dest xs handler) <=>
-      EVERY no_mutcons xs /\ (match handler with NONE -> T | SOME x
-        -> no_mutcons x)) /\
-   (no_mutcons (Force loc n) <=> T) /\
-   (no_mutcons (LetCall rets ticks dest xs y) <=> EVERY no_mutcons xs
-     /\ no_mutcons y) /\
-   (no_mutcons (Return xs) <=> EVERY no_mutcons xs) /\
-   (no_mutcons (Op op xs) <=> no_mutcons_op op /\ EVERY no_mutcons
-     xs)`;;
+let no_mutcons_def = cake_define_list
+  [`no_mutcons (Var n) <=> T`;
+   `no_mutcons (If x1 x2 x3) <=> no_mutcons x1 /\ no_mutcons x2 /\
+  no_mutcons x3`;
+   `no_mutcons (Let xs x) <=> EVERY no_mutcons xs /\ no_mutcons x`;
+   `no_mutcons (Raise x) <=> no_mutcons x`;
+   `no_mutcons (Tick x) <=> no_mutcons x`;
+   `no_mutcons (Call ticks dest xs handler) <=>
+         EVERY no_mutcons xs /\ (match handler with NONE -> T |
+           SOME x -> no_mutcons x)`;
+   `no_mutcons (Force loc n) <=> T`;
+   `no_mutcons (LetCall rets ticks dest xs y) <=> EVERY no_mutcons xs
+  /\ no_mutcons y`;
+   `no_mutcons (Return xs) <=> EVERY no_mutcons xs`;
+   `no_mutcons (Op op xs) <=> no_mutcons_op op /\ EVERY no_mutcons xs`];;
 
 let code_rel_def = cake_define
   `bvi_tmcProof_code_rel c1 c2 <=>

@@ -225,97 +225,100 @@ hol4_overload "fix_clock" "bviSem_fix_clock";;
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of bvi_exp expressions. *)
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: >> rpt strip_tac >> simp[dec_clock_def] >>
-   imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
-let evaluate_def = cake_define_wf
-  `(inv_image (MEASURE I LEX MEASURE (list_size exp_size))
-                             (\(xs,env,s). (?_clock s,xs)))`
-  `(bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
-  list,exn_or_ret)semanticPrimitives_result),s)) /\
-   (bviSem_evaluate (x :: y :: xs,env,s) =
-      (match fix_clock s (bviSem_evaluate ([x],env,s)) with (Rval
-        v1,s1) ->
-          (match bviSem_evaluate (y :: xs,env,s1) with (Rval vs,s2)
-            -> (Rval (HD v1 :: vs),s2) | res -> res) | res -> res)) /\
-   (bviSem_evaluate ([Var n],env,s) =
-      (if n < LENGTH env then (Rval [EL n env],s) else (Rerr (Rabort
-        Rtype_error),s))) /\
-   (bviSem_evaluate ([If x1 x2 x3],env,s) =
-      (match fix_clock s (bviSem_evaluate ([x1],env,s)) with (Rval
-        vs,s1) ->
-           (if Boolv T = HD vs then bviSem_evaluate ([x2],env,s1)
-             else
-           if Boolv F = HD vs then bviSem_evaluate ([x3],env,s1) else
-             (Rerr (Rabort Rtype_error),s1)) | res -> res)) /\
-   (bviSem_evaluate ([Let xs x2],env,s) =
-      (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
-        vs,s1) -> bviSem_evaluate ([x2],vs ++ env,s1) | res -> res)) /\
-   (bviSem_evaluate ([Raise x1],env,s) =
-      (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) -> (Rerr
-        (Rraise (Exn (HD vs))),s) | res -> res)) /\
-   (bviSem_evaluate ([Return xs],env,s) =
-      (match bviSem_evaluate (xs,env,s) with (Rval vs,s) -> (Rerr
-        (Rraise (Ret vs)),s) | res -> res)) /\
-   (bviSem_evaluate ([Op op xs],env,s) =
-      (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
-        vs,s) ->
-          (match do_app op (REVERSE vs) s with Rerr e -> (Rerr e,s) |
-            Rval (v,s) -> (Rval [v],s)) | res -> res)) /\
-   (bviSem_evaluate ([Tick x],env,s) =
-      (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s) else
-        bviSem_evaluate ([x],env,dec_clock 1 s))) /\
-   (bviSem_evaluate ([Force force_loc n],env,s) =
-      (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s) else
-        let thunk_v = EL n env in
-          match dest_thunk thunk_v (?_refs s) with BadRef -> (Rerr
-            (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
-            Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
-            IsThunk NotEvaluated f ->
-              (match find_code (SOME force_loc) [thunk_v; f] (?_code
-                s) with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
-                (args,exp) ->
-                   (if ?_clock s = 0 then
-                     (Rerr (Rabort Rtimeout_error),?_clock_fupd (K 0)
-                       s) else
-                     (match bviSem_evaluate ([exp],args,dec_clock 1
-                       s) with (Rerr (Rraise (Ret _24)),s1) -> (Rerr
-                       (Rabort Rtype_error),s1) | res -> res))))) /\
-   (bviSem_evaluate ([Call ticks dest xs handler],env,s1) =
-      (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
-        Rtype_error),s1) else
-      match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with (Rval
-        vs,s) ->
-          (match find_code dest vs (?_code s) with NONE -> (Rerr
-            (Rabort Rtype_error),s) | SOME (args,exp) ->
-               (if (?_clock s < ticks + 1) then (Rerr (Rabort
-                 Rtimeout_error),?_clock_fupd (K 0) s) else
-                 match fix_clock (dec_clock (ticks + 1) s)
-                   (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
-                   s)) with (Rerr (Rraise (Exn v)),s) ->
-                      (match handler with SOME x ->
-                           (match bviSem_evaluate ([x],v :: env,s)
-                             with (Rerr (Rraise (Ret _25)),s1) -> (Rerr
-                             (Rabort Rtype_error),s1) | res -> res) |
-                             NONE -> (Rerr (Rraise (Exn v)),s)) | (Rerr
-                             (Rraise _26),s) -> (Rerr (Rabort
-                             Rtype_error),s) | res -> res)) | res ->
-                             res)) /\
-   (bviSem_evaluate ([LetCall rets ticks dest xs y],env,s1) =
-      (match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with (Rval
-        vs,s) ->
-          (match find_code (SOME dest) vs (?_code s) with NONE ->
-            (Rerr (Rabort Rtype_error),s) | SOME (args,exp) ->
-               (if (?_clock s < ticks + 1) then (Rerr (Rabort
-                 Rtimeout_error),?_clock_fupd (K 0) s) else
-                 match fix_clock (dec_clock (ticks + 1) s)
-                   (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
-                   s)) with (Rval _27,s) -> (Rerr (Rabort
-                   Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s) ->
-                     (if LENGTH ret_vs = rets then bviSem_evaluate
-                       ([y],ret_vs ++ env,s) else (Rerr (Rabort
-                       Rtype_error),s)) | res -> res)) | res -> res))`;;
+let evaluate_def = cake_define_list
+  [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
+  list,exn_or_ret)semanticPrimitives_result),s)`;
+   `bviSem_evaluate (x :: y :: xs,env,s) =
+         (match fix_clock s (bviSem_evaluate ([x],env,s)) with (Rval
+           v1,s1) ->
+             (match bviSem_evaluate (y :: xs,env,s1) with (Rval
+               vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
+               -> res)`;
+   `bviSem_evaluate ([Var n],env,s) =
+         (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
+           (Rabort Rtype_error),s))`;
+   `bviSem_evaluate ([If x1 x2 x3],env,s) =
+         (match fix_clock s (bviSem_evaluate ([x1],env,s)) with
+           (Rval vs,s1) ->
+              (if Boolv T = HD vs then bviSem_evaluate ([x2],env,s1)
+                else
+              if Boolv F = HD vs then bviSem_evaluate ([x3],env,s1)
+                else
+                (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
+   `bviSem_evaluate ([Let xs x2],env,s) =
+         (match fix_clock s (bviSem_evaluate (xs,env,s)) with
+           (Rval vs,s1) -> bviSem_evaluate ([x2],vs ++ env,s1) | res
+           -> res)`;
+   `bviSem_evaluate ([Raise x1],env,s) =
+         (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
+           (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
+   `bviSem_evaluate ([Return xs],env,s) =
+         (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
+           (Rerr (Rraise (Ret vs)),s) | res -> res)`;
+   `bviSem_evaluate ([Op op xs],env,s) =
+         (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
+           vs,s) ->
+             (match do_app op (REVERSE vs) s with Rerr e -> (Rerr
+               e,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)`;
+   `bviSem_evaluate ([Tick x],env,s) =
+         (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
+           else
+           bviSem_evaluate ([x],env,dec_clock 1 s))`;
+   `bviSem_evaluate ([Force force_loc n],env,s) =
+         (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
+           else
+           let thunk_v = EL n env in
+             match dest_thunk thunk_v (?_refs s) with BadRef ->
+               (Rerr (Rabort Rtype_error),s) | NotThunk -> (Rerr (Rabort
+               Rtype_error),s) | IsThunk Evaluated v -> (Rval [v],s) |
+               IsThunk NotEvaluated f ->
+                 (match find_code (SOME force_loc) [thunk_v; f]
+                   (?_code s) with NONE -> (Rerr (Rabort Rtype_error),s)
+                   | SOME (args,exp) ->
+                      (if ?_clock s = 0 then
+                        (Rerr (Rabort Rtimeout_error),?_clock_fupd
+                          (K 0) s) else
+                        (match bviSem_evaluate
+                          ([exp],args,dec_clock 1 s) with (Rerr
+                          (Rraise (Ret _24)),s1) -> (Rerr (Rabort
+                          Rtype_error),s1) | res -> res))))`;
+   `bviSem_evaluate ([Call ticks dest xs handler],env,s1) =
+         (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
+           Rtype_error),s1) else
+         match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with (Rval
+           vs,s) ->
+             (match find_code dest vs (?_code s) with NONE -> (Rerr
+               (Rabort Rtype_error),s) | SOME (args,exp) ->
+                  (if (?_clock s < ticks + 1) then (Rerr (Rabort
+                    Rtimeout_error),?_clock_fupd (K 0) s) else
+                    match fix_clock (dec_clock (ticks + 1) s)
+                      (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
+                      s)) with (Rerr (Rraise (Exn v)),s) ->
+                         (match handler with SOME x ->
+                              (match bviSem_evaluate ([x],v ::
+                                env,s) with (Rerr (Rraise (Ret
+                                _25)),s1) -> (Rerr (Rabort
+                                Rtype_error),s1) | res -> res) | NONE
+                                -> (Rerr (Rraise (Exn v)),s)) | (Rerr
+                                (Rraise _26),s) -> (Rerr (Rabort
+                                Rtype_error),s) | res -> res)) | res
+                                -> res)`;
+   `bviSem_evaluate ([LetCall rets ticks dest xs y],env,s1) =
+         (match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with
+           (Rval vs,s) ->
+             (match find_code (SOME dest) vs (?_code s) with NONE ->
+               (Rerr (Rabort Rtype_error),s) | SOME (args,exp) ->
+                  (if (?_clock s < ticks + 1) then (Rerr (Rabort
+                    Rtimeout_error),?_clock_fupd (K 0) s) else
+                    match fix_clock (dec_clock (ticks + 1) s)
+                      (bviSem_evaluate ([exp],args,dec_clock (ticks + 1)
+                      s)) with (Rval _27,s) -> (Rerr (Rabort
+                      Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s)
+                      ->
+                        (if LENGTH ret_vs = rets then
+                          bviSem_evaluate ([y],ret_vs ++ env,s) else
+                          (Rerr (Rabort Rtype_error),s)) | res ->
+                          res)) | res -> res)`];;
 hol4_overload "evaluate" "bviSem_evaluate";;
 
 (* HOL4 ML code, not ported:

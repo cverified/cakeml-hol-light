@@ -25,7 +25,7 @@ let fix_clock_def = cake_define
        semanticPrimitives_state_clock s' <=
        semanticPrimitives_state_clock s then
        semanticPrimitives_state_clock s' else
-       semanticPrimitives_state_clock s,res)) s')`;;
+       semanticPrimitives_state_clock s)) s',res)`;;
 hol4_overload "fix_clock" "evaluate_fix_clock";;
 
 let dec_clock_def = cake_define

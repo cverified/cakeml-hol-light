@@ -133,8 +133,8 @@ let size_of_def = cake_define_list
           (n1 + n2,refs2,seen2))`;
    `size_of lims [Word64 _1] refs seen = (3,refs,seen)`;
    `size_of lims [Number i] refs seen =
-        (if small_num (limits_arch_64_bit lims) i then 0 else
-          bignum_size (limits_arch_64_bit lims) i,refs,seen)`;
+        ((if small_num (limits_arch_64_bit lims) i then 0 else
+          bignum_size (limits_arch_64_bit lims) i),refs,seen)`;
    `size_of lims [CodePtr _2] refs seen = (0,refs,seen)`;
    `size_of lims [RefPtr _3 r] refs seen =
          (match sptree_lookup r refs with NONE -> (0,refs,seen) |
@@ -1458,140 +1458,142 @@ let set_vars_def = cake_define
   `set_vars ns vs s = (dataSem_state_locals_fupd (K (union (fromAList
   (ZIP (ns,vs))) (dataSem_state_locals s))) s)`;;
 
-let _ = size_thms "prog";;
-(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
-   imp_res_tac fix_clock_IMP \\ imp_res_tac (GSYM fix_clock_IMP) \\
-   FULL_SIMP_TAC (srw_ss()) [set_var_def,push_env_clock,
-   call_env_def,LET_THM] \\ fs [dec_clock_def] *)
-let evaluate_def = cake_define_wf
-  `(inv_image (MEASURE I LEX MEASURE prog_size)
-                            (\(xs,s). (?_clock s,xs)))`
-  `(dataSem_evaluate (Skip,s) = (NONE,s)) /\
-   (dataSem_evaluate (Move dest src,s) =
-      (match get_var src (dataSem_state_locals s) with NONE -> (SOME
-        (Rerr (Rabort Rtype_error)),s) | SOME v -> (NONE,set_var dest v
-        s))) /\
-   (dataSem_evaluate (Assign dest op args names_opt,s) =
-      (if op_requires_names op = IS_NONE names_opt then
-        (SOME (Rerr (Rabort Rtype_error)),s) else
-        match get_vars args (dataSem_state_locals s) with NONE ->
-          (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
-            (match cut_state_opt names_opt s with NONE -> (SOME (Rerr
-              (Rabort Rtype_error)),s) | SOME s ->
-                (match do_app op xs s with Rerr e -> (SOME (Rerr
-                  e),flush_state T (install_sfs op s)) | Rval (v,s) ->
-                    (NONE,set_var dest v (install_sfs op s)))))) /\
-   (dataSem_evaluate (Tick,s) =
-      (if ?_clock s = 0 then (SOME (Rerr (Rabort
-        Rtimeout_error)),flush_state T s) else (NONE,dec_clock s))) /\
-   (dataSem_evaluate (MakeSpace k names,s) =
-      (match cut_env names (dataSem_state_locals s) with NONE ->
-        (SOME (Rerr (Rabort Rtype_error)),s) | SOME env ->
-        (NONE,add_space (dataSem_state_locals_fupd (K env) s) k))) /\
-   (dataSem_evaluate (Raise n,s) =
-      (match get_var n (dataSem_state_locals s) with NONE -> (SOME
-        (Rerr (Rabort Rtype_error)),s) | SOME x ->
-        (match jump_exc s with NONE -> (SOME (Rerr (Rabort
-          Rtype_error)),s) | SOME s -> (SOME (Rerr (Rraise x)),s)))) /\
-   (dataSem_evaluate (Return ns,s) =
-      (match get_vars ns (dataSem_state_locals s) with NONE -> (SOME
-        (Rerr (Rabort Rtype_error)),s) | SOME xs -> (SOME (Rval
-        xs),flush_state F s))) /\
-   (dataSem_evaluate (Seq c1 c2,s) =
-      (let (res,s1) = fix_clock s (dataSem_evaluate (c1,s)) in
-        if res = NONE then dataSem_evaluate (c2,s1) else (res,s1)))
-          /\
-   (dataSem_evaluate (If n c1 c2,s) =
-      (match get_var n (dataSem_state_locals s) with NONE -> (SOME
-        (Rerr (Rabort Rtype_error)),s) | SOME x -> (if isBool T x then
-        dataSem_evaluate (c1,s) else
-                  if isBool F x then dataSem_evaluate (c2,s) else
-                    (SOME (Rerr (Rabort Rtype_error)),s)))) /\
-   (dataSem_evaluate (Force ret loc src,s) =
-      (match get_var src (dataSem_state_locals s) with NONE -> (SOME
-        (Rerr (Rabort Rtype_error)),s) | SOME thunk_v ->
-        (match dest_thunk thunk_v (?_refs s) with BadRef -> (SOME
-          (Rerr (Rabort Rtype_error)),s) | NotThunk -> (SOME (Rerr
-          (Rabort Rtype_error)),s) | IsThunk Evaluated v ->
-           (match ret with NONE -> (SOME (Rval [v]),flush_state F s)
-             | SOME (dest,names) ->
-              (match cut_env names (dataSem_state_locals s) with NONE
-                -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME env ->
-                (NONE,set_var dest v (dataSem_state_locals_fupd (K env)
-                s)))) | IsThunk NotEvaluated f ->
-            (match find_code (SOME loc) [thunk_v; f] (?_code s)
-              (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
-              (Rerr (Rabort Rtype_error)),s) | SOME (args1,prog,ss) ->
-               (match ret with NONE ->
-                   (if ?_clock s = 0 then
-                      (SOME (Rerr (Rabort
-                        Rtimeout_error)),dataSem_state_locals_fupd (K
-                        LN) (?_stack_fupd (K [])
-                            s)) else
-                      (match dataSem_evaluate (prog,call_env args1 ss
-                        (dec_clock s)) with (NONE,s) -> (SOME (Rerr
-                        (Rabort Rtype_error)),s) | (SOME res,s) -> (SOME
-                        res,s))) | SOME (dest,names) ->
-                  (match cut_env names (dataSem_state_locals s) with
-                    NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
-                    env ->
-                       (let s1 = call_env args1 ss (push_env env F
-                         (dec_clock s)) in
-                         if ?_clock s = 0 then
-                           (SOME (Rerr (Rabort
-                             Rtimeout_error)),dataSem_state_locals_fupd
-                             (K LN) (?_stack_fupd (K [])
-                            s1)) else
-                           (match fix_clock s1 (dataSem_evaluate
-                             (prog,s1)) with (SOME (Rval xs),s2) ->
+let evaluate_def = cake_define_list
+  [`dataSem_evaluate (Skip,s) = (NONE,s)`;
+   `dataSem_evaluate (Move dest src,s) =
+         (match get_var src (dataSem_state_locals s) with NONE ->
+           (SOME (Rerr (Rabort Rtype_error)),s) | SOME v ->
+           (NONE,set_var dest v s))`;
+   `dataSem_evaluate (Assign dest op args names_opt,s) =
+         (if op_requires_names op = IS_NONE names_opt then
+           (SOME (Rerr (Rabort Rtype_error)),s) else
+           match get_vars args (dataSem_state_locals s) with NONE ->
+             (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
+               (match cut_state_opt names_opt s with NONE -> (SOME
+                 (Rerr (Rabort Rtype_error)),s) | SOME s ->
+                   (match do_app op xs s with Rerr e -> (SOME (Rerr
+                     e),flush_state T (install_sfs op s)) | Rval (v,s)
+                     ->
+                       (NONE,set_var dest v (install_sfs op
+                         s)))))`;
+   `dataSem_evaluate (Tick,s) =
+         (if ?_clock s = 0 then (SOME (Rerr (Rabort
+           Rtimeout_error)),flush_state T s) else (NONE,dec_clock s))`;
+   `dataSem_evaluate (MakeSpace k names,s) =
+         (match cut_env names (dataSem_state_locals s) with NONE
+           -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME env ->
+           (NONE,add_space (dataSem_state_locals_fupd (K env) s) k))`;
+   `dataSem_evaluate (Raise n,s) =
+         (match get_var n (dataSem_state_locals s) with NONE ->
+           (SOME (Rerr (Rabort Rtype_error)),s) | SOME x ->
+           (match jump_exc s with NONE -> (SOME (Rerr (Rabort
+             Rtype_error)),s) | SOME s -> (SOME (Rerr (Rraise
+             x)),s)))`;
+   `dataSem_evaluate (Return ns,s) =
+         (match get_vars ns (dataSem_state_locals s) with NONE ->
+           (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs -> (SOME
+           (Rval xs),flush_state F s))`;
+   `dataSem_evaluate (Seq c1 c2,s) =
+         (let (res,s1) = fix_clock s (dataSem_evaluate (c1,s)) in
+           if res = NONE then dataSem_evaluate (c2,s1) else
+             (res,s1))`;
+   `dataSem_evaluate (If n c1 c2,s) =
+         (match get_var n (dataSem_state_locals s) with NONE ->
+           (SOME (Rerr (Rabort Rtype_error)),s) | SOME x -> (if isBool T
+           x then dataSem_evaluate (c1,s) else
+                     if isBool F x then dataSem_evaluate (c2,s) else
+                       (SOME (Rerr (Rabort Rtype_error)),s)))`;
+   `dataSem_evaluate (Force ret loc src,s) =
+         (match get_var src (dataSem_state_locals s) with NONE ->
+           (SOME (Rerr (Rabort Rtype_error)),s) | SOME thunk_v ->
+           (match dest_thunk thunk_v (?_refs s) with BadRef -> (SOME
+             (Rerr (Rabort Rtype_error)),s) | NotThunk -> (SOME (Rerr
+             (Rabort Rtype_error)),s) | IsThunk Evaluated v ->
+              (match ret with NONE -> (SOME (Rval [v]),flush_state F
+                s) | SOME (dest,names) ->
+                 (match cut_env names (dataSem_state_locals s) with
+                   NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
+                   env -> (NONE,set_var dest v
+                   (dataSem_state_locals_fupd (K env) s)))) | IsThunk
+                   NotEvaluated f ->
+               (match find_code (SOME loc) [thunk_v; f] (?_code s)
+                 (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
+                 (Rerr (Rabort Rtype_error)),s) | SOME (args1,prog,ss)
+                 ->
+                  (match ret with NONE ->
+                      (if ?_clock s = 0 then
+                         (SOME (Rerr (Rabort
+                           Rtimeout_error)),dataSem_state_locals_fupd (K
+                           LN) (?_stack_fupd (K [])
+                              s)) else
+                         (match dataSem_evaluate (prog,call_env
+                           args1 ss (dec_clock s)) with (NONE,s) ->
+                           (SOME (Rerr (Rabort Rtype_error)),s) | (SOME
+                           res,s) -> (SOME res,s))) | SOME (dest,names)
+                           ->
+                     (match cut_env names (dataSem_state_locals s)
+                       with NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
+                       | SOME env ->
+                          (let s1 = call_env args1 ss (push_env env
+                            F (dec_clock s)) in
+                            if ?_clock s = 0 then
+                              (SOME (Rerr (Rabort
+                                Rtimeout_error))
+                                ,dataSem_state_locals_fupd (K LN)
+                                (?_stack_fupd (K [])
+                              s1)) else
+                              (match fix_clock s1 (dataSem_evaluate
+                                (prog,s1)) with (SOME (Rval xs),s2) ->
                               (if LENGTH xs = 1 then
                               match pop_env s2 with NONE -> (SOME
                                 (Rerr (Rabort Rtype_error)),s2) | SOME
                                 s1 -> (NONE,set_var dest (HD xs) s1)
                                 else
-                              (SOME (Rerr (Rabort Rtype_error)),s2))
-                                | (NONE,s) -> (SOME (Rerr (Rabort
-                                Rtype_error)),s) | res -> res)))))))) /\
-   (dataSem_evaluate (Call ret dest args handler,s) =
-      (match get_vars args (dataSem_state_locals s) with NONE ->
-        (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
-        (match find_code dest xs (?_code s)
-          (dataSem_state_stack_frame_sizes s) with NONE -> (SOME (Rerr
-          (Rabort Rtype_error)),s) | SOME (args1,prog,ss) ->
-           (match ret with NONE ->
-              (if handler = NONE then
-                if ?_clock s = 0 then (SOME (Rerr (Rabort
-                  Rtimeout_error)),
-                      flush_state T s) else
-                  (match dataSem_evaluate (prog,call_env args1 ss
-                    (dec_clock s)) with (NONE,s) -> (SOME (Rerr (Rabort
-                    Rtype_error)),s) | (SOME res,s) -> (SOME res,s))
-                    else (SOME (Rerr (Rabort Rtype_error)),s)) | SOME
-                    (ns,names) ->
-              (if ~ALL_DISTINCT ns then (SOME (Rerr (Rabort
-                Rtype_error)),s) else
-              (match cut_env names (dataSem_state_locals s) with NONE
-                -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME env ->
-                 (let s1 = call_env args1 ss
-                         (push_env env (IS_SOME handler) (dec_clock
-                           s)) in if ?_clock s = 0 then (SOME (Rerr
-                           (Rabort
-                           Rtimeout_error)),dataSem_state_locals_fupd (K
-                           LN) (?_stack_fupd (K [])
-                         s1)) else (match fix_clock s1
-                           (dataSem_evaluate (prog,s1)) with (SOME (Rval
-                           xs),s2) ->
-                            (if LENGTH xs = LENGTH ns then
+                              (SOME (Rerr (Rabort
+                                Rtype_error)),s2)) | (NONE,s) ->
+                                (SOME (Rerr (Rabort Rtype_error)),s)
+                                | res -> res)))))))`;
+   `dataSem_evaluate (Call ret dest args handler,s) =
+         (match get_vars args (dataSem_state_locals s) with NONE ->
+           (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
+           (match find_code dest xs (?_code s)
+             (dataSem_state_stack_frame_sizes s) with NONE -> (SOME
+             (Rerr (Rabort Rtype_error)),s) | SOME (args1,prog,ss) ->
+              (match ret with NONE ->
+                 (if handler = NONE then
+                   if ?_clock s = 0 then (SOME (Rerr (Rabort
+                     Rtimeout_error)),
+                         flush_state T s) else
+                     (match dataSem_evaluate (prog,call_env args1 ss
+                       (dec_clock s)) with (NONE,s) -> (SOME (Rerr
+                       (Rabort Rtype_error)),s) | (SOME res,s) -> (SOME
+                       res,s)) else (SOME (Rerr (Rabort
+                       Rtype_error)),s)) | SOME (ns,names) ->
+                 (if ~ALL_DISTINCT ns then (SOME (Rerr (Rabort
+                   Rtype_error)),s) else
+                 (match cut_env names (dataSem_state_locals s) with
+                   NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
+                   env ->
+                    (let s1 = call_env args1 ss
+                            (push_env env (IS_SOME handler)
+                              (dec_clock s)) in if ?_clock s = 0 then
+                              (SOME (Rerr (Rabort
+                              Rtimeout_error)),dataSem_state_locals_fupd
+                              (K LN) (?_stack_fupd (K [])
+                            s1)) else (match fix_clock s1
+                              (dataSem_evaluate (prog,s1)) with (SOME
+                              (Rval xs),s2) ->
+                              (if LENGTH xs = LENGTH ns then
                               (match pop_env s2 with NONE -> (SOME
                                 (Rerr (Rabort Rtype_error)),s2) | SOME
                                 s1 -> (NONE,set_vars ns xs s1)) else
                               (SOME (Rerr (Rabort Rtype_error)),s2))
                                 | (SOME (Rerr (Rraise x)),s2) ->
-                            (match handler with NONE -> (SOME
-                              (Rerr (Rraise x)),s2) | SOME (n,h) ->
-                              dataSem_evaluate (h,set_var n x s2)) |
-                              (NONE,s) -> (SOME (Rerr (Rabort
-                              Rtype_error)),s) | res -> res))))))))`;;
+                              (match handler with NONE -> (SOME
+                                (Rerr (Rraise x)),s2) | SOME (n,h) ->
+                                dataSem_evaluate (h,set_var n x s2))
+                                | (NONE,s) -> (SOME (Rerr (Rabort
+                                Rtype_error)),s) | res -> res)))))))`];;
 hol4_overload "evaluate" "dataSem_evaluate";;
 
 (* HOL4 ML code, not ported:

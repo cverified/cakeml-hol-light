@@ -76,8 +76,8 @@ let list_id_def = cake_define
   `list_id = 1`;;
 
 let boolv_def = cake_define
-  `flatSem_Boolv b = Conv (SOME (if b then true_tag else
-  false_tag,SOME bool_id)) []`;;
+  `flatSem_Boolv b = Conv (SOME ((if b then true_tag else
+  false_tag),SOME bool_id)) []`;;
 hol4_overload "Boolv" "flatSem_Boolv";;
 
 let unitv_def = cake_define

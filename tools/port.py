@@ -531,6 +531,33 @@ class Porter:
     # the type of a variable in a pattern is the type of the
     # argument of the constructor it sits in; the clause form is
     # only needed where those types can differ
+    # the theories that can provide all the constructors of the
+    # patterns: with those, the type of the argument of a
+    # constructor is known even where the name is ambiguous
+    cons_in = []
+    def cons_of(p):
+      while p.kind in ('paren', 'typed'): p = p.e
+      if p.kind == 'app':
+        h, args = hterm.strip_app(p)
+        if h.kind == 'id': cons_in.append(h.name)
+        for a in args: cons_of(a)
+      elif p.kind == 'list':
+        for a in p.items: cons_of(a)
+      elif p.kind == 'infix':
+        cons_of(p.l); cons_of(p.r)
+    for _, args, _ in cls:
+      for a in args: cons_of(a)
+    thys = None
+    for nm in cons_in:
+      ts = {t for t, k in self.db.defs.get(nm, []) if k == 'con'}
+      if not ts: continue
+      thys = ts if thys is None else thys & ts
+    def argty(nm, j):
+      if thys:
+        out = {self.db.con_argty_thy[(t, nm, j)] for t in thys
+               if (t, nm, j) in self.db.con_argty_thy}
+        if out: return out
+      return self.db.con_argty.get((nm, j))
     where = {}
     def walk(p, tys):
       while p.kind in ('paren', 'typed'): p = p.e
@@ -545,9 +572,7 @@ class Porter:
         h, args = hterm.strip_app(p)
         nm = h.name if h.kind == 'id' else '?'
         for j, a in enumerate(args):
-          # the types that the constructors of that name give the
-          # argument (the theory is not known here, so all of them)
-          walk(a, self.db.con_argty.get((nm, j)))
+          walk(a, argty(nm, j))
         return
       if p.kind == 'list':
         for a in p.items: walk(a, None)
