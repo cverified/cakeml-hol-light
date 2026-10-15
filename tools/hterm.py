@@ -492,8 +492,17 @@ class Parser:
       if self.at(','):
         self.next(); comma = True; continue
       t = self.peek()
+      res = None
       if t.text == '(':
         v = self.parse_atom()
+        # the restriction of a binder may be inside the
+        # parentheses, with a pattern in front of it
+        # (typeSystem's !((p,e) :: LIST_TO_SET pes). P)
+        w = v
+        while w.kind == 'paren': w = w.e
+        if w.kind == 'infix' and w.op == '::':
+          res = w.r
+          v = Node('paren', tok=v.tok, e=w.l)
       elif t.kind == 'id' or t.text == '_':
         self.next()
         v = Node('id', tok=t, name=t.text)
@@ -506,6 +515,7 @@ class Parser:
       if comma and groups: groups[-1].append(v)
       else: groups.append([v])
       comma = False
+      if res is not None: groups[-1][-1].res = res
       if self.at('::'):
         self.next()
         groups[-1][-1].res = self.parse(0)

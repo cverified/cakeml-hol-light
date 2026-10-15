@@ -366,6 +366,15 @@ CON_OF = {
   ('word_cse', 'seqs_def'): {'*': 'wordLang'},
   # the Shift and the Div that this canonicalises are asm's
   ('word_cse', 'canonicalArith_def'): {'*': 'asm'},
+  # the garbage collector that this picks is stackLang code, and
+  # nothing else in the definition says so
+  ('stack_alloc', 'word_gc_partial_or_full_def'):
+    {'Get': 'stackLang', 'Set': 'stackLang', 'If': 'stackLang',
+     'Inst': 'stackLang'},
+  # the comparison that this negates is asm's cmp, which the
+  # clauses that give one back do not say (Less and Equal are
+  # comparison's ordering as well)
+  ('stack_to_lab', 'negate_def'): {'*': 'asm'},
 }
 
 # NB: the key of an override is (theory, name of the OCaml
