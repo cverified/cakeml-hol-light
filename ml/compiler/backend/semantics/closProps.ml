@@ -451,17 +451,18 @@ let is_closure_def = cake_define
         | _80 -> F`;;
 
 let clo_to_loc_def = cake_define
-  `(clo_to_loc (Closure l _81 _82 _83 _84) = l) /\
+  `(clo_to_loc (Closure l _81 _82 _83 _84:closSem_v) = l) /\
    (clo_to_loc (Recclosure l _85 _86 _87 i) = OPTION_MAP ((+) (2 *
      i)) l)`;;
 
 let clo_to_env_def = cake_define
-  `(clo_to_env (Closure _88 _89 env _90 _91) = env) /\
+  `(clo_to_env (Closure _88 _89 env _90 _91:closSem_v) = env) /\
    (clo_to_env (Recclosure loc _92 env fns _93) =
     GENLIST (Recclosure loc [] env fns) (LENGTH fns) ++ env)`;;
 
 let clo_to_partial_args_def = cake_define
-  `(clo_to_partial_args (Closure _94 args _95 _96 _97) = args) /\
+  `(clo_to_partial_args (Closure _94 args _95 _96 _97:closSem_v) = args)
+  /\
    (clo_to_partial_args (Recclosure _98 args _99 _100 _101) =
      args)`;;
 
@@ -472,12 +473,13 @@ let clo_add_partial_args_def = cake_define_list
        Recclosure x1 (args ++ args') x2 x3 x4`];;
 
 let clo_to_num_params_def = cake_define
-  `(clo_to_num_params (Closure _102 _103 _104 n _105) = n) /\
+  `(clo_to_num_params (Closure _102 _103 _104 n _105:closSem_v) = n) /\
    (clo_to_num_params (Recclosure _106 _107 _108 fns i) = FST (EL
      i fns))`;;
 
 let rec_clo_ok_def = cake_define
-  `(rec_clo_ok (Recclosure _109 _110 _111 fns i) <=> i < LENGTH fns) /\
+  `(rec_clo_ok (Recclosure _109 _110 _111 fns i:closSem_v) <=> i <
+  LENGTH fns) /\
    (rec_clo_ok (Closure _112 _113 _114 _115 _116) <=> T)`;;
 
 let clo_can_apply_def = cake_define
@@ -558,7 +560,7 @@ let _ = size_thms "sum";;
    [list_size_pair_size_MAP_FST_SND] *)
 let set_globals_def = cake_define_wf
   `MEASURE (sum_size exp_size (list_size exp_size))`
-  `(closProps_set_globals (Var _118 _119) = EMPTY_BAG) /\
+  `(closProps_set_globals (Var _118 _119:flatLang_exp) = EMPTY_BAG) /\
    (closProps_set_globals (If _120 e1 e2 e3) = BAG_UNION (BAG_UNION
      (closProps_set_globals e1) (closProps_set_globals e2))
        (closProps_set_globals e3)) /\

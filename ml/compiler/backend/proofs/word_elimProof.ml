@@ -94,8 +94,8 @@ let find_loc_state_def = cake_define
        union (union loc sto) (union sta mem))`;;
 
 let code_rel_def = cake_define
-  `word_elimProof_code_rel (reachable:1 spt) s_code
-       (t_code:(num#'a wordLang_prog) spt) =
+  `word_elimProof_code_rel (reachable:1 spt) s_code (t_code:(num#'a
+  wordLang_prog) spt) =
        (!n. n IN domain reachable ==>
            lookup n s_code = lookup n t_code)`;;
 hol4_overload "code_rel" "word_elimProof_code_rel";;

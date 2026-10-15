@@ -47,7 +47,7 @@ let _ = size_thms "v";;
    o SPEC_ALL) \\ DECIDE_TAC *)
 let adjust_bv_def = cake_define_wf
   `MEASURE (v_size o SND)`
-  `(adjust_bv b (Number i) = Number i) /\
+  `(adjust_bv b (Number i:bvlSem_v) = Number i) /\
    (adjust_bv b (Word64 w) = Word64 w) /\
    (adjust_bv b (RefPtr l r) = RefPtr l (b r)) /\
    (adjust_bv b (CodePtr c) = CodePtr ((bvl_num_stubs) +

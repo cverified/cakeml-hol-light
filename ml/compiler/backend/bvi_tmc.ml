@@ -36,7 +36,7 @@ let _ = size_thms "list";;
 let pure_exp_def = cake_define_wf
   `MEASURE (\x. match x with INL (_33,e) -> exp_size e | INR (_34,es)
   -> list_size exp_size es)`
-  `(pure_exp n (Var v) = (v < n)) /\
+  `(pure_exp n (Var v:bvi_exp) = (v < n)) /\
    (pure_exp n (If e1 e2 e3) = F) /\
    (pure_exp n (Let es e) = (pure_exp n e /\ pure_exps n es)) /\
    (pure_exp n (Raise _20) = F) /\
@@ -117,7 +117,7 @@ let _ = size_thms "list";;
 let bvi_to_cb_aux_def = cake_define_wf
   `MEASURE (\x. match x with INL (_47,_48,_49,e) -> exp_size e | INR
   (_50,_51,_52,es) -> list_size exp_size es)`
-  `(bvi_to_cb_aux_sing n loc tag (Call t loc' args h) =
+  `(bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
     (match call_to_cb loc t loc' args h with SOME (bs,cb) -> SOME
       (bs,INR (CallBlock tag [] cb [])) | _38 -> NONE)) /\
    (bvi_to_cb_aux_sing n loc tag (Op op args) =

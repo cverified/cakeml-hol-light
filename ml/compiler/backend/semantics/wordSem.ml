@@ -309,7 +309,7 @@ let _ = size_thms "exp";;
 let word_exp_def = cake_define_wf
   `MEASURE (exp_size ARB o SND)`
   `(^ wordSem_word_exp (s (Const w)) = SOME (Word w)) /\
-   (wordSem_word_exp s (Var v) = get_var v s) /\
+   (wordSem_word_exp s (Var v:wordLang_exp) = get_var v s) /\
    (wordSem_word_exp s (Lookup name) = get_store name s) /\
    (wordSem_word_exp s (Load addr') =
       (match wordSem_word_exp s addr' with SOME (Word w) -> mem_load

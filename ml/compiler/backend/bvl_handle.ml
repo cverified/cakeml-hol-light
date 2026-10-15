@@ -18,7 +18,7 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
 let can_raise_def = cake_define
-  `(can_raise (Var v) = F) /\
+  `(can_raise (Var v:bvl_exp) = F) /\
    (can_raise (If x1 x2 x3) = (can_raise x1 \/ can_raise x2 \/
      can_raise x3)) /\
    (can_raise (Let xs x2) = (can_raise x2 \/ can_raise1 xs)) /\
@@ -58,7 +58,8 @@ let dest_handle_If_def = cake_define
       | _3 -> NONE`;;
 
 let handle_adj_vars_def = cake_define
-  `(handle_adj_vars l d (Var v) = Var (if v < l then v else v + d)) /\
+  `(handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v +
+  d)) /\
    (handle_adj_vars l d (If x1 x2 x3) =
       If (handle_adj_vars l d x1) (handle_adj_vars l d x2)
         (handle_adj_vars l d x3)) /\
@@ -82,7 +83,7 @@ let handle_adj_vars_def = cake_define
      handle_adj_vars1 l d xs)`;;
 
 let handle_size_def = cake_define
-  `(handle_size (Var v) = 1) /\
+  `(handle_size (Var v:bvl_exp) = 1) /\
    (handle_size (If x1 x2 x3) = 1 + handle_size x1 + handle_size x2 +
      handle_size x3) /\
    (handle_size (Let xs x2) = 1 + handle_size x2 + handle_size1 xs)
@@ -208,8 +209,8 @@ val compile_ind = theorem"compile_ind";
 *)
 
 let compile_sing_def = cake_define
-  `(bvl_handle_compile_sing l n (Var v) = (if v < n then (Var v,Var
-  v,1,T) else (Op (IntOp (Const (&0))) [],Empty,1,T))) /\
+  `(bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
+  v,Var v,1,T) else (Op (IntOp (Const (&0))) [],Empty,1,T))) /\
    (bvl_handle_compile_sing l n (If x1 x2 x3) =
       (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
       let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in

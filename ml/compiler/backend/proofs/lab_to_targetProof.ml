@@ -356,7 +356,7 @@ let no_install_or_no_share_mem_def = cake_define
    shift_interfer) and threaded through compile_correct separately. *)
 let oracle_tie_def = cake_define
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
-              (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
+  (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
      s1 = target_io_regs mc_conf (?_ffi s1) ms /\
        labSem_state_io_fp_regs
      s1 = target_io_fp_regs mc_conf (?_ffi s1) ms /\

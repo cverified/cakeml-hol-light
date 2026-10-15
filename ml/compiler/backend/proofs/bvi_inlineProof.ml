@@ -477,8 +477,8 @@ let remove_ticks_co_def = cake_define
 hol4_overload "remove_ticks_co" "bvi_inlineProof_remove_ticks_co";;
 
 let remove_state_rel_def = cake_define
-  `remove_state_rel (s:('c,'ffi)bviSem_state)
-       (t:('c,'ffi)bviSem_state) <=> ?_refs
+  `remove_state_rel (s:('c,'ffi)bviSem_state) (t:('c,'ffi)bviSem_state)
+  <=> ?_refs
      t = ?_refs s /\ ?_clock t = ?_clock s /\ bviSem_state_global t =
        bviSem_state_global s /\ ?_ffi t = ?_ffi s /\ ?_code
      t = map (I ## remove_ticks_exp) (?_code s) /\ ?_compile_oracle

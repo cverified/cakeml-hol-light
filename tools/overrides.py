@@ -137,6 +137,12 @@ MEASURE = {
     'MEASURE (\\(negate,R,n,l). n)',
 }
 
+# definitions whose patterns need the type of their constructor on
+# them: the name is one that several theories in scope have, and
+# the definition does not say which one it is anywhere else
+ANNOTATE = set([
+])
+
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {

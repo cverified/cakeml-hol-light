@@ -57,8 +57,8 @@ let decode_length_def = cake_define
   data_to_word_config_len_size conf)`;;
 
 let word_gc_move_def = cake_define
-  `(word_gc_move conf (Loc l1 l2,i,pa,old,m,dm) = (Loc l1 l2,i,pa,m,(l2
-  = 0))) /\
+  `(word_gc_move conf ((Loc l1 l2:word_loc),i,pa,old,m,dm) = (Loc l1
+  l2,i,pa,m,(l2 = 0))) /\
    (word_gc_move conf (Word w,i,pa,old,m,dm) =
       (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
         let c = (ptr_to_addr conf old w IN dm) in
@@ -78,8 +78,8 @@ let word_gc_move_def = cake_define
               (Word (update_addr conf i w),v,pa1,m1,c)))`;;
 
 let word_gen_gc_partial_move_def = cake_define
-  `(word_gen_gc_partial_move conf (Loc l1 l2,i,pa,old,m,dm,gs,rs) = (Loc
-  l1 l2,i,pa,m,(l2 = 0))) /\
+  `(word_gen_gc_partial_move conf ((Loc l1
+  l2:word_loc),i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))) /\
    (word_gen_gc_partial_move conf (Word w,i,pa,old,m,dm,gs,rs) =
     (if (w && (n2w 1)) = (n2w 0) then (Word w,i,pa,m,T) else
       let header_addr = ptr_to_addr conf old w in
@@ -227,8 +227,8 @@ let word_gen_gc_partial_move_ref_list_def = cake_define
 
 
 let word_gen_gc_partial_move_data_def = cake_define
-  `word_gen_gc_partial_move_data conf k
-    ((h2a:'a word),i,(pa:'a word),old,m,dm,gs,rs) =
+  `word_gen_gc_partial_move_data conf k ((h2a:'a word),i,(pa:'a
+  word),old,m,dm,gs,rs) =
      (if h2a = pa then (i,pa,m,T) else
      if k = 0 then (i,pa,m,F) else
        let c = (h2a IN dm) in
@@ -280,7 +280,7 @@ let is_ref_header_def = cake_define
   0b01000))`;;
 
 let word_gen_gc_move_def = cake_define
-  `(word_gen_gc_move conf (Loc l1 l2,i,pa,ib,pb,old,m,dm) =
+  `(word_gen_gc_move conf ((Loc l1 l2:word_loc),i,pa,ib,pb,old,m,dm) =
       (Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))) /\
    (word_gen_gc_move conf (Word w,i,pa,ib,pb,old,m,dm) =
       (if ((n2w 1) && w) = (n2w 0) then (Word w,i,pa,ib,pb,m,T) else
@@ -332,8 +332,8 @@ let word_gen_gc_move_list_def = cake_define
         (a2,i2,pa2,ib,pb,m2,(a IN dm /\ c1 /\ c2)))`;;
 
 let word_gen_gc_move_data_def = cake_define
-  `word_gen_gc_move_data conf k
-    ((h2a:'a word),i,(pa:'a word),ib,pb,old,m,dm) =
+  `word_gen_gc_move_data conf k ((h2a:'a word),i,(pa:'a
+  word),ib,pb,old,m,dm) =
      (if h2a = pa then (i,pa,ib,pb,m,T) else
      if k = 0 then (i,pa,ib,pb,m,F) else
        let c = (h2a IN dm) in
@@ -353,9 +353,8 @@ let word_gen_gc_move_data_def = cake_define
              (i,pa,ib,pb,m,(c /\ c1 /\ c2)))`;;
 
 let word_gen_gc_move_refs_def = cake_define
-  `word_gen_gc_move_refs conf k
-    ((r2a:'a word),(r1a:'a word),i,(pa:'a word),ib,pb,old,(m:'a
-      word->'a word_loc),dm) =
+  `word_gen_gc_move_refs conf k ((r2a:'a word),(r1a:'a word),i,(pa:'a
+  word),ib,pb,old,(m:'a word->'a word_loc),dm) =
      (if r2a = r1a then (r2a,i,pa,ib,pb,m,T) else
      if k = 0 then (r2a,i,pa,ib,pb,m,F) else
        let c = (r2a IN dm) in
@@ -370,8 +369,8 @@ let word_gen_gc_move_refs_def = cake_define
          (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2)))`;;
 
 let word_gen_gc_move_loop_def = cake_define
-  `word_gen_gc_move_loop conf k
-    ((pax:'a word),i,(pa:'a word),ib,pb,pbx,old,m,dm) =
+  `word_gen_gc_move_loop conf k ((pax:'a word),i,(pa:'a
+  word),ib,pb,pbx,old,m,dm) =
      (if pbx = pb then
        if pax = pa then
          (i,pa,ib,pb,m,T) else

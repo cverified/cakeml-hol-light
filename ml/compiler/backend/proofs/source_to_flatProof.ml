@@ -401,8 +401,8 @@ let src_orac_step_invs_def = cake_define
    and the two compile oracles agree also *)
 let orac_rel_inner_def = cake_define
   `orac_rel_inner dec s (s_compiler:(num#num)#flatSem_v#dec
-  list->(flatSem_v#word8 list#word64 list) option)
-         (g:dec list->dec list) c <=>
+  list->(flatSem_v#word8 list#word64 list) option) (g:dec list->dec
+  list) c <=>
      (!k env_id state_v decs. ?_oracle s k = (env_id,state_v,decs)
        ==>
          (let x = THE (dec state_v) in

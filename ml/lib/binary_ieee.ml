@@ -351,8 +351,8 @@ let float_div_def = cake_define
                              r2)))`;;
 
 let float_mul_add_def = cake_define
-  `float_mul_add mode
-      (x:('t,'w)float) (y:('t,'w)float) (z:('t,'w)float) =
+  `float_mul_add mode (x:('t,'w)float) (y:('t,'w)float) (z:('t,'w)float)
+  =
       (let signP = float_Sign x ?? float_Sign y in
       let infP = (float_is_infinite x \/ float_is_infinite y) in
          if float_is_nan x \/ float_is_nan y \/ float_is_nan z then

@@ -756,7 +756,7 @@ let bvl_to_display_def = cake_define_wf
      match x with
        INL (ns,h,x) -> exp_size x | INR (INL (ns,h,xs)) -> list_size
          exp_size xs | INR (INR (ns,h,i,xs)) -> list_size exp_size xs)`
-  `(bvl_to_display ns h (Var n) =
+  `(bvl_to_display ns h (Var n:flatLang_exp) =
      Item NONE (implode "var") [display_num_as_varn (h - n - 1)]) /\
    (bvl_to_display ns h (If x1 x2 x3) =
      Item NONE (implode "if") [bvl_to_display ns h x1; bvl_to_display

@@ -619,8 +619,8 @@ Finalise eval_simulation;
 let do_eval_oracle_def = cake_define
   `do_eval_oracle (f:(num#num)#semanticPrimitives_v#dec
   list->(semanticPrimitives_v#word8 list#word64 list) option) (g:dec
-  list->dec list) vs
-     (orac:num->(num#num)#semanticPrimitives_v#dec list) =
+  list->dec list) vs (orac:num->(num#num)#semanticPrimitives_v#dec list)
+  =
    (match vs with [env_id_v; st_v; decs_v; st_v2; bs_v; ws_v] ->
        (let (env_id,st,decs) = orac 0 in
        (match (f (env_id,st,decs),v_to_word8_list bs_v,

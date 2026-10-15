@@ -76,8 +76,7 @@ val _ = augment_srw_ss [rewrites [LIST_REL_def]];
 
 let gc_inv_def = cake_define
   `copying_gc_gc_inv (h1,h2,a,n,heap,c,limit)
-  (heap0:(('a,'b)heap_element) list)
-                              (roots0:('a heap_address) list) = (
+  (heap0:(('a,'b)heap_element) list) (roots0:('a heap_address) list) = (
      (a + n = limit) /\
      (a = heap_length (h1 ++ h2)) /\
      (n = heap_length (FILTER (\h. ~(isForwardPointer h)) heap)) /\ c

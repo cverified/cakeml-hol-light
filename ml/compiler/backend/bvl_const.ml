@@ -222,7 +222,7 @@ let compile_def = cake_define
 hol4_overload "compile" "bvl_const_compile";;
 
 let compile_sing_def = cake_define
-  `(bvl_const_compile_sing env (Var v) =
+  `(bvl_const_compile_sing env (Var v:bvl_exp) =
       (match (\l n. oEL n l) env v with NONE -> Var v | SOME NONE ->
         Var v | SOME (SOME (Var i)) -> Var (v + i) | SOME (SOME x) ->
         x)) /\

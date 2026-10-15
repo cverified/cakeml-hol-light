@@ -255,8 +255,8 @@ let stack_size_rel_def = cake_define
 
 let state_rel_def = cake_define
   `word_to_stackProof_state_rel ac k f f'
-  (s:('a,num#'c,'ffi)wordSem_state)
-     (t:('a,'c,'ffi)stackSem_state) lens extra <=>
+  (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state) lens
+  extra <=>
      (?_clock s = ?_clock t) /\ (?_gc_fun s = ?_gc_fun t) /\
        (wordSem_state_permute s = K I) /\
      (?_ffi t = ?_ffi s) /\ stackSem_state_use_stack t /\
@@ -661,7 +661,7 @@ let _ = size_thms "exp";;
    EVAL_TAC \\ simp[] \\ res_tac \\ simp[] *)
 let map_var_def = cake_define_wf
   `MEASURE (exp_size ARB o SND)`
-  `(map_var f (Var num') = Var (f num')) /\
+  `(map_var f (Var num':wordLang_exp) = Var (f num')) /\
    (map_var f (Load exp) = Load (map_var f exp)) /\
    (map_var f (Op wop ls) = Op wop (MAP (map_var f) ls)) /\
    (map_var f (Shift sh e1 e2) = Shift sh (map_var f e1) (map_var f

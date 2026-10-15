@@ -1519,7 +1519,7 @@ let get_spillcost_def = cake_define
   also give some weight to the spill cost of their endpoints
 *)
 let get_coalescecost_def = cake_define
-  `get_coalescecost spillcost (n,p,(x,y)) =
+  `get_coalescecost spillcost (n,p,x,y) =
    (let xcost = if lookup x spillcost = NONE then 0 else 1 in
    let ycost = if lookup y spillcost = NONE then 0 else 1 in
    (n * (10 * (p + 1) + xcost + ycost),(x,y)))`;;

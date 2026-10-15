@@ -27,7 +27,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 let code_rel_def = cake_define
   `bvi_to_dataProof_code_rel (bvi_code:(num#bvi_exp) spt)
-            (data_code:(num#dataLang_prog) spt) <=>
+  (data_code:(num#dataLang_prog) spt) <=>
      wf bvi_code /\ wf data_code /\
      (domain bvi_code = domain data_code) /\
      (!n exp arg_count.
@@ -53,7 +53,7 @@ hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
 \\ Q.EXISTS_TAC `v_size a + 1`
 \\ rw [] *)
 let data_to_bvi_v_def = cake_define
-  `data_to_bvi_v (Number i) = bvlSem_Number i /\
+  `data_to_bvi_v (Number i:dataSem_v) = bvlSem_Number i /\
    data_to_bvi_v (Word64 w) = bvlSem_Word64 w /\
    data_to_bvi_v (CodePtr p) = bvlSem_CodePtr p /\
    data_to_bvi_v (RefPtr b r) = bvlSem_RefPtr b r /\ data_to_bvi_v
@@ -65,7 +65,8 @@ let data_to_bvi_v_def = cake_define
 
 (* Projection for references, non-injective for value arrays *)
 let data_to_bvi_ref_def = cake_define
-  `data_to_bvi_ref (ValueArray l) = ValueArray (MAP data_to_bvi_v l) /\
+  `data_to_bvi_ref (ValueArray l:bvlSem_ref) = ValueArray (MAP
+  data_to_bvi_v l) /\
    data_to_bvi_ref (ByteArray b bl) = ByteArray b bl /\
    data_to_bvi_ref (Thunk m v) = Thunk m (data_to_bvi_v v) /\
      data_to_bvi_ref (MutBlock tg fin ls c rs) =

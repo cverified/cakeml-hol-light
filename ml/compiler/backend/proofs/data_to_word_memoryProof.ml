@@ -206,7 +206,7 @@ let _ = size_thms "v";;
    [v_size_def] \\ res_tac \\ DECIDE_TAC *)
 let get_refs_def = cake_define_wf
   `MEASURE (v_size)`
-  `(get_refs (Number _2) = []) /\
+  `(get_refs (Number _2:dataSem_v) = []) /\
    (get_refs (Word64 _3) = []) /\
    (get_refs (CodePtr _4) = []) /\
    (get_refs (RefPtr _5 p) = [p]) /\
@@ -1454,7 +1454,7 @@ let block_drop_def = cake_define
    ---- *)
 
 let build_part_words_def = cake_define
-  `build_part_words c m (Int i) offset =
+  `build_part_words c m (Int i:const_part) offset =
      (if small_int (:'a) i then SOME (Word (Smallnum i),[]) else let
        (sign,ws) = i2mw i in
              match encode_header c (w2n (b2w sign << 2 || ((n2w 3):'a

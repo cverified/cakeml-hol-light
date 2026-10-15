@@ -74,7 +74,7 @@ needs "semantics/ast.ml";;
      PRIME = 999983:num *)
 
 let part_hash_def = cake_define
-  `part_hash (Int i) = num_of_int (abs i) MOD (999983:num) /\
+  `part_hash (Int i:const_part) = num_of_int (abs i) MOD (999983:num) /\
    part_hash (Str s) =
      (strlen s + 3 * SUM (MAP ORD (explode s))) MOD (999983:num) /\
    part_hash (W64 w) = (17 + w2n w) MOD (999983:num) /\

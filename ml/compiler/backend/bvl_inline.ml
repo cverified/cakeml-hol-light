@@ -47,7 +47,7 @@ let tick_inline_def = cake_define
         cs xs) (mk_tick (SUC ticks) code)])))`;;
 
 let tick_inline_sing_def = cake_define
-  `(tick_inline_sing cs (Var v) = Var v) /\
+  `(tick_inline_sing cs (Var v:bvl_exp) = Var v) /\
    (tick_inline_sing cs (If x1 x2 x3) =
       (If (tick_inline_sing cs x1)
           (tick_inline_sing cs x2)
@@ -110,7 +110,7 @@ let is_small_aux_def = cake_define
         is_small_aux n xs))`;;
 
 let is_small_sing_def = cake_define
-  `(is_small_sing n (Var v) = n) /\
+  `(is_small_sing n (Var v:bvl_exp) = n) /\
    (is_small_sing n (If x1 x2 x3) =
       (let n = n - 1 in if n = 0 then 0 else
       let n = is_small_sing n x1 in if n = 0 then 0 else
@@ -169,7 +169,7 @@ let is_rec_def = cake_define
 hol4_overload "is_rec" "bvl_inline_is_rec";;
 
 let is_rec_sing_def = cake_define
-  `(is_rec_sing n (Var v) = F) /\
+  `(is_rec_sing n (Var v:bvl_exp) = F) /\
    (is_rec_sing n (If x1 x2 x3) =
       (if is_rec_sing n x1 then T else
       if is_rec_sing n x2 then T else
@@ -236,7 +236,7 @@ let remove_ticks_def = cake_define
 hol4_overload "remove_ticks" "bvl_inline_remove_ticks";;
 
 let remove_ticks_sing_def = cake_define
-  `(bvl_inline_remove_ticks_sing (Var v) = Var v) /\
+  `(bvl_inline_remove_ticks_sing (Var v:bvl_exp) = Var v) /\
    (bvl_inline_remove_ticks_sing (If x1 x2 x3) =
       If (bvl_inline_remove_ticks_sing x1)
          (bvl_inline_remove_ticks_sing x2)
@@ -311,7 +311,7 @@ let let_op_def = cake_define
 hol4_overload "let_op" "bvl_inline_let_op";;
 
 let let_op_one_def = cake_define
-  `(let_op_one (Var v) = Var v) /\
+  `(let_op_one (Var v:bvl_exp) = Var v) /\
    (let_op_one (If x1 x2 x3) =
       If (let_op_one x1)
          (let_op_one x2)

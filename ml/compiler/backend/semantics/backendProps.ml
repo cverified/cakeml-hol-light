@@ -42,7 +42,7 @@ let pure_co_def = cake_define
    increase monotonically in some sense. *)
 let oracle_monotonic_def = cake_define
   `oracle_monotonic (f:'a->'b->bool) (R:'b->'b->bool) (S:'b->bool)
-     (orac:num->'a) =
+  (orac:num->'a) =
      (
          (!i j x y. i < j /\ x IN f (orac i) /\ y IN f (orac j)
            ==> R x y) /\ (!i x y. x IN S /\ y IN f (orac i) ==> R x

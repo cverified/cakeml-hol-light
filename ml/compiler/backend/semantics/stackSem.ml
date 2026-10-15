@@ -129,7 +129,7 @@ let _ = size_thms "exp";;
    o Q.SPEC `ARB`)) \\ DECIDE_TAC *)
 let word_exp_def = cake_define_wf
   `MEASURE (exp_size ARB o SND)`
-  `(stackSem_word_exp s (Const w) = SOME w) /\
+  `(stackSem_word_exp s (Const w:wordLang_exp) = SOME w) /\
    (stackSem_word_exp s (Var v) =
       (match FLOOKUP (stackSem_state_regs s) v with SOME (Word w) ->
         SOME w | _10 -> NONE)) /\

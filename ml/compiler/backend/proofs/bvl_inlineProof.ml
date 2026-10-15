@@ -584,8 +584,8 @@ let let_opt_def = cake_define
        prog))`;;
 
 let let_state_rel_def = cake_define
-  `let_state_rel split_seq cut_size
-            (s:('c,'ffi)bvlSem_state) (t:('c,'ffi)bvlSem_state) <=>
+  `let_state_rel split_seq cut_size (s:('c,'ffi)bvlSem_state)
+  (t:('c,'ffi)bvlSem_state) <=>
      t = ?_compile_oracle_fupd (K ((I ##
        MAP (I ## let_opt split_seq cut_size)) o ?_compile_oracle s))
          (?_compile_fupd (K (?_compile t)) (?_code_fupd (K (map (let_opt

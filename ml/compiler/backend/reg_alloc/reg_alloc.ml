@@ -1177,7 +1177,7 @@ let full_consistency_ok_def = cake_define
          return ((bx \/ ax) /\ (by \/ ay) /\ ~(bx /\ by)))))))))`;;
 
 let update_move_def = cake_define
-  `update_move spta ((p:num),((x:num),(y:num))) =
+  `update_move spta ((p:num),(x:num),(y:num)) =
    (let spx:num = spta x in
    let spy:num = spta y in
    if spx <= spy then

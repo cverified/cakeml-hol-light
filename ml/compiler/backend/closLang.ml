@@ -202,7 +202,7 @@ hol4_overload "pure_op" "closLang_pure_op";;
 (* pure e means e can neither raise an exception nor side-effect the
    state *)
 let pure_def = cake_define
-  `(pure (Var _18 _19) <=> T) /\
+  `(pure (Var _18 _19:closLang_exp) <=> T) /\
    (pure (If _20 e1 e2 e3) <=> pure e1 /\ pure e2 /\ pure e3) /\
    (pure (Let _21 es e2) <=> EVERY pure es /\ pure e2) /\
    (pure (Raise _22 _23) <=> F) /\

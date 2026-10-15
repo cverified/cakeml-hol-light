@@ -186,12 +186,10 @@ let contains_loc_def = cake_define
   SOME (Loc l1 l2))`;;
 
 let code_oracle_rel_def = cake_define
-  `code_oracle_rel c
-       (s_compile:'c->(num#num#dataLang_prog) list->(word8
-         list#word64 list#'c) option)
-       s_compile_oracle t_store
-       (t_compile:'c->(num#num#'a wordLang_prog) list->(word8
-         list#('a word) list#'c) option)
+  `code_oracle_rel c (s_compile:'c->(num#num#dataLang_prog) list->(word8
+  list#word64 list#'c) option)
+       s_compile_oracle t_store (t_compile:'c->(num#num#'a
+         wordLang_prog) list->(word8 list#('a word) list#'c) option)
        t_compile_oracle t_code_buffer t_data_buffer <=> buffer_buffer
      t_code_buffer = [] /\ buffer_buffer
      t_data_buffer = [] /\

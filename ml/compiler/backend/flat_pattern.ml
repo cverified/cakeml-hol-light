@@ -101,8 +101,8 @@ let decode_pos_def = cake_define
      pos`;;
 
 let decode_test_def = cake_define
-  `flat_pattern_decode_test t (TagLenEq tag l) v = App t (TagLenEq tag
-  l) [v] /\
+  `flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t (TagLenEq
+  tag l) [v] /\
    flat_pattern_decode_test t (LitEq lit) v = App t (Src Equality)
      [v; Lit t lit]`;;
 hol4_overload "decode_test" "flat_pattern_decode_test";;
@@ -129,8 +129,8 @@ let simp_guard_def = cake_define
       | x -> x`;;
 
 let decode_guard_def = cake_define
-  `decode_guard t v (Not gd) = App t (Src Equality) [decode_guard t v
-  gd; Bool t F] /\
+  `decode_guard t v (Not gd:dGuard) = App t (Src Equality) [decode_guard
+  t v gd; Bool t F] /\
    decode_guard t v (Conj gd1 gd2) = SmartIf t (decode_guard t v gd1)
      (decode_guard t v gd2) (Bool t F) /\
    decode_guard t v (Disj gd1 gd2) = SmartIf t (decode_guard t v gd1)

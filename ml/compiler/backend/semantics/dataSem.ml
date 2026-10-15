@@ -157,7 +157,7 @@ let size_of_def = cake_define_list
              (n + LENGTH vs + 1,refs,seen))`];;
 
 let extract_stack_def = cake_define
-  `extract_stack (Env _6 env) = mlvector_toList env /\
+  `extract_stack (Env _6 env:stack) = mlvector_toList env /\
    extract_stack (Exc _7 env _8) = mlvector_toList env`;;
 
 let global_to_vs_def = cake_define
@@ -257,8 +257,8 @@ let space_consumed_def = cake_define
   Number lower :: Number len :: Number tot :: xs)) =
     LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int lower)
       xs')) + 1) /\
-   (space_consumed s (MemOp RefArray) [Number len; _18] = num_of_int
-     len + 1) /\
+   (space_consumed s (MemOp RefArray) [(Number len:dataSem_v); _18] =
+     num_of_int len + 1) /\
    (space_consumed s (MemOp (RefByte _19)) [Number len; _20] =
      num_of_int len DIV (arch_size (dataSem_state_limits s) DIV 8) + 2)
      /\
@@ -336,7 +336,7 @@ let vb_size_def = cake_define
         | _21 -> 1`;;
 
 let vs_depth_def = cake_define
-  `(vs_depth (Block ts t ls) = vs_depth_list ls) /\
+  `(vs_depth (Block ts t ls:dataSem_v) = vs_depth_list ls) /\
    (vs_depth _22 = 0) /\
    (vs_depth_list [] = 0) /\
    (vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list
@@ -462,8 +462,8 @@ let do_space_def = cake_define
          consume_space (op_space_req op (LENGTH vs)) s)`;;
 
 let size_of_stack_frame_def = cake_define
-  `size_of_stack_frame (Env n _27) = n /\ size_of_stack_frame (Exc n
-  _28 _29) = OPTION_MAP ((+) 3) n`;;
+  `size_of_stack_frame (Env n _27:stack) = n /\ size_of_stack_frame
+  (Exc n _28 _29) = OPTION_MAP ((+) 3) n`;;
 
 let size_of_stack_def = cake_define
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame)
@@ -587,8 +587,8 @@ let with_fresh_ts_def = cake_define
                                 (ts + n))) s) | NONE -> f 0 s)`;;
 
 let lim_safe_part_def = cake_define
-  `(lim_safe_part lims (Con tag xs) <=> (if xs = [] then tag < 2 EXP
-  (arch_size lims) DIV 16 else
+  `(lim_safe_part lims (Con tag xs:const_part) <=> (if xs = [] then tag
+  < 2 EXP (arch_size lims) DIV 16 else
                               LENGTH xs < 2 EXP limits_length_limit
                                 lims /\
                               LENGTH xs < 2 EXP (arch_size lims - 4)

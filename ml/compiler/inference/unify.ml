@@ -348,7 +348,7 @@ let PFLAT_def = cake_define
 
 let kcunifywlR_def = cake_define
   `kcunifywlR ((s:infer_t spt),(wl:(infer_t list#infer_t list) list))
-              (s0,wl0) <=>
+  (s0,wl0) <=>
      cwfs s /\ cwfs s0 /\ sp2fm s0 SUBMAP sp2fm s /\
      substvars (encode_infer_t o_f sp2fm s) UNION cplist_vars wl
        SUBSET

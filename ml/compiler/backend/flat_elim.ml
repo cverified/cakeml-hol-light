@@ -80,7 +80,8 @@ let is_pure_def = cake_define_wf
 hol4_overload "is_pure" "flat_elim_is_pure";;
 
 let has_Eval_def = cake_define
-  `(has_Eval (App t op es) <=> op = Src Eval \/ has_Eval_list es) /\
+  `(has_Eval (App t op es:flatLang_exp) <=> op = Src Eval \/
+  has_Eval_list es) /\
    (has_Eval (Mat _6 e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
    (has_Eval (Letrec _7 funs e) <=> has_Eval e \/ has_Eval_funs funs)
      /\
@@ -147,7 +148,7 @@ let find_lookups_def = cake_define_wf
   `MEASURE (\e. match e with INL x -> exp_size x | INR (y:flatLang_exp
   list) ->
                  list_size exp_size y)`
-  `(find_lookups (Raise _38 er) = find_lookups er) /\
+  `(find_lookups (Raise _38 er:flatLang_exp) = find_lookups er) /\
    (find_lookups (Handle _39 eh p_es) =
        union (find_lookups eh) (find_lookupsL (MAP SND p_es))) /\
    (find_lookups (Lit _40 _41) = LN) /\

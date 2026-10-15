@@ -235,7 +235,7 @@ let dest_Litv_def = cake_define
 hol4_overload "dest_Litv" "flatSem_dest_Litv";;
 
 let the_Litv_Float64_def = cake_define
-  `flatSem_the_Litv_Float64 (Litv (Float64 w)) = w`;;
+  `flatSem_the_Litv_Float64 (Litv (Float64 w):flatSem_v) = w`;;
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
 let do_test_def = cake_define
@@ -588,7 +588,7 @@ let _ = size_thms "pat";;
 let pmatch_def = cake_define_wf
   `inv_image (<) (\x. match x with INL (x,p,y,z) -> pat_size p | INR
   (x,ps,y,z) -> list_size pat_size ps)`
-  `(flatSem_pmatch s (Pvar x) v' bindings =
+  `(flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
      (Match ((x,v') :: bindings))) /\
    (flatSem_pmatch s flatLang_Pany v' bindings = Match bindings) /\
    (flatSem_pmatch s (Plit l) (Litv l') bindings =

@@ -473,14 +473,12 @@ let post_ffi_asm_def = cake_define
 
 let post_ccache_asm_def = cake_define
   `post_ccache_asm (mc_conf:('a,'state,'b)machine_config) (t1:'a
-  asm_state)
-                   (ms':'state) = asm_state_pc_fupd (K
-                     (asm_state_regs t1 (match asm_config_link_reg
-                     (target_config (machine_config_target mc_conf))
-                     with NONE -> 0 | SOME n -> n))) (?_fp_regs_fupd (K
-                     (\i. target_get_fp_reg (machine_config_target
-                     mc_conf) ms' i)) (asm_state_regs_fupd (K (\a. if
-                     MEM a (machine_config_callee_saved_regs mc_conf) \/
+  asm_state) (ms':'state) = asm_state_pc_fupd (K (asm_state_regs t1
+  (match asm_config_link_reg (target_config (machine_config_target
+  mc_conf)) with NONE -> 0 | SOME n -> n))) (?_fp_regs_fupd (K (\i.
+  target_get_fp_reg (machine_config_target mc_conf) ms' i))
+  (asm_state_regs_fupd (K (\a. if MEM a
+  (machine_config_callee_saved_regs mc_conf) \/
                          a = machine_config_ptr_reg mc_conf \/
                          ~(a < asm_config_reg_count (target_config
                            (machine_config_target mc_conf))) \/
@@ -501,8 +499,7 @@ let post_ccache_asm_def = cake_define
 *)
 
 let good_init_state_def = cake_define
-  `good_init_state
-     (mc_conf:('a,'state,'b)machine_config) ms bytes
+  `good_init_state (mc_conf:('a,'state,'b)machine_config) ms bytes
      cbspace
      t m dm sdm <=>
      target_state_rel (machine_config_target mc_conf) t ms /\

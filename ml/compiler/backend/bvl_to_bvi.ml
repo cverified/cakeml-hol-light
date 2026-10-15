@@ -371,7 +371,7 @@ let _ = size_thms "exp1";;
 let compile_exps_sing_def = cake_define_wf
   `MEASURE (\x. match x with INL (n,e) -> exp_size e | INR (n,es) ->
   exp1_size es)`
-  `(compile_exps_sing n (Var v) = (((Var v):bvi_exp),Nil,n)) /\
+  `(compile_exps_sing n (Var v:bvl_exp) = (((Var v):bvi_exp),Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =
       (let (c1,aux1,n1) = compile_exps_sing n x1 in
       let (c2,aux2,n2) = compile_exps_sing n1 x2 in

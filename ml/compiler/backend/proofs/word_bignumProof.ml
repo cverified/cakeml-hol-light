@@ -45,7 +45,7 @@ let word_bignumProof_state_FIELDS =
    "clock","num"];;
 
 let eval_exp_def = cake_define
-  `eval_exp s (Const w) = w /\
+  `eval_exp s (Const w:wordLang_exp) = w /\
    eval_exp s (Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
    eval_exp s (Op Add [x1; x2]) = eval_exp s x1 + eval_exp s x2 /\
    eval_exp s (Op Sub [x1; x2]) = eval_exp s x1 - eval_exp s x2 /\

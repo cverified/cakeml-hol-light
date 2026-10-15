@@ -135,7 +135,7 @@ let is_final_def = cake_define
 
 let gc_inv_def = cake_define
   `gen_gc_gc_inv conf state (heap0:(('a,'b)heap_element) list)
-                     (roots0:('a heap_address) list) =
+  (roots0:('a heap_address) list) =
      (let heap' = gc_state_h1 state ++ gc_state_h2 state ++
                  heap_expand (gc_state_n state) ++ gc_state_r4
                  state ++ gc_state_r3 state ++ gc_state_r2 state ++

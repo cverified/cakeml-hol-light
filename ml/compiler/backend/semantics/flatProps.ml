@@ -189,7 +189,7 @@ val v_conss = TypeBase.nchotomy_of ``: v``
 *)
 
 let simple_basic_val_rel_def = cake_define
-  `(simple_basic_val_rel (Litv l) v = (v = Litv l)) /\
+  `(simple_basic_val_rel (Litv l:flatSem_v) v = (v = Litv l)) /\
    (simple_basic_val_rel (Loc b i) v = (v = Loc b i)) /\
    (simple_basic_val_rel (Conv stmp vs1) v = (?vs2. v = Conv stmp
      vs2)) /\

@@ -162,7 +162,7 @@ class Porter:
   def tnm(self, n):
     return self.ctx.tyname(n)
 
-  def term(self, text):
+  def term(self, text, annotate=False):
     toks = hterm.tokenize(text)
     p = hterm.Parser(toks, self.ctx)
     e = p.parse()
@@ -171,6 +171,19 @@ class Porter:
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
+    # the patterns of the first clause of every function carry the
+    # type of their constructor where its name is one that several
+    # theories in scope have, so that it is resolved as HOL4 does
+    seen = set()
+    for cl in hterm.conjuncts_of(e):
+      try:
+        h = hterm.strip_app(hterm.clauses_of(cl)[0][0])[0]
+        nm = h.name if h.kind == 'id' else None
+      except Exception:
+        nm = None
+      if nm is None or nm in seen: continue
+      seen.add(nm)
+      self.annotate(cl, not annotate)
     try:
       return hterm.Printer(self.ctx).pr(e, 0)
     finally:
@@ -444,6 +457,8 @@ class Porter:
     elif self.clause_clash(body):
       term = None
       clauses = self.clause_form(body)
+    elif key in overrides.ANNOTATE:
+      term = fmt(self.term(body, annotate=True))
     else:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
@@ -551,7 +566,7 @@ class Porter:
       return p
     return go(p)
 
-  def annotate(self, cl):
+  def annotate(self, cl, ambiguous=False):
     """the type of the pattern of a clause that is a quotation of
        its own: without it the clause can typecheck differently
        from the others (the name of a constructor is ambiguous)"""
@@ -562,7 +577,7 @@ class Porter:
     e.l = hterm.strip_app(e.l)[0]
     for a in args:
       e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
-                       arg=self.annotate_pat(a))
+                       arg=self.annotate_pat(a, ambiguous))
     return cl
 
   def clause_form(self, body):

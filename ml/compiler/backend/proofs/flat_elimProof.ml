@@ -77,7 +77,8 @@ let _ = size_thms "v";;
 let find_v_globals_def = cake_define_wf
   `MEASURE (\e. match e with INL x -> v_size x | INR y -> list_size
   v_size y)`
-  `(find_v_globals (Conv _1 vl) = ((find_v_globalsL vl):1 spt)) /\
+  `(find_v_globals (Conv _1 vl:flatSem_v) = ((find_v_globalsL vl):1
+  spt)) /\
    (find_v_globals (Closure env _2 e) =
        union (find_v_globalsL (MAP SND (?_v env))) (find_lookups e))
          /\
@@ -157,8 +158,7 @@ let v_has_Eval_def1 = cake_define_wf
 
 (* s_g = state globals, t_g = removed state globals *)
 let globals_rel_def = cake_define
-  `globals_rel
-     (reachable:1 spt) s_g t_g <=>
+  `globals_rel (reachable:1 spt) s_g t_g <=>
        LENGTH s_g = LENGTH t_g /\
        (!n.
          n IN domain reachable /\ n < LENGTH t_g ==> EL n s_g = EL n

@@ -2665,8 +2665,7 @@ val def = assign_Define `
 
 let assign_def = cake_define
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
-  (dest:num) (op:closLang_op)
-     (args:num list) (names:(1 spt) option) =
+  (dest:num) (op:closLang_op) (args:num list) (names:(1 spt) option) =
      (match op with IntOp (Const i) -> assign_Const i l dest | GlobOp
        GlobalsPtr -> (Assign (adjust_var dest) (Lookup Globals),l) |
        GlobOp SetGlobalsPtr -> arg1 args (assign_SetGlobalsPtr c l dest)
