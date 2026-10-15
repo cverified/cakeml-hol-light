@@ -23,10 +23,8 @@ UNI = {
 # the port maps them back (a source writes both, and they are the
 # same variable: data_to_word's compile has stubs (:α) and
 # (asm_conf:'a asm_config))
-GREEK = dict(zip('αβγδεζηθ'
-                 'ικμνξοπρ'
-                 'στυφχψω',
-                 ["'" + c for c in 'abcdefghijklmnopqrstuvw']))
+GREEK = dict(zip('αβγδεζηθικλμνξοπρςστυφχψω',
+                 ["'" + c for c in 'abcdefghijklmnopqrstuvwxy']))
 
 # the Greek letters that a CakeML source uses for a term variable
 # and not for a type variable; HOL Light needs an ASCII name
