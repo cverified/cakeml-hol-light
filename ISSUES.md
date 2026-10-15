@@ -176,3 +176,13 @@ translator and characteristic formulae, and Pancake.
 
 Of the HOL4 library theories (in `ml/lib/`) only the definitions
 that the port needs are ported, not the whole theories.
+
+Five definitions of `compiler` are left out for the same reason:
+`compile_pancake`, `compile_pancake_64`, `compile_pancake_32` and
+the two command line drivers `full_compile_64` and
+`full_compile_32`, which compile Pancake when the flag says so.
+They need `panStatic$static_check`, `pan_to_target$pan_compile_tap`
+and `panPtreeConversion$parse_topdecs_to_ast`, and their patterns
+need the constructors of Pancake's error type, so the port cannot
+even state them.  `compiler$compile`, which the correctness
+theorem is about, does not use them.

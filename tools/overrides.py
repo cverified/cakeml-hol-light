@@ -338,6 +338,23 @@ let mergesortN_tail_def = cake_define_wf
 # port writes the HOL4 text in a comment, so that the gap is visible
 # in the file (PENDING.md lists them all)
 NOT_YET = {
+  # Pancake is a second source language of the same compiler
+  # backend, which the CakeML correctness theorem does not mention,
+  # so the port does not have the theories that this definition
+  # needs (panStatic's static_check, pan_to_target's
+  # pan_compile_tap, panPtreeConversion's parse_topdecs_to_ast)
+  ('compiler', 'compile_pancake_def'):
+    'Pancake, which the port does not have',
+  ('compiler', 'compile_pancake_64_def'):
+    'Pancake, which the port does not have',
+  ('compiler', 'compile_pancake_32_def'):
+    'Pancake, which the port does not have',
+  # the two command line drivers of the compiler binary, which
+  # compile Pancake when the flag says so
+  ('compiler', 'full_compile_64_def'):
+    'Pancake, which the port does not have',
+  ('compiler', 'full_compile_32_def'):
+    'Pancake, which the port does not have',
 }
 
 # Type blocks whose type HOL4 computes with ML code, with the type

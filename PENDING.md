@@ -23,6 +23,10 @@ that has neither in it, so the value does not depend on them; the
 port instantiates the type with `:1` and the configuration with
 `ARB`, which is therefore the same call graph.
 
+Five definitions of `compiler` are not ported: the three that
+compile Pancake and the two command line drivers that call them
+(see `ISSUES.md`).  Pancake is outside the port.
+
 One constant has no value in the port, because HOL4 computes it
 with ML code of its own that the port cannot run:
 
