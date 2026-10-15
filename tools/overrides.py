@@ -238,6 +238,13 @@ INT_NEG = set([
 WORD_NOT = set([
   ('binary_ieee', 'float_negate_def'),
   ('wordLang', 'word_op_def'),
+  # these state the word of all ones as ~0w
+  ('word_inst', 'op_consts_def'),
+  ('data_to_word', 'tag_mask_def'),
+  ('data_to_word', 'all_ones_def'),
+  ('data_to_word', 'assign_WordFromInt_def'),
+  ('data_to_word', 'comp_def'),
+  ('word_bignum', 'SeqTempImmNot_def'),
 ])
 
 # definitions in which the same variable name has different types in
