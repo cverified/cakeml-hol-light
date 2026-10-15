@@ -216,6 +216,14 @@ MEASURE = {
     'MEASURE (\\(negate,R,n,l). n)',
 }
 
+# definitions whose clauses are one quotation, not one each: the
+# clauses only typecheck together, because one of them says what
+# the type of the result is and the others have a constructor whose
+# name several theories in scope have (bvl_to_bvi's compile_exps
+# gives back a bvi expression, which only its Var clause says)
+ONE_QUOTATION = set([
+])
+
 # definitions whose patterns need the type of their constructor on
 # them: the name is one that several theories in scope have, and
 # the definition does not say which one it is anywhere else

@@ -527,7 +527,8 @@ class Porter:
       # one clause with a match, which HOL Light handles far better
       # than a definition by patterns on several arguments
       term = fmt(self.match_form(body))
-    elif self.several_clauses(body):
+    elif (self.several_clauses(body) and
+          key not in overrides.ONE_QUOTATION):
       # HOL4 typechecks every clause of a definition on its own, so
       # the port writes them as separate quotations, with the type
       # of the pattern on each
