@@ -232,7 +232,7 @@ let do_con_check_def = cake_define
 let one_con_check_def = cake_define
   `one_con_check envc x2 =
       match x2 with
-        (Con cn es) -> do_con_check envc cn (LENGTH es)
+        Con cn es -> do_con_check envc cn (LENGTH es)
       | _11 -> T`;;
 
 let build_conv_def = cake_define
@@ -256,7 +256,7 @@ let match_result_INDUCT,match_result_RECURSION = define_datatype
 let same_type_def = cake_define
   `same_type x1 x2 =
         match (x1,x2) with
-          ((TypeStamp v0 n1),(TypeStamp v1 n2)) -> n1 = n2
+          (TypeStamp v0 n1,TypeStamp v1 n2) -> n1 = n2
         | ((ExnStamp v2),(ExnStamp v3)) -> T
         | (_25,_26) -> F`;;
 
@@ -297,43 +297,46 @@ let _ = size_thms "pat";;
 let pmatch_def = cake_define_wf
   `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> pat_size p | INR
   (s,a,ps,b,c) -> list_size pat_size ps)`
-  `semanticPrimitives_pmatch envC s x3 v' env =
-      match (x3,v') with
-        (Pany,v') -> Match env
-      | ((Pvar x),v') -> Match ((x,v') :: env)
-      | ((Plit l),(Litv l')) ->
+  `semanticPrimitives_pmatch envC s Pany v' env = Match env /\
+   semanticPrimitives_pmatch envC s (Pvar x) v' env = Match ((x,v')
+     :: env) /\
+   semanticPrimitives_pmatch envC s (Plit l) (Litv l') env =
    (if l = l' then Match env else if lit_same_type l l' then No_match
-     else Match_type_error)
-      | ((Pcon (SOME n) ps),(Conv (SOME stamp') vs)) ->
+     else Match_type_error) /\
+   semanticPrimitives_pmatch envC s (Pcon (SOME n) ps) (Conv (SOME
+     stamp') vs) env =
    (match nsLookup envC n with
       NONE -> Match_type_error | SOME (l,stamp) ->
         (if same_type stamp stamp' /\ LENGTH ps = l then
           if same_ctor stamp stamp' then
             if LENGTH vs = l then semanticPrimitives_pmatch_list envC
               s ps vs env else Match_type_error else No_match else
-              Match_type_error))
-      | ((Pcon NONE ps),(Conv NONE vs)) ->
+              Match_type_error)) /\
+   semanticPrimitives_pmatch envC s (Pcon NONE ps) (Conv NONE vs) env
+     =
    (if LENGTH ps = LENGTH vs then semanticPrimitives_pmatch_list envC
-     s ps vs env else Match_type_error)
-      | ((Pref p),(Loc _28 lnum)) ->
+     s ps vs env else Match_type_error) /\
+   semanticPrimitives_pmatch envC s (Pref p) (Loc _28 lnum) env =
    (match store_lookup lnum s with
       NONE -> Match_type_error | SOME (Refv v) ->
         semanticPrimitives_pmatch envC s p v env | SOME _29 ->
-        Match_type_error)
-      | ((Pas p i),v) -> semanticPrimitives_pmatch envC s p v ((i,v)
-        :: env)
-      | ((Ptannot p t),v) -> semanticPrimitives_pmatch envC s p v env
-      | (_30,_31) -> Match_type_error
-      | ([],[]) -> Match env
-      | ((p :: ps),(v :: vs)) ->
+        Match_type_error) /\
+   semanticPrimitives_pmatch envC s (Pas p i) v env =
+     semanticPrimitives_pmatch envC s p v ((i,v) :: env) /\
+   semanticPrimitives_pmatch envC s (Ptannot p t) v env =
+     semanticPrimitives_pmatch envC s p v env /\
+   semanticPrimitives_pmatch envC s _30 _31 env = Match_type_error /\
+   semanticPrimitives_pmatch_list envC s [] [] env = Match env /\
+   semanticPrimitives_pmatch_list envC s (p :: ps) (v :: vs) env =
    (match semanticPrimitives_pmatch envC s p v env with
       No_match ->
         (match semanticPrimitives_pmatch_list envC s ps vs env with
            No_match -> No_match | Match_type_error ->
              Match_type_error | Match v1 -> No_match) | Match_type_error
              -> Match_type_error | Match env' ->
-             semanticPrimitives_pmatch_list envC s ps vs env')
-      | (_32,_33) -> Match_type_error`;;
+             semanticPrimitives_pmatch_list envC s ps vs env') /\
+   semanticPrimitives_pmatch_list envC s _32 _33 env =
+     Match_type_error`;;
 hol4_overload "pmatch" "semanticPrimitives_pmatch";;
 hol4_overload "pmatch_list" "semanticPrimitives_pmatch_list";;
 
@@ -366,42 +369,44 @@ let find_recfun_def = cake_define
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
-let _ = size_thms "list";;
-let _ = size_thms "v";;
-(* HOL4 termination: >> Cases_on ‘compress_bool v1’ >> gs[Boolv_def,
-   listTheory.list_size_def] *)
-let do_eq_def = cake_define_wf
-  `inv_image (<) (\x. match x with INL (v1,v2) -> v_size v1 | INR
-  (vs1,vs2) -> list_size v_size vs1)`
-  `semanticPrimitives_do_eq x1 x2 =
-      match (x1,x2) with
-        ((Litv l1),(Litv l2)) ->
-     (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
-       Eq_type_error)
-      | ((Loc b1 l1),(Loc b2 l2)) ->
-     (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)
-      | ((Conv cn1 vs1),(Conv cn2 vs2)) ->
-     (if cn1 = cn2 /\ LENGTH vs1 = LENGTH vs2 then
-       semanticPrimitives_do_eq_list vs1 vs2 else if ctor_same_type cn1
-       cn2 then Eq_val F else Eq_type_error)
-      | ((Vectorv vs1),(Vectorv vs2)) ->
-     (if LENGTH vs1 = LENGTH vs2 then semanticPrimitives_do_eq_list
-       vs1 vs2 else Eq_val F)
-      | ((Closure v0 v3 v4),(Closure v5 v6 v7)) -> Eq_val T
-      | ((Closure v8 v9 v10),(Recclosure v11 v12 v13)) -> Eq_val T
-      | ((Recclosure v14 v15 v16),(Closure v17 v18 v19)) -> Eq_val T
-      | ((Recclosure v20 v21 v22),(Recclosure v23 v24 v25)) -> Eq_val
-        T
-      | ((Env v26 (gen1,id1)),(Env v27 (gen2,id2))) ->
-     Eq_val (gen1 = gen2 /\ id1 = id2)
-      | (_34,_35) -> Eq_type_error
-      | ([],[]) -> Eq_val T
-      | ((v1 :: vs1),(v2 :: vs2)) ->
-     (match semanticPrimitives_do_eq v1 v2 with
-        Eq_val r -> (if ~r then Eq_val F else
-          semanticPrimitives_do_eq_list vs1 vs2) | Eq_type_error ->
-          Eq_type_error)
-      | (_36,_37) -> Eq_val F`;;
+let do_eq_def = cake_define_list
+  [`semanticPrimitives_do_eq (Litv l1:semanticPrimitives_v) (Litv
+  l2:semanticPrimitives_v) =
+      (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
+        Eq_type_error)`;
+   `semanticPrimitives_do_eq (Loc b1 l1:semanticPrimitives_v) (Loc b2
+  l2:semanticPrimitives_v) =
+      (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)`;
+   `semanticPrimitives_do_eq (Conv cn1 vs1:semanticPrimitives_v) (Conv
+  cn2 vs2:semanticPrimitives_v) =
+      (if cn1 = cn2 /\ LENGTH vs1 = LENGTH vs2 then
+        semanticPrimitives_do_eq_list vs1 vs2 else if ctor_same_type
+        cn1 cn2 then Eq_val F else Eq_type_error)`;
+   `semanticPrimitives_do_eq (Vectorv vs1:semanticPrimitives_v) (Vectorv
+  vs2:semanticPrimitives_v) =
+      (if LENGTH vs1 = LENGTH vs2 then
+        semanticPrimitives_do_eq_list vs1 vs2 else Eq_val F)`;
+   `semanticPrimitives_do_eq (Closure v0 v3 v4:semanticPrimitives_v)
+  (Closure v5 v6 v7:semanticPrimitives_v) = Eq_val T`;
+   `semanticPrimitives_do_eq (Closure v8 v9 v10:semanticPrimitives_v)
+  (Recclosure v11 v12 v13:semanticPrimitives_v) = Eq_val T`;
+   `semanticPrimitives_do_eq (Recclosure v14 v15
+  v16:semanticPrimitives_v) (Closure v17 v18
+  v19:semanticPrimitives_v) = Eq_val T`;
+   `semanticPrimitives_do_eq (Recclosure v20 v21
+  v22:semanticPrimitives_v) (Recclosure v23 v24
+  v25:semanticPrimitives_v) = Eq_val T`;
+   `semanticPrimitives_do_eq (Env v26 (gen1,id1):semanticPrimitives_v)
+  (Env v27 (gen2,id2):semanticPrimitives_v) =
+      Eq_val (gen1 = gen2 /\ id1 = id2)`;
+   `semanticPrimitives_do_eq _34 _35 = Eq_type_error`;
+   `semanticPrimitives_do_eq_list [] [] = Eq_val T`;
+   `semanticPrimitives_do_eq_list (v1 :: vs1) (v2 :: vs2) =
+      (match semanticPrimitives_do_eq v1 v2 with
+         Eq_val r -> (if ~r then Eq_val F else
+           semanticPrimitives_do_eq_list vs1 vs2) | Eq_type_error ->
+           Eq_type_error)`;
+   `semanticPrimitives_do_eq_list _36 _37 = Eq_val F`];;
 hol4_overload "do_eq" "semanticPrimitives_do_eq";;
 hol4_overload "do_eq_list" "semanticPrimitives_do_eq_list";;
 
@@ -425,7 +430,7 @@ hol4_overload "do_opapp" "semanticPrimitives_do_opapp";;
 let v_to_list_def = cake_define
   `semanticPrimitives_v_to_list x1 =
       match x1 with
-        (Conv (SOME stamp) []) ->
+        Conv (SOME stamp) [] ->
      (if stamp = TypeStamp (implode "[]") list_type_num then SOME []
        else NONE)
       | (Conv (SOME stamp) [v1; v2]) ->
@@ -446,7 +451,7 @@ hol4_overload "list_to_v" "semanticPrimitives_list_to_v";;
 let v_to_char_list_def = cake_define
   `semanticPrimitives_v_to_char_list x1 =
       match x1 with
-        (Conv (SOME stamp) []) ->
+        Conv (SOME stamp) [] ->
      (if stamp = TypeStamp (implode "[]") list_type_num then SOME ""
        else NONE)
       | (Conv (SOME stamp) [Litv (Char c); v]) ->
@@ -475,7 +480,7 @@ let maybe_to_v_def = cake_define
 let v_to_id_def = cake_define
   `v_to_id x1 =
       match x1 with
-        (Conv (SOME stamp) [Litv (StrLit s)]) ->
+        Conv (SOME stamp) [Litv (StrLit s)] ->
       (if stamp = TypeStamp (implode "Short") id_type_num then
          SOME (Short s) else NONE)
       | (Conv (SOME stamp) [Litv (StrLit s); v]) ->
@@ -564,14 +569,13 @@ let _ = size_thms "v";;
 let concrete_v_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> v_size v | INR vs -> list_size
   v_size vs)`
-  `concrete_v v =
-        match v with
-          v ->
-        (match v with Loc _45 _46 -> T | Litv _47 -> T | Conv v_ vs
-          -> concrete_v_list vs | Vectorv vs -> concrete_v_list vs | _48
-          -> F)
-        | [] -> T
-        | (v :: vs) -> concrete_v v /\ concrete_v_list vs`;;
+  `(concrete_v v <=>
+      (match v with Loc _45 _46 -> T | Litv _47 -> T | Conv v_ vs ->
+        concrete_v_list vs | Vectorv vs -> concrete_v_list vs | _48 ->
+        F)) /\
+   (concrete_v_list [] <=> T) /\
+   (concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list
+     vs)`;;
 
 let compiler_agrees_def = cake_define
   `compiler_agrees (f:(num#num)#semanticPrimitives_v#dec
@@ -802,7 +806,7 @@ hol4_overload "check_type" "semanticPrimitives_check_type";;
 let dest_Litv_def = cake_define
   `semanticPrimitives_dest_Litv x1 =
       match x1 with
-        (Litv v) -> SOME v
+        Litv v -> SOME v
       | _58 -> NONE`;;
 hol4_overload "dest_Litv" "semanticPrimitives_dest_Litv";;
 
@@ -920,7 +924,7 @@ let do_arith_def = cake_define
 let do_conversion_def = cake_define
   `do_conversion v x2 x3 =
         match (x2,x3) with
-          ((WordT W8),IntT) ->
+          (WordT W8,IntT) ->
         SOME (INR (Litv (IntLit (&(w2n (the_Litv_Word8 v))))))
         | ((WordT W64),IntT) ->
         SOME (INR (Litv (IntLit (&(w2n (the_Litv_Word64 v))))))

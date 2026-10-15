@@ -340,7 +340,7 @@ let supported_arith_def = cake_define
 let supported_conversion_def = cake_define
   `supported_conversion x1 x2 =
         match (x1,x2) with
-          ((WordT W8),IntT) -> T
+          (WordT W8,IntT) -> T
         | ((WordT W64),IntT) -> T
         | (IntT,(WordT W8)) -> T
         | (IntT,(WordT W64)) -> T
@@ -491,7 +491,7 @@ let build_ctor_tenv_def = cake_define
 let is_value_def = cake_define
   `is_value x1 =
         match x1 with
-          (Lit _17) -> T
+          Lit _17 -> T
         | (Con _18 es) -> (EVERY is_value es)
         | (Var _19) -> T
         | (Fun _20 _21) -> T

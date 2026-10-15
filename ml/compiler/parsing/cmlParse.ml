@@ -25,7 +25,7 @@ needs "semantics/typeSystem.ml";;
 let destResult_def = cake_define
   `cmlParse_destResult x1 =
       match x1 with
-        (Result (Success [] x eo)) -> Success [] x eo
+        Result (Success [] x eo) -> Success [] x eo
       | (Result (Success ((_1,l) :: _2) _3 _4)) ->
    Failure l "Expected to be at EOF"
       | (Result (Failure fl fe)) -> Failure fl fe

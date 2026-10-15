@@ -240,7 +240,7 @@ let spt_right_def = cake_define
 let spt_center_def = cake_define
   `spt_center x1 =
         match x1 with
-          (LS x) -> SOME x
+          LS x -> SOME x
         | (BS t1 x t2) -> SOME x
         | _7 -> NONE`;;
 

@@ -19,7 +19,7 @@ needs "semantics/semanticPrimitives.ml";;
 let ref_rel_def = cake_define
   `closProps_ref_rel R x2 x3 =
         match (x2,x3) with
-          ((ValueArray vs),(ValueArray ws)) -> LIST_REL R vs ws
+          (ValueArray vs,ValueArray ws) -> LIST_REL R vs ws
         | ((ByteArray as),(ByteArray bs)) -> as = bs
         | ((Thunk ma a),(Thunk mb b)) -> ma = mb /\ R a b
         | (_1,_2) -> F`;;
@@ -247,7 +247,7 @@ let no_mti_def = cake_define_list
    `no_mti (Letrec t opt1 opt2 funs e:flatLang_exp) <=>
         no_mti e /\ opt1 = NONE /\ opt2 = NONE /\
         EVERY (\x. FST x = 1 /\ no_mti (SND x)) funs`;
-   `no_mti (closLang_Op t op es) <=>
+   `no_mti (closLang_Op t op es:flatLang_exp) <=>
         EVERY no_mti es`];;
 
 let fv_def = cake_define_list
@@ -446,7 +446,7 @@ fun cases_on_op q = Cases_on q
 let is_closure_def = cake_define
   `is_closure x1 =
         match x1 with
-          (Closure _70 _71 _72 _73 _74) -> T
+          (Closure _70 _71 _72 _73 _74:closSem_v) -> T
         | (Recclosure _75 _76 _77 _78 _79) -> T
         | _80 -> F`;;
 
@@ -547,7 +547,7 @@ val _ = export_rewrites ["closLang.exp_size_def"]
 let op_gbag_def = cake_define
   `closProps_op_gbag x1 =
       match x1 with
-        (GlobOp (SetGlobal n)) -> BAG_INSERT n EMPTY_BAG
+        GlobOp (SetGlobal n) -> BAG_INSERT n EMPTY_BAG
       | _117 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "closProps_op_gbag";;
 
@@ -601,7 +601,7 @@ let vsgc_free_def = cake_define_wf
   `MEASURE v_size`
   `vsgc_free x1 =
         match x1 with
-          (Closure _138 VL1 VL2 _139 body) ->
+          (Closure _138 VL1 VL2 _139 body:closSem_v) ->
         set_globals body = EMPTY_BAG /\
         EVERY vsgc_free VL1 /\ EVERY vsgc_free VL2
         | (Recclosure _140 VL1 VL2 bods _141) ->
@@ -614,7 +614,7 @@ let vsgc_free_def = cake_define_wf
 let rsgc_free_def = cake_define
   `rsgc_free x1 =
         match x1 with
-          (Rval vs) -> EVERY vsgc_free vs
+          Rval vs -> EVERY vsgc_free vs
         | (Rerr (Rabort _144)) -> T
         | (Rerr (Rraise v)) -> vsgc_free v`;;
 
@@ -666,7 +666,7 @@ let ssgc_free_def = cake_define
 let isClos_def = cake_define
   `closProps_isClos x1 =
       match x1 with
-        (Closure x1 x2 x3 x4 x5) -> T
+        (Closure x1 x2 x3 x4 x5:closSem_v) -> T
       | (Recclosure y1 y2 y3 y4 y5) -> T
       | _166 -> F`;;
 hol4_overload "isClos" "closProps_isClos";;

@@ -138,7 +138,7 @@ let ienv_ok_def = cake_define
 let infer_subst_var_def = cake_define
   `infer_subst_var s t =
         match t with
-          (Infer_Tuvar n) ->
+          Infer_Tuvar n ->
      (match FLOOKUP s n with NONE -> Infer_Tuvar n | SOME tv ->
        Infer_Tvar_db tv)
         | t -> t`;;
@@ -151,7 +151,7 @@ let ts_tid_rename_def = cake_define_wf
   `MEASURE (\(_1,y). t_size y)`
   `ts_tid_rename f t =
         match t with
-          (Tapp ts tn) -> Tapp (MAP (ts_tid_rename f) ts) (f tn)
+          Tapp ts tn -> Tapp (MAP (ts_tid_rename f) ts) (f tn)
         | t -> t`;;
 
 (* HOL4 ML code, not ported:
@@ -166,7 +166,7 @@ let set_tids_def = cake_define_wf
   `MEASURE t_size`
   `set_tids x1 =
         match x1 with
-          (Tapp ts tn) -> tn INSERT (BIGUNION (set_of_list (MAP
+          Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
             set_tids ts)))
         | _2 -> {}`;;
 
@@ -199,7 +199,7 @@ let inf_set_tids_def = cake_define_wf
   `MEASURE infer_t_size`
   `inf_set_tids x1 =
         match x1 with
-          (Infer_Tapp ts tn) -> tn INSERT (BIGUNION (set_of_list (MAP
+          Infer_Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
             inf_set_tids ts)))
         | _3 -> {}`;;
 

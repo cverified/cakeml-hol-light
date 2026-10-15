@@ -273,8 +273,8 @@ End
 let ref_rel_def = cake_define
   `clos_to_bvlProof_ref_rel R x2 x3 =
         match (x2,x3) with
-          ((closSem_ValueArray vs),(bvlSem_ValueArray ws)) ->
-            LIST_REL R vs ws
+          (closSem_ValueArray vs,bvlSem_ValueArray ws) -> LIST_REL R
+            vs ws
         | ((closSem_Thunk m1 v),(bvlSem_Thunk m2 w)) -> m1 = m2 /\ R
           v w
         | ((ByteArray as),(ByteArray g bs)) -> ~g /\ as = bs
@@ -456,7 +456,7 @@ val v_case_eq_thms =
 let eq_res_def = cake_define
   `eq_res x1 =
       match x1 with
-        (Eq_val b) -> Rval [bvlSem_Boolv b]
+        Eq_val b -> Rval [bvlSem_Boolv b]
       | _5 -> Rerr (Rabort Rtype_error)`;;
 
 (* HOL4 ML code, not ported:
@@ -496,7 +496,8 @@ let num_remaining_args_def = cake_define
 let get_loc_def = cake_define
   `get_loc x1 =
         match x1 with
-          (Closure (SOME loc) args env num_args exp) -> SOME loc
+          (Closure (SOME loc) args env num_args exp:bvlSem_v) -> SOME
+            loc
         | (Recclosure (SOME loc) args env fns i) -> SOME (loc + 2 *
           i)
         | _7 -> NONE`;;
@@ -504,14 +505,14 @@ let get_loc_def = cake_define
 let get_old_args_def = cake_define
   `get_old_args x1 =
         match x1 with
-          (Closure loc args env num_args exp) -> SOME args
+          (Closure loc args env num_args exp:bvlSem_v) -> SOME args
         | (Recclosure loc args env fns i) -> SOME args
         | _8 -> NONE`;;
 
 let get_cl_env_def = cake_define
   `get_cl_env x1 =
         match x1 with
-          (Closure loc args env num_args exp) -> SOME env
+          (Closure loc args env num_args exp:bvlSem_v) -> SOME env
         | (Recclosure loc args env fns i) -> SOME env
         | _9 -> NONE`;;
 

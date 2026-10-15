@@ -173,7 +173,7 @@ let s_rel_def = cake_define
 let orac_s_def = cake_define
   `orac_s x1 =
       match x1 with
-        (SOME (EvalOracle es)) -> es
+        SOME (EvalOracle es) -> es
       | _8 -> ARB "not EvalOracle"`;;
 
 (* HOL4 ML code, not ported:

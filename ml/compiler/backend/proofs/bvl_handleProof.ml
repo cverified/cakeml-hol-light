@@ -19,7 +19,8 @@ needs "semantics/ast.ml";;
 let let_ok_def = cake_define
   `let_ok x1 =
         match x1 with
-          (Let xs b) -> EVERY isVar xs /\ bVarBound (LENGTH xs) [b]
+          (Let xs b:flatLang_exp) -> EVERY isVar xs /\ bVarBound
+            (LENGTH xs) [b]
         | _1 -> F`;;
 
 let _ = size_thms "exp1";;

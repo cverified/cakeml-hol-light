@@ -169,7 +169,7 @@ hol4_overload "state_rel" "bvi_tmcProof_state_rel";;
 let eor_rel_def = cake_define
   `eor_rel f x2 x3 =
         match (x2,x3) with
-          ((Exn v1),(Exn v2)) -> v_rel f v1 v2
+          (Exn v1,Exn v2) -> v_rel f v1 v2
         | ((Ret vs1),(Ret vs2)) -> LIST_REL (v_rel f) vs1 vs2
         | (_1,_2) -> F`;;
 
@@ -235,7 +235,7 @@ let mb_rel_def = cake_define
   `mb_rel f x2 refs v1 v2 =
         match (x2,v1,v2) with
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag
-            xs),(RefPtr b ptr)) ->
+            xs:bvlSem_v),(RefPtr b ptr:bvlSem_v)) ->
       (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else
         match FLOOKUP refs ptr with SOME (MutBlock tag' fin' left'
           child' right') ->

@@ -152,8 +152,7 @@ val tac2 =
 let s_frame_val_eq_def = cake_define
   `s_frame_val_eq x1 x2 =
         match (x1,x2) with
-          ((StackFrame n ls1 ls NONE),(StackFrame n' ls1' ls' NONE))
-            ->
+          (StackFrame n ls1 ls NONE,StackFrame n' ls1' ls' NONE) ->
         MAP SND ls = MAP SND ls' /\ n = n'
         | ((StackFrame n ls1 ls (SOME y)),(StackFrame n' ls1' ls'
           (SOME y'))) ->
@@ -173,8 +172,8 @@ let s_val_eq_def = cake_define
 let s_frame_key_eq_def = cake_define
   `s_frame_key_eq x1 x2 =
         match (x1,x2) with
-          ((StackFrame n ls0 ls NONE),(StackFrame n' ls0' ls' NONE))
-            -> MAP FST ls = MAP FST ls' /\ ls0 = ls0' /\ n = n'
+          (StackFrame n ls0 ls NONE,StackFrame n' ls0' ls' NONE) ->
+            MAP FST ls = MAP FST ls' /\ ls0 = ls0' /\ n = n'
         | ((StackFrame n ls0 ls (SOME y)),(StackFrame n' ls0' ls'
           (SOME y'))) -> MAP FST ls = MAP FST ls' /\ y = y' /\ ls0 =
           ls0' /\ n = n'

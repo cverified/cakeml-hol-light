@@ -213,73 +213,64 @@ let shift_def = cake_define_list
            ([Call t ticks dest c1]))`];;
 hol4_overload "shift" "clos_annotate_shift";;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-let _ = size_thms "pair";;
-(* HOL4 termination: *)
-let shift_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (e,_5,_6,_7) -> exp_size e | INR (INL
-  (es,_8,_9,_10)) -> list_size exp_size es | INR (INR (_11,_12,_13,l))
-  -> list_size (pair_size (\x. x) exp_size) l)`
-  `shift_sing fns_len m l i =
-        match (fns_len,m,l,i) with
-          ((Var t v),m,l,i) ->
-        Var t (get_var m l i v)
-        | ((If t x1 x2 x3),m,l,i) ->
-        (let c1 = shift_sing x1 m l i in
-        let c2 = shift_sing x2 m l i in
-        let c3 = shift_sing x3 m l i in
-          (If t c1 c2 c3))
-        | ((Let t xs x2),m,l,i) ->
-        (let c1 = shift_list xs m l i in
-        let c2 = shift_sing x2 m (l + LENGTH xs) i in
-          (Let t c1 c2))
-        | ((Raise t x1),m,l,i) ->
-        (let (c1) = shift_sing x1 m l i in
-          (Raise t c1))
-        | ((Tick t x1),m,l,i) ->
-        (let c1 = shift_sing x1 m l i in
-          (Tick t c1))
-        | ((Op t op xs),m,l,i) ->
-        (let c1 = shift_list xs m l i in
-          (Op t op c1))
-        | ((App t loc_opt x1 xs2),m,l,i) ->
-        (let c1 = shift_sing x1 m l i in
-        let c2 = shift_list xs2 m l i in
-          (App t loc_opt c1 c2))
-        | ((Fn t loc vs_opt num_args x1),m,l,i) ->
-        (let k = m + l in
-        let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
-        let live = FILTER (\n. n < k) vs in
-        let vars = MAP (get_var m l i) live in
-        let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
-          (Fn t loc (SOME vars) num_args c1))
-        | ((Letrec t loc vsopt fns x1),m,l,i) ->
-        (let vs = match vsopt with NONE -> [] | SOME x -> x in
-        let k = m + l in
-        let live = FILTER (\n. n < k) vs in
-        let vars = MAP (get_var m l i) live in
-        let new_i = shifted_env 0 live in
-        let fns_len = LENGTH fns in
-        let cs = shift_letrec fns_len k new_i fns in
-        let c1 = shift_sing x1 m (l + LENGTH fns) i in
-          (Letrec t loc (SOME vars) cs c1))
-        | ((Handle t x1 x2),m,l,i) ->
-        (let c1 = shift_sing x1 m l i in
-        let c2 = shift_sing x2 m (l + 1) i in
-          (Handle t c1 c2))
-        | ((Call t ticks dest xs),m,l,i) ->
-        (let c1 = shift_list xs m l i in
-          (Call t ticks dest c1))
-        | ([],(m:num),(l:num),(i:num spt)) -> []
-        | (((x:closLang_exp) :: xs),m,l,i) ->
-        (let c1 = shift_sing x m l i in
-        let c2 = shift_list xs m l i in
-          (c1 :: (c2:closLang_exp list)))
-        | (fns_len,k,new_i,[]) -> []
-        | (fns_len,k,new_i,((n,x) :: rest)) ->
-        (let c = shift_sing x k (n + fns_len) new_i in
-          (n,c) :: shift_letrec fns_len k new_i rest)`;;
+let shift_sing_def = cake_define_list
+  [`shift_sing (Var t v:closLang_exp) m l i =
+         Var t (get_var m l i v)`;
+   `shift_sing (If t x1 x2 x3:closLang_exp) m l i =
+         (let c1 = shift_sing x1 m l i in
+         let c2 = shift_sing x2 m l i in
+         let c3 = shift_sing x3 m l i in
+           (If t c1 c2 c3))`;
+   `shift_sing (Let t xs x2:closLang_exp) m l i =
+         (let c1 = shift_list xs m l i in
+         let c2 = shift_sing x2 m (l + LENGTH xs) i in
+           (Let t c1 c2))`;
+   `shift_sing (Raise t x1:closLang_exp) m l i =
+         (let (c1) = shift_sing x1 m l i in
+           (Raise t c1))`;
+   `shift_sing (Tick t x1:closLang_exp) m l i =
+         (let c1 = shift_sing x1 m l i in
+           (Tick t c1))`;
+   `shift_sing (Op t op xs:closLang_exp) m l i =
+         (let c1 = shift_list xs m l i in
+           (Op t op c1))`;
+   `shift_sing (App t loc_opt x1 xs2:closLang_exp) m l i =
+         (let c1 = shift_sing x1 m l i in
+         let c2 = shift_list xs2 m l i in
+           (App t loc_opt c1 c2))`;
+   `shift_sing (Fn t loc vs_opt num_args x1:closLang_exp) m l i =
+         (let k = m + l in
+         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         let live = FILTER (\n. n < k) vs in
+         let vars = MAP (get_var m l i) live in
+         let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
+           (Fn t loc (SOME vars) num_args c1))`;
+   `shift_sing (Letrec t loc vsopt fns x1:closLang_exp) m l i =
+         (let vs = match vsopt with NONE -> [] | SOME x -> x in
+         let k = m + l in
+         let live = FILTER (\n. n < k) vs in
+         let vars = MAP (get_var m l i) live in
+         let new_i = shifted_env 0 live in
+         let fns_len = LENGTH fns in
+         let cs = shift_letrec fns_len k new_i fns in
+         let c1 = shift_sing x1 m (l + LENGTH fns) i in
+           (Letrec t loc (SOME vars) cs c1))`;
+   `shift_sing (Handle t x1 x2:closLang_exp) m l i =
+         (let c1 = shift_sing x1 m l i in
+         let c2 = shift_sing x2 m (l + 1) i in
+           (Handle t c1 c2))`;
+   `shift_sing (Call t ticks dest xs:closLang_exp) m l i =
+         (let c1 = shift_list xs m l i in
+           (Call t ticks dest c1))`;
+   `shift_list [] (m:num) (l:num) (i:num spt) = []`;
+   `shift_list ((x:closLang_exp) :: xs) m l i =
+         (let c1 = shift_sing x m l i in
+         let c2 = shift_list xs m l i in
+           (c1 :: (c2:closLang_exp list)))`;
+   `shift_letrec fns_len k new_i [] = []`;
+   `shift_letrec fns_len k new_i ((n,x) :: rest) =
+         (let c = shift_sing x k (n + fns_len) new_i in
+           (n,c) :: shift_letrec fns_len k new_i rest)`];;
 
 (* main functions *)
 

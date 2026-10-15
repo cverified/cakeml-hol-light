@@ -31,7 +31,7 @@ let lexer_fun_symbol_INDUCT,lexer_fun_symbol_RECURSION = define_datatype
 let mkCharS_def = cake_define
   `mkCharS x1 =
         match x1 with
-          (StringS s) -> (if LENGTH s = 1 then CharS (HD s) else
+          StringS s -> (if LENGTH s = 1 then CharS (HD s) else
             ErrorS)
         | _1 -> ErrorS`;;
 
@@ -52,13 +52,13 @@ let isSymbol_def = cake_define
 let next_loc_def = cake_define
   `next_loc n x =
       match x with
-        (POSN r c) -> POSN r (c + n)
+        POSN r c -> POSN r (c + n)
       | x -> x`;;
 
 let next_line_def = cake_define
   `next_line x =
       match x with
-        (POSN r c) -> POSN (r + 1) 0
+        POSN r c -> POSN (r + 1) 0
       | x -> x`;;
 
 let read_char_as_3digits_def = cake_define

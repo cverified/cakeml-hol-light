@@ -29,13 +29,13 @@ needs "lib/sptree.ml";;
 let dest_word_loc_def = cake_define
   `dest_word_loc x1 =
         match x1 with
-          (Loc n _1) -> SOME n
+          (Loc n _1:semanticPrimitives_v) -> SOME n
         | (_2:'a word_loc) -> NONE`;;
 
 let dest_result_loc_def = cake_define
   `dest_result_loc x1 =
         match x1 with
-          (SOME (Result w ns)) ->
+          SOME (Result w ns) ->
        BIGUNION (set_of_list (MAP (\x. match (dest_word_loc x) with
          NONE -> {} | SOME x -> {x}) ns))
         | (SOME (Exception w (Loc n n0))) -> {n}

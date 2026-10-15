@@ -82,43 +82,42 @@ let _ = size_thms "pat";;
 let pmatch_def = cake_define_wf
   `MEASURE (\x. match x with INL (r,p,_5) -> pat_size p | INR (r,ps,_6)
   -> list_size pat_size ps)`
-  `pattern_semantics_pmatch refs ps t =
-        match (ps,t) with
-          (Any,t) -> PMatchSuccess
-        | ((Lit l),(Litv l')) ->
-        (if ~lit_same_type l l' then PTypeFailure else
-        if l = l' then PMatchSuccess else PMatchFailure)
-        | ((Cons (SOME (tag,siblings)) pargs),(Term (SOME t) targs))
-          ->
-       (if tag = t /\ LENGTH pargs = LENGTH targs then
-         pattern_semantics_pmatch_list refs pargs targs else
-       if is_sibling (t,LENGTH targs) siblings then PMatchFailure
-         else PTypeFailure)
-        | ((Cons NONE pargs),(Term NONE targs)) ->
-       pattern_semantics_pmatch_list refs pargs targs
-        | ((Ref p),(RefPtr r)) ->
-       (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v ->
-         pattern_semantics_pmatch refs p v)
-        | ((Or p1 p2),t) ->
-       (match pattern_semantics_pmatch refs p1 t with
-          PMatchSuccess -> (match pattern_semantics_pmatch refs p2 t
-            with
-                              PTypeFailure -> PTypeFailure | _1 ->
-                                PMatchSuccess) | PMatchFailure ->
-                                pattern_semantics_pmatch refs p2 t |
-                                PTypeFailure -> PTypeFailure)
-        | (_2,_3) -> PTypeFailure
-        | ([],[]) -> PMatchSuccess
-        | ([],ts) -> PTypeFailure
-        | (ps,[]) -> PTypeFailure
-        | ((p :: ps),(t :: ts)) ->
-       (match pattern_semantics_pmatch refs p t with
-         PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts |
-           PMatchFailure -> (match pattern_semantics_pmatch_list refs ps
-           ts with
-                              PTypeFailure -> PTypeFailure | _4 ->
-                                PMatchFailure) | PTypeFailure ->
-                                PTypeFailure)`;;
+  `(pattern_semantics_pmatch refs Any t = PMatchSuccess) /\
+   (pattern_semantics_pmatch refs (Lit l) (Litv l') =
+      (if ~lit_same_type l l' then PTypeFailure else
+      if l = l' then PMatchSuccess else PMatchFailure)) /\
+   (pattern_semantics_pmatch refs (Cons (SOME (tag,siblings)) pargs)
+     (Term (SOME t) targs) =
+     (if tag = t /\ LENGTH pargs = LENGTH targs then
+       pattern_semantics_pmatch_list refs pargs targs else
+     if is_sibling (t,LENGTH targs) siblings then PMatchFailure else
+       PTypeFailure)) /\
+   (pattern_semantics_pmatch refs (Cons NONE pargs) (Term NONE targs)
+     =
+     pattern_semantics_pmatch_list refs pargs targs) /\
+   (pattern_semantics_pmatch refs (Ref p) (RefPtr r) =
+     (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v ->
+       pattern_semantics_pmatch refs p v)) /\
+   (pattern_semantics_pmatch refs (Or p1 p2) t =
+     (match pattern_semantics_pmatch refs p1 t with
+        PMatchSuccess -> (match pattern_semantics_pmatch refs p2 t
+          with
+                            PTypeFailure -> PTypeFailure | _1 ->
+                              PMatchSuccess) | PMatchFailure ->
+                              pattern_semantics_pmatch refs p2 t |
+                              PTypeFailure -> PTypeFailure)) /\
+   (pattern_semantics_pmatch refs _2 _3 = PTypeFailure) /\
+   (pattern_semantics_pmatch_list refs [] [] = PMatchSuccess) /\
+   (pattern_semantics_pmatch_list refs [] ts = PTypeFailure) /\
+   (pattern_semantics_pmatch_list refs ps [] = PTypeFailure) /\
+   (pattern_semantics_pmatch_list refs (p :: ps) (t :: ts) =
+     (match pattern_semantics_pmatch refs p t with
+       PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts |
+         PMatchFailure -> (match pattern_semantics_pmatch_list refs ps
+         ts with
+                            PTypeFailure -> PTypeFailure | _4 ->
+                              PMatchFailure) | PTypeFailure ->
+                              PTypeFailure))`;;
 hol4_overload "pmatch" "pattern_semantics_pmatch";;
 hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
@@ -137,7 +136,7 @@ let match_def = cake_define
 let dt_test_def = cake_define
   `dt_test x1 x2 =
       match (x1,x2) with
-        ((TagLenEq t l),(Term (SOME c) args)) ->
+        (TagLenEq t l,Term (SOME c) args) ->
      SOME (t = c /\ l = LENGTH args)
       | ((LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)

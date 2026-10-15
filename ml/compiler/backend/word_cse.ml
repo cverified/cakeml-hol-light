@@ -299,7 +299,7 @@ let fpToNumList_def = cake_define_list
 let instToNumList_def = cake_define
   `instToNumList x1 =
       match x1 with
-        (Const r w) -> [2; wordToNum w]
+        (Const r w:asm_inst) -> [2; wordToNum w]
       | (Arith a) -> 3 :: (arithToNumList a)
       | (FP fp) -> 4 :: (fpToNumList fp)
       | _1 -> [1]`;;
@@ -344,7 +344,7 @@ let arithWrites_def = cake_define
 let arithReads_def = cake_define
   `arithReads x1 =
       match x1 with
-        (Binop _45 _46 r2 (Reg r3)) -> [r2; r3]
+        Binop _45 _46 r2 (Reg r3) -> [r2; r3]
       | (Binop _47 _48 r2 (Imm _49)) -> [r2]
       | (Shift _50 _51 r2 (Reg r3)) -> [r2; r3]
       | (Shift _52 _53 r2 (Imm _54)) -> [r2]
@@ -361,7 +361,7 @@ let arithReads_def = cake_define
 let fpWrites_def = cake_define
   `fpWrites x1 =
       match x1 with
-        (FPLess r _65 _66) -> [r]
+        FPLess r _65 _66 -> [r]
       | (FPLessEqual r _67 _68) -> [r]
       | (FPEqual r _69 _70) -> [r]
       | (FPMovToReg r1 r2 _71) -> [r1; r2]
@@ -441,7 +441,7 @@ let add_to_load_aux_def = cake_define
 let can_mem_arith_def = cake_define
   `can_mem_arith x1 =
       match x1 with
-        (Binop _73 _74 r1 (Reg r2)) -> (ODD r1 /\ ODD r2)
+        Binop _73 _74 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
       | (Binop _75 _76 r1 (Imm _77)) -> ODD r1
       | (Div _78 r1 r2) -> (ODD r1 /\ ODD r2)
       | (Shift _79 _80 r (Imm _81)) -> ODD r

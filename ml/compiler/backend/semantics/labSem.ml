@@ -60,7 +60,7 @@ let labSem_state_FIELDS = define_record "labSem_state"
 let is_Label_def = cake_define
   `is_Label x1 =
         match x1 with
-          (Label _1 _2 _3) -> T
+          Label _1 _2 _3 -> T
         | _4 -> F`;;
 
 let asm_fetch_aux_def = cake_define
@@ -249,7 +249,7 @@ hol4_overload "addr" "labSem_addr";;
 let is_Loc_def = cake_define
   `is_Loc x1 =
         match x1 with
-          (Loc _28 _29) -> T
+          (Loc _28 _29:asm) -> T
         | _30 -> F`;;
 
 let mem_store_def = cake_define

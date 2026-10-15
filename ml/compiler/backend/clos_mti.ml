@@ -17,7 +17,7 @@ needs "semantics/ast.ml";;
 let collect_args_def = cake_define
   `collect_args max_app num_args e =
         match e with
-          (Fn t NONE NONE num_args' e) ->
+          Fn t NONE NONE num_args' e ->
        (if num_args + num_args' <= max_app then
          collect_args max_app (num_args + num_args') e else
          (num_args,Fn t NONE NONE num_args' e))
@@ -30,7 +30,7 @@ val collect_args_ind = theorem "collect_args_ind";
 let collect_apps_def = cake_define
   `collect_apps max_app args e =
         match e with
-          (App tra NONE e es) ->
+          (App tra NONE e es:closLang_exp) ->
        (if LENGTH args + LENGTH es <= max_app then
          collect_apps max_app (args ++ es) e else
          (args,App tra NONE e es))

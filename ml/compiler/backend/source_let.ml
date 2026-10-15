@@ -21,19 +21,19 @@ needs "semantics/evaluate.ml";;
 let dest_Let_def = cake_define
   `dest_Let x1 =
       match x1 with
-        (Let opt x y) -> SOME (opt,x,y)
+        Let opt x y -> SOME (opt,x,y)
       | _1 -> NONE`;;
 
 let dest_Letrec_def = cake_define
   `dest_Letrec x1 =
       match x1 with
-        (Letrec funs x) -> SOME (funs,x)
+        Letrec funs x -> SOME (funs,x)
       | _2 -> NONE`;;
 
 let lift_let_def = cake_define
   `lift_let x1 =
         match x1 with
-          (Dlet l p x) ->
+          Dlet l p x ->
        (match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l Pany
          x,Dlet l p y) | SOME (SOME m,x,y) -> SOME (Dlet l (Pvar m)
          x,Dlet l p y) | NONE ->

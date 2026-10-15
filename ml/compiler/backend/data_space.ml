@@ -34,7 +34,7 @@ let part_space_req_def = cake_define_list
 let op_space_req_def = cake_define
   `op_space_req x1 l =
         match x1 with
-          (MemOp Ref) -> l + 1
+          MemOp Ref -> l + 1
         | (MemOp (MutCons tag k)) -> l + 1
         | (BlockOp (Cons _1)) -> (if l = 0 then 0 else l + 1)
         | (BlockOp (Build parts)) -> SUM (MAP part_space_req parts)
@@ -78,7 +78,7 @@ let pMakeSpace_def = cake_define
 let space_def = cake_define
   `space c =
         match c with
-          (MakeSpace k names) -> INR (k,names,Skip)
+          MakeSpace k names -> INR (k,names,Skip)
         | (Seq c1 c2) ->
         (let d1 = pMakeSpace (space c1) in
         let x2 = space c2 in

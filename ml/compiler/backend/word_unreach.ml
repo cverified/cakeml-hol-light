@@ -18,7 +18,7 @@ needs "semantics/ast.ml";;
 let dest_Seq_Move_def = cake_define
   `dest_Seq_Move x1 =
       match x1 with
-        (wordLang_Move n l) -> SOME (n,l,Skip)
+        wordLang_Move n l -> SOME (n,l,Skip)
       | (Seq (Move n l) rest) -> SOME (n,l,rest)
       | _1 -> NONE`;;
 

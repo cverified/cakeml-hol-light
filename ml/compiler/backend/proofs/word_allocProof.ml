@@ -55,7 +55,7 @@ hol4_overload "hide" "word_allocProof_hide";;
 let colouring_ok_def = cake_define
   `colouring_ok f prog live lt =
         match prog with
-          (Seq s1 s2) ->
+          (Seq s1 s2:live_tree) ->
        (let s2_live = get_live s2 live lt in
        let s1_live = get_live s1 s2_live lt in
          INJ f (domain s1_live) UNIV /\
@@ -1880,7 +1880,7 @@ let live_store_rel_def = cake_define
 let nlive_store_def = cake_define
   `nlive_store nlive x2 =
         match x2 with
-       (Op _2 ls) ->
+          Op _2 ls ->
          EVERY (nlive_store nlive) ls
         | (Lookup s) -> ~(
        s IN set_of_list nlive)

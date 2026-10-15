@@ -496,29 +496,45 @@ class Porter:
     self.ctx.defining = set()
 
   def con_type(self, nm):
-    """the type of a constructor, as the port writes it (the theory
-       is the one that the constructors of the definition agree on,
-       as in clause_clash)"""
-    for (t, ty), (cons, _) in self.db.datatypes.items():
-      if nm in cons and (not self.contys or t in self.contys):
-        return self.ctx.tyname(ty)
+    """the type of a constructor, as the port writes it.  Where the
+       name is ambiguous it is the one of the theory that comes
+       last among the ones in scope, which is the one HOL4's
+       overload resolution takes"""
+    t, n = nm.split('$') if '$' in nm else (None, nm)
+    if t:
+      ts = [t]
+    else:
+      anc = self.db.ancestors(self.thy) | {self.thy}
+      ts = [x for x, k in self.db.defs.get(n, [])
+            if k == 'con' and x in anc]
+      if self.contys:
+        ts = [x for x in ts if x in self.contys] or ts
+    if not ts: return None
+    rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
+    t = max(ts, key=lambda x: rank.get(x, -1))
+    for (t2, ty), (cons, _) in self.db.datatypes.items():
+      if t2 == t and n in cons: return self.ctx.tyname(ty)
     return None
 
-  def annotate(self, cl):
-    """the type of the pattern of a clause that is a quotation of
-       its own: without it the clause can typecheck differently
-       from the others (the name of a constructor is ambiguous)"""
-    e = cl
-    while e.kind == 'paren': e = e.e
-    if not (e.kind == 'infix' and e.op in ('=', '<=>')): return cl
-    _, args = hterm.strip_app(e.l)
+  def ambiguous_con(self, nm):
+    """is this the name of a constructor of more than one theory in
+       scope, so that only the type says which one it is?"""
+    if '$' in nm: return False
+    anc = self.db.ancestors(self.thy) | {self.thy}
+    return len([x for x, k in self.db.defs.get(nm, [])
+                if k == 'con' and x in anc]) > 1
+
+  def annotate_pat(self, p, ambiguous=False):
+    """the pattern with the type of its constructor on it"""
     done = [False]
     def go(p):
       if done[0]: return p
       while p.kind == 'paren': p = p.e
       if p.kind == 'app':
         h, _ = hterm.strip_app(p)
-        if h.kind == 'id' and h.name in self.ctx.cons:
+        if ambiguous and not self.ambiguous_con(h.name): return p
+        if h.kind == 'id' and (h.name in self.ctx.cons or
+                               '$' in h.name):
           ty = self.con_type(h.name)
           if ty:
             done[0] = True
@@ -529,13 +545,24 @@ class Porter:
       if p.kind == 'list':
         p.items = [go(a) for a in p.items]
         return p
-      if p.kind == 'infix' and p.op == '::':
+      if p.kind == 'infix' and p.op in ('::', ','):
         p.l = go(p.l); p.r = go(p.r)
         return p
       return p
+    return go(p)
+
+  def annotate(self, cl):
+    """the type of the pattern of a clause that is a quotation of
+       its own: without it the clause can typecheck differently
+       from the others (the name of a constructor is ambiguous)"""
+    e = cl
+    while e.kind == 'paren': e = e.e
+    if not (e.kind == 'infix' and e.op in ('=', '<=>')): return cl
+    _, args = hterm.strip_app(e.l)
     e.l = hterm.strip_app(e.l)[0]
-    for a in args: e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
-                                    arg=go(a))
+    for a in args:
+      e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
+                       arg=self.annotate_pat(a))
     return cl
 
   def clause_form(self, body):
@@ -658,6 +685,8 @@ class Porter:
     # the right hand sides below
     heads = set(self.ctx.name(h.name) for h, _, _ in cls
                 if h.kind == 'id')
+    # a match is one clause, so it cannot define a family
+    if len(heads) > 1: return False
     # a recursive definition keeps its clauses: the termination
     # machinery does not look inside a match
     for _, _, r in cls:
@@ -682,6 +711,9 @@ class Porter:
       toks = hterm.tokenize(hol4.strip_comments(body))
       cls = hterm.clauses_of(hterm.Parser(toks, self.ctx).parse())
     except Exception:
+      return False
+    # a match is one clause, so it cannot define a family
+    if len({h.name for h, _, _ in cls if h.kind == 'id'}) > 1:
       return False
     global CONS
     CONS = self.ctx.cons
@@ -729,6 +761,12 @@ class Porter:
       sub = {args[i].name: names[i] for i in range(n)
              if i not in pats and args[i].kind == 'id'
              and args[i].name not in self.ctx.cons}
+      # the pattern of the first arm carries the type, so that an
+      # ambiguous constructor in it is resolved as HOL4 does
+      if not arms:
+        args = list(args)
+        for i in pats:
+          args[i] = self.annotate_pat(args[i], True)
       pat = ','.join(pr.pr(args[i], 60) for i in pats)
       if len(pats) > 1: pat = '(' + pat + ')'
       # the body of an arm needs its parentheses: a match, a let

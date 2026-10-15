@@ -20,14 +20,14 @@ let dummy_def = cake_define
 let is_rec_def = cake_define
   `bvi_tailrec_is_rec name x2 =
         match x2 with
-          (bvi_Call _1 d _2 NONE) -> d = SOME name
+          bvi_Call _1 d _2 NONE -> d = SOME name
         | _3 -> F`;;
 hol4_overload "is_rec" "bvi_tailrec_is_rec";;
 
 let is_const_def = cake_define
   `bvi_tailrec_is_const x1 =
         match x1 with
-          (IntOp (Const i)) -> small_enough_int i
+          IntOp (Const i) -> small_enough_int i
         | _4 -> F`;;
 hol4_overload "is_const" "bvi_tailrec_is_const";;
 
@@ -66,7 +66,7 @@ let from_op_def = cake_define
 let op_eq_def = cake_define
   `op_eq x1 x2 =
         match (x1,x2) with
-          (Plus,(Op op xs)) -> op = IntOp Add
+          (Plus,(Op op xs:bvi_exp)) -> op = IntOp Add
         | (Times,(Op op xs)) -> op = IntOp Mult
         | (Append,(Op op xs)) -> op = BlockOp ListAppend
         | (_6,_7) -> F`;;
@@ -83,13 +83,13 @@ let id_from_op_def = cake_define
 let index_of_def = cake_define
   `index_of x1 =
         match x1 with
-          (bvi_Var i) -> SOME i
+          bvi_Var i -> SOME i
         | _8 -> NONE`;;
 
 let args_from_def = cake_define
   `args_from x1 =
         match x1 with
-          (bvi_Call t (SOME d) as hdl) -> SOME (t,d,as,hdl)
+          bvi_Call t (SOME d) as hdl -> SOME (t,d,as,hdl)
         | _9 -> NONE`;;
 
 let get_bin_args_def = cake_define
@@ -142,7 +142,7 @@ let term_ok_any_def = cake_define_wf
   `MEASURE (exp_size o SND o SND)`
   `term_ok_any ts list expr =
         match expr with
-          (Var i) ->
+          (Var i:bvi_exp) ->
        (if ~list then i < LENGTH ts else if i < LENGTH ts then EL i
          ts = List else F)
         | (Op op xs) ->
@@ -236,8 +236,7 @@ let update_context_def = cake_define
 let arg_ty_def = cake_define
   `arg_ty x1 =
       match x1 with
-        (IntOp (Const i)) -> (if small_enough_int i then Int else
-          Any)
+        IntOp (Const i) -> (if small_enough_int i then Int else Any)
       | (IntOp Add) -> Int
       | (IntOp Sub) -> Int
       | (IntOp Mult) -> Int
@@ -253,7 +252,7 @@ let arg_ty_def = cake_define
 let op_ty_def = cake_define
   `op_ty x1 =
         match x1 with
-          (IntOp Add) -> Int
+          IntOp Add -> Int
         | (IntOp Sub) -> Int
         | (IntOp Mult) -> Int
         | (IntOp Div) -> Int
@@ -342,10 +341,10 @@ let scan_expr_sing_def = cake_define_list
         (let ty = if n < LENGTH ts then EL n ts else Any in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (If xi xt xe:bvi_exp) =
-        (let (ti,tyi,_30,oi) = scan_expr_sing ts loc xi in
-        let (tt,ty1,_31,ot) = scan_expr_sing ti loc xt in
-        let (te,ty2,_32,oe) = scan_expr_sing ti loc xe in
-        let op = match ot with NONE -> oe | _33 -> ot in
+        (let (ti,tyi,_26,oi) = scan_expr_sing ts loc xi in
+        let (tt,ty1,_27,ot) = scan_expr_sing ti loc xt in
+        let (te,ty2,_28,oe) = scan_expr_sing ti loc xe in
+        let op = match ot with NONE -> oe | _29 -> ot in
         let ty = match op with
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
                      ty1 (decide_ty ty2 (op_type opr)) in
@@ -355,11 +354,11 @@ let scan_expr_sing_def = cake_define_list
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
           in
-        let (tu,ty,_34,op) = scan_expr_sing (tt ++ tr) loc x in
+        let (tu,ty,_30,op) = scan_expr_sing (tt ++ tr) loc x in
           (DROP (LENGTH ys) tu,ty,F,op))`;
    `scan_expr_sing ts loc (Raise x:bvi_exp) = (ts,Any,F,NONE)`;
    `scan_expr_sing ts loc (Tick x:bvi_exp) = scan_expr_sing ts loc x`;
-   `scan_expr_sing ts loc (Force _35 n:bvi_exp) =
+   `scan_expr_sing ts loc (Force _31 n:bvi_exp) =
         (let ty = if n < LENGTH ts then EL n ts else Any in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (Call t d xs h:bvi_exp) = (ts,Any,F,NONE)`;
@@ -382,7 +381,7 @@ let scan_expr_sing_def = cake_define_list
                       (ts,Any,F,NONE)) else if op = BlockOp (Cons 0)
                         /\ xs = [] then
                 (ts,List,F,NONE) else
-                (ts,Any,F,NONE)) | _36 ->
+                (ts,Any,F,NONE)) | _32 ->
               (if IS_SOME (check_op ts opr loc (Op op xs)) then
                 (ts,opt,F,SOME opr) else if term_ok ts opt (Op op
                   xs) then
@@ -398,15 +397,15 @@ let scan_expr_sing_def = cake_define_list
 let push_call_def = cake_define
   `push_call n op acc exp x5 =
         match x5 with
-          (SOME (ticks,dest,args,handler)) ->
+          SOME (ticks,dest,args,handler) ->
        Call ticks (SOME n) (args ++ [apply_op op (Var acc) exp])
          handler
-        | _37 -> dummy`;;
+        | _33 -> dummy`;;
 
 let rewrite_def = cake_define
   `rewrite loc next opr acc ts exp =
         match exp with
-          (Var n) -> (F,Var n)
+          (Var n:bvi_exp) -> (F,Var n)
         | (If x1 x2 x3) ->
        (let t1 = FST (HD (scan_expr ts loc [x1])) in
        let (r2,y2) = rewrite loc next opr acc t1 x2 in
@@ -452,19 +451,18 @@ let has_rec_def = cake_define
 let has_rec1_def = cake_define
   `has_rec1 loc x = has_rec loc [x]`;;
 
-let has_rec_sing_def = cake_define
-  `has_rec_sing loc x =
-        match x with
-          (If x1 x2 x3) ->
-       (if has_rec_sing loc x2 then T else has_rec_sing loc x3)
-        | (Let xs x) -> has_rec_sing loc x
-        | (Tick x) -> has_rec_sing loc x
-        | (Op op xs) ->
-       (if EXISTS (is_rec loc) xs then T else has_rec_list loc xs)
-        | x -> F
-        | [] -> F
-        | (x :: xs) ->
-       (if has_rec_sing loc x then T else has_rec_list loc xs)`;;
+let has_rec_sing_def = cake_define_list
+  [`has_rec_sing loc (If x1 x2 x3:bvi_exp) =
+        (if has_rec_sing loc x2 then T else has_rec_sing loc x3)`;
+   `has_rec_sing loc (Let xs x:bvi_exp) = has_rec_sing loc x`;
+   `has_rec_sing loc (Tick x:bvi_exp) = has_rec_sing loc x`;
+   `has_rec_sing loc (Op op xs:bvi_exp) =
+        (if EXISTS (is_rec loc) xs then T else has_rec_list loc
+          xs)`;
+   `has_rec_sing loc x = F`;
+   `has_rec_list loc [] = F`;
+   `has_rec_list loc (x :: xs) =
+        (if has_rec_sing loc x then T else has_rec_list loc xs)`];;
 
 (* HOL4 ML code, not ported:
 val test1_tm = ``Let [] (Call 0 (SOME 0) [] NONE)``
@@ -479,7 +477,7 @@ let check_exp_def = cake_define
      (if ~has_rec1 loc exp then NONE else
        let context = REPLICATE arity Any in
          match scan_expr context loc [exp] with
-           [] -> NONE | (ts,ty,r,opr) :: _38 ->
+           [] -> NONE | (ts,ty,r,opr) :: _34 ->
              (match opr with
                NONE -> NONE | SOME op ->
                  (if ~(ty = op_type op) then NONE else opr)))`;;

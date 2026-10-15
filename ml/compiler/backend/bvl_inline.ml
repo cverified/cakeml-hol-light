@@ -277,7 +277,7 @@ hol4_overload "var_list" "bvl_inline_var_list";;
 let dest_op_def = cake_define
   `bvl_inline_dest_op x1 args =
       match x1 with
-        (bvl_Op op xs) -> (if var_list 0 xs args then SOME op else
+        bvl_Op op xs -> (if var_list 0 xs args then SOME op else
           NONE)
       | _11 -> NONE`;;
 hol4_overload "dest_op" "bvl_inline_dest_op";;

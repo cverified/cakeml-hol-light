@@ -218,7 +218,7 @@ let pure_def = cake_define
 let assign_get_code_label_def = cake_define
   `assign_get_code_label x =
         match x with
-          (closLang_Label x) -> {x}
+          closLang_Label x -> {x}
         | x -> {}`;;
 
 new_type_abbrev("clos_prog",`: closLang_exp

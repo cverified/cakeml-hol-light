@@ -9,6 +9,7 @@
 
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
+needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_names.ml";;
@@ -21,7 +22,8 @@ needs "semantics/typeSystem.ml";;
 let clock_neutral_def = cake_define
   `clock_neutral r =
         match r with
-          (Seq p1 p2) -> clock_neutral p1 /\ clock_neutral p2
+          (Seq p1 p2:wordLang_prog) -> clock_neutral p1 /\
+            clock_neutral p2
         | (LocValue _1 _2 _3) -> T
         | (Halt _4) -> T
         | (Inst _5) -> T
@@ -32,7 +34,7 @@ let clock_neutral_def = cake_define
 let extract_labels_def = cake_define
   `stackProps_extract_labels x1 =
         match x1 with
-          (Call ret dest h) ->
+          (Call ret dest h:wordLang_prog) ->
        (match ret with
          NONE -> [] | SOME (ret_handler,_9,l1,l2) ->
          (let ret_rest = stackProps_extract_labels ret_handler in
@@ -96,7 +98,7 @@ let reg_imm_name_def = cake_define
 let arith_name_def = cake_define
   `arith_name x1 c =
         match (x1,c) with
-          ((Binop b r1 r2 ri),(c:'a asm_config)) ->
+          (Binop b r1 r2 ri,(c:'a asm_config)) ->
        (asm_config_two_reg_arith c ==> r1 = r2 \/ b = Or /\ ri = Reg
          r2) /\ reg_name r1 c /\
        reg_name r2 c /\ reg_imm_name (INL b) ri c
@@ -200,7 +202,7 @@ let addr_name_def = cake_define
 let inst_name_def = cake_define
   `inst_name c x2 =
         match x2 with
-          (Const r w) -> reg_name r c
+          (Const r w:asm_inst) -> reg_name r c
         | (Mem m r a) -> reg_name r c /\ addr_name m a c
         | (Arith x) -> arith_name x c
         | (FP f) -> fp_name f c
@@ -277,7 +279,7 @@ let stack_asm_remove_def = cake_define
 let alloc_arg_def = cake_define
   `alloc_arg x1 =
         match x1 with
-          (Alloc v) -> (v = 1)
+          (Alloc v:wordLang_prog) -> (v = 1)
         | ((Seq p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
         | ((If c r ri p1 p2):'a stackLang_prog) ->
@@ -300,7 +302,7 @@ let reg_bound_exp_def = cake_define_wf
   `MEASURE ((exp_size ARB) o FST)`
   `reg_bound_exp x1 k =
         match x1 with
-          (Var n) -> n < k
+          (Var n:wordLang_exp) -> n < k
         | (Load e) -> reg_bound_exp e k
         | (Shift _45 e1 e2) -> reg_bound_exp e1 k /\ reg_bound_exp e2
           k
@@ -311,7 +313,7 @@ let reg_bound_exp_def = cake_define_wf
 let reg_bound_inst_def = cake_define
   `reg_bound_inst x1 k =
         match x1 with
-          (Mem _49 n (Addr a _50)) -> n < k /\ a < k
+          Mem _49 n (Addr a _50) -> n < k /\ a < k
         | (Const n _51) -> n < k
         | (Arith (Shift _52 n r2 ri)) -> r2 < k /\ n < k /\ (match ri
           with Reg r -> r < k | _53 -> T)
@@ -338,7 +340,7 @@ let reg_bound_inst_def = cake_define
 let reg_bound_def = cake_define
   `reg_bound x1 k =
         match x1 with
-          (Halt v1) ->
+          (Halt v1:stackSem_result) ->
         v1 < k
         | (Raise v1) ->
         v1 < k
@@ -421,7 +423,7 @@ let call_args_def = cake_define
 let stack_get_handler_labels_def = cake_define
   `stack_get_handler_labels n x2 =
         match x2 with
-          (Call r d h) ->
+          (Call r d h:asm) ->
        (match r with SOME (x,_75,_76) -> stack_get_handler_labels n x
          UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
@@ -437,7 +439,7 @@ let stack_get_handler_labels_def = cake_define
 let get_code_labels_def = cake_define
   `stackProps_get_code_labels x1 =
         match x1 with
-          (Call r d h) ->
+          (Call r d h:asm) ->
        (match d with INL x -> {(x,0)} | _83 -> {}) UNION
        (match r with SOME (x,_84,_85) -> stackProps_get_code_labels x
          | _86 -> {}) UNION
@@ -477,7 +479,7 @@ let stack_good_handler_labels_def = cake_define
 let no_install_def = cake_define
   `stackProps_no_install x1 =
         match x1 with
-          (Call r d h) ->
+          (Call r d h:asm) ->
        ((match r with SOME (x,_99,_100) -> stackProps_no_install x |
          _101 -> T) /\
         (match h with SOME (x,_102,_103) -> stackProps_no_install x |
@@ -494,7 +496,7 @@ hol4_overload "no_install" "stackProps_no_install";;
 let no_shmemop_def = cake_define
   `no_shmemop x1 =
         match x1 with
-          (Call r d h) ->
+          (Call r d h:asm) ->
        ((match r with SOME (x,_114,_115) -> no_shmemop x | _116 -> T)
          /\
         (match h with SOME (x,_117,_118) -> no_shmemop x | _119 ->

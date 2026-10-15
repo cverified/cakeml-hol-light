@@ -59,15 +59,15 @@ let seq_assoc_def = cake_define
 let dest_Seq_def = cake_define
   `word_simp_dest_Seq p =
         match p with
-          (Seq p1 p2) -> (p1,(p2:'a wordLang_prog))
+          (Seq p1 p2:wordLang_prog) -> (p1,(p2:'a wordLang_prog))
         | p -> (Skip,p)`;;
 hol4_overload "dest_Seq" "word_simp_dest_Seq";;
 
 let dest_If_def = cake_define
   `dest_If x1 =
         match x1 with
-          (If x1 x2 x3 p1 p2) -> SOME (x1,x2,x3,p1,(p2:'a
-            wordLang_prog))
+          (If x1 x2 x3 p1 p2:wordLang_prog) -> SOME
+            (x1,x2,x3,p1,(p2:'a wordLang_prog))
         | _1 -> NONE`;;
 
 let dest_If_Eq_Imm_def = cake_define
@@ -118,7 +118,7 @@ let strip_const_def = cake_define
 let const_fp_exp_def = cake_define
   `const_fp_exp e cs =
         match e with
-          (Var v) ->
+          (Var v:wordLang_exp) ->
         (match lookup v cs with SOME x -> Const x | NONE -> Var v)
         | (Op op args) ->
         (let const_fp_args = MAP (\a. const_fp_exp a cs) args in
@@ -147,7 +147,7 @@ let const_fp_move_cs_def = cake_define
 let const_fp_inst_cs_def = cake_define
   `const_fp_inst_cs x1 cs =
         match x1 with
-          (Const r _13) -> delete r cs
+          (Const r _13:wordLang_exp) -> delete r cs
         | (Arith (Binop _14 r _15 _16)) -> delete r cs
         | (Arith (Shift _17 r _18 _19)) -> delete r cs
         | (Arith (AddCarry r1 _20 _21 r2)) -> delete r2 (delete r1
@@ -195,8 +195,8 @@ let drop_consts_def = cake_define
 let const_fp_loop_def = cake_define
   `const_fp_loop p cs =
         match p with
-          (Move pri moves) -> (Move pri moves,const_fp_move_cs moves
-            cs cs)
+          Move pri moves -> (Move pri moves,const_fp_move_cs moves cs
+            cs)
         | (Inst i) -> (Inst i,const_fp_inst_cs i cs)
         | (Assign v e) ->
         (let const_fp_e = const_fp_exp e cs in

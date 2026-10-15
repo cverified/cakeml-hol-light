@@ -26,8 +26,8 @@ needs "semantics/ast.ml";;
 let dest_simple_def = cake_define
   `dest_simple x1 =
         match x1 with
-          (bvl_Op (IntOp (Const i)) xs) -> (if NULL xs then SOME i
-            else NONE)
+          bvl_Op (IntOp (Const i)) xs -> (if NULL xs then SOME i else
+            NONE)
         | _1 -> NONE`;;
 
 let case_op_const_def = cake_define
@@ -144,7 +144,7 @@ end
 let dest_EqualInt_def = cake_define
   `dest_EqualInt x1 =
       match x1 with
-        (BlockOp (EqualConst (Int i))) -> SOME i
+        BlockOp (EqualConst (Int i)) -> SOME i
       | _22 -> NONE`;;
 
 let SmartOp1_def = cake_define

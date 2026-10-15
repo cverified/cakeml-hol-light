@@ -418,7 +418,7 @@ let word_tc_def = cake_define
 let op_to_string_def = cake_define
   `op_to_string x1 =
         match x1 with
-          (Shift _3 _4 _5) -> ((implode "Shift"),1)
+          Shift _3 _4 _5 -> ((implode "Shift"),1)
         | Equality -> ((implode "Equality"),2)
         | (Arith a ty) ->
         ((implode "Arith"),

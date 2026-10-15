@@ -130,7 +130,7 @@ let ThunkBlock_def = cake_define
 let ref_ptr_annot_def = cake_define
   `ref_ptr_annot conf x2 =
       match x2 with
-        (SOME (MutBlock tg fin l c r)) ->
+        SOME (MutBlock tg fin l c r) ->
      (Word (ptr_bits conf tg (LENGTH l + 1 + LENGTH r)):'a word_loc)
       | _1 -> Word (n2w 0)`;;
 
@@ -260,13 +260,13 @@ let v_all_ts_def = cake_define_wf
   `MEASURE (v_size)`
   `v_all_ts x1 =
       match x1 with
-        (Block ts _13 xs) -> ts :: FLAT (MAP v_all_ts xs)
+        (Block ts _13 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
       | _14 -> []`;;
 
 let find_ref_def = cake_define
   `find_ref x1 x =
       match x1 with
-        (ValueArray l) -> MEM x l
+        (ValueArray l:bvlSem_ref) -> MEM x l
       | (Thunk m v) -> (v = x)
       | (MutBlock tg fin l c r) -> MEM x (l ++ [c] ++ r)
       | _15 -> F`;;
@@ -284,8 +284,8 @@ let be_ok_def = cake_define
 let v_all_vs_def = cake_define
   `v_all_vs x1 =
       match x1 with
-        (Block ts tag l :: xs) -> (Block ts tag l :: v_all_vs l) ++
-          v_all_vs xs
+        ((Block ts tag l:dataSem_v) :: xs) -> (Block ts tag l ::
+          v_all_vs l) ++ v_all_vs xs
       | (x :: xs) -> x :: v_all_vs xs
       | [] -> []`;;
 
@@ -342,7 +342,7 @@ let isMutTag_def = cake_define
 let isRef_def = cake_define
   `isRef x1 =
       match x1 with
-        (DataElement ys l (tag,qs)) -> isMutTag tag
+        DataElement ys l (tag,qs) -> isMutTag tag
       | _16 -> F`;;
 
 let gen_start_ok_def = cake_define
@@ -682,7 +682,7 @@ let thunk_deref_def = cake_define
 let heap_el_def = cake_define
   `heap_el x1 n heap =
         match x1 with
-          (Pointer a u) ->
+          Pointer a u ->
        (match heap_lookup a heap with SOME (DataElement xs l d) ->
            (if n < LENGTH xs then (EL n xs,T) else (ARB,F)) | _24 ->
              (ARB,F))
@@ -740,7 +740,7 @@ let get_addr_def = cake_define
 let word_addr_def = cake_define
   `word_addr conf x2 =
         match x2 with
-          (Data (Loc l1 l2)) -> Loc l1 0
+          (Data (Loc l1 l2):heap_address) -> Loc l1 0
         | (Data (Word v)) -> Word (v && (--(n2w 1)))
         | (Pointer n w) -> Word (get_addr conf n w)`;;
 
@@ -804,7 +804,7 @@ let word_heap_def = cake_define
 let gen_starts_in_store_def = cake_define
   `gen_starts_in_store c x2 x3 =
       match (x2,x3) with
-        ((GenState _27 gen_starts),(SOME (Word w))) ->
+        (GenState _27 gen_starts,SOME (Word w)) ->
      (!gen_sizes. data_to_word_config_gc_kind
         c = Generational gen_sizes ==>
         LENGTH gen_starts = LENGTH gen_sizes /\
@@ -1034,7 +1034,7 @@ val good_dimindex_def = good_dimindex_def;
 let v_same_type_def = cake_define
   `v_same_type x1 x2 =
         match (x1,x2) with
-          ((Number _35),(Number _36)) -> T
+          ((Number _35:dataSem_v),(Number _36:dataSem_v)) -> T
         | ((Word64 _37),(Word64 _38)) -> T
         | ((Block _39 t1 l1),(Block _40 t2 l2)) -> (t1 = t2 /\ LENGTH
           l1 = LENGTH l2 ==> LIST_REL v_same_type l1 l2)
@@ -1049,8 +1049,8 @@ let v_depth_def = cake_define_wf
   `MEASURE v_size`
   `v_depth x1 =
         match x1 with
-          (Block _49 _50 ls) -> (if NULL ls then 0 else 1) + MAX_LIST
-            (MAP v_depth ls)
+          (Block _49 _50 ls:dataSem_v) -> (if NULL ls then 0 else 1)
+            + MAX_LIST (MAP v_depth ls)
         | _51 -> 0`;;
 
 (* HOL4 ML code, not ported:
@@ -1069,38 +1069,39 @@ let elements_list_def = cake_define
 val elements_list_ind = theorem"elements_list_ind";
 *)
 
-let vb_eq_size_def = cake_define
-  `vb_eq_size refs x2 x3 =
-        match (x2,x3) with
-          ((Block _52 t1 l1),(Block _53 t2 l2)) ->
-        (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
-          isClos t2 l2 then SOME ((1:num),T) else NONE else if (t1 = t2)
-          /\ (LENGTH l1 = LENGTH l2) then OPTION_MAP (\(n,b). (n + 1,b))
-          (vb_eq_size_list refs l1 l2) else SOME (1,F))
-        | ((RefPtr b1 n1),(RefPtr b2 n2)) ->
-        (if b1 /\ b2 then
-          (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
-             (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) -> SOME
-               (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_54) -> NONE |
-               (_55,SOME (ByteArray T bs2)) -> NONE | _56 -> SOME (1,(n1
-               = n2))) else NONE)
-        | ((Number n1),(Number n2)) -> SOME (1,(n1 = n2))
-        | ((Word64 w1),(Word64 w2)) -> SOME (1,(w1 = w2))
-        | (_57,_58) -> NONE
-        | ([],[]) -> SOME (0,T)
-        | ([],_59) -> SOME (0,F)
-        | (_60,[]) -> SOME (0,F)
-        | ((v1 :: vs1),(v2 :: vs2)) ->
-        (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
-          -> SOME (n + 1,F) | SOME (n,T) -> (
-          match vb_eq_size_list refs vs1 vs2 with NONE -> NONE |
-            SOME (m,b) -> SOME (m + n + 1,b)))`;;
+let vb_eq_size_def = cake_define_list
+  [`vb_eq_size refs (Block _52 t1 l1:dataSem_v) (Block _53 t2
+  l2:dataSem_v) =
+         (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
+           isClos t2 l2 then SOME ((1:num),T) else NONE else if (t1 =
+           t2) /\ (LENGTH l1 = LENGTH l2) then OPTION_MAP (\(n,b). (n
+           + 1,b)) (vb_eq_size_list refs l1 l2) else SOME (1,F))`;
+   `vb_eq_size refs (RefPtr b1 n1:dataSem_v) (RefPtr b2 n2:dataSem_v) =
+         (if b1 /\ b2 then
+           (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
+              (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
+                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_54)
+                -> NONE | (_55,SOME (ByteArray T bs2)) -> NONE | _56
+                -> SOME (1,(n1 = n2))) else NONE)`;
+   `vb_eq_size _57 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
+  (1,(n1 = n2))`;
+   `vb_eq_size _58 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
+  (1,(w1 = w2))`;
+   `vb_eq_size _59 _60 _61 = NONE`;
+   `vb_eq_size_list _62 [] [] = SOME (0,T)`;
+   `vb_eq_size_list _63 [] _64 = SOME (0,F)`;
+   `vb_eq_size_list _65 _66 [] = SOME (0,F)`;
+   `vb_eq_size_list refs (v1 :: vs1) (v2 :: vs2) =
+         (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
+           -> SOME (n + 1,F) | SOME (n,T) -> (
+           match vb_eq_size_list refs vs1 vs2 with NONE -> NONE |
+             SOME (m,b) -> SOME (m + n + 1,b)))`];;
 
 let word_header_def = cake_define
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
-           match m a1 with Word x1 -> SOME (a1,x1) | _61 -> NONE))`;;
+           match m a1 with Word x1 -> SOME (a1,x1) | _67 -> NONE))`;;
 
 let fix_clock_def = cake_define
   `data_to_word_memoryProof_fix_clock ck l NONE = NONE /\
@@ -1148,7 +1149,7 @@ let word_eq_def = cake_define_wf
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with
                   NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
-                  (decode_length c h1),ck))) | _62 -> NONE)) /\
+                  (decode_length c h1),ck))) | _68 -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
@@ -1161,7 +1162,7 @@ let word_eq_def = cake_define_wf
                               word_eq_list c st dm m (l - 1) ck (w -
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
-                                bytes_in_word))) | _63 -> NONE))`;;
+                                bytes_in_word))) | _69 -> NONE))`;;
 
 (* HOL4 ML code, not ported:
 val word_eq_ind = theorem "word_eq_ind";
@@ -1447,7 +1448,7 @@ let block_drop_def = cake_define
       match (x1,v) with
         (0,v) -> SOME v
       | ((SUC n),(Block ts tag [h; vl])) -> block_drop n vl
-      | (_64,_65) -> NONE`;;
+      | (_70,_71) -> NONE`;;
 
 (* ---------------------------------------------------------------------
    ---- *)
@@ -1504,8 +1505,8 @@ let word_cond_add_def = cake_define
 let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
-        (Loc n m) -> (m = 0 /\ n IN code)
-      | _66 -> T`;;
+        (Loc n m:dataSem_v) -> (m = 0 /\ n IN code)
+      | _72 -> T`;;
 
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;

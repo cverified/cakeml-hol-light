@@ -125,7 +125,7 @@ let partial_app_label_table_loc_def = cake_define
 let compile_op_def = cake_define
   `clos_to_bvl_compile_op x =
       match x with
-        (BlockOp (Cons tag)) -> BlockOp (Cons (clos_tag_shift tag))
+        BlockOp (Cons tag) -> BlockOp (Cons (clos_tag_shift tag))
       | (BlockOp (ConsExtend tag)) -> BlockOp (ConsExtend
         (clos_tag_shift tag))
       | (BlockOp (TagEq tag)) -> BlockOp (TagEq (clos_tag_shift tag))

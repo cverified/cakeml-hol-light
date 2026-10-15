@@ -40,7 +40,7 @@ needs "semantics/ast.ml";;
 let op_space_reset_def = cake_define
   `op_space_reset x1 =
         match x1 with
-          (IntOp Add) -> T
+          IntOp Add -> T
         | (IntOp Sub) -> T
         | (IntOp Mult) -> T
         | (IntOp Div) -> T

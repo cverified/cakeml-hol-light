@@ -349,7 +349,7 @@ QED
 let known_op_def = cake_define
   `known_op op as g =
         match op with
-          (GlobOp (Global n)) ->
+          GlobOp (Global n) ->
       (if NULL as then
         match lookup n g with NONE -> (Other,g) | SOME x -> (x,g)
           else (Other,g))
@@ -384,13 +384,13 @@ let globalOpt_INDUCT,globalOpt_RECURSION = define_datatype
 let isGlobal_def = cake_define
   `isGlobal x1 =
         match x1 with
-          (GlobOp (Global _10)) -> T
+          GlobOp (Global _10) -> T
         | _11 -> F`;;
 
 let gO_destApx_def = cake_define
   `gO_destApx x1 =
         match x1 with
-          (Int i) -> gO_Int i
+          (Int i:val_approx) -> gO_Int i
         | (Tuple tag args) -> (if NULL args then gO_NullTuple tag
           else gO_None)
         | _12 -> gO_None`;;

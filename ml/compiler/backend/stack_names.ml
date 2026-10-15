@@ -55,7 +55,7 @@ let inst_find_name_def = cake_define
 let dest_find_name_def = cake_define
   `dest_find_name f x =
       match x with
-        (INR r) -> INR ((tlookup) f r)
+        INR r -> INR ((tlookup) f r)
       | x -> x`;;
 
 let comp_def = cake_define

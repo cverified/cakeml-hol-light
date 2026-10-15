@@ -61,21 +61,19 @@ let encode_str_def = cake_define
      toString (ORD c)]) s2))`;;
 
 let json_to_mlstring_def = cake_define
-  `json_to_mlstring obj =
-        match  with
-           ->
-       (match obj with Object mems -> List [(implode "{")] ++
-                   concat_with (MAP mem_to_string mems) (List
-                     [(implode ",")]) ++
-                   List [(implode "}")] | Array obs -> List [(implode
-                     "[")] ++
-                   concat_with (MAP json_to_mlstring obs) (List
-                     [(implode ",")]) ++
-                   List [(implode "]")] | String s -> List
-                     ([(implode) "\""; encode_str T s; (implode) "\""])
-                     | Int i -> List [toString i] | Bool b -> (if b then
-                     List [(implode "true")] else List [(implode
-                     "false")]) | Null -> List [(implode "null")])
-        |  -> (let (n,obj) = obj in
-           List [(implode) "\""; n; (implode) "\":"] ++
-             json_to_mlstring obj)`;;
+  `(json_to_mlstring obj =
+     (match obj with Object mems -> List [(implode "{")] ++
+                 concat_with (MAP mem_to_string mems) (List [(implode
+                   ",")]) ++
+                 List [(implode "}")] | Array obs -> List [(implode
+                   "[")] ++
+                 concat_with (MAP json_to_mlstring obs) (List
+                   [(implode ",")]) ++
+                 List [(implode "]")] | String s -> List ([(implode)
+                   "\""; encode_str T s; (implode) "\""]) | Int i ->
+                   List [toString i] | Bool b -> (if b then List
+                   [(implode "true")] else List [(implode "false")]) |
+                   Null -> List [(implode "null")])) /\
+   (mem_to_string n_obj = (let (n,obj) = n_obj in
+         List [(implode) "\""; n; (implode) "\":"] ++
+           json_to_mlstring obj))`;;

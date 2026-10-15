@@ -27,7 +27,7 @@ hol4_overload "var_list" "clos_letop_var_list";;
 let dest_op_def = cake_define
   `clos_letop_dest_op x1 args =
         match x1 with
-          (Op t op xs) -> (if var_list 0 xs args then SOME op else
+          Op t op xs -> (if var_list 0 xs args then SOME op else
             NONE)
         | _3 -> NONE`;;
 hol4_overload "dest_op" "clos_letop_dest_op";;
@@ -73,48 +73,43 @@ hol4_overload "let_op" "clos_letop_let_op";;
 val let_op_ind = theorem "let_op_ind";
 *)
 
-(* TERMINATION: wf_rel_tac ‘measure $ λx. case x of
-                            | INL x => exp_size x
-                            | INR(INL x) => list_size exp_size x
-                            | INR(INR x) => list_size (pair_size (λx. x)
-                              exp_size) x’ *)
-let let_op_sing_def = cake_define
-  `clos_letop_let_op_sing x1 =
-        match x1 with
-          (Var t v) -> (Var t v)
-        | (If t x1 x2 x3) ->
-        (If t ((clos_letop_let_op_sing (x1)))
-              ((clos_letop_let_op_sing (x2)))
-              ((clos_letop_let_op_sing (x3))))
-        | (Let t xs x2) ->
-        (let xs = clos_letop_let_op_list xs in
-        let x2 = (clos_letop_let_op_sing (x2)) in
-          match dest_op x2 xs with SOME op -> (Op t op xs) | NONE ->
-            (Let t xs x2))
-        | (Raise t x1) ->
-        (Raise t ((clos_letop_let_op_sing (x1))))
-        | (Handle t x1 x2) ->
-        (Handle t ((clos_letop_let_op_sing (x1)))
-                 ((clos_letop_let_op_sing (x2))))
-        | (Op t op xs) ->
-        (Op t op (clos_letop_let_op_list xs))
-        | (Tick t x) -> (Tick t ((clos_letop_let_op_sing (x))))
-        | (Call t ticks dest xs) -> (Call t ticks dest
-          (clos_letop_let_op_list xs))
-        | (App t loc_opt x1 xs) -> (App t loc_opt
-          ((clos_letop_let_op_sing (x1))) (clos_letop_let_op_list xs))
-        | (Letrec t loc_opt vs fns x1) ->
-        (let new_fns = let_op_let fns in
-        (Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
-          (x1)))))
-        | (Fn t loc_opt vs num_args x1) -> (Fn t loc_opt vs num_args
-          ((clos_letop_let_op_sing (x1))))
-        | [] -> []
-        | ((x:closLang_exp) :: xs) ->
-      clos_letop_let_op_sing x :: clos_letop_let_op_list xs
-        | [] -> []
-        | ((num_args,(x:closLang_exp)) :: xs) ->
-      (num_args,clos_letop_let_op_sing x) :: let_op_let xs`;;
+let let_op_sing_def = cake_define_list
+  [`clos_letop_let_op_sing (Var t v:closLang_exp) = (Var t v)`;
+   `clos_letop_let_op_sing (If t x1 x2 x3:closLang_exp) =
+         (If t ((clos_letop_let_op_sing (x1)))
+               ((clos_letop_let_op_sing (x2)))
+               ((clos_letop_let_op_sing (x3))))`;
+   `clos_letop_let_op_sing (Let t xs x2:closLang_exp) =
+         (let xs = clos_letop_let_op_list xs in
+         let x2 = (clos_letop_let_op_sing (x2)) in
+           match dest_op x2 xs with SOME op -> (Op t op xs) |
+             NONE -> (Let t xs x2))`;
+   `clos_letop_let_op_sing (Raise t x1:closLang_exp) =
+         (Raise t ((clos_letop_let_op_sing (x1))))`;
+   `clos_letop_let_op_sing (Handle t x1 x2:closLang_exp) =
+         (Handle t ((clos_letop_let_op_sing (x1)))
+                  ((clos_letop_let_op_sing (x2))))`;
+   `clos_letop_let_op_sing (Op t op xs:closLang_exp) =
+         (Op t op (clos_letop_let_op_list xs))`;
+   `clos_letop_let_op_sing (Tick t x:closLang_exp) = (Tick t
+  ((clos_letop_let_op_sing (x))))`;
+   `clos_letop_let_op_sing (Call t ticks dest xs:closLang_exp) =
+  (Call t ticks dest (clos_letop_let_op_list xs))`;
+   `clos_letop_let_op_sing (App t loc_opt x1 xs:closLang_exp) = (App
+  t loc_opt ((clos_letop_let_op_sing (x1))) (clos_letop_let_op_list
+  xs))`;
+   `clos_letop_let_op_sing (Letrec t loc_opt vs fns x1:closLang_exp) =
+         (let new_fns = let_op_let fns in
+         (Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
+           (x1)))))`;
+   `clos_letop_let_op_sing (Fn t loc_opt vs num_args x1:closLang_exp)
+  = (Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`;
+   `clos_letop_let_op_list [] = []`;
+   `clos_letop_let_op_list ((x:closLang_exp) :: xs) =
+       clos_letop_let_op_sing x :: clos_letop_let_op_list xs`;
+   `let_op_let [] = []`;
+   `let_op_let ((num_args,(x:closLang_exp)) :: xs) =
+       (num_args,clos_letop_let_op_sing x) :: let_op_let xs`];;
 hol4_overload "let_op_list" "clos_letop_let_op_list";;
 hol4_overload "let_op_sing" "clos_letop_let_op_sing";;
 

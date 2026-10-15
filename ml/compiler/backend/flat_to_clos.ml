@@ -24,7 +24,7 @@ needs "semantics/fpSem.ml";;
 let dest_pat_def = cake_define
   `dest_pat x1 =
       match x1 with
-        [(Pvar v,h)] -> SOME ((v:mlstring),h)
+        [(Pvar v:flatLang_pat),h] -> SOME ((v:mlstring),h)
       | _1 -> NONE`;;
 
 let compile_lit_def = cake_define
@@ -263,7 +263,7 @@ let dest_nop_def = cake_define
 let dest_Constant_def = cake_define
   `flat_to_clos_dest_Constant x1 =
       match x1 with
-        (Op t (BlockOp (Constant c)) []) -> SOME c
+        Op t (BlockOp (Constant c)) [] -> SOME c
       | (Op t (IntOp (Const i)) []) -> SOME (ConstInt i)
       | (Op t (BlockOp (Cons n)) []) -> SOME (ConstCons n [])
       | _17 -> NONE`;;
@@ -287,8 +287,8 @@ let compile_def = cake_define_list
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;
-   `flat_to_clos_compile m [flatLang_Raise t e] = [closLang_Raise t
-  (HD (flat_to_clos_compile m [e]))]`;
+   `flat_to_clos_compile m [(flatLang_Raise t e:flatLang_exp)] =
+  [closLang_Raise t (HD (flat_to_clos_compile m [e]))]`;
    `flat_to_clos_compile m [(Lit t l:flatLang_exp)] = [compile_lit t
   l]`;
    `flat_to_clos_compile m [(Var_local t v:flatLang_exp)] = [Var t

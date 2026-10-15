@@ -34,7 +34,7 @@ val extract_labels_ind = theorem"extract_labels_ind";
 let labs_of_def = cake_define
   `labs_of x1 =
       match x1 with
-        (LocValue _2 (Lab n1 n2)) -> {(n1,n2)}
+        (LocValue _2 (Lab n1 n2):asm_with_lab) -> {(n1,n2)}
       | (Jump (Lab n1 n2)) -> {(n1,n2)}
       | (JumpCmp _3 _4 _5 (Lab n1 n2)) -> {(n1,n2)}
       | _6 -> {}`;;
@@ -42,7 +42,7 @@ let labs_of_def = cake_define
 let line_get_labels_def = cake_define
   `line_get_labels x1 =
       match x1 with
-        (LabAsm a _7 _8 _9) -> labs_of a
+        LabAsm a _7 _8 _9 -> labs_of a
       | _10 -> {}`;;
 
 let sec_get_labels_def = cake_define
@@ -57,7 +57,7 @@ hol4_overload "get_labels" "labProps_get_labels";;
 let line_get_code_labels_def = cake_define
   `line_get_code_labels x1 =
       match x1 with
-        (Label _12 l _13) -> {l}
+        Label _12 l _13 -> {l}
       | _14 -> {}`;;
 
 let sec_get_code_labels_def = cake_define
@@ -96,8 +96,8 @@ let align_sdm_def = cake_define
 let line_ok_pre_def = cake_define
   `line_ok_pre c x2 =
         match (c,x2) with
-          ((c:'a asm_config),(Asm b bytes l)) -> asm_ok (cbw_to_asm
-            b) c
+          ((c:'a asm_config),Asm b bytes l) -> asm_ok (cbw_to_asm b)
+            c
         | (c,_16) -> T`;;
 
 let sec_ok_pre_def = cake_define
@@ -112,7 +112,7 @@ let sec_ok_pre_def = cake_define
 let sec_label_ok_def = cake_define
   `sec_label_ok k x2 =
         match x2 with
-          (Label l1 l2 len) -> l1 = k /\ ~(l2 = 0)
+          Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
         | _17 -> T`;;
 
 let sec_labels_ok_def = cake_define

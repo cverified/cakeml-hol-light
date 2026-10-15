@@ -75,8 +75,8 @@ let _ = size_thms "infer_t";;
 let _ = size_thms "list";;
 (* HOL4 termination: *)
 let inf_type_to_string_rec_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_10,t) -> infer_t_size t | INR
-  (_11,ts) -> list_size infer_t_size ts)`
+  `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
+  -> list_size infer_t_size ts)`
   `(inf_type_to_string_rec tys (Infer_Tuvar n) =
      (concat [(implode "_"); mlint_toString (&n)],0)) /\
    (inf_type_to_string_rec tys (Infer_Tvar_db n) =
@@ -87,17 +87,17 @@ let inf_type_to_string_rec_def = cake_define_wf
          (concat [add_parens 2 (inf_type_to_string_rec tys t1);
            (implode " -> ");
                   add_parens 3 (inf_type_to_string_rec tys t2)],3) |
-                    _7 -> (implode "<bad function type>",0)) else if ti
+                    _4 -> (implode "<bad function type>",0)) else if ti
                     = Ttup_num then
       (match ts with [] -> ((implode "unit"),0) | [t] ->
-        inf_type_to_string_rec tys t | _8 -> (concat (commas (implode
+        inf_type_to_string_rec tys t | _5 -> (concat (commas (implode
         " * ")
                 (MAP (add_parens 1) (inf_type_to_string_rec_list tys
                   ts))),2)) else
        match ts with [] -> (type_ident_to_string tys ti,0) | [t] ->
          (concat [add_parens 1 (inf_type_to_string_rec tys t);
            (implode " ");
-                  type_ident_to_string tys ti],1) | _9 ->
+                  type_ident_to_string tys ti],1) | _6 ->
          (concat ([(implode "(")] ++
                   commas (implode ", ")
                     (MAP (add_parens 5) (inf_type_to_string_rec_list

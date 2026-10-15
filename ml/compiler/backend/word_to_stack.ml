@@ -202,7 +202,7 @@ let wInst_def = cake_define
 let wShareInst_def = cake_define
   `wShareInst x1 v x3 kf =
         match (x1,x3) with
-          (Load,(Addr ad offset)) ->
+          (Load,Addr ad offset) ->
        (let (l,n2) = wReg1 ad kf in
        wStackLoad l
          (wRegWrite1 (\r. ShMemOp Load r (Addr n2 offset)) v kf))

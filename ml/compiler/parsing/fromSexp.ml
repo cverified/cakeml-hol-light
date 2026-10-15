@@ -103,25 +103,25 @@ let SEXSTR_def = cake_define
 let odestSEXSTR_def = cake_define
   `odestSEXSTR x1 =
         match x1 with
-          (SX_STR s) -> OPTION_MAP implode (decode_control s)
+          SX_STR s -> OPTION_MAP implode (decode_control s)
         | _3 -> NONE`;;
 
 let odestSXSTR_def = cake_define
   `odestSXSTR x1 =
         match x1 with
-          (SX_STR s) -> SOME (implode s)
+          SX_STR s -> SOME (implode s)
         | _4 -> NONE`;;
 
 let odestSXSYM_def = cake_define
   `odestSXSYM x1 =
         match x1 with
-          (SX_SYM s) -> SOME (implode s)
+          SX_SYM s -> SOME (implode s)
         | _5 -> NONE`;;
 
 let odestSXNUM_def = cake_define
   `odestSXNUM x1 =
         match x1 with
-          (SX_NUM n) -> SOME n
+          SX_NUM n -> SOME n
         | _6 -> NONE`;;
 
 let sexpopt_def = cake_define
@@ -198,25 +198,23 @@ let sexptype_def = cake_define
   imp_res_tac dstrip_sexp_size \\
   fs[LENGTH_EQ_NUM_compute] *)
 let sexptype_alt_def = cake_define
-  `sexptype_alt s =
-        match  with
-           ->
-       (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
-         (if nm = "Atvar" /\ LENGTH args = 1 then
-           OPTION_MAP Atvar (odestSEXSTR (EL 0 args)) else if nm =
-             "Atfun" /\ LENGTH args = 2 then
-           OPTION_MAP2 Atfun (sexptype_alt (EL 0 args)) (sexptype_alt
-             (EL 1 args)) else if nm = "Attup" /\ LENGTH args = 1 then
-           OPTION_MAP Attup (sexptype_list (EL 0 args)) else if nm =
-             "Atapp" /\ LENGTH args = 2 then
-           OPTION_MAP2 Atapp (sexptype_list (EL 0 args)) (sexpid
-             odestSEXSTR (EL 1 args)) else NONE))
-        |  ->
-       (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-         NONE) | SX_CONS a d ->
-         (match sexptype_alt a with NONE -> NONE | SOME h ->
-          (match sexptype_list d with NONE -> NONE | SOME t ->
-            SOME (h :: t))) | _9 -> NONE)`;;
+  `(sexptype_alt s =
+      (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
+        (if nm = "Atvar" /\ LENGTH args = 1 then
+          OPTION_MAP Atvar (odestSEXSTR (EL 0 args)) else if nm =
+            "Atfun" /\ LENGTH args = 2 then
+          OPTION_MAP2 Atfun (sexptype_alt (EL 0 args)) (sexptype_alt
+            (EL 1 args)) else if nm = "Attup" /\ LENGTH args = 1 then
+          OPTION_MAP Attup (sexptype_list (EL 0 args)) else if nm =
+            "Atapp" /\ LENGTH args = 2 then
+          OPTION_MAP2 Atapp (sexptype_list (EL 0 args)) (sexpid
+            odestSEXSTR (EL 1 args)) else NONE))) /\
+   (sexptype_list s =
+      (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
+        NONE) | SX_CONS a d ->
+        (match sexptype_alt a with NONE -> NONE | SOME h ->
+         (match sexptype_list d with NONE -> NONE | SOME t -> SOME
+           (h :: t))) | _9 -> NONE))`;;
 
 let sexplit_def = cake_define
   `sexplit s =
@@ -297,32 +295,29 @@ let sexppat_def = cake_define_wf
    imp_res_tac dstrip_sexp_size \\
    fs[LENGTH_EQ_NUM_compute] *)
 let sexppat_alt_def = cake_define
-  `sexppat_alt s =
-        match  with
-           ->
-       OPTION_MAP Pvar (odestSEXSTR s) ++
-       (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
-         (if nm = "Pany" /\ LENGTH args = 0 then
-           SOME Pany else if nm = "Plit" /\ LENGTH args = 1 then
-           OPTION_MAP Plit (sexplit (EL 0 args)) else if nm = "Pcon"
-             /\ LENGTH args = 2 then
-           OPTION_MAP2 Pcon (sexpopt (sexpid odestSEXSTR) (EL 0
-             args))
-             (sexppat_list (EL 1 args)) else if nm = "Pas" /\ LENGTH
-               args = 2 then
-           OPTION_MAP2 Pas (sexppat_alt (EL 0 args))
-                           (odestSEXSTR (EL 1 args)) else if nm =
-                             "Pref" /\ LENGTH args = 1 then
-           OPTION_MAP Pref (sexppat_alt (EL 0 args)) else if nm =
-             "Ptannot" /\ LENGTH args = 2 then
-           OPTION_MAP2 Ptannot (sexppat_alt (EL 0 args))
-             (sexptype_alt (EL 1 args)) else NONE))
-        |  ->
-       (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-         NONE) | SX_CONS a d ->
-         (match sexppat_alt a with NONE -> NONE | SOME h ->
-          (match sexppat_list d with NONE -> NONE | SOME t -> SOME
-            (h :: t))) | _10 -> NONE)`;;
+  `(sexppat_alt s =
+      OPTION_MAP Pvar (odestSEXSTR s) ++
+      (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
+        (if nm = "Pany" /\ LENGTH args = 0 then
+          SOME Pany else if nm = "Plit" /\ LENGTH args = 1 then
+          OPTION_MAP Plit (sexplit (EL 0 args)) else if nm = "Pcon"
+            /\ LENGTH args = 2 then
+          OPTION_MAP2 Pcon (sexpopt (sexpid odestSEXSTR) (EL 0 args))
+            (sexppat_list (EL 1 args)) else if nm = "Pas" /\ LENGTH
+              args = 2 then
+          OPTION_MAP2 Pas (sexppat_alt (EL 0 args))
+                          (odestSEXSTR (EL 1 args)) else if nm =
+                            "Pref" /\ LENGTH args = 1 then
+          OPTION_MAP Pref (sexppat_alt (EL 0 args)) else if nm =
+            "Ptannot" /\ LENGTH args = 2 then
+          OPTION_MAP2 Ptannot (sexppat_alt (EL 0 args)) (sexptype_alt
+            (EL 1 args)) else NONE))) /\
+   (sexppat_list s =
+      (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
+        NONE) | SX_CONS a d ->
+        (match sexppat_alt a with NONE -> NONE | SOME h ->
+         (match sexppat_list d with NONE -> NONE | SOME t -> SOME
+           (h :: t))) | _10 -> NONE))`;;
 
 (* HOL4 ML code, not ported:
 val sexppat_alt_ind = theorem"sexppat_alt_ind";
@@ -340,7 +335,7 @@ let encode_thunk_mode_def = cake_define
 let decode_test_def = cake_define
   `fromSexp_decode_test x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "Equal" then SOME Equal else
       if s = "Less" then SOME (Compare Lt) else
       if s = "LessEq" then SOME (Compare Leq) else
@@ -356,7 +351,7 @@ hol4_overload "decode_test" "fromSexp_decode_test";;
 let decode_prim_type_def = cake_define
   `decode_prim_type x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "BoolT" then SOME BoolT else
       if s = "IntT" then SOME IntT else
       if s = "CharT" then SOME CharT else
@@ -369,7 +364,7 @@ let decode_prim_type_def = cake_define
 let sexparith_def = cake_define
   `sexparith x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "Add" then SOME Add else
       if s = "Sub" then SOME Sub else
       if s = "Mul" then SOME Mul else
@@ -388,7 +383,7 @@ let sexparith_def = cake_define
 let sexplog_def = cake_define
   `sexplog x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "Andalso" then SOME Andalso else
       if s = "Orelse" then SOME Orelse else NONE)
       | _14 -> NONE`;;
@@ -396,7 +391,7 @@ let sexplog_def = cake_define
 let sexpop_def = cake_define
   `sexpop x1 =
         match x1 with
-          (SX_SYM s) ->
+          SX_SYM s ->
      (if s = "Equality" then SOME Equality else
      if s = "Opapp" then SOME Opapp else
      if s = "Opassign" then SOME Opassign else
@@ -469,7 +464,7 @@ let sexpop_def = cake_define
 let sexplocpt_def = cake_define
   `sexplocpt s =
         match s with
-          (SX_SYM s) ->
+          SX_SYM s ->
        (if s = "unk" then SOME UNKNOWNpt else if s = "eof" then SOME
          EOFpt else NONE)
         | s ->
@@ -575,84 +570,80 @@ let sexpexp_def = cake_define_wf
    imp_res_tac dstrip_sexp_size \\
    fs[LENGTH_EQ_NUM_compute] *)
 let sexpexp_alt_def = cake_define
-  `sexpexp_alt s =
-        match  with
-           ->
-        (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
-             (if nm = "Raise" /\ LENGTH args = 1 then
-                (OPTION_MAP) Raise (sexpexp_alt (EL 0 args)) else
-             if nm = "Handle" /\ LENGTH args = 2 then
-                OPTION_MAP2 Handle (sexpexp_alt (EL 0 args))
-                  (sexppes (EL 1 args)) else
-             if nm = "Lit" /\ LENGTH args = 1 then
-                (OPTION_MAP) Lit (sexplit (EL 0 args)) else
-             if nm = "Con" /\ LENGTH args = 2 then
-                OPTION_MAP2 Con (sexpopt (sexpid odestSEXSTR) (EL 0
-                  args))
-                  (sexpexp_list (EL 1 args)) else
-             if nm = "Var" /\ LENGTH args = 1 then
-                (OPTION_MAP) Var (sexpid odestSEXSTR (EL 0 args))
-                  else
-             if nm = "Fun" /\ LENGTH args = 2 then
-                OPTION_MAP2 Fun (odestSEXSTR (EL 0 args))
-                  (sexpexp_alt (EL 1 args)) else
-             if nm = "App" /\ LENGTH args = 2 then
-                OPTION_MAP2 App (sexpop (EL 0 args))
-                  (sexpexp_list (EL 1 args)) else
-             if nm = "Log" /\ LENGTH args = 3 then
-                (OPTION_MAP) Log (sexplog (EL 0 args)) <*>
-                  sexpexp_alt (EL 1 args) <*>
-                sexpexp_alt (EL 2 args) else
-             if nm = "If" /\ LENGTH args = 3 then
-                (OPTION_MAP) If (sexpexp_alt (EL 0 args)) <*>
-                  sexpexp_alt (EL 1 args) <*>
-                sexpexp_alt (EL 2 args) else
-             if nm = "Mat" /\ LENGTH args = 2 then
-                OPTION_MAP2 Mat (sexpexp_alt (EL 0 args))
-                  (sexppes (EL 1 args)) else
-             if nm = "Let" /\ LENGTH args = 3 then
-                (OPTION_MAP) Let (sexpopt odestSEXSTR (EL 0 args))
-                  <*>
-                sexpexp_alt (EL 1 args) <*> sexpexp_alt (EL 2 args)
-                  else
-             if nm = "Letrec" /\ LENGTH args = 2 then
-                OPTION_MAP2 Letrec
-                  (sexpfuns (EL 0 args))
-                  (sexpexp_alt (EL 1 args)) else
-             if nm = "Tannot" /\ LENGTH args = 2 then
-                OPTION_MAP2 Tannot (sexpexp_alt (EL 0 args))
-                  (sexptype_alt (EL 1 args)) else
-             if nm = "Lannot" /\ LENGTH args = 2 then
-               OPTION_MAP2 Lannot (sexpexp_alt (EL 0 args))
-                 (sexplocn (EL 1 args)) else NONE))
-        |  ->
-         (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-           NONE) | SX_CONS a d ->
-           (match sexpexp_alt a with NONE -> NONE | SOME h ->
-            (match sexpexp_list d with NONE -> NONE | SOME t -> SOME
-              (h :: t))) | _19 -> NONE)
-        |  ->
-      (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-        NONE) | SX_CONS a d ->
-        (match sexppatexp a with NONE -> NONE | SOME h ->
-         (match sexppes d with NONE -> NONE | SOME t -> SOME (h ::
-           t))) | _20 -> NONE)
-        |  ->
-      (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-        NONE) | SX_CONS a d ->
-        (match sexpfun a with NONE -> NONE | SOME h ->
-         (match sexpfuns d with NONE -> NONE | SOME t -> SOME (h ::
-           t))) | _21 -> NONE)
-        |  ->
-       (match s with SX_CONS a d ->
-         (match (sexppat_alt a,sexpexp_alt d) with (SOME p,SOME e) ->
-           SOME (p,e) | _22 -> NONE) | _23 -> NONE)
-        |  ->
-        (match s with SX_CONS a d ->
-          (match d with SX_CONS b d ->
-          (match (odestSEXSTR a,odestSEXSTR b,sexpexp_alt d) with
-            (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _24 -> NONE) |
-            _25 -> NONE) | _26 -> NONE)`;;
+  `(sexpexp_alt s =
+      (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
+           (if nm = "Raise" /\ LENGTH args = 1 then
+              (OPTION_MAP) Raise (sexpexp_alt (EL 0 args)) else
+           if nm = "Handle" /\ LENGTH args = 2 then
+              OPTION_MAP2 Handle (sexpexp_alt (EL 0 args))
+                (sexppes (EL 1 args)) else
+           if nm = "Lit" /\ LENGTH args = 1 then
+              (OPTION_MAP) Lit (sexplit (EL 0 args)) else
+           if nm = "Con" /\ LENGTH args = 2 then
+              OPTION_MAP2 Con (sexpopt (sexpid odestSEXSTR) (EL 0
+                args))
+                (sexpexp_list (EL 1 args)) else
+           if nm = "Var" /\ LENGTH args = 1 then
+              (OPTION_MAP) Var (sexpid odestSEXSTR (EL 0 args)) else
+           if nm = "Fun" /\ LENGTH args = 2 then
+              OPTION_MAP2 Fun (odestSEXSTR (EL 0 args))
+                (sexpexp_alt (EL 1 args)) else
+           if nm = "App" /\ LENGTH args = 2 then
+              OPTION_MAP2 App (sexpop (EL 0 args))
+                (sexpexp_list (EL 1 args)) else
+           if nm = "Log" /\ LENGTH args = 3 then
+              (OPTION_MAP) Log (sexplog (EL 0 args)) <*> sexpexp_alt
+                (EL 1 args) <*>
+              sexpexp_alt (EL 2 args) else
+           if nm = "If" /\ LENGTH args = 3 then
+              (OPTION_MAP) If (sexpexp_alt (EL 0 args)) <*>
+                sexpexp_alt (EL 1 args) <*>
+              sexpexp_alt (EL 2 args) else
+           if nm = "Mat" /\ LENGTH args = 2 then
+              OPTION_MAP2 Mat (sexpexp_alt (EL 0 args))
+                (sexppes (EL 1 args)) else
+           if nm = "Let" /\ LENGTH args = 3 then
+              (OPTION_MAP) Let (sexpopt odestSEXSTR (EL 0 args)) <*>
+              sexpexp_alt (EL 1 args) <*> sexpexp_alt (EL 2 args)
+                else
+           if nm = "Letrec" /\ LENGTH args = 2 then
+              OPTION_MAP2 Letrec
+                (sexpfuns (EL 0 args))
+                (sexpexp_alt (EL 1 args)) else
+           if nm = "Tannot" /\ LENGTH args = 2 then
+              OPTION_MAP2 Tannot (sexpexp_alt (EL 0 args))
+                (sexptype_alt (EL 1 args)) else
+           if nm = "Lannot" /\ LENGTH args = 2 then
+             OPTION_MAP2 Lannot (sexpexp_alt (EL 0 args))
+               (sexplocn (EL 1 args)) else NONE))) /\
+    (sexpexp_list s =
+       (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
+         NONE) | SX_CONS a d ->
+         (match sexpexp_alt a with NONE -> NONE | SOME h ->
+          (match sexpexp_list d with NONE -> NONE | SOME t -> SOME (h
+            :: t))) | _19 -> NONE)) /\
+   (sexppes s =
+    (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else NONE)
+      | SX_CONS a d ->
+      (match sexppatexp a with NONE -> NONE | SOME h ->
+       (match sexppes d with NONE -> NONE | SOME t -> SOME (h :: t)))
+         | _20 -> NONE)) /\
+   (sexpfuns s =
+    (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else NONE)
+      | SX_CONS a d ->
+      (match sexpfun a with NONE -> NONE | SOME h ->
+       (match sexpfuns d with NONE -> NONE | SOME t -> SOME (h ::
+         t))) | _21 -> NONE)) /\
+    (sexppatexp s =
+     (match s with SX_CONS a d ->
+       (match (sexppat_alt a,sexpexp_alt d) with (SOME p,SOME e) ->
+         SOME (p,e) | _22 -> NONE) | _23 -> NONE)) /\
+    (sexpfun s =
+      (match s with SX_CONS a d ->
+        (match d with SX_CONS b d ->
+        (match (odestSEXSTR a,odestSEXSTR b,sexpexp_alt d) with
+          (SOME x,SOME y,SOME z) -> SOME (x,y,z) | _24 -> NONE) | _25
+          -> NONE) | _26 -> NONE))`;;
 
 let sexptype_def_def = cake_define
   `sexptype_def =
@@ -713,43 +704,41 @@ let sexpdec_def = cake_define
    imp_res_tac dstrip_sexp_size \\
    fs[LENGTH_EQ_NUM_compute] *)
 let sexpdec_alt_def = cake_define
-  `sexpdec_alt s =
-        match  with
-           ->
-       (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
-         (if nm = "Dlet" /\ LENGTH args = 3 then
-             ((OPTION_MAP) Dlet (sexplocn (HD args)) <*>
-                          (sexppat_alt (EL 1 args)) <*>
-                          (sexpexp_alt (EL 2 args))) else
-         if nm = "Dletrec" /\ LENGTH args = 2 then
-               (lift2 Dletrec (sexplocn (HD args))
-                              (sexpfuns (EL 1 args))) else
-         if nm = "Dtype" /\ LENGTH args = 2 then
-               (lift2 Dtype (sexplocn (HD args)) (sexptype_def (EL 1
-                 args))) else
-         if nm = "Dtabbrev" /\ LENGTH args = 4 then
-               ((OPTION_MAP) Dtabbrev (sexplocn (EL 0 args)) <*>
-                              (sexplist odestSEXSTR (EL 1 args)) <*>
-                              (odestSEXSTR (EL 2 args)) <*>
-                              (sexptype_alt (EL 3 args))) else
-         if nm = "Denv" /\ LENGTH args = 1 then
-               ((OPTION_MAP) Denv (odestSEXSTR (EL 0 args))) else
-         if nm = "Dexn" /\ LENGTH args = 3 then
-               ((OPTION_MAP) Dexn (sexplocn (EL 0 args)) <*>
-                          (odestSEXSTR (EL 1 args)) <*>
-                          (sexptype_list (EL 2 args))) else
-         if nm = "Dmod" /\ LENGTH args = 2 then
-               (lift2 Dmod (odestSEXSTR (EL 0 args))
-                           (sexpdec_list (EL 1 args))) else
-         if nm = "Dlocal" /\ LENGTH args = 2 then
-               (lift2 Dlocal (sexpdec_list (EL 0 args))
-                           (sexpdec_list (EL 1 args))) else NONE))
-        |  ->
-         (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
-           NONE) | SX_CONS a d ->
-           (match sexpdec_alt a with NONE -> NONE | SOME h ->
-            (match sexpdec_list d with NONE -> NONE | SOME t ->
-              SOME (h :: t))) | _27 -> NONE)`;;
+  `(sexpdec_alt s =
+     (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
+       (if nm = "Dlet" /\ LENGTH args = 3 then
+           ((OPTION_MAP) Dlet (sexplocn (HD args)) <*>
+                        (sexppat_alt (EL 1 args)) <*>
+                        (sexpexp_alt (EL 2 args))) else
+       if nm = "Dletrec" /\ LENGTH args = 2 then
+             (lift2 Dletrec (sexplocn (HD args))
+                            (sexpfuns (EL 1 args))) else
+       if nm = "Dtype" /\ LENGTH args = 2 then
+             (lift2 Dtype (sexplocn (HD args)) (sexptype_def (EL 1
+               args))) else
+       if nm = "Dtabbrev" /\ LENGTH args = 4 then
+             ((OPTION_MAP) Dtabbrev (sexplocn (EL 0 args)) <*>
+                            (sexplist odestSEXSTR (EL 1 args)) <*>
+                            (odestSEXSTR (EL 2 args)) <*>
+                            (sexptype_alt (EL 3 args))) else
+       if nm = "Denv" /\ LENGTH args = 1 then
+             ((OPTION_MAP) Denv (odestSEXSTR (EL 0 args))) else
+       if nm = "Dexn" /\ LENGTH args = 3 then
+             ((OPTION_MAP) Dexn (sexplocn (EL 0 args)) <*>
+                        (odestSEXSTR (EL 1 args)) <*>
+                        (sexptype_list (EL 2 args))) else
+       if nm = "Dmod" /\ LENGTH args = 2 then
+             (lift2 Dmod (odestSEXSTR (EL 0 args))
+                         (sexpdec_list (EL 1 args))) else
+       if nm = "Dlocal" /\ LENGTH args = 2 then
+             (lift2 Dlocal (sexpdec_list (EL 0 args))
+                         (sexpdec_list (EL 1 args))) else NONE))) /\
+    (sexpdec_list s =
+       (match s with SX_SYM nm -> (if nm = "nil" then SOME [] else
+         NONE) | SX_CONS a d ->
+         (match sexpdec_alt a with NONE -> NONE | SOME h ->
+          (match sexpdec_list d with NONE -> NONE | SOME t -> SOME
+            (h :: t))) | _27 -> NONE))`;;
 
 (* HOL4 ML code, not ported:
 val sexpdec_alt_ind = theorem"sexpdec_alt_ind";
@@ -855,7 +844,7 @@ let prim_typesexp_def = cake_define
 let opsexp_def = cake_define
   `opsexp x1 =
         match x1 with
-          (Shift W8 Lsl n) -> SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM n)
+          Shift W8 Lsl n -> SX_CONS (SX_SYM "Shift8Lsl") (SX_NUM n)
         | (Shift W8 Lsr n) -> SX_CONS (SX_SYM "Shift8Lsr") (SX_NUM n)
         | (Shift W8 Asr n) -> SX_CONS (SX_SYM "Shift8Asr") (SX_NUM n)
         | (Shift W8 Ror n) -> SX_CONS (SX_SYM "Shift8Ror") (SX_NUM n)

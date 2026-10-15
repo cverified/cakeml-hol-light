@@ -67,7 +67,7 @@ let bvl_to_bvi_def = cake_define
 let finalise_cons_def = cake_define
   `bviSem_finalise_cons v refs =
         match v with
-          (RefPtr b ptr) ->
+          (RefPtr b ptr:bvlSem_v) ->
        (match FLOOKUP refs ptr with SOME (MutBlock tag finalised l c
          r) ->
            (if ~finalised then
@@ -202,7 +202,7 @@ hol4_overload "IsThunk" "bviSem_IsThunk";;
 let dest_thunk_def = cake_define
   `bviSem_dest_thunk vs refs =
       match vs with
-        (RefPtr b ptr) ->
+        (RefPtr b ptr:bvlSem_v) ->
      (match FLOOKUP refs ptr with NONE -> BadRef | SOME (Thunk
        Evaluated v) ->
           (if b then BadRef else IsThunk Evaluated v) | SOME (Thunk
@@ -234,10 +234,10 @@ let evaluate_def = cake_define_list
              (match bviSem_evaluate (y :: xs,env,s1) with (Rval
                vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
                -> res)`;
-   `bviSem_evaluate ([Var n],env,s) =
+   `bviSem_evaluate ([(Var n:flatLang_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
            (Rabort Rtype_error),s))`;
-   `bviSem_evaluate ([If x1 x2 x3],env,s) =
+   `bviSem_evaluate ([(If x1 x2 x3:flatLang_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate ([x1],env,s)) with
            (Rval vs,s1) ->
               (if Boolv T = HD vs then bviSem_evaluate ([x2],env,s1)
@@ -245,26 +245,26 @@ let evaluate_def = cake_define_list
               if Boolv F = HD vs then bviSem_evaluate ([x3],env,s1)
                 else
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
-   `bviSem_evaluate ([Let xs x2],env,s) =
+   `bviSem_evaluate ([(Let xs x2:flatLang_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with
            (Rval vs,s1) -> bviSem_evaluate ([x2],vs ++ env,s1) | res
            -> res)`;
-   `bviSem_evaluate ([Raise x1],env,s) =
+   `bviSem_evaluate ([(Raise x1:flatLang_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
-   `bviSem_evaluate ([Return xs],env,s) =
+   `bviSem_evaluate ([(Return xs:flatLang_exp)],env,s) =
          (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Ret vs)),s) | res -> res)`;
-   `bviSem_evaluate ([Op op xs],env,s) =
+   `bviSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
            vs,s) ->
              (match do_app op (REVERSE vs) s with Rerr e -> (Rerr
                e,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)`;
-   `bviSem_evaluate ([Tick x],env,s) =
+   `bviSem_evaluate ([(Tick x:flatLang_exp)],env,s) =
          (if ?_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
            else
            bviSem_evaluate ([x],env,dec_clock 1 s))`;
-   `bviSem_evaluate ([Force force_loc n],env,s) =
+   `bviSem_evaluate ([(Force force_loc n:flatLang_exp)],env,s) =
          (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
            else
            let thunk_v = EL n env in
@@ -282,7 +282,8 @@ let evaluate_def = cake_define_list
                           ([exp],args,dec_clock 1 s) with (Rerr
                           (Rraise (Ret _24)),s1) -> (Rerr (Rabort
                           Rtype_error),s1) | res -> res))))`;
-   `bviSem_evaluate ([Call ticks dest xs handler],env,s1) =
+   `bviSem_evaluate ([(Call ticks dest xs handler:flatLang_exp)],env,s1)
+  =
          (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
            Rtype_error),s1) else
          match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with (Rval
@@ -303,7 +304,8 @@ let evaluate_def = cake_define_list
                                 (Rraise _26),s) -> (Rerr (Rabort
                                 Rtype_error),s) | res -> res)) | res
                                 -> res)`;
-   `bviSem_evaluate ([LetCall rets ticks dest xs y],env,s1) =
+   `bviSem_evaluate ([(LetCall rets ticks dest xs
+  y:flatLang_exp)],env,s1) =
          (match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with
            (Rval vs,s) ->
              (match find_code (SOME dest) vs (?_code s) with NONE ->

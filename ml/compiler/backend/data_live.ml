@@ -19,7 +19,7 @@ needs "semantics/ast.ml";;
 let is_pure_def = cake_define
   `data_live_is_pure x1 =
         match x1 with
-          (FFI _1) -> F
+          (FFI _1:closLang_op) -> F
         | (IntOp Add) -> F
         | (IntOp Sub) -> F
         | (IntOp Mult) -> F

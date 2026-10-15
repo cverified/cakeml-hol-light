@@ -171,20 +171,18 @@ let newlines_def = cake_define
       | (x :: xs) -> Append x T (newlines xs)`;;
 
 let v2pretty_def = cake_define
-  `v2pretty v =
-        match  with
-           ->
-        (match v with Str s -> String s | GrabLine w -> Size 100000
-          (v2pretty w) | Trees l -> Parenthesis (newlines (vs2pretty
-          l)))
-        |  ->
-        (match v with [] -> [] | (v :: v) -> v2pretty v ::
-          vs2pretty v)`;;
+  `(v2pretty v =
+      (match v with Str s -> String s | GrabLine w -> Size 100000
+        (v2pretty w) | Trees l -> Parenthesis (newlines (vs2pretty l))))
+        /\
+   (vs2pretty vs =
+      (match vs with [] -> [] | (v :: vs) -> v2pretty v ::
+        vs2pretty vs))`;;
 
 let get_size_def = cake_define
   `mlsexp_get_size x1 =
       match x1 with
-        (Size n x) -> n
+        Size n x -> n
       | (Append x _4 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
       | (Parenthesis x) -> mlsexp_get_size x + 2
       | _5 -> 0`;;
@@ -193,7 +191,7 @@ hol4_overload "get_size" "mlsexp_get_size";;
 let get_next_size_def = cake_define
   `get_next_size x1 =
       match x1 with
-        (Size n x) -> n
+        Size n x -> n
       | (Append x _6 y) -> get_next_size x
       | (Parenthesis x) -> get_next_size x + 2
       | _7 -> 0`;;

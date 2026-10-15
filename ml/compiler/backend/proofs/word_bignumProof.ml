@@ -67,7 +67,7 @@ let eval_exp_def = cake_define
 let eval_exp_pre_def = cake_define
   `eval_exp_pre s x2 =
         match x2 with
-          (Const w) -> T
+          (Const w:wordLang_exp) -> T
         | (Var v) -> v IN FDOM (word_bignumProof_state_regs s)
         | (Op _1 [x; y]) -> eval_exp_pre s x /\ eval_exp_pre s y
         | (Shift sh x1 x2) ->
@@ -336,7 +336,7 @@ hol4_overload "state_rel" "word_bignumProof_state_rel";;
 let exp_ok_def = cake_define
   `exp_ok x1 =
         match x1 with
-          (Const _3) -> T
+          (Const _3:wordLang_exp) -> T
         | (Var i) -> i < (25)
         | (Op _4 [x; y]) -> exp_ok x /\ exp_ok y
         | (Shift sh e n) -> exp_ok e
@@ -345,7 +345,7 @@ let exp_ok_def = cake_define
 let syntax_ok_aux_def = cake_define
   `syntax_ok_aux x1 =
       match x1 with
-        (Loop r vs body) -> syntax_ok_aux body
+        (Loop r vs body:mini) -> syntax_ok_aux body
       | (LoopBody body) -> F
       | (Seq p1 p2) -> syntax_ok_aux p1 /\ syntax_ok_aux p2
       | (Assign t1 e) -> t1 < (25) /\ exp_ok e
@@ -375,7 +375,7 @@ let syntax_ok_aux_def = cake_define
 let syntax_ok_def = cake_define
   `syntax_ok p =
       match p with
-        (LoopBody body) -> syntax_ok_aux body
+        LoopBody body -> syntax_ok_aux body
       | p -> syntax_ok_aux p`;;
 (*Is this worth the hassle*)
 let list_update_def = cake_define

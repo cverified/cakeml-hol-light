@@ -25,7 +25,7 @@ needs "semantics/ast.ml";;
 let is_hidden_def = cake_define
   `is_hidden x1 =
         match x1 with
-          (Raise t e) -> is_hidden e
+          (Raise t e:flatLang_exp) -> is_hidden e
         | (Handle t e pes) -> F
         | (Lit t l) -> T
         | (Con t id_option es) -> EVERY is_hidden es
@@ -42,15 +42,13 @@ let is_hidden_def = cake_define
         | _1 -> F`;;
 
 let total_pat_def = cake_define
-  `total_pat x1 =
-      match x1 with
-        Pany -> T
-      | (Pvar _2) -> T
-      | (Pcon NONE xs) -> total_pat_list xs
-      | (Pas p _3) -> total_pat p
-      | _4 -> F
-      | [] -> T
-      | (p :: ps) -> (total_pat p /\ total_pat_list ps)`;;
+  `total_pat Pany = T /\
+   total_pat (Pvar _2) = T /\
+   total_pat (Pcon NONE xs) = total_pat_list xs /\
+   total_pat (Pas p _3) = total_pat p /\
+   total_pat _4 = F /\
+   total_pat_list [] = T /\
+   total_pat_list (p :: ps) = (total_pat p /\ total_pat_list ps)`;;
 
 (* check if expression is pure in that it does not make any visible
    changes
@@ -64,7 +62,7 @@ let is_pure_def = cake_define_wf
   `MEASURE (\e. exp_size e)`
   `flat_elim_is_pure x1 =
         match x1 with
-          (Handle t e pes) -> flat_elim_is_pure e
+          (Handle t e pes:flatLang_exp) -> flat_elim_is_pure e
         | (Lit t l) -> T
         | (Con t id_option es) -> EVERY flat_elim_is_pure es
         | (Var_local t str) -> T
@@ -82,36 +80,38 @@ let is_pure_def = cake_define_wf
 hol4_overload "is_pure" "flat_elim_is_pure";;
 
 let has_Eval_def = cake_define
-  `has_Eval x1 =
-        match x1 with
-          (App t op es) -> op = Src Eval \/ has_Eval_list es
-        | (Mat _6 e pes) -> has_Eval e \/ has_Eval_pats pes
-        | (Letrec _7 funs e) -> has_Eval e \/ has_Eval_funs funs
-        | (Raise _8 e) -> has_Eval e
-        | (Handle _9 e pes) -> has_Eval e \/ has_Eval_pats pes
-        | (Con _10 _11 es) -> has_Eval_list es
-        | (Fun _12 _13 e) -> has_Eval e
-        | (If _14 e1 e2 e3) -> has_Eval e1 \/ has_Eval e2 \/ has_Eval
-          e3
-        | (Let _15 _16 e1 e2) -> has_Eval e1 \/ has_Eval e2
-        | _17 -> F
-        | [] -> F
-        | (e :: es) -> has_Eval e \/ has_Eval_list es
-        | [] -> F
-        | ((p,e) :: pes) -> has_Eval e \/ has_Eval_pats pes
-        | [] -> F
-        | ((_18,_19,e) :: fs) -> has_Eval e \/ has_Eval_funs fs`;;
+  `(has_Eval (App t op es) <=> op = Src Eval \/ has_Eval_list es) /\
+   (has_Eval (Mat _6 e pes) <=> has_Eval e \/ has_Eval_pats pes) /\
+   (has_Eval (Letrec _7 funs e) <=> has_Eval e \/ has_Eval_funs funs)
+     /\
+   (has_Eval (Raise _8 e) <=> has_Eval e) /\
+   (has_Eval (Handle _9 e pes) <=> has_Eval e \/ has_Eval_pats pes)
+     /\
+   (has_Eval (Con _10 _11 es) <=> has_Eval_list es) /\
+   (has_Eval (Fun _12 _13 e) <=> has_Eval e) /\
+   (has_Eval (If _14 e1 e2 e3) <=> has_Eval e1 \/ has_Eval e2 \/
+     has_Eval e3) /\
+   (has_Eval (Let _15 _16 e1 e2) <=> has_Eval e1 \/ has_Eval e2) /\
+   (has_Eval _17 <=> F) /\
+   (has_Eval_list [] <=> F) /\
+   (has_Eval_list (e :: es) <=> has_Eval e \/ has_Eval_list es) /\
+   (has_Eval_pats [] <=> F) /\
+   (has_Eval_pats ((p,e) :: pes) <=> has_Eval e \/ has_Eval_pats pes)
+     /\
+   (has_Eval_funs [] <=> F) /\
+   (has_Eval_funs ((_18,_19,e) :: fs) <=> has_Eval e \/
+     has_Eval_funs fs)`;;
 
 let dest_GlobalVarInit_def = cake_define
   `dest_GlobalVarInit x1 =
     match x1 with
-      (GlobalVarInit n) -> SOME n
+      GlobalVarInit n -> SOME n
     | _20 -> NONE`;;
 
 let dest_GlobalVarLookup_def = cake_define
   `dest_GlobalVarLookup x1 =
     match x1 with
-      (GlobalVarLookup n) -> SOME n
+      GlobalVarLookup n -> SOME n
     | _21 -> NONE`;;
 
 let _ = size_thms "exp";;

@@ -35,19 +35,20 @@ let can_raise_def = cake_define
 let dest_handle_Raise_def = cake_define
   `dest_handle_Raise x1 =
       match x1 with
-        (Raise x) -> (if can_raise x then NONE else SOME x)
+        (Raise x:bvl_exp) -> (if can_raise x then NONE else SOME x)
       | _1 -> NONE`;;
 
 let dest_handle_Let_def = cake_define
   `dest_handle_Let x1 =
       match x1 with
-        (Let xs x) -> (if can_raise1 xs then NONE else SOME (xs,x))
+        (Let xs x:bvl_exp) -> (if can_raise1 xs then NONE else SOME
+          (xs,x))
       | _2 -> NONE`;;
 
 let dest_handle_If_def = cake_define
   `dest_handle_If x1 =
       match x1 with
-        (If x1 x2 x3) ->
+        (If x1 x2 x3:bvl_exp) ->
      (if can_raise x1 then NONE else
       if can_raise x2 then (if can_raise x3 then NONE else SOME (INL
         (x1,x2,x3))) else

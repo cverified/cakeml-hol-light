@@ -140,7 +140,7 @@ hol4_overload "flatten" "stack_to_lab_flatten";;
 let is_Seq_def = cake_define
   `is_Seq x1 =
       match x1 with
-        (stackLang_Seq p1 p2) -> T
+        stackLang_Seq p1 p2 -> T
       | _12 -> F`;;
 
 let prog_to_section_def = cake_define
@@ -152,7 +152,7 @@ let prog_to_section_def = cake_define
 let is_gen_gc_def = cake_define
   `is_gen_gc x1 =
         match x1 with
-          (Generational l) -> T
+          Generational l -> T
         | _14 -> F`;;
 
 let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"

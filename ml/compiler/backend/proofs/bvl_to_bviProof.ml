@@ -140,8 +140,8 @@ let bv_ok_def = cake_define_wf
   `MEASURE (v_size o SND)`
   `bv_ok refs x2 =
         match (refs,x2) with
-          ((refs:(num,bvlSem_v bvlSem_ref)fmap),(RefPtr l r)) -> r IN
-            FDOM refs
+          ((refs:(num,bvlSem_v bvlSem_ref)fmap),(RefPtr l
+            r:bvlSem_v)) -> r IN FDOM refs
         | (refs,(Block tag vs)) -> EVERY (bv_ok refs) vs
         | (refs,_1) -> T`;;
 

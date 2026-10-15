@@ -274,7 +274,7 @@ let ssa_cc_trans_inst_def = cake_define
 let ssa_cc_trans_exp_def = cake_define
   `ssa_cc_trans_exp t expr =
         match expr with
-          (Var num) ->
+          (Var num:wordLang_exp) ->
        Var (option_lookup t num)
         | (Load exp) -> Load (ssa_cc_trans_exp t exp)
         | (Op wop ls) ->
@@ -582,7 +582,7 @@ let ssa_cc_trans_def = cake_define_list
 let apply_colour_exp_def = cake_define
   `apply_colour_exp f expr =
         match expr with
-          (Var num) -> Var (f num)
+          (Var num:wordLang_exp) -> Var (f num)
         | (Load exp) -> Load (apply_colour_exp f exp)
         | (Op wop ls) -> Op wop (MAP (apply_colour_exp f) ls)
         | (Shift sh exp nexp) -> Shift sh (apply_colour_exp f exp)
@@ -592,7 +592,7 @@ let apply_colour_exp_def = cake_define
 let apply_colour_imm_def = cake_define
   `apply_colour_imm f x =
         match x with
-          (Reg n) -> Reg (f n)
+          Reg n -> Reg (f n)
         | x -> x`;;
 
 let apply_colour_inst_def = cake_define
@@ -703,7 +703,7 @@ let apply_colour_inst_def = cake_define
 let get_writes_inst_def = cake_define
   `get_writes_inst inst =
         match inst with
-          (Const reg w) -> insert reg one LN
+          (Const reg w:wordLang_exp) -> insert reg one LN
         | (Arith (Binop bop r1 r2 ri)) -> insert r1 one LN
         | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
           insert r1 one LN
@@ -784,7 +784,7 @@ let big_union_def = cake_define
 let get_live_exp_def = cake_define
   `get_live_exp expr =
         match expr with
-          (Var num) -> insert num one LN
+          (Var num:wordLang_exp) -> insert num one LN
         | (Load exp) -> get_live_exp exp
         | (Op wop ls) ->
        big_union (MAP get_live_exp ls)
@@ -905,7 +905,7 @@ let remove_dead_inst_def = cake_define
 let remove_dead_def = cake_define
   `remove_dead prog live nlive lt =
         match prog with
-          (Move pri ls) ->
+          Move pri ls ->
        (let ls = FILTER (\(x,y). lookup x live = SOME one) ls in
        if ls = [] then (Skip,live,nlive) else
        let killed = ITLIST delete (MAP FST ls) live in
@@ -1001,7 +1001,7 @@ let remove_dead_prog_def = cake_define
 let get_writes_def = cake_define
   `get_writes prog =
         match prog with
-          (Move pri ls) -> numset_list_insert (MAP FST ls) LN
+          Move pri ls -> numset_list_insert (MAP FST ls) LN
         | (Inst i) -> get_writes_inst i
         | (Assign num exp) -> insert num one LN
         | (Get num store) -> insert num one LN
@@ -1098,7 +1098,7 @@ let get_delta_inst_def = cake_define
 let get_reads_exp_def = cake_define
   `get_reads_exp expr =
         match expr with
-          (Var num) -> [num]
+          (Var num:wordLang_exp) -> [num]
         | (Load exp) -> get_reads_exp exp
         | (Op wop ls) ->
          FLAT (MAP get_reads_exp ls)
@@ -1190,7 +1190,7 @@ let get_clash_tree_def = cake_define_list
 let get_prefs_def = cake_define
   `get_prefs prog acc =
         match prog with
-          (Move pri ls) -> (MAP (\(x,y). (pri,x,y)) ls) ++ acc
+          Move pri ls -> (MAP (\(x,y). (pri,x,y)) ls) ++ acc
         | (MustTerminate s1) ->
        get_prefs s1 acc
         | (Seq s1 s2) ->
@@ -1339,7 +1339,7 @@ let add_call_def = cake_define
 let get_heu_def = cake_define
   `get_heu fc f lr =
         match (f,lr) with
-          ((Move pri ls),(lr,calls)) ->
+          (Move pri ls,(lr,calls)) ->
        (ITLIST add1_lhs_reg
        (MAP FST ls)
        (ITLIST add1_rhs_reg (MAP SND ls) lr),calls)
@@ -1576,7 +1576,7 @@ let remove_temp_stack_def = cake_define
 let get_stack_only_aux_def = cake_define
   `get_stack_only_aux tfs prog =
         match prog with
-          (Move pri ls) ->
+          Move pri ls ->
        ITLIST merge_stack_only ls tfs
         | (Seq s1 s2) ->
        get_stack_only_aux (get_stack_only_aux tfs s2) s1

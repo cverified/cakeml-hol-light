@@ -142,7 +142,7 @@ let insertMin_def = cake_define
 let deleteFindMax_def = cake_define
   `deleteFindMax x1 =
         match x1 with
-          (Bin s k x l Tip) -> ((k,x),l)
+          Bin s k x l Tip -> ((k,x),l)
         | (Bin s k x l r) ->
      (let (km,r') = deleteFindMax r in
        (km,balanceL k x l r'))
@@ -152,7 +152,7 @@ let deleteFindMax_def = cake_define
 let deleteFindMin_def = cake_define
   `deleteFindMin x1 =
         match x1 with
-          (Bin s k x Tip r) -> ((k,x),r)
+          Bin s k x Tip r -> ((k,x),r)
         | (Bin s k x l r) ->
      (let (km,l') = deleteFindMin l in
        (km,balanceR k x l' r))

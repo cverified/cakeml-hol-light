@@ -145,7 +145,7 @@ let state_rel_def = cake_define
 let match_rel_def = cake_define
   `match_rel N x2 x3 =
         match (x2,x3) with
-          ((Match env1),(Match env2)) -> (\N. ALOOKUP_rel (\x.
+          (Match env1,Match env2) -> (\N. ALOOKUP_rel (\x.
             dec_name_to_num x < N) v_rel) N env1 env2
         | (No_match,No_match) -> T
         | (Match_type_error,Match_type_error) -> T
@@ -158,7 +158,7 @@ let encode_val_def = cake_define_wf
   `MEASURE v_size`
   `encode_val others =
       match others with
-        (Litv l) -> Litv l
+        (Litv l:flatSem_v) -> Litv l
       | (Conv stmp xs) -> Term
      (match stmp with NONE -> NONE | SOME (i,_3) -> SOME i)
      (MAP encode_val xs)

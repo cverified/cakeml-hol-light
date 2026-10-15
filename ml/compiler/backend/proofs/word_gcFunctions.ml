@@ -405,7 +405,7 @@ let word_gen_gc_def = cake_define
 let glob_real_def = cake_define
   `glob_real c curr w =
         match w with
-          (Word (w:'a word)) ->
+          Word (w:'a word) ->
         Word (curr + (w >>> (shift_length c) <<
           (backend_common_word_shift) (:'ga)))
         | w -> w`;;

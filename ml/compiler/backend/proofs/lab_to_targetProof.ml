@@ -107,7 +107,7 @@ let has_odd_inst_def = cake_define
 let line_similar_def = cake_define
   `line_similar x1 x2 =
         match (x1,x2) with
-          ((Label k1 k2 l),(Label k1' k2' l')) -> (k1 = k1') /\ (k2 =
+          (Label k1 k2 l,Label k1' k2' l') -> (k1 = k1') /\ (k2 =
             k2')
         | ((Asm b bytes l),(Asm b' bytes' l')) -> (b = b')
         | ((LabAsm a w bytes l),(LabAsm a' w' bytes' l')) -> (a = a')
@@ -158,7 +158,7 @@ let word_loc_val_byte_def = cake_define
 let line_ok_def = cake_define
   `line_ok c labs ffis pos x5 =
         match (c,x5) with
-          ((c:'a asm_config),(Label _9 _10 l)) ->
+          ((c:'a asm_config),Label _9 _10 l) ->
         EVEN pos /\ (l = 0)
         | (c,(Asm b bytes l)) ->
         enc_with_nop (asm_config_encode c) (cbw_to_asm b) bytes /\
@@ -684,7 +684,7 @@ val lines_upd_lab_len_AUX = Q.prove(
 let line_encd0_def = cake_define
   `line_encd0 enc x2 =
         match x2 with
-          (Asm b bytes len) ->
+          Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
         | (LabAsm l w bytes len) ->
         enc (lab_inst w l) = bytes /\ LENGTH bytes <= len /\
@@ -708,7 +708,7 @@ let sec_encd0_def = cake_define
 let line_length_leq_def = cake_define
   `line_length_leq x1 =
         match x1 with
-          (LabAsm _21 _22 bytes l) ->
+          LabAsm _21 _22 bytes l ->
        LENGTH bytes <= l
         | (Asm _23 bytes l) ->
        LENGTH bytes <= l
@@ -725,7 +725,7 @@ let sec_length_leq_def = cake_define
 let label_one_def = cake_define
   `label_one x1 =
         match x1 with
-          (Label _26 _27 n) -> n <= 1
+          Label _26 _27 n -> n <= 1
         | _28 -> T`;;
 
 let sec_label_one_def = cake_define
@@ -742,7 +742,7 @@ let sec_label_one_def = cake_define
 let line_encd_def = cake_define
   `line_encd enc labs ffis pos x5 =
         match x5 with
-          (Asm b bytes len) ->
+          Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
         | (LabAsm Halt _30 bytes len) ->
        enc (Jump (--n2w (pos + ffi_offset))) = bytes /\
@@ -804,7 +804,7 @@ let sec_length_ok_def = cake_define
 let label_zero_def = cake_define
   `label_zero x1 =
         match x1 with
-          (Label _39 _40 n) -> n = 0
+          Label _39 _40 n -> n = 0
         | _41 -> T`;;
 
 let sec_label_zero_def = cake_define
@@ -850,7 +850,7 @@ let sec_label_prefix_zero_def = cake_define
 let line_enc_with_nop_def = cake_define
   `line_enc_with_nop enc labs ffis pos x5 =
         match x5 with
-          (Asm b bytes len) ->
+          Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
         | (LabAsm Halt _44 bytes len) ->
        enc_with_nop enc (Jump (--n2w (pos + ffi_offset))) bytes /\
@@ -915,7 +915,7 @@ val all_enc_with_nop_ind = theorem"all_enc_with_nop_ind";
 let line_lab_len_pos_ok_def = cake_define
   `line_lab_len_pos_ok pos x2 =
         match x2 with
-          (Label _54 _55 l) ->
+          Label _54 _55 l ->
         (if EVEN pos then l = 0 else l = 1)
         | _56 -> T`;;
 
@@ -944,7 +944,7 @@ val all_lab_len_pos_ok_ind = theorem"all_lab_len_pos_ok_ind";
 let line_offset_ok_def = cake_define
   `line_offset_ok labs ffis pos x4 =
         match x4 with
-          (LabAsm a w bytes _58) ->
+          LabAsm a w bytes _58 ->
        w = get_jump_offset a ffis labs pos
         | _59 -> T`;;
 
@@ -976,7 +976,7 @@ val offset_ok_ind = theorem"offset_ok_ind";
 let line_labs_exist_def = cake_define
   `line_labs_exist labs x2 =
         match x2 with
-          (LabAsm a _60 _61 _62) ->
+          LabAsm a _60 _61 _62 ->
        (!n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs =
          NONE))
         | _63 -> T`;;

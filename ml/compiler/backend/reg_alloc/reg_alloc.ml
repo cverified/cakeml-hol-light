@@ -795,7 +795,7 @@ let assign_Atemps_def = cake_define
 let tag_col_def = cake_define
   `tag_col x1 =
         match x1 with
-          (Fixed n) -> n
+          Fixed n -> n
         | _9 -> 0`;;
 
 (* Find the first available in k,k+1,...

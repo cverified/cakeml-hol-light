@@ -113,7 +113,7 @@ let roots_ok_def = cake_define
 let isForwardPointer_def = cake_define
   `isForwardPointer x1 =
         match x1 with
-          (ForwardPointer n d l) -> T
+          ForwardPointer n d l -> T
         | _1 -> F`;;
 
 let heap_ok_def = cake_define

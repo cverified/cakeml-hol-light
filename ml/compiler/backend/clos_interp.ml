@@ -18,7 +18,7 @@ needs "semantics/ast.ml";;
 let can_interpret_op_def = cake_define
   `can_interpret_op x1 l =
       match x1 with
-        (BlockOp (Cons tag)) -> (l = 0 \/ tag < 3)
+        BlockOp (Cons tag) -> (l = 0 \/ tag < 3)
       | (IntOp (Const i)) -> (l = 0)
       | (GlobOp (Global n)) -> (l = 0)
       | (BlockOp (Constant c)) -> (l = 0)
@@ -51,7 +51,7 @@ let can_interpret_def = cake_define
 let check_size_op_def = cake_define
   `check_size_op k x2 l =
       match x2 with
-        (BlockOp (Cons tag)) -> (if l = (0:num) then k else k -
+        BlockOp (Cons tag) -> (if l = (0:num) then k else k -
           (1:num))
       | (IntOp (Const i)) -> (k:num)
       | (GlobOp (Global n)) -> k
@@ -93,7 +93,7 @@ let nontrivial_size_def = cake_define
 let to_constant_op_def = cake_define
   `to_constant_op x1 l cs =
       match x1 with
-        (IntOp (Const i)) -> ConstCons 1 [ConstInt i]
+        IntOp (Const i) -> ConstCons 1 [ConstInt i]
       | (BlockOp (Constant c)) -> ConstCons 1 [c]
       | (GlobOp (Global n)) -> ConstCons 2 [ConstInt (&n)]
       | (BlockOp (Cons tag)) ->
@@ -109,9 +109,9 @@ let to_constant_def = cake_define_wf
   exp_size es)`
   `to_constant ((Var t n):closLang_exp) =
      ConstCons 0 [ConstInt (&n)] /\
-   to_constant (App _28 _29 e es) =
+   to_constant (App _27 _28 e es) =
      ConstCons 0 [to_constant e; match es with [] -> ConstInt (&0) |
-       (e1 :: _30) -> to_constant e1] /\
+       (e1 :: _29) -> to_constant e1] /\
    to_constant (If t e1 e2 e3) =
      ConstCons 0 [to_constant e1; to_constant e2; to_constant e3] /\
    to_constant (Let t es e) = ConstCons 1 [to_constant_list es;
@@ -122,9 +122,9 @@ let to_constant_def = cake_define_wf
    to_constant (Tick t e) = ConstCons 4 [to_constant e] /\
    to_constant (Handle t e1 e2) = ConstCons 2 [to_constant e1;
      to_constant e2] /\
-   to_constant (Fn _31 _32 _33 _34 e) = ConstInt (&0) /\
-   to_constant (Call _35 _36 _37 es) = ConstInt (&0) /\
-   to_constant (Letrec _38 _39 _40 fns e) = ConstInt (&0) /\
+   to_constant (Fn _30 _31 _32 _33 e) = ConstInt (&0) /\
+   to_constant (Call _34 _35 _36 es) = ConstInt (&0) /\
+   to_constant (Letrec _37 _38 _39 fns e) = ConstInt (&0) /\
    to_constant_list [] = ConstCons 0 [] /\
    to_constant_list (x :: xs) = ConstCons 0 [to_constant x;
      to_constant_list xs]`;;
@@ -315,7 +315,7 @@ let insert_interp1_def = cake_define
   `insert_interp1 e =
      (match opt_interp e with SOME x -> x | NONE ->
          (match e with Let t ys y -> Let None (MAP opt_interp1 ys)
-           y | _41 -> e))`;;
+           y | _40 -> e))`;;
 
 let compile_init_def = cake_define
   `compile_init b =

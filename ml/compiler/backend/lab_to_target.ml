@@ -86,7 +86,7 @@ let find_pos_def = cake_define
 let get_label_def = cake_define
   `get_label x1 =
         match x1 with
-          (Jump l) -> l
+          (Jump l:asm_with_lab) -> l
         | (JumpCmp c r ri l) -> l
         | (Call l) -> l
         | (LocValue r l) -> l
@@ -103,7 +103,7 @@ let get_ffi_index_def = cake_define
 let get_jump_offset_def = cake_define
   `get_jump_offset a ffis labs pos =
         match a with
-          (CallFFI s) ->
+          CallFFI s ->
         (n2w 0) - n2w (pos + (3 + get_ffi_index ffis (ExtCall s)) *
           ffi_offset)
         | Install ->
@@ -169,7 +169,7 @@ let upd_lab_len_def = cake_define
 let line_ok_light_def = cake_define
   `line_ok_light c x2 =
         match (c,x2) with
-          ((c:'a asm_config),(Label _17 _18 l)) -> T
+          ((c:'a asm_config),Label _17 _18 l) -> T
         | (c,(Asm b bytes l)) -> T
         | (c,(LabAsm Halt w bytes l)) ->
         asm_ok (Jump w) c
@@ -241,7 +241,7 @@ let get_symbols_def = cake_define
 let zero_labs_acc_of_def = cake_define
   `zero_labs_acc_of x1 acc =
         match x1 with
-          (LocValue _21 (Lab n1 n2)) ->
+          LocValue _21 (Lab n1 n2) ->
        (if n2 = 0 then insert n1 one acc else acc)
         | (Jump (Lab n1 n2)) ->
        (if n2 = 0 then insert n1 one acc else acc)
@@ -253,7 +253,7 @@ let zero_labs_acc_of_def = cake_define
 let line_get_zero_labs_acc_def = cake_define
   `line_get_zero_labs_acc x1 acc =
       match x1 with
-        (LabAsm a _26 _27 _28) -> zero_labs_acc_of a acc
+        LabAsm a _26 _27 _28 -> zero_labs_acc_of a acc
       | _29 -> acc`;;
 
 let sec_get_zero_labs_acc_def = cake_define

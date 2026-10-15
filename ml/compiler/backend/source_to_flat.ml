@@ -101,116 +101,105 @@ let join_all_names_def = cake_define
      (match xs with [x] -> x | _6 -> concat (join_all_names_aux xs
        []))`;;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-let _ = size_thms "mlstring";;
-let _ = size_thms "pair";;
-let _ = size_thms "pat";;
-(* HOL4 termination: *)
-let compile_exp_def = cake_define_wf
-  `inv_image (<) (\x. match x with INL (t,x,e) -> exp_size e | INR (INL
-  (t,x,es)) -> list_size exp_size es | INR (INR (INL (t,x,pes))) ->
-          list_size (pair_size pat_size exp_size) pes | INR (INR (INR
-            (t,x,funs))) ->
-          list_size (pair_size mlstring_size
-                     (pair_size mlstring_size exp_size)) funs)`
-  `source_to_flat_compile_exp t env x3 =
-        match (t,env,x3) with
-          ((t:mlstring list),(env:source_to_flat_environment),(Raise
-            e)) ->
-       Raise None (source_to_flat_compile_exp t env e)
-        | (t,env,(Handle e pes)) ->
-       Handle None (source_to_flat_compile_exp t env e) (compile_pes
-         t env pes)
-        | (t,env,(ast_Lit l)) -> flatLang_Lit None l
-        | (t,env,(Con cn es)) ->
-       Con None (OPTION_JOIN (OPTION_MAP (type_group_id_type o
-         nsLookup (?_c env)) cn))
-             (source_to_flat_compile_exps t env es)
-        | (t,env,(Var x)) ->
-       (match nsLookup (?_v env) x with NONE -> Var_local None
-         (implode "") | SOME x -> compile_var None x)
-        | (t,env,(Fun x e)) ->
-       Fun (join_all_names t) x
-         (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x (Local
-           None x) (?_v env))) env) e)
-        | (t,env,(ast_App op es)) ->
-       (if op = AallocEmpty then
-         ITLIST (Let None NONE)
-           (REVERSE (source_to_flat_compile_exps t env es))
-             (flatLang_App None (Src Aalloc) [Lit None (IntLit (&(&0)));
+let compile_exp_def = cake_define_list
+  [`source_to_flat_compile_exp (t:mlstring list)
+  (env:source_to_flat_environment) (Raise e:flatLang_exp) =
+        Raise None (source_to_flat_compile_exp t env e)`;
+   `source_to_flat_compile_exp t env (Handle e pes:flatLang_exp) =
+        Handle None (source_to_flat_compile_exp t env e)
+          (compile_pes t env pes)`;
+   `source_to_flat_compile_exp t env (ast_Lit l:flatLang_exp) =
+  flatLang_Lit None l`;
+   `source_to_flat_compile_exp t env (Con cn es:flatLang_exp) =
+        Con None (OPTION_JOIN (OPTION_MAP (type_group_id_type o
+          nsLookup (?_c env)) cn))
+              (source_to_flat_compile_exps t env es)`;
+   `source_to_flat_compile_exp t env (Var x:flatLang_exp) =
+        (match nsLookup (?_v env) x with NONE -> Var_local None
+          (implode "") | SOME x -> compile_var None x)`;
+   `source_to_flat_compile_exp t env (Fun x e:flatLang_exp) =
+        Fun (join_all_names t) x
+          (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x
+            (Local None x) (?_v env))) env) e)`;
+   `source_to_flat_compile_exp t env (ast_App op es:flatLang_exp) =
+        (if op = AallocEmpty then
+          ITLIST (Let None NONE)
+            (REVERSE (source_to_flat_compile_exps t env es))
+              (flatLang_App None (Src Aalloc) [Lit None (IntLit
+              (&(&0)));
                               Lit None (IntLit (&(&0)))]) else
-       if op = Eval then
-         flatLang_Mat None (Con None NONE
-           (source_to_flat_compile_exps t env es))
-           [(Pcon NONE [Pany; Pany; Pany; Pany; Pvar (implode
-             "bytes"); Pvar (implode "words")],
-               flatLang_Let None NONE (flatLang_App None (Src Eval)
-                       (MAP (Var_local None) [(implode "bytes");
-                         (implode "words")]))
-                   (Let None (SOME (implode "r")) (App None
-                     (GlobalVarLookup 0) [])
-                       (flatLang_App None (El 0) [Var_local None
-                         (implode "r")])))] else
-       if op = Env_id then (match es with [_7] -> (match
-         source_to_flat_compile_exps t env es with x :: xs -> x | _8 ->
-         Var_local None (implode "")) | _9 -> App None (El 0)
-         (source_to_flat_compile_exps t env es)) else
-         flatLang_App None (astOp_to_flatOp op)
-           (source_to_flat_compile_exps t env es))
-        | (t,env,(Log lop e1 e2)) ->
-         (match lop with Andalso ->
-           If None
-              (source_to_flat_compile_exp t env e1)
-              (source_to_flat_compile_exp t env e2)
-              (Bool None F) | Orelse ->
-           If None
-              (source_to_flat_compile_exp t env e1)
-              (Bool None T)
-              (source_to_flat_compile_exp t env e2))
-        | (t,env,(If e1 e2 e3)) ->
-       If None
-          (source_to_flat_compile_exp t env e1)
-          (source_to_flat_compile_exp t env e2)
-          (source_to_flat_compile_exp t env e3)
-        | (t,env,(Mat e pes)) ->
-       Mat None (source_to_flat_compile_exp t env e) (compile_pes t
-         env pes)
-        | (t,env,(Let (SOME x) e1 e2)) ->
-         Let None (SOME x) (source_to_flat_compile_exp (x :: t) env
-           e1)
-           (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x
-             (Local None x) (?_v env))) env) e2)
-        | (t,env,(Let NONE e1 e2)) ->
-       Let None NONE (source_to_flat_compile_exp t env e1)
-         (source_to_flat_compile_exp t env e2)
-        | (t,env,(ast_Letrec funs e)) ->
-       (let fun_names = MAP FST funs in
-       let new_env = nsBindList (MAP (\x. (x,Local None x))
-         fun_names) (?_v env) in
-         flatLang_Letrec (join_all_names t) (compile_funs t (?_v_fupd
-           (K new_env) env) funs)
-                  (source_to_flat_compile_exp t (?_v_fupd (K new_env)
-                    env) e))
-        | (t,env,(Tannot e _10)) -> source_to_flat_compile_exp t env
-          e
-        | (t,env,(Lannot e (Locs st en))) ->
-          source_to_flat_compile_exp t env e
-        | (t,env,[]) -> []
-        | (t,env,(e :: es)) ->
-        source_to_flat_compile_exp t env e ::
-          source_to_flat_compile_exps t env es
-        | (t,env,[]) -> []
-        | (t,env,((p,e) :: pes)) ->
-       (let pbs = pat_bindings p in
-       let pts = pat_tups None pbs in
-       (compile_pat env p,source_to_flat_compile_exp t (?_v_fupd (K
-         (nsBindList pts (?_v env))) env) e) :: compile_pes t env pes)
-        | (t,env,[]) -> []
-        | (t,env,((f,x,e) :: funs)) ->
-       (f,x,source_to_flat_compile_exp (f :: t) (?_v_fupd (K (nsBind
-         x (Local None x) (?_v env))) env) e) ::
-       compile_funs t env funs`;;
+        if op = Eval then
+          flatLang_Mat None (Con None NONE
+            (source_to_flat_compile_exps t env es))
+            [(Pcon NONE [Pany; Pany; Pany; Pany; Pvar (implode
+              "bytes"); Pvar (implode "words")],
+                flatLang_Let None NONE (flatLang_App None (Src Eval)
+                        (MAP (Var_local None) [(implode "bytes");
+                          (implode "words")]))
+                    (Let None (SOME (implode "r")) (App None
+                      (GlobalVarLookup 0) [])
+                        (flatLang_App None (El 0) [Var_local None
+                          (implode "r")])))] else
+        if op = Env_id then (match es with [_7] -> (match
+          source_to_flat_compile_exps t env es with x :: xs -> x | _8 ->
+          Var_local None (implode "")) | _9 -> App None (El 0)
+          (source_to_flat_compile_exps t env es)) else
+          flatLang_App None (astOp_to_flatOp op)
+            (source_to_flat_compile_exps t env es))`;
+   `source_to_flat_compile_exp t env (Log lop e1 e2:flatLang_exp) =
+          (match lop with Andalso ->
+            If None
+               (source_to_flat_compile_exp t env e1)
+               (source_to_flat_compile_exp t env e2)
+               (Bool None F) | Orelse ->
+            If None
+               (source_to_flat_compile_exp t env e1)
+               (Bool None T)
+               (source_to_flat_compile_exp t env e2))`;
+   `source_to_flat_compile_exp t env (If e1 e2 e3:dTree) =
+        If None
+           (source_to_flat_compile_exp t env e1)
+           (source_to_flat_compile_exp t env e2)
+           (source_to_flat_compile_exp t env e3)`;
+   `source_to_flat_compile_exp t env (Mat e pes:flatLang_exp) =
+        Mat None (source_to_flat_compile_exp t env e)
+          (compile_pes t env pes)`;
+   `source_to_flat_compile_exp t env (Let (SOME x) e1 e2:flatLang_exp) =
+          Let None (SOME x) (source_to_flat_compile_exp (x :: t) env
+            e1)
+            (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x
+              (Local None x) (?_v env))) env) e2)`;
+   `source_to_flat_compile_exp t env (Let NONE e1 e2:flatLang_exp) =
+        Let None NONE (source_to_flat_compile_exp t env e1)
+          (source_to_flat_compile_exp t env e2)`;
+   `source_to_flat_compile_exp t env (ast_Letrec funs e:flatLang_exp) =
+        (let fun_names = MAP FST funs in
+        let new_env = nsBindList (MAP (\x. (x,Local None x))
+          fun_names) (?_v env) in
+          flatLang_Letrec (join_all_names t) (compile_funs t
+            (?_v_fupd (K new_env) env) funs)
+                   (source_to_flat_compile_exp t (?_v_fupd (K
+                     new_env) env) e))`;
+   `source_to_flat_compile_exp t env (Tannot e _10:flatLang_exp) =
+  source_to_flat_compile_exp t env e`;
+   `source_to_flat_compile_exp t env (Lannot e (Locs st
+  en):flatLang_exp) = source_to_flat_compile_exp t env e`;
+   `source_to_flat_compile_exps t env [] = []`;
+   `source_to_flat_compile_exps t env (e :: es) =
+         source_to_flat_compile_exp t env e ::
+           source_to_flat_compile_exps t env es`;
+   `compile_pes t env [] = []`;
+   `compile_pes t env ((p,e) :: pes) =
+        (let pbs = pat_bindings p in
+        let pts = pat_tups None pbs in
+        (compile_pat env p,source_to_flat_compile_exp t (?_v_fupd
+          (K (nsBindList pts (?_v env))) env) e) :: compile_pes t env
+          pes)`;
+   `compile_funs t env [] = []`;
+   `compile_funs t env ((f,x,e) :: funs) =
+        (f,x,source_to_flat_compile_exp (f :: t) (?_v_fupd (K
+          (nsBind x (Local None x) (?_v env))) env) e) ::
+        compile_funs t env funs`];;
 hol4_overload "compile_exp" "source_to_flat_compile_exp";;
 hol4_overload "compile_exps" "source_to_flat_compile_exps";;
 

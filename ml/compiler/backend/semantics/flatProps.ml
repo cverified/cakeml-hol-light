@@ -13,7 +13,6 @@ needs "compiler/backend/semantics/flatSem.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
-needs "semantics/namespace.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -114,44 +113,36 @@ hol4_overload "eval_sim" "flatProps_eval_sim";;
 let op_gbag_def = cake_define
   `flatProps_op_gbag x1 =
       match x1 with
-        (GlobalVarInit n) -> BAG_INSERT n EMPTY_BAG
+        GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
       | _1 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "flatProps_op_gbag";;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: \\ rw [flatLangTheory.exp_size_def] \\ fs [GSYM
-   o_DEF] >- (irule LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size
-   (pair_size mlstring_size (pair_size mlstring_size exp_size)) fs’
-   \\ gvs [] \\ Induct_on ‘fs’ \\ gvs [FORALL_PROD]) \\ irule
-   LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size (pair_size pat_size
-   exp_size) pes’ \\ gvs [] \\ Induct_on ‘pes’ \\ gvs [FORALL_PROD] *)
-let set_globals_def = cake_define_wf
-  `MEASURE (\a. match a with INL e -> exp_size e | INR es -> list_size
-  exp_size es)`
-  `flatProps_set_globals x1 =
-        match x1 with
-          (Raise t e) -> flatProps_set_globals e
-        | (Handle t e pes) -> BAG_UNION (flatProps_set_globals e)
-          (flatProps_elist_globals (MAP SND pes))
-        | (Con t id es) -> flatProps_elist_globals es
-        | (Fun t v e) -> flatProps_set_globals e
-        | (App t op es) -> BAG_UNION (flatProps_elist_globals es)
-          (op_gbag op)
-        | (If t e1 e2 e3) -> BAG_UNION (BAG_UNION
-       (flatProps_set_globals e1) (flatProps_set_globals e2))
-         (flatProps_set_globals e3)
-        | (Mat t e pes) -> BAG_UNION (flatProps_set_globals e)
-          (flatProps_elist_globals (MAP SND pes))
-        | (Let t v e1 e2) -> BAG_UNION (flatProps_set_globals e1)
-          (flatProps_set_globals e2)
-        | (Letrec t fs e) -> BAG_UNION
-       (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o
-         SND) fs))
-        | _2 -> EMPTY_BAG
-        | [] -> EMPTY_BAG
-        | (e :: es) -> BAG_UNION (flatProps_set_globals e)
-          (flatProps_elist_globals es)`;;
+let set_globals_def = cake_define_list
+  [`flatProps_set_globals (Raise t e:flatLang_exp) =
+  flatProps_set_globals e`;
+   `flatProps_set_globals (Handle t e pes:flatLang_exp) = BAG_UNION
+  (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
+   `flatProps_set_globals (Con t id' es:flatLang_exp) =
+  flatProps_elist_globals es`;
+   `flatProps_set_globals (Fun t v e:flatLang_exp) =
+  flatProps_set_globals e`;
+   `flatProps_set_globals (App t op es:flatLang_exp) = BAG_UNION
+  (flatProps_elist_globals es) (op_gbag op)`;
+   `flatProps_set_globals (If t e1 e2 e3:flatLang_exp) = BAG_UNION
+  (BAG_UNION
+        (flatProps_set_globals e1) (flatProps_set_globals e2))
+          (flatProps_set_globals e3)`;
+   `flatProps_set_globals (Mat t e pes:flatLang_exp) = BAG_UNION
+  (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
+   `flatProps_set_globals (Let t v e1 e2:flatLang_exp) = BAG_UNION
+  (flatProps_set_globals e1) (flatProps_set_globals e2)`;
+   `flatProps_set_globals (Letrec t fs e:flatLang_exp) = BAG_UNION
+        (flatProps_set_globals e) (flatProps_elist_globals (MAP
+          (SND o SND) fs))`;
+   `flatProps_set_globals _2 = EMPTY_BAG`;
+   `flatProps_elist_globals [] = EMPTY_BAG`;
+   `flatProps_elist_globals (e :: es) = BAG_UNION
+  (flatProps_set_globals e) (flatProps_elist_globals es)`];;
 hol4_overload "elist_globals" "flatProps_elist_globals";;
 hol4_overload "set_globals" "flatProps_set_globals";;
 
@@ -164,7 +155,7 @@ let esgc_free_def = cake_define_wf
   `MEASURE exp_size`
   `flatProps_esgc_free x1 =
         match x1 with
-          (Raise t e) -> flatProps_esgc_free e
+          (Raise t e:flatLang_exp) -> flatProps_esgc_free e
         | (Handle t e pes) ->
        flatProps_esgc_free e /\ EVERY flatProps_esgc_free (MAP SND
          pes)
@@ -284,12 +275,12 @@ hol4_overload "store_v_vs" "flatProps_store_v_vs";;
 let result_vs_def = cake_define
   `result_vs x1 =
       match x1 with
-        (Rval xs) -> xs
+        Rval xs -> xs
       | (Rerr (Rraise x)) -> [x]
       | (Rerr (Rabort y)) -> []`;;
 
 let no_Mat_def = cake_define_list
-  [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
+  [`no_Mat (flatLang_Raise t e:flatLang_exp) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (Var_local t v:flatLang_exp) <=> T`;
    `no_Mat (Con t n es:flatLang_exp) <=> EVERY no_Mat es`;

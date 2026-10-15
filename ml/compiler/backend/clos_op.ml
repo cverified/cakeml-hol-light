@@ -21,13 +21,13 @@ needs "semantics/ast.ml";;
 let dest_Const_def = cake_define
   `dest_Const x1 =
       match x1 with
-        (IntOp (Const i)) -> SOME i
+        IntOp (Const i) -> SOME i
       | _1 -> NONE`;;
 
 let dest_Constant_def = cake_define
   `clos_op_dest_Constant x1 =
       match x1 with
-        (BlockOp (Constant (ConstStr c))) -> SOME (Str c)
+        BlockOp (Constant (ConstStr c)) -> SOME (Str c)
       | (BlockOp (Constant (ConstInt c))) -> SOME (Int c)
       | (BlockOp (Constant (ConstWord64 c))) -> SOME (W64 c)
       | _2 -> NONE`;;
@@ -36,38 +36,38 @@ hol4_overload "dest_Constant" "clos_op_dest_Constant";;
 let dest_Cons_def = cake_define
   `clos_op_dest_Cons x1 =
       match x1 with
-        (BlockOp (Cons i)) -> SOME i
+        BlockOp (Cons i) -> SOME i
       | _3 -> NONE`;;
 hol4_overload "dest_Cons" "clos_op_dest_Cons";;
 
 let dest_ElemAt_def = cake_define
   `dest_ElemAt x1 =
       match x1 with
-        (BlockOp (ElemAt i)) -> SOME i
+        BlockOp (ElemAt i) -> SOME i
       | _4 -> NONE`;;
 
 let dest_TagEq_def = cake_define
   `dest_TagEq x1 =
       match x1 with
-        (BlockOp (TagEq i)) -> SOME i
+        BlockOp (TagEq i) -> SOME i
       | _5 -> NONE`;;
 
 let dest_LenEq_def = cake_define
   `dest_LenEq x1 =
       match x1 with
-        (BlockOp (LenEq i)) -> SOME i
+        BlockOp (LenEq i) -> SOME i
       | _6 -> NONE`;;
 
 let dest_TagLenEq_def = cake_define
   `dest_TagLenEq x1 =
       match x1 with
-        (BlockOp (TagLenEq i j)) -> SOME (i,j)
+        BlockOp (TagLenEq i j) -> SOME (i,j)
       | _7 -> NONE`;;
 
 let dest_Op_def = cake_define
   `dest_Op f x2 =
       match x2 with
-        (Op t op xs) ->
+        Op t op xs ->
      (match f op with NONE -> NONE | SOME i -> SOME (i,xs))
       | _8 -> NONE`;;
 
@@ -129,7 +129,7 @@ let cons_op_def = cake_define
 let is_Var_def = cake_define
   `is_Var x1 =
       match x1 with
-        (Var _9 _10) -> T
+        (Var _9 _10:closLang_exp) -> T
       | _11 -> F`;;
 
 let eq_direct_nil_def = cake_define

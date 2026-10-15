@@ -115,7 +115,7 @@ hol4_overload "compile" "bvi_let_compile";;
 let compile_sing_def = cake_define_list
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)
-           | _5 -> Var (v + d))`;
+           | _4 -> Var (v + d))`;
    `bvi_let_compile_sing env d (If x1 x2 x3:bvi_exp) =
          (If (bvi_let_compile_sing env d x1)
              (bvi_let_compile_sing env d x2)
@@ -140,7 +140,7 @@ let compile_sing_def = cake_define_list
   (bvi_let_compile_sing env d x))`;
    `bvi_let_compile_sing env d (Force loc v:bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Force loc (v
-           + n) | _6 -> Force loc (v + d))`;
+           + n) | _5 -> Force loc (v + d))`;
    `bvi_let_compile_sing env d (Call t dest xs h:bvi_exp) =
          (Call t dest (bvi_let_compile_list env d xs)
              (match h with NONE -> NONE | SOME e -> SOME
@@ -159,5 +159,5 @@ hol4_overload "compile_sing" "bvi_let_compile_sing";;
 
 let compile_exp_def = cake_define
   `bvi_let_compile_exp x =
-     (match compile [] 0 [x] with (y :: _7) -> y | _8 -> Var 0)`;;
+     (match compile [] 0 [x] with (y :: _6) -> y | _7 -> Var 0)`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;

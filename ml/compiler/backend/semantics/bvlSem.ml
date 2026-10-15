@@ -76,7 +76,7 @@ let bvlSem_state_FIELDS = define_record "bvlSem_state"
 let v_to_list_def = cake_define
   `bvlSem_v_to_list x1 =
         match x1 with
-          (Block tag []) ->
+          (Block tag []:bvlSem_v) ->
         (if tag = nil_tag then SOME [] else NONE)
         | (Block tag [h; bt]) ->
         (if tag = cons_tag then
@@ -96,37 +96,38 @@ let isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "bvlSem_isClos";;
 
-let do_eq_def = cake_define
-  `bvlSem_do_eq refs x2 x3 =
-        match (x2,x3) with
-          ((CodePtr _3),_4) -> Eq_type_error
-        | (_5,(CodePtr _6)) -> Eq_type_error
-        | ((Number n1),(Number n2)) -> (Eq_val (n1 = n2))
-        | ((Number _7),_8) -> Eq_type_error
-        | (_9,(Number _10)) -> Eq_type_error
-        | ((Word64 w1),(Word64 w2)) -> (Eq_val (w1 = w2))
-        | ((Word64 _11),_12) -> Eq_type_error
-        | (_13,(Word64 _14)) -> Eq_type_error
-        | ((RefPtr b1 n1),(RefPtr b2 n2)) ->
-       (if b1 /\ b2 then
-        (match (FLOOKUP refs n1,FLOOKUP refs n2) with
-           (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) -> Eq_val
-             (bs1 = bs2) | (SOME (ByteArray T bs1),_15) -> Eq_type_error
-             | (_16,SOME (ByteArray T bs2)) -> Eq_type_error | _17 ->
-             Eq_val (n1 = n2)) else Eq_type_error)
-        | ((RefPtr _18 _19),_20) -> Eq_type_error
-        | (_21,(RefPtr _22 _23)) -> Eq_type_error
-        | ((Block t1 l1),(Block t2 l2)) ->
-      (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\ isClos
-        t2 l2 then Eq_val T else Eq_type_error else if (t1 = t2) /\
-        (LENGTH l1 = LENGTH l2) then bvlSem_do_eq_list refs l1 l2 else
-        Eq_val F)
-        | ([],[]) -> Eq_val T
-        | ((v1 :: vs1),(v2 :: vs2)) ->
-      (match bvlSem_do_eq refs v1 v2 with Eq_val T ->
-        bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad ->
-        bad)
-        | (_24,_25) -> Eq_val F`;;
+let do_eq_def = cake_define_list
+  [`bvlSem_do_eq _3 (CodePtr _4:bvlSem_v) _5 = Eq_type_error`;
+   `bvlSem_do_eq _6 _7 (CodePtr _8:bvlSem_v) = Eq_type_error`;
+   `bvlSem_do_eq _9 (Number n1:bvlSem_v) (Number n2:bvlSem_v) =
+  (Eq_val (n1 = n2))`;
+   `bvlSem_do_eq _10 (Number _11:bvlSem_v) _12 = Eq_type_error`;
+   `bvlSem_do_eq _13 _14 (Number _15:bvlSem_v) = Eq_type_error`;
+   `bvlSem_do_eq _16 (Word64 w1:bvlSem_v) (Word64 w2:bvlSem_v) =
+  (Eq_val (w1 = w2))`;
+   `bvlSem_do_eq _17 (Word64 _18:bvlSem_v) _19 = Eq_type_error`;
+   `bvlSem_do_eq _20 _21 (Word64 _22:bvlSem_v) = Eq_type_error`;
+   `bvlSem_do_eq refs (RefPtr b1 n1:bvlSem_v) (RefPtr b2 n2:bvlSem_v) =
+        (if b1 /\ b2 then
+         (match (FLOOKUP refs n1,FLOOKUP refs n2) with
+            (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
+              Eq_val (bs1 = bs2) | (SOME (ByteArray T bs1),_23) ->
+              Eq_type_error | (_24,SOME (ByteArray T bs2)) ->
+              Eq_type_error | _25 -> Eq_val (n1 = n2)) else
+              Eq_type_error)`;
+   `bvlSem_do_eq _26 (RefPtr _27 _28:bvlSem_v) _29 = Eq_type_error`;
+   `bvlSem_do_eq _30 _31 (RefPtr _32 _33:bvlSem_v) = Eq_type_error`;
+   `bvlSem_do_eq refs (Block t1 l1:bvlSem_v) (Block t2 l2:bvlSem_v) =
+       (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
+         isClos t2 l2 then Eq_val T else Eq_type_error else if (t1 =
+         t2) /\ (LENGTH l1 = LENGTH l2) then bvlSem_do_eq_list refs
+         l1 l2 else Eq_val F)`;
+   `bvlSem_do_eq_list _34 [] [] = Eq_val T`;
+   `bvlSem_do_eq_list refs (v1 :: vs1) (v2 :: vs2) =
+       (match bvlSem_do_eq refs v1 v2 with Eq_val T ->
+         bvlSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad
+         -> bad)`;
+   `bvlSem_do_eq_list _35 _36 _37 = Eq_val F`];;
 hol4_overload "do_eq" "bvlSem_do_eq";;
 hol4_overload "do_eq_list" "bvlSem_do_eq_list";;
 
@@ -162,7 +163,7 @@ let do_install_def = cake_define
                      FST progs)) /\
                        ALL_DISTINCT (MAP FST progs) then
                     (match (?_compile s cfg progs,progs) with (SOME
-                      (bytes',data',cfg'),(k,prog) :: _26) ->
+                      (bytes',data',cfg'),(k,prog) :: _38) ->
                          (if bytes = bytes' /\ data = data' /\ FST
                            (new_oracle 0) = cfg' then
                            let s' = ?_compile_oracle_fupd (K
@@ -170,10 +171,10 @@ let do_install_def = cake_define
                              s) (fromAList progs)))
                              s) in
                              Rval (CodePtr k,s') else Rerr (Rabort
-                               Rtype_error)) | _27 -> Rerr (Rabort
+                               Rtype_error)) | _39 -> Rerr (Rabort
                                Rtype_error)) else Rerr (Rabort
-                               Rtype_error))) | _28 -> Rerr (Rabort
-                               Rtype_error)) | _29 -> Rerr (Rabort
+                               Rtype_error))) | _40 -> Rerr (Rabort
+                               Rtype_error)) | _41 -> Rerr (Rabort
                                Rtype_error))`;;
 
 let do_part_def = cake_define_list
@@ -203,7 +204,7 @@ hol4_overload "do_build_const" "bvlSem_do_build_const";;
 let do_int_app_def = cake_define
   `bvlSem_do_int_app x1 x2 =
       match (x1,x2) with
-        ((Const n),[]) -> SOME (Number n)
+        (Const n,[]) -> SOME (Number n)
       | ((Add),[Number n1; Number n2]) -> SOME (Number (n1 + n2))
       | ((Sub),[Number n1; Number n2]) -> SOME (Number (n1 - n2))
       | ((Mult),[Number n1; Number n2]) -> SOME (Number (n1 * n2))
@@ -226,7 +227,7 @@ hol4_overload "do_int_app" "bvlSem_do_int_app";;
 let do_word_app_def = cake_define
   `bvlSem_do_word_app x1 ws =
         match (x1,ws) with
-          ((WordOpw W8 opw),[Number n1; Number n2]) ->
+          (WordOpw W8 opw,[(Number n1:bvlSem_v); Number n2]) ->
           (match some (\((w1:word8),(w2:word8)). n1 = &(w2n w1) /\ n2
             = &(w2n w2)) with NONE -> NONE | SOME (w1,w2) -> SOME
             (Number (&(w2n (opw_lookup opw w1 w2)))))
@@ -235,7 +236,7 @@ let do_word_app_def = cake_define
         | ((WordTest W8 test),[Number n1; Number n2]) ->
           (if 0 <= n1 /\ n1 < 256 /\ 0 <= n2 /\ n2 < 256 then
              (match test with Equal -> SOME (Boolv (n1 = n2)) |
-               Compare cmp -> SOME (Boolv (int_cmp cmp n1 n2)) | _30 ->
+               Compare cmp -> SOME (Boolv (int_cmp cmp n1 n2)) | _42 ->
                NONE) else NONE)
         | ((WordShift W8 sh n),[Number i]) ->
           (match some (\(w:word8). i = &(w2n w)) with NONE -> NONE |
@@ -253,17 +254,17 @@ let do_word_app_def = cake_define
             SOME w -> SOME (Word64 (w2w w)))
         | ((FP_top t_op),ws) ->
            (match ws with [Word64 w1; Word64 w2; Word64 w3] ->
-                (SOME (Word64 (fp_top_comp t_op w1 w2 w3))) | _31 ->
+                (SOME (Word64 (fp_top_comp t_op w1 w2 w3))) | _43 ->
                   NONE)
         | ((FP_bop bop),ws) ->
            (match ws with [Word64 w1; Word64 w2] -> (SOME (Word64
-             (fp_bop_comp bop w1 w2))) | _32 -> NONE)
+             (fp_bop_comp bop w1 w2))) | _44 -> NONE)
         | ((FP_uop uop),ws) ->
            (match ws with [Word64 w] -> (SOME (Word64 (fp_uop_comp
-             uop w))) | _33 -> NONE)
+             uop w))) | _45 -> NONE)
         | ((FP_cmp cmp),ws) ->
            (match ws with [Word64 w1; Word64 w2] -> (SOME (Boolv
-             (fp_cmp_comp cmp w1 w2))) | _34 -> NONE)
+             (fp_cmp_comp cmp w1 w2))) | _46 -> NONE)
         | ((op:closLang_word_op),(vs:bvlSem_v list)) -> NONE`;;
 hol4_overload "do_word_app" "bvlSem_do_word_app";;
 
@@ -278,14 +279,14 @@ hol4_overload "IsThunk" "bvlSem_IsThunk";;
 let dest_thunk_def = cake_define
   `bvlSem_dest_thunk x1 refs =
       match x1 with
-        (RefPtr b ptr) ->
+        (RefPtr b ptr:bvlSem_v) ->
      (match FLOOKUP refs ptr with NONE -> BadRef | SOME (Thunk
        Evaluated v) ->
           (if b then BadRef else IsThunk Evaluated v) | SOME (Thunk
             NotEvaluated v) ->
-          (if b then BadRef else IsThunk NotEvaluated v) | SOME _35
+          (if b then BadRef else IsThunk NotEvaluated v) | SOME _47
             -> NotThunk)
-      | _36 -> NotThunk`;;
+      | _48 -> NotThunk`;;
 hol4_overload "dest_thunk" "bvlSem_dest_thunk";;
 
 let bad_thunk_update_def = cake_define
@@ -305,22 +306,22 @@ let do_app_def = cake_define
      (do_app op vs) s =
        (match (op,vs) with (GlobOp (Global n),[]) ->
            (match get_global n (?_globals s) with SOME (SOME v) ->
-             Rval (v,s) | _37 -> ((Rerr (Rabort
+             Rval (v,s) | _49 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (GlobOp (Global
-             _38),[Number i]) ->
+             _50),[Number i]) ->
            (if i < 0 then ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result) else
             match get_global (num_of_int i + num_added_globals)
-              (?_globals s) with SOME (SOME v) -> Rval (v,s) | _39 ->
+              (?_globals s) with SOME (SOME v) -> Rval (v,s) | _51 ->
               ((Rerr (Rabort
               Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
               ,bvlSem_v)semanticPrimitives_result)) | (GlobOp (SetGlobal
               n),[v]) ->
-           (match get_global n (?_globals s) with SOME _40 -> Rval
+           (match get_global n (?_globals s) with SOME _52 -> Rval
              (Unit,?_globals_fupd (K (LUPDATE (SOME v) n (?_globals s)))
-                s) | _41 -> ((Rerr (Rabort
+                s) | _53 -> ((Rerr (Rabort
                   Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                   ,bvlSem_v)semanticPrimitives_result)) | (GlobOp
                   AllocGlobal,[Number i]) ->
@@ -347,7 +348,7 @@ let do_app_def = cake_define
               parts),[]) ->
            (let (v,rs) = do_build_const parts (?_refs s) in Rval
              (v,?_refs_fupd (K rs) s)) | (BlockOp (ConsExtend tag),Block
-             _42 xs' :: Number lower :: Number len :: Number tot :: xs)
+             _54 xs' :: Number lower :: Number len :: Number tot :: xs)
              ->
            (if lower < 0 \/ len < 0 \/ lower + len > &LENGTH xs' \/
               tot = 0 \/ ~(tot = &LENGTH xs + len) then
@@ -356,7 +357,7 @@ let do_app_def = cake_define
                ,bvlSem_v)semanticPrimitives_result) else
              Rval (Block tag (xs ++ TAKE (num_of_int len) (DROP
                (num_of_int lower) xs')),s)) | (BlockOp (ConsExtend
-               tag),_43) -> ((Rerr (Rabort
+               tag),_55) -> ((Rerr (Rabort
                Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                ,bvlSem_v)semanticPrimitives_result) | (MemOp El,[Block
                tag xs; Number i]) ->
@@ -364,12 +365,12 @@ let do_app_def = cake_define
              (num_of_int i) xs,s) else ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (MemOp El,[RefPtr
-             _44 ptr; Number i]) ->
+             _56 ptr; Number i]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ValueArray xs) ->
                (if 0 <= i /\ i < &(LENGTH xs) then Rval (EL
                  (num_of_int i) xs,s) else ((Rerr (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                 ,bvlSem_v)semanticPrimitives_result)) | _45 -> ((Rerr
+                 ,bvlSem_v)semanticPrimitives_result)) | _57 -> ((Rerr
                  (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                  ,bvlSem_v)semanticPrimitives_result)) | (BlockOp
@@ -378,31 +379,31 @@ let do_app_def = cake_define
              (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (BlockOp (ElemAt
-             n),[RefPtr _46 ptr]) ->
+             n),[RefPtr _58 ptr]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ValueArray xs) ->
                (if n < LENGTH xs then Rval (EL n xs,s) else ((Rerr
                  (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                 ,bvlSem_v)semanticPrimitives_result)) | _47 -> ((Rerr
+                 ,bvlSem_v)semanticPrimitives_result)) | _59 -> ((Rerr
                  (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                  ,bvlSem_v)semanticPrimitives_result)) | (BlockOp
                  ListAppend,[x1; x2]) ->
            (match (v_to_list x1,v_to_list x2) with (SOME xs,SOME ys)
-             -> Rval (list_to_v (xs ++ ys),s) | _48 -> ((Rerr (Rabort
+             -> Rval (list_to_v (xs ++ ys),s) | _60 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (BlockOp
              LengthBlock,[Block tag xs]) ->
-           Rval (Number (&LENGTH xs),s) | (MemOp Length,[RefPtr _49
+           Rval (Number (&LENGTH xs),s) | (MemOp Length,[RefPtr _61
              ptr]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ValueArray xs) ->
-                 Rval (Number (&LENGTH xs),s) | _50 -> ((Rerr (Rabort
+                 Rval (Number (&LENGTH xs),s) | _62 -> ((Rerr (Rabort
                    Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                    ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                   LengthByte,[RefPtr _51 ptr]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (ByteArray _52 xs)
+                   LengthByte,[RefPtr _63 ptr]) ->
+           (match FLOOKUP (?_refs s) ptr with SOME (ByteArray _64 xs)
              ->
-                 Rval (Number (&LENGTH xs),s) | _53 -> ((Rerr (Rabort
+                 Rval (Number (&LENGTH xs),s) | _65 -> ((Rerr (Rabort
                    Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                    ,bvlSem_v)semanticPrimitives_result)) | (MemOp
                    (RefByte F),[Number i; Number b]) ->
@@ -421,17 +422,17 @@ let do_app_def = cake_define
                    else ((Rerr (Rabort
                    Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                    ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                   DerefByte,[RefPtr _54 ptr; Number i]) ->
-           (match FLOOKUP (?_refs s) ptr with SOME (ByteArray _55 ws)
+                   DerefByte,[RefPtr _66 ptr; Number i]) ->
+           (match FLOOKUP (?_refs s) ptr with SOME (ByteArray _67 ws)
              ->
                (if 0 <= i /\ i < &LENGTH ws then Rval (Number (&(w2n
                  (EL (num_of_int i) ws))),s) else ((Rerr (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                 ,bvlSem_v)semanticPrimitives_result)) | _56 -> ((Rerr
+                 ,bvlSem_v)semanticPrimitives_result)) | _68 -> ((Rerr
                  (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                  ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                 UpdateByte,[RefPtr _57 ptr; Number i; Number b]) ->
+                 UpdateByte,[RefPtr _69 ptr; Number i; Number b]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ByteArray f bs)
              ->
                (if 0 <= i /\ i < &LENGTH bs /\ (?(w:word8). b = &(w2n
@@ -440,7 +441,7 @@ let do_app_def = cake_define
                     (ptr,ByteArray f (LUPDATE (i2w b) (num_of_int i)
                       bs)))) s) else ((Rerr (Rabort
                       Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                      ,bvlSem_v)semanticPrimitives_result)) | _58 ->
+                      ,bvlSem_v)semanticPrimitives_result)) | _70 ->
                       ((Rerr (Rabort
                       Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                       ,bvlSem_v)semanticPrimitives_result)) | (MemOp
@@ -453,14 +454,14 @@ let do_app_def = cake_define
                (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
                  in
                  Rval (RefPtr T ptr,?_refs_fupd (K (?_refs s |+
-                          (ptr,ByteArray T (FLAT wss)))) s)) | _59 ->
+                          (ptr,ByteArray T (FLAT wss)))) s)) | _71 ->
                             ((Rerr (Rabort
                             Rtype_error)):(bvlSem_v#('c
                             ,'ffi)bvlSem_state
                             ,bvlSem_v)semanticPrimitives_result)) |
                             (BlockOp (FromList n),[lv]) ->
            (match v_to_list lv with SOME vs -> Rval (Block n vs,s) |
-             _60 -> ((Rerr (Rabort
+             _72 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (MemOp
              FromListByte,[lv]) ->
@@ -474,55 +475,55 @@ let do_app_def = cake_define
                                 Rtype_error)):(bvlSem_v#('c
                                 ,'ffi)bvlSem_state
                                 ,bvlSem_v)semanticPrimitives_result)) |
-                                (MemOp ToListByte,[RefPtr _61 ptr]) ->
+                                (MemOp ToListByte,[RefPtr _73 ptr]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ByteArray f bs)
              ->
                (Rval (list_to_v (MAP (\b. Number (&(w2n b))) bs),s))
-                 | _62 -> ((Rerr (Rabort
+                 | _74 -> ((Rerr (Rabort
                  Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                  ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                 (CopyByte F),[RefPtr _63 src; Number srcoff; Number
-                 len; RefPtr _64 dst; Number dstoff]) ->
+                 (CopyByte F),[RefPtr _75 src; Number srcoff; Number
+                 len; RefPtr _76 dst; Number dstoff]) ->
            (match (FLOOKUP (?_refs s) src,FLOOKUP (?_refs s) dst)
-             with (SOME (ByteArray _65 ws),SOME (ByteArray fl ds)) ->
+             with (SOME (ByteArray _77 ws),SOME (ByteArray fl ds)) ->
               (match copy_array (ws,srcoff) len (SOME (ds,dstoff))
                 with SOME ds -> Rval (Unit,?_refs_fupd (K (?_refs s |+
                 (dst,ByteArray fl ds))) s) | NONE -> ((Rerr (Rabort
                 Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                ,bvlSem_v)semanticPrimitives_result)) | _66 -> ((Rerr
+                ,bvlSem_v)semanticPrimitives_result)) | _78 -> ((Rerr
                 (Rabort
                 Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                 ,bvlSem_v)semanticPrimitives_result)) | (MemOp (CopyByte
-                T),[RefPtr _67 src; Number srcoff; Number len]) ->
-          (match (FLOOKUP (?_refs s) src) with SOME (ByteArray _68
+                T),[RefPtr _79 src; Number srcoff; Number len]) ->
+          (match (FLOOKUP (?_refs s) src) with SOME (ByteArray _80
             ws) ->
               (match copy_array (ws,srcoff) len NONE with SOME ds ->
                  (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s))))
                    in
                  Rval (RefPtr T ptr,?_refs_fupd (K (?_refs s |+
-                   (ptr,ByteArray T ds))) s)) | _69 -> ((Rerr (Rabort
+                   (ptr,ByteArray T ds))) s)) | _81 -> ((Rerr (Rabort
                    Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                   ,bvlSem_v)semanticPrimitives_result)) | _70 -> ((Rerr
+                   ,bvlSem_v)semanticPrimitives_result)) | _82 -> ((Rerr
                    (Rabort
                    Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                    ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                   XorByte,[RefPtr _71 dst; RefPtr _72 src]) ->
+                   XorByte,[RefPtr _83 dst; RefPtr _84 src]) ->
            (match (FLOOKUP (?_refs s) src,FLOOKUP (?_refs s) dst)
-             with (SOME (ByteArray _73 ws),SOME (ByteArray fl ds)) ->
+             with (SOME (ByteArray _85 ws),SOME (ByteArray fl ds)) ->
               (match xor_bytes ws ds with SOME ds1 -> Rval
                 (Unit,?_refs_fupd (K (?_refs s |+ (dst,ByteArray fl
                 ds1))) s) | NONE -> ((Rerr (Rabort
                 Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                ,bvlSem_v)semanticPrimitives_result)) | _74 -> ((Rerr
+                ,bvlSem_v)semanticPrimitives_result)) | _86 -> ((Rerr
                 (Rabort
                 Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                 ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                (StringCmp b cmp),[RefPtr _75 s1; RefPtr _76 s2]) ->
+                (StringCmp b cmp),[RefPtr _87 s1; RefPtr _88 s2]) ->
            (match (FLOOKUP (?_refs s) s1,FLOOKUP (?_refs s) s2) with
-             (SOME (ByteArray _77 ws1),SOME (ByteArray _78 ws2)) ->
+             (SOME (ByteArray _89 ws1),SOME (ByteArray _90 ws2)) ->
                 (let s1 = implode (MAP (CHR o w2n) ws1) in
                  let s2 = implode (MAP (CHR o w2n) ws2) in
-                   Rval (Boolv (str_cmp b cmp s1 s2),s)) | _79 ->
+                   Rval (Boolv (str_cmp b cmp s1 s2),s)) | _91 ->
                      ((Rerr (Rabort
                      Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                      ,bvlSem_v)semanticPrimitives_result)) | (BlockOp
@@ -534,37 +535,37 @@ let do_app_def = cake_define
            Rval (Boolv (tag = n /\ LENGTH xs = l),s) | (BlockOp
              (EqualConst p),[x1]) ->
            (match p with Int i -> (match x1 with Number j -> Rval
-             (Boolv (i = j),s) | _80 -> ((Rerr (Rabort
+             (Boolv (i = j),s) | _92 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | W64 i -> (match x1
-             with Word64 j -> Rval (Boolv (i = j),s) | _81 -> ((Rerr
+             with Word64 j -> Rval (Boolv (i = j),s) | _93 -> ((Rerr
              (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | Str i -> (match x1
-             with RefPtr _82 p ->
+             with RefPtr _94 p ->
                           (match FLOOKUP (?_refs s) p with SOME
                             (ByteArray T j) ->
                              Rval (Boolv (j = MAP (n2w o ORD)
-                               (explode i)),s) | _83 -> ((Rerr (Rabort
+                               (explode i)),s) | _95 -> ((Rerr (Rabort
                                Rtype_error)):(bvlSem_v#('c
                                ,'ffi)bvlSem_state
                                ,bvlSem_v)semanticPrimitives_result)) |
-                               _84 -> ((Rerr (Rabort
+                               _96 -> ((Rerr (Rabort
                                Rtype_error)):(bvlSem_v#('c
                                ,'ffi)bvlSem_state
                                ,bvlSem_v)semanticPrimitives_result)) |
-                               _85 -> ((Rerr (Rabort
+                               _97 -> ((Rerr (Rabort
                                Rtype_error)):(bvlSem_v#('c
                                ,'ffi)bvlSem_state
                                ,bvlSem_v)semanticPrimitives_result)) |
                                (BlockOp Equal,[x1; x2]) ->
            (match do_eq (?_refs s) x1 x2 with Eq_val b -> Rval (Boolv
-             b,s) | _86 -> ((Rerr (Rabort
+             b,s) | _98 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (MemOp Ref,xs) ->
            (let ptr = (LEAST (\ptr. ~(ptr IN FDOM (?_refs s)))) in
              Rval (RefPtr T ptr,?_refs_fupd (K (?_refs s |+
-               (ptr,ValueArray xs))) s)) | (MemOp Update,[RefPtr _87
+               (ptr,ValueArray xs))) s)) | (MemOp Update,[RefPtr _99
                ptr; Number i; x]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ValueArray xs) ->
                (if 0 <= i /\ i < &(LENGTH xs) then Rval
@@ -574,7 +575,7 @@ let do_app_def = cake_define
                                 Rtype_error)):(bvlSem_v#('c
                                 ,'ffi)bvlSem_state
                                 ,bvlSem_v)semanticPrimitives_result)) |
-                                _88 -> ((Rerr (Rabort
+                                _100 -> ((Rerr (Rabort
                                 Rtype_error)):(bvlSem_v#('c
                                 ,'ffi)bvlSem_state
                                 ,bvlSem_v)semanticPrimitives_result)) |
@@ -584,15 +585,15 @@ let do_app_def = cake_define
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (IntOp intop,vs) ->
            (match do_int_app intop vs with SOME res -> Rval (res,s) |
-             _89 -> ((Rerr (Rabort
+             _101 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
              ,bvlSem_v)semanticPrimitives_result)) | (WordOp wordop,vs)
              ->
            (match do_word_app wordop vs with SOME res -> Rval (res,s)
-             | _90 -> ((Rerr (Rabort
+             | _102 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-             ,bvlSem_v)semanticPrimitives_result)) | (FFI n,[RefPtr _91
-             cptr; RefPtr _92 ptr]) ->
+             ,bvlSem_v)semanticPrimitives_result)) | (FFI n,[RefPtr _103
+             cptr; RefPtr _104 ptr]) ->
            (match (FLOOKUP (?_refs s) cptr,FLOOKUP (?_refs s) ptr)
              with (SOME (ByteArray T cws),SOME (ByteArray F ws)) ->
               (match call_FFI (?_ffi s) (ExtCall n) cws ws with
@@ -600,39 +601,39 @@ let do_app_def = cake_define
                    Rval (Unit,?_ffi_fupd (K ffi') (?_refs_fupd (K
                      (?_refs s |+ (ptr,ByteArray F ws')))
                          s)) | FFI_final outcome ->
-                   Rerr (Rabort (Rffi_error outcome))) | _93 ->
+                   Rerr (Rabort (Rffi_error outcome))) | _105 ->
                      ((Rerr (Rabort
                      Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                      ,bvlSem_v)semanticPrimitives_result)) | (BlockOp
                      BoundsCheckBlock,xs) ->
            (match xs with [Block tag ys; Number i] ->
-                  Rval (Boolv (0 <= i /\ i < &LENGTH ys),s) | _94 ->
+                  Rval (Boolv (0 <= i /\ i < &LENGTH ys),s) | _106 ->
                     ((Rerr (Rabort
                     Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                     ,bvlSem_v)semanticPrimitives_result)) | (MemOp
                     (BoundsCheckByte loose),xs) ->
-           (match xs with [RefPtr _95 ptr; Number i] ->
-             (match FLOOKUP (?_refs s) ptr with SOME (ByteArray _96
+           (match xs with [RefPtr _107 ptr; Number i] ->
+             (match FLOOKUP (?_refs s) ptr with SOME (ByteArray _108
                ws) ->
                   Rval (Boolv (0 <= i /\ (if loose then (<=) else
-                    (<)) i (&LENGTH ws)),s) | _97 -> ((Rerr (Rabort
+                    (<)) i (&LENGTH ws)),s) | _109 -> ((Rerr (Rabort
                     Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                    ,bvlSem_v)semanticPrimitives_result)) | _98 ->
+                    ,bvlSem_v)semanticPrimitives_result)) | _110 ->
                     ((Rerr (Rabort
                     Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                     ,bvlSem_v)semanticPrimitives_result)) | (MemOp
                     BoundsCheckArray,xs) ->
-           (match xs with [RefPtr _99 ptr; Number i] ->
+           (match xs with [RefPtr _111 ptr; Number i] ->
              (match FLOOKUP (?_refs s) ptr with SOME (ValueArray ws)
                ->
-                  Rval (Boolv (0 <= i /\ i < &LENGTH ws),s) | _100 ->
+                  Rval (Boolv (0 <= i /\ i < &LENGTH ws),s) | _112 ->
                     ((Rerr (Rabort
                     Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                    ,bvlSem_v)semanticPrimitives_result)) | _101 ->
+                    ,bvlSem_v)semanticPrimitives_result)) | _113 ->
                     ((Rerr (Rabort
                     Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                     ,bvlSem_v)semanticPrimitives_result)) | (MemOp
-                    ConfigGC,[Number _102; Number _103]) -> (Rval
+                    ConfigGC,[Number _114; Number _115]) -> (Rval
                     (Unit,s)) | (ThunkOp th_op,vs) ->
            (match (th_op,vs) with (AllocThunk m,[v]) ->
                 (if bad_thunk_update m v (?_refs s) then ((Rerr
@@ -649,14 +650,14 @@ let do_app_def = cake_define
                   Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                   ,bvlSem_v)semanticPrimitives_result) else
                  match FLOOKUP (?_refs s) ptr with SOME (Thunk
-                   NotEvaluated _104) ->
+                   NotEvaluated _116) ->
                     Rval (Unit,?_refs_fupd (K (?_refs s |+
-                      (ptr,Thunk m v))) s) | _105 -> ((Rerr (Rabort
+                      (ptr,Thunk m v))) s) | _117 -> ((Rerr (Rabort
                       Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                      ,bvlSem_v)semanticPrimitives_result)) | _106 ->
+                      ,bvlSem_v)semanticPrimitives_result)) | _118 ->
                       ((Rerr (Rabort
                       Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
-                      ,bvlSem_v)semanticPrimitives_result)) | _107 ->
+                      ,bvlSem_v)semanticPrimitives_result)) | _119 ->
                       ((Rerr (Rabort
                       Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                       ,bvlSem_v)semanticPrimitives_result))`;;
@@ -790,7 +791,7 @@ let semantics_def = cake_define
        ?k s r outcome.
          evaluate (es,[],init k) = (r,s) /\
          (match r with Rerr (Rabort Rtimeout_error) -> F | Rerr
-           (Rabort (Rffi_error e)) -> outcome = FFI_outcome e | _108 ->
+           (Rabort (Rffi_error e)) -> outcome = FFI_outcome e | _120 ->
            outcome = Success) /\
          res = Terminate outcome (ffi_state_io_events (?_ffi s)))
            with SOME res -> res | NONE ->

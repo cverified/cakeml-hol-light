@@ -110,7 +110,7 @@ hol4_overload "decode_test" "flat_pattern_decode_test";;
 let simp_guard_def = cake_define
   `simp_guard x =
       match x with
-        (Conj x y) ->
+        Conj x y ->
      (let v = simp_guard x in
       let w = simp_guard y in
       if v = Not True \/ w = Not True then
@@ -143,8 +143,8 @@ let decode_guard_def = cake_define
 let decode_dtree_def = cake_define
   `decode_dtree t br_spt v df pattern_semantics$Fail =
       match pattern_semantics$Fail with
-        (Leaf n) -> (match lookup n br_spt with SOME br -> br | NONE
-          -> df)
+        Leaf n -> (match lookup n br_spt with SOME br -> br | NONE ->
+          df)
       | pattern_semantics_Fail -> df
       | TypeFail -> Var_local t (implode "impossible-case")
       | (If guard dt1 dt2) ->
@@ -160,7 +160,7 @@ let encode_pat_def = cake_define_wf
   `MEASURE pat_size`
   `encode_pat x1 =
       match x1 with
-        (flatLang_Pany) -> pattern_semantics_Any
+        flatLang_Pany -> pattern_semantics_Any
       | (Plit l) -> Lit l
       | (Pvar _14) -> Any
       | (flatLang_Pcon stmp ps) -> Cons
@@ -219,75 +219,75 @@ let max_dec_name_def = cake_define
 let op_sets_globals_def = cake_define
   `op_sets_globals x1 =
       match x1 with
-        (GlobalVarInit n) -> T
+        GlobalVarInit n -> T
       | _19 -> F`;;
 
-let compile_exp_def = cake_define
-  `flat_pattern_compile_exp cfg exp =
-        match exp with
-          (Var_local t vid) ->
-       (dec_name_to_num vid,F,Var_local t vid)
-        | (Raise t x) ->
-       (let (i,sg,y) = flat_pattern_compile_exp cfg x in
-       (i,sg,Raise t y))
-        | (Handle t x ps) ->
-       (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
-       let (j,sgp,ps2) = compile_match cfg ps in
-       let k = MAX i j + 2 in
-       let nm = enc_num_to_name k in
-       let v = Var_local t nm in
-       let r = Raise t v in
-       let exp = compile_pats cfg sgp t k v r ps2 in
-       (k,(sgx \/ sgp),Handle t y [(Pvar nm,exp)]))
-        | (Con t ts xs) ->
-       (let (i,sg,ys) = flat_pattern_compile_exps cfg (REVERSE xs) in
-       (i,sg,Con t ts (REVERSE ys)))
-        | (Fun t vs x) ->
-       (let (i,sg,y) = flat_pattern_compile_exp cfg x in
-       (i,sg,Fun t vs y))
-        | (App t op xs) ->
-       (let (i,sg,ys) = flat_pattern_compile_exps cfg (REVERSE xs) in
-       (i,(sg \/ op_sets_globals op),App t op (REVERSE ys)))
-        | (Mat t x ps) ->
-       (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
-       let (j,sgp,ps2) = compile_match cfg ps in
-       let k = MAX i j + 2 in
-       let nm = enc_num_to_name k in
-       let v = Var_local t nm in
-       let r = Raise t (Con t (SOME (bind_tag,NONE)) []) in
-       let exp = compile_pats cfg sgp t k v r ps2 in
-       (k,(sgx \/ sgp),Let t (SOME nm) y exp))
-        | (Let t v x1 x2) ->
-       (let (i,sg1,y1) = flat_pattern_compile_exp cfg x1 in
-       let (j,sg2,y2) = flat_pattern_compile_exp cfg x2 in
-       let k = (match v with NONE -> 0 | SOME vid -> dec_name_to_num
-         vid) in
-       (MAX i (MAX j k),(sg1 \/ sg2),Let t v y1 y2))
-        | (flatLang_Letrec t fs x) ->
-       (let ys = MAP (\(a,b,c). (a,b,flat_pattern_compile_exp cfg c))
-         fs in
-       let (i,sgx,y) = flat_pattern_compile_exp cfg x in
-       let j = MAX_LIST (MAP (\(_20,_21,(j,_22,_23)). j) ys) in
-       let sgfs = EXISTS (\(_24,_25,(_26,sg,_27)). sg) ys in
-       let fs2 = MAP (\(a,b,(_28,_29,exp)). (a,b,exp)) ys in
-       (MAX i j,(sgfs \/ sgx),flatLang_Letrec t fs2 y))
-        | (If t x1 x2 x3) ->
-       (let (i,sg1,y1) = flat_pattern_compile_exp cfg x1 in
-       let (j,sg2,y2) = flat_pattern_compile_exp cfg x2 in
-       let (k,sg3,y3) = flat_pattern_compile_exp cfg x3 in
-       (MAX i (MAX j k),(sg1 \/ sg2 \/ sg3),SmartIf t y1 y2 y3))
-        | exp -> (0,F,exp)
-        | [] -> (0,F,[])
-        | (x :: xs) ->
-       (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
-       let (j,sgy,ys) = flat_pattern_compile_exps cfg xs in
-       (MAX i j,(sgx \/ sgy),y :: ys))
-        | [] -> (0,F,[])
-        | ((p,x) :: ps) ->
-       (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
-       let j = max_dec_name (pat_bindings p) in
-       let (k,sgp,ps2) = compile_match cfg ps in
-       (MAX i (MAX j k),(sgx \/ sgp),((p,y) :: ps2)))`;;
+let compile_exp_def = cake_define_list
+  [`flat_pattern_compile_exp cfg (Var_local t vid:flatLang_exp) =
+        (dec_name_to_num vid,F,Var_local t vid)`;
+   `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
+        (let (i,sg,y) = flat_pattern_compile_exp cfg x in
+        (i,sg,Raise t y))`;
+   `flat_pattern_compile_exp cfg (Handle t x ps:flatLang_exp) =
+        (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
+        let (j,sgp,ps2) = compile_match cfg ps in
+        let k = MAX i j + 2 in
+        let nm = enc_num_to_name k in
+        let v = Var_local t nm in
+        let r = Raise t v in
+        let exp = compile_pats cfg sgp t k v r ps2 in
+        (k,(sgx \/ sgp),Handle t y [(Pvar nm,exp)]))`;
+   `flat_pattern_compile_exp cfg (Con t ts xs:flatLang_exp) =
+        (let (i,sg,ys) = flat_pattern_compile_exps cfg (REVERSE xs)
+          in
+        (i,sg,Con t ts (REVERSE ys)))`;
+   `flat_pattern_compile_exp cfg (Fun t vs x:flatLang_exp) =
+        (let (i,sg,y) = flat_pattern_compile_exp cfg x in
+        (i,sg,Fun t vs y))`;
+   `flat_pattern_compile_exp cfg (App t op xs:flatLang_exp) =
+        (let (i,sg,ys) = flat_pattern_compile_exps cfg (REVERSE xs)
+          in
+        (i,(sg \/ op_sets_globals op),App t op (REVERSE ys)))`;
+   `flat_pattern_compile_exp cfg (Mat t x ps:flatLang_exp) =
+        (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
+        let (j,sgp,ps2) = compile_match cfg ps in
+        let k = MAX i j + 2 in
+        let nm = enc_num_to_name k in
+        let v = Var_local t nm in
+        let r = Raise t (Con t (SOME (bind_tag,NONE)) []) in
+        let exp = compile_pats cfg sgp t k v r ps2 in
+        (k,(sgx \/ sgp),Let t (SOME nm) y exp))`;
+   `flat_pattern_compile_exp cfg (Let t v x1 x2:flatLang_exp) =
+        (let (i,sg1,y1) = flat_pattern_compile_exp cfg x1 in
+        let (j,sg2,y2) = flat_pattern_compile_exp cfg x2 in
+        let k = (match v with NONE -> 0 | SOME vid ->
+          dec_name_to_num vid) in
+        (MAX i (MAX j k),(sg1 \/ sg2),Let t v y1 y2))`;
+   `flat_pattern_compile_exp cfg (flatLang_Letrec t fs x:flatLang_exp) =
+        (let ys = MAP (\(a,b,c). (a,b,flat_pattern_compile_exp cfg
+          c)) fs in
+        let (i,sgx,y) = flat_pattern_compile_exp cfg x in
+        let j = MAX_LIST (MAP (\(_20,_21,(j,_22,_23)). j) ys) in
+        let sgfs = EXISTS (\(_24,_25,(_26,sg,_27)). sg) ys in
+        let fs2 = MAP (\(a,b,(_28,_29,exp)). (a,b,exp)) ys in
+        (MAX i j,(sgfs \/ sgx),flatLang_Letrec t fs2 y))`;
+   `flat_pattern_compile_exp cfg (If t x1 x2 x3:flatLang_exp) =
+        (let (i,sg1,y1) = flat_pattern_compile_exp cfg x1 in
+        let (j,sg2,y2) = flat_pattern_compile_exp cfg x2 in
+        let (k,sg3,y3) = flat_pattern_compile_exp cfg x3 in
+        (MAX i (MAX j k),(sg1 \/ sg2 \/ sg3),SmartIf t y1 y2 y3))`;
+   `flat_pattern_compile_exp cfg exp = (0,F,exp)`;
+   `flat_pattern_compile_exps cfg [] = (0,F,[])`;
+   `flat_pattern_compile_exps cfg (x :: xs) =
+        (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
+        let (j,sgy,ys) = flat_pattern_compile_exps cfg xs in
+        (MAX i j,(sgx \/ sgy),y :: ys))`;
+   `compile_match cfg [] = (0,F,[])`;
+   `compile_match cfg ((p,x) :: ps) =
+        (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
+        let j = max_dec_name (pat_bindings p) in
+        let (k,sgp,ps2) = compile_match cfg ps in
+        (MAX i (MAX j k),(sgx \/ sgp),((p,y) :: ps2)))`];;
 hol4_overload "compile_exp" "flat_pattern_compile_exp";;
 hol4_overload "compile_exps" "flat_pattern_compile_exps";;
 

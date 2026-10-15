@@ -1350,7 +1350,7 @@ let make_byte_header_def = cake_define
 let get_lowerbits_def = cake_define
   `get_lowerbits conf x2 =
         match x2 with
-          (Word w) ->
+          Word w ->
         (((word_bits (small_shift_length conf - 1) 0) w) || (n2w 1))
         | _13 -> (n2w 1)`;;
 
@@ -1434,7 +1434,7 @@ let const_parts_to_words_def = cake_define
 let get_Word_def = cake_define
   `get_Word x1 =
       match x1 with
-        (Word w) -> w
+        Word w -> w
       | _14 -> (n2w 0)`;;
 
 (* HOL4 ML code, not ported:

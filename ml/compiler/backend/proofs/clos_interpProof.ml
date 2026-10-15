@@ -136,7 +136,7 @@ let v_ok_def = cake_define_list
 let res_ok_def = cake_define
   `res_ok x1 =
       match x1 with
-        (Rerr (Rabort _1)) -> T
+        Rerr (Rabort _1) -> T
       | (Rerr (Rraise v)) -> v_ok v
       | (Rval v) -> EVERY v_ok v`;;
 

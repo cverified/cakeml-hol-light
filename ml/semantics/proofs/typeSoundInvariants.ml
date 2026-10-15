@@ -151,7 +151,7 @@ let type_v = cake_inductive
 let type_sv_def = cake_define
   `type_sv ctMap tenvS x3 x4 =
         match (x3,x4) with
-          ((Refv v),(Ref_t t)) -> type_v 0 ctMap tenvS v t
+          (Refv v,Ref_t t) -> type_v 0 ctMap tenvS v t
         | ((W8array v),W8array_t) -> T
         | ((Varray vs),(Varray_t t)) ->
        EVERY (\v. type_v 0 ctMap tenvS v t) vs

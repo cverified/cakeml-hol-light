@@ -42,20 +42,19 @@ let encode_infer_t_def = cake_define
      Pair (encode_infer_t t) (encode_infer_ts ts))`;;
 
 let decode_infer_t_def = cake_define
-  `decode_infer_t x1 =
-        match x1 with
-          (Var n) ->
-     Infer_Tuvar n
-        | (Const (DB_tag n)) ->
-     Infer_Tvar_db n
-        | (Pair (Const Tapp_tag) (Pair (Const (TC_tag tc)) s)) ->
-     Infer_Tapp (decode_infer_ts s) tc
-        | _1 -> Infer_Tuvar 5
-        | (Const Null_tag) ->
-     []
-        | (Pair s1 s2) ->
-     decode_infer_t s1 :: decode_infer_ts s2
-        | _2 -> []`;;
+  `(decode_infer_t (Var n) =
+     Infer_Tuvar n) /\
+   (decode_infer_t (Const (DB_tag n)) =
+     Infer_Tvar_db n) /\
+   (decode_infer_t (Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
+     s)) =
+     Infer_Tapp (decode_infer_ts s) tc) /\
+   (decode_infer_t _1 = Infer_Tuvar 5) /\
+   (decode_infer_ts (Const Null_tag) =
+     []) /\
+   (decode_infer_ts (Pair s1 s2) =
+     decode_infer_t s1 :: decode_infer_ts s2) /\
+   (decode_infer_ts _2 = [])`;;
 
 (* "Ramana Kumar unification type to CakeML type" relation *)
 let RKC_def = cake_define
@@ -274,7 +273,7 @@ let star_workbag_def = cake_define
 let isCONSk_def = cake_define
   `isCONSk x1 =
       match x1 with
-        (CONSk _4 _5) -> T
+        CONSk _4 _5 -> T
       | _6 -> F`;;
 
 let kcwalkstarwlR_def = cake_define

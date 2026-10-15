@@ -36,7 +36,7 @@ let is_Any_def = cake_define
 let is_Or_row_def = cake_define
   `is_Or_row x1 =
       match x1 with
-        (Or p1 p2,_4) -> T
+        ((Or p1 p2:pattern_semantics_pat),_4) -> T
       | _5 -> F`;;
 
 let take_until_Any_def = cake_define

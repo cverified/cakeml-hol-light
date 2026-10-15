@@ -9,6 +9,7 @@
 
 needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
@@ -22,6 +23,7 @@ needs "compiler/backend/proofs/stack_namesProof.ml";;
 needs "compiler/backend/proofs/stack_rawcallProof.ml";;
 needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/proofs/word_to_stackProof.ml";;
+needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
@@ -185,7 +187,8 @@ let result_view_INDUCT,result_view_RECURSION = define_datatype
 let result_view_def = cake_define
   `result_view x1 l cs bs =
         match x1 with
-          (Result ((wordLang_Loc) n1 n2)) -> Vloc n1 n2
+          (Result ((wordLang_Loc) n1 n2):word_to_stackProof_result)
+            -> Vloc n1 n2
         | (Exception ((wordLang_Loc) n1 n2)) -> Vloc n1 n2
         | TimeOut -> Vtimeout
         | (Continue n) -> Vcont l (find_lab n cs)
@@ -195,14 +198,14 @@ let result_view_def = cake_define
 let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
-          (Word (n2w 0)) -> Halt Success
+          (Word (n2w 0):any_prog) -> Halt Success
         | (Word _11) -> Halt Resource_limit_hit
         | _12 -> Error`;;
 
 let halt_view_def = cake_define
   `halt_view x1 =
         match x1 with
-          (SOME (Halt w)) -> SOME (halt_word_view w)
+          SOME (Halt w) -> SOME (halt_word_view w)
         | (SOME (FinalFFI outcome)) -> SOME (Halt (FFI_outcome
           outcome))
         | _13 -> NONE`;;
@@ -457,7 +460,7 @@ val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
 let complex_get_code_labels_def = cake_define
   `complex_get_code_labels x1 =
         match x1 with
-          (Seq p1 p2) -> complex_get_code_labels p1 UNION
+          (Seq p1 p2:live_tree) -> complex_get_code_labels p1 UNION
             complex_get_code_labels p2
         | (If _14 _15 _16 p1 p2) -> complex_get_code_labels p1 UNION
           complex_get_code_labels p2

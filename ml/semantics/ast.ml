@@ -248,7 +248,7 @@ let every_exp_def = cake_define_list
    `every_exp p (Handle e pes:ast_exp) <=>
                  p (Handle e pes) /\ every_exp p e /\ EVERY
                    (\(pat,e). every_exp p e) pes`;
-   `every_exp p (ast_Lit l) <=>
+   `every_exp p (ast_Lit l:ast_exp) <=>
                  p (ast_Lit l)`;
    `every_exp p (Con cn es:ast_exp) <=>
                  p (Con cn es) /\ EVERY (every_exp p) es`;

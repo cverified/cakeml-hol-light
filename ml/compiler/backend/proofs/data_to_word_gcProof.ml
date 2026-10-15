@@ -82,7 +82,8 @@ let join_env_def = cake_define
 let flat_def = cake_define
   `flat x1 x2 =
         match (x1,x2) with
-          ((Env _1 env :: xs),(StackFrame _2 _3 vs _4 :: ys)) ->
+          (((Env _1 env:stack) :: xs),(StackFrame _2 _3 vs _4 :: ys))
+            ->
         join_env env vs ++ flat xs ys
         | ((Exc _5 env _6 :: xs),(StackFrame _7 _8 vs _9 :: ys)) ->
         join_env env vs ++ flat xs ys
@@ -98,7 +99,7 @@ let can_select_def = cake_define
 let is_Ref_def = cake_define
   `is_Ref is_ref_tag x2 =
       match x2 with
-        (DataElement xs l r) -> is_ref_tag r
+        DataElement xs l r -> is_ref_tag r
       | _12 -> F`;;
 
 let len_inv_def = cake_define
@@ -121,7 +122,7 @@ let word_heap_parts_def = cake_define
 let muttag_header_def = cake_define
   `muttag_header x1 =
       match x1 with
-        (ThunkTag e) -> (thunk_tag_to_bits e << 3 || (n2w 6))
+        ThunkTag e -> (thunk_tag_to_bits e << 3 || (n2w 6))
       | _13 -> (n2w 2)`;;
 
 let partial_len_inv_def = cake_define
@@ -165,7 +166,7 @@ hol4_overload "code_rel" "data_to_word_gcProof_code_rel";;
 let stack_rel_def = cake_define
   `data_to_word_gcProof_stack_rel x1 x2 =
         match (x1,x2) with
-          ((Env s1 env),(StackFrame s2 ws vs NONE)) ->
+          ((Env s1 env:stack),StackFrame s2 ws vs NONE) ->
         EVERY (\(x1,x2). ~(x1 = 0) /\ EVEN x1) vs /\ s1 = s2 /\
         EVERY (\(x1,x2). x1 = 0) ws /\
         ALL_DISTINCT (MAP FST vs) /\
@@ -337,7 +338,7 @@ val s' = mk_var("s'",type_of s);
 let loc_ok_def = cake_define
   `loc_ok x1 =
       match x1 with
-        (Loc m n) -> (n = 0)
+        (Loc m n:dataSem_v) -> (n = 0)
       | _23 -> T`;;
 
 (* HOL4 ML code, not ported:

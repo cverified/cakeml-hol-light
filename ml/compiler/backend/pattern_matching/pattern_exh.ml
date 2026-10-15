@@ -275,16 +275,14 @@ let exh_matrix_def = cake_define_wf
        (\x. match x with INL rows -> (mat_weight rows,mat_len
          rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
          ms + 1))`
-  `exh_matrix x1 =
-      match x1 with
-        [] -> F
-      | (r :: rows) ->
+  `exh_matrix [] = F /\
+   exh_matrix (r :: rows) =
      (if NULL r then T else
         match col_ctors (r :: rows) with NONE -> exh_matrix
           (default_mat (r :: rows)) | SOME cs -> exh_mats (spec_mats cs
-          (r :: rows)))
-      | [] -> T
-      | (m :: ms) -> (exh_matrix m /\ exh_mats ms)`;;
+          (r :: rows))) /\
+   exh_mats [] = T /\
+   exh_mats (m :: ms) = (exh_matrix m /\ exh_mats ms)`;;
 
 let exh_rows_def = cake_define
   `exh_rows rows = exh_matrix (or_rows rows)`;;
@@ -321,16 +319,14 @@ let exh_steps_def = cake_define_wf
        (\x. match x with INL rows -> (mat_weight rows,mat_len
          rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
          ms + 1))`
-  `exh_steps x1 =
-      match x1 with
-        [] -> (1:num)
-      | (r :: rows) ->
+  `exh_steps [] = (1:num) /\
+   exh_steps (r :: rows) =
      (if NULL r then 1 else
         match col_ctors (r :: rows) with NONE -> 1 + exh_steps
           (default_mat (r :: rows)) | SOME cs -> 1 + exh_steps_list
-          (spec_mats cs (r :: rows)))
-      | [] -> 0
-      | (m :: ms) -> exh_steps m + exh_steps_list ms`;;
+          (spec_mats cs (r :: rows))) /\
+   exh_steps_list [] = 0 /\
+   exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`;;
 
 (* HOL4 termination: \\ rw [exh_steps_def,exh_steps_list_append] \\
    simp [Once exh_steps_def] *)
@@ -422,7 +418,7 @@ let pand_def = cake_define
 let dest_val_def = cake_define
   `dest_val refs x2 =
       match x2 with
-        (Term (SOME t) vs) -> SOME (TagC t (LENGTH vs),vs)
+        Term (SOME t) vs -> SOME (TagC t (LENGTH vs),vs)
       | (Term NONE vs) -> SOME (TupC (LENGTH vs),vs)
       | (RefPtr r) -> (match FLOOKUP refs r with NONE -> NONE | SOME
         w -> SOME (RefC,[w]))

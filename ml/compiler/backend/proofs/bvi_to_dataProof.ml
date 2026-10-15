@@ -109,7 +109,7 @@ val RW = REWRITE_RULE;
 let data_to_bvi_result_def = cake_define
   `data_to_bvi_result x1 =
       match x1 with
-        (Rval vs) -> Rval (MAP data_to_bvi_v vs)
+        Rval vs -> Rval (MAP data_to_bvi_v vs)
       | (Rerr (Rraise v)) -> Rerr (Rraise (Exn (data_to_bvi_v v)))
       | (Rerr (Rabort err)) -> Rerr (Rabort err)`;;
 

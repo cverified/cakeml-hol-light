@@ -558,7 +558,7 @@ let install_def = cake_define
 let compile_exp_def = cake_define
   `word_bignum_compile_exp x1 =
       match x1 with
-        (Op b [x1; x2]) -> Op b [word_bignum_compile_exp x1;
+        Op b [x1; x2] -> Op b [word_bignum_compile_exp x1;
           word_bignum_compile_exp x2]
       | (Var n) -> Lookup (Temp (n2w n))
       | (Const w) -> Const w

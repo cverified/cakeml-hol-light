@@ -228,7 +228,7 @@ last step: need a relation <---
 let heap_element_is_ref_def = cake_define
   `heap_element_is_ref conf x2 =
         match x2 with
-          (DataElement xs l d) -> ?_isRef conf d
+          DataElement xs l d -> ?_isRef conf d
         | _12 -> F`;;
 
 let gen_inv_def = cake_define
@@ -314,13 +314,13 @@ val heap_lookup_heap_expand = isSomeDataElement_heap_lookup_heap_expand
 let similar_ptr_def = cake_define
   `similar_ptr conf x1 x2 =
         match (x1,x2) with
-          ((Pointer p1 d1),(Pointer p2 d2)) -> (d2 = d1)
+          (Pointer p1 d1,Pointer p2 d2) -> (d2 = d1)
         | (x1,x2) -> (x1 = x2)`;;
 
 let similar_data_def = cake_define
   `similar_data conf x y =
         match (x,y) with
-          ((DataElement xs1 l1 d1),(DataElement xs2 l2 d2)) ->
+          (DataElement xs1 l1 d1,DataElement xs2 l2 d2) ->
        (l2 = l1) /\ (d2 = d1) /\ LIST_REL (similar_ptr conf) xs1 xs2
         | (x,y) -> (x = y)`;;
 

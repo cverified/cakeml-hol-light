@@ -77,19 +77,18 @@ let _ = size_thms "v";;
 let find_v_globals_def = cake_define_wf
   `MEASURE (\e. match e with INL x -> v_size x | INR y -> list_size
   v_size y)`
-  `find_v_globals x1 =
-        match x1 with
-          (Conv _1 vl) -> ((find_v_globalsL vl):1 spt)
-        | (Closure env _2 e) ->
-           union (find_v_globalsL (MAP SND (?_v env))) (find_lookups
-             e)
-        | (Recclosure env vves _3) ->
-           union (find_v_globalsL (MAP SND (?_v env)))
-               (find_lookupsL (MAP (SND o SND) vves))
-        | (Vectorv vl) -> find_v_globalsL vl
-        | _4 -> LN
-        | [] -> LN
-        | (h :: t) -> union (find_v_globals h) (find_v_globalsL t)`;;
+  `(find_v_globals (Conv _1 vl) = ((find_v_globalsL vl):1 spt)) /\
+   (find_v_globals (Closure env _2 e) =
+       union (find_v_globalsL (MAP SND (?_v env))) (find_lookups e))
+         /\
+   (find_v_globals (Recclosure env vves _3) =
+       union (find_v_globalsL (MAP SND (?_v env)))
+           (find_lookupsL (MAP (SND o SND) vves))) /\
+   (find_v_globals (Vectorv vl) = find_v_globalsL vl) /\
+   (find_v_globals _4 = LN) /\
+   (find_v_globalsL [] = LN) /\
+   (find_v_globalsL (h :: t) = union (find_v_globals h)
+     (find_v_globalsL t))`;;
 
 (* HOL4 ML code, not ported:
 val find_v_globals_ind = theorem "find_v_globals_ind";
@@ -117,7 +116,7 @@ let find_env_globals_def = cake_define
 let find_result_globals_def = cake_define
   `find_result_globals x1 =
         match x1 with
-          (SOME (Rraise v)) -> find_v_globals v
+          SOME (Rraise v) -> find_v_globals v
         | _7 -> LN`;;
 
 (* HOL4 ML code, not ported:
@@ -147,7 +146,7 @@ let v_has_Eval_def1 = cake_define_wf
   `MEASURE v_size`
   `v_has_Eval x1 =
         match x1 with
-          (Closure env _8 e) -> (has_Eval e \/
+          (Closure env _8 e:flatSem_v) -> (has_Eval e \/
        EXISTS v_has_Eval (MAP SND (?_v env)))
         | (Conv _9 vl) -> EXISTS v_has_Eval vl
         | (Recclosure env nm_es _10) ->

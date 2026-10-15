@@ -174,7 +174,7 @@ let handler_val_def = cake_define
 let is_handler_frame_def = cake_define
   `is_handler_frame x1 =
         match x1 with
-          (StackFrame n l0 l NONE) -> F
+          StackFrame n l0 l NONE -> F
         | _9 -> T`;;
 
 (*Checks for consistency of the values*)

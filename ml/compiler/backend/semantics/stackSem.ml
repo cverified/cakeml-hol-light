@@ -314,7 +314,7 @@ let sh_mem_op_def = cake_define
 let full_read_bitmap_def = cake_define
   `full_read_bitmap bitmaps x2 =
         match x2 with
-          (Word w) ->
+          Word w ->
         (if w = (n2w 0) then NONE else read_bitmap (DROP (w2n (w -
           (n2w 1))) bitmaps))
         | _19 -> NONE`;;
@@ -592,7 +592,7 @@ hol4_overload "STOP" "stackSem_STOP";;
 let get_labels_def = cake_define
   `stackSem_get_labels x1 =
         match x1 with
-          (Seq p1 p2) -> stackSem_get_labels p1 UNION
+          (Seq p1 p2:wordLang_prog) -> stackSem_get_labels p1 UNION
             stackSem_get_labels p2
         | (If _53 _54 _55 p1 p2) -> stackSem_get_labels p1 UNION
           stackSem_get_labels p2
@@ -665,7 +665,7 @@ let check_store_consts_opt_def = cake_define
 let dest_Seq_def = cake_define
   `stackSem_dest_Seq x1 =
       match x1 with
-        (Seq p1 p2) -> SOME (p1,(p2:'a stackLang_prog))
+        (Seq p1 p2:wordLang_prog) -> SOME (p1,(p2:'a stackLang_prog))
       | _62 -> NONE`;;
 hol4_overload "dest_Seq" "stackSem_dest_Seq";;
 
@@ -689,7 +689,7 @@ hol4_overload "cont_loop" "stackSem_cont_loop";;
 let exit_loop_def = cake_define
   `stackSem_exit_loop res =
       match res with
-        (SOME (Break n)) -> (if n = 0 then NONE else SOME (Break (n -
+        SOME (Break n) -> (if n = 0 then NONE else SOME (Break (n -
           1)))
       | (SOME (Continue n)) -> SOME (Continue (n - 1))
       | res -> res`;;
