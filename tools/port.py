@@ -133,6 +133,7 @@ class Porter:
     self.restore = set()   # the infixes to put back at the end
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
+    self.intargs = set()   # arguments that hold an integer
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
@@ -511,7 +512,8 @@ class Porter:
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
-    self.ctx.intvars = self.int_vars(body)
+    self.intargs = set(overrides.INT_ARGS.get(key, []))
+    self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
     if key in overrides.CLAUSE_FORM:
@@ -694,8 +696,15 @@ class Porter:
     e.l = hterm.strip_app(e.l)[0]
     self.annotated = {}
     for a in args:
-      e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
-                       arg=self.annotate_pat(a, ambiguous))
+      a = self.annotate_pat(a, ambiguous)
+      # an argument that holds an integer, where no clause says so
+      b = a
+      while b.kind == 'paren': b = b.e
+      if b.kind == 'id' and b.name in self.intargs:
+        a = hterm.Node('paren', tok=b.tok,
+              e=hterm.Node('typed', tok=b.tok, e=b,
+                           ty=hterm.tokenize('int')))
+      e.l = hterm.Node('app', tok=e.l.tok, fn=e.l, arg=a)
     # a constructor of the pattern that the right hand side uses
     # again gets the same resolution there: a clause of its own is
     # typechecked on its own, so nothing else would say which

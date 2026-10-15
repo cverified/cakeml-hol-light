@@ -156,6 +156,14 @@ INT_NUMERALS = set([
   ('semanticPrimitives', 'copy_array_def'),
 ])
 
+# the arguments of a definition that hold an integer, where no
+# clause of it says so and the clauses would get different types
+# (multiword's int_op adds its two arguments in one clause and
+# compares them with &1 in another)
+INT_ARGS = {
+  ('multiword', 'int_op_def'): ['i', 'j'],
+}
+
 # definitions in which a ~ without an argument ($~) is the negation
 # of an integer, which HOL Light writes --
 INT_NEG = set([

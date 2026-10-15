@@ -40,14 +40,14 @@ hol4_overload "Eq" "multiword_Eq";;
 hol4_overload "Dec" "multiword_Dec";;
 
 let int_op_def = cake_define_list
-  [`multiword_int_op multiword_Add i j = i + j`;
-   `multiword_int_op multiword_Sub i j = i - j`;
-   `multiword_int_op multiword_Mul i j = i * j`;
-   `multiword_int_op multiword_Div i j = i / j`;
-   `multiword_int_op multiword_Mod i j = i % j`;
-   `multiword_int_op multiword_Lt i j = (if i < j then (&1) else
-  (&0))`;
-   `multiword_int_op multiword_Eq i j = (if i = j then (&1) else
-  (&0):int)`;
-   `multiword_int_op multiword_Dec i j = (&0)`];;
+  [`multiword_int_op multiword_Add (i:int) (j:int) = i + j`;
+   `multiword_int_op multiword_Sub (i:int) (j:int) = i - j`;
+   `multiword_int_op multiword_Mul (i:int) (j:int) = i * j`;
+   `multiword_int_op multiword_Div (i:int) (j:int) = i / j`;
+   `multiword_int_op multiword_Mod (i:int) (j:int) = i % j`;
+   `multiword_int_op multiword_Lt (i:int) (j:int) = (if i < j then
+  (&1) else (&0))`;
+   `multiword_int_op multiword_Eq (i:int) (j:int) = (if i = j then
+  (&1) else (&0):int)`;
+   `multiword_int_op multiword_Dec (i:int) (j:int) = (&0)`];;
 hol4_overload "int_op" "multiword_int_op";;
