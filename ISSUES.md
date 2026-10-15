@@ -36,6 +36,21 @@ sources, and why.
   a capital letter unless the name has another capital in it
   (HOL Light's parser), so `Lnext_def` becomes `lnext_def`.  The
   constant itself keeps its name.
+- A constant whose name HOL Light's term parser reserves (`match`
+  of `pattern_semantics`; the other reserved words are `let`, `in`,
+  `and`, `if`, `then`, `else`, `with`, `function` and `when`) is
+  renamed as a clashing name is.
+- Several record types have a field of the same name, and HOL4
+  resolves such a name by the type of the record.  The port
+  declares the accessor and the update of such a field as overloads
+  so that HOL Light resolves it the same way: with the name that
+  HOL4 gives the accessor (`state_clock`) where the record types
+  all have the same name, and with the name of the field itself
+  (`be`, `limit`, `stack`, ...) where they do not.  A variable that
+  is called after one of the latter is renamed (`pc` becomes
+  `pc'`).  The fields `v`, `c` and `max_app`, which a great many
+  variables are called after, have a default record type instead
+  (`FIELD_DEFAULT` of `tools/overrides.py`).
 
 ## Syntax
 
@@ -72,6 +87,20 @@ sources, and why.
 - A relation that a source defines with ML code (`Hol_reln` with
   `replace_quote`: `step` and `dstep` of `parmove`) is ported as
   an inductive definition of the rules that the ML code builds.
+- `do x <- e; f od` is the bind of the monad that the source has
+  enabled with `monadsyntax` (`st_ex_bind` of `ml_monadBase`,
+  `pegresult_bind` of `cmlParse`, `OPTION_BIND` of the option
+  monad), and `return` is its unit; where no monad is enabled it is
+  HOL4's overloaded `monad_bind`, which a source may overload
+  itself (`cmlPEG` does).
+- HOL4's `&` is a prefix that binds looser than application, so
+  `&LENGTH l` is `&(LENGTH l)`.
+- HOL Light's numerals are natural numbers, so a numeral of type
+  `int` is written `&n`.  The port does that for the definitions of
+  `INT_NUMERALS`, for a numeral with a type annotation of `int` or
+  `real`, for an argument of a constructor whose type is one of
+  them, and for a numeral in a comparison or a sum with a variable
+  that a pattern binds to such an argument.
 
 ## Definitions
 
