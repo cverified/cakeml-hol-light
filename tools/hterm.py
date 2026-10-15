@@ -911,6 +911,9 @@ class Ctx:
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
     self.intvars = set()               # variables holding integers
+    self.armvars = {}                  # arm body -> its integer
+                                       # variables (a match arm
+                                       # binds its own)
     self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
     self.iffeq = False                 # is <=> plain equality?
@@ -1346,8 +1349,20 @@ class Printer:
     if k == 'case':
       # a tuple of values or a tuple pattern needs its parentheses,
       # and so does a match, a let or a conditional in an arm
-      arms = ' | '.join(self.pr(p, 15) + ' -> ' + self.pr(b, 2)
-                        for p, b in e.arms)
+      def arm(p, b):
+        # the pattern of an arm binds its own variables, and some
+        # of them hold an integer where the ones of another arm do
+        # not (closSem's do_app matches on [Number i] in one arm
+        # and on (MemOp (ElemAt i)) in another)
+        vs = self.ctx.armvars.get(id(b))
+        if not vs: return self.pr(p, 15) + ' -> ' + self.pr(b, 2)
+        old = self.ctx.intvars
+        self.ctx.intvars = old | vs
+        try:
+          return self.pr(p, 15) + ' -> ' + self.pr(b, 2)
+        finally:
+          self.ctx.intvars = old
+      arms = ' | '.join(arm(p, b) for p, b in e.arms)
       return self.paren('match ' + self.pr(e.s, 15) + ' with ' + arms,
                         1, prec)
     if k == 'field':

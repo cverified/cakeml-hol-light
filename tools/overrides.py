@@ -189,8 +189,9 @@ INT_ARGS = {
   # type of P, which is applied to n - 1, says so
   ('linear_scan', 'check_number_property_def'): ['n'],
   ('linear_scan', 'check_number_property_strong_def'): ['n'],
-  # n1 and n are the integers that a do notation binds, which the
-  # annotation of the argument n does not reach
+  # n1 and n are the integers that a let or a do notation binds,
+  # which the annotation of the argument n does not reach
+  ('linear_scan', 'get_intervals_ct_aux_def'): ['n1'],
   ('linear_scan', 'get_intervals_ct_monad_aux_def'): ['n1'],
   ('linear_scan', 'get_intervals_ct_monad_def'): ['n'],
 }

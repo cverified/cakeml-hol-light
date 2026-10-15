@@ -194,7 +194,7 @@ class Porter:
     if p.peek().kind != 'eof':
       t = p.peek()
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
-    e = self.lambda_cons(e)
+    e = self.arm_intvars(self.lambda_cons(e))
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     # the patterns of the first clause of every function carry the
@@ -694,6 +694,29 @@ class Porter:
     self.ctx.intneg = False
     self.ctx.defining = set()
 
+  def arm_intvars(self, e):
+    """the variables of a match arm that hold an integer: an arm
+       binds its own, and one arm can have an integer where
+       another has a natural number (closSem's do_app matches on
+       [Number i] and on (MemOp (ElemAt i)))"""
+    def go(x):
+      if not isinstance(x, hterm.Node): return
+      if x.kind == 'case':
+        for p, b in x.arms:
+          vs = self.int_vars_node(p)
+          if vs: self.ctx.armvars[id(b)] = vs
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): go(v)
+        elif isinstance(v, (list, tuple)):
+          for y in v:
+            if isinstance(y, hterm.Node): go(y)
+            elif isinstance(y, (list, tuple)):
+              for z in y:
+                if isinstance(z, hterm.Node): go(z)
+    go(e)
+    return e
+
   def lambda_cons(self, e):
     """a HOL4 overload whose name is a constructor as well and
        whose value is a lambda is ambiguous, and HOL4 resolves it
@@ -1028,10 +1051,18 @@ class Porter:
       if n.kind == 'app':
         h, args = hterm.strip_app(n)
         if h.kind == 'id':
+          # the type of the argument of the constructor that this
+          # name means here; the name may be one that several
+          # theories have (closSem's do_app matches on the Number
+          # of closSem, whose argument is an integer)
+          nm = h.name.split('$')[-1]
+          t = self.con_thy(h.name, arity=len(args)) \
+              if iscon(h.name) else None
           for i, a in enumerate(args):
             while a.kind == 'paren': a = a.e
             if a.kind != 'id': continue
-            ty = self.ctx.con_argty.get((h.name, i))
+            ty = (self.db.con_argty_thy.get((t, nm, i)) if t else
+                  None) or self.ctx.con_argty.get((nm, i))
             if ty in ('int', 'real'): out.add(a.name)
             elif ty: other.add(a.name)
         # the argument of a function whose argument is an integer
@@ -1060,7 +1091,8 @@ class Porter:
        same variable name can have different types in two clauses,
        which one HOL Light quotation cannot"""
     toks = hterm.tokenize(hol4.strip_comments(body))
-    e = self.lambda_cons(hterm.Parser(toks, self.ctx).parse())
+    e = self.arm_intvars(
+          self.lambda_cons(hterm.Parser(toks, self.ctx).parse()))
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     try:
@@ -1249,7 +1281,8 @@ class Porter:
     global CONS
     CONS = self.ctx.cons
     toks = hterm.tokenize(hol4.strip_comments(body))
-    e = self.lambda_cons(hterm.Parser(toks, self.ctx).parse())
+    e = self.arm_intvars(
+          self.lambda_cons(hterm.Parser(toks, self.ctx).parse()))
     # a bound variable whose name is a constant of the port is
     # renamed here as well (word_copy matches on Shift shift r1 r2
     # n, and shift is the overload of backend_common's word_shift)
