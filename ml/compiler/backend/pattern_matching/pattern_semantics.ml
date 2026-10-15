@@ -100,11 +100,11 @@ let pmatch_def = cake_define_list
         (match pattern_semantics_pmatch refs p1 t with
            PMatchSuccess -> (match pattern_semantics_pmatch refs p2
              t with
-                              PTypeFailure -> PTypeFailure | _2
+                              PTypeFailure -> PTypeFailure | _3
                                 -> PMatchSuccess) | PMatchFailure ->
                                 pattern_semantics_pmatch refs p2 t |
                                 PTypeFailure -> PTypeFailure)`;
-   `pattern_semantics_pmatch refs _3 _4 = PTypeFailure`;
+   `pattern_semantics_pmatch refs _4 _5 = PTypeFailure`;
    `pattern_semantics_pmatch_list refs [] [] = PMatchSuccess`;
    `pattern_semantics_pmatch_list refs [] ts = PTypeFailure`;
    `pattern_semantics_pmatch_list refs ps [] = PTypeFailure`;
@@ -113,7 +113,7 @@ let pmatch_def = cake_define_list
           PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts
             | PMatchFailure -> (match pattern_semantics_pmatch_list refs
             ps ts with
-                              PTypeFailure -> PTypeFailure | _5
+                              PTypeFailure -> PTypeFailure | _6
                                 -> PMatchFailure) | PTypeFailure ->
                                 PTypeFailure)`];;
 hol4_overload "pmatch" "pattern_semantics_pmatch";;
@@ -125,7 +125,7 @@ let match_def = cake_define_list
         (match pmatch refs p v with
            PMatchSuccess ->
              (match pattern_semantics_match refs rows v with
-               NONE -> NONE | SOME _7 -> SOME (MatchSuccess e))
+               NONE -> NONE | SOME _8 -> SOME (MatchSuccess e))
                  | PMatchFailure -> pattern_semantics_match refs
                  rows v | PTypeFailure -> NONE)`];;
 
@@ -139,7 +139,7 @@ let dt_test_def = cake_define
      SOME (t = c /\ l = LENGTH args)
       | ((pattern_semantics_LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
-      | (_8,_9) -> NONE`;;
+      | (_9,_10) -> NONE`;;
 
 let app_pos_def = cake_define
   `app_pos refs x2 v =
@@ -152,7 +152,7 @@ let app_pos_def = cake_define
           app_pos refs pos x
         | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs))) ->
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
-        | ((Pos _10 _11),_12) -> NONE`;;
+        | ((Pos _11 _12),_13) -> NONE`;;
 
 let dt_eval_guard_def = cake_define_list
   [`dt_eval_guard refs v pattern_semantics_True =
@@ -171,10 +171,10 @@ let dt_eval_guard_def = cake_define_list
            SOME T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
 let dt_eval_def = cake_define_list
-  [`dt_eval refs _13 (pattern_semantics_Leaf k) = SOME (MatchSuccess
+  [`dt_eval refs _14 (pattern_semantics_Leaf k) = SOME (MatchSuccess
   k)`;
-   `dt_eval refs _14 Fail = SOME (MatchFailure)`;
-   `dt_eval refs _15 pattern_semantics_TypeFail = NONE`;
+   `dt_eval refs _15 Fail = SOME (MatchFailure)`;
+   `dt_eval refs _16 pattern_semantics_TypeFail = NONE`;
    `dt_eval refs v (If guard' dt1 dt2:dTree) =
          (match dt_eval_guard refs v guard' with NONE -> NONE |
            SOME b -> dt_eval refs v (if b then dt1 else dt2))`];;

@@ -652,20 +652,20 @@ let pmatch_def = cake_define_list
           No_match)`;
    `flatSem_pmatch s (Pas p i:flatLang_pat) v bindings =
         flatSem_pmatch s p v ((i,v) :: bindings)`;
-   `flatSem_pmatch s (Pref p:flatLang_pat) (Loc _123 lnum:flatSem_v)
+   `flatSem_pmatch s (Pref p:flatLang_pat) (Loc _124 lnum:flatSem_v)
   bindings =
         (match store_lookup lnum (state_refs s) with SOME
           (semanticPrimitives_Refv v) -> flatSem_pmatch s p v
-          bindings | _124 -> Match_type_error)`;
-   `flatSem_pmatch _125 _126 _127 bindings = Match_type_error`;
+          bindings | _125 -> Match_type_error)`;
+   `flatSem_pmatch _126 _127 _128 bindings = Match_type_error`;
    `flatSem_pmatch_list s [] [] bindings = Match bindings`;
    `flatSem_pmatch_list s (p :: ps) (v :: vs) bindings =
         (match flatSem_pmatch s p v bindings with Match_type_error
           -> Match_type_error | Match bindings' -> flatSem_pmatch_list s
           ps vs bindings' | No_match ->
           (match flatSem_pmatch_list s ps vs bindings with
-            Match_type_error -> Match_type_error | _128 -> No_match))`;
-   `flatSem_pmatch_list s _129 _130 bindings = Match_type_error`];;
+            Match_type_error -> Match_type_error | _129 -> No_match))`;
+   `flatSem_pmatch_list s _130 _131 bindings = Match_type_error`];;
 hol4_overload "pmatch" "flatSem_pmatch";;
 hol4_overload "pmatch_list" "flatSem_pmatch_list";;
 
@@ -676,7 +676,7 @@ let pmatch_rows_def = cake_define_list
         Match_type_error | No_match -> pmatch_rows pes s v | Match env
         ->
          (match pmatch_rows pes s v with Match_type_error ->
-           Match_type_error | _132 -> Match (env,p,e)))`];;
+           Match_type_error | _133 -> Match (env,p,e)))`];;
 
 let dec_clock_def = cake_define
   `flatSem_dec_clock s = state_clock_fupd (K (state_clock s - 1)) s`;;
@@ -702,8 +702,8 @@ let do_eval_def = cake_define
              (if bytes = bytes' /\ data = data' /\ ~(decs = []) /\
                  FST (new_oracle 0) = st' then
                SOME (decs,install_config_compile_oracle_fupd (K
-                 new_oracle) eval_config,Unitv) else NONE) | _133 ->
-                 NONE)) | _134 -> NONE) | _135 -> NONE)`;;
+                 new_oracle) eval_config,Unitv) else NONE) | _134 ->
+                 NONE)) | _135 -> NONE) | _136 -> NONE)`;;
 hol4_overload "do_eval" "flatSem_do_eval";;
 
 let AppUnit_def = cake_define
@@ -780,12 +780,12 @@ let evaluate_def = cake_define_list
             (match flatSem_evaluate env s (e2 :: es) with (s,Rval
               vs) -> (s,Rval (HD v :: vs)) | res -> res) | res ->
               res)`;
-   `flatSem_evaluate env s [(Lit _137 l:flatLang_exp)] = (s,Rval
+   `flatSem_evaluate env s [(Lit _138 l:flatLang_exp)] = (s,Rval
   [Litv l])`;
-   `flatSem_evaluate env s [(Raise _139 e:flatLang_exp)] =
+   `flatSem_evaluate env s [(Raise _140 e:flatLang_exp)] =
        (match flatSem_evaluate env s [e] with (s,Rval v) ->
          (s,Rerr (Rraise (HD v))) | res -> res)`;
-   `flatSem_evaluate env s [(Handle _141 e pes:flatLang_exp)] =
+   `flatSem_evaluate env s [(Handle _142 e pes:flatLang_exp)] =
        (match fix_clock s (flatSem_evaluate env s [e]) with (s,Rerr
          (Rraise v)) ->
            (match pmatch_rows pes s v with Match_type_error ->
@@ -795,18 +795,18 @@ let evaluate_def = cake_define_list
                  flatSem_evaluate (flatSem_environment_v_fupd (K
                  (env' ++ flatSem_environment_v env)) env) s [e']
                  else (s,Rerr (Rabort Rtype_error)))) | res -> res)`;
-   `flatSem_evaluate env s [(Con _143 NONE es:flatLang_exp)] =
+   `flatSem_evaluate env s [(Con _144 NONE es:flatLang_exp)] =
         (match flatSem_evaluate env s (REVERSE es) with (s,Rval
           vs) -> (s,Rval [Conv NONE (REVERSE vs)]) | res -> res)`;
-   `flatSem_evaluate env s [(Con _145 (SOME cn) es:flatLang_exp)] =
+   `flatSem_evaluate env s [(Con _146 (SOME cn) es:flatLang_exp)] =
         (match flatSem_evaluate env s (REVERSE es) with (s,Rval
           vs) -> (s,Rval [Conv (SOME cn) (REVERSE vs)]) | res -> res)`;
-   `flatSem_evaluate env s [flatLang_Var_local _146 n] = (s,
+   `flatSem_evaluate env s [flatLang_Var_local _147 n] = (s,
        (match ALOOKUP (flatSem_environment_v env) n with SOME v
          -> Rval [v] | NONE -> Rerr (Rabort Rtype_error)))`;
-   `flatSem_evaluate env s [(Fun _148 n e:flatLang_exp)] = (s,Rval
+   `flatSem_evaluate env s [(Fun _149 n e:flatLang_exp)] = (s,Rval
   [Closure env n e])`;
-   `flatSem_evaluate env s [(App _150 op es:flatLang_exp)] =
+   `flatSem_evaluate env s [(App _151 op es:flatLang_exp)] =
        (match fix_clock s (flatSem_evaluate env s (REVERSE es)) with
          (s,Rval vs) ->
            (if op = flatLang_Src ast_Opapp then
@@ -844,13 +844,13 @@ let evaluate_def = cake_define_list
             (match (do_app s op (REVERSE vs)) with NONE ->
               (s,Rerr (Rabort Rtype_error)) | SOME (s',r) ->
               (s',list_result r))) | res -> res)`;
-   `flatSem_evaluate env s [(If _152 e1 e2 e3:flatLang_exp)] =
+   `flatSem_evaluate env s [(If _153 e1 e2 e3:flatLang_exp)] =
        (match fix_clock s (flatSem_evaluate env s [e1]) with (s,Rval
          vs) ->
          (match do_if (HD vs) e2 e3 with SOME e ->
            flatSem_evaluate env s [e] | NONE -> (s,Rerr (Rabort
            Rtype_error))) | res -> res)`;
-   `flatSem_evaluate env s [(Mat _154 e pes:flatLang_exp)] =
+   `flatSem_evaluate env s [(Mat _155 e pes:flatLang_exp)] =
        (match fix_clock s (flatSem_evaluate env s [e]) with (s,Rval
          v) ->
            (match pmatch_rows pes s (HD v) with Match_type_error ->
@@ -860,11 +860,11 @@ let evaluate_def = cake_define_list
                  flatSem_evaluate (flatSem_environment_v_fupd (K
                  (env' ++ flatSem_environment_v env)) env) s [e']
                  else (s,Rerr (Rabort Rtype_error)))) | res -> res)`;
-   `flatSem_evaluate env s [(Let _156 n e1 e2:flatLang_exp)] =
+   `flatSem_evaluate env s [(Let _157 n e1 e2:flatLang_exp)] =
        (match fix_clock s (flatSem_evaluate env s [e1]) with
          (s,Rval vs) -> flatSem_evaluate (flatSem_environment_v_fupd
          (opt_bind n (HD vs)) env) s [e2] | res -> res)`;
-   `flatSem_evaluate env s [(Letrec _158 funs e:flatLang_exp)] =
+   `flatSem_evaluate env s [(Letrec _159 funs e:flatLang_exp)] =
        (if ALL_DISTINCT (MAP FST funs) then flatSem_evaluate
          (flatSem_environment_v_fupd (K (build_rec_env funs env
          (flatSem_environment_v env))) env) s [e] else (s,Rerr
@@ -907,7 +907,7 @@ let semantics_def = cake_define
          evaluate_decs (flatSem_initial_state ffi k ec) prog = (s,r)
            /\
          (match r with SOME (Rabort (Rffi_error e)) -> outcome =
-           ffi_FFI_outcome e | SOME (Rabort _159) -> F | _160 -> outcome
+           ffi_FFI_outcome e | SOME (Rabort _160) -> F | _161 -> outcome
            = ffi_Success) /\
          res = ffi_Terminate outcome (ffi_state_io_events (state_ffi
            s))) with SOME res -> res | NONE ->

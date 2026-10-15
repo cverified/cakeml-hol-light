@@ -104,9 +104,9 @@ let to_constant_op_def = cake_define
 let to_constant_def = cake_define_list
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
-   `to_constant (App _40 _41 e es:closLang_exp) =
+   `to_constant (App _42 _43 e es:closLang_exp) =
       ConstCons 0 [to_constant e; match es with [] -> ConstInt
-        (&0) | (e1 :: _42) -> to_constant e1]`;
+        (&0) | (e1 :: _44) -> to_constant e1]`;
    `to_constant (If t e1 e2 e3:closLang_exp) =
       ConstCons 0 [to_constant e1; to_constant e2; to_constant
         e3]`;
@@ -119,9 +119,9 @@ let to_constant_def = cake_define_list
    `to_constant (closLang_Tick t e) = ConstCons 4 [to_constant e]`;
    `to_constant (Handle t e1 e2:closLang_exp) = ConstCons 2
   [to_constant e1; to_constant e2]`;
-   `to_constant (closLang_Fn _43 _44 _45 _46 e) = ConstInt (&0)`;
-   `to_constant (closLang_Call _47 _48 _49 es) = ConstInt (&0)`;
-   `to_constant (Letrec _53 _54 _55 fns e:closLang_exp) = ConstInt
+   `to_constant (closLang_Fn _45 _46 _47 _48 e) = ConstInt (&0)`;
+   `to_constant (closLang_Call _49 _50 _51 es) = ConstInt (&0)`;
+   `to_constant (Letrec _55 _56 _57 fns e:closLang_exp) = ConstInt
   (&0)`;
    `to_constant_list [] = ConstCons 0 []`;
    `to_constant_list (x :: xs) = ConstCons 0 [to_constant x;
@@ -413,7 +413,7 @@ let insert_interp1_def = cake_define
   `insert_interp1 e =
      (match opt_interp e with SOME x -> x | NONE ->
          (match e with Let t ys y -> Let backend_common_None (MAP
-           opt_interp1 ys) y | _56 -> e))`;;
+           opt_interp1 ys) y | _58 -> e))`;;
 
 let compile_init_def = cake_define
   `compile_init b =

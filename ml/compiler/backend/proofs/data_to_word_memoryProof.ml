@@ -1086,17 +1086,17 @@ let vb_eq_size_def = cake_define_list
          (if b1 /\ b2 then
            (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
               (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
-                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_70)
-                -> NONE | (_71,SOME (ByteArray T bs2)) -> NONE | _72
+                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_73)
+                -> NONE | (_74,SOME (ByteArray T bs2)) -> NONE | _75
                 -> SOME (1,(n1 = n2))) else NONE)`;
-   `vb_eq_size _73 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
+   `vb_eq_size _76 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
   (1,(n1 = n2))`;
-   `vb_eq_size _74 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
+   `vb_eq_size _77 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
   (1,(w1 = w2))`;
-   `vb_eq_size _75 _76 _77 = NONE`;
-   `vb_eq_size_list _78 [] [] = SOME (0,T)`;
-   `vb_eq_size_list _79 [] _80 = SOME (0,F)`;
-   `vb_eq_size_list _81 _82 [] = SOME (0,F)`;
+   `vb_eq_size _78 _79 _80 = NONE`;
+   `vb_eq_size_list _81 [] [] = SOME (0,T)`;
+   `vb_eq_size_list _82 [] _83 = SOME (0,F)`;
+   `vb_eq_size_list _84 _85 [] = SOME (0,F)`;
    `vb_eq_size_list refs (v1 :: vs1) (v2 :: vs2) =
          (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
            -> SOME (n + 1,F) | SOME (n,T) -> (
@@ -1107,7 +1107,7 @@ let word_header_def = cake_define
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
-           match m a1 with Word x1 -> SOME (a1,x1) | _83 -> NONE))`;;
+           match m a1 with Word x1 -> SOME (a1,x1) | _86 -> NONE))`;;
 
 let fix_clock_def = cake_define_list
   [`data_to_word_memoryProof_fix_clock ck l NONE = NONE`;
@@ -1156,7 +1156,7 @@ let word_eq_def = cake_define_wf
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with
                   NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
-                  (decode_length c h1),ck))) | _84 -> NONE)) /\
+                  (decode_length c h1),ck))) | _87 -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
@@ -1169,7 +1169,7 @@ let word_eq_def = cake_define_wf
                               word_eq_list c st dm m (l - 1) ck (w -
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
-                                bytes_in_word))) | _85 -> NONE))`;;
+                                bytes_in_word))) | _88 -> NONE))`;;
 
 (* HOL4 ML code, not ported:
 val word_eq_ind = theorem "word_eq_ind";
@@ -1462,7 +1462,7 @@ let block_drop_def = cake_define
       match (x1,v) with
         (0,v) -> SOME v
       | ((SUC n),(Block ts tag [h; vl])) -> block_drop n vl
-      | (_86,_87) -> NONE`;;
+      | (_89,_90) -> NONE`;;
 
 (* ---------------------------------------------------------------------
    ---- *)
@@ -1522,7 +1522,7 @@ let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
         (Loc n m:dataSem_v) -> (m = 0 /\ n IN code)
-      | _88 -> T`;;
+      | _91 -> T`;;
 
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;

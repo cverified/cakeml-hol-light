@@ -454,7 +454,7 @@ let compile_exps_def = cake_define_list
                Op (closLang_BlockOp (Cons closure_tag))
                   (REVERSE (mk_label (loc + (num_stubs max_app)) ::
                     mk_const (num_args - 1) :: MAP Var vs)) in
-               ([Let [c4] (HD c2)],aux2)) | _2 ->
+               ([Let [c4] (HD c2)],aux2)) | _3 ->
              (let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
              let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP
@@ -546,7 +546,7 @@ let compile_exp_sing_def = cake_define_list
                Op (closLang_BlockOp (Cons closure_tag))
                   (REVERSE (mk_label (loc + (num_stubs max_app)) ::
                     mk_const (num_args - 1) :: MAP Var vs)) in
-               (bvl_Let [c4] c2,aux2)) | _4 ->
+               (bvl_Let [c4] c2,aux2)) | _6 ->
              (let fns_l = LENGTH fns in
              let l = fns_l + LENGTH vs in
              let (cs,aux1) = compile_exp_list max_app (MAP SND fns)
@@ -577,7 +577,7 @@ let compile_prog_def = cake_define
   `clos_to_bvl_compile_prog max_app prog =
      (let (new_exps,aux) = clos_to_bvl_compile_exps max_app (MAP (SND
        o SND) prog) [] in
-       MAP2 (\(loc,args,_5) exp. (loc + num_stubs max_app,args,exp))
+       MAP2 (\(loc,args,_7) exp. (loc + num_stubs max_app,args,exp))
          prog new_exps ++ aux)`;;
 hol4_overload "compile_prog" "clos_to_bvl_compile_prog";;
 
@@ -605,7 +605,7 @@ let code_split_def = cake_define_list
 let code_merge_def = cake_define_wf
   `MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)`
   `code_merge xs ys =
-     (match (xs,ys) with ([],[]) -> [] | ([],_6) -> ys | (_7,[]) ->
+     (match (xs,ys) with ([],[]) -> [] | ([],_8) -> ys | (_9,[]) ->
        xs | (x1 :: xs1,y1 :: ys1) ->
          (if FST x1 < ((FST y1):num) then
            x1 :: code_merge xs1 ys else
@@ -662,54 +662,54 @@ let get_src_names_def = cake_define_list
   [`get_src_names [] l = l`;
    `get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
   (get_src_names [x] l)`;
-   `get_src_names [closLang_If _8 x y z] l =
+   `get_src_names [closLang_If _10 x y z] l =
       get_src_names [x] (get_src_names [y] (get_src_names [z] l))`;
-   `get_src_names [closLang_Var _9 _10] l = l`;
-   `get_src_names [closLang_Let _11 xs x] l = get_src_names (x :: xs)
+   `get_src_names [closLang_Var _11 _12] l = l`;
+   `get_src_names [closLang_Let _13 xs x] l = get_src_names (x :: xs)
   l`;
-   `get_src_names [(Raise _13 x:bvl_exp)] l = get_src_names [x] l`;
-   `get_src_names [(Handle _15 x y:bvl_exp)] l = get_src_names [x]
+   `get_src_names [(Raise _15 x:bvl_exp)] l = get_src_names [x] l`;
+   `get_src_names [(Handle _17 x y:bvl_exp)] l = get_src_names [x]
   (get_src_names [y] l)`;
-   `get_src_names [(Tick _17 x:bvl_exp)] l = get_src_names [x] l`;
-   `get_src_names [(Call _21 _22 _23 xs:bvl_exp)] l = get_src_names
+   `get_src_names [(Tick _19 x:bvl_exp)] l = get_src_names [x] l`;
+   `get_src_names [(Call _23 _24 _25 xs:bvl_exp)] l = get_src_names
   xs l`;
-   `get_src_names [(Op _26 _27 xs:bvl_exp)] l = get_src_names xs l`;
-   `get_src_names [(App _30 _31 x xs:bvl_exp)] l = get_src_names (x
+   `get_src_names [(Op _28 _29 xs:bvl_exp)] l = get_src_names xs l`;
+   `get_src_names [(App _32 _33 x xs:bvl_exp)] l = get_src_names (x
   :: xs) l`;
-   `get_src_names [closLang_Fn name loc_opt _32 _33 x] l =
+   `get_src_names [closLang_Fn name loc_opt _34 _35 x] l =
       (let l1 = get_src_names [x] l in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names
            n [name] l1)`;
-   `get_src_names [(Letrec names loc_opt _35 funs x:bvl_exp)] l =
+   `get_src_names [(Letrec names loc_opt _37 funs x:bvl_exp)] l =
       (let l0 = get_src_names (MAP SND funs) l in
        let l1 = get_src_names [x] l0 in
          match loc_opt with NONE -> l1 | SOME n ->
            add_src_names n names l1)`];;
 
 let get_src_names_sing_def = cake_define_list
-  [`get_src_names_sing (closLang_If _36 x y z) l =
+  [`get_src_names_sing (closLang_If _38 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;
-   `get_src_names_sing (closLang_Var _37 _38) l = l`;
-   `get_src_names_sing (closLang_Let _39 xs x) l =
+   `get_src_names_sing (closLang_Var _39 _40) l = l`;
+   `get_src_names_sing (closLang_Let _41 xs x) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (Raise _41 x:bvl_exp) l = get_src_names_sing x
+   `get_src_names_sing (Raise _43 x:bvl_exp) l = get_src_names_sing x
   l`;
-   `get_src_names_sing (Handle _43 x y:bvl_exp) l =
+   `get_src_names_sing (Handle _45 x y:bvl_exp) l =
   get_src_names_sing x (get_src_names_sing y l)`;
-   `get_src_names_sing (Tick _45 x:bvl_exp) l = get_src_names_sing x
+   `get_src_names_sing (Tick _47 x:bvl_exp) l = get_src_names_sing x
   l`;
-   `get_src_names_sing (Call _49 _50 _51 xs:bvl_exp) l =
+   `get_src_names_sing (Call _51 _52 _53 xs:bvl_exp) l =
   get_src_names_list xs l`;
-   `get_src_names_sing (Op _54 _55 xs:bvl_exp) l = get_src_names_list
+   `get_src_names_sing (Op _56 _57 xs:bvl_exp) l = get_src_names_list
   xs l`;
-   `get_src_names_sing (App _58 _59 x xs:bvl_exp) l =
+   `get_src_names_sing (App _60 _61 x xs:bvl_exp) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (closLang_Fn name loc_opt _60 _61 x) l =
+   `get_src_names_sing (closLang_Fn name loc_opt _62 _63 x) l =
       (let l1 = get_src_names_sing x l in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names
            n [name] l1)`;
-   `get_src_names_sing (Letrec names loc_opt _63 funs x:bvl_exp) l =
+   `get_src_names_sing (Letrec names loc_opt _65 funs x:bvl_exp) l =
       (let l0 = get_src_names_list (MAP SND funs) l in
        let l1 = get_src_names_sing x l0 in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names

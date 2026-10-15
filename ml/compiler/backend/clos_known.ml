@@ -520,7 +520,7 @@ let known_def = cake_define_list
              ea2),clos_known_Other)],g) | inlD_Annotate new_loc ->
              ([(App t (SOME new_loc) e1 (MAP FST
              ea2),clos_known_Other)],g) | inlD_LetInline body ->
-                 (let (eabody,_16) = known (dec_inline_factor c)
+                 (let (eabody,_17) = known (dec_inline_factor c)
                    [body] (MAP SND ea2) g in
                  let (ebody,abody) = HD eabody in
                    if pure x then
@@ -538,7 +538,7 @@ let known_def = cake_define_list
               (match loc_opt with SOME loc -> clos_approx
                 (clos_known_config_inline_max_body_size c) loc
                 num_args x1 | NONE -> clos_known_Other))],g))`;
-   `known c [(Letrec t loc_opt _18 fns x1:closLang_exp)] vs g =
+   `known c [(Letrec t loc_opt _19 fns x1:closLang_exp)] vs g =
          (let clos = match loc_opt with
                        NONE -> REPLICATE (LENGTH fns)
                          clos_known_Other | SOME loc ->

@@ -573,19 +573,18 @@ let ssa_cc_trans_def = cake_define_list
          inter ssa_refreshed exit_names,na'))`;
    `ssa_cc_trans (wordLang_Break n) ssa na lt =
         (match oEL n lt with
-          NONE -> ((Break n:'a wordLang_prog),ssa,na) | SOME
-            (tgt_ssa,names,exit_names) ->
+          NONE -> (Break n,ssa,na) | SOME (tgt_ssa,names,exit_names)
+            ->
             (let moves = ssa_reconcile ssa tgt_ssa exit_names in
-            ((if moves = Skip then (Break n:'a wordLang_prog)
-              else Seq moves ((Break n:'a wordLang_prog))),ssa,na)))`;
+            ((if moves = Skip then Break n else Seq moves (Break
+              n)),ssa,na)))`;
    `ssa_cc_trans (wordLang_Continue n) ssa na lt =
         (match oEL n lt with
-          NONE -> ((Continue n:'a wordLang_prog),ssa,na) | SOME
+          NONE -> (Continue n,ssa,na) | SOME
             (tgt_ssa,names,exit_names) ->
             (let moves = ssa_reconcile ssa tgt_ssa names in
-            ((if moves = Skip then (Continue n:'a
-              wordLang_prog) else Seq moves ((Continue n:'a
-              wordLang_prog))),ssa,na)))`];;
+            ((if moves = Skip then Continue n else Seq moves
+              (Continue n)),ssa,na)))`];;
 
 (*Recursively applying colours to a program*)
 
@@ -1166,7 +1165,7 @@ let get_clash_tree_def = cake_define_list
         let e3t = get_clash_tree e3 lt in
         match ri with
           Reg r2 -> Seq (reg_alloc_Delta [] [r1; r2]) (Branch
-            NONE e2t e3t) | _30 -> Seq (reg_alloc_Delta [] [r1])
+            NONE e2t e3t) | _31 -> Seq (reg_alloc_Delta [] [r1])
             (Branch NONE e2t e3t))`;
    `get_clash_tree (wordLang_MustTerminate s) lt =
         get_clash_tree s lt`;
@@ -1218,14 +1217,14 @@ let get_clash_tree_def = cake_define_list
         (let args_set = numset_list_insert args LN in
         match ret with
           NONE -> Set args_set | SOME
-            (vs,cutsets,ret_handler,_39,_40) ->
+            (vs,cutsets,ret_handler,_48,_49) ->
           (let cutset = sptree_union (FST cutsets) (SND cutsets) in
           let live_set = sptree_union cutset args_set in
           let ret_tree = Seq (Set (numset_list_insert vs cutset))
             (get_clash_tree ret_handler lt) in
           match h with
             NONE -> Seq (Set live_set) ret_tree | SOME
-              (v',prog,_41,_42) ->
+              (v',prog,_50,_51) ->
             (let handler_tree =
               Seq (Set (sptree_insert v' one cutset))
                 (get_clash_tree prog lt) in
@@ -1312,14 +1311,14 @@ let get_heu_inst_def = cake_define
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
-           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _43 ->
+           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _52 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
-           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _44 ->
+           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _53 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (Div r1 r2 r3)) ->
@@ -1398,9 +1397,9 @@ let get_heu_def = cake_define
         | ((Inst i),(lr,calls)) -> (get_heu_inst i lr,calls)
         | ((Get num store),(lr,calls)) ->
        (add1_lhs_mem num lr,calls)
-        | ((Set _45 exp),(lr,calls)) ->
+        | ((Set _54 exp),(lr,calls)) ->
        (match exp with (Var r) ->
-          (add1_rhs_mem r lr,calls) | _46 -> (lr,calls))
+          (add1_rhs_mem r lr,calls) | _55 -> (lr,calls))
         | ((OpCurrHeap b dst src),(lr,calls)) ->
        (add1_lhs_reg dst (add1_rhs_reg src lr),calls)
         | ((LocValue r l1),(lr,calls)) ->
@@ -1413,37 +1412,37 @@ let get_heu_def = cake_define
        let lr = heu_max_all lr2 lr3 in
        let calls = heu_merge_call (calls2:1 spt) calls3 in
        ((match ri with
-         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _47 ->
+         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _56 ->
          add1_rhs_reg r1 lr),calls))
         | ((Call NONE dest args h),(lr,calls)) ->
        (match dest with
          NONE -> (lr,calls) | SOME p ->
          (if p = fc then (lr,add_call lr calls) else (lr,calls)))
-        | ((Call (SOME (_48,_49,e2,_50,_51)) dest args h),(lr,calls))
+        | ((Call (SOME (_57,_58,e2,_59,_60)) dest args h),(lr,calls))
           ->
        (let calls =
          match dest with NONE -> calls | SOME p ->
            (if p = fc then (add_call lr calls) else calls) in
        let (lr2,calls2) = (get_heu fc e2 (lr,calls)) in
        match h with
-         NONE -> (lr2,calls) | SOME (_52,e3,_53,_54) ->
+         NONE -> (lr2,calls) | SOME (_61,e3,_62,_63) ->
          (let (lr3,calls3) = get_heu fc e3 (lr,calls) in
          (heu_max_all lr2 lr3,heu_merge_call calls2 calls3)))
-        | ((wordLang_ShareInst Load r _55),(lr,calls)) ->
+        | ((wordLang_ShareInst Load r _64),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Load8 r _56),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Load8 r _65),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Load16 r _57),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Load16 r _66),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Load32 r _58),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Load32 r _67),(lr,calls)) ->
           (add1_lhs_mem r lr,calls)
-        | ((wordLang_ShareInst Store r _59),(lr,calls)) ->
+        | ((wordLang_ShareInst Store r _68),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Store8 r _60),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Store8 r _69),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Store16 r _61),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Store16 r _70),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
-        | ((wordLang_ShareInst asm_Store32 r _62),(lr,calls)) ->
+        | ((wordLang_ShareInst asm_Store32 r _71),(lr,calls)) ->
           (add1_rhs_mem r lr,calls)
         | ((Loop names body exit_names),lr) -> get_heu fc body lr
         | (f,lrc) -> lrc`;;
@@ -1479,7 +1478,7 @@ let get_forced_def = cake_define
            (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
              []) ++ acc | asm_FP (FPMovFromReg d r1 r2) ->
            (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-             []) ++ acc | _63 -> acc)
+             []) ++ acc | _72 -> acc)
         | (c,(wordLang_MustTerminate s1)) ->
        get_forced c s1 acc
         | (c,(Seq s1 s2)) ->
@@ -1640,16 +1639,16 @@ let get_stack_only_aux_def = cake_define
        let tfsR = get_stack_only_aux tfs e3 in
        let tfsM = merge_stack_sets tfs tfsL tfsR in
          match ri with
-           Reg r2 -> remove_temp_stack [r1; r2] tfsM | _64 ->
+           Reg r2 -> remove_temp_stack [r1; r2] tfsM | _73 ->
              remove_temp_stack [r1] tfsM)
         | (wordLang_MustTerminate s) ->
        get_stack_only_aux tfs s
         | (Call ret dest args h) ->
        (match ret with
-         NONE -> tfs | SOME (v,cutset,ret_handler,_65,_66) ->
+         NONE -> tfs | SOME (v,cutset,ret_handler,_74,_75) ->
          (let rettfs = get_stack_only_aux tfs ret_handler in
          match h with
-           NONE -> rettfs | SOME (v',handler,_67,_68) ->
+           NONE -> rettfs | SOME (v',handler,_76,_77) ->
            (let handlertfs =
              get_stack_only_aux tfs handler in
            merge_stack_sets tfs rettfs handlertfs)))
@@ -1658,7 +1657,7 @@ let get_stack_only_aux_def = cake_define
         | prog ->
        (match get_clash_tree prog [] with
          reg_alloc_Delta ws rs -> remove_temp_stack (ws ++ rs) tfs
-           | _69 -> tfs)`;;
+           | _78 -> tfs)`;;
 
 let get_stack_only_def = cake_define
   `get_stack_only prog = SND (get_stack_only_aux (LN,LN) prog)`;;
@@ -1686,7 +1685,7 @@ let word_alloc_def = cake_define
        (match select_reg_alloc alg spillcosts k heu_moves tree forced
          fs with
          M_success col ->
-           apply_colour (total_colour col) prog | M_failure _70 ->
+           apply_colour (total_colour col) prog | M_failure _79 ->
              prog)) | SOME col_prog ->
        col_prog)`;;
 

@@ -914,23 +914,23 @@ let app_call_dests_def = cake_define_list
          app_call_dests opt [x1]`;
    `app_call_dests opt [closLang_Op _339 op xs] =
          app_call_dests opt xs`;
-   `app_call_dests opt [(App _342 loc_opt x1 xs:flatLang_exp)] =
+   `app_call_dests opt [(App _343 loc_opt x1 xs:flatLang_exp)] =
          (let ll = if opt = SOME T then {} else
-                    match loc_opt with SOME n -> {n} | _343 -> {} in
+                    match loc_opt with SOME n -> {n} | _344 -> {} in
          let c1 = app_call_dests opt [x1] in
          let c2 = app_call_dests opt xs in
              ll UNION c1 UNION c2)`;
-   `app_call_dests opt [closLang_Fn _344 loc_opt vs num_args x1] =
+   `app_call_dests opt [closLang_Fn _345 loc_opt vs num_args x1] =
          (let c1 = app_call_dests opt [x1] in c1)`;
-   `app_call_dests opt [(Letrec _346 loc_opt vs fns x1:flatLang_exp)] =
+   `app_call_dests opt [(Letrec _347 loc_opt vs fns x1:flatLang_exp)] =
          (let c1 = app_call_dests opt (MAP SND fns) in
          let c2 = app_call_dests opt [x1] in
          c1 UNION c2)`;
-   `app_call_dests opt [(Handle _348 x1 x2:flatLang_exp)] =
+   `app_call_dests opt [(Handle _349 x1 x2:flatLang_exp)] =
          (let c1 = app_call_dests opt [x1] in
          let c2 = app_call_dests opt [x2] in
            c1 UNION c2)`;
-   `app_call_dests opt [closLang_Call _349 ticks dest xs] =
+   `app_call_dests opt [closLang_Call _350 ticks dest xs] =
          (if opt = SOME F then app_call_dests opt xs else
            dest INSERT app_call_dests opt xs)`];;
 
@@ -946,39 +946,39 @@ val app_call_dests_ind = theorem"app_call_dests_ind";
 *)
 
 let get_code_labels_def = cake_define_list
-  [`closProps_get_code_labels (Var _352 _353:flatLang_exp) = {}`;
-   `closProps_get_code_labels (If _355 e1 e2 e3:flatLang_exp) =
+  [`closProps_get_code_labels (Var _353 _354:flatLang_exp) = {}`;
+   `closProps_get_code_labels (If _356 e1 e2 e3:flatLang_exp) =
         closProps_get_code_labels e1 UNION
         closProps_get_code_labels e2 UNION
         closProps_get_code_labels e3`;
-   `closProps_get_code_labels (Let _357 es e:flatLang_exp) =
+   `closProps_get_code_labels (Let _358 es e:flatLang_exp) =
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))
           UNION
         closProps_get_code_labels e`;
-   `closProps_get_code_labels (Raise _359 e:flatLang_exp) =
+   `closProps_get_code_labels (Raise _360 e:flatLang_exp) =
   closProps_get_code_labels e`;
-   `closProps_get_code_labels (Handle _361 e1 e2:flatLang_exp) =
+   `closProps_get_code_labels (Handle _362 e1 e2:flatLang_exp) =
         closProps_get_code_labels e1 UNION
         closProps_get_code_labels e2`;
-   `closProps_get_code_labels (closLang_Tick _362 e) =
+   `closProps_get_code_labels (closLang_Tick _363 e) =
   closProps_get_code_labels e`;
-   `closProps_get_code_labels (closLang_Call _363 _364 l es) =
+   `closProps_get_code_labels (closLang_Call _364 _365 l es) =
         {l} UNION BIGUNION (set_of_list (MAP
           closProps_get_code_labels es))`;
-   `closProps_get_code_labels (App _366 l e es:flatLang_exp) =
+   `closProps_get_code_labels (App _367 l e es:flatLang_exp) =
         (match l with NONE -> {} | SOME n -> {n}) UNION
         closProps_get_code_labels e UNION
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))`;
-   `closProps_get_code_labels (closLang_Fn _367 l _368 _369 e) =
+   `closProps_get_code_labels (closLang_Fn _368 l _369 _370 e) =
        (match l with NONE -> {} | SOME n -> {n}) UNION
        closProps_get_code_labels e`;
-   `closProps_get_code_labels (Letrec _372 l _373 es e:flatLang_exp) =
+   `closProps_get_code_labels (Letrec _373 l _374 es e:flatLang_exp) =
        (match l with NONE -> {} | SOME n ->
          IMAGE (\k. n + 2 * k) (count (LENGTH es))) UNION
         closProps_get_code_labels e UNION
         BIGUNION (set_of_list (MAP closProps_get_code_labels (MAP
           SND es)))`;
-   `closProps_get_code_labels (closLang_Op _374 op es) =
+   `closProps_get_code_labels (closLang_Op _375 op es) =
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))
           UNION
         assign_get_code_label op`];;

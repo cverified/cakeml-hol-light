@@ -711,11 +711,33 @@ class Porter:
        source language in the pattern and the one of its target
        language in the body (bvi_to_data's If)"""
     pr = hterm.Printer(self.ctx)
+    # a term that the body has twice may mean two things there
+    # (bvl_handle's 'compile_sing l n (Var v) = (Var v,Var v,1,T)'
+    # has bvl's Var and db_vars' Var in the body), so only a term
+    # that the body has once carries the resolution over
+    seen = {}
+
+    def count(e):
+      if not isinstance(e, hterm.Node): return
+      if e.kind in ('app', 'id'):
+        s = pr.pr(e, 0)
+        if s in self.annotated: seen[s] = seen.get(s, 0) + 1
+      for k, v in list(e.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): count(v)
+        elif isinstance(v, (tuple, list)):
+          for x in v:
+            if isinstance(x, hterm.Node): count(x)
+            elif isinstance(x, (tuple, list)):
+              for y in x:
+                if isinstance(y, hterm.Node): count(y)
+    count(e)
 
     def go(e):
       if not isinstance(e, hterm.Node): return e
       if e.kind in ('app', 'id'):
-        ty = self.annotated.get(pr.pr(e, 0))
+        s = pr.pr(e, 0)
+        ty = self.annotated.get(s) if seen.get(s) == 1 else None
         if ty:
           return hterm.Node('paren', tok=e.tok,
                    e=hterm.Node('typed', tok=e.tok, e=e,

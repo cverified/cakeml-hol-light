@@ -238,7 +238,7 @@ let calls_def = cake_define_list
            in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls (MAP SND fns) new_g in
-           if EVERY2 (\(n,_12) p. clos_call_closed (closLang_Fn
+           if EVERY2 (\(n,_16) p. clos_call_closed (closLang_Fn
              (implode "") NONE NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
@@ -311,7 +311,7 @@ let calls_sing_def = cake_define_list
            in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
-           if EVERY2 (\(n,_17) p. clos_call_closed (closLang_Fn
+           if EVERY2 (\(n,_25) p. clos_call_closed (closLang_Fn
              (implode "") NONE NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in

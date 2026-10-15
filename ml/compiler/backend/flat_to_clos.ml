@@ -397,7 +397,7 @@ let compile_def = cake_define_list
    `flat_to_clos_compile m [flatLang_Var_local t v] = [Var t
   (indexedLists_findi (SOME v) m)]`;
    `flat_to_clos_compile m [(Con t n es:flatLang_exp)] =
-         (let tag = (match n with SOME (t,_21) -> t | _22 -> 0) in
+         (let tag = (match n with SOME (t,_24) -> t | _25 -> 0) in
            [SmartCons t tag (flat_to_clos_compile m (REVERSE
              es))])`;
    `flat_to_clos_compile m [(App t op es:flatLang_exp)] =
@@ -420,7 +420,7 @@ let compile_def = cake_define_list
    `flat_to_clos_compile m [(Handle t e pes:flatLang_exp)] =
          (match dest_pat pes with SOME (v,h) -> [Handle t (HD
            (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile
-           (SOME v :: m) [h]))] | _24 -> flat_to_clos_compile m [e])`;
+           (SOME v :: m) [h]))] | _28 -> flat_to_clos_compile m [e])`;
    `flat_to_clos_compile m [(Letrec t funs e:flatLang_exp)] =
          (let new_m = MAP (\n. SOME (FST n)) funs ++ m in
            [Letrec (MAP (\n. join_strings t (FST n)) funs) NONE NONE

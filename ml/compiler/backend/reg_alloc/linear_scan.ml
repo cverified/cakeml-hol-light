@@ -200,9 +200,8 @@ let check_number_property_strong_def = cake_define_list
         (let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n -
           (size_of_live_tree lt2)) live in
-        r1 /\ r2 /\ P (n - (size_of_live_tree ((Branch lt1
-          lt2:live_tree)))) (get_live_backward ((Branch lt1
-          lt2:live_tree)) live))`;
+        r1 /\ r2 /\ P (n - (size_of_live_tree (Branch lt1 lt2)))
+          (get_live_backward (Branch lt1 lt2) live))`;
    `check_number_property_strong P (Seq lt1 lt2:live_tree) n live =
         (let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n -
@@ -1125,7 +1124,7 @@ let apply_bij_on_clash_tree_def = cake_define_list
       reg_alloc_Set (foldi (\r _7 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN cutset)`;
    `apply_bij_on_clash_tree (Branch optcutset ct1 ct2:clash_tree) bij =
-      Branch (OPTION_MAP (foldi (\r _17 acc. sptree_insert (the 0
+      Branch (OPTION_MAP (foldi (\r _26 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN) optcutset)
         (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree
         ct2 bij)`;

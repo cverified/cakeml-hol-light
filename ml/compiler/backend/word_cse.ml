@@ -569,9 +569,10 @@ let word_cse_def = cake_define_list
                         (knowledge_to_canonical data)))
                         (knowledge_gets_mem_fupd (K ((x,r) ::
                         knowledge_gets_mem data)) data)),
-                       Get r x)) | SOME k -> (if EVEN r then
-                         (data,wordLang_Move 1 [(r,lookup_any k
-                         (knowledge_to_latest data) k)]) else
+                       (Get r x:'a wordLang_prog))) | SOME k -> (if
+                         EVEN r then (data,wordLang_Move 1
+                         [(r,lookup_any k (knowledge_to_latest data)
+                         k)]) else
                       (knowledge_to_latest_fupd (K (insert k r
                         (knowledge_to_latest data)))
                         (knowledge_to_canonical_fupd (K (insert r k
@@ -580,13 +581,13 @@ let word_cse_def = cake_define_list
                          (knowledge_to_latest data) k)])))`;
    `word_cse data (wordLang_Set x e) =
         (if x = CurrHeap then
-          (empty_data,(Set x e:'a wordLang_prog)) else
+          (empty_data,Set x e) else
           let new_gets_mem = FILTER (\(m,n). ~(m = x))
             (knowledge_gets_mem data) in
             match dest_Var e with NONE -> (knowledge_gets_mem_fupd
-              (K new_gets_mem) data,(Set x e:'a wordLang_prog)) | SOME v
-              -> (if EVEN v then (knowledge_gets_mem_fupd (K
-              new_gets_mem) data,(Set x e:'a wordLang_prog)) else
+              (K new_gets_mem) data,Set x e) | SOME v -> (if EVEN v then
+              (knowledge_gets_mem_fupd (K new_gets_mem) data,Set x e)
+              else
                           (knowledge_to_canonical_fupd (K (insert v
                             (lookup_any v (knowledge_to_canonical data)
                             v) (knowledge_to_canonical
@@ -648,7 +649,7 @@ let word_cse_def = cake_define_list
            data r) in
            (data,wordLang_ShareInst op r exp))`;
    `word_cse data (wordLang_Loop names c exit_names) =
-         (let (_95,c') = word_cse empty_data c in
+         (let (_96,c') = word_cse empty_data c in
            (empty_data,Loop names c' exit_names))`;
    `word_cse data (wordLang_Break k) = (data,(Break k:'a
   wordLang_prog))`;
@@ -657,7 +658,7 @@ let word_cse_def = cake_define_list
 
 let word_common_subexp_elim_def = cake_define
   `word_common_subexp_elim prog =
-     (let (_96,new_prog) = word_cse empty_data prog in
+     (let (_97,new_prog) = word_cse empty_data prog in
        new_prog)`;;
 
 (* tests *)

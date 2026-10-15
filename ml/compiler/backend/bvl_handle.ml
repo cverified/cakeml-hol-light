@@ -164,9 +164,9 @@ let compile_def = cake_define_list
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x] in
          let (dy,ly,s2,nr2) = bvl_handle_compile l n (y :: xs) in
            (dx ++ dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
-   `bvl_handle_compile l n [(Var v:bvl_exp)] = (if v < n then ([(Var
-  v:bvl_exp)],(Var v:bvl_exp),1,T) else ([Op (closLang_IntOp
-  (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
+   `bvl_handle_compile l n [(Var v:bvl_exp)] = (if v < n then ([Var
+  v],Var v,1,T) else ([Op (closLang_IntOp (closLang_Const (&0)))
+  []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(If x1 x2 x3:bvl_exp)] =
          (let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
          let (x2,l2,s2,nr2) = bvl_handle_compile l n [x2] in
@@ -215,9 +215,9 @@ val compile_ind = theorem"compile_ind";
 *)
 
 let compile_sing_def = cake_define_list
-  [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then
-  ((Var v:bvl_exp),(Var v:bvl_exp),1,T) else (Op (closLang_IntOp
-  (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
+  [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
+  v,Var v,1,T) else (Op (closLang_IntOp (closLang_Const (&0)))
+  [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (If x1 x2 x3:bvl_exp) =
          (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
          let (x2,l2,s2,nr2) = bvl_handle_compile_sing l n x2 in

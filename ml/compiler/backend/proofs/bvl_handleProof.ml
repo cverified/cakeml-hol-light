@@ -40,7 +40,7 @@ let handle_ok_def = cake_define_list
    `handle_ok [(Handle x1 x2:flatLang_exp)] <=>
          (match x1 with Let xs b ->
              EVERY isVar xs /\ bVarBound (LENGTH xs) [b] /\
-             handle_ok [b] /\ handle_ok [x2] | _3 -> F)`;
+             handle_ok [b] /\ handle_ok [x2] | _4 -> F)`;
    `handle_ok [(Force loc n:flatLang_exp)] <=> T`;
    `handle_ok [(Call ticks dest xs:flatLang_exp)] <=> handle_ok xs`];;
 

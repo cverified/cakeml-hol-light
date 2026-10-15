@@ -215,9 +215,9 @@ let compile_def = cake_define_list
    `bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
   ++ bvl_const_compile env (y :: xs)`;
    `bvl_const_compile env [(Var v:bvl_exp)] =
-         (match (\l n. oEL n l) env v with NONE -> [(Var
-           v:bvl_exp)] | SOME NONE -> [(Var v:bvl_exp)] | SOME (SOME
-           (Var i)) -> [Var (v + i)] | SOME (SOME x) -> [x])`;
+         (match (\l n. oEL n l) env v with NONE -> [Var v] | SOME
+           NONE -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] |
+           SOME (SOME x) -> [x])`;
    `bvl_const_compile env [(If x1 x2 x3:bvl_exp)] =
          (let y1 = HD (bvl_const_compile env [x1]) in
          let y2 = HD (bvl_const_compile env [x2]) in
@@ -240,19 +240,18 @@ let compile_def = cake_define_list
    `bvl_const_compile env [(Tick x:bvl_exp)] = [Tick (HD
   (bvl_const_compile env [x]))]`;
    `bvl_const_compile env [(Force loc v:bvl_exp)] =
-         (match (\l n. oEL n l) env v with NONE -> [(Force loc
-           v:bvl_exp)] | SOME NONE -> [(Force loc v:bvl_exp)] | SOME
-           (SOME (Var i)) -> [Force loc (v + i)] | SOME (SOME x) ->
-           [(Force loc v:bvl_exp)])`;
+         (match (\l n. oEL n l) env v with NONE -> [Force loc v]
+           | SOME NONE -> [Force loc v] | SOME (SOME (Var i)) ->
+           [Force loc (v + i)] | SOME (SOME x) -> [Force loc v])`;
    `bvl_const_compile env [(Call t dest xs:bvl_exp)] = [Call t dest
   (bvl_const_compile env xs)]`];;
 hol4_overload "compile" "bvl_const_compile";;
 
 let compile_sing_def = cake_define_list
   [`bvl_const_compile_sing env (Var v:bvl_exp) =
-         (match (\l n. oEL n l) env v with NONE -> (Var
-           v:bvl_exp) | SOME NONE -> (Var v:bvl_exp) | SOME (SOME
-           (Var i)) -> Var (v + i) | SOME (SOME x) -> x)`;
+         (match (\l n. oEL n l) env v with NONE -> Var v | SOME
+           NONE -> Var v | SOME (SOME (Var i)) -> Var (v + i) | SOME
+           (SOME x) -> x)`;
    `bvl_const_compile_sing env (If x1 x2 x3:bvl_exp) =
          (let y1 = bvl_const_compile_sing env x1 in
          let y2 = bvl_const_compile_sing env x2 in
@@ -275,10 +274,9 @@ let compile_sing_def = cake_define_list
    `bvl_const_compile_sing env (Tick x:bvl_exp) = Tick
   (bvl_const_compile_sing env x)`;
    `bvl_const_compile_sing env (Force loc v:bvl_exp) =
-         (match (\l n. oEL n l) env v with NONE -> (Force loc
-           v:bvl_exp) | SOME NONE -> (Force loc v:bvl_exp) | SOME
-           (SOME (Var i)) -> Force loc (v + i) | SOME (SOME x) ->
-           (Force loc v:bvl_exp))`;
+         (match (\l n. oEL n l) env v with NONE -> Force loc v |
+           SOME NONE -> Force loc v | SOME (SOME (Var i)) -> Force
+           loc (v + i) | SOME (SOME x) -> Force loc v)`;
    `bvl_const_compile_sing env (Call t dest xs:bvl_exp) = Call t dest
   (bvl_const_compile_list env xs)`;
    `bvl_const_compile_list env [] = []`;

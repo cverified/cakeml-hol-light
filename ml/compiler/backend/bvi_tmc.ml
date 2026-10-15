@@ -110,21 +110,21 @@ let call_to_cb_def = cake_define
 let bvi_to_cb_aux_def = cake_define_list
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
-         SOME (bs,INR (CallBlock tag [] cb [])) | _44 -> NONE)`;
+         SOME (bs,INR (CallBlock tag [] cb [])) | _45 -> NONE)`;
    `bvi_to_cb_aux_sing n loc tag (Op op args:bvi_exp) =
        (match bvi_tmc_dest_Cons op with SOME tag' ->
            (match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
              SOME (bs,INL vs) ->
-                (if pure_exp n ((Op op args:bvi_exp)) then
-                  SOME ([(Op op args:bvi_exp)],INL [0]) else NONE) |
-                    SOME (bs,INR cb) ->
+                (if pure_exp n (Op op args) then
+                  SOME ([Op op args],INL [0]) else NONE) | SOME
+                    (bs,INR cb) ->
                 SOME (bs,INR (CallBlock tag [] cb []))) | NONE ->
-           (if pure_exp n ((Op op args:bvi_exp)) then
-             SOME ([(Op op args:bvi_exp)],INL [0]) else NONE))`;
-   `bvi_to_cb_aux_sing n _45 _46 exp =
+           (if pure_exp n (Op op args) then
+             SOME ([Op op args],INL [0]) else NONE))`;
+   `bvi_to_cb_aux_sing n _46 _47 exp =
        (if pure_exp n exp then
          SOME ([exp],INL [0]) else NONE)`;
-   `bvi_to_cb_aux _47 _48 _49 [] = SOME ([],INL [])`;
+   `bvi_to_cb_aux _48 _49 _50 [] = SOME ([],INL [])`;
    `bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp`;
    `bvi_to_cb_aux n loc tag (h :: t) =
        (match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
@@ -135,13 +135,13 @@ let bvi_to_cb_aux_def = cake_define_list
                   then
                   let vs2' = shift_vars (LENGTH bs1) vs2 in
                     SOME (bs1 ++ bs2,INL (vs1 ++ vs2')) else NONE) |
-                      SOME (bs1,INR (CallBlock _50 [] child [])) ->
+                      SOME (bs1,INR (CallBlock _51 [] child [])) ->
                 (let vs2' = shift_vars (LENGTH bs1) vs2 in
                   SOME (bs1 ++ bs2,INR (CallBlock tag [] child
-                    vs2'))) | _51 -> NONE) | SOME (bs2,INR cb) ->
+                    vs2'))) | _52 -> NONE) | SOME (bs2,INR cb) ->
            (match shift_cb 1 cb with CallBlock tag l child r ->
                (let cb' = CallBlock tag (0 :: l) child r in
-                 SOME (h :: bs2,INR cb')) | _52 -> NONE))`];;
+                 SOME (h :: bs2,INR cb')) | _53 -> NONE))`];;
 
 let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
@@ -163,8 +163,8 @@ let bvi_to_cb_def = cake_define
         | (Op op xs) ->
       (match bvi_tmc_dest_Cons op with SOME tag ->
           (match bvi_to_cb_aux n loc tag xs with SOME (bs,INR cb) ->
-            SOME (bs,cb) | _53 -> NONE) | _54 -> NONE)
-        | _55 -> NONE`;;
+            SOME (bs,cb) | _54 -> NONE) | _55 -> NONE)
+        | _56 -> NONE`;;
 
 (* Convert back to BlockOp Cons for comparing semantics *)
 let cb_to_bvi_def = cake_define_list
@@ -210,8 +210,8 @@ let update_cons_def = cake_define
 let cb_size_def = cake_define
   `cb_size x1 =
       match x1 with
-        CallBlock _56 _57 x _58 -> cb_size x + 1
-      | _59 -> 0`;;
+        CallBlock _57 _58 x _59 -> cb_size x + 1
+      | _60 -> 0`;;
 
 let cb_to_bvi_worker_aux_def = cake_define_list
   [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
@@ -279,14 +279,14 @@ let rewrite_wrapper_def = cake_define
         | (Raise x) -> NONE
         | (Tick x) -> OPTION_MAP Tick (rewrite_wrapper loc loc_opt n
           x)
-        | (Force _60 n) -> NONE
+        | (Force _61 n) -> NONE
         | (Call t d args h) -> NONE
         | (Op op op_args) ->
        (match bvi_to_cb n loc (Op op op_args) with SOME (bs,CallBlock
          tag left child right) ->
            SOME (Let bs (cb_to_bvi_wrapper tag left child right
-             loc_opt)) | _61 -> NONE)
-        | _62 -> NONE`;;
+             loc_opt)) | _62 -> NONE)
+        | _63 -> NONE`;;
 
 (* Assumes that the function can and should be optimised - has been
    checked by rewrite_wrapper. *)
