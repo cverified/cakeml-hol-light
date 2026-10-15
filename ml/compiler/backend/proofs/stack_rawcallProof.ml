@@ -47,12 +47,12 @@ hol4_overload "state_ok" "stack_rawcallProof_state_ok";;
 let state_rel_def = cake_define
   `stack_rawcallProof_state_rel i s t <=>
      (?c.
-       domain c = domain (code s) /\
-       t = code_fupd (K c) s /\
-       stack_rawcallProof_state_ok i (code s) /\
+       domain c = domain (state_code s) /\
+       t = state_code_fupd (K c) s /\
+       stack_rawcallProof_state_ok i (state_code s) /\
        (!n b.
-         sptree_lookup n (code s) = SOME b ==>
-         (?i. stack_rawcallProof_state_ok i (code s) /\
+         sptree_lookup n (state_code s) = SOME b ==>
+         (?i. stack_rawcallProof_state_ok i (state_code s) /\
              lookup n c = SOME (comp_top i b))))`;;
 hol4_overload "state_rel" "stack_rawcallProof_state_rel";;
 

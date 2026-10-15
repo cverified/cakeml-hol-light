@@ -84,8 +84,8 @@ let heap_segment_def = cake_define
          NONE | SOME (h2,h3) -> SOME (h1,h2,h3)))`;;
 
 let heap_restrict_def = cake_define
-  `heap_restrict start end (heap:(('a,'b)heap_element) list) =
-      (match heap_segment (start,end) heap with NONE -> [] | SOME
+  `heap_restrict start' end (heap:(('a,'b)heap_element) list) =
+      (match heap_segment (start',end) heap with NONE -> [] | SOME
         (h1,h2,h3) -> h2)`;;
 
 (* The heap is well-formed if heap_ok *)
@@ -116,8 +116,8 @@ let isForwardPointer_def = cake_define
         | _1 -> F`;;
 
 let heap_ok_def = cake_define
-  `heap_ok heap limit = (
-     (heap_length heap = limit) /\
+  `heap_ok heap limit' = (
+     (heap_length heap = limit') /\
      (FILTER isForwardPointer heap = []) /\
      (!xs l d ptr u. MEM (DataElement xs l d) heap /\ MEM
        (gc_shared_Pointer ptr u) xs ==>

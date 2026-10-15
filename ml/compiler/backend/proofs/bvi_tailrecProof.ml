@@ -124,30 +124,31 @@ let namespace_rel_def = cake_define
 hol4_overload "namespace_rel" "bvi_tailrecProof_namespace_rel";;
 
 let input_condition_def = cake_define
-  `bvi_tailrecProof_input_condition next prog <=>
-     EVERY (bvi_tailrecProof_free_names next o FST) prog /\
+  `bvi_tailrecProof_input_condition next' prog <=>
+     EVERY (bvi_tailrecProof_free_names next' o FST) prog /\
     ALL_DISTINCT (MAP FST prog) /\
     EVERY ((~) o (\n. n MOD bvl_to_bvi_namespaces = 2) o FST) (FILTER
       ((<=) bvl_num_stubs o FST) prog) /\
-    bvl_num_stubs <= next /\ (\n. n MOD bvl_to_bvi_namespaces = 2)
-      next`;;
+    bvl_num_stubs <= next' /\ (\n. n MOD bvl_to_bvi_namespaces =
+      2) next'`;;
 hol4_overload "input_condition" "bvi_tailrecProof_input_condition";;
 
 let state_rel_def = cake_define
-  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> refs
-     t = refs s /\ clock
-     t = clock s /\ bviSem_state_global
-     t = bviSem_state_global s /\ ffi
-     t = ffi s /\ compile_oracle
+  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> state_refs
+     t = state_refs s /\ state_clock
+     t = state_clock s /\ bviSem_state_global
+     t = bviSem_state_global s /\ state_ffi
+     t = state_ffi s /\ compile_oracle
      t = state_co bvi_tailrec_compile_each (compile_oracle s) /\
        compile
      s = state_cc bvi_tailrec_compile_each (compile t) /\
-     bvi_tailrecProof_code_rel (code s) (code t) /\
-     bvi_tailrecProof_namespace_rel (code s) (code t) /\
-     (!n. let ((next,cfg),prog) = compile_oracle s n in
-             bvi_tailrecProof_input_condition next prog) /\
-     (!n. n IN domain (code t) /\ (\n. n MOD bvl_to_bvi_namespaces
-       = 2) n ==> n < FST (FST (compile_oracle s 0)))`;;
+     bvi_tailrecProof_code_rel (state_code s) (state_code t) /\
+     bvi_tailrecProof_namespace_rel (state_code s) (state_code t) /\
+     (!n. let ((next',cfg),prog) = compile_oracle s n in
+             bvi_tailrecProof_input_condition next' prog) /\
+     (!n. n IN domain (state_code t) /\ (\n. n MOD
+       bvl_to_bvi_namespaces = 2) n ==> n < FST (FST (compile_oracle
+       s 0)))`;;
 hol4_overload "state_rel" "bvi_tailrecProof_state_rel";;
 
 (* HOL4 ML code, not ported:

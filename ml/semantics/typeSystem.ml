@@ -225,18 +225,14 @@ let type_env_FIELDS = define_record "type_env"
   ["v","(mlstring,mlstring,num#t)namespace";
    "c","(mlstring,mlstring,mlstring list#t list#num)namespace";
    "t","(mlstring,mlstring,mlstring list#t)namespace"];;
-hol4_overload "v" "type_env_v";;
-hol4_overload "v_fupd" "type_env_v_fupd";;
-hol4_overload "c" "type_env_c";;
-hol4_overload "c_fupd" "type_env_c_fupd";;
 
 
 (*val extend_dec_tenv : type_env -> type_env -> type_env*)
 let extend_dec_tenv_def = cake_define
   `((extend_dec_tenv:type_env->type_env->type_env) tenv' tenv =
-     (mk_type_env (nsAppend (v tenv') (v tenv)) (nsAppend (c
-       tenv') (c tenv)) (nsAppend (type_env_t tenv') (type_env_t
-       tenv))))`;;
+     (mk_type_env (nsAppend (type_env_v tenv') (type_env_v tenv))
+       (nsAppend (type_env_c tenv') (type_env_c tenv)) (nsAppend
+       (type_env_t tenv') (type_env_t tenv))))`;;
 
 
 (*val lookup_varE : id modN varN -> tenv_val_exp -> maybe (nat * t)*)
@@ -254,7 +250,7 @@ let lookup_var_def = cake_define
   ,mlstring)namespace_id->tenv_val_exp->type_env->(num#t) option) id'
   tenvE tenv =
      ((match lookup_varE id' tenvE with
-      SOME x -> SOME x | NONE -> nsLookup (v tenv) id')))`;;
+      SOME x -> SOME x | NONE -> nsLookup (type_env_v tenv) id')))`;;
 
 
 (*val num_tvs : tenv_val_exp -> nat*)
@@ -536,7 +532,7 @@ let type_p = cake_inductive
    (LENGTH ts' = LENGTH tvs') /\
    type_ps tvs tenv ps (MAP (type_subst (alist_to_fmap (ZIP tvs'
      ts'))) ts) bindings /\
-   (nsLookup (c tenv) cn = SOME (tvs',ts,tn))) ==>
+   (nsLookup (type_env_c tenv) cn = SOME (tvs',ts,tn))) ==>
    type_p tvs tenv (ast_Pcon (SOME cn) ps) (Tapp ts' tn) bindings) /\
    (!tvs tenv ps ts bindings.
    (type_ps tvs tenv ps ts bindings) ==>
@@ -597,7 +593,7 @@ let type_e = cake_inductive
    (LENGTH tvs = LENGTH ts') /\
    type_es tenv tenvE es (MAP (type_subst (alist_to_fmap (ZIP tvs
      ts'))) ts) /\
-   (nsLookup (c tenv) cn = SOME (tvs,ts,tn))) ==>
+   (nsLookup (type_env_c tenv) cn = SOME (tvs,ts,tn))) ==>
    type_e tenv tenvE (ast_Con (SOME cn) es) (Tapp ts' tn)) /\
    (!tenv tenvE es ts.
    (type_es tenv tenvE es ts) ==>
@@ -699,8 +695,8 @@ let tscheme_inst_def = cake_define
 
 let tenvLift_def = cake_define
   `((tenvLift:mlstring->type_env->type_env) mn tenv =
-     (mk_type_env (nsLift mn (v tenv)) (nsLift mn (c tenv))
-       (nsLift mn (type_env_t tenv))))`;;
+     (mk_type_env (nsLift mn (type_env_v tenv)) (nsLift mn
+       (type_env_c tenv)) (nsLift mn (type_env_t tenv))))`;;
 
 
 let type_d = cake_inductive
@@ -910,9 +906,10 @@ let tscheme_inst2_def = cake_define
 (*val weak_tenv : type_env -> type_env -> bool*)
 let weak_tenv_def = cake_define
   `((weak_tenv:type_env->type_env->bool) tenv_impl tenv_spec =
-     (nsSub tscheme_inst2 (v tenv_spec) (v tenv_impl) /\
-    nsSub (\i x y. (match (i,x,y) with (_26,x,y) -> x = y)) (c
-      tenv_spec) (c tenv_impl)))`;;
+     (nsSub tscheme_inst2 (type_env_v tenv_spec) (type_env_v
+       tenv_impl) /\
+    nsSub (\i x y. (match (i,x,y) with (_26,x,y) -> x = y))
+      (type_env_c tenv_spec) (type_env_c tenv_impl)))`;;
 (* &&
   nsSub weak_tenvT tenv_spec.t tenv_impl.t*)
 

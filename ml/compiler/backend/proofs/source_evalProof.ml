@@ -84,11 +84,14 @@ let do_eval_record_def = cake_define
 
 let env_rel_def = cake_define
   `source_evalProof_env_rel v_rel' (env:semanticPrimitives_v sem_env)
-  env' <=> c
-     env = c env' /\ nsDom (v env) = nsDom (v env') /\
-     nsDomMod (v env) = nsDomMod (v env') /\
-     (!nm x y. nsLookup (v env) nm = SOME x /\ nsLookup (v env') nm =
-       SOME y ==>
+  env' <=> semanticPrimitives_sem_env_c
+     env = semanticPrimitives_sem_env_c env' /\ nsDom
+       (semanticPrimitives_sem_env_v env) = nsDom
+       (semanticPrimitives_sem_env_v env') /\
+     nsDomMod (semanticPrimitives_sem_env_v env) = nsDomMod
+       (semanticPrimitives_sem_env_v env') /\
+     (!nm x y. nsLookup (semanticPrimitives_sem_env_v env) nm = SOME
+       x /\ nsLookup (semanticPrimitives_sem_env_v env') nm = SOME y ==>
          v_rel' x y)`;;
 hol4_overload "env_rel" "source_evalProof_env_rel";;
 

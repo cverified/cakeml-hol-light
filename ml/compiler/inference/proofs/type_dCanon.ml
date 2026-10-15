@@ -22,8 +22,10 @@ let tenv_equiv_def = cake_define
   `tenv_equiv tenv1 tenv2 <=>
       nsAll2 (\i v1 v2. v1 = v2) (type_env_t tenv1) (type_env_t
         tenv2) /\
-      nsAll2 (\i v1 v2. v1 = v2) (c tenv1) (c tenv2) /\
-      nsAll2 (\i v1 v2. v1 = v2) (v tenv1) (v tenv2)`;;
+      nsAll2 (\i v1 v2. v1 = v2) (semanticPrimitives_sem_env_c tenv1)
+        (semanticPrimitives_sem_env_c tenv2) /\
+      nsAll2 (\i v1 v2. v1 = v2) (semanticPrimitives_sem_env_v
+        tenv1) (semanticPrimitives_sem_env_v tenv2)`;;
 
 (* -- *)
 
@@ -32,8 +34,9 @@ let set_tids_tenv_def = cake_define
   `set_tids_tenv tids tenv <=>
    nsAll (\i (ls,t). set_tids_subset tids t) (type_env_t tenv) /\
    nsAll (\i (ls,ts,tid). EVERY (\t. set_tids_subset tids t) ts /\
-     tid IN tids) (c tenv) /\
-   nsAll (\i (n,t). set_tids_subset tids t) (v tenv)`;;
+     tid IN tids) (semanticPrimitives_sem_env_c tenv) /\
+   nsAll (\i (n,t). set_tids_subset tids t)
+     (semanticPrimitives_sem_env_v tenv)`;;
 
 let type_pe_determ_canon_def = cake_define
   `type_pe_determ_canon n tenv tenvE p e <=>

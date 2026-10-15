@@ -406,9 +406,9 @@ let init_code_def = cake_define
 hol4_overload "init_code" "stack_remove_init_code";;
 
 let init_stubs_def = cake_define
-  `init_stubs gen_gc' max_heap k start =
+  `init_stubs gen_gc' max_heap k start' =
      [(0,stackLang_Seq (stack_remove_init_code gen_gc' max_heap k)
-       (Call NONE (INL start) NONE));
+       (Call NONE (INL start') NONE));
       (1,halt_inst (n2w 0));
       (2,halt_inst (n2w 2))]`;;
 
@@ -422,7 +422,7 @@ hol4_overload "stub_names" "stack_remove_stub_names";;
 (* -- full compiler -- *)
 
 let compile_def = cake_define
-  `stack_remove_compile jump off gen_gc' max_heap k start prog =
-     init_stubs gen_gc' max_heap k start ++
+  `stack_remove_compile jump off gen_gc' max_heap k start' prog =
+     init_stubs gen_gc' max_heap k start' ++
      MAP (stack_remove_prog_comp jump off k) prog`;;
 hol4_overload "compile" "stack_remove_compile";;

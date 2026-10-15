@@ -260,10 +260,10 @@ let SilentFFI_def = cake_define
                  FFI (implode "") 7 n 9 n names] else Skip)`;;
 
 let AllocVar_def = cake_define
-  `AllocVar c (limit:num) (names:1 spt) =
+  `AllocVar c (limit':num) (names:1 spt) =
      list_Seq [Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
        (Var 1) 2);
-               If asm_Lower 1 (Imm (n2w limit))
+               If asm_Lower 1 (Imm (n2w limit'))
                  (Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsl
                    (Op Add [Var 1; Const (n2w 1)])
                    (backend_common_word_shift (:'a))))
@@ -314,7 +314,7 @@ let WriteLastBytes_def = cake_define
 
 let RefByte_code_def = cake_define
   `RefByte_code c =
-       (let limit = MIN (2 EXP data_to_word_config_len_size c)
+       (let limit' = MIN (2 EXP data_to_word_config_len_size c)
          (dimword (:'a) DIV 16) in
        let h = Op Add [(\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
          2) 2; Const bytes_in_word] in
@@ -325,7 +325,7 @@ let RefByte_code_def = cake_define
          list_Seq
            [BignumHalt 2;
             Assign 1 x;
-            AllocVar c limit (fromList [one; one; one]);
+            AllocVar c limit' (fromList [one; one; one]);
             Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr h
               (backend_common_word_shift (:'a)));
             Assign 7 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
@@ -374,8 +374,8 @@ let make_ptr_bits_code_def = cake_define
 
 let FromList_code_def = cake_define
   `FromList_code c =
-     (let limit = MIN (2 EXP data_to_word_config_len_size c) (dimword
-       (:'a) DIV 16) in
+     (let limit' = MIN (2 EXP data_to_word_config_len_size c)
+       (dimword (:'a) DIV 16) in
      let h = (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var 2)
        (dimindex (:'a) - data_to_word_config_len_size c - 2) in
        If Equal 2 (Imm (n2w 0))
@@ -384,7 +384,7 @@ let FromList_code_def = cake_define
                     Return 0 [6]])
          (list_Seq
            [BignumHalt 2;
-            Assign 1 (Var 2); AllocVar c limit (fromList [one; one;
+            Assign 1 (Var 2); AllocVar c limit' (fromList [one; one;
               one]);
             Assign 1 (wordLang_Lookup NextFree);
             Assign 5 (Op Or [h; Const (n2w 3); Var 6]);
@@ -1372,11 +1372,11 @@ let make_ptr_def = cake_define
        backend_common_word_shift (:'a)) || ((n2w 1):'a word))`;;
 
 let write_bytes_def = cake_define_list
-  [`write_bytes bs [] be = []`;
-   `write_bytes bs ((w:'a word) :: ws) be =
+  [`write_bytes bs [] be' = []`;
+   `write_bytes bs ((w:'a word) :: ws) be' =
          (let k = dimindex (:'a) DIV 8 in
-           bytes_to_word k (n2w 0) bs w be :: write_bytes (DROP k
-             bs) ws be)`];;
+           bytes_to_word k (n2w 0) bs w be' :: write_bytes (DROP
+             k bs) ws be')`];;
 
 let small_int_def = cake_define
   `small_int (:'a) i <=>

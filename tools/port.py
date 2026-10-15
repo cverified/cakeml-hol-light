@@ -206,7 +206,10 @@ class Porter:
     return {n: n + "'" for n in names if self.is_const(n)}
 
   def is_const(self, n):
+    # a name that the port overloads the accessors of a record
+    # field with is a constant of HOL Light as well
     return (n in self.db.hl or n in self.db.provided or
+            n in set(self.db.ambiguous_fields().values()) or
             any(k not in ('type', 'tyabbrev')
                 for _, k in self.db.defs.get(n, [])))
 
@@ -434,12 +437,12 @@ class Porter:
     amb = self.db.ambiguous_fields()
     for f, _ in flds:
       if f not in amb: continue
-      for n in (f, f + '_fupd'):
+      for n, c in ((amb[f], f), (amb[f] + '_fupd', f + '_fupd')):
         text = ('hol4_overload "%s" "%s_%s";;'
-                % (n, self.tnm(ty), n))
+                % (n, self.tnm(ty), c))
         if len(text) > 72:
           text = ('hol4_overload "%s"\n  "%s_%s";;'
-                  % (n, self.tnm(ty), n))
+                  % (n, self.tnm(ty), c))
         self.out.append(text)
 
   def overloads_of(self, names):

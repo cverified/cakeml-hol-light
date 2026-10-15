@@ -43,8 +43,8 @@ let word_bignumProof_state_FIELDS =
    "clock","num"];;
 hol4_overload "regs" "word_bignumProof_state_regs";;
 hol4_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
-hol4_overload "clock" "word_bignumProof_state_clock";;
-hol4_overload "clock_fupd" "word_bignumProof_state_clock_fupd";;
+hol4_overload "state_clock" "word_bignumProof_state_clock";;
+hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
 let eval_exp_def = cake_define_list
   [`eval_exp s (wordLang_Const w) = w`;
@@ -91,7 +91,8 @@ let eval_ri_def = cake_define_list
    `eval_ri s (Imm w) = w`];;
 
 let dec_clock_def = cake_define
-  `word_bignumProof_dec_clock s = clock_fupd (K (clock s - 1)) s`;;
+  `word_bignumProof_dec_clock s = state_clock_fupd (K (state_clock s
+  - 1)) s`;;
 hol4_overload "dec_clock" "word_bignumProof_dec_clock";;
 
 let reg_write_def = cake_define
@@ -110,7 +111,7 @@ let array_write_def = cake_define
   v) (word_bignumProof_state_arrays s))) s`;;
 
 let clock_write_def = cake_define
-  `clock_write l s = clock_fupd (K l) s`;;
+  `clock_write l s = state_clock_fupd (K l) s`;;
 
 let copy_vars_def = cake_define_list
   [`word_bignumProof_copy_vars [] s t = SOME t`;
@@ -200,13 +201,14 @@ let eval = cake_inductive
    (!r s1 p vs s2 rec.
       ast_Eval (if rec then SOME p else NONE) (delete_vars vs
         (word_bignumProof_dec_clock s1))
-        (word_bignum_LoopBody p) (INR s2) /\ ~(clock s1 = 0) ==>
+        (word_bignum_LoopBody p) (INR s2) /\ ~(state_clock s1 = 0)
+          ==>
       ast_Eval r s1 (Loop rec vs p) (INR s2)) /\
    (!s1 save_regs vs p s2 s3.
       ast_Eval (SOME p) (delete_vars vs (word_bignumProof_dec_clock
         s1)) (word_bignum_LoopBody p) (INR s2) /\
       word_bignumProof_copy_vars save_regs
-        (word_bignumProof_state_regs s1) s2 = SOME s3 /\ ~(clock
+        (word_bignumProof_state_regs s1) s2 = SOME s3 /\ ~(state_clock
       s1 = 0) ==>
       ast_Eval (SOME p) s1 (word_bignum_Rec save_regs vs) (INR s3))
         /\
@@ -214,7 +216,7 @@ let eval = cake_inductive
       ast_Eval r s1 p (INR s2) ==>
       ast_Eval r s1 (word_bignum_LoopBody p) (INR s2)) /\
    (!r s1 s2 s3 p.
-      ast_Eval r s1 p (INL s2) /\ ~(clock s2 = 0) /\
+      ast_Eval r s1 p (INL s2) /\ ~(state_clock s2 = 0) /\
       ast_Eval r (word_bignumProof_dec_clock s2)
         (word_bignum_LoopBody p) (INR s3) ==>
       ast_Eval r s1 (word_bignum_LoopBody p) (INR s3))`;;
@@ -307,8 +309,8 @@ let div_code_assum_def = cake_define
 
 let state_rel_def = cake_define
   `word_bignumProof_state_rel s (t:('a,'c,'ffi)wordSem_state) cs t0
-  frame <=> clock
-     s = clock t /\
+  frame <=> state_clock
+     s = state_clock t /\
      array_rel (word_bignumProof_state_arrays s) (FLOOKUP
        (wordSem_state_store t) TempIn1)
                         (FLOOKUP (wordSem_state_store t) TempIn2)
@@ -328,8 +330,8 @@ let state_rel_def = cake_define
      t0 = wordSem_state_handler t /\ wordSem_state_termdep
      t0 = wordSem_state_termdep t /\ wordSem_state_code
      t0 = wordSem_state_code t /\ wordSem_state_be
-     t0 = wordSem_state_be t /\ ffi
-     t0 = ffi t /\ wordSem_state_compile
+     t0 = wordSem_state_be t /\ state_ffi
+     t0 = state_ffi t /\ wordSem_state_compile
      t0 = wordSem_state_compile t /\ wordSem_state_compile_oracle
      t0 = wordSem_state_compile_oracle t /\ wordSem_state_code_buffer
      t0 = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
@@ -431,11 +433,11 @@ let corr_def = cake_define
 let loop_app_def = cake_define
   `loop_app f g x =
      (match f x with INL s -> (INL (word_bignumProof_dec_clock
-       s),(g x /\ ~(clock s = 0))) | INR s -> (INR s,g x))`;;
+       s),(g x /\ ~(state_clock s = 0))) | INR s -> (INR s,g x))`;;
 
 let tick_before_def = cake_define
   `tick_before vs f s =
-     (if clock s = 0 then (s,F) else f (delete_vars vs
+     (if state_clock s = 0 then (s,F) else f (delete_vars vs
        (word_bignumProof_dec_clock s)))`;;
 
 (* HOL4 ML code, not ported:

@@ -142,7 +142,7 @@ let InitGlobals_max_def = cake_define
   `InitGlobals_max = 10000`;;
 
 let InitGlobals_code_def = cake_define
-  `InitGlobals_code start n = ((0:num),
+  `InitGlobals_code start' n = ((0:num),
      (let n = MIN (MAX n 1) InitGlobals_max in
        Let [Op (closLang_MemOp closLang_RefArray) [Op (closLang_IntOp
          (closLang_Const (&0))) []; Op (closLang_IntOp (closLang_Const
@@ -151,7 +151,7 @@ let InitGlobals_code_def = cake_define
            (closLang_IntOp (closLang_Const (&1))) []; Op (closLang_IntOp
            (closLang_Const (&0))) []; Var 0]]
            (Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 1]]
-              (Call 0 (SOME start) [] (SOME (Var 0)))))))`;;
+              (Call 0 (SOME start') [] (SOME (Var 0)))))))`;;
 
 let ListLength_code_def = cake_define
   `ListLength_code = (2,
@@ -219,9 +219,9 @@ let ConcatByte_code_def = cake_define
                 Var 5] NONE)))))`;;
 
 let stubs_def = cake_define
-  `bvl_to_bvi_stubs start n = [(AllocGlobal_location,AllocGlobal_code);
+  `bvl_to_bvi_stubs start' n = [(AllocGlobal_location,AllocGlobal_code);
                     (CopyGlobals_location,CopyGlobals_code);
-                    (InitGlobals_location,InitGlobals_code start n);
+                    (InitGlobals_location,InitGlobals_code start' n);
                     (ListLength_location,ListLength_code);
                     (FromListByte_location,FromListByte_code);
                     (ToListByte_location,ToListByte_code);
@@ -455,11 +455,11 @@ let compile_inc_def = cake_define
 hol4_overload "compile_inc" "bvl_to_bvi_compile_inc";;
 
 let compile_prog_def = cake_define
-  `bvl_to_bvi_compile_prog start n prog =
+  `bvl_to_bvi_compile_prog start' n prog =
      (let k = alloc_glob_count (MAP (\(_9,_10,p). p) prog) in
      let (code,n1) = compile_list n prog in
        (InitGlobals_location,bvl_to_bvi_stubs (bvl_num_stubs +
-         bvl_to_bvi_namespaces * start) k ++ append code,n1))`;;
+         bvl_to_bvi_namespaces * start') k ++ append code,n1))`;;
 hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
@@ -504,12 +504,12 @@ let get_names_def = cake_define
 hol4_overload "get_names" "bvl_to_bvi_get_names";;
 
 let compile_def = cake_define
-  `bvl_to_bvi_compile start c names prog =
+  `bvl_to_bvi_compile start' c names prog =
      (let (inlines,prog) = bvl_inline_compile_prog
        (bvl_to_bvi_config_inline_size_limit c)
        (bvl_to_bvi_config_split_main_at_seq
             c) (bvl_to_bvi_config_exp_cut c) prog in
-     let (loc,code,n1) = compile_prog start 0 prog in
+     let (loc,code,n1) = compile_prog start' 0 prog in
      let (n2,code') = bvi_tailrec_compile_prog
        (bvl_to_bvi_config_do_tailrec c) (bvl_num_stubs + 2) code in
      let (n3,code') = bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc

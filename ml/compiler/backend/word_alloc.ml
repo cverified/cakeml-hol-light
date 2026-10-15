@@ -516,15 +516,15 @@ let ssa_cc_trans_def = cake_define_list
           na'' in
         let (ren_ret_handler,ssa_2,na_2) =
           ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
-        let regs = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
+        let regs' = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
         let mov_ret_handler =
-            (Seq ret_mov (Seq ((wordLang_Move 1) (ZIP ret' regs))
+            (Seq ret_mov (Seq ((wordLang_Move 1) (ZIP ret' regs'))
               (ren_ret_handler))) in
         (match h with
           NONE ->
             (let prog =
               (Seq stack_mov (Seq move_args
-              (Call (SOME (regs,stack_set,mov_ret_handler,l1,l2))
+              (Call (SOME (regs',stack_set,mov_ret_handler,l1,l2))
                     dest conv_args NONE))) in
             (prog,ssa_2,na_2)) | SOME (n,h,l1',l2') ->
             (let (n',ssa_3_p,na_3_p) = next_var_rename n ssa'' na_2
@@ -541,7 +541,8 @@ let ssa_cc_trans_def = cake_define_list
             let cons_exc_handler = Seq mov_exc_handler exc_cons in
             let prog =
                 (Seq stack_mov (Seq move_args
-                (Call (SOME (regs,stack_set,cons_ret_handler,l1,l2))
+                (Call (SOME
+                  (regs',stack_set,cons_ret_handler,l1,l2))
                    dest conv_args (SOME
                      (2,cons_exc_handler,l1',l2'))))) in
             (prog,ssa_fin,na_fin))))`;
@@ -1267,37 +1268,37 @@ new_type_abbrev("heu_data",`: num#num#num#num#num`);;
 let add1_lhs_const_def = cake_define
   `add1_lhs_const x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
-     sptree_insert x (1,0,0,0,0) t | SOME (const,reg,mem,rreg,rmem)
+     sptree_insert x (1,0,0,0,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
-     sptree_insert x (const + 1,reg,mem,rreg,rmem) t)`;;
+     sptree_insert x (const + 1,reg,mem',rreg,rmem) t)`;;
 
 let add1_lhs_reg_def = cake_define
   `add1_lhs_reg x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
-     sptree_insert x (0,1,0,0,0) t | SOME (const,reg,mem,rreg,rmem)
+     sptree_insert x (0,1,0,0,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
-     sptree_insert x (const,reg + 1,mem,rreg,rmem) t)`;;
+     sptree_insert x (const,reg + 1,mem',rreg,rmem) t)`;;
 
 let add1_lhs_mem_def = cake_define
   `add1_lhs_mem x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
-     sptree_insert x (0,0,1,0,0) t | SOME (const,reg,mem,rreg,rmem)
+     sptree_insert x (0,0,1,0,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
-     sptree_insert x (const,reg,mem + 1,rreg,rmem) t)`;;
+     sptree_insert x (const,reg,mem' + 1,rreg,rmem) t)`;;
 
 let add1_rhs_reg_def = cake_define
   `add1_rhs_reg x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
-     sptree_insert x (0,0,0,1,0) t | SOME (const,reg,mem,rreg,rmem)
+     sptree_insert x (0,0,0,1,0) t | SOME (const,reg,mem',rreg,rmem)
        ->
-     sptree_insert x (const,reg,mem,rreg + 1,rmem) t)`;;
+     sptree_insert x (const,reg,mem',rreg + 1,rmem) t)`;;
 
 let add1_rhs_mem_def = cake_define
   `add1_rhs_mem x (t:(num#num#num#num#num) spt) =
    (match sptree_lookup x t with NONE ->
-     sptree_insert x (0,0,0,0,1) t | SOME (const,reg,mem,rreg,rmem)
+     sptree_insert x (0,0,0,0,1) t | SOME (const,reg,mem',rreg,rmem)
        ->
-     sptree_insert x (const,reg,mem,rreg,rmem + 1) t)`;;
+     sptree_insert x (const,reg,mem',rreg,rmem + 1) t)`;;
 
 let get_heu_inst_def = cake_define
   `get_heu_inst x tup =

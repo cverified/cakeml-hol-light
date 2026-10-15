@@ -28,12 +28,12 @@ let adjust_pc_def = cake_define
 
 (*All skips for the next k*)
 let all_skips_def = cake_define
-  `all_skips pc code k <=>
-   (!x y. ~(asm_fetch_aux (pc + k) code = SOME (labLang_Asm (Asmi
+  `all_skips pc' code k <=>
+   (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (labLang_Asm (Asmi
      (Inst Skip)) x y))) /\
    (!i. i < k ==>
      (?x y.
-     asm_fetch_aux (pc + i) code = SOME (labLang_Asm (Asmi (Inst
+     asm_fetch_aux (pc' + i) code = SOME (labLang_Asm (Asmi (Inst
        Skip)) x y)))`;;
 
 (*
@@ -67,8 +67,8 @@ let state_rel_def = cake_define
      (?s1compile.
       s1 = compile_fupd (K s1compile) (compile_oracle_fupd (K (\n.
         (\(a,b). (a,filter_skip b)) (compile_oracle t1 n))) (pc_fupd (K
-        (adjust_pc (pc t1) (code t1))) (code_fupd (K (filter_skip (code
-        t1))) t1))) /\ compile
+        (adjust_pc (pc t1) (state_code t1))) (state_code_fupd (K
+        (filter_skip (state_code t1))) t1))) /\ compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
      ~failed t1`;;
 hol4_overload "state_rel" "lab_filterProof_state_rel";;

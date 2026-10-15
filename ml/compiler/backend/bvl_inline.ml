@@ -142,7 +142,7 @@ let is_small_sing_def = cake_define_list
              is_small_list n xs)`];;
 
 let is_small_def = cake_define
-  `is_small limit e = ~(is_small_aux limit [e] = 0)`;;
+  `is_small limit' e = ~(is_small_aux limit' [e] = 0)`;;
 
 let is_rec_def = cake_define_list
   [`bvl_inline_is_rec n [] = F`;
@@ -193,20 +193,21 @@ let is_rec_sing_def = cake_define_list
            is_rec_list n xs)`];;
 
 let must_inline_def = cake_define
-  `must_inline name limit e =
-     (if is_small limit e then ~(bvl_inline_is_rec name [e]) else
+  `must_inline name limit' e =
+     (if is_small limit' e then ~(bvl_inline_is_rec name [e]) else
        F)`;;
 
 let tick_inline_all_def = cake_define_list
-  [`tick_inline_all limit cs [] aux = (cs,REVERSE aux)`;
-   `tick_inline_all limit cs ((n,(arity:num),e1) :: xs) aux =
+  [`tick_inline_all limit' cs [] aux = (cs,REVERSE aux)`;
+   `tick_inline_all limit' cs ((n,(arity:num),e1) :: xs) aux =
          (let e2 = HD (tick_inline cs [e1]) in
-         let cs2 = if must_inline n limit e2 then sptree_insert n
+         let cs2 = if must_inline n limit' e2 then sptree_insert n
            (arity,e2) cs else cs in
-           tick_inline_all limit cs2 xs ((n,arity,e2) :: aux))`];;
+           tick_inline_all limit' cs2 xs ((n,arity,e2) :: aux))`];;
 
 let tick_compile_prog_def = cake_define
-  `tick_compile_prog limit cs prog = tick_inline_all limit cs prog []`;;
+  `tick_compile_prog limit' cs prog = tick_inline_all limit' cs prog
+  []`;;
 
 (* remove_ticks -- a function that removes Ticks *)
 
@@ -354,12 +355,12 @@ let optimise_def = cake_define
 hol4_overload "optimise" "bvl_inline_optimise";;
 
 let compile_inc_def = cake_define
-  `bvl_inline_compile_inc limit split_seq cut_size cs prog =
-     (let (cs,prog1) = tick_compile_prog limit cs prog in
+  `bvl_inline_compile_inc limit' split_seq cut_size cs prog =
+     (let (cs,prog1) = tick_compile_prog limit' cs prog in
        (cs,MAP (bvl_inline_optimise split_seq cut_size) prog1))`;;
 hol4_overload "compile_inc" "bvl_inline_compile_inc";;
 
 let compile_prog_def = cake_define
-  `bvl_inline_compile_prog limit split_seq cut_size prog =
-     bvl_inline_compile_inc limit split_seq cut_size LN prog`;;
+  `bvl_inline_compile_prog limit' split_seq cut_size prog =
+     bvl_inline_compile_inc limit' split_seq cut_size LN prog`;;
 hol4_overload "compile_prog" "bvl_inline_compile_prog";;

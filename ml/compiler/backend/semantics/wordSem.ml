@@ -97,50 +97,50 @@ let word_cmp_def = cake_define
 hol4_overload "word_cmp" "wordSem_word_cmp";;
 
 let mem_load_32_def = cake_define
-  `mem_load_32 m dm be (w:'a word) =
+  `mem_load_32 m dm be' (w:'a word) =
    (if alignment_aligned 2 w then match m (byte_align w) with Loc _8
      _9 -> NONE | wordLang_Word v ->
-            (if byte_align w IN dm then SOME (word_of_bytes be ((n2w
+            (if byte_align w IN dm then SOME (word_of_bytes be' ((n2w
               0):word32)
-              [get_byte w v be; get_byte (w + (n2w 1)) v be;
-               get_byte (w + (n2w 2)) v be; get_byte (w + (n2w 3))
-                 v be]) else NONE) else NONE)`;;
+              [get_byte w v be'; get_byte (w + (n2w 1)) v be';
+               get_byte (w + (n2w 2)) v be'; get_byte (w + (n2w
+                 3)) v be']) else NONE) else NONE)`;;
 
 let mem_store_32_def = cake_define
-  `mem_store_32 m dm be (w:'a word) (hw:word32) =
+  `mem_store_32 m dm be' (w:'a word) (hw:word32) =
    (if alignment_aligned 2 w then match m (byte_align w) with
      wordLang_Word v ->
             (if byte_align w IN dm then
-              let v0 = set_byte w (get_byte ((n2w 0):word32) hw be) v
-                be in
+              let v0 = set_byte w (get_byte ((n2w 0):word32) hw be')
+                v be' in
               let v1 = set_byte (w + (n2w 1)) (get_byte (n2w 1) hw
-                be) v0 be in
+                be') v0 be' in
               let v2 = set_byte (w + (n2w 2)) (get_byte (n2w 2) hw
-                be) v1 be in
+                be') v1 be' in
               let v3 = set_byte (w + (n2w 3)) (get_byte (n2w 3) hw
-                be) v2 be in
+                be') v2 be' in
                 SOME ((byte_align w =+ wordLang_Word v3) m) else
                   NONE) | _10 -> NONE else NONE)`;;
 
 let mem_load_byte_aux_def = cake_define
-  `mem_load_byte_aux m dm be w =
+  `mem_load_byte_aux m dm be' w =
      (match m (byte_align w) with Loc _11 _12 -> NONE | wordLang_Word
        v ->
-         (if byte_align w IN dm then SOME (get_byte w v be) else
+         (if byte_align w IN dm then SOME (get_byte w v be') else
            NONE))`;;
 
 let mem_store_byte_aux_def = cake_define
-  `mem_store_byte_aux m dm be w b =
+  `mem_store_byte_aux m dm be' w b =
      (match m (byte_align w) with wordLang_Word v ->
          (if byte_align w IN dm then SOME ((byte_align w =+
-           wordLang_Word (set_byte w b v be)) m) else NONE) | _13 ->
+           wordLang_Word (set_byte w b v be')) m) else NONE) | _13 ->
            NONE)`;;
 
 let write_bytearray_def = cake_define_list
-  [`write_bytearray a [] m dm be = m`;
-   `write_bytearray a (b :: bs) m dm be =
+  [`write_bytearray a [] m dm be' = m`;
+   `write_bytearray a (b :: bs) m dm be' =
          (match mem_store_byte_aux (write_bytearray (a + (n2w 1))
-           bs m dm be) dm be a b with SOME m -> m | NONE -> m)`];;
+           bs m dm be') dm be' a b with SOME m -> m | NONE -> m)`];;
 
 let stack_frame_INDUCT,stack_frame_RECURSION = define_datatype
   "stack_frame = StackFrame (num option) ((num#'a word_loc) list) \
@@ -183,47 +183,50 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    "code","(num#'a wordLang_prog) spt";
    "be","bool";
    "ffi","'ffi ffi_state"];;
-hol4_overload "locals" "wordSem_state_locals";;
-hol4_overload "locals_fupd" "wordSem_state_locals_fupd";;
-hol4_overload "locals_size" "wordSem_state_locals_size";;
-hol4_overload "locals_size_fupd" "wordSem_state_locals_size_fupd";;
+hol4_overload "state_locals" "wordSem_state_locals";;
+hol4_overload "state_locals_fupd" "wordSem_state_locals_fupd";;
+hol4_overload "state_locals_size" "wordSem_state_locals_size";;
+hol4_overload "state_locals_size_fupd"
+  "wordSem_state_locals_size_fupd";;
 hol4_overload "fp_regs" "wordSem_state_fp_regs";;
 hol4_overload "fp_regs_fupd" "wordSem_state_fp_regs_fupd";;
-hol4_overload "store" "wordSem_state_store";;
-hol4_overload "store_fupd" "wordSem_state_store_fupd";;
+hol4_overload "state_store" "wordSem_state_store";;
+hol4_overload "state_store_fupd" "wordSem_state_store_fupd";;
 hol4_overload "stack" "wordSem_state_stack";;
 hol4_overload "stack_fupd" "wordSem_state_stack_fupd";;
 hol4_overload "stack_limit" "wordSem_state_stack_limit";;
 hol4_overload "stack_limit_fupd" "wordSem_state_stack_limit_fupd";;
-hol4_overload "stack_max" "wordSem_state_stack_max";;
-hol4_overload "stack_max_fupd" "wordSem_state_stack_max_fupd";;
-hol4_overload "memory" "wordSem_state_memory";;
-hol4_overload "memory_fupd" "wordSem_state_memory_fupd";;
-hol4_overload "mdomain" "wordSem_state_mdomain";;
-hol4_overload "mdomain_fupd" "wordSem_state_mdomain_fupd";;
-hol4_overload "sh_mdomain" "wordSem_state_sh_mdomain";;
-hol4_overload "sh_mdomain_fupd" "wordSem_state_sh_mdomain_fupd";;
+hol4_overload "state_stack_max" "wordSem_state_stack_max";;
+hol4_overload "state_stack_max_fupd" "wordSem_state_stack_max_fupd";;
+hol4_overload "state_memory" "wordSem_state_memory";;
+hol4_overload "state_memory_fupd" "wordSem_state_memory_fupd";;
+hol4_overload "state_mdomain" "wordSem_state_mdomain";;
+hol4_overload "state_mdomain_fupd" "wordSem_state_mdomain_fupd";;
+hol4_overload "state_sh_mdomain" "wordSem_state_sh_mdomain";;
+hol4_overload "state_sh_mdomain_fupd" "wordSem_state_sh_mdomain_fupd";;
 hol4_overload "compile" "wordSem_state_compile";;
 hol4_overload "compile_fupd" "wordSem_state_compile_fupd";;
 hol4_overload "compile_oracle" "wordSem_state_compile_oracle";;
 hol4_overload "compile_oracle_fupd"
   "wordSem_state_compile_oracle_fupd";;
-hol4_overload "code_buffer" "wordSem_state_code_buffer";;
-hol4_overload "code_buffer_fupd" "wordSem_state_code_buffer_fupd";;
-hol4_overload "data_buffer" "wordSem_state_data_buffer";;
-hol4_overload "data_buffer_fupd" "wordSem_state_data_buffer_fupd";;
-hol4_overload "gc_fun" "wordSem_state_gc_fun";;
-hol4_overload "gc_fun_fupd" "wordSem_state_gc_fun_fupd";;
-hol4_overload "handler" "wordSem_state_handler";;
-hol4_overload "handler_fupd" "wordSem_state_handler_fupd";;
-hol4_overload "clock" "wordSem_state_clock";;
-hol4_overload "clock_fupd" "wordSem_state_clock_fupd";;
-hol4_overload "code" "wordSem_state_code";;
-hol4_overload "code_fupd" "wordSem_state_code_fupd";;
+hol4_overload "state_code_buffer" "wordSem_state_code_buffer";;
+hol4_overload "state_code_buffer_fupd"
+  "wordSem_state_code_buffer_fupd";;
+hol4_overload "state_data_buffer" "wordSem_state_data_buffer";;
+hol4_overload "state_data_buffer_fupd"
+  "wordSem_state_data_buffer_fupd";;
+hol4_overload "state_gc_fun" "wordSem_state_gc_fun";;
+hol4_overload "state_gc_fun_fupd" "wordSem_state_gc_fun_fupd";;
+hol4_overload "state_handler" "wordSem_state_handler";;
+hol4_overload "state_handler_fupd" "wordSem_state_handler_fupd";;
+hol4_overload "state_clock" "wordSem_state_clock";;
+hol4_overload "state_clock_fupd" "wordSem_state_clock_fupd";;
+hol4_overload "state_code" "wordSem_state_code";;
+hol4_overload "state_code_fupd" "wordSem_state_code_fupd";;
 hol4_overload "be" "wordSem_state_be";;
 hol4_overload "be_fupd" "wordSem_state_be_fupd";;
-hol4_overload "ffi" "wordSem_state_ffi";;
-hol4_overload "ffi_fupd" "wordSem_state_ffi_fupd";;
+hol4_overload "state_ffi" "wordSem_state_ffi";;
+hol4_overload "state_ffi_fupd" "wordSem_state_ffi_fupd";;
 
 let stack_size_frame_def = cake_define
   `stack_size_frame x1 =
@@ -538,29 +541,29 @@ let env_to_list_def = cake_define
        (l,permute))`;;
 
 let push_env_def = cake_define_list
-  [`(\x y. strcat x y) (push_env envs NONE) s =
-        (let l0 = toAList (FST envs) in let
-            (l,permute) = env_to_list (SND envs)
+  [`(\x y. strcat x y) (push_env envs' NONE) s =
+        (let l0 = toAList (FST envs') in let
+            (l,permute) = env_to_list (SND envs')
               (wordSem_state_permute s) in let
-            stack = StackFrame (wordSem_state_locals_size s) l0 l
+            stack' = StackFrame (wordSem_state_locals_size s) l0 l
               NONE :: wordSem_state_stack s in
               wordSem_state_permute_fupd (K permute)
               (wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX
-              (wordSem_state_stack_max s) (stack_size stack)))
-              (wordSem_state_stack_fupd (K stack)
+              (wordSem_state_stack_max s) (stack_size stack')))
+              (wordSem_state_stack_fupd (K stack')
           s)))`;
-   `push_env envs (SOME ((w:num),(h:'a wordLang_prog),l1,l2)) s =
-        (let l0 = toAList (FST envs) in let
-            (l,permute) = env_to_list (SND envs)
+   `push_env envs' (SOME ((w:num),(h:'a wordLang_prog),l1,l2)) s =
+        (let l0 = toAList (FST envs') in let
+            (l,permute) = env_to_list (SND envs')
               (wordSem_state_permute s) in let
             handler = SOME (wordSem_state_handler s,l1,l2) in let
-            stack = StackFrame (wordSem_state_locals_size s) l0 l
+            stack' = StackFrame (wordSem_state_locals_size s) l0 l
               handler :: wordSem_state_stack s in
               wordSem_state_handler_fupd (K (LENGTH (wordSem_state_stack
               s))) (wordSem_state_permute_fupd (K permute)
               (wordSem_state_stack_max_fupd (K (OPTION_MAP2 MAX
-              (wordSem_state_stack_max s) (stack_size stack)))
-              (wordSem_state_stack_fupd (K stack)
+              (wordSem_state_stack_max s) (stack_size stack')))
+              (wordSem_state_stack_fupd (K stack')
           s))))`];;
 
 let pop_env_def = cake_define
@@ -664,10 +667,10 @@ let gc_def = cake_define
            s,wordSem_state_mdomain s,wordSem_state_store s) with NONE ->
            NONE | SOME (wl,m,st) ->
           (match wordSem_dec_stack wl (wordSem_state_stack s) with
-            NONE -> NONE | SOME stack ->
+            NONE -> NONE | SOME stack' ->
                SOME (wordSem_state_memory_fupd (K m)
                  (wordSem_state_store_fupd (K st)
-                 (wordSem_state_stack_fupd (K stack) s)))))`;;
+                 (wordSem_state_stack_fupd (K stack') s)))))`;;
 
 let has_space_def = cake_define
   `(\x y. strcat x y)
@@ -682,10 +685,11 @@ let alloc_def = cake_define
      (alloc (w:'a word) names) s =
        (match cut_envs names (wordSem_state_locals s) with NONE ->
          (SOME (wordSem_Error:'a wordSem_result),flush_state T s) | SOME
-         envs ->
-        (match gc (push_env envs (NONE:(num#'a wordLang_prog#num#num)
-          option) (set_store AllocSize (wordLang_Word w) s)) with NONE
-          -> (SOME wordSem_Error,flush_state T s) | SOME s ->
+         envs' ->
+        (match gc (push_env envs' (NONE:(num#'a
+          wordLang_prog#num#num) option) (set_store AllocSize
+          (wordLang_Word w) s)) with NONE -> (SOME
+          wordSem_Error,flush_state T s) | SOME s ->
           (match pop_env s with NONE -> (SOME
             wordSem_Error,flush_state T s) | SOME s ->
             (match get_store AllocSize s with NONE -> (SOME
@@ -1167,22 +1171,22 @@ let evaluate_def = cake_define_list
                        then (SOME wordSem_Error,s) else
                        (match cut_envs names (wordSem_state_locals
                          s) with NONE -> (SOME wordSem_Error,s) | SOME
-                         envs ->
+                         envs' ->
                             (if wordSem_state_clock s = 0 then
                               (SOME wordSem_TimeOut,
                               flush_state T
                               (wordSem_state_stack_max_fupd (K
                                 (wordSem_state_stack_max (call_env args1
                                 ss
-                              (push_env envs handler s))))
+                              (push_env envs' handler s))))
                                 (wordSem_state_stack_fupd (K []) s)))
                                 else
                               (match wordSem_fix_clock (call_env
-                                args1 ss (push_env envs handler
+                                args1 ss (push_env envs' handler
                                 (dec_clock s)))
                               (wordSem_evaluate (prog,call_env args1
                                 ss
-                              (push_env envs handler (dec_clock
+                              (push_env envs' handler (dec_clock
                                 s)))) with (SOME (wordSem_Result x
                                 ys),s2) ->
                               (if ~(x = Loc l1 l2) \/ ~(LENGTH ys =
@@ -1191,8 +1195,8 @@ let evaluate_def = cake_define_list
                               (match pop_env s2 with NONE -> (SOME
                                 wordSem_Error,s2) | SOME s1 ->
                               (if domain (wordSem_state_locals s1) =
-                                domain (FST envs) UNION domain (SND
-                                envs) then wordSem_evaluate
+                                domain (FST envs') UNION domain (SND
+                                envs') then wordSem_evaluate
                                 (ret_handler,set_vars n ys s1) else
                                 (SOME wordSem_Error,s1)))) | (SOME
                                 (wordSem_Exception x y),s2) ->
@@ -1202,8 +1206,8 @@ let evaluate_def = cake_define_list
                               (if ~(x = Loc l1 l2) then (SOME
                                 wordSem_Error,s2) else
                               (if domain (wordSem_state_locals
-                                s2) = domain (FST envs) UNION domain
-                                (SND envs) then wordSem_evaluate
+                                s2) = domain (FST envs') UNION domain
+                                (SND envs') then wordSem_evaluate
                                 (h,set_var n y s2) else (SOME
                                 wordSem_Error,s2)))) | (NONE,s) ->
                                 (SOME wordSem_Error,s) | (SOME (Break
@@ -1247,8 +1251,8 @@ let semantics_def = cake_define
                    UNIV)))`;;
 
 let word_lang_safe_for_space_def = cake_define
-  `word_lang_safe_for_space (s:('a,'c,'ffi)wordSem_state) start =
-     (let prog = Call NONE (SOME start) [0] NONE in
+  `word_lang_safe_for_space (s:('a,'c,'ffi)wordSem_state) start' =
+     (let prog = Call NONE (SOME start') [0] NONE in
        (!k res t. wordSem_evaluate (prog,wordSem_state_clock_fupd (K
          k) s) = (res,t) ==>
          (?max'. wordSem_state_stack_max t = SOME max' /\ max' <=

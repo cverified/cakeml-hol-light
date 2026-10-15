@@ -218,9 +218,10 @@ class Db:
     """compute the HOL4 -> HOL Light name mapping"""
     multi = {nm for nm, v in self.defs.items()
              if len({t for t, _ in v}) > 1}
-    # the name of a record field that several record types have is
-    # an overloaded name, so a constant of that name is renamed
-    multi |= self.ambiguous_fields()
+    # the name that the port overloads the accessors of a record
+    # field with is an overloaded name, so a constant of that name
+    # is renamed
+    multi |= set(self.ambiguous_fields().values())
     self.rename = {}          # (thy,name) -> new name
     # which datatypes have to be renamed as a whole
     bad_types = set()
@@ -404,16 +405,25 @@ class Db:
     return out
 
   def ambiguous_fields(self):
-    """the names of the record fields that more than one record
-       type of the port has: HOL4 resolves such a name by the type
-       of the record, so the port declares the accessors of those
-       fields as overloads of the name"""
+    """the record fields that more than one record type of the port
+       has, and the name that the port overloads their accessors
+       with.  HOL4 resolves such a field by the type of the record,
+       so HOL Light has to resolve it the same way.  Where the
+       record types all have the same name in HOL4 (the state of
+       every intermediate language) the overload is the name that
+       HOL4 gives the accessor (state_clock); otherwise it is the
+       name of the field itself"""
     if self._ambflds is not None: return self._ambflds
     out = collections.defaultdict(set)
     for (t, ty), flds in self.recs.items():
       for f in flds:
         out[f].add((t, ty))
-    self._ambflds = {f for f, tys in out.items() if len(tys) > 1}
+    self._ambflds = {}
+    for f, tys in out.items():
+      if len(tys) < 2 or f in overrides.FIELD_DEFAULT: continue
+      names = set(ty for _, ty in tys)
+      self._ambflds[f] = (names.pop() + '_' + f if len(names) == 1
+                          else f)
     return self._ambflds
 
   def fields_for(self, thy):
@@ -426,7 +436,8 @@ class Db:
       for f in flds:
         amb[f].append(name)
     for f, tys in amb.items():
-      out[f] = tys[0] if len(set(tys)) == 1 else None
+      out[f] = (tys[0] if len(set(tys)) == 1
+                else overrides.FIELD_DEFAULT.get(f))
     return out, {f: tys for f, tys in amb.items() if len(set(tys)) > 1}
 
   def cons_for(self, thy):

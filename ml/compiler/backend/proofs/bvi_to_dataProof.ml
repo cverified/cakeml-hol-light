@@ -67,16 +67,16 @@ let data_to_bvi_ref_def = cake_define_list
 let state_rel_def = cake_define
   `bvi_to_dataProof_state_rel (s:('c,'ffi)bviSem_state)
   (t:('c,'ffi)dataSem_state) <=>
-     (clock s = clock t) /\
-     bvi_to_dataProof_code_rel (code s) (code t) /\
+     (state_clock s = state_clock t) /\
+     bvi_to_dataProof_code_rel (state_code s) (state_code t) /\
      (compile_oracle t = ((I ## bvi_to_data_compile_prog) o
        compile_oracle s)) /\
      (compile s = (\cfg prog. compile t cfg (bvi_to_data_compile_prog
        prog))) /\
-     (!n. FLOOKUP (refs s) n = lookup n (map data_to_bvi_ref (refs
-       t))) /\
-     (ffi s = ffi t) /\
-     (global s = global t)`;;
+     (!n. FLOOKUP (state_refs s) n = lookup n (map data_to_bvi_ref
+       (state_refs t))) /\
+     (state_ffi s = state_ffi t) /\
+     (state_global s = state_global t)`;;
 hol4_overload "state_rel" "bvi_to_dataProof_state_rel";;
 
 (* semantics lemmas *)

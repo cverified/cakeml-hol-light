@@ -237,41 +237,42 @@ let state_rel_thm = cake_define
   `(\x y. strcat x y)
      (word_bignumProof_state_rel c l1 l2) (s
        (t:('a,'c,'ffi)wordSem_state) v1 locs) <=>
-       (ffi t = ffi s) /\
-       (clock t = clock s) /\
-       (handler t = handler s) /\
+       (state_ffi t = state_ffi s) /\
+       (state_clock t = state_clock s) /\
+       (state_handler t = state_handler s) /\
        (wordSem_state_gc_fun t = word_gc_fun c) /\
-       code_rel c (code s) (code t) /\
+       code_rel c (state_code s) (state_code t) /\
        code_oracle_rel c (compile s) (compile_oracle s)
          (wordSem_state_store t) (compile
-         t) (compile_oracle t) (code_buffer t)
+         t) (compile_oracle t) (state_code_buffer t)
            (wordSem_state_data_buffer t) /\
        good_dimindex (:'a) /\
        shift_length c < dimindex (:'a) /\
        IS_SOME (dataSem_state_tstamps s) /\
        EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
-       (v1 = NONE ==> sptree_lookup 0 (locals t) = SOME (Loc l1 l2))
-         /\
-       (!n. IS_SOME (sptree_lookup n (locals s)) ==>
-            IS_SOME (sptree_lookup (adjust_var n) (locals t))) /\
+       (v1 = NONE ==> sptree_lookup 0 (state_locals t) = SOME (Loc l1
+         l2)) /\
+       (!n. IS_SOME (sptree_lookup n (state_locals s)) ==>
+            IS_SOME (sptree_lookup (adjust_var n) (state_locals t)))
+              /\
        EVERY2 data_to_word_gcProof_stack_rel (stack s) (stack t) /\
        EVERY2 contains_loc (stack t) locs /\
-       option_le (OPTION_MAP2 (+) (stack_size (stack t)) (locals_size
-         t)) (stack_max t) /\
-       option_le (stack_max t) (stack_max s) /\
+       option_le (OPTION_MAP2 (+) (stack_size (stack t))
+         (state_locals_size t)) (state_stack_max t) /\
+       option_le (state_stack_max t) (state_stack_max s) /\
          wordSem_state_stack_size
-       t = dataSem_state_stack_frame_sizes s /\ locals_size
-       t = locals_size s /\
+       t = dataSem_state_stack_frame_sizes s /\ state_locals_size
+       t = state_locals_size s /\
        limits_inv (dataSem_state_limits s) (FLOOKUP
          (wordSem_state_store t) HeapLength) (stack_limit t)
          (data_to_word_config_len_size c) (has_fp_ops c)
          (data_to_word_config_has_fp_tern c) /\
-       memory_rel c (be t) (THE (dataSem_state_tstamps s)) (refs s)
-         (dataSem_state_space s) (wordSem_state_store t)
+       memory_rel c (be t) (THE (dataSem_state_tstamps s))
+         (state_refs s) (dataSem_state_space s) (wordSem_state_store t)
          (wordSem_state_memory t) (wordSem_state_mdomain t)
          ((match v1 with NONE -> [] | SOME vs -> vs) ++
-          join_env (locals s) (toAList (inter (locals t) (adjust_set
-            (locals s)))) ++
+          join_env (state_locals s) (toAList (inter (state_locals t)
+            (adjust_set (state_locals s)))) ++
           [(the_global (dataSem_state_global s),FAPPLY
             (wordSem_state_store t) Globals)] ++
           flat (stack s) (stack t))`;;
@@ -285,8 +286,8 @@ let state_rel_thm = cake_define
 let init_store_ok_def = cake_define
   `init_store_ok c store m (dm:'a word->bool) code_buffer' data_buffer'
   <=>
-     (?limit curr.
-       limit <= max_heap_limit (:'a) c /\
+     (?limit' curr.
+       limit' <= max_heap_limit (:'a) c /\
        FLOOKUP store Globals = SOME (Word (n2w 0)) /\
        FLOOKUP store GlobReal = SOME (Word curr) /\
        FLOOKUP store GenStart = SOME (Word (n2w 0)) /\
@@ -294,13 +295,13 @@ let init_store_ok_def = cake_define
        FLOOKUP store OtherHeap = FLOOKUP store EndOfHeap /\
        FLOOKUP store NextFree = SOME (Word curr) /\
        FLOOKUP store EndOfHeap =
-         SOME (Word (curr + bytes_in_word * n2w limit)) /\
+         SOME (Word (curr + bytes_in_word * n2w limit')) /\
        FLOOKUP store TriggerGC =
          SOME (Word (match data_to_word_config_gc_kind c with
            data_to_word_Generational _21 -> curr | _22 -> curr +
-           bytes_in_word * n2w limit)) /\
+           bytes_in_word * n2w limit')) /\
        FLOOKUP store HeapLength =
-         SOME (Word (bytes_in_word * n2w limit)) /\
+         SOME (Word (bytes_in_word * n2w limit')) /\
        FLOOKUP store CodeBuffer = SOME (Word (buffer_position
          code_buffer')) /\
        FLOOKUP store CodeBufferEnd =
@@ -314,7 +315,7 @@ let init_store_ok_def = cake_define
                   data_buffer'))) /\ buffer_buffer
        code_buffer' = [] /\ buffer_buffer
        data_buffer' = [] /\
-       (word_list_exists curr (limit + limit)) (fun2set (m,dm)) /\
+       (word_list_exists curr (limit' + limit')) (fun2set (m,dm)) /\
        byte_aligned curr)`;;
 
 (* -------------------------------------------------------
@@ -330,7 +331,7 @@ val s1 = mk_var("s1",type_of s);
 
 let inc_clock_def = cake_define
   `data_to_word_gcProof_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
-  clock_fupd (K (clock t + n)) t`;;
+  state_clock_fupd (K (state_clock t + n)) t`;;
 hol4_overload "inc_clock" "data_to_word_gcProof_inc_clock";;
 
 (* HOL4 ML code, not ported:
@@ -385,8 +386,9 @@ let traverse_heap = cake_inductive
 
 let cut_locals_def = cake_define
   `cut_locals names (s:('a,'b)dataSem_state) =
-     (match dataSem_cut_env names (locals s) with SOME env ->
-       locals_fupd (K env) s | NONE -> locals_fupd (K LN) s)`;;
+     (match dataSem_cut_env names (state_locals s) with SOME env
+       -> state_locals_fupd (K env) s | NONE -> state_locals_fupd (K
+       LN) s)`;;
 
 (* HOL4 ML code, not ported:
 val do_app = LIST_CONJ [dataSemTheory.do_app_def,do_space_def,

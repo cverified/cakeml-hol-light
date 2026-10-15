@@ -62,7 +62,7 @@ let backend_config_ok_def = cake_define
   `backend_config_ok (asm_conf:'a asm_config) (c:compiler_config) <=>
   backend_config_source_conf
      c = prim_src_config /\
-     0 < max_app (backend_config_clos_conf c) /\
+     0 < closSem_state_max_app (backend_config_clos_conf c) /\
        bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
      c) = bvl_num_stubs + 2 /\
      LENGTH (asm_config_avoid_regs asm_conf) + 13 <=
@@ -431,7 +431,7 @@ let backend_from_flat_tuple_cc_def = cake_define
   `backend_from_flat_tuple_cc asm_conf (c:compiler_config) =
      pure_cc inc_compile_decs
        (compile_common_inc (backend_config_clos_conf c)
-          (pure_cc (clos_to_bvl_compile_inc (max_app
+          (pure_cc (clos_to_bvl_compile_inc (closSem_state_max_app
             (backend_config_clos_conf c)))
             (full_cc (backend_config_bvl_conf c) (pure_cc
               bvi_to_data_compile_prog

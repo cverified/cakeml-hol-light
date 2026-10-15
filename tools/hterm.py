@@ -853,7 +853,7 @@ class Ctx:
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
-    self.ambfields = ambfields or set()  # fields of several types
+    self.ambfields = ambfields or {}  # field -> overloaded name
     self.reclit = None           # the record type of a literal
     self.overloads = overloads or {}   # name -> hol light term text
     self.accessors = accessors or {}   # field name -> accessor name
@@ -897,7 +897,8 @@ class Ctx:
     # the name of a field that several record types have is an
     # overload of their accessors, which HOL Light resolves by the
     # type of the record, as HOL4 does
-    if f in self.ambfields and f not in self.fields: return f
+    if f in self.ambfields and f not in self.fields:
+      return self.ambfields[f]
     if f in self.fields: return self.fields[f] + '_' + f
     self.warn.append(f'unknown record field {f}')
     return '?_' + f

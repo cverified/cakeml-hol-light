@@ -231,11 +231,11 @@ let isSubstring_def = cake_define
 
 (* String orderings *)
 let compare_aux_def = cake_define
-  `compare_aux (s1:mlstring) s2 ord start len =
+  `compare_aux (s1:mlstring) s2 ord start' len =
      (if len = 0 then
-       ord else if strsub s2 start < strsub s1 start then GREATER
-         else if strsub s1 start < strsub s2 start then LESS else
-         compare_aux s1 s2 ord (start + 1) (len - 1))`;;
+       ord else if strsub s2 start' < strsub s1 start' then
+         GREATER else if strsub s1 start' < strsub s2 start' then
+         LESS else compare_aux s1 s2 ord (start' + 1) (len - 1))`;;
 
 let compare_def = cake_define
   `mlstring_compare s1 s2 = (if (strlen s1) < (strlen s2) then

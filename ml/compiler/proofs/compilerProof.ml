@@ -48,7 +48,7 @@ let initial_condition_def = cake_define
   `initial_condition (st:'ffi semantics_state) (cc:'ga compiler_config)
   mc <=>
      (semantics_state_sem_st st,semantics_state_sem_env st) = THE
-       (prim_sem_env (ffi (semantics_state_sem_st st))) /\
+       (prim_sem_env (state_ffi (semantics_state_sem_st st))) /\
      (?ctMap.
        type_sound_invariant (semantics_state_sem_st st)
          (semantics_state_sem_env st) ctMap FEMPTY {}

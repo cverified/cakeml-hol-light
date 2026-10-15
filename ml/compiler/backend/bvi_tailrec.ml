@@ -517,32 +517,32 @@ let mk_aux_call_def = cake_define
      Call 0 (SOME loc) (id' :: GENLIST (\i. Var i) arity) NONE`;;
 
 let compile_exp_def = cake_define
-  `bvi_tailrec_compile_exp loc next arity exp =
+  `bvi_tailrec_compile_exp loc next' arity exp =
      (match check_exp loc arity exp with
        NONE -> NONE | SOME op ->
        (let context = REPLICATE arity bvi_tailrec_Any in
-       let (r,opt) = rewrite loc next op arity context exp in
+       let (r,opt) = rewrite loc next' op arity context exp in
        let aux = let_wrap arity (id_from_op op) opt in
          SOME (aux,opt)))`;;
 hol4_overload "compile_exp" "bvi_tailrec_compile_exp";;
 
 let compile_each_def = cake_define_list
-  [`bvi_tailrec_compile_each next [] = (next,[])`;
-   `bvi_tailrec_compile_each next ((loc,arity,exp) :: xs) =
-        (match bvi_tailrec_compile_exp loc next arity exp with NONE
+  [`bvi_tailrec_compile_each next' [] = (next',[])`;
+   `bvi_tailrec_compile_each next' ((loc,arity,exp) :: xs) =
+        (match bvi_tailrec_compile_exp loc next' arity exp with NONE
           ->
-            (let (n,ys) = bvi_tailrec_compile_each next xs in
+            (let (n,ys) = bvi_tailrec_compile_each next' xs in
               (n,(loc,arity,exp) :: ys)) | SOME (exp_aux,exp_opt) ->
-            (let (n,ys) = bvi_tailrec_compile_each (next +
+            (let (n,ys) = bvi_tailrec_compile_each (next' +
               bvl_to_bvi_namespaces) xs in
-            (n,(loc,arity,exp_aux) :: (next,arity + 1,exp_opt) ::
-              ys)))`];;
+            (n,(loc,arity,exp_aux) :: (next',arity + 1,exp_opt)
+              :: ys)))`];;
 hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
 let compile_prog_def = cake_define
-  `bvi_tailrec_compile_prog do_it next xs =
-     (if do_it then bvi_tailrec_compile_each next xs else
-       (next,xs))`;;
+  `bvi_tailrec_compile_prog do_it next' xs =
+     (if do_it then bvi_tailrec_compile_each next' xs else
+       (next',xs))`;;
 hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
 
 (* --- Test rewriting --- *)

@@ -74,8 +74,8 @@ let mpop_namedscope_def = cake_define
   `(mpop_namedscope (s:mlstring):PCstate0 list->(1#PCstate0 list)
   option) = (\pcs.
      match pcs with
-       [] -> NONE | [_2] -> NONE | curr :: next :: rest -> SOME
-         (one,next :: rest))`;;
+       [] -> NONE | [_2] -> NONE | curr :: next' :: rest -> SOME
+         (one,next' :: rest))`;;
 (* needs to be adjusted so that constructors (only) declared in the
    current
    scope get recorded in the next level up with the given name as a

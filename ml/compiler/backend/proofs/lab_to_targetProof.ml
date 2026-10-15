@@ -7,7 +7,6 @@
   Correctness proof for lab_to_target
 *)
 
-needs "compiler/backend/export.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/proofs/lab_filterProof.ml";;
@@ -151,9 +150,9 @@ val has_io_name_ind = theorem"has_io_name_ind"
 *)
 
 let word_loc_val_byte_def = cake_define
-  `word_loc_val_byte p labs m a be =
+  `word_loc_val_byte p labs m a be' =
      (match word_loc_val p labs (m (byte_align a)) with SOME w ->
-       SOME (get_byte a w be) | NONE -> NONE)`;;
+       SOME (get_byte a w be') | NONE -> NONE)`;;
 
 let line_ok_def = cake_define
   `line_ok c labs ffis pos x5 =
@@ -252,26 +251,26 @@ let num_pcs_def = cake_define_list
 let share_mem_domain_code_rel_def = cake_define
   `share_mem_domain_code_rel mc_conf p code2 (s1_shared_mem_domain:'a
   word->bool) <=>
-     (!pc op re a inst' len i.
-         (asm_fetch_aux pc code2 = SOME (labLang_Asm (ShareMem op re
+     (!pc' op re a inst' len i.
+         (asm_fetch_aux pc' code2 = SOME (labLang_Asm (ShareMem op re
            a) inst' len) /\
          mmio_pcs_min_index (ffi_names mc_conf) = SOME i) ==>
          (?index.
            i <= index /\
-           find_index (p + n2w (pos_val pc 0 code2))
+           find_index (p + n2w (pos_val pc' 0 code2))
              (machine_config_ffi_entry_pcs mc_conf) 0 =
              SOME index /\
            (let (name,nb) = get_memop_info op in
              EL index (ffi_names mc_conf) = SharedMem name /\
              (
               ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
-                (nb,a,re,p + n2w (pos_val pc 0 code2 + len)))))) /\
-     (!pc line.
-       asm_fetch_aux pc code2 = SOME line /\
+                (nb,a,re,p + n2w (pos_val pc' 0 code2 + len)))))) /\
+     (!pc' line.
+       asm_fetch_aux pc' code2 = SOME line /\
        (!op re a inst' len. ~(line = labLang_Asm (ShareMem op re a)
          inst' len)) ==>
        DISJOINT (set_of_list (machine_config_ffi_entry_pcs mc_conf))
-         {p + n2w a + n2w (pos_val pc 0 code2) |
+         {p + n2w a + n2w (pos_val pc' 0 code2) |
            a < LENGTH (line_bytes line)}) /\
       (!a.
          byte_align a IN s1_shared_mem_domain ==>
@@ -285,7 +284,7 @@ let share_mem_state_rel_def = cake_define
       (!ms2 k index new_bytes t1 nb ad offs re pc' ad' st new_st i.
        mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
        i <= index /\ index < LENGTH (ffi_names mc_conf) /\ RTC
-       call_FFI_rel (ffi s1) st /\
+       call_FFI_rel (state_ffi s1) st /\
        ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
          (nb,Addr ad offs,re,pc') /\
        (machine_config_prog_addresses mc_conf = mem_domain t1) /\
@@ -342,9 +341,9 @@ let share_mem_state_rel_def = cake_define
          mc_conf))))`;;
 
 let no_install_or_no_share_mem_def = cake_define
-  `no_install_or_no_share_mem code ffi_names <=>
+  `no_install_or_no_share_mem code ffi_names' <=>
     (no_share_mem_inst code /\
-     EVERY (\x. ?s. x = ExtCall s) ffi_names) \/
+     EVERY (\x. ?s. x = ExtCall s) ffi_names') \/
      no_install code`;;
 
 (* The lab-level oracles record the register residues that the machine
@@ -358,13 +357,13 @@ let no_install_or_no_share_mem_def = cake_define
 let oracle_tie_def = cake_define
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
   (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
-     s1 = target_io_regs mc_conf (ffi s1) ms /\
+     s1 = target_io_regs mc_conf (state_ffi s1) ms /\
        labSem_state_io_fp_regs
-     s1 = target_io_fp_regs mc_conf (ffi s1) ms /\
+     s1 = target_io_fp_regs mc_conf (state_ffi s1) ms /\
        labSem_state_cc_regs
-     s1 = target_cc_regs mc_conf (ffi s1) ms /\
+     s1 = target_cc_regs mc_conf (state_ffi s1) ms /\
        labSem_state_cc_fp_regs
-     s1 = target_cc_fp_regs mc_conf (ffi s1) ms`;;
+     s1 = target_cc_fp_regs mc_conf (state_ffi s1) ms`;;
 
 (* The code buffer is set-up to immediately follow the current code:
   |---code---|---cb---|
@@ -399,7 +398,7 @@ let state_rel_def = cake_define
         index < i /\
         read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
           RTC
-        call_FFI_rel (ffi s1) st /\
+        call_FFI_rel (state_ffi s1) st /\
         call_FFI st (EL index (ffi_names mc_conf)) bytes bytes2 =
           FFI_return new_st new_bytes /\
         (machine_config_prog_addresses mc_conf = mem_domain t1) /\
@@ -464,8 +463,8 @@ let state_rel_def = cake_define
         (lab_lookup l1 l2 labs = SOME x) ==> EVEN x) /\
      (((n2w 1) && p) = (n2w 0)) /\
      (list_subset
-       (FILTER (\x. ?s. x = ExtCall s) (find_ffi_names (code s1)))
-         (ffi_names
+       (FILTER (\x. ?s. x = ExtCall s) (find_ffi_names (state_code
+         s1))) (ffi_names
        mc_conf)) /\
      EVEN (LENGTH (prog_to_bytes code2)) /\
      (!name i.
@@ -488,7 +487,7 @@ let state_rel_def = cake_define
      interference_ok (machine_config_next_interfer mc_conf)
        (target_proj (machine_config_target mc_conf) (mem_domain t1)) /\
      (!l1 l2 x2.
-        (loc_to_pc l1 l2 (code s1) = SOME x2) ==>
+        (loc_to_pc l1 l2 (state_code s1) = SOME x2) ==>
         (lab_lookup l1 l2 labs = SOME (pos_val x2 0 code2))) /\
      (!r. fp_regs s1 r = fp_regs t1 r) /\
      (!r. word_loc_val p labs (regs s1 r) = SOME (regs t1 r)) /\
@@ -497,25 +496,25 @@ let state_rel_def = cake_define
           (word_loc_val_byte p labs (mem s1) a (be s1) = SOME (mem t1
             a))) /\
      (!n.
-       n < buffer_space_left (code_buffer s1) ==>
-       (let addr' = buffer_position (code_buffer s1) + n2w (LENGTH
-         (buffer_buffer (code_buffer s1)) + n) in
+       n < buffer_space_left (state_code_buffer s1) ==>
+       (let addr' = buffer_position (state_code_buffer s1) + n2w
+         (LENGTH (buffer_buffer (state_code_buffer s1)) + n) in
        addr' IN mem_domain t1 /\ ~(
        addr' IN mem_domain s1))) /\
      bytes_in_mem p (prog_to_bytes code2) (mem
        t1) (mem_domain t1) (mem_domain s1) /\ buffer_position
-         (code_buffer
+         (state_code_buffer
      s1) = p + n2w (LENGTH (prog_to_bytes code2)) /\
-     bytes_in_mem (buffer_position (code_buffer s1)) (buffer_buffer
-       (code_buffer s1)) (mem
+     bytes_in_mem (buffer_position (state_code_buffer s1))
+       (buffer_buffer (state_code_buffer s1)) (mem
        t1) (mem_domain t1) (mem_domain s1) /\
      LENGTH (prog_to_bytes code2) + LENGTH (buffer_buffer
-       (code_buffer s1)) + buffer_space_left (code_buffer s1) < dimword
-       (:'a) /\
+       (state_code_buffer s1)) + buffer_space_left (state_code_buffer
+       s1) < dimword (:'a) /\
      (!bn.
-       bn < LENGTH (buffer_buffer (code_buffer s1)) +
-         buffer_space_left (code_buffer s1) ==>
-       ~MEM (buffer_position (code_buffer s1) + n2w bn)
+       bn < LENGTH (buffer_buffer (state_code_buffer s1)) +
+         buffer_space_left (state_code_buffer s1) ==>
+       ~MEM (buffer_position (state_code_buffer s1) + n2w bn)
          (machine_config_ffi_entry_pcs mc_conf)) /\
      ~failed s1 /\ ~failed t1 /\ (be s1 = be t1) /\
      (pc t1 = p + n2w (pos_val (pc s1) 0 code2)) /\
@@ -531,7 +530,7 @@ let state_rel_def = cake_define
        (TAKE (THE (mmio_pcs_min_index (ffi_names mc_conf)))
          (ffi_names mc_conf)) 0 code2 /\
      EVERY sec_labels_ok code2 /\
-     code_similar (code s1) code2 /\
+     code_similar (state_code s1) code2 /\
      share_mem_state_rel mc_conf s1 t1 ms1 /\
      share_mem_domain_code_rel mc_conf p code2
        (labSem_state_shared_mem_domain s1) /\
@@ -3380,16 +3379,16 @@ val () = PolyML.SaveState.loadState "lab_to_target_syntactic";
 (* introducing make_init *)
 
 let set_bytes_def = cake_define_list
-  [`set_bytes a be [] = (n2w 0)`;
-   `set_bytes a be (b :: bs) = set_byte a b (set_bytes (a + (n2w 1))
-  be bs) be`];;
+  [`set_bytes a be' [] = (n2w 0)`;
+   `set_bytes a be' (b :: bs) = set_byte a b (set_bytes (a + (n2w 1))
+  be' bs) be'`];;
 
 let make_word_def = cake_define
-  `make_word be m (a:'a word) =
+  `make_word be' m (a:'a word) =
      (if dimindex (:'a) = 32 then
-       wordLang_Word (set_bytes a be [m a; m (a + (n2w 1)); m (a +
+       wordLang_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a +
          (n2w 2)); m (a + (n2w 3))]) else
-       wordLang_Word (set_bytes a be [m a; m (a + (n2w 1)); m (a +
+       wordLang_Word (set_bytes a be' [m a; m (a + (n2w 1)); m (a +
          (n2w 2)); m (a + (n2w 3));
                              m (a + (n2w 4)); m (a + (n2w 5)); m
                                (a + (n2w 6)); m (a + (n2w 7))]))`;;

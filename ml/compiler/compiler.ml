@@ -634,19 +634,19 @@ let parse_data_conf_def = cake_define
 
 (* stack *)
 let parse_stack_conf_def = cake_define
-  `parse_stack_conf ls stack =
+  `parse_stack_conf ls stack' =
    (let jump = find_bool (implode "--jump=") ls
-     (stack_to_lab_config_jump stack) in
+     (stack_to_lab_config_jump stack') in
    let perf = find_bool (implode "--perf_callgraph=") ls
-     (stack_to_lab_config_perf_calls stack) in
+     (stack_to_lab_config_perf_calls stack') in
    match (jump,perf) with
      (INL j,INL p) -> INL (stack_to_lab_config_perf_calls_fupd (K
-       p) (stack_to_lab_config_jump_fupd (K j) stack)) | (INR s,_17)
+       p) (stack_to_lab_config_jump_fupd (K j) stack')) | (INR s,_17)
        -> INR s | (_18,INR s) -> INR s)`;;
 
 (* tap *)
 let parse_tap_conf_def = cake_define
-  `parse_tap_conf ls stack =
+  `parse_tap_conf ls stack' =
      INL (mk_tap_config (MEMBER (implode "--explore") ls))`;;
 
 (* lab *)
@@ -665,15 +665,16 @@ let extend_conf_def = cake_define
    let wtw = parse_wtw_conf ls (backend_config_word_to_word_conf
      conf) in
    let data = parse_data_conf ls (backend_config_data_conf conf) in
-   let stack = parse_stack_conf ls (backend_config_stack_conf conf)
+   let stack' = parse_stack_conf ls (backend_config_stack_conf conf)
      in
    let tap = parse_tap_conf ls (backend_config_tap_conf conf) in
    let lab = parse_lab_conf ls (backend_config_lab_conf conf) in
-   match (clos,bvl,wtw,data,stack,tap,lab) with
-     (INL clos,INL bvl,INL wtw,INL data,INL stack,INL tap,INL lab) ->
+   match (clos,bvl,wtw,data,stack',tap,lab) with
+     (INL clos,INL bvl,INL wtw,INL data,INL stack',INL tap,INL lab)
+       ->
        INL (backend_config_lab_conf_fupd (K lab)
          (backend_config_tap_conf_fupd (K tap)
-         (backend_config_stack_conf_fupd (K stack)
+         (backend_config_stack_conf_fupd (K stack')
          (backend_config_data_conf_fupd (K data)
          (backend_config_word_to_word_conf_fupd (K wtw)
          (backend_config_bvl_conf_fupd (K bvl)
@@ -682,7 +683,7 @@ let extend_conf_def = cake_define
                 get_err_str bvl;
                 get_err_str wtw;
                 get_err_str data;
-                get_err_str stack;
+                get_err_str stack';
                 get_err_str tap;
                 get_err_str lab]))`;;
 

@@ -8,9 +8,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/export.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
-needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
@@ -30,9 +28,7 @@ needs "semantics/ast.ml";;
    word_add_carry_def *) *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/export.ml";;
 needs "compiler/backend/proofs/lab_to_targetProof.ml";;
-needs "compiler/backend/proofs/stack_removeProof.ml";;
 needs "compiler/backend/reg_alloc/parmove.ml";;
 needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
@@ -165,10 +161,10 @@ let adjust_names_def = cake_define
 (*handler_val counts the total number of words in the list of frames*)
 let handler_val_def = cake_define_list
   [`handler_val [] = 1`;
-   `handler_val ((NONE,_6,frame) :: stack) =
-        1 + LENGTH frame + handler_val stack`;
-   `handler_val ((SOME _7,_8,frame) :: stack) =
-        4 + LENGTH frame + handler_val stack`];;
+   `handler_val ((NONE,_6,frame) :: stack') =
+        1 + LENGTH frame + handler_val stack'`;
+   `handler_val ((SOME _7,_8,frame) :: stack') =
+        4 + LENGTH frame + handler_val stack'`];;
 
 let is_handler_frame_def = cake_define
   `is_handler_frame x1 =
@@ -220,16 +216,16 @@ let stack_rel_def = cake_define
   `word_to_stackProof_stack_rel k s_handler s_stack t_handler
   t_rest_of_stack t_stack_length t_bitmaps lens <=>
      EVERY sorted_env s_stack /\
-     (?stack.
-       abs_stack t_bitmaps s_stack t_rest_of_stack lens = SOME stack
+     (?stack'.
+       abs_stack t_bitmaps s_stack t_rest_of_stack lens = SOME stack'
          /\
        (
        s_handler < LENGTH s_stack /\
        is_handler_frame (EL (LENGTH s_stack - (s_handler + 1))
          s_stack) ==>
        t_handler = SOME (wordLang_Word (n2w (t_stack_length -
-         handler_val (LASTN (s_handler + 1) stack))))) /\
-       stack_rel_aux k t_stack_length s_stack stack)`;;
+         handler_val (LASTN (s_handler + 1) stack'))))) /\
+       stack_rel_aux k t_stack_length s_stack stack')`;;
 hol4_overload "stack_rel" "word_to_stackProof_stack_rel";;
 
 (*f is the size of the current frame + 1 most of the time
@@ -257,19 +253,20 @@ let state_rel_def = cake_define
   `word_to_stackProof_state_rel ac k f f'
   (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state) lens
   extra <=>
-     (clock s = clock t) /\ (gc_fun s = gc_fun t) /\
-       (wordSem_state_permute s = K I) /\
-     (ffi t = ffi s) /\ stackSem_state_use_stack t /\
+     (state_clock s = state_clock t) /\ (state_gc_fun s =
+       state_gc_fun t) /\ (wordSem_state_permute s = K I) /\
+     (state_ffi t = state_ffi s) /\ stackSem_state_use_stack t /\
        stackSem_state_use_store t /\ stackSem_state_use_alloc t /\
-     (memory t = memory s) /\ (mdomain t = mdomain s) /\ 4 < k /\
-     (sh_mdomain t = sh_mdomain s) /\
-     (store s = store t \\ Handler) /\ gc_fun_ok (gc_fun t) /\
-       wordSem_state_termdep s = 0 /\ be
-     t = be s /\ ffi t = ffi s /\ Handler IN FDOM (store t) /\
-       fp_regs
-     t = fp_regs s /\ data_buffer
-     t = data_buffer s /\ code_buffer
-     t = code_buffer s /\ compile
+     (state_memory t = state_memory s) /\ (state_mdomain t =
+       state_mdomain s) /\ 4 < k /\
+     (state_sh_mdomain t = state_sh_mdomain s) /\
+     (state_store s = state_store t \\ Handler) /\ gc_fun_ok
+       (state_gc_fun t) /\ wordSem_state_termdep s = 0 /\ be
+     t = be s /\ state_ffi t = state_ffi s /\ Handler IN FDOM
+       (state_store t) /\ fp_regs
+     t = fp_regs s /\ state_data_buffer
+     t = state_data_buffer s /\ state_code_buffer
+     t = state_code_buffer s /\ compile
      s = (\(bm0,cfg) progs.
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
          (misc_Nil,bm0) in
@@ -287,11 +284,12 @@ let state_rel_def = cake_define
          EVERY ((<>) raise_stub_location o FST) progs /\
          EVERY ((<>) store_consts_stub_location o FST) progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
-     domain (code t) = raise_stub_location INSERT
-                       store_consts_stub_location INSERT domain (code
-                         s) /\
+     domain (state_code t) = raise_stub_location INSERT
+                       store_consts_stub_location INSERT domain
+                         (state_code s) /\
      (!n word_prog arg_count.
-        (sptree_lookup n (code s) = SOME (arg_count,word_prog)) ==>
+        (sptree_lookup n (state_code s) = SOME (arg_count,word_prog))
+          ==>
         post_alloc_conventions k word_prog /\
         flat_exp_conventions word_prog /\
         (?bs i bs2 i2 f stack_prog.
@@ -301,17 +299,17 @@ let state_rel_def = cake_define
             (stackSem_state_bitmaps t) /\
           isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
             (stackSem_state_bitmaps t)) /\
-          (sptree_lookup n (code t) = SOME stack_prog) /\
+          (sptree_lookup n (state_code t) = SOME stack_prog) /\
           the f (sptree_lookup n (wordSem_state_stack_size s)) = f))
             /\
-     (sptree_lookup raise_stub_location (code t) = SOME (raise_stub F
-       k)) /\
-     (sptree_lookup store_consts_stub_location (code t) = SOME
+     (sptree_lookup raise_stub_location (state_code t) = SOME
+       (raise_stub F k)) /\
+     (sptree_lookup store_consts_stub_location (state_code t) = SOME
        (store_consts_stub k)) /\
      good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-       (data_buffer s)) + buffer_space_left (data_buffer s) + 1 <
-       dimword (:'ga) /\
+       (state_data_buffer s)) + buffer_space_left (state_data_buffer s)
+       + 1 < dimword (:'ga) /\
      1 <= LENGTH (stackSem_state_bitmaps t) /\ HD
        (stackSem_state_bitmaps t) = (n2w 4) /\
        stackSem_state_stack_space
@@ -322,12 +320,12 @@ let state_rel_def = cake_define
        (wordSem_state_stack_limit s) (wordSem_state_stack_max s) (stack
        s) (stack
        t) (stackSem_state_stack_space t) (extra:num) /\
-     (let stack = DROP (stackSem_state_stack_space t + extra) (stack
+     (let stack' = DROP (stackSem_state_stack_space t + extra) (stack
        t) in
-     let current_frame = TAKE f stack in
-     let rest_of_stack = DROP f stack in
+     let current_frame = TAKE f stack' in
+     let rest_of_stack = DROP f stack' in
        word_to_stackProof_stack_rel k (wordSem_state_handler s)
-         (stack s) (FLOOKUP (store t) Handler)
+         (stack s) (FLOOKUP (state_store t) Handler)
          rest_of_stack (LENGTH (stack t)) (stackSem_state_bitmaps t)
            lens /\
        (!n v.
@@ -4683,7 +4681,7 @@ let init_state_ok_def = cake_define
        4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
          stackSem_state_use_stack
        t /\ stackSem_state_use_store t /\ stackSem_state_use_alloc t
-         /\ gc_fun_ok (gc_fun t) /\ stackSem_state_stack_space
+         /\ gc_fun_ok (state_gc_fun t) /\ stackSem_state_stack_space
        t <= LENGTH (stack t) /\
        FLOOKUP (stackSem_state_regs t) 0 = SOME (Loc 1 0) /\
        LENGTH (stackSem_state_bitmaps t) + 1 < dimword (:'a) /\
@@ -4691,9 +4689,9 @@ let init_state_ok_def = cake_define
        LENGTH (stack t) < dimword (:'a) /\
        DROP (stackSem_state_stack_space t) (stack t) = [wordLang_Word
          (n2w 0)] /\
-       Handler IN FDOM (store t) /\
+       Handler IN FDOM (state_store t) /\
        LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-         (data_buffer t)) + buffer_space_left (data_buffer
+         (state_data_buffer t)) + buffer_space_left (state_data_buffer
           t) + 1 < dimword (:'a) /\ compile_oracle
        t = (\n.
          let ((bm0,cfg),progs) = coracle n in
@@ -4711,18 +4709,18 @@ let make_init_def = cake_define
   `(\x y. strcat x y)
      (make_init ac k) (t code coracle) =
        mk_wordSem_state (sptree_insert 0 (Loc 1 0) LN) (SOME 0)
-         (fp_regs t) (store t \\ Handler) [] (LENGTH (stack t))
+         (fp_regs t) (state_store t \\ Handler) [] (LENGTH (stack t))
          (stack_size ([]:('a stack_frame) list)) (mapi (\n
          (arg_count,prog). FST (SND (word_to_stack_compile_prog ac F
-         prog arg_count k (misc_Nil,0)))) code) (memory t) (mdomain t)
-         (sh_mdomain t) (K I) (\(bm0,cfg) progs.
+         prog arg_count k (misc_Nil,0)))) code) (state_memory t)
+         (state_mdomain t) (state_sh_mdomain t) (K I) (\(bm0,cfg) progs.
          let (progs,fs,bm) = compile_word_to_stack ac F k progs
            (misc_Nil,bm0) in
          OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
            bm,cfg)))
-           (compile t cfg progs)) coracle (code_buffer t)
-             (data_buffer t) (gc_fun t) 0 (clock t) 0 code (be t)
-             (ffi t)`;;
+           (compile t cfg progs)) coracle (state_code_buffer t)
+             (state_data_buffer t) (state_gc_fun t) 0 (state_clock t)
+             0 code (be t) (state_ffi t)`;;
 
 (* HOL4 ML code, not ported:
 val init_state_ok_semantics =

@@ -74,9 +74,9 @@ let get_size_sc_aux_def = cake_define_list
            get_size_sc_aux n xs)`];;
 
 let get_size_sc_def = cake_define
-  `get_size_sc limit e =
-     (let n = get_size_sc_aux (limit + 1) [e] in
-       if n = 0 then NONE else SOME ((limit + 1) - n))`;;
+  `get_size_sc limit' e =
+     (let n = get_size_sc_aux (limit' + 1) [e] in
+       if n = 0 then NONE else SOME ((limit' + 1) - n))`;;
 
 let get_size_aux_def = cake_define_list
   [`get_size_aux [] = 0`;

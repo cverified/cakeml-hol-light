@@ -228,15 +228,15 @@ let dest_evaluated_thunk_rel = cake_inductive
   `!x. dest_evaluated_thunk_rel (ThunkBlock Evaluated x) x`;;
 
 let bc_ref_inv_def = cake_define
-  `bc_ref_inv conf n refs (f,tf,heap,be) =
+  `bc_ref_inv conf n refs (f,tf,heap,be') =
      (match (FLOOKUP f n,lookup n refs) with (SOME x,SOME (ValueArray
        ys)) ->
          (?zs. heap_lookup x heap = SOME (RefBlock zs) /\
                EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs ys)
                  | (SOME x,SOME (ByteArray flag bs)) ->
          (let ws = LENGTH bs DIV (dimindex (:'ga) DIV 8) + 1 in
-           (heap_lookup x heap = SOME (Bytes be flag bs (REPLICATE ws
-             ((n2w 0):'a word))))) | (SOME x,SOME (Thunk ev v)) ->
+           (heap_lookup x heap = SOME (Bytes be' flag bs (REPLICATE
+             ws ((n2w 0):'a word))))) | (SOME x,SOME (Thunk ev v)) ->
          (?(z:('ga word_loc) heap_address).
             heap_lookup x heap = SOME (ThunkBlock ev z) /\
             (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
@@ -270,10 +270,10 @@ let find_ref_def = cake_define
 
 (* TODO: MOVE *)
 let all_ts_def = cake_define
-  `all_ts refs stack =
+  `all_ts refs stack' =
      (let refs_v = {x | ?n r. sptree_lookup n refs = SOME r /\
-       find_ref r x} in {ts | ?x. (x IN refs_v \/ MEM x stack) /\ MEM
-       ts (v_all_ts x)})`;;
+       find_ref r x} in {ts | ?x. (x IN refs_v \/ MEM x stack') /\
+       MEM ts (v_all_ts x)})`;;
 
 let be_ok_def = cake_define
   `be_ok b1 b2 <=> b1 = b2`;;
@@ -287,7 +287,7 @@ let v_all_vs_def = cake_define
       | [] -> []`;;
 
 let all_vs_def = cake_define
-  `all_vs refs stack =
+  `all_vs refs stack' =
      {v | ?(n:num) l. lookup n refs = SOME (ValueArray l) /\ MEM v
        (v_all_vs l)} UNION
      {v | ?n ev x. lookup n refs = SOME (Thunk ev x) /\ MEM v
@@ -295,7 +295,7 @@ let all_vs_def = cake_define
      {v | ?n tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg
        fin l c r) /\
                             MEM v (v_all_vs (l ++ [c] ++ r))} UNION
-     {v | MEM v (v_all_vs stack)}`;;
+     {v | MEM v (v_all_vs stack')}`;;
 
 let blocks_unique_def = cake_define
   `blocks_unique ts vs =
@@ -306,21 +306,21 @@ let blocks_unique_def = cake_define
 
 (* THIS IS IMPORTANT *)
 let bc_stack_ref_inv_def = cake_define
-  `bc_stack_ref_inv conf ts stack refs (roots,heap,be) =
+  `bc_stack_ref_inv conf ts stack' refs (roots,heap,be') =
      (?f tf.
        INJ (FAPPLY f) (FDOM f) {a | isSomeDataElement (heap_lookup a
          heap)} /\
        FDOM f SUBSET (domain refs) /\
        INJ (FAPPLY tf) (FDOM tf) {a | isSomeDataElement (heap_lookup
          a heap)} /\
-       FDOM tf SUBSET (all_ts refs stack) /\
-       FDOM tf SUBSET {n | n < ts} /\ be_ok (be conf) be /\
-       blocks_unique ts (all_vs refs stack) /\
-       EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) stack roots /\
+       FDOM tf SUBSET (all_ts refs stack') /\
+       FDOM tf SUBSET {n | n < ts} /\ be_ok (be conf) be' /\
+       blocks_unique ts (all_vs refs stack') /\
+       EVERY2 (\v x. v_inv conf v refs (x,f,tf,heap)) stack' roots /\
        (!n.
-         reachable_refs stack refs n /\
+         reachable_refs stack' refs n /\
          n IN FDOM f ==>
-           bc_ref_inv conf n refs (f,tf,heap,be)))`;;
+           bc_ref_inv conf n refs (f,tf,heap,be')))`;;
 
 let data_up_to_def = cake_define
   `data_up_to a heap =
@@ -367,11 +367,12 @@ let gc_kind_inv_def = cake_define
                    /\ EVERY data_to_word_memoryProof_isRef h2))`;;
 
 let abs_ml_inv_def = cake_define
-  `abs_ml_inv conf stack refs (roots,heap,be,a,sp,sp1,gens) limit ts <=>
-     roots_ok roots heap /\ heap_ok heap limit /\
+  `abs_ml_inv conf stack' refs (roots,heap,be',a,sp,sp1,gens) limit' ts
+  <=>
+     roots_ok roots heap /\ heap_ok heap limit' /\
      gc_kind_inv conf a sp sp1 gens heap /\
      unused_space_inv a (sp + sp1) heap /\
-     bc_stack_ref_inv conf ts stack refs (roots,heap,be)`;;
+     bc_stack_ref_inv conf ts stack' refs (roots,heap,be')`;;
 
 (* --- *)
 
@@ -451,8 +452,8 @@ let all_reachable_from_roots_def = cake_define
         p IN reachable_addresses roots heap)`;;
 
 let make_gc_conf_def = cake_define
-  `make_gc_conf limit =
-     (mk_gen_gc_conf limit (isMutTag o FST):(num#'a) gen_gc_conf)`;;
+  `make_gc_conf limit' =
+     (mk_gen_gc_conf limit' (isMutTag o FST):(num#'a) gen_gc_conf)`;;
 
 let reset_gens_def = cake_define
   `reset_gens conf a =
@@ -823,7 +824,7 @@ let glob_real_inv_def = cake_define
            backend_common_word_shift (:'ga)))))`;;
 
 let heap_in_memory_store_def = cake_define
-  `heap_in_memory_store heap a sp sp1 gens c s m dm limit <=>
+  `heap_in_memory_store heap a sp sp1 gens c s m dm limit' <=>
      heap_length heap <= dimword (:'a) DIV 2 EXP shift_length c /\
      (heap_length heap + 3) * (dimindex (:'a) DIV 8) < dimword (:'a)
        /\
@@ -843,27 +844,27 @@ let heap_in_memory_store_def = cake_define
        (FLOOKUP s EndOfHeap = SOME (Word (curr + bytes_in_word * n2w
          (a + sp + sp1)))) /\
        (FLOOKUP s HeapLength = SOME (Word (bytes_in_word * n2w
-         limit))) /\
+         limit'))) /\
        glob_real_inv c curr (FLOOKUP s Globals) (FLOOKUP s GlobReal)
          /\
        gen_starts_in_store c gens (FLOOKUP s GenStart) /\
        (word_heap curr heap c *
-        word_heap other (heap_expand limit) c) (fun2set (m,dm)))`;;
+        word_heap other (heap_expand limit') c) (fun2set (m,dm)))`;;
 
 let word_ml_inv_def = cake_define
-  `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs stack <=>
-     (?hs. abs_ml_inv c (MAP FST stack) refs
-       (hs,heap,be,a,sp,sp1,gens) limit ts /\
-          EVERY2 (\v w. word_addr c v = w) hs (MAP SND stack))`;;
+  `word_ml_inv (heap,be',a,sp,sp1,gens) limit' ts c refs stack' <=>
+     (?hs. abs_ml_inv c (MAP FST stack') refs
+       (hs,heap,be',a,sp,sp1,gens) limit' ts /\
+          EVERY2 (\v w. word_addr c v = w) hs (MAP SND stack'))`;;
 
 let memory_rel_def = cake_define
-  `memory_rel c be ts refs space' st (m:'a word->'a word_loc) dm vars
+  `memory_rel c be' ts refs space' st (m:'a word->'a word_loc) dm vars
   <=>
-     (?heap limit a sp sp1 gens.
-        heap_in_memory_store heap a sp sp1 gens c st m dm limit /\
-        word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c refs vars /\
-        (limit + 3) * (dimindex (:'ga) DIV 8) + 1 < dimword (:'ga)
-          /\ space' <= sp)`;;
+     (?heap limit' a sp sp1 gens.
+        heap_in_memory_store heap a sp sp1 gens c st m dm limit' /\
+        word_ml_inv (heap,be',a,sp,sp1,gens) limit' ts c refs vars /\
+        (limit' + 3) * (dimindex (:'ga) DIV 8) + 1 < dimword
+          (:'ga) /\ space' <= sp)`;;
 
 let get_real_addr_def = cake_define
   `get_real_addr conf st (w:'a word) =
@@ -954,9 +955,10 @@ val (set_byte_sort_dec,set_byte_sort_asc) = let
 (* slow *)
 
 let last_bytes_def = cake_define
-  `last_bytes k b a w be =
+  `last_bytes k b a w be' =
      (if k = 0 then w else
-       set_byte a b (last_bytes (k - 1) b (a + (n2w 1)) w be) be)`;;
+       set_byte a b (last_bytes (k - 1) b (a + (n2w 1)) w be')
+         be')`;;
 
 let copy_list_def = cake_define
   `copy_list c' st k (a,x,(b:'a word),(m:'a word->'a word_loc),dm) =
@@ -1204,35 +1206,38 @@ let bignum_words_def = cake_define
    [addressTheory.word_arith_lemma2,GSYM word_sub_def] \\ fs [] *)
 let word_copy_fwd_def = cake_define_wf
   `MEASURE (w2n o FST o SND)`
-  `word_copy_fwd be (n:'a word) a b (m:'a word->'a word_loc) dm =
+  `word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
        if n <+ (n2w 2) then
          if n = (n2w 0) then SOME m else
-           OPTION_BIND (mem_load_byte_aux m dm be a)
-                       (\w. mem_store_byte_aux m dm be b w) else
-         OPTION_BIND (mem_load_byte_aux m dm be a) (\w1.
-         OPTION_BIND (mem_load_byte_aux m dm be (a + (n2w 1))) (\w2.
+           OPTION_BIND (mem_load_byte_aux m dm be' a)
+                       (\w. mem_store_byte_aux m dm be' b w) else
+         OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
+         OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 1))) (\w2.
            if n = (n2w 2) then
-             OPTION_BIND (mem_store_byte_aux m dm be b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be (b + (n2w 1))
+             OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1))
                w2) (\m. SOME m)) else
-             OPTION_BIND (mem_load_byte_aux m dm be (a + (n2w 2)))
+             OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 2)))
                (\w3.
-             OPTION_BIND (mem_store_byte_aux m dm be b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be (b + (n2w 1))
+             OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1))
                w2) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be (b + (n2w 2))
+             OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 2))
                w3) (\m. SOME m)))))) else
-       OPTION_BIND (mem_load_byte_aux m dm be a) (\w1.
-       OPTION_BIND (mem_load_byte_aux m dm be (a + (n2w 1))) (\w2.
-       OPTION_BIND (mem_load_byte_aux m dm be (a + (n2w 2))) (\w3.
-       OPTION_BIND (mem_load_byte_aux m dm be (a + (n2w 3))) (\w4.
-       OPTION_BIND (mem_store_byte_aux m dm be b w1) (\m.
-       OPTION_BIND (mem_store_byte_aux m dm be (b + (n2w 1)) w2) (\m.
-       OPTION_BIND (mem_store_byte_aux m dm be (b + (n2w 2)) w3) (\m.
-       OPTION_BIND (mem_store_byte_aux m dm be (b + (n2w 3)) w4) (\m.
-         word_copy_fwd be (n - (n2w 4)) (a + (n2w 4)) (b + (n2w
+       OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
+       OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 1))) (\w2.
+       OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 2))) (\w3.
+       OPTION_BIND (mem_load_byte_aux m dm be' (a + (n2w 3))) (\w4.
+       OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
+       OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 1)) w2)
+         (\m.
+       OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 2)) w3)
+         (\m.
+       OPTION_BIND (mem_store_byte_aux m dm be' (b + (n2w 3)) w4)
+         (\m.
+         word_copy_fwd be' (n - (n2w 4)) (a + (n2w 4)) (b + (n2w
            4)) m dm)))))))))`;;
 
 let list_copy_fwd_def = cake_define
@@ -1280,35 +1285,38 @@ let list_copy_fwd_alias_def = cake_define
    [addressTheory.word_arith_lemma2,GSYM word_sub_def] \\ fs [] *)
 let word_copy_bwd_def = cake_define_wf
   `MEASURE (w2n o FST o SND)`
-  `word_copy_bwd be (n:'a word) a b (m:'a word->'a word_loc) dm =
+  `word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
        if n <+ (n2w 2) then
          if n = (n2w 0) then SOME m else
-           OPTION_BIND (mem_load_byte_aux m dm be a)
-                       (\w. mem_store_byte_aux m dm be b w) else
-         OPTION_BIND (mem_load_byte_aux m dm be a) (\w1.
-         OPTION_BIND (mem_load_byte_aux m dm be (a - (n2w 1))) (\w2.
+           OPTION_BIND (mem_load_byte_aux m dm be' a)
+                       (\w. mem_store_byte_aux m dm be' b w) else
+         OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
+         OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 1))) (\w2.
            if n = (n2w 2) then
-             OPTION_BIND (mem_store_byte_aux m dm be b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be (b - (n2w 1))
+             OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1))
                w2) (\m. SOME m)) else
-             OPTION_BIND (mem_load_byte_aux m dm be (a - (n2w 2)))
+             OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 2)))
                (\w3.
-             OPTION_BIND (mem_store_byte_aux m dm be b w1) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be (b - (n2w 1))
+             OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
+             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1))
                w2) (\m.
-             OPTION_BIND (mem_store_byte_aux m dm be (b - (n2w 2))
+             OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 2))
                w3) (\m. SOME m)))))) else
-       OPTION_BIND (mem_load_byte_aux m dm be a) (\w1.
-       OPTION_BIND (mem_load_byte_aux m dm be (a - (n2w 1))) (\w2.
-       OPTION_BIND (mem_load_byte_aux m dm be (a - (n2w 2))) (\w3.
-       OPTION_BIND (mem_load_byte_aux m dm be (a - (n2w 3))) (\w4.
-       OPTION_BIND (mem_store_byte_aux m dm be b w1) (\m.
-       OPTION_BIND (mem_store_byte_aux m dm be (b - (n2w 1)) w2) (\m.
-       OPTION_BIND (mem_store_byte_aux m dm be (b - (n2w 2)) w3) (\m.
-       OPTION_BIND (mem_store_byte_aux m dm be (b - (n2w 3)) w4) (\m.
-         word_copy_bwd be (n - (n2w 4)) (a - (n2w 4)) (b - (n2w
+       OPTION_BIND (mem_load_byte_aux m dm be' a) (\w1.
+       OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 1))) (\w2.
+       OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 2))) (\w3.
+       OPTION_BIND (mem_load_byte_aux m dm be' (a - (n2w 3))) (\w4.
+       OPTION_BIND (mem_store_byte_aux m dm be' b w1) (\m.
+       OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 1)) w2)
+         (\m.
+       OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 2)) w3)
+         (\m.
+       OPTION_BIND (mem_store_byte_aux m dm be' (b - (n2w 3)) w4)
+         (\m.
+         word_copy_bwd be' (n - (n2w 4)) (a - (n2w 4)) (b - (n2w
            4)) m dm)))))))))`;;
 
 let minus_def = cake_define
@@ -1411,11 +1419,11 @@ val (n1,(n2,n3)) = first (not o test) inputs
 *)
 
 let word_copy_array_def = cake_define
-  `word_copy_array be n a a1 b b1 (m:'a word->'a word_loc) dm =
+  `word_copy_array be' n a a1 b b1 (m:'a word->'a word_loc) dm =
      (if b1 <=+ a1 then
-       word_copy_fwd be n (a + a1) (b + b1) m dm else
-       word_copy_bwd be n ((a + a1 + n) - (n2w 1)) ((b + b1 + n) -
-         (n2w 1)) m dm)`;;
+       word_copy_fwd be' n (a + a1) (b + b1) m dm else
+       word_copy_bwd be' n ((a + a1 + n) - (n2w 1)) ((b + b1 + n)
+         - (n2w 1)) m dm)`;;
 
 (* HOL4 ML code, not ported:
 val memory_rel_copy_array_NONE_lemma =
@@ -1573,21 +1581,21 @@ QED
 
 let word_str_cmp_loop_def = cake_define
   `word_str_cmp_loop (a1:'a word) (a2:'a word) r1 r2 (len:'a word) dm m
-  be ck =
+  be' ck =
      (if ck = 0 then NONE else
      if len = bytes_in_word then
        SOME (r1,r2) else
-       match mem_load_byte_aux m dm be a1 with NONE -> NONE | SOME b1
-         ->
-       (match mem_load_byte_aux m dm be a2 with NONE -> NONE | SOME
+       match mem_load_byte_aux m dm be' a1 with NONE -> NONE | SOME
+         b1 ->
+       (match mem_load_byte_aux m dm be' a2 with NONE -> NONE | SOME
          b2 ->
          (if b1 = b2 then
            word_str_cmp_loop (a1 + (n2w 1)) (a2 + (n2w 1)) r1 r2 (len
-             - (n2w 1)) dm m be (ck - (1:num)) else
+             - (n2w 1)) dm m be' (ck - (1:num)) else
            SOME (w2w b1,w2w b2))))`;;
 
 let word_str_cmp_def = cake_define
-  `word_str_cmp b (a1:'a word) (a2:'a word) dm m be c =
+  `word_str_cmp b (a1:'a word) (a2:'a word) dm m be' c =
      (let k = (dimindex (:'ga) - data_to_word_config_len_size c -
        backend_common_word_shift (:'a)) in
        if a1 IN dm /\ a2 IN dm /\ isWord (m a1) /\ isWord (m a2) then
@@ -1596,10 +1604,10 @@ let word_str_cmp_def = cake_define
            if b then
              (if ~(l1 = l2) then SOME (l1,l2) else
                 word_str_cmp_loop (a1 + bytes_in_word) (a2 +
-                  bytes_in_word) l1 l1 l1 dm m be (dimword (:'a))) else
+                  bytes_in_word) l1 l1 l1 dm m be' (dimword (:'a))) else
              (let l = n2w (MIN (w2n l1) (w2n l2)) in
                 word_str_cmp_loop (a1 + bytes_in_word) (a2 +
-                  bytes_in_word) l1 l2 l dm m be (dimword (:'a)))
+                  bytes_in_word) l1 l2 l dm m be' (dimword (:'a)))
                   else NONE)`;;
 
 let find_diff_def = cake_define_list

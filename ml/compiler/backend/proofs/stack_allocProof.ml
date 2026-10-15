@@ -95,34 +95,34 @@ val gc_lemma = gc_def
 *)
 
 let word_gc_move_roots_bitmaps_def = cake_define
-  `word_gc_move_roots_bitmaps conf (stack,bitmaps,i1,pa1,curr,m,dm) =
-     (match enc_stack bitmaps stack with NONE -> (ARB,ARB,ARB,ARB,F)
+  `word_gc_move_roots_bitmaps conf (stack',bitmaps,i1,pa1,curr,m,dm) =
+     (match enc_stack bitmaps stack' with NONE -> (ARB,ARB,ARB,ARB,F)
        | SOME wl_list ->
          (let (wl,i2,pa2,m2,c2) =
              word_gc_move_roots conf (wl_list,i1,pa1,curr,m,dm) in
-           match dec_stack bitmaps wl stack with NONE ->
-             (ARB,ARB,ARB,ARB,F) | SOME stack ->
-             (stack,i2,pa2,m2,c2)))`;;
+           match dec_stack bitmaps wl stack' with NONE ->
+             (ARB,ARB,ARB,ARB,F) | SOME stack' ->
+             (stack',i2,pa2,m2,c2)))`;;
 
 let word_gc_move_bitmaps_def = cake_define
-  `word_gc_move_bitmaps conf (w,stack,bitmaps,i1,pa1,curr,m,dm) =
+  `word_gc_move_bitmaps conf (w,stack',bitmaps,i1,pa1,curr,m,dm) =
      (match full_read_bitmap bitmaps w with NONE -> NONE | SOME bs ->
-       (match filter_bitmap bs stack with NONE -> NONE | SOME (ts,ws)
-         ->
+       (match filter_bitmap bs stack' with NONE -> NONE | SOME
+         (ts,ws) ->
          (let (wl,i2,pa2,m2,c2) =
                  word_gc_move_roots conf (ts,i1,pa1,curr,m,dm) in
-           match map_bitmap bs wl stack with NONE -> NONE | SOME
+           match map_bitmap bs wl stack' with NONE -> NONE | SOME
              (hd,ts1,ws') ->
                SOME (hd,ws,i2,pa2,m2,c2))))`;;
 
 let word_gc_move_bitmap_def = cake_define
-  `word_gc_move_bitmap conf (w,stack,i1,pa1,curr,m,dm) =
+  `word_gc_move_bitmap conf (w,stack',i1,pa1,curr,m,dm) =
      (let bs = get_bits w in
-       match filter_bitmap bs stack with NONE -> NONE | SOME (ts,ws)
+       match filter_bitmap bs stack' with NONE -> NONE | SOME (ts,ws)
          ->
           (let (wl,i2,pa2,m2,c2) = word_gc_move_roots conf
             (ts,i1,pa1,curr,m,dm) in
-            match map_bitmap bs wl stack with NONE -> NONE | SOME
+            match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
 (* HOL4 ML code, not ported:
@@ -191,75 +191,75 @@ val gc_lemma = gc_def
 
 let word_gen_gc_move_roots_bitmaps_def = cake_define
   `word_gen_gc_move_roots_bitmaps conf
-  (stack,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
-     (match enc_stack bitmaps stack with NONE ->
+  (stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
+     (match enc_stack bitmaps stack' with NONE ->
        (ARB,ARB,ARB,ARB,ARB,ARB,F) | SOME wl_list ->
          (let (wl,i2,pa2,ib2,pb2,m2,c2) =
              word_gen_gc_move_roots conf
                (wl_list,i1,pa1,ib1,pb1,curr,m,dm) in
-           match dec_stack bitmaps wl stack with NONE ->
-             (ARB,ARB,ARB,ARB,ARB,ARB,F) | SOME stack ->
-             (stack,i2,pa2,ib2,pb2,m2,c2)))`;;
+           match dec_stack bitmaps wl stack' with NONE ->
+             (ARB,ARB,ARB,ARB,ARB,ARB,F) | SOME stack' ->
+             (stack',i2,pa2,ib2,pb2,m2,c2)))`;;
 
 let word_gen_gc_partial_move_roots_bitmaps_def = cake_define
   `word_gen_gc_partial_move_roots_bitmaps conf
-  (stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) =
-     (match enc_stack bitmaps stack with NONE -> (ARB,ARB,ARB,ARB,F)
+  (stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
+     (match enc_stack bitmaps stack' with NONE -> (ARB,ARB,ARB,ARB,F)
        | SOME wl_list ->
          (let (wl,i2,pa2,m2,c2) =
              word_gen_gc_partial_move_roots conf
                (wl_list,i1,pa1,curr,m,dm,gs,rs) in
-           match dec_stack bitmaps wl stack with NONE ->
-             (ARB,ARB,ARB,ARB,F) | SOME stack ->
-             (stack,i2,pa2,m2,c2)))`;;
+           match dec_stack bitmaps wl stack' with NONE ->
+             (ARB,ARB,ARB,ARB,F) | SOME stack' ->
+             (stack',i2,pa2,m2,c2)))`;;
 
 let word_gen_gc_move_bitmaps_def = cake_define
   `word_gen_gc_move_bitmaps conf
-  (w,stack,bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
+  (w,stack',bitmaps,i1,pa1,ib1,pb1,curr,m,dm) =
      (match full_read_bitmap bitmaps w with NONE -> NONE | SOME bs ->
-       (match filter_bitmap bs stack with NONE -> NONE | SOME (ts,ws)
-         ->
+       (match filter_bitmap bs stack' with NONE -> NONE | SOME
+         (ts,ws) ->
          (let (wl,i2,pa2,ib2,pb2,m2,c2) =
                  word_gen_gc_move_roots conf
                    (ts,i1,pa1,ib1,pb1,curr,m,dm) in
-           match map_bitmap bs wl stack with NONE -> NONE | SOME
+           match map_bitmap bs wl stack' with NONE -> NONE | SOME
              (hd,ts1,ws') ->
                SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2))))`;;
 
 let word_gen_gc_partial_move_bitmaps_def = cake_define
   `word_gen_gc_partial_move_bitmaps conf
-  (w,stack,bitmaps,i1,pa1,curr,m,dm,gs,rs) =
+  (w,stack',bitmaps,i1,pa1,curr,m,dm,gs,rs) =
      (match full_read_bitmap bitmaps w with NONE -> NONE | SOME bs ->
-       (match filter_bitmap bs stack with NONE -> NONE | SOME (ts,ws)
-         ->
+       (match filter_bitmap bs stack' with NONE -> NONE | SOME
+         (ts,ws) ->
          (let (wl,i2,pa2,m2,c2) =
                  word_gen_gc_partial_move_roots conf
                    (ts,i1,pa1,curr,m,dm,gs,rs) in
-           match map_bitmap bs wl stack with NONE -> NONE | SOME
+           match map_bitmap bs wl stack' with NONE -> NONE | SOME
              (hd,ts1,ws') ->
                SOME (hd,ws,i2,pa2,m2,c2))))`;;
 
 let word_gen_gc_move_bitmap_def = cake_define
-  `word_gen_gc_move_bitmap conf (w,stack,i1,pa1,ib1,pb1,curr,m,dm) =
+  `word_gen_gc_move_bitmap conf (w,stack',i1,pa1,ib1,pb1,curr,m,dm) =
      (let bs = get_bits w in
-       match filter_bitmap bs stack with NONE -> NONE | SOME (ts,ws)
+       match filter_bitmap bs stack' with NONE -> NONE | SOME (ts,ws)
          ->
           (let (wl,i2,pa2,ib2,pb2,m2,c2) =
             word_gen_gc_move_roots conf (ts,i1,pa1,ib1,pb1,curr,m,dm)
               in
-            match map_bitmap bs wl stack with NONE -> NONE | SOME
+            match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,ib2,pb2,m2,c2)))`;;
 
 let word_gen_gc_partial_move_bitmap_def = cake_define
-  `word_gen_gc_partial_move_bitmap conf (w,stack,i1,pa1,curr,m,dm,gs,rs)
-  =
+  `word_gen_gc_partial_move_bitmap conf
+  (w,stack',i1,pa1,curr,m,dm,gs,rs) =
      (let bs = get_bits w in
-       match filter_bitmap bs stack with NONE -> NONE | SOME (ts,ws)
+       match filter_bitmap bs stack' with NONE -> NONE | SOME (ts,ws)
          ->
           (let (wl,i2,pa2,m2,c2) =
             word_gen_gc_partial_move_roots conf
               (ts,i1,pa1,curr,m,dm,gs,rs) in
-            match map_bitmap bs wl stack with NONE -> NONE | SOME
+            match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
 (* HOL4 ML code, not ported:
@@ -324,9 +324,9 @@ val _ = augment_srw_ss[rewrites[with_same_regs_lemma]];
 
 (* TODO: does this have to initialize the data_buffer to empty? *)
 let make_init_def = cake_define
-  `stack_allocProof_make_init c code oracle s = compile_oracle_fupd (K
-  oracle) (compile_fupd (K (\c. compile s c o (MAP prog_comp)))
-  (gc_fun_fupd (K (word_gc_fun c)) (stackSem_state_use_stack_fupd (K T)
-  (stackSem_state_use_alloc_fupd (K T) (code_fupd (K code)
+  `stack_allocProof_make_init c code oracle' s = compile_oracle_fupd (K
+  oracle') (compile_fupd (K (\c. compile s c o (MAP prog_comp)))
+  (state_gc_fun_fupd (K (word_gc_fun c)) (stackSem_state_use_stack_fupd
+  (K T) (stackSem_state_use_alloc_fupd (K T) (state_code_fupd (K code)
      s)))))`;;
 hol4_overload "make_init" "stack_allocProof_make_init";;

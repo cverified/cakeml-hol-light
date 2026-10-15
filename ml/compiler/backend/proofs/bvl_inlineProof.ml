@@ -26,8 +26,9 @@ let state_rel_def = cake_define
   (t:('c,'ffi)bvlSem_state) <=>
      t = compile_oracle_fupd (K ((I ##
        MAP (I ## I ## (\x. HD (remove_ticks [x])))) o compile_oracle
-         s)) (compile_fupd (K (compile t)) (code_fupd (K (sptree_map (I
-         ## (\x. HD (remove_ticks [x]))) (code s))) s)) /\ compile
+         s)) (compile_fupd (K (compile t)) (state_code_fupd (K
+         (sptree_map (I ## (\x. HD (remove_ticks [x]))) (state_code s)))
+         s)) /\ compile
      s = (\cfg prog. compile t cfg
                     (MAP (I ## I ## (\x. HD (remove_ticks [x])))
                       prog))`;;
@@ -110,30 +111,31 @@ let exp_rel = cake_inductive
                [Let ys (mk_tick (SUC ticks) y)])`;;
 
 let in_cc_def = cake_define
-  `bvl_inlineProof_in_cc limit cc =
+  `bvl_inlineProof_in_cc limit' cc =
      (\(cs,cfg) prog.
-         let (cs1,prog1) = tick_compile_prog limit cs prog in
+         let (cs1,prog1) = tick_compile_prog limit' cs prog in
            match cc cfg prog1 with NONE -> NONE | SOME
              (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
 hol4_overload "in_cc" "bvl_inlineProof_in_cc";;
 
 let in_state_rel_def = cake_define
-  `bvl_inlineProof_in_state_rel limit s t <=> globals
-     t = globals s /\ refs
-     t = refs s /\ clock
-     t = clock s /\ ffi
-     t = ffi s /\ compile_oracle
+  `bvl_inlineProof_in_state_rel limit' s t <=> state_globals
+     t = state_globals s /\ state_refs
+     t = state_refs s /\ state_clock
+     t = state_clock s /\ state_ffi
+     t = state_ffi s /\ compile_oracle
      t = (\n.
        let ((cs,cfg),progs) = compile_oracle s n in
-       let (cs1,progs) = tick_compile_prog limit cs progs in
+       let (cs1,progs) = tick_compile_prog limit' cs progs in
          (cfg,progs)) /\
-     subspt (FST (FST (compile_oracle s 0))) (code t) /\ compile
-     s = bvl_inlineProof_in_cc limit (compile t) /\
-     domain (code t) = domain (code s) /\
+     subspt (FST (FST (compile_oracle s 0))) (state_code t) /\
+       compile
+     s = bvl_inlineProof_in_cc limit' (compile t) /\
+     domain (state_code t) = domain (state_code s) /\
      (!k arity exp.
-        sptree_lookup k (code s) = SOME (arity,exp) ==>
-        (?exp2. sptree_lookup k (code t) = SOME (arity,exp2) /\
-               exp_rel (code s) [exp] [exp2]))`;;
+        sptree_lookup k (state_code s) = SOME (arity,exp) ==>
+        (?exp2. sptree_lookup k (state_code t) = SOME (arity,exp2) /\
+               exp_rel (state_code s) [exp] [exp2]))`;;
 hol4_overload "in_state_rel" "bvl_inlineProof_in_state_rel";;
 
 (* HOL4 ML code, not ported:
@@ -202,10 +204,10 @@ val exp_rel_rw = prove(
 *)
 
 let in_co_def = cake_define
-  `bvl_inlineProof_in_co limit co = (\n.
+  `bvl_inlineProof_in_co limit' co = (\n.
        (let
           ((cs,cfg),progs) = co n in let
-          (cs1,progs) = tick_compile_prog limit cs progs in
+          (cs1,progs) = tick_compile_prog limit' cs progs in
           (cfg,progs)))`;;
 hol4_overload "in_co" "bvl_inlineProof_in_co";;
 
@@ -585,8 +587,8 @@ let let_state_rel_def = cake_define
   (t:('c,'ffi)bvlSem_state) <=>
      t = compile_oracle_fupd (K ((I ##
        MAP (I ## let_opt split_seq cut_size)) o compile_oracle s))
-         (compile_fupd (K (compile t)) (code_fupd (K (sptree_map
-         (let_opt split_seq cut_size) (code s))) s)) /\ compile
+         (compile_fupd (K (compile t)) (state_code_fupd (K (sptree_map
+         (let_opt split_seq cut_size) (state_code s))) s)) /\ compile
      s = (\cfg prog. compile t cfg (MAP (I ## let_opt split_seq
        cut_size) prog))`;;
 
@@ -969,15 +971,15 @@ val comp_lemma = prove(
 *)
 
 let bvl_inline_cc_def = cake_define
-  `bvl_inline_cc limit q4 l4 cc =
-     (bvl_inlineProof_in_cc limit (bvl_inlineProof_remove_ticks_cc
-       (let_op_cc q4 l4 cc)))`;;
+  `bvl_inline_cc limit' q4 l4 cc =
+     (bvl_inlineProof_in_cc limit'
+       (bvl_inlineProof_remove_ticks_cc (let_op_cc q4 l4 cc)))`;;
 
 let bvl_inline_co_def = cake_define
-  `bvl_inline_co limit q4 l4 co =
+  `bvl_inline_co limit' q4 l4 co =
     (\x. (I ## MAP (I ## let_opt q4 l4))
            (bvl_inlineProof_remove_ticks_co (bvl_inlineProof_in_co
-             limit co x)))`;;
+             limit' co x)))`;;
 
 (* HOL4 ML code, not ported:
 val MAP_optimise = prove(

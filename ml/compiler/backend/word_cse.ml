@@ -138,8 +138,8 @@ let canonicalImmReg'_def = cake_define_list
    `canonicalImmReg' avoid data (Imm w) = Imm w`];;
 
 let canonicalMultRegs_def = cake_define
-  `canonicalMultRegs (data:knowledge) (regs:num list) = MAP
-  (canonicalRegs data) regs`;;
+  `canonicalMultRegs (data:knowledge) (regs':num list) = MAP
+  (canonicalRegs data) regs'`;;
 
 let map_insert_def = cake_define_list
   [`map_insert [] m = m`;

@@ -117,14 +117,14 @@ hol4_overload "namespace_rel" "bvi_tmcProof_namespace_rel";;
 
 (* This should say: expression in prog satisfies no-mutblock property *)
 let input_condition_def = cake_define
-  `bvi_tmcProof_input_condition next prog <=>
-     EVERY (bvi_tmcProof_free_names next o FST) prog /\
+  `bvi_tmcProof_input_condition next' prog <=>
+     EVERY (bvi_tmcProof_free_names next' o FST) prog /\
      EVERY (no_mutcons o SND o SND) prog /\
      ALL_DISTINCT (MAP FST prog) /\
      EVERY ((~) o (\n. n MOD bvl_to_bvi_namespaces = 3) o FST)
        (FILTER ((<=) bvl_num_stubs o FST) prog) /\
-     bvl_num_stubs <= next /\ (\n. n MOD bvl_to_bvi_namespaces =
-       3) next`;;
+     bvl_num_stubs <= next' /\ (\n. n MOD bvl_to_bvi_namespaces =
+       3) next'`;;
 hol4_overload "input_condition" "bvi_tmcProof_input_condition";;
 
 let state_ref_rel_def = cake_define
@@ -144,19 +144,20 @@ let fmap_inj_def = cake_define
 
 let state_rel_def = cake_define
   `bvi_tmcProof_state_rel f s (t:('a,'ffi)bviSem_state) <=>
-     state_ref_rel f (refs s) (refs t) /\ clock
-     t = clock s /\
+     state_ref_rel f (state_refs s) (state_refs t) /\ state_clock
+     t = state_clock s /\
      OPTREL (\p p'. FLOOKUP f p = SOME p') (bviSem_state_global s)
-       (bviSem_state_global t) /\ ffi
-     t = ffi s /\ compile_oracle
+       (bviSem_state_global t) /\ state_ffi
+     t = state_ffi s /\ compile_oracle
      t = state_co bvi_tmc_compile_each (compile_oracle s) /\ compile
      s = state_cc bvi_tmc_compile_each (compile t) /\
-     bvi_tmcProof_code_rel (code s) (code t) /\
-     bvi_tmcProof_namespace_rel (code s) (code t) /\
-     (!n. let ((next,cfg),prog) = compile_oracle s n in
-             bvi_tmcProof_input_condition next prog) /\
-     (!n. n IN domain (code t) /\ (\n. n MOD bvl_to_bvi_namespaces =
-       3) n ==> n < FST (FST (compile_oracle s 0))) /\
+     bvi_tmcProof_code_rel (state_code s) (state_code t) /\
+     bvi_tmcProof_namespace_rel (state_code s) (state_code t) /\
+     (!n. let ((next',cfg),prog) = compile_oracle s n in
+             bvi_tmcProof_input_condition next' prog) /\
+     (!n. n IN domain (state_code t) /\ (\n. n MOD
+       bvl_to_bvi_namespaces = 3) n ==> n < FST (FST (compile_oracle s
+       0))) /\
      fmap_inj f`;;
 hol4_overload "state_rel" "bvi_tmcProof_state_rel";;
 
@@ -1076,7 +1077,7 @@ QED
 *)
 
 let hypothesis_def = cake_define
-  `hypothesis xs' (s'':(num#'gc,'ffi)bviSem_state) clock <=> clock
+  `hypothesis xs' (s'':(num#'gc,'ffi)bviSem_state) clock <=> state_clock
    s'' < clock ==>
    (!env1' r' t' opt' f' s'³' env2' loc'.
              evaluate (xs',env1',s'') = (r',t') /\
@@ -1090,12 +1091,14 @@ let hypothesis_def = cake_define
                result_rel (LIST_REL (v_rel f'')) (eor_rel f'') r' r''
                  /\
                bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f'' /\
-                 only_fresh f' f'' (refs s'³') /\
-               holes_unchanged_except f' (refs s'³') (refs t'') {} /\
-               holes_still_not_finalised f' (refs s'³') (refs t'') /\
+                 only_fresh f' f'' (state_refs s'³') /\
+               holes_unchanged_except f' (state_refs s'³')
+                 (state_refs t'') {} /\
+               holes_still_not_finalised f' (state_refs s'³')
+                 (state_refs t'') /\
                (!loc_opt.
-                 optimised_code loc' loc_opt (code s'') (code s'³')
-                   ==>
+                 optimised_code loc' loc_opt (state_code s'')
+                   (state_code s'³') ==>
                  (!wrap.
                     LENGTH xs' = 1 /\
                     rewrite_wrapper loc' loc_opt (LENGTH env1') (HD
@@ -1107,17 +1110,17 @@ let hypothesis_def = cake_define
                         f_wrap) r'
                         r_wrap /\ bvi_tmcProof_state_rel f_wrap t'
                           t_wrap /\ f' SUBMAP f_wrap /\
-                      only_fresh f' f_wrap (refs s'³') /\
-                      holes_unchanged_except f' (refs s'³') (refs
-                        t_wrap) {} /\
-                      holes_still_not_finalised f' (refs s'³') (refs
-                        t_wrap))) /\
+                      only_fresh f' f_wrap (state_refs s'³') /\
+                      holes_unchanged_except f' (state_refs s'³')
+                        (state_refs t_wrap) {} /\
+                      holes_still_not_finalised f' (state_refs s'³')
+                        (state_refs t_wrap))) /\
                  (opt' ==>
                   (!hole_ptr.
-                    (?c. hole_has_val f' env1' env2' (refs s'³') c)
-                      /\
-                    hole_not_finalised (refs s'³') hole_ptr /\ EL
-                      (LENGTH env1')
+                    (?c. hole_has_val f' env1' env2' (state_refs
+                      s'³') c) /\
+                    hole_not_finalised (state_refs s'³') hole_ptr /\
+                      EL (LENGTH env1')
                     env2' = RefPtr F hole_ptr ==>
                     (?r_work f_work t_work.
                       evaluate
@@ -1128,17 +1131,17 @@ let hypothesis_def = cake_define
                         /\
                       bvi_tmcProof_state_rel f_work t' t_work /\ f'
                         SUBMAP f_work /\
-                      only_fresh f' f_work (refs s'³') /\
-                      holes_unchanged_except f' (refs s'³') (refs
-                        t_work) {hole_ptr} /\
-                      holes_still_not_finalised f' (refs s'³') (refs
-                        t_work) /\
+                      only_fresh f' f_work (state_refs s'³') /\
+                      holes_unchanged_except f' (state_refs s'³')
+                        (state_refs t_work) {hole_ptr} /\
+                      holes_still_not_finalised f' (state_refs s'³')
+                        (state_refs t_work) /\
                       (!res_v.
                         r' = Rval [res_v] ==>
                         (?res_v'.
-                          mb_rel f_work (refs s'³') (refs t_work \\
-                            hole_ptr) res_v res_v' /\
-                          hole_has_val f' env1' env2' (refs
+                          mb_rel f_work (state_refs s'³') (state_refs
+                            t_work \\ hole_ptr) res_v res_v' /\
+                          hole_has_val f' env1' env2' (state_refs
                             t_work) res_v'))))))))`;;
 
 let alloc_hole_has_val_def = cake_define

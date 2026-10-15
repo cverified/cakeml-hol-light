@@ -73,10 +73,11 @@ let find_v_globals_def = cake_define_list
   [`find_v_globals (Conv _1 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _2 e:flatSem_v) =
-            sptree_union (find_v_globalsL (MAP SND (v env)))
-              (find_lookups e)`;
+            sptree_union (find_v_globalsL (MAP SND
+              (semanticPrimitives_sem_env_v env))) (find_lookups e)`;
    `find_v_globals (Recclosure env vves _3:flatSem_v) =
-            sptree_union (find_v_globalsL (MAP SND (v env)))
+            sptree_union (find_v_globalsL (MAP SND
+              (semanticPrimitives_sem_env_v env)))
                 (find_lookupsL (MAP (SND o SND) vves))`;
    `find_v_globals (Vectorv vl:flatSem_v) = find_v_globalsL vl`;
    `find_v_globals _4 = LN`;
@@ -105,7 +106,8 @@ val find_refs_globals_ind = theorem "find_refs_globals_ind";
 *)
 
 let find_env_globals_def = cake_define
-  `find_env_globals env = find_v_globalsL (MAP SND (v env))`;;
+  `find_env_globals env = find_v_globalsL (MAP SND
+  (semanticPrimitives_sem_env_v env))`;;
 
 let find_result_globals_def = cake_define
   `find_result_globals x1 =
@@ -140,10 +142,12 @@ let v_has_Eval_def1 = cake_define_wf
   `v_has_Eval x1 =
         match x1 with
           (Closure env _8 e:flatSem_v) -> (has_Eval e \/
-       EXISTS v_has_Eval (MAP SND (v env)))
+       EXISTS v_has_Eval (MAP SND (semanticPrimitives_sem_env_v
+         env)))
         | (Conv _9 vl) -> EXISTS v_has_Eval vl
         | (Recclosure env nm_es _10) ->
-       (EXISTS v_has_Eval (MAP SND (v env)) \/
+       (EXISTS v_has_Eval (MAP SND (semanticPrimitives_sem_env_v
+         env)) \/
          EXISTS has_Eval (MAP (SND o SND) nm_es))
         | (Vectorv vl) -> EXISTS v_has_Eval vl
         | _11 -> F`;;
@@ -175,13 +179,15 @@ let decs_closed_def = cake_define
 (* s = state, t = removed state *)
 let flat_state_rel_def = cake_define
   `(\x y. strcat x y) ((\x y. strcat x y)
-       (flat_state_rel reachable) s) t <=> clock
-         s = clock t /\ refs s = refs t /\ ffi
-         s = ffi t /\ globals_rel reachable (flatSem_state_globals s)
-           (flatSem_state_globals t) /\
-         domain (find_refs_globals (refs s)) SUBSET domain reachable
-           /\
-         EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (refs s)`;;
+       (flat_state_rel reachable) s) t <=> state_clock
+         s = state_clock t /\ state_refs s = state_refs t /\
+           state_ffi
+         s = state_ffi t /\ globals_rel reachable
+           (flatSem_state_globals s) (flatSem_state_globals t) /\
+         domain (find_refs_globals (state_refs s)) SUBSET domain
+           reachable /\
+         EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs
+           s)`;;
 
 (**************************** FLATLANG LEMMAS
    *****************************)

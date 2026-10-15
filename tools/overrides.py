@@ -48,6 +48,18 @@ RECORD_OF = {
   ('bviSem', 'bvi_to_bvl_def'): 'bvlSem_state',
 }
 
+# FIELD_DEFAULT: the record type that a field name means where
+# several record types in scope have it and nothing says which one.
+# A field that has a default is not an overloaded name, so the port
+# does not have to rename the variables that are called after it
+# (v and c are the fields of sem_env and the names of a great many
+# variables of the CakeML sources)
+FIELD_DEFAULT = {
+  'v': 'semanticPrimitives_sem_env',
+  'c': 'semanticPrimitives_sem_env',
+  'max_app': 'closSem_state',
+}
+
 FIELD_OF = {
   # both grammar and peg have a field rules
   'pegexec': {'rules': 'peg'},
@@ -55,8 +67,12 @@ FIELD_OF = {
   # source_to_flat's environment has the fields of sem_env
   'source_to_flat': {'v': 'source_to_flat_environment',
                      'c': 'source_to_flat_environment'},
-  'source_to_flatProof': {'v': 'source_to_flat_environment',
-                          'c': 'source_to_flat_environment'},
+  'source_to_flatProof': {'v': 'global_env',
+                          'c': 'global_env'},
+  'flatSem': {'v': 'flatSem_environment'},
+  'typeSystem': {'v': 'type_env',
+                 'c': 'type_env'},
+  'clos_to_bvl': {'max_app': 'clos_to_bvl_config'},
 }
 
 # names in the HOL4 libraries that the port does not really need:

@@ -144,15 +144,15 @@ let LetLet_def = cake_define
        Let (MAP Var zs) (SmartLet long_list body))`;;
 
 let OptionalLetLet_def = cake_define
-  `OptionalLetLet e env_size live s (limit:num) (nr:bool) =
-     (if s < limit then ([e],live,s,nr) else
+  `OptionalLetLet e env_size live s (limit':num) (nr:bool) =
+     (if s < limit' then ([e],live,s,nr) else
        let fvs = db_to_set live in
        let flat_live = vars_from_list (MAP FST (toAList fvs)) in
          ([(Let [] (LetLet env_size fvs e))],flat_live,0,nr))`;;
 
 let OptionalLetLet_sing_def = cake_define
-  `OptionalLetLet_sing e env_size live s (limit:num) (nr:bool) =
-     (if s < limit then (e,live,s,nr) else
+  `OptionalLetLet_sing e env_size live s (limit':num) (nr:bool) =
+     (if s < limit' then (e,live,s,nr) else
        let fvs = db_to_set live in
        let flat_live = vars_from_list (MAP FST (toAList fvs)) in
          ((Let [] (LetLet env_size fvs e)),flat_live,0,nr))`;;

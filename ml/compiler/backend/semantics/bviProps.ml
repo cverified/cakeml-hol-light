@@ -41,8 +41,8 @@ val evaluate_LENGTH = Q.prove(
 *)
 
 let inc_clock_def = cake_define
-  `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = clock_fupd (K
-  (clock s + n)) s`;;
+  `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = state_clock_fupd
+  (K (state_clock s + n)) s`;;
 hol4_overload "inc_clock" "bviProps_inc_clock";;
 
 let get_code_labels_def = cake_define_list
@@ -92,8 +92,9 @@ hol4_overload "good_code_labels" "bviProps_good_code_labels";;
 
 let adj_orac_def = cake_define
   `(adj_orac cc f (s:('a,'ffi)bviSem_state):('b,'ffi)bviSem_state) =
-     mk_bviSem_state (refs s) (clock s) (bviSem_state_global s) cc
-       ((f ## I) o compile_oracle s) (code s) (ffi s)`;;
+     mk_bviSem_state (state_refs s) (state_clock s)
+       (bviSem_state_global s) cc ((f ## I) o compile_oracle s)
+       (state_code s) (state_ffi s)`;;
 
 let adj_orac_ok_def = cake_define
   `adj_orac_ok cc f (s:('a,'ffi)bviSem_state) <=>

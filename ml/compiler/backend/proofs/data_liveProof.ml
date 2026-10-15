@@ -14,11 +14,12 @@ needs "lib/sptree.ml";;
 
 let state_rel_def = cake_define
   `data_liveProof_state_rel (s1:('a,'ffi)dataSem_state)
-  (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> code
-     s1 = code t1 /\ clock s1 = clock t1 /\ dataSem_state_space s1 =
-       dataSem_state_space t1 /\ ffi
-     s1 = ffi t1 /\ refs s1 = refs t1 /\ dataSem_state_global s1 =
-       dataSem_state_global t1 /\ dataSem_state_handler
+  (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> state_code
+     s1 = state_code t1 /\ state_clock s1 = state_clock t1 /\
+       dataSem_state_space s1 = dataSem_state_space t1 /\ state_ffi
+     s1 = state_ffi t1 /\ state_refs s1 = state_refs t1 /\
+       dataSem_state_global s1 = dataSem_state_global t1 /\
+       dataSem_state_handler
      s1 = dataSem_state_handler t1 /\ (LENGTH (stack s1) = LENGTH
        (stack t1)) /\ compile
      s1 = compile t1 /\ compile_oracle s1 = compile_oracle t1 /\

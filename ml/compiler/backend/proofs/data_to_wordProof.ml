@@ -1099,7 +1099,7 @@ let state_rel_ext_def = cake_define
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
        word_bignumProof_state_rel c l1 l2 s t NONE [] /\
-       domain (code t) = domain l /\ wordSem_state_termdep
+       domain (state_code t) = domain l /\ wordSem_state_termdep
        t > 1 /\
        (?tt kk aa co. compile_oracle
           u =
@@ -1109,13 +1109,13 @@ let state_rel_ext_def = cake_define
           t = (\conf progs. compile u conf
             (MAP (\p. full_compile_single tt kk aa co (p,NONE))
               progs))) /\
-       (!n v. lookup n (code t) = SOME v ==>
+       (!n v. lookup n (state_code t) = SOME v ==>
               (?t' k' a' c' col.
               lookup n l = SOME (SND (full_compile_single t' k' a' c'
                 ((n,v),col))))) /\
        u = compile_oracle_fupd (K (compile_oracle u))
          (compile_fupd (K (compile u)) (wordSem_state_termdep_fupd (K
-         0) (code_fupd (K l) t))))`;;
+         0) (state_code_fupd (K l) t))))`;;
 
 (* observational semantics preservation *)
 

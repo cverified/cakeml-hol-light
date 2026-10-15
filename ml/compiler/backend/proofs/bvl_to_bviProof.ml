@@ -68,10 +68,10 @@ let names_ok_def = cake_define
   `bvl_to_bviProof_names_ok s_code t_code s_oracle <=>
      (!n k prog. s_oracle n = (k,prog) ==>
                  EVERY (\(name,arity,exp). handle_ok [exp]) prog) /\
-     (let next = FST (FST (s_oracle 0)) in
+     (let next' = FST (FST (s_oracle 0)) in
        (!n. n IN domain t_code /\ bvl_num_stubs <= n ==>
             (if (\n. n MOD bvl_to_bvi_namespaces = 1) n then n <
-              bvl_num_stubs + bvl_to_bvi_namespaces * next else (\n. n
+              bvl_num_stubs + bvl_to_bvi_namespaces * next' else (\n. n
               MOD bvl_to_bvi_namespaces = 0) n /\
                  (n - bvl_num_stubs) DIV bvl_to_bvi_namespaces IN
                    domain s_code)))`;;
@@ -80,50 +80,51 @@ hol4_overload "names_ok" "bvl_to_bviProof_names_ok";;
 let state_rel_def = cake_define
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state)
   <=>
-     INJ b (FDOM (refs s)) (FDOM (refs t)) /\
-     (!k. match FLOOKUP (refs s) k with NONE -> T | SOME (ValueArray
-       vs) ->
-              (FLOOKUP (refs t) (b k) = SOME (ValueArray (MAP
+     INJ b (FDOM (state_refs s)) (FDOM (state_refs t)) /\
+     (!k. match FLOOKUP (state_refs s) k with NONE -> T | SOME
+       (ValueArray vs) ->
+              (FLOOKUP (state_refs t) (b k) = SOME (ValueArray (MAP
                 (adjust_bv b) vs))) | SOME (Thunk m v) ->
-              (FLOOKUP (refs t) (b k) = SOME (Thunk m (adjust_bv b
-                v))) | SOME res -> (FLOOKUP (refs t) (b k) = SOME res))
-                /\
-     (ffi s = ffi t) /\
+              (FLOOKUP (state_refs t) (b k) = SOME (Thunk m
+                (adjust_bv b v))) | SOME res -> (FLOOKUP (state_refs t)
+                (b k) = SOME res)) /\
+     (state_ffi s = state_ffi t) /\
      (!p. bviSem_state_global t = SOME p ==> ~(
-            p IN IMAGE b (FDOM (refs s))) /\
-            (?z. FLOOKUP (refs t) p =
+            p IN IMAGE b (FDOM (state_refs s))) /\
+            (?z. FLOOKUP (state_refs t) p =
                   SOME (ValueArray
-                    ((Number (&(SUC (LENGTH (globals s))))) ::
+                    ((Number (&(SUC (LENGTH (state_globals s))))) ::
                      (MAP (the (Number (&0)) o OPTION_MAP (adjust_bv
-                       b)) (globals s) ++
-                     REPLICATE (z - (SUC (LENGTH (globals s))))
+                       b)) (state_globals s) ++
+                     REPLICATE (z - (SUC (LENGTH (state_globals s))))
                        (Number (&0))))) /\
-                SUC (LENGTH (globals s)) <= z)) /\
-     (clock s = clock t) /\ compile_oracle
+                SUC (LENGTH (state_globals s)) <= z)) /\
+     (state_clock s = state_clock t) /\ compile_oracle
      t = state_co compile_inc (compile_oracle s) /\ compile
      s = state_cc compile_inc (compile t) /\
-     (sptree_lookup AllocGlobal_location (code t) = SOME
+     (sptree_lookup AllocGlobal_location (state_code t) = SOME
        AllocGlobal_code) /\
-     (sptree_lookup CopyGlobals_location (code t) = SOME
+     (sptree_lookup CopyGlobals_location (state_code t) = SOME
        CopyGlobals_code) /\
-     (sptree_lookup ListLength_location (code t) = SOME
+     (sptree_lookup ListLength_location (state_code t) = SOME
        ListLength_code) /\
-     (sptree_lookup FromListByte_location (code t) = SOME
+     (sptree_lookup FromListByte_location (state_code t) = SOME
        FromListByte_code) /\
-     (sptree_lookup ToListByte_location (code t) = SOME
+     (sptree_lookup ToListByte_location (state_code t) = SOME
        ToListByte_code) /\
-     (sptree_lookup SumListLength_location (code t) = SOME
+     (sptree_lookup SumListLength_location (state_code t) = SOME
        SumListLength_code) /\
-     (sptree_lookup ConcatByte_location (code t) = SOME
+     (sptree_lookup ConcatByte_location (state_code t) = SOME
        ConcatByte_code) /\
-     bvl_to_bviProof_names_ok (code s) (code t) (compile_oracle s) /\
+     bvl_to_bviProof_names_ok (state_code s) (state_code t)
+       (compile_oracle s) /\
      (!name arity exp.
-        (sptree_lookup name (code s) = SOME (arity,exp)) ==>
+        (sptree_lookup name (state_code s) = SOME (arity,exp)) ==>
         (?n. let (c1,aux1,n1) = compile_exps n [exp] in
               (sptree_lookup (bvl_num_stubs + bvl_to_bvi_namespaces *
-                name) (code t) =
+                name) (state_code t) =
                  SOME (arity,bvi_let_compile_exp (HD c1))) /\
-              aux_code_installed (append aux1) (code t) /\
+              aux_code_installed (append aux1) (state_code t) /\
               handle_ok [exp]))`;;
 hol4_overload "state_rel" "bvl_to_bviProof_state_rel";;
 
@@ -146,11 +147,11 @@ val bv_ok_ind = theorem"bv_ok_ind";
 
 let state_ok_def = cake_define
   `bvl_to_bviProof_state_ok (s:('c,'ffi)bvlSem_state) <=>
-     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok (refs s) v)
-       (globals s) /\
-     (!k. match FLOOKUP (refs s) k with SOME (ValueArray vs) ->
-       EVERY (bv_ok (refs s)) vs | SOME (Thunk _2 v) -> bv_ok (refs
-       s) v | _3 -> T)`;;
+     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok (state_refs
+       s) v) (state_globals s) /\
+     (!k. match FLOOKUP (state_refs s) k with SOME (ValueArray vs)
+       -> EVERY (bv_ok (state_refs s)) vs | SOME (Thunk _2 v) ->
+       bv_ok (state_refs s) v | _3 -> T)`;;
 hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* evaluate preserves state_ok *)
@@ -2631,10 +2632,10 @@ Finalise compile_exps_correct;
 
 let full_cc_def = cake_define
   `full_cc c cc =
-     (let limit = bvl_to_bvi_config_inline_size_limit c in
+     (let limit' = bvl_to_bvi_config_inline_size_limit c in
      let split = bvl_to_bvi_config_split_main_at_seq c in
      let cut = bvl_to_bvi_config_exp_cut c in
-       state_cc (compile_inc limit split cut) (state_cc compile_inc
+       state_cc (compile_inc limit' split cut) (state_cc compile_inc
          (state_cc (bvi_tailrec_compile_prog
            (bvl_to_bvi_config_do_tailrec c))
            (state_cc (bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc
@@ -2643,7 +2644,7 @@ let full_cc_def = cake_define
 
 let full_co_def = cake_define
   `full_co c co =
-     (let limit = bvl_to_bvi_config_inline_size_limit c in
+     (let limit' = bvl_to_bvi_config_inline_size_limit c in
      let split = bvl_to_bvi_config_split_main_at_seq c in
      let cut = bvl_to_bvi_config_exp_cut c in
        state_co bvi_inline_compile_inc
@@ -2652,7 +2653,7 @@ let full_co_def = cake_define
            (state_co (bvi_tailrec_compile_prog
              (bvl_to_bvi_config_do_tailrec c))
              (state_co compile_inc
-               (state_co (compile_inc limit split cut) co)))))`;;
+               (state_co (compile_inc limit' split cut) co)))))`;;
 
 (* --- no_mutcons: syntactic absence of MutCons operations ---
 

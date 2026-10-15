@@ -78,8 +78,8 @@ val get_stack_ind = theorem "get_stack_ind";
 *)
 
 let get_memory_def = cake_define
-  `get_memory (mem:'a word->'a word_loc) (mdom:'a word->bool) =
-       (let locSet = SET_TO_LIST (IMAGE mem mdom) in
+  `get_memory (mem':'a word->'a word_loc) (mdom:'a word->bool) =
+       (let locSet = SET_TO_LIST (IMAGE mem' mdom) in
        let locList = MAP THE (FILTER IS_SOME (MAP dest_word_loc
          locSet)) in
        FOLDL (\acc loc. sptree_insert loc one acc) LN locList)`;;
@@ -89,9 +89,10 @@ let find_loc_state_def = cake_define
        (let loc = (get_locals (wordSem_state_locals s)) in
        let sto = (get_store (wordSem_state_store s)) in
        let sta = (get_stack (stack s)) in
-       let mem = (get_memory (wordSem_state_memory s)
+       let mem' = (get_memory (wordSem_state_memory s)
          (wordSem_state_mdomain s)) in
-       sptree_union (sptree_union loc sto) (sptree_union sta mem))`;;
+       sptree_union (sptree_union loc sto) (sptree_union sta
+         mem'))`;;
 
 let code_rel_def = cake_define
   `word_elimProof_code_rel (reachable:1 spt) s_code (t_code:(num#'a
@@ -109,13 +110,13 @@ let code_closed_def = cake_define
 let gc_no_new_locs_def = cake_define
   `gc_no_new_locs (g:('a word_loc) list#('a word->'a word_loc)#('a
   word->bool)#(store_name,'a word_loc)fmap->(('a word_loc) list#('a
-  word->'a word_loc)#(store_name,'a word_loc)fmap) option) <=> (!sta mem
-  mdom sto wl mem1 sto1 sta1.
-       (g (wordSem_enc_stack sta,mem,mdom,sto) = SOME (wl,mem1,sto1))
-         /\
+  word->'a word_loc)#(store_name,'a word_loc)fmap) option) <=> (!sta
+  mem' mdom sto wl mem1 sto1 sta1.
+       (g (wordSem_enc_stack sta,mem',mdom,sto) = SOME
+         (wl,mem1,sto1)) /\
         wordSem_dec_stack wl sta = SOME sta1 ==>
        domain (get_stack sta1) SUBSET domain (get_stack sta) /\
-       domain (get_memory mem1 mdom) SUBSET domain (get_memory mem
+       domain (get_memory mem1 mdom) SUBSET domain (get_memory mem'
          mdom) /\
        domain (get_store sto1) SUBSET domain (get_store sto))`;;
 
@@ -135,11 +136,11 @@ let word_state_rel_def = cake_define
        s = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
        s = wordSem_state_data_buffer t /\ wordSem_state_gc_fun
        s = wordSem_state_gc_fun t /\ wordSem_state_handler
-       s = wordSem_state_handler t /\ clock
-       s = clock t /\ wordSem_state_termdep
+       s = wordSem_state_handler t /\ state_clock
+       s = state_clock t /\ wordSem_state_termdep
        s = wordSem_state_termdep t /\ wordSem_state_be
-       s = wordSem_state_be t /\ ffi
-       s = ffi t /\ wordSem_state_locals_size
+       s = wordSem_state_be t /\ state_ffi
+       s = state_ffi t /\ wordSem_state_locals_size
        s = wordSem_state_locals_size t /\ wordSem_state_stack_max
        s = wordSem_state_stack_max t /\ wordSem_state_stack_limit
        s = wordSem_state_stack_limit t /\ wordSem_state_stack_size

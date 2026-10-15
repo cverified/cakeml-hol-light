@@ -37,10 +37,6 @@ let source_to_flat_environment_FIELDS =
   define_record "source_to_flat_environment"
   ["c","(mlstring,mlstring,num#(num#(num#num) list) option)namespace";
    "v","(mlstring,mlstring,var_name)namespace"];;
-hol4_overload "c" "source_to_flat_environment_c";;
-hol4_overload "c_fupd" "source_to_flat_environment_c_fupd";;
-hol4_overload "v" "source_to_flat_environment_v";;
-hol4_overload "v_fupd" "source_to_flat_environment_v_fupd";;
 
 let environment_generation_store_FIELDS =
   define_record "environment_generation_store"
@@ -236,9 +232,10 @@ let om_tra_def = cake_define
   `om_tra = Cons orphan_trace 1`;;
 
 let alloc_defs_def = cake_define_list
-  [`alloc_defs n next [] = []`;
-   `alloc_defs n next (x :: xs) =
-        (x,Glob om_tra next) :: alloc_defs (n + 1) (next + 1) xs`];;
+  [`alloc_defs n next' [] = []`;
+   `alloc_defs n next' (x :: xs) =
+        (x,Glob om_tra next') :: alloc_defs (n + 1) (next' + 1)
+          xs`];;
 
 let make_varls_def = cake_define
   `make_varls n t idx x4 =
@@ -424,10 +421,10 @@ let compile_flat_def = cake_define
      MAP (compile_dec pcfg) o remove_flat_prog`;;
 
 let glob_alloc_def = cake_define
-  `glob_alloc next c =
+  `glob_alloc next' c =
        (Let om_tra NONE
          (App om_tra
-           (flatLang_GlobalVarAlloc (next_indices_vidx next -
+           (flatLang_GlobalVarAlloc (next_indices_vidx next' -
              next_indices_vidx (next c))) [])
          (flatLang_Con om_tra NONE []))`;;
 
@@ -438,23 +435,23 @@ let alloc_env_ref_def = cake_define
 
 let compile_prog_def = cake_define
   `source_to_flat_compile_prog c p =
-     (let next = next_indices_vidx_fupd (K (next_indices_vidx (next
+     (let next' = next_indices_vidx_fupd (K (next_indices_vidx (next
        c) + 1)) (next c) in
-     let envs = mk_environment_generation_store 0 (next (envs c)) LN
+     let envs' = mk_environment_generation_store 0 (next (envs c)) LN
        in
-     let (_17,next,e,gen,p') = source_to_flat_compile_decs [] 1 next
-       (source_to_flat_config_mod_env c) envs p in
+     let (_17,next',e,gen,p') = source_to_flat_compile_decs [] 1
+       next' (source_to_flat_config_mod_env c) envs' p in
      let envs2 = mk_environment_store (next (envs c) + 1)
        (sptree_insert (next (envs c)) (envs gen)
        (environment_store_env_gens (envs c))) in
      (source_to_flat_config_mod_env_fupd (K e) (envs_fupd (K envs2)
-       (next_fupd (K next) c)),
-         glob_alloc next c :: alloc_env_ref :: p'))`;;
+       (next_fupd (K next') c)),
+         glob_alloc next' c :: alloc_env_ref :: p'))`;;
 hol4_overload "compile_prog" "source_to_flat_compile_prog";;
 
 let lookup_env_id_def = cake_define
-  `lookup_env_id env_id envs = (match sptree_lookup (FST env_id)
-  (environment_store_env_gens envs) with NONE ->
+  `lookup_env_id env_id envs' = (match sptree_lookup (FST env_id)
+  (environment_store_env_gens envs') with NONE ->
   source_to_flat_empty_env | SOME gen -> (match sptree_lookup (SND
   env_id) gen with NONE -> source_to_flat_empty_env | SOME env ->
   env))`;;
@@ -470,17 +467,17 @@ let store_env_id_def = cake_define
 let inc_compile_prog_def = cake_define
   `inc_compile_prog env_id c p =
      (let env = lookup_env_id env_id (envs c) in
-     let envs = mk_environment_generation_store 0 (next (envs c)) LN
+     let envs' = mk_environment_generation_store 0 (next (envs c)) LN
        in
-     let (_18,next,e,gen,p') = source_to_flat_compile_decs [] 1 (next
-       c) env envs p in
+     let (_18,next',e,gen,p') = source_to_flat_compile_decs [] 1
+       (next c) env envs' p in
      let gen_envs = sptree_insert (next gen) (extend_env e env) (envs
        gen) in
      let envs2 = mk_environment_store (next (envs c) + 1)
        (sptree_insert (next (envs c)) gen_envs
        (environment_store_env_gens (envs c))) in
-     (envs_fupd (K envs2) (next_fupd (K next) c),(
-         glob_alloc next c :: p') ++ [store_env_id (generation
+     (envs_fupd (K envs2) (next_fupd (K next') c),(
+         glob_alloc next' c :: p') ++ [store_env_id (generation
            gen) (next gen)]))`;;
 
 let compile_def = cake_define

@@ -100,7 +100,7 @@ let data_section_def = cake_define
          "cake_bitmaps:"])`;;
 
 let data_buffer_def = cake_define
-  `export_data_buffer =
+  `data_buffer =
       MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_bitmaps_buffer_begin)";
          "cdecl(cake_bitmaps_buffer_begin):";
@@ -109,10 +109,9 @@ let data_buffer_def = cake_define
          "#endif";
          "     .globl cdecl(cake_bitmaps_buffer_end)";
          "cdecl(cake_bitmaps_buffer_end):"]`;;
-hol4_overload "data_buffer" "export_data_buffer";;
 
 let code_buffer_def = cake_define
-  `export_code_buffer =
+  `code_buffer =
       MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_codebuffer_begin)";
          "cdecl(cake_codebuffer_begin):";
@@ -123,7 +122,6 @@ let code_buffer_def = cake_define
          "     .globl cdecl(cake_codebuffer_end)";
          "cdecl(cake_codebuffer_end):";
          "     .space 4096"]`;;
-hol4_overload "code_buffer" "export_code_buffer";;
 
 let comm_strlit_def = cake_define
   `comm_strlit = (implode ",")`;;
@@ -162,25 +160,25 @@ let escape_sym_char_def = cake_define
      (implode "$") (toString (code))) (implode "_"))`;;
 
 let get_sym_label_def = cake_define
-  `get_sym_label (ix,appl) (name,start,len) =
+  `get_sym_label (ix,appl) (name,start',len) =
      (let label = (\x y. strcat x y) ((\x y. strcat x y) ((\x y.
        strcat x y)
        (implode "cml_") (concat (MAP escape_sym_char (explode
          name))))
        (implode "_")) (toString (ix)) in
-     (ix + 1,appl ++ [(name,label,start,len)]))`;;
+     (ix + 1,appl ++ [(name,label,start',len)]))`;;
 
 let get_sym_labels_def = cake_define
   `get_sym_labels syms =
      SND (FOLDL get_sym_label (0,[]) syms)`;;
 
 let emit_symbol_def = cake_define
-  `emit_symbol appl (name,label,start,len) =
+  `emit_symbol appl (name,label,start',len) =
      misc_Append appl (misc_List
        [(\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
          ((\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
          (implode "    makesym(") label) (implode ", ")) (toString
-         (start))) (implode ", "))
+         (start'))) (implode ", "))
        (toString (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = cake_define

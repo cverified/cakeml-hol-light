@@ -303,11 +303,11 @@ let stack_free_def = cake_define
 hol4_overload "stack_free" "word_to_stack_stack_free";;
 
 let stack_move_def = cake_define_list
-  [`stack_move 0 start offset i p = p`;
-   `stack_move (SUC n) start offset i p =
-         Seq (stack_move n (start + 1) offset i p)
-             (Seq (stackLang_StackLoad i (start + offset))
-               (stackLang_StackStore i start))`];;
+  [`stack_move 0 start' offset i p = p`;
+   `stack_move (SUC n) start' offset i p =
+         Seq (stack_move n (start' + 1) offset i p)
+             (Seq (stackLang_StackLoad i (start' + offset))
+               (stackLang_StackStore i start'))`];;
 
 let StackArgs_def = cake_define
   `StackArgs dest arg_count (k,f,(f':num)) =

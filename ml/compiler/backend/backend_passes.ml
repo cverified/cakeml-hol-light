@@ -147,13 +147,13 @@ let to_bvl_all_def = cake_define
 let to_bvi_all_def = cake_define
   `to_bvi_all (c:backend_config) p =
      (let (ps,c,p,names) = to_bvl_all c p in
-     let start = clos_to_bvl_config_start (backend_config_clos_conf
+     let start' = clos_to_bvl_config_start (backend_config_clos_conf
        c) in
      let c0 = backend_config_bvl_conf c in
-     let limit = bvl_to_bvi_config_inline_size_limit c0 in
+     let limit' = bvl_to_bvi_config_inline_size_limit c0 in
      let split_seq = bvl_to_bvi_config_split_main_at_seq c0 in
      let cut_size = bvl_to_bvi_config_exp_cut c0 in
-     let (inlines,prog1) = tick_compile_prog limit LN p in
+     let (inlines,prog1) = tick_compile_prog limit' LN p in
      let prog = MAP (\(name,arity,exp). (name,arity,HD (remove_ticks
        [exp]))) prog1 in
      let ps = ps ++ [((implode
@@ -168,7 +168,7 @@ let to_bvi_all_def = cake_define
                           prog in
      let ps = ps ++ [((implode "after bvl_handle"),backend_passes_Bvl
        prog names)] in
-     let (loc,code,n1) = bvl_to_bvi_compile_prog start 0 prog in
+     let (loc,code,n1) = bvl_to_bvi_compile_prog start' 0 prog in
      let (n2,code2) = bvi_tailrec_compile_prog
        (bvl_to_bvi_config_do_tailrec c0) (bvl_num_stubs + 2) code in
      let (n3,code3) = bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc

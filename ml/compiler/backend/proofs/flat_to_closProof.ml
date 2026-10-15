@@ -42,7 +42,7 @@ let v_rel = cake_inductive
    (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Vectorv vs)
      (closSem_Block 0 ws)) /\
    (!env m db.
-     (!n x. ALOOKUP (v env) n = SOME x ==>
+     (!n x. ALOOKUP (semanticPrimitives_sem_env_v env) n = SOME x ==>
             indexedLists_findi (SOME n) m < LENGTH db /\
             v_rel x (EL (indexedLists_findi (SOME n) m) db)) ==>
       env_rel env (m:(mlstring option) list) (db:closSem_v list)) /\
@@ -89,12 +89,13 @@ let install_config_rel'_def = cake_define
 let state_rel_def = cake_define
   `flat_to_closProof_state_rel (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     1 <= closSem_state_max_app t /\ ffi
-     s = ffi t /\ clock
-     s = clock t /\
-     store_rel (refs s) (refs t) /\ ~(
-     LENGTH (globals t) = 0) /\
-     LIST_REL (OPTREL v_rel) (globals s) (TL (globals t)) /\
+     1 <= closSem_state_max_app t /\ state_ffi
+     s = state_ffi t /\ state_clock
+     s = state_clock t /\
+     store_rel (state_refs s) (state_refs t) /\ ~(
+     LENGTH (state_globals t) = 0) /\
+     LIST_REL (OPTREL v_rel) (state_globals s) (TL (state_globals t))
+       /\
      install_config_rel' (flatSem_state_eval_config s)
        (compile_oracle t) (compile t)`;;
 hol4_overload "state_rel" "flat_to_closProof_state_rel";;

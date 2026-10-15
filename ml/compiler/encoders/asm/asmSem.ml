@@ -43,7 +43,7 @@ hol4_overload "failed" "asm_state_failed";;
 hol4_overload "failed_fupd" "asm_state_failed_fupd";;
 
 let upd_pc_def = cake_define
-  `asmSem_upd_pc pc s = asm_state_pc_fupd (K pc) s`;;
+  `asmSem_upd_pc pc' s = asm_state_pc_fupd (K pc') s`;;
 hol4_overload "upd_pc" "asmSem_upd_pc";;
 let upd_reg_def = cake_define
   `asmSem_upd_reg r v s = asm_state_regs_fupd (K ((r =+ v)
@@ -284,20 +284,21 @@ let jump_to_offset_def = cake_define
   `jump_to_offset w s = asmSem_upd_pc (asm_state_pc s + w) s`;;
 
 let asm_def = cake_define_list
-  [`asmSem_asm (asm_Inst i) pc s = asmSem_upd_pc pc (asmSem_inst i s)`;
-   `asmSem_asm (asm_Jump l) pc s = jump_to_offset l s`;
-   `asmSem_asm (asm_JumpCmp cmp r ri l) pc s =
+  [`asmSem_asm (asm_Inst i) pc' s = asmSem_upd_pc pc' (asmSem_inst i
+  s)`;
+   `asmSem_asm (asm_Jump l) pc' s = jump_to_offset l s`;
+   `asmSem_asm (asm_JumpCmp cmp r ri l) pc' s =
          (if asm_word_cmp cmp (asmSem_read_reg r s)
            (asmSem_reg_imm ri s) then jump_to_offset l s else
-           asmSem_upd_pc pc s)`;
-   `asmSem_asm (asm_Call l) pc s = jump_to_offset l (asmSem_upd_reg
-  (asm_state_lr s) pc s)`;
-   `asmSem_asm (asm_JumpReg r) pc s =
+           asmSem_upd_pc pc' s)`;
+   `asmSem_asm (asm_Call l) pc' s = jump_to_offset l (asmSem_upd_reg
+  (asm_state_lr s) pc' s)`;
+   `asmSem_asm (asm_JumpReg r) pc' s =
          (let a = asmSem_read_reg r s in asmSem_upd_pc a
            (asmSem_assert (alignment_aligned (asm_state_align s) a)
            s))`;
-   `asmSem_asm (asm_Loc r l) pc s = asmSem_upd_pc pc (asmSem_upd_reg
-  r (asm_state_pc s + l) s)`];;
+   `asmSem_asm (asm_Loc r l) pc' s = asmSem_upd_pc pc'
+  (asmSem_upd_reg r (asm_state_pc s + l) s)`];;
 hol4_overload "asm" "asmSem_asm";;
 
 let asm_step_def = cake_define

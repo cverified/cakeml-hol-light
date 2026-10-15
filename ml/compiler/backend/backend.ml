@@ -213,11 +213,11 @@ let to_target_def = cake_define
 
 let prim_src_config_def = cake_define
   `prim_src_config =
-     (let (_11,next,env,_12,_13) = compile_decs [] 1 (next
+     (let (_11,next',env,_12,_13) = compile_decs [] 1 (next
        empty_config) source_to_flat_empty_env
          ARB prim_types_program in
      (source_to_flat_config_mod_env_fupd (K env) (next_fupd (K
-       next) empty_config)))`;;
+       next') empty_config)))`;;
 
 let prim_config_def = cake_define
   `prim_config =
@@ -526,7 +526,7 @@ let ffinames_to_string_list_def = cake_define_list
         ffinames_to_string_list rest`];;
 
 let set_oracle_def = cake_define
-  `set_oracle c oracle = backend_config_word_to_word_conf_fupd (K
-  (word_to_word_config_col_oracle_fupd (K oracle)
+  `set_oracle c oracle' = backend_config_word_to_word_conf_fupd (K
+  (word_to_word_config_col_oracle_fupd (K oracle')
   (backend_config_word_to_word_conf c)))
      c`;;

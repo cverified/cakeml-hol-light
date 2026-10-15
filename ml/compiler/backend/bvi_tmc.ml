@@ -322,28 +322,28 @@ let rewrite_worker_def = cake_define
       fill_hole i_old_ptr i_old_idx expr`;;
 
 let compile_exp_def = cake_define
-  `bvi_tmc_compile_exp (loc:num) (next:num) (arity:num) (exp:bvi_exp) =
-     (match rewrite_wrapper loc next arity exp with NONE -> NONE |
+  `bvi_tmc_compile_exp (loc:num) (next':num) (arity:num) (exp:bvi_exp) =
+     (match rewrite_wrapper loc next' arity exp with NONE -> NONE |
        SOME exp_wrapper ->
-       (let exp_worker = rewrite_worker loc next arity (arity + 1)
+       (let exp_worker = rewrite_worker loc next' arity (arity + 1)
          arity exp in
        SOME (exp_wrapper,exp_worker)))`;;
 hol4_overload "compile_exp" "bvi_tmc_compile_exp";;
 
 let compile_each_def = cake_define_list
-  [`bvi_tmc_compile_each next [] = (next,[])`;
-   `bvi_tmc_compile_each next ((loc,arity,exp) :: xs) =
-        (match bvi_tmc_compile_exp loc next arity exp with NONE ->
-            (let (n,ys) = bvi_tmc_compile_each next xs in
+  [`bvi_tmc_compile_each next' [] = (next',[])`;
+   `bvi_tmc_compile_each next' ((loc,arity,exp) :: xs) =
+        (match bvi_tmc_compile_exp loc next' arity exp with NONE ->
+            (let (n,ys) = bvi_tmc_compile_each next' xs in
               (n,(loc,arity,exp) :: ys)) | SOME
                 (exp_wrapper,exp_worker) ->
-            (let (n,ys) = bvi_tmc_compile_each (next +
+            (let (n,ys) = bvi_tmc_compile_each (next' +
               bvl_to_bvi_namespaces) xs in
-            (n,(loc,arity,exp_wrapper) :: (next,arity +
+            (n,(loc,arity,exp_wrapper) :: (next',arity +
               2,exp_worker) :: ys)))`];;
 hol4_overload "compile_each" "bvi_tmc_compile_each";;
 
 let compile_prog_def = cake_define
-  `bvi_tmc_compile_prog do_it next xs =
-     (if do_it then bvi_tmc_compile_each next xs else (next,xs))`;;
+  `bvi_tmc_compile_prog do_it next' xs =
+     (if do_it then bvi_tmc_compile_each next' xs else (next',xs))`;;
 hol4_overload "compile_prog" "bvi_tmc_compile_prog";;

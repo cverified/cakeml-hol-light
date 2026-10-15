@@ -17,18 +17,19 @@ let rename_state_def = cake_define
   `rename_state compile_rest f s = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (tlookup f) (stackSem_state_ffi_save_regs s)))
   (compile_oracle_fupd (K ((I ## stack_names_compile f ## I) o
-  compile_oracle s)) (compile_fupd (K compile_rest) (code_fupd (K
-  (fromAList (stack_names_compile f (toAList (code s)))))
+  compile_oracle s)) (compile_fupd (K compile_rest) (state_code_fupd (K
+  (fromAList (stack_names_compile f (toAList (state_code s)))))
   (stackSem_state_regs_fupd (K (MAP_KEYS (tlookup f)
   (stackSem_state_regs s)))
     s))))`;;
 
 let make_init_def = cake_define
-  `stack_namesProof_make_init f code oracle
+  `stack_namesProof_make_init f code oracle'
   (s:('a,'c,'ffi)stackSem_state) = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (LINV (tlookup f) UNIV) (stackSem_state_ffi_save_regs s)))
-  (compile_oracle_fupd (K oracle) (compile_fupd (K (\cfg. compile s cfg
+  (compile_oracle_fupd (K oracle') (compile_fupd (K (\cfg. compile s cfg
   o (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS
-  (LINV (tlookup f) UNIV) (stackSem_state_regs s))) (code_fupd (K code)
+  (LINV (tlookup f) UNIV) (stackSem_state_regs s))) (state_code_fupd (K
+  code)
      s))))`;;
 hol4_overload "make_init" "stack_namesProof_make_init";;

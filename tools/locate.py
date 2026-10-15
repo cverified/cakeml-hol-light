@@ -7,9 +7,9 @@ text = open(src).read()
 # the phrases of a file of the port end in ";;" at the end of a line
 parts = re.split(r'(?<=;;)\n', text)
 res = ["""let cake_mark s =
-  let o = open_out_gen [Open_append; Open_creat] 0o644
+  let ch = open_out_gen [Open_append; Open_creat] 0o644
             "/home/freek/claude/hol-light/cakeml/tmp/mark.txt" in
-  output_string o (s ^ "\\n"); close_out o;;
+  output_string ch (s ^ "\\n"); close_out ch;;
 """]
 n = 0
 for p in parts:

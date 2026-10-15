@@ -87,9 +87,9 @@ let all_pcs_def = cake_define
           k)) k`;;
 
 let asserts_def = cake_define_list
-  [`asserts 0 next ms _1 Q <=> Q (next 0 ms)`;
-   `asserts (SUC n) next ms P Q <=>
-         (let ms' = next (SUC n) ms in P ms' /\ asserts n next
+  [`asserts 0 next' ms _1 Q <=> Q (next' 0 ms)`;
+   `asserts (SUC n) next' ms P Q <=>
+         (let ms' = next' (SUC n) ms in P ms' /\ asserts n next'
            ms' P Q)`];;
 
 let asserts2_def = cake_define
@@ -111,8 +111,8 @@ let encoder_correct_def = cake_define
                (target_config t) i)) (asm_state_pc s1) in
              asserts n (\k s. env (n - k) (target_next t s)) ms
                (\ms'. target_state_ok t ms' /\
-                      (!pc. pc IN pcs 0 ==> target_get_byte t ms' pc
-                        = target_get_byte t ms pc) /\ target_get_pc
+                      (!pc'. pc' IN pcs 0 ==> target_get_byte t ms'
+                        pc' = target_get_byte t ms pc') /\ target_get_pc
                       t ms' IN pcs (asm_config_code_alignment
                         (target_config t)))
                (\ms'. target_state_rel t s2 ms') /\

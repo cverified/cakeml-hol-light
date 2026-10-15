@@ -101,8 +101,8 @@ let eval_sim_def = cake_define
        rel ds1 ds2 ==>
        (?ck res2 t2.
          evaluate_decs (flatSem_initial_state ffi (k + ck) ec2) ds2 =
-           (t2,res2) /\ ffi
-         s2 = ffi t2 /\
+           (t2,res2) /\ state_ffi
+         s2 = state_ffi t2 /\
          (res1 = NONE ==> res2 = NONE) /\
          (!v. res1 = SOME (Rraise v) ==> (?v1. res2 = SOME (Rraise
            v1))) /\
@@ -215,20 +215,22 @@ hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 
 let simple_state_rel_def = cake_define
   `flatProps_simple_state_rel vr sr <=>
-     (!s t. sr s t ==> LIST_REL (sv_rel vr) (refs s) (refs t)) /\
+     (!s t. sr s t ==> LIST_REL (sv_rel vr) (state_refs s)
+       (state_refs t)) /\
      (!s t srefs trefs.
-         sr s t /\ LIST_REL (sv_rel vr) srefs trefs ==> sr (refs_fupd
-           (K srefs) s) (refs_fupd (K trefs) t)) /\
+         sr s t /\ LIST_REL (sv_rel vr) srefs trefs ==> sr
+           (state_refs_fupd (K srefs) s) (state_refs_fupd (K trefs) t))
+           /\
      (!s t. sr s t ==> LIST_REL (OPTREL vr) (flatSem_state_globals s)
        (flatSem_state_globals t)) /\
      (!s t sglob tglob.
          sr s t /\ LIST_REL (OPTREL vr) sglob tglob ==> sr
            (flatSem_state_globals_fupd (K sglob) s)
            (flatSem_state_globals_fupd (K tglob) t)) /\
-     (!s t. sr s t ==> ffi s = ffi t) /\
+     (!s t. sr s t ==> state_ffi s = state_ffi t) /\
      (!s t sffi tffi.
-         sr s t /\ sffi = tffi ==> sr (ffi_fupd (K sffi) s)
-           (ffi_fupd (K tffi) t))`;;
+         sr s t /\ sffi = tffi ==> sr (state_ffi_fupd (K sffi) s)
+           (state_ffi_fupd (K tffi) t))`;;
 hol4_overload "simple_state_rel" "flatProps_simple_state_rel";;
 
 (* HOL4 ML code, not ported:
@@ -240,9 +242,10 @@ let evaluate_match_def = cake_define
      (match pmatch_rows pes s v with Match_type_error -> (s,Rerr
        (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise err_v)) |
        Match (env',p',e') ->
-         (if ALL_DISTINCT (pat_bindings p') then evaluate (v_fupd
-           (K (env' ++ v env)) env) s [e'] else (s,Rerr (Rabort
-           Rtype_error))))`;;
+         (if ALL_DISTINCT (pat_bindings p') then evaluate
+           (semanticPrimitives_sem_env_v_fupd (K (env' ++
+           semanticPrimitives_sem_env_v env)) env) s [e'] else
+           (s,Rerr (Rabort Rtype_error))))`;;
 hol4_overload "evaluate_match" "flatProps_evaluate_match";;
 
 (* HOL4 ML code, not ported:
