@@ -2040,8 +2040,15 @@ let cake_cheat_list cls =
   else end_itlist CONJ ths;;
 
 let cake_define_list cls =
-  try cake_define (cake_conj_list cls)
-  with Failure _ -> cake_cheat_list cls;;
+  (* the clauses are typechecked on their own, so the types that
+     they give the functions they define have to be unified first;
+     where that fails the clauses are assumed one by one, and the
+     reason is reported, as it is a bug of the port *)
+  match (try Some(cake_conj_list cls) with Failure s ->
+           (print_string ("\ncake_conj_list failed: " ^ s ^ "\n");
+            flush stdout; None)) with
+    Some tm -> cake_define tm
+  | None -> cake_cheat_list cls;;
 
 let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm
