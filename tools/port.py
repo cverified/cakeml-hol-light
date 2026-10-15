@@ -1421,6 +1421,17 @@ class Porter:
         b.name not in hterm.BASE_INFIX and IDENT.match(txt.strip())):
       hterm.set_infix_name(b.name, self.ctx.name(txt.strip()))
       return
+    # an infix that the source overloads with a term of its own
+    # is written as an application of that term (the ' of
+    # cmlPtreeConversion is the bind of the option monad)
+    if (b.name and b.name in hterm.INFIX and
+        not IDENT.match(txt.strip()) and
+        self.ctx.overloads.get(b.name)):
+      hterm.set_infix_lambda(b.name)
+      self.out.append(shorten(
+        '(* HOL4 overload (expanded in the port):\n'
+        '     %s = %s *)' % (b.name, txt)))
+      return
     # an infix that HOL Light has as well becomes an overload of
     # HOL Light, which resolves it by the type as HOL4 does
     if b.name in hterm.BASE_INFIX and IDENT.match(txt.strip()):

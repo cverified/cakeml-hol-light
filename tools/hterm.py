@@ -1087,6 +1087,16 @@ def set_infix_name(tok, name):
     INFIX[tok] = (prec, assoc, name, None)
 
 
+def set_infix_lambda(tok):
+  """a symbolic infix that a CakeML source overloads with a term
+     of its own (cmlPtreeConversion's ' is the bind of the option
+     monad, not the application of a finite map) is written as an
+     application of that term, which ctx.overloads has"""
+  if tok in INFIX:
+    prec, assoc, _, _ = INFIX[tok]
+    INFIX[tok] = (prec, assoc, tok, None)
+
+
 def set_equality(loose):
   """HOL4's ParseExtras.loose_equality puts = at precedence 100,
      where it binds looser than /\\, and tight_equality back at 450,
@@ -1260,7 +1270,10 @@ class Printer:
       if op == '$':
         return self.paren(self.pr(e.l, PRE_APP) + ' ' +
                           self.pr(e.r, APP), PRE_APP, prec)
-      if op in ("'", "''", '--'):
+      # these are applications of the constant of the infix,
+      # unless the source overloads the infix itself (then the
+      # value of the overload is what it is applied to)
+      if op in ("'", "''", '--') and INFIX[op][3] is not None:
         return self.paren(INFIX[op][2] + ' ' + self.pr(e.l, APP) + ' ' +
                           self.pr(e.r, APP), PRE_APP, prec)
       if op == '%%':
