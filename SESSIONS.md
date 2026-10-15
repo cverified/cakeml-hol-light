@@ -58,5 +58,12 @@ gigabyte) running.  Therefore
 - `repl-kill` interrupts the session first (a busy one would not
   read the `exit`), and kills that process if it is still there.
 
-`tools/bin/holclean` removes what is left of sessions that are
-gone.
+A clone is a child of the process it was forked from, so killing
+a session kills the sessions cloned from it as well: `hol-try`,
+a clone of `hol-wa`, died with `hol-wa`.  Kill the clone first,
+or keep the parent until the clone is no longer needed.
+
+`tools/bin/holclean` kills every session except `hol-base`,
+`hol-template-cakeml` and `hol-seq`, the session of a run (which
+`FORCE=1 holclean` kills as well).  It killed a run of 65 files
+before it spared `hol-seq`.

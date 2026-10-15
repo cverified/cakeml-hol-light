@@ -556,8 +556,8 @@ let ssa_cc_trans_def = cake_define_list
             (prog,ssa_fin,na_fin))))`;
    `ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
-          if op = wordLang_Store \/ op = asm_Store8 \/ op =
-            asm_Store16 \/ op = asm_Store32 then
+          if op = asm_Store \/ op = asm_Store8 \/ op = asm_Store16
+            \/ op = asm_Store32 then
             (wordLang_ShareInst op (option_lookup ssa v)
               exp',ssa,na) else
             let (v',ssa',na') = next_var_rename v ssa na in
@@ -1163,32 +1163,34 @@ let get_clash_tree_def = cake_define_list
   [num'] []`;
    `get_clash_tree (wordLang_Store exp num') lt = reg_alloc_Delta []
   (num' :: get_reads_exp exp)`;
-   `get_clash_tree (wordLang_Seq s1 s2) lt = Seq (get_clash_tree s1
-  lt) (get_clash_tree s2 lt)`;
+   `get_clash_tree (wordLang_Seq s1 s2) lt = reg_alloc_Seq
+  (get_clash_tree s1 lt) (get_clash_tree s2 lt)`;
    `get_clash_tree (wordLang_If cmp r1 ri e2 e3) lt =
         (let e2t = get_clash_tree e2 lt in
         let e3t = get_clash_tree e3 lt in
         match ri with
-          Reg r2 -> Seq (reg_alloc_Delta [] [r1; r2]) (Branch
-            NONE e2t e3t) | _31 -> Seq (reg_alloc_Delta [] [r1])
-            (Branch NONE e2t e3t))`;
+          Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
+            (reg_alloc_Branch NONE e2t e3t) | _31 -> reg_alloc_Seq
+            (reg_alloc_Delta [] [r1]) (reg_alloc_Branch NONE e2t
+            e3t))`;
    `get_clash_tree (wordLang_MustTerminate s) lt =
         get_clash_tree s lt`;
    `get_clash_tree (wordLang_Alloc num' numset) lt =
-        Seq (reg_alloc_Delta [] [num']) (Set (sptree_union (FST
-          numset) (SND numset)))`;
+        reg_alloc_Seq (reg_alloc_Delta [] [num']) (reg_alloc_Set
+          (sptree_union (FST numset) (SND numset)))`;
    `get_clash_tree (wordLang_Install r1 r2 r3 r4 numset) lt =
-        Seq (reg_alloc_Delta [] [r4; r3; r2; r1]) (Seq (Set
-          (sptree_union (FST numset) (SND numset))) (reg_alloc_Delta
-          [r1] []))`;
+        reg_alloc_Seq (reg_alloc_Delta [] [r4; r3; r2; r1])
+          (reg_alloc_Seq (reg_alloc_Set (sptree_union (FST numset)
+          (SND numset))) (reg_alloc_Delta [r1] []))`;
    `get_clash_tree (wordLang_CodeBufferWrite r1 r2) lt =
         reg_alloc_Delta [] [r2; r1]`;
    `get_clash_tree (wordLang_DataBufferWrite r1 r2) lt =
         reg_alloc_Delta [] [r2; r1]`;
    `get_clash_tree (wordLang_FFI ffi_index ptr1 len1 ptr2 len2 numset)
   lt =
-        Seq (reg_alloc_Delta [] [ptr1; len1; ptr2; len2]) (Set
-          (sptree_union (FST numset) (SND numset)))`;
+        reg_alloc_Seq (reg_alloc_Delta [] [ptr1; len1; ptr2;
+          len2]) (reg_alloc_Set (sptree_union (FST numset) (SND
+          numset)))`;
    `get_clash_tree (wordLang_Raise num') lt = reg_alloc_Delta []
   [num']`;
    `get_clash_tree (wordLang_Return num1 nums) lt = reg_alloc_Delta
@@ -1207,33 +1209,37 @@ let get_clash_tree_def = cake_define_list
   reg_alloc_Delta [] (v :: get_reads_exp exp) else reg_alloc_Delta
   [v] (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Loop names body exit_names) lt =
-        Seq (Set names)
-          (Seq (Set exit_names)
-            (Seq (get_clash_tree body ((names,exit_names) :: lt))
-              (Set names)))`;
+        reg_alloc_Seq (reg_alloc_Set names)
+          (reg_alloc_Seq (reg_alloc_Set exit_names)
+            (reg_alloc_Seq (get_clash_tree body ((names,exit_names)
+              :: lt))
+              (reg_alloc_Set names)))`;
    `get_clash_tree (wordLang_Break n) lt =
         (match oEL n lt with
-          NONE -> Set LN | SOME (names,exit_names) -> Set
-            exit_names)`;
+          NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
+            reg_alloc_Set exit_names)`;
    `get_clash_tree (wordLang_Continue n) lt =
         (match oEL n lt with
-          NONE -> Set LN | SOME (names,exit_names) -> Set names)`;
+          NONE -> reg_alloc_Set LN | SOME (names,exit_names) ->
+            reg_alloc_Set names)`;
    `get_clash_tree (wordLang_Call ret dest args h) lt =
         (let args_set = numset_list_insert args LN in
         match ret with
-          NONE -> Set args_set | SOME
+          NONE -> reg_alloc_Set args_set | SOME
             (vs,cutsets,ret_handler,_48,_49) ->
           (let cutset = sptree_union (FST cutsets) (SND cutsets) in
           let live_set = sptree_union cutset args_set in
-          let ret_tree = Seq (Set (numset_list_insert vs cutset))
-            (get_clash_tree ret_handler lt) in
+          let ret_tree = reg_alloc_Seq (reg_alloc_Set
+            (numset_list_insert vs cutset)) (get_clash_tree ret_handler
+            lt) in
           match h with
-            NONE -> Seq (Set live_set) ret_tree | SOME
-              (v',prog,_50,_51) ->
+            NONE -> reg_alloc_Seq (reg_alloc_Set live_set) ret_tree
+              | SOME (v',prog,_50,_51) ->
             (let handler_tree =
-              Seq (Set (sptree_insert v' one cutset))
-                (get_clash_tree prog lt) in
-            Branch (SOME live_set) ret_tree handler_tree)))`];;
+              reg_alloc_Seq (reg_alloc_Set (sptree_insert v' one
+                cutset)) (get_clash_tree prog lt) in
+            reg_alloc_Branch (SOME live_set) ret_tree
+              handler_tree)))`];;
 
 (* Preference edges
   The allocator tries hard to coalesce these edges

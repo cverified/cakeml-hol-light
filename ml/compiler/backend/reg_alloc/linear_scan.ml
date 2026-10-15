@@ -1106,14 +1106,14 @@ let linear_reg_alloc_and_extract_coloration_def = cake_define
 
 let size_of_clash_tree_def = cake_define_list
   [`size_of_clash_tree (reg_alloc_Delta wr rd) =
-      (&2)`;
+      ((&2):int)`;
    `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
-      (&1)`;
-   `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) =
+      ((&1):int)`;
+   `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) = ((
       (if IS_SOME optcutset then (&1) else (&0)) +
-        size_of_clash_tree ct1 + size_of_clash_tree ct2`;
-   `size_of_clash_tree (Seq ct1 ct2:clash_tree) =
-      size_of_clash_tree ct1 + size_of_clash_tree ct2`];;
+        size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`;
+   `size_of_clash_tree (Seq ct1 ct2:clash_tree) = ((
+      size_of_clash_tree ct1 + size_of_clash_tree ct2):int)`];;
 
 let run_linear_reg_alloc_intervals_def = cake_define
   `run_linear_reg_alloc_intervals ct k forced moves

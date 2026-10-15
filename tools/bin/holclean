@@ -1,11 +1,14 @@
 #!/bin/sh
-# holclean : kill every HOL Light session of the port except hol-base
-# and hol-template-cakeml
+# holclean : kill every HOL Light session of the port except
+# hol-base, hol-template-cakeml and hol-seq (the session of a run,
+# which FORCE=1 kills as well).  It says which ones it killed.
 PATH=/home/freek/claude/hol-light/bin:$PATH
 for s in $(tmux ls 2>/dev/null | sed -n 's/^hol-\([^:]*\):.*/\1/p'); do
   case "$s" in
     base|template-cakeml) ;;
-    *) repl-kill "$s" > /dev/null 2>&1 ;;
+    seq) [ -n "$FORCE" ] && { echo "killing hol-seq";
+           repl-kill "$s" > /dev/null 2>&1; } ;;
+    *) echo "killing hol-$s"; repl-kill "$s" > /dev/null 2>&1 ;;
   esac
 done
 tmux ls 2>/dev/null | grep hol
