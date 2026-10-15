@@ -95,8 +95,8 @@ let pull_exp_def = cake_define_wf
        let pull_ls = pull_ops op new_ls [] in
          optimize_consts op pull_ls)
         | (Load exp) -> Load (pull_exp exp)
-        | (Shift (backend_common_word_shift) exp nexp) -> Shift
-          (backend_common_word_shift) (pull_exp exp) (pull_exp nexp)
+        | (Shift backend_common_word_shift exp nexp) -> Shift
+          backend_common_word_shift (pull_exp exp) (pull_exp nexp)
         | exp -> exp`;;
 
 (*Flatten list expressions to trees -- of the form:
@@ -122,9 +122,8 @@ let flatten_exp_def = cake_define_wf
         | (Op op (x :: xs)) -> Op op [flatten_exp (Op op xs);
           flatten_exp x]
         | (Load exp) -> Load (flatten_exp exp)
-        | (Shift (backend_common_word_shift) exp nexp) -> Shift
-          (backend_common_word_shift) (flatten_exp exp) (flatten_exp
-          nexp)
+        | (Shift backend_common_word_shift exp nexp) -> Shift
+          backend_common_word_shift (flatten_exp exp) (flatten_exp nexp)
         | exp -> exp`;;
 
 

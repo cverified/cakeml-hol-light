@@ -262,7 +262,7 @@ val help_string_tm =
 *)
 
 let help_string_def = cake_define
-  `help_string = (\x y. strcat x y) (implode) help_string_tm`;;
+  `help_string = (\x y. strcat x y) implode help_string_tm`;;
 
 let compile_error_INDUCT,compile_error_RECURSION = define_datatype
   "compile_error = ParseError (mlstring) | TypeError (mlstring) | \
@@ -303,7 +303,7 @@ let locs_to_string_def = cake_define
                len) | _3 -> len) in
            let underline =
              concat (REPLICATE c (implode " ") ++ REPLICATE ((stop -
-               c) + 1) ((implode) [CHR 94])) in
+               c) + 1) (implode [CHR 94])) in
              concat [(implode "line "); toString (r + 1); (implode
                "\n\n");
                      line; (implode "\n");
@@ -599,7 +599,7 @@ EVAL ``parse_gc [«--gc=gen1234,1234,1234»] def``
 let conf_ok_check_def = cake_define
   `conf_ok_check (:'a) c <=>
      shift_length c < dimindex (:'ga) /\
-     (backend_common_word_shift) (:'ga) <= shift_length c /\
+     backend_common_word_shift (:'ga) <= shift_length c /\
        ~(data_to_word_config_len_size c = 0) /\
        data_to_word_config_len_size
      c + 7 < dimindex (:'ga)`;;

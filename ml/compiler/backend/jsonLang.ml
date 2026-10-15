@@ -70,11 +70,11 @@ let json_to_mlstring_def = cake_define_list
                     concat_with (MAP json_to_mlstring obs) (List
                       [(implode ",")]) ++
                     List [(implode "]")] | String s -> List
-                      ([(implode) "\""; encode_str T s; (implode)
-                      "\""]) | Int i -> List [toString i] | Bool b ->
-                      (if b then List [(implode "true")] else List
+                      ([implode "\""; encode_str T s; implode "\""])
+                      | Int i -> List [toString i] | Bool b -> (if b
+                      then List [(implode "true")] else List
                       [(implode "false")]) | Null -> List [(implode
                       "null")])`;
    `mem_to_string n_obj = (let (n,obj) = n_obj in
-            List [(implode) "\""; n; (implode) "\":"] ++
+            List [implode "\""; n; implode "\":"] ++
               json_to_mlstring obj)`];;

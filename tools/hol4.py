@@ -52,6 +52,37 @@ def unescape_ml(s):
   return out.decode('utf-8', 'replace')
 
 
+DECLARE_MONAD = re.compile(
+    r'declare_monad\s*\(\s*"([^"]*)"\s*,\s*\{(.*?)\}\s*\)', re.S)
+ENABLE_MONAD = re.compile(
+    r'(?:temp_)?enable_monad\s*\(?\s*"([^"]*)"')
+MONAD_FIELD = re.compile(
+    r"(\w+)\s*=\s*(?:SOME\s*)?(?:``|\u201c)\s*\$?([^`\u201d]*?)\s*"
+    r"(?:``|\u201d)")
+
+
+def monad_decls(text):
+  """the monads that an ML block declares: the name and the terms
+     of its fields (bind, unit, ignorebind, ...)"""
+  out = []
+  for m in DECLARE_MONAD.finditer(text):
+    flds = dict(MONAD_FIELD.findall(m.group(2)))
+    if 'NONE' in m.group(2):
+      # a field that is NONE has no term
+      for f in re.findall(r'(\w+)\s*=\s*NONE', m.group(2)):
+        flds.pop(f, None)
+    out.append((m.group(1), flds))
+  return out
+
+
+def monad_enabled(text):
+  """the monad that an ML block enables, if any; HOL4's option
+     monad syntax is a monad of its own"""
+  if 'add_option_monadsyntax' in text: return 'option'
+  m = ENABLE_MONAD.search(text)
+  return m.group(1) if m else None
+
+
 def hol_reln(text):
   """the name and the rules of an ML block that calls Hol_reln"""
   m = HOL_RELN.match(text.strip())

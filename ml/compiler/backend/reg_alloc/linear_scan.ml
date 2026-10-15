@@ -385,85 +385,86 @@ val update_sorted_moves_def = fetch "-" "update_sorted_moves_def";
 
 let numset_list_add_if_lt_monad_def = cake_define_list
   [`numset_list_add_if_lt_monad [] v =
-      return one`;
+      st_ex_return one`;
    `numset_list_add_if_lt_monad (r :: rs) v =
-      monad_bind (int_beg_sub r) (\
+      st_ex_bind (int_beg_sub r) (\
         begr.
         if 0 < begr then
-          monad_ignore_bind
+          st_ex_ignore_bind
             (update_int_beg r v) (
             numset_list_add_if_lt_monad rs v) else if v <= begr then
-          monad_ignore_bind
+          st_ex_ignore_bind
             (update_int_beg r v) (
             numset_list_add_if_lt_monad rs v) else
           numset_list_add_if_lt_monad rs v)`];;
 
 let numset_list_add_if_gt_monad_def = cake_define_list
   [`numset_list_add_if_gt_monad [] v =
-      return one`;
+      st_ex_return one`;
    `numset_list_add_if_gt_monad (r :: rs) v =
-      monad_bind (int_end_sub r) (\
+      st_ex_bind (int_end_sub r) (\
         begr.
         if 0 < begr then
-          monad_ignore_bind
+          st_ex_ignore_bind
             (update_int_end r v) (
             numset_list_add_if_gt_monad rs v) else if begr <= v then
-          monad_ignore_bind
+          st_ex_ignore_bind
             (update_int_end r v) (
             numset_list_add_if_gt_monad rs v) else
           numset_list_add_if_gt_monad rs v)`];;
 
 let get_intervals_ct_monad_aux_def = cake_define_list
   [`get_intervals_ct_monad_aux (reg_alloc_Delta wr rd) (n:int) live =
-      monad_ignore_bind
-        (numset_list_add_if_lt_monad wr n) (monad_ignore_bind
-        (numset_list_add_if_gt_monad wr n) (monad_ignore_bind
+      st_ex_ignore_bind
+        (numset_list_add_if_lt_monad wr n) (st_ex_ignore_bind
+        (numset_list_add_if_gt_monad wr n) (st_ex_ignore_bind
         (numset_list_add_if_gt_monad rd (n - 1)) (
-        return (n - 2,numset_list_insert rd (numset_list_delete
-          wr live)))))`;
+        st_ex_return (n - 2,numset_list_insert rd
+          (numset_list_delete wr live)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Set cutset) (n:int) live =
-      monad_ignore_bind
+      st_ex_ignore_bind
         (numset_list_add_if_gt_monad (MAP FST (toAList cutset)) n) (
-        return (n - 1,union cutset live))`;
+        st_ex_return (n - 1,union cutset live))`;
    `get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2)
   (n:int) live =
-      monad_bind (get_intervals_ct_monad_aux ct2 n live) (\
-        (n2,live2). monad_bind (get_intervals_ct_monad_aux ct1 n2
+      st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
+        (n2,live2). st_ex_bind (get_intervals_ct_monad_aux ct1 n2
           live) (\
         (n1,live1).
-        match optcutset with NONE -> return (n1,union live1 live2) |
-          SOME cutset ->
-          monad_ignore_bind
+        match optcutset with NONE -> st_ex_return (n1,union live1
+          live2) | SOME cutset ->
+          st_ex_ignore_bind
             (numset_list_add_if_gt_monad (MAP FST (toAList cutset))
               n1) (
-            return (n1 - 1,union cutset (union live1 live2)))))`;
+            st_ex_return (n1 - 1,union cutset (union live1
+              live2)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Seq ct1 ct2) (n:int) live =
-      monad_bind (get_intervals_ct_monad_aux ct2 n live) (\
+      st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
         (n2,live2).
         get_intervals_ct_monad_aux ct1 n2 live2)`];;
 
 let get_intervals_ct_monad_def = cake_define
   `get_intervals_ct_monad ct =
-     monad_bind (get_intervals_ct_monad_aux ct 0 LN) (\
-       (n,live). monad_ignore_bind
+     st_ex_bind (get_intervals_ct_monad_aux ct 0 LN) (\
+       (n,live). st_ex_ignore_bind
        (numset_list_add_if_lt_monad (MAP FST (toAList live)) n)
-         (monad_ignore_bind
+         (st_ex_ignore_bind
        (numset_list_add_if_gt_monad (MAP FST (toAList live)) n) (
-       return (n - 1))))`;;
+       st_ex_return (n - 1))))`;;
 
 (* HOL4 termination: >> rw [] *)
 let remove_inactive_intervals_def = cake_define_wf
   `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`
   `remove_inactive_intervals beg st =
-     (match linear_scan_state_active st with [] -> return st | (e,r)
-       :: activetail -> (
+     (match linear_scan_state_active st with [] -> st_ex_return st |
+       (e,r) :: activetail -> (
        if e < beg then
-         monad_bind (colors_sub r) (\
+         st_ex_bind (colors_sub r) (\
            col.
            let st' = linear_scan_state_colorpool_fupd (\l. col :: l)
              (linear_scan_state_active_fupd (K activetail) st) in
            remove_inactive_intervals beg st') else
-         return st))`;;
+         st_ex_return st))`;;
 
 let add_active_interval_def = cake_define_list
   [`add_active_interval v [] = [v]`;
@@ -497,47 +498,47 @@ let find_color_def = cake_define
 
 let spill_register_def = cake_define
   `spill_register st reg =
-     monad_ignore_bind
+     st_ex_ignore_bind
        (update_colors reg (linear_scan_state_stacknum st)) (
-       return (linear_scan_state_stacknum_fupd ((+) 1) st))`;;
+       st_ex_return (linear_scan_state_stacknum_fupd ((+) 1) st))`;;
 
 let color_register_def = cake_define
   `color_register st reg col rend =
-     monad_ignore_bind
+     st_ex_ignore_bind
        (update_colors reg col) (
        if is_phy_var reg then
-         return (linear_scan_state_phyregs_fupd (insert col one)
-           (linear_scan_state_active_fupd (add_active_interval
+         st_ex_return (linear_scan_state_phyregs_fupd (insert col
+           one) (linear_scan_state_active_fupd (add_active_interval
            (rend,reg))
            st)) else
-         return (linear_scan_state_active_fupd
+         st_ex_return (linear_scan_state_active_fupd
            (add_active_interval (rend,reg)) st))`;;
 
 let find_last_stealable_def = cake_define_list
   [`find_last_stealable [] (forbidden:1 spt) =
-        return NONE`;
+        st_ex_return NONE`;
    `find_last_stealable (x :: xs) forbidden =
-      monad_bind (find_last_stealable xs forbidden) (\
+      st_ex_bind (find_last_stealable xs forbidden) (\
         recursion.
-        match recursion with SOME (steal,rest) -> return (SOME
+        match recursion with SOME (steal,rest) -> st_ex_return (SOME
           (steal,x :: rest)) | NONE -> (
-            monad_bind (colors_sub (SND x)) (\
+            st_ex_bind (colors_sub (SND x)) (\
               xcol.
               if ~(is_phy_var (SND x)) /\ (lookup xcol forbidden =
                 NONE) then
-                return (SOME (x,xs)) else
-                return NONE)))`];;
+                st_ex_return (SOME (x,xs)) else
+                st_ex_return NONE)))`];;
 
 let find_spill_def = cake_define
   `find_spill st (forbidden:1 spt) reg rend force =
-     monad_bind (find_last_stealable (linear_scan_state_active st)
+     st_ex_bind (find_last_stealable (linear_scan_state_active st)
        forbidden) (\
        stealable.
        match stealable with NONE -> spill_register st reg | SOME
          ((stealend,stealreg),newactive) ->
          (if force \/ rend < stealend then
-           monad_bind (colors_sub stealreg) (\
-             stealcolor. monad_bind (spill_register
+           st_ex_bind (colors_sub stealreg) (\
+             stealcolor. st_ex_bind (spill_register
                (linear_scan_state_active_fupd (K newactive) st)
                stealreg) (\
              st'.
@@ -558,13 +559,13 @@ let linear_reg_alloc_step_aux_def = cake_define
 
 let linear_reg_alloc_step_pass1_def = cake_define
   `linear_reg_alloc_step_pass1 forced moves st reg =
-     monad_bind (int_beg_sub reg) (\
-       rbeg. monad_bind (int_end_sub reg) (\
-       rend. monad_bind (remove_inactive_intervals rbeg st) (\
+     st_ex_bind (int_beg_sub reg) (\
+       rbeg. st_ex_bind (int_end_sub reg) (\
+       rend. st_ex_bind (remove_inactive_intervals rbeg st) (\
        st'.
        if is_stack_var reg then
          spill_register st' reg else
-         monad_bind (st_ex_MAP colors_sub (the [] (lookup reg
+         st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg
            forced))) (\
            forced_forbidden_list.
            let forced_forbidden = fromAList (MAP (\c. (c,one))
@@ -576,7 +577,7 @@ let linear_reg_alloc_step_pass1_def = cake_define
                linear_reg_alloc_step_aux st' forbidden [] reg rend T
                  else
                spill_register st' reg else
-             monad_bind (st_ex_MAP colors_sub (the [] (lookup reg
+             st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg
                moves))) (\
                moves_preferred.
                linear_reg_alloc_step_aux st' forced_forbidden
@@ -584,14 +585,14 @@ let linear_reg_alloc_step_pass1_def = cake_define
 
 let linear_reg_alloc_step_pass2_def = cake_define
   `linear_reg_alloc_step_pass2 forced moves st reg =
-     monad_bind (int_beg_sub reg) (\
-       rbeg. monad_bind (int_end_sub reg) (\
-       rend. monad_bind (remove_inactive_intervals rbeg st) (\
-       st'. monad_bind (st_ex_MAP colors_sub (the [] (lookup reg
+     st_ex_bind (int_beg_sub reg) (\
+       rbeg. st_ex_bind (int_end_sub reg) (\
+       rend. st_ex_bind (remove_inactive_intervals rbeg st) (\
+       st'. st_ex_bind (st_ex_MAP colors_sub (the [] (lookup reg
          forced))) (\
-       forced_forbidden_list. monad_bind (return (fromAList (MAP (\c.
-         (c,one)) forced_forbidden_list))) (\
-       forced_forbidden. monad_bind (st_ex_MAP colors_sub (the []
+       forced_forbidden_list. st_ex_bind (st_ex_return (fromAList
+         (MAP (\c. (c,one)) forced_forbidden_list))) (\
+       forced_forbidden. st_ex_bind (st_ex_MAP colors_sub (the []
          (lookup reg moves))) (\
        moves_preferred.
        if is_phy_var reg then
@@ -611,9 +612,9 @@ let linear_reg_alloc_pass2_initial_state_def = cake_define
      mk_linear_scan_state [] [] LN k (k + nreg) (k + nreg)`;;
 
 let find_reg_exchange_def = cake_define_list
-  [`find_reg_exchange [] exch invexch = return (exch,invexch)`;
+  [`find_reg_exchange [] exch invexch = st_ex_return (exch,invexch)`;
    `find_reg_exchange (r :: rs) exch invexch =
-      monad_bind (colors_sub r) (\
+      st_ex_bind (colors_sub r) (\
         col1.
         let fcol1 = r DIV 2 in
         let col2 = option_CASE (lookup fcol1 invexch) fcol1 (\x. x)
@@ -624,47 +625,47 @@ let find_reg_exchange_def = cake_define_list
           invexch)))`];;
 
 let MAP_colors_def = cake_define_list
-  [`MAP_colors f 0 = return one`;
+  [`MAP_colors f 0 = st_ex_return one`;
    `MAP_colors f (SUC n) =
-      monad_bind (colors_sub n) (\
-        col. monad_ignore_bind
+      st_ex_bind (colors_sub n) (\
+        col. st_ex_ignore_bind
         (update_colors n (f col)) (
         MAP_colors f n))`];;
 
 let apply_reg_exchange_def = cake_define
   `apply_reg_exchange phyregs =
-     monad_bind (find_reg_exchange phyregs LN LN) (\
-       (exch,invexch). monad_bind colors_length (\
+     st_ex_bind (find_reg_exchange phyregs LN LN) (\
+       (exch,invexch). st_ex_bind colors_length (\
        col_size.
        MAP_colors (\c. option_CASE (lookup c exch) c (\x. x))
          col_size))`;;
 
 let st_ex_FOLDL_def = cake_define_list
-  [`st_ex_FOLDL f e [] = return e`;
+  [`st_ex_FOLDL f e [] = st_ex_return e`;
    `st_ex_FOLDL f e (x :: xs) =
-      monad_bind (f e x) (\
+      st_ex_bind (f e x) (\
         e'.
         st_ex_FOLDL f e' xs)`];;
 
 (* like st_ex_FILTER, but preserve the order *)
 let st_ex_FILTER_good_def = cake_define_list
-  [`st_ex_FILTER_good P [] = return []`;
+  [`st_ex_FILTER_good P [] = st_ex_return []`;
    `st_ex_FILTER_good P (x :: xs) =
-      monad_bind (P x) (\
+      st_ex_bind (P x) (\
         Px.
         if Px then
-          monad_bind (st_ex_FILTER_good P xs) (\
+          st_ex_bind (st_ex_FILTER_good P xs) (\
             filter_xs.
-            return (x :: filter_xs)) else
+            st_ex_return (x :: filter_xs)) else
           st_ex_FILTER_good P xs)`];;
 
 let edges_to_adjlist_def = cake_define_list
-  [`edges_to_adjlist [] acc = return acc`;
+  [`edges_to_adjlist [] acc = st_ex_return acc`;
    `edges_to_adjlist ((a,b) :: abs') acc =
       (if a = b then
         edges_to_adjlist abs' acc else
-        monad_bind (int_beg_sub a) (\
-          bega. monad_bind (int_beg_sub b) (\
+        st_ex_bind (int_beg_sub a) (\
+          bega. st_ex_bind (int_beg_sub b) (\
           begb.
           if bega < begb \/ (bega = begb /\ a <= b) then
             edges_to_adjlist abs' (insert b (a :: (the [] (lookup b
@@ -678,9 +679,9 @@ let sort_moves_rev_def = cake_define
 
 let swap_regs_def = cake_define
   `swap_regs i1 i2 =
-     monad_bind (sorted_regs_sub i1) (\
-       r1. monad_bind (sorted_regs_sub i2) (\
-       r2. monad_ignore_bind
+     st_ex_bind (sorted_regs_sub i1) (\
+       r1. st_ex_bind (sorted_regs_sub i2) (\
+       r2. st_ex_ignore_bind
        (update_sorted_regs i1 r2) (
        update_sorted_regs i2 r1)))`;;
 
@@ -689,14 +690,14 @@ let partition_regs_def = cake_define_wf
   `MEASURE (\(l,rpiv,begrpiv,r). r - l)`
   `partition_regs l rpiv begrpiv r =
      (if r <= l then
-       return l else
-       monad_bind (sorted_regs_sub l) (\
-         reg. monad_bind (int_beg_sub reg) (\
+       st_ex_return l else
+       st_ex_bind (sorted_regs_sub l) (\
+         reg. st_ex_bind (int_beg_sub reg) (\
          begreg.
          if begreg < begrpiv \/ (begreg = begrpiv /\ reg <= rpiv)
            then
              partition_regs (l + 1) rpiv begrpiv r else
-           monad_ignore_bind
+           st_ex_ignore_bind
              (swap_regs l (r - 1)) (
              partition_regs l rpiv begrpiv (r - 1)))))`;;
 
@@ -705,24 +706,24 @@ let sort_regs_def = cake_define_wf
   `MEASURE (\(l,r). r - l)`
   `sort_regs l r =
      (if r <= l + 1 then
-       return one else
-       monad_bind (sorted_regs_sub l) (\
-         rpiv. monad_bind (int_beg_sub rpiv) (\
-         begrpiv. monad_bind (partition_regs (l + 1) rpiv begrpiv r)
+       st_ex_return one else
+       st_ex_bind (sorted_regs_sub l) (\
+         rpiv. st_ex_bind (int_beg_sub rpiv) (\
+         begrpiv. st_ex_bind (partition_regs (l + 1) rpiv begrpiv r)
            (\
-         m. monad_ignore_bind
+         m. st_ex_ignore_bind
          (swap_regs l (m - 1)) (
          if m <= l \/ r < m then
-           return one else
-           monad_ignore_bind
+           st_ex_return one else
+           st_ex_ignore_bind
              (sort_regs l (m - 1)) (
              sort_regs m r))))))`;;
 
 let list_to_sorted_regs_def = cake_define_list
   [`list_to_sorted_regs [] n =
-        return one`;
+        st_ex_return one`;
    `list_to_sorted_regs (r :: rs) n =
-      monad_ignore_bind
+      st_ex_ignore_bind
         (update_sorted_regs n r) (
         list_to_sorted_regs rs (n + 1))`];;
 
@@ -731,17 +732,17 @@ let sorted_regs_to_list_def = cake_define_wf
   `MEASURE (\(n,last). last - n)`
   `sorted_regs_to_list n last =
      (if last <= n then
-       return [] else
-       monad_bind (sorted_regs_sub n) (\
-         r. monad_bind (sorted_regs_to_list (n + 1) last) (\
+       st_ex_return [] else
+       st_ex_bind (sorted_regs_sub n) (\
+         r. st_ex_bind (sorted_regs_to_list (n + 1) last) (\
          l.
-         return (r :: l))))`;;
+         st_ex_return (r :: l))))`;;
 
 let swap_moves_def = cake_define
   `swap_moves i1 i2 =
-     monad_bind (sorted_moves_sub i1) (\
-       r1. monad_bind (sorted_moves_sub i2) (\
-       r2. monad_ignore_bind
+     st_ex_bind (sorted_moves_sub i1) (\
+       r1. st_ex_bind (sorted_moves_sub i2) (\
+       r2. st_ex_ignore_bind
        (update_sorted_moves i1 r2) (
        update_sorted_moves i2 r1)))`;;
 
@@ -750,12 +751,12 @@ let partition_moves_def = cake_define_wf
   `MEASURE (\(l,piv,r). r - l)`
   `partition_moves l ppiv r =
      (if r <= l then
-       return l else
-       monad_bind (sorted_moves_sub l) (\
+       st_ex_return l else
+       st_ex_bind (sorted_moves_sub l) (\
          move.
          if FST move < ppiv then
            partition_moves (l + 1) ppiv r else
-           monad_ignore_bind
+           st_ex_ignore_bind
              (swap_moves l (r - 1)) (
              partition_moves l ppiv (r - 1))))`;;
 
@@ -764,14 +765,14 @@ let sort_moves_def = cake_define_wf
   `MEASURE (\(l,r). r - l)`
   `linear_scan_sort_moves l r =
      (if r <= l + 1 then
-       return one else
-       monad_bind (sorted_moves_sub l) (\
-         piv. monad_bind (partition_moves (l + 1) (FST piv) r) (\
-         m. monad_ignore_bind
+       st_ex_return one else
+       st_ex_bind (sorted_moves_sub l) (\
+         piv. st_ex_bind (partition_moves (l + 1) (FST piv) r) (\
+         m. st_ex_ignore_bind
          (swap_moves l (m - 1)) (
          if m <= l \/ r < m then
-           return one else
-           monad_ignore_bind
+           st_ex_return one else
+           st_ex_ignore_bind
              (linear_scan_sort_moves l (m - 1)) (
              linear_scan_sort_moves m r)))))`;;
 hol4_overload "sort_moves" "linear_scan_sort_moves";;
@@ -779,9 +780,9 @@ hol4_overload "sort_moves" "linear_scan_sort_moves";;
 
 let list_to_sorted_moves_def = cake_define_list
   [`list_to_sorted_moves [] n =
-        return one`;
+        st_ex_return one`;
    `list_to_sorted_moves (r :: rs) n =
-      monad_ignore_bind
+      st_ex_ignore_bind
         (update_sorted_moves n r) (
         list_to_sorted_moves rs (n + 1))`];;
 
@@ -790,60 +791,61 @@ let sorted_moves_to_list_def = cake_define_wf
   `MEASURE (\(n,len). len - n)`
   `sorted_moves_to_list n len =
      (if len <= n then
-       return [] else
-       monad_bind (sorted_moves_sub n) (\
-         r. monad_bind (sorted_moves_to_list (n + 1) len) (\
+       st_ex_return [] else
+       st_ex_bind (sorted_moves_sub n) (\
+         r. st_ex_bind (sorted_moves_to_list (n + 1) len) (\
          l.
-         return (r :: l))))`;;
+         st_ex_return (r :: l))))`;;
 
 let linear_reg_alloc_intervals_def = cake_define
   `linear_reg_alloc_intervals k forced moves reglist_unsorted =
        (let lenreg = LENGTH reglist_unsorted in
        let lenmoves = LENGTH moves in
        let st_init_pass1 = linear_reg_alloc_pass1_initial_state k in
-       monad_ignore_bind
-         (list_to_sorted_regs reglist_unsorted 0) (monad_ignore_bind
-         (sort_regs 0 lenreg) (monad_bind (sorted_regs_to_list 0
+       st_ex_ignore_bind
+         (list_to_sorted_regs reglist_unsorted 0) (st_ex_ignore_bind
+         (sort_regs 0 lenreg) (st_ex_bind (sorted_regs_to_list 0
            lenreg) (\
-         reglist. monad_bind (return (FILTER is_phy_var reglist)) (\
-         phyregs. monad_bind (return (FILTER (\r. r < 2 * k)
+         reglist. st_ex_bind (st_ex_return (FILTER is_phy_var
+           reglist)) (\
+         phyregs. st_ex_bind (st_ex_return (FILTER (\r. r < 2 * k)
            phyregs)) (\
-         phyphyregs. monad_bind (return (FILTER (\r. 2 * k <= r)
-           phyregs)) (\
-         stackphyregs. monad_ignore_bind
-         (list_to_sorted_moves moves 0) (monad_ignore_bind
-         (sort_moves 0 lenmoves) (monad_bind (sorted_moves_to_list 0
+         phyphyregs. st_ex_bind (st_ex_return (FILTER (\r. 2 * k <=
+           r) phyregs)) (\
+         stackphyregs. st_ex_ignore_bind
+         (list_to_sorted_moves moves 0) (st_ex_ignore_bind
+         (sort_moves 0 lenmoves) (st_ex_bind (sorted_moves_to_list 0
            lenmoves) (\
-         smoves. monad_bind (edges_to_adjlist (MAP SND smoves) LN) (\
-         moves_adjlist. monad_bind (edges_to_adjlist forced LN) (\
-         forced_adjlist. monad_bind (st_ex_FOLDL
+         smoves. st_ex_bind (edges_to_adjlist (MAP SND smoves) LN) (\
+         moves_adjlist. st_ex_bind (edges_to_adjlist forced LN) (\
+         forced_adjlist. st_ex_bind (st_ex_FOLDL
            (linear_reg_alloc_step_pass1 forced_adjlist moves_adjlist)
            st_init_pass1 reglist) (\
-         st_end_pass1. monad_ignore_bind
-         (apply_reg_exchange phyphyregs) (monad_bind
+         st_end_pass1. st_ex_ignore_bind
+         (apply_reg_exchange phyphyregs) (st_ex_bind
            (st_ex_FILTER_good (\r.
-           monad_bind (colors_sub r) (\
+           st_ex_bind (colors_sub r) (\
              col.
-             return (is_stack_var r \/ k <= col))) reglist) (\
-         stacklist. monad_bind (return
+             st_ex_return (is_stack_var r \/ k <= col))) reglist) (\
+         stacklist. st_ex_bind (st_ex_return
            (linear_reg_alloc_pass2_initial_state k (LENGTH stacklist)))
            (\
-         st_init_pass2. monad_bind (return (fromAList (MAP (\r.
+         st_init_pass2. st_ex_bind (st_ex_return (fromAList (MAP (\r.
            (r,one)) stacklist))) (\
-         stackset. monad_bind (return (map (FILTER (\r. ~(lookup r
-           stackset = NONE))) forced_adjlist)) (\
-         forced_adjlist'. monad_bind (return (map (FILTER (\r.
+         stackset. st_ex_bind (st_ex_return (map (FILTER (\r.
+           ~(lookup r stackset = NONE))) forced_adjlist)) (\
+         forced_adjlist'. st_ex_bind (st_ex_return (map (FILTER (\r.
            ~(lookup r stackset = NONE))) moves_adjlist)) (\
-         moves_adjlist'. monad_bind (st_ex_FOLDL
+         moves_adjlist'. st_ex_bind (st_ex_FOLDL
            (linear_reg_alloc_step_pass2 forced_adjlist' moves_adjlist')
            st_init_pass2 stacklist) (\
          st_end_pass2.
          apply_reg_exchange stackphyregs))))))))))))))))))))`;;
 
 let extract_coloration_def = cake_define_list
-  [`extract_coloration invbij [] acc = return acc`;
+  [`extract_coloration invbij [] acc = st_ex_return acc`;
    `extract_coloration invbij (r :: rs) acc =
-      monad_bind (colors_sub r) (\
+      st_ex_bind (colors_sub r) (\
         col.
         extract_coloration invbij rs (insert (the 0 (lookup r
           invbij)) col acc))`];;
@@ -918,8 +920,8 @@ val run_i_linear_scan_hidden_state_def =
 let linear_reg_alloc_and_extract_coloration_def = cake_define
   `linear_reg_alloc_and_extract_coloration ct k forced moves
   reglist_unsorted invbij nmax =
-     monad_ignore_bind
-       (get_intervals_ct_monad ct) (monad_ignore_bind
+     st_ex_ignore_bind
+       (get_intervals_ct_monad ct) (st_ex_ignore_bind
        (linear_reg_alloc_intervals k forced moves reglist_unsorted) (
        extract_coloration invbij reglist_unsorted LN))`;;
 

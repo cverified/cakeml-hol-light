@@ -33,13 +33,13 @@ let float_to_real_def = cake_define
   `float_to_real (x:('t,'w)float) =
       (if float_Exponent x = (n2w 0) then --(&1) pow (w2n (float_Sign
         x)) *
-              ((&2) / (&2) pow ((INT_MAX) (:'w))) *
-              (&(w2n (float_Significand x)) / (&2) pow ((dimindex)
+              ((&2) / (&2) pow (INT_MAX (:'w))) *
+              (&(w2n (float_Significand x)) / (&2) pow (dimindex
                 (:'t))) else --(&1) pow (w2n (float_Sign x)) *
-           ((&2) pow (w2n (float_Exponent x)) / (&2) pow ((INT_MAX)
+           ((&2) pow (w2n (float_Exponent x)) / (&2) pow (INT_MAX
              (:'w))) *
            ((&1) + &(w2n (float_Significand x)) / (&2) pow
-             ((dimindex) (:'t))))`;;
+             (dimindex (:'t))))`;;
 
 let float_value_def = cake_define
   `float_value (x:('t,'w)float) =
@@ -210,7 +210,7 @@ let float_round_with_flags_def = cake_define
                  r:('t,'w+1)float) <=+
                 n2w (INT_MIN (:'w)))))
                   (flags_Underflow_BeforeRounding_fupd (K (inexact /\
-                  a < (&2) / (&2) pow ((INT_MAX) (:'w))))
+                  a < (&2) / (&2) pow (INT_MAX (:'w))))
                   (flags_Overflow_fupd (K (float_is_infinite x \/
                   (&2) pow (INT_MIN (:'w)) <= a)) clear_flags)))),x))`;;
 

@@ -461,7 +461,7 @@ let compile_inc_progs_def = cake_define
        in
      let ps = backend_progs_flat_prog_fupd (K (keep_progs k p)) ps in
      let c = backend_config_source_conf_fupd (K c') c in
-     let p = (inc_compile_decs) p in
+     let p = inc_compile_decs p in
      let ps = backend_progs_clos_prog_fupd (K ((keep_progs k ##
        keep_progs k) p)) ps in
      let (c',p) = clos_to_bvl_compile_inc (backend_config_clos_conf
@@ -472,7 +472,7 @@ let compile_inc_progs_def = cake_define
        c) p in
      let c = backend_config_bvl_conf_fupd (K c') c in
      let ps = backend_progs_bvi_prog_fupd (K (keep_progs k p)) ps in
-     let p = (bvi_to_data_compile_prog) p in
+     let p = bvi_to_data_compile_prog p in
      let ps = backend_progs_data_prog_fupd (K (keep_progs k p)) ps in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
        in

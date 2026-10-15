@@ -521,8 +521,8 @@ let const_part_to_display_def = cake_define_list
       Item NONE (implode "Con") [num_to_display t; Tuple (MAP
         num_to_display vs)]`;
    `const_part_to_display (Str s:const_part) =
-      Item NONE (implode "Str") [String (concat [(implode) "\"";
-        s; (implode) "\""])]`;
+      Item NONE (implode "Str") [String (concat [implode "\""; s;
+        implode "\""])]`;
    `const_part_to_display (W64 w:const_part) =
       Item NONE (implode "W64") [word_to_display w]`];;
 
@@ -533,8 +533,8 @@ let const_to_display_def = cake_define_list
       Item NONE (implode "ConstCons") [num_to_display t; Tuple
         (const_to_display_list vs)]`;
    `const_to_display (ConstStr s) =
-      Item NONE (implode "ConstStr") [String (concat [(implode)
-        "\""; s; (implode) "\""])]`;
+      Item NONE (implode "ConstStr") [String (concat [implode
+        "\""; s; implode "\""])]`;
    `const_to_display (ConstWord64 w) =
       Item NONE (implode "ConstWord64") [word_to_display w]`;
    `const_to_display_list [] = []`;

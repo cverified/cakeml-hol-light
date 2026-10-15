@@ -234,6 +234,7 @@ class Porter:
           for tok, prec, ass, _ in hol4.fixities(b.text):
             hterm.add_infix(tok, prec, ass)
           if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
+          self.enable_monad(b.text)
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')
@@ -891,6 +892,27 @@ class Porter:
     self.out.append(shorten(
       '(* HOL4 overload (expanded in the port):\n'
       '     %s = %s *)' % (b.name, txt)))
+
+  def enable_monad(self, text):
+    """the do notation of a source is the bind of the monad that it
+       enables; without one it is HOL4's overloaded monad_bind"""
+    nm = hol4.monad_enabled(text)
+    if nm is None: return
+    m = self.db.monads.get(nm)
+    if m is None:
+      self.warn.append('unknown monad ' + nm)
+      return
+    out = {}
+    for f in ('bind', 'ignorebind'):
+      c = m.get(f)
+      if c and IDENT.match(c): out[f] = self.ctx.name(c)
+    hterm.set_monad(out)
+    # HOL4's monadsyntax overloads return with the unit of the
+    # monad, which may be a term and not a constant
+    u = m.get('unit')
+    if u:
+      self.ctx.overloads['return'] = (
+          self.ctx.name(u) if IDENT.match(u) else self.term(u))
 
   def hol_reln(self, b):
     r = hol4.hol_reln(b.text)

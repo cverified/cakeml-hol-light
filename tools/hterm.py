@@ -705,7 +705,9 @@ class Parser:
         e = self.parse_atoms()
         return Node('prefix', tok=t, op='-', e=e)
       if t.text == '&':
-        e = self.parse_atom()
+        # HOL4's & is a prefix that binds looser than application,
+        # so &LENGTH l is &(LENGTH l)
+        e = self.parse_atoms()
         return Node('prefix', tok=t, op='&', e=e)
       if t.text in ('𝕌', 'univ'):
         self.expect('(')
@@ -965,6 +967,7 @@ def reset_grammar():
      CakeML source adds itself do not reach the other files"""
   INFIX.clear(); INFIX.update(BASE_INFIX)
   OWN_INFIX.clear()
+  MONAD[0] = None
   SYMS[:] = BASE_SYMS
   PMATCH[0] = False
 
@@ -980,6 +983,13 @@ def add_infix(tok, prec, assoc):
 
 
 OWN_INFIX = set()      # the infixes a CakeML source declares itself
+MONAD = [None]         # the monad that a source has enabled
+
+
+def set_monad(m):
+  """the bind and the ignorebind of the monad whose syntax the
+     source of this file uses"""
+  MONAD[0] = m
 
 
 def set_infix_name(tok, name):
@@ -1044,7 +1054,9 @@ class Printer:
       if n == '_': return self.ctx.fresh()
       if n in self.ctx.vars: return self.ctx.vars[n]
       if n in self.ctx.overloads:
-        return '(' + self.ctx.overloads[n] + ')'
+        c = self.ctx.overloads[n]
+        return c if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", c) \
+               else '(' + c + ')'
       return self.ctx.name(n)
     if k == 'num':
       t = e.text
@@ -1252,8 +1264,20 @@ class Printer:
     if k == 'antiq':
       return self.pr(e.e, prec)
     if k == 'do':
-      return self.pr_do(e.stmts)
+      if len(e.stmts) == 1 and e.stmts[0][0] is None:
+        return self.pr(e.stmts[0][1], prec)
+      return self.paren(self.pr_do(e.stmts), PRE_APP, prec)
     raise SyntaxError(f'print: {k}')
+
+  def mname(self, n):
+    """the bind of the monad that the source has enabled, or the
+       overloaded name that HOL4's monadsyntax uses"""
+    c = MONAD[0].get(n) if MONAD[0] else None
+    if c is None:
+      c = 'monad_bind' if n == 'bind' else 'monad_ignore_bind'
+      if c in self.ctx.overloads: return '(' + self.ctx.overloads[c] + ')'
+      return self.ctx.name(c)
+    return c
 
   def pr_do(self, stmts):
     (v, e) = stmts[0]
@@ -1261,8 +1285,14 @@ class Printer:
       return self.pr(e, 0)
     rest = self.pr_do(stmts[1:])
     if v is None:
-      return ('monad_ignore_bind ' + self.pr(e, APP) + ' (' + rest + ')')
-    return ('monad_bind ' + self.pr(e, APP) + ' (\\' +
+      # a monad without an ignorebind binds a variable that the
+      # rest does not use, as HOL4's monad_unitbind does
+      if MONAD[0] and not MONAD[0].get('ignorebind'):
+        return (self.mname('bind') + ' ' + self.pr(e, APP) +
+                ' (\\' + self.ctx.fresh() + '. ' + rest + ')')
+      return (self.mname('ignorebind') + ' ' + self.pr(e, APP) +
+              ' (' + rest + ')')
+    return (self.mname('bind') + ' ' + self.pr(e, APP) + ' (\\' +
             self.pr(v, 0) + '. ' + rest + ')')
 
 

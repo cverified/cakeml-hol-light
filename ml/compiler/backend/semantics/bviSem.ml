@@ -141,7 +141,7 @@ let do_app_aux_def = cake_define
                     ptr; Number i; x]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (MutBlock tag
              finalised l c r) ->
-                (if ~(i = &LENGTH l) \/ finalised then NONE else
+                (if ~(i = &(LENGTH l)) \/ finalised then NONE else
                   SOME (SOME (Unit,?_refs_fupd (K (?_refs s |+
                     (ptr,MutBlock tag F l x r))) s))) | _12 -> NONE) |
                     (MemOp FinaliseCons,[x]) ->
@@ -158,8 +158,8 @@ let do_install_def = cake_define
          (match vs with [v1; v2; vl1; vl2] ->
               (match (v_to_bytes v1,v_to_words v2) with (SOME
                 bytes,SOME data) ->
-                  (if ~(vl1 = Number (&LENGTH bytes)) \/ ~(
-                     vl2 = Number (&LENGTH data)) then Rerr (Rabort
+                  (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(
+                     vl2 = Number (&(LENGTH data))) then Rerr (Rabort
                        Rtype_error) else
                   let (cfg,progs) = ?_compile_oracle s 0 in
                   let new_oracle = shift_seq 1 (?_compile_oracle s)

@@ -231,9 +231,9 @@ let stack_asm_name_def = cake_define
 let fixed_names_def = cake_define
   `fixed_names names c =
    (if asm_config_ISA c = x86_64 then
-     (tlookup) names 3 = 2 /\
-     (tlookup) names 4 = 1 /\
-     (tlookup) names 0 = 0 else T)`;;
+     tlookup names 3 = 2 /\
+     tlookup names 4 = 1 /\
+     tlookup names 0 = 0 else T)`;;
 
 let stack_asm_remove_def = cake_define
   `stack_asm_remove c x2 =

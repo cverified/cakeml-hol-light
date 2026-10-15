@@ -815,14 +815,14 @@ let glob_real_inv_def = cake_define
   `glob_real_inv c (curr:'a word) globals globreal <=>
      (?w. globals = SOME (Word w) /\
          globreal = SOME (Word (curr + (w >>> (shift_length c) <<
-           (backend_common_word_shift) (:'ga)))))`;;
+           backend_common_word_shift (:'ga)))))`;;
 
 let heap_in_memory_store_def = cake_define
   `heap_in_memory_store heap a sp sp1 gens c s m dm limit <=>
      heap_length heap <= dimword (:'a) DIV 2 EXP shift_length c /\
      (heap_length heap + 3) * (dimindex (:'a) DIV 8) < dimword (:'a)
        /\
-     (backend_common_word_shift) (:'a) <= shift_length c /\
+     backend_common_word_shift (:'a) <= shift_length c /\
        ~(data_to_word_config_len_size c = 0) /\
        data_to_word_config_len_size
      c + 7 < dimindex (:'a) /\
@@ -862,7 +862,7 @@ let memory_rel_def = cake_define
 
 let get_real_addr_def = cake_define
   `get_real_addr conf st (w:'a word) =
-     (let k = (backend_common_word_shift) (:'ga) in
+     (let k = backend_common_word_shift (:'ga) in
        match FLOOKUP st CurrHeap with SOME (Word curr) ->
            (if k = shift_length conf /\ data_to_word_config_len_bits
              conf = 0 /\ data_to_word_config_tag_bits conf = 0 then SOME
@@ -880,7 +880,7 @@ let get_real_offset_def = cake_define
 let get_real_simple_addr_def = cake_define
   `get_real_simple_addr conf st (w:'a word) =
      (match FLOOKUP st CurrHeap with SOME (Word curr) -> SOME
-       (curr + w >>> shift_length conf << (backend_common_word_shift)
+       (curr + w >>> shift_length conf << backend_common_word_shift
        (:'ga)) | _31 -> NONE)`;;
 
 (* mirrors memory_rel_Update: writing the hole of an unfinalised
@@ -1501,7 +1501,7 @@ let word_cond_add_def = cake_define
       match x3 with
         (F,x) -> (x:'a word_loc)
       | (T,Word w) -> Word (w + a << (shift_length c -
-        (backend_common_word_shift) (:'a)))
+        backend_common_word_shift (:'a)))
       | (T,other) -> other`;;
 
 let good_loc_def = cake_define
@@ -1520,7 +1520,7 @@ let read_word_def = cake_define
 let word_xor_bytes_def = cake_define_wf
   `MEASURE (\(a1,a2,len,dm,m). w2n len)`
   `word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
-     (if len <+ (n2w 2) \/ ~(good_dimindex) (:'a) then
+     (if len <+ (n2w 2) \/ ~good_dimindex (:'a) then
        if len = (n2w 0) then SOME m else
          let (w1a,c1) = read_word dm m a1 in
          let (w2a,c2) = read_word dm m a2 in
@@ -1583,7 +1583,7 @@ let word_str_cmp_loop_def = cake_define
 let word_str_cmp_def = cake_define
   `word_str_cmp b (a1:'a word) (a2:'a word) dm m be c =
      (let k = (dimindex (:'ga) - data_to_word_config_len_size c -
-       (backend_common_word_shift) (:'a)) in
+       backend_common_word_shift (:'a)) in
        if a1 IN dm /\ a2 IN dm /\ isWord (m a1) /\ isWord (m a2) then
          let l1 = (theWord (m a1) >>> k) in
          let l2 = (theWord (m a2) >>> k) in

@@ -114,10 +114,10 @@ val fromChars_ind = theorem"fromChars_ind"
 let fromString_unsafe_def = cake_define
   `fromString_unsafe str =
      (if strlen str = 0 then (&0) else if strsub str 0 = (CHR 126)
-       then ~&fromChars_unsafe (strlen str - 1)
-                              (substring str 1 (strlen str - 1))
-                                else &fromChars_unsafe (strlen str)
-                                str)`;;
+       then --&(fromChars_unsafe (strlen str - 1)
+                              (substring str 1 (strlen str - 1)))
+                                else &(fromChars_unsafe (strlen str)
+                                str))`;;
 
 let fromString_def = cake_define
   `mlint_fromString str =
@@ -155,7 +155,7 @@ let num_gcd_def = cake_define
   a)`;;
 
 let int_gcd_def = cake_define
-  `mlint_int_gcd (m:int) (n:int) = (&mlint_num_gcd (num_of_int (abs
+  `mlint_int_gcd (m:int) (n:int) = &(mlint_num_gcd (num_of_int (abs
   m)) (num_of_int (abs n)):int)`;;
 
 (* lemmas *)

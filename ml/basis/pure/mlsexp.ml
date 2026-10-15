@@ -252,7 +252,7 @@ let str_every_def = cake_define
 
 let make_str_safe_def = cake_define
   `make_str_safe s =
-     (if s = (implode "") then (implode) "\"\"" else
+     (if s = (implode "") then implode "\"\"" else
      if str_every is_safe_char (strlen s) s then s else escape_str
        s)`;;
 

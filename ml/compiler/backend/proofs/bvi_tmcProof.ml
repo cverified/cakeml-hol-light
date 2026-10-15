@@ -188,8 +188,8 @@ let hole_has_val_def = cake_define
    LENGTH env2 = LENGTH env1 + 2 /\
    (?hole_ptr tag finalised left right. EL (LENGTH env1)
      env2 = RefPtr F hole_ptr /\ EL (LENGTH env1 + 1)
-     env2 = Number (&LENGTH left) /\
-     small_enough_int (&LENGTH left) /\ ~(
+     env2 = Number (&(LENGTH left)) /\
+     small_enough_int (&(LENGTH left)) /\ ~(
      hole_ptr IN FRANGE f) /\
      FLOOKUP refs hole_ptr = SOME (MutBlock tag finalised left c
        right))`;;
@@ -1149,7 +1149,7 @@ let alloc_hole_has_val_def = cake_define
        i_ptr < LENGTH extras /\ EL i_ptr
        extras = RefPtr F hole_ptr /\
        c_idx = LENGTH left /\
-       small_enough_int (&LENGTH left) /\ ~(
+       small_enough_int (&(LENGTH left)) /\ ~(
        hole_ptr IN FRANGE f) /\
        FLOOKUP refs hole_ptr = SOME (MutBlock tag F left c right))`;;
 

@@ -82,6 +82,9 @@ class Db:
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
     self.ty_params = {}        # (thy,type) -> the type parameters
+    self.monads = {'option': {'bind': 'OPTION_BIND',
+                              'unit': 'SOME',
+                              'ignorebind': 'OPTION_IGNORE_BIND'}}
     self.thy_of_file = {}
     self.kind_of_thy = {}
     self.scan()
@@ -176,6 +179,8 @@ class Db:
           self.abbrevs[(thy, b.name)] = (params, txt)
           self.defs[b.name].append((thy, 'tyabbrev'))
         elif b.kind == 'ML':
+          for nm, flds in hol4.monad_decls(b.text):
+            self.monads[nm] = flds
           r = hol4.hol_reln(b.text)
           if r:
             for nm in definition_names(r[1]):

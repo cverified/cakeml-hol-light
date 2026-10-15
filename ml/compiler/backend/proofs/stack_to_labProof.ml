@@ -61,12 +61,12 @@ val get_reg_value_def = targetSemTheory.get_reg_value_def;
 let dest_to_loc_def = cake_define
   `dest_to_loc regs dest =
      (match dest with INL p -> p | INR r -> (match FAPPLY regs r
-       with (wordLang_Loc) loc _1 -> loc))`;;
+       with wordLang_Loc loc _1 -> loc))`;;
 
 let dest_to_loc'_def = cake_define
   `dest_to_loc' regs dest =
      (match dest with INL p -> p | INR r -> (match regs r with
-       (wordLang_Loc) loc _2 -> loc))`;;
+       wordLang_Loc loc _2 -> loc))`;;
 
 (* -- Lemmas about code_installed, loc_to_pc and asm_fetch_aux -- *)
 
@@ -186,9 +186,9 @@ let result_view_INDUCT,result_view_RECURSION = define_datatype
 let result_view_def = cake_define
   `result_view x1 l cs bs =
         match x1 with
-          (Result ((wordLang_Loc) n1 n2):word_to_stackProof_result)
-            -> Vloc n1 n2
-        | (Exception ((wordLang_Loc) n1 n2)) -> Vloc n1 n2
+          (Result (wordLang_Loc n1 n2):word_to_stackProof_result) ->
+            Vloc n1 n2
+        | (Exception (wordLang_Loc n1 n2)) -> Vloc n1 n2
         | TimeOut -> Vtimeout
         | (Continue n) -> Vcont l (find_lab n cs)
         | (Break n) -> Vloc l (find_lab n bs)
@@ -324,7 +324,7 @@ let full_make_init_def = cake_define
      coracle1 in
    let coracle3 = (I ## compile (stack_to_lab_config_reg_names
      stack_conf) ## I) o coracle2 in
-   let s3 = make_init code3 coracle3 (MAP ((tlookup)
+   let s3 = make_init code3 coracle3 (MAP (tlookup
      (stack_to_lab_config_reg_names stack_conf)) [2; 3; 4]) save_regs s4
      in
    let s2 = make_init (stack_to_lab_config_reg_names stack_conf)
@@ -338,9 +338,9 @@ let full_make_init_def = cake_define
 let memory_assumption_def = cake_define
   `memory_assumption rnames (bitmaps:('a word) list) data_sp t =
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       (\r s. ?_regs s r) ((tlookup) rnames 2) t = Word ptr2 /\
-       (\r s. ?_regs s r) ((tlookup) rnames 3) t = Word ptr3 /\
-       (\r s. ?_regs s r) ((tlookup) rnames 4) t = Word ptr4 /\ ?_mem
+       (\r s. ?_regs s r) (tlookup rnames 2) t = Word ptr2 /\
+       (\r s. ?_regs s r) (tlookup rnames 3) t = Word ptr3 /\
+       (\r s. ?_regs s r) (tlookup rnames 4) t = Word ptr4 /\ ?_mem
        t ptr2 = Word bitmap_ptr /\ ?_mem
        t (ptr2 + bytes_in_word) =
            Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))

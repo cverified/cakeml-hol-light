@@ -45,8 +45,8 @@ let adjust_bv_def = cake_define_list
   [`adjust_bv b (Number i:bvlSem_v) = Number i`;
    `adjust_bv b (Word64 w:bvlSem_v) = Word64 w`;
    `adjust_bv b (RefPtr l r:bvlSem_v) = RefPtr l (b r)`;
-   `adjust_bv b (CodePtr c) = CodePtr ((bvl_num_stubs) +
-  (bvl_to_bvi_namespaces) * c)`;
+   `adjust_bv b (CodePtr c) = CodePtr (bvl_num_stubs +
+  bvl_to_bvi_namespaces * c)`;
    `adjust_bv b (Block tag vs:bvlSem_v) = Block tag (MAP (adjust_bv
   b) vs)`];;
 
@@ -70,12 +70,12 @@ let names_ok_def = cake_define
      (!n k prog. s_oracle n = (k,prog) ==>
                  EVERY (\(name,arity,exp). handle_ok [exp]) prog) /\
      (let next = FST (FST (s_oracle 0)) in
-       (!n. n IN domain t_code /\ (bvl_num_stubs) <= n ==>
+       (!n. n IN domain t_code /\ bvl_num_stubs <= n ==>
             (if (\n. n MOD bvl_to_bvi_namespaces = 1) n then n <
-              (bvl_num_stubs) + (bvl_to_bvi_namespaces) * next else (\n.
-              n MOD bvl_to_bvi_namespaces = 0) n /\
-                 (n - (bvl_num_stubs)) DIV bvl_to_bvi_namespaces
-                   IN domain s_code)))`;;
+              bvl_num_stubs + bvl_to_bvi_namespaces * next else (\n. n
+              MOD bvl_to_bvi_namespaces = 0) n /\
+                 (n - bvl_num_stubs) DIV bvl_to_bvi_namespaces IN
+                   domain s_code)))`;;
 hol4_overload "names_ok" "bvl_to_bviProof_names_ok";;
 
 let state_rel_def = cake_define
@@ -121,8 +121,8 @@ let state_rel_def = cake_define
      (!name arity exp.
         (lookup name (?_code s) = SOME (arity,exp)) ==>
         (?n. let (c1,aux1,n1) = compile_exps n [exp] in
-              (lookup ((bvl_num_stubs) + (bvl_to_bvi_namespaces) *
-                name) (?_code t) =
+              (lookup (bvl_num_stubs + bvl_to_bvi_namespaces * name)
+                (?_code t) =
                  SOME (arity,bvi_let_compile_exp (HD c1))) /\
               aux_code_installed (append aux1) (?_code t) /\
               handle_ok [exp]))`;;
@@ -294,7 +294,7 @@ val sorted_lt_append =
 *)
 
 let in_ns_def = cake_define
-  `in_ns k n <=> n MOD (bvl_to_bvi_namespaces) = k`;;
+  `in_ns k n <=> n MOD bvl_to_bvi_namespaces = k`;;
 
 (* HOL4 ML code, not ported:
 val ODD_num_stubs = EVAL``in_ns 0 num_stubs``;

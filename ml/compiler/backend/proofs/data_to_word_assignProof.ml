@@ -290,9 +290,9 @@ val eval_Call_Mod = Q.SPEC `6` eval_Call_Arith
 (* TODO: move to backendProps *)
 
 let sane_locals_size_def = cake_define
-  `sane_locals_size t = (?_locals_size t = (sptree_lookup)
-  Equal_location (wordSem_state_stack_size t) \/ ?_locals_size
-                         t = (sptree_lookup) Equal1_location
+  `sane_locals_size t = (?_locals_size t = sptree_lookup Equal_location
+  (wordSem_state_stack_size t) \/ ?_locals_size
+                         t = sptree_lookup Equal1_location
                            (wordSem_state_stack_size t))`;;
 
 (* HOL4 ML code, not ported:

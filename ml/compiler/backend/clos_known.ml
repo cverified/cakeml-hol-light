@@ -356,7 +356,7 @@ let known_op_def = cake_define
         | (IntOp (Const i)) -> (Int i,g)
         | (MemOp El) ->
         (match as with [Tuple _7 xs; Int i] ->
-            (if 0 <= i /\ i < &LENGTH xs then (EL (num_of_int i)
+            (if 0 <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
               xs,g) else (Other,g)) | Impossible :: xs -> (Impossible,g)
               | _8 :: Impossible :: xs -> (Impossible,g) | _9 ->
               (Other,g))

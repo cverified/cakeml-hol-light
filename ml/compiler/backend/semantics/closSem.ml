@@ -335,8 +335,8 @@ let do_app_def = cake_define
              tag),xs) -> Rval (Block tag xs,s) | (BlockOp (ConsExtend
              tag),Block _37 xs' :: Number lower :: Number len :: Number
              tot :: xs) ->
-           (if lower < 0 \/ len < 0 \/ &LENGTH xs' < lower + len \/
-              tot = 0 \/ ~(tot = &LENGTH xs + len) then
+           (if lower < 0 \/ len < 0 \/ &(LENGTH xs') < lower + len \/
+              tot = 0 \/ ~(tot = &(LENGTH xs) + len) then
              ((Rerr (Rabort
                Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                ,closSem_v)semanticPrimitives_result) else
@@ -384,15 +384,17 @@ let do_app_def = cake_define
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result)) | (BlockOp
              LengthBlock,[Block tag xs]) ->
-           Rval (Number (&LENGTH xs),s) | (MemOp Length,[RefPtr _42
+           Rval (Number (&(LENGTH xs)),s) | (MemOp Length,[RefPtr _42
              ptr]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ValueArray xs) ->
-                 Rval (Number (&LENGTH xs),s) | _43 -> ((Rerr (Rabort
+                 Rval (Number (&(LENGTH xs)),s) | _43 -> ((Rerr
+                   (Rabort
                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                    ,closSem_v)semanticPrimitives_result)) | (MemOp
                    LengthByte,[RefPtr _44 ptr]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ByteArray xs) ->
-                 Rval (Number (&LENGTH xs),s) | _45 -> ((Rerr (Rabort
+                 Rval (Number (&(LENGTH xs)),s) | _45 -> ((Rerr
+                   (Rabort
                    Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                    ,closSem_v)semanticPrimitives_result)) | (MemOp
                    (RefByte F),[Number i; Number b]) ->
@@ -413,8 +415,8 @@ let do_app_def = cake_define
                    ,closSem_v)semanticPrimitives_result)) | (MemOp
                    DerefByte,[RefPtr _46 ptr; Number i]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ByteArray ws) ->
-               (if 0 <= i /\ i < &LENGTH ws then Rval (Number (&(w2n
-                 (EL (num_of_int i) ws))),s) else ((Rerr (Rabort
+               (if 0 <= i /\ i < &(LENGTH ws) then Rval (Number
+                 (&(w2n (EL (num_of_int i) ws))),s) else ((Rerr (Rabort
                  Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                  ,closSem_v)semanticPrimitives_result)) | _47 -> ((Rerr
                  (Rabort
@@ -422,8 +424,8 @@ let do_app_def = cake_define
                  ,closSem_v)semanticPrimitives_result)) | (MemOp
                  UpdateByte,[RefPtr _48 ptr; Number i; Number b]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ByteArray bs) ->
-               (if 0 <= i /\ i < &LENGTH bs /\ (?(w:word8). b = &(w2n
-                 w)) then
+               (if 0 <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b =
+                 &(w2n w)) then
                   Rval (Unit,?_refs_fupd (K (?_refs s |+
                     (ptr,ByteArray (LUPDATE (i2w b) (num_of_int i)
                       bs)))) s) else ((Rerr (Rabort
@@ -452,9 +454,9 @@ let do_app_def = cake_define
              ToListByte,[ByteVector bs]) ->
            (Rval (list_to_v (MAP (\b. Number (&(w2n b))) bs),s)) |
              (MemOp LengthByteVec,[ByteVector bs]) ->
-           (Rval (Number (&LENGTH bs),s)) | (MemOp
+           (Rval (Number (&(LENGTH bs)),s)) | (MemOp
              DerefByteVec,[ByteVector bs; Number i]) ->
-           (if 0 <= i /\ i < &LENGTH bs then
+           (if 0 <= i /\ i < &(LENGTH bs) then
               Rval (Number (&(w2n (EL (num_of_int i) bs))),s) else
                 ((Rerr (Rabort
                 Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -576,19 +578,19 @@ let do_app_def = cake_define
                      Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                      ,closSem_v)semanticPrimitives_result)) | (BlockOp
                      BoundsCheckBlock,[Block tag ys; Number i]) ->
-           Rval (Boolv (0 <= i /\ i < &LENGTH ys),s) | (MemOp
+           Rval (Boolv (0 <= i /\ i < &(LENGTH ys)),s) | (MemOp
              (BoundsCheckByte loose),[ByteVector bs; Number i]) ->
            Rval (Boolv (0 <= i /\ (if loose then (<=) else (<)) i
-             (&LENGTH bs)),s) | (MemOp (BoundsCheckByte loose),[RefPtr
+             (&(LENGTH bs))),s) | (MemOp (BoundsCheckByte loose),[RefPtr
              _75 ptr; Number i]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ByteArray ws) ->
                 Rval (Boolv (0 <= i /\ (if loose then (<=) else (<))
-                  i (&LENGTH ws)),s) | _76 -> ((Rerr (Rabort
+                  i (&(LENGTH ws))),s) | _76 -> ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                   ,closSem_v)semanticPrimitives_result)) | (MemOp
                   BoundsCheckArray,[RefPtr _77 ptr; Number i]) ->
            (match FLOOKUP (?_refs s) ptr with SOME (ValueArray ws) ->
-                Rval (Boolv (0 <= i /\ i < &LENGTH ws),s) | _78 ->
+                Rval (Boolv (0 <= i /\ i < &(LENGTH ws)),s) | _78 ->
                   ((Rerr (Rabort
                   Rtype_error)):(closSem_v#('c,'ffi)closSem_state
                   ,closSem_v)semanticPrimitives_result)) | (MemOp

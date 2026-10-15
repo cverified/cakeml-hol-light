@@ -594,7 +594,7 @@ let SeqIndex_def = cake_define
        -> TempIn1) in
        Seq (Assign i (Op Add [Lookup t;
             (\sh e n. Shift sh e (Const (n2w n))) Lsl (Lookup
-              (Temp (n2w r))) ((backend_common_word_shift) (:'a))]))
+              (Temp (n2w r))) (backend_common_word_shift (:'a))]))
               p:'a wordLang_prog)`;;
 
 let div_location_def = cake_define

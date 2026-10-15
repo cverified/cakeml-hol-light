@@ -118,7 +118,7 @@ let shift_length_def = cake_define
 let conf_ok_def = cake_define
   `conf_ok (:'a) c <=>
      shift_length c < dimindex (:'ga) /\
-     (backend_common_word_shift) (:'ga) <= shift_length c /\
+     backend_common_word_shift (:'ga) <= shift_length c /\
        ~(data_to_word_config_len_size c = 0) /\
        data_to_word_config_len_size
      c + 7 < dimindex (:'ga)`;;
@@ -126,8 +126,8 @@ let conf_ok_def = cake_define
 let max_heap_limit_def = cake_define
   `max_heap_limit (:'a) c =
      MIN (dimword (:'a) DIV 2 EXP shift_length c)
-         (dimword (:'a) DIV 2 EXP ((backend_common_word_shift)
-           (:'a) + 1))`;;
+         (dimword (:'a) DIV 2 EXP (backend_common_word_shift (:'a)
+           + 1))`;;
 
 let all_ones_def = cake_define
   `all_ones m n = (if m <= n then (n2w 0) else (word_slice (m - 1) n)
@@ -146,7 +146,7 @@ let ptr_bits_def = cake_define
 
 let real_addr_def = cake_define
   `((real_addr (conf:data_to_word_config) r):'a wordLang_exp) =
-     (let k = (backend_common_word_shift) (:'a) in
+     (let k = backend_common_word_shift (:'a) in
      let l = shift_length conf in
        if k = l /\ data_to_word_config_len_bits conf = 0 /\
          data_to_word_config_tag_bits conf = 0 then
@@ -262,7 +262,7 @@ let AllocVar_def = cake_define
                If Lower 1 (Imm (n2w limit))
                  (Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsl
                    (Op Add [Var 1; Const (n2w 1)])
-                   ((backend_common_word_shift) (:'a))))
+                   (backend_common_word_shift (:'a))))
                  (Assign 1 (Const (--((n2w 1):'a word))));
                Assign 3 (Op Sub [Lookup TriggerGC; Lookup NextFree]);
                If Lower 3 (Reg 1)
@@ -315,25 +315,25 @@ let RefByte_code_def = cake_define
          2) 2; Const bytes_in_word] in
        let x = SmallLsr h (dimindex (:'a) - 63) in
        let y = (\sh e n. Shift sh e (Const (n2w n))) Lsl h (dimindex
-         (:'a) - (backend_common_word_shift) (:'a) -
+         (:'a) - backend_common_word_shift (:'a) -
          data_to_word_config_len_size c) in
          list_Seq
            [BignumHalt 2;
             Assign 1 x;
             AllocVar c limit (fromList [one; one; one]);
             Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr h
-              ((backend_common_word_shift) (:'a)));
+              (backend_common_word_shift (:'a)));
             Assign 7 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
               5) 2);
             Assign 9 (Lookup NextFree);
             Assign 1 (Op Add [Var 9;
                               (\sh e n. Shift sh e (Const (n2w n)))
-                                Lsl (Var 5) ((backend_common_word_shift)
+                                Lsl (Var 5) (backend_common_word_shift
                                 (:'a))]);
             Set NextFree (Op Add [Var 1; Const bytes_in_word]);
             Assign 3 (Op Or [(\sh e n. Shift sh e (Const (n2w n)))
               Lsl (Op Sub [Var 9; Lookup CurrHeap])
-                (shift_length c - (backend_common_word_shift) (:'a));
+                (shift_length c - backend_common_word_shift (:'a));
                   Const ((n2w 1):'a word)]);
             Assign 5 (Op Or [Op Or [y; Const (n2w 7)]; Var 6]);
             MakeBytes 4;
@@ -361,7 +361,7 @@ let make_ptr_bits_code_def = cake_define
      (list_Seq [Assign dest (Op Or
         [Const (n2w 1); (\sh e n. Shift sh e (Const (n2w n))) Lsl (Op
           Sub [Lookup NextFree; Lookup CurrHeap])
-            (shift_length c - (backend_common_word_shift) (:'a))]);
+            (shift_length c - backend_common_word_shift (:'a))]);
          Maxout_bits_code (data_to_word_config_tag_bits c) (1 +
            data_to_word_config_len_bits c) dest tag;
          Maxout_bits_code (data_to_word_config_len_bits c) 1 dest
@@ -415,13 +415,13 @@ let RefArray_code_def = cake_define
            [Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Op
              Add [((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var 2) 2);
              Const (n2w 1)])
-                       ((backend_common_word_shift) (:'a)));
+                       (backend_common_word_shift (:'a)));
             Set TriggerGC (Op Sub [Lookup TriggerGC; Var 1]);
             Assign 1 (Op Sub [Lookup EndOfHeap; Var 1]);
             Set EndOfHeap (Var 1);
             Assign 3 (Op Or [(\sh e n. Shift sh e (Const (n2w n)))
               Lsl (Op Sub [Var 1; Lookup CurrHeap])
-                (shift_length c - (backend_common_word_shift) (:'a));
+                (shift_length c - backend_common_word_shift (:'a));
                   Const ((n2w 1):'a word)]);
             Assign 5 (Op Or [(\sh e n. Shift sh e (Const (n2w n)))
               Lsl (Var 2)
@@ -556,10 +556,10 @@ let AnyArith_code_def = cake_define
        Store (Var 5) 7;
        Assign 1 (Op Sub [Var 5; Lookup CurrHeap]);
        Assign 1 (Op Or [ShiftVar Lsl 1 (shift_length c -
-         (backend_common_word_shift) (:'a)); Const (n2w 1)]);
+         backend_common_word_shift (:'a)); Const (n2w 1)]);
        Set NextFree (Op Add [Var 5; Const bytes_in_word;
                              ShiftVar Lsl 6
-                               ((backend_common_word_shift) (:'a))]);
+                               (backend_common_word_shift (:'a))]);
        Return 0 [1]]:'a wordLang_prog)`;;
 
 let add_code_def = cake_define
@@ -675,10 +675,10 @@ let compare_code_def = cake_define
                     (list_Seq
                       [Assign 2 (Op Add [Var 11; (\sh e n. Shift sh e
                         (Const (n2w n))) Lsl (Var 6)
-                        ((backend_common_word_shift) (:'a))]);
+                        (backend_common_word_shift (:'a))]);
                        Assign 4 (Op Add [Var 13; (\sh e n. Shift sh e
                          (Const (n2w n))) Lsl (Var 6)
-                         ((backend_common_word_shift) (:'a))]);
+                         (backend_common_word_shift (:'a))]);
                        If Test 1 (Imm (n2w 16))
                         (Call NONE (SOME Compare1_location) [0; 6; 2;
                           4] NONE)
@@ -756,9 +756,9 @@ let equal_code_def = cake_define
        Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
          data_to_word_config_len_size c)));
        Assign 2 (Op Add [Var 20; ShiftVar Lsl 6
-         ((backend_common_word_shift) (:'a))]);
+         (backend_common_word_shift (:'a))]);
        Assign 4 (Op Add [Var 40; ShiftVar Lsl 6
-         ((backend_common_word_shift) (:'a))]);
+         (backend_common_word_shift (:'a))]);
        Call NONE (SOME Compare1_location) [0; 6; 2; 4] NONE]`;;
 
 let LongDiv_code_def = cake_define
@@ -814,7 +814,7 @@ let append_code_def = cake_define
               Assign 7 (Op Or [(\sh e n. Shift sh e (Const (n2w n)))
                 Lsl (Op Sub [Var 1; Lookup CurrHeap])
                               (shift_length c -
-                                (backend_common_word_shift) (:'a));
+                                backend_common_word_shift (:'a));
                               Const ((n2w 1) || (word_bits
                                 (small_shift_length c - 1) 0)
                               (ptr_bits c 0 2))]);
@@ -860,7 +860,7 @@ let AppendLenLoop_code_def = cake_define
        (list_Seq
          [Assign 1 (Op Sub [Lookup TriggerGC; Lookup NextFree]);
           Assign 1 (Op Add [Var 4; ShiftVar Lsr 1
-            ((backend_common_word_shift) (:'a) - 2)]);
+            (backend_common_word_shift (:'a) - 2)]);
           Assign 4 (Lookup (Temp (n2w 0)));
           Assign 2 (Lookup (Temp (n2w 1)));
           AllocVar c (dimword (:'ga) DIV 8 - 1) (fromList [one;
@@ -945,7 +945,7 @@ let WriteWord64_def = cake_define
                  (Op Or [(\sh e n. Shift sh e (Const (n2w n))) Lsl
                    (Op Sub [Var 1; Lookup CurrHeap])
                            (shift_length c -
-                             (backend_common_word_shift) (:'a));
+                             backend_common_word_shift (:'a));
                          Const (n2w 1)])]:'a wordLang_prog)`;;
 
 let WriteWord64_on_32_def = cake_define
@@ -962,7 +962,7 @@ let WriteWord64_on_32_def = cake_define
                  (Op Or [(\sh e n. Shift sh e (Const (n2w n))) Lsl
                    (Op Sub [Var 1; Lookup CurrHeap])
                            (shift_length c -
-                             (backend_common_word_shift) (:'a));
+                             backend_common_word_shift (:'a));
                          Const (n2w 1)])]:'a wordLang_prog)`;;
 
 let WriteWord32_on_32_def = cake_define
@@ -977,7 +977,7 @@ let WriteWord32_on_32_def = cake_define
            (Op Or
               [(\sh e n. Shift sh e (Const (n2w n))) Lsl (Op Sub [Var
                 1; Lookup CurrHeap])
-                 (shift_length c - (backend_common_word_shift)
+                 (shift_length c - backend_common_word_shift
                    (:'ga)); Const ((n2w 1):'a word)])]`;;
 
 let WordOp64_on_32_def = cake_define
@@ -1351,14 +1351,13 @@ let get_lowerbits_def = cake_define
 let make_cons_ptr_def = cake_define
   `make_cons_ptr conf nf tag len =
      Word (
-             nf << (shift_length conf -
-               (backend_common_word_shift) (:'a)) || ((n2w 1):'a
-               word) || get_lowerbits conf (Word (ptr_bits conf tag
-               len)))`;;
+             nf << (shift_length conf - backend_common_word_shift
+               (:'a)) || ((n2w 1):'a word) || get_lowerbits conf
+               (Word (ptr_bits conf tag len)))`;;
 
 let make_ptr_def = cake_define
   `make_ptr conf nf tag len =
-     Word (nf << (shift_length conf - (backend_common_word_shift)
+     Word (nf << (shift_length conf - backend_common_word_shift
        (:'a)) || ((n2w 1):'a word))`;;
 
 let write_bytes_def = cake_define_list
@@ -1370,7 +1369,7 @@ let write_bytes_def = cake_define_list
 
 let small_int_def = cake_define
   `small_int (:'a) i <=>
-     --&(dimword (:'a) DIV 8) <= i /\ i < (&(dimword (:'a) DIV
+     --&(dimword (:'a) DIV 8) <= i /\ i < &((dimword (:'a) DIV
        8):int)`;;
 
 let part_to_words_def = cake_define_list
@@ -1388,7 +1387,7 @@ let part_to_words_def = cake_define_list
          match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
            | SOME hd -> SOME ((T,Word
                               (offset << (shift_length c -
-                                (backend_common_word_shift) (:'ga)) +
+                                backend_common_word_shift (:'ga)) +
                               (ptr_bits c t (LENGTH ns) || (n2w
                                 1)))),
                             (F,Word hd) :: (MAP (lookup_mem m)

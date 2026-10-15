@@ -57,7 +57,7 @@ let next_sym_alt_def = cake_define_list
              if ~(str = "") /\ c = (CHR 48) /\ HD str = (CHR 120)
                then
                let (n,rest) = read_while isHexDigit (TL str) [] in
-                 SOME (NumberS (&num_from_hex_string_alt n),
+                 SOME (NumberS (&(num_from_hex_string_alt n)),
                        Locs loc (next_loc (LENGTH n) loc),
                        rest) else
                let (n,rest) = read_while isDigit str [] in

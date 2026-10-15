@@ -86,7 +86,7 @@ let preamble_def = cake_define
 
 let data_section_def = cake_define
   `data_section word_directive ret =
-      MAP (\n. (implode) (n ++ "\n"))
+      MAP (\n. implode (n ++ "\n"))
         (["     .data";
          "     .p2align 3";
          "cdecl(cml_heap): " ++ word_directive ++ " 0";
@@ -102,7 +102,7 @@ let data_section_def = cake_define
 
 let data_buffer_def = cake_define
   `data_buffer =
-      MAP (\n. (implode) (n ++ "\n"))
+      MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_bitmaps_buffer_begin)";
          "cdecl(cake_bitmaps_buffer_begin):";
          "#if defined(EVAL)";
@@ -113,7 +113,7 @@ let data_buffer_def = cake_define
 
 let code_buffer_def = cake_define
   `code_buffer =
-      MAP (\n. (implode) (n ++ "\n"))
+      MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_codebuffer_begin)";
          "cdecl(cake_codebuffer_begin):";
          "#if defined(EVAL)";
@@ -143,7 +143,7 @@ let word_to_string_def = cake_define
 
 let byte_to_string_def = cake_define
   `byte_to_string (b:word8) =
-     (implode) (
+     implode (
                   "0x" ++ [EL (w2n b DIV 16) "0123456789ABCDEF"]
                     ++ [EL (w2n b MOD 16) "0123456789ABCDEF"])`;;
 

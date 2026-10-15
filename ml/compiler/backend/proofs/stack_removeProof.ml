@@ -86,7 +86,7 @@ let state_rel_def = cake_define
      s2 = (\n. (I ## MAP (prog_comp jump off k) ## I)
        (?_compile_oracle s1 n)) /\
      (!n i p. MEM (i,p) (FST (SND (?_compile_oracle s1 n))) ==>
-       reg_bound p k /\ (stack_num_stubs) <= i + 1) /\
+       reg_bound p k /\ stack_num_stubs <= i + 1) /\
      good_dimindex (:'a) /\
      (!n.
         n < k ==>
@@ -321,16 +321,16 @@ let get_stack_heap_limit'_def = cake_define
                  (if max_heap_w <+ --(n2w 1) * n2w ptr2 + n2w ptr3
                    then
                    max_heap_w + (n2w ptr2:'a word) else n2w ptr3))
-                     >>> ((backend_common_word_shift) (:'ga) + 1) <<
-                     ((backend_common_word_shift) (:'ga) + 1) in
+                     >>> (backend_common_word_shift (:'ga) + 1) <<
+                     (backend_common_word_shift (:'ga) + 1) in
        get_stack_heap_limit'' (ptr2 DIV d) (w2n reg3 DIV d) (ptr4
          DIV d))`;;
 
 let get_stack_heap_limit_def = cake_define
   `get_stack_heap_limit max_heap (ptr2,ptr3,(ptr4:'a word)) =
      (let middle = ptr2 + (--(n2w 1) * ptr2 + ptr4) >>>
-       ((backend_common_word_shift) (:'ga) + 1) <<
-       (backend_common_word_shift) (:'ga) in
+       (backend_common_word_shift (:'ga) + 1) <<
+       backend_common_word_shift (:'ga) in
      let adj_ptr2 = ptr2 + bytes_in_word * n2w max_stack_alloc in
      let adj_ptr4 = ptr4 - (bytes_in_word * n2w max_stack_alloc) in
      let adj_ptr3 = (if adj_ptr2 <=+ ptr3 /\ ptr3 <=+ adj_ptr4 then
@@ -402,11 +402,11 @@ let make_init_any_def = cake_define
 
 let discharge_these_def = cake_define
   `discharge_these jump off gen_gc' max_heap k start coracle code s2 <=>
-       EVERY (\(n,p). reg_bound p k /\ (stack_num_stubs) <= n + 1)
-         code /\
+       EVERY (\(n,p). reg_bound p k /\ stack_num_stubs <= n + 1) code
+         /\
        (!n i p.
          MEM (i,p) (FST (SND (coracle n))) ==> reg_bound p k /\
-           (stack_num_stubs) <= i + 1) /\ ?_compile_oracle
+           stack_num_stubs <= i + 1) /\ ?_compile_oracle
        s2 = (I ## MAP (prog_comp jump off k) ## I) o coracle /\
          ?_code
        s2 = fromAList (compile jump off gen_gc' max_heap k start

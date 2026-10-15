@@ -39,23 +39,22 @@ val _ = add_strliteral_form{inj=“implode”, ldelim = "«"};
      strlit = implode *)
 
 let strlen_def = cake_define
-  `strlen ((implode) s) = LENGTH s`;;
+  `strlen (implode s) = LENGTH s`;;
 
 let strsub_def = cake_define
-  `strsub ((implode) s) n = EL n s`;;
+  `strsub (implode s) n = EL n s`;;
 
 (* the test here is because underspecification is annoying (and SEG is
    underspecified) *)
 (* the underlying primitive (CopyStrStr) raises an exception if the test
    is false *)
 let substring_def = cake_define
-  `substring ((implode) s) off len = (implode) (if off + len <=
-  LENGTH s then SEG len off s else if off <= LENGTH s then DROP off s
-  else "")`;;
+  `substring (implode s) off len = implode (if off + len <= LENGTH s
+  then SEG len off s else if off <= LENGTH s then DROP off s else "")`;;
 
 let concat_def = cake_define
-  `mlstring_concat l = (implode) (FLAT (MAP (\s. match s with
-  (implode) x -> x) l))`;;
+  `mlstring_concat l = implode (FLAT (MAP (\s. match s with implode x
+  -> x) l))`;;
 hol4_overload "concat" "mlstring_concat";;
 
 let explode_aux_def = cake_define_list
@@ -314,7 +313,7 @@ let char_escape_seq_def = cake_define
   `char_escape_seq c =
      (if c = (CHR 9) then SOME (implode "\\t") else if c = (CHR
        10) then SOME (implode "\\n") else if c = (CHR 92) then SOME
-       (implode "\\\\") else if c = (CHR 34) then SOME ((implode)
+       (implode "\\\\") else if c = (CHR 34) then SOME (implode
        "\\\"") else NONE)`;;
 
 let char_escaped_def = cake_define

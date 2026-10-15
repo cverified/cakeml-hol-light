@@ -76,8 +76,8 @@ let otherwise_def = cake_define
 
 let can_def = cake_define
   `can f x = (
-              otherwise monad_ignore_bind (f x) (return T) (return
-                F))`;;
+              otherwise (st_ex_ignore_bind (f x) (st_ex_return T))
+                (st_ex_return F))`;;
 
 (* Dynamic allocation of references *)
 let store_ref_INDUCT,store_ref_RECURSION = define_datatype

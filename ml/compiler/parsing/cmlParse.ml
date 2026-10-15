@@ -74,17 +74,17 @@ let optlift_def = cake_define_list
    `optlift (SOME a) = (\toks. Success toks a NONE)`];;
 
 let cmlParseExpr_def = cake_define
-  `cmlParseExpr = monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt
-  n) t [] NONE [] done failed) nE) (\
-     pts. monad_bind (optlift (oHD pts)) (\
-     pt. monad_bind (optlift (ptree_Expr nE pt)) (\
+  `cmlParseExpr = pegresult_bind (destResult o (\n t. peg_exec cmlPEG
+  (pnt n) t [] NONE [] done failed) nE) (\
+     pts. pegresult_bind (optlift (oHD pts)) (\
+     pt. pegresult_bind (optlift (ptree_Expr nE pt)) (\
      ast.
-     return ast)))`;;
+     (\a inp. Success inp a NONE) ast)))`;;
 
 let parse_prog_def = cake_define
   `parse_prog =
-     monad_bind (destResult o (\n t. peg_exec cmlPEG (pnt n) t []
+     pegresult_bind (destResult o (\n t. peg_exec cmlPEG (pnt n) t []
        NONE [] done failed) nTopLevelDecs) (\
-       pts. monad_bind (optlift (oHD pts)) (\
+       pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;

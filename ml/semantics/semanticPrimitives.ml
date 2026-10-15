@@ -638,7 +638,7 @@ let ws_to_chars_def = cake_define
   `ws_to_chars (ws:word8 list) = MAP (\w. CHR (w2n w)) ws`;;
 
 let chars_to_ws_def = cake_define
-  `chars_to_ws cs = (MAP (\c. i2w (&ORD c)) cs:word8 list)`;;
+  `chars_to_ws cs = (MAP (\c. i2w (&(ORD c))) cs:word8 list)`;;
 
 (*
 

@@ -98,7 +98,7 @@ let backend_config_ok_def = cake_define
      asm_conf (INL Sub) (n2w 1) /\
      OPTION_ALL (EVERY (\x. ?s. x = ExtCall s)) (?_ffi_names
        (backend_config_lab_conf c)) /\
-     (tlookup) (stack_to_lab_config_reg_names
+     tlookup (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) PERMUTES UNIV /\
      names_ok (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) (asm_config_reg_count asm_conf)
@@ -117,21 +117,21 @@ let backend_config_ok_def = cake_define
 
 let mc_init_ok_def = cake_define
   `mc_init_ok asm_conf c mc <=>
-   EVERY (\r. MEM ((tlookup) (stack_to_lab_config_reg_names
+   EVERY (\r. MEM (tlookup (stack_to_lab_config_reg_names
      (backend_config_stack_conf c)) ((r + asm_config_reg_count
      (target_config (machine_config_target mc))) - (LENGTH
      (asm_config_avoid_regs (target_config (machine_config_target mc)))
      + 5))) (machine_config_callee_saved_regs mc)) [2; 3; 4] /\
-   (tlookup) (stack_to_lab_config_reg_names
-     (backend_config_stack_conf c)) 4 = ?_len2_reg mc /\
-   (tlookup) (stack_to_lab_config_reg_names
-     (backend_config_stack_conf c)) 3 = ?_ptr2_reg mc /\
-   (tlookup) (stack_to_lab_config_reg_names
-     (backend_config_stack_conf c)) 2 = ?_len_reg mc /\
-   (tlookup) (stack_to_lab_config_reg_names
-     (backend_config_stack_conf c)) 1 = ?_ptr_reg mc /\
-   (tlookup) (stack_to_lab_config_reg_names
-     (backend_config_stack_conf c)) 0 =
+   tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
+     c)) 4 = ?_len2_reg mc /\
+   tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
+     c)) 3 = ?_ptr2_reg mc /\
+   tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
+     c)) 2 = ?_len_reg mc /\
+   tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
+     c)) 1 = ?_ptr_reg mc /\
+   tlookup (stack_to_lab_config_reg_names (backend_config_stack_conf
+     c)) 0 =
      (match ?_link_reg (target_config (machine_config_target mc))
        with NONE -> 0 | SOME n -> n) /\ ?_be (backend_config_data_conf
    c) = asm_config_big_endian (target_config (machine_config_target
@@ -151,7 +151,7 @@ let mc_init_ok_def = cake_define
 
 let heap_regs_def = cake_define
   `heap_regs reg_names =
-     ((tlookup) reg_names 2,(tlookup) reg_names 4)`;;
+     (tlookup reg_names 2,tlookup reg_names 4)`;;
 
 (* HOL4 overload (expanded in the port):
      bvl_inline_compile_prog = bvl_inline$compile_prog *)
@@ -365,13 +365,13 @@ let read_limits_def = cake_define
   mc ms =
      get_stack_heap_limit
        (2 * max_heap_limit (:'ga) (backend_config_data_conf c) - 1)
-       ((target_get_reg (machine_config_target mc) ms ((tlookup)
+       ((target_get_reg (machine_config_target mc) ms (tlookup
          (stack_to_lab_config_reg_names (backend_config_stack_conf c))
          2):'a word),(target_get_reg (machine_config_target
-        mc) ms ((tlookup) (stack_to_lab_config_reg_names
+        mc) ms (tlookup (stack_to_lab_config_reg_names
           (backend_config_stack_conf c)) 3):'a word),(target_get_reg
           (machine_config_target
-        mc) ms ((tlookup) (stack_to_lab_config_reg_names
+        mc) ms (tlookup (stack_to_lab_config_reg_names
           (backend_config_stack_conf c)) 4):'a word))`;;
 hol4_overload "read_limits" "backendProof_read_limits";;
 
@@ -435,7 +435,7 @@ let backend_from_flat_tuple_cc_def = cake_define
           (pure_cc (clos_to_bvl_compile_inc (?_max_app
             (backend_config_clos_conf c)))
             (full_cc (backend_config_bvl_conf c) (pure_cc
-              (bvi_to_data_compile_prog)
+              bvi_to_data_compile_prog
               (backend_from_data_tuple_cc asm_conf c)))))`;;
 
 (* HOL4 overload (expanded in the port):

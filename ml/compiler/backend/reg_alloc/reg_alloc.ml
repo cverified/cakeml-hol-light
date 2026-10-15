@@ -145,33 +145,33 @@ val move_related_manip = el 5 arr_manip;
 
 (* Monadic list functions -- doesn't care about order *)
 let st_ex_FOREACH_def = cake_define_list
-  [`st_ex_FOREACH [] a = return one`;
+  [`st_ex_FOREACH [] a = st_ex_return one`;
    `st_ex_FOREACH (x :: xs) a =
-      monad_ignore_bind
+      st_ex_ignore_bind
         (a x) (
         st_ex_FOREACH xs a)`];;
 
 let st_ex_MAP_def = cake_define_list
-  [`st_ex_MAP f [] = return []`;
+  [`st_ex_MAP f [] = st_ex_return []`;
    `st_ex_MAP f (x :: xs) =
-      monad_bind (f x) (\
-        fx. monad_bind (st_ex_MAP f xs) (\
+      st_ex_bind (f x) (\
+        fx. st_ex_bind (st_ex_MAP f xs) (\
         fxs.
-        return (fx :: fxs)))`];;
+        st_ex_return (fx :: fxs)))`];;
 
 let st_ex_PARTITION_def = cake_define_list
-  [`st_ex_PARTITION P [] tt ff = return (tt,ff)`;
+  [`st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)`;
    `st_ex_PARTITION P (x :: xs) tt ff =
-      monad_bind (P x) (\
+      st_ex_bind (P x) (\
         Px.
         if Px then
           st_ex_PARTITION P xs (x :: tt) ff else
           st_ex_PARTITION P xs tt (x :: ff))`];;
 
 let st_ex_FILTER_def = cake_define_list
-  [`st_ex_FILTER P [] acc = return acc`;
+  [`st_ex_FILTER P [] acc = st_ex_return acc`;
    `st_ex_FILTER P (x :: xs) acc =
-      monad_bind (P x) (\
+      st_ex_bind (P x) (\
         Px.
         if Px then
           st_ex_FILTER P xs (x :: acc) else
@@ -195,25 +195,25 @@ let sorted_mem_def = cake_define_list
 
 let insert_edge_def = cake_define
   `insert_edge x y =
-   monad_bind (adj_ls_sub x) (\
-     adjx. monad_bind (adj_ls_sub y) (\
+   st_ex_bind (adj_ls_sub x) (\
+     adjx. st_ex_bind (adj_ls_sub y) (\
      adjy.
-     monad_ignore_bind
+     st_ex_ignore_bind
        (update_adj_ls x (sorted_insert y [] adjx)) (
        update_adj_ls y (sorted_insert x [] adjy))))`;;
 
 (* insert a list of edges all adjacent to one node *)
 let list_insert_edge_def = cake_define_list
-  [`list_insert_edge x [] = return one`;
+  [`list_insert_edge x [] = st_ex_return one`;
    `list_insert_edge x (y :: ys) =
-        monad_ignore_bind
+        st_ex_ignore_bind
           (insert_edge x y) (
           list_insert_edge x ys)`];;
 
 let clique_insert_edge_def = cake_define_list
-  [`clique_insert_edge [] = return one`;
+  [`clique_insert_edge [] = st_ex_return one`;
    `clique_insert_edge (x :: xs) =
-      monad_ignore_bind
+      st_ex_ignore_bind
         (list_insert_edge x xs) (
         clique_insert_edge xs)`];;
 
@@ -221,11 +221,11 @@ let clique_insert_edge_def = cake_define_list
    extend it with new members
 *)
 let extend_clique_def = cake_define_list
-  [`extend_clique [] cli = return cli`;
+  [`extend_clique [] cli = st_ex_return cli`;
    `extend_clique (x :: xs) cli =
         (if MEM x cli then
           extend_clique xs cli else
-        monad_ignore_bind
+        st_ex_ignore_bind
           (list_insert_edge x cli) (
           extend_clique xs (x :: cli)))`];;
 
@@ -235,50 +235,50 @@ let extend_clique_def = cake_define_list
 (* (Safely) decrement the degree of all vertices adjacent to n by 1 *)
 let dec_deg_def = cake_define
   `dec_deg n =
-   monad_bind (degrees_sub n) (\
+   st_ex_bind (degrees_sub n) (\
      cd.
      update_degrees n (cd - 1))`;;
 
 let dec_degree_def = cake_define
   `dec_degree n =
-   monad_bind get_dim (\
+   st_ex_bind get_dim (\
      d.
      if n < d then
-     monad_bind (adj_ls_sub n) (\
+     st_ex_bind (adj_ls_sub n) (\
        adjs.
        st_ex_FOREACH adjs dec_deg) else
-       return one)`;;
+       st_ex_return one)`;;
 
 let add_simp_wl_def = cake_define
   `add_simp_wl ls =
-   monad_bind get_simp_wl (\
+   st_ex_bind get_simp_wl (\
      swl.
      set_simp_wl (ls ++ swl))`;;
 
 let add_spill_wl_def = cake_define
   `add_spill_wl ls =
-   monad_bind get_spill_wl (\
+   st_ex_bind get_spill_wl (\
      swl.
      set_spill_wl (ls ++ swl))`;;
 
 let add_freeze_wl_def = cake_define
   `add_freeze_wl ls =
-   monad_bind get_freeze_wl (\
+   st_ex_bind get_freeze_wl (\
      fwl.
      set_freeze_wl (ls ++ fwl))`;;
 
 (* push x onto the stack, deleting it from "existence" *)
 let push_stack_def = cake_define
   `push_stack x =
-   monad_bind get_stack (\
-     swl. monad_ignore_bind
-     (update_degrees x 0) (monad_ignore_bind
+   st_ex_bind get_stack (\
+     swl. st_ex_ignore_bind
+     (update_degrees x 0) (st_ex_ignore_bind
      (update_move_related x F) (
      set_stack (x :: swl))))`;;
 
 let add_unavail_moves_wl_def = cake_define
   `add_unavail_moves_wl ls =
-   monad_bind get_unavail_moves_wl (\
+   st_ex_bind get_unavail_moves_wl (\
      swl.
      set_unavail_moves_wl (ls ++ swl))`;;
 
@@ -289,18 +289,18 @@ let add_unavail_moves_wl_def = cake_define
 *)
 let is_not_coalesced_def = cake_define
   `is_not_coalesced d =
-   monad_bind (coalesced_sub d) (\
+   st_ex_bind (coalesced_sub d) (\
      dt.
-     return (d = dt))`;;
+     st_ex_return (d = dt))`;;
 
 let split_degree_def = cake_define
   `split_degree d k v =
    (if v < d then
-   monad_bind (degrees_sub v) (\
-     vd. monad_bind (is_not_coalesced v) (\
+   st_ex_bind (degrees_sub v) (\
+     vd. st_ex_bind (is_not_coalesced v) (\
      b.
-     return (vd < k /\ b))) else
-     return T)`;;
+     st_ex_return (vd < k /\ b))) else
+     st_ex_return T)`;;
 
 (* sort moves by priority *)
 let sort_moves_def = cake_define
@@ -324,29 +324,29 @@ let smerge_def = cake_define
 *)
 let revive_moves_def = cake_define
   `revive_moves vs =
-   monad_bind (st_ex_MAP adj_ls_sub vs) (\
-     nbs. monad_bind get_unavail_moves_wl (\
-     uam. monad_bind get_avail_moves_wl (\
+   st_ex_bind (st_ex_MAP adj_ls_sub vs) (\
+     nbs. st_ex_bind get_unavail_moves_wl (\
+     uam. st_ex_bind get_avail_moves_wl (\
      am.
      let (rev,unavail) = PARTITION
        (\(_1,(x,y)). EXISTS (sorted_mem x) nbs \/ EXISTS (sorted_mem
          y) nbs) uam in
      let sorted = smerge (sort_moves rev) am in
-     monad_ignore_bind
+     st_ex_ignore_bind
        (set_avail_moves_wl sorted) (
        set_unavail_moves_wl unavail))))`;;
 
 let unspill_def = cake_define
   `unspill (k:num) =
-   monad_bind get_dim (\
-     d. monad_bind get_spill_wl (\
-     swl. monad_bind (st_ex_PARTITION (split_degree d k) swl [] [])
+   st_ex_bind get_dim (\
+     d. st_ex_bind get_spill_wl (\
+     swl. st_ex_bind (st_ex_PARTITION (split_degree d k) swl [] [])
        (\
-     (ltk,gtk). monad_ignore_bind
-     (revive_moves ltk) (monad_bind (st_ex_PARTITION
+     (ltk,gtk). st_ex_ignore_bind
+     (revive_moves ltk) (st_ex_bind (st_ex_PARTITION
        (move_related_sub) ltk [] []) (\
-     (ltkfreeze,ltksimp). monad_ignore_bind
-     (set_spill_wl gtk) (monad_ignore_bind
+     (ltkfreeze,ltksimp). st_ex_ignore_bind
+     (set_spill_wl gtk) (st_ex_ignore_bind
      (add_simp_wl ltksimp) (
      add_freeze_wl ltkfreeze)))))))`;;
 
@@ -358,21 +358,21 @@ let unspill_def = cake_define
 *)
 let do_simplify_def = cake_define
   `do_simplify k =
-   monad_bind get_simp_wl (\
+   st_ex_bind get_simp_wl (\
      simps.
      if NULL simps then
-       return F else
-     monad_ignore_bind
-       (st_ex_FOREACH simps dec_degree) (monad_ignore_bind
-       (st_ex_FOREACH simps push_stack) (monad_ignore_bind
-       (set_simp_wl []) (monad_ignore_bind
+       st_ex_return F else
+     st_ex_ignore_bind
+       (st_ex_FOREACH simps dec_degree) (st_ex_ignore_bind
+       (st_ex_FOREACH simps push_stack) (st_ex_ignore_bind
+       (set_simp_wl []) (st_ex_ignore_bind
        (unspill k) (
-       return T)))))`;;
+       st_ex_return T)))))`;;
 
 (* increment degree of n by d *)
 let inc_deg_def = cake_define
   `inc_deg n d =
-   monad_bind (degrees_sub n) (\
+   st_ex_bind (degrees_sub n) (\
      cd.
      update_degrees n (cd + d))`;;
 
@@ -401,18 +401,18 @@ let inc_deg_def = cake_define
 (* An actual register *)
 let is_Fixed_def = cake_define
   `is_Fixed x =
-   monad_bind (node_tag_sub x) (\
+   st_ex_bind (node_tag_sub x) (\
      xt.
-     return (match xt with Fixed n -> T | _2 -> F))`;;
+     st_ex_return (match xt with Fixed n -> T | _2 -> F))`;;
 
 let do_coalesce_real_def = cake_define
   `do_coalesce_real x y case1 case2 =
-   monad_ignore_bind
-     (update_coalesced y x) (monad_bind (is_Fixed x) (\
-     bx. monad_ignore_bind
-     (if bx then return one else inc_deg x (LENGTH case2))
-       (monad_ignore_bind
-     (list_insert_edge x case2) (monad_ignore_bind
+   st_ex_ignore_bind
+     (update_coalesced y x) (st_ex_bind (is_Fixed x) (\
+     bx. st_ex_ignore_bind
+     (if bx then st_ex_return one else inc_deg x (LENGTH case2))
+       (st_ex_ignore_bind
+     (list_insert_edge x case2) (st_ex_ignore_bind
      (st_ex_FOREACH case1 dec_deg) (
      push_stack y)))))`;;
 
@@ -434,55 +434,55 @@ let do_coalesce_real_def = cake_define
 *)
 let is_Atemp_def = cake_define
   `is_Atemp d =
-   monad_bind (node_tag_sub d) (\
+   st_ex_bind (node_tag_sub d) (\
      dt.
-     return (dt = Atemp))`;;
+     st_ex_return (dt = Atemp))`;;
 
 let is_Fixed_k_def = cake_define
   `is_Fixed_k k x =
-   monad_bind (node_tag_sub x) (\
+   st_ex_bind (node_tag_sub x) (\
      xt.
-     return (match xt with Fixed n -> n < k | _3 -> F))`;;
+     st_ex_return (match xt with Fixed n -> n < k | _3 -> F))`;;
 
 let considered_var_def = cake_define
   `considered_var k x =
-   monad_bind (is_Atemp x) (\
-     bx. monad_bind (is_Fixed_k k x) (\
+   st_ex_bind (is_Atemp x) (\
+     bx. st_ex_bind (is_Fixed_k k x) (\
      fx.
-     return (bx \/ fx)))`;;
+     st_ex_return (bx \/ fx)))`;;
 
 (* Fixed vars are treated as having infinite degree *)
 let deg_or_inf_def = cake_define
   `deg_or_inf k x =
-   monad_bind (is_Fixed_k k x) (\
+   st_ex_bind (is_Fixed_k k x) (\
      bx.
-     if bx then return k else degrees_sub x)`;;
+     if bx then st_ex_return k else degrees_sub x)`;;
 
 let bg_ok_def = cake_define
   `bg_ok k x y =
-   monad_bind (adj_ls_sub x) (\
-     adjx. monad_bind (adj_ls_sub y) (\
+   st_ex_bind (adj_ls_sub x) (\
+     adjx. st_ex_bind (adj_ls_sub y) (\
      adjy.
      let (case1,case2) = PARTITION (\v. sorted_mem v adjx) adjy in
-     monad_bind (st_ex_FILTER (considered_var k) case1 []) (\
-       case1. monad_bind (st_ex_FILTER (considered_var k) case2 [])
+     st_ex_bind (st_ex_FILTER (considered_var k) case1 []) (\
+       case1. st_ex_bind (st_ex_FILTER (considered_var k) case2 [])
          (\
-       case2. monad_bind (st_ex_MAP (deg_or_inf k) case2) (\
+       case2. st_ex_bind (st_ex_MAP (deg_or_inf k) case2) (\
        case2degs.
        let c2len = LENGTH (FILTER (\x. x >= k) case2degs) in
-       if c2len = 0 then return (SOME (case1,case2)) else
+       if c2len = 0 then st_ex_return (SOME (case1,case2)) else
        let case3 = FILTER (\v. ~sorted_mem v adjy) adjx in
-       monad_bind (st_ex_FILTER (considered_var k) case3 []) (\
-         case3. monad_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\
-         case1degs. monad_bind (st_ex_MAP (deg_or_inf k) case3) (\
-         case3degs. monad_bind (return (LENGTH (FILTER (\x. x - 1 >=
-           k) case1degs))) (\
-         c1len. monad_bind (return (LENGTH (FILTER (\x. x >= k)
+       st_ex_bind (st_ex_FILTER (considered_var k) case3 []) (\
+         case3. st_ex_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\
+         case1degs. st_ex_bind (st_ex_MAP (deg_or_inf k) case3) (\
+         case3degs. st_ex_bind (st_ex_return (LENGTH (FILTER (\x. x -
+           1 >= k) case1degs))) (\
+         c1len. st_ex_bind (st_ex_return (LENGTH (FILTER (\x. x >= k)
            case3degs))) (\
          c3len.
          if c1len + c2len + c3len < k then
-           return (SOME (case1,case2)) else
-           return NONE))))))))))`;;
+           st_ex_return (SOME (case1,case2)) else
+           st_ex_return NONE))))))))))`;;
 
 (*
   Consistency check for moves
@@ -496,16 +496,16 @@ let bg_ok_def = cake_define
 let consistency_ok_def = cake_define
   `consistency_ok x y =
    (if x = y then
-     return F else
-   monad_bind (adj_ls_sub y) (\
+     st_ex_return F else
+   st_ex_bind (adj_ls_sub y) (\
      adjy.
-     if sorted_mem x adjy then return F else
-     monad_bind (is_Fixed x) (\
-       bx. monad_bind (is_Fixed y) (\
-       by. monad_bind (move_related_sub x) (\
-       movrelx. monad_bind (move_related_sub y) (\
+     if sorted_mem x adjy then st_ex_return F else
+     st_ex_bind (is_Fixed x) (\
+       bx. st_ex_bind (is_Fixed y) (\
+       by. st_ex_bind (move_related_sub x) (\
+       movrelx. st_ex_bind (move_related_sub y) (\
        movrely.
-       return ((bx \/ movrelx) /\ (by \/ movrely) /\ ~(bx /\
+       st_ex_return ((bx \/ movrelx) /\ (by \/ movrely) /\ ~(bx /\
          by))))))))`;;
 
 (*
@@ -515,25 +515,26 @@ let consistency_ok_def = cake_define
 *)
 let coalesce_parent_def = cake_define
   `coalesce_parent x =
-   monad_bind (coalesced_sub x) (\
-     xt. monad_bind (is_Fixed xt) (\
+   st_ex_bind (coalesced_sub x) (\
+     xt. st_ex_bind (is_Fixed xt) (\
      bx.
      if bx then
-       return xt else
+       st_ex_return xt else
        if x <= xt then
-         return x else
-       monad_bind (coalesce_parent xt) (\
-         anc. monad_ignore_bind
+         st_ex_return x else
+       st_ex_bind (coalesce_parent xt) (\
+         anc. st_ex_ignore_bind
          (update_coalesced x anc) (
-         return anc))))`;;
+         st_ex_return anc))))`;;
 
 let canonize_move_def = cake_define
   `canonize_move x y =
-   monad_bind (is_Fixed x) (\
-     bx. monad_bind (is_Fixed y) (\
+   st_ex_bind (is_Fixed x) (\
+     bx. st_ex_bind (is_Fixed y) (\
      by.
-     if by then return (y,x) else if bx then return (x,y) else
-       if x < y then return (x,y) else return (y,x)))`;;
+     if by then st_ex_return (y,x) else if bx then st_ex_return (x,y)
+       else
+       if x < y then st_ex_return (x,y) else st_ex_return (y,x)))`;;
 
 (*
   Picks apart the available moves worklist
@@ -542,53 +543,53 @@ let canonize_move_def = cake_define
   3) returns the first bg_ok move that is also consistent
 *)
 let st_ex_FIRST_def = cake_define_list
-  [`st_ex_FIRST P Q [] unavail = return (NONE,unavail)`;
+  [`st_ex_FIRST P Q [] unavail = st_ex_return (NONE,unavail)`;
    `st_ex_FIRST P Q (m :: ms) unavail =
         (let (p,(x,y)) = m in
-        monad_bind (coalesce_parent x) (\
-          x. monad_bind (coalesce_parent y) (\
-          y. monad_bind (P x y) (\
+        st_ex_bind (coalesce_parent x) (\
+          x. st_ex_bind (coalesce_parent y) (\
+          y. st_ex_bind (P x y) (\
           b1.
           if ~b1 then
             st_ex_FIRST P Q ms unavail else
-          monad_bind (canonize_move x y) (\
-            (x,y). monad_bind (Q x y) (\
+          st_ex_bind (canonize_move x y) (\
+            (x,y). st_ex_bind (Q x y) (\
             optb2.
             match optb2 with
               NONE -> st_ex_FIRST P Q ms ((p,(x,y)) :: unavail) |
                 SOME pr ->
-              return (SOME ((x,y),pr,ms),unavail)))))))`];;
+              st_ex_return (SOME ((x,y),pr,ms),unavail)))))))`];;
 
 let respill_def = cake_define
   `respill k x =
-   monad_bind (degrees_sub x) (\
+   st_ex_bind (degrees_sub x) (\
      xd.
-     if xd < k then return one else
-     monad_bind get_freeze_wl (\
+     if xd < k then st_ex_return one else
+     st_ex_bind get_freeze_wl (\
        freeze.
        if MEM x freeze then
-       monad_ignore_bind
+       st_ex_ignore_bind
          (add_spill_wl [x]) (
-         set_freeze_wl (FILTER (\y. ~(y = x)) freeze)) else return
-           one))`;;
+         set_freeze_wl (FILTER (\y. ~(y = x)) freeze)) else
+           st_ex_return one))`;;
 
 let do_coalesce_def = cake_define
   `do_coalesce k =
-   monad_bind get_avail_moves_wl (\
-     am. monad_bind (st_ex_FIRST consistency_ok (bg_ok k) am []) (\
-     (ores,unavail). monad_ignore_bind
+   st_ex_bind get_avail_moves_wl (\
+     am. st_ex_bind (st_ex_FIRST consistency_ok (bg_ok k) am []) (\
+     (ores,unavail). st_ex_ignore_bind
      (add_unavail_moves_wl unavail) (
      match ores with
        NONE ->
-         monad_ignore_bind
+         st_ex_ignore_bind
            (set_avail_moves_wl []) (
-           return F) | SOME ((x,y),(case1,case2),ms) ->
-     monad_ignore_bind
-       (set_avail_moves_wl ms) (monad_ignore_bind
-       (do_coalesce_real x y case1 case2) (monad_ignore_bind
-       (unspill k) (monad_ignore_bind
+           st_ex_return F) | SOME ((x,y),(case1,case2),ms) ->
+     st_ex_ignore_bind
+       (set_avail_moves_wl ms) (st_ex_ignore_bind
+       (do_coalesce_real x y case1 case2) (st_ex_ignore_bind
+       (unspill k) (st_ex_ignore_bind
        (respill k x) (
-       return T)))))))`;;
+       st_ex_return T)))))))`;;
 
 (*
   prefreeze: make the freeze and spill worklists consistent.
@@ -608,35 +609,35 @@ let do_coalesce_def = cake_define
 
 let reset_move_related_def = cake_define
   `reset_move_related ls =
-   monad_bind get_dim (\
-     d. monad_ignore_bind
+   st_ex_bind get_dim (\
+     d. st_ex_ignore_bind
      (st_ex_FOREACH (COUNT_LIST d) (\x. update_move_related x F)) (
      st_ex_FOREACH ls (\(_4,(x,y)).
-         monad_bind (is_Fixed x) (\
-           bx. monad_bind (is_Fixed y) (\
-           by. monad_ignore_bind
+         st_ex_bind (is_Fixed x) (\
+           bx. st_ex_bind (is_Fixed y) (\
+           by. st_ex_ignore_bind
            (update_move_related x (~bx)) (
            update_move_related y (~by)))))))`;;
 
 let do_prefreeze_def = cake_define
   `do_prefreeze k =
-   monad_bind get_freeze_wl (\
-     fwl_pre. monad_bind (st_ex_FILTER is_not_coalesced fwl_pre [])
+   st_ex_bind get_freeze_wl (\
+     fwl_pre. st_ex_bind (st_ex_FILTER is_not_coalesced fwl_pre [])
        (\
-     fwl. monad_bind get_spill_wl (\
-     swl_pre. monad_bind (st_ex_FILTER is_not_coalesced swl_pre [])
+     fwl. st_ex_bind get_spill_wl (\
+     swl_pre. st_ex_bind (st_ex_FILTER is_not_coalesced swl_pre [])
        (\
-     swl. monad_ignore_bind
-     (set_spill_wl swl) (monad_bind get_unavail_moves_wl (\
-     uam_pre. monad_bind (st_ex_FILTER (\(_5,(x,y)). consistency_ok x
+     swl. st_ex_ignore_bind
+     (set_spill_wl swl) (st_ex_bind get_unavail_moves_wl (\
+     uam_pre. st_ex_bind (st_ex_FILTER (\(_5,(x,y)). consistency_ok x
        y) uam_pre []) (\
-     uam. monad_ignore_bind
-     (reset_move_related uam) (monad_bind (set_unavail_moves_wl uam)
+     uam. st_ex_ignore_bind
+     (reset_move_related uam) (st_ex_bind (set_unavail_moves_wl uam)
        (\
-     uam. monad_bind (st_ex_PARTITION (move_related_sub) fwl [] [])
+     uam. st_ex_bind (st_ex_PARTITION (move_related_sub) fwl [] [])
        (\
-     (ltkfreeze,ltksimp). monad_ignore_bind
-     (add_simp_wl ltksimp) (monad_ignore_bind
+     (ltkfreeze,ltksimp). st_ex_ignore_bind
+     (add_simp_wl ltksimp) (st_ex_ignore_bind
      (set_freeze_wl ltkfreeze) (
      do_simplify k))))))))))))`;;
 
@@ -644,16 +645,16 @@ let do_prefreeze_def = cake_define
 
 let do_freeze_def = cake_define
   `do_freeze k =
-   monad_bind get_freeze_wl (\
+   st_ex_bind get_freeze_wl (\
      freeze.
      match freeze with
-       [] -> return F | x :: xs ->
-       monad_ignore_bind
-         (dec_degree x) (monad_ignore_bind
-         (push_stack x) (monad_ignore_bind
-         (set_freeze_wl xs) (monad_ignore_bind
+       [] -> st_ex_return F | x :: xs ->
+       st_ex_ignore_bind
+         (dec_degree x) (st_ex_ignore_bind
+         (push_stack x) (st_ex_ignore_bind
+         (set_freeze_wl xs) (st_ex_ignore_bind
          (unspill k) (
-         return T)))))`;;
+         st_ex_return T)))))`;;
 
 (* spill:
   If given a spill cost,
@@ -666,12 +667,12 @@ let safe_div_def = cake_define
   `safe_div x v = (if v = 0 then 0 else x DIV v)`;;
 
 let st_ex_list_MIN_cost_def = cake_define_list
-  [`st_ex_list_MIN_cost scost [] d k v acc = return (k,acc)`;
+  [`st_ex_list_MIN_cost scost [] d k v acc = st_ex_return (k,acc)`;
    `st_ex_list_MIN_cost scost (x :: xs) d k v acc =
       (if x < d then
-        monad_bind (degrees_sub x) (\
-          xv. monad_bind (return (safe_div (lookup_any x scost 0)
-            xv)) (\
+        st_ex_bind (degrees_sub x) (\
+          xv. st_ex_bind (st_ex_return (safe_div (lookup_any x scost
+            0) xv)) (\
           cost.
           if v > cost then
             st_ex_list_MIN_cost scost xs d x cost (k :: acc) else
@@ -679,10 +680,10 @@ let st_ex_list_MIN_cost_def = cake_define_list
         st_ex_list_MIN_cost scost xs d k v acc)`];;
 
 let st_ex_list_MAX_deg_def = cake_define_list
-  [`st_ex_list_MAX_deg [] d k v acc = return (k,acc)`;
+  [`st_ex_list_MAX_deg [] d k v acc = st_ex_return (k,acc)`;
    `st_ex_list_MAX_deg (x :: xs) d k v acc =
       (if x < d then
-        monad_bind (degrees_sub x) (\
+        st_ex_bind (degrees_sub x) (\
           xv.
           if v < xv then
             st_ex_list_MAX_deg xs d x xv (k :: acc) else
@@ -691,48 +692,48 @@ let st_ex_list_MAX_deg_def = cake_define_list
 
 let do_spill_def = cake_define
   `do_spill scostopt k =
-   monad_bind get_spill_wl (\
-     spills. monad_bind get_dim (\
+   st_ex_bind get_spill_wl (\
+     spills. st_ex_bind get_dim (\
      d.
      match spills with
-       [] -> return F | (x :: xs) ->
-       monad_bind (degrees_sub x) (\
-         xv. monad_bind (match scostopt with
+       [] -> st_ex_return F | (x :: xs) ->
+       st_ex_bind (degrees_sub x) (\
+         xv. st_ex_bind (match scostopt with
                NONE -> st_ex_list_MAX_deg xs d x xv [] | SOME scost
                  -> st_ex_list_MIN_cost scost xs d x (safe_div
                  (lookup_any x scost 0) xv) []) (\
-         (y,ys). monad_ignore_bind
-         (dec_degree y) (monad_ignore_bind
-         (push_stack y) (monad_ignore_bind
-         (set_spill_wl ys) (monad_ignore_bind
+         (y,ys). st_ex_ignore_bind
+         (dec_degree y) (st_ex_ignore_bind
+         (push_stack y) (st_ex_ignore_bind
+         (set_spill_wl ys) (st_ex_ignore_bind
          (unspill k) (
-         return T))))))))`;;
+         st_ex_return T))))))))`;;
 
 let do_step_def = cake_define
   `do_step scost k =
-   monad_bind (do_simplify k) (\
+   st_ex_bind (do_simplify k) (\
      b.
-     if b then return b else
-     monad_bind (do_coalesce k) (\
+     if b then st_ex_return b else
+     st_ex_bind (do_coalesce k) (\
        b.
-       if b then return b else
-       monad_bind (do_prefreeze k) (\
+       if b then st_ex_return b else
+       st_ex_bind (do_prefreeze k) (\
          b.
-         if b then return b else
-         monad_bind (do_freeze k) (\
+         if b then st_ex_return b else
+         st_ex_bind (do_freeze k) (\
            b.
            if b then
-             return b else
-             monad_bind (do_spill scost k) (\
+             st_ex_return b else
+             st_ex_bind (do_spill scost k) (\
                b.
-               return b)))))`;;
+               st_ex_return b)))))`;;
 
 let rpt_do_step_def = cake_define_list
-  [`rpt_do_step scost k 0 = return one`;
+  [`rpt_do_step scost k 0 = st_ex_return one`;
    `rpt_do_step scost k (SUC c) =
-      monad_bind (do_step scost k) (\
+      st_ex_bind (do_step scost k) (\
         b.
-        if b then rpt_do_step scost k c else return one)`];;
+        if b then rpt_do_step scost k c else st_ex_return one)`];;
 
 (*
   The coloring functions
@@ -742,17 +743,17 @@ let rpt_do_step_def = cake_define_list
 let remove_colours_def = cake_define
   `remove_colours x1 ks =
         match (x1,ks) with
-          ((ls:num list),[]) -> return []
-        | ([],(ks:num list)) -> return ks
+          ((ls:num list),[]) -> st_ex_return []
+        | ([],(ks:num list)) -> st_ex_return ks
         | ((x :: xs),ks) ->
-       monad_bind (node_tag_sub x) (\
-         cx. monad_bind
+       st_ex_bind (node_tag_sub x) (\
+         cx. st_ex_bind
          (match cx with
            Fixed c ->
              remove_colours xs (FILTER (\x. ~(x = c)) ks) | _6 ->
              remove_colours xs ks) (\
          r.
-         return r))`;;
+         st_ex_return r))`;;
 
 (* First colouring -- turns all Atemps into Fixeds or Stemps drawing
    from colors in ks *)
@@ -761,32 +762,33 @@ let remove_colours_def = cake_define
 
 let assign_Atemp_tag_def = cake_define
   `assign_Atemp_tag ks prefs n =
-   monad_bind (node_tag_sub n) (\
+   st_ex_bind (node_tag_sub n) (\
      ntag.
      match ntag with
        Atemp ->
-       monad_bind (adj_ls_sub n) (\
-         adjs. monad_bind (remove_colours adjs ks) (\
+       st_ex_bind (adj_ls_sub n) (\
+         adjs. st_ex_bind (remove_colours adjs ks) (\
          ks.
          match ks with
            [] -> update_node_tag n Stemp | (x :: _7) ->
-           monad_bind (prefs n ks) (\
+           st_ex_bind (prefs n ks) (\
              c.
              match c with
                NONE ->
                update_node_tag n (Fixed x) | SOME y ->
-               update_node_tag n (Fixed y)))) | _8 -> return one)`;;
+               update_node_tag n (Fixed y)))) | _8 -> st_ex_return
+                 one)`;;
 
 (* The first allocation step *)
 (* k = num registers, ls = heuristic list, prefs = coloring preference
    *)
 let assign_Atemps_def = cake_define
   `assign_Atemps k ls prefs =
-   monad_bind get_dim (\
-     d. monad_bind (return (FILTER (\n. n < d) ls)) (\
-     ls. monad_bind (return (GENLIST (\x. x) k)) (\
-     ks. monad_bind (return (GENLIST (\x. x) d)) (\
-     cs. monad_ignore_bind
+   st_ex_bind get_dim (\
+     d. st_ex_bind (st_ex_return (FILTER (\n. n < d) ls)) (\
+     ls. st_ex_bind (st_ex_return (GENLIST (\x. x) k)) (\
+     ks. st_ex_bind (st_ex_return (GENLIST (\x. x) d)) (\
+     cs. st_ex_ignore_bind
      (st_ex_FOREACH ls (assign_Atemp_tag ks prefs)) (
      st_ex_FOREACH cs (assign_Atemp_tag ks prefs))))))`;;
 
@@ -813,40 +815,41 @@ let unbound_colour_def = cake_define_list
 (* Second colouring -- turns all Stemps into Fixed ≥ k *)
 let assign_Stemp_tag_def = cake_define
   `assign_Stemp_tag k prefs n =
-   monad_bind (node_tag_sub n) (\
+   st_ex_bind (node_tag_sub n) (\
      ntag.
      match ntag with
        Stemp ->
-       monad_bind (adj_ls_sub n) (\
-         adjs. monad_bind (st_ex_MAP node_tag_sub adjs) (\
+       st_ex_bind (adj_ls_sub n) (\
+         adjs. st_ex_bind (st_ex_MAP node_tag_sub adjs) (\
          tags.
          let bads = sort (\x y. x <= y) (MAP tag_col tags) in
-         monad_bind (prefs n bads) (\
+         st_ex_bind (prefs n bads) (\
            c.
            match c with
              NONE ->
                update_node_tag n (Fixed (unbound_colour k bads)) |
                  SOME y ->
-               update_node_tag n (Fixed y)))) | _10 -> return one)`;;
+               update_node_tag n (Fixed y)))) | _10 ->
+                 st_ex_return one)`;;
 
 
 (* The second allocation step *)
 let assign_Stemps_def = cake_define
   `assign_Stemps k prefs =
-   monad_bind get_dim (\
-     d. monad_bind (return (GENLIST (\x. x) d)) (\
+   st_ex_bind get_dim (\
+     d. st_ex_bind (st_ex_return (GENLIST (\x. x) d)) (\
      cs.
      st_ex_FOREACH cs (assign_Stemp_tag k prefs)))`;;
 
 (* Monadic biased selection oracle, finds the first matching color *)
 let first_match_col_def = cake_define_list
-  [`first_match_col ks [] = return NONE`;
+  [`first_match_col ks [] = st_ex_return NONE`;
    `first_match_col ks (x :: xs) =
-        monad_bind (node_tag_sub x) (\
+        st_ex_bind (node_tag_sub x) (\
           c.
           match c with
             Fixed m ->
-              (if MEM m ks then return (SOME m) else
+              (if MEM m ks then st_ex_return (SOME m) else
                 first_match_col ks xs) | _12 -> first_match_col ks
                 xs)`];;
 
@@ -978,7 +981,7 @@ let is_alloc_var_def = cake_define
 (* Set the tags according to wordLang conventions *)
 let mk_tags_def = cake_define
   `mk_tags n fs fa =
-   monad_bind (return (GENLIST (\x. x) n)) (\
+   st_ex_bind (st_ex_return (GENLIST (\x. x) n)) (\
      inds.
      st_ex_FOREACH inds
      (\i.
@@ -995,34 +998,35 @@ let mk_tags_def = cake_define
    bijection *)
 let mk_graph_def = cake_define_list
   [`mk_graph ta (Delta w r) liveout =
-        monad_bind (return (MAP ta w)) (\
-          wta. monad_bind (return (MAP ta r)) (\
-          rta. monad_bind (extend_clique wta liveout) (\
-          live. monad_bind (return (FILTER (\x. ~MEM x wta) live))
-            (\
-          live. monad_bind (extend_clique rta live) (\
+        st_ex_bind (st_ex_return (MAP ta w)) (\
+          wta. st_ex_bind (st_ex_return (MAP ta r)) (\
+          rta. st_ex_bind (extend_clique wta liveout) (\
+          live. st_ex_bind (st_ex_return (FILTER (\x. ~MEM x wta)
+            live)) (\
+          live. st_ex_bind (extend_clique rta live) (\
           livein.
-          return livein)))))`;
+          st_ex_return livein)))))`;
    `mk_graph ta (Set t) liveout =
-        monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
-          live. monad_ignore_bind
+        st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t)))) (\
+          live. st_ex_ignore_bind
           (clique_insert_edge live) (
-          return live))`;
+          st_ex_return live))`;
    `mk_graph ta (Branch topt t1 t2) liveout =
-        monad_bind (mk_graph ta t1 liveout) (\
-          t1_live. monad_bind (mk_graph ta t2 liveout) (\
+        st_ex_bind (mk_graph ta t1 liveout) (\
+          t1_live. st_ex_bind (mk_graph ta t2 liveout) (\
           t2_live.
           (match topt with
             NONE ->
-            monad_bind (extend_clique t1_live t2_live) (\
+            st_ex_bind (extend_clique t1_live t2_live) (\
               livein.
-              return livein) | SOME t ->
-            monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
-              clashes. monad_ignore_bind
+              st_ex_return livein) | SOME t ->
+            st_ex_bind (st_ex_return (MAP ta (MAP FST (toAList t))))
+              (\
+              clashes. st_ex_ignore_bind
               (clique_insert_edge clashes) (
-              return clashes)))))`;
+              st_ex_return clashes)))))`;
    `mk_graph ta (Seq t1 t2) liveout =
-        monad_bind (mk_graph ta t2 liveout) (\
+        st_ex_bind (mk_graph ta t2 liveout) (\
           live.
           mk_graph ta t1 live)`];;
 
@@ -1032,9 +1036,9 @@ let sp_default_def = cake_define
      else 0) | SOME x -> x)`;;
 
 let extend_graph_def = cake_define_list
-  [`extend_graph ta [] = return one`;
+  [`extend_graph ta [] = st_ex_return one`;
    `extend_graph ta ((x,y) :: xs) =
-      monad_ignore_bind
+      st_ex_ignore_bind
         (insert_edge (ta x) (ta y)) (
         extend_graph ta xs)`];;
 
@@ -1050,8 +1054,8 @@ let extend_graph_def = cake_define_list
 *)
 let init_ra_state_def = cake_define
   `init_ra_state ct forced fs (ta,fa,n) =
-   monad_ignore_bind
-     (mk_graph (sp_default ta) ct []) (monad_ignore_bind
+   st_ex_ignore_bind
+     (mk_graph (sp_default ta) ct []) (st_ex_ignore_bind
      (extend_graph (sp_default ta) forced) (
      mk_tags n fs (sp_default fa)))`;;
 
@@ -1063,49 +1067,49 @@ let do_upd_coalesce_def = cake_define
 (* Initializer for the first allocation step *)
 let init_alloc1_heu_def = cake_define
   `init_alloc1_heu moves d k =
-   monad_bind (return (COUNT_LIST d)) (\
-     ds. monad_bind (st_ex_FILTER is_Atemp ds []) (\
-     allocs. monad_ignore_bind
+   st_ex_bind (st_ex_return (COUNT_LIST d)) (\
+     ds. st_ex_bind (st_ex_FILTER is_Atemp ds []) (\
+     allocs. st_ex_ignore_bind
      (st_ex_FOREACH ds
        (\i.
-       monad_bind (adj_ls_sub i) (\
-         adjls. monad_bind (st_ex_FILTER (\v. considered_var k v)
+       st_ex_bind (adj_ls_sub i) (\
+         adjls. st_ex_bind (st_ex_FILTER (\v. considered_var k v)
            adjls []) (\
          fills.
-         update_degrees i (LENGTH fills))))) (monad_ignore_bind
-     (st_ex_FOREACH ds do_upd_coalesce) (monad_ignore_bind
-     (set_avail_moves_wl (sort_moves moves)) (monad_ignore_bind
-     (reset_move_related moves) (monad_bind (st_ex_PARTITION
+         update_degrees i (LENGTH fills))))) (st_ex_ignore_bind
+     (st_ex_FOREACH ds do_upd_coalesce) (st_ex_ignore_bind
+     (set_avail_moves_wl (sort_moves moves)) (st_ex_ignore_bind
+     (reset_move_related moves) (st_ex_bind (st_ex_PARTITION
        (split_degree d k) allocs [] []) (\
-     (ltk,gtk). monad_bind (st_ex_PARTITION (move_related_sub) ltk []
+     (ltk,gtk). st_ex_bind (st_ex_PARTITION (move_related_sub) ltk []
        []) (\
-     (ltkfreeze,ltksimp). monad_ignore_bind
-     (set_spill_wl gtk) (monad_ignore_bind
-     (set_simp_wl ltksimp) (monad_ignore_bind
+     (ltkfreeze,ltksimp). st_ex_ignore_bind
+     (set_spill_wl gtk) (st_ex_ignore_bind
+     (set_simp_wl ltksimp) (st_ex_ignore_bind
      (set_freeze_wl ltkfreeze) (
-     return (LENGTH allocs))))))))))))`;;
+     st_ex_return (LENGTH allocs))))))))))))`;;
 
 let do_alloc1_def = cake_define
   `do_alloc1 moves scost k =
-   monad_bind get_dim (\
-     d. monad_bind (init_alloc1_heu moves d k) (\
-     l. monad_ignore_bind
-     (rpt_do_step scost k l) (monad_bind get_stack (\
+   st_ex_bind get_dim (\
+     d. st_ex_bind (init_alloc1_heu moves d k) (\
+     l. st_ex_ignore_bind
+     (rpt_do_step scost k l) (st_ex_bind get_stack (\
      st.
-     return st))))`;;
+     st_ex_return st))))`;;
 
 let extract_tag_def = cake_define
   `((extract_tag t = (match t with
      Fixed m -> m | _15 -> 0))
    End'
    Definition extract_color_def:extract_color ta) =
-   monad_bind (return (toAList ta)) (\
-     taa. monad_bind (st_ex_MAP (\(k,v).
-       monad_bind (node_tag_sub v) (\
+   st_ex_bind (st_ex_return (toAList ta)) (\
+     taa. st_ex_bind (st_ex_MAP (\(k,v).
+       st_ex_bind (node_tag_sub v) (\
          t.
-         return (k,extract_tag t))) taa) (\
+         st_ex_return (k,extract_tag t))) taa) (\
      itags.
-     return (fromAList itags)))`;;
+     st_ex_return (fromAList itags)))`;;
 
 let pri_move_insert_def = cake_define
   `pri_move_insert p x y acc =
@@ -1139,46 +1143,47 @@ hol4_overload "IRC" "reg_alloc_IRC";;
    where state must not be modified. *)
 let coalesce_root_def = cake_define
   `coalesce_root x =
-   monad_bind (coalesced_sub x) (\
-     xt. monad_bind (is_Fixed xt) (\
+   st_ex_bind (coalesced_sub x) (\
+     xt. st_ex_bind (is_Fixed xt) (\
      bx.
      if bx then
-       return xt else
+       st_ex_return xt else
        if x <= xt then
-         return x else
+         st_ex_return x else
          coalesce_root xt))`;;
 
 (* mtable is an sptree lookup for the moves *)
 let biased_pref_def = cake_define
   `biased_pref mtable n ks =
-   monad_bind get_dim (\
+   st_ex_bind get_dim (\
      d.
      if n < d then
-     monad_bind (coalesce_root n) (\
+     st_ex_bind (coalesce_root n) (\
        v.
        let vs = match lookup n mtable with NONE -> [] | SOME vs -> vs
          in
-       handle_Subscript (first_match_col ks (v :: vs)) (return NONE))
-         else
-       return NONE)`;;
+       handle_Subscript (first_match_col ks (v :: vs)) (st_ex_return
+         NONE)) else
+       st_ex_return NONE)`;;
 
 (* very similar to consistency_ok, but for initializing *)
 let full_consistency_ok_def = cake_define
   `full_consistency_ok k x y =
    (if x = y then
-     return F else
-   monad_bind get_dim (\
+     st_ex_return F else
+   st_ex_bind get_dim (\
      d.
-     if x >= d \/ y >= d then return F else
-     monad_bind (adj_ls_sub y) (\
+     if x >= d \/ y >= d then st_ex_return F else
+     st_ex_bind (adj_ls_sub y) (\
        adjy.
-       if sorted_mem x adjy then return F else
-       monad_bind (is_Fixed_k k x) (\
-         bx. monad_bind (is_Fixed_k k y) (\
-         by. monad_bind (is_Atemp x) (\
-         ax. monad_bind (is_Atemp y) (\
+       if sorted_mem x adjy then st_ex_return F else
+       st_ex_bind (is_Fixed_k k x) (\
+         bx. st_ex_bind (is_Fixed_k k y) (\
+         by. st_ex_bind (is_Atemp x) (\
+         ax. st_ex_bind (is_Atemp y) (\
          ay.
-         return ((bx \/ ax) /\ (by \/ ay) /\ ~(bx /\ by)))))))))`;;
+         st_ex_return ((bx \/ ax) /\ (by \/ ay) /\ ~(bx /\
+           by)))))))))`;;
 
 let update_move_def = cake_define
   `update_move spta ((p:num),(x:num),(y:num)) =
@@ -1190,45 +1195,45 @@ let update_move_def = cake_define
 
 (* These behave in reverse to their other versions *)
 let neg_first_match_col_def = cake_define_list
-  [`neg_first_match_col k bads [] = return NONE`;
+  [`neg_first_match_col k bads [] = st_ex_return NONE`;
    `neg_first_match_col k bads (x :: xs) =
-        monad_bind (node_tag_sub x) (\
+        st_ex_bind (node_tag_sub x) (\
           c.
           match c with
             Fixed m ->
               (if MEM m bads \/ m < k then neg_first_match_col k
-                bads xs else return (SOME m)) | _17 ->
+                bads xs else st_ex_return (SOME m)) | _17 ->
                 neg_first_match_col k bads xs)`];;
 
 let neg_biased_pref_def = cake_define
   `neg_biased_pref k mtable n bads =
-   monad_bind get_dim (\
+   st_ex_bind get_dim (\
      d.
      if n < d then
        let vs = match lookup n mtable with NONE -> [] | SOME vs -> vs
          in
-       handle_Subscript (neg_first_match_col k bads vs) (return NONE)
-         else
-       return NONE)`;;
+       handle_Subscript (neg_first_match_col k bads vs) (st_ex_return
+         NONE) else
+       st_ex_return NONE)`;;
 
 (* Putting everything together in one call *)
 let do_reg_alloc_def = cake_define
   `do_reg_alloc alg scost k moves ct forced fs (ta,fa,n) =
-   monad_ignore_bind
-     (init_ra_state ct forced fs (ta,fa,n)) (monad_bind (return (MAP
-       (update_move (sp_default ta)) moves)) (\
-     moves0. monad_bind (st_ex_FILTER (\(_18,(x,y)).
+   st_ex_ignore_bind
+     (init_ra_state ct forced fs (ta,fa,n)) (st_ex_bind (st_ex_return
+       (MAP (update_move (sp_default ta)) moves)) (\
+     moves0. st_ex_bind (st_ex_FILTER (\(_18,(x,y)).
        full_consistency_ok k x y) moves0 []) (\
-     moves. monad_bind (do_alloc1 (if alg = Simple then [] else
+     moves. st_ex_bind (do_alloc1 (if alg = Simple then [] else
        moves) scost k) (\
-     ls. monad_bind (return (resort_moves (moves_to_sp moves0 LN)))
-       (\
-     mvs. monad_ignore_bind
-     (assign_Atemps k ls (biased_pref mvs)) (monad_ignore_bind
-     (assign_Stemps k (neg_biased_pref k mvs)) (monad_bind
+     ls. st_ex_bind (st_ex_return (resort_moves (moves_to_sp moves0
+       LN))) (\
+     mvs. st_ex_ignore_bind
+     (assign_Atemps k ls (biased_pref mvs)) (st_ex_ignore_bind
+     (assign_Stemps k (neg_biased_pref k mvs)) (st_ex_bind
        (extract_color ta) (\
      spcol.
-     return spcol))))))))`;;
+     st_ex_return spcol))))))))`;;
 
 (* As we are using fixed-size array, we need to define a different
    record type for the initialization *)

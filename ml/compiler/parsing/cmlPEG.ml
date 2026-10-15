@@ -108,7 +108,7 @@ let tokeq_def = cake_define
 
 let tokSymP_def = cake_define
   `tokSymP P =
-     tok (\t. (monad_bind (destSymbolT t) (\s. assert (P s))) =
+     tok (\t. ((OPTION_BIND) (destSymbolT t) (\s. assert (P s))) =
        SOME one) mktokLf`;;
 
 let pnt_def = cake_define
@@ -122,7 +122,7 @@ let pnt_def = cake_define
 
 let peg_UQConstructorName_def = cake_define
   `peg_UQConstructorName =
-     tok (\t. monad_bind (destAlphaT t) (\s.
+     tok (\t. (OPTION_BIND) (destAlphaT t) (\s.
                  assert (~(s = (implode "")) /\ isUpper (strsub s
                    0))) = SOME one)
          (bindNT nUQConstructorName o mktokLf)`;;
@@ -139,7 +139,7 @@ let peg_TypeDec_def = cake_define
 let peg_V_def = cake_define
   `peg_V =
     choicel [tok (\t.
-                   monad_bind (destAlphaT t) (\s.
+                   (OPTION_BIND) (destAlphaT t) (\s.
                       assert (~(s IN {(implode "before"),(implode
                         "div"),(implode "mod"),(implode "o")}) /\ ~(
                              s = (implode "")) /\ ~isUpper (strsub s
@@ -149,7 +149,7 @@ let peg_V_def = cake_define
                nV)]`;;
 
 let peg_longV_def = cake_define
-  `peg_longV = tok (\t. monad_bind (destLongidT t) (\
+  `peg_longV = tok (\t. (OPTION_BIND) (destLongidT t) (\
                          (str,s).
                          assert (~(s = (implode "")) /\ (isAlpha
                            (strsub s 0) ==> ~isUpper (strsub s 0)))) =
@@ -188,7 +188,7 @@ let peg_EbaseParen_def = cake_define
 
 let peg_StructName_def = cake_define
   `peg_StructName =
-     tok (\t. monad_bind (destAlphaT t) (\s.
+     tok (\t. (OPTION_BIND) (destAlphaT t) (\s.
                  assert (~(s = (implode "")))) = SOME one)
          (bindNT nStructName o mktokLf)`;;
 
@@ -248,15 +248,15 @@ let cmlPEG_def = cake_define
                               tokeq (AlphaT (implode "o"))])
                               (bindNT nCompOps));
                ((INL:MMLnonT->MMLnonT+num) nOpID,
-                choicel [tok (\t. monad_bind (destLongidT t) (\
+                choicel [tok (\t. (OPTION_BIND) (destLongidT t) (\
                               (str,s).
                               assert (~(s = (implode "")))) = SOME
                                 one) (bindNT nOpID o mktokLf);
-                         tok (\t. monad_bind (destSymbolT t) (\
+                         tok (\t. (OPTION_BIND) (destSymbolT t) (\
                               s.
                               assert (~(s = (implode "")))) = SOME
                                 one) (bindNT nOpID o mktokLf);
-                         tok (\t. monad_bind (destAlphaT t) (\
+                         tok (\t. (OPTION_BIND) (destAlphaT t) (\
                               s.
                               assert (~(s = (implode "")))) = SOME
                                 one) (bindNT nOpID o mktokLf);
@@ -440,7 +440,7 @@ let cmlPEG_def = cake_define
                 choicel [
                   pegf (pnt nUQConstructorName) (bindNT
                     nConstructorName);
-                  tok (\t. monad_bind (destLongidT t) (\
+                  tok (\t. (OPTION_BIND) (destLongidT t) (\
                              (str,s).
                              assert (~(s = (implode "")) /\
                               isAlpha (strsub s 0) /\

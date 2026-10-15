@@ -254,7 +254,7 @@ let word_gen_gc_partial_move_data_def = cake_define
 let word_gen_gc_partial_def = cake_define
   `word_gen_gc_partial conf (roots,(curr:'a word),new,len,m,dm,gs,rs) =
      (let refs_end = curr + len in
-     let gen_start = gs >>> (backend_common_word_shift) (:'ga) in
+     let gen_start = gs >>> backend_common_word_shift (:'ga) in
      let (roots,i,pa,m,c1) = word_gen_gc_partial_move_roots conf
                      (roots,gen_start,new,curr,m,dm,gs,rs) in
      let (i,pa,m,c2) = word_gen_gc_partial_move_ref_list (dimword
@@ -271,8 +271,8 @@ let word_gen_gc_partial_full_def = cake_define
   word),new,len,m,dm,gs,rs) =
      (let (roots,i,pa,m,c1) = word_gen_gc_partial conf
        (roots,curr,new,len,m,dm,gs,rs) in
-     let cpy_length = (pa - new) >>> (backend_common_word_shift)
-       (:'a) in
+     let cpy_length = (pa - new) >>> backend_common_word_shift (:'a)
+       in
      let (b1,m,c2) = memcpy cpy_length new (curr + gs) m dm in
       (roots,i,b1,m,(c1 /\ c2)))`;;
 
@@ -399,7 +399,7 @@ let word_gen_gc_move_loop_def = cake_define
 let word_gen_gc_def = cake_define
   `word_gen_gc conf (roots,curr,new,(len:'a word),m,dm) =
      (let new_end = new + len in
-     let len = len >>> (backend_common_word_shift) (:'a) in
+     let len = len >>> backend_common_word_shift (:'a) in
      let (roots,i,pa,ib,pb,m,c1) = word_gen_gc_move_roots conf
                      (roots,(n2w 0),new,len,new_end,curr,m,dm) in
      let (i,pa,ib,pb,m,c2) = word_gen_gc_move_loop conf (w2n len)
@@ -411,7 +411,7 @@ let glob_real_def = cake_define
         match w with
           Word (w:'a word) ->
         Word (curr + (w >>> (shift_length c) <<
-          (backend_common_word_shift) (:'ga)))
+          backend_common_word_shift (:'ga)))
         | w -> w`;;
 
 let word_gc_fun_def = cake_define

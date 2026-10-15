@@ -297,7 +297,7 @@ val compile_op_def = Define compile_op_quotation;
 
 let compile_aux_def = cake_define
   `compile_aux (k,args,p) =
-     List [((bvl_num_stubs) + (bvl_to_bvi_namespaces) * k +
+     List [(bvl_num_stubs + bvl_to_bvi_namespaces * k +
        1,args,bvi_let_compile_exp p)]`;;
 
 let compile_exps_def = cake_define_list
@@ -320,8 +320,8 @@ let compile_exps_def = cake_define_list
            let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
            let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
            let n3 = n2 + 1 in
-             ([Call 0 (SOME ((bvl_num_stubs) +
-               (bvl_to_bvi_namespaces) * n2 + 1)) c1 NONE],
+             ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+               n2 + 1)) c1 NONE],
               aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
                 else
            let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
@@ -334,8 +334,8 @@ let compile_exps_def = cake_define_list
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
            ([Tick (HD c1)],aux1,n1))`;
    `bvl_to_bvi_compile_exps n [(Force loc v:bvl_exp)] =
-         ([Force ((bvl_num_stubs) + (bvl_to_bvi_namespaces) *
-           loc) v],Nil,n)`;
+         ([Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
+           v],Nil,n)`;
    `bvl_to_bvi_compile_exps n [(Op op xs:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
            ([compile_op op c1],aux1,n1))`;
@@ -346,15 +346,15 @@ let compile_exps_def = cake_define_list
          let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
          let aux4 = compile_aux (n3,LENGTH args,HD c2) in
          let n4 = n3 + 1 in
-           ([Call 0 (SOME ((bvl_num_stubs) + (bvl_to_bvi_namespaces)
-             * n3 + 1)) c1 (SOME (HD c3))],
+           ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+             n3 + 1)) c1 (SOME (HD c3))],
             aux1 ++ aux2 ++ aux3 ++ aux4,n4))`;
    `bvl_to_bvi_compile_exps n [(Call ticks dest xs:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
            ([Call ticks
                   (match dest with NONE -> NONE | SOME n -> SOME
-                    ((bvl_num_stubs) + (bvl_to_bvi_namespaces) * n))
-                    c1 NONE],aux1,n1))`];;
+                    (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
+                    NONE],aux1,n1))`];;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let compile_exps_sing_def = cake_define_list
@@ -370,8 +370,8 @@ let compile_exps_sing_def = cake_define_list
            let (c1,aux1,n1) = compile_exps_list n args in
            let (c2,aux2,n2) = compile_exps_sing n1 x0 in
            let n3 = n2 + 1 in
-             ((Call 0 (SOME ((bvl_num_stubs) +
-               (bvl_to_bvi_namespaces) * n2 + 1)) c1 NONE),
+             ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+               n2 + 1)) c1 NONE),
               aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,c2),n3)
                 else
            let (c1,aux1,n1) = compile_exps_list n xs in
@@ -384,7 +384,7 @@ let compile_exps_sing_def = cake_define_list
          (let (c1,aux1,n1) = compile_exps_sing n x1 in
            (Tick c1,aux1,n1))`;
    `compile_exps_sing n (Force loc v:bvl_exp) =
-         (Force ((bvl_num_stubs) + (bvl_to_bvi_namespaces) * loc)
+         (Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
            v,Nil,n)`;
    `compile_exps_sing n (Op op xs:bvl_exp) =
          (let (c1,aux1,n1) = compile_exps_list n xs in
@@ -396,15 +396,15 @@ let compile_exps_sing_def = cake_define_list
          let (c3,aux3,n3) = compile_exps_sing n2 x2 in
          let aux4 = compile_aux (n3,LENGTH args,c2) in
          let n4 = n3 + 1 in
-           ((Call 0 (SOME ((bvl_num_stubs) + (bvl_to_bvi_namespaces)
-             * n3 + 1)) c1 (SOME c3)),
+           ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+             n3 + 1)) c1 (SOME c3)),
             aux1 ++ aux2 ++ aux3 ++ aux4,n4))`;
    `compile_exps_sing n (Call ticks dest xs:bvl_exp) =
          (let (c1,aux1,n1) = compile_exps_list n xs in
            ((Call ticks
                   (match dest with NONE -> NONE | SOME n -> SOME
-                    ((bvl_num_stubs) + (bvl_to_bvi_namespaces) * n))
-                    c1 NONE),aux1,n1))`;
+                    (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
+                    NONE),aux1,n1))`;
    `compile_exps_list n [] = ([],Nil,n)`;
    `compile_exps_list n ((x:bvl_exp) :: xs) =
          (let (c1,aux1,n1) = compile_exps_sing n x in
@@ -415,7 +415,7 @@ let compile_single_def = cake_define
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = compile_exps n [exp] in
        (
-         List [((bvl_num_stubs) + (bvl_to_bvi_namespaces) *
+         List [(bvl_num_stubs + bvl_to_bvi_namespaces *
            name,arg_count,bvi_let_compile_exp (HD c))] ++ aux,n1))`;;
 hol4_overload "compile_single" "bvl_to_bvi_compile_single";;
 
@@ -437,8 +437,8 @@ let compile_prog_def = cake_define
   `bvl_to_bvi_compile_prog start n prog =
      (let k = alloc_glob_count (MAP (\(_9,_10,p). p) prog) in
      let (code,n1) = compile_list n prog in
-       (InitGlobals_location,bvl_to_bvi_stubs ((bvl_num_stubs) +
-         (bvl_to_bvi_namespaces) * start) k ++ append code,n1))`;;
+       (InitGlobals_location,bvl_to_bvi_stubs (bvl_num_stubs +
+         bvl_to_bvi_namespaces * start) k ++ append code,n1))`;;
 hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
@@ -455,8 +455,8 @@ let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
 
 let default_config_def = cake_define
   `bvl_to_bvi_default_config =
-     mk_bvl_to_bvi_config 10 1000 T ((bvl_num_stubs) + 1)
-       ((bvl_num_stubs) + 2) ((bvl_num_stubs) + 3) T T LN LN`;;
+     mk_bvl_to_bvi_config 10 1000 T (bvl_num_stubs + 1)
+       (bvl_num_stubs + 2) (bvl_num_stubs + 3) T T LN LN`;;
 hol4_overload "default_config" "bvl_to_bvi_default_config";;
 
 let get_names_def = cake_define
@@ -471,10 +471,10 @@ let get_names_def = cake_define
        if n = SumListLength_location then implode "SumListLength"
          else
        if n = ConcatByte_location then implode "ConcatByte" else
-       if n < (bvl_num_stubs) then implode "bvi_unknown" else
-         let k = n - (bvl_num_stubs) in
-         let kd = k DIV (bvl_to_bvi_namespaces) in
-         let km = k MOD (bvl_to_bvi_namespaces) in
+       if n < bvl_num_stubs then implode "bvi_unknown" else
+         let k = n - bvl_num_stubs in
+         let kd = k DIV bvl_to_bvi_namespaces in
+         let km = k MOD bvl_to_bvi_namespaces in
          let n = (match lookup kd old_names with NONE -> implode
            "bvi_unmapped" | SOME name -> name) in
          let aux = (if km = 0 then implode "" else implode
@@ -490,9 +490,9 @@ let compile_def = cake_define
             c) (bvl_to_bvi_config_exp_cut c) prog in
      let (loc,code,n1) = compile_prog start 0 prog in
      let (n2,code') = bvi_tailrec_compile_prog
-       (bvl_to_bvi_config_do_tailrec c) ((bvl_num_stubs) + 2) code in
+       (bvl_to_bvi_config_do_tailrec c) (bvl_num_stubs + 2) code in
      let (n3,code') = bvi_tmc_compile_prog (bvl_to_bvi_config_do_tmc
-       c) ((bvl_num_stubs) + 3) code' in
+       c) (bvl_num_stubs + 3) code' in
      let (bvi_inlines,code') = bvi_inline_compile_prog code' in
        (loc,code',inlines,bvi_inlines,n1,n2,n3,
         get_names (MAP FST code') names))`;;

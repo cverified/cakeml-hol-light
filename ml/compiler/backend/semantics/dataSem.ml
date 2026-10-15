@@ -552,8 +552,8 @@ let do_install_def = cake_define
          (match vs with [v1; v2; vl1; vl2] ->
               (match (v_to_bytes v1,v_to_words v2) with (SOME
                 bytes,SOME data) ->
-                  (if ~(vl1 = Number (&LENGTH bytes)) \/ ~(
-                     vl2 = Number (&LENGTH data)) then Rerr (Rabort
+                  (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(
+                     vl2 = Number (&(LENGTH data))) then Rerr (Rabort
                        Rtype_error) else
                   let (cfg,progs) = ?_compile_oracle s 0 in
                   let new_oracle = shift_seq 1 (?_compile_oracle s)
@@ -648,10 +648,10 @@ let lim_safe_def = cake_define
              -> T)
         | ((BlockOp (ConsExtend tag)),(Block _74 _75 xs' :: Number
           lower :: Number len :: Number tot :: xs)) ->
-           (if lower < 0 \/ len < 0 \/ lower + len > &LENGTH xs' \/
-              tot = 0 \/ ~(tot = &LENGTH xs + len) then T else LENGTH
-                (xs ++ TAKE (num_of_int len) (DROP (num_of_int lower)
-                xs')) < 2 EXP limits_length_limit lims /\
+           (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
+              tot = 0 \/ ~(tot = &(LENGTH xs) + len) then T else
+                LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
+                lower) xs')) < 2 EXP limits_length_limit lims /\
                 LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
                   lower) xs')) < 2 EXP (arch_size lims) DIV 16 /\
                 4 * tag < 2 EXP (arch_size lims) DIV 16 /\
@@ -1000,8 +1000,8 @@ let do_app_aux_def = cake_define
                                 (ConsExtend tag),Block x y xs' :: Number
                                 lower :: Number len :: Number tot :: xs)
                                 ->
-           (if lower < 0 \/ len < 0 \/ lower + len > &LENGTH xs' \/
-              tot = 0 \/ ~(tot = &LENGTH xs + len) then
+           (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
+              tot = 0 \/ ~(tot = &(LENGTH xs) + len) then
              ((Rerr (Rabort
                Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                +dataSem_v#string) else with_fresh_ts s 1
@@ -1059,17 +1059,17 @@ let do_app_aux_def = cake_define
                                 ,'ffi)dataSem_state)#string+dataSem_v
                                 #string)) | (BlockOp LengthBlock,[Block
                                 _129 tag xs]) ->
-           Rval (Number (&LENGTH xs),s) | (MemOp Length,[RefPtr _130
-             ptr]) ->
+           Rval (Number (&(LENGTH xs)),s) | (MemOp Length,[RefPtr
+             _130 ptr]) ->
            (match lookup ptr (?_refs s) with SOME (ValueArray xs) ->
-                 Rval (Number (&LENGTH xs),s) | _131 -> ((Rerr
+                 Rval (Number (&(LENGTH xs)),s) | _131 -> ((Rerr
                    (Rabort
                    Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                    #string+dataSem_v#string)) | (MemOp
                    LengthByte,[RefPtr _132 ptr]) ->
            (match lookup ptr (?_refs s) with SOME (ByteArray _133 xs)
              ->
-                 Rval (Number (&LENGTH xs),s) | _134 -> ((Rerr
+                 Rval (Number (&(LENGTH xs)),s) | _134 -> ((Rerr
                    (Rabort
                    Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                    #string+dataSem_v#string)) | (MemOp RefArray,[Number
@@ -1085,16 +1085,16 @@ let do_app_aux_def = cake_define
                        DerefByte,[RefPtr _135 ptr; Number i]) ->
            (match lookup ptr (?_refs s) with SOME (ByteArray _136 ws)
              ->
-               (if 0 <= i /\ i < &LENGTH ws then Rval (Number (&(w2n
-                 (EL (num_of_int i) ws))),s) else ((Rerr (Rabort
+               (if 0 <= i /\ i < &(LENGTH ws) then Rval (Number
+                 (&(w2n (EL (num_of_int i) ws))),s) else ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                  +dataSem_v#string)) | _137 -> ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                  +dataSem_v#string)) | (MemOp UpdateByte,[RefPtr _138
                  ptr; Number i; Number b]) ->
            (match lookup ptr (?_refs s) with SOME (ByteArray f bs) ->
-               (if 0 <= i /\ i < &LENGTH bs /\ (?(w:word8). b = &(w2n
-                 w)) then
+               (if 0 <= i /\ i < &(LENGTH bs) /\ (?(w:word8). b =
+                 &(w2n w)) then
                   Rval (Unit,?_refs_fupd (K (insert ptr
                     (ByteArray f (LUPDATE (i2w b) (num_of_int i) bs))
                       (?_refs s))) s) else ((Rerr (Rabort
@@ -1195,7 +1195,8 @@ let do_app_aux_def = cake_define
                           Number i; x]) ->
            (match lookup ptr (?_refs s) with SOME (MutBlock tag
              finalised l c r) ->
-                (if ~(i = &LENGTH l) \/ finalised then ((Rerr (Rabort
+                (if ~(i = &(LENGTH l)) \/ finalised then ((Rerr
+                  (Rabort
                   Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                   #string+dataSem_v#string) else
                   Rval (Unit,?_refs_fupd (K (insert ptr (MutBlock tag
@@ -1231,8 +1232,8 @@ let do_app_aux_def = cake_define
                      #string+dataSem_v#string)) | (BlockOp
                      BoundsCheckBlock,xs) ->
            (match xs with [Block _172 tag ys; Number i] ->
-                  Rval (Boolv (0 <= i /\ i < &LENGTH ys),s) | _173 ->
-                    ((Rerr (Rabort
+                  Rval (Boolv (0 <= i /\ i < &(LENGTH ys)),s) | _173
+                    -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                     #string+dataSem_v#string)) | (MemOp (BoundsCheckByte
                     loose),xs) ->
@@ -1240,7 +1241,7 @@ let do_app_aux_def = cake_define
              (match lookup ptr (?_refs s) with SOME (ByteArray _175
                ws) ->
                   Rval (Boolv (0 <= i /\ (if loose then (<=) else
-                    (<)) i (&LENGTH ws)),s) | _176 -> ((Rerr (Rabort
+                    (<)) i (&(LENGTH ws))),s) | _176 -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                     #string+dataSem_v#string)) | _177 -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
@@ -1249,8 +1250,8 @@ let do_app_aux_def = cake_define
            (match xs with [RefPtr _178 ptr; Number i] ->
              (match lookup ptr (?_refs s) with SOME (ValueArray ws)
                ->
-                  Rval (Boolv (0 <= i /\ i < &LENGTH ws),s) | _179 ->
-                    ((Rerr (Rabort
+                  Rval (Boolv (0 <= i /\ i < &(LENGTH ws)),s) | _179
+                    -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)
                     #string+dataSem_v#string)) | _180 -> ((Rerr (Rabort
                     Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)

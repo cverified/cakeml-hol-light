@@ -679,7 +679,7 @@ let word_gc_code_def = cake_define
                 Get 5 Globals;
                 Get 3 OtherHeap;
                 (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 4
-                  ((backend_common_word_shift) (:'a));
+                  (backend_common_word_shift (:'a));
                 (\dest src. Inst (Arith (Binop Or dest src (Reg
                   src)))) 6 3;
                 word_gen_gc_partial_move_code conf;
@@ -711,7 +711,7 @@ let word_gc_code_def = cake_define
                 (\r1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2)))) 0
                   2;
                 (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 0
-                  ((backend_common_word_shift) (:'a));
+                  (backend_common_word_shift (:'a));
                 Get 3 GenStart;
                 Get 1 CurrHeap;
                 (\r1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2)))) 3
@@ -749,7 +749,7 @@ let word_gc_code_def = cake_define
                 Set (Temp (n2w 6)) 4;
                 Get 4 HeapLength;
                 (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 4
-                  ((backend_common_word_shift) (:'a));
+                  (backend_common_word_shift (:'a));
                 Set (Temp (n2w 3)) 4;
                 (\dest src. Inst (Arith (Binop Or dest src (Reg
                   src)))) 4 1;

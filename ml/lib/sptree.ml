@@ -294,8 +294,8 @@ let spts_to_alist_aux_def = cake_define
        acc_left,acc_cent,repeat) | (j,spt) :: ys ->
        (if (\t. t = LN) spt then spts_to_alist_aux (i + j) ys
          acc_cent
-         ((spts_to_alist_add_pause) j acc_right)
-           ((spts_to_alist_add_pause) j acc_left)
+         (spts_to_alist_add_pause j acc_right)
+           (spts_to_alist_add_pause j acc_left)
          repeat else spts_to_alist_aux (i + j) ys
          ((match spt_center spt with NONE -> [] | SOME c -> [(i,c)])
            ++ acc_cent)

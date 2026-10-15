@@ -152,7 +152,7 @@ let wf_cb_def = cake_define_list
        (wf_vars n left /\
         wf_cb n child /\
         wf_vars n right /\
-        small_enough_int (&LENGTH right))`];;
+        small_enough_int (&(LENGTH right)))`];;
 
 let bvi_to_cb_def = cake_define
   `bvi_to_cb n loc x3 =

@@ -184,7 +184,7 @@ val remove = CONV_RULE (RAND_CONV (REWRITE_CONV[dfkcocl_removed]))
      kcocwl0 = apply_kcockont *)
 
 let kcocwl_def = cake_define
-  `kcocwl s n ts = (apply_kcockont) s n ts F`;;
+  `kcocwl s n ts = apply_kcockont s n ts F`;;
 
 (* HOL4 ML code, not ported:
 val kcocwl_code =

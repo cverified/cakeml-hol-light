@@ -154,18 +154,17 @@ let ssa_cc_trans_inst_def = cake_define
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Inst (Arith (Binop bop r1' r2' ri)),ssa',na')))
-        | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
        (match ri with Reg r3 ->
          (let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let mov_in = (Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (Seq mov_in (Inst (Arith (Shift
-             (backend_common_word_shift) r1' r2' (Reg 8)))),ssa',na')) |
-             _6 ->
+           (Seq mov_in (Inst (Arith (Shift backend_common_word_shift
+             r1' r2' (Reg 8)))),ssa',na')) | _6 ->
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (Inst (Arith (Shift (backend_common_word_shift) r1' r2'
+           (Inst (Arith (Shift backend_common_word_shift r1' r2'
              ri)),ssa',na')))
         | (Arith (Div r1 r2 r3)) ->
        (let r2' = option_lookup ssa r2 in
@@ -601,9 +600,9 @@ let apply_colour_inst_def = cake_define
    (apply_colour_inst f (Const reg w) = Const (f reg) w) /\
    (apply_colour_inst f (Arith (Binop bop r1 r2 ri)) =
      Arith (Binop bop (f r1) (f r2) (apply_colour_imm f ri))) /\
-   (apply_colour_inst f (Arith (Shift (backend_common_word_shift) r1
-     r2 ri)) =
-     Arith (Shift (backend_common_word_shift) (f r1) (f r2)
+   (apply_colour_inst f (Arith (Shift backend_common_word_shift r1 r2
+     ri)) =
+     Arith (Shift backend_common_word_shift (f r1) (f r2)
        (apply_colour_imm f ri))) /\
    (apply_colour_inst f (Arith (Div r1 r2 r3)) =
      Arith (Div (f r1) (f r2) (f r3))) /\
@@ -706,7 +705,7 @@ let get_writes_inst_def = cake_define
         match inst with
           wordLang_Const reg w -> insert reg one LN
         | (Arith (Binop bop r1 r2 ri)) -> insert r1 one LN
-        | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
           insert r1 one LN
         | (Arith (Div r1 r2 r3)) -> insert r1 one LN
         | (Arith (AddCarry r1 r2 r3 r4)) -> insert r4 one (insert r1
@@ -740,7 +739,7 @@ let get_live_inst_def = cake_define
         | (Arith (Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> insert r2 one (insert r3 one (delete
          r1 live)) | _7 -> insert r2 one (delete r1 live))
-        | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
        (match ri with Reg r3 -> insert r2 one (insert r3 one (delete
          r1 live)) | _8 -> insert r2 one (delete r1 live))
         | (Arith (Div r1 r2 r3)) ->
@@ -871,8 +870,8 @@ let remove_dead_inst_def = cake_define
         | ((Const reg w),live) -> (lookup reg live = NONE)
         | ((Arith (Binop bop r1 r2 ri)),live) -> (lookup r1 live =
           NONE)
-        | ((Arith (Shift (backend_common_word_shift) r1 r2 n)),live)
-          -> (lookup r1 live = NONE)
+        | ((Arith (Shift backend_common_word_shift r1 r2 n)),live) ->
+          (lookup r1 live = NONE)
         | ((Arith (Div r1 r2 r3)),live) -> (lookup r1 live = NONE)
         | ((Arith (AddCarry r1 r2 r3 r4)),live) ->
        (lookup r1 live = NONE /\ lookup r4 live = NONE)
@@ -1066,7 +1065,7 @@ let get_delta_inst_def = cake_define
         | (Arith (Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> Delta [r1] [r2; r3] | _27 -> Delta
          [r1] [r2])
-        | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
        (match ri with Reg r3 -> Delta [r1] [r2; r3] | _28 -> Delta
          [r1] [r2])
         | (Arith (Div r1 r2 r3)) -> Delta [r1] [r3; r2]
@@ -1263,7 +1262,7 @@ let get_heu_inst_def = cake_define
            (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _34 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
-        | (Arith (Shift (backend_common_word_shift) r1 r2 ri)) ->
+        | (Arith (Shift backend_common_word_shift r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1

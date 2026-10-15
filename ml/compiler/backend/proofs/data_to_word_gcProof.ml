@@ -77,7 +77,7 @@ fun rpt_drule th = old_drule (th |> GEN_ALL) \\ rpt (disch_then
 
 let join_env_def = cake_define
   `join_env env vs =
-     MAP (\(n,v). (THE ((sptree_lookup) ((n - 2) DIV 2) env),v))
+     MAP (\(n,v). (THE (sptree_lookup ((n - 2) DIV 2) env),v))
        (FILTER (\(n,v). ~(n = 0) /\ EVEN n) vs)`;;
 
 let flat_def = cake_define
@@ -156,12 +156,12 @@ let code_rel_def = cake_define
   spt) <=>
      domain t_code = domain s_code UNION set_of_list (MAP FST (stubs
        (:'a) c)) /\
-     EVERY (\(n,x). (sptree_lookup) n t_code = SOME x) (stubs (:'a)
-       c) /\
+     EVERY (\(n,x). sptree_lookup n t_code = SOME x) (stubs (:'a) c)
+       /\
      (!n arg_count prog.
-       ((sptree_lookup) n s_code = SOME ((arg_count:num),prog)) ==>
-       ((sptree_lookup) n t_code = SOME (arg_count + 1,FST (comp c
-         n 2 prog))))`;;
+       (sptree_lookup n s_code = SOME ((arg_count:num),prog)) ==>
+       (sptree_lookup n t_code = SOME (arg_count + 1,FST (comp c n
+         2 prog))))`;;
 hol4_overload "code_rel" "data_to_word_gcProof_code_rel";;
 
 let stack_rel_def = cake_define
@@ -171,8 +171,8 @@ let stack_rel_def = cake_define
         EVERY (\(x1,x2). ~(x1 = 0) /\ EVEN x1) vs /\ s1 = s2 /\
         EVERY (\(x1,x2). x1 = 0) ws /\
         ALL_DISTINCT (MAP FST vs) /\
-        (!n. IS_SOME ((sptree_lookup) n env) <=>
-            IS_SOME ((sptree_lookup) (adjust_var n) (fromAList vs)))
+        (!n. IS_SOME (sptree_lookup n env) <=>
+            IS_SOME (sptree_lookup (adjust_var n) (fromAList vs)))
         | ((Exc s1 env n),(StackFrame s2 ws vs (SOME (x1,x2,x3)))) ->
         data_to_word_gcProof_stack_rel (Env s1 env) (StackFrame s2 ws
           vs NONE) /\ (x1 = n)
@@ -247,10 +247,10 @@ let state_rel_thm = cake_define
        shift_length c < dimindex (:'a) /\
        IS_SOME (dataSem_state_tstamps s) /\
        EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
-       (v1 = NONE ==> (sptree_lookup) 0 (?_locals t) = SOME (Loc l1
+       (v1 = NONE ==> sptree_lookup 0 (?_locals t) = SOME (Loc l1
          l2)) /\
-       (!n. IS_SOME ((sptree_lookup) n (?_locals s)) ==>
-            IS_SOME ((sptree_lookup) (adjust_var n) (?_locals t))) /\
+       (!n. IS_SOME (sptree_lookup n (?_locals s)) ==>
+            IS_SOME (sptree_lookup (adjust_var n) (?_locals t))) /\
        EVERY2 stack_rel (?_stack s) (?_stack t) /\
        EVERY2 contains_loc (?_stack t) locs /\
        option_le (OPTION_MAP2 (+) (stack_size (?_stack t))

@@ -627,13 +627,13 @@ let do_eval_oracle_def = cake_define
              v_to_word64_list ws_v) with (SOME (st_v2,c_bs,c_ws),SOME
                bs,SOME ws) ->
              (if bs = c_bs /\ ws = c_ws /\ st_v2 = (FST (SND (orac
-               1))) then SOME (env_id,(misc_shift_seq) 1 orac,g decs)
+               1))) then SOME (env_id,misc_shift_seq 1 orac,g decs)
                else NONE) | _10 -> NONE)) | _11 -> NONE)`;;
 
 let insert_gen_oracle_def = cake_define
   `insert_gen_oracle ci g shift_f orac es = (match es with SOME
   (EvalOracle s) -> SOME (EvalOracle (?_oracle_fupd (K
-  ((misc_shift_seq) (shift_f (?_oracle s 0)) orac))
+  (misc_shift_seq (shift_f (?_oracle s 0)) orac))
   (eval_oracle_state_custom_do_eval_fupd (K (do_eval_oracle
   (mk_compiler_fun_from_ci ci) g)) s))) | _12 -> es)`;;
 
@@ -800,9 +800,9 @@ let precond_eval_state_def = cake_define
   `precond_eval_state orac ci s env decs = (match
   semanticPrimitives_state_eval_state s with NONE -> T | SOME (EvalDecs
   eds) -> EvalDecs eds = mk_init_eval_state ci /\
-         (orac_extended_wf ((mk_compiler_fun_from_ci) ci) orac) /\
+         (orac_extended_wf (mk_compiler_fun_from_ci ci) orac) /\
          (!i r x. get_oracle ci s env decs i = SOME r /\
-           (mk_compiler_fun_from_ci) ci r = SOME x ==>
+           mk_compiler_fun_from_ci ci r = SOME x ==>
              orac i = r) | SOME (EvalOracle _19) -> F)`;;
 
 (* for use in source-to-source phases, a proof that the oracle can be
@@ -814,7 +814,7 @@ let adjust_oracle_def = cake_define
      NONE -> es | SOME (EvalDecs _20) -> es | SOME (EvalOracle o_s)
        -> SOME (EvalOracle
          (eval_oracle_state_custom_do_eval_fupd (K (do_eval_oracle
-           ((mk_compiler_fun_from_ci) ci) f)) o_s)))`;;
+           (mk_compiler_fun_from_ci ci) f)) o_s)))`;;
 
 (* HOL4 overload (expanded in the port):
      s_adjust_oracle = \ci f s. s with eval_state updated_by
