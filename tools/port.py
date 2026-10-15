@@ -339,7 +339,14 @@ class Porter:
     if not self.wanted(b):
       return
     if k == 'Comment':
-      self.out.append(shorten(b.text))
+      # a comment block of the source can have ML code after the
+      # comment (word_bignum's get_exp has '(* Var *) let' on one
+      # line), and that code is not OCaml
+      if comment_only(b.text):
+        self.out.append(shorten(b.text))
+      else:
+        self.out.append('(* HOL4 ML code, not ported:\n' +
+                        shorten(b.text) + '\n*)')
     elif k == 'Theory':
       # the header of the port comes first, before the comments that
       # the HOL4 file has before its Theory line
@@ -1579,6 +1586,21 @@ def iscon(n):
   """is this the name of a constructor?  A CakeML source may write
      it with the name of its theory (fpSem$FP_Add)"""
   return n.split('$')[-1] in CONS
+
+
+def comment_only(text):
+  """is everything of this text inside a comment?"""
+  i = 0
+  depth = 0
+  while i < len(text):
+    if text.startswith('(*', i): depth += 1; i += 2; continue
+    if text.startswith('*)', i):
+      depth -= 1
+      if depth < 0: return False
+      i += 2; continue
+    if not depth and not text[i].isspace(): return False
+    i += 1
+  return depth == 0
 
 
 def has_con(p):
