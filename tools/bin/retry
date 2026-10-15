@@ -1,0 +1,33 @@
+#!/bin/sh
+# retry <mlfile> <from> [<to>] : load the phrases of a file of the
+# port from <from> (to <to>) in a clone of the session <SRC> (hol-seq
+# by default, the session of a whole run, which has the ancestors of
+# every file loaded).  This is how a fix for the phrase a run
+# reported is tried without loading the ancestors again.
+# The clone is the session hol-try, which the next retry replaces.
+# Only use this while no run is going: cloning hol-seq talks to it,
+# and a run that gets a command of its own hangs.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+f="$1"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+[ -f "$f" ] || { echo "retry: no file $f"; exit 1; }
+python3 -I - "$f" "$2" "$3" > $C/tmp/retry.ml <<'PY'
+import re, sys
+f, lo = sys.argv[1], int(sys.argv[2])
+hi = int(sys.argv[3]) if len(sys.argv) > 3 and sys.argv[3] else None
+ph = [p for p in re.split(r'(?<=;;)\n', open(f).read()) if p.strip()]
+sys.stdout.write('\n'.join(ph[lo - 1:hi]) + '\n')
+PY
+s=${SRC:-seq}
+tmux has -t hol-$s 2> /dev/null || { echo "retry: no session hol-$s";
+  exit 1; }
+repl-kill try > /dev/null 2>&1
+rm -f /home/freek/claude/hol-light/bin/fifo/hol-try
+repl-clone hol-$s try > /dev/null 2>&1 || {
+  echo "retry: cannot clone hol-$s"; exit 1; }
+TIMEOUT=${TIMEOUT:-600} repl-step try "loadt \"$C/tmp/retry.ml\";;" \
+  2>&1 | grep -E '^(cake_|Exception|Error|Warning [0-9])' |
+  head -${TAIL:-4}
+TIMEOUT=60 repl-step try 'length(axioms());;' 2>&1 |
+  grep -E '^val it' | sed 's/^/axioms: /'

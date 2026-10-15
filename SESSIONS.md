@@ -33,6 +33,12 @@ running**, and do not clone it either: the command is queued in the
 session, eats one of the prompts that `repl-step` waits for, and
 the run hangs.  Clone `hol-template-cakeml` instead.
 
+Once a run is over, `hol-seq` has the ancestors of every file
+loaded, which is what `tools/bin/retry` uses: it loads the phrases
+of a file from the one that failed on, in a clone of `hol-seq`
+(the session `hol-try`), so that a fix is tried without loading
+the ancestors again.
+
 ## Interrupting and killing
 
 A clone is forked from another HOL Light process, so it is not a

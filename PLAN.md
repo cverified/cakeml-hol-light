@@ -167,6 +167,8 @@ The other checks:
                        `tools/bin/quotesall` does that for every
                        file that the last run reports
 - `tools/bin/locate`   which phrase of a file fails
+- `tools/bin/retry`    load a file from the phrase that failed on,
+                       in a clone of the session of the last run
 - `tools/bin/deps`     load only what a file needs
 - `tools/bin/cheats`   write `ml/CHEATS.md` from `cake_cheats ()`
 - `tools/bin/timings`  write `ml/TIMINGS.md` from the last run
