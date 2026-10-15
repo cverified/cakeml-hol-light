@@ -82,6 +82,12 @@ overload_interface("--",`word_neg:(N)word->(N)word`);;
    arith_upd divides the two registers of a Div) *)
 overload_interface("/",`word_udiv:(N)word->(N)word->(N)word`);;
 
+(* HOL4 writes the bit of a word as w ' i (the index of fcp),
+   which ml/lib/finite_map.ml overloads FAPPLY with *)
+
+let word_index = new_definition
+  `word_index (w:(N)word) (i:num) <=> bit i w`;;
+
 (* with the operations overloaded, a numeral whose type is not
    determined otherwise should still be a natural number *)
 

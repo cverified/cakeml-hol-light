@@ -20,8 +20,18 @@ let fmap_tybij =
 let FDOM = new_definition
   `FDOM (fm:(A,B)fmap) = {x | ~(fmap_fn fm x = NONE)}`;;
 
-let FAPPLY = new_definition
-  `FAPPLY (fm:(A,B)fmap) x = THE (fmap_fn fm x)`;;
+(* HOL4 writes the application of a finite map as fm ' x, and the
+   bit of a word as w ' i; the port writes both as FAPPLY, which
+   is therefore overloaded (the word one is in ml/lib/words4.ml) *)
+
+let fmap_apply = new_definition
+  `fmap_apply (fm:(A,B)fmap) x = THE (fmap_fn fm x)`;;
+
+make_overloadable "FAPPLY" `:A->B->C`;;
+overload_interface("FAPPLY",`fmap_apply:(A,B)fmap->A->B`);;
+overload_interface("FAPPLY",`word_index:(N)word->num->bool`);;
+
+let FAPPLY = fmap_apply;;
 
 let FLOOKUP = new_definition
   `FLOOKUP (fm:(A,B)fmap) x = fmap_fn fm x`;;
