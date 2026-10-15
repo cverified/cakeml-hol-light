@@ -1806,6 +1806,52 @@ let size_thms tyname =
 (* The definition functions that the port uses.                       *)
 (* ------------------------------------------------------------------ *)
 
+(* ------------------------------------------------------------------ *)
+(* The definitions whose proof the port cannot do yet.  In this     *)
+(* pass they are assumed: the constants are declared and the        *)
+(* clauses are an axiom, so that the files that come after can be   *)
+(* loaded.  They are what length(axioms()) counts beyond the three  *)
+(* of HOL Light, and cake_cheats() says which ones they are.        *)
+(* ------------------------------------------------------------------ *)
+
+let the_cheats = ref ([]:string list);;
+
+let cake_cheats () = rev (!the_cheats);;
+
+let cake_cheat tm =
+  let fs = definition_heads tm in
+  do_list (fun f ->
+             let s,ty = dest_var f in
+             if not (can get_const_type s) then new_constant(s,ty))
+          fs;
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   fs in
+  let cls = map (fun cl -> close_clause []
+                             (vsubst consts (snd(strip_forall cl))))
+                (conjuncts(snd(strip_forall tm))) in
+  let name = fst(dest_var(hd fs)) in
+  the_cheats := name :: !the_cheats;
+  print_string ("\ncake_define " ^ name ^ " CHEATED\n");
+  flush stdout;
+  new_axiom (list_mk_conj cls);;
+
+(* HOL Light's machinery for a wellfounded recursion takes minutes
+   over a definition with many clauses, so it only gets this many
+   seconds before the definition is assumed instead (0 is no
+   limit) *)
+
+let cake_timeout = ref 20;;
+
+let with_timeout f x =
+  if !cake_timeout <= 0 then f x else
+  let old = Sys.signal Sys.sigalrm
+              (Sys.Signal_handle (fun _ -> failwith "cake timeout")) in
+  let fin () = (ignore(Unix.alarm 0); Sys.set_signal Sys.sigalrm old)
+    in
+  ignore(Unix.alarm (!cake_timeout));
+  try let y = f x in (fin (); y)
+  with e -> (fin (); raise e);;
+
 let cake_define_gen wf tm =
   let fs = definition_heads tm in
   let cls = definition_clauses tm in
@@ -1818,19 +1864,19 @@ let cake_define_gen wf tm =
      followed by another one *)
   let declared () =
     exists (fun g -> can get_const_type (fst(dest_var g))) fs in
-  let ths,_ =
+  let strategies () =
     if not recursive then
       (if length fs = 1 then
          (if length cls = 1
           then (try [new_definition tm],TRUTH
-                with Failure _ -> define_single [] tm)
+                with Failure _ -> with_timeout (define_single []) tm)
           else
             (* a definition by cases on one argument is an instance
                of the recursion theorem of the type, which is much
                faster than HOL Light's machinery for patterns *)
             (try define_prim_rec tm
              with Failure _ when not (declared ()) ->
-             define_single [] tm))
+             with_timeout (define_single []) tm))
        else
          itlist
            (fun f (l,th) ->
@@ -1838,7 +1884,8 @@ let cake_define_gen wf tm =
                             fst(strip_comb(lhs(snd(strip_forall cl)))) =
                               f)
                             (conjuncts(snd(strip_forall tm))) in
-              let ths,th' = define_single [] (list_mk_conj mycls) in
+              let ths,th' =
+                with_timeout (define_single []) (list_mk_conj mycls) in
               ths @ l,th')
            fs ([],TRUTH))
     else
@@ -1849,8 +1896,12 @@ let cake_define_gen wf tm =
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in
-       try attempt cands
-       with Failure _ when not (declared ()) -> attempt []) in
+       try with_timeout attempt cands
+       with Failure _ when not (declared ()) ->
+         with_timeout attempt []) in
+  let ths,_ =
+    try strategies ()
+    with Failure _ -> [cake_cheat tm],TRUTH in
   end_itlist CONJ ths;;
 
 (* with cake_timing set, every definition reports how long it took *)

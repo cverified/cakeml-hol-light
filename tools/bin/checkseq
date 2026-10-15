@@ -16,7 +16,12 @@ for f in "$@"; do
   case "$f" in /*) g="$f";; *) g="$ML/$f";; esac
   repl-step $s "let cake_t0 = Sys.time();; print_string \"CHECKSEQ\";;" \
     > /dev/null 2>&1
-  TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$g\";;" > /dev/null 2>&1
+  # a file that takes too long is interrupted, so that the session
+  # is free for the files after it
+  slow=
+  TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$g\";;" 2>&1 |
+    grep -qi timeout && slow=yes
+  [ -n "$slow" ] && { repl-int $s > /dev/null 2>&1; sleep 1; }
   TIMEOUT=120 repl-step $s \
     "(Sys.time() -. cake_t0,length(axioms()));;" > /dev/null 2>&1
   # -J joins the lines that the pane wrapped, so that a long path
@@ -38,5 +43,6 @@ for f in "$@"; do
              # the toplevel breaks a long exception over lines
              if ($0 ~ /^Exception:$/) { getline; print; getline; print }
              exit }' | tr '\n' ' ')
+  [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
 done
