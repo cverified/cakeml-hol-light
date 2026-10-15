@@ -890,7 +890,7 @@ class Porter:
       for i, cl in enumerate(all):
         # every clause has its own variables, so also its own ones
         # that hold an integer
-        self.ctx.intvars = self.int_vars_node(cl)
+        self.ctx.intvars = self.int_vars_node(cl) | self.intargs
         cls.append(fmt(p.pr(self.annotate(cl, True), 0), indent=4,
                        last=5 if i == len(all) - 1 else 3))
     finally:

@@ -379,7 +379,7 @@ class Parser:
       return not arg and t.text in ('!', '?', '\\', '@', '-', '^')
     return False
 
-  def parse_atoms(self):
+  def parse_atoms(self, annot=True):
     e = self.parse_fields(self.parse_atom())
     # R^* is RTC R and R^+ is TC R (relationTheory)
     while self.peek().text == '^' and \
@@ -391,7 +391,7 @@ class Parser:
       a = self.parse_fields(self.parse_atom())
       e = Node('app', tok=e.tok, fn=e, arg=a)
     e = self.parse_postfix(e)
-    if self.at(':'):
+    if annot and self.at(':'):
       self.next()
       ty = self.parse_type()
       e = Node('typed', tok=e.tok, e=e, ty=ty)
@@ -725,8 +725,9 @@ class Parser:
         return Node('prefix', tok=t, op='-', e=e)
       if t.text == '&':
         # HOL4's & is a prefix that binds looser than application,
-        # so &LENGTH l is &(LENGTH l)
-        e = self.parse_atoms()
+        # so &LENGTH l is &(LENGTH l); a type annotation after it
+        # is of the whole (mlint's int_gcd)
+        e = self.parse_atoms(False)
         return Node('prefix', tok=t, op='&', e=e)
       if t.text in ('𝕌', 'univ'):
         self.expect('(')

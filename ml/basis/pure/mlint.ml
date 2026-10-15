@@ -156,7 +156,7 @@ let num_gcd_def = cake_define
   a)`;;
 
 let int_gcd_def = cake_define
-  `mlint_int_gcd (m:int) (n:int) = &(mlint_num_gcd (num_of_int (abs
-  m)) (num_of_int (abs n)):int)`;;
+  `mlint_int_gcd (m:int) (n:int) = (&(mlint_num_gcd (num_of_int (abs
+  m)) (num_of_int (abs n))):int)`;;
 
 (* lemmas *)

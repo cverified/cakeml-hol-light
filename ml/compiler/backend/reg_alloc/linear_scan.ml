@@ -122,10 +122,10 @@ let size_of_live_tree_def = cake_define_list
 
 let get_intervals_def = cake_define_list
   [`get_intervals (linear_scan_Writes l) (n:int) int_beg int_end =
-      (n - 1,numset_list_add_if_lt l n
+      (n - (&1),numset_list_add_if_lt l n
         int_beg,numset_list_add_if_gt l n int_end)`;
    `get_intervals (linear_scan_Reads l) (n:int) int_beg int_end =
-      (n - 1,int_beg,numset_list_add_if_gt l n int_end)`;
+      (n - (&1),int_beg,numset_list_add_if_gt l n int_end)`;
    `get_intervals (Branch lt1 lt2:live_tree) (n:int) int_beg int_end =
       (let (n2,int_beg2,int_end2) = get_intervals lt2 n int_beg
         int_end in
@@ -143,12 +143,12 @@ let get_intervals_def = cake_define_list
 let get_intervals_withlive_def = cake_define_list
   [`get_intervals_withlive (linear_scan_Writes l) (n:int) int_beg
   int_end live =
-      (n - 1,numset_list_add_if_lt l n
+      (n - (&1),numset_list_add_if_lt l n
         int_beg,numset_list_add_if_gt l n int_end)`;
    `get_intervals_withlive (linear_scan_Reads l) (n:int) int_beg int_end
   live =
-      (n - 1,numset_list_delete l int_beg,numset_list_add_if_gt l
-        n int_end)`;
+      (n - (&1),numset_list_delete l
+        int_beg,numset_list_add_if_gt l n int_end)`;
    `get_intervals_withlive (Branch lt1 lt2:live_tree) (n:int) int_beg
   int_end live =
       (let (n2,int_beg2,int_end2) = get_intervals_withlive lt2 n
@@ -254,14 +254,14 @@ let check_intervals_def = cake_define
 let get_intervals_ct_aux_def = cake_define_list
   [`get_intervals_ct_aux (reg_alloc_Delta wr rd) (n:int) int_beg int_end
   live =
-      (n - 2,numset_list_add_if_lt wr n
-        int_beg,numset_list_add_if_gt rd (n - 1)
+      (n - (&2),numset_list_add_if_lt wr n
+        int_beg,numset_list_add_if_gt rd (n - (&1))
         (numset_list_add_if_gt wr n
         int_end),linear_scan_numset_list_insert rd
         (numset_list_delete wr live))`;
    `get_intervals_ct_aux (reg_alloc_Set cutset) (n:int) int_beg int_end
   live =
-      (n - 1,int_beg,numset_list_add_if_gt (MAP FST (toAList
+      (n - (&1),int_beg,numset_list_add_if_gt (MAP FST (toAList
         cutset)) n int_end,sptree_union cutset live)`;
    `get_intervals_ct_aux (reg_alloc_Branch optcutset ct1 ct2) (n:int)
   int_beg int_end live =
@@ -569,13 +569,13 @@ let get_intervals_ct_monad_aux_def = cake_define_list
       st_ex_ignore_bind
         (numset_list_add_if_lt_monad wr n) (st_ex_ignore_bind
         (numset_list_add_if_gt_monad wr n) (st_ex_ignore_bind
-        (numset_list_add_if_gt_monad rd (n - 1)) (
-        st_ex_return (n - 2,linear_scan_numset_list_insert rd
+        (numset_list_add_if_gt_monad rd (n - (&1))) (
+        st_ex_return (n - (&2),linear_scan_numset_list_insert rd
           (numset_list_delete wr live)))))`;
    `get_intervals_ct_monad_aux (reg_alloc_Set cutset) (n:int) live =
       st_ex_ignore_bind
         (numset_list_add_if_gt_monad (MAP FST (toAList cutset)) n) (
-        st_ex_return (n - 1,sptree_union cutset live))`;
+        st_ex_return (n - (&1),sptree_union cutset live))`;
    `get_intervals_ct_monad_aux (reg_alloc_Branch optcutset ct1 ct2)
   (n:int) live =
       st_ex_bind (get_intervals_ct_monad_aux ct2 n live) (\
