@@ -233,6 +233,9 @@ INT_ARGS = {
 # is the &1 of an integer, which HOL Light reads as a real)
 INT_RESULT = set([
   ('multiword', 'int_op_def'),
+  # the size of a clash tree is an integer, which only the
+  # numerals of the first two clauses say
+  ('linear_scan', 'size_of_clash_tree_def'),
 ])
 
 # definitions whose <=> is plain equality, not the equality of two
@@ -350,6 +353,9 @@ CON_OF = {
   # names linear_scan's live trees have as well
   ('linear_scan', 'apply_bij_on_clash_tree_def'): {'*': 'reg_alloc'},
   ('word_alloc', 'apply_colour_def'): {'*': 'wordLang'},
+  # this builds a clash tree of reg_alloc, whose Seq and Set
+  # wordLang has as well
+  ('word_alloc', 'get_clash_tree_def'): {'*': 'reg_alloc'},
   ('word_alloc', 'full_ssa_cc_trans_def'): {'*': 'wordLang'},
 }
 

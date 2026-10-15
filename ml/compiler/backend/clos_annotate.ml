@@ -152,41 +152,50 @@ let get_var_def = cake_define
 hol4_overload "get_var" "clos_annotate_get_var";;
 
 let shifted_env_def = cake_define_list
-  [`shifted_env n [] = LN`;
-   `shifted_env n (x :: xs) = sptree_insert x (n:num) (shifted_env
-  (n + 1) xs)`];;
+  [`shifted_env (n:num) [] = LN`;
+   `shifted_env (n:num) (x :: xs) = sptree_insert x (n:num)
+  (shifted_env (n + 1) xs)`];;
 
 let shift_def = cake_define_list
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;
-   `clos_annotate_shift ((x:closLang_exp) :: y :: xs) m l i =
+   `clos_annotate_shift ((x:closLang_exp) :: y :: xs) (m:num) (l:num)
+  (i:num spt) =
          (let c1 = clos_annotate_shift [x] m l i in
          let c2 = clos_annotate_shift (y :: xs) m l i in
            (c1 ++ (c2:closLang_exp list)))`;
-   `clos_annotate_shift [(Var t v:closLang_exp)] m l i =
+   `clos_annotate_shift [(Var t v:closLang_exp)] (m:num) (l:num) (i:num
+  spt) =
          [Var t (clos_annotate_get_var m l i v)]`;
-   `clos_annotate_shift [(If t x1 x2 x3:closLang_exp)] m l i =
+   `clos_annotate_shift [(If t x1 x2 x3:closLang_exp)] (m:num) (l:num)
+  (i:num spt) =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift [x2] m l i in
          let c3 = clos_annotate_shift [x3] m l i in
            ([If t (HD c1) (HD c2) (HD c3)]))`;
-   `clos_annotate_shift [(Let t xs x2:closLang_exp)] m l i =
+   `clos_annotate_shift [(Let t xs x2:closLang_exp)] (m:num) (l:num)
+  (i:num spt) =
          (let c1 = clos_annotate_shift xs m l i in
          let c2 = clos_annotate_shift [x2] m (l + LENGTH xs) i in
            ([Let t c1 (HD c2)]))`;
-   `clos_annotate_shift [(Raise t x1:closLang_exp)] m l i =
+   `clos_annotate_shift [(Raise t x1:closLang_exp)] (m:num) (l:num)
+  (i:num spt) =
          (let (c1) = clos_annotate_shift [x1] m l i in
            ([Raise t (HD c1)]))`;
-   `clos_annotate_shift [(closLang_Tick t x1:closLang_exp)] m l i =
+   `clos_annotate_shift [(closLang_Tick t x1:closLang_exp)] (m:num)
+  (l:num) (i:num spt) =
          (let c1 = clos_annotate_shift [x1] m l i in
            ([closLang_Tick t (HD c1)]))`;
-   `clos_annotate_shift [(closLang_Op t op xs:closLang_exp)] m l i =
+   `clos_annotate_shift [(closLang_Op t op xs:closLang_exp)] (m:num)
+  (l:num) (i:num spt) =
          (let c1 = clos_annotate_shift xs m l i in
            ([closLang_Op t op c1]))`;
-   `clos_annotate_shift [(App t loc_opt x1 xs2:closLang_exp)] m l i =
+   `clos_annotate_shift [(App t loc_opt x1 xs2:closLang_exp)] (m:num)
+  (l:num) (i:num spt) =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift xs2 m l i in
            ([App t loc_opt (HD c1) c2]))`;
-   `clos_annotate_shift [closLang_Fn t loc vs_opt num_args x1] m l i =
+   `clos_annotate_shift [closLang_Fn t loc vs_opt num_args x1] (m:num)
+  (l:num) (i:num spt) =
          (let k = m + l in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let live = FILTER (\n. n < k) vs in
@@ -194,8 +203,8 @@ let shift_def = cake_define_list
          let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
            live) in
            ([closLang_Fn t loc (SOME vars') num_args (HD c1)]))`;
-   `clos_annotate_shift [(Letrec t loc vsopt fns x1:closLang_exp)] m l i
-  =
+   `clos_annotate_shift [(Letrec t loc vsopt fns x1:closLang_exp)]
+  (m:num) (l:num) (i:num spt) =
          (let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          let k = m + l in
          let live = FILTER (\n. n < k) vs in
@@ -207,49 +216,56 @@ let shift_def = cake_define_list
                               (n,HD c)) fns in
          let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
            ([Letrec t loc (SOME vars') cs (HD c1)]))`;
-   `clos_annotate_shift [(Handle t x1 x2:closLang_exp)] m l i =
+   `clos_annotate_shift [(Handle t x1 x2:closLang_exp)] (m:num) (l:num)
+  (i:num spt) =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift [x2] m (l + 1) i in
            ([Handle t (HD c1) (HD c2)]))`;
-   `clos_annotate_shift [(closLang_Call t ticks dest xs:closLang_exp)] m
-  l i =
+   `clos_annotate_shift [(closLang_Call t ticks dest xs:closLang_exp)]
+  (m:num) (l:num) (i:num spt) =
          (let c1 = clos_annotate_shift xs m l i in
            ([closLang_Call t ticks dest c1]))`];;
 hol4_overload "shift" "clos_annotate_shift";;
 
 let shift_sing_def = cake_define_list
-  [`shift_sing (Var t v:closLang_exp) m l i =
+  [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =
          Var t (clos_annotate_get_var m l i v)`;
-   `shift_sing (If t x1 x2 x3:closLang_exp) m l i =
+   `shift_sing (If t x1 x2 x3:closLang_exp) (m:num) (l:num) (i:num spt)
+  =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_sing x2 m l i in
          let c3 = shift_sing x3 m l i in
            (If t c1 c2 c3))`;
-   `shift_sing (Let t xs x2:closLang_exp) m l i =
+   `shift_sing (Let t xs x2:closLang_exp) (m:num) (l:num) (i:num spt) =
          (let c1 = shift_list xs m l i in
          let c2 = shift_sing x2 m (l + LENGTH xs) i in
            (Let t c1 c2))`;
-   `shift_sing (Raise t x1:closLang_exp) m l i =
+   `shift_sing (Raise t x1:closLang_exp) (m:num) (l:num) (i:num spt) =
          (let (c1) = shift_sing x1 m l i in
            (Raise t c1))`;
-   `shift_sing (closLang_Tick t x1:closLang_exp) m l i =
+   `shift_sing (closLang_Tick t x1:closLang_exp) (m:num) (l:num) (i:num
+  spt) =
          (let c1 = shift_sing x1 m l i in
            (closLang_Tick t c1))`;
-   `shift_sing (closLang_Op t op xs:closLang_exp) m l i =
+   `shift_sing (closLang_Op t op xs:closLang_exp) (m:num) (l:num) (i:num
+  spt) =
          (let c1 = shift_list xs m l i in
            (closLang_Op t op c1))`;
-   `shift_sing (App t loc_opt x1 xs2:closLang_exp) m l i =
+   `shift_sing (App t loc_opt x1 xs2:closLang_exp) (m:num) (l:num)
+  (i:num spt) =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_list xs2 m l i in
            (App t loc_opt c1 c2))`;
-   `shift_sing (closLang_Fn t loc vs_opt num_args x1) m l i =
+   `shift_sing (closLang_Fn t loc vs_opt num_args x1) (m:num) (l:num)
+  (i:num spt) =
          (let k = m + l in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let live = FILTER (\n. n < k) vs in
          let vars' = MAP (clos_annotate_get_var m l i) live in
          let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
            (closLang_Fn t loc (SOME vars') num_args c1))`;
-   `shift_sing (Letrec t loc vsopt fns x1:closLang_exp) m l i =
+   `shift_sing (Letrec t loc vsopt fns x1:closLang_exp) (m:num) (l:num)
+  (i:num spt) =
          (let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          let k = m + l in
          let live = FILTER (\n. n < k) vs in
@@ -259,15 +275,17 @@ let shift_sing_def = cake_define_list
          let cs = shift_letrec fns_len k new_i fns in
          let c1 = shift_sing x1 m (l + LENGTH fns) i in
            (Letrec t loc (SOME vars') cs c1))`;
-   `shift_sing (Handle t x1 x2:closLang_exp) m l i =
+   `shift_sing (Handle t x1 x2:closLang_exp) (m:num) (l:num) (i:num spt)
+  =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_sing x2 m (l + 1) i in
            (Handle t c1 c2))`;
-   `shift_sing (closLang_Call t ticks dest xs:closLang_exp) m l i =
+   `shift_sing (closLang_Call t ticks dest xs:closLang_exp) (m:num)
+  (l:num) (i:num spt) =
          (let c1 = shift_list xs m l i in
            (closLang_Call t ticks dest c1))`;
    `shift_list [] (m:num) (l:num) (i:num spt) = []`;
-   `shift_list ((x:closLang_exp) :: xs) m l i =
+   `shift_list ((x:closLang_exp) :: xs) (m:num) (l:num) (i:num spt) =
          (let c1 = shift_sing x m l i in
          let c2 = shift_list xs m l i in
            (c1 :: (c2:closLang_exp list)))`;

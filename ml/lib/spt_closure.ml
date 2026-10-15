@@ -9,7 +9,7 @@ needs "lib/sptree.ml";;
 (* HOL4 ancestors outside the port: pred_set arithmetic relation *)
 
 let num_set_tree_union_def = cake_define_list
-  [`num_set_tree_union LN t2 = (t2:(1 spt) spt)`;
+  [`num_set_tree_union LN (t2:(1 spt) spt) = (t2:(1 spt) spt)`;
    `num_set_tree_union (LS a) t =
        ((match t with LN -> LS a | LS b -> LS (sptree_union a b)
          | BN t1 t2 -> BS t1 a t2 | BS t1 b t2 -> BS t1 (sptree_union

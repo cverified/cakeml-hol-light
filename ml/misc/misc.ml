@@ -534,7 +534,7 @@ let all_words_def = cake_define_list
 
 let asm_write_bytearray_def = cake_define_list
   [`asm_write_bytearray a [] (m:'a word->word8) = m`;
-   `asm_write_bytearray a (x :: xs) m = (a =+ x)
+   `asm_write_bytearray a (x :: xs) (m:'a word->word8) = (a =+ x)
   (asm_write_bytearray (a + (n2w 1)) xs m)`];;
 
 (* TODO: move to sptTheory *)

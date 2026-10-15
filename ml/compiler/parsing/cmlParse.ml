@@ -38,10 +38,10 @@ hol4_overload "destResult" "cmlParse_destResult";;
        pegresult *)
 let pegresult_bind_def = cake_define
   `(pegresult_bind (f:(tokens_token#locs) list->((tokens_token#locs)
-  list,'ga,string)pegresult) (g:'ga->(tokens_token#locs)
+  list,'a,string)pegresult) (g:'a->(tokens_token#locs)
   list->((tokens_token#locs)
-  list,'gb,string)pegresult):(tokens_token#locs)
-  list->((tokens_token#locs) list,'gb,string)pegresult) =
+  list,'b,string)pegresult):(tokens_token#locs)
+  list->((tokens_token#locs) list,'b,string)pegresult) =
    (\toks.
      match f toks with
        peg_Success toks' x eo -> g x toks' | peg_Failure fl fe ->
@@ -49,10 +49,10 @@ let pegresult_bind_def = cake_define
 
 let pegresult_choice_def = cake_define
   `(pegresult_choice (f:(tokens_token#locs) list->((tokens_token#locs)
-  list,'ga,string)pegresult) (g:(tokens_token#locs)
+  list,'a,string)pegresult) (g:(tokens_token#locs)
   list->((tokens_token#locs)
-  list,'ga,string)pegresult):(tokens_token#locs)
-  list->((tokens_token#locs) list,'ga,string)pegresult) =
+  list,'a,string)pegresult):(tokens_token#locs)
+  list->((tokens_token#locs) list,'a,string)pegresult) =
    (\toks.
      match f toks with
        peg_Success toks' x eo -> peg_Success toks' x eo | _6 -> g
@@ -72,7 +72,7 @@ hol4_overload "++" "pegresult_choice";;
 
 let optlift_def = cake_define_list
   [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
-  list,'ga,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
+  list,'a,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
   "Option = NONE")`;
    `optlift (SOME a) = (\toks. peg_Success toks a NONE)`];;
 

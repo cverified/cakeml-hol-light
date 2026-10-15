@@ -260,7 +260,7 @@ let word_gen_gc_partial_move_data_def = cake_define
 let word_gen_gc_partial_def = cake_define
   `word_gen_gc_partial conf (roots,(curr:'a word),new,len,m,dm,gs,rs) =
      (let refs_end = curr + len in
-     let gen_start = gs >>> backend_common_word_shift (:'ga) in
+     let gen_start = gs >>> backend_common_word_shift (:'a) in
      let (roots,i,pa,m,c1) = word_gen_gc_partial_move_roots conf
                      (roots,gen_start,new,curr,m,dm,gs,rs) in
      let (i,pa,m,c2) = word_gen_gc_partial_move_ref_list (dimword
@@ -419,7 +419,7 @@ let glob_real_def = cake_define
         match w with
           wordLang_Word (w:'a word) ->
         wordLang_Word (curr + (w >>> (shift_length c) <<
-          backend_common_word_shift (:'ga)))
+          backend_common_word_shift (:'a)))
         | w -> w`;;
 
 let word_gc_fun_def = cake_define

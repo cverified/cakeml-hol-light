@@ -173,16 +173,19 @@ let check_number_property_def = cake_define_list
         (let n_out = n - (&1) in
         let live_out = numset_list_delete l live in
         P n_out live_out)`;
-   `check_number_property P (linear_scan_Reads l) (n:int) live =
+   `check_number_property (P:int->1 spt->bool) (linear_scan_Reads l)
+  (n:int) live =
         (let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
-   `check_number_property P (Branch lt1 lt2:live_tree) (n:int) live =
+   `check_number_property (P:int->1 spt->bool) (Branch lt1
+  lt2:live_tree) (n:int) live =
         (let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - (size_of_live_tree
           lt2)) live in
         r1 /\ r2)`;
-   `check_number_property P (Seq lt1 lt2:live_tree) (n:int) live =
+   `check_number_property (P:int->1 spt->bool) (Seq lt1 lt2:live_tree)
+  (n:int) live =
         (let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - size_of_live_tree
           lt2) (get_live_backward lt2 live) in
@@ -194,19 +197,20 @@ let check_number_property_strong_def = cake_define_list
         (let n_out = n - (&1) in
         let live_out = numset_list_delete l live in
         P n_out live_out)`;
-   `check_number_property_strong P (linear_scan_Reads l) (n:int) live =
+   `check_number_property_strong (P:int->1 spt->bool) (linear_scan_Reads
+  l) (n:int) live =
         (let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
-   `check_number_property_strong P (Branch lt1 lt2:live_tree) (n:int)
-  live =
+   `check_number_property_strong (P:int->1 spt->bool) (Branch lt1
+  lt2:live_tree) (n:int) live =
         (let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n -
           (size_of_live_tree lt2)) live in
         r1 /\ r2 /\ P (n - (size_of_live_tree (Branch lt1 lt2)))
           (get_live_backward (Branch lt1 lt2) live))`;
-   `check_number_property_strong P (Seq lt1 lt2:live_tree) (n:int) live
-  =
+   `check_number_property_strong (P:int->1 spt->bool) (Seq lt1
+  lt2:live_tree) (n:int) live =
         (let r2 = check_number_property_strong P lt2 n live in
         let r1 = check_number_property_strong P lt1 (n -
           size_of_live_tree lt2) (get_live_backward lt2 live) in
@@ -286,8 +290,8 @@ let get_intervals_ct_aux_def = cake_define_list
 
 let get_intervals_ct_def = cake_define
   `get_intervals_ct ct =
-       (let (n,int_beg,int_end,live) = get_intervals_ct_aux ct 0 LN
-         LN LN in
+       (let (n,int_beg,int_end,live) = get_intervals_ct_aux ct (&0)
+         LN LN LN in
        let listlive = MAP FST (toAList live) in
        (n - (&1),numset_list_add_if_lt listlive n
          int_beg,numset_list_add_if_gt listlive n int_end))`;;
@@ -539,12 +543,12 @@ val update_sorted_moves_def = fetch "-" "update_sorted_moves_def";
 *)
 
 let numset_list_add_if_lt_monad_def = cake_define_list
-  [`numset_list_add_if_lt_monad [] v =
+  [`numset_list_add_if_lt_monad [] (v:int) =
       st_ex_return one`;
-   `numset_list_add_if_lt_monad (r :: rs) v =
+   `numset_list_add_if_lt_monad (r :: rs) (v:int) =
       st_ex_bind (int_beg_sub r) (\
         begr.
-        if 0 < begr then
+        if (&0) < begr then
           st_ex_ignore_bind
             (update_int_beg r v) (
             numset_list_add_if_lt_monad rs v) else if v <= begr then
@@ -554,12 +558,12 @@ let numset_list_add_if_lt_monad_def = cake_define_list
           numset_list_add_if_lt_monad rs v)`];;
 
 let numset_list_add_if_gt_monad_def = cake_define_list
-  [`numset_list_add_if_gt_monad [] v =
+  [`numset_list_add_if_gt_monad [] (v:int) =
       st_ex_return one`;
-   `numset_list_add_if_gt_monad (r :: rs) v =
+   `numset_list_add_if_gt_monad (r :: rs) (v:int) =
       st_ex_bind (int_end_sub r) (\
         begr.
-        if 0 < begr then
+        if (&0) < begr then
           st_ex_ignore_bind
             (update_int_end r v) (
             numset_list_add_if_gt_monad rs v) else if begr <= v then
@@ -600,7 +604,7 @@ let get_intervals_ct_monad_aux_def = cake_define_list
 
 let get_intervals_ct_monad_def = cake_define
   `get_intervals_ct_monad ct =
-     st_ex_bind (get_intervals_ct_monad_aux ct 0 LN) (\
+     st_ex_bind (get_intervals_ct_monad_aux ct (&0) LN) (\
        (n,live). st_ex_ignore_bind
        (numset_list_add_if_lt_monad (MAP FST (toAList live)) n)
          (st_ex_ignore_bind
@@ -630,7 +634,7 @@ let add_active_interval_def = cake_define_list
 
 let find_color_in_list_def = cake_define_list
   [`find_color_in_list [] (forbidden:1 spt) = NONE`;
-   `find_color_in_list (r :: rs) forbidden =
+   `find_color_in_list (r :: rs) (forbidden:1 spt) =
         (if sptree_lookup r forbidden = NONE then
           SOME (r,rs) else
           match find_color_in_list rs forbidden with NONE ->
@@ -672,7 +676,7 @@ let color_register_def = cake_define
 let find_last_stealable_def = cake_define_list
   [`find_last_stealable [] (forbidden:1 spt) =
         st_ex_return NONE`;
-   `find_last_stealable (x :: xs) forbidden =
+   `find_last_stealable (x :: xs) (forbidden:1 spt) =
       st_ex_bind (find_last_stealable xs forbidden) (\
         recursion.
         match recursion with SOME (steal,rest) -> st_ex_return (SOME
@@ -1106,19 +1110,20 @@ let size_of_clash_tree_def = cake_define_list
    `size_of_clash_tree (reg_alloc_Set cutset:clash_tree) =
       (&1)`;
    `size_of_clash_tree (Branch optcutset ct1 ct2:clash_tree) =
-      (if IS_SOME optcutset then 1 else 0) + size_of_clash_tree
-        ct1 + size_of_clash_tree ct2`;
+      (if IS_SOME optcutset then (&1) else (&0)) +
+        size_of_clash_tree ct1 + size_of_clash_tree ct2`;
    `size_of_clash_tree (Seq ct1 ct2:clash_tree) =
       size_of_clash_tree ct1 + size_of_clash_tree ct2`];;
 
 let run_linear_reg_alloc_intervals_def = cake_define
-  `run_linear_reg_alloc_intervals ct k forced moves reglist_unsorted
-  invbij nmax =
-       run_i_linear_scan_hidden_state
-         (linear_reg_alloc_and_extract_coloration ct k forced moves
-           reglist_unsorted invbij nmax)
-         (mk_i_linear_scan_hidden_state (nmax + 1,0) (nmax + 1,1)
-           (nmax + 1,1) (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
+  `run_linear_reg_alloc_intervals ct k forced moves
+     reglist_unsorted invbij nmax =
+     run_i_linear_scan_hidden_state
+       (linear_reg_alloc_and_extract_coloration ct k forced moves
+         reglist_unsorted invbij nmax)
+       (mk_i_linear_scan_hidden_state (nmax + 1,0)
+         ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
+         (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 
 let apply_bij_on_clash_tree_def = cake_define_list
   [`apply_bij_on_clash_tree (reg_alloc_Delta wr rd) bij =
@@ -1128,12 +1133,12 @@ let apply_bij_on_clash_tree_def = cake_define_list
       reg_alloc_Set (foldi (\r _18 acc. sptree_insert (the 0
         (sptree_lookup r bij)) one acc) 0 LN cutset)`;
    `apply_bij_on_clash_tree (Branch optcutset ct1 ct2:clash_tree) bij =
-      Branch (OPTION_MAP (foldi (\r _34 acc. sptree_insert (the 0
-        (sptree_lookup r bij)) one acc) 0 LN) optcutset)
-        (apply_bij_on_clash_tree ct1 bij) (apply_bij_on_clash_tree
-        ct2 bij)`;
+      reg_alloc_Branch (OPTION_MAP (foldi (\r _34 acc.
+        sptree_insert (the 0 (sptree_lookup r bij)) one acc) 0 LN)
+        optcutset) (apply_bij_on_clash_tree ct1 bij)
+        (apply_bij_on_clash_tree ct2 bij)`;
    `apply_bij_on_clash_tree (Seq ct1 ct2:clash_tree) bij =
-      Seq (apply_bij_on_clash_tree ct1 bij)
+      reg_alloc_Seq (apply_bij_on_clash_tree ct1 bij)
         (apply_bij_on_clash_tree ct2 bij)`];;
 
 

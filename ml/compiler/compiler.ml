@@ -194,7 +194,7 @@ let current_build_info_str_def = cake_define
 let compiler_config_FIELDS = define_record "compiler_config"
   ["inferencer_config","inf_env";
    "backend_config","backend_config";
-   "asm_config","'ga asm_config";
+   "asm_config","'a asm_config";
    "input_is_sexp","bool";
    "exclude_prelude","bool";
    "skip_type_inference","bool";
@@ -435,8 +435,8 @@ let parse_num_list_def = cake_define_list
              INR s -> INR s | INL ns -> INL (n :: ns)))`];;
 
 let comma_tokens_def = cake_define_list
-  [`comma_tokens acc xs [] = (if NULL xs then acc else acc ++
-  [implode xs])`;
+  [`comma_tokens acc (xs:string) [] = (if NULL xs then acc else acc
+  ++ [implode xs])`;
    `comma_tokens acc (xs:string) (c :: (cs:string)) =
         (if c = (CHR 44) then
           comma_tokens (acc ++ (if NULL xs then [] else [implode
@@ -555,11 +555,11 @@ EVAL ``parse_gc [«--gc=gen1234,1234,1234»] def``
 (* Copy of conf_ok from data_to_word *)
 let conf_ok_check_def = cake_define
   `conf_ok_check (:'a) c <=>
-     shift_length c < dimindex (:'ga) /\
-     backend_common_word_shift (:'ga) <= shift_length c /\
+     shift_length c < dimindex (:'a) /\
+     backend_common_word_shift (:'a) <= shift_length c /\
        ~(data_to_word_config_len_size c = 0) /\
        data_to_word_config_len_size
-     c + 7 < dimindex (:'ga)`;;
+     c + 7 < dimindex (:'a)`;;
 
 (* data *)
 let parse_data_conf_def = cake_define

@@ -85,8 +85,9 @@ let wMoveAux_def = cake_define
         | (xy :: xys) -> Seq (wMoveSingle xy kf) (wMoveAux xys kf)`;;
 
 let format_var_def = cake_define_list
-  [`format_var k NONE = INL (k + 1)`;
-   `format_var k (SOME x) = (if x < (k:num) then INL x else INR x)`];;
+  [`format_var (k:num) NONE = INL (k + 1)`;
+   `format_var (k:num) (SOME x) = (if x < (k:num) then INL x else
+  INR x)`];;
 
 let wMove_def = cake_define
   `wMove xs (k,(f:num),(f':num)) =
@@ -387,7 +388,7 @@ let PopHandler_def = cake_define
    prog))`;;
 
 let chunk_to_bits_def = cake_define_list
-  [`chunk_to_bits ([]:(bool#'ga word) list) = ((n2w 1):'a word)`;
+  [`chunk_to_bits ([]:(bool#'a word) list) = ((n2w 1):'a word)`;
    `chunk_to_bits ((b,w) :: ws) =
       ((let res = (chunk_to_bits ws) << 1 in
         if b then res + (n2w 1) else res):'a word)`];;
@@ -396,7 +397,7 @@ let chunk_to_bitmap_def = cake_define
   `chunk_to_bitmap ws = chunk_to_bits ws :: MAP SND ws`;;
 
 let const_words_to_bitmap_def = cake_define
-  `const_words_to_bitmap (ws:(bool#'ga word) list) (ws_len:num) =
+  `const_words_to_bitmap (ws:(bool#'a word) list) (ws_len:num) =
      (if ws_len < (dimindex (:'a) - 1) \/ (dimindex (:'a) - 1) = 0
        then chunk_to_bitmap ws else
        let h = TAKE (dimindex (:'a) - 1) ws in

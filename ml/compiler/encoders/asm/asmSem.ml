@@ -99,15 +99,16 @@ let word_shift_def = cake_define_list
 hol4_overload "word_shift" "asmSem_word_shift";;
 
 let arith_upd_def = cake_define_list
-  [`asmSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) s =
+  [`asmSem_arith_upd (asm_Binop b r1 r2 (ri:'a asm_reg_imm)) (s:'a
+  asm_state) =
          asmSem_binop_upd r1 b (asmSem_read_reg r2 s)
            (asmSem_reg_imm ri s) s`;
-   `asmSem_arith_upd (asm_Shift l r1 r2 ri) s =
+   `asmSem_arith_upd (asm_Shift l r1 r2 ri) (s:'a asm_state) =
          asmSem_assert (match ri with Reg r -> w2n (asmSem_read_reg
            r s) < dimindex (:'a) | _6 -> T)
            (asmSem_upd_reg r1 (asmSem_word_shift l
              (asmSem_read_reg r2 s) (w2n (asmSem_reg_imm ri s))) s)`;
-   `asmSem_arith_upd (asm_Div r1 r2 r3) s =
+   `asmSem_arith_upd (asm_Div r1 r2 r3) (s:'a asm_state) =
          (let q = asmSem_read_reg r3 s in
            asmSem_assert (~(q = (n2w 0))) (asmSem_upd_reg r1
              (asmSem_read_reg r2 s / q) s))`;
@@ -147,43 +148,43 @@ let arith_upd_def = cake_define_list
 hol4_overload "arith_upd" "asmSem_arith_upd";;
 
 let fp_upd_def = cake_define_list
-  [`asmSem_fp_upd (FPLess r d1 d2) s =
+  [`asmSem_fp_upd (FPLess r d1 d2) (s:'a asm_state) =
          asmSem_upd_reg r (if fp64_lessThan (asmSem_read_fp_reg
            d1 s) (asmSem_read_fp_reg d2 s) then (n2w 1) else (n2w 0))
            s`;
-   `asmSem_fp_upd (FPLessEqual r d1 d2) s =
+   `asmSem_fp_upd (FPLessEqual r d1 d2) (s:'a asm_state) =
          asmSem_upd_reg r (if fp64_lessEqual (asmSem_read_fp_reg
            d1 s) (asmSem_read_fp_reg d2 s) then (n2w 1) else (n2w 0))
            s`;
-   `asmSem_fp_upd (FPEqual r d1 d2) s =
+   `asmSem_fp_upd (FPEqual r d1 d2) (s:'a asm_state) =
          asmSem_upd_reg r (if fp64_equal (asmSem_read_fp_reg d1
            s) (asmSem_read_fp_reg d2 s) then (n2w 1) else (n2w 0)) s`;
-   `asmSem_fp_upd (FPMov d1 d2) s = asmSem_upd_fp_reg d1
-  (asmSem_read_fp_reg d2 s) s`;
-   `asmSem_fp_upd (FPAbs d1 d2) s = asmSem_upd_fp_reg d1 (fp64_abs
-  (asmSem_read_fp_reg d2 s)) s`;
-   `asmSem_fp_upd (FPNeg d1 d2) s = asmSem_upd_fp_reg d1 (fp64_negate
-  (asmSem_read_fp_reg d2 s)) s`;
-   `asmSem_fp_upd (FPSqrt d1 d2) s =
+   `asmSem_fp_upd (FPMov d1 d2) (s:'a asm_state) = asmSem_upd_fp_reg
+  d1 (asmSem_read_fp_reg d2 s) s`;
+   `asmSem_fp_upd (FPAbs d1 d2) (s:'a asm_state) = asmSem_upd_fp_reg
+  d1 (fp64_abs (asmSem_read_fp_reg d2 s)) s`;
+   `asmSem_fp_upd (FPNeg d1 d2) (s:'a asm_state) = asmSem_upd_fp_reg
+  d1 (fp64_negate (asmSem_read_fp_reg d2 s)) s`;
+   `asmSem_fp_upd (FPSqrt d1 d2) (s:'a asm_state) =
          asmSem_upd_fp_reg d1 (fp64_sqrt roundTiesToEven
            (asmSem_read_fp_reg d2 s)) s`;
-   `asmSem_fp_upd (FPAdd d1 d2 d3) s =
+   `asmSem_fp_upd (FPAdd d1 d2 d3) (s:'a asm_state) =
          asmSem_upd_fp_reg d1
            (fp64_add roundTiesToEven (asmSem_read_fp_reg d2 s)
              (asmSem_read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPSub d1 d2 d3) s =
+   `asmSem_fp_upd (FPSub d1 d2 d3) (s:'a asm_state) =
          asmSem_upd_fp_reg d1
            (fp64_sub roundTiesToEven (asmSem_read_fp_reg d2 s)
              (asmSem_read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPMul d1 d2 d3) s =
+   `asmSem_fp_upd (FPMul d1 d2 d3) (s:'a asm_state) =
          asmSem_upd_fp_reg d1
            (fp64_mul roundTiesToEven (asmSem_read_fp_reg d2 s)
              (asmSem_read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPDiv d1 d2 d3) s =
+   `asmSem_fp_upd (FPDiv d1 d2 d3) (s:'a asm_state) =
          asmSem_upd_fp_reg d1
            (fp64_div roundTiesToEven (asmSem_read_fp_reg d2 s)
              (asmSem_read_fp_reg d3 s)) s`;
-   `asmSem_fp_upd (FPFma d1 d2 d3) s =
+   `asmSem_fp_upd (FPFma d1 d2 d3) (s:'a asm_state) =
          asmSem_upd_fp_reg d1
            (fp64_mul_add roundTiesToEven (asmSem_read_fp_reg d2
              s) (asmSem_read_fp_reg d3 s) (asmSem_read_fp_reg d1 s))
@@ -261,14 +262,17 @@ let mem_store_def = cake_define
 hol4_overload "mem_store" "asmSem_mem_store";;
 
 let mem_op_def = cake_define_list
-  [`asmSem_mem_op (asm_Load:memop) r a = asmSem_mem_load (dimindex
-  (:'a) DIV 8) r a`;
-   `asmSem_mem_op (asm_Store:memop) r a = asmSem_mem_store (dimindex
-  (:'a) DIV 8) r a`;
-   `asmSem_mem_op asm_Load8 r a = asmSem_mem_load 1 r a`;
-   `asmSem_mem_op asm_Store8 r a = asmSem_mem_store 1 r a`;
-   `asmSem_mem_op asm_Load16 r a = asmSem_mem_load 2 r a`;
-   `asmSem_mem_op asm_Store16 r a = asmSem_mem_store 2 r a`;
+  [`asmSem_mem_op (asm_Load:memop) r (a:'a asm_addr) =
+  asmSem_mem_load (dimindex (:'a) DIV 8) r a`;
+   `asmSem_mem_op (asm_Store:memop) r (a:'a asm_addr) =
+  asmSem_mem_store (dimindex (:'a) DIV 8) r a`;
+   `asmSem_mem_op asm_Load8 r (a:'a asm_addr) = asmSem_mem_load 1 r a`;
+   `asmSem_mem_op asm_Store8 r (a:'a asm_addr) = asmSem_mem_store 1 r
+  a`;
+   `asmSem_mem_op asm_Load16 r (a:'a asm_addr) = asmSem_mem_load 2 r
+  a`;
+   `asmSem_mem_op asm_Store16 r (a:'a asm_addr) = asmSem_mem_store 2
+  r a`;
    `asmSem_mem_op asm_Load32 r (a:'a asm_addr) = asmSem_mem_load 4 r
   a`;
    `asmSem_mem_op asm_Store32 r (a:'a asm_addr) = asmSem_mem_store

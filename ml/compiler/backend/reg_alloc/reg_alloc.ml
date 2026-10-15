@@ -373,14 +373,14 @@ let st_ex_FILTER_def = cake_define_list
 (* Insert an undirect edge into the adj list representation *)
 let sorted_insert_def = cake_define_list
   [`sorted_insert (x:num) acc [] = REVERSE (x :: acc)`;
-   `sorted_insert x acc (y :: ys) =
+   `sorted_insert (x:num) acc (y :: ys) =
         (if x = y then REVERSE acc ++ (y :: ys) else if x > y
           then REVERSE acc ++ (x :: y :: ys) else sorted_insert x
           (y :: acc) ys)`];;
 
 let sorted_mem_def = cake_define_list
   [`sorted_mem (x:num) [] = F`;
-   `sorted_mem x (y :: ys) =
+   `sorted_mem (x:num) (y :: ys) =
         (if x = y then T else if x > y then F else sorted_mem x
           ys)`];;
 
@@ -1071,7 +1071,7 @@ hol4_overload "Seq" "reg_alloc_Seq";;
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def = cake_define_list
   [`numset_list_delete [] (t:'a spt) = t`;
-   `numset_list_delete (x :: xs) t = numset_list_delete xs
+   `numset_list_delete (x :: xs) (t:'a spt) = numset_list_delete xs
   (sptree_delete x t)`];;
 
 (*Check that a numset is injective over the clash sets in an interpreted

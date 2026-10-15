@@ -320,7 +320,7 @@ hol4_overload "get_var" "wordSem_get_var";;
 
 let get_vars_def = cake_define_list
   [`wordSem_get_vars [] (s:('a,'c,'ffi)wordSem_state) = SOME []`;
-   `wordSem_get_vars (v :: vs) s =
+   `wordSem_get_vars (v :: vs) (s:('a,'c,'ffi)wordSem_state) =
          (match wordSem_get_var v s with NONE -> NONE | SOME x
            -> (match wordSem_get_vars vs s with NONE -> NONE | SOME
            xs -> SOME (x :: xs)))`];;
@@ -357,17 +357,21 @@ hol4_overload "set_store" "wordSem_set_store";;
 let word_exp_def = cake_define_list
   [`wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Const w)
   = SOME (wordLang_Word w)`;
-   `wordSem_word_exp s (wordLang_Var v) = wordSem_get_var v s`;
-   `wordSem_word_exp s (wordLang_Lookup name) = wordSem_get_store
-  name s`;
-   `wordSem_word_exp s (wordLang_Load addr') =
+   `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Var v) =
+  wordSem_get_var v s`;
+   `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Lookup
+  name) = wordSem_get_store name s`;
+   `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Load addr')
+  =
          (match wordSem_word_exp s addr' with SOME (wordLang_Word
            w) -> wordSem_mem_load w s | _27 -> NONE)`;
-   `wordSem_word_exp s (wordLang_Op op wexps) =
+   `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Op op
+  wexps) =
          (match the_words (MAP (wordSem_word_exp s) wexps) with
            SOME ws -> (OPTION_MAP wordLang_Word (wordLang_word_op op
            ws)) | _30 -> NONE)`;
-   `wordSem_word_exp s (wordLang_Shift sh wexp wexp1) =
+   `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Shift sh
+  wexp wexp1) =
          (match (wordSem_word_exp s wexp,wordSem_word_exp s
            wexp1) with (SOME (wordLang_Word w),SOME (wordLang_Word
            w1)) -> OPTION_MAP wordLang_Word (word_sh sh w (w2n w1))
@@ -559,8 +563,8 @@ let push_env_def = cake_define_list
               (wordSem_state_stack_max s) (stack_size stack')))
               (wordSem_state_stack_fupd (K stack')
           s)))`;
-   `wordSem_push_env envs' (SOME ((w:num),(h:'a wordLang_prog),l1,l2)) s
-  =
+   `wordSem_push_env envs' (SOME ((w:num),(h:'a wordLang_prog),l1,l2))
+  (s:('a,'c,'ffi)wordSem_state) =
         (let l0 = toAList (FST envs') in let
             (l,permute) = env_to_list (SND envs')
               (wordSem_state_permute s) in let
@@ -916,7 +920,8 @@ hol4_overload "inst" "wordSem_inst";;
 let get_var_imm_def = cake_define_list
   [`wordSem_get_var_imm ((Reg n):'a asm_reg_imm)
   (s:('a,'c,'ffi)wordSem_state) = wordSem_get_var n s`;
-   `wordSem_get_var_imm (Imm w) s = SOME (wordLang_Word w)`];;
+   `wordSem_get_var_imm (Imm w) (s:('a,'c,'ffi)wordSem_state) =
+  SOME (wordLang_Word w)`];;
 hol4_overload "get_var_imm" "wordSem_get_var_imm";;
 
 let add_ret_loc_def = cake_define_list
@@ -941,7 +946,7 @@ let const_addresses_def = cake_define_list
       (a IN d /\ const_addresses (a + bytes_in_word) xs d)`];;
 
 let const_writes_def = cake_define_list
-  [`const_writes a off [] m = m`;
+  [`const_writes (a:'a word) off [] m = m`;
    `const_writes (a:'a word) off ((b,(x:'a word)) :: xs) m =
       const_writes (a + bytes_in_word) off xs
         ((a =+ wordLang_Word (if b then x + off else x)) m)`];;

@@ -29,16 +29,16 @@ let liftM_def = cake_define
 (* Definitions using monadic syntax *)
 
 let st_ex_bind_def = cake_define
-  `(st_ex_bind:('ga->('gb,'gc)exc#'ga)->('gb->'ga->('gd,'gc)exc
-  #'ga)->'ga->('gd,'gc)exc#'ga) x f =
+  `(st_ex_bind:('a->('b,'c)exc#'a)->('b->'a->('d,'c)exc#'a)->'a->('d
+  ,'c)exc#'a) x f =
      (\s.
        match x s with
          (M_success y,s) -> f y s | (M_failure x,s) -> (M_failure
            x,s))`;;
 
 let st_ex_ignore_bind_def = cake_define
-  `(st_ex_ignore_bind:('ga->('gb,'gc)exc#'ga)->('ga->('gd,'gc)exc
-  #'ga)->'ga->('gd,'gc)exc#'ga) x f =
+  `(st_ex_ignore_bind:('a->('b,'c)exc#'a)->('a->('d,'c)exc#'a)->'a->('d
+  ,'c)exc#'a) x f =
      (\s.
        match x s with
          (M_success y,s) -> f s | (M_failure x,s) -> (M_failure

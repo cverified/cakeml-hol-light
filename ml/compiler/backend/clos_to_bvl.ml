@@ -175,9 +175,9 @@ let code_for_recc_case_def = cake_define
          (Var 0) i) n) c))`;;
 
 let build_aux_def = cake_define_list
-  [`build_aux i [] aux = ((i:num),aux)`;
-   `build_aux i ((x:num#bvl_exp) :: xs) aux = build_aux (i + 2) xs
-  ((i,x) :: aux)`];;
+  [`build_aux (i:num) [] aux = ((i:num),aux)`;
+   `build_aux (i:num) ((x:num#bvl_exp) :: xs) aux = build_aux (i +
+  2) xs ((i,x) :: aux)`];;
 
 let recc_Let_def = cake_define
   `recc_Let n num_args i =

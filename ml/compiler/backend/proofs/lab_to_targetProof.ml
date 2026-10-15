@@ -209,9 +209,10 @@ val all_enc_ok_ind = theorem"all_enc_ok_ind";
 *)
 
 let pos_val_def = cake_define_list
-  [`pos_val i pos [] = (pos:num)`;
-   `pos_val i pos (Section k [] :: xs) = ((pos_val i pos xs):num)`;
-   `pos_val i pos (Section k (y :: ys) :: xs) =
+  [`pos_val i (pos:num) [] = (pos:num)`;
+   `pos_val i (pos:num) (Section k [] :: xs) = ((pos_val i pos
+  xs):num)`;
+   `pos_val i (pos:num) (Section k (y :: ys) :: xs) =
          ((if is_Label y then pos_val i (pos + line_length y)
            ((Section k ys) :: xs) else if i = (0:num) then pos else
            pos_val (i - 1) (pos + line_length y) ((Section k ys) ::

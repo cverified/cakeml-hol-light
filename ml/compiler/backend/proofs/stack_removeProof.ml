@@ -157,7 +157,7 @@ val tac1 = simp [Once
 *)
 
 let mem_val_def = cake_define_list
-  [`mem_val regs' (INL w) = wordLang_Word w`;
+  [`mem_val (regs':(num,'a word_loc)fmap) (INL w) = wordLang_Word w`;
    `mem_val (regs':(num,'a word_loc)fmap) (INR n) = FAPPLY regs' n`];;
 
 (* HOL4 ML code, not ported:
@@ -275,8 +275,7 @@ let init_prop_def = cake_define
         byte_aligned curr /\
         LAST (stack s) = wordLang_Word (n2w 0) /\
         LENGTH (stack s) = SUC (stackSem_state_stack_space s) /\
-        LENGTH (stack s) * (dimindex (:'ga) DIV 8) < dimword (:'ga)
-          /\
+        LENGTH (stack s) * (dimindex (:'a) DIV 8) < dimword (:'a) /\
         len + len <= max_heap /\
         (word_list_exists curr len * word_list_exists other len)
            (fun2set (state_memory s,state_mdomain s)))`;;
@@ -332,7 +331,7 @@ let get_stack_heap_limit'_def = cake_define
      let ptr4 = w2n p4 in
      let d = dimindex (:'a) DIV 8 in
      let max_heap_w = (if max_heap * w2n (bytes_in_word:'a word) <
-       dimword (:'ga) then
+       dimword (:'a) then
                         bytes_in_word * n2w max_heap else --((n2w
                           1):'a word)) in
      let reg3 = n2w ptr2 +
@@ -340,16 +339,16 @@ let get_stack_heap_limit'_def = cake_define
                  (if max_heap_w <+ --(n2w 1) * n2w ptr2 + n2w ptr3
                    then
                    max_heap_w + (n2w ptr2:'a word) else n2w ptr3))
-                     >>> (backend_common_word_shift (:'ga) + 1) <<
-                     (backend_common_word_shift (:'ga) + 1) in
+                     >>> (backend_common_word_shift (:'a) + 1) <<
+                     (backend_common_word_shift (:'a) + 1) in
        get_stack_heap_limit'' (ptr2 DIV d) (w2n reg3 DIV d) (ptr4
          DIV d))`;;
 
 let get_stack_heap_limit_def = cake_define
   `get_stack_heap_limit max_heap (ptr2,ptr3,(ptr4:'a word)) =
      (let middle = ptr2 + (--(n2w 1) * ptr2 + ptr4) >>>
-       (backend_common_word_shift (:'ga) + 1) <<
-       backend_common_word_shift (:'ga) in
+       (backend_common_word_shift (:'a) + 1) <<
+       backend_common_word_shift (:'a) in
      let adj_ptr2 = ptr2 + bytes_in_word * n2w max_stack_alloc in
      let adj_ptr4 = ptr4 - (bytes_in_word * n2w max_stack_alloc) in
      let adj_ptr3 = (if adj_ptr2 <=+ ptr3 /\ ptr3 <=+ adj_ptr4 then

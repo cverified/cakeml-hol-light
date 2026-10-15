@@ -109,9 +109,9 @@ let backend_config_ok_def = cake_define
        (store_offset s)) /\
      (!n.
           n <= max_stack_alloc ==> asm_config_valid_imm
-          asm_conf (INL Sub) (n2w (n * (dimindex (:'ga) DIV 8))) /\
+          asm_conf (INL Sub) (n2w (n * (dimindex (:'a) DIV 8))) /\
             asm_config_valid_imm
-          asm_conf (INL Add) (n2w (n * (dimindex (:'ga) DIV 8))))`;;
+          asm_conf (INL Add) (n2w (n * (dimindex (:'a) DIV 8))))`;;
 
 let mc_init_ok_def = cake_define
   `mc_init_ok asm_conf c mc <=>
@@ -362,7 +362,7 @@ let read_limits_def = cake_define
   `backendProof_read_limits (asm_conf:'a asm_config) (c:compiler_config)
   mc ms =
      get_stack_heap_limit
-       (2 * max_heap_limit (:'ga) (backend_config_data_conf c) - 1)
+       (2 * max_heap_limit (:'a) (backend_config_data_conf c) - 1)
        ((target_get_reg (machine_config_target mc) ms (tlookup
          (stack_to_lab_config_reg_names (backend_config_stack_conf c))
          2):'a word),(target_get_reg (machine_config_target

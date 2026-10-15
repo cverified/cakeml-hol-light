@@ -54,19 +54,19 @@ let next_var_rename_def = cake_define
 
 let list_next_var_rename_def = cake_define_list
   [`list_next_var_rename [] ssa (na:num) = ([],ssa,na)`;
-   `list_next_var_rename (x :: xs) ssa na =
+   `list_next_var_rename (x :: xs) ssa (na:num) =
         (let (y,ssa',na') = next_var_rename x ssa na in
         let (ys,ssa'',na'') = list_next_var_rename xs ssa' na' in
           (y :: ys,ssa'',na''))`];;
 
 let fake_move_def = cake_define
-  `(fake_move v:'ga wordLang_prog) = Inst (Const v (n2w 0))`;;
+  `(fake_move v:'a wordLang_prog) = Inst (Const v (n2w 0))`;;
 
 (*Do the merging moves only*)
 let merge_moves_def = cake_define_list
   [`word_alloc_merge_moves [] ssa_L ssa_R (na:num) =
   ([],[],na,ssa_L,ssa_R)`;
-   `word_alloc_merge_moves (x :: xs) ssa_L ssa_R na =
+   `word_alloc_merge_moves (x :: xs) ssa_L ssa_R (na:num) =
         (let (seqL,seqR,na',ssa_L',ssa_R') =
           word_alloc_merge_moves xs ssa_L ssa_R na in
         let optLx = sptree_lookup x ssa_L' in
@@ -105,7 +105,7 @@ let priority_def = cake_define
 let fake_moves_def = cake_define_list
   [`fake_moves prio [] ssa_L ssa_R (na:num) = ((Skip:'a
   wordLang_prog),(Skip:'a wordLang_prog),na,ssa_L,ssa_R)`;
-   `fake_moves prio (x :: xs) ssa_L ssa_R na =
+   `fake_moves prio (x :: xs) ssa_L ssa_R (na:num) =
         (let (seqL,seqR,na',ssa_L',ssa_R') =
           fake_moves prio xs ssa_L ssa_R na in
         let optLx = sptree_lookup x ssa_L' in
@@ -353,7 +353,7 @@ let loop_setup_def = cake_define
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
 let ssa_cc_trans_def = cake_define_list
-  [`ssa_cc_trans wordLang_Skip ssa na lt = ((Skip:'a
+  [`ssa_cc_trans wordLang_Skip ssa na lt = ((wordLang_Skip:'a
   wordLang_prog),ssa,na)`;
    `ssa_cc_trans (wordLang_Move pri ls) ssa na lt =
         (let ls_1 = MAP FST ls in
@@ -369,8 +369,8 @@ let ssa_cc_trans_def = cake_define_list
         let d1 = option_lookup ssa d in
         let (d2,ssa',na') = next_var_rename d ssa na in
         let (c2,ssa'',na'') = next_var_rename c ssa' na' in
-        let prog = Seq ((wordLang_Move 1) [(4,c1); (6,d1)])
-          (Seq (StoreConsts 0 2 4 6 ws)
+        let prog = wordLang_Seq ((wordLang_Move 1) [(4,c1); (6,d1)])
+          (wordLang_Seq (wordLang_StoreConsts 0 2 4 6 ws)
                ((wordLang_Move 1) [(c2,4); (d2,6)])) in
         (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Inst i) ssa na lt =
@@ -382,15 +382,15 @@ let ssa_cc_trans_def = cake_define_list
           (wordLang_Assign num' exp',ssa',na'))`;
    `ssa_cc_trans (wordLang_Get num' store) ssa na lt =
         (let (num',ssa',na') = next_var_rename num' ssa na in
-          ((Get num' store:'a wordLang_prog),ssa',na'))`;
+          ((wordLang_Get num' store:'a wordLang_prog),ssa',na'))`;
    `ssa_cc_trans (wordLang_Store exp num') ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         let num' = option_lookup ssa num' in
-          (Store exp' num',ssa,na))`;
+          (wordLang_Store exp' num',ssa,na))`;
    `ssa_cc_trans (wordLang_Seq s1 s2) ssa na lt =
         (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
         let (s2',ssa'',na'') = ssa_cc_trans s2 ssa' na' lt in
-          (Seq s1' s2',ssa'',na''))`;
+          (wordLang_Seq s1' s2',ssa'',na''))`;
    `ssa_cc_trans (wordLang_MustTerminate s1) ssa na lt =
         (let (s1',ssa',na') = ssa_cc_trans s1 ssa na lt in
           (wordLang_MustTerminate s1',ssa',na'))`;
@@ -403,8 +403,8 @@ let ssa_cc_trans_def = cake_define_list
         let prio = mk_prio e2' e3' in
         let (e2_cons,e3_cons,na_fin,ssa_fin) =
           fix_inconsistencies prio ssa2 ssa3 na3 in
-        (If cmp r1' ri' (Seq e2' e2_cons) (Seq e3'
-          e3_cons),ssa_fin,na_fin))`;
+        (wordLang_If cmp r1' ri' (wordLang_Seq e2' e2_cons)
+          (wordLang_Seq e3' e3_cons),ssa_fin,na_fin))`;
    `ssa_cc_trans (wordLang_Alloc num' numset) ssa na lt =
         (let all_names' = sptree_union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
@@ -416,32 +416,33 @@ let ssa_cc_trans_def = cake_define_list
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
-        let prog = (Seq (stack_mov)
-                   (Seq ((wordLang_Move 1) [(2,num')])
-                   (Seq (Alloc 2 stack_set) (ret_mov)))) in
+        let prog = (wordLang_Seq (stack_mov)
+                   (wordLang_Seq ((wordLang_Move 1) [(2,num')])
+                   (wordLang_Seq (wordLang_Alloc 2 stack_set)
+                     (ret_mov)))) in
         (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Raise num') ssa na lt =
         (let num' = option_lookup ssa num' in
         let mov = (wordLang_Move 1) [(2,num')] in
-        (Seq mov (Raise 2),ssa,na))`;
+        (wordLang_Seq mov (wordLang_Raise 2),ssa,na))`;
    `ssa_cc_trans (wordLang_OpCurrHeap b dst src) ssa na lt =
         (let src' = option_lookup ssa src in
         let (dst',ssa',na') = next_var_rename dst ssa na in
-          (OpCurrHeap b dst' src',ssa',na'))`;
+          (wordLang_OpCurrHeap b dst' src',ssa',na'))`;
    `ssa_cc_trans (wordLang_Return num' nums) ssa na lt =
         (let num' = option_lookup ssa num' in
         let nums' = MAP (option_lookup ssa) nums in
         let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
         let mov = wordLang_Move 0 (ZIP rets nums') in
-        (Seq mov (Return num' rets),ssa,na))`;
-   `ssa_cc_trans wordLang_Tick ssa na lt = ((Tick:'a
+        (wordLang_Seq mov (wordLang_Return num' rets),ssa,na))`;
+   `ssa_cc_trans wordLang_Tick ssa na lt = ((wordLang_Tick:'a
   wordLang_prog),ssa,na)`;
    `ssa_cc_trans (wordLang_Set n exp) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
-        (Set n exp',ssa,na))`;
+        (wordLang_Set n exp',ssa,na))`;
    `ssa_cc_trans (wordLang_LocValue r l1) ssa na lt =
         (let (r',ssa',na') = next_var_rename r ssa na in
-          (LocValue r' l1,ssa',na'))`;
+          (wordLang_LocValue r' l1,ssa',na'))`;
    `ssa_cc_trans (wordLang_Install ptr len dptr dlen numset) ssa na lt =
         (let all_names' = sptree_union (FST numset) (SND numset) in
         let ls = MAP FST (toAList all_names') in
@@ -458,20 +459,22 @@ let ssa_cc_trans_def = cake_define_list
           2) in
         let (ret_mov,ssa''',na''') =
           list_next_var_rename_move ssa'' na'' ls in
-        let prog = (Seq (stack_mov)
-                   (Seq ((wordLang_Move 1) [(2,ptr'); (4,len')])
-                   (Seq (Install 2 4 dptr' dlen' stack_set)
-                   (Seq ((wordLang_Move 1) [(ptr'',2)]) ret_mov))))
-                     in
+        let prog = (wordLang_Seq (stack_mov)
+                   (wordLang_Seq ((wordLang_Move 1) [(2,ptr');
+                     (4,len')])
+                   (wordLang_Seq (wordLang_Install 2 4 dptr' dlen'
+                     stack_set)
+                   (wordLang_Seq ((wordLang_Move 1) [(ptr'',2)])
+                     ret_mov)))) in
         (prog,ssa''',na'''))`;
    `ssa_cc_trans (wordLang_CodeBufferWrite r1 r2) ssa na lt =
         (let r1' = option_lookup ssa r1 in
         let r2' = option_lookup ssa r2 in
-        (CodeBufferWrite r1' r2',ssa,na))`;
+        (wordLang_CodeBufferWrite r1' r2',ssa,na))`;
    `ssa_cc_trans (wordLang_DataBufferWrite r1 r2) ssa na lt =
         (let r1' = option_lookup ssa r1 in
         let r2' = option_lookup ssa r2 in
-        (DataBufferWrite r1' r2',ssa,na))`;
+        (wordLang_DataBufferWrite r1' r2',ssa,na))`;
    `ssa_cc_trans (wordLang_FFI ffi_index ptr1 len1 ptr2 len2 numset) ssa
   na lt =
         (let all_names' = sptree_union (FST numset) (SND numset) in
@@ -487,17 +490,18 @@ let ssa_cc_trans_def = cake_define_list
         let ssa_cut = inter ssa' all_names' in
         let (ret_mov,ssa'',na'') =
           list_next_var_rename_move ssa_cut (na' + 2) ls in
-        let prog = (Seq (stack_mov)
-                   (Seq ((wordLang_Move 1) [(2,cptr1); (4,clen1);
-                     (6,cptr2); (8,clen2)])
-                   (Seq (FFI ffi_index 2 4 6 8 stack_set)
-                     (ret_mov)))) in
+        let prog = (wordLang_Seq (stack_mov)
+                   (wordLang_Seq ((wordLang_Move 1) [(2,cptr1);
+                     (4,clen1); (6,cptr2); (8,clen2)])
+                   (wordLang_Seq (wordLang_FFI ffi_index 2 4 6 8
+                     stack_set) (ret_mov)))) in
         (prog,ssa'',na''))`;
    `ssa_cc_trans (wordLang_Call NONE dest args h) ssa na lt =
         (let names = MAP (option_lookup ssa) args in
         let conv_args = GENLIST (\x. 2 * x) (LENGTH names) in
         let move_args = ((wordLang_Move 1) (ZIP conv_args names)) in
-        let prog = Seq move_args (Call NONE dest conv_args h) in
+        let prog = wordLang_Seq move_args (wordLang_Call NONE dest
+          conv_args h) in
           (prog,ssa,na))`;
    `ssa_cc_trans (wordLang_Call (SOME (ret,numset,ret_handler,l1,l2))
   dest args h) ssa na lt =
@@ -519,13 +523,14 @@ let ssa_cc_trans_def = cake_define_list
           ssa_cc_trans ret_handler ssa_2_p na_2_p lt in
         let regs' = GENLIST (\x. 2 * (x + 1)) (LENGTH ret) in
         let mov_ret_handler =
-            (Seq ret_mov (Seq ((wordLang_Move 1) (ZIP ret' regs'))
-              (ren_ret_handler))) in
+            (wordLang_Seq ret_mov (wordLang_Seq ((wordLang_Move 1)
+              (ZIP ret' regs')) (ren_ret_handler))) in
         (match h with
           NONE ->
             (let prog =
-              (Seq stack_mov (Seq move_args
-              (Call (SOME (regs',stack_set,mov_ret_handler,l1,l2))
+              (wordLang_Seq stack_mov (wordLang_Seq move_args
+              (wordLang_Call (SOME
+                (regs',stack_set,mov_ret_handler,l1,l2))
                     dest conv_args NONE))) in
             (prog,ssa_2,na_2)) | SOME (n,h,l1',l2') ->
             (let (n',ssa_3_p,na_3_p) = next_var_rename n ssa'' na_2
@@ -533,24 +538,26 @@ let ssa_cc_trans_def = cake_define_list
             let (ren_exc_handler,ssa_3,na_3) =
                 (ssa_cc_trans h ssa_3_p na_3_p lt) in
             let mov_exc_handler =
-                (Seq ret_mov (Seq ((wordLang_Move 1) [n',2])
-                  (ren_exc_handler))) in
+                (wordLang_Seq ret_mov (wordLang_Seq ((wordLang_Move
+                  1) [n',2]) (ren_exc_handler))) in
             let prio = mk_prio mov_ret_handler mov_exc_handler in
             let (ret_cons,exc_cons,na_fin,ssa_fin) =
                 fix_inconsistencies prio ssa_2 ssa_3 na_3 in
-            let cons_ret_handler = Seq mov_ret_handler ret_cons in
-            let cons_exc_handler = Seq mov_exc_handler exc_cons in
+            let cons_ret_handler = wordLang_Seq mov_ret_handler
+              ret_cons in
+            let cons_exc_handler = wordLang_Seq mov_exc_handler
+              exc_cons in
             let prog =
-                (Seq stack_mov (Seq move_args
-                (Call (SOME
+                (wordLang_Seq stack_mov (wordLang_Seq move_args
+                (wordLang_Call (SOME
                   (regs',stack_set,cons_ret_handler,l1,l2))
                    dest conv_args (SOME
                      (2,cons_exc_handler,l1',l2'))))) in
             (prog,ssa_fin,na_fin))))`;
    `ssa_cc_trans (wordLang_ShareInst op v exp) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
-          if op = Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op
-            = asm_Store32 then
+          if op = wordLang_Store \/ op = asm_Store8 \/ op =
+            asm_Store16 \/ op = asm_Store32 then
             (wordLang_ShareInst op (option_lookup ssa v)
               exp',ssa,na) else
             let (v',ssa',na') = next_var_rename v ssa na in
@@ -567,24 +574,26 @@ let ssa_cc_trans_def = cake_define_list
           ssa_cc_trans body ssa_body na_refreshed
             ((ssa_refreshed,names,exit_names) :: lt) in
         let back_moves = ssa_reconcile ssa' ssa_refreshed names in
-        let body_final = (if back_moves = Skip then body' else Seq
-          body' back_moves) in
-        (Seq setup_prog (Loop ssa_names body_final ssa_exit),
+        let body_final = (if back_moves = wordLang_Skip then body'
+          else wordLang_Seq body' back_moves) in
+        (wordLang_Seq setup_prog (wordLang_Loop ssa_names body_final
+          ssa_exit),
          inter ssa_refreshed exit_names,na'))`;
    `ssa_cc_trans (wordLang_Break n) ssa na lt =
         (match oEL n lt with
-          NONE -> (Break n,ssa,na) | SOME (tgt_ssa,names,exit_names)
-            ->
+          NONE -> (wordLang_Break n,ssa,na) | SOME
+            (tgt_ssa,names,exit_names) ->
             (let moves = ssa_reconcile ssa tgt_ssa exit_names in
-            ((if moves = Skip then Break n else Seq moves (Break
-              n)),ssa,na)))`;
+            ((if moves = wordLang_Skip then wordLang_Break n else
+              wordLang_Seq moves (wordLang_Break n)),ssa,na)))`;
    `ssa_cc_trans (wordLang_Continue n) ssa na lt =
         (match oEL n lt with
-          NONE -> (Continue n,ssa,na) | SOME
+          NONE -> (wordLang_Continue n,ssa,na) | SOME
             (tgt_ssa,names,exit_names) ->
             (let moves = ssa_reconcile ssa tgt_ssa names in
-            ((if moves = Skip then Continue n else Seq moves
-              (Continue n)),ssa,na)))`];;
+            ((if moves = wordLang_Skip then wordLang_Continue n
+              else wordLang_Seq moves (wordLang_Continue
+              n)),ssa,na)))`];;
 
 (*Recursively applying colours to a program*)
 

@@ -122,13 +122,13 @@ let word_gc_move_loop_code_def = cake_define
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  If Test 7 (Imm (n2w 4))
                    (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'ga) -
+                     (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (bytes_in_word))))) 8;
                               word_gc_move_list_code conf])
                    (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'ga) -
+                     (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (n2w 1))))) 7;
@@ -478,13 +478,13 @@ let word_gen_gc_move_data_code_def = cake_define
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  If Test 7 (Imm (n2w 4))
                    (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'ga) -
+                     (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (bytes_in_word))))) 8;
                               word_gen_gc_move_list_code conf])
                    (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'ga) -
+                     (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (n2w 1))))) 7;
@@ -501,8 +501,7 @@ let word_gen_gc_partial_move_ref_list_code_def = cake_define
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 7
-                   (dimindex (:'ga) - data_to_word_config_len_size
-                   conf);
+                   (dimindex (:'a) - data_to_word_config_len_size conf);
                  (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 8;
                  word_gen_gc_partial_move_list_code conf]):'a
@@ -515,14 +514,14 @@ let word_gen_gc_partial_move_data_code_def = cake_define
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  If Test 7 (Imm (n2w 4))
                    (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'ga) -
+                     (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (bytes_in_word))))) 8;
                               word_gen_gc_partial_move_list_code
                                 conf])
                    (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'ga) -
+                     (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (n2w 1))))) 7;
@@ -539,8 +538,7 @@ let word_gen_gc_move_refs_code_def = cake_define
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 7
-                   (dimindex (:'ga) - data_to_word_config_len_size
-                   conf);
+                   (dimindex (:'a) - data_to_word_config_len_size conf);
                  (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 8;
                  word_gen_gc_move_list_code conf;

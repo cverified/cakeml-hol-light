@@ -162,7 +162,7 @@ let store_v_same_type_def = cake_define
      store = ('a store_v) list *)
 
 let empty_store_def = cake_define
-  `empty_store = ([]:('ga store_v) list)`;;
+  `empty_store = ([]:('a store_v) list)`;;
 
 let store_lookup_def = cake_define
   `store_lookup l (st:('a store_v) list) =
@@ -875,10 +875,10 @@ let the_Boolv_def = cake_define
   `the_Boolv v = (v = semanticPrimitives_Boolv T)`;;
 
 let num_cmp_def = cake_define_list
-  [`semanticPrimitives_num_cmp (ast_Lt:opb) i j = (i < (j:num))`;
-   `semanticPrimitives_num_cmp ast_Leq i j = (i <= j)`;
-   `semanticPrimitives_num_cmp ast_Gt i j = (i > j)`;
-   `semanticPrimitives_num_cmp ast_Geq i j = (i >= j)`];;
+  [`semanticPrimitives_num_cmp (ast_Lt:opb) i (j:num) = (i < (j:num))`;
+   `semanticPrimitives_num_cmp ast_Leq i (j:num) = (i <= j)`;
+   `semanticPrimitives_num_cmp ast_Gt i (j:num) = (i > j)`;
+   `semanticPrimitives_num_cmp ast_Geq i (j:num) = (i >= j)`];;
 hol4_overload "num_cmp" "semanticPrimitives_num_cmp";;
 
 let int_cmp_def = cake_define_list

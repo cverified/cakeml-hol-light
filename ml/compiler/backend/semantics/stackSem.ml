@@ -349,13 +349,20 @@ hol4_overload "sh_mem_load32" "stackSem_sh_mem_load32";;
 let sh_mem_op_def = cake_define_list
   [`sh_mem_op (Load:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
   sh_mem_load r ad s`;
-   `sh_mem_op (Store:memop) r ad s = sh_mem_store r ad s`;
-   `sh_mem_op asm_Load8 r ad s = sh_mem_load_byte r ad s`;
-   `sh_mem_op asm_Store8 r ad s = sh_mem_store_byte r ad s`;
-   `sh_mem_op asm_Load16 r ad s = sh_mem_load16 r ad s`;
-   `sh_mem_op asm_Store16 r ad s = sh_mem_store16 r ad s`;
-   `sh_mem_op asm_Load32 r ad s = sh_mem_load32 r ad s`;
-   `sh_mem_op asm_Store32 r ad s = sh_mem_store32 r ad s`];;
+   `sh_mem_op (Store:memop) r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_store r ad s`;
+   `sh_mem_op asm_Load8 r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_load_byte r ad s`;
+   `sh_mem_op asm_Store8 r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_store_byte r ad s`;
+   `sh_mem_op asm_Load16 r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_load16 r ad s`;
+   `sh_mem_op asm_Store16 r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_store16 r ad s`;
+   `sh_mem_op asm_Load32 r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_load32 r ad s`;
+   `sh_mem_op asm_Store32 r ad (s:('a,'c,'ffi)stackSem_state) =
+  sh_mem_store32 r ad s`];;
 
 let full_read_bitmap_def = cake_define
   `full_read_bitmap bitmaps x2 =

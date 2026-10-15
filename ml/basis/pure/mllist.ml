@@ -52,8 +52,8 @@ let dropUntil_def = cake_define_list
 
 let mapi_def = cake_define_list
   [`mllist_mapi f (n:num) [] = []`;
-   `mllist_mapi f n (h :: t) = (let y = f n h in (y :: (mllist_mapi
-  f (n + 1) t)))`];;
+   `mllist_mapi f (n:num) (h :: t) = (let y = f n h in (y ::
+  (mllist_mapi f (n + 1) t)))`];;
 hol4_overload "mapi" "mllist_mapi";;
 
 let mapPartial_def = cake_define_list
@@ -120,8 +120,8 @@ let cpn_to_reln_def = cake_define
 
 (* from std_preludeLib *)
 let LENGTH_AUX_def = cake_define_list
-  [`LENGTH_AUX [] n = (n:num)`;
-   `LENGTH_AUX (x :: xs) n = ((LENGTH_AUX xs (n + 1)):num)`];;
+  [`LENGTH_AUX [] (n:num) = (n:num)`;
+   `LENGTH_AUX (x :: xs) (n:num) = ((LENGTH_AUX xs (n + 1)):num)`];;
 
 (* tail-recursive MAP *)
 

@@ -137,7 +137,8 @@ let ptree_TyvarN_def = cake_define_list
 
 let Long_Short_def = cake_define_list
   [`Long_Short tokens_End (s:mlstring) = Short s`;
-   `Long_Short (Mod x xs:tokens_path) s = Long x (Long_Short xs s)`];;
+   `Long_Short (Mod x xs:tokens_path) (s:mlstring) = Long x
+  (Long_Short xs s)`];;
 
 let ptree_Tyop_def = cake_define_list
   [`ptree_Tyop (Lf _10) = NONE`;

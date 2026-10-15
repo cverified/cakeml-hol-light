@@ -34,8 +34,8 @@ let loc_err_info_FIELDS = define_record "loc_err_info"
    "err","(mlstring,mlstring,mlstring list#t)namespace"];;
 
 let failwith_def = cake_define
-  `(infer_failwith:loc_err_info->'ga->'gb->('gc,locs option#'ga)exc#'gb)
-  l msg =
+  `(infer_failwith:loc_err_info->'a->'b->('c,locs option#'a)exc#'b) l
+  msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
 hol4_overload "failwith" "infer_failwith";;
 
@@ -44,11 +44,11 @@ let guard_def = cake_define
   msg)`;;
 
 let read_def = cake_define
-  `(read:'ga->('ga,'gb)exc#'ga) =
+  `(read:'a->('a,'b)exc#'a) =
    (\s. (M_success s,s))`;;
 
 let write_def = cake_define
-  `(write:'ga->'ga->(1,'gb)exc#'ga) v =
+  `(write:'a->'a->(1,'b)exc#'a) v =
    (\s. (M_success one,v))`;;
 
 let lookup_st_ex_def = cake_define
@@ -64,7 +64,7 @@ let infer_st_FIELDS = define_record "infer_st"
    "next_id","num"];;
 
 let fresh_uvar_def = cake_define
-  `(fresh_uvar:infer_st->(infer_t,'ga)exc#infer_st) =
+  `(fresh_uvar:infer_st->(infer_t,'a)exc#infer_st) =
    (\s. (M_success (Infer_Tuvar (infer_st_next_uvar
      s)),infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s))`;;
 

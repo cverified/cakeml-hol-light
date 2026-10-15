@@ -79,9 +79,11 @@ let eval_exp_pre_def = cake_define
         | _2 -> F`;;
 
 let eval_ri_pre_def = cake_define_list
-  [`eval_ri_pre s (Reg r) <=> eval_exp_pre (s:'a
-  word_bignumProof_state) ((Var r):'a wordLang_exp)`;
-   `eval_ri_pre s (Imm (w:'a word)) <=> T`];;
+  [`eval_ri_pre (s:'a word_bignumProof_state) (Reg r) <=>
+  eval_exp_pre (s:'a word_bignumProof_state) ((Var r):'a
+  wordLang_exp)`;
+   `eval_ri_pre (s:'a word_bignumProof_state) (Imm (w:'a word)) <=>
+  T`];;
 
 let eval_ri_def = cake_define_list
   [`eval_ri s (Reg r) = eval_exp s (Var r)`;

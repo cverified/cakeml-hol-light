@@ -54,21 +54,24 @@ let sing_env_def = cake_define
        sem_env)`;;
 
 let evaluate_def = cake_define_list
-  [`evaluate st env [] = ((st:'ffi semanticPrimitives_state),Rval [])`;
-   `evaluate st env (e1 :: e2 :: es) =
+  [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
+  semanticPrimitives_state),Rval [])`;
+   `evaluate (st:'ffi semanticPrimitives_state) env (e1 :: e2 :: es) =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
          (st',Rval v1) ->
            (match evaluate st' env (e2 :: es) with
               (st'',Rval vs) -> (st'',Rval (HD v1 :: vs)) |
                 (st'',Rerr v8) -> (st'',Rerr v8)) | (st',Rerr v10) ->
                 (st',Rerr v10))`;
-   `evaluate st env [(ast_Lit l:ast_exp)] = (st,Rval
-  [semanticPrimitives_Litv l])`;
-   `evaluate st env [(ast_Raise e:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Lit
+  l:ast_exp)] = (st,Rval [semanticPrimitives_Litv l])`;
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Raise
+  e:ast_exp)] =
       (match evaluate st env [e] with
          (st',Rval v) -> (st',Rerr (Rraise (HD v))) | (st',Rerr
            v8) -> (st',Rerr v8))`;
-   `evaluate st env [(ast_Handle e pes:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Handle e
+  pes:ast_exp)] =
       (match evaluate_fix_clock st (evaluate st env [e]) with
          (st',Rval v7) -> (st',Rval v7) | (st',Rerr (Rraise v)) ->
          (if can_pmatch_all (sem_env_c env)
@@ -76,7 +79,8 @@ let evaluate_def = cake_define_list
            evaluate_evaluate_match st' env v pes v else (st',Rerr
              (Rabort Rtype_error))) | (st',Rerr (Rabort v12)) ->
              (st',Rerr (Rabort v12)))`;
-   `evaluate st env [(ast_Con cn es:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Con cn
+  es:ast_exp)] =
       (if do_con_check (sem_env_c env) cn (LENGTH es) then
          match evaluate st env (REVERSE es) with
            (st',Rval vs) ->
@@ -84,13 +88,15 @@ let evaluate_def = cake_define_list
                 NONE -> (st',Rerr (Rabort Rtype_error)) | SOME v
                   -> (st',Rval [v])) | (st',Rerr v8) -> (st',Rerr v8)
                   else (st,Rerr (Rabort Rtype_error)))`;
-   `evaluate st env [(ast_Var n:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Var
+  n:ast_exp)] =
       (match nsLookup (sem_env_v env) n with
          NONE -> (st,Rerr (Rabort Rtype_error)) | SOME v ->
            (st,Rval [v]))`;
-   `evaluate st env [(ast_Fun x e:ast_exp)] = (st,Rval
-  [semanticPrimitives_Closure env x e])`;
-   `evaluate st env [(ast_App op es:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Fun x
+  e:ast_exp)] = (st,Rval [semanticPrimitives_Closure env x e])`;
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_App op
+  es:ast_exp)] =
      (match evaluate_fix_clock st (evaluate st env (REVERSE es))
        with
       (st',Rval vs) ->
@@ -155,21 +161,24 @@ let evaluate_def = cake_define_list
               ((semanticPrimitives_state_ffi_fupd (K ffi)
                 (semanticPrimitives_state_refs_fupd (K refs)
                 st')),list_result r))) | res -> res)`;
-   `evaluate st env [ast_Log lop e1 e2] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [ast_Log lop e1 e2]
+  =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
          (st',Rval v1) ->
            (match do_log lop (HD v1) e2 with
               NONE -> (st',Rerr (Rabort Rtype_error)) | SOME (Exp
                 e) -> evaluate st' env [e] | SOME (Val v) ->
                 (st',Rval [v])) | (st',Rerr v9) -> (st',Rerr v9))`;
-   `evaluate st env [(ast_If e1 e2 e3:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_If e1 e2
+  e3:ast_exp)] =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
          (st',Rval v) ->
            (match semanticPrimitives_do_if (HD v) e2 e3 with
               NONE -> (st',Rerr (Rabort Rtype_error)) | SOME e ->
                 evaluate st' env [e]) | (st',Rerr v8) -> (st',Rerr
                 v8))`;
-   `evaluate st env [(ast_Mat e pes:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Mat e
+  pes:ast_exp)] =
       (match evaluate_fix_clock st (evaluate st env [e]) with
          (st',Rval v) ->
            (if can_pmatch_all (sem_env_c env)
@@ -178,22 +187,27 @@ let evaluate_def = cake_define_list
              evaluate_evaluate_match st' env (HD v) pes
                semanticPrimitives_bind_exn_v else (st',Rerr (Rabort
                Rtype_error))) | (st',Rerr v8) -> (st',Rerr v8))`;
-   `evaluate st env [(ast_Let xo e1 e2:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Let xo e1
+  e2:ast_exp)] =
       (match evaluate_fix_clock st (evaluate st env [e1]) with
          (st',Rval v) ->
            evaluate st' (sem_env_v_fupd (K (nsOptBind xo (HD v)
              (sem_env_v env))) env) [e2] | (st',Rerr v8) -> (st',Rerr
              v8))`;
-   `evaluate st env [(ast_Letrec funs e:ast_exp)] =
+   `evaluate (st:'ffi semanticPrimitives_state) env [(ast_Letrec funs
+  e:ast_exp)] =
       (if ALL_DISTINCT (MAP (\(x,y,z). x) funs) then
          evaluate st (sem_env_v_fupd (K
            (semanticPrimitives_build_rec_env funs env (sem_env_v
            env))) env) [e] else (st,Rerr (Rabort Rtype_error)))`;
-   `evaluate st env [ast_Tannot e t] = evaluate st env [e]`;
-   `evaluate st env [ast_Lannot e l] = evaluate st env [e]`;
-   `evaluate_evaluate_match st env v [] err_v = (st,Rerr (Rraise
-  err_v))`;
-   `evaluate_evaluate_match st env v ((p,e) :: pes) err_v =
+   `evaluate (st:'ffi semanticPrimitives_state) env [ast_Tannot e t]
+  = evaluate st env [e]`;
+   `evaluate (st:'ffi semanticPrimitives_state) env [ast_Lannot e l]
+  = evaluate st env [e]`;
+   `evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v
+  [] err_v = (st,Rerr (Rraise err_v))`;
+   `evaluate_evaluate_match (st:'ffi semanticPrimitives_state) env v
+  ((p,e) :: pes) err_v =
       (if ALL_DISTINCT (ast_pat_bindings p) then
          match semanticPrimitives_pmatch (sem_env_c env)
            (semanticPrimitives_state_refs st) p v [] with
@@ -203,9 +217,10 @@ let evaluate_def = cake_define_list
            evaluate st (sem_env_v_fupd (K (nsAppend (alist_to_ns
              env_v') (sem_env_v env))) env) [e] else (st,Rerr (Rabort
              Rtype_error)))`;
-   `evaluate_evaluate_decs st env [] = (st,Rval (mk_sem_env nsEmpty
-  nsEmpty))`;
-   `evaluate_evaluate_decs st env (d1 :: d2 :: ds) =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env []
+  = (st,Rval (mk_sem_env nsEmpty nsEmpty))`;
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env (d1 ::
+  d2 :: ds) =
       (match evaluate_fix_clock st (evaluate_evaluate_decs st env
         [d1]) with
          (st1,Rval env1) ->
@@ -213,7 +228,8 @@ let evaluate_def = cake_define_list
              env) (d2 :: ds) with
               (st2,r) -> (st2,combine_dec_result env1 r)) |
                 (st1,Rerr v7) -> (st1,Rerr v7))`;
-   `evaluate_evaluate_decs st env [Dlet locs p e] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dlet
+  locs p e] =
       (if ALL_DISTINCT (ast_pat_bindings p) /\
           every_exp (one_con_check (sem_env_c env)) e then
          match evaluate st env [e] with
@@ -227,14 +243,16 @@ let evaluate_def = cake_define_list
                 Rval (mk_sem_env (alist_to_ns new_vals)
                   nsEmpty))) | (st',Rerr err) -> (st',Rerr err) else
                   (st,Rerr (Rabort Rtype_error)))`;
-   `evaluate_evaluate_decs st env [Dletrec locs funs] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env
+  [Dletrec locs funs] =
       (st,
        (if ALL_DISTINCT (MAP (\(x,y,z). x) funs) /\
           EVERY (\(f,n,e). every_exp (one_con_check (sem_env_c env))
             e) funs then
          Rval (mk_sem_env (semanticPrimitives_build_rec_env funs
            env nsEmpty) nsEmpty) else Rerr (Rabort Rtype_error)))`;
-   `evaluate_evaluate_decs st env [Dtype locs tds] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dtype
+  locs tds] =
       (if EVERY check_dup_ctors tds then
          (semanticPrimitives_state_next_type_stamp_fupd (K
            (semanticPrimitives_state_next_type_stamp st + LENGTH tds))
@@ -242,21 +260,25 @@ let evaluate_def = cake_define_list
           Rval (mk_sem_env nsEmpty (build_tdefs
             (semanticPrimitives_state_next_type_stamp st) tds))) else
             (st,Rerr (Rabort Rtype_error)))`;
-   `evaluate_evaluate_decs st env [Dtabbrev locs tvs tn t] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env
+  [Dtabbrev locs tvs tn t] =
       (st,Rval (mk_sem_env nsEmpty nsEmpty))`;
-   `evaluate_evaluate_decs st env [Denv n] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Denv
+  n] =
       (match declare_env (semanticPrimitives_state_eval_state st)
         env with
          NONE -> (st,Rerr (Rabort Rtype_error)) | SOME (x,es') ->
          (semanticPrimitives_state_eval_state_fupd (K es')
            st,Rval (mk_sem_env (nsSing n x) nsEmpty)))`;
-   `evaluate_evaluate_decs st env [Dexn locs cn ts] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dexn
+  locs cn ts] =
       (semanticPrimitives_state_next_exn_stamp_fupd (K
         (semanticPrimitives_state_next_exn_stamp st + 1)) st,
        Rval
          (mk_sem_env nsEmpty (nsSing cn (LENGTH ts,ExnStamp
            (semanticPrimitives_state_next_exn_stamp st)))))`;
-   `evaluate_evaluate_decs st env [Dmod mn ds] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env [Dmod
+  mn ds] =
       (match evaluate_evaluate_decs st env ds with
          (st',r) ->
            (st',
@@ -265,7 +287,8 @@ let evaluate_def = cake_define_list
                 Rval (mk_sem_env (nsLift mn (sem_env_v env'))
                   (nsLift mn (sem_env_c env'))) | Rerr err -> Rerr
                   err)))`;
-   `evaluate_evaluate_decs st env [Dlocal lds ds] =
+   `evaluate_evaluate_decs (st:'ffi semanticPrimitives_state) env
+  [Dlocal lds ds] =
       (match evaluate_fix_clock st (evaluate_evaluate_decs st env
         lds) with
         (st1,Rval env1) -> evaluate_evaluate_decs st1

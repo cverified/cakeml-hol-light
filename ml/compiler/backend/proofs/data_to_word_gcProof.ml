@@ -144,7 +144,7 @@ let do_partial_def = cake_define
        | _15 -> F)`;;
 
 let alloc_size_def = cake_define
-  `alloc_size k = ((if k * (dimindex (:'a) DIV 8) < dimword (:'ga) then
+  `alloc_size k = ((if k * (dimindex (:'a) DIV 8) < dimword (:'a) then
                      n2w (k * (dimindex (:'a) DIV 8)) else (--(n2w
                        1))):'a word)`;;
 

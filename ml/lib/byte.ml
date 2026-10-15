@@ -41,7 +41,7 @@ let bytes_to_word_def = cake_define
 
 let word_to_bytes_aux_def = cake_define_list
   [`word_to_bytes_aux 0 (w:'a word) be' = []`;
-   `word_to_bytes_aux (SUC n) w be' =
+   `word_to_bytes_aux (SUC n) (w:'a word) be' =
       (word_to_bytes_aux n w be') ++ [get_byte (n2w n) w be']`];;
 
 let word_to_bytes_def = cake_define

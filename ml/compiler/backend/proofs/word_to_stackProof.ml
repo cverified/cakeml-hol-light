@@ -305,7 +305,7 @@ let state_rel_def = cake_define
      good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
        (state_data_buffer s)) + buffer_space_left (state_data_buffer s)
-       + 1 < dimword (:'ga) /\
+       + 1 < dimword (:'a) /\
      1 <= LENGTH (stackSem_state_bitmaps t) /\ HD
        (stackSem_state_bitmaps t) = (n2w 4) /\
        stackSem_state_stack_space
@@ -4670,7 +4670,7 @@ fun drule0 th =
 *)
 
 let init_state_ok_def = cake_define
-  `init_state_ok ac k (t:('ga,'c,'ffi)stackSem_state) coracle <=>
+  `init_state_ok ac k (t:('a,'c,'ffi)stackSem_state) coracle <=>
      4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
        stackSem_state_use_stack
      t /\ stackSem_state_use_store t /\ stackSem_state_use_alloc t /\
@@ -4699,8 +4699,8 @@ let init_state_ok_def = cake_define
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
 let make_init_def = cake_define
-  `word_to_stackProof_make_init ac k (t:('ga,'c,'ffi)stackSem_state)
-  code coracle =
+  `word_to_stackProof_make_init ac k (t:('a,'c,'ffi)stackSem_state) code
+  coracle =
      mk_wordSem_state (sptree_insert 0 (Loc 1 0) LN) (SOME 0)
        (fp_regs t) (state_store t \\ Handler) [] (LENGTH (stack t))
        (stack_size ([]:('a stack_frame) list)) (mapi (\n

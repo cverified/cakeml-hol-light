@@ -215,48 +215,48 @@ let fp_upd_def = cake_define_list
   [`labSem_fp_upd (FPLess r d1 d2) (s:('a,'c,'ffi)labSem_state) =
          upd_reg r (wordLang_Word (if fp64_lessThan (read_fp_reg
            d1 s) (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s`;
-   `labSem_fp_upd (FPLessEqual r d1 d2) s =
+   `labSem_fp_upd (FPLessEqual r d1 d2) (s:('a,'c,'ffi)labSem_state) =
          upd_reg r (wordLang_Word (if fp64_lessEqual (read_fp_reg
            d1 s) (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s`;
-   `labSem_fp_upd (FPEqual r d1 d2) s =
+   `labSem_fp_upd (FPEqual r d1 d2) (s:('a,'c,'ffi)labSem_state) =
          upd_reg r (wordLang_Word (if fp64_equal (read_fp_reg d1
            s) (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s`;
-   `labSem_fp_upd (FPMov d1 d2) s = upd_fp_reg d1 (read_fp_reg d2 s)
-  s`;
-   `labSem_fp_upd (FPAbs d1 d2) s = upd_fp_reg d1 (fp64_abs
-  (read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPNeg d1 d2) s = upd_fp_reg d1 (fp64_negate
-  (read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPSqrt d1 d2) s =
+   `labSem_fp_upd (FPMov d1 d2) (s:('a,'c,'ffi)labSem_state) =
+  upd_fp_reg d1 (read_fp_reg d2 s) s`;
+   `labSem_fp_upd (FPAbs d1 d2) (s:('a,'c,'ffi)labSem_state) =
+  upd_fp_reg d1 (fp64_abs (read_fp_reg d2 s)) s`;
+   `labSem_fp_upd (FPNeg d1 d2) (s:('a,'c,'ffi)labSem_state) =
+  upd_fp_reg d1 (fp64_negate (read_fp_reg d2 s)) s`;
+   `labSem_fp_upd (FPSqrt d1 d2) (s:('a,'c,'ffi)labSem_state) =
          upd_fp_reg d1 (fp64_sqrt roundTiesToEven (read_fp_reg d2
            s)) s`;
-   `labSem_fp_upd (FPAdd d1 d2 d3) s =
+   `labSem_fp_upd (FPAdd d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          upd_fp_reg d1
            (fp64_add roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPSub d1 d2 d3) s =
+   `labSem_fp_upd (FPSub d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          upd_fp_reg d1
            (fp64_sub roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPMul d1 d2 d3) s =
+   `labSem_fp_upd (FPMul d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          upd_fp_reg d1
            (fp64_mul roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPDiv d1 d2 d3) s =
+   `labSem_fp_upd (FPDiv d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          upd_fp_reg d1
            (fp64_div roundTiesToEven (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPFma d1 d2 d3) s =
+   `labSem_fp_upd (FPFma d1 d2 d3) (s:('a,'c,'ffi)labSem_state) =
          upd_fp_reg d1
            (fpfma (read_fp_reg d1 s) (read_fp_reg d2 s)
              (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPMovToReg r1 r2 d) s =
+   `labSem_fp_upd (FPMovToReg r1 r2 d) (s:('a,'c,'ffi)labSem_state) =
          (if dimindex (:'a) = 64 then
            upd_reg r1 (wordLang_Word (w2w (read_fp_reg d s))) s else
              let v = read_fp_reg d s in
            upd_reg r2 (wordLang_Word ((63 >< 32) v)) (upd_reg r1
              (wordLang_Word ((31 >< 0) v)) s))`;
-   `labSem_fp_upd (FPMovFromReg d r1 r2) s =
+   `labSem_fp_upd (FPMovFromReg d r1 r2) (s:('a,'c,'ffi)labSem_state) =
          (if dimindex (:'a) = 64 then
            match (\r s. regs s r) r1 s with
              wordLang_Word w1 -> upd_fp_reg d (w2w w1) s | _31 ->
@@ -264,7 +264,7 @@ let fp_upd_def = cake_define_list
            match ((\r s. regs s r) r1 s,(\r s. regs s r) r2 s) with
              (wordLang_Word w1,wordLang_Word w2) -> upd_fp_reg d
                (w2 @@ w1) s | _32 -> assert F s)`;
-   `labSem_fp_upd (FPToInt d1 d2) s =
+   `labSem_fp_upd (FPToInt d1 d2) (s:('a,'c,'ffi)labSem_state) =
          (match fp64_to_int roundTiesToEven (read_fp_reg d2 s) with
              SOME i ->
                (let w = (i2w i:word32) in
@@ -275,7 +275,7 @@ let fp_upd_def = cake_define_list
                            (bit_field_insert h l w (read_fp_reg (d1
                              DIV 2) s)))
                     (assert (w2i w = i) s)) | _33 -> assert F s)`;
-   `labSem_fp_upd (FPFromInt d1 d2) s =
+   `labSem_fp_upd (FPFromInt d1 d2) (s:('a,'c,'ffi)labSem_state) =
          (let i = (if dimindex (:'a) = 64 then
                    w2i ((31 >< 0) (read_fp_reg d2 s):word32) else
                      let v = read_fp_reg (d2 DIV 2) s in
@@ -343,25 +343,26 @@ let mem_store_byte_def = cake_define
               -> assert F s) | _41 -> assert F s))`;;
 
 let mem_op_def = cake_define_list
-  [`labSem_mem_op (Load:memop) r a = mem_load r a`;
-   `labSem_mem_op (Store:memop) r a = mem_store r a`;
-   `labSem_mem_op asm_Load32 r a = mem_load32 r a`;
-   `labSem_mem_op asm_Store32 r a = mem_store32 r a`;
-   `labSem_mem_op asm_Load8 r a = mem_load_byte r a`;
-   `labSem_mem_op asm_Store8 r a = mem_store_byte r a`;
+  [`labSem_mem_op (Load:memop) r (a:'a asm_addr) = mem_load r a`;
+   `labSem_mem_op (Store:memop) r (a:'a asm_addr) = mem_store r a`;
+   `labSem_mem_op asm_Load32 r (a:'a asm_addr) = mem_load32 r a`;
+   `labSem_mem_op asm_Store32 r (a:'a asm_addr) = mem_store32 r a`;
+   `labSem_mem_op asm_Load8 r (a:'a asm_addr) = mem_load_byte r a`;
+   `labSem_mem_op asm_Store8 r (a:'a asm_addr) = mem_store_byte r a`;
    `labSem_mem_op asm_Load16 r (a:'a asm_addr) = assert F`;
    `labSem_mem_op asm_Store16 r (a:'a asm_addr) = assert F`];;
 hol4_overload "mem_op" "labSem_mem_op";;
 
 let asm_inst_def = cake_define_list
-  [`asm_inst asm_Skip s = (s:('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Const r imm) s = ((upd_reg r (wordLang_Word imm)
-  s):('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Arith x) s = ((arith_upd x
-  s):('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_Mem m r a) s = ((mem_op m r a
-  s):('a,'c,'ffi)labSem_state)`;
-   `asm_inst (asm_FP fp) s = ((fp_upd fp
+  [`asm_inst asm_Skip (s:('a,'c,'ffi)labSem_state) =
+  (s:('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_Const r imm) (s:('a,'c,'ffi)labSem_state) =
+  ((upd_reg r (wordLang_Word imm) s):('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_Arith x) (s:('a,'c,'ffi)labSem_state) = ((arith_upd
+  x s):('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_Mem m r a) (s:('a,'c,'ffi)labSem_state) = ((mem_op
+  m r a s):('a,'c,'ffi)labSem_state)`;
+   `asm_inst (asm_FP fp) (s:('a,'c,'ffi)labSem_state) = ((fp_upd fp
   s):('a,'c,'ffi)labSem_state)`];;
 
 let dec_clock_def = cake_define
@@ -459,13 +460,20 @@ let share_mem_store_def = cake_define
 let share_mem_op_def = cake_define_list
   [`share_mem_op (Load:memop) r ad (s:('a,'c,'ffi)labSem_state) =
         share_mem_load r ad s 0`;
-   `share_mem_op asm_Load8 r ad s = share_mem_load r ad s 1`;
-   `share_mem_op asm_Load16 r ad s = share_mem_load r ad s 2`;
-   `share_mem_op (Store:memop) r ad s = share_mem_store r ad s 0`;
-   `share_mem_op asm_Store8 r ad s = share_mem_store r ad s 1`;
-   `share_mem_op asm_Store16 r ad s = share_mem_store r ad s 2`;
-   `share_mem_op asm_Load32 r ad s = share_mem_load r ad s 4`;
-   `share_mem_op asm_Store32 r ad s = share_mem_store r ad s 4`];;
+   `share_mem_op asm_Load8 r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_load r ad s 1`;
+   `share_mem_op asm_Load16 r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_load r ad s 2`;
+   `share_mem_op (Store:memop) r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_store r ad s 0`;
+   `share_mem_op asm_Store8 r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_store r ad s 1`;
+   `share_mem_op asm_Store16 r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_store r ad s 2`;
+   `share_mem_op asm_Load32 r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_load r ad s 4`;
+   `share_mem_op asm_Store32 r ad (s:('a,'c,'ffi)labSem_state) =
+  share_mem_store r ad s 4`];;
 
 (* HOL4 termination: \\ fs [inc_pc_def] \\ rw [] \\ IMP_RES_TAC
    asm_fetch_IMP \\

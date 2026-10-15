@@ -289,7 +289,7 @@ val flip_ord_def = ternaryComparisonsTheory.invert_comparison_def
 
 let collate_aux_def = cake_define_list
   [`mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord`;
-   `mlstring_collate_aux f s1 s2 ord n (SUC len) =
+   `mlstring_collate_aux f (s1:mlstring) s2 ord n (SUC len) =
         (if f (strsub s1 n) (strsub s2 n) = EQUAL then
           mlstring_collate_aux f s1 s2 ord (n + 1) len else f
           (strsub s1 n) (strsub s2 n))`];;

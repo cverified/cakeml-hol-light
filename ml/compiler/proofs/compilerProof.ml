@@ -28,7 +28,7 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
 
 let config_ok_def = cake_define
-  `config_ok (cc:'ga compiler_config) mc <=>
+  `config_ok (cc:'a compiler_config) mc <=>
      env_rel prim_tenv (compiler_config_inferencer_config cc) /\
      inf_set_tids_ienv prim_type_ids
        (compiler_config_inferencer_config cc) /\
@@ -43,7 +43,7 @@ let config_ok_def = cake_define
        (compiler_config_backend_config cc) mc`;;
 
 let initial_condition_def = cake_define
-  `initial_condition (st:'ffi semantics_state) (cc:'ga compiler_config)
+  `initial_condition (st:'ffi semantics_state) (cc:'a compiler_config)
   mc <=>
      (semantics_state_sem_st st,semantics_state_sem_env st) = THE
        (prim_sem_env (state_ffi (semantics_state_sem_st st))) /\

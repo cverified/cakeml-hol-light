@@ -728,7 +728,7 @@ hol4_overload "fix_clock" "closSem_fix_clock";;
 let check_loc_def = cake_define_list
   [`check_loc (max_app:num) NONE loc num_params num_args so_far <=>
         num_args <= max_app`;
-   `check_loc max_app (SOME p) loc num_params num_args so_far <=>
+   `check_loc (max_app:num) (SOME p) loc num_params num_args so_far <=>
         num_params = num_args /\ so_far = (0:num) /\ SOME p =
           loc`];;
 
@@ -938,8 +938,9 @@ let evaluate_def = cake_define_list
                       closSem_evaluate
                         ([exp],args,closSem_dec_clock (ticks + 1)
                         s))) | res -> res)`;
-   `evaluate_app loc_opt f [] s = (Rval [f],s)`;
-   `evaluate_app loc_opt f args s =
+   `evaluate_app loc_opt f [] (s:('c,'ffi)closSem_state) = (Rval
+  [f],s)`;
+   `evaluate_app loc_opt f args (s:('c,'ffi)closSem_state) =
          (match dest_closure (closSem_state_max_app s) loc_opt f
            args with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
            (Partial_app v) ->

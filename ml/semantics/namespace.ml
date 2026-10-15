@@ -41,7 +41,8 @@ let nsLookup_def = cake_define_list
         nsLookup env id')`];;
 
 let nsLookupMod_def = cake_define_list
-  [`nsLookupMod e [] = SOME (e:('m,'n,'v)namespace)`;
+  [`nsLookupMod (e:('m,'n,'v)namespace) [] = SOME
+  (e:('m,'n,'v)namespace)`;
    `nsLookupMod (Bind v m) (mn :: path') =
     (match ALOOKUP m mn with NONE -> NONE | SOME env ->
       nsLookupMod env path')`];;
@@ -88,12 +89,13 @@ let nsAll2_def = cake_define
 
 let nsDom_def = cake_define
   `nsDom (env:('m,'n,'v)namespace) =
-      {n | (v,n) | v IN UNIV /\ n IN UNIV /\ nsLookup env n = SOME
-        v}`;;
+      {n | (v,n) | v IN (UNIV:'v->bool) /\ n IN
+        (UNIV:('m,'n)namespace_id->bool) /\ nsLookup env n = SOME v}`;;
 
 let nsDomMod_def = cake_define
   `nsDomMod (env:('m,'n,'v)namespace) =
-      {n | (v,n) | v IN UNIV /\ n IN UNIV /\
+      {n | (v,n) | v IN (UNIV:('m,'n,'v)namespace->bool) /\ n IN
+        (UNIV:'m list->bool) /\
                    nsLookupMod env n = SOME v}`;;
 
 let nsMap_def = cake_define

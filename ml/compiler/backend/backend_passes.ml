@@ -49,10 +49,9 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
    ((num#num#bvl_exp) list) (mlstring spt) | backend_passes_Bvi \
    ((num#num#bvi_exp) list) (mlstring spt) | backend_passes_Data \
    ((num#num#dataLang_prog) list) (mlstring spt) | \
-   backend_passes_Word ((num#num#'ga wordLang_prog) list) (mlstring \
-   spt) | backend_passes_Stack ((num#'ga stackLang_prog) list) \
-   (mlstring spt) | backend_passes_Lab (('ga sec) list) (mlstring \
-   spt)";;
+   backend_passes_Word ((num#num#'a wordLang_prog) list) (mlstring \
+   spt) | backend_passes_Stack ((num#'a stackLang_prog) list) \
+   (mlstring spt) | backend_passes_Lab (('a sec) list) (mlstring spt)";;
 hol4_overload "Source" "backend_passes_Source";;
 hol4_overload "Flat" "backend_passes_Flat";;
 hol4_overload "Clos" "backend_passes_Clos";;
@@ -272,7 +271,7 @@ let to_word_all_def = cake_define
                    (data_to_word_config_has_fp_ops_fupd (K (1 <
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
-     let p = stubs (:'ga) data_conf ++ MAP (compile_part data_conf) p
+     let p = stubs (:'a) data_conf ++ MAP (compile_part data_conf) p
        in
      let ps = ps ++ [((implode "after data_to_word"),Word p names)]
        in
@@ -423,7 +422,7 @@ let from_data_all_def = cake_define
                    (data_to_word_config_has_fp_ops_fupd (K (1 <
                    asm_config_fp_reg_count asm_conf))
              data_conf) in
-     let p = stubs (:'ga) data_conf ++ MAP (compile_part data_conf) p
+     let p = stubs (:'a) data_conf ++ MAP (compile_part data_conf) p
        in
      let ps = ps ++ [((implode "after data_to_word"),Word p names)]
        in

@@ -1061,8 +1061,9 @@ class Porter:
     r = e.r
     while r.kind == 'paren': r = r.e
     if self.intresult and r.kind != 'typed':
-      e.r = hterm.Node('typed', tok=e.r.tok,
-              e=hterm.Node('paren', tok=e.r.tok, e=e.r),
+      inner = (e.r if e.r.kind in ('paren', 'num', 'id')
+               else hterm.Node('paren', tok=e.r.tok, e=e.r))
+      e.r = hterm.Node('typed', tok=e.r.tok, e=inner,
               ty=hterm.tokenize('int'))
     return cl
 
@@ -1243,6 +1244,45 @@ class Porter:
     # is not an integer as well says nothing
     return out - other
 
+  def conof_arity(self, e):
+    """the occurrences of a name of CON_OF that the theory it
+       names has no constructor of that arity for, written with
+       the theory that has one (word_alloc's ssa_cc_trans means
+       wordLang's Store where it builds a program and asm's,
+       which takes no arguments, where it compares a memop)"""
+    def go(x):
+      if not isinstance(x, hterm.Node): return
+      # the arity is the one of the whole application, so the
+      # function of an application is not looked at on its own
+      if x.kind == 'app':
+        h, args = hterm.strip_app(x)
+        head(h, len(args))
+        for a in args: go(a)
+        return
+      if x.kind == 'id':
+        head(x, 0)
+        return
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): go(v)
+        elif isinstance(v, (tuple, list)):
+          for y in v:
+            if isinstance(y, hterm.Node): go(y)
+            elif isinstance(y, (tuple, list)):
+              for z in y:
+                if isinstance(z, hterm.Node): go(z)
+
+    def head(h, n):
+      if (h.kind != 'id' or '$' in h.name
+          or h.name not in self.conof): return
+      t = self.conof[h.name]
+      if self.db.con_arity(t, h.name) == n: return
+      t2 = self.con_thy(h.name, arity=n)
+      if t2 and t2 != t and self.db.con_arity(t2, h.name) == n:
+        h.name = t2 + '$' + h.name
+    go(e)
+    return e
+
   def pr_clause(self, p, cl):
     """a clause, with the right hand side printed with the
        constructors that CON_OF says this definition means"""
@@ -1258,7 +1298,7 @@ class Porter:
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     try:
-      rhs = p.pr(e.r, 13)
+      rhs = p.pr(self.conof_arity(e.r), 13)
     finally:
       for nm in self.conof:
         if old[nm]: self.ctx.overloaded.add(nm)

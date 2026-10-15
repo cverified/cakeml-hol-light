@@ -159,7 +159,7 @@ let GENLIST_Var_def = cake_define
 
 let calls_list_def = cake_define_list
   [`calls_list t (i:num) loc [] = []`;
-   `calls_list t i loc ((n,_7) :: xs) =
+   `calls_list t (i:num) loc ((n,_7) :: xs) =
          (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
               calls_list t (i + 1) (loc + 2) xs`];;
 
