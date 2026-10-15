@@ -13,7 +13,8 @@ for root, dirs, files in os.walk(C + '/ml'):
     text = open(p).read()
     for nm in names:
       if nm in where: continue
-      if re.search(r'`\s*\(?\s*%s\b' % re.escape(nm), text):
+      if (re.search(r'`\s*\(?\s*%s\b' % re.escape(nm), text) or
+          re.search(r'cake_declare\s+"%s"' % re.escape(nm), text)):
         where[nm] = os.path.relpath(p, C + '/ml')
 with open(C + '/ml/CHEATS.md', 'w') as out:
   out.write('# The definitions that the first pass assumes\n\n')
