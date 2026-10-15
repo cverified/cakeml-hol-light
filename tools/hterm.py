@@ -809,7 +809,9 @@ def pattern_vars(e, cons, lam=False):
      of an application is bound as well (a lambda or a let)"""
   while e.kind in ('paren', 'typed'): e = e.e
   if e.kind == 'id':
-    return [] if not lam and (e.name in cons or e.name in HLCONS) \
+    # a source may write a constructor with the name of its theory
+    nm = e.name.split('$')[-1]
+    return [] if not lam and (nm in cons or nm in HLCONS) \
            else [e.name]
   if e.kind == 'app':
     h, args = strip_app(e)
