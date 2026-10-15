@@ -56,7 +56,11 @@ sources, and why.
 
 - Record fields: `r.fld` becomes `ty_fld r`, `r with fld := v`
   becomes `ty_fld_fupd (K v) r` and `<|fld := v|>` becomes
-  `mk_ty v ...`, because HOL Light has no record syntax.
+  `mk_ty v ...`, because HOL Light has no record syntax.  A
+  literal that does not give every field (`bviSem`'s `bvi_to_bvl`)
+  gets `ARB` for the fields it leaves out, where HOL4 updates an
+  arbitrary record of the type; both leave those fields
+  unspecified, but the two terms are not the same.
 - HOL4's `Overload`s are parse abbreviations; the port expands
   them, so that it does not introduce constants that HOL4 does
   not have.  An overload of one constant whose name another
