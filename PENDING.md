@@ -1,9 +1,10 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 227 files of the port: 4162
-blocks, and all 4162 of them are in (see `tools/coverage.py`).
-There is nothing pending.
+`Definition` and `Inductive` of the 227 files of the port: 4165
+blocks, and all 4165 of them are in (see `tools/coverage.py`).
+`tools/fidelity.py` checks that no definition lost a name or a
+constructor argument on the way.  There is nothing pending.
 
 Three of them are definitions whose value HOL4 computes with ML
 code (`EVAL` or `type_of`) and states as the value it finds.  The
