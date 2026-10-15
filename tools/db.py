@@ -10,7 +10,7 @@ constructors of a type stay uniform.
 """
 import sys, os, re, json, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hol4, hterm, overrides
+import hol4, hterm, grammardef, overrides
 
 T = os.path.dirname(os.path.abspath(__file__)) + '/'
 SRC = hol4.SRC
@@ -118,6 +118,27 @@ class Db:
         text = ''
       self.fix[thy] = hol4.fixities(text)
 
+  def grammar_type(self, thy, path, b):
+    """register the datatype that mk_grammar_def makes, so that
+       the theories after it know its constructors"""
+    try:
+      info = grammardef.parse_ml(open(path).read())
+      i = b.text.index('mk_grammar_def')
+      j = b.text.index('`', i)
+      k = b.text.rindex('`')
+      rules = grammardef.parse_bnf(b.text[j + 1:k])
+      nts = grammardef.nonterminals(rules, info['ntprefix'])
+    except Exception:
+      return
+    ty = info.get('nt_tyname')
+    if not ty or not nts: return
+    self.datatypes[(thy, ty)] = (nts, [])
+    self.defs[ty].append((thy, 'type'))
+    for c in nts:
+      self.defs[c].append((thy, 'con'))
+      self.con_argty_thy.pop((thy, c, 0), None)
+    self.defs[info['gname']].append((thy, 'def'))
+
   def base_grammar(self, thy):
     """put the term grammar in the state in which a theory starts:
        the infixes that its ancestors declare permanently (a temp_
@@ -144,6 +165,10 @@ class Db:
           for tok, prec, ass, _ in hol4.fixities(b.text):
             hterm.add_infix(tok, prec, ass)
           if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
+          # the datatype of the nonterminals that HOL4's
+          # mk_grammar_def makes with ML code (gram's MMLnonT)
+          if 'mk_grammar_def' in b.text:
+            self.grammar_type(thy, path, b)
         if (b.kind == 'Overload' and b.name and
             not b.name[0].isalpha()):
           self.ovl_infix[(thy, b.name)] = (

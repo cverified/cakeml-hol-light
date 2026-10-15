@@ -6,7 +6,7 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 """
 import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hol4, hterm, db as dbmod, overrides
+import hol4, hterm, db as dbmod, overrides, grammardef
 hterm.NAME_MAP = overrides.NAME_MAP
 hterm.TYPE_MAP = overrides.TYPE_MAP
 
@@ -382,6 +382,8 @@ class Porter:
         return
       if self.monadic(b):
         return
+      if self.grammar_block(b):
+        return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
       self.out.append('(* HOL4 ML code, not ported:\n' +
                       shorten(b.text) + '\n*)')
@@ -451,6 +453,42 @@ class Porter:
     self.out.append('%s\n%s";;' % (head, text))
     if overloads: self.out.append('\n'.join(overloads))
     self.ctx.defining = set()
+
+  def grammar_block(self, b):
+    """HOL4's mk_grammar_def (of grammarLib) takes a grammar in
+       BNF and makes the datatype of its nonterminals and the
+       grammar itself; gram makes CakeML's cmlG with it"""
+    if 'mk_grammar_def' not in b.text: return False
+    info = grammardef.parse_ml(open(self.path).read())
+    i = b.text.index('mk_grammar_def')
+    j = b.text.index('`', i)
+    k = b.text.rindex('`')
+    rules = grammardef.parse_bnf(b.text[j + 1:k])
+    dt, gr = grammardef.generate(rules, info, self, hterm)
+    self.out.append(
+      '(* HOL4 makes the datatype of the nonterminals and the\n'
+      '   grammar itself with the ML code of grammarLib\n'
+      '   (mk_grammar_def); the port writes out what it makes *)')
+    self.emit_datatype('\n' + dt)
+    self.out.append('\nlet %s_def = cake_define\n  `%s`;;'
+                    % (info['gname'], fmt(gr)))
+    return True
+
+  def emit_datatype(self, spec):
+    """a datatype specification, as define_datatype takes it"""
+    pre, spec = ('\n', spec[1:]) if spec.startswith('\n') else ('', spec)
+    params = sorted(set(re.findall(r"'[A-Za-z][A-Za-z0-9_']*", spec)))
+    for part in spec.split(';\n'):
+      ty = part.split('=')[0].strip()
+      self.db.ty_params[(self.thy, ty)] = params
+    names = [ocaml_name(part.split('=')[0].strip())
+             for part in spec.split(';\n')]
+    lhs = '%s_INDUCT,%s_RECURSION' % (names[0], names[0])
+    text = '\n'.join(
+      ' \\\n'.join(fill('  "' if m == 0 else '   ', part.split(), 69))
+      for m, part in enumerate(spec.split('\n')))
+    self.out.append('%slet %s = define_datatype\n%s";;'
+                    % (pre, lhs, text))
 
   def typ_ast(self, ty):
     ty = hterm.expand_type(ty, self.abbrevs)
