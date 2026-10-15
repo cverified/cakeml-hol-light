@@ -183,7 +183,8 @@ let fp_name_def = cake_define_list
             reg_name r2 c) /\
           fp_reg_ok d c`;
    `fp_name (FPToInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_name (FPFromInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`];;
+   `fp_name (FPFromInt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2
+  c`];;
 
 let addr_name_def = cake_define
   `addr_name m (Addr r w) c <=>

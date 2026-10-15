@@ -343,9 +343,9 @@ let evaluate_def = cake_define_list
                       Rtype_error),s) | (Rerr (Rraise (Ret ret_vs)),s)
                       ->
                         (if LENGTH ret_vs = rets then
-                          bviSem_evaluate ([y],ret_vs ++ env,s) else
-                          (Rerr (Rabort Rtype_error),s)) | res ->
-                          res)) | res -> res)`];;
+                          bviSem_evaluate ([y],ret_vs ++ env,s)
+                          else (Rerr (Rabort Rtype_error),s)) | res
+                          -> res)) | res -> res)`];;
 hol4_overload "evaluate" "bviSem_evaluate";;
 
 (* HOL4 ML code, not ported:

@@ -63,9 +63,9 @@ val asm_exists_tac = first_assum(match_exists_tac o concl)
 let read_bytearray_def = cake_define_list
   [`read_bytearray a 0 get_byte' = SOME []`;
    `read_bytearray a (SUC n) get_byte' =
-         (match get_byte' a with NONE -> NONE | SOME b -> (match
-           read_bytearray (a + (n2w 1)) n get_byte' with NONE -> NONE
-           | SOME bs -> SOME (b :: bs)))`];;
+         (match get_byte' a with NONE -> NONE | SOME b ->
+           (match read_bytearray (a + (n2w 1)) n get_byte' with
+           NONE -> NONE | SOME bs -> SOME (b :: bs)))`];;
 
 (* HOL to have OPT_MMAP f l1 = SOME l2 ==> (LENGTH l2 = LENGTH l1) *)
 
@@ -102,8 +102,8 @@ hol4_overload "Nil" "misc_Nil";;
 let append_aux_def = cake_define_list
   [`append_aux misc_Nil aux = aux`;
    `append_aux (misc_List xs) aux = xs ++ aux`;
-   `append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux l2
-  aux)`];;
+   `append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux
+  l2 aux)`];;
 
 let append_def = cake_define
   `append l = append_aux l []`;;
@@ -156,8 +156,8 @@ let tlookup_def = cake_define
 (* should be composition of oEL and as-yet-undefined "THE default" *)
 let any_el_def = cake_define_list
   [`any_el n [] d = d`;
-   `any_el n (x :: xs) d = (if n = 0 then x else any_el (n - (1:num))
-  xs d)`];;
+   `any_el n (x :: xs) d = (if n = 0 then x else any_el (n -
+  (1:num)) xs d)`];;
 
 let update_resize_def = cake_define
   `update_resize ls default v n =
@@ -219,8 +219,8 @@ let UPDATE_LIST_def = cake_define
 (* should be using indexedLists$findi, or INDEX_OF *)
 let find_index_def = cake_define_list
   [`find_index _2 [] _3 = NONE`;
-   `find_index y (x :: xs) n = (if x = y then SOME n else find_index
-  y xs (n + 1))`];;
+   `find_index y (x :: xs) n = (if x = y then SOME n else
+  find_index y xs (n + 1))`];;
 
 (* HOL4 ML code, not ported:
 val ALOOKUP_find_index_SOME = Q.prove(
@@ -529,13 +529,13 @@ val steps_rel_ind = theorem"steps_rel_ind";
 
 let all_words_def = cake_define_list
   [`all_words base 0 = {}`;
-   `all_words base (SUC n) = base INSERT (all_words (base + (n2w 1))
-  n)`];;
+   `all_words base (SUC n) = base INSERT (all_words (base + (n2w
+  1)) n)`];;
 
 let asm_write_bytearray_def = cake_define_list
   [`asm_write_bytearray a [] (m:'a word->word8) = m`;
-   `asm_write_bytearray a (x :: xs) m = (a =+ x) (asm_write_bytearray
-  (a + (n2w 1)) xs m)`];;
+   `asm_write_bytearray a (x :: xs) m = (a =+ x)
+  (asm_write_bytearray (a + (n2w 1)) xs m)`];;
 
 (* TODO: move to sptTheory *)
 
@@ -589,8 +589,8 @@ let range_def = cake_define
 let bytes_in_memory_def = cake_define_list
   [`bytes_in_memory a [] m dm <=> T`;
    `bytes_in_memory a ((x:word8) :: xs) m dm <=>
-         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1)) xs
-           m dm`];;
+         (m a = x) /\ a IN dm /\ bytes_in_memory (a + (n2w 1))
+           xs m dm`];;
 
 let bytes_in_mem_def = cake_define_list
   [`bytes_in_mem a [] m md k <=> T`;

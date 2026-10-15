@@ -53,4 +53,5 @@ let has_var_def = cake_define_list
   [`has_var n db_vars_Empty <=> F`;
    `has_var n (db_vars_Var v) <=> (n = v)`;
    `has_var n (db_vars_Shift k d) <=> has_var (n + k) d`;
-   `has_var n (db_vars_Union d1 d2) <=> has_var n d1 \/ has_var n d2`];;
+   `has_var n (db_vars_Union d1 d2) <=> has_var n d1 \/ has_var n
+  d2`];;

@@ -186,8 +186,8 @@ let get_vars_def = cake_define_list
   [`stackSem_get_vars [] s = SOME []`;
    `stackSem_get_vars (v :: vs) s =
          (match stackSem_get_var v s with NONE -> NONE | SOME x
-           -> (match stackSem_get_vars vs s with NONE -> NONE | SOME
-           xs -> SOME (x :: xs)))`];;
+           -> (match stackSem_get_vars vs s with NONE -> NONE |
+           SOME xs -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "stackSem_get_vars";;
 
 let get_fp_var_def = cake_define
@@ -356,8 +356,8 @@ let enc_stack_def = cake_define_list
              bs ->
               (match filter_bitmap bs ws with NONE -> NONE | SOME
                 (ts,ws') ->
-                  (match stackSem_enc_stack bitmaps ws' with NONE
-                    -> NONE | SOME rs -> SOME (ts ++ rs))))`];;
+                  (match stackSem_enc_stack bitmaps ws' with
+                    NONE -> NONE | SOME rs -> SOME (ts ++ rs))))`];;
 hol4_overload "enc_stack" "stackSem_enc_stack";;
 
 let dec_stack_def = cake_define_list
@@ -618,8 +618,8 @@ let find_code_def = cake_define_list
   [`stackSem_find_code (INL p) regs' code = sptree_lookup p code`;
    `stackSem_find_code (INR r) regs' code =
          (match FLOOKUP regs' r with
-           SOME (Loc loc 0) -> sptree_lookup loc code | other ->
-             NONE)`];;
+           SOME (Loc loc 0) -> sptree_lookup loc code | other
+             -> NONE)`];;
 hol4_overload "find_code" "stackSem_find_code";;
 
 let fix_clock_def = cake_define
@@ -1008,8 +1008,8 @@ let evaluate_def = cake_define_list
          (if ~stackSem_state_use_stack s \/ r = v then (SOME
            Error,s) else
          match stackSem_get_var v s with SOME (wordLang_Word w) ->
-             (if LENGTH (stackSem_state_bitmaps s) <= w2n w then
-               (SOME Error,s) else (NONE,stackSem_set_var r
+             (if LENGTH (stackSem_state_bitmaps s) <= w2n w
+               then (SOME Error,s) else (NONE,stackSem_set_var r
                (wordLang_Word (EL (w2n w) (stackSem_state_bitmaps
                s))) s)) | _93 -> (SOME Error,s))`];;
 hol4_overload "evaluate" "stackSem_evaluate";;

@@ -99,8 +99,8 @@ hol4_overload "v_to_list" "bvlSem_v_to_list";;
 
 let list_to_v_def = cake_define_list
   [`bvlSem_list_to_v [] = Block nil_tag []`;
-   `bvlSem_list_to_v (v :: vs) = Block cons_tag [v; bvlSem_list_to_v
-  vs]`];;
+   `bvlSem_list_to_v (v :: vs) = Block cons_tag [v;
+  bvlSem_list_to_v vs]`];;
 hol4_overload "list_to_v" "bvlSem_list_to_v";;
 
 let isClos_def = cake_define
@@ -198,8 +198,8 @@ let do_part_def = cake_define_list
    `bvlSem_do_part m (closLang_Str t) refs =
       (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
       let bytes = MAP (n2w o ORD) (explode t) in
-        (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
-          bvlSem_ref))))`];;
+        (RefPtr T ptr,refs |+ (ptr,((ByteArray T
+          bytes):bvlSem_v bvlSem_ref))))`];;
 hol4_overload "do_part" "bvlSem_do_part";;
 
 let do_build_def = cake_define_list
@@ -727,9 +727,10 @@ let find_code_def = cake_define_list
    `bvlSem_find_code NONE args code =
          (if args = [] then NONE else
            match LAST args with bvlSem_CodePtr loc ->
-               (match sptree_lookup loc code with NONE -> NONE |
-                 SOME (arity,exp) -> (if LENGTH args = arity + 1 then
-                 SOME (FRONT args,exp) else NONE)) | other -> NONE)`];;
+               (match sptree_lookup loc code with NONE -> NONE
+                 | SOME (arity,exp) -> (if LENGTH args = arity + 1
+                 then SOME (FRONT args,exp) else NONE)) | other ->
+                 NONE)`];;
 hol4_overload "find_code" "bvlSem_find_code";;
 
 (* The evaluation is defined as a clocked functional version of
@@ -813,8 +814,8 @@ let evaluate_def = cake_define_list
                   (if state_clock s < ticks + 1 then (Rerr (Rabort
                     Rtimeout_error),state_clock_fupd (K 0) s) else
                       bvlSem_evaluate
-                        ([exp],args,bvlSem_dec_clock (ticks + 1) s)))
-                        | res -> res)`];;
+                        ([exp],args,bvlSem_dec_clock (ticks + 1)
+                        s))) | res -> res)`];;
 hol4_overload "evaluate" "bvlSem_evaluate";;
 
 (* HOL4 ML code, not ported:

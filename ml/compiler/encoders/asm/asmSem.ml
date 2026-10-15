@@ -82,7 +82,8 @@ let binop_upd_def = cake_define_list
    `asmSem_binop_upd r Sub w1 w2 = asmSem_upd_reg r (w1 - w2)`;
    `asmSem_binop_upd r And w1 w2 = asmSem_upd_reg r (word_and w1 w2)`;
    `asmSem_binop_upd r Or w1 w2 = asmSem_upd_reg r (word_or w1 w2)`;
-   `asmSem_binop_upd r Xor w1 w2 = asmSem_upd_reg r (word_xor w1 w2)`];;
+   `asmSem_binop_upd r Xor w1 w2 = asmSem_upd_reg r (word_xor w1
+  w2)`];;
 hol4_overload "binop_upd" "asmSem_binop_upd";;
 
 let is_test_def = cake_define
@@ -268,8 +269,8 @@ let mem_op_def = cake_define_list
    `asmSem_mem_op asm_Store16 r a = asmSem_mem_store 2 r a`;
    `asmSem_mem_op asm_Load32 r (a:'a asm_addr) = asmSem_mem_load 4 r
   a`;
-   `asmSem_mem_op asm_Store32 r (a:'a asm_addr) = asmSem_mem_store 4
-  r a`];;
+   `asmSem_mem_op asm_Store32 r (a:'a asm_addr) = asmSem_mem_store
+  4 r a`];;
 hol4_overload "mem_op" "asmSem_mem_op";;
 
 let inst_def = cake_define_list

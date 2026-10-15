@@ -242,8 +242,8 @@ let apply_kclkont_def = cake_define_list
    `apply_kclkont s (UVk n :: k) its = apply_kclkont s k (Infer_Tuvar
   n :: its)`;
    `apply_kclkont s (CONSk cits n :: k) its =
-    kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its n
-      :: xk'))`];;
+    kcwalkstarl s cits (\xk'. apply_kclkont s k (Infer_Tapp its
+      n :: xk'))`];;
 
 let dfkcwalkstarl_def = cake_define
   `dfkcwalkstarl s t k = kcwalkstarl s t (apply_kclkont s k)`;;

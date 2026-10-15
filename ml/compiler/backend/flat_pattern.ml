@@ -101,14 +101,14 @@ let compile_pat_rhs_def = cake_define
 
 let decode_pos_def = cake_define_list
   [`decode_pos t v EmptyPos = v`;
-   `decode_pos t v (Pos i pos) = decode_pos t (App t (flatLang_El i)
-  [v]) pos`];;
+   `decode_pos t v (Pos i pos) = decode_pos t (App t (flatLang_El
+  i) [v]) pos`];;
 
 let decode_test_def = cake_define_list
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
   (TagLenEq tag l) [v]`;
-   `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v = App
-  t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
+   `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v =
+  App t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
 hol4_overload "decode_test" "flat_pattern_decode_test";;
 
 let simp_guard_def = cake_define
@@ -225,8 +225,8 @@ let compile_pats_def = cake_define
 
 let max_dec_name_def = cake_define_list
   [`max_dec_name [] = 0`;
-   `max_dec_name (nm :: nms) = MAX (dec_name_to_num nm) (max_dec_name
-  nms)`];;
+   `max_dec_name (nm :: nms) = MAX (dec_name_to_num nm)
+  (max_dec_name nms)`];;
 
 let op_sets_globals_def = cake_define
   `op_sets_globals x1 =

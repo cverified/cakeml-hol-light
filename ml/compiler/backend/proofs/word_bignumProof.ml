@@ -66,8 +66,8 @@ let eval_exp_def = cake_define_list
   (eval_exp s x2))`;
    `eval_exp s (wordLang_Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n
   (eval_exp s x2))`;
-   `eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s x1)
-  (w2n (eval_exp s x2))`];;
+   `eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s
+  x1) (w2n (eval_exp s x2))`];;
 
 let eval_exp_pre_def = cake_define
   `eval_exp_pre s x2 =
@@ -117,7 +117,8 @@ let copy_vars_def = cake_define_list
   [`word_bignumProof_copy_vars [] s t = SOME t`;
    `word_bignumProof_copy_vars (n :: ns) s t =
          (match FLOOKUP s n with NONE -> NONE | SOME x ->
-           word_bignumProof_copy_vars ns s (reg_write n (SOME x) t))`];;
+           word_bignumProof_copy_vars ns s (reg_write n (SOME x)
+           t))`];;
 hol4_overload "copy_vars" "word_bignumProof_copy_vars";;
 
 let eval = cake_inductive
@@ -393,8 +394,8 @@ let list_update_def = cake_define_list
   [`list_update [] ys t = t`;
    `list_update (x :: xs) (y :: ys) t = sptree_insert x y
   (list_update xs ys t)`;
-   `list_update (x :: xs) [] t = sptree_insert x ARB (list_update xs
-  [] t)`];;
+   `list_update (x :: xs) [] t = sptree_insert x ARB (list_update
+  xs [] t)`];;
 
 let list_store_def = cake_define_list
   [`list_store [] ys s = s`;

@@ -1067,8 +1067,9 @@ let MemEqList_def = cake_define_list
 let get_gen_size_def = cake_define_list
   [`get_gen_size [] = bytes_in_word * ((--(n2w 1)):'a word)`;
    `get_gen_size (x :: xs) =
-         (if w2n (bytes_in_word:'a word) * x < dimword (:'a) then
-           bytes_in_word * n2w x else bytes_in_word * (--(n2w 1)))`];;
+         (if w2n (bytes_in_word:'a word) * x < dimword (:'a)
+           then bytes_in_word * n2w x else bytes_in_word * (--(n2w
+           1)))`];;
 
 let fp_cmp_inst_def = cake_define_list
   [`fp_cmp_inst FP_Less = FPLess 3 0 1`;
@@ -1275,8 +1276,8 @@ let assign_ConfigGC_def = cake_define
 let getWords_def = cake_define_list
   [`getWords [] aux = (REVERSE aux,[])`;
    `getWords (c :: cs) aux =
-      (match c with (b,wordLang_Word w) -> getWords cs ((b,w) ::
-        aux) | _8 -> (REVERSE aux,c :: cs))`];;
+      (match c with (b,wordLang_Word w) -> getWords cs ((b,w)
+        :: aux) | _8 -> (REVERSE aux,c :: cs))`];;
 
 let StoreAnyConsts_def = cake_define_list
   [`StoreAnyConsts r1 r2 r3 [] v =
@@ -1337,8 +1338,8 @@ let write_bytes_def = cake_define_list
   [`write_bytes bs [] be' = []`;
    `write_bytes bs ((w:'a word) :: ws) be' =
          (let k = dimindex (:'a) DIV 8 in
-           bytes_to_word k (n2w 0) bs w be' :: write_bytes (DROP
-             k bs) ws be')`];;
+           bytes_to_word k (n2w 0) bs w be' :: write_bytes
+             (DROP k bs) ws be')`];;
 
 let small_int_def = cake_define
   `small_int (:'a) i <=>
@@ -1395,7 +1396,8 @@ let parts_to_words_def = cake_define_list
         ->
         (match parts_to_words c (insert i w m) (i + 1) parts
                  (off + bytes_in_word * n2w (LENGTH xs)) with
-                   NONE -> NONE | SOME (r,ys) -> SOME (r,xs ++ ys)))`];;
+                   NONE -> NONE | SOME (r,ys) -> SOME (r,xs ++
+                   ys)))`];;
 
 let const_parts_to_words_def = cake_define
   `const_parts_to_words c parts =
@@ -1553,8 +1555,8 @@ let AssignCmp_def = cake_define_list
   (Reg v1)`;
    `AssignCmp dest (ast_Leq:opb) v1 v2 = SetBool dest asm_NotLower v2
   (Reg v1)`;
-   `AssignCmp dest (ast_Geq:opb) v1 v2 = SetBool dest asm_NotLower v1
-  (Reg v2)`];;
+   `AssignCmp dest (ast_Geq:opb) v1 v2 = SetBool dest asm_NotLower
+  v1 (Reg v2)`];;
 
 let assign_StringCmp_def = cake_define
   `assign_StringCmp (c:data_to_word_config) (secn:num) (l:num)

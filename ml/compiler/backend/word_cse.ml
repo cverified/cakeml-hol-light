@@ -98,8 +98,8 @@ let invalidate_data_def = cake_define
   instructions); empties the data if any of them is tracked. *)
 let invalidate_regs_def = cake_define_list
   [`invalidate_regs data [] = data`;
-   `invalidate_regs data (r :: rs) = invalidate_regs (invalidate_data
-  data r) rs`];;
+   `invalidate_regs data (r :: rs) = invalidate_regs
+  (invalidate_data data r) rs`];;
 
 (* Enter an odd register that a stored fact reads into the tracked set
    as a
@@ -258,8 +258,8 @@ let arithToNumList_def = cake_define_list
   100]`;
    `arithToNumList (asm_AddOverflow r1 r2 r3 r4) = [31; r2 + 100; r3
   + 100]`;
-   `arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100; r3
-  + 100]`];;
+   `arithToNumList (asm_SubOverflow r1 r2 r3 r4) = [32; r2 + 100;
+  r3 + 100]`];;
 
 let memOpToNum_def = cake_define_list
   [`memOpToNum Load = (21:num)`;

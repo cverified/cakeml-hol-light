@@ -98,8 +98,8 @@ let labs_correct_def = cake_define_list
   [`labs_correct n [] code <=> T`;
    `labs_correct n (x :: xs) code <=>
          (if is_Label x then labs_correct n xs code /\
-           (match x with Label l1 l2 v2 -> loc_to_pc l1 l2 code =
-             SOME n | _6 -> T) else labs_correct (n + 1) xs code)`];;
+           (match x with Label l1 l2 v2 -> loc_to_pc l1 l2 code
+             = SOME n | _6 -> T) else labs_correct (n + 1) xs code)`];;
 
 (* HOL4 ML code, not ported:
 val is_Label_def = labSemTheory.is_Label_def

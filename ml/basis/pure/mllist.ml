@@ -42,16 +42,18 @@ let drop_def = cake_define
 
 let takeUntil_def = cake_define_list
   [`takeUntil p [] = []`;
-   `takeUntil p (x :: xs) = (if p x then [] else x :: takeUntil p xs)`];;
+   `takeUntil p (x :: xs) = (if p x then [] else x :: takeUntil p
+  xs)`];;
 
 let dropUntil_def = cake_define_list
   [`dropUntil p [] = []`;
-   `dropUntil p (x :: xs) = (if p x then x :: xs else dropUntil p xs)`];;
+   `dropUntil p (x :: xs) = (if p x then x :: xs else dropUntil p
+  xs)`];;
 
 let mapi_def = cake_define_list
   [`mllist_mapi f (n:num) [] = []`;
-   `mllist_mapi f n (h :: t) = (let y = f n h in (y :: (mllist_mapi f
-  (n + 1) t)))`];;
+   `mllist_mapi f n (h :: t) = (let y = f n h in (y :: (mllist_mapi
+  f (n + 1) t)))`];;
 hol4_overload "mapi" "mllist_mapi";;
 
 let mapPartial_def = cake_define_list
@@ -64,8 +66,8 @@ hol4_overload "mapPartial" "mllist_mapPartial";;
 let partition_aux_def = cake_define_list
   [`partition_aux f [] pos neg =
         (REVERSE pos,REVERSE neg)`;
-   `partition_aux f (h :: t) pos neg = (if f h then partition_aux f t
-  (h :: pos) neg else partition_aux f t pos (h :: neg))`];;
+   `partition_aux f (h :: t) pos neg = (if f h then partition_aux f
+  t (h :: pos) neg else partition_aux f t pos (h :: neg))`];;
 
 let partition_def = cake_define
   `partition (f:'a->bool) l = partition_aux f l [] []`;;
@@ -77,8 +79,8 @@ hol4_overload "foldl" "mllist_foldl";;
 
 let foldli_aux_def = cake_define_list
   [`mllist_foldli_aux f e n [] = e`;
-   `mllist_foldli_aux f e n (h :: t) = mllist_foldli_aux f (f n h e)
-  (SUC n) t`];;
+   `mllist_foldli_aux f e n (h :: t) = mllist_foldli_aux f (f n h
+  e) (SUC n) t`];;
 hol4_overload "foldli_aux" "mllist_foldli_aux";;
 
 let foldli_def = cake_define
@@ -109,8 +111,8 @@ let collate_def = cake_define_list
    `mllist_collate f [] (h :: t) = LESS`;
    `mllist_collate f (h :: t) [] = GREATER`;
    `mllist_collate f (h1 :: t1) (h2 :: t2) =
-        (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f h1
-          h2)`];;
+        (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f
+          h1 h2)`];;
 hol4_overload "collate" "mllist_collate";;
 
 let cpn_to_reln_def = cake_define

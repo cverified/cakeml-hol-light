@@ -151,8 +151,8 @@ hol4_overload "get_var" "clos_annotate_get_var";;
 
 let shifted_env_def = cake_define_list
   [`shifted_env n [] = LN`;
-   `shifted_env n (x :: xs) = sptree_insert x (n:num) (shifted_env (n
-  + 1) xs)`];;
+   `shifted_env n (x :: xs) = sptree_insert x (n:num) (shifted_env
+  (n + 1) xs)`];;
 
 let shift_def = cake_define_list
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;

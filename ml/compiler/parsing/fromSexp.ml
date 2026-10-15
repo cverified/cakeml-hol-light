@@ -720,8 +720,8 @@ let sexpdec_alt_def = cake_define_list
           (match s with SX_SYM nm -> (if nm = "nil" then SOME []
             else NONE) | SX_CONS a d ->
             (match sexpdec_alt a with NONE -> NONE | SOME h ->
-             (match sexpdec_list d with NONE -> NONE | SOME t ->
-               SOME (h :: t))) | _27 -> NONE)`];;
+             (match sexpdec_list d with NONE -> NONE | SOME t
+               -> SOME (h :: t))) | _27 -> NONE)`];;
 
 (* HOL4 ML code, not ported:
 val sexpdec_alt_ind = theorem"sexpdec_alt_ind";
@@ -748,8 +748,8 @@ let typesexp_def = cake_define_list
   typesexp t2]`;
    `typesexp (Attup ts) = listsexp [SX_SYM "Attup"; listsexp (MAP
   typesexp ts)]`;
-   `typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp (MAP
-  typesexp ts); idsexp tc]`];;
+   `typesexp (Atapp ts tc) = listsexp [SX_SYM "Atapp"; listsexp
+  (MAP typesexp ts); idsexp tc]`];;
 
 let litsexp_def = cake_define_list
   [`litsexp (ast_IntLit i) =
@@ -760,8 +760,8 @@ let litsexp_def = cake_define_list
    `litsexp (ast_Word8 w) = listsexp [SX_SYM "word8"; SX_NUM (w2n w)]`;
    `litsexp (ast_Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n
   w)]`;
-   `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM (w2n
-  w)]`];;
+   `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM
+  (w2n w)]`];;
 
 let patsexp_def = cake_define_list
   [`patsexp ast_Pany = listsexp [SX_SYM "Pany"]`;

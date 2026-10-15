@@ -116,8 +116,8 @@ let parse_aux_def = cake_define_list
    `parse_aux (OPEN :: rest) xs s =
       (match s with [] -> parse_aux rest xs s | (y :: ys) ->
         parse_aux rest ((Expr xs) :: y) ys)`;
-   `parse_aux (SYMBOL sy :: rest) xs s = parse_aux rest ((Atom sy) ::
-  xs) s`];;
+   `parse_aux (SYMBOL sy :: rest) xs s = parse_aux rest ((Atom sy)
+  :: xs) s`];;
 
 (* Parses (at most) one S-expression, and returns the rest of the input.
    Fails exactly when lexing fails. *)

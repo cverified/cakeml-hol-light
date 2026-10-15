@@ -443,8 +443,8 @@ let ptree_V_def = cake_define_list
            (assert (FST nt' = (INL:MMLnonT->MMLnonT+num) nV)) (
            match subs with
               [pt] -> OPTION_BIND (FAPPLY destTOK (destLf pt)) (\t.
-                         destAlphaT t ++ destSymbolT t) | _47 ->
-                           NONE)`];;
+                         destAlphaT t ++ destSymbolT t) | _47
+                           -> NONE)`];;
 
 let ptree_FQV_def = cake_define_list
   [`ptree_FQV (Lf _49) = NONE`;
@@ -511,9 +511,10 @@ let ptree_OpID_def = cake_define_list
             (if tk = tokens_StarT then
                ifM (isSymbolicConstructor "*")
                    (SOME (ast_Con (SOME (Short (implode "*"))) []))
-                   (SOME (ast_Var (Short (implode "*")))) else if
-                     tk = tokens_EqualsT then SOME (ast_Var (Short
-                     (implode "="))) else NONE) | _56 -> NONE)`];;
+                   (SOME (ast_Var (Short (implode "*")))) else
+                     if tk = tokens_EqualsT then SOME (ast_Var
+                     (Short (implode "="))) else NONE) | _56 ->
+                     NONE)`];;
 
 let papply_def = cake_define
   `Papply pat arg =
@@ -658,7 +659,8 @@ let ptree_PbaseList1_def = cake_define_list
                  p_pt) | [p_pt; pl_pt] ->
                    lift2 CONS
                          (ptree_Pattern nPbase p_pt)
-                         (ptree_PbaseList1 pl_pt) | _71 -> NONE)`];;
+                         (ptree_PbaseList1 pl_pt) | _71 ->
+                           NONE)`];;
 
 let eseq_encode_def = cake_define
   `Eseq_encode x1 =
@@ -744,8 +746,8 @@ let ptree_Eliteral_def = cake_define_list
            s))) ++
          OPTION_BIND (destWordT t) (\n. SOME (ast_Lit (ast_Word64
            (n2w n)))) ++
-         OPTION_BIND (destFFIT t) (\s. SOME (ast_App (ast_FFI s)
-           []))))))`];;
+         OPTION_BIND (destFFIT t) (\s. SOME (ast_App (ast_FFI
+           s) []))))))`];;
 
 let bind_loc_def = cake_define
   `bind_loc e l' =

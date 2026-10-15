@@ -24,8 +24,8 @@ let wf_def = cake_define_list
    `sptree_wf (LS a) <=> T`;
    `sptree_wf (BN t1 t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t. t
   = LN) t1 /\ (\t. t = LN) t2)`;
-   `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t.
-  t = LN) t1 /\ (\t. t = LN) t2)`];;
+   `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\
+  ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
 hol4_overload "wf" "sptree_wf";;
 
 let lookup_def = cake_define_list
@@ -35,8 +35,8 @@ let lookup_def = cake_define_list
          (if k = 0 then NONE else sptree_lookup ((k - 1) DIV 2)
            (if EVEN k then t1 else t2))`;
    `sptree_lookup k (BS t1 a t2) =
-         (if k = 0 then SOME a else sptree_lookup ((k - 1) DIV 2)
-           (if EVEN k then t1 else t2))`];;
+         (if k = 0 then SOME a else sptree_lookup ((k - 1) DIV
+           2) (if EVEN k then t1 else t2))`];;
 hol4_overload "lookup" "sptree_lookup";;
 
 let insert_def = cake_define_list
@@ -101,8 +101,8 @@ let union_def = cake_define_list
            t2 t2'))`;
    `sptree_union (BS t1 a t2) t =
          (match t with LN -> BS t1 a t2 | LS a' -> BS t1 a t2 |
-           BN t1' t2' -> BS (sptree_union t1 t1') a (sptree_union t2
-           t2') | BS t1' a' t2' -> BS (sptree_union t1 t1') a
+           BN t1' t2' -> BS (sptree_union t1 t1') a (sptree_union
+           t2 t2') | BS t1' a' t2' -> BS (sptree_union t1 t1') a
            (sptree_union t2 t2'))`];;
 hol4_overload "union" "sptree_union";;
 
@@ -135,8 +135,8 @@ let inter_eq_def = cake_define_list
            LN) | BN t1' t2' -> mk_BN (inter_eq t1 t1') (inter_eq t2 t2')
            | BS t1' a' t2' ->
                (if a' = a then
-                 mk_BS (inter_eq t1 t1') a (inter_eq t2 t2') else
-                   mk_BN (inter_eq t1 t1') (inter_eq t2 t2')))`];;
+                 mk_BS (inter_eq t1 t1') a (inter_eq t2 t2')
+                   else mk_BN (inter_eq t1 t1') (inter_eq t2 t2')))`];;
 
 let difference_def = cake_define_list
   [`difference LN t = LN`;
@@ -149,10 +149,10 @@ let difference_def = cake_define_list
            t1' a t2' -> mk_BN (difference t1 t1') (difference t2
            t2'))`;
    `difference (BS t1 a t2) t =
-         (match t with LN -> BS t1 a t2 | LS a' -> BN t1 t2 | BN
-           t1' t2' -> mk_BS (difference t1 t1') a (difference t2 t2')
-           | BS t1' a' t2' -> mk_BN (difference t1 t1') (difference
-           t2 t2'))`];;
+         (match t with LN -> BS t1 a t2 | LS a' -> BN t1 t2 |
+           BN t1' t2' -> mk_BS (difference t1 t1') a (difference t2
+           t2') | BS t1' a' t2' -> mk_BN (difference t1 t1')
+           (difference t2 t2'))`];;
 
 (* HOL4 termination: \\ fs [DIV_LT_X] \\ REPEAT STRIP_TAC \\
    DECIDE_TAC *)
@@ -268,12 +268,13 @@ let spt_fold_def = cake_define_list
 
 let list_to_num_set_def = cake_define_list
   [`list_to_num_set [] = LN`;
-   `list_to_num_set (n :: ns) = sptree_insert n one (list_to_num_set
-  ns)`];;
+   `list_to_num_set (n :: ns) = sptree_insert n one
+  (list_to_num_set ns)`];;
 
 let list_insert_def = cake_define_list
   [`list_insert [] t = t`;
-   `list_insert (n :: ns) t = list_insert ns (sptree_insert n one t)`];;
+   `list_insert (n :: ns) t = list_insert ns (sptree_insert n one
+  t)`];;
 
 let alist_insert_def = cake_define
   `alist_insert vs xs t =

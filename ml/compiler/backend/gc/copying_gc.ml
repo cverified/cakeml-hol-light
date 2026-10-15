@@ -23,9 +23,10 @@ let gc_move_def = cake_define_list
              let n = n - (l + 1) in
              let h2 = h2 ++ [DataElement xs l dd] in
              let (heap,c) = gc_forward_ptr ptr heap a d c in
-               (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c)) |
-                 SOME (ForwardPointer ptr _3 l) -> (gc_shared_Pointer
-                 ptr d,h2,a,n,heap,c) | _4 -> (ARB,h2,a,n,heap,F))`];;
+               (gc_shared_Pointer a d,h2,a + (l + 1),n,heap,c))
+                 | SOME (ForwardPointer ptr _3 l) ->
+                 (gc_shared_Pointer ptr d,h2,a,n,heap,c) | _4 ->
+                 (ARB,h2,a,n,heap,F))`];;
 hol4_overload "gc_move" "copying_gc_gc_move";;
 
 let gc_move_list_def = cake_define_list
@@ -52,7 +53,8 @@ let gc_move_loop_def = cake_define_list
               let h2 = TL h2 in
               let h1 = h1 ++ [DataElement xs l d] in
                 copying_gc_gc_move_loop
-                  (h1,h2,a,n,heap,c,limit')) | _6 -> (h1,a,n,heap,F))`];;
+                  (h1,h2,a,n,heap,c,limit')) | _6 ->
+                  (h1,a,n,heap,F))`];;
 hol4_overload "gc_move_loop" "copying_gc_gc_move_loop";;
 
 let full_gc_def = cake_define

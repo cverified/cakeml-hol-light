@@ -295,8 +295,8 @@ let no_Mat_def = cake_define_list
    `no_Mat (Handle t e pes:flatLang_exp) <=> no_Mat e /\ EVERY no_Mat
   (MAP SND pes) /\
         (match pes with [(Pvar _8,_9)] -> T | _10 -> F)`;
-   `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP (SND
-  o SND) funs) /\ no_Mat e`];;
+   `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP
+  (SND o SND) funs) /\ no_Mat e`];;
 
 let no_Mat_decs_def = cake_define_list
   [`no_Mat_decs [] = T`;

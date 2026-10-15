@@ -276,8 +276,8 @@ let every_exp_def = cake_define_list
    `every_exp p (ast_Lannot e a) <=>
                  p (ast_Lannot e a) /\ every_exp p e`;
    `every_exp p (ast_Letrec funs e) <=>
-                 p (ast_Letrec funs e) /\ every_exp p e /\ EVERY
-                   (\(n,v,e). every_exp p e) funs`];;
+                 p (ast_Letrec funs e) /\ every_exp p e /\
+                   EVERY (\(n,v,e). every_exp p e) funs`];;
 
 let seqs_def = cake_define_list
   [`ast_Seqs [] = ast_Con NONE []`;

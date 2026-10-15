@@ -46,8 +46,8 @@ let data_to_bvi_v_def = cake_define_list
    `data_to_bvi_v (Word64 w:dataSem_v) = bvlSem_Word64 w`;
    `data_to_bvi_v (CodePtr p:dataSem_v) = bvlSem_CodePtr p`;
    `data_to_bvi_v (RefPtr b r:dataSem_v) = bvlSem_RefPtr b r`;
-   `data_to_bvi_v (Block _1 tag l:dataSem_v) = bvlSem_Block tag (MAP
-  data_to_bvi_v l)`];;
+   `data_to_bvi_v (Block _1 tag l:dataSem_v) = bvlSem_Block tag
+  (MAP data_to_bvi_v l)`];;
 
 (* Projection for Unit constant *)
 

@@ -42,8 +42,8 @@ let tick_inline_def = cake_define_list
    `tick_inline cs [(Call ticks dest xs:bvl_exp)] =
          (match dest with NONE -> [Call ticks dest (tick_inline cs
            xs)] | SOME n ->
-         (match sptree_lookup n cs with NONE -> [Call ticks dest
-           (tick_inline cs xs)] | SOME (arity,code) -> [Let
+         (match sptree_lookup n cs with NONE -> [Call ticks
+           dest (tick_inline cs xs)] | SOME (arity,code) -> [Let
            (tick_inline cs xs) (mk_tick (SUC ticks) code)]))`];;
 
 let tick_inline_sing_def = cake_define_list

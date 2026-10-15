@@ -246,8 +246,8 @@ let calls_def = cake_define_list
                  1 loc fns) (HD e1)],g) else
              let (fns1,g) = calls (MAP SND fns) g in
              let (e1,g) = calls [x1] g in
-               ([Letrec t loc_opt ws (ZIP (MAP FST fns) fns1) (HD
-                 e1)],g))`];;
+               ([Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
+                 (HD e1)],g))`];;
 
 let calls_sing_def = cake_define_list
   [`calls_sing (Var t v:closLang_exp) g =
@@ -329,7 +329,8 @@ let calls_sing_def = cake_define_list
 
 let compile_def = cake_define_list
   [`clos_call_compile F x = (x,(LN,[]))`;
-   `clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in (xs,g))`];;
+   `clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in
+  (xs,g))`];;
 hol4_overload "compile" "clos_call_compile";;
 
 let compile_inc_def = cake_define

@@ -153,8 +153,8 @@ let compile_sing_def = cake_define_list
             (bvi_let_compile_sing (REPLICATE rets 0 ++ env) d y)`;
    `bvi_let_compile_list env d [] = []`;
    `bvi_let_compile_list env d (x :: xs) =
-        bvi_let_compile_sing env d x :: bvi_let_compile_list env
-          d xs`];;
+        bvi_let_compile_sing env d x :: bvi_let_compile_list
+          env d xs`];;
 hol4_overload "compile_list" "bvi_let_compile_list";;
 hol4_overload "compile_sing" "bvi_let_compile_sing";;
 

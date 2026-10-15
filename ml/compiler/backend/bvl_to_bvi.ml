@@ -376,9 +376,9 @@ let compile_exps_def = cake_define_list
    `bvl_to_bvi_compile_exps n [(Call ticks dest xs:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
            ([Call ticks
-                  (match dest with NONE -> NONE | SOME n -> SOME
-                    (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
-                    NONE],aux1,n1))`];;
+                  (match dest with NONE -> NONE | SOME n ->
+                    SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
+                    n)) c1 NONE],aux1,n1))`];;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let compile_exps_sing_def = cake_define_list

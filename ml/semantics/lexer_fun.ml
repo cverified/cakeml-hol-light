@@ -365,14 +365,14 @@ let toplevel_semi_dex_def = cake_define_list
   [`toplevel_semi_dex (i:num) (d:num) [] = NONE`;
    `toplevel_semi_dex i d ((h,l) :: t) =
         (if h = tokens_SemicolonT /\ (d = 0) then SOME (i + 1)
-          else if h = tokens_LetT then toplevel_semi_dex (i + 1) (d +
-          1) t else if h = tokens_StructT then toplevel_semi_dex (i +
-          1) (d + 1) t else if h = tokens_SigT then toplevel_semi_dex
-          (i + 1) (d + 1) t else if h = tokens_LparT then
-          toplevel_semi_dex (i + 1) (d + 1) t else if h = tokens_EndT
-          then toplevel_semi_dex (i + 1) (d - 1) t else if h =
-          tokens_RparT then toplevel_semi_dex (i + 1) (d - 1) t else
-          toplevel_semi_dex (i + 1) d t)`];;
+          else if h = tokens_LetT then toplevel_semi_dex (i + 1) (d
+          + 1) t else if h = tokens_StructT then toplevel_semi_dex
+          (i + 1) (d + 1) t else if h = tokens_SigT then
+          toplevel_semi_dex (i + 1) (d + 1) t else if h =
+          tokens_LparT then toplevel_semi_dex (i + 1) (d + 1) t
+          else if h = tokens_EndT then toplevel_semi_dex (i + 1) (d
+          - 1) t else if h = tokens_RparT then toplevel_semi_dex (i
+          + 1) (d - 1) t else toplevel_semi_dex (i + 1) d t)`];;
 
 (* TERMINATION: wf_rel_tac `measure LENGTH` >>
   rw [] >>

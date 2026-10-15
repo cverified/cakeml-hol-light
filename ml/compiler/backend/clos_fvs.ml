@@ -97,8 +97,8 @@ let remove_fvs_sing_def = cake_define_list
          remove_fvs_sing fvs x :: remove_fvs_list fvs xs`;
    `remove_fvs_let m fvs [] = []`;
    `remove_fvs_let m new_fvs ((num_args,x) :: xs) =
-         (num_args,remove_fvs_sing (num_args + m + new_fvs) x) ::
-           remove_fvs_let m new_fvs xs`];;
+         (num_args,remove_fvs_sing (num_args + m + new_fvs) x)
+           :: remove_fvs_let m new_fvs xs`];;
 
 let compile_def = cake_define
   `clos_fvs_compile exps = remove_fvs 0 exps`;;

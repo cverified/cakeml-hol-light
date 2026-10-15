@@ -167,8 +167,8 @@ val halt_tac =
 let read_mem_def = cake_define_list
   [`stack_removeProof_read_mem a m 0 = []`;
    `stack_removeProof_read_mem a m (SUC n) =
-         m a :: stack_removeProof_read_mem (a + bytes_in_word) m
-           n`];;
+         m a :: stack_removeProof_read_mem (a + bytes_in_word)
+           m n`];;
 hol4_overload "read_mem" "stack_removeProof_read_mem";;
 
 let addresses_def = cake_define_list

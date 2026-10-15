@@ -53,8 +53,8 @@ let gc_move_def = cake_define_list
                 (
                 gc_shared_Pointer (gc_state_a state)
                   d,gc_state_ok_fupd (K ok) (gc_state_heap_fupd (K
-                  heap) (gc_state_a_fupd (K a) (gc_state_n_fupd (K n)
-                  (gc_state_h2_fupd (K h2) state)))))) | _4 ->
+                  heap) (gc_state_a_fupd (K a) (gc_state_n_fupd (K
+                  n) (gc_state_h2_fupd (K h2) state)))))) | _4 ->
                   (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F)
                   state))`];;
 hol4_overload "gc_move" "gen_gc_gc_move";;

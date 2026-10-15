@@ -231,8 +231,8 @@ let live_tree_registers_def = cake_define_list
    `live_tree_registers (linear_scan_Reads l) = set_of_list l`;
    `live_tree_registers (Branch lt1 lt2:live_tree) =
   live_tree_registers lt1 UNION live_tree_registers lt2`;
-   `live_tree_registers (Seq lt1 lt2:live_tree) = live_tree_registers
-  lt1 UNION live_tree_registers lt2`];;
+   `live_tree_registers (Seq lt1 lt2:live_tree) =
+  live_tree_registers lt1 UNION live_tree_registers lt2`];;
 
 let interval_intersect_def = cake_define
   `interval_intersect ((l1:int),(r1:int)) (l2,r2) = (l1 <= r2 /\ l2
@@ -485,8 +485,8 @@ let find_color_in_list_def = cake_define_list
    `find_color_in_list (r :: rs) forbidden =
         (if sptree_lookup r forbidden = NONE then
           SOME (r,rs) else
-          match find_color_in_list rs forbidden with NONE -> NONE
-            | SOME (col,rest) -> SOME (col,r :: rest))`];;
+          match find_color_in_list rs forbidden with NONE ->
+            NONE | SOME (col,rest) -> SOME (col,r :: rest))`];;
 
 let find_color_in_colornum_def = cake_define
   `find_color_in_colornum st (forbidden:1 spt) =
@@ -629,8 +629,8 @@ let find_reg_exchange_def = cake_define_list
         let fcol2 = option_CASE (sptree_lookup col1 exch) col1 (\x.
           x) in
         find_reg_exchange rs (sptree_insert col1 fcol1
-          (sptree_insert col2 fcol2 exch)) (sptree_insert fcol1 col1
-          (sptree_insert fcol2 col2 invexch)))`];;
+          (sptree_insert col2 fcol2 exch)) (sptree_insert fcol1
+          col1 (sptree_insert fcol2 col2 invexch)))`];;
 
 let MAP_colors_def = cake_define_list
   [`MAP_colors f 0 = st_ex_return one`;
@@ -678,8 +678,8 @@ let edges_to_adjlist_def = cake_define_list
           if bega < begb \/ (bega = begb /\ a <= b) then
             edges_to_adjlist abs' (sptree_insert b (a :: (the []
               (sptree_lookup b acc))) acc) else
-            edges_to_adjlist abs' (sptree_insert a (b :: (the []
-              (sptree_lookup a acc))) acc))))`];;
+            edges_to_adjlist abs' (sptree_insert a (b :: (the
+              [] (sptree_lookup a acc))) acc))))`];;
 
 let sort_moves_rev_def = cake_define
   `sort_moves_rev ls =

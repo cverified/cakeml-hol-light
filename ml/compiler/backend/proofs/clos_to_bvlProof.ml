@@ -578,8 +578,8 @@ val bEvalOp_def = bvlSemTheory.do_app_def;
 let check_loc'_def = cake_define_list
   [`check_loc' NONE loc num_params num_args so_far <=> T`;
    `check_loc' (SOME p) loc num_params num_args so_far <=>
-        (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME p
-          = loc)`];;
+        (num_params = num_args) /\ (so_far = (0:num)) /\ (SOME
+          p = loc)`];;
 
 let dest_closure'_def = cake_define
   `dest_closure' loc_opt f args =

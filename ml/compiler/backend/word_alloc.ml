@@ -80,8 +80,9 @@ let merge_moves_def = cake_define_list
             let Rmove = (na',Ly) in
             (Lmove :: seqL,Rmove :: seqR,na' + 4,
                               sptree_insert x na'
-                                ssa_L',sptree_insert x na' ssa_R')) |
-                                _2 -> (seqL,seqR,na',ssa_L',ssa_R'))`];;
+                                ssa_L',sptree_insert x na' ssa_R'))
+                                | _2 ->
+                                (seqL,seqR,na',ssa_L',ssa_R'))`];;
 hol4_overload "merge_moves" "word_alloc_merge_moves";;
 
 (* tracking priority of moves

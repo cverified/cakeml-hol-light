@@ -102,8 +102,8 @@ let has_Eval_def = cake_define_list
    `has_Eval_pats [] <=> F`;
    `has_Eval_pats ((p,e) :: pes) <=> has_Eval e \/ has_Eval_pats pes`;
    `has_Eval_funs [] <=> F`;
-   `has_Eval_funs ((_18,_19,e) :: fs) <=> has_Eval e \/ has_Eval_funs
-  fs`];;
+   `has_Eval_funs ((_18,_19,e) :: fs) <=> has_Eval e \/
+  has_Eval_funs fs`];;
 
 let dest_GlobalVarInit_def = cake_define
   `dest_GlobalVarInit x1 =

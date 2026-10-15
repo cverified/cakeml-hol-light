@@ -28,8 +28,8 @@ let seq_stack_alloc_def = cake_define
 let collect_info_def = cake_define_list
   [`collect_info [] f = f`;
    `collect_info ((n,(b:'a stackLang_prog)) :: xs) f =
-         collect_info xs (match seq_stack_alloc b with NONE -> f
-           | SOME k -> insert n k f)`];;
+         collect_info xs (match seq_stack_alloc b with NONE ->
+           f | SOME k -> insert n k f)`];;
 
 (* optimise based on stack allocation information *)
 

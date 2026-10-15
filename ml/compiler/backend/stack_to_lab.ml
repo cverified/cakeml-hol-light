@@ -31,8 +31,8 @@ needs "semantics/ast.ml";;
 let compile_jump_def = cake_define_list
   [`compile_jump (INL n) = labLang_LabAsm (Jump (labLang_Lab n 0))
   (n2w 0) [] 0`;
-   `compile_jump (INR r) = (\a. (\a. (\a. labLang_Asm (Asmi a)) (Asmi
-  a)) (Asmi a)) (asm_JumpReg r) [] 0`];;
+   `compile_jump (INR r) = (\a. (\a. (\a. labLang_Asm (Asmi a))
+  (Asmi a)) (Asmi a)) (asm_JumpReg r) [] 0`];;
 
 let negate_def = cake_define_list
   [`negate Less = asm_NotLess`;

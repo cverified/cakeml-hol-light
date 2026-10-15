@@ -105,8 +105,8 @@ let index_list_def = cake_define_list
 
 let list_LUPDATE_def = cake_define_list
   [`list_LUPDATE [] n ys = ys`;
-   `list_LUPDATE (x :: xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE x
-  n ys)`];;
+   `list_LUPDATE (x :: xs) n ys = list_LUPDATE xs (n + 1) (LUPDATE
+  x n ys)`];;
 
 (* move to stackProps? *)
 

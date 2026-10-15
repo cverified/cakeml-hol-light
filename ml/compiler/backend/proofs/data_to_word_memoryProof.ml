@@ -540,8 +540,8 @@ fun unlength_tac thms =
 
 let bind_each_def = cake_define_list
   [`bind_each tf ts (k:num) i 0 = tf`;
-   `bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k + i)
-  i n |+ (ts,k)`];;
+   `bind_each tf ts (k:num) i (SUC n) = bind_each tf (ts + 1) (k +
+  i) i n |+ (ts,k)`];;
 
 (* A timestamp that is not in the  *)
 
@@ -1100,8 +1100,8 @@ let vb_eq_size_def = cake_define_list
    `vb_eq_size_list refs (v1 :: vs1) (v2 :: vs2) =
          (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
            -> SOME (n + 1,F) | SOME (n,T) -> (
-           match vb_eq_size_list refs vs1 vs2 with NONE -> NONE |
-             SOME (m,b) -> SOME (m + n + 1,b)))`];;
+           match vb_eq_size_list refs vs1 vs2 with NONE -> NONE
+             | SOME (m,b) -> SOME (m + n + 1,b)))`];;
 
 let word_header_def = cake_define
   `word_header c st a dm m =
@@ -1612,5 +1612,5 @@ let word_str_cmp_def = cake_define
 
 let find_diff_def = cake_define_list
   [`find_diff [] [] r1 r2 = (r1,r2)`;
-   `find_diff (x :: xs) (y :: ys) r1 r2 = (if x = y then find_diff xs
-  ys r1 r2 else (w2w x,w2w y))`];;
+   `find_diff (x :: xs) (y :: ys) r1 r2 = (if x = y then find_diff
+  xs ys r1 r2 else (w2w x,w2w y))`];;

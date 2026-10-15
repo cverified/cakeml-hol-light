@@ -302,8 +302,8 @@ let compile_sing_def = cake_define_list
    `bvl_const_compile_sing env (Call t dest xs:bvl_exp) = Call t dest
   (bvl_const_compile_list env xs)`;
    `bvl_const_compile_list env [] = []`;
-   `bvl_const_compile_list env (x :: xs) = bvl_const_compile_sing env
-  x :: bvl_const_compile_list env xs`];;
+   `bvl_const_compile_list env (x :: xs) = bvl_const_compile_sing
+  env x :: bvl_const_compile_list env xs`];;
 hol4_overload "compile_list" "bvl_const_compile_list";;
 hol4_overload "compile_sing" "bvl_const_compile_sing";;
 

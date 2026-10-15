@@ -83,8 +83,8 @@ let no_mutcons_def = cake_define_list
    `no_mutcons (bvi_LetCall rets ticks dest xs y) <=> EVERY
   no_mutcons xs /\ no_mutcons y`;
    `no_mutcons (bvi_Return xs) <=> EVERY no_mutcons xs`;
-   `no_mutcons (Op op xs:flatLang_exp) <=> no_mutcons_op op /\ EVERY
-  no_mutcons xs`];;
+   `no_mutcons (Op op xs:flatLang_exp) <=> no_mutcons_op op /\
+  EVERY no_mutcons xs`];;
 
 let code_rel_def = cake_define
   `bvi_tmcProof_code_rel c1 c2 <=>

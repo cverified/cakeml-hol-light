@@ -421,7 +421,8 @@ let source_to_display_dec_def = cake_define_list
                                 NONE (implode "Denv") [String n])`;
    `source_to_display_dec_list [] = []`;
    `source_to_display_dec_list (x :: xs) =
-        source_to_display_dec x :: source_to_display_dec_list xs`];;
+        source_to_display_dec x :: source_to_display_dec_list
+          xs`];;
 
 (* flatLang *)
 
@@ -984,8 +985,8 @@ let data_prog_to_display_def = cake_define_list
    `data_prog_to_display_list k ns (x :: xs) =
         (match k with
           0 -> [] | SUC k ->
-        data_prog_to_display k ns x :: data_prog_to_display_list
-          k ns xs)`];;
+        data_prog_to_display k ns x ::
+          data_prog_to_display_list k ns xs)`];;
 
 let data_fun_to_display_def = cake_define
   `data_fun_to_display names (n,argc,body) =
@@ -1481,8 +1482,8 @@ let default_tap_config_def = cake_define
 
 let map_to_append_def = cake_define_list
   [`map_to_append f [] = misc_Nil`;
-   `map_to_append f (x :: xs) = Append (List (f x)) (map_to_append f
-  xs)`];;
+   `map_to_append f (x :: xs) = Append (List (f x)) (map_to_append
+  f xs)`];;
 
 let source_to_strs_def = cake_define
   `source_to_strs decs =

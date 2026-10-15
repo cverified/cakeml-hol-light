@@ -377,7 +377,8 @@ let vs_depth_def = cake_define_list
   [`vs_depth (Block ts t ls:dataSem_v) = vs_depth_list ls`;
    `vs_depth _22 = 0`;
    `vs_depth_list [] = 0`;
-   `vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list xs)`];;
+   `vs_depth_list (x :: xs) = MAX (1 + vs_depth x) (vs_depth_list
+  xs)`];;
 
 let eq_code_stack_max_def = cake_define
   `eq_code_stack_max n tsz =
@@ -500,8 +501,8 @@ let do_space_def = cake_define
 
 let size_of_stack_frame_def = cake_define_list
   [`size_of_stack_frame (Env n _27:dataSem_stack) = n`;
-   `size_of_stack_frame (dataSem_Exc n _28 _29) = OPTION_MAP ((+) 3)
-  n`];;
+   `size_of_stack_frame (dataSem_Exc n _28 _29) = OPTION_MAP ((+)
+  3) n`];;
 
 let size_of_stack_def = cake_define
   `size_of_stack = FOLDR (OPTION_MAP2 (+) o size_of_stack_frame)
@@ -646,8 +647,8 @@ let lim_safe_part_def = cake_define_list
             i DIV (arch_size lims DIV (&8)) + 1 < 2 EXP
               limits_length_limit lims /\
             small_num (limits_arch_64_bit lims) (&i))`;
-   `lim_safe_part lims (W64 w:const_part) <=> 1 < limits_length_limit
-  lims`];;
+   `lim_safe_part lims (W64 w:const_part) <=> 1 <
+  limits_length_limit lims`];;
 
 let lim_safe_def = cake_define
   `lim_safe lims x2 xs =
@@ -1400,9 +1401,9 @@ hol4_overload "get_var" "dataSem_get_var";;
 let get_vars_def = cake_define_list
   [`dataSem_get_vars [] s = SOME []`;
    `dataSem_get_vars (v :: vs) s =
-         (match get_var v s with NONE -> NONE | SOME x -> (match
-           dataSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME
-           (x :: xs)))`];;
+         (match get_var v s with NONE -> NONE | SOME x ->
+           (match dataSem_get_vars vs s with NONE -> NONE | SOME xs
+           -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "dataSem_get_vars";;
 
 let set_var_def = cake_define
@@ -1677,10 +1678,11 @@ let evaluate_def = cake_define_list
                               (SOME (Rerr (Rabort Rtype_error)),s2))
                                 | (SOME (Rerr (Rraise x)),s2) ->
                               (match handler with NONE -> (SOME
-                                (Rerr (Rraise x)),s2) | SOME (n,h) ->
-                                dataSem_evaluate (h,dataSem_set_var n
-                                x s2)) | (NONE,s) -> (SOME (Rerr
-                                (Rabort Rtype_error)),s) | res ->
+                                (Rerr (Rraise x)),s2) | SOME (n,h)
+                                -> dataSem_evaluate
+                                (h,dataSem_set_var n x s2)) |
+                                (NONE,s) -> (SOME (Rerr (Rabort
+                                Rtype_error)),s) | res ->
                                 res)))))))`];;
 hol4_overload "evaluate" "dataSem_evaluate";;
 

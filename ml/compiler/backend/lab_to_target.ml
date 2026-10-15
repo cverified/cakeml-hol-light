@@ -138,8 +138,8 @@ let enc_lines_again_def = cake_define_list
              let bs = enc (lab_inst w1 a) in
              let l1 = MAX (LENGTH bs) l in
                enc_lines_again labs ffis (pos + l1) enc xs
-                 ((labLang_LabAsm a w1 bs l1) :: acc,(ok /\ (l1 =
-                   l))))`];;
+                 ((labLang_LabAsm a w1 bs l1) :: acc,(ok /\ (l1
+                   = l))))`];;
 
 let enc_secs_again_def = cake_define_list
   [`enc_secs_again pos labs ffis enc [] = ([],T)`;
@@ -222,8 +222,8 @@ let pad_section_def = cake_define_list
          pad_section nop xs (labLang_Asm x (pad_bytes bytes len
            nop) len :: aux)`;
    `pad_section nop (labLang_LabAsm y w bytes len :: xs) aux =
-         pad_section nop xs (labLang_LabAsm y w (pad_bytes bytes
-           len nop) len :: aux)`];;
+         pad_section nop xs (labLang_LabAsm y w (pad_bytes
+           bytes len nop) len :: aux)`];;
 
 let pad_code_def = cake_define_list
   [`pad_code nop [] = []`;
@@ -354,9 +354,9 @@ let find_ffi_names_def = cake_define_list
    `find_ffi_names (Section k (x :: xs) :: rest) =
        (match x with labLang_LabAsm (labLang_CallFFI s) _40 _41 _42
          ->
-           list_add_if_fresh (ExtCall s) (find_ffi_names (Section
-             k xs :: rest)) | _43 -> find_ffi_names (Section k xs ::
-             rest))`];;
+           list_add_if_fresh (ExtCall s) (find_ffi_names
+             (Section k xs :: rest)) | _43 -> find_ffi_names
+             (Section k xs :: rest))`];;
 
 let get_memop_info_def = cake_define_list
   [`get_memop_info asm_Load = (MappedRead,((n2w 0):word8))`;

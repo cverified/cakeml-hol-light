@@ -147,8 +147,8 @@ let left_insert1_def = cake_define_list
   [`left_insert1 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert1 pt (Nd (n,l0) subs) =
          (match subs with
-             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [x]
-               -> mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n
+             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] |
+               [x] -> mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n
                (left_insert1 pt x :: xs))`];;
 
 (* HOL4 ML code, not ported:
@@ -200,9 +200,9 @@ let left_insert2_def = cake_define_list
   [`left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert2 pt (Nd (n,l0) subs) =
          (match subs with
-             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] | [Nd
-               _6 [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x :: ys ->
-               mkNd n (left_insert2 pt x :: ys))`];;
+             [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] |
+               [Nd _6 [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x ::
+               ys -> mkNd n (left_insert2 pt x :: ys))`];;
 
 (* the situation with DType is similar to that with Eapp and Ebase.
 
@@ -256,8 +256,8 @@ let left_insert_def = cake_define_list
            else
            match subs with
                [c0] -> mkNd p [mkNd p [c]; sep; c0] | [p'; s';
-                 c'] -> mkNd p [left_insert p' p sep c; s'; c'] | _8
-                 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
+                 c'] -> mkNd p [left_insert p' p sep c; s'; c'] |
+                 _8 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
 
 (* HOL4 ML code, not ported:
 fun has_const c = assert (Lib.can (find_term (same_const c)) o concl)

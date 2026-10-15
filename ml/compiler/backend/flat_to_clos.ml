@@ -431,8 +431,8 @@ hol4_overload "compile" "flat_to_clos_compile";;
 
 let compile_decs_def = cake_define_list
   [`flat_to_clos_compile_decs [] = []`;
-   `flat_to_clos_compile_decs (e :: xs) = flat_to_clos_compile [] [e]
-  ++ flat_to_clos_compile_decs xs`];;
+   `flat_to_clos_compile_decs (e :: xs) = flat_to_clos_compile []
+  [e] ++ flat_to_clos_compile_decs xs`];;
 hol4_overload "compile_decs" "flat_to_clos_compile_decs";;
 
 let compile_prog_def = cake_define

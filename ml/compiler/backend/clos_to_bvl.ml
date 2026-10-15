@@ -654,8 +654,9 @@ let compile_common_def = cake_define
 let add_src_names_def = cake_define_list
   [`add_src_names n [] l = l`;
    `add_src_names n (x :: xs) l =
-      add_src_names (n + 2) xs (sptree_insert n (mlstring_concat
-        [x; implode "_clos"]) (sptree_insert (n + 1) x l))`];;
+      add_src_names (n + 2) xs (sptree_insert n
+        (mlstring_concat [x; implode "_clos"]) (sptree_insert (n +
+        1) x l))`];;
 
 let get_src_names_def = cake_define_list
   [`get_src_names [] l = l`;
@@ -682,8 +683,8 @@ let get_src_names_def = cake_define_list
    `get_src_names [(Letrec names loc_opt _22 funs x:bvl_exp)] l =
       (let l0 = get_src_names (MAP SND funs) l in
        let l1 = get_src_names [x] l0 in
-         match loc_opt with NONE -> l1 | SOME n -> add_src_names
-           n names l1)`];;
+         match loc_opt with NONE -> l1 | SOME n ->
+           add_src_names n names l1)`];;
 
 let get_src_names_sing_def = cake_define_list
   [`get_src_names_sing (closLang_If _23 x y z) l =
@@ -760,8 +761,8 @@ let extract_name_def = cake_define_list
   [`extract_name [] = (0,[])`;
    `extract_name (x :: xs) =
       (match (some (\n. ?t. x = Op t (closLang_IntOp
-        (closLang_Const (&n))) [])) with NONE -> (0,x :: xs) | SOME n
-        -> (n,(if xs = [] then [x] else xs)))`];;
+        (closLang_Const (&n))) [])) with NONE -> (0,x :: xs) | SOME
+        n -> (n,(if xs = [] then [x] else xs)))`];;
 
 let compile_inc_def = cake_define
   `clos_to_bvl_compile_inc max_app (es,prog) =

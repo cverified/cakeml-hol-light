@@ -189,7 +189,8 @@ let infer_deBruijn_subst_def = cake_define_list
       Infer_Tuvar n`;
    `infer_deBruijn_subst_list s [] = []`;
    `infer_deBruijn_subst_list s (t :: ts) =
-      infer_deBruijn_subst s t :: infer_deBruijn_subst_list s ts`];;
+      infer_deBruijn_subst s t :: infer_deBruijn_subst_list s
+        ts`];;
 
 let type_name_check_subst_def = cake_define_list
   [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
@@ -293,7 +294,8 @@ let type_name_check_sub_def = cake_define_list
                       with
                        (M_success ts',s) -> (M_success (t' ::
                          ts'),s) | (M_failure x,s) -> (M_failure
-                         x,s)) | (M_failure x,s) -> (M_failure x,s))`];;
+                         x,s)) | (M_failure x,s) -> (M_failure
+                         x,s))`];;
 
 let find_dup_def = cake_define_list
   [`find_dup [] = NONE`;

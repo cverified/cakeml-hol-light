@@ -100,9 +100,9 @@ let asm_fetch_aux_def = cake_define_list
   [`asm_fetch_aux pos [] = NONE`;
    `asm_fetch_aux pos (Section k [] :: xs) = asm_fetch_aux pos xs`;
    `asm_fetch_aux pos (Section k (y :: ys) :: xs) =
-         (if is_Label y then asm_fetch_aux pos ((Section k ys) ::
-           xs) else if pos = (0:num) then SOME y else asm_fetch_aux
-           (pos - 1) ((Section k ys) :: xs))`];;
+         (if is_Label y then asm_fetch_aux pos ((Section k ys)
+           :: xs) else if pos = (0:num) then SOME y else
+           asm_fetch_aux (pos - 1) ((Section k ys) :: xs))`];;
 
 let asm_fetch_def = cake_define
   `asm_fetch s = asm_fetch_aux (pc s) (state_code s)`;;
@@ -138,8 +138,8 @@ let binop_upd_def = cake_define_list
   w1 w2))`;
    `labSem_binop_upd r Or w1 w2 = upd_reg r (wordLang_Word (word_or
   w1 w2))`;
-   `labSem_binop_upd r Xor w1 w2 = upd_reg r (wordLang_Word (word_xor
-  w1 w2))`];;
+   `labSem_binop_upd r Xor w1 w2 = upd_reg r (wordLang_Word
+  (word_xor w1 w2))`];;
 hol4_overload "binop_upd" "labSem_binop_upd";;
 
 let arith_upd_def = cake_define_list
@@ -199,8 +199,8 @@ let arith_upd_def = cake_define_list
            (wordLang_Word w2,wordLang_Word w3) ->
              upd_reg r4 (wordLang_Word (if ~(w2i (w2 - w3) = w2i w2
                - w2i w3) then (n2w 1) else (n2w 0)))
-                (upd_reg r1 (wordLang_Word (w2 - w3)) s) | _20 ->
-                  assert F s)`];;
+                (upd_reg r1 (wordLang_Word (w2 - w3)) s) | _20
+                  -> assert F s)`];;
 hol4_overload "arith_upd" "labSem_arith_upd";;
 
 let upd_fp_reg_def = cake_define
@@ -371,8 +371,8 @@ let asm_code_length_def = cake_define_list
   [`asm_code_length [] = 0`;
    `asm_code_length (Section k [] :: xs) = asm_code_length xs`;
    `asm_code_length (Section k (y :: ys) :: xs) =
-         asm_code_length ((Section k ys) :: xs) + (if is_Label y
-           then 0 else 1:num)`];;
+         asm_code_length ((Section k ys) :: xs) + (if is_Label
+           y then 0 else 1:num)`];;
 
 let lab_to_loc_def = cake_define
   `lab_to_loc (labLang_Lab n1 n2) = Loc n1 n2`;;
@@ -409,10 +409,10 @@ let get_lab_after_def = cake_define_list
   [`get_lab_after pos [] = NONE`;
    `get_lab_after pos (Section k [] :: xs) = get_lab_after pos xs`;
    `get_lab_after pos (Section k (y :: ys) :: xs) =
-         (if is_Label y then get_lab_after pos ((Section k ys) ::
-           xs) else if pos = (0:num) then next_label ((Section k ys)
-           :: xs) else get_lab_after (pos - 1) ((Section k ys) ::
-           xs))`];;
+         (if is_Label y then get_lab_after pos ((Section k ys)
+           :: xs) else if pos = (0:num) then next_label ((Section k
+           ys) :: xs) else get_lab_after (pos - 1) ((Section k ys)
+           :: xs))`];;
 
 let get_ret_Loc_def = cake_define
   `get_ret_Loc s = get_lab_after (pc s) (state_code s)`;;

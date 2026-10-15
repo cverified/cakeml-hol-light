@@ -145,8 +145,8 @@ let to_gen_heap_address_def = cake_define_list
           gc_shared_Data (Protected (gc_shared_Pointer ptr a)) else
             if gen_gc_partial_conf_refs_start conf <= ptr then
           gc_shared_Data (Protected (gc_shared_Pointer ptr a)) else
-          gc_shared_Pointer (ptr - gen_gc_partial_conf_gen_start
-            conf) (Real a))`];;
+          gc_shared_Pointer (ptr -
+            gen_gc_partial_conf_gen_start conf) (Real a))`];;
 
 let to_gen_conf_def = cake_define
   `to_gen_conf (conf:'a gen_gc_partial_conf) =

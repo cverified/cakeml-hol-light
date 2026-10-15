@@ -139,8 +139,9 @@ let mem_store_byte_aux_def = cake_define
 let write_bytearray_def = cake_define_list
   [`write_bytearray a [] m dm be' = m`;
    `write_bytearray a (b :: bs) m dm be' =
-         (match mem_store_byte_aux (write_bytearray (a + (n2w 1))
-           bs m dm be') dm be' a b with SOME m -> m | NONE -> m)`];;
+         (match mem_store_byte_aux (write_bytearray (a + (n2w
+           1)) bs m dm be') dm be' a b with SOME m -> m | NONE ->
+           m)`];;
 
 let stack_frame_INDUCT,stack_frame_RECURSION = define_datatype
   "stack_frame = StackFrame (num option) ((num#'a word_loc) list) \
@@ -323,9 +324,9 @@ let get_var_def = cake_define
 let get_vars_def = cake_define_list
   [`(\x y. strcat x y) (wordSem_get_vars []) s = SOME []`;
    `wordSem_get_vars (v :: vs) s =
-         (match get_var v s with NONE -> NONE | SOME x -> (match
-           wordSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME
-           (x :: xs)))`];;
+         (match get_var v s with NONE -> NONE | SOME x ->
+           (match wordSem_get_vars vs s with NONE -> NONE | SOME xs
+           -> SOME (x :: xs)))`];;
 hol4_overload "get_vars" "wordSem_get_vars";;
 
 let set_var_def = cake_define
@@ -369,8 +370,8 @@ let word_exp_def = cake_define_list
    `wordSem_word_exp s (wordLang_Shift sh wexp wexp1) =
          (match (wordSem_word_exp s wexp,wordSem_word_exp s
            wexp1) with (SOME (wordLang_Word w),SOME (wordLang_Word
-           w1)) -> OPTION_MAP wordLang_Word (word_sh sh w (w2n w1)) |
-           _27 -> NONE)`];;
+           w1)) -> OPTION_MAP wordLang_Word (word_sh sh w (w2n w1))
+           | _27 -> NONE)`];;
 hol4_overload "word_exp" "wordSem_word_exp";;
 
 (* Flushes the locals and (optionally) the store *)
@@ -635,16 +636,16 @@ let find_code_def = cake_define_list
    `wordSem_find_code NONE args code ssize =
          (if args = [] then NONE else
            match LAST args with Loc loc 0 ->
-               (match sptree_lookup loc code with NONE -> NONE |
-                 SOME (arity,exp) -> (if LENGTH args = arity + 1 then
-                 SOME (FRONT args,exp,sptree_lookup loc ssize) else
-                 NONE)) | other -> NONE)`];;
+               (match sptree_lookup loc code with NONE -> NONE
+                 | SOME (arity,exp) -> (if LENGTH args = arity + 1
+                 then SOME (FRONT args,exp,sptree_lookup loc ssize)
+                 else NONE)) | other -> NONE)`];;
 hol4_overload "find_code" "wordSem_find_code";;
 
 let enc_stack_def = cake_define_list
   [`wordSem_enc_stack [] = []`;
-   `wordSem_enc_stack (StackFrame n _47 l handler :: st) = MAP SND l
-  ++ wordSem_enc_stack st`];;
+   `wordSem_enc_stack (StackFrame n _47 l handler :: st) = MAP SND
+  l ++ wordSem_enc_stack st`];;
 hol4_overload "enc_stack" "wordSem_enc_stack";;
 
 let dec_stack_def = cake_define
@@ -1206,14 +1207,15 @@ let evaluate_def = cake_define_list
                               (if ~(x = Loc l1 l2) then (SOME
                                 wordSem_Error,s2) else
                               (if domain (wordSem_state_locals
-                                s2) = domain (FST envs') UNION domain
-                                (SND envs') then wordSem_evaluate
-                                (h,set_var n y s2) else (SOME
-                                wordSem_Error,s2)))) | (NONE,s) ->
-                                (SOME wordSem_Error,s) | (SOME (Break
-                                _105),s) -> (SOME wordSem_Error,s) |
-                                (SOME (Continue _106),s) -> (SOME
-                                wordSem_Error,s) | res -> res)))))))`];;
+                                s2) = domain (FST envs') UNION
+                                domain (SND envs') then
+                                wordSem_evaluate (h,set_var n y s2)
+                                else (SOME wordSem_Error,s2)))) |
+                                (NONE,s) -> (SOME wordSem_Error,s)
+                                | (SOME (Break _105),s) -> (SOME
+                                wordSem_Error,s) | (SOME (Continue
+                                _106),s) -> (SOME wordSem_Error,s)
+                                | res -> res)))))))`];;
 hol4_overload "evaluate" "wordSem_evaluate";;
 
 (* We prove that the clock never increases and that termdep is constant.

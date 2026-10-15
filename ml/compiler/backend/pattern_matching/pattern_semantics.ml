@@ -125,9 +125,9 @@ let match_def = cake_define_list
         (match pmatch refs p v with
            PMatchSuccess ->
              (match pattern_semantics_match refs rows v with
-               NONE -> NONE | SOME _6 -> SOME (MatchSuccess e)) |
-                 PMatchFailure -> pattern_semantics_match refs rows v
-                 | PTypeFailure -> NONE)`];;
+               NONE -> NONE | SOME _6 -> SOME (MatchSuccess e))
+                 | PMatchFailure -> pattern_semantics_match refs
+                 rows v | PTypeFailure -> NONE)`];;
 
 (* semantics of output *)
 
@@ -167,8 +167,8 @@ let dt_eval_guard_def = cake_define_list
          (match dt_eval_guard refs v g1 with NONE -> NONE | SOME
            T -> dt_eval_guard refs v g2 | SOME F -> SOME F)`;
    `dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
-         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME
-           T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
+         (match dt_eval_guard refs v g1 with NONE -> NONE |
+           SOME T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
 let dt_eval_def = cake_define_list
   [`dt_eval refs _12 (pattern_semantics_Leaf k) = SOME (MatchSuccess

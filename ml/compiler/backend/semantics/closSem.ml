@@ -203,7 +203,8 @@ let make_const_def = cake_define_list
    `make_const (ConstStr s) = closSem_ByteVector (MAP (n2w o ORD)
   (explode s))`;
    `make_const (ConstWord64 w) = Word64 w`;
-   `make_const (ConstCons t cs) = closSem_Block t (MAP make_const cs)`];;
+   `make_const (ConstCons t cs) = closSem_Block t (MAP make_const
+  cs)`];;
 
 let do_int_app_def = cake_define
   `closSem_do_int_app x1 x2 =
@@ -736,7 +737,8 @@ let check_loc_def = cake_define_list
   [`check_loc (max_app:num) NONE loc num_params num_args so_far <=>
         num_args <= max_app`;
    `check_loc max_app (SOME p) loc num_params num_args so_far <=>
-        num_params = num_args /\ so_far = (0:num) /\ SOME p = loc`];;
+        num_params = num_args /\ so_far = (0:num) /\ SOME p =
+          loc`];;
 
 let app_kind_INDUCT,app_kind_RECURSION = define_datatype
   "app_kind = Partial_app (closSem_v) | Full_app (closLang_exp) \
@@ -835,8 +837,8 @@ let exp_alt_size_def = cake_define_list
    `closSem_exp2_alt_size (a0,a1) = 1 + (a0 + closSem_exp_alt_size
   a1)`;
    `closSem_exp3_alt_size [] = 0`;
-   `closSem_exp3_alt_size (a0 :: a1) = 1 + (closSem_exp_alt_size a0 +
-  closSem_exp3_alt_size a1)`];;
+   `closSem_exp3_alt_size (a0 :: a1) = 1 + (closSem_exp_alt_size a0
+  + closSem_exp3_alt_size a1)`];;
 hol4_overload "exp1_alt_size" "closSem_exp1_alt_size";;
 hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;

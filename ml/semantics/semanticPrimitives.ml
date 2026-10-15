@@ -458,9 +458,9 @@ hol4_overload "v_to_list" "semanticPrimitives_v_to_list";;
 let list_to_v_def = cake_define_list
   [`semanticPrimitives_list_to_v [] = semanticPrimitives_Conv (SOME
   (TypeStamp (implode "[]") list_type_num)) []`;
-   `semanticPrimitives_list_to_v (x :: xs) = semanticPrimitives_Conv
-  (SOME (TypeStamp (implode "::") list_type_num)) [x;
-  semanticPrimitives_list_to_v xs]`];;
+   `semanticPrimitives_list_to_v (x :: xs) =
+  semanticPrimitives_Conv (SOME (TypeStamp (implode "::")
+  list_type_num)) [x; semanticPrimitives_list_to_v xs]`];;
 hol4_overload "list_to_v" "semanticPrimitives_list_to_v";;
 
 let v_to_char_list_def = cake_define
@@ -591,7 +591,8 @@ let concrete_v_def = cake_define_list
            v_ vs -> concrete_v_list vs | semanticPrimitives_Vectorv
            vs -> concrete_v_list vs | _48 -> F)`;
    `concrete_v_list [] <=> T`;
-   `concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list vs`];;
+   `concrete_v_list (v :: vs) <=> concrete_v v /\ concrete_v_list
+  vs`];;
 
 let compiler_agrees_def = cake_define
   `compiler_agrees (f:(num#num)#semanticPrimitives_v#dec
@@ -904,8 +905,8 @@ let do_test_def = cake_define_list
    `semanticPrimitives_do_test (ast_AltCompare cmp) ty v1 v2 =
       (match (ty,semanticPrimitives_dest_Litv
         v1,semanticPrimitives_dest_Litv v2) with (ast_StrT,SOME
-        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp
-        s t) | _62 -> Eq_type_error)`];;
+        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T
+        cmp s t) | _62 -> Eq_type_error)`];;
 hol4_overload "do_test" "semanticPrimitives_do_test";;
 
 let do_arith_def = cake_define

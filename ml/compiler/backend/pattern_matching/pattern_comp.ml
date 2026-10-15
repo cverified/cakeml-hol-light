@@ -42,7 +42,8 @@ let is_Or_row_def = cake_define
 let take_until_Any_def = cake_define_list
   [`take_until_Any [] = []`;
    `take_until_Any ((p,x) :: xs) =
-      (if is_Any p then [(p,x)] else (p,x) :: take_until_Any xs)`];;
+      (if is_Any p then [(p,x)] else (p,x) :: take_until_Any
+        xs)`];;
 
 let move_const_up_def = cake_define
   `move_const_up rows =
@@ -119,8 +120,8 @@ let walk_def = cake_define_list
         xs then pattern_comp_walk ns (EL n xs) refs else NONE) |
         (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
                         match FLOOKUP refs p with SOME y ->
-                          pattern_comp_walk ns y refs | _10 -> NONE)
-                          | _11 -> NONE)`];;
+                          pattern_comp_walk ns y refs | _10 ->
+                          NONE) | _11 -> NONE)`];;
 hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = cake_define

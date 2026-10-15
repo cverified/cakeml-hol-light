@@ -134,8 +134,8 @@ let store_v_vs_def = cake_define_list
   = vs`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_W8array
   _13) = []`;
-   `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk _14
-  v) = [v]`];;
+   `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk
+  _14 v) = [v]`];;
 hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
 let store_vs_def = cake_define

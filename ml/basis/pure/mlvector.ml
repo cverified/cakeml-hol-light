@@ -61,8 +61,8 @@ hol4_overload "foldli" "mlvector_foldli";;
 
 let foldl_aux_def = cake_define_list
   [`foldl_aux f e vec n 0 = e`;
-   `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n)) vec
-  (n + 1) len`];;
+   `foldl_aux f e vec n (SUC len) = foldl_aux f (f e (sub vec n))
+  vec (n + 1) len`];;
 
 let foldl_def = cake_define
   `mlvector_foldl f e vec = foldl_aux f e vec 0 (length vec)`;;
@@ -71,8 +71,8 @@ hol4_overload "foldl" "mlvector_foldl";;
 
 let foldri_aux_def = cake_define_list
   [`foldri_aux f e vec 0 = e`;
-   `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec len)
-  e) vec len`];;
+   `foldri_aux f e vec (SUC len) = foldri_aux f (f len (sub vec
+  len) e) vec len`];;
 
 let foldri_def = cake_define
   `foldri f e vec = foldri_aux f e vec (length vec)`;;
@@ -80,8 +80,8 @@ let foldri_def = cake_define
 
 let foldr_aux_def = cake_define_list
   [`foldr_aux f e vec 0 = e`;
-   `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e) vec
-  len`];;
+   `foldr_aux f e vec (SUC len) = foldr_aux f (f (sub vec len) e)
+  vec len`];;
 
 let foldr_def = cake_define
   `foldr f e vec = foldr_aux f e vec (length vec)`;;
@@ -101,8 +101,8 @@ hol4_overload "findi" "mlvector_findi";;
 let find_aux_def = cake_define_list
   [`find_aux f vec n 0 = NONE`;
    `find_aux f vec n (SUC len) =
-      (if f (sub vec n) then SOME (sub vec n) else find_aux f vec
-        (n + 1) len)`];;
+      (if f (sub vec n) then SOME (sub vec n) else find_aux f
+        vec (n + 1) len)`];;
 
 let find_def = cake_define
   `find f vec = find_aux f vec 0 (length vec)`;;
@@ -120,7 +120,8 @@ let exists_def = cake_define
 let all_aux_def = cake_define_list
   [`all_aux f vec n 0 = T`;
    `all_aux f vec n (SUC len) =
-        (if f (sub vec n) then all_aux f vec (n + 1) len else F)`];;
+        (if f (sub vec n) then all_aux f vec (n + 1) len else
+          F)`];;
 
 let all_def = cake_define
   `all f vec = all_aux f vec 0 (length vec)`;;

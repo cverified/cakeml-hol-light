@@ -258,8 +258,8 @@ let num_tvs_def = cake_define_list
   [`(num_tvs:tenv_val_exp->num) typeSystem_Empty = ((0:num))`;
    `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_tvar tvs tenvE) =
   (tvs + num_tvs tenvE)`;
-   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t tenvE)
-  = (num_tvs tenvE)`];;
+   `(num_tvs:tenv_val_exp->num) (typeSystem_Bind_name n tvs t
+  tenvE) = (num_tvs tenvE)`];;
 
 
 (*val bind_var_list : nat -> list (varN * t) -> tenv_val_exp ->
@@ -446,8 +446,8 @@ let type_name_subst_def = cake_define_list
   list#t)namespace->ast_t->t) tenvT (Atapp ts tc) =
        (let args = (MAP (type_name_subst tenvT) ts) in
       (match nsLookup tenvT tc with
-        SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs args))
-          t | NONE -> Ttup args))`];;
+        SOME (tvs,t) -> type_subst (alist_to_fmap (ZIP tvs
+          args)) t | NONE -> Ttup args))`];;
 
 (* Check that a type definition defines no already defined types or
    duplicate

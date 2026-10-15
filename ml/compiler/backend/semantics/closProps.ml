@@ -458,8 +458,8 @@ let clo_to_env_def = cake_define_list
 let clo_to_partial_args_def = cake_define_list
   [`clo_to_partial_args (Closure _94 args _95 _96 _97:closSem_v) =
   args`;
-   `clo_to_partial_args (Recclosure _98 args _99 _100 _101:closSem_v)
-  = args`];;
+   `clo_to_partial_args (Recclosure _98 args _99 _100
+  _101:closSem_v) = args`];;
 
 let clo_add_partial_args_def = cake_define_list
   [`clo_add_partial_args args (Closure x1 args' x2 x3 x4:closSem_v) =
@@ -893,8 +893,8 @@ let no_Labels_def = cake_define_list
    `no_Labels (closLang_Fn _200 _201 _202 _203 e) <=> no_Labels e`;
    `no_Labels (Letrec _204 _205 _206 es e:flatLang_exp) <=> EVERY
   no_Labels (MAP SND es) /\ no_Labels e`;
-   `no_Labels (closLang_Op _207 op es) <=> (!n. ~(op = closLang_Label
-  n)) /\ EVERY no_Labels es`];;
+   `no_Labels (closLang_Op _207 op es) <=> (!n. ~(op =
+  closLang_Label n)) /\ EVERY no_Labels es`];;
 
 let app_call_dests_def = cake_define_list
   [`app_call_dests opt [] = {}`;

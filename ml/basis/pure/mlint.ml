@@ -36,8 +36,9 @@ val exp_tm = rhs (concl exp_thm)
 let num_to_chars_def = cake_define_list
   [`num_to_chars i 0 k acc = num_to_chars (i DIV exp_tm)
           exp_for_dec_enc ((i MOD exp_tm) + k) acc`;
-   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then toChar k
-  :: acc else num_to_chars i j (k DIV 10) (toChar (k MOD 10) :: acc))`];;
+   `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then toChar
+  k :: acc else num_to_chars i j (k DIV 10) (toChar (k MOD 10) ::
+  acc))`];;
 
 let int_to_string_def = cake_define
   `int_to_string neg_char i =
@@ -77,8 +78,8 @@ let fromChars_range_def = cake_define_list
   [`fromChars_range l 0 str = SOME 0`;
    `fromChars_range l (SUC n) str =
       (let rest = OPTION_MAP ((*) 10) (fromChars_range l n str) and
-          head = fromChar (strsub str (l + n)) in OPTION_MAP2 (+)
-            rest head)`];;
+          head = fromChar (strsub str (l + n)) in OPTION_MAP2
+            (+) rest head)`];;
 
 (* TERMINATION: wf_rel_tac `measure FST` \\ rw [padLen_DEC_eq] *)
 let fromChars_unsafe_def = cake_define

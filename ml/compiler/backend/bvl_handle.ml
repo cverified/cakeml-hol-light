@@ -126,9 +126,10 @@ let handle_simp_def = cake_define_list
                               (make_handle b3 x2 l) | SOME (INL
                                 (b1,b2,b3)) -> If (handle_simp b1)
                               (make_handle b2 x2 l)
-                              (handle_simp b3) | NONE -> (Handle
-                                (handle_simp x1) (handle_adj_vars 1 l
-                                (handle_simp x2))))))`];;
+                              (handle_simp b3) | NONE ->
+                                (Handle (handle_simp x1)
+                                (handle_adj_vars 1 l (handle_simp
+                                x2))))))`];;
 
 let SmartLet_def = cake_define
   `SmartLet xs x = (if NULL xs then x else Let xs x)`;;

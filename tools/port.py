@@ -714,8 +714,12 @@ class Porter:
     self.ctx.vars = self.shadowing(e)
     try:
       p = hterm.Printer(self.ctx)
-      cls = [fmt(p.pr(self.annotate(cl, True), 0), indent=4, last=3)
-             for cl in hterm.conjuncts_of(e)]
+      # the last clause of the list ends in `];; and the others
+      # in `;, which is what the lines have to leave room for
+      all = hterm.conjuncts_of(e)
+      cls = [fmt(p.pr(self.annotate(cl, True), 0), indent=4,
+                 last=5 if i == len(all) - 1 else 3)
+             for i, cl in enumerate(all)]
     finally:
       self.ctx.vars = old
     return '[`' + '`;\n   `'.join(cls) + '`]'

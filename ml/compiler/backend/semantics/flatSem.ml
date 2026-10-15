@@ -191,8 +191,8 @@ hol4_overload "v_to_list" "flatSem_v_to_list";;
 let list_to_v_def = cake_define_list
   [`flatSem_list_to_v [] = Conv (SOME (nil_tag,SOME list_id)) []`;
    `flatSem_list_to_v (x :: xs) =
-        Conv (SOME (cons_tag,SOME list_id)) [x; flatSem_list_to_v
-          xs]`];;
+        Conv (SOME (cons_tag,SOME list_id)) [x;
+          flatSem_list_to_v xs]`];;
 hol4_overload "list_to_v" "flatSem_list_to_v";;
 
 let v_to_char_list_def = cake_define
@@ -270,8 +270,8 @@ let do_test_def = cake_define_list
         Eq_type_error)`;
    `flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
       (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
-        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp
-        s t) | _42 -> Eq_type_error)`];;
+        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T
+        cmp s t) | _42 -> Eq_type_error)`];;
 hol4_overload "do_test" "flatSem_do_test";;
 
 let v_to_flat_def = cake_define

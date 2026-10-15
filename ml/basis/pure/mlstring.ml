@@ -87,8 +87,8 @@ hol4_overload "toString" "chr_to_str";;
 
 let translate_aux_def = cake_define_list
   [`translate_aux f s n 0 = []`;
-   `translate_aux f s n (SUC len) = f (strsub s n) :: translate_aux f
-  s (n + 1) len`];;
+   `translate_aux f s n (SUC len) = f (strsub s n) :: translate_aux
+  f s (n + 1) len`];;
 
 let translate_def = cake_define
   `translate f s = implode (translate_aux f s 0 (strlen s))`;;
@@ -116,8 +116,8 @@ let tokens_aux_def = cake_define_list
           else tokens_aux f s [strsub s n] (n + 1) len)`;
    `tokens_aux f s (h :: t) n (SUC len) =
         (if f (strsub s n) then (implode (REVERSE (h :: t))) ::
-          (tokens_aux f s [] (n + 1) len) else tokens_aux f s (strsub
-          s n :: (h :: t)) (n + 1) len)`];;
+          (tokens_aux f s [] (n + 1) len) else tokens_aux f s
+          (strsub s n :: (h :: t)) (n + 1) len)`];;
 
 (* HOL4 ML code, not ported:
 val tokens_aux_ind = theorem"tokens_aux_ind";
@@ -160,8 +160,8 @@ let fields_aux_def = cake_define_list
   [`fields_aux f s ss n 0 = [implode (REVERSE ss)]`;
    `fields_aux f s ss n (SUC len) =
         (if f (strsub s n) then implode (REVERSE ss) ::
-          (fields_aux f s [] (n + 1) len) else fields_aux f s (strsub
-          s n :: ss) (n + 1) len)`];;
+          (fields_aux f s [] (n + 1) len) else fields_aux f s
+          (strsub s n :: ss) (n + 1) len)`];;
 
 
 let fields_def = cake_define
@@ -188,8 +188,8 @@ let str_findi_def = cake_define_wf
 let isStringThere_aux_def = cake_define_list
   [`isStringThere_aux s1 s2 s1i s2i 0 = T`;
    `isStringThere_aux s1 s2 s1i s2i (SUC len) =
-        (if strsub s1 s1i = strsub s2 s2i then isStringThere_aux
-          s1 s2 (s1i + 1) (s2i + 1) len else F)`];;
+        (if strsub s1 s1i = strsub s2 s2i then
+          isStringThere_aux s1 s2 (s1i + 1) (s2i + 1) len else F)`];;
 
 
 (*
@@ -297,8 +297,8 @@ let collate_aux_def = cake_define_list
   [`mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord`;
    `mlstring_collate_aux f s1 s2 ord n (SUC len) =
         (if f (strsub s1 n) (strsub s2 n) = EQUAL then
-          mlstring_collate_aux f s1 s2 ord (n + 1) len else f (strsub
-          s1 n) (strsub s2 n))`];;
+          mlstring_collate_aux f s1 s2 ord (n + 1) len else f
+          (strsub s1 n) (strsub s2 n))`];;
 hol4_overload "collate_aux" "mlstring_collate_aux";;
 
 let collate_def = cake_define

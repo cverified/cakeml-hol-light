@@ -99,8 +99,8 @@ let has_odd_inst_def = cake_define_list
   [`has_odd_inst [] = F`;
    `has_odd_inst (Section k [] :: xs) = has_odd_inst xs`;
    `has_odd_inst (Section k (y :: ys) :: xs) <=>
-         ~EVEN (line_length y) \/ has_odd_inst ((Section k ys) ::
-           xs)`];;
+         ~EVEN (line_length y) \/ has_odd_inst ((Section k ys)
+           :: xs)`];;
 
 let line_similar_def = cake_define
   `line_similar x1 x2 =
@@ -134,8 +134,8 @@ val code_similar_ind = theorem "code_similar_ind";
 let word_loc_val_def = cake_define_list
   [`word_loc_val p labs (wordLang_Word w) = SOME w`;
    `word_loc_val p labs (wordLang_Loc k1 k2) =
-         (match lab_lookup k1 k2 labs with NONE -> NONE | SOME q
-           -> SOME (p + n2w q))`];;
+         (match lab_lookup k1 k2 labs with NONE -> NONE | SOME
+           q -> SOME (p + n2w q))`];;
 
 let has_io_name_def = cake_define_list
   [`has_io_name index [] = F`;
@@ -201,8 +201,8 @@ let all_enc_ok_def = cake_define_list
          EVEN pos /\ all_enc_ok c labs ffis pos xs`;
    `all_enc_ok c labs ffis pos (Section k (y :: ys) :: xs) <=>
          line_ok c labs ffis pos y /\
-         all_enc_ok c labs ffis (pos + line_length y) ((Section k
-           ys) :: xs)`];;
+         all_enc_ok c labs ffis (pos + line_length y) ((Section
+           k ys) :: xs)`];;
 
 (* HOL4 ML code, not ported:
 val all_enc_ok_ind = theorem"all_enc_ok_ind";
@@ -226,8 +226,8 @@ let sec_pos_val_def = cake_define_list
    `sec_pos_val i pos (y :: ys) =
        (if is_Label y then
          sec_pos_val i (pos + line_length y) ys else if i = 0
-           then SOME pos else sec_pos_val (i - 1) (pos + line_length
-           y) ys)`];;
+           then SOME pos else sec_pos_val (i - 1) (pos +
+           line_length y) ys)`];;
 
 let good_code_def = cake_define
   `lab_to_targetProof_good_code c labs code <=>
@@ -884,7 +884,8 @@ let lines_enc_with_nop_def = cake_define_list
   [`lines_enc_with_nop enc labs ffis pos [] <=> T`;
    `lines_enc_with_nop enc labs ffis pos (l :: ls) <=>
        line_enc_with_nop enc labs ffis pos l /\
-       lines_enc_with_nop enc labs ffis (pos + line_length l) ls`];;
+       lines_enc_with_nop enc labs ffis (pos + line_length l)
+         ls`];;
 
 let all_enc_with_nop_def = cake_define_list
   [`all_enc_with_nop enc labs ffis pos [] <=> T`;
@@ -1019,7 +1020,8 @@ let even_labels_strong_def = cake_define_list
         EVEN pos /\ even_labels_strong pos ls`;
    `even_labels_strong pos (Section k (y :: ys) :: ls) <=>
        (is_Label y ==> EVEN pos) /\
-       even_labels_strong (pos + line_len y) (Section k ys :: ls)`];;
+       even_labels_strong (pos + line_len y) (Section k ys ::
+         ls)`];;
 
 (*
 val tm = ``[Label 0 1 0; Label 0 2 1; Label 0 3 0; Label 0 4 1]``;
@@ -3380,8 +3382,8 @@ val () = PolyML.SaveState.loadState "lab_to_target_syntactic";
 
 let set_bytes_def = cake_define_list
   [`set_bytes a be' [] = (n2w 0)`;
-   `set_bytes a be' (b :: bs) = set_byte a b (set_bytes (a + (n2w 1))
-  be' bs) be'`];;
+   `set_bytes a be' (b :: bs) = set_byte a b (set_bytes (a + (n2w
+  1)) be' bs) be'`];;
 
 let make_word_def = cake_define
   `make_word be' m (a:'a word) =

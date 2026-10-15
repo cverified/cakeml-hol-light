@@ -186,8 +186,8 @@ let sorted_insert_def = cake_define_list
   [`sorted_insert (x:num) acc [] = REVERSE (x :: acc)`;
    `sorted_insert x acc (y :: ys) =
         (if x = y then REVERSE acc ++ (y :: ys) else if x > y
-          then REVERSE acc ++ (x :: y :: ys) else sorted_insert x (y
-          :: acc) ys)`];;
+          then REVERSE acc ++ (x :: y :: ys) else sorted_insert x
+          (y :: acc) ys)`];;
 
 let sorted_mem_def = cake_define_list
   [`sorted_mem (x:num) [] = F`;
@@ -899,8 +899,8 @@ let check_partial_col_def = cake_define_list
         (match sptree_lookup x t with
           SOME one -> check_partial_col f xs t ft | NONE ->
         (match sptree_lookup (f x) ft with
-          NONE -> check_partial_col f xs (sptree_insert x one t)
-            (sptree_insert (f x) one ft) | SOME one -> NONE))`];;
+          NONE -> check_partial_col f xs (sptree_insert x one
+            t) (sptree_insert (f x) one ft) | SOME one -> NONE))`];;
 
 (* The checking function, used by oracle, and also used as part of the
    correctness proof *)
@@ -946,8 +946,8 @@ let list_remap_def = cake_define_list
    `list_remap (x :: xs) (ta,fa,nv) =
         (match sptree_lookup x ta with
           SOME v -> list_remap xs (ta,fa,nv) | NONE ->
-          list_remap xs (sptree_insert x nv ta,sptree_insert nv x
-            fa,nv + 1))`];;
+          list_remap xs (sptree_insert x nv ta,sptree_insert nv
+            x fa,nv + 1))`];;
 
 let mk_bij_aux_def = cake_define_list
   [`mk_bij_aux (reg_alloc_Delta writes reads) tfn =
@@ -1205,8 +1205,8 @@ let neg_first_match_col_def = cake_define_list
           c.
           match c with
             Fixed m ->
-              (if MEM m bads \/ m < k then neg_first_match_col k
-                bads xs else st_ex_return (SOME m)) | _17 ->
+              (if MEM m bads \/ m < k then neg_first_match_col
+                k bads xs else st_ex_return (SOME m)) | _17 ->
                 neg_first_match_col k bads xs)`];;
 
 let neg_biased_pref_def = cake_define

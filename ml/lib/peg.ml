@@ -66,6 +66,6 @@ hol4_overload "pegf" "peg_pegf";;
 
 let choicel_def = cake_define_list
   [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;
-   `peg_choicel (h :: t) = peg_choice h (peg_choicel t) (\s. sum_CASE
-  s I I)`];;
+   `peg_choicel (h :: t) = peg_choice h (peg_choicel t) (\s.
+  sum_CASE s I I)`];;
 hol4_overload "choicel" "peg_choicel";;
