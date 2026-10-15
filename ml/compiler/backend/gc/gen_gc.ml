@@ -34,8 +34,8 @@ let gc_move_def = cake_define_list
          (match heap_lookup ptr (gc_state_heap state) with SOME
            (ForwardPointer ptr _3 l) -> (gc_shared_Pointer ptr d,state)
            | SOME (DataElement xs l dd) ->
-           (let ok = gc_state_ok state /\ l + 1 <= gc_state_n state
-             in
+           (let ok = (gc_state_ok state /\ l + 1 <= gc_state_n
+             state) in
            let n = gc_state_n state - (l + 1) in
             if gen_gc_conf_isRef conf dd then
               let r4 = (DataElement xs l dd) :: gc_state_r4 state in
@@ -80,8 +80,8 @@ let gc_move_data_def = cake_define_wf
           (let (xs,state) = gen_gc_gc_move_list conf state xs in
           let h1 = gc_state_h1 state ++ [DataElement xs l d] in
           let h2 = TL (gc_state_h2 state) in
-          let ok = gc_state_ok state /\ ~(gc_state_h2 state = []) /\
-            (HD (gc_state_h2 state) = h) in
+          let ok = (gc_state_ok state /\ ~(gc_state_h2 state = []) /\
+            (HD (gc_state_h2 state) = h)) in
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
               state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;

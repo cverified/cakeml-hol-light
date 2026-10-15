@@ -100,7 +100,7 @@ let to_bvl_all_def = cake_define
        (clos_to_bvl_config_max_app c0) es0 in
      let ps = ps ++ [((implode "after clos_mti"),Clos es [])] in
      let loc = clos_to_bvl_config_next_loc c0 + MAX 1 (LENGTH es) in
-     let loc = if loc MOD 2 = 0 then loc else loc + 1 in
+     let loc = (if loc MOD 2 = 0 then loc else loc + 1) in
      let (n,es) = renumber_code_locs_list loc es in
      let ps = ps ++ [((implode "after clos_number"),Clos es [])] in
      let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf

@@ -117,6 +117,12 @@ let OPTION_APPLY = new_recursive_definition option_RECURSION
   `(OPTION_APPLY NONE (x:A) = (NONE:B option)) /\
    (OPTION_APPLY (SOME f) x = SOME (f x))`;;
 
+(* HOL4's OPTION_GUARD: the condition of a computation in the
+   option monad (cmlPEG overloads assert with it) *)
+
+let OPTION_GUARD = new_definition
+  `OPTION_GUARD b = if b then SOME one else NONE`;;
+
 (* HOL4's some binder: the choice that gives NONE when there is
    nothing to choose *)
 

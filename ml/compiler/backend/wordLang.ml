@@ -302,7 +302,7 @@ let max_var_def = cake_define
         | (Seq s1 s2) -> MAX (max_var s1) (max_var s2)
         | (wordLang_MustTerminate s1) -> max_var s1
         | (If cmp r1 ri e2 e3) ->
-       (let r = match ri with Reg r -> MAX r r1 | _11 -> r1 in
+       (let r = (match ri with Reg r -> MAX r r1 | _11 -> r1) in
          max3 r (max_var e2) (max_var e3))
         | (Alloc num' numset) ->
        MAX num' (cutsets_max numset)

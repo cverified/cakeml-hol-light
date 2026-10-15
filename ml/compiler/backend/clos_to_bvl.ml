@@ -427,8 +427,8 @@ let compile_exps_def = cake_define_list
             aux2))`;
    `clos_to_bvl_compile_exps max_app [closLang_Fn t loc_opt vs_opt
   num_args x1] aux =
-         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+         let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
          let c2 =
@@ -441,8 +441,8 @@ let compile_exps_def = cake_define_list
             (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))`;
    `clos_to_bvl_compile_exps max_app [(Letrec t loc_opt vsopt fns
   x1:closLang_exp)] aux =
-         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-         let vs = match vsopt with NONE -> [] | SOME x -> x in
+         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+         let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          match fns with [] -> clos_to_bvl_compile_exps max_app [x1]
            aux | [(num_args,exp)] ->
              (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
@@ -523,8 +523,8 @@ let compile_exp_sing_def = cake_define_list
             aux2))`;
    `compile_exp_sing max_app (closLang_Fn t loc_opt vs_opt num_args x1)
   aux =
-         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+         let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let c2 =
            Let (GENLIST Var num_args ++ free_let (Var num_args)
@@ -535,8 +535,8 @@ let compile_exp_sing_def = cake_define_list
             (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))`;
    `compile_exp_sing max_app (Letrec t loc_opt vsopt fns
   x1:closLang_exp) aux =
-         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-         let vs = match vsopt with NONE -> [] | SOME x -> x in
+         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
+         let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          match fns with [] -> compile_exp_sing max_app x1 aux |
            [(num_args,exp)] ->
              (let (c1,aux1) = compile_exp_sing max_app exp aux in
@@ -637,7 +637,7 @@ let compile_common_def = cake_define
      (let es = clos_mti_compile (clos_to_bvl_config_do_mti c)
        (clos_to_bvl_config_max_app c) es in
      let loc = clos_to_bvl_config_next_loc c + MAX 1 (LENGTH es) in
-     let loc = if loc MOD 2 = 0 then loc else loc + 1 in
+     let loc = (if loc MOD 2 = 0 then loc else loc + 1) in
      let (n,es) = renumber_code_locs_list loc es in
      let (kc,es) = clos_known_compile (clos_to_bvl_config_known_conf
        c) es in

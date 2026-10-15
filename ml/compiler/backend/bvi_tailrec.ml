@@ -297,17 +297,17 @@ let scan_expr_def = cake_define_list
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
           (tx,ty,r,op) :: scan_expr tx loc (y :: xs))`;
    `scan_expr ts loc [(Var n:bvi_exp)] =
-        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
-          in
+        (let ty = (if n < LENGTH ts then EL n ts else
+          bvi_tailrec_Any) in
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(If xi xt xe:bvi_exp)] =
         (let (ti,tyi,_27,oi) = HD (scan_expr ts loc [xi]) in
         let (tt,ty1,_28,ot) = HD (scan_expr ti loc [xt]) in
         let (te,ty2,_29,oe) = HD (scan_expr ti loc [xe]) in
-        let op = match ot with NONE -> oe | _30 -> ot in
-        let ty = match op with
+        let op = (match ot with NONE -> oe | _30 -> ot) in
+        let ty = (match op with
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
-                     ty1 (decide_ty ty2 (op_type opr)) in
+                     ty1 (decide_ty ty2 (op_type opr))) in
           [(MAP2 decide_ty tt te,ty,IS_SOME oe,op)])`;
    `scan_expr ts loc [(Let xs x:bvi_exp)] =
         (let ys = scan_expr ts loc xs in
@@ -320,8 +320,8 @@ let scan_expr_def = cake_define_list
   [(ts,bvi_tailrec_Any,F,NONE)]`;
    `scan_expr ts loc [(Tick x:bvi_exp)] = scan_expr ts loc [x]`;
    `scan_expr ts loc [(Force _35 n:bvi_exp)] =
-        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
-          in
+        (let ty = (if n < LENGTH ts then EL n ts else
+          bvi_tailrec_Any) in
           [(ts,ty,F,NONE)])`;
    `scan_expr ts loc [(Call t d xs h:bvi_exp)] =
   [(ts,bvi_tailrec_Any,F,NONE)]`;
@@ -358,17 +358,17 @@ let scan_expr_def = cake_define_list
 
 let scan_expr_sing_def = cake_define_list
   [`scan_expr_sing ts loc (Var n:bvi_exp) =
-        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
-          in
+        (let ty = (if n < LENGTH ts then EL n ts else
+          bvi_tailrec_Any) in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (If xi xt xe:bvi_exp) =
         (let (ti,tyi,_47,oi) = scan_expr_sing ts loc xi in
         let (tt,ty1,_48,ot) = scan_expr_sing ti loc xt in
         let (te,ty2,_49,oe) = scan_expr_sing ti loc xe in
-        let op = match ot with NONE -> oe | _50 -> ot in
-        let ty = match op with
+        let op = (match ot with NONE -> oe | _50 -> ot) in
+        let ty = (match op with
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
-                     ty1 (decide_ty ty2 (op_type opr)) in
+                     ty1 (decide_ty ty2 (op_type opr))) in
           (MAP2 decide_ty tt te,ty,IS_SOME oe,op))`;
    `scan_expr_sing ts loc (Let xs x:bvi_exp) =
         (let ys = scan_expr_list ts loc xs in
@@ -381,8 +381,8 @@ let scan_expr_sing_def = cake_define_list
   (ts,bvi_tailrec_Any,F,NONE)`;
    `scan_expr_sing ts loc (Tick x:bvi_exp) = scan_expr_sing ts loc x`;
    `scan_expr_sing ts loc (Force _55 n:bvi_exp) =
-        (let ty = if n < LENGTH ts then EL n ts else bvi_tailrec_Any
-          in
+        (let ty = (if n < LENGTH ts then EL n ts else
+          bvi_tailrec_Any) in
           (ts,ty,F,NONE))`;
    `scan_expr_sing ts loc (Call t d xs h:bvi_exp) =
   (ts,bvi_tailrec_Any,F,NONE)`;
@@ -437,13 +437,13 @@ let rewrite_def = cake_define
        (let t1 = FST (HD (scan_expr ts loc [x1])) in
        let (r2,y2) = rewrite loc next' opr acc t1 x2 in
        let (r3,y3) = rewrite loc next' opr acc t1 x3 in
-       let z2 = if r2 then y2 else apply_op opr (Var acc) x2 in
-       let z3 = if r3 then y3 else apply_op opr (Var acc) x3 in
+       let z2 = (if r2 then y2 else apply_op opr (Var acc) x2) in
+       let z3 = (if r3 then y3 else apply_op opr (Var acc) x3) in
          ((r2 \/ r3),If x1 z2 z3))
         | (Let xs x) ->
        (let ys = scan_expr ts loc xs in
        let tt = MAP (FST o SND) ys in
-       let tr = match LAST1 ys with NONE -> ts | SOME c -> FST c in
+       let tr = (match LAST1 ys with NONE -> ts | SOME c -> FST c) in
        let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++ tr)
          x in
          (r,Let xs y))

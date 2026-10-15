@@ -61,9 +61,9 @@ let colouring_ok_def = cake_define
        (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = sptree_union e2_live e3_live in
-       let merged = match ri with Reg r2 -> sptree_insert r2 one
+       let merged = (match ri with Reg r2 -> sptree_insert r2 one
          (sptree_insert r1 one union_live) | _1 -> sptree_insert r1 one
-         union_live in
+         union_live) in
          INJ f (domain merged) UNIV /\
          colouring_ok f e2 live lt /\ colouring_ok f e3 live lt)
         | (Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) ->

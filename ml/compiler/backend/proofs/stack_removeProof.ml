@@ -331,10 +331,10 @@ let get_stack_heap_limit'_def = cake_define
      let ptr3 = w2n p3 in
      let ptr4 = w2n p4 in
      let d = dimindex (:'a) DIV 8 in
-     let max_heap_w = if max_heap * w2n (bytes_in_word:'a word) <
+     let max_heap_w = (if max_heap * w2n (bytes_in_word:'a word) <
        dimword (:'ga) then
                         bytes_in_word * n2w max_heap else --((n2w
-                          1):'a word) in
+                          1):'a word)) in
      let reg3 = n2w ptr2 +
                 (--(n2w 1) * n2w ptr2 +
                  (if max_heap_w <+ --(n2w 1) * n2w ptr2 + n2w ptr3

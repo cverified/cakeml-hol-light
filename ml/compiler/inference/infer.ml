@@ -854,12 +854,13 @@ let infer_d_def = cake_define_list
          one. st_ex_bind (apply_subst_list (MAP SND env')) (\
          ts. st_ex_bind (st_ex_return (generalise_list n 0 FEMPTY
            ts)) (\
-         (num_tvs,s,ts'). st_ex_bind (guard (num_tvs = 0 \/ is_value
-           e) (mk_loc_err_info (SOME locs) (inf_env_inf_t ienv))
+         (num_tvs',s,ts'). st_ex_bind (guard (num_tvs' = 0 \/
+           is_value e) (mk_loc_err_info (SOME locs) (inf_env_inf_t
+           ienv))
                      ((implode "Value restriction violated"))) (\
          one.
          st_ex_return (mk_inf_env (alist_to_ns (ZIP (MAP FST
-           env') (MAP (\t. (num_tvs,t)) ts'))) nsEmpty
+           env') (MAP (\t. (num_tvs',t)) ts'))) nsEmpty
            nsEmpty))))))))))`;
    `infer_d ienv (Dletrec locs funs) =
       st_ex_ignore_bind
@@ -871,7 +872,7 @@ let infer_d_def = cake_define_list
                   " a mutually recursive function definition")])
                    (MAP FST funs)) (st_ex_bind init_state (\
          one. st_ex_bind get_next_uvar (\
-         next. st_ex_bind (n_fresh_uvar (LENGTH funs)) (\
+         next'. st_ex_bind (n_fresh_uvar (LENGTH funs)) (\
          uvars. st_ex_bind (st_ex_return (nsAppend (alist_to_ns
            (MAP2 (\(f,x,e) uvar. (f,(0,uvar))) funs uvars))
            (inf_env_inf_v ienv))) (\
@@ -882,8 +883,8 @@ let infer_d_def = cake_define_list
          funs_ts. st_ex_bind (add_constraints (mk_loc_err_info (SOME
            locs) (inf_env_inf_t ienv)) uvars funs_ts) (\
          one. st_ex_bind (apply_subst_list uvars) (\
-         ts. st_ex_bind (st_ex_return (generalise_list next 0 FEMPTY
-           ts)) (\
+         ts. st_ex_bind (st_ex_return (generalise_list next' 0
+           FEMPTY ts)) (\
          (num_gen,s,ts').
          st_ex_return (mk_inf_env (alist_to_ns (MAP2 (\(f,x,e) t.
            (f,(num_gen,t))) funs ts')) nsEmpty nsEmpty))))))))))`;

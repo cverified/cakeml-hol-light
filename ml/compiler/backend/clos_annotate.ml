@@ -188,7 +188,7 @@ let shift_def = cake_define_list
            ([App t loc_opt (HD c1) c2]))`;
    `clos_annotate_shift [closLang_Fn t loc vs_opt num_args x1] m l i =
          (let k = m + l in
-         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let live = FILTER (\n. n < k) vs in
          let vars = MAP (clos_annotate_get_var m l i) live in
          let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
@@ -196,7 +196,7 @@ let shift_def = cake_define_list
            ([closLang_Fn t loc (SOME vars) num_args (HD c1)]))`;
    `clos_annotate_shift [(Letrec t loc vsopt fns x1:closLang_exp)] m l i
   =
-         (let vs = match vsopt with NONE -> [] | SOME x -> x in
+         (let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          let k = m + l in
          let live = FILTER (\n. n < k) vs in
          let vars = MAP (clos_annotate_get_var m l i) live in
@@ -244,13 +244,13 @@ let shift_sing_def = cake_define_list
            (App t loc_opt c1 c2))`;
    `shift_sing (closLang_Fn t loc vs_opt num_args x1) m l i =
          (let k = m + l in
-         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let live = FILTER (\n. n < k) vs in
          let vars = MAP (clos_annotate_get_var m l i) live in
          let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
            (closLang_Fn t loc (SOME vars) num_args c1))`;
    `shift_sing (Letrec t loc vsopt fns x1:closLang_exp) m l i =
-         (let vs = match vsopt with NONE -> [] | SOME x -> x in
+         (let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          let k = m + l in
          let live = FILTER (\n. n < k) vs in
          let vars = MAP (clos_annotate_get_var m l i) live in

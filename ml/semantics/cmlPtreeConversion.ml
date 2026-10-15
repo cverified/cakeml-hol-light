@@ -12,12 +12,10 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
-needs "lib/peg.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/tokenUtils.ml";;
-needs "semantics/tokens.ml";;
 
 (* handling constructor arities gets very complicated when "open" is
    implemented *)
@@ -504,10 +502,10 @@ let ptree_OpID_def = cake_define_list
                     (SOME (ast_Con (SOME (Short s)) []))
                     (SOME (ast_Var (Short s)))) ++
             OPTION_BIND (destLongidT tk) (\
-                (path,s).
+                (path',s).
                 ifM (isConstructor (explode s))
-                    (SOME (ast_Con (SOME (Long_Short path s)) []))
-                    (SOME (ast_Var (Long_Short path s)))) ++
+                    (SOME (ast_Con (SOME (Long_Short path' s)) []))
+                    (SOME (ast_Var (Long_Short path' s)))) ++
             (if tk = tokens_StarT then
                ifM (isSymbolicConstructor "*")
                    (SOME (ast_Con (SOME (Short (implode "*"))) []))
@@ -616,9 +614,9 @@ let ptree_Pattern_def = cake_define_list
               OPTION_IGNORE_BIND
                 (assert (tokcheck colon_t tokens_ColonT))
                   (OPTION_BIND (ptree_Pattern nPas pas_pt) (\
-                pc. OPTION_BIND (ptree_Type nType type_pt) (\
+                pc'. OPTION_BIND (ptree_Type nType type_pt) (\
                 ty.
-                SOME (ast_Ptannot pc ty)))) | _64 -> fail else if
+                SOME (ast_Ptannot pc' ty)))) | _64 -> fail else if
                   FST nm = (INL:MMLnonT->MMLnonT+num) nPtuple then
           match args with
               [lp; rp] -> OPTION_IGNORE_BIND (assert (tokcheckl [lp;
@@ -1115,8 +1113,8 @@ let ptree_Expr_def = cake_define_list
                 (assert (tokcheck semi tokens_SemicolonT))
                   (OPTION_BIND (ptree_Expr nE e_pt) (\
                 e. OPTION_BIND (ptree_Eseq seq_pt) (\
-                seq.
-                SOME (e :: seq)))) | _122 -> NONE)`];;
+                seq'.
+                SOME (e :: seq')))) | _122 -> NONE)`];;
 
 let ptree_StructName_def = cake_define_list
   [`ptree_StructName (Lf _124) = NONE`;

@@ -194,7 +194,7 @@ let wInst_def = cake_define
         | (asm_FP (FPMovFromReg d r1 r2)) ->
        (let (l,n1) = wReg1 r1 kf in
        let (l',n2) =
-         if dimindex (:'a) = 64 then ([],0) else wReg2 r2 kf in
+         (if dimindex (:'a) = 64 then ([],0) else wReg2 r2 kf) in
        wStackLoad (l ++ l')
          (Inst (asm_FP (FPMovFromReg d n1 n2))))
         | (asm_FP f) -> Inst (asm_FP f)
@@ -500,9 +500,9 @@ let comp_def = cake_define
             (let (q1,bs) = wLive live bs kf in
             let (q2,bs) = word_to_stack_comp conf perf ret_code bs kf
               in
-            let pre = if perf then perf_call_prefix l1 l2 (FST kf)
-              else Skip in
-            let suf = if perf then perf_call_suffix else Skip in
+            let pre = (if perf then perf_call_prefix l1 l2 (FST kf)
+              else Skip) in
+            let suf = (if perf then perf_call_suffix else Skip) in
               match handler with NONE ->
                 (let q3 = Seq suf (copy_ret perf F kf vs q2) in
                   (Seq q0
@@ -587,7 +587,7 @@ let compile_prog_def = cake_define
      (let stack_arg_count' = arg_count - reg_count in
      let stack_var_count = MAX ((max_var prog DIV 2 + 1) - reg_count)
        stack_arg_count' in
-     let f = if stack_var_count = 0 then 0 else stack_var_count + 1
+     let f = (if stack_var_count = 0 then 0 else stack_var_count + 1)
        in
      let (q1,bitmaps) = word_to_stack_comp asm_conf perf prog bitmaps
        (reg_count,f,stack_var_count) in
@@ -610,8 +610,8 @@ let compile_def = cake_define
      (let k = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      let init_bitmaps =
-         if perf then (misc_List [(n2w 16)],1) else (misc_List [(n2w
-           4)],1) in
+         (if perf then (misc_List [(n2w 16)],1) else (misc_List [(n2w
+           4)],1)) in
      let (progs,fs,bitmaps) = compile_word_to_stack asm_conf perf k
        progs init_bitmaps in
      let sfs = fromAList (MAP (\((i,_9),n). (i,n)) (ZIP progs fs)) in

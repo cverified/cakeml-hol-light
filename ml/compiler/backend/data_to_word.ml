@@ -495,8 +495,8 @@ let AnyHeader_def = cake_define
 let ShiftVar_def = cake_define
   `ShiftVar sh v n =
      (if sh = Ror then
-       (let m = if n < dimindex (:'a) then n else n MOD (dimindex
-         (:'a)) in
+       (let m = (if n < dimindex (:'a) then n else n MOD (dimindex
+         (:'a))) in
           if m = 0 then Var v else (\sh e n. Shift sh e (Const (n2w
             n))) sh (Var v) m) else if n = 0 then Var v else if dimindex
             (:'a) <= n then
@@ -1309,8 +1309,8 @@ let byte_len_def = cake_define
 
 let make_byte_header_def = cake_define
   `make_byte_header conf cmp_by_contents len =
-   (let tag = if cmp_by_contents then (n2w 0b00111) else (n2w
-     0b10111) in
+   (let tag = (if cmp_by_contents then (n2w 0b00111) else (n2w
+     0b10111)) in
      (if dimindex (:'a) = 32 then n2w (len + 4) << (dimindex
        (:'ga) - 2 - data_to_word_config_len_size conf) || tag else
        n2w (len + 8) << (dimindex (:'ga) - 3 -
@@ -2179,7 +2179,7 @@ let assign_WordShiftW8_def = cake_define
 let assign_WordShiftW64_def = cake_define
   `assign_WordShiftW64 sh n (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
-          (let len = if dimindex (:'a) < 64 then 2 else 1 in
+          (let len = (if dimindex (:'a) < 64 then 2 else 1) in
           (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
              ((if len = 1 then
@@ -2209,7 +2209,7 @@ let assign_WordFromWord_def = cake_define
                         Assign (adjust_var dest) (ShiftVar Lsl 1
                           2)],l) else
            (let
-              len = if dimindex (:'ga) < 64 then 2 else 1 in
+              len = (if dimindex (:'ga) < 64 then 2 else 1) in
               match encode_header c 3 len with
                 NONE -> (GiveUp,l) | SOME header ->
                  (if len = 1 then
@@ -2225,7 +2225,7 @@ let assign_WordFromWord_def = cake_define
 let assign_WordFromInt_def = cake_define
   `assign_WordFromInt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
-         (let len = if dimindex (:'a) < 64 then 2 else 1 in
+         (let len = (if dimindex (:'a) < 64 then 2 else 1) in
          ((match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
            (header:'a word) ->
             (if len = 1 then
@@ -2281,7 +2281,7 @@ let assign_WordFromInt_def = cake_define
 let assign_WordToInt_def = cake_define
   `assign_WordToInt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v =
-         (let len = if dimindex (:'a) < 64 then 2 else 1 in
+         (let len = (if dimindex (:'a) < 64 then 2 else 1) in
          (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
            header ->
               (if len = 1 then
@@ -2726,7 +2726,7 @@ let comp_def = cake_define
              dataLang_MakeSpace n names ->
          (let k = dimindex (:'a) DIV 8 in
          let w = n2w (n * k) in
-         let w = if w2n w = n * k then w else --(n2w 0) in
+         let w = (if w2n w = n * k then w else --(n2w 0)) in
            (Seq (Assign 1 (Op Sub [wordLang_Lookup TriggerGC;
              wordLang_Lookup NextFree]))
                 (If asm_Lower 1 (Imm w)

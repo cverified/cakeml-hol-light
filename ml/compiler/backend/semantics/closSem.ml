@@ -905,9 +905,9 @@ let evaluate_def = cake_define_list
                fns) in
            let
              envdelta =
-               match namesopt with NONE -> SOME (build_rc env) |
+               (match namesopt with NONE -> SOME (build_rc env) |
                  SOME names -> OPTION_MAP build_rc (lookup_vars names
-                 env) in
+                 env)) in
              match envdelta with
                  NONE -> (Rerr (Rabort Rtype_error),s) | SOME ed ->
                    closSem_evaluate ([exp],ed ++ env,s) else

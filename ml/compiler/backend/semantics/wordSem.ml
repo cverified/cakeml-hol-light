@@ -890,13 +890,13 @@ let inst_def = cake_define
          NONE -> NONE | SOME f ->
        (match fp64_to_int roundTiesToEven f with
          NONE -> NONE | SOME i ->
-         (let w = i2w i:word32 in
+         (let w = (i2w i:word32) in
          if w2i w = i then
            (if dimindex (:'a) = 64 then
               SOME (wordSem_set_fp_var d1 (w2w w) s) else
             match wordSem_get_fp_var (d1 DIV 2) s with
               NONE -> NONE | SOME f ->
-              (let (h,l) = if ODD d1 then (63,32) else (31,0) in
+              (let (h,l) = (if ODD d1 then (63,32) else (31,0)) in
                    SOME (wordSem_set_fp_var (d1 DIV 2)
                      (bit_field_insert h l w f) s))) else
            NONE))) | asm_FP (FPFromInt d1 d2) ->

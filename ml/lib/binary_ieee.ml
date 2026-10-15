@@ -201,7 +201,7 @@ let float_round_def = cake_define
 
 let float_round_with_flags_def = cake_define
   `float_round_with_flags mode to_neg r =
-   (let x = float_round mode to_neg r:('t,'w)float and a = abs r in
+   (let x = (float_round mode to_neg r:('t,'w)float) and a = abs r in
    let inexact = (~(float_value x = Float r)) in
      ((flags_Precision_fupd (K inexact)
        (flags_Underflow_AfterRounding_fupd (K

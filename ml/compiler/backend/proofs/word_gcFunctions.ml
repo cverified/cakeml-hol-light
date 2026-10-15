@@ -122,7 +122,7 @@ let word_gc_move_list_def = cake_define
   `word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
-      let w = (m a):'a word_loc in
+      let w = ((m a):'a word_loc) in
       let (w1,i1,pa1,m1,c1) = word_gc_move conf (w,i,pa,old,m,dm) in
       let m1 = (a =+ w1) m1 in
       let (a2,i2,pa2,m2,c2) = word_gc_move_list conf (a +
@@ -143,7 +143,7 @@ let word_gen_gc_partial_move_list_def = cake_define
   `word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
-      let w = (m a):'a word_loc in
+      let w = ((m a):'a word_loc) in
       let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
         (w,i,pa,old,m,dm,gs,rs) in
       let m1 = (a =+ w1) m1 in
@@ -336,7 +336,7 @@ let word_gen_gc_move_list_def = cake_define
   `word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,ib,pb,m,T) else
-      let w = (m a):'a word_loc in
+      let w = ((m a):'a word_loc) in
       let (w1,i1,pa1,ib,pb,m1,c1) = word_gen_gc_move conf
         (w,i,pa,ib,pb,old,m,dm) in
       let m1 = (a =+ w1) m1 in

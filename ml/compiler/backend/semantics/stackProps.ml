@@ -339,7 +339,7 @@ let reg_bound_inst_def = cake_define
 let reg_bound_def = cake_define
   `reg_bound x1 k =
         match x1 with
-          stackSem_Halt v1 ->
+          stackLang_Halt v1 ->
         v1 < k
         | (Raise v1) ->
         v1 < k

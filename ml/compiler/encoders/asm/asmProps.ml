@@ -77,7 +77,7 @@ let target_ok_def = cake_define
        = target_get_byte t ms2 a))`;;
 
 let interference_ok_def = cake_define
-  `interference_ok env proj <=> (!(i:num ms). proj (env i ms) = proj
+  `interference_ok env proj <=> (!(i:num) ms. proj (env i ms) = proj
   ms)`;;
 let all_pcs_def = cake_define
   `all_pcs n a k =

@@ -542,10 +542,10 @@ let known_def = cake_define_list
                 (clos_known_config_inline_max_body_size c) loc
                 num_args x1 | NONE -> clos_known_Other))],g))`;
    `known c [(Letrec t loc_opt _19 fns x1:closLang_exp)] vs g =
-         (let clos = match loc_opt with
+         (let clos = (match loc_opt with
                        NONE -> REPLICATE (LENGTH fns)
                          clos_known_Other | SOME loc ->
-                         clos_gen_noinline loc 0 fns in
+                         clos_gen_noinline loc 0 fns) in
          let new_fns = MAP (\(num_args,x).
                         let new_vs = REPLICATE num_args
                           clos_known_Other ++ clos ++ vs in

@@ -318,8 +318,11 @@ class Parser:
 
   # -- types ------------------------------------------------------
 
-  def parse_type(self):
-    """a type, as a list of tokens"""
+  def parse_type(self, stop_unknown=False):
+    """a type, as a list of tokens.  A type that is not in
+       parentheses ends at a name that is not a type: HOL4 reads
+       !i:num ms. as !(i:num) ms, because ms is no type of its
+       own"""
     out = []
     depth = 0
     while True:
@@ -331,6 +334,10 @@ class Parser:
         if depth == 0: break
         depth -= 1
       elif depth == 0 and (t.text in TYPE_STOP or t.kind == 'key'):
+        break
+      elif (stop_unknown and depth == 0 and out and t.kind == 'id'
+            and self.ctx is not None and self.ctx.tyops
+            and t.text.split('$')[-1] not in self.ctx.tyops):
         break
       out.append(t); self.next()
     return out
@@ -485,7 +492,8 @@ class Parser:
         v = Node('id', tok=t, name=t.text)
         if self.at(':'):
           self.next()
-          v = Node('typed', tok=t, e=v, ty=self.parse_type())
+          v = Node('typed', tok=t, e=v,
+                   ty=self.parse_type(True))
       else:
         raise SyntaxError(f'binder expected at {t.pos}: {t.text!r}')
       if comma and groups: groups[-1].append(v)
@@ -853,6 +861,10 @@ def bound_names(e, cons, defn=False):
       for p, _ in e.binds: out.update(pattern_vars(p, cons, True))
     elif k == 'case':
       for p, _ in e.arms: out.update(pattern_vars(p, cons))
+    elif k == 'do':
+      # do v <- e; ... od binds v in what follows it
+      for v, _ in e.stmts:
+        if v is not None: out.update(pattern_vars(v, cons, True))
     elif k == 'setabs':
       out.update(pattern_vars(e.e, cons, True))
     elif k == 'setabs2':
@@ -892,6 +904,7 @@ class Ctx:
     self.accessors = accessors or {}   # field name -> accessor name
     self.updaters = updaters or {}     # field name -> update name
     self.cons = cons or set()          # the constructor names
+    self.tyops = set()                 # the type names in scope
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
@@ -1314,7 +1327,11 @@ class Printer:
            ' else ' + self.pr(e.b, 0))
       return self.paren(s, 1, prec)
     if k == 'let':
-      bs = ' and '.join(self.pr(p, 0) + ' = ' + self.pr(v, 0)
+      # HOL Light parses the binding of a let as a term and splits
+      # it at the =, so what is bound to needs its parentheses
+      # where it has an operator that binds looser than = does
+      # (copying_gc's gc_move has let c = c /\ ... in)
+      bs = ' and '.join(self.pr(p, 0) + ' = ' + self.pr(v, 13)
                         for p, v in e.binds)
       return self.paren('let ' + bs + ' in ' + self.pr(e.body, 0),
                         1, prec)

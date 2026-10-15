@@ -75,8 +75,8 @@ let do_eval_record_def = cake_define
          decs_v) with (SOME env_id,SOME decs) ->
          (if compiler_agrees (mk_compiler_fun_from_ci ci)
              (env_id,st_v,decs) (st_v2,bs_v,ws_v) /\ st_v = st then
-         let orac' = \j. if j = 0 then ((i + 1,0),st_v2,[]) else
-           if j = SUC i then (env_id,st,decs) else orac j in SOME
+         let orac' = (\j. if j = 0 then ((i + 1,0),st_v2,[]) else
+           if j = SUC i then (env_id,st,decs) else orac j) in SOME
            (env_id,orac',decs) else NONE) | _6 -> NONE)) | _7 ->
            NONE)`;;
 

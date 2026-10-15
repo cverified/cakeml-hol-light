@@ -396,8 +396,8 @@ let ssa_cc_trans_def = cake_define_list
           (wordLang_MustTerminate s1',ssa',na'))`;
    `ssa_cc_trans (wordLang_If cmp r1 ri e2 e3) ssa na lt =
         (let r1' = option_lookup ssa r1 in
-        let ri' = match ri with Reg r -> Reg (option_lookup ssa r) |
-          Imm v -> Imm v in
+        let ri' = (match ri with Reg r -> Reg (option_lookup ssa r)
+          | Imm v -> Imm v) in
         let (e2',ssa2,na2) = ssa_cc_trans e2 ssa na lt in
         let (e3',ssa3,na3) = ssa_cc_trans e3 ssa na2 lt in
         let prio = mk_prio e2' e3' in
@@ -567,8 +567,8 @@ let ssa_cc_trans_def = cake_define_list
           ssa_cc_trans body ssa_body na_refreshed
             ((ssa_refreshed,names,exit_names) :: lt) in
         let back_moves = ssa_reconcile ssa' ssa_refreshed names in
-        let body_final = if back_moves = Skip then body' else Seq
-          body' back_moves in
+        let body_final = (if back_moves = Skip then body' else Seq
+          body' back_moves) in
         (Seq setup_prog (Loop ssa_names body_final ssa_exit),
          inter ssa_refreshed exit_names,na'))`;
    `ssa_cc_trans (wordLang_Break n) ssa na lt =
@@ -661,14 +661,14 @@ let apply_colour_def = cake_define
         | (Get num' store) -> Get (f num') store
         | (Store exp num') -> Store (apply_colour_exp f exp) (f num')
         | (Call ret dest args h) ->
-       (let ret = match ret with NONE -> NONE | SOME
+       (let ret = (match ret with NONE -> NONE | SOME
          (vs,cutset,ret_handler,l1,l2) ->
                              SOME (MAP f vs,apply_nummaps_key f
-                               cutset,apply_colour f ret_handler,l1,l2)
+                               cutset,apply_colour f ret_handler,l1,l2))
                                in
        let args = MAP f args in
-       let h = match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
-         SOME (f v,apply_colour f prog,l1,l2) in
+       let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
+         SOME (f v,apply_colour f prog,l1,l2)) in
          Call ret dest args h)
         | (Seq s1 s2) -> Seq (apply_colour f s1) (apply_colour f s2)
         | (wordLang_MustTerminate s1) -> wordLang_MustTerminate
@@ -967,9 +967,9 @@ let remove_dead_def = cake_define
        (let (s2,s2live,s2nlive) = remove_dead s2 live nlive lt in
        let (s1,s1live,s1nlive) = remove_dead s1 s2live s2nlive lt in
        let prog =
-         if s1 = Skip then
+         (if s1 = Skip then
            s2 else
-           if s2 = Skip then s1 else Seq s1 s2 in
+           if s2 = Skip then s1 else Seq s1 s2) in
              (prog,s1live,s1nlive))
         | (wordLang_MustTerminate s1) ->
        (let (s1,s1live,s1nlive) = remove_dead s1 live nlive lt in
@@ -979,13 +979,13 @@ let remove_dead_def = cake_define
        let (e3,e3_live,e3_nlive) = remove_dead e3 live nlive lt in
        let union_live = sptree_union e2_live e3_live in
        let liveset =
-          match ri with Reg r2 -> sptree_insert r2 one (sptree_insert
-            r1 one union_live) | _13 -> sptree_insert r1 one union_live
-            in
+          (match ri with Reg r2 -> sptree_insert r2 one
+            (sptree_insert r1 one union_live) | _13 -> sptree_insert r1
+            one union_live) in
        let nliveset = FILTER (\s. MEM s e3_nlive) e2_nlive in
        let prog =
-         if e2 = Skip /\ e3 = Skip then Skip else If cmp r1 ri e2 e3
-           in
+         (if e2 = Skip /\ e3 = Skip then Skip else If cmp r1 ri e2
+           e3) in
        (prog,liveset,nliveset))
         | (Call (SOME (v,cutsets,ret_handler,l1,l2)) dest args h) ->
        (let args_set = numset_list_insert args LN in
@@ -1417,8 +1417,8 @@ let get_heu_def = cake_define
         | ((Call (SOME (_57,_58,e2,_59,_60)) dest args
           h),(lr,calls')) ->
        (let calls' =
-         match dest with NONE -> calls' | SOME p ->
-           (if p = fc then (add_call lr calls') else calls') in
+         (match dest with NONE -> calls' | SOME p ->
+           (if p = fc then (add_call lr calls') else calls')) in
        let (lr2,calls2) = (get_heu fc e2 (lr,calls')) in
        match h with
          NONE -> (lr2,calls') | SOME (_61,e3,_62,_63) ->
@@ -1567,8 +1567,9 @@ let get_spillcost_def = cake_define
 *)
 let get_coalescecost_def = cake_define
   `get_coalescecost spillcost (n,p,x,y) =
-   (let xcost = if sptree_lookup x spillcost = NONE then 0 else 1 in
-   let ycost = if sptree_lookup y spillcost = NONE then 0 else 1 in
+   (let xcost = (if sptree_lookup x spillcost = NONE then 0 else 1)
+     in
+   let ycost = (if sptree_lookup y spillcost = NONE then 0 else 1) in
    (n * (10 * (p + 1) + xcost + ycost),(x,y)))`;;
 
 let get_heuristics_def = cake_define
@@ -1600,13 +1601,14 @@ let select_reg_alloc_def = cake_define
 let merge_stack_only_def = cake_define
   `merge_stack_only (x,y) (ts,fs) =
    (if sptree_lookup x ts = SOME one then
-     let ts = if is_alloc_var y then sptree_insert y one ts else ts
+     let ts = (if is_alloc_var y then sptree_insert y one ts else ts)
        in
-     let fs = if is_phy_var y then fs else sptree_insert x one fs in
+     let fs = (if is_phy_var y then fs else sptree_insert x one fs)
+       in
      (ts,fs) else
      if is_stack_var x then
-       let ts = if is_alloc_var y then sptree_insert y one ts else ts
-         in
+       let ts = (if is_alloc_var y then sptree_insert y one ts else
+         ts) in
        (ts,fs) else
        (sptree_delete y ts,fs))`;;
 

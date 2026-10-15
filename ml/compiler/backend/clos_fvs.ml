@@ -41,8 +41,8 @@ let remove_fvs_def = cake_define_list
   loc_opt (HD (remove_fvs fvs [x1])) (remove_fvs fvs xs)]`;
    `remove_fvs fvs [(Letrec t loc_opt vs fns x1:closLang_exp)] =
          (let m = LENGTH fns in
-         let new_fvs = match vs with NONE -> fvs | SOME x -> LENGTH
-           x in
+         let new_fvs = (match vs with NONE -> fvs | SOME x -> LENGTH
+           x) in
          let new_fns =
            MAP (\(num_args,x).
              (num_args,HD (remove_fvs (num_args + m + new_fvs)
@@ -50,7 +50,8 @@ let remove_fvs_def = cake_define_list
          [Letrec t loc_opt vs new_fns (HD (remove_fvs (m + fvs)
            [x1]))])`;
    `remove_fvs fvs [closLang_Fn t loc_opt vs num_args x1] =
-        (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
+        (let fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x)
+          in
         [closLang_Fn t loc_opt vs num_args (HD (remove_fvs
           (num_args + fvs) [x1]))])`];;
 
@@ -83,13 +84,14 @@ let remove_fvs_sing_def = cake_define_list
           fvs xs)`;
    `remove_fvs_sing fvs (Letrec t loc_opt vs fns x1:closLang_exp) =
          (let m = LENGTH fns in
-         let new_fvs = match vs with NONE -> fvs | SOME x -> LENGTH
-           x in
+         let new_fvs = (match vs with NONE -> fvs | SOME x -> LENGTH
+           x) in
          let new_fns = remove_fvs_let m new_fvs fns in
          Letrec t loc_opt vs new_fns (remove_fvs_sing (m + fvs)
            x1))`;
    `remove_fvs_sing fvs (closLang_Fn t loc_opt vs num_args x1) =
-        (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
+        (let fvs = (match vs with NONE -> fvs | SOME x -> LENGTH x)
+          in
         closLang_Fn t loc_opt vs num_args (remove_fvs_sing
           (num_args + fvs) x1))`;
    `remove_fvs_list fvs [] = []`;

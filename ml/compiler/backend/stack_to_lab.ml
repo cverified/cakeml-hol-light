@@ -31,8 +31,8 @@ needs "semantics/ast.ml";;
 let compile_jump_def = cake_define_list
   [`compile_jump (INL n) = labLang_LabAsm (Jump (labLang_Lab n 0))
   (n2w 0) [] 0`;
-   `compile_jump (INR r) = (\a. (\a. (\a. labLang_Asm (Asmi a))
-  (Asmi a)) (Asmi a)) (asm_JumpReg r) [] 0`];;
+   `compile_jump (INR r) = (\a. labLang_Asm (Asmi a)) (asm_JumpReg
+  r) [] 0`];;
 
 let negate_def = cake_define_list
   [`negate (Less:cmp) = asm_NotLess`;
@@ -52,9 +52,8 @@ hol4_overload "++" "misc_Append";;
 
 let flatten_def = cake_define
   `stack_to_lab_flatten t p n m conts breaks =
-     (match p with Tick -> (List [(\a. (\a. (\a. labLang_Asm (Asmi
-       a)) (Asmi a)) (Asmi a)) (Inst (Skip)) [] 0],F,m) | Inst a ->
-       (List [(\a. (\a. (\a. labLang_Asm (Asmi a)) (Asmi a)) (Asmi a))
+     (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
+       (Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi a))
        (Inst a) [] 0],F,m) | Halt _1 -> (List [labLang_LabAsm Halt (n2w
        0) [] 0],T,m) | Seq p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks
@@ -96,9 +95,8 @@ let flatten_def = cake_define
             List [labLang_LabAsm (Jump (labLang_Lab n cont_lab)) (n2w
               0) [] 0;
                   Label n break_lab 0],F,m)) | Raise r -> (List [(\a.
-                    (\a. (\a. labLang_Asm (Asmi a)) (Asmi a)) (Asmi a))
-                    (asm_JumpReg r) [] 0],T,m) | Return r -> (List [(\a.
-                    (\a. (\a. labLang_Asm (Asmi a)) (Asmi a)) (Asmi a))
+                    labLang_Asm (Asmi a)) (asm_JumpReg r) [] 0],T,m) |
+                    Return r -> (List [(\a. labLang_Asm (Asmi a))
                     (asm_JumpReg r) [] 0],T,m) | Break k -> (List
                     [labLang_LabAsm (Jump (labLang_Lab n (find_lab k
                     breaks))) (n2w 0) [] 0],T,m) | Continue k -> (List
@@ -135,10 +133,10 @@ let flatten_def = cake_define
          [] 0;
        labLang_LabAsm Install (n2w 0) [] 0;
        Label n m 0],F,m + 1) | stackLang_ShMemOp op r ad -> (List
-         [(\a. (\a. (\a. labLang_Asm (Asmi a)) (Asmi a)) (Asmi a))
-         (ShareMem op r ad) [] 0],F,m) | CodeBufferWrite r1 r2 ->
-       (List [(\a. (\a. (\a. labLang_Asm (Asmi a)) (Asmi a)) (Asmi
-         a)) (Cbw r1 r2) [] 0],F,m) | _11 -> (List [],F,m))`;;
+         [(\a. labLang_Asm (Asmi a)) (ShareMem op r ad) [] 0],F,m) |
+         CodeBufferWrite r1 r2 ->
+       (List [(\a. labLang_Asm (Asmi a)) (Cbw r1 r2) [] 0],F,m) |
+         _11 -> (List [],F,m))`;;
 hol4_overload "flatten" "stack_to_lab_flatten";;
 
 let is_Seq_def = cake_define

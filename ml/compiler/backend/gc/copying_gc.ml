@@ -19,7 +19,7 @@ let gc_move_def = cake_define_list
    `copying_gc_gc_move (gc_shared_Pointer ptr d,h2,a,n,heap,c,limit') =
          (match heap_lookup ptr heap with SOME (DataElement xs l dd)
            ->
-             (let c = c /\ l + 1 <= n /\ (a + n = limit') in
+             (let c = (c /\ l + 1 <= n /\ (a + n = limit')) in
              let n = n - (l + 1) in
              let h2 = h2 ++ [DataElement xs l dd] in
              let (heap,c) = gc_forward_ptr ptr heap a d c in
@@ -49,7 +49,7 @@ let gc_move_loop_def = cake_define_list
            match h with DataElement xs l d ->
               (let (xs,h2,a,n,heap,c) = copying_gc_gc_move_list
                 (xs,h :: h2,a,n,heap,c,limit') in
-              let c = c /\ ~(h2 = []) /\ (HD h2 = h) in
+              let c = (c /\ ~(h2 = []) /\ (HD h2 = h)) in
               let h2 = TL h2 in
               let h1 = h1 ++ [DataElement xs l d] in
                 copying_gc_gc_move_loop

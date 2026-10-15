@@ -27,7 +27,7 @@ needs "lib/sptree.ml";;
 let dest_word_loc_def = cake_define
   `dest_word_loc x1 =
         match x1 with
-          (Loc n _2:semanticPrimitives_v) -> SOME n
+          wordLang_Loc n _2 -> SOME n
         | (_3:'a word_loc) -> NONE`;;
 
 let dest_result_loc_def = cake_define

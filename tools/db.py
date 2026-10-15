@@ -45,6 +45,11 @@ RESERVED = set(['let', 'in', 'and', 'if', 'then', 'else',
                 'match', 'with', 'function', 'when'])
 
 
+def hl_types():
+  """the type names of HOL Light and of the library layer"""
+  return set(l.strip() for l in open(T + 'hl-types.txt') if l.strip())
+
+
 def hl_names():
   return RESERVED | set(l.strip()
                         for l in open(T + 'hl-names.txt')

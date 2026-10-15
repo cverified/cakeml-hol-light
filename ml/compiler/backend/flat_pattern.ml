@@ -72,8 +72,8 @@ let compile_pat_bindings_def = cake_define_list
       let exp3 = ITLIST (\((j,nm),_40) exp.
           flatLang_Let t (SOME nm) (App t (flatLang_El j) [x]) exp)
             j_nms_used exp2 in
-      let spt2 = if NULL j_nms_used then spt else sptree_insert k
-        one spt in
+      let spt2 = (if NULL j_nms_used then spt else sptree_insert k
+        one spt) in
       (spt2,exp3))`;
    `compile_pat_bindings t i (((Pas p v:flatLang_pat),k,x) :: m) exp = (
       let nm = enc_num_to_name (i + 1) in

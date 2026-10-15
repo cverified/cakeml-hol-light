@@ -96,13 +96,13 @@ let copy_prop_inst_def = cake_define
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let ri' = lookup_eq_imm cs ri in
-       let ri'' = if ri' = Reg r1 then ri else ri' in
+       let ri'' = (if ri' = Reg r1 then ri else ri') in
        (Inst (Arith (asm_Binop bop r1 r2' ri'')),cs'))
         | (Arith (Shift shift' r1 r2 n)) ->
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
-       let n'' = if n' = Reg r1 then n else n' in
+       let n'' = (if n' = Reg r1 then n else n') in
        (Inst (Arith (Shift shift' r1 r2' n'')),cs'))
         | (Arith (Div r1 r2 r3)) ->
        (let r2' = lookup_eq cs r2 in
@@ -113,19 +113,19 @@ let copy_prop_inst_def = cake_define
        (let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
-       let r3'' = if r3' = r1 then r3 else r3' in
+       let r3'' = (if r3' = r1 then r3 else r3') in
        (Inst (Arith (asm_AddCarry r1 r2' r3'' r4)),cs'))
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
        (let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
-       let r3'' = if r3' = r1 then r3 else r3' in
+       let r3'' = (if r3' = r1 then r3 else r3') in
        (Inst (Arith (asm_AddOverflow r1 r2' r3'' r4)),cs'))
         | (Arith (asm_SubOverflow r1 r2 r3 r4)) ->
        (let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
-       let r3'' = if r3' = r1 then r3 else r3' in
+       let r3'' = (if r3' = r1 then r3 else r3') in
        (Inst (Arith (asm_SubOverflow r1 r2' r3'' r4)),cs'))
         | (Arith (asm_LongMul r1 r2 r3 r4)) ->
        (let r3' = lookup_eq cs r3 in
@@ -185,7 +185,7 @@ let copy_prop_inst_def = cake_define
         | (asm_FP (FPMovFromReg d r1 r2)) ->
          (let r1' = lookup_eq cs r1 in
          let r2' = lookup_eq cs r2 in
-         let (r1'',r2'') = if r1' = r2' then (r1,r2) else (r1',r2')
+         let (r1'',r2'') = (if r1' = r2' then (r1,r2) else (r1',r2'))
            in
          (Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs))
         | (asm_FP x) -> (Inst (asm_FP x),cs)
@@ -291,7 +291,7 @@ let copy_prop_prog_def = cake_define
          (Raise v',cs))
         | (OpCurrHeap b dst src) ->
        (let src' = lookup_eq cs src in
-       let src'' = if src' = dst then src else src' in
+       let src'' = (if src' = dst then src else src') in
          (OpCurrHeap b dst src'',
             remove_eq cs dst))
         | Tick -> (Tick,cs)

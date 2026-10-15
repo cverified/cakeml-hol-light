@@ -51,11 +51,11 @@ let code_locs_def = cake_define_list
          let c2 = code_locs xs in
              c1 ++ c2)`;
    `code_locs [closLang_Fn _17 loc_opt vs num_args x1] =
-         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let c1 = code_locs [x1] in
            c1 ++ [loc])`;
    `code_locs [(Letrec _19 loc_opt vs fns x1:closLang_exp)] =
-         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+         (let loc = (match loc_opt with NONE -> 0 | SOME n -> n) in
          let c1 = code_locs (MAP SND fns) in
          let c2 = code_locs [x1] in
          c1 ++ GENLIST (\n. loc + 2 * n) (LENGTH fns) ++ c2)`;
@@ -919,8 +919,9 @@ let app_call_dests_def = cake_define_list
    `app_call_dests opt [(closLang_Op _379 op xs:closLang_exp)] =
          app_call_dests opt xs`;
    `app_call_dests opt [(App _383 loc_opt x1 xs:closLang_exp)] =
-         (let ll = if opt = SOME T then {} else
-                    match loc_opt with SOME n -> {n} | _384 -> {} in
+         (let ll = (if opt = SOME T then {} else
+                    match loc_opt with SOME n -> {n} | _384 -> {})
+                      in
          let c1 = app_call_dests opt [x1] in
          let c2 = app_call_dests opt xs in
              ll UNION c1 UNION c2)`;

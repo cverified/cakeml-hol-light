@@ -9,7 +9,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
-needs "compiler/backend/stackLang.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
@@ -906,8 +905,8 @@ let partition_moves_def = cake_define_wf
      (if r <= l then
        st_ex_return l else
        st_ex_bind (sorted_moves_sub l) (\
-         move.
-         if FST move < ppiv then
+         move'.
+         if FST move' < ppiv then
            partition_moves (l + 1) ppiv r else
            st_ex_ignore_bind
              (swap_moves l (r - 1)) (

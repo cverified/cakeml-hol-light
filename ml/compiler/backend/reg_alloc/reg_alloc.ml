@@ -1355,8 +1355,8 @@ let biased_pref_def = cake_define
      if n < d then
      st_ex_bind (coalesce_root n) (\
        v.
-       let vs = match sptree_lookup n mtable with NONE -> [] | SOME
-         vs -> vs in
+       let vs = (match sptree_lookup n mtable with NONE -> [] | SOME
+         vs -> vs) in
        handle_Subscript (first_match_col ks (v :: vs)) (st_ex_return
          NONE)) else
        st_ex_return NONE)`;;
@@ -1405,8 +1405,8 @@ let neg_biased_pref_def = cake_define
    st_ex_bind get_dim (\
      d.
      if n < d then
-       let vs = match sptree_lookup n mtable with NONE -> [] | SOME
-         vs -> vs in
+       let vs = (match sptree_lookup n mtable with NONE -> [] | SOME
+         vs -> vs) in
        handle_Subscript (neg_first_match_col k bads vs) (st_ex_return
          NONE) else
        st_ex_return NONE)`;;

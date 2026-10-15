@@ -185,8 +185,7 @@ let inst_select_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB o SND o SND o SND)`
   `inst_select_exp c tar temp x4 =
         match (c,tar,temp,x4) with
-          ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp)
-            ->
+          ((c:'a asm_config),(tar:num),(temp:num),asm_Load exp) ->
        (match exp with wordLang_Op Add [exp'; Const w] ->
          (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
            then
@@ -300,13 +299,13 @@ let inst_select_def = cake_define
        If cmp r1 ri (inst_select c temp c1) (inst_select c temp c2)
         | (Call ret dest args handler) ->
        (let retsel =
-         match ret with
+         (match ret with
            NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
-           SOME (n,names,inst_select c temp ret_handler,l1,l2) in
+           SOME (n,names,inst_select c temp ret_handler,l1,l2)) in
        let handlersel =
-         match handler with
+         (match handler with
            NONE -> NONE | SOME (n,h,l1,l2) -> SOME (n,inst_select c
-             temp h,l1,l2) in
+             temp h,l1,l2)) in
        Call retsel dest args handlersel)
         | (Loop names body exit_names) ->
        Loop names (inst_select c temp body) exit_names
@@ -342,13 +341,13 @@ let three_to_two_reg_def = cake_define
        If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg c2)
         | (Call ret dest args handler) ->
        (let retsel =
-         match ret with
+         (match ret with
            NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
-           SOME (n,names,three_to_two_reg ret_handler,l1,l2) in
+           SOME (n,names,three_to_two_reg ret_handler,l1,l2)) in
        let handlersel =
-         match handler with
+         (match handler with
            NONE -> NONE | SOME (n,h,l1,l2) -> SOME
-             (n,three_to_two_reg h,l1,l2) in
+             (n,three_to_two_reg h,l1,l2)) in
        Call retsel dest args handlersel)
         | (Loop names body exit_names) ->
        Loop names (three_to_two_reg body) exit_names

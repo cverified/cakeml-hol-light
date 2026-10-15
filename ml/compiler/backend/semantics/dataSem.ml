@@ -146,7 +146,7 @@ let small_num_def = cake_define
 let bignum_digits_def = cake_define
   `bignum_digits arch64 n =
      (if n = 0 then 0 else
-       let d = if arch64 then 64 else 32 in
+       let d = (if arch64 then 64 else 32) in
          1 + bignum_digits arch64 (n DIV 2 EXP d))`;;
 
 let bignum_size_def = cake_define
@@ -818,7 +818,7 @@ hol4_overload "do_build_const" "dataSem_do_build_const";;
 let do_int_app_def = cake_define
   `dataSem_do_int_app x1 x2 =
       match (x1,x2) with
-        (word_depth_Const n,[]) ->
+        ((Const n:closLang_int_op),[]) ->
      (if small_enough_int n then SOME (Number n) else NONE)
       | ((Add),[Number n1; Number n2]) -> SOME (Number (n1 + n2))
       | ((Sub),[Number n1; Number n2]) -> SOME (Number (n1 - n2))

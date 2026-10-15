@@ -783,7 +783,7 @@ let word_payload_def = cake_define_list
    `word_payload ys l (BytesTag fl n) qs conf =
          (((make_byte_header conf fl n):'a word),
           qs,((ys = []) /\ (LENGTH qs = l) /\
-              (let k = if dimindex (:'a) = 32 then 2 else 3 in
+              (let k = (if dimindex (:'a) = 32 then 2 else 3) in
               n + 2 EXP k < 2 EXP (data_to_word_config_len_size
                 conf + k))))`];;
 
@@ -1113,8 +1113,8 @@ let fix_clock_def = cake_define_list
   [`data_to_word_memoryProof_fix_clock ck l NONE = NONE`;
    `data_to_word_memoryProof_fix_clock ck (l:num) (SOME
   (y,(l1:num),(ck1:num))) =
-    (let new_ck = if ck < ck1 then ck else ck1 in let
-        new_l = if l < l1 then l else l1 in SOME
+    (let new_ck = (if ck < ck1 then ck else ck1) in let
+        new_l = (if l < l1 then l else l1) in SOME
           (y,new_l,new_ck))`];;
 hol4_overload "fix_clock" "data_to_word_memoryProof_fix_clock";;
 

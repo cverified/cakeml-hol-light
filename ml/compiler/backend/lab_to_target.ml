@@ -154,7 +154,7 @@ let enc_secs_again_def = cake_define_list
 let lines_upd_lab_len_def = cake_define_list
   [`lines_upd_lab_len pos [] acc = (REVERSE acc,pos)`;
    `lines_upd_lab_len pos (labLang_Label k1 k2 l :: xs) acc =
-         (let l1 = if EVEN pos then 0 else 1 in
+         (let l1 = (if EVEN pos then 0 else 1) in
            lines_upd_lab_len (pos + l1) xs ((labLang_Label k1 k2
              l1 :: acc)))`;
    `lines_upd_lab_len pos (labLang_Asm x1 x2 l :: xs) acc =

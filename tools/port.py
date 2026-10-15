@@ -130,6 +130,13 @@ class Porter:
                          cons=db.cons_for(thy), abbrevs=self.abbrevs,
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy))
+    # the names that are types, so that the parser knows where a
+    # type that is not in parentheses ends
+    self.ctx.tyops = (
+      {k[1] if isinstance(k, tuple) else k
+       for k in self.ctx.tynames} |
+      set(self.ctx.tynames.values()) | set(self.abbrevs) |
+      dbmod.hl_types() | set(overrides.TYPE_MAP))
     self.out = []
     self.warn = []
     self.head = None
@@ -152,8 +159,13 @@ class Porter:
            and not self.is_overloaded(nm, txt)}
     for _ in range(3):
       for nm, txt in raw.items():
+        # the name of the overload itself is the constant in its
+        # own body (stack_to_lab overloads Asm with
+        # \a. Asm (Asmi a), whose Asm is labLang's)
+        old = self.ctx.overloads.pop(nm, None)
         try: self.ctx.overloads[nm] = self.term(txt)
-        except Exception: pass
+        except Exception:
+          if old is not None: self.ctx.overloads[nm] = old
     self.bound = set()
 
   # -- helpers ---------------------------------------------------
@@ -1131,6 +1143,25 @@ class Porter:
     # (word_copy's 'copy_prop_inst Skip cs = (Skip,cs)' matches on
     # the Skip of asm and gives back the Skip of wordLang)
     self.clause_clash(body)
+    # a type that the source itself puts on a pattern says which
+    # theory an ambiguous constructor of another arm is from
+    # (word_elimProof's dest_word_loc matches on the Loc of
+    # wordLang's word_loc, which only its catchall says)
+    atys = set()
+    for _, args, _ in cls:
+      for i in pats:
+        a = args[i]
+        while a.kind == 'paren': a = a.e
+        if a.kind != 'typed': continue
+        try:
+          ty = hterm.parse_type_text(
+                 ' '.join(t.text for t in a.ty))
+        except Exception:
+          continue
+        if ty[0] != 'op': continue
+        nm = ty[1].split('$')[-1]
+        atys |= {t for (t, ty2) in self.db.datatypes if ty2 == nm}
+    if atys: self.contys = atys
     arms = []
     done = False
     for _, args, r in cls:

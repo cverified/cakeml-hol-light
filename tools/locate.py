@@ -16,7 +16,11 @@ for p in parts:
   if not p.strip():
     res.append(p); continue
   n += 1
-  res.append('cake_mark "%d: %s";;\n%s'
-             % (n, p.strip().split('\n')[0][:60].replace('"', "'"), p))
+  # the text of the mark is an OCaml string, so a backslash in it
+  # (the \\ of a HOL4 tactic) is escaped; one at the end would
+  # otherwise escape the quote that closes the string
+  mark = p.strip().split('\n')[0][:60]
+  mark = mark.replace('\\', '\\\\').replace('"', "'")
+  res.append('cake_mark "%d: %s";;\n%s' % (n, mark, p))
 open(out, 'w').write('\n'.join(res))
 print(n)

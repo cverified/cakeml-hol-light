@@ -203,21 +203,21 @@ let fp_upd_def = cake_define_list
          (match fp64_to_int roundTiesToEven (asmSem_read_fp_reg d2
            s) with
              SOME i ->
-               (let w = i2w i:word32 in
+               (let w = (i2w i:word32) in
                  (if dimindex (:'a) = 64 then
-                    asmSem_upd_fp_reg d1 (w2w w) else let (h,l) = if
-                      ODD d1 then (63,32) else (31,0) in
+                    asmSem_upd_fp_reg d1 (w2w w) else let (h,l) =
+                      (if ODD d1 then (63,32) else (31,0)) in
                          asmSem_upd_fp_reg (d1 DIV 2)
                            (bit_field_insert h l w
                              (asmSem_read_fp_reg (d1 DIV 2) s)))
                     (asmSem_assert (w2i w = i) s)) | _8 ->
                       asmSem_assert F s)`;
    `asmSem_fp_upd (FPFromInt d1 d2) (s:'a asm_state) =
-         (let i = if dimindex (:'a) = 64 then
+         (let i = (if dimindex (:'a) = 64 then
                    w2i ((31 >< 0) (asmSem_read_fp_reg d2 s):word32)
                      else let v = asmSem_read_fp_reg (d2 DIV 2) s in
                    w2i (if ODD d2 then (63 >< 32) v else (31 >< 0)
-                     v:'a word) in
+                     v:'a word)) in
            asmSem_upd_fp_reg d1 (int_to_fp64 roundTiesToEven i)
              s)`];;
 hol4_overload "fp_upd" "asmSem_fp_upd";;

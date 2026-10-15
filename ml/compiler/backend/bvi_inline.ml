@@ -75,8 +75,8 @@ let inline_all_def = cake_define_list
   [`inline_all cs [] = (cs,[])`;
    `inline_all cs ((name,arity,body) :: prog) =
          (let body = inline_exp cs body in
-         let cs1 = if wrapper_ok name arity body then
-                     sptree_insert name (arity,body) cs else cs in
+         let cs1 = (if wrapper_ok name arity body then
+                     sptree_insert name (arity,body) cs else cs) in
          let (cs2,prog2) = inline_all cs1 prog in
            (cs2,(name,arity,body) :: prog2))`];;
 

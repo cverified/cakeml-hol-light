@@ -289,8 +289,8 @@ let compile_def = cake_define
          (ParseError msg),misc_Nil) | INR prog ->
         (let _9 = empty_ffi (implode "finished: lexing and parsing")
           in
-        let full_prog = if compiler_config_exclude_prelude c then
-          prog else prelude ++ prog in
+        let full_prog = (if compiler_config_exclude_prelude c then
+          prog else prelude ++ prog) in
         match
           (if compiler_config_skip_type_inference c then M_success
             (compiler_config_inferencer_config c) else infertype_prog

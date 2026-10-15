@@ -201,8 +201,8 @@ let tick_inline_all_def = cake_define_list
   [`tick_inline_all limit' cs [] aux = (cs,REVERSE aux)`;
    `tick_inline_all limit' cs ((n,(arity:num),e1) :: xs) aux =
          (let e2 = HD (tick_inline cs [e1]) in
-         let cs2 = if must_inline n limit' e2 then sptree_insert n
-           (arity,e2) cs else cs in
+         let cs2 = (if must_inline n limit' e2 then sptree_insert n
+           (arity,e2) cs else cs) in
            tick_inline_all limit' cs2 xs ((n,arity,e2) :: aux))`];;
 
 let tick_compile_prog_def = cake_define

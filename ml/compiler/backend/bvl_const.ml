@@ -48,10 +48,10 @@ let SmartOp_flip_def = cake_define
 let SmartOp2_def = cake_define
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
      (let mk_add_const x1 c2 =
-       if c2 = (&0) then x1 else Op (closLang_IntOp Add) [x1; Op
-         (closLang_IntOp (closLang_Const c2)) []] in
+       (if c2 = (&0) then x1 else Op (closLang_IntOp Add) [x1; Op
+         (closLang_IntOp (closLang_Const c2)) []]) in
      let mk_add x1 x2 =
-       let default = Op (closLang_IntOp Add) [x1; x2] in
+       (let default = Op (closLang_IntOp Add) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
                  (if op = closLang_IntOp Add then mk_add_const x11
@@ -74,9 +74,9 @@ let SmartOp2_def = cake_define
                      + n12))) []] else if op1 = closLang_IntOp Sub /\
                      op2 = closLang_IntOp Add then
                    mk_add_const (Op (closLang_IntOp Sub) [x11; x21])
-                     (n22 + n12) else default) | _7 -> default) in
+                     (n22 + n12) else default) | _7 -> default)) in
      let mk_sub x1 x2 =
-       let default = Op (closLang_IntOp Sub) [x1; x2] in
+       (let default = Op (closLang_IntOp Sub) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
                  (if op = closLang_IntOp Add then Op (closLang_IntOp
@@ -99,9 +99,9 @@ let SmartOp2_def = cake_define
                      - n12))) []] else if op1 = closLang_IntOp Sub /\
                      op2 = closLang_IntOp Add then
                    mk_add_const (Op (closLang_IntOp Add) [x11; x21])
-                     (n22 - n12) else default) | _11 -> default) in
+                     (n22 - n12) else default) | _11 -> default)) in
      let mk_mul x1 x2 =
-       let default = Op (closLang_IntOp closLang_Mult) [x1; x2] in
+       (let default = Op (closLang_IntOp closLang_Mult) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
                  (if op = closLang_IntOp closLang_Mult then Op
@@ -121,7 +121,7 @@ let SmartOp2_def = cake_define
                    Op (closLang_IntOp closLang_Mult) [Op
                      (closLang_IntOp (closLang_Const (n22 * n12))) [];
                      Op (closLang_IntOp closLang_Mult) [x11; x21]] else
-                     default) | _15 -> default) in
+                     default) | _15 -> default)) in
      let default = Op op [x1; x2] in
      if op = closLang_IntOp Add then
        mk_add x1 x2 else if op = closLang_IntOp Sub then

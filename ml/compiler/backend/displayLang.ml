@@ -55,8 +55,8 @@ let display_to_json_def = cake_define_list
         (let es' = MAP display_to_json es in
         let props = [((implode "name"),String name); ((implode
           "args"),jsonLang_Array es')] in
-        let props' = match tra with NONE -> props | SOME t ->
-          ((implode "trace"),trace_to_json t) :: props in
+        let props' = (match tra with NONE -> props | SOME t ->
+          ((implode "trace"),trace_to_json t) :: props) in
           jsonLang_Object props')`;
    `display_to_json (String s:sExp) = String s`;
    `display_to_json (displayLang_Tuple es:sExp) =
