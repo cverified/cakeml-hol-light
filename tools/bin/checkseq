@@ -20,8 +20,9 @@ for f in "$@"; do
   # with MARK=1 the file is loaded with a marker before every
   # phrase, so that the report says which phrase fails
   h="$g"
+  nph=
   [ "$MARK" = 1 ] && {
-    python3 -I $C/tools/locate.py "$g" $C/tmp/locate.ml > /dev/null
+    nph=$(python3 -I $C/tools/locate.py "$g" $C/tmp/locate.ml)
     : > $C/tmp/mark.txt
     h=$C/tmp/locate.ml; }
   # a file that takes too long is interrupted, so that the session
@@ -51,7 +52,7 @@ for f in "$@"; do
   e=$(printf '%s' "$out" |
       python3 -I $C/tools/cserr.py "$h")
   [ "$MARK" = 1 ] && [ -n "$e" ] && \
-    e="$e [at $(tail -1 $C/tmp/mark.txt)]"
+    e="$e [at $(tail -1 $C/tmp/mark.txt) of $nph]"
   [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
 done
