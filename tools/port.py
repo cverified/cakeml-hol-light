@@ -387,7 +387,10 @@ class Porter:
       if nm not in self.ctx.overloaded: continue
       new = self.nm_defined(nm)
       if new == nm: continue
-      out.append('hol4_overload "%s" "%s";;' % (nm, new))
+      text = 'hol4_overload "%s" "%s";;' % (nm, new)
+      if len(text) > 72:
+        text = 'hol4_overload "%s"\n  "%s";;' % (nm, new)
+      out.append(text)
     return out
 
   def nm_defined(self, n):
@@ -432,7 +435,11 @@ class Porter:
     else:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
-    if term is None:
+    if term is None and rel is not None:
+      text = ('(* the termination relation is not in the HOL4 '
+              'source *)\nlet %s = cake_define_list_wf\n  `%s`\n'
+              '  %s;;' % (name, rel, clauses))
+    elif term is None:
       text = ('let %s = cake_define_list\n  %s;;' % (name, clauses))
     elif rel is not None:
       text = ('(* the termination relation is not in the HOL4 '
@@ -472,7 +479,7 @@ class Porter:
     self.ctx.vars = self.shadowing(e)
     try:
       p = hterm.Printer(self.ctx)
-      cls = [fmt(p.pr(cl, 0), indent=4, last=2)
+      cls = [fmt(p.pr(cl, 0), indent=4, last=3)
              for cl in hterm.conjuncts_of(e)]
     finally:
       self.ctx.vars = old

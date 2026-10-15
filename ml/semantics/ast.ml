@@ -242,7 +242,9 @@ let pat_bindings_def = cake_define
 hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
-let every_exp_def = cake_define_list
+(* the termination relation is not in the HOL4 source *)
+let every_exp_def = cake_define_list_wf
+  `MEASURE (\(p,e). ast_exp_size e)`
   [`every_exp p (Raise e) <=>
                  p (Raise e) /\ every_exp p e`;
    `every_exp p (Handle e pes) <=>

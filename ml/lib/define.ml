@@ -396,13 +396,18 @@ let define_single wfs tm =
     let th = pure_prove_recursive_function_exists etm in
     if hyp th = [] then th
     else tryfind (fun rt -> discharge_conditions rt th) wfs in
-  try let dth = new_specification [name] (existence cls) in
-      CONJUNCTS dth,dth
-  with Failure _ ->
-    (* the recursive calls may be under a lambda with a pattern, or
-       under ALL or EX, which HOL Light's machinery cannot handle *)
-    let cls' = map (fun cl -> mapify [f] (depair cl)) cls in
-    if cls' = cls then failwith "define_single" else
+  let plain () =
+    let dth = new_specification [name] (existence cls) in
+    CONJUNCTS dth,dth in
+  (* where a recursive call is under a lambda with a pattern, or
+     under ALL or EX, HOL Light's machinery gives a condition that
+     is not provable (it asks for every element of the type, not
+     for every element of the list), so the clauses are rewritten
+     with MAP, which it does know, and the clauses as they were
+     given are derived from the result *)
+  let cls' = map (fun cl -> mapify [f] (depair cl)) cls in
+  if cls' = cls then plain () else
+  let mapped () =
     let dth = new_specification [name] (existence cls') in
     let c = mk_mconst(name,type_of f) in
     let dths = CONJUNCTS dth in
@@ -413,7 +418,8 @@ let define_single wfs tm =
             REWRITE_TAC[IN_SET_OF_LIST; ALL_MEM; ALL_MAPIFY;
                         EX_MAPIFY; ETA_AX] THEN
             FIRST (map MATCH_ACCEPT_TAC dths)) in
-    map derive cls,dth;;
+    map derive cls,dth in
+  try mapped () with Failure _ -> plain ();;
 
 (* ------------------------------------------------------------------ *)
 (* Definition of a family of mutually recursive functions.            *)
@@ -613,7 +619,7 @@ let define_prim_rec tm =
     itlist (fun fn ins ->
              let _,resvar = dest_fun_ty(type_of fn) in
              if can (rev_assoc resvar) ins then ins
-             else (mk_type("one",[]),resvar)::ins)
+             else (mk_type("1",[]),resvar)::ins)
            fns tyins in
   let fns = map (inst tyins) fns in
   let canon = map (fun (fn,con,args,fj,rvs,rargs) ->
@@ -1318,7 +1324,7 @@ let rec tyunify ins ty1 ty2 =
     then failwith "tyunify"
     else itlist2 (fun a b ins -> tyunify ins a b) args1 args2 ins;;
 
-let cake_define_list cls =
+let cake_conj_list cls =
   (* every clause is typechecked on its own, so the function that
      they define can have a different type in each of them (HOL4
      typechecks them separately as well, but has one constant); the
@@ -1334,11 +1340,16 @@ let cake_define_list cls =
                                        cls [])) in
          itlist (fun ty ins -> tyunify ins (hd tys) ty) (tl tys) ins)
       names [] in
-  cake_define (list_mk_conj (map (inst ins) cls));;
+  list_mk_conj (map (inst ins) cls);;
+
+let cake_define_list cls = cake_define (cake_conj_list cls);;
 
 let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm
   with Failure s -> cake_report tm s;;
+
+let cake_define_list_wf rel cls =
+  cake_define_wf rel (cake_conj_list cls);;
 
 let cake_define_tac (rel,tac) tm =
   try cake_time (cake_define_gen (Some(rel,tac))) tm
