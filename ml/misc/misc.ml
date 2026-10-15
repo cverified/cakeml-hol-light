@@ -27,9 +27,9 @@ needs "lib/ternaryComparisons.ml";;
    relation toto bit words string address path res_quan *)
 
 (* Total version of THE *)
-let the_def = cake_define_list
-  [`the _1 (SOME x) = x`;
-   `the x NONE = x`];;
+let the_def = cake_define
+  `the _1 (SOME x) = x /\
+   the x NONE = x`;;
 
 let opt_bind_def = cake_define
   `opt_bind n v e =

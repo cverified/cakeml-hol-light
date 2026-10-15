@@ -148,7 +148,8 @@ class Db:
           for nm in definition_names(b.body):
             self.defs[nm].append((thy, 'rel'))
         elif b.kind == 'Type':
-          txt = strip_quote(b.body)
+          txt = (overrides.TYPE_TEXT.get((thy, b.name)) or
+                 strip_quote(b.body))
           try:
             ty = hterm.parse_type_text(txt)
           except Exception:

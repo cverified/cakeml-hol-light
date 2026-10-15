@@ -1302,27 +1302,39 @@ let cake_define tm =
    in which the same variable name has different types in different
    clauses (HOL4 typechecks every clause on its own) *)
 
+(* unification of two types, which HOL Light does not have (it has
+   matching, which is not enough here) *)
+
+let rec tyunify ins ty1 ty2 =
+  let ty1 = type_subst ins ty1 and ty2 = type_subst ins ty2 in
+  if ty1 = ty2 then ins
+  else if is_vartype ty1 then
+    (if mem ty1 (tyvars ty2) then failwith "tyunify" else
+     (ty2,ty1) :: map (fun (t,v) -> type_subst [ty2,ty1] t,v) ins)
+  else if is_vartype ty2 then tyunify ins ty2 ty1
+  else
+    let op1,args1 = dest_type ty1 and op2,args2 = dest_type ty2 in
+    if op1 <> op2 || length args1 <> length args2
+    then failwith "tyunify"
+    else itlist2 (fun a b ins -> tyunify ins a b) args1 args2 ins;;
+
 let cake_define_list cls =
   (* every clause is typechecked on its own, so the function that
-     they define can have a different (more or less general) type in
-     each of them; here they are made the same again *)
+     they define can have a different type in each of them (HOL4
+     typechecks them separately as well, but has one constant); the
+     types are unified here *)
   let head cl = fst(strip_comb(lhs(snd(strip_forall cl)))) in
   let names = setify (map (fun cl -> fst(dest_var(head cl))) cls) in
-  let unify cls nm =
-    let tys = map type_of
-                  (filter (fun h -> fst(dest_var h) = nm)
-                          (map head cls)) in
-    try
-      let ty = find (fun t -> forall (fun t' -> can (type_match t' t) [])
-                                     tys)
-                    tys in
-      map (fun cl ->
-             if fst(dest_var(head cl)) <> nm then cl else
-             inst (type_match (type_of (head cl)) ty []) cl)
-          cls
-    with Failure _ -> cls in
-  cake_define (list_mk_conj (itlist (fun nm cls -> unify cls nm)
-                                    names cls));;
+  let ins =
+    itlist
+      (fun nm ins ->
+         let tys = map type_of
+                       (filter (fun v -> fst(dest_var v) = nm)
+                               (itlist (fun cl l -> union (frees cl) l)
+                                       cls [])) in
+         itlist (fun ty ins -> tyunify ins (hd tys) ty) (tl tys) ins)
+      names [] in
+  cake_define (list_mk_conj (map (inst ins) cls));;
 
 let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm

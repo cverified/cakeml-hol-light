@@ -128,6 +128,14 @@ MEASURE = {
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # HOL4 computes the value with EVAL (of the expression below) and
+  # states the numeral; the port states the expression, which is the
+  # same number
+  ('infer', 'start_type_id_def'): '''
+let start_type_id_def = cake_define
+  `start_type_id =
+     ITLIST MAX (Tlist_num :: Tbool_num :: prim_type_nums) 0 + 1`;;
+''',
   # HOL4 overloads * with the separating conjunction (and ~ with
   # SEP_HIDE, which the port does not need)
   ('set_sep', 'STAR_def'): '''
@@ -197,6 +205,18 @@ NOT_YET = {
     '   llistTheory\'s eventually, which the port does not have yet',
   ('misc', 'Lnext_pos_def'):
     'needs Lnext',
+  ('data_to_word', 'AnyArith_call_tree_def'):
+    'the value is the call graph that HOL4 computes with EVAL;\n'
+    '   the expression that it evaluates has a free variable\n'
+    '   (data_conf), so the port has to compute the value as well',
+}
+
+# Type blocks whose type HOL4 computes with ML code, with the type
+# that it computes
+TYPE_TEXT = {
+  # type_of ``primTypes$prim_tenv.t``, the type of the t field of a
+  # type_env, which typeSystem calls tenv_abbrev
+  ('infer', 'err_var'): 'tenv_abbrev',
 }
 
 # definitions that HOL4 generates with ML code, so that there is no

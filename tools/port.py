@@ -491,8 +491,9 @@ class Porter:
     def walk(p, ty):
       while p.kind in ('paren', 'typed'): p = p.e
       if p.kind == 'id':
-        # a wildcard is a fresh variable in every clause anyway
-        if (p.name == '_' or p.name in CONS or
+        # a wildcard is a fresh variable in every clause anyway, and
+        # a position whose type is not known says nothing
+        if (p.name == '_' or ty is None or p.name in CONS or
             p.name in hterm.HLCONS): return
         where.setdefault(p.name, set()).add(ty)
         return
@@ -501,10 +502,10 @@ class Porter:
         nm = h.name if h.kind == 'id' else '?'
         for j, a in enumerate(args):
           tys = self.db.con_argty.get((nm, j))
-          walk(a, min(tys) if tys and len(tys) == 1 else (nm, j))
+          walk(a, min(tys) if tys and len(tys) == 1 else None)
         return
       if p.kind == 'infix':
-        walk(p.l, (p.op, 0)); walk(p.r, (p.op, 1))
+        walk(p.l, None); walk(p.r, None)
     for _, args, _ in cls:
       for i, a in enumerate(args): walk(a, ('arg', i))
     return any(len(v) > 1 for v in where.values())
@@ -603,7 +604,8 @@ class Porter:
   # -- type abbreviations, overloads, inductive relations --------
 
   def typeabbrev(self, b):
-    txt = dbmod.strip_quote(b.body)
+    txt = (overrides.TYPE_TEXT.get((self.thy, b.name)) or
+           dbmod.strip_quote(b.body))
     ty = hterm.parse_type_text(txt)
     params = hterm.type_vars_of(ty)
     if params:

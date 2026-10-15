@@ -169,17 +169,17 @@ let dec_INDUCT,dec_RECURSION = define_datatype
    | Denv (mlstring)";;
 
 (* Computes the bindings of a pattern *)
-let pat_bindings_def = cake_define_list
-  [`ast_pat_bindings Pany = []`;
-   `ast_pat_bindings (Pvar n) = [n]`;
-   `ast_pat_bindings (Plit l) = []`;
-   `ast_pat_bindings (Pcon v0 ps) = ast_pats_bindings ps`;
-   `ast_pat_bindings (Pref p) = ast_pat_bindings p`;
-   `ast_pat_bindings (Pas p i) = ast_pat_bindings p ++ [i]`;
-   `ast_pat_bindings (ast_Ptannot p v1) = ast_pat_bindings p`;
-   `ast_pats_bindings [] = []`;
-   `ast_pats_bindings (p :: ps) = ast_pats_bindings ps ++
-  ast_pat_bindings p`];;
+let pat_bindings_def = cake_define
+  `ast_pat_bindings Pany = [] /\
+   ast_pat_bindings (Pvar n) = [n] /\
+   ast_pat_bindings (Plit l) = [] /\
+   ast_pat_bindings (Pcon v0 ps) = ast_pats_bindings ps /\
+   ast_pat_bindings (Pref p) = ast_pat_bindings p /\
+   ast_pat_bindings (Pas p i) = ast_pat_bindings p ++ [i] /\
+   ast_pat_bindings (ast_Ptannot p v1) = ast_pat_bindings p /\
+   ast_pats_bindings [] = [] /\
+   ast_pats_bindings (p :: ps) = ast_pats_bindings ps ++
+     ast_pat_bindings p`;;
 hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
