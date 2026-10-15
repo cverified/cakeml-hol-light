@@ -2,9 +2,10 @@
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
 `Definition` and `Inductive` of the 227 files of the port: 4165
-blocks, and all 4165 of them are in (see `tools/coverage.py`).
+blocks, of which 4160 are in (see `tools/coverage.py`); the five
+that are not are the Pancake definitions of `compiler` below.
 `tools/fidelity.py` checks that no definition lost a name or a
-constructor argument on the way.  There is nothing pending.
+constructor argument on the way.
 
 Three of them are definitions whose value HOL4 computes with ML
 code (`EVAL` or `type_of`) and states as the value it finds.  The
