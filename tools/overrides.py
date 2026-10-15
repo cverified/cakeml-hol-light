@@ -152,6 +152,16 @@ LOCAL_NAMES = {
   ('clos_to_bvl', 'fromList'): 'sptree_fromList',
 }
 
+# constants that the port declares itself (cake_declare), which
+# the HOL4 sources make with ML code, so that the database knows
+# their names: a variable of that name is renamed, as it is for
+# any other constant (semantics/ffi has an oracle called oc)
+EXTRA_DEFS = [
+  ('walk', 'vwalk'), ('walkstar', 'walkstar'),
+  ('unifDef', 'oc'), ('unifDef', 'unify'),
+  ('word_bignum', 'mc_iop_code'),
+]
+
 # the HOL Light constant that an infix of HOL4 means where no
 # CakeML source overloads it with one of its own; a source that does
 # (bvl_to_bvi overloads ++ with SmartAppend) has the port declare
@@ -196,6 +206,7 @@ INT_ARGS = {
   # n1 and n are the integers that a let or a do notation binds,
   # which the annotation of the argument n does not reach
   ('linear_scan', 'get_intervals_ct_aux_def'): ['n1'],
+  ('linear_scan', 'get_intervals_ct_def'): ['n'],
   ('linear_scan', 'get_intervals_ct_monad_aux_def'): ['n1'],
   ('linear_scan', 'get_intervals_ct_monad_def'): ['n'],
 }
@@ -289,13 +300,12 @@ ONE_QUOTATION = set([
   # the Writes clause gives an integer, which is what says that
   # the + of the Branch clause is the one of the integers
   ('linear_scan', 'size_of_live_tree_def'),
-  # the result is a flatLang expression, which only the Lit
-  # clause says (the patterns are the constructors of ast, whose
-  # names flatLang has as well)
-  ('source_to_flat', 'compile_exp_def'),
   # the Jump of the right hand side is the one of asm, which
   # only the LocValue clause says (it annotates the word)
   ('lab_to_target', 'lab_inst_def'),
+  # the Seq of the last clause is wordLang's, which only the
+  # clause of the empty list says (it gives wordLang's Skip)
+  ('data_to_word', 'list_Seq_def'),
 ])
 
 # the theory whose constructor a name means in one definition,
@@ -305,6 +315,10 @@ ONE_QUOTATION = set([
 # Inst of wordLang comes later)
 CON_OF = {
   ('stack_remove', 'single_stack_free_def'): {'Inst': 'stackLang'},
+  # the right hand sides build flatLang expressions, where the
+  # patterns are the constructors of ast, which has the same
+  # names ('*' is every constructor name of that theory)
+  ('source_to_flat', 'compile_exp_def'): {'*': 'flatLang'},
 }
 
 # definitions whose patterns need the type of their constructor on

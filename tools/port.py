@@ -150,6 +150,7 @@ class Porter:
     self.bound = set()
     self.contys = set()
     self._con_ovl = None
+    self.conof = {}
     # an overload of an ancestor does not shadow a constant that
     # this theory defines itself (semanticPrimitives defines
     # num_cmp, which comparison has as an overload of num_compare)
@@ -614,8 +615,21 @@ class Porter:
     # one can have the same id once it is gone)
     self.ctx.armvars = {}
     # the theory whose constructor a name means here
-    conof = overrides.CON_OF.get(key, {})
+    conof = dict(overrides.CON_OF.get(key, {}))
+    if '*' in conof:
+      # every constructor name of that theory
+      t = conof.pop('*')
+      for (t2, ty), (cons, _) in self.db.datatypes.items():
+        if t2 != t: continue
+        for c in cons:
+          if c in self.ctx.overloaded: conof.setdefault(c, t)
+    # the right hand side of a clause is printed with these, the
+    # pattern with the names as they are (the pattern of
+    # source_to_flat's compile_exp is a constructor of ast and
+    # the body builds the one of flatLang with the same name)
+    self.conof = conof
     for nm, t in conof.items():
+      if '*' in overrides.CON_OF.get(key, {}): continue
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     if key in overrides.CLAUSE_FORM:
@@ -702,8 +716,10 @@ class Porter:
     self.out.append(text if not overloads else
                     text + '\n' + '\n'.join(overloads))
     for nm in conof:
+      if '*' in overrides.CON_OF.get(key, {}): continue
       self.ctx.overloaded.add(nm)
       del self.ctx.names[(self.thy, nm)]
+    self.conof = {}
     self.ctx.intnums = False
     self.ctx.wordnot = False
     self.ctx.intneg = False
@@ -887,18 +903,70 @@ class Porter:
       return p
     return go(p)
 
-  def annotate(self, cl, ambiguous=False):
+  def pat_types(self, cls):
+    """the theories of the types that the source itself puts on a
+       pattern, per argument position: those say which theory an
+       ambiguous constructor of another clause is from
+       (source_to_flat's compile_exp matches on the If of ast,
+       which only the clauses with an :ast_exp on them say)"""
+    out = {}
+    for cl in cls:
+      e = cl
+      while e.kind == 'paren': e = e.e
+      if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
+      h, args = hterm.strip_app(e.l)
+      if h.kind != 'id': continue
+      for i, a in enumerate(args):
+        while a.kind == 'paren': a = a.e
+        if a.kind != 'typed': continue
+        try:
+          ty = hterm.parse_type_text(
+                 ' '.join(t.text for t in a.ty))
+        except Exception:
+          continue
+        if ty[0] != 'op': continue
+        nm = ty[1].split('$')[-1]
+        ts = {t for (t, ty2) in self.db.datatypes if ty2 == nm}
+        if ts: out[(h.name, i)] = ts | out.get((h.name, i), set())
+    # and the theories that can provide the constructor that
+    # every clause has at that position: with those, an
+    # ambiguous name is the one that fits the whole definition
+    poss = {}
+    for cl in cls:
+      e = cl
+      while e.kind == 'paren': e = e.e
+      if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
+      h, args = hterm.strip_app(e.l)
+      if h.kind != 'id': continue
+      for i, a in enumerate(args):
+        while a.kind in ('paren', 'typed'): a = a.e
+        c, _ = hterm.strip_app(a) if a.kind == 'app' else (a, [])
+        if c.kind != 'id' or not iscon(c.name): continue
+        nm = c.name.split('$')[-1]
+        ts = ({c.name.split('$')[0]} if '$' in c.name else
+              {t for t, k in self.db.defs.get(nm, []) if k == 'con'})
+        key = (h.name, i)
+        poss[key] = ts if key not in poss else (poss[key] & ts)
+    for k, v in poss.items():
+      if v: out.setdefault(k, v)
+    return out
+
+  def annotate(self, cl, ambiguous=False, atys=None):
     """the type of the pattern of a clause that is a quotation of
        its own: without it the clause can typecheck differently
        from the others (the name of a constructor is ambiguous)"""
     e = cl
     while e.kind == 'paren': e = e.e
     if not (e.kind == 'infix' and e.op in ('=', '<=>')): return cl
-    _, args = hterm.strip_app(e.l)
+    head, args = hterm.strip_app(e.l)
     e.l = hterm.strip_app(e.l)[0]
     self.annotated = {}
-    for a in args:
+    base = self.contys
+    for i, a in enumerate(args):
+      if atys:
+        self.contys = atys.get((head.name, i)) or base
       a = self.annotate_pat(a, ambiguous)
+      self.contys = base
       # an argument that holds an integer, where no clause says so
       b = a
       while b.kind == 'paren': b = b.e
@@ -1100,6 +1168,28 @@ class Porter:
     # is not an integer as well says nothing
     return out - other
 
+  def pr_clause(self, p, cl):
+    """a clause, with the right hand side printed with the
+       constructors that CON_OF says this definition means"""
+    if not self.conof: return p.pr(cl, 0)
+    e = cl
+    while e.kind == 'paren': e = e.e
+    if not (e.kind == 'infix' and e.op in ('=', '<=>')):
+      return p.pr(cl, 0)
+    lhs = p.pr(e.l, 13)
+    old = {}
+    for nm, t in self.conof.items():
+      old[nm] = nm in self.ctx.overloaded
+      self.ctx.overloaded.discard(nm)
+      self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
+    try:
+      rhs = p.pr(e.r, 13)
+    finally:
+      for nm in self.conof:
+        if old[nm]: self.ctx.overloaded.add(nm)
+        del self.ctx.names[(self.thy, nm)]
+    return '%s %s %s' % (lhs, e.op, rhs)
+
   def clause_form(self, body):
     """the clauses of a definition as separate quotations: HOL4
        typechecks every clause of a definition on its own, so the
@@ -1115,12 +1205,15 @@ class Porter:
       # the last clause of the list ends in `];; and the others
       # in `;, which is what the lines have to leave room for
       all = hterm.conjuncts_of(e)
+      atys = self.pat_types(all)
       cls = []
       for i, cl in enumerate(all):
         # every clause has its own variables, so also its own ones
         # that hold an integer
         self.ctx.intvars = self.int_vars_node(cl) | self.intargs
-        cls.append(fmt(p.pr(self.annotate(cl, True), 0), indent=4,
+        cls.append(fmt(self.pr_clause(p,
+                         self.annotate(cl, True, atys)),
+                       indent=4,
                        last=5 if i == len(all) - 1 else 3))
     finally:
       self.ctx.vars = old

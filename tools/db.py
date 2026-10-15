@@ -103,6 +103,7 @@ class Db:
     self.thy_of_file = {}
     self.kind_of_thy = {}
     self.scan()
+    self.extra_defs()
     self.mapping()
     self.compute_needed()
 
@@ -242,6 +243,12 @@ class Db:
             if not local:
               self.defs[b.name].append((thy, 'overload'))
             self.overloads[(thy, b.name)] = (strip_quote(b.body), local)
+
+  def extra_defs(self):
+    """the constants that the port declares itself"""
+    for thy, nm in overrides.EXTRA_DEFS:
+      if not any(t == thy for t, _ in self.defs.get(nm, [])):
+        self.defs[nm].append((thy, 'def'))
 
   # ---------------------------------------------------------------
 

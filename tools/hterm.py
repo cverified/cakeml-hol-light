@@ -558,7 +558,10 @@ class Parser:
       # values as "case x, y of p, q => ...")
       pat = self.parse(50)
       self.expect('=>')
-      b = self.parse(60)
+      # the body of an arm reaches over a comma, as it does in
+      # HOL4 (data_to_word's assign_WordFromInt gives back
+      # case ... of NONE => (GiveUp,l) | SOME h => (if ...), l)
+      b = self.parse(50)
       arms.append((pat, b))
       if self.at('|'): self.next(); continue
       break
