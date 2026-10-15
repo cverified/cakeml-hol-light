@@ -243,38 +243,38 @@ hol4_overload "pat_bindings" "ast_pat_bindings";;
 hol4_overload "pats_bindings" "ast_pats_bindings";;
 
 let every_exp_def = cake_define_list
-  [`every_exp p (Raise e) <=>
+  [`every_exp p (Raise e:ast_exp) <=>
                  p (Raise e) /\ every_exp p e`;
-   `every_exp p (Handle e pes) <=>
+   `every_exp p (Handle e pes:ast_exp) <=>
                  p (Handle e pes) /\ every_exp p e /\ EVERY
                    (\(pat,e). every_exp p e) pes`;
    `every_exp p (ast_Lit l) <=>
                  p (ast_Lit l)`;
-   `every_exp p (Con cn es) <=>
+   `every_exp p (Con cn es:ast_exp) <=>
                  p (Con cn es) /\ EVERY (every_exp p) es`;
-   `every_exp p (Var v) <=>
+   `every_exp p (Var v:ast_exp) <=>
                  p (Var v)`;
-   `every_exp p (Fun x e) <=>
+   `every_exp p (Fun x e:ast_exp) <=>
                  p (Fun x e) /\ every_exp p e`;
-   `every_exp p (App op es) <=>
+   `every_exp p (App op es:ast_exp) <=>
                  p (App op es) /\ EVERY (every_exp p) es`;
-   `every_exp p (Log lop e1 e2) <=>
+   `every_exp p (Log lop e1 e2:ast_exp) <=>
                  p (Log lop e1 e2) /\ every_exp p e1 /\ every_exp
                    p e2`;
-   `every_exp p (If e1 e2 e3) <=>
+   `every_exp p (If e1 e2 e3:ast_exp) <=>
                  p (If e1 e2 e3) /\ every_exp p e1 /\ every_exp p
                    e2 /\ every_exp p e3`;
-   `every_exp p (Mat e pes) <=>
+   `every_exp p (Mat e pes:ast_exp) <=>
                  p (Mat e pes) /\ every_exp p e /\ EVERY
                    (\(pat,e). every_exp p e) pes`;
-   `every_exp p (Let x e1 e2) <=>
+   `every_exp p (Let x e1 e2:ast_exp) <=>
                  p (Let x e1 e2) /\ every_exp p e1 /\ every_exp p
                    e2`;
-   `every_exp p (Tannot e a) <=>
+   `every_exp p (Tannot e a:ast_exp) <=>
                  p (Tannot e a) /\ every_exp p e`;
-   `every_exp p (Lannot e a) <=>
+   `every_exp p (Lannot e a:ast_exp) <=>
                  p (Lannot e a) /\ every_exp p e`;
-   `every_exp p (Letrec funs e) <=>
+   `every_exp p (Letrec funs e:ast_exp) <=>
                  p (Letrec funs e) /\ every_exp p e /\ EVERY
                    (\(n,v,e). every_exp p e) funs`];;
 

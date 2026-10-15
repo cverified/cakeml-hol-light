@@ -97,17 +97,18 @@ let handle_size_def = cake_define
    (handle_size1 (x :: xs) = 1 + handle_size x + handle_size1 xs)`;;
 
 let handle_simp_def = cake_define_list
-  [`handle_simp (Handle x1 x2) = make_handle x1 x2 0`;
-   `handle_simp (Var v) = Var v`;
-   `handle_simp (If x1 x2 x3) = If (handle_simp x1) (handle_simp x2)
-  (handle_simp x3)`;
-   `handle_simp (Let xs x2) = Let (handle_simp_list xs) (handle_simp
-  x2)`;
-   `handle_simp (Raise x1) = Raise (handle_simp x1)`;
-   `handle_simp (Op op xs) = Op op (handle_simp_list xs)`;
-   `handle_simp (Tick x) = Tick (handle_simp x)`;
-   `handle_simp (Force m n) = Force m n`;
-   `handle_simp (Call t dest xs) = Call t dest (handle_simp_list xs)`;
+  [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
+   `handle_simp (Var v:bvl_exp) = Var v`;
+   `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)
+  (handle_simp x2) (handle_simp x3)`;
+   `handle_simp (Let xs x2:bvl_exp) = Let (handle_simp_list xs)
+  (handle_simp x2)`;
+   `handle_simp (Raise x1:bvl_exp) = Raise (handle_simp x1)`;
+   `handle_simp (Op op xs:bvl_exp) = Op op (handle_simp_list xs)`;
+   `handle_simp (Tick x:bvl_exp) = Tick (handle_simp x)`;
+   `handle_simp (Force m n:bvl_exp) = Force m n`;
+   `handle_simp (Call t dest xs:bvl_exp) = Call t dest
+  (handle_simp_list xs)`;
    `handle_simp_list [] = ([]:bvl_exp list)`;
    `handle_simp_list (x :: xs) = handle_simp x :: handle_simp_list xs`;
    `make_handle x1 x2 l =

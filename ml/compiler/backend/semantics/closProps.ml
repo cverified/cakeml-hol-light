@@ -120,34 +120,34 @@ let every_Fn_SOME_def = cake_define_list
    `every_Fn_SOME (x :: y :: xs) <=>
          every_Fn_SOME [x] /\
          every_Fn_SOME (y :: xs)`;
-   `every_Fn_SOME [Var _26 v] <=> T`;
-   `every_Fn_SOME [If _27 x1 x2 x3] <=>
+   `every_Fn_SOME [(Var _26 v:flatLang_exp)] <=> T`;
+   `every_Fn_SOME [(If _27 x1 x2 x3:flatLang_exp)] <=>
          every_Fn_SOME [x1] /\
          every_Fn_SOME [x2] /\
          every_Fn_SOME [x3]`;
-   `every_Fn_SOME [Let _28 xs x2] <=>
+   `every_Fn_SOME [(Let _28 xs x2:flatLang_exp)] <=>
          every_Fn_SOME [x2] /\
          every_Fn_SOME xs`;
-   `every_Fn_SOME [Raise _29 x1] <=>
+   `every_Fn_SOME [(Raise _29 x1:flatLang_exp)] <=>
          every_Fn_SOME [x1]`;
-   `every_Fn_SOME [Tick _30 x1] <=>
+   `every_Fn_SOME [(Tick _30 x1:flatLang_exp)] <=>
          every_Fn_SOME [x1]`;
-   `every_Fn_SOME [Op _31 op xs] <=>
+   `every_Fn_SOME [(Op _31 op xs:flatLang_exp)] <=>
          every_Fn_SOME xs`;
-   `every_Fn_SOME [App _32 loc_opt x1 x2] <=>
+   `every_Fn_SOME [(App _32 loc_opt x1 x2:flatLang_exp)] <=>
          every_Fn_SOME [x1] /\
          every_Fn_SOME x2`;
-   `every_Fn_SOME [Fn _33 loc_opt vs num_args x1] <=>
+   `every_Fn_SOME [(Fn _33 loc_opt vs num_args x1:flatLang_exp)] <=>
          IS_SOME loc_opt /\
          every_Fn_SOME [x1]`;
-   `every_Fn_SOME [Letrec _34 loc_opt vs fns x1] <=>
+   `every_Fn_SOME [(Letrec _34 loc_opt vs fns x1:flatLang_exp)] <=>
          IS_SOME loc_opt /\
          every_Fn_SOME (MAP SND fns) /\
          every_Fn_SOME [x1]`;
-   `every_Fn_SOME [Handle _35 x1 x2] <=>
+   `every_Fn_SOME [(Handle _35 x1 x2:flatLang_exp)] <=>
          every_Fn_SOME [x1] /\
          every_Fn_SOME [x2]`;
-   `every_Fn_SOME [Call _36 ticks dest xs] <=>
+   `every_Fn_SOME [(Call _36 ticks dest xs:flatLang_exp)] <=>
          every_Fn_SOME xs`];;
 
 let every_Fn_vs_NONE_def = cake_define_list
@@ -155,34 +155,34 @@ let every_Fn_vs_NONE_def = cake_define_list
    `every_Fn_vs_NONE (x :: y :: xs) <=>
          every_Fn_vs_NONE [x] /\
          every_Fn_vs_NONE (y :: xs)`;
-   `every_Fn_vs_NONE [Var _37 v] <=> T`;
-   `every_Fn_vs_NONE [If _38 x1 x2 x3] <=>
+   `every_Fn_vs_NONE [(Var _37 v:flatLang_exp)] <=> T`;
+   `every_Fn_vs_NONE [(If _38 x1 x2 x3:flatLang_exp)] <=>
          every_Fn_vs_NONE [x1] /\
          every_Fn_vs_NONE [x2] /\
          every_Fn_vs_NONE [x3]`;
-   `every_Fn_vs_NONE [Let _39 xs x2] <=>
+   `every_Fn_vs_NONE [(Let _39 xs x2:flatLang_exp)] <=>
          every_Fn_vs_NONE [x2] /\
          every_Fn_vs_NONE xs`;
-   `every_Fn_vs_NONE [Raise _40 x1] <=>
+   `every_Fn_vs_NONE [(Raise _40 x1:flatLang_exp)] <=>
          every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [Tick _41 x1] <=>
+   `every_Fn_vs_NONE [(Tick _41 x1:flatLang_exp)] <=>
          every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [Op _42 op xs] <=>
+   `every_Fn_vs_NONE [(Op _42 op xs:flatLang_exp)] <=>
          every_Fn_vs_NONE xs`;
-   `every_Fn_vs_NONE [App _43 loc_opt x1 x2] <=>
+   `every_Fn_vs_NONE [(App _43 loc_opt x1 x2:flatLang_exp)] <=>
          every_Fn_vs_NONE [x1] /\
          every_Fn_vs_NONE x2`;
-   `every_Fn_vs_NONE [Fn _44 loc vs_opt num_args x1] <=>
+   `every_Fn_vs_NONE [(Fn _44 loc vs_opt num_args x1:flatLang_exp)] <=>
          IS_NONE vs_opt /\
          every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [Letrec _45 loc vs_opt fns x1] <=>
+   `every_Fn_vs_NONE [(Letrec _45 loc vs_opt fns x1:flatLang_exp)] <=>
          IS_NONE vs_opt /\
          every_Fn_vs_NONE (MAP SND fns) /\
          every_Fn_vs_NONE [x1]`;
-   `every_Fn_vs_NONE [Handle _46 x1 x2] <=>
+   `every_Fn_vs_NONE [(Handle _46 x1 x2:flatLang_exp)] <=>
          every_Fn_vs_NONE [x1] /\
          every_Fn_vs_NONE [x2]`;
-   `every_Fn_vs_NONE [Call _47 ticks dest xs] <=>
+   `every_Fn_vs_NONE [(Call _47 ticks dest xs:flatLang_exp)] <=>
          every_Fn_vs_NONE xs`];;
 
 let every_Fn_vs_SOME_def = cake_define_list
@@ -190,61 +190,61 @@ let every_Fn_vs_SOME_def = cake_define_list
    `every_Fn_vs_SOME (x :: y :: xs) <=>
          every_Fn_vs_SOME [x] /\
          every_Fn_vs_SOME (y :: xs)`;
-   `every_Fn_vs_SOME [Var _48 v] <=> T`;
-   `every_Fn_vs_SOME [If _49 x1 x2 x3] <=>
+   `every_Fn_vs_SOME [(Var _48 v:flatLang_exp)] <=> T`;
+   `every_Fn_vs_SOME [(If _49 x1 x2 x3:flatLang_exp)] <=>
          every_Fn_vs_SOME [x1] /\
          every_Fn_vs_SOME [x2] /\
          every_Fn_vs_SOME [x3]`;
-   `every_Fn_vs_SOME [Let _50 xs x2] <=>
+   `every_Fn_vs_SOME [(Let _50 xs x2:flatLang_exp)] <=>
          every_Fn_vs_SOME [x2] /\
          every_Fn_vs_SOME xs`;
-   `every_Fn_vs_SOME [Raise _51 x1] <=>
+   `every_Fn_vs_SOME [(Raise _51 x1:flatLang_exp)] <=>
          every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [Tick _52 x1] <=>
+   `every_Fn_vs_SOME [(Tick _52 x1:flatLang_exp)] <=>
          every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [Op _53 op xs] <=>
+   `every_Fn_vs_SOME [(Op _53 op xs:flatLang_exp)] <=>
          every_Fn_vs_SOME xs`;
-   `every_Fn_vs_SOME [App _54 loc_opt x1 x2] <=>
+   `every_Fn_vs_SOME [(App _54 loc_opt x1 x2:flatLang_exp)] <=>
          every_Fn_vs_SOME [x1] /\
          every_Fn_vs_SOME x2`;
-   `every_Fn_vs_SOME [Fn _55 loc vs_opt num_args x1] <=>
+   `every_Fn_vs_SOME [(Fn _55 loc vs_opt num_args x1:flatLang_exp)] <=>
          IS_SOME vs_opt /\
          every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [Letrec _56 loc vs_opt fns x1] <=>
+   `every_Fn_vs_SOME [(Letrec _56 loc vs_opt fns x1:flatLang_exp)] <=>
          IS_SOME vs_opt /\
          every_Fn_vs_SOME (MAP SND fns) /\
          every_Fn_vs_SOME [x1]`;
-   `every_Fn_vs_SOME [Handle _57 x1 x2] <=>
+   `every_Fn_vs_SOME [(Handle _57 x1 x2:flatLang_exp)] <=>
          every_Fn_vs_SOME [x1] /\
          every_Fn_vs_SOME [x2]`;
-   `every_Fn_vs_SOME [Call _58 ticks dest xs] <=>
+   `every_Fn_vs_SOME [(Call _58 ticks dest xs:flatLang_exp)] <=>
          every_Fn_vs_SOME xs`];;
 
 let no_mti_def = cake_define_list
-  [`no_mti (Var t n) = T`;
-   `no_mti (If t e1 e2 e3) <=>
+  [`no_mti (Var t n:flatLang_exp) = T`;
+   `no_mti (If t e1 e2 e3:flatLang_exp) <=>
         no_mti e1 /\
         no_mti e2 /\
         no_mti e3`;
-   `no_mti (Let t es e) <=>
+   `no_mti (Let t es e:flatLang_exp) <=>
         EVERY no_mti es /\
         no_mti e`;
-   `no_mti (Raise t e) <=>
+   `no_mti (Raise t e:flatLang_exp) <=>
         no_mti e`;
-   `no_mti (Handle t e1 e2) <=>
+   `no_mti (Handle t e1 e2:flatLang_exp) <=>
         no_mti e1 /\
         no_mti e2`;
-   `no_mti (Tick t e) <=>
+   `no_mti (Tick t e:flatLang_exp) <=>
         no_mti e`;
-   `no_mti (Call t ticks n es) = F`;
-   `no_mti (App t opt e es) <=>
+   `no_mti (Call t ticks n es:flatLang_exp) = F`;
+   `no_mti (App t opt e es:flatLang_exp) <=>
         LENGTH es = 1 /\ opt = NONE /\
         EVERY no_mti es /\
         no_mti e`;
-   `no_mti (Fn t opt1 opt2 num_args e) <=>
+   `no_mti (Fn t opt1 opt2 num_args e:flatLang_exp) <=>
         num_args = 1 /\ opt1 = NONE /\ opt2 = NONE /\
         no_mti e`;
-   `no_mti (Letrec t opt1 opt2 funs e) <=>
+   `no_mti (Letrec t opt1 opt2 funs e:flatLang_exp) <=>
         no_mti e /\ opt1 = NONE /\ opt2 = NONE /\
         EVERY (\x. FST x = 1 /\ no_mti (SND x)) funs`;
    `no_mti (closLang_Op t op es) <=>
@@ -254,24 +254,24 @@ let fv_def = cake_define_list
   [`fv n [] <=> F`;
    `fv n ((x:closLang_exp) :: y :: xs) <=>
          fv n [x] \/ fv n (y :: xs)`;
-   `fv n [Var _59 v] <=> (n = v)`;
-   `fv n [If _60 x1 x2 x3] <=>
+   `fv n [(Var _59 v:flatLang_exp)] <=> (n = v)`;
+   `fv n [(If _60 x1 x2 x3:flatLang_exp)] <=>
          fv n [x1] \/ fv n [x2] \/ fv n [x3]`;
-   `fv n [Let _61 xs x2] <=>
+   `fv n [(Let _61 xs x2:flatLang_exp)] <=>
          fv n xs \/ fv (n + LENGTH xs) [x2]`;
-   `fv n [Raise _62 x1] <=> fv n [x1]`;
-   `fv n [Tick _63 x1] <=> fv n [x1]`;
-   `fv n [Op _64 op xs] <=> fv n xs`;
-   `fv n [App _65 loc_opt x1 x2] <=>
+   `fv n [(Raise _62 x1:flatLang_exp)] <=> fv n [x1]`;
+   `fv n [(Tick _63 x1:flatLang_exp)] <=> fv n [x1]`;
+   `fv n [(Op _64 op xs:flatLang_exp)] <=> fv n xs`;
+   `fv n [(App _65 loc_opt x1 x2:flatLang_exp)] <=>
          fv n [x1] \/ fv n x2`;
-   `fv n [Fn _66 loc vs num_args x1] <=>
+   `fv n [(Fn _66 loc vs num_args x1:flatLang_exp)] <=>
          fv (n + num_args) [x1]`;
-   `fv n [Letrec _67 loc vs fns x1] <=>
+   `fv n [(Letrec _67 loc vs fns x1:flatLang_exp)] <=>
          EXISTS (\(num_args,x). fv (n + num_args + LENGTH fns)
            [x]) fns \/ fv (n + LENGTH fns) [x1]`;
-   `fv n [Handle _68 x1 x2] <=>
+   `fv n [(Handle _68 x1 x2:flatLang_exp)] <=>
          fv n [x1] \/ fv (n + 1) [x2]`;
-   `fv n [Call _69 ticks dest xs] <=> fv n xs`];;
+   `fv n [(Call _69 ticks dest xs:flatLang_exp)] <=> fv n xs`];;
 
 let fv1_def = cake_define
   `fv1 v e = fv v [e]`;;
@@ -466,9 +466,9 @@ let clo_to_partial_args_def = cake_define
      args)`;;
 
 let clo_add_partial_args_def = cake_define_list
-  [`clo_add_partial_args args (Closure x1 args' x2 x3 x4) =
+  [`clo_add_partial_args args (Closure x1 args' x2 x3 x4:closSem_v) =
        Closure x1 (args ++ args') x2 x3 x4`;
-   `clo_add_partial_args args (Recclosure x1 args' x2 x3 x4) =
+   `clo_add_partial_args args (Recclosure x1 args' x2 x3 x4:closSem_v) =
        Recclosure x1 (args ++ args') x2 x3 x4`];;
 
 let clo_to_num_params_def = cake_define
@@ -619,25 +619,29 @@ let rsgc_free_def = cake_define
         | (Rerr (Rraise v)) -> vsgc_free v`;;
 
 let esgc_free_def = cake_define_list
-  [`closProps_esgc_free (Var _145 _146) <=> T`;
-   `closProps_esgc_free (If _147 e1 e2 e3) <=> closProps_esgc_free e1
-  /\ closProps_esgc_free e2 /\ closProps_esgc_free e3`;
-   `closProps_esgc_free (Let _148 binds e) <=> EVERY
+  [`closProps_esgc_free (Var _145 _146:flatLang_exp) <=> T`;
+   `closProps_esgc_free (If _147 e1 e2 e3:flatLang_exp) <=>
+  closProps_esgc_free e1 /\ closProps_esgc_free e2 /\
+  closProps_esgc_free e3`;
+   `closProps_esgc_free (Let _148 binds e:flatLang_exp) <=> EVERY
   closProps_esgc_free binds /\ closProps_esgc_free e`;
-   `closProps_esgc_free (Raise _149 e) <=> closProps_esgc_free e`;
-   `closProps_esgc_free (Handle _150 e1 e2) <=> closProps_esgc_free
-  e1 /\ closProps_esgc_free e2`;
-   `closProps_esgc_free (Tick _151 e) <=> closProps_esgc_free e`;
-   `closProps_esgc_free (Call _152 _153 _154 args) <=> EVERY
-  closProps_esgc_free args`;
-   `closProps_esgc_free (App _155 _156 e args) <=>
+   `closProps_esgc_free (Raise _149 e:flatLang_exp) <=>
+  closProps_esgc_free e`;
+   `closProps_esgc_free (Handle _150 e1 e2:flatLang_exp) <=>
+  closProps_esgc_free e1 /\ closProps_esgc_free e2`;
+   `closProps_esgc_free (Tick _151 e:flatLang_exp) <=>
+  closProps_esgc_free e`;
+   `closProps_esgc_free (Call _152 _153 _154 args:flatLang_exp) <=>
+  EVERY closProps_esgc_free args`;
+   `closProps_esgc_free (App _155 _156 e args:flatLang_exp) <=>
   closProps_esgc_free e /\ EVERY closProps_esgc_free args`;
-   `closProps_esgc_free (Fn _157 _158 _159 _160 b) <=> set_globals b
-  = EMPTY_BAG`;
-   `closProps_esgc_free (Letrec _161 _162 _163 binds bod) <=>
+   `closProps_esgc_free (Fn _157 _158 _159 _160 b:flatLang_exp) <=>
+  set_globals b = EMPTY_BAG`;
+   `closProps_esgc_free (Letrec _161 _162 _163 binds bod:flatLang_exp)
+  <=>
         elist_globals (MAP SND binds) = EMPTY_BAG /\
           closProps_esgc_free bod`;
-   `closProps_esgc_free (Op _164 _165 args) <=> EVERY
+   `closProps_esgc_free (Op _164 _165 args:flatLang_exp) <=> EVERY
   closProps_esgc_free args`];;
 hol4_overload "esgc_free" "closProps_esgc_free";;
 
@@ -852,40 +856,45 @@ val do_app_lemma =
 *)
 
 let obeys_max_app_def = cake_define_list
-  [`obeys_max_app m (Var _167 _168) <=> T`;
-   `obeys_max_app m (If _169 e1 e2 e3) <=> obeys_max_app m e1 /\
-  obeys_max_app m e2 /\ obeys_max_app m e3`;
-   `obeys_max_app m (Let _170 es e) <=> EVERY (obeys_max_app m) es /\
+  [`obeys_max_app m (Var _167 _168:flatLang_exp) <=> T`;
+   `obeys_max_app m (If _169 e1 e2 e3:flatLang_exp) <=> obeys_max_app
+  m e1 /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
+   `obeys_max_app m (Let _170 es e:flatLang_exp) <=> EVERY
+  (obeys_max_app m) es /\ obeys_max_app m e`;
+   `obeys_max_app m (Raise _171 e:flatLang_exp) <=> obeys_max_app m e`;
+   `obeys_max_app m (Handle _172 e1 e2:flatLang_exp) <=>
+  obeys_max_app m e1 /\ obeys_max_app m e2`;
+   `obeys_max_app m (Tick _173 e:flatLang_exp) <=> obeys_max_app m e`;
+   `obeys_max_app m (Call _174 _175 _176 es:flatLang_exp) <=> EVERY
+  (obeys_max_app m) es`;
+   `obeys_max_app m (App _177 _178 e es:flatLang_exp) <=> LENGTH es
+  <= m /\ obeys_max_app m e /\ EVERY (obeys_max_app m) es`;
+   `obeys_max_app m (Fn _179 _180 _181 _182 e:flatLang_exp) <=>
   obeys_max_app m e`;
-   `obeys_max_app m (Raise _171 e) <=> obeys_max_app m e`;
-   `obeys_max_app m (Handle _172 e1 e2) <=> obeys_max_app m e1 /\
-  obeys_max_app m e2`;
-   `obeys_max_app m (Tick _173 e) <=> obeys_max_app m e`;
-   `obeys_max_app m (Call _174 _175 _176 es) <=> EVERY (obeys_max_app
-  m) es`;
-   `obeys_max_app m (App _177 _178 e es) <=> LENGTH es <= m /\
-  obeys_max_app m e /\ EVERY (obeys_max_app m) es`;
-   `obeys_max_app m (Fn _179 _180 _181 _182 e) <=> obeys_max_app m e`;
-   `obeys_max_app m (Letrec _183 _184 _185 es e) <=> EVERY
-  (obeys_max_app m) (MAP SND es) /\ obeys_max_app m e`;
-   `obeys_max_app m (Op _186 _187 es) <=> EVERY (obeys_max_app m) es`];;
+   `obeys_max_app m (Letrec _183 _184 _185 es e:flatLang_exp) <=>
+  EVERY (obeys_max_app m) (MAP SND es) /\ obeys_max_app m e`;
+   `obeys_max_app m (Op _186 _187 es:flatLang_exp) <=> EVERY
+  (obeys_max_app m) es`];;
 
 let no_Labels_def = cake_define_list
-  [`no_Labels (Var _188 _189) <=> T`;
-   `no_Labels (If _190 e1 e2 e3) <=> no_Labels e1 /\ no_Labels e2 /\
-  no_Labels e3`;
-   `no_Labels (Let _191 es e) <=> EVERY no_Labels es /\ no_Labels e`;
-   `no_Labels (Raise _192 e) <=> no_Labels e`;
-   `no_Labels (Handle _193 e1 e2) <=> no_Labels e1 /\ no_Labels e2`;
-   `no_Labels (Tick _194 e) <=> no_Labels e`;
-   `no_Labels (Call _195 _196 _197 es) <=> EVERY no_Labels es`;
-   `no_Labels (App _198 _199 e es) <=> no_Labels e /\ EVERY no_Labels
-  es`;
-   `no_Labels (Fn _200 _201 _202 _203 e) <=> no_Labels e`;
-   `no_Labels (Letrec _204 _205 _206 es e) <=> EVERY no_Labels (MAP
-  SND es) /\ no_Labels e`;
-   `no_Labels (Op _207 op es) <=> (!n. ~(op = Label n)) /\ EVERY
-  no_Labels es`];;
+  [`no_Labels (Var _188 _189:flatLang_exp) <=> T`;
+   `no_Labels (If _190 e1 e2 e3:flatLang_exp) <=> no_Labels e1 /\
+  no_Labels e2 /\ no_Labels e3`;
+   `no_Labels (Let _191 es e:flatLang_exp) <=> EVERY no_Labels es /\
+  no_Labels e`;
+   `no_Labels (Raise _192 e:flatLang_exp) <=> no_Labels e`;
+   `no_Labels (Handle _193 e1 e2:flatLang_exp) <=> no_Labels e1 /\
+  no_Labels e2`;
+   `no_Labels (Tick _194 e:flatLang_exp) <=> no_Labels e`;
+   `no_Labels (Call _195 _196 _197 es:flatLang_exp) <=> EVERY
+  no_Labels es`;
+   `no_Labels (App _198 _199 e es:flatLang_exp) <=> no_Labels e /\
+  EVERY no_Labels es`;
+   `no_Labels (Fn _200 _201 _202 _203 e:flatLang_exp) <=> no_Labels e`;
+   `no_Labels (Letrec _204 _205 _206 es e:flatLang_exp) <=> EVERY
+  no_Labels (MAP SND es) /\ no_Labels e`;
+   `no_Labels (Op _207 op es:flatLang_exp) <=> (!n. ~(op = Label n))
+  /\ EVERY no_Labels es`];;
 
 (* TERMINATION: wf_rel_tac `measure (list_size exp_size o SND)`
   \\ rw [list_size_pair_size_MAP_FST_SND] *)
@@ -943,39 +952,39 @@ val app_call_dests_ind = theorem"app_call_dests_ind";
 *)
 
 let get_code_labels_def = cake_define_list
-  [`closProps_get_code_labels (Var _220 _221) = {}`;
-   `closProps_get_code_labels (If _222 e1 e2 e3) =
+  [`closProps_get_code_labels (Var _220 _221:flatLang_exp) = {}`;
+   `closProps_get_code_labels (If _222 e1 e2 e3:flatLang_exp) =
         closProps_get_code_labels e1 UNION
         closProps_get_code_labels e2 UNION
         closProps_get_code_labels e3`;
-   `closProps_get_code_labels (Let _223 es e) =
+   `closProps_get_code_labels (Let _223 es e:flatLang_exp) =
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))
           UNION
         closProps_get_code_labels e`;
-   `closProps_get_code_labels (Raise _224 e) =
+   `closProps_get_code_labels (Raise _224 e:flatLang_exp) =
   closProps_get_code_labels e`;
-   `closProps_get_code_labels (Handle _225 e1 e2) =
+   `closProps_get_code_labels (Handle _225 e1 e2:flatLang_exp) =
         closProps_get_code_labels e1 UNION
         closProps_get_code_labels e2`;
-   `closProps_get_code_labels (Tick _226 e) =
+   `closProps_get_code_labels (Tick _226 e:flatLang_exp) =
   closProps_get_code_labels e`;
-   `closProps_get_code_labels (Call _227 _228 l es) =
+   `closProps_get_code_labels (Call _227 _228 l es:flatLang_exp) =
         {l} UNION BIGUNION (set_of_list (MAP
           closProps_get_code_labels es))`;
-   `closProps_get_code_labels (App _229 l e es) =
+   `closProps_get_code_labels (App _229 l e es:flatLang_exp) =
         (match l with NONE -> {} | SOME n -> {n}) UNION
         closProps_get_code_labels e UNION
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))`;
-   `closProps_get_code_labels (Fn _230 l _231 _232 e) =
+   `closProps_get_code_labels (Fn _230 l _231 _232 e:flatLang_exp) =
        (match l with NONE -> {} | SOME n -> {n}) UNION
        closProps_get_code_labels e`;
-   `closProps_get_code_labels (Letrec _233 l _234 es e) =
+   `closProps_get_code_labels (Letrec _233 l _234 es e:flatLang_exp) =
        (match l with NONE -> {} | SOME n ->
          IMAGE (\k. n + 2 * k) (count (LENGTH es))) UNION
         closProps_get_code_labels e UNION
         BIGUNION (set_of_list (MAP closProps_get_code_labels (MAP
           SND es)))`;
-   `closProps_get_code_labels (Op _235 op es) =
+   `closProps_get_code_labels (Op _235 op es:flatLang_exp) =
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))
           UNION
         assign_get_code_label op`];;

@@ -208,12 +208,12 @@ let simple_basic_val_rel_def = cake_define
    (simple_basic_val_rel (Recclosure vs exps nm) v = F)`;;
 
 let v_container_xs_def = cake_define_list
-  [`v_container_xs (Litv _4) = []`;
-   `v_container_xs (Loc _5 _6) = []`;
-   `v_container_xs (Conv _7 vs) = vs`;
-   `v_container_xs (Vectorv vs) = vs`;
-   `v_container_xs (Closure vs nm exp) = []`;
-   `v_container_xs (Recclosure vs exps nm) = []`];;
+  [`v_container_xs (Litv _4:flatSem_v) = []`;
+   `v_container_xs (Loc _5 _6:flatSem_v) = []`;
+   `v_container_xs (Conv _7 vs:flatSem_v) = vs`;
+   `v_container_xs (Vectorv vs:flatSem_v) = vs`;
+   `v_container_xs (Closure vs nm exp:flatSem_v) = []`;
+   `v_container_xs (Recclosure vs exps nm:flatSem_v) = []`];;
 
 let simple_val_rel_def = cake_define
   `flatProps_simple_val_rel vr = (
@@ -290,19 +290,20 @@ let result_vs_def = cake_define
 
 let no_Mat_def = cake_define_list
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
-   `no_Mat (Lit t l) <=> T`;
-   `no_Mat (Var_local t v) <=> T`;
-   `no_Mat (Con t n es) <=> EVERY no_Mat es`;
-   `no_Mat (App t op es) <=> EVERY no_Mat es`;
-   `no_Mat (Fun t v e) <=> no_Mat e`;
-   `no_Mat (If t x1 x2 x3) <=> no_Mat x1 /\ no_Mat x2 /\ no_Mat x3`;
-   `no_Mat (Let t vo e1 e2) <=> no_Mat e1 /\ no_Mat e2`;
-   `no_Mat (Mat t e pes) <=> F`;
-   `no_Mat (Handle t e pes) <=> no_Mat e /\ EVERY no_Mat (MAP SND pes)
-  /\
+   `no_Mat (Lit t l:flatLang_exp) <=> T`;
+   `no_Mat (Var_local t v:flatLang_exp) <=> T`;
+   `no_Mat (Con t n es:flatLang_exp) <=> EVERY no_Mat es`;
+   `no_Mat (App t op es:flatLang_exp) <=> EVERY no_Mat es`;
+   `no_Mat (Fun t v e:flatLang_exp) <=> no_Mat e`;
+   `no_Mat (If t x1 x2 x3:flatLang_exp) <=> no_Mat x1 /\ no_Mat x2 /\
+  no_Mat x3`;
+   `no_Mat (Let t vo e1 e2:flatLang_exp) <=> no_Mat e1 /\ no_Mat e2`;
+   `no_Mat (Mat t e pes:flatLang_exp) <=> F`;
+   `no_Mat (Handle t e pes:flatLang_exp) <=> no_Mat e /\ EVERY no_Mat
+  (MAP SND pes) /\
         (match pes with [(Pvar _8,_9)] -> T | _10 -> F)`;
-   `no_Mat (Letrec t funs e) <=> EVERY no_Mat (MAP (SND o SND) funs)
-  /\ no_Mat e`];;
+   `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP (SND
+  o SND) funs) /\ no_Mat e`];;
 
 let no_Mat_decs_def = cake_define
   `no_Mat_decs [] = T /\

@@ -199,15 +199,15 @@ let get_next_size_def = cake_define
       | _7 -> 0`;;
 
 let annotate_def = cake_define_list
-  [`mlsexp_annotate (String s) = Size (strlen s) (String s)`;
-   `mlsexp_annotate (Parenthesis b) =
+  [`mlsexp_annotate (String s:pretty) = Size (strlen s) (String s)`;
+   `mlsexp_annotate (Parenthesis b:pretty) =
       (let b = mlsexp_annotate b in
          Size (get_size b + 2) (Parenthesis b))`;
-   `mlsexp_annotate (Append b1 n b2) =
+   `mlsexp_annotate (Append b1 n b2:pretty) =
       (let b1 = mlsexp_annotate b1 in
        let b2 = mlsexp_annotate b2 in
           (Append b1 n b2))`;
-   `mlsexp_annotate (Size n b) = Size n (mlsexp_annotate b)`];;
+   `mlsexp_annotate (Size n b:pretty) = Size n (mlsexp_annotate b)`];;
 hol4_overload "annotate" "mlsexp_annotate";;
 
 let remove_all_def = cake_define
@@ -218,12 +218,12 @@ let remove_all_def = cake_define
    remove_all (Size v4 v5) = remove_all v5`;;
 
 let smart_remove_def = cake_define_list
-  [`smart_remove i k (Size n b) =
+  [`smart_remove i k (Size n b:pretty) =
       (if k + n < 70 then remove_all b else smart_remove i k b)`;
-   `smart_remove i k (Parenthesis v) = Parenthesis (smart_remove (i +
-  1) (k + 1) v)`;
-   `smart_remove i k (String v1) = String v1`;
-   `smart_remove i k (Append v2 b v3) =
+   `smart_remove i k (Parenthesis v:pretty) = Parenthesis
+  (smart_remove (i + 1) (k + 1) v)`;
+   `smart_remove i k (String v1:pretty) = String v1`;
+   `smart_remove i k (Append v2 b v3:pretty) =
       (let n2 = get_size v2 in
       let n3 = get_next_size v3 in
         if k + n2 + n3 < 50 then

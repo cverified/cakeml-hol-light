@@ -87,18 +87,18 @@ let item_with_word_def = cake_define
   `item_with_word name w = Item NONE name [word_to_display w]`;;
 
 let lit_to_display_def = cake_define_list
-  [`lit_to_display (IntLit i) =
+  [`lit_to_display (IntLit i:lit) =
         Item NONE (implode "IntLit") [empty_item (toString i)]`;
-   `lit_to_display (Char c) =
+   `lit_to_display (Char c:lit) =
         Item NONE (implode "Char") [empty_item (implode ("#\"" ++
           [c] ++ "\""))]`;
-   `lit_to_display (StrLit s) =
+   `lit_to_display (StrLit s:lit) =
         Item NONE (implode "StrLit") [string_imp s]`;
-   `lit_to_display (Word8 w) =
+   `lit_to_display (Word8 w:lit) =
         Item NONE (implode "Word8") [word_to_display w]`;
-   `lit_to_display (Word64 w) =
+   `lit_to_display (Word64 w:lit) =
         Item NONE (implode "Word64") [word_to_display w]`;
-   `lit_to_display (Float64 w) =
+   `lit_to_display (Float64 w:lit) =
         Item NONE (implode "Float64") [word_to_display w]`];;
 
 (* HOL4 overload (expanded in the port):
@@ -274,9 +274,9 @@ let op_to_display_def = cake_define
                              thunk_op_to_display t)`;;
 
 let id_to_display_def = cake_define_list
-  [`id_to_display (Short n) =
+  [`id_to_display (Short n:namespace_id) =
       Item NONE (implode "Short") [String n]`;
-   `id_to_display (Long n i) =
+   `id_to_display (Long n i:namespace_id) =
       Item NONE (implode "Long") [String n; id_to_display i]`];;
 
 let _ = size_thms "ast_t";;
@@ -821,10 +821,10 @@ let bvl_fun_to_display_def = cake_define
 (* bvi to displayLang *)
 
 let bvi_to_display_def = cake_define_list
-  [`bvi_to_display ns h (Var n) =
+  [`bvi_to_display ns h (Var n:flatLang_exp) =
         Item NONE (implode "var") [display_num_as_varn (h - n -
           1)]`;
-   `bvi_to_display ns h (If x1 x2 x3) =
+   `bvi_to_display ns h (If x1 x2 x3:flatLang_exp) =
         Item NONE (implode "if") [bvi_to_display ns h x1;
           bvi_to_display ns h x2;
             bvi_to_display ns h x3]`;
@@ -832,11 +832,11 @@ let bvi_to_display_def = cake_define_list
         separate_lines (implode "let")
             (bvi_to_display_lets ns h (LENGTH xs - 1) xs ++
                 [bvi_to_display ns (h + LENGTH xs) x])`;
-   `bvi_to_display ns h (Raise x) =
+   `bvi_to_display ns h (Raise x:flatLang_exp) =
         Item NONE (implode "raise") [bvi_to_display ns h x]`;
-   `bvi_to_display ns h (Tick x) =
+   `bvi_to_display ns h (Tick x:flatLang_exp) =
         Item NONE (implode "tick") [bvi_to_display ns h x]`;
-   `bvi_to_display ns h (Call ticks dest xs handler) =
+   `bvi_to_display ns h (Call ticks dest xs handler:flatLang_exp) =
         Item NONE (implode "call")
              ((String (attach_name ns dest) ::
               (bvi_to_display_list ns h xs)) ++
@@ -844,17 +844,17 @@ let bvi_to_display_def = cake_define_list
                 (implode "handler") [display_num_as_varn h;
                               empty_item (implode "->");
                               bvi_to_display ns (h + 1) e]]))`;
-   `bvi_to_display ns h (Force loc n) =
+   `bvi_to_display ns h (Force loc n:flatLang_exp) =
         Item NONE (implode "force")
              [display_num_as_varn (h - n - 1); String
                (attach_name ns (SOME loc))]`;
-   `bvi_to_display ns h (Op op xs) =
+   `bvi_to_display ns h (Op op xs:flatLang_exp) =
         Item NONE (implode "op") (clos_op_to_display ns op ::
                               (bvi_to_display_list ns h xs))`;
-   `bvi_to_display ns h (Return xs) =
+   `bvi_to_display ns h (Return xs:flatLang_exp) =
         Item NONE (implode "return") (bvi_to_display_list ns h
           xs)`;
-   `bvi_to_display ns h (LetCall rets ticks dest xs y) =
+   `bvi_to_display ns h (LetCall rets ticks dest xs y:flatLang_exp) =
         separate_lines (implode "letcall")
             [Item NONE (implode "call")
                (String (attach_name ns (SOME dest)) ::

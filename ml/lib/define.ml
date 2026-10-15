@@ -1842,10 +1842,14 @@ let cake_cheat tm =
 
 let cake_timeout = ref 20;;
 
+exception Cake_timeout;;
+
 let with_timeout f x =
   if !cake_timeout <= 0 then f x else
+  (* the exception is not a Failure, which the machinery of HOL
+     Light catches all over the place *)
   let old = Sys.signal Sys.sigalrm
-              (Sys.Signal_handle (fun _ -> failwith "cake timeout")) in
+              (Sys.Signal_handle (fun _ -> raise Cake_timeout)) in
   let fin () = (ignore(Unix.alarm 0); Sys.set_signal Sys.sigalrm old)
     in
   ignore(Unix.alarm (!cake_timeout));
@@ -1869,14 +1873,14 @@ let cake_define_gen wf tm =
       (if length fs = 1 then
          (if length cls = 1
           then (try [new_definition tm],TRUTH
-                with Failure _ -> with_timeout (define_single []) tm)
+                with Failure _ -> define_single [] tm)
           else
             (* a definition by cases on one argument is an instance
                of the recursion theorem of the type, which is much
                faster than HOL Light's machinery for patterns *)
             (try define_prim_rec tm
              with Failure _ when not (declared ()) ->
-             with_timeout (define_single []) tm))
+             define_single [] tm))
        else
          itlist
            (fun f (l,th) ->
@@ -1884,8 +1888,7 @@ let cake_define_gen wf tm =
                             fst(strip_comb(lhs(snd(strip_forall cl)))) =
                               f)
                             (conjuncts(snd(strip_forall tm))) in
-              let ths,th' =
-                with_timeout (define_single []) (list_mk_conj mycls) in
+              let ths,th' = define_single [] (list_mk_conj mycls) in
               ths @ l,th')
            fs ([],TRUTH))
     else
@@ -1896,12 +1899,13 @@ let cake_define_gen wf tm =
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in
-       try with_timeout attempt cands
-       with Failure _ when not (declared ()) ->
-         with_timeout attempt []) in
+       try attempt cands
+       with Failure _ when not (declared ()) -> attempt []) in
+  (* every way of making the definition together gets the budget;
+     what is left after it is assumed *)
   let ths,_ =
-    try strategies ()
-    with Failure _ -> [cake_cheat tm],TRUTH in
+    try with_timeout strategies ()
+    with Cake_timeout | Failure _ -> [cake_cheat tm],TRUTH in
   end_itlist CONJ ths;;
 
 (* with cake_timing set, every definition reports how long it took *)

@@ -245,46 +245,46 @@ let arith_ok_def = cake_define
         ==> ~(r1 = r3)))`;;
 
 let fp_ok_def = cake_define_list
-  [`fp_ok (FPLess r d1 d2) c <=>
+  [`fp_ok (FPLess r d1 d2:fp) c <=>
           reg_ok r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPLessEqual r d1 d2) c <=>
+   `fp_ok (FPLessEqual r d1 d2:fp) c <=>
           reg_ok r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPEqual r d1 d2) c <=>
+   `fp_ok (FPEqual r d1 d2:fp) c <=>
           reg_ok r c /\ fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPAbs d1 d2) c <=>
+   `fp_ok (FPAbs d1 d2:fp) c <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
             fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPNeg d1 d2) c <=>
+   `fp_ok (FPNeg d1 d2:fp) c <=>
           (asm_config_two_reg_arith c ==> (~(d1 = d2))) /\
             fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPSqrt d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPAdd d1 d2 d3) c <=>
+   `fp_ok (FPSqrt d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_ok (FPAdd d1 d2 d3:fp) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_ok (FPSub d1 d2 d3) c <=>
+   `fp_ok (FPSub d1 d2 d3:fp) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_ok (FPMul d1 d2 d3) c <=>
+   `fp_ok (FPMul d1 d2 d3:fp) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_ok (FPDiv d1 d2 d3) c <=>
+   `fp_ok (FPDiv d1 d2 d3:fp) c <=>
           (asm_config_two_reg_arith c ==> (d1 = d2)) /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_ok (FPFma d1 d2 d3) c <=>
+   `fp_ok (FPFma d1 d2 d3:fp) c <=>
           (asm_config_ISA c = ARMv7) /\
           2 < asm_config_fp_reg_count c /\
           fp_reg_ok d1 c /\ fp_reg_ok d2 c /\ fp_reg_ok d3 c`;
-   `fp_ok (FPMov d1 d2) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
-   `fp_ok (FPMovToReg r1 r2 d) (c:'a asm_config) <=>
+   `fp_ok (FPMov d1 d2:fp) c <=> fp_reg_ok d1 c /\ fp_reg_ok d2 c`;
+   `fp_ok (FPMovToReg r1 r2 d:fp) (c:'a asm_config) <=>
           reg_ok r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
             reg_ok r2 c) /\
           fp_reg_ok d c`;
-   `fp_ok (FPMovFromReg d r1 r2) (c:'a asm_config) <=>
+   `fp_ok (FPMovFromReg d r1 r2:fp) (c:'a asm_config) <=>
           reg_ok r1 c /\ ((dimindex (:'a) = 32) ==> ~(r1 = r2) /\
             reg_ok r2 c) /\
           fp_reg_ok d c`;
-   `fp_ok (FPToInt r d) c <=> fp_reg_ok r c /\ fp_reg_ok d c`;
-   `fp_ok (FPFromInt d r) c <=> fp_reg_ok r c /\ fp_reg_ok d c`];;
+   `fp_ok (FPToInt r d:fp) c <=> fp_reg_ok r c /\ fp_reg_ok d c`;
+   `fp_ok (FPFromInt d r:fp) c <=> fp_reg_ok r c /\ fp_reg_ok d c`];;
 
 let cmp_ok_def = cake_define
   `cmp_ok (cmp:cmp) r ri c <=> reg_ok r c /\ reg_imm_ok (INR cmp) ri

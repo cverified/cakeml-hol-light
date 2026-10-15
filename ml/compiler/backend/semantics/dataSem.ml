@@ -131,12 +131,12 @@ let size_of_def = cake_define_list
           ys) refs seen) in
         let (n2,refs2,seen2) = size_of lims [x] refs1 seen1 in
           (n1 + n2,refs2,seen2))`;
-   `size_of lims [Word64 _1] refs seen = (3,refs,seen)`;
-   `size_of lims [Number i] refs seen =
+   `size_of lims [(Word64 _1:dataSem_v)] refs seen = (3,refs,seen)`;
+   `size_of lims [(Number i:dataSem_v)] refs seen =
         ((if small_num (limits_arch_64_bit lims) i then 0 else
           bignum_size (limits_arch_64_bit lims) i),refs,seen)`;
-   `size_of lims [CodePtr _2] refs seen = (0,refs,seen)`;
-   `size_of lims [RefPtr _3 r] refs seen =
+   `size_of lims [(CodePtr _2:dataSem_v)] refs seen = (0,refs,seen)`;
+   `size_of lims [(RefPtr _3 r:dataSem_v)] refs seen =
          (match sptree_lookup r refs with NONE -> (0,refs,seen) |
            SOME (ByteArray _4 bs) -> (LENGTH bs DIV (arch_size lims DIV
            8) + 2,delete r refs,seen) | SOME (ValueArray vs) -> (let
@@ -150,7 +150,7 @@ let size_of_def = cake_define_list
                (delete r refs) seen in
                (n + LENGTH ls + LENGTH rs + 2,refs,seen)))`;
    `(size_of lims [Block ts tag []]) refs seen = (0,refs,seen)`;
-   `size_of lims [Block ts tag vs] refs seen =
+   `size_of lims [(Block ts tag vs:dataSem_v)] refs seen =
          (if IS_SOME (sptree_lookup ts seen) then (0,refs,seen) else
            let (n,refs,seen) = size_of lims vs refs (insert ts one
              seen) in
@@ -740,13 +740,13 @@ let check_lim_def = cake_define
         s`;;
 
 let do_part_def = cake_define_list
-  [`dataSem_do_part m (Int i) s ts = (Number i,s,ts)`;
-   `dataSem_do_part m (W64 w) s ts = (Word64 w,s,ts)`;
-   `dataSem_do_part m (Con t ns) s ts =
+  [`dataSem_do_part m (Int i:const_part) s ts = (Number i,s,ts)`;
+   `dataSem_do_part m (W64 w:const_part) s ts = (Word64 w,s,ts)`;
+   `dataSem_do_part m (Con t ns:const_part) s ts =
       (if ns = [] then (Block 0 t [],s,ts) else match ts with
         NONE -> (Block 0 t (MAP m ns),s,ts) | SOME n -> (Block n t
         (MAP m ns),s,SOME (n + (1:num))))`;
-   `dataSem_do_part m (Str t) s ts =
+   `dataSem_do_part m (Str t:const_part) s ts =
       (let ptr = (LEAST (\ptr. ~(ptr IN domain s))) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (RefPtr T ptr,insert ptr (ByteArray T bytes) s,ts))`];;

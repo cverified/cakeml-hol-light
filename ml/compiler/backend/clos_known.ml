@@ -36,39 +36,40 @@ let get_size_sc_aux_def = cake_define_list
          (if n = 0 then n else
            let n = get_size_sc_aux n [x] in if n = 0 then n else
              get_size_sc_aux n (y :: xs))`;
-   `get_size_sc_aux n [Var t v] = n - 1`;
-   `get_size_sc_aux n [If t x1 x2 x3] =
+   `get_size_sc_aux n [(Var t v:closLang_exp)] = n - 1`;
+   `get_size_sc_aux n [(If t x1 x2 x3:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
          let n = get_size_sc_aux n [x2] in if n = 0 then 0 else
            get_size_sc_aux n [x3])`;
-   `get_size_sc_aux n [Let t xs x2] =
+   `get_size_sc_aux n [(Let t xs x2:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n xs in if n = 0 then 0 else
            get_size_sc_aux n [x2])`;
-   `get_size_sc_aux n [Raise t x1] =
+   `get_size_sc_aux n [(Raise t x1:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n [x1])`;
-   `get_size_sc_aux n [Handle t x1 x2] =
+   `get_size_sc_aux n [(Handle t x1 x2:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
            get_size_sc_aux n [x2])`;
-   `get_size_sc_aux n [Op t op xs] =
+   `get_size_sc_aux n [(Op t op xs:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n xs)`;
-   `get_size_sc_aux n [Tick t x] = get_size_sc_aux n [x]`;
-   `get_size_sc_aux n [Call t ticks dest xs] =
+   `get_size_sc_aux n [(Tick t x:closLang_exp)] = get_size_sc_aux n
+  [x]`;
+   `get_size_sc_aux n [(Call t ticks dest xs:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n xs)`;
-   `get_size_sc_aux n [Fn t loc_opt ws_opt num_args x1] =
+   `get_size_sc_aux n [(Fn t loc_opt ws_opt num_args x1:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            get_size_sc_aux n [x1])`;
-   `get_size_sc_aux n [Letrec t loc_opt ws_opt fns x1] =
+   `get_size_sc_aux n [(Letrec t loc_opt ws_opt fns x1:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n (MAP SND fns) in if n = 0 then 0
            else
            get_size_sc_aux n [x1])`;
-   `get_size_sc_aux n [App t loc_opt x1 xs] =
+   `get_size_sc_aux n [(App t loc_opt x1 xs:closLang_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
          let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
            get_size_sc_aux n xs)`];;
@@ -82,27 +83,27 @@ let get_size_aux_def = cake_define_list
   [`get_size_aux [] = 0`;
    `get_size_aux (x :: y :: xs) =
          get_size_aux [x] + get_size_aux (y :: xs)`;
-   `get_size_aux [Var t v] = 1`;
-   `get_size_aux [If t x1 x2 x3] =
+   `get_size_aux [(Var t v:closLang_exp)] = 1`;
+   `get_size_aux [(If t x1 x2 x3:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux [x2] + get_size_aux
            [x3]`;
-   `get_size_aux [Let t xs x2] =
+   `get_size_aux [(Let t xs x2:closLang_exp)] =
          1 + get_size_aux xs + get_size_aux [x2]`;
-   `get_size_aux [Raise t x1] =
+   `get_size_aux [(Raise t x1:closLang_exp)] =
          1 + get_size_aux [x1]`;
-   `get_size_aux [Handle t x1 x2] =
+   `get_size_aux [(Handle t x1 x2:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux [x2]`;
-   `get_size_aux [Op t op xs] =
+   `get_size_aux [(Op t op xs:closLang_exp)] =
          1 + get_size_aux xs`;
-   `get_size_aux [Tick t x] =
+   `get_size_aux [(Tick t x:closLang_exp)] =
          get_size_aux [x]`;
-   `get_size_aux [Call t ticks dest xs] =
+   `get_size_aux [(Call t ticks dest xs:closLang_exp)] =
          1 + get_size_aux xs`;
-   `get_size_aux [Fn t loc_opt ws_opt num_args x1] =
+   `get_size_aux [(Fn t loc_opt ws_opt num_args x1:closLang_exp)] =
          1 + get_size_aux [x1]`;
-   `get_size_aux [Letrec t loc_opt ws_opt fns x1] =
+   `get_size_aux [(Letrec t loc_opt ws_opt fns x1:closLang_exp)] =
          1 + get_size_aux (MAP SND fns) + get_size_aux [x1]`;
-   `get_size_aux [App t loc_opt x1 xs] =
+   `get_size_aux [(App t loc_opt x1 xs:closLang_exp)] =
          1 + get_size_aux [x1] + get_size_aux xs`];;
 
 (* HOL4 ML code, not ported:
@@ -119,37 +120,37 @@ let free_def = cake_define_list
          (let (c1,l1) = clos_known_free [x] in
          let (c2,l2) = clos_known_free (y :: xs) in
            (c1 ++ c2,mk_Union l1 l2))`;
-   `clos_known_free [Var t v] = ([Var t v],Var v)`;
-   `clos_known_free [If t x1 x2 x3] =
+   `clos_known_free [(Var t v:closLang_exp)] = ([Var t v],Var v)`;
+   `clos_known_free [(If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in
          let (c3,l3) = clos_known_free [x3] in
            ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
              l2 l3)))`;
-   `clos_known_free [Let t xs x2] =
+   `clos_known_free [(Let t xs x2:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
          let (c2,l2) = clos_known_free [x2] in
            ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
              l2)))`;
-   `clos_known_free [Raise t x1] =
+   `clos_known_free [(Raise t x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
            ([Raise t (HD c1)],l1))`;
-   `clos_known_free [Tick t x1] =
+   `clos_known_free [(Tick t x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
            ([Tick t (HD c1)],l1))`;
-   `clos_known_free [Op t op xs] =
+   `clos_known_free [(Op t op xs:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
            ([Op t op c1],l1))`;
-   `clos_known_free [App t loc_opt x1 xs2] =
+   `clos_known_free [(App t loc_opt x1 xs2:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free xs2 in
            ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
-   `clos_known_free [Fn t loc _1 num_args x1] =
+   `clos_known_free [(Fn t loc _1 num_args x1:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let l2 = Shift num_args l1 in
            ([Fn t loc (SOME (vars_to_list l2)) num_args (HD
              c1)],l2))`;
-   `clos_known_free [Letrec t loc _2 fns x1] =
+   `clos_known_free [(Letrec t loc _2 fns x1:closLang_exp)] =
          (let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = clos_known_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
@@ -158,11 +159,11 @@ let free_def = cake_define_list
          let (c2,l2) = clos_known_free [x1] in
            ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
             mk_Union l1 (Shift (LENGTH fns) l2)))`;
-   `clos_known_free [Handle t x1 x2] =
+   `clos_known_free [(Handle t x1 x2:closLang_exp)] =
          (let (c1,l1) = clos_known_free [x1] in
          let (c2,l2) = clos_known_free [x2] in
            ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
-   `clos_known_free [Call t ticks dest xs] =
+   `clos_known_free [(Call t ticks dest xs:closLang_exp)] =
          (let (c1,l1) = clos_known_free xs in
            ([Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_known_free";;
@@ -223,24 +224,30 @@ let contains_closures_def = cake_define_list
    `contains_closures (x :: y :: xs) =
         (if contains_closures [x] then T else
           contains_closures (y :: xs))`;
-   `contains_closures [Var t v] = F`;
-   `contains_closures [If t x1 x2 x3] =
+   `contains_closures [(Var t v:closLang_exp)] = F`;
+   `contains_closures [(If t x1 x2 x3:closLang_exp)] =
          (if contains_closures [x1] then T else
          if contains_closures [x2] then T else
            contains_closures [x3])`;
-   `contains_closures [Let t xs x2] =
+   `contains_closures [(Let t xs x2:closLang_exp)] =
          (if contains_closures xs then T else
            contains_closures [x2])`;
-   `contains_closures [Raise t x1] = contains_closures [x1]`;
-   `contains_closures [Handle t x1 x2] =
+   `contains_closures [(Raise t x1:closLang_exp)] = contains_closures
+  [x1]`;
+   `contains_closures [(Handle t x1 x2:closLang_exp)] =
          (if contains_closures [x1] then T else
            contains_closures [x2])`;
-   `contains_closures [Op t op xs] = contains_closures xs`;
-   `contains_closures [Tick t x] = contains_closures [x]`;
-   `contains_closures [Call t ticks dest xs] = contains_closures xs`;
-   `contains_closures [Fn t loc_opt ws_opt num_args x1] = T`;
-   `contains_closures [Letrec t loc_opt ws_opt fns x1] = T`;
-   `contains_closures [App t loc_opt x1 xs] =
+   `contains_closures [(Op t op xs:closLang_exp)] = contains_closures
+  xs`;
+   `contains_closures [(Tick t x:closLang_exp)] = contains_closures
+  [x]`;
+   `contains_closures [(Call t ticks dest xs:closLang_exp)] =
+  contains_closures xs`;
+   `contains_closures [(Fn t loc_opt ws_opt num_args
+  x1:closLang_exp)] = T`;
+   `contains_closures [(Letrec t loc_opt ws_opt fns x1:closLang_exp)]
+  = T`;
+   `contains_closures [(App t loc_opt x1 xs:closLang_exp)] =
          (if contains_closures [x1] then T else
            contains_closures xs)`];;
 
@@ -448,9 +455,9 @@ let known_def = cake_define_list
          (let (eas1,g) = known c [x] vs g in
          let (eas2,g) = known c (y :: xs) vs g in
            (eas1 ++ eas2,g))`;
-   `known c [Var t v] vs g =
+   `known c [(Var t v:closLang_exp)] vs g =
          ([(Var t v,any_el v vs Other)],g)`;
-   `known c [If t x1 x2 x3] vs g =
+   `known c [(If t x1 x2 x3:closLang_exp)] vs g =
          (let (ea1,g) = known c [x1] vs g in
          let (ea2,g) = known c [x2] vs g in
          let (ea3,g) = known c [x3] vs g in
@@ -458,29 +465,29 @@ let known_def = cake_define_list
          let (e2,a2) = HD ea2 in
          let (e3,a3) = HD ea3 in
            ([(If t e1 e2 e3),merge a2 a3],g))`;
-   `known c [Let t xs x2] vs g =
+   `known c [(Let t xs x2:closLang_exp)] vs g =
          (let (ea1,g) = known c xs vs g in
          let (ea2,g) = known c [x2] (MAP SND ea1 ++ vs) g in
          let (e2,a2) = HD ea2 in
            ([(Let t (MAP FST ea1) e2,a2)],g))`;
-   `known c [Raise t x1] vs g =
+   `known c [(Raise t x1:closLang_exp)] vs g =
          (let (ea1,g) = known c [x1] vs g in
          let (e1,a1) = HD ea1 in
            ([(Raise t e1,Impossible)],g))`;
-   `known c [Tick t x1] vs g =
+   `known c [(Tick t x1:closLang_exp)] vs g =
          (let (ea1,g) = known c [x1] vs g in
          let (e1,a1) = HD ea1 in
            ([(Tick t e1,a1)],g))`;
-   `known c [Handle t x1 x2] vs g =
+   `known c [(Handle t x1 x2:closLang_exp)] vs g =
          (let (ea1,g) = known c [x1] vs g in
          let (ea2,g) = known c [x2] (Other :: vs) g in
          let (e1,a1) = HD ea1 in
          let (e2,a2) = HD ea2 in
            ([(Handle t e1 e2,merge a1 a2)],g))`;
-   `known c [Call t ticks dest xs] vs g =
+   `known c [(Call t ticks dest xs:closLang_exp)] vs g =
          (let (ea1,g) = known c xs vs g in
            ([(Call t ticks dest (MAP FST ea1),Other)],g))`;
-   `known c [Op t op xs] vs g =
+   `known c [(Op t op xs:closLang_exp)] vs g =
          (let (ea1,g) = known c xs vs g in
          let (a,g) = known_op op (REVERSE (MAP SND ea1)) g in
          let e =
@@ -490,7 +497,7 @@ let known_def = cake_define_list
                  -> Op t (BlockOp (Cons tag)) else SmartOp t op) (MAP
                  FST ea1) in
            ([(e,a)],g))`;
-   `known c [App t loc_opt x xs] vs g =
+   `known c [(App t loc_opt x xs:closLang_exp)] vs g =
          (let (ea2,g) = known c xs vs g in
          let (ea1,g) = known c [x] vs g in
          let (e1,a1) = HD ea1 in
@@ -509,7 +516,7 @@ let known_def = cake_define_list
                      ([(Let (§ t 0) (SNOC e1 (MAP FST ea2))
                               (mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g)))`;
-   `known c [Fn t loc_opt ws_opt num_args x1] vs g =
+   `known c [(Fn t loc_opt ws_opt num_args x1:closLang_exp)] vs g =
          (let (ea1,g) = known c [x1] (REPLICATE num_args Other ++
            vs) g in
          let (body,a1) = HD ea1 in
@@ -517,7 +524,7 @@ let known_def = cake_define_list
               (match loc_opt with SOME loc -> clos_approx
                 (clos_known_config_inline_max_body_size c) loc
                 num_args x1 | NONE -> Other))],g))`;
-   `known c [Letrec t loc_opt _15 fns x1] vs g =
+   `known c [(Letrec t loc_opt _15 fns x1:closLang_exp)] vs g =
          (let clos = match loc_opt with
                        NONE -> REPLICATE (LENGTH fns) Other | SOME
                          loc -> clos_gen_noinline loc 0 fns in

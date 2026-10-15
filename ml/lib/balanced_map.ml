@@ -194,7 +194,7 @@ let trim_help_lesser_def = cake_define
    (trim_help_lesser cmp lo Tip = Tip)`;;
 
 let trim_help_middle_def = cake_define_list
-  [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
+  [`trim_help_middle cmp lo hi (Bin s' k v' l r:balanced_map) =
       (if cmp k lo = Less \/ cmp k lo = Equal then
         trim_help_middle cmp lo hi r else if cmp k hi = Greater \/
           cmp k hi = Equal then

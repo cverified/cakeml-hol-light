@@ -129,6 +129,7 @@ class Porter:
     self.head = None
     self.deps = []
     self.bound = set()
+    self.contys = set()
     # an overload of an ancestor does not shadow a constant that
     # this theory defines itself (semanticPrimitives defines
     # num_cmp, which comparison has as an overload of num_compare)
@@ -494,6 +495,49 @@ class Porter:
     self.ctx.wordnot = False
     self.ctx.defining = set()
 
+  def con_type(self, nm):
+    """the type of a constructor, as the port writes it (the theory
+       is the one that the constructors of the definition agree on,
+       as in clause_clash)"""
+    for (t, ty), (cons, _) in self.db.datatypes.items():
+      if nm in cons and (not self.contys or t in self.contys):
+        return self.ctx.tyname(ty)
+    return None
+
+  def annotate(self, cl):
+    """the type of the pattern of a clause that is a quotation of
+       its own: without it the clause can typecheck differently
+       from the others (the name of a constructor is ambiguous)"""
+    e = cl
+    while e.kind == 'paren': e = e.e
+    if not (e.kind == 'infix' and e.op in ('=', '<=>')): return cl
+    _, args = hterm.strip_app(e.l)
+    done = [False]
+    def go(p):
+      if done[0]: return p
+      while p.kind == 'paren': p = p.e
+      if p.kind == 'app':
+        h, _ = hterm.strip_app(p)
+        if h.kind == 'id' and h.name in self.ctx.cons:
+          ty = self.con_type(h.name)
+          if ty:
+            done[0] = True
+            return hterm.Node('paren', tok=p.tok,
+                     e=hterm.Node('typed', tok=p.tok, e=p,
+                                  ty=hterm.tokenize(ty)))
+        return p
+      if p.kind == 'list':
+        p.items = [go(a) for a in p.items]
+        return p
+      if p.kind == 'infix' and p.op == '::':
+        p.l = go(p.l); p.r = go(p.r)
+        return p
+      return p
+    e.l = hterm.strip_app(e.l)[0]
+    for a in args: e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
+                                    arg=go(a))
+    return cl
+
   def clause_form(self, body):
     """the clauses of a definition as separate quotations: HOL4
        typechecks every clause of a definition on its own, so the
@@ -505,7 +549,7 @@ class Porter:
     self.ctx.vars = self.shadowing(e)
     try:
       p = hterm.Printer(self.ctx)
-      cls = [fmt(p.pr(cl, 0), indent=4, last=3)
+      cls = [fmt(p.pr(self.annotate(cl), 0), indent=4, last=3)
              for cl in hterm.conjuncts_of(e)]
     finally:
       self.ctx.vars = old
@@ -552,6 +596,7 @@ class Porter:
       ts = {t for t, k in self.db.defs.get(nm, []) if k == 'con'}
       if not ts: continue
       thys = ts if thys is None else thys & ts
+    self.contys = thys or set()
     def argty(nm, j):
       if thys:
         out = {self.db.con_argty_thy[(t, nm, j)] for t in thys

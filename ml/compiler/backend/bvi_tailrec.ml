@@ -284,10 +284,10 @@ let scan_expr_def = cake_define_list
    `scan_expr ts loc (x :: y :: xs) =
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
           (tx,ty,r,op) :: scan_expr tx loc (y :: xs))`;
-   `scan_expr ts loc [Var n] =
+   `scan_expr ts loc [(Var n:bvi_exp)] =
         (let ty = if n < LENGTH ts then EL n ts else Any in
           [(ts,ty,F,NONE)])`;
-   `scan_expr ts loc [If xi xt xe] =
+   `scan_expr ts loc [(If xi xt xe:bvi_exp)] =
         (let (ti,tyi,_19,oi) = HD (scan_expr ts loc [xi]) in
         let (tt,ty1,_20,ot) = HD (scan_expr ti loc [xt]) in
         let (te,ty2,_21,oe) = HD (scan_expr ti loc [xe]) in
@@ -296,22 +296,23 @@ let scan_expr_def = cake_define_list
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
                      ty1 (decide_ty ty2 (op_type opr)) in
           [(MAP2 decide_ty tt te,ty,IS_SOME oe,op)])`;
-   `scan_expr ts loc [Let xs x] =
+   `scan_expr ts loc [(Let xs x:bvi_exp)] =
         (let ys = scan_expr ts loc xs in
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
           in
         let (tu,ty,_23,op) = HD (scan_expr (tt ++ tr) loc [x]) in
           [(DROP (LENGTH ys) tu,ty,F,op)])`;
-   `scan_expr ts loc [Raise x] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [Tick x] = scan_expr ts loc [x]`;
-   `scan_expr ts loc [Force _24 n] =
+   `scan_expr ts loc [(Raise x:bvi_exp)] = [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [(Tick x:bvi_exp)] = scan_expr ts loc [x]`;
+   `scan_expr ts loc [(Force _24 n:bvi_exp)] =
         (let ty = if n < LENGTH ts then EL n ts else Any in
           [(ts,ty,F,NONE)])`;
-   `scan_expr ts loc [Call t d xs h] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [Return xs] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [LetCall rets t d xs y] = [(ts,Any,F,NONE)]`;
-   `scan_expr ts loc [Op op xs] =
+   `scan_expr ts loc [(Call t d xs h:bvi_exp)] = [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [(Return xs:bvi_exp)] = [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [(LetCall rets t d xs y:bvi_exp)] =
+  [(ts,Any,F,NONE)]`;
+   `scan_expr ts loc [(Op op xs:bvi_exp)] =
         (let opr = from_op op in
         let opt = op_type opr in
           match opr with
@@ -337,10 +338,10 @@ let scan_expr_def = cake_define_list
                 [(ts,Any,F,NONE)]))`];;
 
 let scan_expr_sing_def = cake_define_list
-  [`scan_expr_sing ts loc (Var n) =
+  [`scan_expr_sing ts loc (Var n:bvi_exp) =
         (let ty = if n < LENGTH ts then EL n ts else Any in
           (ts,ty,F,NONE))`;
-   `scan_expr_sing ts loc (If xi xt xe) =
+   `scan_expr_sing ts loc (If xi xt xe:bvi_exp) =
         (let (ti,tyi,_30,oi) = scan_expr_sing ts loc xi in
         let (tt,ty1,_31,ot) = scan_expr_sing ti loc xt in
         let (te,ty2,_32,oe) = scan_expr_sing ti loc xe in
@@ -349,22 +350,23 @@ let scan_expr_sing_def = cake_define_list
                    NONE -> decide_ty ty1 ty2 | SOME opr -> decide_ty
                      ty1 (decide_ty ty2 (op_type opr)) in
           (MAP2 decide_ty tt te,ty,IS_SOME oe,op))`;
-   `scan_expr_sing ts loc (Let xs x) =
+   `scan_expr_sing ts loc (Let xs x:bvi_exp) =
         (let ys = scan_expr_list ts loc xs in
         let tt = MAP (FST o SND) ys in
         let tr = (match LAST1 ys with SOME c -> FST c | NONE -> ts)
           in
         let (tu,ty,_34,op) = scan_expr_sing (tt ++ tr) loc x in
           (DROP (LENGTH ys) tu,ty,F,op))`;
-   `scan_expr_sing ts loc (Raise x) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (Tick x) = scan_expr_sing ts loc x`;
-   `scan_expr_sing ts loc (Force _35 n) =
+   `scan_expr_sing ts loc (Raise x:bvi_exp) = (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (Tick x:bvi_exp) = scan_expr_sing ts loc x`;
+   `scan_expr_sing ts loc (Force _35 n:bvi_exp) =
         (let ty = if n < LENGTH ts then EL n ts else Any in
           (ts,ty,F,NONE))`;
-   `scan_expr_sing ts loc (Call t d xs h) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (Return xs) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (LetCall rets t d xs y) = (ts,Any,F,NONE)`;
-   `scan_expr_sing ts loc (Op op xs) =
+   `scan_expr_sing ts loc (Call t d xs h:bvi_exp) = (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (Return xs:bvi_exp) = (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (LetCall rets t d xs y:bvi_exp) =
+  (ts,Any,F,NONE)`;
+   `scan_expr_sing ts loc (Op op xs:bvi_exp) =
         (let opr = from_op op in
         let opt = op_type opr in
           match opr with

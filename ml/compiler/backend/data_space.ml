@@ -23,12 +23,12 @@ let num_size_def = cake_define
        DIV 2 EXP 32))`;;
 
 let part_space_req_def = cake_define_list
-  [`part_space_req (W64 s) = 3`;
-   `part_space_req (Int i) =
+  [`part_space_req (W64 s:const_part) = 3`;
+   `part_space_req (Int i:const_part) =
       (if num_of_int (abs i) < 2 EXP 29 then 0 else
         data_space_num_size (num_of_int (abs i)))`;
-   `part_space_req (Str s) = strlen s DIV 4 + 2`;
-   `part_space_req (Con t ns) =
+   `part_space_req (Str s:const_part) = strlen s DIV 4 + 2`;
+   `part_space_req (Con t ns:const_part) =
       (let l = LENGTH ns in if l = 0 then 0 else l + 1)`];;
 
 let op_space_req_def = cake_define

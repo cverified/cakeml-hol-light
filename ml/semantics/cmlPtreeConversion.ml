@@ -185,7 +185,7 @@ let tuplify_def = cake_define
 
 let ptree_Type_def = cake_define_list
   [`(ptree_Type nt' (Lf _18):ast_t option) = NONE`;
-   `ptree_Type nm (Nd nt' args) =
+   `ptree_Type nm (Nd nt' args:parsetree) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nm) then NONE
            else if nm = nType then
            match args with
@@ -743,8 +743,8 @@ let letFromPat_def = cake_define
          | _90 -> Mat rhs [(p,body)])`;;
 
 let ptree_Expr_def = cake_define_list
-  [`ptree_Expr ent (Lf _105) = NONE`;
-   `ptree_Expr ent (Nd (nt',loc) subs) =
+  [`ptree_Expr ent (Lf _105:parsetree) = NONE`;
+   `ptree_Expr ent (Nd (nt',loc) subs:parsetree) =
     monad_bind (if (INL:MMLnonT->MMLnonT+num) ent = nt' then
         if nt' = (INL:MMLnonT->MMLnonT+num) nEbase then
           match subs with
@@ -1009,8 +1009,9 @@ let ptree_Expr_def = cake_define_list
                     p. monad_bind (ptree_Expr nE e_pt) (\
                     e.
                     SOME (INL (p,e))))) | _135 -> NONE))`;
-   `ptree_PEs (Lf _136) = (NONE:((ast_pat#ast_exp) list) option)`;
-   `ptree_PEs (Nd (nt',_137) args) =
+   `ptree_PEs (Lf _136:parsetree) = (NONE:((ast_pat#ast_exp) list)
+  option)`;
+   `ptree_PEs (Nd (nt',_137) args:parsetree) =
         (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEs) then NONE else
           match args with
               [pattern_pt; arrow_pt; pe_pt] ->
@@ -1020,8 +1021,8 @@ let ptree_Expr_def = cake_define_list
                 pat. monad_bind (ptree_PE pe_pt) (\
                 (e,pes).
                 SOME ((pat,e) :: pes)))) | _138 -> NONE)`;
-   `ptree_PE (Lf _139) = NONE`;
-   `ptree_PE (Nd (nt',_140) args) =
+   `ptree_PE (Lf _139:parsetree) = NONE`;
+   `ptree_PE (Nd (nt',_140) args:parsetree) =
          (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPE) then NONE else
            match args with
                [eorraise_pt; pesfx_pt] ->
@@ -1059,7 +1060,7 @@ let ptree_Expr_def = cake_define_list
                  SOME (If ge te ee,rest))))) | _141 -> NONE)`;
    `(ptree_PEsfx (Lf _142):(bool#(ast_pat#ast_exp) list) option) =
   NONE`;
-   `ptree_PEsfx (Nd (nt',_143) args) =
+   `ptree_PEsfx (Nd (nt',_143) args:parsetree) =
          (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nPEsfx) then NONE
            else
            match args with
@@ -1074,8 +1075,8 @@ let ptree_Expr_def = cake_define_list
                    (ptree_PEs pes_pt) (\
                  pes.
                  SOME (F,pes))) | _144 -> NONE)`;
-   `ptree_Eseq (Lf _145) = NONE`;
-   `ptree_Eseq (Nd (nt',_146) args) =
+   `ptree_Eseq (Lf _145:parsetree) = NONE`;
+   `ptree_Eseq (Nd (nt',_146) args:parsetree) =
         (if ~(nt' = (INL:MMLnonT->MMLnonT+num) nEseq) then NONE else
           match args with
               [single] ->

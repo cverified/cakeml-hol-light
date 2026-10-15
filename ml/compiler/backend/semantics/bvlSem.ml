@@ -177,10 +177,11 @@ let do_install_def = cake_define
                                Rtype_error))`;;
 
 let do_part_def = cake_define_list
-  [`bvlSem_do_part m (Int i) refs = (Number i,refs)`;
-   `bvlSem_do_part m (W64 w) refs = (Word64 w,refs)`;
-   `bvlSem_do_part m (Con t ns) refs = (Block t (MAP m ns),refs)`;
-   `bvlSem_do_part m (Str t) refs =
+  [`bvlSem_do_part m (Int i:const_part) refs = (Number i,refs)`;
+   `bvlSem_do_part m (W64 w:const_part) refs = (Word64 w,refs)`;
+   `bvlSem_do_part m (Con t ns:const_part) refs = (Block t (MAP m
+  ns),refs)`;
+   `bvlSem_do_part m (Str t:const_part) refs =
       (let ptr = (LEAST (\ptr. ~(ptr IN FDOM refs))) in
       let bytes = MAP (n2w o ORD) (explode t) in
         (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
