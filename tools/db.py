@@ -460,7 +460,12 @@ class Db:
         if not any(k in tykinds for k in kinds): continue
       else:
         if kinds and all(k in tykinds for k in kinds): continue
-      if t in anc or t == thy:
+      # a name that the hand written library layer provides keeps
+      # its meaning where it stands on its own; the renamed
+      # constant of the theory is reached by its own name
+      # (llist's fromList is the one that a bare fromList means,
+      # sptree's is sptree_fromList)
+      if (t in anc or t == thy) and nm not in self.provided:
         out[nm] = new
       out[(t, nm)] = new
     return out

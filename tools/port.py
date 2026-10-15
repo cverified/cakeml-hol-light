@@ -598,6 +598,10 @@ class Porter:
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
     self.ctx.iffeq = key in overrides.IFF_IS_EQ
+    # the map from the body of a match arm to its integer
+    # variables is for this definition only (a node of another
+    # one can have the same id once it is gone)
+    self.ctx.armvars = {}
     # the theory whose constructor a name means here
     conof = overrides.CON_OF.get(key, {})
     for nm, t in conof.items():
@@ -1357,11 +1361,22 @@ class Porter:
           args[i] = self.annotate_pat(args[i], True)
         self.contys = base
         done = True
-      pat = ','.join(pr.pr(args[i], 60) for i in pats)
-      if len(pats) > 1: pat = '(' + pat + ')'
-      # the body of an arm needs its parentheses: a match, a let
-      # or a conditional in it would swallow the arms after it
-      arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 2)))
+      # the patterns of a clause bind their own variables, and
+      # some of them hold an integer where the ones of another
+      # clause do not (dataSem's lim_safe has [Number i; v] in
+      # one clause and (MemOp (MutCons tag i)) in another)
+      iv = self.ctx.intvars
+      vs = set()
+      for i in pats: vs |= self.int_vars_node(args[i])
+      self.ctx.intvars = iv | vs
+      try:
+        pat = ','.join(pr.pr(args[i], 60) for i in pats)
+        if len(pats) > 1: pat = '(' + pat + ')'
+        # the body of an arm needs its parentheses: a match, a let
+        # or a conditional in it would swallow the arms after it
+        arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 2)))
+      finally:
+        self.ctx.intvars = iv
     scrut = ','.join(names[i] for i in pats)
     if len(pats) > 1: scrut = '(' + scrut + ')'
     head = pr.pr(hop, 0) + ' ' + ' '.join(names)
