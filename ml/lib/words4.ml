@@ -78,6 +78,9 @@ overload_interface("<=",`word_ile:(N)word->(N)word->bool`);;
 overload_interface(">",`word_igt:(N)word->(N)word->bool`);;
 overload_interface(">=",`word_ige:(N)word->(N)word->bool`);;
 overload_interface("--",`word_neg:(N)word->(N)word`);;
+(* HOL4's / of two words is the unsigned division (asmSem's
+   arith_upd divides the two registers of a Div) *)
+overload_interface("/",`word_udiv:(N)word->(N)word->(N)word`);;
 
 (* with the operations overloaded, a numeral whose type is not
    determined otherwise should still be a natural number *)

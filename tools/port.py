@@ -591,6 +591,11 @@ class Porter:
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
     self.ctx.iffeq = key in overrides.IFF_IS_EQ
+    # the theory whose constructor a name means here
+    conof = overrides.CON_OF.get(key, {})
+    for nm, t in conof.items():
+      self.ctx.overloaded.discard(nm)
+      self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     if key in overrides.CLAUSE_FORM:
       term = None
       clauses = self.clause_form(body)
@@ -611,6 +616,7 @@ class Porter:
     else:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
+    if rel is not None: rel = fmt(' '.join(rel.split()), last=1)
 
     def size_prelude(text):
       """a measure that uses the size function of a datatype needs
@@ -618,8 +624,10 @@ class Porter:
          definition first needs one, which is too late for the
          measure itself"""
       anc = self.db.ancestors(self.thy) | {self.thy}
-      types = set(self.tnm(ty) for (t2, ty) in self.db.datatypes
-                  if t2 in anc)
+      # the name that the port gives the type of that theory, not
+      # the one that the name means in this theory's scope
+      types = set(self.tnm(t2 + '$' + ty)
+                  for (t2, ty) in self.db.datatypes if t2 in anc)
       out = ''
       for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+)_size\b",
                                       text))):
@@ -633,15 +641,22 @@ class Porter:
       return out
 
     sizes = size_prelude(rel) if rel else ''
+    # where the source gives a termination its text is kept, as
+    # it is for a relation that the port takes from it
+    relnote = ('(* the termination relation is not in the HOL4 '
+               'source *)\n')
+    if rel is not None and b.extra and b.extra.strip():
+      relnote = ('(* the termination relation that HOL4 gives, with\n'
+                 '   the names that the port gives the constants *)\n')
     if term is None and rel is not None:
-      text = (sizes + '(* the termination relation is not in the HOL4 '
-              'source *)\nlet %s = cake_define_list_wf\n  `%s`\n'
+      text = (sizes + relnote +
+              'let %s = cake_define_list_wf\n  `%s`\n'
               '  %s;;' % (name, rel, clauses))
     elif term is None:
       text = ('let %s = cake_define_list\n  %s;;' % (name, clauses))
     elif rel is not None:
-      text = (sizes + '(* the termination relation is not in the HOL4 '
-              'source *)\nlet %s = cake_define_wf\n  `%s`\n'
+      text = (sizes + relnote +
+              'let %s = cake_define_wf\n  `%s`\n'
               '  `%s`;;' % (name, rel, term))
     elif b.extra is None:
       text = 'let %s = cake_define\n  `%s`;;' % (name, term)
@@ -664,6 +679,9 @@ class Porter:
     overloads = self.overloads_of(sorted(self.ctx.defining))
     self.out.append(text if not overloads else
                     text + '\n' + '\n'.join(overloads))
+    for nm in conof:
+      self.ctx.overloaded.add(nm)
+      del self.ctx.names[(self.thy, nm)]
     self.ctx.intnums = False
     self.ctx.wordnot = False
     self.ctx.intneg = False

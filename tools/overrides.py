@@ -254,6 +254,18 @@ MEASURE = {
   ('mergesort', 'mergesortN_def'): 'MEASURE (\\(R,n,l). n)',
   ('mergesort', 'mergesortN_tail_def'):
     'MEASURE (\\(negate,R,n,l). n)',
+  # HOL4's exp_size and pat_size here are the ones of ast (the
+  # arguments are the expressions of the source language), which
+  # the port resolves to flatLang's and pattern_semantics'
+  ('source_to_flat', 'compile_exp_def'):
+    'inv_image (<) (\\x. match x with'
+    ' INL (t,x,e) -> ast_exp_size e'
+    ' | INR (INL (t,x,es)) -> list_size ast_exp_size es'
+    ' | INR (INR (INL (t,x,pes))) ->'
+    ' list_size (pair_size ast_pat_size ast_exp_size) pes'
+    ' | INR (INR (INR (t,x,funs))) ->'
+    ' list_size (pair_size mlstring_size'
+    ' (pair_size mlstring_size ast_exp_size)) funs)',
 }
 
 # definitions whose clauses are one quotation, not one each: the
@@ -272,7 +284,20 @@ ONE_QUOTATION = set([
   # the Writes clause gives an integer, which is what says that
   # the + of the Branch clause is the one of the integers
   ('linear_scan', 'size_of_live_tree_def'),
+  # the result is a flatLang expression, which only the Lit
+  # clause says (the patterns are the constructors of ast, whose
+  # names flatLang has as well)
+  ('source_to_flat', 'compile_exp_def'),
 ])
+
+# the theory whose constructor a name means in one definition,
+# where nothing in the definition says it and HOL4 resolves it by
+# its scope (stack_remove's single_stack_free builds the Inst of
+# stackLang, and the port is loaded in one namespace, where the
+# Inst of wordLang comes later)
+CON_OF = {
+  ('stack_remove', 'single_stack_free_def'): {'Inst': 'stackLang'},
+}
 
 # definitions whose patterns need the type of their constructor on
 # them: the name is one that several theories in scope have, and
