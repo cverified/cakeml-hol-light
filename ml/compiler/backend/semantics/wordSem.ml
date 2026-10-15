@@ -1057,8 +1057,10 @@ let evaluate_def = cake_define_list
            ((match wordSem_jump_exc s with NONE -> (SOME
              wordSem_Error,s) | SOME (s,l1,l2) -> (SOME
              (wordSem_Exception (Loc l1 l2) w))),s))`;
-   `wordSem_evaluate (wordLang_Break k,s) = (SOME (Break k),s)`;
-   `wordSem_evaluate (wordLang_Continue k,s) = (SOME (Continue k),s)`;
+   `wordSem_evaluate (wordLang_Break k,s) = (SOME (wordLang_Break
+  k),s)`;
+   `wordSem_evaluate (wordLang_Continue k,s) = (SOME
+  (wordLang_Continue k),s)`;
    `wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with
           (SOME x,SOME y) ->
@@ -1073,9 +1075,9 @@ let evaluate_def = cake_define_list
                if wordSem_cont_loop res then
                  (if wordSem_state_clock s1 = 0 then (SOME
                    wordSem_TimeOut,wordSem_flush_state T s1) else
-                    wordSem_evaluate (wordSem_STOP (Loop names c
-                      exit_names),wordSem_dec_clock s1)) else if res =
-                      SOME (Break 0) then
+                    wordSem_evaluate (wordSem_STOP (wordLang_Loop
+                      names c exit_names),wordSem_dec_clock s1)) else if
+                      res = SOME (Break 0) then
                  match wordSem_cut_state (exit_names,LN) s1 with
                    NONE -> (SOME wordSem_Error,s1) | SOME s2 ->
                    (NONE,s2) else (wordSem_exit_loop res,s1)))`;

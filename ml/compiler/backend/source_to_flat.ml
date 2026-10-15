@@ -64,16 +64,17 @@ let compile_var_def = cake_define_list
 let compile_pat_def = cake_define_list
   [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
    `compile_pat env Pany = Pany`;
-   `compile_pat env (Plit l:pattern_semantics_pat) = Plit l`;
+   `compile_pat env (Plit l:pattern_semantics_pat) = (Plit
+  l:pattern_semantics_pat)`;
    `compile_pat env (ast_Pcon id' ps) =
         flatLang_Pcon
           (OPTION_JOIN (OPTION_MAP (nsLookup
             (source_to_flat_environment_c env)) id'))
           (MAP (compile_pat env) ps)`;
-   `compile_pat env (Pref p:pattern_semantics_pat) = Pref
-  (compile_pat env p)`;
-   `compile_pat env (Pas p i:pattern_semantics_pat) = Pas
-  (compile_pat env p) i`;
+   `compile_pat env (Pref p:pattern_semantics_pat) = (Pref
+  (compile_pat env p):pattern_semantics_pat)`;
+   `compile_pat env (Pas p i:pattern_semantics_pat) = (Pas
+  (compile_pat env p) i:pattern_semantics_pat)`;
    `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
 
 let pat_tups_def = cake_define_list
@@ -111,28 +112,29 @@ let join_all_names_def = cake_define
 let compile_exp_def = cake_define_list
   [`source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (Raise e:flatLang_exp) =
-        Raise backend_common_None (source_to_flat_compile_exp t
-          env e)`;
+        (Raise backend_common_None (source_to_flat_compile_exp t
+          env e):flatLang_exp)`;
    `source_to_flat_compile_exp t env (Handle e pes:flatLang_exp) =
-        Handle backend_common_None (source_to_flat_compile_exp t
-          env e) (compile_pes t env pes)`;
+        (Handle backend_common_None (source_to_flat_compile_exp t
+          env e) (compile_pes t env pes):flatLang_exp)`;
    `source_to_flat_compile_exp t env (ast_Lit l) = flatLang_Lit
   backend_common_None l`;
    `source_to_flat_compile_exp t env (Con cn es:flatLang_exp) =
-        Con backend_common_None (OPTION_JOIN (OPTION_MAP
+        (Con backend_common_None (OPTION_JOIN (OPTION_MAP
           (type_group_id_type o nsLookup (source_to_flat_environment_c
           env)) cn))
-              (source_to_flat_compile_exps t env es)`;
+              (source_to_flat_compile_exps t env
+                es):flatLang_exp)`;
    `source_to_flat_compile_exp t env (ast_Var x) =
         (match nsLookup (source_to_flat_environment_v env) x with
           NONE -> flatLang_Var_local backend_common_None (implode "")
           | SOME x -> compile_var backend_common_None x)`;
    `source_to_flat_compile_exp t env (Fun x e:flatLang_exp) =
-        Fun (join_all_names t) x
+        (Fun (join_all_names t) x
           (source_to_flat_compile_exp t
             (source_to_flat_environment_v_fupd (K (nsBind x (Local
             backend_common_None x) (source_to_flat_environment_v
-            env))) env) e)`;
+            env))) env) e):flatLang_exp)`;
    `source_to_flat_compile_exp t env (ast_App op es) =
         (if op = ast_AallocEmpty then
           ITLIST (Let backend_common_None NONE)
@@ -175,23 +177,24 @@ let compile_exp_def = cake_define_list
                (flatLang_Bool backend_common_None T)
                (source_to_flat_compile_exp t env e2))`;
    `source_to_flat_compile_exp t env (If e1 e2 e3:dTree) =
-        If backend_common_None
+        (If backend_common_None
            (source_to_flat_compile_exp t env e1)
            (source_to_flat_compile_exp t env e2)
-           (source_to_flat_compile_exp t env e3)`;
+           (source_to_flat_compile_exp t env e3):dTree)`;
    `source_to_flat_compile_exp t env (Mat e pes:flatLang_exp) =
-        Mat backend_common_None (source_to_flat_compile_exp t env
-          e) (compile_pes t env pes)`;
+        (Mat backend_common_None (source_to_flat_compile_exp t
+          env e) (compile_pes t env pes):flatLang_exp)`;
    `source_to_flat_compile_exp t env (Let (SOME x) e1 e2:flatLang_exp) =
-          Let backend_common_None (SOME x)
+          (Let backend_common_None (SOME x)
             (source_to_flat_compile_exp (x :: t) env e1)
             (source_to_flat_compile_exp t
               (source_to_flat_environment_v_fupd (K (nsBind x (Local
               backend_common_None x) (source_to_flat_environment_v
-              env))) env) e2)`;
+              env))) env) e2):flatLang_exp)`;
    `source_to_flat_compile_exp t env (Let NONE e1 e2:flatLang_exp) =
-        Let backend_common_None NONE (source_to_flat_compile_exp
-          t env e1) (source_to_flat_compile_exp t env e2)`;
+        (Let backend_common_None NONE (source_to_flat_compile_exp
+          t env e1) (source_to_flat_compile_exp t env
+          e2):flatLang_exp)`;
    `source_to_flat_compile_exp t env (ast_Letrec funs e) =
         (let fun_names = MAP FST funs in
         let new_env = nsBindList (MAP (\x. (x,Local

@@ -347,11 +347,11 @@ val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2``
 
 let loc_merge_def = cake_define_list
   [`loc_merge [] ys = []`;
-   `loc_merge (wordLang_Loc l1 l2 :: xs) ys = Loc l1 l2 :: loc_merge
-  xs ys`;
+   `loc_merge (wordLang_Loc l1 l2 :: xs) ys = wordLang_Loc l1 l2 ::
+  loc_merge xs ys`;
    `loc_merge (wordLang_Word w :: xs) (y :: ys) = y :: loc_merge xs
   ys`;
-   `loc_merge (wordLang_Word w :: xs) [] = Word w :: xs`];;
+   `loc_merge (wordLang_Word w :: xs) [] = wordLang_Word w :: xs`];;
 
 let traverse_heap = cake_inductive
   `(!heap p1.

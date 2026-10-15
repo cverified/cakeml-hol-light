@@ -333,7 +333,7 @@ let scan_expr_def = cake_define_list
           match opr with
             bvi_tailrec_Noop ->
               (if arg_ty op = Int then
-                match get_bin_args (Op op xs) with
+                match get_bin_args ((Op op xs:bvi_exp)) with
                   NONE ->
                     (if bvi_tailrec_is_const op then
                       [(ts,Int,F,NONE)] else
@@ -394,7 +394,7 @@ let scan_expr_sing_def = cake_define_list
           match opr with
             bvi_tailrec_Noop ->
               (if arg_ty op = Int then
-                match get_bin_args (Op op xs) with
+                match get_bin_args ((Op op xs:bvi_exp)) with
                   NONE ->
                     (if bvi_tailrec_is_const op then
                       (ts,Int,F,NONE) else

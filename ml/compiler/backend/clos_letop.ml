@@ -37,34 +37,37 @@ let let_op_def = cake_define_list
    `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
          HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::
            xs)`;
-   `clos_letop_let_op [(Var t v:closLang_exp)] = [Var t v]`;
+   `clos_letop_let_op [(Var t v:closLang_exp)] = [(Var t
+  v:closLang_exp)]`;
    `clos_letop_let_op [(If t x1 x2 x3:closLang_exp)] =
-         [If t (HD (clos_letop_let_op [x1]))
+         [(If t (HD (clos_letop_let_op [x1]))
                (HD (clos_letop_let_op [x2]))
-               (HD (clos_letop_let_op [x3]))]`;
+               (HD (clos_letop_let_op [x3])):closLang_exp)]`;
    `clos_letop_let_op [(Let t xs x2:closLang_exp)] =
          (let xs = clos_letop_let_op xs in
          let x2 = HD (clos_letop_let_op [x2]) in
            match clos_letop_dest_op x2 xs with SOME op ->
-             [closLang_Op t op xs] | NONE -> [Let t xs x2])`;
+             [closLang_Op t op xs] | NONE -> [(Let t xs
+             x2:closLang_exp)])`;
    `clos_letop_let_op [(Raise t x1:closLang_exp)] =
-         [Raise t (HD (clos_letop_let_op [x1]))]`;
+         [(Raise t (HD (clos_letop_let_op [x1])):closLang_exp)]`;
    `clos_letop_let_op [(Handle t x1 x2:closLang_exp)] =
-         [Handle t (HD (clos_letop_let_op [x1]))
-                  (HD (clos_letop_let_op [x2]))]`;
+         [(Handle t (HD (clos_letop_let_op [x1]))
+                  (HD (clos_letop_let_op [x2])):closLang_exp)]`;
    `clos_letop_let_op [closLang_Op t op xs] =
          [closLang_Op t op (clos_letop_let_op xs)]`;
    `clos_letop_let_op [closLang_Tick t x] = [closLang_Tick t (HD
   (clos_letop_let_op [x]))]`;
    `clos_letop_let_op [closLang_Call t ticks dest xs] =
   [closLang_Call t ticks dest (clos_letop_let_op xs)]`;
-   `clos_letop_let_op [(App t loc_opt x1 xs:closLang_exp)] = [App t
-  loc_opt (HD (clos_letop_let_op [x1])) (clos_letop_let_op xs)]`;
+   `clos_letop_let_op [(App t loc_opt x1 xs:closLang_exp)] = [(App t
+  loc_opt (HD (clos_letop_let_op [x1])) (clos_letop_let_op
+  xs):closLang_exp)]`;
    `clos_letop_let_op [(Letrec t loc_opt vs fns x1:closLang_exp)] =
          (let new_fns = MAP (\(num_args,x). (num_args,HD
            (clos_letop_let_op [x]))) fns in
-         [Letrec t loc_opt vs new_fns (HD (clos_letop_let_op
-           [x1]))])`;
+         [(Letrec t loc_opt vs new_fns (HD (clos_letop_let_op
+           [x1])):closLang_exp)])`;
    `clos_letop_let_op [closLang_Fn t loc_opt vs num_args x1] =
   [closLang_Fn t loc_opt vs num_args (HD (clos_letop_let_op [x1]))]`];;
 hol4_overload "let_op" "clos_letop_let_op";;
@@ -74,34 +77,36 @@ val let_op_ind = theorem "let_op_ind";
 *)
 
 let let_op_sing_def = cake_define_list
-  [`clos_letop_let_op_sing (Var t v:closLang_exp) = (Var t v)`;
+  [`clos_letop_let_op_sing (Var t v:closLang_exp) = ((Var t
+  v:closLang_exp))`;
    `clos_letop_let_op_sing (If t x1 x2 x3:closLang_exp) =
-         (If t ((clos_letop_let_op_sing (x1)))
+         ((If t ((clos_letop_let_op_sing (x1)))
                ((clos_letop_let_op_sing (x2)))
-               ((clos_letop_let_op_sing (x3))))`;
+               ((clos_letop_let_op_sing (x3))):closLang_exp))`;
    `clos_letop_let_op_sing (Let t xs x2:closLang_exp) =
          (let xs = clos_letop_let_op_list xs in
          let x2 = (clos_letop_let_op_sing (x2)) in
            match clos_letop_dest_op x2 xs with SOME op ->
-             (closLang_Op t op xs) | NONE -> (Let t xs x2))`;
+             (closLang_Op t op xs) | NONE -> ((Let t xs
+             x2:closLang_exp)))`;
    `clos_letop_let_op_sing (Raise t x1:closLang_exp) =
-         (Raise t ((clos_letop_let_op_sing (x1))))`;
+         ((Raise t ((clos_letop_let_op_sing (x1))):closLang_exp))`;
    `clos_letop_let_op_sing (Handle t x1 x2:closLang_exp) =
-         (Handle t ((clos_letop_let_op_sing (x1)))
-                  ((clos_letop_let_op_sing (x2))))`;
+         ((Handle t ((clos_letop_let_op_sing (x1)))
+                  ((clos_letop_let_op_sing (x2))):closLang_exp))`;
    `clos_letop_let_op_sing (closLang_Op t op xs) =
          (closLang_Op t op (clos_letop_let_op_list xs))`;
    `clos_letop_let_op_sing (closLang_Tick t x) = (closLang_Tick t
   ((clos_letop_let_op_sing (x))))`;
    `clos_letop_let_op_sing (closLang_Call t ticks dest xs) =
   (closLang_Call t ticks dest (clos_letop_let_op_list xs))`;
-   `clos_letop_let_op_sing (App t loc_opt x1 xs:closLang_exp) = (App
+   `clos_letop_let_op_sing (App t loc_opt x1 xs:closLang_exp) = ((App
   t loc_opt ((clos_letop_let_op_sing (x1))) (clos_letop_let_op_list
-  xs))`;
+  xs):closLang_exp))`;
    `clos_letop_let_op_sing (Letrec t loc_opt vs fns x1:closLang_exp) =
          (let new_fns = let_op_let fns in
-         (Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
-           (x1)))))`;
+         ((Letrec t loc_opt vs new_fns ((clos_letop_let_op_sing
+           (x1))):closLang_exp)))`;
    `clos_letop_let_op_sing (closLang_Fn t loc_opt vs num_args x1) =
   (closLang_Fn t loc_opt vs num_args ((clos_letop_let_op_sing (x1))))`;
    `clos_letop_let_op_list [] = []`;

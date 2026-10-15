@@ -25,9 +25,9 @@ let ffi_offset_def = cake_define
 (* basic assemble function *)
 
 let lab_inst_def = cake_define_list
-  [`lab_inst w (labLang_Jump _1) = Jump w`;
-   `lab_inst w (labLang_JumpCmp c r ri _2) = JumpCmp c r ri w`;
-   `lab_inst w (labLang_Call _3) = Call w`;
+  [`lab_inst w (labLang_Jump _1) = labLang_Jump w`;
+   `lab_inst w (labLang_JumpCmp c r ri _2) = labLang_JumpCmp c r ri w`;
+   `lab_inst w (labLang_Call _3) = labLang_Call w`;
    `lab_inst w (labLang_LocValue r _4) = asm_Loc r (w:'a word)`;
    `lab_inst w labLang_Halt = Jump w`;
    `lab_inst w labLang_Install = Jump w`;

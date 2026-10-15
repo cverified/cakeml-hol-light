@@ -14,7 +14,6 @@ needs "compiler/backend/proofs/word_simpProof.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "misc/misc.ml";;
@@ -56,8 +55,8 @@ let decode_length_def = cake_define
   data_to_word_config_len_size conf)`;;
 
 let word_gc_move_def = cake_define_list
-  [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) = (Loc l1
-  l2,i,pa,m,(l2 = 0))`;
+  [`word_gc_move conf (wordLang_Loc l1 l2,i,pa,old,m,dm) =
+  (wordLang_Loc l1 l2,i,pa,m,(l2 = 0))`;
    `word_gc_move conf (wordLang_Word w,i,pa,old,m,dm) =
          (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word
            w,i,pa,m,T) else
@@ -82,7 +81,7 @@ let word_gc_move_def = cake_define_list
 
 let word_gen_gc_partial_move_def = cake_define_list
   [`word_gen_gc_partial_move conf (wordLang_Loc l1
-  l2,i,pa,old,m,dm,gs,rs) = (Loc l1 l2,i,pa,m,(l2 = 0))`;
+  l2,i,pa,old,m,dm,gs,rs) = (wordLang_Loc l1 l2,i,pa,m,(l2 = 0))`;
    `word_gen_gc_partial_move conf (wordLang_Word w,i,pa,old,m,dm,gs,rs)
   =
        (if (w && (n2w 1)) = (n2w 0) then (wordLang_Word w,i,pa,m,T)
@@ -288,7 +287,7 @@ let is_ref_header_def = cake_define
 
 let word_gen_gc_move_def = cake_define_list
   [`word_gen_gc_move conf (wordLang_Loc l1 l2,i,pa,ib,pb,old,m,dm) =
-         (Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))`;
+         (wordLang_Loc l1 l2,i,pa,ib,pb,m,(l2 = 0))`;
    `word_gen_gc_move conf (wordLang_Word w,i,pa,ib,pb,old,m,dm) =
          (if ((n2w 1) && w) = (n2w 0) then (wordLang_Word
            w,i,pa,ib,pb,m,T) else

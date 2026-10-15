@@ -34,25 +34,26 @@ let alt_free_def = cake_define_list
          (let (c1,l1) = alt_free [x] in
          let (c2,l2) = alt_free (y :: xs) in
            (c1 ++ c2,mk_Union l1 l2))`;
-   `alt_free [(Var t v:closLang_exp)] = ([Var t v],Var v)`;
+   `alt_free [(Var t v:closLang_exp)] = ([(Var t v:closLang_exp)],Var
+  v)`;
    `alt_free [(If t x1 x2 x3:closLang_exp)] =
          (let (c1,l1) = alt_free [x1] in
          let (c2,l2) = alt_free [x2] in
          let (c3,l3) = alt_free [x3] in
-           ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
-             l2 l3)))`;
+           ([(If t (HD c1) (HD c2) (HD
+             c3):closLang_exp)],mk_Union l1 (mk_Union l2 l3)))`;
    `alt_free [(Let t xs x2:closLang_exp)] =
          (let m = LENGTH xs in
          let (c2,l2) = alt_free [x2] in
            if no_overlap m l2 /\ EVERY pure xs then
-             ([Let t (REPLICATE m (const_0 t)) (HD c2)],Shift m l2)
-               else
+             ([(Let t (REPLICATE m (const_0 t)) (HD
+               c2):closLang_exp)],Shift m l2) else
              let (c1,l1) = alt_free xs in
                ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
                  l2)))`;
    `alt_free [(Raise t x1:closLang_exp)] =
          (let (c1,l1) = alt_free [x1] in
-           ([Raise t (HD c1)],l1))`;
+           ([(Raise t (HD c1):closLang_exp)],l1))`;
    `alt_free [closLang_Tick t x1] =
          (let (c1,l1) = alt_free [x1] in
            ([closLang_Tick t (HD c1)],l1))`;
@@ -62,7 +63,8 @@ let alt_free_def = cake_define_list
    `alt_free [(App t loc_opt x1 xs2:closLang_exp)] =
          (let (c1,l1) = alt_free [x1] in
          let (c2,l2) = alt_free xs2 in
-           ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
+           ([(App t loc_opt (HD c1) c2:closLang_exp)],mk_Union l1
+             l2))`;
    `alt_free [closLang_Fn t loc _1 num_args x1] =
          (let (c1,l1) = alt_free [x1] in
          let l2 = Shift num_args l1 in
@@ -75,33 +77,38 @@ let alt_free_def = cake_define_list
                               ((n,HD c),Shift (n + m) l)) fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
-           ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
+           ([(Letrec t loc (SOME (vars_to_list l1)) c1 (HD
+             c2):closLang_exp)],
             mk_Union l1 (Shift (LENGTH fns) l2)))`;
    `alt_free [(Handle t x1 x2:closLang_exp)] =
          (let (c1,l1) = alt_free [x1] in
          let (c2,l2) = alt_free [x2] in
-           ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
+           ([(Handle t (HD c1) (HD c2):closLang_exp)],mk_Union l1
+             (Shift 1 l2)))`;
    `alt_free [closLang_Call t ticks dest xs] =
          (let (c1,l1) = alt_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
 
 let alt_free_sing_def = cake_define_list
-  [`alt_free_sing (Var t v:closLang_exp) = (Var t v,Var v)`;
+  [`alt_free_sing (Var t v:closLang_exp) = ((Var t
+  v:closLang_exp),Var v)`;
    `alt_free_sing (If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = alt_free_sing x1 in
          let (c2,l2) = alt_free_sing x2 in
          let (c3,l3) = alt_free_sing x3 in
-           (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))`;
+           ((If t c1 c2 c3:closLang_exp),mk_Union l1 (mk_Union l2
+             l3)))`;
    `alt_free_sing (Let t xs x2:closLang_exp) =
          (let m = LENGTH xs in
          let (c2,l2) = alt_free_sing x2 in
            if no_overlap m l2 /\ EVERY pure xs then
-             (Let t (REPLICATE m (const_0 t)) c2,Shift m l2) else
+             ((Let t (REPLICATE m (const_0 t))
+               c2:closLang_exp),Shift m l2) else
              let (c1,l1) = alt_free_list xs in
                (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))`;
    `alt_free_sing (Raise t x1:closLang_exp) =
          (let (c1,l1) = alt_free_sing x1 in
-           (Raise t c1,l1))`;
+           ((Raise t c1:closLang_exp),l1))`;
    `alt_free_sing (closLang_Tick t x1) =
          (let (c1,l1) = alt_free_sing x1 in
            (closLang_Tick t c1,l1))`;
@@ -111,7 +118,7 @@ let alt_free_sing_def = cake_define_list
    `alt_free_sing (App t loc_opt x1 xs2:closLang_exp) =
          (let (c1,l1) = alt_free_sing x1 in
          let (c2,l2) = alt_free_list xs2 in
-           (App t loc_opt c1 c2,mk_Union l1 l2))`;
+           ((App t loc_opt c1 c2:closLang_exp),mk_Union l1 l2))`;
    `alt_free_sing (closLang_Fn t loc _3 num_args x1) =
          (let (c1,l1) = alt_free_sing x1 in
          let l2 = Shift num_args l1 in
@@ -123,12 +130,14 @@ let alt_free_sing_def = cake_define_list
          let res = alt_free_letrec m fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
-           (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
+           ((Letrec t loc (SOME (vars_to_list l1)) c1
+             c2:closLang_exp),
             mk_Union l1 (Shift (LENGTH fns) l2)))`;
    `alt_free_sing (Handle t x1 x2:closLang_exp) =
          (let (c1,l1) = alt_free_sing x1 in
          let (c2,l2) = alt_free_sing x2 in
-           (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
+           ((Handle t c1 c2:closLang_exp),mk_Union l1 (Shift 1
+             l2)))`;
    `alt_free_sing (closLang_Call t ticks dest xs) =
          (let (c1,l1) = alt_free_list xs in
            (closLang_Call t ticks dest c1,l1))`;
@@ -161,19 +170,19 @@ let shift_def = cake_define_list
          let c2 = clos_annotate_shift (y :: xs) m l i in
            (c1 ++ (c2:closLang_exp list)))`;
    `clos_annotate_shift [(Var t v:closLang_exp)] m l i =
-         [Var t (clos_annotate_get_var m l i v)]`;
+         [(Var t (clos_annotate_get_var m l i v):closLang_exp)]`;
    `clos_annotate_shift [(If t x1 x2 x3:closLang_exp)] m l i =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift [x2] m l i in
          let c3 = clos_annotate_shift [x3] m l i in
-           ([If t (HD c1) (HD c2) (HD c3)]))`;
+           ([(If t (HD c1) (HD c2) (HD c3):closLang_exp)]))`;
    `clos_annotate_shift [(Let t xs x2:closLang_exp)] m l i =
          (let c1 = clos_annotate_shift xs m l i in
          let c2 = clos_annotate_shift [x2] m (l + LENGTH xs) i in
-           ([Let t c1 (HD c2)]))`;
+           ([(Let t c1 (HD c2):closLang_exp)]))`;
    `clos_annotate_shift [(Raise t x1:closLang_exp)] m l i =
          (let (c1) = clos_annotate_shift [x1] m l i in
-           ([Raise t (HD c1)]))`;
+           ([(Raise t (HD c1):closLang_exp)]))`;
    `clos_annotate_shift [closLang_Tick t x1] m l i =
          (let c1 = clos_annotate_shift [x1] m l i in
            ([closLang_Tick t (HD c1)]))`;
@@ -183,7 +192,7 @@ let shift_def = cake_define_list
    `clos_annotate_shift [(App t loc_opt x1 xs2:closLang_exp)] m l i =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift xs2 m l i in
-           ([App t loc_opt (HD c1) c2]))`;
+           ([(App t loc_opt (HD c1) c2:closLang_exp)]))`;
    `clos_annotate_shift [closLang_Fn t loc vs_opt num_args x1] m l i =
          (let k = m + l in
          let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
@@ -204,11 +213,12 @@ let shift_def = cake_define_list
            + fns_len) new_i in
                               (n,HD c)) fns in
          let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
-           ([Letrec t loc (SOME vars) cs (HD c1)]))`;
+           ([(Letrec t loc (SOME vars) cs (HD
+             c1):closLang_exp)]))`;
    `clos_annotate_shift [(Handle t x1 x2:closLang_exp)] m l i =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift [x2] m (l + 1) i in
-           ([Handle t (HD c1) (HD c2)]))`;
+           ([(Handle t (HD c1) (HD c2):closLang_exp)]))`;
    `clos_annotate_shift [closLang_Call t ticks dest xs] m l i =
          (let c1 = clos_annotate_shift xs m l i in
            ([closLang_Call t ticks dest c1]))`];;
@@ -216,19 +226,19 @@ hol4_overload "shift" "clos_annotate_shift";;
 
 let shift_sing_def = cake_define_list
   [`shift_sing (Var t v:closLang_exp) m l i =
-         Var t (clos_annotate_get_var m l i v)`;
+         (Var t (clos_annotate_get_var m l i v):closLang_exp)`;
    `shift_sing (If t x1 x2 x3:closLang_exp) m l i =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_sing x2 m l i in
          let c3 = shift_sing x3 m l i in
-           (If t c1 c2 c3))`;
+           ((If t c1 c2 c3:closLang_exp)))`;
    `shift_sing (Let t xs x2:closLang_exp) m l i =
          (let c1 = shift_list xs m l i in
          let c2 = shift_sing x2 m (l + LENGTH xs) i in
-           (Let t c1 c2))`;
+           ((Let t c1 c2:closLang_exp)))`;
    `shift_sing (Raise t x1:closLang_exp) m l i =
          (let (c1) = shift_sing x1 m l i in
-           (Raise t c1))`;
+           ((Raise t c1:closLang_exp)))`;
    `shift_sing (closLang_Tick t x1) m l i =
          (let c1 = shift_sing x1 m l i in
            (closLang_Tick t c1))`;
@@ -238,7 +248,7 @@ let shift_sing_def = cake_define_list
    `shift_sing (App t loc_opt x1 xs2:closLang_exp) m l i =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_list xs2 m l i in
-           (App t loc_opt c1 c2))`;
+           ((App t loc_opt c1 c2:closLang_exp)))`;
    `shift_sing (closLang_Fn t loc vs_opt num_args x1) m l i =
          (let k = m + l in
          let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
@@ -255,11 +265,11 @@ let shift_sing_def = cake_define_list
          let fns_len = LENGTH fns in
          let cs = shift_letrec fns_len k new_i fns in
          let c1 = shift_sing x1 m (l + LENGTH fns) i in
-           (Letrec t loc (SOME vars) cs c1))`;
+           ((Letrec t loc (SOME vars) cs c1:closLang_exp)))`;
    `shift_sing (Handle t x1 x2:closLang_exp) m l i =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_sing x2 m (l + 1) i in
-           (Handle t c1 c2))`;
+           ((Handle t c1 c2:closLang_exp)))`;
    `shift_sing (closLang_Call t ticks dest xs) m l i =
          (let c1 = shift_list xs m l i in
            (closLang_Call t ticks dest c1))`;

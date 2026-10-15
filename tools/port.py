@@ -132,6 +132,7 @@ class Porter:
     self.deps = []
     self.restore = set()   # the infixes to put back at the end
     self.rec_src = {}      # record type -> [(field, type)]
+    self.annotated = set() # the constructors a pattern resolved
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
@@ -645,6 +646,7 @@ class Porter:
                                '$' in h.name):
           if ambiguous and not self.ambiguous_con(h.name):
             return p
+          self.annotated.add(h.name)
           ty = self.con_type(h.name)
           # a type variable that the port writes is rigid in HOL
           # Light, so a type with parameters cannot be written in an
@@ -680,10 +682,42 @@ class Porter:
     if not (e.kind == 'infix' and e.op in ('=', '<=>')): return cl
     _, args = hterm.strip_app(e.l)
     e.l = hterm.strip_app(e.l)[0]
+    self.annotated = set()
     for a in args:
       e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
                        arg=self.annotate_pat(a, ambiguous))
+    # a constructor of the pattern that the right hand side uses
+    # again gets the same resolution there: a clause of its own is
+    # typechecked on its own, so nothing else would say which
+    # constructor it is (bvl_inline's Force is bvl's, not db_vars')
+    if ambiguous and self.annotated:
+      e.r = self.annotate_again(e.r)
     return cl
+
+  def annotate_again(self, e):
+    """the constructors that the pattern of the clause resolved,
+       resolved the same way where the body uses them again"""
+    done = set()
+
+    def go(e):
+      if not isinstance(e, hterm.Node): return e
+      if e.kind in ('app', 'id'):
+        h = hterm.strip_app(e)[0] if e.kind == 'app' else e
+        nm = h.name if h.kind == 'id' else None
+        if nm in self.annotated and nm not in done:
+          done.add(nm)
+          return self.annotate_pat(e, True)
+      for k, v in list(e.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): setattr(e, k, go(v))
+        elif isinstance(v, list):
+          setattr(e, k, [go(x) if isinstance(x, hterm.Node)
+                         else ([go(y) if isinstance(y, hterm.Node)
+                                else y for y in x]
+                               if isinstance(x, (list, tuple)) else x)
+                         for x in v])
+      return e
+    return go(e)
 
   def int_vars(self, body):
     """the variables of a definition that hold an integer: the ones

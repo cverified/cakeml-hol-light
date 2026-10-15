@@ -452,7 +452,8 @@ let clo_to_loc_def = cake_define_list
 let clo_to_env_def = cake_define_list
   [`clo_to_env (Closure _88 _89 env _90 _91:closSem_v) = env`;
    `clo_to_env (Recclosure loc _92 env fns _93:closSem_v) =
-       GENLIST (Recclosure loc [] env fns) (LENGTH fns) ++ env`];;
+       GENLIST ((Recclosure loc [] env fns:closSem_v)) (LENGTH
+         fns) ++ env`];;
 
 let clo_to_partial_args_def = cake_define_list
   [`clo_to_partial_args (Closure _94 args _95 _96 _97:closSem_v) =
@@ -462,9 +463,9 @@ let clo_to_partial_args_def = cake_define_list
 
 let clo_add_partial_args_def = cake_define_list
   [`clo_add_partial_args args (Closure x1 args' x2 x3 x4:closSem_v) =
-       Closure x1 (args ++ args') x2 x3 x4`;
+       (Closure x1 (args ++ args') x2 x3 x4:closSem_v)`;
    `clo_add_partial_args args (Recclosure x1 args' x2 x3 x4:closSem_v) =
-       Recclosure x1 (args ++ args') x2 x3 x4`];;
+       (Recclosure x1 (args ++ args') x2 x3 x4:closSem_v)`];;
 
 let clo_to_num_params_def = cake_define_list
   [`clo_to_num_params (Closure _102 _103 _104 n _105:closSem_v) = n`;

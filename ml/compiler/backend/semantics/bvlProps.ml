@@ -94,22 +94,26 @@ let bEvery_def = cake_define_list
   [`bEvery P [] <=> T`;
    `bEvery P ((x:bvl_exp) :: y :: xs) <=>
          bEvery P [x] /\ bEvery P (y :: xs)`;
-   `bEvery P [(Var v:flatLang_exp)] <=> P (Var v)`;
-   `bEvery P [(If x1 x2 x3:flatLang_exp)] <=> P (If x1 x2 x3) /\
+   `bEvery P [(Var v:flatLang_exp)] <=> P ((Var v:flatLang_exp))`;
+   `bEvery P [(If x1 x2 x3:flatLang_exp)] <=> P ((If x1 x2
+  x3:flatLang_exp)) /\
          bEvery P [x1] /\ bEvery P [x2] /\ bEvery P [x3]`;
-   `bEvery P [(Let xs x2:flatLang_exp)] <=> P (Let xs x2) /\
+   `bEvery P [(Let xs x2:flatLang_exp)] <=> P ((Let xs x2:flatLang_exp))
+  /\
          bEvery P xs /\ bEvery P [x2]`;
-   `bEvery P [(Raise x1:flatLang_exp)] <=> P (Raise x1) /\ bEvery P
-  [x1]`;
-   `bEvery P [(Tick x1:flatLang_exp)] <=> P (Tick x1) /\ bEvery P
-  [x1]`;
-   `bEvery P [(Force m n:flatLang_exp)] <=> P (Force m n)`;
-   `bEvery P [(Op op xs:flatLang_exp)] <=> P (Op op xs) /\ bEvery P
-  xs`;
-   `bEvery P [(Handle x1 x2:flatLang_exp)] <=> P (Handle x1 x2) /\
+   `bEvery P [(Raise x1:flatLang_exp)] <=> P ((Raise
+  x1:flatLang_exp)) /\ bEvery P [x1]`;
+   `bEvery P [(Tick x1:flatLang_exp)] <=> P ((Tick x1:flatLang_exp))
+  /\ bEvery P [x1]`;
+   `bEvery P [(Force m n:flatLang_exp)] <=> P ((Force m
+  n:flatLang_exp))`;
+   `bEvery P [(Op op xs:flatLang_exp)] <=> P ((Op op
+  xs:flatLang_exp)) /\ bEvery P xs`;
+   `bEvery P [(Handle x1 x2:flatLang_exp)] <=> P ((Handle x1
+  x2:flatLang_exp)) /\
          bEvery P [x1] /\ bEvery P [x2]`;
-   `bEvery P [(Call ticks dest xs:flatLang_exp)] <=> P (Call ticks
-  dest xs) /\ bEvery P xs`];;
+   `bEvery P [(Call ticks dest xs:flatLang_exp)] <=> P ((Call ticks
+  dest xs:flatLang_exp)) /\ bEvery P xs`];;
 
 let get_code_labels_def = cake_define_list
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;

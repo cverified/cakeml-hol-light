@@ -756,7 +756,7 @@ let evaluate_def = cake_define_list
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackSem_Halt v,s) =
-         (match get_var v s with SOME w -> (SOME (Halt
+         (match get_var v s with SOME w -> (SOME (stackSem_Halt
            w),stackSem_empty_env s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Alloc n,s) =
          (if ~stackSem_state_use_alloc s then (SOME Error,s) else
@@ -798,8 +798,10 @@ let evaluate_def = cake_define_list
    `stackSem_evaluate (wordLang_Raise n,s) =
          (match get_var n s with SOME (Loc l1 l2) -> (SOME
            (Exception (Loc l1 l2)),s) | _72 -> (SOME Error,s))`;
-   `stackSem_evaluate (stackSem_Break n,s) = (SOME (Break n),s)`;
-   `stackSem_evaluate (stackSem_Continue n,s) = (SOME (Continue n),s)`;
+   `stackSem_evaluate (stackSem_Break n,s) = (SOME (stackSem_Break
+  n),s)`;
+   `stackSem_evaluate (stackSem_Continue n,s) = (SOME
+  (stackSem_Continue n),s)`;
    `stackSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y)
           ->
@@ -811,8 +813,8 @@ let evaluate_def = cake_define_list
            if cont_loop res then
              (if state_clock s1 = 0 then (SOME
                TimeOut,stackSem_empty_env s1) else
-                stackSem_evaluate (STOP (Loop c1),dec_clock s1))
-                  else (exit_loop res,s1))`;
+                stackSem_evaluate (STOP (wordLang_Loop
+                  c1),dec_clock s1)) else (exit_loop res,s1))`;
    `stackSem_evaluate (stackLang_JumpLower r1 r2 dest,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
           x),SOME (wordLang_Word y)) ->

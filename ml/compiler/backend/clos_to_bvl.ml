@@ -381,8 +381,8 @@ let compile_exps_def = cake_define_list
          let (c2,aux2) = clos_to_bvl_compile_exps max_app (y :: xs)
            aux1 in
            (c1 ++ c2,aux2))`;
-   `clos_to_bvl_compile_exps max_app [(Var t v:bvl_exp)] aux = ([(Var
-  v):bvl_exp],aux)`;
+   `clos_to_bvl_compile_exps max_app [(Var t v:bvl_exp)] aux =
+  ([((Var v:bvl_exp)):bvl_exp],aux)`;
    `clos_to_bvl_compile_exps max_app [(If t x1 x2 x3:bvl_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
@@ -390,26 +390,26 @@ let compile_exps_def = cake_define_list
            in
          let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2
            in
-           ([If (HD c1) (HD c2) (HD c3)],aux3))`;
+           ([(If (HD c1) (HD c2) (HD c3):bvl_exp)],aux3))`;
    `clos_to_bvl_compile_exps max_app [(Let t xs x2:bvl_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
            in
-           ([Let c1 (HD c2)],aux2))`;
+           ([(Let c1 (HD c2):bvl_exp)],aux2))`;
    `clos_to_bvl_compile_exps max_app [(Raise t x1:bvl_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
-           ([Raise (HD c1)],aux1))`;
+           ([(Raise (HD c1):bvl_exp)],aux1))`;
    `clos_to_bvl_compile_exps max_app [(Tick t x1:bvl_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
            in
-           ([Tick (HD c1)],aux1))`;
+           ([(Tick (HD c1):bvl_exp)],aux1))`;
    `clos_to_bvl_compile_exps max_app [(Op t op xs:bvl_exp)] aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
          (
          [if op = closLang_Install then
-             Call 0 NONE [Op closLang_Install c1] else if op =
-               ThunkOp ForceThunk then
+             Call 0 NONE [(Op closLang_Install c1:bvl_exp)] else if
+               op = ThunkOp ForceThunk then
              Let c1 (Force (num_stubs max_app - 2) 0) else
              Op (clos_to_bvl_compile_op op) c1],aux1))`;
    `clos_to_bvl_compile_exps max_app [(App t loc_opt x1 xs2:bvl_exp)]
@@ -473,12 +473,12 @@ let compile_exps_def = cake_define_list
            in
          let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
            in
-           ([Handle (HD c1) (HD c2)],aux2))`;
+           ([(Handle (HD c1) (HD c2):bvl_exp)],aux2))`;
    `clos_to_bvl_compile_exps max_app [(Call t ticks dest xs:bvl_exp)]
   aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-           ([Call ticks (SOME (dest + (num_stubs max_app)))
-             c1],aux1))`];;
+           ([(Call ticks (SOME (dest + (num_stubs max_app)))
+             c1:bvl_exp)],aux1))`];;
 hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 (* HOL4 ML code, not ported:
@@ -486,30 +486,30 @@ val compile_exps_ind = theorem"compile_exps_ind";
 *)
 
 let compile_exp_sing_def = cake_define_list
-  [`compile_exp_sing max_app (Var t v:bvl_exp) aux = (((Var
-  v):bvl_exp),aux)`;
+  [`compile_exp_sing max_app (Var t v:bvl_exp) aux = ((((Var
+  v:bvl_exp)):bvl_exp),aux)`;
    `compile_exp_sing max_app (If t x1 x2 x3:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
          let (c3,aux3) = compile_exp_sing max_app x3 aux2 in
-           (If c1 c2 c3,aux3))`;
+           ((If c1 c2 c3:bvl_exp),aux3))`;
    `compile_exp_sing max_app (Let t xs x2:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-           (Let c1 c2,aux2))`;
+           ((Let c1 c2:bvl_exp),aux2))`;
    `compile_exp_sing max_app (Raise t x1:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-           (Raise c1,aux1))`;
+           ((Raise c1:bvl_exp),aux1))`;
    `compile_exp_sing max_app (Tick t x1:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-           (Tick c1,aux1))`;
+           ((Tick c1:bvl_exp),aux1))`;
    `compile_exp_sing max_app (Op t op xs:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
          (
-         (if op = closLang_Install then Call 0 NONE [Op
-           closLang_Install c1] else if op = ThunkOp ForceThunk then
-           Let c1 (Force (num_stubs max_app - 2) 0) else Op
-           (clos_to_bvl_compile_op op) c1),aux1))`;
+         (if op = closLang_Install then Call 0 NONE [(Op
+           closLang_Install c1:bvl_exp)] else if op = ThunkOp
+           ForceThunk then Let c1 (Force (num_stubs max_app - 2) 0)
+           else Op (clos_to_bvl_compile_op op) c1),aux1))`;
    `compile_exp_sing max_app (App t loc_opt x1 xs2:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
@@ -562,11 +562,11 @@ let compile_exp_sing_def = cake_define_list
    `compile_exp_sing max_app (Handle t x1 x2:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_sing max_app x1 aux in
          let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-           (Handle c1 c2,aux2))`;
+           ((Handle c1 c2:bvl_exp),aux2))`;
    `compile_exp_sing max_app (Call t ticks dest xs:bvl_exp) aux =
          (let (c1,aux1) = compile_exp_list max_app xs aux in
-           (Call ticks (SOME (dest + (num_stubs max_app)))
-             c1,aux1))`;
+           ((Call ticks (SOME (dest + (num_stubs max_app)))
+             c1:bvl_exp),aux1))`;
    `compile_exp_list max_app [] aux = ([],aux)`;
    `compile_exp_list max_app ((x:closLang_exp) :: xs) aux =
          (let (c1,aux1) = compile_exp_sing max_app x aux in

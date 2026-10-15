@@ -20,19 +20,20 @@ let renumber_code_locs_def = cake_define_list
          (let (n,x) = renumber_code_locs n x in
          let (n,xs) = renumber_code_locs_list n xs in
          (n,x :: xs))`;
-   `renumber_code_locs n (Var t v:closLang_exp) = (n,(Var t v))`;
+   `renumber_code_locs n (Var t v:closLang_exp) = (n,((Var t
+  v:closLang_exp)))`;
    `renumber_code_locs n (If t x1 x2 x3:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
          let (n,x3) = renumber_code_locs n x3 in
-           (n,If t x1 x2 x3))`;
+           (n,(If t x1 x2 x3:closLang_exp)))`;
    `renumber_code_locs n (Let t xs x2:closLang_exp) =
          (let (n,xs) = renumber_code_locs_list n xs in
          let (n,x2) = renumber_code_locs n x2 in
-           (n,Let t xs x2))`;
+           (n,(Let t xs x2:closLang_exp)))`;
    `renumber_code_locs n (Raise t x1:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
-           (n,Raise t x1))`;
+           (n,(Raise t x1:closLang_exp)))`;
    `renumber_code_locs n (closLang_Tick t x1) =
          (let (n,x1) = renumber_code_locs n x1 in
            (n,closLang_Tick t x1))`;
@@ -42,18 +43,19 @@ let renumber_code_locs_def = cake_define_list
    `renumber_code_locs n (App t loc_opt x1 x2:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs_list n x2 in
-           (n,App t NONE x1 x2))`;
+           (n,(App t NONE x1 x2:closLang_exp)))`;
    `renumber_code_locs n (closLang_Fn t loc vs num_args x1) =
          (let (n,x1) = renumber_code_locs n x1 in
            (n + 2,closLang_Fn t (SOME n) vs num_args x1))`;
    `renumber_code_locs n (Letrec t loc vs fns x1:closLang_exp) =
          (let (m,fns') = renumber_code_locs_list n (MAP SND fns) in
          let (n,x1) = renumber_code_locs (m + 2 * LENGTH fns') x1 in
-           (n,Letrec t (SOME m) vs (ZIP (MAP FST fns) fns') x1))`;
+           (n,(Letrec t (SOME m) vs (ZIP (MAP FST fns) fns')
+             x1:closLang_exp)))`;
    `renumber_code_locs n (Handle t x1 x2:closLang_exp) =
          (let (n,x1) = renumber_code_locs n x1 in
          let (n,x2) = renumber_code_locs n x2 in
-           (n,Handle t x1 x2))`;
+           (n,(Handle t x1 x2:closLang_exp)))`;
    `renumber_code_locs n (closLang_Call t ticks dest xs) =
          (let (n,xs) = renumber_code_locs_list n xs in
            (n,closLang_Op t (closLang_IntOp Add) xs))`];;

@@ -105,7 +105,7 @@ let decode_pos_def = cake_define_list
 
 let decode_test_def = cake_define_list
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
-  (TagLenEq tag l) [v]`;
+  ((TagLenEq tag l:dTest)) [v]`;
    `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v =
   App t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
 hol4_overload "decode_test" "flat_pattern_decode_test";;
@@ -238,7 +238,7 @@ let compile_exp_def = cake_define_list
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =
         (let (i,sg,y) = flat_pattern_compile_exp cfg x in
-        (i,sg,Raise t y))`;
+        (i,sg,(Raise t y:flatLang_exp)))`;
    `flat_pattern_compile_exp cfg (Handle t x ps:flatLang_exp) =
         (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
         let (j,sgp,ps2) = compile_match cfg ps in
@@ -247,18 +247,20 @@ let compile_exp_def = cake_define_list
         let v = flatLang_Var_local t nm in
         let r = Raise t v in
         let exp = compile_pats cfg sgp t k v r ps2 in
-        (k,(sgx \/ sgp),Handle t y [(Pvar nm,exp)]))`;
+        (k,(sgx \/ sgp),(Handle t y [(Pvar
+          nm,exp)]:flatLang_exp)))`;
    `flat_pattern_compile_exp cfg (Con t ts xs:flatLang_exp) =
         (let (i,sg,ys) = flat_pattern_compile_exps cfg (REVERSE xs)
           in
-        (i,sg,Con t ts (REVERSE ys)))`;
+        (i,sg,(Con t ts (REVERSE ys):flatLang_exp)))`;
    `flat_pattern_compile_exp cfg (Fun t vs x:flatLang_exp) =
         (let (i,sg,y) = flat_pattern_compile_exp cfg x in
-        (i,sg,Fun t vs y))`;
+        (i,sg,(Fun t vs y:flatLang_exp)))`;
    `flat_pattern_compile_exp cfg (App t op xs:flatLang_exp) =
         (let (i,sg,ys) = flat_pattern_compile_exps cfg (REVERSE xs)
           in
-        (i,(sg \/ op_sets_globals op),App t op (REVERSE ys)))`;
+        (i,(sg \/ op_sets_globals op),(App t op (REVERSE
+          ys):flatLang_exp)))`;
    `flat_pattern_compile_exp cfg (Mat t x ps:flatLang_exp) =
         (let (i,sgx,y) = flat_pattern_compile_exp cfg x in
         let (j,sgp,ps2) = compile_match cfg ps in
@@ -273,7 +275,8 @@ let compile_exp_def = cake_define_list
         let (j,sg2,y2) = flat_pattern_compile_exp cfg x2 in
         let k = (match v with NONE -> 0 | SOME vid ->
           dec_name_to_num vid) in
-        (MAX i (MAX j k),(sg1 \/ sg2),Let t v y1 y2))`;
+        (MAX i (MAX j k),(sg1 \/ sg2),(Let t v y1
+          y2:flatLang_exp)))`;
    `flat_pattern_compile_exp cfg (flatLang_Letrec t fs x) =
         (let ys = MAP (\(a,b,c). (a,b,flat_pattern_compile_exp cfg
           c)) fs in

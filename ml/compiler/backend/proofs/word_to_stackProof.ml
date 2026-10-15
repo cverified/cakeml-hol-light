@@ -20,7 +20,6 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: (* for extend_with_resource_limit
    *) (* for list_Seq *) (* for extract_labels *) (* for
    word_add_carry_def *) *)
@@ -38,7 +37,6 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 
 (* Set up ML bindings *)
 (* HOL4 ML code, not ported:
@@ -382,18 +380,19 @@ let abs_frame_eq_def = cake_define
      result = 'a wordSem$result *)
 
 let compile_result_def = cake_define_list
-  [`compile_result (Result w1 w2:word_to_stackProof_result) = Result
-  w1`;
+  [`compile_result (Result w1 w2:word_to_stackProof_result) = (Result
+  w1:word_to_stackProof_result)`;
    `compile_result (Exception w1 w2:word_to_stackProof_result) =
-  Exception w1`;
+  (Exception w1:word_to_stackProof_result)`;
    `compile_result TimeOut = TimeOut`;
    `compile_result wordSem_NotEnoughSpace = Halt (wordLang_Word (n2w
   1))`;
-   `compile_result (FinalFFI f:word_to_stackProof_result) = FinalFFI
-  f`;
-   `compile_result (Break k:word_to_stackProof_result) = Break k`;
-   `compile_result (Continue k:word_to_stackProof_result) = Continue
-  k`;
+   `compile_result (FinalFFI f:word_to_stackProof_result) = (FinalFFI
+  f:word_to_stackProof_result)`;
+   `compile_result (Break k:word_to_stackProof_result) = (Break
+  k:word_to_stackProof_result)`;
+   `compile_result (Continue k:word_to_stackProof_result) = (Continue
+  k:word_to_stackProof_result)`;
    `compile_result Error = Error`];;
 
 (* HOL4 ML code, not ported:
@@ -651,13 +650,13 @@ Theorem wStackLoad_thm3 =
  |> PURE_REWRITE_RULE[wordPropsTheory.set_var_const,set_var_const]
 *)
 let map_var_def = cake_define_list
-  [`map_var f (wordLang_Var num') = Var (f num')`;
-   `map_var f (wordLang_Load exp) = Load (map_var f exp)`;
+  [`map_var f (wordLang_Var num') = wordLang_Var (f num')`;
+   `map_var f (wordLang_Load exp) = wordLang_Load (map_var f exp)`;
    `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f)
   ls)`;
-   `map_var f (wordLang_Shift sh e1 e2) = Shift sh (map_var f e1)
-  (map_var f e2)`;
-   `map_var f (wordLang_Const c) = Const c`;
+   `map_var f (wordLang_Shift sh e1 e2) = wordLang_Shift sh (map_var
+  f e1) (map_var f e2)`;
+   `map_var f (wordLang_Const c) = wordLang_Const c`;
    `map_var f (wordLang_Lookup v) = wordLang_Lookup v`];;
 (*
 Theorem word_exp_thm1:

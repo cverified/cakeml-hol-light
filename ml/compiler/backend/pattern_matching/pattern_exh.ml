@@ -97,7 +97,8 @@ let mk_conses_def = cake_define_list
 
 let expand_def = cake_define_list
   [`expand pattern_semantics_Any = [pattern_semantics_Any]`;
-   `expand (Lit l:pattern_semantics_pat) = [Lit l]`;
+   `expand (Lit l:pattern_semantics_pat) = [(Lit
+  l:pattern_semantics_pat)]`;
    `expand (Or p q:pattern_semantics_pat) = expand p ++ expand q`;
    `expand (pattern_semantics_Ref p) = mk_refs (expand p)`;
    `expand (pattern_semantics_Cons t ps) = mk_conses t (expand_list

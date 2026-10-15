@@ -115,7 +115,7 @@ let bvi_to_cb_aux_def = cake_define_list
        (match bvi_tmc_dest_Cons op with SOME tag' ->
            (match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
              SOME (bs,INL vs) ->
-                (if pure_exp n (Op op args) then
+                (if pure_exp n ((Op op args:bvi_exp)) then
                   SOME ([Op op args],INL [0]) else NONE) | SOME
                     (bs,INR cb) ->
                 SOME (bs,INR (CallBlock tag [] cb []))) | NONE ->
