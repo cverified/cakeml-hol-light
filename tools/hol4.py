@@ -393,7 +393,8 @@ def parse(path):
 QUOTATION = re.compile(r"(?:local\s+)?val\s+([A-Za-z0-9_']+)"
                        r"\s*=\s*`", re.S)
 QUOT_DEF = re.compile(r"val\s+([A-Za-z0-9_']+)_def\s*=\s*"
-                      r"[txzq]?Define\s+([A-Za-z0-9_']+)\s*;", re.S)
+                      r"[txzq]?Define\s+([A-Za-z0-9_']+)"
+                      r"(?![A-Za-z0-9_'])", re.S)
 
 
 def quotation_definitions(blocks):

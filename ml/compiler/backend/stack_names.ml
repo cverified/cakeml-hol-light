@@ -8,7 +8,6 @@
   architecture.
 *)
 
-needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
@@ -58,49 +57,40 @@ let dest_find_name_def = cake_define
         INR r -> INR (tlookup f r)
       | x -> x`;;
 
-(* HOL4 ML code, not ported:
-local val comp_quotation = `
-  comp f p =
-    case p of
-    | Halt r => Halt (find_name f r)
-    | Raise r => Raise (find_name f r)
-    | Break n => Break n
-    | Continue n => Continue n
-    | Return r => Return (find_name f r)
-    | Inst i => Inst (inst_find_name f i)
-    | LocValue i l1 l2 => LocValue (find_name f i) l1 l2
-    | Seq p1 p2 => Seq (comp f p1) (comp f p2)
-    | If c r ri p1 p2 =>
-        If c (find_name f r) (ri_find_name f ri) (comp f p1) (comp f p2)
-    | Loop p1 => Loop (comp f p1)
-    | Call ret dest exc =>
-        Call (case ret of
-              | NONE => NONE
-              | SOME (p1,lr,l1,l2) => SOME (comp f p1,find_name f
-                lr,l1,l2))
-             (dest_find_name f dest)
-             (case exc of
-              | NONE => NONE
-              | SOME (p2,l1,l2) => SOME (comp f p2,l1,l2))
-    | Install r1 r2 r3 r4 r5 => Install (find_name f r1) (find_name f
-      r2)
-      (find_name f r3) (find_name f r4) (find_name f r5)
-    | ShMemOp op r (Addr a w) => ShMemOp op (find_name f r) (Addr
-      (find_name f a) w)
-    | CodeBufferWrite r1 r2 => CodeBufferWrite (find_name f r1)
-      (find_name f r2)
-    | FFI i r1 r2 r3 r4 r5 => FFI i (find_name f r1) (find_name f r2)
-      (find_name f r3)
-                                    (find_name f r4) (find_name f r5)
-    | JumpLower r1 r2 dest => JumpLower (find_name f r1) (find_name f
-      r2) dest
-    | p => p`
-in
-val comp_def = Define comp_quotation
-*)
+let comp_def = cake_define
+  `stack_names_comp f p =
+     (match p with stackLang_Halt r -> stackLang_Halt (tlookup f r) |
+       Raise r -> Raise (tlookup f r) | stackLang_Break n ->
+       stackLang_Break n | stackLang_Continue n -> stackLang_Continue n
+       | stackLang_Return r -> stackLang_Return (tlookup f r) | Inst i
+       -> Inst (inst_find_name f i) | stackLang_LocValue i l1 l2 ->
+       stackLang_LocValue (tlookup f i) l1 l2 | stackLang_Seq p1 p2 ->
+       stackLang_Seq (stack_names_comp f p1) (stack_names_comp f p2) |
+       If c r ri p1 p2 ->
+         If c (tlookup f r) (ri_find_name f ri) (stack_names_comp f
+           p1) (stack_names_comp f p2) | stackLang_Loop p1 ->
+           stackLang_Loop (stack_names_comp f p1) | Call ret dest exc ->
+         Call (match ret with NONE -> NONE | SOME (p1,lr,l1,l2) ->
+           SOME (stack_names_comp f p1,tlookup f lr,l1,l2))
+              (dest_find_name f dest)
+              (match exc with NONE -> NONE | SOME (p2,l1,l2) -> SOME
+                (stack_names_comp f p2,l1,l2)) | stackLang_Install r1 r2
+                r3 r4 r5 -> stackLang_Install (tlookup f r1) (tlookup f
+                r2)
+       (tlookup f r3) (tlookup f r4) (tlookup f r5) |
+         stackLang_ShMemOp op r (Addr a w) -> stackLang_ShMemOp op
+         (tlookup f r) (Addr (tlookup f a) w) |
+         stackLang_CodeBufferWrite r1 r2 -> stackLang_CodeBufferWrite
+         (tlookup f r1) (tlookup f r2) | FFI i r1 r2 r3 r4 r5 -> FFI i
+         (tlookup f r1) (tlookup f r2) (tlookup f r3)
+                              (tlookup f r4) (tlookup f r5) |
+                                stackLang_JumpLower r1 r2 dest ->
+                                stackLang_JumpLower (tlookup f r1)
+                                (tlookup f r2) dest | p -> p)`;;
+hol4_overload "comp" "stack_names_comp";;
 
 let prog_comp_def = cake_define
-  `stack_names_prog_comp f (n,p) = (n,comp f p)`;;
+  `stack_names_prog_comp f (n,p) = (n,stack_names_comp f p)`;;
 hol4_overload "prog_comp" "stack_names_prog_comp";;
 
 let compile_def = cake_define
