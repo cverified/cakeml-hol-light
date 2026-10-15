@@ -22,6 +22,15 @@ lib/pegexec.ml
 lib/spt_closure.ml
 lib/multiword.ml
 lib/balanced_map.ml
+lib/term.ml
+lib/subst.ml
+lib/walk.ml
+lib/walkstar.ml
+lib/unifDef.ml
+lib/collapse.ml
+lib/fmsp.ml
+lib/rmfmap.ml
+lib/tcallUnif.ml
 misc/misc.ml
 basis/pure/mllist.ml
 basis/pure/mlstring.ml

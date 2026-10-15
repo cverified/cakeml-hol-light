@@ -1,8 +1,8 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 227 files of the port: 4169
-blocks, of which 4164 are in (see `tools/coverage.py`); the five
+`Definition` and `Inductive` of the 236 files of the port: 4191
+blocks, of which 4186 are in (see `tools/coverage.py`); the five
 that are not are the Pancake definitions of `compiler` below.
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way.
@@ -33,12 +33,15 @@ Five definitions of `compiler` are not ported: the three that
 compile Pancake and the two command line drivers that call them
 (see `ISSUES.md`).  Pancake is outside the port.
 
-One constant has no value in the port, because HOL4 computes it
-with ML code of its own that the port cannot run:
+Five constants have no value in the port, because HOL4 makes
+them in a way that HOL Light has no counterpart for.  The port
+declares them (`cake_declare`, which adds no axiom) and says
+nothing about their value:
 
 | constant | what HOL4 does |
 |---|---|
-| `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds.  The port declares the constant (`cake_declare`, which adds no axiom) and says nothing about its value |
+| `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds |
+| `walk$vwalk`, `walkstar$walkstar`, `unifDef$oc`, `unifDef$unify` | the triangular unification algorithm, which HOL4 defines with a schema (`xDefineSchema`): the equations hold under the hypothesis that the substitution is wellfounded (`wfs s`), and the recursion terminates only then.  Only the theorems of the second pass need what they are |
 
 One definition of the first pass is not ported, because HOL4
 makes it from a theorem that the second pass has to prove first
