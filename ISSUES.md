@@ -87,6 +87,20 @@ sources, and why.
 - A relation that a source defines with ML code (`Hol_reln` with
   `replace_quote`: `step` and `dstep` of `parmove`) is ported as
   an inductive definition of the rules that the ML code builds.
+- A definition that a source makes with ML code is ported like the
+  others: `Define` with any wrapper around it (`data_to_word` has
+  sixty definitions behind its own `assign_Define`), `tDefine`,
+  and a definition from a quotation that the source keeps in a
+  value (`stack_rawcall`'s `comp` and six others).
+- `^x` is HOL4's antiquotation of an ML value, which the port
+  splices in (the sources use it for the state variable of a
+  semantics: `dataSem` writes `evaluate (If n c1 c2,^s)`).
+- The monadic machinery that `ml_monadBaseLib` generates with ML
+  code for `reg_alloc` and `linear_scan` (the accessors of the
+  state record, the manipulators of its fixed size arrays, the
+  functions of its exception type and the run function of an
+  initial state: about ninety definitions) is written out by the
+  port.
 - `do x <- e; f od` is the bind of the monad that the source has
   enabled with `monadsyntax` (`st_ex_bind` of `ml_monadBase`,
   `pegresult_bind` of `cmlParse`, `OPTION_BIND` of the option
