@@ -122,7 +122,6 @@ MATCH_FORM = set([
 MEASURE = {
   # the measure is the size of the expression; without it the port
   # searches through the candidates, which takes minutes here
-  ('ast', 'every_exp_def'): 'MEASURE (\\(p,e). ast_exp_size e)',
   ('mergesort', 'mergesortN_def'): 'MEASURE (\\(R,n,l). n)',
   ('mergesort', 'mergesortN_tail_def'):
     'MEASURE (\\(negate,R,n,l). n)',
