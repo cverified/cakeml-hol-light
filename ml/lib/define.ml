@@ -1995,7 +1995,14 @@ let cake_conj_list cls =
                        (filter (fun v -> fst(dest_var v) = nm)
                                (itlist (fun cl l -> union (frees cl) l)
                                        cls [])) in
-         itlist (fun ty ins -> tyunify ins (hd tys) ty) (tl tys) ins)
+         itlist
+           (fun ty ins ->
+              try tyunify ins (hd tys) ty
+              with Failure _ ->
+                failwith (nm ^ " has the types " ^
+                          string_of_type (hd tys) ^ " and " ^
+                          string_of_type ty))
+           (tl tys) ins)
       names [] in
   list_mk_conj (map (inst ins) cls);;
 
