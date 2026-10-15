@@ -222,9 +222,9 @@ let do_int_app_def = cake_define
       | ((closLang_Mult),[Number n1; Number n2]) -> SOME (Number (n1
         * n2))
       | ((Div),[Number n1; Number n2]) ->
-       (if n2 = 0 then NONE else SOME (Number (n1 / n2)))
+       (if n2 = (&0) then NONE else SOME (Number (n1 / n2)))
       | ((Mod),[Number n1; Number n2]) ->
-       (if n2 = 0 then NONE else SOME (Number (n1 % n2)))
+       (if n2 = (&0) then NONE else SOME (Number (n1 % n2)))
       | ((Less),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
       | ((closLang_LessEq),[Number n1; Number n2]) -> SOME (Boolv (n1
         <= n2))
@@ -232,7 +232,7 @@ let do_int_app_def = cake_define
       | ((closLang_GreaterEq),[Number n1; Number n2]) -> SOME (Boolv
         (n1 >= n2))
       | ((closLang_LessConstSmall n),[Number i]) ->
-         (if 0 <= i /\ i <= 1000000 /\ n < 1000000 then
+         (if (&0) <= i /\ i <= (&1000000) /\ n < 1000000 then
            SOME (Boolv (i < &n)) else NONE)
       | ((op:closLang_int_op),(vs:bvlSem_v list)) -> NONE`;;
 hol4_overload "do_int_app" "bvlSem_do_int_app";;
@@ -248,7 +248,8 @@ let do_word_app_def = cake_define
         | ((WordOpw W64 opw),[Word64 w1; Word64 w2]) ->
            SOME (Word64 (opw_lookup opw w1 w2))
         | ((WordTest ast_W8 test),[Number n1; Number n2]) ->
-          (if 0 <= n1 /\ n1 < 256 /\ 0 <= n2 /\ n2 < 256 then
+          (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256)
+            then
              (match test with Equal -> SOME (Boolv (n1 = n2)) |
                ast_Compare cmp -> SOME (Boolv
                (semanticPrimitives_int_cmp cmp n1 n2)) | _42 -> NONE)
@@ -366,8 +367,9 @@ let do_app_def = cake_define
              (v,refs_fupd (K rs) s)) | (closLang_BlockOp
              (closLang_ConsExtend tag),Block _54 xs' :: Number lower ::
              Number len :: Number tot :: xs) ->
-           (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
-              tot = 0 \/ ~(tot = &(LENGTH xs) + len) then
+           (if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH
+             xs') \/
+              tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
              ((Rerr (Rabort
                Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                ,bvlSem_v)semanticPrimitives_result) else

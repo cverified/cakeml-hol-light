@@ -367,7 +367,7 @@ let do_app_def = cake_define
            ast_Aw8sub,[Loc _50 lnum; Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_W8array ws) ->
-        (if i < 0 then
+        (if i < (&0) then
           SOME (s,Rerr (Rraise subscript_exn_v)) else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
@@ -377,7 +377,7 @@ let do_app_def = cake_define
                 Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_W8array ws) ->
-        (if i < 0 then
+        (if i < (&0) then
           NONE else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
@@ -391,7 +391,7 @@ let do_app_def = cake_define
           (ast_IntLit i); Litv (ast_Word8 w)]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_W8array ws) ->
-        (if i < 0 then
+        (if i < (&0) then
           SOME (s,Rerr (Rraise subscript_exn_v)) else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
@@ -403,7 +403,7 @@ let do_app_def = cake_define
                 (ast_IntLit i); Litv (ast_Word8 w)]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_W8array ws) ->
-        (if i < 0 then
+        (if i < (&0) then
           NONE else
           let n = (num_of_int (abs i)) in
             if n >= LENGTH ws then
@@ -468,7 +468,7 @@ let do_app_def = cake_define
      (SOME (s,Rval (list_to_v (MAP (\c. Litv (ast_Char c)) (explode
        str))))) | (flatLang_Src ast_Strsub,[Litv (ast_StrLit str); Litv
        (ast_IntLit i)]) ->
-     (if i < 0 then
+     (if i < (&0) then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let n = (num_of_int (abs i)) in
          if n >= strlen str then
@@ -486,14 +486,14 @@ let do_app_def = cake_define
      (match v_to_list v with SOME vs ->
         SOME (s,Rval (Vectorv vs)) | NONE -> NONE) | (flatLang_Src
           ast_Vsub,[Vectorv vs; Litv (ast_IntLit i)]) ->
-     (if i < 0 then
+     (if i < (&0) then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let n = (num_of_int (abs i)) in
          if n >= LENGTH vs then
            SOME (s,Rerr (Rraise subscript_exn_v)) else
            SOME (s,Rval (EL n vs))) | (flatLang_Src
              ast_Vsub_unsafe,[Vectorv vs; Litv (ast_IntLit i)]) ->
-     (if 0 <= i /\ num_of_int i < LENGTH vs then
+     (if (&0) <= i /\ num_of_int i < LENGTH vs then
        SOME (s,Rval (EL (num_of_int i) vs)) else
        NONE) | (flatLang_Src ast_Vlength,[Vectorv vs]) ->
      SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH vs))))) |
@@ -511,7 +511,7 @@ let do_app_def = cake_define
          ast_Asub,[Loc _73 lnum; Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_Varray vs) ->
-      (if i < 0 then
+      (if i < (&0) then
         SOME (s,Rerr (Rraise subscript_exn_v)) else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
@@ -520,7 +520,7 @@ let do_app_def = cake_define
               ast_Asub_unsafe,[Loc _75 lnum; Litv (ast_IntLit i)]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_Varray vs) ->
-      (if i < 0 then
+      (if i < (&0) then
         NONE else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
@@ -534,7 +534,7 @@ let do_app_def = cake_define
             Litv (ast_IntLit i); v]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_Varray vs) ->
-      (if i < 0 then
+      (if i < (&0) then
         SOME (s,Rerr (Rraise subscript_exn_v)) else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then
@@ -546,7 +546,7 @@ let do_app_def = cake_define
               (ast_IntLit i); v]) ->
      (match store_lookup lnum (refs s) with SOME
        (semanticPrimitives_Varray vs) ->
-      (if i < 0 then
+      (if i < (&0) then
         NONE else
         let n = (num_of_int (abs i)) in
           if n >= LENGTH vs then

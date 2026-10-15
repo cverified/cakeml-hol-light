@@ -753,7 +753,7 @@ let typesexp_def = cake_define_list
 
 let litsexp_def = cake_define_list
   [`litsexp (ast_IntLit i) =
-       (if i < 0 then listsexp [SX_SYM "-"; SX_NUM (num_of_int
+       (if i < (&0) then listsexp [SX_SYM "-"; SX_NUM (num_of_int
          (--i))] else SX_NUM (num_of_int i))`;
    `litsexp (ast_Char c) = listsexp [SX_SYM "char"; SEXSTR [c]]`;
    `litsexp (ast_StrLit s) = SEXSTR (explode s)`;

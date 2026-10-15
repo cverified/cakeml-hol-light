@@ -57,7 +57,8 @@ let mk_init_eval_state_def = cake_define
 
 let v_to_nat_def = cake_define
   `v_to_nat v = (match v with (semanticPrimitives_Litv (ast_IntLit
-  i)) -> (if 0 <= i then SOME (num_of_int i) else NONE) | _1 -> NONE)`;;
+  i)) -> (if (&0) <= i then SOME (num_of_int i) else NONE) | _1 ->
+  NONE)`;;
 
 let v_to_env_id_def = cake_define
   `v_to_env_id v = (match v with semanticPrimitives_Conv NONE

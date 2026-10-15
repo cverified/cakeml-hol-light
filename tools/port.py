@@ -487,6 +487,7 @@ class Porter:
     self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
+    self.ctx.intvars = self.int_vars(body)
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
     if key in overrides.CLAUSE_FORM:
@@ -660,6 +661,42 @@ class Porter:
       e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
                        arg=self.annotate_pat(a, ambiguous))
     return cl
+
+  def int_vars(self, body):
+    """the variables of a definition that hold an integer: the ones
+       that are the argument of a constructor whose type there is
+       int, as i is in clos_known's [Tuple _ xs; Int i]"""
+    out = set(); other = set()
+    try:
+      toks = hterm.tokenize(hol4.strip_comments(body))
+      e = hterm.Parser(toks, self.ctx).parse()
+    except Exception:
+      return out
+
+    def go(n):
+      if n is None or not isinstance(n, hterm.Node): return
+      if n.kind == 'app':
+        h, args = hterm.strip_app(n)
+        if h.kind == 'id':
+          for i, a in enumerate(args):
+            while a.kind == 'paren': a = a.e
+            if a.kind != 'id': continue
+            ty = self.ctx.con_argty.get((h.name, i))
+            if ty in ('int', 'real'): out.add(a.name)
+            elif ty: other.add(a.name)
+      for k in ('e', 'l', 'r', 'fn', 'arg', 'body', 's', 'p', 'p2',
+                'ty'):
+        go(getattr(n, k, None))
+      for k in ('items', 'stmts', 'arms', 'upds', 'vs', 'cls'):
+        for x in getattr(n, k, None) or []:
+          if isinstance(x, hterm.Node): go(x)
+          elif isinstance(x, (tuple, list)):
+            for y in x:
+              if isinstance(y, hterm.Node): go(y)
+    go(e)
+    # a name that is the argument of a constructor whose type there
+    # is not an integer as well says nothing
+    return out - other
 
   def clause_form(self, body):
     """the clauses of a definition as separate quotations: HOL4

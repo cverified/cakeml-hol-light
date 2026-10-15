@@ -368,7 +368,7 @@ let known_op_def = cake_define
         | (closLang_IntOp (closLang_Const i)) -> (Int i,g)
         | (closLang_MemOp closLang_El) ->
         (match as with [clos_known_Tuple _7 xs; Int i] ->
-            (if 0 <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
+            (if (&0) <= i /\ i < &(LENGTH xs) then (EL (num_of_int i)
               xs,g) else (clos_known_Other,g)) | clos_known_Impossible
               :: xs -> (clos_known_Impossible,g) | _8 ::
               clos_known_Impossible :: xs -> (clos_known_Impossible,g) |

@@ -324,9 +324,9 @@ let space_consumed_def = cake_define_list
    `space_consumed s (closLang_IntOp closLang_Mult) [(Number
   i1:dataSem_v); Number i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
-          i1 /\ 0 <= i1 /\
+          i1 /\ (&0) <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
-             i2 /\ 0 <= i2 /\
+             i2 /\ (&0) <= i2 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
              (i1 * i2) then 0 else (\i1 i2 s.
           let il = bignum_size (limits_arch_64_bit
@@ -337,9 +337,9 @@ let space_consumed_def = cake_define_list
    `space_consumed s (closLang_IntOp Div) [(Number i1:dataSem_v); Number
   i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
-          i1 /\ 0 <= i1 /\
+          i1 /\ (&0) <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
-             i2 /\ 0 <= i2 /\
+             i2 /\ (&0) <= i2 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
              (i1 / i2) then 0 else (\i1 i2 s.
           let il = bignum_size (limits_arch_64_bit
@@ -350,9 +350,9 @@ let space_consumed_def = cake_define_list
    `space_consumed s (closLang_IntOp Mod) [(Number i1:dataSem_v); Number
   i2] =
         (if small_num (limits_arch_64_bit (dataSem_state_limits s))
-          i1 /\ 0 <= i1 /\
+          i1 /\ (&0) <= i1 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
-             i2 /\ 0 <= i2 /\
+             i2 /\ (&0) <= i2 /\
            small_num (limits_arch_64_bit (dataSem_state_limits s))
              (i1 % i2) then 0 else (\i1 i2 s.
           let il = bignum_size (limits_arch_64_bit
@@ -421,8 +421,8 @@ let stack_consumed_def = cake_define
           (lookup AppendLenLoop_location sfs)
           (lookup AppendMainLoop_location sfs))
         | ((closLang_IntOp Div),[Number n1; Number n2]) ->
-       (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
-          small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\ (&0) <= n1 /\
+          small_num (limits_arch_64_bit lims) n2 /\ (&0) <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 / n2) then
          OPTION_MAP2 MAX
            (lookup LongDiv_location sfs)
@@ -430,8 +430,8 @@ let stack_consumed_def = cake_define
          OPTION_MAP2 MAX (lookup Div_location sfs)
            (max_depth sfs AnyArith_call_tree))
         | ((closLang_IntOp Mod),[Number n1; Number n2]) ->
-       (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
-          small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\ (&0) <= n1 /\
+          small_num (limits_arch_64_bit lims) n2 /\ (&0) <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 % n2) then
          OPTION_MAP2 MAX
            (lookup LongDiv_location sfs)
@@ -439,8 +439,8 @@ let stack_consumed_def = cake_define
          OPTION_MAP2 MAX (lookup Mod_location sfs)
            (max_depth sfs AnyArith_call_tree))
         | ((closLang_IntOp closLang_Mult),[Number n1; Number n2]) ->
-       (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
-          small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\ (&0) <= n1 /\
+          small_num (limits_arch_64_bit lims) n2 /\ (&0) <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 * n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Mul_location sfs)
@@ -640,9 +640,9 @@ let lim_safe_part_def = cake_define_list
               il <= 2 EXP limits_length_limit lims)`;
    `lim_safe_part lims (Str s:const_part) <=>
          (let i = strlen s in
-            i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims)
+            i DIV (arch_size lims DIV (&8)) < 2 EXP (arch_size lims)
               DIV arch_size lims /\
-            i DIV (arch_size lims DIV 8) + 1 < 2 EXP
+            i DIV (arch_size lims DIV (&8)) + 1 < 2 EXP
               limits_length_limit lims /\
             small_num (limits_arch_64_bit lims) (&i))`;
    `lim_safe_part lims (W64 w:const_part) <=> 1 < limits_length_limit
@@ -682,8 +682,9 @@ let lim_safe_def = cake_define
              -> T)
         | ((closLang_BlockOp (closLang_ConsExtend tag)),(Block _74
           _75 xs' :: Number lower :: Number len :: Number tot :: xs)) ->
-           (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
-              tot = 0 \/ ~(tot = &(LENGTH xs) + len) then T else
+           (if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH
+             xs') \/
+              tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then T else
                 LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
                 lower) xs')) < 2 EXP limits_length_limit lims /\
                 LENGTH (xs ++ TAKE (num_of_int len) (DROP (num_of_int
@@ -706,22 +707,22 @@ let lim_safe_def = cake_define
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
         | ((closLang_IntOp closLang_Mult),[Number i1; Number i2]) ->
-      (if small_num (limits_arch_64_bit lims) i1 /\ 0 <= i1 /\
-          small_num (limits_arch_64_bit lims) i2 /\ 0 <= i2 /\
+      (if small_num (limits_arch_64_bit lims) i1 /\ (&0) <= i1 /\
+          small_num (limits_arch_64_bit lims) i2 /\ (&0) <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 * i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
         | ((closLang_IntOp Div),[Number i1; Number i2]) ->
-      (if small_num (limits_arch_64_bit lims) i1 /\ 0 <= i1 /\
-          small_num (limits_arch_64_bit lims) i2 /\ 0 <= i2 /\
+      (if small_num (limits_arch_64_bit lims) i1 /\ (&0) <= i1 /\
+          small_num (limits_arch_64_bit lims) i2 /\ (&0) <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 / i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
            il + jl <= 2 EXP limits_length_limit lims)
         | ((closLang_IntOp Mod),[Number i1; Number i2]) ->
-      (if small_num (limits_arch_64_bit lims) i1 /\ 0 <= i1 /\
-          small_num (limits_arch_64_bit lims) i2 /\ 0 <= i2 /\
+      (if small_num (limits_arch_64_bit lims) i1 /\ (&0) <= i1 /\
+          small_num (limits_arch_64_bit lims) i2 /\ (&0) <= i2 /\
           small_num (limits_arch_64_bit lims) (i1 % i2) then T else
          let il = bignum_size (limits_arch_64_bit lims) i1 in
          let jl = bignum_size (limits_arch_64_bit lims) i2 in
@@ -816,9 +817,9 @@ let do_int_app_def = cake_define
       | ((closLang_Mult),[Number n1; Number n2]) -> SOME (Number (n1
         * n2))
       | ((Div),[Number n1; Number n2]) ->
-       (if n2 = 0 then NONE else SOME (Number (n1 / n2)))
+       (if n2 = (&0) then NONE else SOME (Number (n1 / n2)))
       | ((Mod),[Number n1; Number n2]) ->
-       (if n2 = 0 then NONE else SOME (Number (n1 % n2)))
+       (if n2 = (&0) then NONE else SOME (Number (n1 % n2)))
       | ((Less),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
       | ((closLang_LessEq),[Number n1; Number n2]) -> SOME (Boolv (n1
         <= n2))
@@ -826,7 +827,7 @@ let do_int_app_def = cake_define
       | ((closLang_GreaterEq),[Number n1; Number n2]) -> SOME (Boolv
         (n1 >= n2))
       | ((closLang_LessConstSmall n),[Number i]) ->
-         (if 0 <= i /\ i <= 1000000 /\ n < 1000000 then
+         (if (&0) <= i /\ i <= (&1000000) /\ n < 1000000 then
            SOME (Boolv (i < &n)) else NONE)
       | ((op:closLang_int_op),(vs:dataSem_v list)) -> NONE`;;
 hol4_overload "do_int_app" "dataSem_do_int_app";;
@@ -841,7 +842,8 @@ let do_word_app_def = cake_define
         | ((WordOpw W64 opw),[Word64 w1; Word64 w2]) ->
            SOME (Word64 (opw_lookup opw w1 w2))
         | ((WordTest ast_W8 test),[Number n1; Number n2]) ->
-          (if 0 <= n1 /\ n1 < 256 /\ 0 <= n2 /\ n2 < 256 then
+          (if (&0) <= n1 /\ n1 < (&256) /\ (&0) <= n2 /\ n2 < (&256)
+            then
              (match test with Equal -> SOME (Boolv (n1 = n2)) |
                ast_Compare Lt -> SOME (Boolv (n1 < n2)) | ast_Compare
                ast_Leq -> SOME (Boolv (n1 <= n2)) | _97 -> NONE) else
@@ -1044,8 +1046,9 @@ let do_app_aux_def = cake_define
                                 (closLang_BlockOp (closLang_ConsExtend
                                 tag),Block x y xs' :: Number lower ::
                                 Number len :: Number tot :: xs) ->
-           (if lower < 0 \/ len < 0 \/ lower + len > &(LENGTH xs') \/
-              tot = 0 \/ ~(tot = &(LENGTH xs) + len) then
+           (if lower < (&0) \/ len < (&0) \/ lower + len > &(LENGTH
+             xs') \/
+              tot = (&0) \/ ~(tot = &(LENGTH xs) + len) then
              ((Rerr (Rabort
                Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                +dataSem_v#string) else with_fresh_ts s 1

@@ -862,6 +862,7 @@ class Ctx:
     self.abbrevs = abbrevs or {}       # type abbreviation -> type
     self.intnums = False               # are numerals integers here?
     self.intneg = False                # is $~ the negation of an int?
+    self.intvars = set()               # variables holding integers
     self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
     self.thy = thy
@@ -1061,6 +1062,13 @@ class Printer:
       out += txt
     return out
 
+  def intvar(self, e):
+    """is this a variable that holds an integer?  A pattern binds
+       one where it is the argument of a constructor whose type
+       there is int"""
+    while e.kind == 'paren': e = e.e
+    return e.kind == 'id' and e.name in self.ctx.intvars
+
   def pr0(self, e, prec):
     k = e.kind
     if k == 'id':
@@ -1194,6 +1202,10 @@ class Printer:
       # the exponent of pow, EXP and ** is a natural number, also in
       # a definition whose other numerals are integers or reals
       oldint = self.ctx.intnums
+      # a numeral next to a variable that holds an integer is &n
+      if ((op in NUMCTX or op in ('=', '<>')) and
+          (self.intvar(e.l) or self.intvar(e.r))):
+        self.ctx.intnums = True
       lp = hprec + 1 if assoc != 'l' else hprec
       rp = hprec if assoc == 'r' else hprec + 1
       l = self.pr(e.l, lp)
