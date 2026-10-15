@@ -30,6 +30,13 @@ for f in "$@"; do
   TIMEOUT=${TIMEOUT:-1800} repl-step $s "loadt \"$h\";;" 2>&1 |
     grep -qi timeout && slow=yes
   [ -n "$slow" ] && { repl-int $s > /dev/null 2>&1; sleep 1; }
+  # the file was loaded under the name of the instrumented copy, so
+  # it is registered under its own name, or the files that need it
+  # would load it a second time
+  [ "$MARK" = 1 ] && repl-step $s \
+    "loaded_files :=
+       (Filename.basename \"$g\",Digest.file \"$g\") ::
+         !loaded_files;;" > /dev/null 2>&1
   TIMEOUT=120 repl-step $s \
     "(Sys.time() -. cake_t0,length(axioms()));;" > /dev/null 2>&1
   # -J joins the lines that the pane wrapped, so that a long path
