@@ -61,6 +61,7 @@ let dest_Seq_def = cake_define
         match p with
           wordLang_Seq p1 p2 -> (p1,(p2:'a wordLang_prog))
         | p -> (Skip,p)`;;
+hol4_overload "dest_Seq" "word_simp_dest_Seq";;
 
 let dest_If_def = cake_define
   `dest_If x1 =
@@ -407,3 +408,4 @@ let compile_exp_def = cake_define
      let e = simp_duplicate_if e in
      let e = push_out_if e in
        e)`;;
+hol4_overload "compile_exp" "word_simp_compile_exp";;

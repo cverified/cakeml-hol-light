@@ -26,27 +26,38 @@ let pattern_semantics_pat_INDUCT,pattern_semantics_pat_RECURSION =
    (pattern_semantics_pat) (pattern_semantics_pat) | \
    pattern_semantics_Lit (lit) | pattern_semantics_Ref \
    (pattern_semantics_pat)";;
+hol4_overload "Any" "pattern_semantics_Any";;
+hol4_overload "Cons" "pattern_semantics_Cons";;
 hol4_overload "Or" "pattern_semantics_Or";;
 hol4_overload "Lit" "pattern_semantics_Lit";;
+hol4_overload "Ref" "pattern_semantics_Ref";;
 
 (* output syntax *)
 
 let dTest_INDUCT,dTest_RECURSION = define_datatype
   "dTest = pattern_semantics_TagLenEq (num) (num) | \
    pattern_semantics_LitEq (lit)";;
+hol4_overload "TagLenEq" "pattern_semantics_TagLenEq";;
+hol4_overload "LitEq" "pattern_semantics_LitEq";;
 
 let dGuard_INDUCT,dGuard_RECURSION = define_datatype
   "dGuard = pattern_semantics_PosTest (position) (dTest) | \
    pattern_semantics_Not (dGuard) | pattern_semantics_Conj (dGuard) \
    (dGuard) | pattern_semantics_Disj (dGuard) (dGuard) | \
    pattern_semantics_True";;
+hol4_overload "PosTest" "pattern_semantics_PosTest";;
 hol4_overload "Not" "pattern_semantics_Not";;
+hol4_overload "Conj" "pattern_semantics_Conj";;
+hol4_overload "Disj" "pattern_semantics_Disj";;
+hol4_overload "True" "pattern_semantics_True";;
 
 let dTree_INDUCT,dTree_RECURSION = define_datatype
   "dTree = pattern_semantics_Leaf (num) | pattern_semantics_Fail | \
    pattern_semantics_TypeFail | pattern_semantics_If (dGuard) (dTree) \
    (dTree)";;
+hol4_overload "Leaf" "pattern_semantics_Leaf";;
 hol4_overload "Fail" "pattern_semantics_Fail";;
+hol4_overload "TypeFail" "pattern_semantics_TypeFail";;
 hol4_overload "If" "pattern_semantics_If";;
 
 (* semantic values *)
@@ -55,7 +66,10 @@ let term_INDUCT,term_RECURSION = define_datatype
   "term = pattern_semantics_Term (num option) (term list) | \
    pattern_semantics_Litv (lit) | pattern_semantics_RefPtr (num) | \
    pattern_semantics_Other";;
+hol4_overload "Term" "pattern_semantics_Term";;
 hol4_overload "Litv" "pattern_semantics_Litv";;
+hol4_overload "RefPtr" "pattern_semantics_RefPtr";;
+hol4_overload "Other" "pattern_semantics_Other";;
 
 (* semantics of input *)
 let is_sibling_def = cake_define_list

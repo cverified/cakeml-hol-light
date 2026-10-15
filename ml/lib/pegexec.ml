@@ -20,6 +20,19 @@ let kont_INDUCT,kont_RECURSION = define_datatype
    ('cvalue list->'cvalue) (kont) | pegexec_listsym \
    (('atok,'bnt,'cvalue,'err)pegsym) ('cvalue list->'cvalue) (kont) | \
    pegexec_done | pegexec_failed";;
+hol4_overload "ksym" "pegexec_ksym";;
+hol4_overload "appf1" "pegexec_appf1";;
+hol4_overload "appf2" "pegexec_appf2";;
+hol4_overload "dropErr" "pegexec_dropErr";;
+hol4_overload "addErr" "pegexec_addErr";;
+hol4_overload "cmpErrs" "pegexec_cmpErrs";;
+hol4_overload "cmpEO" "pegexec_cmpEO";;
+hol4_overload "returnTo" "pegexec_returnTo";;
+hol4_overload "restoreEO" "pegexec_restoreEO";;
+hol4_overload "poplist" "pegexec_poplist";;
+hol4_overload "listsym" "pegexec_listsym";;
+hol4_overload "done" "pegexec_done";;
+hol4_overload "failed" "pegexec_failed";;
 
 let poplist_aux_def = cake_define_list
   [`poplist_aux acc (SOME h :: t) = poplist_aux (h :: acc) t`;
@@ -39,6 +52,10 @@ let evalcase_INDUCT,evalcase_RECURSION = define_datatype
    option) list) ((locs#'err) option) ((locs#'err) list) | \
    pegexec_Result ((('atok#locs) list,'cvalue,'err)pegresult) | \
    pegexec_Looped";;
+hol4_overload "EV" "pegexec_EV";;
+hol4_overload "AP" "pegexec_AP";;
+hol4_overload "Result" "pegexec_Result";;
+hol4_overload "Looped" "pegexec_Looped";;
 
 (* HOL4 overload (expanded in the port):
      OME = optmax MAXerr *)
@@ -168,3 +185,4 @@ let peg_exec_def = cake_define
 
 let destResult_def = cake_define
   `pegexec_destResult (pegexec_Result r) = r`;;
+hol4_overload "destResult" "pegexec_destResult";;

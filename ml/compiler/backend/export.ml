@@ -110,6 +110,7 @@ let data_buffer_def = cake_define
          "#endif";
          "     .globl cdecl(cake_bitmaps_buffer_end)";
          "cdecl(cake_bitmaps_buffer_end):"]`;;
+hol4_overload "data_buffer" "export_data_buffer";;
 
 let code_buffer_def = cake_define
   `export_code_buffer =
@@ -123,6 +124,7 @@ let code_buffer_def = cake_define
          "     .globl cdecl(cake_codebuffer_end)";
          "cdecl(cake_codebuffer_end):";
          "     .space 4096"]`;;
+hol4_overload "code_buffer" "export_code_buffer";;
 
 let comm_strlit_def = cake_define
   `comm_strlit = (implode ",")`;;

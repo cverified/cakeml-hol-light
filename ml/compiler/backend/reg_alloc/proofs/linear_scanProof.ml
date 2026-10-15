@@ -48,6 +48,7 @@ let find_reg_exchange_step_def = cake_define
 
 let id_def = cake_define
   `linear_scanProof_id x = x`;;
+hol4_overload "id" "linear_scanProof_id";;
 
 let less_FST_def = cake_define
   `less_FST (x:int#num) y = (FST x <= FST y)`;;

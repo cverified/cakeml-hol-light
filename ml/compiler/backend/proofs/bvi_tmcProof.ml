@@ -63,6 +63,7 @@ let env_rel_def = cake_define
          EL 0 ys = RefPtr F hole_ptr /\
          EL 1 ys = Number hole_idx /\
          small_enough_int hole_idx)))`;;
+hol4_overload "env_rel" "bvi_tmcProof_env_rel";;
 
 let no_mutcons_op_def = cake_define
   `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
@@ -98,10 +99,12 @@ let code_rel_def = cake_define
            compile_exp loc n arity exp = SOME (wrap,work) ==>
            sptree_lookup loc c2 = SOME (arity,wrap) /\
            sptree_lookup n c2 = SOME (arity + 2,work))))`;;
+hol4_overload "code_rel" "bvi_tmcProof_code_rel";;
 
 let free_names_def = cake_define
   `bvi_tmcProof_free_names n (name:num) <=> (!k. ~(n +
   bvl_to_bvi_namespaces * k = name))`;;
+hol4_overload "free_names" "bvi_tmcProof_free_names";;
 
 let namespace_rel_def = cake_define
   `bvi_tmcProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
@@ -111,6 +114,7 @@ let namespace_rel_def = cake_define
      (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 3) n)) /\
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
+hol4_overload "namespace_rel" "bvi_tmcProof_namespace_rel";;
 
 (* This should say: expression in prog satisfies no-mutblock property *)
 let input_condition_def = cake_define
@@ -122,6 +126,7 @@ let input_condition_def = cake_define
        (FILTER ((<=) bvl_num_stubs o FST) prog) /\
      bvl_num_stubs <= next /\ (\n. n MOD bvl_to_bvi_namespaces =
        3) next`;;
+hol4_overload "input_condition" "bvi_tmcProof_input_condition";;
 
 let state_ref_rel_def = cake_define
   `state_ref_rel f (s_refs:(num,bvlSem_v bvlSem_ref)fmap)
@@ -154,6 +159,7 @@ let state_rel_def = cake_define
      (!n. n IN domain (code t) /\ (\n. n MOD bvl_to_bvi_namespaces =
        3) n ==> n < FST (FST (compile_oracle s 0))) /\
      fmap_inj f`;;
+hol4_overload "state_rel" "bvi_tmcProof_state_rel";;
 
 (* Structural facts about compile_each and the namespace allocation.
    These follow bvi_tailrecProof; they only depend on the recursion

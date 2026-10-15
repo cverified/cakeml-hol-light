@@ -95,6 +95,7 @@ let code_installed_def = cake_define
   `clos_to_bvlProof_code_installed aux code =
      EVERY (\(n,num_args,exp). sptree_lookup n code = SOME
        (num_args,exp)) aux`;;
+hol4_overload "code_installed" "clos_to_bvlProof_code_installed";;
 
 let closure_code_installed_def = cake_define
   `closure_code_installed max_app code exps_ps (env:closSem_v list) =
@@ -216,6 +217,7 @@ let env_rel_def = cake_define
         | ((x :: xs),(y :: ys)) ->
         v_rel max_app f refs code x y /\ clos_to_bvlProof_env_rel
           max_app f refs code xs ys`;;
+hol4_overload "env_rel" "clos_to_bvlProof_env_rel";;
 
 (* HOL4 ML code, not ported:
 val env_rel_IMP_EL =
@@ -318,6 +320,7 @@ let state_rel_def = cake_define
          (sptree_lookup (name + (num_stubs (max_app s))) (code t) =
            SOME (arity,c2)) /\
          clos_to_bvlProof_code_installed aux2 (code t)))`;;
+hol4_overload "state_rel" "clos_to_bvlProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 val v_rel_SUBMAP = Q.prove(

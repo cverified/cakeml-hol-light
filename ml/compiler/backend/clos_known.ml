@@ -111,6 +111,7 @@ val get_size_aux_ind = theorem "get_size_aux_ind";
 
 let get_size_def = cake_define
   `clos_known_get_size e = get_size_aux [e]`;;
+hol4_overload "get_size" "clos_known_get_size";;
 
 let free_def = cake_define_list
   [`clos_known_free [] = ([],db_vars_Empty)`;
@@ -164,6 +165,7 @@ let free_def = cake_define_list
    `clos_known_free [closLang_Call t ticks dest xs] =
          (let (c1,l1) = clos_known_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
+hol4_overload "free" "clos_known_free";;
 
 (*
 val free_LENGTH_LEMMA = Q.prove(
@@ -215,6 +217,7 @@ QED
 let closed_def = cake_define
   `clos_known_closed x = (\t. t = LN) (db_to_set (SND
   (clos_known_free [x])))`;;
+hol4_overload "closed" "clos_known_closed";;
 
 let contains_closures_def = cake_define_list
   [`contains_closures [] = F`;
@@ -265,7 +268,12 @@ let val_approx_INDUCT,val_approx_RECURSION = define_datatype
    (num) (num) (closLang_exp) (num) | clos_known_Tuple (num) \
    (val_approx list) | clos_known_Int (int) | clos_known_Other | \
    clos_known_Impossible";;
+hol4_overload "ClosNoInline" "clos_known_ClosNoInline";;
+hol4_overload "Clos" "clos_known_Clos";;
+hol4_overload "Tuple" "clos_known_Tuple";;
 hol4_overload "Int" "clos_known_Int";;
+hol4_overload "Other" "clos_known_Other";;
+hol4_overload "Impossible" "clos_known_Impossible";;
 (* HOL4 ML code, not ported:
 val val_approx_size_def = definition "val_approx_size_def"
 *)
@@ -426,6 +434,7 @@ let default_config_def = cake_define
   `clos_known_default_config max_app = mk_config
   (default_max_body_size max_app default_inline_factor)
   default_inline_factor`;;
+hol4_overload "default_config" "clos_known_default_config";;
 
 let dec_inline_factor_def = cake_define
   `dec_inline_factor c = clos_known_config_inline_factor_fupd (K

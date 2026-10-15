@@ -211,12 +211,15 @@ let compile_sing_def = cake_define_list
              let (c2,vs,n2) = bvi_to_data_compile_list n1 env (v1 ::
                live) xs in
                (dataLang_Seq c1 c2,v1 :: vs,n2))`];;
+hol4_overload "compile_list" "bvi_to_data_compile_list";;
+hol4_overload "compile_sing" "bvi_to_data_compile_sing";;
 
 (* combine dataLang optimisations *)
 
 let optimise_def = cake_define
   `bvi_to_data_optimise prog = data_space_compile (simp (FST
   (data_live_compile prog LN)) dataLang_Skip)`;;
+hol4_overload "optimise" "bvi_to_data_optimise";;
 
 (* the top-level compiler includes the optimisations, because the
    correctness
@@ -226,10 +229,13 @@ let compile_exp_def = cake_define
   `bvi_to_data_compile_exp arg_count exp =
      bvi_to_data_optimise (FST (compile arg_count (COUNT_LIST
        arg_count) T [] [exp]))`;;
+hol4_overload "compile_exp" "bvi_to_data_compile_exp";;
 
 let compile_part_def = cake_define
   `bvi_to_data_compile_part ((name:num),arg_count,exp) =
      (name,arg_count,bvi_to_data_compile_exp arg_count exp)`;;
+hol4_overload "compile_part" "bvi_to_data_compile_part";;
 
 let compile_prog_def = cake_define
   `bvi_to_data_compile_prog prog = MAP bvi_to_data_compile_part prog`;;
+hol4_overload "compile_prog" "bvi_to_data_compile_prog";;

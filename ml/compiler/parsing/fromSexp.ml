@@ -341,6 +341,7 @@ let decode_test_def = cake_define
       if s = "AltGreaterEq" then SOME (ast_AltCompare ast_Geq) else
         NONE)
       | _11 -> NONE`;;
+hol4_overload "decode_test" "fromSexp_decode_test";;
 
 let decode_prim_type_def = cake_define
   `decode_prim_type x1 =

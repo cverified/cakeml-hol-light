@@ -82,6 +82,7 @@ let env_rel_def = cake_define
          Int -> (?k. EL acc env2 = Number k) | List -> (?ys.
            v_to_list (EL acc env2) = SOME ys) | bvi_tailrec_Any ->
            F))`;;
+hol4_overload "env_rel" "bvi_tailrecProof_env_rel";;
 
 (* HOL4 overload (expanded in the port):
      in_ns_2 = λn. n MOD bvl_to_bvi_namespaces = 2 *)
@@ -98,6 +99,7 @@ let code_rel_def = cake_define
            compile_exp loc n arity exp = SOME (exp_aux,exp_opt) ==>
              sptree_lookup loc c2 = SOME (arity,exp_aux) /\
              sptree_lookup n c2 = SOME (arity + 1,exp_opt))))`;;
+hol4_overload "code_rel" "bvi_tailrecProof_code_rel";;
 
 let optimized_code_def = cake_define
   `optimized_code loc arity exp n c op =
@@ -110,6 +112,7 @@ let optimized_code_def = cake_define
 let free_names_def = cake_define
   `bvi_tailrecProof_free_names n (name:num) <=> (!k. ~(n +
   bvl_to_bvi_namespaces * k = name))`;;
+hol4_overload "free_names" "bvi_tailrecProof_free_names";;
 
 let namespace_rel_def = cake_define
   `bvi_tailrecProof_namespace_rel (c1:'a spt) (c2:'a spt) <=>
@@ -119,6 +122,7 @@ let namespace_rel_def = cake_define
      (!n. n IN domain c1 /\ bvl_num_stubs <= n ==> ~((\n. n MOD
        bvl_to_bvi_namespaces = 2) n)) /\
      (!n. n IN domain c2 /\ n < bvl_num_stubs ==> n IN domain c1)`;;
+hol4_overload "namespace_rel" "bvi_tailrecProof_namespace_rel";;
 
 let input_condition_def = cake_define
   `bvi_tailrecProof_input_condition next prog <=>
@@ -128,6 +132,7 @@ let input_condition_def = cake_define
       ((<=) bvl_num_stubs o FST) prog) /\
     bvl_num_stubs <= next /\ (\n. n MOD bvl_to_bvi_namespaces = 2)
       next`;;
+hol4_overload "input_condition" "bvi_tailrecProof_input_condition";;
 
 let state_rel_def = cake_define
   `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> refs
@@ -144,6 +149,7 @@ let state_rel_def = cake_define
              bvi_tailrecProof_input_condition next prog) /\
      (!n. n IN domain (code t) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 2) n ==> n < FST (FST (compile_oracle s 0)))`;;
+hol4_overload "state_rel" "bvi_tailrecProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_rewrite_tail[NIL]:

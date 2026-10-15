@@ -28,6 +28,7 @@ let state_rel_def = cake_define
      s1 = dataSem_state_stack_frame_sizes t1 /\
      (!x. x IN domain live ==> (lookup x (dataSem_state_locals s1)
        = lookup x (dataSem_state_locals t1)))`;;
+hol4_overload "state_rel" "data_liveProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 fun cases_on_op q = Cases_on q >|

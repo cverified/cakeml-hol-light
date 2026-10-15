@@ -602,3 +602,4 @@ let semantics_def = cake_define
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (ffi (SND
               (evaluate (clock_fupd (K k) s)))))) UNIV)))`;;
+hol4_overload "semantics" "labSem_semantics";;

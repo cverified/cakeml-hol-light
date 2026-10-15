@@ -53,6 +53,7 @@ fun split_tac q = Cases_on q \\ Cases_on `q` \\ FULL_SIMP_TAC (srw_ss())
 
 let inc_clock_def = cake_define
   `bvlProps_inc_clock ck s = clock_fupd (K (clock s + ck)) s`;;
+hol4_overload "inc_clock" "bvlProps_inc_clock";;
 
 let get_vars_def = cake_define_list
   [`bvlProps_get_vars [] env = SOME []`;
@@ -60,6 +61,7 @@ let get_vars_def = cake_define_list
          (if n < LENGTH env then
            (match bvlProps_get_vars ns env with NONE -> NONE |
              SOME vs -> SOME (EL n env :: vs)) else NONE)`];;
+hol4_overload "get_vars" "bvlProps_get_vars";;
 
 let isVar_def = cake_define
   `isVar x1 =
@@ -130,3 +132,4 @@ let get_code_labels_def = cake_define_list
    `bvlProps_get_code_labels (Op op es:flatLang_exp) =
   assign_get_code_label op UNION BIGUNION (set_of_list (MAP
   bvlProps_get_code_labels es))`];;
+hol4_overload "get_code_labels" "bvlProps_get_code_labels";;

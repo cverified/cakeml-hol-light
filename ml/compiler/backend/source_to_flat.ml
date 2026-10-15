@@ -256,6 +256,7 @@ let make_varls_def = cake_define
 let empty_env_def = cake_define
   `source_to_flat_empty_env = mk_source_to_flat_environment nsEmpty
   nsEmpty`;;
+hol4_overload "empty_env" "source_to_flat_empty_env";;
 
 let extend_env_def = cake_define
   `extend_env e1 e2 =
@@ -400,6 +401,7 @@ let compile_decs_def = cake_define_wf
             env) envs1 ds in
           (n'',next2,extend_env new_env2 new_env1,envs2,d' ++
             ds'))`;;
+hol4_overload "compile_decs" "source_to_flat_compile_decs";;
 
 let source_to_flat_config_FIELDS = define_record "source_to_flat_config"
   ["next","next_indices";
@@ -448,6 +450,7 @@ let compile_prog_def = cake_define
      (source_to_flat_config_mod_env_fupd (K e) (envs_fupd (K envs2)
        (next_fupd (K next) c)),
          glob_alloc next c :: alloc_env_ref :: p'))`;;
+hol4_overload "compile_prog" "source_to_flat_compile_prog";;
 
 let lookup_env_id_def = cake_define
   `lookup_env_id env_id envs = (match sptree_lookup (FST env_id)
@@ -486,6 +489,7 @@ let compile_def = cake_define
      let p' = compile_flat (source_to_flat_config_pattern_cfg c') p'
        in
        (c',p'))`;;
+hol4_overload "compile" "source_to_flat_compile";;
 
 (* note that flat_elim is always disabled in the eval/incremental case
    *)

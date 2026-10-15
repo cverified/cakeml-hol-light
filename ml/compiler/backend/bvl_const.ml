@@ -181,6 +181,7 @@ let SmartOp_def = cake_define
   `bvl_const_SmartOp op xs =
      (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
        [x] -> SmartOp1 op x | _23 -> Op op xs)`;;
+hol4_overload "SmartOp" "bvl_const_SmartOp";;
 
 let extract_def = cake_define
   `bvl_const_extract x1 ys =
@@ -199,6 +200,7 @@ let extract_list_def = cake_define_list
   [`bvl_const_extract_list [] = []`;
    `bvl_const_extract_list (x :: xs) = extract x xs ::
   bvl_const_extract_list xs`];;
+hol4_overload "extract_list" "bvl_const_extract_list";;
 
 let delete_var_def = cake_define
   `bvl_const_delete_var x =
@@ -206,6 +208,7 @@ let delete_var_def = cake_define
           ((Var n):bvl_exp) -> Op (closLang_IntOp (closLang_Const
             (&0))) []
         | x -> x`;;
+hol4_overload "delete_var" "bvl_const_delete_var";;
 
 let compile_def = cake_define_list
   [`bvl_const_compile env [] = []`;
@@ -242,6 +245,7 @@ let compile_def = cake_define_list
            [Force loc (v + i)] | SOME (SOME x) -> [Force loc v])`;
    `bvl_const_compile env [(Call t dest xs:bvl_exp)] = [Call t dest
   (bvl_const_compile env xs)]`];;
+hol4_overload "compile" "bvl_const_compile";;
 
 let compile_sing_def = cake_define_list
   [`bvl_const_compile_sing env (Var v:bvl_exp) =
@@ -278,8 +282,11 @@ let compile_sing_def = cake_define_list
    `bvl_const_compile_list env [] = []`;
    `bvl_const_compile_list env (x :: xs) = bvl_const_compile_sing env
   x :: bvl_const_compile_list env xs`];;
+hol4_overload "compile_list" "bvl_const_compile_list";;
+hol4_overload "compile_sing" "bvl_const_compile_sing";;
 
 let compile_exp_def = cake_define
   `bvl_const_compile_exp x =
      (match bvl_const_compile [] [x] with (y :: _25) -> y | _26 ->
        Var 0)`;;
+hol4_overload "compile_exp" "bvl_const_compile_exp";;

@@ -66,6 +66,7 @@ let commas_def = cake_define
         [] -> []
       | [x] -> [x]
       | (x :: ys) -> x :: c :: infer_t_commas c ys`;;
+hol4_overload "commas" "infer_t_commas";;
 
 let add_parens_def = cake_define
   `add_parens threshold' (x,n) =

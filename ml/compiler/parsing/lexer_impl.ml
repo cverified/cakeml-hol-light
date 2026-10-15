@@ -120,6 +120,7 @@ let lex_aux_def = cake_define_wf
                token = tokens_RparT then lexer_impl_lex_aux new_acc
                (d - 1) rest newloc else lexer_impl_lex_aux new_acc d
                rest newloc))`;;
+hol4_overload "lex_aux" "lexer_impl_lex_aux";;
 
 let lex_until_toplevel_semicolon_def = cake_define
   `lex_until_toplevel_semicolon input = lexer_impl_lex_aux [] 0 input`;;

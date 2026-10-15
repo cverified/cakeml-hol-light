@@ -26,6 +26,7 @@ let wf_def = cake_define_list
   = LN) t1 /\ (\t. t = LN) t2)`;
    `sptree_wf (BS t1 a t2) <=> sptree_wf t1 /\ sptree_wf t2 /\ ~((\t.
   t = LN) t1 /\ (\t. t = LN) t2)`];;
+hol4_overload "wf" "sptree_wf";;
 
 let lookup_def = cake_define_list
   [`sptree_lookup k LN = NONE`;
@@ -36,6 +37,7 @@ let lookup_def = cake_define_list
    `sptree_lookup k (BS t1 a t2) =
          (if k = 0 then SOME a else sptree_lookup ((k - 1) DIV 2)
            (if EVEN k then t1 else t2))`];;
+hol4_overload "lookup" "sptree_lookup";;
 
 let insert_def = cake_define_list
   [`sptree_insert k a LN = (if k = 0 then LS a else if EVEN k then BN
@@ -53,6 +55,7 @@ let insert_def = cake_define_list
          (if k = 0 then BS t1 a t2 else if EVEN k then BS
            (sptree_insert ((k - 1) DIV 2) a t1) a' t2 else BS t1 a'
            (sptree_insert ((k - 1) DIV 2) a t2))`];;
+hol4_overload "insert" "sptree_insert";;
 
 let mk_BN_def = cake_define
   `mk_BN t1 t2 =
@@ -77,12 +80,14 @@ let delete_def = cake_define_list
          (if k = 0 then BN t1 t2 else if EVEN k then
            mk_BS (sptree_delete ((k - 1) DIV 2) t1) a t2 else
            mk_BS t1 a (sptree_delete ((k - 1) DIV 2) t2))`];;
+hol4_overload "delete" "sptree_delete";;
 
 let size_def = cake_define_list
   [`sptree_size LN = 0`;
    `sptree_size (LS a) = 1`;
    `sptree_size (BN t1 t2) = sptree_size t1 + sptree_size t2`;
    `sptree_size (BS t1 a t2) = sptree_size t1 + sptree_size t2 + 1`];;
+hol4_overload "size" "sptree_size";;
 
 let union_def = cake_define_list
   [`sptree_union LN t = t`;
@@ -99,6 +104,7 @@ let union_def = cake_define_list
            BN t1' t2' -> BS (sptree_union t1 t1') a (sptree_union t2
            t2') | BS t1' a' t2' -> BS (sptree_union t1 t1') a
            (sptree_union t2 t2'))`];;
+hol4_overload "union" "sptree_union";;
 
 let inter_def = cake_define_list
   [`inter LN t = LN`;
@@ -188,6 +194,7 @@ let mapi0_def = cake_define_list
 
 let mapi_def = cake_define
   `sptree_mapi f pt = mapi0 f 0 pt`;;
+hol4_overload "mapi" "sptree_mapi";;
 
 let toAList_def = cake_define
   `toAList = foldi (\k v a. (k,v) :: a) 0 []`;;
@@ -214,6 +221,7 @@ let map_def = cake_define_list
    `sptree_map f (BN t1 t2) = BN (sptree_map f t1) (sptree_map f t2)`;
    `sptree_map f (BS t1 a t2) = BS (sptree_map f t1) (f a)
   (sptree_map f t2)`];;
+hol4_overload "map" "sptree_map";;
 
 let spt_left_def = cake_define_list
   [`spt_left LN = LN`;

@@ -108,10 +108,12 @@ val intro_multi_ind = theorem "intro_multi_ind";
 let compile_def = cake_define_list
   [`clos_mti_compile F max_app exps = exps`;
    `clos_mti_compile T max_app exps = intro_multi max_app exps`];;
+hol4_overload "compile" "clos_mti_compile";;
 
 let compile_inc_def = cake_define
   `clos_mti_compile_inc max_app (e,es) =
      (intro_multi max_app e,[])`;;
+hol4_overload "compile_inc" "clos_mti_compile_inc";;
 
 let cond_mti_compile_inc_def = cake_define
   `cond_mti_compile_inc do_it max_app =

@@ -30,6 +30,7 @@ let flat_pattern_config_FIELDS = define_record "flat_pattern_config"
 
 let init_config_def = cake_define
   `flat_pattern_init_config ph = mk_flat_pattern_config ph`;;
+hol4_overload "init_config" "flat_pattern_init_config";;
 
 (* HOL4 termination: *)
 let sum_string_ords_def = cake_define_wf
@@ -108,6 +109,7 @@ let decode_test_def = cake_define_list
   (TagLenEq tag l) [v]`;
    `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v = App
   t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
+hol4_overload "decode_test" "flat_pattern_decode_test";;
 
 let simp_guard_def = cake_define
   `simp_guard x =
@@ -298,6 +300,8 @@ let compile_exp_def = cake_define_list
         let j = max_dec_name (pat_bindings p) in
         let (k,sgp,ps2) = compile_match cfg ps in
         (MAX i (MAX j k),(sgx \/ sgp),((p,y) :: ps2)))`];;
+hol4_overload "compile_exp" "flat_pattern_compile_exp";;
+hol4_overload "compile_exps" "flat_pattern_compile_exps";;
 
 let compile_dec_def = cake_define
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;

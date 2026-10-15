@@ -90,6 +90,7 @@ let finalise_cons_def = cake_define
                NONE) | SOME res -> SOME (RefPtr b ptr,refs) | NONE ->
                NONE)
         | v -> SOME (v,refs)`;;
+hol4_overload "finalise_cons" "bviSem_finalise_cons";;
 
 (* HOL4 ML code, not ported:
 val s = ``(s:('c,'ffi) bviSem$state)``;

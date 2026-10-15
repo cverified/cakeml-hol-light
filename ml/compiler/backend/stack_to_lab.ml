@@ -140,6 +140,7 @@ let flatten_def = cake_define
          (ShareMem op r ad) [] 0],F,m) | CodeBufferWrite r1 r2 ->
        (List [(\a. (\a. (\a. labLang_Asm (Asmi a)) (Asmi a)) (Asmi
          a)) (Cbw r1 r2) [] 0],F,m) | _11 -> (List [],F,m))`;;
+hol4_overload "flatten" "stack_to_lab_flatten";;
 
 let is_Seq_def = cake_define
   `is_Seq x1 =

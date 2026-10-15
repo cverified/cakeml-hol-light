@@ -58,6 +58,7 @@ let is_pure_def = cake_define
         | closLang_Install -> F
         | (ThunkOp _17) -> F
         | _18 -> T`;;
+hol4_overload "is_pure" "data_live_is_pure";;
 
 let compile_def = cake_define_list
   [`data_live_compile dataLang_Skip live = (dataLang_Skip,live)`;
@@ -110,3 +111,4 @@ let compile_def = cake_define_list
          let l1 = inter names l0 in
          let l2 = list_insert vs l1 in
            (Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2))`];;
+hol4_overload "compile" "data_live_compile";;

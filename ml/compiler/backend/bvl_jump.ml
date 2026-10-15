@@ -36,3 +36,4 @@ let JumpList_def = cake_define_wf
 
 let jump_def = cake_define
   `bvl_jump_Jump x xs = Let [x] (JumpList 0 xs)`;;
+hol4_overload "Jump" "bvl_jump_Jump";;

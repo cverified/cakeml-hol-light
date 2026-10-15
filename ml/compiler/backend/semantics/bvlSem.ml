@@ -36,6 +36,7 @@ let bvlSem_ref_INDUCT,bvlSem_ref_RECURSION = define_datatype
 hol4_overload "ValueArray" "bvlSem_ValueArray";;
 hol4_overload "ByteArray" "bvlSem_ByteArray";;
 hol4_overload "Thunk" "bvlSem_Thunk";;
+hol4_overload "MutBlock" "bvlSem_MutBlock";;
 
 (* these parts are shared by bytecode and, if bytecode is to be
    supported, need
@@ -48,6 +49,7 @@ let bvlSem_v_INDUCT,bvlSem_v_RECURSION = define_datatype
 hol4_overload "Number" "bvlSem_Number";;
 hol4_overload "Word64" "bvlSem_Word64";;
 hol4_overload "Block" "bvlSem_Block";;
+hol4_overload "CodePtr" "bvlSem_CodePtr";;
 hol4_overload "RefPtr" "bvlSem_RefPtr";;
 
 let boolv_def = cake_define
@@ -105,6 +107,7 @@ hol4_overload "list_to_v" "bvlSem_list_to_v";;
 let isClos_def = cake_define
   `bvlSem_isClos t1 l1 = (((t1 = closure_tag) \/ (t1 =
   partial_app_tag)) /\ ~(l1 = []))`;;
+hol4_overload "isClos" "bvlSem_isClos";;
 
 let do_eq_def = cake_define_list
   [`bvlSem_do_eq _3 (bvlSem_CodePtr _4) _5 = Eq_type_error`;
@@ -197,16 +200,19 @@ let do_part_def = cake_define_list
       let bytes = MAP (n2w o ORD) (explode t) in
         (RefPtr T ptr,refs |+ (ptr,((ByteArray T bytes):bvlSem_v
           bvlSem_ref))))`];;
+hol4_overload "do_part" "bvlSem_do_part";;
 
 let do_build_def = cake_define_list
   [`bvlSem_do_build m i [] refs = (m (i - 1),refs)`;
    `bvlSem_do_build m i (p :: rest) refs =
       (let (x,refs1) = bvlSem_do_part m p refs in
         bvlSem_do_build ((i =+ x) m) (i + 1) rest refs1)`];;
+hol4_overload "do_build" "bvlSem_do_build";;
 
 let do_build_const_def = cake_define
   `bvlSem_do_build_const xs refs = bvlSem_do_build (\x. Number (&0))
   0 xs refs`;;
+hol4_overload "do_build_const" "bvlSem_do_build_const";;
 (* same as closSem$do_int_app *)
 let do_int_app_def = cake_define
   `bvlSem_do_int_app x1 x2 =
@@ -684,6 +690,7 @@ let do_app_def = cake_define
 
 let dec_clock_def = cake_define
   `bvlSem_dec_clock n s = clock_fupd (K (clock s - n)) s`;;
+hol4_overload "dec_clock" "bvlSem_dec_clock";;
 
 (* Functions for looking up function definitions *)
 

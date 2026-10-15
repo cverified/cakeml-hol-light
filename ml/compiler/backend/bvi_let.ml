@@ -59,6 +59,7 @@ let extract_list_def = cake_define_list
   [`bvi_let_extract_list [] = []`;
    `bvi_let_extract_list (x :: xs) = extract x xs ::
   bvi_let_extract_list xs`];;
+hol4_overload "extract_list" "bvi_let_extract_list";;
 
 let delete_var_def = cake_define
   `bvi_let_delete_var x =
@@ -66,6 +67,7 @@ let delete_var_def = cake_define
           ((Var n):bvi_exp) -> Op (closLang_IntOp (closLang_Const
             (&0))) []
         | x -> x`;;
+hol4_overload "delete_var" "bvi_let_delete_var";;
 
 let compile_def = cake_define_list
   [`bvi_let_compile env d [] = []`;
@@ -109,6 +111,7 @@ let compile_def = cake_define_list
          [bvi_LetCall rets t dest (bvi_let_compile env d xs)
             (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d
               [y]))]`];;
+hol4_overload "compile" "bvi_let_compile";;
 
 let compile_sing_def = cake_define_list
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
@@ -152,8 +155,11 @@ let compile_sing_def = cake_define_list
    `bvi_let_compile_list env d (x :: xs) =
         bvi_let_compile_sing env d x :: bvi_let_compile_list env
           d xs`];;
+hol4_overload "compile_list" "bvi_let_compile_list";;
+hol4_overload "compile_sing" "bvi_let_compile_sing";;
 
 let compile_exp_def = cake_define
   `bvi_let_compile_exp x =
      (match bvi_let_compile [] 0 [x] with (y :: _6) -> y | _7 ->
        Var 0)`;;
+hol4_overload "compile_exp" "bvi_let_compile_exp";;

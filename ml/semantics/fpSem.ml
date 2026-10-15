@@ -19,6 +19,8 @@ let fp_cmp_INDUCT,fp_cmp_RECURSION = define_datatype
 
 let fp_uop_INDUCT,fp_uop_RECURSION = define_datatype
   "fp_uop = fpSem_FP_Abs | fpSem_FP_Neg | fpSem_FP_Sqrt";;
+hol4_overload "FP_Abs" "fpSem_FP_Abs";;
+hol4_overload "FP_Neg" "fpSem_FP_Neg";;
 hol4_overload "FP_Sqrt" "fpSem_FP_Sqrt";;
 
 let fp_bop_INDUCT,fp_bop_RECURSION = define_datatype

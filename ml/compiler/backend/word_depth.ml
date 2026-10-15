@@ -19,8 +19,11 @@ let call_tree_INDUCT,call_tree_RECURSION = define_datatype
   "call_tree = word_depth_Leaf | word_depth_Unknown | \
    word_depth_Const (num) (call_tree) | word_depth_Call (num) \
    (call_tree) | word_depth_Branch (call_tree) (call_tree)";;
+hol4_overload "Leaf" "word_depth_Leaf";;
+hol4_overload "Unknown" "word_depth_Unknown";;
 hol4_overload "Const" "word_depth_Const";;
 hol4_overload "Call" "word_depth_Call";;
+hol4_overload "Branch" "word_depth_Branch";;
 
 (* computing the max stack depth *)
 

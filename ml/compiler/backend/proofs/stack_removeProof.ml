@@ -36,6 +36,7 @@ val word_shift_def = backend_commonTheory.word_shift_def
 
 let memory_def = cake_define
   `stack_removeProof_memory m dm = (\s. s = fun2set (m,dm))`;;
+hol4_overload "memory" "stack_removeProof_memory";;
 
 let word_list_rev_def = cake_define_list
   [`word_list_rev a [] = emp`;
@@ -61,6 +62,7 @@ let code_rel_def = cake_define
    Definition is_SOME_Word_def:(is_SOME_Word (SOME (wordLang_Word w))
      = T)) /\
    (is_SOME_Word _1 = F)`;;
+hol4_overload "code_rel" "stack_removeProof_code_rel";;
 
 let the_SOME_Word_def = cake_define
   `(the_SOME_Word (SOME (wordLang_Word w)) = w)`;;
@@ -121,6 +123,7 @@ let state_rel_def = cake_define
         word_store base (store s1) *
         misc_word_list base (stack s1))
          (fun2set (memory s2,mdomain s2)) | _2 -> F))`;;
+hol4_overload "state_rel" "stack_removeProof_state_rel";;
 
 (* Significantly faster than SEP_R_TAC *)
 
@@ -167,6 +170,7 @@ let read_mem_def = cake_define_list
    `stack_removeProof_read_mem a m (SUC n) =
          m a :: stack_removeProof_read_mem (a + bytes_in_word) m
            n`];;
+hol4_overload "read_mem" "stack_removeProof_read_mem";;
 
 let addresses_def = cake_define_list
   [`addresses a 0 = {}`;

@@ -19,6 +19,8 @@ let live_tree_INDUCT,live_tree_RECURSION = define_datatype
   "live_tree = linear_scan_Writes (num list) | linear_scan_Reads (num \
    list) | linear_scan_Branch (live_tree) (live_tree) | \
    linear_scan_Seq (live_tree) (live_tree)";;
+hol4_overload "Writes" "linear_scan_Writes";;
+hol4_overload "Reads" "linear_scan_Reads";;
 hol4_overload "Branch" "linear_scan_Branch";;
 hol4_overload "Seq" "linear_scan_Seq";;
 
@@ -27,6 +29,7 @@ let numset_list_insert_def = cake_define_list
   [`linear_scan_numset_list_insert [] t = t`;
    `linear_scan_numset_list_insert (x :: xs) t =
   linear_scan_numset_list_insert xs (sptree_insert x one t)`];;
+hol4_overload "numset_list_insert" "linear_scan_numset_list_insert";;
 
 let numset_list_insert_nottailrec_def = cake_define_list
   [`numset_list_insert_nottailrec [] t = t`;

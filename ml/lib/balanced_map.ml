@@ -23,6 +23,7 @@ let delta_def = cake_define
 let size_def = cake_define_list
   [`balanced_map_size Tip = 0`;
    `balanced_map_size (Bin s k v l r) = s`];;
+hol4_overload "size" "balanced_map_size";;
 
 let bin_def = cake_define
   `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
@@ -33,9 +34,11 @@ let lookup_def = cake_define_list
    `balanced_map_lookup cmp k (Bin s k' v l r) =
       (match cmp k k' with Less' -> balanced_map_lookup cmp k l |
         Greater' -> balanced_map_lookup cmp k r | Equal' -> SOME v)`];;
+hol4_overload "lookup" "balanced_map_lookup";;
 
 let empty_def = cake_define
   `balanced_map_empty = Tip`;;
+hol4_overload "empty" "balanced_map_empty";;
 
 let singleton_def = cake_define
   `singleton k x = Bin 1 k x Tip Tip`;;
@@ -121,6 +124,7 @@ let insert_def = cake_define_list
         (balanced_map_insert cmp k v l) r | Greater' -> balanceR k'
         v' l (balanced_map_insert cmp k v r) | Equal' -> Bin s k v l
         r)`];;
+hol4_overload "insert" "balanced_map_insert";;
 
 let insertR_def = cake_define_list
   [`insertR cmp k v Tip = singleton k v`;
@@ -177,6 +181,7 @@ let delete_def = cake_define_list
       (match cmp k k' with Less' -> balanceR k' v
         (balanced_map_delete cmp k l) r | Greater' -> balanceL k' v l
         (balanced_map_delete cmp k r) | Eq' -> glue l r)`];;
+hol4_overload "delete" "balanced_map_delete";;
 
 let trim_help_greater_def = cake_define_list
   [`trim_help_greater cmp lo (Bin s' k v' l' r) =
@@ -263,6 +268,7 @@ let union_def = cake_define
           (Tip,t2) -> t2
         | (t1,Tip) -> t1
         | (t1,t2) -> hedgeUnion cmp NONE NONE t1 t2`;;
+hol4_overload "union" "balanced_map_union";;
 
 let mapWithKey_def = cake_define_list
   [`mapWithKey f Tip = Tip`;
@@ -271,6 +277,7 @@ let mapWithKey_def = cake_define_list
 
 let map_def = cake_define
   `balanced_map_map f t = mapWithKey (\k x. f x) t`;;
+hol4_overload "map" "balanced_map_map";;
 
 let balanced_def = cake_define
   `balanced l r <=> l + r <= 1 \/ MAX l r <= delta * MIN l r`;;
@@ -296,3 +303,4 @@ let invariant_def = cake_define_list
       balanced (balanced_map_size l) (balanced_map_size r) /\
       balanced_map_invariant cmp l /\
       balanced_map_invariant cmp r`];;
+hol4_overload "invariant" "balanced_map_invariant";;

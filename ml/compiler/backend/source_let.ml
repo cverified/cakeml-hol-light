@@ -63,6 +63,7 @@ let compile_decs_def = cake_define_list
                   (source_let_compile_decs ds2) ::
                   source_let_compile_decs ds | _6 -> d ::
                   source_let_compile_decs ds))`];;
+hol4_overload "compile_decs" "source_let_compile_decs";;
 
 (*
 val test3 = EVAL “

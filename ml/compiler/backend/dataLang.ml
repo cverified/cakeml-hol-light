@@ -78,9 +78,15 @@ let dataLang_prog_INDUCT,dataLang_prog_RECURSION = define_datatype
    (dataLang_prog) | dataLang_MakeSpace (num) (1 spt) | \
    dataLang_Raise (num) | dataLang_Return (num list) | dataLang_Tick \
    | dataLang_Force ((num#1 spt) option) (num) (num)";;
+hol4_overload "Skip" "dataLang_Skip";;
+hol4_overload "Move" "dataLang_Move";;
 hol4_overload "Call" "dataLang_Call";;
+hol4_overload "Assign" "dataLang_Assign";;
+hol4_overload "Seq" "dataLang_Seq";;
 hol4_overload "If" "dataLang_If";;
+hol4_overload "MakeSpace" "dataLang_MakeSpace";;
 hol4_overload "Raise" "dataLang_Raise";;
+hol4_overload "Return" "dataLang_Return";;
 hol4_overload "Tick" "dataLang_Tick";;
 hol4_overload "Force" "dataLang_Force";;
 

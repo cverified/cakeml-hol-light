@@ -121,6 +121,7 @@ let walk_def = cake_define_list
                         match FLOOKUP refs p with SOME y ->
                           pattern_comp_walk ns y refs | _10 -> NONE)
                           | _11 -> NONE)`];;
+hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = cake_define
   `walk_list ns x refs =
@@ -136,3 +137,4 @@ let comp_def = cake_define
      let rows1 = (if exh_rows rows0 then insert_Any rows0 else rows0)
        in
        pats_to_code rows1)`;;
+hol4_overload "comp" "pattern_comp_comp";;

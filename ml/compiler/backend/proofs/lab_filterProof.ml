@@ -72,6 +72,7 @@ let state_rel_def = cake_define
         t1))) t1))) /\ compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
      ~failed t1`;;
+hol4_overload "state_rel" "lab_filterProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 val all_skips_evaluate_0 = all_skips_evaluate |>SIMP_RULE std_ss

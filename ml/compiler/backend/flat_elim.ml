@@ -78,6 +78,7 @@ let is_pure_def = cake_define_wf
           flat_elim_is_pure e2)
         | (Letrec t funs e) -> flat_elim_is_pure e
         | _5 -> F`;;
+hol4_overload "is_pure" "flat_elim_is_pure";;
 
 let has_Eval_def = cake_define_list
   [`has_Eval (App t op es:flatLang_exp) <=> op = flatLang_Src

@@ -580,6 +580,7 @@ let invariant_def = cake_define
        idxs))
          (src_orac_next_cfg interp
            (semanticPrimitives_state_eval_state s))`;;
+hol4_overload "invariant" "source_to_flatProof_invariant";;
 
 (* subsequent oracle config will still have the previous envs in store
    *)

@@ -71,6 +71,7 @@ let path_def = cake_define_list
    `parmove_path [_1] <=> T`;
    `parmove_path ((c,b') :: (b,a) :: p) <=>
          (b = b') /\ parmove_path ((b,a) :: p)`];;
+hol4_overload "path" "parmove_path";;
 
 let wf_def = cake_define
   `parmove_wf (mu,sigma,tau) <=>

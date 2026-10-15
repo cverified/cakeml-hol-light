@@ -102,6 +102,8 @@ let remove_fvs_sing_def = cake_define_list
 
 let compile_def = cake_define
   `clos_fvs_compile exps = remove_fvs 0 exps`;;
+hol4_overload "compile" "clos_fvs_compile";;
 
 let compile_inc_def = cake_define
   `clos_fvs_compile_inc (e,xs) = (clos_fvs_compile e,[])`;;
+hol4_overload "compile_inc" "clos_fvs_compile_inc";;

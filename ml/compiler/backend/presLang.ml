@@ -693,6 +693,7 @@ let commas_def = cake_define
       | [x] -> x
       | (x :: xs) -> (\x y. strcat x y) ((\x y. strcat x y) x
         (implode ",")) (presLang_commas xs)`;;
+hol4_overload "commas" "presLang_commas";;
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)

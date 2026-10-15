@@ -76,6 +76,7 @@ let names_ok_def = cake_define
               MOD bvl_to_bvi_namespaces = 0) n /\
                  (n - bvl_num_stubs) DIV bvl_to_bvi_namespaces IN
                    domain s_code)))`;;
+hol4_overload "names_ok" "bvl_to_bviProof_names_ok";;
 
 let state_rel_def = cake_define
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state)
@@ -151,6 +152,7 @@ let state_ok_def = cake_define
      (!k. match FLOOKUP (refs s) k with SOME (ValueArray vs) ->
        EVERY (bv_ok (refs s)) vs | SOME (Thunk _2 v) -> bv_ok (refs
        s) v | _3 -> T)`;;
+hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* evaluate preserves state_ok *)
 

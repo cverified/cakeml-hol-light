@@ -68,6 +68,7 @@ let compile_inc_def = cake_define
      let (m,ys) = renumber_code_locs_list n1 xs in
        (m,closLang_Op backend_common_None (closLang_IntOp
          (closLang_Const (&n))) [] :: ys))`;;
+hol4_overload "compile_inc" "clos_number_compile_inc";;
 
 let ignore_table_def = cake_define
   `ignore_table f st (code,aux) = (let (st',code') = f st code in

@@ -447,7 +447,10 @@ class Porter:
        that HOL4 has for them"""
     out = []
     for nm in names:
-      if nm not in self.ctx.overloaded: continue
+      # the declaration is global, so it is made for every name
+      # that the port renames anywhere, not only for the ones that
+      # are ambiguous in the scope of this theory
+      if nm not in self.db.overloaded(): continue
       new = self.nm_defined(nm)
       if new == nm: continue
       text = 'hol4_overload "%s" "%s";;' % (nm, new)

@@ -341,6 +341,7 @@ let isRef_def = cake_define
       match x1 with
         DataElement ys l (tag,qs) -> isMutTag tag
       | _16 -> F`;;
+hol4_overload "isRef" "data_to_word_memoryProof_isRef";;
 
 let gen_start_ok_def = cake_define
   `gen_start_ok heap refs_start gen_start =

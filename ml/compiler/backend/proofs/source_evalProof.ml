@@ -90,6 +90,7 @@ let env_rel_def = cake_define
      (!nm x y. nsLookup (v env) nm = SOME x /\ nsLookup (v env') nm =
        SOME y ==>
          v_rel' x y)`;;
+hol4_overload "env_rel" "source_evalProof_env_rel";;
 
 (* HOL4 ML code, not ported:
 val _ = IndDefLib.add_mono_thm env_rel_mono_rel;
@@ -205,6 +206,7 @@ let match_result_rel_def = cake_define
   `source_evalProof_match_result_rel nerr R mr1 mr2 <=> (match mr1
   with No_match -> mr2 = No_match | Match_type_error -> nerr \/ mr2 =
   Match_type_error | Match x -> (?y. mr2 = Match y /\ R x y))`;;
+hol4_overload "match_result_rel" "source_evalProof_match_result_rel";;
 
 (* HOL4 ML code, not ported:
 val ci = mk_var ("ci", ``: 'cfg compiler_instance``);
@@ -213,6 +215,7 @@ val ci = mk_var ("ci", ``: 'cfg compiler_instance``);
 let abort_def = cake_define
   `source_evalProof_abort r <=> (match r with Rerr (Rabort a) -> T |
   _9 -> F)`;;
+hol4_overload "abort" "source_evalProof_abort";;
 
 (* case splits for evaluate proofs *)
 (* HOL4 ML code, not ported:

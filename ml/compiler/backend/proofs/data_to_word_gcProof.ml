@@ -181,6 +181,7 @@ let stack_rel_def = cake_define
         data_to_word_gcProof_stack_rel (Env s1 env) (StackFrame s2 ws
           vs NONE) /\ (x1 = n)
         | (_15,_16) -> F`;;
+hol4_overload "stack_rel" "data_to_word_gcProof_stack_rel";;
 
 let the_global_def = cake_define
   `the_global g = the (Number (&0)) (OPTION_MAP (RefPtr T) g)`;;

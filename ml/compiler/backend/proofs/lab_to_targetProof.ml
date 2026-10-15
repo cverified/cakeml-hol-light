@@ -241,6 +241,7 @@ let good_code_def = cake_define
     restrict_nonzero (get_labels code) SUBSET get_code_labels code
       UNION labs_domain labs /\
     (\c ls. EVERY (sec_ok_pre c) ls) c code`;;
+hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
 let num_pcs_def = cake_define_list
   [`num_pcs [] = (0:num)`;
@@ -3407,6 +3408,7 @@ let make_init_def = cake_define
        (len_reg mc_conf) (ptr2_reg mc_conf) (len2_reg mc_conf) (match
        link_reg (target_config (machine_config_target mc_conf)) with
        SOME n -> n | _67 -> 0)`;;
+hol4_overload "make_init" "lab_to_targetProof_make_init";;
 
 (* HOL4 ML code, not ported:
 val IMP_LEMMA = METIS_PROVE [] ``(a ==> b) ==> (b ==> c) ==> (a ==> c)``

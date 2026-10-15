@@ -182,6 +182,9 @@ let tenv_val_exp_INDUCT,tenv_val_exp_RECURSION = define_datatype
   "tenv_val_exp = typeSystem_Empty | typeSystem_Bind_tvar (num) \
    (tenv_val_exp) | typeSystem_Bind_name (mlstring) (num) (t) \
    (tenv_val_exp)";;
+hol4_overload "Empty" "typeSystem_Empty";;
+hol4_overload "Bind_tvar" "typeSystem_Bind_tvar";;
+hol4_overload "Bind_name" "typeSystem_Bind_name";;
 
 
 (*val bind_tvar : nat -> tenv_val_exp -> tenv_val_exp*)

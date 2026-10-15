@@ -34,6 +34,7 @@ let code_rel_def = cake_define
        (lookup n bvi_code = SOME (arg_count,exp)) ==>
        (lookup n data_code = SOME (arg_count,compile_exp arg_count
          exp)))`;;
+hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
 
 (* Projection from `dataSem$v` into `bvlSem$v` that basically gets rid
    of

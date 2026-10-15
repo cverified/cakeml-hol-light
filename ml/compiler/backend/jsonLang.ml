@@ -20,6 +20,12 @@ let obj_INDUCT,obj_RECURSION = define_datatype
   "obj = jsonLang_Object ((mlstring#obj) list) | jsonLang_Array (obj \
    list) | jsonLang_String (mlstring) | jsonLang_Int (int) | \
    jsonLang_Bool (bool) | jsonLang_Null";;
+hol4_overload "Object" "jsonLang_Object";;
+hol4_overload "Array" "jsonLang_Array";;
+hol4_overload "String" "jsonLang_String";;
+hol4_overload "Int" "jsonLang_Int";;
+hol4_overload "Bool" "jsonLang_Bool";;
+hol4_overload "Null" "jsonLang_Null";;
 
 hol4_overload "++" "misc_Append";;
 

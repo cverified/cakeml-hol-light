@@ -55,6 +55,7 @@ let substring_def = cake_define
 let concat_def = cake_define
   `mlstring_concat l = implode (FLAT (MAP (\s. match s with implode x
   -> x) l))`;;
+hol4_overload "concat" "mlstring_concat";;
 
 let explode_aux_def = cake_define_list
   [`explode_aux s n 0 = []`;
@@ -69,6 +70,7 @@ let extract_def = cake_define
      (if strlen s <= i then implode [] else match opt with
          SOME x -> substring s i (MIN (strlen s - i) x) | NONE ->
            substring s i (strlen s - i))`;;
+hol4_overload "extract" "mlstring_extract";;
 
 let strcat_def = cake_define
   `strcat s1 s2 = mlstring_concat [s1; s2]`;;
@@ -240,6 +242,7 @@ let compare_def = cake_define
   compare_aux s1 s2 LESS 0 (strlen s1) else if (strlen s2) < (strlen
   s1) then compare_aux s1 s2 GREATER 0 (strlen s2) else compare_aux
   s1 s2 EQUAL 0 (strlen s2))`;;
+hol4_overload "compare" "mlstring_compare";;
 
 let mlstring_lt_def = cake_define
   `mlstring_lt s1 s2 <=> (mlstring_compare s1 s2 = LESS)`;;
@@ -296,6 +299,7 @@ let collate_aux_def = cake_define_list
         (if f (strsub s1 n) (strsub s2 n) = EQUAL then
           mlstring_collate_aux f s1 s2 ord (n + 1) len else f (strsub
           s1 n) (strsub s2 n))`];;
+hol4_overload "collate_aux" "mlstring_collate_aux";;
 
 let collate_def = cake_define
   `mlstring_collate f s1 s2 =

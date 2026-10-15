@@ -227,6 +227,7 @@ let stubs_def = cake_define
                     (ToListByte_location,ToListByte_code);
                     (SumListLength_location,SumListLength_code);
                     (ConcatByte_location,ConcatByte_code)]`;;
+hol4_overload "stubs" "bvl_to_bvi_stubs";;
 
 (* HOL4 overload (expanded in the port):
      num_stubs = backend_common$bvl_num_stubs *)
@@ -374,6 +375,7 @@ let compile_exps_def = cake_define_list
                   (match dest with NONE -> NONE | SOME n -> SOME
                     (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
                     NONE],aux1,n1))`];;
+hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let compile_exps_sing_def = cake_define_list
   [`compile_exps_sing n (Var v:bvl_exp) = (((Var
@@ -436,6 +438,7 @@ let compile_single_def = cake_define
        (
          List [(bvl_num_stubs + bvl_to_bvi_namespaces *
            name,arg_count,bvi_let_compile_exp (HD c))] ++ aux,n1))`;;
+hol4_overload "compile_single" "bvl_to_bvi_compile_single";;
 
 let compile_list_def = cake_define_list
   [`bvl_to_bvi_compile_list n [] = (List [],n)`;
@@ -475,6 +478,7 @@ let default_config_def = cake_define
   `bvl_to_bvi_default_config =
      mk_bvl_to_bvi_config 10 1000 T (bvl_num_stubs + 1)
        (bvl_num_stubs + 2) (bvl_num_stubs + 3) T T LN LN`;;
+hol4_overload "default_config" "bvl_to_bvi_default_config";;
 
 let get_names_def = cake_define
   `bvl_to_bvi_get_names final_nums old_names =
@@ -497,6 +501,7 @@ let get_names_def = cake_define
          let aux = (if km = 0 then implode "" else implode
            "_bvi_aux") in (\x y. strcat x y)
            n aux))) final_nums)`;;
+hol4_overload "get_names" "bvl_to_bvi_get_names";;
 
 let compile_def = cake_define
   `bvl_to_bvi_compile start c names prog =

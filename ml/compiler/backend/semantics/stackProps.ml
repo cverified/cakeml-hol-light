@@ -45,6 +45,7 @@ let extract_labels_def = cake_define
         | (If cmp r1 ri e2 e3) ->
        (stackProps_extract_labels e2 ++ stackProps_extract_labels e3)
         | _10 -> []`;;
+hol4_overload "extract_labels" "stackProps_extract_labels";;
 
 let addr_ok_def = cake_define
   `addr_ok op (Addr a w) c <=>
@@ -454,6 +455,7 @@ let get_code_labels_def = cake_define
         | (LocValue _95 l1 l2) -> {(l1,l2)}
         | (StoreConsts _96 _97 (SOME l)) -> {(l,0)}
         | _98 -> {}`;;
+hol4_overload "get_code_labels" "stackProps_get_code_labels";;
 
 (* elabs gives a set of existing code labels *)
 let stack_good_code_labels_def = cake_define
@@ -490,6 +492,7 @@ let no_install_def = cake_define
         | (Loop p) -> stackProps_no_install p
         | (Install _108 _109 _110 _111 _112) -> F
         | _113 -> T`;;
+hol4_overload "no_install" "stackProps_no_install";;
 
 let no_shmemop_def = cake_define
   `no_shmemop x1 =

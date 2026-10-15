@@ -78,6 +78,7 @@ let good_code_labels_def = cake_define
   `bviProps_good_code_labels p elabs <=>
      BIGUNION (set_of_list (MAP (get_code_labels o SND o SND) p))
        SUBSET set_of_list (MAP FST p) UNION elabs`;;
+hol4_overload "good_code_labels" "bviProps_good_code_labels";;
 
 (* --- switching a compiler pass off
    --------------------------------------
@@ -104,3 +105,4 @@ let adj_orac_rel_def = cake_define
   `bviProps_adj_orac_rel cc f (s1:('a,'ffi)bviSem_state)
   (s2:('b,'ffi)bviSem_state) <=>
      adj_orac_ok cc f s1 /\ s2 = adj_orac cc f s1`;;
+hol4_overload "adj_orac_rel" "bviProps_adj_orac_rel";;

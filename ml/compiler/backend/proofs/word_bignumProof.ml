@@ -93,6 +93,7 @@ let eval_ri_def = cake_define_list
 
 let dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = clock_fupd (K (clock s - 1)) s`;;
+hol4_overload "dec_clock" "word_bignumProof_dec_clock";;
 
 let reg_write_def = cake_define
   `reg_write v NONE (s:'a word_bignumProof_state) =
@@ -117,6 +118,7 @@ let copy_vars_def = cake_define_list
    `word_bignumProof_copy_vars (n :: ns) s t =
          (match FLOOKUP s n with NONE -> NONE | SOME x ->
            word_bignumProof_copy_vars ns s (reg_write n (SOME x) t))`];;
+hol4_overload "copy_vars" "word_bignumProof_copy_vars";;
 
 let eval = cake_inductive
   `(!r s. ast_Eval r s Skip (INR (s:'a word_bignumProof_state))) /\
@@ -273,6 +275,7 @@ let code_rel_def = cake_define
           word_bignum_compile n 2 1 cs1 prog = (p2,l2,i2,cs2) /\
           sptree_lookup n code = SOME (1,Seq p2 (Return 0 [0])) /\
           code_subset cs2 cs))`;;
+hol4_overload "code_rel" "word_bignumProof_code_rel";;
 
 let div_code_assum_def = cake_define
   `div_code_assum (:'ffi) (:'c) code =
@@ -338,6 +341,7 @@ let state_rel_def = cake_define
        (wordSem_state_store t0) TempOut /\
      (!n. (!r. ~(n = Temp r)) ==> FLOOKUP (wordSem_state_store t)
        n = FLOOKUP (wordSem_state_store t0) n)`;;
+hol4_overload "state_rel" "word_bignumProof_state_rel";;
 
 let exp_ok_def = cake_define
   `exp_ok x1 =
@@ -412,6 +416,7 @@ let good_code_def = cake_define
        (?cs1 l2' i2 cs2.
          word_bignum_compile n 2 1 cs1 prog = (p2,l2',i2,cs2) /\
            code_subset cs2 cs3))`;;
+hol4_overload "good_code" "word_bignumProof_good_code";;
 
 
 (* correctenss judgement *)

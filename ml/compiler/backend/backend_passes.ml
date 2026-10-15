@@ -54,8 +54,14 @@ let any_prog_INDUCT,any_prog_RECURSION = define_datatype
    spt) | backend_passes_Stack ((num#'ga stackLang_prog) list) \
    (mlstring spt) | backend_passes_Lab (('ga sec) list) (mlstring \
    spt)";;
+hol4_overload "Source" "backend_passes_Source";;
+hol4_overload "Flat" "backend_passes_Flat";;
 hol4_overload "Clos" "backend_passes_Clos";;
+hol4_overload "Bvl" "backend_passes_Bvl";;
+hol4_overload "Bvi" "backend_passes_Bvi";;
+hol4_overload "Data" "backend_passes_Data";;
 hol4_overload "Word" "backend_passes_Word";;
+hol4_overload "Stack" "backend_passes_Stack";;
 hol4_overload "Lab" "backend_passes_Lab";;
 
 let to_flat_all_def = cake_define

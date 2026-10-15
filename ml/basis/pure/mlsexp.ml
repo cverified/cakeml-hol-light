@@ -63,6 +63,7 @@ let read_string_aux_def = cake_define_list
 let read_string_def = cake_define
   `(mlsexp_read_string (input:string):mlstring#string+mlstring#string) =
      read_string_aux input []`;;
+hol4_overload "read_string" "mlsexp_read_string";;
 
 (* Returns the string until a closing parenthesis or whitespace, and the
    rest of the input.
@@ -99,6 +100,7 @@ let lex_aux_def = cake_define_list
         match read_symbol cs [c] with (s,rest) ->
             (if depth = 0 then INR ([SYMBOL s],rest) else
               mlsexp_lex_aux depth rest ((SYMBOL s) :: acc)))`];;
+hol4_overload "lex_aux" "mlsexp_lex_aux";;
 
 (* Tokenizes (at most) one S-expression, and returns the rest of the
    input.
@@ -125,6 +127,7 @@ let parse_def = cake_define
        (rev_toks,rest) ->
          (match parse_aux rev_toks [] [] with [] -> INL ((implode
            "parse: empty input"),rest) | (v :: _1) -> INR (v,rest)))`;;
+hol4_overload "parse" "mlsexp_parse";;
 
 (* Function for parsing in the style of the Standard ML basis library.
    *)
@@ -141,12 +144,18 @@ hol4_overload "fromString" "mlsexp_fromString";;
 let str_tree_INDUCT,str_tree_RECURSION = define_datatype
   "str_tree = mlsexp_Str (mlstring) | mlsexp_Trees (str_tree list) | \
    mlsexp_GrabLine (str_tree)";;
+hol4_overload "Str" "mlsexp_Str";;
+hol4_overload "Trees" "mlsexp_Trees";;
+hol4_overload "GrabLine" "mlsexp_GrabLine";;
 
 let pretty_INDUCT,pretty_RECURSION = define_datatype
   "pretty = mlsexp_Parenthesis (pretty) | mlsexp_String (mlstring) | \
    mlsexp_Append (pretty) (bool) (pretty) | mlsexp_Size (num) \
    (pretty)";;
+hol4_overload "Parenthesis" "mlsexp_Parenthesis";;
+hol4_overload "String" "mlsexp_String";;
 hol4_overload "Append" "mlsexp_Append";;
+hol4_overload "Size" "mlsexp_Size";;
 
 let newlines_def = cake_define
   `newlines x1 =
@@ -172,6 +181,7 @@ let get_size_def = cake_define
       | (Append x _4 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
       | (mlsexp_Parenthesis x) -> mlsexp_get_size x + 2
       | _5 -> 0`;;
+hol4_overload "get_size" "mlsexp_get_size";;
 
 let get_next_size_def = cake_define
   `get_next_size x1 =
@@ -194,6 +204,7 @@ let annotate_def = cake_define_list
           (Append b1 n b2))`;
    `mlsexp_annotate (mlsexp_Size n b) = mlsexp_Size n
   (mlsexp_annotate b)`];;
+hol4_overload "annotate" "mlsexp_annotate";;
 
 let remove_all_def = cake_define_list
   [`remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis
@@ -227,6 +238,7 @@ let flatten_def = cake_define_list
    `mlsexp_flatten indent (Append p1 b p2:pretty) s =
       mlsexp_flatten indent p1 ((if b then indent else (implode
         " ")) :: mlsexp_flatten indent p2 s)`];;
+hol4_overload "flatten" "mlsexp_flatten";;
 
 let str_tree_to_strs_def = cake_define
   `str_tree_to_strs end v = mlsexp_flatten (implode "\n")

@@ -43,6 +43,7 @@ let compile_single_def = cake_define
    let reg_prog = word_alloc name_num c alg reg_count rm_prog col_opt
      in
      (name_num,arg_count,reg_prog))`;;
+hol4_overload "compile_single" "word_to_word_compile_single";;
 
 let full_compile_single_def = cake_define
   `full_compile_single two_reg_arith reg_count alg c p =
@@ -66,6 +67,7 @@ let compile_def = cake_define
      let progs = ZIP progs n_oracles in
      (col,MAP (full_compile_single two_reg_arith reg_count
        (word_to_word_config_reg_alg word_conf) asm_conf) progs))`;;
+hol4_overload "compile" "word_to_word_compile";;
 
 let full_compile_single_for_eval_def = cake_define
   `full_compile_single_for_eval two_reg_arith reg_count alg c p =

@@ -58,6 +58,7 @@ let gc_move_def = cake_define_list
                   (gc_state_h2_fupd (K h2) state)))))) | _4 ->
                   (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F)
                   state))`];;
+hol4_overload "gc_move" "gen_gc_gc_move";;
 
 let gc_move_list_def = cake_define_list
   [`gen_gc_gc_move_list conf state [] = ([],state)`;
@@ -65,6 +66,7 @@ let gc_move_list_def = cake_define_list
         (let (x,state) = gen_gc_gc_move conf state x in
         let (xs,state) = gen_gc_gc_move_list conf state xs in
           (x :: xs,state))`];;
+hol4_overload "gc_move_list" "gen_gc_gc_move_list";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
@@ -84,6 +86,7 @@ let gc_move_data_def = cake_define_wf
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
               state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;
+hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ decide_tac *)
@@ -113,6 +116,7 @@ let gc_move_loop_def = cake_define
          (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
        if clock = 0 then gc_state_ok_fupd (K F) state else
          gen_gc_gc_move_loop conf state (clock - 1)))`;;
+hol4_overload "gc_move_loop" "gen_gc_gc_move_loop";;
 
 let gen_gc_def = cake_define
   `gen_gc conf (roots,heap) =
@@ -188,6 +192,7 @@ let gc_inv_def = cake_define
            MEM (gc_shared_Pointer ptr d) xs /\ is_final conf state j
              ==>
            ptr IN FDOM (heap_map 0 (gc_state_heap state))))))`;;
+hol4_overload "gc_inv" "gen_gc_gc_inv";;
 
 (* HOL4 ML code, not ported:
 val full_simp = full_simp_tac std_ss

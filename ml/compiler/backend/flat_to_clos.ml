@@ -41,11 +41,13 @@ let arg1_def = cake_define
   `flat_to_clos_arg1 xs f =
      (match xs with [x] -> f x | _2 -> closLang_Let
        backend_common_None xs (Var backend_common_None 0))`;;
+hol4_overload "arg1" "flat_to_clos_arg1";;
 
 let arg2_def = cake_define
   `flat_to_clos_arg2 xs f =
      (match xs with [x; y] -> f x y | _3 -> closLang_Let
        backend_common_None xs (Var backend_common_None 0))`;;
+hol4_overload "arg2" "flat_to_clos_arg2";;
 
 (* HOL4 ML code, not ported:
 fun var_fun m n = ``closLang$Var t ^(numSyntax.term_of_int(m-n))``;
@@ -337,6 +339,7 @@ let compile_op_def = cake_define
                              flatLang_Src _12 -> Let
                              backend_common_None xs (Var
                              backend_common_None 0))`;;
+hol4_overload "compile_op" "flat_to_clos_compile_op";;
 
 let join_strings_def = cake_define
   `join_strings (x:mlstring) y =
@@ -365,6 +368,7 @@ let dest_Constant_def = cake_define
       | (closLang_Op t (closLang_BlockOp (Cons n)) []) -> SOME
         (ConstCons n [])
       | _17 -> NONE`;;
+hol4_overload "dest_Constant" "flat_to_clos_dest_Constant";;
 
 let dest_Constants_def = cake_define_list
   [`dest_Constants [] = SOME []`;
@@ -423,15 +427,18 @@ let compile_def = cake_define_list
               (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (SOME v ::
                 new_m) [x]))) funs)
               (HD (flat_to_clos_compile new_m [e]))])`];;
+hol4_overload "compile" "flat_to_clos_compile";;
 
 let compile_decs_def = cake_define_list
   [`flat_to_clos_compile_decs [] = []`;
    `flat_to_clos_compile_decs (e :: xs) = flat_to_clos_compile [] [e]
   ++ flat_to_clos_compile_decs xs`];;
+hol4_overload "compile_decs" "flat_to_clos_compile_decs";;
 
 let compile_prog_def = cake_define
   `flat_to_clos_compile_prog xs =
      attach_interpreter (flat_to_clos_compile_decs xs)`;;
+hol4_overload "compile_prog" "flat_to_clos_compile_prog";;
 
 let inc_compile_decs_def = cake_define
   `inc_compile_decs decs =

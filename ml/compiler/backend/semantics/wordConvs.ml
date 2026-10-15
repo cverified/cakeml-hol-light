@@ -318,6 +318,7 @@ let extract_labels_def = cake_define
         | (If cmp r1 ri e2 e3) ->
        (wordConvs_extract_labels e2 ++ wordConvs_extract_labels e3)
         | _21 -> []`;;
+hol4_overload "extract_labels" "wordConvs_extract_labels";;
 
 (*** Property on max_var ***)
 
@@ -339,6 +340,7 @@ let get_code_labels_def = cake_define
         | (wordLang_MustTerminate p) -> wordConvs_get_code_labels p
         | (LocValue _33 l1) -> {l1}
         | _34 -> {}`;;
+hol4_overload "get_code_labels" "wordConvs_get_code_labels";;
 
 (*** TODO: This seems like it must have been established before
   handler labels point only within the current table entry
@@ -364,6 +366,7 @@ let good_code_labels_def = cake_define
    (BIGUNION (set_of_list (MAP (\(n,m,pp). (wordConvs_get_code_labels
      pp)) p))) SUBSET
    (set_of_list (MAP FST p) UNION elabs)`;;
+hol4_overload "good_code_labels" "wordConvs_good_code_labels";;
 
 (*** not_created_subprogs ***)
 
@@ -413,6 +416,7 @@ val no_install_P = ``((<>) (Install 0 0 0 0 (LN,LN)))``
 let no_install_subprogs_def = cake_define
   `wordConvs_no_install p = (\x y. strcat x y) not_created_subprogs
   (no_install_P p)`;;
+hol4_overload "no_install" "wordConvs_no_install";;
 
 (****** no_mt : no MustTerminate ******)
 

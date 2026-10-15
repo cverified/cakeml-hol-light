@@ -59,6 +59,8 @@ hol4_overload "Tick" "bvi_Tick";;
 hol4_overload "Call" "bvi_Call";;
 hol4_overload "Force" "bvi_Force";;
 hol4_overload "Op" "bvi_Op";;
+hol4_overload "LetCall" "bvi_LetCall";;
+hol4_overload "Return" "bvi_Return";;
 
 (* HOL4 overload (expanded in the port):
      mk_unit = bvi$Op (BlockOp (Cons 0)) [] *)

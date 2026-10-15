@@ -31,3 +31,4 @@ let make_init_def = cake_define
   o (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS
   (LINV (tlookup f) UNIV) (stackSem_state_regs s))) (code_fupd (K code)
      s))))`;;
+hol4_overload "make_init" "stack_namesProof_make_init";;

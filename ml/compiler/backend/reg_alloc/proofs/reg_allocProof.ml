@@ -265,6 +265,7 @@ let is_subgraph_def = cake_define
 (* TODO quick sanity check: move to proof file when done *)
 let hide_def = cake_define
   `reg_allocProof_hide x = x`;;
+hol4_overload "hide" "reg_allocProof_hide";;
 
 (* From here onwards we stop characterizing s'.adj_ls exactly
    although it could be done

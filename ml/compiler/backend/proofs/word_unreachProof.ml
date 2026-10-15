@@ -24,6 +24,7 @@ let copy_vars_def = cake_define_list
    `word_unreachProof_copy_vars ((l,r) :: rest) from to =
       sptree_insert l (THE (sptree_lookup r from))
         (word_unreachProof_copy_vars rest from to)`];;
+hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_Seq_assoc_right_lemma[Loop]:

@@ -24,6 +24,7 @@ let ref_rel_def = cake_define
         | ((closSem_ByteArray as),(closSem_ByteArray bs)) -> as = bs
         | ((Thunk ma a),(Thunk mb b)) -> ma = mb /\ R a b
         | (_1,_2) -> F`;;
+hol4_overload "ref_rel" "closProps_ref_rel";;
 
 let code_locs_def = cake_define_list
   [`code_locs [] = []`;
@@ -546,6 +547,7 @@ let op_gbag_def = cake_define
       match x1 with
         closLang_GlobOp (SetGlobal n) -> BAG_INSERT n EMPTY_BAG
       | _117 -> EMPTY_BAG`;;
+hol4_overload "op_gbag" "closProps_op_gbag";;
 
 let set_globals_def = cake_define_list
   [`closProps_set_globals (Var _118 _119:flatLang_exp) = EMPTY_BAG`;
@@ -576,6 +578,8 @@ let set_globals_def = cake_define_list
    `closProps_elist_globals [] = EMPTY_BAG`;
    `closProps_elist_globals (e :: es) = BAG_UNION
   (closProps_set_globals e) (closProps_elist_globals es)`];;
+hol4_overload "elist_globals" "closProps_elist_globals";;
+hol4_overload "set_globals" "closProps_set_globals";;
 
 (* {foo}sgc_free: foo is free of SetGlobal closures, meaning closures
    that
@@ -633,6 +637,7 @@ let esgc_free_def = cake_define_list
           closProps_esgc_free bod`;
    `closProps_esgc_free (closLang_Op _164 _165 args) <=> EVERY
   closProps_esgc_free args`];;
+hol4_overload "esgc_free" "closProps_esgc_free";;
 
 (* state is setglobal-closure free *)
 let ssgc_free_def = cake_define
@@ -659,6 +664,7 @@ let isClos_def = cake_define
         (Closure x1 x2 x3 x4 x5:closSem_v) -> T
       | (Recclosure y1 y2 y3 y4 y5) -> T
       | _166 -> F`;;
+hol4_overload "isClos" "closProps_isClos";;
 
 let simple_val_rel_def = cake_define
   `closProps_simple_val_rel vr <=>
@@ -674,6 +680,7 @@ let simple_val_rel_def = cake_define
        vr x (Closure x1 x2 x3 x4 x5) ==> closProps_isClos x) /\
     (!y5 y4 y3 y2 y1 x.
        vr x (Recclosure y1 y2 y3 y4 y5) ==> closProps_isClos x)`;;
+hol4_overload "simple_val_rel" "closProps_simple_val_rel";;
 
 let simple_state_rel_def = cake_define
   `closProps_simple_state_rel vr sr <=>
@@ -718,6 +725,7 @@ let simple_state_rel_def = cake_define
        sr s t /\ LIST_REL (OPTREL vr) xs ys ==>
        sr (closSem_state_globals_fupd (K xs) s)
          (closSem_state_globals_fupd (K ys) t))`;;
+hol4_overload "simple_state_rel" "closProps_simple_state_rel";;
 
 (*TODO move to semanticPrimitivesProps*)
 
@@ -797,6 +805,7 @@ let eval_sim_def = cake_define
              = (res2,t2) /\
          result_rel (\x y. T) (\x y. T) res1 res2 /\ ffi s2 = ffi
            t2))`;;
+hol4_overload "eval_sim" "closProps_eval_sim";;
 
 (* HOL4 ML code, not ported:
 val evaluate_add_to_clock_io_events_mono_alt =
@@ -815,6 +824,7 @@ let adj_orac_rel_def = cake_define
         (ffi s1) (clock s1) cc ((f ## I) o
         closSem_state_compile_oracle s1) (closSem_state_code s1)
         (closSem_state_max_app s1)`;;
+hol4_overload "adj_orac_rel" "closProps_adj_orac_rel";;
 
 (* HOL4 ML code, not ported:
 val do_app_lemma =
@@ -975,6 +985,7 @@ let get_code_labels_def = cake_define_list
         BIGUNION (set_of_list (MAP closProps_get_code_labels es))
           UNION
         assign_get_code_label op`];;
+hol4_overload "get_code_labels" "closProps_get_code_labels";;
 
 (* HOL4 ML code, not ported:
 val code_locs_ind = theorem"code_locs_ind";

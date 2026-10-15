@@ -58,6 +58,7 @@ let dest_Cons_def = cake_define
       match x1 with
         closLang_BlockOp (Cons block_tag) -> SOME block_tag
       | _33 -> NONE`;;
+hol4_overload "dest_Cons" "bvi_tmc_dest_Cons";;
 
 (* PHASE 1: extract everything into a let bound "call block" *)
 
@@ -191,6 +192,7 @@ let mut_cons_def = cake_define
 let finalise_cons_def = cake_define
   `bvi_tmc_finalise_cons i_top_ptr = Op (closLang_MemOp
   closLang_FinaliseCons) [Var i_top_ptr]`;;
+hol4_overload "finalise_cons" "bvi_tmc_finalise_cons";;
 
 let fill_hole_def = cake_define
   `fill_hole i_ptr i_idx exp = Op (closLang_MemOp
@@ -326,6 +328,7 @@ let compile_exp_def = cake_define
        (let exp_worker = rewrite_worker loc next arity (arity + 1)
          arity exp in
        SOME (exp_wrapper,exp_worker)))`;;
+hol4_overload "compile_exp" "bvi_tmc_compile_exp";;
 
 let compile_each_def = cake_define_list
   [`bvi_tmc_compile_each next [] = (next,[])`;
@@ -338,7 +341,9 @@ let compile_each_def = cake_define_list
               bvl_to_bvi_namespaces) xs in
             (n,(loc,arity,exp_wrapper) :: (next,arity +
               2,exp_worker) :: ys)))`];;
+hol4_overload "compile_each" "bvi_tmc_compile_each";;
 
 let compile_prog_def = cake_define
   `bvi_tmc_compile_prog do_it next xs =
      (if do_it then bvi_tmc_compile_each next xs else (next,xs))`;;
+hol4_overload "compile_prog" "bvi_tmc_compile_prog";;

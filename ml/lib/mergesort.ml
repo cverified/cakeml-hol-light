@@ -37,6 +37,7 @@ let merge_def = cake_define
        (if R x y then
          x :: mergesort_merge R l1 (y :: l2) else
          y :: mergesort_merge R (x :: l1) l2)`;;
+hol4_overload "merge" "mergesort_merge";;
 
 let mergesortN_def = cake_define_wf
   `MEASURE (\(R,n,l). n)`

@@ -32,6 +32,7 @@ let state_rel_def = cake_define
      s = (\cfg prog. compile t cfg
                     (MAP (I ## I ## (\x. HD (remove_ticks [x])))
                       prog))`;;
+hol4_overload "state_rel" "bvl_inlineProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 val state_rel_alt = state_rel_def
@@ -56,10 +57,12 @@ let remove_ticks_cc_def = cake_define
      (\cfg prog'.
           cc cfg (MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks
             [x]))) prog'))`;;
+hol4_overload "remove_ticks_cc" "bvl_inlineProof_remove_ticks_cc";;
 
 let remove_ticks_co_def = cake_define
   `bvl_inlineProof_remove_ticks_co =
      (I ## MAP (I ## I ## (\x. HD (bvl_inline_remove_ticks [x]))))`;;
+hol4_overload "remove_ticks_co" "bvl_inlineProof_remove_ticks_co";;
 
 (* HOL4 ML code, not ported:
 val FST_EQ_LEMMA = prove(
@@ -113,6 +116,7 @@ let in_cc_def = cake_define
          let (cs1,prog1) = tick_compile_prog limit cs prog in
            match cc cfg prog1 with NONE -> NONE | SOME
              (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
+hol4_overload "in_cc" "bvl_inlineProof_in_cc";;
 
 let in_state_rel_def = cake_define
   `bvl_inlineProof_in_state_rel limit s t <=> globals
@@ -131,6 +135,7 @@ let in_state_rel_def = cake_define
         sptree_lookup k (code s) = SOME (arity,exp) ==>
         (?exp2. sptree_lookup k (code t) = SOME (arity,exp2) /\
                exp_rel (code s) [exp] [exp2]))`;;
+hol4_overload "in_state_rel" "bvl_inlineProof_in_state_rel";;
 
 (* HOL4 ML code, not ported:
 val tick_inline_all_acc = prove(
@@ -203,6 +208,7 @@ let in_co_def = cake_define
           ((cs,cfg),progs) = co n in let
           (cs1,progs) = tick_compile_prog limit cs progs in
           (cfg,progs)))`;;
+hol4_overload "in_co" "bvl_inlineProof_in_co";;
 
 (* HOL4 ML code, not ported:
 val exp_rel_rw = prove(

@@ -301,6 +301,7 @@ let stack_arg_count_def = cake_define
 let stack_free_def = cake_define
   `word_to_stack_stack_free dest arg_count (k,f,(f':num)) =
      f - stack_arg_count dest arg_count k`;;
+hol4_overload "stack_free" "word_to_stack_stack_free";;
 
 let stack_move_def = cake_define_list
   [`stack_move 0 start offset i p = p`;
@@ -555,6 +556,7 @@ let comp_def = cake_define
          NONE -> (Skip,bs) | SOME addr -> wShareInst op v addr
            kf),bs)
         | _8 -> (Skip,bs)`;;
+hol4_overload "comp" "word_to_stack_comp";;
 
 let raise_stub_def = cake_define
   `raise_stub perf k =
@@ -592,6 +594,7 @@ let compile_prog_def = cake_define
        (reg_count,f,stack_var_count) in
        (Seq (stackLang_StackAlloc (f - stack_arg_count'))
          q1,f,bitmaps))`;;
+hol4_overload "compile_prog" "word_to_stack_compile_prog";;
 
 let compile_word_to_stack_def = cake_define_list
   [`compile_word_to_stack asm_conf perf k [] bitmaps =
@@ -618,8 +621,10 @@ let compile_def = cake_define
         (raise_stub_location,raise_stub perf k) ::
         (store_consts_stub_location,store_consts_stub k) ::
           progs))`;;
+hol4_overload "compile" "word_to_stack_compile";;
 
 let stub_names_def = cake_define
   `word_to_stack_stub_names one = [
      (raise_stub_location,implode "_Raise");
      (store_consts_stub_location,implode "_StoreConsts")]`;;
+hol4_overload "stub_names" "word_to_stack_stub_names";;

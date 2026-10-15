@@ -149,6 +149,7 @@ let compile_op_def = cake_define
         num_added_globals))
       | (closLang_BlockOp (closLang_Constant c)) -> compile_const c
       | x -> x`;;
+hol4_overload "compile_op" "clos_to_bvl_compile_op";;
 
 let mk_const_def = cake_define
   `(mk_const n:bvl_exp) = Op (closLang_IntOp (closLang_Const (&n)))
@@ -339,6 +340,7 @@ let init_code_def = cake_define
                   1,generate_partial_app_closure_fn tot prev))
                 tot)
             max_app))`;;
+hol4_overload "init_code" "clos_to_bvl_init_code";;
 
 let init_globals_def = cake_define
   `init_globals max_app start_loc =
@@ -477,6 +479,7 @@ let compile_exps_def = cake_define_list
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
            ([Call ticks (SOME (dest + (num_stubs max_app)))
              c1],aux1))`];;
+hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 (* HOL4 ML code, not ported:
 val compile_exps_ind = theorem"compile_exps_ind";
@@ -576,6 +579,7 @@ let compile_prog_def = cake_define
        o SND) prog) [] in
        MAP2 (\(loc,args,_3) exp. (loc + num_stubs max_app,args,exp))
          prog new_exps ++ aux)`;;
+hol4_overload "compile_prog" "clos_to_bvl_compile_prog";;
 
 let clos_to_bvl_config_FIELDS = define_record "clos_to_bvl_config"
   ["next_loc","num";

@@ -35,16 +35,20 @@ let mini_INDUCT,mini_RECURSION = define_datatype
    (num list) (num list) | word_bignum_LoopBody (mini)";;
 hol4_overload "Skip" "word_bignum_Skip";;
 hol4_overload "Assign" "word_bignum_Assign";;
+hol4_overload "Delete" "word_bignum_Delete";;
 hol4_overload "Seq" "word_bignum_Seq";;
 hol4_overload "Load" "word_bignum_Load";;
 hol4_overload "Store" "word_bignum_Store";;
 hol4_overload "If" "word_bignum_If";;
+hol4_overload "Swap" "word_bignum_Swap";;
 hol4_overload "Add" "word_bignum_Add";;
 hol4_overload "Sub" "word_bignum_Sub";;
 hol4_overload "Mul" "word_bignum_Mul";;
 hol4_overload "Div" "word_bignum_Div";;
 hol4_overload "Loop" "word_bignum_Loop";;
 hol4_overload "Continue" "word_bignum_Continue";;
+hol4_overload "Rec" "word_bignum_Rec";;
+hol4_overload "LoopBody" "word_bignum_LoopBody";;
 
 
 (* syntax helper funs *)
@@ -561,6 +565,7 @@ let compile_exp_def = cake_define
       | (Shift sh x y) -> Shift sh (word_bignum_compile_exp x)
         (word_bignum_compile_exp y)
       | _1 -> Const (n2w 0)`;;
+hol4_overload "compile_exp" "word_bignum_compile_exp";;
 
 let TempIn1_def = cake_define
   `TempIn1 = Temp (n2w 31)`;;
@@ -687,6 +692,7 @@ let compile_def = cake_define
         (Seq (Set (Temp (n2w r0)) (Var (i + 0)))
              (Set (Temp (n2w r1)) (Var (i + 1))))))),l + 1,i + 5,cs)
         | _3 -> (Skip,l,i,cs)`;;
+hol4_overload "compile" "word_bignum_compile";;
 
 (* HOL4 ML code, not ported:
 val _ = (max_print_depth := 25);

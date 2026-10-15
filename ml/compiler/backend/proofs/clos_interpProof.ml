@@ -43,6 +43,7 @@ let state_rel_def = cake_define
        s /\
      oHD (closSem_state_globals s) = SOME (SOME (Closure NONE []
        [] 1 clos_interpreter))`;;
+hol4_overload "state_rel" "clos_interpProof_state_rel";;
 
 let state_rel_1_def = cake_define
   `state_rel_1 (s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state) <=>

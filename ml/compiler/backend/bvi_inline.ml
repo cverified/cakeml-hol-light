@@ -109,6 +109,8 @@ let compile_inc_def = cake_define
      (let (cs1,prog1) = inline_all cs prog in
        (cs1,MAP (\(name,arity,body).
                    (name,arity,remove_ticks_exp body)) prog1))`;;
+hol4_overload "compile_inc" "bvi_inline_compile_inc";;
 
 let compile_prog_def = cake_define
   `bvi_inline_compile_prog prog = bvi_inline_compile_inc LN prog`;;
+hol4_overload "compile_prog" "bvi_inline_compile_prog";;

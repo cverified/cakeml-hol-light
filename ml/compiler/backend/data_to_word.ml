@@ -35,6 +35,7 @@ let gc_kind_INDUCT,gc_kind_RECURSION = define_datatype
    data_to_word_Generational (num list)";;
 hol4_overload "None" "data_to_word_None";;
 hol4_overload "Simple" "data_to_word_Simple";;
+hol4_overload "Generational" "data_to_word_Generational";;
 
 let data_to_word_config_FIELDS = define_record "data_to_word_config"
   ["tag_bits","num";
@@ -67,6 +68,7 @@ let adjust_sets_def = cake_define
 
 let unit_def = cake_define
   `data_to_word_Unit = Const (n2w 2)`;;
+hol4_overload "Unit" "data_to_word_Unit";;
 
 let GiveUp_def = cake_define
   `GiveUp = (Seq (Assign 1 (Const (--(n2w 1))))
@@ -926,6 +928,7 @@ let StringCmpLoop_code_def = cake_define
 let get_names_def = cake_define_list
   [`data_to_word_get_names NONE = LN`;
    `data_to_word_get_names (SOME x) = x`];;
+hol4_overload "get_names" "data_to_word_get_names";;
 
 let LoadWord64_def = cake_define
   `LoadWord64 c i j =
@@ -1094,10 +1097,12 @@ let fp_uop_inst_def = cake_define
 
 let arg1_def = cake_define
   `data_to_word_arg1 vs f x = (match vs with [v1] -> f v1 | _1 -> x)`;;
+hol4_overload "arg1" "data_to_word_arg1";;
 
 let arg2_def = cake_define
   `data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 | _2
   -> x)`;;
+hol4_overload "arg2" "data_to_word_arg2";;
 
 let arg3_def = cake_define
   `arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _3 -> x)`;;
@@ -2783,6 +2788,7 @@ let assign_def = cake_define
            closLang_WordOp (FP_uop fpu) -> data_to_word_arg1 args
            (assign_FP_uop fpu c secn l dest names) (Skip,l) | _16 ->
            (Skip,l))`;;
+hol4_overload "assign" "data_to_word_assign";;
 
 let force_thunk_def = cake_define
   `force_thunk (c:data_to_word_config) secn (l:num) ret loc v1 =
@@ -2855,10 +2861,12 @@ let comp_def = cake_define
                    let handler = SOME (adjust_var n,q1,secn,l + 1) in
                      (Call ret target (MAP adjust_var args)
                        handler,l1)))))`;;
+hol4_overload "comp" "data_to_word_comp";;
 
 let compile_part_def = cake_define
   `data_to_word_compile_part c (n,arg_count,p) = (n,arg_count + 1,FST
   (data_to_word_comp c n 2 p))`;;
+hol4_overload "compile_part" "data_to_word_compile_part";;
 
 let MemCopy_code_def = cake_define
   `MemCopy_code =
@@ -3010,6 +3018,7 @@ let stubs_def = cake_define
      (ByteCopyNew_location,4,ByteCopyNew_code data_conf);
      (Dummy_location,0,Skip)] ++ generated_bignum_stubs
        Bignum_location`;;
+hol4_overload "stubs" "data_to_word_stubs";;
 
 let stub_names_def = cake_define
   `data_to_word_stub_names one = [
@@ -3047,6 +3056,7 @@ let stub_names_def = cake_define
      (Dummy_location,(implode "_Dummy"))] ++ GENLIST (\i. (i +
        Bignum_location,(implode "_Bignum")))
      (data_num_stubs - Bignum_location)`;;
+hol4_overload "stub_names" "data_to_word_stub_names";;
 
 let compile_def = cake_define
   `data_to_word_compile data_conf word_conf asm_conf prog =

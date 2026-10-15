@@ -219,12 +219,14 @@ let get_code_labels_def = cake_define
           dataProps_get_code_labels p2
         | (Assign _11 op _12 _13) -> assign_get_code_label op
         | _14 -> {}`;;
+hol4_overload "get_code_labels" "dataProps_get_code_labels";;
 
 let good_code_labels_def = cake_define
   `dataProps_good_code_labels p elabs <=>
      (BIGUNION (set_of_list (MAP (\(n,m,pp).
        (dataProps_get_code_labels pp)) p))) SUBSET
      (set_of_list (MAP FST p)) UNION elabs`;;
+hol4_overload "good_code_labels" "dataProps_good_code_labels";;
 
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 

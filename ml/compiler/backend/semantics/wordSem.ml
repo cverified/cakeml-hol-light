@@ -245,20 +245,28 @@ let wordSem_result_INDUCT,wordSem_result_RECURSION = define_datatype
    (num) | wordSem_Continue (num) | wordSem_TimeOut | \
    wordSem_NotEnoughSpace | wordSem_FinalFFI (final_event) | \
    wordSem_Error";;
+hol4_overload "Result" "wordSem_Result";;
+hol4_overload "Exception" "wordSem_Exception";;
 hol4_overload "Break" "wordSem_Break";;
 hol4_overload "Continue" "wordSem_Continue";;
+hol4_overload "TimeOut" "wordSem_TimeOut";;
+hol4_overload "NotEnoughSpace" "wordSem_NotEnoughSpace";;
+hol4_overload "FinalFFI" "wordSem_FinalFFI";;
+hol4_overload "Error" "wordSem_Error";;
 
 let isResult_def = cake_define
   `wordSem_isResult x1 =
         match x1 with
           wordSem_Result a b -> T
         | _19 -> F`;;
+hol4_overload "isResult" "wordSem_isResult";;
 
 let isException_def = cake_define
   `wordSem_isException x1 =
         match x1 with
           wordSem_Exception a b -> T
         | _20 -> F`;;
+hol4_overload "isException" "wordSem_isException";;
 
 (* HOL4 ML code, not ported:
 val s = ``(s:('a,'c,'ffi) wordSem$state)``
@@ -275,6 +283,7 @@ let fix_clock_def = cake_define
        old_s)) (wordSem_state_clock_fupd (K (if wordSem_state_clock
        old_s < wordSem_state_clock new_s then wordSem_state_clock
        old_s else wordSem_state_clock new_s)) new_s))`;;
+hol4_overload "fix_clock" "wordSem_fix_clock";;
 
 let is_word_def = cake_define
   `is_word x1 =
@@ -315,6 +324,7 @@ let get_vars_def = cake_define_list
          (match get_var v s with NONE -> NONE | SOME x -> (match
            wordSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME
            (x :: xs)))`];;
+hol4_overload "get_vars" "wordSem_get_vars";;
 
 let set_var_def = cake_define
   `(\x y. strcat x y)
@@ -359,6 +369,7 @@ let word_exp_def = cake_define_list
            wexp1) with (SOME (wordLang_Word w),SOME (wordLang_Word
            w1)) -> OPTION_MAP wordLang_Word (word_sh sh w (w2n w1)) |
            _27 -> NONE)`];;
+hol4_overload "word_exp" "wordSem_word_exp";;
 
 (* Flushes the locals and (optionally) the store *)
 let flush_state_def = cake_define
@@ -598,6 +609,7 @@ let cut_env_def = cake_define
   `wordSem_cut_env (name_sets:1 spt#1 spt) env =
      (match cut_envs name_sets env with SOME (e1,e2) -> SOME
        (sptree_union e2 e1) | _46 -> NONE)`;;
+hol4_overload "cut_env" "wordSem_cut_env";;
 (* -- *)
 
 let cut_state_def = cake_define
@@ -625,11 +637,13 @@ let find_code_def = cake_define_list
                  SOME (arity,exp) -> (if LENGTH args = arity + 1 then
                  SOME (FRONT args,exp,sptree_lookup loc ssize) else
                  NONE)) | other -> NONE)`];;
+hol4_overload "find_code" "wordSem_find_code";;
 
 let enc_stack_def = cake_define_list
   [`wordSem_enc_stack [] = []`;
    `wordSem_enc_stack (StackFrame n _47 l handler :: st) = MAP SND l
   ++ wordSem_enc_stack st`];;
+hol4_overload "enc_stack" "wordSem_enc_stack";;
 
 let dec_stack_def = cake_define
   `wordSem_dec_stack xs x2 =
@@ -641,6 +655,7 @@ let dec_stack_def = cake_define
             -> NONE | SOME s -> SOME (StackFrame n l0
               (ZIP (MAP FST l) (TAKE (LENGTH l) xs)) handler :: s))
         | (_48,_49) -> NONE`;;
+hol4_overload "dec_stack" "wordSem_dec_stack";;
 
 let gc_def = cake_define
   `(\x y. strcat x y)
@@ -692,11 +707,13 @@ let assign_def = cake_define
 let get_fp_var_def = cake_define
   `wordSem_get_fp_var v (s:('a,'c,'ffi)wordSem_state) = FLOOKUP
   (wordSem_state_fp_regs s) v`;;
+hol4_overload "get_fp_var" "wordSem_get_fp_var";;
 
 let set_fp_var_def = cake_define
   `wordSem_set_fp_var v x (s:('a,'c,'ffi)wordSem_state) =
      (wordSem_state_fp_regs_fupd (K (wordSem_state_fp_regs s |+
        (v,x))) s)`;;
+hol4_overload "set_fp_var" "wordSem_set_fp_var";;
 
 let inst_def = cake_define
   `(\x y. strcat x y)
@@ -889,6 +906,7 @@ let get_var_imm_def = cake_define_list
   [`(\x y. strcat x y) (wordSem_get_var_imm ((Reg n):'a asm_reg_imm))
   s = get_var n s`;
    `wordSem_get_var_imm (Imm w) s = SOME (wordLang_Word w)`];;
+hol4_overload "get_var_imm" "wordSem_get_var_imm";;
 
 let add_ret_loc_def = cake_define_list
   [`add_ret_loc NONE xs = xs`;
@@ -919,6 +937,7 @@ let const_writes_def = cake_define_list
 
 let STOP_def = cake_define
   `wordSem_STOP x = x`;;
+hol4_overload "STOP" "wordSem_STOP";;
 
 let bad_fun_return_def = cake_define
   `wordSem_bad_fun_return x1 =
@@ -927,6 +946,7 @@ let bad_fun_return_def = cake_define
       | (SOME (Break _83)) -> T
       | (SOME (Continue _84)) -> T
       | _85 -> F`;;
+hol4_overload "bad_fun_return" "wordSem_bad_fun_return";;
 
 let cont_loop_def = cake_define
   `wordSem_cont_loop x1 =
@@ -934,6 +954,7 @@ let cont_loop_def = cake_define
         NONE -> T
       | (SOME (Continue n)) -> (n = 0)
       | _86 -> F`;;
+hol4_overload "cont_loop" "wordSem_cont_loop";;
 
 let exit_loop_def = cake_define
   `wordSem_exit_loop res =
@@ -941,6 +962,7 @@ let exit_loop_def = cake_define
         SOME (Break n) -> SOME (Break (n - 1))
       | (SOME (Continue n)) -> SOME (Continue (n - 1))
       | res -> res`;;
+hol4_overload "exit_loop" "wordSem_exit_loop";;
 
 let evaluate_def = cake_define_list
   [`wordSem_evaluate ((Skip:'a wordLang_prog),s) = (NONE,s)`;
@@ -1189,6 +1211,7 @@ let evaluate_def = cake_define_list
                                 _105),s) -> (SOME wordSem_Error,s) |
                                 (SOME (Continue _106),s) -> (SOME
                                 wordSem_Error,s) | res -> res)))))))`];;
+hol4_overload "evaluate" "wordSem_evaluate";;
 
 (* We prove that the clock never increases and that termdep is constant.
    *)

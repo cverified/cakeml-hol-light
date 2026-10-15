@@ -71,6 +71,7 @@ let read_bytearray_def = cake_define_list
 
 let shift_seq_def = cake_define
   `misc_shift_seq k s = (\i. s (i + (k:num)))`;;
+hol4_overload "shift_seq" "misc_shift_seq";;
 
 (* TODO: Used once in all of CakeML: could probably be pushed back to
    use-site*)
@@ -94,6 +95,9 @@ let shift_seq_def = cake_define
 let app_list_INDUCT,app_list_RECURSION = define_datatype
   "app_list = misc_List ('a list) | misc_Append (app_list) (app_list) \
    | misc_Nil";;
+hol4_overload "List" "misc_List";;
+hol4_overload "Append" "misc_Append";;
+hol4_overload "Nil" "misc_Nil";;
 
 let append_aux_def = cake_define_list
   [`append_aux misc_Nil aux = aux`;
@@ -322,6 +326,7 @@ let word_list_def = cake_define_list
   [`misc_word_list a [] = emp`;
    `misc_word_list a (x :: xs) = set_sep_one (a,x) * misc_word_list
   (a + bytes_in_word) xs`];;
+hol4_overload "word_list" "misc_word_list";;
 
 let word_list_exists_def = cake_define
   `word_list_exists a n =

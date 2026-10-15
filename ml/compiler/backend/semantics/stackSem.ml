@@ -142,15 +142,18 @@ let mem_store_def = cake_define
      (if addr' IN mdomain s then
        SOME (memory_fupd (K ((addr' =+ w) (memory s))) s) else
          NONE)`;;
+hol4_overload "mem_store" "stackSem_mem_store";;
 
 let mem_load_def = cake_define
   `stackSem_mem_load (addr':'a word) (s:('a,'c,'ffi)stackSem_state) =
      (if addr' IN mdomain s then
        SOME (memory s addr') else NONE)`;;
+hol4_overload "mem_load" "stackSem_mem_load";;
 
 let dec_clock_def = cake_define
   `stackSem_dec_clock (s:('a,'c,'ffi)stackSem_state) = clock_fupd (K
   (clock s - 1)) s`;;
+hol4_overload "dec_clock" "stackSem_dec_clock";;
 
 let word_exp_def = cake_define_list
   [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
@@ -177,6 +180,7 @@ hol4_overload "word_exp" "stackSem_word_exp";;
 let get_var_def = cake_define
   `stackSem_get_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP
   (stackSem_state_regs s) v`;;
+hol4_overload "get_var" "stackSem_get_var";;
 
 let get_vars_def = cake_define_list
   [`stackSem_get_vars [] s = SOME []`;
@@ -195,6 +199,7 @@ let set_var_def = cake_define
   `stackSem_set_var v x (s:('a,'c,'ffi)stackSem_state) =
      (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
        (v,x))) s)`;;
+hol4_overload "set_var" "stackSem_set_var";;
 
 let set_fp_var_def = cake_define
   `stackSem_set_fp_var v x (s:('a,'c,'ffi)stackSem_state) =
@@ -208,6 +213,7 @@ let set_store_def = cake_define
 let empty_env_def = cake_define
   `stackSem_empty_env (s:('a,'c,'ffi)stackSem_state) = stack_fupd (K
   []) (stackSem_state_regs_fupd (K FEMPTY) s)`;;
+hol4_overload "empty_env" "stackSem_empty_env";;
 
 let sh_mem_store_def = cake_define
   `(sh_mem_store r (a:'a word) (s:('a,'c,'ffi)stackSem_state):('a
@@ -407,6 +413,7 @@ let assign_def = cake_define
   `stackSem_assign reg exp s =
      (match word_exp s exp with NONE -> NONE | SOME w -> SOME
        (stackSem_set_var reg (wordLang_Word w) s))`;;
+hol4_overload "assign" "stackSem_assign";;
 
 let inst_def = cake_define
   `stackSem_inst i (s:('a,'c,'ffi)stackSem_state) =
@@ -594,6 +601,7 @@ let inst_def = cake_define
              v:'a word) in
              SOME (set_fp_var d1 (int_to_fp64 roundTiesToEven i)
                s)) | NONE -> NONE | _52 -> NONE))`;;
+hol4_overload "inst" "stackSem_inst";;
 
 let get_var_imm_def = cake_define_list
   [`stackSem_get_var_imm ((Reg n):'a asm_reg_imm) s =
@@ -633,6 +641,7 @@ let get_labels_def = cake_define
                (l1,l2) INSERT stackSem_get_labels r)))
         | (Halt _58) -> {}
         | _59 -> {}`;;
+hol4_overload "get_labels" "stackSem_get_labels";;
 
 let loc_check_def = cake_define
   `loc_check code (l1,l2) <=>
@@ -699,6 +708,7 @@ let dest_Seq_def = cake_define
       match x1 with
         wordLang_Seq p1 p2 -> SOME (p1,(p2:'a stackLang_prog))
       | _62 -> NONE`;;
+hol4_overload "dest_Seq" "stackSem_dest_Seq";;
 
 let bad_fun_return_def = cake_define
   `stackSem_bad_fun_return x1 =
@@ -1019,6 +1029,7 @@ let semantics_def = cake_define
           (build_lprefix_lub
             (IMAGE (\k. fromList (ffi_state_io_events (ffi (SND
               (evaluate (prog,clock_fupd (K k) s)))))) UNIV)))`;;
+hol4_overload "semantics" "stackSem_semantics";;
 
 (* record accessors *)
 

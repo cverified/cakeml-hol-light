@@ -31,6 +31,14 @@ let flatLang_op_INDUCT,flatLang_op_RECURSION = define_datatype
    (num) | flatLang_GlobalVarInit (num) | flatLang_GlobalVarLookup \
    (num) | flatLang_TagLenEq (num) (num) | flatLang_LenEq (num) | \
    flatLang_El (num) | flatLang_Id";;
+hol4_overload "Src" "flatLang_Src";;
+hol4_overload "GlobalVarAlloc" "flatLang_GlobalVarAlloc";;
+hol4_overload "GlobalVarInit" "flatLang_GlobalVarInit";;
+hol4_overload "GlobalVarLookup" "flatLang_GlobalVarLookup";;
+hol4_overload "TagLenEq" "flatLang_TagLenEq";;
+hol4_overload "LenEq" "flatLang_LenEq";;
+hol4_overload "El" "flatLang_El";;
+hol4_overload "Id" "flatLang_Id";;
 
 new_type_abbrev("ctor_id",`: num`);;
 (* NONE represents the exception type *)
@@ -81,6 +89,7 @@ hol4_overload "Raise" "flatLang_Raise";;
 hol4_overload "Handle" "flatLang_Handle";;
 hol4_overload "Lit" "flatLang_Lit";;
 hol4_overload "Con" "flatLang_Con";;
+hol4_overload "Var_local" "flatLang_Var_local";;
 hol4_overload "Fun" "flatLang_Fun";;
 hol4_overload "App" "flatLang_App";;
 hol4_overload "If" "flatLang_If";;
@@ -97,6 +106,7 @@ let bool_id_def = cake_define
 
 let bool_def = cake_define
   `flatLang_Bool t b = Con t (SOME (bool_to_tag b,SOME bool_id)) []`;;
+hol4_overload "Bool" "flatLang_Bool";;
 
 let SmartIf_def = cake_define
   `SmartIf t e p q =

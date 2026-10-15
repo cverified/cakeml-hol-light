@@ -26,10 +26,12 @@ let fix_clock_def = cake_define
        semanticPrimitives_state_clock s then
        semanticPrimitives_state_clock s' else
        semanticPrimitives_state_clock s)) s',res)`;;
+hol4_overload "fix_clock" "evaluate_fix_clock";;
 
 let dec_clock_def = cake_define
   `evaluate_dec_clock s = (semanticPrimitives_state_clock_fupd (K
   (semanticPrimitives_state_clock s - 1)) s)`;;
+hol4_overload "dec_clock" "evaluate_dec_clock";;
 
 let do_eval_res_def = cake_define
   `do_eval_res vs s =
@@ -269,6 +271,8 @@ let evaluate_def = cake_define_list
         (st1,Rval env1) -> evaluate_evaluate_decs st1
           (extend_dec_env env1 env) ds | (st1,Rerr v7) -> (st1,Rerr
           v7))`];;
+hol4_overload "evaluate_decs" "evaluate_evaluate_decs";;
+hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 
 (* tidy up evalute_def and evaluate_ind *)
 

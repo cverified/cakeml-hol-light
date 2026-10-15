@@ -110,6 +110,7 @@ val (move_related, get_move_related_def, set_move_related_def) =
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
   "state_exn = reg_alloc_Fail (string) | reg_alloc_Subscript";;
 hol4_overload "Fail" "reg_alloc_Fail";;
+hol4_overload "Subscript" "reg_alloc_Subscript";;
 
 (* Monadic functions to handle the exceptions *)
 (* HOL4 ML code, not ported:
@@ -307,6 +308,7 @@ let split_degree_def = cake_define
 let sort_moves_def = cake_define
   `reg_alloc_sort_moves ls =
      sort (\((p:num),x,p',x'). p > p') ls`;;
+hol4_overload "sort_moves" "reg_alloc_sort_moves";;
 
 (* merge two sorted lists *)
 let smerge_def = cake_define
@@ -872,6 +874,10 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
   "clash_tree = reg_alloc_Delta (num list) (num list) | reg_alloc_Set \
    (1 spt) | reg_alloc_Branch ((1 spt) option) (clash_tree) \
    (clash_tree) | reg_alloc_Seq (clash_tree) (clash_tree)";;
+hol4_overload "Delta" "reg_alloc_Delta";;
+hol4_overload "Set" "reg_alloc_Set";;
+hol4_overload "Branch" "reg_alloc_Branch";;
+hol4_overload "Seq" "reg_alloc_Seq";;
 
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def = cake_define_list
@@ -1134,6 +1140,7 @@ let resort_moves_def = cake_define
 let algorithm_INDUCT,algorithm_RECURSION = define_datatype
   "algorithm = reg_alloc_Simple | reg_alloc_IRC";;
 hol4_overload "Simple" "reg_alloc_Simple";;
+hol4_overload "IRC" "reg_alloc_IRC";;
 
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref

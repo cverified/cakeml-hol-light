@@ -232,6 +232,7 @@ let stack_rel_def = cake_define
        t_handler = SOME (wordLang_Word (n2w (t_stack_length -
          handler_val (LASTN (s_handler + 1) stack))))) /\
        stack_rel_aux k t_stack_length s_stack stack)`;;
+hol4_overload "stack_rel" "word_to_stackProof_stack_rel";;
 
 (*f is the size of the current frame + 1 most of the time
   (extra word for the bitmap pointer)
@@ -338,6 +339,7 @@ let state_rel_def = cake_define
            2) = SOME v) else ((\l n. oEL n l) current_frame (f - 1 - (n
            DIV 2 - k)) = SOME v) /\
               n DIV 2 < k + f')))`;;
+hol4_overload "state_rel" "word_to_stackProof_state_rel";;
 
 (* correctness proof *)
 

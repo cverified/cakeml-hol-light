@@ -25,6 +25,7 @@ let extract_labels_def = cake_define
         | ((labLang_Label l1 l2 _1) :: xs) -> (l1,l2) ::
           labProps_extract_labels xs
         | (x :: xs) -> labProps_extract_labels xs`;;
+hol4_overload "extract_labels" "labProps_extract_labels";;
 
 (* HOL4 ML code, not ported:
 val extract_labels_ind = theorem"extract_labels_ind";
@@ -51,6 +52,7 @@ let sec_get_labels_def = cake_define
 let get_labels_def = cake_define
   `labProps_get_labels code = BIGUNION (IMAGE sec_get_labels
   (set_of_list code))`;;
+hol4_overload "get_labels" "labProps_get_labels";;
 
 let line_get_code_labels_def = cake_define
   `line_get_code_labels x1 =
@@ -67,6 +69,7 @@ let sec_get_code_labels_def = cake_define
 let get_code_labels_def = cake_define
   `labProps_get_code_labels code = BIGUNION (IMAGE
   sec_get_code_labels (set_of_list code))`;;
+hol4_overload "get_code_labels" "labProps_get_code_labels";;
 
 let sec_ends_with_label_def = cake_define
   `sec_ends_with_label (Section _15 ls) <=>
@@ -120,6 +123,7 @@ let no_install_def = cake_define
    (!p w bytes l. ~(
      asm_fetch_aux p code =
        SOME (labLang_LabAsm Install w bytes l)))`;;
+hol4_overload "no_install" "labProps_no_install";;
 
 let no_share_mem_inst_def = cake_define
   `no_share_mem_inst code <=>

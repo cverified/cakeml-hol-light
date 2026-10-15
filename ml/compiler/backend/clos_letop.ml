@@ -22,6 +22,7 @@ let var_list_def = cake_define
         | ((Var t m :: xs),(y :: ys)) -> ((m = n) /\
           clos_letop_var_list (n + 1) xs ys)
         | (_1,_2) -> F`;;
+hol4_overload "var_list" "clos_letop_var_list";;
 
 let dest_op_def = cake_define
   `clos_letop_dest_op x1 args =
@@ -29,6 +30,7 @@ let dest_op_def = cake_define
           closLang_Op t op xs -> (if clos_letop_var_list 0 xs args
             then SOME op else NONE)
         | _3 -> NONE`;;
+hol4_overload "dest_op" "clos_letop_dest_op";;
 
 let let_op_def = cake_define_list
   [`clos_letop_let_op [] = []`;
@@ -65,6 +67,7 @@ let let_op_def = cake_define_list
            [x1]))])`;
    `clos_letop_let_op [closLang_Fn t loc_opt vs num_args x1] =
   [closLang_Fn t loc_opt vs num_args (HD (clos_letop_let_op [x1]))]`];;
+hol4_overload "let_op" "clos_letop_let_op";;
 
 (* HOL4 ML code, not ported:
 val let_op_ind = theorem "let_op_ind";
@@ -107,6 +110,9 @@ let let_op_sing_def = cake_define_list
    `let_op_let [] = []`;
    `let_op_let ((num_args,(x:closLang_exp)) :: xs) =
        (num_args,clos_letop_let_op_sing x) :: let_op_let xs`];;
+hol4_overload "let_op_list" "clos_letop_let_op_list";;
+hol4_overload "let_op_sing" "clos_letop_let_op_sing";;
 
 let compile_inc_def = cake_define
   `clos_letop_compile_inc (e,xs) = (clos_letop_let_op e,[])`;;
+hol4_overload "compile_inc" "clos_letop_compile_inc";;

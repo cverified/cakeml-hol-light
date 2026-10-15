@@ -27,6 +27,7 @@ let merge_moves_def = cake_define
      (let l2' = MAP (\(x,y). match ALOOKUP l1 y with NONE -> (x,y) |
        SOME v -> (x,v)) l2 in
        anub (l2' ++ l1) ([]:num list))`;;
+hol4_overload "merge_moves" "word_unreach_merge_moves";;
 
 let SimpSeq_def = cake_define
   `SimpSeq p1 (p2:'a wordLang_prog) =

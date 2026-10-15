@@ -14,6 +14,7 @@ needs "compiler/backend/semantics/bviSem.ml";;
 
 let v_rel_def = cake_define
   `bvi_letProof_v_rel a x y xs ys <=> (\l n. oEL n l) ys a = SOME x`;;
+hol4_overload "v_rel" "bvi_letProof_v_rel";;
 
 let env_rel_def = cake_define
   `bvi_letProof_env_rel x1 d e1 e2 =
@@ -23,6 +24,7 @@ let env_rel_def = cake_define
         bvi_letProof_v_rel a x y (x :: e1) (y :: e2) /\
           bvi_letProof_env_rel rest d e1 e2
         | (_1,_2,_3) -> F`;;
+hol4_overload "env_rel" "bvi_letProof_env_rel";;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_env_rel[CONS]:

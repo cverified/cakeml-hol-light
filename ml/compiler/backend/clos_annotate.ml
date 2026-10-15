@@ -147,6 +147,7 @@ let alt_free_sing_def = cake_define_list
 let get_var_def = cake_define
   `clos_annotate_get_var m l i v =
      (if v < l then v else l + zlookup i (v - l))`;;
+hol4_overload "get_var" "clos_annotate_get_var";;
 
 let shifted_env_def = cake_define_list
   [`shifted_env n [] = LN`;
@@ -211,6 +212,7 @@ let shift_def = cake_define_list
    `clos_annotate_shift [closLang_Call t ticks dest xs] m l i =
          (let c1 = clos_annotate_shift xs m l i in
            ([closLang_Call t ticks dest c1]))`];;
+hol4_overload "shift" "clos_annotate_shift";;
 
 let shift_sing_def = cake_define_list
   [`shift_sing (Var t v:closLang_exp) m l i =
@@ -276,15 +278,18 @@ let shift_sing_def = cake_define_list
 let annotate_def = cake_define
   `clos_annotate_annotate arity xs = clos_annotate_shift (FST
   (alt_free xs)) 0 arity LN`;;
+hol4_overload "annotate" "clos_annotate_annotate";;
 
 let compile_def = cake_define
   `clos_annotate_compile prog =
      MAP (\(n,args,exp). (n,args,HD (clos_annotate_annotate args
        [exp]))) prog`;;
+hol4_overload "compile" "clos_annotate_compile";;
 
 let compile_inc_def = cake_define
   `clos_annotate_compile_inc (e,aux) = (clos_annotate_annotate 0
   e,clos_annotate_compile aux)`;;
+hol4_overload "compile_inc" "clos_annotate_compile_inc";;
 
 (* cv versions *)
 

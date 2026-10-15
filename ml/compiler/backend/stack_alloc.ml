@@ -888,6 +888,7 @@ hol4_overload "comp" "stack_alloc_comp";;
 
 let prog_comp_def = cake_define
   `stack_alloc_prog_comp (n,p) = (n,FST (comp n (next_lab p 2) p))`;;
+hol4_overload "prog_comp" "stack_alloc_prog_comp";;
 
 let compile_def = cake_define
   `stack_alloc_compile c prog = stubs c ++ MAP stack_alloc_prog_comp

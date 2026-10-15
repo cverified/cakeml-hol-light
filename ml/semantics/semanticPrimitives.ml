@@ -45,6 +45,13 @@ let semanticPrimitives_v_INDUCT,semanticPrimitives_v_RECURSION =
    (mlstring) | semanticPrimitives_Loc (bool) (num) | \
    semanticPrimitives_Vectorv (semanticPrimitives_v list) | \
    semanticPrimitives_Env (semanticPrimitives_v sem_env) (num#num)";;
+hol4_overload "Litv" "semanticPrimitives_Litv";;
+hol4_overload "Conv" "semanticPrimitives_Conv";;
+hol4_overload "Closure" "semanticPrimitives_Closure";;
+hol4_overload "Recclosure" "semanticPrimitives_Recclosure";;
+hol4_overload "Loc" "semanticPrimitives_Loc";;
+hol4_overload "Vectorv" "semanticPrimitives_Vectorv";;
+hol4_overload "Env" "semanticPrimitives_Env";;
 
 new_type_abbrev("env_ctor",`: (mlstring,mlstring,num#stamp)namespace`);;
 new_type_abbrev("env_val",`:
@@ -62,12 +69,15 @@ let subscript_stamp_def = cake_define
 let bind_exn_v_def = cake_define
   `semanticPrimitives_bind_exn_v = semanticPrimitives_Conv (SOME
   bind_stamp) []`;;
+hol4_overload "bind_exn_v" "semanticPrimitives_bind_exn_v";;
 let chr_exn_v_def = cake_define
   `semanticPrimitives_chr_exn_v = semanticPrimitives_Conv (SOME
   chr_stamp) []`;;
+hol4_overload "chr_exn_v" "semanticPrimitives_chr_exn_v";;
 let div_exn_v_def = cake_define
   `semanticPrimitives_div_exn_v = semanticPrimitives_Conv (SOME
   div_stamp) []`;;
+hol4_overload "div_exn_v" "semanticPrimitives_div_exn_v";;
 let sub_exn_v_def = cake_define
   `sub_exn_v = semanticPrimitives_Conv (SOME subscript_stamp) []`;;
 
@@ -137,6 +147,10 @@ let store_v_INDUCT,store_v_RECURSION = define_datatype
    semanticPrimitives_W8array (word8 list) | \
    semanticPrimitives_Varray ('a list) | semanticPrimitives_Thunk \
    (thunk_mode) ('a)";;
+hol4_overload "Refv" "semanticPrimitives_Refv";;
+hol4_overload "W8array" "semanticPrimitives_W8array";;
+hol4_overload "Varray" "semanticPrimitives_Varray";;
+hol4_overload "Thunk" "semanticPrimitives_Thunk";;
 
 let store_v_same_type_def = cake_define
   `store_v_same_type v1 v2 =
@@ -276,12 +290,14 @@ let ctor_same_type_def = cake_define
     (match (c1,c2) with
       (NONE,NONE) -> T | (SOME stamp1,SOME stamp2) -> same_type
         stamp1 stamp2 | _27 -> F)`;;
+hol4_overload "ctor_same_type" "semanticPrimitives_ctor_same_type";;
 
 let boolv_def = cake_define
   `semanticPrimitives_Boolv b =
      (if b then semanticPrimitives_Conv (SOME (TypeStamp (implode
        "True") bool_type_num)) [] else semanticPrimitives_Conv (SOME
        (TypeStamp (implode "False") bool_type_num)) [])`;;
+hol4_overload "Boolv" "semanticPrimitives_Boolv";;
 
 (* A big-step pattern matcher.  If the value matches the pattern, return
    an
@@ -340,6 +356,8 @@ let pmatch_def = cake_define_list
               semanticPrimitives_pmatch_list envC s ps vs env')`;
    `semanticPrimitives_pmatch_list envC s _32 _33 env =
   Match_type_error`];;
+hol4_overload "pmatch" "semanticPrimitives_pmatch";;
+hol4_overload "pmatch_list" "semanticPrimitives_pmatch_list";;
 
 let can_pmatch_all_def = cake_define_list
   [`can_pmatch_all envC refs [] v <=> T`;
@@ -358,6 +376,7 @@ let build_rec_env_def = cake_define
    ITLIST (\(f,x,e) env'. nsBind f (semanticPrimitives_Recclosure
      cl_env funs f) env') funs
          add_to_env`;;
+hol4_overload "build_rec_env" "semanticPrimitives_build_rec_env";;
 
 (* Lookup in the list of mutually recursive functions *)
 let find_recfun_def = cake_define
@@ -407,6 +426,8 @@ let do_eq_def = cake_define_list
            semanticPrimitives_do_eq_list vs1 vs2) | Eq_type_error ->
            Eq_type_error)`;
    `semanticPrimitives_do_eq_list _36 _37 = Eq_val F`];;
+hol4_overload "do_eq" "semanticPrimitives_do_eq";;
+hol4_overload "do_eq_list" "semanticPrimitives_do_eq_list";;
 
 (* Do an application *)
 let do_opapp_def = cake_define
@@ -421,6 +442,7 @@ let do_opapp_def = cake_define
               (sem_env_v_fupd (K (nsBind n v
                 (semanticPrimitives_build_rec_env funs env'
                 (sem_env_v env')))) env',e) else NONE) | _38 -> NONE)`;;
+hol4_overload "do_opapp" "semanticPrimitives_do_opapp";;
 
 (* If a value represents a list, get that list. Otherwise return Nothing
    *)
@@ -435,6 +457,7 @@ let v_to_list_def = cake_define
         match semanticPrimitives_v_to_list v2 with NONE -> NONE |
           SOME vs -> SOME (v1 :: vs) else NONE)
       | _39 -> NONE`;;
+hol4_overload "v_to_list" "semanticPrimitives_v_to_list";;
 
 let list_to_v_def = cake_define_list
   [`semanticPrimitives_list_to_v [] = semanticPrimitives_Conv (SOME
@@ -442,6 +465,7 @@ let list_to_v_def = cake_define_list
    `semanticPrimitives_list_to_v (x :: xs) = semanticPrimitives_Conv
   (SOME (TypeStamp (implode "::") list_type_num)) [x;
   semanticPrimitives_list_to_v xs]`];;
+hol4_overload "list_to_v" "semanticPrimitives_list_to_v";;
 
 let v_to_char_list_def = cake_define
   `semanticPrimitives_v_to_char_list x1 =
@@ -455,6 +479,7 @@ let v_to_char_list_def = cake_define
         match semanticPrimitives_v_to_char_list v with NONE -> NONE |
           SOME cs -> SOME (STRING c cs) else NONE)
       | _40 -> NONE`;;
+hol4_overload "v_to_char_list" "semanticPrimitives_v_to_char_list";;
 
 let vs_to_string_def = cake_define
   `semanticPrimitives_vs_to_string x1 =
@@ -464,6 +489,7 @@ let vs_to_string_def = cake_define
      (match semanticPrimitives_vs_to_string vs with NONE -> NONE |
        SOME s2 -> SOME (strcat s1 s2))
       | (_41 :: v1) -> NONE`;;
+hol4_overload "vs_to_string" "semanticPrimitives_vs_to_string";;
 
 let maybe_to_v_def = cake_define_list
   [`maybe_to_v NONE = semanticPrimitives_Conv (SOME (TypeStamp
@@ -608,6 +634,7 @@ let do_eval_def = cake_define
                  SOME
                  (EvalOracle (add_env_generation (oracle_fupd (K
                    oracle) s')))))) | _51 -> NONE)`;;
+hol4_overload "do_eval" "semanticPrimitives_do_eval";;
 
 (* conclude an Eval generation *)
 
@@ -738,6 +765,9 @@ let semanticPrimitives_dest_thunk_ret_INDUCT,
   "semanticPrimitives_dest_thunk_ret = semanticPrimitives_BadRef | \
    semanticPrimitives_NotThunk | semanticPrimitives_IsThunk \
    (thunk_mode) (semanticPrimitives_v)";;
+hol4_overload "BadRef" "semanticPrimitives_BadRef";;
+hol4_overload "NotThunk" "semanticPrimitives_NotThunk";;
+hol4_overload "IsThunk" "semanticPrimitives_IsThunk";;
 
 let dest_thunk_def = cake_define
   `semanticPrimitives_dest_thunk vs st =
@@ -752,6 +782,7 @@ let dest_thunk_def = cake_define
             semanticPrimitives_IsThunk NotEvaluated v) | SOME _53 ->
             semanticPrimitives_NotThunk)
       | vs -> semanticPrimitives_NotThunk`;;
+hol4_overload "dest_thunk" "semanticPrimitives_dest_thunk";;
 
 let update_thunk_def = cake_define
   `semanticPrimitives_update_thunk x1 st x3 =
@@ -761,11 +792,13 @@ let update_thunk_def = cake_define
        semanticPrimitives_NotThunk -> store_assign n
        (semanticPrimitives_Thunk Evaluated v) st | _54 -> NONE)
       | (_55,_56) -> NONE`;;
+hol4_overload "update_thunk" "semanticPrimitives_update_thunk";;
 
 let bad_thunk_update_def = cake_define
   `semanticPrimitives_bad_thunk_update m v st <=>
      m = Evaluated /\ ~(semanticPrimitives_dest_thunk [v] st =
        semanticPrimitives_NotThunk)`;;
+hol4_overload "bad_thunk_update" "semanticPrimitives_bad_thunk_update";;
 
 let thunk_op_def = cake_define
   `semanticPrimitives_thunk_op ((s:(semanticPrimitives_v store_v)
@@ -781,6 +814,7 @@ let thunk_op_def = cake_define
             with SOME s' -> SOME ((s',t),Rval
             (semanticPrimitives_Conv NONE [])) | NONE -> NONE) | _57
             -> NONE)`;;
+hol4_overload "thunk_op" "semanticPrimitives_thunk_op";;
 
 let check_type_def = cake_define
   `semanticPrimitives_check_type x1 v =
@@ -796,12 +830,14 @@ let check_type_def = cake_define
         (ast_Word64 w))
       | ast_Float64T -> (?w. v = semanticPrimitives_Litv
         (ast_Float64 w))`;;
+hol4_overload "check_type" "semanticPrimitives_check_type";;
 
 let dest_Litv_def = cake_define
   `semanticPrimitives_dest_Litv x1 =
       match x1 with
         semanticPrimitives_Litv v -> SOME v
       | _58 -> NONE`;;
+hol4_overload "dest_Litv" "semanticPrimitives_dest_Litv";;
 
 let the_Litv_IntLit_def = cake_define
   `the_Litv_IntLit (semanticPrimitives_Litv (ast_IntLit i)) = i`;;
@@ -815,6 +851,7 @@ let the_Litv_Word64_def = cake_define
 let the_Litv_Float64_def = cake_define
   `semanticPrimitives_the_Litv_Float64 (semanticPrimitives_Litv
   (ast_Float64 w)) = w`;;
+hol4_overload "the_Litv_Float64" "semanticPrimitives_the_Litv_Float64";;
 
 let the_Litv_Char_def = cake_define
   `the_Litv_Char (semanticPrimitives_Litv (ast_Char c)) = c`;;
@@ -834,6 +871,7 @@ let int_cmp_def = cake_define_list
    `semanticPrimitives_int_cmp ast_Leq i j = (i <= j)`;
    `semanticPrimitives_int_cmp ast_Gt i j = (i > j)`;
    `semanticPrimitives_int_cmp ast_Geq i j = (i >= j)`];;
+hol4_overload "int_cmp" "semanticPrimitives_int_cmp";;
 
 let str_cmp_def = cake_define
   `str_cmp x1 x2 i j =
@@ -872,6 +910,7 @@ let do_test_def = cake_define_list
         v1,semanticPrimitives_dest_Litv v2) with (ast_StrT,SOME
         (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp
         s t) | _62 -> Eq_type_error)`];;
+hol4_overload "do_test" "semanticPrimitives_do_test";;
 
 let do_arith_def = cake_define
   `do_arith a x2 vals =
@@ -1281,6 +1320,7 @@ let do_app_def = cake_define
          (match semanticPrimitives_do_test test test_ty v1 v2 with
              Eq_type_error -> NONE | Eq_val b -> SOME ((s,t),Rval
                (semanticPrimitives_Boolv b))) | _109 -> NONE)`;;
+hol4_overload "do_app" "semanticPrimitives_do_app";;
 
 (* Do a logical operation *)
 let do_log_def = cake_define
@@ -1296,6 +1336,7 @@ let do_if_def = cake_define
   `semanticPrimitives_do_if v e1 e2 =
      (if v = semanticPrimitives_Boolv T then SOME e1 else if v =
        semanticPrimitives_Boolv F then SOME e2 else NONE)`;;
+hol4_overload "do_if" "semanticPrimitives_do_if";;
 
 (* Semantic helpers for definitions *)
 

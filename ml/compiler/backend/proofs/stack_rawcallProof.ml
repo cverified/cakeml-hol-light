@@ -42,6 +42,7 @@ let state_ok_def = cake_define
        sptree_lookup n i = SOME v ==>
        (?p. sptree_lookup n code = SOME (Seq (stackLang_StackAlloc
          v) p)))`;;
+hol4_overload "state_ok" "stack_rawcallProof_state_ok";;
 
 let state_rel_def = cake_define
   `stack_rawcallProof_state_rel i s t <=>
@@ -53,6 +54,7 @@ let state_rel_def = cake_define
          sptree_lookup n (code s) = SOME b ==>
          (?i. stack_rawcallProof_state_ok i (code s) /\
              lookup n c = SOME (comp_top i b))))`;;
+hol4_overload "state_rel" "stack_rawcallProof_state_rel";;
 
 (* HOL4 ML code, not ported:
 val simple_case =

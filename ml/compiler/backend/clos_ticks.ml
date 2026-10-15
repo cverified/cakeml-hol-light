@@ -50,6 +50,7 @@ let remove_ticks_def = cake_define_list
    `clos_ticks_remove_ticks [closLang_Fn t loc_opt vs num_args x1] =
          [closLang_Fn t loc_opt vs num_args (HD
            (clos_ticks_remove_ticks [x1]))]`];;
+hol4_overload "remove_ticks" "clos_ticks_remove_ticks";;
 
 let remove_ticks_sing_def = cake_define_list
   [`clos_ticks_remove_ticks_sing (Var t v:closLang_exp) = (Var t v)`;
@@ -92,6 +93,8 @@ let remove_ticks_sing_def = cake_define_list
    `remove_ticks_let ((num_args,x) :: xs) =
        (num_args,clos_ticks_remove_ticks_sing x) ::
          remove_ticks_let xs`];;
+hol4_overload "remove_ticks_list" "clos_ticks_remove_ticks_list";;
+hol4_overload "remove_ticks_sing" "clos_ticks_remove_ticks_sing";;
 
 (* HOL4 ML code, not ported:
 val remove_ticks_ind = theorem "remove_ticks_ind";
@@ -99,3 +102,4 @@ val remove_ticks_ind = theorem "remove_ticks_ind";
 
 let compile_inc_def = cake_define
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
+hol4_overload "compile_inc" "clos_ticks_compile_inc";;

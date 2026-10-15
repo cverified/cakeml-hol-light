@@ -22,22 +22,28 @@ let is_rec_def = cake_define
         match x2 with
           bvi_Call _1 d _2 NONE -> d = SOME name
         | _3 -> F`;;
+hol4_overload "is_rec" "bvi_tailrec_is_rec";;
 
 let is_const_def = cake_define
   `bvi_tailrec_is_const x1 =
         match x1 with
           closLang_IntOp (closLang_Const i) -> small_enough_int i
         | _4 -> F`;;
+hol4_overload "is_const" "bvi_tailrec_is_const";;
 
 let assoc_op_INDUCT,assoc_op_RECURSION = define_datatype
   "assoc_op = bvi_tailrec_Plus | bvi_tailrec_Times | \
    bvi_tailrec_Append | bvi_tailrec_Noop";;
+hol4_overload "Plus" "bvi_tailrec_Plus";;
+hol4_overload "Times" "bvi_tailrec_Times";;
 hol4_overload "Append" "bvi_tailrec_Append";;
+hol4_overload "Noop" "bvi_tailrec_Noop";;
 
 let v_ty_INDUCT,v_ty_RECURSION = define_datatype
   "v_ty = bvi_tailrec_Int | bvi_tailrec_List | bvi_tailrec_Any";;
 hol4_overload "Int" "bvi_tailrec_Int";;
 hol4_overload "List" "bvi_tailrec_List";;
+hol4_overload "Any" "bvi_tailrec_Any";;
 
 let op_type_def = cake_define
   `op_type x1 =
@@ -518,6 +524,7 @@ let compile_exp_def = cake_define
        let (r,opt) = rewrite loc next op arity context exp in
        let aux = let_wrap arity (id_from_op op) opt in
          SOME (aux,opt)))`;;
+hol4_overload "compile_exp" "bvi_tailrec_compile_exp";;
 
 let compile_each_def = cake_define_list
   [`bvi_tailrec_compile_each next [] = (next,[])`;
@@ -530,11 +537,13 @@ let compile_each_def = cake_define_list
               bvl_to_bvi_namespaces) xs in
             (n,(loc,arity,exp_aux) :: (next,arity + 1,exp_opt) ::
               ys)))`];;
+hol4_overload "compile_each" "bvi_tailrec_compile_each";;
 
 let compile_prog_def = cake_define
   `bvi_tailrec_compile_prog do_it next xs =
      (if do_it then bvi_tailrec_compile_each next xs else
        (next,xs))`;;
+hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
 
 (* --- Test rewriting --- *)
 

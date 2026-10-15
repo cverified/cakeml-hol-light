@@ -23,6 +23,7 @@ let parse_def = cake_define
                    real_fringe pt = MAP (grammar_TOK ## I) toks)
                      with NONE -> NONE | SOME p -> ptree_TopLevelDecs
                      p)`;;
+hol4_overload "parse" "semantics_parse";;
 
 let semantics_state_FIELDS = define_record "semantics_state"
   ["tenv","type_env";

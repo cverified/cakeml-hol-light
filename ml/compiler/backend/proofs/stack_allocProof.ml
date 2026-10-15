@@ -330,3 +330,4 @@ let make_init_def = cake_define
   (gc_fun_fupd (K (word_gc_fun c)) (stackSem_state_use_stack_fupd (K T)
   (stackSem_state_use_alloc_fupd (K T) (code_fupd (K code)
      s)))))`;;
+hol4_overload "make_init" "stack_allocProof_make_init";;

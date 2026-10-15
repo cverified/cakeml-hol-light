@@ -99,6 +99,7 @@ let code_rel_def = cake_define
   wordLang_prog) spt) =
        (!n. n IN domain reachable ==>
            sptree_lookup n s_code = sptree_lookup n t_code)`;;
+hol4_overload "code_rel" "word_elimProof_code_rel";;
 
 let code_closed_def = cake_define
   `code_closed reachable c1 <=> (?code1. c1 = fromAList code1 /\

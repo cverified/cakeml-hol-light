@@ -35,6 +35,7 @@ let is_const_def = cake_define
         match x1 with
           wordLang_Const w -> T
         | _3 -> F`;;
+hol4_overload "is_const" "word_inst_is_const";;
 
 let rm_const_def = cake_define
   `rm_const x1 =

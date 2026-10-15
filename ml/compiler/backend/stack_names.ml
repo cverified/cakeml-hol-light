@@ -88,12 +88,15 @@ let comp_def = cake_define
                                 stackLang_JumpLower r1 r2 dest ->
                                 stackLang_JumpLower (tlookup f r1)
                                 (tlookup f r2) dest | p -> p)`;;
+hol4_overload "comp" "stack_names_comp";;
 
 let prog_comp_def = cake_define
   `stack_names_prog_comp f (n,p) = (n,stack_names_comp f p)`;;
+hol4_overload "prog_comp" "stack_names_prog_comp";;
 
 let compile_def = cake_define
   `stack_names_compile f prog = MAP (stack_names_prog_comp f) prog`;;
+hol4_overload "compile" "stack_names_compile";;
 
 (* some defaults *)
 
@@ -103,3 +106,4 @@ let names_ok_def = cake_define
        avoid_regs) in
        ALL_DISTINCT xs /\
        EVERY (\x. x < reg_count /\ ~(MEM x avoid_regs)) xs)`;;
+hol4_overload "names_ok" "stack_names_names_ok";;

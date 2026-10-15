@@ -137,6 +137,7 @@ let store_v_vs_def = cake_define_list
   _13) = []`;
    `semanticPrimitivesProps_store_v_vs (semanticPrimitives_Thunk _14
   v) = [v]`];;
+hol4_overload "store_v_vs" "semanticPrimitivesProps_store_v_vs";;
 
 let store_vs_def = cake_define
   `store_vs s = FLAT (MAP semanticPrimitivesProps_store_v_vs s)`;;

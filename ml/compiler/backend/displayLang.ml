@@ -22,7 +22,9 @@ let sExp_INDUCT,sExp_RECURSION = define_datatype
   "sExp = displayLang_Item (tra option) (mlstring) (sExp list) | \
    displayLang_String (mlstring) | displayLang_Tuple (sExp list) | \
    displayLang_List (sExp list)";;
+hol4_overload "Item" "displayLang_Item";;
 hol4_overload "String" "displayLang_String";;
+hol4_overload "Tuple" "displayLang_Tuple";;
 hol4_overload "List" "displayLang_List";;
 
 (* HOL4 ML code, not ported:

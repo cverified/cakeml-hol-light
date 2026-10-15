@@ -34,12 +34,14 @@ let dest_Constant_def = cake_define
       | (closLang_BlockOp (closLang_Constant (ConstWord64 c))) ->
         SOME (W64 c)
       | _2 -> NONE`;;
+hol4_overload "dest_Constant" "clos_op_dest_Constant";;
 
 let dest_Cons_def = cake_define
   `clos_op_dest_Cons x1 =
       match x1 with
         closLang_BlockOp (Cons i) -> SOME i
       | _3 -> NONE`;;
+hol4_overload "dest_Cons" "clos_op_dest_Cons";;
 
 let dest_ElemAt_def = cake_define
   `dest_ElemAt x1 =
@@ -118,6 +120,7 @@ let int_op_def = cake_define
        <= j)) else
      if op = closLang_BlockOp Equal then SOME (MakeBool (j = i))
        else NONE)`;;
+hol4_overload "int_op" "clos_op_int_op";;
 
 let cons_op_def = cake_define
   `cons_op op t xs =
@@ -292,3 +295,4 @@ let SmartOp_def = cake_define
   `clos_op_SmartOp tra op xs =
      (match SmartOp' tra op xs with NONE -> closLang_Op tra op xs
        | SOME x -> x)`;;
+hol4_overload "SmartOp" "clos_op_SmartOp";;

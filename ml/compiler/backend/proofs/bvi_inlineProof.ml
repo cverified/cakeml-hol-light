@@ -66,6 +66,7 @@ let in_cc_def = cake_define
         let (cs1,prog1) = inline_all cs prog in
           match cc cfg prog1 with NONE -> NONE | SOME
             (code,data,cfg1) -> SOME (code,data,(cs1,cfg1)))`;;
+hol4_overload "in_cc" "bvi_inlineProof_in_cc";;
 
 let in_co_def = cake_define
   `bvi_inlineProof_in_co co =
@@ -73,6 +74,7 @@ let in_co_def = cake_define
         let ((cs,cfg),prog) = co n in
         let (cs1,prog1) = inline_all cs prog in
           (cfg,prog1))`;;
+hol4_overload "in_co" "bvi_inlineProof_in_co";;
 
 let in_state_rel_def = cake_define
   `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=> refs
@@ -88,6 +90,7 @@ let in_state_rel_def = cake_define
         sptree_lookup k (code s) = SOME (arity,exp) ==>
         (?exp1. sptree_lookup k (code t) = SOME (arity,exp1) /\
                exp_rel (code t) exp exp1))`;;
+hol4_overload "in_state_rel" "bvi_inlineProof_in_state_rel";;
 
 (* Inversion of [exp_rel] on each source constructor. [~inline] is why
    the
@@ -466,9 +469,11 @@ let clean_prog_def = cake_define
 let remove_ticks_cc_def = cake_define
   `bvi_inlineProof_remove_ticks_cc cc = (\cfg prog. cc cfg
   (clean_prog prog))`;;
+hol4_overload "remove_ticks_cc" "bvi_inlineProof_remove_ticks_cc";;
 
 let remove_ticks_co_def = cake_define
   `bvi_inlineProof_remove_ticks_co = (I ## clean_prog)`;;
+hol4_overload "remove_ticks_co" "bvi_inlineProof_remove_ticks_co";;
 
 let remove_state_rel_def = cake_define
   `remove_state_rel (s:('c,'ffi)bviSem_state) (t:('c,'ffi)bviSem_state)

@@ -35,6 +35,7 @@ let failwith_def = cake_define
   `(infer_failwith:loc_err_info->'ga->'gb->('gc,locs option#'ga)exc#'gb)
   l msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
+hol4_overload "failwith" "infer_failwith";;
 
 let guard_def = cake_define
   `guard P l msg = (if P then st_ex_return one else infer_failwith l
@@ -969,6 +970,7 @@ let infertype_prog_inc_def = cake_define
 let init_config_def = cake_define
   `(infer_init_config:inf_env) =
      mk_inf_env nsEmpty (c prim_tenv) (type_env_t prim_tenv)`;;
+hol4_overload "init_config" "infer_init_config";;
 
 (* The following aren't needed to run the inferencer, but are useful in
    the proofs

@@ -108,12 +108,14 @@ let eval_sim_def = cake_define
          (!v. res1 = SOME (Rraise v) ==> (?v1. res2 = SOME (Rraise
            v1))) /\
          (!a. res1 = SOME (Rabort a) ==> res2 = SOME (Rabort a))))`;;
+hol4_overload "eval_sim" "flatProps_eval_sim";;
 
 let op_gbag_def = cake_define
   `flatProps_op_gbag x1 =
       match x1 with
         flatLang_GlobalVarInit n -> BAG_INSERT n EMPTY_BAG
       | _1 -> EMPTY_BAG`;;
+hol4_overload "op_gbag" "flatProps_op_gbag";;
 
 let set_globals_def = cake_define_list
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
@@ -141,6 +143,8 @@ let set_globals_def = cake_define_list
    `flatProps_elist_globals [] = EMPTY_BAG`;
    `flatProps_elist_globals (e :: es) = BAG_UNION
   (flatProps_set_globals e) (flatProps_elist_globals es)`];;
+hol4_overload "elist_globals" "flatProps_elist_globals";;
+hol4_overload "set_globals" "flatProps_set_globals";;
 
 
 let _ = size_thms "exp";;
@@ -169,6 +173,7 @@ let esgc_free_def = cake_define_wf
        flatProps_esgc_free e /\ flatProps_elist_globals (MAP (SND o
          SND) fs) = EMPTY_BAG
         | _3 -> T`;;
+hol4_overload "esgc_free" "flatProps_esgc_free";;
 
 (* generic proof support for most val_rel/state_rel examples *)
 
@@ -207,6 +212,7 @@ let simple_val_rel_def = cake_define
        ~isClosure v1 ==> vr v1 v2 = (
          simple_basic_val_rel v1 v2 /\ LIST_REL vr (v_container_xs
            v1) (v_container_xs v2))))`;;
+hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 
 let simple_state_rel_def = cake_define
   `flatProps_simple_state_rel vr sr <=>
@@ -224,6 +230,7 @@ let simple_state_rel_def = cake_define
      (!s t sffi tffi.
          sr s t /\ sffi = tffi ==> sr (ffi_fupd (K sffi) s)
            (ffi_fupd (K tffi) t))`;;
+hol4_overload "simple_state_rel" "flatProps_simple_state_rel";;
 
 (* HOL4 ML code, not ported:
 val sv_rel_cases = semanticPrimitivesPropsTheory.sv_rel_cases;
@@ -296,3 +303,4 @@ let no_Mat_decs_def = cake_define_list
 let mk_flat_install_conf_def = cake_define
   `flatProps_mk_flat_install_conf cc co =
      (mk_install_config cc co:'c install_config)`;;
+hol4_overload "mk_flat_install_conf" "flatProps_mk_flat_install_conf";;

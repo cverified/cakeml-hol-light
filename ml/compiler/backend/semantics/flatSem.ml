@@ -223,10 +223,12 @@ hol4_overload "vs_to_string" "flatSem_vs_to_string";;
 let v_to_bytes_def = cake_define
   `flatSem_v_to_bytes lv = some (\ns. v_to_list lv = SOME (MAP (Litv
   o ast_Word8) ns))`;;
+hol4_overload "v_to_bytes" "flatSem_v_to_bytes";;
 
 let v_to_words_def = cake_define
   `flatSem_v_to_words lv = some (\ns. v_to_list lv = SOME (MAP (Litv
   o ast_Word64) ns))`;;
+hol4_overload "v_to_words" "flatSem_v_to_words";;
 
 let check_type_def = cake_define
   `flatSem_check_type x1 v =
@@ -705,6 +707,7 @@ hol4_overload "do_eval" "flatSem_do_eval";;
 let AppUnit_def = cake_define
   `flatSem_AppUnit x = flatLang_App backend_common_None (flatLang_Src
   ast_Opapp) [x; Con backend_common_None NONE []]`;;
+hol4_overload "AppUnit" "flatSem_AppUnit";;
 
 let exp_alt_size_def = cake_define_list
   [`flatSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
@@ -756,6 +759,10 @@ let exp_alt_size_def = cake_define_list
    `exp6_alt_size [] = 0`;
    `exp6_alt_size (a0 :: a1) = 1 + (flatSem_exp_alt_size a0 +
   exp6_alt_size a1)`];;
+hol4_overload "exp1_alt_size" "flatSem_exp1_alt_size";;
+hol4_overload "exp2_alt_size" "flatSem_exp2_alt_size";;
+hol4_overload "exp3_alt_size" "flatSem_exp3_alt_size";;
+hol4_overload "exp_alt_size" "flatSem_exp_alt_size";;
 
 let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
@@ -884,6 +891,7 @@ val eqs = LIST_CONJ (map TypeBase.case_eq_of
 let initial_state_def = cake_define
   `flatSem_initial_state ffi k ec =
      (mk_flatSem_state k [] ffi [] ec:('c,'ffi)flatSem_state)`;;
+hol4_overload "initial_state" "flatSem_initial_state";;
 
 let semantics_def = cake_define
   `flatSem_semantics (ec:'c install_config) (ffi:'ffi ffi_state) prog =
@@ -905,6 +913,7 @@ let semantics_def = cake_define
               (FST (evaluate_decs (flatSem_initial_state ffi k ec)
                 prog)))))
                 UNIV)))`;;
+hol4_overload "semantics" "flatSem_semantics";;
 
 (* HOL4 ML code, not ported:
 val _ = map (can delete_const)

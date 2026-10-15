@@ -15,6 +15,8 @@ needs "lib/integer_word.ml";;
 
 let heap_address_INDUCT,heap_address_RECURSION = define_datatype
   "heap_address = gc_shared_Pointer (num) ('a) | gc_shared_Data ('a)";;
+hol4_overload "Pointer" "gc_shared_Pointer";;
+hol4_overload "Data" "gc_shared_Data";;
 
 let heap_element_INDUCT,heap_element_RECURSION = define_datatype
   "heap_element = Unused (num) | ForwardPointer (num) ('a) (num) | \

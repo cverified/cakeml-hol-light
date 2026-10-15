@@ -31,6 +31,8 @@ needs "semantics/semanticPrimitives.ml";;
 let closSem_ref_INDUCT,closSem_ref_RECURSION = define_datatype
   "closSem_ref = closSem_ValueArray ('a list) | closSem_ByteArray \
    (word8 list) | closSem_Thunk (thunk_mode) ('a)";;
+hol4_overload "ValueArray" "closSem_ValueArray";;
+hol4_overload "ByteArray" "closSem_ByteArray";;
 hol4_overload "Thunk" "closSem_Thunk";;
 
 (* --- Semantics of ClosLang --- *)
@@ -42,7 +44,11 @@ let closSem_v_INDUCT,closSem_v_RECURSION = define_datatype
    (closSem_v list) (closSem_v list) (num) (closLang_exp) | \
    closSem_Recclosure (num option) (closSem_v list) (closSem_v list) \
    ((num#closLang_exp) list) (num)";;
+hol4_overload "Number" "closSem_Number";;
 hol4_overload "Word64" "closSem_Word64";;
+hol4_overload "Block" "closSem_Block";;
+hol4_overload "ByteVector" "closSem_ByteVector";;
+hol4_overload "RefPtr" "closSem_RefPtr";;
 hol4_overload "Closure" "closSem_Closure";;
 hol4_overload "Recclosure" "closSem_Recclosure";;
 
@@ -139,6 +145,7 @@ hol4_overload "list_to_v" "closSem_list_to_v";;
 
 let unit_def = cake_define
   `closSem_Unit = closSem_Block tuple_tag []`;;
+hol4_overload "Unit" "closSem_Unit";;
 
 (* HOL4 overload (expanded in the port):
      Error = (Rerr(Rabort Rtype_error)):(closSem$v#(('c,'ffi)
@@ -148,10 +155,12 @@ let v_to_bytes_def = cake_define
   `closSem_v_to_bytes lv = some (\(ns:word8 list).
                      v_to_list lv = SOME (MAP (closSem_Number o
                        (&) o w2n) ns))`;;
+hol4_overload "v_to_bytes" "closSem_v_to_bytes";;
 
 let v_to_words_def = cake_define
   `closSem_v_to_words lv = some (\ns. v_to_list lv = SOME (MAP Word64
   ns))`;;
+hol4_overload "v_to_words" "closSem_v_to_words";;
 
 (* HOL4 ML code, not ported:
 val s = ``s:('c,'ffi)closSem$state``;
@@ -225,6 +234,7 @@ let do_int_app_def = cake_define
          (if 0 <= i /\ i <= 1000000 /\ n < 1000000 then
            SOME (Boolv (i < &n)) else NONE)
       | ((op:closLang_int_op),(vs:closSem_v list)) -> NONE`;;
+hol4_overload "do_int_app" "closSem_do_int_app";;
 
 let opw_lookup_def = cake_define_list
   [`opw_lookup backend_common_Andw = word_and`;
@@ -279,6 +289,7 @@ let do_word_app_def = cake_define
            (match ws with [Word64 w1; Word64 w2] -> (SOME (Boolv
              (fp_cmp_comp cmp w1 w2))) | _26 -> NONE)
         | ((op:closLang_word_op),(vs:closSem_v list)) -> NONE`;;
+hol4_overload "do_word_app" "closSem_do_word_app";;
 
 let closSem_dest_thunk_ret_INDUCT,closSem_dest_thunk_ret_RECURSION =
   define_datatype
@@ -692,6 +703,7 @@ let find_code_def = cake_define
   `closSem_find_code p args code =
      (match FLOOKUP code p with NONE -> NONE | SOME (arity,exp) ->
        (if LENGTH args = arity then SOME (args,exp) else NONE))`;;
+hol4_overload "find_code" "closSem_find_code";;
 
 (* The evaluation is defined as a clocked functional version of
    a conventional big-step operational semantics. *)
@@ -704,6 +716,7 @@ let find_code_def = cake_define
 let fix_clock_def = cake_define
   `closSem_fix_clock s (res,s1) = (res,clock_fupd (K (MIN (clock s)
   (clock s1))) s1)`;;
+hol4_overload "fix_clock" "closSem_fix_clock";;
 
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
@@ -767,6 +780,7 @@ let build_recc_def = cake_define
 let AppUnit_def = cake_define
   `closSem_AppUnit x = closLang_App backend_common_None NONE x
   [closLang_Op backend_common_None (closLang_BlockOp (Cons 0)) []]`;;
+hol4_overload "AppUnit" "closSem_AppUnit";;
 
 let exp_alt_size_def = cake_define_list
   [`closSem_exp_alt_size (Var a0 a1:flatLang_exp) = 1 + (tra_size a0
@@ -813,6 +827,10 @@ let exp_alt_size_def = cake_define_list
    `closSem_exp3_alt_size [] = 0`;
    `closSem_exp3_alt_size (a0 :: a1) = 1 + (closSem_exp_alt_size a0 +
   closSem_exp3_alt_size a1)`];;
+hol4_overload "exp1_alt_size" "closSem_exp1_alt_size";;
+hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
+hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
+hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
 
 let evaluate_def = cake_define_list
   [`closSem_evaluate ([],(env:closSem_v list),s) = (Rval [],s)`;
@@ -929,6 +947,7 @@ let evaluate_def = cake_define_list
                           (Rval [v],s1) ->
                    evaluate_app loc_opt v rest_args s1 | res ->
                      res))`];;
+hol4_overload "evaluate" "closSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
@@ -940,6 +959,7 @@ let evaluate_def = cake_define_list
 let initial_state_def = cake_define
   `closSem_initial_state ffi ma code co cc k = mk_closSem_state []
   FEMPTY ffi k cc co code ma`;;
+hol4_overload "initial_state" "closSem_initial_state";;
 
 let semantics_def = cake_define
   `closSem_semantics ffi ma code co cc es =
@@ -958,3 +978,4 @@ let semantics_def = cake_define
             (build_lprefix_lub
               (IMAGE (\k. fromList (ffi_state_io_events (ffi
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;
+hol4_overload "semantics" "closSem_semantics";;

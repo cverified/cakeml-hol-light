@@ -107,3 +107,4 @@ let space_def = cake_define
 
 let compile_def = cake_define
   `data_space_compile c = pMakeSpace (space c)`;;
+hol4_overload "compile" "data_space_compile";;

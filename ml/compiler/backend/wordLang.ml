@@ -25,7 +25,9 @@ let wordLang_exp_INDUCT,wordLang_exp_RECURSION = define_datatype
    (ast_shift) (wordLang_exp) (wordLang_exp)";;
 hol4_overload "Const" "wordLang_Const";;
 hol4_overload "Var" "wordLang_Var";;
+hol4_overload "Lookup" "wordLang_Lookup";;
 hol4_overload "Load" "wordLang_Load";;
+hol4_overload "Op" "wordLang_Op";;
 hol4_overload "Shift" "wordLang_Shift";;
 
 (* HOL4 overload (expanded in the port):
@@ -54,10 +56,13 @@ let wordLang_prog_INDUCT,wordLang_prog_RECURSION = define_datatype
    (num) (num) (num) (num) (1 spt#1 spt) | wordLang_ShareInst (memop) \
    (num) ('a wordLang_exp)";;
 hol4_overload "Skip" "wordLang_Skip";;
+hol4_overload "Move" "wordLang_Move";;
 hol4_overload "Inst" "wordLang_Inst";;
+hol4_overload "Assign" "wordLang_Assign";;
 hol4_overload "Get" "wordLang_Get";;
 hol4_overload "Set" "wordLang_Set";;
 hol4_overload "Store" "wordLang_Store";;
+hol4_overload "MustTerminate" "wordLang_MustTerminate";;
 hol4_overload "Call" "wordLang_Call";;
 hol4_overload "Seq" "wordLang_Seq";;
 hol4_overload "If" "wordLang_If";;
@@ -75,6 +80,7 @@ hol4_overload "Install" "wordLang_Install";;
 hol4_overload "CodeBufferWrite" "wordLang_CodeBufferWrite";;
 hol4_overload "DataBufferWrite" "wordLang_DataBufferWrite";;
 hol4_overload "FFI" "wordLang_FFI";;
+hol4_overload "ShareInst" "wordLang_ShareInst";;
 
 let raise_stub_location_def = cake_define
   `raise_stub_location = word_num_stubs - 2`;;
@@ -331,6 +337,7 @@ let word_op_def = cake_define
        (n2w 0)) | (Or,ws) -> SOME (ITLIST word_or ws (n2w 0)) |
        (Xor,ws) -> SOME (ITLIST word_xor ws (n2w 0)) | (Sub,[w1; w2])
        -> SOME (w1 - w2) | _13 -> NONE)`;;
+hol4_overload "word_op" "wordLang_word_op";;
 
 let word_sh_def = cake_define
   `word_sh sh (w:'a word) n =
@@ -351,4 +358,5 @@ let exp_to_addr_def = cake_define
 
 let word_loc_INDUCT,word_loc_RECURSION = define_datatype
   "word_loc = wordLang_Word ('a word) | wordLang_Loc (num) (num)";;
+hol4_overload "Word" "wordLang_Word";;
 hol4_overload "Loc" "wordLang_Loc";;

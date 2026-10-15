@@ -105,6 +105,7 @@ let read_string_def = cake_define_wf
                         lexer_fun_read_string cs' (s ++ [c])
                               (next_loc 4 loc) else (ErrorS,loc,TL
                                 str)) | _2 -> (ErrorS,loc,TL str))`;;
+hol4_overload "read_string" "lexer_fun_read_string";;
 
 let skip_comment_def = cake_define_list
   [`skip_comment "" d _3 = NONE`;

@@ -47,6 +47,7 @@ let store_list_def = cake_define
                  Temp (n2w 25); Temp (n2w 26); Temp (n2w 27); Temp
                    (n2w 28); Temp (n2w 29);
                  Temp (n2w 30); Temp (n2w 31)]`;;
+hol4_overload "store_list" "stack_remove_store_list";;
 
 let store_pos_def = cake_define
   `store_pos name =
@@ -107,6 +108,7 @@ let stack_free_def = cake_define_wf
      if n <= max_stack_alloc then single_stack_free k n else
        stackLang_Seq (single_stack_free k max_stack_alloc)
            (stack_remove_stack_free k (n - max_stack_alloc)))`;;
+hol4_overload "stack_free" "stack_remove_stack_free";;
 
 (* upshift the stack pointer *)
 (* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
@@ -257,10 +259,12 @@ let comp_def = cake_define
            SOME (stack_remove_comp jump off k p1,lr,l1,l2))
            dest (match exc with NONE -> NONE | SOME (p2,l1,l2) ->
              SOME (stack_remove_comp jump off k p2,l1,l2)) | p -> p)`;;
+hol4_overload "comp" "stack_remove_comp";;
 
 let prog_comp_def = cake_define
   `stack_remove_prog_comp jump off k (n,p) = (n,stack_remove_comp
   jump off k p)`;;
+hol4_overload "prog_comp" "stack_remove_prog_comp";;
 
 (* -- init code -- *)
 
@@ -400,6 +404,7 @@ let init_code_def = cake_define
                  init_memory k (MAP (store_init gen_gc' k) (REVERSE
                    stack_remove_store_list));
                  stackLang_LocValue 0 1 0])`;;
+hol4_overload "init_code" "stack_remove_init_code";;
 
 let init_stubs_def = cake_define
   `init_stubs gen_gc' max_heap k start =
@@ -413,6 +418,7 @@ let stub_names_def = cake_define
      (0,implode "_Init");
      (1,implode "_Halt0");
      (2,implode "_Halt2")]`;;
+hol4_overload "stub_names" "stack_remove_stub_names";;
 
 (* -- full compiler -- *)
 
@@ -420,3 +426,4 @@ let compile_def = cake_define
   `stack_remove_compile jump off gen_gc' max_heap k start prog =
      init_stubs gen_gc' max_heap k start ++
      MAP (stack_remove_prog_comp jump off k) prog`;;
+hol4_overload "compile" "stack_remove_compile";;

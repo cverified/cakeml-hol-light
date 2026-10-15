@@ -68,6 +68,7 @@ let free_def = cake_define_list
    `clos_call_free [closLang_Call t ticks dest xs] =
          (let (c1,l1) = clos_call_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
+hol4_overload "free" "clos_call_free";;
 
 (* HOL4 ML code, not ported:
 val free_ind = theorem "free_ind";
@@ -138,6 +139,7 @@ val free_LENGTH_LEMMA = Q.prove(
 let closed_def = cake_define
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (clos_call_free
   [x])))`;;
+hol4_overload "closed" "clos_call_closed";;
 
 let insert_each_def = cake_define_list
   [`insert_each p 0 g = g`;
@@ -328,11 +330,13 @@ let calls_sing_def = cake_define_list
 let compile_def = cake_define_list
   [`clos_call_compile F x = (x,(LN,[]))`;
    `clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in (xs,g))`];;
+hol4_overload "compile" "clos_call_compile";;
 
 let compile_inc_def = cake_define
   `clos_call_compile_inc d (e,xs) =
      (let (ea,d1,new_code) = calls e (d,[]) in
        (d1,ea,new_code))`;;
+hol4_overload "compile_inc" "clos_call_compile_inc";;
 
 let cond_call_compile_inc_def = cake_define
   `cond_call_compile_inc do_it = (if do_it then clos_call_compile_inc

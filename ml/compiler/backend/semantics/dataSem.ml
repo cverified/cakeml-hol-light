@@ -65,6 +65,7 @@ let dataSem_stack_INDUCT,dataSem_stack_RECURSION = define_datatype
   "dataSem_stack = dataSem_Env (num option) (dataSem_v spt) | \
    dataSem_Exc (num option) (dataSem_v spt) (num)";;
 hol4_overload "Env" "dataSem_Env";;
+hol4_overload "Exc" "dataSem_Exc";;
 
 let limits_FIELDS = define_record "limits"
   ["heap_limit","num";
@@ -1380,10 +1381,12 @@ let get_vars_def = cake_define_list
          (match get_var v s with NONE -> NONE | SOME x -> (match
            dataSem_get_vars vs s with NONE -> NONE | SOME xs -> SOME
            (x :: xs)))`];;
+hol4_overload "get_vars" "dataSem_get_vars";;
 
 let set_var_def = cake_define
   `dataSem_set_var v x s = (dataSem_state_locals_fupd (K (insert v x
   (dataSem_state_locals s))) s)`;;
+hol4_overload "set_var" "dataSem_set_var";;
 
 let dec_clock_def = cake_define
   `dataSem_dec_clock s = clock_fupd (K (clock s - 1)) s`;;
@@ -1473,6 +1476,7 @@ let cut_env_def = cake_define
   `dataSem_cut_env (name_set:1 spt) env =
      (if domain name_set SUBSET domain env then SOME (mk_wf (inter
        env name_set)) else NONE)`;;
+hol4_overload "cut_env" "dataSem_cut_env";;
 
 let cut_state_def = cake_define
   `(\x y. strcat x y)

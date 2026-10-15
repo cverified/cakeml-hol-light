@@ -80,6 +80,9 @@ let call_FFI_def = cake_define
 let outcome_INDUCT,outcome_RECURSION = define_datatype
   "outcome = ffi_Success | ffi_Resource_limit_hit | ffi_FFI_outcome \
    (final_event)";;
+hol4_overload "Success" "ffi_Success";;
+hol4_overload "Resource_limit_hit" "ffi_Resource_limit_hit";;
+hol4_overload "FFI_outcome" "ffi_FFI_outcome";;
 
 (* A program can Diverge, Terminate, or Fail. We prove that Fail is
    avoided. For Diverge and Terminate, we keep track of what I/O
@@ -87,6 +90,9 @@ let outcome_INDUCT,outcome_RECURSION = define_datatype
 let behaviour_INDUCT,behaviour_RECURSION = define_datatype
   "behaviour = ffi_Diverge (io_event llist) | ffi_Terminate (outcome) \
    (io_event list) | ffi_Fail";;
+hol4_overload "Diverge" "ffi_Diverge";;
+hol4_overload "Terminate" "ffi_Terminate";;
+hol4_overload "Fail" "ffi_Fail";;
 
 (* trace-based semantics can be recovered as an instance of oracle-based
  * semantics as follows. *)

@@ -456,3 +456,4 @@ let compile_lab_def = cake_define
 let compile_def = cake_define
   `lab_to_target_compile asm_conf c sec_list = compile_lab asm_conf c
   (filter_skip sec_list)`;;
+hol4_overload "compile" "lab_to_target_compile";;

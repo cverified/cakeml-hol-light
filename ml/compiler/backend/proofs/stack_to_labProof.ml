@@ -79,6 +79,7 @@ let code_installed_def = cake_define_list
          stack_to_labProof_code_installed n xs code else
          asm_fetch_aux n code = SOME x /\
          stack_to_labProof_code_installed (n + 1) xs code)`];;
+hol4_overload "code_installed" "stack_to_labProof_code_installed";;
 
 (* TODO: these may already be proved in lab_filter or lab_to_target,
          they ought to move into labProps

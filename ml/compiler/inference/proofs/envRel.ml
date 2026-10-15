@@ -154,6 +154,7 @@ let env_rel_def = cake_define
       tenv) x = NONE) /\
     env_rel_sound FEMPTY ienv tenv typeSystem_Empty /\
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
+hol4_overload "env_rel" "envRel_env_rel";;
 
 let ienv_to_tenv_def = cake_define
   `ienv_to_tenv ienv =

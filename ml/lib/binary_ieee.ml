@@ -179,6 +179,13 @@ let fp_op_INDUCT,fp_op_RECURSION = define_datatype
    binary_ieee_FP_MulAdd (rounding) (('t,'w)float) (('t,'w)float) \
    (('t,'w)float) | binary_ieee_FP_MulSub (rounding) (('t,'w)float) \
    (('t,'w)float) (('t,'w)float)";;
+hol4_overload "FP_Sqrt" "binary_ieee_FP_Sqrt";;
+hol4_overload "FP_Add" "binary_ieee_FP_Add";;
+hol4_overload "FP_Sub" "binary_ieee_FP_Sub";;
+hol4_overload "FP_Mul" "binary_ieee_FP_Mul";;
+hol4_overload "FP_Div" "binary_ieee_FP_Div";;
+hol4_overload "FP_MulAdd" "binary_ieee_FP_MulAdd";;
+hol4_overload "FP_MulSub" "binary_ieee_FP_MulSub";;
 
 let float_some_qnan_def = cake_define
   `float_some_qnan (fp_op:('t,'w)fp_op) =
