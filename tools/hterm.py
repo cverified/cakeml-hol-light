@@ -469,34 +469,41 @@ class Parser:
     return upds
 
   def parse_binders(self):
-    vs = []
-    paired = False
+    # HOL4 writes a paired abstraction as \x,y. e as well as as
+    # \(x,y). e, and a lambda may have several of them next to
+    # each other (reg_alloc's \p:num,x p',x'. p>p')
+    groups = []
+    comma = False
     while not self.at('.'):
-      # HOL4 writes a paired abstraction as \x,y. e as well as as
-      # \(x,y). e
       if self.at(','):
-        self.next(); paired = True; continue
+        self.next(); comma = True; continue
       t = self.peek()
       if t.text == '(':
-        vs.append(self.parse_atom())
+        v = self.parse_atom()
       elif t.kind == 'id' or t.text == '_':
         self.next()
         v = Node('id', tok=t, name=t.text)
         if self.at(':'):
           self.next()
           v = Node('typed', tok=t, e=v, ty=self.parse_type())
-        vs.append(v)
       else:
         raise SyntaxError(f'binder expected at {t.pos}: {t.text!r}')
+      if comma and groups: groups[-1].append(v)
+      else: groups.append([v])
+      comma = False
       if self.at('::'):
         self.next()
-        vs[-1].res = self.parse(0)
+        groups[-1][-1].res = self.parse(0)
     self.expect('.')
-    if paired and len(vs) > 1:
-      e = vs[-1]
-      for v in reversed(vs[:-1]):
-        e = Node('infix', tok=v.tok, op=',', l=v, r=e)
-      vs = [Node('paren', tok=vs[0].tok, e=e)]
+    vs = []
+    for g in groups:
+      if len(g) == 1:
+        vs.append(g[0])
+      else:
+        e = g[-1]
+        for v in reversed(g[:-1]):
+          e = Node('infix', tok=v.tok, op=',', l=v, r=e)
+        vs.append(Node('paren', tok=g[0].tok, e=e))
     return vs
 
   def starts_binder(self):

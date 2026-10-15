@@ -493,7 +493,7 @@ let split_degree_def = cake_define
 (* sort moves by priority *)
 let sort_moves_def = cake_define
   `reg_alloc_sort_moves ls =
-     sort (\((p:num),x,p',x'). p > p') ls`;;
+     sort (\((p:num),x) (p',x'). p > p') ls`;;
 hol4_overload "sort_moves" "reg_alloc_sort_moves";;
 
 (* merge two sorted lists *)

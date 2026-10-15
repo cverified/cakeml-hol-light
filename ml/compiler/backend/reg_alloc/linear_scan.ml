@@ -827,7 +827,7 @@ let edges_to_adjlist_def = cake_define_list
 
 let sort_moves_rev_def = cake_define
   `sort_moves_rev ls =
-     sort (\((p:num),x,p',x'). p < p') ls`;;
+     sort (\((p:num),x) (p',x'). p < p') ls`;;
 
 let swap_regs_def = cake_define
   `swap_regs i1 i2 =
