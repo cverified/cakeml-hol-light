@@ -134,6 +134,7 @@ class Porter:
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
+    self.intresult = False # is the result an integer?
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
@@ -513,6 +514,7 @@ class Porter:
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intneg = key in overrides.INT_NEG
     self.intargs = set(overrides.INT_ARGS.get(key, []))
+    self.intresult = key in overrides.INT_RESULT
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
@@ -711,6 +713,14 @@ class Porter:
     # constructor it is (bvl_inline's Force is bvl's, not db_vars')
     if ambiguous and self.annotated:
       e.r = self.annotate_again(e.r)
+    # the result of the clause is an integer, where no clause of
+    # the definition says so
+    r = e.r
+    while r.kind == 'paren': r = r.e
+    if self.intresult and r.kind != 'typed':
+      e.r = hterm.Node('typed', tok=e.r.tok,
+              e=hterm.Node('paren', tok=e.r.tok, e=e.r),
+              ty=hterm.tokenize('int'))
     return cl
 
   def annotate_again(self, e):

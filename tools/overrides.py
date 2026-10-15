@@ -164,6 +164,13 @@ INT_ARGS = {
   ('multiword', 'int_op_def'): ['i', 'j'],
 }
 
+# definitions whose result is an integer, where no clause of it
+# says so (multiword's int_op has a clause whose right hand side
+# is the &1 of an integer, which HOL Light reads as a real)
+INT_RESULT = set([
+  ('multiword', 'int_op_def'),
+])
+
 # definitions in which a ~ without an argument ($~) is the negation
 # of an integer, which HOL Light writes --
 INT_NEG = set([
