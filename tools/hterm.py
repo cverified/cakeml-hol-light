@@ -1069,6 +1069,11 @@ def add_infix(tok, prec, assoc):
 
 
 OWN_INFIX = set()      # the infixes a CakeML source declares itself
+
+# the constants that the library layer of the port declares as
+# infixes of HOL Light: where one of them is applied to its
+# arguments the port writes its name in parentheses
+HL_INFIX = {'BAG_UNION', 'LEX', 'o_f', 'SUBMAP'}
 MONAD = [None]         # the monad that a source has enabled
 ANTIQ = {}             # the ML values that a source antiquotes
 
@@ -1248,6 +1253,10 @@ class Printer:
                             self.pr(a.l, APP) + ' ' +
                             self.pr(a.r, APP), PRE_APP, prec)
       fn = self.pr(e.fn, PRE_APP)
+      # a constant that the library layer declares as an infix of
+      # HOL Light needs its parentheses where it is applied
+      # (term's varb gives back BAG_UNION (varb t1) (varb t2))
+      if hop.kind == 'id' and fn in HL_INFIX: fn = '(' + fn + ')'
       # a numeral in an argument of a constructor whose type is an
       # integer or a real is written &n
       oldint = self.ctx.intnums
@@ -1290,7 +1299,11 @@ class Printer:
       if hprec is None:
         fn = self.ctx.overloads.get(hop) if self.ctx is not None \
              else None
-        fn = '(' + fn + ')' if fn else self.ctx.name(hop)
+        if fn:
+          fn = '(' + fn + ')'
+        else:
+          fn = self.ctx.name(hop)
+          if fn in HL_INFIX: fn = '(' + fn + ')'
         return self.paren(fn + ' ' + self.pr(e.l, APP) + ' ' +
                           self.pr(e.r, APP), PRE_APP, prec)
       old = self.numctx

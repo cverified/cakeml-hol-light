@@ -1416,8 +1416,17 @@ class Porter:
                 '\n'.join(fill('  `:', body.split(' '), 69)) + '`);;')
       self.out.append(text)
 
+  ETA = re.compile(r"^[\\\u03bb]\s*((?:[A-Za-z_][A-Za-z0-9_']*\s*)+)"
+                   r"\.\s*([A-Za-z_][A-Za-z0-9_']*)\s+(.*)$")
+
   def overload(self, b):
     txt = dbmod.strip_quote(b.body)
+    # an overload that is a constant with its arguments spelled
+    # out is that constant (mlstring overloads < with
+    # \x y. mlstring_lt x y)
+    m = self.ETA.match(txt.strip())
+    if m and m.group(1).split() == m.group(3).split():
+      txt = m.group(2)
     # an overload of one constant whose name other theories of the
     # port use for a constant of their own is an overload in HOL
     # Light as well; expanding it would resolve the name the wrong
