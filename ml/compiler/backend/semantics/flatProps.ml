@@ -193,16 +193,16 @@ let simple_basic_val_rel_def = cake_define_list
    `simple_basic_val_rel (Loc b i:flatSem_v) v = (v = (Loc b
   i:flatSem_v))`;
    `simple_basic_val_rel (Conv stmp vs1:flatSem_v) v = (?vs2. v =
-  (Conv stmp vs2:flatSem_v))`;
+  Conv stmp vs2)`;
    `simple_basic_val_rel (Vectorv vs1:flatSem_v) v = (?vs2. v =
-  (Vectorv vs2:flatSem_v))`;
+  Vectorv vs2)`;
    `simple_basic_val_rel (Closure vs nm exp:flatSem_v) v = F`;
    `simple_basic_val_rel (Recclosure vs exps nm:flatSem_v) v = F`];;
 
 let v_container_xs_def = cake_define_list
-  [`v_container_xs (Litv _4:flatSem_v) = []`;
-   `v_container_xs (Loc _5 _6:flatSem_v) = []`;
-   `v_container_xs (Conv _7 vs:flatSem_v) = vs`;
+  [`v_container_xs (Litv _5:flatSem_v) = []`;
+   `v_container_xs (Loc _8 _9:flatSem_v) = []`;
+   `v_container_xs (Conv _11 vs:flatSem_v) = vs`;
    `v_container_xs (Vectorv vs:flatSem_v) = vs`;
    `v_container_xs (Closure vs nm exp:flatSem_v) = []`;
    `v_container_xs (Recclosure vs exps nm:flatSem_v) = []`];;
@@ -296,7 +296,7 @@ let no_Mat_def = cake_define_list
    `no_Mat (Mat t e pes:flatLang_exp) <=> F`;
    `no_Mat (Handle t e pes:flatLang_exp) <=> no_Mat e /\ EVERY no_Mat
   (MAP SND pes) /\
-        (match pes with [(Pvar _8,_9)] -> T | _10 -> F)`;
+        (match pes with [(Pvar _16,_17)] -> T | _18 -> F)`;
    `no_Mat (Letrec t funs e:flatLang_exp) <=> EVERY no_Mat (MAP
   (SND o SND) funs) /\ no_Mat e`];;
 

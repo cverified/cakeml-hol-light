@@ -844,10 +844,10 @@ let evaluate_def = cake_define_list
              (match closSem_evaluate (y :: xs,env,s1) with (Rval
                vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
                -> res)`;
-   `closSem_evaluate ([(Var _86 n:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(Var _87 n:flatLang_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
            (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([(If _87 x1 x2 x3:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(If _89 x1 x2 x3:flatLang_exp)],env,s) =
          (match closSem_fix_clock s (closSem_evaluate ([x1],env,s))
            with (Rval vs,s1) ->
               (if Boolv T = HD vs then closSem_evaluate
@@ -855,18 +855,18 @@ let evaluate_def = cake_define_list
               if Boolv F = HD vs then closSem_evaluate ([x3],env,s1)
                 else
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
-   `closSem_evaluate ([(Let _88 xs x2:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(Let _91 xs x2:flatLang_exp)],env,s) =
          (match closSem_fix_clock s (closSem_evaluate (xs,env,s))
            with (Rval vs,s1) -> closSem_evaluate ([x2],vs ++ env,s1)
            | res -> res)`;
-   `closSem_evaluate ([(Raise _89 x1:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(Raise _93 x1:flatLang_exp)],env,s) =
          (match closSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (HD vs)),s) | res -> res)`;
-   `closSem_evaluate ([(Handle _90 x1 x2:flatLang_exp)],env,s1) =
+   `closSem_evaluate ([(Handle _95 x1 x2:flatLang_exp)],env,s1) =
          (match closSem_fix_clock s1 (closSem_evaluate
            ([x1],env,s1)) with (Rerr (Rraise v),s) ->
            closSem_evaluate ([x2],v :: env,s) | res -> res)`;
-   `closSem_evaluate ([closLang_Op _91 op xs],env,s) =
+   `closSem_evaluate ([closLang_Op _96 op xs],env,s) =
          (match closSem_fix_clock s (closSem_evaluate (xs,env,s))
            with (Rval vs,s) ->
            (if op = closLang_Install then
@@ -887,7 +887,7 @@ let evaluate_def = cake_define_list
                        e,s) -> (Rerr e,s))) else
            (match do_app op (REVERSE vs) s with Rerr err -> (Rerr
              err,s) | Rval (v,s) -> (Rval [v],s))) | res -> res)`;
-   `closSem_evaluate ([closLang_Fn _92 loc vsopt num_args exp],env,s) =
+   `closSem_evaluate ([closLang_Fn _97 loc vsopt num_args exp],env,s) =
          (if num_args <= closSem_state_max_app s /\ ~(num_args = 0)
            then
            match vsopt with NONE -> (Rval [Closure loc [] env
@@ -896,7 +896,7 @@ let evaluate_def = cake_define_list
                  Rtype_error),s) | SOME env' -> (Rval [Closure loc []
                  env' num_args exp],s)) else
            (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([(Letrec _93 loc namesopt fns
+   `closSem_evaluate ([(Letrec _99 loc namesopt fns
   exp:flatLang_exp)],env,s) =
          (if EVERY (\(num_args,e). num_args <= closSem_state_max_app
            s /\ ~(num_args = 0)) fns then
@@ -912,7 +912,7 @@ let evaluate_def = cake_define_list
                  NONE -> (Rerr (Rabort Rtype_error),s) | SOME ed ->
                    closSem_evaluate ([exp],ed ++ env,s) else
            (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([(App _94 loc_opt x1 args:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(App _101 loc_opt x1 args:flatLang_exp)],env,s) =
          (if LENGTH args > 0 then
            (match closSem_fix_clock s (closSem_evaluate
              (args,env,s)) with (Rval y2,s1) ->
@@ -920,11 +920,11 @@ let evaluate_def = cake_define_list
                 ([x1],env,s1)) with (Rval y1,s2) -> evaluate_app loc_opt
                 (HD y1) y2 s2 | res -> res) | res -> res) else
            (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([closLang_Tick _95 x],env,s) =
+   `closSem_evaluate ([closLang_Tick _102 x],env,s) =
          (if state_clock s = 0 then (Rerr (Rabort
            Rtimeout_error),s) else closSem_evaluate
            ([x],env,closSem_dec_clock 1 s))`;
-   `closSem_evaluate ([closLang_Call _96 ticks dest xs],env,s1) =
+   `closSem_evaluate ([closLang_Call _103 ticks dest xs],env,s1) =
          (match closSem_fix_clock s1 (closSem_evaluate (xs,env,s1))
            with (Rval vs,s) ->
              (match closSem_find_code dest vs (closSem_state_code s)
@@ -978,7 +978,7 @@ let semantics_def = cake_define
            closSem_evaluate (es,[],st k) = (r,s) /\
            (match r with Rerr (Rabort Rtimeout_error) -> F | Rerr
              (Rabort (Rffi_error e)) -> outcome = ffi_FFI_outcome e |
-             _97 -> outcome = ffi_Success) /\
+             _104 -> outcome = ffi_Success) /\
            res = ffi_Terminate outcome (ffi_state_io_events
              (state_ffi s))) with SOME res -> res | NONE ->
           ffi_Diverge

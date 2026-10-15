@@ -26,7 +26,7 @@ val s = ``s:('a,'c,'ffi) wordSem$state``
 (* gc *)
 
 let is_gc_word_const_def = cake_define_list
-  [`is_gc_word_const (wordLang_Loc _1 _2) = T`;
+  [`is_gc_word_const (wordLang_Loc _3 _4) = T`;
    `is_gc_word_const (wordLang_Word w) = is_gc_const w`];;
 
 let gc_fun_const_ok_def = cake_define
@@ -38,7 +38,7 @@ let gc_fun_const_ok_def = cake_define
 
 
 let sf_gc_consts_def = cake_define
-  `sf_gc_consts (StackFrame _3 l0 sv h) (StackFrame _4 l0' sw h') =
+  `sf_gc_consts (StackFrame _5 l0 sv h) (StackFrame _6 l0' sw h') =
    (EVERY2 (\(ak,av) (bk,bv). (ak = bk) /\ (is_gc_word_const av
      ==> bv = av)) sv sw /\ l0 = l0' /\ h = h')`;;
 
@@ -79,8 +79,8 @@ QED*)
 
 let get_above_handler_def = cake_define
   `get_above_handler s = (match EL (LENGTH (stack s) -
-  (wordSem_state_handler s + 1)) (stack s) with StackFrame _5 _6 _7
-  (SOME (h,_8,_9)) -> h)`;;
+  (wordSem_state_handler s + 1)) (stack s) with StackFrame _7 _8 _9
+  (SOME (h,_10,_11)) -> h)`;;
 
 (*TODO move*)
 

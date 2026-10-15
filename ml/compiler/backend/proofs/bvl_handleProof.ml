@@ -31,8 +31,8 @@ let handle_ok_def = cake_define_list
          handle_ok [x1] /\ handle_ok [x2] /\ handle_ok [x3]`;
    `handle_ok [(Let xs x2:flatLang_exp)] <=>
          (if LENGTH xs = 0 then
-           let_ok x2 /\ (!ys y. x2 = (Let ys y:flatLang_exp) ==>
-             handle_ok [y]) else
+           let_ok x2 /\ (!ys y. x2 = Let ys y ==> handle_ok [y])
+             else
            handle_ok xs /\ handle_ok [x2])`;
    `handle_ok [(Raise x1:flatLang_exp)] <=> handle_ok [x1]`;
    `handle_ok [(Tick x1:flatLang_exp)] <=> handle_ok [x1]`;
@@ -40,7 +40,7 @@ let handle_ok_def = cake_define_list
    `handle_ok [(Handle x1 x2:flatLang_exp)] <=>
          (match x1 with Let xs b ->
              EVERY isVar xs /\ bVarBound (LENGTH xs) [b] /\
-             handle_ok [b] /\ handle_ok [x2] | _2 -> F)`;
+             handle_ok [b] /\ handle_ok [x2] | _3 -> F)`;
    `handle_ok [(Force loc n:flatLang_exp)] <=> T`;
    `handle_ok [(Call ticks dest xs:flatLang_exp)] <=> handle_ok xs`];;
 

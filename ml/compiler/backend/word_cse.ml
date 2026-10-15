@@ -165,10 +165,10 @@ let canonicalArith_def = cake_define_list
       asm_Binop op r1 (canonicalRegs' r1 data r2)
         (canonicalImmReg' r1 data r3)`;
    `canonicalArith data (asm_Shift s r1 r2 ri) =
-      asm_Shift s r1 (canonicalRegs' r1 data r2)
-        (canonicalImmReg' r1 data ri)`;
+      Shift s r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
+        data ri)`;
    `canonicalArith data (asm_Div r1 r2 r3) =
-      asm_Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
+      Div r1 (canonicalRegs data r2) (canonicalRegs data r3)`;
    `canonicalArith data (asm_LongMul r1 r2 r3 r4) =
       asm_LongMul r1 r2 (canonicalRegs data r3) (canonicalRegs
         data r4)`;
@@ -319,42 +319,42 @@ let OpCurrHeapToNumList_def = cake_define
 
 let firstRegOfArith_def = cake_define_list
   [`firstRegOfArith (asm_Binop _2 r _3 _4) = r`;
-   `firstRegOfArith (asm_Shift _5 r _6 _7) = r`;
-   `firstRegOfArith (asm_Div r _8 _9) = r`;
-   `firstRegOfArith (asm_LongMul r _10 _11 _12) = r`;
-   `firstRegOfArith (asm_LongDiv r _13 _14 _15 _16) = r`;
-   `firstRegOfArith (asm_AddCarry r _17 _18 _19) = r`;
-   `firstRegOfArith (asm_AddOverflow r _20 _21 _22) = r`;
-   `firstRegOfArith (asm_SubOverflow r _23 _24 _25) = r`];;
+   `firstRegOfArith (asm_Shift _8 r _9 _10) = r`;
+   `firstRegOfArith (asm_Div r _13 _14) = r`;
+   `firstRegOfArith (asm_LongMul r _15 _16 _17) = r`;
+   `firstRegOfArith (asm_LongDiv r _18 _19 _20 _21) = r`;
+   `firstRegOfArith (asm_AddCarry r _22 _23 _24) = r`;
+   `firstRegOfArith (asm_AddOverflow r _25 _26 _27) = r`;
+   `firstRegOfArith (asm_SubOverflow r _28 _29 _30) = r`];;
 
 (* All registers an arith instruction writes (multi-output ops write
    two), so
   that every written register is invalidated. *)
 let arithWrites_def = cake_define_list
-  [`arithWrites (asm_Binop _26 r _27 _28) = [r]`;
-   `arithWrites (asm_Shift _29 r _30 _31) = [r]`;
-   `arithWrites (asm_Div r _32 _33) = [r]`;
-   `arithWrites (asm_LongMul r1 r2 _34 _35) = [r1; r2]`;
-   `arithWrites (asm_LongDiv r1 r2 _36 _37 _38) = [r1; r2]`;
-   `arithWrites (asm_AddCarry r1 _39 _40 r4) = [r1; r4]`;
-   `arithWrites (asm_AddOverflow r1 _41 _42 r4) = [r1; r4]`;
-   `arithWrites (asm_SubOverflow r1 _43 _44 r4) = [r1; r4]`];;
+  [`arithWrites (asm_Binop _31 r _32 _33) = [r]`;
+   `arithWrites (asm_Shift _37 r _38 _39) = [r]`;
+   `arithWrites (asm_Div r _42 _43) = [r]`;
+   `arithWrites (asm_LongMul r1 r2 _44 _45) = [r1; r2]`;
+   `arithWrites (asm_LongDiv r1 r2 _46 _47 _48) = [r1; r2]`;
+   `arithWrites (asm_AddCarry r1 _49 _50 r4) = [r1; r4]`;
+   `arithWrites (asm_AddOverflow r1 _51 _52 r4) = [r1; r4]`;
+   `arithWrites (asm_SubOverflow r1 _53 _54 r4) = [r1; r4]`];;
 
 (* All registers an arith instruction reads (AddCarry also reads the
   carry-flag register r4). *)
 let arithReads_def = cake_define
   `arithReads x1 =
       match x1 with
-        asm_Binop _45 _46 r2 (Reg r3) -> [r2; r3]
-      | (asm_Binop _47 _48 r2 (Imm _49)) -> [r2]
-      | (Shift _50 _51 r2 (Reg r3)) -> [r2; r3]
-      | (Shift _52 _53 r2 (Imm _54)) -> [r2]
-      | (Div _55 r2 r3) -> [r2; r3]
-      | (asm_LongMul _56 _57 r3 r4) -> [r3; r4]
-      | (asm_LongDiv _58 _59 r3 r4 r5) -> [r3; r4; r5]
-      | (asm_AddCarry _60 r2 r3 r4) -> [r2; r3; r4]
-      | (asm_AddOverflow _61 r2 r3 _62) -> [r2; r3]
-      | (asm_SubOverflow _63 r2 r3 _64) -> [r2; r3]`;;
+        asm_Binop _55 _56 r2 (Reg r3) -> [r2; r3]
+      | (asm_Binop _57 _58 r2 (Imm _59)) -> [r2]
+      | (Shift _60 _61 r2 (Reg r3)) -> [r2; r3]
+      | (Shift _62 _63 r2 (Imm _64)) -> [r2]
+      | (Div _65 r2 r3) -> [r2; r3]
+      | (asm_LongMul _66 _67 r3 r4) -> [r3; r4]
+      | (asm_LongDiv _68 _69 r3 r4 r5) -> [r3; r4; r5]
+      | (asm_AddCarry _70 r2 r3 r4) -> [r2; r3; r4]
+      | (asm_AddOverflow _71 r2 r3 _72) -> [r2; r3]
+      | (asm_SubOverflow _73 r2 r3 _74) -> [r2; r3]`;;
 
 (* The general-purpose registers an fp instruction writes. Most write
    only
@@ -362,11 +362,11 @@ let arithReads_def = cake_define
 let fpWrites_def = cake_define
   `fpWrites x1 =
       match x1 with
-        FPLess r _65 _66 -> [r]
-      | (FPLessEqual r _67 _68) -> [r]
-      | (FPEqual r _69 _70) -> [r]
-      | (FPMovToReg r1 r2 _71) -> [r1; r2]
-      | _72 -> []`;;
+        FPLess r _75 _76 -> [r]
+      | (FPLessEqual r _77 _78) -> [r]
+      | (FPEqual r _79 _80) -> [r]
+      | (FPMovToReg r1 r2 _81) -> [r1; r2]
+      | _82 -> []`;;
 
 let add_to_data_aux_def = cake_define
   `add_to_data_aux data r i x =
@@ -444,11 +444,11 @@ let add_to_load_aux_def = cake_define
 let can_mem_arith_def = cake_define
   `can_mem_arith x1 =
       match x1 with
-        asm_Binop _73 _74 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
-      | (asm_Binop _75 _76 r1 (Imm _77)) -> ODD r1
-      | (Div _78 r1 r2) -> (ODD r1 /\ ODD r2)
-      | (Shift _79 _80 r (Imm _81)) -> ODD r
-      | _82 -> F`;;
+        asm_Binop _83 _84 r1 (Reg r2) -> (ODD r1 /\ ODD r2)
+      | (asm_Binop _85 _86 r1 (Imm _87)) -> ODD r1
+      | (Div _88 r1 r2) -> (ODD r1 /\ ODD r2)
+      | (Shift _89 _90 r (Imm _91)) -> ODD r
+      | _92 -> F`;;
 
 let is_store_def = cake_define_list
   [`is_store Load = F`;
@@ -495,7 +495,7 @@ let dest_Var_def = cake_define
   `dest_Var x1 =
       match x1 with
         (Var v:'a wordLang_exp) -> SOME v
-      | _83 -> NONE`;;
+      | _93 -> NONE`;;
 
 (* IF-JOIN MERGE
 
@@ -562,7 +562,7 @@ let word_cse_def = cake_define_list
    `word_cse data (wordLang_Get r x) =
         (let data = invalidate_data data r in
           match ALOOKUP (knowledge_gets_mem data) x with NONE -> (if
-            EVEN r then (data,wordLang_Get r x) else
+            EVEN r then (data,(Get r x:'a wordLang_prog)) else
                       (knowledge_to_latest_fupd (K (insert r r
                         (knowledge_to_latest data)))
                         (knowledge_to_canonical_fupd (K (insert r r
@@ -580,13 +580,13 @@ let word_cse_def = cake_define_list
                          (knowledge_to_latest data) k)])))`;
    `word_cse data (wordLang_Set x e) =
         (if x = CurrHeap then
-          (empty_data,wordLang_Set x e) else
+          (empty_data,(Set x e:'a wordLang_prog)) else
           let new_gets_mem = FILTER (\(m,n). ~(m = x))
             (knowledge_gets_mem data) in
             match dest_Var e with NONE -> (knowledge_gets_mem_fupd
-              (K new_gets_mem) data,Set x e) | SOME v -> (if EVEN v then
-              (knowledge_gets_mem_fupd (K new_gets_mem) data,Set x e)
-              else
+              (K new_gets_mem) data,(Set x e:'a wordLang_prog)) | SOME v
+              -> (if EVEN v then (knowledge_gets_mem_fupd (K
+              new_gets_mem) data,(Set x e:'a wordLang_prog)) else
                           (knowledge_to_canonical_fupd (K (insert v
                             (lookup_any v (knowledge_to_canonical data)
                             v) (knowledge_to_canonical
@@ -598,15 +598,16 @@ let word_cse_def = cake_define_list
                 (let (data',p') = word_cse data p in
                     (data',wordLang_MustTerminate p'))`;
    `word_cse data (wordLang_Call ret dest args handler) =
-                (empty_data,wordLang_Call ret dest args handler)`;
+                (empty_data,(Call ret dest args handler:'a
+                  wordLang_prog))`;
    `word_cse data (wordLang_Seq p1 p2) =
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data1 p2 in
-          (data2,wordLang_Seq p1' p2'))`;
+          (data2,Seq p1' p2'))`;
    `word_cse data (wordLang_If c r1 r2 p1 p2) =
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data p2 in
-          (merge_data data1 data2,wordLang_If c r1 r2 p1' p2'))`;
+          (merge_data data1 data2,If c r1 r2 p1' p2'))`;
    `word_cse data ((OpCurrHeap b r1 r2):'a wordLang_prog) =
         (let data = invalidate_data data r1 in
           if EVEN r2 \/ r2 = r1 then (data,OpCurrHeap b r1 r2) else
@@ -616,43 +617,47 @@ let word_cse_def = cake_define_list
                 (OpCurrHeap b r1 r2))`;
    `word_cse data (wordLang_LocValue r l) =
         (let data = invalidate_data data r in
-          add_to_data_aux data r [48; l] (wordLang_LocValue r l))`;
+          add_to_data_aux data r [48; l] ((LocValue r l:'a
+            wordLang_prog)))`;
    `word_cse data Skip = (data,Skip)`;
    `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
-  balanced_map_empty) data,wordLang_Store e r)`;
+  balanced_map_empty) data,(Store e r:'a wordLang_prog))`;
    `word_cse data (wordLang_Assign r e) = (data,wordLang_Assign r e)`;
-   `word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)`;
-   `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1
-  r2)`;
+   `word_cse data (wordLang_Raise r) = (data,(Raise r:'a
+  wordLang_prog))`;
+   `word_cse data (wordLang_Return r1 r2) = (data,(Return r1 r2:'a
+  wordLang_prog))`;
    `word_cse data Tick = (data,Tick)`;
-   `word_cse data (wordLang_Alloc r m) = (empty_data,wordLang_Alloc r
-  m)`;
+   `word_cse data (wordLang_Alloc r m) = (empty_data,(Alloc r m:'a
+  wordLang_prog))`;
    `word_cse data (wordLang_Install p l dp dl m) =
-  (empty_data,wordLang_Install p l dp dl m)`;
+  (empty_data,(Install p l dp dl m:'a wordLang_prog))`;
    `word_cse data (wordLang_CodeBufferWrite r1 r2) =
-  (data,wordLang_CodeBufferWrite r1 r2)`;
+  (data,(CodeBufferWrite r1 r2:'a wordLang_prog))`;
    `word_cse data (wordLang_DataBufferWrite r1 r2) =
-  (data,wordLang_DataBufferWrite r1 r2)`;
-   `word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
-  (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
+  (data,(DataBufferWrite r1 r2:'a wordLang_prog))`;
+   `word_cse data (wordLang_FFI s p1 l1 p2 l2 m) = (empty_data,(FFI s
+  p1 l1 p2 l2 m:'a wordLang_prog))`;
    `word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
          (let data = invalidate_regs data [r1; r2; r3; r4] in
             (knowledge_loads_mem_fupd (K balanced_map_empty)
-              data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
+              data,(StoreConsts r1 r2 r3 r4 payload:'a
+              wordLang_prog)))`;
    `word_cse data (wordLang_ShareInst op r exp) =
          (let data = (if is_store op then data else invalidate_data
            data r) in
            (data,wordLang_ShareInst op r exp))`;
    `word_cse data (wordLang_Loop names c exit_names) =
-         (let (_84,c') = word_cse empty_data c in
-           (empty_data,wordLang_Loop names c' exit_names))`;
-   `word_cse data (wordLang_Break k) = (data,wordLang_Break k)`;
-   `word_cse data (wordLang_Continue k) = (data,wordLang_Continue
-  k)`];;
+         (let (_95,c') = word_cse empty_data c in
+           (empty_data,Loop names c' exit_names))`;
+   `word_cse data (wordLang_Break k) = (data,(Break k:'a
+  wordLang_prog))`;
+   `word_cse data (wordLang_Continue k) = (data,(Continue k:'a
+  wordLang_prog))`];;
 
 let word_common_subexp_elim_def = cake_define
   `word_common_subexp_elim prog =
-     (let (_85,new_prog) = word_cse empty_data prog in
+     (let (_96,new_prog) = word_cse empty_data prog in
        new_prog)`;;
 
 (* tests *)

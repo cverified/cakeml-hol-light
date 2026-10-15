@@ -174,9 +174,9 @@ let has_install_def = cake_define_list
    `has_install (Handle t e1 e2:closLang_exp) = (has_install e1 \/
   has_install e2)`;
    `has_install (closLang_Call _5 _6 _7 es) = has_install_list es`;
-   `has_install (App _8 _9 e es:closLang_exp) = (has_install e \/
+   `has_install (App _10 _11 e es:closLang_exp) = (has_install e \/
   has_install_list es)`;
-   `has_install (Letrec _10 _11 _12 fns e:closLang_exp) =
+   `has_install (Letrec _15 _16 _17 fns e:closLang_exp) =
   (has_install_list (MAP SND fns) \/ has_install e)`;
    `has_install_list [] = F`;
    `has_install_list (x :: xs) = (has_install x \/ has_install_list
@@ -185,31 +185,31 @@ let has_install_def = cake_define_list
 let pure_op_def = cake_define
   `closLang_pure_op op <=>
      (match op with
-       FFI _13 -> F | closLang_GlobOp (SetGlobal _14) -> F |
+       FFI _18 -> F | closLang_GlobOp (SetGlobal _19) -> F |
          closLang_GlobOp AllocGlobal -> F | closLang_MemOp
-         (closLang_RefByte _15) -> F | closLang_MemOp
+         (closLang_RefByte _20) -> F | closLang_MemOp
          closLang_RefArray -> F | closLang_MemOp closLang_UpdateByte
          -> F | closLang_MemOp (closLang_CopyByte F) -> F |
          closLang_MemOp closLang_XorByte -> F | closLang_MemOp
          closLang_Ref -> F | closLang_MemOp closLang_Update -> F |
-         closLang_Install -> F | ThunkOp _16 -> F | _17 -> T)`;;
+         closLang_Install -> F | ThunkOp _21 -> F | _22 -> T)`;;
 hol4_overload "pure_op" "closLang_pure_op";;
 
 (* pure e means e can neither raise an exception nor side-effect the
    state *)
 let pure_def = cake_define_list
-  [`pure (Var _18 _19:closLang_exp) <=> T`;
-   `pure (If _20 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\
+  [`pure (Var _25 _26:closLang_exp) <=> T`;
+   `pure (If _28 e1 e2 e3:closLang_exp) <=> pure e1 /\ pure e2 /\
   pure e3`;
-   `pure (Let _21 es e2:closLang_exp) <=> EVERY pure es /\ pure e2`;
-   `pure (Raise _22 _23:closLang_exp) <=> F`;
-   `pure (Handle _24 e1 e2:closLang_exp) <=> pure e1`;
-   `pure (closLang_Tick _25 _26) <=> F`;
-   `pure (closLang_Call _27 _28 _29 _30) <=> F`;
-   `pure (App _31 _32 _33 _34:closLang_exp) <=> F`;
-   `pure (closLang_Fn _35 _36 _37 _38 _39) <=> T`;
-   `pure (Letrec _40 _41 _42 _43 x:closLang_exp) <=> pure x`;
-   `pure (closLang_Op _44 opn es) <=> EVERY pure es /\
+   `pure (Let _30 es e2:closLang_exp) <=> EVERY pure es /\ pure e2`;
+   `pure (Raise _33 _34:closLang_exp) <=> F`;
+   `pure (Handle _36 e1 e2:closLang_exp) <=> pure e1`;
+   `pure (closLang_Tick _37 _38) <=> F`;
+   `pure (closLang_Call _39 _40 _41 _42) <=> F`;
+   `pure (App _47 _48 _49 _50:closLang_exp) <=> F`;
+   `pure (closLang_Fn _51 _52 _53 _54 _55) <=> T`;
+   `pure (Letrec _60 _61 _62 _63 x:closLang_exp) <=> pure x`;
+   `pure (closLang_Op _64 opn es) <=> EVERY pure es /\
   closLang_pure_op opn`];;
 
 (* used in proofs about closLang, BVL, BVI and dataLang *)

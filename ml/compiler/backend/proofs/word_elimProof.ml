@@ -27,8 +27,8 @@ needs "lib/sptree.ml";;
 let dest_word_loc_def = cake_define
   `dest_word_loc x1 =
         match x1 with
-          (Loc n _1:semanticPrimitives_v) -> SOME n
-        | (_2:'a word_loc) -> NONE`;;
+          (Loc n _2:semanticPrimitives_v) -> SOME n
+        | (_3:'a word_loc) -> NONE`;;
 
 let dest_result_loc_def = cake_define
   `dest_result_loc x1 =
@@ -37,7 +37,7 @@ let dest_result_loc_def = cake_define
        BIGUNION (set_of_list (MAP (\x. match (dest_word_loc x) with
          NONE -> {} | SOME x -> {x}) ns))
         | (SOME (wordSem_Exception w (Loc n n0))) -> {n}
-        | _3 -> {}`;;
+        | _4 -> {}`;;
 
 (* TODO could do alt def using toAList -
     not necessary though, may not be cleaner *)
@@ -70,7 +70,7 @@ let get_num_wordloc_alist_def = cake_define
 
 let get_stack_def = cake_define_list
   [`get_stack [] = (LN:1 spt)`;
-   `get_stack (StackFrame lsz e0 e _4 :: xs) =
+   `get_stack (StackFrame lsz e0 e _5 :: xs) =
             sptree_union (sptree_union (get_num_wordloc_alist
               e0) (get_num_wordloc_alist e)) (get_stack xs)`];;
 

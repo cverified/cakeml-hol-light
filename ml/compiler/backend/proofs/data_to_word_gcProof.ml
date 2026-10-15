@@ -81,13 +81,13 @@ let join_env_def = cake_define
 let flat_def = cake_define
   `flat x1 x2 =
         match (x1,x2) with
-          (((Env _1 env:dataSem_stack) :: xs),(StackFrame _2 _3 vs _4
+          (((Env _2 env:dataSem_stack) :: xs),(StackFrame _3 _4 vs _5
             :: ys)) ->
         join_env env vs ++ flat xs ys
-        | ((dataSem_Exc _5 env _6 :: xs),(StackFrame _7 _8 vs _9 ::
+        | ((dataSem_Exc _6 env _7 :: xs),(StackFrame _8 _9 vs _10 ::
           ys)) ->
         join_env env vs ++ flat xs ys
-        | (_10,_11) -> []`;;
+        | (_11,_12) -> []`;;
 
 (* HOL4 ML code, not ported:
 val DISJ_EQ_IMP = METIS_PROVE [] ``(~b \/ c) <=> (b ==> c)``
@@ -100,7 +100,7 @@ let is_Ref_def = cake_define
   `is_Ref is_ref_tag x2 =
       match x2 with
         DataElement xs l r -> is_ref_tag r
-      | _12 -> F`;;
+      | _13 -> F`;;
 
 let len_inv_def = cake_define
   `len_inv s <=>
@@ -123,7 +123,7 @@ let muttag_header_def = cake_define
   `muttag_header x1 =
       match x1 with
         ThunkTag e -> (thunk_tag_to_bits e << 3 || (n2w 6))
-      | _13 -> (n2w 2)`;;
+      | _14 -> (n2w 2)`;;
 
 let partial_len_inv_def = cake_define
   `partial_len_inv s <=>
@@ -141,7 +141,7 @@ let do_partial_def = cake_define
   `do_partial c s =
      (match data_to_word_config_gc_kind c with
        data_to_word_Generational l -> word_gen_gc_can_do_partial l s
-       | _14 -> F)`;;
+       | _15 -> F)`;;
 
 let alloc_size_def = cake_define
   `alloc_size k = ((if k * (dimindex (:'a) DIV 8) < dimword (:'ga) then
@@ -178,14 +178,14 @@ let stack_rel_def = cake_define
           (x1,x2,x3)))) ->
         data_to_word_gcProof_stack_rel (Env s1 env) (StackFrame s2 ws
           vs NONE) /\ (x1 = n)
-        | (_15,_16) -> F`;;
+        | (_16,_17) -> F`;;
 hol4_overload "stack_rel" "data_to_word_gcProof_stack_rel";;
 
 let the_global_def = cake_define
   `the_global g = the (Number (&0)) (OPTION_MAP (RefPtr T) g)`;;
 
 let contains_loc_def = cake_define
-  `contains_loc (StackFrame _17 vs _18 _19) (l1,l2) = (ALOOKUP vs 0 =
+  `contains_loc (StackFrame _18 vs _19 _20) (l1,l2) = (ALOOKUP vs 0 =
   SOME (Loc l1 l2))`;;
 
 let code_oracle_rel_def = cake_define
@@ -212,7 +212,7 @@ let code_oracle_rel_def = cake_define
                         MAP (compile_part c)) /\
      t_compile_oracle = (I ## MAP (compile_part c)) o
        s_compile_oracle /\
-     (!n. EVERY (\(n,_20). data_num_stubs <= n) (SND
+     (!n. EVERY (\(n,_21). data_num_stubs <= n) (SND
        (s_compile_oracle n)))`;;
 
 let limits_inv_def = cake_define
@@ -295,7 +295,7 @@ let init_store_ok_def = cake_define
          SOME (Word (curr + bytes_in_word * n2w limit')) /\
        FLOOKUP store TriggerGC =
          SOME (Word (match data_to_word_config_gc_kind c with
-           data_to_word_Generational _21 -> curr | _22 -> curr +
+           data_to_word_Generational _22 -> curr | _23 -> curr +
            bytes_in_word * n2w limit')) /\
        FLOOKUP store HeapLength =
          SOME (Word (bytes_in_word * n2w limit')) /\
@@ -339,7 +339,7 @@ let loc_ok_def = cake_define
   `loc_ok x1 =
       match x1 with
         (Loc m n:dataSem_v) -> (n = 0)
-      | _23 -> T`;;
+      | _24 -> T`;;
 
 (* HOL4 ML code, not ported:
 val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2``
@@ -347,11 +347,12 @@ val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2``
 
 let loc_merge_def = cake_define_list
   [`loc_merge [] ys = []`;
-   `loc_merge (wordLang_Loc l1 l2 :: xs) ys = wordLang_Loc l1 l2 ::
-  loc_merge xs ys`;
+   `loc_merge (wordLang_Loc l1 l2 :: xs) ys = (Loc l1 l2:'a word_loc)
+  :: loc_merge xs ys`;
    `loc_merge (wordLang_Word w :: xs) (y :: ys) = y :: loc_merge xs
   ys`;
-   `loc_merge (wordLang_Word w :: xs) [] = wordLang_Word w :: xs`];;
+   `loc_merge (wordLang_Word w :: xs) [] = (Word w:'a word_loc) ::
+  xs`];;
 
 let traverse_heap = cake_inductive
   `(!heap p1.

@@ -58,27 +58,27 @@ let dest_handle_If_def = cake_define
       | _3 -> NONE`;;
 
 let handle_adj_vars_def = cake_define_list
-  [`handle_adj_vars l d (Var v:bvl_exp) = (Var (if v < l then v else
-  v + d):bvl_exp)`;
+  [`handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v
+  + d)`;
    `handle_adj_vars l d (If x1 x2 x3:bvl_exp) =
-         (If (handle_adj_vars l d x1) (handle_adj_vars l d x2)
-           (handle_adj_vars l d x3):bvl_exp)`;
+         If (handle_adj_vars l d x1) (handle_adj_vars l d x2)
+           (handle_adj_vars l d x3)`;
    `handle_adj_vars l d (Let xs x2:bvl_exp) =
-         (Let (handle_adj_vars1 l d xs) (handle_adj_vars (l +
-           LENGTH xs) d x2):bvl_exp)`;
+         Let (handle_adj_vars1 l d xs) (handle_adj_vars (l +
+           LENGTH xs) d x2)`;
    `handle_adj_vars l d (Handle x1 x2:bvl_exp) =
-         (Handle (handle_adj_vars l d x1) (handle_adj_vars (l +
-           1) d x2):bvl_exp)`;
-   `handle_adj_vars l d (Raise x1:bvl_exp) = (Raise (handle_adj_vars
-  l d x1):bvl_exp)`;
-   `handle_adj_vars l d (Op op xs:bvl_exp) = (Op op (handle_adj_vars1
-  l d xs):bvl_exp)`;
-   `handle_adj_vars l d (Tick x:bvl_exp) = (Tick (handle_adj_vars l d
-  x):bvl_exp)`;
-   `handle_adj_vars l d (Force m v:bvl_exp) = (Force m (if v < l then
-  v else v + d):bvl_exp)`;
+         Handle (handle_adj_vars l d x1) (handle_adj_vars (l + 1)
+           d x2)`;
+   `handle_adj_vars l d (Raise x1:bvl_exp) = Raise (handle_adj_vars l
+  d x1)`;
+   `handle_adj_vars l d (Op op xs:bvl_exp) = Op op (handle_adj_vars1
+  l d xs)`;
+   `handle_adj_vars l d (Tick x:bvl_exp) = Tick (handle_adj_vars l d
+  x)`;
+   `handle_adj_vars l d (Force m v:bvl_exp) = Force m (if v < l then
+  v else v + d)`;
    `handle_adj_vars l d (Call t dest xs:bvl_exp) =
-         (Call t dest (handle_adj_vars1 l d xs):bvl_exp)`;
+         Call t dest (handle_adj_vars1 l d xs)`;
    `handle_adj_vars1 l d [] = []`;
    `handle_adj_vars1 l d (x :: xs) = handle_adj_vars l d x ::
   handle_adj_vars1 l d xs`];;
@@ -102,17 +102,16 @@ let handle_size_def = cake_define_list
 let handle_simp_def = cake_define_list
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (Var v:bvl_exp) = (Var v:bvl_exp)`;
-   `handle_simp (If x1 x2 x3:bvl_exp) = (If (handle_simp x1)
-  (handle_simp x2) (handle_simp x3):bvl_exp)`;
-   `handle_simp (Let xs x2:bvl_exp) = (Let (handle_simp_list xs)
-  (handle_simp x2):bvl_exp)`;
-   `handle_simp (Raise x1:bvl_exp) = (Raise (handle_simp x1):bvl_exp)`;
-   `handle_simp (Op op xs:bvl_exp) = (Op op (handle_simp_list
-  xs):bvl_exp)`;
-   `handle_simp (Tick x:bvl_exp) = (Tick (handle_simp x):bvl_exp)`;
+   `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)
+  (handle_simp x2) (handle_simp x3)`;
+   `handle_simp (Let xs x2:bvl_exp) = Let (handle_simp_list xs)
+  (handle_simp x2)`;
+   `handle_simp (Raise x1:bvl_exp) = Raise (handle_simp x1)`;
+   `handle_simp (Op op xs:bvl_exp) = Op op (handle_simp_list xs)`;
+   `handle_simp (Tick x:bvl_exp) = Tick (handle_simp x)`;
    `handle_simp (Force m n:bvl_exp) = (Force m n:bvl_exp)`;
-   `handle_simp (Call t dest xs:bvl_exp) = (Call t dest
-  (handle_simp_list xs):bvl_exp)`;
+   `handle_simp (Call t dest xs:bvl_exp) = Call t dest
+  (handle_simp_list xs)`;
    `handle_simp_list [] = ([]:bvl_exp list)`;
    `handle_simp_list (x :: xs) = handle_simp x :: handle_simp_list xs`;
    `make_handle x1 x2 l =
@@ -166,13 +165,13 @@ let compile_def = cake_define_list
          let (dy,ly,s2,nr2) = bvl_handle_compile l n (y :: xs) in
            (dx ++ dy,mk_Union lx ly,s1 + s2,(nr1 /\ nr2)))`;
    `bvl_handle_compile l n [(Var v:bvl_exp)] = (if v < n then ([(Var
-  v:bvl_exp)],Var v,1,T) else ([Op (closLang_IntOp (closLang_Const
-  (&0))) []],db_vars_Empty,1,T))`;
+  v:bvl_exp)],(Var v:bvl_exp),1,T) else ([Op (closLang_IntOp
+  (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(If x1 x2 x3:bvl_exp)] =
          (let (x1,l1,s1,nr1) = bvl_handle_compile l n [x1] in
          let (x2,l2,s2,nr2) = bvl_handle_compile l n [x2] in
          let (x3,l3,s3,nr3) = bvl_handle_compile l n [x3] in
-           OptionalLetLet ((If (HD x1) (HD x2) (HD x3):bvl_exp)) n
+           OptionalLetLet (If (HD x1) (HD x2) (HD x3)) n
              (mk_Union l1 (mk_Union l2 l3)) (s1 + s2 + s3 + 1) l
              (nr1 /\ nr2 /\ nr3))`;
    `bvl_handle_compile l n [(Let xs x2:bvl_exp)] =
@@ -181,7 +180,7 @@ let compile_def = cake_define_list
            let k = LENGTH xs in
            let (xs,l1,s1,nr1) = bvl_handle_compile l n xs in
            let (x2,l2,s2,nr2) = bvl_handle_compile l (n + k) [x2] in
-             OptionalLetLet ((Let xs (HD x2):bvl_exp)) n
+             OptionalLetLet (Let xs (HD x2)) n
                (mk_Union l1 (Shift k l2)) (s1 + s2 + 1) l (nr1 /\
                  nr2))`;
    `bvl_handle_compile l n [(Handle x1 x2:bvl_exp)] =
@@ -189,29 +188,26 @@ let compile_def = cake_define_list
            if nr1 then (y1,l1,s1,T) else
              let (y2,l2,s2,nr2) = bvl_handle_compile l (n + 1) [x2]
                in
-               ([(Handle (LetLet n (db_to_set l1) (HD y1)) (HD
-                 y2):bvl_exp)],
+               ([Handle (LetLet n (db_to_set l1) (HD y1)) (HD y2)],
                 mk_Union l1 (Shift 1 l2),
                 s2,nr2))`;
    `bvl_handle_compile l n [(Raise x1:bvl_exp)] =
          (let (dx,lx,s1,nr1) = bvl_handle_compile l n [x1] in
-           OptionalLetLet ((Raise (HD dx):bvl_exp)) n lx (s1 + 1)
-             l F)`;
+           OptionalLetLet (Raise (HD dx)) n lx (s1 + 1) l F)`;
    `bvl_handle_compile l n [(Op op xs:bvl_exp)] =
          (let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
            if op = ThunkOp ForceThunk then
-             ([(Op op ys:bvl_exp)],lx,s1 + 1,F) else
+             ([Op op ys],lx,s1 + 1,F) else
              OptionalLetLet (Op op ys) n lx (s1 + 1) l nr1)`;
    `bvl_handle_compile l n [(Tick x:bvl_exp)] =
          (let (y,lx,s1,nr1) = bvl_handle_compile l n [x] in
-           ([(Tick (HD y):bvl_exp)],lx,s1,nr1))`;
+           ([Tick (HD y)],lx,s1,nr1))`;
    `bvl_handle_compile l n [(Force m v:bvl_exp)] = (if v < n then
   ([(Force m v:bvl_exp)],Var v,1,F) else ([Op (closLang_IntOp
   (closLang_Const (&0))) []],db_vars_Empty,1,T))`;
    `bvl_handle_compile l n [(Call t dest xs:bvl_exp)] =
          (let (ys,lx,s1,nr1) = bvl_handle_compile l n xs in
-           OptionalLetLet ((Call t dest ys:bvl_exp)) n lx (s1 +
-             1) l F)`];;
+           OptionalLetLet (Call t dest ys) n lx (s1 + 1) l F)`];;
 hol4_overload "compile" "bvl_handle_compile";;
 
 (* HOL4 ML code, not ported:
@@ -220,7 +216,7 @@ val compile_ind = theorem"compile_ind";
 
 let compile_sing_def = cake_define_list
   [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then
-  ((Var v:bvl_exp),Var v,1,T) else (Op (closLang_IntOp
+  ((Var v:bvl_exp),(Var v:bvl_exp),1,T) else (Op (closLang_IntOp
   (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (If x1 x2 x3:bvl_exp) =
          (let (x1,l1,s1,nr1) = bvl_handle_compile_sing l n x1 in
@@ -244,28 +240,27 @@ let compile_sing_def = cake_define_list
            if nr1 then (y1,l1,s1,T) else
              let (y2,l2,s2,nr2) = bvl_handle_compile_sing l (n + 1)
                x2 in
-               ((Handle (LetLet n (db_to_set l1) y1) y2:bvl_exp),
+               (Handle (LetLet n (db_to_set l1) y1) y2,
                 mk_Union l1 (Shift 1 l2),
                 s2,nr2))`;
    `bvl_handle_compile_sing l n (Raise x1:bvl_exp) =
          (let (dx,lx,s1,nr1) = bvl_handle_compile_sing l n x1 in
-           OptionalLetLet_sing ((Raise dx:bvl_exp)) n lx (s1 + 1)
-             l F)`;
+           OptionalLetLet_sing (Raise dx) n lx (s1 + 1) l F)`;
    `bvl_handle_compile_sing l n (Op op xs:bvl_exp) =
          (let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
            if op = ThunkOp ForceThunk then
-             ((Op op ys:bvl_exp),lx,s1 + 1,F) else
+             (Op op ys,lx,s1 + 1,F) else
              OptionalLetLet_sing (Op op ys) n lx (s1 + 1) l nr1)`;
    `bvl_handle_compile_sing l n (Tick x:bvl_exp) =
          (let (y,lx,s1,nr1) = bvl_handle_compile_sing l n x in
-           ((Tick y:bvl_exp),lx,s1,nr1))`;
+           (Tick y,lx,s1,nr1))`;
    `bvl_handle_compile_sing l n (Force m v:bvl_exp) = (if v < n then
   ((Force m v:bvl_exp),Var v,1,F) else (Op (closLang_IntOp
   (closLang_Const (&0))) [],db_vars_Empty,1,T))`;
    `bvl_handle_compile_sing l n (Call t dest xs:bvl_exp) =
          (let (ys,lx,s1,nr1) = bvl_handle_compile_list l n xs in
-           OptionalLetLet_sing ((Call t dest ys:bvl_exp)) n lx
-             (s1 + 1) l F)`;
+           OptionalLetLet_sing (Call t dest ys) n lx (s1 + 1) l
+             F)`;
    `bvl_handle_compile_list l n [] = (([]:bvl_exp
   list),db_vars_Empty,0,T)`;
    `bvl_handle_compile_list l n (x :: xs) =

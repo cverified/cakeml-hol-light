@@ -210,8 +210,8 @@ let remove_all_def = cake_define_list
   [`remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis
   (remove_all v)`;
    `remove_all (mlsexp_String v1) = mlsexp_String v1`;
-   `remove_all (Append v2 _8 v3:pretty) = (Append (remove_all v2) F
-  (remove_all v3):pretty)`;
+   `remove_all (Append v2 _9 v3:pretty) = Append (remove_all v2) F
+  (remove_all v3)`;
    `remove_all (mlsexp_Size v4 v5) = remove_all v5`];;
 
 let smart_remove_def = cake_define_list
@@ -224,8 +224,8 @@ let smart_remove_def = cake_define_list
       (let n2 = mlsexp_get_size v2 in
       let n3 = get_next_size v3 in
         if k + n2 + n3 < 50 then
-          (Append (smart_remove i k v2) F (smart_remove i (k + n2)
-            v3):pretty) else
+          Append (smart_remove i k v2) F (smart_remove i (k + n2)
+            v3) else
           Append (smart_remove i k v2) T (smart_remove i i v3))`];;
 
 let flatten_def = cake_define_list

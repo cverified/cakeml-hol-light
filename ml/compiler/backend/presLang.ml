@@ -1172,7 +1172,7 @@ let stack_prog_to_display_def = cake_define_list
    `stack_prog_to_display (SUC k) ns (Alloc n:labLang_prog) =
   item_with_num (implode "alloc") n`;
    `stack_prog_to_display (SUC k) ns (StoreConsts n1 n2
-  _10:labLang_prog) = item_with_nums (implode "store_consts") [n1;
+  _11:labLang_prog) = item_with_nums (implode "store_consts") [n1;
   n2]`;
    `stack_prog_to_display (SUC k) ns (Raise n:labLang_prog) =
   item_with_num (implode "raise") n`;
@@ -1302,7 +1302,7 @@ let lab_fun_to_display_def = cake_define
 let word_seqs_def = cake_define
   `word_seqs z =
      (match z with wordLang_Seq x y -> Append (word_seqs x)
-       (word_seqs y) | _11 -> List [z])`;;
+       (word_seqs y) | _12 -> List [z])`;;
 
 let word_exp_to_display_def = cake_define_list
   [`word_exp_to_display (wordLang_Const v) = item_with_word (implode

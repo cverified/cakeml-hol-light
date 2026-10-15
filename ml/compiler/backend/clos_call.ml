@@ -28,16 +28,16 @@ let free_def = cake_define_list
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
          let (c3,l3) = clos_call_free [x3] in
-           ([(If t (HD c1) (HD c2) (HD
-             c3):closLang_exp)],mk_Union l1 (mk_Union l2 l3)))`;
+           ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
+             l2 l3)))`;
    `clos_call_free [(Let t xs x2:closLang_exp)] =
          (let (c1,l1) = clos_call_free xs in
          let (c2,l2) = clos_call_free [x2] in
-           ([(Let t c1 (HD c2):closLang_exp)],mk_Union l1 (Shift
-             (LENGTH xs) l2)))`;
+           ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
+             l2)))`;
    `clos_call_free [(Raise t x1:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
-           ([(Raise t (HD c1):closLang_exp)],l1))`;
+           ([Raise t (HD c1)],l1))`;
    `clos_call_free [closLang_Tick t x1] =
          (let (c1,l1) = clos_call_free [x1] in
            ([closLang_Tick t (HD c1)],l1))`;
@@ -47,28 +47,25 @@ let free_def = cake_define_list
    `clos_call_free [(App t loc_opt x1 xs2:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free xs2 in
-           ([(App t loc_opt (HD c1) c2:closLang_exp)],mk_Union l1
-             l2))`;
+           ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
    `clos_call_free [closLang_Fn t loc _1 num_args x1] =
          (let (c1,l1) = clos_call_free [x1] in
          let l2 = Shift num_args l1 in
            ([closLang_Fn t loc (SOME (vars_to_list l2)) num_args
              (HD c1)],l2))`;
-   `clos_call_free [(Letrec t loc _2 fns x1:closLang_exp)] =
+   `clos_call_free [(Letrec t loc _3 fns x1:closLang_exp)] =
          (let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = clos_call_free [x1] in
-           ([(Letrec t loc (SOME (vars_to_list l1)) c1 (HD
-             c2):closLang_exp)],
+           ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
             mk_Union l1 (Shift (LENGTH fns) l2)))`;
    `clos_call_free [(Handle t x1 x2:closLang_exp)] =
          (let (c1,l1) = clos_call_free [x1] in
          let (c2,l2) = clos_call_free [x2] in
-           ([(Handle t (HD c1) (HD c2):closLang_exp)],mk_Union l1
-             (Shift 1 l2)))`;
+           ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
    `clos_call_free [closLang_Call t ticks dest xs] =
          (let (c1,l1) = clos_call_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
@@ -84,16 +81,14 @@ let free_sing_def = cake_define_list
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
          let (c3,l3) = free_sing x3 in
-           ((If t c1 c2 c3:closLang_exp),mk_Union l1 (mk_Union l2
-             l3)))`;
+           (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))`;
    `free_sing (Let t xs x2:closLang_exp) =
          (let (c1,l1) = free_list xs in
          let (c2,l2) = free_sing x2 in
-           ((Let t c1 c2:closLang_exp),mk_Union l1 (Shift (LENGTH
-             xs) l2)))`;
+           (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))`;
    `free_sing (Raise t x1:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
-           ((Raise t c1:closLang_exp),l1))`;
+           (Raise t c1,l1))`;
    `free_sing (closLang_Tick t x1) =
          (let (c1,l1) = free_sing x1 in
            (closLang_Tick t c1,l1))`;
@@ -103,27 +98,25 @@ let free_sing_def = cake_define_list
    `free_sing (App t loc_opt x1 xs2:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_list xs2 in
-           ((App t loc_opt c1 c2:closLang_exp),mk_Union l1 l2))`;
-   `free_sing (closLang_Fn t loc _3 num_args x1) =
+           (App t loc_opt c1 c2,mk_Union l1 l2))`;
+   `free_sing (closLang_Fn t loc _4 num_args x1) =
          (let (c1,l1) = free_sing x1 in
          let l2 = Shift num_args l1 in
            (closLang_Fn t loc (SOME (vars_to_list l2)) num_args
              c1,l2))`;
-   `free_sing (Letrec t loc _4 fns x1:closLang_exp) =
+   `free_sing (Letrec t loc _6 fns x1:closLang_exp) =
          (let m = LENGTH fns in
          let res = MAP (\(n,x). let (c,l) = free_sing x in
                               ((n,c),Shift (n + m) l)) fns in
          let c1 = MAP FST res in
          let l1 = list_mk_Union (MAP SND res) in
          let (c2,l2) = free_sing x1 in
-           ((Letrec t loc (SOME (vars_to_list l1)) c1
-             c2:closLang_exp),
+           (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
             mk_Union l1 (Shift (LENGTH fns) l2)))`;
    `free_sing (Handle t x1 x2:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
          let (c2,l2) = free_sing x2 in
-           ((Handle t c1 c2:closLang_exp),mk_Union l1 (Shift 1
-             l2)))`;
+           (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
    `free_sing (closLang_Call t ticks dest xs) =
          (let (c1,l1) = free_list xs in
            (closLang_Call t ticks dest c1,l1))`;
@@ -166,7 +159,7 @@ let GENLIST_Var_def = cake_define
 
 let calls_list_def = cake_define_list
   [`calls_list t (i:num) loc [] = []`;
-   `calls_list t i loc ((n,_5) :: xs) =
+   `calls_list t i loc ((n,_7) :: xs) =
          (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
               calls_list t (i + 1) (loc + 2) xs`];;
 
@@ -185,16 +178,16 @@ let calls_def = cake_define_list
          let e1 = HD e1 in
          let e2 = HD e2 in
          let e3 = HD e3 in
-           ([(If t e1 e2 e3:closLang_exp)],g))`;
+           ([If t e1 e2 e3],g))`;
    `calls [(Let t xs x2:closLang_exp)] g =
          (let (e1,g) = calls xs g in
          let (e2,g) = calls [x2] g in
          let e2 = HD e2 in
-           ([(Let t e1 e2:closLang_exp)],g))`;
+           ([Let t e1 e2],g))`;
    `calls [(Raise t x1:closLang_exp)] g =
          (let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
-           ([(Raise t e1:closLang_exp)],g))`;
+           ([Raise t e1],g))`;
    `calls [closLang_Tick t x1] g =
          (let (e1,g) = calls [x1] g in
          let e1 = HD e1 in
@@ -204,7 +197,7 @@ let calls_def = cake_define_list
          let (e2,g) = calls [x2] g in
          let e1 = HD e1 in
          let e2 = HD e2 in
-           ([(Handle t e1 e2:closLang_exp)],g))`;
+           ([Handle t e1 e2],g))`;
    `calls [closLang_Call t ticks dest xs] g =
          (let (xs,g) = calls xs g in
            ([closLang_Call t ticks dest xs],g))`;
@@ -224,8 +217,7 @@ let calls_def = cake_define_list
                ([Let (mk_cons t 0) (SNOC e1 es)
                   (closLang_Call (mk_cons t 1) (LENGTH es) (loc +
                     1) (GENLIST_Var backend_common_None 2 (LENGTH
-                    es)))],g) else ([(App t loc_opt e1
-                    es:closLang_exp)],g))`;
+                    es)))],g) else ([App t loc_opt e1 es],g))`;
    `calls [closLang_Fn t loc_opt ws num_args x1] g =
          (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
            in
@@ -246,14 +238,13 @@ let calls_def = cake_define_list
            in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls (MAP SND fns) new_g in
-           if EVERY2 (\(n,_6) p. clos_call_closed (closLang_Fn
+           if EVERY2 (\(n,_12) p. clos_call_closed (closLang_Fn
              (implode "") NONE NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
              let (e1,g) = calls [x1] new_g in
-               ([(Letrec t loc_opt ws (calls_list
-                 backend_common_None 1 loc fns) (HD
-                 e1):closLang_exp)],g) else
+               ([Letrec t loc_opt ws (calls_list backend_common_None
+                 1 loc fns) (HD e1)],g) else
              let (fns1,g) = calls (MAP SND fns) g in
              let (e1,g) = calls [x1] g in
                ([Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)
@@ -266,21 +257,21 @@ let calls_sing_def = cake_define_list
          (let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in
          let (e3,g) = calls_sing x3 g in
-           ((If t e1 e2 e3:closLang_exp),g))`;
+           (If t e1 e2 e3,g))`;
    `calls_sing (Let t xs x2:closLang_exp) g =
          (let (e1,g) = calls_sing_list xs g in
          let (e2,g) = calls_sing x2 g in
-           ((Let t e1 e2:closLang_exp),g))`;
+           (Let t e1 e2,g))`;
    `calls_sing (Raise t x1:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
-           ((Raise t e1:closLang_exp),g))`;
+           (Raise t e1,g))`;
    `calls_sing (closLang_Tick t x1) g =
          (let (e1,g) = calls_sing x1 g in
            (closLang_Tick t e1,g))`;
    `calls_sing (Handle t x1 x2:closLang_exp) g =
          (let (e1,g) = calls_sing x1 g in
          let (e2,g) = calls_sing x2 g in
-           ((Handle t e1 e2:closLang_exp),g))`;
+           (Handle t e1 e2,g))`;
    `calls_sing (closLang_Call t ticks dest xs) g =
          (let (xs,g) = calls_sing_list xs g in
            (closLang_Call t ticks dest xs,g))`;
@@ -299,8 +290,7 @@ let calls_sing_def = cake_define_list
                (Let (mk_cons t 0) (SNOC e1 es)
                   (closLang_Call (mk_cons t 1) (LENGTH es) (loc +
                     1) (GENLIST_Var backend_common_None 2 (LENGTH
-                    es))),g) else ((App t loc_opt e1
-                    es:closLang_exp),g))`;
+                    es))),g) else (App t loc_opt e1 es,g))`;
    `calls_sing (closLang_Fn t loc_opt ws num_args x1) g =
          (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
            in
@@ -321,13 +311,13 @@ let calls_sing_def = cake_define_list
            in
          let new_g = insert_each loc (LENGTH fns) g in
          let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
-           if EVERY2 (\(n,_7) p. clos_call_closed (closLang_Fn
+           if EVERY2 (\(n,_17) p. clos_call_closed (closLang_Fn
              (implode "") NONE NONE n p)) fns fns1 then
              let new_g = code_list loc (ZIP (MAP FST fns) fns1)
                new_g in
              let (e1,g) = calls_sing x1 new_g in
-               ((Letrec t loc_opt ws (calls_list backend_common_None
-                 1 loc fns) e1:closLang_exp),g) else
+               (Letrec t loc_opt ws (calls_list backend_common_None
+                 1 loc fns) e1,g) else
              let (fns1,g) = calls_sing_list (MAP SND fns) g in
              let (e1,g) = calls_sing x1 g in
                (Letrec t loc_opt ws (ZIP (MAP FST fns) fns1)

@@ -35,12 +35,12 @@ let pure_exp_def = cake_define_list
   [`pure_exp n (Var v:bvi_exp) = (v < n)`;
    `pure_exp n (If e1 e2 e3:bvi_exp) = F`;
    `pure_exp n (Let es e:bvi_exp) = (pure_exp n e /\ pure_exps n es)`;
-   `pure_exp n (Raise _20:bvi_exp) = F`;
+   `pure_exp n (Raise _21:bvi_exp) = F`;
    `pure_exp n (Tick e:bvi_exp) = F`;
-   `pure_exp n (Call _21 _22 _23 _24:bvi_exp) = F`;
-   `pure_exp n (Force _25 _26:bvi_exp) = F`;
-   `pure_exp n (bvi_LetCall _27 _28 _29 _30 _31) = F`;
-   `pure_exp n (bvi_Return _32) = F`;
+   `pure_exp n (Call _26 _27 _28 _29:bvi_exp) = F`;
+   `pure_exp n (Force _32 _33:bvi_exp) = F`;
+   `pure_exp n (bvi_LetCall _34 _35 _36 _37 _38) = F`;
+   `pure_exp n (bvi_Return _39) = F`;
    `pure_exp n (Op op args:bvi_exp) = (pure_op op args /\ pure_exps n
   args)`;
    `pure_exps n [] = T`;
@@ -57,7 +57,7 @@ let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
       match x1 with
         closLang_BlockOp (Cons block_tag) -> SOME block_tag
-      | _33 -> NONE`;;
+      | _40 -> NONE`;;
 hol4_overload "dest_Cons" "bvi_tmc_dest_Cons";;
 
 (* PHASE 1: extract everything into a let bound "call block" *)
@@ -76,7 +76,7 @@ let call_block_INDUCT,call_block_RECURSION = define_datatype
 
 let bind_def = cake_define_list
   [`bind (n:num) [] = ([],n)`;
-   `bind (n:num) (_34 :: t) =
+   `bind (n:num) (_41 :: t) =
        (match bind (n + 1) t with (vs,n') -> (n :: vs,n'))`];;
 
 let shift_vars_def = cake_define_list
@@ -94,7 +94,7 @@ let shift_cb_def = cake_define_list
 let call_to_cb_def = cake_define
   `call_to_cb loc call_ts call_loc call_args' call_h =
    (if call_loc = SOME loc /\ call_h = NONE then
-     match bind 0 call_args' with (vs,_35) ->
+     match bind 0 call_args' with (vs,_42) ->
          SOME (call_args',RCall call_ts vs) else NONE)`;;
 
 (* Attempts to build a CallBlock from the tag and args of a BlockOp
@@ -110,21 +110,21 @@ let call_to_cb_def = cake_define
 let bvi_to_cb_aux_def = cake_define_list
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
-         SOME (bs,INR (CallBlock tag [] cb [])) | _36 -> NONE)`;
+         SOME (bs,INR (CallBlock tag [] cb [])) | _44 -> NONE)`;
    `bvi_to_cb_aux_sing n loc tag (Op op args:bvi_exp) =
        (match bvi_tmc_dest_Cons op with SOME tag' ->
            (match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
              SOME (bs,INL vs) ->
                 (if pure_exp n ((Op op args:bvi_exp)) then
-                  SOME ([Op op args],INL [0]) else NONE) | SOME
-                    (bs,INR cb) ->
+                  SOME ([(Op op args:bvi_exp)],INL [0]) else NONE) |
+                    SOME (bs,INR cb) ->
                 SOME (bs,INR (CallBlock tag [] cb []))) | NONE ->
-           (if pure_exp n (Op op args) then
-             SOME ([Op op args],INL [0]) else NONE))`;
-   `bvi_to_cb_aux_sing n _37 _38 exp =
+           (if pure_exp n ((Op op args:bvi_exp)) then
+             SOME ([(Op op args:bvi_exp)],INL [0]) else NONE))`;
+   `bvi_to_cb_aux_sing n _45 _46 exp =
        (if pure_exp n exp then
          SOME ([exp],INL [0]) else NONE)`;
-   `bvi_to_cb_aux _39 _40 _41 [] = SOME ([],INL [])`;
+   `bvi_to_cb_aux _47 _48 _49 [] = SOME ([],INL [])`;
    `bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp`;
    `bvi_to_cb_aux n loc tag (h :: t) =
        (match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
@@ -135,13 +135,13 @@ let bvi_to_cb_aux_def = cake_define_list
                   then
                   let vs2' = shift_vars (LENGTH bs1) vs2 in
                     SOME (bs1 ++ bs2,INL (vs1 ++ vs2')) else NONE) |
-                      SOME (bs1,INR (CallBlock _42 [] child [])) ->
+                      SOME (bs1,INR (CallBlock _50 [] child [])) ->
                 (let vs2' = shift_vars (LENGTH bs1) vs2 in
                   SOME (bs1 ++ bs2,INR (CallBlock tag [] child
-                    vs2'))) | _43 -> NONE) | SOME (bs2,INR cb) ->
+                    vs2'))) | _51 -> NONE) | SOME (bs2,INR cb) ->
            (match shift_cb 1 cb with CallBlock tag l child r ->
                (let cb' = CallBlock tag (0 :: l) child r in
-                 SOME (h :: bs2,INR cb')) | _44 -> NONE))`];;
+                 SOME (h :: bs2,INR cb')) | _52 -> NONE))`];;
 
 let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
@@ -163,8 +163,8 @@ let bvi_to_cb_def = cake_define
         | (Op op xs) ->
       (match bvi_tmc_dest_Cons op with SOME tag ->
           (match bvi_to_cb_aux n loc tag xs with SOME (bs,INR cb) ->
-            SOME (bs,cb) | _45 -> NONE) | _46 -> NONE)
-        | _47 -> NONE`;;
+            SOME (bs,cb) | _53 -> NONE) | _54 -> NONE)
+        | _55 -> NONE`;;
 
 (* Convert back to BlockOp Cons for comparing semantics *)
 let cb_to_bvi_def = cake_define_list
@@ -210,8 +210,8 @@ let update_cons_def = cake_define
 let cb_size_def = cake_define
   `cb_size x1 =
       match x1 with
-        CallBlock _48 _49 x _50 -> cb_size x + 1
-      | _51 -> 0`;;
+        CallBlock _56 _57 x _58 -> cb_size x + 1
+      | _59 -> 0`;;
 
 let cb_to_bvi_worker_aux_def = cake_define_list
   [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
@@ -279,14 +279,14 @@ let rewrite_wrapper_def = cake_define
         | (Raise x) -> NONE
         | (Tick x) -> OPTION_MAP Tick (rewrite_wrapper loc loc_opt n
           x)
-        | (Force _52 n) -> NONE
+        | (Force _60 n) -> NONE
         | (Call t d args h) -> NONE
         | (Op op op_args) ->
        (match bvi_to_cb n loc (Op op op_args) with SOME (bs,CallBlock
          tag left child right) ->
            SOME (Let bs (cb_to_bvi_wrapper tag left child right
-             loc_opt)) | _53 -> NONE)
-        | _54 -> NONE`;;
+             loc_opt)) | _61 -> NONE)
+        | _62 -> NONE`;;
 
 (* Assumes that the function can and should be optimised - has been
    checked by rewrite_wrapper. *)

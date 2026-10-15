@@ -346,11 +346,11 @@ hol4_overload "state_rel" "word_bignumProof_state_rel";;
 let exp_ok_def = cake_define
   `exp_ok x1 =
         match x1 with
-          wordLang_Const _3 -> T
+          wordLang_Const _4 -> T
         | (Var i) -> i < (25)
-        | (wordLang_Op _4 [x; y]) -> exp_ok x /\ exp_ok y
+        | (wordLang_Op _5 [x; y]) -> exp_ok x /\ exp_ok y
         | (Shift sh e n) -> exp_ok e
-        | _5 -> F`;;
+        | _6 -> F`;;
 
 let syntax_ok_aux_def = cake_define
   `syntax_ok_aux x1 =
@@ -359,7 +359,7 @@ let syntax_ok_aux_def = cake_define
       | (word_bignum_LoopBody body) -> F
       | (Seq p1 p2) -> syntax_ok_aux p1 /\ syntax_ok_aux p2
       | (Assign t1 e) -> t1 < (25) /\ exp_ok e
-      | (Load t1 t2 _6) -> t1 < (25) /\ t2 < (25)
+      | (Load t1 t2 _7) -> t1 < (25) /\ t2 < (25)
       | (Store t1 t2) -> t1 < (25) /\ t2 < (25)
       | (If t1 t2 t3 p1 p2) ->
       t2 < (25) /\ (!r. t3 = Reg r ==> r < (25)) /\
@@ -378,9 +378,9 @@ let syntax_ok_aux_def = cake_define
       | (Div n1 n2 n3 n4 n5) ->
       n1 < (25) /\ n2 < (25) /\
       n3 < (25) /\ n4 < (25) /\ n5 < (25)
-      | (word_bignum_Rec save_regs _7) ->
+      | (word_bignum_Rec save_regs _8) ->
       EVERY (\n. n < (25)) save_regs /\ ALL_DISTINCT save_regs
-      | _8 -> T`;;
+      | _9 -> T`;;
 
 let syntax_ok_def = cake_define
   `syntax_ok p =

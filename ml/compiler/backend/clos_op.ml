@@ -140,8 +140,8 @@ let cons_op_def = cake_define
 let is_Var_def = cake_define
   `is_Var x1 =
       match x1 with
-        (Var _9 _10:closLang_exp) -> T
-      | _11 -> F`;;
+        (Var _11 _12:closLang_exp) -> T
+      | _13 -> F`;;
 
 let eq_direct_nil_def = cake_define
   `eq_direct_nil x y =
@@ -192,7 +192,7 @@ let cons_measure_def = cake_define_wf
   `MEASURE closLang_exp_size`
   `cons_measure x =
      (match (dest_Op clos_op_dest_Cons) x with NONE -> 0 | SOME
-       (_12,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;
+       (_14,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;
 
 (* HOL4 termination: \\ reverse (rpt strip_tac) \\ fs [] THEN1
    (imp_res_tac cons_measure_lemma \\ fs [cons_measure_lemma]) THEN1
@@ -270,8 +270,8 @@ let lift_exps_def = cake_define_list
 
 let eq_any_def = cake_define
   `eq_any x y =
-     (match lift_exps [x; y] 0 [] with (x :: y :: _13,_14,binds)
-       -> SOME (Let backend_common_None binds (eq_pure x y)) | _15 ->
+     (match lift_exps [x; y] 0 [] with (x :: y :: _15,_16,binds)
+       -> SOME (Let backend_common_None binds (eq_pure x y)) | _17 ->
        NONE)`;;
 
 let eq_op_def = cake_define
@@ -289,7 +289,7 @@ let SmartOp'_def = cake_define
          cons_op op t xs | NONE -> NONE) | [x; y] ->
        (match dest_Op_Consts x y with SOME (i,j) -> clos_op_int_op
          op i j | NONE -> (if op = closLang_BlockOp Equal then eq_op
-         x y else NONE)) | _16 -> NONE)`;;
+         x y else NONE)) | _18 -> NONE)`;;
 
 let SmartOp_def = cake_define
   `clos_op_SmartOp tra op xs =

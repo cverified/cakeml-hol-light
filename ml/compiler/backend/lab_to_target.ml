@@ -25,10 +25,10 @@ let ffi_offset_def = cake_define
 (* basic assemble function *)
 
 let lab_inst_def = cake_define_list
-  [`lab_inst w (labLang_Jump _1) = labLang_Jump w`;
-   `lab_inst w (labLang_JumpCmp c r ri _2) = labLang_JumpCmp c r ri w`;
-   `lab_inst w (labLang_Call _3) = labLang_Call w`;
-   `lab_inst w (labLang_LocValue r _4) = asm_Loc r (w:'a word)`;
+  [`lab_inst w (labLang_Jump _2) = Jump w`;
+   `lab_inst w (labLang_JumpCmp c r ri _4) = JumpCmp c r ri w`;
+   `lab_inst w (labLang_Call _6) = Call w`;
+   `lab_inst w (labLang_LocValue r _7) = asm_Loc r (w:'a word)`;
    `lab_inst w labLang_Halt = Jump w`;
    `lab_inst w labLang_Install = Jump w`;
    `lab_inst w (labLang_CallFFI n) = Jump w`];;
@@ -44,10 +44,10 @@ let cbw_to_asm_def = cake_define
 let enc_line_def = cake_define_list
   [`enc_line enc skip_len (labLang_Label n1 n2 n3) = labLang_Label n1
   n2 skip_len`;
-   `enc_line enc skip_len (labLang_Asm a _5 _6) =
+   `enc_line enc skip_len (labLang_Asm a _8 _9) =
          (let bs = enc (cbw_to_asm a) in labLang_Asm a bs (LENGTH
            bs))`;
-   `enc_line enc skip_len (labLang_LabAsm l _7 _8 _9) =
+   `enc_line enc skip_len (labLang_LabAsm l _10 _11 _12) =
          (let bs = enc (lab_inst (n2w 0) l) in
            labLang_LabAsm l (n2w 0) bs (LENGTH bs))`];;
 
@@ -64,14 +64,14 @@ let enc_sec_list_def = cake_define
 
 let section_labels_def = cake_define_list
   [`section_labels pos [] labs = (pos,labs)`;
-   `section_labels pos (labLang_Label _10 l2 len :: xs) labs =
+   `section_labels pos (labLang_Label _13 l2 len :: xs) labs =
          (if l2 = 0 then
            section_labels (pos + len) xs labs else
            section_labels (pos + len) xs ((l2,pos + len) ::
              labs))`;
-   `section_labels pos (labLang_Asm _11 _12 len :: xs) labs =
+   `section_labels pos (labLang_Asm _14 _15 len :: xs) labs =
          section_labels (pos + len) xs labs`;
-   `section_labels pos (labLang_LabAsm _13 _14 _15 len :: xs) labs =
+   `section_labels pos (labLang_LabAsm _16 _17 _18 len :: xs) labs =
          section_labels (pos + len) xs labs`];;
 
 let compute_labels_alt_def = cake_define_list
@@ -95,7 +95,7 @@ let get_label_def = cake_define
         | (JumpCmp c r ri l) -> l
         | (Call l) -> l
         | (labLang_LocValue r l) -> l
-        | _16 -> labLang_Lab 0 0`;;
+        | _19 -> labLang_Lab 0 0`;;
 
 (* It should never happen that get_ffi_index returns the default 0 ---
    nonetheless, having a default prevents the translator from generating
@@ -176,7 +176,7 @@ let upd_lab_len_def = cake_define_list
 let line_ok_light_def = cake_define
   `line_ok_light c x2 =
         match (c,x2) with
-          ((c:'a asm_config),labLang_Label _17 _18 l) -> T
+          ((c:'a asm_config),labLang_Label _20 _21 l) -> T
         | (c,(labLang_Asm b bytes l)) -> T
         | (c,(labLang_LabAsm labLang_Halt w bytes l)) ->
         asm_ok (Jump w) c
@@ -232,7 +232,7 @@ let pad_code_def = cake_define_list
 
 let sec_length_def = cake_define_list
   [`sec_length [] k = k`;
-   `sec_length (labLang_Label _19 _20 l :: xs) k = sec_length xs (k +
+   `sec_length (labLang_Label _22 _23 l :: xs) k = sec_length xs (k +
   l)`;
    `sec_length (labLang_Asm x1 x2 l :: xs) k = sec_length xs (k + l)`;
    `sec_length (labLang_LabAsm a w bytes l :: xs) k = sec_length xs
@@ -248,23 +248,23 @@ let get_symbols_def = cake_define_list
 let zero_labs_acc_of_def = cake_define
   `zero_labs_acc_of x1 acc =
         match x1 with
-          labLang_LocValue _21 (labLang_Lab n1 n2) ->
+          labLang_LocValue _24 (labLang_Lab n1 n2) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
         | (Jump (labLang_Lab n1 n2)) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
-        | (JumpCmp _22 _23 _24 (labLang_Lab n1 n2)) ->
+        | (JumpCmp _25 _26 _27 (labLang_Lab n1 n2)) ->
        (if n2 = 0 then sptree_insert n1 one acc else acc)
-        | _25 -> acc`;;
+        | _28 -> acc`;;
 
 
 let line_get_zero_labs_acc_def = cake_define
   `line_get_zero_labs_acc x1 acc =
       match x1 with
-        labLang_LabAsm a _26 _27 _28 -> zero_labs_acc_of a acc
-      | _29 -> acc`;;
+        labLang_LabAsm a _29 _30 _31 -> zero_labs_acc_of a acc
+      | _32 -> acc`;;
 
 let sec_get_zero_labs_acc_def = cake_define
-  `sec_get_zero_labs_acc (Section _30 lines) acc =
+  `sec_get_zero_labs_acc (Section _33 lines) acc =
      ITLIST line_get_zero_labs_acc lines acc`;;
 
 let get_zero_labs_acc_def = cake_define
@@ -274,7 +274,7 @@ let get_zero_labs_acc_def = cake_define
 let zero_labs_acc_exist_def = cake_define
   `zero_labs_acc_exist labs code <=>
      (let zlabs = toAList (get_zero_labs_acc code) in
-     EVERY (\(n,_31).
+     EVERY (\(n,_34).
      match sptree_lookup n labs with NONE -> F | SOME l ->
        ~(sptree_lookup 0 l = NONE)) zlabs)`;;
 
@@ -308,9 +308,9 @@ let remove_labels_def = cake_define
 (* code extraction *)
 
 let line_bytes_def = cake_define_list
-  [`line_bytes (labLang_Label _32 _33 _34) = []`;
-   `line_bytes (labLang_Asm _35 bytes _36) = bytes`;
-   `line_bytes (labLang_LabAsm _37 _38 bytes _39) = bytes`];;
+  [`line_bytes (labLang_Label _35 _36 _37) = []`;
+   `line_bytes (labLang_Asm _38 bytes _39) = bytes`;
+   `line_bytes (labLang_LabAsm _40 _41 bytes _42) = bytes`];;
 
 let prog_to_bytes_def = cake_define_list
   [`prog_to_bytes [] = []`;
@@ -352,10 +352,10 @@ let find_ffi_names_def = cake_define_list
    `find_ffi_names (Section k [] :: rest) =
          find_ffi_names rest`;
    `find_ffi_names (Section k (x :: xs) :: rest) =
-       (match x with labLang_LabAsm (labLang_CallFFI s) _40 _41 _42
+       (match x with labLang_LabAsm (labLang_CallFFI s) _43 _44 _45
          ->
            list_add_if_fresh (ExtCall s) (find_ffi_names
-             (Section k xs :: rest)) | _43 -> find_ffi_names
+             (Section k xs :: rest)) | _46 -> find_ffi_names
              (Section k xs :: rest))`];;
 
 let get_memop_info_def = cake_define_list
@@ -377,10 +377,10 @@ let get_shmem_info_def = cake_define
        (ffi_names,shmem_info)
         | ((Section k [] :: rest),shmem_info) ->
        get_shmem_info rest pos ffi_names shmem_info
-        | ((Section k ((labLang_Label _44 _45 _46) :: xs) ::
+        | ((Section k ((labLang_Label _47 _48 _49) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) pos ffi_names shmem_info
-        | ((Section k ((labLang_Asm (ShareMem m r ad) bytes _47) ::
+        | ((Section k ((labLang_Asm (ShareMem m r ad) bytes _50) ::
           xs) :: rest),shmem_info) ->
        (let (name,nb) = get_memop_info m in
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
@@ -390,11 +390,11 @@ let get_shmem_info_def = cake_define
            mk_shmem_info_num pos nb (match ad with Addr r off -> r)
              (match ad with Addr r off -> w2n off) r (pos + LENGTH
              bytes)]))
-        | ((Section k ((labLang_LabAsm _48 _49 bytes _50) :: xs) ::
+        | ((Section k ((labLang_LabAsm _51 _52 bytes _53) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          ffi_names shmem_info
-        | ((Section k ((labLang_Asm _51 bytes _52) :: xs) ::
+        | ((Section k ((labLang_Asm _54 bytes _55) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          ffi_names shmem_info`;;
@@ -432,7 +432,7 @@ let compile_lab_def = cake_define
      (let current_ffis = find_ffi_names sec_list in
      let (ffis,ffis_ok) =
          (match lab_to_target_config_ffi_names c with SOME ffis ->
-           (ffis,list_subset current_ffis ffis) | _53 ->
+           (ffis,list_subset current_ffis ffis) | _56 ->
            (current_ffis,T)) in
      if ffis_ok then
        match remove_labels (lab_to_target_config_init_clock c)

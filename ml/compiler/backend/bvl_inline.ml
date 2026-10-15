@@ -23,25 +23,25 @@ let tick_inline_def = cake_define_list
          HD (tick_inline cs [x]) :: tick_inline cs (y :: xs)`;
    `tick_inline cs [(Var v:bvl_exp)] = [(Var v:bvl_exp)]`;
    `tick_inline cs [(If x1 x2 x3:bvl_exp)] =
-         [(If (HD (tick_inline cs [x1]))
+         [If (HD (tick_inline cs [x1]))
              (HD (tick_inline cs [x2]))
-             (HD (tick_inline cs [x3])):bvl_exp)]`;
+             (HD (tick_inline cs [x3]))]`;
    `tick_inline cs [(Let xs x2:bvl_exp)] =
-         [(Let (tick_inline cs xs)
-               (HD (tick_inline cs [x2])):bvl_exp)]`;
+         [Let (tick_inline cs xs)
+               (HD (tick_inline cs [x2]))]`;
    `tick_inline cs [(Raise x1:bvl_exp)] =
-         [(Raise (HD (tick_inline cs [x1])):bvl_exp)]`;
+         [Raise (HD (tick_inline cs [x1]))]`;
    `tick_inline cs [(Handle x1 x2:bvl_exp)] =
-         [(Handle (HD (tick_inline cs [x1]))
-                 (HD (tick_inline cs [x2])):bvl_exp)]`;
+         [Handle (HD (tick_inline cs [x1]))
+                 (HD (tick_inline cs [x2]))]`;
    `tick_inline cs [(Op op xs:bvl_exp)] =
-         [(Op op (tick_inline cs xs):bvl_exp)]`;
+         [Op op (tick_inline cs xs)]`;
    `tick_inline cs [(Tick x:bvl_exp)] =
-         [(Tick (HD (tick_inline cs [x])):bvl_exp)]`;
+         [Tick (HD (tick_inline cs [x]))]`;
    `tick_inline cs [(Force m n:bvl_exp)] = [(Force m n:bvl_exp)]`;
    `tick_inline cs [(Call ticks dest xs:bvl_exp)] =
-         (match dest with NONE -> [(Call ticks dest (tick_inline cs
-           xs):bvl_exp)] | SOME n ->
+         (match dest with NONE -> [Call ticks dest (tick_inline cs
+           xs)] | SOME n ->
          (match sptree_lookup n cs with NONE -> [Call ticks
            dest (tick_inline cs xs)] | SOME (arity,code) -> [Let
            (tick_inline cs xs) (mk_tick (SUC ticks) code)]))`];;
@@ -49,25 +49,25 @@ let tick_inline_def = cake_define_list
 let tick_inline_sing_def = cake_define_list
   [`tick_inline_sing cs (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `tick_inline_sing cs (If x1 x2 x3:bvl_exp) =
-         ((If (tick_inline_sing cs x1)
+         (If (tick_inline_sing cs x1)
              (tick_inline_sing cs x2)
-             (tick_inline_sing cs x3):bvl_exp))`;
+             (tick_inline_sing cs x3))`;
    `tick_inline_sing cs (Let xs x2:bvl_exp) =
-         ((Let (tick_inline_list cs xs)
-              (tick_inline_sing cs x2):bvl_exp))`;
+         (Let (tick_inline_list cs xs)
+              (tick_inline_sing cs x2))`;
    `tick_inline_sing cs (Raise x1:bvl_exp) =
-         ((Raise (tick_inline_sing cs x1):bvl_exp))`;
+         (Raise (tick_inline_sing cs x1))`;
    `tick_inline_sing cs (Handle x1 x2:bvl_exp) =
-         ((Handle (tick_inline_sing cs x1)
-                 (tick_inline_sing cs x2):bvl_exp))`;
+         (Handle (tick_inline_sing cs x1)
+                 (tick_inline_sing cs x2))`;
    `tick_inline_sing cs (Op op xs:bvl_exp) =
-         ((Op op (tick_inline_list cs xs):bvl_exp))`;
+         (Op op (tick_inline_list cs xs))`;
    `tick_inline_sing cs (Tick x:bvl_exp) =
-         ((Tick (tick_inline_sing cs x):bvl_exp))`;
+         (Tick (tick_inline_sing cs x))`;
    `tick_inline_sing cs (Force m n:bvl_exp) = (Force m n:bvl_exp)`;
    `tick_inline_sing cs (Call ticks dest xs:bvl_exp) =
-         (match dest with NONE -> (Call ticks dest (tick_inline_list
-           cs xs):bvl_exp) | SOME n ->
+         (match dest with NONE -> Call ticks dest (tick_inline_list
+           cs xs) | SOME n ->
          (match sptree_lookup n cs with NONE -> Call ticks dest
            (tick_inline_list cs xs) | SOME (arity,code) ->
              Let (tick_inline_list cs xs) (mk_tick (SUC ticks)
@@ -104,7 +104,7 @@ let is_small_aux_def = cake_define_list
          (let n = n - 1 in if n = 0 then 0 else
            is_small_aux n xs)`;
    `is_small_aux n [(Tick x:bvl_exp)] = is_small_aux n [x]`;
-   `is_small_aux n [(Force _1 _2:bvl_exp)] = n`;
+   `is_small_aux n [(Force _3 _4:bvl_exp)] = n`;
    `is_small_aux n [(Call ticks dest xs:bvl_exp)] =
          (let n = n - 1 in if n = 0 then 0 else
            is_small_aux n xs)`];;
@@ -131,7 +131,7 @@ let is_small_sing_def = cake_define_list
          (let n = n - 1 in if n = 0 then 0 else
            is_small_list n xs)`;
    `is_small_sing n (Tick x:bvl_exp) = is_small_sing n x`;
-   `is_small_sing n (Force _3 _4:bvl_exp) = n`;
+   `is_small_sing n (Force _7 _8:bvl_exp) = n`;
    `is_small_sing n (Call ticks dest xs:bvl_exp) =
          (let n = n - 1 in if n = 0 then 0 else
            is_small_list n xs)`;
@@ -164,7 +164,7 @@ let is_rec_def = cake_define_list
            bvl_inline_is_rec n [x2])`;
    `bvl_inline_is_rec n [(Op op xs:bvl_exp)] = bvl_inline_is_rec n xs`;
    `bvl_inline_is_rec n [(Tick x:bvl_exp)] = bvl_inline_is_rec n [x]`;
-   `bvl_inline_is_rec n [(Force _5 _6:bvl_exp)] = F`;
+   `bvl_inline_is_rec n [(Force _11 _12:bvl_exp)] = F`;
    `bvl_inline_is_rec n [(Call ticks dest xs:bvl_exp)] =
          (if dest = SOME n then T else bvl_inline_is_rec n xs)`];;
 hol4_overload "is_rec" "bvl_inline_is_rec";;
@@ -184,7 +184,7 @@ let is_rec_sing_def = cake_define_list
            is_rec_sing n x2)`;
    `is_rec_sing n (Op op xs:bvl_exp) = is_rec_list n xs`;
    `is_rec_sing n (Tick x:bvl_exp) = is_rec_sing n x`;
-   `is_rec_sing n (Force _7 _8:bvl_exp) = F`;
+   `is_rec_sing n (Force _15 _16:bvl_exp) = F`;
    `is_rec_sing n (Call ticks dest xs:bvl_exp) =
          (if dest = SOME n then T else is_rec_list n xs)`;
    `is_rec_list n [] = F`;
@@ -218,49 +218,49 @@ let remove_ticks_def = cake_define_list
            bvl_inline_remove_ticks (y :: xs)`;
    `bvl_inline_remove_ticks [(Var v:bvl_exp)] = [(Var v:bvl_exp)]`;
    `bvl_inline_remove_ticks [(If x1 x2 x3:bvl_exp)] =
-         [(If (HD (bvl_inline_remove_ticks [x1]))
+         [If (HD (bvl_inline_remove_ticks [x1]))
              (HD (bvl_inline_remove_ticks [x2]))
-             (HD (bvl_inline_remove_ticks [x3])):bvl_exp)]`;
+             (HD (bvl_inline_remove_ticks [x3]))]`;
    `bvl_inline_remove_ticks [(Let xs x2:bvl_exp)] =
-         [(Let (bvl_inline_remove_ticks xs) (HD
-           (bvl_inline_remove_ticks [x2])):bvl_exp)]`;
+         [Let (bvl_inline_remove_ticks xs) (HD
+           (bvl_inline_remove_ticks [x2]))]`;
    `bvl_inline_remove_ticks [(Raise x1:bvl_exp)] =
-         [(Raise (HD (bvl_inline_remove_ticks [x1])):bvl_exp)]`;
+         [Raise (HD (bvl_inline_remove_ticks [x1]))]`;
    `bvl_inline_remove_ticks [(Handle x1 x2:bvl_exp)] =
-         [(Handle (HD (bvl_inline_remove_ticks [x1]))
-                 (HD (bvl_inline_remove_ticks [x2])):bvl_exp)]`;
+         [Handle (HD (bvl_inline_remove_ticks [x1]))
+                 (HD (bvl_inline_remove_ticks [x2]))]`;
    `bvl_inline_remove_ticks [(Op op xs:bvl_exp)] =
-         [(Op op (bvl_inline_remove_ticks xs):bvl_exp)]`;
+         [Op op (bvl_inline_remove_ticks xs)]`;
    `bvl_inline_remove_ticks [(Tick x:bvl_exp)] =
   bvl_inline_remove_ticks [x]`;
    `bvl_inline_remove_ticks [(Force m n:bvl_exp)] = [(Force m
   n:bvl_exp)]`;
    `bvl_inline_remove_ticks [(Call ticks dest xs:bvl_exp)] =
-         [(Call 0 dest (bvl_inline_remove_ticks xs):bvl_exp)]`];;
+         [Call 0 dest (bvl_inline_remove_ticks xs)]`];;
 hol4_overload "remove_ticks" "bvl_inline_remove_ticks";;
 
 let remove_ticks_sing_def = cake_define_list
   [`bvl_inline_remove_ticks_sing (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `bvl_inline_remove_ticks_sing (If x1 x2 x3:bvl_exp) =
-         (If (bvl_inline_remove_ticks_sing x1)
+         If (bvl_inline_remove_ticks_sing x1)
             (bvl_inline_remove_ticks_sing x2)
-            (bvl_inline_remove_ticks_sing x3):bvl_exp)`;
+            (bvl_inline_remove_ticks_sing x3)`;
    `bvl_inline_remove_ticks_sing (Let xs x2:bvl_exp) =
-         (Let (bvl_inline_remove_ticks_list xs)
-           (bvl_inline_remove_ticks_sing x2):bvl_exp)`;
+         Let (bvl_inline_remove_ticks_list xs)
+           (bvl_inline_remove_ticks_sing x2)`;
    `bvl_inline_remove_ticks_sing (Raise x1:bvl_exp) =
-         (Raise (bvl_inline_remove_ticks_sing x1):bvl_exp)`;
+         Raise (bvl_inline_remove_ticks_sing x1)`;
    `bvl_inline_remove_ticks_sing (Handle x1 x2:bvl_exp) =
-         (Handle (bvl_inline_remove_ticks_sing x1)
-                (bvl_inline_remove_ticks_sing x2):bvl_exp)`;
+         Handle (bvl_inline_remove_ticks_sing x1)
+                (bvl_inline_remove_ticks_sing x2)`;
    `bvl_inline_remove_ticks_sing (Op op xs:bvl_exp) =
-         (Op op (bvl_inline_remove_ticks_list xs):bvl_exp)`;
+         Op op (bvl_inline_remove_ticks_list xs)`;
    `bvl_inline_remove_ticks_sing (Tick x:bvl_exp) =
   bvl_inline_remove_ticks_sing x`;
    `bvl_inline_remove_ticks_sing (Force m n:bvl_exp) = (Force m
   n:bvl_exp)`;
    `bvl_inline_remove_ticks_sing (Call ticks dest xs:bvl_exp) =
-         (Call 0 dest (bvl_inline_remove_ticks_list xs):bvl_exp)`;
+         Call 0 dest (bvl_inline_remove_ticks_list xs)`;
    `bvl_inline_remove_ticks_list [] = []`;
    `bvl_inline_remove_ticks_list (x :: xs) =
          (bvl_inline_remove_ticks_sing x) ::
@@ -276,7 +276,7 @@ let var_list_def = cake_define
         ([],[]) -> T
       | ((bvl_Var m :: xs),(y :: ys)) -> (m = n /\
         bvl_inline_var_list (n + 1) xs ys)
-      | (_9,_10) -> F`;;
+      | (_17,_18) -> F`;;
 hol4_overload "var_list" "bvl_inline_var_list";;
 
 let dest_op_def = cake_define
@@ -284,7 +284,7 @@ let dest_op_def = cake_define
       match x1 with
         bvl_Op op xs -> (if bvl_inline_var_list 0 xs args then SOME
           op else NONE)
-      | _11 -> NONE`;;
+      | _19 -> NONE`;;
 hol4_overload "dest_op" "bvl_inline_dest_op";;
 
 let let_op_def = cake_define_list
@@ -294,50 +294,50 @@ let let_op_def = cake_define_list
            xs)`;
    `bvl_inline_let_op [(Var v:bvl_exp)] = [(Var v:bvl_exp)]`;
    `bvl_inline_let_op [(If x1 x2 x3:bvl_exp)] =
-         [(If (HD (bvl_inline_let_op [x1]))
+         [If (HD (bvl_inline_let_op [x1]))
              (HD (bvl_inline_let_op [x2]))
-             (HD (bvl_inline_let_op [x3])):bvl_exp)]`;
+             (HD (bvl_inline_let_op [x3]))]`;
    `bvl_inline_let_op [(Let xs x2:bvl_exp)] =
          (let xs = bvl_inline_let_op xs in
          let x2 = HD (bvl_inline_let_op [x2]) in
            match bvl_inline_dest_op x2 xs with SOME op -> [Op op
              xs] | NONE -> [(Let xs x2:bvl_exp)])`;
    `bvl_inline_let_op [(Raise x1:bvl_exp)] =
-         [(Raise (HD (bvl_inline_let_op [x1])):bvl_exp)]`;
+         [Raise (HD (bvl_inline_let_op [x1]))]`;
    `bvl_inline_let_op [(Handle x1 x2:bvl_exp)] =
-         [(Handle (HD (bvl_inline_let_op [x1]))
-                  (HD (bvl_inline_let_op [x2])):bvl_exp)]`;
+         [Handle (HD (bvl_inline_let_op [x1]))
+                  (HD (bvl_inline_let_op [x2]))]`;
    `bvl_inline_let_op [(Op op xs:bvl_exp)] =
-         [(Op op (bvl_inline_let_op xs):bvl_exp)]`;
-   `bvl_inline_let_op [(Tick x:bvl_exp)] = [(Tick (HD
-  (bvl_inline_let_op [x])):bvl_exp)]`;
+         [Op op (bvl_inline_let_op xs)]`;
+   `bvl_inline_let_op [(Tick x:bvl_exp)] = [Tick (HD
+  (bvl_inline_let_op [x]))]`;
    `bvl_inline_let_op [(Force m n:bvl_exp)] = [(Force m n:bvl_exp)]`;
-   `bvl_inline_let_op [(Call ticks dest xs:bvl_exp)] = [(Call ticks
-  dest (bvl_inline_let_op xs):bvl_exp)]`];;
+   `bvl_inline_let_op [(Call ticks dest xs:bvl_exp)] = [Call ticks
+  dest (bvl_inline_let_op xs)]`];;
 hol4_overload "let_op" "bvl_inline_let_op";;
 
 let let_op_one_def = cake_define_list
   [`let_op_one (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `let_op_one (If x1 x2 x3:bvl_exp) =
-         (If (let_op_one x1)
+         If (let_op_one x1)
             (let_op_one x2)
-            (let_op_one x3):bvl_exp)`;
+            (let_op_one x3)`;
    `let_op_one (Let xs x2:bvl_exp) =
          (let xs = bvl_inline_let_op_list xs in
          let x2 = let_op_one x2 in
            match bvl_inline_dest_op x2 xs with SOME op -> Op op
              xs | NONE -> (Let xs x2:bvl_exp))`;
    `let_op_one (Raise x1:bvl_exp) =
-         (Raise (let_op_one x1):bvl_exp)`;
+         Raise (let_op_one x1)`;
    `let_op_one (Handle x1 x2:bvl_exp) =
-         (Handle (let_op_one x1)
-                (let_op_one x2):bvl_exp)`;
+         Handle (let_op_one x1)
+                (let_op_one x2)`;
    `let_op_one (Op op xs:bvl_exp) =
-         (Op op (bvl_inline_let_op_list xs):bvl_exp)`;
-   `let_op_one (Tick x:bvl_exp) = (Tick (let_op_one x):bvl_exp)`;
+         Op op (bvl_inline_let_op_list xs)`;
+   `let_op_one (Tick x:bvl_exp) = Tick (let_op_one x)`;
    `let_op_one (Force m n:bvl_exp) = (Force m n:bvl_exp)`;
-   `let_op_one (Call ticks dest xs:bvl_exp) = (Call ticks dest
-  (bvl_inline_let_op_list xs):bvl_exp)`;
+   `let_op_one (Call ticks dest xs:bvl_exp) = Call ticks dest
+  (bvl_inline_let_op_list xs)`;
    `bvl_inline_let_op_list [] = []`;
    `bvl_inline_let_op_list ((x:bvl_exp) :: xs) =
          (let_op_one x) :: bvl_inline_let_op_list xs`];;
@@ -345,7 +345,7 @@ hol4_overload "let_op_list" "bvl_inline_let_op_list";;
 
 let let_op_sing_def = cake_define
   `bvl_inline_let_op_sing x =
-     (match bvl_inline_let_op [x] with (y :: ys) -> y | _12 -> Op
+     (match bvl_inline_let_op [x] with (y :: ys) -> y | _20 -> Op
        (closLang_IntOp (closLang_Const (&0))) [])`;;
 hol4_overload "let_op_sing" "bvl_inline_let_op_sing";;
 

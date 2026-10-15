@@ -69,17 +69,17 @@ QED
 (************************** DEFINITIONS ***************************)
 
 let find_v_globals_def = cake_define_list
-  [`find_v_globals (Conv _1 vl:flatSem_v) = ((find_v_globalsL vl):1
+  [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
-   `find_v_globals (Closure env _2 e:flatSem_v) =
+   `find_v_globals (Closure env _4 e:flatSem_v) =
             sptree_union (find_v_globalsL (MAP SND
               (semanticPrimitives_sem_env_v env))) (find_lookups e)`;
-   `find_v_globals (Recclosure env vves _3:flatSem_v) =
+   `find_v_globals (Recclosure env vves _6:flatSem_v) =
             sptree_union (find_v_globalsL (MAP SND
               (semanticPrimitives_sem_env_v env)))
                 (find_lookupsL (MAP (SND o SND) vves))`;
    `find_v_globals (Vectorv vl:flatSem_v) = find_v_globalsL vl`;
-   `find_v_globals _4 = LN`;
+   `find_v_globals _7 = LN`;
    `find_v_globalsL [] = LN`;
    `find_v_globalsL (h :: t) = sptree_union (find_v_globals h)
   (find_v_globalsL t)`];;
@@ -95,9 +95,9 @@ let find_refs_globals_def = cake_define
            sptree_union (find_v_globals a) (find_refs_globals t)
         | (semanticPrimitives_Varray l :: t) ->
            sptree_union (find_v_globalsL l) (find_refs_globals t)
-        | (semanticPrimitives_Thunk _5 a :: t) ->
+        | (semanticPrimitives_Thunk _8 a :: t) ->
            sptree_union (find_v_globals a) (find_refs_globals t)
-        | (_6 :: t) -> find_refs_globals t
+        | (_9 :: t) -> find_refs_globals t
         | [] -> LN`;;
 
 (* HOL4 ML code, not ported:
@@ -112,7 +112,7 @@ let find_result_globals_def = cake_define
   `find_result_globals x1 =
         match x1 with
           SOME (Rraise v) -> find_v_globals v
-        | _7 -> LN`;;
+        | _10 -> LN`;;
 
 (* HOL4 ML code, not ported:
 val find_result_globals_ind = theorem "find_result_globals_ind";
@@ -140,16 +140,16 @@ let v_has_Eval_def1 = cake_define_wf
   `MEASURE flatSem_v_size`
   `v_has_Eval x1 =
         match x1 with
-          (Closure env _8 e:flatSem_v) -> (has_Eval e \/
+          (Closure env _12 e:flatSem_v) -> (has_Eval e \/
        EXISTS v_has_Eval (MAP SND (semanticPrimitives_sem_env_v
          env)))
-        | (Conv _9 vl) -> EXISTS v_has_Eval vl
-        | (Recclosure env nm_es _10) ->
+        | (Conv _13 vl) -> EXISTS v_has_Eval vl
+        | (Recclosure env nm_es _14) ->
        (EXISTS v_has_Eval (MAP SND (semanticPrimitives_sem_env_v
          env)) \/
          EXISTS has_Eval (MAP (SND o SND) nm_es))
         | (Vectorv vl) -> EXISTS v_has_Eval vl
-        | _11 -> F`;;
+        | _15 -> F`;;
 
 (* s_g = state globals, t_g = removed state globals *)
 let globals_rel_def = cake_define

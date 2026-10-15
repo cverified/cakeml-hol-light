@@ -33,19 +33,19 @@ val extract_labels_ind = theorem"extract_labels_ind";
 let labs_of_def = cake_define
   `labs_of x1 =
       match x1 with
-        labLang_LocValue _2 (labLang_Lab n1 n2) -> {(n1,n2)}
+        labLang_LocValue _3 (labLang_Lab n1 n2) -> {(n1,n2)}
       | (Jump (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | (JumpCmp _3 _4 _5 (labLang_Lab n1 n2)) -> {(n1,n2)}
-      | _6 -> {}`;;
+      | (JumpCmp _4 _5 _6 (labLang_Lab n1 n2)) -> {(n1,n2)}
+      | _7 -> {}`;;
 
 let line_get_labels_def = cake_define
   `line_get_labels x1 =
       match x1 with
-        labLang_LabAsm a _7 _8 _9 -> labs_of a
-      | _10 -> {}`;;
+        labLang_LabAsm a _8 _9 _10 -> labs_of a
+      | _11 -> {}`;;
 
 let sec_get_labels_def = cake_define
-  `sec_get_labels (Section _11 lines) =
+  `sec_get_labels (Section _12 lines) =
      BIGUNION (IMAGE line_get_labels (set_of_list lines))`;;
 
 let get_labels_def = cake_define
@@ -56,8 +56,8 @@ hol4_overload "get_labels" "labProps_get_labels";;
 let line_get_code_labels_def = cake_define
   `line_get_code_labels x1 =
       match x1 with
-        labLang_Label _12 l _13 -> {l}
-      | _14 -> {}`;;
+        labLang_Label _13 l _14 -> {l}
+      | _15 -> {}`;;
 
 let sec_get_code_labels_def = cake_define
   `sec_get_code_labels (Section n1 lines) =
@@ -71,7 +71,7 @@ let get_code_labels_def = cake_define
 hol4_overload "get_code_labels" "labProps_get_code_labels";;
 
 let sec_ends_with_label_def = cake_define
-  `sec_ends_with_label (Section _15 ls) <=>
+  `sec_ends_with_label (Section _16 ls) <=>
      ~NULL ls /\ is_Label (LAST ls)`;;
 
 let line_length_def = cake_define_list
@@ -97,7 +97,7 @@ let line_ok_pre_def = cake_define
         match (c,x2) with
           ((c:'a asm_config),labLang_Asm b bytes l) -> asm_ok
             (cbw_to_asm b) c
-        | (c,_16) -> T`;;
+        | (c,_17) -> T`;;
 
 let sec_ok_pre_def = cake_define
   `sec_ok_pre c (Section k ls) <=>
@@ -112,7 +112,7 @@ let sec_label_ok_def = cake_define
   `sec_label_ok k x2 =
         match x2 with
           labLang_Label l1 l2 len -> l1 = k /\ ~(l2 = 0)
-        | _17 -> T`;;
+        | _18 -> T`;;
 
 let sec_labels_ok_def = cake_define
   `sec_labels_ok (Section k ls) <=> EVERY (sec_label_ok k) ls`;;

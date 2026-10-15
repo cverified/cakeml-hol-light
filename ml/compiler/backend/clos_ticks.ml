@@ -22,19 +22,17 @@ let remove_ticks_def = cake_define_list
    `clos_ticks_remove_ticks [(Var t v:closLang_exp)] = [(Var t
   v:closLang_exp)]`;
    `clos_ticks_remove_ticks [(If t x1 x2 x3:closLang_exp)] =
-         [(If t (HD (clos_ticks_remove_ticks [x1]))
+         [If t (HD (clos_ticks_remove_ticks [x1]))
                (HD (clos_ticks_remove_ticks [x2]))
-               (HD (clos_ticks_remove_ticks [x3])):closLang_exp)]`;
+               (HD (clos_ticks_remove_ticks [x3]))]`;
    `clos_ticks_remove_ticks [(Let t xs x2:closLang_exp)] =
-         [(Let t (clos_ticks_remove_ticks xs) (HD
-           (clos_ticks_remove_ticks [x2])):closLang_exp)]`;
+         [Let t (clos_ticks_remove_ticks xs) (HD
+           (clos_ticks_remove_ticks [x2]))]`;
    `clos_ticks_remove_ticks [(Raise t x1:closLang_exp)] =
-         [(Raise t (HD (clos_ticks_remove_ticks
-           [x1])):closLang_exp)]`;
+         [Raise t (HD (clos_ticks_remove_ticks [x1]))]`;
    `clos_ticks_remove_ticks [(Handle t x1 x2:closLang_exp)] =
-         [(Handle t (HD (clos_ticks_remove_ticks [x1]))
-                   (HD (clos_ticks_remove_ticks
-                     [x2])):closLang_exp)]`;
+         [Handle t (HD (clos_ticks_remove_ticks [x1]))
+                   (HD (clos_ticks_remove_ticks [x2]))]`;
    `clos_ticks_remove_ticks [closLang_Op t op xs] =
          [closLang_Op t op (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [closLang_Tick t x1] =
@@ -42,14 +40,14 @@ let remove_ticks_def = cake_define_list
    `clos_ticks_remove_ticks [closLang_Call t ticks dest xs] =
          [closLang_Call t 0 dest (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [(App t loc_opt x1 xs:closLang_exp)] =
-         [(App t loc_opt (HD (clos_ticks_remove_ticks [x1]))
-           (clos_ticks_remove_ticks xs):closLang_exp)]`;
+         [App t loc_opt (HD (clos_ticks_remove_ticks [x1]))
+           (clos_ticks_remove_ticks xs)]`;
    `clos_ticks_remove_ticks [(Letrec t loc_opt vs fns x1:closLang_exp)]
   =
          (let new_fns = MAP (\(num_args,x). (num_args,HD
            (clos_ticks_remove_ticks [x]))) fns in
-         [(Letrec t loc_opt vs new_fns (HD
-           (clos_ticks_remove_ticks [x1])):closLang_exp)])`;
+         [Letrec t loc_opt vs new_fns (HD
+           (clos_ticks_remove_ticks [x1]))])`;
    `clos_ticks_remove_ticks [closLang_Fn t loc_opt vs num_args x1] =
          [closLang_Fn t loc_opt vs num_args (HD
            (clos_ticks_remove_ticks [x1]))]`];;
@@ -59,20 +57,17 @@ let remove_ticks_sing_def = cake_define_list
   [`clos_ticks_remove_ticks_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp))`;
    `clos_ticks_remove_ticks_sing (If t x1 x2 x3:closLang_exp) =
-         ((If t ((clos_ticks_remove_ticks_sing (x1)))
+         (If t ((clos_ticks_remove_ticks_sing (x1)))
                ((clos_ticks_remove_ticks_sing (x2)))
-               ((clos_ticks_remove_ticks_sing
-                 (x3))):closLang_exp))`;
+               ((clos_ticks_remove_ticks_sing (x3))))`;
    `clos_ticks_remove_ticks_sing (Let t xs x2:closLang_exp) =
-         ((Let t (clos_ticks_remove_ticks_list xs)
-           ((clos_ticks_remove_ticks_sing (x2))):closLang_exp))`;
+         (Let t (clos_ticks_remove_ticks_list xs)
+           ((clos_ticks_remove_ticks_sing (x2))))`;
    `clos_ticks_remove_ticks_sing (Raise t x1:closLang_exp) =
-         ((Raise t ((clos_ticks_remove_ticks_sing
-           (x1))):closLang_exp))`;
+         (Raise t ((clos_ticks_remove_ticks_sing (x1))))`;
    `clos_ticks_remove_ticks_sing (Handle t x1 x2:closLang_exp) =
-         ((Handle t ((clos_ticks_remove_ticks_sing (x1)))
-                   ((clos_ticks_remove_ticks_sing
-                     (x2))):closLang_exp))`;
+         (Handle t ((clos_ticks_remove_ticks_sing (x1)))
+                   ((clos_ticks_remove_ticks_sing (x2))))`;
    `clos_ticks_remove_ticks_sing (closLang_Op t op xs) =
          (closLang_Op t op (clos_ticks_remove_ticks_list xs))`;
    `clos_ticks_remove_ticks_sing (closLang_Tick t x1) =
@@ -81,13 +76,13 @@ let remove_ticks_sing_def = cake_define_list
          (closLang_Call t 0 dest (clos_ticks_remove_ticks_list
            xs))`;
    `clos_ticks_remove_ticks_sing (App t loc_opt x1 xs:closLang_exp) =
-         ((App t loc_opt ((clos_ticks_remove_ticks_sing (x1)))
-           (clos_ticks_remove_ticks_list xs):closLang_exp))`;
+         (App t loc_opt ((clos_ticks_remove_ticks_sing (x1)))
+           (clos_ticks_remove_ticks_list xs))`;
    `clos_ticks_remove_ticks_sing (Letrec t loc_opt vs fns
   x1:closLang_exp) =
          (let new_fns = remove_ticks_let fns in
-         ((Letrec t loc_opt vs new_fns
-           ((clos_ticks_remove_ticks_sing (x1))):closLang_exp)))`;
+         (Letrec t loc_opt vs new_fns
+           ((clos_ticks_remove_ticks_sing (x1)))))`;
    `clos_ticks_remove_ticks_sing (closLang_Fn t loc_opt vs num_args x1)
   =
          (closLang_Fn t loc_opt vs num_args

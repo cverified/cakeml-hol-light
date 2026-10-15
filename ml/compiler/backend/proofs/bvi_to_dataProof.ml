@@ -46,7 +46,7 @@ let data_to_bvi_v_def = cake_define_list
    `data_to_bvi_v (Word64 w:dataSem_v) = bvlSem_Word64 w`;
    `data_to_bvi_v (CodePtr p:dataSem_v) = bvlSem_CodePtr p`;
    `data_to_bvi_v (RefPtr b r:dataSem_v) = bvlSem_RefPtr b r`;
-   `data_to_bvi_v (Block _1 tag l:dataSem_v) = bvlSem_Block tag
+   `data_to_bvi_v (Block _2 tag l:dataSem_v) = bvlSem_Block tag
   (MAP data_to_bvi_v l)`];;
 
 (* Projection for Unit constant *)
@@ -55,11 +55,11 @@ let data_to_bvi_v_def = cake_define_list
 
 (* Projection for references, non-injective for value arrays *)
 let data_to_bvi_ref_def = cake_define_list
-  [`data_to_bvi_ref (bvlSem_ValueArray l) = bvlSem_ValueArray (MAP
+  [`data_to_bvi_ref (bvlSem_ValueArray l) = ValueArray (MAP
   data_to_bvi_v l)`;
-   `data_to_bvi_ref (bvlSem_ByteArray b bl) = bvlSem_ByteArray b bl`;
-   `data_to_bvi_ref (bvlSem_Thunk m v) = bvlSem_Thunk m
-  (data_to_bvi_v v)`;
+   `data_to_bvi_ref (bvlSem_ByteArray b bl) = (ByteArray b bl:'a
+  bvlSem_ref)`;
+   `data_to_bvi_ref (bvlSem_Thunk m v) = Thunk m (data_to_bvi_v v)`;
    `data_to_bvi_ref (bvlSem_MutBlock tg fin ls c rs) =
         bvlSem_MutBlock tg fin (MAP data_to_bvi_v ls)
           (data_to_bvi_v c) (MAP data_to_bvi_v rs)`];;

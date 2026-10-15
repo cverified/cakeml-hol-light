@@ -61,7 +61,7 @@ let pat_bindings_def = cake_define_list
   [`flatLang_pat_bindings Pany = []`;
    `flatLang_pat_bindings (Pvar n:flatLang_pat) = [n]`;
    `flatLang_pat_bindings (Plit l:flatLang_pat) = []`;
-   `flatLang_pat_bindings (Pcon _1 ps:flatLang_pat) =
+   `flatLang_pat_bindings (Pcon _2 ps:flatLang_pat) =
   flatLang_pats_bindings ps`;
    `flatLang_pat_bindings (Pas p i:flatLang_pat) =
   flatLang_pat_bindings p ++ [i]`;
@@ -111,7 +111,7 @@ hol4_overload "Bool" "flatLang_Bool";;
 let SmartIf_def = cake_define
   `SmartIf t e p q =
      (match e with
-       Con _2 (SOME (tag,SOME id')) [] ->
+       Con _3 (SOME (tag,SOME id')) [] ->
          (if id' = bool_id then
            if tag = true_tag then p else if tag = false_tag then q
-             else If t e p q else If t e p q) | _3 -> If t e p q)`;;
+             else If t e p q else If t e p q) | _4 -> If t e p q)`;;

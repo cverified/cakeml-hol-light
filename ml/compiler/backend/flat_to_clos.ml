@@ -397,7 +397,7 @@ let compile_def = cake_define_list
    `flat_to_clos_compile m [flatLang_Var_local t v] = [Var t
   (indexedLists_findi (SOME v) m)]`;
    `flat_to_clos_compile m [(Con t n es:flatLang_exp)] =
-         (let tag = (match n with SOME (t,_18) -> t | _19 -> 0) in
+         (let tag = (match n with SOME (t,_21) -> t | _22 -> 0) in
            [SmartCons t tag (flat_to_clos_compile m (REVERSE
              es))])`;
    `flat_to_clos_compile m [(App t op es:flatLang_exp)] =
@@ -409,27 +409,24 @@ let compile_def = cake_define_list
          [closLang_Fn t NONE NONE 1 (HD (flat_to_clos_compile
            (SOME v :: m) [e]))]`;
    `flat_to_clos_compile m [(If t x1 x2 x3:flatLang_exp)] =
-         [(If t (HD (flat_to_clos_compile m [x1]))
+         [If t (HD (flat_to_clos_compile m [x1]))
                (HD (flat_to_clos_compile m [x2]))
-               (HD (flat_to_clos_compile m [x3])):flatLang_exp)]`;
+               (HD (flat_to_clos_compile m [x3]))]`;
    `flat_to_clos_compile m [(Let t vo e1 e2:flatLang_exp)] =
-         [(Let t (flat_to_clos_compile m [e1]) (HD
-           (flat_to_clos_compile (vo :: m) [e2])):flatLang_exp)]`;
+         [Let t (flat_to_clos_compile m [e1]) (HD
+           (flat_to_clos_compile (vo :: m) [e2]))]`;
    `flat_to_clos_compile m [(Mat t e pes:flatLang_exp)] =
   [closLang_Op t (closLang_IntOp (closLang_Const (&0))) []]`;
    `flat_to_clos_compile m [(Handle t e pes:flatLang_exp)] =
-         (match dest_pat pes with SOME (v,h) -> [(Handle t (HD
+         (match dest_pat pes with SOME (v,h) -> [Handle t (HD
            (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile
-           (SOME v :: m) [h])):flatLang_exp)] | _20 ->
-           flat_to_clos_compile m [e])`;
+           (SOME v :: m) [h]))] | _24 -> flat_to_clos_compile m [e])`;
    `flat_to_clos_compile m [(Letrec t funs e:flatLang_exp)] =
          (let new_m = MAP (\n. SOME (FST n)) funs ++ m in
-           [(Letrec (MAP (\n. join_strings t (FST n)) funs) NONE
-             NONE
+           [Letrec (MAP (\n. join_strings t (FST n)) funs) NONE NONE
               (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (SOME v ::
                 new_m) [x]))) funs)
-              (HD (flat_to_clos_compile new_m
-                [e])):flatLang_exp)])`];;
+              (HD (flat_to_clos_compile new_m [e]))])`];;
 hol4_overload "compile" "flat_to_clos_compile";;
 
 let compile_decs_def = cake_define_list

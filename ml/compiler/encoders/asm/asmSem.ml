@@ -102,7 +102,7 @@ let arith_upd_def = cake_define_list
            (asmSem_reg_imm ri s) s`;
    `asmSem_arith_upd (asm_Shift l r1 r2 ri) s =
          asmSem_assert (match ri with Reg r -> w2n (asmSem_read_reg
-           r s) < dimindex (:'a) | _2 -> T)
+           r s) < dimindex (:'a) | _4 -> T)
            (asmSem_upd_reg r1 (asmSem_word_shift l
              (asmSem_read_reg r2 s) (w2n (asmSem_reg_imm ri s))) s)`;
    `asmSem_arith_upd (asm_Div r1 r2 r3) s =
@@ -208,7 +208,7 @@ let fp_upd_def = cake_define_list
                          asmSem_upd_fp_reg (d1 DIV 2)
                            (bit_field_insert h l w
                              (asmSem_read_fp_reg (d1 DIV 2) s)))
-                    (asmSem_assert (w2i w = i) s)) | _4 ->
+                    (asmSem_assert (w2i w = i) s)) | _6 ->
                       asmSem_assert F s)`;
    `asmSem_fp_upd (FPFromInt d1 d2) (s:'a asm_state) =
          (let i = if dimindex (:'a) = 64 then

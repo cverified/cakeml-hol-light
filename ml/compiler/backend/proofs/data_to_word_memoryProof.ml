@@ -202,18 +202,18 @@ let v_inv_eq = cake_define
    pointer annotation is always 0 *)
 
 let get_refs_def = cake_define_list
-  [`get_refs (Number _2:dataSem_v) = []`;
-   `get_refs (Word64 _3:dataSem_v) = []`;
-   `get_refs (CodePtr _4:dataSem_v) = []`;
-   `get_refs (RefPtr _5 p:dataSem_v) = [p]`;
-   `get_refs (Block _6 _7 vs:dataSem_v) = FLAT (MAP get_refs vs)`];;
+  [`get_refs (Number _3:dataSem_v) = []`;
+   `get_refs (Word64 _5:dataSem_v) = []`;
+   `get_refs (CodePtr _7:dataSem_v) = []`;
+   `get_refs (RefPtr _9 p:dataSem_v) = [p]`;
+   `get_refs (Block _12 _13 vs:dataSem_v) = FLAT (MAP get_refs vs)`];;
 
 let ref_edge_def = cake_define
   `ref_edge refs x res =
      (match lookup x refs with SOME (ValueArray ys) -> MEM res
-       (get_refs (Block 0 ARB ys)) | SOME (Thunk _8 v) -> MEM res
-       (get_refs (Block 0 ARB [v])) | SOME (bvlSem_MutBlock _9 _10 l
-       c r) -> MEM res (get_refs (Block 0 ARB (l ++ [c] ++ r))) | _11
+       (get_refs (Block 0 ARB ys)) | SOME (Thunk _14 v) -> MEM res
+       (get_refs (Block 0 ARB [v])) | SOME (bvlSem_MutBlock _15 _16 l
+       c r) -> MEM res (get_refs (Block 0 ARB (l ++ [c] ++ r))) | _17
        -> F)`;;
 
 let reachable_refs_def = cake_define
@@ -247,7 +247,7 @@ let bc_ref_inv_def = cake_define
          (~fin ==> ~(x IN IMAGE (FAPPLY tf) (FDOM tf))) /\
          (?zs. heap_lookup x heap = SOME (BlockRep tg zs) /\
                EVERY2 (\z y. v_inv conf y refs (z,f,tf,heap)) zs
-                 (l ++ [c] ++ r)) | _12 -> F)`;;
+                 (l ++ [c] ++ r)) | _18 -> F)`;;
 
 (* TODO: MOVE *)
 let _ = size_thms "dataSem_v";;
@@ -257,8 +257,8 @@ let v_all_ts_def = cake_define_wf
   `MEASURE (dataSem_v_size)`
   `v_all_ts x1 =
       match x1 with
-        (Block ts _13 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
-      | _14 -> []`;;
+        (Block ts _20 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
+      | _21 -> []`;;
 
 let find_ref_def = cake_define
   `find_ref x1 x =
@@ -266,7 +266,7 @@ let find_ref_def = cake_define
         bvlSem_ValueArray l -> MEM x l
       | (Thunk m v) -> (v = x)
       | (bvlSem_MutBlock tg fin l c r) -> MEM x (l ++ [c] ++ r)
-      | _15 -> F`;;
+      | _22 -> F`;;
 
 (* TODO: MOVE *)
 let all_ts_def = cake_define
@@ -340,7 +340,7 @@ let isRef_def = cake_define
   `data_to_word_memoryProof_isRef x1 =
       match x1 with
         DataElement ys l (tag,qs) -> isMutTag tag
-      | _16 -> F`;;
+      | _23 -> F`;;
 hol4_overload "isRef" "data_to_word_memoryProof_isRef";;
 
 let gen_start_ok_def = cake_define
@@ -353,7 +353,7 @@ let gen_start_ok_def = cake_define
          p < gen_start \/ refs_start <= p))`;;
 
 let gen_state_ok_def = cake_define
-  `gen_state_ok a refs_start heap (GenState _17 starts) <=>
+  `gen_state_ok a refs_start heap (GenState _24 starts) <=>
      EVERY (\s. s <= a) starts /\
      EVERY (gen_start_ok heap refs_start) starts`;;
 
@@ -459,10 +459,10 @@ let reset_gens_def = cake_define
   `reset_gens conf a =
      (match data_to_word_config_gc_kind conf with
        data_to_word_Generational sizes -> GenState 0 (MAP (K a)
-       sizes) | _18 -> GenState 0 [])`;;
+       sizes) | _25 -> GenState 0 [])`;;
 
 let has_gen_def = cake_define
-  `has_gen (GenState _19 xs) <=> ~(xs = [])`;;
+  `has_gen (GenState _26 xs) <=> ~(xs = [])`;;
 
 let data_pointers_def = cake_define
   `data_pointers x1 =
@@ -526,7 +526,7 @@ let list_to_BlockReps_def = cake_define_list
   [`list_to_BlockReps conf t a [] = ARB`;
    `list_to_BlockReps conf t a (h :: l) =
       (match l with
-        [] -> [BlockRep cons_tag [h; t]] | _21 ->
+        [] -> [BlockRep cons_tag [h; t]] | _28 ->
           BlockRep cons_tag
             [h; gc_shared_Pointer (a + 3) (Word (ptr_bits conf
               cons_tag 2))] ::
@@ -637,12 +637,12 @@ val update_thunk_gen_state_ok = prove(
 let heap_deref_def = cake_define
   `(heap_deref a heap =
      (match heap_lookup a heap with SOME (DataElement xs l
-       (RefTag,[])) -> SOME xs | _22 -> NONE))`;;
+       (RefTag,[])) -> SOME xs | _29 -> NONE))`;;
 
 let thunk_deref_def = cake_define
   `(thunk_deref a heap =
      (match heap_lookup a heap with SOME (DataElement xs l
-       (ThunkTag NotEvaluated,[])) -> SOME xs | _23 -> NONE))`;;
+       (ThunkTag NotEvaluated,[])) -> SOME xs | _30 -> NONE))`;;
 
 (* ---- UpdateCons: writing the hole of an unfinalised MutBlock.  The
    cell is
@@ -687,9 +687,9 @@ let heap_el_def = cake_define
         match x1 with
           gc_shared_Pointer a u ->
        (match heap_lookup a heap with SOME (DataElement xs l d) ->
-           (if n < LENGTH xs then (EL n xs,T) else (ARB,F)) | _24 ->
+           (if n < LENGTH xs then (EL n xs,T) else (ARB,F)) | _31 ->
              (ARB,F))
-        | _25 -> (ARB,F)`;;
+        | _32 -> (ARB,F)`;;
 
 (* el *)
 
@@ -719,7 +719,7 @@ let pointer_bits_def = cake_define
          maxout_bits (LENGTH xs) (data_to_word_config_len_bits conf)
            (data_to_word_config_tag_bits conf + 2) ||
          maxout_bits tag (data_to_word_config_tag_bits conf) 2 ||
-           (n2w 1) | _26 -> all_ones (data_to_word_config_len_bits
+           (n2w 1) | _33 -> all_ones (data_to_word_config_len_bits
            conf + data_to_word_config_tag_bits conf + 1) 0)`;;
 
 let is_all_ones_def = cake_define
@@ -809,13 +809,13 @@ let word_heap_def = cake_define_list
 let gen_starts_in_store_def = cake_define
   `gen_starts_in_store c x2 x3 =
       match (x2,x3) with
-        (GenState _27 gen_starts,SOME (Word w)) ->
+        (GenState _34 gen_starts,SOME (Word w)) ->
      (!gen_sizes. data_to_word_config_gc_kind
         c = data_to_word_Generational gen_sizes ==>
         LENGTH gen_starts = LENGTH gen_sizes /\
         (!x xs. gen_starts = x :: xs ==>
                w = (bytes_in_word * n2w x)))
-      | (_28,_29) -> F`;;
+      | (_35,_36) -> F`;;
 
 let glob_real_inv_def = cake_define
   `glob_real_inv c (curr:'a word) globals globreal <=>
@@ -875,7 +875,7 @@ let get_real_addr_def = cake_define
              ((curr + w) - (n2w 1)) else
              if k <= data_to_word_config_pad_bits conf + 1 then
                SOME (curr + (w >>> (shift_length conf - k))) else
-               SOME (curr + (w >>> (shift_length conf) << k))) | _30
+               SOME (curr + (w >>> (shift_length conf) << k))) | _37
                -> NONE)`;;
 
 let get_real_offset_def = cake_define
@@ -887,7 +887,7 @@ let get_real_simple_addr_def = cake_define
   `get_real_simple_addr conf st (w:'a word) =
      (match FLOOKUP st CurrHeap with SOME (Word curr) -> SOME
        (curr + w >>> shift_length conf << backend_common_word_shift
-       (:'ga)) | _31 -> NONE)`;;
+       (:'ga)) | _38 -> NONE)`;;
 
 (* mirrors memory_rel_Update: writing the hole of an unfinalised
    MutBlock is
@@ -966,7 +966,7 @@ let copy_list_def = cake_define
      let m = (b =+ x) m in
      let b = b + bytes_in_word in
        if k = 0 then (if c then SOME (b,m) else NONE) else
-         match a with Loc _32 _33 -> NONE | Word a ->
+         match a with Loc _39 _40 -> NONE | Word a ->
          (match get_real_addr c' st a with NONE -> NONE | SOME a ->
            (let c = (c /\ a + (n2w 2) * bytes_in_word IN dm /\ a +
              bytes_in_word IN dm) in
@@ -1021,7 +1021,7 @@ let word_cmp_loop_def = cake_define
              (if w1 = w2 then
                word_cmp_loop (l - (n2w 1)) (a1 - bytes_in_word)
                  (a2 - bytes_in_word) dm m else if w1 <+ w2 then
-                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _34 ->
+                   SOME (n2w 0) else SOME ((n2w 2):'a word)) | _41 ->
                    NONE else NONE)`;;
 
 (* HOL4 ML code, not ported:
@@ -1040,13 +1040,13 @@ val good_dimindex_def = good_dimindex_def;
 let v_same_type_def = cake_define
   `v_same_type x1 x2 =
         match (x1,x2) with
-          ((Number _35:dataSem_v),(Number _36:dataSem_v)) -> T
-        | ((Word64 _37),(Word64 _38)) -> T
-        | ((Block _39 t1 l1),(Block _40 t2 l2)) -> (t1 = t2 /\ LENGTH
+          ((Number _44:dataSem_v),(Number _45:dataSem_v)) -> T
+        | ((Word64 _46),(Word64 _47)) -> T
+        | ((Block _48 t1 l1),(Block _49 t2 l2)) -> (t1 = t2 /\ LENGTH
           l1 = LENGTH l2 ==> LIST_REL v_same_type l1 l2)
-        | ((CodePtr _41),(CodePtr _42)) -> T
-        | ((RefPtr _43 _44),(RefPtr _45 _46)) -> T
-        | (_47,_48) -> F`;;
+        | ((CodePtr _50),(CodePtr _51)) -> T
+        | ((RefPtr _52 _53),(RefPtr _54 _55)) -> T
+        | (_56,_57) -> F`;;
 
 let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ ntac 2 gen_tac \\ Induct \\ rw[v_size_def] \\
@@ -1055,9 +1055,9 @@ let v_depth_def = cake_define_wf
   `MEASURE dataSem_v_size`
   `v_depth x1 =
         match x1 with
-          (Block _49 _50 ls:dataSem_v) -> (if NULL ls then 0 else 1)
+          (Block _60 _61 ls:dataSem_v) -> (if NULL ls then 0 else 1)
             + MAX_LIST (MAP v_depth ls)
-        | _51 -> 0`;;
+        | _62 -> 0`;;
 
 (* HOL4 ML code, not ported:
 val v_depth_ind = theorem"v_depth_ind";
@@ -1076,7 +1076,7 @@ val elements_list_ind = theorem"elements_list_ind";
 *)
 
 let vb_eq_size_def = cake_define_list
-  [`vb_eq_size refs (Block _52 t1 l1:dataSem_v) (Block _53 t2
+  [`vb_eq_size refs (Block _65 t1 l1:dataSem_v) (Block _66 t2
   l2:dataSem_v) =
          (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
            isClos t2 l2 then SOME ((1:num),T) else NONE else if (t1 =
@@ -1086,17 +1086,17 @@ let vb_eq_size_def = cake_define_list
          (if b1 /\ b2 then
            (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
               (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) ->
-                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_54)
-                -> NONE | (_55,SOME (ByteArray T bs2)) -> NONE | _56
+                SOME (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_70)
+                -> NONE | (_71,SOME (ByteArray T bs2)) -> NONE | _72
                 -> SOME (1,(n1 = n2))) else NONE)`;
-   `vb_eq_size _57 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
+   `vb_eq_size _73 (Number n1:dataSem_v) (Number n2:dataSem_v) = SOME
   (1,(n1 = n2))`;
-   `vb_eq_size _58 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
+   `vb_eq_size _74 (Word64 w1:dataSem_v) (Word64 w2:dataSem_v) = SOME
   (1,(w1 = w2))`;
-   `vb_eq_size _59 _60 _61 = NONE`;
-   `vb_eq_size_list _62 [] [] = SOME (0,T)`;
-   `vb_eq_size_list _63 [] _64 = SOME (0,F)`;
-   `vb_eq_size_list _65 _66 [] = SOME (0,F)`;
+   `vb_eq_size _75 _76 _77 = NONE`;
+   `vb_eq_size_list _78 [] [] = SOME (0,T)`;
+   `vb_eq_size_list _79 [] _80 = SOME (0,F)`;
+   `vb_eq_size_list _81 _82 [] = SOME (0,F)`;
    `vb_eq_size_list refs (v1 :: vs1) (v2 :: vs2) =
          (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
            -> SOME (n + 1,F) | SOME (n,T) -> (
@@ -1107,7 +1107,7 @@ let word_header_def = cake_define
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
-           match m a1 with Word x1 -> SOME (a1,x1) | _67 -> NONE))`;;
+           match m a1 with Word x1 -> SOME (a1,x1) | _83 -> NONE))`;;
 
 let fix_clock_def = cake_define_list
   [`data_to_word_memoryProof_fix_clock ck l NONE = NONE`;
@@ -1156,7 +1156,7 @@ let word_eq_def = cake_define_wf
                 (a1 + bytes_in_word * (decode_length c h1))
                 (a2 + bytes_in_word * (decode_length c h1)) dm m with
                   NONE -> NONE | SOME res -> SOME (res,l - 1 - w2n
-                  (decode_length c h1),ck))) | _68 -> NONE)) /\
+                  (decode_length c h1),ck))) | _84 -> NONE)) /\
    (word_eq_list c st dm m l ck w a1 a2 =
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
@@ -1169,7 +1169,7 @@ let word_eq_def = cake_define_wf
                               word_eq_list c st dm m (l - 1) ck (w -
                                 (n2w 1))
                               (a1 + bytes_in_word) (a2 +
-                                bytes_in_word))) | _69 -> NONE))`;;
+                                bytes_in_word))) | _85 -> NONE))`;;
 
 (* HOL4 ML code, not ported:
 val word_eq_ind = theorem "word_eq_ind";
@@ -1462,7 +1462,7 @@ let block_drop_def = cake_define
       match (x1,v) with
         (0,v) -> SOME v
       | ((SUC n),(Block ts tag [h; vl])) -> block_drop n vl
-      | (_70,_71) -> NONE`;;
+      | (_86,_87) -> NONE`;;
 
 (* ---------------------------------------------------------------------
    ---- *)
@@ -1522,7 +1522,7 @@ let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
         (Loc n m:dataSem_v) -> (m = 0 /\ n IN code)
-      | _72 -> T`;;
+      | _88 -> T`;;
 
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;

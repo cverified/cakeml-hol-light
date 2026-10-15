@@ -43,11 +43,11 @@ val handle_ok_def = bvl_handleProofTheory.handle_ok_def;
 let adjust_bv_def = cake_define_list
   [`adjust_bv b (Number i:bvlSem_v) = (Number i:bvlSem_v)`;
    `adjust_bv b (Word64 w:bvlSem_v) = (Word64 w:bvlSem_v)`;
-   `adjust_bv b (RefPtr l r:bvlSem_v) = (RefPtr l (b r):bvlSem_v)`;
+   `adjust_bv b (RefPtr l r:bvlSem_v) = RefPtr l (b r)`;
    `adjust_bv b (bvlSem_CodePtr c) = bvlSem_CodePtr (bvl_num_stubs +
   bvl_to_bvi_namespaces * c)`;
-   `adjust_bv b (Block tag vs:bvlSem_v) = (Block tag (MAP
-  (adjust_bv b) vs):bvlSem_v)`];;
+   `adjust_bv b (Block tag vs:bvlSem_v) = Block tag (MAP (adjust_bv
+  b) vs)`];;
 
 (* HOL4 ML code, not ported:
 val adjust_bv_ind = theorem"adjust_bv_ind";

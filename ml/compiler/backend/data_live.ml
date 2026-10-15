@@ -19,7 +19,7 @@ needs "semantics/ast.ml";;
 let is_pure_def = cake_define
   `data_live_is_pure x1 =
         match x1 with
-          (FFI _1:closLang_op) -> F
+          (FFI _2:closLang_op) -> F
         | (closLang_IntOp Add) -> F
         | (closLang_IntOp Sub) -> F
         | (closLang_IntOp closLang_Mult) -> F
@@ -27,37 +27,37 @@ let is_pure_def = cake_define
         | (closLang_IntOp Mod) -> F
         | (closLang_IntOp Less) -> F
         | (closLang_IntOp closLang_LessEq) -> F
-        | (closLang_WordOp (WordOpw W64 _2)) -> F
-        | (closLang_WordOp (WordShift W64 _3 _4)) -> F
+        | (closLang_WordOp (WordOpw W64 _3)) -> F
+        | (closLang_WordOp (WordShift W64 _4 _5)) -> F
         | (closLang_WordOp WordFromInt) -> F
         | (closLang_WordOp WordToInt) -> F
         | (closLang_WordOp (WordFromWord b)) -> F
-        | (closLang_WordOp (FP_uop _5)) -> F
-        | (closLang_WordOp (FP_bop _6)) -> F
-        | (closLang_WordOp (FP_top _7)) -> F
-        | (closLang_BlockOp (closLang_Build _8)) -> F
-        | (closLang_BlockOp (Cons _9)) -> F
-        | (closLang_BlockOp (closLang_ConsExtend _10)) -> F
-        | (closLang_BlockOp (closLang_FromList _11)) -> F
+        | (closLang_WordOp (FP_uop _6)) -> F
+        | (closLang_WordOp (FP_bop _7)) -> F
+        | (closLang_WordOp (FP_top _8)) -> F
+        | (closLang_BlockOp (closLang_Build _9)) -> F
+        | (closLang_BlockOp (Cons _10)) -> F
+        | (closLang_BlockOp (closLang_ConsExtend _11)) -> F
+        | (closLang_BlockOp (closLang_FromList _12)) -> F
         | (closLang_BlockOp ListAppend) -> F
         | (closLang_BlockOp Equal) -> F
-        | (closLang_GlobOp (SetGlobal _12)) -> F
+        | (closLang_GlobOp (SetGlobal _13)) -> F
         | (closLang_GlobOp SetGlobalsPtr) -> F
         | (closLang_MemOp closLang_Ref) -> F
-        | (closLang_MemOp (closLang_RefByte _13)) -> F
+        | (closLang_MemOp (closLang_RefByte _14)) -> F
         | (closLang_MemOp closLang_RefArray) -> F
         | (closLang_MemOp closLang_Update) -> F
-        | (closLang_MemOp (closLang_MutCons _14 _15)) -> F
+        | (closLang_MemOp (closLang_MutCons _15 _16)) -> F
         | (closLang_MemOp closLang_UpdateCons) -> F
         | (closLang_MemOp closLang_FinaliseCons) -> F
         | (closLang_MemOp closLang_UpdateByte) -> F
         | (closLang_MemOp closLang_FromListByte) -> F
-        | (closLang_MemOp (closLang_CopyByte _16)) -> F
+        | (closLang_MemOp (closLang_CopyByte _17)) -> F
         | (closLang_MemOp closLang_XorByte) -> F
         | (closLang_MemOp ConfigGC) -> F
         | closLang_Install -> F
-        | (ThunkOp _17) -> F
-        | _18 -> T`;;
+        | (ThunkOp _18) -> F
+        | _19 -> T`;;
 hol4_overload "is_pure" "data_live_is_pure";;
 
 let compile_def = cake_define_list
@@ -88,8 +88,7 @@ let compile_def = cake_define_list
    `data_live_compile (If n c2 c3:dataLang_prog) live =
          (let (d3,l3) = data_live_compile c3 live in
          let (d2,l2) = data_live_compile c2 live in
-           ((If n d2 d3:dataLang_prog),sptree_insert n one
-             (sptree_union l2 l3)))`;
+           (If n d2 d3,sptree_insert n one (sptree_union l2 l3)))`;
    `data_live_compile (Force NONE loc src:dataLang_prog) live =
          ((Force NONE loc src:dataLang_prog),sptree_insert src
            one LN)`;
@@ -97,7 +96,7 @@ let compile_def = cake_define_list
   live =
          (let l1 = inter names (sptree_delete n live) in
          let l2 = sptree_insert src one l1 in
-           ((Force (SOME (n,l1)) loc src:dataLang_prog),l2))`;
+           (Force (SOME (n,l1)) loc src,l2))`;
    `data_live_compile (Call NONE dest vs handler:dataLang_prog) live =
          ((Call NONE dest vs
            handler:dataLang_prog),list_to_num_set vs)`;
@@ -105,7 +104,7 @@ let compile_def = cake_define_list
   NONE:dataLang_prog) live =
          (let l1 = inter names (list_delete ns live) in
          let l2 = list_insert vs l1 in
-           ((Call (SOME (ns,l1)) dest vs NONE:dataLang_prog),l2))`;
+           (Call (SOME (ns,l1)) dest vs NONE,l2))`;
    `data_live_compile (Call (SOME (ns,names)) dest vs (SOME
   (v,c)):dataLang_prog) live =
          (let (d,l3) = data_live_compile c live in
@@ -113,6 +112,5 @@ let compile_def = cake_define_list
            v l3) in
          let l1 = inter names l0 in
          let l2 = list_insert vs l1 in
-           ((Call (SOME (ns,l1)) dest vs (SOME
-             (v,d)):dataLang_prog),l2))`];;
+           (Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2))`];;
 hol4_overload "compile" "data_live_compile";;

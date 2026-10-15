@@ -130,7 +130,7 @@ let get_code_labels_def = cake_define_list
    `bvlProps_get_code_labels (Tick e:flatLang_exp) =
   bvlProps_get_code_labels e`;
    `bvlProps_get_code_labels (Force loc v:flatLang_exp) = {loc}`;
-   `bvlProps_get_code_labels (Call _3 d es:flatLang_exp) = (match d
+   `bvlProps_get_code_labels (Call _4 d es:flatLang_exp) = (match d
   with NONE -> {} | SOME n -> {n}) UNION BIGUNION (set_of_list (MAP
   bvlProps_get_code_labels es))`;
    `bvlProps_get_code_labels (Op op es:flatLang_exp) =

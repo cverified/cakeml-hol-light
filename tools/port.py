@@ -132,7 +132,7 @@ class Porter:
     self.deps = []
     self.restore = set()   # the infixes to put back at the end
     self.rec_src = {}      # record type -> [(field, type)]
-    self.annotated = set() # the constructors a pattern resolved
+    self.annotated = {}    # the terms a pattern resolved
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
@@ -655,8 +655,9 @@ class Porter:
                                '$' in h.name):
           if ambiguous and not self.ambiguous_con(h.name):
             return p
-          self.annotated.add(h.name)
           ty = self.con_type(h.name)
+          if ty:
+            self.annotated[hterm.Printer(self.ctx).pr(p, 0)] = ty
           # a type variable that the port writes is rigid in HOL
           # Light, so a type with parameters cannot be written in an
           # annotation; the name of the constructor itself then says
@@ -691,7 +692,7 @@ class Porter:
     if not (e.kind == 'infix' and e.op in ('=', '<=>')): return cl
     _, args = hterm.strip_app(e.l)
     e.l = hterm.strip_app(e.l)[0]
-    self.annotated = set()
+    self.annotated = {}
     for a in args:
       e.l = hterm.Node('app', tok=e.l.tok, fn=e.l,
                        arg=self.annotate_pat(a, ambiguous))
@@ -704,18 +705,21 @@ class Porter:
     return cl
 
   def annotate_again(self, e):
-    """the constructors that the pattern of the clause resolved,
-       resolved the same way where the body uses them again"""
-    done = set()
+    """a term that the pattern of the clause resolved, resolved the
+       same way where the body has it again.  Only the very same
+       term: a compiler pass uses the name of a constructor of its
+       source language in the pattern and the one of its target
+       language in the body (bvi_to_data's If)"""
+    pr = hterm.Printer(self.ctx)
 
     def go(e):
       if not isinstance(e, hterm.Node): return e
       if e.kind in ('app', 'id'):
-        h = hterm.strip_app(e)[0] if e.kind == 'app' else e
-        nm = h.name if h.kind == 'id' else None
-        if nm in self.annotated and nm not in done:
-          done.add(nm)
-          return self.annotate_pat(e, True)
+        ty = self.annotated.get(pr.pr(e, 0))
+        if ty:
+          return hterm.Node('paren', tok=e.tok,
+                   e=hterm.Node('typed', tok=e.tok, e=e,
+                                ty=hterm.tokenize(ty)))
       for k, v in list(e.__dict__.items()):
         if k == 'tok': continue
         if isinstance(v, hterm.Node): setattr(e, k, go(v))
