@@ -642,9 +642,9 @@ let lim_safe_part_def = cake_define_list
               il <= 2 EXP limits_length_limit lims)`;
    `lim_safe_part lims (Str s:const_part) <=>
          (let i = strlen s in
-            i DIV (arch_size lims DIV (&8)) < 2 EXP (arch_size lims)
+            i DIV (arch_size lims DIV 8) < 2 EXP (arch_size lims)
               DIV arch_size lims /\
-            i DIV (arch_size lims DIV (&8)) + 1 < 2 EXP
+            i DIV (arch_size lims DIV 8) + 1 < 2 EXP
               limits_length_limit lims /\
             small_num (limits_arch_64_bit lims) (&i))`;
    `lim_safe_part lims (W64 w:const_part) <=> 1 <

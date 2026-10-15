@@ -137,8 +137,8 @@ hol4_overload "fromString" "mlint_fromString";;
 let fromNatString_def = cake_define
   `fromNatString str =
      (match fromString str with
-       NONE -> NONE | SOME i -> (if 0 <= i then SOME (num_of_int
-         i) else NONE))`;;
+       NONE -> NONE | SOME i -> (if (&0) <= i then SOME
+         (num_of_int i) else NONE))`;;
 
 (* fromString auxiliar lemmas *)
 

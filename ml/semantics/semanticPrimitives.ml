@@ -988,7 +988,7 @@ let do_conversion_def = cake_define
           (the_Litv_Char v))))))
         | (ast_IntT,ast_CharT) ->
         (let i = the_Litv_IntLit v in
-          if i < 0 \/ i > 255 then SOME (INL
+          if i < (&0) \/ i > (&255) then SOME (INL
             semanticPrimitives_chr_exn_v) else SOME (INR
             (semanticPrimitives_Litv (ast_Char (CHR (num_of_int (abs
             i)))))))

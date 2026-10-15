@@ -686,12 +686,26 @@ class Porter:
     """the variables of a definition that hold an integer: the ones
        that are the argument of a constructor whose type there is
        int, as i is in clos_known's [Tuple _ xs; Int i]"""
-    out = set(); other = set()
     try:
       toks = hterm.tokenize(hol4.strip_comments(body))
       e = hterm.Parser(toks, self.ctx).parse()
     except Exception:
-      return out
+      return set()
+    return self.int_vars_node(e)
+
+  def int_vars_node(self, e):
+    """the same of a term that is already parsed (the clauses of a
+       definition in list form are typechecked on their own, so
+       each of them has its own variables)"""
+    out = set(); other = set()
+
+    def arith_vars(n, acc):
+      while n.kind == 'paren': n = n.e
+      if n.kind == 'id': acc.add(n.name)
+      elif n.kind == 'infix' and n.op in hterm.ARITH:
+        arith_vars(n.l, acc); arith_vars(n.r, acc)
+      elif n.kind == 'prefix' and n.op in ('-', '~'):
+        arith_vars(n.e, acc)
 
     def go(n):
       if n is None or not isinstance(n, hterm.Node): return
@@ -704,15 +718,20 @@ class Porter:
             ty = self.ctx.con_argty.get((h.name, i))
             if ty in ('int', 'real'): out.add(a.name)
             elif ty: other.add(a.name)
-      for k in ('e', 'l', 'r', 'fn', 'arg', 'body', 's', 'p', 'p2',
-                'ty'):
-        go(getattr(n, k, None))
-      for k in ('items', 'stmts', 'arms', 'upds', 'vs', 'cls'):
-        for x in getattr(n, k, None) or []:
-          if isinstance(x, hterm.Node): go(x)
-          elif isinstance(x, (tuple, list)):
-            for y in x:
-              if isinstance(y, hterm.Node): go(y)
+        # the argument of a function whose argument is an integer
+        # (HOL4's Num) holds one, and so do the variables that a
+        # sum or a product of it is made of
+        if h.kind == 'id' and h.name in hterm.INT_FUNS:
+          for a in args: arith_vars(a, out)
+      for k, v in list(n.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): go(v)
+        elif isinstance(v, (tuple, list)):
+          for x in v:
+            if isinstance(x, hterm.Node): go(x)
+            elif isinstance(x, (tuple, list)):
+              for y in x:
+                if isinstance(y, hterm.Node): go(y)
     go(e)
     # a name that is the argument of a constructor whose type there
     # is not an integer as well says nothing
@@ -732,9 +751,13 @@ class Porter:
       # the last clause of the list ends in `];; and the others
       # in `;, which is what the lines have to leave room for
       all = hterm.conjuncts_of(e)
-      cls = [fmt(p.pr(self.annotate(cl, True), 0), indent=4,
-                 last=5 if i == len(all) - 1 else 3)
-             for i, cl in enumerate(all)]
+      cls = []
+      for i, cl in enumerate(all):
+        # every clause has its own variables, so also its own ones
+        # that hold an integer
+        self.ctx.intvars = self.int_vars_node(cl)
+        cls.append(fmt(p.pr(self.annotate(cl, True), 0), indent=4,
+                       last=5 if i == len(all) - 1 else 3))
     finally:
       self.ctx.vars = old
     return '[`' + '`;\n   `'.join(cls) + '`]'

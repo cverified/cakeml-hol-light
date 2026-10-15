@@ -1048,8 +1048,8 @@ let WordShift64_on_32_def = cake_define
 
 let smallnum_def = cake_define
   `Smallnum i =
-     (if i < 0 then (n2w 0) - n2w (num_of_int (4 * (0 - i))) else
-       n2w (num_of_int (4 * i)))`;;
+     (if i < (&0) then (n2w 0) - n2w (num_of_int ((&4) * ((&0) -
+       i))) else n2w (num_of_int ((&4) * i)))`;;
 
 (* HOL4 overload (expanded in the port):
      FALSE_CONST = Const (n2w 2:'a word) *)
@@ -1122,10 +1122,10 @@ fun assign_Define q = let
 
 let assign_Const_def = cake_define
   `assign_Const i (l:num) (dest:num) =
-         (if i < 0 then (Assign (adjust_var dest) (Const ((n2w 0)
-           - n2w (num_of_int (4 * (0 - i))))),l) else (Assign
-           (adjust_var dest) (Const (n2w (num_of_int (4 * i)))),l):'a
-           wordLang_prog#num)`;;
+         (if i < (&0) then (Assign (adjust_var dest) (Const ((n2w
+           0) - n2w (num_of_int ((&4) * ((&0) - i))))),l) else
+           (Assign (adjust_var dest) (Const (n2w (num_of_int ((&4) *
+           i)))),l):'a wordLang_prog#num)`;;
 
 let assign_SetGlobalsPtr_def = cake_define
   `assign_SetGlobalsPtr (c:data_to_word_config) (l:num) (dest:num) v1 =

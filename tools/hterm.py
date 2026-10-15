@@ -958,6 +958,11 @@ def layout(tok, s):
 NUMCTX = set(['+', '-', '*', '/', 'DIV', 'MOD', 'EXP', '**',
               '<', '<=', '>', '>='])
 
+# the operators whose two sides have the same numeric type, and the
+# functions whose argument is an integer
+ARITH = set(['+', '-', '*', '/', '%', 'DIV', 'MOD'])
+INT_FUNS = set(['Num', 'ABS'])  # the names of HOL4
+
 # HOL Light constants that are binders, so that f (\x. b) has to be
 # printed as f x. b
 BINDERS = set(['minimal'])
@@ -1064,11 +1069,17 @@ class Printer:
     return out
 
   def intvar(self, e):
-    """is this a variable that holds an integer?  A pattern binds
-       one where it is the argument of a constructor whose type
-       there is int"""
+    """does this expression hold an integer?  It does where it is
+       a variable that holds one (a pattern binds such a variable
+       where it is the argument of a constructor whose type there
+       is int) or a sum or a product of such an expression"""
     while e.kind == 'paren': e = e.e
-    return e.kind == 'id' and e.name in self.ctx.intvars
+    if e.kind == 'id': return e.name in self.ctx.intvars
+    if e.kind == 'infix' and e.op in ARITH:
+      return self.intvar(e.l) or self.intvar(e.r)
+    if e.kind == 'prefix' and e.op in ('-', '~'):
+      return self.intvar(e.e)
+    return False
 
   def pr0(self, e, prec):
     k = e.kind
