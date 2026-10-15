@@ -288,12 +288,12 @@ let ast_t_to_display_def = cake_define_wf
   `ast_t_to_display c =
         match c with
           c ->
-     match c with Atvar n -> Item NONE (implode "Atvar") [String n] |
-       Atfun t1 t2 -> Item NONE (implode "Atfun") [ast_t_to_display t1;
-       ast_t_to_display t2] | Attup ts -> Item NONE (implode "Attup")
-       [Tuple (ast_t_to_display_list ts)] | Atapp ts id -> Item NONE
-       (implode "Attup") [Tuple (ast_t_to_display_list ts);
-                              id_to_display id]
+     (match c with Atvar n -> Item NONE (implode "Atvar") [String n]
+       | Atfun t1 t2 -> Item NONE (implode "Atfun") [ast_t_to_display
+       t1; ast_t_to_display t2] | Attup ts -> Item NONE (implode
+       "Attup") [Tuple (ast_t_to_display_list ts)] | Atapp ts id -> Item
+       NONE (implode "Attup") [Tuple (ast_t_to_display_list ts);
+                              id_to_display id])
         | [] -> []
         | (x :: xs) ->
        ast_t_to_display x :: ast_t_to_display_list xs`;;
@@ -307,7 +307,7 @@ let pat_to_display_def = cake_define_wf
   `pat_to_display x1 =
         match x1 with
           (c:ast_pat) ->
-     match c with Pany -> Item NONE (implode "Pany") [] | Pvar v ->
+     (match c with Pany -> Item NONE (implode "Pany") [] | Pvar v ->
        Item NONE (implode "Pvar") [String v] | Plit l -> Item NONE
        (implode "Plit") [lit_to_display l] | Pcon opt_id pats ->
          Item NONE (implode "Pcon") [(\f opt. match opt with NONE ->
@@ -319,7 +319,7 @@ let pat_to_display_def = cake_define_wf
                              Item NONE (implode "Pref") [pat_to_display
                              t] | Ptannot x y -> Item NONE (implode
                              "Ptannot") [pat_to_display x;
-                             ast_t_to_display y]
+                             ast_t_to_display y])
         | [] -> []
         | (x :: xs) ->
        pat_to_display x :: pat_to_display_list xs`;;
@@ -328,7 +328,7 @@ let exp_to_display_def = cake_define
   `exp_to_display x1 =
         match x1 with
           (c:ast_exp) ->
-     match c with Lit l -> Item NONE (implode "Lit") [lit_to_display
+     (match c with Lit l -> Item NONE (implode "Lit") [lit_to_display
        l] | Raise e -> Item NONE (implode "Raise") [exp_to_display e] |
        Con opt_id es -> Item NONE (implode "Con") [(\f opt. match opt
        with NONE -> empty_item (implode "none") | SOME opt' -> Item NONE
@@ -365,7 +365,7 @@ let exp_to_display_def = cake_define
          [Tuple (fun_to_display_list fns);
           exp_to_display e] | Tannot e _1 -> Item NONE (implode
             "Tannot") [exp_to_display e] | Lannot e _2 -> Item NONE
-            (implode "Lannot") [exp_to_display e]
+            (implode "Lannot") [exp_to_display e])
         | [] -> []
         | (x :: xs) ->
        exp_to_display x :: exp_to_display_list xs
@@ -389,7 +389,7 @@ let source_to_display_dec_def = cake_define_wf
   `source_to_display_dec x1 =
         match x1 with
           (d:dec) ->
-     match d with Dlet _3 pat e -> Item NONE (implode "Dlet")
+     (match d with Dlet _3 pat e -> Item NONE (implode "Dlet")
        [pat_to_display pat; exp_to_display e] | Dletrec _4 fns -> Item
        NONE (implode "Dletrec")
                              (MAP (\(m,n,e). Tuple [String m;
@@ -415,7 +415,7 @@ let source_to_display_dec_def = cake_define_wf
                                 (source_to_display_dec_list xs);
                               Tuple (source_to_display_dec_list ys)]
                                 | Denv n -> Item NONE (implode "Denv")
-                                [String n]
+                                [String n])
         | [] -> []
         | (x :: xs) ->
        source_to_display_dec x :: source_to_display_dec_list xs`;;
@@ -437,7 +437,7 @@ let flat_pat_to_display_def = cake_define_wf
   `flat_pat_to_display p =
         match p with
           p ->
-       match p with flatLang_Pvar varN -> Item NONE (implode "Pvar")
+       (match p with flatLang_Pvar varN -> Item NONE (implode "Pvar")
          [string_imp varN] | Pany -> empty_item (implode "Pany") | Plit
          lit -> Item NONE (implode "Plit") [lit_to_display lit] |
          flatLang_Pcon id pats -> Item NONE (implode "Pcon")
@@ -445,7 +445,7 @@ let flat_pat_to_display_def = cake_define_wf
                  NONE (implode "Pas") [flat_pat_to_display pat;
                               string_imp varN] | Pref pat -> Item
                                 NONE (implode "Pref")
-                                [flat_pat_to_display pat]
+                                [flat_pat_to_display pat])
         | [] -> []
         | (x :: xs) ->
        flat_pat_to_display x :: flat_pat_to_display_list xs`;;
@@ -905,8 +905,8 @@ let data_prog_to_display_def = cake_define_wf
         match (k,prog) with
           (0,prog) -> empty_item (implode "...")
         | ((SUC k),prog) ->
-         match prog with dataLang_Skip -> empty_item (implode "skip")
-           | dataLang_Move x y -> Tuple
+         (match prog with dataLang_Skip -> empty_item (implode
+           "skip") | dataLang_Move x y -> Tuple
            [num_to_display x; String (implode ":="); num_to_display
              y] | Call rets target args NONE -> Item NONE (implode
              "call")
@@ -958,13 +958,13 @@ let data_prog_to_display_def = cake_define_wf
              Item NONE (implode "raise") [num_to_display n] | Return ns
              -> Item NONE (implode "return") [(\f xs. displayLang_Tuple
              (MAP f xs)) num_to_display ns] | Tick -> empty_item
-             (implode "tick")
+             (implode "tick"))
         | (k,[]) -> []
         | (k,(x :: xs)) ->
-       match k with
+       (match k with
          0 -> [] | SUC k ->
        data_prog_to_display k ns x :: data_prog_to_display_list k
-         ns xs`;;
+         ns xs)`;;
 
 let data_fun_to_display_def = cake_define
   `data_fun_to_display names (n,argc,body) =
@@ -1204,9 +1204,9 @@ let stack_prog_to_display_def = cake_define_wf
       | ((SUC k),(Halt n)) -> item_with_num (implode "halt") n
       | (k,[]) -> []
       | (k,(x :: xs)) ->
-     match k with 0 -> [] | SUC k ->
+     (match k with 0 -> [] | SUC k ->
      stack_prog_to_display k ns x :: stack_prog_to_display_list k
-       ns xs`;;
+       ns xs)`;;
 
 let stack_fun_to_display_def = cake_define
   `stack_fun_to_display names (n,body) =
@@ -1401,24 +1401,24 @@ let word_prog_to_display_def = cake_define_wf
              [num_sets_to_display ms])
         | (k,[]) -> []
         | (k,(x :: xs)) ->
-       match k with 0 -> [] | SUC k ->
+       (match k with 0 -> [] | SUC k ->
        word_prog_to_display k ns x :: word_prog_to_display_list k ns
-         xs
+         xs)
         | (k,NONE) -> empty_item (implode "tail")
         | (k,(SOME (vs,ms,prog,n2,n3))) ->
-       match k with 0 -> empty_item (implode "...") | SUC k ->
+       (match k with 0 -> empty_item (implode "...") | SUC k ->
        Item NONE (implode "returning") [Tuple [Tuple (MAP
          num_to_display vs); num_sets_to_display ms;
            word_prog_to_display k ns prog;
            String (attach_name ns (SOME n2));
-           num_to_display n3]]
+           num_to_display n3]])
         | (k,NONE) -> empty_item (implode "no_handler")
         | (k,(SOME (n1,prog,n2,n3))) ->
-       match k with 0 -> empty_item (implode "...") | SUC k ->
+       (match k with 0 -> empty_item (implode "...") | SUC k ->
        Item NONE (implode "handler") [Tuple [num_to_display n1;
            word_prog_to_display k ns prog;
            String (attach_name ns (SOME n2));
-           num_to_display n3]]`;;
+           num_to_display n3]])`;;
 
 let word_fun_to_display_def = cake_define
   `word_fun_to_display names (n,argc,body) =

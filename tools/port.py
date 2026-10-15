@@ -122,7 +122,8 @@ class Porter:
                          overloaded=db.overloaded(),
                          recs=db.recs_for(thy), thy=thy,
                          accessors=overrides.ACCESSORS.get(thy, {}),
-                         cons=db.cons_for(thy), abbrevs=self.abbrevs)
+                         cons=db.cons_for(thy), abbrevs=self.abbrevs,
+                         con_argty=db.con_argty_for(thy))
     self.out = []
     self.warn = []
     self.head = None
@@ -531,27 +532,34 @@ class Porter:
     # argument of the constructor it sits in; the clause form is
     # only needed where those types can differ
     where = {}
-    def walk(p, ty):
+    def walk(p, tys):
       while p.kind in ('paren', 'typed'): p = p.e
       if p.kind == 'id':
         # a wildcard is a fresh variable in every clause anyway, and
         # a position whose type is not known says nothing
-        if (p.name == '_' or ty is None or p.name in CONS or
+        if (p.name == '_' or not tys or p.name in CONS or
             p.name in hterm.HLCONS): return
-        where.setdefault(p.name, set()).add(ty)
+        where.setdefault(p.name, []).append(tys)
         return
       if p.kind == 'app':
         h, args = hterm.strip_app(p)
         nm = h.name if h.kind == 'id' else '?'
         for j, a in enumerate(args):
-          tys = self.db.con_argty.get((nm, j))
-          walk(a, min(tys) if tys and len(tys) == 1 else None)
+          # the types that the constructors of that name give the
+          # argument (the theory is not known here, so all of them)
+          walk(a, self.db.con_argty.get((nm, j)))
+        return
+      if p.kind == 'list':
+        for a in p.items: walk(a, None)
         return
       if p.kind == 'infix':
         walk(p.l, None); walk(p.r, None)
     for _, args, _ in cls:
-      for i, a in enumerate(args): walk(a, ('arg', i))
-    return any(len(v) > 1 for v in where.values())
+      for i, a in enumerate(args): walk(a, {('arg', i)})
+    # the clause form is needed where the places of a variable have
+    # no type in common
+    return any(not set.intersection(*map(set, v))
+               for v in where.values() if len(v) > 1)
 
   def multi_pattern(self, body):
     """does a definition that is not recursive match on more than
@@ -565,7 +573,10 @@ class Porter:
     except Exception:
       return False
     if len(cls) < 2: return False
-    heads = set(h.name for h, _, _ in cls if h.kind == 'id')
+    # the names as the port writes them, which is how they are in
+    # the right hand sides below
+    heads = set(self.ctx.name(h.name) for h, _, _ in cls
+                if h.kind == 'id')
     # a recursive definition keeps its clauses: the termination
     # machinery does not look inside a match
     for _, _, r in cls:
@@ -639,7 +650,9 @@ class Porter:
              and args[i].name not in self.ctx.cons}
       pat = ','.join(pr.pr(args[i], 60) for i in pats)
       if len(pats) > 1: pat = '(' + pat + ')'
-      arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 0)))
+      # the body of an arm needs its parentheses: a match, a let
+      # or a conditional in it would swallow the arms after it
+      arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 2)))
     scrut = ','.join(names[i] for i in pats)
     if len(pats) > 1: scrut = '(' + scrut + ')'
     head = pr.pr(hop, 0) + ' ' + ' '.join(names)

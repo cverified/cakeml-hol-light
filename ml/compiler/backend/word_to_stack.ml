@@ -99,86 +99,86 @@ let wInst_def = cake_define
           ((Const n c):'a asm_inst) ->
        wRegWrite1 (\n. Inst (Const n c)) n kf
         | (Arith (Binop bop n1 n2 (Imm imm))) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
          (wRegWrite1 (\n1. Inst (Arith (Binop bop n1 n2 (Imm imm))))
-           n1 kf)
+           n1 kf))
         | (Arith (Binop bop n1 n2 (Reg n3))) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (l ++ l')
          (wRegWrite1 (\n1. Inst (Arith (Binop bop n1 n2 (Reg n3))))
-           n1 kf)
+           n1 kf))
         | (Arith (Shift sh n1 n2 (Imm imm))) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
          (wRegWrite1 (\n1. Inst (Arith (Shift sh n1 n2 (Imm imm))))
-           n1 kf)
+           n1 kf))
         | (Arith (Shift sh n1 n2 (Reg n3))) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (l ++ l')
          (wRegWrite1 (\n1. Inst (Arith (Shift sh n1 n2 (Reg n3)))) n1
-           kf)
+           kf))
         | (Arith (Div n1 n2 n3)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (l ++ l')
-         (wRegWrite1 (\n1. Inst (Arith (Div n1 n2 n3))) n1 kf)
+         (wRegWrite1 (\n1. Inst (Arith (Div n1 n2 n3))) n1 kf))
         | (Arith (AddCarry n1 n2 n3 n4)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (l ++ l')
          (wRegWrite1 (\n1. Inst (Arith (AddCarry n1 n2 n3 n4))) n1
-           kf)
+           kf))
         | (Arith (AddOverflow n1 n2 n3 n4)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (l ++ l')
          (wRegWrite1 (\n1. Inst (Arith (AddOverflow n1 n2 n3 n4))) n1
-           kf)
+           kf))
         | (Arith (SubOverflow n1 n2 n3 n4)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        let (l',n3) = wReg2 n3 kf in
        wStackLoad (l ++ l')
          (wRegWrite1 (\n1. Inst (Arith (SubOverflow n1 n2 n3 n4))) n1
-           kf)
+           kf))
         | (Arith (LongMul n1 n2 n3 n4)) ->
          (Inst (Arith (LongMul 3 0 0 2)))
         | (Arith (LongDiv n1 n2 n3 n4 n5)) ->
-       let (l,n5) = wReg1 n5 kf in
+       (let (l,n5) = wReg1 n5 kf in
        wStackLoad l
-         (Inst (Arith (LongDiv 0 3 3 0 n5)))
+         (Inst (Arith (LongDiv 0 3 3 0 n5))))
         | (Mem Load n1 (Addr n2 offset)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
          (wRegWrite1 (\n1. Inst (Mem Load n1 (Addr n2 offset))) n1
-           kf)
+           kf))
         | (Mem Store n1 (Addr n2 offset)) ->
-       let (l1,n2) = wReg1 n2 kf in
+       (let (l1,n2) = wReg1 n2 kf in
        let (l2,n1) = wReg2 n1 kf in
          wStackLoad (l1 ++ l2)
-           (Inst (Mem Store n1 (Addr n2 offset)))
+           (Inst (Mem Store n1 (Addr n2 offset))))
         | (Mem Load8 n1 (Addr n2 offset)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
          (wRegWrite1 (\n1. Inst (Mem Load8 n1 (Addr n2 offset))) n1
-           kf)
+           kf))
         | (Mem Store8 n1 (Addr n2 offset)) ->
-       let (l1,n2) = wReg1 n2 kf in
+       (let (l1,n2) = wReg1 n2 kf in
        let (l2,n1) = wReg2 n1 kf in
          wStackLoad (l1 ++ l2)
-           (Inst (Mem Store8 n1 (Addr n2 offset)))
+           (Inst (Mem Store8 n1 (Addr n2 offset))))
         | (Mem Load32 n1 (Addr n2 offset)) ->
-       let (l,n2) = wReg1 n2 kf in
+       (let (l,n2) = wReg1 n2 kf in
        wStackLoad l
          (wRegWrite1 (\n1. Inst (Mem Load32 n1 (Addr n2 offset))) n1
-           kf)
+           kf))
         | (Mem Store32 n1 (Addr n2 offset)) ->
-       let (l1,n2) = wReg1 n2 kf in
+       (let (l1,n2) = wReg1 n2 kf in
        let (l2,n1) = wReg2 n1 kf in
          wStackLoad (l1 ++ l2)
-           (Inst (Mem Store32 n1 (Addr n2 offset)))
+           (Inst (Mem Store32 n1 (Addr n2 offset))))
         | (FP (FPLess r f1 f2)) ->
        wRegWrite1 (\r. Inst (FP (FPLess r f1 f2))) r kf
         | (FP (FPLessEqual r f1 f2)) ->
@@ -186,16 +186,16 @@ let wInst_def = cake_define
         | (FP (FPEqual r f1 f2)) ->
        wRegWrite1 (\r. Inst (FP (FPEqual r f1 f2))) r kf
         | (FP (FPMovToReg r1 r2 d)) ->
-       if dimindex (:'a) = 64 then
+       (if dimindex (:'a) = 64 then
          wRegWrite1 (\r1. Inst (FP (FPMovToReg r1 0 d))) r1 kf else
          wRegWrite2 (\r2. wRegWrite1 (\r1. Inst (FP (FPMovToReg r1 r2
-           d))) r1 kf) r2 kf
+           d))) r1 kf) r2 kf)
         | (FP (FPMovFromReg d r1 r2)) ->
-       let (l,n1) = wReg1 r1 kf in
+       (let (l,n1) = wReg1 r1 kf in
        let (l',n2) =
          if dimindex (:'a) = 64 then ([],0) else wReg2 r2 kf in
        wStackLoad (l ++ l')
-         (Inst (FP (FPMovFromReg d n1 n2)))
+         (Inst (FP (FPMovFromReg d n1 n2))))
         | (FP f) -> Inst (FP f)
         | _1 -> Inst Skip`;;
 
@@ -203,41 +203,41 @@ let wShareInst_def = cake_define
   `wShareInst x1 v x3 kf =
         match (x1,x3) with
           (Load,(Addr ad offset)) ->
-       let (l,n2) = wReg1 ad kf in
+       (let (l,n2) = wReg1 ad kf in
        wStackLoad l
-         (wRegWrite1 (\r. ShMemOp Load r (Addr n2 offset)) v kf)
+         (wRegWrite1 (\r. ShMemOp Load r (Addr n2 offset)) v kf))
         | (Load8,(Addr ad offset)) ->
-       let (l,n2) = wReg1 ad kf in
+       (let (l,n2) = wReg1 ad kf in
        wStackLoad l
-         (wRegWrite1 (\r. ShMemOp Load8 r (Addr n2 offset)) v kf)
+         (wRegWrite1 (\r. ShMemOp Load8 r (Addr n2 offset)) v kf))
         | (Load16,(Addr ad offset)) ->
-       let (l,n2) = wReg1 ad kf in
+       (let (l,n2) = wReg1 ad kf in
        wStackLoad l
-         (wRegWrite1 (\r. ShMemOp Load16 r (Addr n2 offset)) v kf)
+         (wRegWrite1 (\r. ShMemOp Load16 r (Addr n2 offset)) v kf))
         | (Load32,(Addr ad offset)) ->
-       let (l,n2) = wReg1 ad kf in
+       (let (l,n2) = wReg1 ad kf in
        wStackLoad l
-         (wRegWrite1 (\r. ShMemOp Load32 r (Addr n2 offset)) v kf)
+         (wRegWrite1 (\r. ShMemOp Load32 r (Addr n2 offset)) v kf))
         | (Store,(Addr ad offset)) ->
-       let (l1,n2) = wReg1 ad kf in
+       (let (l1,n2) = wReg1 ad kf in
        let (l2,n1) = wReg2 v kf in
        wStackLoad (l1 ++ l2)
-         (ShMemOp Store n1 (Addr n2 offset))
+         (ShMemOp Store n1 (Addr n2 offset)))
         | (Store8,(Addr ad offset)) ->
-       let (l1,n2) = wReg1 ad kf in
+       (let (l1,n2) = wReg1 ad kf in
        let (l2,n1) = wReg2 v kf in
        wStackLoad (l1 ++ l2)
-         (ShMemOp Store8 n1 (Addr n2 offset))
+         (ShMemOp Store8 n1 (Addr n2 offset)))
         | (Store16,(Addr ad offset)) ->
-       let (l1,n2) = wReg1 ad kf in
+       (let (l1,n2) = wReg1 ad kf in
        let (l2,n1) = wReg2 v kf in
        wStackLoad (l1 ++ l2)
-         (ShMemOp Store16 n1 (Addr n2 offset))
+         (ShMemOp Store16 n1 (Addr n2 offset)))
         | (Store32,(Addr ad offset)) ->
-       let (l1,n2) = wReg1 ad kf in
+       (let (l1,n2) = wReg1 ad kf in
        let (l2,n1) = wReg2 v kf in
        wStackLoad (l1 ++ l2)
-         (ShMemOp Store32 n1 (Addr n2 offset))`;;
+         (ShMemOp Store32 n1 (Addr n2 offset)))`;;
 
 let bits_to_word_def = cake_define
   `(bits_to_word [] = (n2w 0)) /\
@@ -440,24 +440,24 @@ let comp_def = cake_define
         | (Move _4 xs) -> (wMove xs kf,bs)
         | (Inst i) -> (wInst i kf,bs)
         | (Return v1 vs) ->
-        let (xs,x) = wReg1 v1 kf in
+        (let (xs,x) = wReg1 v1 kf in
           (wStackLoad xs (SeqStackFree (skip_free kf vs) (Return
-            x)),bs)
+            x)),bs))
         | (Raise v) -> (Call NONE (INL raise_stub_location) NONE,bs)
         | (OpCurrHeap b dst src) ->
-        let (xs,src_r) = wReg1 src kf in
+        (let (xs,src_r) = wReg1 src kf in
           (wStackLoad xs (wRegWrite1 (\dst_r. OpCurrHeap b dst_r
-            src_r) dst kf),bs)
+            src_r) dst kf),bs))
         | (Tick) -> (Tick,bs)
         | (Break k) -> (Break k,bs)
         | (Continue k) -> (Continue k,bs)
         | (MustTerminate p1) -> word_to_stack_comp conf perf p1 bs kf
         | (Seq p1 p2) ->
-        let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
+        (let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
         let (q2,bs) = word_to_stack_comp conf perf p2 bs kf in
-          (Seq q1 q2,bs)
+          (Seq q1 q2,bs))
         | (If cmp r ri p1 p2) ->
-        let (x1,r') = wReg1 r kf in
+        (let (x1,r') = wReg1 r kf in
         let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
         let (q2,bs) = word_to_stack_comp conf perf p2 bs kf in
         match ri with
@@ -470,18 +470,18 @@ let comp_def = cake_define
              let r = FST kf + 1 in
              (Seq
                ((\r w. Inst (Const r w)) r i)
-               (wStackLoad x1 (If cmp r' (Reg r) q1 q2)),bs))
+               (wStackLoad x1 (If cmp r' (Reg r) q1 q2)),bs)))
         | (Loop _5 p1 _6) ->
-        let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
-          (Loop q1,bs)
+        (let (q1,bs) = word_to_stack_comp conf perf p1 bs kf in
+          (Loop q1,bs))
         | (Set name exp) ->
-       if name = BitmapBase then (Skip,bs) else
+       (if name = BitmapBase then (Skip,bs) else
         match exp with Var n -> (let (x1,r') = wReg1 n kf in
-          (wStackLoad x1 (Set name r'),bs)) | _7 -> (Skip,bs)
+          (wStackLoad x1 (Set name r'),bs)) | _7 -> (Skip,bs))
         | (Get n name) ->
         (wRegWrite1 (\r. Get r name) n kf,bs)
         | (Call ret dest args handler) ->
-        let (q0,dest) = call_dest dest args kf in
+        (let (q0,dest) = call_dest dest args kf in
         match ret with NONE -> (Seq q0 (SeqStackFree (stack_free dest
           (LENGTH args) kf)
                     (Call NONE dest NONE)),bs) | SOME
@@ -512,31 +512,31 @@ let comp_def = cake_define
                            (Seq pre
                              (Call (SOME (q3,0,l1,l2)) dest (SOME
                                (q4,h1,h2))))))),
-                   bs)))
+                   bs))))
         | (Alloc r live) ->
-        let (q1,bs) = wLive live bs kf in
-          (Seq q1 (Alloc 1),bs)
+        (let (q1,bs) = wLive live bs kf in
+          (Seq q1 (Alloc 1),bs))
         | (StoreConsts a b c d ws) ->
-        let (new_bs,i) = insert_bitmap (const_words_to_bitmap ws
+        (let (new_bs,i) = insert_bitmap (const_words_to_bitmap ws
           (LENGTH ws)) bs in
           (Seq (Inst (Const 1 (n2w i)))
                (StoreConsts (FST kf) (FST kf + 1) (SOME
-                 store_consts_stub_location)),new_bs)
+                 store_consts_stub_location)),new_bs))
         | (LocValue r l1) -> (wRegWrite1 (\r. LocValue r l1 0) r
           kf,bs)
         | (Install r1 r2 r3 r4 live) ->
-       let (l3,r3) = wReg1 r3 kf in
+       (let (l3,r3) = wReg1 r3 kf in
        let (l4,r4) = wReg2 r4 kf in
          (wStackLoad (l3 ++ l4) (Install (r1 DIV 2) (r2 DIV 2) r3 r4
-           0),bs)
+           0),bs))
         | (CodeBufferWrite r1 r2) ->
-       let (l1,r1) = wReg1 r1 kf in
+       (let (l1,r1) = wReg1 r1 kf in
        let (l2,r2) = wReg2 r2 kf in
-         (wStackLoad (l1 ++ l2) (CodeBufferWrite r1 r2),bs)
+         (wStackLoad (l1 ++ l2) (CodeBufferWrite r1 r2),bs))
         | (DataBufferWrite r1 r2) ->
-       let (l1,r1) = wReg1 r1 kf in
+       (let (l1,r1) = wReg1 r1 kf in
        let (l2,r2) = wReg2 r2 kf in
-         (wStackLoad (l1 ++ l2) (DataBufferWrite r1 r2),bs)
+         (wStackLoad (l1 ++ l2) (DataBufferWrite r1 r2),bs))
         | (FFI i r1 r2 r3 r4 live) -> (FFI i (r1 DIV 2) (r2 DIV 2)
                               (r3 DIV 2) (r4 DIV 2) 0,bs)
         | (ShareInst op v exp) ->

@@ -94,11 +94,11 @@ let fromChars_unsafe_def = cake_define
       match n with
         0 -> 0
       | n ->
-     if n <= padLen_DEC then fromChars_range_unsafe 0 n str else let
+     (if n <= padLen_DEC then fromChars_range_unsafe 0 n str else let
        n' = n - padLen_DEC in let
               front = fromChars_unsafe n' str * maxSmall_DEC in let
               back = fromChars_range_unsafe n' padLen_DEC str in
-                front + back`;;
+                front + back)`;;
 (* HOL4 ML code, not ported:
 val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 *)
@@ -109,12 +109,12 @@ let fromChars_def = cake_define
       match n with
         0 -> NONE
       | n ->
-     if n <= padLen_DEC then fromChars_range 0 n str else let n' = n
+     (if n <= padLen_DEC then fromChars_range 0 n str else let n' = n
        - padLen_DEC in let
               front = OPTION_MAP ((*) maxSmall_DEC) (fromChars n'
                 str) in let
               back = fromChars_range n' padLen_DEC str in
-                OPTION_MAP2 (+) front back`;;
+                OPTION_MAP2 (+) front back)`;;
 (* HOL4 ML code, not ported:
 val fromChars_ind = theorem"fromChars_ind"
 *)

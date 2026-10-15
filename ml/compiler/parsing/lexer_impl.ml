@@ -68,7 +68,7 @@ let next_sym_alt_def = cake_define_wf
                     rest) else if c = (CHR 126) /\ ~(str = "") /\
                       isDigit (HD str) then
         let (n,rest) = read_while isDigit str [] in
-          SOME (NumberS (0 - &(num_from_dec_string_alt n)),
+          SOME (NumberS ((&0) - &(num_from_dec_string_alt n)),
                 Locs loc (next_loc (LENGTH n + 1) loc),
                 rest) else if c = (CHR 39) then
         let (n,rest) = read_while isAlphaNumPrime str [c] in

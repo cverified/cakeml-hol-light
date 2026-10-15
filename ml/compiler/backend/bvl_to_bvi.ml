@@ -48,7 +48,7 @@ let compile_int_def = cake_define
 let alloc_glob_count_def = cake_define
   `alloc_glob_count x1 =
         match x1 with
-          [] -> 0:num
+          [] -> (0:num)
         | (x :: y :: xs) ->
         alloc_glob_count [x] + alloc_glob_count (y :: xs)
         | [(Var _2):bvl_exp] -> 0
@@ -65,8 +65,8 @@ let alloc_glob_count_def = cake_define
         | [Let xs x] -> alloc_glob_count (x :: xs)
         | [Call _3 _4 xs] -> alloc_glob_count xs
         | [Op op xs] ->
-        if op = GlobOp AllocGlobal then 1 + alloc_glob_count xs else
-          alloc_glob_count xs
+        (if op = GlobOp AllocGlobal then 1 + alloc_glob_count xs else
+          alloc_glob_count xs)
         | [_5] -> 0`;;
 
 let _ = size_thms "exp";;
@@ -117,26 +117,27 @@ let ConcatByte_location_def = cake_define
 let AllocGlobal_code_def = cake_define
   `AllocGlobal_code = ((1:num),
      Let [Op (GlobOp GlobalsPtr) []] (
-     Let [Op (MemOp El) [Op (IntOp (Const 0)) []; Var 0]] (
+     Let [Op (MemOp El) [Op (IntOp (Const (&0))) []; Var 0]] (
      Let [Op (IntOp Add) [Var 0; Var 2]] (
      Let [Op (MemOp Length) [Var 2]] (
-     Let [Op (MemOp Update) [Var 1; Op (IntOp (Const 0)) []; Var 3]]
+     Let [Op (MemOp Update) [Var 1; Op (IntOp (Const (&0))) []; Var
+       3]]
        (If (Op (IntOp Less) [Var 1; Var 2]) (Var 0)
-          (Let [Op (MemOp RefArray) [Op (IntOp (Const 0)) []; Op
+          (Let [Op (MemOp RefArray) [Op (IntOp (Const (&0))) []; Op
             (IntOp Add) [Var 2; Var 2]]] (
            Let [Op (GlobOp SetGlobalsPtr) [Var 0]]
              (Call 0 (SOME CopyGlobals_location)
-               [Var 1; Var 6; Op (IntOp Sub) [Op (IntOp (Const 1))
-                 []; Var 3]] NONE)))))))))`;;
+               [Var 1; Var 6; Op (IntOp Sub) [Op (IntOp (Const
+                 (&1))) []; Var 3]] NONE)))))))))`;;
 
 let CopyGlobals_code_def = cake_define
   `CopyGlobals_code = ((3:num),
      Let [Op (MemOp Update) [Op (MemOp El) [Var 2; Var 1]; Var 2; Var
        0]]
-       (If (Op (BlockOp Equal) [Op (IntOp (Const 0)) []; Var 3]) (Var
-         0)
+       (If (Op (BlockOp Equal) [Op (IntOp (Const (&0))) []; Var 3])
+         (Var 0)
          (Call 0 (SOME CopyGlobals_location) [Var 1; Var 2; Op
-           (IntOp Sub) [Op (IntOp (Const 1)) []; Var 3]] NONE)))`;;
+           (IntOp Sub) [Op (IntOp (Const (&1))) []; Var 3]] NONE)))`;;
 
 let InitGlobals_max_def = cake_define
   `InitGlobals_max = 10000`;;
@@ -144,10 +145,10 @@ let InitGlobals_max_def = cake_define
 let InitGlobals_code_def = cake_define
   `InitGlobals_code start n = ((0:num),
      (let n = MIN (MAX n 1) InitGlobals_max in
-       Let [Op (MemOp RefArray) [Op (IntOp (Const 0)) []; Op (IntOp
-         (Const (&n))) []]]
-         (Let [Op (MemOp Update) [Op (IntOp (Const 1)) []; Op (IntOp
-           (Const 0)) []; Var 0]]
+       Let [Op (MemOp RefArray) [Op (IntOp (Const (&0))) []; Op
+         (IntOp (Const (&n))) []]]
+         (Let [Op (MemOp Update) [Op (IntOp (Const (&1))) []; Op
+           (IntOp (Const (&0))) []; Var 0]]
            (Let [Op (GlobOp SetGlobalsPtr) [Var 1]]
               (Call 0 (SOME start) [] (SOME (Var 0)))))))`;;
 
@@ -155,24 +156,24 @@ let ListLength_code_def = cake_define
   `ListLength_code = (2,
      If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0])
        (Var 1) (Call 0 (SOME ListLength_location)
-                 [Op (MemOp El) [Op (IntOp (Const 1)) []; Var 0];
-                  Op (IntOp Add) [Var 1; Op (IntOp (Const 1)) []]]
-                    NONE))`;;
+                 [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 0];
+                  Op (IntOp Add) [Var 1; Op (IntOp (Const (&1)))
+                    []]] NONE))`;;
 
 let FromListByte_code_def = cake_define
   `FromListByte_code = (3,
      If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0]) (Var 2)
        (Let [Op (MemOp UpdateByte) [Op (MemOp El) [Op (IntOp (Const
-         0)) []; Var 0]; Var 1; Var 2]]
+         (&0))) []; Var 0]; Var 1; Var 2]]
          (Call 0 (SOME FromListByte_location)
-           [Op (MemOp El) [Op (IntOp (Const 1)) []; Var 1];
-            Op (IntOp Add) [Var 2; Op (IntOp (Const 1)) []];
+           [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 1];
+            Op (IntOp Add) [Var 2; Op (IntOp (Const (&1))) []];
             Var 3] NONE)))`;;
 
 let ToListByte_code_def = cake_define
   `ToListByte_code = (3,
      If (Op (BlockOp (EqualConst (Int (&0)))) [Var 1]) (Var 0)
-       (Let [Op (IntOp Sub) [Op (IntOp (Const 1)) []; Var 1]]
+       (Let [Op (IntOp Sub) [Op (IntOp (Const (&1))) []; Var 1]]
        (Let [Op (MemOp DerefByte) [Var 0; Var 3]]
          (Call 0 (SOME ToListByte_location)
            [Op (BlockOp (Cons 0)) [Var 2; Var 0];
@@ -184,21 +185,21 @@ let SumListLength_code_def = cake_define
      If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0])
        (Var 1)
        (Call 0 (SOME SumListLength_location)
-          [Op (MemOp El) [Op (IntOp (Const 1)) []; Var 0];
+          [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 0];
            Op (IntOp Add) [Var 1; Op (MemOp LengthByte)
-                            [Op (MemOp El) [Op (IntOp (Const 0))
-                              []; Var 0]]]] NONE))`;;
+                            [Op (MemOp El) [Op (IntOp (Const
+                              (&0))) []; Var 0]]]] NONE))`;;
 
 let ConcatByte_code_def = cake_define
   `ConcatByte_code = (3,
      If (Op (BlockOp (TagLenEq nil_tag 0)) [Var 0]) (Var 2)
-       (Let [Op (MemOp El) [Op (IntOp (Const 0)) []; Var 0]]
+       (Let [Op (MemOp El) [Op (IntOp (Const (&0))) []; Var 0]]
          (Let [Op (MemOp LengthByte) [Var 0]]
            (Let [Op (MemOp (CopyByte F))
-                   [Var 3; Var 4; Var 0; Op (IntOp (Const 0)) []; Var
-                     1]]
+                   [Var 3; Var 4; Var 0; Op (IntOp (Const (&0))) [];
+                     Var 1]]
              (Call 0 (SOME ConcatByte_location)
-               [Op (MemOp El) [Op (IntOp (Const 1)) []; Var 3];
+               [Op (MemOp El) [Op (IntOp (Const (&1))) []; Var 3];
                 Op (IntOp Add) [Var 4; Var 1];
                 Var 5] NONE)))))`;;
 
@@ -311,58 +312,55 @@ let _ = size_thms "exp1";;
    [destLet_def] \\ SRW_TAC [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
 let compile_exps_def = cake_define_wf
   `MEASURE (exp1_size o SND)`
-  `bvl_to_bvi_compile_exps n x2 =
-        match x2 with
-          [] -> ([],Nil,n)
-        | ((x:bvl_exp) :: y :: xs) ->
-        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
-        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
-          (c1 ++ c2,aux1 ++ aux2,n2)
-        | [Var v] -> ([(Var v):bvi_exp],Nil,n)
-        | [If x1 x2 x3] ->
-        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-        let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
-          ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++ aux3,n3)
-        | [Let xs x2] ->
-        if NULL xs then
-          let (args,x0) = destLet x2 in
-          let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
-          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
-          let n3 = n2 + 1 in
-            ([Call 0 (SOME ((bvl_num_stubs) + nss * n2 + 1)) c1
-              NONE],
-             aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
-               else
-          let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-          let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-            ([Let c1 (HD c2)],aux1 ++ aux2,n2)
-        | [Raise x1] ->
-        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-          ([Raise (HD c1)],aux1,n1)
-        | [Tick x1] ->
-        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-          ([Tick (HD c1)],aux1,n1)
-        | [Force loc v] ->
-        ([Force ((bvl_num_stubs) + nss * loc) v],Nil,n)
-        | [Op op xs] ->
-        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-          ([compile_op op c1],aux1,n1)
-        | [Handle x1 x2] ->
-        let (args,x0) = destLet x1 in
+  `(bvl_to_bvi_compile_exps n [] = ([],Nil,n)) /\
+   (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
+      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
+        (c1 ++ c2,aux1 ++ aux2,n2))) /\
+   (bvl_to_bvi_compile_exps n [Var v] = ([(Var v):bvi_exp],Nil,n)) /\
+   (bvl_to_bvi_compile_exps n [If x1 x2 x3] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
+      let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
+        ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++ aux3,n3))) /\
+   (bvl_to_bvi_compile_exps n [Let xs x2] =
+      (if NULL xs then
+        let (args,x0) = destLet x2 in
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
-        let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
-        let aux4 = compile_aux (n3,LENGTH args,HD c2) in
-        let n4 = n3 + 1 in
-          ([Call 0 (SOME ((bvl_num_stubs) + nss * n3 + 1)) c1 (SOME
-            (HD c3))],
-           aux1 ++ aux2 ++ aux3 ++ aux4,n4)
-        | [Call ticks dest xs] ->
+        let n3 = n2 + 1 in
+          ([Call 0 (SOME ((bvl_num_stubs) + nss * n2 + 1)) c1 NONE],
+           aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
+             else
         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-          ([Call ticks
-                 (match dest with NONE -> NONE | SOME n -> SOME
-                   ((bvl_num_stubs) + nss * n)) c1 NONE],aux1,n1)`;;
+        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
+          ([Let c1 (HD c2)],aux1 ++ aux2,n2))) /\
+   (bvl_to_bvi_compile_exps n [Raise x1] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+        ([Raise (HD c1)],aux1,n1))) /\
+   (bvl_to_bvi_compile_exps n [Tick x1] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+        ([Tick (HD c1)],aux1,n1))) /\
+   (bvl_to_bvi_compile_exps n [Force loc v] =
+      ([Force ((bvl_num_stubs) + nss * loc) v],Nil,n)) /\
+   (bvl_to_bvi_compile_exps n [Op op xs] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+        ([compile_op op c1],aux1,n1))) /\
+   (bvl_to_bvi_compile_exps n [Handle x1 x2] =
+      (let (args,x0) = destLet x1 in
+      let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
+      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
+      let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
+      let aux4 = compile_aux (n3,LENGTH args,HD c2) in
+      let n4 = n3 + 1 in
+        ([Call 0 (SOME ((bvl_num_stubs) + nss * n3 + 1)) c1 (SOME (HD
+          c3))],
+         aux1 ++ aux2 ++ aux3 ++ aux4,n4))) /\
+   (bvl_to_bvi_compile_exps n [Call ticks dest xs] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+        ([Call ticks
+               (match dest with NONE -> NONE | SOME n -> SOME
+                 ((bvl_num_stubs) + nss * n)) c1 NONE],aux1,n1)))`;;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "exp";;

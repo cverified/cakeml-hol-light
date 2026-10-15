@@ -99,10 +99,10 @@ let state_rel_def = cake_define
             (?z. FLOOKUP (?_refs t) p =
                   SOME (ValueArray
                     ((Number (&(SUC (LENGTH (?_globals s))))) ::
-                     (MAP (the (Number 0) o OPTION_MAP (adjust_bv b))
-                       (?_globals s) ++
+                     (MAP (the (Number (&0)) o OPTION_MAP (adjust_bv
+                       b)) (?_globals s) ++
                      REPLICATE (z - (SUC (LENGTH (?_globals s))))
-                       (Number 0)))) /\
+                       (Number (&0))))) /\
                 SUC (LENGTH (?_globals s)) <= z)) /\
      (?_clock s = ?_clock t) /\ ?_compile_oracle
      t = state_co compile_inc (?_compile_oracle s) /\ ?_compile

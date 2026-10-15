@@ -237,11 +237,11 @@ let v_to_list_def = cake_define
   `dataSem_v_to_list x1 =
         match x1 with
           (Block ts tag []) ->
-        if tag = nil_tag then SOME [] else NONE
+        (if tag = nil_tag then SOME [] else NONE)
         | (Block ts tag [h; bt]) ->
-        if tag = cons_tag then
+        (if tag = cons_tag then
           (match dataSem_v_to_list bt with SOME t -> SOME (h :: t) |
-            _14 -> NONE) else NONE
+            _14 -> NONE) else NONE)
         | _15 -> NONE`;;
 hol4_overload "v_to_list" "dataSem_v_to_list";;
 
@@ -385,47 +385,47 @@ let stack_consumed_def = cake_define
           (lookup AppendLenLoop_location sfs)
           (lookup AppendMainLoop_location sfs))
         | ((IntOp Div),[Number n1; Number n2]) ->
-       if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 / n2) then
          OPTION_MAP2 MAX
            (lookup LongDiv_location sfs)
            (lookup LongDiv1_location sfs) else
          OPTION_MAP2 MAX (lookup Div_location sfs)
-           (max_depth sfs AnyArith_call_tree)
+           (max_depth sfs AnyArith_call_tree))
         | ((IntOp Mod),[Number n1; Number n2]) ->
-       if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 % n2) then
          OPTION_MAP2 MAX
            (lookup LongDiv_location sfs)
            (lookup LongDiv1_location sfs) else
          OPTION_MAP2 MAX (lookup Mod_location sfs)
-           (max_depth sfs AnyArith_call_tree)
+           (max_depth sfs AnyArith_call_tree))
         | ((IntOp Mult),[Number n1; Number n2]) ->
-       if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\ 0 <= n1 /\
           small_num (limits_arch_64_bit lims) n2 /\ 0 <= n2 /\
           small_num (limits_arch_64_bit lims) (n1 * n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Mul_location sfs)
-           (max_depth sfs AnyArith_call_tree)
+           (max_depth sfs AnyArith_call_tree))
         | ((BlockOp Equal),[v1; v2]) ->
       (eq_code_stack_max (MIN (vs_depth v1 + 1) (vs_depth v2 + 1))
         sfs)
         | ((IntOp Sub),[Number n1; Number n2]) ->
-       if small_num (limits_arch_64_bit lims) n1 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\
           small_num (limits_arch_64_bit lims) n2 /\
           small_num (limits_arch_64_bit lims) (n1 - n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Sub_location sfs)
-           (max_depth sfs AnyArith_call_tree)
+           (max_depth sfs AnyArith_call_tree))
         | ((IntOp Add),[Number n1; Number n2]) ->
-       if small_num (limits_arch_64_bit lims) n1 /\
+       (if small_num (limits_arch_64_bit lims) n1 /\
           small_num (limits_arch_64_bit lims) n2 /\
           small_num (limits_arch_64_bit lims) (n1 + n2) then SOME 0
             else
          OPTION_MAP2 MAX (lookup Add_location sfs)
-           (max_depth sfs AnyArith_call_tree)
+           (max_depth sfs AnyArith_call_tree))
         | ((IntOp LessEq),vs) ->
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
@@ -435,7 +435,7 @@ let stack_consumed_def = cake_define
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
         | (p,vs) ->
-        if allowed_op p (LENGTH vs) then SOME 0 else NONE`;;
+        (if allowed_op p (LENGTH vs) then SOME 0 else NONE)`;;
 
 (* HOL4 overload (expanded in the port):
      do_space_safe = λop vs ^s. if op_space_reset op
@@ -514,24 +514,24 @@ let do_eq_def = cake_define
         | ((Word64 _38),_39) -> Eq_type_error
         | (_40,(Word64 _41)) -> Eq_type_error
         | ((RefPtr b1 n1),(RefPtr b2 n2)) ->
-       if b1 /\ b2 then
+       (if b1 /\ b2 then
         (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
            (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) -> Eq_val
              (bs1 = bs2) | (SOME (ByteArray T bs1),_42) -> Eq_type_error
              | (_43,SOME (ByteArray T bs2)) -> Eq_type_error | _44 ->
-             Eq_val (n1 = n2)) else Eq_type_error
+             Eq_val (n1 = n2)) else Eq_type_error)
         | ((RefPtr _45 _46),_47) -> Eq_type_error
         | (_48,(RefPtr _49 _50)) -> Eq_type_error
         | ((Block _51 t1 l1),(Block _52 t2 l2)) ->
-      if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\ isClos
+      (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\ isClos
         t2 l2 then Eq_val T else Eq_type_error else if (t1 = t2) /\
         (LENGTH l1 = LENGTH l2) then dataSem_do_eq_list refs l1 l2 else
-        Eq_val F
+        Eq_val F)
         | ([],[]) -> Eq_val T
         | ((v1 :: vs1),(v2 :: vs2)) ->
-      match dataSem_do_eq refs v1 v2 with Eq_val T ->
+      (match dataSem_do_eq refs v1 v2 with Eq_val T ->
         dataSem_do_eq_list refs vs1 vs2 | Eq_val F -> Eq_val F | bad ->
-        bad
+        bad)
         | (_53,_54) -> Eq_val F`;;
 hol4_overload "do_eq" "dataSem_do_eq";;
 hol4_overload "do_eq_list" "dataSem_do_eq_list";;
@@ -611,12 +611,12 @@ let lim_safe_def = cake_define
   `lim_safe lims x2 xs =
         match (x2,xs) with
           ((BlockOp (Cons tag)),xs) ->
-       if xs = [] then tag < 2 EXP (arch_size lims) DIV 16 else
+       (if xs = [] then tag < 2 EXP (arch_size lims) DIV 16 else
          LENGTH xs < 2 EXP limits_length_limit lims /\
          LENGTH xs < 2 EXP (arch_size lims - 4) /\
          4 * tag < 2 EXP (arch_size lims) DIV 16 /\
          4 * tag < 2 EXP (arch_size lims - limits_length_limit lims -
-           2)
+           2))
         | ((MemOp (MutCons tag i)),xs) ->
          (LENGTH xs < 2 EXP limits_length_limit lims /\
           LENGTH xs < 2 EXP (arch_size lims - 4) /\
@@ -641,7 +641,7 @@ let lim_safe_def = cake_define
              -> T)
         | ((BlockOp (ConsExtend tag)),(Block _62 _63 xs' :: Number
           lower :: Number len :: Number tot :: xs)) ->
-           if lower < 0 \/ len < 0 \/ lower + len > &LENGTH xs' \/
+           (if lower < 0 \/ len < 0 \/ lower + len > &LENGTH xs' \/
               tot = 0 \/ ~(tot = &LENGTH xs + len) then T else LENGTH
                 (xs ++ TAKE (num_of_int len) (DROP (num_of_int lower)
                 xs')) < 2 EXP limits_length_limit lims /\
@@ -649,7 +649,7 @@ let lim_safe_def = cake_define
                   lower) xs')) < 2 EXP (arch_size lims) DIV 16 /\
                 4 * tag < 2 EXP (arch_size lims) DIV 16 /\
                 4 * tag < 2 EXP (arch_size lims - limits_length_limit
-                  lims - 2)
+                  lims - 2))
         | ((IntOp Add),[Number i1; Number i2]) ->
       (if small_num (limits_arch_64_bit lims) i1 /\
           small_num (limits_arch_64_bit lims) i2 /\
@@ -739,17 +739,17 @@ let check_lim_def = cake_define
                               s))
         s`;;
 
-let do_part_def = cake_define
-  `dataSem_do_part m (Int i) s ts = (Number i,s,ts) /\
-   dataSem_do_part m (W64 w) s ts = (Word64 w,s,ts) /\
-   dataSem_do_part m (Con t ns) s ts =
-     (if ns = [] then (Block 0 t [],s,ts) else match ts with NONE ->
-       (Block 0 t (MAP m ns),s,ts) | SOME n -> (Block n t (MAP m
-       ns),s,SOME (n + (1:num)))) /\
-   dataSem_do_part m (Str t) s ts =
-     (let ptr = (LEAST (\ptr. ~(ptr IN domain s))) in
-     let bytes = MAP (n2w o ORD) (explode t) in
-       (RefPtr T ptr,insert ptr (ByteArray T bytes) s,ts))`;;
+let do_part_def = cake_define_list
+  [`dataSem_do_part m (Int i) s ts = (Number i,s,ts)`;
+   `dataSem_do_part m (W64 w) s ts = (Word64 w,s,ts)`;
+   `dataSem_do_part m (Con t ns) s ts =
+      (if ns = [] then (Block 0 t [],s,ts) else match ts with
+        NONE -> (Block 0 t (MAP m ns),s,ts) | SOME n -> (Block n t
+        (MAP m ns),s,SOME (n + (1:num))))`;
+   `dataSem_do_part m (Str t) s ts =
+      (let ptr = (LEAST (\ptr. ~(ptr IN domain s))) in
+      let bytes = MAP (n2w o ORD) (explode t) in
+        (RefPtr T ptr,insert ptr (ByteArray T bytes) s,ts))`];;
 hol4_overload "do_part" "dataSem_do_part";;
 
 let do_build_def = cake_define
@@ -760,7 +760,8 @@ let do_build_def = cake_define
 hol4_overload "do_build" "dataSem_do_build";;
 
 let do_build_const_def = cake_define
-  `dataSem_do_build_const xs s ts = do_build (\x. Number 0) 0 xs s ts`;;
+  `dataSem_do_build_const xs s ts = do_build (\x. Number (&0)) 0 xs s
+  ts`;;
 hol4_overload "do_build_const" "dataSem_do_build_const";;
 
 let do_int_app_def = cake_define
@@ -874,8 +875,8 @@ let finalise_cons_def = cake_define_wf
   `dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr) ->
-       match lookup ptr refs with SOME (MutBlock tag finalised l c r)
-         ->
+       (match lookup ptr refs with SOME (MutBlock tag finalised l c
+         r) ->
            (if ~finalised then
              (match dataSem_finalise_cons c (delete ptr refs) ts with
                SOME (c',refs',ts') ->
@@ -884,7 +885,7 @@ let finalise_cons_def = cake_define_wf
                         insert ptr (MutBlock tag T l c r) refs',
                         OPTION_MAP SUC ts') | NONE -> NONE) else
                           NONE) | SOME res -> SOME (RefPtr b
-                          ptr,refs,ts) | NONE -> NONE
+                          ptr,refs,ts) | NONE -> NONE)
         | v -> SOME (v,refs,ts)`;;
 hol4_overload "finalise_cons" "dataSem_finalise_cons";;
 
@@ -951,8 +952,8 @@ let do_app_aux_def = cake_define
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
              +dataSem_v#string)) | (BlockOp (FromList n),xs) ->
            (match xs with [len; lv] ->
-               (match v_to_list lv with SOME [] -> (if len = Number 0
-                 then Rval (Block 0 n [],s) else ((Rerr (Rabort
+               (match v_to_list lv with SOME [] -> (if len = Number
+                 (&0) then Rval (Block 0 n [],s) else ((Rerr (Rabort
                  Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
                  +dataSem_v#string)) | SOME vs -> (if len = Number
                  (&(LENGTH vs)) then with_fresh_ts s 1
@@ -1362,8 +1363,8 @@ let push_env_def = cake_define
   `^ (push_env env F) s  =
         match  with
            ->
-       let stack = Env (dataSem_state_locals_size s) env :: ?_stack s
-         in let
+       (let stack = Env (dataSem_state_locals_size s) env :: ?_stack
+         s in let
            stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
              (size_of_stack stack) in let
            stack_safe = the F (OPTION_MAP ((>) (limits_stack_limit
@@ -1371,9 +1372,9 @@ let push_env_def = cake_define
              dataSem_state_safe_for_space_fupd (K
              (dataSem_state_safe_for_space s /\ stack_safe))
              (dataSem_state_stack_max_fupd (K stack_max) (?_stack_fupd
-             (K stack) s))
+             (K stack) s)))
         |  ->
-      let stack = Exc (dataSem_state_locals_size s) env
+      (let stack = Exc (dataSem_state_locals_size s) env
         (dataSem_state_handler s) :: ?_stack s in let
           stack_max = OPTION_MAP2 MAX (dataSem_state_stack_max s)
             (size_of_stack stack) in let
@@ -1383,7 +1384,7 @@ let push_env_def = cake_define
             (dataSem_state_safe_for_space s /\ stack_safe))
             (dataSem_state_handler_fupd (K (LENGTH (?_stack s)))
             (dataSem_state_stack_max_fupd (K stack_max) (?_stack_fupd
-            (K stack) s)))`;;
+            (K stack) s))))`;;
 
 let pop_env_def = cake_define
   `^

@@ -16,113 +16,113 @@ needs "compiler/backend/db_vars.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-let free_def = cake_define
-  `clos_call_free x1 =
-        match x1 with
-          [] -> ([],Empty)
-        | ((x:closLang_exp) :: y :: xs) ->
-        let (c1,l1) = clos_call_free [x] in
-        let (c2,l2) = clos_call_free (y :: xs) in
-          (c1 ++ c2,mk_Union l1 l2)
-        | [Var t v] -> ([Var t v],Var v)
-        | [If t x1 x2 x3] ->
-        let (c1,l1) = clos_call_free [x1] in
-        let (c2,l2) = clos_call_free [x2] in
-        let (c3,l3) = clos_call_free [x3] in
-          ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union l2
-            l3))
-        | [Let t xs x2] ->
-        let (c1,l1) = clos_call_free xs in
-        let (c2,l2) = clos_call_free [x2] in
-          ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs) l2))
-        | [Raise t x1] ->
-        let (c1,l1) = clos_call_free [x1] in
-          ([Raise t (HD c1)],l1)
-        | [Tick t x1] ->
-        let (c1,l1) = clos_call_free [x1] in
-          ([Tick t (HD c1)],l1)
-        | [Op t op xs] ->
-        let (c1,l1) = clos_call_free xs in
-          ([Op t op c1],l1)
-        | [App t loc_opt x1 xs2] ->
-        let (c1,l1) = clos_call_free [x1] in
-        let (c2,l2) = clos_call_free xs2 in
-          ([App t loc_opt (HD c1) c2],mk_Union l1 l2)
-        | [Fn t loc _1 num_args x1] ->
-        let (c1,l1) = clos_call_free [x1] in
-        let l2 = Shift num_args l1 in
-          ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)
-        | [Letrec t loc _2 fns x1] ->
-        let m = LENGTH fns in
-        let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
+let free_def = cake_define_list
+  [`clos_call_free [] = ([],Empty)`;
+   `clos_call_free ((x:closLang_exp) :: y :: xs) =
+         (let (c1,l1) = clos_call_free [x] in
+         let (c2,l2) = clos_call_free (y :: xs) in
+           (c1 ++ c2,mk_Union l1 l2))`;
+   `clos_call_free [Var t v] = ([Var t v],Var v)`;
+   `clos_call_free [If t x1 x2 x3] =
+         (let (c1,l1) = clos_call_free [x1] in
+         let (c2,l2) = clos_call_free [x2] in
+         let (c3,l3) = clos_call_free [x3] in
+           ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
+             l2 l3)))`;
+   `clos_call_free [Let t xs x2] =
+         (let (c1,l1) = clos_call_free xs in
+         let (c2,l2) = clos_call_free [x2] in
+           ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
+             l2)))`;
+   `clos_call_free [Raise t x1] =
+         (let (c1,l1) = clos_call_free [x1] in
+           ([Raise t (HD c1)],l1))`;
+   `clos_call_free [Tick t x1] =
+         (let (c1,l1) = clos_call_free [x1] in
+           ([Tick t (HD c1)],l1))`;
+   `clos_call_free [Op t op xs] =
+         (let (c1,l1) = clos_call_free xs in
+           ([Op t op c1],l1))`;
+   `clos_call_free [App t loc_opt x1 xs2] =
+         (let (c1,l1) = clos_call_free [x1] in
+         let (c2,l2) = clos_call_free xs2 in
+           ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
+   `clos_call_free [Fn t loc _1 num_args x1] =
+         (let (c1,l1) = clos_call_free [x1] in
+         let l2 = Shift num_args l1 in
+           ([Fn t loc (SOME (vars_to_list l2)) num_args (HD
+             c1)],l2))`;
+   `clos_call_free [Letrec t loc _2 fns x1] =
+         (let m = LENGTH fns in
+         let res = MAP (\(n,x). let (c,l) = clos_call_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
-        let c1 = MAP FST res in
-        let l1 = list_mk_Union (MAP SND res) in
-        let (c2,l2) = clos_call_free [x1] in
-          ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-           mk_Union l1 (Shift (LENGTH fns) l2))
-        | [Handle t x1 x2] ->
-        let (c1,l1) = clos_call_free [x1] in
-        let (c2,l2) = clos_call_free [x2] in
-          ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2))
-        | [Call t ticks dest xs] ->
-        let (c1,l1) = clos_call_free xs in
-          ([Call t ticks dest c1],l1)`;;
+         let c1 = MAP FST res in
+         let l1 = list_mk_Union (MAP SND res) in
+         let (c2,l2) = clos_call_free [x1] in
+           ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
+            mk_Union l1 (Shift (LENGTH fns) l2)))`;
+   `clos_call_free [Handle t x1 x2] =
+         (let (c1,l1) = clos_call_free [x1] in
+         let (c2,l2) = clos_call_free [x2] in
+           ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
+   `clos_call_free [Call t ticks dest xs] =
+         (let (c1,l1) = clos_call_free xs in
+           ([Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_call_free";;
 
 (* HOL4 ML code, not ported:
 val free_ind = theorem "free_ind";
 *)
 
-let free_sing_def = cake_define
-  `(free_sing (Var t v) = (Var t v,Var v)) /\
-   (free_sing (If t x1 x2 x3) =
-      (let (c1,l1) = free_sing x1 in
-      let (c2,l2) = free_sing x2 in
-      let (c3,l3) = free_sing x3 in
-        (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))) /\
-   (free_sing (Let t xs x2) =
-      (let (c1,l1) = free_list xs in
-      let (c2,l2) = free_sing x2 in
-        (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))) /\
-   (free_sing (Raise t x1) =
-      (let (c1,l1) = free_sing x1 in
-        (Raise t c1,l1))) /\
-   (free_sing (Tick t x1) =
-      (let (c1,l1) = free_sing x1 in
-        (Tick t c1,l1))) /\
-   (free_sing (Op t op xs) =
-      (let (c1,l1) = free_list xs in
-        (Op t op c1,l1))) /\
-   (free_sing (App t loc_opt x1 xs2) =
-      (let (c1,l1) = free_sing x1 in
-      let (c2,l2) = free_list xs2 in
-        (App t loc_opt c1 c2,mk_Union l1 l2))) /\
-   (free_sing (Fn t loc _3 num_args x1) =
-      (let (c1,l1) = free_sing x1 in
-      let l2 = Shift num_args l1 in
-        (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))) /\
-   (free_sing (Letrec t loc _4 fns x1) =
-      (let m = LENGTH fns in
-      let res = MAP (\(n,x). let (c,l) = free_sing x in
+let free_sing_def = cake_define_list
+  [`free_sing (Var t v) = (Var t v,Var v)`;
+   `free_sing (If t x1 x2 x3) =
+         (let (c1,l1) = free_sing x1 in
+         let (c2,l2) = free_sing x2 in
+         let (c3,l3) = free_sing x3 in
+           (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))`;
+   `free_sing (Let t xs x2) =
+         (let (c1,l1) = free_list xs in
+         let (c2,l2) = free_sing x2 in
+           (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))`;
+   `free_sing (Raise t x1) =
+         (let (c1,l1) = free_sing x1 in
+           (Raise t c1,l1))`;
+   `free_sing (Tick t x1) =
+         (let (c1,l1) = free_sing x1 in
+           (Tick t c1,l1))`;
+   `free_sing (Op t op xs) =
+         (let (c1,l1) = free_list xs in
+           (Op t op c1,l1))`;
+   `free_sing (App t loc_opt x1 xs2) =
+         (let (c1,l1) = free_sing x1 in
+         let (c2,l2) = free_list xs2 in
+           (App t loc_opt c1 c2,mk_Union l1 l2))`;
+   `free_sing (Fn t loc _3 num_args x1) =
+         (let (c1,l1) = free_sing x1 in
+         let l2 = Shift num_args l1 in
+           (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))`;
+   `free_sing (Letrec t loc _4 fns x1) =
+         (let m = LENGTH fns in
+         let res = MAP (\(n,x). let (c,l) = free_sing x in
                               ((n,c),Shift (n + m) l)) fns in
-      let c1 = MAP FST res in
-      let l1 = list_mk_Union (MAP SND res) in
-      let (c2,l2) = free_sing x1 in
-        (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
-         mk_Union l1 (Shift (LENGTH fns) l2)))) /\
-   (free_sing (Handle t x1 x2) =
-      (let (c1,l1) = free_sing x1 in
-      let (c2,l2) = free_sing x2 in
-        (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))) /\
-   (free_sing (Call t ticks dest xs) =
-      (let (c1,l1) = free_list xs in
-        (Call t ticks dest c1,l1))) /\
-   (free_list [] = ([],Empty)) /\
-   (free_list ((x:closLang_exp) :: xs) =
-      (let (c1,l1) = free_sing x in
-      let (c2,l2) = free_list xs in
-        (c1 :: c2,mk_Union l1 l2)))`;;
+         let c1 = MAP FST res in
+         let l1 = list_mk_Union (MAP SND res) in
+         let (c2,l2) = free_sing x1 in
+           (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
+            mk_Union l1 (Shift (LENGTH fns) l2)))`;
+   `free_sing (Handle t x1 x2) =
+         (let (c1,l1) = free_sing x1 in
+         let (c2,l2) = free_sing x2 in
+           (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
+   `free_sing (Call t ticks dest xs) =
+         (let (c1,l1) = free_list xs in
+           (Call t ticks dest c1,l1))`;
+   `free_list [] = ([],Empty)`;
+   `free_list ((x:closLang_exp) :: xs) =
+         (let (c1,l1) = free_sing x in
+         let (c2,l2) = free_list xs in
+           (c1 :: c2,mk_Union l1 l2))`];;
 
 (* HOL4 ML code, not ported:
 val free_LENGTH_LEMMA = Q.prove(
@@ -160,162 +160,163 @@ let calls_list_def = cake_define
       (n,Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
            calls_list t (i + 1) (loc + 2) xs)`;;
 
-let _ = size_thms "exp3";;
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
-   NOT_LESS,exp_size_def] \\ IMP_RES_TAC EL_MEM_LEMMA \\ IMP_RES_TAC
-   exp1_size_lemma \\ assume_tac (SPEC_ALL exp3_size_MAP_SND) \\
-   DECIDE_TAC *)
-let calls_def = cake_define_wf
-  `MEASURE (exp3_size o FST)`
-  `(calls [] g = ([],g)) /\
-   (calls ((x:closLang_exp) :: y :: xs) g =
-      (let (e1,g) = calls [x] g in
-      let (e2,g) = calls (y :: xs) g in
-        (e1 ++ e2,g))) /\
-   (calls [Var t v] g =
-      ([Var t v],g)) /\
-   (calls [If t x1 x2 x3] g =
-      (let (e1,g) = calls [x1] g in
-      let (e2,g) = calls [x2] g in
-      let (e3,g) = calls [x3] g in
-      let e1 = HD e1 in
-      let e2 = HD e2 in
-      let e3 = HD e3 in
-        ([If t e1 e2 e3],g))) /\
-   (calls [Let t xs x2] g =
-      (let (e1,g) = calls xs g in
-      let (e2,g) = calls [x2] g in
-      let e2 = HD e2 in
-        ([Let t e1 e2],g))) /\
-   (calls [Raise t x1] g =
-      (let (e1,g) = calls [x1] g in
-      let e1 = HD e1 in
-        ([Raise t e1],g))) /\
-   (calls [Tick t x1] g =
-      (let (e1,g) = calls [x1] g in
-      let e1 = HD e1 in
-        ([Tick t e1],g))) /\
-   (calls [Handle t x1 x2] g =
-      (let (e1,g) = calls [x1] g in
-      let (e2,g) = calls [x2] g in
-      let e1 = HD e1 in
-      let e2 = HD e2 in
-        ([Handle t e1 e2],g))) /\
-   (calls [Call t ticks dest xs] g =
-      (let (xs,g) = calls xs g in
-        ([Call t ticks dest xs],g))) /\
-   (calls [Op t op xs] g =
-      (let (e1,g) = calls xs g in
-        ([Op t op e1],g))) /\
-   (calls [App t loc_opt x xs] g =
-      (let (es,g) = calls xs g in
-      let (e1,g) = calls [x] g in
-      let e1 = HD e1 in
-      let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
-        if IS_SOME loc_opt /\ IS_SOME (lookup loc (FST g)) then
-          if pure x then ([Call t (LENGTH es) (loc + 1) es],g) else
-            ([Let (§ t 0) (SNOC e1 es)
-               (Call (§ t 1) (LENGTH es) (loc + 1) (GENLIST_Var None
-                 2 (LENGTH es)))],g) else ([App t loc_opt e1 es],g))) /\
-   (calls [Fn t loc_opt ws num_args x1] g =
-      (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
-      let new_g = insert_each loc 1 g in
-      let (e1,new_g) = calls [x1] new_g in
-      let new_g = (FST new_g,(loc + 1,num_args,HD e1) :: SND new_g)
-        in
-        if closed (Fn t loc_opt ws num_args (HD e1)) then
-          ([Fn t loc_opt ws num_args
-              (Call None 0 (loc + 1) (GENLIST_Var None 1
-                num_args))],new_g) else
-          let (e1,g) = calls [x1] g in
-            ([Fn t loc_opt ws num_args (HD e1)],g))) /\
-   (calls [Letrec t loc_opt ws fns x1] g =
-      (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
-      let new_g = insert_each loc (LENGTH fns) g in
-      let (fns1,new_g) = calls (MAP SND fns) new_g in
-        if EVERY2 (\(n,_6) p. closed (Fn (implode "") NONE NONE n p))
-          fns fns1 then
-          let new_g = code_list loc (ZIP (MAP FST fns,fns1)) new_g in
-          let (e1,g) = calls [x1] new_g in
-            ([Letrec t loc_opt ws (calls_list None 1 loc fns) (HD
-              e1)],g) else
-          let (fns1,g) = calls (MAP SND fns) g in
-          let (e1,g) = calls [x1] g in
-            ([Letrec t loc_opt ws (ZIP (MAP FST fns,fns1)) (HD
-              e1)],g)))`;;
+let calls_def = cake_define_list
+  [`calls [] g = ([],g)`;
+   `calls ((x:closLang_exp) :: y :: xs) g =
+         (let (e1,g) = calls [x] g in
+         let (e2,g) = calls (y :: xs) g in
+           (e1 ++ e2,g))`;
+   `calls [Var t v] g =
+         ([Var t v],g)`;
+   `calls [If t x1 x2 x3] g =
+         (let (e1,g) = calls [x1] g in
+         let (e2,g) = calls [x2] g in
+         let (e3,g) = calls [x3] g in
+         let e1 = HD e1 in
+         let e2 = HD e2 in
+         let e3 = HD e3 in
+           ([If t e1 e2 e3],g))`;
+   `calls [Let t xs x2] g =
+         (let (e1,g) = calls xs g in
+         let (e2,g) = calls [x2] g in
+         let e2 = HD e2 in
+           ([Let t e1 e2],g))`;
+   `calls [Raise t x1] g =
+         (let (e1,g) = calls [x1] g in
+         let e1 = HD e1 in
+           ([Raise t e1],g))`;
+   `calls [Tick t x1] g =
+         (let (e1,g) = calls [x1] g in
+         let e1 = HD e1 in
+           ([Tick t e1],g))`;
+   `calls [Handle t x1 x2] g =
+         (let (e1,g) = calls [x1] g in
+         let (e2,g) = calls [x2] g in
+         let e1 = HD e1 in
+         let e2 = HD e2 in
+           ([Handle t e1 e2],g))`;
+   `calls [Call t ticks dest xs] g =
+         (let (xs,g) = calls xs g in
+           ([Call t ticks dest xs],g))`;
+   `calls [Op t op xs] g =
+         (let (e1,g) = calls xs g in
+           ([Op t op e1],g))`;
+   `calls [App t loc_opt x xs] g =
+         (let (es,g) = calls xs g in
+         let (e1,g) = calls [x] g in
+         let e1 = HD e1 in
+         let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
+           in
+           if IS_SOME loc_opt /\ IS_SOME (lookup loc (FST g)) then
+             if pure x then ([Call t (LENGTH es) (loc + 1) es],g)
+               else
+               ([Let (§ t 0) (SNOC e1 es)
+                  (Call (§ t 1) (LENGTH es) (loc + 1)
+                    (GENLIST_Var None 2 (LENGTH es)))],g) else ([App
+                    t loc_opt e1 es],g))`;
+   `calls [Fn t loc_opt ws num_args x1] g =
+         (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
+           in
+         let new_g = insert_each loc 1 g in
+         let (e1,new_g) = calls [x1] new_g in
+         let new_g = (FST new_g,(loc + 1,num_args,HD e1) :: SND
+           new_g) in
+           if closed (Fn t loc_opt ws num_args (HD e1)) then
+             ([Fn t loc_opt ws num_args
+                 (Call None 0 (loc + 1) (GENLIST_Var None 1
+                   num_args))],new_g) else
+             let (e1,g) = calls [x1] g in
+               ([Fn t loc_opt ws num_args (HD e1)],g))`;
+   `calls [Letrec t loc_opt ws fns x1] g =
+         (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
+           in
+         let new_g = insert_each loc (LENGTH fns) g in
+         let (fns1,new_g) = calls (MAP SND fns) new_g in
+           if EVERY2 (\(n,_6) p. closed (Fn (implode "") NONE NONE n
+             p)) fns fns1 then
+             let new_g = code_list loc (ZIP (MAP FST fns,fns1))
+               new_g in
+             let (e1,g) = calls [x1] new_g in
+               ([Letrec t loc_opt ws (calls_list None 1 loc fns) (HD
+                 e1)],g) else
+             let (fns1,g) = calls (MAP SND fns) g in
+             let (e1,g) = calls [x1] g in
+               ([Letrec t loc_opt ws (ZIP (MAP FST fns,fns1)) (HD
+                 e1)],g))`];;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
-   NOT_LESS,list_size_pair_size_MAP_FST_SND] *)
-let calls_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (e,_8) -> exp_size e | INR (es,_9) ->
-  list_size exp_size es)`
-  `(calls_sing (Var t v) g =
-      (Var t v,g)) /\
-   (calls_sing (If t x1 x2 x3) g =
-      (let (e1,g) = calls_sing x1 g in
-      let (e2,g) = calls_sing x2 g in
-      let (e3,g) = calls_sing x3 g in
-        (If t e1 e2 e3,g))) /\
-   (calls_sing (Let t xs x2) g =
-      (let (e1,g) = calls_sing_list xs g in
-      let (e2,g) = calls_sing x2 g in
-        (Let t e1 e2,g))) /\
-   (calls_sing (Raise t x1) g =
-      (let (e1,g) = calls_sing x1 g in
-        (Raise t e1,g))) /\
-   (calls_sing (Tick t x1) g =
-      (let (e1,g) = calls_sing x1 g in
-        (Tick t e1,g))) /\
-   (calls_sing (Handle t x1 x2) g =
-      (let (e1,g) = calls_sing x1 g in
-      let (e2,g) = calls_sing x2 g in
-        (Handle t e1 e2,g))) /\
-   (calls_sing (Call t ticks dest xs) g =
-      (let (xs,g) = calls_sing_list xs g in
-        (Call t ticks dest xs,g))) /\
-   (calls_sing (Op t op xs) g =
-      (let (e1,g) = calls_sing_list xs g in
-        (Op t op e1,g))) /\
-   (calls_sing (App t loc_opt x xs) g =
-      (let (es,g) = calls_sing_list xs g in
-      let (e1,g) = calls_sing x g in
-      let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
-        if IS_SOME loc_opt /\ IS_SOME (lookup loc (FST g)) then
-          if pure x then (Call t (LENGTH es) (loc + 1) es,g) else
-            (Let (§ t 0) (SNOC e1 es)
-               (Call (§ t 1) (LENGTH es) (loc + 1) (GENLIST_Var None
-                 2 (LENGTH es))),g) else (App t loc_opt e1 es,g))) /\
-   (calls_sing (Fn t loc_opt ws num_args x1) g =
-      (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
-      let new_g = insert_each loc 1 g in
-      let (e1,new_g) = calls_sing x1 new_g in
-      let new_g = (FST new_g,(loc + 1,num_args,e1) :: SND new_g) in
-        if closed (Fn t loc_opt ws num_args e1) then
-          (Fn t loc_opt ws num_args
-              (Call None 0 (loc + 1) (GENLIST_Var None 1
-                num_args)),new_g) else
-          let (e1,g) = calls_sing x1 g in
-            (Fn t loc_opt ws num_args e1,g))) /\
-   (calls_sing (Letrec t loc_opt ws fns x1) g =
-      (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0) in
-      let new_g = insert_each loc (LENGTH fns) g in
-      let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
-        if EVERY2 (\(n,_7) p. closed (Fn (implode "") NONE NONE n p))
-          fns fns1 then
-          let new_g = code_list loc (ZIP (MAP FST fns,fns1)) new_g in
-          let (e1,g) = calls_sing x1 new_g in
-            (Letrec t loc_opt ws (calls_list None 1 loc fns) e1,g)
-              else
-          let (fns1,g) = calls_sing_list (MAP SND fns) g in
-          let (e1,g) = calls_sing x1 g in
-            (Letrec t loc_opt ws (ZIP (MAP FST fns,fns1)) e1,g))) /\
-   (calls_sing_list [] g = ([],g)) /\
-   (calls_sing_list ((x:closLang_exp) :: xs) g =
-      (let (e1,g) = calls_sing x g in
-      let (e2,g) = calls_sing_list xs g in
-        (e1 :: e2,g)))`;;
+let calls_sing_def = cake_define_list
+  [`calls_sing (Var t v) g =
+         (Var t v,g)`;
+   `calls_sing (If t x1 x2 x3) g =
+         (let (e1,g) = calls_sing x1 g in
+         let (e2,g) = calls_sing x2 g in
+         let (e3,g) = calls_sing x3 g in
+           (If t e1 e2 e3,g))`;
+   `calls_sing (Let t xs x2) g =
+         (let (e1,g) = calls_sing_list xs g in
+         let (e2,g) = calls_sing x2 g in
+           (Let t e1 e2,g))`;
+   `calls_sing (Raise t x1) g =
+         (let (e1,g) = calls_sing x1 g in
+           (Raise t e1,g))`;
+   `calls_sing (Tick t x1) g =
+         (let (e1,g) = calls_sing x1 g in
+           (Tick t e1,g))`;
+   `calls_sing (Handle t x1 x2) g =
+         (let (e1,g) = calls_sing x1 g in
+         let (e2,g) = calls_sing x2 g in
+           (Handle t e1 e2,g))`;
+   `calls_sing (Call t ticks dest xs) g =
+         (let (xs,g) = calls_sing_list xs g in
+           (Call t ticks dest xs,g))`;
+   `calls_sing (Op t op xs) g =
+         (let (e1,g) = calls_sing_list xs g in
+           (Op t op e1,g))`;
+   `calls_sing (App t loc_opt x xs) g =
+         (let (es,g) = calls_sing_list xs g in
+         let (e1,g) = calls_sing x g in
+         let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
+           in
+           if IS_SOME loc_opt /\ IS_SOME (lookup loc (FST g)) then
+             if pure x then (Call t (LENGTH es) (loc + 1) es,g) else
+               (Let (§ t 0) (SNOC e1 es)
+                  (Call (§ t 1) (LENGTH es) (loc + 1)
+                    (GENLIST_Var None 2 (LENGTH es))),g) else (App t
+                    loc_opt e1 es,g))`;
+   `calls_sing (Fn t loc_opt ws num_args x1) g =
+         (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
+           in
+         let new_g = insert_each loc 1 g in
+         let (e1,new_g) = calls_sing x1 new_g in
+         let new_g = (FST new_g,(loc + 1,num_args,e1) :: SND new_g)
+           in
+           if closed (Fn t loc_opt ws num_args e1) then
+             (Fn t loc_opt ws num_args
+                 (Call None 0 (loc + 1) (GENLIST_Var None 1
+                   num_args)),new_g) else
+             let (e1,g) = calls_sing x1 g in
+               (Fn t loc_opt ws num_args e1,g))`;
+   `calls_sing (Letrec t loc_opt ws fns x1) g =
+         (let loc = (match loc_opt with SOME loc -> loc | NONE -> 0)
+           in
+         let new_g = insert_each loc (LENGTH fns) g in
+         let (fns1,new_g) = calls_sing_list (MAP SND fns) new_g in
+           if EVERY2 (\(n,_7) p. closed (Fn (implode "") NONE NONE n
+             p)) fns fns1 then
+             let new_g = code_list loc (ZIP (MAP FST fns,fns1))
+               new_g in
+             let (e1,g) = calls_sing x1 new_g in
+               (Letrec t loc_opt ws (calls_list None 1 loc fns)
+                 e1,g) else
+             let (fns1,g) = calls_sing_list (MAP SND fns) g in
+             let (e1,g) = calls_sing x1 g in
+               (Letrec t loc_opt ws (ZIP (MAP FST fns,fns1))
+                 e1,g))`;
+   `calls_sing_list [] g = ([],g)`;
+   `calls_sing_list ((x:closLang_exp) :: xs) g =
+         (let (e1,g) = calls_sing x g in
+         let (e2,g) = calls_sing_list xs g in
+           (e1 :: e2,g))`];;
 
 let compile_def = cake_define
   `clos_call_compile F x = (x,(LN,[])) /\

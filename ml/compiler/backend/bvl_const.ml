@@ -26,8 +26,8 @@ needs "semantics/ast.ml";;
 let dest_simple_def = cake_define
   `dest_simple x1 =
         match x1 with
-          (bvl_Op (IntOp (Const i)) xs) -> if NULL xs then SOME i
-            else NONE
+          (bvl_Op (IntOp (Const i)) xs) -> (if NULL xs then SOME i
+            else NONE)
         | _1 -> NONE`;;
 
 let case_op_const_def = cake_define
@@ -45,7 +45,7 @@ let SmartOp_flip_def = cake_define
 let SmartOp2_def = cake_define
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
      (let mk_add_const x1 c2 =
-       if c2 = 0 then x1 else Op (IntOp Add) [x1; Op (IntOp (Const
+       if c2 = (&0) then x1 else Op (IntOp Add) [x1; Op (IntOp (Const
          c2)) []] in
      let mk_add x1 x2 =
        let default = Op (IntOp Add) [x1; x2] in
@@ -97,9 +97,9 @@ let SmartOp2_def = cake_define
                    (IntOp (Const (n2 * n12))) []] else default) | _12 ->
                  (match (dest_simple x1) with SOME n1 -> Op (IntOp
                    (Const (n2 * n1))) [] | _13 ->
-                     (if n2 = 1 then x1 else if n2 = --1 then mk_sub
-                       x1 (Op (IntOp (Const 0)) []) else default))) |
-                       _14 ->
+                     (if n2 = (&1) then x1 else if n2 = --(&1) then
+                       mk_sub x1 (Op (IntOp (Const (&0))) []) else
+                       default))) | _14 ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
                  (if op1 = IntOp Mult /\ op2 = IntOp Mult then
@@ -114,20 +114,20 @@ let SmartOp2_def = cake_define
          IntOp LessEq; IntOp Greater; IntOp GreaterEq] then
        match (dest_simple x1,dest_simple x2) with (SOME x1,SOME
          (x2:int)) ->
-           (match op with IntOp Div -> (if x1 = 0 then default else
-             Op (IntOp (Const (x2 / x1))) []) | IntOp Mod -> (if x1 = 0
-             then default else Op (IntOp (Const (x2 % x1))) []) | IntOp
-             Less -> Bool (x2 < x1) | IntOp LessEq -> Bool (x2 <= x1) |
-             IntOp Greater -> Bool (x2 > x1) | IntOp GreaterEq -> Bool
-             (x2 >= x1) | _16 -> default) | _17 -> default else if op =
-             BlockOp Equal then
+           (match op with IntOp Div -> (if x1 = (&0) then default
+             else Op (IntOp (Const (x2 / x1))) []) | IntOp Mod -> (if x1
+             = (&0) then default else Op (IntOp (Const (x2 % x1))) []) |
+             IntOp Less -> Bool (x2 < x1) | IntOp LessEq -> Bool (x2 <=
+             x1) | IntOp Greater -> Bool (x2 > x1) | IntOp GreaterEq ->
+             Bool (x2 >= x1) | _16 -> default) | _17 -> default else if
+             op = BlockOp Equal then
        match (dest_simple x1,dest_simple x2) with (SOME i,SOME j) ->
          Bool (j = i) | (SOME i,_18) -> Op (BlockOp (EqualConst (Int
          i))) [x2] | (_19,SOME i) -> Op (BlockOp (EqualConst (Int i)))
          [x1] | _20 -> default else if op = MemOp El then
-       match dest_simple x1 with SOME i -> (if i < 0 then default
-         else Op (BlockOp (ElemAt (num_of_int i))) [x2]) | _21 ->
-         default else default)`;;
+       match dest_simple x1 with SOME i -> (if i < (&0) then
+         default else Op (BlockOp (ElemAt (num_of_int i))) [x2]) |
+         _21 -> default else default)`;;
 
 (* NOTE: the space after case and pmatch is important *)
 (* HOL4 ML code, not ported:
@@ -167,7 +167,7 @@ let extract_def = cake_define
             1)):bvl_exp)
         | (Op (IntOp (Const i)) xs) -> SOME (Op (IntOp (Const i)) [])
         | (Op (BlockOp (Cons t)) xs) ->
-       if NULL xs then SOME (Op (BlockOp (Cons t)) []) else NONE
+       (if NULL xs then SOME (Op (BlockOp (Cons t)) []) else NONE)
         | _24 -> NONE`;;
 hol4_overload "extract" "bvl_const_extract";;
 
@@ -180,45 +180,45 @@ hol4_overload "extract_list" "bvl_const_extract_list";;
 let delete_var_def = cake_define
   `bvl_const_delete_var x =
         match x with
-          ((Var n):bvl_exp) -> Op (IntOp (Const 0)) []
+          ((Var n):bvl_exp) -> Op (IntOp (Const (&0))) []
         | x -> x`;;
 hol4_overload "delete_var" "bvl_const_delete_var";;
 
 let compile_def = cake_define
-  `bvl_const_compile env x2 =
-        match x2 with
-          [] -> []
-        | (x :: y :: xs) -> bvl_const_compile env [x] ++
-          bvl_const_compile env (y :: xs)
-        | [Var v] ->
-        match (\l n. oEL n l) env v with NONE -> [Var v] | SOME NONE
-          -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] | SOME (SOME
-          x) -> [x]
-        | [If x1 x2 x3] ->
-        let y1 = HD (bvl_const_compile env [x1]) in
-        let y2 = HD (bvl_const_compile env [x2]) in
-        let y3 = HD (bvl_const_compile env [x3]) in
-          if y1 = Bool T then [y2] else
-          if y1 = Bool F then [y3] else
-            [If y1 y2 y3]
-        | [Let xs x2] ->
-        let ys = bvl_const_compile env xs in
-          [Let (MAP delete_var ys)
-               (HD (bvl_const_compile (extract_list ys ++ env)
-                 [x2]))]
-        | [Handle x1 x2] ->
-        [Handle (HD (bvl_const_compile env [x1])) (HD
-          (bvl_const_compile (NONE :: env) [x2]))]
-        | [Raise x1] ->
-        [Raise (HD (bvl_const_compile env [x1]))]
-        | [Op op xs] -> [SmartOp op (bvl_const_compile env xs)]
-        | [Tick x] -> [Tick (HD (bvl_const_compile env [x]))]
-        | [Force loc v] ->
-        match (\l n. oEL n l) env v with NONE -> [Force loc v] | SOME
-          NONE -> [Force loc v] | SOME (SOME (Var i)) -> [Force loc (v +
-          i)] | SOME (SOME x) -> [Force loc v]
-        | [Call t dest xs] -> [Call t dest (bvl_const_compile env
-          xs)]`;;
+  `(bvl_const_compile env [] = []) /\
+   (bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
+     ++ bvl_const_compile env (y :: xs)) /\
+   (bvl_const_compile env [Var v] =
+      (match (\l n. oEL n l) env v with NONE -> [Var v] | SOME NONE
+        -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] | SOME (SOME
+        x) -> [x])) /\
+   (bvl_const_compile env [If x1 x2 x3] =
+      (let y1 = HD (bvl_const_compile env [x1]) in
+      let y2 = HD (bvl_const_compile env [x2]) in
+      let y3 = HD (bvl_const_compile env [x3]) in
+        if y1 = Bool T then [y2] else
+        if y1 = Bool F then [y3] else
+          [If y1 y2 y3])) /\
+   (bvl_const_compile env [Let xs x2] =
+      (let ys = bvl_const_compile env xs in
+        [Let (MAP delete_var ys)
+             (HD (bvl_const_compile (extract_list ys ++ env)
+               [x2]))])) /\
+   (bvl_const_compile env [Handle x1 x2] =
+      [Handle (HD (bvl_const_compile env [x1])) (HD
+        (bvl_const_compile (NONE :: env) [x2]))]) /\
+   (bvl_const_compile env [Raise x1] =
+      [Raise (HD (bvl_const_compile env [x1]))]) /\
+   (bvl_const_compile env [Op op xs] = [SmartOp op (bvl_const_compile
+     env xs)]) /\
+   (bvl_const_compile env [Tick x] = [Tick (HD (bvl_const_compile env
+     [x]))]) /\
+   (bvl_const_compile env [Force loc v] =
+      (match (\l n. oEL n l) env v with NONE -> [Force loc v] | SOME
+        NONE -> [Force loc v] | SOME (SOME (Var i)) -> [Force loc (v +
+        i)] | SOME (SOME x) -> [Force loc v])) /\
+   (bvl_const_compile env [Call t dest xs] = [Call t dest
+     (bvl_const_compile env xs)])`;;
 hol4_overload "compile" "bvl_const_compile";;
 
 let compile_sing_def = cake_define

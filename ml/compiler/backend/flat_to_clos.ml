@@ -91,13 +91,13 @@ let compile_arith_def = cake_define
      (match ty with IntT -> (match a with Add -> Op t (IntOp Add) xs
        | Sub -> Op t (IntOp Sub) xs | Mul -> Op t (IntOp Mult) xs | Div
        -> Let t xs (If t (Op t (BlockOp Equal) [Var t 0; Op t (IntOp
-       (Const 0)) []])
+       (Const (&0))) []])
                               (Raise t (Op t (BlockOp (Cons div_tag))
                                 []))
                               (Op t (IntOp closLang_Div) [Var t 0;
                                 Var t 1])) | Mod -> Let t xs (If t (Op t
                                 (BlockOp Equal) [Var t 0; Op t (IntOp
-                                (Const 0)) []])
+                                (Const (&0))) []])
                               (Raise t (Op t (BlockOp (Cons div_tag))
                                 []))
                               (Op t (IntOp closLang_Mod) [Var t 0;
@@ -135,9 +135,9 @@ let compile_op_def = cake_define
        GlobalVarLookup n -> Op t (GlobOp (Global (n + 1))) xs | Id ->
        arg1 xs (\x. x) | Src Opapp -> arg2 xs (\x f. closLang_App t NONE
        f [x]) | Src Opassign -> arg2 xs (\x y. Op t (MemOp Update) [x;
-       Op None (IntOp (Const 0)) []; y]) | Src Opref -> Op t (MemOp Ref)
-       xs | Src ConfigGC -> Op t (MemOp ConfigGC) xs | Src Equality ->
-       Op t (BlockOp Equal) xs | Src (FFI n) -> Op t (FFI n) xs | Src
+       Op None (IntOp (Const (&0))) []; y]) | Src Opref -> Op t (MemOp
+       Ref) xs | Src ConfigGC -> Op t (MemOp ConfigGC) xs | Src Equality
+       -> Op t (BlockOp Equal) xs | Src (FFI n) -> Op t (FFI n) xs | Src
        ListAppend -> Op t (BlockOp ListAppend) xs | Src Vlength -> Op t
        (BlockOp LengthBlock) xs | Src Alength -> Op t (MemOp Length) xs
        | Src Implode -> Op t (MemOp FromListByte) xs | Src Explode -> Op
@@ -165,13 +165,13 @@ let compile_op_def = cake_define
             Equal) xs) | _11 -> Op t (BlockOp Equal) xs) | Src Aw8length
             -> Op t (MemOp LengthByte) xs | Src AallocFixed -> Op t
             (MemOp Ref) xs | Src Aalloc -> Let t xs (If t (Op t (IntOp
-            Less) [Op t (IntOp (Const 0)) []; Var t 1])
+            Less) [Op t (IntOp (Const (&0))) []; Var t 1])
                               (Raise t (Op t (BlockOp (Cons
                                 subscript_tag)) []))
                               (Op t (MemOp RefArray) [Var t 0; Var t
                                 1])) | Src Aw8alloc -> Let t xs (If t
                                 (Op t (IntOp Less) [Op t (IntOp (Const
-                                0)) []; Var t 1])
+                                (&0))) []; Var t 1])
                               (Raise t (Op t (BlockOp (Cons
                                 subscript_tag)) []))
                               (Op t (MemOp (RefByte F)) [Var t 0; Var
@@ -227,15 +227,15 @@ let compile_op_def = cake_define
                                 W64) IntT) -> Op t (WordOp WordToInt) xs
                                 | Src (FromTo IntT (WordT W8)) -> arg1
                                 xs (\x. Op t (IntOp Mod) [Op t (IntOp
-                                (Const 256)) []; x]) | Src (FromTo IntT
-                                (WordT W64)) -> Op t (WordOp
+                                (Const (&256))) []; x]) | Src (FromTo
+                                IntT (WordT W64)) -> Op t (WordOp
                                 WordFromInt) xs | Src (FromTo IntT
                                 CharT) -> Let t xs (If t (Op t (IntOp
-                                Less) [Op None (IntOp (Const 0)) []; Var
-                                t 0])
+                                Less) [Op None (IntOp (Const (&0))) [];
+                                Var t 0])
                          (Raise t (Op t (BlockOp (Cons chr_tag)) []))
                          (If t (Op t (IntOp Less) [Var t 0; Op None
-                           (IntOp (Const 255)) []])
+                           (IntOp (Const (&255))) []])
                            (Raise t (Op t (BlockOp (Cons chr_tag))
                              []))
                            (Var t 0))) | Src (FromTo Float64T
@@ -283,51 +283,45 @@ let SmartCons_def = cake_define
        tag)) xs | SOME cs -> Op t (BlockOp (Constant (ConstCons tag
        (REVERSE cs)))) [])`;;
 
-let _ = size_thms "exp6";;
-(* HOL4 termination: \\ rw [] \\ `!funs f v x. MEM (f,v,x) funs ==>
-   exp_size x < flatLang$exp1_size funs` by (Induct \\ fs [] \\ rw []
-   \\ fs [flatLangTheory.exp_size_def] \\ res_tac \\ fs []) \\
-   res_tac \\ fs [dest_pat_thm] \\ fs [flatLangTheory.exp_size_def]
-   \\ gvs [dest_nop_thm] \\ fs [flatLangTheory.exp_size_def] *)
-let compile_def = cake_define_wf
-  `MEASURE (exp6_size o SND)`
-  `flat_to_clos_compile m x2 =
-        match x2 with
-          [] -> []
-        | (x :: y :: xs) -> flat_to_clos_compile m [x] ++
-          flat_to_clos_compile m (y :: xs)
-        | [flatLang_Raise t e] -> [closLang_Raise t (HD
-          (flat_to_clos_compile m [e]))]
-        | [Lit t l] -> [compile_lit t l]
-        | [Var_local t v] -> [Var t (findi (SOME v) m)]
-        | [Con t n es] ->
-        let tag = (match n with SOME (t,_21) -> t | _22 -> 0) in
-          [SmartCons t tag (flat_to_clos_compile m (REVERSE es))]
-        | [App t op es] ->
-        match dest_nop op es with SOME e -> flat_to_clos_compile m
-          [e] | NONE -> [compile_op t op (flat_to_clos_compile m
-          (REVERSE es))]
-        | [Fun t v e] ->
-        [Fn t NONE NONE 1 (HD (flat_to_clos_compile (SOME v :: m)
-          [e]))]
-        | [If t x1 x2 x3] ->
-        [If t (HD (flat_to_clos_compile m [x1]))
-              (HD (flat_to_clos_compile m [x2]))
-              (HD (flat_to_clos_compile m [x3]))]
-        | [Let t vo e1 e2] ->
-        [Let t (flat_to_clos_compile m [e1]) (HD
-          (flat_to_clos_compile (vo :: m) [e2]))]
-        | [Mat t e pes] -> [Op t (IntOp (Const 0)) []]
-        | [Handle t e pes] ->
-        match dest_pat pes with SOME (v,h) -> [Handle t (HD
-          (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile (SOME
-          v :: m) [h]))] | _23 -> flat_to_clos_compile m [e]
-        | [Letrec t funs e] ->
-        let new_m = MAP (\n. SOME (FST n)) funs ++ m in
-          [Letrec (MAP (\n. join_strings t (FST n)) funs) NONE NONE
-             (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (SOME v ::
-               new_m) [x]))) funs)
-             (HD (flat_to_clos_compile new_m [e]))]`;;
+let compile_def = cake_define_list
+  [`flat_to_clos_compile m [] = []`;
+   `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
+  [x] ++ flat_to_clos_compile m (y :: xs)`;
+   `flat_to_clos_compile m [flatLang_Raise t e] = [closLang_Raise t
+  (HD (flat_to_clos_compile m [e]))]`;
+   `flat_to_clos_compile m [Lit t l] = [compile_lit t l]`;
+   `flat_to_clos_compile m [Var_local t v] = [Var t (findi (SOME v)
+  m)]`;
+   `flat_to_clos_compile m [Con t n es] =
+         (let tag = (match n with SOME (t,_18) -> t | _19 -> 0) in
+           [SmartCons t tag (flat_to_clos_compile m (REVERSE
+             es))])`;
+   `flat_to_clos_compile m [App t op es] =
+         (match dest_nop op es with SOME e ->
+           flat_to_clos_compile m [e] | NONE -> [compile_op t op
+           (flat_to_clos_compile m (REVERSE es))])`;
+   `flat_to_clos_compile m [Fun t v e] =
+         [Fn t NONE NONE 1 (HD (flat_to_clos_compile (SOME v ::
+           m) [e]))]`;
+   `flat_to_clos_compile m [If t x1 x2 x3] =
+         [If t (HD (flat_to_clos_compile m [x1]))
+               (HD (flat_to_clos_compile m [x2]))
+               (HD (flat_to_clos_compile m [x3]))]`;
+   `flat_to_clos_compile m [Let t vo e1 e2] =
+         [Let t (flat_to_clos_compile m [e1]) (HD
+           (flat_to_clos_compile (vo :: m) [e2]))]`;
+   `flat_to_clos_compile m [Mat t e pes] = [Op t (IntOp (Const (&0)))
+  []]`;
+   `flat_to_clos_compile m [Handle t e pes] =
+         (match dest_pat pes with SOME (v,h) -> [Handle t (HD
+           (flat_to_clos_compile m [e])) (HD (flat_to_clos_compile
+           (SOME v :: m) [h]))] | _20 -> flat_to_clos_compile m [e])`;
+   `flat_to_clos_compile m [Letrec t funs e] =
+         (let new_m = MAP (\n. SOME (FST n)) funs ++ m in
+           [Letrec (MAP (\n. join_strings t (FST n)) funs) NONE NONE
+              (MAP (\(f,v,x). (1,HD (flat_to_clos_compile (SOME v ::
+                new_m) [x]))) funs)
+              (HD (flat_to_clos_compile new_m [e]))])`];;
 hol4_overload "compile" "flat_to_clos_compile";;
 
 let compile_decs_def = cake_define

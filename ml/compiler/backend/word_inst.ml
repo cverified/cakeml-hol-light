@@ -86,14 +86,14 @@ let pull_exp_def = cake_define_wf
   `pull_exp exp =
         match exp with
           (Op Sub ls) ->
-       let new_ls = MAP pull_exp ls in
-       convert_sub new_ls
+       (let new_ls = MAP pull_exp ls in
+       convert_sub new_ls)
         | (Op op []) -> op_consts op
         | (Op op [x]) -> pull_exp x
         | (Op op ls) ->
-       let new_ls = MAP pull_exp ls in
+       (let new_ls = MAP pull_exp ls in
        let pull_ls = pull_ops op new_ls [] in
-         optimize_consts op pull_ls
+         optimize_consts op pull_ls)
         | (Load exp) -> Load (pull_exp exp)
         | (Shift (backend_common_word_shift) exp nexp) -> Shift
           (backend_common_word_shift) (pull_exp exp) (pull_exp nexp)
@@ -187,7 +187,7 @@ let inst_select_exp_def = cake_define_wf
   `inst_select_exp c tar temp x4 =
         match (c,tar,temp,x4) with
           ((c:'a asm_config),(tar:num),(temp:num),(Load exp)) ->
-       match exp with Op Add [exp'; Const w] ->
+       (match exp with Op Add [exp'; Const w] ->
          (if (\c. offset_ok 0 (asm_config_addr_offset c)) c w then
            let prog = inst_select_exp c temp temp exp' in
              Seq prog (Inst (Mem Load tar (Addr temp w))) else
@@ -195,14 +195,14 @@ let inst_select_exp_def = cake_define_wf
              Seq prog (Inst (Mem Load tar (Addr temp ((n2w 0)))))) |
                _9 ->
          (let prog = inst_select_exp c temp temp exp in
-         Seq prog (Inst (Mem Load tar (Addr temp ((n2w 0))))))
+         Seq prog (Inst (Mem Load tar (Addr temp ((n2w 0)))))))
         | (c,(tar:num),(temp:num),(Const w)) -> (Inst (Const tar w))
         | (c,(tar:num),(temp:num),(Var v)) ->
        Move 0 [tar,v]
         | (c,tar,temp,(Lookup store_name)) ->
        Get tar store_name
         | (c,tar,temp,(Op op [e1; e2])) ->
-       if is_Lookup_CurrHeap e2 then
+       (if is_Lookup_CurrHeap e2 then
          (let p1 = inst_select_exp c temp temp e1 in
            Seq p1 (OpCurrHeap op tar temp)) else if
              is_Lookup_CurrHeap e1 /\ ~(op = Sub) then
@@ -220,9 +220,9 @@ let inst_select_exp_def = cake_define_wf
              + 1))))))) | _10 ->
          (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
          Seq p1 (Seq p2 (Inst (Arith (Binop op tar temp (Reg (temp +
-           1)))))))
+           1))))))))
         | (c,tar,temp,(Shift sh exp e1)) ->
-       match e1 with Const shift_len ->
+       (match e1 with Const shift_len ->
            (let n = w2n shift_len in
              if (n < dimindex (:'a)) then
                (let prog = inst_select_exp c temp temp exp in
@@ -234,7 +234,7 @@ let inst_select_exp_def = cake_define_wf
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
          Seq p (Seq p1 (Inst (Arith (Shift sh tar temp (Reg (temp +
-           1)))))))
+           1))))))))
         | (_12,_13,_14,_15) -> Skip`;;
 
 (*
@@ -258,11 +258,11 @@ let inst_select_def = cake_define
           (Assign v exp) ->
        (inst_select_exp c v temp o flatten_exp o pull_exp) exp
         | (Set store exp) ->
-       let prog = (inst_select_exp c temp temp o flatten_exp o
+       (let prog = (inst_select_exp c temp temp o flatten_exp o
          pull_exp) exp in
-       Seq prog (Set store (Var temp))
+       Seq prog (Set store (Var temp)))
         | (Store exp var) ->
-       let exp = (flatten_exp o pull_exp) exp in
+       (let exp = (flatten_exp o pull_exp) exp in
        match exp with Op Add [exp'; Const w] ->
          (if (\c. offset_ok 0 (asm_config_addr_offset c)) c w then
            let prog = inst_select_exp c temp temp exp' in
@@ -271,13 +271,13 @@ let inst_select_def = cake_define
              Seq prog (Inst (Mem Store var (Addr temp ((n2w 0)))))) |
                _16 ->
          (let prog = inst_select_exp c temp temp exp in
-         Seq prog (Inst (Mem Store var (Addr temp ((n2w 0))))))
+         Seq prog (Inst (Mem Store var (Addr temp ((n2w 0)))))))
         | (Seq p1 p2) ->
        Seq (inst_select c temp p1) (inst_select c temp p2)
         | (MustTerminate p1) ->
        MustTerminate (inst_select c temp p1)
         | (ShareInst op v exp) ->
-       let exp = (flatten_exp o pull_exp) exp in
+       (let exp = (flatten_exp o pull_exp) exp in
        match exp with Op Add [exp'; Const w] ->
          (if ((op = Load \/ op = Store) /\ (\c. offset_ok 0
            (asm_config_addr_offset c)) c w) \/
@@ -293,11 +293,11 @@ let inst_select_def = cake_define
            let prog = inst_select_exp c temp temp exp in
              Seq prog (ShareInst op v (Var temp))) | _17 ->
          (let prog = inst_select_exp c temp temp exp in
-         Seq prog (ShareInst op v (Var temp)))
+         Seq prog (ShareInst op v (Var temp))))
         | (If cmp r1 ri c1 c2) ->
        If cmp r1 ri (inst_select c temp c1) (inst_select c temp c2)
         | (Call ret dest args handler) ->
-       let retsel =
+       (let retsel =
          match ret with
            NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
            SOME (n,names,inst_select c temp ret_handler,l1,l2) in
@@ -305,7 +305,7 @@ let inst_select_def = cake_define
          match handler with
            NONE -> NONE | SOME (n,h,l1,l2) -> SOME (n,inst_select c
              temp h,l1,l2) in
-       Call retsel dest args handlersel
+       Call retsel dest args handlersel)
         | (Loop names body exit_names) ->
        Loop names (inst_select c temp body) exit_names
         | prog -> prog`;;
@@ -335,7 +335,7 @@ let three_to_two_reg_def = cake_define
         | (If cmp r1 ri c1 c2) ->
        If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg c2)
         | (Call ret dest args handler) ->
-       let retsel =
+       (let retsel =
          match ret with
            NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
            SOME (n,names,three_to_two_reg ret_handler,l1,l2) in
@@ -343,7 +343,7 @@ let three_to_two_reg_def = cake_define
          match handler with
            NONE -> NONE | SOME (n,h,l1,l2) -> SOME
              (n,three_to_two_reg h,l1,l2) in
-       Call retsel dest args handlersel
+       Call retsel dest args handlersel)
         | (Loop names body exit_names) ->
        Loop names (three_to_two_reg body) exit_names
         | prog -> prog`;;

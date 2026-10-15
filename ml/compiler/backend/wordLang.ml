@@ -232,7 +232,7 @@ let max_var_exp_def = cake_define
         | (Op wop ls) -> MAX_LIST (MAP (max_var_exp) ls)
         | (Shift sh exp1 exp2) -> MAX (max_var_exp exp1) (max_var_exp
           exp2)
-        | exp -> 0:num`;;
+        | exp -> (0:num)`;;
 
 let max_var_inst_def = cake_define
   `max_var_inst x1 =
@@ -240,9 +240,9 @@ let max_var_inst_def = cake_define
           Skip -> 0
         | (Const reg w) -> reg
         | (Arith (Binop bop r1 r2 ri)) ->
-       match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2
+       (match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2)
         | (Arith (Shift (backend_common_word_shift) r1 r2 n)) ->
-       match n with Reg r -> max3 r1 r2 r | _9 -> MAX r1 r2
+       (match n with Reg r -> max3 r1 r2 r | _9 -> MAX r1 r2)
         | (Arith (Div r1 r2 r3)) -> max3 r1 r2 r3
         | (Arith (AddCarry r1 r2 r3 r4)) -> MAX (MAX r1 r2) (MAX r3
           r4)
@@ -264,9 +264,9 @@ let max_var_inst_def = cake_define
         | (FP (FPLessEqual r f1 f2)) -> r
         | (FP (FPEqual r f1 f2)) -> r
         | (FP (FPMovToReg r1 r2 d):'a asm_inst) ->
-       if dimindex (:'a) = 64 then r1 else MAX r1 r2
+       (if dimindex (:'a) = 64 then r1 else MAX r1 r2)
         | (FP (FPMovFromReg d r1 r2)) ->
-       if dimindex (:'a) = 64 then r1 else MAX r1 r2
+       (if dimindex (:'a) = 64 then r1 else MAX r1 r2)
         | _10 -> 0`;;
 
 let cutsets_max_def = cake_define
@@ -285,7 +285,7 @@ let max_var_def = cake_define
         | (Get num store) -> num
         | (Store exp num) -> MAX num (max_var_exp exp)
         | (Call ret dest args h) ->
-       let n = MAX_LIST args in
+       (let n = MAX_LIST args in
        match ret with
          NONE -> n | SOME (v,cutset,ret_handler,l1,l2) ->
          (let cutset_max = MAX n (cutsets_max cutset) in
@@ -293,12 +293,12 @@ let max_var_def = cake_define
            ret_handler) in
          (match h with
            NONE -> ret_max | SOME (v,prog,l1,l2) ->
-           max3 v ret_max (max_var prog)))
+           max3 v ret_max (max_var prog))))
         | (Seq s1 s2) -> MAX (max_var s1) (max_var s2)
         | (MustTerminate s1) -> max_var s1
         | (If cmp r1 ri e2 e3) ->
-       let r = match ri with Reg r -> MAX r r1 | _11 -> r1 in
-         max3 r (max_var e2) (max_var e3)
+       (let r = match ri with Reg r -> MAX r r1 | _11 -> r1 in
+         max3 r (max_var e2) (max_var e3))
         | (Alloc num numset) ->
        MAX num (cutsets_max numset)
         | (StoreConsts a b c d ws) ->

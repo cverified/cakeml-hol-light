@@ -41,7 +41,7 @@ let approx_of_def = cake_define_wf
          bignum_size (limits_arch_64_bit lims) i)
         | [CodePtr _2] -> 0
         | [RefPtr _3 r] ->
-        match lookup r refs with NONE -> 0 | SOME (ByteArray _4 bs)
+        (match lookup r refs with NONE -> 0 | SOME (ByteArray _4 bs)
           -> LENGTH bs DIV (arch_size lims DIV 8) + 2 | SOME (ValueArray
           vs) ->
             approx_of lims vs (delete r refs) + LENGTH vs + 1 | SOME
@@ -49,7 +49,7 @@ let approx_of_def = cake_define_wf
             approx_of lims [v] (delete r refs) + 2 | SOME (MutBlock
               tg fin ls c rs) ->
             approx_of lims (ls ++ [c] ++ rs) (delete r refs) +
-            LENGTH ls + LENGTH rs + 2
+            LENGTH ls + LENGTH rs + 2)
         | [Block ts tag []] -> 0
         | [Block ts tag vs] ->
        approx_of lims vs refs + LENGTH vs + 1`;;

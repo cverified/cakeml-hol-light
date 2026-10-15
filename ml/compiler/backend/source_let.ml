@@ -34,11 +34,11 @@ let lift_let_def = cake_define
   `lift_let x1 =
         match x1 with
           (Dlet l p x) ->
-       match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l Pany
+       (match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l Pany
          x,Dlet l p y) | SOME (SOME m,x,y) -> SOME (Dlet l (Pvar m)
          x,Dlet l p y) | NONE ->
            (match dest_Letrec x with SOME (funs,x) -> SOME (Dletrec l
-             funs,Dlet l p x) | NONE -> NONE)
+             funs,Dlet l p x) | NONE -> NONE))
         | _3 -> NONE`;;
 
 (* TERMINATION: wf_rel_tac ‘measure (dec_size o SND)’

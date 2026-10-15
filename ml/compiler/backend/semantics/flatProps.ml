@@ -207,13 +207,13 @@ let simple_basic_val_rel_def = cake_define
    (simple_basic_val_rel (Closure vs nm exp) v = F) /\
    (simple_basic_val_rel (Recclosure vs exps nm) v = F)`;;
 
-let v_container_xs_def = cake_define
-  `v_container_xs (Litv _4) = [] /\
-   v_container_xs (Loc _5 _6) = [] /\
-   v_container_xs (Conv _7 vs) = vs /\
-   v_container_xs (Vectorv vs) = vs /\
-   v_container_xs (Closure vs nm exp) = [] /\
-   v_container_xs (Recclosure vs exps nm) = []`;;
+let v_container_xs_def = cake_define_list
+  [`v_container_xs (Litv _4) = []`;
+   `v_container_xs (Loc _5 _6) = []`;
+   `v_container_xs (Conv _7 vs) = vs`;
+   `v_container_xs (Vectorv vs) = vs`;
+   `v_container_xs (Closure vs nm exp) = []`;
+   `v_container_xs (Recclosure vs exps nm) = []`];;
 
 let simple_val_rel_def = cake_define
   `flatProps_simple_val_rel vr = (

@@ -86,39 +86,39 @@ let pmatch_def = cake_define_wf
         match (ps,t) with
           (Any,t) -> PMatchSuccess
         | ((Lit l),(Litv l')) ->
-        if ~lit_same_type l l' then PTypeFailure else
-        if l = l' then PMatchSuccess else PMatchFailure
+        (if ~lit_same_type l l' then PTypeFailure else
+        if l = l' then PMatchSuccess else PMatchFailure)
         | ((Cons (SOME (tag,siblings)) pargs),(Term (SOME t) targs))
           ->
-       if tag = t /\ LENGTH pargs = LENGTH targs then
+       (if tag = t /\ LENGTH pargs = LENGTH targs then
          pattern_semantics_pmatch_list refs pargs targs else
        if is_sibling (t,LENGTH targs) siblings then PMatchFailure
-         else PTypeFailure
+         else PTypeFailure)
         | ((Cons NONE pargs),(Term NONE targs)) ->
        pattern_semantics_pmatch_list refs pargs targs
         | ((Ref p),(RefPtr r)) ->
-       match FLOOKUP refs r with NONE -> PTypeFailure | SOME v ->
-         pattern_semantics_pmatch refs p v
+       (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v ->
+         pattern_semantics_pmatch refs p v)
         | ((Or p1 p2),t) ->
-       match pattern_semantics_pmatch refs p1 t with
+       (match pattern_semantics_pmatch refs p1 t with
           PMatchSuccess -> (match pattern_semantics_pmatch refs p2 t
             with
                               PTypeFailure -> PTypeFailure | _1 ->
                                 PMatchSuccess) | PMatchFailure ->
                                 pattern_semantics_pmatch refs p2 t |
-                                PTypeFailure -> PTypeFailure
+                                PTypeFailure -> PTypeFailure)
         | (_2,_3) -> PTypeFailure
         | ([],[]) -> PMatchSuccess
         | ([],ts) -> PTypeFailure
         | (ps,[]) -> PTypeFailure
         | ((p :: ps),(t :: ts)) ->
-       match pattern_semantics_pmatch refs p t with
+       (match pattern_semantics_pmatch refs p t with
          PMatchSuccess -> pattern_semantics_pmatch_list refs ps ts |
            PMatchFailure -> (match pattern_semantics_pmatch_list refs ps
            ts with
                               PTypeFailure -> PTypeFailure | _4 ->
                                 PMatchFailure) | PTypeFailure ->
-                                PTypeFailure`;;
+                                PTypeFailure)`;;
 hol4_overload "pmatch" "pattern_semantics_pmatch";;
 hol4_overload "pmatch_list" "pattern_semantics_pmatch_list";;
 
@@ -148,8 +148,8 @@ let app_pos_def = cake_define
         match (x2,v) with
           (EmptyPos,v) -> SOME v
         | ((Pos 0 pos),(RefPtr r)) ->
-        match FLOOKUP refs r with NONE -> NONE | SOME v -> app_pos
-          refs pos v
+        (match FLOOKUP refs r with NONE -> NONE | SOME v -> app_pos
+          refs pos v)
         | ((Pos 0 pos),(Term c (x :: xs))) -> app_pos refs pos x
         | ((Pos (SUC n) pos),(Term c (x :: xs))) ->
        app_pos refs (Pos n pos) (Term c xs)

@@ -301,8 +301,8 @@ let match_result_rel_def = cake_define
   `source_to_flatProof_match_result_rel genv env' x3 x4 =
         match (x3,x4) with
           ((Match env),(Match env_i1)) ->
-        ?env''. env = env'' ++ env' /\ env_rel genv (alist_to_ns
-          env'') env_i1
+        (?env''. env = env'' ++ env' /\ env_rel genv (alist_to_ns
+          env'') env_i1)
         | (No_match,No_match) -> T
         | (Match_type_error,_1) -> T
         | (_2,_3) -> F`;;
@@ -2040,8 +2040,8 @@ let num_bindings_def = cake_define
   `num_bindings x1 =
         match x1 with
           (Dlet _19 p e) ->
-        match simple_dlet p e with SOME _20 -> 0 | _21 -> LENGTH
-          (pat_bindings p)
+        (match simple_dlet p e with SOME _20 -> 0 | _21 -> LENGTH
+          (pat_bindings p))
         | (Dletrec _22 f) -> LENGTH f
         | (Dmod _23 ds) -> SUM (MAP num_bindings ds)
         | (Dlocal lds ds) ->

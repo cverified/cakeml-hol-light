@@ -628,26 +628,26 @@ let compile_def = cake_define
             save_regs) LN),
              SaveRegs save_regs,n,l)) (SOME n) [] NONE),l + 1,i,cs)
         | (Loop rec_calls vs body) ->
-        match has_compiled body cs with INL existing_index ->
+        (match has_compiled body cs with INL existing_index ->
             (Call (SOME ([i],(LS one,LN),Skip,n,l)) (SOME
               existing_index) [] NONE,l + 1,i + 1,cs) | INR new_index ->
             (let (new_code,a,b,cs) = word_bignum_compile new_index 2
               1 (code_acc_next cs) body in
               (Call (SOME ([i],(LS one,LN),Skip,n,l)) (SOME
                 new_index) [] NONE,l + 1,i + 1,
-               install (body,new_index,new_code) cs))
+               install (body,new_index,new_code) cs)))
         | (LoopBody b) -> word_bignum_compile n l i cs b
         | (Seq p1 p2) ->
-        let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
+        (let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
-          (Seq p1 p2,l,i,cs)
+          (Seq p1 p2,l,i,cs))
         | (If t r ri p1 p2) ->
-        let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
+        (let (p1,l,i,cs) = word_bignum_compile n l i cs p1 in
         let (p2,l,i,cs) = word_bignum_compile n l i cs p2 in
           match ri with Reg r2 -> (SeqTemp i r (SeqTemp (i + 1) r2
             (If t i (Reg (i + 1)) p1 p2)),
                        l,i + 2,cs) | Imm im -> (SeqTemp i r (If t i
-                         ri p1 p2),l,i + 1,cs)
+                         ri p1 p2),l,i + 1,cs))
         | (Assign j e) ->
         (Seq (Assign i (compile_exp e)) (Set (Temp (n2w j)) (Var
           i)),l,i + 1,cs)

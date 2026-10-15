@@ -20,131 +20,125 @@ needs "semantics/ast.ml";;
    lets with dummies *)
 
 let const_0_def = cake_define
-  `const_0 t = Op t (IntOp (Const 0)) []`;;
+  `const_0 t = Op t (IntOp (Const (&0))) []`;;
 
 let no_overlap_def = cake_define
   `(no_overlap 0 l <=> T) /\
    (no_overlap (SUC n) l <=>
       (if has_var n l then F else no_overlap n l))`;;
 
-let alt_free_def = cake_define
-  `(alt_free [] = ([],Empty)) /\
-   (alt_free ((x:closLang_exp) :: y :: xs) =
-      (let (c1,l1) = alt_free [x] in
-      let (c2,l2) = alt_free (y :: xs) in
-        (c1 ++ c2,mk_Union l1 l2))) /\
-   (alt_free [Var t v] = ([Var t v],Var v)) /\
-   (alt_free [If t x1 x2 x3] =
-      (let (c1,l1) = alt_free [x1] in
-      let (c2,l2) = alt_free [x2] in
-      let (c3,l3) = alt_free [x3] in
-        ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union l2
-          l3)))) /\
-   (alt_free [Let t xs x2] =
-      (let m = LENGTH xs in
-      let (c2,l2) = alt_free [x2] in
-        if no_overlap m l2 /\ EVERY pure xs then
-          ([Let t (REPLICATE m (const_0 t)) (HD c2)],Shift m l2) else
-          let (c1,l1) = alt_free xs in
-            ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs) l2))))
-              /\
-   (alt_free [Raise t x1] =
-      (let (c1,l1) = alt_free [x1] in
-        ([Raise t (HD c1)],l1))) /\
-   (alt_free [Tick t x1] =
-      (let (c1,l1) = alt_free [x1] in
-        ([Tick t (HD c1)],l1))) /\
-   (alt_free [Op t op xs] =
-      (let (c1,l1) = alt_free xs in
-        ([Op t op c1],l1))) /\
-   (alt_free [App t loc_opt x1 xs2] =
-      (let (c1,l1) = alt_free [x1] in
-      let (c2,l2) = alt_free xs2 in
-        ([App t loc_opt (HD c1) c2],mk_Union l1 l2))) /\
-   (alt_free [Fn t loc _1 num_args x1] =
-      (let (c1,l1) = alt_free [x1] in
-      let l2 = Shift num_args l1 in
-        ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)))
-          /\
-   (alt_free [Letrec t loc _2 fns x1] =
-      (let m = LENGTH fns in
-      let (c2,l2) = alt_free [x1] in
-      let res = MAP (\(n,x). let (c,l) = alt_free [x] in
+let alt_free_def = cake_define_list
+  [`alt_free [] = ([],Empty)`;
+   `alt_free ((x:closLang_exp) :: y :: xs) =
+         (let (c1,l1) = alt_free [x] in
+         let (c2,l2) = alt_free (y :: xs) in
+           (c1 ++ c2,mk_Union l1 l2))`;
+   `alt_free [Var t v] = ([Var t v],Var v)`;
+   `alt_free [If t x1 x2 x3] =
+         (let (c1,l1) = alt_free [x1] in
+         let (c2,l2) = alt_free [x2] in
+         let (c3,l3) = alt_free [x3] in
+           ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
+             l2 l3)))`;
+   `alt_free [Let t xs x2] =
+         (let m = LENGTH xs in
+         let (c2,l2) = alt_free [x2] in
+           if no_overlap m l2 /\ EVERY pure xs then
+             ([Let t (REPLICATE m (const_0 t)) (HD c2)],Shift m l2)
+               else
+             let (c1,l1) = alt_free xs in
+               ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
+                 l2)))`;
+   `alt_free [Raise t x1] =
+         (let (c1,l1) = alt_free [x1] in
+           ([Raise t (HD c1)],l1))`;
+   `alt_free [Tick t x1] =
+         (let (c1,l1) = alt_free [x1] in
+           ([Tick t (HD c1)],l1))`;
+   `alt_free [Op t op xs] =
+         (let (c1,l1) = alt_free xs in
+           ([Op t op c1],l1))`;
+   `alt_free [App t loc_opt x1 xs2] =
+         (let (c1,l1) = alt_free [x1] in
+         let (c2,l2) = alt_free xs2 in
+           ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
+   `alt_free [Fn t loc _1 num_args x1] =
+         (let (c1,l1) = alt_free [x1] in
+         let l2 = Shift num_args l1 in
+           ([Fn t loc (SOME (vars_to_list l2)) num_args (HD
+             c1)],l2))`;
+   `alt_free [Letrec t loc _2 fns x1] =
+         (let m = LENGTH fns in
+         let (c2,l2) = alt_free [x1] in
+         let res = MAP (\(n,x). let (c,l) = alt_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
-      let c1 = MAP FST res in
-      let l1 = list_mk_Union (MAP SND res) in
-        ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-         mk_Union l1 (Shift (LENGTH fns) l2)))) /\
-   (alt_free [Handle t x1 x2] =
-      (let (c1,l1) = alt_free [x1] in
-      let (c2,l2) = alt_free [x2] in
-        ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))) /\
-   (alt_free [Call t ticks dest xs] =
-      (let (c1,l1) = alt_free xs in
-        ([Call t ticks dest c1],l1)))`;;
+         let c1 = MAP FST res in
+         let l1 = list_mk_Union (MAP SND res) in
+           ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
+            mk_Union l1 (Shift (LENGTH fns) l2)))`;
+   `alt_free [Handle t x1 x2] =
+         (let (c1,l1) = alt_free [x1] in
+         let (c2,l2) = alt_free [x2] in
+           ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
+   `alt_free [Call t ticks dest xs] =
+         (let (c1,l1) = alt_free xs in
+           ([Call t ticks dest c1],l1))`];;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-let _ = size_thms "pair";;
-(* HOL4 termination: *)
-let alt_free_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL e -> exp_size e | INR (INL es) ->
-  list_size exp_size es | INR (INR (_5,fns)) -> list_size (pair_size
-  (\x. x) exp_size) fns)`
-  `(alt_free_sing (Var t v) = (Var t v,Var v)) /\
-   (alt_free_sing (If t x1 x2 x3) =
-      (let (c1,l1) = alt_free_sing x1 in
-      let (c2,l2) = alt_free_sing x2 in
-      let (c3,l3) = alt_free_sing x3 in
-        (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))) /\
-   (alt_free_sing (Let t xs x2) =
-      (let m = LENGTH xs in
-      let (c2,l2) = alt_free_sing x2 in
-        if no_overlap m l2 /\ EVERY pure xs then
-          (Let t (REPLICATE m (const_0 t)) c2,Shift m l2) else
-          let (c1,l1) = alt_free_list xs in
-            (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))) /\
-   (alt_free_sing (Raise t x1) =
-      (let (c1,l1) = alt_free_sing x1 in
-        (Raise t c1,l1))) /\
-   (alt_free_sing (Tick t x1) =
-      (let (c1,l1) = alt_free_sing x1 in
-        (Tick t c1,l1))) /\
-   (alt_free_sing (Op t op xs) =
-      (let (c1,l1) = alt_free_list xs in
-        (Op t op c1,l1))) /\
-   (alt_free_sing (App t loc_opt x1 xs2) =
-      (let (c1,l1) = alt_free_sing x1 in
-      let (c2,l2) = alt_free_list xs2 in
-        (App t loc_opt c1 c2,mk_Union l1 l2))) /\
-   (alt_free_sing (Fn t loc _3 num_args x1) =
-      (let (c1,l1) = alt_free_sing x1 in
-      let l2 = Shift num_args l1 in
-        (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))) /\
-   (alt_free_sing (Letrec t loc _4 fns x1) =
-      (let m = LENGTH fns in
-      let (c2,l2) = alt_free_sing x1 in
-      let res = alt_free_letrec m fns in
-      let c1 = MAP FST res in
-      let l1 = list_mk_Union (MAP SND res) in
-        (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
-         mk_Union l1 (Shift (LENGTH fns) l2)))) /\
-   (alt_free_sing (Handle t x1 x2) =
-      (let (c1,l1) = alt_free_sing x1 in
-      let (c2,l2) = alt_free_sing x2 in
-        (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))) /\
-   (alt_free_sing (Call t ticks dest xs) =
-      (let (c1,l1) = alt_free_list xs in
-        (Call t ticks dest c1,l1))) /\
-   (alt_free_list [] = ([],Empty)) /\
-   (alt_free_list ((x:closLang_exp) :: xs) =
-      (let (c1,l1) = alt_free_sing x in
-      let (c2,l2) = alt_free_list xs in
-        (c1 :: c2,mk_Union l1 l2))) /\
-   (alt_free_letrec m [] = []) /\
-   (alt_free_letrec m ((n,x) :: rest) =
-      (let (c,l) = alt_free_sing x in
-        ((n,c),Shift (n + m) l) :: alt_free_letrec m rest))`;;
+let alt_free_sing_def = cake_define_list
+  [`alt_free_sing (Var t v) = (Var t v,Var v)`;
+   `alt_free_sing (If t x1 x2 x3) =
+         (let (c1,l1) = alt_free_sing x1 in
+         let (c2,l2) = alt_free_sing x2 in
+         let (c3,l3) = alt_free_sing x3 in
+           (If t c1 c2 c3,mk_Union l1 (mk_Union l2 l3)))`;
+   `alt_free_sing (Let t xs x2) =
+         (let m = LENGTH xs in
+         let (c2,l2) = alt_free_sing x2 in
+           if no_overlap m l2 /\ EVERY pure xs then
+             (Let t (REPLICATE m (const_0 t)) c2,Shift m l2) else
+             let (c1,l1) = alt_free_list xs in
+               (Let t c1 c2,mk_Union l1 (Shift (LENGTH xs) l2)))`;
+   `alt_free_sing (Raise t x1) =
+         (let (c1,l1) = alt_free_sing x1 in
+           (Raise t c1,l1))`;
+   `alt_free_sing (Tick t x1) =
+         (let (c1,l1) = alt_free_sing x1 in
+           (Tick t c1,l1))`;
+   `alt_free_sing (Op t op xs) =
+         (let (c1,l1) = alt_free_list xs in
+           (Op t op c1,l1))`;
+   `alt_free_sing (App t loc_opt x1 xs2) =
+         (let (c1,l1) = alt_free_sing x1 in
+         let (c2,l2) = alt_free_list xs2 in
+           (App t loc_opt c1 c2,mk_Union l1 l2))`;
+   `alt_free_sing (Fn t loc _3 num_args x1) =
+         (let (c1,l1) = alt_free_sing x1 in
+         let l2 = Shift num_args l1 in
+           (Fn t loc (SOME (vars_to_list l2)) num_args c1,l2))`;
+   `alt_free_sing (Letrec t loc _4 fns x1) =
+         (let m = LENGTH fns in
+         let (c2,l2) = alt_free_sing x1 in
+         let res = alt_free_letrec m fns in
+         let c1 = MAP FST res in
+         let l1 = list_mk_Union (MAP SND res) in
+           (Letrec t loc (SOME (vars_to_list l1)) c1 c2,
+            mk_Union l1 (Shift (LENGTH fns) l2)))`;
+   `alt_free_sing (Handle t x1 x2) =
+         (let (c1,l1) = alt_free_sing x1 in
+         let (c2,l2) = alt_free_sing x2 in
+           (Handle t c1 c2,mk_Union l1 (Shift 1 l2)))`;
+   `alt_free_sing (Call t ticks dest xs) =
+         (let (c1,l1) = alt_free_list xs in
+           (Call t ticks dest c1,l1))`;
+   `alt_free_list [] = ([],Empty)`;
+   `alt_free_list ((x:closLang_exp) :: xs) =
+         (let (c1,l1) = alt_free_sing x in
+         let (c2,l2) = alt_free_list xs in
+           (c1 :: c2,mk_Union l1 l2))`;
+   `alt_free_letrec m [] = []`;
+   `alt_free_letrec m ((n,x) :: rest) =
+         (let (c,l) = alt_free_sing x in
+           ((n,c),Shift (n + m) l) :: alt_free_letrec m rest)`];;
 
 (* shift renames variables to use only those in the annotations *)
 
@@ -158,65 +152,63 @@ let shifted_env_def = cake_define
    (shifted_env n (x :: xs) = insert x (n:num) (shifted_env (n +
      1) xs))`;;
 
-let shift_def = cake_define
-  `clos_annotate_shift x1 m l i =
-        match (x1,m,l,i) with
-          ([],(m:num),(l:num),(i:num spt)) -> []
-        | (((x:closLang_exp) :: y :: xs),m,l,i) ->
-        let c1 = clos_annotate_shift [x] m l i in
-        let c2 = clos_annotate_shift (y :: xs) m l i in
-          (c1 ++ (c2:closLang_exp list))
-        | ([Var t v],m,l,i) ->
-        [Var t (get_var m l i v)]
-        | ([If t x1 x2 x3],m,l,i) ->
-        let c1 = clos_annotate_shift [x1] m l i in
-        let c2 = clos_annotate_shift [x2] m l i in
-        let c3 = clos_annotate_shift [x3] m l i in
-          ([If t (HD c1) (HD c2) (HD c3)])
-        | ([Let t xs x2],m,l,i) ->
-        let c1 = clos_annotate_shift xs m l i in
-        let c2 = clos_annotate_shift [x2] m (l + LENGTH xs) i in
-          ([Let t c1 (HD c2)])
-        | ([Raise t x1],m,l,i) ->
-        let (c1) = clos_annotate_shift [x1] m l i in
-          ([Raise t (HD c1)])
-        | ([Tick t x1],m,l,i) ->
-        let c1 = clos_annotate_shift [x1] m l i in
-          ([Tick t (HD c1)])
-        | ([Op t op xs],m,l,i) ->
-        let c1 = clos_annotate_shift xs m l i in
-          ([Op t op c1])
-        | ([App t loc_opt x1 xs2],m,l,i) ->
-        let c1 = clos_annotate_shift [x1] m l i in
-        let c2 = clos_annotate_shift xs2 m l i in
-          ([App t loc_opt (HD c1) c2])
-        | ([Fn t loc vs_opt num_args x1],m,l,i) ->
-        let k = m + l in
-        let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
-        let live = FILTER (\n. n < k) vs in
-        let vars = MAP (get_var m l i) live in
-        let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
-          live) in
-          ([Fn t loc (SOME vars) num_args (HD c1)])
-        | ([Letrec t loc vsopt fns x1],m,l,i) ->
-        let vs = match vsopt with NONE -> [] | SOME x -> x in
-        let k = m + l in
-        let live = FILTER (\n. n < k) vs in
-        let vars = MAP (get_var m l i) live in
-        let new_i = shifted_env 0 live in
-        let fns_len = LENGTH fns in
-        let cs = MAP (\(n,x). let c = clos_annotate_shift [x] k (n +
-          fns_len) new_i in
+let shift_def = cake_define_list
+  [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;
+   `clos_annotate_shift ((x:closLang_exp) :: y :: xs) m l i =
+         (let c1 = clos_annotate_shift [x] m l i in
+         let c2 = clos_annotate_shift (y :: xs) m l i in
+           (c1 ++ (c2:closLang_exp list)))`;
+   `clos_annotate_shift [Var t v] m l i =
+         [Var t (get_var m l i v)]`;
+   `clos_annotate_shift [If t x1 x2 x3] m l i =
+         (let c1 = clos_annotate_shift [x1] m l i in
+         let c2 = clos_annotate_shift [x2] m l i in
+         let c3 = clos_annotate_shift [x3] m l i in
+           ([If t (HD c1) (HD c2) (HD c3)]))`;
+   `clos_annotate_shift [Let t xs x2] m l i =
+         (let c1 = clos_annotate_shift xs m l i in
+         let c2 = clos_annotate_shift [x2] m (l + LENGTH xs) i in
+           ([Let t c1 (HD c2)]))`;
+   `clos_annotate_shift [Raise t x1] m l i =
+         (let (c1) = clos_annotate_shift [x1] m l i in
+           ([Raise t (HD c1)]))`;
+   `clos_annotate_shift [Tick t x1] m l i =
+         (let c1 = clos_annotate_shift [x1] m l i in
+           ([Tick t (HD c1)]))`;
+   `clos_annotate_shift [Op t op xs] m l i =
+         (let c1 = clos_annotate_shift xs m l i in
+           ([Op t op c1]))`;
+   `clos_annotate_shift [App t loc_opt x1 xs2] m l i =
+         (let c1 = clos_annotate_shift [x1] m l i in
+         let c2 = clos_annotate_shift xs2 m l i in
+           ([App t loc_opt (HD c1) c2]))`;
+   `clos_annotate_shift [Fn t loc vs_opt num_args x1] m l i =
+         (let k = m + l in
+         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         let live = FILTER (\n. n < k) vs in
+         let vars = MAP (get_var m l i) live in
+         let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
+           live) in
+           ([Fn t loc (SOME vars) num_args (HD c1)]))`;
+   `clos_annotate_shift [Letrec t loc vsopt fns x1] m l i =
+         (let vs = match vsopt with NONE -> [] | SOME x -> x in
+         let k = m + l in
+         let live = FILTER (\n. n < k) vs in
+         let vars = MAP (get_var m l i) live in
+         let new_i = shifted_env 0 live in
+         let fns_len = LENGTH fns in
+         let cs = MAP (\(n,x). let c = clos_annotate_shift [x] k (n
+           + fns_len) new_i in
                               (n,HD c)) fns in
-        let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
-          ([Letrec t loc (SOME vars) cs (HD c1)])
-        | ([Handle t x1 x2],m,l,i) ->
-        let c1 = clos_annotate_shift [x1] m l i in
-        let c2 = clos_annotate_shift [x2] m (l + 1) i in
-          ([Handle t (HD c1) (HD c2)])
-        | ([Call t ticks dest xs],m,l,i) ->
-        let c1 = clos_annotate_shift xs m l i in
-          ([Call t ticks dest c1])`;;
+         let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
+           ([Letrec t loc (SOME vars) cs (HD c1)]))`;
+   `clos_annotate_shift [Handle t x1 x2] m l i =
+         (let c1 = clos_annotate_shift [x1] m l i in
+         let c2 = clos_annotate_shift [x2] m (l + 1) i in
+           ([Handle t (HD c1) (HD c2)]))`;
+   `clos_annotate_shift [Call t ticks dest xs] m l i =
+         (let c1 = clos_annotate_shift xs m l i in
+           ([Call t ticks dest c1]))`];;
 hol4_overload "shift" "clos_annotate_shift";;
 
 let _ = size_thms "exp";;
@@ -224,44 +216,44 @@ let _ = size_thms "list";;
 let _ = size_thms "pair";;
 (* HOL4 termination: *)
 let shift_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (e,_6,_7,_8) -> exp_size e | INR (INL
-  (es,_9,_10,_11)) -> list_size exp_size es | INR (INR (_12,_13,_14,l))
+  `MEASURE (\x. match x with INL (e,_5,_6,_7) -> exp_size e | INR (INL
+  (es,_8,_9,_10)) -> list_size exp_size es | INR (INR (_11,_12,_13,l))
   -> list_size (pair_size (\x. x) exp_size) l)`
   `shift_sing fns_len m l i =
         match (fns_len,m,l,i) with
           ((Var t v),m,l,i) ->
         Var t (get_var m l i v)
         | ((If t x1 x2 x3),m,l,i) ->
-        let c1 = shift_sing x1 m l i in
+        (let c1 = shift_sing x1 m l i in
         let c2 = shift_sing x2 m l i in
         let c3 = shift_sing x3 m l i in
-          (If t c1 c2 c3)
+          (If t c1 c2 c3))
         | ((Let t xs x2),m,l,i) ->
-        let c1 = shift_list xs m l i in
+        (let c1 = shift_list xs m l i in
         let c2 = shift_sing x2 m (l + LENGTH xs) i in
-          (Let t c1 c2)
+          (Let t c1 c2))
         | ((Raise t x1),m,l,i) ->
-        let (c1) = shift_sing x1 m l i in
-          (Raise t c1)
+        (let (c1) = shift_sing x1 m l i in
+          (Raise t c1))
         | ((Tick t x1),m,l,i) ->
-        let c1 = shift_sing x1 m l i in
-          (Tick t c1)
+        (let c1 = shift_sing x1 m l i in
+          (Tick t c1))
         | ((Op t op xs),m,l,i) ->
-        let c1 = shift_list xs m l i in
-          (Op t op c1)
+        (let c1 = shift_list xs m l i in
+          (Op t op c1))
         | ((App t loc_opt x1 xs2),m,l,i) ->
-        let c1 = shift_sing x1 m l i in
+        (let c1 = shift_sing x1 m l i in
         let c2 = shift_list xs2 m l i in
-          (App t loc_opt c1 c2)
+          (App t loc_opt c1 c2))
         | ((Fn t loc vs_opt num_args x1),m,l,i) ->
-        let k = m + l in
+        (let k = m + l in
         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
         let live = FILTER (\n. n < k) vs in
         let vars = MAP (get_var m l i) live in
         let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
-          (Fn t loc (SOME vars) num_args c1)
+          (Fn t loc (SOME vars) num_args c1))
         | ((Letrec t loc vsopt fns x1),m,l,i) ->
-        let vs = match vsopt with NONE -> [] | SOME x -> x in
+        (let vs = match vsopt with NONE -> [] | SOME x -> x in
         let k = m + l in
         let live = FILTER (\n. n < k) vs in
         let vars = MAP (get_var m l i) live in
@@ -269,23 +261,23 @@ let shift_sing_def = cake_define_wf
         let fns_len = LENGTH fns in
         let cs = shift_letrec fns_len k new_i fns in
         let c1 = shift_sing x1 m (l + LENGTH fns) i in
-          (Letrec t loc (SOME vars) cs c1)
+          (Letrec t loc (SOME vars) cs c1))
         | ((Handle t x1 x2),m,l,i) ->
-        let c1 = shift_sing x1 m l i in
+        (let c1 = shift_sing x1 m l i in
         let c2 = shift_sing x2 m (l + 1) i in
-          (Handle t c1 c2)
+          (Handle t c1 c2))
         | ((Call t ticks dest xs),m,l,i) ->
-        let c1 = shift_list xs m l i in
-          (Call t ticks dest c1)
+        (let c1 = shift_list xs m l i in
+          (Call t ticks dest c1))
         | ([],(m:num),(l:num),(i:num spt)) -> []
         | (((x:closLang_exp) :: xs),m,l,i) ->
-        let c1 = shift_sing x m l i in
+        (let c1 = shift_sing x m l i in
         let c2 = shift_list xs m l i in
-          (c1 :: (c2:closLang_exp list))
+          (c1 :: (c2:closLang_exp list)))
         | (fns_len,k,new_i,[]) -> []
         | (fns_len,k,new_i,((n,x) :: rest)) ->
-        let c = shift_sing x k (n + fns_len) new_i in
-          (n,c) :: shift_letrec fns_len k new_i rest`;;
+        (let c = shift_sing x k (n + fns_len) new_i in
+          (n,c) :: shift_letrec fns_len k new_i rest)`;;
 
 (* main functions *)
 

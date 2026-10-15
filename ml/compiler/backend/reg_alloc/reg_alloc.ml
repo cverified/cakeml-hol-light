@@ -314,9 +314,9 @@ let smerge_def = cake_define
           ([],ys) -> ys
         | (xs,[]) -> xs
         | ((((p:num),m) :: xs),((p',m') :: ys)) ->
-       if p >= p' then
+       (if p >= p' then
          (p,m) :: smerge xs ((p',m') :: ys) else
-         (p',m') :: smerge ((p,m) :: xs) ys`;;
+         (p',m') :: smerge ((p,m) :: xs) ys)`;;
 
 (*
   revive the unavailable moves that touch each neighbor

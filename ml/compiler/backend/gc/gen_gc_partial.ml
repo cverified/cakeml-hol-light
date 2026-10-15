@@ -83,9 +83,9 @@ let gc_move_ref_list_def = cake_define
         match x3 with
           [] -> ([],state)
         | (DataElement ptrs l d :: xs) ->
-       let (ptrs',state) = gc_move_list conf state ptrs in
+       (let (ptrs',state) = gc_move_list conf state ptrs in
        let (xs,state) = gc_move_ref_list conf state xs in
-         (DataElement ptrs' l d :: xs,state)
+         (DataElement ptrs' l d :: xs,state))
         | (x :: xs) -> (x :: xs,gc_state_ok_fupd (K F) state)`;;
 
 let partial_gc_def = cake_define

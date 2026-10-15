@@ -79,6 +79,7 @@ class Db:
     self.abbrevs = {}          # (thy,name) -> (params, type text)
     self.overloads = {}        # (thy,name) -> term text
     self.con_argty = {}        # (constructor,index) -> {type texts}
+    self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
     self.thy_of_file = {}
     self.kind_of_thy = {}
@@ -145,6 +146,7 @@ class Db:
               con = alt.split()[0]
               for j, t in enumerate(tys):
                 self.con_argty.setdefault((con, j), set()).add(t)
+                self.con_argty_thy[(thy, con, j)] = t
           for ty, cons, flds in hol4.datatype_names(b.body):
             self.datatypes[(thy, ty)] = (cons, flds)
             self.defs[ty].append((thy, 'type'))
@@ -386,6 +388,19 @@ class Db:
     anc = self.ancestors(thy) | {thy}
     return {self.rename.get((t, ty), ty): flds
             for (t, ty), flds in self.recs.items() if t in anc}
+
+  def con_argty_for(self, thy):
+    """the type of the argument of a constructor, as far as the
+       theories in scope agree on it (the numerals of an argument
+       whose type is int or real are written &n)"""
+    anc = self.ancestors(thy) | {thy}
+    out = {}
+    for (t, con, j), ty in self.con_argty_thy.items():
+      if t not in anc: continue
+      k = (con, j)
+      if k in out and out[k] != ty: out[k] = None
+      else: out.setdefault(k, ty)
+    return {k: v for k, v in out.items() if v is not None}
 
   def overloads_for(self, thy):
     """the overloads in scope: the local ones only in their own theory"""

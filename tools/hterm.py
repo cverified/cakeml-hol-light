@@ -825,9 +825,11 @@ class Ctx:
 
   def __init__(self, names=None, fields=None, recs=None, thy='',
                overloads=None, accessors=None, cons=None,
-               abbrevs=None, tynames=None, overloaded=None):
+               abbrevs=None, tynames=None, overloaded=None,
+               con_argty=None):
     self.names = names or {}     # cakeml name -> hol light name
     self.tynames = tynames or {} # the same for the type names
+    self.con_argty = con_argty or {}  # (con,index) -> type text
     self.overloaded = overloaded or set()  # names HOL4 overloads
     self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
@@ -1064,7 +1066,15 @@ class Printer:
             self.numctx = old
             return self.paren(s, PRE_APP, prec)
       fn = self.pr(e.fn, PRE_APP)
+      # a numeral in an argument of a constructor whose type is an
+      # integer or a real is written &n
+      oldint = self.ctx.intnums
+      if hop.kind == 'id' and \
+         self.ctx.con_argty.get((hop.name, len(args) - 1)) in \
+           ('int', 'real'):
+        self.ctx.intnums = True
       arg = self.pr(e.arg, APP)
+      self.ctx.intnums = oldint
       self.numctx = old
       return self.paren(fn + ' ' + arg, PRE_APP, prec)
     if k == 'infix':

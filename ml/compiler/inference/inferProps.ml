@@ -139,8 +139,8 @@ let infer_subst_var_def = cake_define
   `infer_subst_var s t =
         match t with
           (Infer_Tuvar n) ->
-     match FLOOKUP s n with NONE -> Infer_Tuvar n | SOME tv ->
-       Infer_Tvar_db tv
+     (match FLOOKUP s n with NONE -> Infer_Tuvar n | SOME tv ->
+       Infer_Tvar_db tv)
         | t -> t`;;
 
 (* Rename (type_system) type identifiers with a function *)

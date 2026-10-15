@@ -64,7 +64,7 @@ let json_to_mlstring_def = cake_define
   `json_to_mlstring obj =
         match  with
            ->
-       match obj with Object mems -> List [(implode "{")] ++
+       (match obj with Object mems -> List [(implode "{")] ++
                    concat_with (MAP mem_to_string mems) (List
                      [(implode ",")]) ++
                    List [(implode "}")] | Array obs -> List [(implode
@@ -75,7 +75,7 @@ let json_to_mlstring_def = cake_define
                      ([(implode) "\""; encode_str T s; (implode) "\""])
                      | Int i -> List [toString i] | Bool b -> (if b then
                      List [(implode "true")] else List [(implode
-                     "false")]) | Null -> List [(implode "null")]
-        |  -> let (n,obj) = obj in
+                     "false")]) | Null -> List [(implode "null")])
+        |  -> (let (n,obj) = obj in
            List [(implode) "\""; n; (implode) "\":"] ++
-             json_to_mlstring obj`;;
+             json_to_mlstring obj)`;;

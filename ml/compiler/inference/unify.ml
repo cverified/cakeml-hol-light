@@ -431,8 +431,8 @@ let ts_unify_def = cake_define
         match (x2,x3) with
           ([],[]) -> SOME s
         | ((t1 :: ts1),(t2 :: ts2)) ->
-     match t_unify s t1 t2 with NONE -> NONE | SOME s' -> ts_unify s'
-       ts1 ts2
+     (match t_unify s t1 t2 with NONE -> NONE | SOME s' -> ts_unify
+       s' ts1 ts2)
         | (_7,_8) -> NONE`;;
 
 let apply_subst_t_def = cake_define

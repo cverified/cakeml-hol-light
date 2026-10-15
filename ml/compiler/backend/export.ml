@@ -23,9 +23,9 @@ let split16_def = cake_define_wf
         match xs with
           [] -> Nil
         | xs ->
-        let xs1 = TAKE 16 xs in
+        (let xs1 = TAKE 16 xs in
         let xs2 = DROP 16 xs in
-          SmartAppend (f xs1) (split16 f xs2)`;;
+          SmartAppend (f xs1) (split16 f xs2))`;;
 
 (* HOL4 ML code, not ported:
 val preamble_tm =

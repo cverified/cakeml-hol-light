@@ -22,7 +22,7 @@ let JumpList_def = cake_define_wf
   `MEASURE (LENGTH o SND)`
   `(JumpList n xs =
       (let l = LENGTH xs in
-        if l = 0 then Op (IntOp (Const 0)) [] else
+        if l = 0 then Op (IntOp (Const (&0))) [] else
         if l = 1 then HD xs else
           let k = l DIV 2 in
           let ys = TAKE k xs in

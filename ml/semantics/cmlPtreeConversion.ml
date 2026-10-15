@@ -474,8 +474,8 @@ let isConstructor_def = cake_define
 let EtoPat_def = cake_define
   `EtoPat x1 =
         match x1 with
-          (Con x args) -> if NULL args then SOME (Pcon x []) else
-            NONE
+          (Con x args) -> (if NULL args then SOME (Pcon x []) else
+            NONE)
         | (Var (Short n)) -> SOME (Pvar n)
         | (Var (Long str n)) -> SOME (Pcon (SOME (Long str n)) [])
         | _54 -> NONE`;;
@@ -674,8 +674,8 @@ let strip_loc_expr_def = cake_define
   `strip_loc_expr e =
         match e with
           (Lannot e l) ->
-       match (strip_loc_expr e) with
-         (e0,_85) -> (e0,SOME l)
+       (match (strip_loc_expr e) with
+         (e0,_85) -> (e0,SOME l))
         | e -> (e,NONE)`;;
 
 let merge_locsopt_def = cake_define
@@ -1168,7 +1168,7 @@ let ptree_Decl_def = cake_define
   `ptree_Decl pt =
         match pt with
           pt ->
-       match pt with
+       (match pt with
           Lf _163 -> NONE | Nd (nt,locs) args ->
           (if ~(nt = (INL:MMLnonT->MMLnonT+num) nDecl) then NONE else
             match args with
@@ -1202,21 +1202,21 @@ let ptree_Decl_def = cake_define
                     decls1_pt) (\
                   decls1. monad_bind (ptree_Decls decls2_pt) (\
                   decls2.
-                  return (Dlocal decls1 decls2)))) | _164 -> NONE)
+                  return (Dlocal decls1 decls2)))) | _164 -> NONE))
         | (Lf _165) -> NONE
         | (Nd (nt,_166) args) ->
-       if ~(nt = (INL:MMLnonT->MMLnonT+num) nDecls) then NONE else
+       (if ~(nt = (INL:MMLnonT->MMLnonT+num) nDecls) then NONE else
          match args with
              [] -> SOME [] | [d_pt; ds_pt] ->
              (if tokcheck d_pt SemicolonT then ptree_Decls ds_pt else
                monad_bind (ptree_Decl d_pt) (\
                  d. monad_bind (ptree_Decls ds_pt) (\
                  ds.
-                 SOME (d :: ds)))) | _167 -> NONE
+                 SOME (d :: ds)))) | _167 -> NONE)
         | (Lf _168) -> NONE
         | (Nd nt args) ->
-       if ~(FST nt = (INL:MMLnonT->MMLnonT+num) nStructure) then NONE
-         else
+       (if ~(FST nt = (INL:MMLnonT->MMLnonT+num) nStructure) then
+         NONE else
          match args with
              [structuretok; sname_pt; asc_opt; eqtok; structtok;
                ds_pt; endtok] ->
@@ -1241,14 +1241,14 @@ let ptree_Decl_def = cake_define
                               SOME (SOME sigv))) | _170 -> NONE)) (\
                asc. monad_bind (ptree_Decls ds_pt) (\
                ds.
-               SOME (Dmod sname ds))))) | _171 -> NONE`;;
+               SOME (Dmod sname ds))))) | _171 -> NONE)`;;
 
 let ptree_TopLevelDecs_def = cake_define
   `ptree_TopLevelDecs x1 =
       match x1 with
         (Lf _172) -> fail
       | (Nd nt args) ->
-      if ~(FST nt = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs) then
+      (if ~(FST nt = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs) then
         fail else
         match args with
             [] -> return [] | [td_pt; tds_pt] ->
@@ -1264,10 +1264,10 @@ let ptree_TopLevelDecs_def = cake_define
               e. monad_bind (ptree_TopLevelDecs tds_pt) (\
               tds.
               return (Dlet (SND nt) (Pvar (implode "it")) e ::
-                tds)))) | _173 -> NONE
+                tds)))) | _173 -> NONE)
       | (Lf _174) -> fail
       | (Nd nt args) ->
-      if ~(FST nt = (INL:MMLnonT->MMLnonT+num) nNonETopLevelDecs)
+      (if ~(FST nt = (INL:MMLnonT->MMLnonT+num) nNonETopLevelDecs)
         then fail else
         match args with
           [] -> return [] | [pt1; pt2] ->
@@ -1276,4 +1276,4 @@ let ptree_TopLevelDecs_def = cake_define
             monad_bind (ptree_Decl pt1) (\
               td. monad_bind (ptree_NonETopLevelDecs pt2) (\
               tds.
-              return (td :: tds)))) | _175 -> fail`;;
+              return (td :: tds)))) | _175 -> fail)`;;

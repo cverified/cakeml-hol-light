@@ -99,7 +99,7 @@ let to_constant_op_def = cake_define
       | (BlockOp (Cons tag)) ->
      (if l = 0 then ConstCons 1 [ConstCons tag []] else ConstCons
        (tag + 5) [cs])
-      | _26 -> ConstInt 0`;;
+      | _26 -> ConstInt (&0)`;;
 
 let _ = size_thms "exp";;
 let _ = size_thms "list";;
@@ -110,8 +110,8 @@ let to_constant_def = cake_define_wf
   `to_constant ((Var t n):closLang_exp) =
      ConstCons 0 [ConstInt (&n)] /\
    to_constant (App _28 _29 e es) =
-     ConstCons 0 [to_constant e; match es with [] -> ConstInt 0 | (e1
-       :: _30) -> to_constant e1] /\
+     ConstCons 0 [to_constant e; match es with [] -> ConstInt (&0) |
+       (e1 :: _30) -> to_constant e1] /\
    to_constant (If t e1 e2 e3) =
      ConstCons 0 [to_constant e1; to_constant e2; to_constant e3] /\
    to_constant (Let t es e) = ConstCons 1 [to_constant_list es;
@@ -122,9 +122,9 @@ let to_constant_def = cake_define_wf
    to_constant (Tick t e) = ConstCons 4 [to_constant e] /\
    to_constant (Handle t e1 e2) = ConstCons 2 [to_constant e1;
      to_constant e2] /\
-   to_constant (Fn _31 _32 _33 _34 e) = ConstInt 0 /\
-   to_constant (Call _35 _36 _37 es) = ConstInt 0 /\
-   to_constant (Letrec _38 _39 _40 fns e) = ConstInt 0 /\
+   to_constant (Fn _31 _32 _33 _34 e) = ConstInt (&0) /\
+   to_constant (Call _35 _36 _37 es) = ConstInt (&0) /\
+   to_constant (Letrec _38 _39 _40 fns e) = ConstInt (&0) /\
    to_constant_list [] = ConstCons 0 [] /\
    to_constant_list (x :: xs) = ConstCons 0 [to_constant x;
      to_constant_list xs]`;;
@@ -153,10 +153,11 @@ let to_constant_def = cake_define_wf
 
 let clos_interp_el_def = cake_define
   `clos_interp_el =
-     If None (Op None (BlockOp (EqualConst (Int 0))) [(Var None) 1])
+     If None (Op None (BlockOp (EqualConst (Int (&0)))) [(Var None)
+       1])
        ((\n x. Op None (BlockOp (ElemAt n)) [x]) 0 ((Var None) 0))
      (App None NONE (App None NONE ((Var None) 2)
-       [Op None (IntOp Sub) [Op None (IntOp (Const 1)) []; (Var
+       [Op None (IntOp Sub) [Op None (IntOp (Const (&1))) []; (Var
          None) 1]]) [(\n x. Op None (BlockOp (ElemAt n)) [x]) 1 ((Var
          None) 0)])`;;
 
@@ -319,7 +320,7 @@ let insert_interp1_def = cake_define
 let compile_init_def = cake_define
   `compile_init b =
      Let None [Op None (GlobOp AllocGlobal) [Op None (IntOp (Const
-       1)) []];
+       (&1))) []];
                if b then
                  Fn (implode "clos_interpreter") NONE NONE 1
                    clos_interpreter else

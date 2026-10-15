@@ -294,7 +294,7 @@ let locs_to_string_def = cake_define
         match x2 with
           NONE -> implode "unknown location"
         | (SOME (Locs startl endl)) ->
-       match startl with POSN r c ->
+       (match startl with POSN r c ->
           (let line = get_nth_line r input 0 in
            let len = strlen line in
            let stop =
@@ -307,7 +307,7 @@ let locs_to_string_def = cake_define
                "\n\n");
                      line; (implode "\n");
                      underline; (implode "\n")]) | _4 -> implode
-                       "unknown location"`;;
+                       "unknown location")`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
 (* HOL4 overload (expanded in the port):

@@ -108,13 +108,12 @@ let tabulate_def = cake_define
 hol4_overload "tabulate" "mllist_tabulate";;
 
 let collate_def = cake_define
-  `mllist_collate f x2 x3 =
-        match (x2,x3) with
-          ([],[]) -> EQUAL
-        | ([],(h :: t)) -> LESS
-        | ((h :: t),[]) -> GREATER
-        | ((h1 :: t1),(h2 :: t2)) ->
-       if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f h1 h2`;;
+  `(mllist_collate f [] [] = EQUAL) /\
+   (mllist_collate f [] (h :: t) = LESS) /\
+   (mllist_collate f (h :: t) [] = GREATER) /\
+   (mllist_collate f (h1 :: t1) (h2 :: t2) =
+     (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f h1
+       h2))`;;
 hol4_overload "collate" "mllist_collate";;
 
 let cpn_to_reln_def = cake_define

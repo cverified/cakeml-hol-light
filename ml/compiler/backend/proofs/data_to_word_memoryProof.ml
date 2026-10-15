@@ -683,9 +683,9 @@ let heap_el_def = cake_define
   `heap_el x1 n heap =
         match x1 with
           (Pointer a u) ->
-       match heap_lookup a heap with SOME (DataElement xs l d) ->
+       (match heap_lookup a heap with SOME (DataElement xs l d) ->
            (if n < LENGTH xs then (EL n xs,T) else (ARB,F)) | _24 ->
-             (ARB,F)
+             (ARB,F))
         | _25 -> (ARB,F)`;;
 
 (* el *)
@@ -1073,17 +1073,17 @@ let vb_eq_size_def = cake_define
   `vb_eq_size refs x2 x3 =
         match (x2,x3) with
           ((Block _52 t1 l1),(Block _53 t2 l2)) ->
-        if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
+        (if isClos t1 l1 \/ isClos t2 l2 then if isClos t1 l1 /\
           isClos t2 l2 then SOME ((1:num),T) else NONE else if (t1 = t2)
           /\ (LENGTH l1 = LENGTH l2) then OPTION_MAP (\(n,b). (n + 1,b))
-          (vb_eq_size_list refs l1 l2) else SOME (1,F)
+          (vb_eq_size_list refs l1 l2) else SOME (1,F))
         | ((RefPtr b1 n1),(RefPtr b2 n2)) ->
-        if b1 /\ b2 then
+        (if b1 /\ b2 then
           (match (sptree_lookup n1 refs,sptree_lookup n2 refs) with
              (SOME (ByteArray T bs1),SOME (ByteArray T bs2)) -> SOME
                (1,(bs1 = bs2)) | (SOME (ByteArray T bs1),_54) -> NONE |
                (_55,SOME (ByteArray T bs2)) -> NONE | _56 -> SOME (1,(n1
-               = n2))) else NONE
+               = n2))) else NONE)
         | ((Number n1),(Number n2)) -> SOME (1,(n1 = n2))
         | ((Word64 w1),(Word64 w2)) -> SOME (1,(w1 = w2))
         | (_57,_58) -> NONE
@@ -1091,10 +1091,10 @@ let vb_eq_size_def = cake_define
         | ([],_59) -> SOME (0,F)
         | (_60,[]) -> SOME (0,F)
         | ((v1 :: vs1),(v2 :: vs2)) ->
-        match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F) ->
-          SOME (n + 1,F) | SOME (n,T) -> (
+        (match vb_eq_size refs v1 v2 with NONE -> NONE | SOME (n,F)
+          -> SOME (n + 1,F) | SOME (n,T) -> (
           match vb_eq_size_list refs vs1 vs2 with NONE -> NONE |
-            SOME (m,b) -> SOME (m + n + 1,b))`;;
+            SOME (m,b) -> SOME (m + n + 1,b)))`;;
 
 let word_header_def = cake_define
   `word_header c st a dm m =
@@ -1547,8 +1547,8 @@ let xor_words_def = cake_define
         ([],ys) -> SOME ys
       | (xs,[]) -> NONE
       | ((x :: xs),(y :: ys)) ->
-     match xor_words xs ys with NONE -> NONE | SOME rest -> SOME
-       (word_xor (x:'a word) y :: rest)`;;
+     (match xor_words xs ys with NONE -> NONE | SOME rest -> SOME
+       (word_xor (x:'a word) y :: rest))`;;
 
 (*
 Theorem xor_bytes_length:

@@ -94,12 +94,10 @@ let encode_header_def = cake_define
           ((make_header conf (n2w tag) len):'a word) else NONE)`;;
 
 let list_Seq_def = cake_define
-  `data_to_word_list_Seq x1 =
-        match x1 with
-          [] -> wordLang_Skip
-        | [x] -> x
-        | (x :: y :: xs) -> Seq x (data_to_word_list_Seq (y ::
-          xs))`;;
+  `(data_to_word_list_Seq [] = wordLang_Skip) /\
+   (data_to_word_list_Seq [x] = x) /\
+   (data_to_word_list_Seq (x :: y :: xs) = Seq x
+     (data_to_word_list_Seq (y :: xs)))`;;
 hol4_overload "list_Seq" "data_to_word_list_Seq";;
 
 let StoreEach_def = cake_define

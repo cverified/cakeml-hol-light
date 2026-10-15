@@ -320,7 +320,7 @@ hol4_overload "init_code" "clos_to_bvl_init_code";;
 
 let init_globals_def = cake_define
   `init_globals max_app start_loc =
-     Let [Op (GlobOp AllocGlobal) [Op (IntOp (Const 1)) []]]
+     Let [Op (GlobOp AllocGlobal) [Op (IntOp (Const (&1))) []]]
      (Let
        [Op (GlobOp (SetGlobal partial_app_label_table_loc))
          [Op (BlockOp (Cons tuple_tag))
@@ -336,8 +336,8 @@ let init_globals_def = cake_define
 
 let force_thunk_code_def = cake_define
   `force_thunk_code =
-     (If (Op (BlockOp (EqualConst (Int 0))) [(\b i. bvl_Op (BlockOp
-       (ElemAt i)) [b]) (Var 1) 1])
+     (If (Op (BlockOp (EqualConst (Int (&0)))) [(\b i. bvl_Op
+       (BlockOp (ElemAt i)) [b]) (Var 1) 1])
        (Let [Call 0 NONE [(bvl_Op (BlockOp (Cons 0)) []); Var 1; (\b
          i. bvl_Op (BlockOp (ElemAt i)) [b]) (Var 1) 0]]
          (Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0; Var 1]]
@@ -346,207 +346,205 @@ let force_thunk_code_def = cake_define
          (Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0; Var
            1]] (Var 1))):bvl_exp)`;;
 
-let _ = size_thms "exp3";;
-(* HOL4 termination: >> srw_tac [ARITH_ss]
-   [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
-   l) <= exp1_size l` by (Induct_on `l` >> rw
-   [closLangTheory.exp_size_def] >> PairCases_on `h` >> full_simp_tac
-   (srw_ss()++ARITH_ss) [closLangTheory.exp_size_def]) >> pop_assum
-   (qspec_then `v7` assume_tac) >> decide_tac *)
-let compile_exps_def = cake_define_wf
-  `MEASURE (exp3_size o FST o SND)`
-  `clos_to_bvl_compile_exps max_app x2 aux =
-        match x2 with
-          [] -> ([],aux)
-        | ((x:closLang_exp) :: y :: xs) ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux in
-        let (c2,aux2) = clos_to_bvl_compile_exps max_app (y :: xs)
-          aux1 in
-          (c1 ++ c2,aux2)
-        | [Var t v] -> ([(Var v):bvl_exp],aux)
-        | [If t x1 x2 x3] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-        let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
-        let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2 in
-          ([If (HD c1) (HD c2) (HD c3)],aux3)
-        | [Let t xs x2] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-        let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
-          ([Let c1 (HD c2)],aux2)
-        | [Raise t x1] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-          ([Raise (HD c1)],aux1)
-        | [Tick t x1] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-          ([Tick (HD c1)],aux1)
-        | [Op t op xs] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-        (
-        [if op = Install then
-            Call 0 NONE [Op Install c1] else if op = ThunkOp
-              ForceThunk then
-            Let c1 (Force (num_stubs max_app - 2) 0) else
-            Op (compile_op op) c1],aux1)
-        | [App t loc_opt x1 xs2] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-        let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1 in
-          ([match loc_opt with NONE ->
-                Let (c2 ++ c1) (mk_cl_call (Var (LENGTH c2)) (GENLIST
-                  Var (LENGTH c2))) | SOME loc ->
-                (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
-                  max_app))) (c2 ++ c1))],
-           aux2)
-        | [Fn t loc_opt vs_opt num_args x1] ->
-        let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-        let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-        let c2 =
-          Let (GENLIST Var num_args ++ free_let (Var num_args)
-            (LENGTH vs))
-              (HD c1) in
-          ([Op (BlockOp (Cons closure_tag))
-               (REVERSE (mk_label (loc + num_stubs max_app) ::
-                 mk_const (num_args - 1) :: MAP Var vs))],
-           (loc + (num_stubs max_app),num_args + 1,c2) :: aux1)
-        | [Letrec t loc_opt vsopt fns x1] ->
-        let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-        let vs = match vsopt with NONE -> [] | SOME x -> x in
-        match fns with [] -> clos_to_bvl_compile_exps max_app [x1]
-          aux | [(num_args,exp)] ->
-            (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
-              aux in
-            let c3 = Let (GENLIST Var num_args ++ [Var num_args] ++
-              free_let (Var num_args) (LENGTH vs)) (HD c1) in
-            let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1]
-              ((loc + (num_stubs max_app),num_args + 1,c3) :: aux1) in
-            let c4 =
-              Op (BlockOp (Cons closure_tag))
-                 (REVERSE (mk_label (loc + (num_stubs max_app)) ::
-                   mk_const (num_args - 1) :: MAP Var vs)) in
-              ([Let [c4] (HD c2)],aux2)) | _2 ->
-            (let fns_l = LENGTH fns in
-            let l = fns_l + LENGTH vs in
-            let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP SND
-              fns) aux in
-            let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
-            let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1
-              aux1 in
-            let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1]
-              aux2 in
-            let c4 = build_recc_lets (MAP FST fns) vs (loc +
-              (num_stubs max_app)) fns_l (HD c3) in
-              ([c4],aux3))
-        | [Handle t x1 x2] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux in
-        let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1 in
-          ([Handle (HD c1) (HD c2)],aux2)
-        | [Call t ticks dest xs] ->
-        let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
-          ([Call ticks (SOME (dest + (num_stubs max_app)))
-            c1],aux1)`;;
+let compile_exps_def = cake_define_list
+  [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
+   `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
+           in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app (y :: xs)
+           aux1 in
+           (c1 ++ c2,aux2))`;
+   `clos_to_bvl_compile_exps max_app [Var t v] aux = ([(Var
+  v):bvl_exp],aux)`;
+   `clos_to_bvl_compile_exps max_app [If t x1 x2 x3] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
+           in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
+           in
+         let (c3,aux3) = clos_to_bvl_compile_exps max_app [x3] aux2
+           in
+           ([If (HD c1) (HD c2) (HD c3)],aux3))`;
+   `clos_to_bvl_compile_exps max_app [Let t xs x2] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
+           in
+           ([Let c1 (HD c2)],aux2))`;
+   `clos_to_bvl_compile_exps max_app [Raise t x1] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
+           in
+           ([Raise (HD c1)],aux1))`;
+   `clos_to_bvl_compile_exps max_app [Tick t x1] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
+           in
+           ([Tick (HD c1)],aux1))`;
+   `clos_to_bvl_compile_exps max_app [Op t op xs] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+         (
+         [if op = Install then
+             Call 0 NONE [Op Install c1] else if op = ThunkOp
+               ForceThunk then
+             Let c1 (Force (num_stubs max_app - 2) 0) else
+             Op (compile_op op) c1],aux1))`;
+   `clos_to_bvl_compile_exps max_app [App t loc_opt x1 xs2] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
+           in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app xs2 aux1
+           in
+           ([match loc_opt with NONE ->
+                 Let (c2 ++ c1) (mk_cl_call (Var (LENGTH c2))
+                   (GENLIST Var (LENGTH c2))) | SOME loc ->
+                 (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
+                   max_app))) (c2 ++ c1))],
+            aux2))`;
+   `clos_to_bvl_compile_exps max_app [Fn t loc_opt vs_opt num_args x1]
+  aux =
+         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
+           in
+         let c2 =
+           Let (GENLIST Var num_args ++ free_let (Var num_args)
+             (LENGTH vs))
+               (HD c1) in
+           ([Op (BlockOp (Cons closure_tag))
+                (REVERSE (mk_label (loc + num_stubs max_app) ::
+                  mk_const (num_args - 1) :: MAP Var vs))],
+            (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))`;
+   `clos_to_bvl_compile_exps max_app [Letrec t loc_opt vsopt fns x1] aux
+  =
+         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+         let vs = match vsopt with NONE -> [] | SOME x -> x in
+         match fns with [] -> clos_to_bvl_compile_exps max_app [x1]
+           aux | [(num_args,exp)] ->
+             (let (c1,aux1) = clos_to_bvl_compile_exps max_app [exp]
+               aux in
+             let c3 = Let (GENLIST Var num_args ++ [Var num_args] ++
+               free_let (Var num_args) (LENGTH vs)) (HD c1) in
+             let (c2,aux2) = clos_to_bvl_compile_exps max_app [x1]
+               ((loc + (num_stubs max_app),num_args + 1,c3) :: aux1) in
+             let c4 =
+               Op (BlockOp (Cons closure_tag))
+                  (REVERSE (mk_label (loc + (num_stubs max_app)) ::
+                    mk_const (num_args - 1) :: MAP Var vs)) in
+               ([Let [c4] (HD c2)],aux2)) | _1 ->
+             (let fns_l = LENGTH fns in
+             let l = fns_l + LENGTH vs in
+             let (cs,aux1) = clos_to_bvl_compile_exps max_app (MAP
+               SND fns) aux in
+             let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs
+               in
+             let (n2,aux2) = build_aux (loc + (num_stubs max_app))
+               cs1 aux1 in
+             let (c3,aux3) = clos_to_bvl_compile_exps max_app [x1]
+               aux2 in
+             let c4 = build_recc_lets (MAP FST fns) vs (loc +
+               (num_stubs max_app)) fns_l (HD c3) in
+               ([c4],aux3)))`;
+   `clos_to_bvl_compile_exps max_app [Handle t x1 x2] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x1] aux
+           in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x2] aux1
+           in
+           ([Handle (HD c1) (HD c2)],aux2))`;
+   `clos_to_bvl_compile_exps max_app [Call t ticks dest xs] aux =
+         (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+           ([Call ticks (SOME (dest + (num_stubs max_app)))
+             c1],aux1))`];;
 hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
 (* HOL4 ML code, not ported:
 val compile_exps_ind = theorem"compile_exps_ind";
 *)
 
-let _ = size_thms "exp";;
-let _ = size_thms "exp3";;
-(* HOL4 termination: >> srw_tac [ARITH_ss]
-   [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
-   l) <= exp1_size l` by ( Induct_on `l` >> rw
-   [closLangTheory.exp_size_def] >> PairCases_on `h` >> full_simp_tac
-   (srw_ss()++ARITH_ss) [closLangTheory.exp_size_def]) >> pop_assum
-   (qspec_then `v7` assume_tac) >> decide_tac *)
-let compile_exp_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_4,e,_5) -> exp_size e | INR
-  (_6,es,_7) -> exp3_size es)`
-  `(compile_exp_sing max_app (Var t v) aux = (((Var v):bvl_exp),aux)) /\
-   (compile_exp_sing max_app (If t x1 x2 x3) aux =
-      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-      let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-      let (c3,aux3) = compile_exp_sing max_app x3 aux2 in
-        (If c1 c2 c3,aux3))) /\
-   (compile_exp_sing max_app (Let t xs x2) aux =
-      (let (c1,aux1) = compile_exp_list max_app xs aux in
-      let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-        (Let c1 c2,aux2))) /\
-   (compile_exp_sing max_app (Raise t x1) aux =
-      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-        (Raise c1,aux1))) /\
-   (compile_exp_sing max_app (Tick t x1) aux =
-      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-        (Tick c1,aux1))) /\
-   (compile_exp_sing max_app (Op t op xs) aux =
-      (let (c1,aux1) = compile_exp_list max_app xs aux in
-      (if op = Install then Call 0 NONE [Op Install c1] else if op =
-        ThunkOp ForceThunk then Let c1 (Force (num_stubs max_app - 2) 0)
-        else
-      Op (compile_op op) c1,aux1))) /\
-   (compile_exp_sing max_app (App t loc_opt x1 xs2) aux =
-      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-      let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
-        ((match loc_opt with NONE ->
-              Let (c2 ++ [c1]) (mk_cl_call (Var (LENGTH c2)) (GENLIST
-                Var (LENGTH c2))) | SOME loc ->
-              (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
-                max_app))) (c2 ++ [c1]))),
-         aux2))) /\
-   (compile_exp_sing max_app (Fn t loc_opt vs_opt num_args x1) aux =
-      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-      let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
-      let (c1,aux1) = compile_exp_sing max_app x1 aux in
-      let c2 =
-        Let (GENLIST Var num_args ++ free_let (Var num_args) (LENGTH
-          vs)) c1 in
-        (Op (BlockOp (Cons closure_tag))
-            (REVERSE (mk_label (loc + num_stubs max_app) :: mk_const
-              (num_args - 1) :: MAP Var vs)),
-         (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))) /\
-   (compile_exp_sing max_app (Letrec t loc_opt vsopt fns x1) aux =
-      (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
-      let vs = match vsopt with NONE -> [] | SOME x -> x in
-      match fns with [] -> compile_exp_sing max_app x1 aux |
-        [(num_args,exp)] ->
-          (let (c1,aux1) = compile_exp_sing max_app exp aux in
-          let c3 = Let (GENLIST Var num_args ++ [Var num_args] ++
-            free_let (Var num_args) (LENGTH vs)) c1 in
-          let (c2,aux2) = compile_exp_sing max_app x1 ((loc +
-            (num_stubs max_app),num_args + 1,c3) :: aux1) in
-          let c4 =
-            Op (BlockOp (Cons closure_tag))
-               (REVERSE (mk_label (loc + (num_stubs max_app)) ::
-                 mk_const (num_args - 1) :: MAP Var vs)) in
-            (bvl_Let [c4] c2,aux2)) | _3 ->
-          (let fns_l = LENGTH fns in
-          let l = fns_l + LENGTH vs in
-          let (cs,aux1) = compile_exp_list max_app (MAP SND fns) aux
-            in
-          let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs in
-          let (n2,aux2) = build_aux (loc + (num_stubs max_app)) cs1
-            aux1 in
-          let (c3,aux3) = compile_exp_sing max_app x1 aux2 in
-          let c4 = build_recc_lets (MAP FST fns) vs (loc + (num_stubs
-            max_app)) fns_l c3 in
-            (c4,aux3)))) /\
-   (compile_exp_sing max_app (Handle t x1 x2) aux =
-      (let (c1,aux1) = compile_exp_sing max_app x1 aux in
-      let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
-        (Handle c1 c2,aux2))) /\
-   (compile_exp_sing max_app (Call t ticks dest xs) aux =
-      (let (c1,aux1) = compile_exp_list max_app xs aux in
-        (Call ticks (SOME (dest + (num_stubs max_app))) c1,aux1))) /\
-   (compile_exp_list max_app [] aux = ([],aux)) /\
-   (compile_exp_list max_app ((x:closLang_exp) :: xs) aux =
-      (let (c1,aux1) = compile_exp_sing max_app x aux in
-      let (c2,aux2) = compile_exp_list max_app xs aux1 in
-        (c1 :: c2,aux2)))`;;
+let compile_exp_sing_def = cake_define_list
+  [`compile_exp_sing max_app (Var t v) aux = (((Var v):bvl_exp),aux)`;
+   `compile_exp_sing max_app (If t x1 x2 x3) aux =
+         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+         let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
+         let (c3,aux3) = compile_exp_sing max_app x3 aux2 in
+           (If c1 c2 c3,aux3))`;
+   `compile_exp_sing max_app (Let t xs x2) aux =
+         (let (c1,aux1) = compile_exp_list max_app xs aux in
+         let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
+           (Let c1 c2,aux2))`;
+   `compile_exp_sing max_app (Raise t x1) aux =
+         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+           (Raise c1,aux1))`;
+   `compile_exp_sing max_app (Tick t x1) aux =
+         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+           (Tick c1,aux1))`;
+   `compile_exp_sing max_app (Op t op xs) aux =
+         (let (c1,aux1) = compile_exp_list max_app xs aux in
+         (if op = Install then Call 0 NONE [Op Install c1] else if
+           op = ThunkOp ForceThunk then Let c1 (Force (num_stubs max_app
+           - 2) 0) else
+         Op (compile_op op) c1,aux1))`;
+   `compile_exp_sing max_app (App t loc_opt x1 xs2) aux =
+         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+         let (c2,aux2) = compile_exp_list max_app xs2 aux1 in
+           ((match loc_opt with NONE ->
+                 Let (c2 ++ [c1]) (mk_cl_call (Var (LENGTH c2))
+                   (GENLIST Var (LENGTH c2))) | SOME loc ->
+                 (Call (LENGTH c2 - 1) (SOME (loc + (num_stubs
+                   max_app))) (c2 ++ [c1]))),
+            aux2))`;
+   `compile_exp_sing max_app (Fn t loc_opt vs_opt num_args x1) aux =
+         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+         let vs = match vs_opt with NONE -> [] | SOME vs -> vs in
+         let (c1,aux1) = compile_exp_sing max_app x1 aux in
+         let c2 =
+           Let (GENLIST Var num_args ++ free_let (Var num_args)
+             (LENGTH vs)) c1 in
+           (Op (BlockOp (Cons closure_tag))
+               (REVERSE (mk_label (loc + num_stubs max_app) ::
+                 mk_const (num_args - 1) :: MAP Var vs)),
+            (loc + (num_stubs max_app),num_args + 1,c2) :: aux1))`;
+   `compile_exp_sing max_app (Letrec t loc_opt vsopt fns x1) aux =
+         (let loc = match loc_opt with NONE -> 0 | SOME n -> n in
+         let vs = match vsopt with NONE -> [] | SOME x -> x in
+         match fns with [] -> compile_exp_sing max_app x1 aux |
+           [(num_args,exp)] ->
+             (let (c1,aux1) = compile_exp_sing max_app exp aux in
+             let c3 = Let (GENLIST Var num_args ++ [Var num_args] ++
+               free_let (Var num_args) (LENGTH vs)) c1 in
+             let (c2,aux2) = compile_exp_sing max_app x1 ((loc +
+               (num_stubs max_app),num_args + 1,c3) :: aux1) in
+             let c4 =
+               Op (BlockOp (Cons closure_tag))
+                  (REVERSE (mk_label (loc + (num_stubs max_app)) ::
+                    mk_const (num_args - 1) :: MAP Var vs)) in
+               (bvl_Let [c4] c2,aux2)) | _2 ->
+             (let fns_l = LENGTH fns in
+             let l = fns_l + LENGTH vs in
+             let (cs,aux1) = compile_exp_list max_app (MAP SND fns)
+               aux in
+             let cs1 = MAP2 (code_for_recc_case l) (MAP FST fns) cs
+               in
+             let (n2,aux2) = build_aux (loc + (num_stubs max_app))
+               cs1 aux1 in
+             let (c3,aux3) = compile_exp_sing max_app x1 aux2 in
+             let c4 = build_recc_lets (MAP FST fns) vs (loc +
+               (num_stubs max_app)) fns_l c3 in
+               (c4,aux3)))`;
+   `compile_exp_sing max_app (Handle t x1 x2) aux =
+         (let (c1,aux1) = compile_exp_sing max_app x1 aux in
+         let (c2,aux2) = compile_exp_sing max_app x2 aux1 in
+           (Handle c1 c2,aux2))`;
+   `compile_exp_sing max_app (Call t ticks dest xs) aux =
+         (let (c1,aux1) = compile_exp_list max_app xs aux in
+           (Call ticks (SOME (dest + (num_stubs max_app)))
+             c1,aux1))`;
+   `compile_exp_list max_app [] aux = ([],aux)`;
+   `compile_exp_list max_app ((x:closLang_exp) :: xs) aux =
+         (let (c1,aux1) = compile_exp_sing max_app x aux in
+         let (c2,aux2) = compile_exp_list max_app xs aux1 in
+           (c1 :: c2,aux2))`];;
 
 let compile_prog_def = cake_define
   `clos_to_bvl_compile_prog max_app prog =
      (let (new_exps,aux) = compile_exps max_app (MAP (SND o SND)
        prog) [] in
-       MAP2 (\(loc,args,_8) exp. (loc + num_stubs max_app,args,exp))
+       MAP2 (\(loc,args,_3) exp. (loc + num_stubs max_app,args,exp))
          prog new_exps ++ aux)`;;
 hol4_overload "compile_prog" "clos_to_bvl_compile_prog";;
 
@@ -572,7 +570,7 @@ let code_split_def = cake_define
 let code_merge_def = cake_define_wf
   `MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)`
   `code_merge xs ys =
-     (match (xs,ys) with ([],[]) -> [] | ([],_9) -> ys | (_10,[]) ->
+     (match (xs,ys) with ([],[]) -> [] | ([],_4) -> ys | (_5,[]) ->
        xs | (x1 :: xs1,y1 :: ys1) ->
          (if FST x1 < ((FST y1):num) then
            x1 :: code_merge xs1 ys else
@@ -592,7 +590,7 @@ let code_sort_def = cake_define_wf
 let chain_exps_def = cake_define
   `chain_exps i x2 =
         match x2 with
-          [] -> [(i,0,Op None (IntOp (Const 0)) [])]
+          [] -> [(i,0,Op None (IntOp (Const (&0))) [])]
         | [e] -> [(i,0,e)]
         | (e :: es) ->
        (i,0,
@@ -637,23 +635,23 @@ let get_src_names_def = cake_define_wf
   `get_src_names [] l = l /\
    get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
      (get_src_names [x] l) /\
-   get_src_names [closLang_If _11 x y z] l =
+   get_src_names [closLang_If _6 x y z] l =
      get_src_names [x] (get_src_names [y] (get_src_names [z] l)) /\
-   get_src_names [closLang_Var _12 _13] l = l /\
-   get_src_names [closLang_Let _14 xs x] l = get_src_names (x :: xs)
-     l /\
-   get_src_names [Raise _15 x] l = get_src_names [x] l /\
-   get_src_names [Handle _16 x y] l = get_src_names [x]
+   get_src_names [closLang_Var _7 _8] l = l /\
+   get_src_names [closLang_Let _9 xs x] l = get_src_names (x :: xs) l
+     /\
+   get_src_names [Raise _10 x] l = get_src_names [x] l /\
+   get_src_names [Handle _11 x y] l = get_src_names [x]
      (get_src_names [y] l) /\
-   get_src_names [Tick _17 x] l = get_src_names [x] l /\
-   get_src_names [Call _18 _19 _20 xs] l = get_src_names xs l /\
-   get_src_names [Op _21 _22 xs] l = get_src_names xs l /\
-   get_src_names [App _23 _24 x xs] l = get_src_names (x :: xs) l /\
-   get_src_names [Fn name loc_opt _25 _26 x] l =
+   get_src_names [Tick _12 x] l = get_src_names [x] l /\
+   get_src_names [Call _13 _14 _15 xs] l = get_src_names xs l /\
+   get_src_names [Op _16 _17 xs] l = get_src_names xs l /\
+   get_src_names [App _18 _19 x xs] l = get_src_names (x :: xs) l /\
+   get_src_names [Fn name loc_opt _20 _21 x] l =
      (let l1 = get_src_names [x] l in
         match loc_opt with NONE -> l1 | SOME n -> add_src_names n
           [name] l1) /\
-   get_src_names [Letrec names loc_opt _27 funs x] l =
+   get_src_names [Letrec names loc_opt _22 funs x] l =
      (let l0 = get_src_names (MAP SND funs) l in
       let l1 = get_src_names [x] l0 in
         match loc_opt with NONE -> l1 | SOME n -> add_src_names n
@@ -666,28 +664,28 @@ let _ = size_thms "exp3";;
    ‘funs’ \\ fs [closLangTheory.exp_size_def] \\ fs
    [FORALL_PROD,closLangTheory.exp_size_def] *)
 let get_src_names_sing_def = cake_define_wf
-  `MEASURE (\x. match x with INL (e,_45) -> exp_size e | INR (es,_46)
+  `MEASURE (\x. match x with INL (e,_40) -> exp_size e | INR (es,_41)
   -> exp3_size es)`
-  `get_src_names_sing (closLang_If _28 x y z) l =
+  `get_src_names_sing (closLang_If _23 x y z) l =
      get_src_names_sing x (get_src_names_sing y (get_src_names_sing z
        l)) /\
-   get_src_names_sing (closLang_Var _29 _30) l = l /\
-   get_src_names_sing (closLang_Let _31 xs x) l =
+   get_src_names_sing (closLang_Var _24 _25) l = l /\
+   get_src_names_sing (closLang_Let _26 xs x) l =
      get_src_names_list xs (get_src_names_sing x l) /\
-   get_src_names_sing (Raise _32 x) l = get_src_names_sing x l /\
-   get_src_names_sing (Handle _33 x y) l = get_src_names_sing x
+   get_src_names_sing (Raise _27 x) l = get_src_names_sing x l /\
+   get_src_names_sing (Handle _28 x y) l = get_src_names_sing x
      (get_src_names_sing y l) /\
-   get_src_names_sing (Tick _34 x) l = get_src_names_sing x l /\
-   get_src_names_sing (Call _35 _36 _37 xs) l = get_src_names_list xs
+   get_src_names_sing (Tick _29 x) l = get_src_names_sing x l /\
+   get_src_names_sing (Call _30 _31 _32 xs) l = get_src_names_list xs
      l /\
-   get_src_names_sing (Op _38 _39 xs) l = get_src_names_list xs l /\
-   get_src_names_sing (App _40 _41 x xs) l =
+   get_src_names_sing (Op _33 _34 xs) l = get_src_names_list xs l /\
+   get_src_names_sing (App _35 _36 x xs) l =
      get_src_names_list xs (get_src_names_sing x l) /\
-   get_src_names_sing (Fn name loc_opt _42 _43 x) l =
+   get_src_names_sing (Fn name loc_opt _37 _38 x) l =
      (let l1 = get_src_names_sing x l in
         match loc_opt with NONE -> l1 | SOME n -> add_src_names n
           [name] l1) /\
-   get_src_names_sing (Letrec names loc_opt _44 funs x) l =
+   get_src_names_sing (Letrec names loc_opt _39 funs x) l =
      (let l0 = get_src_names_list (MAP SND funs) l in
       let l1 = get_src_names_sing x l0 in
         match loc_opt with NONE -> l1 | SOME n -> add_src_names n

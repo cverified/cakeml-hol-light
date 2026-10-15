@@ -34,9 +34,9 @@ let merge_def = cake_define
         | (l,[]) -> l
         | ([],l) -> l
         | ((x :: l1),(y :: l2)) ->
-       if R x y then
+       (if R x y then
          x :: mergesort_merge R l1 (y :: l2) else
-         y :: mergesort_merge R (x :: l1) l2`;;
+         y :: mergesort_merge R (x :: l1) l2)`;;
 hol4_overload "merge" "mergesort_merge";;
 
 let mergesortN_def = cake_define_wf
@@ -88,9 +88,9 @@ let merge_tail_def = cake_define
         | (negate,l,[]) -> REV l acc
         | (negate,[],l) -> REV l acc
         | (negate,(x :: l1),(y :: l2)) ->
-       if ~(R x y = negate) then
+       (if ~(R x y = negate) then
          merge_tail negate R l1 (y :: l2) (x :: acc) else
-         merge_tail negate R (x :: l1) l2 (y :: acc)`;;
+         merge_tail negate R (x :: l1) l2 (y :: acc))`;;
 
 let mergesortN_tail_def = cake_define_wf
   `MEASURE (\(negate,R,n,l). n)`

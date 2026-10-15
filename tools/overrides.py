@@ -99,6 +99,7 @@ INT_NUMERALS = set([
   ('binary_ieee', 'float_mul_add_def'),
   ('integer_word', 'toString_def'),
   ('backend_common', 'small_enough_int_def'),
+  ('bvl_const', 'SmartOp2_def'),
   ('integer_word', 'fromString_def'),
 ])
 

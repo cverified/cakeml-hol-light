@@ -128,18 +128,18 @@ let compile_exp_def = cake_define_wf
          nsLookup (?_c env)) cn))
              (source_to_flat_compile_exps t env es)
         | (t,env,(Var x)) ->
-       match nsLookup (?_v env) x with NONE -> Var_local None
-         (implode "") | SOME x -> compile_var None x
+       (match nsLookup (?_v env) x with NONE -> Var_local None
+         (implode "") | SOME x -> compile_var None x)
         | (t,env,(Fun x e)) ->
        Fun (join_all_names t) x
          (source_to_flat_compile_exp t (?_v_fupd (K (nsBind x (Local
            None x) (?_v env))) env) e)
         | (t,env,(ast_App op es)) ->
-       if op = AallocEmpty then
+       (if op = AallocEmpty then
          ITLIST (Let None NONE)
            (REVERSE (source_to_flat_compile_exps t env es))
-             (flatLang_App None (Src Aalloc) [Lit None (IntLit (&0));
-                              Lit None (IntLit (&0))]) else
+             (flatLang_App None (Src Aalloc) [Lit None (IntLit (&(&0)));
+                              Lit None (IntLit (&(&0)))]) else
        if op = Eval then
          flatLang_Mat None (Con None NONE
            (source_to_flat_compile_exps t env es))
@@ -157,9 +157,9 @@ let compile_exp_def = cake_define_wf
          Var_local None (implode "")) | _9 -> App None (El 0)
          (source_to_flat_compile_exps t env es)) else
          flatLang_App None (astOp_to_flatOp op)
-           (source_to_flat_compile_exps t env es)
+           (source_to_flat_compile_exps t env es))
         | (t,env,(Log lop e1 e2)) ->
-         match lop with Andalso ->
+         (match lop with Andalso ->
            If None
               (source_to_flat_compile_exp t env e1)
               (source_to_flat_compile_exp t env e2)
@@ -167,7 +167,7 @@ let compile_exp_def = cake_define_wf
            If None
               (source_to_flat_compile_exp t env e1)
               (Bool None T)
-              (source_to_flat_compile_exp t env e2)
+              (source_to_flat_compile_exp t env e2))
         | (t,env,(If e1 e2 e3)) ->
        If None
           (source_to_flat_compile_exp t env e1)
@@ -185,13 +185,13 @@ let compile_exp_def = cake_define_wf
        Let None NONE (source_to_flat_compile_exp t env e1)
          (source_to_flat_compile_exp t env e2)
         | (t,env,(ast_Letrec funs e)) ->
-       let fun_names = MAP FST funs in
+       (let fun_names = MAP FST funs in
        let new_env = nsBindList (MAP (\x. (x,Local None x))
          fun_names) (?_v env) in
          flatLang_Letrec (join_all_names t) (compile_funs t (?_v_fupd
            (K new_env) env) funs)
                   (source_to_flat_compile_exp t (?_v_fupd (K new_env)
-                    env) e)
+                    env) e))
         | (t,env,(Tannot e _10)) -> source_to_flat_compile_exp t env
           e
         | (t,env,(Lannot e (Locs st en))) ->
@@ -202,10 +202,10 @@ let compile_exp_def = cake_define_wf
           source_to_flat_compile_exps t env es
         | (t,env,[]) -> []
         | (t,env,((p,e) :: pes)) ->
-       let pbs = pat_bindings p in
+       (let pbs = pat_bindings p in
        let pts = pat_tups None pbs in
        (compile_pat env p,source_to_flat_compile_exp t (?_v_fupd (K
-         (nsBindList pts (?_v env))) env) e) :: compile_pes t env pes
+         (nsBindList pts (?_v env))) env) e) :: compile_pes t env pes)
         | (t,env,[]) -> []
         | (t,env,((f,x,e) :: funs)) ->
        (f,x,source_to_flat_compile_exp (f :: t) (?_v_fupd (K (nsBind
@@ -228,9 +228,9 @@ let make_varls_def = cake_define
           (t,[]) -> Con None NONE []
         | (t,[x]) -> App None (GlobalVarInit idx) [Var_local None x]
         | ((t:tra),(x :: xs)) ->
-         Let None NONE (App None (GlobalVarInit idx) [Var_local None
+         (Let None NONE (App None (GlobalVarInit idx) [Var_local None
            x])
-           (make_varls (n + 1) None (idx + 1) xs):flatLang_exp`;;
+           (make_varls (n + 1) None (idx + 1) xs):flatLang_exp)`;;
 
 let empty_env_def = cake_define
   `source_to_flat_empty_env = mk_? nsEmpty nsEmpty`;;
@@ -285,7 +285,7 @@ let compile_decs_def = cake_define_wf
   `source_to_flat_compile_decs t n next env envs x6 =
         match (t,x6) with
           ((t:mlstring list),[Dlet locs p e]) ->
-        match simple_dlet p e with SOME (pv,v) ->
+        (match simple_dlet p e with SOME (pv,v) ->
             (match nsLookup (?_v env) v with SOME (Glob t i) ->
                     (n,next,mk_? (alist_to_ns [(pv,Glob t i)])
                       nsEmpty,envs,[]) | _13 -> (n,next,mk_? nsEmpty
@@ -302,9 +302,9 @@ let compile_decs_def = cake_define_wf
                envs,
                [Mat None e'
                   [(compile_pat env p,make_varls 0 None
-                    (next_indices_vidx next) xs)]]))
+                    (next_indices_vidx next) xs)]])))
         | (t,[Dletrec locs funs]) ->
-        let fun_names = MAP FST funs in
+        (let fun_names = MAP FST funs in
         let new_env = nsBindList (MAP (\x. (x,Local None x))
           fun_names) (?_v env) in
         let flat_funs = compile_funs t (?_v_fupd (K new_env) env)
@@ -317,16 +317,16 @@ let compile_decs_def = cake_define_wf
            env',envs,
            [(flatLang_Letrec (join_all_names t) flat_funs
               (make_varls 0 None (next_indices_vidx next) (REVERSE
-                fun_names)))])
+                fun_names)))]))
         | (t,[Dtype locs type_def]) ->
-       let new_env = MAPi (\tid (_14,_15,constrs). alloc_tags
+       (let new_env = MAPi (\tid (_14,_15,constrs). alloc_tags
          (next_indices_tidx next + tid) constrs) type_def in
         (n,(next_indices_tidx_fupd (K (next_indices_tidx next +
           LENGTH type_def)) next),
          mk_? nsEmpty (FOLDL (\ns (l,cids). nsAppend l ns) nsEmpty
            new_env),
          envs,
-         [])
+         []))
         | (_16,[Dtabbrev locs tvs tn t]) ->
         (n,next,empty_env,envs,[])
         | (t,[Dexn locs cn ts]) ->
@@ -336,16 +336,16 @@ let compile_decs_def = cake_define_wf
          envs,
          [])
         | (t,[Dmod mn ds]) ->
-        let (n',next',new_env,envs',ds') =
+        (let (n',next',new_env,envs',ds') =
           source_to_flat_compile_decs (mn :: t) n next env envs ds in
-          (n',next',(lift_env mn new_env),envs',ds')
+          (n',next',(lift_env mn new_env),envs',ds'))
         | (t,[Dlocal lds ds]) ->
-        let (n',next1,new_env1,envs',lds') =
+        (let (n',next1,new_env1,envs',lds') =
           source_to_flat_compile_decs t n next env envs lds in
         let (n'',next2,new_env2,envs'',ds') =
           source_to_flat_compile_decs t n' next1
            (extend_env new_env1 env) envs' ds in
-             (n'',next2,new_env2,envs'',lds' ++ ds')
+             (n'',next2,new_env2,envs'',lds' ++ ds'))
         | (t,[Denv nenv]) ->
         (n + 1,next_indices_vidx_fupd (K (next_indices_vidx next +
           1)) next,
@@ -358,12 +358,13 @@ let compile_decs_def = cake_define_wf
         | (t,[]) ->
        (n,next,empty_env,envs,[])
         | (t,(d :: ds)) ->
-        let (n',next1,new_env1,envs1,d') =
+        (let (n',next1,new_env1,envs1,d') =
           source_to_flat_compile_decs t n next env envs [d] in
         let (n'',next2,new_env2,envs2,ds') =
           source_to_flat_compile_decs t n' next1 (extend_env new_env1
             env) envs1 ds in
-          (n'',next2,extend_env new_env2 new_env1,envs2,d' ++ ds')`;;
+          (n'',next2,extend_env new_env2 new_env1,envs2,d' ++
+            ds'))`;;
 hol4_overload "compile_decs" "source_to_flat_compile_decs";;
 
 let source_to_flat_config_FIELDS = define_record "source_to_flat_config"

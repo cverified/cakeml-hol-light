@@ -238,7 +238,7 @@ let mb_rel_def = cake_define
         match (x2,v1,v2) with
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag
             xs),(RefPtr b ptr)) ->
-      if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else
+      (if b \/ ptr IN FRANGE f \/ ptr IN FDOM refs_old then F else
         match FLOOKUP refs ptr with SOME (MutBlock tag' fin' left'
           child' right') ->
             (tag = tag' /\
@@ -247,7 +247,7 @@ let mb_rel_def = cake_define
                xs = left ++ [child] ++ right /\
                LIST_REL (v_rel f) left left' /\
                mb_rel f refs_old (refs \\ ptr) child child' /\
-               LIST_REL (v_rel f) right right')) | _4 -> F
+               LIST_REL (v_rel f) right right')) | _4 -> F)
         | (_5,v1,v2) -> v_rel f v1 v2`;;
 
 (* Install reads byte/word vectors out of values; these are lists of

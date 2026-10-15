@@ -164,27 +164,27 @@ let line_ok_def = cake_define
         enc_with_nop (asm_config_encode c) (cbw_to_asm b) bytes /\
         (LENGTH bytes = l) /\ asm_ok (cbw_to_asm b) c
         | (c,(LabAsm Halt w bytes l)) ->
-        let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
+        (let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
           enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (Jump w1) c
+          (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
         | (c,(LabAsm Install w bytes l)) ->
-        let w1 = ((n2w 0):'a word) - n2w (pos + 2 * ffi_offset) in
+        (let w1 = ((n2w 0):'a word) - n2w (pos + 2 * ffi_offset) in
           enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (Jump w1) c
+          (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
         | (c,(LabAsm (CallFFI index) w bytes l)) ->
-        let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index
+        (let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index
           ffis (ExtCall index)) * ffi_offset) in
           enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (Jump w1) c
+          (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
         | (c,(LabAsm (Call v24) w bytes l)) ->
         F
         | (c,(LabAsm a w bytes l)) ->
-        match get_label a with Lab l1 l2 ->
+        (match get_label a with Lab l1 l2 ->
         (match lab_lookup l1 l2 labs with
           NONE -> F | SOME t ->
         (let w1 = n2w t - n2w pos in
           enc_with_nop (asm_config_encode c) (lab_inst w1 a) bytes /\
-          (LENGTH bytes = l) /\ asm_ok (lab_inst w1 a) c))`;;
+          (LENGTH bytes = l) /\ asm_ok (lab_inst w1 a) c)))`;;
 
 (* HOL4 ML code, not ported:
 val line_ok_ind = theorem"line_ok_ind";
@@ -916,7 +916,7 @@ let line_lab_len_pos_ok_def = cake_define
   `line_lab_len_pos_ok pos x2 =
         match x2 with
           (Label _54 _55 l) ->
-        if EVEN pos then l = 0 else l = 1
+        (if EVEN pos then l = 0 else l = 1)
         | _56 -> T`;;
 
 let lab_len_pos_ok_def = cake_define
@@ -955,13 +955,12 @@ let lines_offset_ok_def = cake_define
     lines_offset_ok labs ffis (pos + line_len l) ls)`;;
 
 let offset_ok_def = cake_define
-  `lab_to_targetProof_offset_ok labs ffis pos x4 =
-        match x4 with
-          [] -> T
-        | (Section k ls :: ss) ->
-      lines_offset_ok labs ffis pos ls /\
-      lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
-        line_len ls)) ss`;;
+  `(lab_to_targetProof_offset_ok labs ffis pos [] <=> T) /\
+   (lab_to_targetProof_offset_ok labs ffis pos (Section k ls :: ss)
+     <=>
+    lines_offset_ok labs ffis pos ls /\
+    lab_to_targetProof_offset_ok labs ffis (pos + SUM (MAP
+      line_len ls)) ss)`;;
 hol4_overload "offset_ok" "lab_to_targetProof_offset_ok";;
 
 (* HOL4 ML code, not ported:
@@ -978,8 +977,8 @@ let line_labs_exist_def = cake_define
   `line_labs_exist labs x2 =
         match x2 with
           (LabAsm a _60 _61 _62) ->
-       !n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs =
-         NONE)
+       (!n1 n2. (n1,n2) IN labs_of a ==> ~(lab_lookup n1 n2 labs =
+         NONE))
         | _63 -> T`;;
 
 (* HOL4 ML code, not ported:

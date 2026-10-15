@@ -642,176 +642,167 @@ let constrain_op_def = cake_define
                ((implode "Type mismatch")) s | _37 -> failwith l
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-let _ = size_thms "mlstring";;
-let _ = size_thms "pair";;
-let _ = size_thms "pat";;
-(* HOL4 termination: >> rw [] *)
-let infer_e_def = cake_define_wf
-  `MEASURE (\x. match x with INL (_40,_41,e) -> exp_size e | INR (INL
-  (_42,_43,es)) -> list_size exp_size es | INR (INR (INL
-  (_44,_45,pes,_46,_47))) -> list_size (pair_size pat_size exp_size) pes
-  | INR (INR (INR (_48,_49,funs))) ->
-       list_size (pair_size mlstring_size
-            (pair_size mlstring_size exp_size)) funs)`
-  `(infer_e l ienv (Raise e) =
-     monad_bind (infer_e l ienv e) (\t2. monad_bind (add_constraint l
-       t2 (Infer_Tapp [] Texn_num)) (\
-        one. monad_bind fresh_uvar (\
-        t1.
-        return t1)))) /\
-   (infer_e l ienv (Handle e pes) =
-     (if pes = [] then
-       failwith l ((implode "No patterns in handle")) else
-       monad_bind (infer_e l ienv e) (\t1. monad_bind (infer_pes l
-         ienv pes (Infer_Tapp [] Texn_num) t1) (\
-          one.
-          return t1)))) /\
-   (infer_e l ienv (Lit (IntLit i)) =
-     return (Infer_Tapp [] Tint_num)) /\
-   (infer_e l ienv (Lit (Char c)) =
-     return (Infer_Tapp [] Tchar_num)) /\
-   (infer_e l ienv (Lit (StrLit s)) =
-     return (Infer_Tapp [] Tstring_num)) /\
-   (infer_e l ienv (Lit (Word8 w)) =
-     return (Infer_Tapp [] Tword8_num)) /\
-   (infer_e l ienv (Lit (Word64 _38)) =
-     return (Infer_Tapp [] Tword64_num)) /\
-   (infer_e l ienv (Lit (Float64 _39)) =
-     return (Infer_Tapp [] Tdouble_num)) /\
-   (infer_e l ienv (Var id') =
-     monad_bind (lookup_st_ex l (implode "variable") id'
-       (inf_env_inf_v ienv)) (\(tvs,t). monad_bind (n_fresh_uvar tvs) (\
-        uvs.
-        return (infer_deBruijn_subst uvs t)))) /\
-   (infer_e l ienv (Con cn_opt es) =
-     (match cn_opt with
-         NONE ->
-          monad_bind (infer_es l ienv es) (\ts.
-             return (Infer_Tapp ts Ttup_num)) | SOME cn ->
-          monad_bind (lookup_st_ex l (implode "constructor") cn
-            (inf_env_inf_c ienv)) (\(tvs',ts,tn). monad_bind (infer_es l
-            ienv es) (\
-             ts''. monad_bind (n_fresh_uvar (LENGTH tvs')) (\
-             ts'. monad_ignore_bind
-              (guard (LENGTH ts'' = LENGTH ts) l
-                    (concat [(implode "Constructor "); id_to_string
-                      cn; (implode " given ");
-                             toString (&LENGTH ts''); (implode
-                               " arguments, but expected ");
-                             toString (&LENGTH ts)])) (monad_bind
-                               (add_constraints l ts'' (MAP
-                               (infer_type_subst (ZIP (tvs',ts'))) ts))
-                               (\
+let infer_e_def = cake_define_list
+  [`infer_e l ienv (Raise e) =
+        monad_bind (infer_e l ienv e) (\t2. monad_bind
+          (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
+           one. monad_bind fresh_uvar (\
+           t1.
+           return t1)))`;
+   `infer_e l ienv (Handle e pes) =
+        (if pes = [] then
+          failwith l ((implode "No patterns in handle")) else
+          monad_bind (infer_e l ienv e) (\t1. monad_bind (infer_pes
+            l ienv pes (Infer_Tapp [] Texn_num) t1) (\
              one.
-             return (Infer_Tapp ts' tn)))))))) /\
-   (infer_e l ienv (Fun x e) =
-     monad_bind fresh_uvar (\t1. monad_bind (infer_e l
-       (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v ienv)))
-       ienv) e) (\
-        t2.
-        return (Infer_Tapp [t1; t2] Tfn_num)))) /\
-   (infer_e l ienv (App op es) =
-     monad_bind (infer_es l ienv es) (\ts. monad_bind (constrain_op l
-       op ts) (\
-        t.
-        return t))) /\
-   (infer_e l ienv (Log log e1 e2) =
-     monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l ienv
-       e2) (\
-        t2. monad_bind (add_constraint l t1 (Infer_Tapp []
-          Tbool_num)) (\
-        one. monad_bind (add_constraint l t2 (Infer_Tapp []
-          Tbool_num)) (\
-        one.
-        return (Infer_Tapp [] Tbool_num)))))) /\
-   (infer_e l ienv (If e1 e2 e3) =
-     monad_bind (infer_e l ienv e1) (\t1. monad_bind (add_constraint
-       l t1 (Infer_Tapp [] Tbool_num)) (\
-        one. monad_bind (infer_e l ienv e2) (\
-        t2. monad_bind (infer_e l ienv e3) (\
-        t3. monad_bind (add_constraint l t2 t3) (\
-        one.
-        return t2)))))) /\
-   (infer_e l ienv (Mat e pes) =
-     (if pes = [] then
-       failwith l ((implode "No patterns in case")) else
-       monad_bind (infer_e l ienv e) (\t1. monad_bind fresh_uvar (\
-          t2. monad_bind (infer_pes l ienv pes t1 t2) (\
-          one.
-          return t2))))) /\
-   (infer_e l ienv (Let x e1 e2) =
-       monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l
-         (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v
-         ienv))) ienv) e2) (\
-          t2.
-          return t2))) /\
-   (infer_e l ienv (Letrec funs e) =
-     monad_ignore_bind
-       (check_dups l (\n. concat [(implode
-         "Duplicate function name "); n;
+             return t1)))`;
+   `infer_e l ienv (Lit (IntLit i)) =
+        return (Infer_Tapp [] Tint_num)`;
+   `infer_e l ienv (Lit (Char c)) =
+        return (Infer_Tapp [] Tchar_num)`;
+   `infer_e l ienv (Lit (StrLit s)) =
+        return (Infer_Tapp [] Tstring_num)`;
+   `infer_e l ienv (Lit (Word8 w)) =
+        return (Infer_Tapp [] Tword8_num)`;
+   `infer_e l ienv (Lit (Word64 _38)) =
+        return (Infer_Tapp [] Tword64_num)`;
+   `infer_e l ienv (Lit (Float64 _39)) =
+        return (Infer_Tapp [] Tdouble_num)`;
+   `infer_e l ienv (Var id') =
+        monad_bind (lookup_st_ex l (implode "variable") id'
+          (inf_env_inf_v ienv)) (\(tvs,t). monad_bind (n_fresh_uvar tvs)
+          (\
+           uvs.
+           return (infer_deBruijn_subst uvs t)))`;
+   `infer_e l ienv (Con cn_opt es) =
+        (match cn_opt with
+            NONE ->
+             monad_bind (infer_es l ienv es) (\ts.
+                return (Infer_Tapp ts Ttup_num)) | SOME cn ->
+             monad_bind (lookup_st_ex l (implode "constructor") cn
+               (inf_env_inf_c ienv)) (\(tvs',ts,tn). monad_bind
+               (infer_es l ienv es) (\
+                ts''. monad_bind (n_fresh_uvar (LENGTH tvs')) (\
+                ts'. monad_ignore_bind
+                 (guard (LENGTH ts'' = LENGTH ts) l
+                       (concat [(implode "Constructor ");
+                         id_to_string cn; (implode " given ");
+                              toString (&LENGTH ts''); (implode
+                                " arguments, but expected ");
+                              toString (&LENGTH ts)])) (monad_bind
+                                (add_constraints l ts'' (MAP
+                                (infer_type_subst (ZIP (tvs',ts'))) ts))
+                                (\
+                one.
+                return (Infer_Tapp ts' tn)))))))`;
+   `infer_e l ienv (Fun x e) =
+        monad_bind fresh_uvar (\t1. monad_bind (infer_e l
+          (inf_env_inf_v_fupd (K (nsBind x (0,t1) (inf_env_inf_v ienv)))
+          ienv) e) (\
+           t2.
+           return (Infer_Tapp [t1; t2] Tfn_num)))`;
+   `infer_e l ienv (App op es) =
+        monad_bind (infer_es l ienv es) (\ts. monad_bind
+          (constrain_op l op ts) (\
+           t.
+           return t))`;
+   `infer_e l ienv (Log log e1 e2) =
+        monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l
+          ienv e2) (\
+           t2. monad_bind (add_constraint l t1 (Infer_Tapp []
+             Tbool_num)) (\
+           one. monad_bind (add_constraint l t2 (Infer_Tapp []
+             Tbool_num)) (\
+           one.
+           return (Infer_Tapp [] Tbool_num)))))`;
+   `infer_e l ienv (If e1 e2 e3) =
+        monad_bind (infer_e l ienv e1) (\t1. monad_bind
+          (add_constraint l t1 (Infer_Tapp [] Tbool_num)) (\
+           one. monad_bind (infer_e l ienv e2) (\
+           t2. monad_bind (infer_e l ienv e3) (\
+           t3. monad_bind (add_constraint l t2 t3) (\
+           one.
+           return t2)))))`;
+   `infer_e l ienv (Mat e pes) =
+        (if pes = [] then
+          failwith l ((implode "No patterns in case")) else
+          monad_bind (infer_e l ienv e) (\t1. monad_bind fresh_uvar
+            (\
+             t2. monad_bind (infer_pes l ienv pes t1 t2) (\
+             one.
+             return t2))))`;
+   `infer_e l ienv (Let x e1 e2) =
+          monad_bind (infer_e l ienv e1) (\t1. monad_bind (infer_e l
+            (inf_env_inf_v_fupd (K (nsOptBind x (0,t1) (inf_env_inf_v
+            ienv))) ienv) e2) (\
+             t2.
+             return t2))`;
+   `infer_e l ienv (Letrec funs e) =
+        monad_ignore_bind
+          (check_dups l (\n. concat [(implode
+            "Duplicate function name "); n;
                               (implode
 
       " in mutually recursive function definition")])
-                    (MAP FST funs)) (monad_bind (n_fresh_uvar (LENGTH
-                      funs)) (\
-        uvars. monad_bind (return (nsAppend (alist_to_ns (MAP2
-          (\(f,x,e) uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v
-          ienv))) (\
-        env'. monad_bind (infer_funs l (inf_env_inf_v_fupd (K env')
-          ienv) funs) (\
-        funs_ts. monad_bind (add_constraints l uvars funs_ts) (\
-        one. monad_bind (infer_e l (inf_env_inf_v_fupd (K env') ienv)
-          e) (\
-        t.
-        return t))))))) /\
-   (infer_e l ienv (Tannot e t) =
-     monad_bind (infer_e l ienv e) (\t'. monad_bind
-       (type_name_check_subst l
-               (\tv. concat [(implode "Type variable "); tv; (implode
-                 " found in type annotation. ");
-                             (implode
+                       (MAP FST funs)) (monad_bind (n_fresh_uvar
+                         (LENGTH funs)) (\
+           uvars. monad_bind (return (nsAppend (alist_to_ns (MAP2
+             (\(f,x,e) uvar. (f,(0,uvar))) funs uvars)) (inf_env_inf_v
+             ienv))) (\
+           env'. monad_bind (infer_funs l (inf_env_inf_v_fupd (K
+             env') ienv) funs) (\
+           funs_ts. monad_bind (add_constraints l uvars funs_ts) (\
+           one. monad_bind (infer_e l (inf_env_inf_v_fupd (K env')
+             ienv) e) (\
+           t.
+           return t))))))`;
+   `infer_e l ienv (Tannot e t) =
+        monad_bind (infer_e l ienv e) (\t'. monad_bind
+          (type_name_check_subst l
+                  (\tv. concat [(implode "Type variable "); tv;
+                    (implode " found in type annotation. ");
+                              (implode
 
       "Type variables are not supported in type annotations.")])
       (inf_env_inf_t
-               ienv) [] t) (\
-        t''. monad_bind (add_constraint l t' (infer_type_subst []
-          t'')) (\
-        one.
-        return t')))) /\
-   (infer_e l ienv (Lannot e new_l) =
-     infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e) /\
-   (infer_es l ienv [] =
-     return []) /\
-   (infer_es l ienv (e :: es) =
-     monad_bind (infer_e l ienv e) (\t. monad_bind (infer_es l ienv
-       es) (\
-        ts.
-        return (t :: ts)))) /\
-   (infer_pes l ienv [] t1 t2 =
-      return one) /\
-   (infer_pes l ienv ((p,e) :: pes) t1 t2 =
-     monad_bind (infer_p l ienv p) (\(t1',env'). monad_ignore_bind
-       (check_dups l (\n. concat [(implode "Duplicate variable "); n;
-         (implode " in pattern")])
-                 (MAP FST env')) (monad_bind (add_constraint l t1
-                   t1') (\
-        one. monad_bind (infer_e l (inf_env_inf_v_fupd (K (nsAppend
-          (alist_to_ns (MAP (\(n,t). (n,(0,t))) env')) (inf_env_inf_v
+                  ienv) [] t) (\
+           t''. monad_bind (add_constraint l t' (infer_type_subst []
+             t'')) (\
+           one.
+           return t')))`;
+   `infer_e l ienv (Lannot e new_l) =
+        infer_e (loc_err_info_loc_fupd (K (SOME new_l)) l) ienv e`;
+   `infer_es l ienv [] =
+        return []`;
+   `infer_es l ienv (e :: es) =
+        monad_bind (infer_e l ienv e) (\t. monad_bind (infer_es l
+          ienv es) (\
+           ts.
+           return (t :: ts)))`;
+   `infer_pes l ienv [] t1 t2 =
+         return one`;
+   `infer_pes l ienv ((p,e) :: pes) t1 t2 =
+        monad_bind (infer_p l ienv p) (\(t1',env').
+          monad_ignore_bind
+          (check_dups l (\n. concat [(implode
+            "Duplicate variable "); n; (implode " in pattern")])
+                    (MAP FST env')) (monad_bind (add_constraint l t1
+                      t1') (\
+           one. monad_bind (infer_e l (inf_env_inf_v_fupd (K
+             (nsAppend (alist_to_ns (MAP (\(n,t). (n,(0,t))) env'))
+             (inf_env_inf_v ienv))) ienv) e) (\
+           t2'. monad_bind (add_constraint l t2 t2') (\
+           one. monad_bind (infer_pes l ienv pes t1 t2) (\
+           one.
+           return one))))))`;
+   `infer_funs l ienv [] = return []`;
+   `infer_funs l ienv ((f,x,e) :: funs) =
+        monad_bind fresh_uvar (\uvar. monad_bind (infer_e l
+          (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v
           ienv))) ienv) e) (\
-        t2'. monad_bind (add_constraint l t2 t2') (\
-        one. monad_bind (infer_pes l ienv pes t1 t2) (\
-        one.
-        return one))))))) /\
-   (infer_funs l ienv [] = return []) /\
-   (infer_funs l ienv ((f,x,e) :: funs) =
-     monad_bind fresh_uvar (\uvar. monad_bind (infer_e l
-       (inf_env_inf_v_fupd (K (nsBind x (0,uvar) (inf_env_inf_v ienv)))
-       ienv) e) (\
-        t. monad_bind (infer_funs l ienv funs) (\
-        ts.
-        return (Infer_Tapp [uvar; t] Tfn_num :: ts)))))`;;
+           t. monad_bind (infer_funs l ienv funs) (\
+           ts.
+           return (Infer_Tapp [uvar; t] Tfn_num :: ts))))`];;
 
 let extend_dec_ienv_def = cake_define
   `extend_dec_ienv ienv' ienv =
@@ -948,7 +939,7 @@ let infertype_prog_inc_def = cake_define
      next_id)) with
      (M_success new_ienv,st) ->
      (M_success (extend_dec_ienv new_ienv ienv,infer_st_next_id
-       st)) | (M_failure x,_50) -> M_failure x)`;;
+       st)) | (M_failure x,_40) -> M_failure x)`;;
 
 let init_config_def = cake_define
   `(infer_init_config:inf_env) =
@@ -1036,7 +1027,7 @@ let ns_to_alist_def = cake_define
 let inf_env_to_types_string_def = cake_define
   `inf_env_to_types_string s =
      (let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
-     let xs = MAP (\(n,_51,t). concat [n; (implode ": ");
+     let xs = MAP (\(n,_41,t). concat [n; (implode ": ");
                               inf_type_to_string (inf_env_inf_t s) t;
                               (implode "\n")]) l in
         REVERSE xs)`;;

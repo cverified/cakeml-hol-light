@@ -31,8 +31,8 @@ let lexer_fun_symbol_INDUCT,lexer_fun_symbol_RECURSION = define_datatype
 let mkCharS_def = cake_define
   `mkCharS x1 =
         match x1 with
-          (StringS s) -> if LENGTH s = 1 then CharS (HD s) else
-            ErrorS
+          (StringS s) -> (if LENGTH s = 1 then CharS (HD s) else
+            ErrorS)
         | _1 -> ErrorS`;;
 
 let read_while_def = cake_define
@@ -40,8 +40,8 @@ let read_while_def = cake_define
         match x2 with
           "" -> (IMPLODE (REVERSE s),"")
         | (STRING c cs) ->
-        if P c then read_while P cs (c :: s) else (IMPLODE
-          (REVERSE s),STRING c cs)`;;
+        (if P c then read_while P cs (c :: s) else (IMPLODE
+          (REVERSE s),STRING c cs))`;;
 
 let is_single_char_symbol_def = cake_define
   `is_single_char_symbol c = MEM c "()[]{},;"`;;
@@ -203,7 +203,7 @@ let next_sym_def = cake_define
                     rest) else if c = (CHR 126) /\ ~(str = "") /\
                       isDigit (HD str) then
         let (n,rest) = read_while isDigit str [] in
-          SOME (NumberS (0 - &(num_from_dec_string n)),
+          SOME (NumberS ((&0) - &(num_from_dec_string n)),
                 Locs loc (next_loc (LENGTH n + 1) loc),
                 rest) else if c = (CHR 39) then
         let (n,rest) = read_while isAlphaNumPrime str [c] in

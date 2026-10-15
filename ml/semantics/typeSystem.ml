@@ -325,16 +325,16 @@ let supported_arith_def = cake_define
   `supported_arith a x2 =
         match x2 with
           IntT ->
-        if MEM a [Add; Sub; Mul; Div; Mod] then SOME (2:num) else
-          NONE
+        (if MEM a [Add; Sub; Mul; Div; Mod] then SOME (2:num) else
+          NONE)
         | Float64T ->
-        if MEM a [Abs; Neg; Sqrt] then SOME 1 else
+        (if MEM a [Abs; Neg; Sqrt] then SOME 1 else
         if MEM a [Add; Sub; Mul; Div] then SOME 2 else
-        if MEM a [FMA] then SOME 3 else NONE
+        if MEM a [FMA] then SOME 3 else NONE)
         | (WordT _4) ->
-        if MEM a [Add; Sub; And; Or; Xor] then SOME 2 else NONE
+        (if MEM a [Add; Sub; And; Or; Xor] then SOME 2 else NONE)
         | BoolT ->
-        if MEM a [Not] then SOME 1 else NONE
+        (if MEM a [Not] then SOME 1 else NONE)
         | (ty:prim_type) -> NONE`;;
 
 let supported_conversion_def = cake_define

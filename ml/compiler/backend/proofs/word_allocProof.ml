@@ -56,27 +56,27 @@ let colouring_ok_def = cake_define
   `colouring_ok f prog live lt =
         match prog with
           (Seq s1 s2) ->
-       let s2_live = get_live s2 live lt in
+       (let s2_live = get_live s2 live lt in
        let s1_live = get_live s1 s2_live lt in
          INJ f (domain s1_live) UNIV /\
-         colouring_ok f s2 live lt /\ colouring_ok f s1 s2_live lt
+         colouring_ok f s2 live lt /\ colouring_ok f s1 s2_live lt)
         | (If cmp r1 ri e2 e3) ->
-       let e2_live = get_live e2 live lt in
+       (let e2_live = get_live e2 live lt in
        let e3_live = get_live e3 live lt in
        let union_live = union e2_live e3_live in
        let merged = match ri with Reg r2 -> insert r2 one (insert r1
          one union_live) | _1 -> insert r1 one union_live in
          INJ f (domain merged) UNIV /\
-         colouring_ok f e2 live lt /\ colouring_ok f e3 live lt
+         colouring_ok f e2 live lt /\ colouring_ok f e3 live lt)
         | (Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) ->
-       let args_set = numset_list_insert args LN in
+       (let args_set = numset_list_insert args LN in
        let all_names = union (SND cutset) (FST cutset) in
        INJ f (domain (union all_names args_set)) UNIV /\
        INJ f (domain (numset_list_insert v all_names)) UNIV /\
        colouring_ok f ret_handler live lt /\
        (match h with NONE -> T | SOME (v,prog,l1,l2) ->
            INJ f (domain (insert v one all_names)) UNIV /\
-           colouring_ok f prog live lt)
+           colouring_ok f prog live lt))
         | (MustTerminate p) ->
        colouring_ok f p live lt
         | (Loop names body exit_names) ->
@@ -84,9 +84,9 @@ let colouring_ok_def = cake_define
        INJ f (domain exit_names) UNIV /\
        colouring_ok f body names ((names,exit_names) :: lt))
         | prog ->
-       let lset = get_live prog live lt in
+       (let lset = get_live prog live lt in
        let iset = union (get_writes prog) live in
-         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV`;;
+         INJ f (domain lset) UNIV /\ INJ f (domain iset) UNIV)`;;
 
 (*Equivalence on everything except permutation and locals*)
 (* should we add local_size here? may be no, as locals are not included

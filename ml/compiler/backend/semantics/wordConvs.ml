@@ -84,10 +84,10 @@ let inst_ok_less_def = cake_define
        (((asm_config_ISA c = MIPS) \/ (asm_config_ISA c = RISC_V))
          ==> ~(r1 = r3))
         | (c,(Mem m r (Addr r' w))) ->
-        if m IN {Load,Store,Load16,Store16,Load32,Store32} then (\c.
+        (if m IN {Load,Store,Load16,Store16,Load32,Store32} then (\c.
           offset_ok 0 (asm_config_addr_offset c)) c w else if m IN
           {Load16,Store16} then (\c. offset_ok 0 (asm_config_hw_offset
-          c)) c w else (\c. offset_ok 0 (asm_config_byte_offset c)) c w
+          c)) c w else (\c. offset_ok 0 (asm_config_byte_offset c)) c w)
         | (c,(FP (FPLess r d1 d2))) -> fp_reg_ok d1 c /\ fp_reg_ok d2
           c
         | (c,(FP (FPLessEqual r d1 d2))) -> fp_reg_ok d1 c /\
@@ -190,12 +190,12 @@ let full_inst_ok_less_def = cake_define
          (match handler with
            NONE -> T | SOME (n,h,l1,l2) -> full_inst_ok_less c h))
         | (ShareInst op r ad) ->
-       match exp_to_addr ad with SOME (Addr _8 w) ->
+       (match exp_to_addr ad with SOME (Addr _8 w) ->
          (if op IN {Load,Store,Load32,Store32} then (\c. offset_ok 0
            (asm_config_addr_offset c)) c w else if op IN
            {Load16,Store16} then (\c. offset_ok 0 (asm_config_hw_offset
            c)) c w else (\c. offset_ok 0 (asm_config_byte_offset c)) c
-           w) | NONE -> F
+           w) | NONE -> F)
         | prog -> T`;;
 
 (*** All cutsets are well-formed ***)
@@ -342,10 +342,10 @@ let good_handlers_def = cake_define
   `good_handlers n x2 =
         match x2 with
           (Call r d a h) ->
-       match r with
+       (match r with
          NONE -> T | SOME (_35,_36,x,_37,_38) -> good_handlers n x /\
        (match h with SOME (_39,x,l1,_40) -> l1 = n /\ good_handlers n
-         x | _41 -> T)
+         x | _41 -> T))
         | (Seq p1 p2) -> good_handlers n p1 /\ good_handlers n p2
         | (Loop names p exit_names) -> good_handlers n p
         | (If _42 _43 _44 p1 p2) -> good_handlers n p1 /\

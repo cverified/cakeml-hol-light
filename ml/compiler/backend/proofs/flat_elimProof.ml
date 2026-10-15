@@ -79,7 +79,7 @@ let find_v_globals_def = cake_define_wf
   v_size y)`
   `find_v_globals x1 =
         match x1 with
-          (Conv _1 vl) -> (find_v_globalsL vl):1 spt
+          (Conv _1 vl) -> ((find_v_globalsL vl):1 spt)
         | (Closure env _2 e) ->
            union (find_v_globalsL (MAP SND (?_v env))) (find_lookups
              e)

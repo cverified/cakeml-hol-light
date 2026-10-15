@@ -18,9 +18,9 @@ let collect_args_def = cake_define
   `collect_args max_app num_args e =
         match e with
           (Fn t NONE NONE num_args' e) ->
-       if num_args + num_args' <= max_app then
+       (if num_args + num_args' <= max_app then
          collect_args max_app (num_args + num_args') e else
-         (num_args,Fn t NONE NONE num_args' e)
+         (num_args,Fn t NONE NONE num_args' e))
         | e -> (num_args,e)`;;
 
 (* HOL4 ML code, not ported:
@@ -31,9 +31,9 @@ let collect_apps_def = cake_define
   `collect_apps max_app args e =
         match e with
           (App tra NONE e es) ->
-       if LENGTH args + LENGTH es <= max_app then
+       (if LENGTH args + LENGTH es <= max_app then
          collect_apps max_app (args ++ es) e else
-         (args,App tra NONE e es)
+         (args,App tra NONE e es))
         | e -> (args,e)`;;
 
 (* HOL4 ML code, not ported:
@@ -72,15 +72,15 @@ let intro_multi_def = cake_define_wf
         | [Call t ticks n es] ->
        [Call t ticks n (intro_multi max_app es)]
         | [App t NONE e es] ->
-       let (es',e') = collect_apps max_app es e in
+       (let (es',e') = collect_apps max_app es e in
          [App t NONE (HD (intro_multi max_app [e'])) (intro_multi
-           max_app es')]
+           max_app es')])
         | [App t (SOME l) e es] ->
        [App t (SOME l) (HD (intro_multi max_app [e])) (intro_multi
          max_app es)]
         | [Fn t NONE NONE num_args e] ->
-       let (num_args',e') = collect_args max_app num_args e in
-         [Fn t NONE NONE num_args' (HD (intro_multi max_app [e']))]
+       (let (num_args',e') = collect_args max_app num_args e in
+         [Fn t NONE NONE num_args' (HD (intro_multi max_app [e']))])
         | [Fn t loc fvs num_args e] ->
          [Fn t loc fvs num_args (HD (intro_multi max_app [e]))]
         | [Letrec t NONE NONE funs e] ->

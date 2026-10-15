@@ -30,87 +30,80 @@ needs "semantics/ast.ml";;
 
 (* This definition is written to short-circuit,
    i.e. exit as soon as possible. *)
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: \\ fs[list_size_pair_size_MAP_FST_SND] *)
-let get_size_sc_aux_def = cake_define_wf
-  `MEASURE (list_size exp_size o SND)`
-  `(get_size_sc_aux n [] = n) /\
-   (get_size_sc_aux n (x :: y :: xs) =
-      (if n = 0 then n else
-        let n = get_size_sc_aux n [x] in if n = 0 then n else
-          get_size_sc_aux n (y :: xs))) /\
-   (get_size_sc_aux n [Var t v] = n - 1) /\
-   (get_size_sc_aux n [If t x1 x2 x3] =
-      (let n = n - 1 in if n = 0 then 0 else
-      let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
-      let n = get_size_sc_aux n [x2] in if n = 0 then 0 else
-        get_size_sc_aux n [x3])) /\
-   (get_size_sc_aux n [Let t xs x2] =
-      (let n = n - 1 in if n = 0 then 0 else
-      let n = get_size_sc_aux n xs in if n = 0 then 0 else
-        get_size_sc_aux n [x2])) /\
-   (get_size_sc_aux n [Raise t x1] =
-      (let n = n - 1 in if n = 0 then 0 else
-        get_size_sc_aux n [x1])) /\
-   (get_size_sc_aux n [Handle t x1 x2] =
-      (let n = n - 1 in if n = 0 then 0 else
-      let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
-        get_size_sc_aux n [x2])) /\
-   (get_size_sc_aux n [Op t op xs] =
-      (let n = n - 1 in if n = 0 then 0 else
-        get_size_sc_aux n xs)) /\
-   (get_size_sc_aux n [Tick t x] = get_size_sc_aux n [x]) /\
-   (get_size_sc_aux n [Call t ticks dest xs] =
-      (let n = n - 1 in if n = 0 then 0 else
-        get_size_sc_aux n xs)) /\
-   (get_size_sc_aux n [Fn t loc_opt ws_opt num_args x1] =
-      (let n = n - 1 in if n = 0 then 0 else
-        get_size_sc_aux n [x1])) /\
-   (get_size_sc_aux n [Letrec t loc_opt ws_opt fns x1] =
-      (let n = n - 1 in if n = 0 then 0 else
-      let n = get_size_sc_aux n (MAP SND fns) in if n = 0 then 0 else
-        get_size_sc_aux n [x1])) /\
-   (get_size_sc_aux n [App t loc_opt x1 xs] =
-      (let n = n - 1 in if n = 0 then 0 else
-      let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
-        get_size_sc_aux n xs))`;;
+let get_size_sc_aux_def = cake_define_list
+  [`get_size_sc_aux n [] = n`;
+   `get_size_sc_aux n (x :: y :: xs) =
+         (if n = 0 then n else
+           let n = get_size_sc_aux n [x] in if n = 0 then n else
+             get_size_sc_aux n (y :: xs))`;
+   `get_size_sc_aux n [Var t v] = n - 1`;
+   `get_size_sc_aux n [If t x1 x2 x3] =
+         (let n = n - 1 in if n = 0 then 0 else
+         let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
+         let n = get_size_sc_aux n [x2] in if n = 0 then 0 else
+           get_size_sc_aux n [x3])`;
+   `get_size_sc_aux n [Let t xs x2] =
+         (let n = n - 1 in if n = 0 then 0 else
+         let n = get_size_sc_aux n xs in if n = 0 then 0 else
+           get_size_sc_aux n [x2])`;
+   `get_size_sc_aux n [Raise t x1] =
+         (let n = n - 1 in if n = 0 then 0 else
+           get_size_sc_aux n [x1])`;
+   `get_size_sc_aux n [Handle t x1 x2] =
+         (let n = n - 1 in if n = 0 then 0 else
+         let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
+           get_size_sc_aux n [x2])`;
+   `get_size_sc_aux n [Op t op xs] =
+         (let n = n - 1 in if n = 0 then 0 else
+           get_size_sc_aux n xs)`;
+   `get_size_sc_aux n [Tick t x] = get_size_sc_aux n [x]`;
+   `get_size_sc_aux n [Call t ticks dest xs] =
+         (let n = n - 1 in if n = 0 then 0 else
+           get_size_sc_aux n xs)`;
+   `get_size_sc_aux n [Fn t loc_opt ws_opt num_args x1] =
+         (let n = n - 1 in if n = 0 then 0 else
+           get_size_sc_aux n [x1])`;
+   `get_size_sc_aux n [Letrec t loc_opt ws_opt fns x1] =
+         (let n = n - 1 in if n = 0 then 0 else
+         let n = get_size_sc_aux n (MAP SND fns) in if n = 0 then 0
+           else
+           get_size_sc_aux n [x1])`;
+   `get_size_sc_aux n [App t loc_opt x1 xs] =
+         (let n = n - 1 in if n = 0 then 0 else
+         let n = get_size_sc_aux n [x1] in if n = 0 then 0 else
+           get_size_sc_aux n xs)`];;
 
 let get_size_sc_def = cake_define
   `get_size_sc limit e =
      (let n = get_size_sc_aux (limit + 1) [e] in
        if n = 0 then NONE else SOME ((limit + 1) - n))`;;
 
-let _ = size_thms "exp";;
-let _ = size_thms "list";;
-(* HOL4 termination: \\ simp [list_size_pair_size_MAP_FST_SND] *)
-let get_size_aux_def = cake_define_wf
-  `MEASURE (list_size exp_size)`
-  `(get_size_aux [] = 0) /\
-   (get_size_aux (x :: y :: xs) =
-      get_size_aux [x] + get_size_aux (y :: xs)) /\
-   (get_size_aux [Var t v] = 1) /\
-   (get_size_aux [If t x1 x2 x3] =
-      1 + get_size_aux [x1] + get_size_aux [x2] + get_size_aux [x3])
-        /\
-   (get_size_aux [Let t xs x2] =
-      1 + get_size_aux xs + get_size_aux [x2]) /\
-   (get_size_aux [Raise t x1] =
-      1 + get_size_aux [x1]) /\
-   (get_size_aux [Handle t x1 x2] =
-      1 + get_size_aux [x1] + get_size_aux [x2]) /\
-   (get_size_aux [Op t op xs] =
-      1 + get_size_aux xs) /\
-   (get_size_aux [Tick t x] =
-      get_size_aux [x]) /\
-   (get_size_aux [Call t ticks dest xs] =
-      1 + get_size_aux xs) /\
-   (get_size_aux [Fn t loc_opt ws_opt num_args x1] =
-      1 + get_size_aux [x1]) /\
-   (get_size_aux [Letrec t loc_opt ws_opt fns x1] =
-      1 + get_size_aux (MAP SND fns) + get_size_aux [x1]) /\
-   (get_size_aux [App t loc_opt x1 xs] =
-      1 + get_size_aux [x1] + get_size_aux xs)`;;
+let get_size_aux_def = cake_define_list
+  [`get_size_aux [] = 0`;
+   `get_size_aux (x :: y :: xs) =
+         get_size_aux [x] + get_size_aux (y :: xs)`;
+   `get_size_aux [Var t v] = 1`;
+   `get_size_aux [If t x1 x2 x3] =
+         1 + get_size_aux [x1] + get_size_aux [x2] + get_size_aux
+           [x3]`;
+   `get_size_aux [Let t xs x2] =
+         1 + get_size_aux xs + get_size_aux [x2]`;
+   `get_size_aux [Raise t x1] =
+         1 + get_size_aux [x1]`;
+   `get_size_aux [Handle t x1 x2] =
+         1 + get_size_aux [x1] + get_size_aux [x2]`;
+   `get_size_aux [Op t op xs] =
+         1 + get_size_aux xs`;
+   `get_size_aux [Tick t x] =
+         get_size_aux [x]`;
+   `get_size_aux [Call t ticks dest xs] =
+         1 + get_size_aux xs`;
+   `get_size_aux [Fn t loc_opt ws_opt num_args x1] =
+         1 + get_size_aux [x1]`;
+   `get_size_aux [Letrec t loc_opt ws_opt fns x1] =
+         1 + get_size_aux (MAP SND fns) + get_size_aux [x1]`;
+   `get_size_aux [App t loc_opt x1 xs] =
+         1 + get_size_aux [x1] + get_size_aux xs`];;
 
 (* HOL4 ML code, not ported:
 val get_size_aux_ind = theorem "get_size_aux_ind";
@@ -120,58 +113,58 @@ let get_size_def = cake_define
   `clos_known_get_size e = get_size_aux [e]`;;
 hol4_overload "get_size" "clos_known_get_size";;
 
-let free_def = cake_define
-  `clos_known_free x1 =
-        match x1 with
-          [] -> ([],Empty)
-        | ((x:closLang_exp) :: y :: xs) ->
-        let (c1,l1) = clos_known_free [x] in
-        let (c2,l2) = clos_known_free (y :: xs) in
-          (c1 ++ c2,mk_Union l1 l2)
-        | [Var t v] -> ([Var t v],Var v)
-        | [If t x1 x2 x3] ->
-        let (c1,l1) = clos_known_free [x1] in
-        let (c2,l2) = clos_known_free [x2] in
-        let (c3,l3) = clos_known_free [x3] in
-          ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union l2
-            l3))
-        | [Let t xs x2] ->
-        let (c1,l1) = clos_known_free xs in
-        let (c2,l2) = clos_known_free [x2] in
-          ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs) l2))
-        | [Raise t x1] ->
-        let (c1,l1) = clos_known_free [x1] in
-          ([Raise t (HD c1)],l1)
-        | [Tick t x1] ->
-        let (c1,l1) = clos_known_free [x1] in
-          ([Tick t (HD c1)],l1)
-        | [Op t op xs] ->
-        let (c1,l1) = clos_known_free xs in
-          ([Op t op c1],l1)
-        | [App t loc_opt x1 xs2] ->
-        let (c1,l1) = clos_known_free [x1] in
-        let (c2,l2) = clos_known_free xs2 in
-          ([App t loc_opt (HD c1) c2],mk_Union l1 l2)
-        | [Fn t loc _1 num_args x1] ->
-        let (c1,l1) = clos_known_free [x1] in
-        let l2 = Shift num_args l1 in
-          ([Fn t loc (SOME (vars_to_list l2)) num_args (HD c1)],l2)
-        | [Letrec t loc _2 fns x1] ->
-        let m = LENGTH fns in
-        let res = MAP (\(n,x). let (c,l) = clos_known_free [x] in
+let free_def = cake_define_list
+  [`clos_known_free [] = ([],Empty)`;
+   `clos_known_free ((x:closLang_exp) :: y :: xs) =
+         (let (c1,l1) = clos_known_free [x] in
+         let (c2,l2) = clos_known_free (y :: xs) in
+           (c1 ++ c2,mk_Union l1 l2))`;
+   `clos_known_free [Var t v] = ([Var t v],Var v)`;
+   `clos_known_free [If t x1 x2 x3] =
+         (let (c1,l1) = clos_known_free [x1] in
+         let (c2,l2) = clos_known_free [x2] in
+         let (c3,l3) = clos_known_free [x3] in
+           ([If t (HD c1) (HD c2) (HD c3)],mk_Union l1 (mk_Union
+             l2 l3)))`;
+   `clos_known_free [Let t xs x2] =
+         (let (c1,l1) = clos_known_free xs in
+         let (c2,l2) = clos_known_free [x2] in
+           ([Let t c1 (HD c2)],mk_Union l1 (Shift (LENGTH xs)
+             l2)))`;
+   `clos_known_free [Raise t x1] =
+         (let (c1,l1) = clos_known_free [x1] in
+           ([Raise t (HD c1)],l1))`;
+   `clos_known_free [Tick t x1] =
+         (let (c1,l1) = clos_known_free [x1] in
+           ([Tick t (HD c1)],l1))`;
+   `clos_known_free [Op t op xs] =
+         (let (c1,l1) = clos_known_free xs in
+           ([Op t op c1],l1))`;
+   `clos_known_free [App t loc_opt x1 xs2] =
+         (let (c1,l1) = clos_known_free [x1] in
+         let (c2,l2) = clos_known_free xs2 in
+           ([App t loc_opt (HD c1) c2],mk_Union l1 l2))`;
+   `clos_known_free [Fn t loc _1 num_args x1] =
+         (let (c1,l1) = clos_known_free [x1] in
+         let l2 = Shift num_args l1 in
+           ([Fn t loc (SOME (vars_to_list l2)) num_args (HD
+             c1)],l2))`;
+   `clos_known_free [Letrec t loc _2 fns x1] =
+         (let m = LENGTH fns in
+         let res = MAP (\(n,x). let (c,l) = clos_known_free [x] in
                               ((n,HD c),Shift (n + m) l)) fns in
-        let c1 = MAP FST res in
-        let l1 = list_mk_Union (MAP SND res) in
-        let (c2,l2) = clos_known_free [x1] in
-          ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
-           mk_Union l1 (Shift (LENGTH fns) l2))
-        | [Handle t x1 x2] ->
-        let (c1,l1) = clos_known_free [x1] in
-        let (c2,l2) = clos_known_free [x2] in
-          ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2))
-        | [Call t ticks dest xs] ->
-        let (c1,l1) = clos_known_free xs in
-          ([Call t ticks dest c1],l1)`;;
+         let c1 = MAP FST res in
+         let l1 = list_mk_Union (MAP SND res) in
+         let (c2,l2) = clos_known_free [x1] in
+           ([Letrec t loc (SOME (vars_to_list l1)) c1 (HD c2)],
+            mk_Union l1 (Shift (LENGTH fns) l2)))`;
+   `clos_known_free [Handle t x1 x2] =
+         (let (c1,l1) = clos_known_free [x1] in
+         let (c2,l2) = clos_known_free [x2] in
+           ([Handle t (HD c1) (HD c2)],mk_Union l1 (Shift 1 l2)))`;
+   `clos_known_free [Call t ticks dest xs] =
+         (let (c1,l1) = clos_known_free xs in
+           ([Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_known_free";;
 
 (*
@@ -225,32 +218,31 @@ let closed_def = cake_define
   `clos_known_closed x = (\t. t = LN) (db_to_set (SND (free [x])))`;;
 hol4_overload "closed" "clos_known_closed";;
 
-let contains_closures_def = cake_define
-  `(contains_closures [] = F) /\
-   (contains_closures (x :: y :: xs) =
-     (if contains_closures [x] then T else
-       contains_closures (y :: xs))) /\
-   (contains_closures [Var t v] = F) /\
-   (contains_closures [If t x1 x2 x3] =
-      (if contains_closures [x1] then T else
-      if contains_closures [x2] then T else
-        contains_closures [x3])) /\
-   (contains_closures [Let t xs x2] =
-      (if contains_closures xs then T else
-        contains_closures [x2])) /\
-   (contains_closures [Raise t x1] = contains_closures [x1]) /\
-   (contains_closures [Handle t x1 x2] =
-      (if contains_closures [x1] then T else
-        contains_closures [x2])) /\
-   (contains_closures [Op t op xs] = contains_closures xs) /\
-   (contains_closures [Tick t x] = contains_closures [x]) /\
-   (contains_closures [Call t ticks dest xs] = contains_closures xs)
-     /\
-   (contains_closures [Fn t loc_opt ws_opt num_args x1] = T) /\
-   (contains_closures [Letrec t loc_opt ws_opt fns x1] = T) /\
-   (contains_closures [App t loc_opt x1 xs] =
-      (if contains_closures [x1] then T else
-        contains_closures xs))`;;
+let contains_closures_def = cake_define_list
+  [`contains_closures [] = F`;
+   `contains_closures (x :: y :: xs) =
+        (if contains_closures [x] then T else
+          contains_closures (y :: xs))`;
+   `contains_closures [Var t v] = F`;
+   `contains_closures [If t x1 x2 x3] =
+         (if contains_closures [x1] then T else
+         if contains_closures [x2] then T else
+           contains_closures [x3])`;
+   `contains_closures [Let t xs x2] =
+         (if contains_closures xs then T else
+           contains_closures [x2])`;
+   `contains_closures [Raise t x1] = contains_closures [x1]`;
+   `contains_closures [Handle t x1 x2] =
+         (if contains_closures [x1] then T else
+           contains_closures [x2])`;
+   `contains_closures [Op t op xs] = contains_closures xs`;
+   `contains_closures [Tick t x] = contains_closures [x]`;
+   `contains_closures [Call t ticks dest xs] = contains_closures xs`;
+   `contains_closures [Fn t loc_opt ws_opt num_args x1] = T`;
+   `contains_closures [Letrec t loc_opt ws_opt fns x1] = T`;
+   `contains_closures [App t loc_opt x1 xs] =
+         (if contains_closures [x1] then T else
+           contains_closures xs)`];;
 
 (* -----------------------------------------------------------------
 
@@ -288,14 +280,14 @@ let merge_def = cake_define
           (Impossible,y) -> y
         | (x,Impossible) -> x
         | ((Tuple tg1 xs),(Tuple tg2 ys)) ->
-        if LENGTH xs = LENGTH ys /\ tg1 = tg2 then Tuple tg1 (MAP2
-          clos_known_merge xs ys) else Other
+        (if LENGTH xs = LENGTH ys /\ tg1 = tg2 then Tuple tg1 (MAP2
+          clos_known_merge xs ys) else Other)
         | ((ClosNoInline m1 n1),(ClosNoInline m2 n2)) ->
-        if m1 = m2 /\ n1 = n2 then ClosNoInline m1 n1 else Other
+        (if m1 = m2 /\ n1 = n2 then ClosNoInline m1 n1 else Other)
         | ((Clos m1 n1 e1 s1),(Clos m2 n2 e2 s2)) ->
-        if m1 = m2 /\ n1 = n2 /\ e1 = e2 /\ s1 = s2 then Clos m1 n1
-          e1 s1 else Other
-        | ((Int i),(Int j)) -> if i = j then Int i else Other
+        (if m1 = m2 /\ n1 = n2 /\ e1 = e2 /\ s1 = s2 then Clos m1 n1
+          e1 s1 else Other)
+        | ((Int i),(Int j)) -> (if i = j then Int i else Other)
         | (_3,_4) -> Other`;;
 hol4_overload "merge" "clos_known_merge";;
 
@@ -313,14 +305,14 @@ let merge_tup_def = cake_define_wf
           (Impossible,y) -> y
         | (x,Impossible) -> x
         | (Tuple tg1 xs,Tuple tg2 ys) ->
-        if LENGTH xs = LENGTH ys /\ tg1 = tg2 then
-          Tuple tg1 (MAP merge_tup (ZIP (xs,ys))) else Other
+        (if LENGTH xs = LENGTH ys /\ tg1 = tg2 then
+          Tuple tg1 (MAP merge_tup (ZIP (xs,ys))) else Other)
         | (ClosNoInline m1 n1,ClosNoInline m2 n2) ->
-        if m1 = m2 /\ n1 = n2 then ClosNoInline m1 n1 else Other
+        (if m1 = m2 /\ n1 = n2 then ClosNoInline m1 n1 else Other)
         | (Clos m1 n1 e1 s1,Clos m2 n2 e2 s2) ->
-        if m1 = m2 /\ n1 = n2 /\ e1 = e2 /\ s1 = s2 then Clos m1 n1
-          e1 s1 else Other
-        | (Int i,Int j) -> if i = j then Int i else Other
+        (if m1 = m2 /\ n1 = n2 /\ e1 = e2 /\ s1 = s2 then Clos m1 n1
+          e1 s1 else Other)
+        | (Int i,Int j) -> (if i = j then Int i else Other)
         | (_5,_6) -> Other`;;
 
 (* TODO: this function seems to throw the translator into an infinite
@@ -351,21 +343,21 @@ let known_op_def = cake_define
   `known_op op as g =
         match op with
           (GlobOp (Global n)) ->
-      if NULL as then
+      (if NULL as then
         match lookup n g with NONE -> (Other,g) | SOME x -> (x,g)
-          else (Other,g)
+          else (Other,g))
         | (GlobOp (SetGlobal n)) ->
-        match as with [] -> (Other,g) | (a :: xs) ->
+        (match as with [] -> (Other,g) | (a :: xs) ->
           (match lookup n g with NONE -> (Other,insert n a g) | SOME
-            other -> (Other,insert n (merge other a) g))
+            other -> (Other,insert n (merge other a) g)))
         | (BlockOp (Cons tg)) -> (Tuple tg as,g)
         | (IntOp (Const i)) -> (Int i,g)
         | (MemOp El) ->
-        match as with [Tuple _7 xs; Int i] ->
+        (match as with [Tuple _7 xs; Int i] ->
             (if 0 <= i /\ i < &LENGTH xs then (EL (num_of_int i)
               xs,g) else (Other,g)) | Impossible :: xs -> (Impossible,g)
               | _8 :: Impossible :: xs -> (Impossible,g) | _9 ->
-              (Other,g)
+              (Other,g))
         | op -> (Other,g)`;;
 
 let clos_approx_def = cake_define
@@ -392,8 +384,8 @@ let gO_destApx_def = cake_define
   `gO_destApx x1 =
         match x1 with
           (Int i) -> gO_Int i
-        | (Tuple tag args) -> if NULL args then gO_NullTuple tag else
-          gO_None
+        | (Tuple tag args) -> (if NULL args then gO_NullTuple tag
+          else gO_None)
         | _12 -> gO_None`;;
 
 (* TERMINATION: wf_rel_tac `measure (FST o SND o SND)` *)
@@ -450,100 +442,93 @@ let decide_inline_def = cake_define
                    then inlD_LetInline body else inlD_Annotate loc)
                    else inlD_Nothing) | _13 -> inlD_Nothing)`;;
 
-(* TERMINATION: wf_rel_tac `inv_image (measure I LEX measure I)
-                        (\(c, xs, vs, g). (c.inline_factor, list_size
-                          exp_size xs))`
-  \\ simp [dec_inline_factor_def] \\ rpt strip_tac
-  \\ imp_res_tac decide_inline_LetInline
-  \\ fs []
-  \\ drule MEM_list_size
-  \\ disch_then (qspec_then `pair_size (λx. x) exp_size` mp_tac)
-  \\ simp[list_size_pair_size_MAP_FST_SND] *)
-let known_def = cake_define
-  `(known c [] vs (g:val_approx spt) = ([],g)) /\
-   (known c ((x:closLang_exp) :: y :: xs) vs g =
-      (let (eas1,g) = known c [x] vs g in
-      let (eas2,g) = known c (y :: xs) vs g in
-        (eas1 ++ eas2,g))) /\
-   (known c [Var t v] vs g =
-      ([(Var t v,any_el v vs Other)],g)) /\
-   (known c [If t x1 x2 x3] vs g =
-      (let (ea1,g) = known c [x1] vs g in
-      let (ea2,g) = known c [x2] vs g in
-      let (ea3,g) = known c [x3] vs g in
-      let (e1,a1) = HD ea1 in
-      let (e2,a2) = HD ea2 in
-      let (e3,a3) = HD ea3 in
-        ([(If t e1 e2 e3),merge a2 a3],g))) /\
-   (known c [Let t xs x2] vs g =
-      (let (ea1,g) = known c xs vs g in
-      let (ea2,g) = known c [x2] (MAP SND ea1 ++ vs) g in
-      let (e2,a2) = HD ea2 in
-        ([(Let t (MAP FST ea1) e2,a2)],g))) /\
-   (known c [Raise t x1] vs g =
-      (let (ea1,g) = known c [x1] vs g in
-      let (e1,a1) = HD ea1 in
-        ([(Raise t e1,Impossible)],g))) /\
-   (known c [Tick t x1] vs g =
-      (let (ea1,g) = known c [x1] vs g in
-      let (e1,a1) = HD ea1 in
-        ([(Tick t e1,a1)],g))) /\
-   (known c [Handle t x1 x2] vs g =
-      (let (ea1,g) = known c [x1] vs g in
-      let (ea2,g) = known c [x2] (Other :: vs) g in
-      let (e1,a1) = HD ea1 in
-      let (e2,a2) = HD ea2 in
-        ([(Handle t e1 e2,merge a1 a2)],g))) /\
-   (known c [Call t ticks dest xs] vs g =
-      (let (ea1,g) = known c xs vs g in
-        ([(Call t ticks dest (MAP FST ea1),Other)],g))) /\
-   (known c [Op t op xs] vs g =
-      (let (ea1,g) = known c xs vs g in
-      let (a,g) = known_op op (REVERSE (MAP SND ea1)) g in
-      let e =
-          (if isGlobal op then
-            match gO_destApx a with gO_None -> SmartOp t op | gO_Int
-              i -> Op t (IntOp (Const i)) | gO_NullTuple tag -> Op t
-              (BlockOp (Cons tag)) else SmartOp t op) (MAP FST ea1) in
-        ([(e,a)],g))) /\
-   (known c [App t loc_opt x xs] vs g =
-      (let (ea2,g) = known c xs vs g in
-      let (ea1,g) = known c [x] vs g in
-      let (e1,a1) = HD ea1 in
-        match decide_inline c a1 loc_opt (LENGTH xs) with
-          inlD_Nothing -> ([(App t loc_opt e1 (MAP FST ea2),Other)],g) |
-          inlD_Annotate new_loc -> ([(App t (SOME new_loc) e1 (MAP FST
-          ea2),Other)],g) | inlD_LetInline body ->
-              (let (eabody,_14) = known (dec_inline_factor c) [body]
-                (MAP SND ea2) g in
-              let (ebody,abody) = HD eabody in
-                if pure x then
-                  ([(Let (§ t 0) (MAP FST ea2)
+let known_def = cake_define_list
+  [`known c [] vs (g:val_approx spt) = ([],g)`;
+   `known c ((x:closLang_exp) :: y :: xs) vs g =
+         (let (eas1,g) = known c [x] vs g in
+         let (eas2,g) = known c (y :: xs) vs g in
+           (eas1 ++ eas2,g))`;
+   `known c [Var t v] vs g =
+         ([(Var t v,any_el v vs Other)],g)`;
+   `known c [If t x1 x2 x3] vs g =
+         (let (ea1,g) = known c [x1] vs g in
+         let (ea2,g) = known c [x2] vs g in
+         let (ea3,g) = known c [x3] vs g in
+         let (e1,a1) = HD ea1 in
+         let (e2,a2) = HD ea2 in
+         let (e3,a3) = HD ea3 in
+           ([(If t e1 e2 e3),merge a2 a3],g))`;
+   `known c [Let t xs x2] vs g =
+         (let (ea1,g) = known c xs vs g in
+         let (ea2,g) = known c [x2] (MAP SND ea1 ++ vs) g in
+         let (e2,a2) = HD ea2 in
+           ([(Let t (MAP FST ea1) e2,a2)],g))`;
+   `known c [Raise t x1] vs g =
+         (let (ea1,g) = known c [x1] vs g in
+         let (e1,a1) = HD ea1 in
+           ([(Raise t e1,Impossible)],g))`;
+   `known c [Tick t x1] vs g =
+         (let (ea1,g) = known c [x1] vs g in
+         let (e1,a1) = HD ea1 in
+           ([(Tick t e1,a1)],g))`;
+   `known c [Handle t x1 x2] vs g =
+         (let (ea1,g) = known c [x1] vs g in
+         let (ea2,g) = known c [x2] (Other :: vs) g in
+         let (e1,a1) = HD ea1 in
+         let (e2,a2) = HD ea2 in
+           ([(Handle t e1 e2,merge a1 a2)],g))`;
+   `known c [Call t ticks dest xs] vs g =
+         (let (ea1,g) = known c xs vs g in
+           ([(Call t ticks dest (MAP FST ea1),Other)],g))`;
+   `known c [Op t op xs] vs g =
+         (let (ea1,g) = known c xs vs g in
+         let (a,g) = known_op op (REVERSE (MAP SND ea1)) g in
+         let e =
+             (if isGlobal op then
+               match gO_destApx a with gO_None -> SmartOp t op |
+                 gO_Int i -> Op t (IntOp (Const i)) | gO_NullTuple tag
+                 -> Op t (BlockOp (Cons tag)) else SmartOp t op) (MAP
+                 FST ea1) in
+           ([(e,a)],g))`;
+   `known c [App t loc_opt x xs] vs g =
+         (let (ea2,g) = known c xs vs g in
+         let (ea1,g) = known c [x] vs g in
+         let (e1,a1) = HD ea1 in
+           match decide_inline c a1 loc_opt (LENGTH xs) with
+             inlD_Nothing -> ([(App t loc_opt e1 (MAP FST
+             ea2),Other)],g) | inlD_Annotate new_loc -> ([(App t (SOME
+             new_loc) e1 (MAP FST ea2),Other)],g) | inlD_LetInline body
+             ->
+                 (let (eabody,_14) = known (dec_inline_factor c)
+                   [body] (MAP SND ea2) g in
+                 let (ebody,abody) = HD eabody in
+                   if pure x then
+                     ([(Let (§ t 0) (MAP FST ea2)
                               (mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g) else
-                  ([(Let (§ t 0) (SNOC e1 (MAP FST ea2))
+                     ([(Let (§ t 0) (SNOC e1 (MAP FST ea2))
                               (mk_Ticks t 1 (LENGTH xs)
-                                ebody),abody)],g)))) /\
-   (known c [Fn t loc_opt ws_opt num_args x1] vs g =
-      (let (ea1,g) = known c [x1] (REPLICATE num_args Other ++ vs) g
-        in
-      let (body,a1) = HD ea1 in
-        ([(Fn t loc_opt NONE num_args body,
-           (match loc_opt with SOME loc -> clos_approx
-             (clos_known_config_inline_max_body_size c) loc num_args x1
-             | NONE -> Other))],g))) /\
-   (known c [Letrec t loc_opt _15 fns x1] vs g =
-      (let clos = match loc_opt with
-                    NONE -> REPLICATE (LENGTH fns) Other | SOME loc
-                      -> clos_gen_noinline loc 0 fns in
-      let new_fns = MAP (\(num_args,x).
-                     let new_vs = REPLICATE num_args Other ++ clos ++
-                       vs in
-                     let res = known c [x] new_vs g in
-                       (num_args,FST (HD (FST res)))) fns in
-      let (ea1,g) = known c [x1] (clos ++ vs) g in
-      let (e1,a1) = HD ea1 in
-        ([(Letrec t loc_opt NONE new_fns e1,a1)],g)))`;;
+                                ebody),abody)],g)))`;
+   `known c [Fn t loc_opt ws_opt num_args x1] vs g =
+         (let (ea1,g) = known c [x1] (REPLICATE num_args Other ++
+           vs) g in
+         let (body,a1) = HD ea1 in
+           ([(Fn t loc_opt NONE num_args body,
+              (match loc_opt with SOME loc -> clos_approx
+                (clos_known_config_inline_max_body_size c) loc
+                num_args x1 | NONE -> Other))],g))`;
+   `known c [Letrec t loc_opt _15 fns x1] vs g =
+         (let clos = match loc_opt with
+                       NONE -> REPLICATE (LENGTH fns) Other | SOME
+                         loc -> clos_gen_noinline loc 0 fns in
+         let new_fns = MAP (\(num_args,x).
+                        let new_vs = REPLICATE num_args Other ++
+                          clos ++ vs in
+                        let res = known c [x] new_vs g in
+                          (num_args,FST (HD (FST res)))) fns in
+         let (ea1,g) = known c [x1] (clos ++ vs) g in
+         let (e1,a1) = HD ea1 in
+           ([(Letrec t loc_opt NONE new_fns e1,a1)],g))`];;
 
 let compile_def = cake_define
   `clos_known_compile NONE exps = (NONE,exps) /\

@@ -36,7 +36,7 @@ let op_space_req_def = cake_define
         match x1 with
           (MemOp Ref) -> l + 1
         | (MemOp (MutCons tag k)) -> l + 1
-        | (BlockOp (Cons _1)) -> if l = 0 then 0 else l + 1
+        | (BlockOp (Cons _1)) -> (if l = 0 then 0 else l + 1)
         | (BlockOp (Build parts)) -> SUM (MAP part_space_req parts)
         | (WordOp (WordOpw W64 _2)) -> 3
         | (WordOp (WordShift W64 _3 _4)) -> 3
@@ -80,7 +80,7 @@ let space_def = cake_define
         match c with
           (MakeSpace k names) -> INR (k,names,Skip)
         | (Seq c1 c2) ->
-        let d1 = pMakeSpace (space c1) in
+        (let d1 = pMakeSpace (space c1) in
         let x2 = space c2 in
           match x2 with INL c4 ->
              (match c1 with MakeSpace k names -> INR (k,names,c4) |
@@ -95,7 +95,7 @@ let space_def = cake_define
                   INR (op_space_req op (LENGTH args) + k2,
                        list_insert args (delete dest names2),
                        Seq (Assign dest op args NONE) c4) | _11 ->
-                         INL (Seq d1 (pMakeSpace x2)))
+                         INL (Seq d1 (pMakeSpace x2))))
         | (If n c2 c3) ->
         INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
         | c -> INL c`;;

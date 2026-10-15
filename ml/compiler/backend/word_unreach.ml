@@ -54,14 +54,14 @@ let seq_assoc_right_def = cake_define
         | (MustTerminate q) ->
         SimpSeq (MustTerminate (Seq_assoc_right q Skip)) acc
         | (Call ret_prog dest args handler) ->
-        match ret_prog with NONE -> Call ret_prog dest args handler |
-          SOME (x1,x2,q1,x3,x4) ->
+        (match ret_prog with NONE -> Call ret_prog dest args handler
+          | SOME (x1,x2,q1,x3,x4) ->
             SimpSeq (Call (SOME (x1,x2,Seq_assoc_right q1
               Skip,x3,x4))
               dest args
                  (match handler with NONE -> NONE | SOME
                    (y1,q2,y2,y3) -> SOME (y1,Seq_assoc_right q2
-                   Skip,y2,y3))) acc
+                   Skip,y2,y3))) acc)
         | (Loop names body exit_names) ->
         SimpSeq (Loop names (Seq_assoc_right body Skip) exit_names)
           acc

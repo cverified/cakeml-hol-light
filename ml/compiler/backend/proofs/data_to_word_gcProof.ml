@@ -178,7 +178,7 @@ let stack_rel_def = cake_define
 hol4_overload "stack_rel" "data_to_word_gcProof_stack_rel";;
 
 let the_global_def = cake_define
-  `the_global g = the (Number 0) (OPTION_MAP (RefPtr T) g)`;;
+  `the_global g = the (Number (&0)) (OPTION_MAP (RefPtr T) g)`;;
 
 let contains_loc_def = cake_define
   `contains_loc (StackFrame _17 vs _18 _19) (l1,l2) = (ALOOKUP vs 0 =

@@ -242,11 +242,11 @@ let zero_labs_acc_of_def = cake_define
   `zero_labs_acc_of x1 acc =
         match x1 with
           (LocValue _21 (Lab n1 n2)) ->
-       if n2 = 0 then insert n1 one acc else acc
+       (if n2 = 0 then insert n1 one acc else acc)
         | (Jump (Lab n1 n2)) ->
-       if n2 = 0 then insert n1 one acc else acc
+       (if n2 = 0 then insert n1 one acc else acc)
         | (JumpCmp _22 _23 _24 (Lab n1 n2)) ->
-       if n2 = 0 then insert n1 one acc else acc
+       (if n2 = 0 then insert n1 one acc else acc)
         | _25 -> acc`;;
 
 
@@ -372,14 +372,14 @@ let get_shmem_info_def = cake_define
        get_shmem_info (Section k xs :: rest) pos ffi_names shmem_info
         | ((Section k ((Asm (ShareMem m r ad) bytes _47) :: xs) ::
           rest),shmem_info) ->
-       let (name,nb) = get_memop_info m in
+       (let (name,nb) = get_memop_info m in
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          (ffi_names ++ [SharedMem name])
          (shmem_info ++
          [
            mk_shmem_info_num pos nb (match ad with Addr r off -> r)
              (match ad with Addr r off -> w2n off) r (pos + LENGTH
-             bytes)])
+             bytes)]))
         | ((Section k ((LabAsm _48 _49 bytes _50) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)

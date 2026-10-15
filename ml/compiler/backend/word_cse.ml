@@ -461,20 +461,20 @@ let word_cseInst_def = cake_define
         match (data,x2) with
           ((data:knowledge),Skip) -> (data,Inst Skip)
         | (data,(Const r w)) ->
-        let data = invalidate_data data r in
+        (let data = invalidate_data data r in
           if EVEN r then (data,Inst (Const r w)) else
-            add_to_data_const data r w
+            add_to_data_const data r w)
         | (data,(Arith a)) ->
-        let r = firstRegOfArith a in
+        (let r = firstRegOfArith a in
         let data = invalidate_regs data (arithWrites a) in
         let a' = canonicalArith data a in
         let rds = arithReads a' in
           if can_mem_arith a' /\ ~MEM r rds then
             add_to_data (register_reads data rds) r (Arith a') (Arith
               a) else
-            (data,Inst (Arith a))
+            (data,Inst (Arith a)))
         | (data,(Mem op r (Addr a ofs))) ->
-        if is_store op then
+        (if is_store op then
           (knowledge_loads_mem_fupd (K empty) data,Inst (Mem op r
             (Addr a ofs))) else
           let data = invalidate_data data r in
@@ -483,7 +483,7 @@ let word_cseInst_def = cake_define
               let a' = canonicalRegs' r data a in
                 add_to_load_aux (register_read data a') r
                   (loadToNumList op a' ofs)
-                              (Inst (Mem op r (Addr a ofs)))
+                              (Inst (Mem op r (Addr a ofs))))
         | (data,(FP fp:'a asm_inst)) ->
         (invalidate_regs data (fpWrites fp),Inst (FP fp))`;;
 
@@ -651,11 +651,10 @@ let word_common_subexp_elim_def = cake_define
 (* tests *)
 
 let seqs_def = cake_define
-  `word_cse_Seqs x1 =
-        match x1 with
-          [] -> wordLang_Skip
-        | [x] -> x
-        | (x :: y :: xs) -> Seq x (word_cse_Seqs (y :: xs))`;;
+  `(word_cse_Seqs [] = wordLang_Skip) /\
+   (word_cse_Seqs [x] = x) /\
+   (word_cse_Seqs (x :: y :: xs) = Seq x (word_cse_Seqs (y ::
+     xs)))`;;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
 (* Concrete word type: the load-fact keys compare distinct offsets,

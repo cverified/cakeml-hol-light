@@ -117,19 +117,20 @@ let do_eq_def = cake_define
   `flatSem_do_eq x1 x2 =
         match (x1,x2) with
           ((Litv l1),(Litv l2)) ->
-      if lit_same_type l1 l2 then Eq_val (l1 = l2) else Eq_type_error
+      (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
+        Eq_type_error)
         | ((Loc b1 l1),(Loc b2 l2)) ->
        (if b1 /\ b2 then Eq_val (l1 = l2) else Eq_type_error)
         | ((Conv cn1 vs1),(Conv cn2 vs2)) ->
-      if (cn1 = cn2) /\ (LENGTH vs1 = LENGTH vs2) then
+      (if (cn1 = cn2) /\ (LENGTH vs1 = LENGTH vs2) then
         flatSem_do_eq_list vs1 vs2 else if ctor_same_type cn1 cn2
           then
         Eq_val F else
-        Eq_type_error
+        Eq_type_error)
         | ((Vectorv vs1),(Vectorv vs2)) ->
-      if LENGTH vs1 = LENGTH vs2 then
+      (if LENGTH vs1 = LENGTH vs2 then
         flatSem_do_eq_list vs1 vs2 else
-        Eq_val F
+        Eq_val F)
         | ((Closure _5 _6 _7),(Closure _8 _9 _10)) -> Eq_val T
         | ((Closure _11 _12 _13),(Recclosure _14 _15 _16)) -> Eq_val
           T
@@ -166,12 +167,12 @@ let v_to_list_def = cake_define
   `flatSem_v_to_list x1 =
         match x1 with
           (Conv (SOME (cid,tid)) []) ->
-      if cid = nil_tag /\ tid = SOME list_id then
-        SOME [] else NONE
+      (if cid = nil_tag /\ tid = SOME list_id then
+        SOME [] else NONE)
         | (Conv (SOME (cid,tid)) [v1; v2]) ->
-      if cid = cons_tag /\ tid = SOME list_id then
+      (if cid = cons_tag /\ tid = SOME list_id then
         (match flatSem_v_to_list v2 with SOME vs -> SOME (v1 :: vs) |
-          NONE -> NONE) else NONE
+          NONE -> NONE) else NONE)
         | _34 -> NONE`;;
 hol4_overload "v_to_list" "flatSem_v_to_list";;
 
@@ -186,12 +187,12 @@ let v_to_char_list_def = cake_define
   `flatSem_v_to_char_list x1 =
         match x1 with
           (Conv (SOME (cid,tid)) []) ->
-     if cid = nil_tag /\ tid = SOME list_id then
-       SOME [] else NONE
+     (if cid = nil_tag /\ tid = SOME list_id then
+       SOME [] else NONE)
         | (Conv (SOME (cid,tid)) [Litv (Char c); v]) ->
-     if cid = cons_tag /\ tid = SOME list_id then
+     (if cid = cons_tag /\ tid = SOME list_id then
        (match flatSem_v_to_char_list v with SOME cs -> SOME (c :: cs)
-         | NONE -> NONE) else NONE
+         | NONE -> NONE) else NONE)
         | _35 -> NONE`;;
 hol4_overload "v_to_char_list" "flatSem_v_to_char_list";;
 
@@ -200,8 +201,8 @@ let vs_to_string_def = cake_define
         match x1 with
           [] -> SOME (implode "")
         | (Litv (StrLit s1) :: vs) ->
-      match flatSem_vs_to_string vs with SOME s2 -> SOME (^ s1 s2) |
-        _36 -> NONE
+      (match flatSem_vs_to_string vs with SOME s2 -> SOME (^ s1 s2) |
+        _36 -> NONE)
         | _37 -> NONE`;;
 hol4_overload "vs_to_string" "flatSem_vs_to_string";;
 
@@ -594,30 +595,30 @@ let pmatch_def = cake_define_wf
        (Match ((x,v') :: bindings))
         | (flatLang_Pany,v') -> Match bindings
         | ((Plit l),(Litv l')) ->
-       if l = l' then
+       (if l = l' then
          Match bindings else if lit_same_type l l' then
          No_match else
-         Match_type_error
+         Match_type_error)
         | ((Pcon stmp ps),(Conv stmp' vs)) ->
-       if ~pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs) then
+       (if ~pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs) then
          Match_type_error else if OPTION_MAP FST stmp = OPTION_MAP
            FST stmp' /\
           LENGTH ps = LENGTH vs then
          flatSem_pmatch_list s ps vs bindings else
-         No_match
+         No_match)
         | ((Pas p i),v) ->
        flatSem_pmatch s p v ((i,v) :: bindings)
         | ((Pref p),(Loc _97 lnum)) ->
-       match store_lookup lnum (?_refs s) with SOME (Refv v) ->
-         flatSem_pmatch s p v bindings | _98 -> Match_type_error
+       (match store_lookup lnum (?_refs s) with SOME (Refv v) ->
+         flatSem_pmatch s p v bindings | _98 -> Match_type_error)
         | (_99,_100) -> Match_type_error
         | ([],[]) -> Match bindings
         | ((p :: ps),(v :: vs)) ->
-       match flatSem_pmatch s p v bindings with Match_type_error ->
+       (match flatSem_pmatch s p v bindings with Match_type_error ->
          Match_type_error | Match bindings' -> flatSem_pmatch_list s ps
          vs bindings' | No_match ->
          (match flatSem_pmatch_list s ps vs bindings with
-           Match_type_error -> Match_type_error | _101 -> No_match)
+           Match_type_error -> Match_type_error | _101 -> No_match))
         | (_102,_103) -> Match_type_error`;;
 hol4_overload "pmatch" "flatSem_pmatch";;
 hol4_overload "pmatch_list" "flatSem_pmatch_list";;

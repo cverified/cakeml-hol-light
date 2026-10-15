@@ -126,20 +126,20 @@ let abs_stack_def = cake_define
   `abs_stack bitmaps x2 stack x4 =
         match (bitmaps,x2,stack,x4) with
           ((bitmaps:('a word) list),[],stack,[]) ->
-       if stack = [Word ((n2w 0):'a word)] then SOME [] else NONE
+       (if stack = [Word ((n2w 0):'a word)] then SOME [] else NONE)
         | (bitmaps,((StackFrame n l0 l NONE) :: xs),(w :: stack),(len
           :: lens)) ->
-       match full_read_bitmap bitmaps w with NONE -> NONE | SOME bits
-         ->
+       (match full_read_bitmap bitmaps w with NONE -> NONE | SOME
+         bits ->
            (if ~(LENGTH bits = len) then NONE else
            if LENGTH stack < len then NONE else
              let frame = TAKE len stack in
              let rest = DROP len stack in
                match abs_stack bitmaps xs rest lens with NONE -> NONE
-                 | SOME ys -> SOME ((NONE,bits,frame) :: ys))
+                 | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
         | (bitmaps,((StackFrame n l0 l (SOME _1)) :: xs),(w ::
           stack),(len :: lens)) ->
-       if ~(w = Word (n2w 1)) then NONE else
+       (if ~(w = Word (n2w 1)) then NONE else
          (match stack with loc :: hv :: w :: stack ->
             (match full_read_bitmap bitmaps w with NONE -> NONE |
               SOME bits ->
@@ -149,7 +149,7 @@ let abs_stack_def = cake_define
                    let rest = DROP len stack in
                      match abs_stack bitmaps xs rest lens with NONE
                        -> NONE | SOME ys -> SOME ((SOME
-                       (loc,hv),bits,frame) :: ys))) | _2 -> NONE)
+                       (loc,hv),bits,frame) :: ys))) | _2 -> NONE))
         | (bitmaps,_3,_4,_5) -> NONE`;;
 
 (* HOL4 ML code, not ported:

@@ -120,10 +120,10 @@ let bvi_to_cb_aux_def = cake_define_wf
   `bvi_to_cb_aux_sing n loc tag exp =
         match exp with
           (Call t loc' args h) ->
-      match call_to_cb loc t loc' args h with SOME (bs,cb) -> SOME
-        (bs,INR (CallBlock tag [] cb [])) | _38 -> NONE
+      (match call_to_cb loc t loc' args h with SOME (bs,cb) -> SOME
+        (bs,INR (CallBlock tag [] cb [])) | _38 -> NONE)
         | (Op op args) ->
-      match dest_Cons op with SOME tag' ->
+      (match dest_Cons op with SOME tag' ->
           (match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
             SOME (bs,INL vs) ->
                (if pure_exp n (Op op args) then
@@ -131,14 +131,14 @@ let bvi_to_cb_aux_def = cake_define_wf
                    (bs,INR cb) ->
                SOME (bs,INR (CallBlock tag [] cb []))) | NONE ->
           (if pure_exp n (Op op args) then
-            SOME ([Op op args],INL [0]) else NONE)
+            SOME ([Op op args],INL [0]) else NONE))
         | exp ->
-      if pure_exp n exp then
-        SOME ([exp],INL [0]) else NONE
+      (if pure_exp n exp then
+        SOME ([exp],INL [0]) else NONE)
         | [] -> SOME ([],INL [])
         | [exp] -> bvi_to_cb_aux_sing n loc tag exp
         | (h :: t) ->
-      match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
+      (match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
         (bs2,INL vs2) ->
           (match bvi_to_cb_aux_sing n loc tag h with NONE -> NONE |
             SOME (bs1,INL vs1) ->
@@ -151,7 +151,7 @@ let bvi_to_cb_aux_def = cake_define_wf
                    | _40 -> NONE) | SOME (bs2,INR cb) ->
           (match shift_cb 1 cb with CallBlock tag l child r ->
               (let cb' = CallBlock tag (0 :: l) child r in
-                SOME (h :: bs2,INR cb')) | _41 -> NONE)`;;
+                SOME (h :: bs2,INR cb')) | _41 -> NONE))`;;
 
 let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
@@ -171,9 +171,9 @@ let bvi_to_cb_def = cake_define
           (Call call_ts call_loc call_args call_h) ->
       call_to_cb loc call_ts call_loc call_args call_h
         | (Op op xs) ->
-      match dest_Cons op with SOME tag ->
+      (match dest_Cons op with SOME tag ->
           (match bvi_to_cb_aux n loc tag xs with SOME (bs,INR cb) ->
-            SOME (bs,cb) | _48 -> NONE) | _49 -> NONE
+            SOME (bs,cb) | _48 -> NONE) | _49 -> NONE)
         | _50 -> NONE`;;
 
 (* Convert back to BlockOp Cons for comparing semantics *)
@@ -192,7 +192,7 @@ let cb_to_bvi_def = cake_define
 let mut_cons_def = cake_define
   `mut_cons t l r =
      (let l' = MAP (\n. Var n) l in
-     let hole' = Op (IntOp (Const 0)) [] in
+     let hole' = Op (IntOp (Const (&0))) [] in
      let r' = MAP (\n. Var n) r in
      let i = LENGTH r in
      Op (MemOp (MutCons t i)) (l' ++ [hole'] ++ r'))`;;
@@ -278,24 +278,24 @@ let rewrite_wrapper_def = cake_define
         match x4 with
           (Var n) -> NONE
         | (If xi xt xe) ->
-       let opt_t = rewrite_wrapper loc loc_opt n xt in
+       (let opt_t = rewrite_wrapper loc loc_opt n xt in
        let opt_e = rewrite_wrapper loc loc_opt n xe in
        match (opt_t,opt_e) with (NONE,NONE) -> NONE | (SOME yt,NONE)
          -> SOME (If xi yt xe) | (NONE,SOME ye) -> SOME (If xi xt ye) |
-         (SOME yt,SOME ye) -> SOME (If xi yt ye)
+         (SOME yt,SOME ye) -> SOME (If xi yt ye))
         | (Let xs x) ->
-       match rewrite_wrapper loc loc_opt (n + LENGTH xs) x with NONE
-         -> NONE | SOME y -> SOME (Let xs y)
+       (match rewrite_wrapper loc loc_opt (n + LENGTH xs) x with NONE
+         -> NONE | SOME y -> SOME (Let xs y))
         | (Raise x) -> NONE
         | (Tick x) -> OPTION_MAP Tick (rewrite_wrapper loc loc_opt n
           x)
         | (Force _55 n) -> NONE
         | (Call t d args h) -> NONE
         | (Op op op_args) ->
-       match bvi_to_cb n loc (Op op op_args) with SOME (bs,CallBlock
+       (match bvi_to_cb n loc (Op op op_args) with SOME (bs,CallBlock
          tag left child right) ->
            SOME (Let bs (cb_to_bvi_wrapper tag left child right
-             loc_opt)) | _56 -> NONE
+             loc_opt)) | _56 -> NONE)
         | _57 -> NONE`;;
 
 (* Assumes that the function can and should be optimised - has been
@@ -304,22 +304,22 @@ let rewrite_worker_def = cake_define
   `rewrite_worker loc loc_opt i_old_ptr i_old_idx n expr =
         match expr with
           (If xi xt xe) ->
-       let yt = rewrite_worker loc loc_opt i_old_ptr i_old_idx n xt
+       (let yt = rewrite_worker loc loc_opt i_old_ptr i_old_idx n xt
          in
        let ye = rewrite_worker loc loc_opt i_old_ptr i_old_idx n xe
          in
-       If xi yt ye
+       If xi yt ye)
         | (Let xs x) ->
-       let offset = LENGTH xs in
+       (let offset = LENGTH xs in
          Let xs (rewrite_worker loc loc_opt (i_old_ptr + offset)
-           (i_old_idx + offset) (n + offset) x)
+           (i_old_idx + offset) (n + offset) x))
         | (Raise x) -> Raise x
         | (Op op op_args) ->
-      match bvi_to_cb n loc (Op op op_args) with SOME (bs,cb) ->
+      (match bvi_to_cb n loc (Op op op_args) with SOME (bs,cb) ->
           (let offset = LENGTH bs in
              Let bs (cb_to_bvi_worker cb loc_opt (offset + i_old_ptr)
                (offset + i_old_idx))) | NONE ->
-          fill_hole i_old_ptr i_old_idx (Op op op_args)
+          fill_hole i_old_ptr i_old_idx (Op op op_args))
         | (Tick x) ->
        Tick (rewrite_worker loc loc_opt i_old_ptr i_old_idx n x)
         | (Call ts l args h) ->

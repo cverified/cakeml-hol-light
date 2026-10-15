@@ -67,7 +67,7 @@ let call_graph_def = cake_define_wf
         mk_Branch (call_graph funs n ns total p1) (call_graph funs n
           ns total p2)
         | (Call ret dest args handler) ->
-        match dest with NONE -> Unknown | SOME d ->
+        (match dest with NONE -> Unknown | SOME d ->
           (if MEM d ns /\ ret = NONE then Leaf else
           match lookup d funs with NONE -> Unknown | SOME
             ((a:num),body) ->
@@ -88,7 +88,7 @@ let call_graph_def = cake_define_wf
                      [d] total body)))
                    (mk_Branch (call_graph funs n ns total p)
                               (call_graph funs n ns total
-                                ret_prog))))))
+                                ret_prog)))))))
         | (MustTerminate p) -> call_graph funs n ns total p
         | (Alloc _11 _12) -> Call n Leaf
         | (Install _13 _14 _15 _16 _17) -> Unknown

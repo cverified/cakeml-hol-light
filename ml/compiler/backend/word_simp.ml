@@ -111,28 +111,28 @@ let strip_const_def = cake_define
         match x1 with
           [] -> SOME []
         | (Const w :: cs) ->
-        match strip_const cs with SOME ws -> SOME (w :: ws) | _4 ->
-          NONE
+        (match strip_const cs with SOME ws -> SOME (w :: ws) | _4 ->
+          NONE)
         | _5 -> NONE`;;
 
 let const_fp_exp_def = cake_define
   `const_fp_exp e cs =
         match e with
           (Var v) ->
-        match lookup v cs with SOME x -> Const x | NONE -> Var v
+        (match lookup v cs with SOME x -> Const x | NONE -> Var v)
         | (Op op args) ->
-        let const_fp_args = MAP (\a. const_fp_exp a cs) args in
+        (let const_fp_args = MAP (\a. const_fp_exp a cs) args in
           match strip_const const_fp_args with SOME ws -> (match
             word_op op ws with SOME w -> Const w | _6 -> Op op (MAP
-            Const ws)) | _7 -> Op op const_fp_args
+            Const ws)) | _7 -> Op op const_fp_args)
         | (Shift sh e e1) ->
-        let const_fp_exp_e = const_fp_exp e cs in
+        (let const_fp_exp_e = const_fp_exp e cs in
         let const_fp_exp_e1 = const_fp_exp e1 cs in
           match (const_fp_exp_e,const_fp_exp_e1) with (Const c,Const
             c1) ->
                 (match word_sh sh c (w2n c1) with SOME w -> Const w |
                   _8 -> Shift sh (Const c) (Const c1)) | _9 -> Shift sh
-                  const_fp_exp_e const_fp_exp_e1
+                  const_fp_exp_e const_fp_exp_e1)
         | e -> e`;;
 
 let const_fp_move_cs_def = cake_define
@@ -167,8 +167,8 @@ let const_fp_inst_cs_def = cake_define
         | (FP (FPLessEqual r f1 f2)) -> delete r cs
         | (FP (FPEqual r f1 f2)) -> delete r cs
         | ((FP (FPMovToReg r1 r2 d)):'a asm_inst) ->
-       if dimindex (:'a) = 64 then delete r1 cs else delete r2
-         (delete r1 cs)
+       (if dimindex (:'a) = 64 then delete r1 cs else delete r2
+         (delete r1 cs))
         | _36 -> cs`;;
 
 let get_var_imm_cs_def = cake_define
@@ -199,30 +199,30 @@ let const_fp_loop_def = cake_define
             cs cs)
         | (Inst i) -> (Inst i,const_fp_inst_cs i cs)
         | (Assign v e) ->
-        let const_fp_e = const_fp_exp e cs in
+        (let const_fp_e = const_fp_exp e cs in
           match const_fp_e with Const c -> (Assign v
             const_fp_e,insert v c cs) | _38 -> (Assign v
-            const_fp_e,delete v cs)
+            const_fp_e,delete v cs))
         | (Get v name) -> (Get v name,delete v cs)
         | (OpCurrHeap b v w) -> (OpCurrHeap b v w,delete v cs)
         | (MustTerminate p) ->
-       let (p',cs') = const_fp_loop p cs in
-         (MustTerminate p',cs')
+       (let (p',cs') = const_fp_loop p cs in
+         (MustTerminate p',cs'))
         | (Seq p1 p2) ->
-       let (p1',cs') = const_fp_loop p1 cs in
+       (let (p1',cs') = const_fp_loop p1 cs in
        let (p2',cs'') = const_fp_loop p2 cs' in
-         (Seq p1' p2',cs'')
+         (Seq p1' p2',cs''))
         | (wordLang_If cmp lhs rhs p1 p2) ->
-       match (lookup lhs cs,get_var_imm_cs rhs cs) with (SOME
+       (match (lookup lhs cs,get_var_imm_cs rhs cs) with (SOME
          clhs,SOME crhs) ->
            (if asm_word_cmp cmp clhs crhs then const_fp_loop p1 cs
              else const_fp_loop p2 cs) | _39 -> (let (p1',p1cs) =
              const_fp_loop p1 cs in
                  let (p2',p2cs) = const_fp_loop p2 cs in
                   (wordLang_If cmp lhs rhs p1' p2',inter_eq p1cs
-                    p2cs))
+                    p2cs)))
         | (Call ret dest args handler) ->
-       match ret with NONE -> (SmartSeq (drop_consts cs args) (Call
+       (match ret with NONE -> (SmartSeq (drop_consts cs args) (Call
          ret dest args handler),
                     filter_v is_gc_const cs) | SOME
                       (n,names,ret_handler,l1,l2) ->
@@ -235,7 +235,7 @@ let const_fp_loop_def = cake_define
                    (Call (SOME (n,names,ret_handler',l1,l2)) dest
                      args handler),cs'')) else
               (SmartSeq (drop_consts cs args)
-                (Call ret dest args handler),LN))
+                (Call ret dest args handler),LN)))
         | (FFI x0 x1 x2 x3 x4 names) ->
        (SmartSeq (drop_consts cs [x1; x2; x3; x4]) (FFI x0 x1 x2 x3
          x4 names),inter cs (all_names names))

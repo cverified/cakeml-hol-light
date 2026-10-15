@@ -75,8 +75,8 @@ let apply_op_def = cake_define
   `apply_op op e1 e2 = Op (to_op op) [e1; e2]`;;
 
 let id_from_op_def = cake_define
-  `id_from_op Plus = bvi_Op (IntOp (Const 0)) [] /\
-   id_from_op Times = bvi_Op (IntOp (Const 1)) [] /\
+  `id_from_op Plus = bvi_Op (IntOp (Const (&0))) [] /\
+   id_from_op Times = bvi_Op (IntOp (Const (&1))) [] /\
    id_from_op Append = bvi_Op (BlockOp (Cons nil_tag)) [] /\
    id_from_op Noop = dummy`;;
 
@@ -143,10 +143,10 @@ let term_ok_any_def = cake_define_wf
   `term_ok_any ts list expr =
         match expr with
           (Var i) ->
-       if ~list then i < LENGTH ts else if i < LENGTH ts then EL i ts
-         = List else F
+       (if ~list then i < LENGTH ts else if i < LENGTH ts then EL i
+         ts = List else F)
         | (Op op xs) ->
-       match get_bin_args (Op op xs) with
+       (match get_bin_args (Op op xs) with
          NONE -> xs = [] /\ (if list then op = BlockOp (Cons 0) else
            is_const op) | SOME (x,y) ->
            (if op = BlockOp ListAppend then term_ok_any ts T x /\
@@ -154,7 +154,7 @@ let term_ok_any_def = cake_define_wf
              term_ok_int ts x /\ term_ok_int ts y else if ~list /\
              is_rel op then term_ok_int ts x /\ term_ok_int ts y else if
              op = BlockOp (Cons 0) then term_ok_any ts T x /\
-             term_ok_any ts F y else F)
+             term_ok_any ts F y else F))
         | expr -> F`;;
 
 (* TODO the translator does not accept this with the induction theorem
@@ -200,9 +200,9 @@ let try_swap_def = cake_define
         match opr with
           Append -> exp
         | opr ->
-       match opbinargs opr exp with
+       (match opbinargs opr exp with
          NONE -> exp | SOME (l,r) ->
-           (if is_rec loc l then apply_op opr r l else exp)`;;
+           (if is_rec loc l then apply_op opr r l else exp))`;;
 
 (* Check if ok to lift xs into accumulator *)
 let check_op_def = cake_define
@@ -259,10 +259,10 @@ let op_ty_def = cake_define
         | (IntOp Div) -> Int
         | (IntOp Mod) -> Int
         | (BlockOp ListAppend) -> List
-        | (BlockOp (Cons tag)) -> if tag = nil_tag \/ tag = cons_tag
-          then List else Any
-        | (IntOp (Const i)) -> if small_enough_int i then Int else
-          Any
+        | (BlockOp (Cons tag)) -> (if tag = nil_tag \/ tag = cons_tag
+          then List else Any)
+        | (IntOp (Const i)) -> (if small_enough_int i then Int else
+          Any)
         | _18 -> Any`;;
 
 (* Gather information about expressions:
@@ -405,29 +405,29 @@ let rewrite_def = cake_define
         match exp with
           (Var n) -> (F,Var n)
         | (If x1 x2 x3) ->
-       let t1 = FST (HD (scan_expr ts loc [x1])) in
+       (let t1 = FST (HD (scan_expr ts loc [x1])) in
        let (r2,y2) = rewrite loc next opr acc t1 x2 in
        let (r3,y3) = rewrite loc next opr acc t1 x3 in
        let z2 = if r2 then y2 else apply_op opr (Var acc) x2 in
        let z3 = if r3 then y3 else apply_op opr (Var acc) x3 in
-         ((r2 \/ r3),If x1 z2 z3)
+         ((r2 \/ r3),If x1 z2 z3))
         | (Let xs x) ->
-       let ys = scan_expr ts loc xs in
+       (let ys = scan_expr ts loc xs in
        let tt = MAP (FST o SND) ys in
        let tr = match LAST1 ys with NONE -> ts | SOME c -> FST c in
        let (r,y) = rewrite loc next opr (acc + LENGTH xs) (tt ++ tr)
          x in
-         (r,Let xs y)
+         (r,Let xs y))
         | (Tick x) ->
-       let (r,y) = rewrite loc next opr acc ts x in
-         (r,Tick y)
+       (let (r,y) = rewrite loc next opr acc ts x in
+         (r,Tick y))
         | (Force l v) -> (F,Force l v)
         | exp ->
-       match check_op ts opr loc exp with
+       (match check_op ts opr loc exp with
          NONE -> (F,apply_op opr (Var acc) exp) | SOME exp ->
            (match opbinargs opr exp with
              NONE -> (F,apply_op opr (Var acc) exp) | SOME (xs,f)
-               -> (T,push_call next opr acc xs (args_from f)))`;;
+               -> (T,push_call next opr acc xs (args_from f))))`;;
 
 
 (* --- Top-level expression check --- *)
@@ -437,13 +437,13 @@ let has_rec_def = cake_define
         match x2 with
           [] -> F
         | (x :: y :: xs) ->
-       if has_rec loc [x] then T else has_rec loc (y :: xs)
+       (if has_rec loc [x] then T else has_rec loc (y :: xs))
         | [If x1 x2 x3] ->
-       if has_rec loc [x2] then T else has_rec loc [x3]
+       (if has_rec loc [x2] then T else has_rec loc [x3])
         | [Let xs x] -> has_rec loc [x]
         | [Tick x] -> has_rec loc [x]
         | [Op op xs] ->
-       if EXISTS (is_rec loc) xs then T else has_rec loc xs
+       (if EXISTS (is_rec loc) xs then T else has_rec loc xs)
         | [x] -> F`;;
 
 let has_rec1_def = cake_define
@@ -453,15 +453,15 @@ let has_rec_sing_def = cake_define
   `has_rec_sing loc x =
         match x with
           (If x1 x2 x3) ->
-       if has_rec_sing loc x2 then T else has_rec_sing loc x3
+       (if has_rec_sing loc x2 then T else has_rec_sing loc x3)
         | (Let xs x) -> has_rec_sing loc x
         | (Tick x) -> has_rec_sing loc x
         | (Op op xs) ->
-       if EXISTS (is_rec loc) xs then T else has_rec_list loc xs
+       (if EXISTS (is_rec loc) xs then T else has_rec_list loc xs)
         | x -> F
         | [] -> F
         | (x :: xs) ->
-       if has_rec_sing loc x then T else has_rec_list loc xs`;;
+       (if has_rec_sing loc x then T else has_rec_list loc xs)`;;
 
 (* HOL4 ML code, not ported:
 val test1_tm = ``Let [] (Call 0 (SOME 0) [] NONE)``

@@ -567,9 +567,9 @@ let concrete_v_def = cake_define_wf
   `concrete_v v =
         match v with
           v ->
-        match v with Loc _45 _46 -> T | Litv _47 -> T | Conv v_ vs ->
-          concrete_v_list vs | Vectorv vs -> concrete_v_list vs | _48 ->
-          F
+        (match v with Loc _45 _46 -> T | Litv _47 -> T | Conv v_ vs
+          -> concrete_v_list vs | Vectorv vs -> concrete_v_list vs | _48
+          -> F)
         | [] -> T
         | (v :: vs) -> concrete_v v /\ concrete_v_list vs`;;
 
@@ -723,8 +723,8 @@ let xor_bytes_def = cake_define
         ([],bs2) -> SOME (bs2:word8 list)
       | (bs1,[]) -> NONE
       | ((b1 :: bs1),(b2 :: bs2)) ->
-     match xor_bytes bs1 bs2 with NONE -> NONE | SOME rest -> SOME
-       (word_xor b1 b2 :: rest)`;;
+     (match xor_bytes bs1 bs2 with NONE -> NONE | SOME rest ->
+       SOME (word_xor b1 b2 :: rest))`;;
 
 (* With `dest_thunk` we check 3 things:
      - The values contain exactly one reference
@@ -875,7 +875,7 @@ let do_arith_def = cake_define
   `do_arith a x2 vals =
         match x2 with
           Float64T ->
-        match (a,MAP the_Litv_Float64 vals) with (Abs,[v1]) -> SOME
+        (match (a,MAP the_Litv_Float64 vals) with (Abs,[v1]) -> SOME
           (INR (Litv (Float64 (fp64_abs v1)))) | (Neg,[v1]) -> SOME (INR
           (Litv (Float64 (fp64_negate v1)))) | (Sqrt,[v1]) -> SOME (INR
           (Litv (Float64 (fp64_sqrt roundTiesToEven v1)))) | (Add,[v1;
@@ -885,9 +885,9 @@ let do_arith_def = cake_define
           (Float64 (fp64_mul roundTiesToEven v1 v2)))) | (Div,[v1; v2])
           -> SOME (INR (Litv (Float64 (fp64_div roundTiesToEven v1
           v2)))) | (FMA,[v1; v2; v3]) -> SOME (INR (Litv (Float64
-          (fp64_mul_add roundTiesToEven v2 v3 v1)))) | _63 -> NONE
+          (fp64_mul_add roundTiesToEven v2 v3 v1)))) | _63 -> NONE)
         | IntT ->
-        match (a,MAP the_Litv_IntLit vals) with (Add,[v1; v2]) ->
+        (match (a,MAP the_Litv_IntLit vals) with (Add,[v1; v2]) ->
           SOME (INR (Litv (IntLit (v1 + v2)))) | (Sub,[v1; v2]) -> SOME
           (INR (Litv (IntLit (v1 - v2)))) | (Mul,[v1; v2]) -> SOME (INR
           (Litv (IntLit (v1 * v2)))) | (Div,[v1; v2]) -> SOME (if v2 = 0
@@ -896,25 +896,25 @@ let do_arith_def = cake_define
                                 (Mod,[v1; v2]) -> SOME (if v2 = 0 then
                                 INL div_exn_v else
                               INR (Litv (IntLit (v1 % v2)))) | _64 ->
-                                NONE
+                                NONE)
         | (WordT W8) ->
-        match (a,MAP the_Litv_Word8 vals) with (Add,[v1; v2]) -> SOME
-          (INR (Litv (Word8 (word_add v1 v2)))) | (Sub,[v1; v2]) -> SOME
-          (INR (Litv (Word8 (word_sub v1 v2)))) | (And,[v1; v2]) -> SOME
-          (INR (Litv (Word8 (word_and v1 v2)))) | (Or,[v1; v2]) -> SOME
-          (INR (Litv (Word8 (word_or v1 v2)))) | (Xor,[v1; v2]) -> SOME
-          (INR (Litv (Word8 (word_xor v1 v2)))) | _65 -> NONE
+        (match (a,MAP the_Litv_Word8 vals) with (Add,[v1; v2]) ->
+          SOME (INR (Litv (Word8 (word_add v1 v2)))) | (Sub,[v1; v2]) ->
+          SOME (INR (Litv (Word8 (word_sub v1 v2)))) | (And,[v1; v2]) ->
+          SOME (INR (Litv (Word8 (word_and v1 v2)))) | (Or,[v1; v2]) ->
+          SOME (INR (Litv (Word8 (word_or v1 v2)))) | (Xor,[v1; v2]) ->
+          SOME (INR (Litv (Word8 (word_xor v1 v2)))) | _65 -> NONE)
         | (WordT W64) ->
-        match (a,MAP the_Litv_Word64 vals) with (Add,[v1; v2]) ->
+        (match (a,MAP the_Litv_Word64 vals) with (Add,[v1; v2]) ->
           SOME (INR (Litv (Word64 (word_add v1 v2)))) | (Sub,[v1; v2])
           -> SOME (INR (Litv (Word64 (word_sub v1 v2)))) | (And,[v1;
           v2]) -> SOME (INR (Litv (Word64 (word_and v1 v2)))) | (Or,[v1;
           v2]) -> SOME (INR (Litv (Word64 (word_or v1 v2)))) | (Xor,[v1;
           v2]) -> SOME (INR (Litv (Word64 (word_xor v1 v2)))) | _66 ->
-          NONE
+          NONE)
         | BoolT ->
-        match (a,vals) with (Not,[v1]) -> SOME (INR (Boolv
-          (~(the_Boolv v1)))) | _67 -> NONE
+        (match (a,vals) with (Not,[v1]) -> SOME (INR (Boolv
+          (~(the_Boolv v1)))) | _67 -> NONE)
         | _68 -> NONE`;;
 
 let do_conversion_def = cake_define
@@ -931,9 +931,9 @@ let do_conversion_def = cake_define
         | (CharT,IntT) ->
         SOME (INR (Litv (IntLit (&(ORD (the_Litv_Char v))))))
         | (IntT,CharT) ->
-        let i = the_Litv_IntLit v in
+        (let i = the_Litv_IntLit v in
           if i < 0 \/ i > 255 then SOME (INL chr_exn_v) else SOME
-            (INR (Litv (Char (CHR (num_of_int (abs i))))))
+            (INR (Litv (Char (CHR (num_of_int (abs i)))))))
         | (CharT,(WordT W8)) ->
         SOME (INR (Litv (Word8 (char_to_word8 (the_Litv_Char v)))))
         | ((WordT W8),CharT) ->
