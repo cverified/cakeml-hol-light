@@ -193,6 +193,9 @@ INT_NUMERALS = set([
   # is the integer 0
   ('linear_scan', 'get_intervals_ct_def'),
   ('linear_scan', 'get_intervals_ct_monad_def'),
+  # the size of a clash tree is an integer (2i and 1i in the
+  # first two clauses)
+  ('linear_scan', 'size_of_clash_tree_def'),
   # the IntT arm compares the integer v2 with 0
   ('semanticPrimitives', 'do_arith_def'),
 ])
@@ -213,6 +216,16 @@ INT_ARGS = {
   ('linear_scan', 'get_intervals_ct_def'): ['n'],
   ('linear_scan', 'get_intervals_ct_monad_aux_def'): ['n1'],
   ('linear_scan', 'get_intervals_ct_monad_def'): ['n'],
+  # the beginnings and the ends of the live intervals are
+  # integers, which only the array that they come from says
+  ('linear_scan', 'numset_list_add_if_lt_monad_def'):
+    ['begr', 'v'],
+  ('linear_scan', 'numset_list_add_if_gt_monad_def'):
+    ['begr', 'v'],
+  ('linear_scan', 'linear_reg_alloc_step_pass1_def'):
+    ['rbeg', 'rend'],
+  ('linear_scan', 'linear_reg_alloc_step_pass2_def'):
+    ['rbeg', 'rend'],
 }
 
 # definitions whose result is an integer, where no clause of it
@@ -333,6 +346,9 @@ CON_OF = {
   # these build wordLang programs, whose constructor names
   # linear_scan's live trees and word_bignum's language have too
   ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},
+  # this gives back a clash tree of reg_alloc, whose constructor
+  # names linear_scan's live trees have as well
+  ('linear_scan', 'apply_bij_on_clash_tree_def'): {'*': 'reg_alloc'},
   ('word_alloc', 'apply_colour_def'): {'*': 'wordLang'},
   ('word_alloc', 'full_ssa_cc_trans_def'): {'*': 'wordLang'},
 }
@@ -346,6 +362,20 @@ ANNOTATE = set([
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # the int_beg and int_end arrays of the state hold integers and
+  # the others natural numbers, which the port cannot tell from
+  # the numerals of the record that gives the initial values
+  ('linear_scan', 'run_linear_reg_alloc_intervals_def'): r'''
+let run_linear_reg_alloc_intervals_def = cake_define
+  `run_linear_reg_alloc_intervals ct k forced moves
+     reglist_unsorted invbij nmax =
+     run_i_linear_scan_hidden_state
+       (linear_reg_alloc_and_extract_coloration ct k forced moves
+         reglist_unsorted invbij nmax)
+       (mk_i_linear_scan_hidden_state (nmax + 1,0)
+         ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
+         (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
+''',
   # HOL4 states the call tree that EVAL computes for the
   # expression below, in which the type and the fields of the
   # configuration other than the two that are given are free
