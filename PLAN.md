@@ -1,8 +1,9 @@
 # Plan for the first pass (all definitions)
 
-_State: the port has all 4093 definition blocks of the 203
-theories, which `tools/coverage.py` checks; `tools/bin/checkseq`
-loads them one after the other and reports what still fails._
+_State: the port has all 4162 definition blocks of the 227 files,
+which `tools/coverage.py` checks; `tools/bin/checkseq` loads them
+one after the other in the order of `tools/load.txt` and reports
+what still fails._
 
 ## What is ported
 
@@ -24,10 +25,17 @@ The first pass ports, in the topological order of
    closure (they are needed to _state_ the correctness
    theorems of the second pass; `backend_config_ok`,
    `mc_conf_ok`, `env_rel`, ... are of this kind), in the order
-   of `tools/order1b.txt`: 83 theories with 940 blocks, which
-   together with the 3153 blocks of the 120 definition theories
-   and the 24 HOL4 library theories of `ml/lib` make the 4093
-   blocks of the first pass.
+   of `tools/order1b.txt`: 83 theories with 927 blocks, which
+   together with the 3017 blocks of the 120 definition theories
+   and the 218 blocks of the 24 HOL4 library theories of
+   `ml/lib` make the 4162 blocks of the first pass.
+
+A definition that a source makes with ML code counts as well:
+`Define` with any wrapper around it (`data_to_word` has 60
+definitions behind its own `assign_Define`), `tDefine`,
+`Hol_reln` (`parmove`'s `step` and `dstep`) and a definition from
+a quotation that the source keeps in a value (`stack_rawcall`'s
+`comp` and six others).
 
 `tools/portall.py` translates all of them (in seven seconds).
 
