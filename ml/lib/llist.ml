@@ -117,3 +117,108 @@ let LTL_LDROP_1 = prove
   REPEAT GEN_TAC THEN REWRITE_TAC[LTL; LDROP] THEN
   COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
   ASM_SIMP_TAC[ARITH_RULE `m < 1 <=> m = 0`; FORALL_UNWIND_THM2]);;
+
+(* the first element of a lazy list is one step before the elements
+   of its tail *)
+
+let llist_fn_NONE = prove
+ (`!(l:A llist) n. llist_fn l n = NONE ==> llist_fn l (SUC n) = NONE`,
+  GEN_TAC THEN
+  MP_TAC(SPEC `llist_fn (l:A llist)` (CONJUNCT2 llist_tybij)) THEN
+  REWRITE_TAC[CONJUNCT1 llist_tybij]);;
+
+let LTL_LLIST_FN = prove
+ (`!(l:A llist) t n.
+     LTL l = SOME t ==> llist_fn t n = llist_fn l (n + 1)`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[LTL] THEN COND_CASES_TAC THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option"] THEN
+  DISCH_THEN(SUBST1_TAC o SYM) THEN
+  SUBGOAL_THEN
+   `llist_fn (mk_llist (\n. llist_fn (l:A llist) (n + 1))) =
+    (\n. llist_fn l (n + 1))`
+   (fun th -> REWRITE_TAC[th]) THEN
+  REWRITE_TAC[GSYM(CONJUNCT2 llist_tybij)] THEN GEN_TAC THEN
+  REWRITE_TAC[ARITH_RULE `SUC n + 1 = SUC (n + 1)`] THEN
+  MATCH_ACCEPT_TAC llist_fn_NONE);;
+
+let LTL_NONE_LDROP = prove
+ (`!(l:A llist) n. LTL l = NONE ==> LDROP (SUC n) l = NONE`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[LTL; LDROP] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[distinctness "option"] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `0`) THEN
+  ASM_REWRITE_TAC[ARITH_RULE `0 < SUC n`]);;
+
+let LDROP_SUC = prove
+ (`!(l:A llist) t n. LTL l = SOME t ==> LDROP (SUC n) l = LDROP n t`,
+  REPEAT GEN_TAC THEN DISCH_TAC THEN
+  SUBGOAL_THEN `!m. llist_fn (t:A llist) m = llist_fn l (m + 1)`
+    ASSUME_TAC THENL
+   [ASM_MESON_TAC[LTL_LLIST_FN]; ALL_TAC] THEN
+  SUBGOAL_THEN `~(llist_fn (l:A llist) 0 = NONE)` ASSUME_TAC THENL
+   [UNDISCH_TAC `LTL (l:A llist) = SOME t` THEN REWRITE_TAC[LTL] THEN
+    COND_CASES_TAC THEN ASM_REWRITE_TAC[distinctness "option"];
+    ALL_TAC] THEN
+  ASM_REWRITE_TAC[LDROP] THEN
+  SUBGOAL_THEN
+   `(!m. m < SUC n ==> ~(llist_fn (l:A llist) m = NONE)) <=>
+    (!m. m < n ==> ~(llist_fn l (m + 1) = NONE))`
+   SUBST1_TAC THENL
+   [EQ_TAC THENL
+     [DISCH_TAC THEN X_GEN_TAC `m:num` THEN DISCH_TAC THEN
+      FIRST_X_ASSUM MATCH_MP_TAC THEN UNDISCH_TAC `m < n` THEN
+      ARITH_TAC;
+      DISCH_TAC THEN X_GEN_TAC `m:num` THEN
+      STRUCT_CASES_TAC (SPEC `m:num` num_CASES) THEN
+      REWRITE_TAC[LT_SUC] THEN REWRITE_TAC[ADD1] THEN
+      ASM_MESON_TAC[]];
+    ALL_TAC] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[] THEN AP_TERM_TAC THEN
+  MATCH_MP_TAC LLIST_FN_EQ THEN
+  REWRITE_TAC[CONJUNCT1 llist_tybij; FUN_EQ_THM] THEN GEN_TAC THEN
+  REWRITE_TAC[ARITH_RULE `x + SUC n = (x + n) + 1`]);;
+
+(* a list of which P does not hold itself but eventually does, is a
+   list with a tail, of which P eventually holds *)
+
+let eventually_LTL = prove
+ (`!P (l:A llist).
+     eventually P l /\ ~P l
+     ==> ?t. LTL l = SOME t /\ eventually P t`,
+  REPEAT GEN_TAC THEN REWRITE_TAC[eventually] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 MP_TAC ASSUME_TAC) THEN
+  REWRITE_TAC[LEFT_IMP_EXISTS_THM] THEN
+  MAP_EVERY X_GEN_TAC [`n:num`; `u:A llist`] THEN STRIP_TAC THEN
+  ASM_CASES_TAC `n = 0` THENL
+   [UNDISCH_TAC `LDROP n (l:A llist) = SOME u` THEN
+    ASM_REWRITE_TAC[LDROP_0; injectivity "option"] THEN
+    DISCH_THEN(SUBST_ALL_TAC o SYM) THEN ASM_MESON_TAC[];
+    ALL_TAC] THEN
+  SUBGOAL_THEN `?m. n = SUC m` (CHOOSE_THEN SUBST_ALL_TAC) THENL
+   [ASM_MESON_TAC[num_CASES]; ALL_TAC] THEN
+  SUBGOAL_THEN `?t. LTL (l:A llist) = SOME t` STRIP_ASSUME_TAC THENL
+   [ASM_MESON_TAC[LTL_NONE_LDROP; cases "option";
+                  distinctness "option"];
+    ALL_TAC] THEN
+  EXISTS_TAC `t:A llist` THEN ASM_REWRITE_TAC[] THEN
+  MAP_EVERY EXISTS_TAC [`m:num`; `u:A llist`] THEN
+  ASM_MESON_TAC[LDROP_SUC]);;
+
+(* the least number that satisfies a predicate that 0 does not
+   satisfy is one more than the least number that satisfies the
+   predicate one step on (which a recursion along a lazy list needs,
+   for misc's Lnext) *)
+
+let MINIMAL_SUC = prove
+ (`!P. (?n. P n) /\ ~P 0
+       ==> (minimal n. P n) = SUC (minimal n. P (SUC n))`,
+  GEN_TAC THEN DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+  SUBGOAL_THEN `?m. (P:num->bool) (SUC m)` ASSUME_TAC THENL
+   [ASM_MESON_TAC[num_CASES]; ALL_TAC] THEN
+  MP_TAC(SPEC `\m. (P:num->bool) (SUC m)` MINIMAL) THEN
+  ASM_REWRITE_TAC[] THEN
+  DISCH_THEN(CONJUNCTS_THEN2 ASSUME_TAC ASSUME_TAC) THEN
+  MATCH_MP_TAC MINIMAL_UNIQUE THEN ASM_REWRITE_TAC[] THEN
+  X_GEN_TAC `m:num` THEN
+  STRUCT_CASES_TAC (SPEC `m:num` num_CASES) THEN
+  ASM_REWRITE_TAC[LT_SUC] THEN ASM_MESON_TAC[]);;

@@ -130,6 +130,48 @@ MEASURE = {
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # HOL4 proves the termination with the induction principle
+  # of llistTheory's eventually; the port proves the
+  # existence of the function with the number of steps to
+  # the first tail that satisfies P as the witness (the
+  # lemmas that it needs are in ml/lib/llist.ml)
+  ('misc', 'lnext_def'): r'''
+let lnext_def =
+  let th = prove
+   (`?Lnext. !P (ll:A llist).
+       Lnext P ll = if eventually P ll then
+                      if P ll then 0
+                      else SUC (Lnext P (THE (LTL ll)))
+                    else ARB`,
+    EXISTS_TAC
+     `\P (ll:A llist).
+        if eventually P ll
+        then minimal n. ?u. LDROP n ll = SOME u /\ P u
+        else ARB` THEN
+    REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+    COND_CASES_TAC THEN REWRITE_TAC[] THEN COND_CASES_TAC THENL
+     [MATCH_MP_TAC MINIMAL_UNIQUE THEN BETA_TAC THEN CONJ_TAC THENL
+       [EXISTS_TAC `ll:A llist` THEN ASM_REWRITE_TAC[LDROP_0];
+        REWRITE_TAC[LT]];
+      MP_TAC(SPECL [`P:A llist->bool`; `ll:A llist`]
+                   eventually_LTL) THEN
+      ASM_REWRITE_TAC[] THEN
+      DISCH_THEN(X_CHOOSE_THEN `t:A llist` STRIP_ASSUME_TAC) THEN
+      ASM_REWRITE_TAC[THE] THEN
+      MP_TAC(SPEC `\n. ?u. LDROP n (ll:A llist) = SOME u /\ P u`
+                  MINIMAL_SUC) THEN
+      REWRITE_TAC[] THEN ANTS_TAC THENL
+       [CONJ_TAC THENL
+         [UNDISCH_TAC `eventually (P:A llist->bool) ll` THEN
+          REWRITE_TAC[eventually] THEN MESON_TAC[];
+          REWRITE_TAC[LDROP_0; injectivity "option"] THEN
+          ASM_MESON_TAC[]];
+        ALL_TAC] THEN
+      DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN
+      REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN
+      ASM_MESON_TAC[LDROP_SUC]]) in
+  new_specification ["Lnext"] th;;
+''',
   # HOL4 computes the value with EVAL (of the expression below) and
   # states the numeral; the port states the expression, which is the
   # same number
@@ -202,11 +244,6 @@ let mergesortN_tail_def = cake_define_wf
 # port writes the HOL4 text in a comment, so that the gap is visible
 # in the file (PENDING.md lists them all)
 NOT_YET = {
-  ('misc', 'Lnext_def'):
-    'HOL4 proves the termination with the induction principle of\n'
-    '   llistTheory\'s eventually, which the port does not have yet',
-  ('misc', 'Lnext_pos_def'):
-    'needs Lnext',
   ('data_to_word', 'AnyArith_call_tree_def'):
     'the value is the call graph that HOL4 computes with EVAL;\n'
     '   the expression that it evaluates has a free variable\n'

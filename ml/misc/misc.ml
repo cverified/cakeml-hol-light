@@ -11,6 +11,7 @@
 (* Misc. lemmas (without any compiler constants) *)
 
 needs "lib/alignment.ml";;
+needs "lib/binary_ieee.ml";;
 needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
@@ -420,37 +421,45 @@ let list_set_eq_def = cake_define
 (* move into llistTheory? *)
 
 (* computes the next position for which P holds *)
-(* PENDING: HOL4 proves the termination with the induction principle of
-   llistTheory's eventually, which the port does not have yet
-Definition Lnext_def:
-  Lnext P ll = if eventually P ll then
-                        if P ll then 0
-                        else SUC(Lnext P (THE (LTL ll)))
-                     else ARB
-Termination
-  exists_tac``\(P,ll') (P',ll).
-    ((P = P') /\ eventually P ll /\ eventually P ll' /\
-    (LTL ll = SOME ll') /\ ¬ P ll)`` >>
-    reverse(rw[relationTheory.WF_DEF,eventually_thm])
-  >-(Cases_on`ll` >> fs[])
-  >-(Cases_on`ll` >> fs[]) >>
-  Cases_on`w` >> rename[`B(P, ll)`] >> rename[`B(P, ll)`] >>
-  reverse(Cases_on`eventually P ll`)
-  >-(qexists_tac`(P,ll)` >> rw[] >> pairarg_tac >> fs[] >> res_tac >>
-    rfs[]) >>
-  rpt(LAST_X_ASSUM MP_TAC) >> qid_spec_tac `ll` >>
-  HO_MATCH_MP_TAC eventually_ind >> rw[]
-  >-(qexists_tac`(P,ll)` >> rw[] >> pairarg_tac >> fs[] >> res_tac >>
-    rfs[]) >>
-  Cases_on`B(P,ll)` >-(metis_tac[]) >>
-  qexists_tac`(P,h:::ll)` >> fs[] >> rw[] >> pairarg_tac >> fs[]
-End *)
+let lnext_def =
+  let th = prove
+   (`?Lnext. !P (ll:A llist).
+       Lnext P ll = if eventually P ll then
+                      if P ll then 0
+                      else SUC (Lnext P (THE (LTL ll)))
+                    else ARB`,
+    EXISTS_TAC
+     `\P (ll:A llist).
+        if eventually P ll
+        then minimal n. ?u. LDROP n ll = SOME u /\ P u
+        else ARB` THEN
+    REWRITE_TAC[] THEN REPEAT GEN_TAC THEN
+    COND_CASES_TAC THEN REWRITE_TAC[] THEN COND_CASES_TAC THENL
+     [MATCH_MP_TAC MINIMAL_UNIQUE THEN BETA_TAC THEN CONJ_TAC THENL
+       [EXISTS_TAC `ll:A llist` THEN ASM_REWRITE_TAC[LDROP_0];
+        REWRITE_TAC[LT]];
+      MP_TAC(SPECL [`P:A llist->bool`; `ll:A llist`]
+                   eventually_LTL) THEN
+      ASM_REWRITE_TAC[] THEN
+      DISCH_THEN(X_CHOOSE_THEN `t:A llist` STRIP_ASSUME_TAC) THEN
+      ASM_REWRITE_TAC[THE] THEN
+      MP_TAC(SPEC `\n. ?u. LDROP n (ll:A llist) = SOME u /\ P u`
+                  MINIMAL_SUC) THEN
+      REWRITE_TAC[] THEN ANTS_TAC THENL
+       [CONJ_TAC THENL
+         [UNDISCH_TAC `eventually (P:A llist->bool) ll` THEN
+          REWRITE_TAC[eventually] THEN MESON_TAC[];
+          REWRITE_TAC[LDROP_0; injectivity "option"] THEN
+          ASM_MESON_TAC[]];
+        ALL_TAC] THEN
+      DISCH_THEN SUBST1_TAC THEN AP_TERM_TAC THEN AP_TERM_TAC THEN
+      REWRITE_TAC[FUN_EQ_THM] THEN GEN_TAC THEN
+      ASM_MESON_TAC[LDROP_SUC]]) in
+  new_specification ["Lnext"] th;;
 
-(* PENDING: needs Lnext
-Definition Lnext_pos_def:
-  Lnext_pos (ll :num llist) = Lnext (λll. ∃k. LHD ll = SOME k ∧ k ≠ 0)
-    ll
-End *)
+let lnext_pos_def = cake_define
+  `Lnext_pos (ll:num llist) = Lnext (\ll. ?k. LHD ll = SOME k /\ ~(k
+  = 0)) ll`;;
 
 (* insert a string (l1) at specified index (n) in a list (l2) *)
 let insert_atI_def = cake_define
