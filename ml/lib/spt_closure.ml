@@ -40,3 +40,12 @@ let closure_spt_def = cake_define_wf
      let nodes = spt_fold union LN sets in
      if subspt nodes reachable then reachable else closure_spt
        (union reachable nodes) tree)`;;
+
+let is_adjacent_def = cake_define
+  `is_adjacent tree x y =
+   (?aSetx.
+       (lookup x tree = SOME aSetx) /\ (lookup y aSetx = SOME
+         one))`;;
+
+let is_reachable_def = cake_define
+  `is_reachable tree = RTC (is_adjacent tree)`;;

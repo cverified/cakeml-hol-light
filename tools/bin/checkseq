@@ -33,7 +33,10 @@ for f in "$@"; do
       awk -v f="$g" '/Error in included file/ {
              if (index($0, f) == 0) { b = ""; next } }
            { b = b $0 "\n" } END { printf "%s", b }' |
-      grep -E '^(cake_define [a-zA-Z_0-9]* failed|Exception|Error|Warning [0-9])' |
-      head -${TAIL:-1} | tr '\n' '|')
+      awk '/^(cake_define [a-zA-Z_0-9]* failed|Exception|Error|Warning [0-9])/ {
+             print;
+             # the toplevel breaks a long exception over lines
+             if ($0 ~ /^Exception:$/) { getline; print; getline; print }
+             exit }' | tr '\n' ' ')
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
 done

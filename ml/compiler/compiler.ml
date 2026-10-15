@@ -28,6 +28,7 @@ needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
+needs "lib/integer_word.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
@@ -302,8 +303,8 @@ let locs_to_string_def = cake_define
            let underline =
              concat (REPLICATE c (implode " ") ++ REPLICATE ((stop -
                c) + 1) ((implode) [CHR 94])) in
-             concat [(implode "line "); (num_to_str) (r + 1);
-               (implode "\n\n");
+             concat [(implode "line "); toString (r + 1); (implode
+               "\n\n");
                      line; (implode "\n");
                      underline; (implode "\n")]) | _4 -> implode
                        "unknown location"`;;

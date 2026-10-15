@@ -22,12 +22,12 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/compiler.ml";;
+needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/multiword.ml";;
 needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -409,7 +409,7 @@ let stack_consumed_def = cake_define
             else
          OPTION_MAP2 MAX (lookup Mul_location sfs)
            (max_depth sfs AnyArith_call_tree)
-        | ((BlockOp (EQUAL)),[v1; v2]) ->
+        | ((BlockOp Equal),[v1; v2]) ->
       (eq_code_stack_max (MIN (vs_depth v1 + 1) (vs_depth v2 + 1))
         sfs)
         | ((IntOp Sub),[Number n1; Number n2]) ->
@@ -430,7 +430,7 @@ let stack_consumed_def = cake_define
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
-        | ((IntOp (LESS)),vs) ->
+        | ((IntOp Less),vs) ->
        OPTION_MAP2 MAX
         (lookup Compare_location sfs)
         (lookup Compare1_location sfs)
@@ -775,10 +775,9 @@ let do_int_app_def = cake_define
        (if n2 = 0 then NONE else SOME (Number (n1 / n2)))
       | ((Mod),[Number n1; Number n2]) ->
        (if n2 = 0 then NONE else SOME (Number (n1 % n2)))
-      | (((LESS)),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
+      | ((Less),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
       | ((LessEq),[Number n1; Number n2]) -> SOME (Boolv (n1 <= n2))
-      | (((GREATER)),[Number n1; Number n2]) -> SOME (Boolv (n1 >
-        n2))
+      | ((Greater),[Number n1; Number n2]) -> SOME (Boolv (n1 > n2))
       | ((GreaterEq),[Number n1; Number n2]) -> SOME (Boolv (n1 >=
         n2))
       | ((LessConstSmall n),[Number i]) ->
@@ -798,7 +797,7 @@ let do_word_app_def = cake_define
            SOME (Word64 (opw_lookup opw w1 w2))
         | ((WordTest W8 test),[Number n1; Number n2]) ->
           (if 0 <= n1 /\ n1 < 256 /\ 0 <= n2 /\ n2 < 256 then
-             (match test with (EQUAL) -> SOME (Boolv (n1 = n2)) |
+             (match test with Equal -> SOME (Boolv (n1 = n2)) |
                Compare Lt -> SOME (Boolv (n1 < n2)) | Compare Leq ->
                SOME (Boolv (n1 <= n2)) | _85 -> NONE) else NONE)
         | ((WordShift W8 sh n),[Number i]) ->
@@ -1154,7 +1153,7 @@ let do_app_aux_def = cake_define
                                #string)) | _149 -> ((Rerr (Rabort
                                Rtype_error)):(dataSem_v#('c
                                ,'ffi)dataSem_state)#string+dataSem_v
-                               #string)) | (BlockOp (EQUAL),[x1; x2]) ->
+                               #string)) | (BlockOp Equal,[x1; x2]) ->
            (match do_eq (?_refs s) x1 x2 with Eq_val b -> Rval (Boolv
              b,s) | _150 -> ((Rerr (Rabort
              Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
@@ -1300,8 +1299,7 @@ let do_app_def = cake_define
        (if op = Install then do_install vs
          (dataSem_state_stack_frame_sizes_fupd (K LN)
          (dataSem_state_stack_max_fupd (K NONE) s)) else
-       if MEM op [IntOp (GREATER); IntOp GreaterEq] then ((Rerr
-         (Rabort
+       if MEM op [IntOp Greater; IntOp GreaterEq] then ((Rerr (Rabort
          Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state)#string
          +dataSem_v#string) else
        match do_space op vs s with NONE -> ((Rerr (Rabort

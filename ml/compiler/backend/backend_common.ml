@@ -147,7 +147,8 @@ let upper_w2w_def = cake_define
      (if dimindex (:'a) = 32 then w2w w << 32 else (w2w w):word64)`;;
 
 let word_add_carry_def = cake_define
-  `word_add_carry (l) (r) (c) =
+  `(word_add_carry (l:'ga word) (r:'ga word) (c:'ga word):'ga word#'ga
+  word) =
    (let
      res = w2n l + w2n r + (if c = (n2w 0) then 0 else 1) in
      (n2w res,(if dimword (:'ga) <= res then (n2w 1) else (n2w

@@ -9,7 +9,7 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "lib/ternaryComparisons.ml";;
+needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -316,7 +316,7 @@ let t_of_def = cake_define
 let supported_test_def = cake_define
   `supported_test x1 ty =
       match x1 with
-        (EQUAL) -> T
+        Equal -> T
       | (Compare _2) -> MEM ty [IntT; CharT; WordT W8; Float64T;
         StrT]
       | _3 -> (ty = StrT)`;;

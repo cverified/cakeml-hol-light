@@ -16,10 +16,10 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -209,10 +209,9 @@ let do_int_app_def = cake_define
        (if n2 = 0 then NONE else SOME (Number (n1 / n2)))
       | ((Mod),[Number n1; Number n2]) ->
        (if n2 = 0 then NONE else SOME (Number (n1 % n2)))
-      | (((LESS)),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
+      | ((Less),[Number n1; Number n2]) -> SOME (Boolv (n1 < n2))
       | ((LessEq),[Number n1; Number n2]) -> SOME (Boolv (n1 <= n2))
-      | (((GREATER)),[Number n1; Number n2]) -> SOME (Boolv (n1 >
-        n2))
+      | ((Greater),[Number n1; Number n2]) -> SOME (Boolv (n1 > n2))
       | ((GreaterEq),[Number n1; Number n2]) -> SOME (Boolv (n1 >=
         n2))
       | ((LessConstSmall n),[Number i]) ->
@@ -233,7 +232,7 @@ let do_word_app_def = cake_define
            SOME (Word64 (opw_lookup opw w1 w2))
         | ((WordTest W8 test),[Number n1; Number n2]) ->
           (if 0 <= n1 /\ n1 < 256 /\ 0 <= n2 /\ n2 < 256 then
-             (match test with (EQUAL) -> SOME (Boolv (n1 = n2)) |
+             (match test with Equal -> SOME (Boolv (n1 = n2)) |
                Compare cmp -> SOME (Boolv (int_cmp cmp n1 n2)) | _30 ->
                NONE) else NONE)
         | ((WordShift W8 sh n),[Number i]) ->
@@ -556,7 +555,7 @@ let do_app_def = cake_define
                                Rtype_error)):(bvlSem_v#('c
                                ,'ffi)bvlSem_state
                                ,bvlSem_v)semanticPrimitives_result)) |
-                               (BlockOp (EQUAL),[x1; x2]) ->
+                               (BlockOp Equal,[x1; x2]) ->
            (match do_eq (?_refs s) x1 x2 with Eq_val b -> Rval (Boolv
              b,s) | _86 -> ((Rerr (Rabort
              Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state

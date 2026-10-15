@@ -11,7 +11,7 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "lib/ternaryComparisons.ml";;
+needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 
 let dummy_def = cake_define
@@ -119,8 +119,8 @@ let is_arith_def = cake_define
 let is_rel_def = cake_define
   `is_rel op =
      (match op with
-       IntOp (LESS) -> T | IntOp LessEq -> T | IntOp (GREATER) ->
-         T | IntOp GreaterEq -> T | _13 -> F)`;;
+       IntOp Less -> T | IntOp LessEq -> T | IntOp Greater -> T |
+         IntOp GreaterEq -> T | _13 -> F)`;;
 
 let _ = size_thms "exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
@@ -244,8 +244,8 @@ let arg_ty_def = cake_define
       | (IntOp Div) -> Int
       | (IntOp Mod) -> Int
       | (IntOp LessEq) -> Int
-      | (IntOp (LESS)) -> Int
-      | (IntOp (GREATER)) -> Int
+      | (IntOp Less) -> Int
+      | (IntOp Greater) -> Int
       | (IntOp GreaterEq) -> Int
       | (BlockOp ListAppend) -> List
       | _17 -> Any`;;

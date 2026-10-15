@@ -1039,8 +1039,6 @@ class Printer:
     if k == 'paren':
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'typed':
-      if greek(e.ty):
-        return self.pr(e.e, prec)
       return self.paren(self.pr(e.e, 1) + ':' + self.pr_type(e.ty),
                         0, prec)
     if k == 'app':

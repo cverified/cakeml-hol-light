@@ -26,7 +26,6 @@ needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/multiword.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
@@ -295,7 +294,7 @@ let SmallLsr_def = cake_define
 
 let WriteLastByte_aux_def = cake_define
   `WriteLastByte_aux offset a b n p =
-     If (EQUAL) n (Imm offset) Skip
+     If Equal n (Imm offset) Skip
        (Seq (Inst (Mem Store8 b (Addr a offset))) p)`;;
 
 let WriteLastBytes_def = cake_define
@@ -376,7 +375,7 @@ let FromList_code_def = cake_define
        (:'a) DIV 16) in
      let h = (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var 2)
        (dimindex (:'a) - data_to_word_config_len_size c - 2) in
-       If (EQUAL) 2 (Imm (n2w 0))
+       If Equal 2 (Imm (n2w 0))
          (list_Seq [Assign 6 (Op Add [Var 6; Const ((n2w 2):'a
            word)]);
                     Return 0 [6]])
@@ -399,7 +398,7 @@ let FromList1_code_def = cake_define
      (list_Seq
        [Store (Var 2) 10;
         Assign 2 (Op Add [Var 2; Const bytes_in_word]);
-        If (EQUAL) 6 (Imm (n2w 0))
+        If Equal 6 (Imm (n2w 0))
           (list_Seq
              [Set NextFree (Var 2);
               Return 0 [8]])
@@ -437,7 +436,7 @@ let RefArray_code_def = cake_define
 
 let replicate_code_def = cake_define
   `Replicate_code =
-     (If (EQUAL) 6 (Imm (n2w 0)) (Return 0 [8])
+     (If Equal 6 (Imm (n2w 0)) (Return 0 [8])
        (list_Seq [Assign 2 (Op Add [Var 2; Const (bytes_in_word)]);
                   Store (Var 2) 4;
                   Assign 6 (Op Sub [Var 6; Const (n2w 4)]);
@@ -446,7 +445,7 @@ let replicate_code_def = cake_define
 
 let AddNumSize_def = cake_define
   `AddNumSize c src =
-     (If (EQUAL) (adjust_var src) (Imm (n2w 0)) Skip
+     (If Equal (adjust_var src) (Imm (n2w 0)) Skip
        (If Test (adjust_var src) (Imm (n2w 1))
           (Assign 1 (Op Add [Var 1; Const (n2w 4)]))
         (Assign 1 (Op Add [Var 1;
@@ -458,7 +457,7 @@ let AddNumSize_def = cake_define
 
 let AnyHeader_def = cake_define
   `AnyHeader c r a t1 t2 t3 =
-     If (EQUAL) r (Imm ((n2w 0):'a word))
+     If Equal r (Imm ((n2w 0):'a word))
        (list_Seq [Assign 7 (Const (n2w 0));
                   Set (Temp t1) (Var r);
                   Set (Temp t2) (Var r);
@@ -531,7 +530,7 @@ let AnyArith_code_def = cake_define
        If Test 1 (Reg 1) (Return 0 [1]) Skip;
        Assign 3 (Load (Op Add [Lookup NextFree; Const
          bytes_in_word]));
-       If (EQUAL) 1 (Imm (n2w 2))
+       If Equal 1 (Imm (n2w 2))
          (Seq (Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
            (Var 3) (dimindex (:'a) - 3)))
               (If Test 5 (Reg 5)
@@ -539,7 +538,7 @@ let AnyArith_code_def = cake_define
                    n))) Lsl (Var 3) 2))
                       (Return 0 [1]))
                  Skip))
-         (If (EQUAL) 1 (Imm (n2w 3))
+         (If Equal 1 (Imm (n2w 3))
            (Seq (Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
              (Op Sub [Var 3; Const (n2w 1)])
                              (dimindex (:'a) - 3)))
@@ -636,12 +635,12 @@ let InstallData_code_def = cake_define
 
 let compare1_code_def = cake_define
   `Compare1_code =
-     If (EQUAL) 2 (Imm (n2w 0))
+     If Equal 2 (Imm (n2w 0))
        (Seq (Assign 2 (Const (n2w 1))) (Return 0 [2]))
        (list_Seq
           [Assign 8 (Load (Var 4));
            Assign 9 (Load (Var 6));
-           If (EQUAL) 8 (Reg 9)
+           If Equal 8 (Reg 9)
              (list_Seq
                 [Assign 2 (Op Sub [Var 2; Const (n2w 1)]);
                  Assign 4 (Op Sub [Var 4; Const bytes_in_word]);
@@ -674,7 +673,7 @@ let compare_code_def = cake_define
                   Assign 8 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
                     (Var 3) ((dimindex (:'a) -
                     data_to_word_config_len_size c)));
-                  If (EQUAL) 1 (Reg 3)
+                  If Equal 1 (Reg 3)
                     (list_Seq
                       [Assign 2 (Op Add [Var 11; (\sh e n. Shift sh e
                         (Const (n2w n))) Lsl (Var 6)
@@ -708,14 +707,14 @@ let compare_code_def = cake_define
 let equal1_code_def = cake_define
   `Equal1_code =
      list_Seq [
-       If (EQUAL) 2 (Imm (n2w 0))
+       If Equal 2 (Imm (n2w 0))
          (Seq (Assign 2 (Const (n2w 1))) (Return 0 [2])) Skip;
        Assign 1 (Load (Var 4));
        Assign 3 (Load (Var 6));
        Call (SOME ([5],(list_insert [0; 2; 4; 6]
          LN,LN),Skip,Equal1_location,2))
          (SOME Equal_location) [1; 3] NONE;
-       If (EQUAL) 5 (Imm (n2w 1)) Skip (Return 0 [5]);
+       If Equal 5 (Imm (n2w 1)) Skip (Return 0 [5]);
        Assign 2 (Op Sub [Var 2; Const (n2w 1)]);
        Assign 4 (Op Add [Var 4; Const bytes_in_word]);
        Assign 6 (Op Add [Var 6; Const bytes_in_word]);
@@ -724,7 +723,7 @@ let equal1_code_def = cake_define
 let equal_code_def = cake_define
   `Equal_code c =
      list_Seq [
-       If (EQUAL) 2 (Reg 4)
+       If Equal 2 (Reg 4)
          (Seq (Assign 2 (Const ((n2w 1):'a word))) (Return 0 [2]))
            Skip;
        Assign 1 (Op And [Var 2; Var 4]);
@@ -737,11 +736,11 @@ let equal_code_def = cake_define
        If Test 21 (Imm (n2w 0b1100)) (list_Seq
            [Assign 1 (Op And [Var 21; Const (tag_mask c || (n2w
              2))]);
-            If (EQUAL) 1 (Imm (n2w (16 * closure_tag + 2)))
+            If Equal 1 (Imm (n2w (16 * closure_tag + 2)))
               (Seq (Assign 2 (Const (n2w 1))) (Return 0 [2])) Skip;
-            If (EQUAL) 1 (Imm (n2w (16 * partial_app_tag + 2)))
+            If Equal 1 (Imm (n2w (16 * partial_app_tag + 2)))
               (Seq (Assign 2 (Const (n2w 1))) (Return 0 [2])) Skip;
-            If (EQUAL) 21 (Reg 41)
+            If Equal 21 (Reg 41)
               Skip (Seq (Assign 2 (Const (n2w 0))) (Return 0 [2]));
             Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
               data_to_word_config_len_size c)));
@@ -749,12 +748,12 @@ let equal_code_def = cake_define
             Assign 40 (Op Add [Var 40; Const bytes_in_word]);
             Call NONE (SOME Equal1_location) [0; 6; 20; 40] NONE])
          Skip;
-       If (EQUAL) 21 (Reg 41) Skip
+       If Equal 21 (Reg 41) Skip
          (Seq (Assign 2 (Const (n2w 0))) (Return 0 [2]));
        If Test 21 (Imm (n2w 4))
          (Seq (Assign 2 (Const (n2w 0))) (Return 0 [2])) Skip;
        Assign 1 (Op And [Var 21; Const (n2w 24)]);
-       If (EQUAL) 1 (Imm (n2w 16))
+       If Equal 1 (Imm (n2w 16))
          (Seq (Assign 2 (Const (n2w 0))) (Return 0 [2])) Skip;
        Assign 6 (ShiftVar Lsr 21 ((dimindex (:'a) -
          data_to_word_config_len_size c)));
@@ -790,7 +789,7 @@ let LongDiv1_code_def = cake_define
                     If Lower 12 (Reg 4)
                       (Call NONE (SOME LongDiv1_location)
                         [0; 2; 4; 6; 8; 10; 12] NONE) Skip;
-                    If (EQUAL) 12 (Reg 4)
+                    If Equal 12 (Reg 4)
                       (If Lower 10 (Reg 6)
                          (Call NONE (SOME LongDiv1_location)
                             [0; 2; 4; 6; 8; 10; 12] NONE) Skip) Skip;
@@ -878,7 +877,7 @@ let AppendLenLoop_code_def = cake_define
 let XorLoop_code_def = cake_define
   `XorLoop_code =
      (If Lower 6 (Imm (n2w 2))
-       (If (EQUAL) 6 (Imm (n2w 0))
+       (If Equal 6 (Imm (n2w 0))
           (list_Seq [Assign 1 (Const (n2w 2));
                      Return 0 [1]])
           (list_Seq [Assign 5 (Load (Var 4));
@@ -907,7 +906,7 @@ let XorLoop_code_def = cake_define
 
 let StringCmpLoop_code_def = cake_define
   `StringCmpLoop_code =
-     (If (EQUAL) 6 (Imm bytes_in_word)
+     (If Equal 6 (Imm bytes_in_word)
        (Return 0 [8; 10])
        (list_Seq
           [Inst (Mem Load8 1 (Addr 2 (n2w 0)));
@@ -1053,7 +1052,7 @@ let MemEqList_def = cake_define
   wordLang_prog)) /\
    (MemEqList a (w :: ws) =
       Seq (Assign 5 (Load (Op Add [Var 3; Const a])))
-          (If (EQUAL) 5 (Imm w) (MemEqList (a + bytes_in_word) ws)
+          (If Equal 5 (Imm w) (MemEqList (a + bytes_in_word) ws)
             Skip))`;;
 
 let get_gen_size_def = cake_define
@@ -2713,15 +2712,15 @@ let assign_def = cake_define
          arg2 args (assign_BoundsCheckArray c secn l dest names)
            (Skip,l) | BlockOp BoundsCheckBlock ->
          arg2 args (assign_BoundsCheckBlock c secn l dest names)
-           (Skip,l) | BlockOp (EQUAL) -> arg2 args (assign_Equal c secn
-           l dest names) (Skip,l) | IntOp (LESS) -> arg2 args
-           (assign_Less c secn l dest names) (Skip,l) | IntOp LessEq ->
-           arg2 args (assign_LessEq c secn l dest names) (Skip,l) |
-           BlockOp LengthBlock -> arg1 args (assign_LengthBlock c secn l
-           dest names) (Skip,l) | MemOp Length -> arg1 args
-           (assign_Length c secn l dest names) (Skip,l) | MemOp
-           LengthByte -> arg1 args (assign_LengthByte c secn l dest
-           names) (Skip,l) | BlockOp (TagLenEq tag len) ->
+           (Skip,l) | BlockOp Equal -> arg2 args (assign_Equal c secn l
+           dest names) (Skip,l) | IntOp Less -> arg2 args (assign_Less c
+           secn l dest names) (Skip,l) | IntOp LessEq -> arg2 args
+           (assign_LessEq c secn l dest names) (Skip,l) | BlockOp
+           LengthBlock -> arg1 args (assign_LengthBlock c secn l dest
+           names) (Skip,l) | MemOp Length -> arg1 args (assign_Length c
+           secn l dest names) (Skip,l) | MemOp LengthByte -> arg1 args
+           (assign_LengthByte c secn l dest names) (Skip,l) | BlockOp
+           (TagLenEq tag len) ->
          arg1 args (assign_TagLenEq c secn l dest names tag len)
            (Skip,l) | BlockOp (LenEq len) -> arg1 args (assign_LenEq
            c secn l dest names len) (Skip,l) | BlockOp (TagEq tag) ->
@@ -2767,7 +2766,7 @@ let force_thunk_def = cake_define
         (list_Seq
            [Assign 1 (real_addr c (adjust_var v1));
             Assign 3 (Op And [Load (Var 1); Const (n2w 0b111100)]);
-            If (EQUAL) 3 (Imm (n2w ((8 + 6) * 4)))
+            If Equal 3 (Imm (n2w ((8 + 6) * 4)))
               (match ret with NONE ->
                   list_Seq
                     [Assign 1 (Load (Op Add [Var 1; Const
@@ -2801,7 +2800,7 @@ let comp_def = cake_define
            (Seq q1 q2,l2)) | If n p1 p2 ->
          (let (q1,l1) = data_to_word_comp c secn l p1 in
          let (q2,l2) = data_to_word_comp c secn l1 p2 in
-           (If (EQUAL) (adjust_var n) (Imm (n2w 18)) q1 q2,l2)) |
+           (If Equal (adjust_var n) (Imm (n2w 18)) q1 q2,l2)) |
              MakeSpace n names ->
          (let k = dimindex (:'a) DIV 8 in
          let w = n2w (n * k) in
@@ -2870,7 +2869,7 @@ let ByteCopyAdd_code_def = cake_define
      (
        If Lower 2 (Imm (n2w 2))
        (
-         If (EQUAL) 2 (Imm (n2w 0)) (Return 0 [8])
+         If Equal 2 (Imm (n2w 0)) (Return 0 [8])
          (
            list_Seq [
              Inst (Mem Load8 1 (Addr 4 (n2w 0)));
@@ -2879,7 +2878,7 @@ let ByteCopyAdd_code_def = cake_define
        (list_Seq [
          Inst (Mem Load8 1 (Addr 4 (n2w 0)));
          Inst (Mem Load8 3 (Addr 4 (n2w 1)));
-         If (EQUAL) 2 (Imm (n2w 2))
+         If Equal 2 (Imm (n2w 2))
            (list_Seq [
              Inst (Mem Store8 1 (Addr 6 (n2w 0)));
              Inst (Mem Store8 3 (Addr 6 (n2w 1)));
@@ -2911,7 +2910,7 @@ let ByteCopySub_code_def = cake_define
      (
        If Lower 2 (Imm (n2w 2))
        (
-         If (EQUAL) 2 (Imm (n2w 0)) (Return 0 [8])
+         If Equal 2 (Imm (n2w 0)) (Return 0 [8])
          (
            list_Seq [
              Inst (Mem Load8 1 (Addr 4 (n2w 0)));
@@ -2920,7 +2919,7 @@ let ByteCopySub_code_def = cake_define
        (list_Seq [
          Inst (Mem Load8 1 (Addr 4 (n2w 0)));
          Inst (Mem Load8 3 (Addr 4 (--(n2w 1))));
-         If (EQUAL) 2 (Imm (n2w 2))
+         If Equal 2 (Imm (n2w 2))
            (list_Seq [
              Inst (Mem Store8 1 (Addr 6 (n2w 0)));
              Inst (Mem Store8 3 (Addr 6 (--(n2w 1))));
@@ -2951,7 +2950,8 @@ let ByteCopyNew_code_def = cake_define
 
 let stubs_def = cake_define
   `data_to_word_stubs (:'ga) data_conf = [
-     (FromList_location,4,(FromList_code data_conf));
+     (FromList_location,4,((FromList_code data_conf):'ga
+       wordLang_prog));
      (FromList1_location,6,FromList1_code data_conf);
      (RefByte_location,4,RefByte_code data_conf);
      (RefArray_location,3,RefArray_code data_conf);

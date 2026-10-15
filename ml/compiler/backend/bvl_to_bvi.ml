@@ -25,8 +25,8 @@ needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
@@ -121,7 +121,7 @@ let AllocGlobal_code_def = cake_define
      Let [Op (IntOp Add) [Var 0; Var 2]] (
      Let [Op (MemOp Length) [Var 2]] (
      Let [Op (MemOp Update) [Var 1; Op (IntOp (Const 0)) []; Var 3]]
-       (If (Op (IntOp (LESS)) [Var 1; Var 2]) (Var 0)
+       (If (Op (IntOp Less) [Var 1; Var 2]) (Var 0)
           (Let [Op (MemOp RefArray) [Op (IntOp (Const 0)) []; Op
             (IntOp Add) [Var 2; Var 2]]] (
            Let [Op (GlobOp SetGlobalsPtr) [Var 0]]
@@ -133,8 +133,8 @@ let CopyGlobals_code_def = cake_define
   `CopyGlobals_code = ((3:num),
      Let [Op (MemOp Update) [Op (MemOp El) [Var 2; Var 1]; Var 2; Var
        0]]
-       (If (Op (BlockOp (EQUAL)) [Op (IntOp (Const 0)) []; Var 3])
-         (Var 0)
+       (If (Op (BlockOp Equal) [Op (IntOp (Const 0)) []; Var 3]) (Var
+         0)
          (Call 0 (SOME CopyGlobals_location) [Var 1; Var 2; Op
            (IntOp Sub) [Op (IntOp (Const 1)) []; Var 3]] NONE)))`;;
 

@@ -12,8 +12,8 @@
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 
 (* function that makes all Seq associate to the left *)
@@ -72,7 +72,7 @@ let dest_If_def = cake_define
 
 let dest_If_Eq_Imm_def = cake_define
   `dest_If_Eq_Imm p =
-     (match dest_If p with SOME ((EQUAL),n,Imm w,p1,p2) -> SOME
+     (match dest_If p with SOME (Equal,n,Imm w,p1,p2) -> SOME
        (n,w,p1,p2) | _2 -> NONE)`;;
 
 let dest_Seq_Assign_Const_def = cake_define

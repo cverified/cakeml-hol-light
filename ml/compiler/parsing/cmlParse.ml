@@ -37,14 +37,22 @@ hol4_overload "destResult" "cmlParse_destResult";;
      M = (token # locs) list -> ((token # locs) list, α, string)
        pegresult *)
 let pegresult_bind_def = cake_define
-  `pegresult_bind (f) (g) =
+  `(pegresult_bind (f:(tokens_token#locs) list->((tokens_token#locs)
+  list,'ga,string)pegresult) (g:'ga->(tokens_token#locs)
+  list->((tokens_token#locs)
+  list,'gb,string)pegresult):(tokens_token#locs)
+  list->((tokens_token#locs) list,'gb,string)pegresult) =
    (\toks.
      match f toks with
        Success toks' x eo -> g x toks' | Failure fl fe -> Failure
          fl fe)`;;
 
 let pegresult_choice_def = cake_define
-  `pegresult_choice (f) (g) =
+  `(pegresult_choice (f:(tokens_token#locs) list->((tokens_token#locs)
+  list,'ga,string)pegresult) (g:(tokens_token#locs)
+  list->((tokens_token#locs)
+  list,'ga,string)pegresult):(tokens_token#locs)
+  list->((tokens_token#locs) list,'ga,string)pegresult) =
    (\toks.
      match f toks with
        Success toks' x eo -> Success toks' x eo | _6 -> g toks)`;;
@@ -60,7 +68,9 @@ let pegresult_guard_def = cake_define
      (toks_to_loc toks) "Assert failure")`;;
 
 let optlift_def = cake_define
-  `optlift NONE = (\toks. Failure (toks_to_loc toks) "Option = NONE") /\
+  `(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
+  list,'ga,string)pegresult) = (\toks. Failure (toks_to_loc toks)
+  "Option = NONE") /\
    optlift (SOME a) = (\toks. Success toks a NONE)`;;
 
 let cmlParseExpr_def = cake_define

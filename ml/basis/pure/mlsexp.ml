@@ -231,14 +231,15 @@ let smart_remove_def = cake_define
          Append (smart_remove i k v2) T (smart_remove i i v3))`;;
 
 let flatten_def = cake_define
-  `flatten indent (Size n p) s = flatten indent p s /\
-   flatten indent (Parenthesis p) s =
-     (implode "(") :: flatten (concat [indent; (implode "   ")]) p
-       ((implode ")") :: s) /\
-   flatten indent (String t) s = t :: s /\
-   flatten indent (Append p1 b p2) s =
-     flatten indent p1 ((if b then indent else (implode " ")) ::
-       flatten indent p2 s)`;;
+  `mlsexp_flatten indent (Size n p) s = mlsexp_flatten indent p s /\
+   mlsexp_flatten indent (Parenthesis p) s =
+     (implode "(") :: mlsexp_flatten (concat [indent; (implode
+       "   ")]) p ((implode ")") :: s) /\
+   mlsexp_flatten indent (String t) s = t :: s /\
+   mlsexp_flatten indent (Append p1 b p2) s =
+     mlsexp_flatten indent p1 ((if b then indent else (implode
+       " ")) :: mlsexp_flatten indent p2 s)`;;
+hol4_overload "flatten" "mlsexp_flatten";;
 
 let str_tree_to_strs_def = cake_define
   `str_tree_to_strs end v = flatten (implode "\n") (smart_remove 0 0

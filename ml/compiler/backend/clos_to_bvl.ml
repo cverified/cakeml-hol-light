@@ -64,8 +64,8 @@ needs "compiler/backend/clos_call.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 
 (* Constant flattening *)
@@ -231,7 +231,7 @@ let generate_generic_app_def = cake_define
   `generate_generic_app max_app n =
      Let [Op (IntOp Sub) [mk_const (n + 1); (\b i. bvl_Op (BlockOp
        (ElemAt i)) [b]) (Var (n + 1)) 1]]
-         (If (Op (IntOp (LESS)) [mk_const 0; Var 0])
+         (If (Op (IntOp Less) [mk_const 0; Var 0])
              (Jump ((\b i. bvl_Op (BlockOp (ElemAt i)) [b]) (Var (n +
                2)) 1)
                (GENLIST (\num_args.

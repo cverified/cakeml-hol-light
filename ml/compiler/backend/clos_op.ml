@@ -11,8 +11,8 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "lib/comparison.ml";;
 needs "lib/indexedLists.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
@@ -107,12 +107,11 @@ let int_op_def = cake_define
        i)) else
      if op = IntOp Mod then SOME (MakeInt (if i = 0 then 0 else j %
        i)) else
-     if op = IntOp (LESS) then SOME (MakeBool (j < i)) else
+     if op = IntOp Less then SOME (MakeBool (j < i)) else
      if op = IntOp LessEq then SOME (MakeBool (j <= i)) else
-     if op = IntOp (GREATER) then SOME (MakeBool (i < j)) else
+     if op = IntOp Greater then SOME (MakeBool (i < j)) else
      if op = IntOp GreaterEq then SOME (MakeBool (i <= j)) else
-     if op = BlockOp (EQUAL) then SOME (MakeBool (j = i)) else
-       NONE)`;;
+     if op = BlockOp Equal then SOME (MakeBool (j = i)) else NONE)`;;
 hol4_overload "int_op" "clos_op_int_op";;
 
 let cons_op_def = cake_define
@@ -201,7 +200,7 @@ let eq_pure_list_def = cake_define_wf
       | [(x,y)] ->
     (match eq_direct x y with SOME z -> List [z] | NONE ->
        (match ((dest_Op dest_Cons) x,(dest_Op dest_Cons) y) with
-         (NONE,NONE) -> List [Op None (BlockOp (EQUAL)) [x; y]] | (SOME
+         (NONE,NONE) -> List [Op None (BlockOp Equal) [x; y]] | (SOME
          (t1,xs),SOME (t2,ys)) ->
             (if ~(t1 = t2) \/ ~(LENGTH xs = LENGTH ys) then List
               [MakeBool F] else eq_pure_list (ZIP (REVERSE xs,REVERSE
@@ -271,8 +270,8 @@ let SmartOp'_def = cake_define
        (match (dest_Op dest_Cons) x with SOME (t,xs) -> cons_op op t
          xs | NONE -> NONE) | [x; y] ->
        (match dest_Op_Consts x y with SOME (i,j) -> int_op op i j
-         | NONE -> (if op = BlockOp (EQUAL) then eq_op x y else
-         NONE)) | _16 -> NONE)`;;
+         | NONE -> (if op = BlockOp Equal then eq_op x y else NONE))
+         | _16 -> NONE)`;;
 
 let SmartOp_def = cake_define
   `clos_op_SmartOp tra op xs =

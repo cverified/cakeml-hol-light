@@ -32,9 +32,9 @@ needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/comparison.ml";;
+needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -47,10 +47,10 @@ let empty_item_def = cake_define
   `empty_item name = String name`;;
 
 let num_to_display_def = cake_define
-  `num_to_display (n:num) = String ((num_to_str) n)`;;
+  `num_to_display (n:num) = String (toString n)`;;
 
 let int_to_display_def = cake_define
-  `int_to_display (i:int) = String ((num_to_str) i)`;;
+  `int_to_display (i:int) = String (toString i)`;;
 
 let string_imp_def = cake_define
   `string_imp s = String s`;;
@@ -88,8 +88,7 @@ let item_with_word_def = cake_define
 
 let lit_to_display_def = cake_define_list
   [`lit_to_display (IntLit i) =
-        Item NONE (implode "IntLit") [empty_item ((num_to_str)
-          i)]`;
+        Item NONE (implode "IntLit") [empty_item (toString i)]`;
    `lit_to_display (Char c) =
         Item NONE (implode "Char") [empty_item (implode ("#\"" ++
           [c] ++ "\""))]`;
@@ -171,7 +170,7 @@ let thunk_op_to_display_def = cake_define
      "ForceThunk"))`;;
 
 let test_to_display_def = cake_define
-  `test_to_display (EQUAL) = empty_item (implode "Equal") /\
+  `test_to_display Equal = empty_item (implode "Equal") /\
    test_to_display (Compare cmp) = Item NONE (implode "Compare")
      [opb_to_display cmp] /\
    test_to_display (AltCompare cmp) = Item NONE (implode
@@ -536,8 +535,8 @@ let num_to_varn_list_def = cake_define
 let attach_name_def = cake_define
   `attach_name ns NONE = (implode "none") /\
    attach_name ns (SOME d) =
-     (match lookup d ns with NONE -> (num_to_str) d | SOME name ->
-       concat [name; (implode "@"); (num_to_str) d])`;;
+     (match lookup d ns with NONE -> toString d | SOME name ->
+       concat [name; (implode "@"); toString d])`;;
 
 let const_part_to_display_def = cake_define
   `const_part_to_display (Int i:const_part) =
@@ -590,22 +589,22 @@ let clos_op_to_display_def = cake_define
   | BlockOp (FromList num') -> item_with_num (implode "FromList") num' |
   BlockOp ListAppend -> String (implode "ListAppend") | BlockOp
   (Constant c) -> Item NONE (implode "Constant") [const_to_display c] |
-  BlockOp (EQUAL) -> String (implode "Equal") | BlockOp (EqualConst c)
-  -> Item NONE (implode "EqualConst") [const_part_to_display c] |
-  BlockOp (Build bs) -> Item NONE (implode "Build") (MAP
-  const_part_to_display bs) | MemOp Ref -> String (implode "Ref") |
-  MemOp Update -> String (implode "Update") | MemOp El -> String
-  (implode "El") | MemOp Length -> String (implode "Length") | MemOp
-  LengthByte -> String (implode "LengthByte") | MemOp (RefByte b) ->
-  Item NONE (implode "RefByte") [bool_to_display b] | MemOp RefArray ->
-  String (implode "RefArray") | MemOp DerefByte -> String (implode
-  "DerefByte") | MemOp UpdateByte -> String (implode "UpdateByte") |
-  MemOp ConcatByteVec -> String (implode "ConcatByteVec") | MemOp
-  (CopyByte b) -> Item NONE (implode "CopyByte") [bool_to_display b] |
-  MemOp FromListByte -> String (implode "FromListByte") | MemOp
-  ToListByte -> String (implode "ToListByte") | MemOp LengthByteVec ->
-  String (implode "LengthByteVec") | MemOp DerefByteVec -> String
-  (implode "DerefByteVec") | MemOp BoundsCheckArray -> String (implode
+  BlockOp Equal -> String (implode "Equal") | BlockOp (EqualConst c) ->
+  Item NONE (implode "EqualConst") [const_part_to_display c] | BlockOp
+  (Build bs) -> Item NONE (implode "Build") (MAP const_part_to_display
+  bs) | MemOp Ref -> String (implode "Ref") | MemOp Update -> String
+  (implode "Update") | MemOp El -> String (implode "El") | MemOp Length
+  -> String (implode "Length") | MemOp LengthByte -> String (implode
+  "LengthByte") | MemOp (RefByte b) -> Item NONE (implode "RefByte")
+  [bool_to_display b] | MemOp RefArray -> String (implode "RefArray") |
+  MemOp DerefByte -> String (implode "DerefByte") | MemOp UpdateByte ->
+  String (implode "UpdateByte") | MemOp ConcatByteVec -> String (implode
+  "ConcatByteVec") | MemOp (CopyByte b) -> Item NONE (implode
+  "CopyByte") [bool_to_display b] | MemOp FromListByte -> String
+  (implode "FromListByte") | MemOp ToListByte -> String (implode
+  "ToListByte") | MemOp LengthByteVec -> String (implode
+  "LengthByteVec") | MemOp DerefByteVec -> String (implode
+  "DerefByteVec") | MemOp BoundsCheckArray -> String (implode
   "BoundsCheckArray") | MemOp (BoundsCheckByte b) -> Item NONE (implode
   "BoundsCheckByte") [bool_to_display b] | MemOp closLang_ConfigGC ->
   String (implode "ConfigGC") | MemOp (StringCmp b opb) -> Item NONE
@@ -627,9 +626,9 @@ let clos_op_to_display_def = cake_define
                                 IntOp Mult -> String (implode "Mult") |
                                 IntOp Div -> String (implode "Div") |
                                 IntOp Mod -> String (implode "Mod") |
-                                IntOp (LESS) -> String (implode "Less")
-                                | IntOp LessEq -> String (implode
-                                "LessEq") | IntOp (GREATER) -> String
+                                IntOp Less -> String (implode "Less") |
+                                IntOp LessEq -> String (implode
+                                "LessEq") | IntOp Greater -> String
                                 (implode "Greater") | IntOp GreaterEq ->
                                 String (implode "GreaterEq") | IntOp
                                 (LessConstSmall num') -> item_with_num
@@ -888,8 +887,8 @@ let bvi_fun_to_display_def = cake_define
 let num_set_to_display_def = cake_define
   `num_set_to_display ns =
      String (concat [(implode "{");
-                      commas (MAP (num_to_str) (MAP FST
-                        (toSortedAList ns)));
+                      commas (MAP toString (MAP FST (toSortedAList
+                        ns)));
                       (implode "}")])`;;
 
 let data_seqs_def = cake_define
@@ -1022,10 +1021,10 @@ let asm_memop_to_display_def = cake_define
   "Store16") | Store32 -> empty_item (implode "Store32"))`;;
 
 let asm_cmp_to_display_def = cake_define
-  `asm_cmp_to_display op = (match op with (EQUAL) -> empty_item
-  (implode "Equal") | Lower -> empty_item (implode "Lower") | (LESS)
-  -> empty_item (implode "Less") | Test -> empty_item (implode
-  "Test") | NotEqual -> empty_item (implode "NotEqual") | NotLower ->
+  `asm_cmp_to_display op = (match op with Equal -> empty_item
+  (implode "Equal") | Lower -> empty_item (implode "Lower") | Less ->
+  empty_item (implode "Less") | Test -> empty_item (implode "Test") |
+  NotEqual -> empty_item (implode "NotEqual") | NotLower ->
   empty_item (implode "NotLower") | NotLess -> empty_item (implode
   "NotLess") | NotTest -> empty_item (implode "NotTest"))`;;
 
@@ -1181,24 +1180,24 @@ let stack_prog_to_display_def = cake_define_wf
         "stack_free") n
       | ((SUC k),(StackStore n m)) ->
       Tuple [String (^ (^ (^ (implode "stack[") (num_to_hex_mlstring
-        n)) (implode "] := ")) ((num_to_str) m))]
+        n)) (implode "] := ")) (toString m))]
       | ((SUC k),(StackStoreAny n m)) ->
-      Tuple [String (^ (^ (^ (implode "stack[var ") ((num_to_str) n))
-        (implode "] := ")) ((num_to_str) m))]
+      Tuple [String (^ (^ (^ (implode "stack[var ") (toString n))
+        (implode "] := ")) (toString m))]
       | ((SUC k),(StackLoad n m)) ->
-      Tuple [String (concat [(num_to_str) n;
+      Tuple [String (concat [toString n;
                              (implode " := stack[");
                              num_to_hex_mlstring m; (implode "]")])]
       | ((SUC k),(StackLoadAny n m)) ->
-      Tuple [String (concat [(num_to_str) n;
+      Tuple [String (concat [toString n;
                              (implode " := stack[var ");
-                             (num_to_str) m; (implode "]")])]
+                             toString m; (implode "]")])]
       | ((SUC k),(StackGetSize n)) -> item_with_num (implode
         "stack_get_size") n
       | ((SUC k),(StackSetSize n)) -> item_with_num (implode
         "stack_set_size") n
       | ((SUC k),(BitmapLoad n m)) ->
-      Tuple [String (concat [(num_to_str) n;
+      Tuple [String (concat [toString n;
                              (implode " := bitmap[");
                              num_to_hex_mlstring m;
                              (implode "]")])]

@@ -9,7 +9,7 @@
 
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "lib/ternaryComparisons.ml";;
+needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\
@@ -29,7 +29,7 @@ let JumpList_def = cake_define_wf
           let zs = DROP k xs in
           let lt = (if n + l < 1000000 /\ n + k < 1000000 then Op
             (IntOp (LessConstSmall (n + k))) [Var 0] else Op (IntOp
-            (LESS)) [Op (IntOp (Const (&(n + k)))) []; Var 0]) in
+            Less) [Op (IntOp (Const (&(n + k)))) []; Var 0]) in
             If lt (JumpList n ys) (JumpList (n + k) zs)))`;;
 
 let jump_def = cake_define

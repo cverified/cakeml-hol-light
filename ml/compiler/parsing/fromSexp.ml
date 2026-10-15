@@ -21,7 +21,6 @@ needs "lib/ASCIInumbers.ml";;
 needs "lib/comparison.ml";;
 needs "lib/location.ml";;
 needs "lib/numposrep.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
@@ -342,7 +341,7 @@ let decode_test_def = cake_define
   `fromSexp_decode_test x1 =
       match x1 with
         (SX_SYM s) ->
-     (if s = "Equal" then SOME (EQUAL) else
+     (if s = "Equal" then SOME Equal else
       if s = "Less" then SOME (Compare Lt) else
       if s = "LessEq" then SOME (Compare Leq) else
       if s = "Greater" then SOME (Compare Gt) else
@@ -814,7 +813,7 @@ let patsexp_def = cake_define_wf
 let testsexp_def = cake_define
   `testsexp x1 =
       match x1 with
-        (EQUAL) -> SX_SYM "Equal"
+        Equal -> SX_SYM "Equal"
       | (Compare Lt) -> SX_SYM "Less"
       | (Compare Leq) -> SX_SYM "LessEq"
       | (Compare Gt) -> SX_SYM "Greater"

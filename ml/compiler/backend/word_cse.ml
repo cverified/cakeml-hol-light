@@ -13,8 +13,8 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/balanced_map.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: words bool *)
@@ -73,11 +73,11 @@ let knowledge_FIELDS = define_record "knowledge"
 
 let listCmp_def = cake_define
   `(listCmp ((hd1:num) :: tl1) ((hd2:num) :: tl2) =
-    (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then
-      (GREATER) else (LESS))) /\
-   (listCmp [] [] = (EQUAL)) /\
-   (listCmp (hd1 :: tl1) [] = (GREATER)) /\
-   (listCmp [] (hd2 :: tl2) = (LESS))`;;
+    (if hd1 = hd2 then listCmp tl1 tl2 else if hd1 > hd2 then Greater
+      else Less)) /\
+   (listCmp [] [] = Equal) /\
+   (listCmp (hd1 :: tl1) [] = Greater) /\
+   (listCmp [] (hd2 :: tl2) = Less)`;;
 
 let empty_data_def = cake_define
   `empty_data = mk_knowledge LN LN [] empty empty`;;

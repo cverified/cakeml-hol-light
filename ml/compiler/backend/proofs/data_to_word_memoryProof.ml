@@ -240,7 +240,7 @@ let bc_ref_inv_def = cake_define
          (let ws = LENGTH bs DIV (dimindex (:'ga) DIV 8) + 1 in
            (heap_lookup x heap = SOME (Bytes be flag bs (REPLICATE ws
              ((n2w 0):'a word))))) | (SOME x,SOME (Thunk ev v)) ->
-         (?(z).
+         (?(z:('ga word_loc) heap_address).
             heap_lookup x heap = SOME (ThunkBlock ev z) /\
             (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
             v_inv conf v refs (z,f,tf,heap)) | (SOME x,SOME (MutBlock

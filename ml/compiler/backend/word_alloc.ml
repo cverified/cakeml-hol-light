@@ -60,7 +60,7 @@ let list_next_var_rename_def = cake_define
        (y :: ys,ssa'',na'')))`;;
 
 let fake_move_def = cake_define
-  `fake_move v = Inst (Const v (n2w 0))`;;
+  `(fake_move v:'ga wordLang_prog) = Inst (Const v (n2w 0))`;;
 
 (*Do the merging moves only*)
 let merge_moves_def = cake_define

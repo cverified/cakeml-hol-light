@@ -21,11 +21,11 @@ needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
+needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/machine_ieee.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
@@ -74,8 +74,8 @@ let isWord_def = cake_define
 let word_cmp_def = cake_define
   `wordSem_word_cmp x1 x2 x3 =
         match (x1,x2,x3) with
-          ((EQUAL),(Word w1),(Word w2)) -> SOME (w1 = w2)
-        | ((LESS),(Word w1),(Word w2)) -> SOME (w1 < w2)
+          (Equal,(Word w1),(Word w2)) -> SOME (w1 = w2)
+        | (Less,(Word w1),(Word w2)) -> SOME (w1 < w2)
         | (Lower,(Word w1),(Word w2)) -> SOME (w1 <+ w2)
         | (Test,(Word w1),(Word w2)) -> SOME ((w1 && w2) = (n2w 0))
         | (Test,(Loc _3 n),(Word w2)) -> if ~(n = 0) then NONE else

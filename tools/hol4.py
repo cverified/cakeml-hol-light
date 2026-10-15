@@ -271,7 +271,44 @@ def parse(path):
         body = body[:k]
     blocks.append(Block(kind, name, attrs, body, extra, text=text))
     i = j + 1
-  return blocks
+  return quotation_definitions(blocks)
+
+
+# a definition that HOL4 makes in ML from a quotation that it keeps
+# in a value, so that it can also make the pmatch version of it:
+#
+#   local val foo_quotation = `foo x = ...`
+#   in val foo_def = Define foo_quotation ... end
+
+QUOTATION = re.compile(r"(?:local\s+)?val\s+([A-Za-z0-9_']+)_quotation"
+                       r"\s*=\s*`", re.S)
+QUOT_DEF = re.compile(r"val\s+([A-Za-z0-9_']+)_def\s*=\s*"
+                      r"[txz]?Define\s+\1_quotation", re.S)
+
+
+def quotation_definitions(blocks):
+  quots = {}
+  for b in blocks:
+    if b.kind != 'ML': continue
+    m = QUOTATION.match(b.text.strip())
+    if m:
+      t = b.text.strip()
+      i = t.index('`', m.end() - 1)
+      j = t.find('`', i + 1)
+      if j > 0: quots[m.group(1)] = (b, t[i+1:j])
+  out = []
+  for b in blocks:
+    m = b.kind == 'ML' and QUOT_DEF.search(b.text)
+    if m and m.group(1) in quots:
+      qb, body = quots[m.group(1)]
+      out = [x for x in out if x is not qb]
+      nb = Block('Definition', m.group(1) + '_def', [], body,
+                 None, text=qb.text + b.text)
+      nb.blanks = getattr(qb, 'blanks', 1)
+      out.append(nb)
+    else:
+      out.append(b)
+  return out
 
 
 # ---------------------------------------------------------------

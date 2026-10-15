@@ -14,6 +14,7 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "lib/balanced_map.ml";;
+needs "lib/integer_word.ml";;
 needs "misc/misc.ml";;
 
 let obj_INDUCT,obj_RECURSION = define_datatype
@@ -57,7 +58,7 @@ let encode_str_def = cake_define
    if EVERY printable s2 then s else concat (MAP (\c. if printable
      c then implode [c] else if unicode then implode ("\\u" ++
      REVERSE (n_rev_hex_digs 4 (ORD c))) else concat [(implode "\\");
-     (num_to_str) (ORD c)]) s2))`;;
+     toString (ORD c)]) s2))`;;
 
 let json_to_mlstring_def = cake_define
   `json_to_mlstring obj =
@@ -72,8 +73,8 @@ let json_to_mlstring_def = cake_define
                      [(implode ",")]) ++
                    List [(implode "]")] | String s -> List
                      ([(implode) "\""; encode_str T s; (implode) "\""])
-                     | Int i -> List [(num_to_str) i] | Bool b -> (if b
-                     then List [(implode "true")] else List [(implode
+                     | Int i -> List [toString i] | Bool b -> (if b then
+                     List [(implode "true")] else List [(implode
                      "false")]) | Null -> List [(implode "null")]
         |  -> let (n,obj) = obj in
            List [(implode) "\""; n; (implode) "\":"] ++

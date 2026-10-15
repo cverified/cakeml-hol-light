@@ -377,7 +377,7 @@ let PopHandler_def = cake_define
    prog))`;;
 
 let chunk_to_bits_def = cake_define
-  `chunk_to_bits ([]) = ((n2w 1):'a word) /\
+  `chunk_to_bits ([]:(bool#'ga word) list) = ((n2w 1):'a word) /\
    chunk_to_bits ((b,w) :: ws) =
      (let res = (chunk_to_bits ws) << 1 in
        if b then res + (n2w 1) else res)`;;
@@ -386,7 +386,7 @@ let chunk_to_bitmap_def = cake_define
   `chunk_to_bitmap ws = chunk_to_bits ws :: MAP SND ws`;;
 
 let const_words_to_bitmap_def = cake_define
-  `const_words_to_bitmap (ws) (ws_len:num) =
+  `const_words_to_bitmap (ws:(bool#'ga word) list) (ws_len:num) =
      (if ws_len < (dimindex (:'a) - 1) \/ (dimindex (:'a) - 1) = 0
        then chunk_to_bitmap ws else
        let h = TAKE (dimindex (:'a) - 1) ws in

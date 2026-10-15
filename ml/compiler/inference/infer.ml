@@ -7,12 +7,12 @@
   Definition of CakeML's type inferencer.
 *)
 
-needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
+needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -33,7 +33,8 @@ let loc_err_info_FIELDS = define_record "loc_err_info"
    "err","(mlstring,mlstring,mlstring list#t)namespace"];;
 
 let failwith_def = cake_define
-  `(infer_failwith) l msg =
+  `(infer_failwith:loc_err_info->'ga->'gb->('gc,locs option#'ga)exc#'gb)
+  l msg =
      (\s. (M_failure (loc_err_info_loc l,msg),s))`;;
 hol4_overload "failwith" "infer_failwith";;
 
@@ -41,11 +42,11 @@ let guard_def = cake_define
   `guard P l msg = (if P then return one else failwith l msg)`;;
 
 let read_def = cake_define
-  `(read) =
+  `(read:'ga->('ga,'gb)exc#'ga) =
    (\s. (M_success s,s))`;;
 
 let write_def = cake_define
-  `(write) v =
+  `(write:'ga->'ga->(1,'gb)exc#'ga) v =
    (\s. (M_success one,v))`;;
 
 let lookup_st_ex_def = cake_define
@@ -61,7 +62,7 @@ let infer_st_FIELDS = define_record "infer_st"
    "next_id","num"];;
 
 let fresh_uvar_def = cake_define
-  `(fresh_uvar) =
+  `(fresh_uvar:infer_st->(infer_t,'ga)exc#infer_st) =
    (\s. (M_success (Infer_Tuvar (infer_st_next_uvar
      s)),infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s))`;;
 
@@ -213,9 +214,9 @@ let type_name_check_subst_def = cake_define
        (guard (LENGTH tvs' = LENGTH ts) l
                   (concat [(implode "Type constructor ");
                     id_to_string tc; (implode " given ");
-                           (num_to_str) (&LENGTH ts); (implode
+                           toString (&LENGTH ts); (implode
                              " arguments, but expected ");
-                           (num_to_str) (&LENGTH tvs')])) (
+                           toString (&LENGTH tvs')])) (
        return (type_subst (alist_to_fmap (ZIP (tvs',ts'))) t'))))) /\
    (type_name_check_subst_list l f tenvT fvs [] = return []) /\
    (type_name_check_subst_list l f tenvT fvs (t :: ts) =
@@ -273,12 +274,12 @@ let type_name_check_sub_def = cake_define
                             (concat
                               [(implode "Type constructor ");
                                 id_to_string tc;
-                              (implode " given "); (num_to_str)
-                                (LENGTH ts);
+                              (implode " given "); toString (LENGTH
+                                ts);
                               (implode " arguments, but expected ");
-                              (num_to_str) (LENGTH y)])),s)) |
-                                (M_failure x,s) -> (M_failure x,s)) |
-                                (M_failure x,s) -> (M_failure x,s))) /\
+                              toString (LENGTH y)])),s)) | (M_failure
+                                x,s) -> (M_failure x,s)) | (M_failure
+                                x,s) -> (M_failure x,s))) /\
    (type_name_check_sub_list l tenvT fvs [] = (\s. (M_success [],s)))
      /\
    (type_name_check_sub_list l tenvT fvs (t :: ts) =
@@ -374,10 +375,10 @@ let infer_p_def = cake_define_list
                  (guard (LENGTH ts'' = LENGTH ts) l
                        (concat [(implode "Constructor ");
                          id_to_string cn; (implode " given ");
-                              (num_to_str) (&LENGTH ts''); (implode
+                              toString (&LENGTH ts''); (implode
                                 " arguments, but expected ");
-                              (num_to_str) (&LENGTH ts)]))
-                                (monad_bind (add_constraints l ts'' (MAP
+                              toString (&LENGTH ts)])) (monad_bind
+                                (add_constraints l ts'' (MAP
                                 (infer_type_subst (ZIP (tvs',ts'))) ts))
                                 (\
                  one.
@@ -541,8 +542,8 @@ let op_n_args_msg_def = cake_define
   `op_n_args_msg op n =
      (let (ops,args) = op_to_string op in
      concat [(implode "Primitive "); ops; (implode " given ");
-         (num_to_str) (&n); (implode " arguments, but expects ");
-         (num_to_str) (&args)])`;;
+         toString (&n); (implode " arguments, but expects ");
+         toString (&args)])`;;
 
 let constrain_op_def = cake_define
   `constrain_op l op ts s =
@@ -697,9 +698,9 @@ let infer_e_def = cake_define_wf
               (guard (LENGTH ts'' = LENGTH ts) l
                     (concat [(implode "Constructor "); id_to_string
                       cn; (implode " given ");
-                             (num_to_str) (&LENGTH ts''); (implode
+                             toString (&LENGTH ts''); (implode
                                " arguments, but expected ");
-                             (num_to_str) (&LENGTH ts)])) (monad_bind
+                             toString (&LENGTH ts)])) (monad_bind
                                (add_constraints l ts'' (MAP
                                (infer_type_subst (ZIP (tvs',ts'))) ts))
                                (\

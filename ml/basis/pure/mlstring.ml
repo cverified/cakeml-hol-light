@@ -84,8 +84,7 @@ let concatWith_def = cake_define
 let chr_to_str_def = cake_define
   `chr_to_str (c:char) = implode [c]`;;
 
-(* HOL4 overload (expanded in the port):
-     toString = chr_to_str *)
+hol4_overload "toString" "chr_to_str";;
 
 let translate_aux_def = cake_define
   `(translate_aux f s n 0 = []) /\

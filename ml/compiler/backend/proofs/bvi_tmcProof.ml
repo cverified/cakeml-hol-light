@@ -19,6 +19,7 @@ needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "compiler/backend/semantics/stackSem.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
@@ -212,7 +213,8 @@ let hole_not_finalised_def = cake_define
        FLOOKUP refs ptr = SOME (MutBlock tag F left child right))`;;
 
 let holes_still_not_finalised_def = cake_define
-  `holes_still_not_finalised f (refs) (refs') <=>
+  `holes_still_not_finalised f (refs:('gb,'gc bvlSem_ref)fmap)
+  (refs':('gb,'gc bvlSem_ref)fmap) <=>
      (!ptr. ~(
        ptr IN FRANGE f) /\
        hole_not_finalised refs ptr ==>
@@ -1076,7 +1078,7 @@ QED
 *)
 
 let hypothesis_def = cake_define
-  `hypothesis xs' (s'') clock <=> ?_clock
+  `hypothesis xs' (s'':(num#'gc,'ffi)bviSem_state) clock <=> ?_clock
    s'' < clock ==>
    (!env1' r' t' opt' f' s'³' env2' loc'.
              evaluate (xs',env1',s'') = (r',t') /\

@@ -60,8 +60,7 @@ hol4_overload "toString" "mlint_toString";;
 let num_to_str_def = cake_define
   `num_to_str (n:num) = toString (&n)`;;
 
-(* HOL4 overload (expanded in the port):
-     toString = num_to_str *)
+hol4_overload "toString" "num_to_str";;
 
 (* fromString Definitions *)
 let fromChar_unsafe_def = cake_define

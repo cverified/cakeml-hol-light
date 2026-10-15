@@ -12,9 +12,9 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "lib/binary_ieee.ml";;
+needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/machine_ieee.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -157,7 +157,7 @@ let store_v_same_type_def = cake_define
      store = ('a store_v) list *)
 
 let empty_store_def = cake_define
-  `empty_store = []`;;
+  `empty_store = ([]:('ga store_v) list)`;;
 
 let store_lookup_def = cake_define
   `store_lookup l (st:('a store_v) list) =
@@ -852,7 +852,7 @@ let str_cmp_def = cake_define
       | (T,Geq) -> fast_ge i j`;;
 
 let do_test_def = cake_define
-  `semanticPrimitives_do_test (EQUAL) ty v1 v2 =
+  `semanticPrimitives_do_test Equal ty v1 v2 =
      (if check_type ty v1 /\ check_type ty v2 then
         (if ty = Float64T then Eq_val (fp64_equal (the_Litv_Float64
           v1) (the_Litv_Float64 v2)) else do_eq v1 v2) else

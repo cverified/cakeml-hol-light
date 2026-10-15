@@ -9,6 +9,11 @@ needs "lib/ASCIInumbers.ml";;
 (* HOL4 ancestors outside the port: pred_set res_quan arithmetic
    words bit pair list rich_list relation pair integer fcp *)
 
+let b2n_def = cake_define
+  `(b2n T = 1) /\ (b2n F = (0:num))`;;
+let b2w_def = cake_define
+  `b2w c = n2w (b2n c)`;;
+
 (* HOL4 termination: \\ SIMP_TAC std_ss [MATCH_MP DIV_LT_X
    ZERO_LT_dimword,ONE_LT_dimword] \\ DECIDE_TAC *)
 let n2mw_def = cake_define_wf

@@ -30,7 +30,7 @@
 *)
 
 needs "compiler/backend/closLang.ml";;
-needs "lib/ternaryComparisons.ml";;
+needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: (* for op *) (* for num_set *) *)
@@ -45,11 +45,11 @@ let op_space_reset_def = cake_define
         | (IntOp Mult) -> T
         | (IntOp Div) -> T
         | (IntOp Mod) -> T
-        | (IntOp (LESS)) -> T
+        | (IntOp Less) -> T
         | (IntOp LessEq) -> T
-        | (IntOp (GREATER)) -> T
+        | (IntOp Greater) -> T
         | (IntOp GreaterEq) -> T
-        | (BlockOp (EQUAL)) -> T
+        | (BlockOp Equal) -> T
         | (BlockOp ListAppend) -> T
         | (BlockOp (FromList _1)) -> T
         | (MemOp RefArray) -> T

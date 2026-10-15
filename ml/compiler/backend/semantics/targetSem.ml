@@ -265,7 +265,8 @@ let machine_sem_def = cake_define
 (* define what it means for code to be loaded and ready to run *)
 
 let code_loaded_def = cake_define
-  `code_loaded (bytes:word8 list) (mc) (ms) <=>
+  `code_loaded (bytes:word8 list) (mc:('ga,'gb,'gc)machine_config)
+  (ms:'gb) <=>
      read_bytearray (target_get_pc (machine_config_target mc) ms)
        (LENGTH bytes)
        (\a. if a IN machine_config_prog_addresses mc then SOME

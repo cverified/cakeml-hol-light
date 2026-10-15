@@ -14,7 +14,7 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
-needs "lib/ternaryComparisons.ml";;
+needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: (* for bytes_in_word *) *)
@@ -160,7 +160,7 @@ let copy_loop_def = cake_define
      list_Seq [(\r a. Inst (Mem Load r (Addr a (n2w 0)))) 1 t2;
                (\r1. Inst (Arith (Binop Add r1 r1 (Imm
                  (bytes_in_word))))) t2;
-               (\cmp r ri c. Loop (If cmp r ri c (Break 0))) (LESS) 1
+               (\cmp r ri c. Loop (If cmp r ri c (Break 0))) Less 1
                  (Imm (n2w 0))
                  (list_Seq [copy_each t1 t2;
                             (\r a. Inst (Mem Load r (Addr a (n2w

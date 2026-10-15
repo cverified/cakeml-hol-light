@@ -12,8 +12,8 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 
 let is_pure_def = cake_define
@@ -25,7 +25,7 @@ let is_pure_def = cake_define
         | (IntOp Mult) -> F
         | (IntOp Div) -> F
         | (IntOp Mod) -> F
-        | (IntOp (LESS)) -> F
+        | (IntOp Less) -> F
         | (IntOp LessEq) -> F
         | (WordOp (WordOpw W64 _2)) -> F
         | (WordOp (WordShift W64 _3 _4)) -> F
@@ -40,7 +40,7 @@ let is_pure_def = cake_define
         | (BlockOp (ConsExtend _10)) -> F
         | (BlockOp (FromList _11)) -> F
         | (BlockOp ListAppend) -> F
-        | (BlockOp (EQUAL)) -> F
+        | (BlockOp Equal) -> F
         | (GlobOp (SetGlobal _12)) -> F
         | (GlobOp SetGlobalsPtr) -> F
         | (MemOp Ref) -> F

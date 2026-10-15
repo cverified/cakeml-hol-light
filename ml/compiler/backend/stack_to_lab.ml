@@ -9,9 +9,10 @@
   of goto-like jumps.
 *)
 
-needs "basis/pure/mlsexp.ml";;
+needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
@@ -22,7 +23,7 @@ needs "compiler/backend/stack_rawcall.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/ternaryComparisons.ml";;
+needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
@@ -35,12 +36,12 @@ let compile_jump_def = cake_define
      (Asmi a)) (JumpReg r) [] 0)`;;
 
 let negate_def = cake_define
-  `(negate (LESS) = NotLess) /\
-   (negate (EQUAL) = NotEqual) /\
+  `(negate Less = NotLess) /\
+   (negate Equal = NotEqual) /\
    (negate Lower = NotLower) /\
    (negate Test = NotTest) /\
-   (negate NotLess = (LESS)) /\
-   (negate NotEqual = (EQUAL)) /\
+   (negate NotLess = Less) /\
+   (negate NotEqual = Equal) /\
    (negate NotLower = Lower) /\
    (negate NotTest = Test)`;;
 
@@ -51,100 +52,100 @@ let find_lab_def = cake_define
 (* HOL4 overload (expanded in the port):
      None =  *)
 
-(* HOL4 ML code, not ported:
-local val flatten_quotation = `
-  flatten t p n m conts breaks =
-    case p of
-    | Tick => (List [Asm (Inst (Skip)) [] 0],F,m)
-    | Inst a => (List [Asm (Inst a) [] 0],F,m)
-    | Halt _ => (List [LabAsm Halt 0w [] 0],T,m)
-    | Seq p1 p2 =>
-        let (xs,nr1,m) = flatten F p1 n m conts breaks in
-        let (ys,nr2,m) = flatten F p2 n m conts breaks in
-          if t then (xs ++ List [Label n 1 0] ++ ys, nr1 ∨ nr2, m)
-          else (xs ++ ys, nr1 ∨ nr2, m)
-    | If c r ri p1 p2 =>
-        let (xs,nr1,m) = flatten F p1 n m conts breaks in
-        let (ys,nr2,m) = flatten F p2 n m conts breaks in
-          if (p1 = Skip) /\ (p2 = Skip) then (List [],F,m)
-          else if p1 = Skip then
-            (List [LabAsm (JumpCmp c r ri (Lab n m)) 0w [] 0] ++ ys ++
-             List [Label n m 0],F,m+1)
-          else if p2 = Skip then
-            (List [LabAsm (JumpCmp (negate c) r ri (Lab n m)) 0w [] 0]
-              ++ xs ++
-             List [Label n m 0],F,m+1)
-          else if nr1 then
-            (List [LabAsm (JumpCmp (negate c) r ri (Lab n m)) 0w [] 0]
-              ++ xs ++
-             List [Label n m 0] ++ ys,nr2,m+1)
-          else if nr2 then
-            (List [LabAsm (JumpCmp c r ri (Lab n m)) 0w [] 0] ++ ys ++
-             List [Label n m 0] ++ xs,nr1,m+1)
-          else
-            (List [LabAsm (JumpCmp c r ri (Lab n m)) 0w [] 0] ++ ys ++
-             List [LabAsm (Jump (Lab n (m+1))) 0w [] 0; Label n m 0] ++
-               xs ++
-             List [Label n (m+1) 0],nr1 ∧ nr2,m+2)
-    | Loop p1 =>
-        let cont_lab = m in
-        let break_lab = m+1 in
-        let (xs,_,m) = flatten F p1 n (m+2) (cont_lab :: conts)
-          (break_lab :: breaks) in
-          (List [Label n cont_lab 0] ++
-           xs ++
-           List [LabAsm (Jump (Lab n cont_lab)) 0w [] 0;
-                 Label n break_lab 0],F,m)
-    | Raise r => (List [Asm (JumpReg r) [] 0],T,m)
-    | Return r => (List [Asm (JumpReg r) [] 0],T,m)
-    | Break k => (List [LabAsm (Jump (Lab n (find_lab k breaks))) 0w []
-      0],T,m)
-    | Continue k => (List [LabAsm (Jump (Lab n (find_lab k conts))) 0w
-      [] 0],T,m)
-    | RawCall n => (List [LabAsm (Jump (Lab n 1)) 0w [] 0],T,m)
-    | Call NONE dest handler => (List [compile_jump dest],T,m)
-    | Call (SOME (p1,lr,l1,l2)) dest handler =>
-        let (xs,nr1,m) = flatten F p1 n m conts breaks in
-        let prefix = List [LabAsm (LocValue lr (Lab l1 l2)) 0w [] 0;
-                 compile_jump dest; Label l1 l2 0] ++ xs in
-        (case handler of
-        | NONE => (prefix, nr1, m)
-        | SOME (p2,k1,k2) =>
-            let (ys,nr2,m) = flatten F p2 n m conts breaks in
-              (prefix ++ (List [LabAsm (Jump (Lab n m)) 0w [] 0; Label
-                k1 k2 0] ++
-              ys ++ List [Label n m 0]), nr1 ∧ nr2, m+1))
-    | JumpLower r1 r2 target =>
-        (List [LabAsm (JumpCmp Lower r1 (Reg r2) (Lab target 0)) 0w []
-          0],F,m)
-    | FFI ffi_index _ _ _ _ lr => (List [LabAsm (LocValue lr (Lab n m))
-      0w [] 0;
-                                         LabAsm (CallFFI ffi_index) 0w
-                                           [] 0;
-                                         Label n m 0],F,m+1)
-    | LocValue i l1 l2 => (List [LabAsm (LocValue i (Lab l1 l2)) 0w []
-      0],F,m)
-    | Install _ _ _ _ ret =>
-      (List [LabAsm (LocValue ret (Lab n m)) 0w [] 0;
-      LabAsm Install 0w [] 0;
-      Label n m 0],F,m+1)
-    | ShMemOp op r ad => (List [Asm (ShareMem op r ad) [] 0],F,m)
-    | CodeBufferWrite r1 r2 =>
-      (List [Asm (Cbw r1 r2) [] 0],F,m)
-    | _  => (List [],F,m)`
-in
-val flatten_def = Define flatten_quotation;
-*)
+let flatten_def = cake_define
+  `stack_to_lab_flatten t p n m conts breaks =
+     (match p with Tick -> (List [(\a. (\a. (\a. Asm (Asmi a)) (Asmi
+       a)) (Asmi a)) (Inst (Skip)) [] 0],F,m) | Inst a -> (List [(\a.
+       (\a. (\a. Asm (Asmi a)) (Asmi a)) (Asmi a)) (Inst a) [] 0],F,m) |
+       Halt _1 -> (List [LabAsm Halt (n2w 0) [] 0],T,m) | Seq p1 p2 ->
+         (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks
+           in
+         let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
+           in
+           if t then (xs ++ List [Label n 1 0] ++ ys,(nr1 \/ nr2),m)
+             else (xs ++ ys,(nr1 \/ nr2),m)) | If c r ri p1 p2 ->
+         (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks
+           in
+         let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
+           in
+           if (p1 = Skip) /\ (p2 = Skip) then (List [],F,m) else if
+             p1 = Skip then
+             (List [LabAsm (JumpCmp c r ri (Lab n m)) (n2w 0) [] 0]
+               ++ ys ++
+              List [Label n m 0],F,m + 1) else if p2 = Skip then
+             (List [LabAsm (JumpCmp (negate c) r ri (Lab n m)) (n2w
+               0) [] 0] ++ xs ++
+              List [Label n m 0],F,m + 1) else if nr1 then
+             (List [LabAsm (JumpCmp (negate c) r ri (Lab n m)) (n2w
+               0) [] 0] ++ xs ++
+              List [Label n m 0] ++ ys,nr2,m + 1) else if nr2 then
+             (List [LabAsm (JumpCmp c r ri (Lab n m)) (n2w 0) [] 0]
+               ++ ys ++
+              List [Label n m 0] ++ xs,nr1,m + 1) else
+             (List [LabAsm (JumpCmp c r ri (Lab n m)) (n2w 0) [] 0]
+               ++ ys ++
+              List [LabAsm (Jump (Lab n (m + 1))) (n2w 0) [] 0; Label
+                n m 0] ++ xs ++
+              List [Label n (m + 1) 0],(nr1 /\ nr2),m + 2)) | Loop p1
+                ->
+         (let cont_lab = m in
+         let break_lab = m + 1 in
+         let (xs,_2,m) = stack_to_lab_flatten F p1 n (m + 2)
+           (cont_lab :: conts) (break_lab :: breaks) in
+           (List [Label n cont_lab 0] ++
+            xs ++
+            List [LabAsm (Jump (Lab n cont_lab)) (n2w 0) [] 0;
+                  Label n break_lab 0],F,m)) | Raise r -> (List [(\a.
+                    (\a. (\a. Asm (Asmi a)) (Asmi a)) (Asmi a)) (JumpReg
+                    r) [] 0],T,m) | Return r -> (List [(\a. (\a. (\a.
+                    Asm (Asmi a)) (Asmi a)) (Asmi a)) (JumpReg r) []
+                    0],T,m) | Break k -> (List [LabAsm (Jump (Lab n
+                    (find_lab k breaks))) (n2w 0) [] 0],T,m) | Continue
+                    k -> (List [LabAsm (Jump (Lab n (find_lab k conts)))
+                    (n2w 0) [] 0],T,m) | RawCall n -> (List [LabAsm
+                    (Jump (Lab n 1)) (n2w 0) [] 0],T,m) | Call NONE dest
+                    handler -> (List [compile_jump dest],T,m) | Call
+                    (SOME (p1,lr,l1,l2)) dest handler ->
+         (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks
+           in
+         let prefix = List [LabAsm (LocValue lr (Lab l1 l2)) (n2w 0)
+           [] 0;
+                  compile_jump dest; Label l1 l2 0] ++ xs in
+         (match handler with NONE -> (prefix,nr1,m) | SOME (p2,k1,k2)
+           ->
+             (let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts
+               breaks in
+               (prefix ++ (List [LabAsm (Jump (Lab n m)) (n2w 0) []
+                 0; Label k1 k2 0] ++
+               ys ++ List [Label n m 0]),(nr1 /\ nr2),m + 1)))) |
+                 JumpLower r1 r2 target ->
+         (List [LabAsm (JumpCmp Lower r1 (Reg r2) (Lab target 0))
+           (n2w 0) [] 0],F,m) | FFI ffi_index _3 _4 _5 _6 lr -> (List
+           [LabAsm (LocValue lr (Lab n m)) (n2w 0) [] 0;
+                              LabAsm (CallFFI ffi_index) (n2w 0) []
+                                0;
+                              Label n m 0],F,m + 1) | LocValue i l1
+                                l2 -> (List [LabAsm (LocValue i (Lab l1
+                                l2)) (n2w 0) [] 0],F,m) | Install _7 _8
+                                _9 _10 ret ->
+       (List [LabAsm (LocValue ret (Lab n m)) (n2w 0) [] 0;
+       LabAsm Install (n2w 0) [] 0;
+       Label n m 0],F,m + 1) | ShMemOp op r ad -> (List [(\a. (\a.
+         (\a. Asm (Asmi a)) (Asmi a)) (Asmi a)) (ShareMem op r ad) []
+         0],F,m) | CodeBufferWrite r1 r2 ->
+       (List [(\a. (\a. (\a. Asm (Asmi a)) (Asmi a)) (Asmi a))
+         (Cbw r1 r2) [] 0],F,m) | _11 -> (List [],F,m))`;;
+hol4_overload "flatten" "stack_to_lab_flatten";;
 
 let is_Seq_def = cake_define
   `is_Seq x1 =
       match x1 with
         (stackLang_Seq p1 p2) -> T
-      | _1 -> F`;;
+      | _12 -> F`;;
 
 let prog_to_section_def = cake_define
   `prog_to_section (n,p) =
-     (let (lines,_2,m) = (flatten T p n (next_lab p 2) [] []) in
+     (let (lines,_13,m) = (flatten T p n (next_lab p 2) [] []) in
        Section n (append (Append lines
          (List [Label n (if is_Seq p then m else 1) 0]))))`;;
 
@@ -152,7 +153,7 @@ let is_gen_gc_def = cake_define
   `is_gen_gc x1 =
         match x1 with
           (Generational l) -> T
-        | _3 -> F`;;
+        | _14 -> F`;;
 
 let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"
   ["reg_names","num spt";

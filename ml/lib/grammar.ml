@@ -57,3 +57,13 @@ let valid_locs_def = cake_define
 
 let valid_lptree_def = cake_define
   `valid_lptree G pt <=> valid_locs pt /\ valid_ptree G pt`;;
+
+let derive_def = cake_define
+  `derive G sf1 sf2 <=>
+     (?p sym rhs s. sf1 = p ++ [NT sym] ++ s /\ sf2 = p ++ rhs ++ s
+       /\
+                   sym IN FDOM (grammar_rules G) /\ rhs IN FAPPLY
+                     (grammar_rules G) sym)`;;
+
+(* HOL4 overload (expanded in the port):
+     derives = λG. RTC (derive G) *)

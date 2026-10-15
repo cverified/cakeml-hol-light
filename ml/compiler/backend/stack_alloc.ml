@@ -20,8 +20,8 @@ needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
+needs "lib/comparison.ml";;
 needs "lib/multiword.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 
 let memcpy_code_def = cake_define
@@ -213,7 +213,7 @@ let word_gen_gc_move_code_def = cake_define
                        (\r w. Inst (Const r w)) 2 (n2w 0b1100);
                        (\r1 r2. Inst (Arith (Binop And r1 r1 (Reg
                          r2)))) 6 2;
-                       If (EQUAL) 6 (Imm (n2w 8))
+                       If Equal 6 (Imm (n2w 8))
                          (list_Seq [
                            Set (Temp (n2w 0)) 3;
                            Set (Temp (n2w 1)) 4;
@@ -532,7 +532,7 @@ let word_gen_gc_move_refs_code_def = cake_define
 let word_gen_gc_move_loop_code_def = cake_define
   `word_gen_gc_move_loop_code conf =
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) NotTest 7 (Reg 7)
-       (If (EQUAL) 1 (Reg 2)
+       (If Equal 1 (Reg 2)
           (list_Seq [word_gen_gc_move_data_code conf;
                      Get 5 (Temp (n2w 2));
                      Get 7 (Temp (n2w 4));
@@ -828,56 +828,40 @@ hol4_overload "stub_names" "stack_alloc_stub_names";;
 
 (* compiler *)
 
-(* HOL4 ML code, not ported:
-local
-val next_lab_quotation = `
-  next_lab (p:'a stackLang$prog) aux =
-    case p of
-    | Seq p1 p2 => next_lab p1 (next_lab p2 aux)
-    | If _ _ _ p1 p2 => next_lab p1 (next_lab p2 aux)
-    | Loop p => next_lab p aux
-    | Call NONE _ NONE => aux
-    | Call NONE _ (SOME (_,_,l2)) => MAX aux (l2 + 2)
-    | Call (SOME (p,_,_,l2)) _ NONE => next_lab p (MAX aux (l2 + 2))
-    | Call (SOME (p,_,_,l2)) _ (SOME (p',_,l3)) =>
-          next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux)))
-    | _ => aux`
-in
-val next_lab_def = Define next_lab_quotation;
-*)
+let next_lab_def = cake_define
+  `next_lab (p:'a stackLang_prog) aux =
+     (match p with Seq p1 p2 -> next_lab p1 (next_lab p2 aux) | If _2
+       _3 _4 p1 p2 -> next_lab p1 (next_lab p2 aux) | Loop p -> next_lab
+       p aux | Call NONE _5 NONE -> aux | Call NONE _6 (SOME (_7,_8,l2))
+       -> MAX aux (l2 + 2) | Call (SOME (p,_9,_10,l2)) _11 NONE ->
+       next_lab p (MAX aux (l2 + 2)) | Call (SOME (p,_12,_13,l2)) _14
+       (SOME (p',_15,l3)) ->
+           next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux))) |
+             _16 -> aux)`;;
 
-(* HOL4 ML code, not ported:
-local
-val comp_quotation = `
-  comp n m p =
-    case p of
-    | Seq p1 p2 =>
-        let (q1,m) = comp n m p1 in
-        let (q2,m) = comp n m p2 in
-          (Seq q1 q2,m)
-    | If c r ri p1 p2 =>
-        let (q1,m) = comp n m p1 in
-        let (q2,m) = comp n m p2 in
-          (If c r ri q1 q2,m)
-    | Loop p1 =>
-        let (q1,m) = comp n m p1 in
-          (Loop q1,m)
-    | Call NONE dest exc => (Call NONE dest NONE,m)
-    | Call (SOME (p1,lr,l1,l2)) dest exc =>
-        let (q1,m) = comp n m p1 in
-         (case exc of
-          | NONE => (Call (SOME (q1,lr,l1,l2)) dest NONE,m)
-          | SOME (p2,k1,k2) =>
-              let (q2,m) = comp n m p2 in
-                (Call (SOME (q1,lr,l1,l2)) dest (SOME (q2,k1,k2)),m))
-    | Alloc k => (Call (SOME (Skip,0,n,m)) (INL gc_stub_location)
-      NONE,m+1)
-    | StoreConsts k1 k2 (SOME loc) => (Call (SOME (Skip,0,n,m)) (INL
-      loc) NONE,m+1)
-    | _ => (p,m) `
-in
-val comp_def = Define comp_quotation
-*)
+let comp_def = cake_define
+  `stack_alloc_comp n m p =
+     (match p with Seq p1 p2 ->
+         (let (q1,m) = stack_alloc_comp n m p1 in
+         let (q2,m) = stack_alloc_comp n m p2 in
+           (Seq q1 q2,m)) | If c r ri p1 p2 ->
+         (let (q1,m) = stack_alloc_comp n m p1 in
+         let (q2,m) = stack_alloc_comp n m p2 in
+           (If c r ri q1 q2,m)) | Loop p1 ->
+         (let (q1,m) = stack_alloc_comp n m p1 in
+           (Loop q1,m)) | Call NONE dest exc -> (Call NONE dest
+             NONE,m) | Call (SOME (p1,lr,l1,l2)) dest exc ->
+         (let (q1,m) = stack_alloc_comp n m p1 in
+          (match exc with NONE -> (Call (SOME (q1,lr,l1,l2)) dest
+            NONE,m) | SOME (p2,k1,k2) ->
+               (let (q2,m) = stack_alloc_comp n m p2 in
+                 (Call (SOME (q1,lr,l1,l2)) dest (SOME
+                   (q2,k1,k2)),m)))) | Alloc k -> (Call (SOME
+                   (Skip,0,n,m)) (INL gc_stub_location) NONE,m + 1) |
+                   StoreConsts k1 k2 (SOME loc) -> (Call (SOME
+                   (Skip,0,n,m)) (INL loc) NONE,m + 1) | _17 ->
+                   (p,m))`;;
+hol4_overload "comp" "stack_alloc_comp";;
 
 let prog_comp_def = cake_define
   `stack_alloc_prog_comp (n,p) = (n,FST (comp n (next_lab p 2) p))`;;

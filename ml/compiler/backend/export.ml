@@ -13,6 +13,7 @@ needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/integer_word.ml";;
 needs "misc/misc.ml";;
 
 (* HOL4 termination: \\ fs [listTheory.LENGTH_DROP] *)
@@ -138,7 +139,7 @@ let words_line_def = cake_define
      List (word_directive :: comma_cat to_string ls)`;;
 
 let word_to_string_def = cake_define
-  `word_to_string w = (num_to_str) (w2n w)`;;
+  `word_to_string w = toString (w2n w)`;;
 
 let byte_to_string_def = cake_define
   `byte_to_string (b:word8) =
@@ -155,16 +156,16 @@ let all_bytes_def = cake_define
 let escape_sym_char_def = cake_define
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
-        code >= 48 /\ code <= 57 \/ code = 95 then (num_to_str) ch
-          else ^ (^
-     (implode "$") ((num_to_str) (code))) (implode "_"))`;;
+        code >= 48 /\ code <= 57 \/ code = 95 then toString ch else ^
+          (^
+     (implode "$") (toString (code))) (implode "_"))`;;
 
 let get_sym_label_def = cake_define
   `get_sym_label (ix,appl) (name,start,len) =
      (let label = ^ (^ (^
        (implode "cml_") (concat (MAP escape_sym_char (explode
          name))))
-       (implode "_")) ((num_to_str) (ix)) in
+       (implode "_")) (toString (ix)) in
      (ix + 1,appl ++ [(name,label,start,len)]))`;;
 
 let get_sym_labels_def = cake_define
@@ -175,8 +176,8 @@ let emit_symbol_def = cake_define
   `emit_symbol appl (name,label,start,len) =
      misc_Append appl (misc_List
        [^ (^ (^ (^ (^ (^ (implode "    makesym(") label) (implode
-         ", ")) ((num_to_str) (start))) (implode ", "))
-       ((num_to_str) (len))) (implode ")\n")])`;;
+         ", ")) (toString (start))) (implode ", "))
+       (toString (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = cake_define
   `emit_symbols lsyms =

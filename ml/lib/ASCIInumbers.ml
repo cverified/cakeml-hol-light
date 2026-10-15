@@ -38,5 +38,4 @@ let num_to_dec_string_def = cake_define
 let num_to_hex_string_def = cake_define
   `num_to_hex_string = n2s 16 HEX`;;
 
-(* HOL4 overload (expanded in the port):
-     toString = num_to_dec_string *)
+hol4_overload "toString" "num_to_dec_string";;

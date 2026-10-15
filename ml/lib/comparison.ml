@@ -8,12 +8,8 @@
 (* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: option pair string list
    arithmetic toto *)
-(* HOL4 overload (expanded in the port):
-     Less = LESS *)
-(* HOL4 overload (expanded in the port):
-     Equal = EQUAL *)
-(* HOL4 overload (expanded in the port):
-     Greater = GREATER *)
+hol4_overload "Less" "LESS";;
+hol4_overload "Equal" "EQUAL";;
+hol4_overload "Greater" "GREATER";;
 
-(* HOL4 overload (expanded in the port):
-     num_cmp = num_compare *)
+hol4_overload "num_cmp" "num_compare";;

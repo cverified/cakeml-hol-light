@@ -340,8 +340,7 @@ End
 val exn_functions = define_monad_exception_functions ``:state_exn``
   ``:linear_scan_hidden_state``;
 *)
-(* HOL4 overload (expanded in the port):
-     failwith = raise_Fail *)
+hol4_overload "failwith" "raise_Fail";;
 
 (* HOL4 ML code, not ported:
 val sub_exn = ``Subscript``;

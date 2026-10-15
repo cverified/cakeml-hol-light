@@ -273,7 +273,7 @@ val sextract_labels_def = stackPropsTheory.extract_labels_def
 
 let halt_assum_def = cake_define
   `halt_assum (:'ffi#'c) code <=>
-    (!(s).
+    (!(s:('ga,'c,'ffi)stackSem_state).
       subspt code (?_code s) /\ ~(?_clock s = 0) ==>
       (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt (Word
         (n2w 0))),t) /\ ?_ffi
@@ -282,11 +282,11 @@ let halt_assum_def = cake_define
 let make_init_def = cake_define
   `stack_to_labProof_make_init code coracle regs save_regs
   (s:('a,'c,'ffi)labSem_state) =
-     mk_? (FEMPTY |++ (MAP (\r. r,(\r s. ?_regs s r) r s) regs))
+     (mk_? (FEMPTY |++ (MAP (\r. r,(\r s. ?_regs s r) r s) regs))
        FEMPTY (?_mem s) (?_mem_domain s)
        (labSem_state_shared_mem_domain s) F F F (\c p. ?_compile s c
        (MAP prog_to_section p)) coracle (?_code_buffer s) (?_clock s)
-       code (?_ffi s) save_regs (?_be s)`;;
+       code (?_ffi s) save_regs (?_be s):('ga,'c,'ffi)stackSem_state)`;;
 hol4_overload "make_init" "stack_to_labProof_make_init";;
 
 (* HOL4 ML code, not ported:

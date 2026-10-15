@@ -11,9 +11,9 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "lib/comparison.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
@@ -239,7 +239,7 @@ let the_Litv_Float64_def = cake_define
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
 let do_test_def = cake_define
-  `flatSem_do_test (EQUAL) ty v1 v2 =
+  `flatSem_do_test Equal ty v1 v2 =
      (if check_type ty v1 /\ check_type ty v2 then
         (if ty = Float64T then Eq_val (fp64_equal (the_Litv_Float64
           v1) (the_Litv_Float64 v2)) else do_eq v1 v2) else
@@ -247,12 +247,11 @@ let do_test_def = cake_define
    flatSem_do_test (Compare cmp) ty v1 v2 =
      (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME (IntLit
        i),SOME (IntLit j)) -> Eq_val (int_cmp cmp i j) | (CharT,SOME
-       (Char c),SOME (Char d)) -> Eq_val ((num_compare) cmp (ORD c) (ORD
-       d)) | (WordT W8,SOME (Word8 w),SOME (Word8 v)) -> Eq_val
-       ((num_compare) cmp (w2n w) (w2n v)) | (Float64T,SOME (Float64
-       w),SOME (Float64 v)) -> Eq_val (fp_cmp cmp w v) | (StrT,SOME
-       (StrLit s),SOME (StrLit t)) -> Eq_val (str_cmp F cmp s t) | _41
-       -> Eq_type_error) /\
+       (Char c),SOME (Char d)) -> Eq_val (num_cmp cmp (ORD c) (ORD d)) |
+       (WordT W8,SOME (Word8 w),SOME (Word8 v)) -> Eq_val (num_cmp cmp
+       (w2n w) (w2n v)) | (Float64T,SOME (Float64 w),SOME (Float64 v))
+       -> Eq_val (fp_cmp cmp w v) | (StrT,SOME (StrLit s),SOME (StrLit
+       t)) -> Eq_val (str_cmp F cmp s t) | _41 -> Eq_type_error) /\
    flatSem_do_test (AltCompare cmp) ty v1 v2 =
      (match (ty,dest_Litv v1,dest_Litv v2) with (StrT,SOME (StrLit
        s),SOME (StrLit t)) -> Eq_val (str_cmp T cmp s t) | _42 ->

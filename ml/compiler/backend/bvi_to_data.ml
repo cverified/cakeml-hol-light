@@ -14,8 +14,8 @@ needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_simp.ml";;
 needs "compiler/backend/data_space.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
@@ -25,9 +25,9 @@ let iAssign_def = cake_define
   `iAssign n1 op vs live env =
      (if op_requires_names op then
        let xs = SOME (list_to_num_set (vs ++ live ++ env)) in
-         if op = IntOp (GREATER) then
-           Assign n1 (IntOp (LESS)) (REVERSE vs) xs else if op =
-             IntOp GreaterEq then
+         if op = IntOp Greater then
+           Assign n1 (IntOp Less) (REVERSE vs) xs else if op = IntOp
+             GreaterEq then
            Assign n1 (IntOp LessEq) (REVERSE vs) xs else
            Assign n1 op vs xs else
        let k = op_space_req op (LENGTH vs) in

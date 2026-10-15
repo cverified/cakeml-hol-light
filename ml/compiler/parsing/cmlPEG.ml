@@ -20,8 +20,7 @@ needs "semantics/tokens.ml";;
 
 (* HOL4 overload (expanded in the port):
      monad_bind = OPTION_BIND *)
-(* HOL4 overload (expanded in the port):
-     assert = OPTION_GUARD *)
+hol4_overload "assert" "OPTION_GUARD";;
 
 (* HOL4 ML code, not ported:
 val distinct_ths = let
@@ -109,8 +108,8 @@ let tokeq_def = cake_define
 
 let tokSymP_def = cake_define
   `tokSymP P =
-     tok (\t. (monad_bind (destSymbolT t) (\s. (OPTION_GUARD) (P
-       s))) = SOME one) mktokLf`;;
+     tok (\t. (monad_bind (destSymbolT t) (\s. assert (P s))) =
+       SOME one) mktokLf`;;
 
 let pnt_def = cake_define
   `pnt ntsym = nt ((INL:MMLnonT->MMLnonT+num) ntsym) I`;;
@@ -124,8 +123,8 @@ let pnt_def = cake_define
 let peg_UQConstructorName_def = cake_define
   `peg_UQConstructorName =
      tok (\t. monad_bind (destAlphaT t) (\s.
-                 (OPTION_GUARD) (~(s = (implode "")) /\ isUpper
-                   (strsub s 0))) = SOME one)
+                 assert (~(s = (implode "")) /\ isUpper (strsub s
+                   0))) = SOME one)
          (bindNT nUQConstructorName o mktokLf)`;;
 
 let peg_TypeDec_def = cake_define
@@ -141,9 +140,8 @@ let peg_V_def = cake_define
   `peg_V =
     choicel [tok (\t.
                    monad_bind (destAlphaT t) (\s.
-                      (OPTION_GUARD) (~(s IN {(implode
-                        "before"),(implode "div"),(implode
-                        "mod"),(implode "o")}) /\ ~(
+                      assert (~(s IN {(implode "before"),(implode
+                        "div"),(implode "mod"),(implode "o")}) /\ ~(
                              s = (implode "")) /\ ~isUpper (strsub s
                                0))) = SOME one)
                  (bindNT nV o mktokLf);
@@ -153,9 +151,9 @@ let peg_V_def = cake_define
 let peg_longV_def = cake_define
   `peg_longV = tok (\t. monad_bind (destLongidT t) (\
                          (str,s).
-                         (OPTION_GUARD) (~(s = (implode "")) /\
-                           (isAlpha (strsub s 0) ==> ~isUpper (strsub s
-                           0)))) = SOME one)
+                         assert (~(s = (implode "")) /\ (isAlpha
+                           (strsub s 0) ==> ~isUpper (strsub s 0)))) =
+                           SOME one)
                    (bindNT nFQV o mktokLf)`;;
 
 let peg_EbaseParenFn_def = cake_define
@@ -191,7 +189,7 @@ let peg_EbaseParen_def = cake_define
 let peg_StructName_def = cake_define
   `peg_StructName =
      tok (\t. monad_bind (destAlphaT t) (\s.
-                 (OPTION_GUARD) (~(s = (implode "")))) = SOME one)
+                 assert (~(s = (implode "")))) = SOME one)
          (bindNT nStructName o mktokLf)`;;
 
 let ptPapply0_def = cake_define
@@ -252,16 +250,16 @@ let cmlPEG_def = cake_define
                ((INL:MMLnonT->MMLnonT+num) nOpID,
                 choicel [tok (\t. monad_bind (destLongidT t) (\
                               (str,s).
-                              (OPTION_GUARD) (~(s = (implode "")))) =
-                                SOME one) (bindNT nOpID o mktokLf);
+                              assert (~(s = (implode "")))) = SOME
+                                one) (bindNT nOpID o mktokLf);
                          tok (\t. monad_bind (destSymbolT t) (\
                               s.
-                              (OPTION_GUARD) (~(s = (implode "")))) =
-                                SOME one) (bindNT nOpID o mktokLf);
+                              assert (~(s = (implode "")))) = SOME
+                                one) (bindNT nOpID o mktokLf);
                          tok (\t. monad_bind (destAlphaT t) (\
                               s.
-                              (OPTION_GUARD) (~(s = (implode "")))) =
-                                SOME one) (bindNT nOpID o mktokLf);
+                              assert (~(s = (implode "")))) = SOME
+                                one) (bindNT nOpID o mktokLf);
                          pegf (tokeq StarT) (bindNT nOpID);
                          pegf (tokeq EqualsT) (bindNT nOpID)]);
                ((INL:MMLnonT->MMLnonT+num) nEliteral,
@@ -444,7 +442,7 @@ let cmlPEG_def = cake_define
                     nConstructorName);
                   tok (\t. monad_bind (destLongidT t) (\
                              (str,s).
-                             (OPTION_GUARD) (~(s = (implode "")) /\
+                             assert (~(s = (implode "")) /\
                               isAlpha (strsub s 0) /\
                               isUpper (strsub s 0))) = SOME one)
                       (bindNT nConstructorName o mktokLf)]);

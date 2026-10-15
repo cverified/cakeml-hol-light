@@ -133,7 +133,8 @@ class Porter:
     # num_cmp, which comparison has as an overload of num_compare)
     raw = {nm: txt for nm, txt in db.overloads_for(thy).items()
            if not any(t == thy and k in ('def', 'con', 'rel')
-                      for t, k in db.defs.get(nm, []))}
+                      for t, k in db.defs.get(nm, []))
+           and not self.is_overloaded(nm, txt)}
     for _ in range(3):
       for nm, txt in raw.items():
         try: self.ctx.overloads[nm] = self.term(txt)
@@ -141,6 +142,14 @@ class Porter:
     self.bound = set()
 
   # -- helpers ---------------------------------------------------
+
+  def is_overloaded(self, nm, txt):
+    """is this HOL4 overload one that the port declares as an
+       overload of HOL Light instead of expanding it?  (the name of
+       a constant of another theory of the port, which expanding
+       would resolve the wrong way there)"""
+    return (bool(re.match(r"^[A-Za-z][A-Za-z0-9_']*$", txt.strip())) and
+            len({t for t, _ in self.db.defs.get(nm, [])}) > 1)
 
   def srcname(self):
     return re.sub(r'^.*/(cakeml-src|hol4-src)/', '', self.path)
@@ -660,6 +669,14 @@ class Porter:
 
   def overload(self, b):
     txt = dbmod.strip_quote(b.body)
+    # an overload of one constant whose name other theories of the
+    # port use for a constant of their own is an overload in HOL
+    # Light as well; expanding it would resolve the name the wrong
+    # way where another theory means its own constant
+    if b.name and self.is_overloaded(b.name, txt):
+      c = self.ctx.name(txt.strip())
+      self.out.append('hol4_overload "%s" "%s";;' % (b.name, c))
+      return
     self.warn.append('Overload %s' % b.name)
     self.out.append(shorten(
       '(* HOL4 overload (expanded in the port):\n'

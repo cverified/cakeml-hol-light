@@ -15,6 +15,7 @@ needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/jsonLang.ml";;
+needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: (* for str_tree *) *)
 
 let sExp_INDUCT,sExp_RECURSION = define_datatype
@@ -34,7 +35,7 @@ val sExp_size_def = fetch "-" "sExp_size_def";
 let trace_to_json_def = cake_define
   `(trace_to_json (backend_common_Cons tra num') =
      Object [((implode "name"),String (implode "Cons"));
-       ((implode "num"),String ((num_to_str) num'));
+       ((implode "num"),String (toString num'));
        ((implode "trace"),trace_to_json tra)]) /\
    (trace_to_json (Union tra1 tra2) =
      Object [((implode "name"),String (implode "Union"));

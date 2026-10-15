@@ -16,8 +16,8 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "lib/binary_ieee.ml";;
+needs "lib/comparison.ml";;
 needs "lib/indexedLists.ml";;
-needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
@@ -90,13 +90,13 @@ let compile_arith_def = cake_define
   `compile_arith t (a:ast_arith) ty xs =
      (match ty with IntT -> (match a with Add -> Op t (IntOp Add) xs
        | Sub -> Op t (IntOp Sub) xs | Mul -> Op t (IntOp Mult) xs | Div
-       -> Let t xs (If t (Op t (BlockOp (EQUAL)) [Var t 0; Op t (IntOp
+       -> Let t xs (If t (Op t (BlockOp Equal) [Var t 0; Op t (IntOp
        (Const 0)) []])
                               (Raise t (Op t (BlockOp (Cons div_tag))
                                 []))
                               (Op t (IntOp closLang_Div) [Var t 0;
                                 Var t 1])) | Mod -> Let t xs (If t (Op t
-                                (BlockOp (EQUAL)) [Var t 0; Op t (IntOp
+                                (BlockOp Equal) [Var t 0; Op t (IntOp
                                 (Const 0)) []])
                               (Raise t (Op t (BlockOp (Cons div_tag))
                                 []))
@@ -137,7 +137,7 @@ let compile_op_def = cake_define
        f [x]) | Src Opassign -> arg2 xs (\x y. Op t (MemOp Update) [x;
        Op None (IntOp (Const 0)) []; y]) | Src Opref -> Op t (MemOp Ref)
        xs | Src ConfigGC -> Op t (MemOp ConfigGC) xs | Src Equality ->
-       Op t (BlockOp (EQUAL)) xs | Src (FFI n) -> Op t (FFI n) xs | Src
+       Op t (BlockOp Equal) xs | Src (FFI n) -> Op t (FFI n) xs | Src
        ListAppend -> Op t (BlockOp ListAppend) xs | Src Vlength -> Op t
        (BlockOp LengthBlock) xs | Src Alength -> Op t (MemOp Length) xs
        | Src Implode -> Op t (MemOp FromListByte) xs | Src Explode -> Op
@@ -151,27 +151,26 @@ let compile_op_def = cake_define
           (match test_ty with BoolT -> Op t (BlockOp (BoolTest test))
             xs | CharT -> Op t (WordOp (WordTest W8 test)) xs | WordT W8
             -> Op t (WordOp (WordTest W8 test)) xs | IntT -> (match test
-            with Compare Lt -> Op t (IntOp (LESS)) xs | Compare Leq ->
-            Op t (IntOp LessEq) xs | Compare Gt -> Op t (IntOp
-            (GREATER)) xs | Compare Geq -> Op t (IntOp GreaterEq) xs |
-            _8 -> Op t (BlockOp (EQUAL)) xs) | Float64T -> (match test
-            with Compare Lt -> Op t (WordOp (FP_cmp FP_Less)) xs |
-            Compare Leq -> Op t (WordOp (FP_cmp FP_LessEqual)) xs |
-            Compare Gt -> Op t (WordOp (FP_cmp FP_Greater)) xs | Compare
-            Geq -> Op t (WordOp (FP_cmp FP_GreaterEqual)) xs | _9 -> Op
-            t (WordOp (FP_cmp FP_Equal)) xs) | StrT -> (match test with
-            Compare opb -> Op t (MemOp (StringCmp F opb)) xs |
-            AltCompare opb -> Op t (MemOp (StringCmp T opb)) xs | _10 ->
-            Op t (BlockOp (EQUAL)) xs) | _11 -> Op t (BlockOp (EQUAL))
-            xs) | Src Aw8length -> Op t (MemOp LengthByte) xs | Src
-            AallocFixed -> Op t (MemOp Ref) xs | Src Aalloc -> Let t xs
-            (If t (Op t (IntOp (LESS)) [Op t (IntOp (Const 0)) []; Var t
-            1])
+            with Compare Lt -> Op t (IntOp Less) xs | Compare Leq -> Op
+            t (IntOp LessEq) xs | Compare Gt -> Op t (IntOp Greater) xs
+            | Compare Geq -> Op t (IntOp GreaterEq) xs | _8 -> Op t
+            (BlockOp Equal) xs) | Float64T -> (match test with Compare
+            Lt -> Op t (WordOp (FP_cmp FP_Less)) xs | Compare Leq -> Op
+            t (WordOp (FP_cmp FP_LessEqual)) xs | Compare Gt -> Op t
+            (WordOp (FP_cmp FP_Greater)) xs | Compare Geq -> Op t
+            (WordOp (FP_cmp FP_GreaterEqual)) xs | _9 -> Op t (WordOp
+            (FP_cmp FP_Equal)) xs) | StrT -> (match test with Compare
+            opb -> Op t (MemOp (StringCmp F opb)) xs | AltCompare opb ->
+            Op t (MemOp (StringCmp T opb)) xs | _10 -> Op t (BlockOp
+            Equal) xs) | _11 -> Op t (BlockOp Equal) xs) | Src Aw8length
+            -> Op t (MemOp LengthByte) xs | Src AallocFixed -> Op t
+            (MemOp Ref) xs | Src Aalloc -> Let t xs (If t (Op t (IntOp
+            Less) [Op t (IntOp (Const 0)) []; Var t 1])
                               (Raise t (Op t (BlockOp (Cons
                                 subscript_tag)) []))
                               (Op t (MemOp RefArray) [Var t 0; Var t
                                 1])) | Src Aw8alloc -> Let t xs (If t
-                                (Op t (IntOp (LESS)) [Op t (IntOp (Const
+                                (Op t (IntOp Less) [Op t (IntOp (Const
                                 0)) []; Var t 1])
                               (Raise t (Op t (BlockOp (Cons
                                 subscript_tag)) []))
@@ -232,10 +231,10 @@ let compile_op_def = cake_define
                                 (WordT W64)) -> Op t (WordOp
                                 WordFromInt) xs | Src (FromTo IntT
                                 CharT) -> Let t xs (If t (Op t (IntOp
-                                (LESS)) [Op None (IntOp (Const 0)) [];
-                                Var t 0])
+                                Less) [Op None (IntOp (Const 0)) []; Var
+                                t 0])
                          (Raise t (Op t (BlockOp (Cons chr_tag)) []))
-                         (If t (Op t (IntOp (LESS)) [Var t 0; Op None
+                         (If t (Op t (IntOp Less) [Var t 0; Op None
                            (IntOp (Const 255)) []])
                            (Raise t (Op t (BlockOp (Cons chr_tag))
                              []))

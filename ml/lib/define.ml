@@ -1343,8 +1343,12 @@ let candidate_measures tm =
 
 let size_thms tyname =
   if not (can (assoc tyname) (!the_size_thms))
-  then (ignore(define_size tyname) : unit);
-  let a,b = assoc tyname (!the_size_thms) in a @ b;;
+  then (try ignore(define_size tyname) : unit
+        with Failure _ -> ());
+  (* a type that the port did not define itself (list) has its size
+     function in ml/lib/hol4.ml, and nothing to define here *)
+  try let a,b = assoc tyname (!the_size_thms) in a @ b
+  with Failure _ -> [];;
 
 (* The definition functions that the port uses.                       *)
 (* ------------------------------------------------------------------ *)
