@@ -98,7 +98,8 @@ class Db:
     self.ty_params = {}        # (thy,type) -> the type parameters
     self.monads = {'option': {'bind': 'OPTION_BIND',
                               'unit': 'SOME',
-                              'ignorebind': 'OPTION_IGNORE_BIND'}}
+                              'ignorebind': 'OPTION_IGNORE_BIND',
+                              'choice': 'OPTION_CHOICE'}}
     self.thy_of_file = {}
     self.kind_of_thy = {}
     self.scan()

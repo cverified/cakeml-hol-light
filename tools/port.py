@@ -1459,6 +1459,14 @@ class Porter:
       c = m.get(f)
       if c and IDENT.match(c): out[f] = self.ctx.name(c)
     hterm.set_monad(out)
+    # the ++ of a source that has enabled a monad is the choice of
+    # that monad, not the append of two lists (fromSexp's sexpopt
+    # tries the second parse where the first gives NONE)
+    c = m.get('choice')
+    if c and IDENT.match(c):
+      nm = self.ctx.name(c)
+      self.out.append('hol4_overload "++" "%s";;' % nm)
+      self.restore.add('++')
     # HOL4's monadsyntax overloads return with the unit of the
     # monad, which may be a term and not a constant
     u = m.get('unit')
