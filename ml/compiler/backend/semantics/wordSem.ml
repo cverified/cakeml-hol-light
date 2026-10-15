@@ -1263,7 +1263,7 @@ let semantics_def = cake_define
            (wordSem_state_ffi t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events
+            (IMAGE (\k. sptree_fromList (ffi_state_io_events
               (wordSem_state_ffi
                (SND (wordSem_evaluate
                  (prog,wordSem_state_clock_fupd (K k) s)))))) UNIV)))`;;

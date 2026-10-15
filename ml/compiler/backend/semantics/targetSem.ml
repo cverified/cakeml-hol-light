@@ -19,7 +19,6 @@ needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/set_sep.ml";;
-needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
@@ -264,8 +263,8 @@ let machine_sem_def = cake_define_list
          (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE
-             (\k. fromList (ffi_state_io_events (SND (SND (evaluate
-               mc st k ms))))) UNIV)
+             (\k. sptree_fromList (ffi_state_io_events (SND (SND
+               (evaluate mc st k ms))))) UNIV)
            io_trace`;
    `machine_sem mc st ms ffi_Fail <=>
          (?k. FST (evaluate mc st k ms) = Error)`];;

@@ -158,7 +158,7 @@ let esgc_free_def = cake_define_wf
         | (Handle t e pes) ->
        flatProps_esgc_free e /\ EVERY flatProps_esgc_free (MAP SND
          pes)
-        | (Con t id es) -> EVERY flatProps_esgc_free es
+        | (Con t id' es) -> EVERY flatProps_esgc_free es
         | (Fun t v e) -> flatProps_set_globals e = EMPTY_BAG
         | (App t op es) -> EVERY flatProps_esgc_free es
         | (If t e1 e2 e3) ->

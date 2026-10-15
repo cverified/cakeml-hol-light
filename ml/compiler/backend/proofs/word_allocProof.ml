@@ -19,7 +19,6 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_alloc.ml";;
-needs "compiler/backend/word_simp.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
@@ -69,12 +68,12 @@ let colouring_ok_def = cake_define
          colouring_ok f e2 live lt /\ colouring_ok f e3 live lt)
         | (Call (SOME (v,cutset,ret_handler,l1,l2)) dest args h) ->
        (let args_set = numset_list_insert args LN in
-       let all_names = sptree_union (SND cutset) (FST cutset) in
-       INJ f (domain (sptree_union all_names args_set)) UNIV /\
-       INJ f (domain (numset_list_insert v all_names)) UNIV /\
+       let all_names' = sptree_union (SND cutset) (FST cutset) in
+       INJ f (domain (sptree_union all_names' args_set)) UNIV /\
+       INJ f (domain (numset_list_insert v all_names')) UNIV /\
        colouring_ok f ret_handler live lt /\
        (match h with NONE -> T | SOME (v,prog,l1,l2) ->
-           INJ f (domain (sptree_insert v one all_names)) UNIV /\
+           INJ f (domain (sptree_insert v one all_names')) UNIV /\
            colouring_ok f prog live lt))
         | (wordLang_MustTerminate p) ->
        colouring_ok f p live lt

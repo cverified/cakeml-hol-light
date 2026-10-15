@@ -482,13 +482,14 @@ let build_ctor_tenv_def = cake_define
   `build_ctor_tenv tenvT x2 x3 =
         match (x2,x3) with
           ([],[]) -> (alist_to_ns [])
-        | (((tvs,tn,ctors) :: tds),(id :: ids)) ->
+        | (((tvs,tn,ctors) :: tds),(id' :: ids)) ->
       (nsAppend
        (build_ctor_tenv tenvT tds ids)
        (alist_to_ns
          (REVERSE
            (MAP
-             (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT) ts,id)))
+             (\(cn,ts). (cn,(tvs,MAP (type_name_subst tenvT)
+               ts,id')))
              ctors))))
         | (_15,_16) -> (alist_to_ns [])`;;
 

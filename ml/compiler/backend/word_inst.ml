@@ -13,7 +13,6 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (*Scheme:
 1) Pull all nested ops and consts as far up as possible and convert
@@ -95,8 +94,8 @@ let pull_exp_def = cake_define_wf
        let pull_ls = pull_ops op new_ls [] in
          optimize_consts op pull_ls)
         | (Load exp) -> Load (pull_exp exp)
-        | (Shift backend_common_word_shift exp nexp) -> Shift
-          backend_common_word_shift (pull_exp exp) (pull_exp nexp)
+        | (Shift shift' exp nexp) -> Shift shift' (pull_exp exp)
+          (pull_exp nexp)
         | exp -> exp`;;
 
 (*Flatten list expressions to trees -- of the form:
@@ -123,8 +122,8 @@ let flatten_exp_def = cake_define_wf
         | (wordLang_Op op (x :: xs)) -> wordLang_Op op [flatten_exp
           (wordLang_Op op xs); flatten_exp x]
         | (Load exp) -> Load (flatten_exp exp)
-        | (Shift backend_common_word_shift exp nexp) -> Shift
-          backend_common_word_shift (flatten_exp exp) (flatten_exp nexp)
+        | (Shift shift' exp nexp) -> Shift shift' (flatten_exp exp)
+          (flatten_exp nexp)
         | exp -> exp`;;
 
 

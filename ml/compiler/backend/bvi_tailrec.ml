@@ -153,15 +153,15 @@ let term_ok_any_def = cake_define_wf
   `term_ok_any ts list expr =
         match expr with
           (Var i:bvi_exp) ->
-       (if ~list then i < LENGTH ts else if i < LENGTH ts then EL i
+       (if ~list' then i < LENGTH ts else if i < LENGTH ts then EL i
          ts = List else F)
         | (Op op xs) ->
        (match get_bin_args (Op op xs) with
-         NONE -> xs = [] /\ (if list then op = closLang_BlockOp (Cons
-           0) else bvi_tailrec_is_const op) | SOME (x,y) ->
+         NONE -> xs = [] /\ (if list' then op = closLang_BlockOp
+           (Cons 0) else bvi_tailrec_is_const op) | SOME (x,y) ->
            (if op = closLang_BlockOp ListAppend then term_ok_any ts T
-             x /\ term_ok_any ts T y else if ~list /\ is_arith op then
-             term_ok_int ts x /\ term_ok_int ts y else if ~list /\
+             x /\ term_ok_any ts T y else if ~list' /\ is_arith op then
+             term_ok_int ts x /\ term_ok_int ts y else if ~list' /\
              is_rel op then term_ok_int ts x /\ term_ok_int ts y else if
              op = closLang_BlockOp (Cons 0) then term_ok_any ts T x /\
              term_ok_any ts F y else F))
@@ -434,8 +434,8 @@ let rewrite_def = cake_define
           (Var n:bvi_exp) -> (F,Var n)
         | (If x1 x2 x3) ->
        (let t1 = FST (HD (scan_expr ts loc [x1])) in
-       let (r2,y2) = rewrite loc next opr acc t1 x2 in
-       let (r3,y3) = rewrite loc next opr acc t1 x3 in
+       let (r2,y2) = rewrite loc next' opr acc t1 x2 in
+       let (r3,y3) = rewrite loc next' opr acc t1 x3 in
        let z2 = if r2 then y2 else apply_op opr (Var acc) x2 in
        let z3 = if r3 then y3 else apply_op opr (Var acc) x3 in
          ((r2 \/ r3),If x1 z2 z3))
@@ -443,11 +443,11 @@ let rewrite_def = cake_define
        (let ys = scan_expr ts loc xs in
        let tt = MAP (FST o SND) ys in
        let tr = match LAST1 ys with NONE -> ts | SOME c -> FST c in
-       let (r,y) = rewrite loc next opr (acc + LENGTH xs) (tt ++ tr)
+       let (r,y) = rewrite loc next' opr (acc + LENGTH xs) (tt ++ tr)
          x in
          (r,Let xs y))
         | (Tick x) ->
-       (let (r,y) = rewrite loc next opr acc ts x in
+       (let (r,y) = rewrite loc next' opr acc ts x in
          (r,Tick y))
         | (Force l v) -> (F,Force l v)
         | exp ->
@@ -455,7 +455,7 @@ let rewrite_def = cake_define
          NONE -> (F,apply_op opr (Var acc) exp) | SOME exp ->
            (match opbinargs opr exp with
              NONE -> (F,apply_op opr (Var acc) exp) | SOME (xs,f)
-               -> (T,push_call next opr acc xs (args_from f))))`;;
+               -> (T,push_call next' opr acc xs (args_from f))))`;;
 
 
 (* --- Top-level expression check --- *)

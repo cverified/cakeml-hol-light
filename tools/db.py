@@ -242,6 +242,7 @@ class Db:
           continue
         if nm in multi or nm in self.hl:
           self.rename[(thy, nm)] = prefix(thy, nm)
+    self.rename.update(overrides.RENAME)
 
   # ---------------------------------------------------------------
 
@@ -304,6 +305,8 @@ class Db:
         self.needed_names.add((thy, nm))
 
   def is_needed(self, thy, names):
+    if any((thy, nm) in overrides.ALSO_NEEDED for nm in names):
+      return True
     if self.kind_of_thy.get(thy) == 'lib' and \
        all(nm in self.provided for nm in names):
       return False

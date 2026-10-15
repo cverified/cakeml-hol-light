@@ -125,7 +125,28 @@ ALSO_NEEDED = set([
   ('ternaryComparisons', 'num_compare'),
   # HOL4 declares the field updates of locn with ML code
   ('location', 'locn_rowupdate'), ('location', 'locn_colupdate'),
+  # clos_to_bvl's init_code uses sptree$fromList, which the
+  # dependency analysis took for the fromList of llist
+  ('sptree', 'fromList'),
 ])
+
+# the name that the port gives a constant where the usual rules
+# would give it one that is taken: llist's fromList is one of the
+# hand written constants of ml/lib, so sptree's needs a name of
+# its own
+RENAME = {
+  ('sptree', 'fromList'): 'sptree_fromList',
+}
+
+# the constant that a name means in one theory of the port, where
+# the name is one of the hand written library layer as well (the
+# fromList of data_to_word and flat_pattern is sptree's, the one
+# of the semantics theories is llist's)
+LOCAL_NAMES = {
+  ('data_to_word', 'fromList'): 'sptree_fromList',
+  ('flat_pattern', 'fromList'): 'sptree_fromList',
+  ('clos_to_bvl', 'fromList'): 'sptree_fromList',
+}
 
 # the HOL Light constant that an infix of HOL4 means where no
 # CakeML source overloads it with one of its own; a source that does
@@ -154,6 +175,8 @@ INT_NUMERALS = set([
   ('clos_op', 'int_op_def'),
   ('integer_word', 'fromString_def'),
   ('semanticPrimitives', 'copy_array_def'),
+  # the IntT arm compares the integer v2 with 0
+  ('semanticPrimitives', 'do_arith_def'),
 ])
 
 # the arguments of a definition that hold an integer, where no
@@ -162,6 +185,9 @@ INT_NUMERALS = set([
 # compares them with &1 in another)
 INT_ARGS = {
   ('multiword', 'int_op_def'): ['i', 'j'],
+  # n is the number of the instruction, an integer; only the
+  # type of P, which is applied to n - 1, says so
+  ('linear_scan', 'check_number_property_def'): ['n'],
 }
 
 # definitions whose result is an integer, where no clause of it

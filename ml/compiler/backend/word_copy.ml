@@ -98,13 +98,12 @@ let copy_prop_inst_def = cake_define
        let ri' = lookup_eq_imm cs ri in
        let ri'' = if ri' = Reg r1 then ri else ri' in
        (Inst (Arith (asm_Binop bop r1 r2' ri'')),cs'))
-        | (Arith (Shift backend_common_word_shift r1 r2 n)) ->
+        | (Arith (Shift shift' r1 r2 n)) ->
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
        let n'' = if n' = Reg r1 then n else n' in
-       (Inst (Arith (Shift backend_common_word_shift r1 r2'
-         n'')),cs'))
+       (Inst (Arith (Shift shift' r1 r2' n'')),cs'))
         | (Arith (Div r1 r2 r3)) ->
        (let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in

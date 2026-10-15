@@ -98,7 +98,7 @@ hol4_overload "store_consts_stub_location"
 let every_var_exp_def = cake_define
   `every_var_exp P expr =
         match expr with
-          wordLang_Var num -> P num
+          wordLang_Var num' -> P num'
         | (Load exp) -> every_var_exp P exp
         | (wordLang_Op wop ls) -> EVERY (every_var_exp P) ls
         | (Shift sh e1 e2) -> (every_var_exp P e1 /\ every_var_exp P
@@ -117,8 +117,8 @@ let every_var_inst_def = cake_define
           asm_Const reg w -> P reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)
-        | (Arith (Shift backend_common_word_shift r1 r2 ri)) -> (P r1
-          /\ P r2 /\ every_var_imm P ri)
+        | (Arith (Shift shift' r1 r2 ri)) -> (P r1 /\ P r2 /\
+          every_var_imm P ri)
         | (Arith (Div r1 r2 r3)) -> (P r1 /\ P r2 /\ P r3)
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P r3
           /\ P r4)
@@ -143,7 +143,7 @@ let every_var_inst_def = cake_define
        (if dimindex (:'a) = 64 then P r1 else (P r1 /\ P r2))
         | (asm_FP (FPMovFromReg d r1 r2)) ->
        (if dimindex (:'a) = 64 then P r1 else (P r1 /\ P r2))
-        | inst -> T`;;
+        | inst' -> T`;;
 (*catchall*)
 
 let every_name_def = cake_define
@@ -158,9 +158,10 @@ let every_var_def = cake_define
         | (wordLang_Move pri ls) -> (EVERY P (MAP FST ls) /\ EVERY P
           (MAP SND ls))
         | (Inst i) -> every_var_inst P i
-        | (wordLang_Assign num exp) -> (P num /\ every_var_exp P exp)
-        | (Get num store) -> P num
-        | (Store exp num) -> (P num /\ every_var_exp P exp)
+        | (wordLang_Assign num' exp) -> (P num' /\ every_var_exp P
+          exp)
+        | (Get num' store) -> P num'
+        | (Store exp num') -> (P num' /\ every_var_exp P exp)
         | (LocValue r _2) -> P r
         | (Install r1 r2 r3 r4 names) -> (P r1 /\ P r2 /\ P r3 /\ P
           r4 /\ every_name P names)
@@ -183,17 +184,17 @@ let every_var_def = cake_define
         | (If cmp r1 ri e2 e3) ->
        (P r1 /\ every_var_imm P ri /\ every_var P e2 /\ every_var P
          e3)
-        | (Alloc num numset) ->
-       (P num /\ every_name P numset)
+        | (Alloc num' numset) ->
+       (P num' /\ every_name P numset)
         | (StoreConsts a b c d ws) ->
        (P a /\ P b /\ P c /\ P d)
-        | (Raise num) -> P num
+        | (Raise num') -> P num'
         | (Return num1 ns) -> (P num1 /\ EVERY P ns)
         | (OpCurrHeap _3 num1 num2) -> (P num1 /\ P num2)
         | Tick -> T
         | (Set n exp) -> every_var_exp P exp
-        | (wordLang_ShareInst op num exp) -> (P num /\ every_var_exp
-          P exp)
+        | (wordLang_ShareInst op num' exp) -> (P num' /\
+          every_var_exp P exp)
         | (wordLang_Loop names body exit_names) ->
        (EVERY P (MAP FST (toAList names)) /\ every_var P body /\
         EVERY P (MAP FST (toAList exit_names)))
@@ -215,7 +216,7 @@ let every_stack_var_def = cake_define
        (match h with
          NONE -> T | SOME (v,prog,l1,l2) ->
          every_stack_var P prog))
-        | (Alloc num numset) ->
+        | (Alloc num' numset) ->
        every_name P numset
         | (wordLang_MustTerminate s1) ->
        every_stack_var P s1
@@ -231,7 +232,7 @@ let every_stack_var_def = cake_define
 let max_var_exp_def = cake_define
   `max_var_exp exp =
         match exp with
-          wordLang_Var num -> num
+          wordLang_Var num' -> num'
         | (Load exp) -> max_var_exp exp
         | (wordLang_Op wop ls) -> MAX_LIST (MAP (max_var_exp) ls)
         | (Shift sh exp1 exp2) -> MAX (max_var_exp exp1) (max_var_exp
@@ -245,7 +246,7 @@ let max_var_inst_def = cake_define
         | (Const reg w) -> reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2)
-        | (Arith (Shift backend_common_word_shift r1 r2 n)) ->
+        | (Arith (Shift shift' r1 r2 n)) ->
        (match n with Reg r -> max3 r1 r2 r | _9 -> MAX r1 r2)
         | (Arith (Div r1 r2 r3)) -> max3 r1 r2 r3
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> MAX (MAX r1 r2) (MAX
@@ -285,9 +286,9 @@ let max_var_def = cake_define
         | (wordLang_Move pri ls) ->
        MAX_LIST (MAP FST ls ++ MAP SND ls)
         | (Inst i) -> max_var_inst i
-        | (wordLang_Assign num exp) -> MAX num (max_var_exp exp)
-        | (Get num store) -> num
-        | (Store exp num) -> MAX num (max_var_exp exp)
+        | (wordLang_Assign num' exp) -> MAX num' (max_var_exp exp)
+        | (Get num' store) -> num'
+        | (Store exp num') -> MAX num' (max_var_exp exp)
         | (Call ret dest args h) ->
        (let n = MAX_LIST args in
        match ret with
@@ -303,8 +304,8 @@ let max_var_def = cake_define
         | (If cmp r1 ri e2 e3) ->
        (let r = match ri with Reg r -> MAX r r1 | _11 -> r1 in
          max3 r (max_var e2) (max_var e3))
-        | (Alloc num numset) ->
-       MAX num (cutsets_max numset)
+        | (Alloc num' numset) ->
+       MAX num' (cutsets_max numset)
         | (StoreConsts a b c d ws) ->
        MAX_LIST [a; b; c; d]
         | (Install r1 r2 r3 r4 numset) ->
@@ -315,13 +316,13 @@ let max_var_def = cake_define
        MAX r1 r2
         | (FFI ffi_index ptr1 len1 ptr2 len2 numset) ->
        MAX_LIST [ptr1; len1; ptr2; len2; cutsets_max numset]
-        | (Raise num) -> num
+        | (Raise num') -> num'
         | (OpCurrHeap _12 num1 num2) -> MAX num1 num2
         | (Return num1 ns) -> MAX_LIST (num1 :: ns)
         | Tick -> 0
         | (LocValue r l1) -> r
         | (Set n exp) -> max_var_exp exp
-        | (wordLang_ShareInst op num exp) -> MAX num (max_var_exp
+        | (wordLang_ShareInst op num' exp) -> MAX num' (max_var_exp
           exp)
         | (Loop names body exit_names) ->
        max3 (MAX_LIST (MAP FST (toAList names)))

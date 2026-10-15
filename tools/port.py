@@ -112,6 +112,10 @@ class Porter:
     self.path = db.thy_of_file[thy]
     self.kind = db.kind_of_thy[thy]
     names = db.names_for(thy)
+    # a name that means another constant in this theory than it
+    # does elsewhere in the port
+    for (t, nm), new in overrides.LOCAL_NAMES.items():
+      if t == thy: names[(thy, nm)] = new
     fields, amb = db.fields_for(thy)
     self.amb = amb
     flds = {f: t for f, t in fields.items() if t}
@@ -138,6 +142,7 @@ class Porter:
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
+    self._con_ovl = None
     # an overload of an ancestor does not shadow a constant that
     # this theory defines itself (semanticPrimitives defines
     # num_cmp, which comparison has as an overload of num_compare)
@@ -201,14 +206,29 @@ class Porter:
     """HOL4 lets a variable shadow a constant, HOL Light does not,
        so a bound variable whose name is a constant of the port or of
        HOL Light is renamed"""
-    # an overload of HOL4 is a constant, not a variable, where it
-    # occurs in a pattern
-    names = hterm.bound_names(e, self.ctx.cons | set(self.ctx.overloads),
+    # an overload of HOL4 whose value is a constructor is a
+    # constant, not a variable, where it occurs in a pattern; an
+    # overload of a function cannot stand in a pattern, so there
+    # it is a variable (word_copy matches on Shift shift r1 r2 n,
+    # and wordLang overloads shift with backend_common's
+    # word_shift)
+    names = hterm.bound_names(e, self.ctx.cons | self.con_overloads(),
                               True)
     # a bound variable is not a reference to a constant, so it does
     # not make the file need the theory of a constant of that name
     self.bound |= names
     return {n: n + "'" for n in names if self.is_const(n)}
+
+  def con_overloads(self):
+    """the names that HOL4 overloads with a constructor"""
+    if self._con_ovl is None:
+      cons = set()
+      for (thy, ty), (cs, flds) in self.db.datatypes.items():
+        for c in cs:
+          cons.add(self.ctx.names.get((thy, c), c))
+      self._con_ovl = {n for n, t in self.ctx.overloads.items()
+                       if t.strip() in cons}
+    return self._con_ovl
 
   def is_const(self, n):
     # a name that the port overloads the accessors of a record
@@ -941,6 +961,11 @@ class Porter:
     cons_in = []
     def cons_of(p):
       while p.kind in ('paren', 'typed'): p = p.e
+      # a constructor without arguments is a pattern of its own
+      # (presLang's opw_to_display matches on the Andw of
+      # backend_common, which says that the Add of the clause
+      # after it is the one of backend_common too)
+      if p.kind == 'id' and iscon(p.name): cons_in.append(p.name)
       if p.kind == 'app':
         h, args = hterm.strip_app(p)
         if h.kind == 'id': cons_in.append(h.name)
@@ -1066,6 +1091,10 @@ class Porter:
     CONS = self.ctx.cons
     toks = hterm.tokenize(hol4.strip_comments(body))
     e = hterm.Parser(toks, self.ctx).parse()
+    # a bound variable whose name is a constant of the port is
+    # renamed here as well (word_copy matches on Shift shift r1 r2
+    # n, and shift is the overload of backend_common's word_shift)
+    self.ctx.vars = self.shadowing(e)
     cls = hterm.clauses_of(e)
     hop = cls[0][0]
     n = max(len(args) for _, args, _ in cls)
@@ -1116,6 +1145,7 @@ class Porter:
     if len(pats) > 1: scrut = '(' + scrut + ')'
     head = pr.pr(hop, 0) + ' ' + ' '.join(names)
     body = '\n     | '.join('%s -> %s' % (p, b) for p, b in arms)
+    self.ctx.vars = {}
     return '%s =\n     match %s with\n       %s' % (head, scrut, body)
 
   # -- type abbreviations, overloads, inductive relations --------

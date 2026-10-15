@@ -311,23 +311,23 @@ let compile_decs_def = cake_define_wf
         (match simple_dlet p e with SOME (pv,v) ->
             (match nsLookup (source_to_flat_environment_v env) v with
               SOME (Glob t i) ->
-                    (n,next,mk_source_to_flat_environment nsEmpty
-                      (alist_to_ns [(pv,Glob t i)]),envs,[]) | _13 ->
-                      (n,next,mk_source_to_flat_environment nsEmpty
-                      nsEmpty,envs,[])) | NONE ->
+                    (n,next',mk_source_to_flat_environment nsEmpty
+                      (alist_to_ns [(pv,Glob t i)]),envs',[]) | _13 ->
+                      (n,next',mk_source_to_flat_environment nsEmpty
+                      nsEmpty,envs',[])) | NONE ->
             (let n' = n + 4 in
             let xs = REVERSE (pat_bindings p) in
             let e' = compile_exp (xs ++ t) env e in
             let l = LENGTH xs in
             let n'' = n' + l in
-              (n'',(next_indices_vidx_fupd (K (next_indices_vidx next
-                + l)) next),
+              (n'',(next_indices_vidx_fupd (K (next_indices_vidx
+                next' + l)) next'),
                mk_source_to_flat_environment nsEmpty (alist_to_ns
-                 (alloc_defs n' (next_indices_vidx next) xs)),
-               envs,
+                 (alloc_defs n' (next_indices_vidx next') xs)),
+               envs',
                [Mat backend_common_None e'
                   [(compile_pat env p,make_varls 0
-                    backend_common_None (next_indices_vidx next)
+                    backend_common_None (next_indices_vidx next')
                     xs)]])))
         | (t,[Dletrec locs funs]) ->
         (let fun_names = MAP FST funs in
@@ -338,59 +338,59 @@ let compile_decs_def = cake_define_wf
           (source_to_flat_environment_v_fupd (K new_env) env) funs in
         let n' = n + 1 in
         let env' = mk_source_to_flat_environment nsEmpty (alist_to_ns
-          (alloc_defs n' (next_indices_vidx next) (REVERSE fun_names)))
+          (alloc_defs n' (next_indices_vidx next') (REVERSE fun_names)))
           in
           (n' + LENGTH funs,(next_indices_vidx_fupd (K
-            (next_indices_vidx next + LENGTH funs)) next),
-           env',envs,
+            (next_indices_vidx next' + LENGTH funs)) next'),
+           env',envs',
            [(flatLang_Letrec (join_all_names t) flat_funs
               (make_varls 0 backend_common_None (next_indices_vidx
-                next) (REVERSE fun_names)))]))
+                next') (REVERSE fun_names)))]))
         | (t,[Dtype locs type_def]) ->
        (let new_env = MAPi (\tid (_14,_15,constrs). alloc_tags
-         (next_indices_tidx next + tid) constrs) type_def in
-        (n,(next_indices_tidx_fupd (K (next_indices_tidx next +
-          LENGTH type_def)) next),
+         (next_indices_tidx next' + tid) constrs) type_def in
+        (n,(next_indices_tidx_fupd (K (next_indices_tidx next' +
+          LENGTH type_def)) next'),
          mk_source_to_flat_environment (FOLDL (\ns (l,cids). nsAppend
            l ns) nsEmpty new_env) nsEmpty,
-         envs,
+         envs',
          []))
         | (_16,[Dtabbrev locs tvs tn t]) ->
-        (n,next,source_to_flat_empty_env,envs,[])
+        (n,next',source_to_flat_empty_env,envs',[])
         | (t,[Dexn locs cn ts]) ->
-        (n,(next_indices_eidx_fupd (K (next_indices_eidx next + 1))
-          next),
+        (n,(next_indices_eidx_fupd (K (next_indices_eidx next' + 1))
+          next'),
          mk_source_to_flat_environment (nsSing cn (next_indices_eidx
-           next,NONE)) nsEmpty,
-         envs,
+           next',NONE)) nsEmpty,
+         envs',
          [])
         | (t,[Dmod mn ds]) ->
         (let (n',next',new_env,envs',ds') =
-          source_to_flat_compile_decs (mn :: t) n next env envs ds in
+          source_to_flat_compile_decs (mn :: t) n next' env envs' ds in
           (n',next',(lift_env mn new_env),envs',ds'))
         | (t,[Dlocal lds ds]) ->
         (let (n',next1,new_env1,envs',lds') =
-          source_to_flat_compile_decs t n next env envs lds in
+          source_to_flat_compile_decs t n next' env envs' lds in
         let (n'',next2,new_env2,envs'',ds') =
           source_to_flat_compile_decs t n' next1
            (extend_env new_env1 env) envs' ds in
              (n'',next2,new_env2,envs'',lds' ++ ds'))
         | (t,[Denv nenv]) ->
-        (n + 1,next_indices_vidx_fupd (K (next_indices_vidx next +
-          1)) next,
+        (n + 1,next_indices_vidx_fupd (K (next_indices_vidx next' +
+          1)) next',
            mk_source_to_flat_environment nsEmpty (nsBind nenv (Glob
-             backend_common_None (next_indices_vidx next))
-             nsEmpty),envs_fupd (K (sptree_insert (next envs) env (envs
-             envs))) (next_fupd (K (next envs + 1))
-           envs),
+             backend_common_None (next_indices_vidx next'))
+             nsEmpty),envs_fupd (K (sptree_insert (next envs') env (envs
+             envs'))) (next_fupd (K (next envs' + 1))
+           envs'),
            [(App backend_common_None (flatLang_GlobalVarInit
-             (next_indices_vidx next))
-               [env_id_tuple (generation envs) (next envs)])])
+             (next_indices_vidx next'))
+               [env_id_tuple (generation envs') (next envs')])])
         | (t,[]) ->
-       (n,next,source_to_flat_empty_env,envs,[])
+       (n,next',source_to_flat_empty_env,envs',[])
         | (t,(d :: ds)) ->
         (let (n',next1,new_env1,envs1,d') =
-          source_to_flat_compile_decs t n next env envs [d] in
+          source_to_flat_compile_decs t n next' env envs' [d] in
         let (n'',next2,new_env2,envs2,ds') =
           source_to_flat_compile_decs t n' next1 (extend_env new_env1
             env) envs1 ds in

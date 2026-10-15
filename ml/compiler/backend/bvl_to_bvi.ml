@@ -324,117 +324,125 @@ let compile_aux_def = cake_define
      List [(bvl_num_stubs + bvl_to_bvi_namespaces * k +
        1,args,bvi_let_compile_exp p)]`;;
 
-let compile_exps_def = cake_define_list
-  [`bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)`;
-   `bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
-         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
-           (c1 ++ c2,aux1 ++ aux2,n2))`;
-   `bvl_to_bvi_compile_exps n [(Var v:bvl_exp)] = ([(Var
-  v):bvi_exp],misc_Nil,n)`;
-   `bvl_to_bvi_compile_exps n [(If x1 x2 x3:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-         let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
-           ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++
-             aux3,n3))`;
-   `bvl_to_bvi_compile_exps n [(Let xs x2:bvl_exp)] =
-         (if NULL xs then
-           let (args,x0) = destLet x2 in
-           let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
-           let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
-           let n3 = n2 + 1 in
-             ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-               n2 + 1)) c1 NONE],
-              aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
-                else
-           let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-           let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
-             ([Let c1 (HD c2)],aux1 ++ aux2,n2))`;
-   `bvl_to_bvi_compile_exps n [(Raise x1:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-           ([Raise (HD c1)],aux1,n1))`;
-   `bvl_to_bvi_compile_exps n [(Tick x1:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
-           ([Tick (HD c1)],aux1,n1))`;
-   `bvl_to_bvi_compile_exps n [(Force loc v:bvl_exp)] =
-         ([Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
-           v],misc_Nil,n)`;
-   `bvl_to_bvi_compile_exps n [(Op op xs:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-           ([bvl_to_bvi_compile_op op c1],aux1,n1))`;
-   `bvl_to_bvi_compile_exps n [(Handle x1 x2:bvl_exp)] =
-         (let (args,x0) = destLet x1 in
-         let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
-         let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
-         let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
-         let aux4 = compile_aux (n3,LENGTH args,HD c2) in
-         let n4 = n3 + 1 in
-           ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-             n3 + 1)) c1 (SOME (HD c3))],
-            aux1 ++ aux2 ++ aux3 ++ aux4,n4))`;
-   `bvl_to_bvi_compile_exps n [(Call ticks dest xs:bvl_exp)] =
-         (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-           ([Call ticks
-                  (match dest with NONE -> NONE | SOME n ->
-                    SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-                    n)) c1 NONE],aux1,n1))`];;
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ TRY
+   (Cases_on `x1`) \\ fs [destLet_def] \\ TRY (Cases_on `x2`) \\ fs
+   [destLet_def] \\ SRW_TAC [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
+let compile_exps_def = cake_define_wf
+  `MEASURE (exp1_size o SND)`
+  `(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
+   (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
+      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 (y :: xs) in
+        (c1 ++ c2,aux1 ++ aux2,n2))) /\
+   (bvl_to_bvi_compile_exps n [Var v] = ([(Var
+     v):bvi_exp],misc_Nil,n)) /\
+   (bvl_to_bvi_compile_exps n [If x1 x2 x3] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
+      let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x3] in
+        ([If (HD c1) (HD c2) (HD c3)],aux1 ++ aux2 ++ aux3,n3))) /\
+   (bvl_to_bvi_compile_exps n [Let xs x2] =
+      (if NULL xs then
+        let (args,x0) = destLet x2 in
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
+        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
+        let n3 = n2 + 1 in
+          ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n2
+            + 1)) c1 NONE],
+           aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,HD c2),n3)
+             else
+        let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+        let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x2] in
+          ([Let c1 (HD c2)],aux1 ++ aux2,n2))) /\
+   (bvl_to_bvi_compile_exps n [Raise x1] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+        ([Raise (HD c1)],aux1,n1))) /\
+   (bvl_to_bvi_compile_exps n [Tick x1] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x1] in
+        ([Tick (HD c1)],aux1,n1))) /\
+   (bvl_to_bvi_compile_exps n [Force loc v] =
+      ([Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
+        v],misc_Nil,n)) /\
+   (bvl_to_bvi_compile_exps n [Op op xs] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+        ([bvl_to_bvi_compile_op op c1],aux1,n1))) /\
+   (bvl_to_bvi_compile_exps n [Handle x1 x2] =
+      (let (args,x0) = destLet x1 in
+      let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
+      let (c2,aux2,n2) = bvl_to_bvi_compile_exps n1 [x0] in
+      let (c3,aux3,n3) = bvl_to_bvi_compile_exps n2 [x2] in
+      let aux4 = compile_aux (n3,LENGTH args,HD c2) in
+      let n4 = n3 + 1 in
+        ([Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n3 +
+          1)) c1 (SOME (HD c3))],
+         aux1 ++ aux2 ++ aux3 ++ aux4,n4))) /\
+   (bvl_to_bvi_compile_exps n [Call ticks dest xs] =
+      (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
+        ([Call ticks
+               (match dest with NONE -> NONE | SOME n -> SOME
+                 (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
+                 NONE],aux1,n1)))`;;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
-let compile_exps_sing_def = cake_define_list
-  [`compile_exps_sing n (Var v:bvl_exp) = (((Var
-  v):bvi_exp),misc_Nil,n)`;
-   `compile_exps_sing n (If x1 x2 x3:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_sing n x1 in
-         let (c2,aux2,n2) = compile_exps_sing n1 x2 in
-         let (c3,aux3,n3) = compile_exps_sing n2 x3 in
-           (If c1 c2 c3,aux1 ++ aux2 ++ aux3,n3))`;
-   `compile_exps_sing n (Let xs x2:bvl_exp) =
-         (if NULL xs then
-           let (args,x0) = destLet x2 in
-           let (c1,aux1,n1) = compile_exps_list n args in
-           let (c2,aux2,n2) = compile_exps_sing n1 x0 in
-           let n3 = n2 + 1 in
-             ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-               n2 + 1)) c1 NONE),
-              aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,c2),n3)
-                else
-           let (c1,aux1,n1) = compile_exps_list n xs in
-           let (c2,aux2,n2) = compile_exps_sing n1 x2 in
-             ((Let c1 (c2)),aux1 ++ aux2,n2))`;
-   `compile_exps_sing n (Raise x1:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_sing n x1 in
-           (Raise c1,aux1,n1))`;
-   `compile_exps_sing n (Tick x1:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_sing n x1 in
-           (Tick c1,aux1,n1))`;
-   `compile_exps_sing n (Force loc v:bvl_exp) =
-         (Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
-           v,misc_Nil,n)`;
-   `compile_exps_sing n (Op op xs:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_list n xs in
-           (bvl_to_bvi_compile_op op c1,aux1,n1))`;
-   `compile_exps_sing n (Handle x1 x2:bvl_exp) =
-         (let (args,x0) = destLet x1 in
-         let (c1,aux1,n1) = compile_exps_list n args in
-         let (c2,aux2,n2) = compile_exps_sing n1 x0 in
-         let (c3,aux3,n3) = compile_exps_sing n2 x2 in
-         let aux4 = compile_aux (n3,LENGTH args,c2) in
-         let n4 = n3 + 1 in
-           ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces *
-             n3 + 1)) c1 (SOME c3)),
-            aux1 ++ aux2 ++ aux3 ++ aux4,n4))`;
-   `compile_exps_sing n (Call ticks dest xs:bvl_exp) =
-         (let (c1,aux1,n1) = compile_exps_list n xs in
-           ((Call ticks
-                  (match dest with NONE -> NONE | SOME n -> SOME
-                    (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
-                    NONE),aux1,n1))`;
-   `compile_exps_list n [] = ([],misc_Nil,n)`;
-   `compile_exps_list n ((x:bvl_exp) :: xs) =
-         (let (c1,aux1,n1) = compile_exps_sing n x in
-         let (c2,aux2,n2) = compile_exps_list n1 xs in
-           (c1 :: c2,aux1 ++ aux2,n2))`];;
+let _ = size_thms "bvl_exp";;
+(* HOL4 termination: \\ rpt strip_tac \\ rpt $ qpat_x_assum ‘(_,_,_)
+   = _’ kall_tac \\ gvs [bvlTheory.exp_size_def] \\ gvs [oneline
+   destLet_def, AllCaseEqs(), bvlTheory.exp_size_def] *)
+let compile_exps_sing_def = cake_define_wf
+  `MEASURE (\x. match x with INL (n,e) -> bvl_exp_size e | INR (n,es)
+  -> exp1_size es)`
+  `(compile_exps_sing n (Var v:bvl_exp) = (((Var
+  v):bvi_exp),misc_Nil,n)) /\
+   (compile_exps_sing n (If x1 x2 x3) =
+      (let (c1,aux1,n1) = compile_exps_sing n x1 in
+      let (c2,aux2,n2) = compile_exps_sing n1 x2 in
+      let (c3,aux3,n3) = compile_exps_sing n2 x3 in
+        (If c1 c2 c3,aux1 ++ aux2 ++ aux3,n3))) /\
+   (compile_exps_sing n (Let xs x2) =
+      (if NULL xs then
+        let (args,x0) = destLet x2 in
+        let (c1,aux1,n1) = compile_exps_list n args in
+        let (c2,aux2,n2) = compile_exps_sing n1 x0 in
+        let n3 = n2 + 1 in
+          ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n2
+            + 1)) c1 NONE),
+           aux1 ++ aux2 ++ compile_aux (n2,LENGTH args,c2),n3) else
+        let (c1,aux1,n1) = compile_exps_list n xs in
+        let (c2,aux2,n2) = compile_exps_sing n1 x2 in
+          ((Let c1 (c2)),aux1 ++ aux2,n2))) /\
+   (compile_exps_sing n (Raise x1) =
+      (let (c1,aux1,n1) = compile_exps_sing n x1 in
+        (Raise c1,aux1,n1))) /\
+   (compile_exps_sing n (Tick x1) =
+      (let (c1,aux1,n1) = compile_exps_sing n x1 in
+        (Tick c1,aux1,n1))) /\
+   (compile_exps_sing n (Force loc v) =
+      (Force (bvl_num_stubs + bvl_to_bvi_namespaces * loc)
+        v,misc_Nil,n)) /\
+   (compile_exps_sing n (Op op xs) =
+      (let (c1,aux1,n1) = compile_exps_list n xs in
+        (bvl_to_bvi_compile_op op c1,aux1,n1))) /\
+   (compile_exps_sing n (Handle x1 x2) =
+      (let (args,x0) = destLet x1 in
+      let (c1,aux1,n1) = compile_exps_list n args in
+      let (c2,aux2,n2) = compile_exps_sing n1 x0 in
+      let (c3,aux3,n3) = compile_exps_sing n2 x2 in
+      let aux4 = compile_aux (n3,LENGTH args,c2) in
+      let n4 = n3 + 1 in
+        ((Call 0 (SOME (bvl_num_stubs + bvl_to_bvi_namespaces * n3 +
+          1)) c1 (SOME c3)),
+         aux1 ++ aux2 ++ aux3 ++ aux4,n4))) /\
+   (compile_exps_sing n (Call ticks dest xs) =
+      (let (c1,aux1,n1) = compile_exps_list n xs in
+        ((Call ticks
+               (match dest with NONE -> NONE | SOME n -> SOME
+                 (bvl_num_stubs + bvl_to_bvi_namespaces * n)) c1
+                 NONE),aux1,n1))) /\
+   (compile_exps_list n [] = ([],misc_Nil,n)) /\
+   (compile_exps_list n ((x:bvl_exp) :: xs) =
+      (let (c1,aux1,n1) = compile_exps_sing n x in
+      let (c2,aux2,n2) = compile_exps_list n1 xs in
+        (c1 :: c2,aux1 ++ aux2,n2)))`;;
 
 let compile_single_def = cake_define
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =

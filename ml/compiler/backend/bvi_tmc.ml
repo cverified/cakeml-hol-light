@@ -158,8 +158,8 @@ let wf_cb_def = cake_define_list
 let bvi_to_cb_def = cake_define
   `bvi_to_cb n loc x3 =
         match x3 with
-          (Call call_ts call_loc call_args call_h:bvi_exp) ->
-      call_to_cb loc call_ts call_loc call_args call_h
+          (Call call_ts call_loc call_args' call_h:bvi_exp) ->
+      call_to_cb loc call_ts call_loc call_args' call_h
         | (Op op xs) ->
       (match bvi_tmc_dest_Cons op with SOME tag ->
           (match bvi_to_cb_aux n loc tag xs with SOME (bs,INR cb) ->

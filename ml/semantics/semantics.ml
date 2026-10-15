@@ -9,7 +9,6 @@
 
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/sptree.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
@@ -58,7 +57,7 @@ let semantics_prog_def = cake_define_list
               (ffi,Rerr (Rabort Rtimeout_error)))) /\
          lprefix_lub
            (IMAGE
-             (\k. fromList (ffi_state_io_events (FST
+             (\k. sptree_fromList (ffi_state_io_events (FST
                (evaluate_prog_with_clock st env k prog))))
              UNIV)
            io_trace`;

@@ -13,7 +13,6 @@ needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
-needs "compiler/backend/semantics/dataSem.ml";;
 needs "semantics/ast.ml";;
 
 let gen_state_INDUCT,gen_state_RECURSION = define_datatype
@@ -34,8 +33,8 @@ let gc_combined_def = cake_define
         (roots,heap ++ heap_expand (limit conf - a),a,limit conf -
           a,gs,c))
       | ((data_to_word_Generational
-        limits),(roots,heap,gs,rs,do_partial)) ->
-     (if do_partial then
+        limits),(roots,heap,gs,rs,do_partial')) ->
+     (if do_partial' then
        (let partial_conf = make_partial_conf conf gs rs in
         let (roots,state) = partial_gc partial_conf (roots,heap) in
           (roots,gc_state_old state ++ gc_state_h1 state ++

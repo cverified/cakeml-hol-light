@@ -1433,7 +1433,7 @@ let call_env_def = cake_define
            (dataSem_state_safe_for_space s /\ stack_safe))
            (dataSem_state_stack_max_fupd (K new_stack_max)
            (dataSem_state_locals_size_fupd (K size')
-           (dataSem_state_locals_fupd (K (fromList args))
+           (dataSem_state_locals_fupd (K (sptree_fromList args))
        s))))`;;
 hol4_overload "call_env" "dataSem_call_env";;
 
@@ -1723,8 +1723,8 @@ let semantics_def = cake_define
            s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
-              (SND (evaluate (p,init k)))))) UNIV)))`;;
+            (IMAGE (\k. sptree_fromList (ffi_state_io_events
+              (state_ffi (SND (evaluate (p,init k)))))) UNIV)))`;;
 hol4_overload "semantics" "dataSem_semantics";;
 
 let data_lang_safe_for_space_def = cake_define

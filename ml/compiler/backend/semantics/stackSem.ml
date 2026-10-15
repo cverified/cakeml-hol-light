@@ -1041,9 +1041,9 @@ let semantics_def = cake_define
            t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
-              (SND (evaluate (prog,state_clock_fupd (K k) s))))))
-              UNIV)))`;;
+            (IMAGE (\k. sptree_fromList (ffi_state_io_events
+              (state_ffi (SND (evaluate (prog,state_clock_fupd (K k)
+              s)))))) UNIV)))`;;
 hol4_overload "semantics" "stackSem_semantics";;
 
 (* record accessors *)

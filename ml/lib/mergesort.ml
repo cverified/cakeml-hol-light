@@ -84,13 +84,13 @@ let sort3_tail_def = cake_define
 let merge_tail_def = cake_define
   `merge_tail negate R l x4 acc =
         match (negate,l,x4) with
-          ((negate:bool),[],[]) -> acc
-        | (negate,l,[]) -> REV l acc
-        | (negate,[],l) -> REV l acc
-        | (negate,(x :: l1),(y :: l2)) ->
-       (if ~(R x y = negate) then
-         merge_tail negate R l1 (y :: l2) (x :: acc) else
-         merge_tail negate R (x :: l1) l2 (y :: acc))`;;
+          ((negate':bool),[],[]) -> acc
+        | (negate',l,[]) -> REV l acc
+        | (negate',[],l) -> REV l acc
+        | (negate',(x :: l1),(y :: l2)) ->
+       (if ~(R x y = negate') then
+         merge_tail negate' R l1 (y :: l2) (x :: acc) else
+         merge_tail negate' R (x :: l1) l2 (y :: acc))`;;
 
 let mergesortN_tail_def = cake_define_wf
   `MEASURE (\(negate,R,n,l). n)`

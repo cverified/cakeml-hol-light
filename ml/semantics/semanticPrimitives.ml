@@ -503,8 +503,8 @@ let v_to_id_def = cake_define
       | (semanticPrimitives_Conv (SOME stamp)
         [semanticPrimitives_Litv (ast_StrLit s); v]) ->
       (if stamp = TypeStamp (implode "Long") id_type_num then
-         match v_to_id v with NONE -> NONE | SOME id -> SOME (Long s
-           id) else NONE)
+         match v_to_id v with NONE -> NONE | SOME id' -> SOME (Long s
+           id') else NONE)
       | _42 -> NONE`;;
 
 let nat_to_v_def = cake_define
@@ -935,11 +935,11 @@ let do_arith_def = cake_define
           | (ast_Sub,[v1; v2]) -> SOME (INR (semanticPrimitives_Litv
           (ast_IntLit (v1 - v2)))) | (ast_Mul,[v1; v2]) -> SOME (INR
           (semanticPrimitives_Litv (ast_IntLit (v1 * v2)))) |
-          (ast_Div,[v1; v2]) -> SOME (if v2 = 0 then INL
+          (ast_Div,[v1; v2]) -> SOME (if v2 = (&0) then INL
           semanticPrimitives_div_exn_v else
                               INR (semanticPrimitives_Litv
                                 (ast_IntLit (v1 / v2)))) | (ast_Mod,[v1;
-                                v2]) -> SOME (if v2 = 0 then INL
+                                v2]) -> SOME (if v2 = (&0) then INL
                                 semanticPrimitives_div_exn_v else
                               INR (semanticPrimitives_Litv
                                 (ast_IntLit (v1 % v2)))) | _64 -> NONE)

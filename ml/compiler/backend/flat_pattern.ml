@@ -153,13 +153,13 @@ let decode_dtree_def = cake_define
       | pattern_semantics_Fail -> df
       | pattern_semantics_TypeFail -> flatLang_Var_local t (implode
         "impossible-case")
-      | (If guard dt1 dt2) ->
-   (let guard = simp_guard guard in
+      | (If guard' dt1 dt2) ->
+   (let guard' = simp_guard guard' in
    let dec1 = decode_dtree t br_spt v df dt1 in
    let dec2 = decode_dtree t br_spt v df dt2 in
-   if guard = pattern_semantics_True then dec1 else if guard = Not
-     pattern_semantics_True then dec2 else SmartIf t (decode_guard t
-     v guard) dec1 dec2)`;;
+   if guard' = pattern_semantics_True then dec1 else if guard' =
+     Not pattern_semantics_True then dec2 else SmartIf t
+     (decode_guard t v guard') dec1 dec2)`;;
 
 let _ = size_thms "pattern_semantics_pat";;
 (* HOL4 termination: \\ rw [pat1_size] \\ fs [MEM_SPLIT, SUM_APPEND] *)
@@ -216,8 +216,8 @@ let compile_pats_def = cake_define
    if naive then
    naive_pattern_matches t v (ZIP (MAP FST ps) branches) default_x
      else let pats = MAPi (\j (p,_46). (encode_pat p,j)) ps in
-   let dt = pattern_comp_comp pats in decode_dtree t (fromList
-     branches) v default_x dt)`;;
+   let dt = pattern_comp_comp pats in decode_dtree t
+     (sptree_fromList branches) v default_x dt)`;;
 
 let max_dec_name_def = cake_define_list
   [`max_dec_name [] = 0`;

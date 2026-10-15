@@ -828,7 +828,8 @@ let semantics_def = cake_define
            s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
+            (IMAGE (\k. sptree_fromList (ffi_state_io_events
+              (state_ffi
                (SND (evaluate (es,[],init k)))))) UNIV)))`;;
 hol4_overload "semantics" "bvlSem_semantics";;
 

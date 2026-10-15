@@ -2071,8 +2071,21 @@ let cake_define_wf rel tm =
    same shape of rules and gives the rules, the induction principle
    and the cases theorem *)
 
+(* HOL4's Hol_reln quantifies the free variables of a rule itself,
+   where HOL Light wants them quantified (parmove's step comes from
+   a quotation that HOL4 builds with ML code, and has none) *)
+
+let close_rules tm =
+  let rules = conjuncts tm in
+  let head r =
+    let r = snd(strip_forall r) in
+    fst(strip_comb (if is_imp r then rand r else r)) in
+  let rels = setify (map head rules) in
+  let close r = list_mk_forall(subtract (frees r) rels,r) in
+  list_mk_conj (map close rules);;
+
 let cake_inductive tm =
-  try cake_time new_inductive_definition tm
+  try cake_time new_inductive_definition (close_rules tm)
   with Failure s -> cake_report tm s;;
 
 let cake_define_list_wf rel cls =

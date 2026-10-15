@@ -84,8 +84,8 @@ let binary_branch_exp_def = cake_define_wf
         | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ EVERY
           (binary_branch_exp) xs)
         | (Load exp) -> binary_branch_exp exp
-        | (Shift backend_common_word_shift exp nexp) ->
-          (binary_branch_exp exp /\ binary_branch_exp nexp)
+        | (Shift shift' exp nexp) -> (binary_branch_exp exp /\
+          binary_branch_exp nexp)
         | exp -> T`;;
 
 (* flatten_exp syntax *)

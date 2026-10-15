@@ -57,31 +57,30 @@ let dest_handle_If_def = cake_define
         NONE)
       | _3 -> NONE`;;
 
-let handle_adj_vars_def = cake_define_list
-  [`handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v
-  + d)`;
-   `handle_adj_vars l d (If x1 x2 x3:bvl_exp) =
-         If (handle_adj_vars l d x1) (handle_adj_vars l d x2)
-           (handle_adj_vars l d x3)`;
-   `handle_adj_vars l d (Let xs x2:bvl_exp) =
-         Let (handle_adj_vars1 l d xs) (handle_adj_vars (l +
-           LENGTH xs) d x2)`;
-   `handle_adj_vars l d (Handle x1 x2:bvl_exp) =
-         Handle (handle_adj_vars l d x1) (handle_adj_vars (l + 1)
-           d x2)`;
-   `handle_adj_vars l d (Raise x1:bvl_exp) = Raise (handle_adj_vars l
-  d x1)`;
-   `handle_adj_vars l d (Op op xs:bvl_exp) = Op op (handle_adj_vars1
-  l d xs)`;
-   `handle_adj_vars l d (Tick x:bvl_exp) = Tick (handle_adj_vars l d
-  x)`;
-   `handle_adj_vars l d (Force m v:bvl_exp) = Force m (if v < l then
-  v else v + d)`;
-   `handle_adj_vars l d (Call t dest xs:bvl_exp) =
-         Call t dest (handle_adj_vars1 l d xs)`;
-   `handle_adj_vars1 l d [] = []`;
-   `handle_adj_vars1 l d (x :: xs) = handle_adj_vars l d x ::
-  handle_adj_vars1 l d xs`];;
+let handle_adj_vars_def = cake_define
+  `(handle_adj_vars l d (Var v:bvl_exp) = Var (if v < l then v else v +
+  d)) /\
+   (handle_adj_vars l d (If x1 x2 x3) =
+      If (handle_adj_vars l d x1) (handle_adj_vars l d x2)
+        (handle_adj_vars l d x3)) /\
+   (handle_adj_vars l d (Let xs x2) =
+      Let (handle_adj_vars1 l d xs) (handle_adj_vars (l + LENGTH xs)
+        d x2)) /\
+   (handle_adj_vars l d (Handle x1 x2) =
+      Handle (handle_adj_vars l d x1) (handle_adj_vars (l + 1) d x2))
+        /\
+   (handle_adj_vars l d (Raise x1) = Raise (handle_adj_vars l d x1))
+     /\
+   (handle_adj_vars l d (Op op xs) = Op op (handle_adj_vars1 l d xs))
+     /\
+   (handle_adj_vars l d (Tick x) = Tick (handle_adj_vars l d x)) /\
+   (handle_adj_vars l d (Force m v) = Force m (if v < l then v else v
+     + d)) /\
+   (handle_adj_vars l d (Call t dest xs) =
+      Call t dest (handle_adj_vars1 l d xs)) /\
+   (handle_adj_vars1 l d [] = []) /\
+   (handle_adj_vars1 l d (x :: xs) = handle_adj_vars l d x ::
+     handle_adj_vars1 l d xs)`;;
 
 let handle_size_def = cake_define_list
   [`handle_size (Var v:bvl_exp) = 1`;

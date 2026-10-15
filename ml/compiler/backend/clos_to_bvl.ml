@@ -329,7 +329,7 @@ let check_closure_def = cake_define
 
 let init_code_def = cake_define
   `clos_to_bvl_init_code max_app =
-     fromList
+     sptree_fromList
        (GENLIST (\n. (n + 2,generate_generic_app max_app n)) max_app
          ++
         FLAT

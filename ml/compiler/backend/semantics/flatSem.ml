@@ -12,7 +12,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "lib/comparison.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
@@ -913,7 +912,8 @@ let semantics_def = cake_define
            s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
+            (IMAGE (\k. sptree_fromList (ffi_state_io_events
+              (state_ffi
               (FST (evaluate_decs (flatSem_initial_state ffi k ec)
                 prog)))))
                 UNIV)))`;;

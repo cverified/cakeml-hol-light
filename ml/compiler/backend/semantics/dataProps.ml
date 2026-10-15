@@ -247,8 +247,8 @@ val trivial_tac = qpat_x_assum `evaluate _ = (_,_)` (strip_assume_tac o
 let stack_frame_size_rel_def = cake_define
   `stack_frame_size_rel x1 x2 =
         match (x1,x2) with
-          (dataSem_Exc opt spt num,dataSem_Exc opt' spt' num') ->
-       spt = spt' /\ num = num'
+          (dataSem_Exc opt spt num',dataSem_Exc opt' spt' num') ->
+       spt = spt' /\ num' = num'
         | ((Env opt spt),(Env opt' spt')) ->
        spt = spt'
         | (_15,_16) -> F`;;

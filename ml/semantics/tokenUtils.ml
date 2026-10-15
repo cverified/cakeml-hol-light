@@ -10,7 +10,6 @@
 
 needs "lib/grammar.ml";;
 needs "semantics/tokens.ml";;
-needs "semantics/typeSystem.ml";;
 
 
 let isInt_def = cake_define

@@ -115,29 +115,29 @@ let list_LUPDATE_def = cake_define_list
 let abs_stack_def = cake_define
   `abs_stack bitmaps x2 stack x4 =
         match (bitmaps,x2,stack,x4) with
-          ((bitmaps:('a word) list),[],stack,[]) ->
-       (if stack = [wordLang_Word ((n2w 0):'a word)] then SOME []
+          ((bitmaps:('a word) list),[],stack',[]) ->
+       (if stack' = [wordLang_Word ((n2w 0):'a word)] then SOME []
          else NONE)
-        | (bitmaps,((StackFrame n l0 l NONE) :: xs),(w :: stack),(len
-          :: lens)) ->
+        | (bitmaps,((StackFrame n l0 l NONE) :: xs),(w ::
+          stack'),(len :: lens)) ->
        (match full_read_bitmap bitmaps w with NONE -> NONE | SOME
          bits ->
            (if ~(LENGTH bits = len) then NONE else
-           if LENGTH stack < len then NONE else
-             let frame = TAKE len stack in
-             let rest = DROP len stack in
+           if LENGTH stack' < len then NONE else
+             let frame = TAKE len stack' in
+             let rest = DROP len stack' in
                match abs_stack bitmaps xs rest lens with NONE -> NONE
                  | SOME ys -> SOME ((NONE,bits,frame) :: ys)))
         | (bitmaps,((StackFrame n l0 l (SOME _1)) :: xs),(w ::
-          stack),(len :: lens)) ->
+          stack'),(len :: lens)) ->
        (if ~(w = wordLang_Word (n2w 1)) then NONE else
-         (match stack with loc :: hv :: w :: stack ->
+         (match stack' with loc :: hv :: w :: stack' ->
             (match full_read_bitmap bitmaps w with NONE -> NONE |
               SOME bits ->
                  (if ~(LENGTH bits = len) then NONE else
-                 if LENGTH stack < len then NONE else
-                   let frame = TAKE len stack in
-                   let rest = DROP len stack in
+                 if LENGTH stack' < len then NONE else
+                   let frame = TAKE len stack' in
+                   let rest = DROP len stack' in
                      match abs_stack bitmaps xs rest lens with NONE
                        -> NONE | SOME ys -> SOME ((SOME
                        (loc,hv),bits,frame) :: ys))) | _2 -> NONE))
@@ -174,7 +174,7 @@ let stack_rel_aux_def = cake_define
         match (x3,x4) with
           ([],[]) -> T
         | (((StackFrame n l0 l NONE) :: xs),((NONE,bits,frame) ::
-          stack)) ->
+          stack')) ->
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
          adjust_names n < k + LENGTH bits /\
@@ -184,13 +184,13 @@ let stack_rel_aux_def = cake_define
        filter_bitmap bits (index_list frame k) = SOME (MAP_FST
          adjust_names l,[]) /\
        the (LENGTH frame + 1) n = LENGTH frame + 1 /\
-       stack_rel_aux k len xs stack
+       stack_rel_aux k len xs stack'
         | (((StackFrame n l0 l (SOME (h1,l1,l2))) :: xs),((SOME
-          (loc,hv),bits,frame) :: stack)) ->
-       (h1 < LENGTH stack /\
-       is_handler_frame (EL (LENGTH stack - (h1 + 1)) xs) ==>
+          (loc,hv),bits,frame) :: stack')) ->
+       (h1 < LENGTH stack' /\
+       is_handler_frame (EL (LENGTH stack' - (h1 + 1)) xs) ==>
        hv = wordLang_Word (n2w (len - handler_val (LASTN (h1 + 1)
-         stack)))) /\
+         stack')))) /\
        loc = Loc l1 l2 /\
        (!n v.
          ALOOKUP l0 n = SOME v /\ ALOOKUP l n = NONE ==>
@@ -201,7 +201,7 @@ let stack_rel_aux_def = cake_define
        filter_bitmap bits (index_list frame k) = SOME (MAP_FST
          adjust_names l,[]) /\
        the (LENGTH frame + 1) n = LENGTH frame + 1 /\
-       stack_rel_aux k len xs stack
+       stack_rel_aux k len xs stack'
         | (_10,_11) -> F`;;
 
 let sorted_env_def = cake_define
@@ -382,17 +382,17 @@ let abs_frame_eq_def = cake_define
      result = 'a wordSem$result *)
 
 let compile_result_def = cake_define_list
-  [`compile_result (stackSem_Result w1 w2) = Result w1`;
-   `compile_result (stackSem_Exception w1 w2) = Exception w1`;
-   `compile_result stackSem_TimeOut = (TimeOut:'w stackSem_result)`;
+  [`compile_result (wordSem_Result w1 w2) = Result w1`;
+   `compile_result (wordSem_Exception w1 w2) = Exception w1`;
+   `compile_result wordSem_TimeOut = (TimeOut:'w wordSem_result)`;
    `compile_result wordSem_NotEnoughSpace = Halt (wordLang_Word (n2w
   1))`;
-   `compile_result (stackSem_FinalFFI f) = (FinalFFI f:'w
-  stackSem_result)`;
-   `compile_result (stackSem_Break k) = (Break k:'w stackSem_result)`;
-   `compile_result (stackSem_Continue k) = (Continue k:'w
-  stackSem_result)`;
-   `compile_result stackSem_Error = (Error:'w stackSem_result)`];;
+   `compile_result (wordSem_FinalFFI f) = (FinalFFI f:'w
+  wordSem_result)`;
+   `compile_result (wordSem_Break k) = (Break k:'w wordSem_result)`;
+   `compile_result (wordSem_Continue k) = (Continue k:'w
+  wordSem_result)`;
+   `compile_result wordSem_Error = (Error:'w wordSem_result)`];;
 
 (* HOL4 ML code, not ported:
 val stack_evaluate_add_clock_NONE =

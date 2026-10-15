@@ -14,7 +14,6 @@ needs "compiler/backend/stack_names.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/typeSystem.ml";;
 
 let clock_neutral_def = cake_define
   `clock_neutral r =

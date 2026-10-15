@@ -552,7 +552,7 @@ let comp_def = cake_define
                               (r3 DIV 2) (r4 DIV 2) 0,bs)
         | (wordLang_ShareInst op v exp) ->
       ((match exp_to_addr exp with
-         NONE -> (Skip,bs) | SOME addr -> wShareInst op v addr
+         NONE -> (Skip,bs) | SOME addr' -> wShareInst op v addr'
            kf),bs)
         | _8 -> (Skip,bs)`;;
 hol4_overload "comp" "word_to_stack_comp";;

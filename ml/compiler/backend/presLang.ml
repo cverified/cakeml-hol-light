@@ -153,9 +153,9 @@ let opb_to_display_def = cake_define_list
 let opw_to_display_def = cake_define_list
   [`opw_to_display backend_common_Andw = empty_item (implode "Andw")`;
    `opw_to_display backend_common_Orw = empty_item (implode "Orw")`;
-   `opw_to_display (Xor:binop) = empty_item (implode "Xor")`;
-   `opw_to_display (Add:binop) = empty_item (implode "Add")`;
-   `opw_to_display (Sub:binop) = empty_item (implode "Sub")`];;
+   `opw_to_display (Xor:opw) = empty_item (implode "Xor")`;
+   `opw_to_display (Add:opw) = empty_item (implode "Add")`;
+   `opw_to_display (Sub:opw) = empty_item (implode "Sub")`];;
 
 let shift_to_display_def = cake_define_list
   [`shift_to_display Lsl = empty_item (implode "Lsl")`;
@@ -187,16 +187,14 @@ let test_to_display_def = cake_define_list
   (implode "AltCompare") [opb_to_display cmp]`];;
 
 let arith_to_display_def = cake_define_list
-  [`arith_to_display (Add:binop) = empty_item (implode "Add")`;
-   `arith_to_display (Sub:binop) = empty_item (implode "Sub")`;
+  [`arith_to_display (Add:ast_arith) = empty_item (implode "Add")`;
+   `arith_to_display (Sub:ast_arith) = empty_item (implode "Sub")`;
    `arith_to_display ast_Mul = empty_item (implode "Mul")`;
-   `arith_to_display (Div:closLang_int_op) = empty_item (implode
-  "Div")`;
-   `arith_to_display (Mod:closLang_int_op) = empty_item (implode
-  "Mod")`;
-   `arith_to_display (And:binop) = empty_item (implode "And")`;
-   `arith_to_display (Xor:binop) = empty_item (implode "Xor")`;
-   `arith_to_display (Or:binop) = empty_item (implode "Or")`;
+   `arith_to_display (Div:ast_arith) = empty_item (implode "Div")`;
+   `arith_to_display (Mod:ast_arith) = empty_item (implode "Mod")`;
+   `arith_to_display (And:ast_arith) = empty_item (implode "And")`;
+   `arith_to_display (Xor:ast_arith) = empty_item (implode "Xor")`;
+   `arith_to_display (Or:ast_arith) = empty_item (implode "Or")`;
    `arith_to_display ast_Neg = empty_item (implode "Neg")`;
    `arith_to_display (Not:ast_arith) = empty_item (implode "Not")`;
    `arith_to_display ast_Abs = empty_item (implode "Abs")`;

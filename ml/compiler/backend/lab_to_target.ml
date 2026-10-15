@@ -374,17 +374,18 @@ let get_shmem_info_def = cake_define
   `get_shmem_info x1 pos ffi_names shmem_info =
         match (x1,shmem_info) with
           (([]:('a sec) list),(shmem_info:shmem_info_num list)) ->
-       (ffi_names,shmem_info)
+       (ffi_names',shmem_info)
         | ((Section k [] :: rest),shmem_info) ->
-       get_shmem_info rest pos ffi_names shmem_info
+       get_shmem_info rest pos ffi_names' shmem_info
         | ((Section k ((labLang_Label _47 _48 _49) :: xs) ::
           rest),shmem_info) ->
-       get_shmem_info (Section k xs :: rest) pos ffi_names shmem_info
+       get_shmem_info (Section k xs :: rest) pos ffi_names'
+         shmem_info
         | ((Section k ((labLang_Asm (ShareMem m r ad) bytes _50) ::
           xs) :: rest),shmem_info) ->
        (let (name,nb) = get_memop_info m in
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
-         (ffi_names ++ [SharedMem name])
+         (ffi_names' ++ [SharedMem name])
          (shmem_info ++
          [
            mk_shmem_info_num pos nb (match ad with Addr r off -> r)
@@ -393,11 +394,11 @@ let get_shmem_info_def = cake_define
         | ((Section k ((labLang_LabAsm _51 _52 bytes _53) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
-         ffi_names shmem_info
+         ffi_names' shmem_info
         | ((Section k ((labLang_Asm _54 bytes _55) :: xs) ::
           rest),shmem_info) ->
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
-         ffi_names shmem_info`;;
+         ffi_names' shmem_info`;;
 
 (*
 Definition compile_lab_def:

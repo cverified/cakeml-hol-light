@@ -10,7 +10,6 @@
   functions. This phase is vital for good performance.
 *)
 
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 

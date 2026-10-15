@@ -14,7 +14,6 @@ needs "compiler/backend/flatLang.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
-needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -237,8 +236,8 @@ let opw_lookup_def = cake_define_list
   [`opw_lookup backend_common_Andw = word_and`;
    `opw_lookup backend_common_Orw = word_or`;
    `opw_lookup (Xor:opw) = word_xor`;
-   `opw_lookup (Add:closLang_int_op) = word_add`;
-   `opw_lookup (Sub:closLang_int_op) = word_sub`];;
+   `opw_lookup (Add:opw) = word_add`;
+   `opw_lookup (Sub:opw) = word_sub`];;
 
 let do_word_app_def = cake_define
   `closSem_do_word_app x1 ws =
@@ -983,6 +982,7 @@ let semantics_def = cake_define
              (state_ffi s))) with SOME res -> res | NONE ->
           ffi_Diverge
             (build_lprefix_lub
-              (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
+              (IMAGE (\k. sptree_fromList (ffi_state_io_events
+                (state_ffi
                  (SND (closSem_evaluate (es,[],st k)))))) UNIV)))`;;
 hol4_overload "semantics" "closSem_semantics";;

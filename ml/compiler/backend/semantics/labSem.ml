@@ -20,7 +20,6 @@ needs "lib/byte.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/pegexec.ml";;
-needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
@@ -599,6 +598,7 @@ let semantics_def = cake_define
            t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
-              (SND (evaluate (state_clock_fupd (K k) s)))))) UNIV)))`;;
+            (IMAGE (\k. sptree_fromList (ffi_state_io_events
+              (state_ffi (SND (evaluate (state_clock_fupd (K k)
+              s)))))) UNIV)))`;;
 hol4_overload "semantics" "labSem_semantics";;

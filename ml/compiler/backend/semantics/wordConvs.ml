@@ -33,7 +33,7 @@ let flat_exp_conventions_def = cake_define
   `flat_exp_conventions x1 =
         match x1 with
           wordLang_Assign v exp -> F
-        | (Store exp num) -> F
+        | (Store exp num') -> F
         | (Set store_name (Var r)) -> T
         | (Set store_name _1) -> F
         | (wordLang_ShareInst op v (Var r)) -> T

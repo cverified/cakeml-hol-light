@@ -166,21 +166,21 @@ let get_intervals_withlive_def = cake_define_list
       (n1,int_beg1,int_end1))`];;
 
 let check_number_property_def = cake_define_list
-  [`check_number_property (P:int->1 spt->bool) (linear_scan_Writes l) n
-  live =
-        (let n_out = n - 1 in
+  [`check_number_property (P:int->1 spt->bool) (linear_scan_Writes l)
+  (n:int) live =
+        (let n_out = n - (&1) in
         let live_out = numset_list_delete l live in
         P n_out live_out)`;
-   `check_number_property P (linear_scan_Reads l) n live =
-        (let n_out = n - 1 in
+   `check_number_property P (linear_scan_Reads l) (n:int) live =
+        (let n_out = n - (&1) in
         let live_out = linear_scan_numset_list_insert l live in
         P n_out live_out)`;
-   `check_number_property P (Branch lt1 lt2:live_tree) n live =
+   `check_number_property P (Branch lt1 lt2:live_tree) (n:int) live =
         (let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - (size_of_live_tree
           lt2)) live in
         r1 /\ r2)`;
-   `check_number_property P (Seq lt1 lt2:live_tree) n live =
+   `check_number_property P (Seq lt1 lt2:live_tree) (n:int) live =
         (let r2 = check_number_property P lt2 n live in
         let r1 = check_number_property P lt1 (n - size_of_live_tree
           lt2) (get_live_backward lt2 live) in

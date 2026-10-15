@@ -82,6 +82,10 @@ let delete_def = cake_define_list
            mk_BS t1 a (sptree_delete ((k - 1) DIV 2) t2))`];;
 hol4_overload "delete" "sptree_delete";;
 
+let fromList_def = cake_define
+  `sptree_fromList l = SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a
+  t)) (0,LN) l)`;;
+
 let size_def = cake_define_list
   [`sptree_size LN = 0`;
    `sptree_size (LS a) = 1`;
