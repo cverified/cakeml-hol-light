@@ -153,7 +153,23 @@ what fails, keep the loading time of the file in
 `ml/TIMINGS.md`, and commit.  `tools/bin/checkseq` loads the
 files of the port one after the other in one session and
 reports the time, the number of axioms and the first failure of
-each, which is the measure of how far the pass is.
+each, which is the measure of how far the pass is.  With `MARK=1`
+it also says which phrase of the file fails.
+
+The other checks:
+
+- `tools/coverage.py`  every block of every HOL4 source that the
+                       port has to have is in
+- `tools/fidelity.py`  no definition of the port lost a name or a
+                       constructor argument on the way
+- `tools/bin/quotes`   which quotation of a file does not parse
+                       (in a session that has the file loaded);
+                       `tools/bin/quotesall` does that for every
+                       file that the last run reports
+- `tools/bin/locate`   which phrase of a file fails
+- `tools/bin/deps`     load only what a file needs
+- `tools/bin/cheats`   write `ml/CHEATS.md` from `cake_cheats ()`
+- `tools/bin/timings`  write `ml/TIMINGS.md` from the last run
 
 A definition that takes minutes is a bug.  The two that bit so
 far: HOL Light's machinery for a definition by patterns is slow
