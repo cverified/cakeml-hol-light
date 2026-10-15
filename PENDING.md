@@ -11,6 +11,11 @@ Three of them are definitions whose value HOL4 computes with ML
 code (`EVAL` or `type_of`) and states as the value it finds.  The
 port states the expression that HOL4 evaluates, which is provably
 the same value; `REPLACE` in `tools/overrides.py` has the text.
+(To compute the value in HOL Light instead, the call by value
+machinery of `compute.ml` of the HOL Light distribution, which is
+a translation of HOL4's `computeLib`, and the fuller version at
+https://github.com/hol-light-family/compute-hol-light are what to
+use; nothing of the first pass evaluates anything.)
 
 | definition | what the port says |
 |---|---|

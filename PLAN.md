@@ -202,7 +202,9 @@ that none of the strategies of `cake_define` makes are _assumed_
   made with the measure that `candidate_measures` gives it
   (`MEASURE (\(x0,x1). closLang_exp_size1 x1)`), but the
   existence proof of HOL Light takes seven minutes over its
-  thirteen clauses.  What the twenty or so definitions of this
-  shape (the recursions over `closLang$exp` of the clos phases,
-  each with its `_sing` companion) need is a faster way of
-  proving the termination conditions, not another measure.
+  thirteen clauses.  As one clause with a `match` it takes ten
+  minutes and does not get there at all.  What the twenty or so
+  definitions of this shape (the recursions over `closLang$exp`
+  of the clos phases, each with its `_sing` companion) need is a
+  faster way of proving the termination conditions, not another
+  measure or another form.
