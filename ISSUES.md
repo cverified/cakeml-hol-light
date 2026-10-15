@@ -127,6 +127,25 @@ sources, and why.
   preprocessor prelude, and one of those strings is longer than
   that by itself.
 
+- HOL4 resolves the name of a constant in the scope of the
+  theory that uses it; the port has one namespace, in which the
+  overload of a theory that is loaded later is in the way.  Where
+  the type decides, both resolve it the same way.  Where it does
+  not, the port writes the name of the constant out: in a pattern
+  it does that by itself, and in the body of a definition `CON_OF`
+  in `tools/overrides.py` says which theory is meant
+  (`stack_remove$single_stack_free` builds the `Inst` of
+  `stackLang`).
+- HOL4's `<=>` is its `=` with another precedence, so a source
+  writes it where the two sides are not of type `bool`, which HOL
+  Light's `<=>` does not allow (`word_alloc$oracle_colour_ok`
+  gives an option).  `IFF_IS_EQ` marks those.
+- Two constants of a theory can be given the same name by the
+  prefix that the port puts before a name that several theories
+  have (`clos_to_bvl` defines `compile_inc` as well as
+  `clos_to_bvl_compile_inc`); the renamed one then gets a prime.
+  A type and a constant of the same name do not clash.
+
 ## Definitions
 
 - A definition whose clauses overlap relies on HOL4's
