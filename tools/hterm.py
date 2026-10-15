@@ -735,8 +735,11 @@ class Ctx:
 
   def __init__(self, names=None, fields=None, recs=None, thy='',
                overloads=None, accessors=None, cons=None,
-               abbrevs=None):
+               abbrevs=None, tynames=None, overloaded=None):
     self.names = names or {}     # cakeml name -> hol light name
+    self.tynames = tynames or {} # the same for the type names
+    self.overloaded = overloaded or set()  # names HOL4 overloads
+    self.defining = set()        # the names of the block being made
     self.fields = fields or {}   # field name -> record type name
     self.recs = recs or {}       # record type -> [field names]
     self.overloads = overloads or {}   # name -> hol light term text
@@ -755,7 +758,20 @@ class Ctx:
       thy, n2 = n.split('$')
       return self.names.get((thy, n2), self.names.get(n2, n2))
     if n in NAME_MAP: return NAME_MAP[n]
+    # the block that defines a name uses the name of the constant,
+    # and everything else the name that HOL4 overloads with it
+    if n in self.defining:
+      return self.names.get((self.thy, n), self.names.get(n, n))
+    if n in self.overloaded: return n
     return self.names.get((self.thy, n), self.names.get(n, n))
+
+  def tyname(self, n):
+    if '$' in n:
+      thy, n2 = n.split('$')
+      return self.tynames.get((thy, n2), self.tynames.get(n2, n2))
+    if n in NAME_MAP: return NAME_MAP[n]
+    return self.tynames.get((self.thy, n),
+                            self.tynames.get(n, n))
 
   def field(self, f):
     """the accessor of a record field, without its argument"""
@@ -1124,6 +1140,15 @@ def head_of(e):
     else: return e
 
 
+def conjuncts_of(e):
+  """the conjuncts of a definition, as terms"""
+  if e.kind == 'paren': return conjuncts_of(e.e)
+  if e.kind == 'quant' and e.q == '!': return conjuncts_of(e.body)
+  if e.kind == 'infix' and e.op == '/\\':
+    return conjuncts_of(e.l) + conjuncts_of(e.r)
+  return [e]
+
+
 def clauses_of(e):
   """the clauses of a definition, as (head, args, rhs)"""
   def conj(e):
@@ -1292,7 +1317,7 @@ def print_type(ty, ctx=None, prec=0):
     s = (print_type(args[0], ctx, 4) + '+' +
          print_type(args[1], ctx, 3))
     return '(' + s + ')' if prec > 3 else s
-  nm = ctx.name(name) if ctx is not None else name
+  nm = ctx.tyname(name) if ctx is not None else name
   if not args: return nm
   if len(args) == 1:
     s = print_type(args[0], ctx, 6) + ' ' + nm

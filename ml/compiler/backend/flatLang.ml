@@ -33,6 +33,9 @@ let flatLang_op_INDUCT,flatLang_op_RECURSION = define_datatype
    (num) | flatLang_GlobalVarInit (num) | flatLang_GlobalVarLookup \
    (num) | flatLang_TagLenEq (num) (num) | flatLang_LenEq (num) | \
    flatLang_El (num) | flatLang_Id";;
+hol4_overload "TagLenEq" "flatLang_TagLenEq";;
+hol4_overload "LenEq" "flatLang_LenEq";;
+hol4_overload "El" "flatLang_El";;
 
 new_type_abbrev("ctor_id",`: num`);;
 (* NONE represents the exception type *)
@@ -44,20 +47,27 @@ let flatLang_pat_INDUCT,flatLang_pat_RECURSION = define_datatype
    flatLang_Plit (lit) | flatLang_Pcon ((num#(num#(num#num) list) \
    option) option) (flatLang_pat list) | flatLang_Pas (flatLang_pat) \
    (mlstring) | flatLang_Pref (flatLang_pat)";;
+hol4_overload "Pany" "flatLang_Pany";;
+hol4_overload "Pvar" "flatLang_Pvar";;
+hol4_overload "Plit" "flatLang_Plit";;
+hol4_overload "Pcon" "flatLang_Pcon";;
+hol4_overload "Pas" "flatLang_Pas";;
+hol4_overload "Pref" "flatLang_Pref";;
 
 let pat_bindings_def = cake_define
-  `(flatLang_pat_bindings flatLang_Pany = []) /\
-   (flatLang_pat_bindings (flatLang_Pvar n) = [n]) /\
-   (flatLang_pat_bindings (flatLang_Plit l) = []) /\
-   (flatLang_pat_bindings (flatLang_Pcon _1 ps) =
-     flatLang_pats_bindings ps) /\
-   (flatLang_pat_bindings (flatLang_Pas p i) = flatLang_pat_bindings
-     p ++ [i]) /\
-   (flatLang_pat_bindings (flatLang_Pref p) = flatLang_pat_bindings
-     p) /\
+  `(flatLang_pat_bindings Pany = []) /\
+   (flatLang_pat_bindings (Pvar n) = [n]) /\
+   (flatLang_pat_bindings (Plit l) = []) /\
+   (flatLang_pat_bindings (Pcon _1 ps) = flatLang_pats_bindings ps)
+     /\
+   (flatLang_pat_bindings (Pas p i) = flatLang_pat_bindings p ++ [i])
+     /\
+   (flatLang_pat_bindings (Pref p) = flatLang_pat_bindings p) /\
    (flatLang_pats_bindings [] = []) /\
    (flatLang_pats_bindings (p :: ps) = flatLang_pats_bindings ps
      ++ flatLang_pat_bindings p)`;;
+hol4_overload "pat_bindings" "flatLang_pat_bindings";;
+hol4_overload "pats_bindings" "flatLang_pats_bindings";;
 
 let flatLang_exp_INDUCT,flatLang_exp_RECURSION = define_datatype
   "flatLang_exp = flatLang_Raise (tra) (flatLang_exp) | \
@@ -71,6 +81,16 @@ let flatLang_exp_INDUCT,flatLang_exp_RECURSION = define_datatype
    flatLang_Let (tra) (mlstring option) (flatLang_exp) (flatLang_exp) \
    | flatLang_Letrec (mlstring) ((mlstring#mlstring#flatLang_exp) \
    list) (flatLang_exp)";;
+hol4_overload "Raise" "flatLang_Raise";;
+hol4_overload "Handle" "flatLang_Handle";;
+hol4_overload "Lit" "flatLang_Lit";;
+hol4_overload "Con" "flatLang_Con";;
+hol4_overload "Fun" "flatLang_Fun";;
+hol4_overload "App" "flatLang_App";;
+hol4_overload "If" "flatLang_If";;
+hol4_overload "Mat" "flatLang_Mat";;
+hol4_overload "Let" "flatLang_Let";;
+hol4_overload "Letrec" "flatLang_Letrec";;
 
 (* HOL4 ML code, not ported:
 val exp_size_def = definition"exp_size_def";
@@ -80,14 +100,13 @@ let bool_id_def = cake_define
   `bool_id = 0`;;
 
 let bool_def = cake_define
-  `flatLang_Bool t b = flatLang_Con t (SOME (bool_to_tag b,SOME
-  bool_id)) []`;;
+  `flatLang_Bool t b = Con t (SOME (bool_to_tag b,SOME bool_id)) []`;;
+hol4_overload "Bool" "flatLang_Bool";;
 
 let SmartIf_def = cake_define
   `SmartIf t e p q =
      (match e with
-       flatLang_Con _2 (SOME (tag,SOME id)) [] ->
+       Con _2 (SOME (tag,SOME id)) [] ->
          (if id = bool_id then
            if tag = true_tag then p else if tag = false_tag then q
-             else flatLang_If t e p q else flatLang_If t e p q) | _3
-             -> flatLang_If t e p q)`;;
+             else If t e p q else If t e p q) | _3 -> If t e p q)`;;

@@ -13,11 +13,17 @@
 
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/bvl.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "misc/misc.ml";;
 
 let obj_INDUCT,obj_RECURSION = define_datatype
   "obj = jsonLang_Object ((mlstring#obj) list) | jsonLang_Array (obj \
    list) | jsonLang_String (mlstring) | jsonLang_Int (int) | \
    jsonLang_Bool (bool) | jsonLang_Null";;
+hol4_overload "String" "jsonLang_String";;
+hol4_overload "Int" "jsonLang_Int";;
+hol4_overload "Bool" "jsonLang_Bool";;
 
 (* HOL4 overload (expanded in the port):
      None =  *)
@@ -25,7 +31,7 @@ let obj_INDUCT,obj_RECURSION = define_datatype
 let concat_with_def = cake_define
   `concat_with x1 c =
         match x1 with
-          [] -> misc_List []
+          [] -> List []
         | [s] -> s
         | (s :: ss) -> s ++ (c ++ concat_with ss c)`;;
 
@@ -46,30 +52,28 @@ let n_rev_hex_digs = cake_define
 let encode_str_def = cake_define
   `encode_str unicode s =
    (let s2 = explode s in
-   if EVERY printable s2 then s else mlstring_concat (MAP (\c. if
-     printable c then implode [c] else if unicode then implode ("\\u"
-     ++ REVERSE (n_rev_hex_digs 4 (ORD c))) else mlstring_concat
-     [(strlit "\\"); (num_to_str) (ORD c)]) s2))`;;
+   if EVERY printable s2 then s else concat (MAP (\c. if printable
+     c then implode [c] else if unicode then implode ("\\u" ++
+     REVERSE (n_rev_hex_digs 4 (ORD c))) else concat [(implode "\\");
+     (num_to_str) (ORD c)]) s2))`;;
 
 let json_to_mlstring_def = cake_define
   `json_to_mlstring obj =
         match  with
            ->
-       match obj with jsonLang_Object mems -> misc_List [(strlit
-         "{")] ++
-                   concat_with (MAP mem_to_string mems) (misc_List
-                     [(strlit ",")]) ++
-                   misc_List [(strlit "}")] | jsonLang_Array obs ->
-                     misc_List [(strlit "[")] ++
-                   concat_with (MAP json_to_mlstring obs) (misc_List
-                     [(strlit ",")]) ++
-                   misc_List [(strlit "]")] | jsonLang_String s ->
-                     misc_List ([(implode) "\""; encode_str T s;
-                     (implode) "\""]) | jsonLang_Int i -> misc_List
-                     [(num_to_str) i] | jsonLang_Bool b -> (if b then
-                     misc_List [(strlit "true")] else misc_List [(strlit
-                     "false")]) | jsonLang_Null -> misc_List [(strlit
+       match obj with jsonLang_Object mems -> List [(implode "{")] ++
+                   concat_with (MAP mem_to_string mems) (List
+                     [(implode ",")]) ++
+                   List [(implode "}")] | jsonLang_Array obs -> List
+                     [(implode "[")] ++
+                   concat_with (MAP json_to_mlstring obs) (List
+                     [(implode ",")]) ++
+                   List [(implode "]")] | String s -> List
+                     ([(implode) "\""; encode_str T s; (implode) "\""])
+                     | Int i -> List [(num_to_str) i] | Bool b -> (if b
+                     then List [(implode "true")] else List [(implode
+                     "false")]) | jsonLang_Null -> List [(implode
                      "null")]
         |  -> let (n,obj) = obj in
-           misc_List [(implode) "\""; n; (implode) "\":"] ++
+           List [(implode) "\""; n; (implode) "\":"] ++
              json_to_mlstring obj`;;

@@ -54,6 +54,7 @@ let int_to_string_def = cake_define
 
 let toString_def1 = cake_define
   `(num_to_str) i = int_to_string (CHR 126) i`;;
+hol4_overload "toString" "mlint_toString";;
 
 let num_to_str_def = cake_define
   `num_to_str (n:num) = (num_to_str) (&n)`;;
@@ -138,10 +139,11 @@ let fromString_def = cake_define
                          (substring str 1 (strlen str - 1))) else
                            OPTION_MAP (&) (fromChars (strlen str)
                            str))`;;
+hol4_overload "fromString" "mlint_fromString";;
 
 let fromNatString_def = cake_define
   `fromNatString str =
-     (match mlint_fromString str with
+     (match fromString str with
        NONE -> NONE | SOME i -> (if 0 <= i then SOME (num_of_int
          i) else NONE))`;;
 
@@ -154,6 +156,7 @@ let fromNatString_def = cake_define
 let int_cmp_def = cake_define
   `mlint_int_cmp i (j:int) = (if i < j then LESS else
                        if j < i then GREATER else EQUAL)`;;
+hol4_overload "int_cmp" "mlint_int_cmp";;
 
 let num_gcd_def = cake_define
   `mlint_num_gcd a b = (if a = 0 then b else mlint_num_gcd (b MOD a)

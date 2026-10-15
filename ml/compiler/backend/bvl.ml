@@ -35,13 +35,22 @@ let bvl_exp_INDUCT,bvl_exp_RECURSION = define_datatype
    bvl_Handle (bvl_exp) (bvl_exp) | bvl_Tick (bvl_exp) | bvl_Call \
    (num) (num option) (bvl_exp list) | bvl_Force (num) (num) | bvl_Op \
    (closLang_op) (bvl_exp list)";;
+hol4_overload "Var" "bvl_Var";;
+hol4_overload "If" "bvl_If";;
+hol4_overload "Let" "bvl_Let";;
+hol4_overload "Raise" "bvl_Raise";;
+hol4_overload "Handle" "bvl_Handle";;
+hol4_overload "Tick" "bvl_Tick";;
+hol4_overload "Call" "bvl_Call";;
+hol4_overload "Force" "bvl_Force";;
+hol4_overload "Op" "bvl_Op";;
 
 let bool_def = cake_define
-  `bvl_Bool b = bvl_Op (closLang_BlockOp (closLang_Cons (bool_to_tag
-  b))) []`;;
+  `bvl_Bool b = Op (closLang_BlockOp (Cons (bool_to_tag b))) []`;;
+hol4_overload "Bool" "bvl_Bool";;
 
 let mk_tick_def = cake_define
-  `mk_tick n e = (FUNPOW bvl_Tick n e:bvl_exp)`;;
+  `mk_tick n e = (FUNPOW Tick n e:bvl_exp)`;;
 
 (* HOL4 overload (expanded in the port):
      mk_unit = bvl$Op (BlockOp (Cons 0)) [] *)

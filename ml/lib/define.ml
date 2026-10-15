@@ -864,6 +864,15 @@ let define_nested tm =
 
 (* ------------------------------------------------------------------ *)
 
+(* A name that several theories of the port define is an overloaded
+   name in HOL4, which resolves it by the type; HOL Light can do the
+   same, so the port gives the constants of such a name different
+   names and overloads the name that HOL4 uses with all of them. *)
+
+let hol4_overload name cname =
+  (try make_overloadable name `:A` with Failure _ -> ());
+  overload_interface(name,mk_mconst(cname,get_const_type cname));;
+
 (* HOL4's Datatype, which also registers the recursion theorem and (as*)
 (* HOL4                                                               *)
 (* does) defines the size functions of the family.                    *)
@@ -1283,6 +1292,12 @@ let cake_report tm s =
 let cake_define tm =
   try cake_time (cake_define_gen None) tm
   with Failure s -> cake_report tm s;;
+
+(* the clauses of a definition as separate terms, for a definition
+   in which the same variable name has different types in different
+   clauses (HOL4 typechecks every clause on its own) *)
+
+let cake_define_list cls = cake_define (list_mk_conj cls);;
 
 let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm

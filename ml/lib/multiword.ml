@@ -24,15 +24,21 @@ let mw_op_INDUCT,mw_op_RECURSION = define_datatype
   "mw_op = multiword_Add | multiword_Sub | multiword_Mul | \
    multiword_Div | multiword_Mod | multiword_Lt | multiword_Eq | \
    multiword_Dec";;
+hol4_overload "Add" "multiword_Add";;
+hol4_overload "Sub" "multiword_Sub";;
+hol4_overload "Mul" "multiword_Mul";;
+hol4_overload "Div" "multiword_Div";;
+hol4_overload "Mod" "multiword_Mod";;
+hol4_overload "Lt" "multiword_Lt";;
 
 let int_op_def = cake_define
-  `(multiword_int_op multiword_Add i j = i + j) /\
-   (multiword_int_op multiword_Sub i j = i - j) /\
-   (multiword_int_op multiword_Mul i j = i * j) /\
-   (multiword_int_op multiword_Div i j = i / j) /\
-   (multiword_int_op multiword_Mod i j = i % j) /\
-   (multiword_int_op multiword_Lt i j = (if i < j then (&1) else
-     (&0))) /\
+  `(multiword_int_op Add i j = i + j) /\
+   (multiword_int_op Sub i j = i - j) /\
+   (multiword_int_op Mul i j = i * j) /\
+   (multiword_int_op Div i j = i / j) /\
+   (multiword_int_op Mod i j = i % j) /\
+   (multiword_int_op Lt i j = (if i < j then (&1) else (&0))) /\
    (multiword_int_op multiword_Eq i j = (if i = j then (&1) else
      (&0):int)) /\
    (multiword_int_op multiword_Dec i j = (&0))`;;
+hol4_overload "int_op" "multiword_int_op";;

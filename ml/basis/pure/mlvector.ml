@@ -8,6 +8,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "basis/pure/mlstring.ml";;
 needs "lib/indexedLists.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
@@ -18,6 +19,7 @@ let sub_unsafe_def = cake_define
 
 let tabulate_def = cake_define
   `mlvector_tabulate n f = Vector (GENLIST f n)`;;
+hol4_overload "tabulate" "mlvector_tabulate";;
 
 (* TERMINATION: wf_rel_tac `measure (\(vec, n). length(vec) - n)` *)
 let toList_aux_def = cake_define
@@ -38,21 +40,25 @@ let update_def = cake_define
 
 let concat_def = cake_define
   `mlvector_concat l = Vector (FLAT (MAP mlvector_toList l))`;;
+hol4_overload "concat" "mlvector_concat";;
 
 let map_def = cake_define
   `mlvector_map vec f = Vector (MAP f (mlvector_toList vec))`;;
+hol4_overload "map" "mlvector_map";;
 
 let mapi_def = cake_define
   `mlvector_mapi vec f = Vector (MAPi f (mlvector_toList vec))`;;
+hol4_overload "mapi" "mlvector_mapi";;
 
 let foldli_aux_def = cake_define
   `(mlvector_foldli_aux f e vec n 0 = e) /\
    (mlvector_foldli_aux f e vec n (SUC len) = mlvector_foldli_aux
      f (f n (sub vec n) e) vec (n + 1) len)`;;
+hol4_overload "foldli_aux" "mlvector_foldli_aux";;
 
 let foldli_def = cake_define
-  `mlvector_foldli f e vec = mlvector_foldli_aux f e vec 0 (length
-  vec)`;;
+  `mlvector_foldli f e vec = foldli_aux f e vec 0 (length vec)`;;
+hol4_overload "foldli" "mlvector_foldli";;
 
 let foldl_aux_def = cake_define
   `(foldl_aux f e vec n 0 = e) /\
@@ -61,6 +67,7 @@ let foldl_aux_def = cake_define
 
 let foldl_def = cake_define
   `mlvector_foldl f e vec = foldl_aux f e vec 0 (length vec)`;;
+hol4_overload "foldl" "mlvector_foldl";;
 
 
 let foldri_aux_def = cake_define
@@ -89,6 +96,7 @@ let findi_aux_def = cake_define
 
 let findi_def = cake_define
   `mlvector_findi f vec = findi_aux f vec 0 (length vec)`;;
+hol4_overload "findi" "mlvector_findi";;
 
 
 let find_aux_def = cake_define
@@ -108,6 +116,7 @@ let exists_aux_def = cake_define
 
 let exists_def = cake_define
   `mlvector_exists f vec = exists_aux f vec 0 (length vec)`;;
+hol4_overload "exists" "mlvector_exists";;
 
 let all_aux_def = cake_define
   `(all_aux f vec n 0 = T) /\
@@ -123,11 +132,12 @@ let collate_aux_def = cake_define
      (if f (sub vec1 n) (sub vec2 n) = EQUAL then
        mlvector_collate_aux f vec1 vec2 (n + 1) ord len else f (sub
        vec1 n) (sub vec2 n)))`;;
+hol4_overload "collate_aux" "mlvector_collate_aux";;
 
 let collate_def = cake_define
   `mlvector_collate f vec1 vec2 =
-   (if (length vec1) < (length vec2) then mlvector_collate_aux f
-     vec1 vec2 0 LESS (length vec1) else if (length vec2) < (length
-     vec1) then mlvector_collate_aux f vec1 vec2 0 GREATER (length
-     vec2) else mlvector_collate_aux f vec1 vec2 0 EQUAL (length
-     vec2))`;;
+   (if (length vec1) < (length vec2) then collate_aux f vec1 vec2
+     0 LESS (length vec1) else if (length vec2) < (length vec1) then
+     collate_aux f vec1 vec2 0 GREATER (length vec2) else collate_aux
+     f vec1 vec2 0 EQUAL (length vec2))`;;
+hol4_overload "collate" "mlvector_collate";;

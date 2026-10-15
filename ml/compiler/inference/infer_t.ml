@@ -10,6 +10,7 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
+needs "compiler/backend/presLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -22,13 +23,13 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
 let id_to_string_def = cake_define
   `(id_to_string (Short s) = s) /\
    (id_to_string (Long x id) =
-     mlstring_concat [x; implode "."; id_to_string id])`;;
+     concat [x; implode "."; id_to_string id])`;;
 
 let get_tyname_def = cake_define
   `get_tyname n (Bind [] []) = NONE /\
    get_tyname n (Bind [] ((m,ys) :: xs)) =
      (match get_tyname n ys with NONE -> get_tyname n (Bind [] xs) |
-       SOME x -> SOME (^ (^ m (strlit ".")) x)) /\
+       SOME x -> SOME (^ (^ m (implode ".")) x)) /\
    get_tyname n (Bind ((tyname,_1,t) :: xs) m) =
      (if (match t with Tapp _2 m -> m = n | _3 -> F) then
        SOME tyname else get_tyname n (Bind xs m))`;;
@@ -36,27 +37,26 @@ let get_tyname_def = cake_define
 let type_ident_to_string_def = cake_define
   `type_ident_to_string tys ti =
    (if ti = Tarray_num then
-     (strlit "Array.array") else if ti = Tbool_num then
-     (strlit "bool") else if ti = Tchar_num then
-     (strlit "char") else if ti = Texn_num then
-     (strlit "exn") else if ti = Tint_num then
-     (strlit "int") else if ti = Tlist_num then
-     (strlit "list") else if ti = Tref_num then
-     (strlit "ref") else if ti = Tstring_num then
-     (strlit "string") else if ti = Tvector_num then
-     (strlit "Vector.vector") else if ti = Tword64_num then
-     (strlit "Word64.word") else if ti = Tword8_num then
-     (strlit "Word8.word") else if ti = Tword8array_num then
-     (strlit "byte_array") else if ti = Tdouble_num then
-     (strlit "Double.double") else
+     (implode "Array.array") else if ti = Tbool_num then
+     (implode "bool") else if ti = Tchar_num then
+     (implode "char") else if ti = Texn_num then
+     (implode "exn") else if ti = Tint_num then
+     (implode "int") else if ti = Tlist_num then
+     (implode "list") else if ti = Tref_num then
+     (implode "ref") else if ti = Tstring_num then
+     (implode "string") else if ti = Tvector_num then
+     (implode "Vector.vector") else if ti = Tword64_num then
+     (implode "Word64.word") else if ti = Tword8_num then
+     (implode "Word8.word") else if ti = Tword8array_num then
+     (implode "byte_array") else if ti = Tdouble_num then
+     (implode "Double.double") else
      match get_tyname ti tys with NONE -> mlint_toString (&ti) |
        SOME s -> s)`;;
 
 let ty_var_name_def = cake_define
   `ty_var_name n =
      (if n < 28 then implode ("'" ++ [CHR (n + ORD (CHR 97))]) else
-                    mlstring_concat [implode "'"; mlint_toString
-                      (&n)])`;;
+                    concat [implode "'"; mlint_toString (&n)])`;;
 
 let commas_def = cake_define
   `infer_t_commas c x2 =
@@ -64,42 +64,43 @@ let commas_def = cake_define
         [] -> []
       | [x] -> [x]
       | (x :: ys) -> x :: c :: infer_t_commas c ys`;;
+hol4_overload "commas" "infer_t_commas";;
 
 let add_parens_def = cake_define
   `add_parens threshold' (x,n) =
-     (if threshold' < (n:num) then mlstring_concat [(strlit "(");
-       x; (strlit ")")] else x)`;;
+     (if threshold' < (n:num) then concat [(implode "("); x;
+       (implode ")")] else x)`;;
 
 (* HOL4 termination: *)
 let inf_type_to_string_rec_def = cake_define_wf
   `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
   -> list_size infer_t_size ts)`
   `(inf_type_to_string_rec tys (Infer_Tuvar n) =
-     (mlstring_concat [(strlit "_"); mlint_toString (&n)],0)) /\
+     (concat [(implode "_"); mlint_toString (&n)],0)) /\
    (inf_type_to_string_rec tys (Infer_Tvar_db n) =
-     (mlstring_concat [ty_var_name n],0)) /\
+     (concat [ty_var_name n],0)) /\
    (inf_type_to_string_rec tys (Infer_Tapp ts ti) =
      (if ti = Tfn_num then
       (match ts with [t1; t2] ->
-         (mlstring_concat [add_parens 2 (inf_type_to_string_rec tys
-           t1); (strlit " -> ");
+         (concat [add_parens 2 (inf_type_to_string_rec tys t1);
+           (implode " -> ");
                   add_parens 3 (inf_type_to_string_rec tys t2)],3) |
                     _4 -> (implode "<bad function type>",0)) else if ti
                     = Ttup_num then
-      (match ts with [] -> ((strlit "unit"),0) | [t] ->
-        inf_type_to_string_rec tys t | _5 -> (mlstring_concat
-        (infer_t_commas (strlit " * ")
+      (match ts with [] -> ((implode "unit"),0) | [t] ->
+        inf_type_to_string_rec tys t | _5 -> (concat (commas (implode
+        " * ")
                 (MAP (add_parens 1) (inf_type_to_string_rec_list tys
                   ts))),2)) else
        match ts with [] -> (type_ident_to_string tys ti,0) | [t] ->
-         (mlstring_concat [add_parens 1 (inf_type_to_string_rec tys
-           t); (strlit " ");
+         (concat [add_parens 1 (inf_type_to_string_rec tys t);
+           (implode " ");
                   type_ident_to_string tys ti],1) | _6 ->
-         (mlstring_concat ([(strlit "(")] ++
-                  infer_t_commas (strlit ", ")
+         (concat ([(implode "(")] ++
+                  commas (implode ", ")
                     (MAP (add_parens 5) (inf_type_to_string_rec_list
                       tys ts)) ++
-                  [(strlit ") "); type_ident_to_string tys ti]),1)))
+                  [(implode ") "); type_ident_to_string tys ti]),1)))
                     /\
    inf_type_to_string_rec_list tys [] = [] /\
    inf_type_to_string_rec_list tys (t :: ts) =

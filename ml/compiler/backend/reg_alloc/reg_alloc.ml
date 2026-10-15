@@ -8,11 +8,16 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "compiler/backend/dataLang.ml";;
+needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/word_depth.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (*
@@ -108,6 +113,7 @@ val (move_related, get_move_related_def, set_move_related_def) =
 (* Data type for the exceptions *)
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
   "state_exn = reg_alloc_Fail (string) | reg_alloc_Subscript";;
+hol4_overload "Fail" "reg_alloc_Fail";;
 
 (* Monadic functions to handle the exceptions *)
 (* HOL4 ML code, not ported:
@@ -293,10 +299,10 @@ let is_not_coalesced_def = cake_define
      return (d = dt))`;;
 
 let split_degree_def = cake_define
-  `split_degree d k semanticPrimitives_v =
-   (if semanticPrimitives_v < d then
-   monad_bind (degrees_sub semanticPrimitives_v) (\
-     vd. monad_bind (is_not_coalesced semanticPrimitives_v) (\
+  `split_degree d k v =
+   (if v < d then
+   monad_bind (degrees_sub v) (\
+     vd. monad_bind (is_not_coalesced v) (\
      b.
      return (vd < k /\ b))) else
      return T)`;;
@@ -305,6 +311,7 @@ let split_degree_def = cake_define
 let sort_moves_def = cake_define
   `reg_alloc_sort_moves ls =
      sort (\((p:num),x,p',x'). p > p') ls`;;
+hol4_overload "sort_moves" "reg_alloc_sort_moves";;
 
 (* merge two sorted lists *)
 let smerge_def = cake_define
@@ -329,7 +336,7 @@ let revive_moves_def = cake_define
      let (rev,unavail) = PARTITION
        (\(_1,(x,y)). EXISTS (sorted_mem x) nbs \/ EXISTS (sorted_mem
          y) nbs) uam in
-     let sorted = smerge (reg_alloc_sort_moves rev) am in
+     let sorted = smerge (sort_moves rev) am in
      monad_ignore_bind
        (set_avail_moves_wl sorted) (
        set_unavail_moves_wl unavail))))`;;
@@ -461,8 +468,7 @@ let bg_ok_def = cake_define
    monad_bind (adj_ls_sub x) (\
      adjx. monad_bind (adj_ls_sub y) (\
      adjy.
-     let (case1,case2) = PARTITION (\semanticPrimitives_v. sorted_mem
-       semanticPrimitives_v adjx) adjy in
+     let (case1,case2) = PARTITION (\v. sorted_mem v adjx) adjy in
      monad_bind (st_ex_FILTER (considered_var k) case1 []) (\
        case1. monad_bind (st_ex_FILTER (considered_var k) case2 [])
          (\
@@ -470,8 +476,7 @@ let bg_ok_def = cake_define
        case2degs.
        let c2len = LENGTH (FILTER (\x. x >= k) case2degs) in
        if c2len = 0 then return (SOME (case1,case2)) else
-       let case3 = FILTER (\semanticPrimitives_v. ~sorted_mem
-         semanticPrimitives_v adjy) adjx in
+       let case3 = FILTER (\v. ~sorted_mem v adjy) adjx in
        monad_bind (st_ex_FILTER (considered_var k) case3 []) (\
          case3. monad_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\
          case1degs. monad_bind (st_ex_MAP (deg_or_inf k) case3) (\
@@ -663,37 +668,31 @@ let do_freeze_def = cake_define
     picks highest degree node
 *)
 let safe_div_def = cake_define
-  `safe_div x semanticPrimitives_v = (if semanticPrimitives_v = 0
-  then 0 else x DIV semanticPrimitives_v)`;;
+  `safe_div x v = (if v = 0 then 0 else x DIV v)`;;
 
 let st_ex_list_MIN_cost_def = cake_define
-  `(st_ex_list_MIN_cost scost [] d k semanticPrimitives_v acc = return
-  (k,acc)) /\
-   (st_ex_list_MIN_cost scost (x :: xs) d k semanticPrimitives_v acc
-     =
+  `(st_ex_list_MIN_cost scost [] d k v acc = return (k,acc)) /\
+   (st_ex_list_MIN_cost scost (x :: xs) d k v acc =
    (if x < d then
      monad_bind (degrees_sub x) (\
        xv. monad_bind (return (safe_div (lookup_any x scost 0) xv))
          (\
        cost.
-       if semanticPrimitives_v > cost then
+       if v > cost then
          st_ex_list_MIN_cost scost xs d x cost (k :: acc) else
-         st_ex_list_MIN_cost scost xs d k semanticPrimitives_v (x ::
-           acc))) else
-     st_ex_list_MIN_cost scost xs d k semanticPrimitives_v acc))`;;
+         st_ex_list_MIN_cost scost xs d k v (x :: acc))) else
+     st_ex_list_MIN_cost scost xs d k v acc))`;;
 
 let st_ex_list_MAX_deg_def = cake_define
-  `(st_ex_list_MAX_deg [] d k semanticPrimitives_v acc = return (k,acc))
-  /\
-   (st_ex_list_MAX_deg (x :: xs) d k semanticPrimitives_v acc =
+  `(st_ex_list_MAX_deg [] d k v acc = return (k,acc)) /\
+   (st_ex_list_MAX_deg (x :: xs) d k v acc =
    (if x < d then
      monad_bind (degrees_sub x) (\
        xv.
-       if semanticPrimitives_v < xv then
+       if v < xv then
          st_ex_list_MAX_deg xs d x xv (k :: acc) else
-         st_ex_list_MAX_deg xs d k semanticPrimitives_v (x :: acc))
-           else
-   st_ex_list_MAX_deg xs d k semanticPrimitives_v acc))`;;
+         st_ex_list_MAX_deg xs d k v (x :: acc)) else
+   st_ex_list_MAX_deg xs d k v acc))`;;
 
 let do_spill_def = cake_define
   `do_spill scostopt k =
@@ -874,12 +873,15 @@ let clash_tree_INDUCT,clash_tree_RECURSION = define_datatype
   "clash_tree = reg_alloc_Delta (num list) (num list) | reg_alloc_Set \
    (one spt) | reg_alloc_Branch ((one spt) option) (clash_tree) \
    (clash_tree) | reg_alloc_Seq (clash_tree) (clash_tree)";;
+hol4_overload "Set" "reg_alloc_Set";;
+hol4_overload "Branch" "reg_alloc_Branch";;
+hol4_overload "Seq" "reg_alloc_Seq";;
 
 (* --- clash_tree oracle checks --- *)
 let numset_list_delete_def = cake_define
   `(numset_list_delete [] (t:'a spt) = t) /\
-   (numset_list_delete (x :: xs) t = numset_list_delete xs
-     (sptree_delete x t))`;;
+   (numset_list_delete (x :: xs) t = numset_list_delete xs (delete
+     x t))`;;
 
 (*Check that a numset is injective over the clash sets in an interpreted
    tree*)
@@ -892,11 +894,11 @@ let check_col_def = cake_define
 let check_partial_col_def = cake_define
   `(check_partial_col f [] t ft = SOME (t,ft)) /\
    (check_partial_col f (x :: xs) t ft =
-     (match sptree_lookup x t with
+     (match lookup x t with
        SOME one -> check_partial_col f xs t ft | NONE ->
-     (match sptree_lookup (f x) ft with
-       NONE -> check_partial_col f xs (sptree_insert x one t)
-         (sptree_insert (f x) one ft) | SOME one -> NONE)))`;;
+     (match lookup (f x) ft with
+       NONE -> check_partial_col f xs (insert x one t) (insert (f
+         x) one ft) | SOME one -> NONE)))`;;
 
 (* The checking function, used by oracle, and also used as part of the
    correctness proof *)
@@ -908,9 +910,8 @@ let check_clash_tree_def = cake_define
      (let del_w = (numset_list_delete w live) in
      let fdel_w = (numset_list_delete (MAP f w) flive) in
      check_partial_col f r del_w fdel_w))) /\
-   (check_clash_tree f (reg_alloc_Set t) live flive = check_col f t)
-     /\
-   (check_clash_tree f (reg_alloc_Branch topt t1 t2) live flive =
+   (check_clash_tree f (Set t) live flive = check_col f t) /\
+   (check_clash_tree f (Branch topt t1 t2) live flive =
      (match check_clash_tree f t1 live flive with
        NONE -> NONE | SOME (t1_out,ft1_out) ->
      (match check_clash_tree f t2 live flive with
@@ -919,7 +920,7 @@ let check_clash_tree_def = cake_define
        NONE ->
          check_partial_col f (MAP FST (toAList (difference t2_out
            t1_out))) t1_out ft1_out | SOME t -> check_col f t)))) /\
-   (check_clash_tree f (reg_alloc_Seq t1 t2) live flive =
+   (check_clash_tree f (Seq t1 t2) live flive =
      (match check_clash_tree f t2 live flive with
        NONE -> NONE | SOME (t2_out,ft2_out) ->
        check_clash_tree f t1 t2_out ft2_out))`;;
@@ -940,23 +941,21 @@ The second remap is probably not necessary?
 let list_remap_def = cake_define
   `(list_remap [] (ta,fa,nv) = (ta,fa,nv)) /\
    (list_remap (x :: xs) (ta,fa,nv) =
-     (match sptree_lookup x ta with
-       SOME semanticPrimitives_v -> list_remap xs (ta,fa,nv) | NONE
-         ->
-       list_remap xs (sptree_insert x nv ta,sptree_insert nv x
-         fa,nv + 1)))`;;
+     (match lookup x ta with
+       SOME v -> list_remap xs (ta,fa,nv) | NONE ->
+       list_remap xs (insert x nv ta,insert nv x fa,nv + 1)))`;;
 
 let mk_bij_aux_def = cake_define
   `(mk_bij_aux (reg_alloc_Delta writes reads) tfn =
      list_remap writes (list_remap reads tfn)) /\
-   (mk_bij_aux (reg_alloc_Set t) tfn =
+   (mk_bij_aux (Set t) tfn =
      list_remap (MAP FST (toAList t)) tfn) /\
-   (mk_bij_aux (reg_alloc_Branch topt t1 t2) tfn =
+   (mk_bij_aux (Branch topt t1 t2) tfn =
       (let tfn' = mk_bij_aux t2 (mk_bij_aux t1 tfn) in
       match topt with
         NONE -> tfn' | SOME ts -> list_remap (MAP FST (toAList ts))
           tfn')) /\
-   (mk_bij_aux (reg_alloc_Seq t1 t2) tfn =
+   (mk_bij_aux (Seq t1 t2) tfn =
      mk_bij_aux t1 (mk_bij_aux t2 tfn))`;;
 
 let mk_bij_def = cake_define
@@ -985,14 +984,14 @@ let mk_tags_def = cake_define
      inds.
      st_ex_FOREACH inds
      (\i.
-       let semanticPrimitives_v = fa i in
-       let remainder = semanticPrimitives_v MOD 4 in
+       let v = fa i in
+       let remainder = v MOD 4 in
        if remainder = 1 then
-         (match sptree_lookup semanticPrimitives_v fs with
+         (match lookup v fs with
            NONE -> update_node_tag i Atemp | SOME one ->
              update_node_tag i Stemp) else if remainder = 3 then
          update_node_tag i Stemp else
-         update_node_tag i (Fixed (semanticPrimitives_v DIV 2))))`;;
+         update_node_tag i (Fixed (v DIV 2))))`;;
 
 (* Initializes the clash_graph using a clash_tree and a remapping
    bijection *)
@@ -1005,12 +1004,12 @@ let mk_graph_def = cake_define
        live. monad_bind (extend_clique rta live) (\
        livein.
        return livein)))))) /\
-   (mk_graph ta (reg_alloc_Set t) liveout =
+   (mk_graph ta (Set t) liveout =
      monad_bind (return (MAP ta (MAP FST (toAList t)))) (\
        live. monad_ignore_bind
        (clique_insert_edge live) (
        return live))) /\
-   (mk_graph ta (reg_alloc_Branch topt t1 t2) liveout =
+   (mk_graph ta (Branch topt t1 t2) liveout =
      monad_bind (mk_graph ta t1 liveout) (\
        t1_live. monad_bind (mk_graph ta t2 liveout) (\
        t2_live.
@@ -1023,15 +1022,15 @@ let mk_graph_def = cake_define
            clashes. monad_ignore_bind
            (clique_insert_edge clashes) (
            return clashes)))))) /\
-   (mk_graph ta (reg_alloc_Seq t1 t2) liveout =
+   (mk_graph ta (Seq t1 t2) liveout =
      monad_bind (mk_graph ta t2 liveout) (\
        live.
        mk_graph ta t1 live))`;;
 
 let sp_default_def = cake_define
   `sp_default t i =
-   (match sptree_lookup i t with NONE -> (if is_phy_var i then i
-     DIV 2 else 0) | SOME x -> x)`;;
+   (match lookup i t with NONE -> (if is_phy_var i then i DIV 2
+     else 0) | SOME x -> x)`;;
 
 let extend_graph_def = cake_define
   `(extend_graph ta [] = return one) /\
@@ -1071,13 +1070,12 @@ let init_alloc1_heu_def = cake_define
      (st_ex_FOREACH ds
        (\i.
        monad_bind (adj_ls_sub i) (\
-         adjls. monad_bind (st_ex_FILTER (\semanticPrimitives_v.
-           considered_var k semanticPrimitives_v) adjls []) (\
+         adjls. monad_bind (st_ex_FILTER (\v. considered_var k v)
+           adjls []) (\
          fills.
          update_degrees i (LENGTH fills))))) (monad_ignore_bind
      (st_ex_FOREACH ds do_upd_coalesce) (monad_ignore_bind
-     (set_avail_moves_wl (reg_alloc_sort_moves moves))
-       (monad_ignore_bind
+     (set_avail_moves_wl (sort_moves moves)) (monad_ignore_bind
      (reset_move_related moves) (monad_bind (st_ex_PARTITION
        (split_degree d k) allocs [] []) (\
      (ltk,gtk). monad_bind (st_ex_PARTITION (move_related_sub) ltk []
@@ -1103,8 +1101,8 @@ let extract_tag_def = cake_define
    End'
    Definition extract_color_def:extract_color ta) =
    monad_bind (return (toAList ta)) (\
-     taa. monad_bind (st_ex_MAP (\(k,semanticPrimitives_v).
-       monad_bind (node_tag_sub semanticPrimitives_v) (\
+     taa. monad_bind (st_ex_MAP (\(k,v).
+       monad_bind (node_tag_sub v) (\
          t.
          return (k,extract_tag t))) taa) (\
      itags.
@@ -1112,10 +1110,10 @@ let extract_tag_def = cake_define
 
 let pri_move_insert_def = cake_define
   `pri_move_insert p x y acc =
-   (match sptree_lookup x acc with
+   (match lookup x acc with
      NONE ->
-       sptree_insert x [(p,y)] acc | SOME ls ->
-       sptree_insert x ((p,y) :: ls) acc)`;;
+       insert x [(p,y)] acc | SOME ls ->
+       insert x ((p,y) :: ls) acc)`;;
 
 let undir_move_insert_def = cake_define
   `undir_move_insert p x y acc =
@@ -1130,10 +1128,11 @@ let moves_to_sp_def = cake_define
 (*Do a consistency sort after setting up the sptree of moves*)
 let resort_moves_def = cake_define
   `resort_moves acc =
-   sptree_map (\ls. MAP SND (reg_alloc_sort_moves ls)) acc`;;
+   map (\ls. MAP SND (sort_moves ls)) acc`;;
 
 let algorithm_INDUCT,algorithm_RECURSION = define_datatype
   "algorithm = reg_alloc_Simple | reg_alloc_IRC";;
+hol4_overload "Simple" "reg_alloc_Simple";;
 
 (* Read-only version of coalesce_parent: follows the coalesce chain
    to the root without path compression. Safe for use in biased_pref
@@ -1156,11 +1155,11 @@ let biased_pref_def = cake_define
      d.
      if n < d then
      monad_bind (coalesce_root n) (\
-       semanticPrimitives_v.
-       let vs = match sptree_lookup n mtable with NONE -> [] | SOME
-         vs -> vs in
-       handle_Subscript (first_match_col ks (semanticPrimitives_v ::
-         vs)) (return NONE)) else
+       v.
+       let vs = match lookup n mtable with NONE -> [] | SOME vs -> vs
+         in
+       handle_Subscript (first_match_col ks (v :: vs)) (return NONE))
+         else
        return NONE)`;;
 
 (* very similar to consistency_ok, but for initializing *)
@@ -1206,8 +1205,8 @@ let neg_biased_pref_def = cake_define
    monad_bind get_dim (\
      d.
      if n < d then
-       let vs = match sptree_lookup n mtable with NONE -> [] | SOME
-         vs -> vs in
+       let vs = match lookup n mtable with NONE -> [] | SOME vs -> vs
+         in
        handle_Subscript (neg_first_match_col k bads vs) (return NONE)
          else
        return NONE)`;;
@@ -1220,8 +1219,8 @@ let do_reg_alloc_def = cake_define
        (update_move (sp_default ta)) moves)) (\
      moves0. monad_bind (st_ex_FILTER (\(_15,(x,y)).
        full_consistency_ok k x y) moves0 []) (\
-     moves. monad_bind (do_alloc1 (if alg = reg_alloc_Simple then []
-       else moves) scost k) (\
+     moves. monad_bind (do_alloc1 (if alg = Simple then [] else
+       moves) scost k) (\
      ls. monad_bind (return (resort_moves (moves_to_sp moves0 LN)))
        (\
      mvs. monad_ignore_bind

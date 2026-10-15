@@ -7,12 +7,15 @@
   One function that can run any of the GC algorithms.
 *)
 
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 let gen_state_INDUCT,gen_state_RECURSION = define_datatype
   "gen_state = GenState (num) (num list)";;
@@ -22,10 +25,9 @@ let make_partial_conf_def = cake_define
      mk_? (?_limit conf) (?_isRef conf) (HD gen_starts) rs`;;
 
 let gc_combined_def = cake_define
-  `gc_combined conf data_to_word_None (roots,heap,(gs:gen_state),_2,_3)
-  =
+  `gc_combined conf None (roots,heap,(gs:gen_state),_2,_3) =
      (roots,heap,0,0,gs,T) /\
-   gc_combined conf data_to_word_Simple (roots,heap,gs,_4,_5) =
+   gc_combined conf Simple (roots,heap,gs,_4,_5) =
      (let (roots,heap,a,c) = full_gc (roots,heap,?_limit conf) in
         (roots,heap ++ heap_expand (?_limit conf - a),a,?_limit conf
           - a,gs,c)) /\
@@ -33,22 +35,14 @@ let gc_combined_def = cake_define
      (roots,heap,gs,rs,do_partial) =
      (if do_partial then
        (let partial_conf = make_partial_conf conf gs rs in
-        let (roots,semanticPrimitives_state) = partial_gc
-          partial_conf (roots,heap) in
-          (roots,gc_state_old semanticPrimitives_state ++ gc_state_h1
-            semanticPrimitives_state ++ heap_expand (gc_state_n
-            semanticPrimitives_state) ++ gc_state_r1
-            semanticPrimitives_state,gc_state_a
-           semanticPrimitives_state,gc_state_n
-             semanticPrimitives_state,GenState 0 (MAP (K (gc_state_a
-             semanticPrimitives_state)) limits),gc_state_ok
-             semanticPrimitives_state)) else
-       (let (roots,semanticPrimitives_state) = gen_gc conf
-         (roots,heap) in
-          (roots,gc_state_h1 semanticPrimitives_state ++ heap_expand
-            (gc_state_n semanticPrimitives_state) ++ gc_state_r1
-            semanticPrimitives_state,gc_state_a
-           semanticPrimitives_state,gc_state_n
-             semanticPrimitives_state,GenState 0 (MAP (K (gc_state_a
-             semanticPrimitives_state)) limits),gc_state_ok
-             semanticPrimitives_state)))`;;
+        let (roots,state) = partial_gc partial_conf (roots,heap) in
+          (roots,gc_state_old state ++ gc_state_h1 state ++
+            heap_expand (gc_state_n state) ++ gc_state_r1
+            state,gc_state_a
+           state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
+             state)) limits),gc_state_ok state)) else
+       (let (roots,state) = gen_gc conf (roots,heap) in
+          (roots,gc_state_h1 state ++ heap_expand (gc_state_n state)
+            ++ gc_state_r1 state,gc_state_a
+           state,gc_state_n state,GenState 0 (MAP (K (gc_state_a
+             state)) limits),gc_state_ok state)))`;;

@@ -11,6 +11,8 @@
 
 needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -19,15 +21,17 @@ needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_rawcall.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/word_to_stack.ml";;
+needs "compiler/encoders/asm/asm.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 
 (* HOL4 overload (expanded in the port):
      Asm = λa. Asm (Asmi a) *)
 
 let compile_jump_def = cake_define
-  `(compile_jump (INL n) = labLang_LabAsm (labLang_Jump (labLang_Lab n
-  0)) (n2w 0) [] 0) /\
+  `(compile_jump (INL n) = labLang_LabAsm (Jump (Lab n 0)) (n2w 0) [] 0)
+  /\
    (compile_jump (INR r) = (\a. (\a. (\a. labLang_Asm (Asmi a))
      (Asmi a)) (Asmi a)) (asm_JumpReg r) [] 0)`;;
 
@@ -35,11 +39,11 @@ let negate_def = cake_define
   `(negate (LESS) = asm_NotLess) /\
    (negate (EQUAL) = asm_NotEqual) /\
    (negate asm_Lower = asm_NotLower) /\
-   (negate asm_Test = asm_NotTest) /\
+   (negate Test = asm_NotTest) /\
    (negate asm_NotLess = (LESS)) /\
    (negate asm_NotEqual = (EQUAL)) /\
    (negate asm_NotLower = asm_Lower) /\
-   (negate asm_NotTest = asm_Test)`;;
+   (negate asm_NotTest = Test)`;;
 
 let find_lab_def = cake_define
   `find_lab n labs =
@@ -142,9 +146,8 @@ let is_Seq_def = cake_define
 let prog_to_section_def = cake_define
   `prog_to_section (n,p) =
      (let (lines,_2,m) = (flatten T p n (next_lab p 2) [] []) in
-       Section n (append (bvi_tailrec_Append lines
-         (bvi_tailrec_List [labLang_Label n (if is_Seq p then m
-           else 1) 0]))))`;;
+       Section n (append (Append lines
+         (List [Label n (if is_Seq p then m else 1) 0]))))`;;
 
 let is_gen_gc_def = cake_define
   `is_gen_gc x1 =
@@ -158,21 +161,21 @@ let stack_to_lab_config_FIELDS = define_record "stack_to_lab_config"
    "perf_calls","bool"];;
 
 let compile_def = cake_define
-  `stack_to_lab_compile stack_conf data_conf max_heap sp offset
-  labLang_prog =
-     (let labLang_prog = stack_rawcall_compile labLang_prog in
-     let labLang_prog = stack_alloc_compile data_conf labLang_prog in
-     let labLang_prog = stack_remove_compile
-       (stack_to_lab_config_jump stack_conf) offset (is_gen_gc
-       (data_to_word_config_gc_kind data_conf))
-                  max_heap sp InitGlobals_location labLang_prog in
-     let labLang_prog = stack_names_compile
-       (stack_to_lab_config_reg_names stack_conf) labLang_prog in
-       MAP prog_to_section labLang_prog)`;;
+  `stack_to_lab_compile stack_conf data_conf max_heap sp offset prog =
+     (let prog = stack_rawcall_compile prog in
+     let prog = stack_alloc_compile data_conf prog in
+     let prog = stack_remove_compile (stack_to_lab_config_jump
+       stack_conf) offset (is_gen_gc (data_to_word_config_gc_kind
+       data_conf))
+                  max_heap sp InitGlobals_location prog in
+     let prog = stack_names_compile (stack_to_lab_config_reg_names
+       stack_conf) prog in
+       MAP prog_to_section prog)`;;
+hol4_overload "compile" "stack_to_lab_compile";;
 
 let compile_no_stubs_def = cake_define
-  `compile_no_stubs f jump offset sp labLang_prog =
+  `compile_no_stubs f jump offset sp prog =
    MAP prog_to_section
      (stack_names_compile f
-       (MAP (stack_remove_prog_comp jump offset sp)
-         (MAP stack_remove_prog_comp labLang_prog)))`;;
+       (MAP (prog_comp jump offset sp)
+         (MAP prog_comp prog)))`;;

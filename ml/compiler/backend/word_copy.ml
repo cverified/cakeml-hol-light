@@ -13,6 +13,8 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 (*
   The copy propagator does the "propagation" but
@@ -49,27 +51,24 @@ let empty_eq_def = cake_define
 (* lookup representative of eq class, if it exists
   otherwise it's just the var itself *)
 let lookup_eq_def = cake_define
-  `lookup_eq cs semanticPrimitives_v =
-   (match sptree_lookup semanticPrimitives_v (copy_state_to_eq cs)
-     with
-     NONE -> semanticPrimitives_v | SOME c ->
-     (match sptree_lookup c (copy_state_from_eq cs) with
-       NONE -> semanticPrimitives_v | SOME v' -> v'))`;;
+  `lookup_eq cs v =
+   (match lookup v (copy_state_to_eq cs) with
+     NONE -> v | SOME c ->
+     (match lookup c (copy_state_from_eq cs) with
+       NONE -> v | SOME v' -> v'))`;;
 
 let lookup_eq_imm_def = cake_define
   `lookup_eq_imm cs vi =
    (match vi with
-     Reg semanticPrimitives_v -> Reg (lookup_eq cs
-       semanticPrimitives_v) | _1 -> vi)`;;
+     Reg v -> Reg (lookup_eq cs v) | _1 -> vi)`;;
 
 (* remove v from its equivalence class,
     possibly destroying the entire class
   In SSA, this should never happen, so
   we simply drop the entire eq state if it does *)
 let remove_eq_def = cake_define
-  `remove_eq cs semanticPrimitives_v =
-   (match sptree_lookup semanticPrimitives_v (copy_state_to_eq cs)
-     with
+  `remove_eq cs v =
+   (match lookup v (copy_state_to_eq cs) with
      NONE -> cs | SOME c -> empty_eq)`;;
 (*
     let to_eq = delete v cs.to_eq in
@@ -83,117 +82,113 @@ let remove_eq_def = cake_define
 
 let remove_eqs_def = cake_define
   `(remove_eqs cs [] = cs) /\
-   (remove_eqs cs (semanticPrimitives_v :: vs) =
-     remove_eqs (remove_eq cs semanticPrimitives_v) vs)`;;
+   (remove_eqs cs (v :: vs) =
+     remove_eqs (remove_eq cs v) vs)`;;
 
 let copy_prop_inst_def = cake_define
   `copy_prop_inst x1 cs =
         match x1 with
-          wordLang_Skip -> (wordLang_Skip,cs)
-        | (wordLang_Const asm_reg w) ->
-       (wordLang_Inst (wordLang_Const asm_reg w),remove_eq cs
-         asm_reg)
-        | (asm_Arith (asm_Binop bop r1 r2 ri)) ->
+          Skip -> (Skip,cs)
+        | (Const reg w) ->
+       (Inst (Const reg w),remove_eq cs reg)
+        | (Arith (asm_Binop bop r1 r2 ri)) ->
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let ri' = lookup_eq_imm cs ri in
        let ri'' = if ri' = Reg r1 then ri else ri' in
-       (wordLang_Inst (asm_Arith (asm_Binop bop r1 r2' ri'')),cs')
-        | (asm_Arith (wordLang_Shift (backend_common_word_shift) r1
-          r2 n)) ->
+       (Inst (Arith (asm_Binop bop r1 r2' ri'')),cs')
+        | (Arith (Shift (backend_common_word_shift) r1 r2 n)) ->
        let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
        let n'' = if n' = Reg r1 then n else n' in
-       (wordLang_Inst (asm_Arith (wordLang_Shift
-         (backend_common_word_shift) r1 r2' n'')),cs')
-        | (asm_Arith (asm_Div r1 r2 r3)) ->
+       (Inst (Arith (Shift (backend_common_word_shift) r1 r2'
+         n'')),cs')
+        | (Arith (Div r1 r2 r3)) ->
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
-       (wordLang_Inst (asm_Arith (asm_Div r1 r2' r3')),
+       (Inst (Arith (Div r1 r2' r3')),
            remove_eq cs r1)
-        | (asm_Arith (asm_AddCarry r1 r2 r3 r4)) ->
+        | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
        let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = if r3' = r1 then r3 else r3' in
-       (wordLang_Inst (asm_Arith (asm_AddCarry r1 r2' r3'' r4)),cs')
-        | (asm_Arith (asm_AddOverflow r1 r2 r3 r4)) ->
+       (Inst (Arith (asm_AddCarry r1 r2' r3'' r4)),cs')
+        | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
        let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = if r3' = r1 then r3 else r3' in
-       (wordLang_Inst (asm_Arith (asm_AddOverflow r1 r2' r3''
-         r4)),cs')
-        | (asm_Arith (asm_SubOverflow r1 r2 r3 r4)) ->
+       (Inst (Arith (asm_AddOverflow r1 r2' r3'' r4)),cs')
+        | (Arith (asm_SubOverflow r1 r2 r3 r4)) ->
        let cs' = remove_eqs cs [r1; r4] in
        let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
        let r3'' = if r3' = r1 then r3 else r3' in
-       (wordLang_Inst (asm_Arith (asm_SubOverflow r1 r2' r3''
-         r4)),cs')
-        | (asm_Arith (asm_LongMul r1 r2 r3 r4)) ->
+       (Inst (Arith (asm_SubOverflow r1 r2' r3'' r4)),cs')
+        | (Arith (asm_LongMul r1 r2 r3 r4)) ->
        let r3' = lookup_eq cs r3 in
        let r4' = lookup_eq cs r4 in
-       (wordLang_Inst (asm_Arith (asm_LongMul r1 r2 r3 r4)),
+       (Inst (Arith (asm_LongMul r1 r2 r3 r4)),
            remove_eqs cs [r1; r2])
-        | (asm_Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
+        | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
        let r3' = lookup_eq cs r3 in
        let r4' = lookup_eq cs r4 in
        let r5' = lookup_eq cs r5 in
-       (wordLang_Inst (asm_Arith (asm_LongDiv r1 r2 r3' r4' r5')),
+       (Inst (Arith (asm_LongDiv r1 r2 r3' r4' r5')),
            remove_eqs cs [r2; r1])
-        | (asm_Mem wordLang_Load r (Addr a w)) ->
+        | (asm_Mem Load r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (wordLang_Inst (asm_Mem wordLang_Load r (Addr a' w)),
+         (Inst (asm_Mem Load r (Addr a' w)),
            remove_eq cs r)
-        | (asm_Mem wordLang_Store r (Addr a w)) ->
+        | (asm_Mem Store r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (wordLang_Inst (asm_Mem wordLang_Store r' (Addr a' w)),cs)
+         (Inst (asm_Mem Store r' (Addr a' w)),cs)
         | (asm_Mem asm_Load8 r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (wordLang_Inst (asm_Mem asm_Load8 r (Addr a' w)),
+         (Inst (asm_Mem asm_Load8 r (Addr a' w)),
            remove_eq cs r)
         | (asm_Mem asm_Store8 r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (wordLang_Inst (asm_Mem asm_Store8 r' (Addr a' w)),cs)
+         (Inst (asm_Mem asm_Store8 r' (Addr a' w)),cs)
         | (asm_Mem asm_Load16 r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (wordLang_Inst (asm_Mem asm_Load16 r (Addr a' w)),
+         (Inst (asm_Mem asm_Load16 r (Addr a' w)),
            remove_eq cs r)
         | (asm_Mem asm_Store16 r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (wordLang_Inst (asm_Mem asm_Store16 r' (Addr a' w)),cs)
+         (Inst (asm_Mem asm_Store16 r' (Addr a' w)),cs)
         | (asm_Mem asm_Load32 r (Addr a w)) ->
        let a' = lookup_eq cs a in
-         (wordLang_Inst (asm_Mem asm_Load32 r (Addr a' w)),
+         (Inst (asm_Mem asm_Load32 r (Addr a' w)),
            remove_eq cs r)
         | (asm_Mem asm_Store32 r (Addr a w)) ->
        let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (wordLang_Inst (asm_Mem asm_Store32 r' (Addr a' w)),cs)
+         (Inst (asm_Mem asm_Store32 r' (Addr a' w)),cs)
         | (asm_FP (FPLess r f1 f2)) ->
-         (wordLang_Inst (asm_FP (FPLess r f1 f2)),
+         (Inst (asm_FP (FPLess r f1 f2)),
            remove_eq cs r)
         | (asm_FP (FPLessEqual r f1 f2)) ->
-         (wordLang_Inst (asm_FP (FPLessEqual r f1 f2)),
+         (Inst (asm_FP (FPLessEqual r f1 f2)),
            remove_eq cs r)
         | (asm_FP (FPEqual r f1 f2)) ->
-         (wordLang_Inst (asm_FP (FPEqual r f1 f2)),
+         (Inst (asm_FP (FPEqual r f1 f2)),
            remove_eq cs r)
         | (asm_FP (FPMovToReg r1 r2 d):'a asm_inst) ->
-         (wordLang_Inst (asm_FP (FPMovToReg r1 r2 d)),
+         (Inst (asm_FP (FPMovToReg r1 r2 d)),
            remove_eqs cs [r1; r2])
         | (asm_FP (FPMovFromReg d r1 r2)) ->
          let r1' = lookup_eq cs r1 in
          let r2' = lookup_eq cs r2 in
          let (r1'',r2'') = if r1' = r2' then (r1,r2) else (r1',r2')
            in
-         (wordLang_Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs)
-        | (asm_FP x) -> (wordLang_Inst (asm_FP x),cs)
+         (Inst (asm_FP (FPMovFromReg d r1'' r2'')),cs)
+        | (asm_FP x) -> (Inst (asm_FP x),cs)
         | _2 -> ARB`;;
 
 (* handle x := y by making x the new
@@ -203,18 +198,18 @@ let set_eq_def = cake_define
   `set_eq cs x y =
    (if is_alloc_var x /\ is_alloc_var y then
      match
-       (match sptree_lookup y (copy_state_to_eq cs) with
-         NONE -> NONE | SOME c -> (if sptree_lookup c
-           (copy_state_from_eq cs) = NONE then NONE else SOME c)) with
+       (match lookup y (copy_state_to_eq cs) with
+         NONE -> NONE | SOME c -> (if lookup c (copy_state_from_eq
+           cs) = NONE then NONE else SOME c)) with
         NONE ->
-       mk_copy_state (sptree_insert x (copy_state_next cs)
-         (sptree_insert y (copy_state_next cs) (copy_state_to_eq cs)))
-         (sptree_insert (copy_state_next cs) x (copy_state_from_eq cs))
+       mk_copy_state (insert x (copy_state_next cs) (insert y
+         (copy_state_next cs) (copy_state_to_eq cs))) (insert
+         (copy_state_next cs) x (copy_state_from_eq cs))
          (copy_state_store_to_eq cs) (copy_state_next cs + 1) | SOME c
          ->
-       mk_copy_state (sptree_insert x c (copy_state_to_eq cs))
-         (sptree_insert c x (copy_state_from_eq cs))
-         (copy_state_store_to_eq cs) (copy_state_next cs) else
+       mk_copy_state (insert x c (copy_state_to_eq cs)) (insert c x
+         (copy_state_from_eq cs)) (copy_state_store_to_eq cs)
+         (copy_state_next cs) else
      cs)`;;
 
 (* Handle Store <- y
@@ -228,14 +223,14 @@ let set_store_eq_def = cake_define
   `set_store_eq cs s y =
    (if is_alloc_var y then
      match
-       (match sptree_lookup y (copy_state_to_eq cs) with
-         NONE -> NONE | SOME c -> (if sptree_lookup c
-           (copy_state_from_eq cs) = NONE then NONE else SOME c)) with
+       (match lookup y (copy_state_to_eq cs) with
+         NONE -> NONE | SOME c -> (if lookup c (copy_state_from_eq
+           cs) = NONE then NONE else SOME c)) with
        NONE ->
-       mk_copy_state (sptree_insert y (copy_state_next cs)
-         (copy_state_to_eq cs)) (sptree_insert (copy_state_next cs) y
-         (copy_state_from_eq cs)) ((s,copy_state_next cs) ::
-         copy_state_store_to_eq cs) (copy_state_next cs + 1) | SOME c ->
+       mk_copy_state (insert y (copy_state_next cs) (copy_state_to_eq
+         cs)) (insert (copy_state_next cs) y (copy_state_from_eq cs))
+         ((s,copy_state_next cs) :: copy_state_store_to_eq cs)
+         (copy_state_next cs + 1) | SOME c ->
          copy_state_store_to_eq_fupd (K ((s,c) :: copy_state_store_to_eq
          cs))
        cs else empty_eq)`;;
@@ -244,7 +239,7 @@ let lookup_store_eq_def = cake_define
   `lookup_store_eq cs s =
    (match ALOOKUP (copy_state_store_to_eq cs) s with
      NONE -> NONE | SOME c ->
-     (match sptree_lookup c (copy_state_from_eq cs) with
+     (match lookup c (copy_state_from_eq cs) with
        NONE -> NONE | SOME v' -> SOME v'))`;;
 
 (* conservatively merge two equivalence classes *)
@@ -268,100 +263,95 @@ let copy_prop_move_def = cake_define
      ((x,y') :: ms,cs'')))`;;
 
 let copy_prop_share_def = cake_define
-  `copy_prop_share wordLang_exp cs =
-     (match wordLang_exp with
-     wordLang_Var r -> wordLang_Var (lookup_eq cs r) | (wordLang_Op
-       asm_Add [wordLang_Var r; wordLang_Const c]) ->
-      wordLang_Op asm_Add [wordLang_Var (lookup_eq cs r);
-        wordLang_Const c] | _3 -> wordLang_exp)`;;
+  `copy_prop_share exp cs =
+     (match exp with
+     Var r -> Var (lookup_eq cs r) | (Op Add [Var r; Const c]) ->
+      Op Add [Var (lookup_eq cs r); Const c] | _3 -> exp)`;;
 
 let copy_prop_prog_def = cake_define
   `copy_prop_prog prog cs =
         match prog with
-          (wordLang_Skip:'a wordLang_prog) ->
-       (wordLang_Skip,cs)
-        | (wordLang_Move pri xs) ->
+          (Skip:'a wordLang_prog) ->
+       (Skip,cs)
+        | (Move pri xs) ->
        let tt = MAP FST xs in let ss = MAP SND xs in
        if EVERY (\t. ~MEM t ss) tt then
          let (xs',cs') = copy_prop_move xs cs in
-         (wordLang_Move pri xs',cs') else (wordLang_Move pri
-           xs,empty_eq)
-        | (wordLang_Inst i) ->
+         (Move pri xs',cs') else (Move pri xs,empty_eq)
+        | (Inst i) ->
        copy_prop_inst i cs
-        | (wordLang_Return v1 v2) ->
+        | (Return v1 v2) ->
        let v1' = lookup_eq cs v1 in
        let v2' = MAP (lookup_eq cs) v2 in
-         (wordLang_Return v1' v2',cs)
-        | (wordLang_Raise semanticPrimitives_v) ->
-       let v' = lookup_eq cs semanticPrimitives_v in
-         (wordLang_Raise v',cs)
-        | (wordLang_OpCurrHeap b dst src) ->
+         (Return v1' v2',cs)
+        | (Raise v) ->
+       let v' = lookup_eq cs v in
+         (Raise v',cs)
+        | (OpCurrHeap b dst src) ->
        let src' = lookup_eq cs src in
        let src'' = if src' = dst then src else src' in
-         (wordLang_OpCurrHeap b dst src'',
+         (OpCurrHeap b dst src'',
             remove_eq cs dst)
-        | wordLang_Tick -> (wordLang_Tick,cs)
+        | Tick -> (Tick,cs)
         | (wordLang_MustTerminate p1) ->
        let (p1',cs') = copy_prop_prog p1 cs in
        (wordLang_MustTerminate p1',cs')
-        | (reg_alloc_Seq p1 p2) ->
+        | (Seq p1 p2) ->
         let (q1,cs') = copy_prop_prog p1 cs in
         let (q2,cs'') = copy_prop_prog p2 cs' in
-          (reg_alloc_Seq q1 q2,cs'')
-        | (wordLang_If cmp r ri p1 p2) ->
+          (Seq q1 q2,cs'')
+        | (If cmp r ri p1 p2) ->
         let r' = lookup_eq cs r in
         let ri' = lookup_eq_imm cs ri in
         let (q1,cs') = copy_prop_prog p1 cs in
         let (q2,cs'') = copy_prop_prog p2 cs in
-          (wordLang_If cmp r' ri' q1 q2,
+          (If cmp r' ri' q1 q2,
           merge_eqs cs' cs'')
-        | (reg_alloc_Set name wordLang_exp) ->
-       match wordLang_exp with
-         wordLang_Var n ->
+        | (Set name exp) ->
+       match exp with
+         Var n ->
          (let n' = lookup_eq cs n in
-         (reg_alloc_Set name (wordLang_Var n'),set_store_eq cs name
-           n)) | _4 -> (reg_alloc_Set name wordLang_exp,empty_eq)
-        | (wordLang_Get n name) ->
+         (Set name (Var n'),set_store_eq cs name n)) | _4 -> (Set
+           name exp,empty_eq)
+        | (Get n name) ->
        match lookup_store_eq cs name with
          NONE ->
-           (wordLang_Get n name,set_store_eq (remove_eq cs n) name n)
-             | SOME semanticPrimitives_v ->
-         (if ~(semanticPrimitives_v = n) then
-         let (xs',cs') = copy_prop_move [(n,semanticPrimitives_v)] cs
-           in
-           (wordLang_Move 0 xs',cs') else (wordLang_Skip,cs))
-        | (wordLang_Call ret dest args handler) ->
-       (wordLang_Call ret dest args handler,empty_eq)
-        | (wordLang_Alloc r live) ->
-        (wordLang_Alloc r live,empty_eq)
-        | (wordLang_StoreConsts a b c d ws) ->
-         (wordLang_StoreConsts a b c d ws,
+           (Get n name,set_store_eq (remove_eq cs n) name n) | SOME v
+             ->
+         (if ~(v = n) then
+         let (xs',cs') = copy_prop_move [(n,v)] cs in
+           (Move 0 xs',cs') else (Skip,cs))
+        | (Call ret dest args handler) ->
+       (Call ret dest args handler,empty_eq)
+        | (Alloc r live) ->
+        (Alloc r live,empty_eq)
+        | (StoreConsts a b c d ws) ->
+         (StoreConsts a b c d ws,
            remove_eqs cs [a; b; c; d])
-        | (wordLang_LocValue r l1) ->
-         (wordLang_LocValue r l1,remove_eq cs r)
-        | (wordLang_Install r1 r2 r3 r4 live) ->
-        (wordLang_Install r1 r2 r3 r4 live,empty_eq)
-        | (wordLang_CodeBufferWrite r1 r2) ->
+        | (LocValue r l1) ->
+         (LocValue r l1,remove_eq cs r)
+        | (Install r1 r2 r3 r4 live) ->
+        (Install r1 r2 r3 r4 live,empty_eq)
+        | (CodeBufferWrite r1 r2) ->
         let r1' = lookup_eq cs r1 in
         let r2' = lookup_eq cs r2 in
-        (wordLang_CodeBufferWrite r1' r2',cs)
-        | (wordLang_DataBufferWrite r1 r2) ->
+        (CodeBufferWrite r1' r2',cs)
+        | (DataBufferWrite r1 r2) ->
         let r1' = lookup_eq cs r1 in
         let r2' = lookup_eq cs r2 in
-        (wordLang_DataBufferWrite r1' r2',cs)
-        | (wordLang_FFI i r1 r2 r3 r4 live) ->
-       (wordLang_FFI i r1 r2 r3 r4 live,empty_eq)
-        | (wordLang_ShareInst ast_op semanticPrimitives_v
-          wordLang_exp) ->
-       let exp' = copy_prop_share wordLang_exp cs in
-       (wordLang_ShareInst ast_op semanticPrimitives_v exp',
-         remove_eq cs semanticPrimitives_v)
-        | (wordLang_Loop names c exit_names) ->
+        (DataBufferWrite r1' r2',cs)
+        | (FFI i r1 r2 r3 r4 live) ->
+       (FFI i r1 r2 r3 r4 live,empty_eq)
+        | (wordLang_ShareInst op v exp) ->
+       let exp' = copy_prop_share exp cs in
+       (wordLang_ShareInst op v exp',
+         remove_eq cs v)
+        | (Loop names c exit_names) ->
         let (c',_5) = copy_prop_prog c empty_eq in
-          (wordLang_Loop names c' exit_names,empty_eq)
-        | (wordLang_Break k) -> (wordLang_Break k,cs)
-        | (wordLang_Continue k) -> (wordLang_Continue k,cs)
-        | wordLang_prog -> (wordLang_prog,empty_eq)`;;
+          (Loop names c' exit_names,empty_eq)
+        | (Break k) -> (Break k,cs)
+        | (Continue k) -> (Continue k,cs)
+        | prog -> (prog,empty_eq)`;;
 
 let copy_prop_def = cake_define
   `copy_prop (e:'a wordLang_prog) =

@@ -17,9 +17,12 @@ needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/clos_known.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
+needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/labLang.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer.ml";;
@@ -27,8 +30,10 @@ needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
 needs "lib/location.ml";;
+needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: basisProg simpleSexpParse
@@ -211,8 +216,8 @@ val date_tm = Term `strlit^(stringSyntax.fromMLstring date_str)`
 let print_option_def = cake_define
   `print_option h x =
      (match x with
-       NONE -> (strlit "") | SOME y -> ^ (^ (^ h (strlit " ")) y)
-         (strlit "\n"))`;;
+       NONE -> (implode "") | SOME y -> ^ (^ (^ h (implode " "))
+         y) (implode "\n"))`;;
 
 (* HOL4 ML code, not ported:
 val current_build_info_str_tm = EVAL ``
@@ -273,7 +278,7 @@ let find_next_newline_def = cake_define_wf
 let safe_substring_def = cake_define
   `safe_substring s n l =
      (let k = strlen s in
-       if k <= n then (strlit "") else
+       if k <= n then (implode "") else
          if n + l <= k then
            substring s n l else substring s n (k - n))`;;
 
@@ -294,12 +299,12 @@ let locs_to_string_def = cake_define
            (match endl with POSN r1 c1 -> (if r1 = r then c1 else
              len) | _1 -> len) in
          let underline =
-           mlvector_concat (REPLICATE c (strlit " ") ++ REPLICATE
-             ((stop - c) + 1) ((implode) [CHR 94])) in
-           mlvector_concat [(strlit "line "); (num_to_str) (r + 1);
-             (strlit "\n\n");
-                   line; (strlit "\n");
-                   underline; (strlit "\n")]) | _2 -> implode
+           concat (REPLICATE c (implode " ") ++ REPLICATE ((stop - c)
+             + 1) ((implode) [CHR 94])) in
+           concat [(implode "line "); (num_to_str) (r + 1); (implode
+             "\n\n");
+                   line; (implode "\n");
+                   underline; (implode "\n")]) | _2 -> implode
                      "unknown location"))`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
@@ -308,7 +313,7 @@ let locs_to_string_def = cake_define
 
 let parse_sexp_input_def = cake_define
   `parse_sexp_input input =
-     (let err = (strlit "Parsing of sexp syntax failed") in
+     (let err = (implode "Parsing of sexp syntax failed") in
        match parse_sexp ((MAP (\c. (c,unknown_loc))) input) with
          NONE -> INL err | SOME x -> (match sexplist sexpdec x with
          NONE -> INL err | SOME x -> INR x))`;;
@@ -316,35 +321,34 @@ let parse_sexp_input_def = cake_define
 let parse_cml_input_def = cake_define
   `parse_cml_input input =
      (match parse_prog (lexer_fun input) with peg_Failure l _3 ->
-       INL (^ (strlit "Parsing failed at ") (locs_to_string (implode
-       input) (SOME l))) | ffi_Success _4 x _5 -> INR x)`;;
+       INL (^ (implode "Parsing failed at ") (locs_to_string (implode
+       input) (SOME l))) | Success _4 x _5 -> INR x)`;;
 
 let compile_def = cake_define
   `compiler_compile c prelude input =
-     (let _6 = empty_ffi (strlit "finished: start up") in
+     (let _6 = empty_ffi (implode "finished: start up") in
      match
        (if compiler_config_input_is_sexp c then parse_sexp_input
          input else parse_cml_input input) with INL msg -> (M_failure
-         (ParseError msg),misc_Nil) | INR labLang_prog ->
-        (let _7 = empty_ffi (strlit "finished: lexing and parsing")
+         (ParseError msg),misc_Nil) | INR prog ->
+        (let _7 = empty_ffi (implode "finished: lexing and parsing")
           in
         let full_prog = if compiler_config_exclude_prelude c then
-          labLang_prog else prelude ++ labLang_prog in
+          prog else prelude ++ prog in
         match
           (if compiler_config_skip_type_inference c then M_success
             (compiler_config_inferencer_config c) else infertype_prog
             (compiler_config_inferencer_config c) full_prog) with
             M_failure (locs,msg) ->
-            (M_failure (TypeError (mlvector_concat [msg; (strlit
-              " at ");
+            (M_failure (TypeError (concat [msg; (implode " at ");
                 locs_to_string (implode input) locs])),misc_Nil) |
                   M_success ic ->
-           (let _8 = empty_ffi (strlit "finished: type inference") in
+           (let _8 = empty_ffi (implode "finished: type inference")
+             in
            if compiler_config_only_print_types c then
-             (M_failure (TypeError (mlvector_concat ([(strlit "\n")]
-               ++
+             (M_failure (TypeError (concat ([(implode "\n")] ++
                               inf_env_to_types_string ic ++
-                              [(strlit "\n")]))),misc_Nil) else if
+                              [(implode "\n")]))),misc_Nil) else if
                                 compiler_config_only_print_sexp c then
              (M_failure (TypeError (implode
                 ("\n" ++ print_sexp (listsexp (MAP decsexp
@@ -353,20 +357,21 @@ let compile_def = cake_define
              (compiler_config_backend_config c) full_prog with
              (NONE,td) -> (M_failure AssembleError,td) | (SOME
              (bytes,data,c),td) -> (M_success (bytes,data,c),td))))`;;
+hol4_overload "compile" "compiler_compile";;
 
 let compile_pancake_def = cake_define
   `compile_pancake asm_conf c input =
-   (let _9 = empty_ffi (strlit "finished: start up") in
+   (let _9 = empty_ffi (implode "finished: start up") in
    match parse_topdecs_to_ast input with INR errs ->
-     ((M_failure (ParseError (mlvector_concat
-        (MAP (\(msg,loc). mlvector_concat [msg; (strlit " at ");
+     ((M_failure (ParseError (concat
+        (MAP (\(msg,loc). concat [msg; (implode " at ");
                               locs_to_string (implode input) (SOME
-                                loc); (strlit "\n")])
+                                loc); (implode "\n")])
             errs)))),misc_Nil,[]) | INL funs ->
        (match static_check funs with (peg_error e,warns) ->
          (M_failure (StaticError e),misc_Nil,MAP StaticError warns) |
          (return one,warns) ->
-           (let _10 = empty_ffi (strlit
+           (let _10 = empty_ffi (implode
              "finished: lexing and parsing") in
            match pan_compile_tap asm_conf c funs with (NONE,td) ->
              (M_failure AssembleError,td,MAP StaticError warns) |
@@ -376,29 +381,28 @@ let compile_pancake_def = cake_define
 (* The top-level compiler *)
 let error_to_str_def = cake_define
   `(error_to_str (ParseError s) =
-      mlvector_concat [(strlit "### ERROR: parse error\n"); s;
-        (strlit "\n")]) /\
+      concat [(implode "### ERROR: parse error\n"); s; (implode
+        "\n")]) /\
    (error_to_str (TypeError s) =
       (if (if strlen s = 0 then T else
           if strsub s 0 = (CHR 10) then F else T) then
-        mlvector_concat [(strlit "### ERROR: type error\n"); s;
-          (strlit "\n")] else s)) /\
-   (error_to_str (ConfigError s) = mlvector_concat [(strlit
-     "### ERROR: config error\n"); s; (strlit "\n")]) /\
-   (error_to_str AssembleError = (strlit
+        concat [(implode "### ERROR: type error\n"); s; (implode
+          "\n")] else s)) /\
+   (error_to_str (ConfigError s) = concat [(implode
+     "### ERROR: config error\n"); s; (implode "\n")]) /\
+   (error_to_str AssembleError = (implode
      "### ERROR: assembly error\n")) /\
    (error_to_str (StaticError e) =
      (match e with
-       ScopeErr s -> mlvector_concat [(strlit
-         "### ERROR: scope error\n"); s; (strlit "\n")] | WarningErr
-         s -> mlvector_concat [(strlit "# WARNING:\n"); s; (strlit
-         "\n")] | GenErr s -> mlvector_concat [(strlit
-         "### ERROR: static error\n"); s; (strlit "\n")] | ShapeErr s
-         -> mlvector_concat [(strlit "### ERROR: shape error\n"); s;
-         (strlit "\n")]))`;;
+       ScopeErr s -> concat [(implode "### ERROR: scope error\n");
+         s; (implode "\n")] | WarningErr s -> concat [(implode
+         "# WARNING:\n"); s; (implode "\n")] | GenErr s -> concat
+         [(implode "### ERROR: static error\n"); s; (implode "\n")] |
+         ShapeErr s -> concat [(implode "### ERROR: shape error\n");
+         s; (implode "\n")]))`;;
 
 let is_error_msg_def = cake_define
-  `is_error_msg x = isPrefix (strlit "###") x`;;
+  `is_error_msg x = isPrefix (implode "###") x`;;
 
 (* TODO: translator fails inside mlstringLib.mlstring_case_conv
   when the following definition just matches against (strlit str)
@@ -411,7 +415,7 @@ let parse_num_def = cake_define
 
 let parse_bool_def = cake_define
   `parse_bool str =
-   (if str = (strlit "true") then SOME T else if str = (strlit
+   (if str = (implode "true") then SOME T else if str = (implode
      "false") then SOME F else NONE)`;;
 
 (* Finds the first occurence of the flag and
@@ -420,7 +424,7 @@ let find_str_def = cake_define
   `(find_str flag [] = NONE) /\
    (find_str flag (x :: xs) =
      (if isPrefix flag x then
-       SOME (bvl_const_extract x (strlen flag) NONE) else
+       SOME (extract x (strlen flag) NONE) else
        find_str flag xs))`;;
 
 (* Finds all occurences of the flag as a prefix, returning
@@ -429,8 +433,7 @@ let find_strs_def = cake_define
   `(find_strs flag [] = []) /\
    (find_strs flag (x :: xs) =
      (if isPrefix flag x then
-       (bvl_const_extract x (strlen flag) NONE) :: find_strs flag xs
-         else
+       (extract x (strlen flag) NONE) :: find_strs flag xs else
        find_strs flag xs))`;;
 
 (* If flag is not present then F, else if it is present then
@@ -440,8 +443,8 @@ let find_bool_def = cake_define
    (match find_str flag ls with
      NONE -> INL default | SOME rest ->
      (match parse_bool rest with
-       SOME b -> INL b | NONE -> INR (mlvector_concat [(strlit
-         "Unable to parse as bool: "); rest; (strlit " for flag: ");
+       SOME b -> INL b | NONE -> INR (concat [(implode
+         "Unable to parse as bool: "); rest; (implode " for flag: ");
          flag])))`;;
 
 (* If flag is not present then INL default, else if it is present then
@@ -451,21 +454,21 @@ let find_num_def = cake_define
    (match find_str flag ls with
      NONE -> INL default | SOME rest ->
    (match parse_num rest with
-     SOME n -> INL n | NONE -> INR (mlvector_concat [(strlit
-       "Unable to parse as num: "); rest; (strlit " for flag: ");
+     SOME n -> INL n | NONE -> INR (concat [(implode
+       "Unable to parse as num: "); rest; (implode " for flag: ");
        flag])))`;;
 
 let get_err_str_def = cake_define
-  `(get_err_str (INL n) = (strlit "")) /\
-   (get_err_str (INR n) = mlvector_concat [n; (strlit "\n")])`;;
+  `(get_err_str (INL n) = (implode "")) /\
+   (get_err_str (INR n) = concat [n; (implode "\n")])`;;
 
 (* All the numbers must parse *)
 let parse_num_list_def = cake_define
   `(parse_num_list [] = INL []) /\
    (parse_num_list (x :: xs) =
       (match parse_num x with
-        NONE -> INR (mlvector_concat [(strlit
-          "Unable to parse as num: "); x]) | SOME n ->
+        NONE -> INR (concat [(implode "Unable to parse as num: ");
+          x]) | SOME n ->
         (match parse_num_list xs with
           INR s -> INR s | INL ns -> INL (n :: ns))))`;;
 
@@ -498,20 +501,20 @@ let parse_nums_def = cake_define
 (* clos_conf *)
 let parse_clos_conf_def = cake_define
   `parse_clos_conf ls clos =
-   (let multi = find_bool (strlit "--multi=") ls
+   (let multi = find_bool (implode "--multi=") ls
      (clos_to_bvl_config_do_mti clos) in
-   let known' = find_bool (strlit "--known=") ls (IS_SOME
+   let known' = find_bool (implode "--known=") ls (IS_SOME
      (clos_to_bvl_config_known_conf clos)) in
-   let inline_factor = find_num (strlit "--inline_factor=") ls
+   let inline_factor = find_num (implode "--inline_factor=") ls
      default_inline_factor in
-   let call = find_bool (strlit "--call=") ls
+   let call = find_bool (implode "--call=") ls
      (clos_to_bvl_config_do_call clos) in
-   let maxapp = find_num (strlit "--max_app=") ls
+   let maxapp = find_num (implode "--max_app=") ls
      (clos_to_bvl_config_max_app clos) in
    match (multi,known',inline_factor,call,maxapp) with
      (INL m,INL k,INL i,INL c,INL n) ->
      (if k then
-     (let max_body_size = find_num (strlit "--max_body_size=") ls
+     (let max_body_size = find_num (implode "--max_body_size=") ls
        (default_max_body_size n i) in
       match max_body_size with
        (INL x) ->
@@ -520,13 +523,13 @@ let parse_clos_conf_def = cake_define
            (clos_to_bvl_config_do_call_fupd (K c)
            (clos_to_bvl_config_known_conf_fupd (K (SOME (mk_config x
            i))) (clos_to_bvl_config_do_mti_fupd (K m) clos)))) | _11 ->
-           INR (mlvector_concat [get_err_str max_body_size])) else
+           INR (concat [get_err_str max_body_size])) else
      (INL
        (clos_to_bvl_config_max_app_fupd (K n)
          (clos_to_bvl_config_do_call_fupd (K c)
          (clos_to_bvl_config_known_conf_fupd (K NONE)
          (clos_to_bvl_config_do_mti_fupd (K m) clos)))))) | _12 ->
-     INR (mlvector_concat [get_err_str multi;
+     INR (concat [get_err_str multi;
                   get_err_str known';
                   get_err_str inline_factor;
                   get_err_str call;
@@ -535,15 +538,15 @@ let parse_clos_conf_def = cake_define
 (* bvl *)
 let parse_bvl_conf_def = cake_define
   `parse_bvl_conf ls bvl =
-   (let inlinesz = find_num (strlit "--inline_size=") ls
+   (let inlinesz = find_num (implode "--inline_size=") ls
      (bvl_to_bvi_config_inline_size_limit bvl) in
-   let expcut = find_num (strlit "--exp_cut=") ls
+   let expcut = find_num (implode "--exp_cut=") ls
      (bvl_to_bvi_config_exp_cut bvl) in
-   let tmc = find_bool (strlit "--tmc=") ls (bvl_to_bvi_config_do_tmc
-     bvl) in
-   let tailrec = find_bool (strlit "--tailrec=") ls
+   let tmc = find_bool (implode "--tmc=") ls
+     (bvl_to_bvi_config_do_tmc bvl) in
+   let tailrec = find_bool (implode "--tailrec=") ls
      (bvl_to_bvi_config_do_tailrec bvl) in
-   let splitmain = find_bool (strlit "--split=") ls
+   let splitmain = find_bool (implode "--split=") ls
      (bvl_to_bvi_config_split_main_at_seq bvl) in
    match (inlinesz,expcut,splitmain,tmc,tailrec) with
      (INL i,INL e,INL m,INL do_tmc,INL do_tailrec) ->
@@ -554,7 +557,7 @@ let parse_bvl_conf_def = cake_define
          (bvl_to_bvi_config_exp_cut_fupd (K e)
          (bvl_to_bvi_config_inline_size_limit_fupd (K i) bvl))))) | _13
          ->
-     INR (mlvector_concat [get_err_str inlinesz;
+     INR (concat [get_err_str inlinesz;
                   get_err_str expcut;
                   get_err_str splitmain;
                   get_err_str tmc;
@@ -563,7 +566,7 @@ let parse_bvl_conf_def = cake_define
 (* wtw *)
 let parse_wtw_conf_def = cake_define
   `parse_wtw_conf ls wtw =
-     (let regalg = find_num (strlit "--reg_alg=") ls
+     (let regalg = find_num (implode "--reg_alg=") ls
        (word_to_word_config_reg_alg wtw) in
        match regalg with
          INL r -> INL (word_to_word_config_reg_alg_fupd (K r) wtw)
@@ -571,18 +574,17 @@ let parse_wtw_conf_def = cake_define
 
 let parse_gc_def = cake_define
   `parse_gc ls default =
-   (match find_str (strlit "--gc=") ls with
+   (match find_str (implode "--gc=") ls with
      NONE -> INL default | SOME rest ->
-     (if rest = (strlit "none") then INL data_to_word_None else if
-       rest = (strlit "simple") then INL data_to_word_Simple else if
-       isPrefix (strlit "gen") rest then
-       match parse_nums (bvl_const_extract rest (strlen (strlit
-         "gen")) NONE) with
+     (if rest = (implode "none") then INL None else if rest =
+       (implode "simple") then INL Simple else if isPrefix (implode
+       "gen") rest then
+       match parse_nums (extract rest (strlen (implode "gen")) NONE)
+         with
          INL ls -> INL (data_to_word_Generational ls) | INR s ->
-         INR (mlvector_concat [(strlit
-           "Error parsing GenGC argument: "); s]) else INR
-           (mlvector_concat [(strlit "Unrecognized GC option: ");
-           rest])))`;;
+         INR (concat [(implode "Error parsing GenGC argument: ");
+           s]) else INR (concat [(implode
+           "Unrecognized GC option: "); rest])))`;;
 
 (*
 EVAL ``parse_gc [«--gc=gen1234,1234,1234»] def``
@@ -600,15 +602,15 @@ let conf_ok_check_def = cake_define
 (* data *)
 let parse_data_conf_def = cake_define
   `parse_data_conf ls data =
-   (let tag_bits = find_num (strlit "--tag_bits=") ls
+   (let tag_bits = find_num (implode "--tag_bits=") ls
      (data_to_word_config_tag_bits data) in
-   let len_bits = find_num (strlit "--len_bits=") ls
+   let len_bits = find_num (implode "--len_bits=") ls
      (data_to_word_config_len_bits data) in
-   let pad_bits = find_num (strlit "--pad_bits=") ls
+   let pad_bits = find_num (implode "--pad_bits=") ls
      (data_to_word_config_pad_bits data) in
-   let len_size = find_num (strlit "--len_size=") ls
+   let len_size = find_num (implode "--len_size=") ls
      (data_to_word_config_len_size data) in
-   let empty_FFI = find_bool (strlit "--emit_empty_ffi=") ls
+   let empty_FFI = find_bool (implode "--emit_empty_ffi=") ls
      (data_to_word_config_call_empty_ffi data) in
    let gc' = parse_gc ls (data_to_word_config_gc_kind data) in
    match (tag_bits,len_bits,pad_bits,len_size,gc',empty_FFI) with
@@ -619,7 +621,7 @@ let parse_data_conf_def = cake_define
          (data_to_word_config_pad_bits_fupd (K pb)
          (data_to_word_config_len_bits_fupd (K lb)
          (data_to_word_config_tag_bits_fupd (K tb) data)))))) | _14 ->
-      INR (mlvector_concat [get_err_str tag_bits;
+      INR (concat [get_err_str tag_bits;
                    get_err_str len_bits;
                    get_err_str pad_bits;
                    get_err_str len_size;
@@ -629,9 +631,9 @@ let parse_data_conf_def = cake_define
 (* stack *)
 let parse_stack_conf_def = cake_define
   `parse_stack_conf ls stack =
-   (let jump = find_bool (strlit "--jump=") ls
+   (let jump = find_bool (implode "--jump=") ls
      (stack_to_lab_config_jump stack) in
-   let perf = find_bool (strlit "--perf_callgraph=") ls
+   let perf = find_bool (implode "--perf_callgraph=") ls
      (stack_to_lab_config_perf_calls stack) in
    match (jump,perf) with
      (INL j,INL p) -> INL (stack_to_lab_config_perf_calls_fupd (K
@@ -641,12 +643,12 @@ let parse_stack_conf_def = cake_define
 (* tap *)
 let parse_tap_conf_def = cake_define
   `parse_tap_conf ls stack =
-     INL (mk_tap_config (MEMBER (strlit "--explore") ls))`;;
+     INL (mk_tap_config (MEMBER (implode "--explore") ls))`;;
 
 (* lab *)
 let parse_lab_conf_def = cake_define
   `parse_lab_conf ls lab =
-     (let hs = find_num (strlit "--hash_size=") ls
+     (let hs = find_num (implode "--hash_size=") ls
        (lab_to_target_config_hash_size lab) in
        match hs with
          INL r -> INL (lab_to_target_config_hash_size_fupd (K r)
@@ -672,7 +674,7 @@ let extend_conf_def = cake_define
          (backend_config_word_to_word_conf_fupd (K wtw)
          (backend_config_bvl_conf_fupd (K bvl)
          (backend_config_clos_conf_fupd (K clos) conf))))))) | _17 ->
-       INR (mlvector_concat [get_err_str clos;
+       INR (concat [get_err_str clos;
                 get_err_str bvl;
                 get_err_str wtw;
                 get_err_str data;
@@ -683,48 +685,47 @@ let extend_conf_def = cake_define
 (* Defaults to x64 if no target given *)
 let parse_target_64_def = cake_define
   `parse_target_64 ls =
-   (match find_str (strlit "--target=") ls with
+   (match find_str (implode "--target=") ls with
      NONE -> INL (x64_backend_config,x64_export,x64_config) | SOME
        rest ->
-     (if rest = (strlit "x64") then INL
+     (if rest = (implode "x64") then INL
        (x64_backend_config,x64_export,x64_config) else if rest =
-       (strlit "arm8") then INL
+       (implode "arm8") then INL
        (arm8_backend_config,arm8_export,arm8_config) else if rest =
-       (strlit "mips") then INL
+       (implode "mips") then INL
        (mips_backend_config,mips_export,mips_config) else if rest =
-       (strlit "riscv") then INL
+       (implode "riscv") then INL
        (riscv_backend_config,riscv_export,riscv_config) else INR
-       (mlvector_concat [(strlit
-       "Unrecognized 64-bit target option: "); rest])))`;;
+       (concat [(implode "Unrecognized 64-bit target option: ");
+       rest])))`;;
 
 (* Defaults to arm7 if no target given *)
 let parse_target_32_def = cake_define
   `parse_target_32 ls =
-   (match find_str (strlit "--target=") ls with
+   (match find_str (implode "--target=") ls with
      NONE -> INL (arm7_backend_config,arm7_export,arm7_config) | SOME
        rest ->
-     (if rest = (strlit "arm7") then INL
+     (if rest = (implode "arm7") then INL
        (arm7_backend_config,arm7_export,arm7_config) else if rest =
-       (strlit "ag32") then INL
-       (ag32_backend_config,ag32_export,ag32_config) else INR
-       (mlvector_concat [(strlit
-       "Unrecognized 32-bit target option: "); rest])))`;;
+       (implode "ag32") then INL
+       (ag32_backend_config,ag32_export,ag32_config) else INR (concat
+       [(implode "Unrecognized 32-bit target option: "); rest])))`;;
 
 let parse_top_config_def = cake_define
   `parse_top_config ls =
-   (let sexp = find_bool (strlit "--sexp=") ls F in
-   let prelude = find_bool (strlit "--exclude_prelude=") ls F in
-   let typeinference = find_bool (strlit "--skip_type_inference=") ls
-     F in
-   let sexpprint = MEMBER (strlit "--print_sexp") ls in
-   let onlyprinttypes = MEMBER (strlit "--types") ls in
-   let nowarnings = MEMBER (strlit "--no_warn") ls in
-   let mainreturn = find_bool (strlit "--main_return=") ls F in
+   (let sexp = find_bool (implode "--sexp=") ls F in
+   let prelude = find_bool (implode "--exclude_prelude=") ls F in
+   let typeinference = find_bool (implode "--skip_type_inference=")
+     ls F in
+   let sexpprint = MEMBER (implode "--print_sexp") ls in
+   let onlyprinttypes = MEMBER (implode "--types") ls in
+   let nowarnings = MEMBER (implode "--no_warn") ls in
+   let mainreturn = find_bool (implode "--main_return=") ls F in
    match (sexp,prelude,typeinference,mainreturn) with
      (INL sexp,INL prelude,INL typeinference,INL mainreturn) ->
        INL
          (sexp,prelude,typeinference,onlyprinttypes,sexpprint,mainreturn
-         ,nowarnings) | _18 -> INR (mlvector_concat [
+         ,nowarnings) | _18 -> INR (concat [
                 get_err_str sexp;
                 get_err_str prelude;
                 get_err_str typeinference;
@@ -732,19 +733,19 @@ let parse_top_config_def = cake_define
 
 (* Check for version flag *)
 let has_version_flag_def = cake_define
-  `has_version_flag ls = MEM (strlit "--version") ls`;;
+  `has_version_flag ls = MEM (implode "--version") ls`;;
 
 (* Check for version help *)
 let has_help_flag_def = cake_define
-  `has_help_flag ls = MEM (strlit "--help") ls`;;
+  `has_help_flag ls = MEM (implode "--help") ls`;;
 
 (* Check for pancake flag *)
 let has_pancake_flag_def = cake_define
-  `has_pancake_flag ls = MEM (strlit "--pancake") ls`;;
+  `has_pancake_flag ls = MEM (implode "--pancake") ls`;;
 
 let format_compiler_result_def = cake_define
   `format_compiler_result bytes_export (M_failure err) =
-     ((displayLang_List []:mlstring app_list),error_to_str err) /\
+     ((List []:mlstring app_list),error_to_str err) /\
    format_compiler_result bytes_export
      (M_success ((bytes:word8 list),(data:('a word)
        list),(c:backend_config))) =
@@ -775,8 +776,8 @@ let compile_64_def = cake_define
      match ext_conf with
        INL ext_conf ->
          (let compiler_conf =
-           mk_compiler_config infer_init_config ext_conf aconf sexp
-             prelude typeinfer onlyprinttypes sexpprint in
+           mk_compiler_config init_config ext_conf aconf sexp prelude
+             typeinfer onlyprinttypes sexpprint in
          (match compiler_compile compiler_conf basis input with
            (M_success (bytes,data,c),td) ->
              (add_tap_output td (export
@@ -787,39 +788,38 @@ let compile_64_def = cake_define
                  bytes data (backend_config_symbols c)
                    (backend_config_exported c) mainret F),
                implode "") | (M_failure err,td) -> (add_tap_output td
-                 (displayLang_List []),error_to_str err))) | INR err ->
-     (displayLang_List [],error_to_str (ConfigError (get_err_str
-       ext_conf)))) | _19 ->
-     (displayLang_List [],error_to_str (ConfigError
-       (mlvector_concat [get_err_str confexp; get_err_str
-       topconf]))))`;;
+                 (List []),error_to_str err))) | INR err ->
+     (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
+       _19 ->
+     (List [],error_to_str (ConfigError (concat [get_err_str
+       confexp; get_err_str topconf]))))`;;
 
 let pancake_backend_conf_def = cake_define
   `pancake_backend_conf c = backend_config_data_conf_fupd (K
-  (data_to_word_config_gc_kind_fupd (K data_to_word_None)
-  (backend_config_data_conf c)))
+  (data_to_word_config_gc_kind_fupd (K None) (backend_config_data_conf
+  c)))
      c`;;
 
 let compile_pancake_64_def = cake_define
   `compile_pancake_64 cl input =
    (let confexp = parse_target_64 cl in
-   match confexp with INR err -> (displayLang_List [],error_to_str
-     (ConfigError err)) | INL (conf,export,aconf) ->
+   match confexp with INR err -> (List [],error_to_str (ConfigError
+     err)) | INL (conf,export,aconf) ->
        (let topconf = parse_top_config cl in
-       match (topconf) with INR err -> (displayLang_List
-         [],error_to_str (ConfigError err)) | INL
+       match (topconf) with INR err -> (List [],error_to_str
+         (ConfigError err)) | INL
          (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret
          ,nowarn) ->
            (let ext_conf = extend_conf cl conf in
            match ext_conf with INR err ->
-               (displayLang_List [],error_to_str (ConfigError
-                 (get_err_str ext_conf))) | INL ext_conf ->
+               (List [],error_to_str (ConfigError (get_err_str
+                 ext_conf))) | INL ext_conf ->
                (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with
                  (M_failure err,td,warns) ->
-                   (displayLang_List [],mlvector_concat (MAP
-                     error_to_str (err :: (if nowarn then [] else
-                     warns)))) | (M_success (bytes,data,c),td,warns) ->
+                   (List [],concat (MAP error_to_str (err :: (if
+                     nowarn then [] else warns)))) | (M_success
+                     (bytes,data,c),td,warns) ->
                    (add_tap_output td
                      (export (ffinames_to_string_list
                        (the [] (lab_to_target_config_ffi_names
@@ -827,8 +827,8 @@ let compile_pancake_64_def = cake_define
                          (backend_config_symbols c)
                          (backend_config_exported
                        c) mainret T),
-                    mlvector_concat (MAP error_to_str (if nowarn
-                      then [] else warns)))))))`;;
+                    concat (MAP error_to_str (if nowarn then []
+                      else warns)))))))`;;
 
 let full_compile_64_def = cake_define
   `full_compile_64 cl inp fs =
@@ -839,8 +839,8 @@ let full_compile_64_def = cake_define
          if has_pancake_flag cl then
            compile_pancake_64 cl inp else
            compile_64 cl inp in
-       add_stderr (add_stdout (fastForwardFD fs 0)
-         (mlvector_concat (append out))) err)`;;
+       add_stderr (add_stdout (fastForwardFD fs 0) (concat (append
+         out))) err)`;;
 
 let compile_32_def = cake_define
   `compile_32 cl input =
@@ -854,8 +854,8 @@ let compile_32_def = cake_define
      match ext_conf with
        INL ext_conf ->
          (let compiler_conf =
-           mk_compiler_config infer_init_config ext_conf aconf sexp
-             prelude typeinfer onlyprinttypes sexpprint in
+           mk_compiler_config init_config ext_conf aconf sexp prelude
+             typeinfer onlyprinttypes sexpprint in
          (match compiler_compile compiler_conf basis input with
            (M_success (bytes,data,c),td) ->
              (add_tap_output td (export
@@ -864,34 +864,33 @@ let compile_32_def = cake_define
                    (backend_config_lab_conf c))))
                  bytes data (backend_config_symbols c)
                    (backend_config_exported c) mainret F),
-               implode "") | (M_failure err,td) -> (displayLang_List
+               implode "") | (M_failure err,td) -> (List
                  [],error_to_str err))) | INR err ->
-     (displayLang_List [],error_to_str (ConfigError (get_err_str
-       ext_conf)))) | _20 ->
-     (displayLang_List [],error_to_str (ConfigError
-       (mlvector_concat [get_err_str confexp; get_err_str
-       topconf]))))`;;
+     (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
+       _20 ->
+     (List [],error_to_str (ConfigError (concat [get_err_str
+       confexp; get_err_str topconf]))))`;;
 
 let compile_pancake_32_def = cake_define
   `compile_pancake_32 cl input =
    (let confexp = parse_target_32 cl in
-   match confexp with INR err -> (displayLang_List [],error_to_str
-     (ConfigError err)) | INL (conf,export,aconf) ->
+   match confexp with INR err -> (List [],error_to_str (ConfigError
+     err)) | INL (conf,export,aconf) ->
        (let topconf = parse_top_config cl in
-       match (topconf) with INR err -> (displayLang_List
-         [],error_to_str (ConfigError err)) | INL
+       match (topconf) with INR err -> (List [],error_to_str
+         (ConfigError err)) | INL
          (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret
          ,nowarn) ->
            (let ext_conf = extend_conf cl conf in
            match ext_conf with INR err ->
-               (displayLang_List [],error_to_str (ConfigError
-                 (get_err_str ext_conf))) | INL ext_conf ->
+               (List [],error_to_str (ConfigError (get_err_str
+                 ext_conf))) | INL ext_conf ->
                (let ext_conf = pancake_backend_conf ext_conf in
                match compile_pancake aconf ext_conf input with
                  (M_failure err,td,warns) ->
-                   (displayLang_List [],mlvector_concat (MAP
-                     error_to_str (err :: (if nowarn then [] else
-                     warns)))) | (M_success (bytes,data,c),td,warns) ->
+                   (List [],concat (MAP error_to_str (err :: (if
+                     nowarn then [] else warns)))) | (M_success
+                     (bytes,data,c),td,warns) ->
                    (add_tap_output td
                      (export (ffinames_to_string_list
                        (the [] (lab_to_target_config_ffi_names
@@ -899,8 +898,8 @@ let compile_pancake_32_def = cake_define
                          (backend_config_symbols c)
                          (backend_config_exported
                        c) mainret T),
-                    mlvector_concat (MAP error_to_str (if nowarn
-                      then [] else warns)))))))`;;
+                    concat (MAP error_to_str (if nowarn then []
+                      else warns)))))))`;;
 
 let full_compile_32_def = cake_define
   `full_compile_32 cl inp fs =
@@ -911,5 +910,5 @@ let full_compile_32_def = cake_define
          if has_pancake_flag cl then
            compile_pancake_32 cl inp else
            compile_32 cl inp in
-       add_stderr (add_stdout (fastForwardFD fs 0)
-         (mlvector_concat (append out))) err)`;;
+       add_stderr (add_stdout (fastForwardFD fs 0) (concat (append
+         out))) err)`;;

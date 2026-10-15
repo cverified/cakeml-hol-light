@@ -16,6 +16,9 @@ needs "lib/sptree.ml";;
 let opw_INDUCT,opw_RECURSION = define_datatype
   "opw = backend_common_Andw | backend_common_Orw | \
    backend_common_Xor | backend_common_Add | backend_common_Sub";;
+hol4_overload "Xor" "backend_common_Xor";;
+hol4_overload "Add" "backend_common_Add";;
+hol4_overload "Sub" "backend_common_Sub";;
 
 (* Small general definition *)
 let small_enough_int_def = cake_define
@@ -63,6 +66,9 @@ let tra_INDUCT,tra_RECURSION = define_datatype
   "tra = backend_common_SourceLoc (num) (num) (num) (num) | \
    backend_common_Cons (tra) (num) | backend_common_Union (tra) (tra) \
    | backend_common_None";;
+hol4_overload "Cons" "backend_common_Cons";;
+hol4_overload "Union" "backend_common_Union";;
+hol4_overload "None" "backend_common_None";;
 
 (* The code below replaces "Cons" in hol output with the chosen symbol
    *)
@@ -93,8 +99,7 @@ let orphan_trace_def = cake_define
 * turned off. *)
 let mk_cons_def = cake_define
   `mk_cons tr n =
-     (match tr with backend_common_None -> backend_common_None |
-       _1 -> backend_common_Cons tr n)`;;
+     (match tr with None -> None | _1 -> Cons tr n)`;;
 
 (* HOL4 ML code, not ported:
 val _ = set_fixity "§" (Infixl 480);
@@ -106,9 +111,8 @@ val _ = set_fixity "§" (Infixl 480);
 * indicating traces are turned off. *)
 let mk_union_def = cake_define
   `mk_union tr1 tr2 =
-     (match tr1 with backend_common_None -> backend_common_None |
-       _2 -> (match tr2 with backend_common_None ->
-       backend_common_None | _3 -> backend_common_Union tr1 tr2))`;;
+     (match tr1 with None -> None | _2 -> (match tr2 with None ->
+       None | _3 -> Union tr1 tr2))`;;
 
 let bool_to_tag_def = cake_define
   `bool_to_tag b = (if b then true_tag else false_tag)`;;
@@ -132,6 +136,7 @@ let bvl_to_bvi_namespaces_def = cake_define
 let word_shift_def = cake_define
   `backend_common_word_shift (:'a) =
      (if dimindex (:'a) = 32 then 2 else 3:num)`;;
+hol4_overload "word_shift" "backend_common_word_shift";;
 
 let upper_w2w_def = cake_define
   `upper_w2w (w:'a word) =
@@ -149,4 +154,4 @@ let word_add_carry_def = cake_define
      *)
 let list_delete_def = cake_define
   `list_delete [] s = s /\
-   list_delete (v :: vs) s = list_delete vs (sptree_delete v s)`;;
+   list_delete (v :: vs) s = list_delete vs (delete v s)`;;

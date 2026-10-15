@@ -12,6 +12,7 @@
 *)
 
 needs "basis/pure/mllist.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
@@ -57,6 +58,7 @@ let substring_def = cake_define
 let concat_def = cake_define
   `mlstring_concat l = (implode) (FLAT (MAP (\s. match s with
   (implode) x -> x) l))`;;
+hol4_overload "concat" "mlstring_concat";;
 
 let explode_aux_def = cake_define
   `(explode_aux s n 0 = []) /\
@@ -71,14 +73,15 @@ let extract_def = cake_define
      (if strlen s <= i then implode [] else match opt with
          SOME x -> substring s i (MIN (strlen s - i) x) | NONE ->
            substring s i (strlen s - i))`;;
+hol4_overload "extract" "mlstring_extract";;
 
 let strcat_def = cake_define
-  `strcat s1 s2 = mlstring_concat [s1; s2]`;;
+  `strcat s1 s2 = concat [s1; s2]`;;
 (* HOL4 overload (expanded in the port):
      None =  *)
 
 let concatWith_def = cake_define
-  `concatWith s l = mlstring_concat (intersperse s l)`;;
+  `concatWith s l = concat (intersperse s l)`;;
 
 let chr_to_str_def = cake_define
   `chr_to_str (c:char) = implode [c]`;;
@@ -99,8 +102,8 @@ let splitl_aux_def = cake_define_wf
   `inv_image (<) (\(x,s,i). strlen s - i)`
   `splitl_aux P s i =
      (if i < strlen s /\ P (strsub s i) then
-         splitl_aux P s (i + 1) else (mlstring_extract s 0 (SOME
-           i),mlstring_extract s i NONE))`;;
+         splitl_aux P s (i + 1) else (extract s 0 (SOME i),extract
+           s i NONE))`;;
 
 (* HOL4 ML code, not ported:
 val splitl_aux_ind = theorem"splitl_aux_ind";
@@ -243,18 +246,19 @@ let compare_def = cake_define
   compare_aux s1 s2 LESS 0 (strlen s1) else if (strlen s2) < (strlen
   s1) then compare_aux s1 s2 GREATER 0 (strlen s2) else compare_aux
   s1 s2 EQUAL 0 (strlen s2))`;;
+hol4_overload "compare" "mlstring_compare";;
 
 let mlstring_lt_def = cake_define
-  `mlstring_lt s1 s2 <=> (mlstring_compare s1 s2 = LESS)`;;
+  `mlstring_lt s1 s2 <=> (compare s1 s2 = LESS)`;;
 
 let mlstring_le_def = cake_define
-  `mlstring_le s1 s2 <=> (~(mlstring_compare s1 s2 = GREATER))`;;
+  `mlstring_le s1 s2 <=> (~(compare s1 s2 = GREATER))`;;
 
 let mlstring_gt_def = cake_define
-  `mlstring_gt s1 s2 <=> (mlstring_compare s1 s2 = GREATER)`;;
+  `mlstring_gt s1 s2 <=> (compare s1 s2 = GREATER)`;;
 
 let mlstring_ge_def = cake_define
-  `mlstring_ge s1 s2 <=> (~(mlstring_compare s1 s2 = LESS))`;;
+  `mlstring_ge s1 s2 <=> (~(compare s1 s2 = LESS))`;;
 
 (* HOL4 overload (expanded in the port):
      None =  *)
@@ -299,13 +303,15 @@ let collate_aux_def = cake_define
      (if f (strsub s1 n) (strsub s2 n) = EQUAL then
        mlstring_collate_aux f s1 s2 ord (n + 1) len else f (strsub s1
        n) (strsub s2 n)))`;;
+hol4_overload "collate_aux" "mlstring_collate_aux";;
 
 let collate_def = cake_define
   `mlstring_collate f s1 s2 =
-   (if (strlen s1) < (strlen s2) then mlstring_collate_aux f s1 s2
-     LESS 0 (strlen s1) else if (strlen s2) < (strlen s1) then
-     mlstring_collate_aux f s1 s2 GREATER 0 (strlen s2) else
-     mlstring_collate_aux f s1 s2 EQUAL 0 (strlen s2))`;;
+   (if (strlen s1) < (strlen s2) then collate_aux f s1 s2 LESS 0
+     (strlen s1) else if (strlen s2) < (strlen s1) then collate_aux f
+     s1 s2 GREATER 0 (strlen s2) else collate_aux f s1 s2 EQUAL 0
+     (strlen s2))`;;
+hol4_overload "collate" "mlstring_collate";;
 
 let char_escape_seq_def = cake_define
   `char_escape_seq c =
@@ -340,22 +346,21 @@ let sum_sizes_def = cake_define
 
 let make_app_list_ann_def = cake_define
   `make_app_list_ann input =
-     (match input with misc_Nil -> (Small input,0) | misc_Append l1
-       l2 ->
+     (match input with misc_Nil -> (Small input,0) | Append l1 l2 ->
          (let (x1,n1) = make_app_list_ann l1 in
           let (x2,n2) = make_app_list_ann l2 in
           let n = n1 + n2 in
             if n < (2048:num) then
               (Small input,n) else
-              (BigAppend x1 x2,n)) | misc_List ls ->
+              (BigAppend x1 x2,n)) | List ls ->
          (let n = sum_sizes ls 0 in
             if n < (2048:num) then
               (Small input,n) else (BigList ls,n)))`;;
 
 let shrink_def = cake_define
-  `shrink (Small t) = misc_List [mlstring_concat (append t)] /\
-   shrink (BigList ls) = misc_List ls /\
-   shrink (BigAppend l1 l2) = misc_Append (shrink l1) (shrink l2)`;;
+  `shrink (Small t) = List [concat (append t)] /\
+   shrink (BigList ls) = List ls /\
+   shrink (BigAppend l1 l2) = Append (shrink l1) (shrink l2)`;;
 
 let str_app_list_opt_def = cake_define
   `str_app_list_opt l =

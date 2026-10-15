@@ -13,6 +13,7 @@ needs "basis/pure/mlstring.ml";;
 
 let tokens_path_INDUCT,tokens_path_RECURSION = define_datatype
   "tokens_path = tokens_Mod (mlstring) (tokens_path) | tokens_End";;
+hol4_overload "Mod" "tokens_Mod";;
 
 let tokens_token_INDUCT,tokens_token_RECURSION = define_datatype
   "tokens_token = tokens_WhitespaceT (num) | tokens_NewlineT | \
@@ -36,3 +37,6 @@ let tokens_token_INDUCT,tokens_token_RECURSION = define_datatype
    (mlstring) | tokens_SymbolT (mlstring) | tokens_LongidT \
    (tokens_path) (mlstring) | tokens_FFIT (mlstring) | tokens_REPLIDT \
    (mlstring)";;
+hol4_overload "IntT" "tokens_IntT";;
+hol4_overload "WordT" "tokens_WordT";;
+hol4_overload "CharT" "tokens_CharT";;

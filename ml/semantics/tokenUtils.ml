@@ -17,7 +17,7 @@ needs "semantics/typeSystem.ml";;
 let isInt_def = cake_define
   `isInt x1 =
       match x1 with
-        (tokens_IntT i) -> T
+        (IntT i) -> T
       | _1 -> F`;;
 
 let isString_def = cake_define
@@ -60,13 +60,13 @@ let isWhitespaceT_def = cake_define
 let isCharT_def = cake_define
   `isCharT x1 =
         match x1 with
-          (tokens_CharT _13) -> T
+          (CharT _13) -> T
         | _14 -> F`;;
 
 let isWordT_def = cake_define
   `isWordT x1 =
         match x1 with
-          (tokens_WordT _15) -> T
+          (WordT _15) -> T
         | _16 -> F`;;
 
 let isLongidT_def = cake_define
@@ -98,6 +98,7 @@ let destTOK_def = cake_define
         match x1 with
           (grammar_TOK t) -> SOME t
         | _25 -> NONE`;;
+hol4_overload "destTOK" "tokenUtils_destTOK";;
 
 let destAlphaT_def = cake_define
   `destAlphaT x1 =
@@ -114,13 +115,13 @@ let destSymbolT_def = cake_define
 let destIntT_def = cake_define
   `destIntT x1 =
         match x1 with
-          (tokens_IntT i) -> SOME i
+          (IntT i) -> SOME i
         | _28 -> NONE`;;
 
 let destCharT_def = cake_define
   `destCharT x1 =
         match x1 with
-          (tokens_CharT c) -> SOME c
+          (CharT c) -> SOME c
         | _29 -> NONE`;;
 
 let destStringT_def = cake_define
@@ -132,7 +133,7 @@ let destStringT_def = cake_define
 let destWordT_def = cake_define
   `destWordT x1 =
         match x1 with
-          (tokens_WordT w) -> SOME w
+          (WordT w) -> SOME w
         | _31 -> NONE`;;
 
 let destFFIT_def = cake_define

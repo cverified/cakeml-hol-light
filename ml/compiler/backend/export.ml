@@ -123,9 +123,9 @@ let code_buffer_def = cake_define
          "     .space 4096"]`;;
 
 let comm_strlit_def = cake_define
-  `comm_strlit = (strlit ",")`;;
+  `comm_strlit = (implode ",")`;;
 let newl_strlit_def = cake_define
-  `newl_strlit = (strlit "\n")`;;
+  `newl_strlit = (implode "\n")`;;
 
 let comma_cat_def = cake_define
   `comma_cat f x =
@@ -134,7 +134,7 @@ let comma_cat_def = cake_define
 
 let words_line_def = cake_define
   `words_line word_directive to_string ls =
-     misc_List (word_directive :: comma_cat to_string ls)`;;
+     List (word_directive :: comma_cat to_string ls)`;;
 
 let word_to_string_def = cake_define
   `word_to_string w = (num_to_str) (w2n w)`;;
@@ -156,14 +156,14 @@ let escape_sym_char_def = cake_define
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
         code >= 48 /\ code <= 57 \/ code = 95 then (num_to_str) ch
           else ^ (^
-     (strlit "$") ((num_to_str) (code))) (strlit "_"))`;;
+     (implode "$") ((num_to_str) (code))) (implode "_"))`;;
 
 let get_sym_label_def = cake_define
   `get_sym_label (ix,appl) (name,start,len) =
      (let label = ^ (^ (^
-       (strlit "cml_") (mlvector_concat (MAP escape_sym_char (explode
+       (implode "cml_") (concat (MAP escape_sym_char (explode
          name))))
-       (strlit "_")) ((num_to_str) (ix)) in
+       (implode "_")) ((num_to_str) (ix)) in
      (ix + 1,appl ++ [(name,label,start,len)]))`;;
 
 let get_sym_labels_def = cake_define
@@ -173,9 +173,9 @@ let get_sym_labels_def = cake_define
 let emit_symbol_def = cake_define
   `emit_symbol appl (name,label,start,len) =
      misc_Append appl (misc_List
-       [^ (^ (^ (^ (^ (^ (strlit "    makesym(") label) (strlit
-         ", ")) ((num_to_str) (start))) (strlit ", "))
-       ((num_to_str) (len))) (strlit ")\n")])`;;
+       [^ (^ (^ (^ (^ (^ (implode "    makesym(") label) (implode
+         ", ")) ((num_to_str) (start))) (implode ", "))
+       ((num_to_str) (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = cake_define
   `emit_symbols lsyms =

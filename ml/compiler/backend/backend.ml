@@ -15,6 +15,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
 needs "compiler/backend/jsonLang.ml";;
@@ -61,7 +62,7 @@ val config_component_equality = theorem"config_component_equality";
 let attach_bitmaps_def = cake_define
   `(attach_bitmaps names c bm (SOME (bytes,c')) =
      SOME (bytes,bm,backend_config_symbols_fupd (K (MAP (\(n,p,l).
-       (lookup_any n names (strlit "NOTFOUND"),p,l))
+       (lookup_any n names (implode "NOTFOUND"),p,l))
        (lab_to_target_config_sec_pos_len c')))
        (backend_config_lab_conf_fupd (K c')
            c))) /\
@@ -70,17 +71,17 @@ let attach_bitmaps_def = cake_define
 let compile_def = cake_define
   `backend_compile asm_conf c p =
      (let p = source_to_source_compile p in
-     let _1 = empty_ffi (strlit "finished: source_to_source") in
+     let _1 = empty_ffi (implode "finished: source_to_source") in
      let (c',p) = source_to_flat_compile (backend_config_source_conf
        c) p in
-     let _2 = empty_ffi (strlit "finished: source_to_flat") in
+     let _2 = empty_ffi (implode "finished: source_to_flat") in
      let c = backend_config_source_conf_fupd (K c') c in
      let p = flat_to_clos_compile_prog p in
-     let _3 = empty_ffi (strlit "finished: flat_to_clos") in
+     let _3 = empty_ffi (implode "finished: flat_to_clos") in
      let (c',p,names) = clos_to_bvl_compile (backend_config_clos_conf
        c) p in
      let c = backend_config_clos_conf_fupd (K c') c in
-     let _4 = empty_ffi (strlit "finished: clos_to_bvl") in
+     let _4 = empty_ffi (implode "finished: clos_to_bvl") in
      let (s,p,l,bl,n1,n2,n3,names) = bvl_to_bvi_compile
        (clos_to_bvl_config_start (backend_config_clos_conf c))
        (backend_config_bvl_conf c) names p in
@@ -92,9 +93,9 @@ let compile_def = cake_define
        (bvl_to_bvi_config_next_name1_fupd (K n1)
        (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
        (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
-     let _5 = empty_ffi (strlit "finished: bvl_to_bvi") in
+     let _5 = empty_ffi (implode "finished: bvl_to_bvi") in
      let p = bvi_to_data_compile_prog p in
-     let _6 = empty_ffi (strlit "finished: bvi_to_data") in
+     let _6 = empty_ffi (implode "finished: bvi_to_data") in
      let (col,p) = data_to_word_compile (backend_config_data_conf c)
        (backend_config_word_to_word_conf c) asm_conf p in
      let c = backend_config_word_to_word_conf_fupd (\c.
@@ -103,24 +104,25 @@ let compile_def = cake_define
        ++
        word_to_stack_stub_names one ++ stack_alloc_stub_names one ++
        stack_remove_stub_names one)) names in
-     let _7 = empty_ffi (strlit "finished: data_to_word") in
+     let _7 = empty_ffi (implode "finished: data_to_word") in
      let (bm,c',fs,p) = word_to_stack_compile asm_conf
        (stack_to_lab_config_perf_calls (backend_config_stack_conf c)) p
        in
      let c = backend_config_word_conf_fupd (K c') c in
-     let _8 = empty_ffi (strlit "finished: word_to_stack") in
+     let _8 = empty_ffi (implode "finished: word_to_stack") in
      let p = stack_to_lab_compile (backend_config_stack_conf
        c) (backend_config_data_conf c) (2 * max_heap_limit (:'a)
          (backend_config_data_conf c) - 1)
        (asm_config_reg_count asm_conf - (LENGTH
          (asm_config_avoid_regs asm_conf) + 3))
        (asm_config_addr_offset asm_conf) p in
-     let _9 = empty_ffi (strlit "finished: stack_to_lab") in
+     let _9 = empty_ffi (implode "finished: stack_to_lab") in
      let res = attach_bitmaps names c bm
        (lab_to_target_compile asm_conf (backend_config_lab_conf c)
          (p:'a labLang_prog)) in
-     let _10 = empty_ffi (strlit "finished: lab_to_target") in
+     let _10 = empty_ffi (implode "finished: lab_to_target") in
        res)`;;
+hol4_overload "compile" "backend_compile";;
 
 let to_flat_def = cake_define
   `to_flat c p =
@@ -213,8 +215,8 @@ let to_target_def = cake_define
 
 let prim_src_config_def = cake_define
   `prim_src_config =
-     (let (_11,next,env,_12,_13) = source_let_compile_decs [] 1
-       (?_next empty_config) source_to_flat_empty_env
+     (let (_11,next,env,_12,_13) = compile_decs [] 1 (?_next
+       empty_config) empty_env
          ARB prim_types_program in
      (source_to_flat_config_mod_env_fupd (K env) (?_next_fupd (K
        next) empty_config)))`;;
@@ -249,11 +251,11 @@ let from_word_def = cake_define
 
 let from_word_0_def = cake_define
   `from_word_0 asm_conf c names p =
-   (let (col,labLang_prog) = word_to_word_compile
+   (let (col,prog) = word_to_word_compile
      (backend_config_word_to_word_conf c) asm_conf p in
    let c = backend_config_word_to_word_conf_fupd (\c.
      word_to_word_config_col_oracle_fupd (K col) c) c in
-   from_word asm_conf c names labLang_prog)`;;
+   from_word asm_conf c names prog)`;;
 
 let from_data_def = cake_define
   `from_data asm_conf c names p =
@@ -312,10 +314,10 @@ let to_livesets_0_def = cake_define
    (let word_conf = backend_config_word_to_word_conf c in
    let alg = word_to_word_config_reg_alg word_conf in
    let p =
-     MAP (\(name_num,arg_count,labLang_prog).
-     let labLang_prog = word_simp_compile_exp labLang_prog in
-     let maxv = max_var labLang_prog + 1 in
-     let inst_prog = inst_select asm_conf maxv labLang_prog in
+     MAP (\(name_num,arg_count,prog).
+     let prog = word_simp_compile_exp prog in
+     let maxv = max_var prog + 1 in
+     let inst_prog = inst_select asm_conf maxv prog in
      let ssa_prog = full_ssa_cc_trans arg_count inst_prog in
      let rm_ssa_prog = remove_dead_prog ssa_prog in
      let cse_prog = word_common_subexp_elim rm_ssa_prog in
@@ -326,12 +328,10 @@ let to_livesets_0_def = cake_define
      let rm_prog = remove_dead_prog unreach_prog in
          (name_num,arg_count,rm_prog))
        p in
-     let data = MAP (\(name_num,arg_count,labLang_prog).
-     let (heu_moves,spillcosts) = get_heuristics alg name_num
-       labLang_prog in
-     (get_clash_tree labLang_prog [],heu_moves,spillcosts,
-       get_forced asm_conf labLang_prog [],get_stack_only
-         labLang_prog)) p in
+     let data = MAP (\(name_num,arg_count,prog).
+     let (heu_moves,spillcosts) = get_heuristics alg name_num prog in
+     (get_clash_tree prog [],heu_moves,spillcosts,
+       get_forced asm_conf prog [],get_stack_only prog)) p in
      ((asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)),data),c,names,p))`;;
 
@@ -349,15 +349,15 @@ let from_livesets_def = cake_define
    let p =
      MAP
        (\(col_opt,((tree,heu_moves,spillcosts,forced,fs),name_num
-       ,arg_count,labLang_prog)).
-       match oracle_colour_ok k col_opt tree labLang_prog forced with
+       ,arg_count,prog)).
+       match oracle_colour_ok k col_opt tree prog forced with
          NONE ->
            (let cp =
              (match select_reg_alloc alg spillcosts k heu_moves tree
                forced fs with
                M_success col ->
-                 (apply_colour (total_colour col) labLang_prog) |
-                   M_failure _14 -> labLang_prog) in
+                 (apply_colour (total_colour col) prog) | M_failure
+                   _14 -> prog) in
            (name_num,arg_count,remove_must_terminate cp)) | SOME
              col_prog -> (name_num,arg_count,remove_must_terminate
              col_prog)) prog_with_oracles in
@@ -478,7 +478,7 @@ let compile_inc_progs_def = cake_define
      let ps = backend_progs_data_prog_fupd (K (keep_progs k p)) ps in
      let dc = ensure_fp_conf_ok asm_conf (backend_config_data_conf c)
        in
-     let p = MAP (data_to_word_compile_part dc) p in
+     let p = MAP (compile_part dc) p in
      let reg_count1 = asm_config_reg_count asm_conf - (5 + LENGTH
        (asm_config_avoid_regs asm_conf)) in
      let p = MAP (\p. full_compile_single (asm_config_two_reg_arith

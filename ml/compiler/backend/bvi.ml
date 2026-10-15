@@ -51,6 +51,15 @@ let bvi_exp_INDUCT,bvi_exp_RECURSION = define_datatype
    option) | bvi_Force (num) (num) | bvi_Op (closLang_op) (bvi_exp \
    list) | bvi_LetCall (num) (num) (num) (bvi_exp list) (bvi_exp) | \
    bvi_Return (bvi_exp list)";;
+hol4_overload "Var" "bvi_Var";;
+hol4_overload "If" "bvi_If";;
+hol4_overload "Let" "bvi_Let";;
+hol4_overload "Raise" "bvi_Raise";;
+hol4_overload "Tick" "bvi_Tick";;
+hol4_overload "Call" "bvi_Call";;
+hol4_overload "Force" "bvi_Force";;
+hol4_overload "Op" "bvi_Op";;
+hol4_overload "Return" "bvi_Return";;
 
 (* HOL4 overload (expanded in the port):
      mk_unit = bvi$Op (BlockOp (Cons 0)) [] *)

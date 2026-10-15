@@ -10,6 +10,25 @@ sources, and why.
   is prefixed with its theory name: `closLang_Var`, `wordSem_state`.
   This mirrors HOL4's own `closLang$Var` qualification.
   See `PLAN.md` and `tools/db.py`.
+- A name that several theories of the port define (there are 301
+  of them, `Var`, `Add`, `If`, ... of the intermediate languages)
+  is an _overloaded_ name in HOL4, which resolves it by the type.
+  HOL Light can do that too, so the port declares the name as an
+  overload of all the constants that have it
+  (`hol4_overload "Var" "closLang_Var"`), and the sources of the
+  port then read as the CakeML sources do.
+- A HOL4 definition may use the same variable name with two
+  different types in two clauses (`every_exp` of `ast` does),
+  because HOL4 typechecks every clause on its own.  One HOL Light
+  quotation cannot, so such a definition is written as a list of
+  quotations (`cake_define_list`).
+- A bound variable whose name is a constant of HOL Light or of the
+  port is renamed (`get_byte` becomes `get_byte'`): HOL4 lets a
+  variable shadow a constant, HOL Light does not.
+- The name of the OCaml binding of a definition cannot start with
+  a capital letter unless the name has another capital in it
+  (HOL Light's parser), so `Lnext_def` becomes `lnext_def`.  The
+  constant itself keeps its name.
 
 ## Syntax
 
@@ -58,6 +77,12 @@ HOL4's names, so `ml/lib/finite_map.ml`, `ml/lib/llist.ml` and
 HOL4's `pathTheory` is not ported: the dependency analysis found
 it only because CakeML definitions use variables called `el`,
 `first`, `exists` and `length`.
+
+## Definitions that the port does not have yet
+
+`PENDING.md` lists the definitions of the ported files that the
+port does not have yet, with the reason.  They are in the files as
+a comment that starts with `PENDING`, so that nothing is lost.
 
 ## What is not ported
 

@@ -15,6 +15,7 @@ needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_exh.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* moving constant patterns up *)
@@ -22,20 +23,20 @@ needs "semantics/semanticPrimitives.ml";;
 let is_const_row_def = cake_define
   `is_const_row x1 =
       match x1 with
-        (pattern_semantics_Cons _1 pats,x) -> NULL pats
+        (Cons _1 pats,x) -> NULL pats
       | _2 -> F`;;
 
 let is_Any_def = cake_define
   `is_Any x1 =
       match x1 with
-        pattern_semantics_Any -> T
-      | (pattern_semantics_Or p1 p2) -> (is_Any p1 \/ is_Any p2)
+        Any -> T
+      | (Or p1 p2) -> (is_Any p1 \/ is_Any p2)
       | _3 -> F`;;
 
 let is_Or_row_def = cake_define
   `is_Or_row x1 =
       match x1 with
-        (pattern_semantics_Or p1 p2,_4) -> T
+        (Or p1 p2,_4) -> T
       | _5 -> F`;;
 
 let take_until_Any_def = cake_define
@@ -57,7 +58,7 @@ let insert_Any_def = cake_define
   `insert_Any x1 =
       match x1 with
         [] -> []
-      | [(p,x)] -> [(pattern_semantics_Any,x)]
+      | [(p,x)] -> [(Any,x)]
       | (x :: xs) -> x :: insert_Any xs`;;
 
 
@@ -79,8 +80,7 @@ let mk_Conj_def = cake_define
      if is_True q then p else pattern_semantics_Conj p q)`;;
 
 let mk_If_def = cake_define
-  `mk_If g p q = (if is_True g then p else pattern_semantics_If g p
-  q)`;;
+  `mk_If g p q = (if is_True g then p else If g p q)`;;
 
 let get_pos_def = cake_define
   `get_pos [] = EmptyPos /\
@@ -90,37 +90,32 @@ let get_pos_def = cake_define
 let pat_to_guard_def = cake_define_wf
   `MEASURE (\x. match x with INL (_8,p) -> pat_size p | INR (_9,k,p) ->
   list_size pat_size p)`
-  `pat_to_guard l pattern_semantics_Any = pattern_semantics_True /\
-   pat_to_guard l (pattern_semantics_Lit r) =
-     pattern_semantics_PosTest (get_pos (REVERSE l))
-     (pattern_semantics_LitEq r) /\
-   pat_to_guard l (pattern_semantics_Cons NONE pats) = pats_to_guard
-     l 0 pats /\
-   pat_to_guard l (pattern_semantics_Cons (SOME (t,_7)) pats) =
+  `pat_to_guard l Any = pattern_semantics_True /\
+   pat_to_guard l (Lit r) = pattern_semantics_PosTest (get_pos
+     (REVERSE l)) (pattern_semantics_LitEq r) /\
+   pat_to_guard l (Cons NONE pats) = pats_to_guard l 0 pats /\
+   pat_to_guard l (Cons (SOME (t,_7)) pats) =
      mk_Conj (pattern_semantics_PosTest (get_pos (REVERSE l))
-       (pattern_semantics_TagLenEq t (LENGTH pats))) (pats_to_guard l
-         0 pats) /\
-   pat_to_guard l (pattern_semantics_Or p1 p2) = mk_Disj
-     (pat_to_guard l p1) (pat_to_guard l p2) /\
-   pat_to_guard l (pattern_semantics_Ref p) = pat_to_guard (0 :: l) p
-     /\
+       (TagLenEq t (LENGTH pats))) (pats_to_guard l 0 pats) /\
+   pat_to_guard l (Or p1 p2) = mk_Disj (pat_to_guard l p1)
+     (pat_to_guard l p2) /\
+   pat_to_guard l (Ref p) = pat_to_guard (0 :: l) p /\
    pats_to_guard l k [] = pattern_semantics_True /\
    pats_to_guard l k [p] = pat_to_guard (k :: l) p /\
    pats_to_guard l k (p :: ps) = mk_Conj (pat_to_guard (k :: l) p)
      (pats_to_guard l (k + 1) ps)`;;
 
 let pats_to_code_def = cake_define
-  `pats_to_code [] = pattern_semantics_Fail /\
+  `pats_to_code [] = Fail /\
    pats_to_code ((p,x) :: rows) =
-     mk_If (pat_to_guard [] p) (pattern_semantics_Leaf x)
-       (pats_to_code rows)`;;
+     mk_If (pat_to_guard [] p) (Leaf x) (pats_to_code rows)`;;
 
 let walk_def = cake_define
   `walk [] x refs = SOME x /\
    walk (n :: ns) x refs =
      (match x with (pattern_semantics_Term t xs) -> (if n < LENGTH xs
-       then walk ns (EL n xs) refs else NONE) |
-       (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
+       then walk ns (EL n xs) refs else NONE) | (RefPtr p) -> (if ~(n =
+       0) then NONE else
                        match FLOOKUP refs p with SOME y -> walk ns
                          y refs | _10 -> NONE) | _11 -> NONE)`;;
 
@@ -138,3 +133,4 @@ let comp_def = cake_define
      let rows1 = (if exh_rows rows0 then insert_Any rows0 else rows0)
        in
        pats_to_code rows1)`;;
+hol4_overload "comp" "pattern_comp_comp";;

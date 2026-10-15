@@ -17,30 +17,34 @@
    bvi_let is a simpler version of this optimisation.
 *)
 
+needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
+needs "compiler/backend/bvi_let.ml";;
 needs "compiler/backend/bvl.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/data_live.ml";;
+needs "semantics/ast.ml";;
 
 let dest_simple_def = cake_define
   `dest_simple x1 =
         match x1 with
-          (bvl_Op (closLang_IntOp (closLang_Const i)) xs) -> if NULL
-            xs then SOME i else NONE
+          (bvl_Op (closLang_IntOp (Const i)) xs) -> if NULL xs then
+            SOME i else NONE
         | _1 -> NONE`;;
 
 let case_op_const_def = cake_define
-  `case_op_const bvl_exp =
-       (match bvl_exp with (bvl_Op closLang_op [x1; bvl_Op
-         (closLang_IntOp (closLang_Const n2)) l]) -> (if NULL l then
-         SOME (closLang_op,x1,n2) else NONE) | _2 -> NONE)`;;
+  `case_op_const exp =
+       (match exp with (Op op [x1; Op (closLang_IntOp (Const n2))
+         l]) -> (if NULL l then SOME (op,x1,n2) else NONE) | _2 ->
+         NONE)`;;
 
 let SmartOp_flip_def = cake_define
-  `SmartOp_flip closLang_op x1 x2 =
+  `SmartOp_flip op x1 x2 =
      (match (dest_simple x1) with (SOME i) ->
-         (if MEM closLang_op [closLang_IntOp closLang_Add;
-           closLang_IntOp closLang_Mult] then (closLang_op,x2,x1)
-           else if closLang_op = closLang_IntOp closLang_Sub then
-           (closLang_IntOp closLang_Add,x2,bvl_Op (closLang_IntOp
-           (closLang_Const (--i))) []) else (closLang_op,x1,x2)) | _3
-           -> (closLang_op,x1,x2))`;;
+         (if MEM op [closLang_IntOp Add; closLang_IntOp
+           closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
+           Sub then (closLang_IntOp Add,x2,Op (closLang_IntOp (Const
+           (--i))) []) else (op,x1,x2)) | _3 -> (op,x1,x2))`;;
 
 (* HOL4 ML code, not ported:
 local val SmartOp2_quotation = `
@@ -186,122 +190,123 @@ end
 let dest_EqualInt_def = cake_define
   `dest_EqualInt x1 =
       match x1 with
-        (closLang_BlockOp (closLang_EqualConst (closLang_Int i))) ->
-          SOME i
+        (closLang_BlockOp (closLang_EqualConst (Int i))) -> SOME i
       | _4 -> NONE`;;
 
 let SmartOp1_def = cake_define
-  `SmartOp1 closLang_op x =
-     (match dest_EqualInt closLang_op with NONE -> bvl_Op closLang_op
-       [x] | SOME i ->
-       (match dest_simple x with NONE -> bvl_Op closLang_op [x] |
-         SOME j -> bvl_Bool (j = i)))`;;
+  `SmartOp1 op x =
+     (match dest_EqualInt op with NONE -> Op op [x] | SOME i ->
+       (match dest_simple x with NONE -> Op op [x] | SOME j ->
+         Bool (j = i)))`;;
 
 
 let SmartOp_def = cake_define
-  `bvl_const_SmartOp closLang_op xs =
-     (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip closLang_op
-       x1 x2) | [x] -> SmartOp1 closLang_op x | _5 -> bvl_Op
-       closLang_op xs)`;;
+  `bvl_const_SmartOp op xs =
+     (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
+       [x] -> SmartOp1 op x | _5 -> Op op xs)`;;
+hol4_overload "SmartOp" "bvl_const_SmartOp";;
 
 let extract_def = cake_define
   `bvl_const_extract x1 ys =
         match x1 with
-          ((bvl_Var n):bvl_exp) -> SOME ((bvl_Var (n + LENGTH ys +
+          ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys +
             1)):bvl_exp)
-        | (bvl_Op (closLang_IntOp (closLang_Const i)) xs) -> SOME
-          (bvl_Op (closLang_IntOp (closLang_Const i)) [])
-        | (bvl_Op (closLang_BlockOp (closLang_Cons t)) xs) ->
-       if NULL xs then SOME (bvl_Op (closLang_BlockOp (closLang_Cons
-         t)) []) else NONE
+        | (Op (closLang_IntOp (Const i)) xs) -> SOME (Op
+          (closLang_IntOp (Const i)) [])
+        | (Op (closLang_BlockOp (Cons t)) xs) ->
+       if NULL xs then SOME (Op (closLang_BlockOp (Cons t)) []) else
+         NONE
         | _6 -> NONE`;;
+hol4_overload "extract" "bvl_const_extract";;
 
 let extract_list_def = cake_define
   `(bvl_const_extract_list [] = []) /\
-   (bvl_const_extract_list (x :: xs) = bvl_const_extract x xs ::
+   (bvl_const_extract_list (x :: xs) = extract x xs ::
      bvl_const_extract_list xs)`;;
+hol4_overload "extract_list" "bvl_const_extract_list";;
 
 let delete_var_def = cake_define
   `bvl_const_delete_var x =
         match x with
-          ((bvl_Var n):bvl_exp) -> bvl_Op (closLang_IntOp
-            (closLang_Const 0)) []
+          ((Var n):bvl_exp) -> Op (closLang_IntOp (Const 0)) []
         | x -> x`;;
+hol4_overload "delete_var" "bvl_const_delete_var";;
 
 let compile_def = cake_define
   `(bvl_const_compile env [] = []) /\
    (bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
      ++ bvl_const_compile env (y :: xs)) /\
-   (bvl_const_compile env [bvl_Var v] =
-      (match (\l n. oEL n l) env v with NONE -> [bvl_Var v] | SOME
-        NONE -> [bvl_Var v] | SOME (SOME (bvl_Var i)) -> [bvl_Var (v +
-        i)] | SOME (SOME x) -> [x])) /\
-   (bvl_const_compile env [bvl_If x1 x2 x3] =
+   (bvl_const_compile env [Var v] =
+      (match (\l n. oEL n l) env v with NONE -> [Var v] | SOME NONE
+        -> [Var v] | SOME (SOME (Var i)) -> [Var (v + i)] | SOME (SOME
+        x) -> [x])) /\
+   (bvl_const_compile env [If x1 x2 x3] =
       (let y1 = HD (bvl_const_compile env [x1]) in
       let y2 = HD (bvl_const_compile env [x2]) in
       let y3 = HD (bvl_const_compile env [x3]) in
-        if y1 = bvl_Bool T then [y2] else
-        if y1 = bvl_Bool F then [y3] else
-          [bvl_If y1 y2 y3])) /\
-   (bvl_const_compile env [bvl_Let xs x2] =
+        if y1 = Bool T then [y2] else
+        if y1 = Bool F then [y3] else
+          [If y1 y2 y3])) /\
+   (bvl_const_compile env [Let xs x2] =
       (let ys = bvl_const_compile env xs in
-        [bvl_Let (MAP bvl_const_delete_var ys)
-             (HD (bvl_const_compile (bvl_const_extract_list ys ++
-               env) [x2]))])) /\
-   (bvl_const_compile env [bvl_Handle x1 x2] =
-      [bvl_Handle (HD (bvl_const_compile env [x1])) (HD
+        [Let (MAP delete_var ys)
+             (HD (bvl_const_compile (extract_list ys ++ env)
+               [x2]))])) /\
+   (bvl_const_compile env [Handle x1 x2] =
+      [Handle (HD (bvl_const_compile env [x1])) (HD
         (bvl_const_compile (NONE :: env) [x2]))]) /\
-   (bvl_const_compile env [bvl_Raise x1] =
-      [bvl_Raise (HD (bvl_const_compile env [x1]))]) /\
-   (bvl_const_compile env [bvl_Op closLang_op xs] =
-     [bvl_const_SmartOp closLang_op (bvl_const_compile env xs)]) /\
-   (bvl_const_compile env [bvl_Tick x] = [bvl_Tick (HD
-     (bvl_const_compile env [x]))]) /\
-   (bvl_const_compile env [bvl_Force loc v] =
-      (match (\l n. oEL n l) env v with NONE -> [bvl_Force loc v] |
-        SOME NONE -> [bvl_Force loc v] | SOME (SOME (bvl_Var i)) ->
-        [bvl_Force loc (v + i)] | SOME (SOME x) -> [bvl_Force loc v]))
-        /\
-   (bvl_const_compile env [bvl_Call t dest xs] = [bvl_Call t dest
+   (bvl_const_compile env [Raise x1] =
+      [Raise (HD (bvl_const_compile env [x1]))]) /\
+   (bvl_const_compile env [Op op xs] = [SmartOp op (bvl_const_compile
+     env xs)]) /\
+   (bvl_const_compile env [Tick x] = [Tick (HD (bvl_const_compile env
+     [x]))]) /\
+   (bvl_const_compile env [Force loc v] =
+      (match (\l n. oEL n l) env v with NONE -> [Force loc v] | SOME
+        NONE -> [Force loc v] | SOME (SOME (Var i)) -> [Force loc (v +
+        i)] | SOME (SOME x) -> [Force loc v])) /\
+   (bvl_const_compile env [Call t dest xs] = [Call t dest
      (bvl_const_compile env xs)])`;;
+hol4_overload "compile" "bvl_const_compile";;
 
 let compile_sing_def = cake_define
-  `(bvl_const_compile_sing env (bvl_Var v) =
-      (match (\l n. oEL n l) env v with NONE -> bvl_Var v | SOME NONE
-        -> bvl_Var v | SOME (SOME (bvl_Var i)) -> bvl_Var (v + i) | SOME
-        (SOME x) -> x)) /\
-   (bvl_const_compile_sing env (bvl_If x1 x2 x3) =
+  `(bvl_const_compile_sing env (Var v) =
+      (match (\l n. oEL n l) env v with NONE -> Var v | SOME NONE ->
+        Var v | SOME (SOME (Var i)) -> Var (v + i) | SOME (SOME x) ->
+        x)) /\
+   (bvl_const_compile_sing env (If x1 x2 x3) =
       (let y1 = bvl_const_compile_sing env x1 in
       let y2 = bvl_const_compile_sing env x2 in
       let y3 = bvl_const_compile_sing env x3 in
-        if y1 = bvl_Bool T then y2 else
-        if y1 = bvl_Bool F then y3 else
-          bvl_If y1 y2 y3)) /\
-   (bvl_const_compile_sing env (bvl_Let xs x2) =
+        if y1 = Bool T then y2 else
+        if y1 = Bool F then y3 else
+          If y1 y2 y3)) /\
+   (bvl_const_compile_sing env (Let xs x2) =
       (let ys = bvl_const_compile_list env xs in
-        bvl_Let (MAP bvl_const_delete_var ys)
-            (bvl_const_compile_sing (bvl_const_extract_list ys ++
-              env) x2))) /\
-   (bvl_const_compile_sing env (bvl_Handle x1 x2) =
-      bvl_Handle (bvl_const_compile_sing env x1)
-        (bvl_const_compile_sing (NONE :: env) x2)) /\
-   (bvl_const_compile_sing env (bvl_Raise x1) =
-      bvl_Raise (bvl_const_compile_sing env x1)) /\
-   (bvl_const_compile_sing env (bvl_Op closLang_op xs) =
-     bvl_const_SmartOp closLang_op (bvl_const_compile_list env xs)) /\
-   (bvl_const_compile_sing env (bvl_Tick x) = bvl_Tick
+        Let (MAP delete_var ys)
+            (bvl_const_compile_sing (extract_list ys ++ env) x2))) /\
+   (bvl_const_compile_sing env (Handle x1 x2) =
+      Handle (bvl_const_compile_sing env x1) (bvl_const_compile_sing
+        (NONE :: env) x2)) /\
+   (bvl_const_compile_sing env (Raise x1) =
+      Raise (bvl_const_compile_sing env x1)) /\
+   (bvl_const_compile_sing env (Op op xs) = SmartOp op
+     (bvl_const_compile_list env xs)) /\
+   (bvl_const_compile_sing env (Tick x) = Tick
      (bvl_const_compile_sing env x)) /\
-   (bvl_const_compile_sing env (bvl_Force loc v) =
-      (match (\l n. oEL n l) env v with NONE -> bvl_Force loc v |
-        SOME NONE -> bvl_Force loc v | SOME (SOME (bvl_Var i)) ->
-        bvl_Force loc (v + i) | SOME (SOME x) -> bvl_Force loc v)) /\
-   (bvl_const_compile_sing env (bvl_Call t dest xs) = bvl_Call t dest
+   (bvl_const_compile_sing env (Force loc v) =
+      (match (\l n. oEL n l) env v with NONE -> Force loc v | SOME
+        NONE -> Force loc v | SOME (SOME (Var i)) -> Force loc (v + i) |
+        SOME (SOME x) -> Force loc v)) /\
+   (bvl_const_compile_sing env (Call t dest xs) = Call t dest
      (bvl_const_compile_list env xs)) /\
    (bvl_const_compile_list env [] = []) /\
    (bvl_const_compile_list env (x :: xs) = bvl_const_compile_sing
      env x :: bvl_const_compile_list env xs)`;;
+hol4_overload "compile_list" "bvl_const_compile_list";;
+hol4_overload "compile_sing" "bvl_const_compile_sing";;
 
 let compile_exp_def = cake_define
   `bvl_const_compile_exp x =
-     (match bvl_const_compile [] [x] with (y :: _7) -> y | _8 ->
-       bvl_Var 0)`;;
+     (match compile [] [x] with (y :: _7) -> y | _8 -> Var 0)`;;
+hol4_overload "compile_exp" "bvl_const_compile_exp";;

@@ -111,6 +111,8 @@ class Porter:
     flds.update(overrides.FIELD_OF.get(thy, {}))
     self.abbrevs = db.abbrevs_for(thy)
     self.ctx = hterm.Ctx(names=names, fields=flds,
+                         tynames=db.names_for(thy, True),
+                         overloaded=db.overloaded(),
                          recs=db.recs_for(thy), thy=thy,
                          accessors=overrides.ACCESSORS.get(thy, {}),
                          cons=db.cons_for(thy), abbrevs=self.abbrevs)
@@ -131,6 +133,9 @@ class Porter:
 
   def nm(self, n):
     return self.ctx.name(n)
+
+  def tnm(self, n):
+    return self.ctx.tyname(n)
 
   def term(self, text):
     toks = hterm.tokenize(text)
@@ -277,6 +282,10 @@ class Porter:
 
   def datatype(self, b):
     specs = hol4.split_top(hol4.strip_comments(b.body), ';')
+    # the names of this block are the ones of its own constants
+    self.ctx.defining = set()
+    for ty, cons, flds in hol4.datatype_names(b.body):
+      self.ctx.defining |= set([ty] + cons + flds)
     parts = []
     for part in specs:
       if not part.strip(): continue
@@ -300,13 +309,13 @@ class Porter:
       parts.append((ty, cons))
     if not parts: return
     spec = ';\n   '.join(
-      '%s = %s' % (self.nm(ty),
+      '%s = %s' % (self.tnm(ty),
                    ' | '.join(
                      ' '.join([self.nm(c)] +
                               ['(%s)' % self.typ_ast(a) for a in args])
                      for c, args in cons))
       for ty, cons in parts)
-    names = [ocaml_name(self.nm(ty)) for ty, _ in parts]
+    names = [ocaml_name(self.tnm(ty)) for ty, _ in parts]
     lhs = ','.join('%s_INDUCT' % n for n in names[:1]) + ',' + \
           ','.join('%s_RECURSION' % n for n in names[:1])
     # the specification is laid out in lines of at most 72
@@ -315,6 +324,8 @@ class Porter:
     text = '\n'.join(
       ' \\\n'.join(fill('  "' if k == 0 else '   ', part.split(), 69))
       for k, part in enumerate(spec.split('\n')))
+    overloads = self.overloads_of(
+      [c for _, cons in parts for c, _ in cons])
     head = 'let %s = define_datatype' % lhs
     if len(head) > 72:
       head = 'let %s =\n  define_datatype' % lhs
@@ -322,6 +333,8 @@ class Porter:
         head = ('let %s,\n    %s =\n  define_datatype'
                 % tuple(lhs.split(',')))
     self.out.append('%s\n%s";;' % (head, text))
+    if overloads: self.out.append('\n'.join(overloads))
+    self.ctx.defining = set()
 
   def typ_ast(self, ty):
     ty = hterm.expand_type(ty, self.abbrevs)
@@ -340,11 +353,31 @@ class Porter:
       lines.append(' \\\n'.join(
         fill(pre + '"%s","' % f, t.split(' '), 70)) + '"')
     head = ('let %s_FIELDS = define_record "%s"'
-            % (ocaml_name(self.nm(ty)), self.nm(ty)))
+            % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
     if len(head) > 72:
       head = ('let %s_FIELDS =\n  define_record "%s"'
-              % (ocaml_name(self.nm(ty)), self.nm(ty)))
+              % (ocaml_name(self.tnm(ty)), self.tnm(ty)))
     self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
+
+  def overloads_of(self, names):
+    """the declarations that make the names of a block the overloads
+       that HOL4 has for them"""
+    out = []
+    for nm in names:
+      if nm not in self.ctx.overloaded: continue
+      new = self.nm_defined(nm)
+      if new == nm: continue
+      out.append('hol4_overload "%s" "%s";;' % (nm, new))
+    return out
+
+  def nm_defined(self, n):
+    """the name of the constant that a block defines"""
+    old = self.ctx.defining
+    self.ctx.defining = {n}
+    try:
+      return self.ctx.name(n)
+    finally:
+      self.ctx.defining = old
 
   # -- definitions -----------------------------------------------
 
@@ -362,36 +395,62 @@ class Porter:
       self.out.append(overrides.REPLACE[key].strip())
       return
     body = b.body
+    self.ctx.defining = set(dbmod.definition_names(body))
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.wordnot = key in overrides.WORD_NOT
-    if key in overrides.MATCH_FORM or self.overlapping(body):
+    if key in overrides.CLAUSE_FORM:
+      term = None
+      clauses = self.clause_form(body)
+    elif key in overrides.MATCH_FORM or self.overlapping(body):
       term = fmt(self.match_form(body))
     else:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
-    if rel is not None:
-      self.out.append('(* the termination relation is not in the HOL4 '
-                      'source *)\nlet %s = cake_define_wf\n  `%s`\n'
-                      '  `%s`;;' % (name, rel, term))
-      return
+    if term is None:
+      text = ('let %s = cake_define_list\n  %s;;' % (name, clauses))
+    elif rel is not None:
+      text = ('(* the termination relation is not in the HOL4 '
+              'source *)\nlet %s = cake_define_wf\n  `%s`\n'
+              '  `%s`;;' % (name, rel, term))
+    elif b.extra is None:
+      text = 'let %s = cake_define\n  `%s`;;' % (name, term)
+    else:
+      wf, rest = wf_relation(b.extra)
+      if wf is None:
+        self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
+        text = (shorten('(* TERMINATION: %s *)' % b.extra.strip()) +
+                '\nlet %s = cake_define\n  `%s`;;' % (name, term))
+      else:
+        text = (shorten('\n'.join(
+                  fill('(* HOL4 termination:', rest.split(), 69))
+                + ' *)') +
+                '\nlet %s = cake_define_wf\n  `%s`\n  `%s`;;'
+                % (name, fmt(self.term(wf), last=1), term))
+    # the definition is followed by the overloads of HOL4, where the
+    # name it gives a constant is one that other theories use too
+    overloads = self.overloads_of(sorted(self.ctx.defining))
+    self.out.append(text if not overloads else
+                    text + '\n' + '\n'.join(overloads))
     self.ctx.intnums = False
     self.ctx.wordnot = False
-    if b.extra is None:
-      self.out.append('let %s = cake_define\n  `%s`;;' % (name, term))
-    else:
-      rel, rest = wf_relation(b.extra)
-      if rel is None:
-        self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
-        self.out.append(shorten('(* TERMINATION: %s *)'
-                                % b.extra.strip()) +
-                        '\nlet %s = cake_define\n  `%s`;;'
-                        % (name, term))
-      else:
-        self.out.append(shorten('\n'.join(
-                          fill('(* HOL4 termination:', rest.split(), 69))
-                        + ' *)') +
-                        '\nlet %s = cake_define_wf\n  `%s`\n  `%s`;;'
-                        % (name, fmt(self.term(rel), last=1), term))
+    self.ctx.defining = set()
+
+  def clause_form(self, body):
+    """the clauses of a definition as separate quotations: HOL4
+       typechecks every clause of a definition on its own, so the
+       same variable name can have different types in two clauses,
+       which one HOL Light quotation cannot"""
+    toks = hterm.tokenize(hol4.strip_comments(body))
+    e = hterm.Parser(toks, self.ctx).parse()
+    old = self.ctx.vars
+    self.ctx.vars = self.shadowing(e)
+    try:
+      p = hterm.Printer(self.ctx)
+      cls = [fmt(p.pr(cl, 0), indent=4, last=2)
+             for cl in hterm.conjuncts_of(e)]
+    finally:
+      self.ctx.vars = old
+    return '[`' + '`;\n   `'.join(cls) + '`]'
 
   # -- a definition as one clause with a match -------------------
 
@@ -471,10 +530,10 @@ class Porter:
     else:
       # the type may be too long for one line
       body = self.typ(txt)
-      head = 'new_type_abbrev("%s",`:' % self.nm(b.name)
+      head = 'new_type_abbrev("%s",`:' % self.tnm(b.name)
       text = '\n'.join(fill(head, body.split(' '), 69)) + '`);;'
       if max(len(l) for l in text.split('\n')) > 72:
-        text = ('new_type_abbrev("%s",\n' % self.nm(b.name) +
+        text = ('new_type_abbrev("%s",\n' % self.tnm(b.name) +
                 '\n'.join(fill('  `:', body.split(' '), 69)) + '`);;')
       self.out.append(text)
 

@@ -7,6 +7,7 @@
   Types, functions and lemmas that are shared between GC definitions
 *)
 
+needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/integer_word.ml";;
 needs "semantics/typeSystem.ml";;
@@ -16,6 +17,7 @@ needs "semantics/typeSystem.ml";;
 
 let heap_address_INDUCT,heap_address_RECURSION = define_datatype
   "heap_address = gc_shared_Pointer (num) ('a) | gc_shared_Data ('a)";;
+hol4_overload "Data" "gc_shared_Data";;
 
 let heap_element_INDUCT,heap_element_RECURSION = define_datatype
   "heap_element = Unused (num) | ForwardPointer (num) ('a) (num) | \
@@ -175,14 +177,13 @@ let heap_addresses_def = cake_define
 
 let ADDR_MAP_def = cake_define
   `(ADDR_MAP f [] = []) /\
-   (ADDR_MAP f (gc_shared_Data x :: xs) = gc_shared_Data x ::
-     ADDR_MAP f xs) /\
+   (ADDR_MAP f (Data x :: xs) = Data x :: ADDR_MAP f xs) /\
    (ADDR_MAP f (gc_shared_Pointer a d :: xs) = gc_shared_Pointer
      (f a) d :: ADDR_MAP f xs)`;;
 
 let ADDR_APPLY_def = cake_define
   `(ADDR_APPLY f (gc_shared_Pointer x d) = gc_shared_Pointer (f x) d) /\
-   (ADDR_APPLY f (gc_shared_Data y) = gc_shared_Data y)`;;
+   (ADDR_APPLY f (Data y) = Data y)`;;
 
 (* HOL4 ML code, not ported:
 val _ = augment_srw_ss [rewrites [LIST_REL_def]];

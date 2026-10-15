@@ -17,6 +17,7 @@ new_type_abbrev("labLang_reg",`: num`);;
 
 let lab_INDUCT,lab_RECURSION = define_datatype
   "lab = labLang_Lab (num) (num)";;
+hol4_overload "Lab" "labLang_Lab";;
 
 (* Each line of a section consists of either a label, an assembly
    instruction (without a label) or some labelled asm instruction. *)
@@ -26,6 +27,12 @@ let asm_with_lab_INDUCT,asm_with_lab_RECURSION = define_datatype
    ('a asm_reg_imm) (lab) | labLang_Call (lab) | labLang_LocValue \
    (num) (lab) | labLang_CallFFI (mlstring) | labLang_Install | \
    labLang_Halt";;
+hol4_overload "Jump" "labLang_Jump";;
+hol4_overload "JumpCmp" "labLang_JumpCmp";;
+hol4_overload "Call" "labLang_Call";;
+hol4_overload "LocValue" "labLang_LocValue";;
+hol4_overload "Install" "labLang_Install";;
+hol4_overload "Halt" "labLang_Halt";;
 
 let asm_or_cbw_INDUCT,asm_or_cbw_RECURSION = define_datatype
   "asm_or_cbw = Asmi ('a asm) | Cbw (num) (num) | ShareMem (memop) \
@@ -36,6 +43,7 @@ let line_INDUCT,line_RECURSION = define_datatype
   "line = labLang_Label (num) (num) (num) | labLang_Asm ('a \
    asm_or_cbw) (word8 list) (num) | labLang_LabAsm ('a asm_with_lab) \
    ('a word) (word8 list) (num)";;
+hol4_overload "Label" "labLang_Label";;
                                   (* position, encoded instruction,
                                      length *)
 

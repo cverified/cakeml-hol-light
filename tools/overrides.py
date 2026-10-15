@@ -99,6 +99,14 @@ WORD_NOT = set([
   ('binary_ieee', 'float_negate_def'),
 ])
 
+# definitions in which the same variable name has different types in
+# different clauses, which HOL4 allows (it typechecks every clause on
+# its own) and one HOL Light quotation does not; the port writes the
+# clauses as separate quotations
+CLAUSE_FORM = set([
+  ('ast', 'every_exp_def'),
+])
+
 # definitions whose clauses overlap, so that they depend on HOL4's
 # first match semantics; they are ported as one clause with a
 # `match', which has the same semantics in HOL Light

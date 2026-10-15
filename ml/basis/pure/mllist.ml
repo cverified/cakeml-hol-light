@@ -54,12 +54,14 @@ let mapi_def = cake_define
   `(mllist_mapi f (n:num) [] = []) /\
    (mllist_mapi f n (h :: t) = (let y = f n h in (y ::
      (mllist_mapi f (n + 1) t))))`;;
+hol4_overload "mapi" "mllist_mapi";;
 
 let mapPartial_def = cake_define
   `(mllist_mapPartial f [] = []) /\
    (mllist_mapPartial f (h :: t) = (match (f h) with
      NONE -> mllist_mapPartial f t | (SOME x) -> x ::
        mllist_mapPartial f t))`;;
+hol4_overload "mapPartial" "mllist_mapPartial";;
 
 let partition_aux_def = cake_define
   `(partition_aux f [] pos neg =
@@ -74,14 +76,17 @@ let partition_def = cake_define
 let foldl_def = cake_define
   `(mllist_foldl f e [] = e) /\
    (mllist_foldl f e (h :: t) = mllist_foldl f (f h e) t)`;;
+hol4_overload "foldl" "mllist_foldl";;
 
 let foldli_aux_def = cake_define
   `(mllist_foldli_aux f e n [] = e) /\
    (mllist_foldli_aux f e n (h :: t) = mllist_foldli_aux f (f n h
      e) (SUC n) t)`;;
+hol4_overload "foldli_aux" "mllist_foldli_aux";;
 
 let foldli_def = cake_define
-  `mllist_foldli f e l = mllist_foldli_aux f e 0 l`;;
+  `mllist_foldli f e l = foldli_aux f e 0 l`;;
+hol4_overload "foldli" "mllist_foldli";;
 
 (* these definitions are in A normal form in
    order to be able to prove CF specs about them
@@ -100,6 +105,7 @@ let tabulate_aux_def = cake_define
 
 let tabulate_def = cake_define
   `mllist_tabulate n f = (let l = [] in tabulate_aux 0 n f l)`;;
+hol4_overload "tabulate" "mllist_tabulate";;
 
 let collate_def = cake_define
   `(mllist_collate f [] [] = EQUAL) /\
@@ -108,6 +114,7 @@ let collate_def = cake_define
    (mllist_collate f (h1 :: t1) (h2 :: t2) =
      (if f h1 h2 = EQUAL then mllist_collate f t1 t2 else f h1
        h2))`;;
+hol4_overload "collate" "mllist_collate";;
 
 let cpn_to_reln_def = cake_define
   `cpn_to_reln f x1 x2 = (f x1 x2 = LESS)`;;

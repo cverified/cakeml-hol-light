@@ -26,8 +26,7 @@ let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
    "refs_start","num"];;
 
 let gc_move_def = cake_define
-  `(gen_gc_partial_gc_move conf state (gc_shared_Data d) =
-  (gc_shared_Data d,state)) /\
+  `(gen_gc_partial_gc_move conf state (Data d) = (Data d,state)) /\
    (gen_gc_partial_gc_move conf state (gc_shared_Pointer ptr d) =
       (let ok = (gc_state_ok state /\ (ptr < heap_length
         (gc_state_heap state))) in
@@ -51,13 +50,15 @@ let gc_move_def = cake_define
                 (ForwardPointer ptr _1 l) -> (gc_shared_Pointer ptr
                 d,state) | _2 -> (gc_shared_Pointer ptr
                 d,gc_state_ok_fupd (K F) state))))`;;
+hol4_overload "gc_move" "gen_gc_partial_gc_move";;
 
 let gc_move_list_def = cake_define
   `(gen_gc_partial_gc_move_list conf state [] = ([],state)) /\
    (gen_gc_partial_gc_move_list conf state (x :: xs) =
-     (let (x,state) = gen_gc_partial_gc_move conf state x in
+     (let (x,state) = gc_move conf state x in
      let (xs,state) = gen_gc_partial_gc_move_list conf state xs in
        (x :: xs,state)))`;;
+hol4_overload "gc_move_list" "gen_gc_partial_gc_move_list";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
@@ -69,8 +70,7 @@ let gc_move_data_def = cake_define_wf
        (if ?_limit conf < heap_length (gc_state_h1 state ++ (h ::
          h2)) then gc_state_ok_fupd (K F) state else
         match h with DataElement xs l d ->
-          (let (xs,state) = gen_gc_partial_gc_move_list conf state xs
-            in
+          (let (xs,state) = gc_move_list conf state xs in
           let h1 = gc_state_h1 state ++ [DataElement xs l d] in
           let h2 = TL (gc_state_h2 state) in
           let ok = gc_state_ok state /\ ~(gc_state_h2 state = []) /\
@@ -78,14 +78,14 @@ let gc_move_data_def = cake_define_wf
             gen_gc_partial_gc_move_data conf (gc_state_ok_fupd (K
               ok) (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
               state)))) | _3 -> gc_state_ok_fupd (K F) state)))`;;
+hol4_overload "gc_move_data" "gen_gc_partial_gc_move_data";;
 
 let gc_move_ref_list_def = cake_define
   `gc_move_ref_list conf state x3 =
         match x3 with
           [] -> ([],state)
         | (DataElement ptrs l d :: xs) ->
-       let (ptrs',state) = gen_gc_partial_gc_move_list conf state
-         ptrs in
+       let (ptrs',state) = gc_move_list conf state ptrs in
        let (xs,state) = gc_move_ref_list conf state xs in
          (DataElement ptrs' l d :: xs,state)
         | (x :: xs) -> (x :: xs,gc_state_ok_fupd (K F) state)`;;
@@ -102,11 +102,10 @@ let partial_gc_def = cake_define
              (gen_gc_partial_conf_gen_start conf)) (gc_state_r2_fupd (K
              refs) (gc_state_old_fupd (K old) (gc_state_heap_fupd (K
              heap) empty_state)))) in
-       let (roots,state) = gen_gc_partial_gc_move_list conf state
-         roots in
+       let (roots,state) = gc_move_list conf state roots in
        let (refs',state) = gc_move_ref_list conf state refs in
-       let state = gen_gc_partial_gc_move_data conf (gc_state_r2_fupd
-         (K []) (gc_state_r1_fupd (K refs') state)) in
+       let state = gc_move_data conf (gc_state_r2_fupd (K [])
+         (gc_state_r1_fupd (K refs') state)) in
          (roots,state)))`;;
 
 (* Pointers between current and old generations are correct *)
@@ -135,13 +134,12 @@ let data_sort_INDUCT,data_sort_RECURSION = define_datatype
   "data_sort = Protected ('a) | Real ('b)";;
 
 let to_gen_heap_address_def = cake_define
-  `(to_gen_heap_address conf (gc_shared_Data a) = gc_shared_Data (Real
-  a)) /\
+  `(to_gen_heap_address conf (Data a) = Data (Real a)) /\
    (to_gen_heap_address conf (gc_shared_Pointer ptr a) =
      (if ptr < gen_gc_partial_conf_gen_start conf then
-       gc_shared_Data (Protected (gc_shared_Pointer ptr a)) else if
+       Data (Protected (gc_shared_Pointer ptr a)) else if
          gen_gc_partial_conf_refs_start conf <= ptr then
-       gc_shared_Data (Protected (gc_shared_Pointer ptr a)) else
+       Data (Protected (gc_shared_Pointer ptr a)) else
        gc_shared_Pointer (ptr - gen_gc_partial_conf_gen_start
          conf) (Real a)))`;;
 
@@ -201,8 +199,8 @@ let RootsRefs = cake_inductive
         refs) (gc_shared_Pointer ptr a :: roots)) /\
    (!ptrs m b refs roots a.
       RootsRefs (DataElement ptrs m b :: refs) roots ==>
-      RootsRefs (DataElement (gc_shared_Data a :: ptrs) m b :: refs)
-        (gc_shared_Data a :: roots)) /\
+      RootsRefs (DataElement (Data a :: ptrs) m b :: refs) (Data a ::
+        roots)) /\
    (!refs roots m b.
       RootsRefs refs roots ==>
       RootsRefs (DataElement [] m b :: refs) roots) /\

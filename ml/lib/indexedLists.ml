@@ -12,3 +12,4 @@ let findi_def = cake_define
   `indexedLists_findi x [] = 0 /\
    indexedLists_findi x (h :: t) = (if x = h then 0 else 1 +
      indexedLists_findi x t)`;;
+hol4_overload "findi" "indexedLists_findi";;

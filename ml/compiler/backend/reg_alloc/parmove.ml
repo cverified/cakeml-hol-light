@@ -80,6 +80,7 @@ let wf_def = cake_define
      (~NULL 'gq ==> EVERY IS_SOME (MAP SND (FRONT 'gq))) /\
      EVERY IS_SOME (MAP FST 'gq) /\
      parmove_path 'gq`;;
+hol4_overload "wf" "parmove_wf";;
 (* HOL4 overload (expanded in the port):
      None =  *)
 

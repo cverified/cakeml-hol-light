@@ -289,11 +289,31 @@ class Db:
       st += self.deps.get(t, [])
     return seen
 
-  def names_for(self, thy):
-    """the name mapping to use when translating theory thy"""
+  def overloaded(self):
+    """the names that several theories of the port define as a
+       constant: HOL4 overloads them and resolves them by the type,
+       and the port does the same"""
+    out = set()
+    for nm, v in self.defs.items():
+      ts = set(t for t, k in v if k in ('def', 'con', 'rel'))
+      if len(ts) > 1 and nm not in self.hl and nm not in self.provided:
+        out.add(nm)
+    return out
+
+  def names_for(self, thy, types=False):
+    """the name mapping to use when translating theory thy; with
+       types it is the mapping of the type names, which is a
+       different one (a type and a constant can have the same name,
+       as the type v and the constant v do)"""
     anc = self.ancestors(thy)
+    tykinds = ('type', 'tyabbrev')
     out = {}
     for (t, nm), new in self.rename.items():
+      kinds = [k for t2, k in self.defs.get(nm, []) if t2 == t]
+      if types:
+        if not any(k in tykinds for k in kinds): continue
+      else:
+        if kinds and all(k in tykinds for k in kinds): continue
       if t in anc or t == thy:
         out[nm] = new
       out[(t, nm)] = new

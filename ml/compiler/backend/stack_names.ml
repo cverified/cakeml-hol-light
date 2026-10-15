@@ -11,8 +11,10 @@
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/stack_alloc.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
 
 (* HOL4 overload (expanded in the port):
      find_name = tlookup *)
@@ -23,28 +25,27 @@ let ri_find_name_def = cake_define
 
 let inst_find_name_def = cake_define
   `inst_find_name f i =
-     (match i with stackLang_Skip -> stackLang_Skip | asm_Const r w
-       -> asm_Const ((tlookup) f r) w | asm_Arith (asm_Binop bop d r ri)
-       ->
-         asm_Arith (asm_Binop bop ((tlookup) f d) ((tlookup) f r)
-           (ri_find_name f ri)) | asm_Arith (asm_Shift sop d r ri) ->
-         asm_Arith (asm_Shift sop ((tlookup) f d) ((tlookup) f r)
-           (ri_find_name f ri)) | asm_Arith (asm_Div r1 r2 r3) ->
-         asm_Arith (asm_Div ((tlookup) f r1) ((tlookup) f r2)
-           ((tlookup) f r3)) | asm_Arith (asm_AddCarry r1 r2 r3 r4) ->
-         asm_Arith (asm_AddCarry ((tlookup) f r1) ((tlookup) f r2)
-           ((tlookup) f r3) ((tlookup) f r4)) | asm_Arith
-           (asm_AddOverflow r1 r2 r3 r4) ->
-         asm_Arith (asm_AddOverflow ((tlookup) f r1) ((tlookup) f r2)
-           ((tlookup) f r3) ((tlookup) f r4)) | asm_Arith
-           (asm_SubOverflow r1 r2 r3 r4) ->
-         asm_Arith (asm_SubOverflow ((tlookup) f r1) ((tlookup) f r2)
-           ((tlookup) f r3) ((tlookup) f r4)) | asm_Arith (asm_LongMul
+     (match i with Skip -> Skip | Const r w -> Const ((tlookup) f r)
+       w | Arith (asm_Binop bop d r ri) ->
+         Arith (asm_Binop bop ((tlookup) f d) ((tlookup) f r)
+           (ri_find_name f ri)) | Arith (Shift sop d r ri) ->
+         Arith (Shift sop ((tlookup) f d) ((tlookup) f r)
+           (ri_find_name f ri)) | Arith (Div r1 r2 r3) ->
+         Arith (Div ((tlookup) f r1) ((tlookup) f r2) ((tlookup) f
+           r3)) | Arith (asm_AddCarry r1 r2 r3 r4) ->
+         Arith (asm_AddCarry ((tlookup) f r1) ((tlookup) f r2)
+           ((tlookup) f r3) ((tlookup) f r4)) | Arith (asm_AddOverflow
            r1 r2 r3 r4) ->
-         asm_Arith (asm_LongMul ((tlookup) f r1) ((tlookup) f r2)
-           ((tlookup) f r3) ((tlookup) f r4)) | asm_Arith (asm_LongDiv
-           r1 r2 r3 r4 r5) ->
-         asm_Arith (asm_LongDiv ((tlookup) f r1) ((tlookup) f r2)
+         Arith (asm_AddOverflow ((tlookup) f r1) ((tlookup) f r2)
+           ((tlookup) f r3) ((tlookup) f r4)) | Arith (asm_SubOverflow
+           r1 r2 r3 r4) ->
+         Arith (asm_SubOverflow ((tlookup) f r1) ((tlookup) f r2)
+           ((tlookup) f r3) ((tlookup) f r4)) | Arith (asm_LongMul r1 r2
+           r3 r4) ->
+         Arith (asm_LongMul ((tlookup) f r1) ((tlookup) f r2)
+           ((tlookup) f r3) ((tlookup) f r4)) | Arith (asm_LongDiv r1 r2
+           r3 r4 r5) ->
+         Arith (asm_LongDiv ((tlookup) f r1) ((tlookup) f r2)
            ((tlookup) f r3) ((tlookup) f r4) ((tlookup) f r5)) |
            asm_Mem mop r (Addr a w) -> asm_Mem mop ((tlookup) f r)
            (Addr ((tlookup) f a) w) | asm_FP (FPLess r f1 f2) ->
@@ -105,10 +106,11 @@ val comp_def = Define comp_quotation
 
 let prog_comp_def = cake_define
   `stack_names_prog_comp f (n,p) = (n,comp f p)`;;
+hol4_overload "prog_comp" "stack_names_prog_comp";;
 
 let compile_def = cake_define
-  `stack_names_compile f stackLang_prog = MAP (stack_names_prog_comp
-  f) stackLang_prog`;;
+  `stack_names_compile f prog = MAP (prog_comp f) prog`;;
+hol4_overload "compile" "stack_names_compile";;
 
 (* some defaults *)
 

@@ -93,12 +93,14 @@ let shift_seq_def = cake_define
 let app_list_INDUCT,app_list_RECURSION = define_datatype
   "app_list = misc_List ('a list) | misc_Append (app_list) (app_list) \
    | misc_Nil";;
+hol4_overload "List" "misc_List";;
+hol4_overload "Append" "misc_Append";;
 
 let append_aux_def = cake_define
   `(append_aux misc_Nil aux = aux) /\
-   (append_aux (misc_List xs) aux = xs ++ aux) /\
-   (append_aux (misc_Append l1 l2) aux = append_aux l1 (append_aux
-     l2 aux))`;;
+   (append_aux (List xs) aux = xs ++ aux) /\
+   (append_aux (Append l1 l2) aux = append_aux l1 (append_aux l2
+     aux))`;;
 
 let append_def = cake_define
   `append l = append_aux l []`;;
@@ -108,7 +110,7 @@ let SmartAppend_def = cake_define
         match (l1,l2) with
           (misc_Nil,l2) -> l2
         | (l1,misc_Nil) -> l1
-        | (l1,l2) -> misc_Append l1 l2`;;
+        | (l1,l2) -> Append l1 l2`;;
 
 (* instant derivation from LIST_EQ_REWRITE *)
 
@@ -132,21 +134,19 @@ let SmartAppend_def = cake_define
 
 let lookup_any_def = cake_define
   `lookup_any x sp d =
-     (match sptree_lookup x sp with NONE -> d | SOME m -> m)`;;
+     (match lookup x sp with NONE -> d | SOME m -> m)`;;
 
 let fromList2_def = cake_define
-  `fromList2 l = SND (FOLDL (\(i,t) a. (i + 2,sptree_insert i a t))
-  (0,LN) l)`;;
+  `fromList2 l = SND (FOLDL (\(i,t) a. (i + 2,insert i a t)) (0,LN)
+  l)`;;
 
 (* used in only one place: stack_to_labProof *)
 
 let zlookup_def = cake_define
-  `zlookup m k = (match sptree_lookup k m with NONE -> 0 | SOME k ->
-  k)`;;
+  `zlookup m k = (match lookup k m with NONE -> 0 | SOME k -> k)`;;
 
 let tlookup_def = cake_define
-  `tlookup m k = (match sptree_lookup k m with NONE -> k | SOME k ->
-  k)`;;
+  `tlookup m k = (match lookup k m with NONE -> k | SOME k -> k)`;;
 
 (* should be composition of oEL and as-yet-undefined "THE default" *)
 let any_el_def = cake_define
@@ -324,10 +324,11 @@ let word_list_def = cake_define
   `(misc_word_list a [] = emp) /\
    (misc_word_list a (x :: xs) = set_sep_one (a,x) *
      misc_word_list (a + bytes_in_word) xs)`;;
+hol4_overload "word_list" "misc_word_list";;
 
 let word_list_exists_def = cake_define
   `word_list_exists a n =
-     SEP_EXISTS (\xs. misc_word_list a xs * cond (LENGTH xs = n))`;;
+     SEP_EXISTS (\xs. word_list a xs * cond (LENGTH xs = n))`;;
 
 (* lookup_vars vs env = OPT_MMAP (\i. oEL i env) vs *)
 let lookup_vars_def = cake_define
@@ -569,7 +570,7 @@ let copy_shape_def = cake_define
 (* The range is the set of values taken on by an sptree.
   Not sure if these are worth moving. *)
 let range_def = cake_define
-  `range s = {v | ?n. sptree_lookup n s = SOME v}`;;
+  `range s = {v | ?n. lookup n s = SOME v}`;;
 
 (* END TODO *)
 

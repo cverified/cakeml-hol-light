@@ -15,6 +15,7 @@ let destTOK_def = cake_define
         match x1 with
           (grammar_TOK tk,_1) -> SOME tk
         | _2 -> NONE`;;
+hol4_overload "destTOK" "grammar_destTOK";;
 
 let grammar_FIELDS = define_record "grammar"
   ["start","'b+num";

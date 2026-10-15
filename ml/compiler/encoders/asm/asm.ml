@@ -70,6 +70,9 @@
    ---------------------------------------------------------------------
      ---- *)
 
+needs "compiler/backend/bvl_jump.ml";;
+needs "compiler/backend/closLang.ml";;
+needs "compiler/backend/dataLang.ml";;
 needs "lib/alignment.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "semantics/ast.ml";;
@@ -87,10 +90,18 @@ let asm_reg_imm_INDUCT,asm_reg_imm_RECURSION = define_datatype
 
 let binop_INDUCT,binop_RECURSION = define_datatype
   "binop = asm_Add | asm_Sub | asm_And | asm_Or | asm_Xor";;
+hol4_overload "Add" "asm_Add";;
+hol4_overload "Sub" "asm_Sub";;
+hol4_overload "And" "asm_And";;
+hol4_overload "Or" "asm_Or";;
+hol4_overload "Xor" "asm_Xor";;
 
 let cmp_INDUCT,cmp_RECURSION = define_datatype
   "cmp = asm_Equal | asm_Lower | asm_Less | asm_Test | asm_NotEqual | \
    asm_NotLower | asm_NotLess | asm_NotTest";;
+hol4_overload "Equal" "asm_Equal";;
+hol4_overload "Less" "asm_Less";;
+hol4_overload "Test" "asm_Test";;
 
 let asm_arith_INDUCT,asm_arith_RECURSION = define_datatype
   "asm_arith = asm_Binop (binop) (num) (num) ('a asm_reg_imm) | \
@@ -99,6 +110,8 @@ let asm_arith_INDUCT,asm_arith_RECURSION = define_datatype
    (num) (num) (num) (num) (num) | asm_AddCarry (num) (num) (num) \
    (num) | asm_AddOverflow (num) (num) (num) (num) | asm_SubOverflow \
    (num) (num) (num) (num)";;
+hol4_overload "Shift" "asm_Shift";;
+hol4_overload "Div" "asm_Div";;
 
 let fp_INDUCT,fp_RECURSION = define_datatype
   "fp = FPLess (num) (num) (num) | FPLessEqual (num) (num) (num) | \
@@ -115,15 +128,25 @@ let asm_addr_INDUCT,asm_addr_RECURSION = define_datatype
 let memop_INDUCT,memop_RECURSION = define_datatype
   "memop = asm_Load | asm_Load8 | asm_Load16 | asm_Load32 | asm_Store \
    | asm_Store8 | asm_Store16 | asm_Store32";;
+hol4_overload "Load" "asm_Load";;
+hol4_overload "Store" "asm_Store";;
 
 let asm_inst_INDUCT,asm_inst_RECURSION = define_datatype
   "asm_inst = asm_Skip | asm_Const (num) ('a word) | asm_Arith ('a \
    asm_arith) | asm_Mem (memop) (num) ('a asm_addr) | asm_FP (fp)";;
+hol4_overload "Skip" "asm_Skip";;
+hol4_overload "Const" "asm_Const";;
+hol4_overload "Arith" "asm_Arith";;
 
 let asm_INDUCT,asm_RECURSION = define_datatype
   "asm = asm_Inst ('a asm_inst) | asm_Jump ('a word) | asm_JumpCmp \
    (cmp) (num) ('a asm_reg_imm) ('a word) | asm_Call ('a word) | \
    asm_JumpReg (num) | asm_Loc (num) ('a word)";;
+hol4_overload "Inst" "asm_Inst";;
+hol4_overload "Jump" "asm_Jump";;
+hol4_overload "JumpCmp" "asm_JumpCmp";;
+hol4_overload "Call" "asm_Call";;
+hol4_overload "Loc" "asm_Loc";;
 
 (* -- ASM target-specific configuration -- *)
 
@@ -158,24 +181,24 @@ let fp_reg_ok_def = cake_define
 let reg_imm_ok_def = cake_define
   `(reg_imm_ok b (Reg r) c = reg_ok r c) /\
    (reg_imm_ok b (Imm w) c =
-      ((b = INL asm_Xor) /\ (w = --(n2w 1)) \/
-        asm_config_valid_imm c b w))`;;
+      ((b = INL Xor) /\ (w = --(n2w 1)) \/ asm_config_valid_imm c
+        b w))`;;
 
 
 (* Requires register inequality for some architectures *)
 let arith_ok_def = cake_define
   `(arith_ok (asm_Binop b r1 r2 ri) c <=>
-      (asm_config_two_reg_arith c ==> (r1 = r2) \/ (b = asm_Or) /\
-        (ri = Reg r2)) /\
+      (asm_config_two_reg_arith c ==> (r1 = r2) \/ (b = Or) /\ (ri =
+        Reg r2)) /\
       reg_ok r1 c /\ reg_ok r2 c /\ reg_imm_ok (INL b) ri c) /\
-   (arith_ok (asm_Shift l r1 r2 ri) (c:'a asm_config) <=>
+   (arith_ok (Shift l r1 r2 ri) (c:'a asm_config) <=>
       (asm_config_two_reg_arith c ==> (r1 = r2)) /\
       reg_ok r1 c /\ reg_ok r2 c /\
       (match ri with Imm i -> (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i
         < dimindex (:'a)) | Reg r ->
          reg_ok r c /\
          (asm_config_ISA c = x86_64 ==> r = 1))) /\
-   (arith_ok (asm_Div r1 r2 r3) c <=>
+   (arith_ok (Div r1 r2 r3) c <=>
       reg_ok r1 c /\ reg_ok r2 c /\ reg_ok r3 c /\ asm_config_ISA
       c IN {ARMv8,MIPS,RISC_V}) /\
    (arith_ok (asm_LongMul r1 r2 r3 r4) c <=>
@@ -270,13 +293,13 @@ let offset_ok_def = cake_define
      loc_offset_ok = λc. offset_ok c.code_alignment c.loc_offset *)
 
 let inst_ok_def = cake_define
-  `(inst_ok asm_Skip c = T) /\
-   (inst_ok (asm_Const r w) c = reg_ok r c) /\
-   (inst_ok (asm_Arith x) c = arith_ok x c) /\
+  `(inst_ok Skip c = T) /\
+   (inst_ok (Const r w) c = reg_ok r c) /\
+   (inst_ok (Arith x) c = arith_ok x c) /\
    (inst_ok (asm_FP x) c = fp_ok x c) /\
    (inst_ok (asm_Mem m r1 (Addr r2 w):'a asm_inst) c <=>
       reg_ok r1 c /\ reg_ok r2 c /\
-      (if m IN {asm_Load,asm_Store,asm_Load32,asm_Store32} then
+      (if m IN {Load,Store,asm_Load32,asm_Store32} then
          (\c. offset_ok 0 (asm_config_addr_offset c)) c w else if m
            IN {asm_Load16,asm_Store16} then
          (\c. offset_ok 0 (asm_config_hw_offset c)) c w /\
@@ -284,35 +307,36 @@ let inst_ok_def = cake_define
          (\c. offset_ok 0 (asm_config_byte_offset c)) c w))`;;
 
 let asm_ok_def = cake_define
-  `(asm_ok (asm_Inst i) c <=> inst_ok i c) /\
-   (asm_ok (asm_Jump w) c <=> (\c. offset_ok
-     (asm_config_code_alignment c) (asm_config_jump_offset c)) c w) /\
-   (asm_ok (asm_JumpCmp cmp r ri w) c <=>
+  `(asm_ok (Inst i) c <=> inst_ok i c) /\
+   (asm_ok (Jump w) c <=> (\c. offset_ok (asm_config_code_alignment
+     c) (asm_config_jump_offset c)) c w) /\
+   (asm_ok (JumpCmp cmp r ri w) c <=>
       (\c. offset_ok (asm_config_code_alignment c)
         (asm_config_cjump_offset c)) c w /\ cmp_ok cmp r ri c) /\
-   (asm_ok (asm_Call w) c <=>
+   (asm_ok (Call w) c <=>
       (match asm_config_link_reg c with SOME r -> reg_ok r c | NONE
         -> F) /\
       (\c. offset_ok (asm_config_code_alignment c)
         (asm_config_jump_offset c)) c w) /\
    (asm_ok (asm_JumpReg r) c <=> reg_ok r c) /\
-   (asm_ok (asm_Loc r w) c <=> reg_ok r c /\ (\c. offset_ok
+   (asm_ok (Loc r w) c <=> reg_ok r c /\ (\c. offset_ok
      (asm_config_code_alignment c) (asm_config_loc_offset c)) c w)`;;
 
 let word_cmp_def = cake_define
   `(asm_word_cmp (EQUAL) w1 w2 = (w1 = w2)) /\
    (asm_word_cmp (LESS) w1 w2 = (w1 < w2)) /\
    (asm_word_cmp asm_Lower w1 w2 = (w1 <+ w2)) /\
-   (asm_word_cmp asm_Test w1 w2 = ((w1 && w2) = (n2w 0))) /\
+   (asm_word_cmp Test w1 w2 = ((w1 && w2) = (n2w 0))) /\
    (asm_word_cmp asm_NotEqual w1 w2 = (~(w1 = w2))) /\
    (asm_word_cmp asm_NotLess w1 w2 = ~(w1 < w2)) /\
    (asm_word_cmp asm_NotLower w1 w2 = ~(w1 <+ w2)) /\
    (asm_word_cmp asm_NotTest w1 w2 = (~((w1 && w2) = (n2w 0))))`;;
+hol4_overload "word_cmp" "asm_word_cmp";;
 
 let is_load_def = cake_define
   `is_load x1 =
         match x1 with
-          asm_Load -> T
+          Load -> T
         | asm_Load8 -> T
         | asm_Load16 -> T
         | asm_Load32 -> T

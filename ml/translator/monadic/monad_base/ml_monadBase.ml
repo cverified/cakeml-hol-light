@@ -9,6 +9,7 @@
 *)
 
 needs "lib/set_sep.ml";;
+needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 (* 'a is the type of the state, 'b is the type of successful
@@ -23,10 +24,9 @@ let exc_INDUCT,exc_RECURSION = define_datatype
 
 let liftM_def = cake_define
   `((liftM read' (write':('a->'a)->'d->'d)
-  (ast_op:'a->('b,'c)exc#'a)):'d->('b,'c)exc#'d) =
-     (\semanticPrimitives_state. let (ret,new) = ast_op (read'
-       semanticPrimitives_state) in
-                (ret,write' (K new) semanticPrimitives_state))`;;
+  (op:'a->('b,'c)exc#'a)):'d->('b,'c)exc#'d) =
+     (\state. let (ret,new) = op (read' state) in
+                (ret,write' (K new) state))`;;
 
 (* Definitions using monadic syntax *)
 
@@ -201,5 +201,4 @@ val monad_eqs = LIST_CONJ
 
 (* Run *)
 let run_def = cake_define
-  `run (x:'a->('b,'c)exc#'a) semanticPrimitives_state = FST (x
-  semanticPrimitives_state)`;;
+  `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;

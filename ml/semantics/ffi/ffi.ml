@@ -61,7 +61,7 @@ let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
 
 let call_FFI_def = cake_define
   `call_FFI (st:'ffi ffi_state) s conf bytes =
-     (if ~(s = ExtCall (strlit "")) then
+     (if ~(s = ExtCall (implode "")) then
        match ffi_state_oracle st s (ffi_state_ffi_state st) conf
          bytes with
          Oracle_return ffi' bytes' ->
@@ -78,6 +78,7 @@ let call_FFI_def = cake_define
 let outcome_INDUCT,outcome_RECURSION = define_datatype
   "outcome = ffi_Success | ffi_Resource_limit_hit | ffi_FFI_outcome \
    (final_event)";;
+hol4_overload "Success" "ffi_Success";;
 
 (* A program can Diverge, Terminate, or Fail. We prove that Fail is
    avoided. For Diverge and Terminate, we keep track of what I/O
@@ -85,6 +86,7 @@ let outcome_INDUCT,outcome_RECURSION = define_datatype
 let behaviour_INDUCT,behaviour_RECURSION = define_datatype
   "behaviour = ffi_Diverge (io_event llist) | ffi_Terminate (outcome) \
    (io_event list) | ffi_Fail";;
+hol4_overload "Fail" "ffi_Fail";;
 
 (* trace-based semantics can be recovered as an instance of oracle-based
  * semantics as follows. *)

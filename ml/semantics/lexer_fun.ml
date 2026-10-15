@@ -7,6 +7,7 @@
   A functional specification of lexing from strings to token lists.
 *)
 
+needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/ASCIInumbers.ml";;
@@ -106,6 +107,7 @@ let read_string_def = cake_define_wf
                         lexer_fun_read_string cs' (s ++ [c])
                               (next_loc 4 loc) else (ErrorS,loc,TL
                                 str)) | _2 -> (ErrorS,loc,TL str))`;;
+hol4_overload "read_string" "lexer_fun_read_string";;
 
 let skip_comment_def = cake_define
   `(skip_comment "" d _3 = NONE) /\
@@ -209,14 +211,13 @@ let next_sym_def = cake_define
         let (n,rest) = read_while isAlphaNumPrime str [c] in
           SOME (OtherS n,Locs loc (next_loc (LENGTH n - 1) loc),
                 rest) else if c = (CHR 34) then
-        let (t,loc',rest) = lexer_fun_read_string str "" (next_loc 1
-          loc) in
+        let (t,loc',rest) = read_string str "" (next_loc 1 loc) in
           SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
             str) then
         SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
           isPREFIX "#\"" (c :: str) then
-        let (t,loc',rest) = lexer_fun_read_string (TL str) ""
-          (next_loc 2 loc) in
+        let (t,loc',rest) = read_string (TL str) "" (next_loc 2 loc)
+          in
           SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX "#("
             (c :: str) then
         let (t,loc',rest) = read_FFIcall (TL str) "" (next_loc 2 loc)
@@ -318,15 +319,15 @@ let get_token_def = cake_define
 
 let to_path_def = cake_define
   `to_path [] = tokens_End /\
-   to_path (x :: xs) = tokens_Mod x (to_path xs)`;;
+   to_path (x :: xs) = Mod x (to_path xs)`;;
 
 let token_of_sym_def = cake_define
   `token_of_sym s =
      (match s with ErrorS -> tokens_LexErrorT | StringS s ->
-       tokens_StringT (implode s) | CharS c -> tokens_CharT c |
-       NumberS i -> tokens_IntT i | WordS n -> tokens_WordT n | LongS
-       xs s -> tokens_LongidT (to_path (MAP implode xs)) (implode s)
-       | FFIS s -> tokens_FFIT (implode s) | OtherS s -> get_token s)`;;
+       tokens_StringT (implode s) | CharS c -> CharT c | NumberS i ->
+       IntT i | WordS n -> WordT n | LongS xs s -> tokens_LongidT
+       (to_path (MAP implode xs)) (implode s) | FFIS s -> tokens_FFIT
+       (implode s) | OtherS s -> get_token s)`;;
 
 let next_token_def = cake_define
   `next_token input loc =
@@ -340,9 +341,9 @@ let next_token_def = cake_define
 let lexer_fun_aux_def = cake_define_wf
   `MEASURE (LENGTH o FST)`
   `lexer_fun_aux input loc =
-     (match next_token input loc with NONE -> [] | SOME
-       (tokens_token,Locs loc' loc'',rest_of_input) ->
-         (tokens_token,Locs loc' loc'') ::
+     (match next_token input loc with NONE -> [] | SOME (token,Locs
+       loc' loc'',rest_of_input) ->
+         (token,Locs loc' loc'') ::
              lexer_fun_aux rest_of_input (next_loc 1 loc''))`;;
 
 let lexer_fun_def = cake_define

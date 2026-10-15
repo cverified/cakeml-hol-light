@@ -16,6 +16,8 @@ needs "compiler/backend/pattern_matching/pattern_comp.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "lib/sptree.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: unifProps unifDef walk walkstar
    collapse subst rmfmap tcallUnif transfer cps *)
@@ -35,7 +37,7 @@ let encode_infer_t_def = cake_define
      Pair (Const Tapp_tag) (Pair (Const (TC_tag tc)) (encode_infer_ts
        ts))) /\
    (encode_infer_t (Infer_Tuvar n) =
-     ast_Var n) /\
+     Var n) /\
    (encode_infer_ts [] =
      Const Null_tag) /\
    (encode_infer_ts (t :: ts) =
@@ -44,7 +46,7 @@ let encode_infer_t_def = cake_define
 let decode_infer_t_def = cake_define
   `decode_infer_t x1 =
         match x1 with
-          (ast_Var n) ->
+          (Var n) ->
      Infer_Tuvar n
         | (Const (DB_tag n)) ->
      Infer_Tvar_db n
@@ -62,11 +64,11 @@ let RKC_def = cake_define
   `RKC rkt ct <=> encode_infer_t ct = rkt`;;
 
 let substR_def = cake_define
-  `substR fm sp <=> wfs fm /\ sptree_wf sp /\ fm = encode_infer_t o_f
-  sp2fm sp`;;
+  `substR fm sp <=> wfs fm /\ wf sp /\ fm = encode_infer_t o_f sp2fm
+  sp`;;
 
 let cwfs_def = cake_define
-  `cwfs s <=> swfs (sptree_map encode_infer_t s) /\ sptree_wf s`;;
+  `cwfs s <=> swfs (map encode_infer_t s) /\ wf s`;;
 
 (*
 Theorem RKC_FORALL[transfer_rule]:
@@ -77,11 +79,10 @@ QED
 *)
 
 let cvwalk_def = cake_define
-  `cvwalk s n = decode_infer_t (svwalk (sptree_map encode_infer_t s)
-  n)`;;
+  `cvwalk s n = decode_infer_t (svwalk (map encode_infer_t s) n)`;;
 
 let cwalk_def = cake_define
-  `cwalk s it = decode_infer_t (swalk (sptree_map encode_infer_t s)
+  `cwalk s it = decode_infer_t (swalk (map encode_infer_t s)
   (encode_infer_t it))`;;
 
 (* HOL4 ML code, not ported:
@@ -90,29 +91,28 @@ val cwfs = ASSUME “cwfs s” |> SRULE[cwfs_def] |> cj 1
 *)
 
 let coc_def = cake_define
-  `coc s it n = soc (sptree_map encode_infer_t s) (encode_infer_t it)
-  n`;;
+  `coc s it n = soc (map encode_infer_t s) (encode_infer_t it) n`;;
 
 let t_vars_def = cake_define
   `t_vars t = vars (encode_infer_t t)`;;
 
 let cunify_def = cake_define
-  `cunify s t1 t2 = OPTION_MAP (sptree_map decode_infer_t)
-                              (sunify (sptree_map encode_infer_t s)
+  `cunify s t1 t2 = OPTION_MAP (map decode_infer_t)
+                              (sunify (map encode_infer_t s)
                                 (encode_infer_t t1)
                               (encode_infer_t t2))`;;
 
 let cunifyl_def = cake_define
   `cunifyl s ts1 ts2 =
-   OPTION_MAP (sptree_map decode_infer_t)
-              (sunify (sptree_map encode_infer_t s)
+   OPTION_MAP (map decode_infer_t)
+              (sunify (map encode_infer_t s)
                       (encode_infer_ts ts1)
                       (encode_infer_ts ts2))`;;
 
 (* HOL4 termination: *)
 let capply_subst_def = cake_define_wf
   `MEASURE (infer_t_size o SND)`
-  `(capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with
+  `(capply_subst s (Infer_Tuvar n) = (match lookup n s with
                               NONE -> Infer_Tuvar n | SOME it -> it))
                                 /\
    (capply_subst s (Infer_Tapp ts tc) = Infer_Tapp (MAP (capply_subst
@@ -146,8 +146,7 @@ let cvwalk_code_def = cake_define
   `cvwalk_code s = cvwalk_code`;;
 
 let cvwalkR_def = cake_define
-  `cvwalkR 'gq = (\semanticPrimitives_v v0. vR (encode_infer_t o_f
-  sp2fm 'gq) semanticPrimitives_v v0)`;;
+  `cvwalkR 'gq = (\v v0. vR (encode_infer_t o_f sp2fm 'gq) v v0)`;;
 
 let tcvwalk_def = cake_define
   `tcvwalk s n = TAILREC (cvwalk_code s) n`;;
@@ -155,9 +154,8 @@ let tcvwalk_def = cake_define
 let tcwalk_def = cake_define
   `tcwalk s it = (match it with
                    Infer_Tvar_db c -> Infer_Tvar_db c | Infer_Tapp
-                     l n -> Infer_Tapp l n | Infer_Tuvar
-                     semanticPrimitives_v -> tcvwalk s
-                     semanticPrimitives_v)`;;
+                     l n -> Infer_Tapp l n | Infer_Tuvar v -> tcvwalk
+                     s v)`;;
 
 let cocl_def = cake_define
   `(cocl s [] n <=> F) /\
@@ -208,8 +206,8 @@ let kcocwl_code_def = cake_define
 
 let kcocwlR_def = cake_define
   `kcocwlR (s:infer_t spt) (n:num) =
-   inv_image (mlt1 (walkstarR (sp2fm (sptree_map encode_infer_t s)))
-     LEX (<))
+   inv_image (mlt1 (walkstarR (sp2fm (map encode_infer_t s))) LEX
+     (<))
              (\(ts:(infer_t list) list).
                 (BAG_OF_LIST (MAP encode_infer_t (FLAT ts)),LENGTH
                   ts))`;;
@@ -270,9 +268,9 @@ let star_kwork_def = cake_define
       | (_3 :: ks) -> star_kwork ks`;;
 
 let star_workbag_def = cake_define
-  `star_workbag semanticPrimitives_v its k =
-   (if semanticPrimitives_v then star_kwork k else BAG_UNION
-     (BAG_OF_LIST its) (star_kwork k))`;;
+  `star_workbag v its k =
+   (if v then star_kwork k else BAG_UNION (BAG_OF_LIST its)
+     (star_kwork k))`;;
 
 let isCONSk_def = cake_define
   `isCONSk x1 =
@@ -288,9 +286,7 @@ let kcwalkstarwlR_def = cake_define
               (<) LEX
               MEASURE (LENGTH o FILTER isCONSk) LEX
               MEASURE (\b. if b then 0 else 1))
-             (\(semanticPrimitives_v,its,k). (star_workbag
-               semanticPrimitives_v its k,LENGTH
-               k,k,semanticPrimitives_v))`;;
+             (\(v,its,k). (star_workbag v its k,LENGTH k,k,v))`;;
 
 (* HOL4 ML code, not ported:
 val kcwalkstarwl_code = tcallify_th [“s:infer_t num_map”] $
@@ -300,8 +296,7 @@ let kcwalkstarwl_code_def = cake_define
   `kcwalkstarwl_code s = kcwalkstarwl_code`;;
 
 let tcwalkstarwl_def = cake_define
-  `tcwalkstarwl s semanticPrimitives_v its k = TAILREC
-  (kcwalkstarwl_code s) (semanticPrimitives_v,its,k)`;;
+  `tcwalkstarwl s v its k = TAILREC (kcwalkstarwl_code s) (v,its,k)`;;
 
 let tcwalkstar_p1_def = cake_define
   `tcwalkstar_p1 s its k = tcwalkstarwl s F its k`;;
@@ -360,7 +355,7 @@ let kcunifywlR_def = cake_define
      substvars (encode_infer_t o_f sp2fm s) UNION cplist_vars wl
        SUBSET
      substvars (encode_infer_t o_f sp2fm s0) UNION cplist_vars wl0 /\
-     (mlt (walkstarR (sp2fm (sptree_map encode_infer_t s))) LEX (<))
+     (mlt (walkstarR (sp2fm (map encode_infer_t s))) LEX (<))
           (PFLAT wl,LENGTH wl)
           (PFLAT wl0,LENGTH wl0)`;;
 
@@ -374,16 +369,14 @@ let t_wfs_def = cake_define
   `t_wfs s = wfs (encode_infer_t o_f s)`;;
 
 let t_vwalk_def = cake_define
-  `t_vwalk s semanticPrimitives_v = decode_infer_t (vwalk
-  (encode_infer_t o_f s) semanticPrimitives_v)`;;
+  `t_vwalk s v = decode_infer_t (vwalk (encode_infer_t o_f s) v)`;;
 
 let t_walk_def = cake_define
   `t_walk s t = decode_infer_t (walk (encode_infer_t o_f s)
   (encode_infer_t t))`;;
 
 let t_oc_def = cake_define
-  `t_oc s t semanticPrimitives_v = oc (encode_infer_t o_f s)
-  (encode_infer_t t) semanticPrimitives_v`;;
+  `t_oc s t v = oc (encode_infer_t o_f s) (encode_infer_t t) v`;;
 
 (*
 Theorem t_oc_ind'[local]:
@@ -422,11 +415,10 @@ QED
 *)
 
 let t_ext_s_check_def = cake_define
-  `t_ext_s_check s semanticPrimitives_v t =
+  `t_ext_s_check s v t =
      OPTION_MAP
        ((o_f) decode_infer_t)
-       (ext_s_check (encode_infer_t o_f s) semanticPrimitives_v
-         (encode_infer_t t))`;;
+       (ext_s_check (encode_infer_t o_f s) v (encode_infer_t t))`;;
 
 let t_unify_def = cake_define
   `t_unify s t1 t2 =

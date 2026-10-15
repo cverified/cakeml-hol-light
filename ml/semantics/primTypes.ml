@@ -26,21 +26,21 @@ needs "semantics/typeSystem.ml";;
    exceptions and types must match those in semanticPrimitives *)
 let prim_types_program_def = cake_define
   `prim_types_program =
-    [Dexn unknown_loc (strlit "Bind") [];
-     Dexn unknown_loc (strlit "Chr") [];
-     Dexn unknown_loc (strlit "Div") [];
-     Dexn unknown_loc (strlit "Subscript") [];
-     Dtype unknown_loc [([],(strlit "bool"),[((strlit "False"),[]);
-       ((strlit "True"),[])])];
+    [Dexn unknown_loc (implode "Bind") [];
+     Dexn unknown_loc (implode "Chr") [];
+     Dexn unknown_loc (implode "Div") [];
+     Dexn unknown_loc (implode "Subscript") [];
+     Dtype unknown_loc [([],(implode "bool"),[((implode "False"),[]);
+       ((implode "True"),[])])];
      Dtype unknown_loc
-           [([(strlit "'a")],(strlit "list"),
-             [((strlit "[]"),[]); ((strlit "::"),[Atvar (strlit
-               "'a"); Atapp [Atvar (strlit "'a")] (Short (strlit
+           [([(implode "'a")],(implode "list"),
+             [((implode "[]"),[]); ((implode "::"),[Atvar (implode
+               "'a"); Atapp [Atvar (implode "'a")] (Short (implode
                "list"))])])]]`;;
 
 let add_to_sem_env_def = cake_define
   `add_to_sem_env ((st:'ffi semanticPrimitives_state),env) prog =
-   (match evaluate_evaluate_decs st env prog with
+   (match evaluate_decs st env prog with
      (st,Rval env') -> SOME (st,extend_dec_env env' env) |
        (st,Rerr _1) -> NONE)`;;
 
@@ -55,35 +55,36 @@ let prim_tenv_def = cake_define
       mk_?
           (alist_to_ns
             (REVERSE
-               [((strlit "Bind"),[],[],Texn_num); ((strlit
+               [((implode "Bind"),[],[],Texn_num); ((implode
                  "Chr"),[],[],Texn_num);
-                ((strlit "Div"),[],[],Texn_num); ((strlit
+                ((implode "Div"),[],[],Texn_num); ((implode
                   "Subscript"),[],[],Texn_num);
-                ((strlit "False"),[],[],Tbool_num); ((strlit
+                ((implode "False"),[],[],Tbool_num); ((implode
                   "True"),[],[],Tbool_num);
-                ((strlit "[]"),[(strlit "'a")],[],Tlist_num);
-                ((strlit "::"),[(strlit "'a")],[Tvar (strlit "'a");
-                  Tlist (Tvar (strlit "'a"))],Tlist_num)])) nsEmpty
+                ((implode "[]"),[(implode "'a")],[],Tlist_num);
+                ((implode "::"),[(implode "'a")],[Tvar (implode
+                  "'a"); Tlist (Tvar (implode "'a"))],Tlist_num)]))
+                  nsEmpty
           (alist_to_ns
             (REVERSE
-               [((strlit "array"),[(strlit "'a")],Tapp [Tvar (strlit
-                 "'a")] Tarray_num);
-                ((strlit "bool"),[],Tapp [] Tbool_num);
-                ((strlit "char"),[],Tapp [] Tchar_num);
-                ((strlit "double"),[],Tapp [] Tdouble_num);
-                ((strlit "exn"),[],Tapp [] Texn_num);
-                ((strlit "int"),[],Tapp [] Tint_num);
-                ((strlit "list"),[(strlit "'a")],Tapp [Tvar (strlit
-                  "'a")] Tlist_num);
-                ((strlit "ref"),[(strlit "'a")],Tapp [Tvar (strlit
+               [((implode "array"),[(implode "'a")],Tapp [Tvar
+                 (implode "'a")] Tarray_num);
+                ((implode "bool"),[],Tapp [] Tbool_num);
+                ((implode "char"),[],Tapp [] Tchar_num);
+                ((implode "double"),[],Tapp [] Tdouble_num);
+                ((implode "exn"),[],Tapp [] Texn_num);
+                ((implode "int"),[],Tapp [] Tint_num);
+                ((implode "list"),[(implode "'a")],Tapp [Tvar
+                  (implode "'a")] Tlist_num);
+                ((implode "ref"),[(implode "'a")],Tapp [Tvar (implode
                   "'a")] Tref_num);
-                ((strlit "string"),[],Tapp [] Tstring_num);
-                ((strlit "unit"),[],Tapp [] Ttup_num);
-                ((strlit "vector"),[(strlit "'a")],Tapp [Tvar (strlit
-                  "'a")] Tvector_num);
-                ((strlit "word64"),[],Tapp [] Tword64_num);
-                ((strlit "word8"),[],Tapp [] Tword8_num);
-                ((strlit "word8array"),[],Tapp []
+                ((implode "string"),[],Tapp [] Tstring_num);
+                ((implode "unit"),[],Tapp [] Ttup_num);
+                ((implode "vector"),[(implode "'a")],Tapp [Tvar
+                  (implode "'a")] Tvector_num);
+                ((implode "word64"),[],Tapp [] Tword64_num);
+                ((implode "word8"),[],Tapp [] Tword8_num);
+                ((implode "word8array"),[],Tapp []
                   Tword8array_num)]))`;;
 
 let prim_type_ids_def = cake_define

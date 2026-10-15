@@ -13,6 +13,8 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
+needs "compiler/backend/stackLang.ml";;
+needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
@@ -21,6 +23,8 @@ needs "lib/lprefix_lub.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ast.ml";;
+needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
@@ -31,6 +35,9 @@ needs "semantics/typeSystem.ml";;
 let machine_result_INDUCT,machine_result_RECURSION = define_datatype
   "machine_result = targetSem_Halt (outcome) | targetSem_Error | \
    targetSem_TimeOut";;
+hol4_overload "Halt" "targetSem_Halt";;
+hol4_overload "Error" "targetSem_Error";;
+hol4_overload "TimeOut" "targetSem_TimeOut";;
 
 let machine_config_FIELDS = define_record "machine_config"
   ["prog_addresses","'a word->bool";
@@ -48,7 +55,7 @@ let machine_config_FIELDS = define_record "machine_config"
    "ccache_pc","'a word";
    "ccache_interfer","num->'a word#'a word#'b->'b";
    "target","('a,'b,'c)target";
-   "mmio_info","(num#word8#'a asmSem_addr#num#'a word) list"];;
+   "mmio_info","(num#word8#'a asm_addr#num#'a word) list"];;
 
 let apply_oracle_def = cake_define
   `apply_oracle oracle x =
@@ -80,43 +87,41 @@ let read_ffi_bytearrays_def = cake_define
         (machine_config_len2_reg mc) ms)`;;
 
 let is_valid_mapped_read_def = cake_define
-  `is_valid_mapped_read pc (nb:word8) (ad:'a asmSem_addr) r pc' t ms md
-  =
+  `is_valid_mapped_read pc (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
-       (bytes_in_memory pc (asm_config_encode (?_config t)
-         (wordLang_Inst (asm_Mem asm_Load8 r ad)))
+       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+         (asm_Mem asm_Load8 r ad)))
          (?_get_byte t ms) md) else if nb = (n2w 0) then
-       (bytes_in_memory pc (asm_config_encode (?_config t)
-         (wordLang_Inst (asm_Mem wordLang_Load r ad)))
+       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+         (asm_Mem Load r ad)))
          (?_get_byte t ms) md) else if nb = (n2w 2) then
-       (bytes_in_memory pc (asm_config_encode (?_config t)
-         (wordLang_Inst (asm_Mem asm_Load16 r ad)))
+       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+         (asm_Mem asm_Load16 r ad)))
          (?_get_byte t ms) md) else if nb = (n2w 4) then
-       (bytes_in_memory pc (asm_config_encode (?_config t)
-         (wordLang_Inst (asm_Mem asm_Load32 r ad)))
+       (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+         (asm_Mem asm_Load32 r ad)))
          (?_get_byte t ms) md) else F)`;;
 
 let is_valid_mapped_write_def = cake_define
-  `is_valid_mapped_write pc (nb:word8) (ad:'a asmSem_addr) r pc' t ms md
-  =
+  `is_valid_mapped_write pc (nb:word8) (ad:'a asm_addr) r pc' t ms md =
      (if nb = (n2w 1) then
-         (bytes_in_memory pc (asm_config_encode (?_config t)
-           (wordLang_Inst (asm_Mem asm_Store8 r ad)))
+         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+           (asm_Mem asm_Store8 r ad)))
            (?_get_byte t ms) md) else if nb = (n2w 0) then
-         (bytes_in_memory pc (asm_config_encode (?_config t)
-           (wordLang_Inst (asm_Mem wordLang_Store r ad)))
+         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+           (asm_Mem Store r ad)))
            (?_get_byte t ms) md) else if nb = (n2w 2) then
-         (bytes_in_memory pc (asm_config_encode (?_config t)
-           (wordLang_Inst (asm_Mem asm_Store16 r ad)))
+         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+           (asm_Mem asm_Store16 r ad)))
            (?_get_byte t ms) md) else if nb = (n2w 4) then
-         (bytes_in_memory pc (asm_config_encode (?_config t)
-           (wordLang_Inst (asm_Mem asm_Store32 r ad)))
+         (bytes_in_memory pc (asm_config_encode (?_config t) (Inst
+           (asm_Mem asm_Store32 r ad)))
            (?_get_byte t ms) md) else F)`;;
 
 let evaluate_def = cake_define
   `targetSem_evaluate (mc:('b,'a,'c)machine_config) (ffi:'ffi ffi_state)
   k (ms:'a) =
-     (if k = 0 then (targetSem_TimeOut,ms,ffi) else
+     (if k = 0 then (TimeOut,ms,ffi) else
        if (?_get_pc (machine_config_target mc) ms) IN
          (machine_config_prog_addresses mc DIFF (set_of_list
          (machine_config_ffi_entry_pcs mc))) then
@@ -136,13 +141,12 @@ let evaluate_def = cake_define
                     mc) ms1 x = ?_get_byte (machine_config_target
                     mc) ms x) then
                targetSem_evaluate mc ffi (k - 1) ms2 else
-               (targetSem_Error,ms,ffi) else (targetSem_Error,ms,ffi)
-                 else if ?_get_pc (machine_config_target mc) ms =
-                 machine_config_halt_pc mc then
+               (Error,ms,ffi) else (Error,ms,ffi) else if ?_get_pc
+                 (machine_config_target mc) ms = machine_config_halt_pc
+                 mc then
          (if ?_get_reg (machine_config_target mc) ms
-           (machine_config_ptr_reg mc) = (n2w 0) then targetSem_Halt
-           ffi_Success else targetSem_Halt
-           ffi_Resource_limit_hit,ms,ffi) else if ?_get_pc
+           (machine_config_ptr_reg mc) = (n2w 0) then Halt Success else
+           Halt ffi_Resource_limit_hit,ms,ffi) else if ?_get_pc
            (machine_config_target mc) ms = machine_config_ccache_pc mc
            then
          let (ms1,new_oracle) =
@@ -157,13 +161,13 @@ let evaluate_def = cake_define
            targetSem_evaluate mc ffi (k - 1) ms1 else
          match find_index (?_get_pc (machine_config_target mc) ms)
            (machine_config_ffi_entry_pcs mc) 0 with NONE ->
-           (targetSem_Error,ms,ffi) | SOME ffi_index ->
-             (match EL ffi_index (?_ffi_names mc) with SharedMem
-               ast_op ->
+           (Error,ms,ffi) | SOME ffi_index ->
+             (match EL ffi_index (?_ffi_names mc) with SharedMem op
+               ->
                   (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with NONE -> (targetSem_Error,ms,ffi) |
-                    SOME (nb,a,labLang_reg,pc') ->
-                       (match ast_op with MappedRead ->
+                    ffi_index with NONE -> (Error,ms,ffi) | SOME
+                    (nb,a,reg,pc') ->
+                       (match op with MappedRead ->
                               (match a with Addr r off ->
                               (let ad = ?_get_reg
                                 (machine_config_target mc) ms r + off in
@@ -172,17 +176,16 @@ let evaluate_def = cake_define
                               (ad IN machine_config_shared_addresses
                                 mc) /\
                               is_valid_mapped_read (?_get_pc
-                                (machine_config_target mc) ms) nb a
-                                labLang_reg pc' (machine_config_target
+                                (machine_config_target mc) ms) nb a reg
+                                pc' (machine_config_target
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
                                 (?_ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome ->
-                              (targetSem_Halt (ffi_FFI_outcome
-                                outcome),ms,ffi) | FFI_return new_ffi
-                                new_bytes ->
+                              (Halt (ffi_FFI_outcome outcome),ms,ffi)
+                                | FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -190,8 +193,7 @@ let evaluate_def = cake_define
                                 machine_config_ffi_interfer_fupd (K
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
-                                (1:num)) ms1)) else
-                                (targetSem_Error,ms,ffi)))) |
+                                (1:num)) ms1)) else (Error,ms,ffi)))) |
                                 MappedWrite ->
                               (match a with Addr r off ->
                               (let ad = (?_get_reg
@@ -202,23 +204,21 @@ let evaluate_def = cake_define
                               (ad IN machine_config_shared_addresses
                                 mc) /\
                               is_valid_mapped_write (?_get_pc
-                                (machine_config_target mc) ms) nb a
-                                labLang_reg pc' (machine_config_target
+                                (machine_config_target mc) ms) nb a reg
+                                pc' (machine_config_target
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
                                 (?_ffi_names mc)) [nb]
                               (
                               (let w = ?_get_reg
-                                (machine_config_target mc) ms
-                                labLang_reg in
+                                (machine_config_target mc) ms reg in
                               if nb = (n2w 0) then word_to_bytes w F
                                 else word_to_bytes_aux (w2n nb) w F) ++
                                 (word_to_bytes ad F)) with FFI_final
                                 outcome ->
-                              (targetSem_Halt (ffi_FFI_outcome
-                                outcome),ms,ffi) | FFI_return new_ffi
-                                new_bytes ->
+                              (Halt (ffi_FFI_outcome outcome),ms,ffi)
+                                | FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -226,17 +226,15 @@ let evaluate_def = cake_define
                                 machine_config_ffi_interfer_fupd (K
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
-                                (1:num)) ms1)) else
-                                (targetSem_Error,ms,ffi)))))) | ExtCall
-                                _1 ->
+                                (1:num)) ms1)) else (Error,ms,ffi))))))
+                                | ExtCall _1 ->
                   (match ALOOKUP (machine_config_mmio_info mc)
-                    ffi_index with SOME _2 -> (targetSem_Error,ms,ffi) |
-                    NONE ->
+                    ffi_index with SOME _2 -> (Error,ms,ffi) | NONE ->
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
                               (?_ffi_names mc)) bytes bytes2 with
-                              FFI_final outcome -> (targetSem_Halt
+                              FFI_final outcome -> (Halt
                               (ffi_FFI_outcome outcome),ms,ffi) |
                               FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
@@ -247,24 +245,23 @@ let evaluate_def = cake_define
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
                                 (1:num)) ms1)) | _3 ->
-                                (targetSem_Error,ms,ffi)))))`;;
+                                (Error,ms,ffi)))))`;;
+hol4_overload "evaluate" "targetSem_evaluate";;
 
 let machine_sem_def = cake_define
   `(machine_sem mc st ms (ffi_Terminate t io_list) <=>
       (?k ms' st'.
-        targetSem_evaluate mc st k ms = (targetSem_Halt t,ms',st') /\
-          ffi_state_io_events
+        evaluate mc st k ms = (Halt t,ms',st') /\ ffi_state_io_events
         st' = io_list)) /\
    (machine_sem mc st ms (ffi_Diverge io_trace) <=>
-      (!k. ?ms' st'. targetSem_evaluate mc st k ms =
-        (targetSem_TimeOut,ms',st')) /\
+      (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
       lprefix_lub
         (IMAGE
-          (\k. fromList (ffi_state_io_events (SND (SND
-            (targetSem_evaluate mc st k ms))))) UNIV)
+          (\k. fromList (ffi_state_io_events (SND (SND (evaluate mc
+            st k ms))))) UNIV)
         io_trace) /\
-   (machine_sem mc st ms ffi_Fail <=>
-      (?k. FST (targetSem_evaluate mc st k ms) = targetSem_Error))`;;
+   (machine_sem mc st ms Fail <=>
+      (?k. FST (evaluate mc st k ms) = Error))`;;
 
 (* define what it means for code to be loaded and ready to run *)
 
@@ -291,8 +288,7 @@ let target_configured_def = cake_define
 
 let get_reg_value_def = cake_define
   `(get_reg_value NONE w f = w) /\
-   (get_reg_value (SOME semanticPrimitives_v) _4 f = f
-     semanticPrimitives_v)`;;
+   (get_reg_value (SOME v) _4 f = f v)`;;
 
 let mmio_pcs_min_index_def = cake_define
   `mmio_pcs_min_index ffi_names =
@@ -301,7 +297,7 @@ let mmio_pcs_min_index_def = cake_define
      (!j. j < x ==> (?s.
        EL j ffi_names = ExtCall s)) /\
      (!j. x <= j /\ j < LENGTH ffi_names ==>
-          (?ast_op. EL j ffi_names = SharedMem ast_op))))`;;
+          (?op. EL j ffi_names = SharedMem op))))`;;
 
 (* start_pc_ok: machine configuration's saved pcs and initial pc are ok
    *)
@@ -364,8 +360,8 @@ let ffi_interfer_ok_def = cake_define
             read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME
               bytes2) /\
             LENGTH new_bytes = LENGTH bytes2 /\
-            (EL index (?_ffi_names mc_conf) = ExtCall (strlit "") ==>
-              new_bytes = bytes2) /\
+            (EL index (?_ffi_names mc_conf) = ExtCall (implode "")
+              ==> new_bytes = bytes2) /\
             target_state_rel (machine_config_target mc_conf)
               (asm_state_pc_fupd (K (--n2w ((3 + index) * ffi_offset)
                 + pc)) t1) ms2 /\
@@ -530,7 +526,7 @@ let good_init_state_def = cake_define
      (!a. ?w. asm_state_mem
        t a = get_byte a w (asm_config_big_endian (?_config
          (machine_config_target mc_conf))) /\
-       m (byte_align a) = wordLang_Word w) /\
+       m (byte_align a) = Word w) /\
      (!n. n < cbspace ==>
        n2w (n + LENGTH bytes) + asm_state_pc t IN
          asm_state_mem_domain t /\ ~(
@@ -560,20 +556,19 @@ let installed_def = cake_define
        (n2w 1024) * bytes_in_word <=+ asm_state_regs t r2 -
          asm_state_regs t r1 /\
        DISJOINT heap_stack_dm bitmaps_dm /\
-       m (asm_state_regs t r1) = wordLang_Word bitmap_ptr /\
+       m (asm_state_regs t r1) = Word bitmap_ptr /\
        m (asm_state_regs t r1 + bytes_in_word) =
-         wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
-           bitmaps)) /\
+         Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 2) * bytes_in_word) =
-         wordLang_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
+         Word (bitmap_ptr + bytes_in_word * n2w data_sp +
                bytes_in_word * n2w (LENGTH bitmaps)) /\
        m (asm_state_regs t r1 + (n2w 3) * bytes_in_word) =
-         wordLang_Word (?_get_pc (machine_config_target mc_conf) ms +
-           n2w (LENGTH bytes)) /\
+         Word (?_get_pc (machine_config_target mc_conf) ms + n2w
+           (LENGTH bytes)) /\
        m (asm_state_regs t r1 + (n2w 4) * bytes_in_word) =
-         wordLang_Word (?_get_pc (machine_config_target mc_conf) ms +
-           n2w cbspace + n2w (LENGTH bytes)) /\
-       (misc_word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
+         Word (?_get_pc (machine_config_target mc_conf) ms + n2w
+           cbspace + n2w (LENGTH bytes)) /\
+       (word_list bitmap_ptr (MAP Word bitmaps) *
          word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
            bitmaps)) data_sp)
         (fun2set (m,byte_aligned INTER bitmaps_dm)) /\

@@ -21,21 +21,21 @@ needs "semantics/evaluate.ml";;
 let dest_Let_def = cake_define
   `dest_Let x1 =
       match x1 with
-        (ast_Let opt x y) -> SOME (opt,x,y)
+        (Let opt x y) -> SOME (opt,x,y)
       | _1 -> NONE`;;
 
 let dest_Letrec_def = cake_define
   `dest_Letrec x1 =
       match x1 with
-        (ast_Letrec funs x) -> SOME (funs,x)
+        (Letrec funs x) -> SOME (funs,x)
       | _2 -> NONE`;;
 
 let lift_let_def = cake_define
   `lift_let x1 =
         match x1 with
           (Dlet l p x) ->
-       match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l ast_Pany
-         x,Dlet l p y) | SOME (SOME m,x,y) -> SOME (Dlet l (ast_Pvar m)
+       match dest_Let x with SOME (NONE,x,y) -> SOME (Dlet l Pany
+         x,Dlet l p y) | SOME (SOME m,x,y) -> SOME (Dlet l (Pvar m)
          x,Dlet l p y) | NONE ->
            (match dest_Letrec x with SOME (funs,x) -> SOME (Dletrec l
              funs,Dlet l p x) | NONE -> NONE)
@@ -64,6 +64,7 @@ let compile_decs_def = cake_define
                (source_let_compile_decs ds2) ::
                source_let_compile_decs ds | _5 -> d ::
                source_let_compile_decs ds)))`;;
+hol4_overload "compile_decs" "source_let_compile_decs";;
 
 (*
 val test3 = EVAL “

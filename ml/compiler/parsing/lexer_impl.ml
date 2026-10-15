@@ -10,6 +10,7 @@
   structures, signatures, and between parentheses).
 *)
 
+needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/location.ml";;
@@ -76,14 +77,13 @@ let next_sym_alt_def = cake_define_wf
           SOME (OtherS n,
                 Locs loc (next_loc (LENGTH n - 1) loc),
                 rest) else if c = (CHR 34) then
-        let (t,loc',rest) = lexer_fun_read_string str "" (next_loc 1
-          loc) in
+        let (t,loc',rest) = read_string str "" (next_loc 1 loc) in
           SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
             str) then
         SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
           isPREFIX "#\"" (c :: str) then
-        let (t,loc',rest) = lexer_fun_read_string (TL str) ""
-          (next_loc 2 loc) in
+        let (t,loc',rest) = read_string (TL str) "" (next_loc 2 loc)
+          in
           SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX "#("
             (c :: str) then
         let (t,loc',rest) =
@@ -105,25 +105,26 @@ let lex_aux_def = cake_define_wf
   `lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
        NONE -> NONE |
-       SOME (tokens_token,Locs loc' loc'',rest) ->
-         (let new_acc = ((tokens_token,Locs loc' loc'') :: acc) in
+       SOME (token,Locs loc' loc'',rest) ->
+         (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in
-           if tokens_token = tokens_SemicolonT /\ (d = 0) then SOME
-             (REVERSE new_acc,newloc,rest) else
-             if tokens_token = tokens_LetT then lexer_impl_lex_aux
-               new_acc (d + 1) rest newloc else if tokens_token =
+           if token = tokens_SemicolonT /\ (d = 0) then SOME (REVERSE
+             new_acc,newloc,rest) else
+             if token = tokens_LetT then lexer_impl_lex_aux
+               new_acc (d + 1) rest newloc else if token =
                tokens_StructT then lexer_impl_lex_aux new_acc (d + 1)
-               rest newloc else if tokens_token = tokens_SigT then
+               rest newloc else if token = tokens_SigT then
                lexer_impl_lex_aux new_acc (d + 1) rest newloc else if
-               tokens_token = tokens_LparT then lexer_impl_lex_aux
-               new_acc (d + 1) rest newloc else if tokens_token =
-               tokens_EndT then lexer_impl_lex_aux new_acc (d - 1)
-               rest newloc else if tokens_token = tokens_RparT then
-               lexer_impl_lex_aux new_acc (d - 1) rest newloc else
-               lexer_impl_lex_aux new_acc d rest newloc))`;;
+               token = tokens_LparT then lexer_impl_lex_aux new_acc
+               (d + 1) rest newloc else if token = tokens_EndT then
+               lexer_impl_lex_aux new_acc (d - 1) rest newloc else if
+               token = tokens_RparT then lexer_impl_lex_aux new_acc
+               (d - 1) rest newloc else lexer_impl_lex_aux new_acc d
+               rest newloc))`;;
+hol4_overload "lex_aux" "lexer_impl_lex_aux";;
 
 let lex_until_toplevel_semicolon_def = cake_define
-  `lex_until_toplevel_semicolon input = lexer_impl_lex_aux [] 0 input`;;
+  `lex_until_toplevel_semicolon input = lex_aux [] 0 input`;;
 
 (* lex_until_toplevel_semicolon_alt *)
 
@@ -133,15 +134,15 @@ let lex_aux_alt_def = cake_define_wf
   `lex_aux_alt acc (d:num) input l =
      (match next_sym input l with
        NONE -> NONE |
-       SOME (tokens_token,Locs loc' loc'',rest) ->
-         (let new_acc = ((tokens_token,Locs loc' loc'') :: acc) in
+       SOME (token,Locs loc' loc'',rest) ->
+         (let new_acc = ((token,Locs loc' loc'') :: acc) in
          let newloc = next_loc 1 loc'' in
-           if (tokens_token = OtherS ";") /\ (d = 0) then SOME
-             (REVERSE new_acc,newloc,rest) else if MEM tokens_token
-             [OtherS "let"; OtherS "struct";
+           if (token = OtherS ";") /\ (d = 0) then SOME (REVERSE
+             new_acc,newloc,rest) else if MEM token [OtherS "let";
+             OtherS "struct";
                               OtherS "sig"; OtherS "("] then
              lex_aux_alt new_acc (d + 1) rest newloc else if MEM
-               tokens_token [OtherS ")"; OtherS "end"] then
+               token [OtherS ")"; OtherS "end"] then
              lex_aux_alt new_acc (d - 1) rest newloc else
                lex_aux_alt new_acc d rest newloc))`;;
 
@@ -186,21 +187,21 @@ let lex_impl_all_def = cake_define_wf
 let lex_aux_tokens_def = cake_define
   `lex_aux_tokens acc (d:num) input =
       (match input with
-        [] -> NONE | (tokens_token,locs) :: rest ->
-          (let new_acc = (tokens_token,locs) :: acc in
-            if tokens_token = tokens_SemicolonT /\ (d = 0) then
+        [] -> NONE | (token,locs) :: rest ->
+          (let new_acc = (token,locs) :: acc in
+            if token = tokens_SemicolonT /\ (d = 0) then
               SOME (REVERSE (new_acc),rest) else
-              if tokens_token = tokens_LetT then
-                lex_aux_tokens new_acc (d + 1) rest else if
-                  tokens_token = tokens_StructT then
-                lex_aux_tokens new_acc (d + 1) rest else if
-                  tokens_token = tokens_SigT then
-                lex_aux_tokens new_acc (d + 1) rest else if
-                  tokens_token = tokens_LparT then
-                lex_aux_tokens new_acc (d + 1) rest else if
-                  tokens_token = tokens_EndT then
-                lex_aux_tokens new_acc (d - 1) rest else if
-                  tokens_token = tokens_RparT then
+              if token = tokens_LetT then
+                lex_aux_tokens new_acc (d + 1) rest else if token =
+                  tokens_StructT then
+                lex_aux_tokens new_acc (d + 1) rest else if token =
+                  tokens_SigT then
+                lex_aux_tokens new_acc (d + 1) rest else if token =
+                  tokens_LparT then
+                lex_aux_tokens new_acc (d + 1) rest else if token =
+                  tokens_EndT then
+                lex_aux_tokens new_acc (d - 1) rest else if token =
+                  tokens_RparT then
                 lex_aux_tokens new_acc (d - 1) rest else
                   lex_aux_tokens new_acc d rest))`;;
 

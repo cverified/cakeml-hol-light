@@ -40,6 +40,7 @@
 needs "compiler/backend/pattern_matching/pattern_common.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "semantics/ast.ml";;
+needs "semantics/semanticPrimitives.ml";;
 
 
 (* --------------------------------------------------------------------
@@ -64,7 +65,7 @@ let ctor_arity_def = cake_define
 
 let anys_def = cake_define
   `anys 0 = [] /\
-   anys (SUC n) = pattern_semantics_Any :: anys n`;;
+   anys (SUC n) = Any :: anys n`;;
 
 
 (* --------------------------------------------------------------------
@@ -87,23 +88,21 @@ let mk_prods_def = cake_define
 
 let mk_refs_def = cake_define
   `mk_refs [] = [] /\
-   mk_refs (p :: ps) = pattern_semantics_Ref p :: mk_refs ps`;;
+   mk_refs (p :: ps) = Ref p :: mk_refs ps`;;
 
 let mk_conses_def = cake_define
   `mk_conses t [] = [] /\
-   mk_conses t (ps :: pss) = pattern_semantics_Cons t ps ::
-     mk_conses t pss`;;
+   mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`;;
 
 (* HOL4 termination: *)
 let expand_def = cake_define_wf
   `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
   pat_size ps)`
-  `expand pattern_semantics_Any = [pattern_semantics_Any] /\
-   expand (pattern_semantics_Lit l) = [pattern_semantics_Lit l] /\
-   expand (pattern_semantics_Or p q) = expand p ++ expand q /\
-   expand (pattern_semantics_Ref p) = mk_refs (expand p) /\
-   expand (pattern_semantics_Cons t ps) = mk_conses t (expand_list
-     ps) /\
+  `expand Any = [Any] /\
+   expand (Lit l) = [Lit l] /\
+   expand (Or p q) = expand p ++ expand q /\
+   expand (Ref p) = mk_refs (expand p) /\
+   expand (Cons t ps) = mk_conses t (expand_list ps) /\
    expand_list [] = [[]] /\
    expand_list (p :: ps) = mk_prods (expand p) (expand_list ps)`;;
 
@@ -137,14 +136,13 @@ let ctor_nub_def = cake_define
      ctor_nub xs)`;;
 
 let ctors_of_def = cake_define
-  `ctors_of pattern_semantics_Any = NONE /\
-   ctors_of (pattern_semantics_Lit _1) = NONE /\
-   ctors_of (pattern_semantics_Or _2 _3) = NONE /\
-   ctors_of (pattern_semantics_Ref _4) = SOME [RefC] /\
-   ctors_of (pattern_semantics_Cons NONE qs) = SOME [TupC (LENGTH
-     qs)] /\
-   ctors_of (pattern_semantics_Cons (SOME (t,NONE)) qs) = NONE /\
-   ctors_of (pattern_semantics_Cons (SOME (t,SOME sibs)) qs) =
+  `ctors_of Any = NONE /\
+   ctors_of (Lit _1) = NONE /\
+   ctors_of (Or _2 _3) = NONE /\
+   ctors_of (Ref _4) = SOME [RefC] /\
+   ctors_of (Cons NONE qs) = SOME [TupC (LENGTH qs)] /\
+   ctors_of (Cons (SOME (t,NONE)) qs) = NONE /\
+   ctors_of (Cons (SOME (t,SOME sibs)) qs) =
      SOME (ctor_nub (TagC t (LENGTH qs) :: tag_ctors sibs))`;;
 
 let ctor_keep_def = cake_define
@@ -180,16 +178,15 @@ let col_ctors_def = cake_define
 
 let spec_row_def = cake_define
   `spec_row c [] = [] /\
-   spec_row c (pattern_semantics_Any :: rest) = [anys (ctor_arity c)
-     ++ rest] /\
-   spec_row c ((pattern_semantics_Cons NONE qs) :: rest) =
+   spec_row c (Any :: rest) = [anys (ctor_arity c) ++ rest] /\
+   spec_row c ((Cons NONE qs) :: rest) =
      (if c = TupC (LENGTH qs) then [qs ++ rest] else []) /\
-   spec_row c ((pattern_semantics_Cons (SOME ts) qs) :: rest) =
+   spec_row c ((Cons (SOME ts) qs) :: rest) =
      (if c = TagC (FST ts) (LENGTH qs) then [qs ++ rest] else []) /\
-   spec_row c ((pattern_semantics_Ref q) :: rest) = (if c = RefC then
-     [q :: rest] else []) /\
-   spec_row c ((pattern_semantics_Lit l) :: rest) = [] /\
-   spec_row c ((pattern_semantics_Or p q) :: rest) = []`;;
+   spec_row c ((Ref q) :: rest) = (if c = RefC then [q :: rest] else
+     []) /\
+   spec_row c ((Lit l) :: rest) = [] /\
+   spec_row c ((Or p q) :: rest) = []`;;
 
 let spec_mat_def = cake_define
   `spec_mat c [] = [] /\
@@ -202,7 +199,7 @@ let spec_mats_def = cake_define
 let default_row_def = cake_define
   `default_row x1 =
       match x1 with
-        (pattern_semantics_Any :: rest) -> [rest]
+        (Any :: rest) -> [rest]
       | _6 -> []`;;
 
 let default_mat_def = cake_define
@@ -227,12 +224,11 @@ let default_mat_def = cake_define
 let pat_weight_def = cake_define_wf
   `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
   pat_size ps)`
-  `pat_weight pattern_semantics_Any = (0:num) /\
-   pat_weight (pattern_semantics_Lit l) = 0 /\
-   pat_weight (pattern_semantics_Or p q) = 1 + pat_weight p +
-     pat_weight q /\
-   pat_weight (pattern_semantics_Ref p) = 1 + pat_weight p /\
-   pat_weight (pattern_semantics_Cons t ps) = 1 + pats_weight ps /\
+  `pat_weight Any = (0:num) /\
+   pat_weight (Lit l) = 0 /\
+   pat_weight (Or p q) = 1 + pat_weight p + pat_weight q /\
+   pat_weight (Ref p) = 1 + pat_weight p /\
+   pat_weight (Cons t ps) = 1 + pats_weight ps /\
    pats_weight [] = 0 /\
    pats_weight (p :: ps) = pat_weight p + pats_weight ps`;;
 
@@ -421,10 +417,10 @@ let dest_val_def = cake_define
   (LENGTH vs),vs) /\
    dest_val refs (pattern_semantics_Term NONE vs) = SOME (TupC
      (LENGTH vs),vs) /\
-   dest_val refs (pattern_semantics_RefPtr r) = (match FLOOKUP refs r
-     with NONE -> NONE | SOME w -> SOME (RefC,[w])) /\
-   dest_val refs (pattern_semantics_Litv l) = NONE /\
-   dest_val refs pattern_semantics_Other = NONE`;;
+   dest_val refs (RefPtr r) = (match FLOOKUP refs r with NONE -> NONE
+     | SOME w -> SOME (RefC,[w])) /\
+   dest_val refs (Litv l) = NONE /\
+   dest_val refs Other = NONE`;;
 
 (* A head pattern that reports a constructor set really does confine a
    value that it does not type-fail on to that set. *)

@@ -7,6 +7,7 @@
   The major collection of the generational copying garbage collector.
 *)
 
+needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -27,8 +28,7 @@ let gen_gc_conf_FIELDS = define_record "gen_gc_conf"
    "isRef","'a->bool"];;
 
 let gc_move_def = cake_define
-  `(gen_gc_gc_move conf state (gc_shared_Data d) = (gc_shared_Data
-  d,state)) /\
+  `(gen_gc_gc_move conf state (Data d) = (Data d,state)) /\
    (gen_gc_gc_move conf state (gc_shared_Pointer ptr d) =
       (match heap_lookup ptr (gc_state_heap state) with SOME
         (ForwardPointer ptr _1 l) -> (gc_shared_Pointer ptr d,state) |
@@ -55,13 +55,15 @@ let gc_move_def = cake_define
                (gc_state_h2_fupd (K h2) state)))))) | _2 ->
                (gc_shared_Pointer ptr d,gc_state_ok_fupd (K F)
                state)))`;;
+hol4_overload "gc_move" "gen_gc_gc_move";;
 
 let gc_move_list_def = cake_define
   `(gen_gc_gc_move_list conf state [] = ([],state)) /\
    (gen_gc_gc_move_list conf state (x :: xs) =
-     (let (x,state) = gen_gc_gc_move conf state x in
+     (let (x,state) = gc_move conf state x in
      let (xs,state) = gen_gc_gc_move_list conf state xs in
        (x :: xs,state)))`;;
+hol4_overload "gc_move_list" "gen_gc_gc_move_list";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
@@ -73,7 +75,7 @@ let gc_move_data_def = cake_define_wf
        (if gen_gc_conf_limit conf < heap_length (gc_state_h1 state ++
          (h :: h2)) then gc_state_ok_fupd (K F) state else
         match h with DataElement xs l d ->
-          (let (xs,state) = gen_gc_gc_move_list conf state xs in
+          (let (xs,state) = gc_move_list conf state xs in
           let h1 = gc_state_h1 state ++ [DataElement xs l d] in
           let h2 = TL (gc_state_h2 state) in
           let ok = gc_state_ok state /\ ~(gc_state_h2 state = []) /\
@@ -81,6 +83,7 @@ let gc_move_data_def = cake_define_wf
             gen_gc_gc_move_data conf (gc_state_ok_fupd (K ok)
               (gc_state_h2_fupd (K h2) (gc_state_h1_fupd (K h1)
               state)))) | _3 -> gc_state_ok_fupd (K F) state)))`;;
+hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ decide_tac *)
@@ -91,7 +94,7 @@ let gc_move_refs_def = cake_define_wf
        (gc_state_r3 state ++ gc_state_r1 state)) (gc_state_r3_fupd (K
        []) state) | ref :: r2 ->
        (match ref with DataElement xs l d ->
-         (let (xs,state) = gen_gc_gc_move_list conf state xs in
+         (let (xs,state) = gc_move_list conf state xs in
          let r3 = gc_state_r3 state ++ [DataElement xs l d] in
            gc_move_refs conf (gc_state_r3_fupd (K r3)
              (gc_state_r2_fupd (K r2) state))) | _4 ->
@@ -103,13 +106,14 @@ let gc_move_loop_def = cake_define
   `gen_gc_gc_move_loop conf state (clock:num) =
      (match gc_state_r4 state with [] ->
        (match gc_state_h2 state with [] -> state | (h :: h2) ->
-          (let state = gen_gc_gc_move_data conf state in
+          (let state = gc_move_data conf state in
           if clock = 0 then gc_state_ok_fupd (K F) state else
             gen_gc_gc_move_loop conf state (clock - 1))) | (h :: r4) ->
        (let state = gc_move_refs conf (gc_state_r4_fupd (K [])
          (gc_state_r2_fupd (K (gc_state_r4 state)) state)) in
        if clock = 0 then gc_state_ok_fupd (K F) state else
          gen_gc_gc_move_loop conf state (clock - 1)))`;;
+hol4_overload "gc_move_loop" "gen_gc_gc_move_loop";;
 
 let gen_gc_def = cake_define
   `gen_gc conf (roots,heap) =
@@ -117,9 +121,8 @@ let gen_gc_def = cake_define
          gc_state_ok_fupd (K (heap_length heap = gen_gc_conf_limit
            conf)) (gc_state_n_fupd (K (gen_gc_conf_limit conf))
            (gc_state_heap_fupd (K heap) empty_state)) in
-     let (roots,state) = gen_gc_gc_move_list conf state roots in
-     let state = gen_gc_gc_move_loop conf state (gen_gc_conf_limit
-       conf) in
+     let (roots,state) = gc_move_list conf state roots in
+     let state = gc_move_loop conf state (gen_gc_conf_limit conf) in
        (roots,state))`;;
 
 (* Do we point to something that is fully processed? I.e. all children
@@ -185,6 +188,7 @@ let gc_inv_def = cake_define
            MEM (gc_shared_Pointer ptr d) xs /\ is_final conf state j
              ==>
            ptr IN FDOM (heap_map 0 (gc_state_heap state))))))`;;
+hol4_overload "gc_inv" "gen_gc_gc_inv";;
 
 (* HOL4 ML code, not ported:
 val full_simp = full_simp_tac std_ss
