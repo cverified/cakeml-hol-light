@@ -142,6 +142,18 @@ sources, and why.
   `ml/lib/define.ml`) and derives the equations as HOL4 states
   them.  Without them `ast$every_exp` took six minutes and failed;
   with them it takes half a second.
+- The clauses of a definition by patterns are a quotation each,
+  because HOL4 typechecks them one by one and the same variable
+  can have another type in another clause.  That loses what one
+  clause says about the type of another one, and where a
+  constructor name is one that several theories in scope have,
+  HOL Light then takes the one of the theory that declared the
+  overload last, which need not be the one HOL4 means
+  (`bvl_handle$handle_adj_vars` gives back a `bvl` expression,
+  and `db_vars`, loaded just before it, has a `Var` of its own).
+  Such a definition is one quotation instead
+  (`ONE_QUOTATION` in `tools/overrides.py`), in which HOL Light's
+  overload resolution sees all the clauses at once.
 - Definitions that are not primitive recursive need a
   termination measure.  Where HOL4's `Termination` gives one, the
   port uses it; where HOL4 guessed one, the port uses the sum of

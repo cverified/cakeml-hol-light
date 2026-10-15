@@ -222,6 +222,13 @@ MEASURE = {
 # name several theories in scope have (bvl_to_bvi's compile_exps
 # gives back a bvi expression, which only its Var clause says)
 ONE_QUOTATION = set([
+  # the result is a bvi expression, which only the Var clause says
+  ('bvl_to_bvi', 'compile_exps_def'),
+  ('bvl_to_bvi', 'compile_exps_sing_def'),
+  # the Var of the right hand side is the one of bvl, which only
+  # the other clauses say (db_vars has a Var of its own, and it is
+  # the one that HOL Light takes in a clause of its own)
+  ('bvl_handle', 'handle_adj_vars_def'),
 ])
 
 # definitions whose patterns need the type of their constructor on
