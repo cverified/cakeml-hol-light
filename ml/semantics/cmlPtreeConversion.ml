@@ -222,8 +222,8 @@ let ptree_Type_def = cake_define_list
                     RparT)) (monad_bind (ptree_Typelist2 tl) (\
                   tylist. monad_bind (ptree_Tyop opn) (\
                   opname.
-                  SOME (Atapp tylist opname)))) | _21 -> NONE else
-                    NONE)`;
+                  SOME (Atapp tylist opname)))) | _21 -> NONE
+                    else NONE)`;
    `(ptree_Typelist2 ptree:(ast_t list) option) =
          (match ptree with
            Lf _22 -> NONE | Nd nt' args ->

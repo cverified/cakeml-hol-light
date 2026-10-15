@@ -41,6 +41,8 @@ let wrapper_ok_def = cake_define
    needed for a hit is that the cached label, arity, and body correspond
    to the code table (up to the expression relation used by the pass).
      *)
+let _ = size_thms "exp";;
+let _ = size_thms "exp2";;
 (* HOL4 termination: >> rpt strip_tac >> simp
    [bviTheory.exp_size_def] *)
 let inline_exp_def = cake_define_wf
@@ -85,6 +87,8 @@ let inline_all_def = cake_define
       let (cs2,prog2) = inline_all cs1 prog in
         (cs2,(name,arity,body) :: prog2)))`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "exp2";;
 (* HOL4 termination: >> rpt strip_tac >> simp
    [bviTheory.exp_size_def] *)
 let remove_ticks_exp_def = cake_define_wf

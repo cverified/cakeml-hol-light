@@ -71,6 +71,8 @@ let add_parens_def = cake_define
      (if threshold' < (n:num) then concat [(implode "("); x;
        (implode ")")] else x)`;;
 
+let _ = size_thms "infer_t";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let inf_type_to_string_rec_def = cake_define_wf
   `MEASURE (\x. match x with INL (_10,t) -> infer_t_size t | INR

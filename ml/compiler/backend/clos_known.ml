@@ -30,6 +30,8 @@ needs "semantics/ast.ml";;
 
 (* This definition is written to short-circuit,
    i.e. exit as soon as possible. *)
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ fs[list_size_pair_size_MAP_FST_SND] *)
 let get_size_sc_aux_def = cake_define_wf
   `MEASURE (list_size exp_size o SND)`
@@ -79,6 +81,8 @@ let get_size_sc_def = cake_define
      (let n = get_size_sc_aux (limit + 1) [e] in
        if n = 0 then NONE else SOME ((limit + 1) - n))`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ simp [list_size_pair_size_MAP_FST_SND] *)
 let get_size_aux_def = cake_define_wf
   `MEASURE (list_size exp_size)`
@@ -295,6 +299,7 @@ let merge_def = cake_define
 hol4_overload "merge" "clos_known_merge";;
 
 (* Avoid MAP2 *)
+let _ = size_thms "val_approx";;
 (* HOL4 termination: >> Induct_on `xs` >> rpt strip_tac>> imp_res_tac
    MEM_ZIP>>fs[]>> rw[val_approx_size_def] >> Cases_on`ys`>>fs[]>>
    first_x_assum (first_assum o mp_then (Pos (el 2)) mp_tac) >>

@@ -694,6 +694,8 @@ hol4_overload "fix_clock" "bvlSem_fix_clock";;
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of exp expressions. *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\
    decide_tac *)

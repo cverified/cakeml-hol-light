@@ -51,6 +51,7 @@ let enc_num_to_name_aux_def = cake_define
 let enc_num_to_name_def = cake_define
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
+let _ = size_thms "pat";;
 (* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw
    [MAP_MAP_o, o_DEF, UNCURRY, SUM_APPEND, pat1_size] \\ simp
    [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
@@ -153,6 +154,7 @@ let decode_dtree_def = cake_define
    if guard = True then dec1 else if guard = Not True then dec2
      else SmartIf t (decode_guard t v guard) dec1 dec2`;;
 
+let _ = size_thms "pat";;
 (* HOL4 termination: \\ rw [pat1_size] \\ fs [MEM_SPLIT, SUM_APPEND] *)
 let encode_pat_def = cake_define_wf
   `MEASURE pat_size`
@@ -168,6 +170,7 @@ let encode_pat_def = cake_define_wf
       | (Pas p v) -> encode_pat p
       | (Pref p) -> Ref (encode_pat p)`;;
 
+let _ = size_thms "pat";;
 (* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw []
    \\ simp [o_DEF, MAPi_eq_MAP, SUM_APPEND, pat1_size] *)
 let naive_pattern_match_def = cake_define_wf

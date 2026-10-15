@@ -289,6 +289,8 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * pattern and value come from the same type.  Match_type_error is
    returned
  * when one of these conditions is violated *)
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let pmatch_def = cake_define_wf
   `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> pat_size p | INR
@@ -362,6 +364,8 @@ let find_recfun_def = cake_define
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
+let _ = size_thms "list";;
+let _ = size_thms "v";;
 (* HOL4 termination: >> Cases_on ‘compress_bool v1’ >> gs[Boolv_def,
    listTheory.list_size_def] *)
 let do_eq_def = cake_define_wf
@@ -552,6 +556,8 @@ let declare_env_def = cake_define
 (* Concrete, or first-order values, which do not contain code closures
    and
    are unchanged by many compiler phases. *)
+let _ = size_thms "list";;
+let _ = size_thms "v";;
 (* HOL4 termination: *)
 let concrete_v_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> v_size v | INR vs -> list_size

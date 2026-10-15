@@ -225,6 +225,8 @@ hol4_overload "fix_clock" "bviSem_fix_clock";;
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of bvi_exp expressions. *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: >> rpt strip_tac >> simp[dec_clock_def] >>
    imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
 let evaluate_def = cake_define_wf

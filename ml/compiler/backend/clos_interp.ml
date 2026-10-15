@@ -101,6 +101,8 @@ let to_constant_op_def = cake_define
        (tag + 5) [cs])
       | _26 -> ConstInt 0`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let to_constant_def = cake_define_wf
   `MEASURE (\x. match x with INL e -> exp_size e | INR es -> list_size

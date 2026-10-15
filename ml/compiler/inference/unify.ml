@@ -107,6 +107,7 @@ let cunifyl_def = cake_define
                       (encode_infer_ts ts1)
                       (encode_infer_ts ts2))`;;
 
+let _ = size_thms "infer_t";;
 (* HOL4 termination: *)
 let capply_subst_def = cake_define_wf
   `MEASURE (infer_t_size o SND)`

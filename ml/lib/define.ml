@@ -1365,6 +1365,14 @@ let cake_define_wf rel tm =
   try cake_time (cake_define_gen (Some(rel,TERM_TAC))) tm
   with Failure s -> cake_report tm s;;
 
+(* HOL4's Inductive: HOL Light's new_inductive_definition takes the
+   same shape of rules and gives the rules, the induction principle
+   and the cases theorem *)
+
+let cake_inductive tm =
+  try cake_time new_inductive_definition tm
+  with Failure s -> cake_report tm s;;
+
 let cake_define_list_wf rel cls =
   cake_define_wf rel (cake_conj_list cls);;
 

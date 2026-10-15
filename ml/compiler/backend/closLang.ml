@@ -160,6 +160,8 @@ hol4_overload "Op" "closLang_Op";;
 val exp_size_def = definition"exp_size_def";
 *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ rw [] \\ qsuff_tac ‘list_size exp_size (MAP
    SND fns) ≤ list_size (pair_size (λx. x) exp_size) fns’ >- fs [] \\
    Induct_on ‘fns’ \\ fs [] \\ fs [list_size_def,FORALL_PROD] \\ rw

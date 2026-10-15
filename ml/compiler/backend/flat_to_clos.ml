@@ -284,6 +284,7 @@ let SmartCons_def = cake_define
        tag)) xs | SOME cs -> Op t (BlockOp (Constant (ConstCons tag
        (REVERSE cs)))) [])`;;
 
+let _ = size_thms "exp6";;
 (* HOL4 termination: \\ rw [] \\ `!funs f v x. MEM (f,v,x) funs ==>
    exp_size x < flatLang$exp1_size funs` by (Induct \\ fs [] \\ rw []
    \\ fs [flatLangTheory.exp_size_def] \\ res_tac \\ fs []) \\

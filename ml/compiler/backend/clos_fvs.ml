@@ -86,8 +86,8 @@ let remove_fvs_sing_def = cake_define_list
            x1))`;
    `remove_fvs_sing fvs (Fn t loc_opt vs num_args x1) =
         (let fvs = match vs with NONE -> fvs | SOME x -> LENGTH x in
-        Fn t loc_opt vs num_args (remove_fvs_sing (num_args + fvs)
-          x1))`;
+        Fn t loc_opt vs num_args (remove_fvs_sing (num_args +
+          fvs) x1))`;
    `remove_fvs_list fvs [] = []`;
    `remove_fvs_list fvs ((x:closLang_exp) :: xs) =
          remove_fvs_sing fvs x :: remove_fvs_list fvs xs`;

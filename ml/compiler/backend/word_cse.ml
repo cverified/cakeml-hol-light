@@ -161,8 +161,8 @@ let canonicalMoveRegs_def = cake_define
 
 let canonicalArith_def = cake_define_list
   [`canonicalArith data (Binop op r1 r2 r3) =
-      Binop op r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
-        data r3)`;
+      Binop op r1 (canonicalRegs' r1 data r2) (canonicalImmReg'
+        r1 data r3)`;
    `canonicalArith data (Shift s r1 r2 ri) =
       Shift s r1 (canonicalRegs' r1 data r2) (canonicalImmReg' r1
         data ri)`;

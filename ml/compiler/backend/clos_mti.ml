@@ -40,6 +40,8 @@ let collect_apps_def = cake_define
 val collect_apps_ind = theorem "collect_apps_ind";
 *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: >> rw[]>> imp_res_tac collect_args_size >>
    imp_res_tac collect_apps_size >> gvs[]>> drule MEM_list_size>>
    disch_then (qspec_then `pair_size (λx. x) exp_size` mp_tac)>>

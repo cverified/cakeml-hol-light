@@ -69,6 +69,8 @@ let alloc_glob_count_def = cake_define
           alloc_glob_count xs
         | [_5] -> 0`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "exp1";;
 (* HOL4 termination: \\ rpt strip_tac \\ simp
    [bvlTheory.exp_size_def] *)
 let global_count_sing_def = cake_define_wf
@@ -303,6 +305,7 @@ let compile_aux_def = cake_define
      List [((bvl_num_stubs) + nss * k + 1,args,bvi_let_compile_exp
        p)]`;;
 
+let _ = size_thms "exp1";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ TRY
    (Cases_on `x1`) \\ fs [destLet_def] \\ TRY (Cases_on `x2`) \\ fs
    [destLet_def] \\ SRW_TAC [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
@@ -359,6 +362,8 @@ let compile_exps_def = cake_define_wf
                  ((bvl_num_stubs) + nss * n)) c1 NONE],aux1,n1)))`;;
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
+let _ = size_thms "exp";;
+let _ = size_thms "exp1";;
 (* HOL4 termination: \\ rpt strip_tac \\ rpt $ qpat_x_assum ‘(_,_,_)
    = _’ kall_tac \\ gvs [bvlTheory.exp_size_def] \\ gvs [oneline
    destLet_def, AllCaseEqs(), bvlTheory.exp_size_def] *)

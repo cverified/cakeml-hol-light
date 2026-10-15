@@ -640,6 +640,11 @@ let constrain_op_def = cake_define
                ((implode "Type mismatch")) s | _37 -> failwith l
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
+let _ = size_thms "mlstring";;
+let _ = size_thms "pair";;
+let _ = size_thms "pat";;
 (* HOL4 termination: >> rw [] *)
 let infer_e_def = cake_define_wf
   `MEASURE (\x. match x with INL (_40,_41,e) -> exp_size e | INR (INL

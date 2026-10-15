@@ -86,7 +86,8 @@ let raise_stub_location_def = cake_define
   `raise_stub_location = word_num_stubs - 2`;;
 let store_consts_stub_location_def = cake_define
   `wordLang_store_consts_stub_location = word_num_stubs - 1`;;
-hol4_overload "store_consts_stub_location" "wordLang_store_consts_stub_location";;
+hol4_overload "store_consts_stub_location"
+  "wordLang_store_consts_stub_location";;
 
 (* wordLang uses syntactic invariants compared to stackLang that uses
    semantic flags

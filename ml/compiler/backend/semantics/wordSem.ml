@@ -299,6 +299,7 @@ let set_store_def = cake_define
      (set_store v x) s = (wordSem_state_store_fupd (K
        (wordSem_state_store s |+ (v,x))) s)`;;
 
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ DECIDE_TAC *)
@@ -892,6 +893,7 @@ let exit_loop_def = cake_define
       | res -> res`;;
 hol4_overload "exit_loop" "wordSem_exit_loop";;
 
+let _ = size_thms "prog";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY
    (full_simp_tac(srw_ss())[] \\ DECIDE_TAC) \\
    full_simp_tac(srw_ss())[termdep_rw,STOP_def] \\ imp_res_tac

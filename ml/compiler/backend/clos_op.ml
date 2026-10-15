@@ -166,6 +166,7 @@ let eq_direct_def = cake_define
        -> (match eq_direct_constant x y with SOME res -> SOME res |
        NONE -> eq_direct_nil x y))`;;
 
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ Cases \\ fs [dest_Op_def] \\ Cases_on ‘o'’ \\
    fs [dest_Cons_def,exp_size_def] \\ Cases_on ‘b’ \\ fs
    [dest_Cons_def,exp_size_def] \\ Induct_on ‘l’ \\ fs [exp_size_def]
@@ -230,6 +231,7 @@ let dont_lift_def = cake_define
          (match (dest_Op_Nil dest_Constant) x with SOME t -> T |
            NONE -> F)))`;;
 
+let _ = size_thms "exp3";;
 (* HOL4 termination: \\ rw [] \\ Cases_on ‘x’ \\ fs
    [dest_Op_def,dest_Cons_def,exp_size_def] \\ rename [‘Op _ oo _’]
    \\ Cases_on ‘oo’ \\ gvs [dest_Cons_def] \\ Cases_on ‘b’ \\ gvs

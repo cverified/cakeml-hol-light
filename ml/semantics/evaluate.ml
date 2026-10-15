@@ -52,6 +52,11 @@ let sing_env_def = cake_define
      (mk_sem_env (nsBind n v nsEmpty) nsEmpty:semanticPrimitives_v
        sem_env)`;;
 
+let _ = size_thms "dec";;
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
+let _ = size_thms "pair";;
+let _ = size_thms "pat";;
 (* HOL4 termination: \\ rw
    [do_if_def,do_log_def,do_eval_res_def,dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ fs [] \\ fs

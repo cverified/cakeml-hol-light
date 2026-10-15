@@ -182,6 +182,7 @@ let do_install_def = cake_define
                                (Rabort Rtype_error),s)) | _21 ->
                                (Rerr (Rabort Rtype_error),s))`;;
 
+let _ = size_thms "const";;
 (* HOL4 termination: \\ Induct_on ‘cs’ \\ rw [] \\ fs
    [const_size_def] \\ res_tac \\ pop_assum (qspec_then ‘t’
    assume_tac) \\ fs [] *)
@@ -761,6 +762,8 @@ hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
 
+let _ = size_thms "exp_alt";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\ TRY
    DECIDE_TAC \\ imp_res_tac do_install_clock \\ imp_res_tac

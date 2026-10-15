@@ -76,6 +76,8 @@ let is_sibling_def = cake_define
   `is_sibling x NONE = T /\
    is_sibling x (SOME l) = MEM x l`;;
 
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let pmatch_def = cake_define_wf
   `MEASURE (\x. match x with INL (r,p,_5) -> pat_size p | INR (r,ps,_6)

@@ -53,6 +53,7 @@ let compile_var_def = cake_define
   `compile_var t (Glob _1 i) = App t (GlobalVarLookup i) [] /\
    compile_var t (Local _2 s) = Var_local t s`;;
 
+let _ = size_thms "pat";;
 (* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
    SUM_APPEND] *)
 let compile_pat_def = cake_define_wf
@@ -99,6 +100,11 @@ let join_all_names_def = cake_define
      (match xs with [x] -> x | _6 -> concat (join_all_names_aux xs
        []))`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
+let _ = size_thms "mlstring";;
+let _ = size_thms "pair";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let compile_exp_def = cake_define_wf
   `inv_image (<) (\x. match x with INL (t,x,e) -> exp_size e | INR (INL
@@ -270,6 +276,8 @@ let simple_dlet_def = cake_define
      (match p with ast_Pvar pv -> (match e with ast_Var v -> SOME
        (pv,v) | _11 -> NONE) | _12 -> NONE)`;;
 
+let _ = size_thms "dec";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let compile_decs_def = cake_define_wf
   `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`

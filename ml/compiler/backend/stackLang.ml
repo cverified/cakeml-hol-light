@@ -129,4 +129,5 @@ let gc_stub_location_def = cake_define
   `gc_stub_location = stack_num_stubs - 1`;;
 let store_consts_stub_location_def = cake_define
   `stackLang_store_consts_stub_location = gc_stub_location - 1`;;
-hol4_overload "store_consts_stub_location" "stackLang_store_consts_stub_location";;
+hol4_overload "store_consts_stub_location"
+  "stackLang_store_consts_stub_location";;

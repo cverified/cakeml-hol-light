@@ -22,11 +22,20 @@ BUILTIN = {}
 
 
 def load_order():
-  """the theories to port: the HOL4 libraries first, then CakeML"""
+  """the theories to port: the HOL4 libraries first, then the
+     CakeML definition theories (order.txt), then the CakeML proof
+     theories, of which the port takes the definitions as well
+     (order1b.txt, the second part of the first pass)"""
   libs = [(l.split('\t')[0], HOL4 + l.split('\t')[1].strip(), 'lib')
           for l in open(T + 'libs.txt').read().split('\n') if l]
   cake = [(l.split('\t')[0], SRC + l.split('\t')[1].strip(), 'cakeml')
           for l in open(T + 'order.txt').read().split('\n') if l]
+  try:
+    cake += [(l.split('\t')[0], SRC + l.split('\t')[1].strip(),
+              'cakeml')
+             for l in open(T + 'order1b.txt').read().split('\n') if l]
+  except IOError:
+    pass
   return libs + cake
 
 

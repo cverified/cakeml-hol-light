@@ -68,6 +68,7 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
+let _ = size_thms "exp2";;
 (* HOL4 termination: \\ rw [] \\ fs [LENGTH_NIL] \\ imp_res_tac
    (METIS_PROVE [SNOC_CASES] ``m <> [] ==> ?x y. m = SNOC x y``) \\
    full_simp_tac std_ss [LAST_SNOC,LENGTH_SNOC,FRONT_SNOC] \\ fs
@@ -116,6 +117,8 @@ let compile_def = cake_define_wf
          (HD (bvi_let_compile (REPLICATE rets 0 ++ env) d [y]))])`;;
 hol4_overload "compile" "bvi_let_compile";;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ rw[bviTheory.exp_size_def] \\ rename1`xs ≠
    []` \\ pop_assum mp_tac \\ qid_spec_tac`xs` \\ Cases using
    SNOC_CASES \\ gvs

@@ -30,6 +30,8 @@ let pure_op_def = cake_define
         | ((ThunkOp _18),_19) -> F`;;
 hol4_overload "pure_op" "bvi_tmc_pure_op";;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let pure_exp_def = cake_define_wf
   `MEASURE (\x. match x with INL (_33,e) -> exp_size e | INR (_34,es)
@@ -109,6 +111,8 @@ let call_to_cb_def = cake_define
      expression is not eligible for transformation and NONE is returned.
    If multiple recursive calls are found, all but the last are let
      bound. *)
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let bvi_to_cb_aux_def = cake_define_wf
   `MEASURE (\x. match x with INL (_42,_43,_44,e) -> exp_size e | INR
@@ -217,6 +221,7 @@ let cb_size_def = cake_define
         (CallBlock _51 _52 x _53) -> cb_size x + 1
       | _54 -> 0`;;
 
+let _ = size_thms "cb";;
 (* HOL4 termination: \\ rw [call_block_size_shift, cb_size_def] *)
 let cb_to_bvi_worker_aux_def = cake_define_wf
   `MEASURE (cb_size o FST)`

@@ -96,6 +96,7 @@ let handle_size_def = cake_define
    (handle_size1 [] = (1:num)) /\
    (handle_size1 (x :: xs) = 1 + handle_size x + handle_size1 xs)`;;
 
+let _ = size_thms "handle";;
 (* HOL4 termination: \\ rpt conj_tac \\ rpt gen_tac \\ simp_tac
    std_ss [] \\ fs [handle_size_def] \\ rw [] \\ gvs
    [DefnBase.one_line_ify NONE dest_handle_If_def,AllCaseEqs()] \\
@@ -279,6 +280,7 @@ val dest_Seq_def = PmatchHeuristics.with_classic_heuristic Define `
   (dest_Seq _ = NONE)`
 *)
 
+let _ = size_thms "exp";;
 (* HOL4 termination: ( \\ strip_tac \\ HO_MATCH_MP_TAC (fetch "-"
    "dest_Seq_ind") \\ fs [dest_Seq_def] \\ EVAL_TAC \\ fs []):tactic *)
 let compile_seqs_def = cake_define_wf

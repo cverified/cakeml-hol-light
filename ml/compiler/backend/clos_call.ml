@@ -159,6 +159,7 @@ let calls_list_def = cake_define
       (n,Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
            calls_list t (i + 1) (loc + 2) xs)`;;
 
+let _ = size_thms "exp3";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
    NOT_LESS,exp_size_def] \\ IMP_RES_TAC EL_MEM_LEMMA \\ IMP_RES_TAC
    exp1_size_lemma \\ assume_tac (SPEC_ALL exp3_size_MAP_SND) \\
@@ -242,6 +243,8 @@ let calls_def = cake_define_wf
             ([Letrec t loc_opt ws (ZIP (MAP FST fns,fns1)) (HD
               e1)],g)))`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
    NOT_LESS,list_size_pair_size_MAP_FST_SND] *)
 let calls_sing_def = cake_define_wf

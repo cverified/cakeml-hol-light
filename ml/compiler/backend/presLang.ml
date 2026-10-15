@@ -88,7 +88,8 @@ let item_with_word_def = cake_define
 
 let lit_to_display_def = cake_define_list
   [`lit_to_display (IntLit i) =
-        Item NONE (implode "IntLit") [empty_item ((num_to_str) i)]`;
+        Item NONE (implode "IntLit") [empty_item ((num_to_str)
+          i)]`;
    `lit_to_display (Char c) =
         Item NONE (implode "Char") [empty_item (implode ("#\"" ++
           [c] ++ "\""))]`;
@@ -279,6 +280,8 @@ let id_to_display_def = cake_define_list
    `id_to_display (Long n i) =
       Item NONE (implode "Long") [String n; id_to_display i]`];;
 
+let _ = size_thms "ast_t";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let ast_t_to_display_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> ast_t_size v | INR v -> list_size
@@ -296,6 +299,8 @@ let ast_t_to_display_def = cake_define_wf
         | (x :: xs) ->
        ast_t_to_display x :: ast_t_to_display_list xs`;;
 
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let pat_to_display_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> pat_size v | INR v -> list_size
@@ -376,6 +381,8 @@ let exp_to_display_def = cake_define
               exp_to_display e] ::
        fun_to_display_list xs`;;
 
+let _ = size_thms "dec";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let source_to_display_dec_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> dec_size v | INR v -> list_size
@@ -422,6 +429,8 @@ let opt_con_to_display_def = cake_define
   "ConIdUntyped") c | SOME (c,SOME t) -> item_with_nums (implode
   "ConIdTyped") [c; t])`;;
 
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let flat_pat_to_display_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> pat_size v | INR v -> list_size
@@ -542,6 +551,8 @@ let const_part_to_display_def = cake_define
    const_part_to_display (W64 w) =
      Item NONE (implode "W64") [word_to_display w]`;;
 
+let _ = size_thms "const";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let const_to_display_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> const_size v | INR v -> list_size
@@ -660,6 +671,9 @@ hol4_overload "commas" "presLang_commas";;
 
 (* The clos_to_display ns function uses the same approach to de bruijn
    indices as the pat_to_display function *)
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
+let _ = size_thms "pair";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 let clos_to_display_def = cake_define_wf
   `MEASURE (\x. match x with INL (_8,_9,e) -> exp_size e | INR (INL
@@ -753,6 +767,8 @@ let clos_dec_to_display_def = cake_define
 
 (* bvl to displayLang *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let bvl_to_display_def = cake_define_wf
   `MEASURE (\x.
@@ -805,6 +821,8 @@ let bvl_fun_to_display_def = cake_define
 
 (* bvi to displayLang *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let bvi_to_display_def = cake_define_wf
   `MEASURE (\x.
@@ -1245,6 +1263,8 @@ let word_seqs_def = cake_define
      (match z with wordLang_Seq x y -> Append (word_seqs x)
        (word_seqs y) | _30 -> List [z])`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: *)
 let word_exp_to_display_def = cake_define_wf
   `MEASURE (\x. match x with INL v -> exp_size ARB v | INR v ->

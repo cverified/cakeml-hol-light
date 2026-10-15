@@ -866,6 +866,7 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
 (* mirrors bviSem$finalise_cons, but threads the timestamp counter so
    that
    each block produced by the finalisation gets a fresh time stamp *)
+let _ = size_thms "sptree";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [sptreeTheory.size_delete] *)
 let finalise_cons_def = cake_define_wf
@@ -1457,6 +1458,7 @@ let set_vars_def = cake_define
   `set_vars ns vs s = (dataSem_state_locals_fupd (K (union (fromAList
   (ZIP (ns,vs))) (dataSem_state_locals s))) s)`;;
 
+let _ = size_thms "prog";;
 (* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ imp_res_tac (GSYM fix_clock_IMP) \\
    FULL_SIMP_TAC (srw_ss()) [set_var_def,push_env_clock,

@@ -346,6 +346,7 @@ let force_thunk_code_def = cake_define
          (Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0; Var
            1]] (Var 1))):bvl_exp)`;;
 
+let _ = size_thms "exp3";;
 (* HOL4 termination: >> srw_tac [ARITH_ss]
    [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
    l) <= exp1_size l` by (Induct_on `l` >> rw
@@ -451,6 +452,8 @@ hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 val compile_exps_ind = theorem"compile_exps_ind";
 *)
 
+let _ = size_thms "exp";;
+let _ = size_thms "exp3";;
 (* HOL4 termination: >> srw_tac [ARITH_ss]
    [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
    l) <= exp1_size l` by ( Induct_on `l` >> rw
@@ -626,6 +629,7 @@ let add_src_names_def = cake_define
      add_src_names (n + 2) xs (insert n (mlstring_concat [x;
        implode "_clos"]) (insert (n + 1) x l))`;;
 
+let _ = size_thms "exp3";;
 (* HOL4 termination: \\ rw [] \\ qsuff_tac ‘exp3_size (MAP SND funs)
    <= exp1_size funs’ \\ fs [] \\ Induct_on ‘funs’ \\ fs
    [closLangTheory.exp_size_def] \\ fs
@@ -657,6 +661,8 @@ let get_src_names_def = cake_define_wf
         match loc_opt with NONE -> l1 | SOME n -> add_src_names n
           names l1)`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "exp3";;
 (* HOL4 termination: \\ rw [closLangTheory.exp_size_def] \\ qsuff_tac
    ‘exp3_size (MAP SND funs) <= exp1_size funs’ \\ fs [] \\ Induct_on
    ‘funs’ \\ fs [closLangTheory.exp_size_def] \\ fs

@@ -78,6 +78,7 @@ let optimize_consts_def = cake_define
 
 (* If this expression contains a constant it should
     be head of the output operation list *)
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ rw[] \\ gvs[] \\ drule MEM_list_size \\
    disch_then(qspec_then `exp_size ARB` mp_tac) \\ rw[] *)
 let pull_exp_def = cake_define_wf
@@ -107,6 +108,7 @@ let pull_exp_def = cake_define_wf
  /\
 c d
 *)
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ fs[exp_size_def] \\ TRY (DECIDE_TAC) *)
@@ -176,6 +178,7 @@ let is_Lookup_CurrHeap_def = cake_define
   in temp and the value of the whole expression must be saved in tar
 *)
 
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ fs[exp_size_def] \\ TRY (DECIDE_TAC) *)

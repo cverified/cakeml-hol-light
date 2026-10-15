@@ -51,6 +51,7 @@ let mk_Branch_def = cake_define
      if t2 = Unknown then t2 else
        Branch t1 t2)`;;
 
+let _ = size_thms "prog";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs [size_delete] \\
    imp_res_tac miscTheory.lookup_zero \\ fs [] *)
 let call_graph_def = cake_define_wf

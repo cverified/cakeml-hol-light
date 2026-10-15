@@ -94,6 +94,8 @@ let mk_conses_def = cake_define
   `mk_conses t [] = [] /\
    mk_conses t (ps :: pss) = Cons t ps :: mk_conses t pss`;;
 
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let expand_def = cake_define_wf
   `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size
@@ -220,6 +222,8 @@ let default_mat_def = cake_define
  * --------------------------------------------------------------------
    *)
 
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let pat_weight_def = cake_define_wf
   `MEASURE (\x. match x with INL p -> pat_size p | INR ps -> list_size

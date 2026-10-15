@@ -122,6 +122,7 @@ let is_rel_def = cake_define
        IntOp (LESS) -> T | IntOp LessEq -> T | IntOp (GREATER) ->
          T | IntOp GreaterEq -> T | _13 -> F)`;;
 
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
    fs[] *)
 let term_ok_int_def = cake_define_wf
@@ -134,6 +135,7 @@ let term_ok_int_def = cake_define_wf
            NONE -> xs = [] /\ is_const op | SOME (x,y) -> is_arith
              op /\ term_ok_int ts x /\ term_ok_int ts y) | _14 -> F)`;;
 
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
    fs [] *)
 let term_ok_any_def = cake_define_wf

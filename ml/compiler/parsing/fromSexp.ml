@@ -255,6 +255,7 @@ let sexplit_def = cake_define
    variables.
    Unclear if this sort of special-casing is ever likely to be helpful
      *)
+let _ = size_thms "sexp";;
 (* HOL4 termination: >> simp[] >> rpt strip_tac >-
    metis_tac[arithmeticTheory.LESS_TRANS, rich_listTheory.EL_MEM,
    DECIDE ``1n < 2``, sxMEM_sizelt, dstrip_sexp_size] >-
@@ -489,6 +490,7 @@ let sexplocn_def = cake_define
               (sexplocpt (EL 0 ls))
               (sexplocpt (EL 1 ls))))`;;
 
+let _ = size_thms "sexp";;
 (* HOL4 termination: >> rw[]>> imp_res_tac dstrip_sexp_size >>
    imp_res_tac sxMEM_sizelt >> gvs[sexp_size_def,DB.fetch
    "quantHeuristics" "LIST_LENGTH_3",SF DNF_ss] *)
@@ -765,9 +767,10 @@ let optsexp_def = cake_define
 
 let idsexp_def = cake_define_list
   [`idsexp (Short n) = listsexp [SX_SYM "Short"; SEXSTR (explode n)]`;
-   `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode ns);
-  idsexp n]`];;
+   `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
+  ns); idsexp n]`];;
 
+let _ = size_thms "ast_t";;
 (* HOL4 termination: >> rw[] \\ Induct_on`ts` >> simp[ast_t_size_def]
    >> rw[] >> res_tac >> simp[] *)
 let typesexp_def = cake_define_wf
@@ -791,6 +794,7 @@ let litsexp_def = cake_define_list
    `litsexp (Word64 w) = listsexp [SX_SYM "word64"; SX_NUM (w2n w)]`;
    `litsexp (Float64 w) = listsexp [SX_SYM "float64"; SX_NUM (w2n w)]`];;
 
+let _ = size_thms "pat";;
 (* HOL4 termination: >> simp [] >> Induct_on`ps`>>simp[pat_size_def]
    >> rw[] >> simp[] >> res_tac >>
    first_x_assum(qspec_then`cn`strip_assume_tac)>> decide_tac *)
@@ -993,8 +997,8 @@ let decsexp_def = cake_define_list
       (SX_SYM "Dexn"; locssexp locs; SEXSTR (explode x); listsexp
         (MAP typesexp ts))`;
    `decsexp (Dmod name decs) =
-      (SX_SYM "Dmod"; SEXSTR (explode name); listsexp (MAP decsexp
-        decs))`;
+      (SX_SYM "Dmod"; SEXSTR (explode name); listsexp (MAP
+        decsexp decs))`;
    `decsexp (Dlocal ldecs decs) =
       listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
                 listsexp (MAP decsexp decs)]`];;

@@ -123,6 +123,7 @@ let dec_clock_def = cake_define
   (K (?_clock s - 1)) s`;;
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
+let _ = size_thms "exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    wordLangTheory.MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC
    o Q.SPEC `ARB`)) \\ DECIDE_TAC *)
@@ -691,6 +692,7 @@ let exit_loop_def = cake_define
       | res -> res`;;
 hol4_overload "exit_loop" "stackSem_exit_loop";;
 
+let _ = size_thms "prog";;
 (* HOL4 termination: \\ rpt strip_tac \\
    fs[empty_env_def,dec_clock_def,set_var_def,STOP_def] \\
    imp_res_tac fix_clock_IMP \\ fs [] \\ imp_res_tac (GSYM

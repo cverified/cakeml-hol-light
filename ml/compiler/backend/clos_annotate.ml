@@ -83,6 +83,9 @@ let alt_free_def = cake_define
       (let (c1,l1) = alt_free xs in
         ([Call t ticks dest c1],l1)))`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
+let _ = size_thms "pair";;
 (* HOL4 termination: *)
 let alt_free_sing_def = cake_define_wf
   `MEASURE (\x. match x with INL e -> exp_size e | INR (INL es) ->
@@ -214,6 +217,9 @@ let shift_def = cake_define
         ([Call t ticks dest c1])))`;;
 hol4_overload "shift" "clos_annotate_shift";;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
+let _ = size_thms "pair";;
 (* HOL4 termination: *)
 let shift_sing_def = cake_define_wf
   `MEASURE (\x. match x with INL (e,_6,_7,_8) -> exp_size e | INR (INL

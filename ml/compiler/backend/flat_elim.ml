@@ -55,6 +55,7 @@ let total_pat_def = cake_define
 (* check if expression is pure in that it does not make any visible
    changes
     (other than writing to globals) *)
+let _ = size_thms "exp";;
 (* HOL4 termination: >> rw[exp_size_def] >> fs[] >> fs [MEM_MAP,
    EXISTS_PROD] >> fs [exp1_size, exp3_size, exp6_size, MEM_SPLIT,
    SUM_APPEND, exp_size_def]>>
@@ -113,6 +114,8 @@ let dest_GlobalVarLookup_def = cake_define
       (GlobalVarLookup n) -> SOME n
     | _21 -> NONE`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 let find_loc_def = cake_define_wf
   `MEASURE (\e. match e with INL x -> exp_size x | INR y -> list_size
@@ -137,6 +140,8 @@ let find_loc_def = cake_define_wf
    (find_locL [] = LN) /\
    (find_locL (e :: es) = union (find_loc e) (find_locL es))`;;
 
+let _ = size_thms "exp";;
+let _ = size_thms "list";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 let find_lookups_def = cake_define_wf
   `MEASURE (\e. match e with INL x -> exp_size x | INR (y:flatLang_exp

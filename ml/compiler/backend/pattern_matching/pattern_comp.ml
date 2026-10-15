@@ -85,6 +85,8 @@ let get_pos_def = cake_define
   `get_pos [] = EmptyPos /\
    get_pos (n :: ns) = Pos n (get_pos ns)`;;
 
+let _ = size_thms "list";;
+let _ = size_thms "pat";;
 (* HOL4 termination: *)
 let pat_to_guard_def = cake_define_wf
   `MEASURE (\x. match x with INL (_8,p) -> pat_size p | INR (_9,k,p) ->
