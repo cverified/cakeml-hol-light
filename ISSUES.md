@@ -143,6 +143,15 @@ sources, and why.
   port uses it; where HOL4 guessed one, the port uses the sum of
   the sizes of the arguments that are matched on (see
   `auto_measure` in `ml/lib/define.ml`).
+- **The first pass assumes the definitions that none of that
+  makes.**  `cake_define` gives every way of making a definition
+  a budget of `cake_timeout` seconds (twenty), and states the
+  clauses as an axiom when they all fail; `ml/CHEATS.md` lists
+  them and `length (axioms ())` counts them (three plus one for
+  every assumed definition, or one for every clause of it where
+  the clauses had to be assumed one by one).  The second pass has
+  to replace each of them by a real definition; until then the
+  port is not conservative over HOL Light.
 
 ## Hand written parts of the library layer
 
