@@ -122,6 +122,10 @@ sources, and why.
   `real`, for an argument of a constructor whose type is one of
   them, and for a numeral in a comparison or a sum with a variable
   that a pattern binds to such an argument.
+- Lines of the ported files are at most 72 characters, with one
+  exception: `export$preamble` is a list of the lines of a C
+  preprocessor prelude, and one of those strings is longer than
+  that by itself.
 
 ## Definitions
 

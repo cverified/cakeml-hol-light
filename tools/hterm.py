@@ -1262,8 +1262,10 @@ class Printer:
         self.ctx.intnums = True
       # HOL Light's EXP is of natural numbers, so a power of an
       # integer is &(b EXP n) (dataSem's small_num has 2 ** 61 of
-      # an integer)
-      if op in ('pow', 'EXP', '**') and self.ctx.intnums:
+      # an integer); its pow is of a real, so a power of a real is
+      # &b pow n (binary_ieee's float_round_with_flags has
+      # 2 pow (bias (:'w)) of a real)
+      if op in ('EXP', '**') and self.ctx.intnums:
         self.ctx.intnums = False
         s = ('&(' + self.pr(e.l, hprec) + ' ' + hop + ' ' +
              self.pr(e.r, hprec + 1) + ')')

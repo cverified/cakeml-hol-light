@@ -210,9 +210,9 @@ let float_round_with_flags_def = cake_define
                  r:('t,'w+1)float) <=+
                 n2w (INT_MIN (:'w)))))
                   (flags_Underflow_BeforeRounding_fupd (K (inexact /\
-                  a < (&2) / &(2 pow (INT_MAX (:'w)))))
-                  (flags_Overflow_fupd (K (float_is_infinite x \/ &(2
-                  pow (INT_MIN (:'w))) <= a)) clear_flags)))),x))`;;
+                  a < (&2) / (&2) pow (INT_MAX (:'w))))
+                  (flags_Overflow_fupd (K (float_is_infinite x \/
+                  (&2) pow (INT_MIN (:'w)) <= a)) clear_flags)))),x))`;;
 
 let check_for_signalling_def = cake_define
   `check_for_signalling l = flags_InvalidOp_fupd (K (EXISTS
