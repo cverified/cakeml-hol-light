@@ -1521,7 +1521,7 @@ let word_cond_add_def = cake_define
 let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
-        (Loc n m:dataSem_v) -> (m = 0 /\ n IN code)
+        (Loc n m:semanticPrimitives_v) -> (m = 0 /\ n IN code)
       | _91 -> T`;;
 
 let read_word_def = cake_define

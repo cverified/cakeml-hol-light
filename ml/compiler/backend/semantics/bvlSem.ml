@@ -737,10 +737,10 @@ let evaluate_def = cake_define_list
              (match bvlSem_evaluate (y :: xs,env,s1) with (Rval
                vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
                -> res)`;
-   `bvlSem_evaluate ([(Var n:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(Var n:bvl_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
            (Rabort Rtype_error),s))`;
-   `bvlSem_evaluate ([(If x1 x2 x3:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(If x1 x2 x3:bvl_exp)],env,s) =
          (match fix_clock s (bvlSem_evaluate ([x1],env,s)) with
            (Rval vs,s1) ->
               (if Boolv T = HD vs then bvlSem_evaluate ([x2],env,s1)
@@ -748,28 +748,28 @@ let evaluate_def = cake_define_list
               if Boolv F = HD vs then bvlSem_evaluate ([x3],env,s1)
                 else
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
-   `bvlSem_evaluate ([(Let xs x2:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(Let xs x2:bvl_exp)],env,s) =
          (match fix_clock s (bvlSem_evaluate (xs,env,s)) with
            (Rval vs,s1) -> bvlSem_evaluate ([x2],vs ++ env,s1) | res
            -> res)`;
-   `bvlSem_evaluate ([(Raise x1:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(Raise x1:bvl_exp)],env,s) =
          (match bvlSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (HD vs)),s) | res -> res)`;
-   `bvlSem_evaluate ([(Handle x1 x2:flatLang_exp)],env,s1) =
+   `bvlSem_evaluate ([(Handle x1 x2:bvl_exp)],env,s1) =
          (match fix_clock s1 (bvlSem_evaluate ([x1],env,s1)) with
            (Rerr (Rraise v),s) -> bvlSem_evaluate ([x2],v :: env,s) |
            res -> res)`;
-   `bvlSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(Op op xs:bvl_exp)],env,s) =
          (match fix_clock s (bvlSem_evaluate (xs,env,s)) with (Rval
            vs,s) ->
              (match do_app op (REVERSE vs) s with Rerr err ->
                (Rerr err,s) | Rval (v,s) -> (Rval [v],s)) | res ->
                res)`;
-   `bvlSem_evaluate ([(Tick x:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(Tick x:bvl_exp)],env,s) =
          (if state_clock s = 0 then (Rerr (Rabort
            Rtimeout_error),s) else bvlSem_evaluate ([x],env,dec_clock
            1 s))`;
-   `bvlSem_evaluate ([(Force force_loc n:flatLang_exp)],env,s) =
+   `bvlSem_evaluate ([(Force force_loc n:bvl_exp)],env,s) =
          (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
            else
            let thunk_v = EL n env in
@@ -785,7 +785,7 @@ let evaluate_def = cake_define_list
                           Rtimeout_error),state_clock_fupd (K 0) s) else
                         bvlSem_evaluate ([exp],args,dec_clock 1
                           s))))`;
-   `bvlSem_evaluate ([(Call ticks dest xs:flatLang_exp)],env,s1) =
+   `bvlSem_evaluate ([(Call ticks dest xs:bvl_exp)],env,s1) =
          (match fix_clock s1 (bvlSem_evaluate (xs,env,s1)) with
            (Rval vs,s) ->
              (match find_code dest vs (state_code s) with NONE ->

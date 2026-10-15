@@ -382,19 +382,16 @@ let abs_frame_eq_def = cake_define
      result = 'a wordSem$result *)
 
 let compile_result_def = cake_define_list
-  [`compile_result (Result w1 w2:word_to_stackProof_result) = Result
-  w1`;
-   `compile_result (Exception w1 w2:word_to_stackProof_result) =
-  Exception w1`;
+  [`compile_result (stackSem_Result w1 w2) = Result w1`;
+   `compile_result (stackSem_Exception w1 w2) = Exception w1`;
    `compile_result TimeOut = TimeOut`;
    `compile_result wordSem_NotEnoughSpace = Halt (wordLang_Word (n2w
   1))`;
-   `compile_result (FinalFFI f:word_to_stackProof_result) = (FinalFFI
-  f:word_to_stackProof_result)`;
-   `compile_result (Break k:word_to_stackProof_result) = (Break
-  k:word_to_stackProof_result)`;
-   `compile_result (Continue k:word_to_stackProof_result) = (Continue
-  k:word_to_stackProof_result)`;
+   `compile_result (stackSem_FinalFFI f) = (FinalFFI f:'w
+  stackSem_result)`;
+   `compile_result (stackSem_Break k) = (Break k:'w stackSem_result)`;
+   `compile_result (stackSem_Continue k) = (Continue k:'w
+  stackSem_result)`;
    `compile_result Error = Error`];;
 
 (* HOL4 ML code, not ported:

@@ -814,7 +814,7 @@ let evaluate_def = cake_define_list
              (if state_clock s1 = 0 then (SOME
                TimeOut,stackSem_empty_env s1) else
                 stackSem_evaluate (STOP ((Loop c1:'a
-                  wordLang_prog)),dec_clock s1)) else (exit_loop
+                  stackLang_prog)),dec_clock s1)) else (exit_loop
                   res,s1))`;
    `stackSem_evaluate (stackLang_JumpLower r1 r2 dest,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word

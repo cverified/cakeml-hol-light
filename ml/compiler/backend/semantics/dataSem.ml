@@ -818,7 +818,7 @@ hol4_overload "do_build_const" "dataSem_do_build_const";;
 let do_int_app_def = cake_define
   `dataSem_do_int_app x1 x2 =
       match (x1,x2) with
-        ((Const n:call_tree),[]) ->
+        (word_depth_Const n,[]) ->
      (if small_enough_int n then SOME (Number n) else NONE)
       | ((Add),[Number n1; Number n2]) -> SOME (Number (n1 + n2))
       | ((Sub),[Number n1; Number n2]) -> SOME (Number (n1 - n2))
@@ -1538,11 +1538,11 @@ hol4_overload "set_vars" "dataSem_set_vars";;
 
 let evaluate_def = cake_define_list
   [`dataSem_evaluate (Skip,(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
-   `dataSem_evaluate ((Move dest src:labLang_prog),s) =
+   `dataSem_evaluate ((Move dest src:dataLang_prog),s) =
          (match get_var src (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME v ->
            (NONE,dataSem_set_var dest v s))`;
-   `dataSem_evaluate ((Assign dest op args names_opt:labLang_prog),s) =
+   `dataSem_evaluate ((Assign dest op args names_opt:dataLang_prog),s) =
          (if op_requires_names op = IS_NONE names_opt then
            (SOME (Rerr (Rabort Rtype_error)),s) else
            match dataSem_get_vars args (dataSem_state_locals s) with
@@ -1563,27 +1563,27 @@ let evaluate_def = cake_define_list
            with NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME
            env -> (NONE,add_space (dataSem_state_locals_fupd (K env)
            s) k))`;
-   `dataSem_evaluate ((Raise n:labLang_prog),s) =
+   `dataSem_evaluate ((Raise n:dataLang_prog),s) =
          (match get_var n (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME x ->
            (match dataSem_jump_exc s with NONE -> (SOME (Rerr
              (Rabort Rtype_error)),s) | SOME s -> (SOME (Rerr (Rraise
              x)),s)))`;
-   `dataSem_evaluate ((Return ns:labLang_prog),s) =
+   `dataSem_evaluate ((Return ns:dataLang_prog),s) =
          (match dataSem_get_vars ns (dataSem_state_locals s) with
            NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
            (SOME (Rval xs),dataSem_flush_state F s))`;
-   `dataSem_evaluate ((Seq c1 c2:labLang_prog),s) =
+   `dataSem_evaluate ((Seq c1 c2:dataLang_prog),s) =
          (let (res,s1) = fix_clock s (dataSem_evaluate (c1,s)) in
            if res = NONE then dataSem_evaluate (c2,s1) else
              (res,s1))`;
-   `dataSem_evaluate ((If n c1 c2:labLang_prog),s) =
+   `dataSem_evaluate ((If n c1 c2:dataLang_prog),s) =
          (match get_var n (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME x -> (if isBool T
            x then dataSem_evaluate (c1,s) else
                      if isBool F x then dataSem_evaluate (c2,s) else
                        (SOME (Rerr (Rabort Rtype_error)),s)))`;
-   `dataSem_evaluate ((Force ret loc src:labLang_prog),s) =
+   `dataSem_evaluate ((Force ret loc src:dataLang_prog),s) =
          (match get_var src (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME thunk_v ->
            (match dest_thunk thunk_v (state_refs s) with BadRef ->
@@ -1633,7 +1633,7 @@ let evaluate_def = cake_define_list
                                 Rtype_error)),s2)) | (NONE,s) ->
                                 (SOME (Rerr (Rabort Rtype_error)),s)
                                 | res -> res)))))))`;
-   `dataSem_evaluate ((Call ret dest args handler:labLang_prog),s) =
+   `dataSem_evaluate ((Call ret dest args handler:dataLang_prog),s) =
          (match dataSem_get_vars args (dataSem_state_locals s) with
            NONE -> (SOME (Rerr (Rabort Rtype_error)),s) | SOME xs ->
            (match find_code dest xs (state_code s)

@@ -76,64 +76,59 @@ let bVarBound_def = cake_define_list
   [`bVarBound n [] <=> T`;
    `bVarBound n ((x:bvl_exp) :: y :: xs) <=>
          bVarBound n [x] /\ bVarBound n (y :: xs)`;
-   `bVarBound n [(Var v:flatLang_exp)] <=> v < n`;
-   `bVarBound n [(If x1 x2 x3:flatLang_exp)] <=>
+   `bVarBound n [(Var v:bvl_exp)] <=> v < n`;
+   `bVarBound n [(If x1 x2 x3:bvl_exp)] <=>
          bVarBound n [x1] /\ bVarBound n [x2] /\ bVarBound n [x3]`;
-   `bVarBound n [(Let xs x2:flatLang_exp)] <=>
+   `bVarBound n [(Let xs x2:bvl_exp)] <=>
          bVarBound n xs /\ bVarBound (n + LENGTH xs) [x2]`;
-   `bVarBound n [(Raise x1:flatLang_exp)] <=> bVarBound n [x1]`;
-   `bVarBound n [(Tick x1:flatLang_exp)] <=> bVarBound n [x1]`;
-   `bVarBound n [(Op op xs:flatLang_exp)] <=> bVarBound n xs`;
-   `bVarBound n [(Force loc v:flatLang_exp)] <=> v < n`;
-   `bVarBound n [(Handle x1 x2:flatLang_exp)] <=>
+   `bVarBound n [(Raise x1:bvl_exp)] <=> bVarBound n [x1]`;
+   `bVarBound n [(Tick x1:bvl_exp)] <=> bVarBound n [x1]`;
+   `bVarBound n [(Op op xs:bvl_exp)] <=> bVarBound n xs`;
+   `bVarBound n [(Force loc v:bvl_exp)] <=> v < n`;
+   `bVarBound n [(Handle x1 x2:bvl_exp)] <=>
          bVarBound n [x1] /\ bVarBound (n + 1) [x2]`;
-   `bVarBound n [(Call ticks dest xs:flatLang_exp)] <=> bVarBound n
-  xs`];;
+   `bVarBound n [(Call ticks dest xs:bvl_exp)] <=> bVarBound n xs`];;
 
 let bEvery_def = cake_define_list
   [`bEvery P [] <=> T`;
    `bEvery P ((x:bvl_exp) :: y :: xs) <=>
          bEvery P [x] /\ bEvery P (y :: xs)`;
-   `bEvery P [(Var v:flatLang_exp)] <=> P ((Var v:flatLang_exp))`;
-   `bEvery P [(If x1 x2 x3:flatLang_exp)] <=> P ((If x1 x2
-  x3:flatLang_exp)) /\
+   `bEvery P [(Var v:bvl_exp)] <=> P ((Var v:bvl_exp))`;
+   `bEvery P [(If x1 x2 x3:bvl_exp)] <=> P ((If x1 x2 x3:bvl_exp)) /\
          bEvery P [x1] /\ bEvery P [x2] /\ bEvery P [x3]`;
-   `bEvery P [(Let xs x2:flatLang_exp)] <=> P ((Let xs x2:flatLang_exp))
-  /\
+   `bEvery P [(Let xs x2:bvl_exp)] <=> P ((Let xs x2:bvl_exp)) /\
          bEvery P xs /\ bEvery P [x2]`;
-   `bEvery P [(Raise x1:flatLang_exp)] <=> P ((Raise
-  x1:flatLang_exp)) /\ bEvery P [x1]`;
-   `bEvery P [(Tick x1:flatLang_exp)] <=> P ((Tick x1:flatLang_exp))
-  /\ bEvery P [x1]`;
-   `bEvery P [(Force m n:flatLang_exp)] <=> P ((Force m
-  n:flatLang_exp))`;
-   `bEvery P [(Op op xs:flatLang_exp)] <=> P ((Op op
-  xs:flatLang_exp)) /\ bEvery P xs`;
-   `bEvery P [(Handle x1 x2:flatLang_exp)] <=> P ((Handle x1
-  x2:flatLang_exp)) /\
+   `bEvery P [(Raise x1:bvl_exp)] <=> P ((Raise x1:bvl_exp)) /\
+  bEvery P [x1]`;
+   `bEvery P [(Tick x1:bvl_exp)] <=> P ((Tick x1:bvl_exp)) /\ bEvery
+  P [x1]`;
+   `bEvery P [(Force m n:bvl_exp)] <=> P ((Force m n:bvl_exp))`;
+   `bEvery P [(Op op xs:bvl_exp)] <=> P ((Op op xs:bvl_exp)) /\
+  bEvery P xs`;
+   `bEvery P [(Handle x1 x2:bvl_exp)] <=> P ((Handle x1 x2:bvl_exp)) /\
          bEvery P [x1] /\ bEvery P [x2]`;
-   `bEvery P [(Call ticks dest xs:flatLang_exp)] <=> P ((Call ticks
-  dest xs:flatLang_exp)) /\ bEvery P xs`];;
+   `bEvery P [(Call ticks dest xs:bvl_exp)] <=> P ((Call ticks dest
+  xs:bvl_exp)) /\ bEvery P xs`];;
 
 let get_code_labels_def = cake_define_list
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;
-   `bvlProps_get_code_labels (If e1 e2 e3:flatLang_exp) =
+   `bvlProps_get_code_labels (If e1 e2 e3:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION
   bvlProps_get_code_labels e3`;
-   `bvlProps_get_code_labels (Let es e:flatLang_exp) = BIGUNION
+   `bvlProps_get_code_labels (Let es e:bvl_exp) = BIGUNION
   (set_of_list (MAP bvlProps_get_code_labels es)) UNION
   bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (Raise e:flatLang_exp) =
+   `bvlProps_get_code_labels (Raise e:bvl_exp) =
   bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (Handle e1 e2:flatLang_exp) =
+   `bvlProps_get_code_labels (Handle e1 e2:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2`;
-   `bvlProps_get_code_labels (Tick e:flatLang_exp) =
+   `bvlProps_get_code_labels (Tick e:bvl_exp) =
   bvlProps_get_code_labels e`;
-   `bvlProps_get_code_labels (Force loc v:flatLang_exp) = {loc}`;
-   `bvlProps_get_code_labels (Call _4 d es:flatLang_exp) = (match d
-  with NONE -> {} | SOME n -> {n}) UNION BIGUNION (set_of_list (MAP
+   `bvlProps_get_code_labels (Force loc v:bvl_exp) = {loc}`;
+   `bvlProps_get_code_labels (Call _4 d es:bvl_exp) = (match d with
+  NONE -> {} | SOME n -> {n}) UNION BIGUNION (set_of_list (MAP
   bvlProps_get_code_labels es))`;
-   `bvlProps_get_code_labels (Op op es:flatLang_exp) =
+   `bvlProps_get_code_labels (Op op es:bvl_exp) =
   assign_get_code_label op UNION BIGUNION (set_of_list (MAP
   bvlProps_get_code_labels es))`];;
 hol4_overload "get_code_labels" "bvlProps_get_code_labels";;

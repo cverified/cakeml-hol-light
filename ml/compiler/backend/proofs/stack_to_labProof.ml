@@ -183,8 +183,7 @@ let result_view_INDUCT,result_view_RECURSION = define_datatype
 let result_view_def = cake_define
   `result_view x1 l cs bs =
         match x1 with
-          (Result (wordLang_Loc n1 n2):word_to_stackProof_result) ->
-            Vloc n1 n2
+          stackSem_Result (wordLang_Loc n1 n2) -> Vloc n1 n2
         | (Exception (wordLang_Loc n1 n2)) -> Vloc n1 n2
         | TimeOut -> Vtimeout
         | (Continue n) -> Vcont l (find_lab n cs)

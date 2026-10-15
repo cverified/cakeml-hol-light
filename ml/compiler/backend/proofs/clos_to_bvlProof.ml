@@ -495,8 +495,8 @@ let num_remaining_args_def = cake_define
 let get_loc_def = cake_define
   `get_loc x1 =
         match x1 with
-          (Closure (SOME loc) args env num_args exp:bvlSem_v) -> SOME
-            loc
+          (Closure (SOME loc) args env num_args exp:closSem_v) ->
+            SOME loc
         | (Recclosure (SOME loc) args env fns i) -> SOME (loc + 2 *
           i)
         | _7 -> NONE`;;
@@ -504,14 +504,14 @@ let get_loc_def = cake_define
 let get_old_args_def = cake_define
   `get_old_args x1 =
         match x1 with
-          (Closure loc args env num_args exp:bvlSem_v) -> SOME args
+          (Closure loc args env num_args exp:closSem_v) -> SOME args
         | (Recclosure loc args env fns i) -> SOME args
         | _8 -> NONE`;;
 
 let get_cl_env_def = cake_define
   `get_cl_env x1 =
         match x1 with
-          (Closure loc args env num_args exp:bvlSem_v) -> SOME env
+          (Closure loc args env num_args exp:closSem_v) -> SOME env
         | (Recclosure loc args env fns i) -> SOME env
         | _9 -> NONE`;;
 

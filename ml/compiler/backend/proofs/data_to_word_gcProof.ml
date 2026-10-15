@@ -338,7 +338,7 @@ val s' = mk_var("s'",type_of s);
 let loc_ok_def = cake_define
   `loc_ok x1 =
       match x1 with
-        (Loc m n:dataSem_v) -> (n = 0)
+        (Loc m n:semanticPrimitives_v) -> (n = 0)
       | _24 -> T`;;
 
 (* HOL4 ML code, not ported:

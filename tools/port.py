@@ -595,16 +595,22 @@ class Porter:
     self.ctx.intneg = False
     self.ctx.defining = set()
 
-  def con_thy(self, nm, kinds=('con',)):
+  def con_thy(self, nm, kinds=('con',), arity=None):
     """the theory whose constant of this name is meant.  Where the
-       name is ambiguous it is the theory that comes last among the
-       ones in scope, which is the one HOL4's overload resolution
-       takes"""
+       name is ambiguous it is the theory whose constructor takes
+       the arguments that are there, and of those the one that
+       comes last among the ones in scope, which is the one HOL4's
+       overload resolution takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
     if t: return t
     anc = self.db.ancestors(self.thy) | {self.thy}
     ts = [x for x, k in self.db.defs.get(n, [])
           if k in kinds and x in anc]
+    # the arguments that are there say more than the types that
+    # the other clauses of the definition use
+    if arity is not None:
+      ts = [x for x in ts
+            if self.db.con_arity(x, n) == arity] or ts
     if kinds == ('con',) and self.contys:
       ts = [x for x in ts if x in self.contys] or ts
     if not ts: return None
@@ -627,14 +633,16 @@ class Porter:
     n = nm.split('$')[-1]
     return self.ctx.names.get((t, n)) if t else None
 
-  def con_type(self, nm):
+  def con_type(self, nm, arity=None):
     """the type of a constructor, as the port writes it"""
-    t = self.con_thy(nm)
+    t = self.con_thy(nm, arity=arity)
     n = nm.split('$')[-1]
     if not t: return None
     for (t2, ty), (cons, _) in self.db.datatypes.items():
       if t2 == t and n in cons:
-        nm = self.ctx.tyname(ty)
+        # the name of the type of that theory, not of whichever
+        # theory in scope has a type of the same name
+        nm = self.ctx.tyname(t2 + '$' + ty)
         ps = self.db.ty_params.get((t2, nm))
         return '(%s)%s' % (','.join(ps), nm) if ps else nm
     return None
@@ -654,12 +662,12 @@ class Porter:
       if done[0]: return p
       while p.kind == 'paren': p = p.e
       if p.kind == 'app':
-        h, _ = hterm.strip_app(p)
+        h, args0 = hterm.strip_app(p)
         if h.kind == 'id' and (h.name in self.ctx.cons or
                                '$' in h.name):
           if ambiguous and not self.ambiguous_con(h.name):
             return p
-          ty = self.con_type(h.name)
+          ty = self.con_type(h.name, len(args0))
           if ty:
             self.annotated[hterm.Printer(self.ctx).pr(p, 0)] = ty
           # a type variable that the port writes is rigid in HOL

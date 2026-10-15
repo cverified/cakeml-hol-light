@@ -250,10 +250,10 @@ let evaluate_def = cake_define_list
              (match bviSem_evaluate (y :: xs,env,s1) with (Rval
                vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
                -> res)`;
-   `bviSem_evaluate ([(Var n:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(Var n:bvi_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
            (Rabort Rtype_error),s))`;
-   `bviSem_evaluate ([(If x1 x2 x3:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(If x1 x2 x3:bvi_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate ([x1],env,s)) with
            (Rval vs,s1) ->
               (if Boolv T = HD vs then bviSem_evaluate ([x2],env,s1)
@@ -261,26 +261,26 @@ let evaluate_def = cake_define_list
               if Boolv F = HD vs then bviSem_evaluate ([x3],env,s1)
                 else
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
-   `bviSem_evaluate ([(Let xs x2:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(Let xs x2:bvi_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with
            (Rval vs,s1) -> bviSem_evaluate ([x2],vs ++ env,s1) | res
            -> res)`;
-   `bviSem_evaluate ([(Raise x1:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(Raise x1:bvi_exp)],env,s) =
          (match bviSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Exn (HD vs))),s) | res -> res)`;
    `bviSem_evaluate ([bvi_Return xs],env,s) =
          (match bviSem_evaluate (xs,env,s) with (Rval vs,s) ->
            (Rerr (Rraise (Ret vs)),s) | res -> res)`;
-   `bviSem_evaluate ([(Op op xs:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(Op op xs:bvi_exp)],env,s) =
          (match fix_clock s (bviSem_evaluate (xs,env,s)) with (Rval
            vs,s) ->
              (match do_app op (REVERSE vs) s with Rerr e -> (Rerr
                e,s) | Rval (v,s) -> (Rval [v],s)) | res -> res)`;
-   `bviSem_evaluate ([(Tick x:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(Tick x:bvi_exp)],env,s) =
          (if state_clock s = 0 then (Rerr (Rabort Rtimeout_error),s)
            else
            bviSem_evaluate ([x],env,dec_clock 1 s))`;
-   `bviSem_evaluate ([(Force force_loc n:flatLang_exp)],env,s) =
+   `bviSem_evaluate ([(Force force_loc n:bvi_exp)],env,s) =
          (if ~(n < LENGTH env) then (Rerr (Rabort Rtype_error),s)
            else
            let thunk_v = EL n env in
@@ -298,8 +298,7 @@ let evaluate_def = cake_define_list
                           ([exp],args,dec_clock 1 s) with (Rerr
                           (Rraise (Ret _32)),s1) -> (Rerr (Rabort
                           Rtype_error),s1) | res -> res))))`;
-   `bviSem_evaluate ([(Call ticks dest xs handler:flatLang_exp)],env,s1)
-  =
+   `bviSem_evaluate ([(Call ticks dest xs handler:bvi_exp)],env,s1) =
          (if IS_NONE dest /\ IS_SOME handler then (Rerr (Rabort
            Rtype_error),s1) else
          match fix_clock s1 (bviSem_evaluate (xs,env,s1)) with (Rval

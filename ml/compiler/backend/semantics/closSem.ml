@@ -785,24 +785,24 @@ let AppUnit_def = cake_define
 hol4_overload "AppUnit" "closSem_AppUnit";;
 
 let exp_alt_size_def = cake_define_list
-  [`closSem_exp_alt_size (Var a0 a1:flatLang_exp) = 1 + (tra_size a0
+  [`closSem_exp_alt_size (Var a0 a1:closLang_exp) = 1 + (tra_size a0
   + a1)`;
-   `closSem_exp_alt_size (If a0 a1 a2 a3:flatLang_exp) =
+   `closSem_exp_alt_size (If a0 a1 a2 a3:closLang_exp) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 +
       (closSem_exp_alt_size a2 + closSem_exp_alt_size a3)))`;
-   `closSem_exp_alt_size (Let a0 a1 a2:flatLang_exp) =
+   `closSem_exp_alt_size (Let a0 a1 a2:closLang_exp) =
     1 + (tra_size a0 + (closSem_exp3_alt_size a1 +
       closSem_exp_alt_size a2))`;
-   `closSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
+   `closSem_exp_alt_size (Raise a0 a1:closLang_exp) = 1 + (tra_size
   a0 + closSem_exp_alt_size a1)`;
-   `closSem_exp_alt_size (Handle a0 a1 a2:flatLang_exp) =
+   `closSem_exp_alt_size (Handle a0 a1 a2:closLang_exp) =
     1 + (tra_size a0 + (closSem_exp_alt_size a1 +
       closSem_exp_alt_size a2))`;
    `closSem_exp_alt_size (closLang_Tick a0 a1) = 1 + (tra_size a0 +
   closSem_exp_alt_size a1)`;
    `closSem_exp_alt_size (closLang_Call a0 a1 a2 a3) =
     1 + (tra_size a0 + (a1 + (a2 + closSem_exp3_alt_size a3)))`;
-   `closSem_exp_alt_size (App a0 a1 a2 a3:flatLang_exp) =
+   `closSem_exp_alt_size (App a0 a1 a2 a3:closLang_exp) =
     1 +
     (tra_size a0 + (option_size (\x. x) a1 +
       (closSem_exp_alt_size a2 + closSem_exp3_alt_size a3)))`;
@@ -812,7 +812,7 @@ let exp_alt_size_def = cake_define_list
      (option_size (\x. x) a1 +
       (option_size (list_size (\x. x)) a2 + (a3 +
         closSem_exp_alt_size a4))))`;
-   `closSem_exp_alt_size (Letrec a0 a1 a2 a3 a4:flatLang_exp) =
+   `closSem_exp_alt_size (Letrec a0 a1 a2 a3 a4:closLang_exp) =
     1 +
     (list_size mlstring_size a0 +
      (option_size (\x. x) a1 +
@@ -844,10 +844,10 @@ let evaluate_def = cake_define_list
              (match closSem_evaluate (y :: xs,env,s1) with (Rval
                vs,s2) -> (Rval (HD v1 :: vs),s2) | res -> res) | res
                -> res)`;
-   `closSem_evaluate ([(Var _87 n:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(Var _87 n:closLang_exp)],env,s) =
          (if n < LENGTH env then (Rval [EL n env],s) else (Rerr
            (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([(If _89 x1 x2 x3:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(If _89 x1 x2 x3:closLang_exp)],env,s) =
          (match closSem_fix_clock s (closSem_evaluate ([x1],env,s))
            with (Rval vs,s1) ->
               (if Boolv T = HD vs then closSem_evaluate
@@ -855,14 +855,14 @@ let evaluate_def = cake_define_list
               if Boolv F = HD vs then closSem_evaluate ([x3],env,s1)
                 else
                 (Rerr (Rabort Rtype_error),s1)) | res -> res)`;
-   `closSem_evaluate ([(Let _91 xs x2:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(Let _91 xs x2:closLang_exp)],env,s) =
          (match closSem_fix_clock s (closSem_evaluate (xs,env,s))
            with (Rval vs,s1) -> closSem_evaluate ([x2],vs ++ env,s1)
            | res -> res)`;
-   `closSem_evaluate ([(Raise _93 x1:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(Raise _93 x1:closLang_exp)],env,s) =
          (match closSem_evaluate ([x1],env,s) with (Rval vs,s) ->
            (Rerr (Rraise (HD vs)),s) | res -> res)`;
-   `closSem_evaluate ([(Handle _95 x1 x2:flatLang_exp)],env,s1) =
+   `closSem_evaluate ([(Handle _95 x1 x2:closLang_exp)],env,s1) =
          (match closSem_fix_clock s1 (closSem_evaluate
            ([x1],env,s1)) with (Rerr (Rraise v),s) ->
            closSem_evaluate ([x2],v :: env,s) | res -> res)`;
@@ -897,7 +897,7 @@ let evaluate_def = cake_define_list
                  env' num_args exp],s)) else
            (Rerr (Rabort Rtype_error),s))`;
    `closSem_evaluate ([(Letrec _99 loc namesopt fns
-  exp:flatLang_exp)],env,s) =
+  exp:closLang_exp)],env,s) =
          (if EVERY (\(num_args,e). num_args <= closSem_state_max_app
            s /\ ~(num_args = 0)) fns then
            let
@@ -912,7 +912,7 @@ let evaluate_def = cake_define_list
                  NONE -> (Rerr (Rabort Rtype_error),s) | SOME ed ->
                    closSem_evaluate ([exp],ed ++ env,s) else
            (Rerr (Rabort Rtype_error),s))`;
-   `closSem_evaluate ([(App _101 loc_opt x1 args:flatLang_exp)],env,s) =
+   `closSem_evaluate ([(App _101 loc_opt x1 args:closLang_exp)],env,s) =
          (if LENGTH args > 0 then
            (match closSem_fix_clock s (closSem_evaluate
              (args,env,s)) with (Rval y2,s1) ->

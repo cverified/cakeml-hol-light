@@ -54,15 +54,13 @@ let compile_pat_bindings_def = cake_define_list
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i ((Pany,_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;
-   `compile_pat_bindings t i (((Pvar s:pattern_semantics_pat),k,x) :: m)
-  exp = (
+   `compile_pat_bindings t i (((Pvar s:flatLang_pat),k,x) :: m) exp = (
       let (spt,exp2) = compile_pat_bindings t i m exp in
       (sptree_insert k one spt,Let t (SOME s) x exp2))`;
-   `compile_pat_bindings t i (((Plit _6:pattern_semantics_pat),_7,_8) ::
-  m) exp =
+   `compile_pat_bindings t i (((Plit _6:flatLang_pat),_7,_8) :: m) exp =
       compile_pat_bindings t i m exp`;
-   `compile_pat_bindings t i (((Pcon _36 ps:pattern_semantics_pat),k,x)
-  :: m) exp = (
+   `compile_pat_bindings t i (((Pcon _36 ps:flatLang_pat),k,x) :: m) exp
+  = (
       let j_nms = MAP (\(j,p). let k = i + 1 + j in
           let nm = enc_num_to_name k in
           ((j,nm),(p,k,flatLang_Var_local t nm))) (enumerate 0 ps)
@@ -77,8 +75,7 @@ let compile_pat_bindings_def = cake_define_list
       let spt2 = if NULL j_nms_used then spt else sptree_insert k
         one spt in
       (spt2,exp3))`;
-   `compile_pat_bindings t i (((Pas p v:pattern_semantics_pat),k,x) ::
-  m) exp = (
+   `compile_pat_bindings t i (((Pas p v:flatLang_pat),k,x) :: m) exp = (
       let nm = enc_num_to_name (i + 1) in
       let (spt,exp2) = compile_pat_bindings t (i + 2)
                         ((p,i + 1,flatLang_Var_local t nm) :: m) exp
@@ -86,8 +83,7 @@ let compile_pat_bindings_def = cake_define_list
       (sptree_insert k one spt,Let t (SOME v) x
                               (Let t (SOME nm)
                                 (flatLang_Var_local t v) exp2)))`;
-   `compile_pat_bindings t i (((Pref p:pattern_semantics_pat),k,x) :: m)
-  exp = (
+   `compile_pat_bindings t i (((Pref p:flatLang_pat),k,x) :: m) exp = (
       let nm = enc_num_to_name (i + 1) in
       let (spt,exp2) = compile_pat_bindings t (i + 2)
           ((p,i + 1,flatLang_Var_local t nm) :: m) exp in

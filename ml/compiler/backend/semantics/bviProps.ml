@@ -46,24 +46,24 @@ let inc_clock_def = cake_define
 hol4_overload "inc_clock" "bviProps_inc_clock";;
 
 let get_code_labels_def = cake_define_list
-  [`bviProps_get_code_labels (Var _2:flatLang_exp) = {}`;
-   `bviProps_get_code_labels (If e1 e2 e3:flatLang_exp) =
+  [`bviProps_get_code_labels (Var _2:bvi_exp) = {}`;
+   `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION
   bviProps_get_code_labels e3`;
-   `bviProps_get_code_labels (Let es e:flatLang_exp) = BIGUNION
+   `bviProps_get_code_labels (Let es e:bvi_exp) = BIGUNION
   (set_of_list (MAP bviProps_get_code_labels es)) UNION
   bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (Raise e:flatLang_exp) =
+   `bviProps_get_code_labels (Raise e:bvi_exp) =
   bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (Tick e:flatLang_exp) =
+   `bviProps_get_code_labels (Tick e:bvi_exp) =
   bviProps_get_code_labels e`;
-   `bviProps_get_code_labels (Force loc v:flatLang_exp) = {loc}`;
-   `bviProps_get_code_labels (Call _4 d es h:flatLang_exp) =
+   `bviProps_get_code_labels (Force loc v:bvi_exp) = {loc}`;
+   `bviProps_get_code_labels (Call _4 d es h:bvi_exp) =
         (match d with NONE -> {} | SOME n -> {n}) UNION
         (match h with NONE -> {} | SOME e ->
           bviProps_get_code_labels e) UNION
         BIGUNION (set_of_list (MAP bviProps_get_code_labels es))`;
-   `bviProps_get_code_labels (Op op es:flatLang_exp) =
+   `bviProps_get_code_labels (Op op es:bvi_exp) =
   assign_get_code_label op UNION BIGUNION (set_of_list (MAP
   bviProps_get_code_labels es))`;
    `bviProps_get_code_labels (bvi_Return es) = BIGUNION (set_of_list

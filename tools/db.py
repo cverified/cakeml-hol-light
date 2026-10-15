@@ -404,6 +404,12 @@ class Db:
       out[(t, nm)] = new
     return out
 
+  def con_arity(self, thy, con):
+    """how many arguments a constructor of a theory takes"""
+    n = 0
+    while (thy, con, n) in self.con_argty_thy: n += 1
+    return n
+
   def ambiguous_fields(self):
     """the record fields that more than one record type of the port
        has, and the name that the port overloads their accessors
