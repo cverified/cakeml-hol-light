@@ -131,6 +131,8 @@ class Porter:
     self.head = None
     self.deps = []
     self.restore = set()   # the infixes to put back at the end
+    self.rec_src = {}      # record type -> [(field, type)]
+    self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
     # an overload of an ancestor does not shadow a constant that
@@ -340,6 +342,8 @@ class Porter:
         return
       if self.hol_reln(b):
         return
+      if self.monadic(b):
+        return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
       self.out.append('(* HOL4 ML code, not ported:\n' +
                       shorten(b.text) + '\n*)')
@@ -417,10 +421,21 @@ class Porter:
   def record(self, ty, rhs):
     inner = rhs[2:rhs.rindex('|>')]
     flds = []
+    src = []
     for f in hol4.split_top(inner, ';'):
       if not f.strip(): continue
       name, tytext = f.split(':', 1)
       flds.append((name.strip(), self.typ(tytext.strip())))
+      try:
+        src.append((name.strip(),
+                    hterm.expand_type(
+                      hterm.parse_type_text(tytext.strip()),
+                      self.abbrevs)))
+      except Exception:
+        src.append((name.strip(), None))
+    # the monadic machinery of ml_monadBaseLib needs the fields of
+    # the state record and their types
+    self.rec_src[self.tnm(ty)] = src
     lines = []
     for i, (f, t) in enumerate(flds):
       pre = '  [' if i == 0 else '   '
@@ -1005,6 +1020,163 @@ class Porter:
     if u:
       self.ctx.overloads['return'] = (
           self.ctx.name(u) if IDENT.match(u) else self.term(u))
+
+  # the monadic state machinery that HOL4's ml_monadBaseLib makes
+  # with ML code: the accessors of a state record, the
+  # manipulators of its fixed size arrays, the functions of its
+  # exception type and the run function of an initial state
+  # (reg_alloc and linear_scan use all four)
+
+  ACCESS_FUNS = re.compile(r'define_monad_access_funs\s*(?:``|\u201c)'
+                           r'\s*:\s*([A-Za-z0-9_\']+)')
+  EXN_FUNS = re.compile(r'define_monad_exception_functions\s*'
+                        r'(?:``|\u201c)\s*:\s*([A-Za-z0-9_\']+)'
+                        r'(?:``|\u201d)\s*(?:``|\u201c)\s*:\s*'
+                        r'([A-Za-z0-9_\']+)')
+  ARR_FUNS = re.compile(r'define_MFarray_manip_funs\s*\[([^\]]*)\]'
+                        r'\s*(\w+)\s*(\w+)', re.S)
+  RUN_FUN = re.compile(r'define_run\s*(?:``|\u201c)\s*:\s*'
+                       r'([A-Za-z0-9_\']+)(?:``|\u201d)\s*(\w+)'
+                       r'\s*"([^"]*)"', re.S)
+  ARR_NAMES = re.compile(r'val\s+array_fields_names\s*=\s*\[([^\]]*)\]',
+                         re.S)
+
+  def monadic(self, b):
+    txt = b.text
+    m = self.ARR_NAMES.search(txt)
+    if m:
+      self.arrflds = re.findall(r'"([^"]*)"', m.group(1))
+    m = self.ACCESS_FUNS.search(txt)
+    if m:
+      self.monad_access(m.group(1)); return True
+    m = self.EXN_FUNS.search(txt)
+    if m:
+      self.monad_exceptions(m.group(1), m.group(2)); return True
+    m = self.ARR_FUNS.search(txt)
+    if m:
+      flds = [x.strip()[:-len('_accessors')]
+              for x in m.group(1).split(',')
+              if x.strip().endswith('_accessors')]
+      self.monad_arrays(flds, 'Subscript'); return True
+    m = self.RUN_FUN.search(txt)
+    if m:
+      self.monad_run(m.group(1), m.group(3)); return True
+    return False
+
+  def mdef(self, name, text):
+    """one of the definitions of the monadic machinery"""
+    self.out.append('let %s_def = cake_define\n  `%s`;;\n'
+                    % (ocaml_name(name), fmt(text)))
+
+  def monad_access(self, ty):
+    """get_f and set_f for every field of the state record"""
+    rty = self.tnm(ty)
+    self.out.append(shorten(
+      '(* HOL4 makes the monadic accessors of %s with ML code\n'
+      '   (define_monad_access_funs of ml_monadBaseLib); these are\n'
+      '   the definitions that it makes *)' % rty))
+    for f, _ in self.rec_src.get(rty, []):
+      self.mdef('get_' + f,
+                'get_%s = (\\state. (M_success (%s state),state))'
+                % (f, self.ctx.field(f)))
+      self.mdef('set_' + f,
+                'set_%s x =\n  (\\state. (M_success one,%s (K x) state))'
+                % (f, self.ctx.fupd(f)))
+
+  def monad_exceptions(self, exn, ty):
+    """raise_C and handle_C for every constructor of the exception
+       type of the state monad"""
+    cons = None
+    for (t, ety), (cs, _) in self.db.datatypes.items():
+      if ety == exn and (t in self.db.ancestors(self.thy) or
+                         t == self.thy):
+        cons = cs
+    if cons is None: return
+    args = {}
+    for c in cons:
+      n = len([1 for i in range(9)
+               if self.db.con_argty.get((c, i)) is not None])
+      args[c] = ' '.join('e%d' % (i + 1) for i in range(n))
+    self.out.append(shorten(
+      '(* HOL4 makes the functions of the exception type %s with ML\n'
+      '   code (define_monad_exception_functions of\n'
+      '   ml_monadBaseLib); these are the definitions that it\n'
+      '   makes *)' % exn))
+    for c in cons:
+      a = args[c]
+      con = ('(%s %s)' % (self.nm(c), a)) if a else self.nm(c)
+      self.mdef('raise_' + c,
+                'raise_%s %s=\n  (\\state. (M_failure %s,state))'
+                % (c, a + ' ' if a else '', con))
+    for c in cons:
+      arms = []
+      for d in cons:
+        a = args[d]
+        pat = self.nm(d) + (' ' + a if a else '')
+        con = ('(%s %s)' % (self.nm(d), a)) if a else self.nm(d)
+        if d == c:
+          arms.append('%s -> f%s state' % (pat, ' ' + a if a else ''))
+        else:
+          arms.append('%s -> (M_failure %s,state)' % (pat, con))
+      self.mdef('handle_' + c,
+                'handle_%s x f =\n'
+                '  (\\state.\n'
+                '    match x state with (res,state) ->\n'
+                '      match res with M_success y -> (M_success y,state)\n'
+                '      | M_failure e ->\n'
+                '        (match e with %s))' % (c, ' | '.join(arms)))
+
+  def monad_arrays(self, flds, exn):
+    """f_length, f_sub and update_f of a fixed size array field"""
+    self.out.append(shorten(
+      '(* HOL4 makes the manipulators of the fixed size arrays with\n'
+      '   ML code (define_MFarray_manip_funs of ml_monadBaseLib);\n'
+      '   these are the definitions that it makes *)'))
+    for f in flds:
+      get = '(\\state. %s state)' % self.ctx.field(f)
+      setf = '(\\x state. %s (K x) state)' % self.ctx.fupd(f)
+      self.mdef(f + '_length', '%s_length = Marray_length %s' % (f, get))
+      self.mdef(f + '_sub',
+                '%s_sub = Marray_sub %s %s' % (f, get, self.nm(exn)))
+      self.mdef('update_' + f,
+                'update_%s =\n  Marray_update %s\n    %s %s'
+                % (f, get, setf, self.nm(exn)))
+
+  def monad_run(self, ty, new):
+    """the record of an initial state, in which an array field is a
+       length and an initial value, and the run function"""
+    rty = self.tnm(ty)
+    flds = self.rec_src.get(rty, [])
+    self.out.append(shorten(
+      '(* HOL4 makes the record of an initial state of %s and the\n'
+      '   run function with ML code (define_run of\n'
+      '   ml_monadBaseLib); an array field of it is the length and\n'
+      '   the initial value of the array *)' % rty))
+    lines = []
+    for i, (f, ty2) in enumerate(flds):
+      if f in self.arrflds and ty2 is not None and ty2[1] == 'list':
+        ty2 = ('op', 'prod', [('op', 'num', []), ty2[2][0]])
+      s = hterm.print_type(ty2, self.ctx) if ty2 is not None else 'num'
+      pre = '  [' if i == 0 else '   '
+      lines.append(' \\\n'.join(
+        fill(pre + '"%s","' % f, s.split(' '), 70)) + '"')
+    head = ('let %s_FIELDS = define_record "%s"' % (ocaml_name(new), new))
+    if len(head) > 72:
+      head = ('let %s_FIELDS =\n  define_record "%s"'
+              % (ocaml_name(new), new))
+    self.out.append('%s\n%s];;' % (head, ';\n'.join(lines)))
+    # the literal of such a record is the one that RECORD_OF names
+    self.ctx.recs[new] = [f for f, _ in flds]
+    args = []
+    for f, _ in flds:
+      acc = '%s_%s state' % (new, f)
+      if f in self.arrflds:
+        args.append('(REPLICATE (FST (%s)) (SND (%s)))' % (acc, acc))
+      else:
+        args.append('(%s)' % acc)
+    self.mdef('run_' + new,
+              'run_%s x state =\n  run x (mk_%s %s)'
+              % (new, rty, ' '.join(args)))
 
   def hol_reln(self, b):
     r = hol4.hol_reln(b.text)

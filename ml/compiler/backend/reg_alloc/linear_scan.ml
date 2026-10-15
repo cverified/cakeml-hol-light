@@ -13,6 +13,7 @@ needs "compiler/backend/stackLang.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
+needs "semantics/ffi/ffi.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let live_tree_INDUCT,live_tree_RECURSION = define_datatype
@@ -303,9 +304,55 @@ let linear_scan_hidden_state_FIELDS =
    "sorted_regs","num list";
    "sorted_moves","(num#num#num) list"];;
 
-(* HOL4 ML code, not ported:
-val accessors = define_monad_access_funs ``:linear_scan_hidden_state``;
-*)
+(* HOL4 makes the monadic accessors of linear_scan_hidden_state with ML
+   code
+   (define_monad_access_funs of ml_monadBaseLib); these are
+   the definitions that it makes *)
+let get_colors_def = cake_define
+  `get_colors = (\state. (M_success (linear_scan_hidden_state_colors
+  state),state))`;;
+
+let set_colors_def = cake_define
+  `set_colors x =
+     (\state. (M_success one,linear_scan_hidden_state_colors_fupd
+       (K x) state))`;;
+
+let get_int_beg_def = cake_define
+  `get_int_beg = (\state. (M_success
+  (linear_scan_hidden_state_int_beg state),state))`;;
+
+let set_int_beg_def = cake_define
+  `set_int_beg x =
+     (\state. (M_success one,linear_scan_hidden_state_int_beg_fupd
+       (K x) state))`;;
+
+let get_int_end_def = cake_define
+  `get_int_end = (\state. (M_success
+  (linear_scan_hidden_state_int_end state),state))`;;
+
+let set_int_end_def = cake_define
+  `set_int_end x =
+     (\state. (M_success one,linear_scan_hidden_state_int_end_fupd
+       (K x) state))`;;
+
+let get_sorted_regs_def = cake_define
+  `get_sorted_regs = (\state. (M_success
+  (linear_scan_hidden_state_sorted_regs state),state))`;;
+
+let set_sorted_regs_def = cake_define
+  `set_sorted_regs x =
+     (\state. (M_success
+       one,linear_scan_hidden_state_sorted_regs_fupd (K x) state))`;;
+
+let get_sorted_moves_def = cake_define
+  `get_sorted_moves = (\state. (M_success
+  (linear_scan_hidden_state_sorted_moves state),state))`;;
+
+let set_sorted_moves_def = cake_define
+  `set_sorted_moves x =
+     (\state. (M_success
+       one,linear_scan_hidden_state_sorted_moves_fupd (K x) state))`;;
+
 
 (* HOL4 ML code, not ported:
 val colors_accessors = el 1 accessors;
@@ -331,10 +378,37 @@ Datatype:
 End
 *)
 
-(* HOL4 ML code, not ported:
-val exn_functions = define_monad_exception_functions ``:state_exn``
-  ``:linear_scan_hidden_state``;
-*)
+(* HOL4 makes the functions of the exception type state_exn with ML
+   code (define_monad_exception_functions of
+   ml_monadBaseLib); these are the definitions that it
+   makes *)
+let raise_Fail_def = cake_define
+  `raise_Fail e1 =
+     (\state. (M_failure (Fail e1),state))`;;
+
+let raise_Subscript_def = cake_define
+  `raise_Subscript =
+     (\state. (M_failure reg_alloc_Subscript,state))`;;
+
+let handle_Fail_def = cake_define
+  `handle_Fail x f =
+     (\state.
+       match x state with (res,state) ->
+         match res with M_success y -> (M_success y,state)
+         | M_failure e ->
+           (match e with Fail e1 -> f e1 state |
+             reg_alloc_Subscript -> (M_failure
+             reg_alloc_Subscript,state)))`;;
+
+let handle_Subscript_def = cake_define
+  `handle_Subscript x f =
+     (\state.
+       match x state with (res,state) ->
+         match res with M_success y -> (M_success y,state)
+         | M_failure e ->
+           (match e with Fail e1 -> (M_failure (Fail e1),state) |
+             reg_alloc_Subscript -> f state))`;;
+
 hol4_overload "failwith" "raise_Fail";;
 
 (* HOL4 ML code, not ported:
@@ -342,11 +416,81 @@ val sub_exn = ``Subscript``;
 val update_exn = ``Subscript``;
 *)
 
-(* HOL4 ML code, not ported:
-val arr_manip = define_MFarray_manip_funs [colors_accessors,
-  int_beg_accessors, int_end_accessors, sorted_regs_accessors,
-  sorted_moves_accessors] sub_exn update_exn;
-*)
+(* HOL4 makes the manipulators of the fixed size arrays with
+   ML code (define_MFarray_manip_funs of ml_monadBaseLib);
+   these are the definitions that it makes *)
+let colors_length_def = cake_define
+  `colors_length = Marray_length (\state.
+  linear_scan_hidden_state_colors state)`;;
+
+let colors_sub_def = cake_define
+  `colors_sub = Marray_sub (\state. linear_scan_hidden_state_colors
+  state) reg_alloc_Subscript`;;
+
+let update_colors_def = cake_define
+  `update_colors =
+     Marray_update (\state. linear_scan_hidden_state_colors state)
+       (\x state. linear_scan_hidden_state_colors_fupd (K x)
+         state) reg_alloc_Subscript`;;
+
+let int_beg_length_def = cake_define
+  `int_beg_length = Marray_length (\state.
+  linear_scan_hidden_state_int_beg state)`;;
+
+let int_beg_sub_def = cake_define
+  `int_beg_sub = Marray_sub (\state. linear_scan_hidden_state_int_beg
+  state) reg_alloc_Subscript`;;
+
+let update_int_beg_def = cake_define
+  `update_int_beg =
+     Marray_update (\state. linear_scan_hidden_state_int_beg state)
+       (\x state. linear_scan_hidden_state_int_beg_fupd (K x)
+         state) reg_alloc_Subscript`;;
+
+let int_end_length_def = cake_define
+  `int_end_length = Marray_length (\state.
+  linear_scan_hidden_state_int_end state)`;;
+
+let int_end_sub_def = cake_define
+  `int_end_sub = Marray_sub (\state. linear_scan_hidden_state_int_end
+  state) reg_alloc_Subscript`;;
+
+let update_int_end_def = cake_define
+  `update_int_end =
+     Marray_update (\state. linear_scan_hidden_state_int_end state)
+       (\x state. linear_scan_hidden_state_int_end_fupd (K x)
+         state) reg_alloc_Subscript`;;
+
+let sorted_regs_length_def = cake_define
+  `sorted_regs_length = Marray_length (\state.
+  linear_scan_hidden_state_sorted_regs state)`;;
+
+let sorted_regs_sub_def = cake_define
+  `sorted_regs_sub = Marray_sub (\state.
+  linear_scan_hidden_state_sorted_regs state) reg_alloc_Subscript`;;
+
+let update_sorted_regs_def = cake_define
+  `update_sorted_regs =
+     Marray_update (\state. linear_scan_hidden_state_sorted_regs
+       state)
+       (\x state. linear_scan_hidden_state_sorted_regs_fupd (K x)
+         state) reg_alloc_Subscript`;;
+
+let sorted_moves_length_def = cake_define
+  `sorted_moves_length = Marray_length (\state.
+  linear_scan_hidden_state_sorted_moves state)`;;
+
+let sorted_moves_sub_def = cake_define
+  `sorted_moves_sub = Marray_sub (\state.
+  linear_scan_hidden_state_sorted_moves state) reg_alloc_Subscript`;;
+
+let update_sorted_moves_def = cake_define
+  `update_sorted_moves =
+     Marray_update (\state. linear_scan_hidden_state_sorted_moves
+       state)
+       (\x state. linear_scan_hidden_state_sorted_moves_fupd (K x)
+         state) reg_alloc_Subscript`;;
+
 
 (* HOL4 ML code, not ported:
 fun accessor_thm (a,b,c,d,e,f) = LIST_CONJ [b,c,d,e,f]
@@ -917,14 +1061,32 @@ let apply_bijection_def = cake_define
        foldi (\r i acc. sptree_insert (the 0 (sptree_lookup r
          bij)) i acc) 0 LN interval`;;
 
-(* HOL4 ML code, not ported:
-val array_fields_names = ["colors", "int_beg", "int_end", "sorted_regs",
-  "sorted_moves"];
-val run_i_linear_scan_hidden_state_def =
-  define_run ``:linear_scan_hidden_state``
-  array_fields_names
-  "i_linear_scan_hidden_state";
-*)
+(* HOL4 makes the record of an initial state of linear_scan_hidden_state
+   and the
+   run function with ML code (define_run of
+   ml_monadBaseLib); an array field of it is the length and
+   the initial value of the array *)
+let i_linear_scan_hidden_state_FIELDS =
+  define_record "i_linear_scan_hidden_state"
+  ["colors","num#num";
+   "int_beg","num#int";
+   "int_end","num#int";
+   "sorted_regs","num#num";
+   "sorted_moves","num#num#num#num"];;
+let run_i_linear_scan_hidden_state_def = cake_define
+  `run_i_linear_scan_hidden_state x state =
+     run x (mk_linear_scan_hidden_state (REPLICATE (FST
+       (i_linear_scan_hidden_state_colors state)) (SND
+       (i_linear_scan_hidden_state_colors state))) (REPLICATE (FST
+       (i_linear_scan_hidden_state_int_beg state)) (SND
+       (i_linear_scan_hidden_state_int_beg state))) (REPLICATE (FST
+       (i_linear_scan_hidden_state_int_end state)) (SND
+       (i_linear_scan_hidden_state_int_end state))) (REPLICATE (FST
+       (i_linear_scan_hidden_state_sorted_regs state)) (SND
+       (i_linear_scan_hidden_state_sorted_regs state))) (REPLICATE
+       (FST (i_linear_scan_hidden_state_sorted_moves state)) (SND
+       (i_linear_scan_hidden_state_sorted_moves state))))`;;
+
 
 let linear_reg_alloc_and_extract_coloration_def = cake_define
   `linear_reg_alloc_and_extract_coloration ct k forced moves
@@ -951,7 +1113,7 @@ let run_linear_reg_alloc_intervals_def = cake_define
        run_i_linear_scan_hidden_state
          (linear_reg_alloc_and_extract_coloration ct k forced moves
            reglist_unsorted invbij nmax)
-         (mk_linear_scan_hidden_state (nmax + 1,0) (nmax + 1,1)
+         (mk_i_linear_scan_hidden_state (nmax + 1,0) (nmax + 1,1)
            (nmax + 1,1) (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 
 let apply_bij_on_clash_tree_def = cake_define_list

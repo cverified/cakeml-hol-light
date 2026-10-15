@@ -75,9 +75,103 @@ let ra_state_FIELDS = define_record "ra_state"
 hol4_overload "stack" "ra_state_stack";;
 hol4_overload "stack_fupd" "ra_state_stack_fupd";;
 
-(* HOL4 ML code, not ported:
-val accessors = define_monad_access_funs ``:ra_state``;
-*)
+(* HOL4 makes the monadic accessors of ra_state with ML code
+   (define_monad_access_funs of ml_monadBaseLib); these are
+   the definitions that it makes *)
+let get_adj_ls_def = cake_define
+  `get_adj_ls = (\state. (M_success (ra_state_adj_ls state),state))`;;
+
+let set_adj_ls_def = cake_define
+  `set_adj_ls x =
+     (\state. (M_success one,ra_state_adj_ls_fupd (K x) state))`;;
+
+let get_node_tag_def = cake_define
+  `get_node_tag = (\state. (M_success (ra_state_node_tag
+  state),state))`;;
+
+let set_node_tag_def = cake_define
+  `set_node_tag x =
+     (\state. (M_success one,ra_state_node_tag_fupd (K x) state))`;;
+
+let get_degrees_def = cake_define
+  `get_degrees = (\state. (M_success (ra_state_degrees state),state))`;;
+
+let set_degrees_def = cake_define
+  `set_degrees x =
+     (\state. (M_success one,ra_state_degrees_fupd (K x) state))`;;
+
+let get_dim_def = cake_define
+  `get_dim = (\state. (M_success (ra_state_dim state),state))`;;
+
+let set_dim_def = cake_define
+  `set_dim x =
+     (\state. (M_success one,ra_state_dim_fupd (K x) state))`;;
+
+let get_simp_wl_def = cake_define
+  `get_simp_wl = (\state. (M_success (ra_state_simp_wl state),state))`;;
+
+let set_simp_wl_def = cake_define
+  `set_simp_wl x =
+     (\state. (M_success one,ra_state_simp_wl_fupd (K x) state))`;;
+
+let get_spill_wl_def = cake_define
+  `get_spill_wl = (\state. (M_success (ra_state_spill_wl
+  state),state))`;;
+
+let set_spill_wl_def = cake_define
+  `set_spill_wl x =
+     (\state. (M_success one,ra_state_spill_wl_fupd (K x) state))`;;
+
+let get_freeze_wl_def = cake_define
+  `get_freeze_wl = (\state. (M_success (ra_state_freeze_wl
+  state),state))`;;
+
+let set_freeze_wl_def = cake_define
+  `set_freeze_wl x =
+     (\state. (M_success one,ra_state_freeze_wl_fupd (K x) state))`;;
+
+let get_avail_moves_wl_def = cake_define
+  `get_avail_moves_wl = (\state. (M_success (ra_state_avail_moves_wl
+  state),state))`;;
+
+let set_avail_moves_wl_def = cake_define
+  `set_avail_moves_wl x =
+     (\state. (M_success one,ra_state_avail_moves_wl_fupd (K x)
+       state))`;;
+
+let get_unavail_moves_wl_def = cake_define
+  `get_unavail_moves_wl = (\state. (M_success
+  (ra_state_unavail_moves_wl state),state))`;;
+
+let set_unavail_moves_wl_def = cake_define
+  `set_unavail_moves_wl x =
+     (\state. (M_success one,ra_state_unavail_moves_wl_fupd (K x)
+       state))`;;
+
+let get_coalesced_def = cake_define
+  `get_coalesced = (\state. (M_success (ra_state_coalesced
+  state),state))`;;
+
+let set_coalesced_def = cake_define
+  `set_coalesced x =
+     (\state. (M_success one,ra_state_coalesced_fupd (K x) state))`;;
+
+let get_move_related_def = cake_define
+  `get_move_related = (\state. (M_success (ra_state_move_related
+  state),state))`;;
+
+let set_move_related_def = cake_define
+  `set_move_related x =
+     (\state. (M_success one,ra_state_move_related_fupd (K x)
+       state))`;;
+
+let get_stack_def = cake_define
+  `get_stack = (\state. (M_success (ra_state_stack state),state))`;;
+
+let set_stack_def = cake_define
+  `set_stack x =
+     (\state. (M_success one,ra_state_stack_fupd (K x) state))`;;
+
 
 (* HOL4 ML code, not ported:
 val adj_ls_accessors = el 1 accessors;
@@ -113,10 +207,37 @@ hol4_overload "Fail" "reg_alloc_Fail";;
 hol4_overload "Subscript" "reg_alloc_Subscript";;
 
 (* Monadic functions to handle the exceptions *)
-(* HOL4 ML code, not ported:
-val exn_functions = define_monad_exception_functions ``:state_exn``
-  ``:ra_state``;
-*)
+(* HOL4 makes the functions of the exception type state_exn with ML
+   code (define_monad_exception_functions of
+   ml_monadBaseLib); these are the definitions that it
+   makes *)
+let raise_Fail_def = cake_define
+  `raise_Fail e1 =
+     (\state. (M_failure (Fail e1),state))`;;
+
+let raise_Subscript_def = cake_define
+  `raise_Subscript =
+     (\state. (M_failure reg_alloc_Subscript,state))`;;
+
+let handle_Fail_def = cake_define
+  `handle_Fail x f =
+     (\state.
+       match x state with (res,state) ->
+         match res with M_success y -> (M_success y,state)
+         | M_failure e ->
+           (match e with Fail e1 -> f e1 state |
+             reg_alloc_Subscript -> (M_failure
+             reg_alloc_Subscript,state)))`;;
+
+let handle_Subscript_def = cake_define
+  `handle_Subscript x f =
+     (\state.
+       match x state with (res,state) ->
+         match res with M_success y -> (M_success y,state)
+         | M_failure e ->
+           (match e with Fail e1 -> (M_failure (Fail e1),state) |
+             reg_alloc_Subscript -> f state))`;;
+
 hol4_overload "failwith" "raise_Fail";;
 
 (* HOL4 ML code, not ported:
@@ -125,11 +246,76 @@ val update_exn = ``Subscript``;
 *)
 
 (* Fixed-size array manipulators *)
-(* HOL4 ML code, not ported:
-val arr_manip = define_MFarray_manip_funs
-  [adj_ls_accessors,node_tag_accessors,degrees_accessors,
-   coalesced_accessors, move_related_accessors] sub_exn update_exn;
-*)
+(* HOL4 makes the manipulators of the fixed size arrays with
+   ML code (define_MFarray_manip_funs of ml_monadBaseLib);
+   these are the definitions that it makes *)
+let adj_ls_length_def = cake_define
+  `adj_ls_length = Marray_length (\state. ra_state_adj_ls state)`;;
+
+let adj_ls_sub_def = cake_define
+  `adj_ls_sub = Marray_sub (\state. ra_state_adj_ls state)
+  reg_alloc_Subscript`;;
+
+let update_adj_ls_def = cake_define
+  `update_adj_ls =
+     Marray_update (\state. ra_state_adj_ls state)
+       (\x state. ra_state_adj_ls_fupd (K x) state)
+         reg_alloc_Subscript`;;
+
+let node_tag_length_def = cake_define
+  `node_tag_length = Marray_length (\state. ra_state_node_tag state)`;;
+
+let node_tag_sub_def = cake_define
+  `node_tag_sub = Marray_sub (\state. ra_state_node_tag state)
+  reg_alloc_Subscript`;;
+
+let update_node_tag_def = cake_define
+  `update_node_tag =
+     Marray_update (\state. ra_state_node_tag state)
+       (\x state. ra_state_node_tag_fupd (K x) state)
+         reg_alloc_Subscript`;;
+
+let degrees_length_def = cake_define
+  `degrees_length = Marray_length (\state. ra_state_degrees state)`;;
+
+let degrees_sub_def = cake_define
+  `degrees_sub = Marray_sub (\state. ra_state_degrees state)
+  reg_alloc_Subscript`;;
+
+let update_degrees_def = cake_define
+  `update_degrees =
+     Marray_update (\state. ra_state_degrees state)
+       (\x state. ra_state_degrees_fupd (K x) state)
+         reg_alloc_Subscript`;;
+
+let coalesced_length_def = cake_define
+  `coalesced_length = Marray_length (\state. ra_state_coalesced
+  state)`;;
+
+let coalesced_sub_def = cake_define
+  `coalesced_sub = Marray_sub (\state. ra_state_coalesced state)
+  reg_alloc_Subscript`;;
+
+let update_coalesced_def = cake_define
+  `update_coalesced =
+     Marray_update (\state. ra_state_coalesced state)
+       (\x state. ra_state_coalesced_fupd (K x) state)
+         reg_alloc_Subscript`;;
+
+let move_related_length_def = cake_define
+  `move_related_length = Marray_length (\state. ra_state_move_related
+  state)`;;
+
+let move_related_sub_def = cake_define
+  `move_related_sub = Marray_sub (\state. ra_state_move_related
+  state) reg_alloc_Subscript`;;
+
+let update_move_related_def = cake_define
+  `update_move_related =
+     Marray_update (\state. ra_state_move_related state)
+       (\x state. ra_state_move_related_fupd (K x) state)
+         reg_alloc_Subscript`;;
+
 
 (* HOL4 ML code, not ported:
 fun accessor_thm (a,b,c,d,e,f) = LIST_CONJ [b,c,d,e,f]
@@ -1241,13 +1427,37 @@ let do_reg_alloc_def = cake_define
 
 (* As we are using fixed-size array, we need to define a different
    record type for the initialization *)
-(* HOL4 ML code, not ported:
-val array_fields_names = ["adj_ls", "node_tag",
-  "degrees","coalesced","move_related"];
-val run_ira_state_def = define_run ``:ra_state``
-                                       array_fields_names
-                                      "ira_state";
-*)
+(* HOL4 makes the record of an initial state of ra_state and the
+   run function with ML code (define_run of
+   ml_monadBaseLib); an array field of it is the length and
+   the initial value of the array *)
+let ira_state_FIELDS = define_record "ira_state"
+  ["adj_ls","num#num list";
+   "node_tag","num#reg_alloc_tag";
+   "degrees","num#num";
+   "dim","num";
+   "simp_wl","num list";
+   "spill_wl","num list";
+   "freeze_wl","num list";
+   "avail_moves_wl","(num#num#num) list";
+   "unavail_moves_wl","(num#num#num) list";
+   "coalesced","num#num";
+   "move_related","num#bool";
+   "stack","num list"];;
+let run_ira_state_def = cake_define
+  `run_ira_state x state =
+     run x (mk_ra_state (REPLICATE (FST (ira_state_adj_ls state))
+       (SND (ira_state_adj_ls state))) (REPLICATE (FST
+       (ira_state_node_tag state)) (SND (ira_state_node_tag state)))
+       (REPLICATE (FST (ira_state_degrees state)) (SND
+       (ira_state_degrees state))) (ira_state_dim state)
+       (ira_state_simp_wl state) (ira_state_spill_wl state)
+       (ira_state_freeze_wl state) (ira_state_avail_moves_wl state)
+       (ira_state_unavail_moves_wl state) (REPLICATE (FST
+       (ira_state_coalesced state)) (SND (ira_state_coalesced
+       state))) (REPLICATE (FST (ira_state_move_related state)) (SND
+       (ira_state_move_related state))) (ira_state_stack state))`;;
+
 
 (* The top-level (non-monadic) reg_alloc call which should be modified
    to fit
@@ -1257,8 +1467,8 @@ let reg_alloc_aux_def = cake_define
   `reg_alloc_aux alg scost k moves ct forced fs (ta,fa,n) =
      run_ira_state (do_reg_alloc alg scost k moves ct forced fs
        (ta,fa,n))
-                       (mk_ra_state (n,[]) (n,Atemp) (n,0) n [] []
-                         [] [] [] (n,0) (n,F) [])`;;
+                       (mk_ira_state (n,[]) (n,Atemp) (n,0) n []
+                         [] [] [] [] (n,0) (n,F) [])`;;
 
 let reg_alloc_def = cake_define
   `reg_alloc alg scost k moves ct forced fs =

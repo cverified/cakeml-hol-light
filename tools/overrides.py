@@ -46,6 +46,11 @@ UPDATERS = {
 # fields that it gives do not say which record type it is
 RECORD_OF = {
   ('bviSem', 'bvi_to_bvl_def'): 'bvlSem_state',
+  # the record of the initial state that define_run makes has the
+  # fields of the state record of the monad
+  ('reg_alloc', 'reg_alloc_aux_def'): 'ira_state',
+  ('linear_scan', 'run_linear_reg_alloc_intervals_def'):
+    'i_linear_scan_hidden_state',
 }
 
 # FIELD_DEFAULT: the record type that a field name means where
