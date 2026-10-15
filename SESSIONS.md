@@ -28,6 +28,11 @@ working session is a clone of it, so a session made before the
 change has the old library (a run of `tools/bin/checkseq` with an
 old template fails on everything that the change adds).
 
+**Never send anything to `hol-seq` while `tools/bin/checkseq` is
+running**, and do not clone it either: the command is queued in the
+session, eats one of the prompts that `repl-step` waits for, and
+the run hangs.  Clone `hol-template-cakeml` instead.
+
 ## Interrupting and killing
 
 A clone is forked from another HOL Light process, so it is not a
