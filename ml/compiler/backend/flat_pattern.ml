@@ -22,7 +22,6 @@ needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/ffi/ffi.ml";;
 
 
 let flat_pattern_config_FIELDS = define_record "flat_pattern_config"
@@ -151,8 +150,8 @@ let decode_guard_def = cake_define_list
   flat_pattern_decode_test t test (decode_pos t v pos)`];;
 
 let decode_dtree_def = cake_define
-  `decode_dtree t br_spt v df pattern_semantics$Fail =
-      match pattern_semantics$Fail with
+  `decode_dtree t br_spt v df x5 =
+      match x5 with
         pattern_semantics_Leaf n -> (match sptree_lookup n br_spt
           with SOME br -> br | NONE -> df)
       | pattern_semantics_Fail -> df

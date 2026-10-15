@@ -842,8 +842,8 @@ class Porter:
       if p.kind == 'id':
         # a wildcard is a fresh variable in every clause anyway, and
         # a position whose type is not known says nothing
-        if (p.name == '_' or not tys or p.name in CONS or
-            p.name in hterm.HLCONS): return
+        if (p.name == '_' or not tys or iscon(p.name) or
+            p.name.split('$')[-1] in hterm.HLCONS): return
         where.setdefault(p.name, []).append(tys)
         return
       if p.kind == 'app':
@@ -924,6 +924,8 @@ class Porter:
   def match_form(self, body):
     """the clauses of a definition as one clause with a match, which
        is what HOL4's first match semantics means"""
+    global CONS
+    CONS = self.ctx.cons
     toks = hterm.tokenize(hol4.strip_comments(body))
     e = hterm.Parser(toks, self.ctx).parse()
     cls = hterm.clauses_of(e)
@@ -937,7 +939,7 @@ class Porter:
     for i in range(n):
       nm = None
       for _, args, _ in cls:
-        if args[i].kind == 'id' and args[i].name not in self.ctx.cons \
+        if args[i].kind == 'id' and not iscon(args[i].name) \
            and args[i].name != '_' and args[i].name not in names:
           nm = args[i].name; break
       if nm is None:
@@ -945,17 +947,17 @@ class Porter:
         while nm in names: nm += "'"
       names.append(nm)
     pats = [i for i in range(n)
-            if any(args[i].kind != 'id' or args[i].name in self.ctx.cons
+            if any(args[i].kind != 'id' or iscon(args[i].name)
                    for _, args, _ in cls)
             and not all(args[i].kind == 'id' and
-                        args[i].name not in self.ctx.cons
+                        not iscon(args[i].name)
                         for _, args, _ in cls)]
     pr = hterm.Printer(self.ctx)
     arms = []
     for _, args, r in cls:
       sub = {args[i].name: names[i] for i in range(n)
              if i not in pats and args[i].kind == 'id'
-             and args[i].name not in self.ctx.cons}
+             and not iscon(args[i].name)}
       # the pattern of the first arm carries the type, so that an
       # ambiguous constructor in it is resolved as HOL4 does
       if not arms:
@@ -1219,10 +1221,16 @@ IDENT = re.compile(r"^(\w+\$)?[A-Za-z_][A-Za-z0-9_']*$")
 CONS = set()           # the constructors in scope, set by the porter
 
 
+def iscon(n):
+  """is this the name of a constructor?  A CakeML source may write
+     it with the name of its theory (fpSem$FP_Add)"""
+  return n.split('$')[-1] in CONS
+
+
 def is_var_pat(p):
   """is this pattern a variable?"""
   while p.kind in ('paren', 'typed'): p = p.e
-  return p.kind == 'id' and p.name not in CONS
+  return p.kind == 'id' and not iscon(p.name)
 
 
 def vars_pat(p):

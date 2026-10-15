@@ -45,9 +45,9 @@ let state_invariant_def = cake_define
 let extend_with_resource_limit_def = cake_define
   `extend_with_resource_limit behaviours =
    behaviours UNION
-   {Terminate' ffi_Resource_limit_hit io_list | io_list | ?t l.
-     Terminate' t l IN behaviours /\ io_list <<= l} UNION
-   {Terminate' ffi_Resource_limit_hit io_list | io_list | ?ll.
+   {ffi_Terminate ffi_Resource_limit_hit io_list | io_list | ?t l.
+     ffi_Terminate t l IN behaviours /\ io_list <<= l} UNION
+   {ffi_Terminate ffi_Resource_limit_hit io_list | io_list | ?ll.
      ffi_Diverge ll IN behaviours /\ LPREFIX (fromList io_list) ll}`;;
 
 let extend_with_resource_limit'_def = cake_define

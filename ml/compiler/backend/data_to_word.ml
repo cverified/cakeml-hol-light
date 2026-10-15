@@ -21,7 +21,6 @@ needs "compiler/backend/word_bignum.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/backend/word_to_word.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
 needs "lib/multiword.ml";;
@@ -1082,19 +1081,19 @@ let fp_top_inst_def = cake_define
   `fp_top_inst FP_Fma = FPFma 0 1 2`;;
 
 let fp_bop_inst_def = cake_define
-  `fp_bop_inst fpSem$FP_Add =
-      match  with
-         -> FPAdd 0 0 1
-      |  -> FPSub 0 0 1
-      |  -> FPMul 0 0 1
-      |  -> FPDiv 0 0 1`;;
+  `fp_bop_inst x1 =
+      match x1 with
+        fpSem_FP_Add -> FPAdd 0 0 1
+      | fpSem_FP_Sub -> FPSub 0 0 1
+      | fpSem_FP_Mul -> FPMul 0 0 1
+      | fpSem_FP_Div -> FPDiv 0 0 1`;;
 
 let fp_uop_inst_def = cake_define
-  `fp_uop_inst fpSem$FP_Neg =
-      match  with
-         -> FPNeg 1 0
-      |  -> FPAbs 1 0
-      |  -> FPSqrt 1 0`;;
+  `fp_uop_inst x1 =
+      match x1 with
+        fpSem_FP_Neg -> FPNeg 1 0
+      | fpSem_FP_Abs -> FPAbs 1 0
+      | fpSem_FP_Sqrt -> FPSqrt 1 0`;;
 
 let arg1_def = cake_define
   `data_to_word_arg1 vs f x = (match vs with [v1] -> f v1 | _1 -> x)`;;

@@ -824,8 +824,12 @@ def bound_names(e, cons, defn=False):
       for p, _ in e.binds: out.update(pattern_vars(p, cons, True))
     elif k == 'case':
       for p, _ in e.arms: out.update(pattern_vars(p, cons))
-    elif k in ('setabs', 'setabs2'):
+    elif k == 'setabs':
       out.update(pattern_vars(e.e, cons, True))
+    elif k == 'setabs2':
+      # {e | vs | p} binds the variables of the middle part, not
+      # the ones of the element
+      out.update(pattern_vars(e.p, cons, True))
     for t in subnodes(e): go(t)
   go(e)
   return out

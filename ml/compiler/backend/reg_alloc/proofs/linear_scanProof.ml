@@ -60,58 +60,58 @@ let good_linear_scan_state_def = cake_define
          (linear_scan_hidden_state_int_end sth) = LENGTH
          (linear_scan_hidden_state_colors sth) /\
        ALL_DISTINCT (linear_scan_state_colorpool st ++ MAP (\(e,r).
-         EL' r (linear_scan_hidden_state_colors sth))
+         EL r (linear_scan_hidden_state_colors sth))
          (linear_scan_state_active st)) /\
        EVERY (\r. r < LENGTH (linear_scan_hidden_state_colors sth)) l
          /\
-       EVERY (\r. EL' r (linear_scan_hidden_state_colors sth) <
+       EVERY (\r. EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_stacknum st) l /\
-       domain (linear_scan_state_phyregs st) = {EL' r
+       domain (linear_scan_state_phyregs st) = {EL r
          (linear_scan_hidden_state_colors sth) | r | MEM r l /\
-         is_phy_var r /\ EL' r (linear_scan_hidden_state_colors sth) <
+         is_phy_var r /\ EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colormax st} /\
-       ALL_DISTINCT (MAP (\r. EL' r (linear_scan_hidden_state_colors
+       ALL_DISTINCT (MAP (\r. EL r (linear_scan_hidden_state_colors
          sth)) (FILTER is_phy_var l)) /\
        EVERY (\c. c < linear_scan_state_colornum st)
          (linear_scan_state_colorpool st) /\
-       EVERY (\(e,r). EL' r (linear_scan_hidden_state_colors sth) <
+       EVERY (\(e,r). EL r (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colornum st) (linear_scan_state_active st) /\
          linear_scan_state_colornum
        st <= linear_scan_state_colormax st /\
          linear_scan_state_colormax
        st <= linear_scan_state_stacknum st /\
-       EVERY (\r. EL' r (linear_scan_hidden_state_colors sth) <
-         linear_scan_state_colormax st ==> EL' r
+       EVERY (\r. EL r (linear_scan_hidden_state_colors sth) <
+         linear_scan_state_colormax st ==> EL r
          (linear_scan_hidden_state_colors sth) <
          linear_scan_state_colornum st) l /\
-       EVERY (\r. EL' r (linear_scan_hidden_state_int_beg sth) <=
-         pos) l /\
-       EVERY (\r. ((pos <= EL' r (linear_scan_hidden_state_int_end
-         sth) /\ EL' r (linear_scan_hidden_state_colors sth) <
-         linear_scan_state_colormax st) ==> (MEM (EL' r
+       EVERY (\r. EL r (linear_scan_hidden_state_int_beg sth) <= pos)
+         l /\
+       EVERY (\r. ((pos <= EL r (linear_scan_hidden_state_int_end
+         sth) /\ EL r (linear_scan_hidden_state_colors sth) <
+         linear_scan_state_colormax st) ==> (MEM (EL r
          (linear_scan_hidden_state_int_end sth),r)
          (linear_scan_state_active st)))) l /\
-       EVERY (\r. ((MEM (EL' r (linear_scan_hidden_state_int_end
-         sth),r) (linear_scan_state_active st)) ==> (pos <= 1 + EL' r
+       EVERY (\r. ((MEM (EL r (linear_scan_hidden_state_int_end
+         sth),r) (linear_scan_state_active st)) ==> (pos <= 1 + EL r
          (linear_scan_hidden_state_int_end sth)))) l /\
        (!r1 r2. MEM r1 l /\ MEM r2 l /\
-           interval_intersect (EL' r1
-             (linear_scan_hidden_state_int_beg sth),EL' r1
-             (linear_scan_hidden_state_int_end sth)) (EL' r2
-             (linear_scan_hidden_state_int_beg sth),EL' r2
+           interval_intersect (EL r1
+             (linear_scan_hidden_state_int_beg sth),EL r1
+             (linear_scan_hidden_state_int_end sth)) (EL r2
+             (linear_scan_hidden_state_int_beg sth),EL r2
              (linear_scan_hidden_state_int_end sth)) /\
-           EL' r1 (linear_scan_hidden_state_colors sth) = EL' r2
+           EL r1 (linear_scan_hidden_state_colors sth) = EL r2
              (linear_scan_hidden_state_colors sth) ==> r1 = r2) /\
        SORTED less_FST (linear_scan_state_active st) /\
-       EVERY (\(e,r). e = EL' r (linear_scan_hidden_state_int_end
+       EVERY (\(e,r). e = EL r (linear_scan_hidden_state_int_end
          sth)) (linear_scan_state_active st) /\
        EVERY (\(e,r). MEM r l) (linear_scan_state_active st) /\
-       EVERY (\(r1,r2). MEM r1 l /\ MEM r2 l /\ EL' r1
-         (linear_scan_hidden_state_colors sth) = EL' r2
+       EVERY (\(r1,r2). MEM r1 l /\ MEM r2 l /\ EL r1
+         (linear_scan_hidden_state_colors sth) = EL r2
          (linear_scan_hidden_state_colors sth) ==> r1 = r2) forced /\
        mincol <= linear_scan_state_colornum st /\
        EVERY (\c. mincol <= c) (linear_scan_state_colorpool st ++
-         MAP (\r. EL' r (linear_scan_hidden_state_colors sth)) l))`;;
+         MAP (\r. EL r (linear_scan_hidden_state_colors sth)) l))`;;
 
 (* HOL4 ML code, not ported:
 val good_linear_scan_state_def' = let
