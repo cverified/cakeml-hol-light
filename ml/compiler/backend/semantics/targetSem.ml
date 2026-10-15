@@ -16,6 +16,7 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmProps.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/alignment.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/byte.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/set_sep.ml";;
@@ -263,8 +264,8 @@ let machine_sem_def = cake_define_list
          (!k. ?ms' st'. evaluate mc st k ms = (TimeOut,ms',st')) /\
          lprefix_lub
            (IMAGE
-             (\k. sptree_fromList (ffi_state_io_events (SND (SND
-               (evaluate mc st k ms))))) UNIV)
+             (\k. fromList (ffi_state_io_events (SND (SND (evaluate
+               mc st k ms))))) UNIV)
            io_trace`;
    `machine_sem mc st ms (ffi_Fail:behaviour) <=>
          (?k. FST (evaluate mc st k ms) = Error)`];;

@@ -62,10 +62,11 @@ hol4_overload "If" "pattern_semantics_If";;
 
 (* semantic values *)
 
-let term_INDUCT,term_RECURSION = define_datatype
-  "term = pattern_semantics_Term (num option) (term list) | \
-   pattern_semantics_Litv (lit) | pattern_semantics_RefPtr (num) | \
-   pattern_semantics_Other";;
+let pattern_semantics_term_INDUCT,pattern_semantics_term_RECURSION =
+  define_datatype
+  "pattern_semantics_term = pattern_semantics_Term (num option) \
+   (pattern_semantics_term list) | pattern_semantics_Litv (lit) | \
+   pattern_semantics_RefPtr (num) | pattern_semantics_Other";;
 hol4_overload "Term" "pattern_semantics_Term";;
 hol4_overload "Litv" "pattern_semantics_Litv";;
 hol4_overload "RefPtr" "pattern_semantics_RefPtr";;
@@ -80,7 +81,7 @@ let pmatch_def = cake_define_list
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
-  l':term) =
+  l':pattern_semantics_term) =
          (if ~lit_same_type l l' then PTypeFailure else
          if l = l' then PMatchSuccess else PMatchFailure)`;
    `pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME
@@ -94,7 +95,8 @@ let pmatch_def = cake_define_list
   pargs:pattern_semantics_pat) (pattern_semantics_Term NONE targs) =
         pattern_semantics_pmatch_list refs pargs targs`;
    `pattern_semantics_pmatch refs (pattern_semantics_Ref
-  p:pattern_semantics_pat) (pattern_semantics_RefPtr r:term) =
+  p:pattern_semantics_pat) (pattern_semantics_RefPtr
+  r:pattern_semantics_term) =
         (match FLOOKUP refs r with NONE -> PTypeFailure | SOME v
           -> pattern_semantics_pmatch refs p v)`;
    `pattern_semantics_pmatch refs (Or p1 p2:pattern_semantics_pat) t =

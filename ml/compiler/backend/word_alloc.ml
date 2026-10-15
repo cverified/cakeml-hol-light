@@ -321,11 +321,11 @@ let mk_prio_def = cake_define
   fails, making the theorem vacuous.*)
 let ssa_reconcile_def = cake_define
   `ssa_reconcile cur_ssa tgt_ssa ns =
-     (let vars = MAP FST (toAList ns) in
+     (let vars' = MAP FST (toAList ns) in
      let moves = FILTER (\(a,b). ~(a = b))
        (FLAT (MAP (\v.
          match sptree_lookup v cur_ssa with NONE -> [] | SOME cur_v
-           -> [(option_lookup tgt_ssa v,cur_v)]) vars)) in
+           -> [(option_lookup tgt_ssa v,cur_v)]) vars')) in
      if moves = [] then (Skip:'a wordLang_prog) else wordLang_Move
        1 moves)`;;
 

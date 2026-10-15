@@ -15,6 +15,7 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/integer_word.ml";;
@@ -598,7 +599,6 @@ let semantics_def = cake_define
            t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. sptree_fromList (ffi_state_io_events
-              (state_ffi (SND (evaluate (state_clock_fupd (K k)
-              s)))))) UNIV)))`;;
+            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
+              (SND (evaluate (state_clock_fupd (K k) s)))))) UNIV)))`;;
 hol4_overload "semantics" "labSem_semantics";;

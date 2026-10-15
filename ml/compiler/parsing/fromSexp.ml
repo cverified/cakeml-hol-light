@@ -24,6 +24,8 @@ needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
 (* HOL4 ancestors outside the port: simpleSexp quantHeuristics *)
 
+hol4_overload "++" "OPTION_CHOICE";;
+
 (* TODO: this is duplicated in parserProgTheory *)
 
 (* HOL4 overload (expanded in the port):
@@ -988,3 +990,5 @@ val exists_g_tac =
 *)
 
 (* valid sexps *)
+
+hol4_overload "++" "APPEND";;

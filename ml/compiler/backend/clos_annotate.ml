@@ -190,23 +190,23 @@ let shift_def = cake_define_list
          (let k = m + l in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let live = FILTER (\n. n < k) vs in
-         let vars = MAP (clos_annotate_get_var m l i) live in
+         let vars' = MAP (clos_annotate_get_var m l i) live in
          let c1 = clos_annotate_shift [x1] k num_args (shifted_env 0
            live) in
-           ([closLang_Fn t loc (SOME vars) num_args (HD c1)]))`;
+           ([closLang_Fn t loc (SOME vars') num_args (HD c1)]))`;
    `clos_annotate_shift [(Letrec t loc vsopt fns x1:closLang_exp)] m l i
   =
          (let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          let k = m + l in
          let live = FILTER (\n. n < k) vs in
-         let vars = MAP (clos_annotate_get_var m l i) live in
+         let vars' = MAP (clos_annotate_get_var m l i) live in
          let new_i = shifted_env 0 live in
          let fns_len = LENGTH fns in
          let cs = MAP (\(n,x). let c = clos_annotate_shift [x] k (n
            + fns_len) new_i in
                               (n,HD c)) fns in
          let c1 = clos_annotate_shift [x1] m (l + LENGTH fns) i in
-           ([Letrec t loc (SOME vars) cs (HD c1)]))`;
+           ([Letrec t loc (SOME vars') cs (HD c1)]))`;
    `clos_annotate_shift [(Handle t x1 x2:closLang_exp)] m l i =
          (let c1 = clos_annotate_shift [x1] m l i in
          let c2 = clos_annotate_shift [x2] m (l + 1) i in
@@ -246,19 +246,19 @@ let shift_sing_def = cake_define_list
          (let k = m + l in
          let vs = (match vs_opt with NONE -> [] | SOME vs -> vs) in
          let live = FILTER (\n. n < k) vs in
-         let vars = MAP (clos_annotate_get_var m l i) live in
+         let vars' = MAP (clos_annotate_get_var m l i) live in
          let c1 = shift_sing x1 k num_args (shifted_env 0 live) in
-           (closLang_Fn t loc (SOME vars) num_args c1))`;
+           (closLang_Fn t loc (SOME vars') num_args c1))`;
    `shift_sing (Letrec t loc vsopt fns x1:closLang_exp) m l i =
          (let vs = (match vsopt with NONE -> [] | SOME x -> x) in
          let k = m + l in
          let live = FILTER (\n. n < k) vs in
-         let vars = MAP (clos_annotate_get_var m l i) live in
+         let vars' = MAP (clos_annotate_get_var m l i) live in
          let new_i = shifted_env 0 live in
          let fns_len = LENGTH fns in
          let cs = shift_letrec fns_len k new_i fns in
          let c1 = shift_sing x1 m (l + LENGTH fns) i in
-           (Letrec t loc (SOME vars) cs c1))`;
+           (Letrec t loc (SOME vars') cs c1))`;
    `shift_sing (Handle t x1 x2:closLang_exp) m l i =
          (let c1 = shift_sing x1 m l i in
          let c2 = shift_sing x2 m (l + 1) i in

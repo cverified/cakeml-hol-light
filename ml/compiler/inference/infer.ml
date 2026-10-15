@@ -12,6 +12,7 @@ needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
+needs "lib/term.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
@@ -21,6 +22,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: string *)
+
+hol4_overload "++" "otherwise";;
 
 
 new_type_abbrev("err_var",`: (mlstring,mlstring,mlstring
@@ -686,7 +689,7 @@ let infer_e_def = cake_define_list
         st_ex_return (Infer_Tapp [] Tword64_num)`;
    `infer_e l ienv (ast_Lit (ast_Float64 _44):ast_exp) =
         st_ex_return (Infer_Tapp [] Tdouble_num)`;
-   `infer_e l ienv (ast_Var id':ast_exp) =
+   `infer_e l ienv (Var id':ast_exp) =
         st_ex_bind (lookup_st_ex l (implode "variable") id'
           (inf_env_inf_v ienv)) (\(tvs,t). st_ex_bind (n_fresh_uvar tvs)
           (\
@@ -1058,3 +1061,5 @@ let inf_env_to_types_string_def = cake_define
                               inf_type_to_string (inf_env_inf_t s) t;
                               (implode "\n")]) l in
         REVERSE xs)`;;
+
+hol4_overload "++" "APPEND";;

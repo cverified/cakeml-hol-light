@@ -13,6 +13,7 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/alignment.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/comparison.ml";;
@@ -1263,7 +1264,7 @@ let semantics_def = cake_define
            (wordSem_state_ffi t))) with SOME res -> res | NONE ->
        ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. sptree_fromList (ffi_state_io_events
+            (IMAGE (\k. fromList (ffi_state_io_events
               (wordSem_state_ffi
                (SND (wordSem_evaluate
                  (prog,wordSem_state_clock_fupd (K k) s)))))) UNIV)))`;;

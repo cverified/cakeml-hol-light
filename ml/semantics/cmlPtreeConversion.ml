@@ -91,6 +91,8 @@ let mpop_namedscope_def = cake_define
    ---------------------------------------------------------------------
      - *)
 
+hol4_overload "++" "OPTION_CHOICE";;
+
 (* HOL4 overload (expanded in the port):
      lift = option$OPTION_MAP *)
 
@@ -110,7 +112,8 @@ let mk_binop_def = cake_define
      ' = λf a. OPTION_BIND a f *)
 
 let tokcheck_def = cake_define
-  `tokcheck pt tok' <=> (FAPPLY destTOK (destLf pt) = SOME tok')`;;
+  `tokcheck pt tok' <=> ((\f a. OPTION_BIND a f) destTOK (destLf pt)
+  = SOME tok')`;;
 
 let ptree_UQTyop_def = cake_define_list
   [`ptree_UQTyop (Lf _4) = NONE`;
@@ -143,8 +146,8 @@ let ptree_Tyop_def = cake_define_list
         else
         match args with
             [pt] ->
-            OPTION_BIND (FAPPLY destLongidT (FAPPLY destTOK (destLf
-              pt))) (\
+            OPTION_BIND ((\f a. OPTION_BIND a f) destLongidT ((\f a.
+              OPTION_BIND a f) destTOK (destLf pt))) (\
               (xs,s).
               SOME (Long_Short xs s)) ++
             OPTION_BIND (ptree_UQTyop pt) (\
@@ -293,8 +296,8 @@ let ptree_UQConstructorName_def = cake_define_list
       (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nUQConstructorName)
         then NONE else
         match args with
-            [pt] -> FAPPLY destAlphaT (FAPPLY destTOK (destLf
-              pt)) | _29 -> NONE)`];;
+            [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a.
+              OPTION_BIND a f) destTOK (destLf pt)) | _29 -> NONE)`];;
 
 let ptree_ConstructorName_def = cake_define
   `ptree_ConstructorName ast =
@@ -307,8 +310,8 @@ let ptree_ConstructorName_def = cake_define
                OPTION_BIND (ptree_UQConstructorName pt) (\
                  s.
                  SOME (Short s)) ++
-               OPTION_BIND (FAPPLY destLongidT (FAPPLY destTOK
-                 (destLf pt))) (\
+               OPTION_BIND ((\f a. OPTION_BIND a f) destLongidT ((\f
+                 a. OPTION_BIND a f) destTOK (destLf pt))) (\
                  (xs,s).
                  SOME (Long_Short xs s)) | _31 -> NONE))`;;
 
@@ -397,16 +400,17 @@ let ptree_TypeAbbrevDec_def = cake_define
            [typetok; tynm; eqtok; typ_pt] -> OPTION_IGNORE_BIND
              (assert (tokcheck typetok tokens_TypeT /\ tokcheck eqtok
                tokens_EqualsT)) (OPTION_BIND (ptree_TypeName tynm) (\
-             (vars,nm). OPTION_BIND (ptree_Type nType typ_pt) (\
+             (vars',nm). OPTION_BIND (ptree_Type nType typ_pt) (\
              typ.
-             SOME (Dtabbrev (SND nt') vars nm typ)))) | _42 ->
+             SOME (Dtabbrev (SND nt') vars' nm typ)))) | _42 ->
                NONE else NONE))`;;
 
 let singleSymP_def = cake_define
   `singleSymP P x2 =
       match x2 with
-        [pt] -> OPTION_BIND (FAPPLY destSymbolT (FAPPLY destTOK
-          (destLf pt))) (\s. OPTION_IGNORE_BIND
+        [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f) destSymbolT ((\f
+          a. OPTION_BIND a f) destTOK (destLf pt))) (\s.
+          OPTION_IGNORE_BIND
                          (assert (P s)) (
                          SOME (Short s)))
       | _43 -> NONE`;;
@@ -440,7 +444,8 @@ let ptree_V_def = cake_define_list
          OPTION_IGNORE_BIND
            (assert (FST nt' = (INL:MMLnonT->MMLnonT+num) nV)) (
            match subs with
-              [pt] -> OPTION_BIND (FAPPLY destTOK (destLf pt)) (\t.
+              [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f) destTOK
+                (destLf pt)) (\t.
                          destAlphaT t ++ destSymbolT t) | _47
                            -> NONE)`];;
 
@@ -451,8 +456,8 @@ let ptree_FQV_def = cake_define_list
         else
         match args with
             [pt] -> OPTION_MAP Short (ptree_V pt) ++
-                    OPTION_BIND (FAPPLY destLongidT (FAPPLY destTOK
-                      (destLf pt))) (\
+                    OPTION_BIND ((\f a. OPTION_BIND a f) destLongidT
+                      ((\f a. OPTION_BIND a f) destTOK (destLf pt))) (\
                       (xs,s).
                       SOME (Long_Short xs s)) | _50 -> NONE)`];;
 
@@ -1122,8 +1127,8 @@ let ptree_StructName_def = cake_define_list
       (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nStructName) then
         NONE else
         match args with
-            [pt] -> FAPPLY destAlphaT (FAPPLY destTOK (destLf
-              pt)) | _125 -> NONE)`];;
+            [pt] -> (\f a. OPTION_BIND a f) destAlphaT ((\f a.
+              OPTION_BIND a f) destTOK (destLf pt)) | _125 -> NONE)`];;
 
 let ptree_OptTypEqn_def = cake_define_list
   [`ptree_OptTypEqn (Lf _127) = (NONE:(ast_t option) option)`;
@@ -1308,3 +1313,5 @@ let ptree_TopLevelDecs_def = cake_define_list
                  td. OPTION_BIND (ptree_NonETopLevelDecs pt2) (\
                  tds.
                  SOME (td :: tds)))) | _150 -> fail)`];;
+
+hol4_overload "++" "APPEND";;

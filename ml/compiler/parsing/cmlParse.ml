@@ -68,6 +68,8 @@ let pegresult_guard_def = cake_define
    (\toks. if b then peg_Success toks one NONE else peg_Failure
      (toks_to_loc toks) "Assert failure")`;;
 
+hol4_overload "++" "pegresult_choice";;
+
 let optlift_def = cake_define_list
   [`(optlift NONE:(tokens_token#locs) list->((tokens_token#locs)
   list,'ga,string)pegresult) = (\toks. peg_Failure (toks_to_loc toks)
@@ -89,3 +91,5 @@ let parse_prog_def = cake_define
        pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;
+
+hol4_overload "++" "APPEND";;

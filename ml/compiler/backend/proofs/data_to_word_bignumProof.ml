@@ -29,6 +29,7 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "lib/alignment.ml";;
 needs "lib/set_sep.ml";;
+needs "lib/term.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 

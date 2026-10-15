@@ -7,6 +7,7 @@
   The top-level semantics of CakeML programs.
 *)
 
+needs "lib/balanced_map.ml";;
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
@@ -59,7 +60,7 @@ let semantics_prog_def = cake_define_list
               (ffi,Rerr (Rabort Rtimeout_error)))) /\
          lprefix_lub
            (IMAGE
-             (\k. sptree_fromList (ffi_state_io_events (FST
+             (\k. fromList (ffi_state_io_events (FST
                (evaluate_prog_with_clock st env k prog))))
              UNIV)
            io_trace`;

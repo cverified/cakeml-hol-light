@@ -14,6 +14,9 @@ needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+
+hol4_overload "++" "otherwise";;
+
 (*
   The graph-coloring register allocator
 
@@ -1478,3 +1481,5 @@ let reg_alloc_aux_def = cake_define
 let reg_alloc_def = cake_define
   `reg_alloc alg scost k moves ct forced fs =
      reg_alloc_aux alg scost k moves ct forced fs (mk_bij ct)`;;
+
+hol4_overload "++" "APPEND";;

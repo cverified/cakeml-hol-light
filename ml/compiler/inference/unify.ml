@@ -11,12 +11,20 @@
   those definitions and theorems.
 *)
 
-needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_comp.ml";;
 needs "compiler/inference/infer_t.ml";;
+needs "lib/collapse.ml";;
+needs "lib/fmsp.ml";;
+needs "lib/rmfmap.ml";;
 needs "lib/sptree.ml";;
-(* HOL4 ancestors outside the port: unifProps unifDef walk walkstar
-   collapse subst rmfmap tcallUnif transfer cps *)
+needs "lib/subst.ml";;
+needs "lib/tcallUnif.ml";;
+needs "lib/term.ml";;
+needs "lib/unifDef.ml";;
+needs "lib/walk.ml";;
+needs "lib/walkstar.ml";;
+(* HOL4 ancestors outside the port: unifProps transfer cps *)
+
+hol4_overload "++" "OPTION_CHOICE";;
 
 (* HOL4 ML code, not ported:
 val option_map_case = optionTheory.OPTION_MAP_CASE
@@ -28,29 +36,29 @@ let atom_INDUCT,atom_RECURSION = define_datatype
 
 let encode_infer_t_def = cake_define_list
   [`encode_infer_t (Infer_Tvar_db n) =
-      Const (DB_tag n)`;
+      term_Const (DB_tag n)`;
    `encode_infer_t (Infer_Tapp ts tc) =
-      Pair (Const Tapp_tag) (Pair (Const (TC_tag tc))
-        (encode_infer_ts ts))`;
+      term_Pair (term_Const Tapp_tag) (term_Pair (term_Const
+        (TC_tag tc)) (encode_infer_ts ts))`;
    `encode_infer_t (Infer_Tuvar n) =
-      ast_Var n`;
+      Var n`;
    `encode_infer_ts [] =
-      Const Null_tag`;
+      term_Const Null_tag`;
    `encode_infer_ts (t :: ts) =
-      Pair (encode_infer_t t) (encode_infer_ts ts)`];;
+      term_Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
 let decode_infer_t_def = cake_define_list
-  [`decode_infer_t (ast_Var n:ast_exp) =
+  [`decode_infer_t (Var n:ast_exp) =
       Infer_Tuvar n`;
-   `decode_infer_t (Const (DB_tag n)) =
+   `decode_infer_t (term_Const (DB_tag n)) =
       Infer_Tvar_db n`;
-   `decode_infer_t (Pair (Const Tapp_tag) (Pair (Const (TC_tag tc)) s))
-  =
+   `decode_infer_t (term_Pair (term_Const Tapp_tag) (term_Pair
+  (term_Const (TC_tag tc)) s)) =
       Infer_Tapp (decode_infer_ts s) tc`;
    `decode_infer_t _1 = Infer_Tuvar 5`;
-   `decode_infer_ts (Const Null_tag) =
+   `decode_infer_ts (term_Const Null_tag) =
       []`;
-   `decode_infer_ts (Pair s1 s2) =
+   `decode_infer_ts (term_Pair s1 s2) =
       decode_infer_t s1 :: decode_infer_ts s2`;
    `decode_infer_ts _2 = []`];;
 
@@ -204,11 +212,12 @@ let kcocwlR_def = cake_define
    inv_image (mlt1 (walkstarR (sp2fm (sptree_map encode_infer_t s)))
      LEX (<))
              (\(ts:(infer_t list) list).
-                (BAG_OF_LIST (MAP encode_infer_t (FLAT ts)),LENGTH
-                  ts))`;;
+                ((FOLDR BAG_INSERT EMPTY_BAG) (MAP encode_infer_t
+                  (FLAT ts)),LENGTH ts))`;;
 
 let subterm_def = cake_define
-  `subterm = TC (\a b. (?t. b = Pair a t) \/ (?t. b = Pair t a))`;;
+  `subterm = TC (\a b. (?t. b = term_Pair a t) \/ (?t. b = term_Pair
+  t a))`;;
 
 let tcocwl_def = cake_define
   `tcocwl s n is = TAILREC (kcocwl_code s n) is`;;
@@ -258,14 +267,14 @@ let star_kwork_def = cake_define
   `star_kwork x1 =
       match x1 with
         [] -> EMPTY_BAG
-      | (CONSk its n :: ks) -> BAG_UNION (BAG_OF_LIST its)
-        (star_kwork ks)
+      | (CONSk its n :: ks) -> BAG_UNION ((FOLDR BAG_INSERT
+        EMPTY_BAG) its) (star_kwork ks)
       | (_3 :: ks) -> star_kwork ks`;;
 
 let star_workbag_def = cake_define
   `star_workbag v its k =
-   (if v then star_kwork k else BAG_UNION (BAG_OF_LIST its)
-     (star_kwork k))`;;
+   (if v then star_kwork k else BAG_UNION ((FOLDR BAG_INSERT
+     EMPTY_BAG) its) (star_kwork k))`;;
 
 let isCONSk_def = cake_define
   `isCONSk x1 =
@@ -470,3 +479,5 @@ let t_compat_def = cake_define
 
 (*t_compat is preserved under certain types of unification
   Proof basically from HOL*)
+
+hol4_overload "++" "APPEND";;

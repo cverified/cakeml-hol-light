@@ -74,6 +74,8 @@ let otherwise_def = cake_define
              (M_success y,s) -> (M_success y,s) | (M_failure e,s)
                -> (y:'a->('b,'c)exc#'a) s)`;;
 
+hol4_overload "++" "otherwise";;
+
 let can_def = cake_define
   `can f x = (
               otherwise (st_ex_ignore_bind (f x) (st_ex_return T))
@@ -202,3 +204,5 @@ val monad_eqs = LIST_CONJ
 (* Run *)
 let run_def = cake_define
   `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
+
+hol4_overload "++" "APPEND";;

@@ -16,7 +16,7 @@ SRC = hol4.SRC
 
 HEAD = '''(* ======================================================== *)
 (*  %s: ported from HOL4's
-    %s  *)%s
+%s  *)%s
 (* ======================================================== *)
 '''
 
@@ -179,7 +179,18 @@ class Porter:
             len({t for t, _ in self.db.defs.get(nm, [])}) > 1)
 
   def srcname(self):
-    return re.sub(r'^.*/(cakeml-src|hol4-src)/', '', self.path)
+    """the path of the HOL4 source, over as many lines as it
+       takes to stay within the line length"""
+    p = re.sub(r'^.*/(cakeml-src|hol4-src)/', '', self.path)
+    out = ''
+    line = '    '
+    for part in p.split('/'):
+      part = part + ('' if part.endswith('.sml') else '/')
+      if len(line) + len(part) > 70 and line.strip():
+        out += line + '\n'
+        line = '      '
+      line += part
+    return out + line
 
   def nm(self, n):
     return self.ctx.name(n)

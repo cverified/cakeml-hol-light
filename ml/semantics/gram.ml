@@ -207,8 +207,8 @@ let cmlG_def = cake_define
                    (INL nEapp,({[grammar_NT (INL nEapp); grammar_NT
                    (INL nEbase)]} UNION {[grammar_NT (INL nEbase)]}))
                    |+ (INL nMultOps,({[grammar_TOK (tokens_AlphaT
-                   (implode "div"))]; [grammar_TOK (tokens_AlphaT
-                   (implode "mod"))]; [grammar_TOK (tokens_StarT)]}
+                   (implode "div"))],[grammar_TOK (tokens_AlphaT
+                   (implode "mod"))],[grammar_TOK (tokens_StarT)]}
                    UNION {[grammar_TOK (tokens_SymbolT s)] |
                    validMultSym (explode s)})) |+ (INL
                    nAddOps,{[grammar_TOK (tokens_SymbolT s)] |

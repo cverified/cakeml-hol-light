@@ -357,11 +357,11 @@ let loc_merge_def = cake_define_list
 let traverse_heap = cake_inductive
   `(!heap p1.
       traverse_heap heap p1 [] p1) /\
-   (!heap vs1 vs2 vars p1 p2 p3.
+   (!heap vs1 vs2 vars' p1 p2 p3.
       traverse_heap heap p1 vs1 p2 /\
       traverse_heap heap p2 vs2 p3 /\
-      set_of_list vars = set_of_list (vs1 ++ vs2) ==>
-      traverse_heap heap p1 vars p3) /\
+      set_of_list vars' = set_of_list (vs1 ++ vs2) ==>
+      traverse_heap heap p1 vars' p3) /\
    (!heap p1 d.
       traverse_heap heap p1 [Data d] p1) /\
    (!heap p1 n t.

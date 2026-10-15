@@ -10,6 +10,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "misc/misc.ml";;
@@ -357,7 +358,7 @@ let do_app_def = cake_define
        SOME (state_refs_fupd (K s') s,Rval (Loc T n))) |
          (flatLang_Src ast_Aw8alloc,[Litv (ast_IntLit n); Litv
          (ast_Word8 w)]) ->
-     (if n < 0 then
+     (if n < (&0) then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let (s',lnum) =
          store_alloc (semanticPrimitives_W8array (REPLICATE
@@ -499,7 +500,7 @@ let do_app_def = cake_define
        NONE) | (flatLang_Src ast_Vlength,[Vectorv vs]) ->
      SOME (s,Rval (Litv (ast_IntLit (int_of_num (LENGTH vs))))) |
        (flatLang_Src ast_Aalloc,[Litv (ast_IntLit n); v]) ->
-     (if n < 0 then
+     (if n < (&0) then
        SOME (s,Rerr (Rraise subscript_exn_v)) else
        let (s',lnum) =
          store_alloc (semanticPrimitives_Varray (REPLICATE
@@ -912,8 +913,7 @@ let semantics_def = cake_define
            s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. sptree_fromList (ffi_state_io_events
-              (state_ffi
+            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi
               (FST (evaluate_decs (flatSem_initial_state ffi k ec)
                 prog)))))
                 UNIV)))`;;

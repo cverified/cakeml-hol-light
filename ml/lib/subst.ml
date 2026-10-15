@@ -1,0 +1,31 @@
+(* ======================================================== *)
+(*  subst: ported from HOL4's
+    examples/algorithms/unification/triangular/first-order/
+      substScript.sml  *)
+(*  Of this HOL4 library theory only the definitions that the
+    CakeML port needs are ported.  *)
+(* ======================================================== *)
+
+needs "lib/term.ml";;
+(* HOL4 ancestors outside the port: pred_set relation finite_map
+   While prim_rec arithmetic bag list *)
+
+let rangevars_def = cake_define
+  `rangevars s = BIGUNION (IMAGE vars (FRANGE s))`;;
+
+let substvars_def = cake_define
+  `substvars s = FDOM s UNION rangevars s`;;
+
+let vR_def = cake_define
+  `vR s y x = (match FLOOKUP s x with SOME t -> y IN vars t | _1 ->
+  F)`;;
+
+let wfs_def = cake_define
+  `wfs s = WF (vR s)`;;
+
+let subst_APPLY_def = cake_define_list
+  [`subst_APPLY s (term_Var v) = (match FLOOKUP s v with NONE ->
+  (term_Var v:'a term) | SOME t -> t)`;
+   `subst_APPLY s (term_Pair t1 t2) = term_Pair (subst_APPLY s t1)
+  (subst_APPLY s t2)`;
+   `subst_APPLY s (term_Const c) = (term_Const c:'a term)`];;

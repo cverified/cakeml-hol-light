@@ -22,7 +22,7 @@ needs "semantics/ast.ml";;
 let cache_code_labels_def = cake_define
   `cache_code_labels (cs:(num#bvi_exp) spt) =
      BIGUNION (set_of_list (MAP (bviProps_get_code_labels o SND)
-       (toList cs)))`;;
+       (sptree_toList cs)))`;;
 
 (* [exp_rel c] relates a source expression to its image under the
    inlining

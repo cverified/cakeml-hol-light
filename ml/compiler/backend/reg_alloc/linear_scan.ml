@@ -15,6 +15,8 @@ needs "misc/misc.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+hol4_overload "++" "otherwise";;
+
 let live_tree_INDUCT,live_tree_RECURSION = define_datatype
   "live_tree = linear_scan_Writes (num list) | linear_scan_Reads (num \
    list) | linear_scan_Branch (live_tree) (live_tree) | \
@@ -273,9 +275,9 @@ let get_intervals_ct_aux_def = cake_define_list
         int_beg2 int_end2 live in
       match optcutset with NONE ->
         (n1,int_beg1,int_end1,sptree_union live1 live2) | SOME cutset
-        -> (n1 - 1,int_beg1,numset_list_add_if_gt (MAP FST (toAList
-        cutset)) n1 int_end1,sptree_union cutset (sptree_union live1
-        live2)))`;
+        -> (n1 - (&1),int_beg1,numset_list_add_if_gt (MAP FST
+        (toAList cutset)) n1 int_end1,sptree_union cutset
+        (sptree_union live1 live2)))`;
    `get_intervals_ct_aux (reg_alloc_Seq ct1 ct2) (n:int) int_beg int_end
   live =
       (let (n2,int_beg2,int_end2,live2) = get_intervals_ct_aux ct2 n
@@ -1344,3 +1346,5 @@ val res = translate get_intervals_def;
 val res = translate linear_scan_reg_alloc_def;
 
 *)
+
+hol4_overload "++" "APPEND";;

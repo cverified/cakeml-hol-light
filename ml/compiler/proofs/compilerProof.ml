@@ -21,13 +21,11 @@ needs "compiler/inference/proofs/inferSound.ml";;
 needs "compiler/inference/proofs/type_dCanon.ml";;
 needs "compiler/parsing/proofs/pegComplete.ml";;
 needs "compiler/parsing/proofs/pegSound.ml";;
-needs "lib/peg.ml";;
 needs "semantics/primTypes.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/typeSound.ml";;
 needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 let config_ok_def = cake_define
   `config_ok (cc:'ga compiler_config) mc <=>
@@ -83,9 +81,11 @@ let is_safe_for_space_def = cake_define
   backendProof_is_safe_for_space ffi (compiler_config_asm_config cc)
   (compiler_config_backend_config cc)`;;
 hol4_overload "is_safe_for_space" "compilerProof_is_safe_for_space";;
+(* HOL4 ML code, not ported:
           (* see the compile_correct_safe_for_space version above
              for the one without the ⊆ and extend_with_resource_limit
                *)`,
+*)
 (* HOL4 ML code, not ported:
   rw [] \\ mp_tac (SPEC_ALL compile_correct_lemma)
   \\ fs [] \\ TOP_CASE_TAC \\ fs []

@@ -14,6 +14,7 @@ needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "lib/balanced_map.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/sptree.ml";;
@@ -134,7 +135,7 @@ let do_app_aux_def = cake_define
                | _8 -> NONE) | _9 -> NONE) | (closLang_MemOp
                (closLang_RefByte f),xs) ->
          (match xs with [Number i; Number b] ->
-             (if 0 <= i /\ (?(w:word8). b = &(w2n w)) then
+             (if (&0) <= i /\ (?(w:word8). b = &(w2n w)) then
                let ptr = (LEAST (\ptr. ~(ptr IN FDOM (state_refs
                  s)))) in
                  SOME (SOME (RefPtr T ptr,state_refs_fupd (K
@@ -372,8 +373,7 @@ let semantics_def = cake_define
            s))) with SOME res -> res | NONE ->
         ffi_Diverge
           (build_lprefix_lub
-            (IMAGE (\k. sptree_fromList (ffi_state_io_events
-              (state_ffi (SND
+            (IMAGE (\k. fromList (ffi_state_io_events (state_ffi (SND
                (evaluate (es,[],init k)))))) UNIV)))`;;
 hol4_overload "semantics" "bviSem_semantics";;
 

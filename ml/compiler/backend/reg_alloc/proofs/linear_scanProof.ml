@@ -21,6 +21,8 @@ val _ = disable_tyabbrev_printing "type_ident"
 val _ = disable_tyabbrev_printing "alist"
 *)
 
+hol4_overload "++" "otherwise";;
+
 (* TODO: clean up this file: e.g., move things upstream *)
 
 (* why breaking encapsulation like this? To get rid of the assumption
@@ -215,3 +217,5 @@ let sptree_eq_list_def = cake_define
      (EL i l <= 0 <=> sptree_lookup i s = SOME (EL i l)))`;;
 
 (* TODO: move *)
+
+hol4_overload "++" "APPEND";;

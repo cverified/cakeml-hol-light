@@ -97,7 +97,8 @@ let stack_alloc_def = cake_define_wf
 
 let single_stack_free_def = cake_define
   `single_stack_free k n =
-     Inst (Arith (asm_Binop Add k k (Imm (word_offset n))))`;;
+     stackLang_Inst (Arith (asm_Binop Add k k (Imm (word_offset
+       n))))`;;
 
 (* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
 let stack_free_def = cake_define_wf

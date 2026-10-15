@@ -139,17 +139,23 @@ val shifts = [(word_lsr_def,``ast$Lsr``),
 (* HOL4 ML code, not ported:
 fun get_exp x =
 *)
+(* HOL4 ML code, not ported:
   (* Var *) let
+*)
 (* HOL4 ML code, not ported:
   val n = dest_reg x
   in wordLangSyntax.mk_Var n end handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
   (* Const *) let
+*)
 (* HOL4 ML code, not ported:
   val _ = wordsSyntax.dest_n2w x
   in wordLangSyntax.mk_Const x end handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
   (* Op *) let
+*)
 (* HOL4 ML code, not ported:
   val (_,name) = first (fn (pat,_) => can (match_term pat) x) binops
   val x1 = get_exp (x |> rator |> rand)
@@ -158,7 +164,9 @@ fun get_exp x =
     end
   handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
   (* Shift *) let
+*)
 (* HOL4 ML code, not ported:
   val (_,name) = first (fn (pat,_) => can (match_term pat) x) shifts
   val x1 = get_exp (x |> rator |> rand)
@@ -166,7 +174,9 @@ fun get_exp x =
   in wordLangSyntax.mk_Shift(name,x1,``Const (n2w ^x2)``) end
   handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
   (* ~ *) let
+*)
 (* HOL4 ML code, not ported:
   val r = wordsSyntax.dest_word_1comp x
   in get_exp ``word_xor ^r (0w - 1w)`` end
@@ -403,12 +413,16 @@ fun get_full_prog inp tm = let
     then (ret_vars := free_vars tm; !ret_tm)
     else
 *)
+(* HOL4 ML code, not ported:
     (* let *) let
+*)
 (* HOL4 ML code, not ported:
     val (x,rest) = get_let tm
     in mk_Seq(x,get_prog rest) end handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
     (* previous translation *) let
+*)
 (* HOL4 ML code, not ported:
     val ((v,x),rest) = my_dest_let tm
     val f = x |> repeat rator
@@ -416,7 +430,9 @@ fun get_full_prog inp tm = let
     val _ = (immediate_deps := code :: (!immediate_deps))
     in mk_Seq(code,get_prog rest) end handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
     (* recursive let *) let
+*)
 (* HOL4 ML code, not ported:
     val (saves,call,rest) = dest_rec_let tm
     val saves = saves |> dest_tuple |> map dest_reg
@@ -425,7 +441,9 @@ fun get_full_prog inp tm = let
     val _ = (cont_vars := free_vars call)
     in mk_Seq(mk_Rec(saves,dels),get_prog rest) end handle HOL_ERR _ =>
 *)
+(* HOL4 ML code, not ported:
     (* If *) let
+*)
 (* HOL4 ML code, not ported:
     val (b,t1,t2) = dest_cond tm
     val (x1,x2,x3) = get_guard b

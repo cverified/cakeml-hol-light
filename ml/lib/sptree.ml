@@ -209,6 +209,9 @@ let toListA_def = cake_define_list
    `toListA acc (BN t1 t2) = toListA (toListA acc t2) t1`;
    `toListA acc (BS t1 a t2) = toListA (a :: toListA acc t2) t1`];;
 
+let toList_def = cake_define
+  `sptree_toList m = toListA [] m`;;
+
 let mk_wf_def = cake_define_list
   [`mk_wf LN = LN`;
    `mk_wf (LS x) = LS x`;

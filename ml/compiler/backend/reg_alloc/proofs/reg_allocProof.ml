@@ -14,6 +14,8 @@ needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+hol4_overload "++" "otherwise";;
+
 (* Edge from node x to node y, in terms of an adjacency list *)
 let has_edge_def = cake_define
   `has_edge adjls x y <=>
@@ -352,3 +354,5 @@ fun first_prove_imp thms =
 
 (* The top-most correctness theorem *)
 (* --- --- *)
+
+hol4_overload "++" "APPEND";;

@@ -858,11 +858,12 @@ let word_ml_inv_def = cake_define
           EVERY2 (\v w. word_addr c v = w) hs (MAP SND stack'))`;;
 
 let memory_rel_def = cake_define
-  `memory_rel c be' ts refs space' st (m:'a word->'a word_loc) dm vars
+  `memory_rel c be' ts refs space' st (m:'a word->'a word_loc) dm vars'
   <=>
      (?heap limit' a sp sp1 gens.
         heap_in_memory_store heap a sp sp1 gens c st m dm limit' /\
-        word_ml_inv (heap,be',a,sp,sp1,gens) limit' ts c refs vars /\
+        word_ml_inv (heap,be',a,sp,sp1,gens) limit' ts c refs vars'
+          /\
         (limit' + 3) * (dimindex (:'ga) DIV 8) + 1 < dimword
           (:'ga) /\ space' <= sp)`;;
 
