@@ -1,0 +1,16 @@
+#!/bin/sh
+# quotesall [session] : for every file that the last run of
+# tools/bin/checkseq reports an error for, parse its quotations one
+# by one in the session (hol-seq by default, which has everything
+# loaded after a run) and report the first quotation that does not
+# parse
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+out=$C/tmp/quotesall.txt
+: > $out
+for f in $(grep -E 'failed|Exception|Error|SLOW' $C/tools/checkseq.log |
+           awk '{print $1}'); do
+  r=$(TIMEOUT=${TIMEOUT:-600} quotes $s "$f" | head -1)
+  printf '%-46s %s\n' "$f" "$r" | tee -a $out
+done
