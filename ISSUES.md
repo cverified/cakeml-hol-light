@@ -22,6 +22,13 @@ sources, and why.
   because HOL4 typechecks every clause on its own.  One HOL Light
   quotation cannot, so such a definition is written as a list of
   quotations (`cake_define_list`).
+- Where the name of a constructor in a pattern is ambiguous, the
+  clause says which constructor it is.  If the type of the
+  constructor has no parameters the pattern carries that type
+  (`(Var t v:closLang_exp)`); if it has parameters the pattern
+  has the name of the constant instead, because a type variable
+  that the port writes is rigid in HOL Light and the definition
+  may use the type at a more special one.
 - A bound variable whose name is a constant of HOL Light or of the
   port is renamed (`get_byte` becomes `get_byte'`): HOL4 lets a
   variable shadow a constant, HOL Light does not.
@@ -47,7 +54,9 @@ sources, and why.
   expanded as well, as HOL Light has no parameterised type
   abbreviations.
 - Type variables that the CakeML sources write as Greek letters
-  become `'ga`, `'gb`, ... (HOL Light has no Greek letters).
+  become `'ga`, `'gb`, ... (HOL Light has no Greek letters); a
+  Greek letter that a source uses for a _term_ variable (`μ`, `σ`,
+  `τ` and `ρ` of `parmove`) becomes `mu`, `sigma`, `tau`, `rho`.
 - HOL4's `one`, the type with one element, is HOL Light's `1`
   (its element is `one` in both).
 - A restricted quantifier (`!x::s. P`) is `RES_FORALL s (\x. P)`,
@@ -56,6 +65,13 @@ sources, and why.
 - A definition that HOL4 makes in ML from a quotation that it
   keeps in a value (`SmartOp2` of `bvl_const` and five others) is
   ported as the definition that the quotation gives.
+- An infix that a source declares itself and overloads with one
+  constant (`backend_common`'s `§`, `parmove`'s `▷` and `↪`) is
+  written as an application of that constant: HOL Light's lexer
+  has no such symbols.
+- A relation that a source defines with ML code (`Hol_reln` with
+  `replace_quote`: `step` and `dstep` of `parmove`) is ported as
+  an inductive definition of the rules that the ML code builds.
 
 ## Definitions
 
