@@ -64,7 +64,10 @@ sources, and why.
   `comparison`, which `closLang` and `asm` have as a
   constructor) is an exception: expanding it would resolve the
   name the wrong way in those theories, so the port declares it
-  as an overload of HOL Light instead.
+  as an overload of HOL Light instead.  An overload that is a
+  lambda (`mlstring`'s `^`, which is `\x y. strcat x y`) is
+  written as that lambda applied to its arguments, where HOL4
+  reduces it away.
 - HOL4 type abbreviations with parameters (`('a,'b) alist`) are
   expanded as well, as HOL Light has no parameterised type
   abbreviations.
