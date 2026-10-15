@@ -105,10 +105,8 @@ val cmlG_def = mk_grammar_def ginfo
  Type ::= PType | PType "->" Type;
  TbaseList ::=  | PTbase TbaseList ;
  PTbase ::= <TyvarT> | TyOp | "(" Type ")" ;
-*)
 
  (* type declarations *)
-(* HOL4 ML code, not ported:
  TypeName ::= UQTyOp | "(" TyVarList ")" UQTyOp | <TyvarT> UQTyOp ;
  TyVarList ::= TyvarN | TyVarList "," TyvarN;
  Dconstructor ::= UQConstructorName TbaseList;
@@ -117,10 +115,8 @@ val cmlG_def = mk_grammar_def ginfo
  DtypeDecls ::= DtypeDecl | DtypeDecls "and" DtypeDecl;
  TypeDec ::= "datatype" DtypeDecls;
  TypeAbbrevDec ::= "type" TypeName "=" Type;
-*)
 
  (* expressions - base cases and function applications *)
-(* HOL4 ML code, not ported:
  UQConstructorName ::= ^(``{AlphaT s | s ≠ «» ∧ isUpper (strsub s
    0)}``);
  ConstructorName ::=
@@ -138,13 +134,9 @@ val cmlG_def = mk_grammar_def ginfo
        |  ^(``{AlphaT s | s ≠ «»}``)
        |  ^(``{SymbolT s | s ≠ «»}``)
        |  "*" | "=" ;
-*)
 
-(* HOL4 ML code, not ported:
  Eliteral ::= <IntT> | <CharT> | <StringT> | <WordT> | <FFIT> ;
-*)
 
-(* HOL4 ML code, not ported:
  Ebase ::= "(" Eseq ")" | Etuple | "(" ")" | FQV | ConstructorName |
    Eliteral
         | "let" LetDecs "in" Eseq "end" | "[" "]"
@@ -154,10 +146,8 @@ val cmlG_def = mk_grammar_def ginfo
  Elist2 ::= E "," Elist1;
  Elist1 ::= E | E "," Elist1;
  Eapp ::= Eapp Ebase | Ebase;
-*)
 
  (* expressions - binary operators *)
-(* HOL4 ML code, not ported:
  MultOps ::= ^(``{AlphaT «div»; AlphaT «mod»; StarT} ∪
                  {SymbolT s | validMultSym (explode s)}``);
  AddOps ::= ^(``{SymbolT s | validAddSym (explode s)}``);
@@ -177,18 +167,14 @@ val cmlG_def = mk_grammar_def ginfo
  E ::= "if" E "then" E "else" E | "case" E "of" PEs | "fn" Pattern "=>"
    E
     | "raise" E |  Ehandle;
-*)
 
  (* function and value declarations *)
-(* HOL4 ML code, not ported:
  FDecl ::= V PbaseList1 "=" E ;
  AndFDecls ::= FDecl | AndFDecls "and" FDecl;
  LetDec ::= "val" Pattern "=" E | "fun" AndFDecls ;
  LetDecs ::= LetDec LetDecs | ";" LetDecs | ;
-*)
 
  (* patterns *)
-(* HOL4 ML code, not ported:
  Pbase ::= V | ConstructorName | <IntT> | <StringT> | <CharT> | Ptuple |
    "_"
         |  "[" "]" | "[" PatternList "]" | "op" OpID;
@@ -207,10 +193,8 @@ val cmlG_def = mk_grammar_def ginfo
      |  ElogicOR PEsfx ;
  PEsfx ::= | "handle" PEs | "|" PEs;
  PEs ::= Pattern "=>" PE;
-*)
 
  (* modules *)
-(* HOL4 ML code, not ported:
  StructName ::= ^(``{AlphaT s | s ≠ «»}``) ;
  SpecLine ::= "val" V ":" Type
            |  "type" TypeName OptTypEqn

@@ -43,47 +43,29 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* HOL4 ML code, not ported:
 val help_string = (* beginning of --help string *) ‘
-*)
 
-(* HOL4 ML code, not ported:
 Usage:  cake [OPTIONS] < input_file > output_file
-*)
 
-(* HOL4 ML code, not ported:
 The cake executable is usually invoked as shown above. The different
 OPTIONS are described in the OPTIONS listing below.
-*)
 
-(* HOL4 ML code, not ported:
 One can also run the cake execuable as follows to print a listing of
 the type of each top-level binding (including the bindings made in
 the standard basis library).
-*)
 
-(* HOL4 ML code, not ported:
 Usage:  cake --types < input_file
-*)
 
-(* HOL4 ML code, not ported:
 One can invoke the cake executable to print this help message (--help)
 or version information (--version) without an input_file:
-*)
 
-(* HOL4 ML code, not ported:
 Usage:  cake --version
 Usage:  cake --help
-*)
 
-(* HOL4 ML code, not ported:
 OPTIONS:
-*)
 
-(* HOL4 ML code, not ported:
   --repl        starts an interactive read-eval-print loop; all other
                 flags are ignored, when the --repl flag is present
-*)
 
-(* HOL4 ML code, not ported:
   --reg_alg=N   N is a natural number that specifies the register
                 allocation algorithm to use:
                    0   - simple allocator, no spill heuristics
@@ -91,9 +73,7 @@ OPTIONS:
                    2   - IRC allocator, no spill heuristics (default)
                    3   - IRC allocator, spill heuristics
                    >=4 - linear scan allocator
-*)
 
-(* HOL4 ML code, not ported:
   --gc=G        specifies garbage collector type; here G is one of:
                    none   - no garbage collector is used
                    simple - a non-generational Cheney (default)
@@ -102,69 +82,45 @@ OPTIONS:
                             N machine words (example: --gc=gen5000)
                 This option has no effect under --pancake; the Pancake
                 compiler always uses gc=none.
-*)
 
-(* HOL4 ML code, not ported:
   --target=T    specifies that compilation should produce code for
     target
                 T, where T can be one of x64, arm8, mips, riscv for
                 the 64-bit compiler; for the 32-bit compiler T can be
                 one of arm7 and ag32.
-*)
 
-(* HOL4 ML code, not ported:
   --sexp=B      B can be either true or false; here false means that the
                 input will be parsed as normal CakeML concrete syntax;
                 true means that the input is parsed as an s-expression.
-*)
 
-(* HOL4 ML code, not ported:
   --print_sexp  causes the cake to print the given program in
                 s-expression format; with this option, the compiler
                 does not generate machine code.
-*)
 
-(* HOL4 ML code, not ported:
   --exclude_prelude=B   here B can be either true or false; the default
                 is false; setting this to true causes the compiler not
                 to include the standard basis library.
-*)
 
-(* HOL4 ML code, not ported:
   --skip_type_inference=B   here B can be either true or false; the
                 default is false; true will make the compiler skip
                 type inference. There are no gurantees of safety if
                 the type inferencer is skipped.
-*)
 
-(* HOL4 ML code, not ported:
   --explore     outputs intermediate forms of the compiled program
-*)
 
-(* HOL4 ML code, not ported:
   --pancake     takes a pancake program as input
-*)
 
-(* HOL4 ML code, not ported:
   --no_warn     silences pancake warning output
-*)
 
-(* HOL4 ML code, not ported:
   --main_return=B   here B can be either true or false; the default is
                 false; setting this to true causes the main function to
                 return to caller instead of exit; this option is
                 required to use multiple entry points with Pancake.
-*)
 
-(* HOL4 ML code, not ported:
 ADDITIONAL OPTIONS:
-*)
 
-(* HOL4 ML code, not ported:
 Optimisations can be configured using the following advanced options.
-*)
 
-(* HOL4 ML code, not ported:
   --jump=B    true means conditional jumps to be used for out-of-stack
     checks
   --multi=B   true means clos_to_bvl phase is to use multi optimisation
@@ -192,9 +148,7 @@ Optimisations can be configured using the following advanced options.
     encoder
   --perf_callgraph=B  unverified: emit C-stack shadowing so `perf record
                 --call-graph fp` produces correct call graphs (x64 only)
-*)
 
-(* HOL4 ML code, not ported:
 ’ (* end of --help string *)
 *)
 

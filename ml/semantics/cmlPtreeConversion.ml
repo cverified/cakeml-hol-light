@@ -521,12 +521,11 @@ let papply_def = cake_define
        ast_Pcon cn args -> ast_Pcon cn (args ++ [arg]) | _57 ->
          pat)`;;
 
-(* HOL4 ML code, not ported:
-val maybe_handleRef_def = PmatchHeuristics.with_classic_heuristic Define
-  ‘
-  maybe_handleRef (Pcon (SOME (Short «Ref»)) [pat]) = Pref pat ∧
-  maybe_handleRef p = p’
-*)
+let maybe_handleRef_def = cake_define
+  `maybe_handleRef p =
+      match p with
+        ast_Pcon (SOME (Short (implode "Ref"))) [pat] -> ast_Pref pat
+      | p -> p`;;
 
 let ptree_Pattern_def = cake_define_list
   [`ptree_Pattern nt' (Lf _58) = NONE`;

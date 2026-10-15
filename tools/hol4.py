@@ -173,8 +173,14 @@ def equality_mode(text):
   return m.group(1) if m else None
 
 
+# an old style definition in ML: Define, tDefine, a qualified one
+# (TotalDefn.tDefine) or a wrapper that a source writes itself
+# (data_to_word's assign_Define, which only keeps the theorem in a
+# list as well), with new_definition as the other form
 ML_DEF = re.compile(r"""^val\s+([A-Za-z0-9_']+)\s*=\s*
-                        (?:[txz]?Define\b\s*("[^"]*")?\s*
+                        (?:[A-Za-z0-9_.]+\s+)*?
+                        (?:[A-Za-z0-9_.]*[txzq]?Define\b
+                           \s*("[^"]*")?\s*
                           |new_(?:binder_|infixr_|infixl_)?definition
                            \s*\(\s*"[^"]*"\s*,\s*)""", re.X)
 
@@ -184,9 +190,18 @@ def ml_definition(text):
      Definition block, so that it is ported like the others"""
   m = ML_DEF.match(text)
   if not m: return None
-  i = text.find('`', m.end())
+  # a quotation of HOL4 is `...`, ``...``, “...” or ‘...’
+  i = min([k for k in (text.find(q, m.end())
+                       for q in ('`', '“', '‘')) if k >= 0]
+          or [-1])
   if i < 0: return None
-  if text[i:i+2] == '``':
+  if text[i] == '“':
+    j = text.find('”', i + 1)
+    body, rest = text[i+1:j], text[j+1:]
+  elif text[i] == '‘':
+    j = text.find('’', i + 1)
+    body, rest = text[i+1:j], text[j+1:]
+  elif text[i:i+2] == '``':
     j = text.find('``', i + 2)
     body, rest = text[i+2:j], text[j+2:]
   else:
@@ -201,8 +216,25 @@ def ml_definition(text):
     if rest.startswith('('): break
     rest = (rest[1:] if rest.startswith(')') else rest[:-1]).strip()
   if rest.startswith('(') and rest.endswith(')'): rest = rest[1:-1]
-  return Block('Definition', m.group(1), [], body, rest or None,
+  # the name of the val may say nothing (data_to_word writes every
+  # one of its assign_Define definitions to a val called def), so
+  # the name of the block is the one of the constant it defines
+  name = m.group(1)
+  if not name.endswith('_def'):
+    try:
+      name = definition_names(body)[0] + '_def'
+    except Exception:
+      pass
+  return Block('Definition', name, [], body, rest or None,
                text=text)
+
+
+def in_quote(text):
+  """is this text in the middle of a term quotation?"""
+  if text.count('“') > text.count('”'): return True
+  if text.count('‘') > text.count('’'): return True
+  s = text.replace('``', '`')
+  return s.count('`') % 2 == 1
 
 
 def blanks_before(lines, i):
@@ -250,8 +282,19 @@ def parse(path):
     if not m:
       if line.strip():
         j = i
-        while j < n and lines[j].strip() and not HEAD.match(lines[j]) \
-            and not lines[j].lstrip().startswith('(*'):
+        while j < n:
+          # a comment or a blank line inside a quotation belongs to
+          # the block (the definitions that data_to_word makes with
+          # assign_Define have comments in them)
+          acc = '\n'.join(lines[i:j])
+          # a definition in ML may have its comments between the
+          # call and the quotation (multiword's mw_div_loop)
+          if in_quote(acc) or (ML_DEF.match(acc) and
+                               not re.search('[`“‘]', acc)):
+            j += 1; continue
+          if not lines[j].strip() or HEAD.match(lines[j]) or \
+             lines[j].lstrip().startswith('(*'):
+            break
           j += 1
         text = '\n'.join(lines[i:j])
         b = ml_definition(text)
@@ -347,10 +390,10 @@ def parse(path):
 #   local val foo_quotation = `foo x = ...`
 #   in val foo_def = Define foo_quotation ... end
 
-QUOTATION = re.compile(r"(?:local\s+)?val\s+([A-Za-z0-9_']+)_quotation"
+QUOTATION = re.compile(r"(?:local\s+)?val\s+([A-Za-z0-9_']+)"
                        r"\s*=\s*`", re.S)
 QUOT_DEF = re.compile(r"val\s+([A-Za-z0-9_']+)_def\s*=\s*"
-                      r"[txz]?Define\s+\1_quotation", re.S)
+                      r"[txzq]?Define\s+([A-Za-z0-9_']+)\s*;", re.S)
 
 
 def quotation_definitions(blocks):
@@ -366,8 +409,8 @@ def quotation_definitions(blocks):
   out = []
   for b in blocks:
     m = b.kind == 'ML' and QUOT_DEF.search(b.text)
-    if m and m.group(1) in quots:
-      qb, body = quots[m.group(1)]
+    if m and m.group(2) in quots:
+      qb, body = quots[m.group(2)]
       out = [x for x in out if x is not qb]
       nb = Block('Definition', m.group(1) + '_def', [], body,
                  None, text=qb.text + b.text)

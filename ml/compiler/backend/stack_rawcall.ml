@@ -16,6 +16,7 @@ needs "compiler/backend/dataLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "lib/sptree.ml";;
+needs "semantics/ast.ml";;
 
 (* collect stack allocation information *)
 
@@ -48,27 +49,23 @@ let comp_seq_def = cake_define
                 Seq Tick (Seq (stackLang_StackAlloc (l - k))
                   (stackLang_RawCall dest)))) | _5 -> default)`;;
 
-(* HOL4 ML code, not ported:
-local
-val q = `
-  comp i (p:'a stackLang$prog) =
-    case p of
-    | Seq p1 p2 => comp_seq p1 p2 i (Seq (comp i p1) (comp i p2))
-    | If c r ri p1 p2 => If c r ri (comp i p1) (comp i p2)
-    | Loop p1 => Loop (comp i p1)
-    | Call (SOME (p1,lr,l1,l2)) dest NONE =>
-        Call (SOME (comp i p1,lr,l1,l2)) dest NONE
-    | Call (SOME (p1,lr,l1,l2)) dest (SOME (p2,k1,k2)) =>
-        Call (SOME (comp i p1,lr,l1,l2)) dest (SOME (comp i p2,k1,k2))
-    | _ => p`
-in
-val comp_def = Define q;
-*)
+let comp_def = cake_define
+  `stack_rawcall_comp i (p:'a stackLang_prog) =
+     (match p with Seq p1 p2 -> comp_seq p1 p2 i (Seq
+       (stack_rawcall_comp i p1) (stack_rawcall_comp i p2)) | If c r ri
+       p1 p2 -> If c r ri (stack_rawcall_comp i p1) (stack_rawcall_comp
+       i p2) | Loop p1 -> Loop (stack_rawcall_comp i p1) | Call (SOME
+       (p1,lr,l1,l2)) dest NONE ->
+         Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest NONE |
+           Call (SOME (p1,lr,l1,l2)) dest (SOME (p2,k1,k2)) ->
+         Call (SOME (stack_rawcall_comp i p1,lr,l1,l2)) dest (SOME
+           (stack_rawcall_comp i p2,k1,k2)) | _6 -> p)`;;
+hol4_overload "comp" "stack_rawcall_comp";;
 
 let comp_top_def = cake_define
   `comp_top i (p:'a stackLang_prog) =
-     (match p with Seq p1 p2 -> Seq (data_to_word_comp i p1)
-       (data_to_word_comp i p2) | _6 -> data_to_word_comp i p)`;;
+     (match p with Seq p1 p2 -> Seq (comp i p1) (comp i p2) | _7
+       -> comp i p)`;;
 
 let compile_def = cake_define
   `stack_rawcall_compile prog =

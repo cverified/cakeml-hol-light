@@ -232,84 +232,88 @@ hol4_overload "stubs" "bvl_to_bvi_stubs";;
 (* HOL4 overload (expanded in the port):
      num_stubs = backend_common$bvl_num_stubs *)
 
-(* HOL4 ML code, not ported:
-local val compile_op_quotation = `
-  compile_op op c1 =
-    case op of
-    | IntOp (Const i) =>
-      (case c1 of [] => compile_int i
-      | _ => Let [Op (IntOp (Const 0)) c1] (compile_int i))
-    | GlobOp (Global n) =>
-      (if NULL c1 then Op (GlobOp (Global (n+1))) []
-      else Let c1 (Op (MemOp El) [
-        Op (IntOp Add) [Op (IntOp (Const 2)) []; Var 0];
-        Op (GlobOp GlobalsPtr) []]))
-    | GlobOp (SetGlobal n) => Op (GlobOp (SetGlobal (n+1))) c1
-    | GlobOp AllocGlobal => Call 0 (SOME AllocGlobal_location) c1 NONE
-    | BlockOp (FromList n) => Let
-        (if NULL c1 then [Op (IntOp (Const 0)) []] else c1)
-        (Op (BlockOp (FromList n))
-        [Var 0; Call 0 (SOME ListLength_location) [Var 0; Op (IntOp
-          (Const 0)) []] NONE])
-    | Install => Let
-      (if LENGTH c1 <> 2
-       then [Let c1 (Op (IntOp (Const 0)) []); Op (IntOp (Const 0)) []]
-         else c1)
-      (Op Install
-       [Call 0 (SOME ListLength_location)
-          [Var 0; Op (IntOp (Const 0)) []] NONE;
-        Call 0 (SOME ListLength_location)
-          [Var 1; Op (IntOp (Const 0)) []] NONE;
-        Var 0; Var 1])
-    | MemOp FromListByte =>
-        Let (if NULL c1 then [Op (IntOp (Const 0)) []] else c1)
-          (Call 0 (SOME FromListByte_location)
+let compile_op_def = cake_define
+  `bvl_to_bvi_compile_op op c1 =
+     (match op with closLang_IntOp (closLang_Const i) ->
+       (match c1 with [] -> compile_int i | _9 -> Let [Op
+         (closLang_IntOp (closLang_Const (&0))) c1] (compile_int i)) |
+         closLang_GlobOp (Global n) ->
+       (if NULL c1 then Op (closLang_GlobOp (Global (n + 1))) [] else
+         Let c1 (Op (closLang_MemOp closLang_El) [
+         Op (closLang_IntOp Add) [Op (closLang_IntOp (closLang_Const
+           (&2))) []; Var 0];
+         Op (closLang_GlobOp GlobalsPtr) []])) | closLang_GlobOp
+           (SetGlobal n) -> Op (closLang_GlobOp (SetGlobal (n + 1))) c1
+           | closLang_GlobOp AllocGlobal -> Call 0 (SOME
+           AllocGlobal_location) c1 NONE | closLang_BlockOp
+           (closLang_FromList n) -> Let
+         (if NULL c1 then [Op (closLang_IntOp (closLang_Const (&0)))
+           []] else c1)
+         (Op (closLang_BlockOp (closLang_FromList n))
+         [Var 0; Call 0 (SOME ListLength_location) [Var 0; Op
+           (closLang_IntOp (closLang_Const (&0))) []] NONE]) |
+           closLang_Install -> Let
+       (if ~(LENGTH c1 = 2) then [Let c1 (Op (closLang_IntOp
+         (closLang_Const (&0))) []); Op (closLang_IntOp (closLang_Const
+         (&0))) []] else c1)
+       (Op closLang_Install
+        [Call 0 (SOME ListLength_location)
+           [Var 0; Op (closLang_IntOp (closLang_Const (&0))) []]
+             NONE;
+         Call 0 (SOME ListLength_location)
+           [Var 1; Op (closLang_IntOp (closLang_Const (&0))) []]
+             NONE;
+         Var 0; Var 1]) | closLang_MemOp closLang_FromListByte ->
+         Let (if NULL c1 then [Op (closLang_IntOp (closLang_Const
+           (&0))) []] else c1)
+           (Call 0 (SOME FromListByte_location)
+              [Var 0;
+               Op (closLang_IntOp (closLang_Const (&0))) [];
+               Op (closLang_MemOp (closLang_RefByte T))
+                 [Op (closLang_IntOp (closLang_Const (&0))) [];
+                  Call 0 (SOME ListLength_location)
+                    [Var 0; Op (closLang_IntOp (closLang_Const (&0)))
+                      []] NONE]]
+              NONE) | closLang_MemOp closLang_ToListByte ->
+         Let (if NULL c1 then [Op (closLang_IntOp (closLang_Const
+           (&0))) []] else c1)
+           (Call 0 (SOME ToListByte_location)
+              [Op (closLang_BlockOp (Cons 0)) [];
+               Op (closLang_MemOp closLang_LengthByte) [Var 0];
+               Var 0]
+              NONE) | closLang_MemOp closLang_ConcatByteVec ->
+         Let (if NULL c1 then [Op (closLang_IntOp (closLang_Const
+           (&0))) []] else c1)
+           (Call 0 (SOME ConcatByte_location)
              [Var 0;
-              Op (IntOp (Const 0)) [];
-              Op (MemOp (RefByte T))
-                [Op (IntOp (Const 0)) [];
-                 Call 0 (SOME ListLength_location)
-                   [Var 0; Op (IntOp (Const 0)) []] NONE]]
-             NONE)
-    | MemOp ToListByte =>
-        Let (if NULL c1 then [Op (IntOp (Const 0)) []] else c1)
-          (Call 0 (SOME ToListByte_location)
-             [Op (BlockOp (Cons 0)) [];
-              Op (MemOp LengthByte) [Var 0];
-              Var 0]
-             NONE)
-    | MemOp ConcatByteVec =>
-        Let (if NULL c1 then [Op (IntOp (Const 0)) []] else c1)
-          (Call 0 (SOME ConcatByte_location)
-            [Var 0;
-             Op (IntOp (Const 0)) [];
-             Op (MemOp (RefByte T))
-               [Op (IntOp (Const 0)) [];
-                Call 0 (SOME SumListLength_location)
-                  [Var 0; Op (IntOp (Const 0)) []] NONE]] NONE)
-    | MemOp (CopyByte T) => (* TODO: this should eventually be
-      implemented in data_to_word instead for efficiency *)
-      Let (if LENGTH c1 < 3 then (c1 ++ REPLICATE 3 (Op (IntOp (Const
-        0)) [])) else c1)
-        (Let [Op (MemOp (RefByte T)) [Op (IntOp (Const 0)) []; Var 0]]
-           (Let [Op (MemOp (CopyByte F)) [Op (IntOp (Const 0)) []; Var
-             0; Var 1; Var 2; Var 3]]
-             (Var 1)))
-    | Label l => Op (Label (bvl_num_stubs + bvl_to_bvi_namespaces * l))
-      c1
-    | BlockOp (Build ps) => Op (BlockOp (Build ps)) c1
-    | BlockOp (EqualConst p) => Op (BlockOp (EqualConst p)) c1
-*)
-    (* reserved for bvi_tmc; bvlSem$do_app is Error on these, so compile
-       them out *)
-(* HOL4 ML code, not ported:
-    | MemOp (MutCons tag i) => Let c1 (Op (IntOp (Const 0)) [])
-    | MemOp UpdateCons => Let c1 (Op (IntOp (Const 0)) [])
-    | MemOp FinaliseCons => Let c1 (Op (IntOp (Const 0)) [])
-    | _ => Op op c1`
-in
-val compile_op_def = Define compile_op_quotation;
-*)
+              Op (closLang_IntOp (closLang_Const (&0))) [];
+              Op (closLang_MemOp (closLang_RefByte T))
+                [Op (closLang_IntOp (closLang_Const (&0))) [];
+                 Call 0 (SOME SumListLength_location)
+                   [Var 0; Op (closLang_IntOp (closLang_Const (&0)))
+                     []] NONE]] NONE) | closLang_MemOp
+                     (closLang_CopyByte T) ->
+       Let (if LENGTH c1 < 3 then (c1 ++ REPLICATE 3 (Op
+         (closLang_IntOp (closLang_Const (&0))) [])) else c1)
+         (Let [Op (closLang_MemOp (closLang_RefByte T)) [Op
+           (closLang_IntOp (closLang_Const (&0))) []; Var 0]]
+            (Let [Op (closLang_MemOp (closLang_CopyByte F)) [Op
+              (closLang_IntOp (closLang_Const (&0))) []; Var 0; Var 1;
+              Var 2; Var 3]]
+              (Var 1))) | closLang_Label l -> Op (closLang_Label
+                (bvl_num_stubs + bvl_to_bvi_namespaces * l)) c1 |
+                closLang_BlockOp (closLang_Build ps) -> Op
+                (closLang_BlockOp (closLang_Build ps)) c1 |
+                closLang_BlockOp (closLang_EqualConst p) -> Op
+                (closLang_BlockOp (closLang_EqualConst p)) c1 |
+                closLang_MemOp (closLang_MutCons tag i) -> Let c1 (Op
+                (closLang_IntOp (closLang_Const (&0))) []) |
+                closLang_MemOp closLang_UpdateCons -> Let c1 (Op
+                (closLang_IntOp (closLang_Const (&0))) []) |
+                closLang_MemOp closLang_FinaliseCons -> Let c1 (Op
+                (closLang_IntOp (closLang_Const (&0))) []) | _10 ->
+                Op op c1)`;;
+hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
 
 hol4_overload "++" "SmartAppend";;
 (* HOL4 overload (expanded in the port):
@@ -358,7 +362,7 @@ let compile_exps_def = cake_define_list
            v],misc_Nil,n)`;
    `bvl_to_bvi_compile_exps n [(Op op xs:bvl_exp)] =
          (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n xs in
-           ([compile_op op c1],aux1,n1))`;
+           ([bvl_to_bvi_compile_op op c1],aux1,n1))`;
    `bvl_to_bvi_compile_exps n [(Handle x1 x2:bvl_exp)] =
          (let (args,x0) = destLet x1 in
          let (c1,aux1,n1) = bvl_to_bvi_compile_exps n args in
@@ -409,7 +413,7 @@ let compile_exps_sing_def = cake_define_list
            v,misc_Nil,n)`;
    `compile_exps_sing n (Op op xs:bvl_exp) =
          (let (c1,aux1,n1) = compile_exps_list n xs in
-           (compile_op op c1,aux1,n1))`;
+           (bvl_to_bvi_compile_op op c1,aux1,n1))`;
    `compile_exps_sing n (Handle x1 x2:bvl_exp) =
          (let (args,x0) = destLet x1 in
          let (c1,aux1,n1) = compile_exps_list n args in
@@ -456,7 +460,7 @@ hol4_overload "compile_inc" "bvl_to_bvi_compile_inc";;
 
 let compile_prog_def = cake_define
   `bvl_to_bvi_compile_prog start' n prog =
-     (let k = alloc_glob_count (MAP (\(_9,_10,p). p) prog) in
+     (let k = alloc_glob_count (MAP (\(_11,_12,p). p) prog) in
      let (code,n1) = compile_list n prog in
        (InitGlobals_location,bvl_to_bvi_stubs (bvl_num_stubs +
          bvl_to_bvi_namespaces * start') k ++ append code,n1))`;;

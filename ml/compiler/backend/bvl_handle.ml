@@ -275,11 +275,12 @@ let compile_exp_def = cake_define
        (bvl_const_compile_exp e)]))`;;
 hol4_overload "compile_exp" "bvl_handle_compile_exp";;
 
-(* HOL4 ML code, not ported:
-val dest_Seq_def = PmatchHeuristics.with_classic_heuristic Define `
-  (dest_Seq (Let [e1;e2] (Var 1)) = SOME (e1,e2)) /\
-  (dest_Seq _ = NONE)`
-*)
+let dest_Seq_def = cake_define
+  `bvl_handle_dest_Seq x1 =
+        match x1 with
+          (Let [e1; e2] (Var 1):bvl_exp) -> SOME (e1,e2)
+        | _4 -> NONE`;;
+hol4_overload "dest_Seq" "bvl_handle_dest_Seq";;
 
 let _ = size_thms "exp";;
 (* HOL4 termination: ( \\ strip_tac \\ HO_MATCH_MP_TAC (fetch "-"
@@ -287,8 +288,8 @@ let _ = size_thms "exp";;
 let compile_seqs_def = cake_define_wf
   `MEASURE (\(c,e,a). exp_size e)`
   `compile_seqs cut_size e acc =
-     (match dest_Seq e with NONE -> (let new_e = compile_exp cut_size
-       0 e in
+     (match bvl_handle_dest_Seq e with NONE -> (let new_e =
+       compile_exp cut_size 0 e in
                   match acc with NONE -> new_e | SOME rest -> Let
                     [new_e] (Let [] (Let [] rest))) | SOME (e1,e2) ->
          compile_seqs cut_size e1

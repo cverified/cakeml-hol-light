@@ -508,9 +508,7 @@ val simp_var_assums_conv =
 (* HOL4 ML code, not ported:
 val sort_lemma = prove(
   ``(clock_write l1 (clock_write l2 s) = clock_write l1 s) /\
-*)
     (* array_write move inwards *)
-(* HOL4 ML code, not ported:
     (array_write a1 x1 (clock_write l s) = clock_write l (array_write a1
       x1 s)) /\
     (array_write a1 x1 (array_write a1 x2 s) = array_write a1 x1 s) /\
@@ -520,9 +518,7 @@ val sort_lemma = prove(
      array_write In1 x2 (array_write Out x1 s)) /\
     (array_write Out x1 (array_write In2 x2 s) =
      array_write In2 x2 (array_write Out x1 s)) /\
-*)
     (* reg_write move inwards *)
-(* HOL4 ML code, not ported:
     (n2 < n1 ==>
      reg_write n1 w1 (reg_write n2 w2 s) = reg_write n2 w2 (reg_write n1
        w1 s)) /\

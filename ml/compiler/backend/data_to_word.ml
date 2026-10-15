@@ -1119,216 +1119,178 @@ fun assign_Define q = let
   in thm end;
 *)
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Const i (l:num) (dest:num) =
-*)
-        (* bvl_to_bvi compilation ensures that all literal
-           constants fit into a machine word *)
-(* HOL4 ML code, not ported:
-        if i < 0
-        then (Assign (adjust_var dest) (Const (0w - n2w (Num (4 * (0 -
-          i))))),l)
-        else (Assign (adjust_var dest) (Const (n2w (Num (4 * i)))),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_Const_def = cake_define
+  `assign_Const i (l:num) (dest:num) =
+         (if i < 0 then (Assign (adjust_var dest) (Const ((n2w 0)
+           - n2w (num_of_int (4 * (0 - i))))),l) else (Assign
+           (adjust_var dest) (Const (n2w (num_of_int (4 * i)))),l):'a
+           wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_SetGlobalsPtr (c:data_to_word$config) (l:num) (dest:num) v1 =
-      (Seq (Set Globals (Var (adjust_var v1)))
-      (Seq (Set GlobReal (real_addr c (adjust_var v1)))
-           (Assign (adjust_var dest) Unit)),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_SetGlobalsPtr_def = cake_define
+  `assign_SetGlobalsPtr (c:data_to_word_config) (l:num) (dest:num) v1 =
+       ((Seq (Set Globals (Var (adjust_var v1)))
+       (Seq (Set GlobReal (real_addr c (adjust_var v1)))
+            (Assign (adjust_var dest) data_to_word_Unit)),l):'a
+              wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Global (c:data_to_word$config) n (l:num) (dest:num) =
-      (Assign (adjust_var dest) (Load (Op Add [Lookup GlobReal;
-                                               Const (bytes_in_word *
-                                                 n2w (n+1))])),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_Global_def = cake_define
+  `assign_Global (c:data_to_word_config) n (l:num) (dest:num) =
+       ((Assign (adjust_var dest) (Load (Op Add [wordLang_Lookup
+         GlobReal;
+                              Const (bytes_in_word * n2w (n +
+                                1))])),l):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_SetGlobal (c:data_to_word$config) n (l:num) (dest:num) v1 =
-      (Seq (Store (Op Add [Lookup GlobReal; Const (bytes_in_word * n2w
-        (n+1))])
-                  (adjust_var v1))
-           (Assign (adjust_var dest) Unit),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_SetGlobal_def = cake_define
+  `assign_SetGlobal (c:data_to_word_config) n (l:num) (dest:num) v1 =
+       ((Seq (Store (Op Add [wordLang_Lookup GlobReal; Const
+         (bytes_in_word * n2w (n + 1))])
+                   (adjust_var v1))
+            (Assign (adjust_var dest) data_to_word_Unit),l):'a
+              wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_El (c:data_to_word$config) (l:num) (dest:num) v1 v2 =
-                         (Assign (adjust_var dest)
-                            (Load (Op Add [real_addr c (adjust_var v1);
-                                           real_offset c (adjust_var
-                                             v2)])),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_El_def = cake_define
+  `assign_El (c:data_to_word_config) (l:num) (dest:num) v1 v2 =
+                          ((Assign (adjust_var dest)
+                             (Load (Op Add [real_addr c (adjust_var
+                               v1);
+                              real_offset c (adjust_var
+                                v2)])),l):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_ElemAt (c:data_to_word$config) n (l:num) (dest:num) v1 =
-                         (Assign (adjust_var dest)
-                            (Load (Op Add [real_addr c (adjust_var v1);
-                                           Const (bytes_in_word +
-                                                  bytes_in_word * n2w
-                                                    n)])),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_ElemAt_def = cake_define
+  `assign_ElemAt (c:data_to_word_config) n (l:num) (dest:num) v1 =
+                          ((Assign (adjust_var dest)
+                             (Load (Op Add [real_addr c (adjust_var
+                               v1);
+                              Const (bytes_in_word +
+                              bytes_in_word * n2w n)])),l):'a
+                                wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_DerefByte (c:data_to_word$config) (l:num) (dest:num) v1 v2 =
-         (list_Seq [
-            Assign 1 (Op Add [real_addr c (adjust_var v1);
+let assign_DerefByte_def = cake_define
+  `assign_DerefByte (c:data_to_word_config) (l:num) (dest:num) v1 v2 =
+          ((list_Seq [
+             Assign 1 (Op Add [real_addr c (adjust_var v1);
                               real_byte_offset (adjust_var v2)]);
-            Inst (Mem Load8 3 (Addr 1 0w));
-            Assign (adjust_var dest) (ShiftN Lsl (Var 3) 2)
-          ], l)
-      : 'a wordLang$prog # num`;
-*)
+             Inst (asm_Mem asm_Load8 3 (Addr 1 (n2w 0)));
+             Assign (adjust_var dest) ((\sh e n. Shift sh e (Const
+               (n2w n))) Lsl (Var 3) 2)],l):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Update (c:data_to_word$config) (l:num) (dest:num) v1 v2 v3 =
-                 (Seq (Store (Op Add [real_addr c (adjust_var v1);
-                                      real_offset c (adjust_var v2)])
-                             (adjust_var v3))
-                      (Assign (adjust_var dest) Unit),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_Update_def = cake_define
+  `assign_Update (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3 =
+                  ((Seq (Store (Op Add [real_addr c (adjust_var v1);
+                              real_offset c (adjust_var v2)])
+                              (adjust_var v3))
+                       (Assign (adjust_var dest)
+                         data_to_word_Unit),l):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_UpdateThunk ev (c:data_to_word$config) (l:num) (dest:num) v1 v2
-    =
-      (case ev of
-       | NotEvaluated =>
-           (Seq (Store (Op Add [real_addr c (adjust_var v1);
-                                Const bytes_in_word])
-                       (adjust_var v2))
-                (Assign (adjust_var dest) Unit),l)
-       | Evaluated =>
-           (case encode_header c (8 + 6) 1 of
-            | NONE => (GiveUp,l)
-            | SOME (header:'a word) => (list_Seq
-                [Assign 1 (real_addr c (adjust_var v1));
-                 Assign 3 (Const header);
-                 Store (Var 1) 3;
-                 Store (Op Add [Var 1; Const bytes_in_word]) (adjust_var
-                   v2);
-                 Assign (adjust_var dest) Unit],l)))
-      : 'a wordLang$prog # num`;
-*)
+let assign_UpdateThunk_def = cake_define
+  `assign_UpdateThunk ev (c:data_to_word_config) (l:num) (dest:num) v1
+  v2 =
+       ((match ev with NotEvaluated ->
+            (Seq (Store (Op Add [real_addr c (adjust_var v1);
+                              Const bytes_in_word])
+                        (adjust_var v2))
+                 (Assign (adjust_var dest) data_to_word_Unit),l) |
+                   Evaluated ->
+            (match encode_header c (8 + 6) 1 with NONE -> (GiveUp,l)
+              | SOME (header:'a word) -> (list_Seq
+                 [Assign 1 (real_addr c (adjust_var v1));
+                  Assign 3 (Const header);
+                  Store (Var 1) 3;
+                  Store (Op Add [Var 1; Const bytes_in_word])
+                    (adjust_var v2);
+                  Assign (adjust_var dest)
+                    data_to_word_Unit],l))):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_UpdateByte (c:data_to_word$config) (l:num) (dest:num) v1 v2 v3
-    =
-      (list_Seq [
-          Assign 1 (Op Add [real_addr c (adjust_var v1);
-                            real_byte_offset (adjust_var v2)]);
-          Assign 3 (ShiftN Lsr (Var (adjust_var v3)) 2);
-          Inst (Mem Store8 3 (Addr 1 0w));
-          Assign (adjust_var dest) Unit], l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_UpdateByte_def = cake_define
+  `assign_UpdateByte (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3
+  =
+       ((list_Seq [
+           Assign 1 (Op Add [real_addr c (adjust_var v1);
+                             real_byte_offset (adjust_var v2)]);
+           Assign 3 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
+             (adjust_var v3)) 2);
+           Inst (asm_Mem asm_Store8 3 (Addr 1 (n2w 0)));
+           Assign (adjust_var dest) data_to_word_Unit],l):'a
+             wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_ListAppend (c:data_to_word$config)
-            (secn:num) (l:num) (dest:num) (names:num_set option) v1 v2 =
-         (case encode_header c 0 2 of
-          | NONE => (GiveUp,l)
-          | SOME (header:'a word) =>
-           (MustTerminate
-             (Call (SOME ([adjust_var dest],adjust_sets (get_names
-               names),Skip,secn,l))
-                (SOME Append_location)
-                   [adjust_var v2; adjust_var v1] NONE) :'a
-                     wordLang$prog,l+1))
-      : 'a wordLang$prog # num`;
-*)
+let assign_ListAppend_def = cake_define
+  `assign_ListAppend (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+          ((match encode_header c 0 2 with NONE -> (GiveUp,l) | SOME
+            (header:'a word) ->
+            ((wordLang_MustTerminate
+              (Call (SOME ([adjust_var dest],adjust_sets
+                (data_to_word_get_names names),Skip,secn,l))
+                 (SOME Append_location)
+                    [adjust_var v2; adjust_var v1] NONE):'a
+                      wordLang_prog),l + 1)):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Cons (c:data_to_word$config) (l:num) (dest:num) tag args =
-                  if LENGTH args = 0 then
-                    if tag < dimword (:'a) DIV 16 then
-                      (Assign (adjust_var dest) (Const (n2w (16 * tag +
-                        2))),l)
-                    else (GiveUp,l) (* tag is too big to be represented
-                      *)
-                  else
-                    (case encode_header c (4 * tag) (LENGTH args) of
-                     | NONE => (GiveUp,l)
-                     | SOME (header:'a word) => (list_Seq
-                        [Assign 1 (Lookup NextFree);
-                         Assign 3 (Const header);
-                         StoreEach 1 (3::MAP adjust_var args) 0w;
-                         Assign (adjust_var dest)
-                           (Op Or [ShiftN Lsl (Op Sub [Var 1; Lookup
-                             CurrHeap])
-                                     (shift_length c − shift (:'a));
-                                   Const (1w ||
-                                           (small_shift_length c − 1 --
-                                             0)
-                                              (ptr_bits c tag (LENGTH
-                                                args)))]);
-                         Set NextFree (Op Add [Var 1;
-                           Const (bytes_in_word * n2w (LENGTH args +
-                             1))])],l))
-      : 'a wordLang$prog # num`;
-*)
+let assign_Cons_def = cake_define
+  `assign_Cons (c:data_to_word_config) (l:num) (dest:num) tag args =
+                   (if LENGTH args = 0 then
+                     if tag < dimword (:'a) DIV 16 then
+                       (Assign (adjust_var dest) (Const (n2w (16 *
+                         tag + 2))),l) else (GiveUp,l) else
+                     (match encode_header c (4 * tag) (LENGTH args)
+                       with NONE -> (GiveUp,l) | SOME (header:'a word)
+                       -> (list_Seq
+                         [Assign 1 (wordLang_Lookup NextFree);
+                          Assign 3 (Const header);
+                          StoreEach 1 (3 :: MAP adjust_var args) (n2w
+                            0);
+                          Assign (adjust_var dest)
+                            (Op Or [(\sh e n. Shift sh e (Const (n2w
+                              n))) Lsl (Op Sub [Var 1; wordLang_Lookup
+                              CurrHeap])
+                              (shift_length c -
+                                backend_common_word_shift (:'a));
+                              Const ((n2w 1) ||
+                              (word_bits (small_shift_length c - 1)
+                                0)
+                              (ptr_bits c tag (LENGTH args)))]);
+                          Set NextFree (Op Add [Var 1;
+                            Const (bytes_in_word * n2w (LENGTH
+                              args + 1))])],l)):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_MutCons (c:data_to_word$config) (l:num) (dest:num) tag args =
-    case c.gc_kind of
-    | Generational _ => (GiveUp,l)
-    | _ => assign_Cons (c:data_to_word$config) (l:num) (dest:num) tag
-      args
-      : 'a wordLang$prog # num`;
-*)
+let assign_MutCons_def = cake_define
+  `assign_MutCons (c:data_to_word_config) (l:num) (dest:num) tag args =
+     (match data_to_word_config_gc_kind c with
+       data_to_word_Generational _5 -> (GiveUp,l) | _6 ->
+       (assign_Cons (c:data_to_word_config) (l:num) (dest:num) tag
+       args:'a wordLang_prog#num))`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_ConfigGC (c:data_to_word$config)
-            (secn:num) (l:num) (dest:num) (names:num_set option) v1 v2 =
-             (list_Seq [SilentFFI c 3 (adjust_sets (get_names names));
-                        Assign 1 (Const 0w);
-                        Alloc 1 (adjust_sets (get_names names)); (* runs
-                          GC *)
-                        SilentFFI c 3 (adjust_sets (get_names names));
-                        Assign (adjust_var dest) (Const 2w)],l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_ConfigGC_def = cake_define
+  `assign_ConfigGC (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+              ((list_Seq [SilentFFI c 3 (adjust_sets
+                (data_to_word_get_names names));
+                         Assign 1 (Const (n2w 0));
+                         Alloc 1 (adjust_sets (data_to_word_get_names
+                           names));
+                         SilentFFI c 3 (adjust_sets
+                           (data_to_word_get_names names));
+                         Assign (adjust_var dest) (Const (n2w
+                           2))],l):'a wordLang_prog#num)`;;
 
 let getWords_def = cake_define_list
   [`getWords [] aux = (REVERSE aux,[])`;
    `getWords (c :: cs) aux =
       (match c with (b,wordLang_Word w) -> getWords cs ((b,w) ::
-        aux) | _6 -> (REVERSE aux,c :: cs))`];;
+        aux) | _8 -> (REVERSE aux,c :: cs))`];;
 
 let StoreAnyConsts_def = cake_define_list
   [`StoreAnyConsts r1 r2 r3 [] v =
       Seq (Set NextFree (Var r2))
-          (match SND v with Loc n _10 -> LocValue r1 n |
+          (match SND v with Loc n _12 -> LocValue r1 n |
             wordLang_Word w -> Assign r1 (if FST v then Op Add [Const
             w; Var r3] else (Const w)))`;
    `StoreAnyConsts r1 r2 r3 (v :: vs) w =
-      (match ((SND v):'a word_loc) with Loc n _11 -> list_Seq
+      (match ((SND v):'a word_loc) with Loc n _13 -> list_Seq
         [LocValue r1 n;
                              Store (Var r2) r1;
                              Assign r2 (Op Add [Var r2; Const
                                bytes_in_word]);
-                             StoreAnyConsts r1 r2 r3 vs w] | _12 ->
+                             StoreAnyConsts r1 r2 r3 vs w] | _14 ->
                                (let (ws,vs1) = getWords (v :: vs) [] in
                Seq (StoreConsts r2 r3 r2 r3 ws)
                    (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
@@ -1357,7 +1319,7 @@ let get_lowerbits_def = cake_define
         match x2 with
           wordLang_Word w ->
         (((word_bits (small_shift_length conf - 1) 0) w) || (n2w 1))
-        | _13 -> (n2w 1)`;;
+        | _15 -> (n2w 1)`;;
 
 let make_cons_ptr_def = cake_define
   `make_cons_ptr conf nf tag len =
@@ -1443,148 +1405,140 @@ let get_Word_def = cake_define
   `get_Word x1 =
       match x1 with
         wordLang_Word w -> w
-      | _14 -> (n2w 0)`;;
+      | _16 -> (n2w 0)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Build (c:data_to_word$config)
-            (secn:num) (l:num) (dest:num) (names:num_set option) ps =
-    case const_parts_to_words c ps of
-    | NONE => (GiveUp,l)
-    | SOME (w,ws) =>
-      (list_Seq
-        [Assign 1 (Lookup NextFree);
-         Assign 3 (ShiftN Lsl (Op Sub [Var 1; Lookup CurrHeap])
-                    (shift_length c − shift (:'a)));
-         StoreAnyConsts (adjust_var dest) 1 3 ws w],l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_Build_def = cake_define
+  `assign_Build (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) ps =
+     (match const_parts_to_words c ps with NONE -> (GiveUp,l) | SOME
+       (w,ws) ->
+       ((list_Seq
+         [Assign 1 (wordLang_Lookup NextFree);
+          Assign 3 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Op Sub
+            [Var 1; wordLang_Lookup CurrHeap])
+                     (shift_length c - backend_common_word_shift
+                       (:'a)));
+          StoreAnyConsts (adjust_var dest) 1 3 ws w],l):'a
+            wordLang_prog#num))`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_ConsExtend (c:data_to_word$config)
-            (secn:num) (l:num) (dest:num) (names:num_set option) tag
-              args =
-        (case args of
-         | (old::start::len::tot::rest) =>
-          (case encode_header c (4 * tag) 0 of
-             NONE => (GiveUp,l)
-           | SOME header =>
-              let limit = MIN (2 ** c.len_size) (dimword (:'a) DIV 16)
-                in
-              let h = ShiftN Lsl (Var (adjust_var tot))
-                        (dimindex (:'a) - c.len_size - 2) in
-                (list_Seq
-                  [BignumHalt (adjust_var tot);
-                   Assign 1 (Var (adjust_var tot));
-                   AllocVar c limit (list_insert args (get_names
-                     names));
-                   Assign 1 (Lookup NextFree);
-                   Assign 5 (Op Or [h; Const header]);
-                   Assign 7 (ShiftN Lsr (Var (adjust_var tot)) 2);
-                   Assign 9 (Const (n2w tag));
-                   StoreEach 1 (5::MAP adjust_var rest) 0w;
-                   Make_ptr_bits_code c 9 7 3;
-                   Set NextFree (Op Add [Var 1; Const bytes_in_word;
-                     ShiftN Lsl (Var 7) (shift (:'a))]);
-                   Assign 15 (Var (adjust_var len));
-                   Assign 13 (Op Add [Var 1;
-                     Const (bytes_in_word * n2w (LENGTH rest + 1))]);
-                   Assign 11 (Op Add [real_addr c (adjust_var old);
-                     Const bytes_in_word;
-                     ShiftVar Lsl (adjust_var start) (shift (:'a) -
-                       2)]);
-                   If Test 15 (Reg 15) (Assign (adjust_var dest) (Var
-                     3)) (list_Seq [
-                     MustTerminate
-                       (Call (SOME ([adjust_var dest],adjust_sets
-                         (get_names names),
-                             Skip,secn,l))
-                          (SOME MemCopy_location) [15;11;13;3]
-                            NONE)])]),l+1)
-         | _ => (Skip,l))
-      : 'a wordLang$prog # num`;
-*)
+let assign_ConsExtend_def = cake_define
+  `assign_ConsExtend (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) tag args =
+         ((match args with (old :: start' :: len :: tot :: rest) ->
+           (match encode_header c (4 * tag) 0 with
+              NONE -> (GiveUp,l) | SOME header ->
+               (let limit' = MIN (2 EXP data_to_word_config_len_size
+                 c) (dimword (:'a) DIV 16) in
+               let h = (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
+                 (adjust_var tot))
+                         (dimindex (:'a) -
+                           data_to_word_config_len_size c - 2) in
+                 (list_Seq
+                   [BignumHalt (adjust_var tot);
+                    Assign 1 (Var (adjust_var tot));
+                    AllocVar c limit' (list_insert args
+                      (data_to_word_get_names names));
+                    Assign 1 (wordLang_Lookup NextFree);
+                    Assign 5 (Op Or [h; Const header]);
+                    Assign 7 ((\sh e n. Shift sh e (Const (n2w n)))
+                      Lsr (Var (adjust_var tot)) 2);
+                    Assign 9 (Const (n2w tag));
+                    StoreEach 1 (5 :: MAP adjust_var rest) (n2w 0);
+                    Make_ptr_bits_code c 9 7 3;
+                    Set NextFree (Op Add [Var 1; Const bytes_in_word;
+                      (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
+                        7) (backend_common_word_shift (:'a))]);
+                    Assign 15 (Var (adjust_var len));
+                    Assign 13 (Op Add [Var 1;
+                      Const (bytes_in_word * n2w (LENGTH rest +
+                        1))]);
+                    Assign 11 (Op Add [real_addr c (adjust_var old);
+                      Const bytes_in_word;
+                      ShiftVar Lsl (adjust_var start')
+                        (backend_common_word_shift (:'a) - 2)]);
+                    If Test 15 (Reg 15) (Assign (adjust_var dest)
+                      (Var 3)) (list_Seq [
+                      wordLang_MustTerminate
+                        (Call (SOME ([adjust_var dest],adjust_sets
+                          (data_to_word_get_names names),
+                              Skip,secn,l))
+                           (SOME MemCopy_location) [15; 11; 13; 3]
+                             NONE)])]),l + 1)) | _17 -> (Skip,l)):'a
+                             wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Ref (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) args =
-          (case encode_header c 2 (LENGTH args) of
-              | NONE => (GiveUp,l)
-              | SOME (header:'a word) => (list_Seq
-                 [Set TriggerGC (Op Sub [Lookup TriggerGC;
-                     Const (bytes_in_word * n2w (LENGTH args + 1))]);
-                  Assign 1 (Op Sub [Lookup EndOfHeap;
-                     Const (bytes_in_word * n2w (LENGTH args + 1))]);
-                  Set EndOfHeap (Var 1);
-                  Assign 3 (Const header);
-                  StoreEach 1 (3::MAP adjust_var args) 0w;
-                  Assign (adjust_var dest)
-                    (Op Or [ShiftN Lsl (Op Sub [Var 1; Lookup CurrHeap])
-                              (shift_length c − shift (:'a));
-                            Const 1w])],l))
-      : 'a wordLang$prog # num`;
-*)
+let assign_Ref_def = cake_define
+  `assign_Ref (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) args =
+           ((match encode_header c 2 (LENGTH args) with NONE ->
+             (GiveUp,l) | SOME (header:'a word) -> (list_Seq
+                  [Set TriggerGC (Op Sub [wordLang_Lookup TriggerGC;
+                      Const (bytes_in_word * n2w (LENGTH args +
+                        1))]);
+                   Assign 1 (Op Sub [wordLang_Lookup EndOfHeap;
+                      Const (bytes_in_word * n2w (LENGTH args +
+                        1))]);
+                   Set EndOfHeap (Var 1);
+                   Assign 3 (Const header);
+                   StoreEach 1 (3 :: MAP adjust_var args) (n2w 0);
+                   Assign (adjust_var dest)
+                     (Op Or [(\sh e n. Shift sh e (Const (n2w n)))
+                       Lsl (Op Sub [Var 1; wordLang_Lookup CurrHeap])
+                              (shift_length c -
+                                backend_common_word_shift (:'a));
+                             Const (n2w 1)])],l)):'a
+                               wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_AllocThunk (ev : thunk_mode) (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) arg =
-          (let tag = (case ev of
-                         | Evaluated => 8 + 6
-                         | NotEvaluated => 0 + 6) in
-           case encode_header c tag 1 of
-              | NONE => (GiveUp,l)
-              | SOME (header:'a word) => (list_Seq
-                 [Set TriggerGC (Op Sub [Lookup TriggerGC;
-                     Const (bytes_in_word * 2w)]);
-                  Assign 1 (Op Sub [Lookup EndOfHeap;
-                     Const (bytes_in_word * 2w)]);
-                  Set EndOfHeap (Var 1);
-                  Assign 3 (Const header);
-                  StoreEach 1 [3; adjust_var arg] 0w;
-                  Assign (adjust_var dest)
-                    (Op Or [ShiftN Lsl (Op Sub [Var 1; Lookup CurrHeap])
-                              (shift_length c − shift (:'a));
-                            Const 1w])],l))
-      : 'a wordLang$prog # num`;
-*)
+let assign_AllocThunk_def = cake_define
+  `assign_AllocThunk (ev:thunk_mode) (c:data_to_word_config) (secn:num)
+  (l:num) (dest:num) (names:(1 spt) option) arg =
+           ((let tag = (match ev with Evaluated -> 8 + 6 |
+             NotEvaluated -> 0 + 6) in
+            match encode_header c tag 1 with NONE -> (GiveUp,l) |
+              SOME (header:'a word) -> (list_Seq
+                  [Set TriggerGC (Op Sub [wordLang_Lookup TriggerGC;
+                      Const (bytes_in_word * (n2w 2))]);
+                   Assign 1 (Op Sub [wordLang_Lookup EndOfHeap;
+                      Const (bytes_in_word * (n2w 2))]);
+                   Set EndOfHeap (Var 1);
+                   Assign 3 (Const header);
+                   StoreEach 1 [3; adjust_var arg] (n2w 0);
+                   Assign (adjust_var dest)
+                     (Op Or [(\sh e n. Shift sh e (Const (n2w n)))
+                       Lsl (Op Sub [Var 1; wordLang_Lookup CurrHeap])
+                              (shift_length c -
+                                backend_common_word_shift (:'a));
+                             Const (n2w 1)])],l)):'a
+                               wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_RefByte (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) immutable v1 v2 =
-         (Seq
-           (Assign 1 (Const (if immutable then 0w else 16w))) (* n.b.
-             this would have been better done with Set Temp *)
-           (MustTerminate
-             (Call (SOME ([adjust_var dest],adjust_sets (get_names
-               names),Skip,secn,l))
-                (SOME RefByte_location)
-                   [adjust_var v1; adjust_var v2; 1] NONE) :'a
-                     wordLang$prog),l+1)
-      : 'a wordLang$prog # num`;
-*)
+let assign_RefByte_def = cake_define
+  `assign_RefByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) immutable v1 v2 =
+          ((Seq
+            (Assign 1 (Const (if immutable then (n2w 0) else (n2w
+              16))))
+            (wordLang_MustTerminate
+              (Call (SOME ([adjust_var dest],adjust_sets
+                (data_to_word_get_names names),Skip,secn,l))
+                 (SOME RefByte_location)
+                    [adjust_var v1; adjust_var v2; 1] NONE):'a
+                      wordLang_prog),l + 1):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_XorByte (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-    (list_Seq [
-        Assign 1 (real_addr c (adjust_var v1));
-        Assign 3 (real_addr c (adjust_var v2));
-        Assign 5 (SmallLsr (Load (Var 3)) (dimindex (:'a) -
-          c.len_size));
-        Assign 1 (Op Add [Var 1; Const bytes_in_word]);
-        Assign 3 (Op Add [Var 3; Const (bytes_in_word:'a word)]);
-        MustTerminate
-          (Call
-            (SOME ([adjust_var dest],adjust_sets (get_names
-              names),Skip,secn,l))
-            (SOME XorLoop_location) [1;3;5] NONE)],l + 1)
-      : 'a wordLang$prog # num`;
-*)
+let assign_XorByte_def = cake_define
+  `assign_XorByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+     ((list_Seq [
+         Assign 1 (real_addr c (adjust_var v1));
+         Assign 3 (real_addr c (adjust_var v2));
+         Assign 5 (SmallLsr (Load (Var 3)) (dimindex (:'a) -
+           data_to_word_config_len_size c));
+         Assign 1 (Op Add [Var 1; Const bytes_in_word]);
+         Assign 3 (Op Add [Var 3; Const (bytes_in_word:'a word)]);
+         wordLang_MustTerminate
+           (Call
+             (SOME ([adjust_var dest],adjust_sets
+               (data_to_word_get_names names),Skip,secn,l))
+             (SOME XorLoop_location) [1; 3; 5] NONE)],l + 1):'a
+               wordLang_prog#num)`;;
 
 let SetBool_def = cake_define
   `SetBool dest cmp r ri =
@@ -1602,1075 +1556,1006 @@ let AssignCmp_def = cake_define_list
    `AssignCmp dest (ast_Geq:opb) v1 v2 = SetBool dest asm_NotLower v1
   (Reg v2)`];;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_StringCmp (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) (b:bool)
-               (cmp:ast$opb) v1 v2 =
-    (let k = (dimindex (:α) − c.len_size - shift (:'a)) in
-      list_Seq [
-          Assign 1 (real_addr c (adjust_var v1)); (* address to header
-            *)
-          Assign 3 (real_addr c (adjust_var v2)); (* address to header
-            *)
-          Assign 5 (ShiftN Lsr (Load (Var 1)) k); (* len + bytes_in_word
-            *)
-          Assign 7 (ShiftN Lsr (Load (Var 3)) k); (* len + bytes_in_word
-            *)
-          (if b then
-             If Equal 5 (Reg 7)
-                (list_Seq
-                 [Assign 11 (Op Add [Var 1; Const bytes_in_word]);
-                  Assign 13 (Op Add [Var 3; Const bytes_in_word]);
-                  MustTerminate
-                  (Call (SOME ([5;7],adjust_sets (get_names
-                    names),Skip,secn,l))
-                        (SOME StringCmpLoop_location) [11;13;7;7;7]
-                          NONE)])
-                Skip
-           else
-             list_Seq
-             [Assign 11 (Op Add [Var 1; Const bytes_in_word]);
-              Assign 13 (Op Add [Var 3; Const bytes_in_word]);
-              Assign 9 (Var 5);
-              If Lower 7 (Reg 5) (Assign 9 (Var 7)) Skip;
-              MustTerminate
-              (Call (SOME ([5;7],adjust_sets (get_names
-                names),Skip,secn,l))
-                    (SOME StringCmpLoop_location) [11;13;9;5;7] NONE)]);
-          AssignCmp (adjust_var dest) cmp 5 7],l + 1)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_CopyByte (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) args =
-      (case args of
-       | [v1;v2;v3;v4;v5] (* alloc_new is F *) =>
-           (MustTerminate
-             (Call (SOME ([adjust_var dest],adjust_sets (get_names
-               names),Skip,secn,l))
-                (SOME ByteCopy_location)
-                   [adjust_var v1; adjust_var v2; adjust_var v3;
-                    adjust_var v4; adjust_var v5] NONE) :'a
-                      wordLang$prog,l+1)
-       | [v1;v2;v3] (* alloc_new is T *) =>
-           (MustTerminate
-             (Call (SOME ([adjust_var dest],adjust_sets (get_names
-               names),Skip,secn,l))
-                (SOME ByteCopyNew_location)
-                   [adjust_var v1; adjust_var v2;
-                    adjust_var v3] NONE) :'a wordLang$prog,l+1)
-       | _ => (Skip,l))
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_RefArray (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-      let limit = MIN (2 ** c.len_size) (dimword (:'a) DIV 16)
-      in
-         (list_Seq
-          [
-          BignumHalt (adjust_var v1);
-          Move 0 [(1,adjust_var v1)];
-          AllocVar c limit (list_insert [v1; v2] (get_names names));
-          MustTerminate
-            (Call (SOME ([adjust_var dest],adjust_sets (get_names
-              names),Skip,secn,l))
-               (SOME RefArray_location)
-                  [adjust_var v1; adjust_var v2] NONE) :'a wordLang$prog
-          ],l+1)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FromList (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) tag v1 v2 =
-       if encode_header c (4 * tag) 0 = (NONE:'a word option) then
-         (GiveUp,l) else
-         (MustTerminate (list_Seq [
-            Assign 1 (Const (n2w (16 * tag)));
-            (Call (SOME ([adjust_var dest],adjust_sets (get_names
-              names),Skip,secn,l))
-               (SOME FromList_location)
-                  [adjust_var v1; adjust_var v2; 1] NONE) :'a
-                    wordLang$prog]),l+1)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_LessConstSmall (l:num) (dest:num) i v1 =
-                 (If Less (adjust_var v1) (Imm (n2w (4 * i)))
-                    (Assign (adjust_var dest) TRUE_CONST)
-                    (Assign (adjust_var dest) FALSE_CONST),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_BoolTest (l:num) (dest:num) (test: ast$test) v1 v2 =
-                 (If Equal (adjust_var v1) (Reg (adjust_var v2))
-                   (Assign (adjust_var dest) TRUE_CONST)
-                   (Assign (adjust_var dest) FALSE_CONST),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_BoolNot (l:num) (dest:num) v1 =
-                 (Assign (adjust_var dest)
-                    (Op Xor [Var (adjust_var v1); Const 16w]),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordTest (l:num) (dest:num) (test: ast$test) v1 v2 =
-       ((case test of
-         | Equal       => If Equal (adjust_var v1) (Reg (adjust_var v2))
-                             (Assign (adjust_var dest) TRUE_CONST)
-                             (Assign (adjust_var dest) FALSE_CONST)
-         | Compare Lt  => If Lower (adjust_var v1) (Reg (adjust_var v2))
-                             (Assign (adjust_var dest) TRUE_CONST)
-                             (Assign (adjust_var dest) FALSE_CONST)
-         | Compare Leq => If NotLower (adjust_var v2) (Reg (adjust_var
-           v1))
-                             (Assign (adjust_var dest) TRUE_CONST)
-                             (Assign (adjust_var dest) FALSE_CONST)
-         | _           => Skip),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_BoundsCheckByte (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) leq v1 v2 =
-                   (list_Seq [Assign 1
-                               (let addr = real_addr c (adjust_var v1)
-                                 in
-                                let header = Load addr in
-                                let extra = (if dimindex (:'a) = 32 then
-                                  2 else 3) in
-                                let k = dimindex (:'a) - c.len_size -
-                                  extra in
-                                  Op Sub [ShiftN Lsr header k; Const
-                                    bytes_in_word]);
-                              Assign 3 (ShiftVar Ror (adjust_var v2) 2);
-                              (if leq then If NotLower 1 (Reg 3) else
-                                           If Lower 3 (Reg 1))
-                                 (Assign (adjust_var dest) TRUE_CONST)
-                                 (Assign (adjust_var dest)
-                                   FALSE_CONST)],l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_BoundsCheckArray (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-                   (list_Seq [Assign 1
-                               (let addr = real_addr c (adjust_var v1)
-                                 in
-                                let header = Load addr in
-                                let k = dimindex (:'a) - c.len_size in
-                                  ShiftN Lsr header k);
-                              Assign 3 (ShiftVar Ror (adjust_var v2) 2);
-                              If Lower 3 (Reg 1)
-                               (Assign (adjust_var dest) TRUE_CONST)
-                               (Assign (adjust_var dest)
-                                 FALSE_CONST)],l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_BoundsCheckBlock (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-                   (list_Seq [If Test (adjust_var v1) (Imm 1w)
-                               (Assign 1 (Const 0w))
-                               (Assign 1
-                                 (let addr = real_addr c (adjust_var v1)
-                                   in
-                                  let header = Load addr in
-                                  let k = dimindex (:'a) - c.len_size in
-                                    ShiftN Lsr header k));
-                              Assign 3 (ShiftVar Ror (adjust_var v2) 2);
-                              If Lower 3 (Reg 1)
-                               (Assign (adjust_var dest) TRUE_CONST)
-                               (Assign (adjust_var dest)
-                                 FALSE_CONST)],l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Equal (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [Assign 1 (Var (adjust_var v1));
-                   Assign 3 (Var (adjust_var v2));
-                   Assign 5 (Op And [Var 1; Var 3]);
-                   If Test 5 (Imm 1w) Skip
-                     (If Equal 1 (Reg 3) Skip
-                       (Seq (MustTerminate
-                          (Call (SOME ([1],adjust_sets (get_names
-                            names),Skip,secn,l))
-                                (SOME Equal_location) [1;3] NONE))
-                          (Assign 3 (Const 1w))));
-                   (If Equal 1 (Reg 3)
-                      (Assign (adjust_var dest) TRUE_CONST)
-                      (Assign (adjust_var dest) FALSE_CONST))],l+1)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Less (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [Assign 1 (Var (adjust_var v1));
-                   Assign 3 (Var (adjust_var v2));
-                   Assign 5 (Op Or [Var 1; Var 3]);
-                   If Test 5 (Imm 1w) Skip
-                     (Seq (MustTerminate
-                          (Call (SOME ([1],adjust_sets (get_names
-                            names),Skip,secn,l))
-                                (SOME Compare_location) [1;3] NONE))
-                          (Assign 3 (Const 1w)));
-                   (If Less 1 (Reg 3)
-                      (Assign (adjust_var dest) TRUE_CONST)
-                      (Assign (adjust_var dest) FALSE_CONST))],l+1)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_LessEq (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [Assign 1 (Var (adjust_var v1));
-                   Assign 3 (Var (adjust_var v2));
-                   Assign 5 (Op Or [Var 1; Var 3]);
-                   If Test 5 (Imm 1w) Skip
-                     (Seq (MustTerminate
-                          (Call (SOME ([1],adjust_sets (get_names
-                            names),Skip,secn,l))
-                                (SOME Compare_location) [1;3] NONE))
-                          (Assign 3 (Const 1w)));
-                   (If NotLess 3 (Reg 1)
-                      (Assign (adjust_var dest) TRUE_CONST)
-                      (Assign (adjust_var dest) FALSE_CONST))],l+1)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_LengthBlock (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-                        (If Test (adjust_var v1) (Imm 1w)
-                           (Assign (adjust_var dest) (Const 0w))
-                           (Assign (adjust_var dest)
-                              (let addr = real_addr c (adjust_var v1) in
-                               let header = Load addr in
-                               let k = dimindex (:'a) - c.len_size in
-                               let len = ShiftN Lsr header k in
-                                 (ShiftN Lsl len 2))),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Length (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-                          (Assign (adjust_var dest)
-                              (let addr = real_addr c (adjust_var v1) in
-                               let header = Load addr in
-                               let k = dimindex (:'a) - c.len_size in
-                               let len = ShiftN Lsr header k in
-                                 (ShiftN Lsl len 2)),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_LengthByte (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-            (Assign (adjust_var dest)
-               (let addr = real_addr c (adjust_var v1) in
-                let header = Load addr in
-                let k = dimindex(:'a) - shift(:'a) - c.len_size in
-                let fakelen = ShiftN Lsr header k in
-                let len = Op Sub [fakelen; Const bytes_in_word] in
-                  (ShiftN Lsl len 2)),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_TagLenEq (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) tag len v1 =
-                        (if len = 0 then
-                           if tag < dimword (:'a) DIV 16 then
-                             (If Equal (adjust_var v1) (Imm (n2w (16 *
-                               tag + 2)))
-                                (Assign (adjust_var dest) TRUE_CONST)
-                                (Assign (adjust_var dest)
-                                  FALSE_CONST),l)
-                           else (Assign (adjust_var dest) FALSE_CONST,l)
-                         else if tag < 2 ** c.tag_bits - 1 /\
-                                 len < 2 ** c.len_bits -1 then
-                           (Seq
-                             (Assign 1 (Op And
-                                [Var (adjust_var v1);
-                                 Const (all_ones (c.len_bits +
-                                   c.tag_bits + 1) 0)]))
-                             (If Equal 1 (Imm (ptr_bits c tag len ||
-                               1w))
-                                (Assign (adjust_var dest) TRUE_CONST)
-                                (Assign (adjust_var dest)
-                                  FALSE_CONST)),l)
-                         else
-                           case encode_header c (4 * tag) len of
-                           | NONE => (Assign (adjust_var dest)
-                             FALSE_CONST,l)
-                           | SOME h =>
-                             (list_Seq
-                               [Assign 1 (Const 0w);
-                                If Test (adjust_var v1) (Imm 1w) Skip
-                                  (Assign 1 (Load (real_addr c
-                                    (adjust_var v1))));
-                                If Equal 1 (Imm h)
-                                  (Assign (adjust_var dest) TRUE_CONST)
-                                  (Assign (adjust_var dest)
-                                    FALSE_CONST)],l))
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_LenEq (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) len v1 =
-                        (if len = 0 then
-                           (If Test (adjust_var v1) (Imm 1w)
-                              (Assign (adjust_var dest) TRUE_CONST)
-                              (Assign (adjust_var dest) FALSE_CONST),l)
-                         else if len < 2 ** c.len_bits - 1 then
-                           (Seq
-                             (Assign 1 (Op And
-                                [Var (adjust_var v1);
-                                 Const (all_ones (c.len_bits + 1) 0)]))
-                             (If Equal 1 (Imm (ptr_bits c 0 len || 1w))
-                                (Assign (adjust_var dest) TRUE_CONST)
-                                (Assign (adjust_var dest)
-                                  FALSE_CONST)),l)
-                         else if len < dimword (:'a) then
-                           (list_Seq
-                             [Assign 1 (Const 0w);
-                              If Test (adjust_var v1) (Imm 1w) Skip
-                               (Assign 1
-                                 (let addr = real_addr c (adjust_var v1)
-                                   in
-                                  let header = Load addr in
-                                  let k = dimindex (:'a) - c.len_size in
-                                  let len = ShiftN Lsr header k in
-                                    len));
-                              If Equal 1 (Imm (n2w len))
-                                (Assign (adjust_var dest) TRUE_CONST)
-                                (Assign (adjust_var dest)
-                                  FALSE_CONST)],l)
-                         else
-                           (Assign (adjust_var dest) FALSE_CONST,l))
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_TagEq (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) tag v1 =
-               (if tag < dimword (:'a) DIV 16 then
+let assign_StringCmp_def = cake_define
+  `assign_StringCmp (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) (b:bool) (cmp:opb) v1 v2 =
+     ((let k = (dimindex (:'ga) - data_to_word_config_len_size c -
+       backend_common_word_shift (:'a)) in
+       list_Seq [
+           Assign 1 (real_addr c (adjust_var v1));
+           Assign 3 (real_addr c (adjust_var v2));
+           Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Load
+             (Var 1)) k);
+           Assign 7 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Load
+             (Var 3)) k);
+           (if b then
+              If Equal 5 (Reg 7)
                  (list_Seq
-                   [Assign 1 (Var (adjust_var v1));
-                    If Test (adjust_var v1) (Imm 1w) Skip
-                      (Assign 1 (let v = adjust_var v1 in
-                                 let h = Load (real_addr c v) in
-                                   Op And [h; Const (tag_mask c ||
-                                     2w)]));
-                    If Equal 1 (Imm (n2w (16 * tag + 2)))
-                      (Assign (adjust_var dest) TRUE_CONST)
-                      (Assign (adjust_var dest) FALSE_CONST)],l)
-                else (Assign (adjust_var dest) FALSE_CONST,l))
-      : 'a wordLang$prog # num`;
-*)
+                  [Assign 11 (Op Add [Var 1; Const bytes_in_word]);
+                   Assign 13 (Op Add [Var 3; Const bytes_in_word]);
+                   wordLang_MustTerminate
+                   (Call (SOME ([5; 7],adjust_sets
+                     (data_to_word_get_names names),Skip,secn,l))
+                         (SOME StringCmpLoop_location) [11; 13; 7; 7;
+                           7] NONE)])
+                 Skip else
+              list_Seq
+              [Assign 11 (Op Add [Var 1; Const bytes_in_word]);
+               Assign 13 (Op Add [Var 3; Const bytes_in_word]);
+               Assign 9 (Var 5);
+               If asm_Lower 7 (Reg 5) (Assign 9 (Var 7)) Skip;
+               wordLang_MustTerminate
+               (Call (SOME ([5; 7],adjust_sets
+                 (data_to_word_get_names names),Skip,secn,l))
+                     (SOME StringCmpLoop_location) [11; 13; 9; 5; 7]
+                       NONE)]);
+           AssignCmp (adjust_var dest) cmp 5 7],l + 1):'a
+             wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Add (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [(* perform addition *)
-                   Inst (Arith (AddOverflow 1 (adjust_var v1)
-                                              (adjust_var v2) 3));
-*)
-                   (* or together bits of overflow flag, and the two
-                      inputs *)
-(* HOL4 ML code, not ported:
-                   Assign 3 (Op Or [Var 3; Var (adjust_var v1); Var
-                     (adjust_var v2)]);
-*)
-                   (* if the least significant bit is set, then bignum
-                      is needed *)
-(* HOL4 ML code, not ported:
-                   If Test 3 (Imm 1w) Skip
-                    (MustTerminate
-                      (Call (SOME ([1],adjust_sets (get_names
-                        names),Skip,secn,l))
-                        (SOME Add_location) [adjust_var v1; adjust_var
-                          v2] NONE));
-                   Move 2 [(adjust_var dest,1)]],l+1)
-      : 'a wordLang$prog # num`;
-*)
+let assign_CopyByte_def = cake_define
+  `assign_CopyByte (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) args =
+       ((match args with [v1; v2; v3; v4; v5] ->
+            ((wordLang_MustTerminate
+              (Call (SOME ([adjust_var dest],adjust_sets
+                (data_to_word_get_names names),Skip,secn,l))
+                 (SOME ByteCopy_location)
+                    [adjust_var v1; adjust_var v2; adjust_var v3;
+                     adjust_var v4; adjust_var v5] NONE):'a
+                       wordLang_prog),l + 1) | [v1; v2; v3] ->
+            ((wordLang_MustTerminate
+              (Call (SOME ([adjust_var dest],adjust_sets
+                (data_to_word_get_names names),Skip,secn,l))
+                 (SOME ByteCopyNew_location)
+                    [adjust_var v1; adjust_var v2;
+                     adjust_var v3] NONE):'a wordLang_prog),l + 1)
+                       | _18 -> (Skip,l)):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Sub (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [(* perform subtraction *)
-                   Inst (Arith (SubOverflow 1 (adjust_var v1)
-                                              (adjust_var v2) 3));
-*)
-                   (* or together bits of overflow flag, and the two
-                      inputs *)
-(* HOL4 ML code, not ported:
-                   Assign 3 (Op Or [Var 3; Var (adjust_var v1); Var
-                     (adjust_var v2)]);
-*)
-                   (* if the least significant bit is set, then bignum
-                      is needed *)
-(* HOL4 ML code, not ported:
-                   If Test 3 (Imm 1w) Skip
-                    (MustTerminate
-                      (Call (SOME ([1],adjust_sets (get_names
-                        names),Skip,secn,l))
-                        (SOME Sub_location) [adjust_var v1; adjust_var
-                          v2] NONE));
-                   Move 2 [(adjust_var dest,1)]],l+1)
-      : 'a wordLang$prog # num`;
-*)
+let assign_RefArray_def = cake_define
+  `assign_RefArray (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+       (let limit' = MIN (2 EXP data_to_word_config_len_size c)
+         (dimword (:'a) DIV 16) in
+          (list_Seq
+           [
+           BignumHalt (adjust_var v1);
+           Move 0 [(1,adjust_var v1)];
+           AllocVar c limit' (list_insert [v1; v2]
+             (data_to_word_get_names names));
+           wordLang_MustTerminate
+             (Call (SOME ([adjust_var dest],adjust_sets
+               (data_to_word_get_names names),Skip,secn,l))
+                (SOME RefArray_location)
+                   [adjust_var v1; adjust_var v2] NONE):'a
+                     wordLang_prog],l + 1):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Mult (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [Assign 1 (ShiftVar Lsr (adjust_var v1) 1);
-                   Inst (Arith (LongMul 3 1 1 (adjust_var v2)));
-                   Assign 3 (Op Or [Var 3;
-                               Op And [Const 1w;
-                                 Op Or [Var (adjust_var v1); Var
-                                   (adjust_var v2)]]]);
-                   Assign 1 (ShiftVar Lsr 1 1);
-                   If Equal 3 (Imm 0w) Skip
-                     (MustTerminate
-                       (Call (SOME ([1],adjust_sets (get_names
-                         names),Skip,secn,l))
-                        (SOME Mul_location) [adjust_var v1; adjust_var
-                          v2] NONE));
-                   Move 2 [(adjust_var dest,1)]],l+1)
-      : 'a wordLang$prog # num`;
-*)
+let assign_FromList_def = cake_define
+  `assign_FromList (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) tag v1 v2 =
+        (if encode_header c (4 * tag) 0 = (NONE:('a word) option)
+          then (GiveUp,l) else
+          (wordLang_MustTerminate (list_Seq [
+             Assign 1 (Const (n2w (16 * tag)));
+             (Call (SOME ([adjust_var dest],adjust_sets
+               (data_to_word_get_names names),Skip,secn,l))
+                (SOME FromList_location)
+                   [adjust_var v1; adjust_var v2; 1] NONE):'a
+                     wordLang_prog]),l + 1):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Div (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [
-           Assign 1 (Op Or [Var (adjust_var v1); Var (adjust_var v2)]);
-           Assign 1 (Op Or [Var 1; ShiftVar Lsr 1 (dimindex (:'a)-1)]);
-           If Test 1 (Imm (1w:'a word))
-             (if c.has_div then
-                list_Seq [Inst (Arith (Div 1 (adjust_var v1) (adjust_var
-                  v2)));
-                          Assign (adjust_var dest) (ShiftVar Lsl 1 2)]
-              else if c.has_longdiv then
-                list_Seq [Assign 1 (Const 0w);
-                          Inst (Arith (LongDiv 1 3 1 (adjust_var
-                            v1)(adjust_var v2)));
-                          Assign (adjust_var dest) (ShiftVar Lsl 1 2)]
-              else
+let assign_LessConstSmall_def = cake_define
+  `assign_LessConstSmall (l:num) (dest:num) i v1 =
+                  ((If Less (adjust_var v1) (Imm (n2w (4 * i)))
+                     (Assign (adjust_var dest) (Const (n2w 18:'a
+                       word)))
+                     (Assign (adjust_var dest) (Const (n2w 2:'a
+                       word))),l):'a wordLang_prog#num)`;;
+
+let assign_BoolTest_def = cake_define
+  `assign_BoolTest (l:num) (dest:num) (test:test) v1 v2 =
+                  ((If Equal (adjust_var v1) (Reg (adjust_var v2))
+                    (Assign (adjust_var dest) (Const (n2w 18:'a
+                      word)))
+                    (Assign (adjust_var dest) (Const (n2w 2:'a
+                      word))),l):'a wordLang_prog#num)`;;
+
+let assign_BoolNot_def = cake_define
+  `assign_BoolNot (l:num) (dest:num) v1 =
+                  ((Assign (adjust_var dest)
+                     (Op Xor [Var (adjust_var v1); Const (n2w
+                       16)]),l):'a wordLang_prog#num)`;;
+
+let assign_WordTest_def = cake_define
+  `assign_WordTest (l:num) (dest:num) (test:test) v1 v2 =
+        (((match test with Equal -> If Equal (adjust_var v1) (Reg
+          (adjust_var v2))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word))) | ast_Compare Lt -> If
+                                asm_Lower (adjust_var v1) (Reg
+                                (adjust_var v2))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word))) | ast_Compare ast_Leq -> If
+                                asm_NotLower (adjust_var v2) (Reg
+                                (adjust_var v1))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const
+                                (n2w 2:'a word))) | _19 ->
+                                Skip),l):'a wordLang_prog#num)`;;
+
+let assign_BoundsCheckByte_def = cake_define
+  `assign_BoundsCheckByte (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) leq v1 v2 =
+                    ((list_Seq [Assign 1
+                              (let addr' = real_addr c (adjust_var
+                                v1) in
+                              let header = Load addr' in
+                              let extra = (if dimindex (:'a) = 32
+                                then 2 else 3) in
+                              let k = dimindex (:'a) -
+                                data_to_word_config_len_size c - extra
+                                in
+                              Op Sub [(\sh e n. Shift sh e (Const
+                                (n2w n))) Lsr header k; Const
+                                bytes_in_word]);
+                              Assign 3 (ShiftVar Ror (adjust_var v2)
+                                2);
+                              (if leq then If asm_NotLower 1 (Reg 3)
+                                else
+                              If asm_Lower 3 (Reg 1))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const
+                                (n2w 2:'a word)))],l):'a
+                                wordLang_prog#num)`;;
+
+let assign_BoundsCheckArray_def = cake_define
+  `assign_BoundsCheckArray (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+                    ((list_Seq [Assign 1
+                              (let addr' = real_addr c (adjust_var
+                                v1) in
+                              let header = Load addr' in
+                              let k = dimindex (:'a) -
+                                data_to_word_config_len_size c in
+                              (\sh e n. Shift sh e (Const (n2w n)))
+                                Lsr header k);
+                              Assign 3 (ShiftVar Ror (adjust_var v2)
+                                2);
+                              If asm_Lower 3 (Reg 1)
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const
+                                (n2w 2:'a word)))],l):'a
+                                wordLang_prog#num)`;;
+
+let assign_BoundsCheckBlock_def = cake_define
+  `assign_BoundsCheckBlock (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+                    ((list_Seq [If Test (adjust_var v1) (Imm (n2w 1))
+                              (Assign 1 (Const (n2w 0)))
+                              (Assign 1
+                              (let addr' = real_addr c (adjust_var
+                                v1) in
+                              let header = Load addr' in
+                              let k = dimindex (:'a) -
+                                data_to_word_config_len_size c in
+                              (\sh e n. Shift sh e (Const (n2w n)))
+                                Lsr header k));
+                              Assign 3 (ShiftVar Ror (adjust_var v2)
+                                2);
+                              If asm_Lower 3 (Reg 1)
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const
+                                (n2w 2:'a word)))],l):'a
+                                wordLang_prog#num)`;;
+
+let assign_Equal_def = cake_define
+  `assign_Equal (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [Assign 1 (Var (adjust_var v1));
+                    Assign 3 (Var (adjust_var v2));
+                    Assign 5 (Op And [Var 1; Var 3]);
+                    If Test 5 (Imm (n2w 1)) Skip
+                      (If Equal 1 (Reg 3) Skip
+                        (Seq (wordLang_MustTerminate
+                           (Call (SOME ([1],adjust_sets
+                             (data_to_word_get_names
+                             names),Skip,secn,l))
+                              (SOME Equal_location) [1; 3] NONE))
+                           (Assign 3 (Const (n2w 1)))));
+                    (If Equal 1 (Reg 3)
+                       (Assign (adjust_var dest) (Const (n2w 18:'a
+                         word)))
+                       (Assign (adjust_var dest) (Const (n2w 2:'a
+                         word))))],l + 1):'a wordLang_prog#num)`;;
+
+let assign_Less_def = cake_define
+  `assign_Less (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [Assign 1 (Var (adjust_var v1));
+                    Assign 3 (Var (adjust_var v2));
+                    Assign 5 (Op Or [Var 1; Var 3]);
+                    If Test 5 (Imm (n2w 1)) Skip
+                      (Seq (wordLang_MustTerminate
+                           (Call (SOME ([1],adjust_sets
+                             (data_to_word_get_names
+                             names),Skip,secn,l))
+                              (SOME Compare_location) [1; 3] NONE))
+                           (Assign 3 (Const (n2w 1))));
+                    (If Less 1 (Reg 3)
+                       (Assign (adjust_var dest) (Const (n2w 18:'a
+                         word)))
+                       (Assign (adjust_var dest) (Const (n2w 2:'a
+                         word))))],l + 1):'a wordLang_prog#num)`;;
+
+let assign_LessEq_def = cake_define
+  `assign_LessEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [Assign 1 (Var (adjust_var v1));
+                    Assign 3 (Var (adjust_var v2));
+                    Assign 5 (Op Or [Var 1; Var 3]);
+                    If Test 5 (Imm (n2w 1)) Skip
+                      (Seq (wordLang_MustTerminate
+                           (Call (SOME ([1],adjust_sets
+                             (data_to_word_get_names
+                             names),Skip,secn,l))
+                              (SOME Compare_location) [1; 3] NONE))
+                           (Assign 3 (Const (n2w 1))));
+                    (If asm_NotLess 3 (Reg 1)
+                       (Assign (adjust_var dest) (Const (n2w 18:'a
+                         word)))
+                       (Assign (adjust_var dest) (Const (n2w 2:'a
+                         word))))],l + 1):'a wordLang_prog#num)`;;
+
+let assign_LengthBlock_def = cake_define
+  `assign_LengthBlock (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+                         ((If Test (adjust_var v1) (Imm (n2w 1))
+                            (Assign (adjust_var dest) (Const (n2w
+                              0)))
+                            (Assign (adjust_var dest)
+                              (let addr' = real_addr c (adjust_var
+                                v1) in
+                              let header = Load addr' in
+                              let k = dimindex (:'a) -
+                                data_to_word_config_len_size c in
+                              let len = (\sh e n. Shift sh e (Const
+                                (n2w n))) Lsr header k in
+                              ((\sh e n. Shift sh e (Const (n2w
+                                n))) Lsl len 2))),l):'a
+                                wordLang_prog#num)`;;
+
+let assign_Length_def = cake_define
+  `assign_Length (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 =
+                           ((Assign (adjust_var dest)
+                              (let addr' = real_addr c (adjust_var
+                                v1) in
+                              let header = Load addr' in
+                              let k = dimindex (:'a) -
+                                data_to_word_config_len_size c in
+                              let len = (\sh e n. Shift sh e (Const
+                                (n2w n))) Lsr header k in
+                              ((\sh e n. Shift sh e (Const (n2w
+                                n))) Lsl len 2)),l):'a
+                                wordLang_prog#num)`;;
+
+let assign_LengthByte_def = cake_define
+  `assign_LengthByte (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+             ((Assign (adjust_var dest)
+                (let addr' = real_addr c (adjust_var v1) in
+                 let header = Load addr' in
+                 let k = dimindex (:'a) - backend_common_word_shift
+                   (:'a) - data_to_word_config_len_size c in
+                 let fakelen = (\sh e n. Shift sh e (Const (n2w n)))
+                   Lsr header k in
+                 let len = Op Sub [fakelen; Const bytes_in_word] in
+                   ((\sh e n. Shift sh e (Const (n2w n))) Lsl len
+                     2)),l):'a wordLang_prog#num)`;;
+
+let assign_TagLenEq_def = cake_define
+  `assign_TagLenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) tag len v1 =
+                         ((if len = 0 then
+                            if tag < dimword (:'a) DIV 16 then
+                              (If Equal (adjust_var v1) (Imm (n2w (16
+                                * tag + 2)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word))),l) else (Assign (adjust_var
+                                dest) (Const (n2w 2:'a word)),l) else if
+                                tag < 2 EXP data_to_word_config_tag_bits
+                                c - 1 /\
+                              len < 2 EXP
+                                data_to_word_config_len_bits c - 1 then
+                            (Seq
+                              (Assign 1 (Op And
+                              [Var (adjust_var v1);
+                              Const (all_ones
+                                (data_to_word_config_len_bits c +
+                                data_to_word_config_tag_bits c + 1)
+                                0)]))
+                              (If Equal 1 (Imm (ptr_bits c tag len ||
+                                (n2w 1)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word)))),l) else
+                            match encode_header c (4 * tag) len with
+                              NONE -> (Assign (adjust_var dest) (Const
+                              (n2w 2:'a word)),l) | SOME h ->
+                              (list_Seq
+                              [Assign 1 (Const (n2w 0));
+                              If Test (adjust_var v1) (Imm (n2w 1))
+                                Skip
+                              (Assign 1 (Load (real_addr c
+                                (adjust_var v1))));
+                              If Equal 1 (Imm h)
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const
+                                (n2w 2:'a word)))],l)):'a
+                                wordLang_prog#num)`;;
+
+let assign_LenEq_def = cake_define
+  `assign_LenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) len v1 =
+                         ((if len = 0 then
+                            (If Test (adjust_var v1) (Imm (n2w 1))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word))),l) else if len < 2 EXP
+                                data_to_word_config_len_bits c - 1 then
+                            (Seq
+                              (Assign 1 (Op And
+                              [Var (adjust_var v1);
+                              Const (all_ones
+                                (data_to_word_config_len_bits c + 1)
+                                0)]))
+                              (If Equal 1 (Imm (ptr_bits c 0 len ||
+                                (n2w 1)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word)))),l) else if len < dimword
+                                (:'a) then
+                            (list_Seq
+                              [Assign 1 (Const (n2w 0));
+                              If Test (adjust_var v1) (Imm (n2w 1))
+                                Skip
+                              (Assign 1
+                              (let addr' = real_addr c (adjust_var
+                                v1) in
+                              let header = Load addr' in
+                              let k = dimindex (:'a) -
+                                data_to_word_config_len_size c in
+                              let len = (\sh e n. Shift sh e (Const
+                                (n2w n))) Lsr header k in
+                              len));
+                              If Equal 1 (Imm (n2w len))
+                              (Assign (adjust_var dest) (Const (n2w
+                                18:'a word)))
+                              (Assign (adjust_var dest) (Const (n2w
+                                2:'a word)))],l) else
+                            (Assign (adjust_var dest) (Const (n2w
+                              2:'a word)),l)):'a wordLang_prog#num)`;;
+
+let assign_TagEq_def = cake_define
+  `assign_TagEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) tag v1 =
+                ((if tag < dimword (:'a) DIV 16 then
+                  (list_Seq
+                    [Assign 1 (Var (adjust_var v1));
+                     If Test (adjust_var v1) (Imm (n2w 1)) Skip
+                       (Assign 1 (let v = adjust_var v1 in
+                              let h = Load (real_addr c v) in
+                              Op And [h; Const (tag_mask c || (n2w
+                                2))]));
+                     If Equal 1 (Imm (n2w (16 * tag + 2)))
+                       (Assign (adjust_var dest) (Const (n2w 18:'a
+                         word)))
+                       (Assign (adjust_var dest) (Const (n2w 2:'a
+                         word)))],l) else (Assign (adjust_var dest)
+                         (Const (n2w 2:'a word)),l)):'a
+                         wordLang_prog#num)`;;
+
+let assign_Add_def = cake_define
+  `assign_Add (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [
+                    Inst (Arith (asm_AddOverflow 1 (adjust_var v1)
+                              (adjust_var v2) 3));
+                    Assign 3 (Op Or [Var 3; Var (adjust_var v1); Var
+                      (adjust_var v2)]);
+                    If Test 3 (Imm (n2w 1)) Skip
+                     (wordLang_MustTerminate
+                       (Call (SOME ([1],adjust_sets
+                         (data_to_word_get_names names),Skip,secn,l))
+                         (SOME Add_location) [adjust_var v1;
+                           adjust_var v2] NONE));
+                    Move 2 [(adjust_var dest,1)]],l + 1):'a
+                      wordLang_prog#num)`;;
+
+let assign_Sub_def = cake_define
+  `assign_Sub (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [
+                    Inst (Arith (asm_SubOverflow 1 (adjust_var v1)
+                              (adjust_var v2) 3));
+                    Assign 3 (Op Or [Var 3; Var (adjust_var v1); Var
+                      (adjust_var v2)]);
+                    If Test 3 (Imm (n2w 1)) Skip
+                     (wordLang_MustTerminate
+                       (Call (SOME ([1],adjust_sets
+                         (data_to_word_get_names names),Skip,secn,l))
+                         (SOME Sub_location) [adjust_var v1;
+                           adjust_var v2] NONE));
+                    Move 2 [(adjust_var dest,1)]],l + 1):'a
+                      wordLang_prog#num)`;;
+
+let assign_Mult_def = cake_define
+  `assign_Mult (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [Assign 1 (ShiftVar Lsr (adjust_var v1) 1);
+                    Inst (Arith (asm_LongMul 3 1 1 (adjust_var v2)));
+                    Assign 3 (Op Or [Var 3;
+                              Op And [Const (n2w 1);
+                              Op Or [Var (adjust_var v1); Var
+                                (adjust_var v2)]]]);
+                    Assign 1 (ShiftVar Lsr 1 1);
+                    If Equal 3 (Imm (n2w 0)) Skip
+                      (wordLang_MustTerminate
+                        (Call (SOME ([1],adjust_sets
+                          (data_to_word_get_names names),Skip,secn,l))
+                         (SOME Mul_location) [adjust_var v1;
+                           adjust_var v2] NONE));
+                    Move 2 [(adjust_var dest,1)]],l + 1):'a
+                      wordLang_prog#num)`;;
+
+let assign_Div_def = cake_define
+  `assign_Div (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [
+            Assign 1 (Op Or [Var (adjust_var v1); Var (adjust_var
+              v2)]);
+            Assign 1 (Op Or [Var 1; ShiftVar Lsr 1 (dimindex (:'a) -
+              1)]);
+            If Test 1 (Imm ((n2w 1):'a word))
+              (if data_to_word_config_has_div c then
+                 list_Seq [Inst (Arith (Div 1 (adjust_var v1)
+                   (adjust_var v2)));
+                           Assign (adjust_var dest) (ShiftVar Lsl 1
+                             2)] else if data_to_word_config_has_longdiv
+                             c then
+                 list_Seq [Assign 1 (Const (n2w 0));
+                           Inst (Arith (asm_LongDiv 1 3 1 (adjust_var
+                             v1) (adjust_var v2)));
+                           Assign (adjust_var dest) (ShiftVar Lsl 1
+                             2)] else
+                 list_Seq
+                   [Assign 1 (Const (n2w 0));
+                    wordLang_MustTerminate
+                     (Call (SOME ([1],adjust_sets
+                       (data_to_word_get_names names),Skip,secn,l + 1))
+                       (SOME LongDiv_location)
+                         [1; adjust_var v1; adjust_var v2] NONE);
+                    Assign (adjust_var dest) (ShiftVar Lsl 1 2)])
+              (list_Seq
+                 [wordLang_MustTerminate
+                    (Call (SOME ([1],adjust_sets
+                      (data_to_word_get_names names),Skip,secn,l))
+                       (SOME Div_location) [adjust_var v1; adjust_var
+                         v2] NONE);
+                  Move 2 [(adjust_var dest,1)]])],l + 2):'a
+                    wordLang_prog#num)`;;
+
+let assign_Mod_def = cake_define
+  `assign_Mod (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 =
+         ((list_Seq [
+            Assign 1 (Op Or [Var (adjust_var v1); Var (adjust_var
+              v2)]);
+            Assign 1 (Op Or [Var 1; ShiftVar Lsr 1 (dimindex (:'a) -
+              1)]);
+            If Test 1 (Imm ((n2w 1):'a word))
+              (if data_to_word_config_has_div c then
+                 list_Seq [Inst (Arith (Div 1 (adjust_var v1)
+                   (adjust_var v2)));
+                           Inst (Arith (asm_LongMul 3 1 1 (adjust_var
+                             v2)));
+                           Assign (adjust_var dest)
+                             (Op Sub [Var (adjust_var v1); Var 1])]
+                               else if data_to_word_config_has_longdiv c
+                               then
+                 list_Seq [Assign 1 (Const (n2w 0));
+                           Inst (Arith (asm_LongDiv 1 3 1 (adjust_var
+                             v1) (adjust_var v2)));
+                           Move 2 [(adjust_var dest,3)]] else
+                 list_Seq
+                   [Assign 1 (Const (n2w 0));
+                    wordLang_MustTerminate
+                     (Call (SOME ([1],adjust_sets
+                       (data_to_word_get_names names),Skip,secn,l + 1))
+                       (SOME LongDiv_location)
+                         [1; adjust_var v1; adjust_var v2] NONE);
+                    Get (adjust_var dest) (Temp (n2w 28))])
+              (list_Seq
+                 [wordLang_MustTerminate
+                    (Call (SOME ([1],adjust_sets
+                      (data_to_word_get_names names),Skip,secn,l))
+                       (SOME Mod_location) [adjust_var v1; adjust_var
+                         v2] NONE);
+                  Move 2 [(adjust_var dest,1)]])],l + 2):'a
+                    wordLang_prog#num)`;;
+
+let assign_WordOpW8_def = cake_define
+  `assign_WordOpW8 opw (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+            ((Assign (adjust_var dest)
+             (match lookup_word_op opw with Bitwise op -> Op op [Var
+               (adjust_var v1); Var (adjust_var v2)] | Carried op ->
+               (let k = dimindex (:'a) - 10 in
+                (\sh e n. Shift sh e (Const (n2w n))) Lsr ((\sh e n.
+                  Shift sh e (Const (n2w n))) Lsl
+                  (Op op [Var (adjust_var v1); Var (adjust_var
+                    v2)]) k) k)),l):'a wordLang_prog#num)`;;
+
+let assign_WordOpW64_def = cake_define
+  `assign_WordOpW64 opw (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+        ((if dimindex (:'a) = 64 then
+          (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
+            (header:'a word) ->
+                 (Seq (Assign 3
+                   (Op (match opw with
+                           backend_common_Andw -> And |
+                             backend_common_Orw -> Or | Xor -> Xor | Add
+                             -> Add | Sub -> Sub)
+                          [Load
+                             (Op Add
+                              [real_addr c (adjust_var v1);
+                              Const bytes_in_word]);
+                           Load
+                             (Op Add
+                              [real_addr c (adjust_var v2);
+                              Const bytes_in_word])]))
+                    (WriteWord64 c header dest 3),l)) else
+          (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
+            header ->
+             (list_Seq [
+                Assign 15 (real_addr c (adjust_var v1));
+                Assign 17 (real_addr c (adjust_var v2));
+                Assign 11 (Load (Op Add [Var 15; Const
+                  bytes_in_word]));
+                Assign 13 (Load (Op Add [Var 15; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Assign 21 (Load (Op Add [Var 17; Const
+                  bytes_in_word]));
+                Assign 23 (Load (Op Add [Var 17; Const ((n2w 2) *
+                  bytes_in_word)]));
+                WordOp64_on_32 opw;
+                WriteWord64_on_32 c header dest 33 31],l))):'a
+                  wordLang_prog#num)`;;
+
+let assign_WordShiftW8_def = cake_define
+  `assign_WordShiftW8 sh n (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+         ((Assign (adjust_var dest)
+            (match sh with Lsl ->
+               (\sh e n. Shift sh e (Const (n2w n))) Lsr
+                 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
+                   (adjust_var v1)) (dimindex (:'a) - 10 + (MIN n 8)))
+                 (dimindex (:'a) - 10) | Lsr ->
+               (\sh e n. Shift sh e (Const (n2w n))) Lsl
+                 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
+                   (adjust_var v1)) ((MIN n 8) + 2)) 2 | Asr ->
+               (\sh e n. Shift sh e (Const (n2w n))) Lsl
+                 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
+                    ((\sh e n. Shift sh e (Const (n2w n))) Asr
+                       ((\sh e n. Shift sh e (Const (n2w n))) Lsl
+                         (Var (adjust_var v1)) (dimindex (:'a) - 10))
+                       (MIN n 8))
+                    (dimindex (:'a) - 8)) 2 | Ror ->
+               (let n = n MOD 8 in
+                  Op Or
+                   [(\sh e n. Shift sh e (Const (n2w n))) Lsl
+                     (ShiftVar Lsr (adjust_var v1) (n + 2)) 2;
+                    (\sh e n. Shift sh e (Const (n2w n))) Lsr
+                      (ShiftVar Lsl (adjust_var v1)
+                      ((dimindex (:'a) - 2) - n)) (dimindex (:'a)
+                        - 10)])),l):'a wordLang_prog#num)`;;
+
+let assign_WordShiftW64_def = cake_define
+  `assign_WordShiftW64 sh n (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+          (let len = if dimindex (:'a) < 64 then 2 else 1 in
+          (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
+            (header:'a word) ->
+             ((if len = 1 then
                 list_Seq
-                  [Assign 1 (Const 0w);
-                   MustTerminate
-                    (Call (SOME ([1],adjust_sets (get_names
-                      names),Skip,secn,l+1))
-                      (SOME LongDiv_location)
-                        [1; adjust_var v1; adjust_var v2] NONE);
-                   Assign (adjust_var dest) (ShiftVar Lsl 1 2)])
-             (list_Seq
-                [MustTerminate
-                   (Call (SOME ([1],adjust_sets (get_names
-                     names),Skip,secn,l))
-                      (SOME Div_location) [adjust_var v1; adjust_var v2]
-                        NONE);
-                 Move 2 [(adjust_var dest,1)]])],l + 2)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Mod (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-        (list_Seq [
-           Assign 1 (Op Or [Var (adjust_var v1); Var (adjust_var v2)]);
-           Assign 1 (Op Or [Var 1; ShiftVar Lsr 1 (dimindex (:'a)-1)]);
-           If Test 1 (Imm (1w:'a word))
-             (if c.has_div then
-                list_Seq [Inst (Arith (Div 1 (adjust_var v1) (adjust_var
-                  v2)));
-                          Inst (Arith (LongMul 3 1 1 (adjust_var v2)));
-                          Assign (adjust_var dest)
-                            (Op Sub [Var (adjust_var v1); Var 1])]
-              else if c.has_longdiv then
-                list_Seq [Assign 1 (Const 0w);
-                          Inst (Arith (LongDiv 1 3 1 (adjust_var
-                            v1)(adjust_var v2)));
-                          Move 2 [(adjust_var dest,3)]]
-              else
-                list_Seq
-                  [Assign 1 (Const 0w);
-                   MustTerminate
-                    (Call (SOME ([1],adjust_sets (get_names
-                      names),Skip,secn,l+1))
-                      (SOME LongDiv_location)
-                        [1; adjust_var v1; adjust_var v2] NONE);
-                   Get (adjust_var dest) (Temp 28w)])
-             (list_Seq
-                [MustTerminate
-                   (Call (SOME ([1],adjust_sets (get_names
-                     names),Skip,secn,l))
-                      (SOME Mod_location) [adjust_var v1; adjust_var v2]
-                        NONE);
-                 Move 2 [(adjust_var dest,1)]])],l + 2)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordOpW8 opw (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-           (Assign (adjust_var dest)
-            (case lookup_word_op opw of
-             | Bitwise op => Op op [Var (adjust_var v1); Var (adjust_var
-               v2)]
-             | Carried op => let k = dimindex(:'a)-10 in
-               ShiftN Lsr (ShiftN Lsl
-                 (Op op [Var (adjust_var v1); Var (adjust_var v2)]) k)
-                   k), l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordOpW64 opw (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-       (if dimindex(:'a) = 64 then
-         (case encode_header c 3 1 of
-          | NONE => (GiveUp,l)
-          | SOME (header:'a word) =>
-                (Seq (Assign 3
-                  (Op (case opw of
-                          Andw => And
-                        | Orw => Or
-                        | Xor => Xor
-                        | Add => Add
-                        | Sub => Sub)
-                         [Load
-                            (Op Add
-                               [real_addr c (adjust_var v1);
-                                Const bytes_in_word]);
-                          Load
-                            (Op Add
-                               [real_addr c (adjust_var v2);
-                                Const bytes_in_word])]))
-                   (WriteWord64 c header dest 3),l))
-        else
-         (case encode_header c 3 2 of
-          | NONE => (GiveUp,l)
-          | SOME header =>
-            (list_Seq [
-               Assign 15 (real_addr c (adjust_var v1));
-               Assign 17 (real_addr c (adjust_var v2));
-               Assign 11 (Load (Op Add [Var 15; Const bytes_in_word]));
-               Assign 13 (Load (Op Add [Var 15; Const (2w *
-                 bytes_in_word)]));
-               Assign 21 (Load (Op Add [Var 17; Const bytes_in_word]));
-               Assign 23 (Load (Op Add [Var 17; Const (2w *
-                 bytes_in_word)]));
-               WordOp64_on_32 opw;
-               WriteWord64_on_32 c header dest 33 31],l)))
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordShiftW8 sh n (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-        (Assign (adjust_var dest)
-           (case sh of
-            | Lsl =>
-              ShiftN Lsr
-                (ShiftN Lsl (Var (adjust_var v1)) (dimindex(:'a)-10+(MIN
-                  n 8)))
-                (dimindex(:'a) - 10)
-            | Lsr =>
-              ShiftN Lsl
-                (ShiftN Lsr (Var (adjust_var v1)) ((MIN n 8)+2)) 2
-            | Asr =>
-              ShiftN Lsl
-                (ShiftN Lsr
-                   (ShiftN Asr
-                      (ShiftN Lsl (Var (adjust_var v1)) (dimindex(:'a) -
-                        10))
-                      (MIN n 8))
-                   (dimindex(:'a) - 8)) 2
-            | Ror =>
-              (let n = n MOD 8 in
-                 Op Or
-                  [ShiftN Lsl (ShiftVar Lsr (adjust_var v1) (n + 2)) 2;
-                   ShiftN Lsr (ShiftVar Lsl (adjust_var v1)
-                     ((dimindex (:'a) - 2) - n)) (dimindex (:'a) -
-                       10)])),l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordShiftW64 sh n (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-         let len = if dimindex(:'a) < 64 then 2 else 1 in
-         (case encode_header c 3 len of
-          | NONE => (GiveUp,l)
-          | SOME (header:'a word) =>
-            (if len = 1 then
-               list_Seq
-                 [LoadWord64 c 3 (adjust_var v1);
-                  Assign 3 (ShiftVar sh 3 n);
-                  WriteWord64 c header dest 3]
-             else
-               list_Seq [
-                 Assign 15 (real_addr c (adjust_var v1));
-                 Assign 11 (Load (Op Add [Var 15; Const
-                   bytes_in_word]));
-                 Assign 13 (Load (Op Add [Var 15; Const (2w *
-                   bytes_in_word)]));
-                 WordShift64_on_32 sh n;
-                 WriteWord64_on_32 c header dest 33 31],l))
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordFromWord b (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-          if b then
-            (list_Seq [Assign 1 (real_addr c (adjust_var v1));
-                       Assign 1 (Load (Op Add [Var 1;
-                         Const (if dimindex (:'a) = 32
-                                then 2w * bytes_in_word else
-                                  bytes_in_word)]));
-                       Assign 1 (Op And [Var 1; Const 255w]);
-                       Assign (adjust_var dest) (ShiftVar Lsl 1 2)],l)
-          else
-          (let
-             len = if dimindex (:α) < 64 then 2 else 1
-           in
-             case encode_header c 3 len of
-               NONE => (GiveUp,l)
-             | SOME header =>
-                (if len = 1 then
-                   (list_Seq [Assign 3 (ShiftN Lsr (Var (adjust_var v1))
-                     2);
-                              WriteWord64 c header dest 3],l)
-                 else
-                   (list_Seq [Assign 5 (ShiftN Lsr (Var (adjust_var v1))
-                     2);
-                              Assign 3 (Const 0w);
-                              WriteWord64_on_32 c header dest 5 3],l)))
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordFromInt (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-        let len = if dimindex(:'a) < 64 then 2 else 1 in
-        (case encode_header c 3 len of
-         | NONE => (GiveUp,l)
-         | SOME (header:'a word) =>
-           (if len = 1 then
-             Seq
-*)
-               (* put the word value into 3 *)
-(* HOL4 ML code, not ported:
-               (If Test (adjust_var v1) (Imm 1w)
-*)
-                   (* smallnum case *)
-(* HOL4 ML code, not ported:
-                    (Assign 3 (ShiftN Asr (Var (adjust_var v1)) 2))
-*)
-                   (* bignum case *)
-(* HOL4 ML code, not ported:
-                   (Seq
-                     (LoadBignum c 1 3 (adjust_var v1))
-                     (If Test 1 (Imm 16w) Skip
-                        (Assign 3 (Op Sub [Const 0w; Var 3])))))
-               (WriteWord64 c header dest 3)
-            else If Test (adjust_var v1) (Imm 1w)
-              (list_Seq [
-                Assign 3 (ShiftN Asr (Var (adjust_var v1)) 2);
-                Assign 5 (ShiftN Asr (Var (adjust_var v1)) 31);
-                WriteWord64_on_32 c header dest 3 5
-              ])
-              (list_Seq [
-                Assign 1 (real_addr c (adjust_var v1));
-                Assign 3 (Load (Var 1));
-                Assign 5 (Load (Op Add [Var 1; Const bytes_in_word]));
-                Assign 7 (ShiftVar Lsr 3 (dimindex (:'a) − c.len_size));
-                If Equal 7 (Imm 1w)
-*)
-                  (* bignum of length 1 *)
-(* HOL4 ML code, not ported:
-                  (If Test 3 (Imm 16w)
-*)
-                    (* positive case *)
-(* HOL4 ML code, not ported:
-                    (Seq (Assign 9 (Const 0w))
-                         (WriteWord64_on_32 c header dest 5 9))
-*)
-                    (* negative case *)
-(* HOL4 ML code, not ported:
-                    (Seq (Assign 9 (Const ~0w))
-                    (Seq (Assign 5 (Op Sub [Const 0w; Var 5]))
-                         (WriteWord64_on_32 c header dest 5 9))))
-*)
-                  (* longer bignum *)
-(* HOL4 ML code, not ported:
-                  (If Test 3 (Imm 16w)
-*)
-                    (* positive case *)
-(* HOL4 ML code, not ported:
-                    (Seq (Assign 9 (Load
-                           (Op Add [Var 1; Const (2w *
-                             bytes_in_word)])))
-                         (WriteWord64_on_32 c header dest 5 9))
-*)
-                    (* negative case -- messy *)
-(* HOL4 ML code, not ported:
-                    (list_Seq
-                      [Assign 11 (Const 0w);
-                       Assign 13 (Const 1w);
-                       Assign 9 (Load
-                         (Op Add [Var 1; Const (2w * bytes_in_word)]));
-                       Assign 5 (Op Xor [Const ~0w; Var 5]);
-                       Assign 9 (Op Xor [Const ~0w; Var 9]);
-                       Inst (Arith (AddCarry 15 11 5 13));
-                       Inst (Arith (AddCarry 19 11 9 13));
-                       WriteWord64_on_32 c header dest 15 19]))])), l)
-      : 'a wordLang$prog # num`;
-*)
-
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_WordToInt (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v =
-        let len = if dimindex(:'a) < 64 then 2 else 1 in
-        (case encode_header c 3 len of
-           | NONE => (GiveUp,l)
-           | SOME header =>
-             if len = 1 then
-               (list_Seq [LoadWord64 c 3 (adjust_var v);
-                          Assign 1 (ShiftN Lsr (Var 3) 61);
-                          If Equal 1 (Imm 0w)
-                            (Assign (adjust_var dest) (ShiftN Lsl (Var
-                              3) 2))
-                            (WriteWord64 c header dest 3)], l)
-             else
-              (case encode_header c 3 1 of
-               | NONE => (GiveUp,l)
-               | SOME header1 =>
-                 (list_Seq [
-                  Assign 15 (real_addr c (adjust_var v));
-                  Assign 13 (Load (Op Add [Var 15; Const
+                  [LoadWord64 c 3 (adjust_var v1);
+                   Assign 3 (ShiftVar sh 3 n);
+                   WriteWord64 c header dest 3] else
+                list_Seq [
+                  Assign 15 (real_addr c (adjust_var v1));
+                  Assign 11 (Load (Op Add [Var 15; Const
                     bytes_in_word]));
-                  Assign 11 (Load (Op Add [Var 15; Const (2w *
+                  Assign 13 (Load (Op Add [Var 15; Const ((n2w 2) *
                     bytes_in_word)]));
-                  If NotEqual 13 (Imm 0w)
-                    (WriteWord64_on_32 c header dest 13 11)
-                    (list_Seq [
-                      Assign 1 (ShiftN Lsr (Var 11) 29);
-                      If Equal 1 (Imm 0w)
-                        (Assign (adjust_var dest) (ShiftN Lsl (Var 11)
-                          2))
-                        (WriteWord32_on_32 c header1 dest 11)])],l)))
-      : 'a wordLang$prog # num`;
-*)
+                  WordShift64_on_32 sh n;
+                  WriteWord64_on_32 c header dest 33 31]),l)):'a
+                    wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FFI ffi_index (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-      if ¬c.call_empty_ffi ∧ ffi_index = «» then (Assign (adjust_var
-        dest) Unit,l) else
-        let addr1 = real_addr c (adjust_var v1) in
-        let header1 = Load addr1 in
-        let k = dimindex(:'a) - shift(:'a) - c.len_size in
-        let fakelen1 = ShiftN Lsr header1 k in
-        let addr2 = real_addr c (adjust_var v2) in
-        let header2 = Load addr2 in
-        let fakelen2 = ShiftN Lsr header2 k in
-        (list_Seq [
-          Assign 1 (Op Add [addr1; Const bytes_in_word]);
-          Assign 3 (Op Sub [fakelen1; Const bytes_in_word]);
-          Assign 5 (if ffi_index = «» then Const 0w else (Op Add [addr2;
-            Const bytes_in_word]));
-          Assign 7 (if ffi_index = «» then Const 0w else (Op Sub
-            [fakelen2; Const bytes_in_word]));
-          FFI ffi_index 1 3 5 7 (adjust_sets (case names of SOME names
-            => names | NONE => LN));
-          Assign (adjust_var dest) Unit]
-        , l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_WordFromWord_def = cake_define
+  `assign_WordFromWord b (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+           (if b then
+             (list_Seq [Assign 1 (real_addr c (adjust_var v1));
+                        Assign 1 (Load (Op Add [Var 1;
+                          Const (if dimindex (:'a) = 32 then (n2w 2)
+                            * bytes_in_word else bytes_in_word)]));
+                        Assign 1 (Op And [Var 1; Const (n2w 255)]);
+                        Assign (adjust_var dest) (ShiftVar Lsl 1
+                          2)],l) else
+           (let
+              len = if dimindex (:'ga) < 64 then 2 else 1 in
+              match encode_header c 3 len with
+                NONE -> (GiveUp,l) | SOME header ->
+                 (if len = 1 then
+                    (list_Seq [Assign 3 ((\sh e n. Shift sh e (Const
+                      (n2w n))) Lsr (Var (adjust_var v1)) 2);
+                              WriteWord64 c header dest 3],l) else
+                    (list_Seq [Assign 5 ((\sh e n. Shift sh e (Const
+                      (n2w n))) Lsr (Var (adjust_var v1)) 2);
+                              Assign 3 (Const (n2w 0));
+                              WriteWord64_on_32 c header dest 5
+                                3],l))):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_EqualConst p (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v =
-    case part_to_words c LN p 0w of
-    | SOME ((F,w),_) =>
-        (If Equal (adjust_var v) (Imm (get_Word w))
-                    (Assign (adjust_var dest) TRUE_CONST)
-                    (Assign (adjust_var dest) FALSE_CONST),l)
-    | SOME (_,words) =>
-        ((case p of
-          | Int _ => If Test (adjust_var v) (Imm 1w)
-                       (Assign (adjust_var dest) FALSE_CONST)
-                       (list_Seq
-                          [Assign 1 FALSE_CONST;
-                           Assign 3 (real_addr c (adjust_var v));
-                           MemEqList 0w (MAP (get_Word o SND) words);
-                           Assign (adjust_var dest) (Var 1)])
-          | W64 _ => (list_Seq
-                          [Assign 1 FALSE_CONST;
-                           Assign 3 (Op Add [real_addr c (adjust_var v);
-                                             Const bytes_in_word]);
-                           MemEqList 0w (MAP (get_Word o SND) (TL
-                             words));
-                           Assign (adjust_var dest) (Var 1)])
-          | Str _ => (list_Seq
-                          [Assign 1 FALSE_CONST;
-                           Assign 3 (real_addr c (adjust_var v));
-                           MemEqList 0w (MAP (get_Word o SND) words);
-                           Assign (adjust_var dest) (Var 1)])
-          | _ => Skip),l)
-    | _ => (Assign (adjust_var dest) FALSE_CONST,l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_WordFromInt_def = cake_define
+  `assign_WordFromInt (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+         (let len = if dimindex (:'a) < 64 then 2 else 1 in
+         ((match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
+           (header:'a word) ->
+            (if len = 1 then
+              Seq
+                (If Test (adjust_var v1) (Imm (n2w 1))
+                     (Assign 3 ((\sh e n. Shift sh e (Const (n2w n)))
+                       Asr (Var (adjust_var v1)) 2))
+                    (Seq
+                      (LoadBignum c 1 3 (adjust_var v1))
+                      (If Test 1 (Imm (n2w 16)) Skip
+                         (Assign 3 (Op Sub [Const (n2w 0); Var
+                           3])))))
+                (WriteWord64 c header dest 3) else If Test
+                  (adjust_var v1) (Imm (n2w 1))
+               (list_Seq [
+                 Assign 3 ((\sh e n. Shift sh e (Const (n2w n))) Asr
+                   (Var (adjust_var v1)) 2);
+                 Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Asr
+                   (Var (adjust_var v1)) 31);
+                 WriteWord64_on_32 c header dest 3 5])
+               (list_Seq [
+                 Assign 1 (real_addr c (adjust_var v1));
+                 Assign 3 (Load (Var 1));
+                 Assign 5 (Load (Op Add [Var 1; Const
+                   bytes_in_word]));
+                 Assign 7 (ShiftVar Lsr 3 (dimindex (:'a) -
+                   data_to_word_config_len_size c));
+                 If Equal 7 (Imm (n2w 1))
+                   (If Test 3 (Imm (n2w 16))
+                     (Seq (Assign 9 (Const (n2w 0)))
+                          (WriteWord64_on_32 c header dest 5 9))
+                     (Seq (Assign 9 (Const (--(n2w 0))))
+                     (Seq (Assign 5 (Op Sub [Const (n2w 0); Var 5]))
+                          (WriteWord64_on_32 c header dest 5 9))))
+                   (If Test 3 (Imm (n2w 16))
+                     (Seq (Assign 9 (Load
+                            (Op Add [Var 1; Const ((n2w 2) *
+                              bytes_in_word)])))
+                          (WriteWord64_on_32 c header dest 5 9))
+                     (list_Seq
+                       [Assign 11 (Const (n2w 0));
+                        Assign 13 (Const (n2w 1));
+                        Assign 9 (Load
+                          (Op Add [Var 1; Const ((n2w 2) *
+                            bytes_in_word)]));
+                        Assign 5 (Op Xor [Const (--(n2w 0)); Var 5]);
+                        Assign 9 (Op Xor [Const (--(n2w 0)); Var 9]);
+                        Inst (Arith (asm_AddCarry 15 11 5 13));
+                        Inst (Arith (asm_AddCarry 19 11 9 13));
+                        WriteWord64_on_32 c header dest 15
+                          19]))]))),l):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_Install (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 v3 v4 =
-        (list_Seq [BignumHalt (adjust_var v3); (* length must be
-          smallint *)
-                   BignumHalt (adjust_var v4); (* length must be
-                     smallint *)
-                   Assign 1 (Lookup BitmapBuffer);
-                   Assign 3 (Op Sub [Lookup BitmapBufferEnd; Var 1]);
-                   Assign 5 (ShiftVar Lsr (adjust_var v4) 2);
-                   Assign 3 (ShiftVar Lsr 3 (shift (:'a)));
-                   If Lower 3 (Reg 5) (* too little data space *) GiveUp
-                     Skip;
-                   Assign 1 (Lookup CodeBuffer);
-                   Assign 3 (Op Sub [Lookup CodeBufferEnd; Var 1]);
-                   Assign 5 (ShiftVar Lsr (adjust_var v3) 2);
-                   If Lower 3 (Reg 5) (* too little code space *) GiveUp
-                     Skip;
-                   MustTerminate
-                    (Call (SOME ([adjust_var dest],
-                       adjust_sets (get_names names),Skip,secn,l))
-                    (SOME InstallCode_location)
-                      [adjust_var v1; adjust_var v2; 1] NONE)],l+1)
-      : 'a wordLang$prog # num`;
-*)
+let assign_WordToInt_def = cake_define
+  `assign_WordToInt (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v =
+         (let len = if dimindex (:'a) < 64 then 2 else 1 in
+         (match encode_header c 3 len with NONE -> (GiveUp,l) | SOME
+           header ->
+              (if len = 1 then
+                (list_Seq [LoadWord64 c 3 (adjust_var v);
+                           Assign 1 ((\sh e n. Shift sh e (Const (n2w
+                             n))) Lsr (Var 3) 61);
+                           If Equal 1 (Imm (n2w 0))
+                             (Assign (adjust_var dest) ((\sh e n.
+                               Shift sh e (Const (n2w n))) Lsl (Var 3)
+                               2))
+                             (WriteWord64 c header dest 3)],l) else
+               (match encode_header c 3 1 with NONE -> (GiveUp,l) |
+                 SOME header1 ->
+                  (list_Seq [
+                   Assign 15 (real_addr c (adjust_var v));
+                   Assign 13 (Load (Op Add [Var 15; Const
+                     bytes_in_word]));
+                   Assign 11 (Load (Op Add [Var 15; Const ((n2w 2) *
+                     bytes_in_word)]));
+                   If asm_NotEqual 13 (Imm (n2w 0))
+                     (WriteWord64_on_32 c header dest 13 11)
+                     (list_Seq [
+                       Assign 1 ((\sh e n. Shift sh e (Const (n2w
+                         n))) Lsr (Var 11) 29);
+                       If Equal 1 (Imm (n2w 0))
+                         (Assign (adjust_var dest) ((\sh e n. Shift
+                           sh e (Const (n2w n))) Lsl (Var 11) 2))
+                         (WriteWord32_on_32 c header1 dest
+                           11)])],l)))):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FP_cmp fpc (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-       (if ~c.has_fp_ops then (GiveUp,l) else
-        if dimindex(:'a) = 64 then
-           ((list_Seq [
-               Assign 3 (Load (Op Add
-                           [real_addr c (adjust_var v1); Const
-                             bytes_in_word]));
-               Assign 5 (Load (Op Add
-                           [real_addr c (adjust_var v2); Const
-                             bytes_in_word]));
-               Inst (FP (FPMovFromReg 0 3 3));
-               Inst (FP (FPMovFromReg 1 5 5));
-               Inst (FP (fp_cmp_inst fpc));
-               Assign (adjust_var dest) (Op Add [ShiftVar Lsl 3 4; Const
-                 2w])],l))
-        else
-           ((list_Seq [
-               Assign 15 (real_addr c (adjust_var v1));
-               Assign 17 (real_addr c (adjust_var v2));
-               Assign 11 (Load (Op Add [Var 15; Const bytes_in_word]));
-               Assign 13 (Load (Op Add [Var 15; Const (2w *
-                 bytes_in_word)]));
-               Assign 21 (Load (Op Add [Var 17; Const bytes_in_word]));
-               Assign 23 (Load (Op Add [Var 17; Const (2w *
-                 bytes_in_word)]));
-               Inst (FP (FPMovFromReg 0 13 11));
-               Inst (FP (FPMovFromReg 1 23 21));
-               Inst (FP (fp_cmp_inst fpc));
-               Assign (adjust_var dest) (Op Add [ShiftVar Lsl 3 4; Const
-                 2w])],l)))
-      : 'a wordLang$prog # num`;
-*)
+let assign_FFI_def = cake_define
+  `assign_FFI ffi_index (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+       (if ~data_to_word_config_call_empty_ffi c /\ ffi_index =
+         (implode "") then (Assign (adjust_var dest)
+         data_to_word_Unit,l) else
+         let addr1 = real_addr c (adjust_var v1) in
+         let header1 = Load addr1 in
+         let k = dimindex (:'a) - backend_common_word_shift (:'a) -
+           data_to_word_config_len_size c in
+         let fakelen1 = (\sh e n. Shift sh e (Const (n2w n))) Lsr
+           header1 k in
+         let addr2 = real_addr c (adjust_var v2) in
+         let header2 = Load addr2 in
+         let fakelen2 = (\sh e n. Shift sh e (Const (n2w n))) Lsr
+           header2 k in
+         (
+         list_Seq [
+           Assign 1 (Op Add [addr1; Const bytes_in_word]);
+           Assign 3 (Op Sub [fakelen1; Const bytes_in_word]);
+           Assign 5 (if ffi_index = (implode "") then Const (n2w 0)
+             else (Op Add [addr2; Const bytes_in_word]));
+           Assign 7 (if ffi_index = (implode "") then Const (n2w 0)
+             else (Op Sub [fakelen2; Const bytes_in_word]));
+           FFI ffi_index 1 3 5 7 (adjust_sets (match names with SOME
+             names -> names | NONE -> LN));
+           Assign (adjust_var dest) data_to_word_Unit],l):'a
+             wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FP_top fpt (c:data_to_word$config) (secn:num)
-              (l:num) (dest:num) (names:num_set option) v1 v2 v3 =
-       (if ~c.has_fp_ops \/ ~c.has_fp_tern then (GiveUp,l) else
-        if dimindex(:'a) = 64 then
-         (case encode_header c 3 1 of
-          | NONE => (GiveUp,l)
-          | SOME (header:'a word) =>
-            (list_Seq [
-               Assign 3 (Load (Op Add
-                           [real_addr c (adjust_var v1); Const
-                             bytes_in_word]));
-               Assign 5 (Load (Op Add
-                           [real_addr c (adjust_var v2); Const
-                             bytes_in_word]));
-               Assign 7 (Load (Op Add
-                           [real_addr c (adjust_var v3); Const
-                             bytes_in_word]));
-               Inst (FP (FPMovFromReg 0 3 3));
-               Inst (FP (FPMovFromReg 1 5 5));
-               Inst (FP (FPMovFromReg 2 7 7));
-               Inst (FP (fp_top_inst fpt));
-               Inst (FP (FPMovToReg 3 5 0));
-               WriteWord64 c header dest 3],l))
-        else
-         (case encode_header c 3 2 of
-          | NONE => (GiveUp,l)
-          | SOME header =>
-            (list_Seq [
-               Assign 15 (real_addr c (adjust_var v1));
-               Assign 17 (real_addr c (adjust_var v2));
-               Assign 19 (real_addr c (adjust_var v3));
-               Assign 11 (Load (Op Add [Var 15; Const bytes_in_word]));
-               Assign 13 (Load (Op Add [Var 15; Const (2w *
-                 bytes_in_word)]));
-               Assign 21 (Load (Op Add [Var 17; Const bytes_in_word]));
-               Assign 23 (Load (Op Add [Var 17; Const (2w *
-                 bytes_in_word)]));
-               Assign 31 (Load (Op Add [Var 19; Const bytes_in_word]));
-               Assign 33 (Load (Op Add [Var 19; Const (2w *
-                 bytes_in_word)]));
-               Inst (FP (FPMovFromReg 0 13 11));
-               Inst (FP (FPMovFromReg 1 23 21));
-               Inst (FP (FPMovFromReg 2 33 31));
-               Inst (FP (fp_top_inst fpt));
-               Inst (FP (FPMovToReg 5 3 0));
-               WriteWord64_on_32 c header dest 5 3],l)))
-      : 'a wordLang$prog # num`;
-*)
+let assign_EqualConst_def = cake_define
+  `assign_EqualConst p (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v =
+     (match part_to_words c LN p (n2w 0) with SOME ((F,w),_20) ->
+         (If Equal (adjust_var v) (Imm (get_Word w))
+                     (Assign (adjust_var dest) (Const (n2w 18:'a
+                       word)))
+                     (Assign (adjust_var dest) (Const (n2w 2:'a
+                       word))),l) | SOME (_21,words) ->
+         ((match p with closLang_Int _22 -> If Test (adjust_var v)
+           (Imm (n2w 1))
+                        (Assign (adjust_var dest) (Const (n2w 2:'a
+                          word)))
+                        (list_Seq
+                           [Assign 1 (Const (n2w 2:'a word));
+                            Assign 3 (real_addr c (adjust_var v));
+                            MemEqList (n2w 0) (MAP (get_Word o SND)
+                              words);
+                            Assign (adjust_var dest) (Var 1)]) | W64
+                              _23 -> (list_Seq
+                           [Assign 1 (Const (n2w 2:'a word));
+                            Assign 3 (Op Add [real_addr c (adjust_var
+                              v);
+                              Const bytes_in_word]);
+                            MemEqList (n2w 0) (MAP (get_Word o SND)
+                              (TL words));
+                            Assign (adjust_var dest) (Var 1)]) |
+                              closLang_Str _24 -> (list_Seq
+                           [Assign 1 (Const (n2w 2:'a word));
+                            Assign 3 (real_addr c (adjust_var v));
+                            MemEqList (n2w 0) (MAP (get_Word o SND)
+                              words);
+                            Assign (adjust_var dest) (Var 1)]) |
+                              _25 -> Skip),l) | _26 -> ((Assign
+                              (adjust_var dest) (Const (n2w 2:'a
+                              word)),l):'a wordLang_prog#num))`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FP_bop fpb (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 v2 =
-       (if ~c.has_fp_ops then (GiveUp,l) else
-        if dimindex(:'a) = 64 then
-         (case encode_header c 3 1 of
-          | NONE => (GiveUp,l)
-          | SOME (header:'a word) =>
-            (list_Seq [
-               Assign 3 (Load (Op Add
-                           [real_addr c (adjust_var v1); Const
-                             bytes_in_word]));
-               Assign 5 (Load (Op Add
-                           [real_addr c (adjust_var v2); Const
-                             bytes_in_word]));
-               Inst (FP (FPMovFromReg 0 3 3));
-               Inst (FP (FPMovFromReg 1 5 5));
-               Inst (FP (fp_bop_inst fpb));
-               Inst (FP (FPMovToReg 3 5 0));
-               WriteWord64 c header dest 3],l))
-        else
-         (case encode_header c 3 2 of
-          | NONE => (GiveUp,l)
-          | SOME header =>
-            (list_Seq [
-               Assign 15 (real_addr c (adjust_var v1));
-               Assign 17 (real_addr c (adjust_var v2));
-               Assign 11 (Load (Op Add [Var 15; Const bytes_in_word]));
-               Assign 13 (Load (Op Add [Var 15; Const (2w *
-                 bytes_in_word)]));
-               Assign 21 (Load (Op Add [Var 17; Const bytes_in_word]));
-               Assign 23 (Load (Op Add [Var 17; Const (2w *
-                 bytes_in_word)]));
-               Inst (FP (FPMovFromReg 0 13 11));
-               Inst (FP (FPMovFromReg 1 23 21));
-               Inst (FP (fp_bop_inst fpb));
-               Inst (FP (FPMovToReg 5 3 0));
-               WriteWord64_on_32 c header dest 5 3],l)))
-      : 'a wordLang$prog # num`;
-*)
+let assign_Install_def = cake_define
+  `assign_Install (c:data_to_word_config) (secn:num) (l:num) (dest:num)
+  (names:(1 spt) option) v1 v2 v3 v4 =
+         ((list_Seq [BignumHalt (adjust_var v3);
+                    BignumHalt (adjust_var v4);
+                    Assign 1 (wordLang_Lookup BitmapBuffer);
+                    Assign 3 (Op Sub [wordLang_Lookup
+                      BitmapBufferEnd; Var 1]);
+                    Assign 5 (ShiftVar Lsr (adjust_var v4) 2);
+                    Assign 3 (ShiftVar Lsr 3
+                      (backend_common_word_shift (:'a)));
+                    If asm_Lower 3 (Reg 5) GiveUp Skip;
+                    Assign 1 (wordLang_Lookup CodeBuffer);
+                    Assign 3 (Op Sub [wordLang_Lookup CodeBufferEnd;
+                      Var 1]);
+                    Assign 5 (ShiftVar Lsr (adjust_var v3) 2);
+                    If asm_Lower 3 (Reg 5) GiveUp Skip;
+                    wordLang_MustTerminate
+                     (Call (SOME ([adjust_var dest],
+                        adjust_sets (data_to_word_get_names
+                          names),Skip,secn,l))
+                     (SOME InstallCode_location)
+                       [adjust_var v1; adjust_var v2; 1] NONE)],l
+                         + 1):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FP_uop fpu (c:data_to_word$config) (secn:num)
-             (l:num) (dest:num) (names:num_set option) v1 =
-       (if ~c.has_fp_ops then (GiveUp,l) else
-        if dimindex(:'a) = 64 then
-         (case encode_header c 3 1 of
-          | NONE => (GiveUp,l)
-          | SOME (header:'a word) =>
-            (list_Seq [
-               Assign 3 (Load (Op Add
-                           [real_addr c (adjust_var v1); Const
-                             bytes_in_word]));
-               Inst (FP (FPMovFromReg 0 3 3));
-               Inst (FP (fp_uop_inst fpu));
-               Inst (FP (FPMovToReg 3 5 1));
-               WriteWord64 c header dest 3],l))
-        else
-         (case encode_header c 3 2 of
-          | NONE => (GiveUp,l)
-          | SOME header =>
-            (list_Seq [
-               Assign 15 (real_addr c (adjust_var v1));
-               Assign 11 (Load (Op Add [Var 15; Const bytes_in_word]));
-               Assign 13 (Load (Op Add [Var 15; Const (2w *
-                 bytes_in_word)]));
-               Inst (FP (FPMovFromReg 0 13 11));
-               Inst (FP (fp_uop_inst fpu));
-               Inst (FP (FPMovToReg 5 3 1));
-               WriteWord64_on_32 c header dest 5 3],l)))
-      : 'a wordLang$prog # num`;
-*)
+let assign_FP_cmp_def = cake_define
+  `assign_FP_cmp fpc (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+        ((if ~data_to_word_config_has_fp_ops c then (GiveUp,l) else
+         if dimindex (:'a) = 64 then
+            ((list_Seq [
+                Assign 3 (Load (Op Add
+                            [real_addr c (adjust_var v1); Const
+                              bytes_in_word]));
+                Assign 5 (Load (Op Add
+                            [real_addr c (adjust_var v2); Const
+                              bytes_in_word]));
+                Inst (asm_FP (FPMovFromReg 0 3 3));
+                Inst (asm_FP (FPMovFromReg 1 5 5));
+                Inst (asm_FP (fp_cmp_inst fpc));
+                Assign (adjust_var dest) (Op Add [ShiftVar Lsl 3 4;
+                  Const (n2w 2)])],l)) else
+            ((list_Seq [
+                Assign 15 (real_addr c (adjust_var v1));
+                Assign 17 (real_addr c (adjust_var v2));
+                Assign 11 (Load (Op Add [Var 15; Const
+                  bytes_in_word]));
+                Assign 13 (Load (Op Add [Var 15; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Assign 21 (Load (Op Add [Var 17; Const
+                  bytes_in_word]));
+                Assign 23 (Load (Op Add [Var 17; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Inst (asm_FP (FPMovFromReg 0 13 11));
+                Inst (asm_FP (FPMovFromReg 1 23 21));
+                Inst (asm_FP (fp_cmp_inst fpc));
+                Assign (adjust_var dest) (Op Add [ShiftVar Lsl 3
+                  4; Const (n2w 2)])],l))):'a wordLang_prog#num)`;;
 
-(* HOL4 ML code, not ported:
-val def = assign_Define `
-  assign_FinaliseCons (l:num) (dest:num) v1 =
-                 (Assign (adjust_var dest) (Var (adjust_var v1)),l)
-      : 'a wordLang$prog # num`;
-*)
+let assign_FP_top_def = cake_define
+  `assign_FP_top fpt (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 v3 =
+        ((if ~data_to_word_config_has_fp_ops c \/
+          ~data_to_word_config_has_fp_tern c then (GiveUp,l) else
+         if dimindex (:'a) = 64 then
+          (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
+            (header:'a word) ->
+             (list_Seq [
+                Assign 3 (Load (Op Add
+                            [real_addr c (adjust_var v1); Const
+                              bytes_in_word]));
+                Assign 5 (Load (Op Add
+                            [real_addr c (adjust_var v2); Const
+                              bytes_in_word]));
+                Assign 7 (Load (Op Add
+                            [real_addr c (adjust_var v3); Const
+                              bytes_in_word]));
+                Inst (asm_FP (FPMovFromReg 0 3 3));
+                Inst (asm_FP (FPMovFromReg 1 5 5));
+                Inst (asm_FP (FPMovFromReg 2 7 7));
+                Inst (asm_FP (fp_top_inst fpt));
+                Inst (asm_FP (FPMovToReg 3 5 0));
+                WriteWord64 c header dest 3],l)) else
+          (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
+            header ->
+             (list_Seq [
+                Assign 15 (real_addr c (adjust_var v1));
+                Assign 17 (real_addr c (adjust_var v2));
+                Assign 19 (real_addr c (adjust_var v3));
+                Assign 11 (Load (Op Add [Var 15; Const
+                  bytes_in_word]));
+                Assign 13 (Load (Op Add [Var 15; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Assign 21 (Load (Op Add [Var 17; Const
+                  bytes_in_word]));
+                Assign 23 (Load (Op Add [Var 17; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Assign 31 (Load (Op Add [Var 19; Const
+                  bytes_in_word]));
+                Assign 33 (Load (Op Add [Var 19; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Inst (asm_FP (FPMovFromReg 0 13 11));
+                Inst (asm_FP (FPMovFromReg 1 23 21));
+                Inst (asm_FP (FPMovFromReg 2 33 31));
+                Inst (asm_FP (fp_top_inst fpt));
+                Inst (asm_FP (FPMovToReg 5 3 0));
+                WriteWord64_on_32 c header dest 5 3],l))):'a
+                  wordLang_prog#num)`;;
+
+let assign_FP_bop_def = cake_define
+  `assign_FP_bop fpb (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 v2 =
+        ((if ~data_to_word_config_has_fp_ops c then (GiveUp,l) else
+         if dimindex (:'a) = 64 then
+          (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
+            (header:'a word) ->
+             (list_Seq [
+                Assign 3 (Load (Op Add
+                            [real_addr c (adjust_var v1); Const
+                              bytes_in_word]));
+                Assign 5 (Load (Op Add
+                            [real_addr c (adjust_var v2); Const
+                              bytes_in_word]));
+                Inst (asm_FP (FPMovFromReg 0 3 3));
+                Inst (asm_FP (FPMovFromReg 1 5 5));
+                Inst (asm_FP (fp_bop_inst fpb));
+                Inst (asm_FP (FPMovToReg 3 5 0));
+                WriteWord64 c header dest 3],l)) else
+          (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
+            header ->
+             (list_Seq [
+                Assign 15 (real_addr c (adjust_var v1));
+                Assign 17 (real_addr c (adjust_var v2));
+                Assign 11 (Load (Op Add [Var 15; Const
+                  bytes_in_word]));
+                Assign 13 (Load (Op Add [Var 15; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Assign 21 (Load (Op Add [Var 17; Const
+                  bytes_in_word]));
+                Assign 23 (Load (Op Add [Var 17; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Inst (asm_FP (FPMovFromReg 0 13 11));
+                Inst (asm_FP (FPMovFromReg 1 23 21));
+                Inst (asm_FP (fp_bop_inst fpb));
+                Inst (asm_FP (FPMovToReg 5 3 0));
+                WriteWord64_on_32 c header dest 5 3],l))):'a
+                  wordLang_prog#num)`;;
+
+let assign_FP_uop_def = cake_define
+  `assign_FP_uop fpu (c:data_to_word_config) (secn:num) (l:num)
+  (dest:num) (names:(1 spt) option) v1 =
+        ((if ~data_to_word_config_has_fp_ops c then (GiveUp,l) else
+         if dimindex (:'a) = 64 then
+          (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
+            (header:'a word) ->
+             (list_Seq [
+                Assign 3 (Load (Op Add
+                            [real_addr c (adjust_var v1); Const
+                              bytes_in_word]));
+                Inst (asm_FP (FPMovFromReg 0 3 3));
+                Inst (asm_FP (fp_uop_inst fpu));
+                Inst (asm_FP (FPMovToReg 3 5 1));
+                WriteWord64 c header dest 3],l)) else
+          (match encode_header c 3 2 with NONE -> (GiveUp,l) | SOME
+            header ->
+             (list_Seq [
+                Assign 15 (real_addr c (adjust_var v1));
+                Assign 11 (Load (Op Add [Var 15; Const
+                  bytes_in_word]));
+                Assign 13 (Load (Op Add [Var 15; Const ((n2w 2) *
+                  bytes_in_word)]));
+                Inst (asm_FP (FPMovFromReg 0 13 11));
+                Inst (asm_FP (fp_uop_inst fpu));
+                Inst (asm_FP (FPMovToReg 5 3 1));
+                WriteWord64_on_32 c header dest 5 3],l))):'a
+                  wordLang_prog#num)`;;
+
+let assign_FinaliseCons_def = cake_define
+  `assign_FinaliseCons (l:num) (dest:num) v1 =
+                  ((Assign (adjust_var dest) (Var (adjust_var
+                    v1)),l):'a wordLang_prog#num)`;;
 
 let assign_def = cake_define
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
@@ -2695,7 +2580,7 @@ let assign_def = cake_define
        (assign_FinaliseCons l dest) (Skip,l) | closLang_BlockOp
        ListAppend -> data_to_word_arg2 args (assign_ListAppend c secn l
        dest names) (Skip,l) | closLang_BlockOp (Cons tag) -> assign_Cons
-       c l dest tag args | closLang_MemOp (closLang_MutCons tag _15) ->
+       c l dest tag args | closLang_MemOp (closLang_MutCons tag _27) ->
        assign_MutCons c l dest tag args | closLang_MemOp ConfigGC ->
        data_to_word_arg2 args (assign_ConfigGC c secn l dest names)
        (Skip,l) | closLang_BlockOp (closLang_Build parts) ->
@@ -2786,7 +2671,7 @@ let assign_def = cake_define
            closLang_WordOp (FP_bop fpb) -> data_to_word_arg2 args
            (assign_FP_bop fpb c secn l dest names) (Skip,l) |
            closLang_WordOp (FP_uop fpu) -> data_to_word_arg1 args
-           (assign_FP_uop fpu c secn l dest names) (Skip,l) | _16 ->
+           (assign_FP_uop fpu c secn l dest names) (Skip,l) | _28 ->
            (Skip,l))`;;
 hol4_overload "assign" "data_to_word_assign";;
 
@@ -2796,7 +2681,7 @@ let force_thunk_def = cake_define
        SOME (header:'a word) ->
       If Test (adjust_var v1) (Imm (n2w 1))
         (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-          (dest,_17) -> Assign (adjust_var dest) (Var (adjust_var v1)))
+          (dest,_29) -> Assign (adjust_var dest) (Var (adjust_var v1)))
         (list_Seq
            [Assign 1 (real_addr c (adjust_var v1));
             Assign 3 (Op And [Load (Var 1); Const (n2w 0b111100)]);
@@ -2805,13 +2690,13 @@ let force_thunk_def = cake_define
                   list_Seq
                     [Assign 1 (Load (Op Add [Var 1; Const
                       bytes_in_word]));
-                     Return 0 [1]] | SOME (dest,_18) ->
+                     Return 0 [1]] | SOME (dest,_30) ->
                    Assign (adjust_var dest)
                           (Load (Op Add [Var 1; Const
                             bytes_in_word])))
             (If asm_NotEqual 3 (Imm (n2w ((0 + 6) * 4)))
               (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-                (dest,_19) -> Assign (adjust_var dest) (Var (adjust_var
+                (dest,_31) -> Assign (adjust_var dest) (Var (adjust_var
                 v1)))
               (list_Seq
                  [Assign 5 (Load (Op Add [Var 1; Const
@@ -3112,12 +2997,12 @@ let AnyArith_call_tree_def = cake_define
 let structure_le_def = cake_define
   `structure_le x1 x2 =
       match (x1,x2) with
-        (word_depth_Leaf,_20) -> T
-      | (_21,word_depth_Unknown) -> T
+        (word_depth_Leaf,_32) -> T
+      | (_33,word_depth_Unknown) -> T
       | ((Const k1 t1),(Const k2 t2)) ->
      (k1 <= k2 /\ structure_le t1 t2)
       | ((Call n1 t2),(Call m1 u2)) ->
      (n1 = m1 /\ structure_le t2 u2)
       | ((Branch t1 t2),(Branch u1 u2)) ->
      (structure_le t1 u1 /\ structure_le t2 u2)
-      | (_22,_23) -> F`;;
+      | (_34,_35) -> F`;;
