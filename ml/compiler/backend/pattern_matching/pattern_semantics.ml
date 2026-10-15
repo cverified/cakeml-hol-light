@@ -147,21 +147,21 @@ let app_pos_def = cake_define
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
         | ((Pos _11 _12),_13) -> NONE`;;
 
-let dt_eval_guard_def = cake_define_list
-  [`dt_eval_guard refs v pattern_semantics_True =
-         SOME T`;
-   `dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
-         (match app_pos refs pos v with NONE -> NONE | SOME x ->
-           dt_test test x)`;
-   `dt_eval_guard refs v (Not g) =
-         (match dt_eval_guard refs v g with NONE -> NONE | SOME b
-           -> SOME (~b))`;
-   `dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
-         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T
-           -> dt_eval_guard refs v g2 | SOME F -> SOME F)`;
-   `dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
-         (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T
-           -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
+let dt_eval_guard_def = cake_define
+  `(dt_eval_guard refs v pattern_semantics_True =
+      SOME T) /\
+   (dt_eval_guard refs v (pattern_semantics_PosTest pos test) =
+      (match app_pos refs pos v with NONE -> NONE | SOME x -> dt_test
+        test x)) /\
+   (dt_eval_guard refs v (Not g) =
+      (match dt_eval_guard refs v g with NONE -> NONE | SOME b ->
+        SOME (~b))) /\
+   (dt_eval_guard refs v (pattern_semantics_Conj g1 g2) =
+      (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
+        dt_eval_guard refs v g2 | SOME F -> SOME F)) /\
+   (dt_eval_guard refs v (pattern_semantics_Disj g1 g2) =
+      (match dt_eval_guard refs v g1 with NONE -> NONE | SOME T ->
+        SOME T | SOME F -> dt_eval_guard refs v g2))`;;
 
 let dt_eval_def = cake_define
   `(dt_eval refs _14 (Leaf k) = SOME (MatchSuccess k)) /\

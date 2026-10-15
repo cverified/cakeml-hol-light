@@ -69,6 +69,7 @@ class Db:
     self.recs = {}             # (thy,ty) -> [fields]
     self.abbrevs = {}          # (thy,name) -> (params, type text)
     self.overloads = {}        # (thy,name) -> term text
+    self.con_argty = {}        # (constructor,index) -> {type texts}
     self.thy_of_file = {}
     self.kind_of_thy = {}
     self.scan()
@@ -117,6 +118,23 @@ class Db:
           anc = [w for w in b.body.split()]
           self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))
         if b.kind == 'Datatype':
+          # the texts of the argument types of the constructors: they
+          # tell whether a variable in a pattern can have different
+          # types in different clauses
+          for part in hol4.split_top(hol4.strip_comments(b.body), ';'):
+            m = re.match(r"\s*[A-Za-z][A-Za-z0-9_']*\s*=\s*(.*)$",
+                         part, re.S)
+            if not m or m.group(1).strip().startswith('<|'): continue
+            for alt in hol4.split_top(m.group(1), '|'):
+              alt = alt.strip()
+              if not alt: continue
+              try:
+                tys = hterm.dtarg_texts(alt)
+              except Exception:
+                continue
+              con = alt.split()[0]
+              for j, t in enumerate(tys):
+                self.con_argty.setdefault((con, j), set()).add(t)
           for ty, cons, flds in hol4.datatype_names(b.body):
             self.datatypes[(thy, ty)] = (cons, flds)
             self.defs[ty].append((thy, 'type'))

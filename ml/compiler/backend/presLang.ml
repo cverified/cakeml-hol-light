@@ -165,21 +165,22 @@ let thunk_mode_to_display_def = cake_define
    (thunk_mode_to_display NotEvaluated = empty_item (implode
      "NotEvaluated"))`;;
 
-let thunk_op_to_display_def = cake_define_list
-  [`thunk_op_to_display (AllocThunk m) =
-        displayLang_Item NONE (implode "AllocThunk")
-          [thunk_mode_to_display m]`;
-   `thunk_op_to_display (UpdateThunk m) =
-        displayLang_Item NONE (implode "UpdateThunk")
-          [thunk_mode_to_display m]`;
-   `thunk_op_to_display ForceThunk = empty_item (implode "ForceThunk")`];;
+let thunk_op_to_display_def = cake_define
+  `(thunk_op_to_display (AllocThunk m) =
+     displayLang_Item NONE (implode "AllocThunk")
+       [thunk_mode_to_display m]) /\
+   (thunk_op_to_display (UpdateThunk m) =
+     displayLang_Item NONE (implode "UpdateThunk")
+       [thunk_mode_to_display m]) /\
+   (thunk_op_to_display ForceThunk = empty_item (implode
+     "ForceThunk"))`;;
 
-let test_to_display_def = cake_define_list
-  [`test_to_display (EQUAL) = empty_item (implode "Equal")`;
-   `test_to_display (ast_Compare cmp) = displayLang_Item NONE (implode
-  "Compare") [opb_to_display cmp]`;
-   `test_to_display (ast_AltCompare cmp) = displayLang_Item NONE
-  (implode "AltCompare") [opb_to_display cmp]`];;
+let test_to_display_def = cake_define
+  `test_to_display (EQUAL) = empty_item (implode "Equal") /\
+   test_to_display (ast_Compare cmp) = displayLang_Item NONE (implode
+     "Compare") [opb_to_display cmp] /\
+   test_to_display (ast_AltCompare cmp) = displayLang_Item NONE
+     (implode "AltCompare") [opb_to_display cmp]`;;
 
 let arith_to_display_def = cake_define
   `arith_to_display Add = empty_item (implode "Add") /\

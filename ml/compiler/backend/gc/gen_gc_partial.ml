@@ -150,13 +150,13 @@ let to_gen_conf_def = cake_define
        (?_limit conf - gen_gc_partial_conf_refs_start conf)) (?_isRef
        conf):'a gen_gc_conf)`;;
 
-let to_gen_heap_element_def = cake_define_list
-  [`to_gen_heap_element conf (Unused n) = Unused n`;
-   `to_gen_heap_element conf (ForwardPointer ptr a l) =
-        ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf)
-          (Real a) l`;
-   `to_gen_heap_element conf (DataElement ptrs l d) =
-        DataElement (MAP (to_gen_heap_address conf) ptrs) l d`];;
+let to_gen_heap_element_def = cake_define
+  `(to_gen_heap_element conf (Unused n) = Unused n) /\
+   (to_gen_heap_element conf (ForwardPointer ptr a l) =
+     ForwardPointer (ptr - gen_gc_partial_conf_gen_start conf) (Real
+       a) l) /\
+   (to_gen_heap_element conf (DataElement ptrs l d) =
+     DataElement (MAP (to_gen_heap_address conf) ptrs) l d)`;;
 
 let to_gen_heap_list_def = cake_define
   `to_gen_heap_list conf heap =

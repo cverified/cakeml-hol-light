@@ -228,15 +228,15 @@ let smart_remove_def = cake_define_list
             v3) else
           Append (smart_remove i k v2) T (smart_remove i i v3))`];;
 
-let flatten_def = cake_define_list
-  [`flatten indent (mlsexp_Size n p) s = flatten indent p s`;
-   `flatten indent (mlsexp_Parenthesis p) s =
-      (implode "(") :: flatten (concat [indent; (implode "   ")])
-        p ((implode ")") :: s)`;
-   `flatten indent (String t) s = t :: s`;
-   `flatten indent (Append p1 b p2) s =
-      flatten indent p1 ((if b then indent else (implode " ")) ::
-        flatten indent p2 s)`];;
+let flatten_def = cake_define
+  `flatten indent (mlsexp_Size n p) s = flatten indent p s /\
+   flatten indent (mlsexp_Parenthesis p) s =
+     (implode "(") :: flatten (concat [indent; (implode "   ")]) p
+       ((implode ")") :: s) /\
+   flatten indent (String t) s = t :: s /\
+   flatten indent (Append p1 b p2) s =
+     flatten indent p1 ((if b then indent else (implode " ")) ::
+       flatten indent p2 s)`;;
 
 let str_tree_to_strs_def = cake_define
   `str_tree_to_strs end v = flatten (implode "\n") (smart_remove 0 0

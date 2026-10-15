@@ -172,77 +172,76 @@ let read_fp_reg_def = cake_define
   `labSem_read_fp_reg r s = ?_fp_regs s r`;;
 hol4_overload "read_fp_reg" "labSem_read_fp_reg";;
 
-let fp_upd_def = cake_define_list
-  [`labSem_fp_upd (FPLess r d1 d2) (s:('a,'c,'ffi)labSem_state) =
-         upd_reg r (Word (if fp64_lessThan (read_fp_reg d1 s)
-           (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s`;
-   `labSem_fp_upd (FPLessEqual r d1 d2) s =
-         upd_reg r (Word (if fp64_lessEqual (read_fp_reg d1 s)
-           (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s`;
-   `labSem_fp_upd (FPEqual r d1 d2) s =
-         upd_reg r (Word (if fp64_equal (read_fp_reg d1 s)
-           (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s`;
-   `labSem_fp_upd (FPMov d1 d2) s = upd_fp_reg d1 (read_fp_reg d2 s) s`;
-   `labSem_fp_upd (FPAbs d1 d2) s = upd_fp_reg d1 (fp64_abs
-  (read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPNeg d1 d2) s = upd_fp_reg d1 (fp64_negate
-  (read_fp_reg d2 s)) s`;
-   `labSem_fp_upd (FPSqrt d1 d2) s =
-         upd_fp_reg d1 (fp64_sqrt roundTiesToEven (read_fp_reg d2
-           s)) s`;
-   `labSem_fp_upd (FPAdd d1 d2 d3) s =
-         upd_fp_reg d1
-           (fp64_add roundTiesToEven (read_fp_reg d2 s)
-             (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPSub d1 d2 d3) s =
-         upd_fp_reg d1
-           (fp64_sub roundTiesToEven (read_fp_reg d2 s)
-             (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPMul d1 d2 d3) s =
-         upd_fp_reg d1
-           (fp64_mul roundTiesToEven (read_fp_reg d2 s)
-             (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPDiv d1 d2 d3) s =
-         upd_fp_reg d1
-           (fp64_div roundTiesToEven (read_fp_reg d2 s)
-             (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPFma d1 d2 d3) s =
-         upd_fp_reg d1
-           (fpfma (read_fp_reg d1 s) (read_fp_reg d2 s)
-             (read_fp_reg d3 s)) s`;
-   `labSem_fp_upd (FPMovToReg r1 r2 d) s =
-         (if dimindex (:'a) = 64 then
-           upd_reg r1 (Word (w2w (read_fp_reg d s))) s else let v =
-             read_fp_reg d s in
-           upd_reg r2 (Word ((63 >< 32) v)) (upd_reg r1 (Word ((31
-             >< 0) v)) s))`;
-   `labSem_fp_upd (FPMovFromReg d r1 r2) s =
-         (if dimindex (:'a) = 64 then
-           match (\r s. ?_regs s r) r1 s with
-             Word w1 -> upd_fp_reg d (w2w w1) s | _24 -> assert F s
-               else
-           match ((\r s. ?_regs s r) r1 s,(\r s. ?_regs s r) r2 s)
-             with
-             (Word w1,Word w2) -> upd_fp_reg d (w2 @@ w1) s | _25
-               -> assert F s)`;
-   `labSem_fp_upd (FPToInt d1 d2) s =
-         (match fp64_to_int roundTiesToEven (read_fp_reg d2 s) with
-             SOME i ->
-               (let w = i2w i:word32 in
-                 (if dimindex (:'a) = 64 then
-                    upd_fp_reg d1 (w2w w) else let (h,l) = if ODD d1
-                      then (63,32) else (31,0) in
-                         upd_fp_reg (d1 DIV 2)
-                           (bit_field_insert h l w (read_fp_reg (d1
-                             DIV 2) s)))
-                    (assert (w2i w = i) s)) | _26 -> assert F s)`;
-   `labSem_fp_upd (FPFromInt d1 d2) s =
-         (let i = if dimindex (:'a) = 64 then
-                   w2i ((31 >< 0) (read_fp_reg d2 s):word32) else
-                     let v = read_fp_reg (d2 DIV 2) s in
-                   w2i (if ODD d2 then (63 >< 32) v else (31 >< 0)
-                     v:'a word) in
-           upd_fp_reg d1 (int_to_fp64 roundTiesToEven i) s)`];;
+let fp_upd_def = cake_define
+  `(labSem_fp_upd (FPLess r d1 d2) (s:('a,'c,'ffi)labSem_state) =
+      upd_reg r (Word (if fp64_lessThan (read_fp_reg d1 s)
+        (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s) /\
+   (labSem_fp_upd (FPLessEqual r d1 d2) s =
+      upd_reg r (Word (if fp64_lessEqual (read_fp_reg d1 s)
+        (read_fp_reg d2 s) then (n2w 1) else (n2w 0))) s) /\
+   (labSem_fp_upd (FPEqual r d1 d2) s =
+      upd_reg r (Word (if fp64_equal (read_fp_reg d1 s) (read_fp_reg
+        d2 s) then (n2w 1) else (n2w 0))) s) /\
+   (labSem_fp_upd (FPMov d1 d2) s = upd_fp_reg d1 (read_fp_reg d2 s)
+     s) /\
+   (labSem_fp_upd (FPAbs d1 d2) s = upd_fp_reg d1 (fp64_abs
+     (read_fp_reg d2 s)) s) /\
+   (labSem_fp_upd (FPNeg d1 d2) s = upd_fp_reg d1 (fp64_negate
+     (read_fp_reg d2 s)) s) /\
+   (labSem_fp_upd (FPSqrt d1 d2) s =
+      upd_fp_reg d1 (fp64_sqrt roundTiesToEven (read_fp_reg d2 s)) s)
+        /\
+   (labSem_fp_upd (FPAdd d1 d2 d3) s =
+      upd_fp_reg d1
+        (fp64_add roundTiesToEven (read_fp_reg d2 s) (read_fp_reg d3
+          s)) s) /\
+   (labSem_fp_upd (FPSub d1 d2 d3) s =
+      upd_fp_reg d1
+        (fp64_sub roundTiesToEven (read_fp_reg d2 s) (read_fp_reg d3
+          s)) s) /\
+   (labSem_fp_upd (FPMul d1 d2 d3) s =
+      upd_fp_reg d1
+        (fp64_mul roundTiesToEven (read_fp_reg d2 s) (read_fp_reg d3
+          s)) s) /\
+   (labSem_fp_upd (FPDiv d1 d2 d3) s =
+      upd_fp_reg d1
+        (fp64_div roundTiesToEven (read_fp_reg d2 s) (read_fp_reg d3
+          s)) s) /\
+   (labSem_fp_upd (FPFma d1 d2 d3) s =
+      upd_fp_reg d1
+        (fpfma (read_fp_reg d1 s) (read_fp_reg d2 s) (read_fp_reg d3
+          s)) s) /\
+   (labSem_fp_upd (FPMovToReg r1 r2 d) s =
+      (if dimindex (:'a) = 64 then
+        upd_reg r1 (Word (w2w (read_fp_reg d s))) s else let v =
+          read_fp_reg d s in
+        upd_reg r2 (Word ((63 >< 32) v)) (upd_reg r1 (Word ((31 >< 0)
+          v)) s))) /\
+   (labSem_fp_upd (FPMovFromReg d r1 r2) s =
+      (if dimindex (:'a) = 64 then
+        match (\r s. ?_regs s r) r1 s with
+          Word w1 -> upd_fp_reg d (w2w w1) s | _24 -> assert F s else
+        match ((\r s. ?_regs s r) r1 s,(\r s. ?_regs s r) r2 s) with
+          (Word w1,Word w2) -> upd_fp_reg d (w2 @@ w1) s | _25 ->
+            assert F s)) /\
+   (labSem_fp_upd (FPToInt d1 d2) s =
+      (match fp64_to_int roundTiesToEven (read_fp_reg d2 s) with
+          SOME i ->
+            (let w = i2w i:word32 in
+              (if dimindex (:'a) = 64 then
+                 upd_fp_reg d1 (w2w w) else let (h,l) = if ODD d1
+                   then (63,32) else (31,0) in
+                      upd_fp_reg (d1 DIV 2)
+                        (bit_field_insert h l w (read_fp_reg (d1 DIV
+                          2) s)))
+                 (assert (w2i w = i) s)) | _26 -> assert F s)) /\
+   (labSem_fp_upd (FPFromInt d1 d2) s =
+      (let i = if dimindex (:'a) = 64 then
+                w2i ((31 >< 0) (read_fp_reg d2 s):word32) else let v
+                  = read_fp_reg (d2 DIV 2) s in
+                w2i (if ODD d2 then (63 >< 32) v else (31 >< 0) v:'a
+                  word) in
+        upd_fp_reg d1 (int_to_fp64 roundTiesToEven i) s))`;;
 hol4_overload "fp_upd" "labSem_fp_upd";;
 
 let addr_def = cake_define

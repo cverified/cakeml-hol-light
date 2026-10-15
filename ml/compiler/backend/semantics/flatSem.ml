@@ -238,26 +238,26 @@ let the_Litv_Float64_def = cake_define
   `flatSem_the_Litv_Float64 (Litv (ast_Float64 w)) = w`;;
 hol4_overload "the_Litv_Float64" "flatSem_the_Litv_Float64";;
 
-let do_test_def = cake_define_list
-  [`flatSem_do_test (EQUAL) ty v1 v2 =
-      (if check_type ty v1 /\ check_type ty v2 then
-         (if ty = ast_Float64T then Eq_val (fp64_equal
-           (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1
-           v2) else Eq_type_error)`;
-   `flatSem_do_test (ast_Compare cmp) ty v1 v2 =
-      (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
-        (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val (int_cmp cmp i
-        j) | (CharT,SOME (ast_Char c),SOME (ast_Char d)) -> Eq_val
-        ((num_compare) cmp (ORD c) (ORD d)) | (WordT ast_W8,SOME
-        (ast_Word8 w),SOME (ast_Word8 v)) -> Eq_val ((num_compare) cmp
-        (w2n w) (w2n v)) | (ast_Float64T,SOME (ast_Float64 w),SOME
-        (ast_Float64 v)) -> Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME
-        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp F cmp s
-        t) | _41 -> Eq_type_error)`;
-   `flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
-      (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
-        (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp s
-        t) | _42 -> Eq_type_error)`];;
+let do_test_def = cake_define
+  `flatSem_do_test (EQUAL) ty v1 v2 =
+     (if check_type ty v1 /\ check_type ty v2 then
+        (if ty = ast_Float64T then Eq_val (fp64_equal
+          (the_Litv_Float64 v1) (the_Litv_Float64 v2)) else do_eq v1 v2)
+          else Eq_type_error) /\
+   flatSem_do_test (ast_Compare cmp) ty v1 v2 =
+     (match (ty,dest_Litv v1,dest_Litv v2) with (IntT,SOME
+       (ast_IntLit i),SOME (ast_IntLit j)) -> Eq_val (int_cmp cmp i j) |
+       (CharT,SOME (ast_Char c),SOME (ast_Char d)) -> Eq_val
+       ((num_compare) cmp (ORD c) (ORD d)) | (WordT ast_W8,SOME
+       (ast_Word8 w),SOME (ast_Word8 v)) -> Eq_val ((num_compare) cmp
+       (w2n w) (w2n v)) | (ast_Float64T,SOME (ast_Float64 w),SOME
+       (ast_Float64 v)) -> Eq_val (fp_cmp cmp w v) | (ast_StrT,SOME
+       (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp F cmp s t)
+       | _41 -> Eq_type_error) /\
+   flatSem_do_test (ast_AltCompare cmp) ty v1 v2 =
+     (match (ty,dest_Litv v1,dest_Litv v2) with (ast_StrT,SOME
+       (ast_StrLit s),SOME (ast_StrLit t)) -> Eq_val (str_cmp T cmp s
+       t) | _42 -> Eq_type_error)`;;
 hol4_overload "do_test" "flatSem_do_test";;
 
 let v_to_flat_def = cake_define

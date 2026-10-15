@@ -663,6 +663,19 @@ ARGPERM = {
 }
 
 
+def dtarg_texts(alt):
+  """the texts of the argument types of one alternative of a HOL4
+     datatype specification"""
+  toks = tokenize(alt)
+  tp = TypeParser(toks[1:-1])
+  out = []
+  while tp.i < len(tp.toks):
+    i0 = tp.i
+    tp.parse_dtarg()
+    out.append(' '.join(t.text for t in tp.toks[i0:tp.i]))
+  return out
+
+
 def subnodes(e):
   """the direct children of a node"""
   out = []

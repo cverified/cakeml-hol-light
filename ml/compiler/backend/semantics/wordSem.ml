@@ -176,10 +176,10 @@ let wordSem_state_FIELDS = define_record "wordSem_state"
    "be","bool";
    "ffi","'ffi ffi_state"];;
 
-let stack_size_frame_def = cake_define_list
-  [`stack_size_frame (StackFrame n _14 _15 NONE) = n`;
-   `stack_size_frame (StackFrame n _16 _17 (SOME _18)) = OPTION_MAP
-  ((+) 3) n`];;
+let stack_size_frame_def = cake_define
+  `stack_size_frame (StackFrame n _14 _15 NONE) = n /\
+   stack_size_frame (StackFrame n _16 _17 (SOME _18)) = OPTION_MAP
+     ((+) 3) n`;;
 
 let stack_size_def = cake_define
   `stack_size = FOLDR (OPTION_MAP2 (+) o stack_size_frame) (SOME 1)`;;
@@ -415,13 +415,13 @@ let sh_mem_load32_def = cake_define
                        (word_to_bytes a F)) else NONE)`;;
 
 (* set variable given the output from ShareLoad(Byte) *)
-let sh_mem_set_var_def = cake_define_list
-  [`^ (sh_mem_set_var (SOME (FFI_final outcome)) _30) s = (SOME
-  (FinalFFI outcome),flush_state T s)`;
-   `sh_mem_set_var (SOME (FFI_return new_ffi new_bytes)) v s =
-  (NONE,set_var v (Word (word_of_bytes F (n2w 0) new_bytes))
-  (wordSem_state_ffi_fupd (K new_ffi) s))`;
-   `sh_mem_set_var _31 _32 s = (SOME Error,s)`];;
+let sh_mem_set_var_def = cake_define
+  `(^ (sh_mem_set_var (SOME (FFI_final outcome)) _30) s = (SOME
+  (FinalFFI outcome),flush_state T s)) /\
+   (sh_mem_set_var (SOME (FFI_return new_ffi new_bytes)) v s =
+     (NONE,set_var v (Word (word_of_bytes F (n2w 0) new_bytes))
+     (wordSem_state_ffi_fupd (K new_ffi) s))) /\
+   (sh_mem_set_var _31 _32 s = (SOME Error,s))`;;
 
 let share_inst_def = cake_define
   `(share_inst Load v ad s = sh_mem_set_var (sh_mem_load ad s) v s) /\

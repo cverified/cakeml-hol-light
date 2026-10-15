@@ -51,43 +51,45 @@ let enc_num_to_name_aux_def = cake_define
 let enc_num_to_name_def = cake_define
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
-let compile_pat_bindings_def = cake_define_list
-  [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
-   `compile_pat_bindings t i ((Pany,_3,_4) :: m) exp =
-      compile_pat_bindings t i m exp`;
-   `compile_pat_bindings t i ((Pvar s,k,x) :: m) exp = (
-      let (spt,exp2) = compile_pat_bindings t i m exp in
-      (insert k one spt,Let t (SOME s) x exp2))`;
-   `compile_pat_bindings t i ((Plit _5,_6,_7) :: m) exp =
-      compile_pat_bindings t i m exp`;
-   `compile_pat_bindings t i ((Pcon _8 ps,k,x) :: m) exp = (
-      let j_nms = MAP (\(j,p). let k = i + 1 + j in
-          let nm = enc_num_to_name k in
-          ((j,nm),(p,k,flatLang_Var_local t nm))) (enumerate 0 ps)
-            in
-      let (spt,exp2) = compile_pat_bindings t (i + 2 + LENGTH ps)
-          (MAP SND j_nms ++ m) exp in
-      let j_nms_used = FILTER (\(_9,(_10,k,_11)). IS_SOME (lookup k
-        spt)) j_nms in
-      let exp3 = ITLIST (\((j,nm),_12) exp.
-          flatLang_Let t (SOME nm) (App t (El j) [x]) exp)
-            j_nms_used exp2 in
-      let spt2 = if NULL j_nms_used then spt else insert k one spt
-        in
-      (spt2,exp3))`;
-   `compile_pat_bindings t i ((Pas p v,k,x) :: m) exp = (
-      let nm = enc_num_to_name (i + 1) in
-      let (spt,exp2) = compile_pat_bindings t (i + 2)
-                        ((p,i + 1,flatLang_Var_local t nm) :: m) exp
-                          in
-      (insert k one spt,Let t (SOME v) x
-                              (Let t (SOME nm) (flatLang_Var_local
-                                t v) exp2)))`;
-   `compile_pat_bindings t i ((Pref p,k,x) :: m) exp = (
-      let nm = enc_num_to_name (i + 1) in
-      let (spt,exp2) = compile_pat_bindings t (i + 2)
-          ((p,i + 1,flatLang_Var_local t nm) :: m) exp in
-      (insert k one spt,Let t (SOME nm) (App t (El 0) [x]) exp2))`];;
+(* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw
+   [MAP_MAP_o, o_DEF, UNCURRY, SUM_APPEND, pat1_size] \\ simp
+   [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
+let compile_pat_bindings_def = cake_define_wf
+  `MEASURE (\(t,i,m,exp). SUM (MAP (pat_size o FST) m) + LENGTH m)`
+  `compile_pat_bindings _1 _2 [] exp = (LN,exp) /\
+   compile_pat_bindings t i ((Pany,_3,_4) :: m) exp =
+     compile_pat_bindings t i m exp /\
+   compile_pat_bindings t i ((Pvar s,k,x) :: m) exp = (
+     let (spt,exp2) = compile_pat_bindings t i m exp in
+     (insert k one spt,Let t (SOME s) x exp2)) /\
+   compile_pat_bindings t i ((Plit _5,_6,_7) :: m) exp =
+     compile_pat_bindings t i m exp /\
+   compile_pat_bindings t i ((Pcon _8 ps,k,x) :: m) exp = (
+     let j_nms = MAP (\(j,p). let k = i + 1 + j in
+         let nm = enc_num_to_name k in
+         ((j,nm),(p,k,flatLang_Var_local t nm))) (enumerate 0 ps) in
+     let (spt,exp2) = compile_pat_bindings t (i + 2 + LENGTH ps)
+         (MAP SND j_nms ++ m) exp in
+     let j_nms_used = FILTER (\(_9,(_10,k,_11)). IS_SOME (lookup k
+       spt)) j_nms in
+     let exp3 = ITLIST (\((j,nm),_12) exp.
+         flatLang_Let t (SOME nm) (App t (El j) [x]) exp) j_nms_used
+           exp2 in
+     let spt2 = if NULL j_nms_used then spt else insert k one spt in
+     (spt2,exp3)) /\
+   compile_pat_bindings t i ((Pas p v,k,x) :: m) exp = (
+     let nm = enc_num_to_name (i + 1) in
+     let (spt,exp2) = compile_pat_bindings t (i + 2)
+                       ((p,i + 1,flatLang_Var_local t nm) :: m) exp
+                         in
+     (insert k one spt,Let t (SOME v) x
+                             (Let t (SOME nm) (flatLang_Var_local t
+                               v) exp2))) /\
+   compile_pat_bindings t i ((Pref p,k,x) :: m) exp = (
+     let nm = enc_num_to_name (i + 1) in
+     let (spt,exp2) = compile_pat_bindings t (i + 2)
+         ((p,i + 1,flatLang_Var_local t nm) :: m) exp in
+     (insert k one spt,Let t (SOME nm) (App t (El 0) [x]) exp2))`;;
 
 let compile_pat_rhs_def = cake_define
   `compile_pat_rhs t i v (p,exp) =
@@ -131,18 +133,18 @@ let simp_guard_def = cake_define
           -> w | _13 -> Not v)
       | x -> x`;;
 
-let decode_guard_def = cake_define_list
-  [`decode_guard t v (Not gd) = App t (flatLang_Src ast_Equality)
-  [decode_guard t v gd; Bool t F]`;
-   `decode_guard t v (pattern_semantics_Conj gd1 gd2) = SmartIf t
-  (decode_guard t v gd1)
-      (decode_guard t v gd2) (Bool t F)`;
-   `decode_guard t v (pattern_semantics_Disj gd1 gd2) = SmartIf t
-  (decode_guard t v gd1) (Bool t T)
-      (decode_guard t v gd2)`;
-   `decode_guard t v pattern_semantics_True = Bool t T`;
-   `decode_guard t v (pattern_semantics_PosTest pos test) =
-  decode_test t test (decode_pos t v pos)`];;
+let decode_guard_def = cake_define
+  `decode_guard t v (Not gd) = App t (flatLang_Src ast_Equality)
+  [decode_guard t v gd; Bool t F] /\
+   decode_guard t v (pattern_semantics_Conj gd1 gd2) = SmartIf t
+     (decode_guard t v gd1)
+     (decode_guard t v gd2) (Bool t F) /\
+   decode_guard t v (pattern_semantics_Disj gd1 gd2) = SmartIf t
+     (decode_guard t v gd1) (Bool t T)
+     (decode_guard t v gd2) /\
+   decode_guard t v pattern_semantics_True = Bool t T /\
+   decode_guard t v (pattern_semantics_PosTest pos test) =
+     decode_test t test (decode_pos t v pos)`;;
 
 let decode_dtree_def = cake_define
   `decode_dtree t br_spt v df pattern_semantics$Fail =

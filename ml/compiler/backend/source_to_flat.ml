@@ -49,21 +49,24 @@ let environment_store_FIELDS = define_record "environment_store"
    "env_gens","(source_to_flat_environment sptree_num_map) \
    sptree_num_map"];;
 
-let compile_var_def = cake_define_list
-  [`compile_var t (Glob _1 i) = App t (flatLang_GlobalVarLookup i) []`;
-   `compile_var t (Local _2 s) = flatLang_Var_local t s`];;
+let compile_var_def = cake_define
+  `compile_var t (Glob _1 i) = App t (flatLang_GlobalVarLookup i) [] /\
+   compile_var t (Local _2 s) = flatLang_Var_local t s`;;
 
-let compile_pat_def = cake_define_list
-  [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
-   `compile_pat env Pany = Pany`;
-   `compile_pat env (Plit l) = Plit l`;
-   `compile_pat env (ast_Pcon id ps) =
-        flatLang_Pcon
-          (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id))
-          (MAP (compile_pat env) ps)`;
-   `compile_pat env (Pref p) = Pref (compile_pat env p)`;
-   `compile_pat env (Pas p i) = Pas (compile_pat env p) i`;
-   `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
+(* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
+   SUM_APPEND] *)
+let compile_pat_def = cake_define_wf
+  `MEASURE (pat_size o SND)`
+  `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
+   (compile_pat env Pany = Pany) /\
+   (compile_pat env (Plit l) = Plit l) /\
+   (compile_pat env (ast_Pcon id ps) =
+     flatLang_Pcon
+       (OPTION_JOIN (OPTION_MAP (nsLookup (?_c env)) id))
+       (MAP (compile_pat env) ps)) /\
+   (compile_pat env (Pref p) = Pref (compile_pat env p)) /\
+   (compile_pat env (Pas p i) = Pas (compile_pat env p) i) /\
+   (compile_pat env (ast_Ptannot p t) = compile_pat env p)`;;
 
 let pat_tups_def = cake_define
   `(pat_tups t [] = []) /\

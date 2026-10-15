@@ -522,122 +522,117 @@ val maybe_handleRef_def = PmatchHeuristics.with_classic_heuristic Define
   maybe_handleRef p = p’
 *)
 
-let ptree_Pattern_def = cake_define_list
-  [`ptree_Pattern nt' (Lf _69) = NONE`;
-   `ptree_Pattern nt' (Nd nm args) =
-        (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE
-          else if FST nm = (INL:MMLnonT->MMLnonT+num) nPbase then
-          match args with
-              [vic] ->
-              ptree_Pattern nPtuple vic ++
-              monad_bind (ptree_ConstructorName vic) (\
-                 cname.
-                 SOME (Pcon (SOME cname) [])) ++
-              monad_bind (ptree_V vic) (\vname. SOME (Pvar vname))
-                ++
-              monad_bind (destLf vic) (\
-                lf. monad_bind (destTOK lf) (\
-                t.
-                (monad_bind (destIntT t) (\i. return (Plit
-                  (ast_IntLit i))) ++
-                 monad_bind (destStringT t) (\s. return (Plit
-                   (ast_StrLit s))) ++
-                 monad_bind (destCharT t) (\c. return (Plit
-                   (ast_Char c)))))) ++
-              monad_ignore_bind (assert (tokcheck vic
-                tokens_UnderbarT)) (return Pany) | [lb; rb] ->
-              (if tokcheckl args [tokens_LbrackT; tokens_RbrackT]
-                then
-                SOME (Pcon (SOME (Short (implode "[]"))) []) else if
-                  tokcheckl [lb] [tokens_OpT] then
-                monad_bind (ptree_OpID rb) (\e. EtoPat e) else NONE)
-                  | [lb; plistpt; rb] ->
-              monad_ignore_bind
-                (assert (tokcheckl [lb; rb] [tokens_LbrackT;
-                  tokens_RbrackT])) (monad_bind (ptree_Plist plistpt) (\
-                plist.
-                SOME (ITLIST (\p a. Pcon (SOME (Short (implode
-                  "::"))) [p; a])
-                            plist
-                            (Pcon (SOME (Short (implode "[]")))
-                              [])))) | _70 -> NONE else if FST nm =
-                              (INL:MMLnonT->MMLnonT+num) nPConApp then
-          match args with
-            [cn] ->
-            monad_bind (ptree_ConstructorName cn) (\
+let ptree_Pattern_def = cake_define
+  `(ptree_Pattern nt' (Lf _69) = NONE) /\
+   (ptree_Pattern nt' (Nd nm args) =
+     (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE else if
+       FST nm = (INL:MMLnonT->MMLnonT+num) nPbase then
+       match args with
+           [vic] ->
+           ptree_Pattern nPtuple vic ++
+           monad_bind (ptree_ConstructorName vic) (\
               cname.
-              return (Pcon (SOME cname) [])) | [capp_pt; base_pt] ->
-            monad_bind (ptree_Pattern nPConApp capp_pt) (\
-              capp. monad_bind (ptree_Pattern nPbase base_pt) (\
-              base.
-              return (Papply capp base))) | _71 -> fail else if FST
-                nm = (INL:MMLnonT->MMLnonT+num) nPapp then
-          match args with
-              [pb] -> ptree_Pattern nPbase pb | [capp_pt; ppt] ->
-              monad_bind (ptree_Pattern nPConApp capp_pt) (\
-                capp. monad_bind (ptree_Pattern nPbase ppt) (\
-                b.
-                return (maybe_handleRef (Papply capp b)))) | _72 ->
-                  NONE else if FST nm = (INL:MMLnonT->MMLnonT+num)
-                  nPcons then
-          match args with
-              [papt] -> ptree_Pattern nPapp papt | [papt; cons_t;
-                pcons_pt] ->
-              monad_ignore_bind
-                (assert (tokcheck cons_t (tokens_SymbolT (implode
-                  "::")))) (monad_bind (ptree_Pattern nPapp papt) (\
-                pa. monad_bind (ptree_Pattern nPcons pcons_pt) (\
-                patt.
-                SOME (Pcon (SOME (Short (implode "::"))) [pa;
-                  patt])))) | _73 -> NONE else if FST nm =
-                  (INL:MMLnonT->MMLnonT+num) nPas then
-          match args with
-              [papt] -> ptree_Pattern nPcons papt | [vt; as_t; papt]
-                ->
-              monad_ignore_bind
-                (assert (tokcheck as_t tokens_AsT)) (monad_bind
-                  (ptree_Pattern nPcons papt) (\
-                pa. monad_bind (ptree_V vt) (\
-                vtt.
-                SOME (Pas pa vtt)))) | _74 -> fail else if FST nm =
-                  (INL:MMLnonT->MMLnonT+num) nPattern then
-          match args with
-              [pas] -> ptree_Pattern nPas pas | [pas_pt; colon_t;
-                type_pt] ->
-              monad_ignore_bind
-                (assert (tokcheck colon_t tokens_ColonT))
-                  (monad_bind (ptree_Pattern nPas pas_pt) (\
-                pc. monad_bind (ptree_Type nType type_pt) (\
-                ty.
-                return (ast_Ptannot pc ty)))) | _75 -> fail else if
-                  FST nm = (INL:MMLnonT->MMLnonT+num) nPtuple then
-          match args with
-              [lp; rp] -> monad_ignore_bind (assert (tokcheckl [lp;
-                rp] [tokens_LparT; tokens_RparT])) (
-                             return (Pcon NONE [])) | [lp; pl_pt;
-                               rp] ->
-              monad_ignore_bind
-                (assert (tokcheckl [lp; rp] [tokens_LparT;
-                  tokens_RparT])) (monad_bind (ptree_Plist pl_pt) (\
-                pl.
-                match pl with
-                    [] -> NONE | [p] -> SOME p | _76 -> SOME (Pcon
-                      NONE pl))) | _77 -> NONE else NONE)`;
-   `ptree_Plist (Lf _78) = NONE`;
-   `ptree_Plist (Nd nm args) =
-         (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPatternList)
-           then NONE else
-           match args with
-               [p_pt] ->
-               monad_bind (ptree_Pattern nPattern p_pt) (\
-                 p.
-                 SOME [p]) | [p; ct; pl] ->
-               monad_ignore_bind
-                 (assert (tokcheck ct tokens_CommaT)) (monad_bind
-                   (ptree_Pattern nPattern p) (\
-                 hdpat. monad_bind (ptree_Plist pl) (\
-                 tlpats.
-                 SOME (hdpat :: tlpats)))) | _79 -> NONE)`];;
+              SOME (Pcon (SOME cname) [])) ++
+           monad_bind (ptree_V vic) (\vname. SOME (Pvar vname)) ++
+           monad_bind (destLf vic) (\
+             lf. monad_bind (destTOK lf) (\
+             t.
+             (monad_bind (destIntT t) (\i. return (Plit (ast_IntLit
+               i))) ++
+              monad_bind (destStringT t) (\s. return (Plit
+                (ast_StrLit s))) ++
+              monad_bind (destCharT t) (\c. return (Plit (ast_Char
+                c)))))) ++
+           monad_ignore_bind (assert (tokcheck vic tokens_UnderbarT))
+             (return Pany) | [lb; rb] ->
+           (if tokcheckl args [tokens_LbrackT; tokens_RbrackT] then
+             SOME (Pcon (SOME (Short (implode "[]"))) []) else if
+               tokcheckl [lb] [tokens_OpT] then
+             monad_bind (ptree_OpID rb) (\e. EtoPat e) else NONE) |
+               [lb; plistpt; rb] ->
+           monad_ignore_bind
+             (assert (tokcheckl [lb; rb] [tokens_LbrackT;
+               tokens_RbrackT])) (monad_bind (ptree_Plist plistpt) (\
+             plist.
+             SOME (ITLIST (\p a. Pcon (SOME (Short (implode "::")))
+               [p; a])
+                         plist
+                         (Pcon (SOME (Short (implode "[]"))) [])))) |
+                           _70 -> NONE else if FST nm =
+                           (INL:MMLnonT->MMLnonT+num) nPConApp then
+       match args with
+         [cn] ->
+         monad_bind (ptree_ConstructorName cn) (\
+           cname.
+           return (Pcon (SOME cname) [])) | [capp_pt; base_pt] ->
+         monad_bind (ptree_Pattern nPConApp capp_pt) (\
+           capp. monad_bind (ptree_Pattern nPbase base_pt) (\
+           base.
+           return (Papply capp base))) | _71 -> fail else if FST nm =
+             (INL:MMLnonT->MMLnonT+num) nPapp then
+       match args with
+           [pb] -> ptree_Pattern nPbase pb | [capp_pt; ppt] ->
+           monad_bind (ptree_Pattern nPConApp capp_pt) (\
+             capp. monad_bind (ptree_Pattern nPbase ppt) (\
+             b.
+             return (maybe_handleRef (Papply capp b)))) | _72 -> NONE
+               else if FST nm = (INL:MMLnonT->MMLnonT+num) nPcons then
+       match args with
+           [papt] -> ptree_Pattern nPapp papt | [papt; cons_t;
+             pcons_pt] ->
+           monad_ignore_bind
+             (assert (tokcheck cons_t (tokens_SymbolT (implode
+               "::")))) (monad_bind (ptree_Pattern nPapp papt) (\
+             pa. monad_bind (ptree_Pattern nPcons pcons_pt) (\
+             patt.
+             SOME (Pcon (SOME (Short (implode "::"))) [pa; patt]))))
+               | _73 -> NONE else if FST nm = (INL:MMLnonT->MMLnonT+num)
+               nPas then
+       match args with
+           [papt] -> ptree_Pattern nPcons papt | [vt; as_t; papt] ->
+           monad_ignore_bind
+             (assert (tokcheck as_t tokens_AsT)) (monad_bind
+               (ptree_Pattern nPcons papt) (\
+             pa. monad_bind (ptree_V vt) (\
+             vtt.
+             SOME (Pas pa vtt)))) | _74 -> fail else if FST nm =
+               (INL:MMLnonT->MMLnonT+num) nPattern then
+       match args with
+           [pas] -> ptree_Pattern nPas pas | [pas_pt; colon_t;
+             type_pt] ->
+           monad_ignore_bind
+             (assert (tokcheck colon_t tokens_ColonT)) (monad_bind
+               (ptree_Pattern nPas pas_pt) (\
+             pc. monad_bind (ptree_Type nType type_pt) (\
+             ty.
+             return (ast_Ptannot pc ty)))) | _75 -> fail else if FST
+               nm = (INL:MMLnonT->MMLnonT+num) nPtuple then
+       match args with
+           [lp; rp] -> monad_ignore_bind (assert (tokcheckl [lp; rp]
+             [tokens_LparT; tokens_RparT])) (
+                          return (Pcon NONE [])) | [lp; pl_pt; rp] ->
+           monad_ignore_bind
+             (assert (tokcheckl [lp; rp] [tokens_LparT;
+               tokens_RparT])) (monad_bind (ptree_Plist pl_pt) (\
+             pl.
+             match pl with
+                 [] -> NONE | [p] -> SOME p | _76 -> SOME (Pcon NONE
+                   pl))) | _77 -> NONE else NONE)) /\
+   (ptree_Plist (Lf _78) = NONE) /\
+   (ptree_Plist (Nd nm args) =
+      (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPatternList) then
+        NONE else
+        match args with
+            [p_pt] ->
+            monad_bind (ptree_Pattern nPattern p_pt) (\
+              p.
+              SOME [p]) | [p; ct; pl] ->
+            monad_ignore_bind
+              (assert (tokcheck ct tokens_CommaT)) (monad_bind
+                (ptree_Pattern nPattern p) (\
+              hdpat. monad_bind (ptree_Plist pl) (\
+              tlpats.
+              SOME (hdpat :: tlpats)))) | _79 -> NONE))`;;
 
 new_type_abbrev("ptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 

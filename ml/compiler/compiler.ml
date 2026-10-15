@@ -375,28 +375,27 @@ let compile_pancake_def = cake_define
              (bytes,data,c),td,MAP StaticError warns))))`;;
 
 (* The top-level compiler *)
-let error_to_str_def = cake_define_list
-  [`error_to_str (ParseError s) =
-         concat [(implode "### ERROR: parse error\n"); s; (implode
-           "\n")]`;
-   `error_to_str (TypeError s) =
-         (if (if strlen s = 0 then T else
-             if strsub s 0 = (CHR 10) then F else T) then
-           concat [(implode "### ERROR: type error\n"); s;
-             (implode "\n")] else s)`;
-   `error_to_str (ConfigError s) = concat [(implode
-  "### ERROR: config error\n"); s; (implode "\n")]`;
-   `error_to_str AssembleError = (implode
-  "### ERROR: assembly error\n")`;
-   `error_to_str (StaticError e) =
-        (match e with
-          ScopeErr s -> concat [(implode
-            "### ERROR: scope error\n"); s; (implode "\n")] |
-            WarningErr s -> concat [(implode "# WARNING:\n"); s;
-            (implode "\n")] | GenErr s -> concat [(implode
-            "### ERROR: static error\n"); s; (implode "\n")] |
-            ShapeErr s -> concat [(implode
-            "### ERROR: shape error\n"); s; (implode "\n")])`];;
+let error_to_str_def = cake_define
+  `(error_to_str (ParseError s) =
+      concat [(implode "### ERROR: parse error\n"); s; (implode
+        "\n")]) /\
+   (error_to_str (TypeError s) =
+      (if (if strlen s = 0 then T else
+          if strsub s 0 = (CHR 10) then F else T) then
+        concat [(implode "### ERROR: type error\n"); s; (implode
+          "\n")] else s)) /\
+   (error_to_str (ConfigError s) = concat [(implode
+     "### ERROR: config error\n"); s; (implode "\n")]) /\
+   (error_to_str AssembleError = (implode
+     "### ERROR: assembly error\n")) /\
+   (error_to_str (StaticError e) =
+     (match e with
+       ScopeErr s -> concat [(implode "### ERROR: scope error\n");
+         s; (implode "\n")] | WarningErr s -> concat [(implode
+         "# WARNING:\n"); s; (implode "\n")] | GenErr s -> concat
+         [(implode "### ERROR: static error\n"); s; (implode "\n")] |
+         ShapeErr s -> concat [(implode "### ERROR: shape error\n");
+         s; (implode "\n")]))`;;
 
 let is_error_msg_def = cake_define
   `is_error_msg x = isPrefix (implode "###") x`;;

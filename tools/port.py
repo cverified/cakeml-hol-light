@@ -484,22 +484,29 @@ class Porter:
     if len(cls) < 2: return False
     global CONS
     CONS = self.ctx.cons
+    # the type of a variable in a pattern is the type of the
+    # argument of the constructor it sits in; the clause form is
+    # only needed where those types can differ
     where = {}
-    def walk(p, path):
+    def walk(p, ty):
       while p.kind in ('paren', 'typed'): p = p.e
       if p.kind == 'id':
-        if p.name in CONS or p.name in hterm.HLCONS: return
-        where.setdefault(p.name, set()).add(path)
+        # a wildcard is a fresh variable in every clause anyway
+        if (p.name == '_' or p.name in CONS or
+            p.name in hterm.HLCONS): return
+        where.setdefault(p.name, set()).add(ty)
         return
       if p.kind == 'app':
         h, args = hterm.strip_app(p)
         nm = h.name if h.kind == 'id' else '?'
-        for j, a in enumerate(args): walk(a, path + (nm, j))
+        for j, a in enumerate(args):
+          tys = self.db.con_argty.get((nm, j))
+          walk(a, min(tys) if tys and len(tys) == 1 else (nm, j))
         return
       if p.kind == 'infix':
-        walk(p.l, path + (p.op, 0)); walk(p.r, path + (p.op, 1))
+        walk(p.l, (p.op, 0)); walk(p.r, (p.op, 1))
     for _, args, _ in cls:
-      for i, a in enumerate(args): walk(a, (i,))
+      for i, a in enumerate(args): walk(a, ('arg', i))
     return any(len(v) > 1 for v in where.values())
 
   def multi_pattern(self, body):
