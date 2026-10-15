@@ -904,6 +904,13 @@ class Ctx:
     if n in self.defining:
       return self.names.get((self.thy, n), self.names.get(n, n))
     if n in self.overloaded: return n
+    # the size function of a datatype is called after the type, so
+    # it follows the name that the port gives the type (HOL4's
+    # exp_size of closLang is closLang_exp_size)
+    if (n.endswith('_size') and (self.thy, n) not in self.names
+        and n not in self.names):
+      ty = self.tyname(n[:-len('_size')])
+      if ty != n[:-len('_size')]: return ty + '_size'
     return self.names.get((self.thy, n), self.names.get(n, n))
 
   def tyname(self, n):

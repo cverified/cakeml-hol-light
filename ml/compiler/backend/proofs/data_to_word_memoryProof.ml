@@ -250,11 +250,11 @@ let bc_ref_inv_def = cake_define
                  (l ++ [c] ++ r)) | _12 -> F)`;;
 
 (* TODO: MOVE *)
-let _ = size_thms "v";;
+let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ rpt strip_tac \\ Induct_on `xs` \\ srw_tac []
    [v_size_def] \\ res_tac \\ DECIDE_TAC *)
 let v_all_ts_def = cake_define_wf
-  `MEASURE (v_size)`
+  `MEASURE (dataSem_v_size)`
   `v_all_ts x1 =
       match x1 with
         (Block ts _13 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
@@ -1048,11 +1048,11 @@ let v_same_type_def = cake_define
         | ((RefPtr _43 _44),(RefPtr _45 _46)) -> T
         | (_47,_48) -> F`;;
 
-let _ = size_thms "v";;
+let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ ntac 2 gen_tac \\ Induct \\ rw[v_size_def] \\
    rw[] \\ res_tac \\ rw[] *)
 let v_depth_def = cake_define_wf
-  `MEASURE v_size`
+  `MEASURE dataSem_v_size`
   `v_depth x1 =
         match x1 with
           (Block _49 _50 ls:dataSem_v) -> (if NULL ls then 0 else 1)

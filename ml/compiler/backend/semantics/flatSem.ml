@@ -730,8 +730,9 @@ let exp_alt_size_def = cake_define_list
     1 + (mlstring_size a0 + (mlstring_size a1 +
       flatSem_exp_alt_size a2))`;
    `flatSem_exp_alt_size (App a0 a1 a2:flatLang_exp) =
-    1 + (tra_size a0 + (op_size a1 + exp6_alt_size a2)) + (if a1
-      = flatLang_Src (ast_ThunkOp ForceThunk) then 100 else 0)`;
+    1 + (tra_size a0 + (flatLang_op_size a1 + exp6_alt_size a2))
+      + (if a1 = flatLang_Src (ast_ThunkOp ForceThunk) then 100 else
+      0)`;
    `flatSem_exp_alt_size (If a0 a1 a2 a3:flatLang_exp) =
     1 + (tra_size a0 + (flatSem_exp_alt_size a1 +
       (flatSem_exp_alt_size a2 + flatSem_exp_alt_size a3)))`;
@@ -756,8 +757,8 @@ let exp_alt_size_def = cake_define_list
   flatSem_exp3_alt_size a1)`;
    `exp4_alt_size (a0,a1) = 1 + (mlstring_size a0 +
   flatSem_exp_alt_size a1)`;
-   `exp5_alt_size (a0,a1) = 1 + (pat_size a0 + flatSem_exp_alt_size
-  a1)`;
+   `exp5_alt_size (a0,a1) = 1 + (flatLang_pat_size a0 +
+  flatSem_exp_alt_size a1)`;
    `exp6_alt_size [] = 0`;
    `exp6_alt_size (a0 :: a1) = 1 + (flatSem_exp_alt_size a0 +
   exp6_alt_size a1)`];;

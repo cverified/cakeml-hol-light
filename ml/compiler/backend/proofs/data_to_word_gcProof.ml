@@ -253,7 +253,7 @@ let state_rel_thm = cake_define
           IS_SOME (sptree_lookup (adjust_var n) (state_locals t))) /\
      EVERY2 data_to_word_gcProof_stack_rel (stack s) (stack t) /\
      EVERY2 contains_loc (stack t) locs /\
-     option_le (OPTION_MAP2 (+) (stack_size (stack t))
+     option_le (OPTION_MAP2 (+) (dataSem_stack_size (stack t))
        (state_locals_size t)) (state_stack_max t) /\
      option_le (state_stack_max t) (state_stack_max s) /\
        wordSem_state_stack_size

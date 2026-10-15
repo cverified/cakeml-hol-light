@@ -71,13 +71,13 @@ val pull_ops_every_var_exp = Q.prove(`
 (*All ops are 2 args. Technically, we should probably check that Sub has
    2 args. However, the semantics already checks that and it will get
    removed later*)
-let _ = size_thms "exp";;
+let _ = size_thms "wordLang_exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ full_simp_tac(srw_ss())[exp_size_def] \\ TRY
    (DECIDE_TAC) *)
 let binary_branch_exp_def = cake_define_wf
-  `MEASURE (exp_size ARB)`
+  `MEASURE (wordLang_exp_size ARB)`
   `binary_branch_exp exp =
         match exp with
           wordLang_Op Sub exps -> EVERY (binary_branch_exp) exps

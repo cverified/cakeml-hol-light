@@ -50,14 +50,13 @@ let mk_Branch_def = cake_define
      if t2 = word_depth_Unknown then t2 else
        word_depth_Branch t1 t2)`;;
 
-let _ = size_thms "prog";;
-let _ = size_thms "sptree";;
+let _ = size_thms "wordLang_prog";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs [size_delete] \\
    imp_res_tac miscTheory.lookup_zero \\ fs [] *)
 let call_graph_def = cake_define_wf
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
          (\(funs,n,ns,total,p). (sptree_size funs,total - LENGTH
-           ns,prog_size (K 0) p)))`
+           ns,wordLang_prog_size (K 0) p)))`
   `call_graph funs n ns total x5 =
         match x5 with
           wordLang_Seq p1 p2 ->

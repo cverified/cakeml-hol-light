@@ -294,12 +294,12 @@ let alloc_arg_def = cake_define
 
 (* stack_remove requires that all register arguments are bounded by k *)
 
-let _ = size_thms "exp";;
+let _ = size_thms "wordLang_exp";;
 (* HOL4 termination: \\ simp[] \\ Induct \\
    simp[wordLangTheory.exp_size_def] \\ srw_tac[][] \\ res_tac \\
    simp[] *)
 let reg_bound_exp_def = cake_define_wf
-  `MEASURE ((exp_size ARB) o FST)`
+  `MEASURE ((wordLang_exp_size ARB) o FST)`
   `reg_bound_exp x1 k =
         match x1 with
           wordLang_Var n -> n < k

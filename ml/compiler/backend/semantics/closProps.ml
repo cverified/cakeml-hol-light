@@ -66,11 +66,11 @@ let code_locs_def = cake_define_list
    `code_locs [closLang_Call _13 ticks dest xs] =
          code_locs xs`];;
 
-let _ = size_thms "exp";;
+let _ = size_thms "flatLang_exp";;
 let _ = size_thms "list";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 let contains_App_SOME_def = cake_define_wf
-  `MEASURE (list_size exp_size o SND)`
+  `MEASURE (list_size flatLang_exp_size o SND)`
   `contains_App_SOME max_app x2 =
         match x2 with
           [] -> F
@@ -587,7 +587,6 @@ hol4_overload "set_globals" "closProps_set_globals";;
 *)
 
 (* value is setglobal-closure free *)
-let _ = size_thms "v";;
 (* HOL4 termination: >> simp[v_size_def] >> rpt strip_tac >>
    imp_res_tac v_size_lemma >> simp[] *)
 let vsgc_free_def = cake_define_wf

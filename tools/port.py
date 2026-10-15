@@ -539,9 +539,18 @@ class Porter:
          it to be there; the port makes the size functions when a
          definition first needs one, which is too late for the
          measure itself"""
+      anc = self.db.ancestors(self.thy) | {self.thy}
+      types = set(self.tnm(ty) for (t2, ty) in self.db.datatypes
+                  if t2 in anc)
       out = ''
       for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+)_size\b",
                                       text))):
+        # a constant whose name happens to end in _size is not the
+        # size function of a datatype (sptree's size is sptree_size
+        # in the port)
+        if ty not in types and ty not in ('list', 'pair', 'option',
+                                          'num', 'prod'):
+          continue
         out += 'let _ = size_thms "%s";;\n' % ty
       return out
 

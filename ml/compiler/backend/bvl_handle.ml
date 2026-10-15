@@ -288,11 +288,11 @@ let dest_Seq_def = cake_define
         | _4 -> NONE`;;
 hol4_overload "dest_Seq" "bvl_handle_dest_Seq";;
 
-let _ = size_thms "exp";;
+let _ = size_thms "bvl_exp";;
 (* HOL4 termination: ( \\ strip_tac \\ HO_MATCH_MP_TAC (fetch "-"
    "dest_Seq_ind") \\ fs [dest_Seq_def] \\ EVAL_TAC \\ fs []):tactic *)
 let compile_seqs_def = cake_define_wf
-  `MEASURE (\(c,e,a). exp_size e)`
+  `MEASURE (\(c,e,a). bvl_exp_size e)`
   `compile_seqs cut_size e acc =
      (match bvl_handle_dest_Seq e with NONE -> (let new_e =
        compile_exp cut_size 0 e in

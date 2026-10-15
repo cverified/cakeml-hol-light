@@ -130,11 +130,11 @@ let is_rel_def = cake_define
          -> T | closLang_IntOp Greater -> T | closLang_IntOp
          closLang_GreaterEq -> T | _13 -> F)`;;
 
-let _ = size_thms "exp";;
+let _ = size_thms "bvi_exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
    fs[] *)
 let term_ok_int_def = cake_define_wf
-  `MEASURE (exp_size o SND)`
+  `MEASURE (bvi_exp_size o SND)`
   `term_ok_int ts expr =
      (match expr with
        Var i -> (if i < LENGTH ts then EL i ts = Int else F) | Op op
@@ -144,11 +144,11 @@ let term_ok_int_def = cake_define_wf
              -> is_arith op /\ term_ok_int ts x /\ term_ok_int ts y)
              | _14 -> F)`;;
 
-let _ = size_thms "exp";;
+let _ = size_thms "bvi_exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
    fs [] *)
 let term_ok_any_def = cake_define_wf
-  `MEASURE (exp_size o SND o SND)`
+  `MEASURE (bvi_exp_size o SND o SND)`
   `term_ok_any ts list expr =
         match expr with
           (Var i:bvi_exp) ->

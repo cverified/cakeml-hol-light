@@ -29,7 +29,6 @@ let num_set_tree_union_def = cake_define_list
                 BS (num_set_tree_union t1 t1') (sptree_union a b)
                     (num_set_tree_union t2 t2'))`];;
 
-let _ = size_thms "sptree";;
 (* HOL4 termination: >> rw[] >> gvs[subspt_domain, SUBSET_DEF] >>
    irule size_diff_less >> gvs[domain_union, domain_spt_fold_union,
    lookup_inter] >> EVERY_CASE_TAC >> gvs[] >> simp[PULL_EXISTS, GSYM

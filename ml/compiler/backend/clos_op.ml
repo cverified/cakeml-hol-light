@@ -183,13 +183,13 @@ let eq_direct_def = cake_define
        -> (match eq_direct_constant x y with SOME res -> SOME res |
        NONE -> eq_direct_nil x y))`;;
 
-let _ = size_thms "exp";;
+let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ Cases \\ fs [dest_Op_def] \\ Cases_on ‘o'’ \\
    fs [dest_Cons_def,exp_size_def] \\ Cases_on ‘b’ \\ fs
    [dest_Cons_def,exp_size_def] \\ Induct_on ‘l’ \\ fs [exp_size_def]
    \\ rw [] \\ res_tac \\ fs [] *)
 let cons_measure_def = cake_define_wf
-  `MEASURE exp_size`
+  `MEASURE closLang_exp_size`
   `cons_measure x =
      (match (dest_Op clos_op_dest_Cons) x with NONE -> 0 | SOME
        (_12,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;

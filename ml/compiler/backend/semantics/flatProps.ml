@@ -146,12 +146,12 @@ hol4_overload "elist_globals" "flatProps_elist_globals";;
 hol4_overload "set_globals" "flatProps_set_globals";;
 
 
-let _ = size_thms "exp";;
+let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: \\ rw [] \\ gvs
    [list_size_pair_size_MAP_FST_SND] \\ drule MEM_list_size \\
    disch_then $ qspec_then ‘exp_size’ mp_tac \\ gvs [] *)
 let esgc_free_def = cake_define_wf
-  `MEASURE exp_size`
+  `MEASURE flatLang_exp_size`
   `flatProps_esgc_free x1 =
         match x1 with
           (Raise t e:flatLang_exp) -> flatProps_esgc_free e

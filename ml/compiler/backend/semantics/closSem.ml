@@ -819,8 +819,9 @@ let exp_alt_size_def = cake_define_list
       (option_size (list_size (\x. x)) a2 +
         (closSem_exp1_alt_size a3 + closSem_exp_alt_size a4))))`;
    `closSem_exp_alt_size (closLang_Op a0 a1 a2) =
-      1 + (tra_size a0 + (op_size a1 + closSem_exp3_alt_size a2))
-        + (if a1 = ThunkOp ForceThunk then 100 else 0)`;
+      1 + (tra_size a0 + (flatLang_op_size a1 +
+        closSem_exp3_alt_size a2)) + (if a1 = ThunkOp ForceThunk then
+        100 else 0)`;
    `closSem_exp1_alt_size [] = 0`;
    `closSem_exp1_alt_size (a0 :: a1) = 1 + (closSem_exp2_alt_size a0
   + closSem_exp1_alt_size a1)`;

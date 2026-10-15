@@ -20,14 +20,13 @@ needs "semantics/ast.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+let _ = size_thms "dataSem_v";;
 let _ = size_thms "list";;
-let _ = size_thms "sptree";;
-let _ = size_thms "v";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs
    [sptreeTheory.size_delete] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [] *)
 let approx_of_def = cake_define_wf
-  `(inv_image (MEASURE I LEX MEASURE (list_size v_size))
+  `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
                              (\(lims,vs,refs). (sptree_size
                                refs,vs)))`
   `approx_of lims x2 refs =

@@ -78,11 +78,11 @@ let optimize_consts_def = cake_define
 
 (* If this expression contains a constant it should
     be head of the output operation list *)
-let _ = size_thms "exp";;
+let _ = size_thms "wordLang_exp";;
 (* HOL4 termination: \\ rw[] \\ gvs[] \\ drule MEM_list_size \\
    disch_then(qspec_then `exp_size ARB` mp_tac) \\ rw[] *)
 let pull_exp_def = cake_define_wf
-  `MEASURE (exp_size ARB)`
+  `MEASURE (wordLang_exp_size ARB)`
   `pull_exp exp =
         match exp with
           wordLang_Op Sub ls ->
@@ -108,12 +108,12 @@ let pull_exp_def = cake_define_wf
  /\
 c d
 *)
-let _ = size_thms "exp";;
+let _ = size_thms "wordLang_exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ fs[exp_size_def] \\ TRY (DECIDE_TAC) *)
 let flatten_exp_def = cake_define_wf
-  `MEASURE (exp_size ARB)`
+  `MEASURE (wordLang_exp_size ARB)`
   `flatten_exp exp =
         match exp with
           wordLang_Op Sub exps -> wordLang_Op Sub (MAP flatten_exp
@@ -178,12 +178,12 @@ let is_Lookup_CurrHeap_def = cake_define
   in temp and the value of the whole expression must be saved in tar
 *)
 
-let _ = size_thms "exp";;
+let _ = size_thms "wordLang_exp";;
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ fs[exp_size_def] \\ TRY (DECIDE_TAC) *)
 let inst_select_exp_def = cake_define_wf
-  `MEASURE (exp_size ARB o SND o SND o SND)`
+  `MEASURE (wordLang_exp_size ARB o SND o SND o SND)`
   `inst_select_exp c tar temp x4 =
         match (c,tar,temp,x4) with
           ((c:'a asm_config),(tar:num),(temp:num),wordLang_Load exp)

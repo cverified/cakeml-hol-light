@@ -246,7 +246,6 @@ let sexplit_def = cake_define
    variables.
    Unclear if this sort of special-casing is ever likely to be helpful
      *)
-let _ = size_thms "sexp";;
 (* HOL4 termination: >> simp[] >> rpt strip_tac >-
    metis_tac[arithmeticTheory.LESS_TRANS, rich_listTheory.EL_MEM,
    DECIDE ``1n < 2``, sxMEM_sizelt, dstrip_sexp_size] >-
@@ -479,7 +478,6 @@ let sexplocn_def = cake_define
               (sexplocpt (EL 0 ls))
               (sexplocpt (EL 1 ls))))`;;
 
-let _ = size_thms "sexp";;
 (* HOL4 termination: >> rw[]>> imp_res_tac dstrip_sexp_size >>
    imp_res_tac sxMEM_sizelt >> gvs[sexp_size_def,DB.fetch
    "quantHeuristics" "LIST_LENGTH_3",SF DNF_ss] *)

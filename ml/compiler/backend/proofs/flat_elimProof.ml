@@ -131,13 +131,13 @@ val new_state = mk_var ("new_state", type_of s);
 val state = mk_var ("state", type_of s);
 *)
 
-let _ = size_thms "v";;
+let _ = size_thms "flatSem_v";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] \\ rw
    [] \\ Cases_on ‘env’ \\ gvs [environment_size_def] \\ imp_res_tac
    MEM_list_size \\ pop_assum $ qspec_then ‘v_size’ mp_tac \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
 let v_has_Eval_def1 = cake_define_wf
-  `MEASURE v_size`
+  `MEASURE flatSem_v_size`
   `v_has_Eval x1 =
         match x1 with
           (Closure env _8 e:flatSem_v) -> (has_Eval e \/

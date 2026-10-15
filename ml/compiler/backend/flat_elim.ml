@@ -53,13 +53,13 @@ let total_pat_def = cake_define_list
 (* check if expression is pure in that it does not make any visible
    changes
     (other than writing to globals) *)
-let _ = size_thms "exp";;
+let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: >> rw[exp_size_def] >> fs[] >> fs [MEM_MAP,
    EXISTS_PROD] >> fs [exp1_size, exp3_size, exp6_size, MEM_SPLIT,
    SUM_APPEND, exp_size_def]>>
    simp[list_size_append,list_size_def,basicSizeTheory.pair_size_def] *)
 let is_pure_def = cake_define_wf
-  `MEASURE (\e. exp_size e)`
+  `MEASURE (\e. flatLang_exp_size e)`
   `flat_elim_is_pure x1 =
         match x1 with
           (Handle t e pes:flatLang_exp) -> flat_elim_is_pure e

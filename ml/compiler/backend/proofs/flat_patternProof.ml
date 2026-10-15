@@ -154,11 +154,11 @@ let match_rel_def = cake_define
         | (Match_type_error,Match_type_error) -> T
         | (_1,_2) -> F`;;
 
-let _ = size_thms "v";;
+let _ = size_thms "flatSem_v";;
 (* HOL4 termination: \\ rw [] \\ fs [MEM_SPLIT, SUM_APPEND,
    v_size_aux] *)
 let encode_val_def = cake_define_wf
-  `MEASURE v_size`
+  `MEASURE flatSem_v_size`
   `encode_val others =
       match others with
         (Litv l:flatSem_v) -> Litv l

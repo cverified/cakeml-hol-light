@@ -128,12 +128,12 @@ let state_rel_def = cake_define
               handle_ok [exp]))`;;
 hol4_overload "state_rel" "bvl_to_bviProof_state_rel";;
 
-let _ = size_thms "v";;
+let _ = size_thms "bvlSem_v";;
 (* HOL4 termination: \\ Induct_on `vs` \\ full_simp_tac(srw_ss())[]
    \\ SRW_TAC [] [v_size_def] \\ RES_TAC \\ FIRST_X_ASSUM (ASSUME_TAC
    o SPEC_ALL) \\ DECIDE_TAC *)
 let bv_ok_def = cake_define_wf
-  `MEASURE (v_size o SND)`
+  `MEASURE (bvlSem_v_size o SND)`
   `bv_ok refs x2 =
         match (refs,x2) with
           ((refs:(num,bvlSem_v bvlSem_ref)fmap),(RefPtr l

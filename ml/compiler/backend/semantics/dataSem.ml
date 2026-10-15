@@ -921,7 +921,6 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
 (* mirrors bviSem$finalise_cons, but threads the timestamp counter so
    that
    each block produced by the finalisation gets a fresh time stamp *)
-let _ = size_thms "sptree";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [sptreeTheory.size_delete] *)
 let finalise_cons_def = cake_define_wf

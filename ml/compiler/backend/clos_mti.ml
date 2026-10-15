@@ -40,14 +40,14 @@ let collect_apps_def = cake_define
 val collect_apps_ind = theorem "collect_apps_ind";
 *)
 
-let _ = size_thms "exp";;
+let _ = size_thms "closLang_exp";;
 let _ = size_thms "list";;
 (* HOL4 termination: >> rw[]>> imp_res_tac collect_args_size >>
    imp_res_tac collect_apps_size >> gvs[]>> drule MEM_list_size>>
    disch_then (qspec_then `pair_size (λx. x) exp_size` mp_tac)>>
    simp[list_size_pair_size_MAP_FST_SND] *)
 let intro_multi_def = cake_define_wf
-  `MEASURE (list_size exp_size o SND)`
+  `MEASURE (list_size closLang_exp_size o SND)`
   `intro_multi max_app x2 =
         match x2 with
           [] -> []
