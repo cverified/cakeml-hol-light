@@ -176,3 +176,17 @@ far: HOL Light's machinery for a definition by patterns is slow
 (use `define_prim_rec` or a `match`), and a recursive call under
 a map over a list of pairs needs the functions of the recursion
 theorem for the pair as well (`define_nested`).
+
+## What is left of the first pass
+
+Every definition is in and the files load, but the definitions
+that none of the strategies of `cake_define` makes are _assumed_
+(`ml/CHEATS.md`).  Making them is the rest of the first pass:
+
+- a definition whose clauses the port has to assume one by one is
+  a bug of the port, not of HOL Light: the clauses are
+  typechecked on their own and got types that do not fit
+  together.  `cake_define_list` says why, and `tools/bin/conjs`
+  asks the same question of a file that is loaded.
+- a definition that only the timeout stops needs a better
+  strategy or a termination measure, not more seconds.
