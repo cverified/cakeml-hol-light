@@ -298,6 +298,10 @@ let cake_instantiate_casewise_recursion,
     (* the proforma of a MAP2, which HOL Light does not have *)
     | "admissible","MAP2"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP2 gl
+    (* the proforma of a conditional, which HOL Light proves
+       but only uses in tail position *)
+    | "admissible","COND"
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_COND gl
     | "admissible","_MATCH" when
           name_of(repeat rator (last args)) = "_SEQPATTERN"
           -> (APPLY_PROFORMA_TAC ADMISSIBLE_MATCH_SEQPATTERN THEN
