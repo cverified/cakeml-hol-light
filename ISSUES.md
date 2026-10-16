@@ -383,6 +383,23 @@ sources, and why.
     not use either, is the cheaper way where the function part
     does not use the function.
 
+- A destructor that gives a _tuple_ and not an option has a
+  default for the arm that does not match (`bvl_to_bvi$destLet`
+  gives `([],Var 0)`), so its parts are not smaller than the
+  argument but not larger either and the fact says `<=`, which
+  is what the termination goal of a definition that recurses on
+  them asks for.  HOL Light's rewriting does not use the
+  injectivity of a datatype of its own accord, so the
+  assumptions are rewritten with the injectivity and the
+  distinctness of the datatypes that they mention
+  (`CON_EQ_TAC`).
+
+- The dispatch of the admissibility proof takes the proformas
+  that a later file of the library layer registers in
+  `admissible_extra`: the one of an `OPTION_MAP` is about the
+  `OPTION_MAP` that `ml/lib/hol4.ml` defines, which
+  `ml/lib/fastdef.ml` cannot name.
+
 - A termination goal may need a fact of the one side of an
   equation between its assumptions and of the other, so every
   assumption is copied with the equations used on it
