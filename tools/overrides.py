@@ -514,6 +514,37 @@ MEASURE = {
   ('mergesort', 'mergesortN_def'): 'MEASURE (\\(R,n,l). n)',
   ('mergesort', 'mergesortN_tail_def'):
     'MEASURE (\\(negate,R,n,l). n)',
+  # the size function of a list of the expressions of a language,
+  # which HOL4 writes as the auxiliary size function of the
+  # family (exp1_size of bvl, exp2_size of bvi, exp3_size of
+  # closLang, exp6_size of flatLang) and the port with list_size
+  ('bvi_let', 'compile_def'):
+    'MEASURE (list_size bvi_exp_size o SND o SND)',
+  ('bvl_to_bvi', 'global_count_sing_def'):
+    'MEASURE (\\x. match x with INL e -> bvl_exp_size e'
+    ' | INR es -> list_size bvl_exp_size es)',
+  ('clos_call', 'calls_def'):
+    'MEASURE (list_size closLang_exp_size o FST)',
+  ('clos_op', 'lift_exps_def'):
+    'MEASURE (\\(xs,n,binds). list_size closLang_exp_size xs)',
+  ('clos_to_bvl', 'compile_exps_def'):
+    'MEASURE (list_size closLang_exp_size o FST o SND)',
+  ('clos_to_bvl', 'compile_exp_sing_def'):
+    'MEASURE (\\x. match x with INL (_7,e,_8) -> bvl_exp_size e'
+    ' | INR (_9,es,_10) -> list_size closLang_exp_size es)',
+  ('clos_to_bvl', 'get_src_names_def'):
+    'MEASURE (list_size closLang_exp_size o FST)',
+  ('clos_to_bvl', 'get_src_names_sing_def'):
+    'MEASURE (\\x. match x with INL (e,_70) -> closLang_exp_size e'
+    ' | INR (es,_71) -> list_size closLang_exp_size es)',
+  ('flat_to_clos', 'compile_def'):
+    'MEASURE (list_size flatLang_exp_size o SND)',
+  ('bvlProps', 'bVarBound_def'):
+    'MEASURE (list_size bvl_exp_size o SND)',
+  ('bvlProps', 'bEvery_def'):
+    'MEASURE (list_size bvl_exp_size o SND)',
+  ('bvl_handleProof', 'handle_ok_def'):
+    'MEASURE (list_size bvl_exp_size)',
   # HOL4's exp2_size is the size function of a list of the
   # expressions of bvi
   ('bvi_inline', 'inline_exp_def'):
