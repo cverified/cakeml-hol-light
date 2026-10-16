@@ -128,6 +128,9 @@ FIELD_OF = {
   'source_to_flatProof': {'v': 'global_env',
                           'c': 'global_env'},
   'flatSem': {'v': 'flatSem_environment'},
+  # the environment that these proofs are about is flatSem's,
+  # whose v is an association list
+  'flat_to_closProof': {'v': 'flatSem_environment'},
   'typeSystem': {'v': 'type_env',
                  'c': 'type_env'},
   'clos_to_bvl': {'max_app': 'clos_to_bvl_config'},
