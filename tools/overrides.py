@@ -577,6 +577,13 @@ CON_OF = {
   # clauses that give one back do not say (Less and Equal are
   # comparison's ordering as well)
   ('stack_to_lab', 'negate_def'): {'*': 'asm'},
+  # the exp_size of the measure of these is the size function of
+  # the expressions of the theory itself (the measure says
+  # nothing about the type, and the port resolved the name to
+  # flatLang's); vsgc_free measures closSem$v_size
+  ('bvlSem', 'evaluate_def'): {'exp_size': 'bvl'},
+  ('closProps', 'contains_App_SOME_def'): {'exp_size': 'closLang'},
+  ('closProps', 'vsgc_free_def'): {'v_size': 'closSem'},
   # the stack of dataSem holds a sptree, so this is sptree's
   # toList, not the one of llist
   ('dataSem', 'extract_stack_def'): {'toList': 'sptree'},
