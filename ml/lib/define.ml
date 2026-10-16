@@ -369,6 +369,9 @@ let NUM_CONST_TAC =
 
 let cake_term_lemmas =
   ref [list_size; pair_size; option_size; num_size; bool_size;
+       (* the measure of a family of functions, which
+          candidate_measures builds, is a sum_measure *)
+       sum_measure;
        DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
        list_size_APPEND; list_size_REVERSE;
        LENGTH_TAKE_LE; LENGTH_DROP_LE];;
