@@ -337,9 +337,16 @@ let FACTS_TAC (asl,w as gl) =
   let tms =
     itlist (fun t l -> union (find_terms (fun _ -> true) t) l)
            (w :: map (concl o snd) asl) [] in
+  (* the constants of the goal and of its assumptions: a fact
+     whose own are not among them cannot match anything, and
+     there is a fact for every datatype of the port *)
+  let gcs = setify (map (fst o dest_const) (filter is_const tms)) in
   let instances th =
     let avs,bod = strip_forall(concl th) in
     let key = sel bod in
+    let kcs = map (fst o dest_const)
+                  (find_terms is_const key) in
+    if not (subset (setify kcs) gcs) then [] else
     let full t =
       try let _,tmin,tyin = term_match [] key t in
           (* the variables of the fact are the ones that the
