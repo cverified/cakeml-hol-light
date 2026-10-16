@@ -428,6 +428,15 @@ sources, and why.
   the one substitution at a time of `SUBST_VAR_TAC` this makes
   the definitions of the shape of `wordLang$max_var`.
 
+- The tail of `ml/lib/define.ml` that `tools/bin/mkpatch`
+  writes out declares the registries of the machinery again,
+  which makes them empty.  A session of a run that it is loaded
+  over keeps what the port put in them only because
+  `tmp/patchall.ml` puts them back: without the recursion
+  theorems (`the_rec_thms`) and the size functions
+  (`the_size_fns`) every candidate measure over a datatype is a
+  `\x. 0`, and the measurement says nothing.
+
 - Setting `cake_proforma` writes the dispatch of the
   admissibility proof, and the goals that no proforma takes, to
   `cakeml/tmp/proforma.txt`: that says which proforma the
