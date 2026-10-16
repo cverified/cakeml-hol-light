@@ -70,8 +70,39 @@ FIELD_DEFAULT = {
 # the record type of a variable, where one theory uses two record
 # types that have a field of the same name and the type of the
 # variable is the only thing that says which one it is
+# the theories that a source restricts its grammar to with
+# set_grammar_ancestry: a name that it writes without a theory in
+# front of it is one of these (and of their ancestors), not of
+# whichever ancestor has it (backendProof's config is backend's,
+# although compiler is an ancestor of it too)
+GRAMMAR_ANCESTRY = {
+  'backendProof': ['backend', 'backend_common', 'backendProps',
+                   'primSemEnv', 'semanticsProps', 'labProps',
+                   'source_evalProof'],
+}
+
 FIELD_VAR = {
   'typeSoundInvariants': {'tenv': 'type_env'},
+  # t is the state of wordSem and s the one of dataSem in the
+  # invariant that these relate them with
+  'data_to_word_gcProof': {'t': 'wordSem_state'},
+  # s is the state of stackSem and t the one of labSem in the
+  # invariant that these relate them with
+  'stack_to_labProof': {'s': 'stackSem_state', 't': 'labSem_state'},
+  # the state that make_init makes is a stackSem state, and the
+  # fields that it sets are of several records
+  'stack_allocProof': {'s': 'stackSem_state'},
+  # t and u are the states of wordSem that state_rel_ext relates
+  'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state'},
+  # the v of genv is the one of the global_env of the file (what
+  # FIELD_OF says), of env the one of a sem_env, of comp_map the
+  # one of source_to_flat's environment and of the local
+  # environments the one of flatSem's
+  'source_to_flatProof': {
+    'env': 'semanticPrimitives_sem_env',
+    'comp_map': 'source_to_flat_environment',
+    "env_v_local'": 'flatSem_environment',
+    'flat_env': 'flatSem_environment'},
 }
 
 FIELD_OF = {
@@ -219,6 +250,8 @@ INT_NUMERALS = set([
 # (multiword's int_op adds its two arguments in one clause and
 # compares them with &1 in another)
 INT_ARGS = {
+  # the two integers that the bignum operation is applied to
+  ('data_to_word_bignumProof', 'int_op_def'): ['i', 'j'],
   ('multiword', 'int_op_def'): ['i', 'j'],
   # n is the number of the instruction, an integer; only the
   # type of P, which is applied to n - 1, says so
@@ -253,6 +286,10 @@ ARG_TYPES = {
   # accessors that the two are compared with do not say
   ('stack_removeProof', 'state_rel_def'):
     {'s2': "('a,'c,'ffi)stackSem_state"},
+  # the state that this makes the initial one of is stackSem's,
+  # which the overloaded accessors in it do not say
+  ('stack_allocProof', 'make_init_def'):
+    {'s': "('a,'c,'ffi)stackSem_state"},
 }
 
 INT_RESULT = set([
@@ -451,6 +488,13 @@ CON_OF = {
   ('word_cse', 'word_cse_def'): {'*': 'wordLang'},
   # the comp that this is about is the one of stack_remove
   ('stack_removeProof', 'code_rel_def'): {'comp': 'stack_remove'},
+  # the size of the stack of the wordSem state, not the one of
+  # dataSem's stack
+  ('data_to_word_gcProof', 'state_rel_thm'): {'stack_size': 'wordSem'},
+  # the values that these relations are about are flatSem's
+  ('flat_patternProof', 'v_rel'): {'*': 'flatSem'},
+  # the program comparison of stack_alloc, whose pass this is
+  ('stack_allocProof', 'make_init_def'): {'prog_comp': 'stack_alloc'},
 }
 
 # NB: the key of an override is (theory, name of the OCaml

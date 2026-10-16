@@ -415,6 +415,19 @@ class Db:
     p = re.sub(r'^.*/cakeml-src/', '', p)
     return re.sub(r'Script\.sml$', '.ml', p)
 
+  def scope(self, thy):
+    """the theories whose names a theory can use without writing
+       the theory in front of them: its ancestors, or, where the
+       source restricts the grammar with set_grammar_ancestry,
+       the theories that it names and their ancestors
+       (backendProof's config is backend's, although compiler is
+       an ancestor of it as well)"""
+    g = overrides.GRAMMAR_ANCESTRY.get(thy)
+    if not g: return self.ancestors(thy)
+    out = {thy}
+    for t in g: out |= self.ancestors(t)
+    return out
+
   def ancestors(self, thy):
     seen = set(); st = [thy]
     while st:
@@ -445,7 +458,7 @@ class Db:
        that more than one theory in its scope defines.  Where only
        one theory in scope has the name, HOL4 resolves it to that
        one, so the port writes the name of that constant"""
-    anc = self.ancestors(thy) | {thy}
+    anc = self.scope(thy) | {thy}
     tykinds = ('type', 'tyabbrev')
     out = set()
     for nm in self.overloaded():
@@ -459,7 +472,7 @@ class Db:
        types it is the mapping of the type names, which is a
        different one (a type and a constant can have the same name,
        as the type v and the constant v do)"""
-    anc = self.ancestors(thy)
+    anc = self.scope(thy)
     tykinds = ('type', 'tyabbrev')
     out = {}
     for (t, nm), new in self.rename.items():
@@ -508,7 +521,7 @@ class Db:
 
   def fields_for(self, thy):
     """field name -> record type, for the records in scope"""
-    anc = self.ancestors(thy) | {thy}
+    anc = self.scope(thy) | {thy}
     out = {}; amb = collections.defaultdict(list)
     for (t, ty), flds in self.recs.items():
       if t not in anc: continue
@@ -522,7 +535,7 @@ class Db:
 
   def cons_for(self, thy):
     """the constructor names in scope, as the CakeML sources write them"""
-    anc = self.ancestors(thy) | {thy}
+    anc = self.scope(thy) | {thy}
     out = set(['NONE', 'SOME', 'NIL', 'CONS', 'INL', 'INR', 'T', 'F',
                'LN', 'LS', 'BN', 'BS'])
     for (t, ty), (cons, flds) in self.datatypes.items():
@@ -530,7 +543,7 @@ class Db:
     return out
 
   def recs_for(self, thy):
-    anc = self.ancestors(thy) | {thy}
+    anc = self.scope(thy) | {thy}
     return {self.rename.get((t, ty), ty): flds
             for (t, ty), flds in self.recs.items() if t in anc}
 
@@ -538,7 +551,7 @@ class Db:
     """the type of the argument of a constructor, as far as the
        theories in scope agree on it (the numerals of an argument
        whose type is int or real are written &n)"""
-    anc = self.ancestors(thy) | {thy}
+    anc = self.scope(thy) | {thy}
     out = {}
     for (t, con, j), ty in self.con_argty_thy.items():
       if t not in anc: continue
@@ -549,12 +562,12 @@ class Db:
 
   def overloads_for(self, thy):
     """the overloads in scope: the local ones only in their own theory"""
-    anc = self.ancestors(thy)
+    anc = self.scope(thy)
     return {nm: txt for (t, nm), (txt, local) in self.overloads.items()
             if t == thy or (t in anc and not local)}
 
   def abbrevs_for(self, thy):
-    anc = self.ancestors(thy) | {thy}
+    anc = self.scope(thy) | {thy}
     rank = {t: i for i, (t, _, _) in enumerate(self.order)}
     # HOL4's 'a set is HOL Light's A->bool
     out = {'set': (["'a"], hterm.parse_type_text("'a -> bool"))}

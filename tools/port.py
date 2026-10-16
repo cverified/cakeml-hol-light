@@ -685,7 +685,7 @@ class Porter:
          it to be there; the port makes the size functions when a
          definition first needs one, which is too late for the
          measure itself"""
-      anc = self.db.ancestors(self.thy) | {self.thy}
+      anc = self.db.scope(self.thy) | {self.thy}
       # the name that the port gives the type of that theory, not
       # the one that the name means in this theory's scope
       types = set(self.tnm(t2 + '$' + ty)
@@ -831,7 +831,7 @@ class Porter:
     t, n = nm.split('$') if '$' in nm else (None, nm)
     if n in self.conof_said: return self.conof_said[n]
     if t: return t
-    anc = self.db.ancestors(self.thy) | {self.thy}
+    anc = self.db.scope(self.thy) | {self.thy}
     ts = [x for x, k in self.db.defs.get(n, [])
           if k in kinds and x in anc]
     # the arguments that are there say more than the types that
@@ -1308,7 +1308,7 @@ class Porter:
     if ty[0] != 'op': return None
     nm = ty[1]
     if '$' in nm: return nm.split('$')[0]
-    anc = self.db.ancestors(self.thy) | {self.thy}
+    anc = self.db.scope(self.thy) | {self.thy}
     ts = [t for (t, ty2) in self.db.datatypes
           if ty2 == nm and t in anc]
     if not ts: return None

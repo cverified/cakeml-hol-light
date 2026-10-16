@@ -1291,8 +1291,16 @@ class Printer:
     if k == 'infix':
       op = e.op
       if op == '<>':
-        return self.paren('~(' + self.pr(e.l, 12) + ' = ' +
-                          self.pr(e.r, 13) + ')', PRE_APP, prec)
+        # a numeral next to a variable that holds an integer is &n
+        # here as well
+        oldint = self.ctx.intnums
+        if self.intvar(e.l) or self.intvar(e.r):
+          self.ctx.intnums = True
+        try:
+          return self.paren('~(' + self.pr(e.l, 12) + ' = ' +
+                            self.pr(e.r, 13) + ')', PRE_APP, prec)
+        finally:
+          self.ctx.intnums = oldint
       if op == 'NOTIN':
         return self.paren('~(' + self.pr(e.l, 11) + ' IN ' +
                           self.pr(e.r, 12) + ')', PRE_APP, prec)
@@ -1435,8 +1443,15 @@ class Printer:
                         PRE_APP, prec)
     if k == 'recupd':
       s = self.pr(e.e, APP)
+      # the record type of a variable that the overrides name
+      w = e.e
+      while w.kind == 'paren': w = w.e
+      while w.kind == 'typed': w = w.e
+      rec = (self.ctx.fieldvar.get(w.name)
+             if w.kind == 'id' else None)
       for i, (fld, v, fn) in enumerate(e.upds):
-        s = (self.ctx.fupd(fld) + ' ' +
+        s = ((rec + '_' + fld + '_fupd' if rec
+              else self.ctx.fupd(fld)) + ' ' +
              (self.pr(v, APP) if fn else '(K ' + self.pr(v, APP) + ')')
              + ' ' + s)
         if i < len(e.upds) - 1: s = '(' + s + ')'
