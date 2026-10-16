@@ -778,9 +778,10 @@ class Porter:
         # a constant whose name happens to end in _size is not the
         # size function of a datatype (sptree's size is sptree_size
         # in the port)
-        if ty not in types and ty not in ('list', 'pair', 'option',
-                                          'num', 'prod'):
-          continue
+        # the size function of a type of the library layer is in
+        # ml/lib/hol4.ml, and making one here would be a second
+        # constant that no lemma is about
+        if ty not in types: continue
         # a constant of the port that happens to be called after
         # the size of a type is not that size function
         # (balanced_map's size is balanced_map_size in the port)

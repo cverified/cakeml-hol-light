@@ -1882,7 +1882,17 @@ register_rec_thm pair_RECURSION;;
 
 let the_size_fns = ref ([]:(hol_type * term * hol_type list) list);;
 
+(* the types whose size function ml/lib/hol4.ml has, and whose
+   size size_fn_of_type writes with it: a size function of our
+   own for one of them would be a second constant that no lemma
+   is about *)
+
+let builtin_size_types =
+  ["list"; "option"; "prod"; "num"; "sum"; "char"; "bool"];;
+
 let define_size tyname =
+  if mem tyname builtin_size_types then
+    failwith "define_size: the library has the size function" else
   let rth = assoc tyname (!the_rec_thms) in
   let _,fns,canon = rec_thm_clauses rth in
   let numty = mk_type("num",[]) in
