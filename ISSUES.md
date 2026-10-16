@@ -316,7 +316,12 @@ sources, and why.
   `cake_term_facts` (`dest_size_fact` in `ml/lib/define.ml`);
   a part of a type that has no size function of its own counts
   for nothing, and a fact in which no part counts is not made.
-  Without it `bvl_handle$compile_seqs` could not be made.
+  Without it `bvl_handle$compile_seqs` could not be made.  An
+  arm that looks at the value of another function
+  (`clos_op$dest_Op` gives the parts when `f op` is `SOME i`)
+  has that value taken apart first, and only the lists that a
+  match still looks at are split: the variables that stand for
+  the parts are what the arm says they are.
 
 - Where HOL4's `Termination` gives a relation, the port uses it
   (`cake_define_wf`), also for a definition whose clauses are a
