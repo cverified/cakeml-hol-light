@@ -862,6 +862,73 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the termination of every evaluate: HOL4 proves it with
+  # imp_res_tac fix_clock_IMP
+  ('bvlSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. bvlSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "bvlSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
+  ('bviSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. bviSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
+  ('dataSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. dataSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "dataSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
+  ('closSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. closSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "closSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
+  ('stackSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. stackSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
   # the fact that HOL4's Termination of term_ok_int and
   # term_ok_any uses with imp_res_tac: the two arguments that
   # get_bin_args gives are smaller than the expression it took
