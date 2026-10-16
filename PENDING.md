@@ -1,9 +1,11 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 236 files of the port: 4191
-blocks, of which 4186 are in (see `tools/coverage.py`); the five
-that are not are the Pancake definitions of `compiler` below.
+`Definition` and `Inductive` of the 238 files of the port: 4198
+blocks, of which 4182 are in (see `tools/coverage.py`); the
+sixteen that are not are the eleven tail recursive definitions
+of `unify` and the five Pancake definitions of `compiler`
+below.
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way.
 
@@ -34,15 +36,26 @@ Five definitions of `compiler` are not ported: the three that
 compile Pancake and the two command line drivers that call them
 (see `ISSUES.md`).  Pancake is outside the port.
 
-Five constants have no value in the port, because HOL4 makes
-them in a way that HOL Light has no counterpart for.  The port
-declares them (`cake_declare`, which adds no axiom) and says
-nothing about their value:
+One constant has no value in the port, because HOL4 makes it in
+a way that HOL Light has no counterpart for.  The port declares
+it (`cake_declare`, which adds no axiom) and says nothing about
+its value:
 
 | constant | what HOL4 does |
 |---|---|
 | `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds |
-| `walk$vwalk`, `walkstar$walkstar`, `unifDef$oc`, `unifDef$unify` | the triangular unification algorithm, which HOL4 defines with a schema (`xDefineSchema`): the equations hold under the hypothesis that the substitution is wellfounded (`wfs s`), and the recursion terminates only then.  Only the theorems of the second pass need what they are |
+
+Four constants of the triangular unification algorithm are
+defined by the graph of their equation, because HOL4 defines
+them with a schema (`xDefineSchema`, for `vwalk` and `walkstar`)
+or with `new_specification` out of a theorem about a tail
+recursive version (`unify`): the equation holds under the
+hypothesis that the substitution is wellfounded (`wfs s`), and
+the recursion terminates only then.  The port states the graph
+of the equation as an inductive relation and takes a value of
+it (`vwalk s v = @r. VWALKR s v r`), which adds no axiom; HOL4's
+equation is a theorem of the second pass.  (`unifDef$oc` is a
+`Hol_reln` in HOL4 already, and is ported as it stands.)
 
 Eleven definitions of `unify` are not ported: the tail recursive
 versions of the unification algorithm, which HOL4 makes with ML
