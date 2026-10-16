@@ -9,16 +9,12 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/backend_passes.ml";;
-needs "compiler/backend/bvi_to_data.ml";;
-needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "compiler/backend/gc/gen_gc_partial.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/data_to_word_memoryProof.ml";;
 needs "compiler/backend/proofs/word_bignumProof.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
@@ -112,8 +108,8 @@ let len_inv_def = cake_define
 let word_heap_parts_def = cake_define
   `word_heap_parts conf p s xs =
      word_heap p (gc_state_h1 s ++ gc_state_h2 s) conf *
-     word_list (p + bytes_in_word * n2w (heap_length (gc_state_h1 s
-       ++ gc_state_h2 s))) xs *
+     misc_word_list (p + bytes_in_word * n2w (heap_length
+       (gc_state_h1 s ++ gc_state_h2 s))) xs *
      word_heap (p + bytes_in_word * n2w (heap_length (gc_state_h1 s
        ++ gc_state_h2 s) + LENGTH xs))
        (gc_state_r4 s ++ gc_state_r3 s ++ gc_state_r2 s ++
@@ -155,14 +151,14 @@ let alloc_size_def = cake_define
 let code_rel_def = cake_define
   `data_to_word_gcProof_code_rel c s_code (t_code:(num#'a wordLang_prog)
   spt) <=>
-     domain t_code = domain s_code UNION set_of_list (MAP FST (stubs
-       (:'a) c)) /\
-     EVERY (\(n,x). sptree_lookup n t_code = SOME x) (stubs (:'a) c)
-       /\
+     domain t_code = domain s_code UNION set_of_list (MAP FST
+       (data_to_word_stubs (:'a) c)) /\
+     EVERY (\(n,x). sptree_lookup n t_code = SOME x)
+       (data_to_word_stubs (:'a) c) /\
      (!n arg_count prog.
        (sptree_lookup n s_code = SOME ((arg_count:num),prog)) ==>
-       (sptree_lookup n t_code = SOME (arg_count + 1,FST (comp c n
-         2 prog))))`;;
+       (sptree_lookup n t_code = SOME (arg_count + 1,FST
+         (data_to_word_comp c n 2 prog))))`;;
 hol4_overload "code_rel" "data_to_word_gcProof_code_rel";;
 
 let stack_rel_def = cake_define
@@ -196,21 +192,21 @@ let code_oracle_rel_def = cake_define
        t_compile_oracle t_code_buffer t_data_buffer <=> buffer_buffer
      t_code_buffer = [] /\ buffer_buffer
      t_data_buffer = [] /\
-     FLOOKUP t_store CodeBuffer = SOME (Word (buffer_position
-       t_code_buffer)) /\
+     FLOOKUP t_store CodeBuffer = SOME (wordLang_Word
+       (buffer_position t_code_buffer)) /\
      FLOOKUP t_store CodeBufferEnd =
-       SOME (Word (buffer_position t_code_buffer + n2w
+       SOME (wordLang_Word (buffer_position t_code_buffer + n2w
          (buffer_space_left t_code_buffer))) /\
-     FLOOKUP t_store BitmapBuffer = SOME (Word (buffer_position
-       t_data_buffer)) /\
+     FLOOKUP t_store BitmapBuffer = SOME (wordLang_Word
+       (buffer_position t_data_buffer)) /\
      FLOOKUP t_store BitmapBufferEnd =
-       SOME (Word (buffer_position t_data_buffer +
+       SOME (wordLang_Word (buffer_position t_data_buffer +
                    bytes_in_word * n2w (buffer_space_left
                      t_data_buffer))) /\
      s_compile = (\cfg. OPTION_MAP (I ## MAP upper_w2w ## I) o
        t_compile cfg o
-                        MAP (compile_part c)) /\
-     t_compile_oracle = (I ## MAP (compile_part c)) o
+                        MAP (data_to_word_compile_part c)) /\
+     t_compile_oracle = (I ## MAP (data_to_word_compile_part c)) o
        s_compile_oracle /\
      (!n. EVERY (\(n,_21). data_num_stubs <= n) (SND
        (s_compile_oracle n)))`;;
@@ -221,8 +217,8 @@ let limits_inv_def = cake_define
      lims = t_stack_limit /\ limits_length_limit
      lims = c_len_size /\ limits_arch_64_bit
      lims = (dimindex (:'a) = 64) /\
-     heaplength = SOME (Word (bytes_in_word * (n2w (limits_heap_limit
-       lims):'a word))) /\ limits_heap_limit
+     heaplength = SOME (wordLang_Word (bytes_in_word * (n2w
+       (limits_heap_limit lims):'a word))) /\ limits_heap_limit
      lims * w2n (bytes_in_word:'a word) < dimword (:'a) /\ has_fp_ops
      lims = c_has_fp_ops /\ limits_has_fp_tops
      lims = c_has_fp_tern`;;
@@ -288,29 +284,29 @@ let init_store_ok_def = cake_define
   <=>
      (?limit' curr.
        limit' <= max_heap_limit (:'a) c /\
-       FLOOKUP store Globals = SOME (Word (n2w 0)) /\
-       FLOOKUP store GlobReal = SOME (Word curr) /\
-       FLOOKUP store GenStart = SOME (Word (n2w 0)) /\
-       FLOOKUP store CurrHeap = SOME (Word curr) /\
+       FLOOKUP store Globals = SOME (wordLang_Word (n2w 0)) /\
+       FLOOKUP store GlobReal = SOME (wordLang_Word curr) /\
+       FLOOKUP store GenStart = SOME (wordLang_Word (n2w 0)) /\
+       FLOOKUP store CurrHeap = SOME (wordLang_Word curr) /\
        FLOOKUP store OtherHeap = FLOOKUP store EndOfHeap /\
-       FLOOKUP store NextFree = SOME (Word curr) /\
+       FLOOKUP store NextFree = SOME (wordLang_Word curr) /\
        FLOOKUP store EndOfHeap =
-         SOME (Word (curr + bytes_in_word * n2w limit')) /\
+         SOME (wordLang_Word (curr + bytes_in_word * n2w limit')) /\
        FLOOKUP store TriggerGC =
-         SOME (Word (match data_to_word_config_gc_kind c with
-           data_to_word_Generational _22 -> curr | _23 -> curr +
+         SOME (wordLang_Word (match data_to_word_config_gc_kind c
+           with data_to_word_Generational _22 -> curr | _23 -> curr +
            bytes_in_word * n2w limit')) /\
        FLOOKUP store HeapLength =
-         SOME (Word (bytes_in_word * n2w limit')) /\
-       FLOOKUP store CodeBuffer = SOME (Word (buffer_position
-         code_buffer')) /\
+         SOME (wordLang_Word (bytes_in_word * n2w limit')) /\
+       FLOOKUP store CodeBuffer = SOME (wordLang_Word
+         (buffer_position code_buffer')) /\
        FLOOKUP store CodeBufferEnd =
-         SOME (Word (buffer_position code_buffer' + n2w
+         SOME (wordLang_Word (buffer_position code_buffer' + n2w
            (buffer_space_left code_buffer'))) /\
-       FLOOKUP store BitmapBuffer = SOME (Word (buffer_position
-         data_buffer')) /\
+       FLOOKUP store BitmapBuffer = SOME (wordLang_Word
+         (buffer_position data_buffer')) /\
        FLOOKUP store BitmapBufferEnd = SOME
-         (Word (buffer_position data_buffer' +
+         (wordLang_Word (buffer_position data_buffer' +
                 bytes_in_word * n2w (buffer_space_left
                   data_buffer'))) /\ buffer_buffer
        code_buffer' = [] /\ buffer_buffer
@@ -354,8 +350,8 @@ let loc_merge_def = cake_define_list
   :: loc_merge xs ys`;
    `loc_merge (wordLang_Word w :: xs) (y :: ys) = y :: loc_merge xs
   ys`;
-   `loc_merge (wordLang_Word w :: xs) [] = (Word w:'a word_loc) ::
-  xs`];;
+   `loc_merge (wordLang_Word w :: xs) [] = (wordLang_Word w:'a
+  word_loc) :: xs`];;
 
 let traverse_heap = cake_inductive
   `(!heap p1.
@@ -366,7 +362,7 @@ let traverse_heap = cake_inductive
       set_of_list vars' = set_of_list (vs1 ++ vs2) ==>
       traverse_heap heap p1 vars' p3) /\
    (!heap p1 d.
-      traverse_heap heap p1 [Data d] p1) /\
+      traverse_heap heap p1 [gc_shared_Data d] p1) /\
    (!heap p1 n t.
       MEM n p1 ==>
       traverse_heap heap p1 [gc_shared_Pointer n t] p1) /\

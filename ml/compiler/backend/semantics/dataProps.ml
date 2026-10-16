@@ -10,7 +10,6 @@
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;

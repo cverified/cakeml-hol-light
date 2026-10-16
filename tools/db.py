@@ -186,8 +186,15 @@ class Db:
           self.ovl_infix[(thy, b.name)] = (
               strip_quote(b.body).strip(), 'local' in b.attrs)
         if b.kind == 'Ancestors':
-          anc = [w for w in b.body.split()]
-          self.deps[thy] = sorted(set(self.deps.get(thy, []) + anc))
+          # a comment in the list is not an ancestor (dataSem says
+          # "data_to_word (* TODO: immoral, semantics shouldn't
+          # depend on compiler *)", whose words would be the
+          # theories compiler and semantics), and a theory that is
+          # only qualified is one all the same
+          anc = [w.split('[')[0]
+                 for w in hol4.strip_comments(b.body).split()]
+          self.deps[thy] = sorted(set(self.deps.get(thy, []) +
+                                      [a for a in anc if a]))
         if b.kind == 'Datatype':
           # the texts of the argument types of the constructors: they
           # tell whether a variable in a pattern can have different

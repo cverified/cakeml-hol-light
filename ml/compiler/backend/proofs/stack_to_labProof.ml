@@ -7,7 +7,6 @@
   Correctness proof for stack_to_lab
 *)
 
-needs "basis/pure/mlsexp.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -29,10 +28,8 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_alloc.ml";;
 needs "compiler/backend/stack_to_lab.ml";;
-needs "compiler/backend/wordLang.ml";;
 needs "lib/alignment.ml";;
 needs "lib/byte.ml";;
-needs "lib/peg.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
@@ -134,8 +131,8 @@ let state_rel_def = cake_define
          t) (labSem_state_ptr2_reg t) (labSem_state_len2_reg t)
          (labSem_state_link_reg t) /\
        (?pc'. stack_to_labProof_code_installed pc'
-              (append (FST (flatten T prog n (next_lab prog 2) []
-                []))) (labSem_state_code t) /\
+              (append (FST (stack_to_lab_flatten T prog n (next_lab
+                prog 2) [] []))) (labSem_state_code t) /\
             loc_to_pc n 0 (labSem_state_code t) = SOME pc')) /\
      domain (stackSem_state_code s) = set_of_list (MAP Section_num
        (labSem_state_code t)) /\
@@ -195,8 +192,8 @@ let result_view_def = cake_define
 let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
-          wordLang_Word (n2w 0) -> Halt Success
-        | (Word _11) -> Halt ffi_Resource_limit_hit
+          wordLang_Word (n2w 0) -> Halt ffi_Success
+        | (wordLang_Word _11) -> Halt ffi_Resource_limit_hit
         | _12 -> Error`;;
 
 let halt_view_def = cake_define
@@ -276,8 +273,8 @@ let halt_assum_def = cake_define
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
         = 0) ==>
-      (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt (Word
-        (n2w 0))),t) /\ labSem_state_ffi
+      (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt
+        (wordLang_Word (n2w 0))),t) /\ labSem_state_ffi
           t = stackSem_state_ffi s /\ labSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 
@@ -341,31 +338,32 @@ let full_make_init_def = cake_define
 let memory_assumption_def = cake_define
   `memory_assumption rnames (bitmaps:('a word) list) data_sp t =
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       (\r s. stackSem_state_regs s r) (tlookup rnames 2) t = Word
-         ptr2 /\
-       (\r s. stackSem_state_regs s r) (tlookup rnames 3) t = Word
-         ptr3 /\
-       (\r s. stackSem_state_regs s r) (tlookup rnames 4) t = Word
-         ptr4 /\ labSem_state_mem
-       t ptr2 = Word bitmap_ptr /\ labSem_state_mem
+       (\r s. stackSem_state_regs s r) (tlookup rnames 2) t =
+         wordLang_Word ptr2 /\
+       (\r s. stackSem_state_regs s r) (tlookup rnames 3) t =
+         wordLang_Word ptr3 /\
+       (\r s. stackSem_state_regs s r) (tlookup rnames 4) t =
+         wordLang_Word ptr4 /\ labSem_state_mem
+       t ptr2 = wordLang_Word bitmap_ptr /\ labSem_state_mem
        t (ptr2 + bytes_in_word) =
-           Word (bitmap_ptr + bytes_in_word * n2w (LENGTH bitmaps))
-             /\ labSem_state_mem
+           wordLang_Word (bitmap_ptr + bytes_in_word * n2w (LENGTH
+             bitmaps)) /\ labSem_state_mem
        t (ptr2 + (n2w 2) * bytes_in_word) =
-           Word (bitmap_ptr + bytes_in_word * n2w data_sp +
+           wordLang_Word (bitmap_ptr + bytes_in_word * n2w data_sp +
                  bytes_in_word * n2w (LENGTH bitmaps)) /\
                    labSem_state_mem
-       t (ptr2 + (n2w 3) * bytes_in_word) = Word (buffer_position
-         (labSem_state_code_buffer t)) /\ labSem_state_mem
+       t (ptr2 + (n2w 3) * bytes_in_word) = wordLang_Word
+         (buffer_position (labSem_state_code_buffer t)) /\
+         labSem_state_mem
        t (ptr2 + (n2w 4) * bytes_in_word) =
-           Word (buffer_position (labSem_state_code_buffer t) + n2w
-             (buffer_space_left (labSem_state_code_buffer t))) /\
-             buffer_buffer (labSem_state_code_buffer
+           wordLang_Word (buffer_position (labSem_state_code_buffer
+             t) + n2w (buffer_space_left (labSem_state_code_buffer t)))
+             /\ buffer_buffer (labSem_state_code_buffer
        t) = [] /\
        ptr2 <=+ ptr4 /\ byte_aligned ptr2 /\
        byte_aligned ptr4 /\ byte_aligned bitmap_ptr /\
        (n2w 1024) * bytes_in_word <=+ ptr4 - ptr2 /\
-      (word_list bitmap_ptr (MAP Word bitmaps) *
+      (word_list bitmap_ptr (MAP wordLang_Word bitmaps) *
        word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
          bitmaps)) data_sp *
        word_list_exists ptr2

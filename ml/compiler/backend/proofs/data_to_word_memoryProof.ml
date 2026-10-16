@@ -9,14 +9,12 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
-needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_combined.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -92,13 +90,13 @@ let bytes_def = cake_define
   list)heap_element) =
      (let ws = write_bytes bs ws is_bigendian in
        DataElement [] (LENGTH ws) (BytesTag cmp_by_contents
-         (LENGTH bs),MAP Word ws))`;;
+         (LENGTH bs),MAP wordLang_Word ws))`;;
 
 let bignum_def = cake_define
   `Bignum i =
      (let (sign,(payload:('a word) list)) = i2mw i in
-       DataElement [] (LENGTH payload) (NumTag sign,MAP Word
-         payload))`;;
+       DataElement [] (LENGTH payload) (NumTag sign,MAP
+         wordLang_Word payload))`;;
 
 let BlockNil_def = cake_define
   `BlockNil n = n2w n << 4 + (n2w 2)`;;
@@ -106,10 +104,10 @@ let BlockNil_def = cake_define
 let Word64Rep_def = cake_define
   `Word64Rep (:'a) (w:word64) =
      (if dimindex (:'a) < 64 then
-       DataElement [] 2 (Word64Tag,[Word ((63 >< 32) w); Word ((31 ><
-         0) w)]) else
-       DataElement [] 1 (Word64Tag,[Word (((63 >< 0) w):'a
-         word)]))`;;
+       DataElement [] 2 (Word64Tag,[wordLang_Word ((63 >< 32) w);
+         wordLang_Word ((31 >< 0) w)]) else
+       DataElement [] 1 (Word64Tag,[wordLang_Word (((63 >< 0)
+         w):'a word)]))`;;
 
 let ThunkBlock_def = cake_define
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
@@ -132,29 +130,31 @@ let ref_ptr_annot_def = cake_define
   `ref_ptr_annot conf x2 =
       match x2 with
         SOME (bvlSem_MutBlock tg fin l c r) ->
-     (Word (ptr_bits conf tg (LENGTH l + 1 + LENGTH r)):'a word_loc)
-      | _1 -> Word (n2w 0)`;;
+     (wordLang_Word (ptr_bits conf tg (LENGTH l + 1 + LENGTH r)):'a
+       word_loc)
+      | _1 -> wordLang_Word (n2w 0)`;;
 
 let v_inv_ck = cake_inductive
   `(small_int (:'a) i ==>
        v_inv_ck ck conf (Number i) (refs:(dataSem_v bvlSem_ref) spt)
-                  (Data (Word (Smallnum i)),f,tf,(heap:(('a
+                  (gc_shared_Data (wordLang_Word (Smallnum
+                    i)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (~small_int (:'a) i /\
      heap_lookup ptr heap = SOME (Bignum i) ==>
-       v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr (Word
-         (n2w 0)),f,tf,(heap:(('a
+       v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr
+         (wordLang_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list))) /\
    (heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
-       v_inv_ck ck conf (Word64 w) refs (gc_shared_Pointer ptr (Word
-         (n2w 0)),f,tf,(heap:(('a
+       v_inv_ck ck conf (Word64 w) refs (gc_shared_Pointer ptr
+         (wordLang_Word (n2w 0)),f,tf,(heap:(('a
          word_loc,data_to_word_memoryProof_tag#('a word_loc)
          list)heap_element) list))) /\
-   (v_inv_ck ck conf (CodePtr n) refs (Data (Loc n 0),f,tf,(heap:(('a
-     word_loc,data_to_word_memoryProof_tag#('a word_loc)
-     list)heap_element) list))) /\
+   (v_inv_ck ck conf (CodePtr n) refs (gc_shared_Data (Loc n
+     0),f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a
+     word_loc) list)heap_element) list))) /\
    (n IN FDOM f /\
      (!ev v. ~(lookup n refs = SOME (Thunk ev v))) /\
      (!tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg fin l c
@@ -172,7 +172,7 @@ let v_inv_ck = cake_inductive
      (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs
        (x,f,tf,heap)) ==>
        v_inv_ck ck conf (RefPtr F n) refs
-                  (gc_shared_Pointer (FAPPLY f n) (Word (n2w
+                  (gc_shared_Pointer (FAPPLY f n) (wordLang_Word (n2w
                     0)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
@@ -186,7 +186,8 @@ let v_inv_ck = cake_inductive
      n < dimword (:'a) DIV 16 /\
      ts = 0 ==>
        v_inv_ck ck conf (Block ts n vs) refs
-                  (Data (Word (BlockNil n)),f,tf,(heap:(('a
+                  (gc_shared_Data (wordLang_Word (BlockNil
+                    n)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
    (~(vs = []) /\
@@ -195,8 +196,8 @@ let v_inv_ck = cake_inductive
      FLOOKUP tf ts = SOME ptr /\
      heap_lookup ptr heap = SOME (BlockRep n xs) ==>
        v_inv_ck ck conf (Block ts n vs) refs
-                  (gc_shared_Pointer ptr (Word (ptr_bits conf n
-                    (LENGTH xs))),
+                  (gc_shared_Pointer ptr (wordLang_Word (ptr_bits
+                    conf n (LENGTH xs))),
                    f,tf,(heap:(('a
                      word_loc,data_to_word_memoryProof_tag#('a
                      word_loc) list)heap_element) list)))`;;
@@ -537,8 +538,8 @@ let list_to_BlockReps_def = cake_define_list
       (match l with
         [] -> [BlockRep cons_tag [h; t]] | _28 ->
           BlockRep cons_tag
-            [h; gc_shared_Pointer (a + 3) (Word (ptr_bits conf
-              cons_tag 2))] ::
+            [h; gc_shared_Pointer (a + 3) (wordLang_Word (ptr_bits
+              conf cons_tag 2))] ::
               list_to_BlockReps conf t (a + 3) l)`];;
 
 (* HOL4 ML code, not ported:
@@ -753,8 +754,10 @@ let word_addr_def = cake_define
   `word_addr conf x2 =
         match x2 with
           gc_shared_Data (Loc l1 l2) -> Loc l1 0
-        | (Data (Word v)) -> Word (v && (--(n2w 1)))
-        | (gc_shared_Pointer n w) -> Word (get_addr conf n w)`;;
+        | (gc_shared_Data (wordLang_Word v)) -> wordLang_Word (v &&
+          (--(n2w 1)))
+        | (gc_shared_Pointer n w) -> wordLang_Word (get_addr conf
+          n w)`;;
 
 let thunk_tag_to_bits_def = cake_define_list
   [`thunk_tag_to_bits Evaluated = (n2w 1)`;
@@ -800,11 +803,11 @@ let word_el_def = cake_define_list
   [`word_el (a:'a word) (Unused l) conf = word_list_exists (a:'a
   word) (l + 1)`;
    `word_el (a:'a word) (ForwardPointer n d l) conf =
-         set_sep_one (a,Word (n2w n << 2)) *
+         set_sep_one (a,wordLang_Word (n2w n << 2)) *
          word_list_exists (a + bytes_in_word) l`;
    `word_el (a:'a word) (DataElement ys l (tag,qs)) conf =
          (let (h,ts,c) = word_payload ys l tag qs conf in
-           word_list a (Word h :: ts) *
+           misc_word_list a (wordLang_Word h :: ts) *
            cond (LENGTH ts < 2 EXP (dimindex (:'a) - 4) /\
                  decode_length conf h = n2w (LENGTH ts) /\ c))`];;
 
@@ -819,7 +822,7 @@ let word_heap_def = cake_define_list
 let gen_starts_in_store_def = cake_define
   `gen_starts_in_store c x2 x3 =
       match (x2,x3) with
-        (GenState _34 gen_starts,SOME (Word w)) ->
+        (GenState _34 gen_starts,SOME (wordLang_Word w)) ->
      (!gen_sizes. data_to_word_config_gc_kind
         c = data_to_word_Generational gen_sizes ==>
         LENGTH gen_starts = LENGTH gen_sizes /\
@@ -829,9 +832,9 @@ let gen_starts_in_store_def = cake_define
 
 let glob_real_inv_def = cake_define
   `glob_real_inv c (curr:'a word) globals globreal <=>
-     (?w. globals = SOME (Word w) /\
-         globreal = SOME (Word (curr + (w >>> (shift_length c) <<
-           backend_common_word_shift (:'a)))))`;;
+     (?w. globals = SOME (wordLang_Word w) /\
+         globreal = SOME (wordLang_Word (curr + (w >>>
+           (shift_length c) << backend_common_word_shift (:'a)))))`;;
 
 let heap_in_memory_store_def = cake_define
   `heap_in_memory_store heap a sp sp1 gens c s m dm limit' <=>
@@ -845,16 +848,16 @@ let heap_in_memory_store_def = cake_define
      shift_length c < dimindex (:'a) /\ Globals IN FDOM s /\
      (?curr other.
        byte_aligned curr /\ byte_aligned other /\
-       (FLOOKUP s CurrHeap = SOME (Word (curr:'a word))) /\
-       (FLOOKUP s OtherHeap = SOME (Word other)) /\
-       (FLOOKUP s NextFree = SOME (Word (curr + bytes_in_word * n2w
-         a))) /\
-       (FLOOKUP s TriggerGC = SOME (Word (curr + bytes_in_word * n2w
-         (a + sp)))) /\
-       (FLOOKUP s EndOfHeap = SOME (Word (curr + bytes_in_word * n2w
-         (a + sp + sp1)))) /\
-       (FLOOKUP s HeapLength = SOME (Word (bytes_in_word * n2w
-         limit'))) /\
+       (FLOOKUP s CurrHeap = SOME (wordLang_Word (curr:'a word))) /\
+       (FLOOKUP s OtherHeap = SOME (wordLang_Word other)) /\
+       (FLOOKUP s NextFree = SOME (wordLang_Word (curr +
+         bytes_in_word * n2w a))) /\
+       (FLOOKUP s TriggerGC = SOME (wordLang_Word (curr +
+         bytes_in_word * n2w (a + sp)))) /\
+       (FLOOKUP s EndOfHeap = SOME (wordLang_Word (curr +
+         bytes_in_word * n2w (a + sp + sp1)))) /\
+       (FLOOKUP s HeapLength = SOME (wordLang_Word (bytes_in_word *
+         n2w limit'))) /\
        glob_real_inv c curr (FLOOKUP s Globals) (FLOOKUP s GlobReal)
          /\
        gen_starts_in_store c gens (FLOOKUP s GenStart) /\
@@ -880,7 +883,7 @@ let memory_rel_def = cake_define
 let get_real_addr_def = cake_define
   `get_real_addr conf st (w:'a word) =
      (let k = backend_common_word_shift (:'a) in
-       match FLOOKUP st CurrHeap with SOME (Word curr) ->
+       match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) ->
            (if k = shift_length conf /\ data_to_word_config_len_bits
              conf = 0 /\ data_to_word_config_tag_bits conf = 0 then SOME
              ((curr + w) - (n2w 1)) else
@@ -896,9 +899,9 @@ let get_real_offset_def = cake_define
 
 let get_real_simple_addr_def = cake_define
   `get_real_simple_addr conf st (w:'a word) =
-     (match FLOOKUP st CurrHeap with SOME (Word curr) -> SOME
-       (curr + w >>> shift_length conf << backend_common_word_shift
-       (:'a)) | _38 -> NONE)`;;
+     (match FLOOKUP st CurrHeap with SOME (wordLang_Word curr) ->
+       SOME (curr + w >>> shift_length conf <<
+       backend_common_word_shift (:'a)) | _38 -> NONE)`;;
 
 (* mirrors memory_rel_Update: writing the hole of an unfinalised
    MutBlock is
@@ -978,7 +981,7 @@ let copy_list_def = cake_define
      let m = (b =+ x) m in
      let b = b + bytes_in_word in
        if k = 0 then (if c then SOME (b,m) else NONE) else
-         match a with Loc _39 _40 -> NONE | Word a ->
+         match a with Loc _39 _40 -> NONE | wordLang_Word a ->
          (match get_real_addr c' st a with NONE -> NONE | SOME a ->
            (let c = (c /\ a + (n2w 2) * bytes_in_word IN dm /\ a +
              bytes_in_word IN dm) in
@@ -1029,7 +1032,8 @@ let word_cmp_loop_def = cake_define
   =
      (if l = (n2w 0) then SOME (n2w 1) else
        if a1 IN dm /\ a2 IN dm then
-         match (m a1,m a2) with (Word w1,Word w2) ->
+         match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2)
+           ->
              (if w1 = w2 then
                word_cmp_loop (l - (n2w 1)) (a1 - bytes_in_word)
                  (a2 - bytes_in_word) dm m else if w1 <+ w2 then
@@ -1119,7 +1123,8 @@ let word_header_def = cake_define
   `word_header c st a dm m =
      (match get_real_addr c st a with NONE -> NONE | SOME a1 ->
          (if ~(a1 IN dm) then NONE else
-           match m a1 with Word x1 -> SOME (a1,x1) | _86 -> NONE))`;;
+           match m a1 with wordLang_Word x1 -> SOME (a1,x1) | _86
+             -> NONE))`;;
 
 let fix_clock_def = cake_define_list
   [`data_to_word_memoryProof_fix_clock ck (l:num) NONE = NONE`;
@@ -1173,7 +1178,7 @@ let word_eq_def = cake_define_wf
       (if w = ((n2w 0):'a word) then SOME ((n2w 1),l,ck) else
       if ~(a1 IN dm) \/ ~(a2 IN dm) \/ (l = 0) \/ (ck = 0) then NONE
         else
-        match (m a1,m a2) with (Word w1,Word w2) ->
+        match (m a1,m a2) with (wordLang_Word w1,wordLang_Word w2) ->
          (match fix_clock (ck - 1) (l - 1) (word_eq c st dm m (l - 1)
            (ck - 1) w1 w2) with NONE -> NONE | SOME (x,l,ck') -> (if ~(x
            = (n2w 1)) then SOME (x,l,ck) else
@@ -1202,7 +1207,7 @@ let word_mem_eq_def = cake_define_list
    `word_mem_eq a (x :: xs) dm m <=>
          (if ~(a IN dm) then NONE else
          if ~isWord (m a) then NONE else
-         if ~(m a = Word x) then SOME F else
+         if ~(m a = wordLang_Word x) then SOME F else
            word_mem_eq (a + bytes_in_word) xs dm m)`];;
 
 let bignum_words_def = cake_define
@@ -1448,10 +1453,10 @@ val memory_rel_copy_array_NONE_lemma =
 let append_writes_def = cake_define_list
   [`append_writes c ptr (hdr:'a word) [] l = ARB`;
    `append_writes c ptr (hdr:'a word) (x :: xs) l =
-      Word hdr :: x ::
+      wordLang_Word hdr :: x ::
         (if xs = [] then [l] else
           let ptr = ptr + ((n2w 3) << shift_length c) in
-            Word ptr ::
+            wordLang_Word ptr ::
             append_writes c ptr hdr xs l)`];;
 
 (* --- ML lists cannot exceed heap size: --- *)
@@ -1462,8 +1467,8 @@ let walk_def = cake_define
        match some (\p.
          ?x y.
          heap_lookup ptr heap = SOME (BlockRep cons_tag [x; y]) /\
-         y = gc_shared_Pointer p (Word (ptr_bits conf cons_tag 2)))
-           with
+         y = gc_shared_Pointer p (wordLang_Word (ptr_bits conf
+           cons_tag 2))) with
          NONE -> [] | SOME p ->
            ptr :: data_to_word_memoryProof_walk conf heap p (n -
              1))`;;
@@ -1481,27 +1486,27 @@ let block_drop_def = cake_define
 
 let build_part_words_def = cake_define_list
   [`build_part_words c m (Int i:const_part) (offset:'a word) =
-      (if small_int (:'a) i then SOME (Word (Smallnum i),[]) else
-        let (sign,ws) = i2mw i in
+      (if small_int (:'a) i then SOME (wordLang_Word (Smallnum
+        i),[]) else let (sign,ws) = i2mw i in
               match encode_header c (w2n (b2w sign << 2 || ((n2w
                 3):'a word))) (LENGTH ws) with NONE -> NONE | SOME hd ->
                 SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH ws),
-                              MAP Word (hd :: ws)))`;
+                              MAP wordLang_Word (hd :: ws)))`;
    `build_part_words c m (Con t ns:const_part) (offset:'a word) =
       (if NULL ns then
-         if t < dimword (:'a) DIV 16 then SOME (Word (n2w (16 * t +
-           2)),[]) else NONE else
+         if t < dimword (:'a) DIV 16 then SOME (wordLang_Word (n2w
+           (16 * t + 2)),[]) else NONE else
          match encode_header c (4 * t) (LENGTH ns) with NONE -> NONE
            | SOME hd -> SOME (make_cons_ptr c offset t (LENGTH ns),
-                            Word hd :: (MAP m ns)))`;
+                            wordLang_Word hd :: (MAP m ns)))`;
    `build_part_words c m (W64 w:const_part) (offset:'a word) =
       (let ws = (if dimindex (:'a) < 64 then [((63 >< 32) w); ((31
         >< 0) w)] else [((63 >< 0) w):'a word]) in
          match encode_header c 3 (LENGTH ws) with NONE -> NONE |
            SOME hd -> SOME (make_ptr c offset ((n2w 0):'a word) (LENGTH
            ws),
-                            MAP Word (hd :: ws)))`;
-   `build_part_words c m (Str s:const_part) (offset:'a word) =
+                            MAP wordLang_Word (hd :: ws)))`;
+   `build_part_words c m (closLang_Str s:const_part) (offset:'a word) =
       (let bytes = MAP (n2w o ORD) (explode s) in
        let n = LENGTH bytes in
        let hd = make_byte_header c T n in
@@ -1510,8 +1515,8 @@ let build_part_words_def = cake_define_list
          if byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
             byte_len (:'a) n < 2 EXP
               data_to_word_config_len_size c then SOME (make_ptr c
-              offset ((n2w 0):'a word) (byte_len (:'a) n),MAP Word
-              (hd :: ws)) else NONE)`];;
+              offset ((n2w 0):'a word) (byte_len (:'a) n),MAP
+              wordLang_Word (hd :: ws)) else NONE)`];;
 
 let build_words_def = cake_define_list
   [`build_words c m i [] (off:'a word) = SOME (m (i - (1:num)),[])`;
@@ -1526,8 +1531,8 @@ let word_cond_add_def = cake_define
   `word_cond_add c a x3 =
       match x3 with
         (F,x) -> (x:'a word_loc)
-      | (T,Word w) -> Word (w + a << (shift_length c -
-        backend_common_word_shift (:'a)))
+      | (T,wordLang_Word w) -> wordLang_Word (w + a << (shift_length
+        c - backend_common_word_shift (:'a)))
       | (T,other) -> other`;;
 
 let good_loc_def = cake_define
@@ -1551,7 +1556,7 @@ let word_xor_bytes_def = cake_define_wf
          let (w1a,c1) = read_word dm m a1 in
          let (w2a,c2) = read_word dm m a2 in
          let a = word_xor w1a w2a in
-         let m = (a2 =+ Word (a:'a word)) m in
+         let m = (a2 =+ wordLang_Word (a:'a word)) m in
            if c1 /\ c2 then SOME m else NONE else
        let (w1a,c1) = read_word dm m a1 in
        let (w2a,c2) = read_word dm m a2 in
@@ -1559,7 +1564,8 @@ let word_xor_bytes_def = cake_define_wf
        let (w2b,c4) = read_word dm m (a2 + bytes_in_word) in
        let a = word_xor w1a w2a in
        let b = word_xor w1b w2b in
-       let m = ((a2 + bytes_in_word) =+ Word b) ((a2 =+ Word a) m) in
+       let m = ((a2 + bytes_in_word) =+ wordLang_Word b) ((a2 =+
+         wordLang_Word a) m) in
          if c1 /\ c2 /\ c3 /\ c4 then
            word_xor_bytes (a1 + (n2w 2) * bytes_in_word) (a2 + (n2w
              2) * bytes_in_word)

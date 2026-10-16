@@ -19,6 +19,10 @@ for path in files:
   if m:
     body = m.group(1)
     body = re.sub(r'\[[^\]]*\]', '', body)
+    # a comment in the list is not an ancestor (dataSem has
+    # "data_to_word (* TODO: immoral, semantics shouldn't depend
+    # on compiler *)", whose words would be theories)
+    body = re.sub(r'\(\*.*?\*\)', '', body, flags=re.S)
     anc += body.split()
   # old style opens
   for mm in re.finditer(r'^\s*(?:val _ = )?open\s+([^;]*);', src, re.M):

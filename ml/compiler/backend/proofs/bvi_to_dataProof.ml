@@ -9,7 +9,6 @@
 
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/data_live.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/proofs/data_liveProof.ml";;
 needs "compiler/backend/proofs/data_simpProof.ml";;
 needs "compiler/backend/proofs/data_spaceProof.ml";;
@@ -28,7 +27,7 @@ needs "semantics/semanticPrimitives.ml";;
 let code_rel_def = cake_define
   `bvi_to_dataProof_code_rel (bvi_code:(num#bvi_exp) spt)
   (data_code:(num#dataLang_prog) spt) <=>
-     wf bvi_code /\ wf data_code /\
+     sptree_wf bvi_code /\ sptree_wf data_code /\
      (domain bvi_code = domain data_code) /\
      (!n exp arg_count.
        (lookup n bvi_code = SOME (arg_count,exp)) ==>
