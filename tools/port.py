@@ -171,6 +171,7 @@ class Porter:
     self.contys = set()
     self._con_ovl = None
     self.conof = {}
+    self.iffeq = False
     # an overload of an ancestor does not shadow a constant that
     # this theory defines itself (semanticPrimitives defines
     # num_cmp, which comparison has as an overload of num_compare)
@@ -651,6 +652,7 @@ class Porter:
                     | self.int_annotated(body))
     self.intresult = key in overrides.INT_RESULT
     self.argtypes = overrides.ARG_TYPES.get(key, {})
+    self.iffeq = key in overrides.IFF_EQ
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
@@ -1586,6 +1588,15 @@ class Porter:
         self.ctx.names.pop((self.thy, nm), None)
     return '%s %s %s' % (lhs, e.op, rhs)
 
+  def iff_to_eq(self, e):
+    """the <=> of a clause that does not give a truth value is
+       the = of HOL Light (HOL4 writes <=> at any type)"""
+    for cl in hterm.conjuncts_of(e):
+      c = cl
+      while c.kind == 'paren': c = c.e
+      if c.kind == 'infix' and c.op == '<=>': c.op = '='
+    return e
+
   def clause_form(self, body):
     """the clauses of a definition as separate quotations: HOL4
        typechecks every clause of a definition on its own, so the
@@ -1594,6 +1605,7 @@ class Porter:
     toks = hterm.tokenize(hol4.strip_comments(body))
     e = self.arg_cons(self.arm_intvars(
           self.lambda_cons(hterm.Parser(toks, self.ctx).parse())))
+    if self.iffeq: e = self.iff_to_eq(e)
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     try:

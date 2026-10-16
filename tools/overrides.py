@@ -374,6 +374,14 @@ ARG_TYPES = {
     {'s': "('a,'c,'ffi)stackSem_state"},
 }
 
+# definitions whose clauses HOL4 writes with <=>, although what
+# they give is not a truth value: HOL4's <=> is its = at any
+# type, HOL Light's is the one of the booleans
+IFF_EQ = set([
+  # word_mem_eq gives a bool option
+  ('data_to_word_memoryProof', 'word_mem_eq_def'),
+])
+
 INT_RESULT = set([
   ('multiword', 'int_op_def'),
   # the size of a clash tree is an integer, which only the
