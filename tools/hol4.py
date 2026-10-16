@@ -380,8 +380,12 @@ def parse(path):
       # quantifier of a rule would reach over the ones after it
       rules = [[]]
       for l in body.split('\n'):
-        if re.match(r"^\s*\[[~^]?[A-Za-z0-9_']*:\]\s*$", l):
+        # the label may be on a line of its own or in front of the
+        # rule (data_to_word_memoryProof's [~unchanged:])
+        m = re.match(r"^\s*\[[~^]?[A-Za-z0-9_']*:\]\s*(.*)$", l)
+        if m:
           rules.append([])
+          if m.group(1).strip(): rules[-1].append(m.group(1))
         else:
           rules[-1].append(l)
       rs = [r for r in ('\n'.join(x) for x in rules) if r.strip()]

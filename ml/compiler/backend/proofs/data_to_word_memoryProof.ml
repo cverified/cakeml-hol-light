@@ -426,13 +426,13 @@ val v_ind =
 *)
 
 let gc_inline_rel = cake_inductive
-  `([~(unchanged:)] gc_inline_rel inline h1 x x) /\
+  `(gc_inline_rel inline h1 x x) /\
    (heap_lookup p h1 = SOME block /\
      inline block x ==>
        gc_inline_rel inline h1 (gc_shared_Pointer p u) x)`;;
 
 let gc_heap_inline_rel = cake_inductive
-  `([~(unchanged:)] gc_heap_inline_rel inline h1 x x) /\
+  `(gc_heap_inline_rel inline h1 x x) /\
    (LIST_REL (gc_inline_rel inline h1) xs ys ==>
        gc_heap_inline_rel inline h1 (DataElement xs n d)
          (DataElement ys n d))`;;

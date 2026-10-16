@@ -859,7 +859,12 @@ let define_nested tm =
   let new_name s =
     let rec go i =
       let s' = if i = 0 then s else s ^ string_of_int i in
-      if can get_const_type s' || mem s' !used then go (i + 1)
+      (* a name that the block itself defines is not free either:
+         presLang defines flat_to_display and the
+         flat_to_display_list that the map of it would be called *)
+      if can get_const_type s' || mem s' !used ||
+         exists (fun f -> fst(dest_var f) = s') fs
+      then go (i + 1)
       else (used := s' :: !used; s') in
     go 0 in
   let auxs =
@@ -1959,7 +1964,9 @@ let define_sing inner tm =
   (* a name for the function on one element *)
   let rec new_name s i =
     let s' = if i = 0 then s else s ^ string_of_int i in
-    if can get_const_type s' then new_name s (i + 1) else s' in
+    if can get_const_type s' ||
+       exists (fun g -> fst(dest_var g) = s') fs
+    then new_name s (i + 1) else s' in
   let _,args0,_ = hd conses in
   let vs = butlast args0 in
   let g = mk_var(new_name (fst(dest_var f) ^ "_el") 0,
