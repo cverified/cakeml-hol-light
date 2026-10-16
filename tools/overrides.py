@@ -115,6 +115,10 @@ FIELD_VAR = {
   'stack_allocProof': {'s': 'stackSem_state'},
   # t and u are the states of wordSem that state_rel_ext relates
   'data_to_wordProof': {'t': 'wordSem_state', 'u': 'wordSem_state'},
+  # the c of the three definitions that have one is the
+  # configuration of clos_to_bvl, whose max_app the state of
+  # closSem has as well
+  'clos_to_bvlProof': {'c': 'clos_to_bvl_config'},
   # the v of genv is the one of the global_env of the file (what
   # FIELD_OF says), of env the one of a sem_env, of comp_map the
   # one of source_to_flat's environment and of the local
