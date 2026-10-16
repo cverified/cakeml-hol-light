@@ -196,6 +196,7 @@ class Porter:
     self.conof_said = {}   # the theory an override gives a name
     self.conof_arities = {}  # the theory per number of arguments
     self.conof_wild = False  # did the override use the wildcard?
+    self.conbody = {}      # the constructors of the body only
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
@@ -708,6 +709,16 @@ class Porter:
     # arguments: the same name is two constants in one definition
     # (stack_to_lab's compile_no_stubs maps stack_remove's
     # prog_comp over what stack_alloc's prog_comp gives)
+    # the constructors that the body of a clause means, where
+    # its pattern means another one of that name
+    conbody = dict(overrides.CON_BODY.get(key, {}))
+    if '*' in conbody:
+      t = conbody.pop('*')
+      for (t2, ty), (cons, _) in self.db.datatypes.items():
+        if t2 != t: continue
+        for c in cons:
+          if c in self.ctx.overloaded: conbody.setdefault(c, t)
+    self.conbody = conbody
     self.conof_wild = '*' in conof
     self.conof_arities = {k: v for k, v in conof.items()
                           if isinstance(v, dict)}
@@ -879,6 +890,7 @@ class Porter:
       if was is None: self.ctx.names.pop((self.thy, nm), None)
       else: self.ctx.names[(self.thy, nm)] = was
     self.conof = {}
+    self.conbody = {}
     if self.ctx.fieldvar is not self.fieldvar:
       self.ctx.overloads = self.ovl_was
     self.ctx.fieldvar = self.fieldvar
@@ -1350,7 +1362,8 @@ class Porter:
         # back the result of stackSem)
         h = hterm.strip_app(e)[0] if e.kind == 'app' else e
         if (h.kind == 'id' and
-            h.name.split('$')[-1] in self.conof): ty = None
+            (h.name.split('$')[-1] in self.conof or
+             h.name.split('$')[-1] in self.conbody)): ty = None
         if ty:
           return hterm.Node('paren', tok=e.tok,
                    e=hterm.Node('typed', tok=e.tok, e=e,
@@ -1622,16 +1635,18 @@ class Porter:
        that CON_OF says this definition means: the arms of a
        definition in the match form are its clauses"""
     e = self.conof_arity(e)
-    if not self.conof_wild: return pr.pr(e, prec)
+    if not self.conof_wild and not self.conbody: return pr.pr(e, prec)
     old = {}
-    for nm, t in self.conof.items():
+    body = dict(self.conof) if self.conof_wild else {}
+    body.update(self.conbody)
+    for nm, t in body.items():
       old[nm] = nm in self.ctx.overloaded
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     try:
       return pr.pr(e, prec)
     finally:
-      for nm in self.conof:
+      for nm in body:
         if old[nm]: self.ctx.overloaded.add(nm)
         self.ctx.names.pop((self.thy, nm), None)
 
@@ -1647,18 +1662,20 @@ class Porter:
     # an override that names the constructors itself is in the
     # scope of the whole definition already; only the ones that
     # the wildcard gives are put in for the right hand side
-    if not self.conof_wild:
+    if not self.conof_wild and not self.conbody:
       return '%s %s %s' % (lhs, e.op,
                            p.pr(self.conof_arity(e.r), 13))
     old = {}
-    for nm, t in self.conof.items():
+    body = dict(self.conof) if self.conof_wild else {}
+    body.update(self.conbody)
+    for nm, t in body.items():
       old[nm] = nm in self.ctx.overloaded
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
     try:
       rhs = p.pr(self.conof_arity(e.r), 13)
     finally:
-      for nm in self.conof:
+      for nm in body:
         if old[nm]: self.ctx.overloaded.add(nm)
         self.ctx.names.pop((self.thy, nm), None)
     return '%s %s %s' % (lhs, e.op, rhs)

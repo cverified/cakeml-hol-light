@@ -146,6 +146,17 @@ SIZE_OF = {
   'closProps': {'exp_size': 'closLang'},
 }
 
+# CON_BODY: the theory of a constructor in the _body_ of a
+# clause, where the pattern of the same clause means the one of
+# another theory with that name.  The evaluate of wordSem and of
+# stackSem matches on the Break and the Continue of the language
+# and gives the ones of its own result type; '*' stands for every
+# constructor name of the theory.
+CON_BODY = {
+  ('wordSem', 'evaluate_def'): {'*': 'wordSem'},
+  ('stackSem', 'evaluate_def'): {'*': 'stackSem'},
+}
+
 # FIELD_VAR_DEF: the same for one definition, where the theory
 # uses the name for another record there (the s of
 # stack_to_labProof is the state of stackSem everywhere except in
@@ -648,7 +659,16 @@ CON_OF = {
                                  'Const': 'wordLang',
                                  'Get': 'stackLang',
                                  'Set': 'stackLang',
-                                 'prog_size': 'stackLang'},
+                                 'prog_size': 'stackLang',
+                                 'CodeBufferWrite': 'stackLang',
+                                 'DataBufferWrite': 'stackLang',
+                                 'If': 'stackLang',
+                                 'Inst': 'stackLang',
+                                 'Install': 'stackLang',
+                                 'OpCurrHeap': 'stackLang',
+                                 'Raise': 'stackLang',
+                                 'Seq': 'stackLang',
+                                 'Tick': 'stackLang'},
   # these build wordLang programs, whose constructor names
   # linear_scan's live trees and word_bignum's language have too
   ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},
