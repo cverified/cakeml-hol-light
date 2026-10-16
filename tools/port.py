@@ -2247,6 +2247,7 @@ class Porter:
     # with the name of its theory (word_bignumProof's Eval, where
     # ast has an Eval of its own)
     self.ctx.defining = set(dbmod.rule_names(b.body))
+    defined = sorted(self.ctx.defining)
     try:
       term = fmt(self.term(b.body))
     finally:
@@ -2258,8 +2259,13 @@ class Porter:
       self.ctx.intvars = set()
       self.ctx.reclit = None
       self.ctx.defining = set()
-    self.out.append('let %s = cake_inductive\n  `%s`;;'
-                    % (ocaml_name(b.name), term))
+    text = ('let %s = cake_inductive\n  `%s`;;'
+            % (ocaml_name(b.name), term))
+    # the relations that the block defines are overloads of HOL4
+    # as the constants of a Definition are
+    overloads = self.overloads_of(defined)
+    self.out.append(text if not overloads else
+                    text + '\n' + '\n'.join(overloads))
 
 
 IDENT = re.compile(r"^(\w+\$)?[A-Za-z_][A-Za-z0-9_']*$")
