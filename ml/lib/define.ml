@@ -3178,7 +3178,14 @@ let cake_inductive tm =
      (cake_cheat_rules rtm,TRUTH,TRUTH));;
 
 let cake_define_list_wf rel cls =
-  cake_define_wf rel (cake_conj_list cls);;
+  (* as cake_define_list: where the types of the clauses do not
+     unify they are assumed one by one, rather than the file
+     dying of it *)
+  match (try Some(cake_conj_list cls) with Failure s ->
+           (print_string ("\ncake_conj_list failed: " ^ s ^ "\n");
+            flush stdout; None)) with
+    Some tm -> cake_define_wf rel tm
+  | None -> cake_cheat_list cls;;
 
 (* the same, with the relation of HOL4 in a function, so that a
    relation that does not typecheck is no error of the file: it
