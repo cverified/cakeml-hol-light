@@ -1022,15 +1022,20 @@ class Ctx:
 
   def size_name(self, n, thy=None):
     """the name of the size function of a datatype, which is
-       called after the type: HOL4's closLang$exp_size is
-       closLang_exp_size, and its exp3_size, the size function of
-       the third type of the family, is closLang_exp_size3"""
-    m = re.match(r"^(.*?)(\d*)_size$", n)
-    if not m or not m.group(1): return None
-    base, num = m.group(1), m.group(2)
+       called after the type (HOL4's closLang$exp_size is
+       closLang_exp_size).  The auxiliary size functions of a
+       family (HOL4's exp1_size, exp2_size, ...) are not
+       translated: HOL Light numbers the types of a family in
+       another order than HOL4 does (of closLang's exp, HOL4's
+       exp1_size is the one of a (num # exp) list and ours is the
+       one of an exp list), and a name of HOL4 that this gave the
+       size function of another type would be a type error."""
+    if not n.endswith('_size'): return None
+    base = n[:-len('_size')]
+    if not base: return None
     ty = self.tyname(base if thy is None else thy + '$' + base)
     if ty == base: return None
-    return ty + '_size' + num
+    return ty + '_size'
 
   def name(self, n):
     if '$' in n:
