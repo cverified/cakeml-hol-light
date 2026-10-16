@@ -1,0 +1,14 @@
+#!/bin/sh
+# types [session] : check that the type of every constant of the
+# port only mentions types of theories that its own theory has as
+# an ancestor (hol-seq by default, after a run)
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+TIMEOUT=300 repl-step $s \
+  "let cake_out = open_out \"$C/tmp/consts.txt\" in
+   do_list (fun (s,ty) ->
+     output_string cake_out (s ^ \"\\t\" ^ string_of_type ty ^ \"\\n\"))
+     (constants ());
+   close_out cake_out; length (constants ());;" 2>&1 | tail -1
+python3 -I $C/tools/typethy.py

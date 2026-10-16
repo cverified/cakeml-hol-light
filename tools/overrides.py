@@ -333,6 +333,24 @@ ONE_QUOTATION = set([
   # the Seq of the last clause is wordLang's, which only the
   # clause of the empty list says (it gives wordLang's Skip)
   ('data_to_word', 'list_Seq_def'),
+  # the clauses of these do not say the type of a variable or of
+  # the result on their own, so HOL Light resolves an overloaded
+  # name in one clause differently from another; typechecked
+  # together they fit (asm's word_cmp compares machine words,
+  # which only the clause with <+ in it says)
+  ('asm', 'word_cmp_def'),
+  ('linear_scan', 'check_startlive_prop_def'),
+  ('word_cse', 'word_cse_def'),
+  ('flat_to_clos', 'compile_def'),
+  ('displayLang', 'display_to_json_def'),
+  ('source_to_flat', 'compile_pat_def'),
+  ('stack_remove', 'store_list_code_def'),
+  ('word_to_stack', 'call_dest_def'),
+  ('closSem', 'evaluate_def'),
+  ('bvlSem', 'evaluate_def'),
+  ('bviSem', 'evaluate_def'),
+  ('unify', 'encode_infer_t_def'),
+  ('infer', 'infer_p_def'),
 ])
 
 # the theory whose constructor a name means in one definition,
