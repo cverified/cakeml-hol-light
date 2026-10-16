@@ -82,6 +82,26 @@ let ADMISSIBLE_MAP2 = prove
 
 let admissible_extra = ref ([]:(string * thm) list);;
 
+(* the admissibility of a recursive call in the body of a let,
+   which HOL Light has no proforma for: without the equation
+   that the let gives, the termination goal of a call on what
+   the let binds says nothing (bvl_to_bvi's compile_exps
+   recurses on the args of let (args,x0) = destLet x2) *)
+
+let ADMISSIBLE_LET = prove
+ (`!(<<) p (s:P->S) (b:(A->B)->P->C->D) (e:(A->B)->P->C).
+      admissible(<<) p s e /\
+      admissible (<<) (\f (y,x). p f x /\ y = e f x)
+                      (\(y,x). s x) (\f (y,x). b f x y)
+      ==> admissible (<<) p s
+            (\(f:A->B) (x:P). LET (b f x) (e f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM; LET_DEF] THEN
+  REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(e:(A->B)->P->C) f a = e g a`
+    (fun th -> ASSUME_TAC th THEN SUBST1_TAC th) THENL
+   [FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
+  FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
+
 let cake_instantiate_casewise_recursion,
     cake_pure_prove_recursive_function_exists,
     cake_prove_general_recursive_function_exists =
@@ -305,6 +325,9 @@ let cake_instantiate_casewise_recursion,
     (* a proforma that a later file of the library layer added *)
     | "admissible",c when can (assoc c) (!admissible_extra)
           -> APPLY_PROFORMA_TAC (assoc c (!admissible_extra)) gl
+    (* the proforma of a let, which HOL Light does not have *)
+    | "admissible","LET"
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_LET gl
     (* the proforma of a MAP2, which HOL Light does not have *)
     | "admissible","MAP2"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP2 gl
