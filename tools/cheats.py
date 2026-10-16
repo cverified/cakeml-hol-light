@@ -43,6 +43,15 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
         why[n] = w
   except Exception:
     pass
+  # the reasons, with how many definitions each of them has:
+  # that is what the next round has to attack
+  import collections
+  cnt = collections.Counter(why.get(nm, '') or '(not recorded)'
+                            for nm in names)
+  out.write('Why they are assumed:\n\n')
+  for w, n in cnt.most_common():
+    out.write('- %d: %s\n' % (n, w[:66]))
+  out.write('\n')
   out.write('| definition | file | why |\n|---|---|---|\n')
   for nm in names:
     w = why.get(nm, '')
