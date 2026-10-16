@@ -575,8 +575,11 @@ let EL_list_size = prove
  (`!(f:A->num) l i. i < LENGTH l ==> f (EL i l) < list_size f l`,
   GEN_TAC THEN LIST_INDUCT_TAC THEN
   REWRITE_TAC[LENGTH; CONJUNCT1 LT] THEN
-  INDUCT_TAC THEN REWRITE_TAC[EL; HD; TL; list_size; LT_SUC] THEN
-  ASM_SIMP_TAC[] THEN ARITH_TAC);;
+  INDUCT_TAC THEN
+  REWRITE_TAC[EL; HD; TL; list_size; LENGTH; LT_SUC; LT_0] THENL
+   [ARITH_TAC;
+    DISCH_THEN(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
+    ARITH_TAC]);;
 
 let MEM_list_size_ALT = prove
  (`!(x:A) l. MEM x l ==> !f:A->num. f x < list_size f l`,
