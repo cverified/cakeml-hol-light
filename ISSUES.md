@@ -334,6 +334,22 @@ port says so with an `override_interface` in `ml/lib/hol4.ml`
 `LIST_REL` and `EVERY2` are `ALL2`, its `STRING` is `CONS`),
 so that the sources of the port read as the CakeML sources do.
 
+`ml/lib/fastdef.ml` is not a HOL4 theory but a copy of the block
+of HOL Light's own `define.ml` that makes
+`instantiate_casewise_recursion`,
+`pure_prove_recursive_function_exists` and
+`prove_general_recursive_function_exists`, word for word, with
+two things kept that HOL Light makes anew every time: the
+proformas of the admissibility proof (they only depend on a
+number of arguments and a theorem) and the last eight existence
+theorems (the strategies of `define.ml` ask for the same one over
+and over).  The names of HOL Light are then bound to the
+functions of that file.  Of the 105 seconds that the existence
+theorem of `bvi_let$compile_sing` (twelve clauses) took, 96 went
+into the fifteen proformas that it asks for 54 times; with them
+kept the theorem takes 9 seconds, and the definition, which the
+budget of thirty seconds could not make at all, is made in 25.
+
 HOL4's `pathTheory` is not ported: the dependency analysis found
 it only because CakeML definitions use variables called `el`,
 `first`, `exists` and `length`.
