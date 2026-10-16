@@ -349,6 +349,9 @@ let FACTS_TAC (asl,w as gl) =
                  vs
       with Failure _ -> false in
     mapfilter (fun t -> PART_MATCH sel th t) (filter full tms) in
+  (* a fact that still has variables of its own gets the
+     instance that the goal asks for *)
+  let spec th = match instances th with [] -> [th] | l -> l in
   let facts = itlist (fun th l -> instances th @ l)
                      (!cake_term_facts) [] in
   (* the same, for a fact whose antecedent an assumption of the
@@ -357,8 +360,10 @@ let FACTS_TAC (asl,w as gl) =
   let facts =
     facts @
     itlist (fun th l ->
-              mapfilter (fun (_,a) -> MATCH_MP th a) asl @
-              mapfilter (fun (_,a) -> MATCH_MP th (SYM a)) asl @ l)
+              flat (mapfilter (fun (_,a) -> spec (MATCH_MP th a))
+                              asl) @
+              flat (mapfilter (fun (_,a) -> spec (MATCH_MP th (SYM a)))
+                              asl) @ l)
            (!cake_term_facts) [] in
   (* a fact whose antecedent is a conjunction that two of the
      assumptions give *)
@@ -368,8 +373,10 @@ let FACTS_TAC (asl,w as gl) =
               let bod = snd(strip_forall(concl th)) in
               if not (is_imp bod && is_conj (lhand bod)) then l else
               itlist (fun (_,a) k ->
-                        mapfilter (fun (_,b) -> MATCH_MP th (CONJ a b))
-                                  asl @ k)
+                        flat (mapfilter
+                                (fun (_,b) ->
+                                   spec (MATCH_MP th (CONJ a b)))
+                                asl) @ k)
                      asl l)
            (!cake_term_facts) [] in
   (if facts = [] then ALL_TAC else MAP_EVERY MP_TAC facts) gl;;
