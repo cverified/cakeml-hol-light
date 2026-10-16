@@ -325,7 +325,7 @@ let detuplify_def = cake_define
 let ptree_PTbase_def = cake_define
   `ptree_PTbase ast =
      (match ast with
-         Lf _32 -> fail | Nd nt' args ->
+         Lf _32 -> NONE | Nd nt' args ->
          (if FST nt' = (INL:MMLnonT->MMLnonT+num) nPTbase then
            match args with
                [pt] ->
@@ -335,19 +335,19 @@ let ptree_PTbase_def = cake_define
                OPTION_IGNORE_BIND
                  (assert (tokcheck lpart tokens_LparT /\ tokcheck
                    rpart tokens_RparT)) (
-                 ptree_Type nType t) | _33 -> fail else fail))`;;
+                 ptree_Type nType t) | _33 -> NONE else NONE))`;;
 
 let ptree_TbaseList_def = cake_define
   `ptree_TbaseList ast =
      (match ast with
-         Lf _34 -> fail | Nd nt' args ->
+         Lf _34 -> NONE | Nd nt' args ->
          (if FST nt' = (INL:MMLnonT->MMLnonT+num) nTbaseList then
            match args with
                [] -> SOME [] | [ptb_pt; rest_pt] -> OPTION_BIND
                  (ptree_PTbase ptb_pt) (\
                  b. OPTION_BIND (ptree_TbaseList rest_pt) (\
                  rest.
-                 SOME (b :: rest))) | _35 -> fail else fail))`;;
+                 SOME (b :: rest))) | _35 -> NONE else NONE))`;;
 
 let ptree_Dconstructor_def = cake_define
   `ptree_Dconstructor ast =
@@ -583,7 +583,7 @@ let ptree_Pattern_def = cake_define_list
             OPTION_BIND (ptree_Pattern nPConApp capp_pt) (\
               capp. OPTION_BIND (ptree_Pattern nPbase base_pt) (\
               base.
-              SOME (Papply capp base))) | _60 -> fail else if FST nm
+              SOME (Papply capp base))) | _60 -> NONE else if FST nm
                 = (INL:MMLnonT->MMLnonT+num) nPapp then
           match args with
               [pb] -> ptree_Pattern nPbase pb | [capp_pt; ppt] ->
@@ -612,7 +612,7 @@ let ptree_Pattern_def = cake_define_list
                   (ptree_Pattern nPcons papt) (\
                 pa. OPTION_BIND (ptree_V vt) (\
                 vtt.
-                SOME (ast_Pas pa vtt)))) | _63 -> fail else if FST
+                SOME (ast_Pas pa vtt)))) | _63 -> NONE else if FST
                   nm = (INL:MMLnonT->MMLnonT+num) nPattern then
           match args with
               [pas] -> ptree_Pattern nPas pas | [pas_pt; colon_t;
@@ -622,7 +622,7 @@ let ptree_Pattern_def = cake_define_list
                   (OPTION_BIND (ptree_Pattern nPas pas_pt) (\
                 pc'. OPTION_BIND (ptree_Type nType type_pt) (\
                 ty.
-                SOME (ast_Ptannot pc' ty)))) | _64 -> fail else if
+                SOME (ast_Ptannot pc' ty)))) | _64 -> NONE else if
                   FST nm = (INL:MMLnonT->MMLnonT+num) nPtuple then
           match args with
               [lp; rp] -> OPTION_IGNORE_BIND (assert (tokcheckl [lp;
@@ -1284,10 +1284,10 @@ let ptree_Decl_def = cake_define_list
               SOME (Dmod sname ds))))) | _146 -> NONE)`];;
 
 let ptree_TopLevelDecs_def = cake_define_list
-  [`ptree_TopLevelDecs (Lf _147) = fail`;
+  [`ptree_TopLevelDecs (Lf _147) = NONE`;
    `ptree_TopLevelDecs (Nd nt' args) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs)
-           then fail else
+           then NONE else
            match args with
                [] -> SOME [] | [td_pt; tds_pt] ->
                (if tokcheck td_pt tokens_SemicolonT then
@@ -1304,10 +1304,10 @@ let ptree_TopLevelDecs_def = cake_define_list
                  tds.
                  SOME (Dlet (SND nt') (ast_Pvar (implode "it")) e
                    :: tds)))) | _148 -> NONE)`;
-   `ptree_NonETopLevelDecs (Lf _149) = fail`;
+   `ptree_NonETopLevelDecs (Lf _149) = NONE`;
    `ptree_NonETopLevelDecs (Nd nt' args) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num)
-           nNonETopLevelDecs) then fail else
+           nNonETopLevelDecs) then NONE else
            match args with
              [] -> SOME [] | [pt1; pt2] ->
              (if tokcheck pt1 tokens_SemicolonT then
@@ -1315,6 +1315,6 @@ let ptree_TopLevelDecs_def = cake_define_list
                OPTION_BIND (ptree_Decl pt1) (\
                  td. OPTION_BIND (ptree_NonETopLevelDecs pt2) (\
                  tds.
-                 SOME (td :: tds)))) | _150 -> fail)`];;
+                 SOME (td :: tds)))) | _150 -> NONE)`];;
 
 hol4_only "++" "APPEND";;

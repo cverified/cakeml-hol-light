@@ -711,6 +711,13 @@ let AppUnit_def = cake_define
   ast_Opapp) [x; Con backend_common_None NONE []]`;;
 hol4_overload "AppUnit" "flatSem_AppUnit";;
 
+let _ = size_thms "flatLang_op";;
+let _ = size_thms "flatLang_pat";;
+let _ = size_thms "lit";;
+let _ = size_thms "mlstring";;
+let _ = size_thms "option";;
+let _ = size_thms "pair";;
+let _ = size_thms "tra";;
 let exp_alt_size_def = cake_define_list
   [`flatSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
   a0 + flatSem_exp_alt_size a1)`;

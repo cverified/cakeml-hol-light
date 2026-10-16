@@ -668,7 +668,14 @@ class Porter:
     for nm, t in conof.items():
       if '*' in overrides.CON_OF.get(key, {}): continue
       self.ctx.overloaded.discard(nm)
-      self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
+      # the size function of a datatype is called after the type,
+      # so the override names the theory of the type
+      if nm.endswith('_size') and (t, nm) not in self.ctx.names:
+        self.ctx.names[(self.thy, nm)] = (
+            self.ctx.tyname(t + '$' + nm[:-len('_size')]) + '_size')
+      else:
+        self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm),
+                                                            nm)
     if key in overrides.CLAUSE_FORM:
       term = None
       clauses = self.clause_form(body)
@@ -713,7 +720,11 @@ class Porter:
         out += 'let _ = size_thms "%s";;\n' % ty
       return out
 
-    sizes = size_prelude(rel) if rel else ''
+    # the size function of a datatype that the definition itself
+    # uses has to be there as well (closSem's exp_alt_size adds the
+    # size of the op of closLang)
+    sizes = size_prelude((rel or '') + ' ' +
+                         (term if term else clauses))
     # where the source gives a termination its text is kept, as
     # it is for a relation that the port takes from it
     relnote = ('(* the termination relation is not in the HOL4 '
@@ -726,22 +737,24 @@ class Porter:
               'let %s = cake_define_list_wf\n  `%s`\n'
               '  %s;;' % (name, rel, clauses))
     elif term is None:
-      text = ('let %s = cake_define_list\n  %s;;' % (name, clauses))
+      text = (sizes +
+              'let %s = cake_define_list\n  %s;;' % (name, clauses))
     elif rel is not None:
       text = (sizes + relnote +
               'let %s = cake_define_wf\n  `%s`\n'
               '  `%s`;;' % (name, rel, term))
     elif b.extra is None:
-      text = 'let %s = cake_define\n  `%s`;;' % (name, term)
+      text = sizes + 'let %s = cake_define\n  `%s`;;' % (name, term)
     else:
       wf, rest = wf_relation(b.extra)
       if wf is None:
         self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
-        text = (shorten('(* TERMINATION: %s *)' % b.extra.strip()) +
+        text = (sizes +
+                shorten('(* TERMINATION: %s *)' % b.extra.strip()) +
                 '\nlet %s = cake_define\n  `%s`;;' % (name, term))
       else:
         wftext = fmt(self.term(wf), last=1)
-        text = (size_prelude(wftext) +
+        text = (size_prelude(wftext + ' ' + term) +
                 shorten('\n'.join(
                   fill('(* HOL4 termination:', rest.split(), 69))
                 + ' *)') +

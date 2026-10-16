@@ -143,13 +143,13 @@ let sexplist_def = cake_define
            ph. OPTION_BIND (sexplist p t) (\
            pt.
            SOME (ph :: pt))) | SX_SYM s -> (if s = "nil" then SOME
-             [] else fail) | _7 -> fail)`;;
+             [] else NONE) | _7 -> NONE)`;;
 
 let sexppair_def = cake_define
   `sexppair p1 p2 s =
      (match s with
        SX_CONS s1 s2 -> OPTION_MAP2 (,) (p1 s1) (p2 s2) | _8 ->
-         fail)`;;
+         NONE)`;;
 
 (* HOL4 overload (expanded in the port):
      guard = λb m. monad_unitbind (assert b) m *)

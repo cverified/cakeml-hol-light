@@ -21,11 +21,13 @@ let ratio_def = cake_define
 let delta_def = cake_define
   `delta = (3:num)`;;
 
+let _ = size_thms "balanced_map";;
 let size_def = cake_define_list
   [`balanced_map_size Tip = 0`;
    `balanced_map_size (Bin s k v l r) = s`];;
 hol4_overload "size" "balanced_map_size";;
 
+let _ = size_thms "balanced_map";;
 let bin_def = cake_define
   `bin k x l r = Bin (balanced_map_size l + balanced_map_size r + 1)
   k x l r`;;
@@ -45,6 +47,7 @@ hol4_overload "empty" "balanced_map_empty";;
 let singleton_def = cake_define
   `singleton k x = Bin 1 k x Tip Tip`;;
 
+let _ = size_thms "balanced_map";;
 let balanceL_def = cake_define
   `balanceL k x x3 x4 =
         match (x3,x4) with
@@ -83,6 +86,7 @@ let balanceL_def = cake_define
        Bin (1 + ls + rs) k x (Bin ls lk lx ll lr) (Bin rs k' v' l'
          r'))`;;
 
+let _ = size_thms "balanced_map";;
 let balanceR_def = cake_define
   `balanceR k x x3 x4 =
         match (x3,x4) with
@@ -165,6 +169,7 @@ let deleteFindMin_def = cake_define
         | Tip ->
      (ARB,Tip)`;;
 
+let _ = size_thms "balanced_map";;
 let glue_def = cake_define
   `glue l r =
         match (l,r) with
@@ -295,6 +300,7 @@ let key_ordered_def = cake_define_list
       key_ordered cmp k l res /\
       key_ordered cmp k r res`];;
 
+let _ = size_thms "balanced_map";;
 let invariant_def = cake_define_list
   [`balanced_map_invariant cmp Tip <=> T`;
    `balanced_map_invariant cmp (Bin s k v l r) <=>

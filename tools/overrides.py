@@ -25,6 +25,9 @@ NAME_MAP = {
   # monadsyntax's unit bind, which the overloads of a source that
   # enables the option monad expand to (fromSexp's guard)
   'monad_unitbind': 'OPTION_IGNORE_BIND',
+  # the failure of the option monad, which
+  # option_monadsyntax.add_option_monadsyntax overloads with NONE
+  'fail': 'NONE',
 }
 
 # HOL4 type names of types that HOL Light has under another name
@@ -523,6 +526,8 @@ CON_OF = {
   ('data_to_word_gcProof', 'state_rel_thm'): {'stack_size': 'wordSem'},
   # the values of the semantics of bvi are bvlSem's
   ('bvi_tailrecProof', 'env_rel_def'): {'*': 'bvlSem'},
+  # the op whose size this adds is closLang's
+  ('closSem', 'exp_alt_size_def'): {'op_size': 'closLang'},
   # the values that these relations are about are flatSem's
   ('flat_patternProof', 'v_rel'): {'*': 'flatSem'},
   # the program comparison of stack_alloc, whose pass this is
