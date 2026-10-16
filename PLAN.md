@@ -1,10 +1,15 @@
 # Plan for the first pass (all definitions)
 
-_State: the port has the 4190 definition blocks of the 237 files
-that it has to have (of 4195; the five that are out are the
-Pancake definitions of `compiler`), which `tools/coverage.py`
-checks; `tools/bin/checkseq` loads them one after the other in
-the order of `tools/load.txt` and reports what still fails._
+_State: the port has the 4182 definition blocks of the 238
+files that it has to have (of 4198; the sixteen that are out
+are the eleven tail recursive definitions of `unify` and the
+five Pancake definitions of `compiler`), which
+`tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
+after the other in the order of `tools/load.txt`: in the run of
+2026-10-16 09:06, 29 files failed and 371 definitions were
+assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 419`.
+Of those 29 failures, 20 are fixed in the round that follows it
+(the run of 09:35)._
 
 ## What is ported
 
