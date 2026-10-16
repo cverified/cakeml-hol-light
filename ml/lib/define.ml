@@ -312,6 +312,24 @@ let SUBST_VAR_TAC (asl,w as gl) =
   (if eqs = [] then ALL_TAC
    else MAP_EVERY (fun th -> TRY(SUBST_ALL_TAC th)) eqs) gl;;
 
+(* the assumptions with the injectivity and the distinctness of
+   the datatypes that they mention *)
+
+let CON_EQ_TAC (asl,w as gl) =
+  let tys =
+    itlist (fun th l ->
+              union (mapfilter (fun t -> fst(dest_type(type_of t)))
+                               (find_terms (fun t -> is_comb t ||
+                                                     is_const t)
+                                           (concl th))) l)
+           (map snd asl) [] in
+  let ths = flat (mapfilter (fun s -> [injectivity s;
+                                       distinctness s]) tys) in
+  if ths = [] then ALL_TAC gl else
+  (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN
+   REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC)) THEN
+   TRY SUBST_VAR_TAC) gl;;
+
 (* the tactic that is tried on the termination conditions *)
 
 (* the lemmas that the termination proofs may need; a ported file can
@@ -427,7 +445,7 @@ and SIZE_TERM_TAC g =
    REWRITE_TAC(all_size_thms()) THEN
    RULE_ASSUM_TAC(REWRITE_RULE(LENGTH_EQ_NIL::all_size_thms())) THEN
    LIST_MEM_TAC THEN
-   EQ_COPY_TAC THEN
+   CON_EQ_TAC THEN EQ_COPY_TAC THEN
    MEM_SIZE_TAC THEN DIV_FACTS_TAC THEN
    (* a fact may make a subterm appear that another fact is about *)
    FACTS_TAC THEN FACTS_TAC THEN
