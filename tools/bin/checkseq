@@ -64,4 +64,7 @@ for f in "$@"; do
     sed "s|^|$f: |" >> $C/tools/conjfail.log
   [ -n "$slow" ] && e="TOO SLOW (interrupted) $e"
   printf '%-44s %-24s %s\n' "$f" "$r" "$e" | tee -a $log
+  # the scrollback is cleared after every file: one that grows
+  # with the run makes the capture slower than the file itself
+  tmux clear-history -t hol-$s 2> /dev/null
 done

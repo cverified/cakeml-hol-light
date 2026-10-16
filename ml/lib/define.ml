@@ -1845,6 +1845,41 @@ let cake_declare name ty =
   print_string ("\ncake_declare " ^ name ^ " (no value)\n");
   flush stdout;;
 
+(* the free variables of a definition that are not the functions it
+   defines: those are the constants that the port does not have
+   yet, and the reason why it cannot make the definition *)
+
+let definition_free tm =
+  try itlist
+        (fun (_,args,r) l ->
+           union (subtract (subtract (frees r) (definition_heads tm))
+                           (itlist (fun a l -> union (frees a) l)
+                                   args []))
+                 l)
+        (definition_clauses tm) []
+  with Failure _ -> [];;
+
+let the_cheat_free = ref ([]:(string * string list) list);;
+
+let cake_cheat_free () = rev (!the_cheat_free);;
+
+(* and why it is assumed: the message of the strategy that failed
+   last, or the timeout *)
+
+let the_cheat_why = ref ([]:(string * string) list);;
+
+let cake_cheat_why () = rev (!the_cheat_why);;
+
+let cheat_why = ref "";;
+
+let note_cheat name tm =
+  let free = map (fst o dest_var) (definition_free tm) in
+  the_cheat_why := (name,!cheat_why) :: !the_cheat_why;
+  if free <> [] then
+    (the_cheat_free := (name,free) :: !the_cheat_free;
+     print_string ("  (free: " ^
+                   end_itlist (fun a b -> a ^ ", " ^ b) free ^ ")\n"));;
+
 let cake_cheat tm =
   let fs = definition_heads tm in
   do_list (fun f ->
@@ -1859,6 +1894,7 @@ let cake_cheat tm =
   let name = fst(dest_var(hd fs)) in
   the_cheats := name :: !the_cheats;
   print_string ("\ncake_define " ^ name ^ " CHEATED\n");
+  note_cheat name tm;
   flush stdout;
   new_axiom (list_mk_conj cls);;
 
@@ -1882,20 +1918,279 @@ let with_timeout f x =
   ignore(Unix.alarm (!cake_timeout));
   try let y = f x in (fin (); y)
   with e -> (fin (); raise e);;
+(* ------------------------------------------------------------------ *)
+(* A definition over a list whose clauses are [], x::y::xs and the    *)
+(* singletons [C ...]: that is how CakeML writes a recursion over an  *)
+(* expression and over a list of them as one function (clos_fvs's     *)
+(* remove_fvs and twenty others).  HOL Light's machinery for a        *)
+(* wellfounded recursion takes minutes over such a definition, so the *)
+(* port defines the function on one element with the recursion        *)
+(* theorem of the type and this function as its map, and derives the  *)
+(* clauses as the source gives them.                                  *)
+(* ------------------------------------------------------------------ *)
+
+let is_nil tm = is_const tm && fst(dest_const tm) = "NIL";;
+
+let dest_sing tm =
+  let h,t = dest_cons tm in
+  if is_nil t then h else failwith "dest_sing";;
+
+let define_sing inner tm =
+  let fs = definition_heads tm in
+  if length fs <> 1 then failwith "define_sing" else
+  let f = hd fs in
+  let cls = definition_clauses tm in
+  let n = itlist (fun (_,args,_) k -> max k (length args)) cls 0 in
+  if n = 0 || exists (fun (_,args,_) -> length args <> n) cls
+  then failwith "define_sing" else
+  let lastarg (_,args,_) = last args in
+  let nils = filter (fun c -> is_nil (lastarg c)) cls in
+  let sings = filter (fun c -> can dest_sing (lastarg c)) cls in
+  let conses = filter (fun c -> is_cons (lastarg c) &&
+                                not (can dest_sing (lastarg c))) cls in
+  if length nils <> 1 || length conses <> 1 || sings = []
+  then failwith "define_sing" else
+  if length (nils @ sings @ conses) <> length cls
+  then failwith "define_sing" else
+  (* the element type and the type of the elements it gives back *)
+  let ty = hd(snd(dest_type(type_of(lastarg (hd sings))))) in
+  let _,_,r0 = hd sings in
+  let rty = hd(snd(dest_type(type_of r0))) in
+  (* a name for the function on one element *)
+  let rec new_name s i =
+    let s' = if i = 0 then s else s ^ string_of_int i in
+    if can get_const_type s' then new_name s (i + 1) else s' in
+  let _,args0,_ = hd conses in
+  let vs = butlast args0 in
+  let g = mk_var(new_name (fst(dest_var f) ^ "_el") 0,
+                 itlist (fun v t -> mk_fun_ty (type_of v) t) vs
+                        (mk_fun_ty ty rty)) in
+  let mapc t = mk_mconst("MAP",mk_fun_ty (mk_fun_ty ty rty)
+                 (mk_fun_ty (mk_type("list",[ty]))
+                            (mk_type("list",[rty])))) in
+  let rec repl t =
+    let h,args = strip_comb t in
+    if h = f && length args = n then
+      let as_ = map repl (butlast args) and l = last args in
+      (try let e = dest_sing l in
+           mk_cons (list_mk_comb(g,as_ @ [repl e])) (mk_list([],rty))
+       with Failure _ ->
+         list_mk_comb(mapc t,[list_mk_comb(g,as_); repl l]))
+    else
+      match t with
+        Comb(s,u) -> mk_comb(repl s,repl u)
+      | Abs(v,b) -> mk_abs(v,repl b)
+      | _ -> t in
+  (* the element that a right hand side of a singleton clause
+     gives: the clauses give a list of one element *)
+  let rec elem r =
+    if is_cond r then
+      let c,(a,b) = dest_cond r in mk_cond(c,elem a,elem b)
+    else
+      let h,args = strip_comb r in
+      if is_const h && fst(dest_const h) = "LET" && args <> [] &&
+         (let b = snd(strip_abs (hd args)) in
+          let h2,a2 = strip_comb b in
+          is_const h2 && fst(dest_const h2) = "LET_END" &&
+          length a2 = 1)
+      then
+        let vs,b = strip_abs (hd args) in
+        let b' = elem (rand b) in
+        let f' = list_mk_abs(vs,
+                   mk_comb(mk_mconst("LET_END",
+                             mk_fun_ty (type_of b') (type_of b')),
+                           b')) in
+        let vals = tl args in
+        let lty = mk_fun_ty (type_of f')
+                    (itlist (fun v t -> mk_fun_ty (type_of v) t)
+                            vals (type_of b')) in
+        list_mk_comb(mk_mconst("LET",lty),f' :: vals)
+      else try dest_sing r with Failure _ ->
+        mk_comb(mk_mconst("HD",
+                  mk_fun_ty (mk_type("list",[rty])) rty),r) in
+  let gcls =
+    map (fun (_,args,r) ->
+           close_clause [g]
+             (mk_eq(list_mk_comb(g,map repl (butlast args) @
+                                   [dest_sing (last args)]),
+                    elem (repl r))))
+        sings in
+  let ths,spec = inner (list_mk_conj gcls) in
+  (* the function itself is the map of the one on an element *)
+  let gc = mk_mconst(fst(dest_var g),type_of g) in
+  let l = variant vs (mk_var("l",mk_type("list",[ty]))) in
+  let fdef = new_definition
+    (mk_eq(list_mk_comb(f,vs @ [l]),
+           list_mk_comb(mapc l,[list_mk_comb(gc,vs); l]))) in
+  let consts = [mk_mconst(fst(dest_var f),type_of f),f] in
+  let derive cl =
+    let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
+    prove(gcl,
+          REPEAT GEN_TAC THEN
+          REWRITE_TAC([fdef; MAP; HD] @ ths) THEN
+          REPEAT (CHANGED_TAC
+            (COND_CASES_TAC THEN
+             REWRITE_TAC([fdef; MAP; HD] @ ths))) THEN
+          REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
+          REWRITE_TAC([fdef; MAP; HD] @ ths)) in
+  map derive (conjuncts(snd(strip_forall tm))),spec;;
+
+(* ------------------------------------------------------------------ *)
+(* A block that defines a function on one element and the map of it   *)
+(* over a list (CakeML writes the recursions over an expression that  *)
+(* way as well: remove_fvs_sing and remove_fvs_list of clos_fvs).     *)
+(* The port defines the functions on an element with the recursion    *)
+(* theorem of the type, the one over the list as the map of the       *)
+(* element it gives, and derives the clauses as they are given.       *)
+(* ------------------------------------------------------------------ *)
+
+let define_maplist inner tm =
+  let fs = definition_heads tm in
+  if length fs < 2 then failwith "define_maplist" else
+  let cls = definition_clauses tm in
+  let allcls = conjuncts(snd(strip_forall tm)) in
+  (* the function whose clauses are [] and x::xs, with the cons
+     clause giving the element that another function of the block
+     gives *)
+  let islist f =
+    let mycls = filter (fun (g,_,_) -> g = f) cls in
+    length mycls = 2 &&
+    exists (fun (_,args,r) -> args <> [] && is_nil (last args) &&
+                              is_nil r) mycls &&
+    exists (fun (_,args,r) -> args <> [] && is_cons (last args) &&
+                              is_cons r) mycls in
+  let fl = try find islist fs with Failure _ ->
+             failwith "define_maplist" in
+  let mycls = filter (fun (g,_,_) -> g = fl) cls in
+  let _,cargs,crhs = find (fun (_,args,_) -> is_cons (last args))
+                          mycls in
+  let x,xs = dest_cons (last cargs) in
+  let el,rest = dest_cons crhs in
+  (* the tail of the right hand side is the function itself on the
+     tail of the list, and the head is the element, which is made
+     of the head of the list and the other arguments (the pattern
+     of the head may be a pair) *)
+  if rest <> list_mk_comb(fl,butlast cargs @ [xs]) then
+    failwith "define_maplist" else
+  let vs = butlast cargs in
+  if not (subset (frees el)
+            (union (frees x)
+               (union fs (itlist (fun v l -> union (frees v) l)
+                                 vs [])))) then
+    failwith "define_maplist" else
+  (* the element may not be the function itself: that would be a
+     recursion that this does not take apart *)
+  if free_in fl el then failwith "define_maplist" else
+  let rty = type_of el and ty = type_of x in
+  let mapc = mk_mconst("MAP",
+               mk_fun_ty (mk_fun_ty ty rty)
+                 (mk_fun_ty (mk_type("list",[ty]))
+                            (mk_type("list",[rty])))) in
+  let n = length cargs in
+  let rec repl t =
+    let g,args = strip_comb t in
+    if g = fl && length args = n then
+      let sub = filter (fun (a,b) -> a <> b)
+                       (zip (map repl (butlast args)) vs) in
+      list_mk_comb(mapc,[mk_gabs(x,vsubst sub (repl el));
+                         repl (last args)])
+    else
+      match t with
+        Comb(s,u) -> mk_comb(repl s,repl u)
+      | Abs(v,b) -> mk_abs(v,repl b)
+      | _ -> t in
+  let others = filter (fun cl ->
+                   fst(strip_comb(lhs(snd(strip_forall cl)))) <> fl)
+                 allcls in
+  if others = [] then failwith "define_maplist" else
+  let newcls = map (fun cl ->
+                      let l,r = dest_eq(snd(strip_forall cl)) in
+                      close_clause fs (mk_eq(l,repl r)))
+                   others in
+  let ths,spec = inner (list_mk_conj newcls) in
+  let consts0 = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                    (filter (fun f -> f <> fl) fs) in
+  let l = variant (vs @ frees el) (mk_var("l",mk_type("list",[ty]))) in
+  let fldef = new_definition
+    (mk_eq(list_mk_comb(fl,vs @ [l]),
+           list_mk_comb(mapc,[mk_gabs(x,vsubst consts0 el); l]))) in
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   fs in
+  let derive cl =
+    let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
+    prove(gcl,
+          REPEAT GEN_TAC THEN
+          REWRITE_TAC([fldef; MAP] @ ths) THEN
+          CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+          REWRITE_TAC([fldef; MAP] @ ths) THEN
+          REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
+          CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+          REWRITE_TAC([fldef; MAP] @ ths)) in
+  map derive allcls,spec;;
+
+(* ------------------------------------------------------------------ *)
+(* A recursive call inside a conditional that is not the whole right  *)
+(* hand side of a clause.  HOL Light's machinery for a wellfounded    *)
+(* recursion takes the condition of such a conditional as true, so    *)
+(* the termination condition that it asks for is not the one that     *)
+(* holds (presLang's num_to_hex calls itself on n DIV 16, which is    *)
+(* smaller than n only where 16 <= n).  The port lifts the            *)
+(* conditional to the top of the clause, where HOL Light does use     *)
+(* the condition, and derives the clause as the source gives it.      *)
+(* ------------------------------------------------------------------ *)
+
+let rec lift_conds fs r =
+  if is_cond r then
+    let c,(a,b) = dest_cond r in
+    mk_cond(c,lift_conds fs a,lift_conds fs b)
+  else
+    let rec look t =
+      if is_cond t && exists (fun f -> free_in f t) fs then Some t
+      else match t with
+        Comb(s,u) -> (match look s with
+                        Some x -> Some x | None -> look u)
+      | _ -> None in
+    match look r with
+      None -> r
+    | Some t ->
+        let c,(a,b) = dest_cond t in
+        lift_conds fs (mk_cond(c,subst [a,t] r,subst [b,t] r));;
+
+let define_lift_if inner tm =
+  let fs = definition_heads tm in
+  let cls = conjuncts(snd(strip_forall tm)) in
+  let lift cl =
+    let l,r = dest_eq(snd(strip_forall cl)) in
+    let r' = lift_conds fs r in
+    if r' = r then cl else close_clause fs (mk_eq(l,r')) in
+  let newcls = map lift cls in
+  if newcls = cls then failwith "define_lift_if" else
+  let ths,spec = inner (list_mk_conj (map (close_clause fs) newcls)) in
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   fs in
+  let derive cl =
+    let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
+    prove(gcl,
+      REPEAT GEN_TAC THEN
+      GEN_REWRITE_TAC LAND_CONV ths THEN
+      REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[]) in
+  map derive cls,spec;;
 
 let cake_define_gen wf tm =
-  let fs = definition_heads tm in
-  let cls = definition_clauses tm in
-  let recursive =
-    exists (fun (_,_,r) -> exists (fun f -> vfree_in f r) fs) cls in
-  let attempt wfs =
-    if length fs = 1 then define_single wfs tm else define_mutual wfs tm
-      in
+  let fs0 = definition_heads tm in
   (* an attempt that fails after it has made the constant cannot be
      followed by another one *)
   let declared () =
-    exists (fun g -> can get_const_type (fst(dest_var g))) fs in
-  let strategies () =
+    exists (fun g -> can get_const_type (fst(dest_var g))) fs0 in
+  let rec strategies tm =
+    let fs = definition_heads tm in
+    let cls = definition_clauses tm in
+    let recursive =
+      exists (fun (_,_,r) -> exists (fun f -> vfree_in f r) fs) cls in
+    let attempt wfs =
+      if length fs = 1 then define_single wfs tm
+      else define_mutual wfs tm in
     if not recursive then
       (if length fs = 1 then
          (if length cls = 1
@@ -1921,8 +2216,14 @@ let cake_define_gen wf tm =
     else
       (try define_prim_rec tm with Failure _ when not (declared ()) ->
        try define_nested tm with Failure _ when not (declared ()) ->
+       try define_maplist strategies tm
+       with Failure _ when not (declared ()) ->
+       try define_sing strategies tm
+       with Failure _ when not (declared ()) ->
        try define_cases tm with Failure _ when not (declared ()) ->
        try define_match tm with Failure _ when not (declared ()) ->
+       try define_lift_if strategies tm
+       with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in
@@ -1931,8 +2232,10 @@ let cake_define_gen wf tm =
   (* every way of making the definition together gets the budget;
      what is left after it is assumed *)
   let ths,_ =
-    try with_timeout strategies ()
-    with Cake_timeout | Failure _ -> [cake_cheat tm],TRUTH in
+    try with_timeout strategies tm
+    with Cake_timeout ->
+           (cheat_why := "timeout"; [cake_cheat tm],TRUTH)
+       | Failure e -> (cheat_why := e; [cake_cheat tm],TRUTH) in
   end_itlist CONJ ths;;
 
 (* with cake_timing set, every definition reports how long it took *)
@@ -2043,6 +2346,7 @@ let cake_cheat_list cls =
   the_cheats := name :: !the_cheats;
   print_string ("\ncake_define " ^ name ^ " CHEATED (clause by " ^
                 "clause)\n");
+  note_cheat name (list_mk_conj (map (close_clause []) cls));
   flush stdout;
   (* only the functions that the clauses define become constants; a
      variable whose name is a constant of something else stays a
