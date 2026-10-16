@@ -93,6 +93,17 @@ FIELD_VAR = {
   # whose c and t the inferencer's init_config takes over
   'infer': {'prim_tenv': 'type_env',
             'primTypes$prim_tenv': 'type_env'},
+  # a tenv is a type environment in the theories about the
+  # inferencer, and an env an environment of flatSem in the
+  # ones about the flat language
+  'inferProps': {'tenv': 'type_env'},
+  'envRel': {'tenv': 'type_env'},
+  'type_dCanon': {'tenv1': 'type_env', 'tenv2': 'type_env',
+                  'tenv': 'type_env'},
+  'flat_elimProof': {'env': 'flatSem_environment'},
+  'flat_patternProof': {'env1': 'flatSem_environment',
+                        'env2': 'flatSem_environment',
+                        'env': 'flatSem_environment'},
   # t is the state of wordSem and s the one of dataSem in the
   # invariant that these relate them with
   'data_to_word_gcProof': {'t': 'wordSem_state'},
