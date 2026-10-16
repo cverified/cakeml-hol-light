@@ -34,7 +34,6 @@ needs "compiler/backend/semantics/dataProps.ml";;
 needs "compiler/backend/semantics/dataSem.ml";;
 needs "compiler/backend/semantics/stackProps.ml";;
 needs "compiler/backend/stack_alloc.ml";;
-needs "compiler/backend/stack_names.ml";;
 needs "compiler/backend/stack_remove.ml";;
 needs "compiler/backend/stack_to_lab.ml";;
 needs "compiler/backend/wordLang.ml";;
@@ -58,10 +57,10 @@ val compile_tap_def = backend_passesTheory.compile_tap_def;
 *)
 
 let backend_config_ok_def = cake_define
-  `backend_config_ok (asm_conf:'a asm_config) (c:compiler_config) <=>
+  `backend_config_ok (asm_conf:'a asm_config) (c:backend_config) <=>
   backend_config_source_conf
      c = prim_src_config /\
-     0 < closSem_state_max_app (backend_config_clos_conf c) /\
+     0 < clos_to_bvl_config_max_app (backend_config_clos_conf c) /\
        bvl_to_bvi_config_next_name2 (backend_config_bvl_conf
      c) = bvl_num_stubs + 2 /\
      LENGTH (asm_config_avoid_regs asm_conf) + 13 <=
@@ -80,15 +79,17 @@ let backend_config_ok_def = cake_define
      (data_to_word_config_has_fp_tern (backend_config_data_conf c)
        <=> asm_config_ISA
          asm_conf = ARMv7 /\ 2 < asm_config_fp_reg_count asm_conf) /\
-     (has_fp_ops (backend_config_data_conf c) <=> 1 <
-       asm_config_fp_reg_count asm_conf) /\
+     (data_to_word_config_has_fp_ops (backend_config_data_conf c) <=>
+       1 < asm_config_fp_reg_count asm_conf) /\
      max_stack_alloc <= 2 * max_heap_limit (:'a)
        (backend_config_data_conf c) - 1 /\
        stack_to_lab_config_perf_calls (backend_config_stack_conf
      c) = F /\
-     (\c. offset_ok 0 (asm_config_addr_offset c)) asm_conf (n2w 0) /\
-     (\c. offset_ok 0 (asm_config_hw_offset c)) asm_conf (n2w 0) /\
-     (!w. --(n2w 8) <= w /\ w <= (n2w 8) ==> (\c. offset_ok 0
+     (\c. asm_offset_ok 0 (asm_config_addr_offset c)) asm_conf (n2w
+       0) /\
+     (\c. asm_offset_ok 0 (asm_config_hw_offset c)) asm_conf (n2w 0)
+       /\
+     (!w. --(n2w 8) <= w /\ w <= (n2w 8) ==> (\c. asm_offset_ok 0
        (asm_config_byte_offset c)) asm_conf w) /\ asm_config_valid_imm
      asm_conf (INL Add) (n2w 8) /\ asm_config_valid_imm
      asm_conf (INL Add) (n2w 4) /\ asm_config_valid_imm
@@ -98,14 +99,14 @@ let backend_config_ok_def = cake_define
        (backend_config_lab_conf c)) /\
      tlookup (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) PERMUTES UNIV /\
-     names_ok (stack_to_lab_config_reg_names
+     stack_names_names_ok (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) (asm_config_reg_count asm_conf)
        (asm_config_avoid_regs asm_conf) /\
      fixed_names (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) asm_conf /\
-     (!s. (\c. offset_ok 0 (asm_config_addr_offset c)) asm_conf
+     (!s. (\c. asm_offset_ok 0 (asm_config_addr_offset c)) asm_conf
        (store_offset s)) /\
-     (!s. (\c. offset_ok 0 (asm_config_hw_offset c)) asm_conf
+     (!s. (\c. asm_offset_ok 0 (asm_config_hw_offset c)) asm_conf
        (store_offset s)) /\
      (!n.
           n <= max_stack_alloc ==> asm_config_valid_imm
@@ -346,8 +347,8 @@ let is_safe_for_space_def = cake_define
        prog)) in
        data_lang_safe_for_space ffi (fromAList data_prog)
          (compute_limits (data_to_word_config_len_size
-           (backend_config_data_conf c)) (is_64_bits (:'a)) (has_fp_ops
-           (backend_config_data_conf c))
+           (backend_config_data_conf c)) (is_64_bits (:'a))
+           (data_to_word_config_has_fp_ops (backend_config_data_conf c))
            (data_to_word_config_has_fp_tern (backend_config_data_conf
            c)) stack_heap_limit)
          (compute_stack_frame_sizes asm_conf word_prog)
@@ -359,7 +360,7 @@ hol4_overload "is_safe_for_space" "backendProof_is_safe_for_space";;
 (* TODO: MOVE *)
 
 let read_limits_def = cake_define
-  `backendProof_read_limits (asm_conf:'a asm_config) (c:compiler_config)
+  `backendProof_read_limits (asm_conf:'a asm_config) (c:backend_config)
   mc ms =
      get_stack_heap_limit
        (2 * max_heap_limit (:'a) (backend_config_data_conf c) - 1)
@@ -390,7 +391,7 @@ let opt_eval_config_wf_def = cake_define_list
    `opt_eval_config_wf asm_conf c' NONE = T`];;
 
 let backend_from_data_tuple_cc_def = cake_define
-  `backend_from_data_tuple_cc asm_conf (c:compiler_config) cfg =
+  `backend_from_data_tuple_cc asm_conf (c:backend_config) cfg =
      OPTION_MAP (I ## MAP upper_w2w ## I) o
        (\progs.
          (\(bm0,cfg) progs.
@@ -427,11 +428,11 @@ let backend_from_data_tuple_cc_def = cake_define
                  (backend_config_data_conf c)))`;;
 
 let backend_from_flat_tuple_cc_def = cake_define
-  `backend_from_flat_tuple_cc asm_conf (c:compiler_config) =
+  `backend_from_flat_tuple_cc asm_conf (c:backend_config) =
      pure_cc inc_compile_decs
        (compile_common_inc (backend_config_clos_conf c)
-          (pure_cc (clos_to_bvl_compile_inc' (closSem_state_max_app
-            (backend_config_clos_conf c)))
+          (pure_cc (clos_to_bvl_compile_inc'
+            (clos_to_bvl_config_max_app (backend_config_clos_conf c)))
             (full_cc (backend_config_bvl_conf c) (pure_cc
               bvi_to_data_compile_prog
               (backend_from_data_tuple_cc asm_conf c)))))`;;

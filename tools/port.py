@@ -1325,12 +1325,28 @@ class Porter:
       if x.kind == 'app':
         h, args = hterm.strip_app(x)
         if h.kind == 'id' and iscon(h.name):
-          t = self.con_thy(h.name, arity=len(args))
           nm = h.name.split('$')[-1]
+          # the theories whose constructor of that name the
+          # occurrence can be: the type of the argument only says
+          # something where they all give it the same one (the
+          # argument of a Litv is an ast$lit, of whichever
+          # theory the Litv is; the argument of an If is of the
+          # language that the If is of, so it says nothing)
+          if '$' in h.name:
+            cands = [h.name.split('$')[0]]
+          else:
+            anc = self.db.scope(self.thy) | {self.thy}
+            cands = [t for t, k in self.db.defs.get(nm, [])
+                     if k == 'con' and t in anc
+                     and self.db.con_arity(t, nm) == len(args)]
           for i, a in enumerate(args):
-            ty = (self.db.con_argty_thy.get((t, nm, i)) if t
-                  else None) or self.ctx.con_argty.get((nm, i))
-            t2 = self.ty_thy(ty) if ty else None
+            tys = {self.ty_thy(self.db.con_argty_thy[(t, nm, i)])
+                   for t in cands
+                   if (t, nm, i) in self.db.con_argty_thy}
+            if not cands:
+              ty = self.ctx.con_argty.get((nm, i))
+              tys = {self.ty_thy(ty)} if ty else set()
+            t2 = tys.pop() if len(tys) == 1 else None
             if not t2: continue
             b = a
             while b.kind == 'paren': b = b.e

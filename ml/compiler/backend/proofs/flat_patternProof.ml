@@ -100,14 +100,14 @@ let v_rel = cake_inductive
    (!N env1 n x env2 cfg.
       env_rel N env1 env2 /\
       FST (flat_pattern_compile_exp cfg x) < N ==>
-      v_rel (Closure env1 n x)
-        (Closure env2 n (SND (SND (flat_pattern_compile_exp cfg
-          x))))) /\
+      v_rel (flatSem_Closure env1 n x)
+        (flatSem_Closure env2 n (SND (SND (flat_pattern_compile_exp
+          cfg x))))) /\
    (!N env1 fs x env2 cfg.
       env_rel N env1 env2 /\
       EVERY (\(n,m,e). FST (flat_pattern_compile_exp cfg e) < N) fs
         ==>
-      v_rel (Recclosure env1 fs x) (Recclosure env2
+      v_rel (flatSem_Recclosure env1 fs x) (flatSem_Recclosure env2
           (MAP (\(n,m,e). (n,m,SND (SND (flat_pattern_compile_exp cfg
             e)))) fs) x)) /\
    (!N env1 env2.

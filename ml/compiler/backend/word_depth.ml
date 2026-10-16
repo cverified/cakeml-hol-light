@@ -84,8 +84,7 @@ let call_graph_def = cake_define_wf
                               (call_graph funs n ns total ret_prog))
                                 | SOME (_8,p,_9,_10) ->
                                 word_depth_Branch (word_depth_Call n
-                                (Const 3 (word_depth_Call d
-                                word_depth_Leaf)))
+                                (Const 3 (Call d word_depth_Leaf)))
                    (mk_Branch (Call n (Const 3 (call_graph new_funs d
                      [d] total body)))
                    (mk_Branch (call_graph funs n ns total p)

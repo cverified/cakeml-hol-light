@@ -302,8 +302,8 @@ let word_gen_gc_partial_move_code_def = cake_define
             (backend_common_word_shift (:'a));
           Get 1 (Temp (n2w 1));
           If asm_Lower 0 (Reg 6) Skip
-           (word_bignum_Seq (Get 6 (Temp (n2w 1)))
-           (word_bignum_If asm_NotLower 0 (Reg 1) Skip (list_Seq [
+           (Seq (Get 6 (Temp (n2w 1)))
+           (If asm_NotLower 0 (Reg 1) Skip (list_Seq [
               Get 1 CurrHeap;
               (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0
                 1;
@@ -614,19 +614,17 @@ let SetNewTrigger_def = cake_define
                (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                  4 ib;
                If asm_Lower 1 (Reg 7)
-                 (word_bignum_If asm_Lower 4 (Reg 7)
+                 (If asm_Lower 4 (Reg 7)
                     (Set TriggerGC endh)
-                    (word_bignum_If Test 7 (Imm (if dimindex (:'a) =
-                      32 then (n2w 3) else (n2w 7)))
-                      (word_bignum_Seq ((\r1 r2. Inst (Arith
-                        (asm_Binop Add r1 r1 (Reg r2)))) 7 ib) (Set
-                        TriggerGC 7))
+                    (If Test 7 (Imm (if dimindex (:'a) = 32 then (n2w
+                      3) else (n2w 7)))
+                      (Seq ((\r1 r2. Inst (Arith (asm_Binop Add r1 r1
+                        (Reg r2)))) 7 ib) (Set TriggerGC 7))
                       (Set TriggerGC endh)))
-                 (word_bignum_If asm_Lower 4 (Reg 1)
+                 (If asm_Lower 4 (Reg 1)
                     (Set TriggerGC endh)
-                    (word_bignum_Seq ((\r1 r2. Inst (Arith
-                      (asm_Binop Add r1 r1 (Reg r2)))) 1 ib) (Set
-                      TriggerGC 1)))]`;;
+                    (Seq ((\r1 r2. Inst (Arith (asm_Binop Add r1
+                      r1 (Reg r2)))) 1 ib) (Set TriggerGC 1)))]`;;
 
 let word_gc_code_def = cake_define
   `word_gc_code conf =
@@ -637,9 +635,8 @@ let word_gc_code_def = cake_define
                 Set NextFree 2;
                 Set TriggerGC 2;
                 Set EndOfHeap 2;
-                If Test 1 (Reg 1) Skip (word_bignum_Seq ((\r w. Inst
-                  (Const r w)) 1 (n2w 1)) (stackLang_Halt 1))]) | Simple
-                  ->
+                If Test 1 (Reg 1) Skip (Seq ((\r w. Inst (Const r w))
+                  1 (n2w 1)) (stackLang_Halt 1))]) | Simple ->
          (list_Seq
                [Set AllocSize 1;
                 Set NextFree 0;
@@ -687,8 +684,8 @@ let word_gc_code_def = cake_define
                 Get 1 AllocSize;
                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                   2 8;
-                If asm_Lower 2 (Reg 1) (word_bignum_Seq ((\r w. Inst
-                  (Const r w)) 1 (n2w 1)) (stackLang_Halt 1)) Skip]) |
+                If asm_Lower 2 (Reg 1) (Seq ((\r w. Inst (Const r w))
+                  1 (n2w 1)) (stackLang_Halt 1)) Skip]) |
                   data_to_word_Generational gen_sizes ->
          ((word_gc_partial_or_full gen_sizes
                [Set AllocSize 1;
@@ -840,9 +837,9 @@ let word_gc_code_def = cake_define
                 Get 2 TriggerGC;
                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                   2 3;
-                If asm_Lower 2 (Reg 1) (word_bignum_Seq ((\r w.
-                  Inst (Const r w)) 1 (n2w 1)) (stackLang_Halt 1))
-                  Skip]):'a stackLang_prog))`;;
+                If asm_Lower 2 (Reg 1) (Seq ((\r w. Inst (Const r
+                  w)) 1 (n2w 1)) (stackLang_Halt 1)) Skip]):'a
+                  stackLang_prog))`;;
 
 let stubs_def = cake_define
   `stack_alloc_stubs conf = [(gc_stub_location,Seq (word_gc_code

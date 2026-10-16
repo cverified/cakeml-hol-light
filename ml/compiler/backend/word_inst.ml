@@ -220,11 +220,11 @@ let inst_select_exp_def = cake_define_wf
            Seq p1 (Inst (Arith (asm_Binop asm_Sub tar temp (Imm
              (--w))))) else
            let p2 = Inst (asm_Const (temp + 1) w) in
-           Seq p1 (wordLang_Seq p2 (Inst (Arith (asm_Binop op tar
-             temp (Reg (temp + 1))))))) | _10 ->
+           Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
+             (temp + 1))))))) | _10 ->
          (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
-         Seq p1 (wordLang_Seq p2 (Inst (Arith (asm_Binop op tar temp
-           (Reg (temp + 1))))))))
+         Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
+           (temp + 1))))))))
         | (c,tar,temp,(Shift sh exp e1)) ->
        (match e1 with Const shift_len ->
            (let n = w2n shift_len in
@@ -237,8 +237,8 @@ let inst_select_exp_def = cake_define_wf
                Inst (asm_Const tar (n2w 0))) | _11 ->
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
-         Seq p (wordLang_Seq p1 (Inst (Arith (asm_Shift sh tar temp
-           (Reg (temp + 1))))))))
+         Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg (temp
+           + 1))))))))
         | (_12,_13,_14,_15) -> Skip`;;
 
 (*
@@ -264,7 +264,7 @@ let inst_select_def = cake_define
         | (Set store exp) ->
        (let prog = (inst_select_exp c temp temp o flatten_exp o
          pull_exp) exp in
-       Seq prog (wordLang_Set store (Var temp)))
+       Seq prog (Set store (Var temp)))
         | (Store exp var) ->
        (let exp = (flatten_exp o pull_exp) exp in
        match exp with wordLang_Op asm_Add [exp'; Const w] ->

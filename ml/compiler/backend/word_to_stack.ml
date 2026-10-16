@@ -564,19 +564,19 @@ hol4_overload "comp" "word_to_stack_comp";;
 let raise_stub_def = cake_define
   `raise_stub perf k =
       Seq (Get k Handler)
-     (wordLang_Seq (stackLang_StackSetSize k)
-     (wordLang_Seq (if perf then
+     (Seq (stackLang_StackSetSize k)
+     (Seq (if perf then
              stackLang_list_Seq [
                stackLang_StackLoad k 3;
                Inst (Arith (asm_Binop asm_Or perf_rsp k (Reg k)));
                stackLang_StackLoad k 4;
                Inst (Arith (asm_Binop asm_Or perf_rbp k (Reg k)))]
                  else Skip)
-     (wordLang_Seq (stackLang_StackLoad k 2)
-     (wordLang_Seq (wordLang_Set Handler k)
-     (wordLang_Seq (stackLang_StackLoad k 1)
-     (wordLang_Seq (stackLang_StackFree (handler_slots perf))
-          (wordLang_Raise k)))))))`;;
+     (Seq (stackLang_StackLoad k 2)
+     (Seq (Set Handler k)
+     (Seq (stackLang_StackLoad k 1)
+     (Seq (stackLang_StackFree (handler_slots perf))
+          (Raise k)))))))`;;
 
 let store_consts_stub_def = cake_define
   `store_consts_stub k =

@@ -105,38 +105,39 @@ let v_rel = cake_inductive
      LIST_REL (v_rel genv) vs vs' ==>
      v_rel genv (Conv NONE vs) (Conv NONE vs')) /\
    (!genv comp_map env env_v_local x e env_v_local' t ts.
-     source_evalProof_env_rel genv env_v_local (global_env_v
+     source_evalProof_env_rel genv env_v_local (flatSem_environment_v
        env_v_local') /\
-     global_env_inv genv comp_map (set_of_list (MAP FST (global_env_v
-       env_v_local'))) env /\
-     LENGTH ts = LENGTH (global_env_v env_v_local') + 1 ==>
+     global_env_inv genv comp_map (set_of_list (MAP FST
+       (flatSem_environment_v env_v_local'))) env /\
+     LENGTH ts = LENGTH (flatSem_environment_v env_v_local') + 1 ==>
      v_rel genv
-       (Closure (global_env_v_fupd (K (nsAppend env_v_local
-         (global_env_v env))) env) x e)
+       (Closure (semanticPrimitives_sem_env_v_fupd (K (nsAppend
+         env_v_local (semanticPrimitives_sem_env_v env))) env) x e)
        (Closure env_v_local' x
          (compile_exp t
-           (global_env_v_fupd (K (bind_locals ts (x :: MAP FST
-             (global_env_v env_v_local')) (global_env_v comp_map)))
-             comp_map)
+           (source_to_flat_environment_v_fupd (K (bind_locals ts (x
+             :: MAP FST (flatSem_environment_v env_v_local'))
+             (source_to_flat_environment_v comp_map))) comp_map)
            e))) /\
    (!genv comp_map env env_v_local funs x env_v_local' t ts.
-     source_evalProof_env_rel genv env_v_local (global_env_v
+     source_evalProof_env_rel genv env_v_local (flatSem_environment_v
        env_v_local') /\
-     global_env_inv genv comp_map (set_of_list (MAP FST (global_env_v
-       env_v_local'))) env /\
-     LENGTH ts = LENGTH funs + LENGTH (global_env_v env_v_local') ==>
+     global_env_inv genv comp_map (set_of_list (MAP FST
+       (flatSem_environment_v env_v_local'))) env /\
+     LENGTH ts = LENGTH funs + LENGTH (flatSem_environment_v
+       env_v_local') ==>
      v_rel genv
-       (Recclosure (global_env_v_fupd (K (nsAppend env_v_local
-         (global_env_v env))) env) funs x)
+       (Recclosure (semanticPrimitives_sem_env_v_fupd (K (nsAppend
+         env_v_local (semanticPrimitives_sem_env_v env))) env) funs x)
        (Recclosure env_v_local'
          (compile_funs t
-           (global_env_v_fupd (K (bind_locals ts (MAP FST funs ++ MAP
-             FST (global_env_v env_v_local')) (global_env_v comp_map)))
-             comp_map) funs)
+           (source_to_flat_environment_v_fupd (K (bind_locals ts (MAP
+             FST funs ++ MAP FST (flatSem_environment_v env_v_local'))
+             (source_to_flat_environment_v comp_map))) comp_map) funs)
            x)) /\
    (!genv comp_map env funs flat_env x y e new_vars t1 t2.
      MAP FST new_vars = MAP FST (REVERSE funs) /\
-     global_env_inv genv comp_map {} env /\ global_env_v
+     global_env_inv genv comp_map {} env /\ flatSem_environment_v
      flat_env = [] /\
      find_recfun x funs = SOME (y,e) /\
      (!x. x IN set_of_list (MAP FST funs) ==>
@@ -146,15 +147,17 @@ let v_rel = cake_inductive
           find_recfun x funs = SOME (y,e) /\
           EL n (global_env_v genv) =
             SOME (Closure flat_env y
-                   (compile_exp t2 (global_env_v_fupd (K (nsBindList
-                     ((y,Local t3 y) :: new_vars) (global_env_v
-                     comp_map))) comp_map) e)))) ==>
+                   (compile_exp t2 (source_to_flat_environment_v_fupd
+                     (K (nsBindList ((y,Local t3 y) :: new_vars)
+                     (source_to_flat_environment_v comp_map))) comp_map)
+                     e)))) ==>
      v_rel genv
        (Recclosure env funs x)
        (Closure flat_env y
          (compile_exp t1
-           (global_env_v_fupd (K (nsBindList ((y,Local t2 y) ::
-             new_vars) (global_env_v comp_map))) comp_map)
+           (source_to_flat_environment_v_fupd (K (nsBindList
+             ((y,Local t2 y) :: new_vars) (source_to_flat_environment_v
+             comp_map))) comp_map)
            e))) /\
    (!genv loc b.
      v_rel genv (Loc b loc) (Loc b (loc + 1))) /\
@@ -172,16 +175,18 @@ let v_rel = cake_inductive
      (!x v.
         ~(
         x IN IMAGE Short shadowers) /\
-        nsLookup (global_env_v env) x = SOME v ==>
+        nsLookup (semanticPrimitives_sem_env_v env) x = SOME v ==>
         (?n v' t.
-          nsLookup (global_env_v comp_map) x = SOME (Glob t n) /\
+          nsLookup (source_to_flat_environment_v comp_map) x = SOME
+            (Glob t n) /\
           n < LENGTH (global_env_v genv) /\
           EL n (global_env_v genv) = SOME v' /\
           v_rel genv v v')) /\
      (!x arity stamp.
-       nsLookup (global_env_c env) x = SOME (arity,stamp) ==>
-       (?cn ty_gp. nsLookup (global_env_c comp_map) x = SOME
-         (cn,ty_gp) /\
+       nsLookup (semanticPrimitives_sem_env_c env) x = SOME
+         (arity,stamp) ==>
+       (?cn ty_gp. nsLookup (source_to_flat_environment_c comp_map) x
+         = SOME (cn,ty_gp) /\
          FLOOKUP (global_env_c genv) ((cn,OPTION_MAP FST
            ty_gp),arity) = SOME stamp /\
          (!ty_id ctors. ty_gp = SOME (ty_id,ctors) ==>
@@ -304,8 +309,9 @@ let env_all_rel = cake_inductive
      global_env_inv genv map' (set_of_list locals) env /\
      source_evalProof_env_rel genv env_v_local env' ==>
      env_all_rel genv map'
-       (mk_global_env (nsAppend env_v_local (global_env_v env))
-         (global_env_c env) ARB)
+       (mk_global_env (nsAppend env_v_local
+         (semanticPrimitives_sem_env_v env))
+         (semanticPrimitives_sem_env_c env) ARB)
        (mk_flatSem_environment env')
        locals)`;;
 
@@ -333,10 +339,14 @@ val s1_i1 = mk_var ("s1_i1", type_of s_i1);
 let env_domain_eq_def = cake_define
   `env_domain_eq (var_map:source_to_flat_environment) (env:'a sem_env)
   <=>
-     nsDom (global_env_v var_map) = nsDom (global_env_v env) /\
-     nsDomMod (global_env_v var_map) = nsDomMod (global_env_v env) /\
-     nsDom (global_env_c var_map) = nsDom (global_env_c env) /\
-     nsDomMod (global_env_c var_map) = nsDomMod (global_env_c env)`;;
+     nsDom (global_env_v var_map) = nsDom
+       (semanticPrimitives_sem_env_v env) /\
+     nsDomMod (global_env_v var_map) = nsDomMod
+       (semanticPrimitives_sem_env_v env) /\
+     nsDom (global_env_c var_map) = nsDom
+       (semanticPrimitives_sem_env_c env) /\
+     nsDomMod (global_env_c var_map) = nsDomMod
+       (semanticPrimitives_sem_env_c env)`;;
 
 (* HOL4 ML code, not ported:
 val result_rel_imp = hd (RES_CANON result_rel_cases);
@@ -1995,11 +2005,13 @@ let init_genv_next = cake_define
   init_genv_els)))`;;
 
 let init_global_env_inv_def = cake_define
-  `init_global_env_inv genv comp_map env <=> global_env_v
+  `init_global_env_inv genv comp_map env <=>
+  semanticPrimitives_sem_env_v
    env = nsEmpty /\
-   (match global_env_c env with Bind ns ms -> ms = [] /\
-     EVERY (\(x,(arity,stamp)). match nsLookup (global_env_c
-       comp_map) (Short x) with
+   (match semanticPrimitives_sem_env_c env with Bind ns ms -> ms = []
+     /\
+     EVERY (\(x,(arity,stamp)). match nsLookup
+       (source_to_flat_environment_c comp_map) (Short x) with
        NONE -> F | SOME (cn,ty_gp) ->
          FLOOKUP (global_env_c genv) ((cn,OPTION_MAP FST
            ty_gp),arity) = SOME stamp /\

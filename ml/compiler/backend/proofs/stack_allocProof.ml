@@ -13,7 +13,6 @@ needs "compiler/backend/semantics/stackSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/stack_alloc.ml";;
-needs "compiler/backend/word_bignum.ml";;
 (* HOL4 ancestors outside the port: (* for memcpy *) *)
 
 (* HOL4 ML code, not ported:
@@ -324,9 +323,12 @@ val _ = augment_srw_ss[rewrites[with_same_regs_lemma]];
 
 (* TODO: does this have to initialize the data_buffer to empty? *)
 let make_init_def = cake_define
-  `stack_allocProof_make_init c code oracle' s = compile_oracle_fupd (K
-  oracle') (compile_fupd (K (\c. compile s c o (MAP prog_comp)))
-  (state_gc_fun_fupd (K (word_gc_fun c)) (stackSem_state_use_stack_fupd
-  (K T) (stackSem_state_use_alloc_fupd (K T) (state_code_fupd (K code)
+  `stack_allocProof_make_init c code oracle'
+  (s:('a,'c,'ffi)stackSem_state) = stackSem_state_compile_oracle_fupd (K
+  oracle') (stackSem_state_compile_fupd (K (\c. stackSem_state_compile s
+  c o (MAP stack_alloc_prog_comp))) (stackSem_state_gc_fun_fupd (K
+  (word_gc_fun c)) (stackSem_state_use_stack_fupd (K T)
+  (stackSem_state_use_alloc_fupd (K T) (stackSem_state_code_fupd (K
+  code)
      s)))))`;;
 hol4_overload "make_init" "stack_allocProof_make_init";;

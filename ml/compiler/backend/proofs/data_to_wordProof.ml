@@ -9,7 +9,6 @@
 
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_shared.ml";;
@@ -1099,23 +1098,26 @@ let state_rel_ext_def = cake_define
   `state_rel_ext c l1 l2 s u <=>
      (?t l.
        state_rel c l1 l2 s t NONE [] /\
-       domain (state_code t) = domain l /\ wordSem_state_termdep
+       domain (wordSem_state_code t) = domain l /\
+         wordSem_state_termdep
        t > 1 /\
-       (?tt kk aa co. compile_oracle
+       (?tt kk aa co. wordSem_state_compile_oracle
           u =
             (I ## MAP (\p. full_compile_single tt kk aa co (p,NONE)))
-              o compile_oracle
-              t /\ compile
-          t = (\conf progs. compile u conf
+              o wordSem_state_compile_oracle
+              t /\ wordSem_state_compile
+          t = (\conf progs. wordSem_state_compile u conf
             (MAP (\p. full_compile_single tt kk aa co (p,NONE))
               progs))) /\
-       (!n v. lookup n (state_code t) = SOME v ==>
+       (!n v. lookup n (wordSem_state_code t) = SOME v ==>
               (?t' k' a' c' col.
               lookup n l = SOME (SND (full_compile_single t' k' a' c'
                 ((n,v),col))))) /\
-       u = compile_oracle_fupd (K (compile_oracle u))
-         (compile_fupd (K (compile u)) (wordSem_state_termdep_fupd (K
-         0) (state_code_fupd (K l) t))))`;;
+       u = wordSem_state_compile_oracle_fupd (K
+         (wordSem_state_compile_oracle u))
+         (wordSem_state_compile_fupd (K (wordSem_state_compile u))
+         (wordSem_state_termdep_fupd (K 0) (wordSem_state_code_fupd
+         (K l) t))))`;;
 
 (* observational semantics preservation *)
 
@@ -1123,8 +1125,9 @@ let get_limits_def = cake_define
   `get_limits c (t:('a,'c,'ffi)wordSem_state) =
      mk_limits (w2n (theWord (FAPPLY (wordSem_state_store t)
        HeapLength)) DIV (dimindex (:'a) DIV 8))
-       (data_to_word_config_len_size c) (stack_limit t) (dimindex
-       (:'a) = 64) (has_fp_ops c) (data_to_word_config_has_fp_tern c)`;;
+       (data_to_word_config_len_size c) (wordSem_state_stack_limit t)
+       (dimindex (:'a) = 64) (has_fp_ops c)
+       (data_to_word_config_has_fp_tern c)`;;
 
 (* HOL4 ML code, not ported:
 val _ = (max_print_depth := 15);

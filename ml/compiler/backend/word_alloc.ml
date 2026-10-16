@@ -1183,7 +1183,7 @@ let get_clash_tree_def = cake_define_list
           (sptree_union (FST numset) (SND numset)))`;
    `get_clash_tree (wordLang_Install r1 r2 r3 r4 numset) lt =
         reg_alloc_Seq (reg_alloc_Delta [] [r4; r3; r2; r1])
-          (wordLang_Seq (reg_alloc_Set (sptree_union (FST numset)
+          (reg_alloc_Seq (reg_alloc_Set (sptree_union (FST numset)
           (SND numset))) (reg_alloc_Delta [r1] []))`;
    `get_clash_tree (wordLang_CodeBufferWrite r1 r2) lt =
         reg_alloc_Delta [] [r2; r1]`;
@@ -1213,8 +1213,8 @@ let get_clash_tree_def = cake_define_list
   [v] (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Loop names body exit_names) lt =
         reg_alloc_Seq (reg_alloc_Set names)
-          (wordLang_Seq (reg_alloc_Set exit_names)
-            (wordLang_Seq (get_clash_tree body ((names,exit_names)
+          (reg_alloc_Seq (reg_alloc_Set exit_names)
+            (reg_alloc_Seq (get_clash_tree body ((names,exit_names)
               :: lt))
               (reg_alloc_Set names)))`;
    `get_clash_tree (wordLang_Break n) lt =

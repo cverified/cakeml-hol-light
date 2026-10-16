@@ -117,8 +117,7 @@ let AllocGlobal_code_def = cake_define
      Let [Op (closLang_MemOp closLang_Length) [Var 2]] (
      Let [Op (closLang_MemOp closLang_Update) [Var 1; Op
        (closLang_IntOp (closLang_Const (&0))) []; Var 3]]
-       (If (bvl_Op (closLang_IntOp closLang_Less) [Var 1; Var 2])
-         (bvl_Var 0)
+       (If (Op (closLang_IntOp closLang_Less) [Var 1; Var 2]) (Var 0)
           (Let [Op (closLang_MemOp closLang_RefArray) [Op
             (closLang_IntOp (closLang_Const (&0))) []; Op
             (closLang_IntOp closLang_Add) [Var 2; Var 2]]] (
@@ -155,9 +154,8 @@ let InitGlobals_code_def = cake_define
 
 let ListLength_code_def = cake_define
   `ListLength_code = (2,
-     If (bvl_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var
-       0])
-       (bvl_Var 1) (Call 0 (SOME ListLength_location)
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
+       (Var 1) (Call 0 (SOME ListLength_location)
                  [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
                    (closLang_Const (&1))) []; Var 0];
                   Op (closLang_IntOp closLang_Add) [Var 1; Op
@@ -166,9 +164,9 @@ let ListLength_code_def = cake_define
 
 let FromListByte_code_def = cake_define
   `FromListByte_code = (3,
-     If (bvl_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var
-       0]) (bvl_Var 2)
-       (bvl_Let [Op (closLang_MemOp closLang_UpdateByte) [Op
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
+       (Var 2)
+       (Let [Op (closLang_MemOp closLang_UpdateByte) [Op
          (closLang_MemOp closLang_El) [Op (closLang_IntOp
          (closLang_Const (&0))) []; Var 0]; Var 1; Var 2]]
          (Call 0 (SOME FromListByte_location)
@@ -180,9 +178,9 @@ let FromListByte_code_def = cake_define
 
 let ToListByte_code_def = cake_define
   `ToListByte_code = (3,
-     If (bvl_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
-       (&0)))) [Var 1]) (bvl_Var 0)
-       (bvl_Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
+     If (Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
+       (&0)))) [Var 1]) (Var 0)
+       (Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
          (closLang_Const (&1))) []; Var 1]]
        (bvl_Let [Op (closLang_MemOp closLang_DerefByte) [Var 0; Var
          3]]
@@ -193,9 +191,8 @@ let ToListByte_code_def = cake_define
 
 let SumListLength_code_def = cake_define
   `SumListLength_code = (2,
-     If (bvl_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var
-       0])
-       (bvl_Var 1)
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
+       (Var 1)
        (Call 0 (SOME SumListLength_location)
           [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
             (closLang_Const (&1))) []; Var 0];
@@ -207,9 +204,9 @@ let SumListLength_code_def = cake_define
 
 let ConcatByte_code_def = cake_define
   `ConcatByte_code = (3,
-     If (bvl_Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var
-       0]) (bvl_Var 2)
-       (bvl_Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
+     If (Op (closLang_BlockOp (closLang_TagLenEq nil_tag 0)) [Var 0])
+       (Var 2)
+       (Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
          (closLang_Const (&0))) []; Var 0]]
          (bvl_Let [Op (closLang_MemOp closLang_LengthByte) [Var 0]]
            (bvl_Let [Op (closLang_MemOp (closLang_CopyByte F))

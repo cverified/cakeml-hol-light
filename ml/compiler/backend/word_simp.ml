@@ -133,8 +133,8 @@ let const_fp_exp_def = cake_define
           match (const_fp_exp_e,const_fp_exp_e1) with (Const c,Const
             c1) ->
                 (match word_sh sh c (w2n c1) with SOME w -> Const w |
-                  _8 -> Shift sh (wordLang_Const c) (wordLang_Const c1))
-                  | _9 -> Shift sh const_fp_exp_e const_fp_exp_e1)
+                  _8 -> Shift sh (Const c) (Const c1)) | _9 -> Shift sh
+                  const_fp_exp_e const_fp_exp_e1)
         | e -> e`;;
 
 let const_fp_move_cs_def = cake_define_list
@@ -331,23 +331,22 @@ let try_if_hoist2_def = cake_define
   `try_if_hoist2 N p1 interm dummy' p2 = (if N = 0 then NONE else match
   p1 with wordLang_If cmp lhs rhs br1 br2 ->
        (let res1 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (Seq (wordLang_Seq br1 interm) dummy')))) in
+         (Seq (Seq br1 interm) dummy')))) in
        if res1 = 0 then NONE else
        let res2 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (Seq (wordLang_Seq br2 interm) dummy')))) in
+         (Seq (Seq br2 interm) dummy')))) in
        if ~(res1 + res2 = 3) then NONE else SOME (const_fp (If cmp
-         lhs rhs (wordLang_Seq (wordLang_Seq br1 interm) p2)
-           (wordLang_Seq (wordLang_Seq br2 interm) p2)))) | Seq p3 p4
-             -> (
+         lhs rhs (Seq (Seq br1 interm) p2)
+           (Seq (Seq br2 interm) p2)))) | Seq p3 p4 -> (
        match dest_If p4 with SOME (cmp,lhs,rhs,br1,br2) ->
        (let res1 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (Seq (wordLang_Seq br1 interm) dummy')))) in
+         (Seq (Seq br1 interm) dummy')))) in
        if res1 = 0 then NONE else
        let res2 = dest_Raise_num (SND (word_simp_dest_Seq (const_fp
-         (Seq (wordLang_Seq br2 interm) dummy')))) in
+         (Seq (Seq br2 interm) dummy')))) in
        if ~(res1 + res2 = 3) then NONE else SOME (Seq p3 (const_fp
-         (If cmp lhs rhs (wordLang_Seq (wordLang_Seq br1 interm) p2)
-           (wordLang_Seq (wordLang_Seq br2 interm) p2))))) | NONE ->
+         (If cmp lhs rhs (Seq (Seq br1 interm) p2)
+           (Seq (Seq br2 interm) p2))))) | NONE ->
        (if is_simple p4 then try_if_hoist2 (N - 1) p3 (Seq p4
          interm) dummy' p2 else NONE)) | _47 -> NONE)`;;
 
@@ -388,12 +387,11 @@ let push_out_if_aux_def = cake_define
        c,b)) | Return _51 _52 -> (p,T) | Raise _53 -> (p,T) | Call NONE
        _54 _55 _56 -> (p,T) | If cmp r1 ri c1 c2 -> (match
        (push_out_if_aux c1,push_out_if_aux c2) with ((c1',T),(c2',T)) ->
-       (If cmp r1 ri c1' c2',T) | ((c1',F),(c2',T)) -> (Seq (wordLang_If
-       cmp r1 ri wordLang_Skip c2') c1',F) | ((c1',T),(c2',F)) -> (Seq
-       (wordLang_If cmp r1 ri c1' wordLang_Skip) c2',F) |
-       ((c1',F),(c2',F)) -> (If cmp r1 ri c1' c2',F)) | Seq c1 c2 ->
-       (match (push_out_if_aux c1) with (c1',T) -> ((Seq c1' c2),T) |
-       (c1',F) ->
+       (If cmp r1 ri c1' c2',T) | ((c1',F),(c2',T)) -> (Seq (If cmp r1
+       ri Skip c2') c1',F) | ((c1',T),(c2',F)) -> (Seq (If cmp r1 ri c1'
+       Skip) c2',F) | ((c1',F),(c2',F)) -> (If cmp r1 ri c1' c2',F)) |
+       Seq c1 c2 -> (match (push_out_if_aux c1) with (c1',T) -> ((Seq
+       c1' c2),T) | (c1',F) ->
                        (match (push_out_if_aux c2) with (c2',b) ->
                          (Seq c1' c2',b))) | Loop names body exit_names
                          ->

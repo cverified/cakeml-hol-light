@@ -613,7 +613,7 @@ let SeqIndex_def = cake_define
      (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
        -> TempIn1) in
        Seq (Assign i (wordLang_Op asm_Add [wordLang_Lookup t;
-            (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
+            (\sh e n. Shift sh e (Const (n2w n))) Lsl
               (wordLang_Lookup (Temp (n2w r)))
               (backend_common_word_shift (:'a))])) p:'a
               wordLang_prog)`;;
@@ -676,7 +676,7 @@ let compile_def = cake_define
         | (word_bignum_Delete _2) -> ((Skip:'a wordLang_prog),l,i,cs)
         | word_bignum_Swap ->
         (Seq (Assign i (wordLang_Lookup (TempIn1)))
-        (word_bignum_Seq (Set (TempIn1) (wordLang_Lookup (TempIn2)))
+        (Seq (Set (TempIn1) (wordLang_Lookup (TempIn2)))
              (Set (TempIn2) (Var i))),l,i + 1,cs)
         | (Store r1 r2) ->
         (SeqTemp i r1
@@ -691,25 +691,25 @@ let compile_def = cake_define
           2) r2
         (Seq (Inst (Arith (asm_AddCarry (i + 1) (i + 2) (i + 3) (i +
           4))))
-        (word_bignum_Seq (Set (Temp (n2w r0)) (Var (i + 1)))
+        (Seq (Set (Temp (n2w r0)) (Var (i + 1)))
              (Set (Temp (n2w r1)) (Var (i + 4))))))),l,i + 5,cs)
         | (Sub r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImmNot (i + 3) r3 (SeqTemp (i
           + 2) r2
         (Seq (Inst (Arith (asm_AddCarry (i + 1) (i + 2) (i + 3) (i +
           4))))
-        (word_bignum_Seq (Set (Temp (n2w r0)) (Var (i + 1)))
+        (Seq (Set (Temp (n2w r0)) (Var (i + 1)))
              (Set (Temp (n2w r1)) (Var (i + 4))))))),l,i + 5,cs)
         | (Mul r0 r1 r2 r3) ->
         (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
         (Seq (Inst (Arith (asm_LongMul (i + 0) (i + 1) (i + 2) (i +
           3))))
-        (word_bignum_Seq (Set (Temp (n2w r1)) (Var (i + 0)))
+        (Seq (Set (Temp (n2w r1)) (Var (i + 0)))
              (Set (Temp (n2w r0)) (Var (i + 1)))))),l,i + 4,cs)
         | (Div r0 r1 r2 r3 r4) ->
         (SeqTemp (i + 4) r4 (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
         (Seq (DivCode n l (i + 0) (i + 1) (i + 2) (i + 3) (i + 4))
-        (word_bignum_Seq (Set (Temp (n2w r0)) (Var (i + 0)))
+        (Seq (Set (Temp (n2w r0)) (Var (i + 0)))
              (Set (Temp (n2w r1)) (Var (i + 1))))))),l + 1,i + 5,cs)
         | _3 -> (Skip,l,i,cs)`;;
 hol4_overload "compile" "word_bignum_compile";;

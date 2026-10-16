@@ -29,6 +29,7 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "lib/alignment.ml";;
 needs "lib/set_sep.ml";;
+needs "lib/term.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
@@ -60,12 +61,12 @@ let get_iop_def = cake_define
                    multiword_Mod)`;;
 
 let int_op_def = cake_define
-  `data_to_word_bignumProof_int_op op_index i j =
+  `data_to_word_bignumProof_int_op op_index (i:int) (j:int) =
      (if op_index = 0 then SOME (i + j) else
      if op_index = 1 then SOME (i - j) else
      if op_index = 4 then SOME (i * j) else
-     if op_index = 5 /\ ~(j = 0) then SOME (i / j) else
-     if op_index = 6 /\ ~(j = 0) then SOME (i % j) else NONE)`;;
+     if op_index = 5 /\ ~(j = (&0)) then SOME (i / j) else
+     if op_index = 6 /\ ~(j = (&0)) then SOME (i % j) else NONE)`;;
 hol4_overload "int_op" "data_to_word_bignumProof_int_op";;
 
 let arith_location_def = cake_define
@@ -78,7 +79,7 @@ let arith_location_def = cake_define
 
 let arith_code_def = cake_define
   `Arith_code index =
-     Seq (Assign 6 (wordLang_Const (n2w (4 * index))))
+     Seq (Assign 6 (Const (n2w (4 * index))))
        (Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
 (* HOL4 ML code, not ported:
