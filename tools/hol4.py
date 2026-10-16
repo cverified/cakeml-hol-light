@@ -536,3 +536,27 @@ def split_top_str(s, sep):
     cur += c; i += 1
   out.append(cur)
   return out
+
+
+# the monadic state machinery that HOL4's ml_monadBaseLib makes
+# with ML code: the accessors of a state record, the manipulators
+# of its fixed size arrays, the functions of its exception type
+# and the run function of an initial state (reg_alloc and
+# linear_scan use all four).  tools/port.py writes out the
+# definitions that it makes; tools/db.py uses the same patterns to
+# know which constants those are
+
+MONAD_ACCESS_FUNS = re.compile(
+  r'define_monad_access_funs\s*(?:``|“)'
+  r'\s*:\s*([A-Za-z0-9_\']+)')
+MONAD_EXN_FUNS = re.compile(
+  r'define_monad_exception_functions\s*'
+  r'(?:``|“)\s*:\s*([A-Za-z0-9_\']+)'
+  r'(?:``|”)\s*(?:``|“)\s*:\s*([A-Za-z0-9_\']+)')
+MONAD_ARR_FUNS = re.compile(
+  r'define_MFarray_manip_funs\s*\[([^\]]*)\]\s*(\w+)\s*(\w+)', re.S)
+MONAD_RUN_FUN = re.compile(
+  r'define_run\s*(?:``|“)\s*:\s*([A-Za-z0-9_\']+)'
+  r'(?:``|”)\s*(\w+)\s*"([^"]*)"', re.S)
+MONAD_ARR_NAMES = re.compile(
+  r'val\s+array_fields_names\s*=\s*\[([^\]]*)\]', re.S)

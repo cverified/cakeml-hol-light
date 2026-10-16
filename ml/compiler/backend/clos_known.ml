@@ -409,8 +409,8 @@ let gO_destApx_def = cake_define
           gO_NullTuple tag else gO_None)
         | _13 -> gO_None`;;
 
-(* TERMINATION: wf_rel_tac `measure (FST o SND o SND)` *)
-let mk_Ticks_def = cake_define
+let mk_Ticks_def = cake_define_wf
+  `MEASURE (FST o SND o SND)`
   `mk_Ticks t tc n e =
      (if n = 0 then e else mk_Ticks t (tc + 1) (n - 1)
        (closLang_Tick (mk_cons t tc) e))`;;

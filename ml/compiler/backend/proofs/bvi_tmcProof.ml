@@ -221,14 +221,11 @@ let only_fresh_def = cake_define
    (!n. n IN FRANGE f' /\ ~(n IN FRANGE f) ==> ~(n IN FDOM
      refs_old))`;;
 
-(* TERMINATION: wf_rel_tac ‘measure $ CARD o FDOM o FST o SND o SND’
-  >> rpt gen_tac
-  >> strip_tac
-  >> gvs [finite_mapTheory.FDOM_DOMSUB, FLOOKUP_DEF]
-  >> Cases_on ‘CARD (FDOM refs)’
-  >- fs[finite_setTheory.fCARD_EQ0]
-  >> gvs [] *)
-let mb_rel_def = cake_define
+(* HOL4 termination: >> rpt gen_tac >> strip_tac >> gvs
+   [finite_mapTheory.FDOM_DOMSUB, FLOOKUP_DEF] >> Cases_on ‘CARD
+   (FDOM refs)’ >- fs[finite_setTheory.fCARD_EQ0] >> gvs [] *)
+let mb_rel_def = cake_define_wf
+  `MEASURE (CARD o FDOM o FST o SND o SND)`
   `mb_rel f x2 refs v1 v2 =
         match (x2,v1,v2) with
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag

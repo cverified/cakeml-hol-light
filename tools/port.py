@@ -765,11 +765,14 @@ class Porter:
                 '\nlet %s = cake_define\n  `%s`;;' % (name, term))
       else:
         wftext = fmt(self.term(wf), last=1)
-        text = (size_prelude(wftext + ' ' + term) +
-                shorten('\n'.join(
-                  fill('(* HOL4 termination:', rest.split(), 69))
-                + ' *)') +
-                '\nlet %s = cake_define_wf\n  `%s`\n  `%s`;;'
+        # the tactic that proves the goals of the relation is of no
+        # use to the port, but it is kept as a comment where there
+        # is one
+        note = '' if not rest.split() else shorten('\n'.join(
+                 fill('(* HOL4 termination:', rest.split(), 69))
+               + ' *)') + '\n'
+        text = (size_prelude(wftext + ' ' + term) + note +
+                'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
                 % (name, wftext, term))
     # the definition is followed by the overloads of HOL4, where the
     # name it gives a constant is one that other theories use too
@@ -1926,19 +1929,16 @@ class Porter:
   # exception type and the run function of an initial state
   # (reg_alloc and linear_scan use all four)
 
-  ACCESS_FUNS = re.compile(r'define_monad_access_funs\s*(?:``|\u201c)'
-                           r'\s*:\s*([A-Za-z0-9_\']+)')
-  EXN_FUNS = re.compile(r'define_monad_exception_functions\s*'
-                        r'(?:``|\u201c)\s*:\s*([A-Za-z0-9_\']+)'
-                        r'(?:``|\u201d)\s*(?:``|\u201c)\s*:\s*'
-                        r'([A-Za-z0-9_\']+)')
-  ARR_FUNS = re.compile(r'define_MFarray_manip_funs\s*\[([^\]]*)\]'
-                        r'\s*(\w+)\s*(\w+)', re.S)
-  RUN_FUN = re.compile(r'define_run\s*(?:``|\u201c)\s*:\s*'
-                       r'([A-Za-z0-9_\']+)(?:``|\u201d)\s*(\w+)'
-                       r'\s*"([^"]*)"', re.S)
-  ARR_NAMES = re.compile(r'val\s+array_fields_names\s*=\s*\[([^\]]*)\]',
-                         re.S)
+  # the patterns are in hol4.py, because the db uses them as well
+  # (it has to know the constants that the port makes here, or a
+  # definition of another theory with the same name is not seen as
+  # a clash: word_elimProof defines a get_stack of its own)
+
+  ACCESS_FUNS = hol4.MONAD_ACCESS_FUNS
+  EXN_FUNS = hol4.MONAD_EXN_FUNS
+  ARR_FUNS = hol4.MONAD_ARR_FUNS
+  RUN_FUN = hol4.MONAD_RUN_FUN
+  ARR_NAMES = hol4.MONAD_ARR_NAMES
 
   def monadic(self, b):
     txt = b.text
@@ -1963,7 +1963,13 @@ class Porter:
     return False
 
   def mdef(self, name, text):
-    """one of the definitions of the monadic machinery"""
+    """one of the definitions of the monadic machinery; the
+       constant has the name that the port gives it, which is not
+       the name of HOL4 where another theory defines one of its
+       own (word_elimProof has a get_stack as well)"""
+    nm = self.nm(name)
+    if nm != name and text.startswith(name):
+      text = nm + text[len(name):]
     self.out.append('let %s_def = cake_define\n  `%s`;;\n'
                     % (ocaml_name(name), fmt(text)))
 
@@ -1986,11 +1992,25 @@ class Porter:
     """raise_C and handle_C for every constructor of the exception
        type of the state monad"""
     cons = None
+    owner = None
     for (t, ety), (cs, _) in self.db.datatypes.items():
       if ety == exn and (t in self.db.ancestors(self.thy) or
                          t == self.thy):
         cons = cs
+        owner = t
     if cons is None: return
+    # where the exception type is another theory's (linear_scan
+    # uses reg_alloc's state_exn, as HOL4 does, whose Datatype it
+    # has in a comment), HOL4 makes constants of its own with the
+    # same names and the same values; the port has one namespace,
+    # so the ones of that theory are the ones it uses
+    if owner != self.thy:
+      self.out.append(shorten(
+        '(* HOL4 makes the functions of the exception type %s a\n'
+        '   second time here (define_monad_exception_functions of\n'
+        '   ml_monadBaseLib); they are the same as the ones that\n'
+        '   %s makes, which the port uses *)' % (exn, owner)))
+      return
     args = {}
     for c in cons:
       n = len([1 for i in range(9)
@@ -2302,8 +2322,9 @@ def wrap(line, indent, width, extra=2, hard=False):
 
 
 def wf_relation(extra):
-  """the relation of a WF_REL_TAC in a HOL4 Termination block"""
-  m = re.search(r'WF_REL_TAC\s*([`‘“])', extra)
+  """the relation of a WF_REL_TAC in a HOL4 Termination block
+     (the sources write it in lower case as well)"""
+  m = re.search(r'(?i:WF_REL_TAC)\s*([`‘“])', extra)
   if not m: return None, extra
   q = m.group(1)
   close = {'`': '`', '‘': '’', '“': '”'}[q]

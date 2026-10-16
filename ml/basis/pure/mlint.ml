@@ -83,8 +83,9 @@ let fromChars_range_def = cake_define_list
           head = fromChar (strsub str (l + n)) in OPTION_MAP2
             (+) rest head)`];;
 
-(* TERMINATION: wf_rel_tac `measure FST` \\ rw [padLen_DEC_eq] *)
-let fromChars_unsafe_def = cake_define
+(* HOL4 termination: \\ rw [padLen_DEC_eq] *)
+let fromChars_unsafe_def = cake_define_wf
+  `MEASURE FST`
   `fromChars_unsafe n str =
       match n with
         0 -> 0
@@ -98,8 +99,9 @@ let fromChars_unsafe_def = cake_define
 val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 *)
 
-(* TERMINATION: wf_rel_tac `measure FST` \\ rw [padLen_DEC_eq] *)
-let fromChars_def = cake_define
+(* HOL4 termination: \\ rw [padLen_DEC_eq] *)
+let fromChars_def = cake_define_wf
+  `MEASURE FST`
   `fromChars n str =
       match n with
         0 -> NONE

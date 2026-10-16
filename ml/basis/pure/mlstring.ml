@@ -91,7 +91,6 @@ let translate_aux_def = cake_define_list
 let translate_def = cake_define
   `translate f s = implode (translate_aux f s 0 (strlen s))`;;
 
-(* HOL4 termination: *)
 let splitl_aux_def = cake_define_wf
   `inv_image (<) (\(x,s,i). strlen s - i)`
   `splitl_aux P s i =
@@ -177,7 +176,6 @@ let fields_alt_aux_def = cake_define_wf
      [substring s i (j - i)]))`;;
 
 
-(* HOL4 termination: *)
 let str_findi_def = cake_define_wf
   `MEASURE (\(P,i,s). strlen s - i)`
   `str_findi P i s = (if i < strlen s then if P (strsub s i) then

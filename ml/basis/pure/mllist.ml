@@ -92,8 +92,8 @@ hol4_overload "foldli" "mllist_foldli";;
    (in addition to the translator-generated ones)
    (the CF specs allow more general arguments f) *)
 
-(* TERMINATION: wf_rel_tac`measure (λ(n,m,_,_). m-n)` *)
-let tabulate_aux_def = cake_define
+let tabulate_aux_def = cake_define_wf
+  `MEASURE (\(n,m,_1,_2). m - n)`
   `tabulate_aux n m f acc =
      (let b = (n >= m) in
      if b then REVERSE acc else

@@ -42,17 +42,13 @@ let alistSub_def = cake_define
 val _ = DefnBase.export_cong "alistSub_cong";
 *)
 
-(* TERMINATION: wf_rel_tac `measure (\(p,r,env,_). namespace_size (\x.0)
-   (\x.0) (\x.0) env)`
- >> rw []
- >> Induct_on `e1M`
- >> rw [namespace_size_def]
- >> PairCases_on `h`
- >> fs [ALOOKUP_def]
- >> every_case_tac
- >> fs []
- >> rw [namespace_size_def,basicSizeTheory.pair_size_def] *)
-let nsSub_compute_def = cake_define
+let _ = size_thms "namespace";;
+(* HOL4 termination: >> rw [] >> Induct_on `e1M` >> rw
+   [namespace_size_def] >> PairCases_on `h` >> fs [ALOOKUP_def] >>
+   every_case_tac >> fs [] >> rw
+   [namespace_size_def,basicSizeTheory.pair_size_def] *)
+let nsSub_compute_def = cake_define_wf
+  `MEASURE (\(p,r,env,_1). namespace_size (\x. 0) (\x. 0) (\x. 0) env)`
   `nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
      alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V
        /\

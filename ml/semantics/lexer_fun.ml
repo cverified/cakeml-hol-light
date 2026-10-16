@@ -374,15 +374,12 @@ let toplevel_semi_dex_def = cake_define_list
           - 1) t else if h = tokens_RparT then toplevel_semi_dex (i
           + 1) (d - 1) t else toplevel_semi_dex (i + 1) d t)`];;
 
-(* TERMINATION: wf_rel_tac `measure LENGTH` >>
-  rw [] >>
-  cases_on `toks` >>
-  fs [toplevel_semi_dex_def] >>
-  cases_on `h` >>
-  fs [] >>
-  metis_tac [toplevel_semi_dex_non0, DECIDE ``0 < 1:num``, DECIDE
-    ``∀x:num. 0 < x + 1``] *)
-let split_top_level_semi_def = cake_define
+(* HOL4 termination: >> rw [] >> cases_on `toks` >> fs
+   [toplevel_semi_dex_def] >> cases_on `h` >> fs [] >> metis_tac
+   [toplevel_semi_dex_non0, DECIDE ``0 < 1:num``, DECIDE ``∀x:num. 0
+   < x + 1``] *)
+let split_top_level_semi_def = cake_define_wf
+  `MEASURE LENGTH`
   `(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
         TAKE i toks :: split_top_level_semi (DROP i toks)))`;;

@@ -40,11 +40,12 @@ let lift_let_def = cake_define
              funs,Dlet l p x) | NONE -> NONE))
         | _3 -> NONE`;;
 
-(* TERMINATION: wf_rel_tac ‘measure (dec_size o SND)’
-  \\ Cases_on ‘d’ \\ rw [lift_let_def]
-  \\ gvs [CaseEqs ["option", "prod"], dec_size_def, exp_size_def,
-          dest_Let_SOME, dest_Letrec_SOME] *)
-let lift_lets_def = cake_define
+let _ = size_thms "dec";;
+(* HOL4 termination: \\ Cases_on ‘d’ \\ rw [lift_let_def] \\ gvs
+   [CaseEqs ["option", "prod"], dec_size_def, exp_size_def,
+   dest_Let_SOME, dest_Letrec_SOME] *)
+let lift_lets_def = cake_define_wf
+  `MEASURE (dec_size o SND)`
   `lift_lets sofar d =
      (match lift_let d with NONE ->
          (match sofar with [] -> NONE | _4 -> SOME (REVERSE

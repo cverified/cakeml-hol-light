@@ -238,7 +238,14 @@ let LOG_TAC (asl,w) =
           asl;
   failwith "LOG_TAC";;
 
-let TERM_TAC g =
+let rec TERM_TAC g =
+  let _,w = g in
+  if (try name_of(fst(strip_comb(snd(strip_forall w)))) =
+             "admissible"
+      with Failure _ -> false)
+  then ADMISS_TERM_TAC g else SIZE_TERM_TAC g
+
+and SIZE_TERM_TAC g =
   (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM;
                o_THM; FST; SND] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
@@ -253,7 +260,63 @@ let TERM_TAC g =
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
      ASM_ARITH_TAC) ORELSE
-    (if !cake_debug then LOG_TAC else NO_TAC))) g;;
+    (if !cake_debug then LOG_TAC else NO_TAC))) g
+
+and ADMISS_TERM_TAC g =
+  (PURE_REWRITE_TAC[admissible] THEN
+   REWRITE_TAC[FORALL_PAIR_THM] THEN
+   REPEAT GEN_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+   REWRITE_TAC[] THEN
+   REPEAT STRIP_TAC THEN
+   REWRITE_TAC[FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
+   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+   AGREE_TAC) g
+
+(* the assumption of an admissibility goal says that the two
+   functions agree below the measure; the subterms f x of the goal
+   for which that can be shown are rewritten with it *)
+
+and AGREE_TAC (asl,w as gl) =
+  let agree =
+    mapfilter
+      (fun (_,th) ->
+         let zs,bod = strip_forall(concl th) in
+         let _,con = dest_imp bod in
+         let l,r = dest_eq con in
+         if zs <> [] && is_comb l && is_comb r &&
+            is_var(rator l) && is_var(rator r) &&
+            rator l <> rator r then th else fail())
+      asl in
+  (* the assumption is about a tuple of variables where the
+     argument of the function is a tuple, so the instance is
+     found by matching *)
+  let use th =
+    let f = rator(lhs(rand(snd(strip_forall(concl th))))) in
+    let args =
+      setify(map rand (find_terms (fun t -> is_comb t &&
+                                            rator t = f) w)) in
+    mapfilter (fun a ->
+                 let ith = PART_MATCH (lhs o rand) th (mk_comb(f,a))
+                   in
+                 MP ith (prove(lhand(concl ith),TERM_TAC)))
+              args in
+  let eqs = itlist (fun th l -> use th @ l) agree [] in
+  if eqs = [] then failwith "AGREE_TAC" else
+  (REWRITE_TAC eqs THEN REWRITE_TAC[]) gl;;
+
+(* why the termination conditions could not be discharged: the
+   kind of the condition that failed says more than the "tryfind"
+   of the strategy that gives up *)
+
+let the_cond_why = ref "";;
+
+let cond_kind h =
+  let b = if is_exists h then snd(dest_exists h) else h in
+  let c = if is_conj b then rand b else b in
+  try let hd = fst(strip_comb(snd(strip_forall c))) in
+      if is_const hd then name_of hd else "measure"
+  with Failure _ -> "?";;
 
 let discharge_conditions (rel,tac) th =
   itlist
@@ -268,7 +331,8 @@ let discharge_conditions (rel,tac) th =
        let hth =
          try prove(h,gtac)
          with Failure s ->
-           (if !cake_debug then
+           (the_cond_why := cond_kind h;
+            if !cake_debug then
               (cake_log ("cannot prove the condition (" ^ s ^
                          ") with the relation");
                cake_log_term rel;
@@ -2195,6 +2259,7 @@ let define_lift_if inner tm =
   map derive cls,spec;;
 
 let cake_define_gen wf tm =
+  the_cond_why := "";
   let fs0 = definition_heads tm in
   the_defining := map (fst o dest_var) fs0;
   (* an attempt that fails after it has made the constant cannot be
@@ -2253,7 +2318,14 @@ let cake_define_gen wf tm =
     try with_timeout strategies tm
     with Cake_timeout ->
            (cheat_why := "timeout"; [cake_cheat tm],TRUTH)
-       | Failure e -> (cheat_why := e; [cake_cheat tm],TRUTH) in
+       | Failure e ->
+           (* "tryfind" is the strategy that gives up, which says
+              nothing; the condition that could not be discharged
+              says what the definition asks for *)
+           (cheat_why :=
+              (if e = "tryfind" && !the_cond_why <> ""
+               then "tryfind: " ^ !the_cond_why else e);
+            [cake_cheat tm],TRUTH) in
   end_itlist CONJ ths;;
 
 (* with cake_timing set, every definition reports how long it took *)

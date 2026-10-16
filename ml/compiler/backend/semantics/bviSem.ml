@@ -70,14 +70,11 @@ let bvl_to_bvi_def = cake_define
   s))
      t))`;;
 
-(* TERMINATION: wf_rel_tac ‘measure $ CARD o FDOM o SND’
-  >> simp [finite_mapTheory.FDOM_DOMSUB, FLOOKUP_DEF]
-  >> rw []
-  >> Cases_on ‘CARD (FDOM refs)’
-  >> rw []
-  >- fs[finite_setTheory.fCARD_EQ0]
-  >> simp [] *)
-let finalise_cons_def = cake_define
+(* HOL4 termination: >> simp [finite_mapTheory.FDOM_DOMSUB,
+   FLOOKUP_DEF] >> rw [] >> Cases_on ‘CARD (FDOM refs)’ >> rw [] >-
+   fs[finite_setTheory.fCARD_EQ0] >> simp [] *)
+let finalise_cons_def = cake_define_wf
+  `MEASURE (CARD o FDOM o SND)`
   `bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->

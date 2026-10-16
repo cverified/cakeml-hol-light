@@ -1048,12 +1048,12 @@ val word_cmp_loop_ind =  theorem"word_cmp_loop_ind";
 val good_dimindex_def = good_dimindex_def;
 *)
 
-(* TERMINATION: wf_rel_tac`measure (v_size o FST)`
- \\ Induct_on`l1` \\ ntac 2 (rw[v_size_def])
- \\ Cases_on`l2` \\ fs[] \\ rw[]
- \\ res_tac \\ fs[] \\ rfs[]
- \\ first_x_assum(qspecl_then[`0`,`t1`]mp_tac) \\ rw[] *)
-let v_same_type_def = cake_define
+let _ = size_thms "dataSem_v";;
+(* HOL4 termination: \\ Induct_on`l1` \\ ntac 2 (rw[v_size_def]) \\
+   Cases_on`l2` \\ fs[] \\ rw[] \\ res_tac \\ fs[] \\ rfs[] \\
+   first_x_assum(qspecl_then[`0`,`t1`]mp_tac) \\ rw[] *)
+let v_same_type_def = cake_define_wf
+  `MEASURE (dataSem_v_size o FST)`
   `v_same_type x1 x2 =
         match (x1,x2) with
           ((Number _44:dataSem_v),(Number _45:dataSem_v)) -> T

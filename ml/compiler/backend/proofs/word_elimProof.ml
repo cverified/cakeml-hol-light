@@ -68,10 +68,12 @@ let get_num_wordloc_alist_def = cake_define
        FOLDL (\acc loc. sptree_insert loc one acc) LN locs)`;;
 
 let get_stack_def = cake_define_list
-  [`get_stack [] = (LN:1 spt)`;
-   `get_stack (StackFrame lsz e0 e _5 :: xs) =
+  [`word_elimProof_get_stack [] = (LN:1 spt)`;
+   `word_elimProof_get_stack (StackFrame lsz e0 e _5 :: xs) =
             ((sptree_union (sptree_union (get_num_wordloc_alist
-              e0) (get_num_wordloc_alist e)) (get_stack xs)):1 spt)`];;
+              e0) (get_num_wordloc_alist e))
+              (word_elimProof_get_stack xs)):1 spt)`];;
+hol4_overload "get_stack" "word_elimProof_get_stack";;
 
 (* HOL4 ML code, not ported:
 val get_stack_ind = theorem "get_stack_ind";

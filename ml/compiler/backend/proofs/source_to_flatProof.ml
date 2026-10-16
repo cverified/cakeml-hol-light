@@ -2050,8 +2050,9 @@ let precondition_def = cake_define
 (* - the source_to_flat compiler produces things which are esgc_free
    ------- *)
 
-(* TERMINATION: wf_rel_tac`measure dec_size` *)
-let num_bindings_def = cake_define
+let _ = size_thms "dec";;
+let num_bindings_def = cake_define_wf
+  `MEASURE dec_size`
   `num_bindings x1 =
         match x1 with
           Dlet _19 p e ->

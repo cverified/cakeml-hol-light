@@ -240,6 +240,8 @@ class Db:
         elif b.kind == 'ML':
           for nm, flds in hol4.monad_decls(b.text):
             self.monads[nm] = flds
+          for nm in self.monad_funs(thy, b.text):
+            self.defs[nm].append((thy, 'def'))
           r = hol4.hol_reln(b.text)
           if r:
             for nm in definition_names(r[1]):
@@ -260,6 +262,37 @@ class Db:
             if not local:
               self.defs[b.name].append((thy, 'overload'))
             self.overloads[(thy, b.name)] = (strip_quote(b.body), local)
+
+  def monad_funs(self, thy, text):
+    """the constants that the monadic machinery of ml_monadBaseLib
+       makes out of an ML block (tools/port.py writes out the
+       definitions): the get_f and set_f of the fields of the
+       state record, the raise_C and handle_C of the constructors
+       of the exception type, the f_length, f_sub and update_f of
+       the fixed size array fields and the run function.  The
+       exception functions are only the ones of a theory that has
+       the exception type itself: where the type is another
+       theory's (linear_scan uses reg_alloc's state_exn), the
+       constants of that theory are the ones the port uses"""
+    out = []
+    m = hol4.MONAD_ACCESS_FUNS.search(text)
+    if m:
+      for f in self.recs.get((thy, m.group(1)), []):
+        out += ['get_' + f, 'set_' + f]
+    m = hol4.MONAD_EXN_FUNS.search(text)
+    if m and (thy, m.group(1)) in self.datatypes:
+      for c in self.datatypes[(thy, m.group(1))][0]:
+        out += ['raise_' + c, 'handle_' + c]
+    m = hol4.MONAD_ARR_FUNS.search(text)
+    if m:
+      for x in m.group(1).split(','):
+        x = x.strip()
+        if x.endswith('_accessors'):
+          f = x[:-len('_accessors')]
+          out += [f + '_length', f + '_sub', 'update_' + f]
+    m = hol4.MONAD_RUN_FUN.search(text)
+    if m: out.append('run_' + m.group(3))
+    return out
 
   def extra_defs(self):
     """the constants that the port declares itself"""

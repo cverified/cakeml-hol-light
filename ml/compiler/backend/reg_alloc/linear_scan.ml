@@ -12,7 +12,6 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 hol4_overload "++" "otherwise";;
@@ -387,37 +386,10 @@ Datatype:
 End
 *)
 
-(* HOL4 makes the functions of the exception type state_exn with ML
-   code (define_monad_exception_functions of
-   ml_monadBaseLib); these are the definitions that it
-   makes *)
-let raise_Fail_def = cake_define
-  `raise_Fail e1 =
-     (\state. (M_failure (Fail e1),state))`;;
-
-let raise_Subscript_def = cake_define
-  `raise_Subscript =
-     (\state. (M_failure reg_alloc_Subscript,state))`;;
-
-let handle_Fail_def = cake_define
-  `handle_Fail x f =
-     (\state.
-       match x state with (res,state) ->
-         match res with M_success y -> (M_success y,state)
-         | M_failure e ->
-           (match e with Fail e1 -> f e1 state |
-             reg_alloc_Subscript -> (M_failure
-             reg_alloc_Subscript,state)))`;;
-
-let handle_Subscript_def = cake_define
-  `handle_Subscript x f =
-     (\state.
-       match x state with (res,state) ->
-         match res with M_success y -> (M_success y,state)
-         | M_failure e ->
-           (match e with Fail e1 -> (M_failure (Fail e1),state) |
-             reg_alloc_Subscript -> f state))`;;
-
+(* HOL4 makes the functions of the exception type state_exn a
+   second time here (define_monad_exception_functions of
+   ml_monadBaseLib); they are the same as the ones that
+   reg_alloc makes, which the port uses *)
 hol4_overload "failwith" "raise_Fail";;
 
 (* HOL4 ML code, not ported:
@@ -846,7 +818,6 @@ let swap_regs_def = cake_define
        (update_sorted_regs i1 r2) (
        update_sorted_regs i2 r1)))`;;
 
-(* HOL4 termination: *)
 let partition_regs_def = cake_define_wf
   `MEASURE (\(l,rpiv,begrpiv,r). r - l)`
   `partition_regs l rpiv begrpiv r =
@@ -862,7 +833,6 @@ let partition_regs_def = cake_define_wf
              (swap_regs l (r - 1)) (
              partition_regs l rpiv begrpiv (r - 1)))))`;;
 
-(* HOL4 termination: *)
 let sort_regs_def = cake_define_wf
   `MEASURE (\(l,r). r - l)`
   `sort_regs l r =
@@ -888,7 +858,6 @@ let list_to_sorted_regs_def = cake_define_list
         (update_sorted_regs n r) (
         list_to_sorted_regs rs (n + 1))`];;
 
-(* HOL4 termination: *)
 let sorted_regs_to_list_def = cake_define_wf
   `MEASURE (\(n,last). last - n)`
   `sorted_regs_to_list n last =
@@ -907,7 +876,6 @@ let swap_moves_def = cake_define
        (update_sorted_moves i1 r2) (
        update_sorted_moves i2 r1)))`;;
 
-(* HOL4 termination: *)
 let partition_moves_def = cake_define_wf
   `MEASURE (\(l,piv,r). r - l)`
   `partition_moves l ppiv r =
@@ -921,7 +889,6 @@ let partition_moves_def = cake_define_wf
              (swap_moves l (r - 1)) (
              partition_moves l ppiv (r - 1))))`;;
 
-(* HOL4 termination: *)
 let sort_moves_def = cake_define_wf
   `MEASURE (\(l,r). r - l)`
   `linear_scan_sort_moves l r =
@@ -947,7 +914,6 @@ let list_to_sorted_moves_def = cake_define_list
         (update_sorted_moves n r) (
         list_to_sorted_moves rs (n + 1))`];;
 
-(* HOL4 termination: *)
 let sorted_moves_to_list_def = cake_define_wf
   `MEASURE (\(n,len). len - n)`
   `sorted_moves_to_list n len =

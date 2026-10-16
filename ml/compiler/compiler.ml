@@ -220,7 +220,6 @@ let compile_error_INDUCT,compile_error_RECURSION = define_datatype
   "compile_error = ParseError (mlstring) | TypeError (mlstring) | \
    AssembleError | ConfigError (mlstring) | StaticError (staterr)";;
 
-(* HOL4 termination: *)
 let find_next_newline_def = cake_define_wf
   `MEASURE (\(n,s). strlen s - n)`
   `find_next_newline n s =

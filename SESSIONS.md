@@ -46,6 +46,16 @@ everything it defines is then "already in use".  A script that
 ports a theory to look at what comes out sets
 `port.ML` to a scratch directory first.
 
+A change to `ml/lib/define.ml` can be tried while a run is going
+without writing into `ml/`: everything that file makes is an ML
+value (it has no definition of its own at the top level), so a
+copy of the part from the changed function to the end of the file
+loads over it in a clone of the template and the port's
+`cake_define` is then the changed one.  The strategies of
+`cake_define_gen` take `TERM_TAC` as it was when they were made,
+so the copy has to start at the function that is changed and go
+on to the end.
+
 Once a run is over, `hol-seq` has the ancestors of every file
 loaded, which is what `tools/bin/retry` uses: it loads the phrases
 of a file from the one that failed on, in a clone of `hol-seq`

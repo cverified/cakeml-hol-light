@@ -169,7 +169,8 @@ let set_move_related_def = cake_define
        state))`;;
 
 let get_stack_def = cake_define
-  `get_stack = (\state. (M_success (ra_state_stack state),state))`;;
+  `reg_alloc_get_stack = (\state. (M_success (ra_state_stack
+  state),state))`;;
 
 let set_stack_def = cake_define
   `set_stack x =
@@ -461,7 +462,7 @@ let add_freeze_wl_def = cake_define
 (* push x onto the stack, deleting it from "existence" *)
 let push_stack_def = cake_define
   `push_stack x =
-   st_ex_bind get_stack (\
+   st_ex_bind reg_alloc_get_stack (\
      swl. st_ex_ignore_bind
      (update_degrees x 0) (st_ex_ignore_bind
      (update_move_related x F) (
@@ -1289,7 +1290,7 @@ let do_alloc1_def = cake_define
    st_ex_bind get_dim (\
      d. st_ex_bind (init_alloc1_heu moves d k) (\
      l. st_ex_ignore_bind
-     (rpt_do_step scost k l) (st_ex_bind get_stack (\
+     (rpt_do_step scost k l) (st_ex_bind reg_alloc_get_stack (\
      st.
      st_ex_return st))))`;;
 

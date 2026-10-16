@@ -343,7 +343,6 @@ let simple_dlet_def = cake_define
 
 let _ = size_thms "dec";;
 let _ = size_thms "list";;
-(* HOL4 termination: *)
 let compile_decs_def = cake_define_wf
   `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`
   `source_to_flat_compile_decs t n next' env envs' x6 =

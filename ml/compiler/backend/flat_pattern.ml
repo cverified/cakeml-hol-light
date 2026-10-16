@@ -31,7 +31,6 @@ let init_config_def = cake_define
   `flat_pattern_init_config ph = mk_flat_pattern_config ph`;;
 hol4_overload "init_config" "flat_pattern_init_config";;
 
-(* HOL4 termination: *)
 let sum_string_ords_def = cake_define_wf
   `MEASURE (\(i,str). strlen str - i)`
   `sum_string_ords i str = (if i < strlen str then (ORD (strsub str

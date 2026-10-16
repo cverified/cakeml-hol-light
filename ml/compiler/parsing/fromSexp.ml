@@ -155,10 +155,11 @@ let sexppair_def = cake_define
 (* HOL4 overload (expanded in the port):
      guard = λb m. monad_unitbind (assert b) m *)
 
-(* TERMINATION: wf_rel_tac `measure (sexp_size o SND)` >>
-  simp[dstrip_sexp_SOME, LENGTH_EQ_NUM_compute, PULL_EXISTS,
-    sexp_size_def] *)
-let sexpid_def = cake_define
+let _ = size_thms "simpleSexp_sexp";;
+(* HOL4 termination: >> simp[dstrip_sexp_SOME, LENGTH_EQ_NUM_compute,
+   PULL_EXISTS, sexp_size_def] *)
+let sexpid_def = cake_define_wf
+  `MEASURE (simpleSexp_sexp_size o SND)`
   `sexpid p s =
      OPTION_BIND (dstrip_sexp s) (\
         (nm,args).
@@ -170,11 +171,12 @@ let sexpid_def = cake_define
                (OPTION_MAP2 Long (odestSEXSTR (EL 0 args)) (sexpid
                  p (EL 1 args)))))`;;
 
-(* TERMINATION: wf_rel_tac `measure sexp_size` >>
-  simp[LENGTH_EQ_NUM_compute, dstrip_sexp_SOME, PULL_EXISTS,
-    sexp_size_def] >>
-  rpt strip_tac >> drule sxMEM_sizelt >> simp[] *)
-let sexptype_def = cake_define
+let _ = size_thms "simpleSexp_sexp";;
+(* HOL4 termination: >> simp[LENGTH_EQ_NUM_compute, dstrip_sexp_SOME,
+   PULL_EXISTS, sexp_size_def] >> rpt strip_tac >> drule sxMEM_sizelt
+   >> simp[] *)
+let sexptype_def = cake_define_wf
+  `MEASURE simpleSexp_sexp_size`
   `sexptype s =
      OPTION_BIND (dstrip_sexp s) (\
         (s,args).
@@ -649,10 +651,11 @@ let sexptype_def_def = cake_define
        (sexppair odestSEXSTR
          (sexplist (sexppair odestSEXSTR (sexplist sexptype)))))`;;
 
-(* TERMINATION: wf_rel_tac`measure sexp_size`
-   \\ rw[LENGTH_EQ_NUM_compute] \\ fs[]
-   \\ metis_tac[sxMEM_sizelt,dstrip_sexp_size,MEM,LESS_TRANS] *)
-let sexpdec_def = cake_define
+let _ = size_thms "simpleSexp_sexp";;
+(* HOL4 termination: \\ rw[LENGTH_EQ_NUM_compute] \\ fs[] \\
+   metis_tac[sxMEM_sizelt,dstrip_sexp_size,MEM,LESS_TRANS] *)
+let sexpdec_def = cake_define_wf
+  `MEASURE simpleSexp_sexp_size`
   `sexpdec s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
