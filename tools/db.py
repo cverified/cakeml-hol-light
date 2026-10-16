@@ -60,10 +60,29 @@ def hl_names():
 HANDWRITTEN = ['hol4.ml', 'words4.ml', 'finite_map.ml', 'llist.ml']
 
 
-def provided_names():
-  """the HOL4 library constants that the hand written files of
-     ml/lib provide"""
-  s = ''.join(open(T + '../ml/lib/' + f).read() for f in HANDWRITTEN)
+# the HOL4 theory that every hand written file of ml/lib stands
+# for: a name that such a file provides is that theory's, and it
+# only wins over the constant of a ported theory of the same name
+# where it is in the scope (llist's fromList is what a bare
+# fromList means in a theory that has llist as an ancestor, and
+# sptree's everywhere else)
+HANDWRITTEN_THY = {'hol4.ml': None, 'words4.ml': 'words',
+                   'finite_map.ml': 'finite_map',
+                   'llist.ml': 'llist'}
+
+
+def provided_thys():
+  """the theory that every provided name stands for"""
+  out = {}
+  for f in HANDWRITTEN:
+    for nm in file_names(T + '../ml/lib/' + f):
+      out.setdefault(nm, HANDWRITTEN_THY.get(f))
+  return out
+
+
+def file_names(path):
+  """the constants that a hand written file of ml/lib defines"""
+  s = open(path).read()
   names = set()
   for m in re.finditer(r'new_(?:recursive_)?definition\b[^`]*`([^`]*)`',
                        s):
@@ -79,11 +98,21 @@ def provided_names():
   return names
 
 
+def provided_names():
+  """the HOL4 library constants that the hand written files of
+     ml/lib provide"""
+  names = set()
+  for f in HANDWRITTEN:
+    names |= file_names(T + '../ml/lib/' + f)
+  return names
+
+
 class Db:
   def __init__(self):
     self.order = load_order()
     self.hl = hl_names()
     self.provided = provided_names()
+    self.provided_thy = provided_thys()
     self.read_fixities()
     self.deps = json.load(open(T + 'deps.json'))['deps']
     self.defs = collections.defaultdict(list)   # name -> [(thy,kind)]
@@ -509,7 +538,15 @@ class Db:
     for (thy, nm), new in self.rename.items():
       kinds = [k for t, k in self.defs.get(nm, []) if t == thy]
       if kinds and all(k in tykinds for k in kinds): continue
-      if nm in self.hl or nm in self.provided: continue
+      # a name of the hand written library layer that stands for
+      # a HOL4 theory (llist's fromList) is overloaded all the
+      # same, because a ported theory may have a notion of that
+      # name too (sptree's fromList) and HOL4 resolves the name
+      # by the type; a name of the compatibility layer itself
+      # (EVERY, ALL) and a name of HOL Light are not
+      lib = nm in self.provided and self.provided_thy.get(nm)
+      if nm in self.hl and not lib: continue
+      if nm in self.provided and not lib: continue
       out.add(nm)
     self._overloaded = out
     return out
