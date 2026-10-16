@@ -2907,8 +2907,12 @@ let dest_size_fact th =
   let tyname = fst(dest_type ty) in
   if not (can (assoc tyname) (!the_rec_thms)) then
     failwith "dest_size_fact" else
-  (match dest_type (type_of l) with
-     "option",_ -> () | _ -> failwith "dest_size_fact");
+  (* a destructor that gives an option gives the parts of what
+     it took apart, and its parts are smaller; one that gives a
+     tuple has a default for the arm that does not match, whose
+     parts are only not larger *)
+  let isopt = (try fst(dest_type (type_of l)) = "option"
+               with Failure _ -> false) in
   (* the body is a match on the argument: that is a destructor,
      where a definition that looks at the value of another one
      (clos_op's dest_Op_Nil) is not *)
@@ -2916,7 +2920,12 @@ let dest_size_fact th =
   if not (is_const hop && fst(dest_const hop) = "_MATCH") ||
      length margs <> 2 || hd margs <> x
   then failwith "dest_size_fact" else
-  let pty = hd(snd(dest_type (type_of l))) in
+  let pty = if isopt then hd(snd(dest_type (type_of l)))
+            else type_of l in
+  if not isopt && not (can (dest_type o type_of) l) then
+    failwith "dest_size_fact" else
+  if not isopt && fst(dest_type (type_of l)) <> "prod" then
+    failwith "dest_size_fact" else
   let rec parts ty =
     if is_vartype ty then [ty] else
     match dest_type ty with
@@ -2939,9 +2948,12 @@ let dest_size_fact th =
                        sizes in
   let goal =
     list_mk_forall(args @ vs,
-      mk_imp(mk_eq(l,mk_comb(mk_mconst("SOME",
-                               mk_fun_ty pty (type_of l)),tuple)),
-             mk_binop `(<):num->num->bool` sum
+      mk_imp(mk_eq(l,if isopt
+                     then mk_comb(mk_mconst("SOME",
+                            mk_fun_ty pty (type_of l)),tuple)
+                     else tuple),
+             mk_binop (if isopt then `(<):num->num->bool`
+                       else `(<=):num->num->bool`) sum
                       (mk_comb(size_fn_of_type ty,x)))) in
   let _ = size_thms tyname in
   let rws () = [distinctness "option"; injectivity "option";
