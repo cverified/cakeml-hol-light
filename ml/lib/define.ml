@@ -263,7 +263,10 @@ let EQ_COPY_TAC (asl,w as gl) =
     (fun e ->
        do_list
          (fun th ->
-            if concl th = concl e then () else
+            (* an equation is not rewritten with another one: the
+               copies are for the facts about the sides *)
+            if concl th = concl e || is_eq (concl th) ||
+               length (!news) > 12 then () else
             let th' = try ONCE_REWRITE_RULE [e] th
                       with Failure _ -> th in
             let c = concl th' in
