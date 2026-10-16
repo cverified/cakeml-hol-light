@@ -62,6 +62,12 @@ template has and a run never loads again, so _those_ may be
 written while a run is going; what the run would load a second
 time is a _ported_ file.
 
+`cake_debug` writes to one file (`tmp/debug.txt`), so a session
+that is given `cake_debug := true` while a run is going writes
+into the log of the run.  Its goals are under the name of the
+definition that is tried (a test gives it a name of its own), but
+a test that does not need the log leaves `cake_debug` alone.
+
 A change to `ml/lib/define.ml` can be tried while a run is going
 without writing into `ml/`: everything that file makes is an ML
 value (it has no definition of its own at the top level), so a
