@@ -21,6 +21,7 @@ use; nothing of the first pass evaluates anything.)
 |---|---|
 | `infer$start_type_id` | `ITLIST MAX (Tlist_num :: Tbool_num :: prim_type_nums) 0 + 1` |
 | `infer$err_var` (a `Type`) | `tenv_abbrev`, the type of the `t` field of a `type_env` |
+| `mlint$exp_tm` (the value that `num_to_chars` divides by) | `10 EXP exp_for_dec_enc` |
 | `data_to_word$AnyArith_call_tree` | `full_call_graph AnyArith_location (fromAList (stubs (:1) ...))`, the call graph of the bignum stubs for a configuration with `call_empty_ffi` and `has_longdiv` false |
 
 In HOL4's `AnyArith_call_tree` the type of the stubs and the other

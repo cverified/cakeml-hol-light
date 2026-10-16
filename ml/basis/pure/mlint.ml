@@ -34,8 +34,10 @@ val exp_tm = rhs (concl exp_thm)
 *)
 
 let num_to_chars_def = cake_define_list
-  [`num_to_chars i 0 k acc = num_to_chars (i DIV exp_tm)
-          exp_for_dec_enc ((i MOD exp_tm) + k) acc`;
+  [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
+  exp_for_dec_enc))
+          exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)
+            acc`;
    `num_to_chars i (SUC j) k acc = (if k < 10 /\ i = 0 then toChar
   k :: acc else num_to_chars i j (k DIV 10) (toChar (k MOD 10) ::
   acc))`];;

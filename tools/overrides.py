@@ -700,6 +700,14 @@ let mergesortN_tail_def = cake_define_wf
 # definitions that the port does not have yet, with the reason; the
 # port writes the HOL4 text in a comment, so that the gap is visible
 # in the file (PENDING.md lists them all)
+# the ML values that a source antiquotes into a definition and
+# that ML code computes: the port writes the expression that HOL4
+# evaluates, which is provably the same value (see PENDING.md)
+ANTIQUOTE = {
+  # exp_tm is rhs (concl (EVAL ``10n ** exp_for_dec_enc``))
+  ('mlint', 'exp_tm'): '10 EXP exp_for_dec_enc',
+}
+
 NOT_YET = {
   # the tail recursive versions of the unification algorithm, which
   # HOL4 makes with ML code (tcallify_th of tcallUnifLib turns the

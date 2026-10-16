@@ -314,6 +314,10 @@ class Porter:
           # the ML values that the file antiquotes into its terms
           for nm, v in hol4.ml_terms(b.text):
             hterm.ANTIQ[nm] = v
+          # and the ones that ML code computes, which the
+          # overrides give as the expression that HOL4 evaluates
+          for (t, nm), v in overrides.ANTIQUOTE.items():
+            if t == self.thy: hterm.ANTIQ[nm] = v
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')
