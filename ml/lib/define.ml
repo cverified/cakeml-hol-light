@@ -2737,6 +2737,32 @@ let cases_of ty =
   try find (fun th -> type_of(fst(dest_forall(concl th))) = ty) ths
   with Failure _ -> hd ths;;
 
+(* the scrutinee of a match of the goal that is not a variable:
+   the arm of a destructor may look at the value of another
+   function (clos_op's dest_Op), and the match on it only goes
+   away when that value is taken apart *)
+
+let MATCH_SCRUT_TAC (asl,w as gl) =
+  let scruts tm =
+    let rec go t acc =
+      let acc =
+        match t with
+          Comb(Comb(Const("_MATCH",_),sc),_) when not (is_var sc) ->
+            insert sc acc
+        | _ -> acc in
+      match t with
+        Comb(a,b) -> go a (go b acc)
+      | Abs(_,b) -> go b acc
+      | _ -> acc in
+    go tm [] in
+  let ok sc =
+    can (fun t -> cases_of (type_of t)) sc &&
+    not (is_const (fst(strip_comb sc))) in
+  let ts = filter ok (scruts w) in
+  if ts = [] then failwith "MATCH_SCRUT_TAC" else
+  MAP_EVERY (fun t -> STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t))))
+            ts gl;;
+
 let dest_size_fact th =
   let tm = snd(strip_forall(concl th)) in
   let l,r = dest_eq tm in
@@ -2795,7 +2821,8 @@ let dest_size_fact th =
         STRUCT_CASES_TAC (ISPEC x (cases_of ty)) THEN
         REWRITE_TAC(rws()) THEN
         REPLICATE_TAC 3
-          (TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws()))) THEN
+          (TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws())) THEN
+           TRY (MATCH_SCRUT_TAC THEN REWRITE_TAC(rws()))) THEN
         (* a pattern that asks for a value that the arm does not
            give (bvl_handle's dest_Seq matches on Var 1) leaves a
            match that the rewriting does not reduce *)
