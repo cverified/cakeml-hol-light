@@ -40,7 +40,17 @@ hol4_overload "code_rel" "bvi_to_dataProof_code_rel";;
    timestamp information (note this make the function non-injective)
 *)
 
-let data_to_bvi_v_def = cake_define_list
+let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ `∀l. v1_size l = SUM (MAP (λx. v_size x + 1)
+   l)` by (Induct >> rw [v_size_def]) \\ rw [] \\ IMP_RES_TAC
+   SUM_MAP_MEM_bound \\ ho_match_mp_tac LESS_EQ_LESS_TRANS \\
+   Q.EXISTS_TAC `SUM (MAP (λx. v_size x + 1) l)` \\ rw [] \\
+   ho_match_mp_tac LESS_EQ_TRANS \\ Q.EXISTS_TAC `v_size a + 1` \\ rw
+   [] *)
+let data_to_bvi_v_def = cake_define_list_try (fun () ->
+  `MEASURE dataSem_v_size`)
   [`data_to_bvi_v (Number i:dataSem_v) = bvlSem_Number i`;
    `data_to_bvi_v (Word64 w:dataSem_v) = bvlSem_Word64 w`;
    `data_to_bvi_v (CodePtr p:dataSem_v) = bvlSem_CodePtr p`;

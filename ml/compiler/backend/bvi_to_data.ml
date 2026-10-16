@@ -137,7 +137,13 @@ let compile_def = cake_define_list
                  (Call ret (SOME dest) vs NONE))) c2,v,n2))`];;
 hol4_overload "compile" "bvi_to_data_compile";;
 
-let compile_sing_def = cake_define_list
+let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp[] *)
+let compile_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (n,env,t,l,x) -> bvi_exp_size x | INR
+  (n,env,l,xs) -> list_size bvi_exp_size xs)`)
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var
   v):bvi_exp) =
          (let var = any_el v env 0 in

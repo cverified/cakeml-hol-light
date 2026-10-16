@@ -72,7 +72,12 @@ let isVar_def = cake_define
 let destVar_def = cake_define
   `(destVar ((Var n):bvl_exp) = n)`;;
 
-let bVarBound_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ SRW_TAC
+   [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
+let bVarBound_def = cake_define_list_try (fun () ->
+  `MEASURE (exp1_size o SND)`)
   [`bVarBound n [] <=> T`;
    `bVarBound n ((x:bvl_exp) :: y :: xs) <=>
          bVarBound n [x] /\ bVarBound n (y :: xs)`;
@@ -89,7 +94,12 @@ let bVarBound_def = cake_define_list
          bVarBound n [x1] /\ bVarBound (n + 1) [x2]`;
    `bVarBound n [(Call ticks dest xs:bvl_exp)] <=> bVarBound n xs`];;
 
-let bEvery_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ SRW_TAC
+   [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
+let bEvery_def = cake_define_list_try (fun () ->
+  `MEASURE (exp1_size o SND)`)
   [`bEvery P [] <=> T`;
    `bEvery P ((x:bvl_exp) :: y :: xs) <=>
          bEvery P [x] /\ bEvery P (y :: xs)`;
@@ -110,7 +120,14 @@ let bEvery_def = cake_define_list
    `bEvery P [(Call ticks dest xs:bvl_exp)] <=> P ((Call ticks dest
   xs:bvl_exp)) /\ bEvery P xs`];;
 
-let get_code_labels_def = cake_define_list
+let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp[bvlTheory.exp_size_def] \\ rpt conj_tac
+   \\ rpt gen_tac \\ Induct_on`es` \\ rw[bvlTheory.exp_size_def] \\
+   simp[] \\ res_tac \\ simp[] *)
+let get_code_labels_def = cake_define_list_try (fun () ->
+  `MEASURE flatLang_exp_size`)
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;
    `bvlProps_get_code_labels (If e1 e2 e3:bvl_exp) =
   bvlProps_get_code_labels e1 UNION bvlProps_get_code_labels e2 UNION

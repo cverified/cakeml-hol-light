@@ -132,6 +132,7 @@ let v_rel = cake_inductive
      (semanticPrimitives_Litv l)) /\
    (source_evalProof_v_rel es (semanticPrimitives_Loc br n)
      (semanticPrimitives_Loc br n))`;;
+hol4_overload "v_rel" "source_evalProof_v_rel";;
 
 (* HOL4 ML code, not ported:
 val _ = bossLib.augment_srw_ss [rewrites [v_rel_l_simps, v_rel_Boolv]];

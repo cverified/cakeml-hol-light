@@ -116,7 +116,18 @@ let op_gbag_def = cake_define
       | _1 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "flatProps_op_gbag";;
 
-let set_globals_def = cake_define_list
+let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [flatLangTheory.exp_size_def] \\ fs [GSYM
+   o_DEF] >- (irule LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size
+   (pair_size mlstring_size (pair_size mlstring_size exp_size)) fs’
+   \\ gvs [] \\ Induct_on ‘fs’ \\ gvs [FORALL_PROD]) \\ irule
+   LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size (pair_size pat_size
+   exp_size) pes’ \\ gvs [] \\ Induct_on ‘pes’ \\ gvs [FORALL_PROD] *)
+let set_globals_def = cake_define_list_try (fun () ->
+  `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
+  list_size flatLang_exp_size es)`)
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)
@@ -283,7 +294,14 @@ let result_vs_def = cake_define
       | (Rerr (Rraise x)) -> [x]
       | (Rerr (Rabort y)) -> []`;;
 
-let no_Mat_def = cake_define_list
+let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ imp_res_tac MEM_list_size \\
+   pop_assum $ qspec_then ‘exp_size’ mp_tac \\ gvs
+   [list_size_pair_size_MAP_FST_SND] *)
+let no_Mat_def = cake_define_list_try (fun () ->
+  `MEASURE (flatLang_exp_size)`)
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (flatLang_Var_local t v) <=> T`;

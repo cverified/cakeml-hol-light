@@ -157,7 +157,14 @@ let dec_clock_def = cake_define
   state_clock_fupd (K (state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
-let word_exp_def = cake_define_list
+let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
+   wordLangTheory.MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC
+   o Q.SPEC `ARB`)) \\ DECIDE_TAC *)
+let word_exp_def = cake_define_list_try (fun () ->
+  `MEASURE (wordLang_exp_size ARB o SND)`)
   [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
    `stackSem_word_exp s (wordLang_Var v) =
          (match FLOOKUP (stackSem_state_regs s) v with SOME
@@ -373,7 +380,12 @@ let full_read_bitmap_def = cake_define
           (n2w 1))) bitmaps))
         | _27 -> NONE`;;
 
-let enc_stack_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
+   filter_bitmap_LENGTH \\ fs [] \\ decide_tac *)
+let enc_stack_def = cake_define_list_try (fun () ->
+  `MEASURE (LENGTH o SND)`)
   [`stackSem_enc_stack bitmaps [] = NONE`;
    `stackSem_enc_stack bitmaps (w :: ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
@@ -386,7 +398,13 @@ let enc_stack_def = cake_define_list
                     NONE -> NONE | SOME rs -> SOME (ts ++ rs))))`];;
 hol4_overload "enc_stack" "stackSem_enc_stack";;
 
-let dec_stack_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ IMP_RES_TAC map_bitmap_LENGTH \\ fs
+   [LENGTH_NIL] \\ rw [] \\ fs [map_bitmap_def] \\ rw [] \\
+   decide_tac *)
+let dec_stack_def = cake_define_list_try (fun () ->
+  `MEASURE (LENGTH o SND o SND)`)
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
    `stackSem_dec_stack bitmaps ts (w :: ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
@@ -774,7 +792,17 @@ let fix_clock_IMP =
 
 cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
-let evaluate_def = cake_define_list
+let _ = size_thms "stackLang_prog";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rpt strip_tac \\
+   fs[empty_env_def,dec_clock_def,set_var_def,STOP_def] \\
+   imp_res_tac fix_clock_IMP \\ fs [] \\ imp_res_tac (GSYM
+   fix_clock_IMP) \\ fs [] \\ decide_tac *)
+let evaluate_def = cake_define_list_try (fun () ->
+  `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
+                              (\(xs,(s:('a,'c,'ffi)stackSem_state)).
+                                (state_clock s,xs)))`)
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =

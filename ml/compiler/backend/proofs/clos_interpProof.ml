@@ -120,7 +120,12 @@ val init_tac =
  * ---------------------------------------------------------------------
    ---- *)
 
-let v_ok_def = cake_define_list
+let _ = size_thms "closSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp[v_size_def] *)
+let v_ok_def = cake_define_list_try (fun () ->
+  `MEASURE closSem_v_size`)
   [`v_ok (closSem_Number i:closSem_v) <=> T`;
    `v_ok (Word64 w:closSem_v) <=> T`;
    `v_ok (closSem_Block n vs:closSem_v) <=> EVERY v_ok vs`;

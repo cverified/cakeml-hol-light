@@ -40,7 +40,14 @@ val handle_ok_def = bvl_handleProofTheory.handle_ok_def;
 (* HOL4 overload (expanded in the port):
      nss = bvl_to_bvi_namespaces *)
 
-let adjust_bv_def = cake_define_list
+let _ = size_thms "bvlSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ Induct_on `vs` \\ full_simp_tac(srw_ss())[]
+   \\ SRW_TAC [] [v_size_def] \\ RES_TAC \\ FIRST_X_ASSUM (ASSUME_TAC
+   o SPEC_ALL) \\ DECIDE_TAC *)
+let adjust_bv_def = cake_define_list_try (fun () ->
+  `MEASURE (bvlSem_v_size o SND)`)
   [`adjust_bv b (Number i:bvlSem_v) = bvlSem_Number i`;
    `adjust_bv b (Word64 w:bvlSem_v) = bvlSem_Word64 w`;
    `adjust_bv b (RefPtr l r:bvlSem_v) = bvlSem_RefPtr l (b r)`;

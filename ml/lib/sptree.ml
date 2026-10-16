@@ -28,7 +28,11 @@ let wf_def = cake_define_list
   ~((\t. t = LN) t1 /\ (\t. t = LN) t2)`];;
 hol4_overload "wf" "sptree_wf";;
 
-let lookup_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> simp[DIV_LT_X] *)
+let lookup_def = cake_define_list_try (fun () ->
+  `MEASURE FST`)
   [`sptree_lookup k LN = NONE`;
    `sptree_lookup k (LS a) = (if k = 0 then SOME a else NONE)`;
    `sptree_lookup k (BN t1 t2) =
@@ -39,7 +43,11 @@ let lookup_def = cake_define_list
            2) (if EVEN k then t1 else t2))`];;
 hol4_overload "lookup" "sptree_lookup";;
 
-let insert_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> simp[DIV_LT_X] *)
+let insert_def = cake_define_list_try (fun () ->
+  `MEASURE FST`)
   [`sptree_insert k a LN = (if k = 0 then LS a else if EVEN k then BN
   (sptree_insert ((k - 1) DIV 2) a LN) LN else BN LN (sptree_insert
   ((k - 1) DIV 2) a LN))`;

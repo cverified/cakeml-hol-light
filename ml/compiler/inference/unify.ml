@@ -114,7 +114,11 @@ let cunifyl_def = cake_define
                       (encode_infer_ts ts1)
                       (encode_infer_ts ts2))`;;
 
-let capply_subst_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let capply_subst_def = cake_define_list_try (fun () ->
+  `MEASURE (infer_t_size o SND)`)
   [`capply_subst s (Infer_Tuvar n) = (match sptree_lookup n s with
                               NONE -> Infer_Tuvar n | SOME it ->
                                 it)`;

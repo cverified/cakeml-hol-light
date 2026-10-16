@@ -14,7 +14,15 @@ needs "semantics/ast.ml";;
 
 (* add fresh code locations *)
 
-let renumber_code_locs_def = cake_define_list
+let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> rw [] >> TRY decide_tac >> Induct_on `fns` >>
+   srw_tac [ARITH_ss] [exp_size_def] >> Cases_on `h` >> rw
+   [exp_size_def, basicSizeTheory.pair_size_def] *)
+let renumber_code_locs_def = cake_define_list_try (fun () ->
+  `inv_image (<) (\x. match x with INL p -> list_size closLang_exp_size
+  (SND p) | INR p -> closLang_exp_size (SND p))`)
   [`renumber_code_locs_list n [] = (n,[])`;
    `renumber_code_locs_list n (x :: xs) =
          (let (n,x) = renumber_code_locs n x in

@@ -203,6 +203,7 @@ let v_rel = cake_inductive
                                 (num_args - 1) (LENGTH ys - 1)) ::
                               Number (&(num_args - 1 - LENGTH
                                 arg_env)) :: cl' :: ys)))`;;
+hol4_overload "v_rel" "clos_to_bvlProof_v_rel";;
 
 let env_rel_def = cake_define
   `clos_to_bvlProof_env_rel max_app f refs code x5 ys =

@@ -22,7 +22,12 @@ let let_ok_def = cake_define
             xs) [b]
         | _1 -> F`;;
 
-let handle_ok_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ SRW_TAC
+   [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
+let handle_ok_def = cake_define_list_try (fun () ->
+  `MEASURE (exp1_size)`)
   [`handle_ok [] <=> T`;
    `handle_ok ((x:bvl_exp) :: y :: xs) <=>
          handle_ok [x] /\ handle_ok (y :: xs)`;

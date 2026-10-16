@@ -99,7 +99,17 @@ let handle_size_def = cake_define_list
    `handle_size1 (x :: xs) = ((1 + handle_size x + handle_size1
   xs):num)`];;
 
-let handle_simp_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rpt conj_tac \\ rpt gen_tac \\ simp_tac
+   std_ss [] \\ fs [handle_size_def] \\ rw [] \\ gvs
+   [DefnBase.one_line_ify NONE dest_handle_If_def,AllCaseEqs()] \\
+   gvs [DefnBase.one_line_ify NONE
+   dest_handle_Raise_def,AllCaseEqs()] \\ fs [handle_size_def] \\ rw
+   [] \\ fs [dest_handle_Let_def,handle_size_non_zero] *)
+let handle_simp_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL a -> handle_size a | INR (INL a) ->
+  handle_size1 a | INR (INR (a,b,_4)) -> handle_size a + handle_size b)`)
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)
@@ -281,7 +291,7 @@ let dest_Seq_def = cake_define
   `bvl_handle_dest_Seq x1 =
         match x1 with
           (Let [e1; e2] (bvl_Var 1):bvl_exp) -> SOME (e1,e2)
-        | _4 -> NONE`;;
+        | _5 -> NONE`;;
 hol4_overload "dest_Seq" "bvl_handle_dest_Seq";;
 
 let _ = size_thms "bvl_exp";;

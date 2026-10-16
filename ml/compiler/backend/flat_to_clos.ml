@@ -394,7 +394,15 @@ let SmartCons_def = cake_define
        closLang_Op t (closLang_BlockOp (closLang_Constant (ConstCons
        tag (REVERSE cs)))) [])`;;
 
-let compile_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ `!funs f v x. MEM (f,v,x) funs ==>
+   exp_size x < flatLang$exp1_size funs` by (Induct \\ fs [] \\ rw []
+   \\ fs [flatLangTheory.exp_size_def] \\ res_tac \\ fs []) \\
+   res_tac \\ fs [dest_pat_thm] \\ fs [flatLangTheory.exp_size_def]
+   \\ gvs [dest_nop_thm] \\ fs [flatLangTheory.exp_size_def] *)
+let compile_def = cake_define_list_try (fun () ->
+  `MEASURE (exp6_size o SND)`)
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;

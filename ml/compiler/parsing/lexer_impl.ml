@@ -34,7 +34,14 @@ let num_from_dec_string_alt_def = cake_define
 let num_from_hex_string_alt_def = cake_define
   `num_from_hex_string_alt = s2n 16 unhex_alt`;;
 
-let next_sym_alt_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: THEN REPEAT STRIP_TAC THEN IMP_RES_TAC (GSYM
+   read_while_thm) THEN IMP_RES_TAC (GSYM read_string_thm) THEN
+   IMP_RES_TAC skip_comment_thm THEN Cases_on `str` THEN
+   FULL_SIMP_TAC (srw_ss()) [LENGTH] THEN DECIDE_TAC *)
+let next_sym_alt_def = cake_define_list_try (fun () ->
+  `MEASURE (LENGTH o FST)`)
   [`next_sym_alt "" _1 = NONE`;
    `next_sym_alt (c :: str) loc =
          (if c = (CHR 10) then

@@ -80,7 +80,13 @@ let read_symbol_def = cake_define_list
 (* By tracking the depth, we can ensure we only lex one S-expression at
    a
    time. *)
-let lex_aux_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw[] \\ imp_res_tac read_string_length \\
+   fs[] \\ fs[Once read_symbol_def] \\ gvs [AllCaseEqs()] \\
+   imp_res_tac read_symbol_length \\ fs[] *)
+let lex_aux_def = cake_define_list_try (fun () ->
+  `MEASURE (\(_1,input,_2). LENGTH input)`)
   [`(mlsexp_lex_aux depth [] acc:mlstring#string+mlsexp_token
   list#string) =
       (if depth = (0:num) then INR (acc,[]) else INL ((implode
@@ -126,15 +132,15 @@ let parse_def = cake_define
      (match lex input with INL (msg,rest) -> INL (msg,rest) | INR
        (rev_toks,rest) ->
          (match parse_aux rev_toks [] [] with [] -> INL ((implode
-           "parse: empty input"),rest) | (v :: _1) -> INR (v,rest)))`;;
+           "parse: empty input"),rest) | (v :: _3) -> INR (v,rest)))`;;
 hol4_overload "parse" "mlsexp_parse";;
 
 (* Function for parsing in the style of the Standard ML basis library.
    *)
 let fromString_def = cake_define
   `(mlsexp_fromString (input:mlstring):mlsexp_sexp option) =
-     (match mlsexp_parse (explode input) with INL _2 -> NONE | INR
-       (se,_3) -> SOME se)`;;
+     (match mlsexp_parse (explode input) with INL _4 -> NONE | INR
+       (se,_5) -> SOME se)`;;
 hol4_overload "fromString" "mlsexp_fromString";;
 
 (*--------------------------------------------------------------*
@@ -178,18 +184,18 @@ let get_size_def = cake_define
   `mlsexp_get_size x1 =
       match x1 with
         mlsexp_Size n x -> n
-      | (Append x _4 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
+      | (Append x _6 y) -> mlsexp_get_size x + mlsexp_get_size y + 1
       | (mlsexp_Parenthesis x) -> mlsexp_get_size x + 2
-      | _5 -> 0`;;
+      | _7 -> 0`;;
 hol4_overload "get_size" "mlsexp_get_size";;
 
 let get_next_size_def = cake_define
   `get_next_size x1 =
       match x1 with
         mlsexp_Size n x -> n
-      | (Append x _6 y) -> get_next_size x
+      | (Append x _8 y) -> get_next_size x
       | (mlsexp_Parenthesis x) -> get_next_size x + 2
-      | _7 -> 0`;;
+      | _9 -> 0`;;
 
 let annotate_def = cake_define_list
   [`mlsexp_annotate (mlsexp_String s:pretty) = mlsexp_Size (strlen s)
@@ -210,7 +216,7 @@ let remove_all_def = cake_define_list
   [`remove_all (mlsexp_Parenthesis v) = mlsexp_Parenthesis
   (remove_all v)`;
    `remove_all (mlsexp_String v1:pretty) = (mlsexp_String v1:pretty)`;
-   `remove_all (Append v2 _9 v3:pretty) = Append (remove_all v2) F
+   `remove_all (Append v2 _11 v3:pretty) = Append (remove_all v2) F
   (remove_all v3)`;
    `remove_all (mlsexp_Size v4 v5) = remove_all v5`];;
 

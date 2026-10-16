@@ -663,7 +663,19 @@ let constrain_op_def = cake_define
                "Type mismatch")) s | _40 -> infer_failwith l
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
-let infer_e_def = cake_define_list
+let _ = size_thms "ast_exp";;
+let _ = size_thms "ast_pat";;
+let _ = size_thms "mlstring";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> rw [] *)
+let infer_e_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_45,_46,e) -> ast_exp_size e | INR
+  (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
+  (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
+  ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
+       list_size (pair_size mlstring_size
+            (pair_size mlstring_size ast_exp_size)) funs)`)
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
@@ -970,7 +982,7 @@ let infertype_prog_inc_def = cake_define
      next_id)) with
      (M_success new_ienv,st) ->
      (M_success (extend_dec_ienv new_ienv ienv,infer_st_next_id
-       st)) | (M_failure x,_45) -> M_failure x)`;;
+       st)) | (M_failure x,_55) -> M_failure x)`;;
 
 let init_config_def = cake_define
   `(infer_init_config:inf_env) =
@@ -1034,7 +1046,11 @@ let sub_completion_def = cake_define
 
 (* printing of types *)
 
-let alist_nub_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ fs [LESS_EQ,LENGTH_FILTER_LEQ] *)
+let alist_nub_def = cake_define_list_try (fun () ->
+  `MEASURE LENGTH`)
   [`alist_nub [] = []`;
    `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
   FST t)) xs)`];;
@@ -1057,7 +1073,7 @@ let ns_to_alist_def = cake_define_list
 let inf_env_to_types_string_def = cake_define
   `inf_env_to_types_string s =
      (let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
-     let xs = MAP (\(n,_46,t). mlstring_concat [n; (implode ": ");
+     let xs = MAP (\(n,_56,t). mlstring_concat [n; (implode ": ");
                               inf_type_to_string (inf_env_inf_t s) t;
                               (implode "\n")]) l in
         REVERSE xs)`;;

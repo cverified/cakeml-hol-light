@@ -88,7 +88,12 @@ let get_pos_def = cake_define_list
   [`get_pos [] = EmptyPos`;
    `get_pos (n :: ns) = Pos n (get_pos ns)`];;
 
-let pat_to_guard_def = cake_define_list
+let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pat_to_guard_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_10,p) -> pattern_semantics_pat_size
+  p | INR (_11,k,p) -> list_size pattern_semantics_pat_size p)`)
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
   pattern_semantics_True`;
    `pat_to_guard l (Lit r:pattern_semantics_pat) =
@@ -123,14 +128,14 @@ let walk_def = cake_define_list
         xs then pattern_comp_walk ns (EL n xs) refs else NONE) |
         (pattern_semantics_RefPtr p) -> (if ~(n = 0) then NONE else
                         match FLOOKUP refs p with SOME y ->
-                          pattern_comp_walk ns y refs | _12 ->
-                          NONE) | _13 -> NONE)`];;
+                          pattern_comp_walk ns y refs | _14 ->
+                          NONE) | _15 -> NONE)`];;
 hol4_overload "walk" "pattern_comp_walk";;
 
 let walk_list_def = cake_define
   `walk_list ns x refs =
      (match pattern_comp_walk ns x refs with SOME
-       (pattern_semantics_Term _14 vs) -> SOME vs | _15 -> NONE)`;;
+       (pattern_semantics_Term _16 vs) -> SOME vs | _17 -> NONE)`;;
 
 
 (* plug all the parts together *)

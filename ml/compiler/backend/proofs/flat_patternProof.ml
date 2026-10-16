@@ -115,6 +115,8 @@ let v_rel = cake_inductive
       ALOOKUP_rel (\x. dec_name_to_num x < N) flat_patternProof_v_rel
         (flatSem_environment_v env1) (flatSem_environment_v env2) ==>
       flat_patternProof_env_rel N env1 env2)`;;
+hol4_overload "env_rel" "flat_patternProof_env_rel";;
+hol4_overload "v_rel" "flat_patternProof_v_rel";;
 
 (* HOL4 ML code, not ported:
 val env_rel_def = ``env_rel N env1 env2``

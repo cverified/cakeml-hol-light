@@ -376,7 +376,16 @@ let force_thunk_code_def = cake_define
          (bvl_Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0;
            Var 1]] (bvl_Var 1))):bvl_exp)`;;
 
-let compile_exps_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> srw_tac [ARITH_ss]
+   [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
+   l) <= exp1_size l` by (Induct_on `l` >> rw
+   [closLangTheory.exp_size_def] >> PairCases_on `h` >> full_simp_tac
+   (srw_ss()++ARITH_ss) [closLangTheory.exp_size_def]) >> pop_assum
+   (qspec_then `v7` assume_tac) >> decide_tac *)
+let compile_exps_def = cake_define_list_try (fun () ->
+  `MEASURE (exp3_size o FST o SND)`)
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
    `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
@@ -490,7 +499,18 @@ hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 val compile_exps_ind = theorem"compile_exps_ind";
 *)
 
-let compile_exp_sing_def = cake_define_list
+let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> srw_tac [ARITH_ss]
+   [closLangTheory.exp_size_def] >> `!l. closLang$exp3_size (MAP SND
+   l) <= exp1_size l` by ( Induct_on `l` >> rw
+   [closLangTheory.exp_size_def] >> PairCases_on `h` >> full_simp_tac
+   (srw_ss()++ARITH_ss) [closLangTheory.exp_size_def]) >> pop_assum
+   (qspec_then `v7` assume_tac) >> decide_tac *)
+let compile_exp_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_7,e,_8) -> bvl_exp_size e | INR
+  (_9,es,_10) -> exp3_size es)`)
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
   v):bvl_exp),aux)`;
    `compile_exp_sing max_app (If t x1 x2 x3:closLang_exp) aux =
@@ -582,7 +602,7 @@ let compile_prog_def = cake_define
   `clos_to_bvl_compile_prog max_app prog =
      (let (new_exps,aux) = clos_to_bvl_compile_exps max_app (MAP (SND
        o SND) prog) [] in
-       MAP2 (\(loc,args,_7) exp. (loc + num_stubs max_app,args,exp))
+       MAP2 (\(loc,args,_11) exp. (loc + num_stubs max_app,args,exp))
          prog new_exps ++ aux)`;;
 hol4_overload "compile_prog" "clos_to_bvl_compile_prog";;
 
@@ -610,13 +630,19 @@ let code_split_def = cake_define_list
 let code_merge_def = cake_define_wf
   `MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)`
   `code_merge xs ys =
-     (match (xs,ys) with ([],[]) -> [] | ([],_8) -> ys | (_9,[]) ->
+     (match (xs,ys) with ([],[]) -> [] | ([],_12) -> ys | (_13,[]) ->
        xs | (x1 :: xs1,y1 :: ys1) ->
          (if FST x1 < ((FST y1):num) then
            x1 :: code_merge xs1 ys else
            y1 :: code_merge xs ys1))`;;
 
-let code_sort_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ imp_res_tac code_split_LENGTH \\
+   drule code_split_NULL \\ fs [] \\ full_simp_tac std_ss [GSYM
+   LENGTH_NIL] >> decide_tac *)
+let code_sort_def = cake_define_list_try (fun () ->
+  `MEASURE LENGTH`)
   [`code_sort [] = []`;
    `code_sort [x] = [x]`;
    `code_sort (x :: y :: xs) =
@@ -663,60 +689,76 @@ let add_src_names_def = cake_define_list
         (mlstring_concat [x; implode "_clos"]) (sptree_insert (n +
         1) x l))`];;
 
-let get_src_names_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ qsuff_tac ‘exp3_size (MAP SND funs)
+   <= exp1_size funs’ \\ fs [] \\ Induct_on ‘funs’ \\ fs
+   [closLangTheory.exp_size_def] \\ fs
+   [FORALL_PROD,closLangTheory.exp_size_def] *)
+let get_src_names_def = cake_define_list_try (fun () ->
+  `MEASURE (exp3_size o FST)`)
   [`get_src_names [] l = l`;
    `get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
   (get_src_names [x] l)`;
-   `get_src_names [closLang_If _10 x y z] l =
+   `get_src_names [closLang_If _14 x y z] l =
       get_src_names [x] (get_src_names [y] (get_src_names [z] l))`;
-   `get_src_names [closLang_Var _11 _12] l = l`;
-   `get_src_names [closLang_Let _13 xs x] l = get_src_names (x :: xs)
+   `get_src_names [closLang_Var _15 _16] l = l`;
+   `get_src_names [closLang_Let _17 xs x] l = get_src_names (x :: xs)
   l`;
-   `get_src_names [(Raise _15 x:closLang_exp)] l = get_src_names [x]
+   `get_src_names [(Raise _19 x:closLang_exp)] l = get_src_names [x]
   l`;
-   `get_src_names [(Handle _17 x y:closLang_exp)] l = get_src_names
+   `get_src_names [(Handle _21 x y:closLang_exp)] l = get_src_names
   [x] (get_src_names [y] l)`;
-   `get_src_names [(Tick _19 x:closLang_exp)] l = get_src_names [x] l`;
-   `get_src_names [(Call _23 _24 _25 xs:closLang_exp)] l =
+   `get_src_names [(Tick _23 x:closLang_exp)] l = get_src_names [x] l`;
+   `get_src_names [(Call _27 _28 _29 xs:closLang_exp)] l =
   get_src_names xs l`;
-   `get_src_names [(Op _28 _29 xs:closLang_exp)] l = get_src_names xs
+   `get_src_names [(Op _32 _33 xs:closLang_exp)] l = get_src_names xs
   l`;
-   `get_src_names [(App _32 _33 x xs:closLang_exp)] l = get_src_names
+   `get_src_names [(App _36 _37 x xs:closLang_exp)] l = get_src_names
   (x :: xs) l`;
-   `get_src_names [closLang_Fn name loc_opt _34 _35 x] l =
+   `get_src_names [closLang_Fn name loc_opt _38 _39 x] l =
       (let l1 = get_src_names [x] l in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names
            n [name] l1)`;
-   `get_src_names [(Letrec names loc_opt _37 funs x:closLang_exp)] l =
+   `get_src_names [(Letrec names loc_opt _41 funs x:closLang_exp)] l =
       (let l0 = get_src_names (MAP SND funs) l in
        let l1 = get_src_names [x] l0 in
          match loc_opt with NONE -> l1 | SOME n ->
            add_src_names n names l1)`];;
 
-let get_src_names_sing_def = cake_define_list
-  [`get_src_names_sing (closLang_If _38 x y z) l =
+let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [closLangTheory.exp_size_def] \\ qsuff_tac
+   ‘exp3_size (MAP SND funs) <= exp1_size funs’ \\ fs [] \\ Induct_on
+   ‘funs’ \\ fs [closLangTheory.exp_size_def] \\ fs
+   [FORALL_PROD,closLangTheory.exp_size_def] *)
+let get_src_names_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (e,_70) -> closLang_exp_size e | INR
+  (es,_71) -> exp3_size es)`)
+  [`get_src_names_sing (closLang_If _42 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;
-   `get_src_names_sing (closLang_Var _39 _40) l = l`;
-   `get_src_names_sing (closLang_Let _41 xs x) l =
+   `get_src_names_sing (closLang_Var _43 _44) l = l`;
+   `get_src_names_sing (closLang_Let _45 xs x) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (Raise _43 x:closLang_exp) l =
+   `get_src_names_sing (Raise _47 x:closLang_exp) l =
   get_src_names_sing x l`;
-   `get_src_names_sing (Handle _45 x y:closLang_exp) l =
+   `get_src_names_sing (Handle _49 x y:closLang_exp) l =
   get_src_names_sing x (get_src_names_sing y l)`;
-   `get_src_names_sing (Tick _47 x:closLang_exp) l =
+   `get_src_names_sing (Tick _51 x:closLang_exp) l =
   get_src_names_sing x l`;
-   `get_src_names_sing (Call _51 _52 _53 xs:closLang_exp) l =
+   `get_src_names_sing (Call _55 _56 _57 xs:closLang_exp) l =
   get_src_names_list xs l`;
-   `get_src_names_sing (Op _56 _57 xs:closLang_exp) l =
+   `get_src_names_sing (Op _60 _61 xs:closLang_exp) l =
   get_src_names_list xs l`;
-   `get_src_names_sing (App _60 _61 x xs:closLang_exp) l =
+   `get_src_names_sing (App _64 _65 x xs:closLang_exp) l =
       get_src_names_list xs (get_src_names_sing x l)`;
-   `get_src_names_sing (closLang_Fn name loc_opt _62 _63 x) l =
+   `get_src_names_sing (closLang_Fn name loc_opt _66 _67 x) l =
       (let l1 = get_src_names_sing x l in
          match loc_opt with NONE -> l1 | SOME n -> add_src_names
            n [name] l1)`;
-   `get_src_names_sing (Letrec names loc_opt _65 funs x:closLang_exp) l
+   `get_src_names_sing (Letrec names loc_opt _69 funs x:closLang_exp) l
   =
       (let l0 = get_src_names_list (MAP SND funs) l in
        let l1 = get_src_names_sing x l0 in

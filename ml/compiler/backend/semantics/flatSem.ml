@@ -633,7 +633,13 @@ let pmatch_stamps_ok = cake_inductive
    (
      n_ps = n_vs ==> pmatch_stamps_ok NONE NONE n_ps n_vs)`;;
 
-let pmatch_def = cake_define_list
+let _ = size_thms "flatLang_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp [] *)
+let pmatch_def = cake_define_list_try (fun () ->
+  `inv_image (<) (\x. match x with INL (x,p,y,z) -> flatLang_pat_size p
+  | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`)
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
         (Match ((x,v') :: bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
@@ -717,8 +723,6 @@ let _ = size_thms "flatLang_op";;
 let _ = size_thms "flatLang_pat";;
 let _ = size_thms "lit";;
 let _ = size_thms "mlstring";;
-let _ = size_thms "option";;
-let _ = size_thms "pair";;
 let _ = size_thms "tra";;
 let exp_alt_size_def = cake_define_list
   [`flatSem_exp_alt_size (Raise a0 a1:flatLang_exp) = 1 + (tra_size
@@ -791,7 +795,18 @@ let fix_clock_IMP =
 
 cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
-let evaluate_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp [dec_clock_def] \\ rw [] \\ imp_res_tac
+   fix_clock_IMP \\ imp_res_tac do_if_either_or \\ imp_res_tac
+   pmatch_rows_Match_exp_alt_size \\ fs [] \\ simp [MAP_REVERSE,
+   SUM_REVERSE, exp6_alt_size, AppUnit_def, char_size_def] *)
+let evaluate_def = cake_define_list_try (fun () ->
+  `inv_image ((<) LEX (<))
+       (\x. match x with INL (env,s,exps) -> (state_clock s,SUM (MAP
+         flatSem_exp_alt_size exps) + LENGTH exps) | (INR (INL (s,d)))
+         -> (state_clock s,dec_alt_size d + 1) | (INR (INR (s,ds))) ->
+         (state_clock s,SUM (MAP dec_alt_size ds) + LENGTH ds + 1))`)
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
   (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;

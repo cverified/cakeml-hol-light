@@ -51,7 +51,11 @@ let lift_lets_def = cake_define_wf
          (match sofar with [] -> NONE | _4 -> SOME (REVERSE
            sofar,d)) | SOME (d1,d2) -> lift_lets (d1 :: sofar) d2)`;;
 
-let compile_decs_def = cake_define_list
+let _ = size_thms "dec";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let compile_decs_def = cake_define_list_try (fun () ->
+  `MEASURE (list_size dec_size)`)
   [`source_let_compile_decs [] = []`;
    `source_let_compile_decs (d :: ds) =
         (match lift_lets [] d with SOME (pre,d) -> Dlocal pre [d] ::

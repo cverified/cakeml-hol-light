@@ -20,7 +20,6 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 let _ = size_thms "dataSem_v";;
-let _ = size_thms "list";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs
    [sptreeTheory.size_delete] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [] *)

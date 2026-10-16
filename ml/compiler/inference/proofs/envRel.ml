@@ -22,7 +22,13 @@ needs "semantics/typeSystem.ml";;
 (* ---------- Converting infer types and envs to type system ones
    ---------- *)
 
-let convert_t_def = cake_define_list
+let _ = size_thms "infer_t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> rw [] >> induct_on `ts` >> rw
+   [infer_tTheory.infer_t_size_def] >> res_tac >> decide_tac *)
+let convert_t_def = cake_define_list_try (fun () ->
+  `MEASURE infer_t_size`)
   [`convert_t (Infer_Tvar_db n) = Tvar_db n`;
    `convert_t (Infer_Tapp ts tc) = Tapp (MAP convert_t ts) tc`];;
 

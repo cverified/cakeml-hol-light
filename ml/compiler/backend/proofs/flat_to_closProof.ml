@@ -66,6 +66,8 @@ let v_rel = cake_inductive
                         (SOME v :: (MAP (\n. SOME (FST n)) funs ++
                           m))
                         [x]))) funs) n))`;;
+hol4_overload "env_rel" "flat_to_closProof_env_rel";;
+hol4_overload "v_rel" "flat_to_closProof_v_rel";;
 
 let store_rel_def = cake_define
   `store_rel refs t_refs =

@@ -95,7 +95,12 @@ let mk_conses_def = cake_define_list
    `mk_conses t (ps :: pss) = pattern_semantics_Cons t ps ::
   mk_conses t pss`];;
 
-let expand_def = cake_define_list
+let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let expand_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
+  INR ps -> list_size pattern_semantics_pat_size ps)`)
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
@@ -229,7 +234,12 @@ let default_mat_def = cake_define_list
  * --------------------------------------------------------------------
    *)
 
-let pat_weight_def = cake_define_list
+let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pat_weight_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
+  INR ps -> list_size pattern_semantics_pat_size ps)`)
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;
@@ -265,7 +275,21 @@ let mats_len_def = cake_define_list
  * --------------------------------------------------------------------
    *)
 
-let exh_matrix_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw
+   [mats_weight_def,mats_len_def,arithmeticTheory.MAX_DEF] >-
+   (imp_res_tac mats_weight_spec_mats \\ fs []) \\ ‘mat_weight
+   (default_mat (r::rows)) <= mat_weight (r::rows)’ by fs
+   [mat_weight_default_mat] \\ Cases_on ‘mat_weight (default_mat
+   (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
+   (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
+   fs [] *)
+let exh_matrix_def = cake_define_list_try (fun () ->
+  `inv_image ((<) LEX (<) LEX (<))
+       (\x. match x with INL rows -> (mat_weight rows,mat_len
+         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
+         ms + 1))`)
   [`exh_matrix [] = F`;
    `exh_matrix (r :: rows) =
       (if NULL r then T else
@@ -297,7 +321,21 @@ let exh_rows_def = cake_define
  * --------------------------------------------------------------------
    *)
 
-let exh_steps_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw
+   [mats_weight_def,mats_len_def,arithmeticTheory.MAX_DEF] THEN1
+   (imp_res_tac mats_weight_spec_mats \\ fs []) \\ ‘mat_weight
+   (default_mat (r::rows)) <= mat_weight (r::rows)’ by fs
+   [mat_weight_default_mat] \\ Cases_on ‘mat_weight (default_mat
+   (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
+   (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
+   fs [] *)
+let exh_steps_def = cake_define_list_try (fun () ->
+  `inv_image ((<) LEX (<) LEX (<))
+       (\x. match x with INL rows -> (mat_weight rows,mat_len
+         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
+         ms + 1))`)
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
       (((if NULL r then 1 else
@@ -307,7 +345,12 @@ let exh_steps_def = cake_define_list
    `exh_steps_list [] = 0`;
    `exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`];;
 
-let exh_all_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [exh_steps_def,exh_steps_list_append] \\
+   simp [Once exh_steps_def] *)
+let exh_all_def = cake_define_list_try (fun () ->
+  `MEASURE exh_steps_list`)
   [`exh_all [] = T`;
    `exh_all ([] :: ms) = F`;
    `exh_all ((r :: rows) :: ms) =

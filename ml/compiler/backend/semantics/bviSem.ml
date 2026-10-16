@@ -251,7 +251,14 @@ let fix_clock_IMP =
 
 cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
-let evaluate_def = cake_define_list
+let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> rpt strip_tac >> simp[dec_clock_def] >>
+   imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
+let evaluate_def = cake_define_list_try (fun () ->
+  `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
+                             (\(xs,env,s). (state_clock s,xs)))`)
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =

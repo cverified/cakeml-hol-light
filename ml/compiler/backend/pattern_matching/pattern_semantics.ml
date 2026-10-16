@@ -77,7 +77,12 @@ let is_sibling_def = cake_define_list
   [`is_sibling x NONE = T`;
    `is_sibling x (SOME l) = MEM x l`];;
 
-let pmatch_def = cake_define_list
+let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pmatch_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (r,p,_7) -> pattern_semantics_pat_size
+  p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`)
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
@@ -128,9 +133,9 @@ let match_def = cake_define_list
         (match pmatch refs p v with
            PMatchSuccess ->
              (match pattern_semantics_match refs rows v with
-               NONE -> NONE | SOME _8 -> SOME (MatchSuccess e))
-                 | PMatchFailure -> pattern_semantics_match refs
-                 rows v | PTypeFailure -> NONE)`];;
+               NONE -> NONE | SOME _10 -> SOME (MatchSuccess
+                 e)) | PMatchFailure -> pattern_semantics_match
+                 refs rows v | PTypeFailure -> NONE)`];;
 
 (* semantics of output *)
 
@@ -142,7 +147,7 @@ let dt_test_def = cake_define
      SOME (t = c /\ l = LENGTH args)
       | ((pattern_semantics_LitEq l1),(Litv l2)) ->
      (if lit_same_type l1 l2 then SOME (l1 = l2) else NONE)
-      | (_9,_10) -> NONE`;;
+      | (_11,_12) -> NONE`;;
 
 let app_pos_def = cake_define
   `app_pos refs x2 v =
@@ -155,7 +160,7 @@ let app_pos_def = cake_define
           app_pos refs pos x
         | ((Pos (SUC n) pos),(pattern_semantics_Term c (x :: xs))) ->
        app_pos refs (Pos n pos) (pattern_semantics_Term c xs)
-        | ((Pos _11 _12),_13) -> NONE`;;
+        | ((Pos _13 _14),_15) -> NONE`;;
 
 let dt_eval_guard_def = cake_define_list
   [`dt_eval_guard refs v pattern_semantics_True =
@@ -174,10 +179,10 @@ let dt_eval_guard_def = cake_define_list
            SOME T -> SOME T | SOME F -> dt_eval_guard refs v g2)`];;
 
 let dt_eval_def = cake_define_list
-  [`dt_eval refs _14 (pattern_semantics_Leaf k:dTree) = SOME
+  [`dt_eval refs _16 (pattern_semantics_Leaf k:dTree) = SOME
   (MatchSuccess k)`;
-   `dt_eval refs _15 (Fail:dTree) = SOME (MatchFailure)`;
-   `dt_eval refs _16 pattern_semantics_TypeFail = NONE`;
+   `dt_eval refs _17 (Fail:dTree) = SOME (MatchFailure)`;
+   `dt_eval refs _18 pattern_semantics_TypeFail = NONE`;
    `dt_eval refs v (If guard' dt1 dt2:dTree) =
          (match dt_eval_guard refs v guard' with NONE -> NONE |
            SOME b -> dt_eval refs v (if b then dt1 else dt2))`];;

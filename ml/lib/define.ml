@@ -3144,6 +3144,15 @@ let cake_inductive tm =
 let cake_define_list_wf rel cls =
   cake_define_wf rel (cake_conj_list cls);;
 
+(* the same, with the relation of HOL4 in a function, so that a
+   relation that does not typecheck is no error of the file: it
+   is only the measure that the definition then has to guess *)
+
+let cake_define_list_try f cls =
+  match (try Some (f ()) with Failure _ -> None) with
+    Some rel -> cake_define_list_wf rel cls
+  | None -> cake_define_list cls;;
+
 let cake_define_tac (rel,tac) tm =
   try cake_time (cake_define_gen (Some(rel,tac))) tm
   with Failure s -> cake_report tm s;;

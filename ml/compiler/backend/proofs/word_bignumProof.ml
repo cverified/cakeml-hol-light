@@ -227,6 +227,7 @@ let eval = cake_inductive
         (INR s3) ==>
       word_bignumProof_Eval r s1 (word_bignum_LoopBody p) (INR
         s3))`;;
+hol4_overload "Eval" "word_bignumProof_Eval";;
 
 (* HOL4 ML code, not ported:
 val raw_eval_cases = eval_cases;

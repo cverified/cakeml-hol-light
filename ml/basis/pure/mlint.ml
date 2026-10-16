@@ -33,7 +33,16 @@ val exp_thm = EVAL ``10n ** exp_for_dec_enc``
 val exp_tm = rhs (concl exp_thm)
 *)
 
-let num_to_chars_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp [GSYM DIVISION, GSYM exp_thm] \\ rw
+   [exp_for_dec_enc_def] \\ simp [EXP] \\ irule (Q.prove (`a <= d /\
+   b <= c /\ (a < d \/ b < c) ==> (a : num) + b < c + d`, simp []))
+   \\ simp [arithmeticTheory.DIV_LESS_EQ] \\ Cases_on `i = 0` \\ fs
+   [] *)
+let num_to_chars_def = cake_define_list_try (fun () ->
+  `inv_image (MEASURE I LEX MEASURE I)
+       (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`)
   [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
   exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)
@@ -66,7 +75,7 @@ let fromChar_def = cake_define
      (match char' with (CHR 48) -> SOME 0 | (CHR 49) -> SOME 1 |
        (CHR 50) -> SOME 2 | (CHR 51) -> SOME 3 | (CHR 52) -> SOME 4 |
        (CHR 53) -> SOME 5 | (CHR 54) -> SOME 6 | (CHR 55) -> SOME 7 |
-       (CHR 56) -> SOME 8 | (CHR 57) -> SOME 9 | _1 -> NONE)`;;
+       (CHR 56) -> SOME 8 | (CHR 57) -> SOME 9 | _2 -> NONE)`;;
 
 (* Equivalence between the safe and unsafe versions of fromChar *)
 

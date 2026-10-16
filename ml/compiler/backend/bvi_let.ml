@@ -69,7 +69,14 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
-let compile_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ fs [LENGTH_NIL] \\ imp_res_tac
+   (METIS_PROVE [SNOC_CASES] ``m <> [] ==> ?x y. m = SNOC x y``) \\
+   full_simp_tac std_ss [LAST_SNOC,LENGTH_SNOC,FRONT_SNOC] \\ fs
+   [exp2_size_APPEND,SNOC_APPEND,exp_size_def] *)
+let compile_def = cake_define_list_try (fun () ->
+  `MEASURE (exp2_size o SND o SND)`)
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;
@@ -113,7 +120,17 @@ let compile_def = cake_define_list
               [y]))]`];;
 hol4_overload "compile" "bvi_let_compile";;
 
-let compile_sing_def = cake_define_list
+let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw[bviTheory.exp_size_def] \\ rename1`xs ≠
+   []` \\ pop_assum mp_tac \\ qid_spec_tac`xs` \\ Cases using
+   SNOC_CASES \\ gvs
+   [SNOC_APPEND,exp2_size_APPEND,bviTheory.exp_size_def
+     ,list_size_APPEND] *)
+let compile_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
+  (_12,_13,es) -> list_size bvi_exp_size es)`)
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)
            | _6 -> Var (v + d))`;
@@ -160,6 +177,6 @@ hol4_overload "compile_sing" "bvi_let_compile_sing";;
 
 let compile_exp_def = cake_define
   `bvi_let_compile_exp x =
-     (match bvi_let_compile [] 0 [x] with (y :: _10) -> y | _11 ->
+     (match bvi_let_compile [] 0 [x] with (y :: _14) -> y | _15 ->
        Var 0)`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;

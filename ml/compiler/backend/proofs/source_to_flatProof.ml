@@ -192,6 +192,8 @@ let v_rel = cake_inductive
          (!ty_id ctors. ty_gp = SOME (ty_id,ctors) ==>
              FLOOKUP (global_env_tys genv) ty_id = SOME ctors))) ==>
      global_env_inv genv comp_map shadowers env)`;;
+hol4_overload "env_rel" "source_to_flatProof_env_rel";;
+hol4_overload "v_rel" "source_to_flatProof_v_rel";;
 
 (*
 Theorem v_rel_eqns:
@@ -278,6 +280,7 @@ let result_rel = cake_inductive
    (!genv a.
      source_to_flatProof_result_rel f genv (Rerr (Rabort a)) (Rerr
        (Rabort a)))`;;
+hol4_overload "result_rel" "source_to_flatProof_result_rel";;
 
 let sv_rel = cake_inductive
   `(!genv v v'.
@@ -295,6 +298,7 @@ let sv_rel = cake_inductive
      source_to_flatProof_v_rel genv v v' ==>
      source_to_flatProof_sv_rel genv (semanticPrimitives_Thunk m
        v) (semanticPrimitives_Thunk m v'))`;;
+hol4_overload "sv_rel" "source_to_flatProof_sv_rel";;
 
 let s_rel = cake_inductive
   `(!genv s s'.
@@ -304,6 +308,7 @@ let s_rel = cake_inductive
      s = state_clock s' /\ state_ffi
      s = state_ffi s' ==>
      source_to_flatProof_s_rel genv s s')`;;
+hol4_overload "s_rel" "source_to_flatProof_s_rel";;
 
 let env_all_rel = cake_inductive
   `(!genv map' env_v_local env env' locals.

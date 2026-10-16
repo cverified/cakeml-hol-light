@@ -113,6 +113,7 @@ let exp_rel = cake_inductive
     bvl_inlineProof_exp_rel cs [x] [y] ==>
     bvl_inlineProof_exp_rel cs [bvl_Call ticks (SOME n) xs]
                [bvl_Let ys (mk_tick (SUC ticks) y)])`;;
+hol4_overload "exp_rel" "bvl_inlineProof_exp_rel";;
 
 let in_cc_def = cake_define
   `bvl_inlineProof_in_cc limit' cc =

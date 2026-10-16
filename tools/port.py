@@ -802,9 +802,13 @@ class Porter:
       relnote = ('(* the termination relation that HOL4 gives, with\n'
                  '   the names that the port gives the constants *)\n')
     if term is None and rel is not None:
+      # the relation of a Termination is parsed in a function, so
+      # that one that does not typecheck is no error of the file
+      how = ('cake_define_list_try (fun () ->\n  `%s`)' % rel
+             if termnote or key not in overrides.MEASURE
+             else 'cake_define_list_wf\n  `%s`' % rel)
       text = (sizes + relnote + termnote +
-              'let %s = cake_define_list_wf\n  `%s`\n'
-              '  %s;;' % (name, rel, clauses))
+              'let %s = %s\n  %s;;' % (name, how, clauses))
     elif term is None:
       text = (sizes +
               'let %s = cake_define_list\n  %s;;' % (name, clauses))

@@ -1317,7 +1317,15 @@ let getWords_def = cake_define_list
       (match c with (b,wordLang_Word w) -> getWords cs ((b,w)
         :: aux) | _8 -> (REVERSE aux,c :: cs))`];;
 
-let StoreAnyConsts_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ fs [getWords_def] \\ rw [] \\ qsuff_tac ‘∀ws
+   aux (ws1:(bool # 'a word) list) vs1. (ws1,vs1) = getWords ws aux ⇒
+   LENGTH vs1 ≤ LENGTH ws’ THEN1 (rw [] \\ res_tac \\ fs []) \\
+   once_rewrite_tac [EQ_SYM_EQ] \\ Induct \\ fs [getWords_def] \\ fs
+   [AllCaseEqs()] \\ rw[] \\ res_tac \\ fs [getWords_def] *)
+let StoreAnyConsts_def = cake_define_list_try (fun () ->
+  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`)
   [`StoreAnyConsts r1 r2 r3 [] v =
       Seq (Set NextFree (Var r2))
           (match SND v with Loc n _12 -> LocValue r1 n |

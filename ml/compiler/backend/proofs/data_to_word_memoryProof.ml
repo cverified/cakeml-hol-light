@@ -210,7 +210,13 @@ let v_inv_eq = cake_define
    its
    pointer annotation is always 0 *)
 
-let get_refs_def = cake_define_list
+let _ = size_thms "dataSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rpt strip_tac \\ Induct_on `vs` \\ srw_tac []
+   [v_size_def] \\ res_tac \\ DECIDE_TAC *)
+let get_refs_def = cake_define_list_try (fun () ->
+  `MEASURE (dataSem_v_size)`)
   [`get_refs (Number _3:dataSem_v) = []`;
    `get_refs (Word64 _5:dataSem_v) = []`;
    `get_refs (CodePtr _7:dataSem_v) = []`;

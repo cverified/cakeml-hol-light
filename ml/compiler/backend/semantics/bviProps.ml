@@ -45,7 +45,14 @@ let inc_clock_def = cake_define
   (K (state_clock s + n)) s`;;
 hol4_overload "inc_clock" "bviProps_inc_clock";;
 
-let get_code_labels_def = cake_define_list
+let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp[bviTheory.exp_size_def] \\ rpt conj_tac
+   \\ rpt gen_tac \\ Induct_on`es` \\ rw[bviTheory.exp_size_def] \\
+   simp[] \\ res_tac \\ simp[] *)
+let get_code_labels_def = cake_define_list_try (fun () ->
+  `MEASURE flatLang_exp_size`)
   [`bviProps_get_code_labels (Var _2:bvi_exp) = {}`;
    `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION

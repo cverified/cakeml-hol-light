@@ -40,7 +40,12 @@ let gc_move_list_def = cake_define_list
            (x :: xs,h2,a,n,heap,c))`];;
 hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
 
-let gc_move_loop_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ SRW_TAC []
+   [heap_length_def,el_length_def,SUM_APPEND] \\ decide_tac *)
+let gc_move_loop_def = cake_define_list_try (fun () ->
+  `MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)`)
   [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') =
   (h1,a,n,heap,c)`;
    `copying_gc_gc_move_loop (h1,h :: h2,a,n,heap,c,limit') =

@@ -68,7 +68,15 @@ QED
 
 (************************** DEFINITIONS ***************************)
 
-let find_v_globals_def = cake_define_list
+let _ = size_thms "flatSem_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
+   Cases_on ‘env’ \\ gvs [environment_size_def] \\ gvs
+   [list_size_pair_size_MAP_FST_SND] *)
+let find_v_globals_def = cake_define_list_try (fun () ->
+  `MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
+  list_size flatSem_v_size y)`)
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _4 e:flatSem_v) =

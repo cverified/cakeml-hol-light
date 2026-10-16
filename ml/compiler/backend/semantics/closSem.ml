@@ -198,7 +198,14 @@ let do_install_def = cake_define
                              Rtype_error),s))`;;
 hol4_overload "do_install" "closSem_do_install";;
 
-let make_const_def = cake_define_list
+let _ = size_thms "const";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ Induct_on ‘cs’ \\ rw [] \\ fs
+   [const_size_def] \\ res_tac \\ pop_assum (qspec_then ‘t’
+   assume_tac) \\ fs [] *)
+let make_const_def = cake_define_list_try (fun () ->
+  `MEASURE const_size`)
   [`make_const (ConstInt i) = closSem_Number i`;
    `make_const (ConstStr s) = closSem_ByteVector (MAP (n2w o ORD)
   (explode s))`;
@@ -789,9 +796,7 @@ let AppUnit_def = cake_define
 hol4_overload "AppUnit" "closSem_AppUnit";;
 
 let _ = size_thms "closLang_op";;
-let _ = size_thms "list";;
 let _ = size_thms "mlstring";;
-let _ = size_thms "option";;
 let _ = size_thms "tra";;
 let exp_alt_size_def = cake_define_list
   [`closSem_exp_alt_size (Var a0 a1:closLang_exp) = 1 + (tra_size a0
@@ -856,7 +861,19 @@ let fix_clock_IMP =
 
 cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
-let evaluate_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
+   imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\ TRY
+   DECIDE_TAC \\ imp_res_tac do_install_clock \\ imp_res_tac
+   dest_closure_length \\ imp_res_tac LESS_EQ_dec_clock \\
+   FULL_SIMP_TAC (srw_ss()) [] \\ simp [AppUnit_def] \\ IF_CASES_TAC
+   \\ gvs [] *)
+let evaluate_def = cake_define_list_try (fun () ->
+  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
+                   (\x. match x with INL (xs,env,s) -> (state_clock
+                     s,list_size closSem_exp_alt_size xs,0) | INR
+                     (l,f,args,s) -> (state_clock s,0,LENGTH args)))`)
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =

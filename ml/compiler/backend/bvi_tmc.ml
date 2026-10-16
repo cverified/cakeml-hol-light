@@ -31,7 +31,12 @@ let pure_op_def = cake_define
         | ((ThunkOp _19),_20) -> F`;;
 hol4_overload "pure_op" "bvi_tmc_pure_op";;
 
-let pure_exp_def = cake_define_list
+let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pure_exp_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_42,e) -> bvi_exp_size e | INR
+  (_43,es) -> list_size bvi_exp_size es)`)
   [`pure_exp n (Var v:bvi_exp) = (v < n)`;
    `pure_exp n (If e1 e2 e3:bvi_exp) = F`;
    `pure_exp n (Let es e:bvi_exp) = (pure_exp n e /\ pure_exps n es)`;
@@ -57,7 +62,7 @@ let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
       match x1 with
         closLang_BlockOp (closLang_Cons block_tag) -> SOME block_tag
-      | _42 -> NONE`;;
+      | _44 -> NONE`;;
 hol4_overload "dest_Cons" "bvi_tmc_dest_Cons";;
 
 (* PHASE 1: extract everything into a let bound "call block" *)
@@ -76,7 +81,7 @@ let call_block_INDUCT,call_block_RECURSION = define_datatype
 
 let bind_def = cake_define_list
   [`bind (n:num) [] = ([],n)`;
-   `bind (n:num) (_43 :: t) =
+   `bind (n:num) (_45 :: t) =
        (match bind (n + 1) t with (vs,n') -> (n :: vs,n'))`];;
 
 let shift_vars_def = cake_define_list
@@ -94,7 +99,7 @@ let shift_cb_def = cake_define_list
 let call_to_cb_def = cake_define
   `call_to_cb loc call_ts call_loc call_args' call_h =
    (if call_loc = SOME loc /\ call_h = NONE then
-     match bind 0 call_args' with (vs,_44) ->
+     match bind 0 call_args' with (vs,_46) ->
          SOME (call_args',RCall call_ts vs) else NONE)`;;
 
 (* Attempts to build a CallBlock from the tag and args of a BlockOp
@@ -107,10 +112,15 @@ let call_to_cb_def = cake_define
      expression is not eligible for transformation and NONE is returned.
    If multiple recursive calls are found, all but the last are let
      bound. *)
-let bvi_to_cb_aux_def = cake_define_list
+let _ = size_thms "bvi_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let bvi_to_cb_aux_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_58,_59,_60,e) -> bvi_exp_size e |
+  INR (_61,_62,_63,es) -> list_size bvi_exp_size es)`)
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
-         SOME (bs,INR (CallBlock tag [] cb [])) | _47 -> NONE)`;
+         SOME (bs,INR (CallBlock tag [] cb [])) | _49 -> NONE)`;
    `bvi_to_cb_aux_sing n loc tag (Op op args:bvi_exp) =
        (match bvi_tmc_dest_Cons op with SOME tag' ->
            (match bvi_to_cb_aux n loc tag' args with NONE -> NONE |
@@ -121,10 +131,10 @@ let bvi_to_cb_aux_def = cake_define_list
                 SOME (bs,INR (CallBlock tag [] cb []))) | NONE ->
            (if pure_exp n (Op op args) then
              SOME ([Op op args],INL [0]) else NONE))`;
-   `bvi_to_cb_aux_sing n _48 _49 exp =
+   `bvi_to_cb_aux_sing n _50 _51 exp =
        (if pure_exp n exp then
          SOME ([exp],INL [0]) else NONE)`;
-   `bvi_to_cb_aux _50 _51 _52 [] = SOME ([],INL [])`;
+   `bvi_to_cb_aux _52 _53 _54 [] = SOME ([],INL [])`;
    `bvi_to_cb_aux n loc tag [exp] = bvi_to_cb_aux_sing n loc tag exp`;
    `bvi_to_cb_aux n loc tag (h :: t) =
        (match bvi_to_cb_aux n loc tag t with NONE -> NONE | SOME
@@ -135,13 +145,13 @@ let bvi_to_cb_aux_def = cake_define_list
                   then
                   let vs2' = shift_vars (LENGTH bs1) vs2 in
                     SOME (bs1 ++ bs2,INL (vs1 ++ vs2')) else NONE) |
-                      SOME (bs1,INR (CallBlock _53 [] child [])) ->
+                      SOME (bs1,INR (CallBlock _55 [] child [])) ->
                 (let vs2' = shift_vars (LENGTH bs1) vs2 in
                   SOME (bs1 ++ bs2,INR (CallBlock tag [] child
-                    vs2'))) | _54 -> NONE) | SOME (bs2,INR cb) ->
+                    vs2'))) | _56 -> NONE) | SOME (bs2,INR cb) ->
            (match shift_cb 1 cb with CallBlock tag l child r ->
                (let cb' = CallBlock tag (0 :: l) child r in
-                 SOME (h :: bs2,INR cb')) | _55 -> NONE))`];;
+                 SOME (h :: bs2,INR cb')) | _57 -> NONE))`];;
 
 let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
@@ -163,8 +173,8 @@ let bvi_to_cb_def = cake_define
         | (Op op xs) ->
       (match bvi_tmc_dest_Cons op with SOME tag ->
           (match bvi_to_cb_aux n loc tag xs with SOME (bs,INR cb) ->
-            SOME (bs,cb) | _56 -> NONE) | _57 -> NONE)
-        | _58 -> NONE`;;
+            SOME (bs,cb) | _64 -> NONE) | _65 -> NONE)
+        | _66 -> NONE`;;
 
 (* Convert back to BlockOp Cons for comparing semantics *)
 let cb_to_bvi_def = cake_define_list
@@ -210,10 +220,14 @@ let update_cons_def = cake_define
 let cb_size_def = cake_define
   `cb_size x1 =
       match x1 with
-        CallBlock _59 _60 x _61 -> cb_size x + 1
-      | _62 -> 0`;;
+        CallBlock _67 _68 x _69 -> cb_size x + 1
+      | _70 -> 0`;;
 
-let cb_to_bvi_worker_aux_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [call_block_size_shift, cb_size_def] *)
+let cb_to_bvi_worker_aux_def = cake_define_list_try (fun () ->
+  `MEASURE (cb_size o FST)`)
   [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Op
          (closLang_IntOp (closLang_Const (&idx))) [])`;
@@ -279,14 +293,14 @@ let rewrite_wrapper_def = cake_define
         | (Raise x) -> NONE
         | (Tick x) -> OPTION_MAP Tick (rewrite_wrapper loc loc_opt n
           x)
-        | (Force _63 n) -> NONE
+        | (Force _71 n) -> NONE
         | (Call t d args h) -> NONE
         | (Op op op_args) ->
        (match bvi_to_cb n loc (Op op op_args) with SOME (bs,CallBlock
          tag left child right) ->
            SOME (Let bs (cb_to_bvi_wrapper tag left child right
-             loc_opt)) | _64 -> NONE)
-        | _65 -> NONE`;;
+             loc_opt)) | _72 -> NONE)
+        | _73 -> NONE`;;
 
 (* Assumes that the function can and should be optimised - has been
    checked by rewrite_wrapper. *)

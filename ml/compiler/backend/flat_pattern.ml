@@ -49,7 +49,15 @@ let enc_num_to_name_aux_def = cake_define
 let enc_num_to_name_def = cake_define
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
-let compile_pat_bindings_def = cake_define_list
+let _ = size_thms "pattern_semantics_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw
+   [MAP_MAP_o, o_DEF, UNCURRY, SUM_APPEND, pat1_size] \\ simp
+   [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
+let compile_pat_bindings_def = cake_define_list_try (fun () ->
+  `MEASURE (\(t,i,m,exp). SUM (MAP (pattern_semantics_pat_size o FST)
+  m) + LENGTH m)`)
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;

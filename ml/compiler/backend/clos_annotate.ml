@@ -86,7 +86,13 @@ let alt_free_def = cake_define_list
          (let (c1,l1) = alt_free xs in
            ([closLang_Call t ticks dest c1],l1))`];;
 
-let alt_free_sing_def = cake_define_list
+let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let alt_free_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR (INL
+  es) -> list_size closLang_exp_size es | INR (INR (_7,fns)) ->
+  list_size (pair_size (\x. x) closLang_exp_size) fns)`)
   [`alt_free_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp),Var v)`;
    `alt_free_sing (If t x1 x2 x3:closLang_exp) =
@@ -227,7 +233,14 @@ let shift_def = cake_define_list
            ([closLang_Call t ticks dest c1]))`];;
 hol4_overload "shift" "clos_annotate_shift";;
 
-let shift_sing_def = cake_define_list
+let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let shift_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (e,_8,_9,_10) -> closLang_exp_size e |
+  INR (INL (es,_11,_12,_13)) -> list_size closLang_exp_size es | INR
+  (INR (_14,_15,_16,l)) -> list_size (pair_size (\x. x)
+  closLang_exp_size) l)`)
   [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =
          Var t (clos_annotate_get_var m l i v)`;
    `shift_sing (If t x1 x2 x3:closLang_exp) (m:num) (l:num) (i:num spt)

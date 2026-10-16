@@ -195,7 +195,14 @@ let sexptype_def = cake_define_wf
                       (sexpid odestSEXSTR (EL 1 args)))))`;;
 
 (* translator friendly version for bootstrapping *)
-let sexptype_alt_def = cake_define_list
+let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
+   fs[LENGTH_EQ_NUM_compute] *)
+let sexptype_alt_def = cake_define_list_try (fun () ->
+  `inv_image (MEASURE simpleSexp_sexp_size)
+                   (\x. match x with INL y -> y | INR y -> y)`)
   [`sexptype_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Atvar" /\ LENGTH args = 1 then
@@ -290,7 +297,14 @@ let sexppat_def = cake_define_wf
                (sexptype (EL 1 args))))`;;
 
 (* translator friendly version for bootstrapping *)
-let sexppat_alt_def = cake_define_list
+let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
+   fs[LENGTH_EQ_NUM_compute] *)
+let sexppat_alt_def = cake_define_list_try (fun () ->
+  `inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
+  y | INR y -> y)`)
   [`sexppat_alt s =
         OPTION_MAP ast_Pvar (odestSEXSTR s) ++
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
@@ -562,7 +576,16 @@ let sexpexp_def = cake_define_wf
                (sexplocn (EL 1 args))))`;;
 
 (* translator friendly version for bootstrapping *)
-let sexpexp_alt_def = cake_define_list
+let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
+   fs[LENGTH_EQ_NUM_compute] *)
+let sexpexp_alt_def = cake_define_list_try (fun () ->
+  `inv_image (MEASURE simpleSexp_sexp_size)
+       (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
+         (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR (INR
+         (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) -> y)`)
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
@@ -699,7 +722,14 @@ let sexpdec_def = cake_define_wf
                  (sexplist sexpdec (EL 1 args))))`;;
 
 (* translator friendly version for bootstrapping *)
-let sexpdec_alt_def = cake_define_list
+let _ = size_thms "simpleSexp_sexp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
+   fs[LENGTH_EQ_NUM_compute] *)
+let sexpdec_alt_def = cake_define_list_try (fun () ->
+  `inv_image (MEASURE simpleSexp_sexp_size)
+       (\x. match x with INL y -> y | INR y -> y)`)
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then
@@ -758,7 +788,13 @@ let idsexp_def = cake_define_list
    `idsexp (Long ns n) = listsexp [SX_SYM "Long"; SEXSTR (explode
   ns); idsexp n]`];;
 
-let typesexp_def = cake_define_list
+let _ = size_thms "ast_t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> rw[] \\ Induct_on`ts` >> simp[ast_t_size_def]
+   >> rw[] >> res_tac >> simp[] *)
+let typesexp_def = cake_define_list_try (fun () ->
+  `MEASURE ast_t_size`)
   [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode
   s)]`;
    `typesexp (Atfun t1 t2) = listsexp [SX_SYM "Atfun"; typesexp t1;
@@ -780,7 +816,14 @@ let litsexp_def = cake_define_list
    `litsexp (ast_Float64 w) = listsexp [SX_SYM "float64"; SX_NUM
   (w2n w)]`];;
 
-let patsexp_def = cake_define_list
+let _ = size_thms "ast_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> simp [] >> Induct_on`ps`>>simp[pat_size_def]
+   >> rw[] >> simp[] >> res_tac >>
+   first_x_assum(qspec_then`cn`strip_assume_tac)>> decide_tac *)
+let patsexp_def = cake_define_list_try (fun () ->
+  `MEASURE ast_pat_size`)
   [`patsexp (ast_Pany:ast_pat) = listsexp [SX_SYM "Pany"]`;
    `patsexp (ast_Pvar s:ast_pat) = SEXSTR (explode s)`;
    `patsexp (ast_Plit l:ast_pat) = listsexp [SX_SYM "Plit"; litsexp

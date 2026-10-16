@@ -176,7 +176,13 @@ val set_tids_ind = theorem"set_tids_ind";
 let set_tids_subset_def = cake_define
   `set_tids_subset tids t <=> set_tids t SUBSET tids`;;
 
-let unconvert_t_def = cake_define_list
+let _ = size_thms "t";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> rw [] >> induct_on `ts` >> rw [t_size_def] >>
+   full_simp_tac (srw_ss()++ARITH_ss) [] *)
+let unconvert_t_def = cake_define_list_try (fun () ->
+  `MEASURE t_size`)
   [`unconvert_t (Tvar_db n) = Infer_Tvar_db n`;
    `unconvert_t (Tapp ts tc) = Infer_Tapp (MAP unconvert_t ts) tc`;
    `unconvert_t (Tvar v) = Infer_Tuvar ARB`];;

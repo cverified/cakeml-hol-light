@@ -65,6 +65,7 @@ let exp_rel = cake_inductive
         LENGTH ys = arity ==>
         bvi_inlineProof_exp_rel c (bvi_Call ticks (SOME n) xs NONE)
           (Let ys (bvi_mk_tick (SUC ticks) body))))`;;
+hol4_overload "exp_rel" "bvi_inlineProof_exp_rel";;
 
 let in_cc_def = cake_define
   `bvi_inlineProof_in_cc cc =

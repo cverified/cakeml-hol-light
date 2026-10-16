@@ -355,7 +355,14 @@ let set_store_def = cake_define
   (wordSem_state_store_fupd (K (wordSem_state_store s |+ (v,x))) s)`;;
 hol4_overload "set_store" "wordSem_set_store";;
 
-let word_exp_def = cake_define_list
+let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
+   MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
+   `ARB`)) \\ DECIDE_TAC *)
+let word_exp_def = cake_define_list_try (fun () ->
+  `MEASURE (wordLang_exp_size ARB o SND)`)
   [`wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Const w)
   = SOME (wordLang_Word w)`;
    `wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Var v) =
@@ -998,7 +1005,28 @@ let fix_clock_IMP =
 
 cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
-let evaluate_def = cake_define_list
+let _ = size_thms "wordLang_prog";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY
+   (full_simp_tac(srw_ss())[] \\ DECIDE_TAC) \\
+   full_simp_tac(srw_ss())[termdep_rw,STOP_def] \\ imp_res_tac
+   fix_clock_IMP_LESS_EQ \\ full_simp_tac(srw_ss())[] \\ imp_res_tac
+   (GSYM fix_clock_IMP_LESS_EQ) \\ TRY (Cases_on `handler`) \\ TRY
+   (PairCases_on `x`) \\
+   full_simp_tac(srw_ss())[set_var_def,set_vars_def,push_env_def
+     ,call_env_def,dec_clock_def,LET_THM]
+   \\ rpt (pairarg_tac \\ full_simp_tac(srw_ss())[]) \\
+   full_simp_tac(srw_ss())[pop_env_def] \\ every_case_tac \\
+   full_simp_tac(srw_ss())[] \\ srw_tac[][] \\
+   full_simp_tac(srw_ss())[] \\ gvs [cut_state_def,CaseEq"option"] \\
+   decide_tac *)
+let evaluate_def = cake_define_list_try (fun () ->
+  `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wordLang_prog_size
+  (K 0)))
+                  (\(xs,((s:('a,'c,'ffi)wordSem_state))).
+                    (wordSem_state_termdep s,wordSem_state_clock
+                    s,xs)))`)
   [`wordSem_evaluate ((Skip:'a
   wordLang_prog),(s:('a,'c,'ffi)wordSem_state)) = (NONE,s)`;
    `wordSem_evaluate (wordLang_Alloc n names,s) =

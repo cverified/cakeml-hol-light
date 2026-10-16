@@ -745,7 +745,6 @@ let fix_clock_IMP =
 cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "bvl_exp";;
-let _ = size_thms "list";;
 (* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\
    decide_tac *)

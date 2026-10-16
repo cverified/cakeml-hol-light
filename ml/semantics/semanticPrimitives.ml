@@ -309,7 +309,12 @@ hol4_overload "Boolv" "semanticPrimitives_Boolv";;
  * pattern and value come from the same type.  Match_type_error is
    returned
  * when one of these conditions is violated *)
-let pmatch_def = cake_define_list
+let _ = size_thms "ast_pat";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let pmatch_def = cake_define_list_try (fun () ->
+  `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> ast_pat_size p |
+  INR (s,a,ps,b,c) -> list_size ast_pat_size ps)`)
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
   Match env`;
    `semanticPrimitives_pmatch envC s (ast_Pvar x:ast_pat) v' env =
@@ -386,7 +391,15 @@ let find_recfun_def = cake_define
 let eq_result_INDUCT,eq_result_RECURSION = define_datatype
   "eq_result = Eq_val (bool) | Eq_type_error";;
 
-let do_eq_def = cake_define_list
+let _ = size_thms "semanticPrimitives_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: >> Cases_on ‘compress_bool v1’ >> gs[Boolv_def,
+   listTheory.list_size_def] *)
+let do_eq_def = cake_define_list_try (fun () ->
+  `inv_image (<) (\x. match x with INL (v1,v2) ->
+  semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
+  semanticPrimitives_v_size vs1)`)
   [`semanticPrimitives_do_eq (semanticPrimitives_Litv
   l1:semanticPrimitives_v) (semanticPrimitives_Litv
   l2:semanticPrimitives_v) =
@@ -598,7 +611,12 @@ let declare_env_def = cake_define
 (* Concrete, or first-order values, which do not contain code closures
    and
    are unchanged by many compiler phases. *)
-let concrete_v_def = cake_define_list
+let _ = size_thms "semanticPrimitives_v";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let concrete_v_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL v -> semanticPrimitives_v_size v | INR
+  vs -> list_size semanticPrimitives_v_size vs)`)
   [`concrete_v v <=>
          (match v with semanticPrimitives_Loc _50 _51 -> T |
            semanticPrimitives_Litv _52 -> T | semanticPrimitives_Conv

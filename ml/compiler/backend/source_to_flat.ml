@@ -111,9 +111,7 @@ let join_all_names_def = cake_define
 
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
-let _ = size_thms "list";;
 let _ = size_thms "mlstring";;
-let _ = size_thms "pair";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 let compile_exp_def = cake_define_list_wf
@@ -342,7 +340,6 @@ let simple_dlet_def = cake_define
        (pv,v) | _11 -> NONE) | _12 -> NONE)`;;
 
 let _ = size_thms "dec";;
-let _ = size_thms "list";;
 let compile_decs_def = cake_define_wf
   `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`
   `source_to_flat_compile_decs t n next' env envs' x6 =

@@ -149,7 +149,12 @@ let read_Ident_ret_def = cake_define
        (OtherS n,new_loc,rest) else
        (LongS (REVERSE acc) n,new_loc,rest))`;;
 
-let read_Ident_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ imp_res_tac (GSYM read_while_thm) \\
+   Cases_on ‘str’ \\ gvs [] *)
+let read_Ident_def = cake_define_list_try (fun () ->
+  `MEASURE (LENGTH o FST)`)
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
    `read_Ident (c :: str) loc acc =
       (if is_single_char_symbol c then
@@ -169,7 +174,13 @@ let read_Ident_def = cake_define_list
 
 (* next_sym reads the next symbol from a string, returning NONE if at
    eof *)
-let next_sym_def = cake_define_list
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ rw [] \\ imp_res_tac (GSYM read_while_thm) \\
+   imp_res_tac (GSYM read_string_thm) \\ Cases_on ‘str’ \\ gvs [] \\
+   imp_res_tac skip_comment_thm \\ gvs [] *)
+let next_sym_def = cake_define_list_try (fun () ->
+  `MEASURE (LENGTH o FST)`)
   [`next_sym "" _5 = NONE`;
    `next_sym (c :: str) loc =
          (if c = (CHR 10) then

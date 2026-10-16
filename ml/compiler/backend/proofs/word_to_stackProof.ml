@@ -647,7 +647,13 @@ Theorem wStackLoad_thm3 =
  |> Q.INST [`t`|->`set_var v1 v2 t`]
  |> PURE_REWRITE_RULE[wordPropsTheory.set_var_const,set_var_const]
 *)
-let map_var_def = cake_define_list
+let _ = size_thms "wordLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+(* HOL4 termination: \\ simp[] \\ Induct \\ simp[] \\ rw[] \\
+   EVAL_TAC \\ simp[] \\ res_tac \\ simp[] *)
+let map_var_def = cake_define_list_try (fun () ->
+  `MEASURE (wordLang_exp_size ARB o SND)`)
   [`map_var f (wordLang_Var num') = Var (f num')`;
    `map_var f (wordLang_Load exp) = Load (map_var f exp)`;
    `map_var f (wordLang_Op wop ls) = wordLang_Op wop (MAP (map_var f)

@@ -55,7 +55,13 @@ let remove_fvs_def = cake_define_list
         [closLang_Fn t loc_opt vs num_args (HD (remove_fvs
           (num_args + fvs) [x1]))])`];;
 
-let remove_fvs_sing_def = cake_define_list
+let _ = size_thms "closLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let remove_fvs_sing_def = cake_define_list_try (fun () ->
+  `MEASURE (\x. match x with INL (_1,e) -> closLang_exp_size e | INR
+  (INL (_2,es)) -> list_size closLang_exp_size es | INR (INR
+  (_3,_4,es)) -> list_size (pair_size (\x. x) closLang_exp_size) es)`)
   [`remove_fvs_sing fvs (Var t v:closLang_exp) =
         (if v < fvs then (Var t v:closLang_exp) else closLang_Op
           t (closLang_MemOp closLang_El) [])`;

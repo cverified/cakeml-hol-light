@@ -42,6 +42,7 @@ let v_rel = cake_inductive
        FLOOKUP f n = SOME m ==>
        bvi_tmcProof_v_rel f (bvlSem_RefPtr b n) (bvlSem_RefPtr b
          m))`;;
+hol4_overload "v_rel" "bvi_tmcProof_v_rel";;
 
 let ref_rel = cake_inductive
   `(bvi_tmcProof_ref_rel f (bvlSem_ByteArray b bs) (bvlSem_ByteArray b
@@ -52,6 +53,7 @@ let ref_rel = cake_inductive
    (bvi_tmcProof_v_rel f x y ==>
      bvi_tmcProof_ref_rel f (bvlSem_Thunk tm x) (bvlSem_Thunk tm
        y))`;;
+hol4_overload "ref_rel" "bvi_tmcProof_ref_rel";;
 
 let env_rel_def = cake_define
   `bvi_tmcProof_env_rel opt f env1 env2 <=>
@@ -70,7 +72,11 @@ let no_mutcons_op_def = cake_define
   `no_mutcons_op op <=> (!tag i. ~(op = closLang_MemOp
   (closLang_MutCons tag i)))`;;
 
-let no_mutcons_def = cake_define_list
+let _ = size_thms "flatLang_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let no_mutcons_def = cake_define_list_try (fun () ->
+  `MEASURE flatLang_exp_size`)
   [`no_mutcons (Var n:bvi_exp) <=> T`;
    `no_mutcons (If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\ no_mutcons
   x2 /\ no_mutcons x3`;
