@@ -2970,20 +2970,20 @@ let MATCH_SCRUT_TAC (asl,w as gl) =
   MAP_EVERY (fun t -> STRUCT_CASES_TAC (ISPEC t (cases_of (type_of t))))
             ts gl;;
 
-let dest_size_fact th =
+let dest_size_facts th =
   let tm = snd(strip_forall(concl th)) in
   let l,r = dest_eq tm in
   let f,args = strip_comb l in
   if args = [] || not (is_var (last args)) then
-    failwith "dest_size_fact" else
+    failwith "dest_size_facts" else
   (* a recursive definition is no destructor, and rewriting with
      one would not stop *)
-  if free_in f r then failwith "dest_size_fact" else
+  if free_in f r then failwith "dest_size_facts" else
   let x = last args in
   let ty = type_of x in
   let tyname = fst(dest_type ty) in
   if not (can (assoc tyname) (!the_rec_thms)) then
-    failwith "dest_size_fact" else
+    failwith "dest_size_facts" else
   (* a destructor that gives an option gives the parts of what
      it took apart, and its parts are smaller; one that gives a
      tuple has a default for the arm that does not match, whose
@@ -2996,66 +2996,81 @@ let dest_size_fact th =
   let hop,margs = strip_comb r in
   if not (is_const hop && fst(dest_const hop) = "_MATCH") ||
      length margs <> 2 || hd margs <> x
-  then failwith "dest_size_fact" else
+  then failwith "dest_size_facts" else
   let pty = if isopt then hd(snd(dest_type (type_of l)))
             else type_of l in
   if not isopt && not (can (dest_type o type_of) l) then
-    failwith "dest_size_fact" else
+    failwith "dest_size_facts" else
   if not isopt && fst(dest_type (type_of l)) <> "prod" then
-    failwith "dest_size_fact" else
+    failwith "dest_size_facts" else
   let rec parts ty =
     if is_vartype ty then [ty] else
     match dest_type ty with
       "prod",[a;b] -> parts a @ parts b
     | _ -> [ty] in
-  let ptys = parts pty in
-  let vs = map2 (fun t i -> mk_var("a" ^ string_of_int i,t))
-                ptys (0--(length ptys - 1)) in
-  let tuple = end_itlist (curry mk_pair) vs in
-  (* a part of a type that has no size function of its own (a
-     number, a word) counts for nothing, and a fact in which no
-     part counts says nothing *)
-  let sizefn t = try size_fn_of_type t
-                 with Failure _ -> mk_abs(mk_var("x",t),`0`) in
-  let sizes = map (fun v -> beta_normalize
-                              (mk_comb(sizefn (type_of v),v))) vs in
-  if not (exists (fun (v,s) -> vfree_in v s) (zip vs sizes)) then
-    failwith "dest_size_fact" else
-  let sum = end_itlist (fun a b -> mk_binop `(+):num->num->num` a b)
-                       sizes in
-  let goal =
-    list_mk_forall(args @ vs,
-      mk_imp(mk_eq(l,if isopt
-                     then mk_comb(mk_mconst("SOME",
-                            mk_fun_ty pty (type_of l)),tuple)
-                     else tuple),
-             mk_binop (if isopt then `(<):num->num->bool`
-                       else `(<=):num->num->bool`) sum
-                      (mk_comb(size_fn_of_type ty,x)))) in
+  (* a destructor may give a sum, and then each side of it is a
+     fact of its own (bvl_handle's dest_handle_If gives a
+     SOME (INL (x1,x2,x3)) or a SOME (INR (x1,x2,x3))) *)
+  let sides =
+    match (try dest_type pty with Failure _ -> ("",[])) with
+      "sum",[a;b] when isopt ->
+        [a,(fun t -> mk_comb(mk_mconst("INL",mk_fun_ty a pty),t));
+         b,(fun t -> mk_comb(mk_mconst("INR",mk_fun_ty b pty),t))]
+    | _ -> [pty,(fun t -> t)] in
   let _ = size_thms tyname in
+  let sumrws =
+    try [distinctness "sum"; injectivity "sum"]
+    with Failure _ -> [] in
   let rws () = [distinctness "option"; injectivity "option";
-                PAIR_EQ; list_size; th] @ all_size_thms() in
-  prove(goal,
-        REPEAT GEN_TAC THEN
-        STRUCT_CASES_TAC (ISPEC x (cases_of ty)) THEN
-        REWRITE_TAC(rws()) THEN
-        REPLICATE_TAC 3
-          ((* the value that an arm looks at first: the parts
-              that the arm gives are only known once the match
-              on it is gone *)
-           TRY (MATCH_SCRUT_TAC THEN REWRITE_TAC(rws())) THEN
-           TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws()))) THEN
-        (* a pattern that asks for a value that the arm does not
-           give (bvl_handle's dest_Seq matches on Var 1) leaves a
-           match that the rewriting does not reduce *)
-        TRY (CONV_TAC (ONCE_DEPTH_CONV MATCH_CONV)) THEN
-        REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC(rws()) THEN
-        REPEAT (DISCH_THEN
-                  (STRIP_ASSUME_TAC o REWRITE_RULE(rws()))) THEN
-        (* the equation that the arm gives may be the other way
-           round ([] = a0 of a destructor that gives a tuple) *)
-        TRY SUBST_VAR_TAC THEN
-        ASM_REWRITE_TAC[] THEN REWRITE_TAC(rws()) THEN ARITH_TAC);;
+                PAIR_EQ; list_size; th] @ sumrws @ all_size_thms() in
+  let fact (qty,inj) =
+    let ptys = parts qty in
+    let vs = map2 (fun t i -> mk_var("a" ^ string_of_int i,t))
+                  ptys (0--(length ptys - 1)) in
+    let tuple = end_itlist (curry mk_pair) vs in
+    (* a part of a type that has no size function of its own (a
+       number, a word) counts for nothing, and a fact in which no
+       part counts says nothing *)
+    let sizefn t = try size_fn_of_type t
+                   with Failure _ -> mk_abs(mk_var("x",t),`0`) in
+    let sizes = map (fun v -> beta_normalize
+                                (mk_comb(sizefn (type_of v),v))) vs in
+    if not (exists (fun (v,s) -> vfree_in v s) (zip vs sizes)) then
+      failwith "dest_size_facts" else
+    let sum = end_itlist (fun a b -> mk_binop `(+):num->num->num` a b)
+                         sizes in
+    let goal =
+      list_mk_forall(args @ vs,
+        mk_imp(mk_eq(l,if isopt
+                       then mk_comb(mk_mconst("SOME",
+                              mk_fun_ty pty (type_of l)),inj tuple)
+                       else tuple),
+               mk_binop (if isopt then `(<):num->num->bool`
+                         else `(<=):num->num->bool`) sum
+                        (mk_comb(size_fn_of_type ty,x)))) in
+    prove(goal,
+          REPEAT GEN_TAC THEN
+          STRUCT_CASES_TAC (ISPEC x (cases_of ty)) THEN
+          REWRITE_TAC(rws()) THEN
+          REPLICATE_TAC 3
+            ((* the value that an arm looks at first: the parts
+                that the arm gives are only known once the match
+                on it is gone *)
+             TRY (MATCH_SCRUT_TAC THEN REWRITE_TAC(rws())) THEN
+             TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws()))) THEN
+          (* a pattern that asks for a value that the arm does not
+             give (bvl_handle's dest_Seq matches on Var 1) leaves a
+             match that the rewriting does not reduce *)
+          TRY (CONV_TAC (ONCE_DEPTH_CONV MATCH_CONV)) THEN
+          REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC(rws()) THEN
+          REPEAT (DISCH_THEN
+                    (STRIP_ASSUME_TAC o REWRITE_RULE(rws()))) THEN
+          (* the equation that the arm gives may be the other way
+             round ([] = a0 of a destructor that gives a tuple) *)
+          TRY SUBST_VAR_TAC THEN
+          ASM_REWRITE_TAC[] THEN REWRITE_TAC(rws()) THEN ARITH_TAC) in
+  let ths = mapfilter fact sides in
+  if ths = [] then failwith "dest_size_facts" else ths;;
 
 (* every definition that is one is registered as a fact; the
    budget is a short one, because most definitions are no
@@ -3066,7 +3081,7 @@ let note_dest_fact th =
     let old = !cake_timeout in
     let fin () = cake_timeout := old in
     (cake_timeout := 10;
-     (try cake_term_facts := dest_size_fact th :: (!cake_term_facts)
+     (try cake_term_facts := dest_size_facts th @ (!cake_term_facts)
       with Failure _ -> () | Cake_timeout -> ());
      fin ());;
 
