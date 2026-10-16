@@ -275,6 +275,16 @@ LOCAL_NAMES = {
   # gives wordSem's stack_size the plain name), and nothing in
   # the invariant says so
   ('data_to_word_gcProof', 'stack_size'): 'stack_size',
+  # the v_rel of source_to_flatProof's result_rel and the Eval of
+  # word_bignumProof's Corr are the ones of their own theory; the
+  # clause says nothing about the type (every proof theory has a
+  # v_rel, and ast has an Eval of its own)
+  ('source_to_flatProof', 'v_rel'): 'source_to_flatProof_v_rel',
+  # the id of source_evalProof's v_rel is a variable of the rule,
+  # and linear_scanProof overloads id with a constant of its own,
+  # which HOL Light (one namespace) reads it as
+  ('source_evalProof', 'id'): "id'",
+  ('word_bignumProof', 'Eval'): 'word_bignumProof_Eval',
   ('data_to_word', 'fromList'): 'sptree_fromList',
   ('flat_pattern', 'fromList'): 'sptree_fromList',
   ('clos_to_bvl', 'fromList'): 'sptree_fromList',
@@ -552,6 +562,11 @@ CON_OF = {
   # a Number and a Word64)
   ('bvi_tmcProof', 'v_rel'): {'*': 'bvlSem'},
   ('bvi_tmcProof', 'ref_rel'): {'*': 'bvlSem'},
+  # the Var and the Const of the two clauses that evaluate a
+  # wordLang expression are wordLang's (the ones of stackLang
+  # and of every other language have the name as well)
+  ('stackSem', 'evaluate_def'): {'Var': 'wordLang',
+                                 'Const': 'wordLang'},
   # these build wordLang programs, whose constructor names
   # linear_scan's live trees and word_bignum's language have too
   ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},

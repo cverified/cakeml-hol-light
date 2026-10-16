@@ -790,7 +790,7 @@ let evaluate_def = cake_define_list
            s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_OpCurrHeap binop v src,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
-         match word_exp s (wordLang_Op binop [Var src;
+         match word_exp s (wordLang_Op binop [wordLang_Var src;
            wordLang_Lookup CurrHeap]) with SOME w -> (NONE,set_var v
            (wordLang_Word w) s) | _82 -> (SOME Error,s))`;
    `stackSem_evaluate (wordLang_Tick,s) =
@@ -909,8 +909,8 @@ let evaluate_def = cake_define_list
                     Error,s))) | _118 -> (SOME Error,s))) | _119 ->
                     (SOME Error,s))`;
    `stackSem_evaluate (stackLang_ShMemOp op r (Addr a w),s) =
-        (match word_exp s (wordLang_Op asm_Add [Var a; Const w])
-          with SOME a ->
+        (match word_exp s (wordLang_Op asm_Add [wordLang_Var a;
+          wordLang_Const w]) with SOME a ->
              (if state_clock s = 0 then (SOME
                TimeOut,stackSem_empty_env s) else
                sh_mem_op op r a (dec_clock s)) | _120 -> (SOME

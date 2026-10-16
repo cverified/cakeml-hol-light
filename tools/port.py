@@ -162,6 +162,12 @@ class Porter:
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy))
     self.ctx.fieldvar = self.fieldvar
+    # a name that LOCAL_NAMES gives this theory is written as that
+    # name, also where the port overloads it (word_bignumProof's
+    # Eval is an overload of its own relation, and ast has an Eval
+    # as well, which the overload does not keep apart)
+    for (t, nm) in overrides.LOCAL_NAMES:
+      if t == thy: self.ctx.overloaded.discard(nm)
     # the names that are types, so that the parser knows where a
     # type that is not in parentheses ends
     self.ctx.tyops = (

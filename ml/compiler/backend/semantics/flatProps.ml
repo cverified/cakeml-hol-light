@@ -245,8 +245,9 @@ let evaluate_match_def = cake_define
        (Rabort Rtype_error)) | No_match -> (s,Rerr (Rraise err_v)) |
        Match (env',p',e') ->
          (if ALL_DISTINCT (pat_bindings p') then evaluate
-           (sem_env_v_fupd (K (env' ++ sem_env_v env)) env) s [e']
-           else (s,Rerr (Rabort Rtype_error))))`;;
+           (flatSem_environment_v_fupd (K (env' ++
+           flatSem_environment_v env)) env) s [e'] else (s,Rerr
+           (Rabort Rtype_error))))`;;
 hol4_overload "evaluate_match" "flatProps_evaluate_match";;
 
 (* HOL4 ML code, not ported:

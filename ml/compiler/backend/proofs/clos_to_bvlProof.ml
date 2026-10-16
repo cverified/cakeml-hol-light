@@ -1046,7 +1046,7 @@ QED
 let compile_common_inc_def = cake_define
   `compile_common_inc c cc =
    (pure_cc (cond_mti_compile_inc (clos_to_bvl_config_do_mti c)
-     (closSem_state_max_app c))
+     (clos_to_bvl_config_max_app c))
      (state_cc (ignore_table clos_number_compile_inc)
        (known_cc (clos_to_bvl_config_known_conf c)
          (state_cc (cond_call_compile_inc (clos_to_bvl_config_do_call
@@ -1090,7 +1090,7 @@ let compile_inc_post_kcompile_def = cake_define
          (make_even (clos_to_bvl_config_next_loc c + MAX 1 (LENGTH
            exps)))
          (compile (clos_to_bvl_config_do_mti c)
-           (closSem_state_max_app c) exps)))`;;
+           (clos_to_bvl_config_max_app c) exps)))`;;
 
 (* HOL4 ML code, not ported:
 fun promote_bool pat thm = let
@@ -1116,8 +1116,8 @@ val c0 = ``Call None 0 loc []``;
 let syntax_oracle_ok_def = cake_define
   `syntax_oracle_ok c c' es co <=>
     (!n. SND (SND (co n)) = []) /\
-    (clos_to_bvl_config_do_mti c ==> 1 <= closSem_state_max_app c /\
-      EVERY no_mti es /\
+    (clos_to_bvl_config_do_mti c ==> 1 <= clos_to_bvl_config_max_app
+      c /\ EVERY no_mti es /\
       (!n. EVERY no_mti (FST (SND (co n))))) /\
     (?v. FST (co 0) = (clos_to_bvl_config_next_loc c',
         option_val_approx_spt (clos_to_bvl_config_known_conf c'),FST
@@ -1128,9 +1128,9 @@ let syntax_oracle_ok_def = cake_define
                 (state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c)
-                      (closSem_state_max_app c)) o co)))) /\
+                      (clos_to_bvl_config_max_app c)) o co)))) /\
     (IS_SOME (clos_to_bvl_config_known_conf c) ==>
-        1 <= closSem_state_max_app c /\ every_Fn_vs_NONE es /\
+        1 <= clos_to_bvl_config_max_app c /\ every_Fn_vs_NONE es /\
         oracle_monotonic (SET_OF_BAG o closProps_elist_globals o FST
           o SND) (<)
             (SET_OF_BAG (closProps_elist_globals es)) co /\
@@ -1142,18 +1142,18 @@ let syntax_oracle_ok_def = cake_define
                 state_co (ignore_table clos_number_compile_inc)
                     (pure_co (cond_mti_compile_inc
                       (clos_to_bvl_config_do_mti c)
-                      (closSem_state_max_app c)) o co)) /\
+                      (clos_to_bvl_config_max_app c)) o co)) /\
         (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
           n')))) /\
                 EVERY closProps_esgc_free (FST (SND (co n'))))) /\
-    ~contains_App_SOME (closSem_state_max_app c) es /\ syntax_ok es
-      /\
-    (!n. ~contains_App_SOME (closSem_state_max_app c) (FST (SND (co
-      n))) /\
+    ~contains_App_SOME (clos_to_bvl_config_max_app c) es /\ syntax_ok
+      es /\
+    (!n. ~contains_App_SOME (clos_to_bvl_config_max_app c) (FST (SND
+      (co n))) /\
             every_Fn_vs_NONE (FST (SND (co n)))) /\
     is_state_oracle (ignore_table clos_number_compile_inc)
         (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
-          c) (closSem_state_max_app c)) o co)`;;
+          c) (clos_to_bvl_config_max_app c)) o co)`;;
 
 (* HOL4 ML code, not ported:
 val compile_exps_code_locs2 = compile_exps_code_locs |> SPEC_ALL

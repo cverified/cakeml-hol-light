@@ -133,6 +133,27 @@ let is_rel_def = cake_define
          closLang_IntOp closLang_GreaterEq -> T | _13 -> F)`;;
 
 let _ = size_thms "bvi_exp";;
+
+let exp_size_get_bin_args = prove
+ (`!x x1 x2. get_bin_args x = SOME (x1,x2)
+             ==> bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
+  GEN_TAC THEN
+  STRUCT_CASES_TAC
+    (ISPEC `x:bvi_exp` (CONJUNCT1 (cases "bvi_exp"))) THEN
+  REWRITE_TAC[get_bin_args_def; distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `a1:bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `t:bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `t':bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  REWRITE_TAC(all_size_thms()) THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
+
+let _ = size_thms "bvi_exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
    fs[] *)
 let term_ok_int_def = cake_define_wf

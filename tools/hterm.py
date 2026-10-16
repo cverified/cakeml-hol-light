@@ -923,6 +923,21 @@ def pattern_vars(e, cons, lam=False):
   return []
 
 
+def ident_names(e):
+  """every name that occurs as an identifier in a term"""
+  out = set()
+  def go(x):
+    if isinstance(x, Node):
+      if x.kind == 'id' and getattr(x, 'name', None):
+        out.add(x.name)
+      for k, v in x.__dict__.items():
+        if k != 'tok': go(v)
+    elif isinstance(x, (list, tuple)):
+      for v in x: go(v)
+  go(e)
+  return out
+
+
 def bound_names(e, cons, defn=False):
   """the names that the term binds somewhere; with defn, it is a
      definition, whose left hand sides bind their arguments"""

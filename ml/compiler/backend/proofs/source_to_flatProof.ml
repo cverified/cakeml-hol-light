@@ -272,7 +272,7 @@ let result_rel = cake_inductive
      f genv v v' ==>
      source_to_flatProof_result_rel f genv (Rval v) (Rval v')) /\
    (!genv v v'.
-     v_rel genv v v' ==>
+     source_to_flatProof_v_rel genv v v' ==>
      source_to_flatProof_result_rel f genv (Rerr (Rraise v)) (Rerr
        (Rraise v'))) /\
    (!genv a.
@@ -281,18 +281,18 @@ let result_rel = cake_inductive
 
 let sv_rel = cake_inductive
   `(!genv v v'.
-     v_rel genv v v' ==>
+     source_to_flatProof_v_rel genv v v' ==>
      source_to_flatProof_sv_rel genv (semanticPrimitives_Refv v)
        (semanticPrimitives_Refv v')) /\
    (!genv w.
      source_to_flatProof_sv_rel genv (semanticPrimitives_W8array w)
        (semanticPrimitives_W8array w)) /\
    (!genv vs vs'.
-     LIST_REL (v_rel genv) vs vs' ==>
+     LIST_REL (source_to_flatProof_v_rel genv) vs vs' ==>
      source_to_flatProof_sv_rel genv (semanticPrimitives_Varray vs)
        (semanticPrimitives_Varray vs')) /\
    (!genv m v v'.
-     v_rel genv v v' ==>
+     source_to_flatProof_v_rel genv v v' ==>
      source_to_flatProof_sv_rel genv (semanticPrimitives_Thunk m
        v) (semanticPrimitives_Thunk m v'))`;;
 

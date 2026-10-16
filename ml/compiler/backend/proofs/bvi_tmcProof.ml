@@ -1080,67 +1080,67 @@ QED
 let hypothesis_def = cake_define
   `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=> state_clock
    s'' < clock ==>
-   (!env1' r' t' opt' f' s'³' env2' loc'.
+   (!env1' r' t' opt' f' s'3' env2' loc'.
              evaluate (xs',env1',s'') = (r',t') /\
              bvi_tmcProof_env_rel opt' f' env1' env2' /\ EVERY (\x.
                no_mutcons x) xs' /\
-             bvi_tmcProof_state_rel f' s'' s'³' /\
+             bvi_tmcProof_state_rel f' s'' s'3' /\
              (opt' ==> LENGTH xs' = 1) /\ ~(
              r' = Rerr (Rabort Rtype_error)) ==>
              (?t'' f'' r''.
-               evaluate (xs',env2',s'³') = (r'',t'') /\
+               evaluate (xs',env2',s'3') = (r'',t'') /\
                semanticPrimitivesProps_result_rel (LIST_REL
                  (bvi_tmcProof_v_rel f'')) (eor_rel f'') r' r'' /\
                bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f'' /\
-                 only_fresh f' f'' (state_refs s'³') /\
-               holes_unchanged_except f' (state_refs s'³')
+                 only_fresh f' f'' (state_refs s'3') /\
+               holes_unchanged_except f' (state_refs s'3')
                  (state_refs t'') {} /\
-               holes_still_not_finalised f' (state_refs s'³')
+               holes_still_not_finalised f' (state_refs s'3')
                  (state_refs t'') /\
                (!loc_opt.
                  optimised_code loc' loc_opt (state_code s'')
-                   (state_code s'³') ==>
+                   (state_code s'3') ==>
                  (!wrap.
                     LENGTH xs' = 1 /\
                     rewrite_wrapper loc' loc_opt (LENGTH env1') (HD
                       xs') = SOME wrap ==>
                     (?t_wrap f_wrap r_wrap.
-                      evaluate ([wrap],env2',s'³') = (r_wrap,t_wrap)
+                      evaluate ([wrap],env2',s'3') = (r_wrap,t_wrap)
                         /\
                       semanticPrimitivesProps_result_rel (LIST_REL
                         (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r'
                         r_wrap /\ bvi_tmcProof_state_rel f_wrap t'
                           t_wrap /\ f' SUBMAP f_wrap /\
-                      only_fresh f' f_wrap (state_refs s'³') /\
-                      holes_unchanged_except f' (state_refs s'³')
+                      only_fresh f' f_wrap (state_refs s'3') /\
+                      holes_unchanged_except f' (state_refs s'3')
                         (state_refs t_wrap) {} /\
-                      holes_still_not_finalised f' (state_refs s'³')
+                      holes_still_not_finalised f' (state_refs s'3')
                         (state_refs t_wrap))) /\
                  (opt' ==>
                   (!hole_ptr.
                     (?c. hole_has_val f' env1' env2' (state_refs
-                      s'³') c) /\
-                    hole_not_finalised (state_refs s'³') hole_ptr /\
+                      s'3') c) /\
+                    hole_not_finalised (state_refs s'3') hole_ptr /\
                       EL (LENGTH env1')
                     env2' = RefPtr F hole_ptr ==>
                     (?r_work f_work t_work.
                       evaluate
                         ([rewrite_worker loc' loc_opt (LENGTH env1')
                             (LENGTH env1' + 1) (LENGTH env1') (HD
-                              xs')],env2',s'³') =
+                              xs')],env2',s'3') =
                       (r_work,t_work) /\ opt_res_rel f_work r' r_work
                         /\
                       bvi_tmcProof_state_rel f_work t' t_work /\ f'
                         SUBMAP f_work /\
-                      only_fresh f' f_work (state_refs s'³') /\
-                      holes_unchanged_except f' (state_refs s'³')
+                      only_fresh f' f_work (state_refs s'3') /\
+                      holes_unchanged_except f' (state_refs s'3')
                         (state_refs t_work) {hole_ptr} /\
-                      holes_still_not_finalised f' (state_refs s'³')
+                      holes_still_not_finalised f' (state_refs s'3')
                         (state_refs t_work) /\
                       (!res_v.
                         r' = Rval [res_v] ==>
                         (?res_v'.
-                          mb_rel f_work (state_refs s'³') (state_refs
+                          mb_rel f_work (state_refs s'3') (state_refs
                             t_work \\ hole_ptr) res_v res_v' /\
                           hole_has_val f' env1' env2' (state_refs
                             t_work) res_v'))))))))`;;

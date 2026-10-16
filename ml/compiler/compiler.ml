@@ -161,7 +161,7 @@ Optimisations can be configured using the following advanced options.
 (* HOL4 ML code, not ported:
 val current_version_tm = mlstring_from_proc "git" ["rev-parse", "HEAD"]
 *)
-(*"*)
+(*"" *)
 
 (* HOL4 ML code, not ported:
 val date_str = Date.toString (Date.fromTimeUniv (Time.now ())) ^

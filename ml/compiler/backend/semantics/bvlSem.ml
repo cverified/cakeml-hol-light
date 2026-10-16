@@ -731,13 +731,13 @@ hol4_overload "fix_clock" "bvlSem_fix_clock";;
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of exp expressions. *)
 
-let _ = size_thms "flatLang_exp";;
+let _ = size_thms "bvl_exp";;
 let _ = size_thms "list";;
 (* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\
    decide_tac *)
 let evaluate_def = cake_define_wf
-  `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
+  `(inv_image (MEASURE I LEX MEASURE (list_size bvl_exp_size))
                             (\(xs,env,s). (state_clock s,xs)))`
   `(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s)) /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =

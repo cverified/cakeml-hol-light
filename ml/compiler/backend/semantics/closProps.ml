@@ -65,11 +65,11 @@ let code_locs_def = cake_define_list
    `code_locs [(closLang_Call _23 ticks dest xs:closLang_exp)] =
          code_locs xs`];;
 
-let _ = size_thms "flatLang_exp";;
+let _ = size_thms "closLang_exp";;
 let _ = size_thms "list";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 let contains_App_SOME_def = cake_define_wf
-  `MEASURE (list_size flatLang_exp_size o SND)`
+  `MEASURE (list_size closLang_exp_size o SND)`
   `contains_App_SOME max_app x2 =
         match x2 with
           [] -> F

@@ -112,10 +112,10 @@ val s = mk_var ("s", ``: 'ffi semanticPrimitives$state``);
    out of Env values and into the state *)
 
 let v_rel = cake_inductive
-  `(!env'. v_to_env_id v = SOME id /\ lookup_env es id = SOME env' /\
+  `(!env'. v_to_env_id v = SOME id' /\ lookup_env es id' = SOME env' /\
          source_evalProof_env_rel (source_evalProof_v_rel es) env
            env' ==>
-     source_evalProof_v_rel es (semanticPrimitives_Env env id) v) /\
+     source_evalProof_v_rel es (semanticPrimitives_Env env id') v) /\
    (LIST_REL (source_evalProof_v_rel es) xs ys ==>
      source_evalProof_v_rel es (semanticPrimitives_Vectorv xs)
        (semanticPrimitives_Vectorv ys)) /\

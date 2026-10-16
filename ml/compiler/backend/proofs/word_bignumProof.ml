@@ -437,7 +437,7 @@ val all_corrs = ref (tl [TRUTH]);
 
 let corr_def = cake_define
   `Corr prog (s:'a word_bignumProof_state) s1 p <=>
-     (p ==> Eval NONE s prog s1)`;;
+     (p ==> word_bignumProof_Eval NONE s prog s1)`;;
 
 let loop_app_def = cake_define
   `loop_app f g x =
