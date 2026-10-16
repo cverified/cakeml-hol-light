@@ -61,8 +61,9 @@ if __name__ == '__main__':
         asms.append(untype(text[i][7:].strip())); i += 1
       goals.append((nm, untype(' '.join(g)), asms))
       defs[nm] += 1
-    elif l.startswith('cannot prove the condition ('):
-      reasons[l[len('cannot prove the condition ('):].split(')')[0]] += 1
+    elif l.startswith('cannot prove the condition'):
+      m = re.search(r'\(([^)]*)\)', l)
+      reasons[m.group(1) if m else '?'] += 1
       i += 1
     else:
       i += 1
