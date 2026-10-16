@@ -836,6 +836,30 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the fact that HOL4's Termination of term_ok_int and
+  # term_ok_any uses with imp_res_tac: the two arguments that
+  # get_bin_args gives are smaller than the expression it took
+  # them from
+  ('bvi_tailrec', 'term_ok_int_def'): r'''
+let exp_size_get_bin_args = prove
+ (`!x x1 x2. get_bin_args x = SOME (x1,x2)
+             ==> bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
+  GEN_TAC THEN
+  STRUCT_CASES_TAC
+    (ISPEC `x:bvi_exp` (CONJUNCT1 (cases "bvi_exp"))) THEN
+  REWRITE_TAC[get_bin_args_def; distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `a1:bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `t:bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"] THEN
+  STRUCT_CASES_TAC (ISPEC `t':bvi_exp list` list_CASES) THEN
+  REWRITE_TAC[distinctness "option"; injectivity "option";
+              PAIR_EQ] THEN
+  REWRITE_TAC(all_size_thms()) THEN REPEAT STRIP_TAC THEN
+  ASM_REWRITE_TAC[] THEN ARITH_TAC);;
+
+cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
+''',
   ('word_bignum', 'generated_bignum_stubs_def'): r'''
 (* HOL4 generates the deep embedding of the bignum routines with ML
    code (to_deep of this file), which runs the shallow definitions
