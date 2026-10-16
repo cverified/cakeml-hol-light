@@ -680,6 +680,23 @@ let mergesortN_tail_def = cake_define_wf
 # port writes the HOL4 text in a comment, so that the gap is visible
 # in the file (PENDING.md lists them all)
 NOT_YET = {
+  # the tail recursive versions of the unification algorithm, which
+  # HOL4 makes with ML code (tcallify_th of tcallUnifLib turns the
+  # equation of a function into the step function of a TAILREC):
+  # the port cannot run that code, and nothing outside this part of
+  # the file uses what it makes
+  ('unify', 'cvwalk_code_def'): 'tcallify_th makes it with ML code',
+  ('unify', 'tcvwalk_def'): 'the tail recursion of cvwalk',
+  ('unify', 'tcwalk_def'): 'the tail recursion of cwalk',
+  ('unify', 'kcocwl_code_def'): 'tcallify_th makes it with ML code',
+  ('unify', 'tcocwl_def'): 'the tail recursion of cocwl',
+  ('unify', 'kcwalkstarwl_code_def'):
+    'tcallify_th makes it with ML code',
+  ('unify', 'tcwalkstarwl_def'): 'the tail recursion of cwalkstarwl',
+  ('unify', 'tcwalkstar_p1_def'): 'the tail recursion of cwalkstar',
+  ('unify', 'tcwalkstar_p2_def'): 'the tail recursion of cwalkstar',
+  ('unify', 'cunify_code_def'): 'tcallify_th makes it with ML code',
+  ('unify', 'tcunify_def'): 'the tail recursion of cunify',
   # Pancake is a second source language of the same compiler
   # backend, which the CakeML correctness theorem does not mention,
   # so the port does not have the theories that this definition

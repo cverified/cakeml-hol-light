@@ -145,20 +145,26 @@ fun tcallify_th fixedvs th =
 val cvwalk_code = tcallify_th [“s:infer_t num_map”] cvwalk_thm
 *)
 
-let cvwalk_code_def = cake_define
-  `cvwalk_code s = cvwalk_code`;;
+(* PENDING: tcallify_th makes it with ML code
+Definition cvwalk_code_def:
+  cvwalk_code s = ^cvwalk_code
+End *)
 
 let cvwalkR_def = cake_define
   `cvwalkR sigma = (\v v0. vR (encode_infer_t o_f sp2fm sigma) v v0)`;;
 
-let tcvwalk_def = cake_define
-  `tcvwalk s n = TAILREC (cvwalk_code s) n`;;
+(* PENDING: the tail recursion of cvwalk
+Definition tcvwalk_def:
+  tcvwalk s n = TAILREC (cvwalk_code s) n
+End *)
 
-let tcwalk_def = cake_define
-  `tcwalk s it = (match it with
-                   Infer_Tvar_db c -> Infer_Tvar_db c | Infer_Tapp
-                     l n -> Infer_Tapp l n | Infer_Tuvar v -> tcvwalk
-                     s v)`;;
+(* PENDING: the tail recursion of cwalk
+Definition tcwalk_def:
+  tcwalk s it = case it of
+                  Infer_Tvar_db c => Infer_Tvar_db c
+                | Infer_Tapp l n => Infer_Tapp l n
+                | Infer_Tuvar v => tcvwalk s v
+End *)
 
 let cocl_def = cake_define_list
   [`cocl s [] n <=> F`;
@@ -204,8 +210,10 @@ tcallify_th [“s:infer_t num_map”, “n:num”]
                                  |> Q.INST [‘s'’ |-> ‘s’]))
 *)
 
-let kcocwl_code_def = cake_define
-  `kcocwl_code s n = kcocwl_code`;;
+(* PENDING: tcallify_th makes it with ML code
+Definition kcocwl_code_def:
+  kcocwl_code s n = ^kcocwl_code
+End *)
 
 let kcocwlR_def = cake_define
   `kcocwlR (s:infer_t spt) (n:num) =
@@ -219,8 +227,10 @@ let subterm_def = cake_define
   `subterm = TC (\a b. (?t. b = term_Pair a t) \/ (?t. b = term_Pair
   t a))`;;
 
-let tcocwl_def = cake_define
-  `tcocwl s n is = TAILREC (kcocwl_code s n) is`;;
+(* PENDING: the tail recursion of cocwl
+Definition tcocwl_def:
+  tcocwl s n is = TAILREC (kcocwl_code s n) is
+End *)
 
 (* ---------------------------------------------------------------------
    -
@@ -296,17 +306,25 @@ let kcwalkstarwlR_def = cake_define
 val kcwalkstarwl_code = tcallify_th [“s:infer_t num_map”] $
   kcwalkstarwl_thm
 *)
-let kcwalkstarwl_code_def = cake_define
-  `kcwalkstarwl_code s = kcwalkstarwl_code`;;
+(* PENDING: tcallify_th makes it with ML code
+Definition kcwalkstarwl_code_def:
+  kcwalkstarwl_code s = ^kcwalkstarwl_code
+End *)
 
-let tcwalkstarwl_def = cake_define
-  `tcwalkstarwl s v its k = TAILREC (kcwalkstarwl_code s) (v,its,k)`;;
+(* PENDING: the tail recursion of cwalkstarwl
+Definition tcwalkstarwl_def:
+  tcwalkstarwl s v its k = TAILREC (kcwalkstarwl_code s) (v,its,k)
+End *)
 
-let tcwalkstar_p1_def = cake_define
-  `tcwalkstar_p1 s its k = tcwalkstarwl s F its k`;;
+(* PENDING: the tail recursion of cwalkstar
+Definition tcwalkstar_p1_def:
+  tcwalkstar_p1 s its k = tcwalkstarwl s F its k
+End *)
 
-let tcwalkstar_p2_def = cake_define
-  `tcwalkstar_p2 s its k = tcwalkstarwl s T its k`;;
+(* PENDING: the tail recursion of cwalkstar
+Definition tcwalkstar_p2_def:
+  tcwalkstar_p2 s its k = tcwalkstarwl s T its k
+End *)
 
 
 (* handle tail-recursification of unify *)
@@ -331,8 +349,10 @@ let kcunifywl_def = cake_define
 val cunify_code = DefnBase.one_line_ify NONE kcunifywl_thm |>
   tcallify_th []
 *)
-let cunify_code_def = cake_define
-  `cunify_code = cunify_code`;;
+(* PENDING: tcallify_th makes it with ML code
+Definition cunify_code_def:
+  cunify_code = ^cunify_code
+End *)
 
 let isvars_def = cake_define_list
   [`isvars [] = {}`;
@@ -366,8 +386,10 @@ let kcunifywlR_def = cake_define
 (* HOL4 overload (expanded in the port):
      kcuR = kcunifywlR *)
 
-let tcunify_def = cake_define
-  `tcunify s wl = TAILREC cunify_code (s,wl)`;;
+(* PENDING: the tail recursion of cunify
+Definition tcunify_def:
+  tcunify s wl = TAILREC cunify_code (s,wl)
+End *)
 
 let t_wfs_def = cake_define
   `t_wfs s = wfs (encode_infer_t o_f s)`;;
