@@ -75,6 +75,13 @@ Not ported (and why):
                  `define_record` makes the type, the field
                  accessors `ty_fld`, the updates `ty_fld_fupd`
                  and the literal constructor
+- `fastdef.ml`   HOL Light's own machinery for a definition by
+                 cases, copied word for word with the proformas
+                 of its admissibility proof and the last
+                 existence theorems kept (they are the better
+                 part of the time of a definition with many
+                 clauses); the names of HOL Light are bound to
+                 the functions of this file
 - `define.ml`    HOL4's `Definition` for HOL Light.
                  `cake_define` tries, in this order:
                  `new_definition` (one clause, not recursive),
@@ -83,11 +90,18 @@ Not ported (and why):
                  functions at once), `define_nested` (a recursive
                  call under a map, and the composition of a
                  function of the block with a map),
-                 `define_cases` (patterns inside patterns:
-                 compiled into functions on the types of the
-                 family, with FST/SND for a pair and a
+                 `define_maplist` (a function of a list that is
+                 the map, the conjunction, the disjunction or the
+                 concatenation of a function of the block over
+                 it), `define_cond_bool` (the same where HOL4
+                 writes the fold with a conditional),
+                 `define_sing`, `define_cases` (patterns inside
+                 patterns: compiled into functions on the types
+                 of the family, with FST/SND for a pair and a
                  conditional for an option), `define_match` (the
                  same for a definition written with a match),
+                 `define_lift_if` (a conditional around a
+                 recursive call lifted to the top of the clause),
                  and finally HOL Light's wellfounded recursion
                  with the measure of HOL4's `Termination` or a
                  guessed one.  Everything but the last derives
