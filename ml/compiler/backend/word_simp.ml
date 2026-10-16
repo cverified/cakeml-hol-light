@@ -133,8 +133,8 @@ let const_fp_exp_def = cake_define
           match (const_fp_exp_e,const_fp_exp_e1) with (Const c,Const
             c1) ->
                 (match word_sh sh c (w2n c1) with SOME w -> Const w |
-                  _8 -> Shift sh (Const c) (Const c1)) | _9 -> Shift sh
-                  const_fp_exp_e const_fp_exp_e1)
+                  _8 -> Shift sh (Const c) (wordLang_Const c1)) | _9 ->
+                  Shift sh const_fp_exp_e const_fp_exp_e1)
         | e -> e`;;
 
 let const_fp_move_cs_def = cake_define_list

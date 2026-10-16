@@ -87,6 +87,17 @@ def strip_ml(text, strings=True):
   return ''.join(out)
 
 
+DEBUG_NAMES = os.environ.get('CAKE_DEBUG_NAMES')
+
+
+def dbg(where, old, new):
+  """with CAKE_DEBUG_NAMES set, say which pass of the port wrote
+     a name out, which is how a wrong one is found"""
+  if DEBUG_NAMES and old != new:
+    print('%-12s %s -> %s' % (where, old, new))
+  return new
+
+
 def ocaml_name(n):
   """the name of the OCaml binding of a definition: HOL Light's
      parser takes an identifier of capitals as a value name, but
@@ -809,7 +820,8 @@ class Porter:
                 w = None
               if base and w == base[0]:
                 t = self.con_thy(h.name)
-                if t: h.name = t + '$' + h.name
+                if t: h.name = dbg('lambda_cons', h.name,
+                                   t + '$' + h.name)
       for k, v in list(x.__dict__.items()):
         if k == 'tok': continue
         if isinstance(v, hterm.Node): go(v)
@@ -914,7 +926,7 @@ class Porter:
             nm = self.con_name(h.name, len(args0))
             if nm:
               done[0] = True
-              h.name = nm
+              h.name = dbg('annotate_pat', h.name, nm)
             return p
           if ty:
             done[0] = True
@@ -1339,10 +1351,27 @@ class Porter:
             cands = [t for t, k in self.db.defs.get(nm, [])
                      if k == 'con' and t in anc
                      and self.db.con_arity(t, nm) == len(args)]
+          def argthy(t, i):
+            """the theory of the type of the ith argument of the
+               constructor of theory t: a type name that is not
+               qualified and that t has a datatype for is t's own
+               (the exp of bvl's Let is bvl's, of bvi's Let
+               bvi's)"""
+            ty = self.db.con_argty_thy.get((t, nm, i))
+            if not ty: return None
+            try:
+              p2 = hterm.parse_type_text(ty)
+            except Exception:
+              return None
+            if (p2[0] == 'op' and '$' not in p2[1] and
+                (t, p2[1]) in self.db.datatypes):
+              return t
+            return self.ty_thy(ty)
+
           for i, a in enumerate(args):
-            tys = {self.ty_thy(self.db.con_argty_thy[(t, nm, i)])
-                   for t in cands
+            tys = {argthy(t, i) for t in cands
                    if (t, nm, i) in self.db.con_argty_thy}
+            tys.discard(None)
             if not cands:
               ty = self.ctx.con_argty.get((nm, i))
               tys = {self.ty_thy(ty)} if ty else set()
@@ -1359,7 +1388,8 @@ class Porter:
                      in self.db.datatypes.items() for c in cs]
                 and self.db.con_arity(t2, bh.name) == len(bargs)
                 and self.hl_pick(bh.name) != t2):
-              bh.name = t2 + '$' + bh.name
+              bh.name = dbg('arg_cons[%s %d]' % (nm, i), bh.name,
+                            t2 + '$' + bh.name)
         for a in args: go(a)
         return
       for k, v in list(x.__dict__.items()):
@@ -1414,7 +1444,7 @@ class Porter:
       if self.db.con_arity(t, h.name) == n: return
       t2 = self.con_thy(h.name, arity=n)
       if t2 and t2 != t and self.db.con_arity(t2, h.name) == n:
-        h.name = t2 + '$' + h.name
+        h.name = dbg('conof_arity', h.name, t2 + '$' + h.name)
     go(e)
     return e
 

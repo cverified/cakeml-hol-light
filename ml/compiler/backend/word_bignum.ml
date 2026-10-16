@@ -613,7 +613,7 @@ let SeqIndex_def = cake_define
      (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
        -> TempIn1) in
        Seq (Assign i (wordLang_Op asm_Add [wordLang_Lookup t;
-            (\sh e n. Shift sh e (Const (n2w n))) Lsl
+            (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
               (wordLang_Lookup (Temp (n2w r)))
               (backend_common_word_shift (:'a))])) p:'a
               wordLang_prog)`;;

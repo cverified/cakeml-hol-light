@@ -307,3 +307,12 @@ let invariant_def = cake_define_list
       balanced_map_invariant cmp l /\
       balanced_map_invariant cmp r`];;
 hol4_overload "invariant" "balanced_map_invariant";;
+
+let exists_def = cake_define_list
+  [`balanced_map_exists f Tip = F`;
+   `balanced_map_exists f (Bin _37 kx x l r) =
+      (if f kx x then
+        T else if balanced_map_exists f l then
+        T else if balanced_map_exists f r then
+        T else
+        F)`];;

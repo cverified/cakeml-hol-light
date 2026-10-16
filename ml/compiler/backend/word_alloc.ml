@@ -831,8 +831,8 @@ let get_live_def = cake_define
          numset_list_insert (MAP SND ls) killed)
         | (Inst i) -> get_live_inst i live
         | (wordLang_Assign num' exp) ->
-       (let sub = get_live_exp exp in
-         sptree_union sub (sptree_delete num' live))
+       (let sub' = get_live_exp exp in
+         sptree_union sub' (sptree_delete num' live))
         | (Get num' store) -> sptree_delete num' live
         | (Store exp num') ->
        sptree_insert num' one (sptree_union (get_live_exp exp) live)
@@ -873,10 +873,10 @@ let get_live_def = cake_define
         | (OpCurrHeap b n1 n2) -> sptree_insert n2 one (sptree_delete
           n1 live)
         | (wordLang_ShareInst mop v exp) ->
-       (let sub = get_live_exp exp in
+       (let sub' = get_live_exp exp in
          if mop = Store \/ mop = asm_Store8 \/ mop = asm_Store16 \/
-           mop = asm_Store32 then sptree_union sub (sptree_insert v one
-           live) else sptree_union sub (sptree_delete v live))
+           mop = asm_Store32 then sptree_union sub' (sptree_insert v one
+           live) else sptree_union sub' (sptree_delete v live))
         | (Loop names body exit_names) -> names
         | (Break n) ->
        (match oEL n lt with

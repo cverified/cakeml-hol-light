@@ -231,13 +231,13 @@ let partial_app_fn_location_code_def = cake_define
 
 let mk_cl_call_def = cake_define
   `mk_cl_call cl args =
-     If (bvl_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
+     If (Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
        (&(LENGTH args - 1))))) [(\b i. bvl_Op (closLang_BlockOp
        (closLang_ElemAt i)) [b]) cl 1])
-        (bvl_Call (LENGTH args - 1) NONE (args ++ [cl] ++ [(\b i.
-          bvl_Op (closLang_BlockOp (closLang_ElemAt i)) [b]) cl 0]))
-        (bvl_Call 0 (SOME (generic_app_fn_location (LENGTH args -
-          1))) (args ++ [cl]))`;;
+        (Call (LENGTH args - 1) NONE (args ++ [cl] ++ [(\b i. bvl_Op
+          (closLang_BlockOp (closLang_ElemAt i)) [b]) cl 0]))
+        (Call 0 (SOME (generic_app_fn_location (LENGTH args - 1)))
+          (args ++ [cl]))`;;
 
 (* Generic application of a function to n+1 arguments *)
 let generate_generic_app_def = cake_define
@@ -262,9 +262,9 @@ let generate_generic_app_def = cake_define
                       - num_args))))
                 max_app))
              (mk_tick n
-             (If (bvl_Op (closLang_BlockOp (closLang_TagEq
-               closure_tag)) [Var (n + 2)])
-                 (bvl_Op (closLang_BlockOp (closLang_Cons
+             (If (Op (closLang_BlockOp (closLang_TagEq closure_tag))
+               [Var (n + 2)])
+                 (Op (closLang_BlockOp (closLang_Cons
                    partial_app_tag))
                      (REVERSE
                        (mk_el (Op (closLang_GlobOp (Global 0)) [])
@@ -275,9 +275,9 @@ let generate_generic_app_def = cake_define
                         Var 0 ::
                         Var (n + 2) ::
                         GENLIST (\n. Var (n + 1)) (n + 1))))
-                 (bvl_Let [Op (closLang_IntOp closLang_Sub) [mk_const
-                   3; Op (closLang_BlockOp closLang_LengthBlock) [Var (n
-                   + 2)]]]
+                 (Let [Op (closLang_IntOp closLang_Sub) [mk_const 3;
+                   Op (closLang_BlockOp closLang_LengthBlock) [Var (n +
+                   2)]]]
                    (bvl_Op (closLang_BlockOp (closLang_ConsExtend
                      partial_app_tag))
                      (REVERSE
@@ -324,10 +324,10 @@ let generate_partial_app_closure_fn_def = cake_define
 
 let check_closure_def = cake_define
   `check_closure v e =
-     If (bvl_Op (closLang_BlockOp (closLang_TagEq closure_tag)) [Var
-       v]) (bvl_Bool T)
-       (bvl_If (bvl_Op (closLang_BlockOp (closLang_TagEq
-         partial_app_tag)) [Var v]) (bvl_Bool T) e)`;;
+     If (Op (closLang_BlockOp (closLang_TagEq closure_tag)) [Var v])
+       (bvl_Bool T)
+       (If (Op (closLang_BlockOp (closLang_TagEq partial_app_tag))
+         [Var v]) (bvl_Bool T) e)`;;
 
 let init_code_def = cake_define
   `clos_to_bvl_init_code max_app =
@@ -363,15 +363,15 @@ let init_globals_def = cake_define
 
 let force_thunk_code_def = cake_define
   `force_thunk_code =
-     (If (bvl_Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
+     (If (Op (closLang_BlockOp (closLang_EqualConst (closLang_Int
        (&0)))) [(\b i. bvl_Op (closLang_BlockOp (closLang_ElemAt i))
        [b]) (Var 1) 1])
-       (bvl_Let [Call 0 NONE [(bvl_Op (closLang_BlockOp
-         (closLang_Cons 0)) []); Var 1; (\b i. bvl_Op (closLang_BlockOp
+       (Let [Call 0 NONE [(bvl_Op (closLang_BlockOp (closLang_Cons
+         0)) []); Var 1; (\b i. bvl_Op (closLang_BlockOp
          (closLang_ElemAt i)) [b]) (Var 1) 0]]
          (bvl_Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0; Var
            1]] (bvl_Var 1)))
-       (bvl_Let [Call 0 (SOME 0) [(bvl_Op (closLang_BlockOp
+       (Let [Call 0 (SOME 0) [(bvl_Op (closLang_BlockOp
          (closLang_Cons 0)) []); Var 1]]
          (bvl_Let [Op (ThunkOp (UpdateThunk Evaluated)) [Var 0;
            Var 1]] (bvl_Var 1))):bvl_exp)`;;

@@ -128,7 +128,7 @@ hol4_overload "int_op" "clos_op_int_op";;
 let cons_op_def = cake_define
   `cons_op op t xs =
      (match dest_ElemAt op with SOME n -> (if n < LENGTH xs then
-                    SOME (Let backend_common_None xs (closLang_Var
+                    SOME (Let backend_common_None xs (Var
                       backend_common_None (LENGTH xs - (n + 1)))) else
                       NONE) | NONE ->
      (match dest_TagLenEq op with SOME (n,l) -> SOME (Let

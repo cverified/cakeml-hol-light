@@ -158,21 +158,22 @@ let real_addr_def = cake_define
            Const (n2w 1)]] else if k <= data_to_word_config_pad_bits
            conf + 1 then
          Op asm_Add [wordLang_Lookup CurrHeap; (\sh e n. Shift sh e
-           (Const (n2w n))) Lsr (Var r) (l - k)] else
+           (wordLang_Const (n2w n))) Lsr (Var r) (l - k)] else
          Op asm_Add [wordLang_Lookup CurrHeap; (\sh e n. Shift sh
-           e (Const (n2w n))) Lsl ((\sh e n. Shift sh e (Const (n2w
-           n))) Lsr (Var r) l) k])`;;
+           e (wordLang_Const (n2w n))) Lsl ((\sh e n. Shift sh e
+           (wordLang_Const (n2w n))) Lsr (Var r) l) k])`;;
 
 let real_offset_def = cake_define
   `((real_offset (conf:data_to_word_config) r):'a wordLang_exp) =
       Op asm_Add [Const bytes_in_word;
               if dimindex (:'a) = 32 then Var r else (\sh e n.
-                Shift sh e (Const (n2w n))) Lsl (Var r) 1]`;;
+                Shift sh e (wordLang_Const (n2w n))) Lsl (Var r) 1]`;;
 
 let real_byte_offset_def = cake_define
   `(real_byte_offset r:'a wordLang_exp) =
      Op asm_Add [Const bytes_in_word;
-             (\sh e n. Shift sh e (Const (n2w n))) Lsr (Var r) 2]`;;
+             (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
+               (Var r) 2]`;;
 
 let word_op_type_INDUCT,word_op_type_RECURSION = define_datatype
   "word_op_type = Bitwise (binop) | Carried (binop)";;
@@ -262,11 +263,11 @@ let SilentFFI_def = cake_define
 
 let AllocVar_def = cake_define
   `AllocVar c (limit':num) (names:1 spt) =
-     list_Seq [Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-       (Var 1) 2);
+     list_Seq [Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w
+       n))) Lsr (Var 1) 2);
                If asm_Lower 1 (Imm (n2w limit'))
-                 (Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsl
-                   (Op asm_Add [Var 1; Const (n2w 1)])
+                 (Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w
+                   n))) Lsl (Op asm_Add [Var 1; Const (n2w 1)])
                    (backend_common_word_shift (:'a))))
                  (Assign 1 (wordLang_Const (--((n2w 1):'a word))));
                Assign 3 (Op asm_Sub [wordLang_Lookup TriggerGC;
@@ -281,20 +282,20 @@ let AllocVar_def = cake_define
 
 let MakeBytes_def = cake_define
   `MakeBytes n =
-     (list_Seq [Assign n ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-       (Var n) 2);
+     (list_Seq [Assign n ((\sh e n. Shift sh e (wordLang_Const (n2w
+       n))) Lsr (Var n) 2);
                Assign n (Op asm_Or [Var n; (\sh e n. Shift sh e
-                 (Const (n2w n))) Lsl (Var n) 8]);
+                 (wordLang_Const (n2w n))) Lsl (Var n) 8]);
                Assign n (Op asm_Or [Var n; (\sh e n. Shift sh e
-                 (Const (n2w n))) Lsl (Var n) 16]);
+                 (wordLang_Const (n2w n))) Lsl (Var n) 16]);
                if dimindex (:'a) = 32 then Skip else
                  Assign n (Op asm_Or [Var n; (\sh e n. Shift sh e
-                   (Const (n2w n))) Lsl (Var n) 32])]:'a
+                   (wordLang_Const (n2w n))) Lsl (Var n) 32])]:'a
                    wordLang_prog)`;;
 
 let SmallLsr_def = cake_define
-  `SmallLsr e n = (if n = 0 then e else (\sh e n. Shift sh e (Const
-  (n2w n))) Lsr e n)`;;
+  `SmallLsr e n = (if n = 0 then e else (\sh e n. Shift sh e
+  (wordLang_Const (n2w n))) Lsr e n)`;;
 
 let WriteLastByte_aux_def = cake_define
   `WriteLastByte_aux offset a b n p =
@@ -317,36 +318,37 @@ let RefByte_code_def = cake_define
   `RefByte_code c =
        (let limit' = MIN (2 EXP data_to_word_config_len_size c)
          (dimword (:'a) DIV 16) in
-       let h = Op asm_Add [(\sh e n. Shift sh e (Const (n2w n))) Lsr
-         (Var 2) 2; Const bytes_in_word] in
+       let h = Op asm_Add [(\sh e n. Shift sh e (wordLang_Const (n2w
+         n))) Lsr (Var 2) 2; Const bytes_in_word] in
        let x = SmallLsr h (dimindex (:'a) - 63) in
-       let y = (\sh e n. Shift sh e (Const (n2w n))) Lsl h (dimindex
-         (:'a) - backend_common_word_shift (:'a) -
+       let y = (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl h
+         (dimindex (:'a) - backend_common_word_shift (:'a) -
          data_to_word_config_len_size c) in
          list_Seq
            [BignumHalt 2;
             Assign 1 x;
             AllocVar c limit' (sptree_fromList [one; one; one]);
-            Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr h
-              (backend_common_word_shift (:'a)));
-            Assign 7 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
-              5) 2);
+            Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+              Lsr h (backend_common_word_shift (:'a)));
+            Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+              Lsl (Var 5) 2);
             Assign 9 (wordLang_Lookup NextFree);
             Assign 1 (Op asm_Add [Var 9;
-                              (\sh e n. Shift sh e (Const (n2w n)))
-                                Lsl (Var 5) (backend_common_word_shift
-                                (:'a))]);
+                              (\sh e n. Shift sh e (wordLang_Const
+                                (n2w n))) Lsl (Var 5)
+                                (backend_common_word_shift (:'a))]);
             Set NextFree (Op asm_Add [Var 1; Const bytes_in_word]);
-            Assign 3 (Op asm_Or [(\sh e n. Shift sh e (Const (n2w
-              n))) Lsl (Op asm_Sub [Var 9; wordLang_Lookup CurrHeap])
+            Assign 3 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+              (n2w n))) Lsl (Op asm_Sub [Var 9; wordLang_Lookup
+              CurrHeap])
                 (shift_length c - backend_common_word_shift (:'a));
                   Const ((n2w 1):'a word)]);
             Assign 5 (Op asm_Or [Op asm_Or [y; Const (n2w 7)]; Var
               6]);
             MakeBytes 4;
             Store (Var 9) 5;
-            Assign 11 (Op And [(\sh e n. Shift sh e (Const (n2w n)))
-              Lsr (Var 2) 2;
+            Assign 11 (Op And [(\sh e n. Shift sh e (wordLang_Const
+              (n2w n))) Lsr (Var 2) 2;
                               Const (bytes_in_word - (n2w 1))]);
             Assign 13 (wordLang_Const (n2w 0));
             Store (Var 1) 13;
@@ -358,16 +360,17 @@ let RefByte_code_def = cake_define
 let maxout_bits_code_def = cake_define
   `Maxout_bits_code rep_len k dest n =
      (If asm_Lower n (Imm (n2w (2 EXP rep_len - 1)))
-       (Assign dest (Op asm_Or [Var dest; (\sh e n. Shift sh e (Const
-         (n2w n))) Lsl (Var n) k]))
+       (Assign dest (Op asm_Or [Var dest; (\sh e n. Shift sh e
+         (wordLang_Const (n2w n))) Lsl (Var n) k]))
        (Assign dest (Op asm_Or [Var dest; Const (all_ones (k +
          rep_len) k)])):'a wordLang_prog)`;;
 
 let make_ptr_bits_code_def = cake_define
   `Make_ptr_bits_code c tag len dest =
      (list_Seq [Assign dest (Op asm_Or
-        [Const (n2w 1); (\sh e n. Shift sh e (Const (n2w n))) Lsl (Op
-          asm_Sub [wordLang_Lookup NextFree; wordLang_Lookup CurrHeap])
+        [Const (n2w 1); (\sh e n. Shift sh e (wordLang_Const (n2w
+          n))) Lsl (Op asm_Sub [wordLang_Lookup NextFree;
+          wordLang_Lookup CurrHeap])
             (shift_length c - backend_common_word_shift (:'a))]);
          Maxout_bits_code (data_to_word_config_tag_bits c) (1 +
            data_to_word_config_len_bits c) dest tag;
@@ -378,8 +381,8 @@ let FromList_code_def = cake_define
   `FromList_code c =
      (let limit' = MIN (2 EXP data_to_word_config_len_size c)
        (dimword (:'a) DIV 16) in
-     let h = (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var 2)
-       (dimindex (:'a) - data_to_word_config_len_size c - 2) in
+     let h = (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl (Var
+       2) (dimindex (:'a) - data_to_word_config_len_size c - 2) in
        If Equal 2 (Imm (n2w 0))
          (list_Seq [Assign 6 (Op asm_Add [Var 6; Const ((n2w 2):'a
            word)]);
@@ -390,10 +393,10 @@ let FromList_code_def = cake_define
               [one; one; one]);
             Assign 1 (wordLang_Lookup NextFree);
             Assign 5 (Op asm_Or [h; Const (n2w 3); Var 6]);
-            Assign 7 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
-              2) 2);
-            Assign 9 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
-              6) 4);
+            Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+              Lsr (Var 2) 2);
+            Assign 9 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+              Lsr (Var 6) 4);
             Make_ptr_bits_code c 9 7 3;
             Call NONE (SOME FromList1_location) [0; 1; 4; 2; 3; 5]
               NONE]):'a wordLang_prog)`;;
@@ -420,20 +423,21 @@ let FromList1_code_def = cake_define
 let RefArray_code_def = cake_define
   `RefArray_code c =
          (list_Seq
-           [Assign 1 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Op
-             asm_Add [((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var 2)
-             2); Const (n2w 1)])
+           [Assign 1 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+             Lsl (Op asm_Add [((\sh e n. Shift sh e (wordLang_Const (n2w
+             n))) Lsr (Var 2) 2); Const (n2w 1)])
                        (backend_common_word_shift (:'a)));
             Set TriggerGC (Op asm_Sub [wordLang_Lookup TriggerGC; Var
               1]);
             Assign 1 (Op asm_Sub [wordLang_Lookup EndOfHeap; Var 1]);
             Set EndOfHeap (Var 1);
-            Assign 3 (Op asm_Or [(\sh e n. Shift sh e (Const (n2w
-              n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+            Assign 3 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+              (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+              CurrHeap])
                 (shift_length c - backend_common_word_shift (:'a));
                   Const ((n2w 1):'a word)]);
-            Assign 5 (Op asm_Or [(\sh e n. Shift sh e (Const (n2w
-              n))) Lsl (Var 2)
+            Assign 5 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+              (n2w n))) Lsl (Var 2)
                               (dimindex (:'a) -
                                 data_to_word_config_len_size c - 2);
                              Const (make_header c (n2w 2) 0)]);
@@ -457,8 +461,8 @@ let AddNumSize_def = cake_define
        (If Test (adjust_var src) (Imm (n2w 1))
           (Assign 1 (Op asm_Add [Var 1; Const (n2w 4)]))
         (Assign 1 (Op asm_Add [Var 1;
-          ((\sh e n. Shift sh e (Const (n2w n))) Lsl ((\sh e n. Shift
-            sh e (Const (n2w n))) Lsr
+          ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl ((\sh e
+            n. Shift sh e (wordLang_Const (n2w n))) Lsr
              (Load (real_addr c (adjust_var src)))
                 (dimindex (:'a) - data_to_word_config_len_size
                   c))) 2]))):'a wordLang_prog)`;;
@@ -475,26 +479,27 @@ let AnyHeader_def = cake_define
          [Assign 7 (real_addr c r);
           Set (Temp t2) (Op asm_Add [Var 7; Const bytes_in_word]);
           Set (Temp t1) (Op asm_Add
-            [(\sh e n. Shift sh e (Const (n2w n))) Lsl ((\sh e n.
-              Shift sh e (Const (n2w n))) Lsr (Load (Var 7)) ((dimindex
-              (:'a)) - data_to_word_config_len_size c)) 1;
-             Op And [Const (n2w 1); (\sh e n. Shift sh e (Const (n2w
-               n))) Lsr (Load (Var 7)) 4]]);
-          Set (Temp t3) (Const (n2w 0))])
+            [(\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl ((\sh
+              e n. Shift sh e (wordLang_Const (n2w n))) Lsr (Load (Var
+              7)) ((dimindex (:'a)) - data_to_word_config_len_size c))
+              1;
+             Op And [Const (n2w 1); (\sh e n. Shift sh e
+               (wordLang_Const (n2w n))) Lsr (Load (Var 7)) 4]]);
+          Set (Temp t3) (wordLang_Const (n2w 0))])
     (If asm_NotLess r (Imm (n2w 0))
        (list_Seq
-         [Set (Temp t1) (Const (n2w 2));
+         [Set (Temp t1) (wordLang_Const (n2w 2));
           Set (Temp t2) (wordLang_Lookup (if a then OtherHeap else
             NextFree));
-          Set (Temp t3) ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-            (Var r) 2);
+          Set (Temp t3) ((\sh e n. Shift sh e (wordLang_Const (n2w
+            n))) Lsr (Var r) 2);
           Assign 7 (wordLang_Const (n2w 0))])
        (list_Seq
-         [Set (Temp t1) (Const (n2w 3));
+         [Set (Temp t1) (wordLang_Const (n2w 3));
           Set (Temp t2) (wordLang_Lookup (if a then OtherHeap else
             NextFree));
           Set (Temp t3) (Op asm_Sub [Const (n2w 0); (\sh e n. Shift
-            sh e (Const (n2w n))) Asr (Var r) 2]);
+            sh e (wordLang_Const (n2w n))) Asr (Var r) 2]);
           Assign 7 (wordLang_Const (n2w 0))])))`;;
 
 let ShiftVar_def = cake_define
@@ -502,13 +507,13 @@ let ShiftVar_def = cake_define
      (if sh = Ror then
        (let m = (if n < dimindex (:'a) then n else n MOD (dimindex
          (:'a))) in
-          if m = 0 then Var v else (\sh e n. Shift sh e (Const (n2w
-            n))) sh (Var v) m) else if n = 0 then Var v else if dimindex
-            (:'a) <= n then
-       if sh = Asr then (\sh e n. Shift sh e (Const (n2w n))) sh
-         (Var v) (dimindex (:'a) - 1) else Const (n2w 0) else ((\sh e
-         n. Shift sh e (Const (n2w n))) sh (Var v) n):'a
-         wordLang_exp)`;;
+          if m = 0 then Var v else (\sh e n. Shift sh e
+            (wordLang_Const (n2w n))) sh (Var v) m) else if n = 0 then
+            Var v else if dimindex (:'a) <= n then
+       if sh = Asr then (\sh e n. Shift sh e (wordLang_Const (n2w
+         n))) sh (Var v) (dimindex (:'a) - 1) else Const (n2w 0) else
+         ((\sh e n. Shift sh e (wordLang_Const (n2w n))) sh (Var v)
+         n):'a wordLang_exp)`;;
 
 let AnyArith_code_def = cake_define
   `AnyArith_code c = (list_Seq [
@@ -527,8 +532,8 @@ let AnyArith_code_def = cake_define
        Get 1 (Temp (n2w 29));
        Assign 2 (wordLang_Lookup NextFree);
        Set (Temp (n2w 29)) (Var 2);
-       Set (Temp (n2w 3)) ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-         (Var 6) 2);
+       Set (Temp (n2w 3)) ((\sh e n. Shift sh e (wordLang_Const (n2w
+         n))) Lsr (Var 6) 2);
        Assign 3 (wordLang_Const (n2w 0));
        Call (SOME ([0],(sptree_fromList
          [one],LN),Skip,AnyArith_location,2))
@@ -543,20 +548,21 @@ let AnyArith_code_def = cake_define
        Assign 3 (wordLang_Load (Op asm_Add [wordLang_Lookup NextFree;
          Const bytes_in_word]));
        If Equal 1 (Imm (n2w 2))
-         (Seq (Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-           (Var 3) (dimindex (:'a) - 3)))
+         (Seq (Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w
+           n))) Lsr (Var 3) (dimindex (:'a) - 3)))
               (If Test 5 (Reg 5)
-                 (Seq (Assign 1 ((\sh e n. Shift sh e (Const (n2w
-                   n))) Lsl (Var 3) 2))
+                 (Seq (Assign 1 ((\sh e n. Shift sh e (wordLang_Const
+                   (n2w n))) Lsl (Var 3) 2))
                       (Return 0 [1]))
                  Skip))
          (If Equal 1 (Imm (n2w 3))
-           (Seq (Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-             (Op asm_Sub [Var 3; Const (n2w 1)])
+           (Seq (Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w
+             n))) Lsr (Op asm_Sub [Var 3; Const (n2w 1)])
                              (dimindex (:'a) - 3)))
                 (If Test 5 (Reg 5)
                    (Seq (Assign 1 (Op asm_Sub [Const (n2w 0); (\sh e
-                     n. Shift sh e (Const (n2w n))) Lsl (Var 3) 2]))
+                     n. Shift sh e (wordLang_Const (n2w n))) Lsl (Var 3)
+                     2]))
                         (Return 0 [1]))
                    Skip))
            (Assign 5 (wordLang_Const (n2w 0))));
@@ -686,19 +692,19 @@ let compare_code_def = cake_define
                   Assign 1 (wordLang_Load (Var 11));
                   Assign 13 (real_addr c 4);
                   Assign 3 (wordLang_Load (Var 13));
-                  Assign 6 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-                    (Var 1) ((dimindex (:'a) -
+                  Assign 6 ((\sh e n. Shift sh e (wordLang_Const (n2w
+                    n))) Lsr (Var 1) ((dimindex (:'a) -
                     data_to_word_config_len_size c)));
-                  Assign 8 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-                    (Var 3) ((dimindex (:'a) -
+                  Assign 8 ((\sh e n. Shift sh e (wordLang_Const (n2w
+                    n))) Lsr (Var 3) ((dimindex (:'a) -
                     data_to_word_config_len_size c)));
                   If Equal 1 (Reg 3)
                     (list_Seq
                       [Assign 2 (Op asm_Add [Var 11; (\sh e n. Shift
-                        sh e (Const (n2w n))) Lsl (Var 6)
+                        sh e (wordLang_Const (n2w n))) Lsl (Var 6)
                         (backend_common_word_shift (:'a))]);
                        Assign 4 (Op asm_Add [Var 13; (\sh e n. Shift
-                         sh e (Const (n2w n))) Lsl (Var 6)
+                         sh e (wordLang_Const (n2w n))) Lsl (Var 6)
                          (backend_common_word_shift (:'a))]);
                        If Test 1 (Imm (n2w 16))
                         (Call NONE (SOME Compare1_location) [0; 6; 2;
@@ -840,8 +846,9 @@ let append_code_def = cake_define
               Assign 3 (wordLang_Const header);
               Assign 5 (Op asm_Sub [wordLang_Lookup TriggerGC; Var
                 1]);
-              Assign 7 (Op asm_Or [(\sh e n. Shift sh e (Const (n2w
-                n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+              Assign 7 (Op asm_Or [(\sh e n. Shift sh e
+                (wordLang_Const (n2w n))) Lsl (Op asm_Sub [Var 1;
+                wordLang_Lookup CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
                               Const ((n2w 1) || (word_bits
@@ -974,8 +981,9 @@ let WriteWord64_def = cake_define
                Set NextFree (Op asm_Add [Var 1; Const ((n2w 2) *
                  bytes_in_word)]);
                Assign (adjust_var dest)
-                 (Op asm_Or [(\sh e n. Shift sh e (Const (n2w n)))
-                   Lsl (Op asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+                 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+                   (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+                   CurrHeap])
                            (shift_length c -
                              backend_common_word_shift (:'a));
                          Const (n2w 1)])]:'a wordLang_prog)`;;
@@ -991,8 +999,9 @@ let WriteWord64_on_32_def = cake_define
                Set NextFree (Op asm_Add [Var 1; Const ((n2w 3) *
                  bytes_in_word)]);
                Assign (adjust_var dest)
-                 (Op asm_Or [(\sh e n. Shift sh e (Const (n2w n)))
-                   Lsl (Op asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+                 (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+                   (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+                   CurrHeap])
                            (shift_length c -
                              backend_common_word_shift (:'a));
                          Const (n2w 1)])]:'a wordLang_prog)`;;
@@ -1007,8 +1016,8 @@ let WriteWord32_on_32_def = cake_define
            bytes_in_word)]);
          Assign (adjust_var dest)
            (Op asm_Or
-              [(\sh e n. Shift sh e (Const (n2w n))) Lsl (Op asm_Sub
-                [Var 1; wordLang_Lookup CurrHeap])
+              [(\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl (Op
+                asm_Sub [Var 1; wordLang_Lookup CurrHeap])
                  (shift_length c - backend_common_word_shift
                    (:'a)); Const ((n2w 1):'a word)])]`;;
 
@@ -1199,8 +1208,9 @@ let assign_DerefByte_def = cake_define
              Assign 1 (Op asm_Add [real_addr c (adjust_var v1);
                               real_byte_offset (adjust_var v2)]);
              Inst (asm_Mem asm_Load8 3 (Addr 1 (n2w 0)));
-             Assign (adjust_var dest) ((\sh e n. Shift sh e (Const
-               (n2w n))) Lsl (Var 3) 2)],l):'a wordLang_prog#num)`;;
+             Assign (adjust_var dest) ((\sh e n. Shift sh e
+               (wordLang_Const (n2w n))) Lsl (Var 3) 2)],l):'a
+               wordLang_prog#num)`;;
 
 let assign_Update_def = cake_define
   `assign_Update (c:data_to_word_config) (l:num) (dest:num) v1 v2 v3 =
@@ -1236,8 +1246,8 @@ let assign_UpdateByte_def = cake_define
        ((list_Seq [
            Assign 1 (Op asm_Add [real_addr c (adjust_var v1);
                              real_byte_offset (adjust_var v2)]);
-           Assign 3 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
-             (adjust_var v3)) 2);
+           Assign 3 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+             Lsr (Var (adjust_var v3)) 2);
            Inst (asm_Mem asm_Store8 3 (Addr 1 (n2w 0)));
            Assign (adjust_var dest) data_to_word_Unit],l):'a
              wordLang_prog#num)`;;
@@ -1268,9 +1278,9 @@ let assign_Cons_def = cake_define
                           StoreEach 1 (3 :: MAP adjust_var args) (n2w
                             0);
                           Assign (adjust_var dest)
-                            (Op asm_Or [(\sh e n. Shift sh e (Const
-                              (n2w n))) Lsl (Op asm_Sub [Var 1;
-                              wordLang_Lookup CurrHeap])
+                            (Op asm_Or [(\sh e n. Shift sh e
+                              (wordLang_Const (n2w n))) Lsl (Op asm_Sub
+                              [Var 1; wordLang_Lookup CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
                               Const ((n2w 1) ||
@@ -1444,8 +1454,8 @@ let assign_Build_def = cake_define
        (w,ws) ->
        ((list_Seq
          [Assign 1 (wordLang_Lookup NextFree);
-          Assign 3 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Op
-            asm_Sub [Var 1; wordLang_Lookup CurrHeap])
+          Assign 3 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+            Lsl (Op asm_Sub [Var 1; wordLang_Lookup CurrHeap])
                      (shift_length c - backend_common_word_shift
                        (:'a)));
           StoreAnyConsts (adjust_var dest) 1 3 ws w],l):'a
@@ -1459,8 +1469,8 @@ let assign_ConsExtend_def = cake_define
               NONE -> (GiveUp,l) | SOME header ->
                (let limit' = MIN (2 EXP data_to_word_config_len_size
                  c) (dimword (:'a) DIV 16) in
-               let h = (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
-                 (adjust_var tot))
+               let h = (\sh e n. Shift sh e (wordLang_Const (n2w n)))
+                 Lsl (Var (adjust_var tot))
                          (dimindex (:'a) -
                            data_to_word_config_len_size c - 2) in
                  (list_Seq
@@ -1470,15 +1480,15 @@ let assign_ConsExtend_def = cake_define
                       (data_to_word_get_names names));
                     Assign 1 (wordLang_Lookup NextFree);
                     Assign 5 (Op asm_Or [h; Const header]);
-                    Assign 7 ((\sh e n. Shift sh e (Const (n2w n)))
-                      Lsr (Var (adjust_var tot)) 2);
+                    Assign 7 ((\sh e n. Shift sh e (wordLang_Const
+                      (n2w n))) Lsr (Var (adjust_var tot)) 2);
                     Assign 9 (wordLang_Const (n2w tag));
                     StoreEach 1 (5 :: MAP adjust_var rest) (n2w 0);
                     Make_ptr_bits_code c 9 7 3;
                     Set NextFree (Op asm_Add [Var 1; Const
                       bytes_in_word;
-                      (\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
-                        7) (backend_common_word_shift (:'a))]);
+                      (\sh e n. Shift sh e (wordLang_Const (n2w n)))
+                        Lsl (Var 7) (backend_common_word_shift (:'a))]);
                     Assign 15 (Var (adjust_var len));
                     Assign 13 (Op asm_Add [Var 1;
                       Const (bytes_in_word * n2w (LENGTH rest +
@@ -1515,8 +1525,8 @@ let assign_Ref_def = cake_define
                    Assign 3 (wordLang_Const header);
                    StoreEach 1 (3 :: MAP adjust_var args) (n2w 0);
                    Assign (adjust_var dest)
-                     (Op asm_Or [(\sh e n. Shift sh e (Const (n2w
-                       n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+                     (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+                       (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
                        CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
@@ -1539,8 +1549,8 @@ let assign_AllocThunk_def = cake_define
                    Assign 3 (wordLang_Const header);
                    StoreEach 1 [3; adjust_var arg] (n2w 0);
                    Assign (adjust_var dest)
-                     (Op asm_Or [(\sh e n. Shift sh e (Const (n2w
-                       n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
+                     (Op asm_Or [(\sh e n. Shift sh e (wordLang_Const
+                       (n2w n))) Lsl (Op asm_Sub [Var 1; wordLang_Lookup
                        CurrHeap])
                               (shift_length c -
                                 backend_common_word_shift (:'a));
@@ -1603,10 +1613,10 @@ let assign_StringCmp_def = cake_define
        list_Seq [
            Assign 1 (real_addr c (adjust_var v1));
            Assign 3 (real_addr c (adjust_var v2));
-           Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Load
-             (Var 1)) k);
-           Assign 7 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Load
-             (Var 3)) k);
+           Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+             Lsr (Load (Var 1)) k);
+           Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+             Lsr (Load (Var 3)) k);
            (if b then
               If Equal 5 (Reg 7)
                  (list_Seq
@@ -1739,9 +1749,9 @@ let assign_BoundsCheckByte_def = cake_define
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c - extra
                                 in
-                              Op asm_Sub [(\sh e n. Shift sh e (Const
-                                (n2w n))) Lsr header k; Const
-                                bytes_in_word]);
+                              Op asm_Sub [(\sh e n. Shift sh e
+                                (wordLang_Const (n2w n))) Lsr header k;
+                                Const bytes_in_word]);
                               Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
                               (if leq then If asm_NotLower 1 (Reg 3)
@@ -1762,8 +1772,8 @@ let assign_BoundsCheckArray_def = cake_define
                               let header = Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              (\sh e n. Shift sh e (Const (n2w n)))
-                                Lsr header k);
+                              (\sh e n. Shift sh e (wordLang_Const
+                                (n2w n))) Lsr header k);
                               Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
                               If asm_Lower 3 (Reg 1)
@@ -1784,8 +1794,8 @@ let assign_BoundsCheckBlock_def = cake_define
                               let header = Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              (\sh e n. Shift sh e (Const (n2w n)))
-                                Lsr header k));
+                              (\sh e n. Shift sh e (wordLang_Const
+                                (n2w n))) Lsr header k));
                               Assign 3 (ShiftVar Ror (adjust_var v2)
                                 2);
                               If asm_Lower 3 (Reg 1)
@@ -1865,11 +1875,12 @@ let assign_LengthBlock_def = cake_define
                               let header = Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              let len = (\sh e n. Shift sh e (Const
-                                (n2w n))) Lsr header k in
-                              ((\sh e n. Shift sh e (Const (n2w
-                                n))) Lsl len 2))),l):'a
-                                wordLang_prog#num)`;;
+                              let len = (\sh e n. Shift sh e
+                                (wordLang_Const (n2w n))) Lsr header k
+                                in
+                              ((\sh e n. Shift sh e
+                                (wordLang_Const (n2w n))) Lsl len
+                                2))),l):'a wordLang_prog#num)`;;
 
 let assign_Length_def = cake_define
   `assign_Length (c:data_to_word_config) (secn:num) (l:num) (dest:num)
@@ -1880,11 +1891,12 @@ let assign_Length_def = cake_define
                               let header = Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              let len = (\sh e n. Shift sh e (Const
-                                (n2w n))) Lsr header k in
-                              ((\sh e n. Shift sh e (Const (n2w
-                                n))) Lsl len 2)),l):'a
-                                wordLang_prog#num)`;;
+                              let len = (\sh e n. Shift sh e
+                                (wordLang_Const (n2w n))) Lsr header k
+                                in
+                              ((\sh e n. Shift sh e
+                                (wordLang_Const (n2w n))) Lsl len
+                                2)),l):'a wordLang_prog#num)`;;
 
 let assign_LengthByte_def = cake_define
   `assign_LengthByte (c:data_to_word_config) (secn:num) (l:num)
@@ -1894,12 +1906,12 @@ let assign_LengthByte_def = cake_define
                  let header = Load addr' in
                  let k = dimindex (:'a) - backend_common_word_shift
                    (:'a) - data_to_word_config_len_size c in
-                 let fakelen = (\sh e n. Shift sh e (Const (n2w n)))
-                   Lsr header k in
+                 let fakelen = (\sh e n. Shift sh e (wordLang_Const
+                   (n2w n))) Lsr header k in
                  let len = Op asm_Sub [fakelen; Const bytes_in_word]
                    in
-                   ((\sh e n. Shift sh e (Const (n2w n))) Lsl len
-                     2)),l):'a wordLang_prog#num)`;;
+                   ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+                     Lsl len 2)),l):'a wordLang_prog#num)`;;
 
 let assign_TagLenEq_def = cake_define
   `assign_TagLenEq (c:data_to_word_config) (secn:num) (l:num) (dest:num)
@@ -1979,8 +1991,9 @@ let assign_LenEq_def = cake_define
                               let header = Load addr' in
                               let k = dimindex (:'a) -
                                 data_to_word_config_len_size c in
-                              let len = (\sh e n. Shift sh e (Const
-                                (n2w n))) Lsr header k in
+                              let len = (\sh e n. Shift sh e
+                                (wordLang_Const (n2w n))) Lsr header k
+                                in
                               len));
                               If Equal 1 (Imm (n2w len))
                               (Assign (adjust_var dest) (Const (n2w
@@ -2145,8 +2158,8 @@ let assign_WordOpW8_def = cake_define
              (match lookup_word_op opw with Bitwise op -> Op op [Var
                (adjust_var v1); Var (adjust_var v2)] | Carried op ->
                (let k = dimindex (:'a) - 10 in
-                (\sh e n. Shift sh e (Const (n2w n))) Lsr ((\sh e n.
-                  Shift sh e (Const (n2w n))) Lsl
+                (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
+                  ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
                   (Op op [Var (adjust_var v1); Var (adjust_var
                     v2)]) k) k)),l):'a wordLang_prog#num)`;;
 
@@ -2192,26 +2205,29 @@ let assign_WordShiftW8_def = cake_define
   (dest:num) (names:(1 spt) option) v1 =
          ((Assign (adjust_var dest)
             (match sh with Lsl ->
-               (\sh e n. Shift sh e (Const (n2w n))) Lsr
-                 ((\sh e n. Shift sh e (Const (n2w n))) Lsl (Var
-                   (adjust_var v1)) (dimindex (:'a) - 10 + (MIN n 8)))
+               (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
+                 ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
+                   (Var (adjust_var v1)) (dimindex (:'a) - 10 + (MIN n
+                   8)))
                  (dimindex (:'a) - 10) | Lsr ->
-               (\sh e n. Shift sh e (Const (n2w n))) Lsl
-                 ((\sh e n. Shift sh e (Const (n2w n))) Lsr (Var
-                   (adjust_var v1)) ((MIN n 8) + 2)) 2 | Asr ->
-               (\sh e n. Shift sh e (Const (n2w n))) Lsl
-                 ((\sh e n. Shift sh e (Const (n2w n))) Lsr
-                    ((\sh e n. Shift sh e (Const (n2w n))) Asr
-                       ((\sh e n. Shift sh e (Const (n2w n))) Lsl
-                         (Var (adjust_var v1)) (dimindex (:'a) - 10))
+               (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
+                 ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
+                   (Var (adjust_var v1)) ((MIN n 8) + 2)) 2 | Asr ->
+               (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
+                 ((\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsr
+                    ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
+                      Asr
+                       ((\sh e n. Shift sh e (wordLang_Const (n2w
+                         n))) Lsl (Var (adjust_var v1)) (dimindex (:'a)
+                         - 10))
                        (MIN n 8))
                     (dimindex (:'a) - 8)) 2 | Ror ->
                (let n = n MOD 8 in
                   Op asm_Or
-                   [(\sh e n. Shift sh e (Const (n2w n))) Lsl
-                     (ShiftVar Lsr (adjust_var v1) (n + 2)) 2;
-                    (\sh e n. Shift sh e (Const (n2w n))) Lsr
-                      (ShiftVar Lsl (adjust_var v1)
+                   [(\sh e n. Shift sh e (wordLang_Const (n2w n)))
+                     Lsl (ShiftVar Lsr (adjust_var v1) (n + 2)) 2;
+                    (\sh e n. Shift sh e (wordLang_Const (n2w n)))
+                      Lsr (ShiftVar Lsl (adjust_var v1)
                       ((dimindex (:'a) - 2) - n)) (dimindex (:'a)
                         - 10)])),l):'a wordLang_prog#num)`;;
 
@@ -2252,11 +2268,13 @@ let assign_WordFromWord_def = cake_define
               match encode_header c 3 len with
                 NONE -> (GiveUp,l) | SOME header ->
                  (if len = 1 then
-                    (list_Seq [Assign 3 ((\sh e n. Shift sh e (Const
-                      (n2w n))) Lsr (Var (adjust_var v1)) 2);
+                    (list_Seq [Assign 3 ((\sh e n. Shift sh e
+                      (wordLang_Const (n2w n))) Lsr (Var (adjust_var
+                      v1)) 2);
                               WriteWord64 c header dest 3],l) else
-                    (list_Seq [Assign 5 ((\sh e n. Shift sh e (Const
-                      (n2w n))) Lsr (Var (adjust_var v1)) 2);
+                    (list_Seq [Assign 5 ((\sh e n. Shift sh e
+                      (wordLang_Const (n2w n))) Lsr (Var (adjust_var
+                      v1)) 2);
                               Assign 3 (wordLang_Const (n2w 0));
                               WriteWord64_on_32 c header dest 5
                                 3],l))):'a wordLang_prog#num)`;;
@@ -2270,8 +2288,8 @@ let assign_WordFromInt_def = cake_define
             (if len = 1 then
               Seq
                 (If Test (adjust_var v1) (Imm (n2w 1))
-                     (Assign 3 ((\sh e n. Shift sh e (Const (n2w n)))
-                       Asr (Var (adjust_var v1)) 2))
+                     (Assign 3 ((\sh e n. Shift sh e (wordLang_Const
+                       (n2w n))) Asr (Var (adjust_var v1)) 2))
                     (Seq
                       (LoadBignum c 1 3 (adjust_var v1))
                       (If Test 1 (Imm (n2w 16)) Skip
@@ -2280,10 +2298,10 @@ let assign_WordFromInt_def = cake_define
                 (WriteWord64 c header dest 3) else If Test
                   (adjust_var v1) (Imm (n2w 1))
                (list_Seq [
-                 Assign 3 ((\sh e n. Shift sh e (Const (n2w n))) Asr
-                   (Var (adjust_var v1)) 2);
-                 Assign 5 ((\sh e n. Shift sh e (Const (n2w n))) Asr
-                   (Var (adjust_var v1)) 31);
+                 Assign 3 ((\sh e n. Shift sh e (wordLang_Const (n2w
+                   n))) Asr (Var (adjust_var v1)) 2);
+                 Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w
+                   n))) Asr (Var (adjust_var v1)) 31);
                  WriteWord64_on_32 c header dest 3 5])
                (list_Seq [
                  Assign 1 (real_addr c (adjust_var v1));
@@ -2329,12 +2347,12 @@ let assign_WordToInt_def = cake_define
            header ->
               (if len = 1 then
                 (list_Seq [LoadWord64 c 3 (adjust_var v);
-                           Assign 1 ((\sh e n. Shift sh e (Const (n2w
-                             n))) Lsr (Var 3) 61);
+                           Assign 1 ((\sh e n. Shift sh e
+                             (wordLang_Const (n2w n))) Lsr (Var 3) 61);
                            If Equal 1 (Imm (n2w 0))
                              (Assign (adjust_var dest) ((\sh e n.
-                               Shift sh e (Const (n2w n))) Lsl (Var 3)
-                               2))
+                               Shift sh e (wordLang_Const (n2w n))) Lsl
+                               (Var 3) 2))
                              (WriteWord64 c header dest 3)],l) else
                (match encode_header c 3 1 with NONE -> (GiveUp,l) |
                  SOME header1 ->
@@ -2347,11 +2365,12 @@ let assign_WordToInt_def = cake_define
                    If asm_NotEqual 13 (Imm (n2w 0))
                      (WriteWord64_on_32 c header dest 13 11)
                      (list_Seq [
-                       Assign 1 ((\sh e n. Shift sh e (Const (n2w
-                         n))) Lsr (Var 11) 29);
+                       Assign 1 ((\sh e n. Shift sh e (wordLang_Const
+                         (n2w n))) Lsr (Var 11) 29);
                        If Equal 1 (Imm (n2w 0))
                          (Assign (adjust_var dest) ((\sh e n. Shift
-                           sh e (Const (n2w n))) Lsl (Var 11) 2))
+                           sh e (wordLang_Const (n2w n))) Lsl (Var 11)
+                           2))
                          (WriteWord32_on_32 c header1 dest
                            11)])],l)))):'a wordLang_prog#num)`;;
 
@@ -2365,12 +2384,12 @@ let assign_FFI_def = cake_define
          let header1 = Load addr1 in
          let k = dimindex (:'a) - backend_common_word_shift (:'a) -
            data_to_word_config_len_size c in
-         let fakelen1 = (\sh e n. Shift sh e (Const (n2w n))) Lsr
-           header1 k in
+         let fakelen1 = (\sh e n. Shift sh e (wordLang_Const (n2w
+           n))) Lsr header1 k in
          let addr2 = real_addr c (adjust_var v2) in
          let header2 = Load addr2 in
-         let fakelen2 = (\sh e n. Shift sh e (Const (n2w n))) Lsr
-           header2 k in
+         let fakelen2 = (\sh e n. Shift sh e (wordLang_Const (n2w
+           n))) Lsr header2 k in
          (
          list_Seq [
            Assign 1 (Op asm_Add [addr1; Const bytes_in_word]);

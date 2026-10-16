@@ -123,11 +123,23 @@ FIELD_OF = {
 # names in the HOL4 libraries that the port does not really need:
 # the dependency analysis found them because a CakeML definition
 # happens to use a variable of that name
+# the names that the port takes from a HOL4 library theory, where
+# it only needs a part of it: the other definitions of the theory
+# are not in the port's namespace at all (of regexp_compiler the
+# port only needs the vector that CakeML's mlvector is about)
+ONLY_NAMES = {
+  'regexp_compiler': set(['vector', 'Vector', 'sub_def', 'sub',
+                          'length_def', 'length']),
+}
+
 NOT_NEEDED = set([
   # CakeML's mlint has its own toString and fromString
   ('integer_word', 'toString'), ('integer_word', 'fromString'),
   ('toto', 'comp'), ('toto', 'cpn'), ('toto', 'lexTO'),
   ('toto', 'lextoto'), ('toto', 'TO_of_LinearOrder'),
+  # of regexp_compiler the port only needs the vector that
+  # mlvector is about, not the sets of a regular expression
+  ('regexp_compiler', 'union'), ('regexp_compiler', 'set'),
 ])
 
 # theories that a file needs although HOL4's Ancestors do not say so
@@ -361,6 +373,9 @@ MATCH_FORM = set([
 # an explicit termination relation, where HOL Light cannot guess one
 # and the HOL4 source does not give one either
 MEASURE = {
+  # the elements of the vector that are left, which HOL4 gives in
+  # the Termination of the definition
+  ('mlvector', 'toList_aux_def'): 'MEASURE (\\(vec,n). length vec - n)',
   # the measure is the size of the expression; without it the port
   # searches through the candidates, which takes minutes here
   ('mergesort', 'mergesortN_def'): 'MEASURE (\\(R,n,l). n)',

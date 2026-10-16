@@ -160,7 +160,17 @@ class Db:
       self.thy_of_file[thy] = path
       self.kind_of_thy[thy] = kind
       self.base_grammar(thy)
+      only = overrides.ONLY_NAMES.get(thy)
       for b in hol4.parse(path):
+        # of a library theory that the port only needs a part of,
+        # the other blocks are not there at all: their names
+        # would clash with the ones of the port for nothing
+        if only is not None and b.kind not in ('ML', 'Ancestors'):
+          nms = [b.name] if b.name else []
+          if b.kind == 'Datatype':
+            for ty, cons, flds in hol4.datatype_names(b.body):
+              nms += [ty] + list(cons)
+          if not any(n in only for n in nms): continue
         mode = hol4.equality_mode(b.text) if b.kind == 'ML' else None
         if mode: hterm.set_equality(mode == 'loose')
         if b.kind == 'ML':

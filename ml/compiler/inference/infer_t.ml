@@ -10,6 +10,7 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/jsonLang.ml";;
+needs "lib/regexp_compiler.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/semanticPrimitives.ml";;

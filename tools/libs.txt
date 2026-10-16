@@ -4,6 +4,7 @@ comparison	src/finite_maps/comparisonScript.sml
 indexedLists	src/list/src/indexedListsScript.sml
 sorting	src/sort/sortingScript.sml
 mergesort	src/sort/mergesortScript.sml
+regexp_compiler	examples/formal-languages/regular/regexp_compilerScript.sml
 sptree	src/finite_maps/sptreeScript.sml
 alignment	src/n-bit/alignmentScript.sml
 bitstring	src/n-bit/bitstringScript.sml

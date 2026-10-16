@@ -9,9 +9,9 @@
 
 needs "basis/pure/mllist.ml";;
 needs "lib/indexedLists.ml";;
+needs "lib/regexp_compiler.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
-(* HOL4 ancestors outside the port: regexp_compiler *)
 
 let sub_unsafe_def = cake_define
   `sub_unsafe (Vector l) n = EL n l`;;
@@ -20,8 +20,10 @@ let tabulate_def = cake_define
   `mlvector_tabulate n f = Vector (GENLIST f n)`;;
 hol4_overload "tabulate" "mlvector_tabulate";;
 
-(* TERMINATION: wf_rel_tac `measure (\(vec, n). length(vec) - n)` *)
-let toList_aux_def = cake_define
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
+let toList_aux_def = cake_define_wf
+  `MEASURE (\(vec,n). length vec - n)`
   `toList_aux vec n =
    (if length (vec) <= n then [] else sub vec n :: toList_aux vec
      (n + 1))`;;

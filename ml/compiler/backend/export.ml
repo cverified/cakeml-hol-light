@@ -13,6 +13,7 @@ needs "basis/pure/mlstring.ml";;
 needs "basis/pure/mlvector.ml";;
 needs "compiler/backend/data_space.ml";;
 needs "lib/integer_word.ml";;
+needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 

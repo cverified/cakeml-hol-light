@@ -131,8 +131,8 @@ let CopyGlobals_code_def = cake_define
   `CopyGlobals_code = ((3:num),
      Let [Op (closLang_MemOp closLang_Update) [Op (closLang_MemOp
        closLang_El) [Var 2; Var 1]; Var 2; Var 0]]
-       (bvl_If (bvl_Op (closLang_BlockOp closLang_Equal) [Op
-         (closLang_IntOp (closLang_Const (&0))) []; Var 3]) (bvl_Var 0)
+       (If (Op (closLang_BlockOp closLang_Equal) [Op (closLang_IntOp
+         (closLang_Const (&0))) []; Var 3]) (Var 0)
          (Call 0 (SOME CopyGlobals_location) [Var 1; Var 2; Op
            (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
            (closLang_Const (&1))) []; Var 3]] NONE)))`;;
@@ -146,10 +146,10 @@ let InitGlobals_code_def = cake_define
        Let [Op (closLang_MemOp closLang_RefArray) [Op (closLang_IntOp
          (closLang_Const (&0))) []; Op (closLang_IntOp (closLang_Const
          (&n))) []]]
-         (bvl_Let [Op (closLang_MemOp closLang_Update) [Op
+         (Let [Op (closLang_MemOp closLang_Update) [Op
            (closLang_IntOp (closLang_Const (&1))) []; Op (closLang_IntOp
            (closLang_Const (&0))) []; Var 0]]
-           (bvl_Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 1]]
+           (Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 1]]
               (Call 0 (SOME start') [] (SOME (Var 0)))))))`;;
 
 let ListLength_code_def = cake_define
@@ -182,8 +182,7 @@ let ToListByte_code_def = cake_define
        (&0)))) [Var 1]) (Var 0)
        (Let [Op (closLang_IntOp closLang_Sub) [Op (closLang_IntOp
          (closLang_Const (&1))) []; Var 1]]
-       (bvl_Let [Op (closLang_MemOp closLang_DerefByte) [Var 0; Var
-         3]]
+       (Let [Op (closLang_MemOp closLang_DerefByte) [Var 0; Var 3]]
          (Call 0 (SOME ToListByte_location)
            [Op (closLang_BlockOp (closLang_Cons 0)) [Var 2; Var 0];
             Var 1;
@@ -208,8 +207,8 @@ let ConcatByte_code_def = cake_define
        (Var 2)
        (Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
          (closLang_Const (&0))) []; Var 0]]
-         (bvl_Let [Op (closLang_MemOp closLang_LengthByte) [Var 0]]
-           (bvl_Let [Op (closLang_MemOp (closLang_CopyByte F))
+         (Let [Op (closLang_MemOp closLang_LengthByte) [Var 0]]
+           (Let [Op (closLang_MemOp (closLang_CopyByte F))
                    [Var 3; Var 4; Var 0; Op (closLang_IntOp
                      (closLang_Const (&0))) []; Var 1]]
              (Call 0 (SOME ConcatByte_location)
@@ -239,7 +238,7 @@ let compile_op_def = cake_define
          (closLang_IntOp (closLang_Const (&0))) c1] (compile_int i)) |
          closLang_GlobOp (Global n) ->
        (if NULL c1 then Op (closLang_GlobOp (Global (n + 1))) [] else
-         Let c1 (bvl_Op (closLang_MemOp closLang_El) [
+         Let c1 (Op (closLang_MemOp closLang_El) [
          Op (closLang_IntOp closLang_Add) [Op (closLang_IntOp
            (closLang_Const (&2))) []; Var 0];
          Op (closLang_GlobOp GlobalsPtr) []])) | closLang_GlobOp
@@ -249,14 +248,14 @@ let compile_op_def = cake_define
            (closLang_FromList n) -> Let
          (if NULL c1 then [Op (closLang_IntOp (closLang_Const (&0)))
            []] else c1)
-         (bvl_Op (closLang_BlockOp (closLang_FromList n))
+         (Op (closLang_BlockOp (closLang_FromList n))
          [Var 0; Call 0 (SOME ListLength_location) [Var 0; Op
            (closLang_IntOp (closLang_Const (&0))) []] NONE]) |
            closLang_Install -> Let
-       (if ~(LENGTH c1 = 2) then [Let c1 (bvl_Op (closLang_IntOp
+       (if ~(LENGTH c1 = 2) then [Let c1 (Op (closLang_IntOp
          (closLang_Const (&0))) []); Op (closLang_IntOp (closLang_Const
          (&0))) []] else c1)
-       (bvl_Op closLang_Install
+       (Op closLang_Install
         [Call 0 (SOME ListLength_location)
            [Var 0; Op (closLang_IntOp (closLang_Const (&0))) []]
              NONE;
@@ -295,25 +294,24 @@ let compile_op_def = cake_define
                      (closLang_CopyByte T) ->
        Let (if LENGTH c1 < 3 then (c1 ++ REPLICATE 3 (Op
          (closLang_IntOp (closLang_Const (&0))) [])) else c1)
-         (bvl_Let [Op (closLang_MemOp (closLang_RefByte T)) [Op
+         (Let [Op (closLang_MemOp (closLang_RefByte T)) [Op
            (closLang_IntOp (closLang_Const (&0))) []; Var 0]]
-            (bvl_Let [Op (closLang_MemOp (closLang_CopyByte F)) [Op
+            (Let [Op (closLang_MemOp (closLang_CopyByte F)) [Op
               (closLang_IntOp (closLang_Const (&0))) []; Var 0; Var 1;
               Var 2; Var 3]]
-              (bvl_Var 1))) | closLang_Label l -> Op
-                (closLang_Label (bvl_num_stubs +
-                bvl_to_bvi_namespaces * l)) c1 | closLang_BlockOp
-                (closLang_Build ps) -> Op (closLang_BlockOp
-                (closLang_Build ps)) c1 | closLang_BlockOp
-                (closLang_EqualConst p) -> Op (closLang_BlockOp
-                (closLang_EqualConst p)) c1 | closLang_MemOp
-                (closLang_MutCons tag i) -> Let c1 (bvl_Op
+              (Var 1))) | closLang_Label l -> Op (closLang_Label
+                (bvl_num_stubs + bvl_to_bvi_namespaces * l)) c1 |
+                closLang_BlockOp (closLang_Build ps) -> Op
+                (closLang_BlockOp (closLang_Build ps)) c1 |
+                closLang_BlockOp (closLang_EqualConst p) -> Op
+                (closLang_BlockOp (closLang_EqualConst p)) c1 |
+                closLang_MemOp (closLang_MutCons tag i) -> Let c1 (Op
                 (closLang_IntOp (closLang_Const (&0))) []) |
-                closLang_MemOp closLang_UpdateCons -> Let c1 (bvl_Op
+                closLang_MemOp closLang_UpdateCons -> Let c1 (Op
                 (closLang_IntOp (closLang_Const (&0))) []) |
-                closLang_MemOp closLang_FinaliseCons -> Let c1
-                (bvl_Op (closLang_IntOp (closLang_Const (&0))) []) |
-                _12 -> Op op c1)`;;
+                closLang_MemOp closLang_FinaliseCons -> Let c1 (Op
+                (closLang_IntOp (closLang_Const (&0))) []) | _12 ->
+                Op op c1)`;;
 hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
 
 hol4_overload "++" "SmartAppend";;

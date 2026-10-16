@@ -40,13 +40,13 @@ let compile_lit_def = cake_define
 let arg1_def = cake_define
   `flat_to_clos_arg1 xs f =
      (match xs with [x] -> f x | _2 -> closLang_Let
-       backend_common_None xs (Var backend_common_None 0))`;;
+       backend_common_None xs (closLang_Var backend_common_None 0))`;;
 hol4_overload "arg1" "flat_to_clos_arg1";;
 
 let arg2_def = cake_define
   `flat_to_clos_arg2 xs f =
      (match xs with [x; y] -> f x y | _3 -> closLang_Let
-       backend_common_None xs (Var backend_common_None 0))`;;
+       backend_common_None xs (closLang_Var backend_common_None 0))`;;
 hol4_overload "arg2" "flat_to_clos_arg2";;
 
 (* HOL4 ML code, not ported:
@@ -92,17 +92,17 @@ let compile_arith_def = cake_define
      (match ty with ast_IntT -> (match a with Add -> closLang_Op t
        (closLang_IntOp closLang_Add) xs | Sub -> closLang_Op t
        (closLang_IntOp closLang_Sub) xs | ast_Mul -> closLang_Op t
-       (closLang_IntOp closLang_Mult) xs | Div -> Let t xs (flatLang_If
-       t (closLang_Op t (closLang_BlockOp closLang_Equal) [Var t 0;
+       (closLang_IntOp closLang_Mult) xs | Div -> Let t xs (If t
+       (closLang_Op t (closLang_BlockOp closLang_Equal) [Var t 0;
        closLang_Op t (closLang_IntOp (closLang_Const (&0))) []])
                               (Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 div_tag)) []))
                               (closLang_Op t (closLang_IntOp
                                 closLang_Div) [Var t 0; Var t 1])) | Mod
-                                -> Let t xs (flatLang_If t (closLang_Op
-                                t (closLang_BlockOp closLang_Equal) [Var
-                                t 0; closLang_Op t (closLang_IntOp
+                                -> Let t xs (If t (closLang_Op t
+                                (closLang_BlockOp closLang_Equal) [Var t
+                                0; closLang_Op t (closLang_IntOp
                                 (closLang_Const (&0))) []])
                               (Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
@@ -171,7 +171,7 @@ let compile_op_def = cake_define
        closLang_Ref) xs | flatLang_Src ast_ConfigGC -> closLang_Op t
        (closLang_MemOp ConfigGC) xs | flatLang_Src ast_Equality ->
        closLang_Op t (closLang_BlockOp closLang_Equal) xs | flatLang_Src
-       (ast_FFI n) -> closLang_Op t (FFI n) xs | flatLang_Src
+       (ast_FFI n) -> closLang_Op t (closLang_FFI n) xs | flatLang_Src
        ast_ListAppend -> closLang_Op t (closLang_BlockOp ListAppend) xs
        | flatLang_Src ast_Vlength -> closLang_Op t (closLang_BlockOp
        closLang_LengthBlock) xs | flatLang_Src ast_Alength ->
@@ -217,28 +217,26 @@ let compile_op_def = cake_define
             | flatLang_Src ast_Aw8length -> closLang_Op t
             (closLang_MemOp closLang_LengthByte) xs | flatLang_Src
             ast_AallocFixed -> closLang_Op t (closLang_MemOp
-            closLang_Ref) xs | flatLang_Src ast_Aalloc -> Let t xs
-            (flatLang_If t (closLang_Op t (closLang_IntOp closLang_Less)
-            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-            Var t 1])
+            closLang_Ref) xs | flatLang_Src ast_Aalloc -> Let t xs (If t
+            (closLang_Op t (closLang_IntOp closLang_Less) [closLang_Op t
+            (closLang_IntOp (closLang_Const (&0))) []; Var t 1])
                               (Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))
                               (closLang_Op t (closLang_MemOp
                                 closLang_RefArray) [Var t 0; Var t 1]))
                                 | flatLang_Src ast_Aw8alloc -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_IntOp closLang_Less)
-                                [closLang_Op t (closLang_IntOp
-                                (closLang_Const (&0))) []; Var t 1])
+                                (If t (closLang_Op t (closLang_IntOp
+                                closLang_Less) [closLang_Op t
+                                (closLang_IntOp (closLang_Const (&0)))
+                                []; Var t 1])
                               (Raise t (closLang_Op t
                                 (closLang_BlockOp (closLang_Cons
                                 subscript_tag)) []))
                               (closLang_Op t (closLang_MemOp
                                 (closLang_RefByte F)) [Var t 0; Var t
                                 1])) | flatLang_Src ast_Vsub -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_BlockOp
+                                (If t (closLang_Op t (closLang_BlockOp
                                 closLang_BoundsCheckBlock) [Var t 0; Var
                                 t 1])
                               (closLang_Op t (closLang_MemOp
@@ -248,9 +246,8 @@ let compile_op_def = cake_define
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Vsub_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_El) xs |
-                                flatLang_Src ast_Asub -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_MemOp
+                                flatLang_Src ast_Asub -> Let t xs (If t
+                                (closLang_Op t (closLang_MemOp
                                 closLang_BoundsCheckArray) [Var t 0; Var
                                 t 1])
                               (closLang_Op t (closLang_MemOp
@@ -260,9 +257,8 @@ let compile_op_def = cake_define
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Asub_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_El) xs |
-                                flatLang_Src ast_Aupdate -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_MemOp
+                                flatLang_Src ast_Aupdate -> Let t xs (If
+                                t (closLang_Op t (closLang_MemOp
                                 closLang_BoundsCheckArray) [Var t 1; Var
                                 t 2])
                               (closLang_Op t (closLang_MemOp
@@ -273,9 +269,8 @@ let compile_op_def = cake_define
                                 subscript_tag)) []))) | flatLang_Src
                                 ast_Aupdate_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_Update) xs |
-                                flatLang_Src ast_Aw8sub -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_MemOp
+                                flatLang_Src ast_Aw8sub -> Let t xs (If
+                                t (closLang_Op t (closLang_MemOp
                                 (closLang_BoundsCheckByte F)) [Var t 0;
                                 Var t 1])
                               (closLang_Op t (closLang_MemOp
@@ -286,8 +281,7 @@ let compile_op_def = cake_define
                                 ast_Aw8sub_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_DerefByte) xs |
                                 flatLang_Src ast_Aw8update -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_MemOp
+                                (If t (closLang_Op t (closLang_MemOp
                                 (closLang_BoundsCheckByte F)) [Var t 1;
                                 Var t 2])
                               (closLang_Op t (closLang_MemOp
@@ -299,8 +293,7 @@ let compile_op_def = cake_define
                                 ast_Aw8update_unsafe -> closLang_Op t
                                 (closLang_MemOp closLang_UpdateByte) xs
                                 | flatLang_Src ast_Strsub -> Let t xs
-                                (flatLang_If t (closLang_Op t
-                                (closLang_MemOp
+                                (If t (closLang_Op t (closLang_MemOp
                                 (closLang_BoundsCheckByte F)) [Var t 0;
                                 Var t 1])
                               (closLang_Op t (closLang_MemOp
@@ -332,17 +325,16 @@ let compile_op_def = cake_define
                                 closLang_Op t (closLang_WordOp
                                 WordFromInt) xs | flatLang_Src
                                 (ast_FromTo ast_IntT ast_CharT) -> Let t
-                                xs (flatLang_If t (closLang_Op t
-                                (closLang_IntOp closLang_Less)
-                                [closLang_Op backend_common_None
-                                (closLang_IntOp (closLang_Const (&0)))
-                                []; Var t 0])
+                                xs (If t (closLang_Op t (closLang_IntOp
+                                closLang_Less) [closLang_Op
+                                backend_common_None (closLang_IntOp
+                                (closLang_Const (&0))) []; Var t 0])
                          (Raise t (closLang_Op t (closLang_BlockOp
                            (closLang_Cons chr_tag)) []))
-                         (flatLang_If t (closLang_Op t
-                           (closLang_IntOp closLang_Less) [Var t 0;
-                           closLang_Op backend_common_None
-                           (closLang_IntOp (closLang_Const (&255))) []])
+                         (If t (closLang_Op t (closLang_IntOp
+                           closLang_Less) [Var t 0; closLang_Op
+                           backend_common_None (closLang_IntOp
+                           (closLang_Const (&255))) []])
                            (Raise t (closLang_Op t (closLang_BlockOp
                              (closLang_Cons chr_tag)) []))
                            (Var t 0))) | flatLang_Src (ast_FromTo
