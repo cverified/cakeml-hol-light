@@ -30,25 +30,22 @@ val s = “s : (num # γ, 'ffi) bviSem$state”;
      in_ns_3 = λn. n MOD bvl_to_bvi_namespaces = 3 *)
 
 let v_rel = cake_inductive
-  `!f i.
-   v_rel f (Number i) (Number i) /\
-   (!f w.
-   v_rel f (Word64 w) (Word64 w) /\
+  `(!f i. v_rel f (Number i) (Number i)) /\
+   (!f w. v_rel f (Word64 w) (Word64 w)) /\
    (!f n xs ys.
-     LIST_REL (v_rel f) xs ys ==>
-     v_rel f (Block n xs) (Block n ys) /\
-   (!f n.
-   v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n) /\
+       LIST_REL (v_rel f) xs ys ==>
+       v_rel f (Block n xs) (Block n ys)) /\
+   (!f n. v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n)) /\
    (!f n m b.
-     FLOOKUP f n = SOME m ==>
-     v_rel f (RefPtr b n) (RefPtr b m)))))`;;
+       FLOOKUP f n = SOME m ==>
+       v_rel f (RefPtr b n) (RefPtr b m))`;;
 
 let ref_rel = cake_inductive
-  `ref_rel f (ByteArray b bs) (ByteArray b bs) /\
-   LIST_REL (v_rel f) xs ys ==>
-   ref_rel f (ValueArray xs) (ValueArray ys) /\
-   v_rel f x y ==>
-   ref_rel f (Thunk tm x) (Thunk tm y)`;;
+  `(ref_rel f (ByteArray b bs) (ByteArray b bs)) /\
+   (LIST_REL (v_rel f) xs ys ==>
+     ref_rel f (ValueArray xs) (ValueArray ys)) /\
+   (v_rel f x y ==>
+     ref_rel f (Thunk tm x) (Thunk tm y))`;;
 
 let env_rel_def = cake_define
   `bvi_tmcProof_env_rel opt f env1 env2 <=>

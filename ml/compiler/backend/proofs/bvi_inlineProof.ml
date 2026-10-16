@@ -29,35 +29,35 @@ let cache_code_labels_def = cake_define
    phase, where [c] is the transformed target code table.
    [exp_rel_inline] is the only rule that removes a Call boundary. *)
 let exp_rel = cake_inductive
-  `(!c n. exp_rel c (Var n) (Var n)) /\
-   (!c loc n. exp_rel c (Force loc n) (Force loc n)) /\
-   (!c x1 x2 x3 y1 y2 y3.
-      exp_rel c x1 y1 /\ exp_rel c x2 y2 /\ exp_rel c x3 y3 ==>
-      exp_rel c (If x1 x2 x3) (If y1 y2 y3)) /\
-   (!c xs ys x y.
-      LIST_REL (exp_rel c) xs ys /\ exp_rel c x y ==>
-      exp_rel c (Let xs x) (Let ys y)) /\
-   (!c x y. exp_rel c x y ==> exp_rel c (Raise x) (Raise y)) /\
-   (!c x y. exp_rel c x y ==> exp_rel c (Tick x) (Tick y)) /\
-   (!c op xs ys. LIST_REL (exp_rel c) xs ys ==>
-      exp_rel c (Op op xs) (Op op ys)) /\
-   (!c ticks dest xs ys handler handler1.
-      LIST_REL (exp_rel c) xs ys /\ OPTREL (exp_rel c) handler
-        handler1 ==>
-      exp_rel c (bvi_Call ticks dest xs handler)
-        (bvi_Call ticks dest ys handler1)) /\
-   (!c rets ticks dest xs ys x y.
-      LIST_REL (exp_rel c) xs ys /\ exp_rel c x y ==>
-      exp_rel c (bvi_LetCall rets ticks dest xs x)
-        (bvi_LetCall rets ticks dest ys y)) /\
-   (!c xs ys. LIST_REL (exp_rel c) xs ys ==>
-      exp_rel c (bvi_Return xs) (bvi_Return ys)) /\
-   (!c ticks n xs ys arity body.
-      LIST_REL (exp_rel c) xs ys /\ sptree_lookup n c = SOME
-        (arity,body) /\
-      LENGTH ys = arity ==>
-      exp_rel c (bvi_Call ticks (SOME n) xs NONE)
-        (Let ys (bvi_mk_tick (SUC ticks) body)))`;;
+  `((!c n. exp_rel c (Var n) (Var n))) /\
+   ((!c loc n. exp_rel c (Force loc n) (Force loc n))) /\
+   ((!c x1 x2 x3 y1 y2 y3.
+        exp_rel c x1 y1 /\ exp_rel c x2 y2 /\ exp_rel c x3 y3 ==>
+        exp_rel c (If x1 x2 x3) (If y1 y2 y3))) /\
+   ((!c xs ys x y.
+        LIST_REL (exp_rel c) xs ys /\ exp_rel c x y ==>
+        exp_rel c (Let xs x) (Let ys y))) /\
+   ((!c x y. exp_rel c x y ==> exp_rel c (Raise x) (Raise y))) /\
+   ((!c x y. exp_rel c x y ==> exp_rel c (Tick x) (Tick y))) /\
+   ((!c op xs ys. LIST_REL (exp_rel c) xs ys ==>
+        exp_rel c (Op op xs) (Op op ys))) /\
+   ((!c ticks dest xs ys handler handler1.
+        LIST_REL (exp_rel c) xs ys /\ OPTREL (exp_rel c) handler
+          handler1 ==>
+        exp_rel c (bvi_Call ticks dest xs handler)
+          (bvi_Call ticks dest ys handler1))) /\
+   ((!c rets ticks dest xs ys x y.
+        LIST_REL (exp_rel c) xs ys /\ exp_rel c x y ==>
+        exp_rel c (bvi_LetCall rets ticks dest xs x)
+          (bvi_LetCall rets ticks dest ys y))) /\
+   ((!c xs ys. LIST_REL (exp_rel c) xs ys ==>
+        exp_rel c (bvi_Return xs) (bvi_Return ys))) /\
+   ((!c ticks n xs ys arity body.
+        LIST_REL (exp_rel c) xs ys /\ sptree_lookup n c = SOME
+          (arity,body) /\
+        LENGTH ys = arity ==>
+        exp_rel c (bvi_Call ticks (SOME n) xs NONE)
+          (Let ys (bvi_mk_tick (SUC ticks) body))))`;;
 
 let in_cc_def = cake_define
   `bvi_inlineProof_in_cc cc =

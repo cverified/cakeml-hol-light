@@ -136,70 +136,70 @@ let ref_ptr_annot_def = cake_define
       | _1 -> Word (n2w 0)`;;
 
 let v_inv_ck = cake_inductive
-  `small_int (:'a) i ==>
-     v_inv_ck ck conf (Number i) (refs:(dataSem_v bvlSem_ref) spt)
-                (Data (Word (Smallnum i)),f,tf,(heap:(('a
-                  word_loc,data_to_word_memoryProof_tag#('a word_loc)
-                  list)heap_element) list)) /\
-   ~small_int (:'a) i /\
-   heap_lookup ptr heap = SOME (Bignum i) ==>
-     v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr (Word
-       (n2w 0)),f,tf,(heap:(('a
-       word_loc,data_to_word_memoryProof_tag#('a word_loc)
-       list)heap_element) list)) /\
-   heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
-     v_inv_ck ck conf (Word64 w) refs (gc_shared_Pointer ptr (Word
-       (n2w 0)),f,tf,(heap:(('a
-       word_loc,data_to_word_memoryProof_tag#('a word_loc)
-       list)heap_element) list)) /\
-   v_inv_ck ck conf (CodePtr n) refs (Data (Loc n 0),f,tf,(heap:(('a
+  `(small_int (:'a) i ==>
+       v_inv_ck ck conf (Number i) (refs:(dataSem_v bvlSem_ref) spt)
+                  (Data (Word (Smallnum i)),f,tf,(heap:(('a
+                    word_loc,data_to_word_memoryProof_tag#('a word_loc)
+                    list)heap_element) list))) /\
+   (~small_int (:'a) i /\
+     heap_lookup ptr heap = SOME (Bignum i) ==>
+       v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr (Word
+         (n2w 0)),f,tf,(heap:(('a
+         word_loc,data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list))) /\
+   (heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
+       v_inv_ck ck conf (Word64 w) refs (gc_shared_Pointer ptr (Word
+         (n2w 0)),f,tf,(heap:(('a
+         word_loc,data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list))) /\
+   (v_inv_ck ck conf (CodePtr n) refs (Data (Loc n 0),f,tf,(heap:(('a
      word_loc,data_to_word_memoryProof_tag#('a word_loc)
-     list)heap_element) list)) /\
-   n IN FDOM f /\
-   (!ev v. ~(lookup n refs = SOME (Thunk ev v))) /\
-   (!tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg fin l c
-     r) ==> ~b) ==>
-     v_inv_ck ck conf (RefPtr b n) refs
-                (gc_shared_Pointer (FAPPLY f n) (ref_ptr_annot conf
-                  (lookup n refs)),
-                 f,tf,(heap:(('a
-                   word_loc,data_to_word_memoryProof_tag#('a word_loc)
-                   list)heap_element) list)) /\
-   lookup n refs = SOME (Thunk ev v) /\
-   (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
-   n IN FDOM f /\
-   heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) /\
-   (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap))
-     ==>
-     v_inv_ck ck conf (RefPtr F n) refs
-                (gc_shared_Pointer (FAPPLY f n) (Word (n2w
-                  0)),f,tf,(heap:(('a
-                  word_loc,data_to_word_memoryProof_tag#('a word_loc)
-                  list)heap_element) list)) /\
-   lookup n refs = SOME (Thunk Evaluated v) /\
-   dest_thunk v refs = NotThunk /\
-   (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
-     v_inv_ck ck conf (RefPtr F n) refs (x,f,tf,(heap:(('a
-       word_loc,data_to_word_memoryProof_tag#('a word_loc)
-       list)heap_element) list)) /\
-   vs = [] /\
-   n < dimword (:'a) DIV 16 /\
-   ts = 0 ==>
-     v_inv_ck ck conf (Block ts n vs) refs
-                (Data (Word (BlockNil n)),f,tf,(heap:(('a
-                  word_loc,data_to_word_memoryProof_tag#('a word_loc)
-                  list)heap_element) list)) /\ ~(
-   vs = []) /\
-   (~(ck = 0) ==> EVERY2 (\v x. v_inv_ck (ck - 1) conf v refs
-     (x,f,tf,heap)) vs xs) /\
-   FLOOKUP tf ts = SOME ptr /\
-   heap_lookup ptr heap = SOME (BlockRep n xs) ==>
-     v_inv_ck ck conf (Block ts n vs) refs
-                (gc_shared_Pointer ptr (Word (ptr_bits conf n (LENGTH
-                  xs))),
-                 f,tf,(heap:(('a
-                   word_loc,data_to_word_memoryProof_tag#('a
-                   word_loc) list)heap_element) list))`;;
+     list)heap_element) list))) /\
+   (n IN FDOM f /\
+     (!ev v. ~(lookup n refs = SOME (Thunk ev v))) /\
+     (!tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg fin l c
+       r) ==> ~b) ==>
+       v_inv_ck ck conf (RefPtr b n) refs
+                  (gc_shared_Pointer (FAPPLY f n) (ref_ptr_annot conf
+                    (lookup n refs)),
+                   f,tf,(heap:(('a
+                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
+                     list)heap_element) list))) /\
+   (lookup n refs = SOME (Thunk ev v) /\
+     (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
+     n IN FDOM f /\
+     heap_lookup (FAPPLY f n) heap = SOME (ThunkBlock ev x) /\
+     (~(ck = (0:num)) ==> v_inv_ck (ck - 1) conf v refs
+       (x,f,tf,heap)) ==>
+       v_inv_ck ck conf (RefPtr F n) refs
+                  (gc_shared_Pointer (FAPPLY f n) (Word (n2w
+                    0)),f,tf,(heap:(('a
+                    word_loc,data_to_word_memoryProof_tag#('a word_loc)
+                    list)heap_element) list))) /\
+   (lookup n refs = SOME (Thunk Evaluated v) /\
+     dest_thunk v refs = NotThunk /\
+     (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
+       v_inv_ck ck conf (RefPtr F n) refs (x,f,tf,(heap:(('a
+         word_loc,data_to_word_memoryProof_tag#('a word_loc)
+         list)heap_element) list))) /\
+   (vs = [] /\
+     n < dimword (:'a) DIV 16 /\
+     ts = 0 ==>
+       v_inv_ck ck conf (Block ts n vs) refs
+                  (Data (Word (BlockNil n)),f,tf,(heap:(('a
+                    word_loc,data_to_word_memoryProof_tag#('a word_loc)
+                    list)heap_element) list))) /\
+   (~(vs = []) /\
+     (~(ck = 0) ==> EVERY2 (\v x. v_inv_ck (ck - 1) conf v refs
+       (x,f,tf,heap)) vs xs) /\
+     FLOOKUP tf ts = SOME ptr /\
+     heap_lookup ptr heap = SOME (BlockRep n xs) ==>
+       v_inv_ck ck conf (Block ts n vs) refs
+                  (gc_shared_Pointer ptr (Word (ptr_bits conf n
+                    (LENGTH xs))),
+                   f,tf,(heap:(('a
+                     word_loc,data_to_word_memoryProof_tag#('a
+                     word_loc) list)heap_element) list)))`;;
 
 let v_inv_eq = cake_define
   `v_inv conf v refs (x,f,tf,heap) =
@@ -426,16 +426,16 @@ val v_ind =
 *)
 
 let gc_inline_rel = cake_inductive
-  `[~(unchanged:)] gc_inline_rel inline h1 x x /\
-     heap_lookup p h1 = SOME block /\
+  `([~(unchanged:)] gc_inline_rel inline h1 x x) /\
+   (heap_lookup p h1 = SOME block /\
      inline block x ==>
-       gc_inline_rel inline h1 (gc_shared_Pointer p u) x`;;
+       gc_inline_rel inline h1 (gc_shared_Pointer p u) x)`;;
 
 let gc_heap_inline_rel = cake_inductive
-  `[~(unchanged:)] gc_heap_inline_rel inline h1 x x /\
-     LIST_REL (gc_inline_rel inline h1) xs ys ==>
+  `([~(unchanged:)] gc_heap_inline_rel inline h1 x x) /\
+   (LIST_REL (gc_inline_rel inline h1) xs ys ==>
        gc_heap_inline_rel inline h1 (DataElement xs n d)
-         (DataElement ys n d)`;;
+         (DataElement ys n d))`;;
 
 let gc_inline_def = cake_define
   `gc_inline inline (r1,h1) (r2,h2) <=>

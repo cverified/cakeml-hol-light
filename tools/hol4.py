@@ -375,14 +375,20 @@ def parse(path):
     # the rules of an Inductive may be labelled ([~Number:] on a
     # line of its own), which is a name for the rule, not syntax
     if kind in ('Inductive', 'CoInductive'):
-      out = []
+      # the label separates the rules, and each of them is a
+      # conjunct of its own: without the parentheses the
+      # quantifier of a rule would reach over the ones after it
+      rules = [[]]
       for l in body.split('\n'):
         if re.match(r"^\s*\[[~^]?[A-Za-z0-9_']*:\]\s*$", l):
-          # the label also separates the rules
-          if any(x.strip() for x in out): out.append('/\\')
+          rules.append([])
         else:
-          out.append(l)
-      body = '\n'.join(out)
+          rules[-1].append(l)
+      rs = [r for r in ('\n'.join(x) for x in rules) if r.strip()]
+      if len(rs) > 1:
+        body = ' /\\\n'.join('(' + r.strip() + ')' for r in rs)
+      elif rs:
+        body = rs[0]
     if kind == 'Definition':
       k = body.find('\nTermination')
       if k >= 0:
