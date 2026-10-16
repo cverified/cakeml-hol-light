@@ -216,9 +216,13 @@ RENAME = {
   ('comparison', 'Less'): 'LESS',
   ('comparison', 'Equal'): 'EQUAL',
   ('comparison', 'Greater'): 'GREATER',
-  # cmlPEG overloads assert with the OPTION_GUARD of the library
-  # layer (asmSem and labSem have an assert of their own)
+  # HOL4's optionTheory overloads assert with OPTION_GUARD, which
+  # the library layer has; the port writes that name, because
+  # asmSem and labSem have an assert of their own and HOL Light
+  # resolves a name over the whole namespace
   ('cmlPEG', 'assert'): 'OPTION_GUARD',
+  ('cmlPtreeConversion', 'assert'): 'OPTION_GUARD',
+  ('fromSexp', 'assert'): 'OPTION_GUARD',
 }
 
 # the constant that a name means in one theory of the port, where

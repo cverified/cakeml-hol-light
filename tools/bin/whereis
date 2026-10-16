@@ -1,0 +1,4 @@
+#!/bin/sh
+# whereis <name>... : which HOL4 theory defines a name, whether
+# the port has that theory, and what the port calls the constant
+python3 -I /home/freek/claude/hol-light/cakeml/tools/whereis.py "$@"
