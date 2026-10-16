@@ -163,6 +163,14 @@ CON_BODY = {
 # make_init, which builds one out of a state of labSem)
 FIELD_VAR_DEF = {
   ('stack_to_labProof', 'make_init_def'): {'s': 'labSem_state'},
+  # the var_map of env_domain_eq is an environment of
+  # source_to_flat, where the v and the c of this theory are
+  # the ones of its own global_env
+  ('source_to_flatProof', 'env_domain_eq_def'):
+    {'var_map': 'source_to_flat_environment'},
+  # the t that the evaluate of halt_assum gives is a state of
+  # stackSem, where the s of this theory is one of labSem
+  ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
 }
 
 FIELD_OF = {
