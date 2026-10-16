@@ -146,6 +146,58 @@ let all_size_fns () =
 let size_fn_of_type_fwd =
   ref ((fun ty -> failwith "size_fn_of_type"):hol_type->term);;
 
+(* the members of the front of a list and its last element are
+   members of the list: a definition that recurses on BUTLAST and
+   LAST (bvi_let$compile_sing) asks for their size *)
+
+let MEM_BUTLAST = prove
+ (`!x l. MEM x (BUTLAST l) ==> MEM x l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[BUTLAST; MEM] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
+  ASM_MESON_TAC[]);;
+
+let MEM_LAST_NONNIL = prove
+ (`!l. ~(l = []) ==> MEM (LAST l) l`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[LAST; MEM; NOT_CONS_NIL] THEN
+  COND_CASES_TAC THEN ASM_REWRITE_TAC[MEM] THEN
+  ASM_MESON_TAC[]);;
+
+(* the facts about BUTLAST and LAST that the assumptions of a
+   termination goal give, so that MEM_SIZE_TAC can use them *)
+
+let LIST_MEM_TAC (asl,w as gl) =
+  let news =
+    mapfilter (fun (_,th) ->
+                 try MATCH_MP MEM_BUTLAST th
+                 with Failure _ -> MATCH_MP MEM_LAST_NONNIL th)
+              asl in
+  let news = filter (fun th ->
+                       not (exists (fun (_,a) -> concl a = concl th)
+                                   asl))
+                    news in
+  (if news = [] then ALL_TAC else MAP_EVERY ASSUME_TAC news) gl;;
+
+(* every bound variable of a termination goal gets a name of its
+   own: HOL Light's STRIP_TAC takes an existential assumption
+   apart under the name that it has, and the goal of a definition
+   by cases has assumptions like (?op xs. Op op xs = expr) whose
+   names are the variables of the clause, where CHOOSE fails *)
+
+let FRESH_BOUND_CONV tm =
+  let used = ref (map (fst o dest_var) (frees tm)) in
+  let rec go t =
+    match t with
+      Comb(s,u) -> mk_comb(go s,go u)
+    | Abs(v,b) ->
+        let v1 = variant (map (fun s -> mk_var(s,type_of v))
+                              (!used)) v in
+        used := fst(dest_var v1) :: (!used);
+        mk_abs(v1,go (vsubst [v1,v] b))
+    | _ -> t in
+  let tm1 = go tm in
+  if tm1 = tm then REFL tm else ALPHA tm tm1;;
+
 let MEM_SIZE_TAC (asl,w as gl) =
   let mems =
     mapfilter (fun (_,th) ->
@@ -221,11 +273,24 @@ let FACTS_TAC (asl,w as gl) =
     itlist (fun t l -> union (find_terms (fun _ -> true) t) l)
            (w :: map (concl o snd) asl) [] in
   let instances th =
-    let key = sel (snd(strip_forall(concl th))) in
-    mapfilter (fun t -> PART_MATCH sel th t)
-              (filter (fun t -> can (term_match [] key) t) tms) in
+    let avs,bod = strip_forall(concl th) in
+    let key = sel bod in
+    let full t =
+      try let _,tmin,_ = term_match [] key t in
+          subset avs (map snd tmin)
+      with Failure _ -> false in
+    mapfilter (fun t -> PART_MATCH sel th t) (filter full tms) in
   let facts = itlist (fun th l -> instances th @ l)
                      (!cake_term_facts) [] in
+  (* the same, for a fact whose antecedent an assumption of the
+     goal gives (HOL4's imp_res_tac); the equation of a match is
+     the other way round, so it is tried both ways *)
+  let facts =
+    facts @
+    itlist (fun th l ->
+              mapfilter (fun (_,a) -> MATCH_MP th a) asl @
+              mapfilter (fun (_,a) -> MATCH_MP th (SYM a)) asl @ l)
+           (!cake_term_facts) [] in
   (if facts = [] then ALL_TAC else MAP_EVERY MP_TAC facts) gl;;
 
 (* when a termination proof does not close, the goal is logged *)
@@ -253,10 +318,12 @@ and SIZE_TERM_TAC g =
   (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM; PAIR_EQ;
                o_THM; FST; SND] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+   CONV_TAC FRESH_BOUND_CONV THEN
    REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REWRITE_TAC(all_size_thms()) THEN
-   RULE_ASSUM_TAC(REWRITE_RULE(all_size_thms())) THEN
+   RULE_ASSUM_TAC(REWRITE_RULE(LENGTH_EQ_NIL::all_size_thms())) THEN
+   LIST_MEM_TAC THEN
    MEM_SIZE_TAC THEN DIV_FACTS_TAC THEN
    (* a fact may make a subterm appear that another fact is about *)
    FACTS_TAC THEN FACTS_TAC THEN
@@ -269,6 +336,7 @@ and SIZE_TERM_TAC g =
 and ADMISS_TERM_TAC g =
   (PURE_REWRITE_TAC[admissible] THEN
    REWRITE_TAC[FORALL_PAIR_THM] THEN
+   CONV_TAC FRESH_BOUND_CONV THEN
    REPEAT GEN_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REWRITE_TAC[] THEN
@@ -577,7 +645,13 @@ let define_mutual wfs tm =
   let newcls = map (fun cl -> close_clause [g] (newcl cl)) cls in
   let existence cls =
     let etm = mk_exists(g,list_mk_conj cls) in
-    if wfs = [] then prove_general_recursive_function_exists etm else
+    if wfs = [] then
+      (* as in define_single: a theorem that still has the
+         condition as an assumption is of no use, and giving it
+         to new_specification would keep the other form of the
+         clauses from being tried *)
+      let th = prove_general_recursive_function_exists etm in
+      (if hyp th = [] then th else failwith "existence") else
     let th = pure_prove_recursive_function_exists etm in
     if hyp th = [] then th
     else tryfind (fun rt -> discharge_conditions rt th) wfs in
@@ -757,10 +831,24 @@ let define_prim_rec tm =
         let f,r = assoc fn assign in
         let n = arity f in
         let others = filter (fun i -> i <> r) (0--(n-1)) in
-        let cl = find (fun (g,cargs,_) ->
-                         g = f && length cargs = n &&
-                         fst(strip_comb(el r cargs)) = con)
-                      cls in
+        let mycls = filter (fun (g,cargs,_) ->
+                              g = f && length cargs = n) cls in
+        (* the clause of the constructor, or, where it has none,
+           the last clause of the function if its pattern is a
+           variable: that is what HOL4's first match semantics
+           makes of it (bvi_tailrec's has_rec_sing ends with
+           has_rec_sing loc x = F) *)
+        let cl,catch =
+          try find (fun (_,cargs,_) ->
+                      fst(strip_comb(el r cargs)) = con) mycls,false
+          with Failure _ ->
+            (* the failure has to be the one that the ARB case of
+               a constructor without a clause catches *)
+            if mycls = [] then failwith "find" else
+            let lst = last mycls in
+            let _,cargs,_ = lst in
+            if is_var (el r cargs) then lst,true
+            else failwith "find" in
         let _,cargs,rhs = cl in
         let pargs = snd(strip_comb(el r cargs)) in
         (* a pattern argument may itself be a tuple of variables, which
@@ -769,8 +857,11 @@ let define_prim_rec tm =
           if is_var p then [a,p]
           else let x,y = dest_pair p in
                patsub (mk_fst a) x @ patsub (mk_snd a) y in
-        let rhs = vsubst (itlist2 (fun a p l -> patsub a p @ l)
-                                  args pargs []) rhs in
+        let rhs =
+          if catch
+          then vsubst [list_mk_comb(con,args),el r cargs] rhs
+          else vsubst (itlist2 (fun a p l -> patsub a p @ l)
+                               args pargs []) rhs in
         let ovars = map (fun i -> el i cargs) others in
         let rmap = map2 (fun rv rval -> rator rval,rand rval,rv)
                         rvs recvals in
@@ -2358,6 +2449,46 @@ let define_lift_if inner tm =
       REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[]) in
   map derive cls,spec;;
 
+(* ------------------------------------------------------------------ *)
+(* A list function that folds with a conditional.                     *)
+(*                                                                    *)
+(* HOL4 writes `if f x then T else g xs` where the definition means   *)
+(* `f x \/ g xs` (bvi_tailrec's has_rec_sing), and define_maplist     *)
+(* only sees the connective.  The clauses are rewritten with the two  *)
+(* tautologies, the definition is made from them, and the clauses as  *)
+(* they were given are derived from it.                               *)
+(* ------------------------------------------------------------------ *)
+
+let COND_T_OR = TAUT `(if a then T else b) <=> a \/ b`
+and COND_F_AND = TAUT `(if a then b else F) <=> a /\ b`;;
+
+let define_cond_bool inner tm =
+  let fs = definition_heads tm in
+  let cls = conjuncts(snd(strip_forall tm)) in
+  let changed = ref false in
+  let newcl cl =
+    let l,r = dest_eq(snd(strip_forall cl)) in
+    let r' = try rand(concl(PURE_REWRITE_CONV[COND_T_OR; COND_F_AND]
+                              r))
+             with Failure _ -> r in
+    if r' <> r then changed := true;
+    close_clause fs (mk_eq(l,r')) in
+  let newcls = map newcl cls in
+  if not (!changed) then failwith "define_cond_bool" else
+  (* only where the rewriting makes the shape that define_maplist
+     takes: a definition that merely has a conditional in it
+     somewhere would otherwise go through all the strategies a
+     second time and spend the budget twice *)
+  let ths,spec = define_maplist inner (list_mk_conj newcls) in
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   fs in
+  let derive cl =
+    let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
+    prove(gcl,
+          REPEAT GEN_TAC THEN
+          REWRITE_TAC(COND_T_OR :: COND_F_AND :: ths)) in
+  map derive cls,spec;;
+
 let cake_define_gen wf tm =
   the_cond_why := "";
   let fs0 = definition_heads tm in
@@ -2403,6 +2534,8 @@ let cake_define_gen wf tm =
        try strat "nested" (fun () -> define_nested tm)
        with Failure _ when not (declared ()) ->
        try strat "maplist" (fun () -> define_maplist strategies tm)
+       with Failure _ when not (declared ()) ->
+       try strat "cond_bool" (fun () -> define_cond_bool strategies tm)
        with Failure _ when not (declared ()) ->
        try strat "sing" (fun () -> define_sing strategies tm)
        with Failure _ when not (declared ()) ->

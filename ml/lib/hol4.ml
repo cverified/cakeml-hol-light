@@ -64,6 +64,16 @@ let FOLDR_THM = prove
 let cwc = new_definition
   `cwc (v:A) (k:A->B) = k v`;;
 
+(* HOL4's count n is the set of the numbers below n
+   (wordSem's list_rearrange), and its SET_TO_LIST is the
+   list_of_set of HOL Light (word_elimProof's get_store) *)
+
+let count_def = new_definition
+  `count n = {m | m < n}`;;
+
+override_interface("SET_TO_LIST",
+  `list_of_set:(A->bool)->(A)list`);;
+
 (* HOL4's OPTREL (optionTheory), with the monotonicity theorem that
    an inductive definition over it needs (HOL Light has the ones of
    ALL and ALL2, which are HOL4's EVERY and LIST_REL) *)
@@ -195,6 +205,17 @@ let DROP = new_recursive_definition list_RECURSION
   `(DROP n [] = ([]:A list)) /\
    (DROP n (CONS x xs) =
     if n = 0 then CONS x xs else DROP (n - 1) xs)`;;
+
+(* HOL4's LASTN of rich_listTheory: the last n elements of a
+   list (wordSem's jump_exc takes the stack from the handler on) *)
+
+let LASTN = new_definition
+  `LASTN n (l:A list) = REVERSE (TAKE n (REVERSE l))`;;
+
+(* HOL4's SINGL: the list of one element (cmlPtreeConversion) *)
+
+let SINGL = new_definition
+  `SINGL (x:A) = [x]`;;
 
 let ALL_DISTINCT = new_definition
   `ALL_DISTINCT (l:A list) <=> PAIRWISE (\x y. ~(x = y)) l`;;
@@ -449,6 +470,14 @@ let toUpper = new_definition
 
 let inv_image = new_definition
   `inv_image (R:B->B->bool) (f:A->B) = \x y. R (f x) (f y)`;;
+
+(* HOL4 writes f PERMUTES s for a bijection of a set onto
+   itself (backendProof asks it of the register names) *)
+
+parse_as_infix("PERMUTES",(12,"right"));;
+
+let PERMUTES = new_definition
+  `(f PERMUTES s) <=> BIJ f s s`;;
 
 parse_as_infix("LEX",(14,"right"));;
 

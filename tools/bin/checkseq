@@ -17,6 +17,11 @@ log=/home/freek/claude/hol-light/cakeml/tools/checkseq.log
   # which files fail is much faster with a small one
   [ -n "$CAKE_TIMEOUT" ] && repl-step $s \
     "cake_timeout := $CAKE_TIMEOUT;;" > /dev/null 2>&1
+  # with CAKE_DEBUG every definition that fails logs the goal it
+  # could not prove to tmp/debug.txt
+  [ -n "$CAKE_DEBUG" ] && {
+    : > $C/tmp/debug.txt
+    repl-step $s "cake_debug := true;;" > /dev/null 2>&1; }
   : > $log; : > $C/tools/conjfail.log; }
 for f in "$@"; do
   case "$f" in /*) g="$f";; *) g="$ML/$f";; esac

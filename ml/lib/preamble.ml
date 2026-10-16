@@ -10,6 +10,7 @@ load_path := cakeml_dir :: (!load_path);;
 
 needs "Library/words.ml";;
 
+needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;
 needs "lib/define.ml";;
 needs "lib/records.ml";;
