@@ -139,6 +139,9 @@ FIELD_OF = {
   'source_to_flatProof': {'v': 'global_env',
                           'c': 'global_env'},
   'flatSem': {'v': 'flatSem_environment'},
+  # the environment of flatProps' evaluate_match is the one of
+  # flatSem, whose v is an association list
+  'flatProps': {'v': 'flatSem_environment'},
   # the environment that these proofs are about is flatSem's,
   # whose v is an association list
   'flat_to_closProof': {'v': 'flatSem_environment'},
@@ -264,6 +267,10 @@ RENAME_CONST = {
 # of the semantics theories is llist's)
 LOCAL_NAMES = {
   ('bvi_inlineProof', 'toList'): 'sptree_toList',
+  # the stack that this measures is the one of wordSem (the port
+  # gives wordSem's stack_size the plain name), and nothing in
+  # the invariant says so
+  ('data_to_word_gcProof', 'stack_size'): 'stack_size',
   ('data_to_word', 'fromList'): 'sptree_fromList',
   ('flat_pattern', 'fromList'): 'sptree_fromList',
   ('clos_to_bvl', 'fromList'): 'sptree_fromList',
