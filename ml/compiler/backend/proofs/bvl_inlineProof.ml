@@ -78,34 +78,40 @@ val remove_ticks_CONS = prove(
 (* correctness of tick_inline *)
 
 let exp_rel = cake_inductive
-  `(!cs v. exp_rel (cs:(num#bvl_exp) spt) [bvl_Var v] [bvl_Var v]) /\
-   (!cs. exp_rel cs [] []) /\
+  `(!cs v. bvl_inlineProof_exp_rel (cs:(num#bvl_exp) spt) [bvl_Var v]
+  [bvl_Var v]) /\
+   (!cs. bvl_inlineProof_exp_rel cs [] []) /\
    (!cs x x1 xs y y1 ys.
-      exp_rel cs [x] [y] /\
-      exp_rel cs (x1 :: xs) (y1 :: ys) ==>
-      exp_rel cs (x :: x1 :: xs) (y :: y1 :: ys)) /\
-   (exp_rel cs [x1] [y1] /\
-    exp_rel cs [x2] [y2] /\
-    exp_rel cs [x3] [y3] ==>
-    exp_rel cs [bvl_If x1 x2 x3] [bvl_If y1 y2 y3]) /\
-   (exp_rel cs xs ys /\
-    exp_rel cs [x] [y] ==>
-    exp_rel cs [bvl_Let xs x] [bvl_Let ys y]) /\
-   (exp_rel cs [x1] [y1] /\
-    exp_rel cs [x2] [y2] ==>
-    exp_rel cs [bvl_Handle x1 x2] [bvl_Handle y1 y2]) /\
-   (exp_rel cs [x] [y] ==>
-    exp_rel cs [bvl_Raise x] [bvl_Raise y]) /\
-   (exp_rel cs [x] [y] ==>
-    exp_rel cs [bvl_Tick x] [bvl_Tick y]) /\
-   (exp_rel cs xs ys ==>
-    exp_rel cs [bvl_Op op xs] [bvl_Op op ys]) /\
-   (exp_rel cs [bvl_Force loc n] [bvl_Force loc n]) /\
-   (exp_rel cs xs ys ==>
-    exp_rel cs [bvl_Call ticks dest xs] [bvl_Call ticks dest ys]) /\
-   (exp_rel cs xs ys /\ sptree_lookup n cs = SOME (arity,x) /\
-    exp_rel cs [x] [y] ==>
-    exp_rel cs [bvl_Call ticks (SOME n) xs]
+      bvl_inlineProof_exp_rel cs [x] [y] /\
+      bvl_inlineProof_exp_rel cs (x1 :: xs) (y1 :: ys) ==>
+      bvl_inlineProof_exp_rel cs (x :: x1 :: xs) (y :: y1 :: ys)) /\
+   (bvl_inlineProof_exp_rel cs [x1] [y1] /\
+    bvl_inlineProof_exp_rel cs [x2] [y2] /\
+    bvl_inlineProof_exp_rel cs [x3] [y3] ==>
+    bvl_inlineProof_exp_rel cs [bvl_If x1 x2 x3] [bvl_If y1 y2 y3])
+      /\
+   (bvl_inlineProof_exp_rel cs xs ys /\
+    bvl_inlineProof_exp_rel cs [x] [y] ==>
+    bvl_inlineProof_exp_rel cs [bvl_Let xs x] [bvl_Let ys y]) /\
+   (bvl_inlineProof_exp_rel cs [x1] [y1] /\
+    bvl_inlineProof_exp_rel cs [x2] [y2] ==>
+    bvl_inlineProof_exp_rel cs [bvl_Handle x1 x2] [bvl_Handle y1 y2])
+      /\
+   (bvl_inlineProof_exp_rel cs [x] [y] ==>
+    bvl_inlineProof_exp_rel cs [bvl_Raise x] [bvl_Raise y]) /\
+   (bvl_inlineProof_exp_rel cs [x] [y] ==>
+    bvl_inlineProof_exp_rel cs [bvl_Tick x] [bvl_Tick y]) /\
+   (bvl_inlineProof_exp_rel cs xs ys ==>
+    bvl_inlineProof_exp_rel cs [bvl_Op op xs] [bvl_Op op ys]) /\
+   (bvl_inlineProof_exp_rel cs [bvl_Force loc n] [bvl_Force loc n])
+     /\
+   (bvl_inlineProof_exp_rel cs xs ys ==>
+    bvl_inlineProof_exp_rel cs [bvl_Call ticks dest xs] [bvl_Call
+      ticks dest ys]) /\
+   (bvl_inlineProof_exp_rel cs xs ys /\ sptree_lookup n cs = SOME
+     (arity,x) /\
+    bvl_inlineProof_exp_rel cs [x] [y] ==>
+    bvl_inlineProof_exp_rel cs [bvl_Call ticks (SOME n) xs]
                [bvl_Let ys (mk_tick (SUC ticks) y)])`;;
 
 let in_cc_def = cake_define
@@ -133,7 +139,8 @@ let in_state_rel_def = cake_define
      (!k arity exp.
         sptree_lookup k (state_code s) = SOME (arity,exp) ==>
         (?exp2. sptree_lookup k (state_code t) = SOME (arity,exp2) /\
-               exp_rel (state_code s) [exp] [exp2]))`;;
+               bvl_inlineProof_exp_rel (state_code s) [exp]
+                 [exp2]))`;;
 hol4_overload "in_state_rel" "bvl_inlineProof_in_state_rel";;
 
 (* HOL4 ML code, not ported:

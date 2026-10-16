@@ -54,6 +54,10 @@ let FUPDATE_LIST = new_definition
 
 (* removing a key, which HOL4 writes fm \\ k *)
 
+(* HOL4 writes this fold as FUPDATE_LIST as well *)
+override_interface("FUPDATE_LIST",
+  `(|++):(A,B)fmap->(A#B)list->(A,B)fmap`);;
+
 parse_as_infix("\\\\",(21,"left"));;
 
 let DOMSUB = new_definition

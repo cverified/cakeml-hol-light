@@ -12,7 +12,26 @@ needs "lib/walk.ml";;
 (* HOL4 ancestors outside the port: relation pair bag prim_rec
    finite_map pred_set *)
 
-cake_declare "walkstar" `:(num,(A)term)fmap->(A)term->(A)term`;;
+let WALKSTARR_RULES,WALKSTARR_INDUCT,WALKSTARR_CASES =
+  new_inductive_definition
+  `(!s t t1 t2 r1 r2.
+      walk s t = term_Pair t1 t2 /\ WALKSTARR s t1 r1 /\
+      WALKSTARR s t2 r2
+      ==> WALKSTARR s t (term_Pair r1 r2)) /\
+   (!s t. (!t1 t2. ~(walk s t = term_Pair t1 t2))
+      ==> WALKSTARR s t (walk s t))`;;
+
+let walkstar_def = new_definition
+  `walkstar s t = @r. WALKSTARR s t r`;;
+
+(* the occurs check, which HOL4 makes with Hol_reln in the same
+   file (walkstarScript.sml) *)
+
+let oc_RULES,oc_INDUCT,oc_CASES =
+  new_inductive_definition
+  `(!s t v. v IN vars t /\ ~(v IN FDOM s) ==> oc s t v) /\
+   (!s t v u t'. u IN vars t /\ vwalk s u = t' /\ oc s t' v
+      ==> oc s t v)`;;
 
 let walkstarR_def = cake_define
   `walkstarR s =

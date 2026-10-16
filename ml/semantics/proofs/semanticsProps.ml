@@ -8,8 +8,8 @@
     determinism.
 *)
 
-needs "lib/balanced_map.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/typeSound.ml";;

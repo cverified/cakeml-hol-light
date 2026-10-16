@@ -34,21 +34,22 @@ val toList_aux_ind = theorem"toList_aux_ind";
 
 let toList_def = cake_define
   `mlvector_toList vec = toList_aux vec 0`;;
+hol4_overload "toList" "mlvector_toList";;
 
 let update_def = cake_define
-  `update vec i x = Vector (LUPDATE x i (mlvector_toList (vec)))`;;
+  `update vec i x = Vector (LUPDATE x i (toList (vec)))`;;
 
 
 let concat_def = cake_define
-  `mlvector_concat l = Vector (FLAT (MAP mlvector_toList l))`;;
+  `mlvector_concat l = Vector (FLAT (MAP toList l))`;;
 hol4_overload "concat" "mlvector_concat";;
 
 let map_def = cake_define
-  `mlvector_map vec f = Vector (MAP f (mlvector_toList vec))`;;
+  `mlvector_map vec f = Vector (MAP f (toList vec))`;;
 hol4_overload "map" "mlvector_map";;
 
 let mapi_def = cake_define
-  `mlvector_mapi vec f = Vector (MAPi f (mlvector_toList vec))`;;
+  `mlvector_mapi vec f = Vector (MAPi f (toList vec))`;;
 hol4_overload "mapi" "mlvector_mapi";;
 
 let foldli_aux_def = cake_define_list

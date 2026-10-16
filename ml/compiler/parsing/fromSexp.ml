@@ -14,7 +14,6 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/ASCIInumbers.ml";;
 needs "lib/comparison.ml";;
 needs "lib/location.ml";;
@@ -129,11 +128,11 @@ let sexpopt_def = cake_define
   `sexpopt p s =
      OPTION_BIND (odestSXSYM s) (\
         nm. OPTION_IGNORE_BIND
-        (assert (nm = (implode "NONE"))) (
+        (OPTION_GUARD (nm = (implode "NONE"))) (
         SOME NONE)) ++
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args). OPTION_IGNORE_BIND
-       (assert (nm = "SOME" /\ LENGTH args = 1)) (
+       (OPTION_GUARD (nm = "SOME" /\ LENGTH args = 1)) (
        OPTION_MAP SOME (p (HD args))))`;;
 
 let sexplist_def = cake_define
@@ -163,11 +162,11 @@ let sexpid_def = cake_define_wf
   `sexpid p s =
      OPTION_BIND (dstrip_sexp s) (\
         (nm,args).
-        ((\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Short" /\
-          LENGTH args = 1)
+        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Short"
+          /\ LENGTH args = 1)
                (OPTION_MAP Short (p (EL 0 args))) ++
-         (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Long" /\
-           LENGTH args = 2)
+         (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Long"
+           /\ LENGTH args = 2)
                (OPTION_MAP2 Long (odestSEXSTR (EL 0 args)) (sexpid
                  p (EL 1 args)))))`;;
 
@@ -180,18 +179,18 @@ let sexptype_def = cake_define_wf
   `sexptype s =
      OPTION_BIND (dstrip_sexp s) (\
         (s,args).
-        ((\b m. OPTION_IGNORE_BIND (assert b) m) (s = "Atvar" /\
-          LENGTH args = 1)
+        ((\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atvar"
+          /\ LENGTH args = 1)
                (OPTION_MAP Atvar (odestSEXSTR (EL 0 args))) ++
-         (\b m. OPTION_IGNORE_BIND (assert b) m) (s = "Atfun" /\
-           LENGTH args = 2)
+         (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atfun"
+           /\ LENGTH args = 2)
                (OPTION_MAP2 Atfun (sexptype (EL 0 args)) (sexptype
                  (EL 1 args))) ++
-         (\b m. OPTION_IGNORE_BIND (assert b) m) (s = "Attup" /\
-           LENGTH args = 1)
+         (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Attup"
+           /\ LENGTH args = 1)
                (OPTION_MAP Attup (sexplist sexptype (EL 0 args))) ++
-         (\b m. OPTION_IGNORE_BIND (assert b) m) (s = "Atapp" /\
-           LENGTH args = 2)
+         (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (s = "Atapp"
+           /\ LENGTH args = 2)
                (OPTION_MAP2 Atapp (sexplist sexptype (EL 0 args))
                       (sexpid odestSEXSTR (EL 1 args)))))`;;
 
@@ -222,30 +221,30 @@ let sexplit_def = cake_define
      OPTION_MAP ast_StrLit (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args). OPTION_IGNORE_BIND
-       (assert (LENGTH args = 1)) (
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "-")
+       (OPTION_GUARD (LENGTH args = 1)) (
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "-")
              (OPTION_BIND (odestSXNUM (HD args))
                           (\n. if n = 0 then NONE else SOME
                             (ast_IntLit (-- &n)))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "char")
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "char")
              (OPTION_BIND (odestSEXSTR (HD args)) (\
                cs. OPTION_IGNORE_BIND
-               (assert (strlen cs = 1)) (
+               (OPTION_GUARD (strlen cs = 1)) (
                SOME (ast_Char (strsub cs 0))))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "word8")
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "word8")
              (OPTION_BIND (odestSXNUM (HD args)) (\
                n. OPTION_IGNORE_BIND
-               (assert (n < 256)) (
+               (OPTION_GUARD (n < 256)) (
                SOME (ast_Word8 (n2w n))))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "word64")
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "word64")
              (OPTION_BIND (odestSXNUM (HD args)) (\
                n. OPTION_IGNORE_BIND
-               (assert (n < 2 EXP 64)) (
+               (OPTION_GUARD (n < 2 EXP 64)) (
                SOME (ast_Word64 (n2w n))))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "float64")
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "float64")
              (OPTION_BIND (odestSXNUM (HD args)) (\
                n. OPTION_IGNORE_BIND
-               (assert (n < 2 EXP 64)) (
+               (OPTION_GUARD (n < 2 EXP 64)) (
                SOME (ast_Float64 (n2w n)))))))`;;
 
 (* don't require Pvar constructors; bare strings can be pattern
@@ -268,25 +267,25 @@ let sexppat_def = cake_define_wf
      OPTION_MAP ast_Pvar (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Pany" /\ LENGTH
-         args = 0)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pany" /\
+         LENGTH args = 0)
              (SOME ast_Pany) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Plit" /\ LENGTH
-         args = 1)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Plit" /\
+         LENGTH args = 1)
              (OPTION_MAP ast_Plit (sexplit (EL 0 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Pcon" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pcon" /\
+         LENGTH args = 2)
              (OPTION_MAP2 ast_Pcon (sexpopt (sexpid odestSEXSTR) (EL
                0 args))
                          (sexplist sexppat (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Pas" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pas" /\
+         LENGTH args = 2)
              (OPTION_MAP2 ast_Pas (sexppat (EL 0 args))
                         (odestSEXSTR (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Pref" /\ LENGTH
-         args = 1) (OPTION_MAP ast_Pref (sexppat (EL 0 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Ptannot" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Pref" /\
+         LENGTH args = 1) (OPTION_MAP ast_Pref (sexppat (EL 0 args))) ++
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Ptannot"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Ptannot (sexppat (EL 0 args))
                (sexptype (EL 1 args))))`;;
 
@@ -471,7 +470,7 @@ let sexplocpt_def = cake_define
         | s ->
       OPTION_BIND (strip_sxcons s) (\
         ls.
-        (\b m. OPTION_IGNORE_BIND (assert b) m) (LENGTH ls = 2)
+        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (LENGTH ls = 2)
           (OPTION_MAP2 POSN
                               (odestSXNUM (EL 0 ls))
                               (odestSXNUM (EL 1 ls))))`;;
@@ -480,7 +479,7 @@ let sexplocn_def = cake_define
   `sexplocn s =
      OPTION_BIND (strip_sxcons s) (\
        ls.
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (LENGTH ls = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (LENGTH ls = 2)
              (OPTION_MAP2 Locs
               (sexplocpt (EL 0 ls))
               (sexplocpt (EL 1 ls))))`;;
@@ -494,70 +493,70 @@ let sexpexp_def = cake_define_wf
   `sexpexp s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Raise" /\
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Raise" /\
          LENGTH args = 1)
              (OPTION_MAP ast_Raise (sexpexp (EL 0 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Handle" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Handle"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Handle
                     (sexpexp (EL 0 args))
                     (sexplist (sexppair sexppat sexpexp) (EL 1
                       args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Lit" /\ LENGTH
-         args = 1)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Lit" /\
+         LENGTH args = 1)
              (OPTION_MAP ast_Lit (sexplit (EL 0 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Con" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Con" /\
+         LENGTH args = 2)
              (OPTION_MAP2 ast_Con
                     (sexpopt (sexpid odestSEXSTR) (EL 0 args))
                     (sexplist sexpexp (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Var" /\ LENGTH
-         args = 1)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Var" /\
+         LENGTH args = 1)
              (OPTION_MAP ast_Var (sexpid odestSEXSTR (EL 0 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Fun" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Fun" /\
+         LENGTH args = 2)
              (OPTION_MAP2 ast_Fun (odestSEXSTR (EL 0 args)) (sexpexp
                (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "App" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "App" /\
+         LENGTH args = 2)
              (OPTION_MAP2 ast_App (sexpop (EL 0 args)) (sexplist
                sexpexp (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Log" /\ LENGTH
-         args = 3)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Log" /\
+         LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Log (sexplog
                (EL 0 args)))
                        (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "If" /\ LENGTH
-         args = 3)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "If" /\
+         LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_If (sexpexp
                (EL 0 args)))
                       (sexpexp (EL 1 args)))
                       (sexpexp (EL 2 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Mat" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Mat" /\
+         LENGTH args = 2)
              (OPTION_MAP2 ast_Mat
                (sexpexp (EL 0 args))
                (sexplist (sexppair sexppat sexpexp) (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Let" /\ LENGTH
-         args = 3)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Let" /\
+         LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Let (sexpopt
                odestSEXSTR (EL 0 args)))
                        (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Letrec" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Letrec"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Letrec
                (sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
                  sexpexp)) (EL 0 args))
                (sexpexp (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Tannot" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Tannot"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Tannot
                (sexpexp (EL 0 args))
                (sexptype (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Lannot" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Lannot"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 ast_Lannot
                (sexpexp (EL 0 args))
                (sexplocn (EL 1 args))))`;;
@@ -659,43 +658,43 @@ let sexpdec_def = cake_define_wf
   `sexpdec s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dlet" /\ LENGTH
-         args = 3)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dlet" /\
+         LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dlet (sexplocn
                (HD args)))
                         (sexppat (EL 1 args)))
                         (sexpexp (EL 2 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dletrec" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dletrec"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 Dletrec (sexplocn (HD args))
                             (sexplist (sexppair odestSEXSTR (sexppair
                               odestSEXSTR sexpexp)) (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dtype" /\
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dtype" /\
          LENGTH args = 2)
              (OPTION_MAP2 Dtype (sexplocn (HD args)) (sexptype_def
                (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dtabbrev" /\
-         LENGTH args = 4)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dtabbrev"
+         /\ LENGTH args = 4)
              (OPTION_APPLY (OPTION_APPLY (OPTION_APPLY (OPTION_MAP
                Dtabbrev (sexplocn (EL 0 args)))
                             (sexplist odestSEXSTR (EL 1 args)))
                             (odestSEXSTR (EL 2 args)))
                             (sexptype (EL 3 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Denv" /\ LENGTH
-         args = 1)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Denv" /\
+         LENGTH args = 1)
              (OPTION_MAP Denv (odestSEXSTR (EL 0 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dexn" /\ LENGTH
-         args = 3)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dexn" /\
+         LENGTH args = 3)
              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dexn (sexplocn
                (EL 0 args)))
                         (odestSEXSTR (EL 1 args)))
                         (sexplist sexptype (EL 2 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dmod" /\ LENGTH
-         args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dmod" /\
+         LENGTH args = 2)
              (OPTION_MAP2 Dmod (odestSEXSTR (EL 0 args))
                          (sexplist sexpdec (EL 1 args))) ++
-       (\b m. OPTION_IGNORE_BIND (assert b) m) (nm = "Dlocal" /\
-         LENGTH args = 2)
+       (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "Dlocal"
+         /\ LENGTH args = 2)
              (OPTION_MAP2 Dlocal (sexplist sexpdec (EL 0 args))
                  (sexplist sexpdec (EL 1 args))))`;;
 
@@ -748,7 +747,7 @@ val sexpdec_alt_ind = theorem"sexpdec_alt_ind";
 (* now the reverse: toSexp *)
 
 let listsexp_def = cake_define
-  `listsexp = FOLDR SX_CONS nil`;;
+  `listsexp = FOLDR SX_CONS (SX_SYM "nil")`;;
 
 let optsexp_def = cake_define_list
   [`optsexp NONE = SX_SYM "NONE"`;
@@ -922,11 +921,12 @@ let locssexp_def = cake_define
   `locssexp (Locs p1 p2) = listsexp (MAP locnsexp [p1; p2])`;;
 
 let expsexp_def = cake_define_list
-  [`expsexp (ast_Raise e:ast_exp) = (SX_SYM "Raise"; expsexp e)`;
+  [`expsexp (ast_Raise e:ast_exp) = (SX_CONS (SX_SYM "Raise")
+  (SX_CONS (expsexp e) (SX_SYM "nil")))`;
    `expsexp (ast_Handle e pes:ast_exp) =
-      (SX_SYM "Handle"; expsexp e;
-       listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
-         pes))`;
+      (SX_CONS (SX_SYM "Handle") (SX_CONS (expsexp e) (SX_CONS (
+       listsexp (MAP (\(p,e). SX_CONS (patsexp p) (expsexp e))
+         pes)) (SX_SYM "nil"))))`;
    `expsexp (ast_Lit l:ast_exp) = listsexp [SX_SYM "Lit"; litsexp l]`;
    `expsexp (ast_Con cn es:ast_exp) =
       listsexp [SX_SYM "Con"; optsexp (OPTION_MAP idsexp cn);
@@ -938,27 +938,30 @@ let expsexp_def = cake_define_list
    `expsexp (ast_App op es:ast_exp) =
       listsexp [SX_SYM "App"; opsexp op; listsexp (MAP expsexp
         es)]`;
-   `expsexp (ast_Log lop e1 e2) = (SX_SYM "Log"; logsexp lop; expsexp
-  e1; expsexp e2)`;
-   `expsexp (ast_If e1 e2 e3:ast_exp) = (SX_SYM "If"; expsexp e1;
-  expsexp e2; expsexp e3)`;
+   `expsexp (ast_Log lop e1 e2) = (SX_CONS (SX_SYM "Log") (SX_CONS
+  (logsexp lop) (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_SYM
+  "nil")))))`;
+   `expsexp (ast_If e1 e2 e3:ast_exp) = (SX_CONS (SX_SYM "If")
+  (SX_CONS (expsexp e1) (SX_CONS (expsexp e2) (SX_CONS (expsexp e3)
+  (SX_SYM "nil")))))`;
    `expsexp (ast_Mat e pes:ast_exp) =
-      (SX_SYM "Mat"; expsexp e;
-       listsexp (MAP (λ(p,e). SX_CONS (patsexp p) (expsexp e))
-         pes))`;
+      (SX_CONS (SX_SYM "Mat") (SX_CONS (expsexp e) (SX_CONS (
+       listsexp (MAP (\(p,e). SX_CONS (patsexp p) (expsexp e))
+         pes)) (SX_SYM "nil"))))`;
    `expsexp (ast_Let so e1 e2:ast_exp) =
-      (SX_SYM "Let"; optsexp (OPTION_MAP (SEXSTR ∘ explode) so);
-        expsexp e1; expsexp e2)`;
+      (SX_CONS (SX_SYM "Let") (SX_CONS (optsexp (OPTION_MAP
+        (SEXSTR o explode) so)) (SX_CONS (expsexp e1) (SX_CONS
+        (expsexp e2) (SX_SYM "nil")))))`;
    `expsexp (ast_Letrec funs e:ast_exp) =
-    (SX_SYM "Letrec";
-     listsexp (MAP (λ(x,y,z). SX_CONS (SEXSTR (explode x))
+    (SX_CONS (SX_SYM "Letrec") (SX_CONS (
+     listsexp (MAP (\(x,y,z). SX_CONS (SEXSTR (explode x))
                               (SX_CONS (SEXSTR (explode y)) (expsexp
-                                z))) funs);
-     expsexp e)`;
-   `expsexp (ast_Tannot e t) = (SX_SYM "Tannot"; expsexp e; typesexp
-  t)`;
-   `expsexp (ast_Lannot e loc) = (SX_SYM "Lannot"; expsexp e;
-  locssexp loc)`];;
+                                z))) funs)) (SX_CONS (
+     expsexp e) (SX_SYM "nil"))))`;
+   `expsexp (ast_Tannot e t) = (SX_CONS (SX_SYM "Tannot") (SX_CONS
+  (expsexp e) (SX_CONS (typesexp t) (SX_SYM "nil"))))`;
+   `expsexp (ast_Lannot e loc) = (SX_CONS (SX_SYM "Lannot")
+  (SX_CONS (expsexp e) (SX_CONS (locssexp loc) (SX_SYM "nil"))))`];;
 
 let type_defsexp_def = cake_define
   `type_defsexp = listsexp o
@@ -970,7 +973,8 @@ let type_defsexp_def = cake_define
 
 let decsexp_def = cake_define_list
   [`decsexp (Dlet locs p e) =
-      (SX_SYM "Dlet"; locssexp locs; patsexp p; expsexp e)`;
+      (SX_CONS (SX_SYM "Dlet") (SX_CONS (locssexp locs) (SX_CONS
+        (patsexp p) (SX_CONS (expsexp e) (SX_SYM "nil")))))`;
    `decsexp (Dletrec locs funs) =
        listsexp [
            SX_SYM "Dletrec";
@@ -979,18 +983,21 @@ let decsexp_def = cake_define_list
              (MAP (\(f,x,e). SX_CONS (SEXSTR (explode f)) (SX_CONS
                (SEXSTR (explode x)) (expsexp e)))
               funs)]`;
-   `decsexp (Dtype locs td) = (SX_SYM "Dtype"; locssexp locs;
-  type_defsexp td)`;
-   `decsexp (Dtabbrev locs ns x t) = (SX_SYM "Dtabbrev"; locssexp
-  locs; listsexp (MAP (SEXSTR ∘ explode) ns); SEXSTR (explode x);
-  typesexp t)`;
-   `decsexp (Denv name) = (SX_SYM "Denv"; SEXSTR (explode name))`;
+   `decsexp (Dtype locs td) = (SX_CONS (SX_SYM "Dtype") (SX_CONS
+  (locssexp locs) (SX_CONS (type_defsexp td) (SX_SYM "nil"))))`;
+   `decsexp (Dtabbrev locs ns x t) = (SX_CONS (SX_SYM "Dtabbrev")
+  (SX_CONS (locssexp locs) (SX_CONS (listsexp (MAP (SEXSTR o explode)
+  ns)) (SX_CONS (SEXSTR (explode x)) (SX_CONS (typesexp t) (SX_SYM
+  "nil"))))))`;
+   `decsexp (Denv name) = (SX_CONS (SX_SYM "Denv") (SX_CONS (SEXSTR
+  (explode name)) (SX_SYM "nil")))`;
    `decsexp (Dexn locs x ts) =
-      (SX_SYM "Dexn"; locssexp locs; SEXSTR (explode x); listsexp
-        (MAP typesexp ts))`;
+      (SX_CONS (SX_SYM "Dexn") (SX_CONS (locssexp locs) (SX_CONS
+        (SEXSTR (explode x)) (SX_CONS (listsexp (MAP typesexp ts))
+        (SX_SYM "nil")))))`;
    `decsexp (Dmod name decs) =
-      (SX_SYM "Dmod"; SEXSTR (explode name); listsexp (MAP
-        decsexp decs))`;
+      (SX_CONS (SX_SYM "Dmod") (SX_CONS (SEXSTR (explode name))
+        (SX_CONS (listsexp (MAP decsexp decs)) (SX_SYM "nil"))))`;
    `decsexp (Dlocal ldecs decs) =
       listsexp [SX_SYM "Dlocal"; listsexp (MAP decsexp ldecs);
                 listsexp (MAP decsexp decs)]`];;

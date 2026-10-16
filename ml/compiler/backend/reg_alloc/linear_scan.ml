@@ -684,7 +684,7 @@ let linear_reg_alloc_step_aux_def = cake_define
        (linear_scan_state_colorpool st)) preferred in
      match find_color_in_list preferred_filtered forbidden with SOME
        (col,_4) -> color_register (linear_scan_state_colorpool_fupd
-       (FILTER ((<>) col)) st) reg col rend | NONE -> (
+       (FILTER ((\x y. ~(x = y)) col)) st) reg col rend | NONE -> (
        match find_color st forbidden with (st',SOME col) ->
          color_register st' reg col rend | (st',NONE) -> find_spill
          st' forbidden reg rend force))`;;

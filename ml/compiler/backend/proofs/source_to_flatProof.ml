@@ -12,7 +12,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/flat_elimProof.ml";;
 needs "compiler/backend/proofs/flat_patternProof.ml";;
 needs "compiler/backend/proofs/source_evalProof.ml";;
@@ -95,22 +94,24 @@ let genv_c_tys_ok_def = cake_define
 
 let v_rel = cake_inductive
   `(!genv lit.
-     v_rel genv ((Litv lit):semanticPrimitives_v) ((Litv
-       lit):flatSem_v)) /\
+     source_to_flatProof_v_rel genv ((Litv lit):semanticPrimitives_v)
+       ((Litv lit):flatSem_v)) /\
    (!genv cn cn' vs vs'.
-     LIST_REL (v_rel genv) vs vs' /\
+     LIST_REL (source_to_flatProof_v_rel genv) vs vs' /\
      FLOOKUP (global_env_c genv) (cn',LENGTH vs) = SOME cn ==>
-     v_rel genv (Conv (SOME cn) vs) (Conv (SOME cn') vs')) /\
+     source_to_flatProof_v_rel genv (Conv (SOME cn) vs) (Conv (SOME
+       cn') vs')) /\
    (!genv vs vs'.
-     LIST_REL (v_rel genv) vs vs' ==>
-     v_rel genv (Conv NONE vs) (Conv NONE vs')) /\
+     LIST_REL (source_to_flatProof_v_rel genv) vs vs' ==>
+     source_to_flatProof_v_rel genv (Conv NONE vs) (Conv NONE vs'))
+       /\
    (!genv comp_map env env_v_local x e env_v_local' t ts.
-     source_evalProof_env_rel genv env_v_local (flatSem_environment_v
-       env_v_local') /\
+     source_to_flatProof_env_rel genv env_v_local
+       (flatSem_environment_v env_v_local') /\
      global_env_inv genv comp_map (set_of_list (MAP FST
        (flatSem_environment_v env_v_local'))) env /\
      LENGTH ts = LENGTH (flatSem_environment_v env_v_local') + 1 ==>
-     v_rel genv
+     source_to_flatProof_v_rel genv
        (Closure (sem_env_v_fupd (K (nsAppend env_v_local (sem_env_v
          env))) env) x e)
        (Closure env_v_local' x
@@ -120,13 +121,13 @@ let v_rel = cake_inductive
              (source_to_flat_environment_v comp_map))) comp_map)
            e))) /\
    (!genv comp_map env env_v_local funs x env_v_local' t ts.
-     source_evalProof_env_rel genv env_v_local (flatSem_environment_v
-       env_v_local') /\
+     source_to_flatProof_env_rel genv env_v_local
+       (flatSem_environment_v env_v_local') /\
      global_env_inv genv comp_map (set_of_list (MAP FST
        (flatSem_environment_v env_v_local'))) env /\
      LENGTH ts = LENGTH funs + LENGTH (flatSem_environment_v
        env_v_local') ==>
-     v_rel genv
+     source_to_flatProof_v_rel genv
        (Recclosure (sem_env_v_fupd (K (nsAppend env_v_local
          (sem_env_v env))) env) funs x)
        (Recclosure env_v_local'
@@ -151,7 +152,7 @@ let v_rel = cake_inductive
                      (K (nsBindList ((y,Local t3 y) :: new_vars)
                      (source_to_flat_environment_v comp_map))) comp_map)
                      e)))) ==>
-     v_rel genv
+     source_to_flatProof_v_rel genv
        (Recclosure env funs x)
        (Closure flat_env y
          (compile_exp t1
@@ -160,17 +161,17 @@ let v_rel = cake_inductive
              comp_map))) comp_map)
            e))) /\
    (!genv loc b.
-     v_rel genv (Loc b loc) (Loc b (loc + 1))) /\
+     source_to_flatProof_v_rel genv (Loc b loc) (Loc b (loc + 1))) /\
    (!genv vs vs'.
-     LIST_REL (v_rel genv) vs vs' ==>
-     v_rel genv (Vectorv vs) (Vectorv vs')) /\
+     LIST_REL (source_to_flatProof_v_rel genv) vs vs' ==>
+     source_to_flatProof_v_rel genv (Vectorv vs) (Vectorv vs')) /\
    (!genv.
-     source_evalProof_env_rel genv nsEmpty []) /\
+     source_to_flatProof_env_rel genv nsEmpty []) /\
    (!genv x v env env' v'.
-     source_evalProof_env_rel genv env env' /\
-     v_rel genv v v' ==>
-     source_evalProof_env_rel genv (nsBind x v env) ((x,v') :: env'))
-       /\
+     source_to_flatProof_env_rel genv env env' /\
+     source_to_flatProof_v_rel genv v v' ==>
+     source_to_flatProof_env_rel genv (nsBind x v env) ((x,v') ::
+       env')) /\
    (!genv comp_map shadowers env.
      (!x v.
         ~(
@@ -181,7 +182,7 @@ let v_rel = cake_inductive
             (Glob t n) /\
           n < LENGTH (global_env_v genv) /\
           EL n (global_env_v genv) = SOME v' /\
-          v_rel genv v v')) /\
+          source_to_flatProof_v_rel genv v v')) /\
      (!x arity stamp.
        nsLookup (sem_env_c env) x = SOME (arity,stamp) ==>
        (?cn ty_gp. nsLookup (source_to_flat_environment_c comp_map) x
@@ -269,29 +270,31 @@ let subglobals_def = cake_define
 let result_rel = cake_inductive
   `(!genv v v'.
      f genv v v' ==>
-     result_rel f genv (Rval v) (Rval v')) /\
+     source_to_flatProof_result_rel f genv (Rval v) (Rval v')) /\
    (!genv v v'.
      v_rel genv v v' ==>
-     result_rel f genv (Rerr (Rraise v)) (Rerr (Rraise v'))) /\
+     source_to_flatProof_result_rel f genv (Rerr (Rraise v)) (Rerr
+       (Rraise v'))) /\
    (!genv a.
-     result_rel f genv (Rerr (Rabort a)) (Rerr (Rabort a)))`;;
+     source_to_flatProof_result_rel f genv (Rerr (Rabort a)) (Rerr
+       (Rabort a)))`;;
 
 let sv_rel = cake_inductive
   `(!genv v v'.
      v_rel genv v v' ==>
-     sv_rel genv (semanticPrimitives_Refv v) (semanticPrimitives_Refv
-       v')) /\
+     source_to_flatProof_sv_rel genv (semanticPrimitives_Refv v)
+       (semanticPrimitives_Refv v')) /\
    (!genv w.
-     sv_rel genv (semanticPrimitives_W8array w)
+     source_to_flatProof_sv_rel genv (semanticPrimitives_W8array w)
        (semanticPrimitives_W8array w)) /\
    (!genv vs vs'.
      LIST_REL (v_rel genv) vs vs' ==>
-     sv_rel genv (semanticPrimitives_Varray vs)
+     source_to_flatProof_sv_rel genv (semanticPrimitives_Varray vs)
        (semanticPrimitives_Varray vs')) /\
    (!genv m v v'.
      v_rel genv v v' ==>
-     sv_rel genv (semanticPrimitives_Thunk m v)
-       (semanticPrimitives_Thunk m v'))`;;
+     source_to_flatProof_sv_rel genv (semanticPrimitives_Thunk m
+       v) (semanticPrimitives_Thunk m v'))`;;
 
 let s_rel = cake_inductive
   `(!genv s s'.
@@ -300,13 +303,13 @@ let s_rel = cake_inductive
        state_clock
      s = state_clock s' /\ state_ffi
      s = state_ffi s' ==>
-     s_rel genv s s')`;;
+     source_to_flatProof_s_rel genv s s')`;;
 
 let env_all_rel = cake_inductive
   `(!genv map' env_v_local env env' locals.
      (?l. env_v_local = alist_to_ns l /\ MAP FST l = locals) /\
      global_env_inv genv map' (set_of_list locals) env /\
-     source_evalProof_env_rel genv env_v_local env' ==>
+     env_rel genv env_v_local env' ==>
      env_all_rel genv map'
        (mk_global_env (nsAppend env_v_local (sem_env_v env))
          (sem_env_c env) ARB)
@@ -317,8 +320,8 @@ let match_result_rel_def = cake_define
   `source_to_flatProof_match_result_rel genv env' x3 x4 =
         match (x3,x4) with
           (Match env,Match env_i1) ->
-        (?env''. env = env'' ++ env' /\ source_evalProof_env_rel genv
-          (alist_to_ns env'') env_i1)
+        (?env''. env = env'' ++ env' /\ env_rel genv (alist_to_ns
+          env'') env_i1)
         | (No_match,No_match) -> T
         | (Match_type_error,_1) -> T
         | (_2,_3) -> F`;;

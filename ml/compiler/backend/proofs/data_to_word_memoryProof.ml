@@ -1203,8 +1203,8 @@ let eq_explode_def = cake_define_list
   bytes_in_word) m dm vs`];;
 
 let word_mem_eq_def = cake_define_list
-  [`word_mem_eq a [] dm m <=> SOME T`;
-   `word_mem_eq a (x :: xs) dm m <=>
+  [`word_mem_eq a [] dm m = SOME T`;
+   `word_mem_eq a (x :: xs) dm m =
          (if ~(a IN dm) then NONE else
          if ~isWord (m a) then NONE else
          if ~(m a = wordLang_Word x) then SOME F else

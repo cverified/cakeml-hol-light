@@ -13,7 +13,6 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_interp.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_to_clos.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/proofs/clos_interpProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
@@ -27,35 +26,41 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 let v_rel = cake_inductive
-  `(!n b. v_rel (Loc b n) (closSem_RefPtr b n)) /\
-   (!i. v_rel (Litv (ast_IntLit i)) (closSem_Number i)) /\
-   (!c. v_rel (Litv (ast_Char c)) (closSem_Number (&(ORD c)))) /\
-   (!s. v_rel (Litv (ast_StrLit s)) (closSem_ByteVector (MAP (n2w o
-     ORD) (explode s)))) /\
-   (!b. v_rel (Litv (ast_Word8 b)) (closSem_Number (&(w2n b)))) /\
-   (!w. v_rel (Litv (ast_Word64 w)) (Word64 w)) /\
-   (!f. v_rel (Litv (ast_Float64 f)) (Word64 f)) /\
-   (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Conv NONE vs)
-     (closSem_Block 0 ws)) /\
-   (!vs ws t r. LIST_REL v_rel vs ws ==> v_rel (Conv (SOME (t,r)) vs)
-     (closSem_Block t ws)) /\
-   (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Vectorv vs)
-     (closSem_Block 0 ws)) /\
+  `(!n b. flat_to_closProof_v_rel (Loc b n) (closSem_RefPtr b n)) /\
+   (!i. flat_to_closProof_v_rel (Litv (ast_IntLit i)) (closSem_Number
+     i)) /\
+   (!c. flat_to_closProof_v_rel (Litv (ast_Char c)) (closSem_Number
+     (&(ORD c)))) /\
+   (!s. flat_to_closProof_v_rel (Litv (ast_StrLit s))
+     (closSem_ByteVector (MAP (n2w o ORD) (explode s)))) /\
+   (!b. flat_to_closProof_v_rel (Litv (ast_Word8 b)) (closSem_Number
+     (&(w2n b)))) /\
+   (!w. flat_to_closProof_v_rel (Litv (ast_Word64 w)) (Word64 w)) /\
+   (!f. flat_to_closProof_v_rel (Litv (ast_Float64 f)) (Word64 f)) /\
+   (!vs ws. LIST_REL flat_to_closProof_v_rel vs ws ==>
+     flat_to_closProof_v_rel (Conv NONE vs) (closSem_Block 0 ws)) /\
+   (!vs ws t r. LIST_REL flat_to_closProof_v_rel vs ws ==>
+     flat_to_closProof_v_rel (Conv (SOME (t,r)) vs) (closSem_Block t
+     ws)) /\
+   (!vs ws. LIST_REL flat_to_closProof_v_rel vs ws ==>
+     flat_to_closProof_v_rel (Vectorv vs) (closSem_Block 0 ws)) /\
    (!env m db.
-     (!n x. ALOOKUP (sem_env_v env) n = SOME x ==>
+     (!n x. ALOOKUP (flatSem_environment_v env) n = SOME x ==>
             indexedLists_findi (SOME n) m < LENGTH db /\
-            v_rel x (EL (indexedLists_findi (SOME n) m) db)) ==>
-      env_rel env (m:(mlstring option) list) (db:closSem_v list)) /\
+            flat_to_closProof_v_rel x (EL (indexedLists_findi (SOME
+              n) m) db)) ==>
+      flat_to_closProof_env_rel env (m:(mlstring option) list)
+        (db:closSem_v list)) /\
    (!env m db n e.
-      env_rel env m db /\ no_Mat e ==>
-      v_rel (Closure env n e)
+      flat_to_closProof_env_rel env m db /\ no_Mat e ==>
+      flat_to_closProof_v_rel (Closure env n e)
             (Closure NONE [] db 1 (HD (flat_to_clos_compile (SOME n
               :: m) [e])))) /\
    (!funs n env m db.
-     n < LENGTH funs /\ env_rel env m db /\ ALL_DISTINCT (MAP FST
-       funs) /\
+     n < LENGTH funs /\ flat_to_closProof_env_rel env m db /\
+       ALL_DISTINCT (MAP FST funs) /\
      EVERY no_Mat (MAP (SND o SND) funs) ==>
-      v_rel (Recclosure env funs (FST (EL n funs)))
+      flat_to_closProof_v_rel (Recclosure env funs (FST (EL n funs)))
        (Recclosure NONE [] db (MAP
              (\(f,v,x). (1,HD (flat_to_clos_compile
                         (SOME v :: (MAP (\n. SOME (FST n)) funs ++
@@ -66,13 +71,14 @@ let store_rel_def = cake_define
   `store_rel refs t_refs =
      (!i. if LENGTH refs <= i then FLOOKUP t_refs i = NONE else
            match EL i refs with semanticPrimitives_Refv v -> (?x.
-             FLOOKUP t_refs i = SOME (closSem_ValueArray [x]) /\ v_rel v
-             x) | Thunk m v -> (?x. FLOOKUP t_refs i = SOME (Thunk m x)
-             /\ v_rel v x) | semanticPrimitives_Varray vs -> (?xs.
-             FLOOKUP t_refs i = SOME (closSem_ValueArray xs) /\
-                              LIST_REL v_rel vs xs) |
-                                semanticPrimitives_W8array bs ->
-                                FLOOKUP t_refs i = SOME
+             FLOOKUP t_refs i = SOME (closSem_ValueArray [x]) /\
+             flat_to_closProof_v_rel v x) | Thunk m v -> (?x. FLOOKUP
+             t_refs i = SOME (Thunk m x) /\ flat_to_closProof_v_rel v x)
+             | semanticPrimitives_Varray vs -> (?xs. FLOOKUP t_refs i =
+             SOME (closSem_ValueArray xs) /\
+                              LIST_REL flat_to_closProof_v_rel vs
+                                xs) | semanticPrimitives_W8array bs
+                                -> FLOOKUP t_refs i = SOME
                                 (closSem_ByteArray bs))`;;
 
 let inc_compile_decs'_def = cake_define
@@ -94,8 +100,8 @@ let state_rel_def = cake_define
      s = state_clock t /\
      store_rel (state_refs s) (state_refs t) /\ ~(
      LENGTH (state_globals t) = 0) /\
-     LIST_REL (OPTREL v_rel) (state_globals s) (TL (state_globals t))
-       /\
+     LIST_REL (OPTREL flat_to_closProof_v_rel) (state_globals s) (TL
+       (state_globals t)) /\
      install_config_rel' (flatSem_state_eval_config s)
        (compile_oracle t) (compile t)`;;
 hol4_overload "state_rel" "flat_to_closProof_state_rel";;

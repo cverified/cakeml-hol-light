@@ -74,11 +74,12 @@ let exc_rel_def = cake_define
         | (_3,_4) -> F`;;
 
 let result_rel_def = cake_define
-  `result_rel R1 R2 x3 x4 =
+  `semanticPrimitivesProps_result_rel R1 R2 x3 x4 =
         match (x3,x4) with
           (Rval v1,Rval v2) -> R1 v1 v2
         | ((Rerr e1),(Rerr e2)) -> exc_rel R2 e1 e2
         | (_5,_6) -> F`;;
+hol4_overload "result_rel" "semanticPrimitivesProps_result_rel";;
 
 let every_error_result_def = cake_define_list
   [`every_error_result P (Rraise e) = P e`;
@@ -115,7 +116,7 @@ let sv_every_def = cake_define
       | _10 -> T`;;
 
 let sv_rel_def = cake_define
-  `sv_rel R x2 x3 =
+  `semanticPrimitivesProps_sv_rel R x2 x3 =
       match (x2,x3) with
         (semanticPrimitives_Refv v1,semanticPrimitives_Refv v2) -> R
           v1 v2
@@ -126,6 +127,7 @@ let sv_rel_def = cake_define
       | ((semanticPrimitives_Thunk m1 v1),(semanticPrimitives_Thunk
         m2 v2)) -> (m1 = m2 /\ R v1 v2)
       | (_11,_12) -> F`;;
+hol4_overload "sv_rel" "semanticPrimitivesProps_sv_rel";;
 
 let store_v_vs_def = cake_define_list
   [`semanticPrimitivesProps_store_v_vs (semanticPrimitives_Refv v) =

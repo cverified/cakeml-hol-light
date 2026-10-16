@@ -11,7 +11,6 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 let ref_rel_def = cake_define
@@ -805,8 +804,8 @@ let eval_sim_def = cake_define
          closSem_evaluate (es2,[],
            closSem_initial_state ffi max_app code2 co2 cc2 (k + ck))
              = (res2,t2) /\
-         result_rel (\x y. T) (\x y. T) res1 res2 /\ state_ffi s2
-           = state_ffi t2))`;;
+         semanticPrimitivesProps_result_rel (\x y. T) (\x y. T)
+           res1 res2 /\ state_ffi s2 = state_ffi t2))`;;
 hol4_overload "eval_sim" "closProps_eval_sim";;
 
 (* HOL4 ML code, not ported:

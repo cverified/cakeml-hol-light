@@ -275,7 +275,26 @@ and ADMISS_TERM_TAC g =
    REPEAT STRIP_TAC THEN
    REWRITE_TAC[FUN_EQ_THM] THEN REPEAT GEN_TAC THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-   AGREE_TAC) g
+   (AGREE_TAC ORELSE (COND_SPLIT_TAC THEN AGREE_TAC))) g
+
+(* the conditions of the conditionals of a goal that no binder
+   of it binds: the measure of a recursive call under one of
+   them only goes down when the condition says so, and the
+   conditional is inside the arm of a match, where
+   COND_CASES_TAC cannot lift it out *)
+
+and COND_SPLIT_TAC (asl,w as gl) =
+  let conds =
+    setify (mapfilter (fun t ->
+                         let c,_ = dest_cond t in
+                         if subset (frees c) (frees w) then c
+                         else fail())
+                      (find_terms is_cond w)) in
+  let conds = if length conds <= 3 then conds
+              else fst(chop_list 3 conds) in
+  if conds = [] then failwith "COND_SPLIT_TAC" else
+  MAP_EVERY (fun c -> ASM_CASES_TAC c THEN ASM_REWRITE_TAC[])
+            conds gl
 
 (* the assumption of an admissibility goal says that the two
    functions agree below the measure; the subterms f x of the goal
@@ -303,7 +322,13 @@ and AGREE_TAC (asl,w as gl) =
     mapfilter (fun a ->
                  let ith = PART_MATCH (lhs o rand) th (mk_comb(f,a))
                    in
-                 MP ith (prove(lhand(concl ith),TERM_TAC)))
+                 (* the assumptions of the goal are what says that
+                    the measure goes down (the condition of a
+                    conditional that the goal was split on) *)
+                 let sub = itlist (fun (_,b) t -> mk_imp(concl b,t))
+                                  asl (lhand(concl ith)) in
+                 MP ith (rev_itlist (fun (_,b) t -> MP t b) asl
+                                    (prove(sub,TERM_TAC))))
               args in
   let eqs = itlist (fun th l -> use th @ l) agree [] in
   if eqs = [] then failwith "AGREE_TAC" else
@@ -2166,6 +2191,42 @@ let define_sing inner tm =
 (* element it gives, and derives the clauses as they are given.       *)
 (* ------------------------------------------------------------------ *)
 
+(* the ways in which the list function of a pair puts the
+   elements together: the map of the element function over the
+   list (CONS), the conjunction or the disjunction of a predicate
+   over the elements, and the concatenation of the lists that the
+   element function gives *)
+
+let maplist_kind r nr =
+  if is_cons r && is_nil nr then "MAP"
+  else if is_conj r && nr = `T` then "ALL"
+  else if is_disj r && nr = `F` then "EX"
+  else if is_nil nr && is_comb r && is_comb(rator r) &&
+          name_of(rator(rator r)) = "APPEND" then "FLAT"
+  else failwith "maplist_kind";;
+
+let maplist_parts k r =
+  if k = "MAP" then dest_cons r
+  else if k = "ALL" then dest_conj r
+  else if k = "EX" then dest_disj r
+  else lhand r,rand r;;
+
+(* the list function itself, of the function g on an element and
+   the list l *)
+
+let maplist_term k g l rty ty =
+  let lty = mk_type("list",[ty]) in
+  if k = "ALL" || k = "EX" then
+    list_mk_comb(mk_mconst(k,
+      mk_fun_ty (type_of g) (mk_fun_ty lty bool_ty)),[g;l])
+  else
+    let m = list_mk_comb(mk_mconst("MAP",
+              mk_fun_ty (type_of g)
+                (mk_fun_ty lty (mk_type("list",[rty])))),[g;l]) in
+    if k = "MAP" then m
+    else mk_comb(mk_mconst("FLAT",
+           mk_fun_ty (type_of m) rty),m);;
+
 let define_maplist inner tm =
   let fs = definition_heads tm in
   if length fs < 2 then failwith "define_maplist" else
@@ -2174,20 +2235,20 @@ let define_maplist inner tm =
   (* the function whose clauses are [] and x::xs, with the cons
      clause giving the element that another function of the block
      gives *)
-  let islist f =
+  let parts f =
     let mycls = filter (fun (g,_,_) -> g = f) cls in
-    length mycls = 2 &&
-    exists (fun (_,args,r) -> args <> [] && is_nil (last args) &&
-                              is_nil r) mycls &&
-    exists (fun (_,args,r) -> args <> [] && is_cons (last args) &&
-                              is_cons r) mycls in
-  let fl = try find islist fs with Failure _ ->
-             failwith "define_maplist" in
-  let mycls = filter (fun (g,_,_) -> g = fl) cls in
-  let _,cargs,crhs = find (fun (_,args,_) -> is_cons (last args))
-                          mycls in
+    if length mycls <> 2 then failwith "parts" else
+    let _,_,nrhs = find (fun (_,args,_) -> args <> [] &&
+                                           is_nil (last args)) mycls in
+    let _,cargs,crhs = find (fun (_,args,_) -> args <> [] &&
+                                               is_cons (last args))
+                            mycls in
+    f,(maplist_kind crhs nrhs,cargs,crhs) in
+  let fl,(kind,cargs,crhs) =
+    try hd (mapfilter parts fs)
+    with Failure _ -> failwith "define_maplist" in
   let x,xs = dest_cons (last cargs) in
-  let el,rest = dest_cons crhs in
+  let el,rest = maplist_parts kind crhs in
   (* the tail of the right hand side is the function itself on the
      tail of the list, and the head is the element, which is made
      of the head of the list and the other arguments (the pattern
@@ -2204,18 +2265,14 @@ let define_maplist inner tm =
      recursion that this does not take apart *)
   if free_in fl el then failwith "define_maplist" else
   let rty = type_of el and ty = type_of x in
-  let mapc = mk_mconst("MAP",
-               mk_fun_ty (mk_fun_ty ty rty)
-                 (mk_fun_ty (mk_type("list",[ty]))
-                            (mk_type("list",[rty])))) in
   let n = length cargs in
   let rec repl t =
     let g,args = strip_comb t in
     if g = fl && length args = n then
       let sub = filter (fun (a,b) -> a <> b)
                        (zip (map repl (butlast args)) vs) in
-      list_mk_comb(mapc,[mk_gabs(x,vsubst sub (repl el));
-                         repl (last args)])
+      maplist_term kind (mk_gabs(x,vsubst sub (repl el)))
+                   (repl (last args)) rty ty
     else
       match t with
         Comb(s,u) -> mk_comb(repl s,repl u)
@@ -2235,19 +2292,22 @@ let define_maplist inner tm =
   let l = variant (vs @ frees el) (mk_var("l",mk_type("list",[ty]))) in
   let fldef = new_definition
     (mk_eq(list_mk_comb(fl,vs @ [l]),
-           list_mk_comb(mapc,[mk_gabs(x,vsubst consts0 el); l]))) in
+           maplist_term kind (mk_gabs(x,vsubst consts0 el)) l
+                        rty ty)) in
   let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
                    fs in
   let derive cl =
     let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
     prove(gcl,
           REPEAT GEN_TAC THEN
-          REWRITE_TAC([fldef; MAP; APPEND] @ ths) THEN
+          REWRITE_TAC([fldef; MAP; ALL; EX; FLAT; APPEND] @ ths)
+            THEN
           CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-          REWRITE_TAC([fldef; MAP; APPEND] @ ths) THEN
+          REWRITE_TAC([fldef; MAP; ALL; EX; FLAT; APPEND] @ ths)
+            THEN
           REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
           CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-          REWRITE_TAC([fldef; MAP; APPEND] @ ths)) in
+          REWRITE_TAC([fldef; MAP; ALL; EX; FLAT; APPEND] @ ths)) in
   map derive allcls,spec;;
 
 (* ------------------------------------------------------------------ *)
@@ -2390,12 +2450,23 @@ let cake_define_gen wf tm =
 
 let cake_timing = ref false;;
 
+(* how long every definition took, which says where the time of
+   a run goes *)
+
+let the_times = ref ([]:(string * float) list);;
+
+let cake_times () = rev (!the_times);;
+
 let cake_time f x =
-  if not (!cake_timing) then f x else
   let t = Sys.time() in
   let y = f x in
-  (print_string (Printf.sprintf "[%.2fs] " (Sys.time() -. t));
-   flush stdout; y);;
+  let dt = Sys.time() -. t in
+  (try the_times :=
+         (fst(dest_var(hd(definition_heads x))),dt) :: !the_times
+   with Failure _ -> ());
+  if !cake_timing then
+    (print_string (Printf.sprintf "[%.2fs] " dt); flush stdout);
+  y;;
 
 (* on failure, say which definition failed (and show it when
    cake_debug is set) *)
@@ -2547,9 +2618,48 @@ let close_rules tm =
   let close r = list_mk_forall(subtract (frees r) rels,r) in
   list_mk_conj (map close rules);;
 
+(* the relations that the rules of an inductive definition
+   define: the head of the conclusion of every rule *)
+
+let rule_heads tm =
+  itlist
+    (fun cl l ->
+       let c = snd(strip_forall cl) in
+       let c = if is_imp c then rand c else c in
+       let f = fst(strip_comb c) in
+       if is_var f && not (mem f l) then f :: l else l)
+    (conjuncts(snd(strip_forall tm))) [];;
+
+(* an inductive definition that HOL Light does not make: the
+   relations are declared and the rules are an axiom.  That is
+   weaker than the definition (it does not say that the relation
+   is the least one that the rules give), so there is no
+   induction theorem, and the second pass has to make the
+   definition itself *)
+
+let cake_cheat_rules tm =
+  let fs = rule_heads tm in
+  do_list (fun f ->
+             let s,ty = dest_var f in
+             if not (can get_const_type s) then new_constant(s,ty))
+          fs;
+  let consts = map (fun f -> mk_mconst(fst(dest_var f),type_of f),f)
+                   fs in
+  let name = fst(dest_var(hd fs)) in
+  the_cheats := name :: !the_cheats;
+  print_string ("\ncake_inductive " ^ name ^ " CHEATED\n");
+  note_cheat name tm;
+  flush stdout;
+  new_axiom (vsubst consts (snd(strip_forall tm)));;
+
 let cake_inductive tm =
-  try cake_time new_inductive_definition (close_rules tm)
-  with Failure s -> cake_report tm s;;
+  let rtm = close_rules tm in
+  try cake_time new_inductive_definition rtm
+  with Failure s ->
+    (cheat_why := s;
+     print_string ("\ncake_inductive failed: " ^ s ^ "\n");
+     flush stdout;
+     (cake_cheat_rules rtm,TRUTH,TRUTH));;
 
 let cake_define_list_wf rel cls =
   cake_define_wf rel (cake_conj_list cls);;

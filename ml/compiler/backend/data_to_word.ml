@@ -327,7 +327,7 @@ let RefByte_code_def = cake_define
          list_Seq
            [BignumHalt 2;
             Assign 1 x;
-            AllocVar c limit' (sptree_fromList [one; one; one]);
+            AllocVar c limit' (fromList [one; one; one]);
             Assign 5 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
               Lsr h (backend_common_word_shift (:'a)));
             Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
@@ -389,8 +389,8 @@ let FromList_code_def = cake_define
                     Return 0 [6]])
          (list_Seq
            [BignumHalt 2;
-            Assign 1 (Var 2); AllocVar c limit' (sptree_fromList
-              [one; one; one]);
+            Assign 1 (Var 2); AllocVar c limit' (fromList [one; one;
+              one]);
             Assign 1 (wordLang_Lookup NextFree);
             Assign 5 (Op asm_Or [h; Const (n2w 3); Var 6]);
             Assign 7 ((\sh e n. Shift sh e (wordLang_Const (n2w n)))
@@ -521,8 +521,8 @@ let AnyArith_code_def = cake_define
        AddNumSize c 0;
        AddNumSize c 1;
        Set (Temp (n2w 29)) (Var 1);
-       AllocVar c (2 EXP data_to_word_config_len_size c)
-         (sptree_fromList [one; one; one]);
+       AllocVar c (2 EXP data_to_word_config_len_size c) (fromList
+         [one; one; one]);
        AnyHeader c 2 F (n2w 0) (n2w 31) (n2w 12);
        AnyHeader c 4 T (n2w 1) (n2w 30) (n2w 11);
        Get 1 (Temp (n2w 11));
@@ -535,13 +535,11 @@ let AnyArith_code_def = cake_define
        Set (Temp (n2w 3)) ((\sh e n. Shift sh e (wordLang_Const (n2w
          n))) Lsr (Var 6) 2);
        Assign 3 (wordLang_Const (n2w 0));
-       Call (SOME ([0],(sptree_fromList
-         [one],LN),Skip,AnyArith_location,2))
+       Call (SOME ([0],(fromList [one],LN),Skip,AnyArith_location,2))
          (SOME Replicate_location) [2; 3; 1; 0] NONE;
        Set (Temp (n2w 29)) (Op asm_Add [wordLang_Lookup (Temp (n2w
          29)); Const bytes_in_word]);
-       Call (SOME ([1],(sptree_fromList
-         [one],LN),Skip,AnyArith_location,3))
+       Call (SOME ([1],(fromList [one],LN),Skip,AnyArith_location,3))
          (SOME Bignum_location) [] NONE;
        Get 1 (Temp (n2w 10));
        If Test 1 (Reg 1) (Return 0 [1]) Skip;
@@ -902,8 +900,7 @@ let AppendLenLoop_code_def = cake_define
             (backend_common_word_shift (:'a) - 2)]);
           Assign 4 (wordLang_Lookup (Temp (n2w 0)));
           Assign 2 (wordLang_Lookup (Temp (n2w 1)));
-          AllocVar c (dimword (:'a) DIV 8 - 1) (sptree_fromList [one;
-            one]);
+          AllocVar c (dimword (:'a) DIV 8 - 1) (fromList [one; one]);
           Call NONE (SOME Append_location) [0; 4; 2] NONE])
        (list_Seq
          [Assign 2 (wordLang_Load (Op asm_Add [real_addr c 2; Const

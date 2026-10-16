@@ -53,9 +53,12 @@ let LPREFIX = new_definition
 let fromList = new_definition
   `fromList (l:A list) = mk_llist (\n. oEL n l)`;;
 
+hol4_overload "fromList" "fromList";;
+
 let toList = new_definition
   `toList (l:A llist) =
    if LFINITE l then LTAKE (THE (LLENGTH l)) l else NONE`;;
+hol4_overload "toList" "toList";;
 
 let LAPPEND = new_definition
   `LAPPEND (l1:A llist) l2 =

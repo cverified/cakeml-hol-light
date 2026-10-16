@@ -217,12 +217,12 @@ hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 
 let simple_state_rel_def = cake_define
   `flatProps_simple_state_rel vr sr <=>
-     (!s t. sr s t ==> LIST_REL (sv_rel vr) (state_refs s)
-       (state_refs t)) /\
+     (!s t. sr s t ==> LIST_REL (semanticPrimitivesProps_sv_rel vr)
+       (state_refs s) (state_refs t)) /\
      (!s t srefs trefs.
-         sr s t /\ LIST_REL (sv_rel vr) srefs trefs ==> sr
-           (state_refs_fupd (K srefs) s) (state_refs_fupd (K trefs) t))
-           /\
+         sr s t /\ LIST_REL (semanticPrimitivesProps_sv_rel vr) srefs
+           trefs ==> sr (state_refs_fupd (K srefs) s) (state_refs_fupd
+           (K trefs) t)) /\
      (!s t. sr s t ==> LIST_REL (OPTREL vr) (flatSem_state_globals s)
        (flatSem_state_globals t)) /\
      (!s t sglob tglob.

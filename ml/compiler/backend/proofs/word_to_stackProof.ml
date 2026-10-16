@@ -277,8 +277,9 @@ let state_rel_def = cake_define
      (!n. let ((bm0,cfg),progs) = compile_oracle s n in
          EVERY (post_alloc_conventions k o SND o SND) progs /\
          EVERY (flat_exp_conventions o SND o SND) progs /\
-         EVERY ((<>) raise_stub_location o FST) progs /\
-         EVERY ((<>) store_consts_stub_location o FST) progs /\
+         EVERY ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
+         EVERY ((\x y. ~(x = y)) store_consts_stub_location o FST)
+           progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
      domain (state_code t) = raise_stub_location INSERT
                        store_consts_stub_location INSERT domain
@@ -4692,8 +4693,9 @@ let init_state_ok_def = cake_define
      (!n. let ((bm0,cfg),progs) = coracle n in
          EVERY (post_alloc_conventions k o SND o SND) progs /\
          EVERY (flat_exp_conventions o SND o SND) progs /\
-         EVERY ((<>) raise_stub_location o FST) progs /\
-         EVERY ((<>) store_consts_stub_location o FST) progs /\
+         EVERY ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
+         EVERY ((\x y. ~(x = y)) store_consts_stub_location o FST)
+           progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t)))`;;
 
 let make_init_def = cake_define

@@ -85,6 +85,7 @@ hol4_overload "delete" "sptree_delete";;
 let fromList_def = cake_define
   `sptree_fromList l = SND (FOLDL (\(i,t) a. (i + 1,sptree_insert i a
   t)) (0,LN) l)`;;
+hol4_overload "fromList" "sptree_fromList";;
 
 let size_def = cake_define_list
   [`sptree_size LN = 0`;
@@ -211,6 +212,7 @@ let toListA_def = cake_define_list
 
 let toList_def = cake_define
   `sptree_toList m = toListA [] m`;;
+hol4_overload "toList" "sptree_toList";;
 
 let mk_wf_def = cake_define_list
   [`mk_wf LN = LN`;

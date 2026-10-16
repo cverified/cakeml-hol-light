@@ -46,6 +46,24 @@ override_interface("EVERY2",
    characters in HOL Light as well *)
 override_interface("STRING",`CONS:char->(char)list->(char)list`);;
 
+(* HOL4's FOLDR takes its arguments in another order than the
+   ITLIST of HOL Light, so it is a definition and not a name for
+   it *)
+
+let FOLDR_def = new_definition
+  `FOLDR (f:A->B->B) e l = ITLIST f l e`;;
+
+let FOLDR_THM = prove
+ (`(!f e. FOLDR (f:A->B->B) e [] = e) /\
+   (!f e x xs. FOLDR f e (CONS x xs) = f x (FOLDR f e xs))`,
+  REWRITE_TAC[FOLDR_def; ITLIST]);;
+
+(* HOL4's cwc of cpsScript (the port does not have that
+   theory): the combinator that gives a value to a continuation *)
+
+let cwc = new_definition
+  `cwc (v:A) (k:A->B) = k v`;;
+
 (* HOL4's OPTREL (optionTheory), with the monotonicity theorem that
    an inductive definition over it needs (HOL Light has the ones of
    ALL and ALL2, which are HOL4's EVERY and LIST_REL) *)

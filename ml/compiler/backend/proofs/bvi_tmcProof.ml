@@ -11,7 +11,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvi_tmc.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
@@ -30,28 +29,35 @@ val s = “s : (num # γ, 'ffi) bviSem$state”;
      in_ns_3 = λn. n MOD bvl_to_bvi_namespaces = 3 *)
 
 let v_rel = cake_inductive
-  `(!f i. v_rel f (Number i) (Number i)) /\
-   (!f w. v_rel f (Word64 w) (Word64 w)) /\
+  `(!f i. bvi_tmcProof_v_rel f (bvlSem_Number i) (bvlSem_Number i)) /\
+   (!f w. bvi_tmcProof_v_rel f (bvlSem_Word64 w) (bvlSem_Word64 w))
+     /\
    (!f n xs ys.
-       LIST_REL (v_rel f) xs ys ==>
-       v_rel f (Block n xs) (Block n ys)) /\
-   (!f n. v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n)) /\
+       LIST_REL (bvi_tmcProof_v_rel f) xs ys ==>
+       bvi_tmcProof_v_rel f (bvlSem_Block n xs) (bvlSem_Block n ys))
+         /\
+   (!f n. bvi_tmcProof_v_rel f (bvlSem_CodePtr n) (bvlSem_CodePtr n))
+     /\
    (!f n m b.
        FLOOKUP f n = SOME m ==>
-       v_rel f (RefPtr b n) (RefPtr b m))`;;
+       bvi_tmcProof_v_rel f (bvlSem_RefPtr b n) (bvlSem_RefPtr b
+         m))`;;
 
 let ref_rel = cake_inductive
-  `(ref_rel f (ByteArray b bs) (ByteArray b bs)) /\
-   (LIST_REL (v_rel f) xs ys ==>
-     ref_rel f (ValueArray xs) (ValueArray ys)) /\
-   (v_rel f x y ==>
-     ref_rel f (Thunk tm x) (Thunk tm y))`;;
+  `(bvi_tmcProof_ref_rel f (bvlSem_ByteArray b bs) (bvlSem_ByteArray b
+  bs)) /\
+   (LIST_REL (bvi_tmcProof_v_rel f) xs ys ==>
+     bvi_tmcProof_ref_rel f (bvlSem_ValueArray xs) (bvlSem_ValueArray
+       ys)) /\
+   (bvi_tmcProof_v_rel f x y ==>
+     bvi_tmcProof_ref_rel f (bvlSem_Thunk tm x) (bvlSem_Thunk tm
+       y))`;;
 
 let env_rel_def = cake_define
   `bvi_tmcProof_env_rel opt f env1 env2 <=>
    (?xs ys.
      env2 = xs ++ ys /\
-     LIST_REL (v_rel f) env1 xs /\
+     LIST_REL (bvi_tmcProof_v_rel f) env1 xs /\
      (opt ==>
        LENGTH ys = 2 /\
        (?hole_ptr hole_idx.
@@ -130,7 +136,7 @@ let state_ref_rel_def = cake_define
      (!i v.
        FLOOKUP s_refs i = SOME v ==>
         (?j w. FLOOKUP f i = SOME j /\
-              ref_rel f v w /\
+              bvi_tmcProof_ref_rel f v w /\
               FLOOKUP t_refs j = SOME w))`;;
 
 let fmap_inj_def = cake_define
@@ -165,8 +171,9 @@ hol4_overload "state_rel" "bvi_tmcProof_state_rel";;
 let eor_rel_def = cake_define
   `eor_rel f x2 x3 =
         match (x2,x3) with
-          (Exn v1,Exn v2) -> v_rel f v1 v2
-        | ((Ret vs1),(Ret vs2)) -> LIST_REL (v_rel f) vs1 vs2
+          (Exn v1,Exn v2) -> bvi_tmcProof_v_rel f v1 v2
+        | ((Ret vs1),(Ret vs2)) -> LIST_REL (bvi_tmcProof_v_rel f)
+          vs1 vs2
         | (_1,_2) -> F`;;
 
 let opt_res_rel_def = cake_define
@@ -237,10 +244,11 @@ let mb_rel_def = cake_define_wf
              fin' = F /\
              (?left child right.
                xs = left ++ [child] ++ right /\
-               LIST_REL (v_rel f) left left' /\
+               LIST_REL (bvi_tmcProof_v_rel f) left left' /\
                mb_rel f refs_old (refs \\ ptr) child child' /\
-               LIST_REL (v_rel f) right right')) | _4 -> F)
-        | (_5,v1,v2) -> v_rel f v1 v2`;;
+               LIST_REL (bvi_tmcProof_v_rel f) right right')) | _4 ->
+                 F)
+        | (_5,v1,v2) -> bvi_tmcProof_v_rel f v1 v2`;;
 
 (* Install reads byte/word vectors out of values; these are lists of
    Numbers
@@ -1081,8 +1089,8 @@ let hypothesis_def = cake_define
              r' = Rerr (Rabort Rtype_error)) ==>
              (?t'' f'' r''.
                evaluate (xs',env2',s'³') = (r'',t'') /\
-               result_rel (LIST_REL (v_rel f'')) (eor_rel f'') r' r''
-                 /\
+               semanticPrimitivesProps_result_rel (LIST_REL
+                 (bvi_tmcProof_v_rel f'')) (eor_rel f'') r' r'' /\
                bvi_tmcProof_state_rel f'' t' t'' /\ f' SUBMAP f'' /\
                  only_fresh f' f'' (state_refs s'³') /\
                holes_unchanged_except f' (state_refs s'³')
@@ -1099,8 +1107,8 @@ let hypothesis_def = cake_define
                     (?t_wrap f_wrap r_wrap.
                       evaluate ([wrap],env2',s'³') = (r_wrap,t_wrap)
                         /\
-                      result_rel (LIST_REL (v_rel f_wrap)) (eor_rel
-                        f_wrap) r'
+                      semanticPrimitivesProps_result_rel (LIST_REL
+                        (bvi_tmcProof_v_rel f_wrap)) (eor_rel f_wrap) r'
                         r_wrap /\ bvi_tmcProof_state_rel f_wrap t'
                           t_wrap /\ f' SUBMAP f_wrap /\
                       only_fresh f' f_wrap (state_refs s'³') /\
@@ -2390,7 +2398,7 @@ let dest_thunk_ret_rel_def = cake_define
       (?tm1 tm2 v1 v2.
         t1 = IsThunk tm1 v1 /\ t2 = IsThunk tm2 v2 /\
         tm1 = tm2 /\
-        v_rel f v1 v2))`;;
+        bvi_tmcProof_v_rel f v1 v2))`;;
 
 (* HOL4 ML code, not ported:
 Resume evaluate_rewrite_tmc[force]:

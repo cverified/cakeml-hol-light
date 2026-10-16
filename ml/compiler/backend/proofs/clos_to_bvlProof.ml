@@ -16,14 +16,12 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 needs "compiler/backend/backend_common.ml";;
@@ -35,14 +33,12 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
-needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: bvl_jumpProof clos_constantProof
    clos_mtiProof clos_numberProof clos_knownProof clos_annotateProof
@@ -167,25 +163,29 @@ let get_num_args_def = cake_define
         | _2 -> NONE`;;
 
 let v_rel = cake_inductive
-  `(v_rel max_app f refs code (Number n) (Number n)) /\
-   (v_rel max_app f refs code (Word64 w) (Word64 w)) /\
-   (EVERY2 (v_rel max_app f refs code) xs (ys:bvlSem_v list) ==>
-    v_rel max_app f refs code (Block t xs) (Block (clos_tag_shift t)
-      ys)) /\
+  `(clos_to_bvlProof_v_rel max_app f refs code (Number n) (Number n)) /\
+   (clos_to_bvlProof_v_rel max_app f refs code (Word64 w) (Word64 w))
+     /\
+   (EVERY2 (clos_to_bvlProof_v_rel max_app f refs code) xs
+     (ys:bvlSem_v list) ==>
+    clos_to_bvlProof_v_rel max_app f refs code (Block t xs) (Block
+      (clos_tag_shift t) ys)) /\
    (FLOOKUP refs p = SOME (ByteArray T bs) /\ ~(p IN FRANGE f) ==>
-    v_rel max_app f refs code (closSem_ByteVector bs) (RefPtr T p))
-      /\
+    clos_to_bvlProof_v_rel max_app f refs code (closSem_ByteVector
+      bs) (RefPtr T p)) /\
    ((FLOOKUP f r1 = SOME r2) ==>
-    v_rel max_app f refs code (RefPtr b r1) (RefPtr b r2)) /\
+    clos_to_bvlProof_v_rel max_app f refs code (RefPtr b r1) (RefPtr
+      b r2)) /\
    (
-    EVERY2 (v_rel max_app f refs code) env fvs /\
+    EVERY2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
     cl_rel max_app (FRANGE f) refs code (env,fvs) cl (Block
       closure_tag (bvlSem_CodePtr p :: Number n :: ys)) ==>
-    v_rel max_app f refs code cl (Block closure_tag (bvlSem_CodePtr p
-      :: Number n :: ys))) /\
+    clos_to_bvlProof_v_rel max_app f refs code cl (Block closure_tag
+      (bvlSem_CodePtr p :: Number n :: ys))) /\
    (
-    EVERY2 (v_rel max_app f refs code) env fvs /\
-    EVERY2 (v_rel max_app f refs code) arg_env ys /\ ~(
+    EVERY2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
+    EVERY2 (clos_to_bvlProof_v_rel max_app f refs code) arg_env ys /\
+      ~(
     arg_env = []) /\
     LENGTH arg_env < num_args /\
     (sptree_lookup (partial_app_fn_location max_app (num_args - 1)
@@ -196,7 +196,7 @@ let v_rel = cake_inductive
     add_args cl arg_env = SOME cl_app /\
     get_num_args cl = SOME num_args /\
     cl_rel max_app (FRANGE f) refs code (env,fvs) cl cl' ==>
-    v_rel max_app f refs code cl_app
+    clos_to_bvlProof_v_rel max_app f refs code cl_app
                         (Block partial_app_tag
                               (bvlSem_CodePtr
                                 (partial_app_fn_location max_app
@@ -211,8 +211,8 @@ let env_rel_def = cake_define
         | ([],ys) -> T
         | ((x :: xs),[]) -> F
         | ((x :: xs),(y :: ys)) ->
-        v_rel max_app f refs code x y /\ clos_to_bvlProof_env_rel
-          max_app f refs code xs ys`;;
+        clos_to_bvlProof_v_rel max_app f refs code x y /\
+          clos_to_bvlProof_env_rel max_app f refs code xs ys`;;
 hol4_overload "env_rel" "clos_to_bvlProof_env_rel";;
 
 (* HOL4 ML code, not ported:
@@ -282,9 +282,9 @@ let state_rel_def = cake_define
   `clos_to_bvlProof_state_rel f (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      (state_ffi s = state_ffi t) /\
-     LIST_REL (OPTREL (v_rel (closSem_state_max_app s) f (state_refs
-       t) (state_code t))) (state_globals s) (DROP num_added_globals
-       (state_globals t)) /\
+     LIST_REL (OPTREL (clos_to_bvlProof_v_rel (closSem_state_max_app
+       s) f (state_refs t) (state_code t))) (state_globals s) (DROP
+       num_added_globals (state_globals t)) /\
      get_global 0 (state_globals t) = SOME (SOME (global_table
        (closSem_state_max_app s))) /\
      INJ ((FAPPLY) f) (FDOM f) (FRANGE f) /\
@@ -295,8 +295,9 @@ let state_rel_def = cake_define
      (!n x. (FLOOKUP (state_refs s) n = SOME x) ==>
             (?y m. (FLOOKUP f n = SOME m) /\
                   (FLOOKUP (state_refs t) m = SOME y) /\
-                  ref_rel (v_rel (closSem_state_max_app s) f
-                    (state_refs t) (state_code t)) x y)) /\
+                  ref_rel (clos_to_bvlProof_v_rel
+                    (closSem_state_max_app s) f (state_refs t)
+                    (state_code t)) x y)) /\
      (!n. n < closSem_state_max_app s ==>
           sptree_lookup (generic_app_fn_location n) (state_code t) =
             SOME (n + 2,generate_generic_app (closSem_state_max_app s)
@@ -922,8 +923,8 @@ let eval_sim_def = cake_define
        (?ck res2 t2.
          bvlSem_evaluate ([Call 0 (SOME start') []],[],
            initial_state ffi code2 co2 cc2 (k + ck)) = (res2,t2) /\
-         result_rel (\x y. T) (\x y. T) res1 res2 /\ state_ffi s2
-           = state_ffi t2))`;;
+         semanticPrimitivesProps_result_rel (\x y. T) (\x y. T)
+           res1 res2 /\ state_ffi s2 = state_ffi t2))`;;
 hol4_overload "eval_sim" "clos_to_bvlProof_eval_sim";;
 
 let init_code_def = cake_define

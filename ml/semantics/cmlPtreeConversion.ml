@@ -9,7 +9,6 @@
 
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/closLang.ml";;
-needs "compiler/encoders/asm/asmSem.ml";;
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "semantics/ast.ml";;
@@ -170,7 +169,7 @@ let ptree_linfix_def = cake_define
            match args with
                [pt] -> OPTION_BIND (elnt pt) (\e. SOME [e]) | [x;
                  op_pt; pt] -> OPTION_IGNORE_BIND
-                 (assert (tokcheck op_pt opn)) (OPTION_BIND
+                 (OPTION_GUARD (tokcheck op_pt opn)) (OPTION_BIND
                    (ptree_linfix topnt opn elnt x) (\
                  front. OPTION_BIND (elnt pt) (\
                  last.
@@ -195,7 +194,7 @@ let ptree_Type_def = cake_define_list
                 tys.
                 tuplify tys) | [dt; arrowt; rt] ->
                   OPTION_IGNORE_BIND
-                    (assert (tokcheck arrowt tokens_ArrowT))
+                    (OPTION_GUARD (tokcheck arrowt tokens_ArrowT))
                       (OPTION_BIND (ptree_PType dt) (\
                     dtys. OPTION_BIND (tuplify dtys) (\
                     dty. OPTION_BIND (ptree_Type nType rt) (\
@@ -215,13 +214,13 @@ let ptree_Type_def = cake_define_list
                     OPTION_MAP (Atapp []) (ptree_Tyop pt) | [lpart;
                       t; rpart] ->
                   OPTION_IGNORE_BIND
-                    (assert (tokcheck lpart tokens_LparT /\ tokcheck
-                      rpart tokens_RparT)) (
+                    (OPTION_GUARD (tokcheck lpart tokens_LparT /\
+                      tokcheck rpart tokens_RparT)) (
                     ptree_Type nType t) | [lpart; tl; rpart; opn] ->
                OPTION_IGNORE_BIND
-                  (assert (tokcheck lpart tokens_LparT /\ tokcheck
-                    rpart tokens_RparT)) (OPTION_BIND (ptree_Typelist2
-                    tl) (\
+                  (OPTION_GUARD (tokcheck lpart tokens_LparT /\
+                    tokcheck rpart tokens_RparT)) (OPTION_BIND
+                    (ptree_Typelist2 tl) (\
                   tylist. OPTION_BIND (ptree_Tyop opn) (\
                   opname.
                   SOME (Atapp tylist opname)))) | _18 -> NONE
@@ -233,7 +232,7 @@ let ptree_Type_def = cake_define_list
              then NONE else
              match args with [dt; commat; tl'] ->
                  OPTION_IGNORE_BIND
-                   (assert (tokcheck commat tokens_CommaT))
+                   (OPTION_GUARD (tokcheck commat tokens_CommaT))
                      (OPTION_BIND (ptree_Type nType dt) (\
                    ty. OPTION_BIND (ptree_TypeList1 tl') (\
                    tylist.
@@ -249,7 +248,7 @@ let ptree_Type_def = cake_define_list
                     ty.
                     SOME ([ty])) | [dt; commat; tl] ->
                   OPTION_IGNORE_BIND
-                    (assert (tokcheck commat tokens_CommaT))
+                    (OPTION_GUARD (tokcheck commat tokens_CommaT))
                       (OPTION_BIND (ptree_Type nType dt) (\
                     ty. OPTION_BIND (ptree_TypeList1 tl) (\
                     tl.
@@ -265,7 +264,7 @@ let ptree_Type_def = cake_define_list
                      dty.
                      SOME [dty]) | [dty_pt; st; pty_pt] ->
                    OPTION_IGNORE_BIND
-                     (assert (tokcheck st tokens_StarT))
+                     (OPTION_GUARD (tokcheck st tokens_StarT))
                        (OPTION_BIND (ptree_Type nDType dty_pt) (\
                      dty. OPTION_BIND (ptree_PType pty_pt) (\
                      ptys.
@@ -284,7 +283,7 @@ let ptree_TypeName_def = cake_define
                             SOME ([tyvn],opn))) | [lp; tyvl; rp; opt]
                               ->
            OPTION_IGNORE_BIND
-             (assert (tokcheck lp tokens_LparT /\ tokcheck rp
+             (OPTION_GUARD (tokcheck lp tokens_LparT /\ tokcheck rp
                tokens_RparT)) (OPTION_BIND (ptree_linfix nTyVarList
                tokens_CommaT ptree_TyvarN tyvl) (\
              tyvnms. OPTION_BIND (ptree_UQTyop opt) (\
@@ -333,8 +332,8 @@ let ptree_PTbase_def = cake_define
                  OPTION_MAP (Atapp []) (ptree_Tyop pt) | [lpart; t;
                    rpart] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheck lpart tokens_LparT /\ tokcheck
-                   rpart tokens_RparT)) (
+                 (OPTION_GUARD (tokcheck lpart tokens_LparT /\
+                   tokcheck rpart tokens_RparT)) (
                  ptree_Type nType t) | _33 -> NONE else NONE))`;;
 
 let ptree_TbaseList_def = cake_define
@@ -372,8 +371,8 @@ let ptree_DtypeDecl_def = cake_define
          (if FST nt' = (INL:MMLnonT->MMLnonT+num) nDtypeDecl then
            match args with
                [tynm_pt; eqt; dtc_pt] -> OPTION_IGNORE_BIND
-                 (assert (tokcheck eqt tokens_EqualsT)) (OPTION_BIND
-                   (ptree_TypeName tynm_pt) (\
+                 (OPTION_GUARD (tokcheck eqt tokens_EqualsT))
+                   (OPTION_BIND (ptree_TypeName tynm_pt) (\
                  tynm. OPTION_BIND (ptree_linfix nDtypeCons
                    tokens_BarT ptree_Dconstructor dtc_pt) (\
                  dtc.
@@ -388,7 +387,8 @@ let ptree_TypeDec_def = cake_define
        (if FST nt' = (INL:MMLnonT->MMLnonT+num) nTypeDec then
          match args with
              [datatype_pt; pt] -> OPTION_IGNORE_BIND
-               (assert (tokcheck datatype_pt tokens_DatatypeT)) (
+               (OPTION_GUARD (tokcheck datatype_pt tokens_DatatypeT))
+                 (
                ptree_linfix nDtypeDecls tokens_AndT
                  ptree_DtypeDecl pt) | _40 -> NONE else NONE))`;;
 
@@ -399,8 +399,9 @@ let ptree_TypeAbbrevDec_def = cake_define
        (if FST nt' = (INL:MMLnonT->MMLnonT+num) nTypeAbbrevDec then
          match args with
            [typetok; tynm; eqtok; typ_pt] -> OPTION_IGNORE_BIND
-             (assert (tokcheck typetok tokens_TypeT /\ tokcheck eqtok
-               tokens_EqualsT)) (OPTION_BIND (ptree_TypeName tynm) (\
+             (OPTION_GUARD (tokcheck typetok tokens_TypeT /\ tokcheck
+               eqtok tokens_EqualsT)) (OPTION_BIND (ptree_TypeName tynm)
+               (\
              (vars',nm). OPTION_BIND (ptree_Type nType typ_pt) (\
              typ.
              SOME (Dtabbrev (SND nt') vars' nm typ)))) | _42 ->
@@ -412,7 +413,7 @@ let singleSymP_def = cake_define
         [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f) destSymbolT ((\f
           a. OPTION_BIND a f) destTOK (destLf pt))) (\s.
           OPTION_IGNORE_BIND
-                         (assert (P s)) (
+                         (OPTION_GUARD (P s)) (
                          SOME (Short s)))
       | _43 -> NONE`;;
 
@@ -431,7 +432,7 @@ let ptree_Op_def = cake_define_list
           (validListSym o explode) subs else if FST nt' =
           (INL:MMLnonT->MMLnonT+num) nRelOps then
         singleSymP (validRelSym o explode) subs ++
-        OPTION_IGNORE_BIND (assert (tokcheckl subs
+        OPTION_IGNORE_BIND (OPTION_GUARD (tokcheckl subs
           [tokens_EqualsT])) (SOME (Short (implode "="))) else if FST
           nt' = (INL:MMLnonT->MMLnonT+num) nCompOps then
         if tokcheckl subs [tokens_SymbolT (implode ":=")] then
@@ -443,7 +444,8 @@ let ptree_V_def = cake_define_list
   [`ptree_V (Lf _46) = NONE`;
    `ptree_V (Nd nt' subs) =
          OPTION_IGNORE_BIND
-           (assert (FST nt' = (INL:MMLnonT->MMLnonT+num) nV)) (
+           (OPTION_GUARD (FST nt' = (INL:MMLnonT->MMLnonT+num) nV))
+             (
            match subs with
               [pt] -> OPTION_BIND ((\f a. OPTION_BIND a f) destTOK
                 (destLf pt)) (\t.
@@ -555,7 +557,7 @@ let ptree_Pattern_def = cake_define_list
                    (ast_StrLit s))) ++
                  OPTION_BIND (destCharT t) (\c. SOME (ast_Plit
                    (ast_Char c)))))) ++
-              OPTION_IGNORE_BIND (assert (tokcheck vic
+              OPTION_IGNORE_BIND (OPTION_GUARD (tokcheck vic
                 tokens_UnderbarT)) (SOME ast_Pany) | [lb; rb] ->
               (if tokcheckl args [tokens_LbrackT; tokens_RbrackT]
                 then
@@ -564,7 +566,7 @@ let ptree_Pattern_def = cake_define_list
                 OPTION_BIND (ptree_OpID rb) (\e. EtoPat e) else
                   NONE) | [lb; plistpt; rb] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheckl [lb; rb] [tokens_LbrackT;
+                (OPTION_GUARD (tokcheckl [lb; rb] [tokens_LbrackT;
                   tokens_RbrackT])) (OPTION_BIND (ptree_Plist plistpt)
                   (\
                 plist.
@@ -597,8 +599,9 @@ let ptree_Pattern_def = cake_define_list
               [papt] -> ptree_Pattern nPapp papt | [papt; cons_t;
                 pcons_pt] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck cons_t (tokens_SymbolT (implode
-                  "::")))) (OPTION_BIND (ptree_Pattern nPapp papt) (\
+                (OPTION_GUARD (tokcheck cons_t (tokens_SymbolT
+                  (implode "::")))) (OPTION_BIND (ptree_Pattern nPapp
+                  papt) (\
                 pa. OPTION_BIND (ptree_Pattern nPcons pcons_pt) (\
                 patt.
                 SOME (ast_Pcon (SOME (Short (implode "::"))) [pa;
@@ -608,8 +611,8 @@ let ptree_Pattern_def = cake_define_list
               [papt] -> ptree_Pattern nPcons papt | [vt; as_t; papt]
                 ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck as_t tokens_AsT)) (OPTION_BIND
-                  (ptree_Pattern nPcons papt) (\
+                (OPTION_GUARD (tokcheck as_t tokens_AsT))
+                  (OPTION_BIND (ptree_Pattern nPcons papt) (\
                 pa. OPTION_BIND (ptree_V vt) (\
                 vtt.
                 SOME (ast_Pas pa vtt)))) | _63 -> NONE else if FST
@@ -618,19 +621,19 @@ let ptree_Pattern_def = cake_define_list
               [pas] -> ptree_Pattern nPas pas | [pas_pt; colon_t;
                 type_pt] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck colon_t tokens_ColonT))
+                (OPTION_GUARD (tokcheck colon_t tokens_ColonT))
                   (OPTION_BIND (ptree_Pattern nPas pas_pt) (\
                 pc'. OPTION_BIND (ptree_Type nType type_pt) (\
                 ty.
                 SOME (ast_Ptannot pc' ty)))) | _64 -> NONE else if
                   FST nm = (INL:MMLnonT->MMLnonT+num) nPtuple then
           match args with
-              [lp; rp] -> OPTION_IGNORE_BIND (assert (tokcheckl [lp;
-                rp] [tokens_LparT; tokens_RparT])) (
+              [lp; rp] -> OPTION_IGNORE_BIND (OPTION_GUARD
+                (tokcheckl [lp; rp] [tokens_LparT; tokens_RparT])) (
                              SOME (ast_Pcon NONE [])) | [lp; pl_pt;
                                rp] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheckl [lp; rp] [tokens_LparT;
+                (OPTION_GUARD (tokcheckl [lp; rp] [tokens_LparT;
                   tokens_RparT])) (OPTION_BIND (ptree_Plist pl_pt) (\
                 pl.
                 match pl with
@@ -646,8 +649,8 @@ let ptree_Pattern_def = cake_define_list
                  p.
                  SOME [p]) | [p; ct; pl] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheck ct tokens_CommaT)) (OPTION_BIND
-                   (ptree_Pattern nPattern p) (\
+                 (OPTION_GUARD (tokcheck ct tokens_CommaT))
+                   (OPTION_BIND (ptree_Pattern nPattern p) (\
                  hdpat. OPTION_BIND (ptree_Plist pl) (\
                  tlpats.
                  SOME (hdpat :: tlpats)))) | _68 -> NONE)`];;
@@ -738,7 +741,7 @@ let ptree_Eliteral_def = cake_define_list
   [`ptree_Eliteral (Lf _78) = NONE`;
    `ptree_Eliteral (Nd nt' subs) =
       OPTION_IGNORE_BIND
-        (assert (LENGTH subs = 1 /\ FST nt' =
+        (OPTION_GUARD (LENGTH subs = 1 /\ FST nt' =
           (INL:MMLnonT->MMLnonT+num) nEliteral)) (OPTION_BIND (destLf
           (HD subs)) (\
         lf. OPTION_BIND (destTOK lf) (\
@@ -775,12 +778,12 @@ let ptree_Expr_def = cake_define_list
               [lpart; pt; rpart] ->
                 (if tokcheck lpart tokens_LparT then
                   OPTION_IGNORE_BIND
-                    (assert (tokcheck rpart tokens_RparT))
+                    (OPTION_GUARD (tokcheck rpart tokens_RparT))
                       (OPTION_BIND (ptree_Eseq pt) (\
                     eseq.
                     Eseq_encode eseq)) else
                   OPTION_IGNORE_BIND
-                    (assert (tokcheckl [lpart; rpart]
+                    (OPTION_GUARD (tokcheckl [lpart; rpart]
                       [tokens_LbrackT; tokens_RbrackT])) (OPTION_BIND
                       (ptree_Exprlist nElist1 pt) (\
                     elist.
@@ -807,9 +810,9 @@ let ptree_Expr_def = cake_define_list
                            NONE) | [lett; letdecs_pt; intok; ept;
                              endt] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheckl [lett; intok; endt] [tokens_LetT;
-                  tokens_InT; tokens_EndT])) (OPTION_BIND (ptree_LetDecs
-                  letdecs_pt) (\
+                (OPTION_GUARD (tokcheckl [lett; intok; endt]
+                  [tokens_LetT; tokens_InT; tokens_EndT])) (OPTION_BIND
+                  (ptree_LetDecs letdecs_pt) (\
                 letdecs. OPTION_BIND (ptree_Eseq ept) (\
                 eseq. OPTION_BIND (Eseq_encode eseq) (\
                 e.
@@ -831,9 +834,9 @@ let ptree_Expr_def = cake_define_list
           match subs with
               [lpart; el2; rpart] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheckl [lpart; rpart] [tokens_LparT;
-                  tokens_RparT])) (OPTION_BIND (ptree_Exprlist nElist2
-                  el2) (\
+                (OPTION_GUARD (tokcheckl [lpart; rpart]
+                  [tokens_LparT; tokens_RparT])) (OPTION_BIND
+                  (ptree_Exprlist nElist2 el2) (\
                 es.
                 SOME (ast_Con NONE es))) | _83 -> NONE else if nt' =
                   (INL:MMLnonT->MMLnonT+num) nEmult then
@@ -879,7 +882,7 @@ let ptree_Expr_def = cake_define_list
                   (INL:MMLnonT->MMLnonT+num) nEbefore then
           match subs with
             [t1; opt; t2] -> OPTION_IGNORE_BIND
-              (assert (tokcheck opt (tokens_AlphaT (implode
+              (OPTION_GUARD (tokcheck opt (tokens_AlphaT (implode
                 "before")))) (OPTION_BIND (ptree_Expr nEbefore t1) (\
               a1. OPTION_BIND (ptree_Expr nEcomp t2) (\
               a2.
@@ -888,8 +891,8 @@ let ptree_Expr_def = cake_define_list
                 (INL:MMLnonT->MMLnonT+num) nEtyped then
           match subs with
             [e_pt; colon; ty_pt] -> OPTION_IGNORE_BIND
-              (assert (tokcheck colon tokens_ColonT)) (OPTION_BIND
-                (ptree_Expr nEbefore e_pt) (\
+              (OPTION_GUARD (tokcheck colon tokens_ColonT))
+                (OPTION_BIND (ptree_Expr nEbefore e_pt) (\
               e. OPTION_BIND (ptree_Type nType ty_pt) (\
               ty.
               SOME (ast_Tannot e ty)))) | [t] -> ptree_Expr nEbefore
@@ -897,7 +900,7 @@ let ptree_Expr_def = cake_define_list
                 nElogicAND then
           match subs with
               [t1; andt; t2] -> OPTION_IGNORE_BIND
-                (assert (tokcheck andt tokens_AndalsoT))
+                (OPTION_GUARD (tokcheck andt tokens_AndalsoT))
                   (OPTION_BIND (ptree_Expr nElogicAND t1) (\
                 a1. OPTION_BIND (ptree_Expr nEtyped t2) (\
                 a2.
@@ -906,8 +909,8 @@ let ptree_Expr_def = cake_define_list
                   (INL:MMLnonT->MMLnonT+num) nElogicOR then
           match subs with
               [t1; ort; t2] -> OPTION_IGNORE_BIND
-                (assert (tokcheck ort tokens_OrelseT)) (OPTION_BIND
-                  (ptree_Expr nElogicOR t1) (\
+                (OPTION_GUARD (tokcheck ort tokens_OrelseT))
+                  (OPTION_BIND (ptree_Expr nElogicOR t1) (\
                 a1. OPTION_BIND (ptree_Expr nElogicAND t2) (\
                 a2.
                 SOME (ast_Log Orelse a1 a2)))) | [t] -> ptree_Expr
@@ -917,7 +920,7 @@ let ptree_Expr_def = cake_define_list
               [pt] -> ptree_Expr nElogicOR pt | [e1pt; handlet; ent]
                 ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck handlet tokens_HandleT))
+                (OPTION_GUARD (tokcheck handlet tokens_HandleT))
                   (OPTION_BIND (ptree_Expr nElogicOR e1pt) (\
                 e. OPTION_BIND (ptree_PEs ent) (\
                 pes.
@@ -926,26 +929,27 @@ let ptree_Expr_def = cake_define_list
           match subs with [t] -> ptree_Expr nEhandle t | [raiset;
             ept] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck raiset tokens_RaiseT))
+                (OPTION_GUARD (tokcheck raiset tokens_RaiseT))
                   (OPTION_BIND (ptree_Expr nE ept) (\
                 e.
                 SOME (ast_Raise e))) | [fnt; pnt'; arrowt; ent] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheckl [fnt; arrowt] [tokens_FnT;
+                (OPTION_GUARD (tokcheckl [fnt; arrowt] [tokens_FnT;
                   tokens_DarrowT])) (OPTION_BIND (ptree_Pattern nPattern
                   pnt') (\
                 p. OPTION_BIND (ptree_Expr nE ent) (\
                 e.
                 SOME (mkFun p e)))) ++ OPTION_IGNORE_BIND
-                (assert (tokcheckl [fnt; arrowt] [tokens_CaseT;
-                  tokens_OfT])) (OPTION_BIND (ptree_Expr nE pnt') (\
+                (OPTION_GUARD (tokcheckl [fnt; arrowt]
+                  [tokens_CaseT; tokens_OfT])) (OPTION_BIND (ptree_Expr
+                  nE pnt') (\
                 e. OPTION_BIND (ptree_PEs ent) (\
                 pes.
                 SOME (ast_Mat e pes)))) | [ift; g; thent; te; elset;
                   ee] -> OPTION_IGNORE_BIND
-                (assert (tokcheckl [ift; thent; elset] [tokens_IfT;
-                  tokens_ThenT; tokens_ElseT])) (OPTION_BIND (ptree_Expr
-                  nE g) (\
+                (OPTION_GUARD (tokcheckl [ift; thent; elset]
+                  [tokens_IfT; tokens_ThenT; tokens_ElseT]))
+                  (OPTION_BIND (ptree_Expr nE g) (\
                 a1. OPTION_BIND (ptree_Expr nE te) (\
                 a2. OPTION_BIND (ptree_Expr nE ee) (\
                 a3.
@@ -961,7 +965,7 @@ let ptree_Expr_def = cake_define_list
                    [sing] -> OPTION_BIND (ptree_Expr nE sing) (\e.
                      SOME [e]) | [e; ct; el1] ->
                    OPTION_IGNORE_BIND
-                     (assert (tokcheck ct tokens_CommaT))
+                     (OPTION_GUARD (tokcheck ct tokens_CommaT))
                        (OPTION_BIND (ptree_Expr nE e) (\
                      front. OPTION_BIND (ptree_Exprlist nElist1 el1)
                        (\
@@ -971,7 +975,7 @@ let ptree_Expr_def = cake_define_list
                match subs with
                    [e; ct; el1] ->
                    OPTION_IGNORE_BIND
-                     (assert (tokcheck ct tokens_CommaT))
+                     (OPTION_GUARD (tokcheck ct tokens_CommaT))
                        (OPTION_BIND (ptree_Expr nE e) (\
                      front. OPTION_BIND (ptree_Exprlist nElist1 el1)
                        (\
@@ -986,8 +990,8 @@ let ptree_Expr_def = cake_define_list
                 [single] -> OPTION_BIND (ptree_FDecl single) (\fdec.
                   SOME ([fdec])) | [fdecspt; andt; fdecpt] ->
                 OPTION_IGNORE_BIND
-                  (assert (tokcheck andt tokens_AndT)) (OPTION_BIND
-                    (ptree_AndFDecls fdecspt) (\
+                  (OPTION_GUARD (tokcheck andt tokens_AndT))
+                    (OPTION_BIND (ptree_AndFDecls fdecspt) (\
                   fdecs. OPTION_BIND (ptree_FDecl fdecpt) (\
                   fdec.
                   SOME (fdecs ++ [fdec])))) | _101 -> NONE else
@@ -999,7 +1003,7 @@ let ptree_Expr_def = cake_define_list
               match subs with
                   [fname_pt; pats_pt; eqt; body_pt] ->
                   OPTION_IGNORE_BIND
-                    (assert (tokcheck eqt tokens_EqualsT))
+                    (OPTION_GUARD (tokcheck eqt tokens_EqualsT))
                       (OPTION_BIND (ptree_V fname_pt) (\
                     fname. OPTION_BIND (ptree_PbaseList1 pats_pt) (\
                     ps. OPTION_BIND (oHD ps) (\
@@ -1028,15 +1032,15 @@ let ptree_Expr_def = cake_define_list
               match args with
                   [funtok; andfdecls_pt] ->
                   OPTION_IGNORE_BIND
-                    (assert (tokcheck funtok tokens_FunT))
+                    (OPTION_GUARD (tokcheck funtok tokens_FunT))
                       (OPTION_BIND (ptree_AndFDecls andfdecls_pt) (\
                     fds.
                     SOME (INR fds))) | [valtok; p_pt; eqtok; e_pt]
                       ->
                   OPTION_IGNORE_BIND
-                    (assert (tokcheckl [valtok; eqtok] [tokens_ValT;
-                      tokens_EqualsT])) (OPTION_BIND (ptree_Pattern
-                      nPattern p_pt) (\
+                    (OPTION_GUARD (tokcheckl [valtok; eqtok]
+                      [tokens_ValT; tokens_EqualsT])) (OPTION_BIND
+                      (ptree_Pattern nPattern p_pt) (\
                     p. OPTION_BIND (ptree_Expr nE e_pt) (\
                     e.
                     SOME (INL (p,e))))) | _110 -> NONE))`;
@@ -1046,7 +1050,7 @@ let ptree_Expr_def = cake_define_list
           match args with
               [pattern_pt; arrow_pt; pe_pt] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck arrow_pt tokens_DarrowT))
+                (OPTION_GUARD (tokcheck arrow_pt tokens_DarrowT))
                   (OPTION_BIND (ptree_Pattern nPattern pattern_pt) (\
                 pat. OPTION_BIND (ptree_PE pe_pt) (\
                 (e,pes).
@@ -1058,7 +1062,7 @@ let ptree_Expr_def = cake_define_list
            match args with
                [eorraise_pt; pesfx_pt] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheck eorraise_pt tokens_RaiseT))
+                 (OPTION_GUARD (tokcheck eorraise_pt tokens_RaiseT))
                    (OPTION_BIND (ptree_PE pesfx_pt) (\
                  (e,pes).
                  SOME (ast_Raise e,pes))) ++
@@ -1069,14 +1073,14 @@ let ptree_Expr_def = cake_define_list
                    (e,pes)))) | [fncase_tok; epat_pt; arrowof_tok;
                    last_pt] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheckl [fncase_tok; arrowof_tok]
+                 (OPTION_GUARD (tokcheckl [fncase_tok; arrowof_tok]
                    [tokens_FnT; tokens_DarrowT])) (OPTION_BIND
                    (ptree_Pattern nPattern epat_pt) (\
                  pat. OPTION_BIND (ptree_Expr nE last_pt) (\
                  e.
                  SOME (mkFun pat e,[])))) ++
                OPTION_IGNORE_BIND
-                 (assert (tokcheckl [fncase_tok; arrowof_tok]
+                 (OPTION_GUARD (tokcheckl [fncase_tok; arrowof_tok]
                    [tokens_CaseT; tokens_OfT])) (OPTION_BIND (ptree_Expr
                    nE epat_pt) (\
                  e. OPTION_BIND (ptree_PEs last_pt) (\
@@ -1084,7 +1088,7 @@ let ptree_Expr_def = cake_define_list
                  SOME (ast_Mat e pes,[])))) | [iftok; ge_pt;
                    thentok; then_pt; elsetok; else_pt] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheckl [iftok; thentok; elsetok]
+                 (OPTION_GUARD (tokcheckl [iftok; thentok; elsetok]
                    [tokens_IfT; tokens_ThenT; tokens_ElseT]))
                    (OPTION_BIND (ptree_Expr nE ge_pt) (\
                  ge. OPTION_BIND (ptree_Expr nE then_pt) (\
@@ -1099,12 +1103,12 @@ let ptree_Expr_def = cake_define_list
            match args with
                [] -> SOME (F,[]) | [handlebar_tok; pes_pt] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheck handlebar_tok tokens_HandleT))
-                   (OPTION_BIND (ptree_PEs pes_pt) (\
+                 (OPTION_GUARD (tokcheck handlebar_tok
+                   tokens_HandleT)) (OPTION_BIND (ptree_PEs pes_pt) (\
                  pes.
                  SOME (T,pes))) ++
                OPTION_IGNORE_BIND
-                 (assert (tokcheck handlebar_tok tokens_BarT))
+                 (OPTION_GUARD (tokcheck handlebar_tok tokens_BarT))
                    (OPTION_BIND (ptree_PEs pes_pt) (\
                  pes.
                  SOME (F,pes))) | _119 -> NONE)`;
@@ -1117,7 +1121,7 @@ let ptree_Expr_def = cake_define_list
                 e.
                 SOME [e]) | [e_pt; semi; seq_pt] ->
               OPTION_IGNORE_BIND
-                (assert (tokcheck semi tokens_SemicolonT))
+                (OPTION_GUARD (tokcheck semi tokens_SemicolonT))
                   (OPTION_BIND (ptree_Expr nE e_pt) (\
                 e. OPTION_BIND (ptree_Eseq seq_pt) (\
                 seq'.
@@ -1140,8 +1144,8 @@ let ptree_OptTypEqn_def = cake_define_list
         match args with
             [] -> SOME NONE | [eqtok; typ_pt] ->
             OPTION_IGNORE_BIND
-              (assert (tokcheck eqtok tokens_EqualsT)) (OPTION_BIND
-                (ptree_Type nType typ_pt) (\
+              (OPTION_GUARD (tokcheck eqtok tokens_EqualsT))
+                (OPTION_BIND (ptree_Type nType typ_pt) (\
               typ.
               SOME (SOME typ))) | _128 -> NONE):(ast_t option)
                 option)`];;
@@ -1157,19 +1161,20 @@ let ptree_SpecLine_def = cake_define_list
               td.
               SOME one) | [exntok; dcon_pt] ->
             OPTION_IGNORE_BIND
-              (assert (tokcheck exntok tokens_ExceptionT))
+              (OPTION_GUARD (tokcheck exntok tokens_ExceptionT))
                 (OPTION_BIND (ptree_Dconstructor dcon_pt) (\
               (nm,tys).
               SOME one)) | [typetok; tynm_pt; opteqn_pt] ->
             OPTION_IGNORE_BIND
-              (assert (tokcheck typetok tokens_TypeT)) (OPTION_BIND
-                (ptree_TypeName tynm_pt) (\
+              (OPTION_GUARD (tokcheck typetok tokens_TypeT))
+                (OPTION_BIND (ptree_TypeName tynm_pt) (\
               (vs,nm). OPTION_BIND (ptree_OptTypEqn opteqn_pt) (\
               opteqn.
               SOME one))) | [valtok; vname_pt; coltok; type_pt] ->
             OPTION_IGNORE_BIND
-              (assert (tokcheckl [valtok; coltok] [tokens_ValT;
-                tokens_ColonT])) (OPTION_BIND (ptree_V vname_pt) (\
+              (OPTION_GUARD (tokcheckl [valtok; coltok]
+                [tokens_ValT; tokens_ColonT])) (OPTION_BIND (ptree_V
+                vname_pt) (\
               vname. OPTION_BIND (ptree_Type nType type_pt) (\
               ty.
               SOME one))) | _131 -> NONE)`];;
@@ -1196,8 +1201,8 @@ let ptree_SignatureValue_def = cake_define_list
         match args with
             [sigtok; sll_pt; endtok] ->
             OPTION_IGNORE_BIND
-              (assert (tokcheckl [sigtok; endtok] [tokens_SigT;
-                tokens_EndT])) (
+              (OPTION_GUARD (tokcheckl [sigtok; endtok]
+                [tokens_SigT; tokens_EndT])) (
               ptree_SpeclineList sll_pt) | _137 -> NONE)`];;
 
 let ptree_Decl_def = cake_define_list
@@ -1213,27 +1218,28 @@ let ptree_Decl_def = cake_define_list
                    SOME (Dtype (locs) tydec)) ++ ptree_TypeAbbrevDec
                      dt ++ ptree_Structure dt | [funtok; fdecls] ->
                  OPTION_IGNORE_BIND
-                   (assert (tokcheck funtok tokens_FunT))
+                   (OPTION_GUARD (tokcheck funtok tokens_FunT))
                      (OPTION_BIND (ptree_AndFDecls fdecls) (\
                    fdecs.
                    SOME (Dletrec (locs) fdecs))) ++
                  OPTION_IGNORE_BIND
-                   (assert (tokcheck funtok tokens_ExceptionT))
-                     (OPTION_BIND (ptree_Dconstructor fdecls) (\
+                   (OPTION_GUARD (tokcheck funtok
+                     tokens_ExceptionT)) (OPTION_BIND
+                     (ptree_Dconstructor fdecls) (\
                    (enm,etys).
                    SOME (Dexn (locs) enm etys))) | [valtok; patpt;
                      eqtok; ept] ->
                  OPTION_IGNORE_BIND
-                   (assert (tokcheckl [valtok; eqtok] [tokens_ValT;
-                     tokens_EqualsT])) (OPTION_BIND (ptree_Pattern
-                     nPattern patpt) (\
+                   (OPTION_GUARD (tokcheckl [valtok; eqtok]
+                     [tokens_ValT; tokens_EqualsT])) (OPTION_BIND
+                     (ptree_Pattern nPattern patpt) (\
                    pat. OPTION_BIND (ptree_Expr nE ept) (\
                    e.
                    SOME (Dlet (locs) pat e)))) | [localtok;
                      decls1_pt; intok; decls2_pt; endtok] ->
                  OPTION_IGNORE_BIND
-                   (assert (tokcheckl [localtok; intok; endtok]
-                     [tokens_LocalT; tokens_InT; tokens_EndT]))
+                   (OPTION_GUARD (tokcheckl [localtok; intok;
+                     endtok] [tokens_LocalT; tokens_InT; tokens_EndT]))
                      (OPTION_BIND (ptree_Decls decls1_pt) (\
                    decls1. OPTION_BIND (ptree_Decls decls2_pt) (\
                    decls2.
@@ -1259,8 +1265,8 @@ let ptree_Decl_def = cake_define_list
             [structuretok; sname_pt; asc_opt; eqtok; structtok;
               ds_pt; endtok] ->
             OPTION_IGNORE_BIND
-              (assert (tokcheckl [structtok; structuretok; eqtok;
-                endtok]
+              (OPTION_GUARD (tokcheckl [structtok; structuretok;
+                eqtok; endtok]
                               [tokens_StructT; tokens_StructureT;
                                 tokens_EqualsT; tokens_EndT]))
                                 (OPTION_BIND (ptree_StructName sname_pt)
@@ -1274,7 +1280,7 @@ let ptree_Decl_def = cake_define_list
                              match args with
                               [] -> SOME NONE | [sealtok; sig_pt] ->
                               OPTION_IGNORE_BIND
-                              (assert (tokcheck sealtok
+                              (OPTION_GUARD (tokcheck sealtok
                                 tokens_SealT)) (OPTION_BIND
                                 (ptree_SignatureValue sig_pt) (\
                               sigv.
@@ -1298,7 +1304,7 @@ let ptree_TopLevelDecs_def = cake_define_list
                    tds.
                    SOME (td :: tds)))) | [e_pt; semitok; tds_pt] ->
                OPTION_IGNORE_BIND
-                 (assert (tokcheck semitok tokens_SemicolonT))
+                 (OPTION_GUARD (tokcheck semitok tokens_SemicolonT))
                    (OPTION_BIND (ptree_Expr nE e_pt) (\
                  e. OPTION_BIND (ptree_TopLevelDecs tds_pt) (\
                  tds.

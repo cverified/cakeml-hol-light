@@ -404,15 +404,16 @@ val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
 *)
 
 let no_alloc_subprogs_def = cake_define
-  `no_alloc p = not_created_subprogs (((<>) (Alloc 0 (LN,LN)))) p`;;
+  `no_alloc p = not_created_subprogs (((\x y. ~(x = y)) (Alloc 0
+  (LN,LN)))) p`;;
 
 (* HOL4 ML code, not ported:
 val no_install_P = ``((<>) (Install 0 0 0 0 (LN,LN)))``
 *)
 
 let no_install_subprogs_def = cake_define
-  `wordConvs_no_install p = not_created_subprogs (((<>) (Install 0 0
-  0 0 (LN,LN)))) p`;;
+  `wordConvs_no_install p = not_created_subprogs (((\x y. ~(x = y))
+  (Install 0 0 0 0 (LN,LN)))) p`;;
 hol4_overload "no_install" "wordConvs_no_install";;
 
 (****** no_mt : no MustTerminate ******)
@@ -422,8 +423,8 @@ val no_mt_P = ``((<>) (MustTerminate Skip))``
 *)
 
 let no_mt_subprogs_def = cake_define
-  `no_mt p = not_created_subprogs (((<>) (wordLang_MustTerminate
-  wordLang_Skip))) p`;;
+  `no_mt p = not_created_subprogs (((\x y. ~(x = y))
+  (wordLang_MustTerminate wordLang_Skip))) p`;;
 
 (* no_share_inst: no ShareInst *)
 
@@ -432,8 +433,8 @@ val no_share_inst_P = ``((<>) (ShareInst ARB 0 (Var 0)))``
 *)
 
 let no_share_inst_subprogs_def = cake_define
-  `no_share_inst p = not_created_subprogs (((<>) (wordLang_ShareInst
-  ARB 0 (Var 0)))) p`;;
+  `no_share_inst p = not_created_subprogs (((\x y. ~(x = y))
+  (wordLang_ShareInst ARB 0 (Var 0)))) p`;;
 
 (* HOL4 overload (expanded in the port):
      word_get_code_labels = wordConvs$get_code_labels *)

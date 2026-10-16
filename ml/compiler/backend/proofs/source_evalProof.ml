@@ -113,24 +113,25 @@ val s = mk_var ("s", ``: 'ffi semanticPrimitives$state``);
 
 let v_rel = cake_inductive
   `(!env'. v_to_env_id v = SOME id /\ lookup_env es id = SOME env' /\
-         source_evalProof_env_rel (v_rel es) env env' ==>
-     v_rel es (semanticPrimitives_Env env id) v) /\
-   (LIST_REL (v_rel es) xs ys ==>
-     v_rel es (semanticPrimitives_Vectorv xs)
+         source_evalProof_env_rel (source_evalProof_v_rel es) env
+           env' ==>
+     source_evalProof_v_rel es (semanticPrimitives_Env env id) v) /\
+   (LIST_REL (source_evalProof_v_rel es) xs ys ==>
+     source_evalProof_v_rel es (semanticPrimitives_Vectorv xs)
        (semanticPrimitives_Vectorv ys)) /\
-   (LIST_REL (v_rel es) xs ys ==>
-     v_rel es (semanticPrimitives_Conv stmp xs)
+   (LIST_REL (source_evalProof_v_rel es) xs ys ==>
+     source_evalProof_v_rel es (semanticPrimitives_Conv stmp xs)
        (semanticPrimitives_Conv stmp ys)) /\
-   (source_evalProof_env_rel (v_rel es) env env' ==>
-     v_rel es (semanticPrimitives_Closure env nm x)
+   (source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
+     source_evalProof_v_rel es (semanticPrimitives_Closure env nm x)
        (semanticPrimitives_Closure env' nm x)) /\
-   (source_evalProof_env_rel (v_rel es) env env' ==>
-     v_rel es (semanticPrimitives_Recclosure env funs nm)
-       (semanticPrimitives_Recclosure env' funs nm)) /\
-   (v_rel es (semanticPrimitives_Litv l) (semanticPrimitives_Litv l))
-     /\
-   (v_rel es (semanticPrimitives_Loc br n) (semanticPrimitives_Loc
-     br n))`;;
+   (source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
+     source_evalProof_v_rel es (semanticPrimitives_Recclosure env
+       funs nm) (semanticPrimitives_Recclosure env' funs nm)) /\
+   (source_evalProof_v_rel es (semanticPrimitives_Litv l)
+     (semanticPrimitives_Litv l)) /\
+   (source_evalProof_v_rel es (semanticPrimitives_Loc br n)
+     (semanticPrimitives_Loc br n))`;;
 
 (* HOL4 ML code, not ported:
 val _ = bossLib.augment_srw_ss [rewrites [v_rel_l_simps, v_rel_Boolv]];
@@ -147,12 +148,13 @@ let recorded_orac_wf_def = cake_define
        FST r))`;;
 
 let s_rel_def = cake_define
-  `s_rel ci s s' <=>
+  `source_evalProof_s_rel ci s s' <=>
    (?dec_s orac_s' refs'. s' =
      semanticPrimitives_state_eval_state_fupd (K (SOME (EvalOracle
      orac_s'))) (semanticPrimitives_state_refs_fupd (K refs') s) /\
-   LIST_REL (sv_rel (v_rel orac_s')) (semanticPrimitives_state_refs
-     s) refs' /\ semanticPrimitives_state_eval_state
+   LIST_REL (semanticPrimitivesProps_sv_rel (source_evalProof_v_rel
+     orac_s')) (semanticPrimitives_state_refs s) refs' /\
+     semanticPrimitives_state_eval_state
    s = SOME (EvalDecs dec_s) /\ eval_oracle_state_custom_do_eval
    orac_s' = do_eval_record ci /\ eval_decs_state_compiler_state
    dec_s = (FST (SND (oracle orac_s' 0))) /\
@@ -175,6 +177,7 @@ let s_rel_def = cake_define
            eval_oracle_state_generation
    orac_s' < LENGTH (eval_oracle_state_envs orac_s') /\
    recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle orac_s'))`;;
+hol4_overload "s_rel" "source_evalProof_s_rel";;
 
 let orac_s_def = cake_define
   `orac_s x1 =

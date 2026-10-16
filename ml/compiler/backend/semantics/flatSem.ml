@@ -10,9 +10,9 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;

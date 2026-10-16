@@ -294,6 +294,7 @@ let evaluate_def = cake_define_list
         (st1,Rval env1) -> evaluate_evaluate_decs st1
           (extend_dec_env env1 env) ds | (st1,Rerr v7) -> (st1,Rerr
           v7))`];;
+hol4_overload "evaluate" "evaluate";;
 hol4_overload "evaluate_decs" "evaluate_evaluate_decs";;
 hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 

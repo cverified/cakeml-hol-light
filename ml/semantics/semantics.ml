@@ -7,15 +7,16 @@
   The top-level semantics of CakeML programs.
 *)
 
-needs "lib/balanced_map.ml";;
 needs "lib/grammar.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/sptree.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/primTypes.ml";;
 needs "semantics/semanticPrimitives.ml";;
+needs "semantics/typeSystem.ml";;
 
 let parse_def = cake_define
   `semantics_parse toks =
@@ -73,15 +74,17 @@ let semantics_INDUCT,semantics_RECURSION = define_datatype
   "semantics = CannotParse | IllTyped | Execute (behaviour->bool)";;
 
 let semantics_def = cake_define
-  `semantics state prelude input =
+  `semantics_semantics state prelude input =
      (match semantics_parse (lexer_fun input) with NONE ->
        CannotParse | SOME prog ->
        (if can_type_prog state (prelude ++ prog) then Execute
          (semantics_prog (semantics_state_sem_st state)
          (semantics_state_sem_env state) (prelude ++ prog)) else
          IllTyped))`;;
+hol4_overload "semantics" "semantics_semantics";;
 
 let semantics_init_def = cake_define
   `semantics_init ffi =
-     semantics (mk_semantics_state prim_tenv prim_type_ids (FST
-       (THE (prim_sem_env ffi))) (SND (THE (prim_sem_env ffi))))`;;
+     semantics_semantics (mk_semantics_state prim_tenv
+       prim_type_ids (FST (THE (prim_sem_env ffi))) (SND (THE
+       (prim_sem_env ffi))))`;;

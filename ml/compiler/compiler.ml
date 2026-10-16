@@ -40,6 +40,10 @@ needs "translator/monadic/monad_base/ml_monadBase.ml";;
    ag32_config export_ag32 panPtreeConversion pan_to_target panStatic
    pan_passes *)
 
+let staterr_INDUCT,staterr_RECURSION = define_datatype
+  "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
+             | GenErr (mlstring) | ShapeErr (mlstring)";;
+
 (* HOL4 ML code, not ported:
 val help_string = (* beginning of --help string *) ‘
 

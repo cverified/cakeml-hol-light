@@ -10,6 +10,7 @@ needs "lib/fmsp.ml";;
 needs "lib/subst.ml";;
 needs "lib/unifDef.ml";;
 needs "lib/walk.ml";;
+needs "lib/walkstar.ml";;
 (* HOL4 ancestors outside the port: transfer pred_set finite_map *)
 
 let swfs_def = cake_define

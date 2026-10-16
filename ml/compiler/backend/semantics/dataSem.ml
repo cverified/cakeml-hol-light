@@ -20,7 +20,6 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/compiler.ml";;
-needs "lib/balanced_map.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
@@ -1574,7 +1573,7 @@ hol4_overload "set_vars" "dataSem_set_vars";;
 
 let evaluate_def = cake_define_list
   [`dataSem_evaluate
-  ((Skip:dataLang_prog),((s:('c,'ffi)dataSem_state))) = (NONE,s)`;
+  ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =
          (match get_var src (dataSem_state_locals s) with NONE ->
            (SOME (Rerr (Rabort Rtype_error)),s) | SOME v ->

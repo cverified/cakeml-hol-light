@@ -12,7 +12,6 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/flat_pattern.ml";;
 needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
-needs "compiler/backend/proofs/bvi_letProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/flatProps.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
@@ -95,25 +94,27 @@ val _ = IndDefLib.add_mono_thm ALOOKUP_rel_mono_rel;
 
 let v_rel = cake_inductive
   `(!v v'. simple_basic_val_rel v v' /\
-     LIST_REL v_rel (v_container_xs v) (v_container_xs v') ==>
-     v_rel v v') /\
+     LIST_REL flat_patternProof_v_rel (v_container_xs v)
+       (v_container_xs v') ==>
+     flat_patternProof_v_rel v v') /\
    (!N env1 n x env2 cfg.
-      env_rel N env1 env2 /\
+      flat_patternProof_env_rel N env1 env2 /\
       FST (flat_pattern_compile_exp cfg x) < N ==>
-      v_rel (flatSem_Closure env1 n x)
+      flat_patternProof_v_rel (flatSem_Closure env1 n x)
         (flatSem_Closure env2 n (SND (SND (flat_pattern_compile_exp
           cfg x))))) /\
    (!N env1 fs x env2 cfg.
-      env_rel N env1 env2 /\
+      flat_patternProof_env_rel N env1 env2 /\
       EVERY (\(n,m,e). FST (flat_pattern_compile_exp cfg e) < N) fs
         ==>
-      v_rel (flatSem_Recclosure env1 fs x) (flatSem_Recclosure env2
+      flat_patternProof_v_rel (flatSem_Recclosure env1 fs x)
+        (flatSem_Recclosure env2
           (MAP (\(n,m,e). (n,m,SND (SND (flat_pattern_compile_exp cfg
             e)))) fs) x)) /\
    (!N env1 env2.
-      ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel (sem_env_v env1)
-        (sem_env_v env2) ==>
-      env_rel N env1 env2)`;;
+      ALOOKUP_rel (\x. dec_name_to_num x < N) flat_patternProof_v_rel
+        (flatSem_environment_v env1) (flatSem_environment_v env2) ==>
+      flat_patternProof_env_rel N env1 env2)`;;
 
 (* HOL4 ML code, not ported:
 val env_rel_def = ``env_rel N env1 env2``
@@ -132,11 +133,12 @@ let state_rel_def = cake_define
   `flat_patternProof_state_rel cfg (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)flatSem_state) <=> state_clock
      t = state_clock s /\
-     LIST_REL (sv_rel v_rel) (state_refs s) (state_refs t) /\
+     LIST_REL (semanticPrimitivesProps_sv_rel
+       flat_patternProof_v_rel) (state_refs s) (state_refs t) /\
        state_ffi
      t = state_ffi s /\
-     LIST_REL (OPTREL v_rel) (flatSem_state_globals s)
-       (flatSem_state_globals t) /\
+     LIST_REL (OPTREL flat_patternProof_v_rel) (flatSem_state_globals
+       s) (flatSem_state_globals t) /\
      install_conf_rel cfg (flatSem_state_eval_config s)
        (flatSem_state_eval_config t)`;;
 hol4_overload "state_rel" "flat_patternProof_state_rel";;
@@ -148,7 +150,7 @@ let match_rel_def = cake_define
   `match_rel N x2 x3 =
         match (x2,x3) with
           (Match env1,Match env2) -> (\N. ALOOKUP_rel (\x.
-            dec_name_to_num x < N) v_rel) N env1 env2
+            dec_name_to_num x < N) flat_patternProof_v_rel) N env1 env2
         | (No_match,No_match) -> T
         | (Match_type_error,Match_type_error) -> T
         | (_1,_2) -> F`;;

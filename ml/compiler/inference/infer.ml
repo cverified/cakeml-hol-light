@@ -974,7 +974,7 @@ let infertype_prog_inc_def = cake_define
 
 let init_config_def = cake_define
   `(infer_init_config:inf_env) =
-     mk_inf_env nsEmpty (sem_env_c prim_tenv) (type_env_t
+     mk_inf_env nsEmpty (type_env_c prim_tenv) (type_env_t
        prim_tenv)`;;
 hol4_overload "init_config" "infer_init_config";;
 
