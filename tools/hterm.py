@@ -1563,6 +1563,10 @@ class Printer:
         if self.ctx.wordnot: return 'word_not'
         return ('(--)' if self.ctx.intnums or self.ctx.intneg
                 else '(~)')
+      # HOL4's <> is a notation for the negated equality, which
+      # the port writes out; as a function of its own it is the
+      # lambda that says the same (EVERY ((<>) x o FST) l)
+      if n == '<>': return '(\\x y. ~(x = y))'
       if n in INFIX: return '(' + INFIX[n][2] + ')'
       # an operator that is not an identifier needs its parentheses
       if not n[0].isalpha() and n[0] != '_':
