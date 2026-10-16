@@ -139,6 +139,16 @@ FIELD_OF = {
 ONLY_NAMES = {
   'regexp_compiler': set(['vector', 'Vector', 'sub_def', 'sub',
                           'length_def', 'length']),
+  # of simpleSexp the port needs the s-expressions that fromSexp
+  # reads the CakeML abstract syntax from, not the parser of them
+  'simpleSexp': set(['sexp', 'SX_CONS', 'SX_SYM', 'SX_NUM',
+                     'SX_STR', 'destSXNUM_def', 'destSXNUM',
+                     'destSXSYM_def', 'destSXSYM',
+                     'destSXCONS_def', 'destSXCONS',
+                     'strip_sxcons_def', 'strip_sxcons',
+                     'sxMEM_def', 'sxMEM',
+                     'dstrip_sexp_def', 'dstrip_sexp',
+                     'arb_sexp_def', 'arb_sexp']),
 }
 
 NOT_NEEDED = set([

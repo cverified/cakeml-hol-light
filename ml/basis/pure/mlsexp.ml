@@ -16,8 +16,8 @@ needs "misc/misc.ml";;
    Definition of s-expression
  *--------------------------------------------------------------*)
 
-let sexp_INDUCT,sexp_RECURSION = define_datatype
-  "sexp = Atom (mlstring) | Expr (sexp list)";;
+let mlsexp_sexp_INDUCT,mlsexp_sexp_RECURSION = define_datatype
+  "mlsexp_sexp = Atom (mlstring) | Expr (mlsexp_sexp list)";;
 
 (*--------------------------------------------------------------*
    Lexing + parsing
@@ -122,7 +122,7 @@ let parse_aux_def = cake_define_list
 (* Parses (at most) one S-expression, and returns the rest of the input.
    Fails exactly when lexing fails. *)
 let parse_def = cake_define
-  `(mlsexp_parse (input:string):mlstring#string+sexp#string) =
+  `(mlsexp_parse (input:string):mlstring#string+mlsexp_sexp#string) =
      (match lex input with INL (msg,rest) -> INL (msg,rest) | INR
        (rev_toks,rest) ->
          (match parse_aux rev_toks [] [] with [] -> INL ((implode
@@ -132,7 +132,7 @@ hol4_overload "parse" "mlsexp_parse";;
 (* Function for parsing in the style of the Standard ML basis library.
    *)
 let fromString_def = cake_define
-  `(mlsexp_fromString (input:mlstring):sexp option) =
+  `(mlsexp_fromString (input:mlstring):mlsexp_sexp option) =
      (match mlsexp_parse (explode input) with INL _2 -> NONE | INR
        (se,_3) -> SOME se)`;;
 hol4_overload "fromString" "mlsexp_fromString";;

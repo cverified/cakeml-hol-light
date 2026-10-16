@@ -19,10 +19,11 @@ needs "lib/ASCIInumbers.ml";;
 needs "lib/comparison.ml";;
 needs "lib/location.ml";;
 needs "lib/numposrep.ml";;
+needs "lib/simpleSexp.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
-(* HOL4 ancestors outside the port: simpleSexp quantHeuristics *)
+(* HOL4 ancestors outside the port: quantHeuristics *)
 
 hol4_overload "++" "OPTION_CHOICE";;
 
@@ -103,25 +104,25 @@ let SEXSTR_def = cake_define
 let odestSEXSTR_def = cake_define
   `odestSEXSTR x1 =
         match x1 with
-          (SX_STR s) -> OPTION_MAP implode (decode_control s)
+          SX_STR s -> OPTION_MAP implode (decode_control s)
         | _3 -> NONE`;;
 
 let odestSXSTR_def = cake_define
   `odestSXSTR x1 =
         match x1 with
-          (SX_STR s) -> SOME (implode s)
+          SX_STR s -> SOME (implode s)
         | _4 -> NONE`;;
 
 let odestSXSYM_def = cake_define
   `odestSXSYM x1 =
         match x1 with
-          (SX_SYM s) -> SOME (implode s)
+          SX_SYM s -> SOME (implode s)
         | _5 -> NONE`;;
 
 let odestSXNUM_def = cake_define
   `odestSXNUM x1 =
         match x1 with
-          (SX_NUM n) -> SOME n
+          SX_NUM n -> SOME n
         | _6 -> NONE`;;
 
 let sexpopt_def = cake_define
@@ -249,6 +250,7 @@ let sexplit_def = cake_define
    variables.
    Unclear if this sort of special-casing is ever likely to be helpful
      *)
+let _ = size_thms "simpleSexp_sexp";;
 (* HOL4 termination: >> simp[] >> rpt strip_tac >-
    metis_tac[arithmeticTheory.LESS_TRANS, rich_listTheory.EL_MEM,
    DECIDE ``1n < 2``, sxMEM_sizelt, dstrip_sexp_size] >-
@@ -259,7 +261,7 @@ let sexplit_def = cake_define
    metis_tac[rich_listTheory.EL_MEM, DECIDE ``0n < 1``,
    listTheory.EL, dstrip_sexp_size] *)
 let sexppat_def = cake_define_wf
-  `MEASURE sexp_size`
+  `MEASURE simpleSexp_sexp_size`
   `sexppat s =
      OPTION_MAP ast_Pvar (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
@@ -330,7 +332,7 @@ let encode_thunk_mode_def = cake_define_list
 let decode_test_def = cake_define
   `fromSexp_decode_test x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "Equal" then SOME Equal else
       if s = "Less" then SOME (ast_Compare ast_Lt) else
       if s = "LessEq" then SOME (ast_Compare ast_Leq) else
@@ -347,7 +349,7 @@ hol4_overload "decode_test" "fromSexp_decode_test";;
 let decode_prim_type_def = cake_define
   `decode_prim_type x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "BoolT" then SOME ast_BoolT else
       if s = "IntT" then SOME ast_IntT else
       if s = "CharT" then SOME ast_CharT else
@@ -360,7 +362,7 @@ let decode_prim_type_def = cake_define
 let sexparith_def = cake_define
   `sexparith x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "Add" then SOME ast_Add else
       if s = "Sub" then SOME ast_Sub else
       if s = "Mul" then SOME ast_Mul else
@@ -379,7 +381,7 @@ let sexparith_def = cake_define
 let sexplog_def = cake_define
   `sexplog x1 =
       match x1 with
-        (SX_SYM s) ->
+        SX_SYM s ->
      (if s = "Andalso" then SOME Andalso else
       if s = "Orelse" then SOME Orelse else NONE)
       | _14 -> NONE`;;
@@ -387,7 +389,7 @@ let sexplog_def = cake_define
 let sexpop_def = cake_define
   `sexpop x1 =
         match x1 with
-          (SX_SYM s) ->
+          SX_SYM s ->
      (if s = "Equality" then SOME ast_Equality else
      if s = "Opapp" then SOME ast_Opapp else
      if s = "Opassign" then SOME ast_Opassign else
@@ -461,7 +463,7 @@ let sexpop_def = cake_define
 let sexplocpt_def = cake_define
   `sexplocpt s =
         match s with
-          (SX_SYM s) ->
+          SX_SYM s ->
        (if s = "unk" then SOME UNKNOWNpt else if s = "eof" then SOME
          EOFpt else NONE)
         | s ->
@@ -481,11 +483,12 @@ let sexplocn_def = cake_define
               (sexplocpt (EL 0 ls))
               (sexplocpt (EL 1 ls))))`;;
 
+let _ = size_thms "simpleSexp_sexp";;
 (* HOL4 termination: >> rw[]>> imp_res_tac dstrip_sexp_size >>
    imp_res_tac sxMEM_sizelt >> gvs[sexp_size_def,DB.fetch
    "quantHeuristics" "LIST_LENGTH_3",SF DNF_ss] *)
 let sexpexp_def = cake_define_wf
-  `MEASURE sexp_size`
+  `MEASURE simpleSexp_sexp_size`
   `sexpexp s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
