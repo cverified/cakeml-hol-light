@@ -1,0 +1,15 @@
+#!/bin/sh
+# slow [session] [n] : the definitions that took the longest in
+# the session of the last run (hol-seq by default)
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+s=${1:-seq}
+n=${2:-30}
+TIMEOUT=120 repl-step $s \
+  "let cake_out = open_out \"/home/freek/claude/hol-light/cakeml/tmp/times.txt\" in
+   do_list (fun (nm,t) ->
+     output_string cake_out (Printf.sprintf \"%8.2f %s\n\" t nm))
+     (try cake_times () with _ -> []);
+   close_out cake_out; length (try cake_times () with _ -> []);;" \
+  2>&1 | tail -1
+sort -rn /home/freek/claude/hol-light/cakeml/tmp/times.txt | head -$n
+echo "(total $(awk '{s+=$1} END {printf "%.0f", s}' /home/freek/claude/hol-light/cakeml/tmp/times.txt) seconds in $(grep -c '' /home/freek/claude/hol-light/cakeml/tmp/times.txt) definitions)"
