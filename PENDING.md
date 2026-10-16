@@ -44,6 +44,15 @@ nothing about their value:
 | `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds |
 | `walk$vwalk`, `walkstar$walkstar`, `unifDef$oc`, `unifDef$unify` | the triangular unification algorithm, which HOL4 defines with a schema (`xDefineSchema`): the equations hold under the hypothesis that the substitution is wellfounded (`wfs s`), and the recursion terminates only then.  Only the theorems of the second pass need what they are |
 
+Eleven definitions of `unify` are not ported: the tail recursive
+versions of the unification algorithm, which HOL4 makes with ML
+code (`tcallify_th` of `tcallUnifLib` turns the equation of a
+function into the step function of a `TAILREC`).  The port cannot
+run that code, and nothing outside that part of the file uses
+what it makes (`cvwalk_code`, `tcvwalk`, `tcwalk`, `kcocwl_code`,
+`tcocwl`, `kcwalkstarwl_code`, `tcwalkstarwl`, `tcwalkstar_p1`,
+`tcwalkstar_p2`, `cunify_code` and `tcunify`).
+
 One definition of the first pass is not ported, because HOL4
 makes it from a theorem that the second pass has to prove first
 (`new_specification` of a Skolem form):

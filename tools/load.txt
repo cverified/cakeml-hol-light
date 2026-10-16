@@ -21,6 +21,7 @@ lib/machine_ieee.ml
 lib/grammar.ml
 lib/peg.ml
 lib/pegexec.ml
+lib/simpleSexp.ml
 lib/spt_closure.ml
 lib/multiword.ml
 lib/term.ml

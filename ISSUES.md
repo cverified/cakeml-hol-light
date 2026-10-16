@@ -166,7 +166,24 @@ sources, and why.
 - Of a HOL4 library theory that the port only needs a part of, the
   rest is not in the port's namespace at all (`ONLY_NAMES`): of
   `regexp_compiler` the port takes the `vector` that CakeML's
-  `mlvector` is about, and nothing else.
+  `mlvector` is about, and of `simpleSexp` the s-expressions that
+  `fromSexp` reads, and nothing else.
+- HOL4's `oHD`, `MAX_LIST`, `splitAtPki`, `isHexDigit`, `EVERY2`
+  and `STRING` are in the library layer (`ml/lib/hol4.ml`), the
+  first four as definitions and the last two as the names that
+  HOL Light has for them (`ALL2` and `CONS`).
+- `fail` is the failure of the option monad (`NONE`),
+  `monad_unitbind` its unit bind (`OPTION_IGNORE_BIND`) and
+  `lift2` HOL4's `OPTION_MAP2`; `cmlPEG`'s `assert` is the
+  `OPTION_GUARD` of the library layer and `comparison`'s `Less`,
+  `Equal` and `Greater` are the constructors of the `ordering` of
+  `ternaryComparisons`.
+- A symbolic prefix and what follows it are kept apart, because
+  HOL Light's lexer takes the longest symbol (`-- &n`, not
+  `--&n`).
+- The size function of a datatype that a definition uses is made
+  in front of it (`size_thms`), unless a constant of the port has
+  that name already (`balanced_map`'s `size`).
 - HOL4's `<=>` is its `=` with another precedence, so a source
   writes it where the two sides are not of type `bool`, which HOL
   Light's `<=>` does not allow (`word_alloc$oracle_colour_ok`
