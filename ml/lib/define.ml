@@ -95,6 +95,14 @@ let definition_clauses tm =
         f,args,r)
       (conjuncts(snd(strip_forall tm)));;
 
+(* the names of the functions that the definition being made
+   defines: an auxiliary that a strategy invents may not take one
+   of them, not even where the strategy only sees a part of the
+   block (presLang's flat_to_display_list is the name that the
+   map of flat_to_display would have got) *)
+
+let the_defining = ref ([]:string list);;
+
 let definition_heads tm =
   itlist (fun (f,_,_) l -> if mem f l then l else f::l)
          (definition_clauses tm) [];;
@@ -863,6 +871,7 @@ let define_nested tm =
          presLang defines flat_to_display and the
          flat_to_display_list that the map of it would be called *)
       if can get_const_type s' || mem s' !used ||
+         mem s' (!the_defining) ||
          exists (fun f -> fst(dest_var f) = s') fs
       then go (i + 1)
       else (used := s' :: !used; s') in
@@ -1176,7 +1185,8 @@ let compile_cases fs cls =
     let rec go i =
       let s = name0 ^ "_case" ^ (if i = 0 then "" else string_of_int i)
         in
-      if can get_const_type s || mem s !used then go (i + 1)
+      if can get_const_type s || mem s !used ||
+         mem s (!the_defining) then go (i + 1)
       else (used := s :: !used; s) in
     go 0 in
   let newcls = ref ([]:term list) in
@@ -1964,7 +1974,7 @@ let define_sing inner tm =
   (* a name for the function on one element *)
   let rec new_name s i =
     let s' = if i = 0 then s else s ^ string_of_int i in
-    if can get_const_type s' ||
+    if can get_const_type s' || mem s' (!the_defining) ||
        exists (fun g -> fst(dest_var g) = s') fs
     then new_name s (i + 1) else s' in
   let _,args0,_ = hd conses in
@@ -2186,6 +2196,7 @@ let define_lift_if inner tm =
 
 let cake_define_gen wf tm =
   let fs0 = definition_heads tm in
+  the_defining := map (fst o dest_var) fs0;
   (* an attempt that fails after it has made the constant cannot be
      followed by another one *)
   let declared () =

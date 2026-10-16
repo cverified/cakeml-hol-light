@@ -69,6 +69,12 @@ a session kills the sessions cloned from it as well: `hol-try`,
 a clone of `hol-wa`, died with `hol-wa`.  Kill the clone first,
 or keep the parent until the clone is no longer needed.
 
+`tools/bin/retemplate` kills the template and makes it again, so
+it kills every session that was cloned from it (including
+`hol-seq`): a run has to be over before the library layer is
+changed, and the sessions that a test needs are made again after
+it.
+
 `tools/bin/holclean` kills every session except `hol-base`,
 `hol-template-cakeml` and `hol-seq`, the session of a run (which
 `FORCE=1 holclean` kills as well).  It killed a run of 65 files
