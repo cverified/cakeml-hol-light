@@ -83,7 +83,13 @@ sources, and why.
   literal that does not give every field (`bviSem`'s `bvi_to_bvl`)
   gets `ARB` for the fields it leaves out, where HOL4 updates an
   arbitrary record of the type; both leave those fields
-  unspecified, but the two terms are not the same.
+  unspecified, but the two terms are not the same.  The record
+  type of a literal is the one whose fields are exactly the ones
+  that the literal gives; where several types fit (a literal of a
+  `c` and a `v` is a `sem_env`, and one of a `v` on its own an
+  environment of `flatSem`, while the `global_env` of
+  `source_to_flatProof` has a `c`, a `v` and a `tys`),
+  `RECORD_OF` in `tools/overrides.py` names it.
 - HOL4's `Overload`s are parse abbreviations; the port expands
   them, so that it does not introduce constants that HOL4 does
   not have.  An overload of one constant whose name another
@@ -297,6 +303,20 @@ sources, and why.
   `FACTS_TAC` uses such a fact on the assumptions of the goal,
   both ways round, as the equation that a match gives is
   `SOME (x,y) = f e`.
+
+- A definition of one clause whose body is a `match` on its last
+  argument and whose arms give `SOME` of the parts of the
+  pattern is a _destructor_ (`bvl_handle$dest_Seq`,
+  `bvi_tailrec$get_bin_args`, `stackLang$dest_Seq`).  The
+  termination proof of a definition that takes an expression
+  apart with one asks for the fact that the parts are smaller
+  than what they were taken from, which HOL4 states and proves
+  by hand (`bvi_tailrec$exp_size_get_bin_args`).  The port proves
+  it with the definition itself and puts it in
+  `cake_term_facts` (`dest_size_fact` in `ml/lib/define.ml`);
+  a part of a type that has no size function of its own counts
+  for nothing, and a fact in which no part counts is not made.
+  Without it `bvl_handle$compile_seqs` could not be made.
 
 - **The first pass assumes the definitions that none of that
   makes.**  `cake_define` gives every way of making a definition

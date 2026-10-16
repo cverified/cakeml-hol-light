@@ -10,8 +10,10 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/comparison.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -776,6 +778,18 @@ hol4_overload "exp_alt_size" "flatSem_exp_alt_size";;
 
 let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
+
+let fix_clock_IMP =
+  try prove
+   (`!s x s1 res. flatSem_fix_clock s x = (s1,res)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "flatSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let evaluate_def = cake_define_list
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)

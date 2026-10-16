@@ -531,6 +531,23 @@ let list_size_TAKE = prove
   COND_CASES_TAC THEN REWRITE_TAC[list_size; LE_0] THEN
   ASM_SIMP_TAC[LE_ADD_LCANCEL] THEN ASM_ARITH_TAC);;
 
+(* the length of a part of a list is not larger than the length
+   of the list (bvl_handle's compile halves one) *)
+
+let LENGTH_TAKE_LE = prove
+ (`!l:A list k. LENGTH (TAKE k l) <= LENGTH l`,
+  LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[TAKE; LENGTH; LE_REFL; LE_0] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[LENGTH; LE_0] THEN
+  ASM_SIMP_TAC[LE_SUC] THEN ASM_ARITH_TAC);;
+
+let LENGTH_DROP_LE = prove
+ (`!l:A list k. LENGTH (DROP k l) <= LENGTH l`,
+  LIST_INDUCT_TAC THEN GEN_TAC THEN
+  REWRITE_TAC[DROP; LENGTH; LE_REFL; LE_0] THEN
+  COND_CASES_TAC THEN REWRITE_TAC[LENGTH; LE_REFL] THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `k - 1`) THEN ARITH_TAC);;
+
 (* HOL4's LOG2, from logrootTheory *)
 
 let LOG2 = define

@@ -185,17 +185,17 @@ let LIST_MEM_TAC (asl,w as gl) =
    names are the variables of the clause, where CHOOSE fails *)
 
 let FRESH_BOUND_CONV tm =
-  let used = ref (map (fst o dest_var) (frees tm)) in
-  let rec go t =
+  (* the variables to keep away from are the free ones and the
+     ones that the binders above this place have taken: two
+     binders beside each other may have the same name *)
+  let rec go avoid t =
     match t with
-      Comb(s,u) -> mk_comb(go s,go u)
+      Comb(s,u) -> mk_comb(go avoid s,go avoid u)
     | Abs(v,b) ->
-        let v1 = variant (map (fun s -> mk_var(s,type_of v))
-                              (!used)) v in
-        used := fst(dest_var v1) :: (!used);
-        mk_abs(v1,go (vsubst [v1,v] b))
+        let v1 = variant avoid v in
+        mk_abs(v1,go (v1 :: avoid) (vsubst [v1,v] b))
     | _ -> t in
-  let tm1 = go tm in
+  let tm1 = go (frees tm) tm in
   if tm1 = tm then REFL tm else ALPHA tm tm1;;
 
 let MEM_SIZE_TAC (asl,w as gl) =
@@ -257,7 +257,8 @@ let SUBST_VAR_TAC (asl,w as gl) =
 let cake_term_lemmas =
   ref [list_size; pair_size; option_size; num_size; bool_size;
        DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
-       list_size_APPEND; list_size_REVERSE];;
+       list_size_APPEND; list_size_REVERSE;
+       LENGTH_TAKE_LE; LENGTH_DROP_LE];;
 
 (* the lemmas that state a fact about a subterm of a termination
    goal (and not an equation, so that rewriting cannot use them);
@@ -296,7 +297,10 @@ let FACTS_TAC (asl,w as gl) =
 (* when a termination proof does not close, the goal is logged *)
 
 let LOG_TAC (asl,w) =
-  cake_log "unsolved termination goal:";
+  cake_log ("unsolved termination goal of " ^
+            (if !the_defining = [] then "?"
+             else end_itlist (fun a b -> a ^ ", " ^ b)
+                             (!the_defining)) ^ ":");
   cake_log_term w;
   do_list (fun (_,th) -> cake_log ("  asm: " ^ string_of_term(concl
     th)))
@@ -328,6 +332,11 @@ and SIZE_TERM_TAC g =
    (* a fact may make a subterm appear that another fact is about *)
    FACTS_TAC THEN FACTS_TAC THEN
    REWRITE_TAC(I_THM::all_size_thms() @ (!cake_term_lemmas)) THEN
+   CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+   (* the facts are assumptions now, and ARITH only sees what the
+      size theorems have taken apart *)
+   RULE_ASSUM_TAC(REWRITE_RULE(I_THM::all_size_thms() @
+                               (!cake_term_lemmas))) THEN
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
      ASM_ARITH_TAC) ORELSE
@@ -435,8 +444,11 @@ let discharge_conditions (rel,tac) th =
          with Failure s ->
            (the_cond_why := cond_kind h;
             if !cake_debug then
-              (cake_log ("cannot prove the condition (" ^ s ^
-                         ") with the relation");
+              (cake_log ("cannot prove the condition of " ^
+                         (if !the_defining = [] then "?"
+                          else end_itlist (fun a b -> a ^ ", " ^ b)
+                                          (!the_defining)) ^
+                         " (" ^ s ^ ") with the relation");
                cake_log_term rel;
                cake_log "for the condition:";
                cake_log_term h);
@@ -2034,8 +2046,21 @@ let candidate_measures tm =
       match l with
         [] -> []
       | h :: t -> h :: nub (filter (fun x -> x <> h) t) in
-    map (fun idxs -> mk_measure (measure_of_positions f cls idxs))
-        (nub cands);;
+    let ms = map (fun idxs ->
+                    mk_measure (measure_of_positions f cls idxs))
+                 (nub cands) in
+    (* a measure that does not look at its argument gives the
+       goal 0 < 0, so it is only kept where there is nothing
+       else *)
+    let looks m =
+      let v,bod = try dest_gabs (rand m) with Failure _ ->
+                  dest_abs (rand m) in
+      (* the size function of a type that has none is \x. 0, so
+         the body only says nothing after it is reduced *)
+      let bod = beta_normalize bod in
+      exists (fun x -> vfree_in x bod) (frees v) in
+    let good = filter looks ms in
+    if good = [] then ms else good;;
 
 let size_thms tyname =
   if not (can (assoc tyname) (!the_size_thms))
@@ -2629,8 +2654,123 @@ let cake_report tm s =
      cake_log_term tm);
   failwith s;;
 
+let cake_destfacts = ref true;;
+
+(* ------------------------------------------------------------------ *)
+(* The size fact of a destructor.                                     *)
+(*                                                                    *)
+(* A definition of one clause whose body is a match on an argument    *)
+(* and whose arms give SOME of the parts of the pattern is a          *)
+(* destructor (bvi_tailrec's get_bin_args, bvl_handle's dest_Seq,     *)
+(* clos_op's dest_Op, ...).  The termination proof of a definition    *)
+(* that uses one asks for the fact that the parts are smaller than    *)
+(* what they were taken from, which HOL4 states and proves by hand;   *)
+(* here it is made and registered with the definition itself.         *)
+(* ------------------------------------------------------------------ *)
+
+let list_type_of ty =
+  match dest_type ty with
+    "list",[t] -> t
+  | _ -> failwith "list_type_of";;
+
+(* a variable of a list type that the goal still matches on *)
+
+let LIST_SPLIT_TAC (asl,w as gl) =
+  let vs = filter (fun v -> can list_type_of (type_of v)) (frees w) in
+  if vs = [] then failwith "LIST_SPLIT_TAC" else
+  MAP_EVERY (fun v -> STRUCT_CASES_TAC (ISPEC v list_CASES)) vs gl;;
+
+(* the cases theorem of a type of a family of them *)
+
+let cases_of ty =
+  let ths = CONJUNCTS (cases (fst(dest_type ty))) in
+  try find (fun th -> type_of(fst(dest_forall(concl th))) = ty) ths
+  with Failure _ -> hd ths;;
+
+let dest_size_fact th =
+  let tm = snd(strip_forall(concl th)) in
+  let l,r = dest_eq tm in
+  let f,args = strip_comb l in
+  if args = [] || not (is_var (last args)) then
+    failwith "dest_size_fact" else
+  (* a recursive definition is no destructor, and rewriting with
+     one would not stop *)
+  if free_in f r then failwith "dest_size_fact" else
+  let x = last args in
+  let ty = type_of x in
+  let tyname = fst(dest_type ty) in
+  if not (can (assoc tyname) (!the_rec_thms)) then
+    failwith "dest_size_fact" else
+  (match dest_type (type_of l) with
+     "option",_ -> () | _ -> failwith "dest_size_fact");
+  (* the body is a match on the argument: that is a destructor,
+     where a definition that looks at the value of another one
+     (clos_op's dest_Op_Nil) is not *)
+  let hop,margs = strip_comb r in
+  if not (is_const hop && fst(dest_const hop) = "_MATCH") ||
+     length margs <> 2 || hd margs <> x
+  then failwith "dest_size_fact" else
+  let pty = hd(snd(dest_type (type_of l))) in
+  let rec parts ty =
+    if is_vartype ty then [ty] else
+    match dest_type ty with
+      "prod",[a;b] -> parts a @ parts b
+    | _ -> [ty] in
+  let ptys = parts pty in
+  let vs = map2 (fun t i -> mk_var("a" ^ string_of_int i,t))
+                ptys (0--(length ptys - 1)) in
+  let tuple = end_itlist (curry mk_pair) vs in
+  (* a part of a type that has no size function of its own (a
+     number, a word) counts for nothing, and a fact in which no
+     part counts says nothing *)
+  let sizefn t = try size_fn_of_type t
+                 with Failure _ -> mk_abs(mk_var("x",t),`0`) in
+  let sizes = map (fun v -> beta_normalize
+                              (mk_comb(sizefn (type_of v),v))) vs in
+  if not (exists (fun (v,s) -> vfree_in v s) (zip vs sizes)) then
+    failwith "dest_size_fact" else
+  let sum = end_itlist (fun a b -> mk_binop `(+):num->num->num` a b)
+                       sizes in
+  let goal =
+    list_mk_forall(args @ vs,
+      mk_imp(mk_eq(l,mk_comb(mk_mconst("SOME",
+                               mk_fun_ty pty (type_of l)),tuple)),
+             mk_binop `(<):num->num->bool` sum
+                      (mk_comb(size_fn_of_type ty,x)))) in
+  let _ = size_thms tyname in
+  let rws () = [distinctness "option"; injectivity "option";
+                PAIR_EQ; list_size; th] @ all_size_thms() in
+  prove(goal,
+        REPEAT GEN_TAC THEN
+        STRUCT_CASES_TAC (ISPEC x (cases_of ty)) THEN
+        REWRITE_TAC(rws()) THEN
+        REPLICATE_TAC 3
+          (TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws()))) THEN
+        (* a pattern that asks for a value that the arm does not
+           give (bvl_handle's dest_Seq matches on Var 1) leaves a
+           match that the rewriting does not reduce *)
+        TRY (CONV_TAC (ONCE_DEPTH_CONV MATCH_CONV)) THEN
+        REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC(rws()) THEN
+        REPEAT (DISCH_THEN
+                  (STRIP_ASSUME_TAC o REWRITE_RULE(rws()))) THEN
+        ASM_REWRITE_TAC[] THEN REWRITE_TAC(rws()) THEN ARITH_TAC);;
+
+(* every definition that is one is registered as a fact; the
+   budget is a short one, because most definitions are no
+   destructor and the proof is only a help *)
+
+let note_dest_fact th =
+  if !cake_destfacts then
+    let old = !cake_timeout in
+    let fin () = cake_timeout := old in
+    (cake_timeout := 10;
+     (try cake_term_facts := dest_size_fact th :: (!cake_term_facts)
+      with Failure _ -> () | Cake_timeout -> ());
+     fin ());;
+
 let cake_define tm =
-  try cake_time (cake_define_gen None) tm
+  try let th = cake_time (cake_define_gen None) tm in
+      note_dest_fact th; th
   with Failure s -> cake_report tm s;;
 
 (* the clauses of a definition as separate terms, for a definition

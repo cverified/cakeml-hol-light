@@ -876,6 +876,36 @@ TYPE_TEXT = {
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
   # the termination of every evaluate: HOL4 proves it with
+  ('wordSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. wordSem_fix_clock s x = (res,s1)
+                  ==> wordSem_state_clock s1 <=
+                      wordSem_state_clock s /\
+                      wordSem_state_termdep s1 =
+                      wordSem_state_termdep s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "wordSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
+  ('flatSem', 'evaluate_def'): r'''
+let fix_clock_IMP =
+  try prove
+   (`!s x s1 res. flatSem_fix_clock s x = (s1,res)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "flatSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+''',
   # imp_res_tac fix_clock_IMP
   ('bvlSem', 'evaluate_def'): r'''
 let fix_clock_IMP =

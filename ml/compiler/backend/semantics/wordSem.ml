@@ -12,6 +12,7 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
@@ -19,6 +20,7 @@ needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/machine_ieee.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -979,6 +981,22 @@ let exit_loop_def = cake_define
       | (SOME (Continue n)) -> SOME (Continue (n - 1))
       | res -> res`;;
 hol4_overload "exit_loop" "wordSem_exit_loop";;
+
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. wordSem_fix_clock s x = (res,s1)
+                  ==> wordSem_state_clock s1 <=
+                      wordSem_state_clock s /\
+                      wordSem_state_termdep s1 =
+                      wordSem_state_termdep s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "wordSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN
+    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let evaluate_def = cake_define_list
   [`wordSem_evaluate ((Skip:'a
