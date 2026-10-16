@@ -1,0 +1,4 @@
+#!/bin/sh
+# source <name>... : the HOL4 source of a definition of the port,
+# with its Termination
+python3 -I /home/freek/claude/hol-light/cakeml/tools/source.py "$@"
