@@ -39,6 +39,9 @@ override_interface("LIST_REL",
 (* HOL4's EVERY2 is its LIST_REL *)
 override_interface("EVERY2",
   `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
+(* and its STRING is the CONS of a string, which is a list of
+   characters in HOL Light as well *)
+override_interface("STRING",`CONS:char->(char)list->(char)list`);;
 
 (* HOL4's OPTREL (optionTheory), with the monotonicity theorem that
    an inductive definition over it needs (HOL Light has the ones of
@@ -647,6 +650,14 @@ let oHD = new_recursive_definition list_RECURSION
 let MAX_LIST = new_recursive_definition list_RECURSION
   `(MAX_LIST [] = 0) /\
    (MAX_LIST (CONS h t) = MAX h (MAX_LIST t))`;;
+
+(* HOL4's splitAtPki of listTheory, which parmove's fstep uses *)
+
+let splitAtPki = new_recursive_definition list_RECURSION
+  `(splitAtPki P k [] = k [] []) /\
+   (splitAtPki P k (CONS h t) =
+      if P 0 h then k [] (CONS h t)
+      else splitAtPki (P o SUC) (\p s. k (CONS h p) s) t)`;;
 
 let isHexDigit = new_definition
   `isHexDigit c <=>
