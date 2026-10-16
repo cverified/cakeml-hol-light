@@ -2006,6 +2006,46 @@ let define_size tyname =
                ASM_REWRITE_TAC(list_size::sizedefs) THEN
                TRY ARITH_TAC))
       ifns in
+  (* the size of what a MAP FST or a MAP SND of a list of pairs
+     of the family gives *)
+  let pairlems =
+    let sfn ty =
+      try let g = find (fun g -> fst(dest_fun_ty(type_of g)) = ty)
+                       ifns in
+          list_mk_comb(mk_mconst(el (index g ifns) names,
+                         type_of(el (index g ifns) svars)),pvars)
+      with Failure _ -> (!size_fn_of_type_fwd) ty in
+    let lsize f t =
+      let ety = fst(dest_fun_ty(type_of f)) in
+      list_mk_comb(mk_mconst("list_size",
+        mk_fun_ty (type_of f)
+          (mk_fun_ty (mk_type("list",[ety])) numty)),[f;t]) in
+    flat (mapfilter
+      (fun fn ->
+         let ty = fst(dest_fun_ty(type_of fn)) in
+         let n,args = dest_type ty in
+         if n <> "prod" then fail() else
+         let aty = hd args and bty = hd(tl args) in
+         let sp = sfn ty in
+         let lty = mk_type("list",[ty]) in
+         let l = mk_var("l",lty) in
+         let maps nm ety =
+           mk_comb(mk_comb(mk_mconst("MAP",
+             mk_fun_ty (mk_fun_ty ty ety)
+               (mk_fun_ty lty (mk_type("list",[ety])))),
+             mk_mconst(nm,mk_fun_ty ty ety)),l) in
+         let lemma f t =
+           prove(mk_forall(l,list_mk_forall(pvars,
+                   mk_binop `(<=):num->num->bool`
+                            (lsize f t) (lsize sp l))),
+                 MATCH_MP_TAC list_INDUCT THEN
+                 REWRITE_TAC[MAP; list_size; FORALL_PAIR_THM] THEN
+                 REPEAT GEN_TAC THEN
+                 REWRITE_TAC(list_size::sizedefs) THEN ARITH_TAC) in
+         [lemma (sfn aty) (maps "FST" aty);
+          lemma (sfn bty) (maps "SND" bty)])
+      ifns) in
+  cake_term_facts := pairlems @ (!cake_term_facts);
   the_size_thms := (tyname,(sizedefs,listlems))::(!the_size_thms);
   do_list
     (fun th ->
