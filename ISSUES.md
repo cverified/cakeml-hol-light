@@ -281,7 +281,16 @@ of a relation and no words with HOL4's names, so
   ones HOL Light does not have are defined in terms of them;
 - a bag is the function that gives the number of times an element
   occurs in it, and the reflexive transitive closure is the
-  inductive definition that HOL4 has.
+  inductive definition that HOL4 has;
+- the fold over a finite map (`ITFMAP`) is the relation that says
+  what a fold gives and a value that it gives, as HOL4's
+  `finite_mapTheory` has it.
+
+Where HOL Light has a notion of HOL4 under another name, the
+port says so with an `override_interface` in `ml/lib/hol4.ml`
+(HOL4's `EVERY` is `ALL`, its `BIGUNION` is `UNIONS`, its
+`LIST_REL` and `EVERY2` are `ALL2`, its `STRING` is `CONS`),
+so that the sources of the port read as the CakeML sources do.
 
 HOL4's `pathTheory` is not ported: the dependency analysis found
 it only because CakeML definitions use variables called `el`,
