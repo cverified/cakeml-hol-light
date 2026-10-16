@@ -2993,6 +2993,9 @@ let dest_size_fact th =
         REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC(rws()) THEN
         REPEAT (DISCH_THEN
                   (STRIP_ASSUME_TAC o REWRITE_RULE(rws()))) THEN
+        (* the equation that the arm gives may be the other way
+           round ([] = a0 of a destructor that gives a tuple) *)
+        TRY SUBST_VAR_TAC THEN
         ASM_REWRITE_TAC[] THEN REWRITE_TAC(rws()) THEN ARITH_TAC);;
 
 (* every definition that is one is registered as a fact; the
