@@ -16,12 +16,12 @@ reasons = collections.Counter()
 i = 0
 while i < len(text):
   l = text[i]
-  if l == 'unsolved termination goal:':
+  if l.startswith('unsolved termination goal'):
     i += 1
     g = []
     while i < len(text) and not text[i].startswith('  asm: ') and \
           not text[i].startswith('cannot prove') and \
-          text[i] != 'unsolved termination goal:':
+          not text[i].startswith('unsolved termination goal'):
       g.append(text[i].strip()); i += 1
     asms = []
     while i < len(text) and text[i].startswith('  asm: '):
