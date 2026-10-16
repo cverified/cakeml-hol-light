@@ -253,7 +253,12 @@ class Db:
           for nm in definition_names(b.body):
             self.defs[nm].append((thy, 'def'))
         elif b.kind in ('Inductive', 'CoInductive'):
-          for nm in definition_names(b.body):
+          # the rules of an inductive are implications, which
+          # definition_names does not look at: the relations
+          # are the heads of their conclusions
+          for nm in (definition_names(b.body) or
+                     rule_names(b.body) or
+                     ([b.name] if b.name else [])):
             self.defs[nm].append((thy, 'rel'))
         elif b.kind == 'Type':
           txt = (overrides.TYPE_TEXT.get((thy, b.name)) or
@@ -713,6 +718,41 @@ def definition_names(body):
       while cl.kind == 'paren': cl = cl.e
     if cl.kind != 'infix' or cl.op not in ('=', '<=>'): continue
     hop = hterm.head_of(cl.l)
+    if hop.kind == 'id' and hop.name not in out:
+      out.append(hop.name)
+  return out
+
+
+def rule_names(body):
+  """the relations that the rules of an Inductive block define:
+     the head of the conclusion of every rule (definition_names
+     only sees the clauses that are equations)"""
+  try:
+    toks = hterm.tokenize(hol4.strip_comments(body))
+    e = hterm.Parser(toks).parse()
+  except Exception:
+    return []
+  out = []
+
+  def conjuncts(e):
+    if e.kind == 'infix' and e.op == '/\\':
+      return conjuncts(e.l) + conjuncts(e.r)
+    if e.kind == 'paren': return conjuncts(e.e)
+    if e.kind == 'quant' and e.q == '!': return conjuncts(e.body)
+    return [e]
+
+  for cl in conjuncts(e):
+    while cl.kind == 'paren': cl = cl.e
+    if cl.kind == 'quant' and cl.q == '!':
+      cl = cl.body
+      while cl.kind == 'paren': cl = cl.e
+    while cl.kind == 'infix' and cl.op == '==>':
+      cl = cl.r
+      while cl.kind == 'paren': cl = cl.e
+    try:
+      hop = hterm.head_of(cl)
+    except Exception:
+      continue
     if hop.kind == 'id' and hop.name not in out:
       out.append(hop.name)
   return out
