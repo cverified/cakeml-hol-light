@@ -112,3 +112,27 @@ for thy in thys:
       bad += 1
       print('%-22s %-28s %s' % (thy, b.name, ' '.join(miss[:8])))
 print('%d definitions, %d with a name missing' % (tot, bad))
+
+# the records of the port have the fields of the HOL4 ones
+port = {}
+for dp, dn, fn in os.walk(portmod.ML):
+  for f in fn:
+    if not f.endswith('.ml'): continue
+    src = open(os.path.join(dp, f)).read()
+    for m in re.finditer(r'define_record "(\w+)"(.*?);;', src, re.S):
+      port[m.group(1)] = re.findall(r'"([A-Za-z_][A-Za-z0-9_\']*)","',
+                                    m.group(2))
+nrec = rbad = 0
+for (thy, ty), flds in sorted(db.recs.items()):
+  if thys != [t for t, _, _ in dbmod.load_order()] and thy not in thys:
+    continue
+  nm = db.rename.get((thy, ty), ty)
+  if nm not in port and thy + '_' + ty in port: nm = thy + '_' + ty
+  nrec += 1
+  if nm not in port:
+    print('%-22s %-20s record not in the port' % (ty, thy)); rbad += 1
+  elif sorted(port[nm]) != sorted(flds):
+    print('%-22s %-20s fields %s' % (ty, thy,
+                                     set(flds) ^ set(port[nm])))
+    rbad += 1
+print('%d records, %d that differ' % (nrec, rbad))
