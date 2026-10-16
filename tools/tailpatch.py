@@ -19,6 +19,15 @@ j = i
 while j > 0 and not (new[j].startswith('let ') or
                      new[j].startswith('(* ')):
   j -= 1
-open(sys.argv[2], 'w').write('\n'.join(new[j:]) + '\n')
+tail = new[j:]
+# a table that the session has filled (the recursion theorems and the
+# size functions of the types that are loaded) may not be made anew:
+# the part that is loaded would reset it, and everything that uses it
+# (a definition by cases, a measure) would then fail
+for k,l in enumerate(tail):
+  if l.startswith('let the_rec_thms = ref') or \
+     l.startswith('let the_size_fns = ref'):
+    tail[k] = '(* %s stays as it is *)' % l.split()[1]
+open(sys.argv[2], 'w').write('\n'.join(tail) + '\n')
 print('from line %d (the difference is at %d), %d lines'
       % (j + 1, i + 1, len(new) - j))
