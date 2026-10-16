@@ -187,6 +187,23 @@ The other checks:
 - `tools/bin/freevars` which constants the definitions that the
                        first pass assumes miss (a free variable is
                        a constant that the port does not have)
+- `tools/bin/trydef`   make the definitions that the first pass
+                       assumes again, with their constants
+                       renamed, in a clone of the session of the
+                       last run: that is how a change to the
+                       strategies of `ml/lib/define.ml` is tried
+                       without a run (`PATCH=` loads the changed
+                       part of the library first,
+                       `tools/tailpatch.py` cuts it out)
+- `tools/bin/shapes`   classify the assumed definitions by their
+                       shape (not recursive, a recursive call
+                       under a lambda, more than one function, a
+                       call on a term that the clause builds)
+- `tools/bin/whereis`  which HOL4 theory defines a name, whether
+                       the port has that theory, and what the
+                       port calls the constant
+- `tools/bin/slow`     which definitions of the last run took the
+                       longest
 - `tools/conjtest.py`  whether a definition of the port is made
                        the way `cake_define` makes it (the clauses
                        of a clause list have to fit together),
