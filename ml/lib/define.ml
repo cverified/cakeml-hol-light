@@ -2771,8 +2771,28 @@ let list_type_of ty =
 
 (* a variable of a list type that the goal still matches on *)
 
+(* what the matches of a term look at *)
+
+let match_scruts tm =
+  let rec go t acc =
+    let acc =
+      match t with
+        Comb(Comb(Const("_MATCH",_),sc),_) -> insert sc acc
+      | _ -> acc in
+    match t with
+      Comb(a,b) -> go a (go b acc)
+    | Abs(_,b) -> go b acc
+    | _ -> acc in
+  go tm [];;
+
+(* a variable of a list type that the goal still matches on: one
+   that the match does not look at is not split, because the
+   equation that the arm gives says what it is *)
+
 let LIST_SPLIT_TAC (asl,w as gl) =
-  let vs = filter (fun v -> can list_type_of (type_of v)) (frees w) in
+  let vs = filter (fun v -> can list_type_of (type_of v))
+                  (itlist (fun s l -> union (frees s) l)
+                          (match_scruts w) []) in
   if vs = [] then failwith "LIST_SPLIT_TAC" else
   MAP_EVERY (fun v -> STRUCT_CASES_TAC (ISPEC v list_CASES)) vs gl;;
 
@@ -2789,18 +2809,7 @@ let cases_of ty =
    away when that value is taken apart *)
 
 let MATCH_SCRUT_TAC (asl,w as gl) =
-  let scruts tm =
-    let rec go t acc =
-      let acc =
-        match t with
-          Comb(Comb(Const("_MATCH",_),sc),_) when not (is_var sc) ->
-            insert sc acc
-        | _ -> acc in
-      match t with
-        Comb(a,b) -> go a (go b acc)
-      | Abs(_,b) -> go b acc
-      | _ -> acc in
-    go tm [] in
+  let scruts tm = filter (fun t -> not (is_var t)) (match_scruts tm) in
   let ok sc =
     can (fun t -> cases_of (type_of t)) sc &&
     not (is_const (fst(strip_comb sc))) in
@@ -2867,8 +2876,11 @@ let dest_size_fact th =
         STRUCT_CASES_TAC (ISPEC x (cases_of ty)) THEN
         REWRITE_TAC(rws()) THEN
         REPLICATE_TAC 3
-          (TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws())) THEN
-           TRY (MATCH_SCRUT_TAC THEN REWRITE_TAC(rws()))) THEN
+          ((* the value that an arm looks at first: the parts
+              that the arm gives are only known once the match
+              on it is gone *)
+           TRY (MATCH_SCRUT_TAC THEN REWRITE_TAC(rws())) THEN
+           TRY (LIST_SPLIT_TAC THEN REWRITE_TAC(rws()))) THEN
         (* a pattern that asks for a value that the arm does not
            give (bvl_handle's dest_Seq matches on Var 1) leaves a
            match that the rewriting does not reduce *)
