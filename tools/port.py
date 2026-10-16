@@ -779,6 +779,12 @@ class Porter:
     overloads = self.overloads_of(sorted(self.ctx.defining))
     self.out.append(text if not overloads else
                     text + '\n' + '\n'.join(overloads))
+    # a definition that the port writes by hand and that goes
+    # where the source has the one that HOL4 makes with ML code
+    # (unifDef's unify, which HOL4 makes with new_specification
+    # out of a theorem about the tail recursive tunify)
+    extra = overrides.EXTRA_AFTER.get((self.thy, key[1]))
+    if extra: self.out.append('\n' + extra.strip())
     for nm in conof:
       if '*' in overrides.CON_OF.get(key, {}): continue
       self.ctx.overloaded.add(nm)

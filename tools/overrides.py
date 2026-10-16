@@ -238,7 +238,7 @@ LOCAL_NAMES = {
 # any other constant (semantics/ffi has an oracle called oc)
 EXTRA_DEFS = [
   ('walk', 'vwalk'), ('walkstar', 'walkstar'),
-  ('unifDef', 'oc'), ('unifDef', 'unify'),
+  ('walkstar', 'oc'), ('unifDef', 'unify'),
   ('word_bignum', 'mc_iop_code'),
 ]
 
@@ -769,23 +769,97 @@ cake_declare "mc_iop_code" `:(A)mini`;;
 ''',
 }
 
+# a definition of the port that goes after the one of the source
+# that it belongs behind
+EXTRA_AFTER = {
+  # HOL4 makes unify with new_specification, out of a theorem
+  # that says that the tail recursive tunify satisfies the
+  # equation for a wellfounded substitution.  The port cannot
+  # prove that yet, so it takes the graph of the equation
+  # (without the hypothesis, which only says that the recursion
+  # stops) and defines the constant as a value of it; HOL4's
+  # equation is then a theorem of the second pass.
+  ('unifDef', 'ext_s_check_def'): r'''
+let UNIFYR_RULES,UNIFYR_INDUCT,UNIFYR_CASES =
+  new_inductive_definition
+  `(!s t1 t2 v1 v2.
+      walk s t1 = term_Var v1 /\ walk s t2 = term_Var v2
+      ==> UNIFYR s t1 t2
+            (SOME (if v1 = v2 then s
+                   else s |+ (v1,term_Var v2)))) /\
+   (!s t1 t2 v1.
+      walk s t1 = term_Var v1 /\
+      (!v2. ~(walk s t2 = term_Var v2))
+      ==> UNIFYR s t1 t2 (ext_s_check s v1 (walk s t2))) /\
+   (!s t1 t2 v2.
+      (!v1. ~(walk s t1 = term_Var v1)) /\
+      walk s t2 = term_Var v2
+      ==> UNIFYR s t1 t2 (ext_s_check s v2 (walk s t1))) /\
+   (!s t1 t2 t1a t1d t2a t2d sx r.
+      walk s t1 = term_Pair t1a t1d /\
+      walk s t2 = term_Pair t2a t2d /\
+      UNIFYR s t1a t2a (SOME sx) /\ UNIFYR sx t1d t2d r
+      ==> UNIFYR s t1 t2 r) /\
+   (!s t1 t2 t1a t1d t2a t2d.
+      walk s t1 = term_Pair t1a t1d /\
+      walk s t2 = term_Pair t2a t2d /\
+      UNIFYR s t1a t2a NONE
+      ==> UNIFYR s t1 t2 NONE) /\
+   (!s t1 t2 c1 c2.
+      walk s t1 = term_Const c1 /\ walk s t2 = term_Const c2
+      ==> UNIFYR s t1 t2 (if c1 = c2 then SOME s else NONE)) /\
+   (!s t1 t2 t1a t1d c2.
+      walk s t1 = term_Pair t1a t1d /\ walk s t2 = term_Const c2
+      ==> UNIFYR s t1 t2 NONE) /\
+   (!s t1 t2 c1 t2a t2d.
+      walk s t1 = term_Const c1 /\ walk s t2 = term_Pair t2a t2d
+      ==> UNIFYR s t1 t2 NONE)`;;
+
+let unify_def = new_definition
+  `unify s t1 t2 = @r. UNIFYR s t1 t2 r`;;
+''',
+}
+
 EXTRA_HEAD = {
-  # HOL4 defines these four with a schema (xDefineSchema, under
-  # the hypothesis that the substitution is wellfounded), which
-  # HOL Light has no counterpart for.  The port declares them and
-  # says nothing about their value, which adds no axiom; only the
-  # theorems of the second pass need what they are.
+  # HOL4 makes vwalk, walkstar and oc with a schema
+  # (xDefineSchema, under the hypothesis wfs s that the
+  # substitution is wellfounded), which HOL Light has no
+  # counterpart for: the port takes the graph of the equation as
+  # an inductive relation and defines the constant as a value of
+  # it (HOL4's equation is then a theorem of the second pass).
   'walk': r'''
-cake_declare "vwalk" `:(num,(A)term)fmap->num->(A)term`;;
+let VWALKR_RULES,VWALKR_INDUCT,VWALKR_CASES =
+  new_inductive_definition
+  `(!s v. FLOOKUP s v = NONE ==> VWALKR s v (term_Var v)) /\
+   (!s v t. FLOOKUP s v = SOME t /\ (!u. ~(t = term_Var u))
+      ==> VWALKR s v t) /\
+   (!s v u r. FLOOKUP s v = SOME (term_Var u) /\ VWALKR s u r
+      ==> VWALKR s v r)`;;
+
+let vwalk_def = new_definition
+  `vwalk s v = @r. VWALKR s v r`;;
 ''',
   'walkstar': r'''
-cake_declare "walkstar" `:(num,(A)term)fmap->(A)term->(A)term`;;
-''',
-  'unifDef': r'''
-cake_declare "oc" `:(num,(A)term)fmap->(A)term->num->bool`;;
-cake_declare "unify"
-  `:(num,(A)term)fmap->(A)term->(A)term->
-      ((num,(A)term)fmap)option`;;
+let WALKSTARR_RULES,WALKSTARR_INDUCT,WALKSTARR_CASES =
+  new_inductive_definition
+  `(!s t t1 t2 r1 r2.
+      walk s t = term_Pair t1 t2 /\ WALKSTARR s t1 r1 /\
+      WALKSTARR s t2 r2
+      ==> WALKSTARR s t (term_Pair r1 r2)) /\
+   (!s t. (!t1 t2. ~(walk s t = term_Pair t1 t2))
+      ==> WALKSTARR s t (walk s t))`;;
+
+let walkstar_def = new_definition
+  `walkstar s t = @r. WALKSTARR s t r`;;
+
+(* the occurs check, which HOL4 makes with Hol_reln in the same
+   file (walkstarScript.sml) *)
+
+let oc_RULES,oc_INDUCT,oc_CASES =
+  new_inductive_definition
+  `(!s t v. v IN vars t /\ ~(v IN FDOM s) ==> oc s t v) /\
+   (!s t v u t'. u IN vars t /\ vwalk s u = t' /\ oc s t' v
+      ==> oc s t v)`;;
 ''',
   'machine_ieee': r'''
 (* HOL4 generates the definitions of the fp16, fp32 and fp64
