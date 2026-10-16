@@ -32,6 +32,23 @@ sources, and why.
 - A bound variable whose name is a constant of HOL Light or of the
   port is renamed (`get_byte` becomes `get_byte'`): HOL4 lets a
   variable shadow a constant, HOL Light does not.
+- A constant whose name the port keeps although other theories
+  have the name too is declared as an overload of itself
+  (`walk` of the theory `walk`, `evaluate` of `evaluate`): an
+  overload that another theory declares for its own constant
+  would otherwise hide it, because HOL Light looks a name up in
+  the interface before the constants.
+- Where a constant and a type of the same theory have the same
+  name and the name is one that other theories use as well, the
+  type keeps it and the constant is prefixed
+  (`semantics$semantics` is `semantics_semantics`, the type
+  `semantics` stays): the definition of the constant would
+  otherwise be parsed with the overloads that the other
+  theories declared for their own `semantics`.
+- The hand written files of `ml/lib` stand for HOL4 theories, so
+  a name of theirs that a ported theory has as well is
+  overloaded like any other (`fromList` is the one of `llist`
+  and the one of `sptree`).
 - The name of the OCaml binding of a definition cannot start with
   a capital letter unless the name has another capital in it
   (HOL Light's parser), so `Lnext_def` becomes `lnext_def`.  The
@@ -53,6 +70,12 @@ sources, and why.
   (`FIELD_DEFAULT` of `tools/overrides.py`).
 
 ## Syntax
+
+- HOL4's `simpleSexp` writes an s-expression list as
+  `⟪x; y; z⟫` and a cons as `⟪h • t⟫`
+  (`add_listform` and `add_rule`); the port writes out the
+  `SX_CONS` chain that those stand for, ending in the `nil`
+  that the theory overloads with the symbol `"nil"`.
 
 - Record fields: `r.fld` becomes `ty_fld r`, `r with fld := v`
   becomes `ty_fld_fupd (K v) r` and `<|fld := v|>` becomes

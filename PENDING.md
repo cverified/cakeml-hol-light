@@ -34,7 +34,9 @@ port instantiates the type with `:1` and the configuration with
 
 Five definitions of `compiler` are not ported: the three that
 compile Pancake and the two command line drivers that call them
-(see `ISSUES.md`).  Pancake is outside the port.
+(see `ISSUES.md`).  Pancake is outside the port, but the
+datatype of its static errors (`panStatic$staterr`) is in the
+port, because `compiler`'s `compile_error` has it in it.
 
 One constant has no value in the port, because HOL4 makes it in
 a way that HOL Light has no counterpart for.  The port declares
