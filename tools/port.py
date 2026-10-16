@@ -1073,13 +1073,34 @@ class Porter:
        (source_to_flat's compile_exp matches on the If of ast,
        which only the clauses with an :ast_exp on them say)"""
     out = {}
+
+    def parts(args):
+      """the arguments of a clause, and the components of the
+         ones that are a tuple: a definition of a semantics takes
+         the program and the state as one pair, and the type that
+         says which language it is of is on the program
+         (stackSem's evaluate matches on the Halt of stackLang
+         and gives the Halt of stackSem)"""
+      for i, a in enumerate(args):
+        while a.kind == 'paren': a = a.e
+        if a.kind == 'infix' and a.op == ',':
+          cs = []
+          b = a
+          while b.kind == 'infix' and b.op == ',':
+            cs.append(b.l); b = b.r
+            while b.kind == 'paren': b = b.e
+          cs.append(b)
+          for j, c in enumerate(cs): yield (i, j), c
+        else:
+          yield (i,), a
+
     for cl in cls:
       e = cl
       while e.kind == 'paren': e = e.e
       if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
       h, args = hterm.strip_app(e.l)
       if h.kind != 'id': continue
-      for i, a in enumerate(args):
+      for i, a in parts(args):
         while a.kind == 'paren': a = a.e
         if a.kind != 'typed': continue
         try:
@@ -1101,7 +1122,7 @@ class Porter:
       if not (e.kind == 'infix' and e.op in ('=', '<=>')): continue
       h, args = hterm.strip_app(e.l)
       if h.kind != 'id': continue
-      for i, a in enumerate(args):
+      for i, a in parts(args):
         while a.kind in ('paren', 'typed'): a = a.e
         c, _ = hterm.strip_app(a) if a.kind == 'app' else (a, [])
         if c.kind != 'id' or not iscon(c.name): continue
@@ -1126,10 +1147,33 @@ class Porter:
     self.annotated = {}
     base = self.contys
     for i, a in enumerate(args):
-      if atys:
-        self.contys = atys.get((head.name, i)) or base
-      a = self.annotate_pat(a, ambiguous)
-      self.contys = base
+      # an argument that is a tuple has a type of its own per
+      # component (a semantics takes the program and the state
+      # as one pair, and only the program says which language
+      # the clause is about)
+      b = a
+      while b.kind == 'paren': b = b.e
+      if b.kind == 'infix' and b.op == ',':
+        cs = []
+        while b.kind == 'infix' and b.op == ',':
+          cs.append(b.l); b = b.r
+          while b.kind == 'paren': b = b.e
+        cs.append(b)
+        out = []
+        hname = head.name if head.kind == 'id' else None
+        for j, c in enumerate(cs):
+          self.contys = ((atys or {}).get((hname, (i, j)))
+                         if hname else None) or base
+          out.append(self.annotate_pat(c, ambiguous))
+          self.contys = base
+        a = out[-1]
+        for c in reversed(out[:-1]):
+          a = hterm.Node('infix', tok=c.tok, op=',', l=c, r=a)
+      else:
+        if atys and head.kind == 'id':
+          self.contys = atys.get((head.name, (i,))) or base
+        a = self.annotate_pat(a, ambiguous)
+        self.contys = base
       # an argument that holds an integer, where no clause says so
       b = a
       while b.kind == 'paren': b = b.e
