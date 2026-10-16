@@ -107,13 +107,29 @@ def ocaml_name(n):
   return n
 
 
+QUOTE = chr(34)
+
+
+def balance_quotes(text):
+  """OCaml reads a " in a comment as the start of a string, so a
+     comment with an odd number of them does not lex (CakeML's
+     compilerScript has a quote of its own in a comment, to
+     balance the ones of SML's lexer).  One more is added at the
+     end, where it is still inside the comment."""
+  return text if text.count(QUOTE) % 2 == 0 else text + ' ' + QUOTE
+
+
 def shorten(text, width=72):
   """break the lines of a comment that are too long; a line that
      opens the comment is continued under its (* """
-  return '\n'.join(wrap(l.rstrip(), 0, width,
-                        3 if l.lstrip().startswith('(*') else 2,
-                        hard=True)
-                   for l in text.split('\n'))
+  out = '\n'.join(wrap(l.rstrip(), 0, width,
+                       3 if l.lstrip().startswith('(*') else 2,
+                       hard=True)
+                  for l in text.split('\n'))
+  if out.count(QUOTE) % 2 == 0: return out
+  # the quote goes inside the comment, before it closes
+  i = out.rfind('*)')
+  return out[:i] + QUOTE + ' ' + out[i:] if i >= 0 else out + ' ' + QUOTE
 
 
 class Porter:
