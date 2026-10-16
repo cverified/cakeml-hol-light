@@ -605,7 +605,12 @@ class Porter:
       # are ambiguous in the scope of this theory
       if nm not in self.db.overloaded(): continue
       new = self.nm_defined(nm)
-      if new == nm: continue
+      # the declaration is made even where the port keeps the
+      # name (the theory walk defines walk, and pattern_comp
+      # defines one too): without it the name of the constant is
+      # not in the interface of HOL Light, and the overload that
+      # another theory declares for its own constant hides it
+      if new == nm and not self.is_const(nm): continue
       text = 'hol4_overload "%s" "%s";;' % (nm, new)
       if len(text) > 72:
         text = 'hol4_overload "%s"\n  "%s";;' % (nm, new)

@@ -148,7 +148,10 @@ ONLY_NAMES = {
                      'strip_sxcons_def', 'strip_sxcons',
                      'sxMEM_def', 'sxMEM',
                      'dstrip_sexp_def', 'dstrip_sexp',
-                     'arb_sexp_def', 'arb_sexp']),
+                     'arb_sexp_def', 'arb_sexp',
+                     # the empty s-expression list, which the
+                     # brackets of an s-expression list end in
+                     'nil']),
 }
 
 NOT_NEEDED = set([

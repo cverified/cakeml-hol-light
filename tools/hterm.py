@@ -61,7 +61,52 @@ class Tok:
     return f'{self.kind}:{self.text}'
 
 
+def split_top_sx(s, sep):
+  """the parts of a text that a separator divides outside
+     brackets and strings"""
+  out = []; cur = ''; d = 0; i = 0
+  while i < len(s):
+    c = s[i]
+    if c == '"':
+      j = i + 1
+      while j < len(s) and s[j] != '"':
+        j += 2 if s[j] == '\\' else 1
+      cur += s[i:j+1]; i = j + 1; continue
+    if c in '([{' or c == '\u27ea': d += 1
+    elif c in ')]}' or c == '\u27eb': d -= 1
+    if d == 0 and s.startswith(sep, i):
+      out.append(cur); cur = ''; i += len(sep); continue
+    cur += c; i += 1
+  out.append(cur)
+  return out
+
+
+def expand_sx(s):
+  """HOL4's simpleSexp writes an s-expression list as
+     \u27eax; y; z\u27eb (the SX_CONS of the elements, ending in
+     nil) and a cons as \u27eah \u2022 t\u27eb (add_listform and
+     add_rule of simpleSexpScript); the port writes the
+     constants out.  The innermost brackets go first, so that
+     the nested ones come out as well"""
+  while True:
+    j = s.find('\u27eb')
+    if j < 0: return s
+    i = s.rfind('\u27ea', 0, j)
+    if i < 0: return s
+    inner = s[i+1:j]
+    parts = split_top_sx(inner, '\u2022')
+    if len(parts) == 2:
+      out = '(SX_CONS (%s) (%s))' % (parts[0], parts[1])
+    else:
+      items = [x for x in split_top_sx(inner, ';') if x.strip()]
+      out = 'nil'
+      for x in reversed(items):
+        out = '(SX_CONS (%s) %s)' % (x, out)
+    s = s[:i] + out + s[j+1:]
+
+
 def tokenize(s):
+  s = expand_sx(s) if '\u27ea' in s else s
   toks = []
   i = 0
   n = len(s)
