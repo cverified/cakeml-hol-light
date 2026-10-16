@@ -6,10 +6,15 @@ are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-16 09:06, 29 files failed and 371 definitions were
-assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 419`.
-Of those 29 failures, 20 are fixed in the round that follows it
-(the run of 09:35)._
+2026-10-16 09:35, 14 files failed and 349 definitions were
+assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 386`
+(the run before it, of 09:06, had 29 and 371).  The round that
+follows it makes HOL Light's machinery for a definition by cases
+much faster (`ml/lib/fastdef.ml`), renames the bound variables of
+a termination goal before it is stripped (without which
+`STRIP_TAC` dies with `CHOOSE` on the goal of a definition by
+cases), uses the lemmas of HOL4's `Termination` as facts, and
+adds the four library names that are still free variables._
 
 ## What is ported
 
