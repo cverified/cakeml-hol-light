@@ -11,6 +11,12 @@
 
 - working sessions are clones of `hol-template-cakeml`
 
+The template has only the _hand written_ files of `ml/lib`
+(`preamble.ml` loads them); the library theories that the port
+translates (`sptree`, `balanced_map`, `regexp_compiler`, ...) are
+loaded by the files that need them, so a session that is to try a
+definition of one of those has to load its file first.
+
 Rebuild a template after changing `ml/lib/`:
 
 ```
