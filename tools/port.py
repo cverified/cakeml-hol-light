@@ -110,13 +110,20 @@ def ocaml_name(n):
 QUOTE = chr(34)
 
 
+def nquotes(text):
+  """the quotes that OCaml sees: an escaped one is part of a
+     string and does not open or close one (lexer_fun has a
+     comment with a HOL4 string with \\" in it)"""
+  return len(re.findall(r'(?<!\\)' + QUOTE, text))
+
+
 def balance_quotes(text):
   """OCaml reads a " in a comment as the start of a string, so a
      comment with an odd number of them does not lex (CakeML's
      compilerScript has a quote of its own in a comment, to
      balance the ones of SML's lexer).  One more is added at the
      end, where it is still inside the comment."""
-  return text if text.count(QUOTE) % 2 == 0 else text + ' ' + QUOTE
+  return text if nquotes(text) % 2 == 0 else text + ' ' + QUOTE
 
 
 def shorten(text, width=72):
@@ -126,7 +133,7 @@ def shorten(text, width=72):
                        3 if l.lstrip().startswith('(*') else 2,
                        hard=True)
                   for l in text.split('\n'))
-  if out.count(QUOTE) % 2 == 0: return out
+  if nquotes(out) % 2 == 0: return out
   # the quote goes inside the comment, before it closes
   i = out.rfind('*)')
   return out[:i] + QUOTE + ' ' + out[i:] if i >= 0 else out + ' ' + QUOTE
