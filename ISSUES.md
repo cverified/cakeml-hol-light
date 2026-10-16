@@ -365,6 +365,36 @@ sources, and why.
   `LENGTH xs = LENGTH ys`, and the fact about the second list
   asks for `i < LENGTH ys`).
 
+- `FACTS_TAC` instantiates a fact by matching it against the
+  goal, and the test that the match determines every variable
+  of the fact compared those variables with the ones of the
+  instantiation.  HOL Light's `term_match` leaves out an
+  instantiation that changes nothing and instantiates the types
+  of the variables, so the test threw away every instance of a
+  fact that has a type variable (all the ones about a list) or
+  whose variable has the name that the goal gives it.  A fact
+  that an assumption gives (`imp_res_tac`) is matched against
+  the goal as well, because its own variables (the size
+  function of `MEM_ZIP_FST`) are not determined by the
+  assumption, and a fact whose antecedent is a conjunction is
+  given two assumptions.
+
+- The size function of a type that the library layer has one
+  for is not defined a second time: `the_rec_thms` has the
+  recursion theorem of HOL Light's `list`, so `size_thms "list"`
+  defined a `list_size1` of its own, and from then on every
+  candidate measure over a list used that one, which none of
+  the lemmas (`MEM_list_size`, `list_size_TAKE`, the size
+  theorems of the datatypes) is about.
+
+- `define_size` also proves, for every type of a family that is
+  a pair, that the size of a `MAP FST` and of a `MAP SND` of a
+  list of them is not larger than the size of the list (HOL4
+  has it as `list_size_pair_size_MAP_FST_SND`), and puts them
+  among the facts.  A fact whose constants are not among the
+  ones of the goal is skipped, because there is such a lemma
+  for every datatype of the port.
+
 - **The first pass assumes the definitions that none of that
   makes.**  `cake_define` gives every way of making a definition
   a budget of `cake_timeout` seconds (twenty), and states the
