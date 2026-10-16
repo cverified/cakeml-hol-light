@@ -115,9 +115,6 @@ FIELD_OF = {
   # source_to_flat's environment has the fields of sem_env
   'source_to_flat': {'v': 'source_to_flat_environment',
                      'c': 'source_to_flat_environment'},
-  # the state that these are about is the one of their own
-  # semantics, which the overloaded accessors do not say
-  'bvlProps': {'s': 'bvlSem_state'},
   'source_to_flatProof': {'v': 'global_env',
                           'c': 'global_env'},
   'flatSem': {'v': 'flatSem_environment'},
