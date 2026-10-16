@@ -1,0 +1,5 @@
+#!/bin/sh
+# shapes [shape] : classify the definitions that the first pass
+# assumes (ml/CHEATS.md) by their shape; with an argument, print
+# the definitions of that shape
+python3 -I /home/freek/claude/hol-light/cakeml/tools/shapes.py "$@"

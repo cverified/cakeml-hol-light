@@ -236,6 +236,26 @@ sources, and why.
   to replace each of them by a real definition; until then the
   port is not conservative over HOL Light.
 
+- A termination condition that HOL Light leaves as an
+  _admissibility_ (`admissible (<<) p s t`) is proved from the
+  definition of `admissible`: the two functions of it agree below
+  the measure, so every subterm `f x` of the goal is rewritten
+  with that assumption, and what is left is an equation between
+  the same terms.  HOL Light's own `ADMISSIBLE_LAMBDA` does not
+  reach these, because the argument of the function is a tuple
+  of the variables of the clause; the recursive calls of the
+  monadic definitions (`reg_alloc`, `linear_scan`, `infer`) and
+  of the ones that read an option (`fromSexp`) are under the
+  lambda of a bind and have that form.
+- The monadic machinery that `ml_monadBaseLib` makes with ML code
+  is written out by the port (`monad_access`, `monad_exceptions`,
+  `monad_arrays` and `monad_run` in `tools/port.py`).  A theory
+  that uses the exception type of another theory gets the
+  functions of that type a second time in HOL4
+  (`linear_scan` uses `reg_alloc`'s `state_exn`); the port has
+  one namespace and the definitions are the same, so it keeps
+  the ones of the theory that has the type.
+
 - HOL4 makes CakeML's grammar (`gram$cmlG`) and the datatype of
   its nonterminals (`MMLnonT`) with the ML code of `grammarLib`,
   out of the BNF that the source states.  The port parses that
