@@ -89,6 +89,10 @@ for thy in thys:
       continue
     if b.kind not in KINDS or not p.wanted(b): continue
     body = hol4.strip_comments(b.body)
+    # HOL4 writes a case expression that need not be exhaustive as
+    # "pmatch <term> of ...", where pmatch is syntax and not the
+    # constant of that name (infer's constrain_op)
+    body = re.sub(r'\bpmatch\b(?=[^\n]*\bof\b)', ' ', body)
     miss = []
     for nm in sorted(set(re.findall(r"[A-Za-z_][A-Za-z0-9_']*", body))):
       kinds = [k for t, k in db.defs.get(nm, [])
