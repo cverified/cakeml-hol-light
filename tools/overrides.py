@@ -89,6 +89,10 @@ GRAMMAR_ANCESTRY = {
 
 FIELD_VAR = {
   'typeSoundInvariants': {'tenv': 'type_env'},
+  # prim_tenv is the type environment of the primitive types,
+  # whose c and t the inferencer's init_config takes over
+  'infer': {'prim_tenv': 'type_env',
+            'primTypes$prim_tenv': 'type_env'},
   # t is the state of wordSem and s the one of dataSem in the
   # invariant that these relate them with
   'data_to_word_gcProof': {'t': 'wordSem_state'},
