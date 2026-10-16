@@ -174,8 +174,11 @@ sources, and why.
   HOL Light has for them (`ALL2` and `CONS`).
 - `fail` is the failure of the option monad (`NONE`),
   `monad_unitbind` its unit bind (`OPTION_IGNORE_BIND`) and
-  `lift2` HOL4's `OPTION_MAP2`; `cmlPEG`'s `assert` is the
-  `OPTION_GUARD` of the library layer and `comparison`'s `Less`,
+  `lift2` HOL4's `OPTION_MAP2`; `assert` (an overload of HOL4's
+  `optionTheory`) is the `OPTION_GUARD` of the library layer,
+  which the port has to write out because `asmSem` and `labSem`
+  define an `assert` of their own and HOL Light resolves a name
+  over the whole namespace; and `comparison`'s `Less`,
   `Equal` and `Greater` are the constructors of the `ordering` of
   `ternaryComparisons`.
 - A symbolic prefix and what follows it are kept apart, because
