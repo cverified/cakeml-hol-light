@@ -207,6 +207,9 @@ sources, and why.
 - A symbolic prefix and what follows it are kept apart, because
   HOL Light's lexer takes the longest symbol (`-- &n`, not
   `--&n`).
+- HOL4's `<>` is a notation for the negated equality, which the
+  port writes out; where it stands on its own (`EVERY ((<>) x o
+  FST) l`) the port writes the lambda that says the same.
 - The size function of a datatype that a definition uses is made
   in front of it (`size_thms`), unless a constant of the port has
   that name already (`balanced_map`'s `size`).
@@ -256,6 +259,12 @@ sources, and why.
   port uses it; where HOL4 guessed one, the port uses the sum of
   the sizes of the arguments that are matched on (see
   `auto_measure` in `ml/lib/define.ml`).
+- An inductive definition that HOL Light does not make is
+  assumed as well: the relations are declared and the rules are
+  an axiom.  That is weaker than the definition (it does not
+  say that the relation is the least one the rules give), so
+  there is no induction theorem, and the second pass has to
+  make the definition itself.
 - **The first pass assumes the definitions that none of that
   makes.**  `cake_define` gives every way of making a definition
   a budget of `cake_timeout` seconds (twenty), and states the
@@ -314,7 +323,10 @@ of a relation and no words with HOL4's names, so
   inductive definition that HOL4 has;
 - the fold over a finite map (`ITFMAP`) is the relation that says
   what a fold gives and a value that it gives, as HOL4's
-  `finite_mapTheory` has it.
+  `finite_mapTheory` has it;
+- `FOLDR`, whose arguments are in another order than the
+  `ITLIST` of HOL Light, and `cwc` of HOL4's `cpsScript` (the
+  port does not have that theory), which `unify` uses.
 
 Where HOL Light has a notion of HOL4 under another name, the
 port says so with an `override_interface` in `ml/lib/hol4.ml`
