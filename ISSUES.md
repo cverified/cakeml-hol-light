@@ -265,6 +265,39 @@ sources, and why.
   say that the relation is the least one the rules give), so
   there is no induction theorem, and the second pass has to
   make the definition itself.
+- HOL4's first match semantics also shows in a definition of a
+  _family_ of functions, where the port cannot write one clause
+  with a match (that would be one function).  The clause of a
+  constructor that has none of its own is therefore the last
+  clause of the function if its pattern is a variable
+  (`bvi_tailrec$has_rec_sing` ends with
+  `has_rec_sing loc x = F`), which is what HOL4 means by it.
+
+- A list function may fold with a conditional instead of a
+  connective (`if f x then T else g xs`), which is how HOL4
+  writes `f x \/ g xs`.  The port rewrites the clauses with the
+  two tautologies, gives them to the strategy for a list
+  function and derives the clauses as they were given
+  (`define_cond_bool`).
+
+- A termination goal is alpha-renamed before it is taken apart:
+  the goal of a definition by cases has assumptions like
+  `(?op xs. Op op xs = expr)` whose bound names are the
+  variables of the clause, and HOL Light's `STRIP_TAC` takes an
+  existential apart under the name it has, so that `CHOOSE`
+  fails and the whole termination proof dies with an exception
+  rather than an unproved goal (`FRESH_BOUND_CONV`).
+
+- Where HOL4's `Termination` uses a lemma of its own with
+  `imp_res_tac`, the port proves that lemma before the
+  definition and puts it in `cake_term_facts` (`EXTRA_BEFORE` in
+  `tools/overrides.py`; `bvi_tailrec$term_ok_int` and
+  `term_ok_any` are made with `exp_size_get_bin_args`, and every
+  `evaluate` of the semantics theories asks for `fix_clock_IMP`).
+  `FACTS_TAC` uses such a fact on the assumptions of the goal,
+  both ways round, as the equation that a match gives is
+  `SOME (x,y) = f e`.
+
 - **The first pass assumes the definitions that none of that
   makes.**  `cake_define` gives every way of making a definition
   a budget of `cake_timeout` seconds (twenty), and states the
