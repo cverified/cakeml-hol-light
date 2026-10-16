@@ -65,6 +65,15 @@ loads over it in a clone of the template and the port's
 so the copy has to start at the function that is changed and go
 on to the end.
 
+That copy may not make the tables of the session again:
+`the_rec_thms` (the recursion theorem of every type that is
+loaded) and `the_size_fns` (their size functions) are `ref`s in
+the middle of `define.ml`, and a copy that resets them leaves the
+session without a recursion theorem and without a size function,
+so that every definition by cases and every measure fails.
+`tools/tailpatch.py` comments those two lines out; a tail that is
+cut by hand (`sed -n '489,$p'`) has to do the same.
+
 Once a run is over, `hol-seq` has the ancestors of every file
 loaded, which is what `tools/bin/retry` uses: it loads the phrases
 of a file from the one that failed on, in a clone of `hol-seq`
