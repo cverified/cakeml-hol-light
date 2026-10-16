@@ -403,11 +403,54 @@ sources, and why.
   single assumption.  `ADMISSIBLE_LET` carries the equation
   into the body.
 
+- The conditions of a definition arrive as one conjunction,
+  which the port used to give to the proof of a measure goal as
+  a whole.  An admissibility condition among them asks for
+  another proof, so `TERM_TAC` splits the conjunction first and
+  sends every conjunct to the proof that fits it.
+
+- The proformas of HOL Light only take an admissibility
+  condition apart when the machinery is given no relation, and
+  the port gives one, so the condition used to arrive at
+  `AGREE_TAC` whole.  It is the proformas that carry the
+  equation of a pattern into the condition of a recursive call
+  under it, which `AGREE_TAC` cannot do, so `ADMISS_TERM_TAC`
+  tries them first (`cake_admiss_tac`, which `ml/lib/fastdef.ml`
+  exports for it).
+
+- A pattern variable that the arm of a match does not use stays
+  an existential in the body of the admissibility condition, and
+  HOL Light has no proforma for one (`ADMISSIBLE_EXISTS`).  Its
+  bound variable is renamed before the proforma is applied: the
+  handler of `wordLang$Call` binds `l1` and `l2`, which the
+  return of the same `Call` binds too, and the match of the
+  proforma confuses the two.  Together with `ADMISSIBLE_LET` and
+  the one substitution at a time of `SUBST_VAR_TAC` this makes
+  the definitions of the shape of `wordLang$max_var`.
+
+- Setting `cake_proforma` writes the dispatch of the
+  admissibility proof, and the goals that no proforma takes, to
+  `cakeml/tmp/proforma.txt`: that says which proforma the
+  library layer is missing.
+
 - The dispatch of the admissibility proof takes the proformas
   that a later file of the library layer registers in
   `admissible_extra`: the one of an `OPTION_MAP` is about the
   `OPTION_MAP` that `ml/lib/hol4.ml` defines, which
   `ml/lib/fastdef.ml` cannot name.
+
+- `SUBST_VAR_TAC` takes one equation at a time, from the
+  assumptions as they are then: a substitution rewrites the
+  other assumptions, so the theorems of a list made before it
+  are stale.  (It lost the pattern of `wordLang$Call`, where the
+  injectivity of the constructor first gives `ret' = ret`.)
+
+- A measure may go down by a constant without arguments, which
+  only the definition of the constant says the value of
+  (`mlint$fromChars` subtracts `padLen_DEC`), so `NUM_CONST_TAC`
+  rewrites with the definitions of the ones in the goal.  A
+  constant that a specification made says nothing, and is left
+  alone.
 
 - A termination goal may need a fact of the one side of an
   equation between its assumptions and of the other, so every
