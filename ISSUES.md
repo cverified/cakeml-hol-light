@@ -394,6 +394,15 @@ sources, and why.
   distinctness of the datatypes that they mention
   (`CON_EQ_TAC`).
 
+- A recursive call in the body of a `let` is proved admissible
+  without the equation that the let gives (HOL Light has no
+  proforma for a `LET`), so the termination goal of a call on
+  what the let binds has nothing to say about it:
+  `bvl_to_bvi$compile_exps` recurses on the `args` of
+  `let (args,x0) = destLet x2` and its goal arrives without a
+  single assumption.  `ADMISSIBLE_LET` carries the equation
+  into the body.
+
 - The dispatch of the admissibility proof takes the proformas
   that a later file of the library layer registers in
   `admissible_extra`: the one of an `OPTION_MAP` is about the
