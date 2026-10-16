@@ -12,6 +12,11 @@ log=/home/freek/claude/hol-light/cakeml/tools/checkseq.log
   rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
   repl-clone hol-template-cakeml $s > /dev/null 2>&1 || {
     echo "checkseq: cannot clone the template"; exit 1; }
+  # with CAKE_TIMEOUT the definitions get another budget than the
+  # thirty seconds of the library: a run that only has to say
+  # which files fail is much faster with a small one
+  [ -n "$CAKE_TIMEOUT" ] && repl-step $s \
+    "cake_timeout := $CAKE_TIMEOUT;;" > /dev/null 2>&1
   : > $log; : > $C/tools/conjfail.log; }
 for f in "$@"; do
   case "$f" in /*) g="$f";; *) g="$ML/$f";; esac
