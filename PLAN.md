@@ -204,6 +204,8 @@ The other checks:
                        port calls the constant
 - `tools/bin/slow`     which definitions of the last run took the
                        longest
+- `tools/bin/source4`  the HOL4 source of a definition of the
+                       port, with its Termination
 - `tools/conjtest.py`  whether a definition of the port is made
                        the way `cake_define` makes it (the clauses
                        of a clause list have to fit together),
