@@ -137,6 +137,15 @@ FIELD_VAR = {
     'flat_env': 'flatSem_environment'},
 }
 
+# SIZE_OF: the theory of the type of a size function that a
+# theory writes without one, where the scope of the theory does
+# not give the one that HOL4 means (closProps is about the exp of
+# closLang, and the last theory of its scope that has an exp is
+# flatLang)
+SIZE_OF = {
+  'closProps': {'exp_size': 'closLang'},
+}
+
 FIELD_OF = {
   # both grammar and peg have a field rules
   'pegexec': {'rules': 'peg'},

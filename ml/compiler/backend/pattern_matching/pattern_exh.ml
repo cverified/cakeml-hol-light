@@ -100,7 +100,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 let expand_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
-  INR ps -> list_size pattern_semantics_pat_size ps)`)
+     INR ps -> list_size pattern_semantics_pat_size ps)`)
   [`expand (pattern_semantics_Any:pattern_semantics_pat) =
   [(pattern_semantics_Any:pattern_semantics_pat)]`;
    `expand (Lit l:pattern_semantics_pat) = [(Lit
@@ -239,7 +239,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 let pat_weight_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL p -> pattern_semantics_pat_size p |
-  INR ps -> list_size pattern_semantics_pat_size ps)`)
+     INR ps -> list_size pattern_semantics_pat_size ps)`)
   [`pat_weight (pattern_semantics_Any:pattern_semantics_pat) =
   (0:num)`;
    `pat_weight (Lit l:pattern_semantics_pat) = ((0):num)`;
@@ -287,9 +287,10 @@ let mats_len_def = cake_define_list
    fs [] *)
 let exh_matrix_def = cake_define_list_try (fun () ->
   `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`)
+          (\x. match x with INL rows -> (mat_weight rows,mat_len
+            rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
+              ms,LENGTH
+            ms + 1))`)
   [`exh_matrix [] = F`;
    `exh_matrix (r :: rows) =
       (if NULL r then T else
@@ -333,9 +334,10 @@ let exh_rows_def = cake_define
    fs [] *)
 let exh_steps_def = cake_define_list_try (fun () ->
   `inv_image ((<) LEX (<) LEX (<))
-       (\x. match x with INL rows -> (mat_weight rows,mat_len
-         rows,(0:num)) | INR ms -> (mats_weight ms,mats_len ms,LENGTH
-         ms + 1))`)
+          (\x. match x with INL rows -> (mat_weight rows,mat_len
+            rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
+              ms,LENGTH
+            ms + 1))`)
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
       (((if NULL r then 1 else

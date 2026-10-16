@@ -314,7 +314,7 @@ let _ = size_thms "ast_pat";;
    the names that the port gives the constants *)
 let pmatch_def = cake_define_list_try (fun () ->
   `inv_image (<) (\x. match x with INL (s,a,p,b,c) -> ast_pat_size p |
-  INR (s,a,ps,b,c) -> list_size ast_pat_size ps)`)
+     INR (s,a,ps,b,c) -> list_size ast_pat_size ps)`)
   [`semanticPrimitives_pmatch envC s (ast_Pany:ast_pat) v' env =
   Match env`;
    `semanticPrimitives_pmatch envC s (ast_Pvar x:ast_pat) v' env =
@@ -398,8 +398,8 @@ let _ = size_thms "semanticPrimitives_v";;
    listTheory.list_size_def] *)
 let do_eq_def = cake_define_list_try (fun () ->
   `inv_image (<) (\x. match x with INL (v1,v2) ->
-  semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
-  semanticPrimitives_v_size vs1)`)
+     semanticPrimitives_v_size v1 | INR (vs1,vs2) -> list_size
+     semanticPrimitives_v_size vs1)`)
   [`semanticPrimitives_do_eq (semanticPrimitives_Litv
   l1:semanticPrimitives_v) (semanticPrimitives_Litv
   l2:semanticPrimitives_v) =
@@ -616,7 +616,7 @@ let _ = size_thms "semanticPrimitives_v";;
    the names that the port gives the constants *)
 let concrete_v_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> semanticPrimitives_v_size v | INR
-  vs -> list_size semanticPrimitives_v_size vs)`)
+     vs -> list_size semanticPrimitives_v_size vs)`)
   [`concrete_v v <=>
          (match v with semanticPrimitives_Loc _50 _51 -> T |
            semanticPrimitives_Litv _52 -> T | semanticPrimitives_Conv

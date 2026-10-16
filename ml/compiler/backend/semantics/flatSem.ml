@@ -639,7 +639,7 @@ let _ = size_thms "flatLang_pat";;
 (* HOL4 termination: \\ simp [] *)
 let pmatch_def = cake_define_list_try (fun () ->
   `inv_image (<) (\x. match x with INL (x,p,y,z) -> flatLang_pat_size p
-  | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`)
+     | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`)
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
         (Match ((x,v') :: bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
@@ -803,10 +803,14 @@ cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
    SUM_REVERSE, exp6_alt_size, AppUnit_def, char_size_def] *)
 let evaluate_def = cake_define_list_try (fun () ->
   `inv_image ((<) LEX (<))
-       (\x. match x with INL (env,s,exps) -> (state_clock s,SUM (MAP
-         flatSem_exp_alt_size exps) + LENGTH exps) | (INR (INL (s,d)))
-         -> (state_clock s,dec_alt_size d + 1) | (INR (INR (s,ds))) ->
-         (state_clock s,SUM (MAP dec_alt_size ds) + LENGTH ds + 1))`)
+          (\x. match x with INL (env,s,exps) -> (state_clock s,SUM
+            (MAP
+            flatSem_exp_alt_size exps) + LENGTH exps) | (INR (INL
+              (s,d)))
+            -> (state_clock s,dec_alt_size d + 1) | (INR (INR
+              (s,ds))) ->
+            (state_clock s,SUM (MAP dec_alt_size ds) + LENGTH ds +
+              1))`)
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
   (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;

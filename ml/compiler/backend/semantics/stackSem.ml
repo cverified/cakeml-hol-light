@@ -802,7 +802,7 @@ let _ = size_thms "stackLang_prog";;
 let evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
-                                (state_clock s,xs)))`)
+                              (state_clock s,xs)))`)
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =

@@ -93,7 +93,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 let pat_to_guard_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_10,p) -> pattern_semantics_pat_size
-  p | INR (_11,k,p) -> list_size pattern_semantics_pat_size p)`)
+     p | INR (_11,k,p) -> list_size pattern_semantics_pat_size p)`)
   [`pat_to_guard l (pattern_semantics_Any:pattern_semantics_pat) =
   pattern_semantics_True`;
    `pat_to_guard l (Lit r:pattern_semantics_pat) =

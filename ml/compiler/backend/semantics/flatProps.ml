@@ -127,7 +127,7 @@ let _ = size_thms "flatLang_exp";;
    exp_size) pes’ \\ gvs [] \\ Induct_on ‘pes’ \\ gvs [FORALL_PROD] *)
 let set_globals_def = cake_define_list_try (fun () ->
   `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
-  list_size flatLang_exp_size es)`)
+     list_size flatLang_exp_size es)`)
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)

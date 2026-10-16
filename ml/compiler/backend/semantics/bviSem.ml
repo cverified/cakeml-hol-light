@@ -258,7 +258,7 @@ let _ = size_thms "flatLang_exp";;
    imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
 let evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
-                             (\(xs,env,s). (state_clock s,xs)))`)
+                              (\(xs,env,s). (state_clock s,xs)))`)
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =

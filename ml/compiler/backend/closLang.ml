@@ -169,7 +169,7 @@ let _ = size_thms "closLang_exp";;
    [] \\ fs [basicSizeTheory.pair_size_def] *)
 let has_install_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-  list_size closLang_exp_size es)`)
+     list_size closLang_exp_size es)`)
   [`has_install ((Var t n):closLang_exp) = F`;
    `has_install (If t e1 e2 e3:closLang_exp) = (has_install e1 \/
   has_install e2 \/ has_install e3)`;

@@ -302,7 +302,7 @@ let _ = size_thms "ast_t";;
    the names that the port gives the constants *)
 let ast_t_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> ast_t_size v | INR v -> list_size
-  ast_t_size v)`)
+     ast_t_size v)`)
   [`ast_t_to_display c =
       (match c with Atvar n -> displayLang_Item NONE (implode
         "Atvar") [String n] | Atfun t1 t2 -> displayLang_Item NONE
@@ -320,7 +320,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 let pat_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-  INR v -> list_size pattern_semantics_pat_size v)`)
+     INR v -> list_size pattern_semantics_pat_size v)`)
   [`pat_to_display (c:ast_pat) =
       (match c with Pany -> displayLang_Item NONE (implode "Pany")
         [] | Pvar v -> displayLang_Item NONE (implode "Pvar") [String v]
@@ -404,7 +404,7 @@ let _ = size_thms "dec";;
    the names that the port gives the constants *)
 let source_to_display_dec_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> dec_size v | INR v -> list_size
-  dec_size v)`)
+     dec_size v)`)
   [`source_to_display_dec (d:dec) =
       (match d with Dlet _3 pat e -> displayLang_Item NONE (implode
         "Dlet") [pat_to_display pat; exp_to_display e] | Dletrec _4 fns
@@ -453,7 +453,7 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 let flat_pat_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-  INR v -> list_size pattern_semantics_pat_size v)`)
+     INR v -> list_size pattern_semantics_pat_size v)`)
   [`flat_pat_to_display p =
         (match p with flatLang_Pvar varN -> displayLang_Item NONE
           (implode "Pvar") [string_imp varN] | Pany -> empty_item
@@ -582,7 +582,7 @@ let _ = size_thms "const";;
    the names that the port gives the constants *)
 let const_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> const_size v | INR v -> list_size
-  const_size v)`)
+     const_size v)`)
   [`const_to_display (ConstInt i:const) =
       displayLang_Item NONE (implode "ConstInt") [int_to_display
         i]`;
@@ -732,10 +732,13 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 let clos_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_8,_9,e) -> flatLang_exp_size e | INR
-  (INL (_10,_11,e)) -> list_size flatLang_exp_size e | INR (INR (INL
-  (_12,_13,_14,es))) -> list_size flatLang_exp_size es | INR (INR (INR
-  (_15,_16,_17,_18,es))) -> list_size (pair_size I flatLang_exp_size)
-  es)`)
+     (INL (_10,_11,e)) -> list_size flatLang_exp_size e | INR (INR
+       (INL
+     (_12,_13,_14,es))) -> list_size flatLang_exp_size es | INR (INR
+       (INR
+     (_15,_16,_17,_18,es))) -> list_size (pair_size I
+       flatLang_exp_size)
+     es)`)
   [`clos_to_display ns h (Var t n:closLang_exp) =
         displayLang_Item (SOME t) (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -834,10 +837,11 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 let bvl_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x.
-     match x with
-       INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
-         list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
-         list_size flatLang_exp_size xs)`)
+        match x with
+          INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs))
+            ->
+            list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
+            list_size flatLang_exp_size xs)`)
   [`bvl_to_display ns h (Var n:bvl_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -894,10 +898,11 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 let bvi_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x.
-     match x with
-       INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs)) ->
-         list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
-         list_size flatLang_exp_size xs)`)
+        match x with
+          INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs))
+            ->
+            list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
+            list_size flatLang_exp_size xs)`)
   [`bvi_to_display ns h (Var n:bvi_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -977,8 +982,8 @@ let data_seqs_def = cake_define
    the names that the port gives the constants *)
 let data_prog_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x.
-     match x with
-       INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`)
+        match x with
+          INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`)
   [`data_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `data_prog_to_display (SUC k) ns prog =
           (match prog with dataLang_Skip -> empty_item (implode
@@ -1181,8 +1186,8 @@ let stack_seqs_def = cake_define
    the names that the port gives the constants *)
 let stack_prog_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x.
-     match x with
-       INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`)
+        match x with
+          INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`)
   [`stack_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item
   (implode "skip")`;
@@ -1369,7 +1374,7 @@ let _ = size_thms "wordLang_exp";;
    the names that the port gives the constants *)
 let word_exp_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL v -> wordLang_exp_size ARB v | INR v
-  -> list_size wordLang_exp_size ARB v)`)
+     -> list_size wordLang_exp_size ARB v)`)
   [`word_exp_to_display (wordLang_Const v) = item_with_word (implode
   "Const") v`;
    `word_exp_to_display (wordLang_Var n) = item_with_num (implode
@@ -1405,7 +1410,7 @@ let num_sets_to_display_def = cake_define
    the names that the port gives the constants *)
 let word_prog_to_display_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (k,_32) -> k | INR (INL (k,_33)) -> k
-  | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`)
+     | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`)
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
    `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
   (implode "skip")`;

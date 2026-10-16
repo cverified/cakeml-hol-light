@@ -202,7 +202,7 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 let sexptype_alt_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size)
-                   (\x. match x with INL y -> y | INR y -> y)`)
+                      (\x. match x with INL y -> y | INR y -> y)`)
   [`sexptype_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Atvar" /\ LENGTH args = 1 then
@@ -304,7 +304,7 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 let sexppat_alt_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
-  y | INR y -> y)`)
+     y | INR y -> y)`)
   [`sexppat_alt s =
         OPTION_MAP ast_Pvar (odestSEXSTR s) ++
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
@@ -583,9 +583,11 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 let sexpexp_alt_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size)
-       (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
-         (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR (INR
-         (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) -> y)`)
+          (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
+            (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR
+              (INR
+            (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) ->
+              y)`)
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
@@ -729,7 +731,7 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 let sexpdec_alt_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size)
-       (\x. match x with INL y -> y | INR y -> y)`)
+          (\x. match x with INL y -> y | INR y -> y)`)
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then

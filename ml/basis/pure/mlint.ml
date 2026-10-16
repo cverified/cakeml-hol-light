@@ -42,7 +42,7 @@ val exp_tm = rhs (concl exp_thm)
    [] *)
 let num_to_chars_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE I LEX MEASURE I)
-       (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`)
+          (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`)
   [`num_to_chars i 0 k acc = num_to_chars (i DIV (10 EXP
   exp_for_dec_enc))
           exp_for_dec_enc ((i MOD (10 EXP exp_for_dec_enc)) + k)

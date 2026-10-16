@@ -22,7 +22,7 @@ let _ = size_thms "closLang_exp";;
    [exp_size_def, basicSizeTheory.pair_size_def] *)
 let renumber_code_locs_def = cake_define_list_try (fun () ->
   `inv_image (<) (\x. match x with INL p -> list_size closLang_exp_size
-  (SND p) | INR p -> closLang_exp_size (SND p))`)
+     (SND p) | INR p -> closLang_exp_size (SND p))`)
   [`renumber_code_locs_list n [] = (n,[])`;
    `renumber_code_locs_list n (x :: xs) =
          (let (n,x) = renumber_code_locs n x in

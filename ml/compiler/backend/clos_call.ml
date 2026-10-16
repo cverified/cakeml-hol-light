@@ -264,7 +264,7 @@ let _ = size_thms "closLang_exp";;
    NOT_LESS,list_size_pair_size_MAP_FST_SND] *)
 let calls_sing_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (e,_26) -> closLang_exp_size e | INR
-  (es,_27) -> list_size closLang_exp_size es)`)
+     (es,_27) -> list_size closLang_exp_size es)`)
   [`calls_sing (Var t v:closLang_exp) g =
          ((Var t v:closLang_exp),g)`;
    `calls_sing (If t x1 x2 x3:closLang_exp) g =

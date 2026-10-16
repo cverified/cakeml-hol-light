@@ -76,7 +76,7 @@ let _ = size_thms "bvl_exp";;
    [bvlTheory.exp_size_def] *)
 let global_count_sing_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL e -> bvl_exp_size e | INR es ->
-  exp1_size es)`)
+     exp1_size es)`)
   [`global_count_sing ((Var _6):bvl_exp) = 0`;
    `global_count_sing (If x y z:bvl_exp) =
          global_count_sing x +

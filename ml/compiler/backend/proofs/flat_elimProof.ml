@@ -76,7 +76,7 @@ let _ = size_thms "flatSem_v";;
    [list_size_pair_size_MAP_FST_SND] *)
 let find_v_globals_def = cake_define_list_try (fun () ->
   `MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
-  list_size flatSem_v_size y)`)
+     list_size flatSem_v_size y)`)
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _4 e:flatSem_v) =

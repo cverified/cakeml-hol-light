@@ -510,7 +510,7 @@ let _ = size_thms "bvl_exp";;
    (qspec_then `v7` assume_tac) >> decide_tac *)
 let compile_exp_sing_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_7,e,_8) -> bvl_exp_size e | INR
-  (_9,es,_10) -> exp3_size es)`)
+     (_9,es,_10) -> exp3_size es)`)
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
   v):bvl_exp),aux)`;
    `compile_exp_sing max_app (If t x1 x2 x3:closLang_exp) aux =
@@ -735,7 +735,7 @@ let _ = size_thms "closLang_exp";;
    [FORALL_PROD,closLangTheory.exp_size_def] *)
 let get_src_names_sing_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (e,_70) -> closLang_exp_size e | INR
-  (es,_71) -> exp3_size es)`)
+     (es,_71) -> exp3_size es)`)
   [`get_src_names_sing (closLang_If _42 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;

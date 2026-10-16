@@ -123,7 +123,7 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 let find_loc_def = cake_define_list_try (fun () ->
   `MEASURE (\e. match e with INL x -> flatLang_exp_size x | INR y ->
-  list_size flatLang_exp_size y)`)
+     list_size flatLang_exp_size y)`)
   [`find_loc ((Raise _35 er):flatLang_exp) = ((find_loc er):1 spt)`;
    `find_loc (Handle _37 eh p_es:flatLang_exp) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND
@@ -155,8 +155,8 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 let find_lookups_def = cake_define_list_try (fun () ->
   `MEASURE (\e. match e with INL x -> flatLang_exp_size x | INR
-  (y:flatLang_exp list) ->
-                 list_size flatLang_exp_size y)`)
+     (y:flatLang_exp list) ->
+                    list_size flatLang_exp_size y)`)
   [`find_lookups (Raise _65 er:flatLang_exp) = find_lookups er`;
    `find_lookups (Handle _67 eh p_es:flatLang_exp) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP

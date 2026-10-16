@@ -36,7 +36,7 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 let pure_exp_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_42,e) -> bvi_exp_size e | INR
-  (_43,es) -> list_size bvi_exp_size es)`)
+     (_43,es) -> list_size bvi_exp_size es)`)
   [`pure_exp n (Var v:bvi_exp) = (v < n)`;
    `pure_exp n (If e1 e2 e3:bvi_exp) = F`;
    `pure_exp n (Let es e:bvi_exp) = (pure_exp n e /\ pure_exps n es)`;
@@ -117,7 +117,7 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 let bvi_to_cb_aux_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_58,_59,_60,e) -> bvi_exp_size e |
-  INR (_61,_62,_63,es) -> list_size bvi_exp_size es)`)
+     INR (_61,_62,_63,es) -> list_size bvi_exp_size es)`)
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
          SOME (bs,INR (CallBlock tag [] cb [])) | _49 -> NONE)`;

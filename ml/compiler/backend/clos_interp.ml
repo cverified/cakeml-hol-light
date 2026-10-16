@@ -111,7 +111,7 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 let to_constant_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-  list_size closLang_exp_size es)`)
+     list_size closLang_exp_size es)`)
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (App _48 _49 e es:closLang_exp) =

@@ -130,7 +130,7 @@ let _ = size_thms "bvi_exp";;
      ,list_size_APPEND] *)
 let compile_sing_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
-  (_12,_13,es) -> list_size bvi_exp_size es)`)
+     (_12,_13,es) -> list_size bvi_exp_size es)`)
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)
            | _6 -> Var (v + d))`;

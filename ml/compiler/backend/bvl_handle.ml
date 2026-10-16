@@ -109,7 +109,8 @@ let handle_size_def = cake_define_list
    [] \\ fs [dest_handle_Let_def,handle_size_non_zero] *)
 let handle_simp_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL a -> handle_size a | INR (INL a) ->
-  handle_size1 a | INR (INR (a,b,_4)) -> handle_size a + handle_size b)`)
+     handle_size1 a | INR (INR (a,b,_4)) -> handle_size a +
+       handle_size b)`)
   [`handle_simp (Handle x1 x2:bvl_exp) = make_handle x1 x2 0`;
    `handle_simp (Var v:bvl_exp) = (Var v:bvl_exp)`;
    `handle_simp (If x1 x2 x3:bvl_exp) = If (handle_simp x1)

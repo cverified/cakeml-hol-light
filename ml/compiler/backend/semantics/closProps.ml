@@ -23,13 +23,13 @@ let ref_rel_def = cake_define
         | (_1,_2) -> F`;;
 hol4_overload "ref_rel" "closProps_ref_rel";;
 
-let _ = size_thms "flatLang_exp";;
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [] \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
 let code_locs_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size flatLang_exp_size)`)
+  `MEASURE (list_size closLang_exp_size)`)
   [`code_locs [] = []`;
    `code_locs (x :: y :: xs) =
          (let c1 = code_locs [x] in
@@ -113,11 +113,12 @@ let contains_App_SOME_def = cake_define_wf
         | [closLang_Call _36 ticks dest xs] ->
         contains_App_SOME max_app xs`;;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 let every_Fn_SOME_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size exp_size)`)
+  `MEASURE (list_size closLang_exp_size)`)
   [`every_Fn_SOME [] <=> T`;
    `every_Fn_SOME (x :: y :: xs) <=>
          every_Fn_SOME [x] /\
@@ -152,11 +153,12 @@ let every_Fn_SOME_def = cake_define_list_try (fun () ->
    `every_Fn_SOME [(closLang_Call _57 ticks dest xs:closLang_exp)] <=>
          every_Fn_SOME xs`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 let every_Fn_vs_NONE_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size exp_size)`)
+  `MEASURE (list_size closLang_exp_size)`)
   [`every_Fn_vs_NONE [] <=> T`;
    `every_Fn_vs_NONE (x :: y :: xs) <=>
          every_Fn_vs_NONE [x] /\
@@ -192,11 +194,12 @@ let every_Fn_vs_NONE_def = cake_define_list_try (fun () ->
   <=>
          every_Fn_vs_NONE xs`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 let every_Fn_vs_SOME_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size exp_size)`)
+  `MEASURE (list_size closLang_exp_size)`)
   [`every_Fn_vs_SOME [] <=> T`;
    `every_Fn_vs_SOME (x :: y :: xs) <=>
          every_Fn_vs_SOME [x] /\
@@ -232,12 +235,13 @@ let every_Fn_vs_SOME_def = cake_define_list_try (fun () ->
   <=>
          every_Fn_vs_SOME xs`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ simp [] \\ rw [] \\ fs [MEM_SPLIT,
    SUM_APPEND, exp3_size, exp_size_def] *)
 let no_mti_def = cake_define_list_try (fun () ->
-  `MEASURE exp_size`)
+  `MEASURE closLang_exp_size`)
   [`no_mti (Var t n:closLang_exp) = T`;
    `no_mti (If t e1 e2 e3:closLang_exp) <=>
         no_mti e1 /\
@@ -267,12 +271,13 @@ let no_mti_def = cake_define_list_try (fun () ->
    `no_mti (closLang_Op t op es) <=>
         EVERY no_mti es`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [] \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
 let fv_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size exp_size o SND)`)
+  `MEASURE (list_size closLang_exp_size o SND)`)
   [`fv n [] <=> F`;
    `fv n ((x:closLang_exp) :: y :: xs) <=>
          fv n [x] \/ fv n (y :: xs)`;
@@ -576,12 +581,13 @@ let op_gbag_def = cake_define
       | _209 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "closProps_op_gbag";;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [] \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
 let set_globals_def = cake_define_list_try (fun () ->
-  `MEASURE (sum_size exp_size (list_size exp_size))`)
+  `MEASURE (sum_size closLang_exp_size (list_size closLang_exp_size))`)
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
    `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) = (BAG_UNION)
   ((BAG_UNION)
@@ -646,12 +652,13 @@ let rsgc_free_def = cake_define
         | (Rerr (Rabort _254)) -> T
         | (Rerr (Rraise v)) -> vsgc_free v`;;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: >> simp[] >> rpt strip_tac >> imp_res_tac
    exp_size_MEM >> simp[] *)
 let esgc_free_def = cake_define_list_try (fun () ->
-  `MEASURE exp_size`)
+  `MEASURE closLang_exp_size`)
   [`closProps_esgc_free (Var _257 _258:closLang_exp) <=> T`;
    `closProps_esgc_free (If _260 e1 e2 e3:closLang_exp) <=>
   closProps_esgc_free e1 /\ closProps_esgc_free e2 /\
@@ -893,13 +900,14 @@ val do_app_lemma =
   |> SIMP_RULE std_ss [do_app_lemma_simp]
 *)
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
    imp_res_tac MEM_list_size \\ pop_assum $ qspec_then ‘exp_size’
    mp_tac \\ gvs [] *)
 let obeys_max_app_def = cake_define_list_try (fun () ->
-  `MEASURE (exp_size o SND)`)
+  `MEASURE (closLang_exp_size o SND)`)
   [`obeys_max_app m (Var _296 _297:closLang_exp) <=> T`;
    `obeys_max_app m (If _299 e1 e2 e3:closLang_exp) <=> obeys_max_app
   m e1 /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
@@ -921,13 +929,14 @@ let obeys_max_app_def = cake_define_list_try (fun () ->
    `obeys_max_app m (closLang_Op _330 _331 es:closLang_exp) <=>
   EVERY (obeys_max_app m) es`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
    imp_res_tac MEM_list_size \\ pop_assum $ qspec_then ‘exp_size’
    mp_tac \\ gvs [] *)
 let no_Labels_def = cake_define_list_try (fun () ->
-  `MEASURE exp_size`)
+  `MEASURE closLang_exp_size`)
   [`no_Labels (Var _334 _335:closLang_exp) <=> T`;
    `no_Labels (If _337 e1 e2 e3:closLang_exp) <=> no_Labels e1 /\
   no_Labels e2 /\ no_Labels e3`;
@@ -947,11 +956,12 @@ let no_Labels_def = cake_define_list_try (fun () ->
    `no_Labels (closLang_Op _367 op es:closLang_exp) <=> (!n. ~(op =
   closLang_Label n)) /\ EVERY no_Labels es`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] *)
 let app_call_dests_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size exp_size o SND)`)
+  `MEASURE (list_size closLang_exp_size o SND)`)
   [`app_call_dests opt [] = {}`;
    `app_call_dests opt (x :: y :: xs) =
          (let c1 = app_call_dests opt [x] in
@@ -1006,13 +1016,14 @@ let app_call_dests_def = cake_define_list_try (fun () ->
 val app_call_dests_ind = theorem"app_call_dests_ind";
 *)
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
    imp_res_tac MEM_list_size \\ pop_assum $ qspec_then ‘exp_size’
    mp_tac \\ gvs [] *)
 let get_code_labels_def = cake_define_list_try (fun () ->
-  `MEASURE exp_size`)
+  `MEASURE closLang_exp_size`)
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION

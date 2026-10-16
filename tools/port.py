@@ -150,6 +150,12 @@ class Porter:
     # does elsewhere in the port
     for (t, nm), new in overrides.LOCAL_NAMES.items():
       if t == thy: names[(thy, nm)] = new
+    # the size function of a type that the scope resolves to
+    # another one than HOL4 means
+    tynames0 = db.names_for(thy, True)
+    for nm, t in overrides.SIZE_OF.get(thy, {}).items():
+      base = nm[:-len('_size')]
+      names[(thy, nm)] = tynames0.get((t, base), base) + '_size'
     fields, amb = db.fields_for(thy)
     self.amb = amb
     flds = {f: t for f, t in fields.items() if t}
@@ -718,6 +724,11 @@ class Porter:
     # source_to_flat's compile_exp is a constructor of ast and
     # the body builds the one of flatLang with the same name)
     self.conof = conof
+    # what the names and the overloads were, so that the block
+    # after this one has them again
+    self.conof_was = dict((nm, (self.ctx.names.get((self.thy, nm)),
+                                nm in self.ctx.overloaded))
+                          for nm in conof)
     for nm, t in conof.items():
       if '*' in overrides.CON_OF.get(key, {}): continue
       self.ctx.overloaded.discard(nm)
@@ -804,7 +815,10 @@ class Porter:
     if term is None and rel is not None:
       # the relation of a Termination is parsed in a function, so
       # that one that does not typecheck is no error of the file
-      how = ('cake_define_list_try (fun () ->\n  `%s`)' % rel
+      # the last line of the relation ends with a quote and a
+      # bracket, so it is two characters shorter
+      how = ('cake_define_list_try (fun () ->\n  `%s`)'
+             % fmt(rel, last=2)
              if termnote or key not in overrides.MEASURE
              else 'cake_define_list_wf\n  `%s`' % rel)
       text = (sizes + relnote + termnote +
@@ -849,8 +863,10 @@ class Porter:
     if extra: self.out.append('\n' + extra.strip())
     for nm in conof:
       if '*' in overrides.CON_OF.get(key, {}): continue
-      self.ctx.overloaded.add(nm)
-      self.ctx.names.pop((self.thy, nm), None)
+      was, ovl = self.conof_was.get(nm, (None, True))
+      if ovl: self.ctx.overloaded.add(nm)
+      if was is None: self.ctx.names.pop((self.thy, nm), None)
+      else: self.ctx.names[(self.thy, nm)] = was
     self.conof = {}
     self.ctx.intnums = False
     self.ctx.append = False
@@ -2242,6 +2258,9 @@ class Porter:
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intvars = set(overrides.INT_ARGS.get(key, []))
     self.ctx.reclit = overrides.RECORD_OF.get(key)
+    was = dict((nm, (self.ctx.names.get((self.thy, nm)),
+                     nm in self.ctx.overloaded))
+               for nm in conof)
     for nm, t in conof.items():
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
@@ -2256,8 +2275,10 @@ class Porter:
       term = fmt(self.term(b.body))
     finally:
       for nm in conof:
-        self.ctx.overloaded.add(nm)
-        del self.ctx.names[(self.thy, nm)]
+        old, ovl = was.get(nm, (None, True))
+        if ovl: self.ctx.overloaded.add(nm)
+        if old is None: del self.ctx.names[(self.thy, nm)]
+        else: self.ctx.names[(self.thy, nm)] = old
       self.conof_said = {}
       self.ctx.intnums = False
       self.ctx.intvars = set()

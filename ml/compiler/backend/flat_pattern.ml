@@ -57,7 +57,7 @@ let _ = size_thms "pattern_semantics_pat";;
    [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
 let compile_pat_bindings_def = cake_define_list_try (fun () ->
   `MEASURE (\(t,i,m,exp). SUM (MAP (pattern_semantics_pat_size o FST)
-  m) + LENGTH m)`)
+     m) + LENGTH m)`)
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;

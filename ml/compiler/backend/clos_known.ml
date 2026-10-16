@@ -483,9 +483,9 @@ let _ = size_thms "closLang_exp";;
    exp_size` mp_tac) \\ simp[list_size_pair_size_MAP_FST_SND] *)
 let known_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE I LEX MEASURE I)
-                           (\(c,xs,vs,g).
-                             (clos_known_config_inline_factor
-                             c,list_size closLang_exp_size xs))`)
+                              (\(c,xs,vs,g).
+                              (clos_known_config_inline_factor
+                              c,list_size closLang_exp_size xs))`)
   [`known c [] vs (g:val_approx spt) = ([],g)`;
    `known c ((x:closLang_exp) :: y :: xs) vs (g:val_approx spt) =
          (let (eas1,g) = known c [x] vs g in

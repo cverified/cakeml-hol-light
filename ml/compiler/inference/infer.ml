@@ -671,11 +671,11 @@ let _ = size_thms "mlstring";;
 (* HOL4 termination: >> rw [] *)
 let infer_e_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_45,_46,e) -> ast_exp_size e | INR
-  (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
-  (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
-  ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
-       list_size (pair_size mlstring_size
-            (pair_size mlstring_size ast_exp_size)) funs)`)
+     (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
+     (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
+     ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
+          list_size (pair_size mlstring_size
+               (pair_size mlstring_size ast_exp_size)) funs)`)
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\

@@ -871,9 +871,11 @@ cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
    \\ gvs [] *)
 let evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
-                   (\x. match x with INL (xs,env,s) -> (state_clock
-                     s,list_size closSem_exp_alt_size xs,0) | INR
-                     (l,f,args,s) -> (state_clock s,0,LENGTH args)))`)
+                      (\x. match x with INL (xs,env,s) ->
+                        (state_clock
+                        s,list_size closSem_exp_alt_size xs,0) | INR
+                        (l,f,args,s) -> (state_clock s,0,LENGTH
+                          args)))`)
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =

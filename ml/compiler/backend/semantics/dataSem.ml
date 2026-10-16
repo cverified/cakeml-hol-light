@@ -161,8 +161,8 @@ let _ = size_thms "dataSem_v";;
    \\ fs [] \\ rw [] \\ fs [] \\ imp_res_tac check_res_IMP \\ fs [] *)
 let size_of_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
-                             (\(lims,vs,refs,seen). (sptree_size
-                               refs,vs)))`)
+                              (\(lims,vs,refs,seen). (sptree_size
+                              refs,vs)))`)
   [`size_of lims [] refs seen = (0,refs,seen)`;
    `size_of lims (x :: y :: ys) refs seen =
         (let (n1,refs1,seen1) = check_res refs (size_of lims (y ::
@@ -1603,7 +1603,7 @@ let _ = size_thms "wordLang_prog";;
    call_env_def,LET_THM] \\ fs [dec_clock_def] *)
 let evaluate_def = cake_define_list_try (fun () ->
   `(inv_image (MEASURE I LEX MEASURE wordLang_prog_size)
-                            (\(xs,s). (state_clock s,xs)))`)
+                              (\(xs,s). (state_clock s,xs)))`)
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =

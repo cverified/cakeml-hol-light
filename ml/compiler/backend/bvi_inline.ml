@@ -47,7 +47,7 @@ let _ = size_thms "bvi_exp";;
    [bviTheory.exp_size_def] *)
 let inline_exp_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_2,e) -> bvi_exp_size e | INR (_3,es)
-  -> exp2_size es)`)
+     -> exp2_size es)`)
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
          bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp
@@ -94,7 +94,7 @@ let _ = size_thms "bvi_exp";;
    [bviTheory.exp_size_def] *)
 let remove_ticks_exp_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
-  exp2_size es)`)
+     exp2_size es)`)
   [`remove_ticks_exp (bvi_Var n) = bvi_Var n`;
    `remove_ticks_exp (bvi_If x y z) =
          bvi_If (remove_ticks_exp x) (remove_ticks_exp y)
