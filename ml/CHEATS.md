@@ -9,33 +9,43 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 386: the three axioms of HOL
-Light and 383 for the 349 definitions below.
+`length (axioms ())` is 350: the three axioms of HOL
+Light and 347 for the 313 definitions below.
 
 Why they are assumed:
 
-- 104: timeout in measure
-- 80: tryfind: /\
-- 53: timeout in guess
-- 28: tryfind: ==>
+- 83: tryfind: /\
+- 76: timeout in measure
+- 32: timeout in guess
+- 29: existence
 - 24: tryfind: admissible
-- 18: new_specification: Assumptions not allowed in theorem
-- 10: TAC_PROOF: Unsolved goals
-- 5: free: count
-- 5: free: LASTN
+- 21: tryfind: ==>
+- 11: TAC_PROOF: Unsolved goals
+- 3: new_definition: Type variables not reflected in constant
+- 2: tryfind
 - 2: free: mlt
-- 2: new_definition: Type variables not reflected in constant
-- 2: free: SET_TO_LIST
-- 2: free: no_Mat_decs
+- 2: free: lexer_fun
+- 2: free: MEMBER
+- 2: free: basis
 - 2: free: firstSet
 - 1: free: c2
-- 1: tryfind
 - 1: (not recorded)
 - 1: free: checkT
 - 1: free: checkF
 - 1: free: e
-- 1: free: SINGL
+- 1: free: next_line, WordS, NumberS, read_while, isAlphaNumPrime, mkCh
+- 1: free: next_token, next_loc
+- 1: free: next_sym, OtherS, next_loc
+- 1: free: token_of_sym
+- 1: free: current_build_info_str_tm
+- 1: free: help_string_tm
+- 1: free: parse_sexp
+- 1: free: print_sexp
+- 1: free: x64_backend_config, x64_export, x64_config, arm8_backend_con
+- 1: free: arm7_backend_config, arm7_export, arm7_config, ag32_backend_
 - 1: free: LIST_RELi
+- 1: free: known_cc
+- 1: free: known_co, syntax_ok
 - 1: free: single_div_pre, single_div
 - 1: free: MAP_KEYS
 - 1: free: MAP_KEYS, LINV
@@ -46,27 +56,21 @@ Why they are assumed:
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | timeout in measure |
 | `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | timeout in measure |
 | `inline_exp` | `compiler/backend/bvi_inline.ml` | timeout in measure |
-| `remove_ticks_exp` | `compiler/backend/bvi_inline.ml` | timeout in guess |
+| `remove_ticks_exp` | `compiler/backend/bvi_inline.ml` | existence |
 | `bvi_let_compile` | `compiler/backend/bvi_let.ml` | timeout in measure |
-| `bvi_let_compile_sing` | `compiler/backend/bvi_let.ml` | timeout in measure |
-| `term_ok_int` | `compiler/backend/bvi_tailrec.ml` | tryfind: /\ |
-| `term_ok_any` | `compiler/backend/bvi_tailrec.ml` | tryfind: /\ |
 | `scan_expr` | `compiler/backend/bvi_tailrec.ml` | timeout in measure |
-| `has_rec` | `compiler/backend/bvi_tailrec.ml` | tryfind: /\ |
 | `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | TAC_PROOF: Unsolved goals |
 | `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | timeout in measure |
 | `cb_to_bvi_worker_aux` | `compiler/backend/bvi_tmc.ml` | tryfind: ==> |
 | `SmartOp2` | `compiler/backend/bvl_const.ml` | free: c2 |
 | `bvl_const_compile` | `compiler/backend/bvl_const.ml` | TAC_PROOF: Unsolved goals |
-| `handle_simp` | `compiler/backend/bvl_handle.ml` | timeout in measure |
-| `bvl_handle_compile` | `compiler/backend/bvl_handle.ml` | timeout in measure |
+| `handle_simp` | `compiler/backend/bvl_handle.ml` | existence |
+| `bvl_handle_compile` | `compiler/backend/bvl_handle.ml` | TAC_PROOF: Unsolved goals |
 | `compile_seqs` | `compiler/backend/bvl_handle.ml` | tryfind: /\ |
 | `tick_inline` | `compiler/backend/bvl_inline.ml` | TAC_PROOF: Unsolved goals |
-| `is_small_aux` | `compiler/backend/bvl_inline.ml` | timeout in measure |
 | `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | TAC_PROOF: Unsolved goals |
-| `alloc_glob_count` | `compiler/backend/bvl_to_bvi.ml` | tryfind: /\ |
-| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | timeout in measure |
-| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | timeout in measure |
+| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | tryfind: /\ |
+| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | existence |
 | `JumpList` | `compiler/backend/bvl_jump.ml` | tryfind: /\ |
 | `alt_free` | `compiler/backend/clos_annotate.ml` | timeout in measure |
 | `alt_free_sing` | `compiler/backend/clos_annotate.ml` | timeout in measure |
@@ -81,35 +85,28 @@ Why they are assumed:
 | `eq_pure_list` | `compiler/backend/clos_op.ml` | tryfind: /\ |
 | `lift_exps` | `compiler/backend/clos_op.ml` | tryfind: /\ |
 | `get_size_sc_aux` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `get_size_aux` | `compiler/backend/clos_known.ml` | timeout in measure |
+| `get_size_aux` | `compiler/backend/clos_known.ml` | tryfind: /\ |
 | `clos_known_free` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `contains_closures` | `compiler/backend/clos_known.ml` | timeout in measure |
 | `clos_known_merge` | `compiler/backend/clos_known.ml` | tryfind: admissible |
 | `merge_tup` | `compiler/backend/clos_known.ml` | tryfind: admissible |
 | `known` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `collect_args` | `compiler/backend/clos_mti.ml` | tryfind: ==> |
-| `collect_apps` | `compiler/backend/clos_mti.ml` | tryfind: ==> |
-| `intro_multi` | `compiler/backend/clos_mti.ml` | timeout in measure |
+| `intro_multi` | `compiler/backend/clos_mti.ml` | timeout in guess |
 | `renumber_code_locs_list` | `compiler/backend/clos_number.ml` | timeout in measure |
 | `clos_to_bvl_compile_exps` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
 | `compile_exp_sing` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
 | `code_sort` | `compiler/backend/clos_to_bvl.ml` | TAC_PROOF: Unsolved goals |
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
-| `every_var_exp` | `compiler/backend/wordLang.ml` | tryfind: /\ |
+| `every_var_exp` | `compiler/backend/wordLang.ml` | timeout in measure |
 | `every_var` | `compiler/backend/wordLang.ml` | timeout in guess |
-| `every_stack_var` | `compiler/backend/wordLang.ml` | timeout in guess |
+| `every_stack_var` | `compiler/backend/wordLang.ml` | tryfind: /\ |
 | `max_var_exp` | `compiler/backend/wordLang.ml` | tryfind: /\ |
-| `max_var` | `compiler/backend/wordLang.ml` | timeout in guess |
-| `word_bignum_compile_exp` | `compiler/backend/word_bignum.ml` | tryfind: /\ |
+| `max_var` | `compiler/backend/wordLang.ml` | tryfind: /\ |
 | `mc_iop_code` | `compiler/backend/word_bignum.ml` |  |
 | `call_graph` | `compiler/backend/word_depth.ml` | timeout in measure |
 | `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | timeout in measure |
 | `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | timeout in measure |
-| `semanticPrimitives_v_to_list` | `semantics/semanticPrimitives.ml` | tryfind: /\ |
-| `semanticPrimitives_v_to_char_list` | `semantics/semanticPrimitives.ml` | tryfind: /\ |
-| `v_to_id` | `semantics/semanticPrimitives.ml` | tryfind: /\ |
-| `concrete_v` | `semantics/semanticPrimitives.ml` | new_specification: Assumptions not allowed in theorem |
+| `concrete_v` | `semantics/semanticPrimitives.ml` | timeout in measure |
 | `st_ex_list_MIN_cost` | `compiler/backend/reg_alloc/reg_alloc.ml` | timeout in guess |
 | `st_ex_list_MAX_deg` | `compiler/backend/reg_alloc/reg_alloc.ml` | timeout in guess |
 | `mk_graph` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: /\ |
@@ -117,200 +114,185 @@ Why they are assumed:
 | `edges_to_adjlist` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: /\ |
 | `sort_regs` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
 | `linear_scan_sort_moves` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `ssa_cc_trans_exp` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
 | `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `apply_colour_exp` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
-| `apply_colour` | `compiler/backend/word_alloc.ml` | timeout in guess |
+| `apply_colour` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
 | `get_live_exp` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
-| `remove_dead` | `compiler/backend/word_alloc.ml` | timeout in measure |
+| `remove_dead` | `compiler/backend/word_alloc.ml` | timeout in guess |
 | `get_reads_exp` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
 | `get_clash_tree` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `get_prefs` | `compiler/backend/word_alloc.ml` | timeout in guess |
+| `get_prefs` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
 | `get_heu` | `compiler/backend/word_alloc.ml` | timeout in measure |
 | `get_forced` | `compiler/backend/word_alloc.ml` | timeout in guess |
-| `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | timeout in measure |
+| `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | timeout in guess |
 | `pull_exp` | `compiler/backend/word_inst.ml` | tryfind: /\ |
 | `flatten_exp` | `compiler/backend/word_inst.ml` | tryfind: /\ |
 | `inst_select_exp` | `compiler/backend/word_inst.ml` | timeout in measure |
-| `inst_select` | `compiler/backend/word_inst.ml` | timeout in measure |
-| `three_to_two_reg` | `compiler/backend/word_inst.ml` | timeout in guess |
+| `inst_select` | `compiler/backend/word_inst.ml` | timeout in guess |
+| `three_to_two_reg` | `compiler/backend/word_inst.ml` | tryfind: /\ |
 | `remove_must_terminate` | `compiler/backend/word_remove.ml` | tryfind: /\ |
-| `Seq_assoc` | `compiler/backend/word_simp.ml` | timeout in guess |
-| `const_fp_exp` | `compiler/backend/word_simp.ml` | tryfind: /\ |
-| `const_fp_loop` | `compiler/backend/word_simp.ml` | timeout in measure |
-| `simp_duplicate_if` | `compiler/backend/word_simp.ml` | timeout in guess |
-| `push_out_if_aux` | `compiler/backend/word_simp.ml` | timeout in guess |
-| `Seq_assoc_right` | `compiler/backend/word_unreach.ml` | timeout in measure |
+| `Seq_assoc` | `compiler/backend/word_simp.ml` | tryfind: /\ |
+| `const_fp_loop` | `compiler/backend/word_simp.ml` | timeout in guess |
+| `simp_duplicate_if` | `compiler/backend/word_simp.ml` | tryfind: /\ |
+| `Seq_assoc_right` | `compiler/backend/word_unreach.ml` | tryfind: /\ |
 | `StoreAnyConsts` | `compiler/backend/data_to_word.ml` | timeout in guess |
-| `data_to_word_comp` | `compiler/backend/data_to_word.ml` | timeout in measure |
+| `data_to_word_comp` | `compiler/backend/data_to_word.ml` | timeout in guess |
 | `to_constant` | `compiler/backend/clos_interp.ml` | timeout in measure |
 | `CopyByteStr` | `compiler/backend/flat_to_clos.ml` | free: checkT |
 | `CopyByteAw8` | `compiler/backend/flat_to_clos.ml` | free: checkF |
 | `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | timeout in measure |
 | `fromChars_unsafe` | `basis/pure/mlint.ml` | tryfind: ==> |
 | `fromChars` | `basis/pure/mlint.ml` | tryfind: ==> |
-| `json_to_mlstring` | `compiler/backend/jsonLang.ml` | new_specification: Assumptions not allowed in theorem |
+| `json_to_mlstring` | `compiler/backend/jsonLang.ml` | existence |
 | `prog_to_bytes` | `compiler/backend/lab_to_target.ml` | tryfind: /\ |
 | `find_ffi_names` | `compiler/backend/lab_to_target.ml` | tryfind: /\ |
-| `get_shmem_info` | `compiler/backend/lab_to_target.ml` | timeout in guess |
 | `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | tryfind: /\ |
-| `v2pretty` | `basis/pure/mlsexp.ml` | new_specification: Assumptions not allowed in theorem |
+| `v2pretty` | `basis/pure/mlsexp.ml` | existence |
 | `getOpt` | `basis/pure/mloption.ml` | TAC_PROOF: Unsolved goals |
 | `evaluate` | `compiler/backend/proofs/bvl_inlineProof.ml` | timeout in measure |
 | `is_hidden` | `compiler/backend/flat_elim.ml` | tryfind: /\ |
-| `total_pat` | `compiler/backend/flat_elim.ml` | new_specification: Assumptions not allowed in theorem |
+| `total_pat` | `compiler/backend/flat_elim.ml` | existence |
 | `flat_elim_is_pure` | `compiler/backend/flat_elim.ml` | tryfind: /\ |
 | `has_Eval` | `compiler/backend/flat_elim.ml` | TAC_PROOF: Unsolved goals |
 | `find_loc` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `find_lookups` | `compiler/backend/flat_elim.ml` | timeout in measure |
-| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | timeout in measure |
+| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | existence |
 | `app_pos` | `compiler/backend/pattern_matching/pattern_semantics.ml` | tryfind: /\ |
-| `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | new_specification: Assumptions not allowed in theorem |
-| `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | new_specification: Assumptions not allowed in theorem |
+| `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
+| `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
 | `exh_all` | `compiler/backend/pattern_matching/pattern_exh.ml` | tryfind: /\ |
-| `pat_to_guard` | `compiler/backend/pattern_matching/pattern_comp.ml` | timeout in guess |
-| `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | timeout in measure |
+| `pat_to_guard` | `compiler/backend/pattern_matching/pattern_comp.ml` | existence |
+| `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | timeout in guess |
 | `encode_pat` | `compiler/backend/flat_pattern.ml` | tryfind: /\ |
 | `naive_pattern_match` | `compiler/backend/flat_pattern.ml` | tryfind: /\ |
 | `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | timeout in measure |
 | `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | timeout in measure |
-| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | timeout in measure |
+| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | timeout in guess |
 | `num_to_hex` | `compiler/backend/presLang.ml` | TAC_PROOF: Unsolved goals |
-| `ast_t_to_display` | `compiler/backend/presLang.ml` | new_specification: Assumptions not allowed in theorem |
-| `pat_to_display` | `compiler/backend/presLang.ml` | new_specification: Assumptions not allowed in theorem |
-| `exp_to_display` | `compiler/backend/presLang.ml` | timeout in guess |
-| `source_to_display_dec` | `compiler/backend/presLang.ml` | new_specification: Assumptions not allowed in theorem |
-| `flat_pat_to_display` | `compiler/backend/presLang.ml` | new_specification: Assumptions not allowed in theorem |
+| `ast_t_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
+| `pat_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
+| `exp_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
+| `source_to_display_dec` | `compiler/backend/presLang.ml` | timeout in measure |
+| `flat_pat_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `clos_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `bvl_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
+| `bvl_to_display` | `compiler/backend/presLang.ml` | existence |
 | `bvi_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `data_seqs` | `compiler/backend/presLang.ml` | tryfind: /\ |
-| `data_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `stack_seqs` | `compiler/backend/presLang.ml` | tryfind: /\ |
+| `data_prog_to_display` | `compiler/backend/presLang.ml` | existence |
 | `stack_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `word_seqs` | `compiler/backend/presLang.ml` | tryfind: /\ |
 | `word_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `is_value` | `semantics/typeSystem.ml` | tryfind: /\ |
-| `source_let_compile_decs` | `compiler/backend/source_let.ml` | tryfind: /\ |
-| `next_lab` | `compiler/backend/stack_alloc.ml` | tryfind: /\ |
-| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | timeout in measure |
-| `stack_names_comp` | `compiler/backend/stack_names.ml` | timeout in guess |
-| `stack_rawcall_comp` | `compiler/backend/stack_rawcall.ml` | timeout in guess |
+| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | timeout in guess |
+| `stack_names_comp` | `compiler/backend/stack_names.ml` | tryfind: /\ |
 | `stack_alloc` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
 | `stack_remove_stack_free` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
 | `upshift` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
 | `downshift` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
 | `stack_remove_comp` | `compiler/backend/stack_remove.ml` | timeout in guess |
 | `word_to_stack_word_list` | `compiler/backend/word_to_stack.ml` | tryfind: ==> |
-| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in measure |
-| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in measure |
+| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in guess |
+| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in guess |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | tryfind: admissible |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | timeout in measure |
-| `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | new_specification: Assumptions not allowed in theorem |
-| `closSem_v_to_list` | `compiler/backend/semantics/closSem.ml` | tryfind: /\ |
+| `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | existence |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | free: e |
-| `bvlSem_v_to_list` | `compiler/backend/semantics/bvlSem.ml` | tryfind: /\ |
 | `bvlSem_do_eq` | `compiler/backend/semantics/bvlSem.ml` | timeout in measure |
-| `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | timeout in measure |
-| `bviSem_finalise_cons` | `compiler/backend/semantics/bviSem.ml` | timeout in guess |
+| `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | timeout in guess |
+| `bviSem_finalise_cons` | `compiler/backend/semantics/bviSem.ml` | tryfind: /\ |
 | `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | timeout in measure |
 | `ptree_linfix` | `semantics/cmlPtreeConversion.ml` | tryfind: admissible |
-| `ptree_Type` | `semantics/cmlPtreeConversion.ml` | timeout in measure |
+| `ptree_Type` | `semantics/cmlPtreeConversion.ml` | existence |
 | `ptree_TbaseList` | `semantics/cmlPtreeConversion.ml` | tryfind: admissible |
-| `ptree_Pattern` | `semantics/cmlPtreeConversion.ml` | timeout in measure |
-| `ptree_PbaseList1` | `semantics/cmlPtreeConversion.ml` | free: SINGL |
+| `ptree_Pattern` | `semantics/cmlPtreeConversion.ml` | existence |
 | `ptree_Expr` | `semantics/cmlPtreeConversion.ml` | timeout in measure |
 | `ptree_SpeclineList` | `semantics/cmlPtreeConversion.ml` | tryfind: /\ |
-| `ptree_Decl` | `semantics/cmlPtreeConversion.ml` | timeout in measure |
-| `ptree_TopLevelDecs` | `semantics/cmlPtreeConversion.ml` | new_specification: Assumptions not allowed in theorem |
+| `ptree_Decl` | `semantics/cmlPtreeConversion.ml` | existence |
+| `ptree_TopLevelDecs` | `semantics/cmlPtreeConversion.ml` | existence |
 | `split16` | `compiler/backend/export.ml` | tryfind: ==> |
 | `sexpid` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
 | `sexptype` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexptype_alt` | `compiler/parsing/fromSexp.ml` | new_specification: Assumptions not allowed in theorem |
+| `sexptype_alt` | `compiler/parsing/fromSexp.ml` | existence |
 | `sexppat` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexppat_alt` | `compiler/parsing/fromSexp.ml` | new_specification: Assumptions not allowed in theorem |
+| `sexppat_alt` | `compiler/parsing/fromSexp.ml` | existence |
 | `sexpexp` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | timeout in measure |
+| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | existence |
 | `sexpdec` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | new_specification: Assumptions not allowed in theorem |
-| `inf_type_to_string_rec` | `compiler/inference/infer_t.ml` | timeout in measure |
-| `decode_infer_t` | `compiler/inference/unify.ml` | new_specification: Assumptions not allowed in theorem |
+| `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | existence |
+| `decode_infer_t` | `compiler/inference/unify.ml` | existence |
 | `apply_kclkont` | `compiler/inference/unify.ml` | tryfind: /\ |
 | `kcwalkstarwlR` | `compiler/inference/unify.ml` | free: mlt |
 | `apply_cunifk` | `compiler/inference/unify.ml` | tryfind: /\ |
 | `kcunifywlR` | `compiler/inference/unify.ml` | free: mlt |
 | `add_constraints` | `compiler/inference/infer.ml` | tryfind: admissible |
-| `type_name_check_subst` | `compiler/inference/infer.ml` | timeout in guess |
-| `type_name_check_sub` | `compiler/inference/infer.ml` | new_specification: Assumptions not allowed in theorem |
-| `infer_p` | `compiler/inference/inferProps.ml` | timeout in measure |
+| `type_name_check_subst` | `compiler/inference/infer.ml` | existence |
+| `type_name_check_sub` | `compiler/inference/infer.ml` | existence |
+| `infer_p` | `compiler/inference/inferProps.ml` | existence |
 | `infer_e` | `compiler/inference/infer.ml` | timeout in measure |
-| `infer_d` | `compiler/inference/infer.ml` | timeout in measure |
-| `sub_completion` | `compiler/inference/infer.ml` | free: count |
+| `infer_d` | `compiler/inference/infer.ml` | existence |
 | `alist_nub` | `compiler/inference/infer.ml` | tryfind: ==> |
 | `ns_to_alist` | `compiler/inference/infer.ml` | tryfind: /\ |
-| `lexer_fun_read_string` | `semantics/lexer_fun.ml` | timeout in guess |
-| `read_Ident` | `semantics/lexer_fun.ml` | tryfind: ==> |
-| `lexer_fun_aux` | `semantics/lexer_fun.ml` | tryfind: ==> |
-| `split_top_level_semi` | `semantics/lexer_fun.ml` | tryfind: ==> |
-| `lexer_impl_lex_aux` | `compiler/parsing/lexer_impl.ml` | tryfind: /\ |
-| `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | tryfind: /\ |
+| `next_sym_alt` | `compiler/parsing/lexer_impl.ml` | free: next_line, WordS, NumberS, read_while, isAlphaNumPrime |
+| `lexer_impl_lex_aux` | `compiler/parsing/lexer_impl.ml` | free: next_token, next_loc |
+| `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | free: next_sym, OtherS, next_loc |
+| `token_of_sym_loc` | `compiler/parsing/lexer_impl.ml` | free: token_of_sym |
 | `lex_impl_all` | `compiler/parsing/lexer_impl.ml` | tryfind: ==> |
 | `lex_impl_all_tokens` | `compiler/parsing/lexer_impl.ml` | tryfind: ==> |
+| `current_build_info_str` | `compiler/compiler.ml` | free: current_build_info_str_tm |
+| `help_string` | `compiler/compiler.ml` | free: help_string_tm |
+| `parse_sexp_input` | `compiler/compiler.ml` | free: parse_sexp |
+| `parse_cml_input` | `compiler/compiler.ml` | free: lexer_fun |
+| `compiler_compile` | `compiler/compiler.ml` | free: print_sexp |
+| `parse_tap_conf` | `compiler/compiler.ml` | free: MEMBER |
+| `parse_target_64` | `compiler/compiler.ml` | free: x64_backend_config, x64_export, x64_config, arm8_backe |
+| `parse_target_32` | `compiler/compiler.ml` | free: arm7_backend_config, arm7_export, arm7_config, ag32_ba |
+| `parse_top_config` | `compiler/compiler.ml` | free: MEMBER |
+| `compile_64` | `compiler/compiler.ml` | free: basis |
+| `compile_32` | `compiler/compiler.ml` | free: basis |
 | `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | timeout in guess |
 | `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | timeout in guess |
-| `size_of` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
-| `dataSem_v_to_list` | `compiler/backend/semantics/dataSem.ml` | tryfind: /\ |
+| `semantics_semantics` | `semantics/semantics.ml` | free: lexer_fun |
+| `size_of` | `compiler/backend/semantics/dataSem.ml` | timeout in guess |
 | `vb_size` | `compiler/backend/semantics/dataSem.ml` | tryfind: admissible |
 | `vs_depth` | `compiler/backend/semantics/dataSem.ml` | TAC_PROOF: Unsolved goals |
 | `dataSem_do_eq` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
-| `dataSem_finalise_cons` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
-| `dataSem_jump_exc` | `compiler/backend/semantics/dataSem.ml` | free: LASTN |
+| `dataSem_finalise_cons` | `compiler/backend/semantics/dataSem.ml` | tryfind: /\ |
 | `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
 | `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | timeout in measure |
-| `flatSem_v_to_list` | `compiler/backend/semantics/flatSem.ml` | tryfind: /\ |
-| `flatSem_v_to_char_list` | `compiler/backend/semantics/flatSem.ml` | tryfind: /\ |
 | `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | timeout in measure |
 | `flatSem_evaluate` | `compiler/backend/semantics/flatSem.ml` | timeout in measure |
 | `gen_gc_gc_move_data` | `compiler/backend/gc/gen_gc.ml` | tryfind: ==> |
 | `gc_move_refs` | `compiler/backend/gc/gen_gc.ml` | tryfind: ==> |
 | `gen_gc_gc_move_loop` | `compiler/backend/gc/gen_gc.ml` | tryfind: /\ |
 | `gen_gc_partial_gc_move_data` | `compiler/backend/gc/gen_gc_partial.ml` | tryfind: ==> |
-| `gc_move_ref_list` | `compiler/backend/gc/gen_gc_partial.ml` | timeout in guess |
-| `list_rearrange` | `compiler/backend/semantics/wordSem.ml` | free: count |
-| `wordSem_jump_exc` | `compiler/backend/semantics/wordSem.ml` | free: LASTN |
-| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | free: LASTN |
+| `gc_move_ref_list` | `compiler/backend/gc/gen_gc_partial.ml` | timeout in measure |
+| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | timeout in measure |
 | `all_pcs` | `compiler/encoders/asm/asmProps.ml` | tryfind: ==> |
-| `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | timeout in measure |
 | `asm_code_length` | `compiler/backend/semantics/labSem.ml` | tryfind: /\ |
 | `loc_to_pc` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | timeout in measure |
+| `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | timeout in guess |
 | `bit_length` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
-| `map_bitmap` | `compiler/backend/semantics/stackSem.ml` | timeout in guess |
 | `stackSem_enc_stack` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
-| `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | timeout in guess |
+| `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
 | `stackSem_get_labels` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
 | `copy_words` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
 | `flat_exp_conventions` | `compiler/backend/proofs/word_to_stackProof.ml` | tryfind: /\ |
-| `every_inst` | `compiler/backend/semantics/wordConvs.ml` | timeout in guess |
-| `full_inst_ok_less` | `compiler/backend/semantics/wordConvs.ml` | timeout in guess |
-| `wf_cutsets` | `compiler/backend/semantics/wordConvs.ml` | timeout in guess |
-| `call_arg_convention` | `compiler/backend/semantics/wordConvs.ml` | timeout in guess |
-| `wordConvs_extract_labels` | `compiler/backend/semantics/wordConvs.ml` | timeout in measure |
+| `every_inst` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
+| `full_inst_ok_less` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
+| `wf_cutsets` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
+| `call_arg_convention` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
+| `wordConvs_extract_labels` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
 | `wordConvs_get_code_labels` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `good_handlers` | `compiler/backend/semantics/wordConvs.ml` | timeout in guess |
-| `not_created_subprogs` | `compiler/backend/semantics/wordConvs.ml` | timeout in guess |
+| `good_handlers` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
+| `not_created_subprogs` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
 | `find_word_ref` | `compiler/backend/word_elim.ml` | tryfind: /\ |
-| `bVarBound` | `compiler/backend/semantics/bvlProps.ml` | timeout in guess |
-| `bEvery` | `compiler/backend/semantics/bvlProps.ml` | timeout in guess |
+| `bVarBound` | `compiler/backend/semantics/bvlProps.ml` | tryfind: /\ |
+| `bEvery` | `compiler/backend/semantics/bvlProps.ml` | tryfind: /\ |
 | `bvlProps_get_code_labels` | `compiler/backend/semantics/bvlProps.ml` | tryfind: /\ |
-| `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | timeout in guess |
+| `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | tryfind: /\ |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | timeout in guess |
 | `dataProps_get_code_labels` | `compiler/backend/semantics/dataProps.ml` | tryfind: /\ |
-| `no_mutcons` | `compiler/backend/proofs/bvi_tmcProof.ml` | timeout in guess |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | timeout in measure |
-| `handle_ok` | `compiler/backend/proofs/bvl_to_bviProof.ml` | timeout in guess |
+| `no_mutcons` | `compiler/backend/proofs/bvi_tmcProof.ml` | tryfind: /\ |
+| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | tryfind: ==> |
+| `handle_ok` | `compiler/backend/proofs/bvl_to_bviProof.ml` | tryfind: /\ |
 | `bvl_handleProof_env_rel` | `compiler/backend/proofs/bvl_handleProof.ml` | free: LIST_RELi |
-| `bv_ok` | `compiler/backend/proofs/bvl_to_bviProof.ml` | tryfind: ==> |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
 | `contains_App_SOME` | `compiler/backend/semantics/closProps.ml` | timeout in guess |
 | `every_Fn_SOME` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
@@ -322,7 +304,9 @@ Why they are assumed:
 | `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
 | `no_Labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
 | `app_call_dests` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | free: count |
+| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `compile_common_inc` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_cc |
+| `syntax_oracle_ok` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_co, syntax_ok |
 | `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | tryfind: ==> |
 | `word_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
 | `word_gen_gc_partial_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
@@ -331,39 +315,34 @@ Why they are assumed:
 | `word_gen_gc_move_data` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in measure |
 | `word_gen_gc_move_loop` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in measure |
 | `v_all_ts` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
-| `v_all_vs` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: /\ |
 | `word_cmp_loop` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: ==> |
 | `v_same_type` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
 | `v_depth` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | timeout in measure |
-| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | timeout in guess |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | existence |
 | `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | timeout in measure |
 | `eval_exp` | `compiler/backend/proofs/word_bignumProof.ml` | timeout in measure |
-| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind: /\ |
+| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind |
 | `eval_ri` | `compiler/backend/proofs/word_bignumProof.ml` | new_definition: Type variables not reflected in constant |
 | `word_bignumProof_Eval` | `` | new_definition: Type variables not reflected in constant |
 | `div_code_assum` | `compiler/backend/proofs/word_bignumProof.ml` | free: single_div_pre, single_div |
-| `exp_ok` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind: /\ |
 | `colouring_ok` | `compiler/backend/proofs/word_allocProof.ml` | timeout in guess |
-| `nlive_store` | `compiler/backend/proofs/word_allocProof.ml` | tryfind: /\ |
-| `word_elimProof_get_store` | `compiler/backend/proofs/word_elimProof.ml` | free: SET_TO_LIST |
-| `get_memory` | `compiler/backend/proofs/word_elimProof.ml` | free: SET_TO_LIST |
+| `nlive_store` | `compiler/backend/proofs/word_allocProof.ml` | timeout in measure |
 | `binary_branch_exp` | `compiler/backend/proofs/word_instProof.ml` | tryfind: /\ |
-| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | timeout in measure |
+| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | existence |
 | `flatProps_esgc_free` | `compiler/backend/semantics/flatProps.ml` | tryfind: /\ |
-| `install_config_rel'` | `` | free: no_Mat_decs |
-| `install_config_rel` | `compiler/backend/proofs/flat_to_closProof.ml` | free: no_Mat_decs |
+| `no_Mat` | `compiler/backend/proofs/flat_to_closProof.ml` | tryfind: /\ |
 | `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | tryfind: /\ |
-| `stackProps_extract_labels` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
-| `stack_asm_ok` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
-| `stack_asm_name` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
-| `stack_asm_remove` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
+| `stackProps_extract_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
+| `stack_asm_ok` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
+| `stack_asm_name` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
+| `stack_asm_remove` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `alloc_arg` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `reg_bound_exp` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `reg_bound` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
-| `call_args` | `compiler/backend/semantics/stackProps.ml` | timeout in measure |
+| `reg_bound_exp` | `compiler/backend/semantics/stackProps.ml` | timeout in measure |
+| `reg_bound` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
+| `call_args` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
 | `stack_get_handler_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `stackProps_get_code_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `stackProps_no_install` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
@@ -375,22 +354,17 @@ Why they are assumed:
 | `all_enc_with_nop` | `compiler/backend/proofs/lab_to_targetProof.ml` | timeout in guess |
 | `even_labels` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
 | `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | new_specification: Assumptions not allowed in theorem |
+| `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | existence |
 | `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | tryfind: /\ |
 | `encode_val` | `compiler/backend/proofs/flat_patternProof.ml` | tryfind: admissible |
-| `encode_refs` | `compiler/backend/proofs/flat_patternProof.ml` | free: count |
 | `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
 | `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
-| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in measure |
-| `stack_rel_aux` | `compiler/backend/proofs/word_to_stackProof.ml` | free: LASTN |
-| `word_to_stackProof_stack_rel` | `compiler/backend/proofs/word_to_stackProof.ml` | free: LASTN |
-| `ts_tid_rename` | `compiler/inference/inferProps.ml` | tryfind: ==> |
+| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in guess |
+| `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | new_definition: Type variables not reflected in constant |
 | `set_tids` | `compiler/inference/inferProps.ml` | tryfind: admissible |
 | `inf_set_tids` | `compiler/inference/inferProps.ml` | tryfind: admissible |
-| `type_pe_determ_canon` | `compiler/inference/proofs/type_dCanon.ml` | free: count |
 | `LINVI` | `compiler/inference/proofs/type_dCanon.ml` | free: LINV_OPT |
-| `left_insert` | `compiler/parsing/proofs/pegComplete.ml` | tryfind: ==> |
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-349 definitions.
+313 definitions.
