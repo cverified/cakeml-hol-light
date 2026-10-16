@@ -1,0 +1,11 @@
+#!/bin/sh
+# mkpatch : write cakeml/tmp/patch1.ml, the tail of
+# ml/lib/define.ml from SUBST_VAR_TAC on, which (after
+# ml/lib/fastdef.ml) can be loaded over a session of a run to
+# try a change to the strategies; tmp/patchall.ml loads both.
+C=/home/freek/claude/hol-light/cakeml
+n=$(grep -n 'the equations of the pattern that a match provides' \
+      $C/ml/lib/define.ml | cut -d: -f1)
+[ -n "$n" ] || { echo "mkpatch: cannot find the start"; exit 1; }
+tail -n +$n $C/ml/lib/define.ml > $C/tmp/patch1.ml
+echo "tmp/patch1.ml: $(wc -l < $C/tmp/patch1.ml) lines from $n"

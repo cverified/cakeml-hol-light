@@ -456,12 +456,20 @@ let LOG_TAC (asl,w) =
           asl;
   failwith "LOG_TAC";;
 
+let is_admissible w =
+  try name_of(fst(strip_comb(snd(strip_forall w)))) = "admissible"
+  with Failure _ -> false;;
+
+(* the conditions of a definition arrive as one conjunction, and
+   an admissibility condition among them asks for another proof
+   than a measure one, so the conjunction is split first *)
+
 let rec TERM_TAC g =
   let _,w = g in
-  if (try name_of(fst(strip_comb(snd(strip_forall w)))) =
-             "admissible"
-      with Failure _ -> false)
-  then ADMISS_TERM_TAC g else SIZE_TERM_TAC g
+  if is_conj w && exists is_admissible (conjuncts w)
+  then (REPEAT CONJ_TAC THEN TERM_TAC) g
+  else if is_admissible w then ADMISS_TERM_TAC g
+  else SIZE_TERM_TAC g
 
 and SIZE_TERM_TAC g =
   (* PAIR_EQ takes the equation of the pattern of a match on a
@@ -493,7 +501,18 @@ and SIZE_TERM_TAC g =
     (NUM_CONST_TAC THEN ASM_ARITH_TAC) ORELSE
     (if !cake_debug then LOG_TAC else NO_TAC))) g
 
+(* the proformas of HOL Light take an admissibility goal apart.
+   They are only used by the machinery when it is given no
+   relation, and the port gives one, so the condition arrives
+   here whole; one step of them has to work, or the goal is
+   taken as it is (and REPEAT would not end on it) *)
+
 and ADMISS_TERM_TAC g =
+  ((cake_admiss_tac THEN REPEAT cake_admiss_tac THEN TERM_TAC)
+   ORELSE AGREE_TERM_TAC
+   ORELSE (if !cake_debug then LOG_TAC else NO_TAC)) g
+
+and AGREE_TERM_TAC g =
   (PURE_REWRITE_TAC[admissible] THEN
    REWRITE_TAC[FORALL_PAIR_THM] THEN
    CONV_TAC FRESH_BOUND_CONV THEN

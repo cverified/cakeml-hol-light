@@ -121,15 +121,19 @@ let ADMISSIBLE_EXISTS = prove
 
 let cake_proforma = ref false;;
 
-let cake_proforma_log tm =
+let cake_proforma_note s =
   let ch = open_out_gen [Open_append; Open_creat] 0o644
     "/home/freek/claude/hol-light/cakeml/tmp/proforma.txt" in
-  output_string ch (string_of_term tm ^ "\n\n");
+  output_string ch (s ^ "\n");
   close_out ch;;
+
+let cake_proforma_log tm =
+  cake_proforma_note ("GOAL " ^ string_of_term tm ^ "\n");;
 
 let cake_instantiate_casewise_recursion,
     cake_pure_prove_recursive_function_exists,
-    cake_prove_general_recursive_function_exists =
+    cake_prove_general_recursive_function_exists,
+    cake_admiss_tac =
 
 (* ------------------------------------------------------------------ *)
 (* Make some basic simplification of conjunction of                 *)
@@ -312,12 +316,14 @@ let cake_instantiate_casewise_recursion,
     | Abs(x,t) -> headonly f t
     | _ -> true in
 
-  let MAIN_ADMISS_TAC (asl,w as gl) =
+  let MAIN_ADMISS_TAC0 (asl,w as gl) =
     let had,args = strip_comb w in
     if not(is_const had) then failwith "ADMISS_TAC" else
     let f,fbod = dest_abs(last args) in
     let xtup,bod = dest_gabs fbod in
     let hop,args = strip_comb bod in
+    (if !cake_proforma then
+       cake_proforma_note (name_of had ^ " / " ^ name_of hop));
     match (name_of had,name_of hop) with
       "superadmissible","COND"
           -> APPLY_PROFORMA_TAC SUPERADMISSIBLE_COND gl
@@ -360,9 +366,20 @@ let cake_instantiate_casewise_recursion,
        but only uses in tail position *)
     | "admissible","COND"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COND gl
-    (* the proforma of an existential *)
+    (* the proforma of an existential.  The bound variable is
+       renamed first: it can have the name of a variable of the
+       tuple (the handler of wordLang's Call binds l1 and l2,
+       which the return of the Call binds too), and the match
+       of the proforma would confuse the two *)
     | "admissible","?"
-          -> APPLY_PROFORMA_TAC ADMISSIBLE_EXISTS gl
+          -> let avoid = variables w in
+             let FRESH_EXISTS_CONV tm =
+               let v,_ = dest_exists tm in
+               let v' = variant avoid v in
+               if v' = v then failwith "FRESH_EXISTS_CONV"
+               else GEN_ALPHA_CONV v' tm in
+             (TRY(CONV_TAC(ONCE_DEPTH_CONV FRESH_EXISTS_CONV)) THEN
+              APPLY_PROFORMA_TAC ADMISSIBLE_EXISTS) gl
     | "admissible","_MATCH" when
           name_of(repeat rator (last args)) = "_SEQPATTERN"
           -> (APPLY_PROFORMA_TAC ADMISSIBLE_MATCH_SEQPATTERN THEN
@@ -392,6 +409,14 @@ let cake_instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
     | _ -> ((if !cake_proforma then cake_proforma_log w);
             failwith "MAIN_ADMISS_TAC") in
+
+  let MAIN_ADMISS_TAC (asl,w as gl) =
+    try MAIN_ADMISS_TAC0 gl
+    with Failure e ->
+      ((if !cake_proforma then
+          (cake_proforma_note ("  FAILED " ^ e);
+           cake_proforma_log w));
+       failwith e) in
 
   let ADMISS_TAC =
     CONJ_TAC ORELSE
@@ -698,7 +723,8 @@ let cake_instantiate_casewise_recursion,
 
   instantiate_casewise_recursion,
   pure_prove_recursive_function_exists,
-  prove_general_recursive_function_exists;;
+  prove_general_recursive_function_exists,
+  ADMISS_TAC;;
 
 (* the names of HOL Light are the functions of this file *)
 
