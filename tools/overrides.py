@@ -22,6 +22,9 @@ NAME_MAP = {
   'I': 'I',
   # HOL4's option theory overloads lift2 with OPTION_MAP2
   'lift2': 'OPTION_MAP2',
+  # monadsyntax's unit bind, which the overloads of a source that
+  # enables the option monad expand to (fromSexp's guard)
+  'monad_unitbind': 'OPTION_IGNORE_BIND',
 }
 
 # HOL4 type names of types that HOL Light has under another name
@@ -200,6 +203,9 @@ RENAME = {
   ('comparison', 'Less'): 'LESS',
   ('comparison', 'Equal'): 'EQUAL',
   ('comparison', 'Greater'): 'GREATER',
+  # cmlPEG overloads assert with the OPTION_GUARD of the library
+  # layer (asmSem and labSem have an assert of their own)
+  ('cmlPEG', 'assert'): 'OPTION_GUARD',
 }
 
 # the constant that a name means in one theory of the port, where

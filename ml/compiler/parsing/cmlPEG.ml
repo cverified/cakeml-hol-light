@@ -107,8 +107,8 @@ let tokeq_def = cake_define
 
 let tokSymP_def = cake_define
   `tokSymP P =
-     peg_tok (\t. ((OPTION_BIND) (destSymbolT t) (\s.
-       cmlPEG_assert (P s))) = SOME one) mktokLf`;;
+     peg_tok (\t. ((OPTION_BIND) (destSymbolT t) (\s. OPTION_GUARD
+       (P s))) = SOME one) mktokLf`;;
 
 let pnt_def = cake_define
   `pnt ntsym = peg_nt ((INL:MMLnonT->MMLnonT+num) ntsym) I`;;
@@ -122,8 +122,8 @@ let pnt_def = cake_define
 let peg_UQConstructorName_def = cake_define
   `peg_UQConstructorName =
      peg_tok (\t. (OPTION_BIND) (destAlphaT t) (\s.
-                 cmlPEG_assert (~(s = (implode "")) /\ isUpper
-                   (strsub s 0))) = SOME one)
+                 OPTION_GUARD (~(s = (implode "")) /\ isUpper (strsub
+                   s 0))) = SOME one)
          (bindNT nUQConstructorName o mktokLf)`;;
 
 let peg_TypeDec_def = cake_define
@@ -139,7 +139,7 @@ let peg_V_def = cake_define
   `peg_V =
     choicel [peg_tok (\t.
                    (OPTION_BIND) (destAlphaT t) (\s.
-                      cmlPEG_assert (~(s IN {(implode
+                      OPTION_GUARD (~(s IN {(implode
                         "before"),(implode "div"),(implode
                         "mod"),(implode "o")}) /\ ~(
                              s = (implode "")) /\ ~isUpper (strsub s
@@ -151,7 +151,7 @@ let peg_V_def = cake_define
 let peg_longV_def = cake_define
   `peg_longV = peg_tok (\t. (OPTION_BIND) (destLongidT t) (\
                          (str,s).
-                         cmlPEG_assert (~(s = (implode "")) /\
+                         OPTION_GUARD (~(s = (implode "")) /\
                            (isAlpha (strsub s 0) ==> ~isUpper (strsub s
                            0)))) = SOME one)
                    (bindNT nFQV o mktokLf)`;;
@@ -190,7 +190,7 @@ let peg_EbaseParen_def = cake_define
 let peg_StructName_def = cake_define
   `peg_StructName =
      peg_tok (\t. (OPTION_BIND) (destAlphaT t) (\s.
-                 cmlPEG_assert (~(s = (implode "")))) = SOME one)
+                 OPTION_GUARD (~(s = (implode "")))) = SOME one)
          (bindNT nStructName o mktokLf)`;;
 
 let ptPapply0_def = cake_define
@@ -253,16 +253,16 @@ let cmlPEG_def = cake_define
                 choicel [peg_tok (\t. (OPTION_BIND) (destLongidT t)
                   (\
                               (str,s).
-                              cmlPEG_assert (~(s = (implode "")))) =
+                              OPTION_GUARD (~(s = (implode "")))) =
                                 SOME one) (bindNT nOpID o mktokLf);
                          peg_tok (\t. (OPTION_BIND) (destSymbolT t)
                            (\
                               s.
-                              cmlPEG_assert (~(s = (implode "")))) =
+                              OPTION_GUARD (~(s = (implode "")))) =
                                 SOME one) (bindNT nOpID o mktokLf);
                          peg_tok (\t. (OPTION_BIND) (destAlphaT t) (\
                               s.
-                              cmlPEG_assert (~(s = (implode "")))) =
+                              OPTION_GUARD (~(s = (implode "")))) =
                                 SOME one) (bindNT nOpID o mktokLf);
                          pegf (tokeq tokens_StarT) (bindNT nOpID);
                          pegf (tokeq tokens_EqualsT) (bindNT
@@ -458,7 +458,7 @@ let cmlPEG_def = cake_define
                     nConstructorName);
                   peg_tok (\t. (OPTION_BIND) (destLongidT t) (\
                              (str,s).
-                             cmlPEG_assert (~(s = (implode "")) /\
+                             OPTION_GUARD (~(s = (implode "")) /\
                               isAlpha (strsub s 0) /\
                               isUpper (strsub s 0))) = SOME one)
                       (bindNT nConstructorName o mktokLf)]);
