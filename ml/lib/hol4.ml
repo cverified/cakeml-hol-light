@@ -581,6 +581,41 @@ let EL_list_size = prove
     DISCH_THEN(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
     ARITH_TAC]);;
 
+(* the first element of a member of a ZIP is a member of the
+   first list; for the second element the lists have to be of the
+   same length, because ZIP of HOL Light takes the elements of
+   the second list with HD and TL *)
+
+let MEM_ZIP_FST = prove
+ (`!(f:A->num) (x:A) (y:B) xs ys.
+     MEM (x,y) (ZIP xs ys) ==> f x < list_size f xs`,
+  GEN_TAC THEN GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[ZIP_DEF; MEM; list_size] THEN
+  REPEAT STRIP_TAC THENL
+   [FIRST_X_ASSUM(MP_TAC o AP_TERM `FST:A#B->A`) THEN
+    REWRITE_TAC[FST] THEN DISCH_THEN SUBST1_TAC THEN ARITH_TAC;
+    FIRST_X_ASSUM(fun th -> FIRST_X_ASSUM(MP_TAC o C MATCH_MP th)) THEN
+    ARITH_TAC]);;
+
+let MEM_ZIP_SND = prove
+ (`!(f:B->num) (x:A) (y:B) xs ys.
+     MEM (x,y) (ZIP xs ys) /\ LENGTH xs = LENGTH ys
+     ==> f y < list_size f ys`,
+  REPLICATE_TAC 3 GEN_TAC THEN
+  MATCH_MP_TAC list_INDUCT THEN CONJ_TAC THENL
+   [REWRITE_TAC[ZIP_DEF; MEM]; ALL_TAC] THEN
+  MAP_EVERY X_GEN_TAC [`a:A`; `l:A list`] THEN DISCH_TAC THEN
+  MATCH_MP_TAC list_INDUCT THEN CONJ_TAC THENL
+   [REWRITE_TAC[LENGTH; NOT_SUC]; ALL_TAC] THEN
+  MAP_EVERY X_GEN_TAC [`b:B`; `m:B list`] THEN
+  DISCH_THEN(K ALL_TAC) THEN
+  REWRITE_TAC[ZIP_DEF; MEM; HD; TL; LENGTH; SUC_INJ; list_size;
+              PAIR_EQ] THEN
+  STRIP_TAC THENL
+   [ASM_REWRITE_TAC[] THEN ARITH_TAC;
+    FIRST_X_ASSUM(MP_TAC o SPEC `m:B list`) THEN
+    ASM_REWRITE_TAC[] THEN ARITH_TAC]);;
+
 let MEM_list_size_ALT = prove
  (`!(x:A) l. MEM x l ==> !f:A->num. f x < list_size f l`,
   MESON_TAC[MEM_list_size]);;

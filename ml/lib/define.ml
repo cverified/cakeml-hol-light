@@ -324,7 +324,8 @@ let cake_term_lemmas =
    goal (and not an equation, so that rewriting cannot use them);
    they are instantiated by matching and added to the assumptions *)
 
-let cake_term_facts = ref ([EL_list_size]:thm list);;
+let cake_term_facts =
+  ref ([EL_list_size; MEM_ZIP_FST; MEM_ZIP_SND]:thm list);;
 
 let FACTS_TAC (asl,w as gl) =
   let sel bod =
@@ -358,6 +359,18 @@ let FACTS_TAC (asl,w as gl) =
     itlist (fun th l ->
               mapfilter (fun (_,a) -> MATCH_MP th a) asl @
               mapfilter (fun (_,a) -> MATCH_MP th (SYM a)) asl @ l)
+           (!cake_term_facts) [] in
+  (* a fact whose antecedent is a conjunction that two of the
+     assumptions give *)
+  let facts =
+    facts @
+    itlist (fun th l ->
+              let bod = snd(strip_forall(concl th)) in
+              if not (is_imp bod && is_conj (lhand bod)) then l else
+              itlist (fun (_,a) k ->
+                        mapfilter (fun (_,b) -> MATCH_MP th (CONJ a b))
+                                  asl @ k)
+                     asl l)
            (!cake_term_facts) [] in
   (if facts = [] then ALL_TAC else MAP_EVERY MP_TAC facts) gl;;
 
