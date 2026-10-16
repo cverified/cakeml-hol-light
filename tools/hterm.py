@@ -105,6 +105,20 @@ def expand_sx(s):
     s = s[:i] + out + s[j+1:]
 
 
+# HOL4 writes a run of primes as a superscript (bvi_tmcProof's
+# hypothesis has a variable s'3' as s followed by a prime, a
+# superscript three and a prime), which HOL Light cannot read
+SUPERSCRIPT = {'\u2070': '0', '\u00b9': '1', '\u00b2': '2',
+               '\u00b3': '3', '\u2074': '4', '\u2075': '5',
+               '\u2076': '6', '\u2077': '7', '\u2078': '8',
+               '\u2079': '9'}
+
+
+def ascii_name(nm):
+  """the name with the superscripts of HOL4 as plain digits"""
+  return ''.join(SUPERSCRIPT.get(c, c) for c in nm)
+
+
 def tokenize(s):
   s = expand_sx(s) if '\u27ea' in s else s
   toks = []
@@ -200,7 +214,7 @@ def tokenize(s):
                                                   or s[j+1] == '_'):
         j += 1
         while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
-      w = s[i:j]
+      w = ascii_name(s[i:j])
       toks.append(Tok('key' if w in KEYWORDS else 'id', w, start, nl, icol))
       i = j; col += j - i; nl = 0; continue
     if s.startswith("''", i):
