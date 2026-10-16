@@ -1553,7 +1553,13 @@ class Printer:
       part = [ty for ty, fs in self.ctx.recs.items()
               if set(flds) <= set(fs)]
       cand = exact or part
-      rty = (self.ctx.reclit if self.ctx.reclit in part
+      # a literal whose fields are exactly the ones of a single
+      # record type is of that type; the record of the overrides
+      # is for the ones that several types have (source_to_flat's
+      # env_all_rel makes a sem_env of a c and a v, and an
+      # environment of flatSem of a v of its own)
+      rty = (exact[0] if len(exact) == 1
+             else self.ctx.reclit if self.ctx.reclit in part
              else cand[0] if len(cand) == 1
              else self.ctx.fields.get(flds[0], '?'))
       order = self.ctx.recs.get(rty, flds)

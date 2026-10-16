@@ -311,8 +311,8 @@ let env_all_rel = cake_inductive
      global_env_inv genv map' (set_of_list locals) env /\
      env_rel genv env_v_local env' ==>
      env_all_rel genv map'
-       (mk_global_env (nsAppend env_v_local (sem_env_v env))
-         (sem_env_c env) ARB)
+       (mk_sem_env (nsAppend env_v_local (sem_env_v env)) (sem_env_c
+         env))
        (mk_flatSem_environment env')
        locals)`;;
 

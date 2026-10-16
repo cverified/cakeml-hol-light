@@ -59,6 +59,10 @@ RECORD_OF = {
   ('reg_alloc', 'reg_alloc_aux_def'): 'ira_state',
   ('linear_scan', 'run_linear_reg_alloc_intervals_def'):
     'i_linear_scan_hidden_state',
+  # the environment that env_all_rel relates is a sem_env, of
+  # which it writes the c and the v: the global_env of the file
+  # has those fields as well
+  ('source_to_flatProof', 'env_all_rel'): 'sem_env',
 }
 
 # FIELD_DEFAULT: the record type that a field name means where

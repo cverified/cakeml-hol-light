@@ -16,6 +16,7 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -237,6 +238,18 @@ hol4_overload "fix_clock" "bviSem_fix_clock";;
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of bvi_exp expressions. *)
+
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. bviSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "bviSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let evaluate_def = cake_define_list
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v

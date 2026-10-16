@@ -20,10 +20,12 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/compiler.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/multiword.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -1570,6 +1572,18 @@ let set_vars_def = cake_define
   `dataSem_set_vars ns vs s = (dataSem_state_locals_fupd (K (union
   (fromAList (ZIP ns vs)) (dataSem_state_locals s))) s)`;;
 hol4_overload "set_vars" "dataSem_set_vars";;
+
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. dataSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "dataSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let evaluate_def = cake_define_list
   [`dataSem_evaluate

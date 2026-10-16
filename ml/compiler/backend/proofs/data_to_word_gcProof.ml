@@ -227,7 +227,6 @@ let limits_inv_def = cake_define
 val s = ``(s:('c,'ffi) dataSem$state)``
 *)
 
-let _ = size_thms "dataSem_stack";;
 let state_rel_thm = cake_define
   `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
   (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
@@ -252,9 +251,8 @@ let state_rel_thm = cake_define
      EVERY2 data_to_word_gcProof_stack_rel (stack s)
        (wordSem_state_stack t) /\
      EVERY2 contains_loc (wordSem_state_stack t) locs /\
-     option_le (OPTION_MAP2 (+) (dataSem_stack_size
-       (wordSem_state_stack t)) (wordSem_state_locals_size t))
-       (wordSem_state_stack_max t) /\
+     option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
+       (wordSem_state_locals_size t)) (wordSem_state_stack_max t) /\
      option_le (wordSem_state_stack_max t) (state_stack_max s) /\
        wordSem_state_stack_size
      t = dataSem_state_stack_frame_sizes s /\

@@ -2225,6 +2225,7 @@ class Porter:
                        if not isinstance(v, dict)}
     self.ctx.intnums = key in overrides.INT_NUMERALS
     self.ctx.intvars = set(overrides.INT_ARGS.get(key, []))
+    self.ctx.reclit = overrides.RECORD_OF.get(key)
     for nm, t in conof.items():
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
@@ -2243,6 +2244,7 @@ class Porter:
       self.conof_said = {}
       self.ctx.intnums = False
       self.ctx.intvars = set()
+      self.ctx.reclit = None
       self.ctx.defining = set()
     self.out.append('let %s = cake_inductive\n  `%s`;;'
                     % (ocaml_name(b.name), term))

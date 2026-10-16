@@ -14,6 +14,7 @@ needs "compiler/backend/flatLang.ml";;
 needs "lib/comparison.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -842,6 +843,18 @@ hol4_overload "exp1_alt_size" "closSem_exp1_alt_size";;
 hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
+
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. closSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "closSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let evaluate_def = cake_define_list
   [`closSem_evaluate ([],(env:closSem_v

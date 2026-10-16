@@ -12,11 +12,13 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
+needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
@@ -760,6 +762,18 @@ let exit_loop_def = cake_define
       | res -> res`;;
 hol4_overload "exit_loop" "stackSem_exit_loop";;
 
+let fix_clock_IMP =
+  try prove
+   (`!s x res s1. stackSem_fix_clock s x = (res,s1)
+                  ==> state_clock s1 <= state_clock s`,
+    REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
+    REWRITE_TAC(PAIR_EQ :: record_thms "stackSem_state") THEN
+    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+  with Failure e ->
+    (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
+
+cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+
 let evaluate_def = cake_define_list
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
@@ -780,11 +794,11 @@ let evaluate_def = cake_define_list
    `stackSem_evaluate (wordLang_Inst i,s) =
          (match inst i s with SOME s1 -> (NONE,s1) | NONE ->
            (SOME Error,s))`;
-   `stackSem_evaluate (wordLang_Get v name,s) =
+   `stackSem_evaluate (stackLang_Get v name,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match FLOOKUP (state_store s) name with SOME x ->
            (NONE,set_var v x s) | NONE -> (SOME Error,s))`;
-   `stackSem_evaluate (wordLang_Set name v,s) =
+   `stackSem_evaluate (stackLang_Set name v,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match get_var v s with SOME w -> (NONE,set_store name w
            s) | NONE -> (SOME Error,s))`;

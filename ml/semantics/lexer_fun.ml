@@ -244,7 +244,7 @@ let init_loc_def = cake_define
   EVAL ``next_sym "0w10 +" init_loc``;
   EVAL ``next_sym "0wx1A +" init_loc``;
 
-" *)
+*)
 
 (* next_token reads the next token from a string *)
 
@@ -357,7 +357,7 @@ let lexer_fun_def = cake_define
     EVAL ``lexer_fun "0w10 + 0wxAa3F"``;
     EVAL ``lexer_fun "0w"`;
 
-" *)
+*)
 
 (* split a list of tokens at top-level semicolons *)
 
