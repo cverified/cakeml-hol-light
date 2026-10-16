@@ -330,11 +330,11 @@ let compile_aux_def = cake_define
      List [(bvl_num_stubs + bvl_to_bvi_namespaces * k +
        1,args,bvi_let_compile_exp p)]`;;
 
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ TRY
-   (Cases_on `x1`) \\ fs [destLet_def] \\ TRY (Cases_on `x2`) \\ fs
-   [destLet_def] \\ SRW_TAC [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
+let _ = size_thms "bvl_exp";;
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 let compile_exps_def = cake_define_wf
-  `MEASURE (exp1_size o SND)`
+  `MEASURE (list_size bvl_exp_size o SND)`
   `(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
@@ -391,12 +391,11 @@ let compile_exps_def = cake_define_wf
 hol4_overload "compile_exps" "bvl_to_bvi_compile_exps";;
 
 let _ = size_thms "bvl_exp";;
-(* HOL4 termination: \\ rpt strip_tac \\ rpt $ qpat_x_assum ‘(_,_,_)
-   = _’ kall_tac \\ gvs [bvlTheory.exp_size_def] \\ gvs [oneline
-   destLet_def, AllCaseEqs(), bvlTheory.exp_size_def] *)
+(* the termination relation that HOL4 gives, with
+   the names that the port gives the constants *)
 let compile_exps_sing_def = cake_define_wf
   `MEASURE (\x. match x with INL (n,e) -> bvl_exp_size e | INR (n,es)
-  -> exp1_size es)`
+  -> list_size bvl_exp_size es)`
   `(compile_exps_sing n (Var v:bvl_exp) = (((Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =

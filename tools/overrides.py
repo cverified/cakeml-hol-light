@@ -506,6 +506,14 @@ MEASURE = {
   ('mergesort', 'mergesortN_def'): 'MEASURE (\\(R,n,l). n)',
   ('mergesort', 'mergesortN_tail_def'):
     'MEASURE (\\(negate,R,n,l). n)',
+  # HOL4's exp1_size is the size function of a list of the
+  # expressions of bvl, which the port writes with list_size (it
+  # numbers the types of a family in another order than HOL4)
+  ('bvl_to_bvi', 'compile_exps_def'):
+    'MEASURE (list_size bvl_exp_size o SND)',
+  ('bvl_to_bvi', 'compile_exps_sing_def'):
+    'MEASURE (\\x. match x with INL (n,e) -> bvl_exp_size e'
+    ' | INR (n,es) -> list_size bvl_exp_size es)',
   # HOL4's exp_size and pat_size here are the ones of ast (the
   # arguments are the expressions of the source language), which
   # the port resolves to flatLang's and pattern_semantics'
