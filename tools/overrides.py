@@ -841,6 +841,8 @@ EXTRA_BEFORE = {
   # get_bin_args gives are smaller than the expression it took
   # them from
   ('bvi_tailrec', 'term_ok_int_def'): r'''
+let _ = size_thms "bvi_exp";;
+
 let exp_size_get_bin_args = prove
  (`!x x1 x2. get_bin_args x = SOME (x1,x2)
              ==> bvi_exp_size x1 + bvi_exp_size x2 < bvi_exp_size x`,
