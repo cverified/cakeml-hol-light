@@ -351,7 +351,9 @@ let FACTS_TAC (asl,w as gl) =
     mapfilter (fun t -> PART_MATCH sel th t) (filter full tms) in
   (* a fact that still has variables of its own gets the
      instance that the goal asks for *)
-  let spec th = match instances th with [] -> [th] | l -> l in
+  let spec th =
+    if fst(strip_forall(concl th)) = [] then [th]
+    else match instances th with [] -> [th] | l -> l in
   let facts = itlist (fun th l -> instances th @ l)
                      (!cake_term_facts) [] in
   (* the same, for a fact whose antecedent an assumption of the
