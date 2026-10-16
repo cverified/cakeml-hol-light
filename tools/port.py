@@ -214,6 +214,7 @@ class Porter:
            if not any(t == thy and k in ('def', 'con', 'rel')
                       for t, k in db.defs.get(nm, []))
            and not self.is_overloaded(nm, txt)}
+    self.raw_overloads = raw
     for _ in range(3):
       for nm, txt in raw.items():
         # the name of the overload itself is the constant in its
@@ -740,6 +741,16 @@ class Porter:
       else:
         self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm),
                                                             nm)
+    # the record type of a variable, for this definition only
+    fv = overrides.FIELD_VAR_DEF.get(key)
+    if fv:
+      self.ctx.fieldvar = dict(self.fieldvar)
+      self.ctx.fieldvar.update(fv)
+      # the body of an overload may read a field of the variable
+      self.ovl_was = dict(self.ctx.overloads)
+      for nm, txt in self.raw_overloads.items():
+        try: self.ctx.overloads[nm] = self.term(txt)
+        except Exception: pass
     if key in overrides.CLAUSE_FORM:
       term = None
       clauses = self.clause_form(body)
@@ -868,6 +879,9 @@ class Porter:
       if was is None: self.ctx.names.pop((self.thy, nm), None)
       else: self.ctx.names[(self.thy, nm)] = was
     self.conof = {}
+    if self.ctx.fieldvar is not self.fieldvar:
+      self.ctx.overloads = self.ovl_was
+    self.ctx.fieldvar = self.fieldvar
     self.ctx.intnums = False
     self.ctx.append = False
     self.ctx.wordnot = False

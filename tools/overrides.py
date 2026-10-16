@@ -146,6 +146,14 @@ SIZE_OF = {
   'closProps': {'exp_size': 'closLang'},
 }
 
+# FIELD_VAR_DEF: the same for one definition, where the theory
+# uses the name for another record there (the s of
+# stack_to_labProof is the state of stackSem everywhere except in
+# make_init, which builds one out of a state of labSem)
+FIELD_VAR_DEF = {
+  ('stack_to_labProof', 'make_init_def'): {'s': 'labSem_state'},
+}
+
 FIELD_OF = {
   # both grammar and peg have a field rules
   'pegexec': {'rules': 'peg'},

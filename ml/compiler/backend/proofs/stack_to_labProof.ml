@@ -282,13 +282,13 @@ let make_init_def = cake_define
   `stack_to_labProof_make_init code coracle regs' save_regs
   (s:('a,'c,'ffi)labSem_state) =
      (mk_stackSem_state (FEMPTY |++ (MAP (\r. r,(\r s.
-       stackSem_state_regs s r) r s) regs')) FEMPTY ARB ARB ARB
-       (stackSem_state_mem s) (stackSem_state_mem_domain s)
-       (stackSem_state_shared_mem_domain s) ARB (\c p.
-       stackSem_state_compile s c (MAP prog_to_section p)) coracle
-       (stackSem_state_code_buffer s) ARB ARB F F F
-       (stackSem_state_clock s) code (stackSem_state_ffi s) save_regs
-       (stackSem_state_be s):('a,'c,'ffi)stackSem_state)`;;
+       labSem_state_regs s r) r s) regs')) FEMPTY ARB ARB ARB
+       (labSem_state_mem s) (labSem_state_mem_domain s)
+       (labSem_state_shared_mem_domain s) ARB (\c p.
+       labSem_state_compile s c (MAP prog_to_section p)) coracle
+       (labSem_state_code_buffer s) ARB ARB F F F (labSem_state_clock
+       s) code (labSem_state_ffi s) save_regs (labSem_state_be
+       s):('a,'c,'ffi)stackSem_state)`;;
 hol4_overload "make_init" "stack_to_labProof_make_init";;
 
 (* HOL4 ML code, not ported:
