@@ -337,12 +337,15 @@ let FACTS_TAC (asl,w as gl) =
     let avs,bod = strip_forall(concl th) in
     let key = sel bod in
     let full t =
-      try let _,tmin,_ = term_match [] key t in
-          (* a variable that the match leaves as it is does not
-             stand in the instantiation, and it is determined
-             where the term has it *)
+      try let _,tmin,tyin = term_match [] key t in
+          (* the variables of the fact are the ones that the
+             types of the match instantiate, and a variable that
+             the match leaves as it is does not stand in the
+             instantiation at all (it is determined where the
+             term has it) *)
+          let vs = map (inst tyin) avs in
           forall (fun v -> mem v (map snd tmin) || vfree_in v t)
-                 avs
+                 vs
       with Failure _ -> false in
     mapfilter (fun t -> PART_MATCH sel th t) (filter full tms) in
   let facts = itlist (fun th l -> instances th @ l)

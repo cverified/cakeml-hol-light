@@ -318,6 +318,53 @@ sources, and why.
   for nothing, and a fact in which no part counts is not made.
   Without it `bvl_handle$compile_seqs` could not be made.
 
+- Where HOL4's `Termination` gives a relation, the port uses it
+  (`cake_define_wf`), also for a definition whose clauses are a
+  quotation each (`cake_define_list_wf`): 107 of the 205
+  `Termination` blocks of the ported sources are of such a
+  definition, and their relation used to be dropped.  HOL4
+  numbers the size functions of the types of a family in another
+  order than HOL Light does (of `closLang$exp`, HOL4's
+  `exp1_size` is the one of a `(num # exp) list` and ours is the
+  one of an `exp list`), so a relation that names one keeps the
+  name as a variable, and `fix_measure` writes the size function
+  of the port down once the type of the variable is known (which
+  is where `discharge_conditions` instantiates the relation for
+  the condition).  A relation that still has a free variable in
+  it is dropped.
+
+- HOL Light's machinery for the admissibility of the recursive
+  calls has gaps that the CakeML definitions run into, which
+  `ml/lib/fastdef.ml` fills:
+  - a call under a `MAP2` has no proforma at all
+    (`ADMISSIBLE_MAP2`, with `MAP2_EQ_EL`).  HOL Light's `MAP2`
+    takes the elements of the second list with `HD` and `TL`, so
+    the proforma is about the element at a position and not
+    about the members of the lists, and `EL_list_size` is the
+    fact that its goal asks for;
+  - `ADMISSIBLE_COND` is proved and not used: the dispatch only
+    has a case for a conditional in tail position, so a call
+    under a conditional that is not a tail call was proved
+    admissible without what the condition says
+    (`clos_known$merge` recurses on the elements of two lists
+    under `if LENGTH xs = LENGTH ys ...`);
+  - a combination is only taken apart where the function does
+    not occur as an argument anywhere in it, so a call under a
+    `MAP` that is not the whole body is not reached
+    (`clos_op$cons_measure` is
+    `SUM (MAP cons_measure xs) + LENGTH xs + 1`).  Taking the
+    combination apart leaves the `MAP` to the proforma of a
+    `MAP`; `ADMISSIBLE_RAND`, which HOL Light proves and does
+    not use either, is the cheaper way where the function part
+    does not use the function.
+
+- A termination goal may need a fact of the one side of an
+  equation between its assumptions and of the other, so every
+  assumption is copied with the equations used on it
+  (`EQ_COPY_TAC`; `clos_known$merge` has `i < LENGTH xs` and
+  `LENGTH xs = LENGTH ys`, and the fact about the second list
+  asks for `i < LENGTH ys`).
+
 - **The first pass assumes the definitions that none of that
   makes.**  `cake_define` gives every way of making a definition
   a budget of `cake_timeout` seconds (twenty), and states the
