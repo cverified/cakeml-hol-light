@@ -115,7 +115,7 @@ val fromChars_ind = theorem"fromChars_ind"
 let fromString_unsafe_def = cake_define
   `fromString_unsafe str =
      (if strlen str = 0 then (&0) else if strsub str 0 = (CHR 126)
-       then --&(fromChars_unsafe (strlen str - 1)
+       then -- &(fromChars_unsafe (strlen str - 1)
                               (substring str 1 (strlen str - 1)))
                                 else &(fromChars_unsafe (strlen str)
                                 str))`;;

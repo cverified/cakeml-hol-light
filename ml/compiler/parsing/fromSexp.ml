@@ -223,7 +223,7 @@ let sexplit_def = cake_define
        (\b m. monad_unitbind (assert b) m) (nm = "-")
              (OPTION_BIND (odestSXNUM (HD args))
                           (\n. if n = 0 then NONE else SOME
-                            (ast_IntLit (--&n)))) ++
+                            (ast_IntLit (-- &n)))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "char")
              (OPTION_BIND (odestSEXSTR (HD args)) (\
                cs. OPTION_IGNORE_BIND

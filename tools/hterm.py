@@ -1013,6 +1013,17 @@ def sml_char(s):
   return s
 
 
+SYMCHARS = set('\\!@#$%^&*-+<>/?|~=:')
+
+
+def sym_space(op, s):
+  """a space between a symbolic prefix and what follows it where
+     the two would be read as one symbol (HOL Light's lexer takes
+     the longest one, so --&n is not -- and &n)"""
+  return ' ' + s if (op and s and op[-1] in SYMCHARS and
+                     s[0] in SYMCHARS) else s
+
+
 def numeric(e):
   """is this term a number rather than a proposition?"""
   while e.kind == 'paren': e = e.e
@@ -1379,9 +1390,11 @@ class Printer:
           return self.paren('word_not ' + self.pr(e.e, APP),
                             PRE_APP, prec)
         op = '--' if numeric(e.e) or self.numctx else '~'
-        return self.paren(op + self.pr(e.e, PRE_APP), PRE_APP, prec)
+        return self.paren(op + sym_space(op, self.pr(e.e, PRE_APP)),
+                          PRE_APP, prec)
       if e.op == '-':
-        return self.paren('--' + self.pr(e.e, PRE_APP), PRE_APP, prec)
+        return self.paren('--' + sym_space('--', self.pr(e.e, PRE_APP)),
+                          PRE_APP, prec)
       if e.op == '&':
         # the argument of HOL4's & is a natural number, also in a
         # definition whose other numerals are integers or reals
