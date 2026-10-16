@@ -136,6 +136,37 @@ sources, and why.
   in `tools/overrides.py` says which theory is meant
   (`stack_remove$single_stack_free` builds the `Inst` of
   `stackLang`).
+- A name of a theory that `set_grammar_ancestry` leaves out is
+  not in the scope of the source, although HOL4 has it as an
+  ancestor: `backendProof`'s `config` is `backend`'s and not
+  `compiler`'s (`GRAMMAR_ANCESTRY` in `tools/overrides.py`).
+- The type of the argument of a constructor says which theory an
+  ambiguous constructor inside it is of, where every constructor
+  of that name says the same (the argument of a `Litv` is an
+  `ast$lit`, whichever `Litv` it is).
+- Where one theory uses two record types that have a field of the
+  same name, `FIELD_VAR` says which record a variable is of
+  (`typeSoundInvariants` has the `c` of a `sem_env` and the `c` of
+  a `type_env` in one rule), and the port writes the accessor and
+  the update of that record out.
+- The overload that a file makes for `++` (the choice of a monad
+  that it enables, or an append of its own) is taken back at the
+  end of the file with `hol4_only`: an overload stays in HOL
+  Light's interface until it is overridden, and a later file where
+  nothing says the type of the two sides would then mean the wrong
+  one.  Where a file uses `++` for the append of two lists and has
+  the overload itself, the port writes `APPEND`
+  (`PLAIN_APPEND` of `tools/overrides.py`).
+- The rules of an `Inductive` that HOL4 writes with a label in
+  front of each of them (`[~Number:]`) are conjuncts of their own
+  in the port, which is what HOL4 makes of them.
+- The value of a record update binds tighter than `=` and `/\` in
+  HOL4 (`D with locals := D.locals = D` is an equation), which the
+  port's parser follows.
+- Of a HOL4 library theory that the port only needs a part of, the
+  rest is not in the port's namespace at all (`ONLY_NAMES`): of
+  `regexp_compiler` the port takes the `vector` that CakeML's
+  `mlvector` is about, and nothing else.
 - HOL4's `<=>` is its `=` with another precedence, so a source
   writes it where the two sides are not of type `bool`, which HOL
   Light's `<=>` does not allow (`word_alloc$oracle_colour_ok`
