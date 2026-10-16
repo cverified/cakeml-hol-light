@@ -8,6 +8,34 @@
    and how often every reason a definition failed occurs."""
 import sys, re, collections
 
+def untype(s):
+  """the goal without the type annotations that HOL Light's
+     printer puts in where a term is polymorphic"""
+  out = []
+  i = 0
+  n = len(s)
+  while i < n:
+    if s[i] == '(':
+      # (name:type) is just the name
+      j = i + 1
+      while j < n and (s[j].isalnum() or s[j] in "_'"): j += 1
+      if j < n and s[j] == ':' and j > i + 1:
+        k = j + 1
+        depth = 0
+        while k < n and (depth or s[k] != ')'):
+          if s[k] == '(': depth += 1
+          elif s[k] == ')': depth -= 1
+          k += 1
+        if k < n:
+          out.append(s[i+1:j])
+          i = k + 1
+          continue
+    out.append(s[i])
+    i += 1
+  return ''.join(out)
+
+
+
 path = sys.argv[1] if len(sys.argv) > 1 else 'tmp/debug.txt'
 text = open(path, errors='replace').read().split('\n')
 
@@ -26,7 +54,8 @@ while i < len(text):
     asms = []
     while i < len(text) and text[i].startswith('  asm: '):
       asms.append(text[i][7:].strip()); i += 1
-    goals.append((' '.join(g), asms))
+      goals.append((untype(' '.join(g)),
+                  [untype(a) for a in asms]))
   elif l.startswith('cannot prove the condition ('):
     reasons[l[len('cannot prove the condition ('):].split(')')[0]] += 1
     i += 1
