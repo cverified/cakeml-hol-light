@@ -1,7 +1,7 @@
 # Plan for the first pass (all definitions)
 
-_State: the port has the 4186 definition blocks of the 236 files
-that it has to have (of 4191; the five that are out are the
+_State: the port has the 4190 definition blocks of the 237 files
+that it has to have (of 4195; the five that are out are the
 Pancake definitions of `compiler`), which `tools/coverage.py`
 checks; `tools/bin/checkseq` loads them one after the other in
 the order of `tools/load.txt` and reports what still fails._
@@ -178,6 +178,21 @@ The other checks:
 - `tools/bin/deps`     load only what a file needs
 - `tools/bin/cheats`   write `ml/CHEATS.md` from `cake_cheats ()`
 - `tools/bin/timings`  write `ml/TIMINGS.md` from the last run
+- `tools/bin/types`    the type of every constant stays in the
+                       scope of its own theory (a constant whose
+                       type mentions a theory that the HOL4 source
+                       does not have as an ancestor got an
+                       overloaded name of a theory that is not in
+                       its scope)
+- `tools/bin/freevars` which constants the definitions that the
+                       first pass assumes miss (a free variable is
+                       a constant that the port does not have)
+- `tools/conjtest.py`  whether a definition of the port is made
+                       the way `cake_define` makes it (the clauses
+                       of a clause list have to fit together),
+                       with the constants renamed, so that a
+                       session that has them already does not give
+                       them their old types
 
 A definition that takes minutes is a bug.  The two that bit so
 far: HOL Light's machinery for a definition by patterns is slow
