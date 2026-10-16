@@ -256,14 +256,11 @@ let dont_lift_def = cake_define
          (match (dest_Op_Nil clos_op_dest_Constant) x with SOME t
            -> T | NONE -> F)))`;;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ Cases_on ‘x’ \\ fs
-   [dest_Op_def,dest_Cons_def,exp_size_def] \\ rename [‘Op _ oo _’]
-   \\ Cases_on ‘oo’ \\ gvs [dest_Cons_def] \\ Cases_on ‘b’ \\ gvs
-   [dest_Cons_def] *)
-let lift_exps_def = cake_define_list_try (fun () ->
-  `MEASURE (\(xs,n,binds). exp3_size xs)`)
+let lift_exps_def = cake_define_list_wf
+  `MEASURE (\(xs,n,binds). list_size closLang_exp_size xs)`
   [`lift_exps [] n binds = ([],n,binds)`;
    `lift_exps (x :: xs) n binds =
       (if dont_lift x then

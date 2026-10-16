@@ -72,12 +72,11 @@ let isVar_def = cake_define
 let destVar_def = cake_define
   `(destVar ((Var n):bvl_exp) = n)`;;
 
+let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ SRW_TAC
-   [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
-let bVarBound_def = cake_define_list_try (fun () ->
-  `MEASURE (exp1_size o SND)`)
+let bVarBound_def = cake_define_list_wf
+  `MEASURE (list_size bvl_exp_size o SND)`
   [`bVarBound n [] <=> T`;
    `bVarBound n ((x:bvl_exp) :: y :: xs) <=>
          bVarBound n [x] /\ bVarBound n (y :: xs)`;
@@ -94,12 +93,11 @@ let bVarBound_def = cake_define_list_try (fun () ->
          bVarBound n [x1] /\ bVarBound (n + 1) [x2]`;
    `bVarBound n [(Call ticks dest xs:bvl_exp)] <=> bVarBound n xs`];;
 
+let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY DECIDE_TAC \\ SRW_TAC
-   [] [bvlTheory.exp_size_def] \\ DECIDE_TAC *)
-let bEvery_def = cake_define_list_try (fun () ->
-  `MEASURE (exp1_size o SND)`)
+let bEvery_def = cake_define_list_wf
+  `MEASURE (list_size bvl_exp_size o SND)`
   [`bEvery P [] <=> T`;
    `bEvery P ((x:bvl_exp) :: y :: xs) <=>
          bEvery P [x] /\ bEvery P (y :: xs)`;

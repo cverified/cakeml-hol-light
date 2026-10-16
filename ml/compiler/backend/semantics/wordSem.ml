@@ -1110,10 +1110,8 @@ let evaluate_def = cake_define_list_try (fun () ->
            (match wordSem_jump_exc s with NONE -> (SOME
              wordSem_Error,s) | SOME (s,l1,l2) -> (SOME
              (wordSem_Exception (wordLang_Loc l1 l2) w)),s))`;
-   `wordSem_evaluate (wordLang_Break k,s) = (SOME ((Break k:'a
-  wordLang_prog)),s)`;
-   `wordSem_evaluate (wordLang_Continue k,s) = (SOME ((Continue k:'a
-  wordLang_prog)),s)`;
+   `wordSem_evaluate (wordLang_Break k,s) = (SOME (Break k),s)`;
+   `wordSem_evaluate (wordLang_Continue k,s) = (SOME (Continue k),s)`;
    `wordSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
         (match (wordSem_get_var r1 s,wordSem_get_var_imm ri s) with
           (SOME x,SOME y) ->

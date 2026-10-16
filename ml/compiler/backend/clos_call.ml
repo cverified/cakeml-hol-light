@@ -163,14 +163,11 @@ let calls_list_def = cake_define_list
          (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
               calls_list t (i + 1) (loc + 2) xs`];;
 
+let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
-   NOT_LESS,exp_size_def] \\ IMP_RES_TAC EL_MEM_LEMMA \\ IMP_RES_TAC
-   exp1_size_lemma \\ assume_tac (SPEC_ALL exp3_size_MAP_SND) \\
-   DECIDE_TAC *)
-let calls_def = cake_define_list_try (fun () ->
-  `MEASURE (exp3_size o FST)`)
+let calls_def = cake_define_list_wf
+  `MEASURE (list_size closLang_exp_size o FST)`
   [`calls [] g = ([],g)`;
    `calls ((x:closLang_exp) :: y :: xs) g =
          (let (e1,g) = calls [x] g in

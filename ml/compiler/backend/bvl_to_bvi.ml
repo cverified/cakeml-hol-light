@@ -72,11 +72,9 @@ let alloc_glob_count_def = cake_define
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt strip_tac \\ simp
-   [bvlTheory.exp_size_def] *)
-let global_count_sing_def = cake_define_list_try (fun () ->
+let global_count_sing_def = cake_define_list_wf
   `MEASURE (\x. match x with INL e -> bvl_exp_size e | INR es ->
-     exp1_size es)`)
+  list_size bvl_exp_size es)`
   [`global_count_sing ((Var _6):bvl_exp) = 0`;
    `global_count_sing (If x y z:bvl_exp) =
          global_count_sing x +

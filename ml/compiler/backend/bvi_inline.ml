@@ -43,11 +43,9 @@ let wrapper_ok_def = cake_define
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rpt strip_tac >> simp
-   [bviTheory.exp_size_def] *)
-let inline_exp_def = cake_define_list_try (fun () ->
+let inline_exp_def = cake_define_list_wf
   `MEASURE (\x. match x with INL (_2,e) -> bvi_exp_size e | INR (_3,es)
-     -> exp2_size es)`)
+  -> list_size bvi_exp_size es)`
   [`inline_exp cs (bvi_Var n) = bvi_Var n`;
    `inline_exp cs (bvi_If x y z) =
          bvi_If (inline_exp cs x) (inline_exp cs y) (inline_exp
@@ -90,11 +88,9 @@ let inline_all_def = cake_define_list
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rpt strip_tac >> simp
-   [bviTheory.exp_size_def] *)
-let remove_ticks_exp_def = cake_define_list_try (fun () ->
+let remove_ticks_exp_def = cake_define_list_wf
   `MEASURE (\x. match x with INL e -> bvi_exp_size e | INR es ->
-     exp2_size es)`)
+  list_size bvi_exp_size es)`
   [`remove_ticks_exp (bvi_Var n) = bvi_Var n`;
    `remove_ticks_exp (bvi_If x y z) =
          bvi_If (remove_ticks_exp x) (remove_ticks_exp y)

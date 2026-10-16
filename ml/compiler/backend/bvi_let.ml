@@ -69,14 +69,11 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
+let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ fs [LENGTH_NIL] \\ imp_res_tac
-   (METIS_PROVE [SNOC_CASES] ``m <> [] ==> ?x y. m = SNOC x y``) \\
-   full_simp_tac std_ss [LAST_SNOC,LENGTH_SNOC,FRONT_SNOC] \\ fs
-   [exp2_size_APPEND,SNOC_APPEND,exp_size_def] *)
-let compile_def = cake_define_list_try (fun () ->
-  `MEASURE (exp2_size o SND o SND)`)
+let compile_def = cake_define_list_wf
+  `MEASURE (list_size bvi_exp_size o SND o SND)`
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;

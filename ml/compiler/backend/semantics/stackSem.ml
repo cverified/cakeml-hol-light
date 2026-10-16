@@ -819,7 +819,7 @@ let evaluate_def = cake_define_list_try (fun () ->
          if ~check_store_consts_opt t1 t2 stub_opt (state_code s)
            then (SOME Error,s) else
            store_const_sem t1 t2 s)`;
-   `stackSem_evaluate (wordLang_Inst i,s) =
+   `stackSem_evaluate (stackLang_Inst i,s) =
          (match inst i s with SOME s1 -> (NONE,s1) | NONE ->
            (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Get v name,s) =
@@ -830,30 +830,28 @@ let evaluate_def = cake_define_list_try (fun () ->
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match get_var v s with SOME w -> (NONE,set_store name w
            s) | NONE -> (SOME Error,s))`;
-   `stackSem_evaluate (wordLang_OpCurrHeap binop v src,s) =
+   `stackSem_evaluate (stackLang_OpCurrHeap binop v src,s) =
          (if ~stackSem_state_use_store s then (SOME Error,s) else
          match word_exp s (wordLang_Op binop [wordLang_Var src;
            wordLang_Lookup CurrHeap]) with SOME w -> (NONE,set_var v
            (wordLang_Word w) s) | _82 -> (SOME Error,s))`;
-   `stackSem_evaluate (wordLang_Tick,s) =
+   `stackSem_evaluate (stackLang_Tick,s) =
          (if state_clock s = 0 then (SOME
            TimeOut,stackSem_empty_env s) else (NONE,dec_clock s))`;
-   `stackSem_evaluate (wordLang_Seq c1 c2,s) =
+   `stackSem_evaluate (stackLang_Seq c1 c2,s) =
          (let (res,s1) = fix_clock s (stackSem_evaluate (c1,s)) in
            if res = NONE then stackSem_evaluate (c2,s1) else
              (res,s1))`;
    `stackSem_evaluate (stackLang_Return n,s) =
          (match get_var n s with SOME (Loc l1 l2) -> (SOME
            (Result (wordLang_Loc l1 l2)),s) | _85 -> (SOME Error,s))`;
-   `stackSem_evaluate (wordLang_Raise n,s) =
+   `stackSem_evaluate (stackLang_Raise n,s) =
          (match get_var n s with SOME (Loc l1 l2) -> (SOME
            (Exception (wordLang_Loc l1 l2)),s) | _88 -> (SOME
            Error,s))`;
-   `stackSem_evaluate (wordLang_Break n,s) = (SOME ((Break n:'a
-  wordLang_prog)),s)`;
-   `stackSem_evaluate (wordLang_Continue n,s) = (SOME ((Continue n:'a
-  wordLang_prog)),s)`;
-   `stackSem_evaluate (wordLang_If cmp r1 ri c1 c2,s) =
+   `stackSem_evaluate (wordLang_Break n,s) = (SOME (Break n),s)`;
+   `stackSem_evaluate (wordLang_Continue n,s) = (SOME (Continue n),s)`;
+   `stackSem_evaluate (stackLang_If cmp r1 ri c1 c2,s) =
         (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y)
           ->
          (match wordSem_word_cmp cmp x y with SOME T ->
@@ -922,7 +920,7 @@ let evaluate_def = cake_define_list_try (fun () ->
                               _106),s) -> (SOME Error,s) | (SOME
                               (Continue _107),s) -> (SOME Error,s) |
                               (res,s) -> (res,s)))))`;
-   `stackSem_evaluate (wordLang_Install ptr len dptr dlen ret,s) =
+   `stackSem_evaluate (stackLang_Install ptr len dptr dlen ret,s) =
         (match (get_var ptr s,get_var len s,get_var dptr s,get_var
           dlen s) with (SOME (wordLang_Word w1),SOME (wordLang_Word
           w2),SOME (wordLang_Word w3),SOME (wordLang_Word w4)) ->
@@ -957,14 +955,14 @@ let evaluate_def = cake_define_list_try (fun () ->
                TimeOut,stackSem_empty_env s) else
                sh_mem_op op r a (dec_clock s)) | _120 -> (SOME
                  Error,s))`;
-   `stackSem_evaluate (wordLang_CodeBufferWrite r1 r2,s) =
+   `stackSem_evaluate (stackLang_CodeBufferWrite r1 r2,s) =
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
           w1),SOME (wordLang_Word w2)) ->
               (match buffer_write (state_code_buffer s) w1 (w2w w2)
                 with SOME new_cb ->
                 (NONE,state_code_buffer_fupd (K new_cb) s) | _125
                   -> (SOME Error,s)) | _126 -> (SOME Error,s))`;
-   `stackSem_evaluate (wordLang_DataBufferWrite r1 r2,s) =
+   `stackSem_evaluate (stackLang_DataBufferWrite r1 r2,s) =
         (if ~stackSem_state_use_stack s then (SOME Error,s) else
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
           w1),SOME (wordLang_Word w2)) ->
