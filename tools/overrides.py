@@ -274,6 +274,8 @@ LOCAL_NAMES = {
   # the stack that this measures is the one of wordSem (the port
   # gives wordSem's stack_size the plain name), and nothing in
   # the invariant says so
+  # (a CON_OF for the same name does not work: the branch for a
+  # size function looks the type `stack` up, which is dataSem's)
   ('data_to_word_gcProof', 'stack_size'): 'stack_size',
   # the v_rel of source_to_flatProof's result_rel and the Eval of
   # word_bignumProof's Corr are the ones of their own theory; the
@@ -635,9 +637,6 @@ CON_OF = {
   ('word_cse', 'word_cse_def'): {'*': 'wordLang'},
   # the comp that this is about is the one of stack_remove
   ('stack_removeProof', 'code_rel_def'): {'comp': 'stack_remove'},
-  # the size of the stack of the wordSem state, not the one of
-  # dataSem's stack
-  ('data_to_word_gcProof', 'state_rel_thm'): {'stack_size': 'wordSem'},
   # the values of the semantics of bvi are bvlSem's
   ('bvi_tailrecProof', 'env_rel_def'): {'*': 'bvlSem'},
   # the op whose size this adds is closLang's
