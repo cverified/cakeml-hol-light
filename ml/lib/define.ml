@@ -246,7 +246,11 @@ let rec TERM_TAC g =
   then ADMISS_TERM_TAC g else SIZE_TERM_TAC g
 
 and SIZE_TERM_TAC g =
-  (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM;
+  (* PAIR_EQ takes the equation of the pattern of a match on a
+     tuple apart, so that SUBST_VAR_TAC can use it (balanced_map's
+     link matches on the pair (l,r), and its condition says
+     Bin ...,Bin ... = l,r) *)
+  (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM; PAIR_EQ;
                o_THM; FST; SND] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
    REPEAT GEN_TAC THEN REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
@@ -310,6 +314,11 @@ and AGREE_TAC (asl,w as gl) =
    of the strategy that gives up *)
 
 let the_cond_why = ref "";;
+
+(* the strategy that cake_define is in, which a cheat that is a
+   timeout reports: the budget ran out in that one *)
+
+let the_strategy = ref "";;
 
 let cond_kind h =
   let b = if is_exists h then snd(dest_exists h) else h in
@@ -1836,6 +1845,25 @@ let pattern_positions f cls =
                           mycls)
          (0--(n-1));;
 
+(* the arguments that a match in the right hand side is on: a
+   definition that HOL4 writes as one clause with a match has
+   variables for patterns, so pattern_positions finds nothing,
+   while the recursion goes down on the arguments of the match
+   (balanced_map's link matches on the pair (l,r)) *)
+
+let match_positions f cls =
+  let mycls = filter (fun (g,_,_) -> g = f) cls in
+  itlist
+    (fun (_,args,r) l ->
+       let hop,margs = strip_comb r in
+       if not (is_const hop && fst(dest_const hop) = "_MATCH") ||
+          length margs <> 2 then l else
+       let vs = striplist dest_pair (hd margs) in
+       union (filter (fun i -> mem (el i args) vs)
+                     (0--(length args - 1)))
+             l)
+    mycls [];;
+
 let mk_measure m =
   let dty = fst(dest_fun_ty(type_of m)) in
   list_mk_comb(mk_mconst("MEASURE",
@@ -1877,8 +1905,11 @@ let candidate_measures tm =
     let f = hd fs in
     let n = arity_in f cls in
     let pats = pattern_positions f cls in
+    let mpos = match_positions f cls in
     let cands =
       (if pats = [] then [] else [pats]) @
+      (if mpos = [] then [] else [mpos]) @
+      (if mpos = [] || pats = [] then [] else [union pats mpos]) @
       map (fun i -> [i]) (0--(n-1)) @
       [0--(n-1)] in
     (* setify would sort them, and the order is the order in which
@@ -1982,19 +2013,28 @@ let cake_cheat tm =
    seconds before the definition is assumed instead (0 is no
    limit) *)
 
-let cake_timeout = ref 20;;
+let cake_timeout = ref 30;;
 
 exception Cake_timeout;;
+
+(* the budget is processor time, not real time: a run shares the
+   machine with whatever else is going on, and a definition is to
+   get the same budget in either case *)
 
 let with_timeout f x =
   if !cake_timeout <= 0 then f x else
   (* the exception is not a Failure, which the machinery of HOL
      Light catches all over the place *)
-  let old = Sys.signal Sys.sigalrm
-              (Sys.Signal_handle (fun _ -> raise Cake_timeout)) in
+  (* the alarm itself is a real time one, so it goes off every
+     second and looks at the processor time that is left *)
+  let deadline = Sys.time() +. float_of_int (!cake_timeout) in
+  let handler _ =
+    if Sys.time() >= deadline then raise Cake_timeout
+    else ignore(Unix.alarm 1) in
+  let old = Sys.signal Sys.sigalrm (Sys.Signal_handle handler) in
   let fin () = (ignore(Unix.alarm 0); Sys.set_signal Sys.sigalrm old)
     in
-  ignore(Unix.alarm (!cake_timeout));
+  ignore(Unix.alarm 1);
   try let y = f x in (fin (); y)
   with e -> (fin (); raise e);;
 (* ------------------------------------------------------------------ *)
@@ -2297,27 +2337,34 @@ let cake_define_gen wf tm =
               ths @ l,th')
            fs ([],TRUTH))
     else
-      (try define_prim_rec tm with Failure _ when not (declared ()) ->
-       try define_nested tm with Failure _ when not (declared ()) ->
-       try define_maplist strategies tm
+      let strat s f = (the_strategy := s; f ()) in
+      (try strat "prim_rec" (fun () -> define_prim_rec tm)
        with Failure _ when not (declared ()) ->
-       try define_sing strategies tm
+       try strat "nested" (fun () -> define_nested tm)
        with Failure _ when not (declared ()) ->
-       try define_cases tm with Failure _ when not (declared ()) ->
-       try define_match tm with Failure _ when not (declared ()) ->
-       try define_lift_if strategies tm
+       try strat "maplist" (fun () -> define_maplist strategies tm)
+       with Failure _ when not (declared ()) ->
+       try strat "sing" (fun () -> define_sing strategies tm)
+       with Failure _ when not (declared ()) ->
+       try strat "cases" (fun () -> define_cases tm)
+       with Failure _ when not (declared ()) ->
+       try strat "match" (fun () -> define_match tm)
+       with Failure _ when not (declared ()) ->
+       try strat "lift_if" (fun () -> define_lift_if strategies tm)
        with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in
-       try attempt cands
-       with Failure _ when not (declared ()) -> attempt []) in
+       try strat "measure" (fun () -> attempt cands)
+       with Failure _ when not (declared ()) ->
+       strat "guess" (fun () -> attempt [])) in
   (* every way of making the definition together gets the budget;
      what is left after it is assumed *)
   let ths,_ =
-    try with_timeout strategies tm
+    try (the_strategy := ""; with_timeout strategies tm)
     with Cake_timeout ->
-           (cheat_why := "timeout"; [cake_cheat tm],TRUTH)
+           (cheat_why := "timeout in " ^ !the_strategy;
+            [cake_cheat tm],TRUTH)
        | Failure e ->
            (* "tryfind" is the strategy that gives up, which says
               nothing; the condition that could not be discharged
