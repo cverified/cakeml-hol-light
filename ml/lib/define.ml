@@ -146,6 +146,39 @@ let all_size_fns () =
 let size_fn_of_type_fwd =
   ref ((fun ty -> failwith "size_fn_of_type"):hol_type->term);;
 
+(* The measure that HOL4 gives, with its size functions: HOL4
+   numbers the size functions of the types of a family in another
+   order than HOL Light does (of closLang's exp, HOL4's exp1_size
+   is the one of a (num # exp) list and ours is the one of an exp
+   list), so the port leaves such a name a variable rather than
+   write down the size function of another type.  The type of the
+   variable says which size function it is.  A relation that still
+   has a free variable in it is of no use: the goals that it gives
+   cannot be proved. *)
+
+let fix_measure rel =
+  let fv = frees rel in
+  if fv = [] then Some rel else
+  try
+    let ins =
+      map (fun v ->
+             let nm = fst(dest_var v) in
+             let n = String.length nm in
+             if n <= 5 || String.sub nm (n - 5) 5 <> "_size"
+             then failwith "fix_measure" else
+             let ty,ran = dest_fun_ty(type_of v) in
+             (* the relation is parsed on its own, so a type that
+                the clauses would fix can still be a variable
+                here, and the size function of a type variable
+                measures nothing *)
+             if ran <> `:num` || tyvars ty <> []
+             then failwith "fix_measure" else
+             (!size_fn_of_type_fwd) ty,v)
+          fv in
+    let rel' = vsubst ins rel in
+    if frees rel' = [] then Some rel' else None
+  with Failure _ -> None;;
+
 (* the members of the front of a list and its last element are
    members of the list: a definition that recurses on BUTLAST and
    LAST (bvi_let$compile_sing) asks for their size *)
@@ -437,6 +470,11 @@ let discharge_conditions (rel,tac) th =
            let v,_ = dest_exists h in
            let rel' = inst (type_match (type_of rel) (type_of v) []) rel
              in
+           (* the size functions of the relation of HOL4, which
+              only its type says *)
+           let rel' = match fix_measure rel' with
+                        Some r -> r
+                      | None -> failwith "free in the relation" in
            EXISTS_TAC rel' THEN CONJ_TAC THENL [WF_TAC; tac]
          else tac in
        let hth =
@@ -1955,30 +1993,6 @@ let rec size_fn_of_type ty =
 (* the variable says which size function it is.  A relation that      *)
 (* still has a free variable in it is of no use: the goals that it    *)
 (* gives cannot be proved, and trying it costs a part of the budget.  *)
-(* ------------------------------------------------------------------ *)
-
-let fix_measure rel =
-  let fv = frees rel in
-  if fv = [] then Some rel else
-  try
-    let ins =
-      map (fun v ->
-             let nm = fst(dest_var v) in
-             let n = String.length nm in
-             if n <= 5 || String.sub nm (n - 5) 5 <> "_size"
-             then failwith "fix_measure" else
-             let ty,ran = dest_fun_ty(type_of v) in
-             (* the relation is parsed on its own, so a type that
-                the clauses would fix can still be a variable
-                here, and the size function of a type variable
-                measures nothing *)
-             if ran <> `:num` || tyvars ty <> []
-             then failwith "fix_measure" else
-             size_fn_of_type ty,v)
-          fv in
-    let rel' = vsubst ins rel in
-    if frees rel' = [] then Some rel' else None
-  with Failure _ -> None;;
 
 (* ------------------------------------------------------------------ *)
 (* A measure for a definition whose termination HOL Light cannot guess*)
@@ -2606,13 +2620,7 @@ let cake_define_gen wf tm =
        with Failure _ when not (declared ()) ->
        try strat "lift_if" (fun () -> define_lift_if strategies tm)
        with Failure _ when not (declared ()) ->
-       let given =
-         match wf with
-           Some (rel,tac) ->
-             (match fix_measure rel with
-                Some r -> [r,tac]
-              | None -> [])
-         | None -> [] in
+       let given = match wf with Some rt -> [rt] | None -> [] in
        let cands = given @ map (fun rel -> rel,TERM_TAC)
                                (candidate_measures tm) in
        try strat "measure" (fun () -> attempt cands)
