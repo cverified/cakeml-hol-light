@@ -29,7 +29,6 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "lib/alignment.ml";;
 needs "lib/set_sep.ml";;
-needs "lib/term.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
@@ -79,7 +78,7 @@ let arith_location_def = cake_define
 
 let arith_code_def = cake_define
   `Arith_code index =
-     Seq (Assign 6 (Const (n2w (4 * index))))
+     Seq (Assign 6 (wordLang_Const (n2w (4 * index))))
        (Call NONE (SOME AnyArith_location) [0; 2; 4; 6] NONE)`;;
 
 (* HOL4 ML code, not ported:

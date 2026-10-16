@@ -26,8 +26,8 @@ let iAssign_def = cake_define
      (if op_requires_names op then
        let xs = SOME (list_to_num_set (vs ++ live ++ env)) in
          if op = closLang_IntOp Greater then
-           dataLang_Assign n1 (closLang_IntOp Less) (REVERSE vs) xs
-             else if op = closLang_IntOp closLang_GreaterEq then
+           dataLang_Assign n1 (closLang_IntOp closLang_Less) (REVERSE
+             vs) xs else if op = closLang_IntOp closLang_GreaterEq then
            dataLang_Assign n1 (closLang_IntOp closLang_LessEq)
              (REVERSE vs) xs else
            dataLang_Assign n1 op vs xs else
@@ -68,8 +68,9 @@ let compile_def = cake_define_list
          let (c3,v3,n3) = bvi_to_data_compile n2 env tail live [x3]
            in
            if tail then
-             (dataLang_Seq c1 (If (HD v1) c2 c3),[n3],n3 + 1) else
-             (dataLang_Seq c1 (If (HD v1) (dataLang_Seq c2
+             (dataLang_Seq c1 (dataLang_If (HD v1) c2 c3),[n3],n3 +
+               1) else
+             (dataLang_Seq c1 (dataLang_If (HD v1) (dataLang_Seq c2
                (dataLang_Move n3 (HD v2)))
                               (dataLang_Seq c3 (dataLang_Move n3
                                 (HD v3)))),[n3],n3 + 1))`;
@@ -82,23 +83,23 @@ let compile_def = cake_define_list
    `bvi_to_data_compile (n:num) (env:num list) tail live [(Raise
   x1:bvi_exp)] =
          (let (c1,v1,n1) = bvi_to_data_compile n env F live [x1] in
-           (dataLang_Seq c1 (Raise (HD v1)),v1,n1))`;
+           (dataLang_Seq c1 (dataLang_Raise (HD v1)),v1,n1))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(Return
   xs:bvi_exp)] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
-           (dataLang_Seq c1 (Return vs),[n1],n1 + 1))`;
+           (dataLang_Seq c1 (dataLang_Return vs),[n1],n1 + 1))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(Op op
   xs:bvi_exp)] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
          let c2 = dataLang_Seq c1 (iAssign n1 op (REVERSE vs) live
            env) in
-           ((if tail then dataLang_Seq c2 (Return [n1]) else
-             c2),[n1],n1 + 1))`;
+           ((if tail then dataLang_Seq c2 (dataLang_Return [n1])
+             else c2),[n1],n1 + 1))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(Tick
   x1:bvi_exp)] =
          (let (c1,v1,n1) = bvi_to_data_compile n env tail live [x1]
            in
-           (dataLang_Seq Tick c1,v1,n1))`;
+           (dataLang_Seq dataLang_Tick c1,v1,n1))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [(Force loc
   v:bvi_exp)] =
          (let var = any_el v env 0 in
@@ -119,9 +120,9 @@ let compile_def = cake_define_list
            live [handler] in
          let ret = SOME ([n2],list_to_num_set (live ++ env)) in
          let c3 = (if tail then Return [n2] else dataLang_Skip) in
-           (dataLang_Seq c1 (mk_ticks ticks (dataLang_Seq (Call
-             ret dest vs (SOME (n1,dataLang_Seq c2 (dataLang_Move n2
-             (HD v))))) c3)),[n2],n2 + 1))`;
+           (dataLang_Seq c1 (mk_ticks ticks (dataLang_Seq
+             (dataLang_Call ret dest vs (SOME (n1,dataLang_Seq c2
+             (dataLang_Move n2 (HD v))))) c3)),[n2],n2 + 1))`;
    `bvi_to_data_compile (n:num) (env:num list) tail live [bvi_LetCall
   rets ticks dest xs y] =
          (let (c1,vs,n1) = bvi_to_data_compile n env F live xs in
@@ -151,9 +152,9 @@ let compile_sing_def = cake_define_list
          let (c3,v3,n3) = bvi_to_data_compile_sing n2 env tail live
            x3 in
            if tail then
-             (dataLang_Seq c1 (If v1 c2 c3),n3,n3 + 1) else
-             (dataLang_Seq c1 (If v1 (dataLang_Seq c2 (dataLang_Move
-               n3 v2))
+             (dataLang_Seq c1 (dataLang_If v1 c2 c3),n3,n3 + 1) else
+             (dataLang_Seq c1 (dataLang_If v1 (dataLang_Seq c2
+               (dataLang_Move n3 v2))
                               (dataLang_Seq c3 (dataLang_Move n3
                                 v3))),n3,n3 + 1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (Let xs
@@ -166,23 +167,23 @@ let compile_sing_def = cake_define_list
   x1:bvi_exp) =
          (let (c1,v1,n1) = bvi_to_data_compile_sing n env F live x1
            in
-           (dataLang_Seq c1 (Raise v1),v1,n1))`;
+           (dataLang_Seq c1 (dataLang_Raise v1),v1,n1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (Return
   xs:bvi_exp) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
-           (dataLang_Seq c1 (Return vs),n1,n1 + 1))`;
+           (dataLang_Seq c1 (dataLang_Return vs),n1,n1 + 1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (Op op
   xs:bvi_exp) =
          (let (c1,vs,n1) = bvi_to_data_compile_list n env live xs in
          let c2 = dataLang_Seq c1 (iAssign n1 op (REVERSE vs) live
            env) in
-           ((if tail then dataLang_Seq c2 (Return [n1]) else
-             c2),n1,n1 + 1))`;
+           ((if tail then dataLang_Seq c2 (dataLang_Return [n1])
+             else c2),n1,n1 + 1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (Tick
   x1:bvi_exp) =
          (let (c1,v1,n1) = bvi_to_data_compile_sing n env tail live
            x1 in
-           (dataLang_Seq Tick c1,v1,n1))`;
+           (dataLang_Seq dataLang_Tick c1,v1,n1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live (Force loc
   v:bvi_exp) =
          (let var = any_el v env 0 in
@@ -204,8 +205,8 @@ let compile_sing_def = cake_define_list
          let ret = SOME ([n2],list_to_num_set (live ++ env)) in
          let c3 = (if tail then Return [n2] else dataLang_Skip) in
            (dataLang_Seq c1 (mk_ticks ticks
-              (dataLang_Seq (Call ret dest vs (SOME (n1,dataLang_Seq
-                c2 (dataLang_Move n2 v)))) c3)),
+              (dataLang_Seq (dataLang_Call ret dest vs (SOME
+                (n1,dataLang_Seq c2 (dataLang_Move n2 v)))) c3)),
             n2,n2 + 1))`;
    `bvi_to_data_compile_sing (n:num) (env:num list) tail live
   (bvi_LetCall rets ticks dest xs y) =

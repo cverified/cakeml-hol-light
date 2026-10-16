@@ -33,7 +33,7 @@ let v_rel = cake_inductive
    (!s. v_rel (Litv (ast_StrLit s)) (closSem_ByteVector (MAP (n2w o
      ORD) (explode s)))) /\
    (!b. v_rel (Litv (ast_Word8 b)) (closSem_Number (&(w2n b)))) /\
-   (!w. v_rel (Litv (Word64 w)) (Word64 w)) /\
+   (!w. v_rel (Litv (ast_Word64 w)) (Word64 w)) /\
    (!f. v_rel (Litv (ast_Float64 f)) (Word64 f)) /\
    (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Conv NONE vs)
      (closSem_Block 0 ws)) /\

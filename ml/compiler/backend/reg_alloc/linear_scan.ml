@@ -216,24 +216,25 @@ let check_number_property_strong_def = cake_define_list
           size_of_live_tree lt2) (get_live_backward lt2 live) in
         r1 /\ r2)`];;
 
-let check_startlive_prop_def = cake_define_list
-  [`check_startlive_prop (linear_scan_Writes l) n beg end ndef =
-        (!r. MEM r l ==> (option_CASE (sptree_lookup r beg) ndef
-          (\x. x) <= n /\
-                        (?v. sptree_lookup r end = SOME v /\ n <=
-                          v)))`;
-   `check_startlive_prop (linear_scan_Reads l) n beg end ndef =
-        T`;
-   `check_startlive_prop (Branch lt1 lt2:live_tree) n beg end ndef =
-        (let r2 = check_startlive_prop lt2 n beg end ndef in
-        let r1 = check_startlive_prop lt1 (n - (size_of_live_tree
-          lt2)) beg end ndef in
-        r1 /\ r2)`;
-   `check_startlive_prop (Seq lt1 lt2:live_tree) n beg end ndef =
-        (let r2 = check_startlive_prop lt2 n beg end ndef in
-        let r1 = check_startlive_prop lt1 (n - size_of_live_tree
-          lt2) beg end ndef in
-        r1 /\ r2)`];;
+let check_startlive_prop_def = cake_define
+  `(
+     check_startlive_prop (linear_scan_Writes l) n beg end ndef =
+         (!r. MEM r l ==> (option_CASE (sptree_lookup r beg) ndef
+           (\x. x) <= n /\
+                         (?v. sptree_lookup r end = SOME v /\ n <=
+                           v)))) /\ (
+     check_startlive_prop (linear_scan_Reads l) n beg end ndef =
+         T) /\ (
+     check_startlive_prop (Branch lt1 lt2) n beg end ndef =
+         (let r2 = check_startlive_prop lt2 n beg end ndef in
+         let r1 = check_startlive_prop lt1 (n - (size_of_live_tree
+           lt2)) beg end ndef in
+         r1 /\ r2)) /\ (
+     check_startlive_prop (Seq lt1 lt2) n beg end ndef =
+         (let r2 = check_startlive_prop lt2 n beg end ndef in
+         let r1 = check_startlive_prop lt1 (n - size_of_live_tree
+           lt2) beg end ndef in
+         r1 /\ r2))`;;
 
 let live_tree_registers_def = cake_define_list
   [`live_tree_registers (linear_scan_Writes l) = set_of_list l`;
@@ -1352,4 +1353,4 @@ val res = translate linear_scan_reg_alloc_def;
 
 *)
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

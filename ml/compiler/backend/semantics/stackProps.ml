@@ -29,7 +29,7 @@ let clock_neutral_def = cake_define
 let extract_labels_def = cake_define
   `stackProps_extract_labels x1 =
         match x1 with
-          wordLang_Call ret dest h ->
+          stackLang_Call ret dest h ->
        (match ret with
          NONE -> [] | SOME (ret_handler,_9,l1,l2) ->
          (let ret_rest = stackProps_extract_labels ret_handler in
@@ -281,7 +281,7 @@ let stack_asm_remove_def = cake_define
 let alloc_arg_def = cake_define
   `alloc_arg x1 =
         match x1 with
-          wordLang_Alloc v -> (v = 1)
+          stackLang_Alloc v -> (v = 1)
         | ((Seq p1 p2):'a stackLang_prog) ->
         alloc_arg p1 /\ alloc_arg p2
         | ((If c r ri p1 p2):'a stackLang_prog) ->
@@ -317,11 +317,11 @@ let reg_bound_inst_def = cake_define
         match x1 with
           asm_Mem _49 n (Addr a _50) -> n < k /\ a < k
         | (Const n _51) -> n < k
-        | (Arith (Shift _52 n r2 ri)) -> r2 < k /\ n < k /\ (match ri
-          with Reg r -> r < k | _53 -> T)
+        | (Arith (asm_Shift _52 n r2 ri)) -> r2 < k /\ n < k /\
+          (match ri with Reg r -> r < k | _53 -> T)
         | (Arith (asm_Binop _54 n r2 ri)) -> r2 < k /\ n < k /\
           (match ri with Reg r1 -> r1 < k | _55 -> T)
-        | (Arith (Div r1 r2 r3)) -> r1 < k /\ r2 < k /\ r3 < k
+        | (Arith (asm_Div r1 r2 r3)) -> r1 < k /\ r2 < k /\ r3 < k
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> r1 < k /\ r2 < k /\
           r3 < k /\ r4 < k
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> r1 < k /\ r2 < k
@@ -425,7 +425,7 @@ let call_args_def = cake_define
 let stack_get_handler_labels_def = cake_define
   `stack_get_handler_labels n x2 =
         match x2 with
-          wordLang_Call r d h ->
+          stackLang_Call r d h ->
        (match r with SOME (x,_75,_76) -> stack_get_handler_labels n x
          UNION
          (match h with SOME (x,l1,l2) -> (if l1 = n then {(l1,l2)}
@@ -482,7 +482,7 @@ let stack_good_handler_labels_def = cake_define
 let no_install_def = cake_define
   `stackProps_no_install x1 =
         match x1 with
-          wordLang_Call r d h ->
+          stackLang_Call r d h ->
        ((match r with SOME (x,_99,_100) -> stackProps_no_install x |
          _101 -> T) /\
         (match h with SOME (x,_102,_103) -> stackProps_no_install x |

@@ -662,7 +662,7 @@ let ptree_PbaseList1_def = cake_define_list
            match args with
                [p_pt] -> OPTION_MAP SINGL (ptree_Pattern nPbase
                  p_pt) | [p_pt; pl_pt] ->
-                   lift2 CONS
+                   OPTION_MAP2 CONS
                          (ptree_Pattern nPbase p_pt)
                          (ptree_PbaseList1 pl_pt) | _71 ->
                            NONE)`];;
@@ -1317,4 +1317,4 @@ let ptree_TopLevelDecs_def = cake_define_list
                  tds.
                  SOME (td :: tds)))) | _150 -> fail)`];;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

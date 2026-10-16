@@ -76,14 +76,16 @@ let call_graph_def = cake_define_wf
                    (call_graph funs d (d :: ns) total body) else
                      word_depth_Leaf) | SOME (_4,_5,ret_prog,_6,_7) ->
               (let new_funs = sptree_delete d funs in
-                match handler with NONE -> word_depth_Branch (Call n
-                  (Call d word_depth_Leaf))
+                match handler with NONE -> word_depth_Branch
+                  (word_depth_Call n (word_depth_Call d
+                  word_depth_Leaf))
                       (mk_Branch (Call n (call_graph new_funs d [d]
                         total body))
                               (call_graph funs n ns total ret_prog))
                                 | SOME (_8,p,_9,_10) ->
-                                word_depth_Branch (Call n (Const 3 (Call
-                                d word_depth_Leaf)))
+                                word_depth_Branch (word_depth_Call n
+                                (Const 3 (word_depth_Call d
+                                word_depth_Leaf)))
                    (mk_Branch (Call n (Const 3 (call_graph new_funs d
                      [d] total body)))
                    (mk_Branch (call_graph funs n ns total p)
@@ -98,7 +100,8 @@ let call_graph_def = cake_define_wf
 let full_call_graph_def = cake_define
   `full_call_graph n funs =
      (match sptree_lookup n funs with NONE -> word_depth_Unknown |
-       SOME (a,prog) -> word_depth_Branch (Call n word_depth_Leaf)
+       SOME (a,prog) -> word_depth_Branch (word_depth_Call n
+       word_depth_Leaf)
                               (call_graph funs n [n] (sptree_size
                                 funs) prog))`;;
 

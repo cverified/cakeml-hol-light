@@ -37,7 +37,7 @@ let flat_exp_conventions_def = cake_define
         | (Set store_name (Var r)) -> T
         | (Set store_name _1) -> F
         | (wordLang_ShareInst op v (Var r)) -> T
-        | (wordLang_ShareInst op v (wordLang_Op Add [Var r; Const
+        | (wordLang_ShareInst op v (wordLang_Op asm_Add [Var r; Const
           c])) -> T
         | (wordLang_ShareInst op v _2) -> F
         | (Seq p1 p2) ->
@@ -64,9 +64,9 @@ let inst_ok_less_def = cake_define
           ((c:'a asm_config),asm_Arith (asm_Binop b r1 r2 (Imm w)))
             -> asm_config_valid_imm
        c (INL b) w
-        | (c,(Arith (Shift l r1 r2 (Imm i)))) ->
+        | (c,(Arith (asm_Shift l r1 r2 (Imm i)))) ->
        (((i = (n2w 0)) ==> (l = Lsl)) /\ w2n i < dimindex (:'a))
-        | (c,(Arith (Div r1 r2 r3))) ->
+        | (c,(Arith (asm_Div r1 r2 r3))) ->
        (asm_config_ISA c IN {ARMv8,MIPS,RISC_V})
         | (c,(Arith (asm_LongMul r1 r2 r3 r4))) ->
        ((asm_config_ISA c = ARMv7 ==> ~(r1 = r2)) /\
@@ -138,7 +138,7 @@ let distinct_tar_reg_def = cake_define
   `distinct_tar_reg x1 =
         match x1 with
           asm_Arith (asm_Binop bop r1 r2 ri) -> ~(ri = Reg r1)
-        | (Arith (Shift l r1 r2 ri)) -> ~(ri = Reg r1)
+        | (Arith (asm_Shift l r1 r2 ri)) -> ~(ri = Reg r1)
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> ~(r1 = r3) /\ ~(r1 =
           r4)
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> ~(r1 = r3)
@@ -152,7 +152,7 @@ let two_reg_inst_def = cake_define
   `two_reg_inst x1 =
         match x1 with
           asm_Arith (asm_Binop bop r1 r2 ri) -> (r1 = r2)
-        | (Arith (Shift l r1 r2 ri)) -> (r1 = r2)
+        | (Arith (asm_Shift l r1 r2 ri)) -> (r1 = r2)
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> (r1 = r2)
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> (r1 = r2)
         | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> (r1 = r2)
@@ -237,7 +237,7 @@ let inst_arg_convention_def = cake_define
   `inst_arg_convention x1 =
         match x1 with
           asm_Arith (asm_AddCarry r1 r2 r3 r4) -> r4 = 0
-        | (Arith (Shift _14 _15 _16 (Reg r))) -> r = 8
+        | (Arith (asm_Shift _14 _15 _16 (Reg r))) -> r = 8
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> r4 = 0
         | (Arith (asm_SubOverflow r1 r2 r3 r4)) -> r4 = 0
         | (Arith (asm_LongMul r1 r2 r3 r4)) -> r1 = 6 /\ r2 = 0 /\ r3
@@ -423,7 +423,7 @@ val no_mt_P = ``((<>) (MustTerminate Skip))``
 
 let no_mt_subprogs_def = cake_define
   `no_mt p = not_created_subprogs (((<>) (wordLang_MustTerminate
-  Skip))) p`;;
+  wordLang_Skip))) p`;;
 
 (* no_share_inst: no ShareInst *)
 

@@ -117,9 +117,9 @@ let every_var_inst_def = cake_define
           asm_Const reg w -> P reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (P r1 /\ P r2 /\ every_var_imm P ri)
-        | (Arith (Shift shift' r1 r2 ri)) -> (P r1 /\ P r2 /\
+        | (Arith (asm_Shift shift' r1 r2 ri)) -> (P r1 /\ P r2 /\
           every_var_imm P ri)
-        | (Arith (Div r1 r2 r3)) -> (P r1 /\ P r2 /\ P r3)
+        | (Arith (asm_Div r1 r2 r3)) -> (P r1 /\ P r2 /\ P r3)
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P r3
           /\ P r4)
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> (P r1 /\ P r2 /\ P
@@ -130,8 +130,8 @@ let every_var_inst_def = cake_define
           /\ P r4)
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> (P r1 /\ P r2 /\ P
           r3 /\ P r4 /\ P r5)
-        | (asm_Mem Load r (Addr a w)) -> (P r /\ P a)
-        | (asm_Mem Store r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem asm_Load r (Addr a w)) -> (P r /\ P a)
+        | (asm_Mem asm_Store r (Addr a w)) -> (P r /\ P a)
         | (asm_Mem asm_Load32 r (Addr a w)) -> (P r /\ P a)
         | (asm_Mem asm_Store32 r (Addr a w)) -> (P r /\ P a)
         | (asm_Mem asm_Load8 r (Addr a w)) -> (P r /\ P a)
@@ -246,9 +246,9 @@ let max_var_inst_def = cake_define
         | (Const reg w) -> reg
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r -> max3 r1 r2 r | _8 -> MAX r1 r2)
-        | (Arith (Shift shift' r1 r2 n)) ->
+        | (Arith (asm_Shift shift' r1 r2 n)) ->
        (match n with Reg r -> max3 r1 r2 r | _9 -> MAX r1 r2)
-        | (Arith (Div r1 r2 r3)) -> max3 r1 r2 r3
+        | (Arith (asm_Div r1 r2 r3)) -> max3 r1 r2 r3
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> MAX (MAX r1 r2) (MAX
           r3 r4)
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> MAX (MAX r1 r2)
@@ -259,8 +259,8 @@ let max_var_inst_def = cake_define
           r3 r4)
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> MAX (MAX (MAX r1
           r2) (MAX r3 r4)) r5
-        | (asm_Mem Load r (Addr a w)) -> MAX a r
-        | (asm_Mem Store r (Addr a w)) -> MAX a r
+        | (asm_Mem asm_Load r (Addr a w)) -> MAX a r
+        | (asm_Mem asm_Store r (Addr a w)) -> MAX a r
         | (asm_Mem asm_Load32 r (Addr a w)) -> MAX a r
         | (asm_Mem asm_Store32 r (Addr a w)) -> MAX a r
         | (asm_Mem asm_Load8 r (Addr a w)) -> MAX a r
@@ -349,8 +349,8 @@ let exp_to_addr_def = cake_define
   `exp_to_addr x1 =
         match x1 with
           wordLang_Var ad -> SOME (Addr ad (n2w 0))
-        | (wordLang_Op Add [Var ad; Const offset]) -> SOME (Addr ad
-          offset)
+        | (wordLang_Op asm_Add [Var ad; Const offset]) -> SOME (Addr
+          ad offset)
         | _14 -> NONE`;;
 
 (* HOL4 overload (expanded in the port):

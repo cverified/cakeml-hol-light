@@ -210,7 +210,7 @@ let prim_type_to_display_def = cake_define
       | ast_StrT -> empty_item (implode "StrT")
       | ast_Float64T -> empty_item (implode "Float64T")
       | (ast_WordT ast_W8) -> empty_item (implode "WordT_W8")
-      | (ast_WordT W64) -> empty_item (implode "WordT_W64")`;;
+      | (ast_WordT ast_W64) -> empty_item (implode "WordT_W64")`;;
 
 let lop_to_display_def = cake_define_list
   [`lop_to_display Andalso = empty_item (implode "Andalso")`;
@@ -581,29 +581,30 @@ let clos_op_to_display_def = cake_define
   closLang_GlobOp AllocGlobal -> String (implode "AllocGlobal") |
   closLang_GlobOp GlobalsPtr -> String (implode "GlobalsPtr") |
   closLang_GlobOp SetGlobalsPtr -> String (implode "SetGlobalsPtr") |
-  closLang_BlockOp (Cons num') -> item_with_num (implode "Cons") num' |
-  closLang_BlockOp (closLang_ElemAt num') -> item_with_num (implode
-  "ElemAt") num' | closLang_BlockOp (TagLenEq n1 n2) -> item_with_nums
-  (implode "TagLenEq") [n1; n2] | closLang_BlockOp (closLang_BoolTest
-  test) -> displayLang_Item NONE (implode "BoolTest") [test_to_display
-  test] | closLang_BlockOp closLang_BoolNot -> String (implode
-  "BoolNot") | closLang_BlockOp (LenEq num') -> item_with_num (implode
-  "LenEq") num' | closLang_BlockOp (closLang_TagEq num') ->
-  item_with_num (implode "TagEq") num' | closLang_BlockOp
-  closLang_LengthBlock -> String (implode "LengthBlock") |
-  closLang_BlockOp closLang_BoundsCheckBlock -> String (implode
-  "BoundsCheckBlock") | closLang_BlockOp (closLang_ConsExtend num') ->
-  item_with_num (implode "ConsExtend") num' | closLang_BlockOp
-  (closLang_FromList num') -> item_with_num (implode "FromList") num' |
-  closLang_BlockOp ListAppend -> String (implode "ListAppend") |
-  closLang_BlockOp (closLang_Constant c) -> displayLang_Item NONE
-  (implode "Constant") [const_to_display c] | closLang_BlockOp Equal ->
-  String (implode "Equal") | closLang_BlockOp (closLang_EqualConst c) ->
-  displayLang_Item NONE (implode "EqualConst") [const_part_to_display c]
-  | closLang_BlockOp (closLang_Build bs) -> displayLang_Item NONE
-  (implode "Build") (MAP const_part_to_display bs) | closLang_MemOp Ref
-  -> String (implode "Ref") | closLang_MemOp closLang_Update -> String
-  (implode "Update") | closLang_MemOp El -> String (implode "El") |
+  closLang_BlockOp (closLang_Cons num') -> item_with_num (implode
+  "Cons") num' | closLang_BlockOp (closLang_ElemAt num') ->
+  item_with_num (implode "ElemAt") num' | closLang_BlockOp
+  (closLang_TagLenEq n1 n2) -> item_with_nums (implode "TagLenEq") [n1;
+  n2] | closLang_BlockOp (closLang_BoolTest test) -> displayLang_Item
+  NONE (implode "BoolTest") [test_to_display test] | closLang_BlockOp
+  closLang_BoolNot -> String (implode "BoolNot") | closLang_BlockOp
+  (closLang_LenEq num') -> item_with_num (implode "LenEq") num' |
+  closLang_BlockOp (closLang_TagEq num') -> item_with_num (implode
+  "TagEq") num' | closLang_BlockOp closLang_LengthBlock -> String
+  (implode "LengthBlock") | closLang_BlockOp closLang_BoundsCheckBlock
+  -> String (implode "BoundsCheckBlock") | closLang_BlockOp
+  (closLang_ConsExtend num') -> item_with_num (implode "ConsExtend")
+  num' | closLang_BlockOp (closLang_FromList num') -> item_with_num
+  (implode "FromList") num' | closLang_BlockOp ListAppend -> String
+  (implode "ListAppend") | closLang_BlockOp (closLang_Constant c) ->
+  displayLang_Item NONE (implode "Constant") [const_to_display c] |
+  closLang_BlockOp closLang_Equal -> String (implode "Equal") |
+  closLang_BlockOp (closLang_EqualConst c) -> displayLang_Item NONE
+  (implode "EqualConst") [const_part_to_display c] | closLang_BlockOp
+  (closLang_Build bs) -> displayLang_Item NONE (implode "Build") (MAP
+  const_part_to_display bs) | closLang_MemOp closLang_Ref -> String
+  (implode "Ref") | closLang_MemOp closLang_Update -> String (implode
+  "Update") | closLang_MemOp closLang_El -> String (implode "El") |
   closLang_MemOp closLang_Length -> String (implode "Length") |
   closLang_MemOp closLang_LengthByte -> String (implode "LengthByte") |
   closLang_MemOp (closLang_RefByte b) -> displayLang_Item NONE (implode
@@ -637,16 +638,17 @@ let clos_op_to_display_def = cake_define
                                 "Label") [String (attach_name ns (SOME
                                 num'))] | FFI s -> displayLang_Item NONE
                                 (implode "FFI") [string_imp s] |
-                                closLang_IntOp (Const i) ->
+                                closLang_IntOp (closLang_Const i) ->
                                 displayLang_Item NONE (implode "Const")
-                                [int_to_display i] | closLang_IntOp Add
-                                -> String (implode "Add") |
-                                closLang_IntOp Sub -> String (implode
-                                "Sub") | closLang_IntOp closLang_Mult ->
-                                String (implode "Mult") | closLang_IntOp
-                                Div -> String (implode "Div") |
-                                closLang_IntOp Mod -> String (implode
-                                "Mod") | closLang_IntOp Less -> String
+                                [int_to_display i] | closLang_IntOp
+                                closLang_Add -> String (implode "Add") |
+                                closLang_IntOp closLang_Sub -> String
+                                (implode "Sub") | closLang_IntOp
+                                closLang_Mult -> String (implode "Mult")
+                                | closLang_IntOp closLang_Div -> String
+                                (implode "Div") | closLang_IntOp
+                                closLang_Mod -> String (implode "Mod") |
+                                closLang_IntOp closLang_Less -> String
                                 (implode "Less") | closLang_IntOp
                                 closLang_LessEq -> String (implode
                                 "LessEq") | closLang_IntOp Greater ->
@@ -1476,8 +1478,8 @@ let default_tap_config_def = cake_define
 
 let map_to_append_def = cake_define_list
   [`map_to_append f [] = misc_Nil`;
-   `map_to_append f (x :: xs) = Append (List (f x)) (map_to_append
-  f xs)`];;
+   `map_to_append f (x :: xs) = Append (misc_List (f x))
+  (map_to_append f xs)`];;
 
 let source_to_strs_def = cake_define
   `source_to_strs decs =

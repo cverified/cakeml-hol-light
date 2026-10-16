@@ -37,8 +37,8 @@ let tenv_val_ok_def = cake_define
 
 let tenv_ok_def = cake_define
   `tenv_ok tenv <=>
-     tenv_val_ok (semanticPrimitives_sem_env_v tenv) /\
-     tenv_ctor_ok (semanticPrimitives_sem_env_c tenv) /\
+     tenv_val_ok (type_env_v tenv) /\
+     tenv_ctor_ok (type_env_c tenv) /\
      tenv_abbrev_ok (type_env_t tenv)`;;
 
 let tenv_val_exp_ok_def = cake_define_list
@@ -124,10 +124,10 @@ let type_v = cake_inductive
      tenv_val_exp_ok tenvE /\
      num_tvs tenvE = 0 /\
      nsAll2 (type_ctor ctMap) (semanticPrimitives_sem_env_c env)
-       (semanticPrimitives_sem_env_c tenv) /\
+       (type_env_c tenv) /\
      nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t)
-       (semanticPrimitives_sem_env_v env) (add_tenvE tenvE
-       (semanticPrimitives_sem_env_v tenv)) /\
+       (semanticPrimitives_sem_env_v env) (add_tenvE tenvE (type_env_v
+       tenv)) /\
      check_freevars tvs [] t1 /\
      type_e tenv (typeSystem_Bind_name n 0 t1 (bind_tvar tvs tenvE))
        e t2 ==>
@@ -138,10 +138,10 @@ let type_v = cake_inductive
      tenv_val_exp_ok tenvE /\
      num_tvs tenvE = 0 /\
      nsAll2 (type_ctor ctMap) (semanticPrimitives_sem_env_c env)
-       (semanticPrimitives_sem_env_c tenv) /\
+       (type_env_c tenv) /\
      nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t)
-       (semanticPrimitives_sem_env_v env) (add_tenvE tenvE
-       (semanticPrimitives_sem_env_v tenv)) /\
+       (semanticPrimitives_sem_env_v env) (add_tenvE tenvE (type_env_v
+       tenv)) /\
      type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs tenvE))
        funs bindings /\
      ALOOKUP bindings n = SOME t /\
@@ -272,10 +272,9 @@ End
 
 let type_all_env_def = cake_define
   `type_all_env ctMap tenvS env tenv <=>
-     nsAll2 (type_ctor ctMap) (sem_env_c env)
-       (semanticPrimitives_sem_env_c tenv) /\
+     nsAll2 (type_ctor ctMap) (sem_env_c env) (type_env_c tenv) /\
      nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t) (sem_env_v
-       env) (semanticPrimitives_sem_env_v tenv)`;;
+       env) (type_env_v tenv)`;;
 
 let type_sound_invariant_def = cake_define
   `type_sound_invariant st env ctMap tenvS type_idents tenv <=>

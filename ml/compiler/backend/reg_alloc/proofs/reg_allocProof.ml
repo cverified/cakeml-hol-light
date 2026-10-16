@@ -355,4 +355,4 @@ fun first_prove_imp thms =
 (* The top-most correctness theorem *)
 (* --- --- *)
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

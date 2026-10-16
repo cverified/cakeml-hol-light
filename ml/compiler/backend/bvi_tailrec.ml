@@ -53,23 +53,23 @@ let op_type_def = cake_define
       | _5 -> Int`;;
 
 let to_op_def = cake_define_list
-  [`to_op bvi_tailrec_Plus = closLang_IntOp Add`;
+  [`to_op bvi_tailrec_Plus = closLang_IntOp closLang_Add`;
    `to_op bvi_tailrec_Times = closLang_IntOp closLang_Mult`;
    `to_op (Append:assoc_op) = closLang_BlockOp ListAppend`;
-   `to_op bvi_tailrec_Noop = closLang_IntOp Mod`];;
+   `to_op bvi_tailrec_Noop = closLang_IntOp closLang_Mod`];;
 
 let from_op_def = cake_define
   `from_op op =
-     (if op = closLang_IntOp Add then bvi_tailrec_Plus else if op
-       = closLang_IntOp closLang_Mult then bvi_tailrec_Times else if
-       op = closLang_BlockOp ListAppend then Append else
-       bvi_tailrec_Noop)`;;
+     (if op = closLang_IntOp closLang_Add then bvi_tailrec_Plus
+       else if op = closLang_IntOp closLang_Mult then
+       bvi_tailrec_Times else if op = closLang_BlockOp ListAppend
+       then Append else bvi_tailrec_Noop)`;;
 
 let op_eq_def = cake_define
   `op_eq x1 x2 =
         match (x1,x2) with
           (bvi_tailrec_Plus,(Op op xs:bvi_exp)) -> op =
-            closLang_IntOp Add
+            closLang_IntOp closLang_Add
         | (bvi_tailrec_Times,(Op op xs)) -> op = closLang_IntOp
           closLang_Mult
         | (Append,(Op op xs)) -> op = closLang_BlockOp ListAppend
@@ -83,8 +83,8 @@ let id_from_op_def = cake_define_list
   (closLang_Const (&0))) []`;
    `id_from_op bvi_tailrec_Times = bvi_Op (closLang_IntOp
   (closLang_Const (&1))) []`;
-   `id_from_op (Append:assoc_op) = bvi_Op (closLang_BlockOp (Cons
-  nil_tag)) []`;
+   `id_from_op (Append:assoc_op) = bvi_Op (closLang_BlockOp
+  (closLang_Cons nil_tag)) []`;
    `id_from_op bvi_tailrec_Noop = dummy`];;
 
 let index_of_def = cake_define
@@ -121,15 +121,16 @@ let try_update_def = cake_define_list
 let is_arith_def = cake_define
   `is_arith op =
      (match op with
-       closLang_IntOp Add -> T | closLang_IntOp Sub -> T |
-         closLang_IntOp closLang_Mult -> T | _12 -> F)`;;
+       closLang_IntOp closLang_Add -> T | closLang_IntOp
+         closLang_Sub -> T | closLang_IntOp closLang_Mult -> T | _12
+         -> F)`;;
 
 let is_rel_def = cake_define
   `is_rel op =
      (match op with
-       closLang_IntOp Less -> T | closLang_IntOp closLang_LessEq
-         -> T | closLang_IntOp Greater -> T | closLang_IntOp
-         closLang_GreaterEq -> T | _13 -> F)`;;
+       closLang_IntOp closLang_Less -> T | closLang_IntOp
+         closLang_LessEq -> T | closLang_IntOp Greater -> T |
+         closLang_IntOp closLang_GreaterEq -> T | _13 -> F)`;;
 
 let _ = size_thms "bvi_exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
@@ -158,13 +159,14 @@ let term_ok_any_def = cake_define_wf
         | (Op op xs) ->
        (match get_bin_args (Op op xs) with
          NONE -> xs = [] /\ (if list' then op = closLang_BlockOp
-           (Cons 0) else bvi_tailrec_is_const op) | SOME (x,y) ->
+           (closLang_Cons 0) else bvi_tailrec_is_const op) | SOME (x,y)
+           ->
            (if op = closLang_BlockOp ListAppend then term_ok_any ts T
              x /\ term_ok_any ts T y else if ~list' /\ is_arith op then
              term_ok_int ts x /\ term_ok_int ts y else if ~list' /\
              is_rel op then term_ok_int ts x /\ term_ok_int ts y else if
-             op = closLang_BlockOp (Cons 0) then term_ok_any ts T x /\
-             term_ok_any ts F y else F))
+             op = closLang_BlockOp (closLang_Cons 0) then term_ok_any ts
+             T x /\ term_ok_any ts F y else F))
         | expr -> F`;;
 
 (* TODO the translator does not accept this with the induction theorem
@@ -250,13 +252,13 @@ let arg_ty_def = cake_define
       match x1 with
         closLang_IntOp (closLang_Const i) -> (if small_enough_int i
           then Int else bvi_tailrec_Any)
-      | (closLang_IntOp Add) -> Int
-      | (closLang_IntOp Sub) -> Int
+      | (closLang_IntOp closLang_Add) -> Int
+      | (closLang_IntOp closLang_Sub) -> Int
       | (closLang_IntOp closLang_Mult) -> Int
-      | (closLang_IntOp Div) -> Int
-      | (closLang_IntOp Mod) -> Int
+      | (closLang_IntOp closLang_Div) -> Int
+      | (closLang_IntOp closLang_Mod) -> Int
       | (closLang_IntOp closLang_LessEq) -> Int
-      | (closLang_IntOp Less) -> Int
+      | (closLang_IntOp closLang_Less) -> Int
       | (closLang_IntOp Greater) -> Int
       | (closLang_IntOp closLang_GreaterEq) -> Int
       | (closLang_BlockOp ListAppend) -> List
@@ -265,14 +267,14 @@ let arg_ty_def = cake_define
 let op_ty_def = cake_define
   `op_ty x1 =
         match x1 with
-          closLang_IntOp Add -> Int
-        | (closLang_IntOp Sub) -> Int
+          closLang_IntOp closLang_Add -> Int
+        | (closLang_IntOp closLang_Sub) -> Int
         | (closLang_IntOp closLang_Mult) -> Int
-        | (closLang_IntOp Div) -> Int
-        | (closLang_IntOp Mod) -> Int
+        | (closLang_IntOp closLang_Div) -> Int
+        | (closLang_IntOp closLang_Mod) -> Int
         | (closLang_BlockOp ListAppend) -> List
-        | (closLang_BlockOp (Cons tag)) -> (if tag = nil_tag \/ tag =
-          cons_tag then List else bvi_tailrec_Any)
+        | (closLang_BlockOp (closLang_Cons tag)) -> (if tag = nil_tag
+          \/ tag = cons_tag then List else bvi_tailrec_Any)
         | (closLang_IntOp (closLang_Const i)) -> (if small_enough_int
           i then Int else bvi_tailrec_Any)
         | _18 -> bvi_tailrec_Any`;;
@@ -344,7 +346,8 @@ let scan_expr_def = cake_define_list
                       [(update_context Int ts x
                         y,bvi_tailrec_Any,F,NONE)] else
                       [(ts,bvi_tailrec_Any,F,NONE)]) else if op =
-                        closLang_BlockOp (Cons 0) /\ xs = [] then
+                        closLang_BlockOp (closLang_Cons 0) /\ xs = []
+                        then
                 [(ts,List,F,NONE)] else
                 [(ts,bvi_tailrec_Any,F,NONE)]) | _38 ->
               (if IS_SOME (check_op ts opr loc (Op op xs)) then
@@ -405,7 +408,8 @@ let scan_expr_sing_def = cake_define_list
                       (update_context Int ts x
                         y,bvi_tailrec_Any,F,NONE) else
                       (ts,bvi_tailrec_Any,F,NONE)) else if op =
-                        closLang_BlockOp (Cons 0) /\ xs = [] then
+                        closLang_BlockOp (closLang_Cons 0) /\ xs = []
+                        then
                 (ts,List,F,NONE) else
                 (ts,bvi_tailrec_Any,F,NONE)) | _58 ->
               (if IS_SOME (check_op ts opr loc (Op op xs)) then

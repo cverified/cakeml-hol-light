@@ -840,11 +840,11 @@ val do_app_lemma =
 
 let SUBMAP_rel_def = cake_define
   `SUBMAP_rel z1 z2 <=>
-     z2 = closSem_state_code_fupd (K (closSem_state_code z2 /\
+     z2 = closSem_state_code_fupd (K (closSem_state_code z2)) z1 /\
        closSem_state_code z1 SUBMAP closSem_state_code z2 /\
      oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
          (FDOM (closSem_state_code z2))
-           (closSem_state_compile_oracle z1))) z1`;;
+           (closSem_state_compile_oracle z1)`;;
 
 (* HOL4 ML code, not ported:
 val do_app_lemma =

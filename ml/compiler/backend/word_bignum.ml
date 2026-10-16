@@ -598,21 +598,22 @@ let SeqTemp_def = cake_define
 
 let SeqTempImm_def = cake_define_list
   [`SeqTempImm i (Reg r) p = SeqTemp i r p`;
-   `SeqTempImm i (Imm w) p = Seq (wordLang_Assign i (Const w)) p`];;
+   `SeqTempImm i (Imm w) p = Seq (wordLang_Assign i (wordLang_Const
+  w)) p`];;
 
 let SeqTempImmNot_def = cake_define_list
   [`SeqTempImmNot i (Reg r) p =
       SeqTemp i r (Seq (Assign i (wordLang_Op Xor [Var i; Const
         (word_not (n2w 0))])) p)`;
-   `SeqTempImmNot i (Imm w) p = Seq (wordLang_Assign i (Const
-  (word_not w))) p`];;
+   `SeqTempImmNot i (Imm w) p = Seq (wordLang_Assign i
+  (wordLang_Const (word_not w))) p`];;
 
 let SeqIndex_def = cake_define
   `SeqIndex i r arr p =
      (let t = (match arr with Out -> TempOut | In2 -> TempIn2 | In1
        -> TempIn1) in
-       Seq (Assign i (wordLang_Op Add [wordLang_Lookup t;
-            (\sh e n. Shift sh e (Const (n2w n))) Lsl
+       Seq (Assign i (wordLang_Op asm_Add [wordLang_Lookup t;
+            (\sh e n. Shift sh e (wordLang_Const (n2w n))) Lsl
               (wordLang_Lookup (Temp (n2w r)))
               (backend_common_word_shift (:'a))])) p:'a
               wordLang_prog)`;;
@@ -623,9 +624,10 @@ let div_location_def = cake_define
 let DivCode_def = cake_define
   `DivCode l1 l2 n1 n2 n3 n4 n5 =
      wordLang_MustTerminate
-       (Seq (Call (SOME ([n1],(LS one,LN),Skip,l1,l2)) (SOME
-         div_location) [n3; n4; n5] NONE)
-            (Assign n2 (wordLang_Lookup (Temp (n2w 28)))))`;;
+       (wordLang_Seq (wordLang_Call (SOME ([n1],(LS
+         one,LN),Skip,l1,l2)) (SOME div_location) [n3; n4; n5] NONE)
+            (wordLang_Assign n2 (wordLang_Lookup (Temp (n2w
+              28)))))`;;
 
 let LoadRegs_def = cake_define_list
   [`LoadRegs [] (p:'a wordLang_prog) = (p:'a wordLang_prog)`;
@@ -674,7 +676,7 @@ let compile_def = cake_define
         | (word_bignum_Delete _2) -> ((Skip:'a wordLang_prog),l,i,cs)
         | word_bignum_Swap ->
         (Seq (Assign i (wordLang_Lookup (TempIn1)))
-        (Seq (Set (TempIn1) (wordLang_Lookup (TempIn2)))
+        (word_bignum_Seq (Set (TempIn1) (wordLang_Lookup (TempIn2)))
              (Set (TempIn2) (Var i))),l,i + 1,cs)
         | (Store r1 r2) ->
         (SeqTemp i r1
@@ -682,32 +684,32 @@ let compile_def = cake_define
            (Store (Var (i + 1)) i)),l,i + 2,cs)
         | (Load r1 r2 arr) ->
         (SeqIndex i r2 arr
-        (Seq (Assign (i + 1) (Load (Var i)))
+        (Seq (Assign (i + 1) (wordLang_Load (Var i)))
              (Set (Temp (n2w r1)) (Var (i + 1)))),l,i + 2,cs)
         | (Add r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImm (i + 3) r3 (SeqTemp (i +
           2) r2
         (Seq (Inst (Arith (asm_AddCarry (i + 1) (i + 2) (i + 3) (i +
           4))))
-        (Seq (Set (Temp (n2w r0)) (Var (i + 1)))
+        (word_bignum_Seq (Set (Temp (n2w r0)) (Var (i + 1)))
              (Set (Temp (n2w r1)) (Var (i + 4))))))),l,i + 5,cs)
         | (Sub r0 r1 r2 r3 r4) ->
         (SeqTempImm (i + 4) r4 (SeqTempImmNot (i + 3) r3 (SeqTemp (i
           + 2) r2
         (Seq (Inst (Arith (asm_AddCarry (i + 1) (i + 2) (i + 3) (i +
           4))))
-        (Seq (Set (Temp (n2w r0)) (Var (i + 1)))
+        (word_bignum_Seq (Set (Temp (n2w r0)) (Var (i + 1)))
              (Set (Temp (n2w r1)) (Var (i + 4))))))),l,i + 5,cs)
         | (Mul r0 r1 r2 r3) ->
         (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
         (Seq (Inst (Arith (asm_LongMul (i + 0) (i + 1) (i + 2) (i +
           3))))
-        (Seq (Set (Temp (n2w r1)) (Var (i + 0)))
+        (word_bignum_Seq (Set (Temp (n2w r1)) (Var (i + 0)))
              (Set (Temp (n2w r0)) (Var (i + 1)))))),l,i + 4,cs)
         | (Div r0 r1 r2 r3 r4) ->
         (SeqTemp (i + 4) r4 (SeqTemp (i + 3) r3 (SeqTemp (i + 2) r2
         (Seq (DivCode n l (i + 0) (i + 1) (i + 2) (i + 3) (i + 4))
-        (Seq (Set (Temp (n2w r0)) (Var (i + 0)))
+        (word_bignum_Seq (Set (Temp (n2w r0)) (Var (i + 0)))
              (Set (Temp (n2w r1)) (Var (i + 1))))))),l + 1,i + 5,cs)
         | _3 -> (Skip,l,i,cs)`;;
 hol4_overload "compile" "word_bignum_compile";;

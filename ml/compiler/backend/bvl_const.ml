@@ -17,7 +17,6 @@
    bvi_let is a simpler version of this optimisation.
 *)
 
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
@@ -39,24 +38,25 @@ let case_op_const_def = cake_define
 let SmartOp_flip_def = cake_define
   `SmartOp_flip op x1 x2 =
      (match (dest_simple x1) with (SOME i) ->
-         (if MEM op [closLang_IntOp Add; closLang_IntOp
+         (if MEM op [closLang_IntOp closLang_Add; closLang_IntOp
            closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
-           Sub then (closLang_IntOp Add,x2,Op (closLang_IntOp
-           (closLang_Const (--i))) []) else (op,x1,x2)) | _3 ->
-           (op,x1,x2))`;;
+           closLang_Sub then (closLang_IntOp closLang_Add,x2,Op
+           (closLang_IntOp (closLang_Const (--i))) []) else
+           (op,x1,x2)) | _3 -> (op,x1,x2))`;;
 
 let SmartOp2_def = cake_define
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
      (let mk_add_const x1 c2 =
-       (if c2 = (&0) then x1 else Op (closLang_IntOp Add) [x1; Op
-         (closLang_IntOp (closLang_Const c2)) []]) in
+       (if c2 = (&0) then x1 else Op (closLang_IntOp closLang_Add)
+         [x1; Op (closLang_IntOp (closLang_Const c2)) []]) in
      let mk_add x1 x2 =
-       (let default = Op (closLang_IntOp Add) [x1; x2] in
+       (let default = Op (closLang_IntOp closLang_Add) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 (if op = closLang_IntOp Add then mk_add_const x11
-                   (n2 + n12) else if op = closLang_IntOp Sub then Op
-                   (closLang_IntOp Sub) [x11; Op (closLang_IntOp
+                 (if op = closLang_IntOp closLang_Add then
+                   mk_add_const x11 (n2 + n12) else if op =
+                   closLang_IntOp closLang_Sub then Op (closLang_IntOp
+                   closLang_Sub) [x11; Op (closLang_IntOp
                    (closLang_Const (n2 + n12))) []] else default) | _4
                    ->
                  (match (dest_simple x1) with SOME n1 -> Op
@@ -64,42 +64,49 @@ let SmartOp2_def = cake_define
                    -> mk_add_const x1 n2)) | _6 ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 (if op1 = closLang_IntOp Add /\ op2 = closLang_IntOp
-                   Add then
-                   mk_add_const (Op (closLang_IntOp Add) [x11; x21])
-                     (n22 + n12) else if op1 = closLang_IntOp Add /\ op2
-                     = closLang_IntOp Sub then
-                   Op (closLang_IntOp Sub) [Op (closLang_IntOp Sub)
-                     [x11; x21]; Op (closLang_IntOp (closLang_Const (n22
-                     + n12))) []] else if op1 = closLang_IntOp Sub /\
-                     op2 = closLang_IntOp Add then
-                   mk_add_const (Op (closLang_IntOp Sub) [x11; x21])
-                     (n22 + n12) else default) | _7 -> default)) in
+                 (if op1 = closLang_IntOp closLang_Add /\ op2 =
+                   closLang_IntOp closLang_Add then
+                   mk_add_const (Op (closLang_IntOp closLang_Add)
+                     [x11; x21]) (n22 + n12) else if op1 =
+                     closLang_IntOp closLang_Add /\ op2 = closLang_IntOp
+                     closLang_Sub then
+                   Op (closLang_IntOp closLang_Sub) [Op
+                     (closLang_IntOp closLang_Sub) [x11; x21]; Op
+                     (closLang_IntOp (closLang_Const (n22 + n12))) []]
+                     else if op1 = closLang_IntOp closLang_Sub /\ op2 =
+                     closLang_IntOp closLang_Add then
+                   mk_add_const (Op (closLang_IntOp closLang_Sub)
+                     [x11; x21]) (n22 + n12) else default) | _7 ->
+                     default)) in
      let mk_sub x1 x2 =
-       (let default = Op (closLang_IntOp Sub) [x1; x2] in
+       (let default = Op (closLang_IntOp closLang_Sub) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
              match (case_op_const x1) with SOME (op,x11,n12) ->
-                 (if op = closLang_IntOp Add then Op (closLang_IntOp
-                   Sub) [x11; Op (closLang_IntOp (closLang_Const (n2 -
-                   n12))) []] else if op = closLang_IntOp Sub then
-                   mk_add_const x11 (n2 - n12) else default) | _8 ->
+                 (if op = closLang_IntOp closLang_Add then Op
+                   (closLang_IntOp closLang_Sub) [x11; Op
+                   (closLang_IntOp (closLang_Const (n2 - n12))) []] else
+                   if op = closLang_IntOp closLang_Sub then mk_add_const
+                   x11 (n2 - n12) else default) | _8 ->
                  (match (dest_simple x1) with SOME n1 -> Op
                    (closLang_IntOp (closLang_Const (n2 - n1))) [] | _9
                    -> default)) | _10 ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
-                 (if op1 = closLang_IntOp Add /\ op2 = closLang_IntOp
-                   Add then
-                   Op (closLang_IntOp Add) [Op (closLang_IntOp Sub)
-                     [x11; x21]; Op (closLang_IntOp (closLang_Const (n22
-                     - n12))) []] else if op1 = closLang_IntOp Add /\
-                     op2 = closLang_IntOp Sub then
-                   Op (closLang_IntOp Sub) [Op (closLang_IntOp Add)
-                     [x11; x21]; Op (closLang_IntOp (closLang_Const (n22
-                     - n12))) []] else if op1 = closLang_IntOp Sub /\
-                     op2 = closLang_IntOp Add then
-                   mk_add_const (Op (closLang_IntOp Add) [x11; x21])
-                     (n22 - n12) else default) | _11 -> default)) in
+                 (if op1 = closLang_IntOp closLang_Add /\ op2 =
+                   closLang_IntOp closLang_Add then
+                   Op (closLang_IntOp closLang_Add) [Op
+                     (closLang_IntOp closLang_Sub) [x11; x21]; Op
+                     (closLang_IntOp (closLang_Const (n22 - n12))) []]
+                     else if op1 = closLang_IntOp closLang_Add /\ op2 =
+                     closLang_IntOp closLang_Sub then
+                   Op (closLang_IntOp closLang_Sub) [Op
+                     (closLang_IntOp closLang_Add) [x11; x21]; Op
+                     (closLang_IntOp (closLang_Const (n22 - n12))) []]
+                     else if op1 = closLang_IntOp closLang_Sub /\ op2 =
+                     closLang_IntOp closLang_Add then
+                   mk_add_const (Op (closLang_IntOp closLang_Add)
+                     [x11; x21]) (n22 - n12) else default) | _11 ->
+                     default)) in
      let mk_mul x1 x2 =
        (let default = Op (closLang_IntOp closLang_Mult) [x1; x2] in
          match (dest_simple x2) with (SOME n2) -> (
@@ -123,24 +130,25 @@ let SmartOp2_def = cake_define
                      Op (closLang_IntOp closLang_Mult) [x11; x21]] else
                      default) | _15 -> default)) in
      let default = Op op [x1; x2] in
-     if op = closLang_IntOp Add then
-       mk_add x1 x2 else if op = closLang_IntOp Sub then
+     if op = closLang_IntOp closLang_Add then
+       mk_add x1 x2 else if op = closLang_IntOp closLang_Sub then
        mk_sub x1 x2 else if op = closLang_IntOp closLang_Mult then
-       mk_mul x1 x2 else if MEM op [closLang_IntOp Div;
-         closLang_IntOp Mod; closLang_IntOp Less; closLang_IntOp
-         closLang_LessEq; closLang_IntOp Greater; closLang_IntOp
-         closLang_GreaterEq] then
+       mk_mul x1 x2 else if MEM op [closLang_IntOp closLang_Div;
+         closLang_IntOp closLang_Mod; closLang_IntOp closLang_Less;
+         closLang_IntOp closLang_LessEq; closLang_IntOp Greater;
+         closLang_IntOp closLang_GreaterEq] then
        match (dest_simple x1,dest_simple x2) with (SOME x1,SOME
          (x2:int)) ->
-           (match op with closLang_IntOp Div -> (if x1 = (&0) then
-             default else Op (closLang_IntOp (closLang_Const (x2 / x1)))
-             []) | closLang_IntOp Mod -> (if x1 = (&0) then default else
-             Op (closLang_IntOp (closLang_Const (x2 % x1))) []) |
-             closLang_IntOp Less -> bvl_Bool (x2 < x1) | closLang_IntOp
-             closLang_LessEq -> bvl_Bool (x2 <= x1) | closLang_IntOp
-             Greater -> bvl_Bool (x2 > x1) | closLang_IntOp
-             closLang_GreaterEq -> bvl_Bool (x2 >= x1) | _16 -> default)
-             | _17 -> default else if op = closLang_BlockOp Equal then
+           (match op with closLang_IntOp closLang_Div -> (if x1 =
+             (&0) then default else Op (closLang_IntOp (closLang_Const
+             (x2 / x1))) []) | closLang_IntOp closLang_Mod -> (if x1 =
+             (&0) then default else Op (closLang_IntOp (closLang_Const
+             (x2 % x1))) []) | closLang_IntOp closLang_Less -> bvl_Bool
+             (x2 < x1) | closLang_IntOp closLang_LessEq -> bvl_Bool (x2
+             <= x1) | closLang_IntOp Greater -> bvl_Bool (x2 > x1) |
+             closLang_IntOp closLang_GreaterEq -> bvl_Bool (x2 >= x1) |
+             _16 -> default) | _17 -> default else if op =
+             closLang_BlockOp closLang_Equal then
        match (dest_simple x1,dest_simple x2) with (SOME i,SOME j) ->
          bvl_Bool (j = i) | (SOME i,_18) -> Op (closLang_BlockOp
          (closLang_EqualConst (closLang_Int i))) [x2] | (_19,SOME i) ->
@@ -190,9 +198,9 @@ let extract_def = cake_define
             1)):bvl_exp)
         | (Op (closLang_IntOp (closLang_Const i)) xs) -> SOME (Op
           (closLang_IntOp (closLang_Const i)) [])
-        | (Op (closLang_BlockOp (Cons t)) xs) ->
-       (if NULL xs then SOME (Op (closLang_BlockOp (Cons t)) []) else
-         NONE)
+        | (Op (closLang_BlockOp (closLang_Cons t)) xs) ->
+       (if NULL xs then SOME (Op (closLang_BlockOp (closLang_Cons t))
+         []) else NONE)
         | _24 -> NONE`;;
 hol4_overload "extract" "bvl_const_extract";;
 

@@ -368,7 +368,8 @@ let known_op_def = cake_define
           (match sptree_lookup n g with NONE ->
             (clos_known_Other,sptree_insert n a g) | SOME other ->
             (clos_known_Other,sptree_insert n (merge other a) g)))
-        | (closLang_BlockOp (Cons tg)) -> (clos_known_Tuple tg as,g)
+        | (closLang_BlockOp (closLang_Cons tg)) -> (clos_known_Tuple
+          tg as,g)
         | (closLang_IntOp (closLang_Const i)) -> (Int i,g)
         | (closLang_MemOp closLang_El) ->
         (match as with [clos_known_Tuple _8 xs; Int i] ->

@@ -60,7 +60,7 @@ let list_next_var_rename_def = cake_define_list
           (y :: ys,ssa'',na''))`];;
 
 let fake_move_def = cake_define
-  `(fake_move v:'a wordLang_prog) = Inst (Const v (n2w 0))`;;
+  `(fake_move v:'a wordLang_prog) = Inst (asm_Const v (n2w 0))`;;
 
 (*Do the merging moves only*)
 let merge_moves_def = cake_define_list
@@ -144,7 +144,7 @@ let ssa_cc_trans_inst_def = cake_define
           asm_Skip -> (Skip,ssa,na)
         | (Const reg w) ->
        (let (reg',ssa',na') = next_var_rename reg ssa na in
-         (Inst (Const reg' w),ssa',na'))
+         (Inst (asm_Const reg' w),ssa',na'))
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
@@ -156,22 +156,22 @@ let ssa_cc_trans_inst_def = cake_define
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
            (Inst (Arith (asm_Binop bop r1' r2' ri)),ssa',na')))
-        | (Arith (Shift shift' r1 r2 ri)) ->
+        | (Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with Reg r3 ->
          (let r3' = option_lookup ssa r3 in
          let r2' = option_lookup ssa r2 in
          let mov_in = (wordLang_Move 1) [(8,r3')] in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (Seq mov_in (Inst (Arith (Shift shift' r1' r2' (Reg
+           (Seq mov_in (Inst (Arith (asm_Shift shift' r1' r2' (Reg
              8)))),ssa',na')) | _6 ->
          (let r2' = option_lookup ssa r2 in
          let (r1',ssa',na') = next_var_rename r1 ssa na in
-           (Inst (Arith (Shift shift' r1' r2' ri)),ssa',na')))
-        | (Arith (Div r1 r2 r3)) ->
+           (Inst (Arith (asm_Shift shift' r1' r2' ri)),ssa',na')))
+        | (Arith (asm_Div r1 r2 r3)) ->
        (let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
        let (r1',ssa',na') = next_var_rename r1 ssa na in
-       (Inst (Arith (Div r1' r2' r3')),ssa',na'))
+       (Inst (Arith (asm_Div r1' r2' r3')),ssa',na'))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
        (let r2' = option_lookup ssa r2 in
        let r3' = option_lookup ssa r3 in
@@ -217,14 +217,14 @@ let ssa_cc_trans_inst_def = cake_define
        let mov_out = (wordLang_Move 1) [(r2',6); (r1',0)] in
          (Seq mov_in (Seq (Inst (Arith (asm_LongDiv 0 6 6 0 r5')))
            mov_out),ssa'',na''))
-        | (asm_Mem Load r (Addr a w)) ->
+        | (asm_Mem asm_Load r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let (r',ssa',na') = next_var_rename r ssa na in
-         (Inst (asm_Mem Load r' (Addr a' w)),ssa',na'))
-        | (asm_Mem Store r (Addr a w)) ->
+         (Inst (asm_Mem asm_Load r' (Addr a' w)),ssa',na'))
+        | (asm_Mem asm_Store r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let r' = option_lookup ssa r in
-         (Inst (asm_Mem Store r' (Addr a' w)),ssa,na))
+         (Inst (asm_Mem asm_Store r' (Addr a' w)),ssa,na))
         | (asm_Mem asm_Load32 r (Addr a w)) ->
        (let a' = option_lookup ssa a in
        let (r',ssa',na') = next_var_rename r ssa na in
@@ -353,8 +353,7 @@ let loop_setup_def = cake_define
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
 let ssa_cc_trans_def = cake_define_list
-  [`ssa_cc_trans wordLang_Skip ssa na lt = ((wordLang_Skip:'a
-  wordLang_prog),ssa,na)`;
+  [`ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)`;
    `ssa_cc_trans (wordLang_Move pri ls) ssa na lt =
         (let ls_1 = MAP FST ls in
         let ls_2 = MAP SND ls in
@@ -382,7 +381,7 @@ let ssa_cc_trans_def = cake_define_list
           (wordLang_Assign num' exp',ssa',na'))`;
    `ssa_cc_trans (wordLang_Get num' store) ssa na lt =
         (let (num',ssa',na') = next_var_rename num' ssa na in
-          ((wordLang_Get num' store:'a wordLang_prog),ssa',na'))`;
+          (wordLang_Get num' store,ssa',na'))`;
    `ssa_cc_trans (wordLang_Store exp num') ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         let num' = option_lookup ssa num' in
@@ -435,8 +434,7 @@ let ssa_cc_trans_def = cake_define_list
         let rets = GENLIST (\x. 2 * (x + 1)) (LENGTH nums') in
         let mov = wordLang_Move 0 (ZIP rets nums') in
         (wordLang_Seq mov (wordLang_Return num' rets),ssa,na))`;
-   `ssa_cc_trans wordLang_Tick ssa na lt = ((wordLang_Tick:'a
-  wordLang_prog),ssa,na)`;
+   `ssa_cc_trans wordLang_Tick ssa na lt = (wordLang_Tick,ssa,na)`;
    `ssa_cc_trans (wordLang_Set n exp) ssa na lt =
         (let exp' = ssa_cc_trans_exp ssa exp in
         (wordLang_Set n exp',ssa,na))`;
@@ -621,10 +619,10 @@ let apply_colour_inst_def = cake_define
         | (Const reg w) -> Const (f reg) w
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        Arith (asm_Binop bop (f r1) (f r2) (apply_colour_imm f ri))
-        | (Arith (Shift shift' r1 r2 ri)) ->
-       Arith (Shift shift' (f r1) (f r2) (apply_colour_imm f ri))
-        | (Arith (Div r1 r2 r3)) ->
-       Arith (Div (f r1) (f r2) (f r3))
+        | (Arith (asm_Shift shift' r1 r2 ri)) ->
+       Arith (asm_Shift shift' (f r1) (f r2) (apply_colour_imm f ri))
+        | (Arith (asm_Div r1 r2 r3)) ->
+       Arith (asm_Div (f r1) (f r2) (f r3))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
        Arith (asm_AddCarry (f r1) (f r2) (f r3) (f r4))
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) ->
@@ -635,10 +633,10 @@ let apply_colour_inst_def = cake_define
        Arith (asm_LongMul (f r1) (f r2) (f r3) (f r4))
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
        Arith (asm_LongDiv (f r1) (f r2) (f r3) (f r4) (f r5))
-        | (asm_Mem Load r (Addr a w)) ->
-       asm_Mem Load (f r) (Addr (f a) w)
-        | (asm_Mem Store r (Addr a w)) ->
-       asm_Mem Store (f r) (Addr (f a) w)
+        | (asm_Mem asm_Load r (Addr a w)) ->
+       asm_Mem asm_Load (f r) (Addr (f a) w)
+        | (asm_Mem asm_Store r (Addr a w)) ->
+       asm_Mem asm_Store (f r) (Addr (f a) w)
         | (asm_Mem asm_Load32 r (Addr a w)) ->
        asm_Mem asm_Load32 (f r) (Addr (f a) w)
         | (asm_Mem asm_Store32 r (Addr a w)) ->
@@ -661,14 +659,15 @@ let apply_colour_inst_def = cake_define
 let apply_colour_def = cake_define
   `apply_colour f p =
         match p with
-          wordLang_Skip -> Skip
+          wordLang_Skip -> wordLang_Skip
         | (wordLang_Move pri ls) ->
        wordLang_Move pri (ZIP (MAP (f o FST) ls) (MAP (f o SND) ls))
-        | (Inst i) -> Inst (apply_colour_inst f i)
+        | (Inst i) -> wordLang_Inst (apply_colour_inst f i)
         | (wordLang_Assign num' exp) -> wordLang_Assign (f num')
           (apply_colour_exp f exp)
-        | (Get num' store) -> Get (f num') store
-        | (Store exp num') -> Store (apply_colour_exp f exp) (f num')
+        | (Get num' store) -> wordLang_Get (f num') store
+        | (Store exp num') -> wordLang_Store (apply_colour_exp f exp)
+          (f num')
         | (Call ret dest args h) ->
        (let ret = (match ret with NONE -> NONE | SOME
          (vs,cutset,ret_handler,l1,l2) ->
@@ -678,38 +677,39 @@ let apply_colour_def = cake_define
        let args = MAP f args in
        let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
          SOME (f v,apply_colour f prog,l1,l2)) in
-         Call ret dest args h)
-        | (Seq s1 s2) -> Seq (apply_colour f s1) (apply_colour f s2)
+         wordLang_Call ret dest args h)
+        | (Seq s1 s2) -> wordLang_Seq (apply_colour f s1)
+          (apply_colour f s2)
         | (wordLang_MustTerminate s1) -> wordLang_MustTerminate
           (apply_colour f s1)
         | (If cmp r1 ri e2 e3) ->
-       If cmp (f r1) (apply_colour_imm f ri) (apply_colour f e2)
-         (apply_colour f e3)
+       wordLang_If cmp (f r1) (apply_colour_imm f ri) (apply_colour f
+         e2) (apply_colour f e3)
         | (Install r1 r2 r3 r4 numset) ->
-       Install (f r1) (f r2) (f r3) (f r4) (apply_nummaps_key f
-         numset)
+       wordLang_Install (f r1) (f r2) (f r3) (f r4)
+         (apply_nummaps_key f numset)
         | (CodeBufferWrite r1 r2) ->
-       CodeBufferWrite (f r1) (f r2)
+       wordLang_CodeBufferWrite (f r1) (f r2)
         | (DataBufferWrite r1 r2) ->
-       DataBufferWrite (f r1) (f r2)
+       wordLang_DataBufferWrite (f r1) (f r2)
         | (FFI ffi_index ptr1 len1 ptr2 len2 numset) ->
-       FFI ffi_index (f ptr1) (f len1) (f ptr2) (f len2)
+       wordLang_FFI ffi_index (f ptr1) (f len1) (f ptr2) (f len2)
          (apply_nummaps_key f numset)
         | (LocValue r l1) ->
-       LocValue (f r) l1
+       wordLang_LocValue (f r) l1
         | (Alloc num' numset) ->
-       Alloc (f num') (apply_nummaps_key f numset)
+       wordLang_Alloc (f num') (apply_nummaps_key f numset)
         | (StoreConsts a b c d ws) ->
-       StoreConsts (f a) (f b) (f c) (f d) ws
-        | (Raise num') -> Raise (f num')
-        | (Return num1 nums) -> Return (f num1) (MAP f nums)
-        | Tick -> Tick
-        | (Set n exp) -> Set n (apply_colour_exp f exp)
-        | (OpCurrHeap b n1 n2) -> OpCurrHeap b (f n1) (f n2)
+       wordLang_StoreConsts (f a) (f b) (f c) (f d) ws
+        | (Raise num') -> wordLang_Raise (f num')
+        | (Return num1 nums) -> wordLang_Return (f num1) (MAP f nums)
+        | Tick -> wordLang_Tick
+        | (Set n exp) -> wordLang_Set n (apply_colour_exp f exp)
+        | (OpCurrHeap b n1 n2) -> wordLang_OpCurrHeap b (f n1) (f n2)
         | (wordLang_ShareInst op v exp) -> wordLang_ShareInst op (f
           v) (apply_colour_exp f exp)
         | (Loop names body exit_names) ->
-       Loop (apply_nummap_key f names) (apply_colour f body)
+       wordLang_Loop (apply_nummap_key f names) (apply_colour f body)
          (apply_nummap_key f exit_names)
         | p -> p`;;
 
@@ -722,8 +722,9 @@ let get_writes_inst_def = cake_define
         match inst' with
           asm_Const reg w -> sptree_insert reg one LN
         | (Arith (asm_Binop bop r1 r2 ri)) -> sptree_insert r1 one LN
-        | (Arith (Shift shift' r1 r2 ri)) -> sptree_insert r1 one LN
-        | (Arith (Div r1 r2 r3)) -> sptree_insert r1 one LN
+        | (Arith (asm_Shift shift' r1 r2 ri)) -> sptree_insert r1 one
+          LN
+        | (Arith (asm_Div r1 r2 r3)) -> sptree_insert r1 one LN
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> sptree_insert r4 one
           (sptree_insert r1 one LN)
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> sptree_insert r4
@@ -734,7 +735,7 @@ let get_writes_inst_def = cake_define
           (sptree_insert r1 one LN)
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> sptree_insert r2
           one (sptree_insert r1 one LN)
-        | (asm_Mem Load r (Addr a w)) -> sptree_insert r one LN
+        | (asm_Mem asm_Load r (Addr a w)) -> sptree_insert r one LN
         | (asm_Mem asm_Load32 r (Addr a w)) -> sptree_insert r one LN
         | (asm_Mem asm_Load8 r (Addr a w)) -> sptree_insert r one LN
         | (asm_FP (FPLess r f1 f2)) -> sptree_insert r one LN
@@ -756,11 +757,11 @@ let get_live_inst_def = cake_define
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert
          r3 one (sptree_delete r1 live)) | _7 -> sptree_insert r2 one
          (sptree_delete r1 live))
-        | (Arith (Shift shift' r1 r2 ri)) ->
+        | (Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with Reg r3 -> sptree_insert r2 one (sptree_insert
          r3 one (sptree_delete r1 live)) | _8 -> sptree_insert r2 one
          (sptree_delete r1 live))
-        | (Arith (Div r1 r2 r3)) ->
+        | (Arith (asm_Div r1 r2 r3)) ->
        (sptree_insert r3 one (sptree_insert r2 one (sptree_delete r1
          live)))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
@@ -778,9 +779,9 @@ let get_live_inst_def = cake_define
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
        sptree_insert r5 one (sptree_insert r4 one (sptree_insert r3
          one (sptree_delete r2 (sptree_delete r1 live))))
-        | (asm_Mem Load r (Addr a w)) ->
+        | (asm_Mem asm_Load r (Addr a w)) ->
        sptree_insert a one (sptree_delete r live)
-        | (asm_Mem Store r (Addr a w)) ->
+        | (asm_Mem asm_Store r (Addr a w)) ->
        sptree_insert a one (sptree_insert r one live)
         | (asm_Mem asm_Load32 r (Addr a w)) ->
        sptree_insert a one (sptree_delete r live)
@@ -896,10 +897,10 @@ let remove_dead_inst_def = cake_define
         | ((Const reg w),live) -> (sptree_lookup reg live = NONE)
         | ((Arith (asm_Binop bop r1 r2 ri)),live) -> (sptree_lookup
           r1 live = NONE)
-        | ((Arith (Shift shift' r1 r2 n)),live) -> (sptree_lookup r1
-          live = NONE)
-        | ((Arith (Div r1 r2 r3)),live) -> (sptree_lookup r1 live =
-          NONE)
+        | ((Arith (asm_Shift shift' r1 r2 n)),live) -> (sptree_lookup
+          r1 live = NONE)
+        | ((Arith (asm_Div r1 r2 r3)),live) -> (sptree_lookup r1 live
+          = NONE)
         | ((Arith (asm_AddCarry r1 r2 r3 r4)),live) ->
        (sptree_lookup r1 live = NONE /\ sptree_lookup r4 live = NONE)
         | ((Arith (asm_AddOverflow r1 r2 r3 r4)),live) ->
@@ -910,8 +911,8 @@ let remove_dead_inst_def = cake_define
        (sptree_lookup r1 live = NONE /\ sptree_lookup r2 live = NONE)
         | ((Arith (asm_LongDiv r1 r2 r3 r4 r5)),live) ->
        (sptree_lookup r1 live = NONE /\ sptree_lookup r2 live = NONE)
-        | ((asm_Mem Load r (Addr a w)),live) -> (sptree_lookup r live
-          = NONE)
+        | ((asm_Mem asm_Load r (Addr a w)),live) -> (sptree_lookup r
+          live = NONE)
         | ((asm_Mem asm_Load32 r (Addr a w)),live) -> (sptree_lookup
           r live = NONE)
         | ((asm_Mem asm_Load8 r (Addr a w)),live) -> (sptree_lookup r
@@ -1049,7 +1050,8 @@ let get_writes_def = cake_define
         | (StoreConsts a b c d _22) -> sptree_insert a one
           (sptree_insert b one (sptree_insert c one (sptree_insert d one
           LN)))
-        | (wordLang_ShareInst Load v _23) -> sptree_insert v one LN
+        | (wordLang_ShareInst asm_Load v _23) -> sptree_insert v one
+          LN
         | (wordLang_ShareInst asm_Load8 v _24) -> sptree_insert v one
           LN
         | (wordLang_ShareInst asm_Load16 v _25) -> sptree_insert v
@@ -1107,10 +1109,10 @@ let get_delta_inst_def = cake_define
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _27
          -> reg_alloc_Delta [r1] [r2])
-        | (Arith (Shift shift' r1 r2 ri)) ->
+        | (Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _28
          -> reg_alloc_Delta [r1] [r2])
-        | (Arith (Div r1 r2 r3)) -> reg_alloc_Delta [r1] [r3; r2]
+        | (Arith (asm_Div r1 r2 r3)) -> reg_alloc_Delta [r1] [r3; r2]
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> reg_alloc_Delta [r1;
           r4] [r4; r3; r2]
         | (Arith (asm_AddOverflow r1 r2 r3 r4)) -> reg_alloc_Delta
@@ -1121,8 +1123,9 @@ let get_delta_inst_def = cake_define
           r2] [r4; r3]
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) -> reg_alloc_Delta
           [r1; r2] [r5; r4; r3]
-        | (asm_Mem Load r (Addr a w)) -> reg_alloc_Delta [r] [a]
-        | (asm_Mem Store r (Addr a w)) -> reg_alloc_Delta [] [r; a]
+        | (asm_Mem asm_Load r (Addr a w)) -> reg_alloc_Delta [r] [a]
+        | (asm_Mem asm_Store r (Addr a w)) -> reg_alloc_Delta [] [r;
+          a]
         | (asm_Mem asm_Load32 r (Addr a w)) -> reg_alloc_Delta [r]
           [a]
         | (asm_Mem asm_Store32 r (Addr a w)) -> reg_alloc_Delta []
@@ -1180,7 +1183,7 @@ let get_clash_tree_def = cake_define_list
           (sptree_union (FST numset) (SND numset)))`;
    `get_clash_tree (wordLang_Install r1 r2 r3 r4 numset) lt =
         reg_alloc_Seq (reg_alloc_Delta [] [r4; r3; r2; r1])
-          (reg_alloc_Seq (reg_alloc_Set (sptree_union (FST numset)
+          (wordLang_Seq (reg_alloc_Set (sptree_union (FST numset)
           (SND numset))) (reg_alloc_Delta [r1] []))`;
    `get_clash_tree (wordLang_CodeBufferWrite r1 r2) lt =
         reg_alloc_Delta [] [r2; r1]`;
@@ -1210,8 +1213,8 @@ let get_clash_tree_def = cake_define_list
   [v] (get_reads_exp exp))`;
    `get_clash_tree (wordLang_Loop names body exit_names) lt =
         reg_alloc_Seq (reg_alloc_Set names)
-          (reg_alloc_Seq (reg_alloc_Set exit_names)
-            (reg_alloc_Seq (get_clash_tree body ((names,exit_names)
+          (wordLang_Seq (reg_alloc_Set exit_names)
+            (wordLang_Seq (get_clash_tree body ((names,exit_names)
               :: lt))
               (reg_alloc_Set names)))`;
    `get_clash_tree (wordLang_Break n) lt =
@@ -1325,14 +1328,14 @@ let get_heu_inst_def = cake_define
            (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _52 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
-        | (Arith (Shift shift' r1 r2 ri)) ->
+        | (Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _53 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
-        | (Arith (Div r1 r2 r3)) ->
+        | (Arith (asm_Div r1 r2 r3)) ->
         (add1_lhs_reg r1
         (add1_rhs_reg r3 (add1_rhs_reg r2 tup)))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
@@ -1350,9 +1353,9 @@ let get_heu_inst_def = cake_define
         | (Arith (asm_LongDiv r1 r2 r3 r4 r5)) ->
         (add1_lhs_reg r2 (add1_lhs_reg r1
         (add1_rhs_reg r5 (add1_rhs_reg r4 (add1_rhs_reg r3 tup)))))
-        | (asm_Mem Load r (Addr a w)) ->
+        | (asm_Mem asm_Load r (Addr a w)) ->
         (add1_lhs_mem r tup)
-        | (asm_Mem Store r (Addr a w)) ->
+        | (asm_Mem asm_Store r (Addr a w)) ->
         (add1_rhs_mem r tup)
         | (asm_Mem asm_Load32 r (Addr a w)) ->
         (add1_lhs_mem r tup)
@@ -1439,7 +1442,7 @@ let get_heu_def = cake_define
          NONE -> (lr2,calls') | SOME (_61,e3,_62,_63) ->
          (let (lr3,calls3) = get_heu fc e3 (lr,calls') in
          (heu_max_all lr2 lr3,heu_merge_call calls2 calls3)))
-        | ((wordLang_ShareInst Load r _64),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Load r _64),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
         | ((wordLang_ShareInst asm_Load8 r _65),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
@@ -1447,7 +1450,7 @@ let get_heu_def = cake_define
           (add1_lhs_mem r lr,calls')
         | ((wordLang_ShareInst asm_Load32 r _67),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
-        | ((wordLang_ShareInst Store r _68),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Store r _68),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')
         | ((wordLang_ShareInst asm_Store8 r _69),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')

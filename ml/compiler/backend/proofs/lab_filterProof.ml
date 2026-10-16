@@ -12,7 +12,6 @@ needs "compiler/backend/lab_filter.ml";;
 needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/pegexec.ml";;
 
 let adjust_pc_def = cake_define
@@ -30,11 +29,11 @@ let adjust_pc_def = cake_define
 let all_skips_def = cake_define
   `all_skips pc' code k <=>
    (!x y. ~(asm_fetch_aux (pc' + k) code = SOME (labLang_Asm (Asmi
-     (Inst Skip)) x y))) /\
+     (asm_Inst asm_Skip)) x y))) /\
    (!i. i < k ==>
      (?x y.
-     asm_fetch_aux (pc' + i) code = SOME (labLang_Asm (Asmi (Inst
-       Skip)) x y)))`;;
+     asm_fetch_aux (pc' + i) code = SOME (labLang_Asm (Asmi
+       (asm_Inst asm_Skip)) x y)))`;;
 
 (*
 Proof plan:

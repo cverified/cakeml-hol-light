@@ -151,6 +151,7 @@ class Porter:
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
     self.intresult = False # is the result an integer?
+    self.argtypes = {}     # the type an override gives an argument
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
@@ -211,7 +212,8 @@ class Porter:
     if p.peek().kind != 'eof':
       t = p.peek()
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
-    e = self.conof_arity(self.arm_intvars(self.lambda_cons(e)))
+    e = self.conof_arity(
+          self.arg_cons(self.arm_intvars(self.lambda_cons(e))))
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     # the patterns of the first clause of every function carry the
@@ -615,6 +617,7 @@ class Porter:
     self.intargs = (set(overrides.INT_ARGS.get(key, []))
                     | self.int_annotated(body))
     self.intresult = key in overrides.INT_RESULT
+    self.argtypes = overrides.ARG_TYPES.get(key, {})
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
@@ -741,7 +744,7 @@ class Porter:
     for nm in conof:
       if '*' in overrides.CON_OF.get(key, {}): continue
       self.ctx.overloaded.add(nm)
-      del self.ctx.names[(self.thy, nm)]
+      self.ctx.names.pop((self.thy, nm), None)
     self.conof = {}
     self.ctx.intnums = False
     self.ctx.append = False
@@ -1074,6 +1077,14 @@ class Porter:
         a = hterm.Node('paren', tok=b.tok,
               e=hterm.Node('typed', tok=b.tok, e=b,
                            ty=hterm.tokenize('int')))
+      # an argument whose type an override gives, because the
+      # definition says it nowhere (stack_removeProof's state_rel
+      # compares two states of stackSem, and the accessors that
+      # it uses are overloaded)
+      elif b.kind == 'id' and b.name in self.argtypes:
+        a = hterm.Node('paren', tok=b.tok,
+              e=hterm.Node('typed', tok=b.tok, e=b,
+                   ty=hterm.tokenize(self.argtypes[b.name])))
       e.l = hterm.Node('app', tok=e.l.tok, fn=e.l, arg=a)
     # a constructor of the pattern that the right hand side uses
     # again gets the same resolution there: a clause of its own is
@@ -1276,6 +1287,77 @@ class Porter:
     # is not an integer as well says nothing
     return out - other
 
+  def hl_pick(self, nm):
+    """the theory whose constructor of this name HOL Light takes
+       where the type does not say: the overload that was
+       declared last, which is the one of the theory that comes
+       last in the whole port"""
+    ts = [t for t, k in self.db.defs.get(nm.split('$')[-1], [])
+          if k == 'con']
+    if not ts: return None
+    rank = {t: i for i, (t, _, _) in enumerate(self.db.order)}
+    return max(ts, key=lambda x: rank.get(x, -1))
+
+  def ty_thy(self, text):
+    """the theory of a type that a constructor argument has, from
+       the text that the HOL4 source gives it"""
+    try:
+      ty = hterm.parse_type_text(text)
+    except Exception:
+      return None
+    if ty[0] != 'op': return None
+    nm = ty[1]
+    if '$' in nm: return nm.split('$')[0]
+    anc = self.db.ancestors(self.thy) | {self.thy}
+    ts = [t for (t, ty2) in self.db.datatypes
+          if ty2 == nm and t in anc]
+    if not ts: return None
+    rank = {t: i for i, (t, _, _) in enumerate(self.db.order)}
+    return max(ts, key=lambda x: rank.get(x, -1))
+
+  def arg_cons(self, e):
+    """an ambiguous constructor that is the argument of another
+       constructor whose argument type says which theory it is of
+       (the Word64 in flat_to_closProof's Litv (Word64 w) is the
+       one of ast, because the argument of Litv is an ast$lit)"""
+    def go(x):
+      if not isinstance(x, hterm.Node): return
+      if x.kind == 'app':
+        h, args = hterm.strip_app(x)
+        if h.kind == 'id' and iscon(h.name):
+          t = self.con_thy(h.name, arity=len(args))
+          nm = h.name.split('$')[-1]
+          for i, a in enumerate(args):
+            ty = (self.db.con_argty_thy.get((t, nm, i)) if t
+                  else None) or self.ctx.con_argty.get((nm, i))
+            t2 = self.ty_thy(ty) if ty else None
+            if not t2: continue
+            b = a
+            while b.kind == 'paren': b = b.e
+            bh, bargs = (hterm.strip_app(b) if b.kind == 'app'
+                         else (b, []))
+            if (bh.kind == 'id' and '$' not in bh.name
+                and iscon(bh.name) and self.ambiguous_con(bh.name)
+                and (t2, bh.name) in
+                    [(t3, c) for (t3, _), (cs, _)
+                     in self.db.datatypes.items() for c in cs]
+                and self.db.con_arity(t2, bh.name) == len(bargs)
+                and self.hl_pick(bh.name) != t2):
+              bh.name = t2 + '$' + bh.name
+        for a in args: go(a)
+        return
+      for k, v in list(x.__dict__.items()):
+        if k == 'tok': continue
+        if isinstance(v, hterm.Node): go(v)
+        elif isinstance(v, (tuple, list)):
+          for y in v:
+            if isinstance(y, hterm.Node): go(y)
+            elif isinstance(y, (tuple, list)):
+              for z in y:
+                if isinstance(z, hterm.Node): go(z)
+    go(e)
+    return e
+
   def conof_arity(self, e):
     if not self.conof and not self.conof_arities: return e
     """the occurrences of a name of CON_OF that the theory it
@@ -1347,6 +1429,12 @@ class Porter:
     if not (e.kind == 'infix' and e.op in ('=', '<=>')):
       return p.pr(cl, 0)
     lhs = p.pr(e.l, 13)
+    # an override that names the constructors itself is in the
+    # scope of the whole definition already; only the ones that
+    # the wildcard gives are put in for the right hand side
+    if not self.conof_wild:
+      return '%s %s %s' % (lhs, e.op,
+                           p.pr(self.conof_arity(e.r), 13))
     old = {}
     for nm, t in self.conof.items():
       old[nm] = nm in self.ctx.overloaded
@@ -1357,7 +1445,7 @@ class Porter:
     finally:
       for nm in self.conof:
         if old[nm]: self.ctx.overloaded.add(nm)
-        del self.ctx.names[(self.thy, nm)]
+        self.ctx.names.pop((self.thy, nm), None)
     return '%s %s %s' % (lhs, e.op, rhs)
 
   def clause_form(self, body):
@@ -1366,8 +1454,8 @@ class Porter:
        same variable name can have different types in two clauses,
        which one HOL Light quotation cannot"""
     toks = hterm.tokenize(hol4.strip_comments(body))
-    e = self.arm_intvars(
-          self.lambda_cons(hterm.Parser(toks, self.ctx).parse()))
+    e = self.arg_cons(self.arm_intvars(
+          self.lambda_cons(hterm.Parser(toks, self.ctx).parse())))
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     try:
@@ -1561,8 +1649,8 @@ class Porter:
     global CONS
     CONS = self.ctx.cons
     toks = hterm.tokenize(hol4.strip_comments(body))
-    e = self.arm_intvars(
-          self.lambda_cons(hterm.Parser(toks, self.ctx).parse()))
+    e = self.arg_cons(self.arm_intvars(
+          self.lambda_cons(hterm.Parser(toks, self.ctx).parse())))
     # a bound variable whose name is a constant of the port is
     # renamed here as well (word_copy matches on Shift shift r1 r2
     # n, and shift is the overload of backend_common's word_shift)

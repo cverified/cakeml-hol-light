@@ -66,10 +66,10 @@ fun cases_on_op q = Cases_on q
 *)
 
 let op_id_val_def = cake_define_list
-  [`op_id_val bvi_tailrec_Plus = Number (&0)`;
-   `op_id_val bvi_tailrec_Times = Number (&1)`;
-   `op_id_val (Append:assoc_op) = Block nil_tag []`;
-   `op_id_val bvi_tailrec_Noop = Number (&6333)`];;
+  [`op_id_val bvi_tailrec_Plus = bvlSem_Number (&0)`;
+   `op_id_val bvi_tailrec_Times = bvlSem_Number (&1)`;
+   `op_id_val (Append:assoc_op) = bvlSem_Block nil_tag []`;
+   `op_id_val bvi_tailrec_Noop = bvlSem_Number (&6333)`];;
 
 let env_rel_def = cake_define
   `bvi_tailrecProof_env_rel ty opt acc env1 env2 <=>

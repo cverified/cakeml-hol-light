@@ -58,7 +58,7 @@ val sec_loc_to_pc_ind = theorem"sec_loc_to_pc_ind"
 let enc_with_nop_def = cake_define
   `enc_with_nop enc (b:'a asm) bytes =
      (let init = enc b in
-     let step = enc (asm_Inst Skip) in
+     let step = enc (asm_Inst asm_Skip) in
        if LENGTH step = 0 then bytes = init else
          let n = (LENGTH bytes - LENGTH init) DIV LENGTH step in
            bytes = init ++ FLAT (REPLICATE n step))`;;
@@ -162,7 +162,7 @@ let line_ok_def = cake_define
         | (c,(labLang_Asm b bytes l)) ->
         enc_with_nop (asm_config_encode c) (cbw_to_asm b) bytes /\
         (LENGTH bytes = l) /\ asm_ok (cbw_to_asm b) c
-        | (c,(labLang_LabAsm Halt w bytes l)) ->
+        | (c,(labLang_LabAsm labLang_Halt w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + ffi_offset) in
           enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
           (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
@@ -743,7 +743,7 @@ let line_encd_def = cake_define
         match x5 with
           labLang_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
-        | (labLang_LabAsm Halt _36 bytes len) ->
+        | (labLang_LabAsm labLang_Halt _36 bytes len) ->
        enc (Jump (--n2w (pos + ffi_offset))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm Install _37 bytes len) ->
@@ -851,7 +851,7 @@ let line_enc_with_nop_def = cake_define
         match x5 with
           labLang_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
-        | (labLang_LabAsm Halt _52 bytes len) ->
+        | (labLang_LabAsm labLang_Halt _52 bytes len) ->
        enc_with_nop enc (Jump (--n2w (pos + ffi_offset))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm Install _53 bytes len) ->

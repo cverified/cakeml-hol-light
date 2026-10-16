@@ -190,7 +190,7 @@ let result_view_def = cake_define
 let halt_word_view_def = cake_define
   `halt_word_view x1 =
         match x1 with
-          backend_passes_Word (n2w 0) -> Halt Success
+          wordLang_Word (n2w 0) -> Halt Success
         | (Word _11) -> Halt ffi_Resource_limit_hit
         | _12 -> Error`;;
 
@@ -270,8 +270,8 @@ let halt_assum_def = cake_define
   `halt_assum (:'ffi#'c) code <=>
     (!(s:('a,'c,'ffi)stackSem_state).
       subspt code (state_code s) /\ ~(state_clock s = 0) ==>
-      (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt (Word
-        (n2w 0))),t) /\ state_ffi
+      (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt
+        (wordLang_Word (n2w 0))),t) /\ state_ffi
           t = state_ffi s /\ state_clock t = state_clock s - 1))`;;
 
 let make_init_def = cake_define

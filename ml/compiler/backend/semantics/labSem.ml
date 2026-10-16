@@ -510,7 +510,7 @@ let evaluate_def = cake_define_wf
                (misc_shift_seq 1 (labSem_state_io_fp_regs s')))
                (labSem_state_io_regs_fupd (K (misc_shift_seq 1
                (labSem_state_io_regs s'))) s')) | NONE -> (Error,s)) |
-               SOME (labLang_LabAsm Halt _56 _57 _58) ->
+               SOME (labLang_LabAsm labLang_Halt _56 _57 _58) ->
         (match regs s (ptr_reg s) with wordLang_Word (n2w 0) -> (Halt
           ffi_Success,s) | wordLang_Word _59 -> (Halt
           ffi_Resource_limit_hit,s) | _60 -> (Error,s)) | SOME

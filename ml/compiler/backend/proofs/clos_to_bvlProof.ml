@@ -71,14 +71,14 @@ let global_table_def = cake_define
 
 let unpack_closure = cake_inductive
   `(
-    total_args >= 0 ==>
+    total_args >= (&0) ==>
     unpack_closure (Block closure_tag (bvlSem_CodePtr l :: Number
       total_args :: fvs))
           ([],num_of_int total_args,Block closure_tag (bvlSem_CodePtr
             l :: Number total_args :: fvs))) /\
    (
     ~(prev_args = []) /\
-    rem_args >= 0 ==>
+    rem_args >= (&0) ==>
     unpack_closure (Block partial_app_tag (bvlSem_CodePtr l :: Number
       rem_args :: clo :: prev_args))
           (prev_args,num_of_int rem_args + LENGTH prev_args,clo))`;;
@@ -591,8 +591,8 @@ let dest_closure'_def = cake_define
                              arg_env ++ clo_env)
                             (REVERSE (DROP (num_args - LENGTH
                               arg_env) (REVERSE args)))) else
-             SOME (Partial_app (Closure loc (args ++ arg_env) clo_env
-               num_args exp)) else
+             SOME (Partial_app (closSem_Closure loc (args ++ arg_env)
+               clo_env num_args exp)) else
            NONE) | Recclosure loc arg_env clo_env fns i ->
          (let (num_args,exp) = EL i fns in
            if LENGTH fns <= i \/
@@ -608,8 +608,8 @@ let dest_closure'_def = cake_define
                               arg_env ++ rs ++ clo_env)
                               (REVERSE (DROP (num_args - LENGTH
                                 arg_env) (REVERSE args)))) else
-                 SOME (Partial_app (Recclosure loc (args ++
-                   arg_env) clo_env fns i))) | _10 -> NONE)`;;
+                 SOME (Partial_app (closSem_Recclosure loc (args
+                   ++ arg_env) clo_env fns i))) | _10 -> NONE)`;;
 
 (* HOL4 ML code, not ported:
 val cl_rel_run_lemma2 = Q.prove (

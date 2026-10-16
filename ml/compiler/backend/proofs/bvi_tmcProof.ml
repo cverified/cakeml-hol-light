@@ -982,7 +982,7 @@ Finalise do_app_op_rel;
 let is_block_op_cons_def = cake_define
   `is_block_op_cons op <=>
      (?block_tag.
-       op = closLang_BlockOp (Cons block_tag))`;;
+       op = closLang_BlockOp (closLang_Cons block_tag))`;;
 
 let optimised_code_def = cake_define
   `optimised_code loc loc_opt c1 c2 <=>

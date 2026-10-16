@@ -53,7 +53,8 @@ let code_rel_def = cake_define
      (!n prog.
        sptree_lookup n code1 = SOME prog ==>
        reg_bound prog k /\
-       sptree_lookup n code2 = SOME (comp jump off k prog)) /\
+       sptree_lookup n code2 = SOME (stack_remove_comp jump off k
+         prog)) /\
      domain code2 = domain code1 UNION {0,1,2}`;;
 hol4_overload "code_rel" "stack_removeProof_code_rel";;
 (* exact characterization for Install *)
@@ -69,7 +70,8 @@ let the_SOME_Word_def = cake_define
 
 let state_rel_def = cake_define
   `stack_removeProof_state_rel jump off k
-  (s1:('a,'c,'ffi)stackSem_state) s2 <=> stackSem_state_use_stack
+  (s1:('a,'c,'ffi)stackSem_state) (s2:('a,'c,'ffi)stackSem_state) <=>
+  stackSem_state_use_stack
      s1 /\ stackSem_state_use_store s1 /\
      ~stackSem_state_use_stack s2 /\ ~stackSem_state_use_store s2 /\
      ~stackSem_state_use_alloc s2 /\ ~stackSem_state_use_alloc s1 /\

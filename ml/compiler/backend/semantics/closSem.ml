@@ -249,7 +249,7 @@ let do_word_app_def = cake_define
           (match some (\((w1:word8),(w2:word8)). n1 = &(w2n w1) /\ n2
             = &(w2n w2)) with NONE -> NONE | SOME (w1,w2) -> SOME
             (closSem_Number (&(w2n (opw_lookup opw w1 w2)))))
-        | ((WordOpw W64 opw),[Word64 w1; Word64 w2]) ->
+        | ((WordOpw ast_W64 opw),[Word64 w1; Word64 w2]) ->
            SOME (Word64 (opw_lookup opw w1 w2))
         | ((WordTest ast_W8 test),[closSem_Number n1; closSem_Number
           n2]) ->
@@ -263,7 +263,7 @@ let do_word_app_def = cake_define
           (match some (\(w:word8). i = &(w2n w)) with NONE -> NONE |
             SOME w -> SOME (closSem_Number (&(w2n (shift_lookup sh w
             n)))))
-        | ((WordShift W64 sh n),[Word64 w]) ->
+        | ((WordShift ast_W64 sh n),[Word64 w]) ->
           SOME (Word64 (shift_lookup sh w n))
         | ((WordFromInt),[closSem_Number i]) ->
           SOME (Word64 (i2w i))
@@ -361,8 +361,8 @@ let do_app_def = cake_define
            (closSem_Unit,closSem_state_globals_fupd (K
            (closSem_state_globals s ++ REPLICATE (num_of_int i) NONE))
            s)) | (closLang_BlockOp (closLang_Constant c),[]) -> Rval
-           (make_const c,s) | (closLang_BlockOp (Cons tag),xs) -> Rval
-           (closSem_Block tag xs,s) | (closLang_BlockOp
+           (make_const c,s) | (closLang_BlockOp (closLang_Cons tag),xs)
+           -> Rval (closSem_Block tag xs,s) | (closLang_BlockOp
            (closLang_ConsExtend tag),closSem_Block _37 xs' ::
            closSem_Number lower :: closSem_Number len :: closSem_Number
            tot :: xs) ->
@@ -377,12 +377,12 @@ let do_app_def = cake_define
              (closLang_ConsExtend tag),_38) -> ((Rerr (Rabort
              Rtype_error)):(closSem_v#('c,'ffi)closSem_state
              ,closSem_v)semanticPrimitives_result) | (closLang_MemOp
-             El,[closSem_Block tag xs; closSem_Number i]) ->
+             closLang_El,[closSem_Block tag xs; closSem_Number i]) ->
          (if (&0) <= i /\ num_of_int i < LENGTH xs then Rval (EL
            (num_of_int i) xs,s) else ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result)) | (closLang_MemOp
-           El,[closSem_RefPtr _39 ptr; closSem_Number i]) ->
+           closLang_El,[closSem_RefPtr _39 ptr; closSem_Number i]) ->
          (match FLOOKUP (state_refs s) ptr with SOME
            (closSem_ValueArray xs) ->
              (if (&0) <= i /\ i < &(LENGTH xs) then Rval (EL
@@ -572,10 +572,10 @@ let do_app_def = cake_define
          let s2 = implode (MAP (CHR o w2n) b2) in
            Rval (Boolv (str_cmp b cmp s1 s2),s)) | (closLang_BlockOp
              (closLang_TagEq n),[closSem_Block tag xs]) ->
-         Rval (Boolv (tag = n),s) | (closLang_BlockOp (LenEq
+         Rval (Boolv (tag = n),s) | (closLang_BlockOp (closLang_LenEq
            l),[closSem_Block tag xs]) ->
-         Rval (Boolv (LENGTH xs = l),s) | (closLang_BlockOp (TagLenEq
-           n l),[closSem_Block tag xs]) ->
+         Rval (Boolv (LENGTH xs = l),s) | (closLang_BlockOp
+           (closLang_TagLenEq n l),[closSem_Block tag xs]) ->
          Rval (Boolv (tag = n /\ LENGTH xs = l),s) |
            (closLang_BlockOp (closLang_EqualConst p),[x1]) ->
          (match p with closLang_Int i -> (match x1 with
@@ -594,7 +594,7 @@ let do_app_def = cake_define
            (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
            ,closSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-           Equal,[x1; x2]) ->
+           closLang_Equal,[x1; x2]) ->
          (match do_eq x1 x2 with Eq_val b -> Rval (Boolv b,s) | _68
            -> ((Rerr (Rabort
            Rtype_error)):(closSem_v#('c,'ffi)closSem_state
@@ -748,8 +748,8 @@ let dest_closure_def = cake_define
                              arg_env ++ clo_env)
                             (REVERSE (DROP (num_args - LENGTH
                               arg_env) (REVERSE args)))) else
-             SOME (Partial_app (Closure loc (args ++ arg_env) clo_env
-               num_args exp)) else
+             SOME (Partial_app (closSem_Closure loc (args ++ arg_env)
+               clo_env num_args exp)) else
            NONE) | Recclosure loc arg_env clo_env fns i ->
          (let (num_args,exp) = EL i fns in
            if LENGTH fns <= i \/
@@ -768,8 +768,8 @@ let dest_closure_def = cake_define
                               arg_env ++ rs ++ clo_env)
                               (REVERSE (DROP (num_args - LENGTH
                                 arg_env) (REVERSE args)))) else
-                 SOME (Partial_app (Recclosure loc (args ++
-                   arg_env) clo_env fns i))) | _85 -> NONE)`;;
+                 SOME (Partial_app (closSem_Recclosure loc (args
+                   ++ arg_env) clo_env fns i))) | _85 -> NONE)`;;
 
 let clos_env_def = cake_define
   `clos_env restrict names env =
@@ -783,7 +783,8 @@ let build_recc_def = cake_define
 
 let AppUnit_def = cake_define
   `closSem_AppUnit x = closLang_App backend_common_None NONE x
-  [closLang_Op backend_common_None (closLang_BlockOp (Cons 0)) []]`;;
+  [closLang_Op backend_common_None (closLang_BlockOp (closLang_Cons
+  0)) []]`;;
 hol4_overload "AppUnit" "closSem_AppUnit";;
 
 let exp_alt_size_def = cake_define_list

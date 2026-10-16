@@ -41,7 +41,7 @@ let encode_infer_t_def = cake_define_list
       term_Pair (term_Const Tapp_tag) (term_Pair (term_Const
         (TC_tag tc)) (encode_infer_ts ts))`;
    `encode_infer_t (Infer_Tuvar n) =
-      Var n`;
+      term_Var n`;
    `encode_infer_ts [] =
       term_Const Null_tag`;
    `encode_infer_ts (t :: ts) =
@@ -480,4 +480,4 @@ let t_compat_def = cake_define
 (*t_compat is preserved under certain types of unification
   Proof basically from HOL*)
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

@@ -1482,4 +1482,4 @@ let reg_alloc_def = cake_define
   `reg_alloc alg scost k moves ct forced fs =
      reg_alloc_aux alg scost k moves ct forced fs (mk_bij ct)`;;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

@@ -39,10 +39,10 @@ let negate_def = cake_define_list
    `negate (Equal:cmp) = asm_NotEqual`;
    `negate asm_Lower = asm_NotLower`;
    `negate (Test:cmp) = asm_NotTest`;
-   `negate asm_NotLess = Less`;
-   `negate asm_NotEqual = Equal`;
+   `negate asm_NotLess = asm_Less`;
+   `negate asm_NotEqual = asm_Equal`;
    `negate asm_NotLower = asm_Lower`;
-   `negate asm_NotTest = Test`];;
+   `negate asm_NotTest = asm_Test`];;
 
 let find_lab_def = cake_define
   `find_lab n labs =
@@ -53,9 +53,9 @@ hol4_overload "++" "misc_Append";;
 let flatten_def = cake_define
   `stack_to_lab_flatten t p n m conts breaks =
      (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
-       (Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi a))
-       (Inst a) [] 0],F,m) | Halt _1 -> (List [labLang_LabAsm Halt (n2w
-       0) [] 0],T,m) | Seq p1 p2 ->
+       (asm_Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi
+       a)) (Inst a) [] 0],F,m) | Halt _1 -> (List [labLang_LabAsm
+       labLang_Halt (n2w 0) [] 0],T,m) | Seq p1 p2 ->
          (let (xs,nr1,m) = stack_to_lab_flatten F p1 n m conts breaks
            in
          let (ys,nr2,m) = stack_to_lab_flatten F p2 n m conts breaks
@@ -150,7 +150,7 @@ let prog_to_section_def = cake_define
      (let (lines,_13,m) = (stack_to_lab_flatten T p n (next_lab p 2)
        [] []) in
        Section n (append (Append lines
-         (List [Label n (if is_Seq p then m else 1) 0]))))`;;
+         (misc_List [Label n (if is_Seq p then m else 1) 0]))))`;;
 
 let is_gen_gc_def = cake_define
   `is_gen_gc x1 =
@@ -180,7 +180,7 @@ let compile_no_stubs_def = cake_define
   `compile_no_stubs f jump offset sp prog =
    MAP prog_to_section
      (stack_names_compile f
-       (MAP (prog_comp jump offset sp)
-         (MAP prog_comp prog)))`;;
+       (MAP (stack_remove_prog_comp jump offset sp)
+         (MAP stack_alloc_prog_comp prog)))`;;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

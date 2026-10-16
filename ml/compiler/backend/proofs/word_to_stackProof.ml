@@ -382,17 +382,15 @@ let abs_frame_eq_def = cake_define
      result = 'a wordSem$result *)
 
 let compile_result_def = cake_define_list
-  [`compile_result (wordSem_Result w1 w2) = Result w1`;
-   `compile_result (wordSem_Exception w1 w2) = Exception w1`;
-   `compile_result wordSem_TimeOut = (TimeOut:'w wordSem_result)`;
-   `compile_result wordSem_NotEnoughSpace = Halt (wordLang_Word (n2w
-  1))`;
-   `compile_result (wordSem_FinalFFI f) = (FinalFFI f:'w
-  wordSem_result)`;
-   `compile_result (wordSem_Break k) = (Break k:'w wordSem_result)`;
-   `compile_result (wordSem_Continue k) = (Continue k:'w
-  wordSem_result)`;
-   `compile_result wordSem_Error = (Error:'w wordSem_result)`];;
+  [`compile_result (wordSem_Result w1 w2) = stackSem_Result w1`;
+   `compile_result (wordSem_Exception w1 w2) = stackSem_Exception w1`;
+   `compile_result wordSem_TimeOut = stackSem_TimeOut`;
+   `compile_result wordSem_NotEnoughSpace = stackSem_Halt
+  (wordLang_Word (n2w 1))`;
+   `compile_result (wordSem_FinalFFI f) = stackSem_FinalFFI f`;
+   `compile_result (wordSem_Break k) = stackSem_Break k`;
+   `compile_result (wordSem_Continue k) = stackSem_Continue k`;
+   `compile_result wordSem_Error = stackSem_Error`];;
 
 (* HOL4 ML code, not ported:
 val stack_evaluate_add_clock_NONE =

@@ -60,18 +60,22 @@ let compile_var_def = cake_define_list
   [`compile_var t (Glob _1 i) = App t (flatLang_GlobalVarLookup i) []`;
    `compile_var t (Local _2 s) = flatLang_Var_local t s`];;
 
-let compile_pat_def = cake_define_list
-  [`compile_pat env (ast_Pvar v) = flatLang_Pvar v`;
-   `compile_pat env (Pany:ast_pat) = (Pany:ast_pat)`;
-   `compile_pat env (Plit l:ast_pat) = (Plit l:ast_pat)`;
-   `compile_pat env (ast_Pcon id' ps) =
-        flatLang_Pcon
-          (OPTION_JOIN (OPTION_MAP (nsLookup
-            (source_to_flat_environment_c env)) id'))
-          (MAP (compile_pat env) ps)`;
-   `compile_pat env (Pref p:ast_pat) = Pref (compile_pat env p)`;
-   `compile_pat env (Pas p i:ast_pat) = Pas (compile_pat env p) i`;
-   `compile_pat env (ast_Ptannot p t) = compile_pat env p`];;
+let _ = size_thms "pattern_semantics_pat";;
+(* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
+   SUM_APPEND] *)
+let compile_pat_def = cake_define_wf
+  `MEASURE (pattern_semantics_pat_size o SND)`
+  `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\
+   (compile_pat env Pany = Pany) /\
+   (compile_pat env (Plit l) = Plit l) /\
+   (compile_pat env (ast_Pcon id' ps) =
+     flatLang_Pcon
+       (OPTION_JOIN (OPTION_MAP (nsLookup
+         (source_to_flat_environment_c env)) id'))
+       (MAP (compile_pat env) ps)) /\
+   (compile_pat env (Pref p) = Pref (compile_pat env p)) /\
+   (compile_pat env (Pas p i) = Pas (compile_pat env p) i) /\
+   (compile_pat env (ast_Ptannot p t) = compile_pat env p)`;;
 
 let pat_tups_def = cake_define_list
   [`pat_tups t [] = []`;

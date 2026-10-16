@@ -79,4 +79,4 @@ let json_to_mlstring_def = cake_define_list
             misc_List [implode "\""; n; implode "\":"] ++
               json_to_mlstring obj)`];;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

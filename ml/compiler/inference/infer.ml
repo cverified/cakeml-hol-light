@@ -402,7 +402,7 @@ let infer_p_def = cake_define_list
           st_ex_return (Infer_Tapp [t] Tref_num,tenv))`;
    `infer_p l ienv (ast_Pas p v:ast_pat) =
         st_ex_bind (infer_p l ienv p) (\(t,tenv).
-          st_ex_return (t,tenv ++ [(v,t)]))`;
+          st_ex_return (t,APPEND tenv [(v,t)]))`;
    `infer_p l ienv (ast_Ptannot p t) =
        st_ex_bind (infer_p l ienv p) (\(t',tenv). st_ex_bind
          (type_name_check_subst l
@@ -423,7 +423,7 @@ let infer_p_def = cake_define_list
         st_ex_bind (infer_p l ienv p) (\(t,tenv). st_ex_bind
           (infer_ps l ienv ps) (\
            (ts,tenv').
-           st_ex_return (t :: ts,tenv' ++ tenv)))`];;
+           st_ex_return (t :: ts,APPEND tenv' tenv)))`];;
 
 let word_tc_def = cake_define_list
   [`word_tc ast_W8 = Tword8_num`;
@@ -1062,4 +1062,4 @@ let inf_env_to_types_string_def = cake_define
                               (implode "\n")]) l in
         REVERSE xs)`;;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

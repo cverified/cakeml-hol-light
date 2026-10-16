@@ -88,7 +88,8 @@ let BlockRep_def = cake_define
 
 let bytes_def = cake_define
   `((Bytes is_bigendian cmp_by_contents (bs:word8 list) (ws:('a word)
-  list)):('a word_loc,num#('a word_loc) list)heap_element) =
+  list)):('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
+  list)heap_element) =
      (let ws = write_bytes bs ws is_bigendian in
        DataElement [] (LENGTH ws) (BytesTag cmp_by_contents
          (LENGTH bs),MAP Word ws))`;;
@@ -138,19 +139,22 @@ let v_inv_ck = cake_inductive
   `small_int (:'a) i ==>
      v_inv_ck ck conf (Number i) (refs:(dataSem_v bvlSem_ref) spt)
                 (Data (Word (Smallnum i)),f,tf,(heap:(('a
-                  word_loc,num#('a word_loc) list)heap_element) list))
-                  /\
+                  word_loc,data_to_word_memoryProof_tag#('a word_loc)
+                  list)heap_element) list)) /\
    ~small_int (:'a) i /\
    heap_lookup ptr heap = SOME (Bignum i) ==>
      v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr (Word
-       (n2w 0)),f,tf,(heap:(('a word_loc,num#('a word_loc)
+       (n2w 0)),f,tf,(heap:(('a
+       word_loc,data_to_word_memoryProof_tag#('a word_loc)
        list)heap_element) list)) /\
    heap_lookup ptr heap = SOME (Word64Rep (:'a) w) ==>
      v_inv_ck ck conf (Word64 w) refs (gc_shared_Pointer ptr (Word
-       (n2w 0)),f,tf,(heap:(('a word_loc,num#('a word_loc)
+       (n2w 0)),f,tf,(heap:(('a
+       word_loc,data_to_word_memoryProof_tag#('a word_loc)
        list)heap_element) list)) /\
    v_inv_ck ck conf (CodePtr n) refs (Data (Loc n 0),f,tf,(heap:(('a
-     word_loc,num#('a word_loc) list)heap_element) list)) /\
+     word_loc,data_to_word_memoryProof_tag#('a word_loc)
+     list)heap_element) list)) /\
    n IN FDOM f /\
    (!ev v. ~(lookup n refs = SOME (Thunk ev v))) /\
    (!tg fin l c r. lookup n refs = SOME (bvlSem_MutBlock tg fin l c
@@ -158,7 +162,8 @@ let v_inv_ck = cake_inductive
      v_inv_ck ck conf (RefPtr b n) refs
                 (gc_shared_Pointer (FAPPLY f n) (ref_ptr_annot conf
                   (lookup n refs)),
-                 f,tf,(heap:(('a word_loc,num#('a word_loc)
+                 f,tf,(heap:(('a
+                   word_loc,data_to_word_memoryProof_tag#('a word_loc)
                    list)heap_element) list)) /\
    lookup n refs = SOME (Thunk ev v) /\
    (ev = Evaluated ==> dest_thunk v refs = NotThunk) /\
@@ -168,20 +173,22 @@ let v_inv_ck = cake_inductive
      ==>
      v_inv_ck ck conf (RefPtr F n) refs
                 (gc_shared_Pointer (FAPPLY f n) (Word (n2w
-                  0)),f,tf,(heap:(('a word_loc,num#('a word_loc)
+                  0)),f,tf,(heap:(('a
+                  word_loc,data_to_word_memoryProof_tag#('a word_loc)
                   list)heap_element) list)) /\
    lookup n refs = SOME (Thunk Evaluated v) /\
    dest_thunk v refs = NotThunk /\
    (~(ck = 0) ==> v_inv_ck (ck - 1) conf v refs (x,f,tf,heap)) ==>
      v_inv_ck ck conf (RefPtr F n) refs (x,f,tf,(heap:(('a
-       word_loc,num#('a word_loc) list)heap_element) list)) /\
+       word_loc,data_to_word_memoryProof_tag#('a word_loc)
+       list)heap_element) list)) /\
    vs = [] /\
    n < dimword (:'a) DIV 16 /\
    ts = 0 ==>
      v_inv_ck ck conf (Block ts n vs) refs
                 (Data (Word (BlockNil n)),f,tf,(heap:(('a
-                  word_loc,num#('a word_loc) list)heap_element) list))
-                  /\ ~(
+                  word_loc,data_to_word_memoryProof_tag#('a word_loc)
+                  list)heap_element) list)) /\ ~(
    vs = []) /\
    (~(ck = 0) ==> EVERY2 (\v x. v_inv_ck (ck - 1) conf v refs
      (x,f,tf,heap)) vs xs) /\
@@ -190,8 +197,9 @@ let v_inv_ck = cake_inductive
      v_inv_ck ck conf (Block ts n vs) refs
                 (gc_shared_Pointer ptr (Word (ptr_bits conf n (LENGTH
                   xs))),
-                 f,tf,(heap:(('a word_loc,num#('a word_loc)
-                   list)heap_element) list))`;;
+                 f,tf,(heap:(('a
+                   word_loc,data_to_word_memoryProof_tag#('a
+                   word_loc) list)heap_element) list))`;;
 
 let v_inv_eq = cake_define
   `v_inv conf v refs (x,f,tf,heap) =
@@ -453,7 +461,8 @@ let all_reachable_from_roots_def = cake_define
 
 let make_gc_conf_def = cake_define
   `make_gc_conf limit' =
-     (mk_gen_gc_conf limit' (isMutTag o FST):(num#'a) gen_gc_conf)`;;
+     (mk_gen_gc_conf limit' (isMutTag o
+       FST):(data_to_word_memoryProof_tag#'a) gen_gc_conf)`;;
 
 let reset_gens_def = cake_define
   `reset_gens conf a =
@@ -800,8 +809,8 @@ let word_el_def = cake_define_list
                  decode_length conf h = n2w (LENGTH ts) /\ c))`];;
 
 let word_heap_def = cake_define_list
-  [`word_heap a ([]:(('a word_loc,num#('a word_loc)
-  list)heap_element) list) conf = emp`;
+  [`word_heap a ([]:(('a word_loc,data_to_word_memoryProof_tag#('a
+  word_loc) list)heap_element) list) conf = emp`;
    `word_heap a (x :: xs) conf =
          word_el a x conf *
          word_heap (a + bytes_in_word * n2w (el_length x)) xs

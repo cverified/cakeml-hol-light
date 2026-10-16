@@ -205,4 +205,4 @@ val monad_eqs = LIST_CONJ
 let run_def = cake_define
   `run (x:'a->('b,'c)exc#'a) state = FST (x state)`;;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

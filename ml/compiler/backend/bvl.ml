@@ -46,7 +46,8 @@ hol4_overload "Force" "bvl_Force";;
 hol4_overload "Op" "bvl_Op";;
 
 let bool_def = cake_define
-  `bvl_Bool b = Op (closLang_BlockOp (Cons (bool_to_tag b))) []`;;
+  `bvl_Bool b = Op (closLang_BlockOp (closLang_Cons (bool_to_tag b)))
+  []`;;
 hol4_overload "Bool" "bvl_Bool";;
 
 let mk_tick_def = cake_define

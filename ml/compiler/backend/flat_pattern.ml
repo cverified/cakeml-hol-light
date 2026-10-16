@@ -101,7 +101,7 @@ let decode_pos_def = cake_define_list
 
 let decode_test_def = cake_define_list
   [`flat_pattern_decode_test t (TagLenEq tag l:dTest) v = App t
-  (TagLenEq tag l) [v]`;
+  (flatLang_TagLenEq tag l) [v]`;
    `flat_pattern_decode_test t (pattern_semantics_LitEq lit) v =
   App t (flatLang_Src ast_Equality) [v; Lit t lit]`];;
 hol4_overload "decode_test" "flat_pattern_decode_test";;
@@ -197,7 +197,7 @@ let naive_pattern_match_def = cake_define_wf
       | ((Pas p i,v) :: mats) ->
      naive_pattern_match t ((p,v) :: mats)
       | ((Pcon (SOME stmp) ps,v) :: mats) ->
-     SmartIf t (App t (TagLenEq (FST stmp) (LENGTH ps)) [v])
+     SmartIf t (App t (flatLang_TagLenEq (FST stmp) (LENGTH ps)) [v])
        (naive_pattern_match t (MAPi (\i p. (p,App t (flatLang_El i)
          [v])) ps ++ mats))
        (flatLang_Bool t F)

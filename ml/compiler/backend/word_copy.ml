@@ -91,23 +91,23 @@ let copy_prop_inst_def = cake_define
         match x1 with
           asm_Skip -> (Skip,cs)
         | (Const reg w) ->
-       (Inst (Const reg w),remove_eq cs reg)
+       (Inst (asm_Const reg w),remove_eq cs reg)
         | (Arith (asm_Binop bop r1 r2 ri)) ->
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let ri' = lookup_eq_imm cs ri in
        let ri'' = (if ri' = Reg r1 then ri else ri') in
        (Inst (Arith (asm_Binop bop r1 r2' ri'')),cs'))
-        | (Arith (Shift shift' r1 r2 n)) ->
+        | (Arith (asm_Shift shift' r1 r2 n)) ->
        (let cs' = remove_eq cs r1 in
        let r2' = lookup_eq cs r2 in
        let n' = lookup_eq_imm cs n in
        let n'' = (if n' = Reg r1 then n else n') in
-       (Inst (Arith (Shift shift' r1 r2' n'')),cs'))
-        | (Arith (Div r1 r2 r3)) ->
+       (Inst (Arith (asm_Shift shift' r1 r2' n'')),cs'))
+        | (Arith (asm_Div r1 r2 r3)) ->
        (let r2' = lookup_eq cs r2 in
        let r3' = lookup_eq cs r3 in
-       (Inst (Arith (Div r1 r2' r3')),
+       (Inst (Arith (asm_Div r1 r2' r3')),
            remove_eq cs r1))
         | (Arith (asm_AddCarry r1 r2 r3 r4)) ->
        (let cs' = remove_eqs cs [r1; r4] in
@@ -138,14 +138,14 @@ let copy_prop_inst_def = cake_define
        let r5' = lookup_eq cs r5 in
        (Inst (Arith (asm_LongDiv r1 r2 r3' r4' r5')),
            remove_eqs cs [r2; r1]))
-        | (asm_Mem Load r (Addr a w)) ->
+        | (asm_Mem asm_Load r (Addr a w)) ->
        (let a' = lookup_eq cs a in
-         (Inst (asm_Mem Load r (Addr a' w)),
+         (Inst (asm_Mem asm_Load r (Addr a' w)),
            remove_eq cs r))
-        | (asm_Mem Store r (Addr a w)) ->
+        | (asm_Mem asm_Store r (Addr a w)) ->
        (let a' = lookup_eq cs a in
        let r' = lookup_eq cs r in
-         (Inst (asm_Mem Store r' (Addr a' w)),cs))
+         (Inst (asm_Mem asm_Store r' (Addr a' w)),cs))
         | (asm_Mem asm_Load8 r (Addr a w)) ->
        (let a' = lookup_eq cs a in
          (Inst (asm_Mem asm_Load8 r (Addr a' w)),
@@ -265,9 +265,10 @@ let copy_prop_move_def = cake_define_list
 let copy_prop_share_def = cake_define
   `copy_prop_share exp cs =
      (match exp with
-     Var r -> Var (lookup_eq cs r) | (wordLang_Op Add [Var r; Const
-       c]) ->
-      wordLang_Op Add [Var (lookup_eq cs r); Const c] | _3 -> exp)`;;
+     Var r -> Var (lookup_eq cs r) | (wordLang_Op asm_Add [Var r;
+       Const c]) ->
+      wordLang_Op asm_Add [Var (lookup_eq cs r); Const c] | _3 ->
+        exp)`;;
 
 let copy_prop_prog_def = cake_define
   `copy_prop_prog prog cs =

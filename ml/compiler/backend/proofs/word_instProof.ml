@@ -80,7 +80,7 @@ let binary_branch_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB)`
   `binary_branch_exp exp =
         match exp with
-          wordLang_Op Sub exps -> EVERY (binary_branch_exp) exps
+          wordLang_Op asm_Sub exps -> EVERY (binary_branch_exp) exps
         | (wordLang_Op op xs) -> (LENGTH xs = 2 /\ EVERY
           (binary_branch_exp) xs)
         | (Load exp) -> binary_branch_exp exp

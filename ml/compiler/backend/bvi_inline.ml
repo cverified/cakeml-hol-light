@@ -27,7 +27,7 @@ let canonical_wrapper_def = cake_define
   `canonical_wrapper name arity x3 =
         match x3 with
           bvi_LetCall rets ticks worker args
-           (bvi_Op (closLang_BlockOp (Cons tag)) rvs) -> ~(
+           (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) -> ~(
         worker = name) /\
         args = GENLIST bvi_Var arity /\
         rvs = REVERSE (GENLIST bvi_Var rets)

@@ -585,10 +585,10 @@ let type_e = cake_inductive
    type_e tenv tenvE (ast_Raise e) t) /\
    (!tenv tenvE e pes t.
    (type_e tenv tenvE e t /\ ~(pes = []) /\
-   (!((p,e) :: LIST_TO_SET pes). ?bindings.
+   (RES_FORALL (LIST_TO_SET pes) (\((p,e)). ?bindings.
       ALL_DISTINCT (ast_pat_bindings p) /\
       type_p (num_tvs tenvE) tenv p Texn bindings /\
-      type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t)) ==>
+      type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t))) ==>
    type_e tenv tenvE (ast_Handle e pes) t) /\
    (!tenv tenvE cn es tvs tn ts' ts.
    (EVERY (check_freevars (num_tvs tenvE) []) ts' /\
@@ -626,10 +626,11 @@ let type_e = cake_inductive
    type_e tenv tenvE (ast_If e1 e2 e3) t) /\
    (!tenv tenvE e pes t1 t2.
    (type_e tenv tenvE e t1 /\ ~(pes = []) /\
-   (!((p,e) :: LIST_TO_SET pes). ?bindings.
+   (RES_FORALL (LIST_TO_SET pes) (\((p,e)). ?bindings.
       ALL_DISTINCT (ast_pat_bindings p) /\
       type_p (num_tvs tenvE) tenv p t1 bindings /\
-      type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t2)) ==>
+      type_e tenv (bind_var_list ((0:num)) bindings tenvE) e t2)))
+        ==>
    type_e tenv tenvE (ast_Mat e pes) t2) /\
    (!tenv tenvE n e1 e2 t1 t2.
    (type_e tenv tenvE e1 t1 /\

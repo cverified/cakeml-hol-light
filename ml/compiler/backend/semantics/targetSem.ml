@@ -98,7 +98,7 @@ let is_valid_mapped_read_def = cake_define
          (Inst (asm_Mem asm_Load8 r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 0) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
-         (Inst (asm_Mem Load r ad)))
+         (Inst (asm_Mem asm_Load r ad)))
          (target_get_byte t ms) md) else if nb = (n2w 2) then
        (bytes_in_memory pc' (asm_config_encode (target_config t)
          (Inst (asm_Mem asm_Load16 r ad)))
@@ -114,7 +114,7 @@ let is_valid_mapped_write_def = cake_define
            (Inst (asm_Mem asm_Store8 r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 0) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
-           (Inst (asm_Mem Store r ad)))
+           (Inst (asm_Mem asm_Store r ad)))
            (target_get_byte t ms) md) else if nb = (n2w 2) then
          (bytes_in_memory pc' (asm_config_encode (target_config t)
            (Inst (asm_Mem asm_Store16 r ad)))

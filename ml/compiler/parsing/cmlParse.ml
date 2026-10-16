@@ -92,4 +92,4 @@ let parse_prog_def = cake_define
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

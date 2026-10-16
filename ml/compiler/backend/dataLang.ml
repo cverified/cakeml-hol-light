@@ -40,16 +40,16 @@ needs "semantics/ast.ml";;
 let op_space_reset_def = cake_define
   `op_space_reset x1 =
         match x1 with
-          closLang_IntOp Add -> T
-        | (closLang_IntOp Sub) -> T
+          closLang_IntOp closLang_Add -> T
+        | (closLang_IntOp closLang_Sub) -> T
         | (closLang_IntOp closLang_Mult) -> T
-        | (closLang_IntOp Div) -> T
-        | (closLang_IntOp Mod) -> T
-        | (closLang_IntOp Less) -> T
+        | (closLang_IntOp closLang_Div) -> T
+        | (closLang_IntOp closLang_Mod) -> T
+        | (closLang_IntOp closLang_Less) -> T
         | (closLang_IntOp closLang_LessEq) -> T
         | (closLang_IntOp Greater) -> T
         | (closLang_IntOp closLang_GreaterEq) -> T
-        | (closLang_BlockOp Equal) -> T
+        | (closLang_BlockOp closLang_Equal) -> T
         | (closLang_BlockOp ListAppend) -> T
         | (closLang_BlockOp (closLang_FromList _1)) -> T
         | (closLang_MemOp closLang_RefArray) -> T
@@ -91,4 +91,4 @@ hol4_overload "Tick" "dataLang_Tick";;
 hol4_overload "Force" "dataLang_Force";;
 
 let mk_ticks_def = cake_define
-  `mk_ticks n e = FUNPOW (dataLang_Seq Tick) n e`;;
+  `mk_ticks n e = FUNPOW (dataLang_Seq dataLang_Tick) n e`;;

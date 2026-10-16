@@ -1451,6 +1451,17 @@ let hol4_overload name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
   overload_interface(name,mk_mconst(cname,get_const_type cname));;
 
+(* the overload that a file makes for an infix is taken back at
+   the end of it, so that the files after it mean what HOL Light
+   means: an overload stays in the interface until it is
+   overridden, and the ++ of two variables that nothing says the
+   type of would then be the choice of a monad that another file
+   enabled (semantics' prelude ++ prog) *)
+
+let hol4_only name cname =
+  (try make_overloadable name `:A` with Failure _ -> ());
+  override_interface(name,mk_mconst(cname,get_const_type cname));;
+
 (* HOL4's Datatype, which also registers the recursion theorem and (as*)
 (* HOL4                                                               *)
 (* does) defines the size functions of the family.                    *)

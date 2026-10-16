@@ -12,7 +12,6 @@
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
-needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
@@ -20,15 +19,15 @@ let is_pure_def = cake_define
   `data_live_is_pure x1 =
         match x1 with
           (FFI _2:closLang_op) -> F
-        | (closLang_IntOp Add) -> F
-        | (closLang_IntOp Sub) -> F
+        | (closLang_IntOp closLang_Add) -> F
+        | (closLang_IntOp closLang_Sub) -> F
         | (closLang_IntOp closLang_Mult) -> F
-        | (closLang_IntOp Div) -> F
-        | (closLang_IntOp Mod) -> F
-        | (closLang_IntOp Less) -> F
+        | (closLang_IntOp closLang_Div) -> F
+        | (closLang_IntOp closLang_Mod) -> F
+        | (closLang_IntOp closLang_Less) -> F
         | (closLang_IntOp closLang_LessEq) -> F
-        | (closLang_WordOp (WordOpw W64 _3)) -> F
-        | (closLang_WordOp (WordShift W64 _4 _5)) -> F
+        | (closLang_WordOp (WordOpw ast_W64 _3)) -> F
+        | (closLang_WordOp (WordShift ast_W64 _4 _5)) -> F
         | (closLang_WordOp WordFromInt) -> F
         | (closLang_WordOp WordToInt) -> F
         | (closLang_WordOp (WordFromWord b)) -> F
@@ -36,11 +35,11 @@ let is_pure_def = cake_define
         | (closLang_WordOp (FP_bop _7)) -> F
         | (closLang_WordOp (FP_top _8)) -> F
         | (closLang_BlockOp (closLang_Build _9)) -> F
-        | (closLang_BlockOp (Cons _10)) -> F
+        | (closLang_BlockOp (closLang_Cons _10)) -> F
         | (closLang_BlockOp (closLang_ConsExtend _11)) -> F
         | (closLang_BlockOp (closLang_FromList _12)) -> F
         | (closLang_BlockOp ListAppend) -> F
-        | (closLang_BlockOp Equal) -> F
+        | (closLang_BlockOp closLang_Equal) -> F
         | (closLang_GlobOp (SetGlobal _13)) -> F
         | (closLang_GlobOp SetGlobalsPtr) -> F
         | (closLang_MemOp closLang_Ref) -> F

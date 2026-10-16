@@ -39,9 +39,9 @@ let memcpy_code_def = cake_define
 
 let clear_top_inst_def = cake_define
   `clear_top_inst i n =
-     (Seq ((\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) i
+     (Seq ((\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) i
        (dimindex (:'a) - n - 1))
-         ((\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) i
+         ((\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w v))))) i
            (dimindex (:'a) - n - 1)):'a stackLang_prog)`;;
 
 let word_gc_move_code_def = cake_define
@@ -51,24 +51,24 @@ let word_gc_move_code_def = cake_define
          [(\dest src. Inst (Arith (asm_Binop Or dest src (Reg src))))
            0 5;
           Get 1 CurrHeap;
-          (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 0
+          (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w v))))) 0
             (shift_length conf);
-          (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 0
+          (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
             (backend_common_word_shift (:'a));
           (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0 1;
           (\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 1 0;
           If Test 1 (Imm (n2w 3))
-            (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
-              v))))) 1 2;
-                       (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w
-                         v))))) 1 (shift_length conf);
+            (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm
+              (n2w v))))) 1 2;
+                       (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
+                         (n2w v))))) 1 (shift_length conf);
                        clear_top_inst 5 (small_shift_length conf -
                          1);
                        (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
                          r2)))) 5 1])
             (list_Seq [
-                       (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
-                         v))))) 1 (dimindex (:'a) -
+                       (\r v. Inst (Arith (asm_Shift Lsr r r (Imm
+                         (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                          (n2w 1))))) 1;
@@ -81,22 +81,23 @@ let word_gc_move_code_def = cake_define
                        memcpy_code;
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 0 6;
-                       (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w
-                         v))))) 0 (backend_common_word_shift (:'a));
+                       (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
+                         (n2w v))))) 0 (backend_common_word_shift
+                         (:'a));
                        (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg
                          r2)))) 2 0;
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 0 4;
-                       (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w
-                         v))))) 0 2;
+                       (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
+                         (n2w v))))) 0 2;
                        (\r a. Inst (asm_Mem Store r (Addr a (n2w
                          0)))) 0 2;
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 1 4;
                        clear_top_inst 5 (small_shift_length conf -
                          1);
-                       (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w
-                         v))))) 1 (shift_length conf);
+                       (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
+                         (n2w v))))) 1 (shift_length conf);
                        (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
                          r2)))) 5 1;
                        (\r1 r2. Inst (Arith (asm_Binop Add r1 r1
@@ -121,20 +122,20 @@ let word_gc_move_loop_code_def = cake_define
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  If Test 7 (Imm (n2w 4))
-                   (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'a) -
+                   (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r
+                     (Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (bytes_in_word))))) 8;
                               word_gc_move_list_code conf])
-                   (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'a) -
+                   (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r
+                     (Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (n2w 1))))) 7;
-                              (\r v. Inst (Arith (Shift Lsl r r (Imm
-                                (n2w v))))) 7 (backend_common_word_shift
-                                (:'a));
+                              (\r v. Inst (Arith (asm_Shift Lsl r r
+                                (Imm (n2w v))))) 7
+                                (backend_common_word_shift (:'a));
                               (\r1 r2. Inst (Arith (asm_Binop Add
                                 r1 r1 (Reg r2)))) 8 7])]):'a
                                 stackLang_prog)`;;
@@ -145,12 +146,12 @@ let word_gc_move_bitmap_code_def = cake_define
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotLower 7
        (Imm (n2w 2))
       (If Test 7 (Imm (n2w 1))
-         (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+         (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
            v))))) 7 1;
                     (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                       (bytes_in_word))))) 8])
          (list_Seq [stackLang_StackLoadAny 5 8;
-                    (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+                    (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                       v))))) 7 1;
                     word_gc_move_code conf;
                     stackLang_StackStoreAny 5 8;
@@ -167,7 +168,7 @@ let word_gc_move_bitmaps_code_def = cake_define
                   stackLang_BitmapLoad 0 9;
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm (n2w
                     1))))) 9;
-                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+                  (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                     v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
@@ -191,17 +192,17 @@ let word_gen_gc_move_code_def = cake_define
          [(\dest src. Inst (Arith (asm_Binop Or dest src (Reg src))))
            0 5;
           Get 1 CurrHeap;
-          (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 0
+          (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w v))))) 0
             (shift_length conf);
-          (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 0
+          (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
             (backend_common_word_shift (:'a));
           (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0 1;
           (\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 1 0;
           If Test 1 (Imm (n2w 3))
-            (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
-              v))))) 1 2;
-                       (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w
-                         v))))) 1 (shift_length conf);
+            (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm
+              (n2w v))))) 1 2;
+                       (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
+                         (n2w v))))) 1 (shift_length conf);
                        clear_top_inst 5 (small_shift_length conf -
                          1);
                        (\r1 r2. Inst (Arith (asm_Binop Or r1 r1 (Reg
@@ -209,8 +210,8 @@ let word_gen_gc_move_code_def = cake_define
             (list_Seq [
                        (\dest src. Inst (Arith (asm_Binop Or dest src
                          (Reg src)))) 6 1;
-                       (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
-                         v))))) 1 (dimindex (:'a) -
+                       (\r v. Inst (Arith (asm_Shift Lsr r r (Imm
+                         (n2w v))))) 1 (dimindex (:'a) -
                          data_to_word_config_len_size conf);
                        (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                          (n2w 1))))) 1;
@@ -225,7 +226,7 @@ let word_gen_gc_move_code_def = cake_define
                            Get 4 (Temp (n2w 3));
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 6 1;
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 1 (backend_common_word_shift
                              (:'a));
                            (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1
@@ -242,14 +243,14 @@ let word_gen_gc_move_code_def = cake_define
                              src (Reg src)))) 0 6;
                            memcpy_code;
                            Get 0 (Temp (n2w 3));
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 2;
                            (\r a. Inst (asm_Mem Store r (Addr a (n2w
                              0)))) 0 4;
                            Get 1 (Temp (n2w 3));
                            clear_top_inst 5 (small_shift_length conf
                              - 1);
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. Inst (Arith (asm_Binop Or r1 r1
                              (Reg r2)))) 5 1;
@@ -265,14 +266,14 @@ let word_gen_gc_move_code_def = cake_define
                            memcpy_code;
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 6;
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 (backend_common_word_shift
                              (:'a));
                            (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1
                              (Reg r2)))) 2 0;
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 4;
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 2;
                            (\r a. Inst (asm_Mem Store r (Addr a (n2w
                              0)))) 0 2;
@@ -280,7 +281,7 @@ let word_gen_gc_move_code_def = cake_define
                              src (Reg src)))) 1 4;
                            clear_top_inst 5 (small_shift_length conf
                              - 1);
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. Inst (Arith (asm_Binop Or r1 r1
                              (Reg r2)))) 5 1;
@@ -295,22 +296,22 @@ let word_gen_gc_partial_move_code_def = cake_define
          [(\dest src. Inst (Arith (asm_Binop Or dest src (Reg src))))
            0 5;
           Get 6 (Temp (n2w 0));
-          (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 0
+          (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w v))))) 0
             (shift_length conf);
-          (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 0
+          (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w v))))) 0
             (backend_common_word_shift (:'a));
           Get 1 (Temp (n2w 1));
           If asm_Lower 0 (Reg 6) Skip
-           (Seq (Get 6 (Temp (n2w 1)))
-           (If asm_NotLower 0 (Reg 1) Skip (list_Seq [
+           (word_bignum_Seq (Get 6 (Temp (n2w 1)))
+           (word_bignum_If asm_NotLower 0 (Reg 1) Skip (list_Seq [
               Get 1 CurrHeap;
               (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2)))) 0
                 1;
               (\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 1 0;
               If Test 1 (Imm (n2w 3))
-                (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
+                (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm
                   (n2w v))))) 1 2;
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 1 (shift_length conf);
                            clear_top_inst 5 (small_shift_length conf
                              - 1);
@@ -319,7 +320,7 @@ let word_gen_gc_partial_move_code_def = cake_define
                 (list_Seq [
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 6 1;
-                           (\r v. Inst (Arith (Shift Lsr r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsr r r (Imm
                              (n2w v))))) 1 (dimindex (:'a) -
                              data_to_word_config_len_size conf);
                            (\r1. Inst (Arith (asm_Binop Add r1 r1
@@ -333,14 +334,14 @@ let word_gen_gc_partial_move_code_def = cake_define
                            memcpy_code;
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 6;
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 (backend_common_word_shift
                              (:'a));
                            (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1
                              (Reg r2)))) 2 0;
                            (\dest src. Inst (Arith (asm_Binop Or dest
                              src (Reg src)))) 0 4;
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 0 2;
                            (\r a. Inst (asm_Mem Store r (Addr a (n2w
                              0)))) 0 2;
@@ -348,7 +349,7 @@ let word_gen_gc_partial_move_code_def = cake_define
                              src (Reg src)))) 1 4;
                            clear_top_inst 5 (small_shift_length conf
                              - 1);
-                           (\r v. Inst (Arith (Shift Lsl r r (Imm
+                           (\r v. Inst (Arith (asm_Shift Lsl r r (Imm
                              (n2w v))))) 1 (shift_length conf);
                            (\r1 r2. Inst (Arith (asm_Binop Or r1 r1
                              (Reg r2)))) 5 1;
@@ -361,12 +362,12 @@ let word_gen_gc_move_bitmap_code_def = cake_define
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotLower 7
        (Imm (n2w 2))
       (If Test 7 (Imm (n2w 1))
-         (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+         (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
            v))))) 7 1;
                     (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                       (bytes_in_word))))) 8])
          (list_Seq [stackLang_StackLoadAny 5 8;
-                    (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+                    (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                       v))))) 7 1;
                     word_gen_gc_move_code conf;
                     stackLang_StackStoreAny 5 8;
@@ -378,12 +379,12 @@ let word_gen_gc_partial_move_bitmap_code_def = cake_define
      (\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotLower 7
        (Imm (n2w 2))
       (If Test 7 (Imm (n2w 1))
-         (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+         (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
            v))))) 7 1;
                     (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                       (bytes_in_word))))) 8])
          (list_Seq [stackLang_StackLoadAny 5 8;
-                    (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+                    (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                       v))))) 7 1;
                     word_gen_gc_partial_move_code conf;
                     stackLang_StackStoreAny 5 8;
@@ -400,7 +401,7 @@ let word_gen_gc_move_bitmaps_code_def = cake_define
                   stackLang_BitmapLoad 0 9;
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm (n2w
                     1))))) 9;
-                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+                  (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                     v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
@@ -413,7 +414,7 @@ let word_gen_gc_partial_move_bitmaps_code_def = cake_define
                   stackLang_BitmapLoad 0 9;
                   (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm (n2w
                     1))))) 9;
-                  (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w
+                  (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
                     v))))) 0 (dimindex (:'a) - 1)])`;;
 
 (* 9 is w, 8 is index into stack *)
@@ -477,20 +478,20 @@ let word_gen_gc_move_data_code_def = cake_define
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  If Test 7 (Imm (n2w 4))
-                   (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'a) -
+                   (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r
+                     (Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (bytes_in_word))))) 8;
                               word_gen_gc_move_list_code conf])
-                   (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'a) -
+                   (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r
+                     (Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (n2w 1))))) 7;
-                              (\r v. Inst (Arith (Shift Lsl r r (Imm
-                                (n2w v))))) 7 (backend_common_word_shift
-                                (:'a));
+                              (\r v. Inst (Arith (asm_Shift Lsl r r
+                                (Imm (n2w v))))) 7
+                                (backend_common_word_shift (:'a));
                               (\r1 r2. Inst (Arith (asm_Binop Add
                                 r1 r1 (Reg r2)))) 8 7])]):'a
                                 stackLang_prog)`;;
@@ -500,8 +501,9 @@ let word_gen_gc_partial_move_ref_list_code_def = cake_define
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 9
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
-                 (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 7
-                   (dimindex (:'a) - data_to_word_config_len_size conf);
+                 (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                   v))))) 7 (dimindex (:'a) -
+                   data_to_word_config_len_size conf);
                  (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 8;
                  word_gen_gc_partial_move_list_code conf]):'a
@@ -513,21 +515,21 @@ let word_gen_gc_partial_move_data_code_def = cake_define
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
                  If Test 7 (Imm (n2w 4))
-                   (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'a) -
+                   (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r
+                     (Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (bytes_in_word))))) 8;
                               word_gen_gc_partial_move_list_code
                                 conf])
-                   (list_Seq [(\r v. Inst (Arith (Shift Lsr r r (Imm
-                     (n2w v))))) 7 (dimindex (:'a) -
+                   (list_Seq [(\r v. Inst (Arith (asm_Shift Lsr r r
+                     (Imm (n2w v))))) 7 (dimindex (:'a) -
                      data_to_word_config_len_size conf);
                               (\r1. Inst (Arith (asm_Binop Add r1 r1
                                 (Imm (n2w 1))))) 7;
-                              (\r v. Inst (Arith (Shift Lsl r r (Imm
-                                (n2w v))))) 7 (backend_common_word_shift
-                                (:'a));
+                              (\r v. Inst (Arith (asm_Shift Lsl r r
+                                (Imm (n2w v))))) 7
+                                (backend_common_word_shift (:'a));
                               (\r1 r2. Inst (Arith (asm_Binop Add
                                 r1 r1 (Reg r2)))) 8 7])]):'a
                                 stackLang_prog)`;;
@@ -537,8 +539,9 @@ let word_gen_gc_move_refs_code_def = cake_define
      ((\cmp r ri c. Loop (If cmp r ri c (Break 0))) asm_NotEqual 0
        (Reg 8)
       (list_Seq [(\r a. Inst (asm_Mem Load r (Addr a (n2w 0)))) 7 8;
-                 (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 7
-                   (dimindex (:'a) - data_to_word_config_len_size conf);
+                 (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                   v))))) 7 (dimindex (:'a) -
+                   data_to_word_config_len_size conf);
                  (\r1. Inst (Arith (asm_Binop Add r1 r1 (Imm
                    (bytes_in_word))))) 8;
                  word_gen_gc_move_list_code conf;
@@ -589,14 +592,15 @@ let word_gen_gc_move_loop_code_def = cake_define
 
 let word_gc_partial_or_full_def = cake_define
   `word_gc_partial_or_full gen_sizes partial_code full_code =
-     (match gen_sizes with [] -> list_Seq ([Get 8 TriggerGC; Get 7
-       EndOfHeap; (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
-       7 8] ++ full_code) | _1 -> list_Seq
-              [Get 8 TriggerGC;
-               Get 7 EndOfHeap;
+     (match gen_sizes with [] -> list_Seq ([stackLang_Get 8
+       TriggerGC; stackLang_Get 7 EndOfHeap; (\r1 r2. Inst (Arith
+       (asm_Binop Sub r1 r1 (Reg r2)))) 7 8] ++ full_code) | _1 ->
+       list_Seq
+              [stackLang_Get 8 TriggerGC;
+               stackLang_Get 7 EndOfHeap;
                (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                  7 8;
-               If asm_NotLower 7 (Reg 1)
+               stackLang_If asm_NotLower 7 (Reg 1)
                  (list_Seq partial_code)
                  (list_Seq full_code)])`;;
 
@@ -610,17 +614,19 @@ let SetNewTrigger_def = cake_define
                (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                  4 ib;
                If asm_Lower 1 (Reg 7)
-                 (If asm_Lower 4 (Reg 7)
+                 (word_bignum_If asm_Lower 4 (Reg 7)
                     (Set TriggerGC endh)
-                    (If Test 7 (Imm (if dimindex (:'a) = 32 then (n2w
-                      3) else (n2w 7)))
-                      (Seq ((\r1 r2. Inst (Arith (asm_Binop Add r1 r1
-                        (Reg r2)))) 7 ib) (Set TriggerGC 7))
+                    (word_bignum_If Test 7 (Imm (if dimindex (:'a) =
+                      32 then (n2w 3) else (n2w 7)))
+                      (word_bignum_Seq ((\r1 r2. Inst (Arith
+                        (asm_Binop Add r1 r1 (Reg r2)))) 7 ib) (Set
+                        TriggerGC 7))
                       (Set TriggerGC endh)))
-                 (If asm_Lower 4 (Reg 1)
+                 (word_bignum_If asm_Lower 4 (Reg 1)
                     (Set TriggerGC endh)
-                    (Seq ((\r1 r2. Inst (Arith (asm_Binop Add r1
-                      r1 (Reg r2)))) 1 ib) (Set TriggerGC 1)))]`;;
+                    (word_bignum_Seq ((\r1 r2. Inst (Arith
+                      (asm_Binop Add r1 r1 (Reg r2)))) 1 ib) (Set
+                      TriggerGC 1)))]`;;
 
 let word_gc_code_def = cake_define
   `word_gc_code conf =
@@ -631,8 +637,9 @@ let word_gc_code_def = cake_define
                 Set NextFree 2;
                 Set TriggerGC 2;
                 Set EndOfHeap 2;
-                If Test 1 (Reg 1) Skip (Seq ((\r w. Inst (Const r w))
-                  1 (n2w 1)) (stackLang_Halt 1))]) | Simple ->
+                If Test 1 (Reg 1) Skip (word_bignum_Seq ((\r w. Inst
+                  (Const r w)) 1 (n2w 1)) (stackLang_Halt 1))]) | Simple
+                  ->
          (list_Seq
                [Set AllocSize 1;
                 Set NextFree 0;
@@ -651,10 +658,10 @@ let word_gc_code_def = cake_define
                 Set Globals 5;
                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                   src)))) 7 5;
-                (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 7
-                  (shift_length conf);
-                (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 7
-                  (backend_common_word_shift (:'a));
+                (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                  v))))) 7 (shift_length conf);
+                (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w
+                  v))))) 7 (backend_common_word_shift (:'a));
                 Get 9 OtherHeap;
                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2))))
                   7 9;
@@ -680,8 +687,8 @@ let word_gc_code_def = cake_define
                 Get 1 AllocSize;
                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                   2 8;
-                If asm_Lower 2 (Reg 1) (Seq ((\r w. Inst (Const r w))
-                  1 (n2w 1)) (stackLang_Halt 1)) Skip]) |
+                If asm_Lower 2 (Reg 1) (word_bignum_Seq ((\r w. Inst
+                  (Const r w)) 1 (n2w 1)) (stackLang_Halt 1)) Skip]) |
                   data_to_word_Generational gen_sizes ->
          ((word_gc_partial_or_full gen_sizes
                [Set AllocSize 1;
@@ -696,18 +703,18 @@ let word_gc_code_def = cake_define
                 Get 7 HeapLength;
                 Get 5 Globals;
                 Get 3 OtherHeap;
-                (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 4
-                  (backend_common_word_shift (:'a));
+                (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                  v))))) 4 (backend_common_word_shift (:'a));
                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                   src)))) 6 3;
                 word_gen_gc_partial_move_code conf;
                 Set Globals 5;
                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                   src)))) 8 5;
-                (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 8
-                  (shift_length conf);
-                (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 8
-                  (backend_common_word_shift (:'a));
+                (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                  v))))) 8 (shift_length conf);
+                (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w
+                  v))))) 8 (backend_common_word_shift (:'a));
                 Get 9 CurrHeap;
                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2))))
                   8 9;
@@ -728,8 +735,8 @@ let word_gc_code_def = cake_define
                   src)))) 0 3;
                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                   0 2;
-                (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 0
-                  (backend_common_word_shift (:'a));
+                (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                  v))))) 0 (backend_common_word_shift (:'a));
                 Get 3 GenStart;
                 Get 1 CurrHeap;
                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2))))
@@ -766,8 +773,8 @@ let word_gc_code_def = cake_define
                 Set (Temp (n2w 5)) 4;
                 Set (Temp (n2w 6)) 4;
                 Get 4 HeapLength;
-                (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 4
-                  (backend_common_word_shift (:'a));
+                (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                  v))))) 4 (backend_common_word_shift (:'a));
                 Set (Temp (n2w 3)) 4;
                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                   src)))) 4 1;
@@ -781,10 +788,10 @@ let word_gc_code_def = cake_define
                 (\dest src. Inst (Arith (asm_Binop Or dest src (Reg
                   src)))) 7 5;
                 Get 9 OtherHeap;
-                (\r v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))) 7
-                  (shift_length conf);
-                (\r v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))) 7
-                  (backend_common_word_shift (:'a));
+                (\r v. Inst (Arith (asm_Shift Lsr r r (Imm (n2w
+                  v))))) 7 (shift_length conf);
+                (\r v. Inst (Arith (asm_Shift Lsl r r (Imm (n2w
+                  v))))) 7 (backend_common_word_shift (:'a));
                 (\r1 r2. Inst (Arith (asm_Binop Add r1 r1 (Reg r2))))
                   7 9;
                 Set GlobReal 7;
@@ -833,9 +840,9 @@ let word_gc_code_def = cake_define
                 Get 2 TriggerGC;
                 (\r1 r2. Inst (Arith (asm_Binop Sub r1 r1 (Reg r2))))
                   2 3;
-                If asm_Lower 2 (Reg 1) (Seq ((\r w. Inst (Const r
-                  w)) 1 (n2w 1)) (stackLang_Halt 1)) Skip]):'a
-                  stackLang_prog))`;;
+                If asm_Lower 2 (Reg 1) (word_bignum_Seq ((\r w.
+                  Inst (Const r w)) 1 (n2w 1)) (stackLang_Halt 1))
+                  Skip]):'a stackLang_prog))`;;
 
 let stubs_def = cake_define
   `stack_alloc_stubs conf = [(gc_stub_location,Seq (word_gc_code

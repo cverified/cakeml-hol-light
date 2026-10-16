@@ -57,7 +57,7 @@ let renumber_code_locs_def = cake_define_list
            (n,(Handle t x1 x2:closLang_exp)))`;
    `renumber_code_locs n (closLang_Call t ticks dest xs:closLang_exp) =
          (let (n,xs) = renumber_code_locs_list n xs in
-           (n,closLang_Op t (closLang_IntOp Add) xs))`];;
+           (n,closLang_Op t (closLang_IntOp closLang_Add) xs))`];;
 
 (* HOL4 ML code, not ported:
 val renumber_code_locs_ind = theorem"renumber_code_locs_ind";

@@ -23,7 +23,7 @@ let pure_op_def = cake_define
           small_enough_int n
         | ((closLang_IntOp _6),_7) -> F
         | ((closLang_WordOp _8),_9) -> F
-        | ((closLang_BlockOp (Cons _10)),_11) -> T
+        | ((closLang_BlockOp (closLang_Cons _10)),_11) -> T
         | ((closLang_BlockOp _12),_13) -> F
         | ((closLang_GlobOp _14),_15) -> F
         | ((closLang_MemOp _16),_17) -> F
@@ -56,7 +56,7 @@ let pure_exp_def = cake_define_list
 let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
       match x1 with
-        closLang_BlockOp (Cons block_tag) -> SOME block_tag
+        closLang_BlockOp (closLang_Cons block_tag) -> SOME block_tag
       | _42 -> NONE`;;
 hol4_overload "dest_Cons" "bvi_tmc_dest_Cons";;
 
@@ -172,8 +172,8 @@ let cb_to_bvi_def = cake_define_list
          (let l' = MAP (\n. Var n) l in
          let child' = cb_to_bvi loc child in
          let r' = MAP (\n. Var n) r in
-           Op (closLang_BlockOp (Cons tag)) (l' ++ [child'] ++
-             r'))`;
+           Op (closLang_BlockOp (closLang_Cons tag)) (l' ++
+             [child'] ++ r'))`;
    `cb_to_bvi loc (RCall ts args) =
          (let args' = MAP (\n. Var n) args in
            bvi_Call ts (SOME loc) args' NONE)`];;

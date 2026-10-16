@@ -25,11 +25,11 @@ let inst_find_name_def = cake_define
      (match i with Skip -> Skip | asm_Const r w -> asm_Const (tlookup
        f r) w | Arith (asm_Binop bop d r ri) ->
          Arith (asm_Binop bop (tlookup f d) (tlookup f r)
-           (ri_find_name f ri)) | Arith (Shift sop d r ri) ->
-         Arith (Shift sop (tlookup f d) (tlookup f r) (ri_find_name f
-           ri)) | Arith (Div r1 r2 r3) ->
-         Arith (Div (tlookup f r1) (tlookup f r2) (tlookup f r3)) |
-           Arith (asm_AddCarry r1 r2 r3 r4) ->
+           (ri_find_name f ri)) | Arith (asm_Shift sop d r ri) ->
+         Arith (asm_Shift sop (tlookup f d) (tlookup f r)
+           (ri_find_name f ri)) | Arith (asm_Div r1 r2 r3) ->
+         Arith (asm_Div (tlookup f r1) (tlookup f r2) (tlookup f r3))
+           | Arith (asm_AddCarry r1 r2 r3 r4) ->
          Arith (asm_AddCarry (tlookup f r1) (tlookup f r2) (tlookup f
            r3) (tlookup f r4)) | Arith (asm_AddOverflow r1 r2 r3 r4) ->
          Arith (asm_AddOverflow (tlookup f r1) (tlookup f r2)

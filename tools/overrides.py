@@ -245,6 +245,16 @@ INT_ARGS = {
 # definitions whose result is an integer, where no clause of it
 # says so (multiword's int_op has a clause whose right hand side
 # is the &1 of an integer, which HOL Light reads as a real)
+# the type of an argument of a definition, where the definition
+# itself says it nowhere and the overloaded names in it are
+# resolved by it
+ARG_TYPES = {
+  # the second state is one of stackSem as well, which the
+  # accessors that the two are compared with do not say
+  ('stack_removeProof', 'state_rel_def'):
+    {'s2': "('a,'c,'ffi)stackSem_state"},
+}
+
 INT_RESULT = set([
   ('multiword', 'int_op_def'),
   # the size of a clash tree is an integer, which only the
@@ -439,6 +449,8 @@ CON_OF = {
   # this gives back a wordLang program, whose Seq, Set and If
   # word_alloc's live_tree and word_bignum's mini have as well
   ('word_cse', 'word_cse_def'): {'*': 'wordLang'},
+  # the comp that this is about is the one of stack_remove
+  ('stack_removeProof', 'code_rel_def'): {'comp': 'stack_remove'},
 }
 
 # NB: the key of an override is (theory, name of the OCaml

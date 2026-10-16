@@ -11,13 +11,11 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/bvl_const.ml";;
 needs "compiler/backend/bvl_handle.ml";;
 needs "compiler/backend/bvl_inline.ml";;
-needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/proofs/bvl_handleProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "lib/sptree.ml";;
-needs "semantics/ast.ml";;
 
 (* removal of ticks *)
 
@@ -89,26 +87,26 @@ let exp_rel = cake_inductive
    (exp_rel cs [x1] [y1] /\
     exp_rel cs [x2] [y2] /\
     exp_rel cs [x3] [y3] ==>
-    exp_rel cs [If x1 x2 x3] [If y1 y2 y3]) /\
+    exp_rel cs [bvl_If x1 x2 x3] [bvl_If y1 y2 y3]) /\
    (exp_rel cs xs ys /\
     exp_rel cs [x] [y] ==>
-    exp_rel cs [Let xs x] [Let ys y]) /\
+    exp_rel cs [bvl_Let xs x] [bvl_Let ys y]) /\
    (exp_rel cs [x1] [y1] /\
     exp_rel cs [x2] [y2] ==>
-    exp_rel cs [Handle x1 x2] [Handle y1 y2]) /\
+    exp_rel cs [bvl_Handle x1 x2] [bvl_Handle y1 y2]) /\
    (exp_rel cs [x] [y] ==>
-    exp_rel cs [Raise x] [Raise y]) /\
+    exp_rel cs [bvl_Raise x] [bvl_Raise y]) /\
    (exp_rel cs [x] [y] ==>
-    exp_rel cs [Tick x] [Tick y]) /\
+    exp_rel cs [bvl_Tick x] [bvl_Tick y]) /\
    (exp_rel cs xs ys ==>
-    exp_rel cs [Op op xs] [Op op ys]) /\
-   (exp_rel cs [Force loc n] [Force loc n]) /\
+    exp_rel cs [bvl_Op op xs] [bvl_Op op ys]) /\
+   (exp_rel cs [bvl_Force loc n] [bvl_Force loc n]) /\
    (exp_rel cs xs ys ==>
-    exp_rel cs [Call ticks dest xs] [Call ticks dest ys]) /\
+    exp_rel cs [bvl_Call ticks dest xs] [bvl_Call ticks dest ys]) /\
    (exp_rel cs xs ys /\ sptree_lookup n cs = SOME (arity,x) /\
     exp_rel cs [x] [y] ==>
-    exp_rel cs [Call ticks (SOME n) xs]
-               [Let ys (mk_tick (SUC ticks) y)])`;;
+    exp_rel cs [bvl_Call ticks (SOME n) xs]
+               [bvl_Let ys (mk_tick (SUC ticks) y)])`;;
 
 let in_cc_def = cake_define
   `bvl_inlineProof_in_cc limit' cc =

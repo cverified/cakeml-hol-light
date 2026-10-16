@@ -11,7 +11,6 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
-needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
@@ -36,12 +35,12 @@ let op_space_req_def = cake_define
         match x1 with
           closLang_MemOp closLang_Ref -> l + 1
         | (closLang_MemOp (closLang_MutCons tag k)) -> l + 1
-        | (closLang_BlockOp (Cons _1)) -> (if l = 0 then 0 else l +
-          1)
+        | (closLang_BlockOp (closLang_Cons _1)) -> (if l = 0 then 0
+          else l + 1)
         | (closLang_BlockOp (closLang_Build parts)) -> SUM (MAP
           part_space_req parts)
-        | (closLang_WordOp (WordOpw W64 _2)) -> 3
-        | (closLang_WordOp (WordShift W64 _3 _4)) -> 3
+        | (closLang_WordOp (WordOpw ast_W64 _2)) -> 3
+        | (closLang_WordOp (WordShift ast_W64 _3 _4)) -> 3
         | (closLang_WordOp WordFromInt) -> 3
         | (closLang_WordOp WordToInt) -> 3
         | (closLang_WordOp (WordFromWord F)) -> 3

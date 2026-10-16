@@ -1281,8 +1281,8 @@ class Printer:
       # integer or a real is written &n
       oldint = self.ctx.intnums
       if hop.kind == 'id' and \
-         self.ctx.con_argty.get((hop.name, len(args) - 1)) in \
-           ('int', 'real'):
+         self.ctx.con_argty.get((hop.name.split('$')[-1],
+                                 len(args) - 1)) in ('int', 'real'):
         self.ctx.intnums = True
       arg = self.pr(e.arg, APP)
       self.ctx.intnums = oldint

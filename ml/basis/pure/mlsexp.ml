@@ -273,13 +273,13 @@ let sexp_to_app_list_def = cake_define_list
   [`sexp_to_app_list (Atom s) = misc_List [make_str_safe s]`;
    `sexp_to_app_list (Expr l) =
       Append (misc_List [(implode "(")])
-             (Append (sexps_to_app_list l) (misc_List [(implode
-               ")")]))`;
+             (misc_Append (sexps_to_app_list l) (misc_List
+               [(implode ")")]))`;
    `sexps_to_app_list [] = misc_List []`;
    `sexps_to_app_list (v :: vs) =
       (if NULL vs then sexp_to_app_list v else Append
         (sexp_to_app_list v)
-                  (Append (misc_List [(implode " ")])
+                  (misc_Append (misc_List [(implode " ")])
                     (sexps_to_app_list vs)))`];;
 
 let sexp_to_string_def = cake_define

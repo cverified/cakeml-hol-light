@@ -410,14 +410,14 @@ let add_to_data_const_def = cake_define
          data) with SOME r' -> (knowledge_to_latest_fupd (K (insert r' r
          (knowledge_to_latest data))) (knowledge_to_canonical_fupd (K
          (insert r r' (knowledge_to_canonical data))) data),
-                     Inst (Const r w)) | NONE ->
+                     Inst (asm_Const r w)) | NONE ->
                        (knowledge_to_latest_fupd (K (insert r r
                        (knowledge_to_latest data)))
                        (knowledge_to_canonical_fupd (K (insert r r
                        (knowledge_to_canonical data)))
                        (knowledge_instrs_mem_fupd (K (insert listCmp i r
                        (knowledge_instrs_mem data))) data)),
-                     Inst (Const r w)))`;;
+                     Inst (asm_Const r w)))`;;
 
 (* As add_to_data_aux, but for the load-fact map. *)
 let add_to_load_aux_def = cake_define
@@ -463,10 +463,10 @@ let is_store_def = cake_define_list
 let word_cseInst_def = cake_define
   `word_cseInst data x2 =
         match (data,x2) with
-          ((data:knowledge),asm_Skip) -> (data,Inst Skip)
+          ((data:knowledge),asm_Skip) -> (data,Inst asm_Skip)
         | (data,(Const r w)) ->
         (let data = invalidate_data data r in
-          if EVEN r then (data,Inst (Const r w)) else
+          if EVEN r then (data,Inst (asm_Const r w)) else
             add_to_data_const data r w)
         | (data,(Arith a)) ->
         (let r = firstRegOfArith a in
@@ -562,17 +562,16 @@ let word_cse_def = cake_define_list
    `word_cse data (wordLang_Get r x) =
         (let data = invalidate_data data r in
           match ALOOKUP (knowledge_gets_mem data) x with NONE -> (if
-            EVEN r then (data,(Get r x:'a wordLang_prog)) else
+            EVEN r then (data,wordLang_Get r x) else
                       (knowledge_to_latest_fupd (K (insert r r
                         (knowledge_to_latest data)))
                         (knowledge_to_canonical_fupd (K (insert r r
                         (knowledge_to_canonical data)))
                         (knowledge_gets_mem_fupd (K ((x,r) ::
                         knowledge_gets_mem data)) data)),
-                       (Get r x:'a wordLang_prog))) | SOME k -> (if
-                         EVEN r then (data,wordLang_Move 1
-                         [(r,lookup_any k (knowledge_to_latest data)
-                         k)]) else
+                       wordLang_Get r x)) | SOME k -> (if EVEN r
+                         then (data,wordLang_Move 1 [(r,lookup_any k
+                         (knowledge_to_latest data) k)]) else
                       (knowledge_to_latest_fupd (K (insert k r
                         (knowledge_to_latest data)))
                         (knowledge_to_canonical_fupd (K (insert r k
@@ -581,81 +580,77 @@ let word_cse_def = cake_define_list
                          (knowledge_to_latest data) k)])))`;
    `word_cse data (wordLang_Set x e) =
         (if x = CurrHeap then
-          (empty_data,Set x e) else
+          (empty_data,wordLang_Set x e) else
           let new_gets_mem = FILTER (\(m,n). ~(m = x))
             (knowledge_gets_mem data) in
             match dest_Var e with NONE -> (knowledge_gets_mem_fupd
-              (K new_gets_mem) data,Set x e) | SOME v -> (if EVEN v then
-              (knowledge_gets_mem_fupd (K new_gets_mem) data,Set x e)
-              else
+              (K new_gets_mem) data,wordLang_Set x e) | SOME v -> (if
+              EVEN v then (knowledge_gets_mem_fupd (K new_gets_mem)
+              data,wordLang_Set x e) else
                           (knowledge_to_canonical_fupd (K (insert v
                             (lookup_any v (knowledge_to_canonical data)
                             v) (knowledge_to_canonical
                               data))) (knowledge_gets_mem_fupd (K
                                 ((x,canonicalRegs data v) ::
                                 new_gets_mem)) data),
-                           Set x e)))`;
+                           wordLang_Set x e)))`;
    `word_cse data (wordLang_MustTerminate p) =
                 (let (data',p') = word_cse data p in
                     (data',wordLang_MustTerminate p'))`;
    `word_cse data (wordLang_Call ret dest args handler) =
-                (empty_data,(Call ret dest args handler:'a
-                  wordLang_prog))`;
+                (empty_data,wordLang_Call ret dest args handler)`;
    `word_cse data (wordLang_Seq p1 p2) =
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data1 p2 in
-          (data2,Seq p1' p2'))`;
+          (data2,wordLang_Seq p1' p2'))`;
    `word_cse data (wordLang_If c r1 r2 p1 p2) =
         (let (data1,p1') = word_cse data p1 in
         let (data2,p2') = word_cse data p2 in
-          (merge_data data1 data2,If c r1 r2 p1' p2'))`;
+          (merge_data data1 data2,wordLang_If c r1 r2 p1' p2'))`;
    `word_cse data ((OpCurrHeap b r1 r2):'a wordLang_prog) =
         (let data = invalidate_data data r1 in
-          if EVEN r2 \/ r2 = r1 then (data,OpCurrHeap b r1 r2) else
+          if EVEN r2 \/ r2 = r1 then (data,wordLang_OpCurrHeap b r1
+            r2) else
             let r2' = canonicalRegs' r1 data r2 in
             let pL = OpCurrHeapToNumList b r2' in
               add_to_data_aux (register_read data r2') r1 pL
-                (OpCurrHeap b r1 r2))`;
+                (wordLang_OpCurrHeap b r1 r2))`;
    `word_cse data (wordLang_LocValue r l) =
         (let data = invalidate_data data r in
-          add_to_data_aux data r [48; l] ((LocValue r l:'a
-            wordLang_prog)))`;
-   `word_cse data wordLang_Skip = (data,(Skip:'a wordLang_prog))`;
+          add_to_data_aux data r [48; l] (wordLang_LocValue r l))`;
+   `word_cse data wordLang_Skip = (data,wordLang_Skip)`;
    `word_cse data (wordLang_Store e r) = (knowledge_loads_mem_fupd (K
-  balanced_map_empty) data,(Store e r:'a wordLang_prog))`;
+  balanced_map_empty) data,wordLang_Store e r)`;
    `word_cse data (wordLang_Assign r e) = (data,(wordLang_Assign r
   e:'a wordLang_prog))`;
-   `word_cse data (wordLang_Raise r) = (data,(Raise r:'a
-  wordLang_prog))`;
-   `word_cse data (wordLang_Return r1 r2) = (data,(Return r1 r2:'a
-  wordLang_prog))`;
-   `word_cse data wordLang_Tick = (data,(Tick:'a wordLang_prog))`;
-   `word_cse data (wordLang_Alloc r m) = (empty_data,(Alloc r m:'a
-  wordLang_prog))`;
+   `word_cse data (wordLang_Raise r) = (data,wordLang_Raise r)`;
+   `word_cse data (wordLang_Return r1 r2) = (data,wordLang_Return r1
+  r2)`;
+   `word_cse data wordLang_Tick = (data,wordLang_Tick)`;
+   `word_cse data (wordLang_Alloc r m) = (empty_data,wordLang_Alloc r
+  m)`;
    `word_cse data (wordLang_Install p l dp dl m) =
-  (empty_data,(Install p l dp dl m:'a wordLang_prog))`;
+  (empty_data,wordLang_Install p l dp dl m)`;
    `word_cse data (wordLang_CodeBufferWrite r1 r2) =
-  (data,(CodeBufferWrite r1 r2:'a wordLang_prog))`;
+  (data,wordLang_CodeBufferWrite r1 r2)`;
    `word_cse data (wordLang_DataBufferWrite r1 r2) =
-  (data,(DataBufferWrite r1 r2:'a wordLang_prog))`;
-   `word_cse data (wordLang_FFI s p1 l1 p2 l2 m) = (empty_data,(FFI s
-  p1 l1 p2 l2 m:'a wordLang_prog))`;
+  (data,wordLang_DataBufferWrite r1 r2)`;
+   `word_cse data (wordLang_FFI s p1 l1 p2 l2 m) =
+  (empty_data,wordLang_FFI s p1 l1 p2 l2 m)`;
    `word_cse data (wordLang_StoreConsts r1 r2 r3 r4 payload) =
          (let data = invalidate_regs data [r1; r2; r3; r4] in
             (knowledge_loads_mem_fupd (K balanced_map_empty)
-              data,(StoreConsts r1 r2 r3 r4 payload:'a
-              wordLang_prog)))`;
+              data,wordLang_StoreConsts r1 r2 r3 r4 payload))`;
    `word_cse data (wordLang_ShareInst op r exp) =
          (let data = (if is_store op then data else invalidate_data
            data r) in
            (data,wordLang_ShareInst op r exp))`;
    `word_cse data (wordLang_Loop names c exit_names) =
          (let (_96,c') = word_cse empty_data c in
-           (empty_data,Loop names c' exit_names))`;
-   `word_cse data (wordLang_Break k) = (data,(Break k:'a
-  wordLang_prog))`;
-   `word_cse data (wordLang_Continue k) = (data,(Continue k:'a
-  wordLang_prog))`];;
+           (empty_data,wordLang_Loop names c' exit_names))`;
+   `word_cse data (wordLang_Break k) = (data,wordLang_Break k)`;
+   `word_cse data (wordLang_Continue k) = (data,wordLang_Continue
+  k)`];;
 
 let word_common_subexp_elim_def = cake_define
   `word_common_subexp_elim prog =

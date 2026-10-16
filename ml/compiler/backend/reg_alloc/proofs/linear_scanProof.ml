@@ -213,9 +213,9 @@ let good_bijection_state_def = cake_define
 let sptree_eq_list_def = cake_define
   `sptree_eq_list (s:int spt) l = (!i.
      i < LENGTH l ==>
-     (0 < EL i l <=> sptree_lookup i s = NONE) /\
-     (EL i l <= 0 <=> sptree_lookup i s = SOME (EL i l)))`;;
+     ((&0) < EL i l <=> sptree_lookup i s = NONE) /\
+     (EL i l <= (&0) <=> sptree_lookup i s = SOME (EL i l)))`;;
 
 (* TODO: move *)
 
-hol4_overload "++" "APPEND";;
+hol4_only "++" "APPEND";;

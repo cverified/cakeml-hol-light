@@ -14,7 +14,6 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_elim.ml";;
-needs "compiler/encoders/asm/asm.ml";;
 needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 
@@ -36,7 +35,7 @@ let dest_result_loc_def = cake_define
           SOME (wordSem_Result w ns) ->
        BIGUNION (set_of_list (MAP (\x. match (dest_word_loc x) with
          NONE -> {} | SOME x -> {x}) ns))
-        | (SOME (wordSem_Exception w (Loc n n0))) -> {n}
+        | (SOME (wordSem_Exception w (wordLang_Loc n n0))) -> {n}
         | _4 -> {}`;;
 
 (* TODO could do alt def using toAList -
