@@ -2358,9 +2358,20 @@ let cake_define_gen wf tm =
        try strat "measure" (fun () -> attempt cands)
        with Failure _ when not (declared ()) ->
        strat "guess" (fun () -> attempt [])) in
+  (* a clause with a free variable that is not one of the
+     functions being defined uses a constant that the port does
+     not have: no strategy can make such a definition, so it is
+     assumed at once *)
+  let free = definition_free tm in
   (* every way of making the definition together gets the budget;
      what is left after it is assumed *)
   let ths,_ =
+    if free <> [] then
+      (cheat_why :=
+         "free: " ^ end_itlist (fun a b -> a ^ ", " ^ b)
+                               (map (fst o dest_var) free);
+       [cake_cheat tm],TRUTH)
+    else
     try (the_strategy := ""; with_timeout strategies tm)
     with Cake_timeout ->
            (cheat_why := "timeout in " ^ !the_strategy;
