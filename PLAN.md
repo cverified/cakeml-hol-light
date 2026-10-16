@@ -6,24 +6,23 @@ are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-16 14:43, 2 files failed (`source_to_flatProof` and
-`stack_to_labProof`, both on a name that resolves to the
-constant of another theory) and 339 definitions were assumed
-(`ml/CHEATS.md`), which was `length (axioms ()) = 409` (a
-definition whose clauses are assumed one by one counts for
-more than one axiom).  The run before it, of 12:23, had 7 files
-that failed and 313 definitions assumed; the five files that
-now load are what the difference of the axioms is.  The round
-that follows takes the termination relation of HOL4 for a
-definition of several clauses too (107 of the 205 `Termination`
-blocks of the ported sources are of one), fills three gaps of
+2026-10-16 17:21, 5 files failed and 323 definitions were
+assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 335`;
+the run before it, of 14:43, assumed 339 of them and was 409
+axioms.  What made the difference is the termination relation
+that HOL4's `Termination` gives, which the port now uses for a
+definition whose clauses are a quotation each as well (the
+`evaluate` of wordSem, 26 clauses, and of stackSem, 35, were
+assumed clause by clause and are now defined), three gaps of
 HOL Light's admissibility machinery (a `MAP2`, a conditional
 that is not a tail call, a combination whose function is an
-argument deeper in), and repairs two things that made every
-measure over a list fail: a second `list_size` that
-`size_thms "list"` had defined, and the test in `FACTS_TAC`
-that threw away the instances of a fact with a type variable
-in it._
+argument deeper in), and two things that made every measure
+over a list fail (a second `list_size` that `size_thms "list"`
+had defined, and the test in `FACTS_TAC` that threw away the
+instances of a fact with a type variable in it).  Of the five
+files that fail, wordSem and stackSem die on the `evaluate`
+whose clauses the port cannot put together, which the round
+after this one repairs._
 
 ## What is ported
 
