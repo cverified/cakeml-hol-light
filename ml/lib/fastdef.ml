@@ -321,6 +321,14 @@ let cake_instantiate_casewise_recursion,
                APPLY_PROFORMA_TAC ADMISSIBLE_BASE gl
     | "admissible",_ when is_comb bod && headonly f bod
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
+    (* the function is only in the argument of the combination *)
+    | "admissible",_ when is_comb bod && not(rand bod = f) &&
+                          not(free_in f (rator bod))
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_RAND gl
+    (* the function is an argument of a combination deeper in,
+       which the proforma of that combination (a MAP) takes *)
+    | "admissible",_ when is_comb bod && not(rand bod = f)
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
     | _ -> failwith "MAIN_ADMISS_TAC" in
 
   let ADMISS_TAC =

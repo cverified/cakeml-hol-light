@@ -248,6 +248,33 @@ let MEM_SIZE_TAC (asl,w as gl) =
       mems in
   MAP_EVERY MP_TAC facts gl;;
 
+(* the assumptions that the equations between the assumptions
+   give: an assumption i < LENGTH xs and an assumption
+   LENGTH xs = LENGTH ys give i < LENGTH ys, which is what the
+   fact about the other list asks for *)
+
+let EQ_COPY_TAC (asl,w as gl) =
+  let asms = map snd asl in
+  let eqs = filter (fun th -> let c = concl th in
+                              is_eq c && type_of(lhs c) <> bool_ty)
+                   asms in
+  let news = ref [] in
+  do_list
+    (fun e ->
+       do_list
+         (fun th ->
+            if concl th = concl e then () else
+            let th' = try ONCE_REWRITE_RULE [e] th
+                      with Failure _ -> th in
+            let c = concl th' in
+            if c = concl th || c = `T` ||
+               exists (fun t -> concl t = c) asms ||
+               exists (fun t -> concl t = c) (!news)
+            then () else news := th' :: (!news))
+         asms)
+    eqs;
+  (if !news = [] then ALL_TAC else MAP_EVERY ASSUME_TAC (!news)) gl;;
+
 (* the facts about division and remainder in the goal *)
 
 let DIV_FACTS_TAC (asl,w as gl) =
@@ -361,6 +388,7 @@ and SIZE_TERM_TAC g =
    REWRITE_TAC(all_size_thms()) THEN
    RULE_ASSUM_TAC(REWRITE_RULE(LENGTH_EQ_NIL::all_size_thms())) THEN
    LIST_MEM_TAC THEN
+   EQ_COPY_TAC THEN
    MEM_SIZE_TAC THEN DIV_FACTS_TAC THEN
    (* a fact may make a subterm appear that another fact is about *)
    FACTS_TAC THEN FACTS_TAC THEN
