@@ -567,8 +567,18 @@ CON_OF = {
   # the Var and the Const of the two clauses that evaluate a
   # wordLang expression are wordLang's (the ones of stackLang
   # and of every other language have the name as well)
+  # the result that evaluate gives is stackSem's, which a clause
+  # with a match in it does not say (the function that the clause
+  # defines is a variable while it is parsed, so nothing fixes
+  # the type of Error)
+  # the Get and the Set that it evaluates are stackLang's (whose
+  # second argument is a register, where wordLang's is an
+  # expression), and the Var and the Const of the two clauses
+  # that evaluate a wordLang expression are wordLang's
   ('stackSem', 'evaluate_def'): {'Var': 'wordLang',
-                                 'Const': 'wordLang'},
+                                 'Const': 'wordLang',
+                                 'Get': 'stackLang',
+                                 'Set': 'stackLang'},
   # these build wordLang programs, whose constructor names
   # linear_scan's live trees and word_bignum's language have too
   ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},
