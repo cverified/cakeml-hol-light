@@ -173,11 +173,31 @@ sources, and why.
   ambiguous constructor inside it is of, where every constructor
   of that name says the same (the argument of a `Litv` is an
   `ast$lit`, whichever `Litv` it is).
+- The relations of an `Inductive` get the overloads of HOL4 that
+  the constants of a `Definition` get: without them a later
+  block that writes the name as HOL4 does
+  (`source_to_flatProof$env_all_rel` says `env_rel`) gets the
+  constant of another theory that has that name.  The names
+  that a `CON_OF` of a definition sets are restored to what
+  they were after the block, not removed, and a name that was
+  not an overload does not become one.
+
+- The relation that the port takes from a `Termination` is
+  parsed in a function (`cake_define_list_try`), so that a
+  relation that does not typecheck only costs the measure
+  rather than being an error that the file does not survive;
+  `tools/relcheck.py` says which they are.
+
 - Where one theory uses two record types that have a field of the
   same name, `FIELD_VAR` says which record a variable is of
   (`typeSoundInvariants` has the `c` of a `sem_env` and the `c` of
   a `type_env` in one rule), and the port writes the accessor and
-  the update of that record out.
+  the update of that record out.  `FIELD_VAR_DEF` says it for
+  one definition, where the theory uses the name for another
+  record there (the `s` of `stack_to_labProof` is the state of
+  stackSem everywhere except in `make_init`, which builds one
+  out of a state of labSem); the overloads whose body reads a
+  field of it are expanded again for such a definition.
 - The overload that a file makes for `++` (the choice of a monad
   that it enables, or an append of its own) is taken back at the
   end of the file with `hol4_only`: an overload stays in HOL
