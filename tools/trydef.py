@@ -72,7 +72,13 @@ for nm in names:
   # the comments may hold HOL4 ML code with quotations of its own
   t = re.sub(r'\(\*.*?\*\)', '', t, flags=re.S)
   qs = [x for x in re.findall(r'`([^`]*)`', t, re.S) if x.strip()]
-  wf = 'cake_define_wf' in t or 'cake_define_list_wf' in t
+  # the relation that HOL4 gives is the first quotation, both
+  # of a _wf form (which takes it as it is) and of a _try one
+  # (which takes a function that gives it, so that a relation
+  # that does not typecheck only costs the measure)
+  tryf = 'cake_define_list_try' in t or 'cake_define_try' in t
+  wf = ('cake_define_wf' in t or 'cake_define_list_wf' in t or
+        tryf)
   rel = qs[0] if wf else None
   if wf: qs = qs[1:]
   hs = heads(qs) - set(['T', 'F', 'let', 'match', 'if'])
@@ -82,7 +88,13 @@ for nm in names:
     return s
   qs = [ren(q) for q in qs]
   lst = 'cake_define_list' in t
-  if lst and wf:
+  if lst and tryf:
+    call = ('cake_define_list_try (fun () -> `%s`)\n  [`%s`]'
+            % (rel, '`;\n   `'.join(qs)))
+  elif tryf:
+    call = ('cake_define_try (fun () -> `%s`)\n  `%s`'
+            % (rel, qs[0]))
+  elif lst and wf:
     call = ('cake_define_list_wf `%s`\n  [`%s`]'
             % (rel, '`;\n   `'.join(qs)))
   elif lst:
