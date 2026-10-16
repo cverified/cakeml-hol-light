@@ -7,6 +7,7 @@
 
 needs "lib/comparison.ml";;
 needs "lib/sorting.ml";;
+needs "lib/ternaryComparisons.ml";;
 (* HOL4 ancestors outside the port: option pair string arithmetic
    pred_set list finite_map alist *)
 
@@ -186,26 +187,23 @@ hol4_overload "delete" "balanced_map_delete";;
 
 let trim_help_greater_def = cake_define_list
   [`trim_help_greater cmp lo (Bin s' k v' l' r) =
-      (if cmp k lo = comparison_Less \/ cmp k lo = comparison_Equal
-        then
+      (if cmp k lo = LESS \/ cmp k lo = EQUAL then
         trim_help_greater cmp lo r else
         Bin s' k v' l' r)`;
    `trim_help_greater cmp lo Tip = Tip`];;
 
 let trim_help_lesser_def = cake_define_list
   [`trim_help_lesser cmp hi (Bin s' k v' l r') =
-      (if cmp k hi = comparison_Greater \/ cmp k hi =
-        comparison_Equal then
+      (if cmp k hi = GREATER \/ cmp k hi = EQUAL then
         trim_help_lesser cmp hi l else
         Bin s' k v' l r')`;
    `trim_help_lesser cmp lo Tip = Tip`];;
 
 let trim_help_middle_def = cake_define_list
   [`trim_help_middle cmp lo hi (Bin s' k v' l r) =
-      (if cmp k lo = comparison_Less \/ cmp k lo = comparison_Equal
-        then
-        trim_help_middle cmp lo hi r else if cmp k hi =
-          comparison_Greater \/ cmp k hi = comparison_Equal then
+      (if cmp k lo = LESS \/ cmp k lo = EQUAL then
+        trim_help_middle cmp lo hi r else if cmp k hi = GREATER \/
+          cmp k hi = EQUAL then
         trim_help_middle cmp lo hi l else
         Bin s' k v' l r)`;
    `trim_help_middle lo cmp hi Tip = Tip`];;
@@ -301,8 +299,8 @@ let invariant_def = cake_define_list
   [`balanced_map_invariant cmp Tip <=> T`;
    `balanced_map_invariant cmp (Bin s k v l r) <=>
       s = 1 + structure_size l + structure_size r /\
-      key_ordered cmp k l comparison_Greater /\
-      key_ordered cmp k r comparison_Less /\
+      key_ordered cmp k l GREATER /\
+      key_ordered cmp k r LESS /\
       balanced (balanced_map_size l) (balanced_map_size r) /\
       balanced_map_invariant cmp l /\
       balanced_map_invariant cmp r`];;

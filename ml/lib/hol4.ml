@@ -36,6 +36,9 @@ override_interface("GENLIST",`list_of_seq:(num->A)->num->(A)list`);;
 override_interface("LIST_TO_SET",`set_of_list:(A)list->A->bool`);;
 override_interface("LIST_REL",
   `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
+(* HOL4's EVERY2 is its LIST_REL *)
+override_interface("EVERY2",
+  `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
 
 (* HOL4's OPTREL (optionTheory), with the monotonicity theorem that
    an inductive definition over it needs (HOL Light has the ones of
@@ -114,8 +117,8 @@ let OPTION_ALL = new_recursive_definition option_RECURSION
    (OPTION_ALL P (SOME x) <=> P x)`;;
 
 let OPTION_APPLY = new_recursive_definition option_RECURSION
-  `(OPTION_APPLY NONE (x:A) = (NONE:B option)) /\
-   (OPTION_APPLY (SOME f) x = SOME (f x))`;;
+  `(OPTION_APPLY NONE (x:A option) = (NONE:B option)) /\
+   (OPTION_APPLY (SOME f) x = OPTION_MAP f x)`;;
 
 (* HOL4's OPTION_GUARD: the condition of a computation in the
    option monad (cmlPEG overloads assert with it) *)
@@ -632,6 +635,24 @@ let INT_CEILING = new_definition
 (* under those is made with the right hand side rewritten with these  *)
 (* lemmas, and then the definition as it was given is derived from it.*)
 (* ------------------------------------------------------------------ *)
+
+(* ------------------------------------------------------------------ *)
+(* Three more functions of HOL4's list and string theories.           *)
+(* ------------------------------------------------------------------ *)
+
+let oHD = new_recursive_definition list_RECURSION
+  `(oHD [] = (NONE:A option)) /\
+   (oHD (CONS (h:A) t) = SOME h)`;;
+
+let MAX_LIST = new_recursive_definition list_RECURSION
+  `(MAX_LIST [] = 0) /\
+   (MAX_LIST (CONS h t) = MAX h (MAX_LIST t))`;;
+
+let isHexDigit = new_definition
+  `isHexDigit c <=>
+     ORD c >= 48 /\ ORD c <= 57 \/
+     ORD c >= 97 /\ ORD c <= 102 \/
+     ORD c >= 65 /\ ORD c <= 70`;;
 
 let ALL_MAPIFY = prove
  (`!f:A->bool l. ALL f l <=> ITLIST (\b a. b /\ a) (MAP f l) T`,

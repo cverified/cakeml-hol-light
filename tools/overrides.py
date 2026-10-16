@@ -194,6 +194,12 @@ ALSO_NEEDED = set([
 RENAME = {
   ('sptree', 'fromList'): 'sptree_fromList',
   ('sptree', 'toList'): 'sptree_toList',
+  # comparison overloads these with the constructors of the
+  # ordering of ternaryComparisons, which the port has under the
+  # names that HOL4 gives them there
+  ('comparison', 'Less'): 'LESS',
+  ('comparison', 'Equal'): 'EQUAL',
+  ('comparison', 'Greater'): 'GREATER',
 }
 
 # the constant that a name means in one theory of the port, where
@@ -509,6 +515,8 @@ CON_OF = {
   # the size of the stack of the wordSem state, not the one of
   # dataSem's stack
   ('data_to_word_gcProof', 'state_rel_thm'): {'stack_size': 'wordSem'},
+  # the values of the semantics of bvi are bvlSem's
+  ('bvi_tailrecProof', 'env_rel_def'): {'*': 'bvlSem'},
   # the values that these relations are about are flatSem's
   ('flat_patternProof', 'v_rel'): {'*': 'flatSem'},
   # the program comparison of stack_alloc, whose pass this is

@@ -51,8 +51,8 @@ fun split_tac q = Cases_on q \\ Cases_on `q` \\ FULL_SIMP_TAC (srw_ss())
 *)
 
 let inc_clock_def = cake_define
-  `bvlProps_inc_clock ck s = state_clock_fupd (K (state_clock s +
-  ck)) s`;;
+  `bvlProps_inc_clock ck s = bvlSem_state_clock_fupd (K
+  (bvlSem_state_clock s + ck)) s`;;
 hol4_overload "inc_clock" "bvlProps_inc_clock";;
 
 let get_vars_def = cake_define_list

@@ -2027,13 +2027,13 @@ let define_sing inner tm =
     let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
     prove(gcl,
           REPEAT GEN_TAC THEN
-          REWRITE_TAC([fdef; MAP; HD] @ ths) THEN
+          REWRITE_TAC([fdef; MAP; HD; APPEND] @ ths) THEN
           REPEAT (CHANGED_TAC
             (COND_CASES_TAC THEN
-             REWRITE_TAC([fdef; MAP; HD] @ ths))) THEN
+             REWRITE_TAC([fdef; MAP; HD; APPEND] @ ths))) THEN
           REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
-          CONV_TAC(TOP_DEPTH_CONV BETA_CONV) THEN
-          REWRITE_TAC([fdef; MAP; HD] @ ths)) in
+          CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
+          REWRITE_TAC([fdef; MAP; HD; APPEND] @ ths)) in
   map derive (conjuncts(snd(strip_forall tm))),spec;;
 
 (* ------------------------------------------------------------------ *)
@@ -2121,12 +2121,12 @@ let define_maplist inner tm =
     let gcl = close_clause [] (vsubst consts (snd(strip_forall cl))) in
     prove(gcl,
           REPEAT GEN_TAC THEN
-          REWRITE_TAC([fldef; MAP] @ ths) THEN
+          REWRITE_TAC([fldef; MAP; APPEND] @ ths) THEN
           CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-          REWRITE_TAC([fldef; MAP] @ ths) THEN
+          REWRITE_TAC([fldef; MAP; APPEND] @ ths) THEN
           REWRITE_TAC[LET_DEF; LET_END_DEF] THEN
           CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN
-          REWRITE_TAC([fldef; MAP] @ ths)) in
+          REWRITE_TAC([fldef; MAP; APPEND] @ ths)) in
   map derive allcls,spec;;
 
 (* ------------------------------------------------------------------ *)

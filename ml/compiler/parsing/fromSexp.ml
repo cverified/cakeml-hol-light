@@ -519,13 +519,15 @@ let sexpexp_def = cake_define_wf
                sexpexp (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Log" /\ LENGTH args
          = 3)
-             (OPTION_MAP ast_Log (sexplog (EL 0 args)) <*>
-                       (sexpexp (EL 1 args)) <*>
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Log (sexplog
+               (EL 0 args)))
+                       (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "If" /\ LENGTH args
          = 3)
-             (OPTION_MAP ast_If (sexpexp (EL 0 args)) <*>
-                      (sexpexp (EL 1 args)) <*>
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_If (sexpexp
+               (EL 0 args)))
+                      (sexpexp (EL 1 args)))
                       (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Mat" /\ LENGTH args
          = 2)
@@ -534,9 +536,9 @@ let sexpexp_def = cake_define_wf
                (sexplist (sexppair sexppat sexpexp) (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Let" /\ LENGTH args
          = 3)
-             (OPTION_MAP ast_Let (sexpopt odestSEXSTR (EL 0 args))
-               <*>
-                       (sexpexp (EL 1 args)) <*>
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP ast_Let (sexpopt
+               odestSEXSTR (EL 0 args)))
+                       (sexpexp (EL 1 args)))
                        (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Letrec" /\ LENGTH
          args = 2)
@@ -579,22 +581,25 @@ let sexpexp_alt_def = cake_define_list
               if nm = "App" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_App (sexpop (EL 0 args))
                    (sexpexp_list (EL 1 args)) else
-              if nm = "Log" /\ LENGTH args = 3 then
-                 OPTION_MAP ast_Log (sexplog (EL 0 args)) <*>
-                   sexpexp_alt (EL 1 args) <*>
-                 sexpexp_alt (EL 2 args) else
-              if nm = "If" /\ LENGTH args = 3 then
-                 OPTION_MAP ast_If (sexpexp_alt (EL 0 args)) <*>
-                   sexpexp_alt (EL 1 args) <*>
-                 sexpexp_alt (EL 2 args) else
+              if nm = "Log" /\ LENGTH args = 3 then OPTION_APPLY
+                (OPTION_APPLY
+                 (OPTION_MAP ast_Log (sexplog (EL 0 args)))
+                   (sexpexp_alt (EL 1 args)))
+                 (sexpexp_alt (EL 2 args)) else
+              if nm = "If" /\ LENGTH args = 3 then OPTION_APPLY
+                (OPTION_APPLY
+                 (OPTION_MAP ast_If (sexpexp_alt (EL 0 args)))
+                   (sexpexp_alt (EL 1 args)))
+                 (sexpexp_alt (EL 2 args)) else
               if nm = "Mat" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Mat (sexpexp_alt (EL 0 args))
                    (sexppes (EL 1 args)) else
-              if nm = "Let" /\ LENGTH args = 3 then
-                 OPTION_MAP ast_Let (sexpopt odestSEXSTR (EL 0
-                   args)) <*>
-                 sexpexp_alt (EL 1 args) <*> sexpexp_alt (EL 2 args)
-                   else
+              if nm = "Let" /\ LENGTH args = 3 then OPTION_APPLY
+                (OPTION_APPLY
+                 (OPTION_MAP ast_Let (sexpopt odestSEXSTR (EL 0
+                   args)))
+                 (sexpexp_alt (EL 1 args))) (sexpexp_alt (EL 2
+                   args)) else
               if nm = "Letrec" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Letrec
                    (sexpfuns (EL 0 args))
@@ -650,8 +655,9 @@ let sexpdec_def = cake_define
        (nm,args).
        (\b m. monad_unitbind (assert b) m) (nm = "Dlet" /\ LENGTH
          args = 3)
-             (OPTION_MAP Dlet (sexplocn (HD args)) <*>
-                        (sexppat (EL 1 args)) <*>
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dlet (sexplocn
+               (HD args)))
+                        (sexppat (EL 1 args)))
                         (sexpexp (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Dletrec" /\ LENGTH
          args = 2)
@@ -664,17 +670,19 @@ let sexpdec_def = cake_define
                (EL 1 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Dtabbrev" /\ LENGTH
          args = 4)
-             (OPTION_MAP Dtabbrev (sexplocn (EL 0 args)) <*>
-                            (sexplist odestSEXSTR (EL 1 args)) <*>
-                            (odestSEXSTR (EL 2 args)) <*>
+             (OPTION_APPLY (OPTION_APPLY (OPTION_APPLY (OPTION_MAP
+               Dtabbrev (sexplocn (EL 0 args)))
+                            (sexplist odestSEXSTR (EL 1 args)))
+                            (odestSEXSTR (EL 2 args)))
                             (sexptype (EL 3 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Denv" /\ LENGTH
          args = 1)
              (OPTION_MAP Denv (odestSEXSTR (EL 0 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Dexn" /\ LENGTH
          args = 3)
-             (OPTION_MAP Dexn (sexplocn (EL 0 args)) <*>
-                        (odestSEXSTR (EL 1 args)) <*>
+             (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dexn (sexplocn
+               (EL 0 args)))
+                        (odestSEXSTR (EL 1 args)))
                         (sexplist sexptype (EL 2 args))) ++
        (\b m. monad_unitbind (assert b) m) (nm = "Dmod" /\ LENGTH
          args = 2)
@@ -690,8 +698,9 @@ let sexpdec_alt_def = cake_define_list
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then
-              (OPTION_MAP Dlet (sexplocn (HD args)) <*>
-                           (sexppat_alt (EL 1 args)) <*>
+              (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dlet (sexplocn
+                (HD args)))
+                           (sexppat_alt (EL 1 args)))
                            (sexpexp_alt (EL 2 args))) else
           if nm = "Dletrec" /\ LENGTH args = 2 then
                 (OPTION_MAP2 Dletrec (sexplocn (HD args))
@@ -700,15 +709,17 @@ let sexpdec_alt_def = cake_define_list
                 (OPTION_MAP2 Dtype (sexplocn (HD args))
                   (sexptype_def (EL 1 args))) else
           if nm = "Dtabbrev" /\ LENGTH args = 4 then
-                (OPTION_MAP Dtabbrev (sexplocn (EL 0 args)) <*>
-                              (sexplist odestSEXSTR (EL 1 args)) <*>
-                              (odestSEXSTR (EL 2 args)) <*>
+                (OPTION_APPLY (OPTION_APPLY (OPTION_APPLY
+                  (OPTION_MAP Dtabbrev (sexplocn (EL 0 args)))
+                              (sexplist odestSEXSTR (EL 1 args)))
+                              (odestSEXSTR (EL 2 args)))
                               (sexptype_alt (EL 3 args))) else
           if nm = "Denv" /\ LENGTH args = 1 then
                 (OPTION_MAP Denv (odestSEXSTR (EL 0 args))) else
           if nm = "Dexn" /\ LENGTH args = 3 then
-                (OPTION_MAP Dexn (sexplocn (EL 0 args)) <*>
-                           (odestSEXSTR (EL 1 args)) <*>
+                (OPTION_APPLY (OPTION_APPLY (OPTION_MAP Dexn
+                  (sexplocn (EL 0 args)))
+                           (odestSEXSTR (EL 1 args)))
                            (sexptype_list (EL 2 args))) else
           if nm = "Dmod" /\ LENGTH args = 2 then
                 (OPTION_MAP2 Dmod (odestSEXSTR (EL 0 args))

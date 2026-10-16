@@ -16,11 +16,18 @@ for l in open(C + '/ml/CHEATS.md'):
   m = re.match(r'\| `([^`]+)` \| `([^`]*)` \|', l)
   if m and m.group(2): cheats.append((m.group(1), m.group(2)))
 
-tests = ["""let cake_free tm =
-  let vs = frees tm in
-  filter (fun v -> not (can get_const_type (fst(dest_var v)))) vs;;
+tests = ["""(* the free variables of a clause that its own
+   arguments do not bind: those are the constants that the port
+   does not have *)
+let cake_free tm =
+  let l,r = dest_eq(snd(strip_forall tm)) in
+  let _,args = strip_comb l in
+  let bound = itlist (fun a s -> union (frees a) s) args [] in
+  filter (fun v -> not (mem v bound) &&
+                   not (can get_const_type (fst(dest_var v))))
+         (frees r);;
 let cake_show nm tm =
-  let vs = cake_free tm in
+  let vs = try cake_free tm with Failure _ -> [] in
   if vs <> [] then
     print_string (nm ^ ": " ^
       end_itlist (fun a b -> a ^ " " ^ b)
