@@ -2101,14 +2101,15 @@ let candidate_measures tm =
                  (nub cands) in
     (* a measure that does not look at its argument gives the
        goal 0 < 0, so it is only kept where there is nothing
-       else *)
+       else; one of another shape is kept, as this only drops
+       the ones that are plainly of no use *)
     let looks m =
-      let v,bod = try dest_gabs (rand m) with Failure _ ->
-                  dest_abs (rand m) in
-      (* the size function of a type that has none is \x. 0, so
-         the body only says nothing after it is reduced *)
-      let bod = beta_normalize bod in
-      exists (fun x -> vfree_in x bod) (frees v) in
+      try let v,bod = dest_gabs (rand m) in
+          (* the size function of a type that has none is \x. 0,
+             so the body only says nothing after it is reduced *)
+          let bod = beta_normalize bod in
+          exists (fun x -> vfree_in x bod) (frees v)
+      with Failure _ -> true in
     let good = filter looks ms in
     if good = [] then ms else good;;
 
