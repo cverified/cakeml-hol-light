@@ -46,6 +46,15 @@ everything it defines is then "already in use".  A script that
 ports a theory to look at what comes out sets
 `port.ML` to a scratch directory first.
 
+`tools/bin/trydef <name>...` makes the definitions that the
+first pass assumes (`ml/CHEATS.md`) again in a clone of
+`hol-seq`, with their constants renamed, and says of each one
+whether it was made, how long it took and why it was not: that
+is the quick way to try a change to the strategies, because the
+ancestors of the definition are loaded already.  With
+`PATCH=<file>` the clone loads a changed part of
+`ml/lib/define.ml` first (see below).
+
 A change to `ml/lib/define.ml` can be tried while a run is going
 without writing into `ml/`: everything that file makes is an ML
 value (it has no definition of its own at the top level), so a

@@ -1,0 +1,21 @@
+#!/bin/sh
+# trydef <name>... : make the definitions that the first pass
+# assumes again, with the constants renamed, in a clone of the
+# session of the last run (hol-seq), so that a change to the
+# strategies can be tried without loading the port again.  Set
+# S=<name> to use another session, and PATCH=<file> to load a
+# changed part of ml/lib/define.ml first.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${S:-try}
+ps -eo args --no-headers | grep -q '[c]heckseq' && {
+  echo "trydef: a run is going, which hol-seq is busy with"; exit 1; }
+tmux has -t hol-$s 2> /dev/null || {
+  rm -f /home/freek/claude/hol-light/bin/fifo/hol-$s
+  repl-clone hol-seq $s > /dev/null 2>&1 || {
+    echo "trydef: cannot clone hol-seq"; exit 1; }
+  [ -n "$PATCH" ] && TIMEOUT=300 repl-step $s "#use \"$PATCH\";;" \
+    > /dev/null 2>&1; }
+python3 -I $C/tools/trydef.py $C/tmp/trydef.ml "$@" || exit 1
+TIMEOUT=${TIMEOUT:-900} repl-step $s "loadt \"$C/tmp/trydef.ml\";;" \
+  2>&1 | grep -E '^TRYDEF|^Exception|^Error'
