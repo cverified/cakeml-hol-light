@@ -1,7 +1,8 @@
 #!/bin/sh
 # cheats [session] : write ml/CHEATS.md from the cheats that the
-# session (hol-seq by default) has recorded, and check that the
-# number of axioms is the three of HOL Light plus the cheats
+# session (hol-seq by default) has recorded, with why each of them
+# is one, and check that the number of axioms is the three of HOL
+# Light plus the ones of the cheats
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s=${1:-seq}
@@ -13,4 +14,12 @@ TIMEOUT=120 repl-step $s \
    output_string cake_out (string_of_int (length (axioms ())) ^ \"\\n\");
    close_out cake_out; (length (cake_cheats ()), length (axioms ()));;" \
   2>&1 | tail -2
+# why each of them is assumed, where the library layer records it
+TIMEOUT=120 repl-step $s \
+  "let cake_out = open_out \"$C/tmp/why.txt\" in
+   do_list (fun (n,w) ->
+     output_string cake_out (n ^ \"\\t\" ^ w ^ \"\\n\"))
+     (try cake_cheat_why () with _ -> []);
+   close_out cake_out; length (try cake_cheat_why () with _ -> []);;" \
+  > /dev/null 2>&1
 python3 -I $C/tools/cheats.py

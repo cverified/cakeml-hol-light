@@ -34,8 +34,19 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
     out.write('`length (axioms ())` is %d: the three axioms of HOL\n'
               'Light and %d for the %d definitions below.\n\n'
               % (nax, nax - 3, len(names)))
-  out.write('| definition | file |\n|---|---|\n')
+  # why each of them is assumed, where the library layer says it
+  why = {}
+  try:
+    for l in open(C + '/tmp/why.txt'):
+      if '\t' in l:
+        n, w = l.rstrip('\n').split('\t', 1)
+        why[n] = w
+  except Exception:
+    pass
+  out.write('| definition | file | why |\n|---|---|---|\n')
   for nm in names:
-    out.write('| `%s` | `%s` |\n' % (nm, where.get(nm, '')))
+    w = why.get(nm, '')
+    w = w.replace('|', '/')[:60]
+    out.write('| `%s` | `%s` | %s |\n' % (nm, where.get(nm, ''), w))
   out.write('\n%d definitions.\n' % len(names))
 print('wrote ml/CHEATS.md (%d)' % len(names))
