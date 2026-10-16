@@ -75,6 +75,13 @@ let ADMISSIBLE_MAP2 = prove
     [`f:A->B`; `g:A->B`; `i:num`; `a:P`]) THEN
   ASM_REWRITE_TAC[]);;
 
+(* the proformas of the admissibility that a later file of the
+   library layer adds, by the name of the function that the
+   recursive call is under (ml/lib/hol4.ml has the one of an
+   OPTION_MAP, whose OPTION_MAP it defines itself) *)
+
+let admissible_extra = ref ([]:(string * thm) list);;
+
 let cake_instantiate_casewise_recursion,
     cake_pure_prove_recursive_function_exists,
     cake_prove_general_recursive_function_exists =
@@ -295,6 +302,9 @@ let cake_instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_NSUM gl
     | "admissible","MAP"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP gl
+    (* a proforma that a later file of the library layer added *)
+    | "admissible",c when can (assoc c) (!admissible_extra)
+          -> APPLY_PROFORMA_TAC (assoc c (!admissible_extra)) gl
     (* the proforma of a MAP2, which HOL Light does not have *)
     | "admissible","MAP2"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP2 gl
