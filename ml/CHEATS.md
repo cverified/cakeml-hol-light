@@ -9,19 +9,19 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 335: the three axioms of HOL
-Light and 332 for the 323 definitions below.
+`length (axioms ())` is 370: the three axioms of HOL
+Light and 367 for the 325 definitions below.
 
 Why they are assumed:
 
 - 84: tryfind: /\
-- 73: timeout in measure
-- 43: timeout in guess
-- 37: tryfind: ==>
-- 29: existence
+- 76: timeout in measure
+- 42: timeout in guess
+- 38: tryfind: ==>
+- 27: existence
 - 16: tryfind: admissible
 - 11: TAC_PROOF: Unsolved goals
-- 3: new_definition: Type variables not reflected in constant
+- 5: new_definition: Type variables not reflected in constant
 - 2: free: mlt
 - 2: free: basis
 - 2: free: firstSet
@@ -40,8 +40,7 @@ Why they are assumed:
 - 1: free: LIST_RELi
 - 1: free: known_cc
 - 1: free: known_co, syntax_ok
-- 1: free: single_div_pre, wordSem_evaluate, single_div
-- 1: free: wordSem_evaluate
+- 1: free: single_div_pre, single_div
 - 1: free: rconc, th
 - 1: free: MAP_KEYS
 - 1: free: MAP_KEYS, LINV
@@ -52,7 +51,6 @@ Why they are assumed:
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | timeout in measure |
 | `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | timeout in measure |
 | `inline_exp` | `compiler/backend/bvi_inline.ml` | timeout in measure |
-| `remove_ticks_exp` | `compiler/backend/bvi_inline.ml` | existence |
 | `bvi_let_compile` | `compiler/backend/bvi_let.ml` | timeout in measure |
 | `scan_expr` | `compiler/backend/bvi_tailrec.ml` | timeout in measure |
 | `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | TAC_PROOF: Unsolved goals |
@@ -113,7 +111,7 @@ Why they are assumed:
 | `get_heu` | `compiler/backend/word_alloc.ml` | timeout in measure |
 | `get_forced` | `compiler/backend/word_alloc.ml` | timeout in guess |
 | `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | timeout in guess |
-| `inst_select_exp` | `compiler/backend/word_inst.ml` | timeout in measure |
+| `inst_select_exp` | `compiler/backend/word_inst.ml` | timeout in guess |
 | `inst_select` | `compiler/backend/word_inst.ml` | timeout in guess |
 | `three_to_two_reg` | `compiler/backend/word_inst.ml` | tryfind: /\ |
 | `remove_must_terminate` | `compiler/backend/word_remove.ml` | tryfind: /\ |
@@ -142,7 +140,7 @@ Why they are assumed:
 | `has_Eval` | `compiler/backend/flat_elim.ml` | TAC_PROOF: Unsolved goals |
 | `find_loc` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `find_lookups` | `compiler/backend/flat_elim.ml` | timeout in measure |
-| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | existence |
+| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | timeout in measure |
 | `app_pos` | `compiler/backend/pattern_matching/pattern_semantics.ml` | tryfind: /\ |
 | `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
 | `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
@@ -152,7 +150,7 @@ Why they are assumed:
 | `naive_pattern_match` | `compiler/backend/flat_pattern.ml` | tryfind: /\ |
 | `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | timeout in measure |
 | `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | timeout in measure |
-| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | timeout in guess |
+| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | timeout in measure |
 | `num_to_hex` | `compiler/backend/presLang.ml` | TAC_PROOF: Unsolved goals |
 | `ast_t_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `pat_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
@@ -175,7 +173,7 @@ Why they are assumed:
 | `stack_remove_comp` | `compiler/backend/stack_remove.ml` | timeout in guess |
 | `word_to_stack_word_list` | `compiler/backend/word_to_stack.ml` | tryfind: ==> |
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in measure |
-| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in guess |
+| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in measure |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | tryfind: admissible |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | timeout in measure |
 | `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | existence |
@@ -256,6 +254,7 @@ Why they are assumed:
 | `gc_move_refs` | `compiler/backend/gc/gen_gc.ml` | tryfind: ==> |
 | `gen_gc_partial_gc_move_data` | `compiler/backend/gc/gen_gc_partial.ml` | tryfind: ==> |
 | `gc_move_ref_list` | `compiler/backend/gc/gen_gc_partial.ml` | timeout in guess |
+| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | timeout in measure |
 | `all_pcs` | `compiler/encoders/asm/asmProps.ml` | tryfind: ==> |
 | `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | timeout in guess |
 | `asm_code_length` | `compiler/backend/semantics/labSem.ml` | tryfind: /\ |
@@ -266,6 +265,8 @@ Why they are assumed:
 | `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
 | `stackSem_get_labels` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
 | `copy_words` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
+| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
+| `stackSem_semantics` | `compiler/backend/semantics/stackSem.ml` | new_definition: Type variables not reflected in constant |
 | `flat_exp_conventions` | `compiler/backend/proofs/word_to_stackProof.ml` | tryfind: /\ |
 | `every_inst` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
 | `full_inst_ok_less` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
@@ -325,11 +326,10 @@ Why they are assumed:
 | `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind: /\ |
 | `eval_ri` | `compiler/backend/proofs/word_bignumProof.ml` | new_definition: Type variables not reflected in constant |
 | `word_bignumProof_Eval` | `` | new_definition: Type variables not reflected in constant |
-| `div_code_assum` | `compiler/backend/proofs/word_bignumProof.ml` | free: single_div_pre, wordSem_evaluate, single_div |
+| `div_code_assum` | `compiler/backend/proofs/word_bignumProof.ml` | free: single_div_pre, single_div |
 | `exp_ok` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind: /\ |
 | `colouring_ok` | `compiler/backend/proofs/word_allocProof.ml` | timeout in guess |
 | `nlive_store` | `compiler/backend/proofs/word_allocProof.ml` | tryfind: /\ |
-| `sem_inv` | `compiler/backend/proofs/word_cseProof.ml` | free: wordSem_evaluate |
 | `binary_branch_exp` | `compiler/backend/proofs/word_instProof.ml` | tryfind: /\ |
 | `stubs_fst` | `compiler/backend/proofs/data_to_wordProof.ml` | free: rconc, th |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | existence |
@@ -348,6 +348,7 @@ Why they are assumed:
 | `stackProps_get_code_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `stackProps_no_install` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `no_shmemop` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
+| `make_init_opt` | `compiler/backend/proofs/stack_removeProof.ml` | new_definition: Type variables not reflected in constant |
 | `find_next_interference` | `compiler/backend/semantics/targetProps.ml` | timeout in measure |
 | `has_odd_inst` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
 | `has_io_name` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
@@ -373,4 +374,4 @@ Why they are assumed:
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-323 definitions.
+325 definitions.
