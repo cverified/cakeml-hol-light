@@ -750,6 +750,17 @@ class Porter:
       term = fmt(self.term(body))
     rel = overrides.MEASURE.get(key)
     if rel is not None: rel = fmt(' '.join(rel.split()), last=1)
+    # the clauses of a definition are a quotation each, and the
+    # relation that HOL4's Termination gives is for all of them
+    # (the branch for one quotation takes it further down)
+    termnote = ''
+    if term is None and rel is None and b.extra:
+      wf, rest = wf_relation(b.extra)
+      if wf is not None:
+        rel = fmt(self.term(wf), last=1)
+        termnote = '' if not rest.split() else shorten('\n'.join(
+                     fill('(* HOL4 termination:', rest.split(), 69))
+                   + ' *)') + '\n'
 
     def size_prelude(text):
       """a measure that uses the size function of a datatype needs
@@ -762,7 +773,7 @@ class Porter:
       types = set(self.tnm(t2 + '$' + ty)
                   for (t2, ty) in self.db.datatypes if t2 in anc)
       out = ''
-      for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+)_size\b",
+      for ty in sorted(set(re.findall(r"([A-Za-z0-9_']+?)_size\d*\b",
                                       text))):
         # a constant whose name happens to end in _size is not the
         # size function of a datatype (sptree's size is sptree_size
@@ -790,7 +801,7 @@ class Porter:
       relnote = ('(* the termination relation that HOL4 gives, with\n'
                  '   the names that the port gives the constants *)\n')
     if term is None and rel is not None:
-      text = (sizes + relnote +
+      text = (sizes + relnote + termnote +
               'let %s = cake_define_list_wf\n  `%s`\n'
               '  %s;;' % (name, rel, clauses))
     elif term is None:

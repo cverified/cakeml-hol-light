@@ -1020,10 +1020,24 @@ class Ctx:
     self.wild = 0
     self.warn = []
 
+  def size_name(self, n, thy=None):
+    """the name of the size function of a datatype, which is
+       called after the type: HOL4's closLang$exp_size is
+       closLang_exp_size, and its exp3_size, the size function of
+       the third type of the family, is closLang_exp_size3"""
+    m = re.match(r"^(.*?)(\d*)_size$", n)
+    if not m or not m.group(1): return None
+    base, num = m.group(1), m.group(2)
+    ty = self.tyname(base if thy is None else thy + '$' + base)
+    if ty == base: return None
+    return ty + '_size' + num
+
   def name(self, n):
     if '$' in n:
       thy, n2 = n.split('$')
-      return self.names.get((thy, n2), self.names.get(n2, n2))
+      if (thy, n2) in self.names or n2 in self.names:
+        return self.names.get((thy, n2), self.names.get(n2, n2))
+      return self.size_name(n2, thy) or n2
     if n in NAME_MAP: return NAME_MAP[n]
     # the block that defines a name uses the name of the constant,
     # and everything else the name that HOL4 overloads with it
@@ -1035,8 +1049,8 @@ class Ctx:
     # exp_size of closLang is closLang_exp_size)
     if (n.endswith('_size') and (self.thy, n) not in self.names
         and n not in self.names):
-      ty = self.tyname(n[:-len('_size')])
-      if ty != n[:-len('_size')]: return ty + '_size'
+      sz = self.size_name(n)
+      if sz: return sz
     return self.names.get((self.thy, n), self.names.get(n, n))
 
   def tyname(self, n):

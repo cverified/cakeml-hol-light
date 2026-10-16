@@ -39,12 +39,16 @@ def untype(s):
 path = sys.argv[1] if len(sys.argv) > 1 else 'tmp/debug.txt'
 text = open(path, errors='replace').read().split('\n')
 
-goals = []        # (goal, [assumptions])
+goals = []        # (definition, goal, [assumptions])
 reasons = collections.Counter()
+defs = collections.Counter()
 i = 0
 while i < len(text):
   l = text[i]
   if l.startswith('unsolved termination goal'):
+    # the log says of which definition the goal is
+    m = re.match(r'unsolved termination goal of (.*):$', l)
+    nm = m.group(1) if m else '?'
     i += 1
     g = []
     while i < len(text) and not text[i].startswith('  asm: ') and \
@@ -53,9 +57,9 @@ while i < len(text):
       g.append(text[i].strip()); i += 1
     asms = []
     while i < len(text) and text[i].startswith('  asm: '):
-      asms.append(text[i][7:].strip()); i += 1
-      goals.append((untype(' '.join(g)),
-                  [untype(a) for a in asms]))
+      asms.append(untype(text[i][7:].strip())); i += 1
+    goals.append((nm, untype(' '.join(g)), asms))
+    defs[nm] += 1
   elif l.startswith('cannot prove the condition ('):
     reasons[l[len('cannot prove the condition ('):].split(')')[0]] += 1
     i += 1
@@ -71,7 +75,7 @@ def shape(s):
 
 kinds = collections.Counter()
 examples = {}
-for g, asms in goals:
+for nm, g, asms in goals:
   k = shape(g)
   kinds[k] += 1
   examples.setdefault(k, (g, asms))
@@ -85,12 +89,16 @@ for k, c in kinds.most_common(40):
     print('        asm: %s' % a[:150])
 print()
 coarse = collections.Counter()
-for g, asms in goals:
+for nm, g, asms in goals:
   k = re.sub(r"\b[A-Za-z0-9_']+_size[0-9]*\b", 'SIZE', shape(g))
   coarse[k] += 1
 print('the same with every size function the same:')
 for k, c in coarse.most_common(20):
   print('%4d  %s' % (c, k[:200]))
+print()
+print('the definitions with the most unsolved goals:')
+for nm, c in defs.most_common(20):
+  print('%6d  %s' % (c, nm[:70]))
 print()
 print('how the condition failed:')
 for r, c in reasons.most_common():
