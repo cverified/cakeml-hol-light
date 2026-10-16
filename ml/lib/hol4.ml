@@ -64,6 +64,14 @@ let FOLDR_THM = prove
 let cwc = new_definition
   `cwc (v:A) (k:A->B) = k v`;;
 
+(* MEMBER of CakeML's ml_translator, which compiler uses to
+   look for a flag among its arguments (the translator theory is
+   not in the dependency closure of the port) *)
+
+let MEMBER = new_recursive_definition list_RECURSION
+  `(MEMBER (x:A) [] <=> F) /\
+   (MEMBER x (CONS y ys) <=> x = y \/ MEMBER x ys)`;;
+
 (* HOL4's count n is the set of the numbers below n
    (wordSem's list_rearrange), and its SET_TO_LIST is the
    list_of_set of HOL Light (word_elimProof's get_store) *)

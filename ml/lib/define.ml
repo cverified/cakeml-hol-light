@@ -1920,7 +1920,7 @@ let the_size_fns = ref ([]:(hol_type * term * hol_type list) list);;
    is about *)
 
 let builtin_size_types =
-  ["list"; "option"; "prod"; "num"; "sum"; "char"; "bool"];;
+  ["list"; "option"; "prod"; "num"; "bool"];;
 
 let define_size tyname =
   if mem tyname builtin_size_types then
@@ -2096,7 +2096,10 @@ let rec size_fn_of_type ty =
         mk_fun_ty (type_of f) (mk_fun_ty (type_of g)
           (mk_fun_ty ty (mk_type("num",[]))))),[f;g])
     else if can (assoc s) (!the_rec_thms) then
-     (let _ = define_size s in size_fn_of_type ty)
+     (* a type that has no size function of its own (char, whose
+        recursion theorem the_rec_thms has) counts for nothing *)
+     (try let _ = define_size s in size_fn_of_type ty
+      with Failure _ -> mk_abs(mk_var("x",ty),mk_small_numeral 0))
     else mk_abs(mk_var("x",ty),mk_small_numeral 0);;
 
 (* ------------------------------------------------------------------ *)
