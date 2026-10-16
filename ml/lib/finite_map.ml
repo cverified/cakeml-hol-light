@@ -110,6 +110,22 @@ let SUBMAP = new_definition
   `(f:(A,B)fmap) SUBMAP g <=>
    !x. x IN FDOM f ==> x IN FDOM g /\ FAPPLY f x = FAPPLY g x`;;
 
+(* folding over a finite map (HOL4's ITFMAP of finite_mapTheory,
+   named by analogy with ITSET): the relation that says what a
+   fold of a map gives, and the fold itself, which is a value
+   that the relation gives (for a function whose applications
+   commute there is exactly one) *)
+
+let ITFMAPR_RULES,ITFMAPR_INDUCT,ITFMAPR_CASES =
+  new_inductive_definition
+  `(!a. ITFMAPR (f:A->B->C->C) FEMPTY a a) /\
+   (!a1 a2 k v fm.
+      ~(k IN FDOM fm) /\ ITFMAPR f fm a1 a2
+      ==> ITFMAPR f (fm |+ (k,v)) a1 (f k v a2))`;;
+
+let ITFMAP = new_definition
+  `ITFMAP (f:A->B->C->C) fm a0 = @a. ITFMAPR f fm a0 a`;;
+
 (* the finite map of an association list, and back *)
 
 let alist_to_fmap = new_definition

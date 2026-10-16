@@ -34,6 +34,9 @@ override_interface("EXISTS",`EX:(A->bool)->(A)list->bool`);;
 override_interface("FRONT",`BUTLAST:(A)list->(A)list`);;
 override_interface("GENLIST",`list_of_seq:(num->A)->num->(A)list`);;
 override_interface("LIST_TO_SET",`set_of_list:(A)list->A->bool`);;
+(* HOL4's BIGUNION is HOL Light's UNIONS *)
+override_interface("BIGUNION",
+  `UNIONS:((A->bool)->bool)->A->bool`);;
 override_interface("LIST_REL",
   `ALL2:(A->B->bool)->(A)list->(B)list->bool`);;
 (* HOL4's EVERY2 is its LIST_REL *)
