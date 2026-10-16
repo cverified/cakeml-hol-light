@@ -461,6 +461,11 @@ ONE_QUOTATION = set([
   ('stack_remove', 'store_list_code_def'),
   ('word_to_stack', 'call_dest_def'),
   ('bvlSem', 'evaluate_def'),
+  # the clauses that give LESS and EQUAL say nothing about the
+  # type of the result, and asm has constructors of those names
+  # as well (the clause with GREATER in it is the one that says
+  # that the result is an ordering)
+  ('word_cse', 'listCmp_def'),
 ])
 
 # the theory whose constructor a name means in one definition,
