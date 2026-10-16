@@ -55,6 +55,13 @@ ancestors of the definition are loaded already.  With
 `PATCH=<file>` the clone loads a changed part of
 `ml/lib/define.ml` first (see below).
 
+The hand written files of `ml/lib` (`fastdef.ml`, `hol4.ml`,
+`define.ml`, `records.ml`, `words4.ml` and the theories that
+`preamble.ml` names) are only loaded by the preamble, which the
+template has and a run never loads again, so _those_ may be
+written while a run is going; what the run would load a second
+time is a _ported_ file.
+
 A change to `ml/lib/define.ml` can be tried while a run is going
 without writing into `ml/`: everything that file makes is an ML
 value (it has no definition of its own at the top level), so a

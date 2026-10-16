@@ -24,6 +24,57 @@
 (*  file, so that everything after it (define.ml) uses them.          *)
 (* ================================================================== *)
 
+(* ------------------------------------------------------------------ *)
+(* The admissibility of a MAP2, which HOL Light does not have.        *)
+(*                                                                    *)
+(* Two functions that agree on the elements that a MAP2 takes give    *)
+(* the same list, so a recursive call under a MAP2 is admissible      *)
+(* (clos_known's merge).  HOL Light's MAP2 takes the elements of the  *)
+(* second list with HD and TL, so the elements are the ones at a      *)
+(* position of the first list, not the members of the lists.          *)
+(* ------------------------------------------------------------------ *)
+
+let MAP2_EQ_EL = prove
+ (`!(f:A->B->C) g l1 l2.
+     (!i. i < LENGTH l1
+          ==> f (EL i l1) (EL i l2) = g (EL i l1) (EL i l2))
+     ==> MAP2 f l1 l2 = MAP2 g l1 l2`,
+  GEN_TAC THEN GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[MAP2_DEF] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(f:A->B->C) h (HD (l2:B list)) = g h (HD l2)`
+   (fun th -> REWRITE_TAC[th]) THENL
+   [FIRST_X_ASSUM(MP_TAC o SPEC `0`) THEN
+    REWRITE_TAC[EL; HD; LENGTH; LT_0];
+    ALL_TAC] THEN
+  AP_TERM_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+  X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o SPEC `SUC i`) THEN
+  ASM_REWRITE_TAC[EL; TL; LENGTH; LT_SUC]);;
+
+let ADMISSIBLE_MAP2 = prove
+ (`!(<<) p (s:P->S) (h:(A->B)->P->C->D->E)
+     (l1:(A->B)->P->C list) (l2:(A->B)->P->D list).
+        admissible(<<) p s l1 /\ admissible(<<) p s l2 /\
+        admissible (<<) (\f (i,x). p f x /\ i < LENGTH (l1 f x))
+                        (\(i,x). s x)
+                        (\f (i,x). h f x (EL i (l1 f x))
+                                         (EL i (l2 f x)))
+   ==> admissible (<<) p s
+         (\(f:A->B) (x:P). MAP2 (h f x) (l1 f x) (l2 f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN
+   `(l1:(A->B)->P->C list) f a = l1 g a /\
+    (l2:(A->B)->P->D list) f a = l2 g a`
+   STRIP_ASSUME_TAC THENL
+   [CONJ_TAC THEN FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[];
+    ALL_TAC] THEN
+  ASM_REWRITE_TAC[] THEN
+  MATCH_MP_TAC MAP2_EQ_EL THEN
+  X_GEN_TAC `i:num` THEN DISCH_TAC THEN
+  FIRST_X_ASSUM(MP_TAC o SPECL
+    [`f:A->B`; `g:A->B`; `i:num`; `a:P`]) THEN
+  ASM_REWRITE_TAC[]);;
+
 let cake_instantiate_casewise_recursion,
     cake_pure_prove_recursive_function_exists,
     cake_prove_general_recursive_function_exists =
@@ -244,6 +295,9 @@ let cake_instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_NSUM gl
     | "admissible","MAP"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP gl
+    (* the proforma of a MAP2, which HOL Light does not have *)
+    | "admissible","MAP2"
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP2 gl
     | "admissible","_MATCH" when
           name_of(repeat rator (last args)) = "_SEQPATTERN"
           -> (APPLY_PROFORMA_TAC ADMISSIBLE_MATCH_SEQPATTERN THEN

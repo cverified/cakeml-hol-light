@@ -569,6 +569,15 @@ let MOD_LT_SELF = prove
  (`!m k. ~(k = 0) ==> m MOD k < k`,
   MESON_TAC[DIVISION]);;
 
+(* the element at a position of a list is smaller than the list *)
+
+let EL_list_size = prove
+ (`!(f:A->num) l i. i < LENGTH l ==> f (EL i l) < list_size f l`,
+  GEN_TAC THEN LIST_INDUCT_TAC THEN
+  REWRITE_TAC[LENGTH; CONJUNCT1 LT] THEN
+  INDUCT_TAC THEN REWRITE_TAC[EL; HD; TL; list_size; LT_SUC] THEN
+  ASM_SIMP_TAC[] THEN ARITH_TAC);;
+
 let MEM_list_size_ALT = prove
  (`!(x:A) l. MEM x l ==> !f:A->num. f x < list_size f l`,
   MESON_TAC[MEM_list_size]);;

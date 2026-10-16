@@ -264,7 +264,7 @@ let cake_term_lemmas =
    goal (and not an equation, so that rewriting cannot use them);
    they are instantiated by matching and added to the assumptions *)
 
-let cake_term_facts = ref ([]:thm list);;
+let cake_term_facts = ref ([EL_list_size]:thm list);;
 
 let FACTS_TAC (asl,w as gl) =
   let sel bod =
