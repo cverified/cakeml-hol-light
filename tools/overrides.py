@@ -579,10 +579,12 @@ CON_OF = {
   # second argument is a register, where wordLang's is an
   # expression), and the Var and the Const of the two clauses
   # that evaluate a wordLang expression are wordLang's
+  # the prog_size of the measure is the one of stackLang as well
   ('stackSem', 'evaluate_def'): {'Var': 'wordLang',
                                  'Const': 'wordLang',
                                  'Get': 'stackLang',
-                                 'Set': 'stackLang'},
+                                 'Set': 'stackLang',
+                                 'prog_size': 'stackLang'},
   # these build wordLang programs, whose constructor names
   # linear_scan's live trees and word_bignum's language have too
   ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},
