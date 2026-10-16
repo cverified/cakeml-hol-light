@@ -345,10 +345,14 @@ val s1_i1 = mk_var ("s1_i1", type_of s_i1);
 let env_domain_eq_def = cake_define
   `env_domain_eq (var_map:source_to_flat_environment) (env:'a sem_env)
   <=>
-     nsDom (global_env_v var_map) = nsDom (sem_env_v env) /\
-     nsDomMod (global_env_v var_map) = nsDomMod (sem_env_v env) /\
-     nsDom (global_env_c var_map) = nsDom (sem_env_c env) /\
-     nsDomMod (global_env_c var_map) = nsDomMod (sem_env_c env)`;;
+     nsDom (source_to_flat_environment_v var_map) = nsDom (sem_env_v
+       env) /\
+     nsDomMod (source_to_flat_environment_v var_map) = nsDomMod
+       (sem_env_v env) /\
+     nsDom (source_to_flat_environment_c var_map) = nsDom (sem_env_c
+       env) /\
+     nsDomMod (source_to_flat_environment_c var_map) = nsDomMod
+       (sem_env_c env)`;;
 
 (* HOL4 ML code, not ported:
 val result_rel_imp = hd (RES_CANON result_rel_cases);

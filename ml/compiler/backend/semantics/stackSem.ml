@@ -849,8 +849,9 @@ let evaluate_def = cake_define_list_try (fun () ->
          (match get_var n s with SOME (Loc l1 l2) -> (SOME
            (Exception (wordLang_Loc l1 l2)),s) | _88 -> (SOME
            Error,s))`;
-   `stackSem_evaluate (wordLang_Break n,s) = (SOME (Break n),s)`;
-   `stackSem_evaluate (wordLang_Continue n,s) = (SOME (Continue n),s)`;
+   `stackSem_evaluate (stackLang_Break n,s) = (SOME (Break n),s)`;
+   `stackSem_evaluate (stackLang_Continue n,s) = (SOME (Continue
+  n),s)`;
    `stackSem_evaluate (stackLang_If cmp r1 ri c1 c2,s) =
         (match (get_var r1 s,get_var_imm ri s) with (SOME x,SOME y)
           ->

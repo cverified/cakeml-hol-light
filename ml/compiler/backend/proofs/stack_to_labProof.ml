@@ -274,8 +274,8 @@ let halt_assum_def = cake_define
       subspt code (stackSem_state_code s) /\ ~(stackSem_state_clock s
         = 0) ==>
       (?t. evaluate (Call NONE (INL 1) NONE,s) = (SOME (Halt
-        (wordLang_Word (n2w 0))),t) /\ labSem_state_ffi
-          t = stackSem_state_ffi s /\ labSem_state_clock t =
+        (wordLang_Word (n2w 0))),t) /\ stackSem_state_ffi
+          t = stackSem_state_ffi s /\ stackSem_state_clock t =
             stackSem_state_clock s - 1))`;;
 
 let make_init_def = cake_define
