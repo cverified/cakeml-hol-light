@@ -10,243 +10,242 @@ one; see `ml/CHEATS.md`).
 
 | file | seconds | axioms | first failure |
 |---|---|---|---|
-| `lib/location.ml` | 0.48 |  |  |
-| `lib/ternaryComparisons.ml` | 0.07 |  |  |
+| `lib/location.ml` | 0.42 |  |  |
+| `lib/ternaryComparisons.ml` | 0.06 |  |  |
 | `lib/comparison.ml` | 0.01 |  |  |
-| `lib/indexedLists.ml` | 0.04 |  |  |
-| `lib/sorting.ml` | 0.20 |  |  |
-| `lib/mergesort.ml` | 10.03 |  |  |
-| `lib/balanced_map.ml` | 41.33 |  |  |
+| `lib/indexedLists.ml` | 0.03 |  |  |
+| `lib/sorting.ml` | 0.19 |  |  |
+| `lib/mergesort.ml` | 9.81 |  |  |
+| `lib/balanced_map.ml` | 40.27 |  |  |
 | `lib/regexp_compiler.ml` | 0.12 |  |  |
-| `lib/sptree.ml` | 8.22 |  |  |
+| `lib/sptree.ml` | 7.95 |  |  |
 | `lib/alignment.ml` | 0.07 |  |  |
-| `lib/numposrep.ml` | 0.15 |  |  |
+| `lib/numposrep.ml` | 0.14 |  |  |
 | `lib/bitstring.ml` | 0.01 |  |  |
-| `lib/byte.ml` | 2.38 |  |  |
-| `lib/ASCIInumbers.ml` | 0.17 |  |  |
+| `lib/byte.ml` | 2.31 |  |  |
+| `lib/ASCIInumbers.ml` | 0.16 |  |  |
 | `lib/integer_word.ml` | 0.01 |  |  |
 | `lib/lprefix_lub.ml` | 0.09 |  |  |
 | `lib/set_sep.ml` | 0.14 |  |  |
 | `lib/state_transformer.ml` | 0.01 |  |  |
-| `lib/binary_ieee.ml` | 2.32 |  |  |
-| `lib/machine_ieee.ml` | 0.38 |  |  |
-| `lib/grammar.ml` | 0.96 |  |  |
-| `lib/peg.ml` | 1.27 |  |  |
-| `lib/pegexec.ml` | 1.80 |  |  |
-| `lib/simpleSexp.ml` | 0.28 |  |  |
-| `lib/spt_closure.ml` | 0.26 |  |  |
-| `lib/multiword.ml` | 0.57 |  |  |
-| `lib/term.ml` | 0.69 |  |  |
-| `lib/subst.ml` | 0.18 |  |  |
-| `lib/walk.ml` | 0.04 |  |  |
-| `lib/walkstar.ml` | 0.04 |  |  |
-| `lib/unifDef.ml` | 0.04 |  |  |
+| `lib/binary_ieee.ml` | 2.25 |  |  |
+| `lib/machine_ieee.ml` | 0.36 |  |  |
+| `lib/grammar.ml` | 0.93 |  |  |
+| `lib/peg.ml` | 1.23 |  |  |
+| `lib/pegexec.ml` | 1.76 |  |  |
+| `lib/simpleSexp.ml` | 0.29 |  |  |
+| `lib/spt_closure.ml` | 0.25 |  |  |
+| `lib/multiword.ml` | 0.56 |  |  |
+| `lib/term.ml` | 0.68 |  |  |
+| `lib/subst.ml` | 0.17 |  |  |
+| `lib/walk.ml` | 0.09 |  |  |
+| `lib/walkstar.ml` | 0.10 |  |  |
+| `lib/unifDef.ml` | 0.14 |  |  |
 | `lib/collapse.ml` | 0.06 |  |  |
 | `lib/fmsp.ml` | 0.08 |  |  |
 | `lib/rmfmap.ml` | 0.12 |  |  |
 | `lib/tcallUnif.ml` | 0.01 |  |  |
-| `misc/misc.ml` | 17.94 |  |  |
-| `basis/pure/mllist.ml` | 3.18 |  |  |
-| `basis/pure/mlstring.ml` | 9.98 |  |  |
-| `semantics/namespace.ml` | 2.40 |  |  |
-| `semantics/ast.ml` | 12.76 |  |  |
-| `compiler/backend/backend_common.ml` | 1.44 |  |  |
-| `semantics/fpSem.ml` | 0.94 |  |  |
-| `compiler/backend/closLang.ml` | 7.95 |  |  |
-| `compiler/backend/bvi.ml` | 1.29 |  |  |
-| `compiler/backend/dataLang.ml` | 1.36 |  |  |
-| `compiler/backend/data_live.ml` | 0.68 |  |  |
-| `compiler/backend/data_simp.ml` | 0.47 |  |  |
-| `compiler/backend/data_space.ml` | 0.95 |  |  |
-| `compiler/backend/bvi_to_data.ml` | 61.25 | 2 |  |
-| `compiler/backend/bvi_inline.ml` | 60.67 | 2 |  |
-| `compiler/backend/bvi_let.ml` | 61.90 | 2 |  |
-| `compiler/backend/bvi_tailrec.ml` | 63.31 | 5 |  |
-| `compiler/backend/bvi_tmc.ml` | 43.13 | 2 |  |
-| `compiler/backend/bvl.ml` | 1.04 |  |  |
-| `compiler/backend/bvl_const.ml` | 1.98 | 2 |  |
-| `compiler/backend/db_vars.ml` | 0.90 |  |  |
-| `compiler/backend/bvl_handle.ml` | 66.74 | 3 |  |
-| `compiler/backend/bvl_inline.ml` | 59.88 | 3 |  |
-| `compiler/backend/bvl_to_bvi.ml` | 75.23 | 3 |  |
-| `compiler/backend/bvl_jump.ml` | 0.80 | 1 |  |
-| `compiler/backend/clos_annotate.ml` | 124.21 | 4 |  |
-| `compiler/backend/clos_call.ml` | 95.72 | 4 |  |
-| `compiler/backend/clos_fvs.ml` | 2.31 |  |  |
-| `compiler/backend/clos_letop.ml` | 7.65 | 1 |  |
-| `compiler/backend/clos_op.ml` | 43.50 | 3 |  |
-| `compiler/backend/clos_ticks.ml` | 1.85 |  |  |
-| `compiler/backend/clos_known.ml` | 161.48 | 7 |  |
-| `compiler/backend/clos_mti.ml` | 37.75 | 3 |  |
-| `compiler/backend/clos_number.ml` | 31.29 | 1 |  |
-| `compiler/backend/clos_to_bvl.ml` | 133.41 | 5 |  |
-| `compiler/encoders/asm/asm.ml` | 13.79 |  |  |
-| `compiler/backend/stackLang.ml` | 14.86 |  |  |
-| `compiler/backend/wordLang.ml` | 119.61 | 5 |  |
-| `compiler/backend/word_bignum.ml` | 8.29 | 1 |  |
-| `compiler/backend/word_depth.ml` | 32.33 | 1 |  |
-| `semantics/ffi/ffi.ml` | 3.50 |  |  |
-| `semantics/semanticPrimitives.ml` | 109.56 | 6 |  |
-| `translator/monadic/monad_base/ml_monadBase.ml` | 5.65 | 2 |  |
-| `compiler/backend/reg_alloc/reg_alloc.ml` | 105.96 | 6 |  |
-| `compiler/backend/reg_alloc/linear_scan.ml` | 54.07 | 9 |  |
-| `compiler/backend/word_alloc.ml` | 276.76 | 12 |  |
-| `compiler/backend/word_copy.ml` | 7.61 |  |  |
-| `compiler/backend/word_cse.ml` | 16.07 | 4 |  |
-| `compiler/backend/word_inst.ml` | 100.35 | 5 |  |
-| `compiler/backend/word_remove.ml` | 26.02 | 1 |  |
-| `compiler/backend/word_simp.ml` | 166.14 | 5 |  |
-| `compiler/backend/word_unreach.ml` | 32.34 | 1 |  |
-| `compiler/backend/word_to_word.ml` | 4.69 |  |  |
-| `compiler/backend/data_to_word.ml` | 124.13 | 2 |  |
-| `compiler/backend/clos_interp.ml` | 37.63 | 1 |  |
-| `compiler/backend/flatLang.ml` | 12.17 |  |  |
-| `compiler/backend/flat_to_clos.ml` | 35.71 | 3 |  |
-| `basis/pure/mlint.ml` | 6.80 | 2 |  |
-| `compiler/backend/jsonLang.ml` | 10.28 | 1 |  |
-| `compiler/backend/labLang.ml` | 4.29 |  |  |
-| `compiler/backend/lab_filter.ml` | 1.06 |  |  |
-| `compiler/backend/lab_to_target.ml` | 113.33 | 4 |  |
-| `basis/pure/mlsexp.ml` | 38.87 | 2 |  |
-| `compiler/backend/displayLang.ml` | 4.67 |  |  |
-| `basis/pure/mloption.ml` | 1.15 | 1 |  |
-| `semantics/evaluate.ml` | 33.24 | 1 |  |
-| `compiler/backend/flat_elim.ml` | 134.43 | 6 |  |
-| `compiler/backend/pattern_matching/pattern_common.ml` | 1.64 |  |  |
-| `compiler/backend/pattern_matching/pattern_semantics.ml` | 46.64 | 2 |  |
-| `compiler/backend/pattern_matching/pattern_exh.ml` | 22.08 | 3 |  |
-| `compiler/backend/pattern_matching/pattern_comp.ml` | 35.68 | 1 |  |
-| `compiler/backend/flat_pattern.ml` | 87.02 | 4 |  |
-| `compiler/backend/source_to_flat.ml` | 84.50 | 2 |  |
-| `compiler/backend/presLang.ml` | 334.78 | 15 |  |
-| `semantics/typeSystem.ml` | 37.31 | 1 |  |
-| `semantics/primTypes.ml` | 3.31 |  |  |
-| `compiler/backend/source_let.ml` | 7.98 | 1 |  |
+| `misc/misc.ml` | 17.34 |  |  |
+| `basis/pure/mllist.ml` | 3.04 |  |  |
+| `basis/pure/mlstring.ml` | 9.73 |  |  |
+| `semantics/namespace.ml` | 2.33 |  |  |
+| `semantics/ast.ml` | 12.30 |  |  |
+| `compiler/backend/backend_common.ml` | 1.40 |  |  |
+| `semantics/fpSem.ml` | 0.90 |  |  |
+| `compiler/backend/closLang.ml` | 7.55 |  |  |
+| `compiler/backend/bvi.ml` | 1.24 |  |  |
+| `compiler/backend/dataLang.ml` | 1.31 |  |  |
+| `compiler/backend/data_live.ml` | 0.66 |  |  |
+| `compiler/backend/data_simp.ml` | 0.45 |  |  |
+| `compiler/backend/data_space.ml` | 0.91 |  |  |
+| `compiler/backend/bvi_to_data.ml` | 62.68 | 2 |  |
+| `compiler/backend/bvi_inline.ml` | 62.43 | 2 |  |
+| `compiler/backend/bvi_let.ml` | 62.45 | 2 |  |
+| `compiler/backend/bvi_tailrec.ml` | 62.50 | 5 |  |
+| `compiler/backend/bvi_tmc.ml` | 42.83 | 2 |  |
+| `compiler/backend/bvl.ml` | 1.01 |  |  |
+| `compiler/backend/bvl_const.ml` | 1.85 | 2 |  |
+| `compiler/backend/db_vars.ml` | 0.89 |  |  |
+| `compiler/backend/bvl_handle.ml` | 66.81 | 3 |  |
+| `compiler/backend/bvl_inline.ml` | 59.83 | 3 |  |
+| `compiler/backend/bvl_to_bvi.ml` | 74.72 | 3 |  |
+| `compiler/backend/bvl_jump.ml` | 0.78 | 1 |  |
+| `compiler/backend/clos_annotate.ml` | 125.28 | 4 |  |
+| `compiler/backend/clos_call.ml` | 96.05 | 4 |  |
+| `compiler/backend/clos_fvs.ml` | 2.25 |  |  |
+| `compiler/backend/clos_letop.ml` | 7.38 | 1 |  |
+| `compiler/backend/clos_op.ml` | 42.07 | 3 |  |
+| `compiler/backend/clos_ticks.ml` | 1.78 |  |  |
+| `compiler/backend/clos_known.ml` | 165.02 | 7 |  |
+| `compiler/backend/clos_mti.ml` | 37.74 | 3 |  |
+| `compiler/backend/clos_number.ml` | 31.38 | 1 |  |
+| `compiler/backend/clos_to_bvl.ml` | 133.07 | 5 |  |
+| `compiler/encoders/asm/asm.ml` | 13.95 |  |  |
+| `compiler/backend/stackLang.ml` | 15.07 |  |  |
+| `compiler/backend/wordLang.ml` | 118.92 | 5 |  |
+| `compiler/backend/word_bignum.ml` | 8.36 | 1 |  |
+| `compiler/backend/word_depth.ml` | 32.31 | 1 |  |
+| `semantics/ffi/ffi.ml` | 3.52 |  |  |
+| `semantics/semanticPrimitives.ml` | 111.31 | 6 |  |
+| `translator/monadic/monad_base/ml_monadBase.ml` | 5.34 |  |  |
+| `compiler/backend/reg_alloc/reg_alloc.ml` | 105.08 | 3 |  |
+| `compiler/backend/reg_alloc/linear_scan.ml` | 41.71 | 4 |  |
+| `compiler/backend/word_alloc.ml` | 275.47 | 12 |  |
+| `compiler/backend/word_copy.ml` | 8.13 |  |  |
+| `compiler/backend/word_cse.ml` | 17.72 |  |  |
+| `compiler/backend/word_inst.ml` | 98.96 | 5 |  |
+| `compiler/backend/word_remove.ml` | 27.02 | 1 |  |
+| `compiler/backend/word_simp.ml` | 165.71 | 5 |  |
+| `compiler/backend/word_unreach.ml` | 32.36 | 1 |  |
+| `compiler/backend/word_to_word.ml` | 4.72 |  |  |
+| `compiler/backend/data_to_word.ml` | 124.21 | 2 |  |
+| `compiler/backend/clos_interp.ml` | 37.05 | 1 |  |
+| `compiler/backend/flatLang.ml` | 12.37 |  |  |
+| `compiler/backend/flat_to_clos.ml` | 35.57 | 3 |  |
+| `basis/pure/mlint.ml` | 6.85 | 2 |  |
+| `compiler/backend/jsonLang.ml` | 10.32 | 1 |  |
+| `compiler/backend/labLang.ml` | 4.31 |  |  |
+| `compiler/backend/lab_filter.ml` | 1.04 |  |  |
+| `compiler/backend/lab_to_target.ml` | 84.19 | 3 |  |
+| `basis/pure/mlsexp.ml` | 39.47 | 2 |  |
+| `compiler/backend/displayLang.ml` | 4.79 |  |  |
+| `basis/pure/mloption.ml` | 1.18 | 1 |  |
+| `semantics/evaluate.ml` | 32.86 | 1 |  |
+| `compiler/backend/flat_elim.ml` | 107.41 | 6 |  |
+| `compiler/backend/pattern_matching/pattern_common.ml` | 1.65 |  |  |
+| `compiler/backend/pattern_matching/pattern_semantics.ml` | 46.85 | 2 |  |
+| `compiler/backend/pattern_matching/pattern_exh.ml` | 25.10 | 3 |  |
+| `compiler/backend/pattern_matching/pattern_comp.ml` | 36.01 | 1 |  |
+| `compiler/backend/flat_pattern.ml` | 86.53 | 4 |  |
+| `compiler/backend/source_to_flat.ml` | 83.93 | 2 |  |
+| `compiler/backend/presLang.ml` | 334.65 | 15 |  |
+| `semantics/typeSystem.ml` | 37.54 | 1 |  |
+| `semantics/primTypes.ml` | 3.36 |  |  |
+| `compiler/backend/source_let.ml` | 7.91 | 1 |  |
 | `compiler/backend/source_to_source.ml` | 0.13 |  |  |
-| `compiler/backend/stack_alloc.ml` | 69.55 | 2 |  |
-| `compiler/backend/stack_names.ml` | 33.35 | 1 |  |
-| `compiler/backend/stack_rawcall.ml` | 33.01 | 1 |  |
-| `compiler/backend/stack_remove.ml` | 41.19 | 5 |  |
-| `compiler/backend/reg_alloc/parmove.ml` | 5.55 |  |  |
-| `compiler/backend/word_to_stack.ml` | 51.57 | 2 |  |
-| `compiler/backend/stack_to_lab.ml` | 37.01 | 1 |  |
-| `compiler/backend/backend.ml` | 32.89 |  |  |
-| `compiler/encoders/asm/asmSem.ml` | 18.14 |  |  |
-| `compiler/backend/backend_passes.ml` | 23.60 |  |  |
-| `semantics/proofs/namespaceProps.ml` | 3.89 | 1 |  |
-| `semantics/proofs/semanticPrimitivesProps.ml` | 39.75 | 1 |  |
-| `compiler/backend/semantics/closSem.ml` | 50.07 | 3 |  |
-| `compiler/backend/semantics/backendProps.ml` | 3.97 |  |  |
-| `compiler/backend/semantics/bvlSem.ml` | 90.50 | 3 |  |
-| `compiler/backend/semantics/bviSem.ml` | 75.33 | 2 |  |
-| `semantics/tokens.ml` | 23.57 |  |  |
-| `semantics/gram.ml` | 30.20 |  |  |
-| `semantics/tokenUtils.ml` | 5.45 |  |  |
-| `compiler/parsing/cmlPEG.ml` | 15.05 |  |  |
-| `semantics/cmlPtreeConversion.ml` | 203.76 | 9 |  |
-| `compiler/parsing/cmlParse.ml` | 3.69 |  |  |
-| `basis/pure/mlvector.ml` | 11.15 |  |  |
-| `compiler/backend/export.ml` | 33.71 | 1 |  |
-| `compiler/parsing/fromSexp.ml` | 132.35 | 10 | Exception: Failure "term after binary operator expected". [at 62: let expsexp_def = cake_define_list of 65] |
-| `compiler/inference/infer_t.ml` | 46.20 | 1 |  |
-| `compiler/inference/unify.ml` | 27.63 | 13 | Exception: Failure "typechecking error (initial type assignment): walk has type (num,(?206907)term)fmap->(?206907)term->(?206907)term, it cannot be used with type (num)list->pattern_semantics_term->(atom)term". [at 60: let t_walk_def = cake_define of 71] |
-| `compiler/inference/infer.ml` | 201.69 | 10 | Exception: Failure "typechecking error (initial type assignment): sem_env_c has type ('v)sem_env->(mlstring,mlstring,num#stamp)namespace, it cannot be used with type (?725566)sem_env->(mlstring,mlstring,(mlstring)list#(t)list#num)namespace". [at 60: let init_config_def = cake_define of 73] |
-| `semantics/lexer_fun.ml` | 70.51 | 4 |  |
-| `compiler/parsing/lexer_impl.ml` | 61.69 | 4 |  |
-| `compiler/compiler.ml` | 0.02 |  | Error in included file /home/freek/claude/hol-light/cakeml/tmp/locate.ml val it : unit = () # loaded_files := (Filename.basename "/home/freek/claude/hol-light/cakeml/ml/compiler/compiler.ml",Digest.file "/home/freek/claude/hol-light/cakeml/ml/compiler/compiler.ml") :: !loaded_files;; val it : unit = () [at of 68] |
-| `compiler/backend/gc/gc_shared.ml` | 30.36 |  |  |
-| `compiler/backend/gc/copying_gc.ml` | 64.24 | 2 |  |
-| `semantics/semantics.ml` | 7.39 |  | Exception: Failure "typechecking error (overload resolution)". [at 17: let semantics_def = cake_define of 18] |
-| `compiler/backend/semantics/dataSem.ml` | 161.13 | 7 | Exception: Failure "typechecking error (initial type assignment): fromList has type (A)list->(A)llist, it cannot be used with type (?761570)list->(dataSem_v)spt". [at 150: let call_env_def = cake_define of 180] |
-| `compiler/backend/semantics/flatSem.ml` | 148.46 | 5 |  |
-| `compiler/backend/gc/gen_gc.ml` | 42.39 | 3 |  |
-| `compiler/backend/gc/gen_gc_partial.ml` | 63.77 | 2 |  |
-| `compiler/backend/gc/gc_combined.ml` | 1.71 |  |  |
-| `compiler/backend/semantics/wordSem.ml` | 215.02 | 29 |  |
-| `compiler/encoders/asm/asmProps.ml` | 15.83 | 1 |  |
-| `semantics/proofs/evaluateProps.ml` | 1.89 |  |  |
-| `compiler/backend/semantics/targetSem.ml` | 60.95 | 1 |  |
-| `compiler/backend/semantics/labSem.ml` | 221.52 | 3 |  |
-| `compiler/backend/semantics/stackSem.ml` | 244.60 | 6 | Exception: Failure "typechecking error (overload resolution)". [at 142: let evaluate_def = cake_define_list of 148] |
-| `compiler/backend/semantics/wordConvs.ml` | 274.43 | 13 |  |
-| `compiler/backend/word_elim.ml` | 28.13 | 1 |  |
-| `compiler/backend/semantics/bvlProps.ml` | 78.52 | 3 |  |
-| `compiler/backend/semantics/bviProps.ml` | 32.81 | 1 |  |
-| `compiler/backend/proofs/bvi_inlineProof.ml` | 3.05 |  |  |
-| `semantics/proofs/typeSoundInvariants.ml` | 6.34 |  | Exception: Failure "new_definition: Type variables not reflected in constant". [at 19: let type_v = cake_inductive of 28] |
-| `semantics/proofs/typeSysProps.ml` | 3.60 |  |  |
+| `compiler/backend/stack_alloc.ml` | 69.90 | 2 |  |
+| `compiler/backend/stack_names.ml` | 33.18 | 1 |  |
+| `compiler/backend/stack_rawcall.ml` | 33.06 | 1 |  |
+| `compiler/backend/stack_remove.ml` | 41.55 | 5 |  |
+| `compiler/backend/reg_alloc/parmove.ml` | 5.52 |  |  |
+| `compiler/backend/word_to_stack.ml` | 51.40 | 2 |  |
+| `compiler/backend/stack_to_lab.ml` | 36.53 | 1 |  |
+| `compiler/backend/backend.ml` | 33.41 |  |  |
+| `compiler/encoders/asm/asmSem.ml` | 18.32 |  |  |
+| `compiler/backend/backend_passes.ml` | 24.44 |  |  |
+| `semantics/proofs/namespaceProps.ml` | 3.96 | 1 |  |
+| `semantics/proofs/semanticPrimitivesProps.ml` | 39.66 | 1 |  |
+| `compiler/backend/semantics/closSem.ml` | 51.95 | 3 |  |
+| `compiler/backend/semantics/backendProps.ml` | 4.11 |  |  |
+| `compiler/backend/semantics/bvlSem.ml` | 90.47 | 3 |  |
+| `compiler/backend/semantics/bviSem.ml` | 73.73 | 2 |  |
+| `semantics/tokens.ml` | 23.38 |  |  |
+| `semantics/gram.ml` | 29.36 |  |  |
+| `semantics/tokenUtils.ml` | 5.36 |  |  |
+| `compiler/parsing/cmlPEG.ml` | 15.04 |  |  |
+| `semantics/cmlPtreeConversion.ml` | 204.55 | 9 |  |
+| `compiler/parsing/cmlParse.ml` | 3.79 |  |  |
+| `basis/pure/mlvector.ml` | 11.51 |  |  |
+| `compiler/backend/export.ml` | 34.80 | 1 |  |
+| `compiler/parsing/fromSexp.ml` | 141.81 | 9 |  |
+| `compiler/inference/infer_t.ml` | 46.38 | 1 |  |
+| `compiler/inference/unify.ml` | 42.09 | 5 |  |
+| `compiler/inference/infer.ml` | 215.29 | 9 |  |
+| `semantics/lexer_fun.ml` | 70.60 | 4 |  |
+| `compiler/parsing/lexer_impl.ml` | 63.59 | 4 |  |
+| `compiler/compiler.ml` | 0.01 |  | Error in included file /home/freek/claude/hol-light/cakeml/tmp/locate.ml val it : unit = () # loaded_files := (Filename.basename "/home/freek/claude/hol-light/cakeml/ml/compiler/compiler.ml",Digest.file "/home/freek/claude/hol-light/cakeml/ml/compiler/compiler.ml") :: !loaded_files;; val it : unit = () [at of 69] |
+| `compiler/backend/gc/gc_shared.ml` | 31.44 |  |  |
+| `compiler/backend/gc/copying_gc.ml` | 63.13 | 2 |  |
+| `semantics/semantics.ml` | 8.07 |  |  |
+| `compiler/backend/semantics/dataSem.ml` | 200.69 | 8 |  |
+| `compiler/backend/semantics/flatSem.ml` | 148.20 | 5 |  |
+| `compiler/backend/gc/gen_gc.ml` | 42.89 | 3 |  |
+| `compiler/backend/gc/gen_gc_partial.ml` | 63.87 | 2 |  |
+| `compiler/backend/gc/gc_combined.ml` | 1.67 |  |  |
+| `compiler/backend/semantics/wordSem.ml` | 219.52 | 28 |  |
+| `compiler/encoders/asm/asmProps.ml` | 16.13 | 1 |  |
+| `semantics/proofs/evaluateProps.ml` | 1.88 |  |  |
+| `compiler/backend/semantics/targetSem.ml` | 60.94 | 1 |  |
+| `compiler/backend/semantics/labSem.ml` | 225.77 | 3 |  |
+| `compiler/backend/semantics/stackSem.ml` | 246.41 | 6 | Exception: Failure "typechecking error (overload resolution)". [at 141: let evaluate_def = cake_define_list of 147] |
+| `compiler/backend/semantics/wordConvs.ml` | 275.32 | 9 |  |
+| `compiler/backend/word_elim.ml` | 28.71 | 1 |  |
+| `compiler/backend/semantics/bvlProps.ml` | 78.73 | 3 |  |
+| `compiler/backend/semantics/bviProps.ml` | 32.46 | 1 |  |
+| `compiler/backend/proofs/bvi_inlineProof.ml` | 2.76 |  |  |
+| `semantics/proofs/typeSoundInvariants.ml` | 9.88 |  |  |
+| `semantics/proofs/typeSysProps.ml` | 3.67 |  |  |
 | `semantics/proofs/primSemEnv.ml` | 0.02 |  |  |
-| `semantics/proofs/weakening.ml` | 0.97 |  |  |
-| `semantics/proofs/typeSound.ml` | 0.28 |  |  |
-| `semantics/proofs/semanticsProps.ml` | 1.02 | 1 |  |
-| `compiler/backend/semantics/dataProps.ml` | 40.83 | 2 |  |
-| `compiler/backend/proofs/data_liveProof.ml` | 0.37 |  |  |
+| `semantics/proofs/weakening.ml` | 0.99 |  |  |
+| `semantics/proofs/typeSound.ml` | 0.29 |  |  |
+| `semantics/proofs/semanticsProps.ml` | 1.29 |  |  |
+| `compiler/backend/semantics/dataProps.ml` | 41.09 | 2 |  |
+| `compiler/backend/proofs/data_liveProof.ml` | 0.40 |  |  |
 | `compiler/backend/proofs/data_simpProof.ml` | 0.01 |  |  |
 | `compiler/backend/proofs/data_spaceProof.ml` | 0.02 |  |  |
-| `compiler/backend/proofs/bvi_to_dataProof.ml` | 3.23 |  |  |
-| `compiler/backend/proofs/bvi_letProof.ml` | 10.96 |  |  |
-| `compiler/backend/proofs/bvi_tailrecProof.ml` | 3.37 |  |  |
-| `compiler/backend/proofs/bvi_tmcProof.ml` | 0.06 |  | Exception: Failure "typechecking error (initial type assignment):find". [at 15: (* HOL4 ML code, not ported: of 46] |
-| `compiler/backend/proofs/bvl_constProof.ml` | 24.23 |  |  |
+| `compiler/backend/proofs/bvi_to_dataProof.ml` | 3.46 |  |  |
+| `compiler/backend/proofs/bvi_letProof.ml` | 11.12 |  |  |
+| `compiler/backend/proofs/bvi_tailrecProof.ml` | 3.44 |  |  |
+| `compiler/backend/proofs/bvi_tmcProof.ml` | 68.06 | 2 | Exception: Failure "Unparsed input". [at 42: (* HOL4 ML code, not ported: of 45] |
+| `compiler/backend/proofs/bvl_constProof.ml` | 24.42 |  |  |
 | `compiler/backend/proofs/bvl_handleProof.ml` | 31.63 | 2 |  |
-| `compiler/backend/proofs/bvl_inlineProof.ml` | 0.95 |  | Exception: Failure "typechecking error (initial type assignment): cs cannot have type (num#bvi_exp)spt and (num#bvl_exp)spt simultaneously". [at 16: (* HOL4 ML code, not ported: of 29] |
-| `compiler/backend/proofs/bvl_to_bviProof.ml` | 11.36 | 1 |  |
-| `compiler/backend/semantics/closProps.ml` | 303.51 | 24 |  |
-| `compiler/backend/proofs/clos_to_bvlProof.ml` | 2.53 |  | Exception: Failure "typechecking error (overload resolution)". [at 45: let v_rel = cake_inductive of 74] |
-| `compiler/backend/semantics/wordProps.ml` | 9.68 |  |  |
-| `compiler/backend/proofs/word_simpProof.ml` | 2.28 |  |  |
-| `compiler/backend/proofs/word_gcFunctions.ml` | 302.01 | 8 |  |
-| `compiler/backend/proofs/data_to_word_memoryProof.ml` | 138.74 | 7 | Exception: Failure "typechecking error (initial type assignment): NONE has type (A)option, it cannot be used with type bool". [at 127: let word_mem_eq_def = cake_define_list of 153] |
-| `compiler/backend/proofs/word_bignumProof.ml` | 16.96 | 13 | Exception: Failure "typechecking error (initial type assignment): ast_Eval has type ast_op, it cannot be used with type _->_->_->_->bool". [at 30: let eval = cake_inductive of 48] |
-| `compiler/backend/proofs/data_to_word_gcProof.ml` | 51.79 |  | Exception: Failure "typechecking error (initial type assignment): dataSem_stack_size has type dataSem_stack->num, it cannot be used with type dataSem_stack->(num)option". [at 49: let state_rel_thm = cake_define of 59] |
+| `compiler/backend/proofs/bvl_inlineProof.ml` | 4.02 |  |  |
+| `compiler/backend/proofs/bvl_to_bviProof.ml` | 11.54 | 1 |  |
+| `compiler/backend/semantics/closProps.ml` | 335.53 | 12 |  |
+| `compiler/backend/proofs/clos_to_bvlProof.ml` | 15.81 |  | Exception: Failure "typechecking error (initial type assignment): c cannot have type clos_to_bvl_config and (_,_)closSem_state simultaneously". [at 63: (* of 70] |
+| `compiler/backend/semantics/wordProps.ml` | 9.77 |  |  |
+| `compiler/backend/proofs/word_simpProof.ml` | 2.55 |  |  |
+| `compiler/backend/proofs/word_gcFunctions.ml` | 283.32 | 7 |  |
+| `compiler/backend/proofs/data_to_word_memoryProof.ml` | 247.60 | 10 |  |
+| `compiler/backend/proofs/word_bignumProof.ml` | 25.59 | 16 | Exception: Failure "typechecking error (initial type assignment):find". [at 45: (* correctenss judgement *) of 48] |
+| `compiler/backend/proofs/data_to_word_gcProof.ml` | 51.84 |  | Exception: Failure "typechecking error (initial type assignment): dataSem_stack_size has type dataSem_stack->num, it cannot be used with type dataSem_stack->(num)option". [at 49: let state_rel_thm = cake_define of 59] |
 | `compiler/backend/proofs/word_depthProof.ml` | 0.02 |  |  |
-| `compiler/backend/proofs/data_to_word_bignumProof.ml` | 1.26 |  |  |
-| `compiler/backend/proofs/data_to_word_assignProof.ml` | 2.16 |  |  |
+| `compiler/backend/proofs/data_to_word_bignumProof.ml` | 1.30 |  |  |
+| `compiler/backend/proofs/data_to_word_assignProof.ml` | 2.22 |  |  |
 | `compiler/backend/proofs/wordConvsProof.ml` | 0.02 |  |  |
-| `compiler/backend/reg_alloc/proofs/reg_allocProof.ml` | 4.07 |  |  |
-| `compiler/backend/reg_alloc/proofs/linear_scanProof.ml` | 6.53 |  |  |
-| `compiler/backend/proofs/word_allocProof.ml` | 41.69 | 2 |  |
-| `compiler/backend/proofs/word_copyProof.ml` | 1.07 |  |  |
-| `compiler/backend/proofs/word_cseProof.ml` | 1.12 |  | Exception: Failure "typechecking error (initial type assignment): listCmp has type (?358981)list->(?358983)list->cmp, it cannot be used with type (?894565)list->(?894565)list->ordering". [at 13: (* The invariant is factored into a STATE-FREE syntactic par of 16] |
-| `compiler/backend/proofs/word_elimProof.ml` | 6.06 | 2 |  |
-| `compiler/backend/proofs/word_instProof.ml` | 4.39 | 1 |  |
-| `compiler/backend/proofs/word_removeProof.ml` | 0.32 |  |  |
-| `compiler/backend/proofs/word_unreachProof.ml` | 0.82 |  |  |
-| `compiler/backend/proofs/word_to_wordProof.ml` | 0.64 |  |  |
-| `compiler/backend/proofs/data_to_wordProof.ml` | 0.13 |  | Exception: Failure "typechecking error (overload resolution)". [at 28: (* HOL4 ancestors outside the port: int_bitwise finite_map W of 31] |
-| `compiler/backend/proofs/clos_interpProof.ml` | 3.88 |  |  |
-| `compiler/backend/semantics/flatProps.ml` | 58.31 | 2 | Exception: Failure "typechecking error (initial type assignment):find". [at 27: (* HOL4 ML code, not ported: of 35] |
-| `compiler/backend/proofs/flat_to_closProof.ml` | 0.12 |  | Exception: Failure "typechecking error (initial type assignment): sem_env_v has type ('v)sem_env->(mlstring,mlstring,'v)namespace, it cannot be used with type (?900450)sem_env->(_#_)list". [at 19: let v_rel = cake_inductive of 27] |
-| `compiler/backend/semantics/labProps.ml` | 11.58 |  |  |
-| `compiler/backend/proofs/lab_filterProof.ml` | 6.60 | 1 |  |
-| `compiler/backend/semantics/stackProps.ml` | 286.67 | 12 |  |
-| `compiler/backend/proofs/stack_removeProof.ml` | 12.65 |  | Exception: Failure "typechecking error (overload resolution)". [at 38: (* memory *) of 43] |
-| `compiler/backend/semantics/targetProps.ml` | 11.04 |  |  |
-| `compiler/backend/proofs/lab_to_targetProof.ml` | 123.42 | 7 |  |
-| `compiler/backend/proofs/flat_elimProof.ml` | 0.06 |  | Exception: Failure "typechecking error (initial type assignment): sem_env_v has type ('v)sem_env->(mlstring,mlstring,'v)namespace, it cannot be used with type (?937289)sem_env->(_#_)list". [at 12: (************************** LEMMAS ************************* of 22] |
-| `compiler/backend/proofs/flat_patternProof.ml` | 0.66 |  | Exception: Failure "typechecking error (initial type assignment): sem_env_v has type ('v)sem_env->(mlstring,mlstring,'v)namespace, it cannot be used with type (?937582)sem_env->(mlstring#_)list". [at 17: (* of 25] |
-| `compiler/backend/proofs/source_evalProof.ml` | 12.07 |  | Exception: Failure "typechecking error (initial type assignment):find". [at 19: (* HOL4 ML code, not ported: of 40] |
-| `compiler/backend/proofs/source_to_flatProof.ml` | 7.21 |  | Exception: Failure "typechecking error (initial type assignment): flatSem_environment_v has type ('v)flatSem_environment->(mlstring#'v)list, it cannot be used with type (?939000)flatSem_environment->(_)sem_env". [at 31: let v_rel = cake_inductive of 78] |
+| `compiler/backend/reg_alloc/proofs/reg_allocProof.ml` | 4.16 |  |  |
+| `compiler/backend/reg_alloc/proofs/linear_scanProof.ml` | 6.60 |  |  |
+| `compiler/backend/proofs/word_allocProof.ml` | 41.66 | 2 |  |
+| `compiler/backend/proofs/word_copyProof.ml` | 1.05 |  |  |
+| `compiler/backend/proofs/word_cseProof.ml` | 2.49 |  |  |
+| `compiler/backend/proofs/word_elimProof.ml` | 6.26 | 2 |  |
+| `compiler/backend/proofs/word_instProof.ml` | 4.27 | 1 |  |
+| `compiler/backend/proofs/word_removeProof.ml` | 0.31 |  |  |
+| `compiler/backend/proofs/word_unreachProof.ml` | 0.84 |  |  |
+| `compiler/backend/proofs/word_to_wordProof.ml` | 0.67 |  |  |
+| `compiler/backend/proofs/data_to_wordProof.ml` | 0.14 |  | Exception: Failure "typechecking error (overload resolution)". [at 28: (* HOL4 ancestors outside the port: int_bitwise finite_map W of 31] |
+| `compiler/backend/proofs/clos_interpProof.ml` | 3.99 |  |  |
+| `compiler/backend/semantics/flatProps.ml` | 58.36 | 2 | Exception: Failure "typechecking error (initial type assignment):find". [at 27: (* HOL4 ML code, not ported: of 35] |
+| `compiler/backend/proofs/flat_to_closProof.ml` | 1.82 | 2 |  |
+| `compiler/backend/semantics/labProps.ml` | 12.12 |  |  |
+| `compiler/backend/proofs/lab_filterProof.ml` | 6.74 | 1 |  |
+| `compiler/backend/semantics/stackProps.ml` | 284.81 | 12 |  |
+| `compiler/backend/proofs/stack_removeProof.ml` | 13.22 |  | Exception: Failure "typechecking error (overload resolution)". [at 38: (* memory *) of 43] |
+| `compiler/backend/semantics/targetProps.ml` | 11.70 |  |  |
+| `compiler/backend/proofs/lab_to_targetProof.ml` | 125.18 | 7 |  |
+| `compiler/backend/proofs/flat_elimProof.ml` | 32.94 | 2 |  |
+| `compiler/backend/proofs/flat_patternProof.ml` | 2.14 | 2 |  |
+| `compiler/backend/proofs/source_evalProof.ml` | 12.39 |  | Exception: Failure "typechecking error (initial type assignment):find". [at 19: (* HOL4 ML code, not ported: of 41] |
+| `compiler/backend/proofs/source_to_flatProof.ml` | 8.61 |  | Exception: Failure "typechecking error (overload resolution)". [at 32: let result_rel = cake_inductive of 77] |
 | `compiler/backend/proofs/source_letProof.ml` | 0.01 |  |  |
-| `compiler/backend/proofs/source_to_sourceProof.ml` | 0.02 |  |  |
-| `compiler/backend/proofs/stack_allocProof.ml` | 8.48 |  |  |
+| `compiler/backend/proofs/source_to_sourceProof.ml` | 0.01 |  |  |
+| `compiler/backend/proofs/stack_allocProof.ml` | 8.66 |  |  |
 | `compiler/backend/proofs/stack_namesProof.ml` | 0.11 | 2 |  |
-| `compiler/backend/proofs/stack_rawcallProof.ml` | 0.65 |  |  |
-| `compiler/backend/proofs/word_to_stackProof.ml` | 42.89 | 5 |  |
-| `compiler/backend/proofs/stack_to_labProof.ml` | 9.06 |  | Exception: Failure "typechecking error (overload resolution)". [at 43: (* HOL4 ML code, not ported: of 52] |
-| `compiler/backend/proofs/backendProof.ml` | 0.19 |  | Exception: Failure "typechecking error (initial type assignment): tlookup has type (num)spt->num->num, it cannot be used with type (num)spt->num->_->bool". [at 41: (* TODO: move/rephrase *) of 59] |
-| `semantics/proofs/gramProps.ml` | 1.36 |  |  |
+| `compiler/backend/proofs/stack_rawcallProof.ml` | 0.67 |  |  |
+| `compiler/backend/proofs/word_to_stackProof.ml` | 43.72 | 3 |  |
+| `compiler/backend/proofs/stack_to_labProof.ml` | 9.31 |  | Exception: Failure "typechecking error (overload resolution)". [at 43: (* HOL4 ML code, not ported: of 52] |
+| `compiler/backend/proofs/backendProof.ml` | 0.18 |  | Exception: Failure "typechecking error (initial type assignment): tlookup has type (num)spt->num->num, it cannot be used with type (num)spt->num->_->bool". [at 41: (* TODO: move/rephrase *) of 59] |
+| `semantics/proofs/gramProps.ml` | 1.40 |  |  |
 | `compiler/parsing/proofs/cmlNTProps.ml` | 0.01 |  |  |
-| `compiler/inference/inferProps.ml` | 6.21 | 4 | Exception: Failure "typechecking error (initial type assignment): sem_env_c has type ('v)sem_env->(mlstring,mlstring,num#stamp)namespace, it cannot be used with type (?948860)sem_env->(mlstring,mlstring,(mlstring)list#(t)list#num)namespace". [at 26: (* HOL4 ML code, not ported: of 28] |
-| `compiler/inference/proofs/envRel.ml` | 1.69 | 2 | Exception: Failure "typechecking error (initial type assignment): sem_env_c has type ('v)sem_env->(mlstring,mlstring,num#stamp)namespace, it cannot be used with type (?948993)sem_env->(mlstring,mlstring,(mlstring)list#(t)list#num)namespace". [at 15: (* TODO: should be able to use max_tvs in place of 0 *) of 20] |
-| `compiler/inference/proofs/infer_eComplete.ml` | 0.09 | 1 |  |
+| `compiler/inference/inferProps.ml` | 7.29 | 3 |  |
+| `compiler/inference/proofs/envRel.ml` | 3.97 |  |  |
+| `compiler/inference/proofs/infer_eComplete.ml` | 0.44 |  |  |
 | `compiler/inference/proofs/infer_eSound.ml` | 0.02 |  |  |
-| `compiler/inference/proofs/type_dCanon.ml` | 0.04 |  | Exception: Failure "typechecking error (initial type assignment): tenv1 cannot have type type_env and (_)sem_env simultaneously". [at 8: (* TODO: move *) of 17] |
+| `compiler/inference/proofs/type_dCanon.ml` | 3.53 | 2 |  |
 | `compiler/inference/proofs/type_eDeterm.ml` | 0.02 |  |  |
 | `compiler/inference/proofs/inferComplete.ml` | 0.02 |  |  |
 | `compiler/inference/proofs/inferSound.ml` | 0.33 |  |  |
-| `compiler/parsing/proofs/pegSound.ml` | 0.46 |  |  |
-| `compiler/parsing/proofs/pegComplete.ml` | 30.65 | 3 |  |
+| `compiler/parsing/proofs/pegSound.ml` | 0.48 |  |  |
+| `compiler/parsing/proofs/pegComplete.ml` | 30.89 | 3 |  |
 | `compiler/proofs/compilerProof.ml` | 0.03 |  | Exception: Failure "Unparsed input following term". [at 19: let config_ok_def = cake_define of 25] |
-| `compiler/proofs/compilerProof.ml` | 0.03 |  | Exception: Failure "Unparsed input following term". [at 19: let config_ok_def = cake_define of 25] |
-| **total** | **8432.3** | **416** | |
+| **total** | **8733.6** | **383** | |
