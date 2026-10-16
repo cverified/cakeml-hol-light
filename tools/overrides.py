@@ -98,6 +98,9 @@ FIELD_VAR = {
   # FIELD_OF says), of env the one of a sem_env, of comp_map the
   # one of source_to_flat's environment and of the local
   # environments the one of flatSem's
+  # the state that these are about is the one of their own
+  # semantics, which the overloaded accessors do not say
+  'bvlProps': {'s': 'bvlSem_state'},
   'source_to_flatProof': {
     'env': 'semanticPrimitives_sem_env',
     'comp_map': 'source_to_flat_environment',
@@ -112,6 +115,9 @@ FIELD_OF = {
   # source_to_flat's environment has the fields of sem_env
   'source_to_flat': {'v': 'source_to_flat_environment',
                      'c': 'source_to_flat_environment'},
+  # the state that these are about is the one of their own
+  # semantics, which the overloaded accessors do not say
+  'bvlProps': {'s': 'bvlSem_state'},
   'source_to_flatProof': {'v': 'global_env',
                           'c': 'global_env'},
   'flatSem': {'v': 'flatSem_environment'},
