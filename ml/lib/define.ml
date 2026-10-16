@@ -299,18 +299,21 @@ let DIV_FACTS_TAC (asl,w as gl) =
   MAP_EVERY MP_TAC facts gl;;
 
 (* the equations of the pattern that a match provides, as
-   substitutions: the goal then talks about the subterms *)
+   substitutions: the goal then talks about the subterms.  One
+   equation is taken at a time, from the assumptions as they are
+   then: a substitution rewrites the other assumptions, and the
+   theorems of a list that was made before it are stale (that
+   lost the pattern of the Call of wordLang, where the
+   injectivity of the constructor first gives ret' = ret) *)
 
-let SUBST_VAR_TAC (asl,w as gl) =
-  let eqs =
-    mapfilter (fun (_,th) ->
-                 let l,r = dest_eq(concl th) in
-                 if is_var r && not (vfree_in r l) then SYM th
-                 else if is_var l && not (vfree_in l r) then th
-                 else fail())
-              asl in
-  (if eqs = [] then ALL_TAC
-   else MAP_EVERY (fun th -> TRY(SUBST_ALL_TAC th)) eqs) gl;;
+let SUBST_VAR_TAC =
+  let orient th =
+    let l,r = dest_eq(concl th) in
+    if aconv l r then fail()
+    else if is_var l && not (vfree_in l r) then th
+    else if is_var r && not (vfree_in r l) then SYM th
+    else fail() in
+  REPEAT (FIRST_X_ASSUM (fun th -> SUBST_ALL_TAC (orient th)));;
 
 (* the assumptions with the injectivity and the distinctness of
    the datatypes that they mention *)
@@ -329,6 +332,35 @@ let CON_EQ_TAC (asl,w as gl) =
   (RULE_ASSUM_TAC(REWRITE_RULE ths) THEN
    REPEAT (FIRST_X_ASSUM (CONJUNCTS_THEN ASSUME_TAC)) THEN
    TRY SUBST_VAR_TAC) gl;;
+
+(* the value of a constant without arguments, which a measure
+   may go down by (mlint's fromChars subtracts padLen_DEC, and
+   only the definition says that that is not 0); a constant that
+   a specification made says nothing, so it is left alone *)
+
+let NUM_CONST_TAC =
+  let num_ty = `:num` in
+  let defn c =
+    tryfind (fun th ->
+               let l,r = dest_eq(concl th) in
+               if l = c && not (can (find_term is_select) r)
+               then th else fail())
+            (definitions()) in
+  fun (asl,w as gl) ->
+    let rec gather ths tms =
+      let cs = filter
+                 (fun c -> type_of c = num_ty &&
+                           not (name_of c = "_0") &&
+                           not (exists (fun th -> lhs(concl th) = c)
+                                       ths))
+                 (setify (flat (map (find_terms is_const) tms))) in
+      let nths = mapfilter defn cs in
+      if nths = [] then ths
+      else gather (nths @ ths) (map (rhs o concl) nths) in
+    let ths = gather [] (w :: map (concl o snd) asl) in
+    if ths = [] then ALL_TAC gl
+    else (REWRITE_TAC ths THEN
+          RULE_ASSUM_TAC(REWRITE_RULE ths)) gl;;
 
 (* the tactic that is tried on the termination conditions *)
 
@@ -458,6 +490,7 @@ and SIZE_TERM_TAC g =
    (ASM_ARITH_TAC ORELSE
     (ASM_SIMP_TAC(all_size_thms() @ (!cake_term_lemmas)) THEN
      ASM_ARITH_TAC) ORELSE
+    (NUM_CONST_TAC THEN ASM_ARITH_TAC) ORELSE
     (if !cake_debug then LOG_TAC else NO_TAC))) g
 
 and ADMISS_TERM_TAC g =

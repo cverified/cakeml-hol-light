@@ -102,6 +102,31 @@ let ADMISSIBLE_LET = prove
    [FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
+(* the admissibility of an existential, which HOL Light has no
+   proforma for: a pattern variable of a match that the arm of
+   the match does not use stays as one (wordLang's Call binds
+   l2 of its handler, and the body of max_var does not look at
+   it) *)
+
+let ADMISSIBLE_EXISTS = prove
+ (`!(<<) p s:P->A t:(A->B)->C->P->bool.
+     admissible(<<) (\f (u,x). p f x) (\(u,x). s x)
+                    (\f (u,x). t f u x)
+     ==> admissible(<<) p s (\f x. ?u. t f u x)`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN MESON_TAC[]);;
+
+(* with cake_proforma set, a goal that no proforma of the
+   dispatch below takes is written to cakeml/tmp/proforma.txt:
+   that says which proforma the library layer is missing *)
+
+let cake_proforma = ref false;;
+
+let cake_proforma_log tm =
+  let ch = open_out_gen [Open_append; Open_creat] 0o644
+    "/home/freek/claude/hol-light/cakeml/tmp/proforma.txt" in
+  output_string ch (string_of_term tm ^ "\n\n");
+  close_out ch;;
+
 let cake_instantiate_casewise_recursion,
     cake_pure_prove_recursive_function_exists,
     cake_prove_general_recursive_function_exists =
@@ -335,6 +360,9 @@ let cake_instantiate_casewise_recursion,
        but only uses in tail position *)
     | "admissible","COND"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COND gl
+    (* the proforma of an existential *)
+    | "admissible","?"
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_EXISTS gl
     | "admissible","_MATCH" when
           name_of(repeat rator (last args)) = "_SEQPATTERN"
           -> (APPLY_PROFORMA_TAC ADMISSIBLE_MATCH_SEQPATTERN THEN
@@ -362,7 +390,8 @@ let cake_instantiate_casewise_recursion,
        which the proforma of that combination (a MAP) takes *)
     | "admissible",_ when is_comb bod && not(rand bod = f)
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
-    | _ -> failwith "MAIN_ADMISS_TAC" in
+    | _ -> ((if !cake_proforma then cake_proforma_log w);
+            failwith "MAIN_ADMISS_TAC") in
 
   let ADMISS_TAC =
     CONJ_TAC ORELSE
