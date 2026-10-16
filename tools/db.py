@@ -299,6 +299,17 @@ class Db:
     for thy, nm in overrides.EXTRA_DEFS:
       if not any(t == thy for t, _ in self.defs.get(nm, [])):
         self.defs[nm].append((thy, 'def'))
+    # and the datatypes that it takes over from a theory that is
+    # not ported
+    for (thy, ty), cons in overrides.EXTRA_DATATYPES.items():
+      if (thy, ty) in self.datatypes: continue
+      self.datatypes[(thy, ty)] = ([c for c, _ in cons], [])
+      self.defs[ty].append((thy, 'type'))
+      for c, argtys in cons:
+        self.defs[c].append((thy, 'con'))
+        for j, t in enumerate(argtys):
+          self.con_argty.setdefault((c, j), set()).add(t)
+          self.con_argty_thy[(thy, c, j)] = t
 
   # ---------------------------------------------------------------
 

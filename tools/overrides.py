@@ -240,6 +240,22 @@ LOCAL_NAMES = {
 # the HOL4 sources make with ML code, so that the database knows
 # their names: a variable of that name is renamed, as it is for
 # any other constant (semantics/ffi has an oracle called oc)
+# a datatype that the port takes over although the theory that
+# has it is not ported: the constructors and the type of every
+# argument, so that the db knows the names (the port writes the
+# datatype itself in EXTRA_HEAD)
+EXTRA_DATATYPES = {
+  # compiler's compile_error has StaticError staterr in it, and
+  # staterr is a datatype of Pancake's panStatic, which the port
+  # does not have; without it compile_error is polymorphic where
+  # HOL4's is not, and the constructors in the match of
+  # error_to_str are variables
+  ('compiler', 'staterr'): [('ScopeErr', ['mlstring']),
+                            ('WarningErr', ['mlstring']),
+                            ('GenErr', ['mlstring']),
+                            ('ShapeErr', ['mlstring'])],
+}
+
 EXTRA_DEFS = [
   ('walk', 'vwalk'), ('walkstar', 'walkstar'),
   ('walkstar', 'oc'), ('unifDef', 'unify'),
@@ -830,6 +846,15 @@ let unify_def = new_definition
 }
 
 EXTRA_HEAD = {
+  # the datatype of the static errors of Pancake (panStatic's
+  # staterr), which compiler's compile_error has in it; Pancake
+  # itself is not ported, but compile_error is not Pancake's and
+  # error_to_str matches on these constructors
+  'compiler': r'''
+let staterr_INDUCT,staterr_RECURSION = define_datatype
+  "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
+             | GenErr (mlstring) | ShapeErr (mlstring)";;
+''',
   # HOL4 makes vwalk, walkstar and oc with a schema
   # (xDefineSchema, under the hypothesis wfs s that the
   # substitution is wellfounded), which HOL Light has no
