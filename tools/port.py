@@ -121,6 +121,7 @@ class Porter:
     flds = {f: t for f, t in fields.items() if t}
     flds.update(overrides.FIELD_OF.get(thy, {}))
     self.abbrevs = db.abbrevs_for(thy)
+    self.fieldvar = overrides.FIELD_VAR.get(thy, {})
     self.ctx = hterm.Ctx(names=names, fields=flds,
                          tynames=db.names_for(thy, True),
                          overloaded=db.overloaded_for(thy),
@@ -130,6 +131,7 @@ class Porter:
                          cons=db.cons_for(thy), abbrevs=self.abbrevs,
                          ambfields=db.ambiguous_fields(),
                          con_argty=db.con_argty_for(thy))
+    self.ctx.fieldvar = self.fieldvar
     # the names that are types, so that the parser knows where a
     # type that is not in parentheses ends
     self.ctx.tyops = (
@@ -143,6 +145,8 @@ class Porter:
     self.deps = []
     self.restore = set()   # the infixes to put back at the end
     self.conof_said = {}   # the theory an override gives a name
+    self.conof_arities = {}  # the theory per number of arguments
+    self.conof_wild = False  # did the override use the wildcard?
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
@@ -207,7 +211,7 @@ class Porter:
     if p.peek().kind != 'eof':
       t = p.peek()
       raise SyntaxError(f'unparsed input at {t.pos}: {t.text!r}')
-    e = self.arm_intvars(self.lambda_cons(e))
+    e = self.conof_arity(self.arm_intvars(self.lambda_cons(e)))
     old = self.ctx.vars
     self.ctx.vars = self.shadowing(e)
     # the patterns of the first clause of every function carry the
@@ -614,6 +618,7 @@ class Porter:
     self.ctx.intvars = self.int_vars(body) | self.intargs
     self.ctx.reclit = overrides.RECORD_OF.get(key)
     self.ctx.wordnot = key in overrides.WORD_NOT
+    self.ctx.append = key in overrides.PLAIN_APPEND
     self.ctx.iffeq = key in overrides.IFF_IS_EQ
     # the map from the body of a match arm to its integer
     # variables is for this definition only (a node of another
@@ -625,6 +630,14 @@ class Porter:
     # through the wildcard, means that theory everywhere in the
     # definition, also where another pass of the port would
     # resolve it (stackSem's dest_Seq matches on stackLang's Seq)
+    # an entry whose value is a dict says the theory per number of
+    # arguments: the same name is two constants in one definition
+    # (stack_to_lab's compile_no_stubs maps stack_remove's
+    # prog_comp over what stack_alloc's prog_comp gives)
+    self.conof_wild = '*' in conof
+    self.conof_arities = {k: v for k, v in conof.items()
+                          if isinstance(v, dict)}
+    for k in self.conof_arities: del conof[k]
     self.conof_said = {k: v for k, v in conof.items() if k != '*'}
     if '*' in conof:
       # every constructor name of that theory
@@ -731,6 +744,7 @@ class Porter:
       del self.ctx.names[(self.thy, nm)]
     self.conof = {}
     self.ctx.intnums = False
+    self.ctx.append = False
     self.ctx.wordnot = False
     self.ctx.intneg = False
     self.ctx.defining = set()
@@ -835,12 +849,12 @@ class Porter:
     t = self.con_thy(nm, ('con', 'def', 'rel'))
     return self.ctx.names.get((t, n), n) if t else self.ctx.name(nm)
 
-  def con_name(self, nm):
+  def con_name(self, nm, arity=None):
     """the name that the port gives the constructor that an
        ambiguous name means; writing it out resolves the overload
        without a type annotation, which HOL Light cannot leave
        general (a type variable that the user writes is rigid)"""
-    t = self.con_thy(nm)
+    t = self.con_thy(nm, arity=arity)
     n = nm.split('$')[-1]
     return self.ctx.names.get((t, n)) if t else None
 
@@ -894,7 +908,7 @@ class Porter:
           # annotation; the name of the constructor itself then says
           # which one it is
           if ambiguous and ty and ty.startswith('('):
-            nm = self.con_name(h.name)
+            nm = self.con_name(h.name, len(args0))
             if nm:
               done[0] = True
               h.name = nm
@@ -1138,6 +1152,13 @@ class Porter:
       if e.kind in ('app', 'id') and top:
         s = pr.pr(e, 0)
         ty = self.annotated.get(s) if seen.get(s) == 1 else None
+        # where CON_OF says the body means a constructor of
+        # another theory, the type of the pattern is not the one
+        # of the body (word_to_stackProof's compile_result gives
+        # back the result of stackSem)
+        h = hterm.strip_app(e)[0] if e.kind == 'app' else e
+        if (h.kind == 'id' and
+            h.name.split('$')[-1] in self.conof): ty = None
         if ty:
           return hterm.Node('paren', tok=e.tok,
                    e=hterm.Node('typed', tok=e.tok, e=e,
@@ -1256,6 +1277,7 @@ class Porter:
     return out - other
 
   def conof_arity(self, e):
+    if not self.conof and not self.conof_arities: return e
     """the occurrences of a name of CON_OF that the theory it
        names has no constructor of that arity for, written with
        the theory that has one (word_alloc's ssa_cc_trans means
@@ -1284,8 +1306,12 @@ class Porter:
                 if isinstance(z, hterm.Node): go(z)
 
     def head(h, n):
-      if (h.kind != 'id' or '$' in h.name
-          or h.name not in self.conof): return
+      if h.kind != 'id' or '$' in h.name: return
+      if h.name in self.conof_arities:
+        t = self.conof_arities[h.name].get(n)
+        if t: h.name = t + '$' + h.name
+        return
+      if h.name not in self.conof: return
       t = self.conof[h.name]
       if self.db.con_arity(t, h.name) == n: return
       t2 = self.con_thy(h.name, arity=n)
@@ -1293,6 +1319,24 @@ class Porter:
         h.name = t2 + '$' + h.name
     go(e)
     return e
+
+  def pr_body(self, pr, e, prec=2):
+    """the right hand side of a match arm, with the constructors
+       that CON_OF says this definition means: the arms of a
+       definition in the match form are its clauses"""
+    e = self.conof_arity(e)
+    if not self.conof_wild: return pr.pr(e, prec)
+    old = {}
+    for nm, t in self.conof.items():
+      old[nm] = nm in self.ctx.overloaded
+      self.ctx.overloaded.discard(nm)
+      self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
+    try:
+      return pr.pr(e, prec)
+    finally:
+      for nm in self.conof:
+        if old[nm]: self.ctx.overloaded.add(nm)
+        self.ctx.names.pop((self.thy, nm), None)
 
   def pr_clause(self, p, cl):
     """a clause, with the right hand side printed with the
@@ -1609,7 +1653,7 @@ class Porter:
         if len(pats) > 1: pat = '(' + pat + ')'
         # the body of an arm needs its parentheses: a match, a let
         # or a conditional in it would swallow the arms after it
-        arms.append((pat, pr.pr(hterm.rename_ast(r, sub), 2)))
+        arms.append((pat, self.pr_body(pr, hterm.rename_ast(r, sub))))
       finally:
         self.ctx.intvars = iv
     scrut = ','.join(names[i] for i in pats)
@@ -1883,7 +1927,32 @@ class Porter:
     return True
 
   def inductive(self, b):
-    term = fmt(self.term(b.body))
+    # a rule may hold integers or a name of a theory that the
+    # overrides give, as the clauses of a definition may
+    key = (self.thy, ocaml_name(b.name))
+    conof = dict(overrides.CON_OF.get(key, {}))
+    if '*' in conof:
+      t = conof.pop('*')
+      for (t2, ty), (cons, _) in self.db.datatypes.items():
+        if t2 != t: continue
+        for c in cons:
+          if c in self.ctx.overloaded: conof.setdefault(c, t)
+    self.conof_said = {k: v for k, v in conof.items()
+                       if not isinstance(v, dict)}
+    self.ctx.intnums = key in overrides.INT_NUMERALS
+    self.ctx.intvars = set(overrides.INT_ARGS.get(key, []))
+    for nm, t in conof.items():
+      self.ctx.overloaded.discard(nm)
+      self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
+    try:
+      term = fmt(self.term(b.body))
+    finally:
+      for nm in conof:
+        self.ctx.overloaded.add(nm)
+        del self.ctx.names[(self.thy, nm)]
+      self.conof_said = {}
+      self.ctx.intnums = False
+      self.ctx.intvars = set()
     self.out.append('let %s = cake_inductive\n  `%s`;;'
                     % (ocaml_name(b.name), term))
 

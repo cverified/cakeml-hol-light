@@ -474,7 +474,10 @@ class Parser:
         self.next(); fn = True
       else:
         self.expect(':='); fn = False
-      v = self.parse(60)
+      # the value of an update binds tighter than = and /\ in
+      # HOL4 (D with locals := D.locals = D is an equation, and
+      # word_bignumProof's reg_write has a clause after the /\)
+      v = self.parse(450)
       upds.append((fld.text, v, fn))
       if single or not self.at(';'): break
       self.next()
@@ -936,6 +939,8 @@ class Ctx:
                                        # binds its own)
     self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
+    self.append = False                # is ++ the append of lists?
+    self.fieldvar = {}                 # variable -> its record
     self.iffeq = False                 # is <=> plain equality?
     self.thy = thy
     self.wild = 0
@@ -1308,6 +1313,12 @@ class Printer:
       if op == '<=>' and self.ctx is not None and self.ctx.iffeq:
         return self.paren(self.pr(e.l, 13) + ' = ' + self.pr(e.r, 13),
                           12, prec)
+      # where the source overloads ++ with the choice of a monad
+      # and uses it for an append of two lists that nothing else
+      # says the type of, the port writes the append out
+      if op == '++' and self.ctx is not None and self.ctx.append:
+        return self.paren('APPEND ' + self.pr(e.l, APP) + ' ' +
+                          self.pr(e.r, APP), PRE_APP, prec)
       _, assoc, hop, hprec = INFIX[op]
       # an infix that HOL Light does not have is written as an
       # application of the constant that HOL4 overloads it with
@@ -1412,7 +1423,15 @@ class Printer:
       return self.paren('match ' + self.pr(e.s, 15) + ' with ' + arms,
                         1, prec)
     if k == 'field':
-      return self.paren(self.ctx.field(e.fld) + ' ' + self.pr(e.e, APP),
+      # the record type of a variable that the overrides name
+      # (typeSoundInvariants has the c of a sem_env and the c of
+      # a type_env in one rule)
+      v = e.e
+      while v.kind == 'paren': v = v.e
+      rec = (self.ctx.fieldvar.get(v.name)
+             if v.kind == 'id' else None)
+      acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
+      return self.paren(acc + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)
     if k == 'recupd':
       s = self.pr(e.e, APP)

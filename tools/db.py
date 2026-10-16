@@ -555,14 +555,22 @@ class Db:
 
   def abbrevs_for(self, thy):
     anc = self.ancestors(thy) | {thy}
+    rank = {t: i for i, (t, _, _) in enumerate(self.order)}
     # HOL4's 'a set is HOL Light's A->bool
     out = {'set': (["'a"], hterm.parse_type_text("'a -> bool"))}
     for (t, nm), (params, txt) in self.abbrevs.items():
-      if t in anc:
-        ty = hterm.parse_type_text(txt)
-        out[nm] = (params, ty)
-        # a CakeML source may qualify the name (sptree$num_map)
-        out[t + '$' + nm] = (params, ty)
+      if t not in anc: continue
+      ty = hterm.parse_type_text(txt)
+      # a CakeML source may qualify the name (sptree$num_map)
+      out[t + '$' + nm] = (params, ty)
+      # a theory that comes after the one of the abbreviation and
+      # has a datatype of that name means its own type, not the
+      # abbreviation (data_to_word_memoryProof's tag is a
+      # datatype of its own, and bvl's tag is num)
+      if any(t2 in anc and rank.get(t2, -1) > rank.get(t, -1)
+             for (t2, ty2) in self.datatypes if ty2 == nm):
+        continue
+      out[nm] = (params, ty)
     return out
 
 

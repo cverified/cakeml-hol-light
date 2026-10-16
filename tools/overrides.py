@@ -67,6 +67,13 @@ FIELD_DEFAULT = {
   'max_app': 'closSem_state',
 }
 
+# the record type of a variable, where one theory uses two record
+# types that have a field of the same name and the type of the
+# variable is the only thing that says which one it is
+FIELD_VAR = {
+  'typeSoundInvariants': {'tenv': 'type_env'},
+}
+
 FIELD_OF = {
   # both grammar and peg have a field rules
   'pegexec': {'rules': 'peg'},
@@ -200,6 +207,11 @@ INT_NUMERALS = set([
   ('linear_scan', 'size_of_clash_tree_def'),
   # the IntT arm compares the integer v2 with 0
   ('semanticPrimitives', 'do_arith_def'),
+  # the elements of the list are the integers of an int spt
+  ('linear_scanProof', 'sptree_eq_list_def'),
+  # the number of the arguments of a closure is the integer of
+  # bvlSem's Number
+  ('clos_to_bvlProof', 'unpack_closure'),
 ])
 
 # the arguments of a definition that hold an integer, where no
@@ -257,6 +269,14 @@ INT_NEG = set([
 
 # definitions in which a prefix ~ is the complement of a word, not
 # the negation of a proposition
+# definitions where ++ is the append of two lists, which the
+# source overloads with the choice of a monad: the port writes
+# APPEND there, because nothing says the type of the two sides
+PLAIN_APPEND = set([
+  # the bindings that the two patterns of a pattern list bind
+  ('infer', 'infer_p_def'),
+])
+
 WORD_NOT = set([
   ('binary_ieee', 'float_negate_def'),
   ('wordLang', 'word_op_def'),
@@ -342,17 +362,11 @@ ONE_QUOTATION = set([
   # which only the clause with <+ in it says)
   ('asm', 'word_cmp_def'),
   ('linear_scan', 'check_startlive_prop_def'),
-  ('word_cse', 'word_cse_def'),
-  ('flat_to_clos', 'compile_def'),
   ('displayLang', 'display_to_json_def'),
   ('source_to_flat', 'compile_pat_def'),
   ('stack_remove', 'store_list_code_def'),
   ('word_to_stack', 'call_dest_def'),
-  ('closSem', 'evaluate_def'),
   ('bvlSem', 'evaluate_def'),
-  ('bviSem', 'evaluate_def'),
-  ('unify', 'encode_infer_t_def'),
-  ('infer', 'infer_p_def'),
 ])
 
 # the theory whose constructor a name means in one definition,
@@ -405,6 +419,26 @@ CON_OF = {
   # the program that this takes apart is stackLang's, which only
   # the annotation on the second component says
   ('stackSem', 'dest_Seq_def'): {'Seq': 'stackLang'},
+  # the prog_comp with three arguments in front of the program is
+  # stack_remove's, the one without arguments stack_alloc's
+  ('stack_to_lab', 'compile_no_stubs_def'):
+    {'prog_comp': {3: 'stack_remove', 0: 'stack_alloc'}},
+  # these are about the programs of stackLang and of bvl, which
+  # the patterns alone do not say
+  ('stackProps', 'extract_labels_def'): {'*': 'stackLang'},
+  ('bvl_inlineProof', 'exp_rel'): {'*': 'bvl'},
+  # these pass from one language to another one that has the same
+  # constructor names: the body is of the second one
+  ('flat_to_clos', 'compile_def'): {'*': 'closLang'},
+  ('word_to_stackProof', 'compile_result_def'): {'*': 'stackSem'},
+  ('bvi_tailrecProof', 'op_id_val_def'): {'*': 'bvlSem'},
+  ('bvl_to_bviProof', 'adjust_bv_def'): {'*': 'bvlSem'},
+  # the term that this encodes an inferencer type as is the one
+  # of the unification library
+  ('unify', 'encode_infer_t_def'): {'Var': 'term'},
+  # this gives back a wordLang program, whose Seq, Set and If
+  # word_alloc's live_tree and word_bignum's mini have as well
+  ('word_cse', 'word_cse_def'): {'*': 'wordLang'},
 }
 
 # NB: the key of an override is (theory, name of the OCaml

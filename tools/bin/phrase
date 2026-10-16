@@ -1,0 +1,12 @@
+#!/bin/sh
+# phrase <mlfile> <n> : print phrase n of an ml file of the port
+C=/home/freek/claude/hol-light/cakeml
+f="$1"
+n="$2"
+case "$f" in /*) ;; *) f="$C/ml/$f";; esac
+export CAKE_F="$f" CAKE_N="$n"
+python3 -I -c '
+import re, os
+f = os.environ["CAKE_F"]; n = int(os.environ["CAKE_N"])
+ph=[p for p in re.split(r"(?<=;;)\n", open(f).read()) if p.strip()]
+print(ph[n-1])'

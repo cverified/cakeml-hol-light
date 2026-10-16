@@ -8,6 +8,9 @@ s=${1:-seq}
 TIMEOUT=120 repl-step $s \
   "let cake_out = open_out \"$C/tmp/cheats.txt\" in
    do_list (fun s -> output_string cake_out (s ^ \"\\n\")) (cake_cheats ());
+   close_out cake_out;
+   let cake_out = open_out \"$C/tmp/axioms.txt\" in
+   output_string cake_out (string_of_int (length (axioms ())) ^ \"\\n\");
    close_out cake_out; (length (cake_cheats ()), length (axioms ()));;" \
   2>&1 | tail -2
 python3 -I $C/tools/cheats.py
