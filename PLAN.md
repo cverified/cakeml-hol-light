@@ -6,15 +6,24 @@ are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-16 09:35, 14 files failed and 349 definitions were
-assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 386`
-(the run before it, of 09:06, had 29 and 371).  The round that
-follows it makes HOL Light's machinery for a definition by cases
-much faster (`ml/lib/fastdef.ml`), renames the bound variables of
-a termination goal before it is stripped (without which
-`STRIP_TAC` dies with `CHOOSE` on the goal of a definition by
-cases), uses the lemmas of HOL4's `Termination` as facts, and
-adds the four library names that are still free variables._
+2026-10-16 14:43, 2 files failed (`source_to_flatProof` and
+`stack_to_labProof`, both on a name that resolves to the
+constant of another theory) and 339 definitions were assumed
+(`ml/CHEATS.md`), which was `length (axioms ()) = 409` (a
+definition whose clauses are assumed one by one counts for
+more than one axiom).  The run before it, of 12:23, had 7 files
+that failed and 313 definitions assumed; the five files that
+now load are what the difference of the axioms is.  The round
+that follows takes the termination relation of HOL4 for a
+definition of several clauses too (107 of the 205 `Termination`
+blocks of the ported sources are of one), fills three gaps of
+HOL Light's admissibility machinery (a `MAP2`, a conditional
+that is not a tail call, a combination whose function is an
+argument deeper in), and repairs two things that made every
+measure over a list fail: a second `list_size` that
+`size_thms "list"` had defined, and the test in `FACTS_TAC`
+that threw away the instances of a fact with a type variable
+in it._
 
 ## What is ported
 
