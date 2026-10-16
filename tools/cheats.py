@@ -50,3 +50,8 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
     out.write('| `%s` | `%s` | %s |\n' % (nm, where.get(nm, ''), w))
   out.write('\n%d definitions.\n' % len(names))
 print('wrote ml/CHEATS.md (%d)' % len(names))
+# the reasons, so that the next round knows what to attack
+import collections
+c = collections.Counter(why.get(nm, '') for nm in names)
+for w, n in c.most_common(12):
+  print('%5d %s' % (n, (w or '(no reason recorded)')[:60]))
