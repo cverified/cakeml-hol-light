@@ -132,6 +132,9 @@ class Porter:
     flds = {f: t for f, t in fields.items() if t}
     flds.update(overrides.FIELD_OF.get(thy, {}))
     self.abbrevs = db.abbrevs_for(thy)
+    # the names that the port gives the constants, so that a size
+    # function is not made for a name that is one of them
+    self.constnames = set(db.names_for(thy).values())
     self.fieldvar = overrides.FIELD_VAR.get(thy, {})
     self.ctx = hterm.Ctx(names=names, fields=flds,
                          tynames=db.names_for(thy, True),
@@ -721,6 +724,10 @@ class Porter:
         if ty not in types and ty not in ('list', 'pair', 'option',
                                           'num', 'prod'):
           continue
+        # a constant of the port that happens to be called after
+        # the size of a type is not that size function
+        # (balanced_map's size is balanced_map_size in the port)
+        if ty + '_size' in self.constnames: continue
         out += 'let _ = size_thms "%s";;\n' % ty
       return out
 
