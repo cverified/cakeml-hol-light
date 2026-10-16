@@ -111,8 +111,8 @@ let v_rel = cake_inductive
        (flatSem_environment_v env_v_local'))) env /\
      LENGTH ts = LENGTH (flatSem_environment_v env_v_local') + 1 ==>
      v_rel genv
-       (Closure (semanticPrimitives_sem_env_v_fupd (K (nsAppend
-         env_v_local (semanticPrimitives_sem_env_v env))) env) x e)
+       (Closure (sem_env_v_fupd (K (nsAppend env_v_local (sem_env_v
+         env))) env) x e)
        (Closure env_v_local' x
          (compile_exp t
            (source_to_flat_environment_v_fupd (K (bind_locals ts (x
@@ -127,8 +127,8 @@ let v_rel = cake_inductive
      LENGTH ts = LENGTH funs + LENGTH (flatSem_environment_v
        env_v_local') ==>
      v_rel genv
-       (Recclosure (semanticPrimitives_sem_env_v_fupd (K (nsAppend
-         env_v_local (semanticPrimitives_sem_env_v env))) env) funs x)
+       (Recclosure (sem_env_v_fupd (K (nsAppend env_v_local
+         (sem_env_v env))) env) funs x)
        (Recclosure env_v_local'
          (compile_funs t
            (source_to_flat_environment_v_fupd (K (bind_locals ts (MAP
@@ -175,7 +175,7 @@ let v_rel = cake_inductive
      (!x v.
         ~(
         x IN IMAGE Short shadowers) /\
-        nsLookup (semanticPrimitives_sem_env_v env) x = SOME v ==>
+        nsLookup (sem_env_v env) x = SOME v ==>
         (?n v' t.
           nsLookup (source_to_flat_environment_v comp_map) x = SOME
             (Glob t n) /\
@@ -183,8 +183,7 @@ let v_rel = cake_inductive
           EL n (global_env_v genv) = SOME v' /\
           v_rel genv v v')) /\
      (!x arity stamp.
-       nsLookup (semanticPrimitives_sem_env_c env) x = SOME
-         (arity,stamp) ==>
+       nsLookup (sem_env_c env) x = SOME (arity,stamp) ==>
        (?cn ty_gp. nsLookup (source_to_flat_environment_c comp_map) x
          = SOME (cn,ty_gp) /\
          FLOOKUP (global_env_c genv) ((cn,OPTION_MAP FST
@@ -309,9 +308,8 @@ let env_all_rel = cake_inductive
      global_env_inv genv map' (set_of_list locals) env /\
      source_evalProof_env_rel genv env_v_local env' ==>
      env_all_rel genv map'
-       (mk_global_env (nsAppend env_v_local
-         (semanticPrimitives_sem_env_v env))
-         (semanticPrimitives_sem_env_c env) ARB)
+       (mk_global_env (nsAppend env_v_local (sem_env_v env))
+         (sem_env_c env) ARB)
        (mk_flatSem_environment env')
        locals)`;;
 
@@ -339,14 +337,10 @@ val s1_i1 = mk_var ("s1_i1", type_of s_i1);
 let env_domain_eq_def = cake_define
   `env_domain_eq (var_map:source_to_flat_environment) (env:'a sem_env)
   <=>
-     nsDom (global_env_v var_map) = nsDom
-       (semanticPrimitives_sem_env_v env) /\
-     nsDomMod (global_env_v var_map) = nsDomMod
-       (semanticPrimitives_sem_env_v env) /\
-     nsDom (global_env_c var_map) = nsDom
-       (semanticPrimitives_sem_env_c env) /\
-     nsDomMod (global_env_c var_map) = nsDomMod
-       (semanticPrimitives_sem_env_c env)`;;
+     nsDom (global_env_v var_map) = nsDom (sem_env_v env) /\
+     nsDomMod (global_env_v var_map) = nsDomMod (sem_env_v env) /\
+     nsDom (global_env_c var_map) = nsDom (sem_env_c env) /\
+     nsDomMod (global_env_c var_map) = nsDomMod (sem_env_c env)`;;
 
 (* HOL4 ML code, not ported:
 val result_rel_imp = hd (RES_CANON result_rel_cases);
@@ -2005,11 +1999,9 @@ let init_genv_next = cake_define
   init_genv_els)))`;;
 
 let init_global_env_inv_def = cake_define
-  `init_global_env_inv genv comp_map env <=>
-  semanticPrimitives_sem_env_v
+  `init_global_env_inv genv comp_map env <=> sem_env_v
    env = nsEmpty /\
-   (match semanticPrimitives_sem_env_c env with Bind ns ms -> ms = []
-     /\
+   (match sem_env_c env with Bind ns ms -> ms = [] /\
      EVERY (\(x,(arity,stamp)). match nsLookup
        (source_to_flat_environment_c comp_map) (Short x) with
        NONE -> F | SOME (cn,ty_gp) ->

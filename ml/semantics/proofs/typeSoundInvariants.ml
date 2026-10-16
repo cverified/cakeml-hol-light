@@ -123,11 +123,9 @@ let type_v = cake_inductive
      tenv_ok tenv /\
      tenv_val_exp_ok tenvE /\
      num_tvs tenvE = 0 /\
-     nsAll2 (type_ctor ctMap) (semanticPrimitives_sem_env_c env)
-       (type_env_c tenv) /\
-     nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t)
-       (semanticPrimitives_sem_env_v env) (add_tenvE tenvE (type_env_v
-       tenv)) /\
+     nsAll2 (type_ctor ctMap) (sem_env_c env) (type_env_c tenv) /\
+     nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t) (sem_env_v
+       env) (add_tenvE tenvE (type_env_v tenv)) /\
      check_freevars tvs [] t1 /\
      type_e tenv (typeSystem_Bind_name n 0 t1 (bind_tvar tvs tenvE))
        e t2 ==>
@@ -137,11 +135,9 @@ let type_v = cake_inductive
      tenv_ok tenv /\
      tenv_val_exp_ok tenvE /\
      num_tvs tenvE = 0 /\
-     nsAll2 (type_ctor ctMap) (semanticPrimitives_sem_env_c env)
-       (type_env_c tenv) /\
-     nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t)
-       (semanticPrimitives_sem_env_v env) (add_tenvE tenvE (type_env_v
-       tenv)) /\
+     nsAll2 (type_ctor ctMap) (sem_env_c env) (type_env_c tenv) /\
+     nsAll2 (\i v (tvs,t). type_v tvs ctMap tenvS v t) (sem_env_v
+       env) (add_tenvE tenvE (type_env_v tenv)) /\
      type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs tenvE))
        funs bindings /\
      ALOOKUP bindings n = SOME t /\

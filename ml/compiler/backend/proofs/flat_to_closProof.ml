@@ -42,7 +42,7 @@ let v_rel = cake_inductive
    (!vs ws. LIST_REL v_rel vs ws ==> v_rel (Vectorv vs)
      (closSem_Block 0 ws)) /\
    (!env m db.
-     (!n x. ALOOKUP (semanticPrimitives_sem_env_v env) n = SOME x ==>
+     (!n x. ALOOKUP (sem_env_v env) n = SOME x ==>
             indexedLists_findi (SOME n) m < LENGTH db /\
             v_rel x (EL (indexedLists_findi (SOME n) m) db)) ==>
       env_rel env (m:(mlstring option) list) (db:closSem_v list)) /\

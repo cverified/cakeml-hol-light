@@ -111,9 +111,8 @@ let v_rel = cake_inductive
           (MAP (\(n,m,e). (n,m,SND (SND (flat_pattern_compile_exp cfg
             e)))) fs) x)) /\
    (!N env1 env2.
-      ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel
-        (semanticPrimitives_sem_env_v env1)
-        (semanticPrimitives_sem_env_v env2) ==>
+      ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel (sem_env_v env1)
+        (sem_env_v env2) ==>
       env_rel N env1 env2)`;;
 
 (* HOL4 ML code, not ported:

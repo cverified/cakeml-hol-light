@@ -264,11 +264,10 @@ val let_tac =
 
 let remap_tenv_def = cake_define
   `remap_tenv f tenv =
-   mk_type_env (nsMap (\(n,t). (n,ts_tid_rename f t))
-     (semanticPrimitives_sem_env_v tenv)) (nsMap (\(ls,ts,tid).
-     (ls,MAP (ts_tid_rename f) ts,f tid))
-     (semanticPrimitives_sem_env_c tenv)) (nsMap (\(ls,t).
-     (ls,ts_tid_rename f t)) (type_env_t tenv))`;;
+   mk_type_env (nsMap (\(n,t). (n,ts_tid_rename f t)) (sem_env_v
+     tenv)) (nsMap (\(ls,ts,tid). (ls,MAP (ts_tid_rename f) ts,f
+     tid)) (sem_env_c tenv)) (nsMap (\(ls,t). (ls,ts_tid_rename f t))
+     (type_env_t tenv))`;;
 
 let hide_def = cake_define
   `inferProps_hide x = x`;;

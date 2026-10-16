@@ -65,8 +65,8 @@ RECORD_OF = {
 # (v and c are the fields of sem_env and the names of a great many
 # variables of the CakeML sources)
 FIELD_DEFAULT = {
-  'v': 'semanticPrimitives_sem_env',
-  'c': 'semanticPrimitives_sem_env',
+  'v': 'sem_env',
+  'c': 'sem_env',
   'max_app': 'closSem_state',
 }
 
@@ -105,7 +105,7 @@ FIELD_VAR = {
   # semantics, which the overloaded accessors do not say
   'bvlProps': {'s': 'bvlSem_state'},
   'source_to_flatProof': {
-    'env': 'semanticPrimitives_sem_env',
+    'env': 'sem_env',
     'comp_map': 'source_to_flat_environment',
     "env_v_local'": 'flatSem_environment',
     'flat_env': 'flatSem_environment'},
