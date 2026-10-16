@@ -2119,8 +2119,12 @@ let define_size tyname =
                  REWRITE_TAC[MAP; list_size; FORALL_PAIR_THM] THEN
                  REPEAT GEN_TAC THEN
                  REWRITE_TAC(list_size::sizedefs) THEN ARITH_TAC) in
-         [lemma (sfn aty) (maps "FST" aty);
-          lemma (sfn bty) (maps "SND" bty)])
+         (* one of the two is often not true (the size of a pair
+            of a family says nothing about the component that is
+            not of the family), and the other one is wanted *)
+         mapfilter (fun f -> f ())
+           [(fun () -> lemma (sfn aty) (maps "FST" aty));
+            (fun () -> lemma (sfn bty) (maps "SND" bty))])
       ifns) in
   cake_term_facts := pairlems @ (!cake_term_facts);
   the_size_thms := (tyname,(sizedefs,listlems))::(!the_size_thms);
