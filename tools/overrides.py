@@ -655,8 +655,13 @@ CON_OF = {
   # expression), and the Var and the Const of the two clauses
   # that evaluate a wordLang expression are wordLang's
   # the prog_size of the measure is the one of stackLang as well
+  # the Break and the Continue that it matches on are
+  # stackLang's, where the ones it gives back are stackSem's
+  # (CON_BODY), and wordLang has the name as well
   ('stackSem', 'evaluate_def'): {'Var': 'wordLang',
                                  'Const': 'wordLang',
+                                 'Break': 'stackLang',
+                                 'Continue': 'stackLang',
                                  'Get': 'stackLang',
                                  'Set': 'stackLang',
                                  'prog_size': 'stackLang',
