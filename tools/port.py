@@ -142,6 +142,7 @@ class Porter:
     self.head = None
     self.deps = []
     self.restore = set()   # the infixes to put back at the end
+    self.conof_said = {}   # the theory an override gives a name
     self.rec_src = {}      # record type -> [(field, type)]
     self.annotated = {}    # the terms a pattern resolved
     self.intargs = set()   # arguments that hold an integer
@@ -316,8 +317,12 @@ class Porter:
     # an infix that this file overloads with an append of its own is
     # the one of HOL Light again for the files that come after
     if self.restore:
+      # hol4_only, because the overload of this file would
+      # otherwise still be there for the files after it, where an
+      # infix between two variables has nothing to resolve it
+      # (semantics' prelude ++ prog)
       text += '\n' + ''.join(
-          'hol4_overload "%s" "%s";;\n'
+          'hol4_only "%s" "%s";;\n'
           % (tok, overrides.BASE_INFIX_CONST[tok])
           for tok in sorted(self.restore))
     # the files that the translation needs
@@ -616,6 +621,11 @@ class Porter:
     self.ctx.armvars = {}
     # the theory whose constructor a name means here
     conof = dict(overrides.CON_OF.get(key, {}))
+    # a name that the override gives a theory itself, rather than
+    # through the wildcard, means that theory everywhere in the
+    # definition, also where another pass of the port would
+    # resolve it (stackSem's dest_Seq matches on stackLang's Seq)
+    self.conof_said = {k: v for k, v in conof.items() if k != '*'}
     if '*' in conof:
       # every constructor name of that theory
       t = conof.pop('*')
@@ -802,6 +812,7 @@ class Porter:
        comes last among the ones in scope, which is the one HOL4's
        overload resolution takes"""
     t, n = nm.split('$') if '$' in nm else (None, nm)
+    if n in self.conof_said: return self.conof_said[n]
     if t: return t
     anc = self.db.ancestors(self.thy) | {self.thy}
     ts = [x for x, k in self.db.defs.get(n, [])

@@ -20,6 +20,8 @@ NAME_MAP = {
   'UINT_MAXw': 'word_T',
   'UNCURRY': 'UNCURRY',
   'I': 'I',
+  # HOL4's option theory overloads lift2 with OPTION_MAP2
+  'lift2': 'OPTION_MAP2',
 }
 
 # HOL4 type names of types that HOL Light has under another name
@@ -393,6 +395,16 @@ CON_OF = {
   # clauses that give one back do not say (Less and Equal are
   # comparison's ordering as well)
   ('stack_to_lab', 'negate_def'): {'*': 'asm'},
+  # the stack of dataSem holds a sptree, so this is sptree's
+  # toList, not the one of llist
+  ('dataSem', 'extract_stack_def'): {'toList': 'sptree'},
+  ('dataSem', 'stack_to_vs_def'): {'toList': 'sptree'},
+  # the location that this puts in front of the arguments of a
+  # call is a word_loc of wordLang
+  ('wordSem', 'add_ret_loc_def'): {'Loc': 'wordLang'},
+  # the program that this takes apart is stackLang's, which only
+  # the annotation on the second component says
+  ('stackSem', 'dest_Seq_def'): {'Seq': 'stackLang'},
 }
 
 # NB: the key of an override is (theory, name of the OCaml
