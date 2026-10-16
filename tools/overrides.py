@@ -228,6 +228,18 @@ RENAME = {
   ('fromSexp', 'assert'): 'OPTION_GUARD',
 }
 
+# the same for a constant whose name a type of the same theory
+# has as well: the type keeps the name, which HOL Light holds
+# apart from the names of the constants
+RENAME_CONST = {
+  # the semantics of every intermediate language is called
+  # semantics, and the one of CakeML itself is in the theory
+  # semantics, so the port cannot keep that name for the
+  # constant: the definition would be parsed with the overloads
+  # that the other theories declared for theirs before it
+  ('semantics', 'semantics'): 'semantics_semantics',
+}
+
 # the constant that a name means in one theory of the port, where
 # the name is one of the hand written library layer as well (the
 # fromList of data_to_word and flat_pattern is sptree's, the one

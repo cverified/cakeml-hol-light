@@ -550,6 +550,12 @@ class Db:
       if (t in anc or t == thy) and nm not in self.provided:
         out[nm] = new
       out[(t, nm)] = new
+    # a constant that is renamed where the type of the same name
+    # is not
+    if not types:
+      for (t, nm), new in overrides.RENAME_CONST.items():
+        if t in anc or t == thy: out[nm] = new
+        out[(t, nm)] = new
     return out
 
   def con_arity(self, thy, con):
