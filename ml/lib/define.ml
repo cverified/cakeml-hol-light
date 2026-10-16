@@ -373,8 +373,8 @@ let cake_term_lemmas =
           candidate_measures builds, is a sum_measure *)
        sum_measure;
        DIV2; DIV2_LT; list_size_DROP; list_size_TAKE;
-       list_size_APPEND; list_size_REVERSE;
-       LENGTH_TAKE_LE; LENGTH_DROP_LE];;
+       list_size_APPEND; list_size_REVERSE; list_size_LENGTH;
+       LENGTH_TAKE_LE; LENGTH_DROP_LE; LENGTH_DROP];;
 
 (* the lemmas that state a fact about a subterm of a termination
    goal (and not an equation, so that rewriting cannot use them);

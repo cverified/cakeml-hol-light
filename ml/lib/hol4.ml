@@ -585,6 +585,24 @@ let LENGTH_DROP_LE = prove
   COND_CASES_TAC THEN REWRITE_TAC[LENGTH; LE_REFL] THEN
   FIRST_X_ASSUM(MP_TAC o SPEC `k - 1`) THEN ARITH_TAC);;
 
+(* the length of the list that a DROP gives, which says more
+   than LENGTH_DROP_LE (word_to_stack's word_list drops a part
+   that is not empty), and the size of a list of things whose
+   size is 0, which is its length *)
+
+let LENGTH_DROP = prove
+ (`!l:A list k. LENGTH (DROP k l) = LENGTH l - k`,
+  LIST_INDUCT_TAC THEN GEN_TAC THEN REWRITE_TAC[DROP; LENGTH] THENL
+   [ARITH_TAC;
+    COND_CASES_TAC THEN ASM_REWRITE_TAC[LENGTH] THENL
+     [ASM_ARITH_TAC;
+      FIRST_X_ASSUM(MP_TAC o SPEC `k - 1`) THEN ASM_ARITH_TAC]]);;
+
+let list_size_LENGTH = prove
+ (`!l:A list. list_size (\x. 0) l = LENGTH l`,
+  LIST_INDUCT_TAC THEN ASM_REWRITE_TAC[list_size; LENGTH] THEN
+  ARITH_TAC);;
+
 (* HOL4's LOG2, from logrootTheory *)
 
 let LOG2 = define
