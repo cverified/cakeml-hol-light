@@ -272,8 +272,18 @@ class Porter:
       for (thy, ty), (cs, flds) in self.db.datatypes.items():
         for c in cs:
           cons.add(self.ctx.names.get((thy, c), c))
-      self._con_ovl = {n for n, t in self.ctx.overloads.items()
-                       if t.strip() in cons}
+          cons.add(c)
+      out = {n for n, t in self.ctx.overloads.items()
+             if t.strip() in cons}
+      # an overload that the port declares as an overload of HOL
+      # Light instead of expanding it is not in ctx.overloads,
+      # and its name is a constructor all the same: comparison
+      # overloads Less with the LESS of ternaryComparisons, and
+      # a pattern Less is that constructor, not a variable
+      anc = self.db.scope(self.thy) | {self.thy}
+      for (t, nm), (txt, local) in self.db.overloads.items():
+        if t in anc and txt.strip() in cons: out.add(nm)
+      self._con_ovl = out
     return self._con_ovl
 
   def is_const(self, n):
