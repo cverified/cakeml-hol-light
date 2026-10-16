@@ -514,6 +514,11 @@ CON_OF = {
   # patterns are the constructors of ast, which has the same
   # names ('*' is every constructor name of that theory)
   ('source_to_flat', 'compile_exp_def'): {'*': 'flatLang'},
+  # the values that these relations relate are the ones of bvl,
+  # which the rules do not say (every intermediate language has
+  # a Number and a Word64)
+  ('bvi_tmcProof', 'v_rel'): {'*': 'bvlSem'},
+  ('bvi_tmcProof', 'ref_rel'): {'*': 'bvlSem'},
   # these build wordLang programs, whose constructor names
   # linear_scan's live trees and word_bignum's language have too
   ('word_alloc', 'ssa_cc_trans_def'): {'*': 'wordLang'},
