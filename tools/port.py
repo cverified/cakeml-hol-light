@@ -2187,6 +2187,12 @@ class Porter:
     for nm, t in conof.items():
       self.ctx.overloaded.discard(nm)
       self.ctx.names[(self.thy, nm)] = self.ctx.names.get((t, nm), nm)
+    # the relations that the block defines get the name that the
+    # port gives them, as the constants of a Definition do: a
+    # relation whose name another theory has as well is written
+    # with the name of its theory (word_bignumProof's Eval, where
+    # ast has an Eval of its own)
+    self.ctx.defining = set(dbmod.rule_names(b.body))
     try:
       term = fmt(self.term(b.body))
     finally:
@@ -2196,6 +2202,7 @@ class Porter:
       self.conof_said = {}
       self.ctx.intnums = False
       self.ctx.intvars = set()
+      self.ctx.defining = set()
     self.out.append('let %s = cake_inductive\n  `%s`;;'
                     % (ocaml_name(b.name), term))
 
