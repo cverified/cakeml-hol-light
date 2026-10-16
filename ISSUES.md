@@ -197,10 +197,14 @@ sources, and why.
 ## Definitions
 
 - A definition whose clauses overlap relies on HOL4's
-  first-match semantics, and HOL4's returned theorem is for the
-  split clauses, not for the clauses as written.  In the port
-  such clauses are made disjoint by hand; each place says so in
-  a comment.  So far: `location$merge_list_locs`.
+  first-match semantics (the last clause of `clos_mti`'s
+  `collect_args` catches what the first one does not).  The
+  port writes such a definition as one clause with a `match`,
+  whose arms HOL Light tries in the order in which they stand,
+  so that the port means what HOL4 means.  The port finds the
+  overlapping clauses itself (`overlapping` in `tools/port.py`);
+  `MATCH_FORM` in `tools/overrides.py` names the ones where it
+  cannot see the overlap.
 - A recursive call under a `MAP` (or an `EVERY`) over a list of
   _pairs_ is not primitive recursive in HOL Light's sense: the
   recursion theorem of a datatype family that nests such a list
