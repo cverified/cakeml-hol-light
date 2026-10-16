@@ -64,35 +64,6 @@ let FOLDR_THM = prove
 let cwc = new_definition
   `cwc (v:A) (k:A->B) = k v`;;
 
-(* the admissibility of a recursive call under an OPTION_MAP,
-   which the machinery of HOL Light has no proforma for
-   (bvi_tmc's remove_ticks_exp maps over the handler of a Call) *)
-
-let OPTION_MAP_EQ = prove
- (`!(f:A->B) g u. (!c. u = SOME c ==> f c = g c)
-                  ==> OPTION_MAP f u = OPTION_MAP g u`,
-  GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC option_INDUCT THEN
-  SIMP_TAC[OPTION_MAP; distinctness "option";
-           injectivity "option"]);;
-
-let ADMISSIBLE_OPTION_MAP = prove
- (`!(<<) p (s:P->S) (h:(A->B)->P->C->D) (l:(A->B)->P->C option).
-        admissible(<<) p s l /\
-        admissible (<<) (\f (y,x). p f x /\ l f x = SOME y)
-                        (\(y,x). s x) (\f (y,x). h f x y)
-   ==> admissible (<<) p s
-         (\(f:A->B) (x:P). OPTION_MAP (h f x) (l f x))`,
-  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
-  SUBGOAL_THEN `(l:(A->B)->P->C option) f a = l g a`
-    (fun th -> SUBST1_TAC th THEN ASSUME_TAC th) THENL
-   [FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
-  MATCH_MP_TAC OPTION_MAP_EQ THEN REPEAT STRIP_TAC THEN
-  FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
-
-
-admissible_extra := ("OPTION_MAP",ADMISSIBLE_OPTION_MAP) ::
-                    (!admissible_extra);;
-
 (* MEMBER of CakeML's ml_translator, which compiler uses to
    look for a flag among its arguments (the translator theory is
    not in the dependency closure of the port) *)
@@ -162,6 +133,35 @@ let IS_NONE = new_recursive_definition option_RECURSION
 let OPTION_MAP = new_recursive_definition option_RECURSION
   `(OPTION_MAP (f:A->B) (SOME x) = SOME (f x)) /\
    (OPTION_MAP f NONE = NONE)`;;
+
+(* the admissibility of a recursive call under an OPTION_MAP,
+   which the machinery of HOL Light has no proforma for
+   (bvi_tmc's remove_ticks_exp maps over the handler of a Call) *)
+
+let OPTION_MAP_EQ = prove
+ (`!(f:A->B) g u. (!c. u = SOME c ==> f c = g c)
+                  ==> OPTION_MAP f u = OPTION_MAP g u`,
+  GEN_TAC THEN GEN_TAC THEN MATCH_MP_TAC option_INDUCT THEN
+  SIMP_TAC[OPTION_MAP; distinctness "option";
+           injectivity "option"]);;
+
+let ADMISSIBLE_OPTION_MAP = prove
+ (`!(<<) p (s:P->S) (h:(A->B)->P->C->D) (l:(A->B)->P->C option).
+        admissible(<<) p s l /\
+        admissible (<<) (\f (y,x). p f x /\ l f x = SOME y)
+                        (\(y,x). s x) (\f (y,x). h f x y)
+   ==> admissible (<<) p s
+         (\(f:A->B) (x:P). OPTION_MAP (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  SUBGOAL_THEN `(l:(A->B)->P->C option) f a = l g a`
+    (fun th -> SUBST1_TAC th THEN ASSUME_TAC th) THENL
+   [FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
+  MATCH_MP_TAC OPTION_MAP_EQ THEN REPEAT STRIP_TAC THEN
+  FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
+
+
+admissible_extra := ("OPTION_MAP",ADMISSIBLE_OPTION_MAP) ::
+                    (!admissible_extra);;
 
 let OPTION_BIND = new_recursive_definition option_RECURSION
   `(OPTION_BIND NONE (f:A->B option) = NONE) /\
