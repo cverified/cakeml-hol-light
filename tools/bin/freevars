@@ -1,0 +1,15 @@
+#!/bin/sh
+# freevars [session] : for every definition that the first pass
+# assumes (ml/CHEATS.md), say which free variables it has: those
+# are the constants that the port does not have, and the reason
+# why cake_define could not make the definition.  The session
+# (hol-seq by default) has to have the whole port loaded.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+s=${1:-seq}
+python3 -I $C/tools/freevars.py $C/tmp/freevars.ml
+TIMEOUT=${TIMEOUT:-900} repl-step $s \
+  "loadt \"$C/tmp/freevars.ml\";;" 2>&1 |
+  grep -E '^[A-Za-z_][A-Za-z0-9_'"'"']*: ' | sort -u | tee $C/tmp/freevars.txt |
+  head -40
+echo "($(grep -c '' $C/tmp/freevars.txt 2>/dev/null) definitions with free variables, in tmp/freevars.txt)"
