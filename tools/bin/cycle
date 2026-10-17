@@ -1,0 +1,48 @@
+#!/bin/sh
+# cycle : everything between two runs, in the order in which it
+# has to happen.  Run it when a run has finished (hol-seq holds
+# its state) and it leaves a fresh run going.
+#   1 the reports of the run that finished (they talk to hol-seq,
+#     so they go before the retemplate)
+#   2 the cheat list from ml/CHEATS.md, which says where the port
+#     writes a CHEAT_TAC
+#   3 the port, with that list
+#   4 the checks that need no session
+#   5 the template (the library layer may have changed) and the
+#     smoke test on it
+#   6 the next run
+# With NORUN=1 it stops after the smoke test.
+B=/home/freek/claude/hol-light
+PATH=$B/bin:$B/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+ps -eo args --no-headers | grep -q '[c]heckseq' && {
+  echo "cycle: a run is going"; exit 1; }
+echo "=== the reports of the run"
+sh tmp/postrun3.sh > tmp/report.txt 2>&1
+sed -n '/=== axioms and cheats/,/=== timings/p' tmp/report.txt |
+  head -14
+echo "=== the cheat list"
+python3 -I tools/mkcheats.py > tmp/cheats.txt 2> tmp/mkcheats.err
+cat tmp/mkcheats.err
+mv tmp/cheats.txt tools/cheats.txt
+echo "=== the port"
+python3 -I tools/portall.py 2>&1 | grep -E 'FAILED|files,'
+python3 -I tools/loadorder.py > tools/load.txt
+checks
+echo "=== the template and the smoke test"
+retemplate
+repl-kill smoke > /dev/null 2>&1
+repl-clone hol-template-cakeml smoke > /dev/null 2>&1
+TIMEOUT=600 repl-step smoke \
+  "loadt \"$C/tools/smoke.ml\";;" > /dev/null 2>&1
+tmux capture-pane -p -t hol-smoke -S -40 |
+  grep -E 'SMOKEALL|SMOKECHEAT|Exception|Error' | tail -3
+[ "$NORUN" = 1 ] && exit 0
+echo "=== the next run"
+nohup env TIMEOUT=900 CAKE_DEBUG=1 sh tmp/run-cs.sh \
+  > tmp/run.log 2>&1 &
+sleep 10
+ps -eo args --no-headers | grep -q '[c]heckseq' &&
+  echo "the run of $(date -u +%H:%M) is going"
