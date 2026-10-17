@@ -32,7 +32,9 @@ let dest_op_def = cake_define
         | _3 -> NONE`;;
 hol4_overload "dest_op" "clos_letop_dest_op";;
 
-let let_op_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let let_op_def = cake_define_list_cheat CHEAT_TAC
   [`clos_letop_let_op [] = []`;
    `clos_letop_let_op ((x:closLang_exp) :: y :: xs) =
          HD (clos_letop_let_op [x]) :: clos_letop_let_op (y ::

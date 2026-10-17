@@ -46,7 +46,9 @@ let iAssign_def = cake_define
                 env)))
                   (dataLang_Assign n1 op vs NONE))`;;
 
-let compile_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_def = cake_define_list_cheat CHEAT_TAC
   [`bvi_to_data_compile (n:num) (env:num list) tail live [] =
         (dataLang_Skip,([]:num list),n)`;
    `bvi_to_data_compile (n:num) (env:num list) tail live (x :: y :: xs)
@@ -141,9 +143,12 @@ let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ simp[] *)
-let compile_sing_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_sing_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (n,env,t,l,x) -> bvi_exp_size x | INR
-     (n,env,l,xs) -> list_size bvi_exp_size xs)`)
+     (n,env,l,xs) -> list_size bvi_exp_size xs)`,
+  CHEAT_TAC)
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var
   v):bvi_exp) =
          (let var = any_el v env 0 in

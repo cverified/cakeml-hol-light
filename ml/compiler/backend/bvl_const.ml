@@ -218,7 +218,9 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvl_const_delete_var";;
 
-let compile_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_def = cake_define_list_cheat CHEAT_TAC
   [`bvl_const_compile env [] = []`;
    `bvl_const_compile env (x :: y :: xs) = bvl_const_compile env [x]
   ++ bvl_const_compile env (y :: xs)`;

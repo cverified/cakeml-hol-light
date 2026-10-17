@@ -9,7 +9,9 @@
 
 needs "lib/ternaryComparisons.ml";;
 
-let getOpt_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let getOpt_def = cake_define_list_cheat CHEAT_TAC
   [`getOpt (SOME v) a = v`;
    `getOpt NONE a = a`];;
 

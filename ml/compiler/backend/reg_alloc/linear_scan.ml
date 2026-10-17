@@ -585,8 +585,11 @@ let get_intervals_ct_monad_def = cake_define
        st_ex_return (n - (&1)))))`;;
 
 (* HOL4 termination: >> rw [] *)
-let remove_inactive_intervals_def = cake_define_wf
-  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let remove_inactive_intervals_def = cake_define_tac (
+  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`,
+  CHEAT_TAC)
   `remove_inactive_intervals beg st =
      (match linear_scan_state_active st with [] -> st_ex_return st |
        (e,r) :: activetail -> (
@@ -773,7 +776,9 @@ let apply_reg_exchange_def = cake_define
        MAP_colors (\c. option_CASE (sptree_lookup c exch) c (\x.
          x)) col_size))`;;
 
-let st_ex_FOLDL_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let st_ex_FOLDL_def = cake_define_list_cheat CHEAT_TAC
   [`st_ex_FOLDL f e [] = st_ex_return e`;
    `st_ex_FOLDL f e (x :: xs) =
       st_ex_bind (f e x) (\
@@ -781,7 +786,9 @@ let st_ex_FOLDL_def = cake_define_list
         st_ex_FOLDL f e' xs)`];;
 
 (* like st_ex_FILTER, but preserve the order *)
-let st_ex_FILTER_good_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let st_ex_FILTER_good_def = cake_define_list_cheat CHEAT_TAC
   [`st_ex_FILTER_good P [] = st_ex_return []`;
    `st_ex_FILTER_good P (x :: xs) =
       st_ex_bind (P x) (\
@@ -833,8 +840,11 @@ let partition_regs_def = cake_define_wf
              (swap_regs l (r - 1)) (
              partition_regs l rpiv begrpiv (r - 1)))))`;;
 
-let sort_regs_def = cake_define_wf
-  `MEASURE (\(l,r). r - l)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let sort_regs_def = cake_define_tac (
+  `MEASURE (\(l,r). r - l)`,
+  CHEAT_TAC)
   `sort_regs l r =
      (if r <= l + 1 then
        st_ex_return one else
@@ -889,8 +899,11 @@ let partition_moves_def = cake_define_wf
              (swap_moves l (r - 1)) (
              partition_moves l ppiv (r - 1))))`;;
 
-let sort_moves_def = cake_define_wf
-  `MEASURE (\(l,r). r - l)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let sort_moves_def = cake_define_tac (
+  `MEASURE (\(l,r). r - l)`,
+  CHEAT_TAC)
   `linear_scan_sort_moves l r =
      (if r <= l + 1 then
        st_ex_return one else

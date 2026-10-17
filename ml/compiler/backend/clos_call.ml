@@ -16,7 +16,9 @@ needs "compiler/backend/db_vars.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-let free_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let free_def = cake_define_list_cheat CHEAT_TAC
   [`clos_call_free [] = ([],db_vars_Empty)`;
    `clos_call_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_call_free [x] in
@@ -75,7 +77,9 @@ hol4_overload "free" "clos_call_free";;
 val free_ind = theorem "free_ind";
 *)
 
-let free_sing_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let free_sing_def = cake_define_list_cheat CHEAT_TAC
   [`free_sing (Var t v:closLang_exp) = ((Var t v:closLang_exp),Var v)`;
    `free_sing (If t x1 x2 x3:closLang_exp) =
          (let (c1,l1) = free_sing x1 in
@@ -166,8 +170,11 @@ let calls_list_def = cake_define_list
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let calls_def = cake_define_list_wf
-  `MEASURE (list_size closLang_exp_size o FST)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let calls_def = cake_define_list_tac (
+  `MEASURE (list_size closLang_exp_size o FST)`,
+  CHEAT_TAC)
   [`calls [] g = ([],g)`;
    `calls ((x:closLang_exp) :: y :: xs) g =
          (let (e1,g) = calls [x] g in
@@ -259,9 +266,12 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
    NOT_LESS,list_size_pair_size_MAP_FST_SND] *)
-let calls_sing_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let calls_sing_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (e,_26) -> closLang_exp_size e | INR
-     (es,_27) -> list_size closLang_exp_size es)`)
+     (es,_27) -> list_size closLang_exp_size es)`,
+  CHEAT_TAC)
   [`calls_sing (Var t v:closLang_exp) g =
          ((Var t v:closLang_exp),g)`;
    `calls_sing (If t x1 x2 x3:closLang_exp) g =

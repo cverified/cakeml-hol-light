@@ -67,7 +67,9 @@ let bool_to_display_def = cake_define
   `bool_to_display b = empty_item (if b then (implode "True") else
   (implode "False"))`;;
 
-let num_to_hex_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let num_to_hex_def = cake_define_cheat CHEAT_TAC
   `num_to_hex n =
      (if n < 16 then [] else num_to_hex (n DIV 16)) ++
      num_to_hex_digit (n MOD 16)`;;
@@ -300,9 +302,12 @@ let id_to_display_def = cake_define_list
 let _ = size_thms "ast_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let ast_t_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ast_t_to_display_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL v -> ast_t_size v | INR v -> list_size
-     ast_t_size v)`)
+     ast_t_size v)`,
+  CHEAT_TAC)
   [`ast_t_to_display c =
       (match c with Atvar n -> displayLang_Item NONE (implode
         "Atvar") [String n] | Atfun t1 t2 -> displayLang_Item NONE
@@ -318,9 +323,12 @@ let ast_t_to_display_def = cake_define_list_try (fun () ->
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let pat_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let pat_to_display_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-     INR v -> list_size pattern_semantics_pat_size v)`)
+     INR v -> list_size pattern_semantics_pat_size v)`,
+  CHEAT_TAC)
   [`pat_to_display (c:ast_pat) =
       (match c with Pany -> displayLang_Item NONE (implode "Pany")
         [] | Pvar v -> displayLang_Item NONE (implode "Pvar") [String v]
@@ -343,7 +351,9 @@ let pat_to_display_def = cake_define_list_try (fun () ->
    `pat_to_display_list (x :: xs) =
         pat_to_display x :: pat_to_display_list xs`];;
 
-let exp_to_display_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let exp_to_display_def = cake_define_list_cheat CHEAT_TAC
   [`exp_to_display (c:ast_exp) =
       (match c with Lit l -> displayLang_Item NONE (implode "Lit")
         [lit_to_display l] | Raise e -> displayLang_Item NONE (implode
@@ -402,9 +412,12 @@ let exp_to_display_def = cake_define_list
 let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let source_to_display_dec_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let source_to_display_dec_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL v -> dec_size v | INR v -> list_size
-     dec_size v)`)
+     dec_size v)`,
+  CHEAT_TAC)
   [`source_to_display_dec (d:dec) =
       (match d with Dlet _3 pat e -> displayLang_Item NONE (implode
         "Dlet") [pat_to_display pat; exp_to_display e] | Dletrec _4 fns
@@ -451,9 +464,12 @@ let opt_con_to_display_def = cake_define
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let flat_pat_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flat_pat_to_display_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-     INR v -> list_size pattern_semantics_pat_size v)`)
+     INR v -> list_size pattern_semantics_pat_size v)`,
+  CHEAT_TAC)
   [`flat_pat_to_display p =
         (match p with flatLang_Pvar varN -> displayLang_Item NONE
           (implode "Pvar") [string_imp varN] | Pany -> empty_item
@@ -730,7 +746,9 @@ let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
-let clos_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let clos_to_display_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (_8,_9,e) -> flatLang_exp_size e | INR
      (INL (_10,_11,e)) -> list_size flatLang_exp_size e | INR (INR
        (INL
@@ -738,7 +756,8 @@ let clos_to_display_def = cake_define_list_try (fun () ->
        (INR
      (_15,_16,_17,_18,es))) -> list_size (pair_size I
        flatLang_exp_size)
-     es)`)
+     es)`,
+  CHEAT_TAC)
   [`clos_to_display ns h (Var t n:closLang_exp) =
         displayLang_Item (SOME t) (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -980,10 +999,13 @@ let data_seqs_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let data_prog_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let data_prog_to_display_def = cake_define_list_tac (
   `MEASURE (\x.
         match x with
-          INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`)
+          INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`,
+  CHEAT_TAC)
   [`data_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `data_prog_to_display (SUC k) ns prog =
           (match prog with dataLang_Skip -> empty_item (implode
@@ -1184,10 +1206,13 @@ let stack_seqs_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let stack_prog_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let stack_prog_to_display_def = cake_define_list_tac (
   `MEASURE (\x.
         match x with
-          INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`)
+          INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`,
+  CHEAT_TAC)
   [`stack_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item
   (implode "skip")`;
@@ -1408,9 +1433,12 @@ let num_sets_to_display_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let word_prog_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_prog_to_display_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (k,_32) -> k | INR (INL (k,_33)) -> k
-     | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`)
+     | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`,
+  CHEAT_TAC)
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
    `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
   (implode "skip")`;

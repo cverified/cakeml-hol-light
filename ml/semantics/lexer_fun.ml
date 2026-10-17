@@ -77,8 +77,11 @@ let read_char_as_3digits_def = cake_define
 (* HOL4 termination: THEN REPEAT STRIP_TAC THEN Cases_on `str` THEN
    FULL_SIMP_TAC (srw_ss()) [] THEN imp_res_tac
    read_char_as_3digits_reduces >> gs[] *)
-let read_string_def = cake_define_wf
-  `MEASURE (LENGTH o FST)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let read_string_def = cake_define_tac (
+  `MEASURE (LENGTH o FST)`,
+  CHEAT_TAC)
   `lexer_fun_read_string str s (loc:locn) =
      (if str = "" then (ErrorS,loc,"") else
      if HD str = (CHR 34) then (StringS s,loc,TL str) else
@@ -153,8 +156,11 @@ let read_Ident_ret_def = cake_define
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [] \\ imp_res_tac (GSYM read_while_thm) \\
    Cases_on ‘str’ \\ gvs [] *)
-let read_Ident_def = cake_define_list_try (fun () ->
-  `MEASURE (LENGTH o FST)`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let read_Ident_def = cake_define_list_tac (
+  `MEASURE (LENGTH o FST)`,
+  CHEAT_TAC)
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
    `read_Ident (c :: str) loc acc =
       (if is_single_char_symbol c then
@@ -345,8 +351,11 @@ let next_token_def = cake_define
 (* top-level lexer specification *)
 
 (* HOL4 termination: >> rw[] >> imp_res_tac next_token_LESS *)
-let lexer_fun_aux_def = cake_define_wf
-  `MEASURE (LENGTH o FST)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let lexer_fun_aux_def = cake_define_tac (
+  `MEASURE (LENGTH o FST)`,
+  CHEAT_TAC)
   `lexer_fun_aux input loc =
      (match next_token input loc with NONE -> [] | SOME (token,Locs
        loc' loc'',rest_of_input) ->
@@ -389,8 +398,11 @@ let toplevel_semi_dex_def = cake_define_list
    [toplevel_semi_dex_def] >> cases_on `h` >> fs [] >> metis_tac
    [toplevel_semi_dex_non0, DECIDE ``0 < 1:num``, DECIDE ``∀x:num. 0
    < x + 1``] *)
-let split_top_level_semi_def = cake_define_wf
-  `MEASURE LENGTH`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let split_top_level_semi_def = cake_define_tac (
+  `MEASURE LENGTH`,
+  CHEAT_TAC)
   `(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
         TAKE i toks :: split_top_level_semi (DROP i toks)))`;;

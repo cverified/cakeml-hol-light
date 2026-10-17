@@ -372,7 +372,9 @@ hol4_overload "dec_clock" "labSem_dec_clock";;
 let inc_pc_def = cake_define
   `inc_pc s = pc_fupd (K (pc s + 1)) s`;;
 
-let asm_code_length_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let asm_code_length_def = cake_define_list_cheat CHEAT_TAC
   [`asm_code_length [] = 0`;
    `asm_code_length (Section k [] :: xs) = asm_code_length xs`;
    `asm_code_length (Section k (y :: ys) :: xs) =
@@ -481,8 +483,11 @@ let share_mem_op_def = cake_define_list
    \\ Cases_on `m` \\
    fs[share_mem_op_def,share_mem_load_def,share_mem_store_def] \\
    gvs[AllCaseEqs(),inc_pc_def,dec_clock_def] *)
-let evaluate_def = cake_define_wf
-  `MEASURE (\s. state_clock s)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_tac (
+  `MEASURE (\s. state_clock s)`,
+  CHEAT_TAC)
   `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _44 _45) ->

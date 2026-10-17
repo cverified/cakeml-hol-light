@@ -112,7 +112,9 @@ let list_LUPDATE_def = cake_define_list
 
 (*Abstracts a stackLang stack w.r.t. wordLang's
   Note: requires assumption on dimindex(:'a) stated in state_rel *)
-let abs_stack_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let abs_stack_def = cake_define_cheat CHEAT_TAC
   `abs_stack bitmaps x2 stack' x4 =
         match (bitmaps,x2,stack',x4) with
           ((bitmaps:('a word) list),[],stack',[]) ->

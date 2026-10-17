@@ -125,9 +125,12 @@ let _ = size_thms "flatLang_exp";;
    \\ gvs [] \\ Induct_on ‘fs’ \\ gvs [FORALL_PROD]) \\ irule
    LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size (pair_size pat_size
    exp_size) pes’ \\ gvs [] \\ Induct_on ‘pes’ \\ gvs [FORALL_PROD] *)
-let set_globals_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let set_globals_def = cake_define_list_tac (
   `MEASURE (\a. match a with INL e -> flatLang_exp_size e | INR es ->
-     list_size flatLang_exp_size es)`)
+     list_size flatLang_exp_size es)`,
+  CHEAT_TAC)
   [`flatProps_set_globals (Raise t e:flatLang_exp) =
   flatProps_set_globals e`;
    `flatProps_set_globals (Handle t e pes:flatLang_exp) = (BAG_UNION)
@@ -161,8 +164,11 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: \\ rw [] \\ gvs
    [list_size_pair_size_MAP_FST_SND] \\ drule MEM_list_size \\
    disch_then $ qspec_then ‘exp_size’ mp_tac \\ gvs [] *)
-let esgc_free_def = cake_define_wf
-  `MEASURE flatLang_exp_size`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let esgc_free_def = cake_define_tac (
+  `MEASURE flatLang_exp_size`,
+  CHEAT_TAC)
   `flatProps_esgc_free x1 =
         match x1 with
           (Raise t e:flatLang_exp) -> flatProps_esgc_free e

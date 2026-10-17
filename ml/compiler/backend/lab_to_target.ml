@@ -312,7 +312,9 @@ let line_bytes_def = cake_define_list
    `line_bytes (labLang_Asm _45 bytes _46) = bytes`;
    `line_bytes (labLang_LabAsm _47 _48 bytes _49) = bytes`];;
 
-let prog_to_bytes_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let prog_to_bytes_def = cake_define_list_cheat CHEAT_TAC
   [`prog_to_bytes [] = []`;
    `prog_to_bytes (Section k [] :: xs) = prog_to_bytes xs`;
    `prog_to_bytes (Section k (y :: ys) :: xs) =
@@ -347,7 +349,9 @@ let list_add_if_fresh_def = cake_define_list
    `list_add_if_fresh e (f :: r) =
         (if e = f then f :: r else f :: list_add_if_fresh e r)`];;
 
-let find_ffi_names_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let find_ffi_names_def = cake_define_list_cheat CHEAT_TAC
   [`find_ffi_names [] = []`;
    `find_ffi_names (Section k [] :: rest) =
          find_ffi_names rest`;

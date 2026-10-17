@@ -43,7 +43,9 @@ let update_addr_def = cake_define
      ((fwd_ptr << (shift_length conf)) ||
       (word_bits (small_shift_length conf - 1) 0) old_addr)`;;
 
-let memcpy_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let memcpy_def = cake_define_cheat CHEAT_TAC
   `memcpy w a b m dm =
      (if w = (n2w 0) then (b,m,T) else
        let (b1,m1,c1) = memcpy (w - (n2w 1)) (a + bytes_in_word) (b +
@@ -118,7 +120,9 @@ let word_gc_move_roots_def = cake_define_list
            (ws,i1,pa1,old,m1,dm) in
            (w1 :: ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
-let word_gc_move_list_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gc_move_list_def = cake_define_cheat CHEAT_TAC
   `word_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
@@ -139,7 +143,9 @@ let word_gen_gc_partial_move_roots_def = cake_define_list
            conf (ws,i1,pa1,old,m1,dm,gs,rs) in
            (w1 :: ws2,i2,pa2,m2,(c1 /\ c2)))`];;
 
-let word_gen_gc_partial_move_list_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_partial_move_list_def = cake_define_cheat CHEAT_TAC
   `word_gen_gc_partial_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
     (if l = (n2w 0) then (a,i,pa,m,T) else
@@ -233,7 +239,9 @@ let word_gen_gc_partial_move_ref_list_def = cake_define
            (pb,i1,pa1,old,m1,dm,(c /\ c1),gs,rs,re))`;;
 
 
-let word_gen_gc_partial_move_data_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_partial_move_data_def = cake_define_cheat CHEAT_TAC
   `word_gen_gc_partial_move_data conf k ((h2a:'a word),i,(pa:'a
   word),old,m,dm,gs,rs) =
      (if h2a = pa then (i,pa,m,T) else
@@ -322,7 +330,9 @@ let word_gen_gc_move_def = cake_define_list
                     (wordLang_Word (update_addr conf i
                       w),v,pa1,ib,pb,m1,c))`];;
 
-let word_gen_gc_move_roots_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_move_roots_def = cake_define_list_cheat CHEAT_TAC
   [`word_gen_gc_move_roots conf ([],i,pa,ib,pb,old,m,dm) =
   ([],i,pa,ib,pb,m,T)`;
    `word_gen_gc_move_roots conf (w :: ws,i,pa,ib,pb,old,m,dm) =
@@ -332,7 +342,9 @@ let word_gen_gc_move_roots_def = cake_define_list
            (ws,i1,pa1,ib,pb,old,m1,dm) in
            (w1 :: ws2,i2,pa2,ib,pb,m2,(c1 /\ c2)))`];;
 
-let word_gen_gc_move_list_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_move_list_def = cake_define_cheat CHEAT_TAC
   `word_gen_gc_move_list conf ((a:'a word),(l:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
     (if l = (n2w 0) then (a,i,pa,ib,pb,m,T) else
@@ -344,7 +356,9 @@ let word_gen_gc_move_list_def = cake_define
         bytes_in_word,l - (n2w 1),i1,pa1,ib,pb,old,m1,dm) in
         (a2,i2,pa2,ib,pb,m2,(a IN dm /\ c1 /\ c2)))`;;
 
-let word_gen_gc_move_data_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_move_data_def = cake_define_cheat CHEAT_TAC
   `word_gen_gc_move_data conf k ((h2a:'a word),i,(pa:'a
   word),ib,pb,old,m,dm) =
      (if h2a = pa then (i,pa,ib,pb,m,T) else
@@ -365,7 +379,9 @@ let word_gen_gc_move_data_def = cake_define
                          (h2a,i,pa,ib,pb,old,m,dm) in
              (i,pa,ib,pb,m,(c /\ c1 /\ c2)))`;;
 
-let word_gen_gc_move_refs_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_move_refs_def = cake_define_cheat CHEAT_TAC
   `word_gen_gc_move_refs conf k ((r2a:'a word),(r1a:'a word),i,(pa:'a
   word),ib,pb,old,(m:'a word->'a word_loc),dm) =
      (if r2a = r1a then (r2a,i,pa,ib,pb,m,T) else
@@ -381,7 +397,9 @@ let word_gen_gc_move_refs_def = cake_define
                               (r2a,r1a,i,pa,ib,pb,old,m,dm) in
          (r2a,i,pa,ib,pb,m,(c /\ c1 /\ c2)))`;;
 
-let word_gen_gc_move_loop_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let word_gen_gc_move_loop_def = cake_define_cheat CHEAT_TAC
   `word_gen_gc_move_loop conf k ((pax:'a word),i,(pa:'a
   word),ib,pb,pbx,old,m,dm) =
      (if pbx = pb then

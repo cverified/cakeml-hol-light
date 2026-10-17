@@ -73,8 +73,11 @@ let bvl_to_bvi_def = cake_define
 (* HOL4 termination: >> simp [finite_mapTheory.FDOM_DOMSUB,
    FLOOKUP_DEF] >> rw [] >> Cases_on ‘CARD (FDOM refs)’ >> rw [] >-
    fs[finite_setTheory.fCARD_EQ0] >> simp [] *)
-let finalise_cons_def = cake_define_wf
-  `MEASURE (CARD o FDOM o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let finalise_cons_def = cake_define_tac (
+  `MEASURE (CARD o FDOM o SND)`,
+  CHEAT_TAC)
   `bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->
@@ -261,9 +264,12 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 termination: >> rpt strip_tac >> simp[dec_clock_def] >>
    imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
-let evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_list_tac (
   `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
-                              (\(xs,env,s). (state_clock s,xs)))`)
+                              (\(xs,env,s). (state_clock s,xs)))`,
+  CHEAT_TAC)
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =

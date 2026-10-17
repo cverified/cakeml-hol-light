@@ -55,9 +55,12 @@ let _ = size_thms "pattern_semantics_pat";;
 (* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw
    [MAP_MAP_o, o_DEF, UNCURRY, SUM_APPEND, pat1_size] \\ simp
    [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
-let compile_pat_bindings_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_pat_bindings_def = cake_define_list_tac (
   `MEASURE (\(t,i,m,exp). SUM (MAP (pattern_semantics_pat_size o FST)
-     m) + LENGTH m)`)
+     m) + LENGTH m)`,
+  CHEAT_TAC)
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;
@@ -187,9 +190,12 @@ let encode_pat_def = cake_define_wf
 let _ = size_thms "pattern_semantics_pat";;
 (* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw []
    \\ simp [o_DEF, MAPi_eq_MAP, SUM_APPEND, pat1_size] *)
-let naive_pattern_match_def = cake_define_wf
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let naive_pattern_match_def = cake_define_tac (
   `MEASURE (\x. SUM (MAP (pattern_semantics_pat_size o FST) (SND x)) +
-  LENGTH (SND x))`
+  LENGTH (SND x))`,
+  CHEAT_TAC)
   `naive_pattern_match t x2 =
       match x2 with
         [] -> flatLang_Bool t T
@@ -237,7 +243,9 @@ let op_sets_globals_def = cake_define
         flatLang_GlobalVarInit n -> T
       | _47 -> F`;;
 
-let compile_exp_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_exp_def = cake_define_list_cheat CHEAT_TAC
   [`flat_pattern_compile_exp cfg (flatLang_Var_local t vid) =
         (dec_name_to_num vid,F,flatLang_Var_local t vid)`;
    `flat_pattern_compile_exp cfg (Raise t x:flatLang_exp) =

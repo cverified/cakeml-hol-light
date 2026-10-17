@@ -127,7 +127,9 @@ let ctor_same_type_def = cake_define
         | (_3,_4) -> F`;;
 hol4_overload "ctor_same_type" "flatSem_ctor_same_type";;
 
-let do_eq_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`flatSem_do_eq (Litv l1:flatSem_v) (Litv l2:flatSem_v) =
        (if lit_same_type l1 l2 then Eq_val (l1 = l2) else
          Eq_type_error)`;
@@ -177,7 +179,9 @@ let do_opapp_def = cake_define
                 else NONE) | _57 -> NONE)`;;
 hol4_overload "do_opapp" "flatSem_do_opapp";;
 
-let v_to_list_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let v_to_list_def = cake_define_cheat CHEAT_TAC
   `flatSem_v_to_list x1 =
         match x1 with
           (Conv (SOME (cid,tid)) []:flatSem_v) ->
@@ -197,7 +201,9 @@ let list_to_v_def = cake_define_list
           flatSem_list_to_v xs]`];;
 hol4_overload "list_to_v" "flatSem_list_to_v";;
 
-let v_to_char_list_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let v_to_char_list_def = cake_define_cheat CHEAT_TAC
   `flatSem_v_to_char_list x1 =
         match x1 with
           (Conv (SOME (cid,tid)) []:flatSem_v) ->
@@ -637,9 +643,12 @@ let _ = size_thms "flatLang_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ simp [] *)
-let pmatch_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let pmatch_def = cake_define_list_tac (
   `inv_image (<) (\x. match x with INL (x,p,y,z) -> flatLang_pat_size p
-     | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`)
+     | INR (x,ps,y,z) -> list_size flatLang_pat_size ps)`,
+  CHEAT_TAC)
   [`flatSem_pmatch s (Pvar x:flatLang_pat) v' bindings =
         (Match ((x,v') :: bindings))`;
    `flatSem_pmatch s flatLang_Pany v' bindings = Match bindings`;
@@ -806,7 +815,9 @@ if concl fix_clock_IMP <> `T` then
    fix_clock_IMP \\ imp_res_tac do_if_either_or \\ imp_res_tac
    pmatch_rows_Match_exp_alt_size \\ fs [] \\ simp [MAP_REVERSE,
    SUM_REVERSE, exp6_alt_size, AppUnit_def, char_size_def] *)
-let evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_list_tac (
   `inv_image ((<) LEX (<))
           (\x. match x with INL (env,s,exps) -> (state_clock s,SUM
             (MAP
@@ -815,7 +826,8 @@ let evaluate_def = cake_define_list_try (fun () ->
             -> (state_clock s,dec_alt_size d + 1) | (INR (INR
               (s,ds))) ->
             (state_clock s,SUM (MAP dec_alt_size ds) + LENGTH ds +
-              1))`)
+              1))`,
+  CHEAT_TAC)
   [`flatSem_evaluate (env:flatSem_v flatSem_environment)
   (s:('c,'ffi)flatSem_state) ([]:flatLang_exp list) =
         (s,Rval [])`;

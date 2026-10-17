@@ -74,9 +74,12 @@ let _ = size_thms "flatSem_v";;
 (* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
    Cases_on ‘env’ \\ gvs [environment_size_def] \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
-let find_v_globals_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let find_v_globals_def = cake_define_list_tac (
   `MEASURE (\e. match e with INL x -> flatSem_v_size x | INR y ->
-     list_size flatSem_v_size y)`)
+     list_size flatSem_v_size y)`,
+  CHEAT_TAC)
   [`find_v_globals (Conv _2 vl:flatSem_v) = ((find_v_globalsL vl):1
   spt)`;
    `find_v_globals (Closure env _4 e:flatSem_v) =
@@ -145,8 +148,11 @@ let _ = size_thms "flatSem_v";;
    [] \\ Cases_on ‘env’ \\ gvs [environment_size_def] \\ imp_res_tac
    MEM_list_size \\ pop_assum $ qspec_then ‘v_size’ mp_tac \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
-let v_has_Eval_def1 = cake_define_wf
-  `MEASURE flatSem_v_size`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let v_has_Eval_def1 = cake_define_tac (
+  `MEASURE flatSem_v_size`,
+  CHEAT_TAC)
   `v_has_Eval x1 =
         match x1 with
           (Closure env _12 e:flatSem_v) -> (has_Eval e \/

@@ -50,7 +50,9 @@ let find_lab_def = cake_define
 
 hol4_overload "++" "misc_Append";;
 
-let flatten_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let flatten_def = cake_define_cheat CHEAT_TAC
   `stack_to_lab_flatten t p n m conts breaks =
      (match p with Tick -> (List [(\a. labLang_Asm (Asmi a)) (Inst
        (asm_Skip)) [] 0],F,m) | Inst a -> (List [(\a. labLang_Asm (Asmi

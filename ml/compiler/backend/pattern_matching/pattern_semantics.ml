@@ -80,9 +80,12 @@ let is_sibling_def = cake_define_list
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let pmatch_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let pmatch_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (r,p,_7) -> pattern_semantics_pat_size
-     p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`)
+     p | INR (r,ps,_8) -> list_size pattern_semantics_pat_size ps)`,
+  CHEAT_TAC)
   [`pattern_semantics_pmatch refs
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv

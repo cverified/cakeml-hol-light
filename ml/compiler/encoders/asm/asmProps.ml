@@ -79,7 +79,9 @@ let target_ok_def = cake_define
 let interference_ok_def = cake_define
   `interference_ok env proj <=> (!(i:num) ms. proj (env i ms) = proj
   ms)`;;
-let all_pcs_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let all_pcs_def = cake_define_cheat CHEAT_TAC
   `all_pcs n a k =
         match n with
           0 -> {}

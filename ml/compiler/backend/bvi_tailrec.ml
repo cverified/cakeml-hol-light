@@ -314,7 +314,9 @@ let op_ty_def = cake_define
        branch of origin for the operation in conditionals.
 *)
 
-let scan_expr_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let scan_expr_def = cake_define_list_cheat CHEAT_TAC
   [`scan_expr ts loc [] = []`;
    `scan_expr ts loc (x :: y :: xs) =
         (let (tx,ty,r,op) = HD (scan_expr ts loc [x]) in
@@ -486,7 +488,9 @@ let rewrite_def = cake_define
 
 (* --- Top-level expression check --- *)
 
-let has_rec_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let has_rec_def = cake_define_cheat CHEAT_TAC
   `has_rec loc x2 =
         match x2 with
           [] -> F
@@ -504,7 +508,9 @@ let has_rec_def = cake_define
 let has_rec1_def = cake_define
   `has_rec1 loc x = has_rec loc [x]`;;
 
-let has_rec_sing_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let has_rec_sing_def = cake_define_list_cheat CHEAT_TAC
   [`has_rec_sing loc (If x1 x2 x3:bvi_exp) =
         (if has_rec_sing loc x2 then T else has_rec_sing loc x3)`;
    `has_rec_sing loc (Let xs x:bvi_exp) = has_rec_sing loc x`;

@@ -1,0 +1,17 @@
+#!/bin/sh
+# invariant : the only axioms the port adds are the ones that its
+# CHEAT_TACs make, so
+#   length (axioms ()) - 3  =  the number of CHEAT_TACs in ml/
+# Counts the CHEAT_TACs in the port and, when a session of a run
+# is there (hol-seq), asks it for the axioms.
+PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
+C=/home/freek/claude/hol-light/cakeml
+cd $C
+n=$(grep -c 'CHEAT_TAC)$\|cheat CHEAT_TAC$' $(find ml -name '*.ml') |
+    awk -F: '{s+=$2} END {print s}')
+echo "CHEAT_TACs in the port: $n"
+a=$(grep -c '^|' ml/CHEATS.md 2>/dev/null)
+echo "rows in ml/CHEATS.md:   $(( ${a:-2} - 2 ))"
+tmux has -t hol-seq 2> /dev/null && {
+  TIMEOUT=120 repl-step seq 'length(axioms());;' 2>&1 |
+    sed -n 's/^val it : int = /axioms in hol-seq:      /p'; }

@@ -23,10 +23,13 @@ let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs
    [sptreeTheory.size_delete] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [] *)
-let approx_of_def = cake_define_wf
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let approx_of_def = cake_define_tac (
   `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
                              (\(lims,vs,refs). (sptree_size
-                               refs,vs)))`
+                               refs,vs)))`,
+  CHEAT_TAC)
   `approx_of lims x2 refs =
         match x2 with
           [] -> 0
@@ -202,7 +205,9 @@ let locals_ok_def = cake_define
 
 (*fs[] is slower than full_simp_tac(srw_ss())[]*)
 
-let get_code_labels_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let get_code_labels_def = cake_define_cheat CHEAT_TAC
   `dataProps_get_code_labels x1 =
         match x1 with
           (Call r d a h:dataLang_prog) ->

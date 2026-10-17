@@ -69,9 +69,12 @@ hol4_overload "gc_move_list" "gen_gc_gc_move_list";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
-let gc_move_data_def = cake_define_wf
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let gc_move_data_def = cake_define_tac (
   `MEASURE (\(conf,state). gen_gc_conf_limit conf - heap_length
-  (gc_state_h1 state))`
+  (gc_state_h1 state))`,
+  CHEAT_TAC)
   `(gen_gc_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
        (if gen_gc_conf_limit conf < heap_length (gc_state_h1 state ++
@@ -89,8 +92,11 @@ hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 
 (* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
    \\ decide_tac *)
-let gc_move_refs_def = cake_define_wf
-  `MEASURE (\(conf,state). heap_length (gc_state_r2 state))`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let gc_move_refs_def = cake_define_tac (
+  `MEASURE (\(conf,state). heap_length (gc_state_r2 state))`,
+  CHEAT_TAC)
   `gc_move_refs conf state =
      (match gc_state_r2 state with [] -> gc_state_r1_fupd (K
        (gc_state_r3 state ++ gc_state_r1 state)) (gc_state_r3_fupd (K

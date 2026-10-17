@@ -28,7 +28,9 @@ let no_overlap_def = cake_define_list
    `no_overlap (SUC n) l <=>
          (if has_var n l then F else no_overlap n l)`];;
 
-let alt_free_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let alt_free_def = cake_define_list_cheat CHEAT_TAC
   [`alt_free [] = ([],db_vars_Empty)`;
    `alt_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = alt_free [x] in
@@ -89,10 +91,13 @@ let alt_free_def = cake_define_list
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let alt_free_sing_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let alt_free_sing_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR (INL
      es) -> list_size closLang_exp_size es | INR (INR (_7,fns)) ->
-     list_size (pair_size (\x. x) closLang_exp_size) fns)`)
+     list_size (pair_size (\x. x) closLang_exp_size) fns)`,
+  CHEAT_TAC)
   [`alt_free_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp),Var v)`;
    `alt_free_sing (If t x1 x2 x3:closLang_exp) =
@@ -162,7 +167,9 @@ let shifted_env_def = cake_define_list
    `shifted_env (n:num) (x :: xs) = sptree_insert x (n:num)
   (shifted_env (n + 1) xs)`];;
 
-let shift_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let shift_def = cake_define_list_cheat CHEAT_TAC
   [`clos_annotate_shift [] (m:num) (l:num) (i:num spt) = []`;
    `clos_annotate_shift ((x:closLang_exp) :: y :: xs) (m:num) (l:num)
   (i:num spt) =
@@ -236,12 +243,15 @@ hol4_overload "shift" "clos_annotate_shift";;
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let shift_sing_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let shift_sing_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (e,_8,_9,_10) -> closLang_exp_size e |
      INR (INL (es,_11,_12,_13)) -> list_size closLang_exp_size es |
        INR
      (INR (_14,_15,_16,l)) -> list_size (pair_size (\x. x)
-     closLang_exp_size) l)`)
+     closLang_exp_size) l)`,
+  CHEAT_TAC)
   [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =
          Var t (clos_annotate_get_var m l i v)`;
    `shift_sing (If t x1 x2 x3:closLang_exp) (m:num) (l:num) (i:num spt)

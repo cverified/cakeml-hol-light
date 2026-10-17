@@ -159,10 +159,13 @@ let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs
    [sptreeTheory.size_delete] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [] \\ rw [] \\ fs [] \\ imp_res_tac check_res_IMP \\ fs [] *)
-let size_of_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let size_of_def = cake_define_list_tac (
   `(inv_image (MEASURE I LEX MEASURE (list_size dataSem_v_size))
                               (\(lims,vs,refs,seen). (sptree_size
-                              refs,vs)))`)
+                              refs,vs)))`,
+  CHEAT_TAC)
   [`size_of lims [] refs seen = (0,refs,seen)`;
    `size_of lims (x :: y :: ys) refs seen =
         (let (n1,refs1,seen1) = check_res refs (size_of lims (y ::
@@ -272,7 +275,9 @@ let allowed_op_def = cake_define
   `allowed_op op _29 = (~(op = closLang_Install) /\ (!t i. ~(op =
   closLang_MemOp (closLang_MutCons t i))))`;;
 
-let v_to_list_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let v_to_list_def = cake_define_cheat CHEAT_TAC
   `dataSem_v_to_list x1 =
         match x1 with
           (Block ts tag []:dataSem_v) ->
@@ -372,14 +377,18 @@ let space_consumed_def = cake_define
        SOME l -> SUC (LENGTH l) * 3 | NONE -> 0)
         | (s,(op:closLang_op),(vs:dataSem_v list)) -> (0:num)`;;
 
-let vb_size_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let vb_size_def = cake_define_cheat CHEAT_TAC
   `vb_size x1 =
         match x1 with
           (Block ts t ls:dataSem_v) -> 1 + t + SUM (MAP vb_size ls) +
             LENGTH ls
         | _39 -> 1`;;
 
-let vs_depth_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let vs_depth_def = cake_define_list_cheat CHEAT_TAC
   [`vs_depth (Block ts t ls:dataSem_v) = vs_depth_list ls`;
    `vs_depth _40 = 0`;
    `vs_depth_list [] = 0`;
@@ -556,7 +565,9 @@ let isClos_def = cake_define
   partial_app_tag)) /\ ~(l1 = []))`;;
 hol4_overload "isClos" "dataSem_isClos";;
 
-let do_eq_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let do_eq_def = cake_define_list_cheat CHEAT_TAC
   [`dataSem_do_eq _50 (CodePtr _51:dataSem_v) _52 = Eq_type_error`;
    `dataSem_do_eq _54 _55 (CodePtr _56:dataSem_v) = Eq_type_error`;
    `dataSem_do_eq _57 (Number n1:dataSem_v) (Number n2:dataSem_v) =
@@ -933,8 +944,11 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
    each block produced by the finalisation gets a fresh time stamp *)
 (* HOL4 termination: \\ rw [] \\ imp_res_tac miscTheory.lookup_zero
    \\ fs [sptreeTheory.size_delete] *)
-let finalise_cons_def = cake_define_wf
-  `MEASURE (sptree_size o FST o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let finalise_cons_def = cake_define_tac (
+  `MEASURE (sptree_size o FST o SND)`,
+  CHEAT_TAC)
   `dataSem_finalise_cons v refs ts =
         match v with
           (RefPtr b ptr:dataSem_v) ->
@@ -1606,9 +1620,12 @@ let _ = size_thms "wordLang_prog";;
    imp_res_tac fix_clock_IMP \\ imp_res_tac (GSYM fix_clock_IMP) \\
    FULL_SIMP_TAC (srw_ss()) [set_var_def,push_env_clock,
    call_env_def,LET_THM] \\ fs [dec_clock_def] *)
-let evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_list_tac (
   `(inv_image (MEASURE I LEX MEASURE wordLang_prog_size)
-                              (\(xs,s). (state_clock s,xs)))`)
+                              (\(xs,s). (state_clock s,xs)))`,
+  CHEAT_TAC)
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =

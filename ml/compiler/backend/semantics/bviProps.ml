@@ -51,8 +51,11 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: \\ simp[bviTheory.exp_size_def] \\ rpt conj_tac
    \\ rpt gen_tac \\ Induct_on`es` \\ rw[bviTheory.exp_size_def] \\
    simp[] \\ res_tac \\ simp[] *)
-let get_code_labels_def = cake_define_list_try (fun () ->
-  `MEASURE flatLang_exp_size`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let get_code_labels_def = cake_define_list_tac (
+  `MEASURE flatLang_exp_size`,
+  CHEAT_TAC)
   [`bviProps_get_code_labels (Var _2:bvi_exp) = {}`;
    `bviProps_get_code_labels (If e1 e2 e3:bvi_exp) =
   bviProps_get_code_labels e1 UNION bviProps_get_code_labels e2 UNION

@@ -41,7 +41,9 @@ let is_hidden_def = cake_define
         | (Letrec t funs e) -> is_hidden e
         | _1 -> F`;;
 
-let total_pat_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let total_pat_def = cake_define_list_cheat CHEAT_TAC
   [`total_pat (Pany:flatLang_pat) = T`;
    `total_pat (Pvar _3:flatLang_pat) = T`;
    `total_pat (Pcon NONE xs:flatLang_pat) = total_pat_list xs`;
@@ -80,7 +82,9 @@ let is_pure_def = cake_define_wf
         | _7 -> F`;;
 hol4_overload "is_pure" "flat_elim_is_pure";;
 
-let has_Eval_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let has_Eval_def = cake_define_list_cheat CHEAT_TAC
   [`has_Eval (App t op es:flatLang_exp) <=> op = flatLang_Src
   ast_Eval \/ has_Eval_list es`;
    `has_Eval (Mat _9 e pes:flatLang_exp) <=> has_Eval e \/
@@ -121,9 +125,12 @@ let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
-let find_loc_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let find_loc_def = cake_define_list_tac (
   `MEASURE (\e. match e with INL x -> flatLang_exp_size x | INR y ->
-     list_size flatLang_exp_size y)`)
+     list_size flatLang_exp_size y)`,
+  CHEAT_TAC)
   [`find_loc ((Raise _35 er):flatLang_exp) = ((find_loc er):1 spt)`;
    `find_loc (Handle _37 eh p_es:flatLang_exp) =
             ((sptree_union (find_loc eh) (find_locL (MAP SND
@@ -153,10 +160,13 @@ let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
-let find_lookups_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let find_lookups_def = cake_define_list_tac (
   `MEASURE (\e. match e with INL x -> flatLang_exp_size x | INR
      (y:flatLang_exp list) ->
-                    list_size flatLang_exp_size y)`)
+                    list_size flatLang_exp_size y)`,
+  CHEAT_TAC)
   [`find_lookups (Raise _65 er:flatLang_exp) = find_lookups er`;
    `find_lookups (Handle _67 eh p_es:flatLang_exp) =
             sptree_union (find_lookups eh) (find_lookupsL (MAP

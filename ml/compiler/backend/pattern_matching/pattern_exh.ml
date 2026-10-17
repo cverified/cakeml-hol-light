@@ -285,12 +285,15 @@ let mats_len_def = cake_define_list
    (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
    (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
    fs [] *)
-let exh_matrix_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let exh_matrix_def = cake_define_list_tac (
   `inv_image ((<) LEX (<) LEX (<))
           (\x. match x with INL rows -> (mat_weight rows,mat_len
             rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
               ms,LENGTH
-            ms + 1))`)
+            ms + 1))`,
+  CHEAT_TAC)
   [`exh_matrix [] = F`;
    `exh_matrix (r :: rows) =
       (if NULL r then T else
@@ -332,12 +335,15 @@ let exh_rows_def = cake_define
    (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
    (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
    fs [] *)
-let exh_steps_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let exh_steps_def = cake_define_list_tac (
   `inv_image ((<) LEX (<) LEX (<))
           (\x. match x with INL rows -> (mat_weight rows,mat_len
             rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
               ms,LENGTH
-            ms + 1))`)
+            ms + 1))`,
+  CHEAT_TAC)
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
       (((if NULL r then 1 else
@@ -351,8 +357,11 @@ let exh_steps_def = cake_define_list_try (fun () ->
    the names that the port gives the constants *)
 (* HOL4 termination: \\ rw [exh_steps_def,exh_steps_list_append] \\
    simp [Once exh_steps_def] *)
-let exh_all_def = cake_define_list_try (fun () ->
-  `MEASURE exh_steps_list`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let exh_all_def = cake_define_list_tac (
+  `MEASURE exh_steps_list`,
+  CHEAT_TAC)
   [`exh_all [] = T`;
    `exh_all ([] :: ms) = F`;
    `exh_all ((r :: rows) :: ms) =

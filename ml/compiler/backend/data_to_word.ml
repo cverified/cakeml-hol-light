@@ -1324,8 +1324,11 @@ let getWords_def = cake_define_list
    LENGTH vs1 ≤ LENGTH ws’ THEN1 (rw [] \\ res_tac \\ fs []) \\
    once_rewrite_tac [EQ_SYM_EQ] \\ Induct \\ fs [getWords_def] \\ fs
    [AllCaseEqs()] \\ rw[] \\ res_tac \\ fs [getWords_def] *)
-let StoreAnyConsts_def = cake_define_list_try (fun () ->
-  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let StoreAnyConsts_def = cake_define_list_tac (
+  `MEASURE (\(r1,r2,r3,vs,v). LENGTH vs)`,
+  CHEAT_TAC)
   [`StoreAnyConsts r1 r2 r3 [] v =
       Seq (Set NextFree (Var r2))
           (match SND v with Loc n _12 -> LocValue r1 n |

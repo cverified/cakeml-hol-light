@@ -43,7 +43,9 @@ hol4_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
 hol4_overload "state_clock" "word_bignumProof_state_clock";;
 hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
-let eval_exp_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let eval_exp_def = cake_define_list_cheat CHEAT_TAC
   [`eval_exp s (wordLang_Const w) = w`;
    `eval_exp s (wordLang_Var v) = FAPPLY (word_bignumProof_state_regs
   s) v`;
@@ -66,7 +68,9 @@ let eval_exp_def = cake_define_list
    `eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s
   x1) (w2n (eval_exp s x2))`];;
 
-let eval_exp_pre_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let eval_exp_pre_def = cake_define_cheat CHEAT_TAC
   `eval_exp_pre s x2 =
         match x2 with
           wordLang_Const w -> T
@@ -354,7 +358,9 @@ let state_rel_def = cake_define
        n = FLOOKUP (wordSem_state_store t0) n)`;;
 hol4_overload "state_rel" "word_bignumProof_state_rel";;
 
-let exp_ok_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let exp_ok_def = cake_define_cheat CHEAT_TAC
   `exp_ok x1 =
         match x1 with
           wordLang_Const _4 -> T

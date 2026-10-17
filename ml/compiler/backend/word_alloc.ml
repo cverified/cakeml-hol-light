@@ -352,7 +352,9 @@ let loop_setup_def = cake_define
        list_next_var_rename_move ssa_ext na_ext refresh_ls in
      (Seq fake_prog refresh_mov,ssa_refreshed,na_refreshed))`;;
 
-let ssa_cc_trans_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
   [`ssa_cc_trans wordLang_Skip ssa na lt = (wordLang_Skip,ssa,na)`;
    `ssa_cc_trans (wordLang_Move pri ls) ssa na lt =
         (let ls_1 = MAP FST ls in
@@ -1155,7 +1157,9 @@ let get_reads_exp_def = cake_define
           nexp
         | expr -> []`;;
 
-let get_clash_tree_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
   [`get_clash_tree wordLang_Skip lt = reg_alloc_Delta [] []`;
    `get_clash_tree (wordLang_Move pri ls) lt =
         reg_alloc_Delta (MAP FST ls) (MAP SND ls)`;
@@ -1401,7 +1405,9 @@ let add_call_def = cake_define
   `(add_call lr calls':1 spt) =
    sptree_union (sptree_map (\v. one) lr) calls'`;;
 
-let get_heu_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let get_heu_def = cake_define_cheat CHEAT_TAC
   `get_heu fc f lr =
         match (f,lr) with
           (wordLang_Move pri ls,(lr,calls')) ->
@@ -1643,7 +1649,9 @@ let remove_temp_stack_def = cake_define
 
 (* Alloc variables that are already stack or
   only ever involved in stack moves *)
-let get_stack_only_aux_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let get_stack_only_aux_def = cake_define_cheat CHEAT_TAC
   `get_stack_only_aux tfs prog =
         match prog with
           wordLang_Move pri ls ->

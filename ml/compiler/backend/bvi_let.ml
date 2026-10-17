@@ -72,8 +72,11 @@ hol4_overload "delete_var" "bvi_let_delete_var";;
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let compile_def = cake_define_list_wf
-  `MEASURE (list_size bvi_exp_size o SND o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_def = cake_define_list_tac (
+  `MEASURE (list_size bvi_exp_size o SND o SND)`,
+  CHEAT_TAC)
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;

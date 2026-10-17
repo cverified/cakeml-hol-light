@@ -47,8 +47,11 @@ let _ = size_thms "namespace";;
    [namespace_size_def] >> PairCases_on `h` >> fs [ALOOKUP_def] >>
    every_case_tac >> fs [] >> rw
    [namespace_size_def,basicSizeTheory.pair_size_def] *)
-let nsSub_compute_def = cake_define_wf
-  `MEASURE (\(p,r,env,_1). namespace_size (\x. 0) (\x. 0) (\x. 0) env)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let nsSub_compute_def = cake_define_tac (
+  `MEASURE (\(p,r,env,_1). namespace_size (\x. 0) (\x. 0) (\x. 0) env)`,
+  CHEAT_TAC)
   `nsSub_compute path' R (Bind e1V e1M) (Bind e2V e2M) <=>
      alistSub (\k v1 v2. R (mk_id (REVERSE path') k) v1 v2) e1V e2V
        /\

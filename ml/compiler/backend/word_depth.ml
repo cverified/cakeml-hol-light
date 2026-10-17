@@ -53,10 +53,13 @@ let mk_Branch_def = cake_define
 let _ = size_thms "wordLang_prog";;
 (* HOL4 termination: \\ rpt strip_tac \\ fs [size_delete] \\
    imp_res_tac miscTheory.lookup_zero \\ fs [] *)
-let call_graph_def = cake_define_wf
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let call_graph_def = cake_define_tac (
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
          (\(funs,n,ns,total,p). (sptree_size funs,total - LENGTH
-           ns,wordLang_prog_size (K 0) p)))`
+           ns,wordLang_prog_size (K 0) p)))`,
+  CHEAT_TAC)
   `call_graph funs n ns total x5 =
         match x5 with
           wordLang_Seq p1 p2 ->

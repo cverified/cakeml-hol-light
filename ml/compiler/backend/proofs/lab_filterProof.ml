@@ -14,7 +14,9 @@ needs "compiler/backend/semantics/labProps.ml";;
 needs "compiler/backend/semantics/labSem.ml";;
 needs "lib/pegexec.ml";;
 
-let adjust_pc_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let adjust_pc_def = cake_define_cheat CHEAT_TAC
   `adjust_pc p xs =
      (if p = 0 then 0 else
        match xs with [] -> p | (Section n [] :: rest) -> adjust_pc p

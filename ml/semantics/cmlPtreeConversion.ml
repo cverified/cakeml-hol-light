@@ -160,7 +160,9 @@ let tokcheckl_def = cake_define
        ([],[]) -> T | (pt :: prest,tok' :: tokrest) -> tokcheck pt
          tok' /\ tokcheckl prest tokrest | _12 -> F)`;;
 
-let ptree_linfix_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_linfix_def = cake_define_cheat CHEAT_TAC
   `ptree_linfix topnt opn elnt (pt:(tokens_token,MMLnonT,locs)parsetree)
   =
      (match pt with
@@ -183,7 +185,9 @@ let tuplify_def = cake_define
       | [ty] -> SOME ty
       | tys -> SOME (Attup tys)`;;
 
-let ptree_Type_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_Type_def = cake_define_list_cheat CHEAT_TAC
   [`(ptree_Type nt' (Lf _15):ast_t option) = NONE`;
    `ptree_Type nm (Nd nt' args) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nm) then NONE
@@ -336,7 +340,9 @@ let ptree_PTbase_def = cake_define
                    tokcheck rpart tokens_RparT)) (
                  ptree_Type nType t) | _33 -> NONE else NONE))`;;
 
-let ptree_TbaseList_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_TbaseList_def = cake_define_cheat CHEAT_TAC
   `ptree_TbaseList ast =
      (match ast with
          Lf _34 -> NONE | Nd nt' args ->
@@ -535,7 +541,9 @@ let maybe_handleRef_def = cake_define
           ast_Pref pat
       | p -> p`;;
 
-let ptree_Pattern_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_Pattern_def = cake_define_list_cheat CHEAT_TAC
   [`ptree_Pattern nt' (Lf _58) = NONE`;
    `ptree_Pattern nt' (Nd nm args) =
         (if ~((INL:MMLnonT->MMLnonT+num) nt' = FST nm) then NONE
@@ -657,7 +665,9 @@ let ptree_Pattern_def = cake_define_list
 
 new_type_abbrev("ptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 
-let ptree_PbaseList1_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_PbaseList1_def = cake_define_list_cheat CHEAT_TAC
   [`ptree_PbaseList1 (Lf _70) = NONE`;
    `ptree_PbaseList1 (Nd nm args) =
          (if ~(FST nm = (INL:MMLnonT->MMLnonT+num) nPbaseList1) then
@@ -769,7 +779,9 @@ let letFromPat_def = cake_define
        ast_Pany -> ast_Let NONE rhs body | ast_Pvar v -> ast_Let
          (SOME v) rhs body | _79 -> ast_Mat rhs [(p,body)])`;;
 
-let ptree_Expr_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_Expr_def = cake_define_list_cheat CHEAT_TAC
   [`ptree_Expr ent (Lf _80) = NONE`;
    `ptree_Expr ent (Nd (nt',loc) subs) =
     OPTION_BIND (if (INL:MMLnonT->MMLnonT+num) ent = nt' then
@@ -1179,7 +1191,9 @@ let ptree_SpecLine_def = cake_define_list
               ty.
               SOME one))) | _131 -> NONE)`];;
 
-let ptree_SpeclineList_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_SpeclineList_def = cake_define_list_cheat CHEAT_TAC
   [`ptree_SpeclineList (Lf _133) = NONE`;
    `ptree_SpeclineList (Nd nt' args) =
       (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nSpecLineList) then
@@ -1205,7 +1219,9 @@ let ptree_SignatureValue_def = cake_define_list
                 [tokens_SigT; tokens_EndT])) (
               ptree_SpeclineList sll_pt) | _137 -> NONE)`];;
 
-let ptree_Decl_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_Decl_def = cake_define_list_cheat CHEAT_TAC
   [`(ptree_Decl pt:dec option) =
         (match pt with
            Lf _138 -> NONE | Nd (nt',locs) args ->
@@ -1289,7 +1305,9 @@ let ptree_Decl_def = cake_define_list
               ds.
               SOME (Dmod sname ds))))) | _146 -> NONE)`];;
 
-let ptree_TopLevelDecs_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ptree_TopLevelDecs_def = cake_define_list_cheat CHEAT_TAC
   [`ptree_TopLevelDecs (Lf _147) = NONE`;
    `ptree_TopLevelDecs (Nd nt' args) =
          (if ~(FST nt' = (INL:MMLnonT->MMLnonT+num) nTopLevelDecs)

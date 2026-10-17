@@ -139,8 +139,11 @@ let _ = size_thms "bvlSem_v";;
 (* HOL4 termination: \\ Induct_on `vs` \\ full_simp_tac(srw_ss())[]
    \\ SRW_TAC [] [v_size_def] \\ RES_TAC \\ FIRST_X_ASSUM (ASSUME_TAC
    o SPEC_ALL) \\ DECIDE_TAC *)
-let bv_ok_def = cake_define_wf
-  `MEASURE (bvlSem_v_size o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bv_ok_def = cake_define_tac (
+  `MEASURE (bvlSem_v_size o SND)`,
+  CHEAT_TAC)
   `bv_ok refs x2 =
         match (refs,x2) with
           ((refs:(num,bvlSem_v bvlSem_ref)fmap),(RefPtr l

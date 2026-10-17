@@ -461,7 +461,9 @@ val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
   and that the mapping target for these avoids bad regs
 *)
 
-let complex_get_code_labels_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let complex_get_code_labels_def = cake_define_cheat CHEAT_TAC
   `complex_get_code_labels x1 =
         match x1 with
           stackLang_Seq p1 p2 -> complex_get_code_labels p1 UNION

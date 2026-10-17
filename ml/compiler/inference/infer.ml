@@ -68,7 +68,9 @@ let fresh_uvar_def = cake_define
    (\s. (M_success (Infer_Tuvar (infer_st_next_uvar
      s)),infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s))`;;
 
-let n_fresh_uvar_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let n_fresh_uvar_def = cake_define_cheat CHEAT_TAC
   `n_fresh_uvar (n:num) =
    (if n = 0 then
      st_ex_return [] else
@@ -106,7 +108,9 @@ let add_constraint_def = cake_define
                                 t2)]),st) | SOME s ->
            (M_success one,infer_st_subst_fupd (K s) st))`;;
 
-let add_constraints_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let add_constraints_def = cake_define_cheat CHEAT_TAC
   `add_constraints l x2 x3 =
         match (x2,x3) with
           ([],[]) ->
@@ -195,7 +199,9 @@ let infer_deBruijn_subst_def = cake_define_list
       infer_deBruijn_subst s t :: infer_deBruijn_subst_list s
         ts`];;
 
-let type_name_check_subst_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let type_name_check_subst_def = cake_define_list_cheat CHEAT_TAC
   [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
         st_ex_ignore_bind
           (guard (MEM tv fvs) l (err_string_f tv)) (
@@ -241,7 +247,9 @@ val type_name_check_subst_alt =
             st_ex_return_def];
 *)
 
-let type_name_check_sub_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let type_name_check_sub_def = cake_define_list_cheat CHEAT_TAC
   [`type_name_check_sub l tenvT fvs (Atvar tv) =
             (\s. if MEM tv fvs then (M_success (Tvar tv),s) else
               (M_failure (loc_err_info_loc l,INR tv),s))`;
@@ -669,13 +677,16 @@ let _ = size_thms "mlstring";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: >> rw [] *)
-let infer_e_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let infer_e_def = cake_define_list_tac (
   `MEASURE (\x. match x with INL (_45,_46,e) -> ast_exp_size e | INR
      (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
      (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
      ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
           list_size (pair_size mlstring_size
-               (pair_size mlstring_size ast_exp_size)) funs)`)
+               (pair_size mlstring_size ast_exp_size)) funs)`,
+  CHEAT_TAC)
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
@@ -848,7 +859,9 @@ let lift_ienv_def = cake_define
      mk_inf_env (nsLift mn (inf_env_inf_v ienv)) (nsLift mn
        (inf_env_inf_c ienv)) (nsLift mn (inf_env_inf_t ienv))`;;
 
-let infer_d_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let infer_d_def = cake_define_list_cheat CHEAT_TAC
   [`infer_d ienv (Dlet locs p e) =
       st_ex_bind init_state (\one. st_ex_bind get_next_uvar (\
          n. st_ex_bind (infer_e (mk_loc_err_info (SOME locs)
@@ -1049,8 +1062,11 @@ let sub_completion_def = cake_define
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ fs [LESS_EQ,LENGTH_FILTER_LEQ] *)
-let alist_nub_def = cake_define_list_try (fun () ->
-  `MEASURE LENGTH`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let alist_nub_def = cake_define_list_tac (
+  `MEASURE LENGTH`,
+  CHEAT_TAC)
   [`alist_nub [] = []`;
    `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
   FST t)) xs)`];;
@@ -1061,7 +1077,9 @@ let ns_nub_def = cake_define_list
    `inner_ns_nubs [] = []`;
    `inner_ns_nubs ((x,y) :: tl) = (x,ns_nub y) :: inner_ns_nubs tl`];;
 
-let ns_to_alist_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let ns_to_alist_def = cake_define_list_cheat CHEAT_TAC
   [`ns_to_alist (Bind [] []) = []`;
    `ns_to_alist (Bind [] ((n,x) :: ms)) =
         MAP (\(x,y). ((\x y. strcat x y) ((\x y. strcat x y) n

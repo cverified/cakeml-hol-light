@@ -182,3 +182,21 @@ print_string ("SMOKE9 cheats " ^
 print_string ("SMOKEALL cheats " ^
               string_of_int(length(cake_cheats())) ^ " axioms " ^
               string_of_int(length(axioms())) ^ "\n");;
+
+(* ---------------------------------------------------------------- *)
+(* the two shapes with which the first pass assumes a termination.
+   The conditions they cheat are true (the tail of a list that is
+   not empty is shorter), so each one costs exactly one axiom, and
+   replacing the CHEAT_TAC by a tactic that proves the condition is
+   all that is needed to make the definition for real. *)
+let a0 = length(axioms());;
+let c_len_def = cake_define_tac (
+  `MEASURE (LENGTH:num list->num)`,
+  CHEAT_TAC)
+  `c_len (l:num list) = (if NULL l then 0 else 1 + c_len (TL l))`;;
+let c_sum_def = cake_define_cheat CHEAT_TAC
+  `c_sum (l:num list) =
+     (if NULL l then 0 else HD l + c_sum (TL l))`;;
+print_string (Printf.sprintf
+  "SMOKECHEAT axioms %d (two more than %d), cheats %d\n"
+  (length(axioms())) a0 (length(cake_cheats())));;

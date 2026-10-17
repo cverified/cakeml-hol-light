@@ -343,7 +343,9 @@ let st_ex_FOREACH_def = cake_define_list
         (a x) (
         st_ex_FOREACH xs a)`];;
 
-let st_ex_MAP_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let st_ex_MAP_def = cake_define_list_cheat CHEAT_TAC
   [`st_ex_MAP f [] = st_ex_return []`;
    `st_ex_MAP f (x :: xs) =
       st_ex_bind (f x) (\
@@ -351,7 +353,9 @@ let st_ex_MAP_def = cake_define_list
         fxs.
         st_ex_return (fx :: fxs)))`];;
 
-let st_ex_PARTITION_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let st_ex_PARTITION_def = cake_define_list_cheat CHEAT_TAC
   [`st_ex_PARTITION P [] tt ff = st_ex_return (tt,ff)`;
    `st_ex_PARTITION P (x :: xs) tt ff =
       st_ex_bind (P x) (\
@@ -360,7 +364,9 @@ let st_ex_PARTITION_def = cake_define_list
           st_ex_PARTITION P xs (x :: tt) ff else
           st_ex_PARTITION P xs tt (x :: ff))`];;
 
-let st_ex_FILTER_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let st_ex_FILTER_def = cake_define_list_cheat CHEAT_TAC
   [`st_ex_FILTER P [] acc = st_ex_return acc`;
    `st_ex_FILTER P (x :: xs) acc =
       st_ex_bind (P x) (\

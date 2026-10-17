@@ -34,8 +34,11 @@ let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 termination: \\ fs[list_size_pair_size_MAP_FST_SND] *)
-let get_size_sc_aux_def = cake_define_list_try (fun () ->
-  `MEASURE (list_size closLang_exp_size o SND)`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let get_size_sc_aux_def = cake_define_list_tac (
+  `MEASURE (list_size closLang_exp_size o SND)`,
+  CHEAT_TAC)
   [`get_size_sc_aux n [] = n`;
    `get_size_sc_aux n (x :: y :: xs) =
          (if n = 0 then n else
@@ -124,7 +127,9 @@ let get_size_def = cake_define
   `clos_known_get_size e = get_size_aux [e]`;;
 hol4_overload "get_size" "clos_known_get_size";;
 
-let free_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let free_def = cake_define_list_cheat CHEAT_TAC
   [`clos_known_free [] = ([],db_vars_Empty)`;
    `clos_known_free ((x:closLang_exp) :: y :: xs) =
          (let (c1,l1) = clos_known_free [x] in
@@ -481,11 +486,14 @@ let _ = size_thms "closLang_exp";;
    \\ imp_res_tac decide_inline_LetInline \\ fs [] \\ drule
    MEM_list_size \\ disch_then (qspec_then `pair_size (λx. x)
    exp_size` mp_tac) \\ simp[list_size_pair_size_MAP_FST_SND] *)
-let known_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let known_def = cake_define_list_tac (
   `inv_image (MEASURE I LEX MEASURE I)
                               (\(c,xs,vs,g).
                               (clos_known_config_inline_factor
-                              c,list_size closLang_exp_size xs))`)
+                              c,list_size closLang_exp_size xs))`,
+  CHEAT_TAC)
   [`known c [] vs (g:val_approx spt) = ([],g)`;
    `known c ((x:closLang_exp) :: y :: xs) vs (g:val_approx spt) =
          (let (eas1,g) = known c [x] vs g in

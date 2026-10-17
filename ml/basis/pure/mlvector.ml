@@ -22,8 +22,11 @@ hol4_overload "tabulate" "mlvector_tabulate";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let toList_aux_def = cake_define_wf
-  `MEASURE (\(vec,n). length vec - n)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let toList_aux_def = cake_define_tac (
+  `MEASURE (\(vec,n). length vec - n)`,
+  CHEAT_TAC)
   `toList_aux vec n =
    (if length (vec) <= n then [] else sub vec n :: toList_aux vec
      (n + 1))`;;

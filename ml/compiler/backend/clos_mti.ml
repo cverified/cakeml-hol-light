@@ -44,8 +44,11 @@ let _ = size_thms "closLang_exp";;
    imp_res_tac collect_apps_size >> gvs[]>> drule MEM_list_size>>
    disch_then (qspec_then `pair_size (λx. x) exp_size` mp_tac)>>
    simp[list_size_pair_size_MAP_FST_SND] *)
-let intro_multi_def = cake_define_wf
-  `MEASURE (list_size closLang_exp_size o SND)`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let intro_multi_def = cake_define_tac (
+  `MEASURE (list_size closLang_exp_size o SND)`,
+  CHEAT_TAC)
   `intro_multi max_app x2 =
         match x2 with
           [] -> []

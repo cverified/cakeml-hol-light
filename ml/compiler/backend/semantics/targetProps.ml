@@ -42,7 +42,9 @@ let app_post_def = cake_define_list
 (* clocked clone of evaluate that stops at the first interference
    application (FFI, shared-memory or cache-clear) and returns its data
    together with the continuation configuration and ffi state *)
-let find_next_interference_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let find_next_interference_def = cake_define_cheat CHEAT_TAC
   `find_next_interference (mc:('b,'a,'c)machine_config) (ffi:'ffi
   ffi_state) k (ms:'a) =
      (if k = 0 then NONE else

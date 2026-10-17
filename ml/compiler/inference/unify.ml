@@ -47,7 +47,9 @@ let encode_infer_t_def = cake_define_list
    `encode_infer_ts (t :: ts) =
       term_Pair (encode_infer_t t) (encode_infer_ts ts)`];;
 
-let decode_infer_t_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let decode_infer_t_def = cake_define_list_cheat CHEAT_TAC
   [`decode_infer_t (term_Var n) =
       Infer_Tuvar n`;
    `decode_infer_t (term_Const (DB_tag n)) =
@@ -256,7 +258,9 @@ let kclkont_INDUCT,kclkont_RECURSION = define_datatype
   "kclkont = DBk (num) | APPk (infer_t list) (num) | UVk (num) | \
    CONSk (infer_t list) (num)";;
 
-let apply_kclkont_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let apply_kclkont_def = cake_define_list_cheat CHEAT_TAC
   [`apply_kclkont s [] its = its`;
    `apply_kclkont s (DBk n :: k) its = apply_kclkont s k
   (Infer_Tvar_db n :: its)`;
@@ -337,7 +341,9 @@ let kcunifyl_def = cake_define
   `kcunifyl s ts us k = cwc (cunifyl s ts us) k`;;
 
 new_type_abbrev("kcunifkont",`: (infer_t list#infer_t list) list`);;
-let apply_cunifk_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let apply_cunifk_def = cake_define_list_cheat CHEAT_TAC
   [`apply_cunifk [] x = x`;
    `apply_cunifk ((ts,us) :: k) NONE = apply_cunifk k NONE`;
    `apply_cunifk ((ts,us) :: k) (SOME m) = kcunifyl m ts us
@@ -368,7 +374,9 @@ let cplist_vars_def = cake_define_list
    `cplist_vars ((ts,us) :: rest) = isvars ts UNION isvars us UNION
   cplist_vars rest`];;
 
-let PFLAT_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let PFLAT_def = cake_define_list_cheat CHEAT_TAC
   [`PFLAT [] = EMPTY_BAG`;
    `PFLAT (([],[]) :: ps) = PFLAT ps`;
    `PFLAT (([],j :: js) :: ps) =

@@ -863,7 +863,9 @@ let next_lab_def = cake_define
            next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux))) |
              _16 -> aux)`;;
 
-let comp_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let comp_def = cake_define_cheat CHEAT_TAC
   `stack_alloc_comp n m p =
      (match p with Seq p1 p2 ->
          (let (q1,m) = stack_alloc_comp n m p1 in

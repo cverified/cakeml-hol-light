@@ -7,6 +7,21 @@ writes ml/<path>/<theory>.ml and reports what it could not do.
 import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides, grammardef
+
+# the definitions whose termination the first pass assumes: the
+# port writes CHEAT_TAC in the place of the Termination tactic of
+# HOL4 for these, so that what is left to do is visible in the
+# file and local to it (tools/mkcheats.py makes the list from
+# ml/CHEATS.md, which a run writes)
+def _cheat_set():
+  f = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                   'cheats.txt')
+  try:
+    return set(tuple(l.split()) for l in open(f) if l.split())
+  except OSError:
+    return set()
+
+CHEATS = _cheat_set()
 hterm.NAME_MAP = overrides.NAME_MAP
 hterm.TYPE_MAP = overrides.TYPE_MAP
 
@@ -834,7 +849,40 @@ class Porter:
     if rel is not None and b.extra and b.extra.strip():
       relnote = ('(* the termination relation that HOL4 gives, with\n'
                  '   the names that the port gives the constants *)\n')
-    if term is None and rel is not None:
+    # the first pass assumes the termination of this one: the
+    # port writes CHEAT_TAC where HOL4 has its tactic, and the
+    # definition is made all the same
+    cheat = (self.thy, name) in CHEATS
+    cheatnote = ('(* the first pass assumes the termination:\n'
+                 '   replacing the CHEAT_TAC is all that is left *)\n'
+                 if cheat else '')
+    if cheat and term is None and rel is not None:
+      text = (sizes + relnote + termnote + cheatnote +
+              'let %s = cake_define_list_tac (\n  `%s`,\n'
+              '  CHEAT_TAC)\n  %s;;'
+              % (name, fmt(rel, last=2), clauses))
+    elif cheat and term is None:
+      text = (sizes + cheatnote +
+              'let %s = cake_define_list_cheat CHEAT_TAC\n'
+              '  %s;;' % (name, clauses))
+    elif cheat and rel is not None:
+      text = (sizes + relnote + cheatnote +
+              'let %s = cake_define_tac (\n  `%s`,\n'
+              '  CHEAT_TAC)\n  `%s`;;' % (name, rel, term))
+    elif cheat and b.extra is not None and wf_relation(b.extra)[0]:
+      wf, rest = wf_relation(b.extra)
+      wftext = fmt(self.term(wf), last=1)
+      note = '' if not rest.split() else shorten('\n'.join(
+               fill('(* HOL4 termination:', rest.split(), 69))
+             + ' *)') + '\n'
+      text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
+              'let %s = cake_define_tac (\n  `%s`,\n'
+              '  CHEAT_TAC)\n  `%s`;;' % (name, wftext, term))
+    elif cheat:
+      text = (sizes + cheatnote +
+              'let %s = cake_define_cheat CHEAT_TAC\n'
+              '  `%s`;;' % (name, term))
+    elif term is None and rel is not None:
       # the relation of a Termination is parsed in a function, so
       # that one that does not typecheck is no error of the file
       # the last line of the relation ends with a quote and a

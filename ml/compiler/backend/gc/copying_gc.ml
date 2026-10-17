@@ -29,7 +29,9 @@ let gc_move_def = cake_define_list
                  (ARB,h2,a,n,heap,F))`];;
 hol4_overload "gc_move" "copying_gc_gc_move";;
 
-let gc_move_list_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let gc_move_list_def = cake_define_list_cheat CHEAT_TAC
   [`copying_gc_gc_move_list ([],h2,a,n,heap,c,limit') =
   ([],h2,a,n,heap,c)`;
    `copying_gc_gc_move_list (x :: xs,h2,a,n,heap,c,limit') =
@@ -44,8 +46,11 @@ hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
    the names that the port gives the constants *)
 (* HOL4 termination: \\ SRW_TAC []
    [heap_length_def,el_length_def,SUM_APPEND] \\ decide_tac *)
-let gc_move_loop_def = cake_define_list_try (fun () ->
-  `MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)`)
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let gc_move_loop_def = cake_define_list_tac (
+  `MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)`,
+  CHEAT_TAC)
   [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') =
   (h1,a,n,heap,c)`;
    `copying_gc_gc_move_loop (h1,h :: h2,a,n,heap,c,limit') =

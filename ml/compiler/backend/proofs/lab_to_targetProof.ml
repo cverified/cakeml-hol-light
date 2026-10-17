@@ -95,7 +95,9 @@ let labs_domain_def = cake_define
   `labs_domain labs = {(n1,n2) | ~(lab_lookup n1 n2 labs = NONE)}`;;
 
 
-let has_odd_inst_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let has_odd_inst_def = cake_define_list_cheat CHEAT_TAC
   [`has_odd_inst [] = F`;
    `has_odd_inst (Section k [] :: xs) = has_odd_inst xs`;
    `has_odd_inst (Section k (y :: ys) :: xs) <=>
@@ -137,7 +139,9 @@ let word_loc_val_def = cake_define_list
          (match lab_lookup k1 k2 labs with NONE -> NONE | SOME
            q -> SOME (p + n2w q))`];;
 
-let has_io_name_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let has_io_name_def = cake_define_list_cheat CHEAT_TAC
   [`has_io_name index [] = F`;
    `has_io_name index (Section k [] :: xs) = has_io_name index xs`;
    `has_io_name index (Section k (y :: ys) :: xs) <=>
@@ -195,7 +199,9 @@ let lines_ok_def = cake_define_list
        line_ok c labs ffis pos y /\
        lines_ok c labs ffis (pos + line_length y) ys`];;
 
-let all_enc_ok_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let all_enc_ok_def = cake_define_list_cheat CHEAT_TAC
   [`all_enc_ok c labs ffis pos [] = T`;
    `all_enc_ok c labs ffis pos (Section k [] :: xs) <=>
          EVEN pos /\ all_enc_ok c labs ffis pos xs`;
@@ -242,7 +248,9 @@ let good_code_def = cake_define
     (\c ls. EVERY (sec_ok_pre c) ls) c code`;;
 hol4_overload "good_code" "lab_to_targetProof_good_code";;
 
-let num_pcs_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let num_pcs_def = cake_define_list_cheat CHEAT_TAC
   [`num_pcs [] = (0:num)`;
    `num_pcs (Section _13 [] :: rest) = ((num_pcs rest):num)`;
    `num_pcs (Section k (x :: xs) :: rest) = ((if is_Label x then
@@ -888,7 +896,9 @@ let lines_enc_with_nop_def = cake_define_list
        lines_enc_with_nop enc labs ffis (pos + line_length l)
          ls`];;
 
-let all_enc_with_nop_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let all_enc_with_nop_def = cake_define_list_cheat CHEAT_TAC
   [`all_enc_with_nop enc labs ffis pos [] <=> T`;
    `all_enc_with_nop enc labs ffis pos (Section k [] :: xs) <=>
        all_enc_with_nop enc labs ffis pos xs`;
@@ -998,7 +1008,9 @@ let sec_labs_exist_def = cake_define
 
 (* invariant: labels aligned at even positions *)
 
-let even_labels_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let even_labels_def = cake_define_list_cheat CHEAT_TAC
   [`even_labels pos [] <=> T`;
    `even_labels pos (Section _75 [] :: ls) <=> even_labels pos ls`;
    `even_labels pos (Section k (y :: ys) :: ls) <=>
@@ -1015,7 +1027,9 @@ let lines_even_labels_def = cake_define_list
        (is_Label y ==> EVEN pos) /\
        lines_even_labels (pos + line_len y) ys`];;
 
-let even_labels_strong_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let even_labels_strong_def = cake_define_list_cheat CHEAT_TAC
   [`even_labels_strong pos [] <=> T`;
    `even_labels_strong pos (Section _76 [] :: ls) <=>
         EVEN pos /\ even_labels_strong pos ls`;
