@@ -971,7 +971,8 @@ let evaluate_def = cake_define_list_try (fun () ->
                 SOME new_db ->
                 (NONE,state_data_buffer_fupd (K new_db) s) | _131
                   -> (SOME Error,s)) | _132 -> (SOME Error,s)))`;
-   `stackSem_evaluate (wordLang_FFI ffi_index ptr len ptr2 len2 ret,s) =
+   `stackSem_evaluate (stackLang_FFI ffi_index ptr len ptr2 len2 ret,s)
+  =
        (match (get_var len s,get_var ptr s,get_var len2 s,get_var
          ptr2 s) with (SOME (wordLang_Word w),SOME (wordLang_Word
          w2),SOME (wordLang_Word w3),SOME (wordLang_Word w4)) ->

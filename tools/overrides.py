@@ -670,6 +670,7 @@ CON_OF = {
                                  'Const': 'wordLang',
                                  'Break': 'stackLang',
                                  'Continue': 'stackLang',
+                                 'FFI': 'stackLang',
                                  'Get': 'stackLang',
                                  'Set': 'stackLang',
                                  'prog_size': 'stackLang',
