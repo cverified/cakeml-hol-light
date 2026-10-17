@@ -152,7 +152,7 @@ let every_name_def = cake_define
    EVERY P (MAP FST (toAList (SND t)))`;;
 
 let every_var_def = cake_define
-  `every_var P p =
+  `wordLang_every_var P p =
         match p with
           (Skip:'a wordLang_prog) -> T
         | (wordLang_Move pri ls) -> (EVERY P (MAP FST ls) /\ EVERY P
@@ -169,21 +169,22 @@ let every_var_def = cake_define
         | (DataBufferWrite r1 r2) -> (P r1 /\ P r2)
         | (FFI ffi_index cptr clen ptr len names) ->
        (P cptr /\ P clen /\ P ptr /\ P len /\ every_name P names)
-        | (wordLang_MustTerminate s1) -> every_var P s1
+        | (wordLang_MustTerminate s1) -> wordLang_every_var P s1
         | (Call ret dest args h) ->
        ((EVERY P args) /\
        (match ret with
          NONE -> T | SOME (v,cutset,ret_handler,l1,l2) ->
          (EVERY P v /\ every_name P cutset /\
-         every_var P ret_handler /\
+         wordLang_every_var P ret_handler /\
          (match h with
            NONE -> T | SOME (v,prog,l1,l2) ->
            (P v /\
-           every_var P prog)))))
-        | (Seq s1 s2) -> (every_var P s1 /\ every_var P s2)
+           wordLang_every_var P prog)))))
+        | (Seq s1 s2) -> (wordLang_every_var P s1 /\
+          wordLang_every_var P s2)
         | (If cmp r1 ri e2 e3) ->
-       (P r1 /\ every_var_imm P ri /\ every_var P e2 /\ every_var P
-         e3)
+       (P r1 /\ every_var_imm P ri /\ wordLang_every_var P e2 /\
+         wordLang_every_var P e3)
         | (Alloc num' numset) ->
        (P num' /\ every_name P numset)
         | (StoreConsts a b c d ws) ->
@@ -196,9 +197,11 @@ let every_var_def = cake_define
         | (wordLang_ShareInst op num' exp) -> (P num' /\
           every_var_exp P exp)
         | (wordLang_Loop names body exit_names) ->
-       (EVERY P (MAP FST (toAList names)) /\ every_var P body /\
+       (EVERY P (MAP FST (toAList names)) /\ wordLang_every_var P
+         body /\
         EVERY P (MAP FST (toAList exit_names)))
         | p -> T`;;
+hol4_overload "every_var" "wordLang_every_var";;
 
 (*Recursor for stack variables*)
 let every_stack_var_def = cake_define

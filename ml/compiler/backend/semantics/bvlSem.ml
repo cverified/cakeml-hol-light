@@ -364,8 +364,8 @@ let do_app_def = cake_define
           if v1 = Boolv F then Rval (Boolv T,s) else ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result)) | (closLang_BlockOp
-            (closLang_Build parts),[]) ->
-         (let (v,rs) = bvlSem_do_build_const parts (state_refs s) in
+            (closLang_Build parts'),[]) ->
+         (let (v,rs) = bvlSem_do_build_const parts' (state_refs s) in
            Rval (v,state_refs_fupd (K rs) s)) | (closLang_BlockOp
            (closLang_ConsExtend tag),Block _70 xs' :: Number lower ::
            Number len :: Number tot :: xs) ->

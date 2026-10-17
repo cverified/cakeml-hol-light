@@ -3,7 +3,11 @@ T='/home/freek/claude/hol-light/cakeml/tools/'
 R='/home/freek/claude/hol-light/cakeml/cakeml-src/'
 d=json.load(open(T+'deps.json')); thy2file=d['thy2file']; deps=d['deps']
 rels=set(l.strip() for l in open(T+'closure2.txt') if l.strip())
+# the encoders and the configurations of the targets are out of the
+# scope of the port (tools/excluded.txt)
+out=set(l.split('\t')[0] for l in open(T+'excluded.txt') if l.strip())
 defset={t for t,f in thy2file.items() if os.path.relpath(f,R) in rels
+        and t not in out
         and not ('/proofs' in f or 'Props' in f or 'Proof' in f)}
 order=[]; seen=set()
 def visit(t,stack=()):

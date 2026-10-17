@@ -426,9 +426,10 @@ let gO_destApx_def = cake_define
 
 let mk_Ticks_def = cake_define_wf
   `MEASURE (FST o SND o SND)`
-  `mk_Ticks t tc n e =
-     (if n = 0 then e else mk_Ticks t (tc + 1) (n - 1)
+  `clos_known_mk_Ticks t tc n e =
+     (if n = 0 then e else clos_known_mk_Ticks t (tc + 1) (n - 1)
        (closLang_Tick (mk_cons t tc) e))`;;
+hol4_overload "mk_Ticks" "clos_known_mk_Ticks";;
 
 let inliningDecision_INDUCT,inliningDecision_RECURSION = define_datatype
   "inliningDecision = inlD_Nothing | inlD_Annotate (num) | \
@@ -559,11 +560,11 @@ let known_def = cake_define_list_try_tac (fun () ->
                  let (ebody,abody) = HD eabody in
                    if pure x then
                      ([(Let (mk_cons t 0) (MAP FST ea2)
-                              (mk_Ticks t 1 (LENGTH xs)
+                              (clos_known_mk_Ticks t 1 (LENGTH xs)
                                 ebody),abody)],g) else
                      ([(Let (mk_cons t 0) (SNOC e1 (MAP FST ea2))
-                              (mk_Ticks t 1 (LENGTH xs)
-                                ebody),abody)],g)))`;
+                              (clos_known_mk_Ticks t 1 (LENGTH
+                                xs) ebody),abody)],g)))`;
    `known c [closLang_Fn t loc_opt ws_opt num_args x1] vs (g:val_approx
   spt) =
          (let (ea1,g) = known c [x1] (REPLICATE num_args

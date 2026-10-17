@@ -37,8 +37,8 @@ let op_space_req_def = cake_define
         | (closLang_MemOp (closLang_MutCons tag k)) -> l + 1
         | (closLang_BlockOp (closLang_Cons _1)) -> (if l = 0 then 0
           else l + 1)
-        | (closLang_BlockOp (closLang_Build parts)) -> SUM (MAP
-          part_space_req parts)
+        | (closLang_BlockOp (closLang_Build parts')) -> SUM (MAP
+          part_space_req parts')
         | (closLang_WordOp (WordOpw ast_W64 _2)) -> 3
         | (closLang_WordOp (WordShift ast_W64 _3 _4)) -> 3
         | (closLang_WordOp WordFromInt) -> 3

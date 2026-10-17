@@ -16,6 +16,14 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
+needs "compiler/backend/proofs/bvl_jumpProof.ml";;
+needs "compiler/backend/proofs/clos_annotateProof.ml";;
+needs "compiler/backend/proofs/clos_callProof.ml";;
+needs "compiler/backend/proofs/clos_constantProof.ml";;
+needs "compiler/backend/proofs/clos_fvsProof.ml";;
+needs "compiler/backend/proofs/clos_knownProof.ml";;
+needs "compiler/backend/proofs/clos_mtiProof.ml";;
+needs "compiler/backend/proofs/clos_numberProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -33,6 +41,14 @@ needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
+needs "compiler/backend/proofs/bvl_jumpProof.ml";;
+needs "compiler/backend/proofs/clos_annotateProof.ml";;
+needs "compiler/backend/proofs/clos_callProof.ml";;
+needs "compiler/backend/proofs/clos_constantProof.ml";;
+needs "compiler/backend/proofs/clos_fvsProof.ml";;
+needs "compiler/backend/proofs/clos_knownProof.ml";;
+needs "compiler/backend/proofs/clos_mtiProof.ml";;
+needs "compiler/backend/proofs/clos_numberProof.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -40,9 +56,6 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
-(* HOL4 ancestors outside the port: bvl_jumpProof clos_constantProof
-   clos_mtiProof clos_numberProof clos_knownProof clos_annotateProof
-   clos_callProof clos_fvsProof *)
 
 (* TODO: move? *)
 
@@ -212,8 +225,8 @@ let env_rel_def = cake_define
         | ([],ys) -> T
         | ((x :: xs),[]) -> F
         | ((x :: xs),(y :: ys)) ->
-        clos_to_bvlProof_v_rel max_app f refs code x y /\
-          clos_to_bvlProof_env_rel max_app f refs code xs ys`;;
+        v_rel max_app f refs code x y /\ clos_to_bvlProof_env_rel
+          max_app f refs code xs ys`;;
 hol4_overload "env_rel" "clos_to_bvlProof_env_rel";;
 
 (* HOL4 ML code, not ported:
@@ -241,10 +254,11 @@ End
 *)
 
 let nth_code_def = cake_define_list
-  [`nth_code t_co 0 = LN`;
-   `nth_code t_co (SUC n) =
-      sptree_union (fromAList (SND (t_co 0))) (nth_code
-        (misc_shift_seq 1 t_co) n)`];;
+  [`clos_to_bvlProof_nth_code t_co 0 = LN`;
+   `clos_to_bvlProof_nth_code t_co (SUC n) =
+      sptree_union (fromAList (SND (t_co 0)))
+        (clos_to_bvlProof_nth_code (misc_shift_seq 1 t_co) n)`];;
+hol4_overload "nth_code" "clos_to_bvlProof_nth_code";;
 
 let compile_oracle_inv_def = cake_define
   `compile_oracle_inv max_app s_code s_cc s_co t_code t_cc t_co <=>
@@ -283,9 +297,9 @@ let state_rel_def = cake_define
   `clos_to_bvlProof_state_rel f (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
      (state_ffi s = state_ffi t) /\
-     LIST_REL (OPTREL (clos_to_bvlProof_v_rel (closSem_state_max_app
-       s) f (state_refs t) (state_code t))) (state_globals s) (DROP
-       num_added_globals (state_globals t)) /\
+     LIST_REL (OPTREL (v_rel (closSem_state_max_app s) f (state_refs
+       t) (state_code t))) (state_globals s) (DROP num_added_globals
+       (state_globals t)) /\
      get_global 0 (state_globals t) = SOME (SOME (global_table
        (closSem_state_max_app s))) /\
      INJ ((FAPPLY) f) (FDOM f) (FRANGE f) /\
@@ -296,9 +310,8 @@ let state_rel_def = cake_define
      (!n x. (FLOOKUP (state_refs s) n = SOME x) ==>
             (?y m. (FLOOKUP f n = SOME m) /\
                   (FLOOKUP (state_refs t) m = SOME y) /\
-                  ref_rel (clos_to_bvlProof_v_rel
-                    (closSem_state_max_app s) f (state_refs t)
-                    (state_code t)) x y)) /\
+                  ref_rel (v_rel (closSem_state_max_app s) f
+                    (state_refs t) (state_code t)) x y)) /\
      (!n. n < closSem_state_max_app s ==>
           sptree_lookup (generic_app_fn_location n) (state_code t) =
             SOME (n + 2,generate_generic_app (closSem_state_max_app s)
@@ -1115,7 +1128,7 @@ val c0 = ``Call None 0 loc []``;
 *)
 
 let syntax_oracle_ok_def = cake_define
-  `syntax_oracle_ok c c' es co <=>
+  `clos_to_bvlProof_syntax_oracle_ok c c' es co <=>
     (!n. SND (SND (co n)) = []) /\
     (clos_to_bvl_config_do_mti c ==> 1 <= clos_to_bvl_config_max_app
       c /\ EVERY no_mti es /\
@@ -1147,14 +1160,15 @@ let syntax_oracle_ok_def = cake_define
         (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
           n')))) /\
                 EVERY closProps_esgc_free (FST (SND (co n'))))) /\
-    ~contains_App_SOME (clos_to_bvl_config_max_app c) es /\ syntax_ok
-      es /\
+    ~contains_App_SOME (clos_to_bvl_config_max_app c) es /\
+      clos_knownProof_syntax_ok es /\
     (!n. ~contains_App_SOME (clos_to_bvl_config_max_app c) (FST (SND
       (co n))) /\
             every_Fn_vs_NONE (FST (SND (co n)))) /\
     is_state_oracle (ignore_table clos_number_compile_inc)
         (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
           c) (clos_to_bvl_config_max_app c)) o co)`;;
+hol4_overload "syntax_oracle_ok" "clos_to_bvlProof_syntax_oracle_ok";;
 
 (* HOL4 ML code, not ported:
 val compile_exps_code_locs2 = compile_exps_code_locs |> SPEC_ALL

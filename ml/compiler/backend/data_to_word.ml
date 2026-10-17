@@ -1440,17 +1440,17 @@ let part_to_words_def = cake_define_list
 let parts_to_words_def = cake_define_list
   [`parts_to_words c m i [] (off:'a word) = SOME (lookup_mem m (i -
   (1:num)),[])`;
-   `parts_to_words c m i (x :: parts) (off:'a word) =
+   `parts_to_words c m i (x :: parts') (off:'a word) =
       (match part_to_words c m x off with NONE -> NONE | SOME (w,xs)
         ->
-        (match parts_to_words c (insert i w m) (i + 1) parts
+        (match parts_to_words c (insert i w m) (i + 1) parts'
                  (off + bytes_in_word * n2w (LENGTH xs)) with
                    NONE -> NONE | SOME (r,ys) -> SOME (r,xs ++
                    ys)))`];;
 
 let const_parts_to_words_def = cake_define
-  `const_parts_to_words c parts =
-     parts_to_words c LN 0 parts (n2w 0)`;;
+  `const_parts_to_words c parts' =
+     parts_to_words c LN 0 parts' (n2w 0)`;;
 
 let get_Word_def = cake_define
   `get_Word x1 =
@@ -2659,8 +2659,8 @@ let assign_def = cake_define
        assign_Cons c l dest tag args | closLang_MemOp (closLang_MutCons
        tag _27) -> assign_MutCons c l dest tag args | closLang_MemOp
        ConfigGC -> data_to_word_arg2 args (assign_ConfigGC c secn l dest
-       names) (Skip,l) | closLang_BlockOp (closLang_Build parts) ->
-       assign_Build c secn l dest names parts | closLang_BlockOp
+       names) (Skip,l) | closLang_BlockOp (closLang_Build parts') ->
+       assign_Build c secn l dest names parts' | closLang_BlockOp
        (closLang_ConsExtend tag) -> assign_ConsExtend c secn l dest
        names tag args | closLang_MemOp closLang_Ref -> assign_Ref c secn
        l dest names args | ThunkOp (AllocThunk ev) -> data_to_word_arg1

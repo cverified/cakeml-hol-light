@@ -767,8 +767,8 @@ let lim_safe_def = cake_define
         | ((closLang_MemOp closLang_Ref),xs) ->
       (LENGTH xs < 2 EXP limits_length_limit lims /\
        LENGTH xs < 2 EXP arch_size lims DIV 16)
-        | ((closLang_BlockOp (closLang_Build parts)),_114) ->
-      EVERY (lim_safe_part lims) parts
+        | ((closLang_BlockOp (closLang_Build parts')),_114) ->
+      EVERY (lim_safe_part lims) parts'
         | ((closLang_WordOp WordToInt),_115) ->
       (1 < limits_length_limit lims)
         | ((closLang_WordOp WordFromInt),_116) ->
@@ -1072,8 +1072,8 @@ let do_app_aux_def = cake_define
                      closLang_ConcatByteVec,_155) -> Rerr (Rabort
                      Rtype_error) | (closLang_MemOp (closLang_CopyByte
                      T),_156) -> Rerr (Rabort Rtype_error) |
-                     (closLang_BlockOp (closLang_Build parts),[]) ->
-         (match do_build_const parts (state_refs s)
+                     (closLang_BlockOp (closLang_Build parts'),[]) ->
+         (match do_build_const parts' (state_refs s)
            (dataSem_state_tstamps s) with (v,s1,ts1) -> Rval
            (v,dataSem_state_tstamps_fupd (K ts1) (state_refs_fupd (K s1)
            s))) | (closLang_BlockOp (closLang_Cons tag),xs) -> (if xs =

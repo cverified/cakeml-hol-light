@@ -398,10 +398,11 @@ let syntax_ok_aux_def = cake_define
       | _9 -> T`;;
 
 let syntax_ok_def = cake_define
-  `syntax_ok p =
+  `word_bignumProof_syntax_ok p =
       match p with
         word_bignum_LoopBody body -> syntax_ok_aux body
       | p -> syntax_ok_aux p`;;
+hol4_overload "syntax_ok" "word_bignumProof_syntax_ok";;
 (*Is this worth the hassle*)
 let list_update_def = cake_define_list
   [`list_update [] ys t = t`;

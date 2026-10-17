@@ -1542,10 +1542,10 @@ let build_part_words_def = cake_define_list
 
 let build_words_def = cake_define_list
   [`build_words c m i [] (off:'a word) = SOME (m (i - (1:num)),[])`;
-   `build_words c m i (x :: parts) (off:'a word) =
+   `build_words c m i (x :: parts') (off:'a word) =
       (match build_part_words c m x off with NONE -> NONE | SOME
         (w,xs) ->
-        (match build_words c ((i =+ w) m) (i + 1) parts (off +
+        (match build_words c ((i =+ w) m) (i + 1) parts' (off +
           bytes_in_word * n2w (LENGTH xs)) with NONE -> NONE | SOME
           (r,ys) -> SOME (r,xs ++ ys)))`];;
 

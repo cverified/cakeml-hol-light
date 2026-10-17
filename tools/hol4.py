@@ -389,7 +389,11 @@ def parse(path):
       for l in body.split('\n'):
         # the label may be on a line of its own or in front of the
         # rule (data_to_word_memoryProof's [~unchanged:])
-        m = re.match(r"^\s*\[[~^]?[A-Za-z0-9_']*:\]\s*(.*)$", l)
+        # a rule that has no name of its own may be separated by
+        # a label that is the conjunction itself (clos_opProof's
+        # red_rel has four of them)
+        m = re.match(r"^\s*\[(?:[~^]?[A-Za-z0-9_']*:|∧)\]"
+                     r"\s*(.*)$", l)
         if m:
           rules.append([])
           if m.group(1).strip(): rules[-1].append(m.group(1))
