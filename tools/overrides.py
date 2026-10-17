@@ -66,6 +66,9 @@ NAME_MAP = {
   'UINT_MAXw': 'word_T',
   'UNCURRY': 'UNCURRY',
   'I': 'I',
+  # combin's flip is its C (the export theories of the targets
+  # filter the symbols with flip MEM)
+  'flip': 'C',
   # HOL4's option theory overloads lift2 with OPTION_MAP2
   'lift2': 'OPTION_MAP2',
   # monadsyntax's unit bind, which the overloads of a source that

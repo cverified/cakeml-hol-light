@@ -86,12 +86,29 @@ def monad_enabled(text):
 ML_TERM = re.compile(r"val\s+([A-Za-z0-9_']+)\s*=\s*"
                      r"(?:``|\u201c)(.*?)(?:``|\u201d)", re.S)
 
+# two terms in one binding, which the export theories of the
+# targets use for the two values of a flag:
+#   val (ffi_code_true,ffi_code_false) =
+#     (``^ffi_code' T`` |> EVAL |> concl |> rand,
+#      ``^ffi_code' F`` |> EVAL |> concl |> rand)
+# what EVAL computes is the value of the term before it, which is
+# what the port keeps (as for a single binding)
+ML_TERM_PAIR = re.compile(
+  r"val\s*\(\s*([A-Za-z0-9_']+)\s*,\s*([A-Za-z0-9_']+)\s*\)"
+  r"\s*=\s*\(\s*(?:``|\u201c)(.*?)(?:``|\u201d)[^,`]*,"
+  r"\s*(?:``|\u201c)(.*?)(?:``|\u201d)", re.S)
+
 
 def ml_terms(text):
   """the terms that an ML block keeps in a value, which the source
      may antiquote into a definition (dataSem's ^s)"""
-  return [(m.group(1), m.group(2).strip())
-          for m in ML_TERM.finditer(text)]
+  out = [(m.group(1), m.group(2).strip())
+         for m in ML_TERM.finditer(text)]
+  out += [(nm, tm.strip())
+          for m in ML_TERM_PAIR.finditer(text)
+          for nm, tm in ((m.group(1), m.group(3)),
+                         (m.group(2), m.group(4)))]
+  return out
 
 
 def hol_reln(text):
