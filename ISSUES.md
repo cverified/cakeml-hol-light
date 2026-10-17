@@ -643,6 +643,20 @@ CakeML theories that instantiate the compiler for one concrete
 target, the basis library program with the proof producing
 translator and characteristic formulae, and Pancake.
 
+The thirteen theories of `tools/excluded.txt` are the encoder of
+each of the six targets and the configuration that has one in it.
+An encoder needs the machine model of its target, which is a
+theory of HOL4's `examples/l3-machine-code` (`x64_step`,
+`arm8_step`, ...) and not part of the CakeML sources; the one
+model that the CakeML sources do have, `ag32` (the Silver ISA),
+is a file that L3 generated, and it builds its types and its
+definitions by calling the ML of HOL4's `Import` library, which a
+source level port cannot follow.  `compiler$parse_target_64` and
+`parse_target_32` only pass the twelve constants of those
+theories on, so the port declares them (`PENDING.md`).  The
+theory that exports the code of a target needs only `export`, so
+those six are ported.
+
 Of the HOL4 library theories (in `ml/lib/`) only the definitions
 that the port needs are ported, not the whole theories.
 
