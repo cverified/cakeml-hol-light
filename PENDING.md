@@ -1,10 +1,11 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 254 files of the port: 4350
+`Definition` and `Inductive` of the 262 files of the port: 4426
 blocks, of which every one is in (see `tools/coverage.py`); the
 ones that HOL4 makes in a way that the port has no counterpart
-for are declared constants, which the list below has.
+for are declared constants (`cake_declare`, which adds no
+axiom), which the list below has.
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way, and `tools/literals.py` that
 its strings, its characters and its numerals are the same ones
@@ -28,14 +29,15 @@ use; nothing of the first pass evaluates anything.)
 | `data_to_word$AnyArith_call_tree` | `full_call_graph AnyArith_location (fromAList (stubs (:1) ...))`, the call graph of the bignum stubs for a configuration with `call_empty_ffi` and `has_longdiv` false |
 | `data_to_wordProof$stubs_fst` | `MAP FST (data_to_word_stubs (:1) ARB)`, the names of the bignum stubs (HOL4's `EVAL` computes the list, in which the type of the stubs and the configuration are free) |
 
-Two definitions of `flat_to_clos` and one of `compiler` have a
-body that HOL4 builds with ML code of the source file, which the
-port writes out instead:
+Two definitions of `flat_to_clos`, one of `compiler` and the
+five `<target>_export` have a body that HOL4 builds with ML code
+of the source file, which the port writes out instead:
 
 | definition | what HOL4 does |
 |---|---|
 | `flat_to_clos$CopyByteStr`, `flat_to_clos$CopyByteAw8` | the ML function `check1` of the source builds the body from the term of the copy and a function that gives the variable of an argument (`Var t (2 - n)` for the first, `Var t (4 - n)` for the second) |
 | `compiler$help_string` | the text of the `--help` quotation at the head of the source without its first line.  The port makes the term of the text with `mk_string`, because the text has a backquote in it |
+| `export_x64$x64_export` and the four other `<target>_export` of a target with an FFI block | the FFI block of the assembly, the Windows one and the entry point code are ML values of the source, each the `EVAL` of a term that the ML code before it builds; the port writes the term that HOL4 evaluates (`tools/hol4.py` reads both terms of the binding that gives the value for the two values of the flag) |
 
 One definition cannot be ported as it stands, because its value
 is the one of the machine that built the theory:
