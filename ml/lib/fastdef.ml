@@ -102,6 +102,48 @@ let ADMISSIBLE_LET = prove
    [FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]; ALL_TAC] THEN
   FIRST_ASSUM MATCH_MP_TAC THEN ASM_REWRITE_TAC[]);;
 
+(* the admissibility of an EVERY and of an EXISTS of HOL4
+   (HOL Light's ALL and EX), which it has the proforma of a MAP
+   for but not these: the recursive call is the function that
+   they take, and it is only used on the members of the list
+   (closProps' vsgc_free is an EVERY vsgc_free) *)
+
+let ALL_EQ_MEM = prove
+ (`!l f g. (!x. MEM x l ==> (f x <=> g x)) ==> (ALL f l <=> ALL g l)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[ALL; MEM] THEN ASM_MESON_TAC[]);;
+
+let EX_EQ_MEM = prove
+ (`!l f g. (!x. MEM x l ==> (f x <=> g x)) ==> (EX f l <=> EX g l)`,
+  LIST_INDUCT_TAC THEN REWRITE_TAC[EX; MEM] THEN ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_ALL = prove
+ (`!(<<) p s h l.
+      admissible(<<) p s l /\
+      admissible (<<) (\f (y,x). p f x /\ MEM y (l f x))
+                      (\(y,x). s x) (\f (y,x). h f x y)
+      ==> admissible (<<) p s (\f:A->B x:P. ALL (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC(MESON[]
+    `x = y /\ (ALL f x <=> ALL g x) ==> (ALL f x <=> ALL g y)`) THEN
+  CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  MATCH_MP_TAC ALL_EQ_MEM THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+  ASM_REWRITE_TAC[FORALL_PAIR_THM] THEN ASM_MESON_TAC[]);;
+
+let ADMISSIBLE_EX = prove
+ (`!(<<) p s h l.
+      admissible(<<) p s l /\
+      admissible (<<) (\f (y,x). p f x /\ MEM y (l f x))
+                      (\(y,x). s x) (\f (y,x). h f x y)
+      ==> admissible (<<) p s (\f:A->B x:P. EX (h f x) (l f x))`,
+  REWRITE_TAC[admissible; FORALL_PAIR_THM] THEN REPEAT STRIP_TAC THEN
+  MATCH_MP_TAC(MESON[]
+    `x = y /\ (EX f x <=> EX g x) ==> (EX f x <=> EX g y)`) THEN
+  CONJ_TAC THENL [ASM_MESON_TAC[]; ALL_TAC] THEN
+  MATCH_MP_TAC EX_EQ_MEM THEN
+  REPEAT STRIP_TAC THEN FIRST_X_ASSUM MATCH_MP_TAC THEN
+  ASM_REWRITE_TAC[FORALL_PAIR_THM] THEN ASM_MESON_TAC[]);;
+
 (* the admissibility of an existential, which HOL Light has no
    proforma for: a pattern variable of a match that the arm of
    the match does not use stays as one (wordLang's Call binds
@@ -353,6 +395,10 @@ let cake_instantiate_casewise_recursion,
           -> APPLY_PROFORMA_TAC ADMISSIBLE_NSUM gl
     | "admissible","MAP"
           -> APPLY_PROFORMA_TAC ADMISSIBLE_MAP gl
+    | "admissible","ALL"
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_ALL gl
+    | "admissible","EX"
+          -> APPLY_PROFORMA_TAC ADMISSIBLE_EX gl
     (* a proforma that a later file of the library layer added *)
     | "admissible",c when can (assoc c) (!admissible_extra)
           -> APPLY_PROFORMA_TAC (assoc c (!admissible_extra)) gl

@@ -164,6 +164,21 @@ let s_simp_def = cake_define
 print_string ("SMOKE8 cheats " ^ string_of_int(length(cake_cheats()))
               ^ "\n");;
 
+
+(* ---------------------------------------------------------------- *)
+(* the shape of closProps' vsgc_free: the recursive call is the
+   function that an EVERY takes *)
+let e_v_INDUCT,e_v_RECURSION = define_datatype
+  "e_v = ENum (num) | EBlock ((e_v) list) | EClos ((e_v) list) \
+   ((e_v) list)";;
+let e_free_def = cake_define
+  `e_free v =
+     match v with ENum n -> T
+     | EBlock vs -> EVERY e_free vs
+     | EClos vs ws -> EVERY e_free (vs ++ ws)`;;
+print_string ("SMOKE9 cheats " ^
+              string_of_int(length(cake_cheats())) ^ "\n");;
+
 print_string ("SMOKEALL cheats " ^
               string_of_int(length(cake_cheats())) ^ " axioms " ^
               string_of_int(length(axioms())) ^ "\n");;
