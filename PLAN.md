@@ -344,8 +344,12 @@ that none of the strategies of `cake_define` makes are _assumed_
 - a definition whose clauses the port has to assume one by one is
   a bug of the port, not of HOL Light: the clauses are
   typechecked on their own and got types that do not fit
-  together.  `cake_define_list` says why, and `tools/bin/conjs`
-  asks the same question of a file that is loaded.
+  together.  `cake_define_list` says why, a run writes every one
+  of them to `tools/conjfail.log` (which `tools/bin/postrun`
+  reports), and `tools/bin/conjs` asks the same question of a
+  file that is loaded.  The four of the run of 18:43 are one
+  quotation now (`ONE_QUOTATION` in `tools/overrides.py`), which
+  typechecks their clauses together.
 - a definition that only the timeout stops needs a better
   strategy or a termination measure, not more seconds.  The
   measure is usually not the problem: `clos_fvs$remove_fvs` is
