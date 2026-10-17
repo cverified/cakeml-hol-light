@@ -429,7 +429,8 @@ let orac_rel_inner_def = cake_define
   `orac_rel_inner dec s (s_compiler:(num#num)#flatSem_v#dec
   list->(flatSem_v#word8 list#word64 list) option) (g:dec list->dec
   list) c <=>
-     (!k env_id state_v decs. oracle s k = (env_id,state_v,decs) ==>
+     (!k env_id state_v decs. eval_oracle_state_oracle s k =
+       (env_id,state_v,decs) ==>
          (let x = THE (dec state_v) in
          let f_decs = SND (inc_compile_prog env_id (FST x) (g decs))
            in install_config_compile_oracle

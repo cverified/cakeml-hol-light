@@ -338,11 +338,11 @@ let full_make_init_def = cake_define
 let memory_assumption_def = cake_define
   `memory_assumption rnames (bitmaps:('a word) list) data_sp t =
      (?ptr2 ptr3 ptr4 bitmap_ptr.
-       (\r s. stackSem_state_regs s r) (tlookup rnames 2) t =
+       (\r s. labSem_state_regs s r) (tlookup rnames 2) t =
          wordLang_Word ptr2 /\
-       (\r s. stackSem_state_regs s r) (tlookup rnames 3) t =
+       (\r s. labSem_state_regs s r) (tlookup rnames 3) t =
          wordLang_Word ptr3 /\
-       (\r s. stackSem_state_regs s r) (tlookup rnames 4) t =
+       (\r s. labSem_state_regs s r) (tlookup rnames 4) t =
          wordLang_Word ptr4 /\ labSem_state_mem
        t ptr2 = wordLang_Word bitmap_ptr /\ labSem_state_mem
        t (ptr2 + bytes_in_word) =

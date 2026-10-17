@@ -172,9 +172,10 @@ FIELD_VAR_DEF = {
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
   # the t of memory_assumption is a state of labSem, where the
-  # regs of this theory are the ones of stackSem
+  # regs of this theory are the ones of stackSem; the s is the
+  # variable of the overload read_reg (\r s. s.regs r)
   ('stack_to_labProof', 'memory_assumption_def'):
-    {'t': 'labSem_state'},
+    {'t': 'labSem_state', 's': 'labSem_state'},
   # the s whose oracle orac_rel_inner reads is the state of an
   # EvalOracle
   ('source_to_flatProof', 'orac_rel_inner_def'):
