@@ -101,3 +101,13 @@ The opam HOL Light needs its own opam switch, so first
 which puts `hol.sh` and the `repl-*` scripts in the path.
 Then use the `repl-*` scripts as described in the CLAUDE.md
 one directory up (`repl-clone`, `repl-step`, `repl-kill`, ...).
+
+A _run_ (`tools/bin/checkseq`, which `tmp/run-cs.sh` starts on
+the whole load order) loads the files of `ml/` one after the
+other in one session, which takes over an hour.  **While a run
+is going, nothing may write into `ml/`**: a file that the run
+has not reached yet would be loaded in a state that no report
+describes, and a file that a `needs` of a later file reloads
+with another digest is an error of its own.  `tools/port.py`
+refuses to write while a run is going, and `tools/bin/trydef`
+refuses to use the session of one.
