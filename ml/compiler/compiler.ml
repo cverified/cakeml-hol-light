@@ -22,6 +22,7 @@ needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_pattern.ml";;
+needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;
@@ -816,6 +817,43 @@ let extend_conf_def = cake_define
                 get_err_str lab]))`;;
 
 (* Defaults to x64 if no target given *)
+cake_declare "x64_backend_config" `:backend_config`;;
+cake_declare "x64_config" `:(64)asm_config`;;
+cake_declare "x64_export"
+  `:mlstring list -> word8 list -> word64 list ->
+    (mlstring#num#num) list -> mlstring list -> bool
+    -> bool -> (mlstring)app_list`;;
+cake_declare "arm8_backend_config" `:backend_config`;;
+cake_declare "arm8_config" `:(64)asm_config`;;
+cake_declare "arm8_export"
+  `:mlstring list -> word8 list -> word64 list ->
+    (mlstring#num#num) list -> mlstring list -> bool
+    -> bool -> (mlstring)app_list`;;
+cake_declare "mips_backend_config" `:backend_config`;;
+cake_declare "mips_config" `:(64)asm_config`;;
+cake_declare "mips_export"
+  `:mlstring list -> word8 list -> word64 list ->
+    (mlstring#num#num) list -> mlstring list -> bool
+    -> bool -> (mlstring)app_list`;;
+cake_declare "riscv_backend_config" `:backend_config`;;
+cake_declare "riscv_config" `:(64)asm_config`;;
+cake_declare "riscv_export"
+  `:mlstring list -> word8 list -> word64 list ->
+    (mlstring#num#num) list -> mlstring list -> bool
+    -> bool -> (mlstring)app_list`;;
+cake_declare "arm7_backend_config" `:backend_config`;;
+cake_declare "arm7_config" `:(32)asm_config`;;
+cake_declare "arm7_export"
+  `:mlstring list -> word8 list -> word32 list ->
+    (mlstring#num#num) list -> mlstring list -> bool
+    -> bool -> (mlstring)app_list`;;
+cake_declare "ag32_backend_config" `:backend_config`;;
+cake_declare "ag32_config" `:(32)asm_config`;;
+cake_declare "ag32_export"
+  `:mlstring list -> word8 list -> word32 list ->
+    (mlstring#num#num) list -> mlstring list -> bool
+    -> bool -> (mlstring)app_list`;;
+
 let parse_target_64_def = cake_define
   `parse_target_64 ls =
    (match find_str (implode "--target=") ls with

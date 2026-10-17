@@ -414,8 +414,10 @@ def parse(path):
         # a rule that has no name of its own may be separated by
         # a label that is the conjunction itself (clos_opProof's
         # red_rel has four of them)
-        m = re.match(r"^\s*\[(?:[~^]?[A-Za-z0-9_']*:|∧)\]"
-                     r"\s*(.*)$", l)
+        # the name of a rule may carry attributes of its own
+        # (peg's wfpeg has [~empty[simp]:])
+        m = re.match(r"^\s*\[(?:[~^]?[A-Za-z0-9_']*"
+                     r"(?:\[[^\]]*\])?:|∧)\]\s*(.*)$", l)
         if m:
           rules.append([])
           if m.group(1).strip(): rules[-1].append(m.group(1))

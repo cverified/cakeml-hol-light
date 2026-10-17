@@ -62,22 +62,18 @@ let sloc_def = cake_define_list
    `sloc (h :: t) = SND h`];;
 
 let wfpeg = cake_inductive
-  `(!n f. n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)
-  ==> wfpeg G (peg_nt n f))
-   [~(_empty [simp]:)]
-   (!c. wfpeg G (peg_empty c))
-   [~(_any [simp]:)]
-   (!f. wfpeg G (peg_any f))
-   [~(peg_tok [simp]:)]
-   (!t f. wfpeg G (peg_tok t f))
-   [~(_error [simp]:)]
-   (!e. wfpeg G (peg_error e)) /\
-   (!e c. wfpeg G e ==> wfpeg G (peg_not e c)) /\
-   (!e1 e2 f. wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2) ==>
-              wfpeg G (peg_seq e1 e2 f)) /\
-   (!e1 e2 f. wfpeg G e1 /\ wfpeg G e2 ==> wfpeg G (peg_choice e1 e2
-     f)) /\
-   (!e f. wfpeg G e /\ ~peg0 G e ==> wfpeg G (peg_rpt e f))`;;
+  `((!n f. n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)
+  ==> wfpeg G (peg_nt n f))) /\
+   ((!c. wfpeg G (peg_empty c))) /\
+   ((!f. wfpeg G (peg_any f))) /\
+   ((!t f. wfpeg G (peg_tok t f))) /\
+   ((!e. wfpeg G (peg_error e)) /\
+     (!e c. wfpeg G e ==> wfpeg G (peg_not e c)) /\
+     (!e1 e2 f. wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2) ==>
+                wfpeg G (peg_seq e1 e2 f)) /\
+     (!e1 e2 f. wfpeg G e1 /\ wfpeg G e2 ==> wfpeg G (peg_choice e1
+       e2 f)) /\
+     (!e f. wfpeg G e /\ ~peg0 G e ==> wfpeg G (peg_rpt e f)))`;;
 
 let subexprs_def = cake_define_list
   [`subexprs (peg_any f1) = {peg_any f1}`;

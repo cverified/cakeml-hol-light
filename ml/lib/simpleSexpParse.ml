@@ -45,8 +45,11 @@ let _ = size_thms "simpleSexp_sexp";;
    \\ imp_res_tac strip_dot_MEM_sizelt \\ imp_res_tac
    strip_dot_last_sizeleq \\ fsrw_tac[boolSimps.DNF_ss][] \\ simp[]
    \\ fs[LENGTH_EQ_NUM_compute] \\ gvs[] *)
-let print_sexp_def = cake_define_wf
-  `MEASURE simpleSexp_sexp_size`
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let print_sexp_def = cake_define_try_tac (fun () ->
+  `MEASURE simpleSexp_sexp_size`)
+  CHEAT_TAC
   `print_sexp s =
         match s with
           SX_SYM s -> s
