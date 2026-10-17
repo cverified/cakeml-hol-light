@@ -1,11 +1,11 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 251 files of the port: 4347
-blocks, of which 4331 are in (see `tools/coverage.py`); the
-sixteen that are not are the eleven tail recursive definitions
-of `unify` and the five Pancake definitions of `compiler`
-below.
+`Definition` and `Inductive` of the 254 files of the port: 4350
+blocks, of which 4345 are in (see `tools/coverage.py`); the five
+that are not are the Pancake definitions of `compiler` below
+(the four step functions of the tail recursive definitions of
+`unify` are declared, which counts as in).
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way, and `tools/literals.py` that
 its strings, its characters and its numerals are the same ones
@@ -89,14 +89,16 @@ it (`vwalk s v = @r. VWALKR s v r`), which adds no axiom; HOL4's
 equation is a theorem of the second pass.  (`unifDef$oc` is a
 `Hol_reln` in HOL4 already, and is ported as it stands.)
 
-Eleven definitions of `unify` are not ported: the tail recursive
-versions of the unification algorithm, which HOL4 makes with ML
-code (`tcallify_th` of `tcallUnifLib` turns the equation of a
-function into the step function of a `TAILREC`).  The port cannot
-run that code, and nothing outside that part of the file uses
-what it makes (`cvwalk_code`, `tcvwalk`, `tcwalk`, `kcocwl_code`,
-`tcocwl`, `kcwalkstarwl_code`, `tcwalkstarwl`, `tcwalkstar_p1`,
-`tcwalkstar_p2`, `cunify_code` and `tcunify`).
+Four more constants are declared, for the same reason: the step
+functions of the tail recursive versions of the unification
+algorithm, which HOL4 builds with the ML code of the source
+(`tcallify_th` of `tcallUnifLib` turns the equation of a function
+into the step function of a `TAILREC`).  The port cannot run that
+code, so it declares `cvwalk_code`, `kcocwl_code`,
+`kcwalkstarwl_code` and `cunify_code` with the type that the
+`TAILREC` uses them at, and the seven definitions that use them
+(`tcvwalk`, `tcwalk`, `tcocwl`, `tcwalkstarwl`, `tcwalkstar_p1`,
+`tcwalkstar_p2` and `tcunify`) are ported as they stand.
 
 One definition of the first pass is not ported, because HOL4
 makes it from a theorem that the second pass has to prove first

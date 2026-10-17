@@ -1148,23 +1148,17 @@ ANTIQUOTE = {
 }
 
 NOT_YET = {
-  # the tail recursive versions of the unification algorithm, which
-  # HOL4 makes with ML code (tcallify_th of tcallUnifLib turns the
-  # equation of a function into the step function of a TAILREC):
-  # the port cannot run that code, and nothing outside this part of
-  # the file uses what it makes
+  # the step functions of the tail recursive versions of the
+  # unification algorithm, which HOL4 makes with ML code
+  # (tcallify_th of tcallUnifLib turns the equation of a function
+  # into the step function of a TAILREC): the port cannot run that
+  # code, so it declares the four constants (EXTRA_BEFORE below)
+  # and ports the seven definitions that use them
   ('unify', 'cvwalk_code_def'): 'tcallify_th makes it with ML code',
-  ('unify', 'tcvwalk_def'): 'the tail recursion of cvwalk',
-  ('unify', 'tcwalk_def'): 'the tail recursion of cwalk',
   ('unify', 'kcocwl_code_def'): 'tcallify_th makes it with ML code',
-  ('unify', 'tcocwl_def'): 'the tail recursion of cocwl',
   ('unify', 'kcwalkstarwl_code_def'):
     'tcallify_th makes it with ML code',
-  ('unify', 'tcwalkstarwl_def'): 'the tail recursion of cwalkstarwl',
-  ('unify', 'tcwalkstar_p1_def'): 'the tail recursion of cwalkstar',
-  ('unify', 'tcwalkstar_p2_def'): 'the tail recursion of cwalkstar',
   ('unify', 'cunify_code_def'): 'tcallify_th makes it with ML code',
-  ('unify', 'tcunify_def'): 'the tail recursion of cunify',
   # Pancake is a second source language of the same compiler
   # backend, which the CakeML correctness theorem does not mention,
   # so the port does not have the theories that this definition
@@ -1197,6 +1191,29 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the step functions of the tail recursions of the unification
+  # algorithm: HOL4 builds the body of each with the ML code of the
+  # source (tcallify_th, which turns the equation of a function
+  # into the step function of a TAILREC), so the port declares the
+  # constant with the type that the TAILREC below uses it at and
+  # says nothing about its value (see PENDING.md)
+  ('unify', 'cvwalk_code_def'): r"""
+cake_declare "cvwalk_code" `:infer_t spt -> num -> num + infer_t`;;
+""",
+  ('unify', 'kcocwl_code_def'): r"""
+cake_declare "kcocwl_code"
+  `:infer_t spt -> num -> kcockont -> kcockont + bool`;;
+""",
+  ('unify', 'kcwalkstarwl_code_def'): r"""
+cake_declare "kcwalkstarwl_code"
+  `:infer_t spt -> bool#infer_t list#kclkont list ->
+    (bool#infer_t list#kclkont list) + infer_t list`;;
+""",
+  ('unify', 'cunify_code_def'): r"""
+cake_declare "cunify_code"
+  `:(infer_t spt)#kcunifkont ->
+    ((infer_t spt)#kcunifkont) + (infer_t spt)option`;;
+""",
   # the basis program: HOL4 computes the list of its declarations
   # with the ML code of its translator (basisProg, which is out of
   # the scope of the port), so the port declares the constant and

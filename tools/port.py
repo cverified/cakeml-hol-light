@@ -698,6 +698,12 @@ class Porter:
 
   def definition(self, b):
     name = ocaml_name(b.name)
+    key = (self.thy, name)
+    # what goes before the block goes there whether the block
+    # itself is ported or not (a declaration takes the place of a
+    # definition that the port does not make)
+    if key in overrides.EXTRA_BEFORE:
+      self.out.append(overrides.EXTRA_BEFORE[key].strip() + '\n')
     key = (self.thy, b.name)
     if key in overrides.NOT_YET:
       self.warn.append('%s: PENDING (%s)'
@@ -706,8 +712,6 @@ class Porter:
                       % (overrides.NOT_YET[key], shorten(b.text.strip())))
       return
     key = (self.thy, name)
-    if key in overrides.EXTRA_BEFORE:
-      self.out.append(overrides.EXTRA_BEFORE[key].strip() + '\n')
     if key in overrides.REPLACE:
       self.out.append(overrides.REPLACE[key].strip())
       return

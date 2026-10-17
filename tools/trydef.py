@@ -25,9 +25,15 @@ for l in open(C + '/ml/CHEATS.md'):
 def block(f, name):
   """the phrase of the port that defines a constant"""
   src = open(C + '/ml/' + f).read()
-  for m in re.finditer(r'^let .*?;;$', src, re.M | re.S):
-    t = m.group(0)
+  phrases = [m.group(0)
+             for m in re.finditer(r'^let .*?;;$', src, re.M | re.S)]
+  for t in phrases:
     if name in re.findall(r"`\(?([A-Za-z0-9_']+)", t): return t
+  # the relation of an inductive definition is not the first word
+  # of its first clause (that is the quantifier of the rule)
+  for t in phrases:
+    if 'cake_inductive' in t and re.search(r'\b%s\b' % name, t):
+      return t
   return None
 
 
@@ -87,8 +93,11 @@ for nm in names:
       s = re.sub(r'\b%s\b' % re.escape(h), h + '_zz', s)
     return s
   qs = [ren(q) for q in qs]
+  ind = 'cake_inductive' in t
   lst = 'cake_define_list' in t
-  if lst and tryf:
+  if ind:
+    call = 'cake_inductive\n  `%s`' % qs[0]
+  elif lst and tryf:
     call = ('cake_define_list_try (fun () -> `%s`)\n  [`%s`]'
             % (rel, '`;\n   `'.join(qs)))
   elif tryf:

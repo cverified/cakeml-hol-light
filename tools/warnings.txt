@@ -300,22 +300,15 @@ unify	ML code skipped: val cwf = ASSUME “cwfs s” |> SRULE[cwfs_def] |> cj 2 
 unify	ML code skipped: fun tcallify_th fixedvs th =   let val (l,r) = dest_eq (conc
 unify	ML code skipped: val cvwalk_code = tcallify_th [“s:infer_t num_map”] cvwalk_t
 unify	cvwalk_code_def: PENDING (tcallify_th makes it with ML code)
-unify	tcvwalk_def: PENDING (the tail recursion of cvwalk)
-unify	tcwalk_def: PENDING (the tail recursion of cwalk)
 unify	ML code skipped: val remove = CONV_RULE (RAND_CONV (REWRITE_CONV[dfkcocl_remo
 unify	Overload kcocwl0
 unify	ML code skipped: val kcocwl_code = tcallify_th [“s:infer_t num_map”, “n:num”]
 unify	kcocwl_code_def: PENDING (tcallify_th makes it with ML code)
-unify	tcocwl_def: PENDING (the tail recursion of cocwl)
 unify	ML code skipped: val kcwalkstarwl_code = tcallify_th [“s:infer_t num_map”] $ 
 unify	kcwalkstarwl_code_def: PENDING (tcallify_th makes it with ML code)
-unify	tcwalkstarwl_def: PENDING (the tail recursion of cwalkstarwl)
-unify	tcwalkstar_p1_def: PENDING (the tail recursion of cwalkstar)
-unify	tcwalkstar_p2_def: PENDING (the tail recursion of cwalkstar)
 unify	ML code skipped: val cunify_code = DefnBase.one_line_ify NONE kcunifywl_thm |
 unify	cunify_code_def: PENDING (tcallify_th makes it with ML code)
 unify	Overload kcuR
-unify	tcunify_def: PENDING (the tail recursion of cunify)
 unify	ML code skipped: val encode_walkstar_reverse = encode_walkstar |>            
 infer	ML code skipped: val type_name_check_subst_alt =   type_name_check_subst_def 
 infer	Overload Tem
