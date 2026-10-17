@@ -599,10 +599,42 @@ it only because CakeML definitions use variables called `el`,
 
 ## Definitions whose form deviates
 
-Every definition of the ported files is in the port.  Three of
-them state the expression that HOL4's ML code evaluates instead of
-the value that it finds, and one (`misc$Lnext`) is proved to exist
-by hand; `PENDING.md` lists all four, with the reason.
+Every definition of the ported files is in the port.  A handful
+state the expression that HOL4's ML code evaluates instead of the
+value that it finds, one (`misc$Lnext`) is proved to exist by
+hand, and two constants are declared without a value because HOL4
+computes them with ML code; `PENDING.md` lists them all, with the
+reason.
+
+## The scope of the dependency closure
+
+A source may have more than one `Ancestors` block: the second one
+of `clos_to_bvlProof` is `Ancestors[ignore_grammar]`, and it is
+the one that has `clos_knownProof` in it.  The dependency scan
+(`tools/deps.py`) only read the first, which left twelve
+`clos_*Proof` theories out of the closure; they are in since
+2026-10-17.  `tools/order1b.py` generates the list of the proof
+theories of the pass (the closure minus the definition theories
+of `tools/order.txt` and the targets of `tools/excluded.txt`), so
+that this cannot drift by hand any more.
+
+## The escapes of a string literal
+
+Both parsers read the escapes of a string literal, and the two
+sets are almost the same: HOL4 reads the ones of SML, HOL Light
+the ones of OCaml (`parser.ml`'s `escapecode`).  The port writes
+the OCaml ones, so an `\a`, `\f`, `\v` or `\u` of SML (which
+OCaml does not know) becomes `\007`, `\012`, `\011` and
+`\\u`, and a backquote becomes `\096` because it would close
+the quotation.  `tools/literals.py` checks the round trip of
+every literal of every definition.
+
+## The complement of a word
+
+HOL4 writes the complement of a word `~w`, as it writes the
+negation of a truth value: only the type tells the two apart,
+which the port cannot do, so the one definition that has it
+(`multiword$single_sub`) is ported by hand with `word_1comp`.
 
 ## What is not ported
 

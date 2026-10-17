@@ -1,13 +1,15 @@
 # Definitions whose form deviates from HOL4's
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
-`Definition` and `Inductive` of the 238 files of the port: 4198
-blocks, of which 4182 are in (see `tools/coverage.py`); the
+`Definition` and `Inductive` of the 251 files of the port: 4347
+blocks, of which 4331 are in (see `tools/coverage.py`); the
 sixteen that are not are the eleven tail recursive definitions
 of `unify` and the five Pancake definitions of `compiler`
 below.
 `tools/fidelity.py` checks that no definition lost a name or a
-constructor argument on the way.
+constructor argument on the way, and `tools/literals.py` that
+its strings, its characters and its numerals are the same ones
+(`tools/bin/checks` runs both).
 
 Three of them are definitions whose value HOL4 computes with ML
 code (`EVAL` or `type_of`) and states as the value it finds.  The
@@ -25,6 +27,23 @@ use; nothing of the first pass evaluates anything.)
 | `infer$err_var` (a `Type`) | `tenv_abbrev`, the type of the `t` field of a `type_env` |
 | `mlint$exp_tm` (the value that `num_to_chars` divides by) | `10 EXP exp_for_dec_enc` |
 | `data_to_word$AnyArith_call_tree` | `full_call_graph AnyArith_location (fromAList (stubs (:1) ...))`, the call graph of the bignum stubs for a configuration with `call_empty_ffi` and `has_longdiv` false |
+| `data_to_wordProof$stubs_fst` | `MAP FST (data_to_word_stubs (:1) ARB)`, the names of the bignum stubs (HOL4's `EVAL` computes the list, in which the type of the stubs and the configuration are free) |
+
+Two definitions of `flat_to_clos` and one of `compiler` have a
+body that HOL4 builds with ML code of the source file, which the
+port writes out instead:
+
+| definition | what HOL4 does |
+|---|---|
+| `flat_to_clos$CopyByteStr`, `flat_to_clos$CopyByteAw8` | the ML function `check1` of the source builds the body from the term of the copy and a function that gives the variable of an argument (`Var t (2 - n)` for the first, `Var t (4 - n)` for the second) |
+| `compiler$help_string` | the text of the `--help` quotation at the head of the source without its first line.  The port makes the term of the text with `mk_string`, because the text has a backquote in it |
+
+One definition cannot be ported as it stands, because its value
+is the one of the machine that built the theory:
+
+| definition | what HOL4 does |
+|---|---|
+| `compiler$current_build_info_str` | `EVAL` of a string that holds the git commit of CakeML, the one of HOL4, the version of PolyML and the time of the build.  The port states the expression that HOL4 evaluates, with the three versions absent (`NONE`) and the date the empty string |
 
 In HOL4's `AnyArith_call_tree` the type of the stubs and the other
 fields of the configuration are free, and `EVAL` computes a value
@@ -46,6 +65,7 @@ its value:
 | constant | what HOL4 does |
 |---|---|
 | `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds |
+| `basisProg$basis` | the declarations of the standard basis library, which the proof producing translator of HOL4 (`ml_progLib`) builds; the basis library is outside the port (see `ISSUES.md`), and `compiler$compile_64` and `compile_32` only pass the constant on |
 
 Four constants of the triangular unification algorithm are
 defined by the graph of their equation, because HOL4 defines
