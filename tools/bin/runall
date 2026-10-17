@@ -1,0 +1,14 @@
+#!/bin/sh
+# runall : run the whole load order through the sequential check
+# into tmp/cs.out, with a marker before every phrase so that the
+# report says which phrase fails.  This is a _run_: it takes over
+# an hour, hol-seq is its session, and nothing may write into ml/
+# while it goes.
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+python3 -I tools/loadorder.py > tools/load.txt
+MARK=1 TIMEOUT=${TIMEOUT:-240} checkseq $(cat tools/load.txt) \
+  > tmp/cs.out 2>&1
+echo FINISHED >> tmp/cs.out

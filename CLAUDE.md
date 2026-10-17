@@ -102,7 +102,7 @@ which puts `hol.sh` and the `repl-*` scripts in the path.
 Then use the `repl-*` scripts as described in the CLAUDE.md
 one directory up (`repl-clone`, `repl-step`, `repl-kill`, ...).
 
-A _run_ (`tools/bin/checkseq`, which `tmp/run-cs.sh` starts on
+A _run_ (`tools/bin/checkseq`, which `tools/bin/runall` starts on
 the whole load order) loads the files of `ml/` one after the
 other in one session, which takes over an hour.  **While a run
 is going, nothing may write into `ml/`**: a file that the run

@@ -271,9 +271,17 @@ The other checks:
                        arguments (HOL Light takes the left hand
                        side of a binding for a pattern)
 - `tools/bin/checks`   the checks above that need no session
+- `tools/bin/runall`   start a run on the whole load order
+- `tools/bin/postrun`  the reports of a run that finished, in the
+                       order in which they have to be made
 - `tools/bin/cycle`    everything between two runs: the reports,
                        the cheat list, the port, the checks, the
                        template, the smoke test and the next run
+                       (with NORUN=1 it stops before the run and
+                       keeps a clone of its session as hol-try)
+- `tools/conjfail.log` the definitions of a run whose clauses do
+                       not typecheck apart (`postrun` reports it):
+                       each needs `ONE_QUOTATION`
 - `tools/bin/quotes`   which quotation of a file does not parse
                        (in a session that has the file loaded);
                        `tools/bin/quotesall` does that for every

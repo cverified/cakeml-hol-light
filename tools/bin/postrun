@@ -1,0 +1,35 @@
+#!/bin/sh
+# postrun : the reports of a finished run, in the order in which
+# they have to be made (the comparison reads the TIMINGS.md of the
+# run before, so it goes first, and the free variables go last
+# because the session of the run may not survive them).
+# Run it ONCE per run: `timings` writes ml/TIMINGS.md, so a second
+# run of it compares the run with itself.  It keeps the output of
+# the run in tmp/cs-<time>.out and tees the reports to
+# tmp/report.txt (`tools/bin/cycle` runs it that way).
+C=/home/freek/claude/hol-light/cakeml
+PATH=/home/freek/claude/hol-light/bin:$C/tools/bin:$PATH
+cd $C
+. tools/holenv.sh > /dev/null 2>&1
+cp tmp/cs.out tmp/cs-$(date +%H%M).out
+echo "=== errors"
+grep -E 'Exception|Error|SLOW' tmp/cs.out | sed 's/  \+/ /g' |
+  cut -c1-150
+echo "=== what changed since the last run"
+python3 -I tools/compare.py
+echo "=== axioms and cheats"
+cheats
+echo "=== timings"
+timings
+echo "=== shapes of the cheats"
+shapes
+echo "=== clauses that do not typecheck apart"
+# a definition whose clauses go to HOL Light one by one and whose
+# types do not fit together: it needs ONE_QUOTATION (the port then
+# typechecks the clauses together), or the clause that gets
+# another type than the rest needs its constructor named
+sed 's/  \+/ /g' tools/conjfail.log | cut -c1-150
+echo "=== types outside their scope"
+types 2>&1 | tail -5
+echo "=== free variables of the cheats"
+freevars 2>&1 | tail -20

@@ -11,10 +11,10 @@
 #   5 the template (the library layer may have changed) and the
 #     smoke test on it
 #   6 the next run
-# With NORUN=1 it stops after the smoke test, which is what to
-# use when a definition still has to be looked at in the session
-# of the run (tools/bin/trydef clones hol-seq, and the next run
-# kills it).
+# With NORUN=1 it stops after the smoke test, which is what to use
+# when a definition still has to be looked at in the session of
+# the run: it then clones hol-seq to hol-try first, which survives
+# both the reports and the next run (S=try tools/bin/trydef).
 B=/home/freek/claude/hol-light
 PATH=$B/bin:$B/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
@@ -22,10 +22,21 @@ cd $C
 . tools/holenv.sh > /dev/null 2>&1
 ps -eo args --no-headers | grep -q '[c]heckseq' && {
   echo "cycle: a run is going"; exit 1; }
+# the reports are heavy enough to lose the session of the run
+# (hol-seq died of the free variables once), and with NORUN=1 the
+# point of the cycle is to keep it: a clone of it is cheap, and
+# tools/bin/trydef takes S=try
+[ "$NORUN" = 1 ] && {
+  repl-kill try > /dev/null 2>&1
+  rm -f /home/freek/claude/hol-light/bin/fifo/hol-try
+  repl-clone hol-seq try > /dev/null 2>&1 &&
+    echo "hol-try is a clone of the session of the run"; }
 echo "=== the reports of the run"
-sh tmp/postrun3.sh > /dev/null 2>&1   # it tees tmp/report.txt
+postrun > tmp/report.txt 2>&1
 sed -n '/=== axioms and cheats/,/=== timings/p' tmp/report.txt |
   head -14
+sed -n '/=== clauses that do not typecheck apart/,/=== types/p' \
+  tmp/report.txt | head -8
 echo "=== the cheat list"
 python3 -I tools/mkcheats.py > tmp/cheats.txt 2> tmp/mkcheats.err
 cat tmp/mkcheats.err
@@ -44,7 +55,7 @@ tmux capture-pane -p -t hol-smoke -S -40 |
   grep -E 'SMOKEALL|SMOKECHEAT|Exception|Error' | tail -3
 [ "$NORUN" = 1 ] && exit 0
 echo "=== the next run"
-nohup env TIMEOUT=900 CAKE_DEBUG=1 sh tmp/run-cs.sh \
+nohup env TIMEOUT=900 CAKE_DEBUG=1 runall \
   > tmp/run.log 2>&1 &
 sleep 10
 ps -eo args --no-headers | grep -q '[c]heckseq' &&
