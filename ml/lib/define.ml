@@ -2884,14 +2884,8 @@ let cake_define_gen wf tm =
        try strat "lift_if" (fun () -> define_lift_if strategies tm)
        with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
-       (* when the first pass assumes the termination there is no
-          point in looking for a measure: the relation that HOL4
-          gives is tried (it is the one the port writes down), and
-          the condition that is left is cheated *)
-       let cands =
-         if cheating () then given
-         else given @ map (fun rel -> rel,TERM_TAC)
-                          (candidate_measures tm) in
+       let cands = given @ map (fun rel -> rel,TERM_TAC)
+                               (candidate_measures tm) in
        try strat "measure" (fun () -> attempt cands)
        with Failure _ when not (declared ()) ->
        strat "guess" (fun () -> attempt [])) in
@@ -3378,43 +3372,49 @@ let with_cheat_tac tac f x =
   the_cheat_tac := old;
   r;;
 
-(* the honest route is tried first all the same, with a short
-   budget: a definition that the machinery can do takes a few
-   seconds, and one that it cannot would spend the whole budget
-   on it.  So an improvement to the machinery takes a CHEAT_TAC
+(* The machinery is tried honestly all the same, and the cheat is
+   the last resort of the one attempt: the strategies run as they
+   always do, the relation that HOL4 gives and the candidate
+   measures are tried, and only the condition that is left over is
+   cheated.  So an improvement to the machinery takes a CHEAT_TAC
    out of use by itself, and the axioms count what is really
-   needed and not what was needed when the list was made. *)
+   needed rather than what was needed when tools/cheats.txt was
+   made.  The budget is a short one, because a definition that the
+   machinery can do takes a few seconds and one that it cannot
+   would spend the whole of it.  (A second attempt is no good: a
+   strategy that fails may have declared the constant already.) *)
 
 let cake_cheat_budget = ref 8;;
 
-let honestly wf tm =
+let with_short_budget f x =
   let old = !cake_timeout in
-  if old > 0 && old < !cake_cheat_budget then cake_timeout := old
-  else cake_timeout := !cake_cheat_budget;
+  cake_timeout := (if old > 0 && old < !cake_cheat_budget then old
+                   else !cake_cheat_budget);
   let fin () = cake_timeout := old in
-  try let th = cake_time (cake_define_gen wf) tm in (fin (); Some th)
-  with Failure _ -> (fin (); None)
-     | Cake_timeout -> (fin (); None);;
+  try let r = f x in (fin (); r) with e -> (fin (); raise e);;
 
 let cake_define_cheat tac tm =
-  match honestly None tm with
-    Some th -> (note_dest_fact th; th)
-  | None ->
-      let th =
-        with_cheat_tac tac
-          (fun tm -> try cake_time (cake_define_gen None) tm
-                     with Failure s -> cake_report tm s) tm in
-      note_term_cheat tm; note_dest_fact th; th;;
+  let n0 = length(axioms()) in
+  let th =
+    with_short_budget
+      (with_cheat_tac tac
+         (fun tm -> try cake_time (cake_define_gen None) tm
+                    with Failure s -> cake_report tm s)) tm in
+  if length(axioms()) > n0 then note_term_cheat tm;
+  note_dest_fact th; th;;
 
-(* the same with the relation that HOL4 gives: the tactic only has
-   to take the conditions that the relation leaves *)
+(* the same with the relation that HOL4 gives.  The relation is
+   tried with the usual tactic first, and the one that is written
+   down only takes the conditions that are left over: with
+   CHEAT_TAC there that is honest first and cheat after, and with
+   a real tactic it is the tactic of HOL4 doing what it is for. *)
 
 let cake_define_tac (rel,tac) tm =
-  match honestly (Some(rel,TERM_TAC)) tm with
-    Some th -> th
-  | None ->
-      let th = with_cheat_tac tac (cake_define_tac (rel,tac)) tm in
-      note_term_cheat tm; th;;
+  let n0 = length(axioms()) in
+  let th = with_short_budget
+             (with_cheat_tac tac (cake_define_tac (rel,TERM_TAC))) tm in
+  if length(axioms()) > n0 then note_term_cheat tm;
+  th;;
 
 (* and the two for a family, whose clauses are given one by one *)
 

@@ -197,6 +197,10 @@ let c_len_def = cake_define_tac (
 let c_sum_def = cake_define_cheat CHEAT_TAC
   `c_sum (l:num list) =
      (if NULL l then 0 else HD l + c_sum (TL l))`;;
+(* c_len is made honestly (the machinery can do its condition),
+   so its CHEAT_TAC costs nothing; c_sum is one axiom, and the
+   definition itself is made. *)
 print_string (Printf.sprintf
-  "SMOKECHEAT axioms %d (two more than %d), cheats %d\n"
-  (length(axioms())) a0 (length(cake_cheats())));;
+  "SMOKECHEAT axioms %d (was %d), cheats %d, c_sum made %B\n"
+  (length(axioms())) a0 (length(cake_cheats()))
+  (can get_const_type "c_sum"));;
