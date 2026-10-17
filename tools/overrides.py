@@ -455,6 +455,10 @@ ARG_TYPES = {
   # which the overloaded accessors in it do not say
   ('stack_allocProof', 'make_init_def'):
     {'s': "('a,'c,'ffi)stackSem_state"},
+  # the compiler of orac_rel_inner takes the v of
+  # semanticPrimitives, where the v of this theory is flatSem's
+  ('source_to_flatProof', 'orac_rel_inner_def'):
+    {'s_compiler': 'compiler_fun'},
 }
 
 # definitions whose clauses HOL4 writes with <=>, although what
@@ -785,6 +789,26 @@ ANNOTATE = set([
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # the compiler that the oracle relation takes is a compiler_fun,
+  # whose v is the one of semanticPrimitives; the port expands the
+  # abbreviation in the theory that uses it, where v is flatSem's
+  ('source_to_flatProof', 'orac_rel_inner_def'): r'''
+let orac_rel_inner_def = cake_define
+  `orac_rel_inner dec s (s_compiler:compiler_fun) (g:dec list->dec
+  list) c <=>
+     (!k env_id state_v decs. eval_oracle_state_oracle s k =
+       (env_id,state_v,decs) ==>
+         (let x = THE (dec state_v) in
+         let f_decs = SND (inc_compile_prog env_id (FST x) (g decs))
+           in install_config_compile_oracle
+         c k = (SND x,f_decs) /\
+         (~(s_compiler (env_id,state_v,decs) = NONE) ==>
+             (?bytes words f_st st_v2. install_config_compile
+             c (SND x) f_decs = SOME (bytes,words,f_st) /\
+             s_compiler (env_id,state_v,decs) = SOME
+               (st_v2,bytes,words) /\
+             (!x2. dec st_v2 = SOME x2 ==> SND x2 = f_st)))))`;;
+''',
   # the int_beg and int_end arrays of the state hold integers and
   # the others natural numbers, which the port cannot tell from
   # the numerals of the record that gives the initial values
