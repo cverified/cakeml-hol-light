@@ -493,6 +493,9 @@ let isPunct = new_definition
 let isPrint = new_definition
   `isPrint c <=> 32 <= ORD c /\ ORD c < 127`;;
 
+let isGraph = new_definition
+  `isGraph c <=> isPrint c /\ ~isSpace c`;;
+
 let toLower = new_definition
   `toLower c = if isUpper c then CHR (ORD c + 32) else c`;;
 

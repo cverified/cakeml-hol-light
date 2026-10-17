@@ -19,7 +19,8 @@ FIELD = re.compile(r'(\w+)\s*=\s*([^,}]*)')
 def parse_ml(text):
   """the token map and the ginfo of the ML code of a theory"""
   tokmap = {}
-  m = re.search(r'val\s+tokmap0\s*=(.*?)\nfun\s', text, re.S)
+  # the map is called tokmap0 in gram and tokmap in simpleSexp
+  m = re.search(r'val\s+tokmap0?\s*=(.*?)\nfun\s', text, re.S)
   if m:
     for s, t in TOKMAP.findall(m.group(1)):
       tokmap[s] = ' '.join(t.split())
@@ -31,7 +32,9 @@ def parse_ml(text):
   for k in ('nt_tyname', 'start', 'gname'):
     if k in info:
       info[k] = info[k].strip().strip('"').strip('`').strip()
-  m = re.search(r'mkntname\s*=\s*\(fn\s+\w+\s*=>\s*"([^"]*)"',
+  # the prefix that mkntname puts on the name of a nonterminal
+  # ("n" for gram's MMLnonT, "sxnt_" for simpleSexp's sexpNT)
+  m = re.search(r'\(fn\s+\w+\s*=>\s*"([^"]*)"',
                 info.get('mkntname', ''))
   info['ntprefix'] = m.group(1) if m else 'n'
   info['tokmap'] = tokmap
@@ -63,7 +66,11 @@ def split_rules(s):
   while i < len(s):
     c = s[i]
     if c == '"':
-      j = s.index('"', i + 1)
+      # a token of the grammar may be a quote (simpleSexp's
+      # sexpstr has "\"" in it), which a backslash escapes
+      j = i + 1
+      while j < len(s) and s[j] != '"':
+        j += 2 if s[j] == '\\' else 1
       cur += s[i:j + 1]; i = j + 1; continue
     if c == '^':
       j = aq_end(s, i)
@@ -113,7 +120,9 @@ def split_alts(s):
   while i < len(s):
     c = s[i]
     if c == '"':
-      j = s.index('"', i + 1)
+      j = i + 1
+      while j < len(s) and s[j] != '"':
+        j += 2 if s[j] == '\\' else 1
       cur += s[i:j + 1]; i = j + 1; continue
     if c == '^':
       j = aq_end(s, i)
@@ -133,7 +142,9 @@ def parse_syms(s):
     c = s[i]
     if c.isspace(): i += 1; continue
     if c == '"':
-      j = s.index('"', i + 1)
+      j = i + 1
+      while j < len(s) and s[j] != '"':
+        j += 2 if s[j] == '\\' else 1
       out.append(('str', s[i + 1:j])); i = j + 1; continue
     if c == '<':
       j = s.index('>', i)

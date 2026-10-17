@@ -364,6 +364,11 @@ class Porter:
       if (thy in anc and not loc and tok in hterm.OWN_INFIX
           and IDENT.match(txt)):
         hterm.set_infix_name(tok, self.ctx.name(txt))
+    # an infix that the ML code of an ancestor maps to a constant
+    # (pegTheory's ~> is ignoreL), with the name of the port
+    for t in sorted(anc):
+      for tok, nm, temp in self.db.fixname.get(t, []):
+        if not temp: hterm.set_infix_name(tok, self.ctx.name(nm))
     chunks = []                 # (blank lines before, text)
     for b in blocks:
       before = len(self.out)
@@ -375,6 +380,8 @@ class Porter:
         if b.kind == 'ML':
           for tok, prec, ass, _ in hol4.fixities(b.text):
             hterm.add_infix(tok, prec, ass)
+          for tok, nm, _ in hol4.mapped_names(b.text):
+            hterm.set_infix_name(tok, self.ctx.name(nm))
           if hol4.pmatch_mode(b.text): hterm.enable_pmatch(True)
           self.enable_monad(b.text)
           # the ML values that the file antiquotes into its terms
@@ -442,6 +449,11 @@ class Porter:
   def block(self, b):
     k = b.kind
     if self.kind == 'lib' and k in ('Comment', 'ML'):
+      # the comments and the ML code of a library theory are not
+      # in the port, but a grammar that its ML code makes is a
+      # datatype and a definition (simpleSexp's sexpNT and sexpG)
+      if k == 'ML' and 'mk_grammar_def' in b.text:
+        self.grammar_block(b)
       return
     if not self.wanted(b):
       return

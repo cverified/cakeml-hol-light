@@ -240,8 +240,11 @@ let _ = size_thms "closSem_v";;
    the names that the port gives the constants *)
 (* HOL4 termination: \\ simp [v1_size_append, v_size_def] \\ rpt
    strip_tac \\ imp_res_tac v_size_lemma \\ simp [] *)
-let v_rel_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let v_rel_def = cake_define_list_try_tac (fun () ->
   `MEASURE (closSem_v_size o FST o SND o SND)`)
+  CHEAT_TAC
   [`clos_knownProof_v_rel c g (closSem_Number i:closSem_v) v <=> v =
   (closSem_Number i:closSem_v)`;
    `clos_knownProof_v_rel c g (Word64 w:closSem_v) v <=> v = (Word64

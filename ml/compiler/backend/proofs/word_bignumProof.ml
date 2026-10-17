@@ -91,9 +91,9 @@ let eval_ri_pre_def = cake_define_list
   T`];;
 
 let eval_ri_def = cake_define_list
-  [`eval_ri (s:'a word_bignumProof_state) (Reg r) = eval_exp s (Var
-  r)`;
-   `eval_ri (s:'a word_bignumProof_state) (Imm w) = w`];;
+  [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
+      eval_exp s ((Var r):'a wordLang_exp)`;
+   `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
 
 let dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = state_clock_fupd (K (state_clock s

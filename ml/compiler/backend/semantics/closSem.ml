@@ -876,13 +876,16 @@ if concl fix_clock_IMP <> `T` then
    dest_closure_length \\ imp_res_tac LESS_EQ_dec_clock \\
    FULL_SIMP_TAC (srw_ss()) [] \\ simp [AppUnit_def] \\ IF_CASES_TAC
    \\ gvs [] *)
-let evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
                       (\x. match x with INL (xs,env,s) ->
                         (state_clock
                         s,list_size closSem_exp_alt_size xs,0) | INR
                         (l,f,args,s) -> (state_clock s,0,LENGTH
                           args)))`)
+  CHEAT_TAC
   [`closSem_evaluate ([],(env:closSem_v
   list),(s:('c,'ffi)closSem_state)) = (Rval [],s)`;
    `closSem_evaluate (x :: y :: xs,env,s) =

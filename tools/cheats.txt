@@ -35,6 +35,7 @@ closProps no_Labels_def
 closProps obeys_max_app_def
 closProps set_globals_def
 closSem do_eq_def
+closSem evaluate_def
 clos_annotate alt_free_def
 clos_annotate alt_free_sing_def
 clos_annotate shift_def
@@ -43,10 +44,12 @@ clos_call calls_def
 clos_call calls_sing_def
 clos_call free_def
 clos_call free_sing_def
+clos_callProof v_rel_def
 clos_interp to_constant_def
 clos_known free_def
 clos_known get_size_sc_aux_def
 clos_known known_def
+clos_knownProof v_rel_def
 clos_letop let_op_def
 clos_mti intro_multi_def
 clos_number renumber_code_locs_def

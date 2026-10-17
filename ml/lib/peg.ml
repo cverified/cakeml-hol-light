@@ -61,6 +61,24 @@ let sloc_def = cake_define_list
   [`sloc [] = (Locs EOFpt EOFpt)`;
    `sloc (h :: t) = SND h`];;
 
+let wfpeg = cake_inductive
+  `(!n f. n IN FDOM (peg_rules G) /\ wfpeg G (FAPPLY (peg_rules G) n)
+  ==> wfpeg G (peg_nt n f))
+   [~(_empty [simp]:)]
+   (!c. wfpeg G (peg_empty c))
+   [~(_any [simp]:)]
+   (!f. wfpeg G (peg_any f))
+   [~(peg_tok [simp]:)]
+   (!t f. wfpeg G (peg_tok t f))
+   [~(_error [simp]:)]
+   (!e. wfpeg G (peg_error e)) /\
+   (!e c. wfpeg G e ==> wfpeg G (peg_not e c)) /\
+   (!e1 e2 f. wfpeg G e1 /\ (peg0 G e1 ==> wfpeg G e2) ==>
+              wfpeg G (peg_seq e1 e2 f)) /\
+   (!e1 e2 f. wfpeg G e1 /\ wfpeg G e2 ==> wfpeg G (peg_choice e1 e2
+     f)) /\
+   (!e f. wfpeg G e /\ ~peg0 G e ==> wfpeg G (peg_rpt e f))`;;
+
 let subexprs_def = cake_define_list
   [`subexprs (peg_any f1) = {peg_any f1}`;
    `subexprs (peg_empty c) = {peg_empty c}`;
@@ -84,6 +102,12 @@ let wfG_def = cake_define
 let pegf_def = cake_define
   `peg_pegf sym f = peg_seq sym (peg_empty ARB) (\l1 l2. f l1)`;;
 hol4_overload "pegf" "peg_pegf";;
+
+let ignoreL_def = cake_define
+  `ignoreL s1 s2 = peg_seq s1 s2 (\a b. b)`;;
+
+let ignoreR_def = cake_define
+  `ignoreR s1 s2 = peg_seq s1 s2 (\a b. a)`;;
 
 let choicel_def = cake_define_list
   [`peg_choicel [] = peg_not (peg_empty ARB) ARB`;

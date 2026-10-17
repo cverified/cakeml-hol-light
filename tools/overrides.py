@@ -296,6 +296,9 @@ EXTRA_NEEDS = {
 # sources use them through HOL4 syntax that mentions them only
 # indirectly (a record field declared with ML code, say)
 ALSO_NEEDED = set([
+  # the ~> and <~ of peg are the infixes that its ML code maps to
+  # ignoreL and ignoreR, which the dependency scan does not see
+  ('peg', 'ignoreL'), ('peg', 'ignoreR'), ('peg', 'wfpeg'),
   # bvl_handleProof's env_rel uses indexedLists' LIST_RELi, which
   # indexedLists is not an ancestor of
   ('indexedLists', 'LIST_RELi'),
@@ -372,6 +375,14 @@ RENAME_CONST = {
 # of the semantics theories is llist's)
 LOCAL_NAMES = {
   ('bvi_inlineProof', 'toList'): 'sptree_toList',
+  # the toString of a number is ASCIInumbers' num_to_dec_string
+  # (mlint has a toString of its own, so the port qualifies the
+  # name, and the qualified one is not the constant)
+  ('simpleSexpParse', 'toString'): 'num_to_dec_string',
+  # mkNT is the ML overload of simpleSexp for INL, which the port
+  # does not see (the one of gram is an Overload block)
+  ('simpleSexpPEG', 'mkNT'): 'INL',
+  ('simpleSexpParse', 'mkNT'): 'INL',
   # the stack that this measures is the one of wordSem (the port
   # gives wordSem's stack_size the plain name), and nothing in
   # the invariant says so

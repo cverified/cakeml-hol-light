@@ -50,7 +50,7 @@ let print_sexp_def = cake_define_wf
   `print_sexp s =
         match s with
           SX_SYM s -> s
-        | (SX_NUM n) -> ASCIInumbers_toString n
+        | (SX_NUM n) -> num_to_dec_string n
         | (SX_STR s) -> "\"" ++ escape_string s ++ "\""
         | s ->
       (let (ls,n) = strip_dot s in

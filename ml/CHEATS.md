@@ -9,42 +9,46 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 239: the three axioms of HOL
-Light and 236 for the 317 definitions below.
+`length (axioms ())` is 250: the three axioms of HOL
+Light and 247 for the 322 definitions below.
+
+Of these 322 definitions
+
+- 295 have only their **termination** assumed, so the
+  constant, its type and its clauses are the real ones;
+- 2 are a constant that is **declared** without a
+  value, because HOL4 computes the value with ML code;
+- 25 are **not made** at all, which is the work that is
+  left.
 
 Why they are assumed:
 
-- 282: termination (CHEAT_TAC)
-- 3: tryfind: /\
-- 3: new_definition: Type variables not reflected in constant
+- 295: termination (CHEAT_TAC)
+- 7: free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_ref->bo
+- 5: new_definition: Type variables not reflected in constant
+- 2: free: isGraph:char->bool
+- 2: declared (no value)
 - 2: timeout in measure
-- 2: free: mlt
-- 2: free: basis
-- 2: free: firstSet
-- 1: free: c2
-- 1: (not recorded)
-- 1: free: checkT
-- 1: free: checkF
-- 1: free: e
-- 1: TAC_PROOF: Unsolved goals
-- 1: free: current_build_info_str_tm
-- 1: free: help_string_tm
-- 1: free: parse_sexp
-- 1: free: print_sexp
-- 1: free: x64_backend_config, x64_export, x64_config, arm8_backend_con
-- 1: free: arm7_backend_config, arm7_export, arm7_config, ag32_backend_
-- 1: free: LIST_RELi
-- 1: free: known_cc
-- 1: free: known_co, syntax_ok
-- 1: free: single_div_pre, single_div
-- 1: free: rconc, th
-- 1: free: MAP_KEYS
-- 1: free: MAP_KEYS, LINV
-- 1: free: Abbrev
-- 1: free: LINV_OPT
+- 1: free: wfpeg:(?206495,?206496,?206497,?206498)peg->(?206495,?206496
+- 1: free: ~>:(char,?210230,simpleSexp_sexp,?210232)pegsym->?210219->?2
+- 1: free: mkNT:?210250->?210247+num
+- 1: free: sxnt_sexp:?212984, sxnt_sexpseq:?212984, <~:(char,sexpNT,sim
+- 1: free: ASCIInumbers_toString:num->(char)list
+- 1: free: strlit:(char)list->mlstring
+- 1: free: x64_backend_config:?741797, x64_export:?741801, x64_config:?
+- 1: free: arm7_backend_config:?742484, arm7_export:?742488, arm7_confi
+- 1: timeout in guess
 
 | definition | file | why |
 |---|---|---|
+| `wfG` | `lib/peg.ml` | free: wfpeg:(?206495,?206496,?206497,?206498)peg->(?206495,? |
+| `valid_first_symchar` | `lib/simpleSexp.ml` | free: isGraph:char->bool |
+| `valid_symchar` | `lib/simpleSexp.ml` | free: isGraph:char->bool |
+| `grabWS` | `lib/simpleSexpPEG.ml` | free: ~>:(char,?210230,simpleSexp_sexp,?210232)pegsym->?2102 |
+| `simpleSexpPEG_pnt` | `lib/simpleSexpPEG.ml` | free: mkNT:?210250->?210247+num |
+| `sexpPEG` | `lib/simpleSexpPEG.ml` | free: sxnt_sexp:?212984, sxnt_sexpseq:?212984, <~:(char,sexp |
+| `parse_sexp` | `lib/simpleSexpParse.ml` | new_definition: Type variables not reflected in constant |
+| `print_sexp` | `lib/simpleSexpParse.ml` | free: ASCIInumbers_toString:num->(char)list |
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
 | `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
@@ -63,7 +67,6 @@ Why they are assumed:
 | `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
 | `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
 | `cb_to_bvi_worker_aux` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
-| `SmartOp2` | `compiler/backend/bvl_const.ml` | free: c2 |
 | `bvl_const_compile` | `compiler/backend/bvl_const.ml` | termination (CHEAT_TAC) |
 | `bvl_const_compile` | `compiler/backend/bvl_const.ml` | termination (CHEAT_TAC) |
 | `handle_simp` | `compiler/backend/bvl_handle.ml` | termination (CHEAT_TAC) |
@@ -115,7 +118,7 @@ Why they are assumed:
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `mc_iop_code` | `compiler/backend/word_bignum.ml` |  |
+| `mc_iop_code` | `compiler/backend/word_bignum.ml` | declared (no value) |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
 | `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
@@ -144,8 +147,6 @@ Why they are assumed:
 | `StoreAnyConsts` | `compiler/backend/data_to_word.ml` | termination (CHEAT_TAC) |
 | `to_constant` | `compiler/backend/clos_interp.ml` | termination (CHEAT_TAC) |
 | `to_constant` | `compiler/backend/clos_interp.ml` | termination (CHEAT_TAC) |
-| `CopyByteStr` | `compiler/backend/flat_to_clos.ml` | free: checkT |
-| `CopyByteAw8` | `compiler/backend/flat_to_clos.ml` | free: checkF |
 | `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | termination (CHEAT_TAC) |
 | `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | termination (CHEAT_TAC) |
 | `prog_to_bytes` | `compiler/backend/lab_to_target.ml` | termination (CHEAT_TAC) |
@@ -153,7 +154,8 @@ Why they are assumed:
 | `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | termination (CHEAT_TAC) |
 | `getOpt` | `basis/pure/mloption.ml` | termination (CHEAT_TAC) |
 | `getOpt` | `basis/pure/mloption.ml` | termination (CHEAT_TAC) |
-| `evaluate` | `compiler/backend/proofs/bvl_inlineProof.ml` | timeout in measure |
+| `evaluate` | `semantics/evaluate.ml` | termination (CHEAT_TAC) |
+| `evaluate` | `semantics/evaluate.ml` | termination (CHEAT_TAC) |
 | `total_pat` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
 | `has_Eval` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
 | `has_Eval` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
@@ -206,7 +208,7 @@ Why they are assumed:
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
 | `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
-| `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | free: e |
+| `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | timeout in measure |
 | `bvlSem_do_eq` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
 | `bvlSem_do_eq` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
 | `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
@@ -230,11 +232,10 @@ Why they are assumed:
 | `sexpdec` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
 | `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
 | `decode_infer_t` | `compiler/inference/unify.ml` | termination (CHEAT_TAC) |
-| `kcwalkstarwlR` | `compiler/inference/unify.ml` | free: mlt |
-| `kcunifywlR` | `compiler/inference/unify.ml` | free: mlt |
 | `type_name_check_subst` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `type_name_check_subst` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
-| `infer_p` | `compiler/inference/inferProps.ml` | TAC_PROOF: Unsolved goals |
+| `infer_p` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_p` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `infer_e` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `infer_e` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `infer_d` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
@@ -249,14 +250,12 @@ Why they are assumed:
 | `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
 | `lex_impl_all` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
 | `lex_impl_all_tokens` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
-| `current_build_info_str` | `compiler/compiler.ml` | free: current_build_info_str_tm |
-| `help_string` | `compiler/compiler.ml` | free: help_string_tm |
-| `parse_sexp_input` | `compiler/compiler.ml` | free: parse_sexp |
-| `compiler_compile` | `compiler/compiler.ml` | free: print_sexp |
-| `parse_target_64` | `compiler/compiler.ml` | free: x64_backend_config, x64_export, x64_config, arm8_backe |
-| `parse_target_32` | `compiler/compiler.ml` | free: arm7_backend_config, arm7_export, arm7_config, ag32_ba |
-| `compile_64` | `compiler/compiler.ml` | free: basis |
-| `compile_32` | `compiler/compiler.ml` | free: basis |
+| `current_build_info_str` | `compiler/compiler.ml` | free: strlit:(char)list->mlstring |
+| `parse_target_64` | `compiler/compiler.ml` | free: x64_backend_config:?741797, x64_export:?741801, x64_co |
+| `parse_target_32` | `compiler/compiler.ml` | free: arm7_backend_config:?742484, arm7_export:?742488, arm7 |
+| `basis` | `compiler/compiler.ml` | declared (no value) |
+| `compile_64` | `compiler/compiler.ml` | new_definition: Type variables not reflected in constant |
+| `compile_32` | `compiler/compiler.ml` | new_definition: Type variables not reflected in constant |
 | `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
@@ -266,7 +265,8 @@ Why they are assumed:
 | `dataSem_do_eq` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
 | `dataSem_do_eq` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
 | `dataSem_finalise_cons` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
-| `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
+| `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
 | `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
 | `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
 | `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
@@ -282,7 +282,7 @@ Why they are assumed:
 | `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
 | `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
 | `asm_code_length` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
-| `loc_to_pc` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
+| `loc_to_pc` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
 | `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
 | `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
 | `bit_length` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
@@ -295,8 +295,8 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
-| `handle_ok` | `compiler/backend/proofs/bvl_to_bviProof.ml` | tryfind: /\ |
-| `bvl_handleProof_env_rel` | `compiler/backend/proofs/bvl_handleProof.ml` | free: LIST_RELi |
+| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
+| `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `contains_App_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
@@ -318,8 +318,15 @@ Why they are assumed:
 | `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `compile_common_inc` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_cc |
-| `syntax_oracle_ok` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_co, syntax_ok |
+| `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | timeout in guess |
+| `clos_callProof_state_rel` | `compiler/backend/proofs/clos_callProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
+| `parts_list` | `compiler/backend/proofs/clos_constantProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
+| `to_parts` | `compiler/backend/proofs/clos_constantProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
+| `build_part'` | `compiler/backend/proofs/clos_constantProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
+| `clos_fvsProof_state_rel` | `compiler/backend/proofs/clos_fvsProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
+| `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | timeout in measure |
+| `clos_knownProof_state_rel` | `compiler/backend/proofs/clos_knownProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
+| `clos_numberProof_state_rel` | `compiler/backend/proofs/clos_numberProof.ml` | free: fmap_rel:((closSem_v)closSem_ref->(closSem_v)closSem_r |
 | `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
 | `word_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
 | `word_gen_gc_partial_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
@@ -329,6 +336,7 @@ Why they are assumed:
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
@@ -336,11 +344,11 @@ Why they are assumed:
 | `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
 | `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
 | `eval_ri` | `compiler/backend/proofs/word_bignumProof.ml` | new_definition: Type variables not reflected in constant |
-| `word_bignumProof_Eval` | `` | new_definition: Type variables not reflected in constant |
-| `div_code_assum` | `compiler/backend/proofs/word_bignumProof.ml` | free: single_div_pre, single_div |
-| `stubs_fst` | `compiler/backend/proofs/data_to_wordProof.ml` | free: rconc, th |
+| `word_bignumProof_Eval` | `compiler/backend/proofs/word_bignumProof.ml` | new_definition: Type variables not reflected in constant |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
-| `no_Mat` | `compiler/backend/proofs/flat_to_closProof.ml` | tryfind: /\ |
+| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
+| `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
+| `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | termination (CHEAT_TAC) |
 | `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
 | `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
@@ -353,14 +361,7 @@ Why they are assumed:
 | `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
 | `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
 | `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
-| `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
-| `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
-| `contain` | `compiler/backend/proofs/stack_to_labProof.ml` | free: Abbrev |
-| `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | new_definition: Type variables not reflected in constant |
-| `LINVI` | `compiler/inference/proofs/type_dCanon.ml` | free: LINV_OPT |
-| `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
-| `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-317 definitions.
+322 definitions.

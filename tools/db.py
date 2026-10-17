@@ -141,6 +141,8 @@ class Db:
   def read_fixities(self):
     """the infixes that each source declares itself"""
     self.fix = {}
+    self.fixname = {}    # an infix -> the constant that ML maps
+                         # it to (set_mapped_fixity's term_name)
     self.ovl_infix = {}  # a symbolic infix -> the constant it means
     for thy, path, kind in self.order:
       try:
@@ -148,6 +150,7 @@ class Db:
       except Exception:
         text = ''
       self.fix[thy] = hol4.fixities(text)
+      self.fixname[thy] = hol4.mapped_names(text)
 
   def grammar_type(self, thy, path, b):
     """register the datatype that mk_grammar_def makes, so that
@@ -183,6 +186,11 @@ class Db:
       if t in anc:
         for tok, prec, ass, temp in self.fix.get(t, []):
           if not temp: hterm.add_infix(tok, prec, ass)
+        # and the constant that the declaration maps it to, with
+        # the name that HOL4 gives it (the port resolves it to the
+        # name it uses itself in Porter.run)
+        for tok, nm, temp in self.fixname.get(t, []):
+          if not temp: hterm.set_infix_name(tok, nm)
 
   def scan(self):
     for thy, path, kind in self.order:

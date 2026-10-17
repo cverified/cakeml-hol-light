@@ -177,6 +177,20 @@ def fixities(text):
   return out
 
 
+def mapped_names(text):
+  """the infixes that an ML declaration maps to a constant, as
+     (token, name of the constant, temporary): pegTheory's
+     set_mapped_fixity gives ~> the constant ignoreL"""
+  out = []
+  for m in MAPPED_FIXITY.finditer(text):
+    mt = MAPPED_TOK.search(m.group(2))
+    mn = re.search(r'term_name\s*=\s*"([^"]*)"', m.group(2))
+    if mt and mn:
+      out.append((sml_string(mt.group(1)), mn.group(1),
+                  bool(m.group(1))))
+  return out
+
+
 EQ_MODE = re.compile(r'\b(?:temp_)?(loose|tight)_equality\b')
 
 

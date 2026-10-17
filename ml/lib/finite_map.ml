@@ -101,6 +101,13 @@ let FUN_FMAP = new_definition
   `FUN_FMAP (f:A->B) s = mk_fmap (\x. if x IN s then SOME (f x) else
     NONE)`;;
 
+(* two maps with the same domain whose values are related *)
+
+let fmap_rel = new_definition
+  `fmap_rel (R:B->C->bool) (f1:(A,B)fmap) f2 <=>
+   FDOM f2 = FDOM f1 /\
+   (!x. x IN FDOM f1 ==> R (FAPPLY f1 x) (FAPPLY f2 x))`;;
+
 (* the map of the keys (HOL4 gives MAP_KEYS by a specification, of
    which this is the witness that finite_mapTheory proves) *)
 
