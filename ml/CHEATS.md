@@ -9,18 +9,18 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 304: the three axioms of HOL
-Light and 301 for the 292 definitions below.
+`length (axioms ())` is 302: the three axioms of HOL
+Light and 299 for the 290 definitions below.
 
 Why they are assumed:
 
-- 77: timeout in measure
-- 69: tryfind: /\
+- 72: timeout in measure
+- 70: tryfind: /\
 - 31: tryfind: ==>
 - 31: timeout in guess
 - 24: existence
 - 20: tryfind: admissible
-- 11: TAC_PROOF: Unsolved goals
+- 12: TAC_PROOF: Unsolved goals
 - 3: new_definition: Type variables not reflected in constant
 - 2: free: mlt
 - 2: free: basis
@@ -44,6 +44,7 @@ Why they are assumed:
 - 1: free: rconc, th
 - 1: free: MAP_KEYS
 - 1: free: MAP_KEYS, LINV
+- 1: free: Abbrev
 - 1: free: LINV_OPT
 
 | definition | file | why |
@@ -72,7 +73,7 @@ Why they are assumed:
 | `clos_call_free` | `compiler/backend/clos_call.ml` | timeout in measure |
 | `free_sing` | `compiler/backend/clos_call.ml` | tryfind |
 | `calls` | `compiler/backend/clos_call.ml` | timeout in measure |
-| `calls_sing` | `compiler/backend/clos_call.ml` | timeout in measure |
+| `calls_sing` | `compiler/backend/clos_call.ml` | TAC_PROOF: Unsolved goals |
 | `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | TAC_PROOF: Unsolved goals |
 | `eq_pure_list` | `compiler/backend/clos_op.ml` | tryfind: /\ |
 | `get_size_sc_aux` | `compiler/backend/clos_known.ml` | timeout in measure |
@@ -85,7 +86,6 @@ Why they are assumed:
 | `code_sort` | `compiler/backend/clos_to_bvl.ml` | TAC_PROOF: Unsolved goals |
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
-| `every_var_exp` | `compiler/backend/wordLang.ml` | timeout in measure |
 | `mc_iop_code` | `compiler/backend/word_bignum.ml` |  |
 | `call_graph` | `compiler/backend/word_depth.ml` | timeout in measure |
 | `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | timeout in measure |
@@ -113,9 +113,7 @@ Why they are assumed:
 | `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | tryfind: /\ |
 | `getOpt` | `basis/pure/mloption.ml` | TAC_PROOF: Unsolved goals |
 | `evaluate` | `compiler/backend/proofs/bvl_inlineProof.ml` | timeout in measure |
-| `is_hidden` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `total_pat` | `compiler/backend/flat_elim.ml` | existence |
-| `flat_elim_is_pure` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `has_Eval` | `compiler/backend/flat_elim.ml` | TAC_PROOF: Unsolved goals |
 | `find_loc` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `find_lookups` | `compiler/backend/flat_elim.ml` | timeout in measure |
@@ -139,7 +137,6 @@ Why they are assumed:
 | `data_prog_to_display` | `compiler/backend/presLang.ml` | TAC_PROOF: Unsolved goals |
 | `stack_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `word_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `is_value` | `semantics/typeSystem.ml` | timeout in measure |
 | `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | timeout in measure |
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in guess |
 | `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in measure |
@@ -330,6 +327,8 @@ Why they are assumed:
 | `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
 | `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in measure |
+| `contain` | `compiler/backend/proofs/stack_to_labProof.ml` | free: Abbrev |
+| `complex_get_code_labels` | `compiler/backend/proofs/stack_to_labProof.ml` | tryfind: /\ |
 | `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | new_definition: Type variables not reflected in constant |
 | `ts_tid_rename` | `compiler/inference/inferProps.ml` | tryfind: ==> |
 | `set_tids` | `compiler/inference/inferProps.ml` | tryfind: ==> |
@@ -341,4 +340,4 @@ Why they are assumed:
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-292 definitions.
+290 definitions.
