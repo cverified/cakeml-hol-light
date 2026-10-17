@@ -364,9 +364,14 @@ let cake_instantiate_casewise_recursion,
     let f,fbod = dest_abs(last args) in
     let xtup,bod = dest_gabs fbod in
     let hop,args = strip_comb bod in
+    (* the head of the body is a lambda where the body applies
+       one (presLang's exp_to_display applies the lambda that an
+       overload of HOL4 stands for to its arguments), and then
+       it has no name *)
+    let hopname = try name_of hop with Failure _ -> "" in
     (if !cake_proforma then
-       cake_proforma_note (name_of had ^ " / " ^ name_of hop));
-    match (name_of had,name_of hop) with
+       cake_proforma_note (name_of had ^ " / " ^ hopname));
+    match (name_of had,hopname) with
       "superadmissible","COND"
           -> APPLY_PROFORMA_TAC SUPERADMISSIBLE_COND gl
     | "superadmissible","_MATCH" when
@@ -453,6 +458,10 @@ let cake_instantiate_casewise_recursion,
        which the proforma of that combination (a MAP) takes *)
     | "admissible",_ when is_comb bod && not(rand bod = f)
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
+    (* a lambda that the body applies: beta reduce it, and the
+       repeat of the dispatch takes the body it gives *)
+    | _ when is_abs hop
+          -> CONV_TAC(TOP_DEPTH_CONV BETA_CONV) gl
     | _ -> ((if !cake_proforma then cake_proforma_log w);
             failwith "MAIN_ADMISS_TAC") in
 
