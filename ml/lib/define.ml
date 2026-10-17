@@ -3374,27 +3374,47 @@ let note_term_cheat tm =
 let with_cheat_tac tac f x =
   let old = !the_cheat_tac in
   the_cheat_tac := Some tac;
-  let n0 = length(axioms()) in
   let r = (try f x with e -> (the_cheat_tac := old; raise e)) in
   the_cheat_tac := old;
-  r,length(axioms()) > n0;;
+  r;;
+
+(* the honest route is tried first all the same, with a short
+   budget: a definition that the machinery can do takes a few
+   seconds, and one that it cannot would spend the whole budget
+   on it.  So an improvement to the machinery takes a CHEAT_TAC
+   out of use by itself, and the axioms count what is really
+   needed and not what was needed when the list was made. *)
+
+let cake_cheat_budget = ref 8;;
+
+let honestly wf tm =
+  let old = !cake_timeout in
+  if old > 0 && old < !cake_cheat_budget then cake_timeout := old
+  else cake_timeout := !cake_cheat_budget;
+  let fin () = cake_timeout := old in
+  try let th = cake_time (cake_define_gen wf) tm in (fin (); Some th)
+  with Failure _ -> (fin (); None)
+     | Cake_timeout -> (fin (); None);;
 
 let cake_define_cheat tac tm =
-  let th,used =
-    with_cheat_tac tac
-      (fun tm -> try cake_time (cake_define_gen None) tm
-                 with Failure s -> cake_report tm s) tm in
-  if used then note_term_cheat tm;
-  note_dest_fact th; th;;
+  match honestly None tm with
+    Some th -> (note_dest_fact th; th)
+  | None ->
+      let th =
+        with_cheat_tac tac
+          (fun tm -> try cake_time (cake_define_gen None) tm
+                     with Failure s -> cake_report tm s) tm in
+      note_term_cheat tm; note_dest_fact th; th;;
 
 (* the same with the relation that HOL4 gives: the tactic only has
    to take the conditions that the relation leaves *)
 
 let cake_define_tac (rel,tac) tm =
-  let n0 = length(axioms()) in
-  let th = cake_define_tac (rel,tac) tm in
-  if length(axioms()) > n0 then note_term_cheat tm;
-  th;;
+  match honestly (Some(rel,TERM_TAC)) tm with
+    Some th -> th
+  | None ->
+      let th = with_cheat_tac tac (cake_define_tac (rel,tac)) tm in
+      note_term_cheat tm; th;;
 
 (* and the two for a family, whose clauses are given one by one *)
 
