@@ -290,6 +290,10 @@ NOT_NEEDED = set([
 # theories that a file needs although HOL4's Ancestors do not say so
 EXTRA_NEEDS = {
   'integer_word': ['ASCIInumbers'],
+  # compile_pancake matches on the error of errorMonad, which the
+  # port writes with the names of that theory (LOCAL_NAMES), so
+  # the scan of the source does not see where they come from
+  'compiler': ['errorMonad'],
 }
 
 # names that the dependency analysis misses, because the CakeML
@@ -308,6 +312,11 @@ ALSO_NEEDED = set([
   ('set_sep', 'STAR'), ('set_sep', 'SEP_EXISTS'),
   ('set_sep', 'SPLIT'), ('set_sep', 'SEP_T'),
   ('location', 'locnrow'), ('location', 'locncol'),
+  # the error of errorMonad is the result type of Pancake's static
+  # check, which compiler's compile_pancake matches on; the port
+  # declares the check itself, so the scan only sees the two
+  # constructors
+  ('errorMonad', 'error'), ('errorMonad', 'return'),
   # HOL4 generates the fp64 encoding of machine_ieee with ML code
   # (machine_ieeeLib), which the port writes out by hand; these are
   # the binary_ieee definitions that it uses
@@ -406,6 +415,12 @@ LOCAL_NAMES = {
   # type of its result says it for, has bvlSem's
   ('bvi_tailrecProof', 'Number'): 'bvlSem_Number',
   ('bvi_tailrecProof', 'v_to_list'): 'bvlSem_v_to_list',
+  # the error and the return of compile_pancake's match are the
+  # constructors of errorMonad's error, which is the result type
+  # of Pancake's static check (peg has an error of its own, and
+  # several theories of the port a return)
+  ('compiler', 'error'): 'errorMonad_error',
+  ('compiler', 'return'): 'errorMonad_return',
   ('data_to_word', 'fromList'): 'sptree_fromList',
   ('flat_pattern', 'fromList'): 'sptree_fromList',
   ('clos_to_bvl', 'fromList'): 'sptree_fromList',
@@ -1179,23 +1194,6 @@ NOT_YET = {
   ('unify', 'kcwalkstarwl_code_def'):
     'tcallify_th makes it with ML code',
   ('unify', 'cunify_code_def'): 'tcallify_th makes it with ML code',
-  # Pancake is a second source language of the same compiler
-  # backend, which the CakeML correctness theorem does not mention,
-  # so the port does not have the theories that this definition
-  # needs (panStatic's static_check, pan_to_target's
-  # pan_compile_tap, panPtreeConversion's parse_topdecs_to_ast)
-  ('compiler', 'compile_pancake_def'):
-    'Pancake, which the port does not have',
-  ('compiler', 'compile_pancake_64_def'):
-    'Pancake, which the port does not have',
-  ('compiler', 'compile_pancake_32_def'):
-    'Pancake, which the port does not have',
-  # the two command line drivers of the compiler binary, which
-  # compile Pancake when the flag says so
-  ('compiler', 'full_compile_64_def'):
-    'Pancake, which the port does not have',
-  ('compiler', 'full_compile_32_def'):
-    'Pancake, which the port does not have',
 }
 
 # Type blocks whose type HOL4 computes with ML code, with the type
@@ -1241,6 +1239,24 @@ cake_declare "cunify_code"
   # definitions below need of it
   ('compiler', 'compile_64_def'): r'''
 cake_declare "basis" `:dec list`;;
+''',
+  # the three entry points of Pancake that the compiler of Pancake
+  # goes through: Pancake is a second source language of the same
+  # backend, which the CakeML correctness theorem does not mention,
+  # so its parser, its static checker and its own backend are
+  # outside the port (only its abstract syntax, panLang, is in,
+  # because the definitions below have it in their type); the port
+  # declares the three with the type that they are used at and
+  # says nothing about their value
+  ('compiler', 'compile_pancake_def'): r'''
+cake_declare "parse_topdecs_to_ast"
+  `:string -> (('a)decl)list + (mlstring#locs)list`;;
+cake_declare "static_check"
+  `:(('a)decl)list -> (1,staterr)errorMonad_error#(staterr)list`;;
+cake_declare "pan_compile_tap"
+  `:('a)asm_config -> backend_config -> (('a)decl)list ->
+    ((((8)word)list#(('a)word)list#backend_config)option)#
+    (mlstring)app_list`;;
 ''',
   # the configurations of the targets: the encoders of the targets
   # need the machine models of HOL4 (x64_step and the others),

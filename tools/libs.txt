@@ -13,6 +13,7 @@ integer_word	src/integer/integer_wordScript.sml
 lprefix_lub	examples/pl-semantics/lprefix_lub/lprefix_lubScript.sml
 set_sep	examples/machine-code/hoare-triple/set_sepScript.sml
 state_transformer	src/monad/more_monads/state_transformerScript.sml
+errorMonad	src/monad/more_monads/errorMonadScript.sml
 numposrep	src/list/src/numposrepScript.sml
 ASCIInumbers	src/string/ASCIInumbersScript.sml
 binary_ieee	src/floating-point/binary_ieeeScript.sml

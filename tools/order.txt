@@ -34,6 +34,7 @@ clos_mti	compiler/backend/clos_mtiScript.sml
 clos_number	compiler/backend/clos_numberScript.sml
 clos_to_bvl	compiler/backend/clos_to_bvlScript.sml
 asm	compiler/encoders/asm/asmScript.sml
+panLang	pancake/panLangScript.sml
 stackLang	compiler/backend/stackLangScript.sml
 wordLang	compiler/backend/wordLangScript.sml
 word_bignum	compiler/backend/word_bignumScript.sml
