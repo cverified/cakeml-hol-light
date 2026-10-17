@@ -67,6 +67,16 @@ its value:
 | `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds |
 | `basisProg$basis` | the declarations of the standard basis library, which the proof producing translator of HOL4 (`ml_progLib`) builds; the basis library is outside the port (see `ISSUES.md`), and `compiler$compile_64` and `compile_32` only pass the constant on |
 
+Eighteen constants are declared for another reason: the encoders
+and the configurations of the six targets are outside the port
+(`tools/excluded.txt`), and `compiler$parse_target_64` and
+`parse_target_32`, which the command line of the compiler goes
+through, only pass them on.  For each of `x64`, `arm8`, `mips`,
+`riscv` (64 bits) and `arm7`, `ag32` (32 bits) the port declares
+`<target>_backend_config`, `<target>_config` and
+`<target>_export`, with the types that the two definitions use
+them at (`EXTRA_BEFORE` in `tools/overrides.py` has the text).
+
 Four constants of the triangular unification algorithm are
 defined by the graph of their equation, because HOL4 defines
 them with a schema (`xDefineSchema`, for `vwalk` and `walkstar`)
