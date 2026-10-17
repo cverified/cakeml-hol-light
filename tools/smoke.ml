@@ -204,3 +204,24 @@ print_string (Printf.sprintf
   "SMOKECHEAT axioms %d (was %d), cheats %d, c_sum made %B\n"
   (length(axioms())) a0 (length(cake_cheats()))
   (can get_const_type "c_sum"));;
+
+(* ---------------------------------------------------------------- *)
+(* a string literal: HOL Light reads the escapes of OCaml, so the
+   text below is seven characters (a quote, a newline, a backslash
+   and a backquote among them) and not twelve *)
+let c_str_def = cake_define
+  `c_str = "a\"b\nc\\d\096"`;;
+print_string (Printf.sprintf "SMOKESTR %d characters, %B\n"
+  (String.length (dest_string (rand (concl c_str_def))))
+  (String.length (dest_string (rand (concl c_str_def))) = 11));;
+
+(* ---------------------------------------------------------------- *)
+(* a constant whose value HOL4 computes with ML code: the port
+   declares it, which costs no axiom and counts as a cheat *)
+let a1 = length(axioms());;
+let n1 = length(cake_cheats());;
+cake_declare "c_opaque" `:num list`;;
+print_string (Printf.sprintf
+  "SMOKEDECLARE axioms %d (was %d), cheats %d (was %d), why %s\n"
+  (length(axioms())) a1 (length(cake_cheats())) n1
+  (try assoc "c_opaque" (cake_cheat_why()) with Failure _ -> "?"));;
