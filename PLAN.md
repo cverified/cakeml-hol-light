@@ -18,12 +18,18 @@ are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-17 05:37 **every one of the 238 files loads to the end**,
-and 291 definitions were assumed (`ml/CHEATS.md`), which was
-`length (axioms ()) = 303`.  The runs of this round were
+2026-10-17 12:04 **every one of the 238 files loads to the end**,
+and of the 317 definitions that were assumed (`ml/CHEATS.md`)
+282 only have their **termination** assumed, so that **35
+definitions are not made**, which was
+`length (axioms ()) = 239`.  The runs of this round were
 17:21 (323 assumed, 335 axioms, 5 files that die), 19:34 (325,
 370, 2), 22:26 (295, 340, 2), 01:12 (292, 304, 2), 03:14 (290,
-299, 1) and 05:37 (291, 303, **0**)._
+299, 1), 05:37 (291, 303, **0**), 10:35 (38 not made, 239, 1)
+and 12:04 (**35 not made**, 239, 0).  The CHEAT_TAC of the
+termination also made the run a third shorter: 6581 s for the
+run of 05:37, 4492 s for the one of 10:35 and 4065 s for the
+one of 12:04._
 
 _What the round repaired.  The admissibility machinery: the
 termination conditions of a definition arrive as one
