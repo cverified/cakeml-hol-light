@@ -75,11 +75,8 @@ let no_mutcons_op_def = cake_define
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let no_mutcons_def = cake_define_list_try_tac (fun () ->
+let no_mutcons_def = cake_define_list_try (fun () ->
   `MEASURE flatLang_exp_size`)
-  CHEAT_TAC
   [`no_mutcons (Var n:bvi_exp) <=> T`;
    `no_mutcons (If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\ no_mutcons
   x2 /\ no_mutcons x3`;

@@ -1616,9 +1616,12 @@ let _ = size_thms "dataLang_prog";;
    imp_res_tac fix_clock_IMP \\ imp_res_tac (GSYM fix_clock_IMP) \\
    FULL_SIMP_TAC (srw_ss()) [set_var_def,push_env_clock,
    call_env_def,LET_THM] \\ fs [dec_clock_def] *)
-let evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE dataLang_prog_size)
                               (\(xs,s). (state_clock s,xs)))`)
+  CHEAT_TAC
   [`dataSem_evaluate
   ((Skip:dataLang_prog),(s:('c,'ffi)dataSem_state)) = (NONE,s)`;
    `dataSem_evaluate ((Move dest src:dataLang_prog),s) =

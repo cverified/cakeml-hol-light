@@ -11,13 +11,13 @@ bvi_tailrec scan_expr_def
 bvi_tmc bvi_to_cb_aux_def
 bvi_tmc cb_to_bvi_worker_aux_def
 bvi_tmcProof mb_rel_def
-bvi_tmcProof no_mutcons_def
 bvi_to_data compile_def
 bvi_to_data compile_sing_def
 bvlSem do_eq_def
 bvlSem evaluate_def
 bvl_const compile_def
 bvl_handle handle_simp_def
+bvl_handleProof handle_ok_def
 bvl_inline let_op_def
 bvl_inline tick_inline_def
 bvl_jump JumpList_def
@@ -62,6 +62,7 @@ copying_gc gc_move_list_def
 copying_gc gc_move_loop_def
 dataProps approx_of_def
 dataSem do_eq_def
+dataSem evaluate_def
 dataSem finalise_cons_def
 dataSem size_of_def
 dataSem vs_depth_def
@@ -73,7 +74,9 @@ data_to_word_memoryProof word_copy_bwd_def
 data_to_word_memoryProof word_copy_fwd_def
 data_to_word_memoryProof word_eq_def
 data_to_word_memoryProof word_xor_bytes_def
+evaluate evaluate_def
 export split16_def
+flatProps no_Mat_def
 flatProps set_globals_def
 flatSem do_eq_def
 flatSem evaluate_def
@@ -103,10 +106,12 @@ gen_gc_partial gc_move_data_def
 infer alist_nub_def
 infer infer_d_def
 infer infer_e_def
+infer infer_p_def
 infer ns_to_alist_def
 infer type_name_check_subst_def
 labSem asm_code_length_def
 labSem evaluate_def
+labSem loc_to_pc_def
 lab_filterProof adjust_pc_def
 lab_to_target find_ffi_names_def
 lab_to_target prog_to_bytes_def

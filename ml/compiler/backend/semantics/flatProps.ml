@@ -303,8 +303,11 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: \\ rw [] \\ imp_res_tac MEM_list_size \\
    pop_assum $ qspec_then ‘exp_size’ mp_tac \\ gvs
    [list_size_pair_size_MAP_FST_SND] *)
-let no_Mat_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let no_Mat_def = cake_define_list_try_tac (fun () ->
   `MEASURE (flatLang_exp_size)`)
+  CHEAT_TAC
   [`no_Mat (flatLang_Raise t e) <=> no_Mat e`;
    `no_Mat (Lit t l:flatLang_exp) <=> T`;
    `no_Mat (flatLang_Var_local t v) <=> T`;

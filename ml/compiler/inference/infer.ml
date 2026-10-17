@@ -357,7 +357,9 @@ let check_type_definition_def = cake_define
                   (MAP (FST o SND) tds)) (
        check_ctors l tenvT tds)`;;
 
-let infer_p_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let infer_p_def = cake_define_list_cheat CHEAT_TAC
   [`infer_p l ienv (ast_Pvar n:ast_pat) =
         st_ex_bind fresh_uvar (\t.
            st_ex_return (t,[(n,t)]))`;

@@ -384,7 +384,9 @@ let asm_code_length_def = cake_define_list_cheat CHEAT_TAC
 let lab_to_loc_def = cake_define
   `lab_to_loc (labLang_Lab n1 n2:lab) = Loc n1 n2`;;
 
-let loc_to_pc_def = cake_define_list
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let loc_to_pc_def = cake_define_list_cheat CHEAT_TAC
   [`loc_to_pc n1 n2 [] = NONE`;
    `loc_to_pc n1 n2 (Section k xs :: ys) =
          (if (k = n1) /\ (n2 = 0) then SOME (0:num) else

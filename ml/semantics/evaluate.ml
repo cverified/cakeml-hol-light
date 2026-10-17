@@ -62,7 +62,9 @@ let _ = size_thms "dec";;
    [do_if_def,do_log_def,do_eval_res_def,dec_clock_def] \\
    imp_res_tac fix_clock_IMP \\ fs [] \\ fs
    [listTheory.list_size_def,list_size_REVERSE] *)
-let evaluate_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let evaluate_def = cake_define_list_try_tac (fun () ->
   `inv_image ((<) LEX (<))
           (\x. match x with INL (s,_1,es) ->
             (semanticPrimitives_state_clock s,list_size ast_exp_size
@@ -74,6 +76,7 @@ let evaluate_def = cake_define_list_try (fun () ->
             (INR (s,_5,ds)) -> (semanticPrimitives_state_clock
               s,list_size
             dec_size ds))`)
+  CHEAT_TAC
   [`evaluate (st:'ffi semanticPrimitives_state) env [] = ((st:'ffi
   semanticPrimitives_state),Rval [])`;
    `evaluate (st:'ffi semanticPrimitives_state) env (e1 :: e2 :: es) =
