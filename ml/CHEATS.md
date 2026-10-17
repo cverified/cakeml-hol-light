@@ -9,13 +9,13 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 302: the three axioms of HOL
-Light and 299 for the 290 definitions below.
+`length (axioms ())` is 303: the three axioms of HOL
+Light and 300 for the 291 definitions below.
 
 Why they are assumed:
 
 - 72: timeout in measure
-- 70: tryfind: /\
+- 71: tryfind: /\
 - 31: tryfind: ==>
 - 31: timeout in guess
 - 24: existence
@@ -324,6 +324,7 @@ Why they are assumed:
 | `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | existence |
 | `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | tryfind: /\ |
 | `encode_val` | `compiler/backend/proofs/flat_patternProof.ml` | tryfind: ==> |
+| `num_bindings` | `compiler/backend/proofs/source_to_flatProof.ml` | tryfind: /\ |
 | `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
 | `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in measure |
@@ -340,4 +341,4 @@ Why they are assumed:
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-290 definitions.
+291 definitions.

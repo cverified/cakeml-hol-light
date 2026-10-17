@@ -6,34 +6,52 @@ are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-16 22:26, 2 files failed and 295 definitions were
-assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 340`;
-the run before it, of 19:34, assumed 325 of them and was 370
-axioms, and the one before that, of 17:21, 323 and 335 (that
-one lost five whole files, which the two after it load).  What
-made the difference in the last round is the admissibility
-machinery: the termination conditions of a definition arrive as
-one conjunction, which the port gave to the proof of a measure
-goal as a whole, and an admissibility condition among them
-needs the proformas of HOL Light instead (which the port only
-reached when it gave no relation).  With the proforma of an
-existential, the equation of a `let`, one substitution at a
-time, the value of a constant without arguments, the two size
-lemmas of a pair one at a time, the measure of a family and the
-length of a `DROP`, the definitions of the shape of
-`wordLang$max_var` are made: wordLang went from 4 assumed
-definitions to 1, word_alloc from 8 to 4, and word_inst,
-word_simp, word_remove, word_unreach, stack_names,
-stack_remove, jsonLang and mlint to 0.  The run also got five
-minutes shorter.  `tools/smoke.ml` holds a definition of every
-shape that the round repaired._
+2026-10-17 05:37 **every one of the 238 files loads to the end**,
+and 291 definitions were assumed (`ml/CHEATS.md`), which was
+`length (axioms ()) = 303`.  The runs of this round were
+17:21 (323 assumed, 335 axioms, 5 files that die), 19:34 (325,
+370, 2), 22:26 (295, 340, 2), 01:12 (292, 304, 2), 03:14 (290,
+299, 1) and 05:37 (291, 303, **0**)._
 
-_What is left: the budget, which 107 of the 295 run out of
-("timeout in measure" 76, "timeout in guess" 31); the
-`evaluate` of stackSem, which is 40 of the 340 axioms (its
-clauses typecheck together now, and the termination proof is
-what is left); and the two files that fail, both on a record
-field of a variable that the port gives the wrong type._
+_What the round repaired.  The admissibility machinery: the
+termination conditions of a definition arrive as one
+conjunction, which the port gave to the proof of a measure goal
+as a whole, and an admissibility condition among them needs the
+proformas of HOL Light instead (which the port only reached
+when it gave no relation).  With the proforma of an existential
+(and its bound variable renamed), of a `let`, of an `EVERY` and
+of an `EXISTS`, one substitution at a time, the value of a
+constant without arguments, the two size lemmas of a pair one
+at a time, the measure of a family, the length of a `DROP` and
+the parts of each side of a sum that a destructor gives, the
+definitions of the shape of `wordLang$max_var` are made:
+wordLang, word_inst, word_simp, word_remove, word_unreach,
+stack_names, stack_remove, jsonLang, mlint and typeSystem
+assume nothing any more, and word_alloc went from 8 to 4.
+`tools/smoke.ml` holds a definition of every shape that the
+round repaired.  The five files that died are repaired by
+giving the port the theory of a constructor (the `Break`, the
+`Continue` and the `FFI` that the `evaluate` of stackSem
+matches on are stackLang's) and the record of a variable (the
+`var_map` of `source_to_flatProof$env_domain_eq`, the `t` of
+`stack_to_labProof$halt_assum` and of `memory_assumption`, the
+`s` of `source_to_flatProof$orac_rel_inner`); the `evaluate` of
+stackSem is a definition now, which was 35 axioms on its own._
+
+_What is left: 103 of the 291 run the budget out ("timeout in
+measure" 72, "timeout in guess" 31), but a timeout says only
+that the budget ran out in that strategy, not that a bigger
+budget would make the definition -- made again with no budget
+at all, `presLang$ast_t_to_display` still fails after two
+seconds and `presLang$clos_to_display` after nineteen minutes.
+So the reasons to work on are the ones a definition reaches
+before the budget does: `tryfind: /\` (71), "tryfind: ==>"
+(31), "existence" (24) and "tryfind: admissible" (20).  Three
+definitions have a type variable in their body that
+`new_definition` does not take, and seven use a constant that
+the port does not have (`bagTheory$mlt1`,
+`NTproperties$firstSet`, the basis program, the target
+configurations)._
 
 ## What is ported
 
