@@ -9,19 +9,19 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 370: the three axioms of HOL
-Light and 367 for the 325 definitions below.
+`length (axioms ())` is 340: the three axioms of HOL
+Light and 337 for the 295 definitions below.
 
 Why they are assumed:
 
-- 84: tryfind: /\
 - 76: timeout in measure
-- 42: timeout in guess
-- 38: tryfind: ==>
-- 27: existence
-- 16: tryfind: admissible
+- 69: tryfind: /\
+- 32: tryfind: ==>
+- 31: timeout in guess
+- 24: existence
+- 20: tryfind: admissible
 - 11: TAC_PROOF: Unsolved goals
-- 5: new_definition: Type variables not reflected in constant
+- 6: new_definition: Type variables not reflected in constant
 - 2: free: mlt
 - 2: free: basis
 - 2: free: firstSet
@@ -53,13 +53,13 @@ Why they are assumed:
 | `inline_exp` | `compiler/backend/bvi_inline.ml` | timeout in measure |
 | `bvi_let_compile` | `compiler/backend/bvi_let.ml` | timeout in measure |
 | `scan_expr` | `compiler/backend/bvi_tailrec.ml` | timeout in measure |
+| `has_rec` | `compiler/backend/bvi_tailrec.ml` | tryfind: /\ |
 | `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | TAC_PROOF: Unsolved goals |
 | `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | timeout in measure |
 | `cb_to_bvi_worker_aux` | `compiler/backend/bvi_tmc.ml` | tryfind: ==> |
 | `SmartOp2` | `compiler/backend/bvl_const.ml` | free: c2 |
 | `bvl_const_compile` | `compiler/backend/bvl_const.ml` | TAC_PROOF: Unsolved goals |
 | `handle_simp` | `compiler/backend/bvl_handle.ml` | existence |
-| `bvl_handle_compile` | `compiler/backend/bvl_handle.ml` | TAC_PROOF: Unsolved goals |
 | `tick_inline` | `compiler/backend/bvl_inline.ml` | TAC_PROOF: Unsolved goals |
 | `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | TAC_PROOF: Unsolved goals |
 | `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | tryfind: /\ |
@@ -75,9 +75,7 @@ Why they are assumed:
 | `calls_sing` | `compiler/backend/clos_call.ml` | timeout in measure |
 | `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | TAC_PROOF: Unsolved goals |
 | `eq_pure_list` | `compiler/backend/clos_op.ml` | tryfind: /\ |
-| `lift_exps` | `compiler/backend/clos_op.ml` | tryfind: /\ |
 | `get_size_sc_aux` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `get_size_aux` | `compiler/backend/clos_known.ml` | tryfind: /\ |
 | `clos_known_free` | `compiler/backend/clos_known.ml` | timeout in measure |
 | `known` | `compiler/backend/clos_known.ml` | timeout in measure |
 | `intro_multi` | `compiler/backend/clos_mti.ml` | timeout in guess |
@@ -88,60 +86,40 @@ Why they are assumed:
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
 | `every_var_exp` | `compiler/backend/wordLang.ml` | timeout in measure |
-| `every_var` | `compiler/backend/wordLang.ml` | timeout in guess |
-| `every_stack_var` | `compiler/backend/wordLang.ml` | tryfind: /\ |
-| `max_var` | `compiler/backend/wordLang.ml` | tryfind: /\ |
 | `mc_iop_code` | `compiler/backend/word_bignum.ml` |  |
 | `call_graph` | `compiler/backend/word_depth.ml` | timeout in measure |
 | `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | timeout in measure |
 | `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | timeout in measure |
 | `concrete_v` | `semantics/semanticPrimitives.ml` | timeout in measure |
-| `st_ex_list_MIN_cost` | `compiler/backend/reg_alloc/reg_alloc.ml` | timeout in guess |
-| `st_ex_list_MAX_deg` | `compiler/backend/reg_alloc/reg_alloc.ml` | timeout in guess |
-| `mk_graph` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: /\ |
+| `st_ex_MAP` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: admissible |
+| `st_ex_PARTITION` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: admissible |
+| `st_ex_FILTER` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: admissible |
 | `remove_inactive_intervals` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `edges_to_adjlist` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: /\ |
+| `st_ex_FOLDL` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
+| `st_ex_FILTER_good` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
 | `sort_regs` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
 | `linear_scan_sort_moves` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
 | `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `apply_colour` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
-| `remove_dead` | `compiler/backend/word_alloc.ml` | timeout in guess |
 | `get_clash_tree` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `get_prefs` | `compiler/backend/word_alloc.ml` | tryfind: /\ |
 | `get_heu` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `get_forced` | `compiler/backend/word_alloc.ml` | timeout in guess |
 | `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | timeout in guess |
-| `inst_select_exp` | `compiler/backend/word_inst.ml` | timeout in guess |
-| `inst_select` | `compiler/backend/word_inst.ml` | timeout in guess |
-| `three_to_two_reg` | `compiler/backend/word_inst.ml` | tryfind: /\ |
-| `remove_must_terminate` | `compiler/backend/word_remove.ml` | tryfind: /\ |
-| `Seq_assoc` | `compiler/backend/word_simp.ml` | tryfind: /\ |
-| `const_fp_loop` | `compiler/backend/word_simp.ml` | timeout in guess |
-| `simp_duplicate_if` | `compiler/backend/word_simp.ml` | tryfind: /\ |
-| `Seq_assoc_right` | `compiler/backend/word_unreach.ml` | tryfind: /\ |
 | `StoreAnyConsts` | `compiler/backend/data_to_word.ml` | timeout in guess |
-| `data_to_word_comp` | `compiler/backend/data_to_word.ml` | timeout in guess |
 | `to_constant` | `compiler/backend/clos_interp.ml` | timeout in measure |
 | `CopyByteStr` | `compiler/backend/flat_to_clos.ml` | free: checkT |
 | `CopyByteAw8` | `compiler/backend/flat_to_clos.ml` | free: checkF |
 | `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | timeout in measure |
-| `fromChars_unsafe` | `basis/pure/mlint.ml` | tryfind: ==> |
-| `fromChars` | `basis/pure/mlint.ml` | tryfind: ==> |
-| `json_to_mlstring` | `compiler/backend/jsonLang.ml` | existence |
 | `prog_to_bytes` | `compiler/backend/lab_to_target.ml` | tryfind: /\ |
 | `find_ffi_names` | `compiler/backend/lab_to_target.ml` | tryfind: /\ |
 | `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | tryfind: /\ |
-| `v2pretty` | `basis/pure/mlsexp.ml` | existence |
 | `getOpt` | `basis/pure/mloption.ml` | TAC_PROOF: Unsolved goals |
 | `evaluate` | `compiler/backend/proofs/bvl_inlineProof.ml` | timeout in measure |
 | `is_hidden` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `total_pat` | `compiler/backend/flat_elim.ml` | existence |
-| `flat_elim_is_pure` | `compiler/backend/flat_elim.ml` | tryfind: /\ |
+| `flat_elim_is_pure` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `has_Eval` | `compiler/backend/flat_elim.ml` | TAC_PROOF: Unsolved goals |
 | `find_loc` | `compiler/backend/flat_elim.ml` | timeout in measure |
 | `find_lookups` | `compiler/backend/flat_elim.ml` | timeout in measure |
-| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | timeout in measure |
-| `app_pos` | `compiler/backend/pattern_matching/pattern_semantics.ml` | tryfind: /\ |
+| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | existence |
 | `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
 | `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
 | `exh_all` | `compiler/backend/pattern_matching/pattern_exh.ml` | tryfind: /\ |
@@ -158,21 +136,12 @@ Why they are assumed:
 | `source_to_display_dec` | `compiler/backend/presLang.ml` | timeout in measure |
 | `flat_pat_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `clos_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `bvl_to_display` | `compiler/backend/presLang.ml` | existence |
-| `bvi_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `data_prog_to_display` | `compiler/backend/presLang.ml` | existence |
+| `data_prog_to_display` | `compiler/backend/presLang.ml` | TAC_PROOF: Unsolved goals |
 | `stack_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `word_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
 | `is_value` | `semantics/typeSystem.ml` | timeout in measure |
-| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | timeout in guess |
-| `stack_names_comp` | `compiler/backend/stack_names.ml` | tryfind: /\ |
-| `stack_alloc` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
-| `stack_remove_stack_free` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
-| `upshift` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
-| `downshift` | `compiler/backend/stack_remove.ml` | tryfind: ==> |
-| `stack_remove_comp` | `compiler/backend/stack_remove.ml` | timeout in guess |
-| `word_to_stack_word_list` | `compiler/backend/word_to_stack.ml` | tryfind: ==> |
-| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in measure |
+| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | timeout in measure |
+| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in guess |
 | `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in measure |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | tryfind: admissible |
 | `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | timeout in measure |
@@ -183,7 +152,7 @@ Why they are assumed:
 | `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | timeout in guess |
 | `bviSem_finalise_cons` | `compiler/backend/semantics/bviSem.ml` | tryfind: /\ |
 | `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | timeout in measure |
-| `ptree_linfix` | `semantics/cmlPtreeConversion.ml` | tryfind: admissible |
+| `ptree_linfix` | `semantics/cmlPtreeConversion.ml` | tryfind: ==> |
 | `ptree_Type` | `semantics/cmlPtreeConversion.ml` | existence |
 | `ptree_TbaseList` | `semantics/cmlPtreeConversion.ml` | tryfind: admissible |
 | `ptree_Pattern` | `semantics/cmlPtreeConversion.ml` | existence |
@@ -362,7 +331,8 @@ Why they are assumed:
 | `encode_val` | `compiler/backend/proofs/flat_patternProof.ml` | tryfind: ==> |
 | `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
 | `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
-| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in guess |
+| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in measure |
+| `halt_assum` | `compiler/backend/proofs/stack_to_labProof.ml` | new_definition: Type variables not reflected in constant |
 | `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | new_definition: Type variables not reflected in constant |
 | `ts_tid_rename` | `compiler/inference/inferProps.ml` | tryfind: ==> |
 | `set_tids` | `compiler/inference/inferProps.ml` | tryfind: ==> |
@@ -374,4 +344,4 @@ Why they are assumed:
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-325 definitions.
+295 definitions.
