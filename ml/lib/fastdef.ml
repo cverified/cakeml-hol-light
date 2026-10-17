@@ -458,10 +458,6 @@ let cake_instantiate_casewise_recursion,
        which the proforma of that combination (a MAP) takes *)
     | "admissible",_ when is_comb bod && not(rand bod = f)
           -> APPLY_PROFORMA_TAC ADMISSIBLE_COMB gl
-    (* a lambda that the body applies: beta reduce it, and the
-       repeat of the dispatch takes the body it gives *)
-    | _ when is_abs hop
-          -> CONV_TAC(TOP_DEPTH_CONV BETA_CONV) gl
     | _ -> ((if !cake_proforma then cake_proforma_log w);
             failwith "MAIN_ADMISS_TAC") in
 
