@@ -59,6 +59,12 @@ let mlt1 = new_definition
                 b2 = BAG_UNION res (BAG_INSERT e EMPTY_BAG) /\
                 (!e'. BAG_IN e' rep ==> r e' e))`;;
 
+(* HOL4 has the multiset order itself as an abbreviation of the
+   transitive closure of mlt1 (bagTheory's Overload mlt) *)
+
+let mlt = new_definition
+  `mlt (r:A->A->bool) = TC (mlt1 r)`;;
+
 (* HOL4 writes the union of two bags as an infix *)
 
 parse_as_infix("BAG_UNION",(16,"left"));;

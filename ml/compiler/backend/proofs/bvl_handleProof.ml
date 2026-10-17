@@ -13,6 +13,7 @@ needs "compiler/backend/db_vars.ml";;
 needs "compiler/backend/proofs/bvl_constProof.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
+needs "lib/indexedLists.ml";;
 needs "semantics/ast.ml";;
 
 let let_ok_def = cake_define

@@ -9,9 +9,10 @@
   the grammar’s rules finite map.
 *)
 
+needs "lib/NTproperties.ml";;
 needs "lib/grammar.ml";;
 needs "semantics/gram.ml";;
-(* HOL4 ancestors outside the port: NTproperties pred_set *)
+(* HOL4 ancestors outside the port: pred_set *)
 
 (* HOL4 ML code, not ported:
 fun dsimp thl = asm_simp_tac (srw_ss() ++ DNF_ss) thl

@@ -430,6 +430,9 @@ class Porter:
         names += [ty] + cons + flds
     elif b.kind in ('Definition', 'Inductive', 'CoInductive'):
       names = dbmod.definition_names(b.body)
+      # the rules of an inductive definition are not equations, so
+      # the names of the relations come from their conclusions
+      if not names: names = dbmod.rule_names(b.body)
     elif b.kind in ('Type', 'Overload'):
       names = [b.name]
     else:

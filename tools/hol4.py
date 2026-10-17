@@ -312,6 +312,13 @@ def parse(path):
           j += 1
         text = '\n'.join(lines[i:j])
         b = ml_definition(text)
+        if b is None:
+          # an old style inductive definition (indexedLists' and
+          # walkstar's are a val of the three theorems that
+          # Hol_reln gives) is an Inductive block
+          r = hol_reln(text)
+          if r:
+            b = Block('Inductive', r[0] + '_rules', [], r[1], text=text)
         blocks.append(b if b else Block('ML', None, [], text, text=text))
         i = j
       else:

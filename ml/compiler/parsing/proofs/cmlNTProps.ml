@@ -7,9 +7,9 @@
   Properties (first sets etc) for non-terminals in the CakeML grammar
 *)
 
+needs "lib/NTproperties.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
-(* HOL4 ancestors outside the port: NTproperties *)
 (* HOL4 ML code, not ported:
 val _ =
 firstSetML_def |> CONJUNCTS |> (fn l => List.take(l,2)) |> rewrites

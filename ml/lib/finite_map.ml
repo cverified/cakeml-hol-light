@@ -101,6 +101,17 @@ let FUN_FMAP = new_definition
   `FUN_FMAP (f:A->B) s = mk_fmap (\x. if x IN s then SOME (f x) else
     NONE)`;;
 
+(* the map of the keys (HOL4 gives MAP_KEYS by a specification, of
+   which this is the witness that finite_mapTheory proves) *)
+
+let MAP_KEYS = new_definition
+  `MAP_KEYS (f:A->B) (fm:(A,C)fmap) =
+   mk_fmap (\y. if y IN IMAGE f (FDOM fm)
+                then (if INJ f (FDOM fm) UNIV
+                      then fmap_fn fm (LINV f (FDOM fm) y)
+                      else SOME ARB)
+                else NONE)`;;
+
 let FCARD = new_definition
   `FCARD (fm:(A,B)fmap) = CARD (FDOM fm)`;;
 

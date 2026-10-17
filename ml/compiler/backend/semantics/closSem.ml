@@ -948,8 +948,8 @@ let evaluate_def = cake_define_list_try (fun () ->
          (if EVERY (\(num_args,e). num_args <= closSem_state_max_app
            s /\ ~(num_args = 0)) fns then
            let
-             build_rc e = GENLIST (Recclosure loc [] e fns) (LENGTH
-               fns) in
+             build_rc = (\e. GENLIST (Recclosure loc [] e fns)
+               (LENGTH fns)) in
            let
              envdelta =
                (match namesopt with NONE -> SOME (build_rc env) |

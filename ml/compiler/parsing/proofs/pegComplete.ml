@@ -12,12 +12,12 @@ needs "basis/pure/mlstring.ml";;
 needs "compiler/parsing/cmlPEG.ml";;
 needs "compiler/parsing/proofs/cmlNTProps.ml";;
 needs "compiler/parsing/proofs/pegSound.ml";;
+needs "lib/NTproperties.ml";;
 needs "lib/grammar.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
-(* HOL4 ancestors outside the port: NTproperties *)
 
 (* Set up ML bindings *)
 (* HOL4 ML code, not ported:

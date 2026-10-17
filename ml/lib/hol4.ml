@@ -778,6 +778,22 @@ override_interface("##",`PAIR_MAP:(A->C)->(B->D)->A#B->C#D`);;
 let OLEAST = new_definition
   `OLEAST (P:num->bool) = if ?n. P n then SOME (LEAST P) else NONE`;;
 
+(* HOL4's left inverse of an injection (pred_setTheory): the one
+   that LINV_OPT gives where there is one *)
+
+let LINV_OPT = new_definition
+  `LINV_OPT (f:A->B) s y =
+   if y IN IMAGE f s then SOME (@x. x IN s /\ f x = y) else NONE`;;
+
+let LINV = new_definition
+  `LINV (f:A->B) s y = THE (LINV_OPT f s y)`;;
+
+(* HOL4's marker that a tactic puts on an abbreviation
+   (markerTheory), which stack_to_labProof's contain states *)
+
+let abbrev_def = new_definition
+  `Abbrev (x:bool) <=> x`;;
+
 (* HOL4's restricted quantifiers (boolTheory) *)
 
 let RES_FORALL = new_definition

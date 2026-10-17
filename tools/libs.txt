@@ -20,6 +20,7 @@ machine_ieee	src/floating-point/machine_ieeeScript.sml
 peg	examples/formal-languages/context-free/pegScript.sml
 pegexec	examples/formal-languages/context-free/pegexecScript.sml
 grammar	examples/formal-languages/context-free/grammarScript.sml
+NTproperties	examples/formal-languages/context-free/NTpropertiesScript.sml
 simpleSexp	examples/formal-languages/context-free/simpleSexpScript.sml
 spt_closure	examples/algorithms/spt_closureScript.sml
 multiword	examples/machine-code/multiword/multiwordScript.sml
