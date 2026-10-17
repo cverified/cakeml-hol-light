@@ -17,6 +17,8 @@
    ones to work on.
 """
 import re, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import defsites
 
 C = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -44,12 +46,16 @@ def binding(f, name):
   return None
 
 
+sites = defsites.sites()
 out, skipped, lost = [], 0, []
 for name, f, why in rows():
   if why.startswith(HOPELESS):
     skipped += 1
     continue
-  b = binding(f, name)
+  # the file of CHEATS.md is the one that defines the constant,
+  # which defsites gives, and the phrase in it
+  site = sites.get(name)
+  f, b = site if site else (f, binding(f, name))
   if b is None:
     lost.append(name)
     continue

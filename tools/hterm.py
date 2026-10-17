@@ -1106,6 +1106,46 @@ def sml_char(s):
   return s
 
 
+def sml_string_bytes(s):
+  """the bytes that the body of an SML string literal denotes"""
+  out = bytearray()
+  i = 0
+  while i < len(s):
+    if s[i] == '\\' and i + 1 < len(s):
+      j = i + 1
+      if s[j].isdigit():
+        k = j
+        while k < len(s) and s[k].isdigit() and k - j < 3: k += 1
+        out.append(int(s[j:k]) % 256); i = k; continue
+      if s[j] == 'u':
+        out.extend(chr(int(s[j+1:j+5], 16)).encode('utf-8'))
+        i = j + 5; continue
+      out.extend(sml_char(s[i:i+2]).encode('utf-8')); i += 2; continue
+    out.extend(s[i].encode('utf-8')); i += 1
+  return out
+
+
+def hl_string(body):
+  """the body of a string literal of HOL4 as a term of HOL Light:
+     HOL Light takes the characters of a literal as they are, so the
+     escapes of HOL4 are decoded, and a byte that a literal of HOL
+     Light cannot hold (a double quote closes it, a backquote the
+     quotation, and a newline would break the layout) is a (CHR n)
+     of its own"""
+  parts = []
+  cur = []
+  for b in sml_string_bytes(body):
+    if 32 <= b < 127 and b not in (34, 96):
+      cur.append(chr(b))
+    else:
+      if cur: parts.append('"%s"' % ''.join(cur)); cur = []
+      parts.append('[CHR %d]' % b)
+  if cur: parts.append('"%s"' % ''.join(cur))
+  if not parts: return '""'
+  if len(parts) == 1: return parts[0]
+  return '(' + ' ++ '.join(parts) + ')'
+
+
 SYMCHARS = set('\\!@#$%^&*-+<>/?|~=:')
 
 
@@ -1311,13 +1351,14 @@ class Printer:
         return '(&' + t + ')'
       return t
     if k == 'str':
-      return e.text
+      return hl_string(e.text[1:-1])
     if k == 'chr':
       return '(CHR ' + str(ord(sml_char(e.text[2:-1]))) + ')'
     if k == 'mlstr':
       # the mlstring literal of HOL4: its constructor is implode,
       # and strlit is an overload of it
-      return '(' + self.cname('strlit') + ' "' + e.text + '")'
+      return ('(' + self.cname('strlit') + ' ' +
+              hl_string(e.text) + ')')
     if k == 'paren':
       return '(' + self.pr(e.e, 0) + ')'
     if k == 'typed':

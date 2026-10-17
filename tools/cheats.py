@@ -1,21 +1,15 @@
 """write ml/CHEATS.md from tmp/cheats.txt, the definitions that the
    first pass assumes instead of making them"""
 import sys, os, re
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import defsites
 
 C = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 names = [l.strip() for l in open(C + '/tmp/cheats.txt') if l.strip()]
-# where each of them is, from the files of the port
-where = {}
-for root, dirs, files in os.walk(C + '/ml'):
-  for f in files:
-    if not f.endswith('.ml'): continue
-    p = os.path.join(root, f)
-    text = open(p).read()
-    for nm in names:
-      if nm in where: continue
-      if (re.search(r'`\s*\(?\s*%s\b' % re.escape(nm), text) or
-          re.search(r'cake_declare\s+"%s"' % re.escape(nm), text)):
-        where[nm] = os.path.relpath(p, C + '/ml')
+# the file that defines each of them, and the phrase in it
+sites = defsites.sites()
+where = {nm: sites[nm][0] for nm in names if nm in sites}
+phrase = {nm: sites[nm][1] for nm in names if nm in sites}
 with open(C + '/ml/CHEATS.md', 'w') as out:
   out.write('# The definitions that the first pass assumes\n\n')
   try:

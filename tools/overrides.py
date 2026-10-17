@@ -5,6 +5,52 @@ ACCESSORS: the record fields that HOL4 declares with ML code
 FIELD_OF: the record type of a field name where several record
   types have a field of that name
 """
+import os, re
+
+SRC = (os.path.dirname(os.path.dirname(os.path.abspath(__file__))) +
+       '/cakeml-src/')
+
+
+def ocaml_string(text, width=60):
+  """the text as the OCaml string literals of a port, one per line
+     of the text and split where a line is too long to fit"""
+  out = []
+  for line in text.split('\n')[:-1] if text.endswith('\n') \
+      else text.split('\n'):
+    s = line.replace('\\', '\\\\').replace('"', '\\"') + '\\n'
+    while len(s) > width:
+      k = width
+      while k > 1 and s[k-1] == '\\': k -= 1
+      out.append('"' + s[:k] + '"'); s = s[k:]
+    out.append('"' + s + '"')
+  return out
+
+
+def help_string():
+  """compiler's help_string is the quotation of the --help text at
+     the head of the source without its first line, which HOL4
+     takes with the ML code of help_string_tm.  The port writes the
+     text out as an OCaml string and makes the term of it, because
+     a string literal of HOL Light holds the characters that are in
+     it, and this text has newlines and a backquote in it."""
+  src = open(SRC + 'compiler/compilerScript.sml',
+             encoding='utf-8').read()
+  m = re.search(r'val help_string =.*?\u2018(.*?)\u2019', src, re.S)
+  text = m.group(1)
+  text = text[text.index('\n') + 1:]
+  body = ' ^\n   '.join(ocaml_string(text))
+  return ("""
+(* HOL4 takes this string from the quotation of the --help text at
+   the head of the source, without its first line (the ML code of
+   help_string_tm above).  The port writes the text out and makes
+   the term of it, because a string literal of HOL Light holds the
+   characters that are in it, and this text has newlines and a
+   backquote in it. *)
+
+let help_string_def = cake_define
+  (mk_eq(`help_string:mlstring`,
+         mk_comb(`implode`, mk_string
+  (""" + body + "))));;\n")
 
 # HOL4 names of notions that HOL Light has under another name
 NAME_MAP = {
@@ -465,6 +511,12 @@ ARG_TYPES = {
   # semanticPrimitives, where the v of this theory is flatSem's
   ('source_to_flatProof', 'orac_rel_inner_def'):
     {'s_compiler': 'compiler_fun'},
+  # the word of the immediate is the one of the state: HOL4
+  # typechecks the clauses together, so the Reg clause of eval_ri
+  # ties the two and the port has to say so
+  ('word_bignumProof', 'eval_ri_def'):
+    {'s': "'a word_bignumProof_state", 'r': 'num',
+     'w': "'a word"},
 }
 
 # definitions whose clauses HOL4 writes with <=>, although what
@@ -795,6 +847,25 @@ ANNOTATE = set([
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  ('compiler', 'help_string_def'): help_string(),
+  # HOL4 states the string that EVAL computes from the git commit
+  # of CakeML, the one of HOL4, the version of PolyML and the time
+  # of the build; a source level port cannot have any of the four,
+  # so it states the expression that HOL4 evaluates, with the
+  # three versions absent and the date the empty string
+  ('compiler', 'current_build_info_str_def'): r"""
+let current_build_info_str_def = cake_define
+  `current_build_info_str =
+     (let commit = print_option (strlit "CakeML:")
+                     (NONE:mlstring option) in
+     let hol = print_option (strlit "HOL4:  ")
+                 (NONE:mlstring option) in
+     let poly = print_option (strlit "PolyML:")
+                  (NONE:mlstring option) in
+       concat [strlit ("The CakeML compiler" ++ [CHR 10] ++ [CHR 10]);
+               strlit ("Version details:" ++ [CHR 10]); strlit "";
+               strlit [CHR 10]; commit; hol; poly])`;;
+""",
   # HOL4 builds the bodies of these two with the ML function
   # check1 of the source file, which takes the term of the copy
   # and a function that gives the variable of an argument: the
@@ -906,6 +977,16 @@ let run_linear_reg_alloc_intervals_def = cake_define
        (mk_i_linear_scan_hidden_state (nmax + 1,0)
          ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
          (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
+''',
+  # HOL4 states the list that EVAL computes for the expression
+  # below, in which the type and the configuration are free (the
+  # names of the stubs depend on neither, or EVAL could not have
+  # computed the list); the port states the expression, with the
+  # two of them instantiated, which is the same list
+  ('data_to_wordProof', 'stubs_fst_def'): r'''
+let stubs_fst_def = cake_define
+  `stubs_fst = MAP FST (data_to_word_stubs (:1)
+                 (ARB:data_to_word_config))`;;
 ''',
   # HOL4 states the call tree that EVAL computes for the
   # expression below, in which the type and the fields of the

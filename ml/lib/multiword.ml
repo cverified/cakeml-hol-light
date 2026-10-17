@@ -26,6 +26,23 @@ let n2mw_def = cake_define_wf
 let i2mw_def = cake_define
   `i2mw i = ((i < (&0)),n2mw (num_of_int (abs i)))`;;
 
+let single_add_def = cake_define
+  `single_add (x:'a word) (y:'a word) c =
+     (x + y + b2w c,(dimword (:'a) <= w2n x + w2n y + b2n c))`;;
+
+let single_sub_def = cake_define
+  `single_sub (x:'a word) (y:'a word) c = single_add x (~y) c`;;
+
+let single_mul_def = cake_define
+  `single_mul (x:'a word) (y:'a word) (c:'a word) =
+     (x * y + c,(n2w ((w2n x * w2n y + w2n c) DIV dimword
+       (:'a)):'a word))`;;
+
+let single_div_def = cake_define
+  `(single_div (x1:'a word) (x2:'a word) (y:'a word) =
+   ((n2w ((w2n x1 * dimword (:'a) + w2n x2) DIV w2n y):'a word),
+    (n2w ((w2n x1 * dimword (:'a) + w2n x2) MOD w2n y):'a word)))`;;
+
 let mw_op_INDUCT,mw_op_RECURSION = define_datatype
   "mw_op = multiword_Add | multiword_Sub | multiword_Mul | \
    multiword_Div | multiword_Mod | multiword_Lt | multiword_Eq | \

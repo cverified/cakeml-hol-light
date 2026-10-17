@@ -22,8 +22,11 @@ pegexec	examples/formal-languages/context-free/pegexecScript.sml
 grammar	examples/formal-languages/context-free/grammarScript.sml
 NTproperties	examples/formal-languages/context-free/NTpropertiesScript.sml
 simpleSexp	examples/formal-languages/context-free/simpleSexpScript.sml
+simpleSexpPEG	examples/formal-languages/context-free/simpleSexpPEGScript.sml
+simpleSexpParse	examples/formal-languages/context-free/simpleSexpParseScript.sml
 spt_closure	examples/algorithms/spt_closureScript.sml
 multiword	examples/machine-code/multiword/multiwordScript.sml
+mc_multiword	examples/machine-code/multiword/mc_multiwordScript.sml
 balanced_map	examples/data-structures/balanced_bst/balanced_mapScript.sml
 term	examples/algorithms/unification/triangular/first-order/termScript.sml
 subst	examples/algorithms/unification/triangular/first-order/substScript.sml

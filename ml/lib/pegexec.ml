@@ -186,3 +186,11 @@ let peg_exec_def = cake_define
 let destResult_def = cake_define
   `pegexec_destResult (pegexec_Result r) = r`;;
 hol4_overload "destResult" "pegexec_destResult";;
+
+let pegparse_def = cake_define
+  `pegparse G s =
+     (if wfG G then
+       match pegexec_destResult (peg_exec G (start G) s [] NONE []
+         pegexec_done pegexec_failed) with
+         peg_Success s v eo -> SOME (s,v,eo) | _30 -> NONE else
+           NONE)`;;

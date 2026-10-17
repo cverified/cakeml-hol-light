@@ -60,6 +60,27 @@ let optmax_def = cake_define
 let sloc_def = cake_define_list
   [`sloc [] = (Locs EOFpt EOFpt)`;
    `sloc (h :: t) = SND h`];;
+
+let subexprs_def = cake_define_list
+  [`subexprs (peg_any f1) = {peg_any f1}`;
+   `subexprs (peg_empty c) = {peg_empty c}`;
+   `subexprs (peg_tok t f2) = {peg_tok t f2}`;
+   `subexprs (peg_error e) = {peg_error e}`;
+   `subexprs (peg_nt s f) = {peg_nt s f}`;
+   `subexprs (peg_not e c) = peg_not e c INSERT subexprs e`;
+   `subexprs (peg_seq e1 e2 f3) = peg_seq e1 e2 f3 INSERT (subexprs
+  e1 UNION subexprs e2)`;
+   `subexprs (peg_choice e1 e2 f4) =
+        peg_choice e1 e2 f4 INSERT (subexprs e1 UNION subexprs
+          e2)`;
+   `subexprs (peg_rpt e f5) = peg_rpt e f5 INSERT subexprs e`];;
+
+let gexprs_def = cake_define
+  `Gexprs G = BIGUNION (IMAGE subexprs (start G INSERT FRANGE
+  (peg_rules G)))`;;
+
+let wfG_def = cake_define
+  `wfG G <=> (!e. e IN Gexprs G ==> wfpeg G e)`;;
 let pegf_def = cake_define
   `peg_pegf sym f = peg_seq sym (peg_empty ARB) (\l1 l2. f l1)`;;
 hol4_overload "pegf" "peg_pegf";;
