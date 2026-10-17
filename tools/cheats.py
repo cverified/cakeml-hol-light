@@ -37,9 +37,28 @@ with open(C + '/ml/CHEATS.md', 'w') as out:
         why[n] = w
   except Exception:
     pass
+  # the three kinds, of which only the last is work to do: a
+  # definition whose termination is assumed is made (the constant
+  # is real and so are its clauses), and a declared constant is
+  # one whose value HOL4 computes with ML code
+  import collections
+  kind = collections.Counter()
+  for nm in names:
+    w = why.get(nm, '')
+    kind['termination' if w.startswith('termination') else
+         'declared' if w.startswith('declared') else
+         'not made'] += 1
+  out.write('Of these %d definitions\n\n'
+            '- %d have only their **termination** assumed, so the\n'
+            '  constant, its type and its clauses are the real ones;\n'
+            '- %d are a constant that is **declared** without a\n'
+            '  value, because HOL4 computes the value with ML code;\n'
+            '- %d are **not made** at all, which is the work that is\n'
+            '  left.\n\n'
+            % (len(names), kind['termination'], kind['declared'],
+               kind['not made']))
   # the reasons, with how many definitions each of them has:
   # that is what the next round has to attack
-  import collections
   cnt = collections.Counter(why.get(nm, '') or '(not recorded)'
                             for nm in names)
   out.write('Why they are assumed:\n\n')

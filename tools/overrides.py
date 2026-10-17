@@ -1181,6 +1181,14 @@ TYPE_TEXT = {
 # are put just after the needs of the file
 # EXTRA_BEFORE: text that the port writes before a definition
 EXTRA_BEFORE = {
+  # the basis program: HOL4 computes the list of its declarations
+  # with the ML code of its translator (basisProg, which is out of
+  # the scope of the port), so the port declares the constant and
+  # says nothing about its value -- which is all that the
+  # definitions below need of it
+  ('compiler', 'compile_64_def'): r'''
+cake_declare "basis" `:dec list`;;
+''',
   # the termination of every evaluate: HOL4 proves it with
   ('wordSem', 'evaluate_def'): r'''
 let fix_clock_IMP =
