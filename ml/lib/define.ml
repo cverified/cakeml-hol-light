@@ -387,6 +387,11 @@ let FACTS_TAC (asl,w as gl) =
   let sel bod =
     let c = if is_imp bod then rand bod else bod in
     lhand c in
+  (* a fact whose statement has no left hand side says nothing
+     (the fix_clock_IMP of a semantics file falls back to TRUTH
+     when its proof fails, and a trivial fact used to make every
+     termination proof after it fail with "rator") *)
+  let fit th = can (fun t -> sel (snd(strip_forall(concl t)))) th in
   let tms =
     itlist (fun t l -> union (find_terms (fun _ -> true) t) l)
            (w :: map (concl o snd) asl) [] in
@@ -418,7 +423,7 @@ let FACTS_TAC (asl,w as gl) =
     if fst(strip_forall(concl th)) = [] then [th]
     else match instances th with [] -> [th] | l -> l in
   let facts = itlist (fun th l -> instances th @ l)
-                     (!cake_term_facts) [] in
+                     (filter fit (!cake_term_facts)) [] in
   (* the same, for a fact whose antecedent an assumption of the
      goal gives (HOL4's imp_res_tac); the equation of a match is
      the other way round, so it is tried both ways *)
@@ -429,7 +434,7 @@ let FACTS_TAC (asl,w as gl) =
                               asl) @
               flat (mapfilter (fun (_,a) -> spec (MATCH_MP th (SYM a)))
                               asl) @ l)
-           (!cake_term_facts) [] in
+           (filter fit (!cake_term_facts)) [] in
   (* a fact whose antecedent is a conjunction that two of the
      assumptions give *)
   let facts =
@@ -443,7 +448,7 @@ let FACTS_TAC (asl,w as gl) =
                                    spec (MATCH_MP th (CONJ a b)))
                                 asl) @ k)
                      asl l)
-           (!cake_term_facts) [] in
+           (filter fit (!cake_term_facts)) [] in
   (if facts = [] then ALL_TAC else MAP_EVERY MP_TAC facts) gl;;
 
 (* when a termination proof does not close, the goal is logged *)

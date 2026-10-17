@@ -1024,7 +1024,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('flatSem', 'evaluate_def'): r'''
 let fix_clock_IMP =
@@ -1037,7 +1040,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   # imp_res_tac fix_clock_IMP
   ('bvlSem', 'evaluate_def'): r'''
@@ -1051,7 +1057,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('bviSem', 'evaluate_def'): r'''
 let fix_clock_IMP =
@@ -1064,7 +1073,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('dataSem', 'evaluate_def'): r'''
 let fix_clock_IMP =
@@ -1077,7 +1089,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('closSem', 'evaluate_def'): r'''
 let fix_clock_IMP =
@@ -1090,7 +1105,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   ('stackSem', 'evaluate_def'): r'''
 let fix_clock_IMP =
@@ -1103,7 +1121,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 ''',
   # the fact that HOL4's Termination of term_ok_int and
   # term_ok_any uses with imp_res_tac: the two arguments that

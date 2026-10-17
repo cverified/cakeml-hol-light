@@ -793,7 +793,10 @@ let fix_clock_IMP =
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
-cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
+(* a fallback TRUTH says nothing, and a fact that says nothing
+   is of no use *)
+if concl fix_clock_IMP <> `T` then
+  cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
