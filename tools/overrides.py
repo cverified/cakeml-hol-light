@@ -171,6 +171,14 @@ FIELD_VAR_DEF = {
   # the t that the evaluate of halt_assum gives is a state of
   # stackSem, where the s of this theory is one of labSem
   ('stack_to_labProof', 'halt_assum_def'): {'t': 'stackSem_state'},
+  # the t of memory_assumption is a state of labSem, where the
+  # regs of this theory are the ones of stackSem
+  ('stack_to_labProof', 'memory_assumption_def'):
+    {'t': 'labSem_state'},
+  # the s whose oracle orac_rel_inner reads is the state of an
+  # EvalOracle
+  ('source_to_flatProof', 'orac_rel_inner_def'):
+    {'s': 'eval_oracle_state'},
 }
 
 FIELD_OF = {
