@@ -738,7 +738,9 @@ let fix_clock_IMP =
                   ==> state_clock s1 <= state_clock s`,
     REWRITE_TAC[FORALL_PAIR_THM; fix_clock_def] THEN
     REWRITE_TAC(PAIR_EQ :: record_thms "bvlSem_state") THEN
-    REPEAT STRIP_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
+    REPEAT STRIP_TAC THEN SUBST_VAR_TAC THEN
+    REWRITE_TAC(record_thms "bvlSem_state") THEN
+    REPEAT COND_CASES_TAC THEN ASM_REWRITE_TAC[] THEN ARITH_TAC)
   with Failure e ->
     (print_string ("\nfix_clock_IMP: " ^ e ^ "\n"); TRUTH);;
 
