@@ -792,6 +792,84 @@ ANNOTATE = set([
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
 REPLACE = {
+  # HOL4 builds the bodies of these two with the ML function
+  # check1 of the source file, which takes the term of the copy
+  # and a function that gives the variable of an argument: the
+  # port writes out what check1 computes (the variable of the
+  # argument n of CopyByteStr is Var t (2 - n) and the one of
+  # CopyByteAw8 is Var t (4 - n))
+  ('flat_to_clos', 'CopyByteStr_def'): r"""
+let CopyByteStr_def = cake_define
+  `CopyByteStr t =
+     closLang_If t
+       (closLang_Op t (closLang_IntOp closLang_Less)
+          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+           closLang_Var t 0])
+       (closLang_Raise t (closLang_Op t
+          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+       (closLang_If t
+         (closLang_Op t (closLang_IntOp closLang_Less)
+            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+             closLang_Var t 1])
+         (closLang_Raise t (closLang_Op t
+            (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+         (closLang_If t
+           (closLang_Op t
+             (closLang_MemOp (closLang_BoundsCheckByte T))
+              [closLang_Op t (closLang_IntOp closLang_Add)
+                 [closLang_Var t 0; closLang_Var t 1];
+               closLang_Var t 2])
+           (closLang_Op t (closLang_MemOp (closLang_CopyByte T))
+              [closLang_Var t 0; closLang_Var t 1; closLang_Var t 2])
+           (closLang_Raise t (closLang_Op t
+              (closLang_BlockOp (closLang_Cons subscript_tag))
+              []))))`;;
+""",
+  ('flat_to_clos', 'CopyByteAw8_def'): r"""
+let CopyByteAw8_def = cake_define
+  `CopyByteAw8 t =
+     closLang_If t
+       (closLang_Op t (closLang_IntOp closLang_Less)
+          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+           closLang_Var t 2])
+       (closLang_Raise t (closLang_Op t
+          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+       (closLang_If t
+         (closLang_Op t (closLang_IntOp closLang_Less)
+            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+             closLang_Var t 3])
+         (closLang_Raise t (closLang_Op t
+            (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+         (closLang_If t
+           (closLang_Op t
+             (closLang_MemOp (closLang_BoundsCheckByte T))
+              [closLang_Op t (closLang_IntOp closLang_Add)
+                 [closLang_Var t 2; closLang_Var t 3];
+               closLang_Var t 4])
+           (closLang_If t
+             (closLang_Op t (closLang_IntOp closLang_Less)
+                [closLang_Op t (closLang_IntOp (closLang_Const (&0)))
+                   []; closLang_Var t 0])
+             (closLang_Raise t (closLang_Op t
+                (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+             (closLang_If t
+               (closLang_Op t
+                 (closLang_MemOp (closLang_BoundsCheckByte T))
+                  [closLang_Op t (closLang_IntOp closLang_Add)
+                     [closLang_Var t 2; closLang_Var t 0];
+                   closLang_Var t 1])
+               (closLang_Op t
+                 (closLang_MemOp (closLang_CopyByte F))
+                  [closLang_Var t 0; closLang_Var t 1;
+                   closLang_Var t 2; closLang_Var t 3;
+                   closLang_Var t 4])
+               (closLang_Raise t (closLang_Op t
+                  (closLang_BlockOp (closLang_Cons subscript_tag))
+                  []))))
+           (closLang_Raise t (closLang_Op t
+              (closLang_BlockOp (closLang_Cons subscript_tag))
+              []))))`;;
+""",
   # the compiler that the oracle relation takes is a compiler_fun,
   # whose v is the one of semanticPrimitives; the port expands the
   # abbreviation in the theory that uses it, where v is flatSem's

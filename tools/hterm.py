@@ -1513,8 +1513,20 @@ class Printer:
       # it at the =, so what is bound to needs its parentheses
       # where it has an operator that binds looser than = does
       # (copying_gc's gc_move has let c = c /\ ... in)
-      bs = ' and '.join(self.pr(p, 0) + ' = ' + self.pr(v, 13)
-                        for p, v in e.binds)
+      def bind(p, v):
+        # HOL4 binds a function with its arguments on the left of
+        # the =, where HOL Light takes the left hand side for a
+        # pattern and leaves the arguments free: the port makes
+        # the arguments an abstraction (bvl_const's SmartOp2 has
+        # let mk_add_const x1 c2 = ... in)
+        if p.kind == 'app':
+          hop, args = strip_app(p)
+          if hop.kind == 'id':
+            return (self.pr(hop, 0) + ' = (\\' +
+                    ' '.join(self.pr(a, APP) for a in args) +
+                    '. ' + self.pr(v, 0) + ')')
+        return self.pr(p, 0) + ' = ' + self.pr(v, 13)
+      bs = ' and '.join(bind(p, v) for p, v in e.binds)
       return self.paren('let ' + bs + ' in ' + self.pr(e.body, 0),
                         1, prec)
     if k == 'case':
