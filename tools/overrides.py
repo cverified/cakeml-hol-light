@@ -856,15 +856,16 @@ REPLACE = {
   ('compiler', 'current_build_info_str_def'): r"""
 let current_build_info_str_def = cake_define
   `current_build_info_str =
-     (let commit = print_option (strlit "CakeML:")
+     (let commit = print_option (implode "CakeML:")
                      (NONE:mlstring option) in
-     let hol = print_option (strlit "HOL4:  ")
+     let hol = print_option (implode "HOL4:  ")
                  (NONE:mlstring option) in
-     let poly = print_option (strlit "PolyML:")
+     let poly = print_option (implode "PolyML:")
                   (NONE:mlstring option) in
-       concat [strlit ("The CakeML compiler" ++ [CHR 10] ++ [CHR 10]);
-               strlit ("Version details:" ++ [CHR 10]); strlit "";
-               strlit [CHR 10]; commit; hol; poly])`;;
+       mlstring_concat
+         [implode "The CakeML compiler\n\n";
+          implode "Version details:\n"; implode "";
+          implode "\n"; commit; hol; poly])`;;
 """,
   # HOL4 builds the bodies of these two with the ML function
   # check1 of the source file, which takes the term of the copy
