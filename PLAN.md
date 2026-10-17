@@ -245,6 +245,18 @@ The other checks:
                        port has to have is in
 - `tools/fidelity.py`  no definition of the port lost a name or a
                        constructor argument on the way
+- `tools/literals.py`  the strings, the characters and the
+                       numerals of a definition are the same ones
+                       in the port (the escapes of a literal are
+                       read by both parsers, in almost the same
+                       way)
+- `tools/lets.py`      a `let` that binds a function abstracts its
+                       arguments (HOL Light takes the left hand
+                       side of a binding for a pattern)
+- `tools/bin/checks`   the checks above that need no session
+- `tools/bin/cycle`    everything between two runs: the reports,
+                       the cheat list, the port, the checks, the
+                       template, the smoke test and the next run
 - `tools/bin/quotes`   which quotation of a file does not parse
                        (in a session that has the file loaded);
                        `tools/bin/quotesall` does that for every
