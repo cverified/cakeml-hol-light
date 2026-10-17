@@ -315,6 +315,12 @@ ALSO_NEEDED = set([
   ('set_sep', 'STAR'), ('set_sep', 'SEP_EXISTS'),
   ('set_sep', 'SPLIT'), ('set_sep', 'SEP_T'),
   ('location', 'locnrow'), ('location', 'locncol'),
+  # the tail recursion of the bignum library: mc_multiword builds
+  # its functions with the ML of mc_tailrecLib, which the port
+  # mirrors (ml/lib/mc_tailrec.ml), so the scan of the sources
+  # does not see that it needs these four
+  ('tailrec', 'TAILREC'), ('tailrec', 'TAILREC_PRE'),
+  ('tailrec', 'SHORT_TAILREC'), ('tailrec', 'SHORT_TAILREC_PRE'),
   # the error of errorMonad is the result type of Pancake's static
   # check, which compiler's compile_pancake matches on; the port
   # declares the check itself, so the scan only sees the two
@@ -373,6 +379,9 @@ RENAME = {
 # has as well: the type keeps the name, which HOL Light holds
 # apart from the names of the constants
 RENAME_CONST = {
+  # While's TAILREC is in the library layer by hand already
+  ('tailrec', 'TAILREC'): 'tailrec_TAILREC',
+
   # the semantics of every intermediate language is called
   # semantics, and the one of CakeML itself is in the theory
   # semantics, so the port cannot keep that name for the
@@ -452,7 +461,6 @@ EXTRA_DATATYPES = {
 EXTRA_DEFS = [
   ('walk', 'vwalk'), ('walkstar', 'walkstar'),
   ('walkstar', 'oc'), ('unifDef', 'unify'),
-  ('word_bignum', 'mc_iop_code'),
 ]
 
 # the HOL Light constant that an infix of HOL4 means where no
@@ -890,6 +898,19 @@ CON_OF = {
 # the definition does not say which one it is anywhere else
 ANNOTATE = set([
 ])
+
+# the ML code of a source that the port has in OCaml: the key is a
+# string of the first ML block of the run that the OCaml replaces,
+# the value is (a string of the last block of the run, the OCaml).
+# The port writes the OCaml where the source has its ML and drops
+# the blocks in between -- they are ported, so there is no reason
+# to keep them in a comment
+ML_PORTED = {
+  ('word_bignum', 'val Skip_tm'):
+    ('val def = mc_use_fac_def',
+     open(os.path.dirname(os.path.abspath(__file__)) +
+          '/word_bignum_todeep.ml').read()),
+}
 
 # definitions that are ported by hand (the text replaces the whole
 # translation of the Definition block)
@@ -1445,15 +1466,6 @@ let exp_size_get_bin_args = prove
 
 cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 ''',
-  ('word_bignum', 'generated_bignum_stubs_def'): r'''
-(* HOL4 generates the deep embedding of the bignum routines with ML
-   code (to_deep of this file), which runs the shallow definitions
-   through a translator of its own.  The port cannot run it, so it
-   declares the constant that the rest of the file uses and says
-   nothing about its value.  *)
-
-cake_declare "mc_iop_code" `:(A)mini`;;
-''',
 }
 
 # a definition of the port that goes after the one of the source
@@ -1508,6 +1520,13 @@ let unify_def = new_definition
 }
 
 EXTRA_HEAD = {
+  # the routines of the bignum library are defined from their step
+  # function by ML code of HOL4 (mc_tailrecLib), which the port
+  # has in OCaml
+  'mc_multiword': r'''
+needs "lib/mc_tailrec.ml";;
+''',
+
   # the datatype of the static errors of Pancake (panStatic's
   # staterr), which compiler's compile_error has in it; Pancake
   # itself is not ported, but compile_error is not Pancake's and

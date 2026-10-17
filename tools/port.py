@@ -217,6 +217,7 @@ class Porter:
     self.intargs = set()   # arguments that hold an integer
     self.intresult = False # is the result an integer?
     self.argtypes = {}     # the type an override gives an argument
+    self.ml_skip = None    # the last ML block that OCaml replaces
     self.arrflds = []      # the array fields of the monadic state
     self.bound = set()
     self.contys = set()
@@ -454,8 +455,16 @@ class Porter:
       # datatype and a definition (simpleSexp's sexpNT and sexpG)
       if k == 'ML' and 'mk_grammar_def' in b.text:
         self.grammar_block(b)
+      elif k == 'ML' and 'tailrec_define "' in b.text:
+        self.tailrec_block(b)
       return
     if not self.wanted(b):
+      return
+    # the ML code that the port has in OCaml: it is written where
+    # the source has its ML, and the blocks that it covers are
+    # dropped (they are ported, so there is no reason to keep them
+    # in a comment)
+    if k in ('ML', 'Comment') and self.ml_ported(b):
       return
     if k == 'Comment':
       # a comment block of the source can have ML code after the
@@ -580,6 +589,43 @@ class Porter:
     self.out.append('%s\n%s";;' % (head, text))
     if overloads: self.out.append('\n'.join(overloads))
     self.ctx.defining = set()
+
+  def ml_ported(self, b):
+    """the ML of a source that the port has in OCaml (ML_PORTED):
+       the OCaml takes the place of the run of blocks from the one
+       that the key names to the one that the value names"""
+    if self.ml_skip:
+      if self.ml_skip in b.text: self.ml_skip = None
+      return True
+    for (t, key), (last, code) in overrides.ML_PORTED.items():
+      if t == self.thy and key in b.text:
+        self.out.append(code.strip())
+        self.ml_skip = last
+        return True
+    return False
+
+  def tailrec_block(self, b):
+    """a function of a HOL4 library theory that ML code defines
+       from its step function: mc_multiword builds the routines of
+       the bignum library with mc_tailrecLib's
+       tailrec_define_from_step, and the port calls its own
+       tailrec_define (ml/lib/mc_tailrec.ml) with the same step.
+       The port takes all of them: they are the routines that the
+       deep embedding of word_bignum is generated from, and one
+       of them is the step of another"""
+    for m in hol4.TAILREC_ML.finditer(b.text):
+      nm, step = m.group(1), m.group(2)
+      self.ctx.defining = {nm, nm + '_pre'}
+      try:
+        term = fmt(self.term(step))
+      except Exception as ex:
+        self.warn.append('tailrec_define %s: %s' % (nm, ex))
+        continue
+      self.ctx.defining = set()
+      new = self.nm_defined(nm)
+      self.out.append('let %s_def,%s_pre_def =\n'
+                      '  tailrec_define "%s"\n  `%s`;;'
+                      % (new, new, new, term))
 
   def grammar_block(self, b):
     """HOL4's mk_grammar_def (of grammarLib) takes a grammar in

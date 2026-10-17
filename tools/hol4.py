@@ -99,6 +99,11 @@ ML_TERM_PAIR = re.compile(
   r"\s*(?:``|\u201c)(.*?)(?:``|\u201d)", re.S)
 
 
+# a function that mc_multiword defines from its step function
+TAILREC_ML = re.compile(r'tailrec_define\s+"([A-Za-z0-9_\']+)"\s*'
+                        r'(?:``|\u201c)(.*?)(?:``|\u201d)', re.S)
+
+
 def ml_terms(text):
   """the terms that an ML block keeps in a value, which the source
      may antiquote into a definition (dataSem's ^s)"""
