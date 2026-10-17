@@ -12,44 +12,56 @@ on is the definitions that HOL Light cannot make **at all**: a
 body with a type variable that the constant does not reflect,
 or a constant that the port does not have.  See `CLAUDE.md`._
 
-_State: the port has the 4334 definition blocks of the 251
-files that it has to have (of 4350; the sixteen that are out
-are the eleven tail recursive definitions of `unify` and the
-five Pancake definitions of `compiler`), which
-`tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
-after the other in the order of `tools/load.txt`: in the run of
-2026-10-17 16:49 **every one of the 254 files loads to the end**
-(the 251 and the three library theories that came with them), and
-of the 322 definitions that are assumed (`ml/CHEATS.md`)
+_State: the port has the 4345 definition blocks of the 254 files
+that it has to have (of 4350; the five that are out are the
+Pancake definitions of `compiler`, which are outside the scope of
+the port), which `tools/coverage.py` checks.  `tools/bin/checkseq`
+loads them one after the other in the order of `tools/load.txt`:
+in the run of 2026-10-17 18:43 **every one of the 254 files loads
+to the end**, and of the 326 definitions that are assumed
+(`ml/CHEATS.md`)
 
-- **295 only have their termination assumed** (`CHEAT_TAC` on the
+- **305 only have their termination assumed** (`CHEAT_TAC` on the
   condition): the constant is introduced by `new_specification`,
   it has the right type and its clauses are theorems, so
   everything after it is ported as if the definition were there,
   because it is;
-- **2 are a constant that is declared** without a value, because
-  HOL4 computes the value with ML code that the port cannot run
-  (`word_bignum$mc_iop_code` and the basis program);
-- **25 are not made at all**, which is the work that is left.
+- **20 are a constant that is declared** without a value, because
+  HOL4 makes the value in a way that the port has no counterpart
+  for (`word_bignum$mc_iop_code`, the basis program and the
+  eighteen configurations, exports and backend configurations of
+  the six targets, whose encoders are outside the port);
+- **one is not made at all** (`word_bignumProof$Eval`, whose body
+  has a type variable that the constant does not reflect), which
+  is the work that is left.
 
-That was `length (axioms ()) = 250` and 4475 s.  The runs of this
-round were 17:21 (323 assumed, 335 axioms, 5 files that die),
-19:34 (325, 370, 2), 22:26 (295, 340, 2), 01:12 (292, 304, 2),
-03:14 (290, 299, 1), 05:37 (291, 303, **0**), 10:35 (38 not made,
-239, 1), 12:04 (35 not made, 239, 0) and 16:49 (**25 not made**,
-250, 0, with thirteen more files in the port)._
+That was `length (axioms ()) = 232` and 4627 s, and no cheat has
+a free variable any more (`tools/bin/freevars`).  The runs of
+this round were 17:21 (323 assumed, 335 axioms, 5 files that
+die), 19:34 (325, 370, 2), 22:26 (295, 340, 2), 01:12 (292, 304,
+2), 03:14 (290, 299, 1), 05:37 (291, 303, **0**), 10:35 (38 not
+made, 239, 1), 12:04 (35 not made, 239, 0), 16:49 (25 not made,
+250, 0, with thirteen more files in the port) and 18:43 (**one
+not made**, 232, 0)._
 
-_What is left (the 25): seven definitions of the clos proofs
-used `finite_map$fmap_rel` and two `string$isGraph`, which are in
-`ml/lib` now; five have a type variable in the body that the
-constant does not reflect (`word_bignumProof`'s `Eval` is the one
-that is left of them); two are the configurations of the targets,
-which are declared constants now; three run the budget out; and
-the rest are the s-expression parser of the new library theories,
-whose constants the port was missing (`peg$ignoreL`, `wfG`, the
-`sxnt_` nonterminals of the grammar that `grammarLib` makes).
-All of them but the type variables and the budget are repaired in
-the port of 18:43; what that run says is the next entry above._
+_What is left (the one).  `word_bignumProof$Eval` is an
+`Inductive` whose rules apply `eval_exp` to a `wordLang$exp`
+that nothing in them types, because the constant of the port
+(unlike HOL4's) did not tie the type of its expression to the
+one of its state: the clauses of `eval_exp` go to HOL Light one
+by one, the `+` of its `Op Add` clause has nothing in that clause
+to say that it adds machine words, and it became the `+` of the
+numbers -- on which the types of the eleven clauses no longer fit
+together (`tools/conjfail.log` of a run says where that happens,
+four definitions in the whole port), and the port fell back to
+assuming them one at a time with the type of the first.  The four
+are one quotation now (`ONE_QUOTATION`), which typechecks the
+clauses together, and `Eval` should follow in the next run.
+The eleven definitions of `unify` that the port did not have are
+in: HOL4 builds the four step functions of the tail recursions
+with the ML code of the source, which the port declares
+(`cake_declare`, no axiom), and the seven definitions that use
+them are ported as they stand._
 
 _What the round repaired.  The admissibility machinery: the
 termination conditions of a definition arrive as one

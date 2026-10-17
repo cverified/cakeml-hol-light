@@ -39,28 +39,28 @@ let make_part_def = cake_define
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let parts_def = cake_define_list_cheat CHEAT_TAC
-  [`parts (ConstInt i) n aux = make_part n (Int i) aux`;
-   `parts (ConstStr s) n aux = make_part n (closLang_Str s) aux`;
-   `parts (ConstWord64 w) n aux = make_part n (W64 w) aux`;
-   `parts (ConstCons t cs) n aux =
-      (let (n,rs,aux) = parts_list cs n aux in
-         make_part n (Con t rs) aux)`;
-   `parts_list [] n aux = (n,[],aux)`;
-   `parts_list (c :: cs) n aux =
-      (let (n,r,aux) = parts c n aux in
-      let (n,rs,aux) = parts_list cs n aux in
-        (n,r :: rs,aux))`];;
+let parts_def = cake_define_cheat CHEAT_TAC
+  `parts (ConstInt i) n aux = make_part n (Int i) aux /\
+   parts (ConstStr s) n aux = make_part n (closLang_Str s) aux /\
+   parts (ConstWord64 w) n aux = make_part n (W64 w) aux /\
+   parts (ConstCons t cs) n aux =
+     (let (n,rs,aux) = parts_list cs n aux in
+        make_part n (Con t rs) aux) /\
+   parts_list [] n aux = (n,[],aux) /\
+   parts_list (c :: cs) n aux =
+     (let (n,r,aux) = parts c n aux in
+     let (n,rs,aux) = parts_list cs n aux in
+       (n,r :: rs,aux))`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let to_parts_def = cake_define_list_cheat CHEAT_TAC
-  [`to_parts (ConstInt i) = [Int i]`;
-   `to_parts (ConstStr s) = [closLang_Str s]`;
-   `to_parts (ConstWord64 w) = [W64 w]`;
-   `to_parts (ConstCons t cs) =
-      (let (n,rs,aux) = parts_list cs 0 [] in
-        REVERSE ((Con t rs) :: MAP FST aux))`];;
+let to_parts_def = cake_define_cheat CHEAT_TAC
+  `to_parts (ConstInt i) = [Int i] /\
+   to_parts (ConstStr s) = [closLang_Str s] /\
+   to_parts (ConstWord64 w) = [W64 w] /\
+   to_parts (ConstCons t cs) =
+     (let (n,rs,aux) = parts_list cs 0 [] in
+       REVERSE ((Con t rs) :: MAP FST aux))`;;
 
 (* semantics *)
 
@@ -119,13 +119,12 @@ let good_hash_table_def = cake_define
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let build_part'_def = cake_define_list_cheat CHEAT_TAC
-  [`build_part' mem' (Int i:const_part) = closSem_Number i`;
-   `build_part' mem' (closLang_Str s:const_part) = closSem_ByteVector
-  (MAP (n2w o ORD) (explode s))`;
-   `build_part' mem' (W64 w:const_part) = Word64 w`;
-   `build_part' mem' (Con t ns:const_part) = closSem_Block t (MAP
-  mem' ns)`];;
+let build_part'_def = cake_define_cheat CHEAT_TAC
+  `build_part' mem' (Int i:const_part) = closSem_Number i /\
+   build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w o
+     ORD) (explode s)) /\
+   build_part' mem' (W64 w) = Word64 w /\
+   build_part' mem' (Con t ns) = closSem_Block t (MAP mem' ns)`;;
 
 let build'_def = cake_define_list
   [`build' mem' i [] = mem' (i - 1)`;

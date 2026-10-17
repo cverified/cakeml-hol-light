@@ -709,6 +709,19 @@ ONE_QUOTATION = set([
   # as well (the clause with GREATER in it is the one that says
   # that the result is an ordering)
   ('word_cse', 'listCmp_def'),
+  # the parts of a constant are closLang's const_part, which only
+  # the Str clause says (the Int, the W64 and the Con of the other
+  # clauses are the ones of dataLang's obj in this scope)
+  ('clos_constantProof', 'parts_def'),
+  ('clos_constantProof', 'to_parts_def'),
+  # the value that this builds is closSem's, which the Number, the
+  # ByteVector and the Block of the other clauses say and the
+  # Word64 of the third one does not (dataSem has one as well)
+  ('clos_constantProof', "build_part'_def"),
+  # the + of the Op Add clause adds machine words, which only the
+  # Const clause says (it gives the word of the constant), and the
+  # shifts of the Shift clauses then shift a word as well
+  ('word_bignumProof', 'eval_exp_def'),
 ])
 
 # the theory whose constructor a name means in one definition,

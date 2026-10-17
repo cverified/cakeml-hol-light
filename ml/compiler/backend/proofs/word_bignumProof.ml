@@ -46,28 +46,27 @@ hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let eval_exp_def = cake_define_list_cheat CHEAT_TAC
-  [`eval_exp s (wordLang_Const w) = w`;
-   `eval_exp s (wordLang_Var v) = FAPPLY (word_bignumProof_state_regs
-  s) v`;
-   `eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 +
-  eval_exp s x2`;
-   `eval_exp s (wordLang_Op asm_Sub [x1; x2]) = eval_exp s x1 -
-  eval_exp s x2`;
-   `eval_exp s (wordLang_Op And [x1; x2]) = word_and (eval_exp s x1)
-  (eval_exp s x2)`;
-   `eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s
-  x1) (eval_exp s x2)`;
-   `eval_exp s (wordLang_Op Xor [x1; x2]) = word_xor (eval_exp s x1)
-  (eval_exp s x2)`;
-   `eval_exp s (wordLang_Shift Lsl x1 x2) = eval_exp s x1 << (w2n
-  (eval_exp s x2))`;
-   `eval_exp s (wordLang_Shift Asr x1 x2) = eval_exp s x1 >> (w2n
-  (eval_exp s x2))`;
-   `eval_exp s (wordLang_Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n
-  (eval_exp s x2))`;
-   `eval_exp s (wordLang_Shift Ror x1 x2) = word_ror (eval_exp s
-  x1) (w2n (eval_exp s x2))`];;
+let eval_exp_def = cake_define_cheat CHEAT_TAC
+  `eval_exp s (wordLang_Const w) = w /\
+   eval_exp s (Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
+   eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 +
+     eval_exp s x2 /\
+   eval_exp s (wordLang_Op asm_Sub [x1; x2]) = eval_exp s x1 -
+     eval_exp s x2 /\
+   eval_exp s (wordLang_Op And [x1; x2]) = word_and (eval_exp s x1)
+     (eval_exp s x2) /\
+   eval_exp s (wordLang_Op asm_Or [x1; x2]) = word_or (eval_exp s x1)
+     (eval_exp s x2) /\
+   eval_exp s (wordLang_Op Xor [x1; x2]) = word_xor (eval_exp s x1)
+     (eval_exp s x2) /\
+   eval_exp s (Shift Lsl x1 x2) = eval_exp s x1 << (w2n (eval_exp s
+     x2)) /\
+   eval_exp s (Shift Asr x1 x2) = eval_exp s x1 >> (w2n (eval_exp s
+     x2)) /\
+   eval_exp s (Shift Lsr x1 x2) = eval_exp s x1 >>> (w2n (eval_exp s
+     x2)) /\
+   eval_exp s (Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
+     (eval_exp s x2))`;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
