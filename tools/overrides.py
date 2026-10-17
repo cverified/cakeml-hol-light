@@ -740,6 +740,10 @@ ONE_QUOTATION = set([
   # ByteVector and the Block of the other clauses say and the
   # Word64 of the third one does not (dataSem has one as well)
   ('clos_constantProof', "build_part'_def"),
+  # the memop that these give is asm's, which only the clauses of
+  # the byte and of the halfword say (the Load and the Store of
+  # the other two are the ones of wordLang in this scope)
+  ('panLang', 'load_op_def'), ('panLang', 'store_op_def'),
   # the + of the Op Add clause adds machine words, which only the
   # Const clause says (it gives the word of the constant), and the
   # shifts of the Shift clauses then shift a word as well
