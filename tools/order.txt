@@ -97,6 +97,12 @@ cmlPtreeConversion	semantics/cmlPtreeConversionScript.sml
 cmlParse	compiler/parsing/cmlParseScript.sml
 mlvector	basis/pure/mlvectorScript.sml
 export	compiler/backend/exportScript.sml
+export_x64	compiler/backend/x64/export_x64Script.sml
+export_arm8	compiler/backend/arm8/export_arm8Script.sml
+export_arm7	compiler/backend/arm7/export_arm7Script.sml
+export_mips	compiler/backend/mips/export_mipsScript.sml
+export_riscv	compiler/backend/riscv/export_riscvScript.sml
+export_ag32	compiler/backend/ag32/export_ag32Script.sml
 fromSexp	compiler/parsing/fromSexpScript.sml
 infer_t	compiler/inference/infer_tScript.sml
 unify	compiler/inference/unifyScript.sml

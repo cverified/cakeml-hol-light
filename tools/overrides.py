@@ -1242,49 +1242,28 @@ cake_declare "cunify_code"
   ('compiler', 'compile_64_def'): r'''
 cake_declare "basis" `:dec list`;;
 ''',
-  # the configurations of the targets and the functions that
-  # export the code of one: the encoders and the configurations of
-  # the targets are outside the port (tools/excluded.txt), and the
-  # command line of the compiler only passes these constants on,
-  # so the port declares them with the type that it uses them at
-  # and says nothing about their value
+  # the configurations of the targets: the encoders of the targets
+  # need the machine models of HOL4 (x64_step and the others),
+  # which are not part of the CakeML sources, so the encoders and
+  # the configurations that have one in them are outside the port
+  # (tools/excluded.txt), and the command line of the compiler
+  # only passes these constants on; the port declares them with
+  # the type that it uses them at and says nothing about their
+  # value.  (The theories that export the code of a target need
+  # only `export`, so the port has those.)
   ('compiler', 'parse_target_64_def'): r'''
 cake_declare "x64_backend_config" `:backend_config`;;
 cake_declare "x64_config" `:(64)asm_config`;;
-cake_declare "x64_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "arm8_backend_config" `:backend_config`;;
 cake_declare "arm8_config" `:(64)asm_config`;;
-cake_declare "arm8_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "mips_backend_config" `:backend_config`;;
 cake_declare "mips_config" `:(64)asm_config`;;
-cake_declare "mips_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "riscv_backend_config" `:backend_config`;;
 cake_declare "riscv_config" `:(64)asm_config`;;
-cake_declare "riscv_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "arm7_backend_config" `:backend_config`;;
 cake_declare "arm7_config" `:(32)asm_config`;;
-cake_declare "arm7_export"
-  `:mlstring list -> word8 list -> word32 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "ag32_backend_config" `:backend_config`;;
 cake_declare "ag32_config" `:(32)asm_config`;;
-cake_declare "ag32_export"
-  `:mlstring list -> word8 list -> word32 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 ''',
   # the termination of every evaluate: HOL4 proves it with
   ('wordSem', 'evaluate_def'): r'''
