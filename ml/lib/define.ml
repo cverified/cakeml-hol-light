@@ -771,6 +771,33 @@ let MAPIFY_CONV fs tm =
                     IN_SET_OF_LIST; ETA_AX]);;
 
 (* ------------------------------------------------------------------ *)
+(* The termination proof that the first pass assumes.                 *)
+(*                                                                    *)
+(* In the first pass proofs are irrelevant (see CLAUDE.md): a         *)
+(* definition whose termination HOL Light's machinery does not prove  *)
+(* is written in the port with CHEAT_TAC in the place of the          *)
+(* Termination tactic of HOL4, and the condition that the machinery   *)
+(* leaves over is proved with that tactic.  The definition itself is  *)
+(* made either way, by new_specification, with the same constant and  *)
+(* the same clauses: replacing the CHEAT_TAC by a real tactic is all  *)
+(* that is needed, and the axiom that CHEAT_TAC makes is the only one *)
+(* the port adds.                                                     *)
+(* ------------------------------------------------------------------ *)
+
+let the_cheat_tac = ref (None:tactic option);;
+
+let cheating () =
+  match !the_cheat_tac with Some _ -> true | None -> false;;
+
+(* the conditions that are left, proved with that tactic *)
+
+let discharge_cheat th =
+  match !the_cheat_tac with
+    None -> failwith "discharge_cheat"
+  | Some tac ->
+      itlist (fun h th -> PROVE_HYP (prove(h,tac)) th) (hyp th) th;;
+
+(* ------------------------------------------------------------------ *)
 (* Definition of one function, with a given termination relation.     *)
 (* ------------------------------------------------------------------ *)
 
@@ -782,6 +809,12 @@ let define_single wfs tm =
   let existence cls =
     let etm = mk_exists(f,list_mk_conj cls) in
     if wfs = [] then
+      (* the first pass assumes the termination: no measure is
+         looked for, the condition is proved with the tactic that
+         the port writes down *)
+      if cheating () then
+        discharge_cheat (pure_prove_recursive_function_exists etm)
+      else
       (* HOL Light leaves the conditions it cannot prove as
          assumptions, and then this form is not the one to use *)
       let th = prove_general_recursive_function_exists etm in
@@ -789,7 +822,9 @@ let define_single wfs tm =
     else
     let th = pure_prove_recursive_function_exists etm in
     if hyp th = [] then th
-    else tryfind (fun rt -> discharge_conditions rt th) wfs in
+    else try tryfind (fun rt -> discharge_conditions rt th) wfs
+         with Failure e ->
+           if cheating () then discharge_cheat th else failwith e in
   (* HOL Light's machinery cannot always take the clauses as they
      are: a lambda with a pattern has to be taken apart with FST and
      SND, and where a recursive call is under an ALL or an EX it
@@ -861,15 +896,20 @@ let define_mutual wfs tm =
   let existence cls =
     let etm = mk_exists(g,list_mk_conj cls) in
     if wfs = [] then
-      (* as in define_single: a theorem that still has the
-         condition as an assumption is of no use, and giving it
-         to new_specification would keep the other form of the
-         clauses from being tried *)
-      let th = prove_general_recursive_function_exists etm in
-      (if hyp th = [] then th else failwith "existence") else
+      (if cheating () then
+         discharge_cheat (pure_prove_recursive_function_exists etm)
+       else
+       (* as in define_single: a theorem that still has the
+          condition as an assumption is of no use, and giving it
+          to new_specification would keep the other form of the
+          clauses from being tried *)
+       let th = prove_general_recursive_function_exists etm in
+       (if hyp th = [] then th else failwith "existence")) else
     let th = pure_prove_recursive_function_exists etm in
     if hyp th = [] then th
-    else tryfind (fun rt -> discharge_conditions rt th) wfs in
+    else try tryfind (fun rt -> discharge_conditions rt th) wfs
+         with Failure e ->
+           if cheating () then discharge_cheat th else failwith e in
   let eth = try existence newcls
             with Failure _ -> existence (map depair newcls) in
   let gth = new_specification [gname] eth in
@@ -2844,8 +2884,14 @@ let cake_define_gen wf tm =
        try strat "lift_if" (fun () -> define_lift_if strategies tm)
        with Failure _ when not (declared ()) ->
        let given = match wf with Some rt -> [rt] | None -> [] in
-       let cands = given @ map (fun rel -> rel,TERM_TAC)
-                               (candidate_measures tm) in
+       (* when the first pass assumes the termination there is no
+          point in looking for a measure: the relation that HOL4
+          gives is tried (it is the one the port writes down), and
+          the condition that is left is cheated *)
+       let cands =
+         if cheating () then given
+         else given @ map (fun rel -> rel,TERM_TAC)
+                          (candidate_measures tm) in
        try strat "measure" (fun () -> attempt cands)
        with Failure _ when not (declared ()) ->
        strat "guess" (fun () -> attempt [])) in
@@ -3298,5 +3344,72 @@ let cake_define_list_try f cls =
 let cake_define_tac (rel,tac) tm =
   try cake_time (cake_define_gen (Some(rel,tac))) tm
   with Failure s -> cake_report tm s;;
+
+(* ------------------------------------------------------------------ *)
+(* The definitions whose termination the first pass assumes.          *)
+(*                                                                    *)
+(* The port writes CHEAT_TAC where HOL4 has its Termination tactic,   *)
+(* so that what is left to do is visible in the file and local to it: *)
+(*                                                                    *)
+(*   let foo_def = cake_define_tac (`MEASURE (...)`, CHEAT_TAC)       *)
+(*     `foo ... = ...`;;              (HOL4 gives the relation)       *)
+(*   let foo_def = cake_define_cheat CHEAT_TAC                        *)
+(*     `foo ... = ...`;;              (HOL4 gives none)               *)
+(*                                                                    *)
+(* Replacing that CHEAT_TAC by a tactic that proves the condition is  *)
+(* all that is needed; the definition itself is made either way.      *)
+(* ------------------------------------------------------------------ *)
+
+(* that a definition cost a cheat is noted, so that ml/CHEATS.md
+   lists it and the reports count it *)
+
+let note_term_cheat tm =
+  let name = try fst(dest_var(hd(definition_heads tm)))
+             with Failure _ -> "?" in
+  the_cheats := name :: !the_cheats;
+  cheat_why := "termination (CHEAT_TAC)";
+  note_cheat name tm;
+  flush stdout;;
+
+let with_cheat_tac tac f x =
+  let old = !the_cheat_tac in
+  the_cheat_tac := Some tac;
+  let n0 = length(axioms()) in
+  let r = (try f x with e -> (the_cheat_tac := old; raise e)) in
+  the_cheat_tac := old;
+  r,length(axioms()) > n0;;
+
+let cake_define_cheat tac tm =
+  let th,used =
+    with_cheat_tac tac
+      (fun tm -> try cake_time (cake_define_gen None) tm
+                 with Failure s -> cake_report tm s) tm in
+  if used then note_term_cheat tm;
+  note_dest_fact th; th;;
+
+(* the same with the relation that HOL4 gives: the tactic only has
+   to take the conditions that the relation leaves *)
+
+let cake_define_tac (rel,tac) tm =
+  let n0 = length(axioms()) in
+  let th = cake_define_tac (rel,tac) tm in
+  if length(axioms()) > n0 then note_term_cheat tm;
+  th;;
+
+(* and the two for a family, whose clauses are given one by one *)
+
+let cake_define_list_cheat tac cls =
+  match (try Some(cake_conj_list cls) with Failure s ->
+           (print_string ("\ncake_conj_list failed: " ^ s ^ "\n");
+            flush stdout; None)) with
+    Some tm -> cake_define_cheat tac tm
+  | None -> cake_cheat_list cls;;
+
+let cake_define_list_tac (rel,tac) cls =
+  match (try Some(cake_conj_list cls) with Failure s ->
+           (print_string ("\ncake_conj_list failed: " ^ s ^ "\n");
+            flush stdout; None)) with
+    Some tm -> cake_define_tac (rel,tac) tm
+  | None -> cake_cheat_list cls;;
 
 (* ------------------------------------------------------------------ *)
