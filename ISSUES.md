@@ -660,12 +660,16 @@ those six are ported.
 Of the HOL4 library theories (in `ml/lib/`) only the definitions
 that the port needs are ported, not the whole theories.
 
-Five definitions of `compiler` are left out for the same reason:
-`compile_pancake`, `compile_pancake_64`, `compile_pancake_32` and
-the two command line drivers `full_compile_64` and
-`full_compile_32`, which compile Pancake when the flag says so.
-They need `panStatic$static_check`, `pan_to_target$pan_compile_tap`
-and `panPtreeConversion$parse_topdecs_to_ast`, and their patterns
-need the constructors of Pancake's error type, so the port cannot
-even state them.  `compiler$compile`, which the correctness
-theorem is about, does not use them.
+The five definitions of `compiler` that compile Pancake
+(`compile_pancake`, `compile_pancake_64`, `compile_pancake_32`
+and the two command line drivers `full_compile_64` and
+`full_compile_32`, which compile Pancake when the flag says so)
+are in the port all the same, because they are definitions of a
+ported source: the port declares the three entry points that they
+go through (`panPtreeConversion$parse_topdecs_to_ast`,
+`panStatic$static_check` and `pan_passes$pan_compile_tap`) and
+has what their type is made of -- `panLang`, the abstract syntax
+of Pancake, whose ancestors the port has anyway, the datatype of
+the static errors and the `error` of `errorMonad`.
+`compiler$compile`, which the correctness theorem is about, does
+not use them.

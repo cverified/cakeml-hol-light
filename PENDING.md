@@ -2,10 +2,9 @@
 
 The first pass ports every `Datatype`, `Type`, `Overload`,
 `Definition` and `Inductive` of the 254 files of the port: 4350
-blocks, of which 4345 are in (see `tools/coverage.py`); the five
-that are not are the Pancake definitions of `compiler` below
-(the four step functions of the tail recursive definitions of
-`unify` are declared, which counts as in).
+blocks, of which every one is in (see `tools/coverage.py`); the
+ones that HOL4 makes in a way that the port has no counterpart
+for are declared constants, which the list below has.
 `tools/fidelity.py` checks that no definition lost a name or a
 constructor argument on the way, and `tools/literals.py` that
 its strings, its characters and its numerals are the same ones
@@ -51,11 +50,21 @@ that has neither in it, so the value does not depend on them; the
 port instantiates the type with `:1` and the configuration with
 `ARB`, which is therefore the same call graph.
 
-Five definitions of `compiler` are not ported: the three that
-compile Pancake and the two command line drivers that call them
-(see `ISSUES.md`).  Pancake is outside the port, but the
-datatype of its static errors (`panStatic$staterr`) is in the
-port, because `compiler`'s `compile_error` has it in it.
+The five definitions of `compiler` that compile Pancake (the
+three that do and the two command line drivers that call them)
+are stated with three declared constants.  Pancake is a second
+source language of the same backend, which the correctness
+theorem does not mention, so its parser, its static checker and
+its own backend are outside the port, and the port declares
+`panPtreeConversion$parse_topdecs_to_ast`,
+`panStatic$static_check` and `pan_passes$pan_compile_tap` with
+the type that the five definitions use them at.  What their type
+is made of is in the port: `panLang`, the abstract syntax of
+Pancake, whose ancestors (`mlstring`, `asm`, `backend_common`)
+the port has, the datatype of the static errors
+(`panStatic$staterr`, which `compiler`'s `compile_error` has in
+it) and the `error` of `errorMonad`, the result type of the
+static check, which the library layer takes over.
 
 One constant has no value in the port, because HOL4 makes it in
 a way that HOL Light has no counterpart for.  The port declares
