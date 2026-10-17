@@ -1,0 +1,18 @@
+#!/bin/sh
+# checks : the checks of the port that do not need a session, so
+# that a cycle can run them after every re-port
+#   coverage  every definition of every ported source has a port
+#   fidelity  no name of a definition is missing from its port
+#   literals  the strings and the numerals of a definition survive
+#   lines     no line of ml/ is longer than 72 characters
+C=/home/freek/claude/hol-light/cakeml
+cd $C
+echo "=== coverage"
+python3 -I tools/coverage.py 2>&1 | tail -3
+echo "=== fidelity"
+python3 -I tools/fidelity.py 2>&1 | tail -3
+echo "=== literals"
+python3 -I tools/literals.py 2>&1 | tail -3
+echo "=== lines over 72 characters"
+find ml -name '*.ml' |
+  xargs awk 'length>72 {print FILENAME" "FNR": "length}' | head -5
