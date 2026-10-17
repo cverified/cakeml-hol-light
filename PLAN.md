@@ -1,5 +1,17 @@
 # Plan for the first pass (all definitions)
 
+_Policy (2026-10-17, from the user): in this pass **proofs are
+irrelevant**, and the rule that nothing may depend on a cheat is
+**suspended** until the definitions are done.  A termination
+condition that HOL Light's machinery does not discharge is
+assumed with `CHEAT_TAC` when the condition is evidently true,
+and the definition is then made by `new_specification` -- one
+axiom, a real constant, real clauses.  No time goes on looking
+for a measure or on a lemma to help one.  What is left to work
+on is the definitions that HOL Light cannot make **at all**: a
+body with a type variable that the constant does not reflect,
+or a constant that the port does not have.  See `CLAUDE.md`._
+
 _State: the port has the 4182 definition blocks of the 238
 files that it has to have (of 4198; the sixteen that are out
 are the eleven tail recursive definitions of `unify` and the

@@ -20,6 +20,16 @@ The work has two passes:
 
 2. _Second pass (later):_ the theorems and their proofs.
 
+**In the first pass proofs are irrelevant.**  Not "kept short",
+irrelevant: no time goes on one.  HOL Light will not make a
+recursive definition without a termination proof, so when its
+machinery does not discharge the termination condition and the
+condition is evidently true, it is assumed with `CHEAT_TAC` and
+the definition is made.  Do not look for a measure, do not
+prove a lemma to help one, do not spend a budget on one.  The
+same holds for any other condition that stands between a source
+definition and its HOL Light counterpart.
+
 ## Ground rules
 
 - The HOL4 sources are a _cloned release_ (tag `v3479`) of
@@ -37,18 +47,36 @@ The work has two passes:
   that takes minutes to process is a bug; fix it (or record the
   timing in a comment if there really is no alternative).
 - Lines in `.ml` files are at most 72 characters.
-- The port must not add **any axiom**: at the end,
-  `length (axioms())` has to be 3, the three axioms of HOL Light's
-  kernel.  So no `mk_thm`, no `new_axiom`, and no cheating: every
-  definition goes through `new_definition`, `new_specification` or
-  `define_type`.
+- The port must not add **any axiom** _when the whole port is
+  done_: `length (axioms())` has to be 3 then, the three axioms
+  of HOL Light's kernel.  So in the end no `mk_thm`, no
+  `new_axiom` and no cheat is left, and every definition goes
+  through `new_definition`, `new_specification` or `define_type`.
 
-  _While the first pass is getting every definition in_, a
-  definition that HOL Light's machinery does not make is assumed
-  instead (`cake_cheat`), so that the files after it load and the
-  gap is visible: `ml/CHEATS.md` lists them and
-  `length (axioms())` counts them.  Making them is the rest of the
-  first pass, and no second pass proof may rely on one.
+  **Until the definitions are done this rule is suspended, and
+  so is the rule that nothing may depend on a cheat.**  A cheat
+  is how the first pass gets on with the next definition.  What
+  it costs is visible and counted the whole time: `ml/CHEATS.md`
+  lists every one with the reason, and `length (axioms())`
+  counts them.  There are two kinds, and the first is much the
+  better one:
+
+  - the _termination_ of a definition is assumed (`CHEAT_TAC` on
+    the condition), and the definition itself is made: the
+    constant is introduced by `new_specification`, it has the
+    right type, and its clauses are theorems.  One axiom, and
+    everything after it can be ported as if the definition were
+    there, because it is.
+  - the _definition_ is assumed (`cake_cheat`), because HOL
+    Light cannot make it at all: the body has a type variable
+    that the constant's type does not reflect, or it uses a
+    constant that the port does not have.  These are the ones to
+    work on, and they need a decision or a missing piece ported,
+    not a proof.
+
+  Paying the debt back -- making every assumed termination real
+  -- comes after the definitions are all in, with HOL4's own
+  `Termination` tactic to transliterate.
 
 ## Layout of this directory
 
