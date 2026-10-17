@@ -437,6 +437,16 @@ sources, and why.
   (`the_size_fns`) every candidate measure over a datatype is a
   `\x. 0`, and the measurement says nothing.
 
+- A reason of the shape "timeout in <strategy>" says only that
+  the budget ran out in that strategy, not that a bigger budget
+  would make the definition.  Made again with no budget at all,
+  `presLang$ast_t_to_display` still fails after two seconds
+  (`existence`) and `presLang$clos_to_display` after nineteen
+  minutes, so the budget of thirty seconds of processor time is
+  what keeps a run of two hours from being a much longer one.
+  The reasons to work on are the ones that a definition reaches
+  before the budget does.
+
 - Setting `cake_proforma` writes the dispatch of the
   admissibility proof, and the goals that no proforma takes, to
   `cakeml/tmp/proforma.txt`: that says which proforma the
