@@ -511,12 +511,6 @@ ARG_TYPES = {
   # semanticPrimitives, where the v of this theory is flatSem's
   ('source_to_flatProof', 'orac_rel_inner_def'):
     {'s_compiler': 'compiler_fun'},
-  # the word of the immediate is the one of the state: HOL4
-  # typechecks the clauses together, so the Reg clause of eval_ri
-  # ties the two and the port has to say so
-  ('word_bignumProof', 'eval_ri_def'):
-    {'s': "'a word_bignumProof_state", 'r': 'num',
-     'w': "'a word"},
 }
 
 # definitions whose clauses HOL4 writes with <=>, although what
@@ -978,6 +972,16 @@ let run_linear_reg_alloc_intervals_def = cake_define
        (mk_i_linear_scan_hidden_state (nmax + 1,0)
          ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
          (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
+''',
+  # the word of the immediate is the one of the state, which HOL4
+  # ties by typechecking the clauses together where the port
+  # typechecks each of them on its own (the pre version of the
+  # source says the types, and this says the same ones)
+  ('word_bignumProof', 'eval_ri_def'): r'''
+let eval_ri_def = cake_define_list
+  [`eval_ri (s:'a word_bignumProof_state) (Reg r) =
+      eval_exp s ((Var r):'a wordLang_exp)`;
+   `eval_ri (s:'a word_bignumProof_state) (Imm (w:'a word)) = w`];;
 ''',
   # the ~ of HOL4 is the complement of a word as well as the
   # negation of a truth value, which the port can only tell from
