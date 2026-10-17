@@ -86,7 +86,7 @@ val preamble_tm =
        ""])`` |> EVAL |> rconc;
 *)
 let preamble_def = cake_define
-  `preamble = ((MAP (\n. implode (n ++ [CHR 10]))
+  `preamble = ((MAP (\n. implode (n ++ "\n"))
        [("/* Preprocessor to get around Mac OS, Windows, and" ++
          " Linux differences in naming and calling conventio" ++
          "ns */");
@@ -115,22 +115,22 @@ let preamble_def = cake_define
         "";
         "#if defined(__APPLE__)";
         ".macro _makesym name, base, len";
-        ".set \name, cake_main+\base";
+        ".set \\name, cake_main+\\base";
         ".endm";
         ("# define makesym(name,base,len) _makesym name, bas" ++
           "e, len");
         "#elif defined(__WIN32)";
         ".macro _makesym name, base, len";
-        ".set \name, cake_main+\base";
+        ".set \\name, cake_main+\\base";
         ".endm";
         ("# define makesym(name,base,len) _makesym name, bas" ++
           "e, len");
         "#else";
         ".macro _makesym name, base, len";
-        ".local \name";
-        ".set \name, cake_main+\base";
-        ".size \name, \len";
-        ".type \name, function";
+        ".local \\name";
+        ".set \\name, cake_main+\\base";
+        ".size \\name, \\len";
+        ".type \\name, function";
         ".endm";
         ("# define makesym(name,base,len) _makesym name, bas" ++
           "e, len");
@@ -139,12 +139,12 @@ let preamble_def = cake_define
         "#define DATA_BUFFER_SIZE    65536";
         "#define CODE_BUFFER_SIZE  5242880";
         "";
-        ("     .file        " ++ [CHR 34] ++ "cake.S" ++ [CHR 34]);
+        "     .file        \"cake.S\"";
         ""]))`;;
 
 let data_section_def = cake_define
   `data_section word_directive ret =
-      MAP (\n. implode (n ++ [CHR 10]))
+      MAP (\n. implode (n ++ "\n"))
         (["     .data";
          "     .p2align 3";
          "cdecl(cml_heap): " ++ word_directive ++ " 0";
@@ -160,7 +160,7 @@ let data_section_def = cake_define
 
 let data_buffer_def = cake_define
   `data_buffer =
-      MAP (\n. implode (n ++ [CHR 10]))
+      MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_bitmaps_buffer_begin)";
          "cdecl(cake_bitmaps_buffer_begin):";
          "#if defined(EVAL)";
@@ -171,7 +171,7 @@ let data_buffer_def = cake_define
 
 let code_buffer_def = cake_define
   `code_buffer =
-      MAP (\n. implode (n ++ [CHR 10]))
+      MAP (\n. implode (n ++ "\n"))
         ["     .globl cdecl(cake_codebuffer_begin)";
          "cdecl(cake_codebuffer_begin):";
          "#if defined(EVAL)";
@@ -185,7 +185,7 @@ let code_buffer_def = cake_define
 let comm_strlit_def = cake_define
   `comm_strlit = (implode ",")`;;
 let newl_strlit_def = cake_define
-  `newl_strlit = (implode [CHR 10])`;;
+  `newl_strlit = (implode "\n")`;;
 
 let comma_cat_def = cake_define
   `comma_cat f x =
@@ -238,7 +238,7 @@ let emit_symbol_def = cake_define
          ((\x y. strcat x y) ((\x y. strcat x y) ((\x y. strcat x y)
          (implode "    makesym(") label) (implode ", ")) (toString
          (start'))) (implode ", "))
-       (toString (len))) (implode (")" ++ [CHR 10]))])`;;
+       (toString (len))) (implode ")\n")])`;;
 
 let emit_symbols_def = cake_define
   `emit_symbols lsyms =

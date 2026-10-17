@@ -2899,9 +2899,14 @@ let cake_define_gen wf tm =
      what is left after it is assumed *)
   let ths,_ =
     if free <> [] then
+      (* with the type of every one of them: that is what the
+         port would have to declare to make the definition (the
+         configurations of the targets, say) *)
       (cheat_why :=
          "free: " ^ end_itlist (fun a b -> a ^ ", " ^ b)
-                               (map (fst o dest_var) free);
+                      (map (fun v -> let n,ty = dest_var v in
+                                     n ^ ":" ^ string_of_type ty)
+                           free);
        [cake_cheat tm],TRUTH)
     else
     try (the_strategy := ""; with_timeout strategies tm)

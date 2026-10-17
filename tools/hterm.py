@@ -1125,41 +1125,31 @@ def sml_string_bytes(s):
   return out
 
 
+# how a byte of a string literal is written for HOL Light, whose
+# lexer reads the escapes of OCaml (and not the \a, \f, \v and
+# \u of SML); a backquote would close the quotation of the port,
+# so it is written as the decimal escape
+OCAML_ESC = {0x5c: '\\\\', 0x22: '\\"', 0x0a: '\\n', 0x09: '\\t',
+             0x0d: '\\r', 0x08: '\\b', 0x60: '\\096'}
+
+
 def hl_string(body):
-  """the body of a string literal of HOL4 as a term of HOL Light:
-     HOL Light takes the characters of a literal as they are, so the
-     escapes of HOL4 are decoded, and a byte that a literal of HOL
-     Light cannot hold (a double quote closes it, a backquote the
-     quotation, and a newline would break the layout) is a (CHR n)
-     of its own"""
-  parts = []
-  cur = []
-
-  def flush():
-    # a literal of more than fifty characters is split, so that the
-    # lines of the port can stay short, and one that would end in a
-    # backslash has that character of its own (a backslash in front
-    # of the quote that closes a literal is read as an escape by
-    # some of the tools, and the port is not to depend on that)
-    while len(cur) > 50:
-      k = 50
-      while k > 1 and cur[k-1] == '\\': k -= 1
-      parts.append('"%s"' % ''.join(cur[:k])); del cur[:k]
-    back = 0
-    while cur and cur[-1] == '\\':
-      cur.pop(); back += 1
-    if cur: parts.append('"%s"' % ''.join(cur))
-    parts.extend(['[CHR 92]'] * back)
-    del cur[:]
-
+  """the body of a string literal of HOL4 as one of HOL Light: the
+     escapes of SML are read and written again in the style that
+     HOL Light's lexer knows.  A literal of more than fifty
+     characters is split, so that the lines of the port can stay
+     short (the two pieces are appended)"""
+  units = []
   for b in sml_string_bytes(body):
-    if 32 <= b < 127 and b not in (34, 96):
-      cur.append(chr(b))
-    else:
-      flush()
-      parts.append('[CHR %d]' % b)
-  flush()
-  parts = [p for p in parts if p != '""']
+    if b in OCAML_ESC: units.append(OCAML_ESC[b])
+    elif 32 <= b < 127: units.append(chr(b))
+    else: units.append('\\%03d' % b)
+  parts, cur, n = [], [], 0
+  for u in units:
+    if n + len(u) > 50 and cur:
+      parts.append('"%s"' % ''.join(cur)); cur, n = [], 0
+    cur.append(u); n += len(u)
+  if cur: parts.append('"%s"' % ''.join(cur))
   if not parts: return '""'
   if len(parts) == 1: return parts[0]
   return '(' + ' ++ '.join(parts) + ')'

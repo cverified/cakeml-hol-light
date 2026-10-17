@@ -303,22 +303,21 @@ hol4_overload "collate" "mlstring_collate";;
 
 let char_escape_seq_def = cake_define
   `char_escape_seq c =
-     (if c = (CHR 9) then SOME (implode "\t") else if c = (CHR 10)
-       then SOME (implode "\n") else if c = (CHR 92) then SOME
-       (implode ([CHR 92] ++ [CHR 92])) else if c = (CHR 34) then
-       SOME (implode ([CHR 92] ++ [CHR 34])) else NONE)`;;
+     (if c = (CHR 9) then SOME (implode "\\t") else if c = (CHR
+       10) then SOME (implode "\\n") else if c = (CHR 92) then SOME
+       (implode "\\\\") else if c = (CHR 34) then SOME (implode
+       "\\\"") else NONE)`;;
 
 let char_escaped_def = cake_define
   `char_escaped c = (match char_escape_seq c with
      NONE -> [c] | SOME s -> explode s)`;;
 
 let escape_str_def = cake_define
-  `escape_str s = implode ([CHR 34] ++ FLAT (MAP char_escaped
-  (explode s)) ++ [CHR 34])`;;
+  `escape_str s = implode ("\"" ++ FLAT (MAP char_escaped (explode
+  s)) ++ "\"")`;;
 
 let escape_char_def = cake_define
-  `escape_char c = implode (("#" ++ [CHR 34]) ++ char_escaped c ++
-  [CHR 34])`;;
+  `escape_char c = implode ("#\"" ++ char_escaped c ++ "\"")`;;
 
 (* optimising mlstring app_list *)
 

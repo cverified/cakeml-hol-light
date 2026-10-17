@@ -46,7 +46,7 @@ let is_single_char_symbol_def = cake_define
   `is_single_char_symbol c = MEM c "()[]{},;"`;;
 
 let isSymbol_def = cake_define
-  `isSymbol c = MEM c (CHR 96 :: "!%&$#+-/:<=>?@\~^|*")`;;
+  `isSymbol c = MEM c (CHR 96 :: "!%&$#+-/:<=>?@\\~^|*")`;;
 
 let next_loc_def = cake_define
   `next_loc n x =
@@ -90,18 +90,18 @@ let read_string_def = cake_define_try_tac (fun () ->
        lexer_fun_read_string (TL str) (s ++ [HD str]) (next_loc 1
          loc) else
        match TL str with (CHR 92) :: cs -> lexer_fun_read_string cs
-         (s ++ [CHR 92]) (next_loc 2 loc) | (CHR 34) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 34]) (next_loc 2 loc) |
-         (CHR 97) :: cs -> lexer_fun_read_string cs (s ++ [CHR 7])
-         (next_loc 2 loc) | (CHR 98) :: cs -> lexer_fun_read_string cs
-         (s ++ [CHR 8]) (next_loc 2 loc) | (CHR 116) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 9]) (next_loc 2 loc) | (CHR
-         110) :: cs -> lexer_fun_read_string cs (s ++ [CHR 10])
-         (next_loc 2 loc) | (CHR 118) :: cs -> lexer_fun_read_string cs
-         (s ++ [CHR 11]) (next_loc 2 loc) | (CHR 102) :: cs ->
-         lexer_fun_read_string cs (s ++ [CHR 12]) (next_loc 2 loc) |
-         (CHR 114) :: cs -> lexer_fun_read_string cs (s ++ [CHR 13])
-         (next_loc 2 loc) | c :: cs -> (if isDigit c then
+         (s ++ "\\") (next_loc 2 loc) | (CHR 34) :: cs ->
+         lexer_fun_read_string cs (s ++ "\"") (next_loc 2 loc) | (CHR
+         97) :: cs -> lexer_fun_read_string cs (s ++ [CHR 7]) (next_loc
+         2 loc) | (CHR 98) :: cs -> lexer_fun_read_string cs (s ++ [CHR
+         8]) (next_loc 2 loc) | (CHR 116) :: cs -> lexer_fun_read_string
+         cs (s ++ [CHR 9]) (next_loc 2 loc) | (CHR 110) :: cs ->
+         lexer_fun_read_string cs (s ++ [CHR 10]) (next_loc 2 loc) |
+         (CHR 118) :: cs -> lexer_fun_read_string cs (s ++ [CHR 11])
+         (next_loc 2 loc) | (CHR 102) :: cs -> lexer_fun_read_string cs
+         (s ++ [CHR 12]) (next_loc 2 loc) | (CHR 114) :: cs ->
+         lexer_fun_read_string cs (s ++ [CHR 13]) (next_loc 2 loc) | c
+         :: cs -> (if isDigit c then
                     match read_char_as_3digits (c :: cs) with
                       NONE -> (ErrorS,loc,c :: cs) | SOME (c,cs') ->
                         lexer_fun_read_string cs' (s ++ [c])
@@ -228,7 +228,7 @@ let next_sym_def = cake_define_list_try (fun () ->
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
                str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-             isPREFIX ("#" ++ [CHR 34]) (c :: str) then
+             isPREFIX "#\"" (c :: str) then
            let (t,loc',rest) = lexer_fun_read_string (TL str) ""
              (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX

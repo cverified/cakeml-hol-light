@@ -40,23 +40,41 @@ def hol4_bytes(body):
   return sorted(out)
 
 
-PIECE = re.compile(r'"([^"]*)"|CHR\s+([0-9]+)')
+PIECE = re.compile(r'"([^"\\]|\\.)*"|CHR\s+([0-9]+)')
 # only the string literals of the port, for masking: its (CHR n)
 # may be a term of the source (lexer_fun's s ++ [CHR 7]) as well
-# as the way a literal holds a byte
-PORT_STR = re.compile(r'"[^"]*"')
+PORT_STR = re.compile(r'"(?:[^"\\]|\\.)*"')
+OCAML = {'\\': 92, '"': 34, "'": 39, 'n': 10, 'r': 13, 't': 9,
+         'b': 8, ' ': 32}
+
+
+def ocaml_bytes(body):
+  """the bytes that the body of a string literal of HOL Light
+     denotes: its lexer reads the escapes of OCaml"""
+  out = bytearray()
+  i = 0
+  while i < len(body):
+    if body[i] == '\\' and i + 1 < len(body):
+      c = body[i+1]
+      if c in OCAML: out.append(OCAML[c]); i += 2; continue
+      if c == 'x':
+        out.append(int(body[i+2:i+4], 16)); i += 4; continue
+      if c.isdigit():
+        out.append(int(body[i+1:i+4]) % 256); i += 4; continue
+      out.append(ord(c)); i += 2; continue
+    out.extend(body[i].encode('utf-8')); i += 1
+  return out
 
 
 def port_bytes(text):
-  """the same of a phrase of the port, where a literal holds its
-     characters as they are and a byte that a literal cannot hold
-     is a (CHR n); only the quotations of the phrase are read, so
-     that a comment of the port counts for nothing"""
+  """the bytes of the literals of a phrase of the port; only its
+     quotations are read, so that a comment counts for nothing"""
   out = []
   quoted = ' '.join(re.findall(r'`([^`]*)`', text, re.S))
   for m in PIECE.finditer(quoted):
-    if m.group(1) is not None:
-      out += list(m.group(1).encode('utf-8', 'replace'))
+    t = m.group(0)
+    if t.startswith('"'):
+      out += list(ocaml_bytes(t[1:-1]))
     else:
       out.append(int(m.group(2)) % 256)
   return sorted(out)

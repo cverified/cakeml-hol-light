@@ -63,8 +63,7 @@ let sexpPEG_def = cake_define
                   (simpleSexpPEG_tokeq (CHR 34))
                       (simpleSexpPEG_pnt sxnt_strcontents))
                         (peg_choice (simpleSexpPEG_tokeq (CHR 34))
-                        (peg_error ("Expected " ++ [CHR 34]))
-                        simpleSexpPEG_sumID);
+                        (peg_error "Expected \"") simpleSexpPEG_sumID);
                   pegf (~> (simpleSexpPEG_tokeq (CHR 39)) (grabWS
                     (simpleSexpPEG_pnt sxnt_sexp0)))
                        (\s. (SX_CONS (SX_SYM "quote") (SX_CONS (s)

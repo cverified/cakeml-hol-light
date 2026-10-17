@@ -174,7 +174,7 @@ let print_option_def = cake_define
      (match x with
        NONE -> (implode "") | SOME y -> (\x y. strcat x y) ((\x y.
          strcat x y) ((\x y. strcat x y) h (implode " ")) y) (implode
-         [CHR 10]))`;;
+         "\n"))`;;
 
 (* HOL4 ML code, not ported:
 val current_build_info_str_tm = EVAL ``
@@ -426,10 +426,10 @@ let locs_to_string_def = cake_define
              concat (REPLICATE c (implode " ") ++ REPLICATE ((stop -
                c) + 1) (implode [CHR 94])) in
              concat [(implode "line "); toString (r + 1); (implode
-               ([CHR 10] ++ [CHR 10]));
-                     line; (implode [CHR 10]);
-                     underline; (implode [CHR 10])]) | _4 ->
-                       implode "unknown location")`;;
+               "\n\n");
+                     line; (implode "\n");
+                     underline; (implode "\n")]) | _4 -> implode
+                       "unknown location")`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
 (* HOL4 overload (expanded in the port):
@@ -471,13 +471,12 @@ let compile_def = cake_define
            (let _10 = empty_ffi (implode "finished: type inference")
              in
            if compiler_config_only_print_types c then
-             (M_failure (TypeError (concat ([(implode [CHR 10])] ++
+             (M_failure (TypeError (concat ([(implode "\n")] ++
                               inf_env_to_types_string ic ++
-                              [(implode [CHR 10])]))),misc_Nil) else
-                                if compiler_config_only_print_sexp c
-                                then
+                              [(implode "\n")]))),misc_Nil) else if
+                                compiler_config_only_print_sexp c then
              (M_failure (TypeError (implode
-                ([CHR 10] ++ print_sexp (listsexp (MAP decsexp
+                ("\n" ++ print_sexp (listsexp (MAP decsexp
                   full_prog))))),misc_Nil) else
            match compile_tap (compiler_config_asm_config c)
              (compiler_config_backend_config c) full_prog with
@@ -512,27 +511,26 @@ End *)
 (* The top-level compiler *)
 let error_to_str_def = cake_define_list
   [`error_to_str (ParseError s) =
-         concat [(implode ("### ERROR: parse error" ++ [CHR
-           10])); s; (implode [CHR 10])]`;
+         concat [(implode "### ERROR: parse error\n"); s;
+           (implode "\n")]`;
    `error_to_str (TypeError s) =
          (if (if strlen s = 0 then T else
              if strsub s 0 = (CHR 10) then F else T) then
-           concat [(implode ("### ERROR: type error" ++ [CHR
-             10])); s; (implode [CHR 10])] else s)`;
+           concat [(implode "### ERROR: type error\n"); s;
+             (implode "\n")] else s)`;
    `error_to_str (ConfigError s) = concat [(implode
-  ("### ERROR: config error" ++ [CHR 10])); s; (implode [CHR 10])]`;
+  "### ERROR: config error\n"); s; (implode "\n")]`;
    `error_to_str AssembleError = (implode
-  ("### ERROR: assembly error" ++ [CHR 10]))`;
+  "### ERROR: assembly error\n")`;
    `error_to_str (StaticError e) =
         (match e with
           ScopeErr s -> concat [(implode
-            ("### ERROR: scope error" ++ [CHR 10])); s; (implode
-            [CHR 10])] | WarningErr s -> concat [(implode
-            ("# WARNING:" ++ [CHR 10])); s; (implode [CHR 10])] |
-            GenErr s -> concat [(implode ("### ERROR: static error"
-            ++ [CHR 10])); s; (implode [CHR 10])] | ShapeErr s ->
-            concat [(implode ("### ERROR: shape error" ++ [CHR
-            10])); s; (implode [CHR 10])])`];;
+            "### ERROR: scope error\n"); s; (implode "\n")] |
+            WarningErr s -> concat [(implode "# WARNING:\n"); s;
+            (implode "\n")] | GenErr s -> concat [(implode
+            "### ERROR: static error\n"); s; (implode "\n")] |
+            ShapeErr s -> concat [(implode
+            "### ERROR: shape error\n"); s; (implode "\n")])`];;
 
 let is_error_msg_def = cake_define
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -593,7 +591,7 @@ let find_num_def = cake_define
 
 let get_err_str_def = cake_define_list
   [`get_err_str (INL n) = (implode "")`;
-   `get_err_str (INR n) = concat [n; (implode [CHR 10])]`];;
+   `get_err_str (INR n) = concat [n; (implode "\n")]`];;
 
 (* All the numbers must parse *)
 let parse_num_list_def = cake_define_list
@@ -897,6 +895,8 @@ let add_tap_output_def = cake_define
 
 (* The top-level compiler with almost everything instantiated except the
    top-level configuration *)
+cake_declare "basis" `:dec list`;;
+
 let compile_64_def = cake_define
   `compile_64 cl input =
    (let confexp = parse_target_64 cl in

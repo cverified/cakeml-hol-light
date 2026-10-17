@@ -97,7 +97,7 @@ let lit_to_display_def = cake_define_list
           (toString i)]`;
    `lit_to_display (ast_Char c) =
         displayLang_Item NONE (implode "Char") [empty_item
-          (implode (("#" ++ [CHR 34]) ++ [c] ++ [CHR 34]))]`;
+          (implode ("#\"" ++ [c] ++ "\""))]`;
    `lit_to_display (ast_StrLit s) =
         displayLang_Item NONE (implode "StrLit") [string_imp s]`;
    `lit_to_display (ast_Word8 w) =
@@ -589,7 +589,7 @@ let const_part_to_display_def = cake_define_list
         Tuple (MAP num_to_display vs)]`;
    `const_part_to_display (Str s:const_part) =
       displayLang_Item NONE (implode "Str") [String
-        (mlstring_concat [implode [CHR 34]; s; implode [CHR 34]])]`;
+        (mlstring_concat [implode "\""; s; implode "\""])]`;
    `const_part_to_display (W64 w:const_part) =
       displayLang_Item NONE (implode "W64") [word_to_display w]`];;
 
@@ -607,7 +607,7 @@ let const_to_display_def = cake_define_list_try (fun () ->
         t; Tuple (const_to_display_list vs)]`;
    `const_to_display (ConstStr s) =
       displayLang_Item NONE (implode "ConstStr") [String
-        (mlstring_concat [implode [CHR 34]; s; implode [CHR 34]])]`;
+        (mlstring_concat [implode "\""; s; implode "\""])]`;
    `const_to_display (ConstWord64 w) =
       displayLang_Item NONE (implode "ConstWord64")
         [word_to_display w]`;
@@ -1588,34 +1588,29 @@ let map_to_append_def = cake_define_list
 
 let source_to_strs_def = cake_define
   `source_to_strs decs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     source_to_display_dec) decs`;;
 
 let flat_to_strs_def = cake_define
   `flat_to_strs (decs:flatLang_exp list) =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     flat_to_display) decs`;;
 
 let clos_to_strs_def = cake_define
   `clos_to_strs (decs,funs) =
      (let names = get_src_names (decs ++ MAP (SND o SND) funs) LN in
-       Append (map_to_append (str_tree_to_strs (implode ([CHR 10] ++
-         [CHR 10])) o
+       Append (map_to_append (str_tree_to_strs (implode "\n\n") o
                               display_to_str_tree o
                               clos_dec_to_display names) decs)
-              (map_to_append (str_tree_to_strs (implode ([CHR 10] ++
-                [CHR 10])) o
+              (map_to_append (str_tree_to_strs (implode "\n\n") o
                               display_to_str_tree o
                               clos_fun_to_display names) funs))`;;
 
 let bvl_to_strs_def = cake_define
   `bvl_to_strs names xs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     bvl_fun_to_display names) xs`;;
 
@@ -1633,8 +1628,7 @@ val bvl_test =
 
 let bvi_to_strs_def = cake_define
   `bvi_to_strs names xs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     bvi_fun_to_display names) xs`;;
 
@@ -1652,8 +1646,7 @@ val bvi_test =
 
 let data_to_strs_def = cake_define
   `data_to_strs names xs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     data_fun_to_display names) xs`;;
 
@@ -1671,22 +1664,19 @@ val data_test =
 
 let word_to_strs_def = cake_define
   `word_to_strs names xs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     word_fun_to_display names) xs`;;
 
 let stack_to_strs_def = cake_define
   `stack_to_strs names xs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     stack_fun_to_display names) xs`;;
 
 let lab_to_strs_def = cake_define
   `lab_to_strs names xs =
-     map_to_append (str_tree_to_strs (implode ([CHR 10] ++ [CHR 10]))
-       o
+     map_to_append (str_tree_to_strs (implode "\n\n") o
                     display_to_str_tree o
                     lab_fun_to_display names) xs`;;
 

@@ -54,9 +54,9 @@ let encode_str_def = cake_define
   `encode_str unicode s =
    (let s2 = explode s in
    if EVERY printable s2 then s else mlstring_concat (MAP (\c. if
-     printable c then implode [c] else if unicode then implode ("\u"
+     printable c then implode [c] else if unicode then implode ("\\u"
      ++ REVERSE (n_rev_hex_digs 4 (ORD c))) else mlstring_concat
-     [(implode [CHR 92]); toString (ORD c)]) s2))`;;
+     [(implode "\\"); toString (ORD c)]) s2))`;;
 
 let json_to_mlstring_def = cake_define_list
   [`json_to_mlstring obj =
@@ -69,14 +69,14 @@ let json_to_mlstring_def = cake_define_list
                     concat_with (MAP json_to_mlstring obs)
                       (misc_List [(implode ",")]) ++
                     misc_List [(implode "]")] | jsonLang_String s
-                      -> misc_List ([implode [CHR 34]; encode_str T
-                      s; implode [CHR 34]]) | jsonLang_Int i ->
-                      misc_List [toString i] | jsonLang_Bool b -> (if
-                      b then misc_List [(implode "true")] else
-                      misc_List [(implode "false")]) | jsonLang_Null
-                      -> misc_List [(implode "null")])`;
+                      -> misc_List ([implode "\""; encode_str T s;
+                      implode "\""]) | jsonLang_Int i -> misc_List
+                      [toString i] | jsonLang_Bool b -> (if b then
+                      misc_List [(implode "true")] else misc_List
+                      [(implode "false")]) | jsonLang_Null ->
+                      misc_List [(implode "null")])`;
    `mem_to_string n_obj = (let (n,obj) = n_obj in
-            misc_List [implode [CHR 34]; n; implode ([CHR 34]
-              ++ ":")] ++ json_to_mlstring obj)`];;
+            misc_List [implode "\""; n; implode "\":"] ++
+              json_to_mlstring obj)`];;
 
 hol4_only "++" "APPEND";;

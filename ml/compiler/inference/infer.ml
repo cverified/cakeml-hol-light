@@ -1089,7 +1089,7 @@ let inf_env_to_types_string_def = cake_define
      (let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
      let xs = MAP (\(n,_56,t). mlstring_concat [n; (implode ": ");
                               inf_type_to_string (inf_env_inf_t s) t;
-                              (implode [CHR 10])]) l in
+                              (implode "\n")]) l in
         REVERSE xs)`;;
 
 hol4_only "++" "APPEND";;
