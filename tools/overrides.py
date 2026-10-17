@@ -399,6 +399,13 @@ LOCAL_NAMES = {
   # which HOL Light (one namespace) reads it as
   ('source_evalProof', 'id'): "id'",
   ('word_bignumProof', 'Eval'): 'word_bignumProof_Eval',
+  # the values of bvi_tailrecProof are bviSem's, which are the
+  # ones of bvlSem (dataSem is not an ancestor of it, and in the
+  # one namespace of the port its v comes later); nothing in
+  # env_rel says the type, and its sibling op_id_val, which the
+  # type of its result says it for, has bvlSem's
+  ('bvi_tailrecProof', 'Number'): 'bvlSem_Number',
+  ('bvi_tailrecProof', 'v_to_list'): 'bvlSem_v_to_list',
   ('data_to_word', 'fromList'): 'sptree_fromList',
   ('flat_pattern', 'fromList'): 'sptree_fromList',
   ('clos_to_bvl', 'fromList'): 'sptree_fromList',
