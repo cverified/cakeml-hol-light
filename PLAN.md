@@ -12,24 +12,44 @@ on is the definitions that HOL Light cannot make **at all**: a
 body with a type variable that the constant does not reflect,
 or a constant that the port does not have.  See `CLAUDE.md`._
 
-_State: the port has the 4182 definition blocks of the 238
-files that it has to have (of 4198; the sixteen that are out
+_State: the port has the 4334 definition blocks of the 251
+files that it has to have (of 4350; the sixteen that are out
 are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-17 12:04 **every one of the 238 files loads to the end**,
-and of the 317 definitions that were assumed (`ml/CHEATS.md`)
-282 only have their **termination** assumed, so that **35
-definitions are not made**, which was
-`length (axioms ()) = 239`.  The runs of this round were
-17:21 (323 assumed, 335 axioms, 5 files that die), 19:34 (325,
-370, 2), 22:26 (295, 340, 2), 01:12 (292, 304, 2), 03:14 (290,
-299, 1), 05:37 (291, 303, **0**), 10:35 (38 not made, 239, 1)
-and 12:04 (**35 not made**, 239, 0).  The CHEAT_TAC of the
-termination also made the run a third shorter: 6581 s for the
-run of 05:37, 4492 s for the one of 10:35 and 4065 s for the
-one of 12:04._
+2026-10-17 16:49 **every one of the 254 files loads to the end**
+(the 251 and the three library theories that came with them), and
+of the 322 definitions that are assumed (`ml/CHEATS.md`)
+
+- **295 only have their termination assumed** (`CHEAT_TAC` on the
+  condition): the constant is introduced by `new_specification`,
+  it has the right type and its clauses are theorems, so
+  everything after it is ported as if the definition were there,
+  because it is;
+- **2 are a constant that is declared** without a value, because
+  HOL4 computes the value with ML code that the port cannot run
+  (`word_bignum$mc_iop_code` and the basis program);
+- **25 are not made at all**, which is the work that is left.
+
+That was `length (axioms ()) = 250` and 4475 s.  The runs of this
+round were 17:21 (323 assumed, 335 axioms, 5 files that die),
+19:34 (325, 370, 2), 22:26 (295, 340, 2), 01:12 (292, 304, 2),
+03:14 (290, 299, 1), 05:37 (291, 303, **0**), 10:35 (38 not made,
+239, 1), 12:04 (35 not made, 239, 0) and 16:49 (**25 not made**,
+250, 0, with thirteen more files in the port)._
+
+_What is left (the 25): seven definitions of the clos proofs
+used `finite_map$fmap_rel` and two `string$isGraph`, which are in
+`ml/lib` now; five have a type variable in the body that the
+constant does not reflect (`word_bignumProof`'s `Eval` is the one
+that is left of them); two are the configurations of the targets,
+which are declared constants now; three run the budget out; and
+the rest are the s-expression parser of the new library theories,
+whose constants the port was missing (`peg$ignoreL`, `wfG`, the
+`sxnt_` nonterminals of the grammar that `grammarLib` makes).
+All of them but the type variables and the budget are repaired in
+the port of 18:43; what that run says is the next entry above._
 
 _What the round repaired.  The admissibility machinery: the
 termination conditions of a definition arrive as one
@@ -55,21 +75,6 @@ matches on are stackLang's) and the record of a variable (the
 `stack_to_labProof$halt_assum` and of `memory_assumption`, the
 `s` of `source_to_flatProof$orac_rel_inner`); the `evaluate` of
 stackSem is a definition now, which was 35 axioms on its own._
-
-_What is left: 103 of the 291 run the budget out ("timeout in
-measure" 72, "timeout in guess" 31), but a timeout says only
-that the budget ran out in that strategy, not that a bigger
-budget would make the definition -- made again with no budget
-at all, `presLang$ast_t_to_display` still fails after two
-seconds and `presLang$clos_to_display` after nineteen minutes.
-So the reasons to work on are the ones a definition reaches
-before the budget does: `tryfind: /\` (71), "tryfind: ==>"
-(31), "existence" (24) and "tryfind: admissible" (20).  Three
-definitions have a type variable in their body that
-`new_definition` does not take, and seven use a constant that
-the port does not have (`bagTheory$mlt1`,
-`NTproperties$firstSet`, the basis program, the target
-configurations)._
 
 ## What is ported
 
