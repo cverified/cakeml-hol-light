@@ -9,19 +9,19 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 340: the three axioms of HOL
-Light and 337 for the 295 definitions below.
+`length (axioms ())` is 304: the three axioms of HOL
+Light and 301 for the 292 definitions below.
 
 Why they are assumed:
 
-- 76: timeout in measure
+- 77: timeout in measure
 - 69: tryfind: /\
-- 32: tryfind: ==>
+- 31: tryfind: ==>
 - 31: timeout in guess
 - 24: existence
 - 20: tryfind: admissible
 - 11: TAC_PROOF: Unsolved goals
-- 6: new_definition: Type variables not reflected in constant
+- 3: new_definition: Type variables not reflected in constant
 - 2: free: mlt
 - 2: free: basis
 - 2: free: firstSet
@@ -234,8 +234,7 @@ Why they are assumed:
 | `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
 | `stackSem_get_labels` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
 | `copy_words` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
-| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
-| `stackSem_semantics` | `compiler/backend/semantics/stackSem.ml` | new_definition: Type variables not reflected in constant |
+| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | timeout in measure |
 | `flat_exp_conventions` | `compiler/backend/proofs/word_to_stackProof.ml` | tryfind: /\ |
 | `every_inst` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
 | `full_inst_ok_less` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
@@ -317,7 +316,6 @@ Why they are assumed:
 | `stackProps_get_code_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `stackProps_no_install` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
 | `no_shmemop` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `make_init_opt` | `compiler/backend/proofs/stack_removeProof.ml` | new_definition: Type variables not reflected in constant |
 | `find_next_interference` | `compiler/backend/semantics/targetProps.ml` | timeout in measure |
 | `has_odd_inst` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
 | `has_io_name` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
@@ -332,7 +330,6 @@ Why they are assumed:
 | `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
 | `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in measure |
-| `halt_assum` | `compiler/backend/proofs/stack_to_labProof.ml` | new_definition: Type variables not reflected in constant |
 | `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | new_definition: Type variables not reflected in constant |
 | `ts_tid_rename` | `compiler/inference/inferProps.ml` | tryfind: ==> |
 | `set_tids` | `compiler/inference/inferProps.ml` | tryfind: ==> |
@@ -344,4 +341,4 @@ Why they are assumed:
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-295 definitions.
+292 definitions.
