@@ -11,7 +11,10 @@
 #   5 the template (the library layer may have changed) and the
 #     smoke test on it
 #   6 the next run
-# With NORUN=1 it stops after the smoke test.
+# With NORUN=1 it stops after the smoke test, which is what to
+# use when a definition still has to be looked at in the session
+# of the run (tools/bin/trydef clones hol-seq, and the next run
+# kills it).
 B=/home/freek/claude/hol-light
 PATH=$B/bin:$B/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
