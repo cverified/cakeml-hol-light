@@ -31,7 +31,8 @@ let single_add_def = cake_define
      (x + y + b2w c,(dimword (:'a) <= w2n x + w2n y + b2n c))`;;
 
 let single_sub_def = cake_define
-  `single_sub (x:'a word) (y:'a word) c = single_add x (~y) c`;;
+  `single_sub (x:'a word) (y:'a word) c =
+     single_add x (word_1comp y) c`;;
 
 let single_mul_def = cake_define
   `single_mul (x:'a word) (y:'a word) (c:'a word) =

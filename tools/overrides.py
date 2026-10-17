@@ -978,6 +978,14 @@ let run_linear_reg_alloc_intervals_def = cake_define
          ((nmax + 1,&1):num#int) ((nmax + 1,&1):num#int)
          (nmax + 1,0) (LENGTH moves,(0,(0,0))))`;;
 ''',
+  # the ~ of HOL4 is the complement of a word as well as the
+  # negation of a truth value, which the port can only tell from
+  # the type: here it is the word one (word_1comp)
+  ('multiword', 'single_sub_def'): r'''
+let single_sub_def = cake_define
+  `single_sub (x:'a word) (y:'a word) c =
+     single_add x (word_1comp y) c`;;
+''',
   # HOL4 states the list that EVAL computes for the expression
   # below, in which the type and the configuration are free (the
   # names of the stubs depend on neither, or EVAL could not have
