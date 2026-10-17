@@ -1332,8 +1332,8 @@ let do_app_def = cake_define
            semanticPrimitives_Loc _112 lnum]) ->
          (match store_lookup lnum s with
            SOME (semanticPrimitives_W8array ws) ->
-             (match call_FFI t (ExtCall n) (MAP (n2w o ORD) (explode
-               conf)) ws with
+             (match call_FFI t (ffi_ExtCall n) (MAP (n2w o ORD)
+               (explode conf)) ws with
                FFI_return t' ws' ->
                 (match store_assign lnum (semanticPrimitives_W8array
                   ws') s with

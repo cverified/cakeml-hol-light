@@ -12,10 +12,10 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
-needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/alignment.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/byte.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/peg.ml";;
@@ -234,8 +234,8 @@ let sh_mem_store_def = cake_define
    (match get_var r s with
       SOME (wordLang_Word w) ->
         (if a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
-            0):word8]
+          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
+            [(n2w 0):word8]
                          (word_to_bytes w F ++ word_to_bytes a F)
                            with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
@@ -249,7 +249,7 @@ let sh_mem_load_def = cake_define
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
    (if a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
+     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
        0):word8]
                     (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
@@ -267,8 +267,8 @@ let sh_mem_store_byte_def = cake_define
    (match get_var r s with
       SOME (wordLang_Word w) ->
         (if byte_align a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
-            1):word8]
+          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
+            [(n2w 1):word8]
                          ([get_byte (n2w 0) w F] ++ word_to_bytes a
                            F) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
@@ -284,8 +284,8 @@ let sh_mem_store16_def = cake_define
    (match get_var r s with
       SOME (wordLang_Word w) ->
         (if byte_align a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
-            2):word8]
+          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
+            [(n2w 2):word8]
                          (TAKE 2 (word_to_bytes w F) ++ word_to_bytes
                            a F) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
@@ -301,8 +301,8 @@ let sh_mem_store32_def = cake_define
    (match get_var r s with
       SOME (wordLang_Word w) ->
         (if byte_align a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (SharedMem MappedWrite) [(n2w
-            4):word8]
+          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
+            [(n2w 4):word8]
                          (TAKE 4 (word_to_bytes w F) ++ word_to_bytes
                            a F) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
@@ -316,7 +316,7 @@ let sh_mem_load_byte_def = cake_define
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
    (if byte_align a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
+     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
        1):word8] (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
@@ -331,7 +331,7 @@ let sh_mem_load16_def = cake_define
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
    (if byte_align a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
+     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
        2):word8] (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
@@ -346,7 +346,7 @@ let sh_mem_load32_def = cake_define
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
    (if byte_align a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (SharedMem MappedRead) [(n2w
+     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
        4):word8] (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
@@ -369,10 +369,10 @@ let sh_mem_op_def = cake_define_list
   sh_mem_load16 r ad s`;
    `sh_mem_op asm_Store16 r ad (s:('a,'c,'ffi)stackSem_state) =
   sh_mem_store16 r ad s`;
-   `sh_mem_op asm_Load32 r ad (s:('a,'c,'ffi)stackSem_state) =
-  sh_mem_load32 r ad s`;
-   `sh_mem_op asm_Store32 r ad (s:('a,'c,'ffi)stackSem_state) =
-  sh_mem_store32 r ad s`];;
+   `sh_mem_op (asm_Load32:memop) r ad (s:('a,'c,'ffi)stackSem_state)
+  = sh_mem_load32 r ad s`;
+   `sh_mem_op (asm_Store32:memop) r ad
+  (s:('a,'c,'ffi)stackSem_state) = sh_mem_store32 r ad s`];;
 
 let full_read_bitmap_def = cake_define
   `full_read_bitmap bitmaps x2 =
@@ -1000,10 +1000,10 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                     read_bytearray w4 (w2n w3) (mem_load_byte_aux
                       (state_memory s) (state_mdomain s) (be s))) with
                       (SOME bytes,SOME bytes2) ->
-                 (match call_FFI (state_ffi s) (ExtCall ffi_index)
-                   bytes bytes2 with FFI_final outcome -> (SOME
-                   (FinalFFI outcome),s) | FFI_return new_ffi new_bytes
-                   ->
+                 (match call_FFI (state_ffi s) (ffi_ExtCall
+                   ffi_index) bytes bytes2 with FFI_final outcome ->
+                   (SOME (FinalFFI outcome),s) | FFI_return new_ffi
+                   new_bytes ->
                       (let new_m = write_bytearray w4 new_bytes
                         (state_memory s) (state_mdomain s) (be s) in
                         (NONE,state_ffi_fupd (K new_ffi)

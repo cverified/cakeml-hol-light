@@ -20,8 +20,8 @@ needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "compiler/backend/word_depth.ml";;
 needs "compiler/compiler.ml";;
-needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/comparison.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/multiword.ml";;
@@ -974,7 +974,7 @@ let do_app_aux_def = cake_define
                       ((Rerr (Rabort
                       Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
                       ,dataSem_v)semanticPrimitives_result)) |
-                      (closLang_GlobOp GlobalsPtr,xs) ->
+                      (closLang_GlobOp closLang_GlobalsPtr,xs) ->
          (match xs with [] -> (match dataSem_state_global s with SOME
            p -> Rval (RefPtr T p,s) | NONE -> ((Rerr (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
@@ -982,7 +982,7 @@ let do_app_aux_def = cake_define
            (Rabort
            Rtype_error)):(dataSem_v#('c,'ffi)dataSem_state
            ,dataSem_v)semanticPrimitives_result)) | (closLang_GlobOp
-           (Global n),xs) ->
+           (closLang_Global n),xs) ->
          (match xs with [] -> (match dataSem_state_global s with SOME
            ptr ->
                        (match sptree_lookup ptr (state_refs s) with
@@ -1004,7 +1004,8 @@ let do_app_aux_def = cake_define
                               Rtype_error)):(dataSem_v#('c
                               ,'ffi)dataSem_state
                               ,dataSem_v)semanticPrimitives_result)) |
-                              (closLang_GlobOp (SetGlobal n),xs) ->
+                              (closLang_GlobOp (closLang_SetGlobal
+                              n),xs) ->
          (match xs with [x] -> (match dataSem_state_global s with
            SOME ptr ->
                         (match lookup ptr (state_refs s) with SOME
@@ -1028,7 +1029,8 @@ let do_app_aux_def = cake_define
                                 Rtype_error)):(dataSem_v#('c
                                 ,'ffi)dataSem_state
                                 ,dataSem_v)semanticPrimitives_result)) |
-                                (closLang_GlobOp (SetGlobalsPtr),xs) ->
+                                (closLang_GlobOp
+                                (closLang_SetGlobalsPtr),xs) ->
          (match xs with [RefPtr T p] -> Rval
            (Unit,dataSem_state_global_fupd (K (SOME p)) s) | _149 ->
            ((Rerr (Rabort
@@ -1065,8 +1067,8 @@ let do_app_aux_def = cake_define
                    (ByteArray f (REPLICATE (num_of_int i) (i2w b)))
                      (state_refs s))) s) else Rerr (Rabort Rtype_error))
                      | _152 -> Rerr (Rabort Rtype_error)) |
-                     (closLang_GlobOp AllocGlobal,_153) -> Rerr (Rabort
-                     Rtype_error) | (closLang_MemOp
+                     (closLang_GlobOp closLang_AllocGlobal,_153) -> Rerr
+                     (Rabort Rtype_error) | (closLang_MemOp
                      closLang_FromListByte,_154) -> Rerr (Rabort
                      Rtype_error) | (closLang_MemOp
                      closLang_ConcatByteVec,_155) -> Rerr (Rabort
@@ -1342,7 +1344,7 @@ let do_app_aux_def = cake_define
            cptr; RefPtr _208 ptr]) ->
          (match (lookup cptr (state_refs s),lookup ptr (state_refs
            s)) with (SOME (ByteArray T cws),SOME (ByteArray F ws)) ->
-            (match call_FFI (state_ffi s) (ExtCall n) cws ws with
+            (match call_FFI (state_ffi s) (ffi_ExtCall n) cws ws with
               FFI_return ffi' ws' ->
                  Rval (Unit,state_ffi_fupd (K ffi') (state_refs_fupd
                    (K (insert ptr (ByteArray F ws') (state_refs s)))

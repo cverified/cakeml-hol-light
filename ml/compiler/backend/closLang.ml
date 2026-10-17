@@ -78,8 +78,14 @@ hol4_overload "EqualConst" "closLang_EqualConst";;
 hol4_overload "Build" "closLang_Build";;
 
 let glob_op_INDUCT,glob_op_RECURSION = define_datatype
-  "glob_op = Global (num) | SetGlobal (num) | AllocGlobal | \
-   GlobalsPtr | SetGlobalsPtr";;
+  "glob_op = closLang_Global (num) | closLang_SetGlobal (num) | \
+   closLang_AllocGlobal | closLang_GlobalsPtr | \
+   closLang_SetGlobalsPtr";;
+hol4_overload "Global" "closLang_Global";;
+hol4_overload "SetGlobal" "closLang_SetGlobal";;
+hol4_overload "AllocGlobal" "closLang_AllocGlobal";;
+hol4_overload "GlobalsPtr" "closLang_GlobalsPtr";;
+hol4_overload "SetGlobalsPtr" "closLang_SetGlobalsPtr";;
 
 let closLang_mem_op_INDUCT,closLang_mem_op_RECURSION = define_datatype
   "closLang_mem_op = closLang_Ref | closLang_Update | closLang_El | \
@@ -195,9 +201,9 @@ let has_install_def = cake_define_list_try (fun () ->
 let pure_op_def = cake_define
   `closLang_pure_op op <=>
      (match op with
-       FFI _21 -> F | closLang_GlobOp (SetGlobal _22) -> F |
-         closLang_GlobOp AllocGlobal -> F | closLang_MemOp
-         (closLang_RefByte _23) -> F | closLang_MemOp
+       FFI _21 -> F | closLang_GlobOp (closLang_SetGlobal _22) ->
+         F | closLang_GlobOp closLang_AllocGlobal -> F |
+         closLang_MemOp (closLang_RefByte _23) -> F | closLang_MemOp
          closLang_RefArray -> F | closLang_MemOp closLang_UpdateByte
          -> F | closLang_MemOp (closLang_CopyByte F) -> F |
          closLang_MemOp closLang_XorByte -> F | closLang_MemOp

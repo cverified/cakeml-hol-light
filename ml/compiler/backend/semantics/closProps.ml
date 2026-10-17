@@ -595,7 +595,8 @@ val _ = export_rewrites ["closLang.exp_size_def"]
 let op_gbag_def = cake_define
   `closProps_op_gbag x1 =
       match x1 with
-        closLang_GlobOp (SetGlobal n) -> BAG_INSERT n EMPTY_BAG
+        closLang_GlobOp (closLang_SetGlobal n) -> BAG_INSERT n
+          EMPTY_BAG
       | _209 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "closProps_op_gbag";;
 

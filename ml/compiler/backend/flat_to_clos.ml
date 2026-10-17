@@ -221,14 +221,14 @@ let compile_op_def = cake_define
        flat_to_clos_arg1 xs (\x. closLang_Op t (closLang_MemOp
        closLang_El) [closLang_Op backend_common_None (closLang_IntOp
        (closLang_Const (&n))) []; x]) | flatLang_GlobalVarAlloc n -> Let
-       t xs (closLang_Op t (closLang_GlobOp AllocGlobal) [closLang_Op t
-       (closLang_IntOp (closLang_Const (&n))) []]) |
+       t xs (closLang_Op t (closLang_GlobOp closLang_AllocGlobal)
+       [closLang_Op t (closLang_IntOp (closLang_Const (&n))) []]) |
        flatLang_GlobalVarInit n -> closLang_Op t (closLang_GlobOp
-       (SetGlobal (n + 1))) xs | flatLang_GlobalVarLookup n ->
-       closLang_Op t (closLang_GlobOp (Global (n + 1))) xs | flatLang_Id
-       -> flat_to_clos_arg1 xs (\x. x) | flatLang_Src ast_Opapp ->
-       flat_to_clos_arg2 xs (\x f. closLang_App t NONE f [x]) |
-       flatLang_Src ast_Opassign -> flat_to_clos_arg2 xs (\x y.
+       (closLang_SetGlobal (n + 1))) xs | flatLang_GlobalVarLookup n ->
+       closLang_Op t (closLang_GlobOp (closLang_Global (n + 1))) xs |
+       flatLang_Id -> flat_to_clos_arg1 xs (\x. x) | flatLang_Src
+       ast_Opapp -> flat_to_clos_arg2 xs (\x f. closLang_App t NONE f
+       [x]) | flatLang_Src ast_Opassign -> flat_to_clos_arg2 xs (\x y.
        closLang_Op t (closLang_MemOp closLang_Update) [x; closLang_Op
        backend_common_None (closLang_IntOp (closLang_Const (&0))) [];
        y]) | flatLang_Src ast_Opref -> closLang_Op t (closLang_MemOp

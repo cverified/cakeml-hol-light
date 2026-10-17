@@ -374,11 +374,11 @@ QED
 let known_op_def = cake_define
   `known_op op as g =
         match op with
-          closLang_GlobOp (Global n) ->
+          closLang_GlobOp (closLang_Global n) ->
       (if NULL as then
         match sptree_lookup n g with NONE -> (clos_known_Other,g) |
           SOME x -> (x,g) else (clos_known_Other,g))
-        | (closLang_GlobOp (SetGlobal n)) ->
+        | (closLang_GlobOp (closLang_SetGlobal n)) ->
         (match as with [] -> (clos_known_Other,g) | (a :: xs) ->
           (match sptree_lookup n g with NONE ->
             (clos_known_Other,sptree_insert n a g) | SOME other ->
@@ -413,7 +413,7 @@ let globalOpt_INDUCT,globalOpt_RECURSION = define_datatype
 let isGlobal_def = cake_define
   `isGlobal x1 =
         match x1 with
-          closLang_GlobOp (Global _11) -> T
+          closLang_GlobOp (closLang_Global _11) -> T
         | _12 -> F`;;
 
 let gO_destApx_def = cake_define

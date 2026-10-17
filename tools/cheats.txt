@@ -45,9 +45,6 @@ clos_call calls_sing_def
 clos_call free_def
 clos_call free_sing_def
 clos_callProof v_rel_def
-clos_constantProof build_part'_def
-clos_constantProof parts_def
-clos_constantProof to_parts_def
 clos_interp to_constant_def
 clos_known free_def
 clos_known get_size_sc_aux_def
@@ -186,8 +183,6 @@ word_alloc get_heu_def
 word_alloc get_stack_only_aux_def
 word_alloc remove_dead_def
 word_alloc ssa_cc_trans_def
-word_bignumProof eval_exp_def
-word_bignumProof eval_exp_pre_def
 word_depth call_graph_def
 word_gcFunctions memcpy_def
 word_gcFunctions word_gc_move_list_def

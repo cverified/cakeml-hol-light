@@ -65,7 +65,7 @@ let alloc_glob_count_def = cake_define
         | [Let xs x] -> alloc_glob_count (x :: xs)
         | [Call _3 _4 xs] -> alloc_glob_count xs
         | [Op op xs] ->
-        (if op = closLang_GlobOp AllocGlobal then 1 +
+        (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
           alloc_glob_count xs else alloc_glob_count xs)
         | [_5] -> 0`;;
 
@@ -90,7 +90,7 @@ let global_count_sing_def = cake_define_list_wf
          global_count_sing x + global_count_list xs`;
    `global_count_sing (Call _9 _10 xs:bvl_exp) = global_count_list xs`;
    `global_count_sing (Op op xs:bvl_exp) =
-         (if op = closLang_GlobOp AllocGlobal then 1 +
+         (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
            global_count_list xs else global_count_list xs)`;
    `global_count_list [] = (0:num)`;
    `global_count_list (x :: xs) = ((
@@ -115,7 +115,7 @@ let ConcatByte_location_def = cake_define
 
 let AllocGlobal_code_def = cake_define
   `AllocGlobal_code = ((1:num),
-     Let [Op (closLang_GlobOp GlobalsPtr) []] (
+     Let [Op (closLang_GlobOp closLang_GlobalsPtr) []] (
      Let [Op (closLang_MemOp closLang_El) [Op (closLang_IntOp
        (closLang_Const (&0))) []; Var 0]] (
      Let [Op (closLang_IntOp closLang_Add) [Var 0; Var 2]] (
@@ -126,7 +126,7 @@ let AllocGlobal_code_def = cake_define
           (Let [Op (closLang_MemOp closLang_RefArray) [Op
             (closLang_IntOp (closLang_Const (&0))) []; Op
             (closLang_IntOp closLang_Add) [Var 2; Var 2]]] (
-           Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 0]]
+           Let [Op (closLang_GlobOp closLang_SetGlobalsPtr) [Var 0]]
              (Call 0 (SOME CopyGlobals_location)
                [Var 1; Var 6; Op (closLang_IntOp closLang_Sub) [Op
                  (closLang_IntOp (closLang_Const (&1))) []; Var 3]]
@@ -154,7 +154,7 @@ let InitGlobals_code_def = cake_define
          (Let [Op (closLang_MemOp closLang_Update) [Op
            (closLang_IntOp (closLang_Const (&1))) []; Op (closLang_IntOp
            (closLang_Const (&0))) []; Var 0]]
-           (Let [Op (closLang_GlobOp SetGlobalsPtr) [Var 1]]
+           (Let [Op (closLang_GlobOp closLang_SetGlobalsPtr) [Var 1]]
               (Call 0 (SOME start') [] (SOME (Var 0)))))))`;;
 
 let ListLength_code_def = cake_define
@@ -241,16 +241,16 @@ let compile_op_def = cake_define
      (match op with closLang_IntOp (closLang_Const i) ->
        (match c1 with [] -> compile_int i | _11 -> Let [Op
          (closLang_IntOp (closLang_Const (&0))) c1] (compile_int i)) |
-         closLang_GlobOp (Global n) ->
-       (if NULL c1 then Op (closLang_GlobOp (Global (n + 1))) [] else
-         Let c1 (Op (closLang_MemOp closLang_El) [
+         closLang_GlobOp (closLang_Global n) ->
+       (if NULL c1 then Op (closLang_GlobOp (closLang_Global (n +
+         1))) [] else Let c1 (Op (closLang_MemOp closLang_El) [
          Op (closLang_IntOp closLang_Add) [Op (closLang_IntOp
            (closLang_Const (&2))) []; Var 0];
-         Op (closLang_GlobOp GlobalsPtr) []])) | closLang_GlobOp
-           (SetGlobal n) -> Op (closLang_GlobOp (SetGlobal (n + 1))) c1
-           | closLang_GlobOp AllocGlobal -> Call 0 (SOME
-           AllocGlobal_location) c1 NONE | closLang_BlockOp
-           (closLang_FromList n) -> Let
+         Op (closLang_GlobOp closLang_GlobalsPtr) []])) |
+           closLang_GlobOp (closLang_SetGlobal n) -> Op (closLang_GlobOp
+           (closLang_SetGlobal (n + 1))) c1 | closLang_GlobOp
+           closLang_AllocGlobal -> Call 0 (SOME AllocGlobal_location) c1
+           NONE | closLang_BlockOp (closLang_FromList n) -> Let
          (if NULL c1 then [Op (closLang_IntOp (closLang_Const (&0)))
            []] else c1)
          (Op (closLang_BlockOp (closLang_FromList n))

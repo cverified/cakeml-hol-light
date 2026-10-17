@@ -44,9 +44,7 @@ hol4_overload "regs_fupd" "word_bignumProof_state_regs_fupd";;
 hol4_overload "state_clock" "word_bignumProof_state_clock";;
 hol4_overload "state_clock_fupd" "word_bignumProof_state_clock_fupd";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let eval_exp_def = cake_define_cheat CHEAT_TAC
+let eval_exp_def = cake_define
   `eval_exp s (wordLang_Const w) = w /\
    eval_exp s (Var v) = FAPPLY (word_bignumProof_state_regs s) v /\
    eval_exp s (wordLang_Op asm_Add [x1; x2]) = eval_exp s x1 +
@@ -68,9 +66,7 @@ let eval_exp_def = cake_define_cheat CHEAT_TAC
    eval_exp s (Shift Ror x1 x2) = word_ror (eval_exp s x1) (w2n
      (eval_exp s x2))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let eval_exp_pre_def = cake_define_cheat CHEAT_TAC
+let eval_exp_pre_def = cake_define
   `eval_exp_pre s x2 =
         match x2 with
           wordLang_Const w -> T

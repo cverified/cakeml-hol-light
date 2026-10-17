@@ -9,23 +9,22 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 232: the three axioms of HOL
-Light and 229 for the 326 definitions below.
+`length (axioms ())` is 205: the three axioms of HOL
+Light and 202 for the 323 definitions below.
 
-Of these 326 definitions
+Of these 323 definitions
 
-- 305 have only their **termination** assumed, so the
+- 299 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
-- 20 are a constant that is **declared** without a
+- 24 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
-- 1 are **not made** at all, which is the work that is
+- 0 are **not made** at all, which is the work that is
   left.
 
 Why they are assumed:
 
-- 305: termination (CHEAT_TAC)
-- 20: declared (no value)
-- 1: new_definition: Type variables not reflected in constant
+- 299: termination (CHEAT_TAC)
+- 24: declared (no value)
 
 | definition | file | why |
 |---|---|---|
@@ -214,6 +213,10 @@ Why they are assumed:
 | `sexpdec` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
 | `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
 | `decode_infer_t` | `compiler/inference/unify.ml` | termination (CHEAT_TAC) |
+| `cvwalk_code` | `compiler/inference/unify.ml` | declared (no value) |
+| `kcocwl_code` | `compiler/inference/unify.ml` | declared (no value) |
+| `kcwalkstarwl_code` | `compiler/inference/unify.ml` | declared (no value) |
+| `cunify_code` | `compiler/inference/unify.ml` | declared (no value) |
 | `type_name_check_subst` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `type_name_check_subst` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `infer_p` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
@@ -315,9 +318,6 @@ Why they are assumed:
 | `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
-| `parts_list` | `compiler/backend/proofs/clos_constantProof.ml` | termination (CHEAT_TAC) |
-| `to_parts` | `compiler/backend/proofs/clos_constantProof.ml` | termination (CHEAT_TAC) |
-| `build_part'` | `compiler/backend/proofs/clos_constantProof.ml` | termination (CHEAT_TAC) |
 | `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
 | `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
 | `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
@@ -333,10 +333,6 @@ Why they are assumed:
 | `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
-| `eval_exp` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
-| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
-| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
-| `word_bignumProof_Eval` | `compiler/backend/proofs/word_bignumProof.ml` | new_definition: Type variables not reflected in constant |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
@@ -356,4 +352,4 @@ Why they are assumed:
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 
-326 definitions.
+323 definitions.

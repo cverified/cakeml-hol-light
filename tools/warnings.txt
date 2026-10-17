@@ -75,6 +75,9 @@ asm	Overload byte_offset_ok
 asm	Overload jump_offset_ok
 asm	Overload cjump_offset_ok
 asm	Overload loc_offset_ok
+panLang	Overload TailCall
+panLang	Overload AssignCall
+panLang	Overload StandAloneCall
 stackLang	Overload While
 stackLang	Overload move
 stackLang	Overload sub_1_inst
@@ -286,6 +289,29 @@ cmlPtreeConversion	Overload lift
 cmlParse	Overload cmlpegexec
 mlvector	ML code skipped: val toList_aux_ind = theorem"toList_aux_ind";
 export	ML code skipped: val preamble_tm =   ``(MAP (\n. strlit(n ++ "\n"))       ["/
+export_x64	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
+export_x64	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
+export_x64	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
+export_x64	ML code skipped: val windows_ffi_code' =   ``λret. SmartAppend     (      Lis
+export_x64	ML code skipped: val (windows_ffi_code_true,windows_ffi_code_false) =     (``
+export_x64	ML code skipped: val windows_ffi_code =   ``λret. if ret then ^windows_ffi_co
+export_x64	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+export_arm8	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
+export_arm8	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
+export_arm8	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
+export_arm8	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+export_arm7	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
+export_arm7	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
+export_arm7	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
+export_arm7	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+export_mips	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
+export_mips	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
+export_mips	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
+export_mips	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
+export_riscv	ML code skipped: val ffi_code' =   ``λret. SmartAppend     (List (MAP (\n. st
+export_riscv	ML code skipped: val (ffi_code_true,ffi_code_false) =     (``^ffi_code' T`` |
+export_riscv	ML code skipped: val ffi_code =   ``λret. if ret then ^ffi_code_true else ^ff
+export_riscv	ML code skipped: val entry_point_code =   ``(List (MAP (\n. strlit(n ++ "\n")
 fromSexp	Overload lift
 fromSexp	ML code skipped: val type_ind =   (TypeBase.induction_of``:ast_t``)   |> Q.SP
 fromSexp	ML code skipped: val pat_ind =   (TypeBase.induction_of``:pat``)   |> Q.SPECL
@@ -322,11 +348,6 @@ compiler	ML code skipped: val current_build_info_str_tm = EVAL ``     let commit
 compiler	ML code skipped: fun drop_until p [] = []   | drop_until p (x::xs) = if p x t
 compiler	ML code skipped: val help_string_tm =   help_string |> hd |> (fn QUOTE s => s
 compiler	Overload add_locs
-compiler	compile_pancake_def: PENDING (Pancake, which the port does not have)
-compiler	compile_pancake_64_def: PENDING (Pancake, which the port does not have)
-compiler	full_compile_64_def: PENDING (Pancake, which the port does not have)
-compiler	compile_pancake_32_def: PENDING (Pancake, which the port does not have)
-compiler	full_compile_32_def: PENDING (Pancake, which the port does not have)
 gc_shared	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];
 gc_shared	ML code skipped: val heap_filter_aux_ADD_SING = prove(   ``!k n e heap.      
 copying_gc	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];

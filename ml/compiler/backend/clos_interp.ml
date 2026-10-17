@@ -20,7 +20,7 @@ let can_interpret_op_def = cake_define
       match x1 with
         closLang_BlockOp (closLang_Cons tag) -> (l = 0 \/ tag < 3)
       | (closLang_IntOp (closLang_Const i)) -> (l = 0)
-      | (closLang_GlobOp (Global n)) -> (l = 0)
+      | (closLang_GlobOp (closLang_Global n)) -> (l = 0)
       | (closLang_BlockOp (closLang_Constant c)) -> (l = 0)
       | _1 -> F`;;
 
@@ -54,7 +54,7 @@ let check_size_op_def = cake_define
         closLang_BlockOp (closLang_Cons tag) -> (if l = (0:num) then
           k else k - (1:num))
       | (closLang_IntOp (closLang_Const i)) -> (k:num)
-      | (closLang_GlobOp (Global n)) -> k
+      | (closLang_GlobOp (closLang_Global n)) -> k
       | _20 -> k - 1`;;
 
 let check_size_def = cake_define_list
@@ -100,7 +100,8 @@ let to_constant_op_def = cake_define
       match x1 with
         closLang_IntOp (closLang_Const i) -> ConstCons 1 [ConstInt i]
       | (closLang_BlockOp (closLang_Constant c)) -> ConstCons 1 [c]
-      | (closLang_GlobOp (Global n)) -> ConstCons 2 [ConstInt (&n)]
+      | (closLang_GlobOp (closLang_Global n)) -> ConstCons 2
+        [ConstInt (&n)]
       | (closLang_BlockOp (closLang_Cons tag)) ->
      (if l = 0 then ConstCons 1 [ConstCons tag []] else ConstCons
        (tag + 5) [cs])
@@ -204,7 +205,7 @@ let clos_interpreter_body_def = cake_define
             Let backend_common_None [(\env x. App backend_common_None
               NONE (closLang_App backend_common_None NONE (closLang_App
               backend_common_None NONE (closLang_Op backend_common_None
-              (closLang_GlobOp (Global 0)) [])
+              (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -214,7 +215,7 @@ let clos_interpreter_body_def = cake_define
                         (closLang_App backend_common_None NONE
                         (closLang_App backend_common_None NONE
                         (closLang_Op backend_common_None
-                        (closLang_GlobOp (Global 0)) [])
+                        (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 1)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -229,7 +230,7 @@ let clos_interpreter_body_def = cake_define
          (App backend_common_None NONE ((\env x. App
            backend_common_None NONE (closLang_App backend_common_None
            NONE (closLang_App backend_common_None NONE (closLang_Op
-           backend_common_None (closLang_GlobOp (Global 0)) [])
+           backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -239,7 +240,7 @@ let clos_interpreter_body_def = cake_define
                           (closLang_App backend_common_None NONE
                           (closLang_App backend_common_None NONE
                           (closLang_Op backend_common_None
-                          (closLang_GlobOp (Global 0)) [])
+                          (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -253,9 +254,10 @@ let clos_interpreter_body_def = cake_define
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 2 1
-         (closLang_Op backend_common_None (closLang_GlobOp (Global
-           0)) [(\n x. closLang_Op backend_common_None (closLang_BlockOp
-           (closLang_ElemAt n)) [x]) 0 ((Var backend_common_None) 0)]) (
+         (closLang_Op backend_common_None (closLang_GlobOp
+           (closLang_Global 0)) [(\n x. closLang_Op backend_common_None
+           (closLang_BlockOp (closLang_ElemAt n)) [x]) 0 ((Var
+           backend_common_None) 0)]) (
        (\tag len. If backend_common_None (closLang_Op
          backend_common_None (closLang_BlockOp (closLang_TagLenEq tag
          len)) [(Var backend_common_None) 0])) 0 1
@@ -272,7 +274,7 @@ let clos_interpreter_body_def = cake_define
          (Let backend_common_None [(\env x. App backend_common_None
            NONE (closLang_App backend_common_None NONE (closLang_App
            backend_common_None NONE (closLang_Op backend_common_None
-           (closLang_GlobOp (Global 0)) [])
+           (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 1)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -281,7 +283,7 @@ let clos_interpreter_body_def = cake_define
             ((\env x. App backend_common_None NONE (closLang_App
               backend_common_None NONE (closLang_App backend_common_None
               NONE (closLang_Op backend_common_None (closLang_GlobOp
-              (Global 0)) [])
+              (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x])
                (closLang_Op backend_common_None (closLang_BlockOp
@@ -295,7 +297,7 @@ let clos_interpreter_body_def = cake_define
          (Handle backend_common_None ((\env x. App
            backend_common_None NONE (closLang_App backend_common_None
            NONE (closLang_App backend_common_None NONE (closLang_Op
-           backend_common_None (closLang_GlobOp (Global 0)) [])
+           backend_common_None (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -304,7 +306,7 @@ let clos_interpreter_body_def = cake_define
             ((\env x. App backend_common_None NONE (closLang_App
               backend_common_None NONE (closLang_App backend_common_None
               NONE (closLang_Op backend_common_None (closLang_GlobOp
-              (Global 0)) [])
+              (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x])
                (closLang_Op backend_common_None (closLang_BlockOp
@@ -318,7 +320,7 @@ let clos_interpreter_body_def = cake_define
          (If backend_common_None ((\env x. App backend_common_None
            NONE (closLang_App backend_common_None NONE (closLang_App
            backend_common_None NONE (closLang_Op backend_common_None
-           (closLang_GlobOp (Global 0)) [])
+           (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -327,7 +329,8 @@ let clos_interpreter_body_def = cake_define
                   ((\env x. App backend_common_None NONE
                     (closLang_App backend_common_None NONE (closLang_App
                     backend_common_None NONE (closLang_Op
-                    backend_common_None (closLang_GlobOp (Global 0)) [])
+                    backend_common_None (closLang_GlobOp
+                    (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -336,7 +339,8 @@ let clos_interpreter_body_def = cake_define
                   ((\env x. App backend_common_None NONE
                     (closLang_App backend_common_None NONE (closLang_App
                     backend_common_None NONE (closLang_Op
-                    backend_common_None (closLang_GlobOp (Global 0)) [])
+                    backend_common_None (closLang_GlobOp
+                    (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -348,7 +352,7 @@ let clos_interpreter_body_def = cake_define
          (Raise backend_common_None ((\env x. App backend_common_None
            NONE (closLang_App backend_common_None NONE (closLang_App
            backend_common_None NONE (closLang_Op backend_common_None
-           (closLang_GlobOp (Global 0)) [])
+           (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -360,7 +364,7 @@ let clos_interpreter_body_def = cake_define
          ((\env x. App backend_common_None NONE (closLang_App
            backend_common_None NONE (closLang_App backend_common_None
            NONE (closLang_Op backend_common_None (closLang_GlobOp
-           (Global 0)) [])
+           (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -369,7 +373,7 @@ let clos_interpreter_body_def = cake_define
        Let backend_common_None [(\env x. App backend_common_None NONE
          (closLang_App backend_common_None NONE (closLang_App
          backend_common_None NONE (closLang_Op backend_common_None
-         (closLang_GlobOp (Global 0)) [])
+         (closLang_GlobOp (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 1)) []]) [x]) ((Var
                backend_common_None) 2) ((\n x. closLang_Op
@@ -414,8 +418,8 @@ let opt_interp_def = cake_define
      (if can_interpret e /\ nontrivial_size e then
        SOME ((\env x. App backend_common_None NONE (closLang_App
          backend_common_None NONE (closLang_App backend_common_None NONE
-         (closLang_Op backend_common_None (closLang_GlobOp (Global 0))
-         [])
+         (closLang_Op backend_common_None (closLang_GlobOp
+         (closLang_Global 0)) [])
              [env]) [closLang_Op backend_common_None
                (closLang_BlockOp (closLang_Cons 0)) []]) [x])
                (closLang_Op backend_common_None (closLang_BlockOp
@@ -436,15 +440,15 @@ let insert_interp1_def = cake_define
 let compile_init_def = cake_define
   `compile_init b =
      Let backend_common_None [closLang_Op backend_common_None
-       (closLang_GlobOp AllocGlobal) [closLang_Op backend_common_None
-       (closLang_IntOp (closLang_Const (&1))) []];
+       (closLang_GlobOp closLang_AllocGlobal) [closLang_Op
+       backend_common_None (closLang_IntOp (closLang_Const (&1))) []];
                if b then
                  closLang_Fn (implode "clos_interpreter") NONE NONE 1
                    clos_interpreter else
                  closLang_Op backend_common_None (closLang_BlockOp
                    (closLang_Cons 0)) []]
        (closLang_Op backend_common_None (closLang_GlobOp
-         (SetGlobal 0)) [Var backend_common_None 1])`;;
+         (closLang_SetGlobal 0)) [Var backend_common_None 1])`;;
 
 let attach_interpreter_def = cake_define
   `attach_interpreter xs =

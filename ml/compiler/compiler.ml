@@ -16,29 +16,36 @@
 needs "basis/pure/mlint.ml";;
 needs "basis/pure/mlsexp.ml";;
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/ag32/export_ag32.ml";;
+needs "compiler/backend/arm7/export_arm7.ml";;
+needs "compiler/backend/arm8/export_arm8.ml";;
 needs "compiler/backend/backend.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/backend_passes.ml";;
 needs "compiler/backend/clos_known.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/flat_pattern.ml";;
+needs "compiler/backend/mips/export_mips.ml";;
+needs "compiler/backend/riscv/export_riscv.ml";;
+needs "compiler/backend/x64/export_x64.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/inference/infer.ml";;
 needs "compiler/parsing/cmlParse.ml";;
 needs "compiler/parsing/fromSexp.ml";;
 needs "compiler/parsing/lexer_impl.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
 needs "lib/simpleSexpParse.ml";;
 needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
-(* HOL4 ancestors outside the port: basisProg x64_config export_x64
-   arm8_config export_arm8 riscv_config export_riscv mips_config
-   export_mips arm7_config export_arm7 ag32_config export_ag32
+(* HOL4 ancestors outside the port: basisProg x64_config arm8_config
+   riscv_config mips_config arm7_config ag32_config
    panPtreeConversion pan_to_target panStatic pan_passes *)
 
 let staterr_INDUCT,staterr_RECURSION = define_datatype
@@ -486,29 +493,33 @@ let compile_def = cake_define
              (bytes,data,c),td) -> (M_success (bytes,data,c),td))))`;;
 hol4_overload "compile" "compiler_compile";;
 
-(* PENDING: Pancake, which the port does not have
-Definition compile_pancake_def:
-  compile_pancake asm_conf c input =
-  let _ = empty_ffi «finished: start up» in
-  case panPtreeConversion$parse_topdecs_to_ast input of
-  | INR errs =>
-    ((M_failure $ ParseError $ concat $
-       MAP (λ(msg,loc). concat [msg; « at »;
-                                locs_to_string (implode input) (SOME
-                                  loc); «\n»])
-           errs), Nil, [])
-  | INL funs =>
-      case static_check funs of
-      | (error e, warns) => (M_failure $ StaticError e, Nil, MAP
-        StaticError warns)
-      | (return (), warns) =>
-          let _ = empty_ffi «finished: lexing and parsing» in
-          case pan_passes$pan_compile_tap asm_conf c funs of
-          | (NONE,td) => (M_failure AssembleError, td, MAP StaticError
-            warns)
-          | (SOME (bytes,data,c),td) => (M_success (bytes,data,c), td,
-            MAP StaticError warns)
-End *)
+cake_declare "parse_topdecs_to_ast"
+  `:string -> (('a)decl)list + (mlstring#locs)list`;;
+cake_declare "static_check"
+  `:(('a)decl)list -> (1,staterr)errorMonad_error#(staterr)list`;;
+cake_declare "pan_compile_tap"
+  `:('a)asm_config -> backend_config -> (('a)decl)list ->
+    ((((8)word)list#(('a)word)list#backend_config)option)#
+    (mlstring)app_list`;;
+
+let compile_pancake_def = cake_define
+  `compile_pancake asm_conf c input =
+   (let _11 = empty_ffi (implode "finished: start up") in
+   match parse_topdecs_to_ast input with INR errs ->
+     ((M_failure (ParseError (concat
+        (MAP (\(msg,loc). concat [msg; (implode " at ");
+                              locs_to_string (implode input) (SOME
+                                loc); (implode "\n")])
+            errs)))),misc_Nil,[]) | INL funs ->
+       (match static_check funs with (errorMonad_error e,warns) ->
+         (M_failure (StaticError e),misc_Nil,MAP StaticError warns) |
+         (errorMonad_return one,warns) ->
+           (let _12 = empty_ffi (implode
+             "finished: lexing and parsing") in
+           match pan_compile_tap asm_conf c funs with (NONE,td) ->
+             (M_failure AssembleError,td,MAP StaticError warns) |
+             (SOME (bytes,data,c),td) -> (M_success
+             (bytes,data,c),td,MAP StaticError warns))))`;;
 
 (* The top-level compiler *)
 let error_to_str_def = cake_define_list
@@ -655,13 +666,13 @@ let parse_clos_conf_def = cake_define
          (clos_to_bvl_config_max_app_fupd (K n)
            (clos_to_bvl_config_do_call_fupd (K c)
            (clos_to_bvl_config_known_conf_fupd (K (SOME (mk_config x
-           i))) (clos_to_bvl_config_do_mti_fupd (K m) clos)))) | _11 ->
+           i))) (clos_to_bvl_config_do_mti_fupd (K m) clos)))) | _13 ->
            INR (concat [get_err_str max_body_size])) else
      (INL
        (clos_to_bvl_config_max_app_fupd (K n)
          (clos_to_bvl_config_do_call_fupd (K c)
          (clos_to_bvl_config_known_conf_fupd (K NONE)
-         (clos_to_bvl_config_do_mti_fupd (K m) clos)))))) | _12 ->
+         (clos_to_bvl_config_do_mti_fupd (K m) clos)))))) | _14 ->
      INR (concat [get_err_str multi;
                   get_err_str known';
                   get_err_str inline_factor;
@@ -688,7 +699,7 @@ let parse_bvl_conf_def = cake_define
          (bvl_to_bvi_config_do_tmc_fupd (K do_tmc)
          (bvl_to_bvi_config_split_main_at_seq_fupd (K m)
          (bvl_to_bvi_config_exp_cut_fupd (K e)
-         (bvl_to_bvi_config_inline_size_limit_fupd (K i) bvl))))) | _13
+         (bvl_to_bvi_config_inline_size_limit_fupd (K i) bvl))))) | _15
          ->
      INR (concat [get_err_str inlinesz;
                   get_err_str expcut;
@@ -753,7 +764,7 @@ let parse_data_conf_def = cake_define
          (data_to_word_config_len_size_fupd (K ls)
          (data_to_word_config_pad_bits_fupd (K pb)
          (data_to_word_config_len_bits_fupd (K lb)
-         (data_to_word_config_tag_bits_fupd (K tb) data)))))) | _14 ->
+         (data_to_word_config_tag_bits_fupd (K tb) data)))))) | _16 ->
       INR (concat [get_err_str tag_bits;
                    get_err_str len_bits;
                    get_err_str pad_bits;
@@ -770,8 +781,8 @@ let parse_stack_conf_def = cake_define
      (stack_to_lab_config_perf_calls stack') in
    match (jump,perf) with
      (INL j,INL p) -> INL (stack_to_lab_config_perf_calls_fupd (K
-       p) (stack_to_lab_config_jump_fupd (K j) stack')) | (INR s,_15)
-       -> INR s | (_16,INR s) -> INR s)`;;
+       p) (stack_to_lab_config_jump_fupd (K j) stack')) | (INR s,_17)
+       -> INR s | (_18,INR s) -> INR s)`;;
 
 (* tap *)
 let parse_tap_conf_def = cake_define
@@ -807,7 +818,7 @@ let extend_conf_def = cake_define
          (backend_config_data_conf_fupd (K data)
          (backend_config_word_to_word_conf_fupd (K wtw)
          (backend_config_bvl_conf_fupd (K bvl)
-         (backend_config_clos_conf_fupd (K clos) conf))))))) | _17 ->
+         (backend_config_clos_conf_fupd (K clos) conf))))))) | _19 ->
        INR (concat [get_err_str clos;
                 get_err_str bvl;
                 get_err_str wtw;
@@ -819,40 +830,16 @@ let extend_conf_def = cake_define
 (* Defaults to x64 if no target given *)
 cake_declare "x64_backend_config" `:backend_config`;;
 cake_declare "x64_config" `:(64)asm_config`;;
-cake_declare "x64_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "arm8_backend_config" `:backend_config`;;
 cake_declare "arm8_config" `:(64)asm_config`;;
-cake_declare "arm8_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "mips_backend_config" `:backend_config`;;
 cake_declare "mips_config" `:(64)asm_config`;;
-cake_declare "mips_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "riscv_backend_config" `:backend_config`;;
 cake_declare "riscv_config" `:(64)asm_config`;;
-cake_declare "riscv_export"
-  `:mlstring list -> word8 list -> word64 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "arm7_backend_config" `:backend_config`;;
 cake_declare "arm7_config" `:(32)asm_config`;;
-cake_declare "arm7_export"
-  `:mlstring list -> word8 list -> word32 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 cake_declare "ag32_backend_config" `:backend_config`;;
 cake_declare "ag32_config" `:(32)asm_config`;;
-cake_declare "ag32_export"
-  `:mlstring list -> word8 list -> word32 list ->
-    (mlstring#num#num) list -> mlstring list -> bool
-    -> bool -> (mlstring)app_list`;;
 
 let parse_target_64_def = cake_define
   `parse_target_64 ls =
@@ -896,7 +883,7 @@ let parse_top_config_def = cake_define
      (INL sexp,INL prelude,INL typeinference,INL mainreturn) ->
        INL
          (sexp,prelude,typeinference,onlyprinttypes,sexpprint,mainreturn
-         ,nowarnings) | _18 -> INR (concat [
+         ,nowarnings) | _20 -> INR (concat [
                 get_err_str sexp;
                 get_err_str prelude;
                 get_err_str typeinference;
@@ -962,7 +949,7 @@ let compile_64_def = cake_define
                implode "") | (M_failure err,td) -> (add_tap_output td
                  (List []),error_to_str err))) | INR err ->
      (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
-       _19 ->
+       _21 ->
      (List [],error_to_str (ConfigError (concat [get_err_str
        confexp; get_err_str topconf]))))`;;
 
@@ -972,56 +959,47 @@ let pancake_backend_conf_def = cake_define
   c)))
      c`;;
 
-(* PENDING: Pancake, which the port does not have
-Definition compile_pancake_64_def:
-  compile_pancake_64 cl input =
-  let confexp = parse_target_64 cl in
-  case confexp of
-  | INR err => (List[], error_to_str (ConfigError err))
-  | INL (conf, export, aconf) =>
-      let topconf = parse_top_config cl in
-      case (topconf) of
-      | INR err => (List[], error_to_str (ConfigError err))
-      | INL
-        (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret,nowarn)
-        =>
-          let ext_conf = extend_conf cl conf in
-          case ext_conf of
-          | INR err =>
-              (List[], error_to_str (ConfigError (get_err_str
-                ext_conf)))
-          | INL ext_conf =>
-              let ext_conf = pancake_backend_conf ext_conf in
-              case compiler$compile_pancake aconf ext_conf input of
-              | (M_failure err, td, warns) =>
-                  (List[], concat (MAP error_to_str (err::(if nowarn
-                    then [] else warns))))
-              | (M_success (bytes, data, c), td, warns) =>
-                  (add_tap_output td
-                    (export (ffinames_to_string_list $
-                      the [] c.lab_conf.ffi_names) bytes data c.symbols
-                      c.exported mainret T),
-                   concat (MAP error_to_str (if nowarn then [] else
-                     warns)))
-End *)
+let compile_pancake_64_def = cake_define
+  `compile_pancake_64 cl input =
+   (let confexp = parse_target_64 cl in
+   match confexp with INR err -> (List [],error_to_str (ConfigError
+     err)) | INL (conf,export,aconf) ->
+       (let topconf = parse_top_config cl in
+       match (topconf) with INR err -> (List [],error_to_str
+         (ConfigError err)) | INL
+         (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret
+         ,nowarn) ->
+           (let ext_conf = extend_conf cl conf in
+           match ext_conf with INR err ->
+               (List [],error_to_str (ConfigError (get_err_str
+                 ext_conf))) | INL ext_conf ->
+               (let ext_conf = pancake_backend_conf ext_conf in
+               match compile_pancake aconf ext_conf input with
+                 (M_failure err,td,warns) ->
+                   (List [],concat (MAP error_to_str (err :: (if
+                     nowarn then [] else warns)))) | (M_success
+                     (bytes,data,c),td,warns) ->
+                   (add_tap_output td
+                     (export (ffinames_to_string_list
+                       (the [] (lab_to_target_config_ffi_names
+                         (backend_config_lab_conf c)))) bytes data
+                         (backend_config_symbols c)
+                         (backend_config_exported
+                       c) mainret T),
+                    concat (MAP error_to_str (if nowarn then []
+                      else warns)))))))`;;
 
-(* PENDING: Pancake, which the port does not have
-Definition full_compile_64_def:
-  full_compile_64 cl inp fs =
-  if has_help_flag cl then
-    add_stdout fs help_string
-  else if has_version_flag cl then
-    add_stdout fs current_build_info_str
-  else
-    let (out, err) =
-        if has_pancake_flag cl then
-          compile_pancake_64 cl inp
-        else
-          compile_64 cl inp
-    in
-      add_stderr (add_stdout (fastForwardFD fs 0) (concat (append out)))
-        err
-End *)
+let full_compile_64_def = cake_define
+  `full_compile_64 cl inp fs =
+   (if has_help_flag cl then
+     add_stdout fs help_string else if has_version_flag cl then
+     add_stdout fs current_build_info_str else
+     let (out,err) =
+         (if has_pancake_flag cl then
+           compile_pancake_64 cl inp else
+           compile_64 cl inp) in
+       add_stderr (add_stdout (fastForwardFD fs 0) (concat (append
+         out))) err)`;;
 
 let compile_32_def = cake_define
   `compile_32 cl input =
@@ -1048,57 +1026,48 @@ let compile_32_def = cake_define
                implode "") | (M_failure err,td) -> (List
                  [],error_to_str err))) | INR err ->
      (List [],error_to_str (ConfigError (get_err_str ext_conf)))) |
-       _20 ->
+       _22 ->
      (List [],error_to_str (ConfigError (concat [get_err_str
        confexp; get_err_str topconf]))))`;;
 
-(* PENDING: Pancake, which the port does not have
-Definition compile_pancake_32_def:
-  compile_pancake_32 cl input =
-  let confexp = parse_target_32 cl in
-  case confexp of
-  | INR err => (List[], error_to_str (ConfigError err))
-  | INL (conf, export, aconf) =>
-      let topconf = parse_top_config cl in
-      case (topconf) of
-      | INR err => (List[], error_to_str (ConfigError err))
-      | INL
-        (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret,nowarn)
-        =>
-          let ext_conf = extend_conf cl conf in
-          case ext_conf of
-          | INR err =>
-              (List[], error_to_str (ConfigError (get_err_str
-                ext_conf)))
-          | INL ext_conf =>
-              let ext_conf = pancake_backend_conf ext_conf in
-              case compiler$compile_pancake aconf ext_conf input of
-              | (M_failure err, td, warns) =>
-                  (List[], concat (MAP error_to_str (err::(if nowarn
-                    then [] else warns))))
-              | (M_success (bytes, data, c), td, warns) =>
-                  (add_tap_output td
-                    (export (ffinames_to_string_list $
-                      the [] c.lab_conf.ffi_names) bytes data c.symbols
-                      c.exported mainret T),
-                   concat (MAP error_to_str (if nowarn then [] else
-                     warns)))
-End *)
+let compile_pancake_32_def = cake_define
+  `compile_pancake_32 cl input =
+   (let confexp = parse_target_32 cl in
+   match confexp with INR err -> (List [],error_to_str (ConfigError
+     err)) | INL (conf,export,aconf) ->
+       (let topconf = parse_top_config cl in
+       match (topconf) with INR err -> (List [],error_to_str
+         (ConfigError err)) | INL
+         (sexp,prelude,typeinfer,onlyprinttypes,sexpprint,mainret
+         ,nowarn) ->
+           (let ext_conf = extend_conf cl conf in
+           match ext_conf with INR err ->
+               (List [],error_to_str (ConfigError (get_err_str
+                 ext_conf))) | INL ext_conf ->
+               (let ext_conf = pancake_backend_conf ext_conf in
+               match compile_pancake aconf ext_conf input with
+                 (M_failure err,td,warns) ->
+                   (List [],concat (MAP error_to_str (err :: (if
+                     nowarn then [] else warns)))) | (M_success
+                     (bytes,data,c),td,warns) ->
+                   (add_tap_output td
+                     (export (ffinames_to_string_list
+                       (the [] (lab_to_target_config_ffi_names
+                         (backend_config_lab_conf c)))) bytes data
+                         (backend_config_symbols c)
+                         (backend_config_exported
+                       c) mainret T),
+                    concat (MAP error_to_str (if nowarn then []
+                      else warns)))))))`;;
 
-(* PENDING: Pancake, which the port does not have
-Definition full_compile_32_def:
-  full_compile_32 cl inp fs =
-  if has_help_flag cl then
-    add_stdout fs help_string
-  else if has_version_flag cl then
-    add_stdout fs current_build_info_str
-  else
-    let (out, err) =
-        if has_pancake_flag cl then
-          compile_pancake_32 cl inp
-        else
-          compile_32 cl inp
-    in
-      add_stderr (add_stdout (fastForwardFD fs 0) (concat (append out)))
-        err
-End *)
+let full_compile_32_def = cake_define
+  `full_compile_32 cl inp fs =
+   (if has_help_flag cl then
+     add_stdout fs help_string else if has_version_flag cl then
+     add_stdout fs current_build_info_str else
+     let (out,err) =
+         (if has_pancake_flag cl then
+           compile_pancake_32 cl inp else
+           compile_32 cl inp) in
+       add_stderr (add_stdout (fastForwardFD fs 0) (concat (append
+         out))) err)`;;

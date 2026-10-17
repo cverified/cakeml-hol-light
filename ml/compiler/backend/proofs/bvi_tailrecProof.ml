@@ -14,10 +14,8 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
-needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/semanticPrimitives.ml";;
 
 (* TODO
 
@@ -37,8 +35,8 @@ val s = mk_var("s",
 
 let ty_rel_def = cake_define
   `ty_rel = LIST_REL
-     (\v t. (t = Int ==> (?k. v = Number k)) /\
-            (t = List ==> (?ys. v_to_list v = SOME ys)))`;;
+     (\v t. (t = Int ==> (?k. v = bvlSem_Number k)) /\
+            (t = List ==> (?ys. bvlSem_v_to_list v = SOME ys)))`;;
 
 (* HOL4 ML code, not ported:
 val v_ty_cases = TypeBase.case_eq_of ``:v_ty``
@@ -78,9 +76,9 @@ let env_rel_def = cake_define
        LENGTH env1 = acc /\
        LENGTH env2 > acc /\
        (match ty with
-         Int -> (?k. EL acc env2 = Number k) | List -> (?ys.
-           v_to_list (EL acc env2) = SOME ys) | bvi_tailrec_Any ->
-           F))`;;
+         Int -> (?k. EL acc env2 = bvlSem_Number k) | List ->
+           (?ys. bvlSem_v_to_list (EL acc env2) = SOME ys) |
+           bvi_tailrec_Any -> F))`;;
 hol4_overload "env_rel" "bvi_tailrecProof_env_rel";;
 
 (* HOL4 overload (expanded in the port):

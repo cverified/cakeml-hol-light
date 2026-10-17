@@ -2637,14 +2637,15 @@ let assign_def = cake_define
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (op:closLang_op) (args:num list) (names:(1 spt) option) =
      (match op with closLang_IntOp (closLang_Const i) -> assign_Const
-       i l dest | closLang_GlobOp GlobalsPtr -> (Assign (adjust_var
-       dest) (wordLang_Lookup Globals),l) | closLang_GlobOp
-       SetGlobalsPtr -> data_to_word_arg1 args (assign_SetGlobalsPtr c l
-       dest) (Skip,l) | closLang_GlobOp (SetGlobal n) ->
-       data_to_word_arg1 args (assign_SetGlobal c n l dest) (Skip,l) |
-       closLang_GlobOp (Global n) -> assign_Global c n l dest |
-       closLang_MemOp closLang_El -> data_to_word_arg2 args (assign_El c
-       l dest) (Skip,l) | closLang_BlockOp (closLang_ElemAt n) ->
+       i l dest | closLang_GlobOp closLang_GlobalsPtr -> (Assign
+       (adjust_var dest) (wordLang_Lookup Globals),l) | closLang_GlobOp
+       closLang_SetGlobalsPtr -> data_to_word_arg1 args
+       (assign_SetGlobalsPtr c l dest) (Skip,l) | closLang_GlobOp
+       (closLang_SetGlobal n) -> data_to_word_arg1 args
+       (assign_SetGlobal c n l dest) (Skip,l) | closLang_GlobOp
+       (closLang_Global n) -> assign_Global c n l dest | closLang_MemOp
+       closLang_El -> data_to_word_arg2 args (assign_El c l dest)
+       (Skip,l) | closLang_BlockOp (closLang_ElemAt n) ->
        data_to_word_arg1 args (assign_ElemAt c n l dest) (Skip,l) |
        closLang_MemOp closLang_DerefByte -> data_to_word_arg2 args
        (assign_DerefByte c l dest) (Skip,l) | closLang_MemOp

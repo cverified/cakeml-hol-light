@@ -80,9 +80,11 @@ let call_block_INDUCT,call_block_RECURSION = define_datatype
    RCall (num) (num list)";;
 
 let bind_def = cake_define_list
-  [`bind (n:num) [] = ([],n)`;
-   `bind (n:num) (_45 :: t) =
-       (match bind (n + 1) t with (vs,n') -> (n :: vs,n'))`];;
+  [`bvi_tmc_bind (n:num) [] = ([],n)`;
+   `bvi_tmc_bind (n:num) (_45 :: t) =
+       (match bvi_tmc_bind (n + 1) t with (vs,n') -> (n ::
+         vs,n'))`];;
+hol4_overload "bind" "bvi_tmc_bind";;
 
 let shift_vars_def = cake_define_list
   [`shift_vars (n:num) [] = []`;
@@ -99,7 +101,7 @@ let shift_cb_def = cake_define_list
 let call_to_cb_def = cake_define
   `call_to_cb loc call_ts call_loc call_args' call_h =
    (if call_loc = SOME loc /\ call_h = NONE then
-     match bind 0 call_args' with (vs,_46) ->
+     match bvi_tmc_bind 0 call_args' with (vs,_46) ->
          SOME (call_args',RCall call_ts vs) else NONE)`;;
 
 (* Attempts to build a CallBlock from the tag and args of a BlockOp

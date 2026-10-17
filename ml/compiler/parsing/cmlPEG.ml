@@ -103,7 +103,8 @@ Definition peg_nonfix_def:
 End *)
 
 let try_def = cake_define
-  `try sym = choicel [sym; peg_empty []]`;;
+  `cmlPEG_try sym = choicel [sym; peg_empty []]`;;
+hol4_overload "try" "cmlPEG_try";;
 
 let tokeq_def = cake_define
   `cmlPEG_tokeq t = peg_tok ((=) t) mktokLf`;;
@@ -233,7 +234,7 @@ let cmlPEG_def = cake_define
                               (mkNd ((INL:MMLnonT->MMLnonT+num)
                                 nEapp) [h]) t]));
                ((INL:MMLnonT->MMLnonT+num) nElist1,
-                seql [cmlPEG_pnt nE; try (seql [cmlPEG_tokeq
+                seql [cmlPEG_pnt nE; cmlPEG_try (seql [cmlPEG_tokeq
                   tokens_CommaT; cmlPEG_pnt nElist1] I)]
                      (bindNT nElist1));
                ((INL:MMLnonT->MMLnonT+num) nMultOps,
@@ -290,8 +291,8 @@ let cmlPEG_def = cake_define
                          seql [cmlPEG_tokeq tokens_LparT;
                            cmlPEG_tokeq tokens_RparT] (bindNT nEbase);
                          peg_EbaseParen;
-                         seql [cmlPEG_tokeq tokens_LbrackT; try
-                           (cmlPEG_pnt nElist1); cmlPEG_tokeq
+                         seql [cmlPEG_tokeq tokens_LbrackT;
+                           cmlPEG_try (cmlPEG_pnt nElist1); cmlPEG_tokeq
                            tokens_RbrackT]
                               (bindNT nEbase);
                          seql [cmlPEG_tokeq tokens_LetT; cmlPEG_pnt
@@ -305,7 +306,7 @@ let cmlPEG_def = cake_define
                          seql [cmlPEG_tokeq tokens_OpT; cmlPEG_pnt
                            nOpID] (bindNT nEbase)]);
                ((INL:MMLnonT->MMLnonT+num) nEseq,
-                seql [cmlPEG_pnt nE; try (seql [cmlPEG_tokeq
+                seql [cmlPEG_pnt nE; cmlPEG_try (seql [cmlPEG_tokeq
                   tokens_SemicolonT; cmlPEG_pnt nEseq] I)]
                      (bindNT nEseq));
                ((INL:MMLnonT->MMLnonT+num) nEmult,
@@ -315,7 +316,7 @@ let cmlPEG_def = cake_define
                  ((INL:MMLnonT->MMLnonT+num) nEadd) (cmlPEG_pnt nEmult)
                  (cmlPEG_pnt nAddOps));
                ((INL:MMLnonT->MMLnonT+num) nElistop,
-                seql [cmlPEG_pnt nEadd; try (seql [cmlPEG_pnt
+                seql [cmlPEG_pnt nEadd; cmlPEG_try (seql [cmlPEG_pnt
                   nListOps; cmlPEG_pnt nElistop] I)]
                      (bindNT nElistop));
                ((INL:MMLnonT->MMLnonT+num) nErel,peg_linfix
@@ -331,8 +332,8 @@ let cmlPEG_def = cake_define
                                 "before"))));
                ((INL:MMLnonT->MMLnonT+num) nEtyped,seql [cmlPEG_pnt
                  nEbefore;
-                              try (seql [cmlPEG_tokeq tokens_ColonT;
-                                cmlPEG_pnt nType] I)]
+                              cmlPEG_try (seql [cmlPEG_tokeq
+                                tokens_ColonT; cmlPEG_pnt nType] I)]
                               (bindNT nEtyped));
                ((INL:MMLnonT->MMLnonT+num) nElogicAND,
                 peg_linfix ((INL:MMLnonT->MMLnonT+num) nElogicAND)
@@ -344,7 +345,7 @@ let cmlPEG_def = cake_define
                            (cmlPEG_tokeq tokens_OrelseT));
                ((INL:MMLnonT->MMLnonT+num) nEhandle,
                 seql [cmlPEG_pnt nElogicOR;
-                      try (seql [cmlPEG_tokeq tokens_HandleT;
+                      cmlPEG_try (seql [cmlPEG_tokeq tokens_HandleT;
                         cmlPEG_pnt nPEs] I)]
                      (bindNT nEhandle));
                ((INL:MMLnonT->MMLnonT+num) nE,
@@ -397,12 +398,12 @@ let cmlPEG_def = cake_define
                   cmlPEG_tokeq tokens_EqualsT; cmlPEG_pnt nE]
                      (bindNT nFDecl));
                ((INL:MMLnonT->MMLnonT+num) nPbaseList1,
-                seql [cmlPEG_pnt nPbase; try (cmlPEG_pnt
+                seql [cmlPEG_pnt nPbase; cmlPEG_try (cmlPEG_pnt
                   nPbaseList1)]
                      (bindNT nPbaseList1));
                ((INL:MMLnonT->MMLnonT+num) nType,
-                seql [cmlPEG_pnt nPType; try (seql [cmlPEG_tokeq
-                  tokens_ArrowT; cmlPEG_pnt nType] I)]
+                seql [cmlPEG_pnt nPType; cmlPEG_try (seql
+                  [cmlPEG_tokeq tokens_ArrowT; cmlPEG_pnt nType] I)]
                      (bindNT nType));
                ((INL:MMLnonT->MMLnonT+num) nDType,
                 seql [cmlPEG_pnt nTbase; peg_rpt (cmlPEG_pnt nTyOp)
@@ -435,12 +436,13 @@ let cmlPEG_def = cake_define
                   cmlPEG_pnt nTypeList1]
                      (bindNT nTypeList2));
                ((INL:MMLnonT->MMLnonT+num) nTypeList1,
-                seql [cmlPEG_pnt nType; try (seql [cmlPEG_tokeq
-                  tokens_CommaT; cmlPEG_pnt nTypeList1] I)]
+                seql [cmlPEG_pnt nType; cmlPEG_try (seql
+                  [cmlPEG_tokeq tokens_CommaT; cmlPEG_pnt nTypeList1]
+                  I)]
                      (bindNT nTypeList1));
                ((INL:MMLnonT->MMLnonT+num) nTbaseList,
-                pegf (try (seql [cmlPEG_pnt nPTbase; cmlPEG_pnt
-                  nTbaseList] I))
+                pegf (cmlPEG_try (seql [cmlPEG_pnt nPTbase;
+                  cmlPEG_pnt nTbaseList] I))
                      (bindNT nTbaseList));
                ((INL:MMLnonT->MMLnonT+num) nTyOp,
                 pegf (choicel [cmlPEG_pnt nUQTyOp; peg_tok isLongidT
@@ -449,8 +451,8 @@ let cmlPEG_def = cake_define
                ((INL:MMLnonT->MMLnonT+num) nUQTyOp,
                 pegf (peg_tok isAlphaSym mktokLf) (bindNT nUQTyOp));
                ((INL:MMLnonT->MMLnonT+num) nPType,
-                seql [cmlPEG_pnt nDType; try (seql [cmlPEG_tokeq
-                  tokens_StarT; cmlPEG_pnt nPType] I)]
+                seql [cmlPEG_pnt nDType; cmlPEG_try (seql
+                  [cmlPEG_tokeq tokens_StarT; cmlPEG_pnt nPType] I)]
                      (bindNT nPType));
                ((INL:MMLnonT->MMLnonT+num) nTypeName,
                 choicel [pegf (cmlPEG_pnt nUQTyOp) (bindNT
@@ -497,8 +499,8 @@ let cmlPEG_def = cake_define
                               mktokLf;
                             cmlPEG_pnt nPtuple; cmlPEG_tokeq
                               tokens_UnderbarT;
-                            seql [cmlPEG_tokeq tokens_LbrackT; try
-                              (cmlPEG_pnt nPatternList);
+                            seql [cmlPEG_tokeq tokens_LbrackT;
+                              cmlPEG_try (cmlPEG_pnt nPatternList);
                               cmlPEG_tokeq tokens_RbrackT] I;
                             seql [cmlPEG_tokeq tokens_OpT; cmlPEG_pnt
                               nOpID] I])
@@ -514,21 +516,21 @@ let cmlPEG_def = cake_define
                          pegf (cmlPEG_pnt nPbase) (bindNT nPapp)]);
                ((INL:MMLnonT->MMLnonT+num) nPcons,
                 seql [cmlPEG_pnt nPapp;
-                      try (seql [cmlPEG_tokeq (tokens_SymbolT
+                      cmlPEG_try (seql [cmlPEG_tokeq (tokens_SymbolT
                         (implode "::")); cmlPEG_pnt nPcons] I)]
                      (bindNT nPcons));
                ((INL:MMLnonT->MMLnonT+num) nPas,
-                seql [try (seql [cmlPEG_pnt nV; cmlPEG_tokeq
+                seql [cmlPEG_try (seql [cmlPEG_pnt nV; cmlPEG_tokeq
                   tokens_AsT] I);
                       cmlPEG_pnt nPcons]
                      (bindNT nPas));
                ((INL:MMLnonT->MMLnonT+num) nPattern,
-                seql [cmlPEG_pnt nPas; try (seql [cmlPEG_tokeq
+                seql [cmlPEG_pnt nPas; cmlPEG_try (seql [cmlPEG_tokeq
                   tokens_ColonT; cmlPEG_pnt nType] I)]
                      (bindNT nPattern));
                ((INL:MMLnonT->MMLnonT+num) nPatternList,
                 seql [cmlPEG_pnt nPattern;
-                      try (seql [cmlPEG_tokeq tokens_CommaT;
+                      cmlPEG_try (seql [cmlPEG_tokeq tokens_CommaT;
                         cmlPEG_pnt nPatternList] I)]
                      (bindNT nPatternList));
                ((INL:MMLnonT->MMLnonT+num) nPtuple,
@@ -606,7 +608,7 @@ let cmlPEG_def = cake_define
                      (bindNT nSignatureValue));
                ((INL:MMLnonT->MMLnonT+num)
                  nOptionalSignatureAscription,
-                pegf (try (seql [cmlPEG_tokeq tokens_SealT;
+                pegf (cmlPEG_try (seql [cmlPEG_tokeq tokens_SealT;
                   cmlPEG_pnt nSignatureValue] I))
                      (bindNT nOptionalSignatureAscription));
                ((INL:MMLnonT->MMLnonT+num)

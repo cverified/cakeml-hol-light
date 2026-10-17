@@ -32,6 +32,7 @@ needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/binary_ieee.ml";;
 needs "lib/comparison.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
@@ -616,32 +617,33 @@ let const_to_display_def = cake_define_list_try (fun () ->
         const_to_display x :: const_to_display_list xs`];;
 
 let clos_op_to_display_def = cake_define
-  `clos_op_to_display ns op = (match op with closLang_GlobOp (Global
-  num') -> item_with_num (implode "Global") num' | closLang_GlobOp
-  (SetGlobal num') -> item_with_num (implode "SetGlobal") num' |
-  closLang_GlobOp AllocGlobal -> String (implode "AllocGlobal") |
-  closLang_GlobOp GlobalsPtr -> String (implode "GlobalsPtr") |
-  closLang_GlobOp SetGlobalsPtr -> String (implode "SetGlobalsPtr") |
-  closLang_BlockOp (closLang_Cons num') -> item_with_num (implode
-  "Cons") num' | closLang_BlockOp (closLang_ElemAt num') ->
-  item_with_num (implode "ElemAt") num' | closLang_BlockOp
-  (closLang_TagLenEq n1 n2) -> item_with_nums (implode "TagLenEq") [n1;
-  n2] | closLang_BlockOp (closLang_BoolTest test) -> displayLang_Item
-  NONE (implode "BoolTest") [test_to_display test] | closLang_BlockOp
-  closLang_BoolNot -> String (implode "BoolNot") | closLang_BlockOp
-  (closLang_LenEq num') -> item_with_num (implode "LenEq") num' |
-  closLang_BlockOp (closLang_TagEq num') -> item_with_num (implode
-  "TagEq") num' | closLang_BlockOp closLang_LengthBlock -> String
-  (implode "LengthBlock") | closLang_BlockOp closLang_BoundsCheckBlock
-  -> String (implode "BoundsCheckBlock") | closLang_BlockOp
-  (closLang_ConsExtend num') -> item_with_num (implode "ConsExtend")
-  num' | closLang_BlockOp (closLang_FromList num') -> item_with_num
-  (implode "FromList") num' | closLang_BlockOp ListAppend -> String
-  (implode "ListAppend") | closLang_BlockOp (closLang_Constant c) ->
-  displayLang_Item NONE (implode "Constant") [const_to_display c] |
-  closLang_BlockOp closLang_Equal -> String (implode "Equal") |
-  closLang_BlockOp (closLang_EqualConst c) -> displayLang_Item NONE
-  (implode "EqualConst") [const_part_to_display c] | closLang_BlockOp
+  `clos_op_to_display ns op = (match op with closLang_GlobOp
+  (closLang_Global num') -> item_with_num (implode "Global") num' |
+  closLang_GlobOp (closLang_SetGlobal num') -> item_with_num (implode
+  "SetGlobal") num' | closLang_GlobOp closLang_AllocGlobal -> String
+  (implode "AllocGlobal") | closLang_GlobOp closLang_GlobalsPtr ->
+  String (implode "GlobalsPtr") | closLang_GlobOp closLang_SetGlobalsPtr
+  -> String (implode "SetGlobalsPtr") | closLang_BlockOp (closLang_Cons
+  num') -> item_with_num (implode "Cons") num' | closLang_BlockOp
+  (closLang_ElemAt num') -> item_with_num (implode "ElemAt") num' |
+  closLang_BlockOp (closLang_TagLenEq n1 n2) -> item_with_nums (implode
+  "TagLenEq") [n1; n2] | closLang_BlockOp (closLang_BoolTest test) ->
+  displayLang_Item NONE (implode "BoolTest") [test_to_display test] |
+  closLang_BlockOp closLang_BoolNot -> String (implode "BoolNot") |
+  closLang_BlockOp (closLang_LenEq num') -> item_with_num (implode
+  "LenEq") num' | closLang_BlockOp (closLang_TagEq num') ->
+  item_with_num (implode "TagEq") num' | closLang_BlockOp
+  closLang_LengthBlock -> String (implode "LengthBlock") |
+  closLang_BlockOp closLang_BoundsCheckBlock -> String (implode
+  "BoundsCheckBlock") | closLang_BlockOp (closLang_ConsExtend num') ->
+  item_with_num (implode "ConsExtend") num' | closLang_BlockOp
+  (closLang_FromList num') -> item_with_num (implode "FromList") num' |
+  closLang_BlockOp ListAppend -> String (implode "ListAppend") |
+  closLang_BlockOp (closLang_Constant c) -> displayLang_Item NONE
+  (implode "Constant") [const_to_display c] | closLang_BlockOp
+  closLang_Equal -> String (implode "Equal") | closLang_BlockOp
+  (closLang_EqualConst c) -> displayLang_Item NONE (implode
+  "EqualConst") [const_part_to_display c] | closLang_BlockOp
   (closLang_Build bs) -> displayLang_Item NONE (implode "Build") (MAP
   const_part_to_display bs) | closLang_MemOp closLang_Ref -> String
   (implode "Ref") | closLang_MemOp closLang_Update -> String (implode

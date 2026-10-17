@@ -72,5 +72,6 @@ let int_op_def = cake_define_list
   j then (&1) else (&0)):int)`;
    `multiword_int_op multiword_Eq (i:int) (j:int) = ((if i = j then
   (&1) else (&0):int):int)`;
-   `multiword_int_op multiword_Dec (i:int) (j:int) = ((&0):int)`];;
+   `multiword_int_op (multiword_Dec:mw_op) (i:int) (j:int) =
+  ((&0):int)`];;
 hol4_overload "int_op" "multiword_int_op";;

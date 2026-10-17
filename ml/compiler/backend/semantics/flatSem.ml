@@ -10,8 +10,8 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
-needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/comparison.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/peg.ml";;
 needs "lib/sptree.ml";;
@@ -569,9 +569,9 @@ let do_app_def = cake_define
           (ast_StrLit conf); Loc _108 lnum]) ->
      (match store_lookup lnum (state_refs s) with SOME
        (semanticPrimitives_W8array ws) ->
-        (match call_FFI (state_ffi s) (ExtCall n) (MAP (\c. n2w (ORD
-          c)) (explode conf)) ws with FFI_final outcome -> SOME (s,Rerr
-          (Rabort (Rffi_error outcome))) | FFI_return t' ws' ->
+        (match call_FFI (state_ffi s) (ffi_ExtCall n) (MAP (\c. n2w
+          (ORD c)) (explode conf)) ws with FFI_final outcome -> SOME
+          (s,Rerr (Rabort (Rffi_error outcome))) | FFI_return t' ws' ->
            (match store_assign lnum (semanticPrimitives_W8array ws')
              (state_refs s) with SOME s' -> SOME (state_ffi_fupd (K t')
              (state_refs_fupd (K s') s),Rval Unitv) | NONE -> NONE)) |

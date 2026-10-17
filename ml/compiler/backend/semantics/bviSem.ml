@@ -14,6 +14,7 @@ needs "compiler/backend/clos_annotate.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/peg.ml";;
@@ -104,13 +105,13 @@ let do_app_aux_def = cake_define
            -> (match xs with [] -> (if l IN domain (state_code s) then
                               SOME (SOME (bvlSem_CodePtr l,s)) else
                                 NONE) | _1 -> NONE) | (closLang_GlobOp
-                                GlobalsPtr,xs) ->
+                                closLang_GlobalsPtr,xs) ->
          (match xs with [] -> (match bviSem_state_global s with SOME
            p -> SOME (SOME (RefPtr T p,s)) | NONE -> NONE) | _2 -> NONE)
-           | (closLang_GlobOp SetGlobalsPtr,xs) ->
+           | (closLang_GlobOp closLang_SetGlobalsPtr,xs) ->
          (match xs with [RefPtr T p] -> SOME (SOME
            (Unit,bviSem_state_global_fupd (K (SOME p)) s)) | _3 -> NONE)
-           | (closLang_GlobOp (Global n),xs) ->
+           | (closLang_GlobOp (closLang_Global n),xs) ->
          (match xs with [] -> (match bviSem_state_global s with SOME
            ptr ->
                         (match FLOOKUP (state_refs s) ptr with SOME
@@ -118,7 +119,7 @@ let do_app_aux_def = cake_define
                              (if n < LENGTH xs then SOME (SOME (EL n
                                xs,s)) else NONE) | _4 -> NONE) | NONE ->
                                NONE) | _5 -> NONE) | (closLang_GlobOp
-                               (SetGlobal n),xs) ->
+                               (closLang_SetGlobal n),xs) ->
          (match xs with [x] -> (match bviSem_state_global s with SOME
            ptr ->
                         (match FLOOKUP (state_refs s) ptr with SOME
@@ -160,9 +161,9 @@ let do_app_aux_def = cake_define
                   NONE) | (closLang_MemOp closLang_FinaliseCons,[x]) ->
          (match bviSem_finalise_cons x (state_refs s) with SOME
            (v,refs') -> SOME (SOME (v,state_refs_fupd (K refs') s)) |
-           NONE -> NONE) | (closLang_GlobOp AllocGlobal,_13) -> NONE
-           | (closLang_MemOp closLang_FromListByte,_14) -> NONE |
-           (closLang_MemOp closLang_ToListByte,_15) -> NONE |
+           NONE -> NONE) | (closLang_GlobOp closLang_AllocGlobal,_13)
+           -> NONE | (closLang_MemOp closLang_FromListByte,_14) ->
+           NONE | (closLang_MemOp closLang_ToListByte,_15) -> NONE |
            (closLang_MemOp closLang_ConcatByteVec,_16) -> NONE |
            (closLang_MemOp (closLang_CopyByte T),_17) -> NONE | _18
            -> SOME NONE)`;;

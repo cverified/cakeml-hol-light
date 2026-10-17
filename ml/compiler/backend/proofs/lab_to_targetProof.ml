@@ -176,7 +176,7 @@ let line_ok_def = cake_define
           (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
         | (c,(labLang_LabAsm (labLang_CallFFI index) w bytes l)) ->
         (let w1 = ((n2w 0):'a word) - n2w (pos + (3 + get_ffi_index
-          ffis (ExtCall index)) * ffi_offset) in
+          ffis (ffi_ExtCall index)) * ffi_offset) in
           enc_with_nop (asm_config_encode c) (Jump w1) bytes /\
           (LENGTH bytes = l) /\ asm_ok (Jump w1) c)
         | (c,(labLang_LabAsm (Call v24) w bytes l)) ->
@@ -270,7 +270,7 @@ let share_mem_domain_code_rel_def = cake_define
              (machine_config_ffi_entry_pcs mc_conf) 0 =
              SOME index /\
            (let (name,nb) = get_memop_info op in
-             EL index (ffi_names mc_conf) = SharedMem name /\
+             EL index (ffi_names mc_conf) = ffi_SharedMem name /\
              (
               ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
                 (nb,a,re,p + n2w (pos_val pc' 0 code2 + len)))))) /\
@@ -302,7 +302,7 @@ let share_mem_state_rel_def = cake_define
        target_state_rel (machine_config_target mc_conf)
          (pc_fupd (K (EL index (machine_config_ffi_entry_pcs
            mc_conf))) t1) ms2 ==>
-       (?op. EL index (ffi_names mc_conf) = SharedMem op /\
+       (?op. EL index (ffi_names mc_conf) = ffi_SharedMem op /\
           (match op with MappedRead ->
           ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
             = 0 else T) /\
@@ -311,7 +311,7 @@ let share_mem_state_rel_def = cake_define
             mc_conf) ms2) nb (Addr ad offs) re pc'
             (machine_config_target
             mc_conf) ms2 (machine_config_prog_addresses mc_conf) /\
-          call_FFI st (SharedMem MappedRead)
+          call_FFI st (ffi_SharedMem MappedRead)
             [nb]
             (word_to_bytes ad' F) =
             FFI_return new_st new_bytes ==>
@@ -328,7 +328,7 @@ let share_mem_state_rel_def = cake_define
              (machine_config_target mc_conf) ms2) nb (Addr ad offs) re
              pc' (machine_config_target
              mc_conf) ms2 (machine_config_prog_addresses mc_conf) /\
-          call_FFI st (SharedMem MappedWrite)
+          call_FFI st (ffi_SharedMem MappedWrite)
            [nb]
            (
             (let w = target_get_reg (machine_config_target mc_conf)
@@ -352,7 +352,7 @@ let share_mem_state_rel_def = cake_define
 let no_install_or_no_share_mem_def = cake_define
   `no_install_or_no_share_mem code ffi_names' <=>
     (no_share_mem_inst code /\
-     EVERY (\x. ?s. x = ExtCall s) ffi_names') \/
+     EVERY (\x. ?s. x = ffi_ExtCall s) ffi_names') \/
      no_install code`;;
 
 (* The lab-level oracles record the register residues that the machine
@@ -472,15 +472,15 @@ let state_rel_def = cake_define
         (lab_lookup l1 l2 labs = SOME x) ==> EVEN x) /\
      (((n2w 1) && p) = (n2w 0)) /\
      (list_subset
-       (FILTER (\x. ?s. x = ExtCall s) (find_ffi_names (state_code
-         s1))) (ffi_names
+       (FILTER (\x. ?s. x = ffi_ExtCall s) (find_ffi_names
+         (state_code s1))) (ffi_names
        mc_conf)) /\
      EVEN (LENGTH (prog_to_bytes code2)) /\
      (!name i.
          MEM name (ffi_names mc_conf) /\
          mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
          get_ffi_index (ffi_names mc_conf) name < i ==>
-         (?s. name = ExtCall s) /\
+         (?s. name = ffi_ExtCall s) /\
         ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
           ffi_offset) IN machine_config_prog_addresses mc_conf) /\
         ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
@@ -758,8 +758,8 @@ let line_encd_def = cake_define
        enc (Jump (--n2w (pos + 2 * ffi_offset))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (labLang_CallFFI s) _38 bytes len) ->
-       enc (Jump (--n2w (pos + (get_ffi_index ffis (ExtCall s) + 3) *
-         ffi_offset))) = bytes /\
+       enc (Jump (--n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) +
+         3) * ffi_offset))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (Jump l) _39 bytes len) ->
        enc (Jump (n2w (find_pos l labs) + --n2w pos)) = bytes /\
@@ -868,7 +868,7 @@ let line_enc_with_nop_def = cake_define
        LENGTH bytes = len
         | (labLang_LabAsm (labLang_CallFFI s) _54 bytes len) ->
        enc_with_nop enc (Jump (--n2w (pos + (get_ffi_index ffis
-         (ExtCall s) + 3) * ffi_offset))) bytes /\
+         (ffi_ExtCall s) + 3) * ffi_offset))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm (Jump l) _55 bytes len) ->
        enc_with_nop enc (Jump (n2w (find_pos l labs) + --n2w pos))
@@ -3466,7 +3466,7 @@ let line_to_info_def = cake_define
   `line_to_info (secs:('a sec) list) p x = (match SND x with
      SOME (labLang_Asm (ShareMem m r ad) bytes l) ->
        (let (name,nb) = get_memop_info m in
-       [(SharedMem name,
+       [(ffi_SharedMem name,
         mk_shmem_info_num (pos_val (FST x) p secs) nb (match ad
           with Addr r off -> r) (match ad with Addr r off -> w2n off)
           r (pos_val (FST x) p secs + LENGTH bytes))]) | _78 -> [])`;;

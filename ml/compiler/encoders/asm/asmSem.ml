@@ -273,10 +273,10 @@ let mem_op_def = cake_define_list
   a`;
    `asmSem_mem_op asm_Store16 r (a:'a asm_addr) = asmSem_mem_store 2
   r a`;
-   `asmSem_mem_op asm_Load32 r (a:'a asm_addr) = asmSem_mem_load 4 r
-  a`;
-   `asmSem_mem_op asm_Store32 r (a:'a asm_addr) = asmSem_mem_store
-  4 r a`];;
+   `asmSem_mem_op (asm_Load32:memop) r (a:'a asm_addr) =
+  asmSem_mem_load 4 r a`;
+   `asmSem_mem_op (asm_Store32:memop) r (a:'a asm_addr) =
+  asmSem_mem_store 4 r a`];;
 hol4_overload "mem_op" "asmSem_mem_op";;
 
 let inst_def = cake_define_list

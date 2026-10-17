@@ -10,10 +10,12 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
 needs "lib/term.ml";;
 needs "misc/misc.ml";;
+needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/primTypes.ml";;
@@ -40,8 +42,9 @@ let failwith_def = cake_define
 hol4_overload "failwith" "infer_failwith";;
 
 let guard_def = cake_define
-  `guard P l msg = (if P then st_ex_return one else infer_failwith l
-  msg)`;;
+  `infer_guard P l msg = (if P then st_ex_return one else
+  infer_failwith l msg)`;;
+hol4_overload "guard" "infer_guard";;
 
 let read_def = cake_define
   `(read:'a->('a,'b)exc#'a) =
@@ -200,7 +203,7 @@ let infer_deBruijn_subst_def = cake_define_list
 let type_name_check_subst_def = cake_define_list_cheat CHEAT_TAC
   [`type_name_check_subst l err_string_f tenvT fvs (Atvar tv) =
         st_ex_ignore_bind
-          (guard (MEM tv fvs) l (err_string_f tv)) (
+          (infer_guard (MEM tv fvs) l (err_string_f tv)) (
           st_ex_return (Tvar tv))`;
    `type_name_check_subst l f tenvT fvs (Attup ts) =
         st_ex_bind (type_name_check_subst_list l f tenvT fvs ts) (\
@@ -217,7 +220,7 @@ let type_name_check_subst_def = cake_define_list_cheat CHEAT_TAC
           ts'. st_ex_bind (lookup_st_ex l (implode
             "type constructor") tc tenvT) (\
           (tvs',t'). st_ex_ignore_bind
-          (guard (LENGTH tvs' = LENGTH ts) l
+          (infer_guard (LENGTH tvs' = LENGTH ts) l
                      (mlstring_concat [(implode
                        "Type constructor "); id_to_string tc; (implode
                        " given ");
@@ -390,7 +393,7 @@ let infer_p_def = cake_define_list_cheat CHEAT_TAC
                  (ts'',tenv). st_ex_bind (n_fresh_uvar (LENGTH
                    tvs')) (\
                  ts'. st_ex_ignore_bind
-                 (guard (LENGTH ts'' = LENGTH ts) l
+                 (infer_guard (LENGTH ts'' = LENGTH ts) l
                        (mlstring_concat [(implode "Constructor ");
                          id_to_string cn; (implode " given ");
                               toString (&(LENGTH ts'')); (implode
@@ -724,7 +727,7 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
                (infer_es l ienv es) (\
                 ts''. st_ex_bind (n_fresh_uvar (LENGTH tvs')) (\
                 ts'. st_ex_ignore_bind
-                 (guard (LENGTH ts'' = LENGTH ts) l
+                 (infer_guard (LENGTH ts'' = LENGTH ts) l
                        (mlstring_concat [(implode "Constructor ");
                          id_to_string cn; (implode " given ");
                               toString (&(LENGTH ts'')); (implode
@@ -878,7 +881,7 @@ let infer_d_def = cake_define_list_cheat CHEAT_TAC
          one. st_ex_bind (apply_subst_list (MAP SND env')) (\
          ts. st_ex_bind (st_ex_return (generalise_list n 0 FEMPTY
            ts)) (\
-         (num_tvs',s,ts'). st_ex_bind (guard (num_tvs' = 0 \/
+         (num_tvs',s,ts'). st_ex_bind (infer_guard (num_tvs' = 0 \/
            is_value e) (mk_loc_err_info (SOME locs) (inf_env_inf_t
            ienv))
                      ((implode "Value restriction violated"))) (\

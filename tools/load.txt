@@ -16,6 +16,7 @@ lib/integer_word.ml
 lib/lprefix_lub.ml
 lib/set_sep.ml
 lib/state_transformer.ml
+lib/errorMonad.ml
 lib/binary_ieee.ml
 lib/machine_ieee.ml
 lib/grammar.ml
@@ -73,6 +74,7 @@ compiler/backend/clos_mti.ml
 compiler/backend/clos_number.ml
 compiler/backend/clos_to_bvl.ml
 compiler/encoders/asm/asm.ml
+pancake/panLang.ml
 compiler/backend/stackLang.ml
 compiler/backend/wordLang.ml
 compiler/backend/word_bignum.ml
@@ -139,6 +141,12 @@ semantics/cmlPtreeConversion.ml
 compiler/parsing/cmlParse.ml
 basis/pure/mlvector.ml
 compiler/backend/export.ml
+compiler/backend/x64/export_x64.ml
+compiler/backend/arm8/export_arm8.ml
+compiler/backend/arm7/export_arm7.ml
+compiler/backend/mips/export_mips.ml
+compiler/backend/riscv/export_riscv.ml
+compiler/backend/ag32/export_ag32.ml
 compiler/parsing/fromSexp.ml
 compiler/inference/infer_t.ml
 compiler/inference/unify.ml

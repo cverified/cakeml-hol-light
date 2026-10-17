@@ -42,7 +42,8 @@ val build_rec_env_merge = flatPropsTheory.build_rec_env_merge;
 (* bind locals with an arbitrary trace *)
 let bind_locals_def = cake_define
   `bind_locals ts locals comp_map =
-     nsBindList (MAP2 (\t x. (x,Local t x)) ts locals) comp_map`;;
+     nsBindList (MAP2 (\t x. (x,source_to_flat_Local t x)) ts
+       locals) comp_map`;;
 
 let global_env_FIELDS = define_record "global_env"
   ["v","(flatSem_v option) list";
@@ -143,22 +144,22 @@ let v_rel = cake_inductive
      find_recfun x funs = SOME (y,e) /\
      (!x. x IN set_of_list (MAP FST funs) ==>
         (?n y e t1 t2 t3.
-          ALOOKUP new_vars x = SOME (Glob t1 n) /\
+          ALOOKUP new_vars x = SOME (source_to_flat_Glob t1 n) /\
           n < LENGTH (global_env_v genv) /\
           find_recfun x funs = SOME (y,e) /\
           EL n (global_env_v genv) =
             SOME (Closure flat_env y
                    (compile_exp t2 (source_to_flat_environment_v_fupd
-                     (K (nsBindList ((y,Local t3 y) :: new_vars)
-                     (source_to_flat_environment_v comp_map))) comp_map)
-                     e)))) ==>
+                     (K (nsBindList ((y,source_to_flat_Local t3 y) ::
+                     new_vars) (source_to_flat_environment_v comp_map)))
+                     comp_map) e)))) ==>
      source_to_flatProof_v_rel genv
        (Recclosure env funs x)
        (Closure flat_env y
          (compile_exp t1
            (source_to_flat_environment_v_fupd (K (nsBindList
-             ((y,Local t2 y) :: new_vars) (source_to_flat_environment_v
-             comp_map))) comp_map)
+             ((y,source_to_flat_Local t2 y) :: new_vars)
+             (source_to_flat_environment_v comp_map))) comp_map)
            e))) /\
    (!genv loc b.
      source_to_flatProof_v_rel genv (Loc b loc) (Loc b (loc + 1))) /\
@@ -179,7 +180,7 @@ let v_rel = cake_inductive
         nsLookup (sem_env_v env) x = SOME v ==>
         (?n v' t.
           nsLookup (source_to_flat_environment_v comp_map) x = SOME
-            (Glob t n) /\
+            (source_to_flat_Glob t n) /\
           n < LENGTH (global_env_v genv) /\
           EL n (global_env_v genv) = SOME v' /\
           source_to_flatProof_v_rel genv v v')) /\

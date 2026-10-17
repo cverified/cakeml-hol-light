@@ -88,7 +88,8 @@ let find_next_interference_def = cake_define
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE -> NONE |
            SOME ffi_index ->
-             (match EL ffi_index (ffi_names mc) with SharedMem op ->
+             (match EL ffi_index (ffi_names mc) with ffi_SharedMem op
+               ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with NONE -> NONE | SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
@@ -148,8 +149,8 @@ let find_next_interference_def = cake_define
                                 ms1,machine_config_ffi_interfer_fupd (K
                                 new_oracle)
                               mc,
-                              new_ffi))) else NONE))))) | ExtCall _1
-                                ->
+                              new_ffi))) else NONE))))) | ffi_ExtCall
+                                _1 ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with SOME _2 -> NONE | NONE ->
                        (match read_ffi_bytearrays mc ms with (SOME

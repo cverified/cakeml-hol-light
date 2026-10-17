@@ -37,9 +37,7 @@ let make_part_def = cake_define
      (match ALOOKUP aux p with SOME k -> (n,k,aux) | NONE -> (n +
        1,n,(p,n) :: aux))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let parts_def = cake_define_cheat CHEAT_TAC
+let parts_def = cake_define
   `parts (ConstInt i) n aux = make_part n (Int i) aux /\
    parts (ConstStr s) n aux = make_part n (closLang_Str s) aux /\
    parts (ConstWord64 w) n aux = make_part n (W64 w) aux /\
@@ -52,9 +50,7 @@ let parts_def = cake_define_cheat CHEAT_TAC
      let (n,rs,aux) = parts_list cs n aux in
        (n,r :: rs,aux))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let to_parts_def = cake_define_cheat CHEAT_TAC
+let to_parts_def = cake_define
   `to_parts (ConstInt i) = [Int i] /\
    to_parts (ConstStr s) = [closLang_Str s] /\
    to_parts (ConstWord64 w) = [W64 w] /\
@@ -117,9 +113,7 @@ let good_hash_table_def = cake_define
 
 (* connection to closSem *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let build_part'_def = cake_define_cheat CHEAT_TAC
+let build_part'_def = cake_define
   `build_part' mem' (Int i:const_part) = closSem_Number i /\
    build_part' mem' (closLang_Str s) = closSem_ByteVector (MAP (n2w o
      ORD) (explode s)) /\

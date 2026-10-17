@@ -109,8 +109,8 @@ let get_jump_offset_def = cake_define
   `get_jump_offset a ffis labs pos =
         match a with
           labLang_CallFFI s ->
-        (n2w 0) - n2w (pos + (3 + get_ffi_index ffis (ExtCall s)) *
-          ffi_offset)
+        (n2w 0) - n2w (pos + (3 + get_ffi_index ffis (ffi_ExtCall s))
+          * ffi_offset)
         | labLang_Install ->
         (n2w 0) - n2w (pos + 2 * ffi_offset)
         | labLang_Halt ->
@@ -358,17 +358,17 @@ let find_ffi_names_def = cake_define_list_cheat CHEAT_TAC
    `find_ffi_names (Section k (x :: xs) :: rest) =
        (match x with labLang_LabAsm (labLang_CallFFI s) _50 _51 _52
          ->
-           list_add_if_fresh (ExtCall s) (find_ffi_names
+           list_add_if_fresh (ffi_ExtCall s) (find_ffi_names
              (Section k xs :: rest)) | _53 -> find_ffi_names
              (Section k xs :: rest))`];;
 
 let get_memop_info_def = cake_define_list
   [`get_memop_info (asm_Load:memop) = (MappedRead,((n2w 0):word8))`;
-   `get_memop_info asm_Load32 = (MappedRead,(n2w 4))`;
+   `get_memop_info (asm_Load32:memop) = (MappedRead,(n2w 4))`;
    `get_memop_info asm_Load16 = (MappedRead,(n2w 2))`;
    `get_memop_info asm_Load8 = (MappedRead,(n2w 1))`;
    `get_memop_info (asm_Store:memop) = (MappedWrite,(n2w 0))`;
-   `get_memop_info asm_Store32 = (MappedWrite,(n2w 4))`;
+   `get_memop_info (asm_Store32:memop) = (MappedWrite,(n2w 4))`;
    `get_memop_info asm_Store16 = (MappedWrite,(n2w 2))`;
    `get_memop_info asm_Store8 = (MappedWrite,(n2w 1))`];;
 
@@ -389,7 +389,7 @@ let get_shmem_info_def = cake_define
           xs) :: rest),shmem_info) ->
        (let (name,nb) = get_memop_info m in
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
-         (ffi_names' ++ [SharedMem name])
+         (ffi_names' ++ [ffi_SharedMem name])
          (shmem_info ++
          [
            mk_shmem_info_num pos nb (match ad with Addr r off -> r)

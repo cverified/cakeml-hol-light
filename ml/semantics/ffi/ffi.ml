@@ -26,7 +26,9 @@ let shmem_op_INDUCT,shmem_op_RECURSION = define_datatype
   "shmem_op = MappedRead | MappedWrite";;
 
 let ffiname_INDUCT,ffiname_RECURSION = define_datatype
-  "ffiname = ExtCall (mlstring) | SharedMem (shmem_op)";;
+  "ffiname = ffi_ExtCall (mlstring) | ffi_SharedMem (shmem_op)";;
+hol4_overload "ExtCall" "ffi_ExtCall";;
+hol4_overload "SharedMem" "ffi_SharedMem";;
 
 (* HOL4 type abbreviation (expanded in the port):
      oracle_function = 'ffi -> word8 list -> word8 list -> 'ffi
@@ -63,7 +65,7 @@ let ffi_result_INDUCT,ffi_result_RECURSION = define_datatype
 
 let call_FFI_def = cake_define
   `call_FFI (st:'ffi ffi_state) s conf bytes =
-     (if ~(s = ExtCall (implode "")) then
+     (if ~(s = ffi_ExtCall (implode "")) then
        match ffi_state_oracle st s (ffi_state_ffi_state st) conf
          bytes with
          Oracle_return ffi' bytes' ->

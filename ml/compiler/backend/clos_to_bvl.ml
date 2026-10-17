@@ -142,10 +142,10 @@ let compile_op_def = cake_define
         closLang_LengthByte
       | (closLang_MemOp closLang_DerefByteVec) -> closLang_MemOp
         closLang_DerefByte
-      | (closLang_GlobOp (SetGlobal n)) -> closLang_GlobOp (SetGlobal
-        (n + num_added_globals))
-      | (closLang_GlobOp (Global n)) -> closLang_GlobOp (Global (n +
-        num_added_globals))
+      | (closLang_GlobOp (closLang_SetGlobal n)) -> closLang_GlobOp
+        (closLang_SetGlobal (n + num_added_globals))
+      | (closLang_GlobOp (closLang_Global n)) -> closLang_GlobOp
+        (closLang_Global (n + num_added_globals))
       | (closLang_BlockOp (closLang_Constant c)) -> compile_const c
       | x -> x`;;
 hol4_overload "compile_op" "clos_to_bvl_compile_op";;
@@ -267,7 +267,8 @@ let generate_generic_app_def = cake_define
                  (Op (closLang_BlockOp (closLang_Cons
                    partial_app_tag))
                      (REVERSE
-                       (mk_el (Op (closLang_GlobOp (Global 0)) [])
+                       (mk_el (Op (closLang_GlobOp (closLang_Global
+                         0)) [])
                          (partial_app_fn_location_code max_app
                            ((\b i. bvl_Op (closLang_BlockOp
                              (closLang_ElemAt i)) [b]) (Var (n + 2)) 1)
@@ -286,7 +287,8 @@ let generate_generic_app_def = cake_define
                         Var 0 ::
                         Op (closLang_IntOp closLang_Add) [Var 0;
                           mk_const (n + 4)] ::
-                        mk_el (Op (closLang_GlobOp (Global 0)) [])
+                        mk_el (Op (closLang_GlobOp (closLang_Global
+                          0)) [])
                           (partial_app_fn_location_code max_app
                             (Op (closLang_IntOp closLang_Add) [Var 0;
                               Op (closLang_IntOp closLang_Add) [mk_const
@@ -346,10 +348,11 @@ hol4_overload "init_code" "clos_to_bvl_init_code";;
 
 let init_globals_def = cake_define
   `init_globals max_app start_loc =
-     Let [Op (closLang_GlobOp AllocGlobal) [Op (closLang_IntOp
-       (closLang_Const (&1))) []]]
+     Let [Op (closLang_GlobOp closLang_AllocGlobal) [Op
+       (closLang_IntOp (closLang_Const (&1))) []]]
      (bvl_Let
-       [Op (closLang_GlobOp (SetGlobal partial_app_label_table_loc))
+       [Op (closLang_GlobOp (closLang_SetGlobal
+         partial_app_label_table_loc))
          [Op (closLang_BlockOp (closLang_Cons tuple_tag))
            (REVERSE (FLAT
              (GENLIST

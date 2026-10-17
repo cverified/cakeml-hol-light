@@ -171,7 +171,8 @@ let evaluate_def = cake_define_cheat CHEAT_TAC
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE ->
            (Error,ms,ffi) | SOME ffi_index ->
-             (match EL ffi_index (ffi_names mc) with SharedMem op ->
+             (match EL ffi_index (ffi_names mc) with ffi_SharedMem op
+               ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with NONE -> (Error,ms,ffi) | SOME
                     (nb,a,reg,pc') ->
@@ -235,7 +236,7 @@ let evaluate_def = cake_define_cheat CHEAT_TAC
                                 new_oracle) mc in
                               targetSem_evaluate mc new_ffi (k -
                                 (1:num)) ms1)) else (Error,ms,ffi))))))
-                                | ExtCall _1 ->
+                                | ffi_ExtCall _1 ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with SOME _2 -> (Error,ms,ffi) | NONE ->
                        (match read_ffi_bytearrays mc ms with (SOME
@@ -306,9 +307,9 @@ let mmio_pcs_min_index_def = cake_define
    some (\x.
      ((x <= LENGTH ffi_names') /\
      (!j. j < x ==> (?s.
-       EL j ffi_names' = ExtCall s)) /\
+       EL j ffi_names' = ffi_ExtCall s)) /\
      (!j. x <= j /\ j < LENGTH ffi_names' ==>
-          (?op. EL j ffi_names' = SharedMem op))))`;;
+          (?op. EL j ffi_names' = ffi_SharedMem op))))`;;
 
 (* start_pc_ok: machine configuration's saved pcs and initial pc are ok
    *)
@@ -371,8 +372,8 @@ let ffi_interfer_ok_def = cake_define
             read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME
               bytes2) /\
             LENGTH new_bytes = LENGTH bytes2 /\
-            (EL index (ffi_names mc_conf) = ExtCall (implode "") ==>
-              new_bytes = bytes2) /\
+            (EL index (ffi_names mc_conf) = ffi_ExtCall (implode "")
+              ==> new_bytes = bytes2) /\
             target_state_rel (machine_config_target mc_conf)
               (asm_state_pc_fupd (K (--n2w ((3 + index) * ffi_offset)
                 + pc')) t1) ms2 /\
@@ -408,8 +409,8 @@ let ffi_interfer_ok_def = cake_define
                (machine_config_ffi_entry_pcs mc_conf))) t1) ms2 ==>
                (?info. ALOOKUP (machine_config_mmio_info mc_conf)
                  index = SOME info /\
-                (EL index (ffi_names mc_conf) = SharedMem MappedRead
-                  ==>
+                (EL index (ffi_names mc_conf) = ffi_SharedMem
+                  MappedRead ==>
                 (!new_bytes.
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_regs_fupd (K (\n. if n = FST (SND (SND
@@ -419,8 +420,8 @@ let ffi_interfer_ok_def = cake_define
                          (SND (SND (SND info)))) t1))
                    (machine_config_ffi_interfer mc_conf k
                      (index,new_bytes,ms2)))) /\
-                (EL index (ffi_names mc_conf) = SharedMem MappedWrite
-                  ==>
+                (EL index (ffi_names mc_conf) = ffi_SharedMem
+                  MappedWrite ==>
                 target_state_rel (machine_config_target mc_conf)
                   (asm_state_pc_fupd (K (SND (SND (SND info)))) t1)
                   (machine_config_ffi_interfer mc_conf k

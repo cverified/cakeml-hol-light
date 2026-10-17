@@ -40,8 +40,8 @@ let is_pure_def = cake_define
         | (closLang_BlockOp (closLang_FromList _12)) -> F
         | (closLang_BlockOp ListAppend) -> F
         | (closLang_BlockOp closLang_Equal) -> F
-        | (closLang_GlobOp (SetGlobal _13)) -> F
-        | (closLang_GlobOp SetGlobalsPtr) -> F
+        | (closLang_GlobOp (closLang_SetGlobal _13)) -> F
+        | (closLang_GlobOp closLang_SetGlobalsPtr) -> F
         | (closLang_MemOp closLang_Ref) -> F
         | (closLang_MemOp (closLang_RefByte _14)) -> F
         | (closLang_MemOp closLang_RefArray) -> F

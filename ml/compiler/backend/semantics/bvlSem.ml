@@ -16,6 +16,7 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/comparison.ml";;
+needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/lprefix_lub.ml";;
 needs "lib/peg.ml";;
@@ -322,12 +323,12 @@ hol4_overload "bad_thunk_update" "bvlSem_bad_thunk_update";;
 
 let do_app_def = cake_define
   `bvlSem_do_app op vs (s:('c,'ffi)bvlSem_state) =
-     (match (op,vs) with (closLang_GlobOp (Global n),[]) ->
+     (match (op,vs) with (closLang_GlobOp (closLang_Global n),[]) ->
          (match get_global n (state_globals s) with SOME (SOME v) ->
            Rval (v,s) | _65 -> ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result)) | (closLang_GlobOp
-           (Global _66),[Number i]) ->
+           (closLang_Global _66),[Number i]) ->
          (if i < (&0) then ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result) else
@@ -336,14 +337,14 @@ let do_app_def = cake_define
             ((Rerr (Rabort
             Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
             ,bvlSem_v)semanticPrimitives_result)) | (closLang_GlobOp
-            (SetGlobal n),[v]) ->
+            (closLang_SetGlobal n),[v]) ->
          (match get_global n (state_globals s) with SOME _68 -> Rval
            (Unit,state_globals_fupd (K (LUPDATE (SOME v) n
            (state_globals s)))
               s) | _69 -> ((Rerr (Rabort
                 Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
                 ,bvlSem_v)semanticPrimitives_result)) | (closLang_GlobOp
-                AllocGlobal,[Number i]) ->
+                closLang_AllocGlobal,[Number i]) ->
          (if i < (&0) then ((Rerr (Rabort
            Rtype_error)):(bvlSem_v#('c,'ffi)bvlSem_state
            ,bvlSem_v)semanticPrimitives_result) else Rval
@@ -629,7 +630,7 @@ let do_app_def = cake_define
            cptr; RefPtr _120 ptr]) ->
          (match (FLOOKUP (state_refs s) cptr,FLOOKUP (state_refs s)
            ptr) with (SOME (ByteArray T cws),SOME (ByteArray F ws)) ->
-            (match call_FFI (state_ffi s) (ExtCall n) cws ws with
+            (match call_FFI (state_ffi s) (ffi_ExtCall n) cws ws with
               FFI_return ffi' ws' ->
                  Rval (Unit,state_ffi_fupd (K ffi') (state_refs_fupd
                    (K (state_refs s |+ (ptr,ByteArray F ws')))

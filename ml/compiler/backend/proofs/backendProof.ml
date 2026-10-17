@@ -43,7 +43,6 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/multiword.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/primSemEnv.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -95,7 +94,7 @@ let backend_config_ok_def = cake_define
      asm_conf (INL Add) (n2w 4) /\ asm_config_valid_imm
      asm_conf (INL Add) (n2w 1) /\ asm_config_valid_imm
      asm_conf (INL Sub) (n2w 1) /\
-     OPTION_ALL (EVERY (\x. ?s. x = ExtCall s)) (ffi_names
+     OPTION_ALL (EVERY (\x. ?s. x = ffi_ExtCall s)) (ffi_names
        (backend_config_lab_conf c)) /\
      tlookup (stack_to_lab_config_reg_names
        (backend_config_stack_conf c)) PERMUTES UNIV /\
