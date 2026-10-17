@@ -14,6 +14,7 @@ needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
+needs "lib/simpleSexpParse.ml";;
 needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
@@ -78,7 +79,7 @@ let optlift_def = cake_define_list
 
 let cmlParseExpr_def = cake_define
   `cmlParseExpr = pegresult_bind (destResult o (\n t. peg_exec cmlPEG
-  (pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\
+  (cmlPEG_pnt n) t [] NONE [] pegexec_done pegexec_failed) nE) (\
      pts. pegresult_bind (optlift (oHD pts)) (\
      pt. pegresult_bind (optlift (ptree_Expr nE pt)) (\
      ast.
@@ -86,8 +87,8 @@ let cmlParseExpr_def = cake_define
 
 let parse_prog_def = cake_define
   `parse_prog =
-     pegresult_bind (destResult o (\n t. peg_exec cmlPEG (pnt n) t []
-       NONE [] pegexec_done pegexec_failed) nTopLevelDecs) (\
+     pegresult_bind (destResult o (\n t. peg_exec cmlPEG (cmlPEG_pnt
+       n) t [] NONE [] pegexec_done pegexec_failed) nTopLevelDecs) (\
        pts. pegresult_bind (optlift (oHD pts)) (\
        pt.
        optlift (ptree_TopLevelDecs pt)))`;;

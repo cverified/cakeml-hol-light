@@ -4,7 +4,7 @@
 
 writes ml/<path>/<theory>.ml and reports what it could not do.
 """
-import sys, os, re
+import sys, os, re, subprocess
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import hol4, hterm, db as dbmod, overrides, grammardef
 
@@ -2580,7 +2580,18 @@ def mlpath(rel):
   return re.sub(r'Script\.sml$', '.ml', rel)
 
 
+def check_no_run():
+  """a run loads the files of ml/ one after the other, so writing
+     into ml/ while one is going invalidates it (and a file that a
+     needs of a later file reloads is an error of its own)"""
+  out = subprocess.run(['ps', '-eo', 'args'],
+                       capture_output=True, text=True).stdout
+  if re.search(r'^[^\n]*[c]heckseq', out, re.M):
+    raise SystemExit('a run is going: ml/ must not change under it')
+
+
 def port(thy, db=None):
+  check_no_run()
   db = db or dbmod.Db()
   p = Porter(db, thy)
   text = p.run()

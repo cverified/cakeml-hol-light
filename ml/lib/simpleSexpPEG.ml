@@ -11,11 +11,9 @@ needs "lib/simpleSexp.ml";;
 let tokeq_def = cake_define
   `simpleSexpPEG_tokeq t = peg_tok ((=) t) (K (SX_SYM [t]))`;;
 hol4_overload "tokeq" "simpleSexpPEG_tokeq";;
-(* PORT FAILED: Definition grabWS_def: parse_atom: sym:'>' at 59
-Definition grabWS_def:
-  grabWS s = rpt (tok isSpace (K arb_sexp)) (K arb_sexp) ~> s
-End
-*)
+let grabWS_def = cake_define
+  `grabWS s = ~> (peg_rpt (peg_tok isSpace (K arb_sexp)) (K
+  arb_sexp)) s`;;
 
 let pnt_def = cake_define
   `simpleSexpPEG_pnt ntsym = peg_nt (mkNT ntsym) I`;;
@@ -43,77 +41,87 @@ let pegf_def = cake_define
   l2. f l1)`;;
 hol4_overload "pegf" "simpleSexpPEG_pegf";;
 
-(* PORT FAILED: Definition sexpPEG_def: parse_atom: sym:'>' at 633
-Definition sexpPEG_def[nocompute]:
-  sexpPEG : (char, sexpNT, sexp, string) peg =
-  <|
-    start := pnt sxnt_sexp ;
-    anyEOF := "Unexpected EOF (any)";
-    tokFALSE := "Failed to see expected token";
-    tokEOF := "Failed to see expected token because of EOF";
-    notFAIL := "Failed to fail in a not rule";
-    rules :=
-    FEMPTY |++
-           [(mkNT sxnt_sexp,
-             pnt sxnt_WSsexp <~
-             seq (rpt (tok isSpace (K arb_sexp)) (K arb_sexp))
-                 (not (any (K arb_sexp)) arb_sexp)
-                 (K (K arb_sexp)));
-            (mkNT sxnt_sexp0,
-             choicel [
-                 pnt sxnt_sexpnum ;
-                 tokeq #"(" ~> pnt sxnt_sexpseq ;
-                 tokeq #"\"" ~>
-                     pnt sxnt_strcontents
-                  <~ choice (tokeq #"\"") (error "Expected \"") sumID;
-                 pegf (tokeq #"'" ~> grabWS (pnt sxnt_sexp0))
-                      (λs. ⟪ SX_SYM "quote"; s⟫) ;
-                 pnt sxnt_sexpsym
-               ]);
-            (mkNT sxnt_sexpseq,
-             choicel [
-                 pegf (grabWS (tokeq #")")) (K (SX_SYM "nil"));
-                 seq (grabWS (pnt sxnt_sexp0))
-                     (seq
-                      (rpt (grabWS (pnt sxnt_sexp0))
-                       (FOLDR SX_CONS (SX_SYM "nil")))
-                      (choicel [
-                          pegf (grabWS (tokeq #")")) (K (SX_SYM "nil"));
-                          grabWS (tokeq #".") ~>
-                                 grabWS (pnt sxnt_sexp0)
-                                 <~ grabWS (tokeq #")")
-                        ])
-                      replace_nil)
-                     SX_CONS
-               ]);
-            (mkNT sxnt_WSsexp,
-             rpt (tok isSpace (K arb_sexp)) (K arb_sexp) ~> pnt sxnt_sexp0);
-            (mkNT sxnt_sexpnum,
-             seq (pnt sxnt_digit)
-                 (rpt (pnt sxnt_digit)
-                  (UNCURRY SX_CONS o (SX_NUM ## SX_NUM) o
-                   FOLDL (λ(l,n) d. (10*l, 10*n + destSXNUM d)) (1,0)))
-                 (λs1. (λ(l,n). SX_NUM (destSXNUM s1 * l + n))
-                       o (destSXNUM ## destSXNUM) o destSXCONS)) ;
-            (mkNT sxnt_digit, tok isDigit (λ(c,l). SX_NUM (ORD c - ORD #"0"))) ;
-            (mkNT sxnt_sexpsym,
-             seq (tok valid_first_symchar (λ(c,l). SX_SYM [c]))
-                 (rpt (tok valid_symchar (λ(c,l). SX_SYM [c]))
-                  (SX_SYM o FOLDR (λs a. destSXSYM s ++ a) []))
-                 (λs1 s2. SX_SYM (destSXSYM s1 ++ destSXSYM s2)));
-            (mkNT sxnt_strcontents,
-             rpt (pnt sxnt_strchar)
-                 (SX_STR o FOLDR (λs a. destSXSYM s ++ a) []));
-            (mkNT sxnt_strchar,
-             choicel [
-                 tokeq #"\\" ~> pnt sxnt_escapedstrchar ;
-                 pnt sxnt_normstrchar
-               ]);
-            (mkNT sxnt_escapedstrchar,
-             choicel [tokeq #"\\"; tokeq #"\""; error "Illegal string-escape"]);
-            (mkNT sxnt_normstrchar,
-             tok (λc. isPrint c ∧ c ≠ #"\"" ∧ c ≠ #"\\") (λ(c,l). SX_SYM [c]))
-           ]
-  |>
-End
-*)
+let sexpPEG_def = cake_define
+  `(sexpPEG:(char,sexpNT,simpleSexp_sexp,string)peg) =
+   mk_peg (simpleSexpPEG_pnt sxnt_sexp) "Unexpected EOF (any)"
+     "Failed to see expected token"
+     "Failed to see expected token because of EOF"
+     "Failed to fail in a not rule" (
+     FEMPTY |++
+            [(mkNT sxnt_sexp,<~
+              (simpleSexpPEG_pnt sxnt_WSsexp)
+              (peg_seq (peg_rpt (peg_tok isSpace (K arb_sexp)) (K
+                arb_sexp))
+                  (peg_not (peg_any (K arb_sexp)) arb_sexp)
+                  (K (K arb_sexp))));
+             (mkNT sxnt_sexp0,
+              choicel [
+                  simpleSexpPEG_pnt sxnt_sexpnum; ~>
+                  (simpleSexpPEG_tokeq (CHR 40)) (simpleSexpPEG_pnt
+                    sxnt_sexpseq);
+                   <~ (~>
+                  (simpleSexpPEG_tokeq (CHR 34))
+                      (simpleSexpPEG_pnt sxnt_strcontents))
+                        (peg_choice (simpleSexpPEG_tokeq (CHR 34))
+                        (peg_error ("Expected " ++ [CHR 34]))
+                        simpleSexpPEG_sumID);
+                  pegf (~> (simpleSexpPEG_tokeq (CHR 39)) (grabWS
+                    (simpleSexpPEG_pnt sxnt_sexp0)))
+                       (\s. (SX_CONS (SX_SYM "quote") (SX_CONS (s)
+                         (SX_SYM "nil"))));
+                  simpleSexpPEG_pnt sxnt_sexpsym]);
+             (mkNT sxnt_sexpseq,
+              choicel [
+                  pegf (grabWS (simpleSexpPEG_tokeq (CHR 41))) (K
+                    (SX_SYM "nil"));
+                  peg_seq (grabWS (simpleSexpPEG_pnt sxnt_sexp0))
+                      (peg_seq
+                       (peg_rpt (grabWS (simpleSexpPEG_pnt
+                         sxnt_sexp0))
+                        (FOLDR SX_CONS (SX_SYM "nil")))
+                       (choicel [
+                           pegf (grabWS (simpleSexpPEG_tokeq (CHR
+                             41))) (K (SX_SYM "nil"));
+                              <~ (~>
+                           (grabWS (simpleSexpPEG_tokeq (CHR 46)))
+                              (grabWS (simpleSexpPEG_pnt
+                                sxnt_sexp0))) (grabWS
+                                (simpleSexpPEG_tokeq (CHR 41)))])
+                       replace_nil)
+                      SX_CONS]);
+             (mkNT sxnt_WSsexp,~>
+              (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp))
+                (simpleSexpPEG_pnt sxnt_sexp0));
+             (mkNT sxnt_sexpnum,
+              peg_seq (simpleSexpPEG_pnt sxnt_digit)
+                  (peg_rpt (simpleSexpPEG_pnt sxnt_digit)
+                   (UNCURRY SX_CONS o (SX_NUM ## SX_NUM) o
+                    FOLDL (\(l,n) d. (10 * l,10 * n + destSXNUM d))
+                      (1,0)))
+                  (\s1.
+                        (\(l,n). SX_NUM (destSXNUM s1 * l + n)) o
+                          (destSXNUM ## destSXNUM) o destSXCONS));
+             (mkNT sxnt_digit,peg_tok isDigit (\(c,l). SX_NUM (ORD c
+               - ORD (CHR 48))));
+             (mkNT sxnt_sexpsym,
+              peg_seq (peg_tok valid_first_symchar (\(c,l). SX_SYM
+                [c]))
+                  (peg_rpt (peg_tok valid_symchar (\(c,l). SX_SYM
+                    [c]))
+                   (SX_SYM o FOLDR (\s a. destSXSYM s ++ a) []))
+                  (\s1 s2. SX_SYM (destSXSYM s1 ++ destSXSYM s2)));
+             (mkNT sxnt_strcontents,
+              peg_rpt (simpleSexpPEG_pnt sxnt_strchar)
+                  (SX_STR o FOLDR (\s a. destSXSYM s ++ a) []));
+             (mkNT sxnt_strchar,
+              choicel [~>
+                  (simpleSexpPEG_tokeq (CHR 92)) (simpleSexpPEG_pnt
+                    sxnt_escapedstrchar);
+                  simpleSexpPEG_pnt sxnt_normstrchar]);
+             (mkNT sxnt_escapedstrchar,
+              choicel [simpleSexpPEG_tokeq (CHR 92);
+                simpleSexpPEG_tokeq (CHR 34); peg_error
+                "Illegal string-escape"]);
+             (mkNT sxnt_normstrchar,
+              peg_tok (\c. isPrint c /\ ~(c = (CHR 34)) /\ ~(c =
+                (CHR 92))) (\(c,l). SX_SYM [c]))])`;;

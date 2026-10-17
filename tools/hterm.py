@@ -1134,13 +1134,32 @@ def hl_string(body):
      of its own"""
   parts = []
   cur = []
+
+  def flush():
+    # a literal of more than fifty characters is split, so that the
+    # lines of the port can stay short, and one that would end in a
+    # backslash has that character of its own (a backslash in front
+    # of the quote that closes a literal is read as an escape by
+    # some of the tools, and the port is not to depend on that)
+    while len(cur) > 50:
+      k = 50
+      while k > 1 and cur[k-1] == '\\': k -= 1
+      parts.append('"%s"' % ''.join(cur[:k])); del cur[:k]
+    back = 0
+    while cur and cur[-1] == '\\':
+      cur.pop(); back += 1
+    if cur: parts.append('"%s"' % ''.join(cur))
+    parts.extend(['[CHR 92]'] * back)
+    del cur[:]
+
   for b in sml_string_bytes(body):
     if 32 <= b < 127 and b not in (34, 96):
       cur.append(chr(b))
     else:
-      if cur: parts.append('"%s"' % ''.join(cur)); cur = []
+      flush()
       parts.append('[CHR %d]' % b)
-  if cur: parts.append('"%s"' % ''.join(cur))
+  flush()
+  parts = [p for p in parts if p != '""']
   if not parts: return '""'
   if len(parts) == 1: return parts[0]
   return '(' + ' ++ '.join(parts) + ')'

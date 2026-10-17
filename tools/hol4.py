@@ -144,11 +144,14 @@ ADD_INFIX = re.compile(r'(temp_)?add_infix\s*\(\s*'
                        r'"((?:[^"\\]|\\.)*)"\s*,'
                        r'\s*(\d+)\s*,\s*(?:\w+\.)?'
                        r'(LEFT|RIGHT|NONASSOC)')
+# the fields of a set_mapped_fixity record come in either order
+# (pegTheory writes the fixity before the token)
 MAPPED_FIXITY = re.compile(
-  r'(temp_)?set_mapped_fixity\s*\{[^}]*?'
-  r'tok\s*=\s*"((?:[^"\\]|\\.)*)"'
-  r'[^}]*?fixity\s*=\s*(Infixl|Infixr|Infix)\s*'
-  r'(?:\(\s*(LEFT|RIGHT|NONASSOC)\s*,\s*)?(\d+)', re.S)
+  r'(temp_)?set_mapped_fixity\s*\{([^}]*)\}', re.S)
+MAPPED_TOK = re.compile(r'tok\s*=\s*"((?:[^"\\]|\\.)*)"')
+MAPPED_FIX = re.compile(r'fixity\s*=\s*(Infixl|Infixr|Infix)\s*'
+                        r'(?:\(\s*(LEFT|RIGHT|NONASSOC)\s*,\s*)?'
+                        r'(\d+)')
 
 
 def fixities(text):
@@ -156,9 +159,14 @@ def fixities(text):
      (token, precedence, associativity, temporary); a temporary one
      does not reach the theories that descend from this one"""
   out = []
-  for m in list(FIXITY.finditer(text)) + \
-           list(MAPPED_FIXITY.finditer(text)):
-    temp, tok, kind, ass, prec = m.groups()
+  pairs = [m.groups() for m in FIXITY.finditer(text)]
+  for m in MAPPED_FIXITY.finditer(text):
+    mt = MAPPED_TOK.search(m.group(2))
+    mf = MAPPED_FIX.search(m.group(2))
+    if mt and mf:
+      pairs.append((m.group(1), mt.group(1), mf.group(1),
+                    mf.group(2), mf.group(3)))
+  for temp, tok, kind, ass, prec in pairs:
     a = 'l' if kind == 'Infixl' else 'r' if kind == 'Infixr' else \
         {'LEFT': 'l', 'RIGHT': 'r'}.get(ass, 'n')
     out.append((sml_string(tok), int(prec), a, bool(temp)))

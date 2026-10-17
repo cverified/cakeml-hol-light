@@ -2399,6 +2399,15 @@ let the_cheats = ref ([]:string list);;
 
 let cake_cheats () = rev (!the_cheats);;
 
+(* and why it is assumed: the message of the strategy that failed
+   last, or the timeout *)
+
+let the_cheat_why = ref ([]:(string * string) list);;
+
+let cake_cheat_why () = rev (!the_cheat_why);;
+
+let cheat_why = ref "";;
+
 (* a constant whose value HOL4 computes with ML code that the port
    cannot run: the constant is declared and nothing is known about
    it (which adds no axiom), and it is recorded as a cheat *)
@@ -2406,6 +2415,7 @@ let cake_cheats () = rev (!the_cheats);;
 let cake_declare name ty =
   new_constant(name,ty);
   the_cheats := name :: !the_cheats;
+  the_cheat_why := (name,"declared (no value)") :: !the_cheat_why;
   print_string ("\ncake_declare " ^ name ^ " (no value)\n");
   flush stdout;;
 
@@ -2426,15 +2436,6 @@ let definition_free tm =
 let the_cheat_free = ref ([]:(string * string list) list);;
 
 let cake_cheat_free () = rev (!the_cheat_free);;
-
-(* and why it is assumed: the message of the strategy that failed
-   last, or the timeout *)
-
-let the_cheat_why = ref ([]:(string * string) list);;
-
-let cake_cheat_why () = rev (!the_cheat_why);;
-
-let cheat_why = ref "";;
 
 let note_cheat name tm =
   let free = map (fst o dest_var) (definition_free tm) in

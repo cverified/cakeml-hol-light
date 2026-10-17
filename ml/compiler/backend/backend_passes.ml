@@ -439,7 +439,8 @@ let any_prog_pp_def = cake_define
 
 let pp_with_title_def = cake_define
   `pp_with_title pp (title,p) acc =
-     Append (List [(implode "# "); title; (implode "\n\n")])
+     Append (List [(implode "# "); title; (implode ([CHR 10] ++ [CHR
+       10]))])
      (Append (pp p) acc)`;;
 
 let compile_tap_def = cake_define

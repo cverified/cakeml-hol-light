@@ -30,15 +30,15 @@ needs "lib/integer_word.ml";;
 needs "lib/location.ml";;
 needs "lib/peg.ml";;
 needs "lib/pegexec.ml";;
+needs "lib/simpleSexpParse.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
-(* HOL4 ancestors outside the port: basisProg simpleSexpParse
-   x64_config export_x64 arm8_config export_arm8 riscv_config
-   export_riscv mips_config export_mips arm7_config export_arm7
-   ag32_config export_ag32 panPtreeConversion pan_to_target panStatic
-   pan_passes *)
+(* HOL4 ancestors outside the port: basisProg x64_config export_x64
+   arm8_config export_arm8 riscv_config export_riscv mips_config
+   export_mips arm7_config export_arm7 ag32_config export_ag32
+   panPtreeConversion pan_to_target panStatic pan_passes *)
 
 let staterr_INDUCT,staterr_RECURSION = define_datatype
   "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
@@ -174,7 +174,7 @@ let print_option_def = cake_define
      (match x with
        NONE -> (implode "") | SOME y -> (\x y. strcat x y) ((\x y.
          strcat x y) ((\x y. strcat x y) h (implode " ")) y) (implode
-         "\n"))`;;
+         [CHR 10]))`;;
 
 (* HOL4 ML code, not ported:
 val current_build_info_str_tm = EVAL ``
@@ -190,7 +190,16 @@ val current_build_info_str_tm = EVAL ``
 *)
 
 let current_build_info_str_def = cake_define
-  `current_build_info_str = current_build_info_str_tm`;;
+  `current_build_info_str =
+     (let commit = print_option (strlit "CakeML:")
+                     (NONE:mlstring option) in
+     let hol = print_option (strlit "HOL4:  ")
+                 (NONE:mlstring option) in
+     let poly = print_option (strlit "PolyML:")
+                  (NONE:mlstring option) in
+       concat [strlit ("The CakeML compiler" ++ [CHR 10] ++ [CHR 10]);
+               strlit ("Version details:" ++ [CHR 10]); strlit "";
+               strlit [CHR 10]; commit; hol; poly])`;;
 
 (* =====================================================================
    ==== *)
@@ -217,8 +226,165 @@ val help_string_tm =
   |> stringSyntax.fromMLstring;
 *)
 
+(* HOL4 takes this string from the quotation of the --help text at
+   the head of the source, without its first line (the ML code of
+   help_string_tm above).  The port writes the text out and makes
+   the term of it, because a string literal of HOL Light holds the
+   characters that are in it, and this text has newlines and a
+   backquote in it. *)
+
 let help_string_def = cake_define
-  `help_string = implode help_string_tm`;;
+  (mk_eq(`help_string:mlstring`,
+         mk_comb(`implode`, mk_string
+  ("\n" ^
+   "Usage:  cake [OPTIONS] < input_file > output_file\n" ^
+   "\n" ^
+   "The cake executable is usually invoked as shown above. The d" ^
+   "ifferent\n" ^
+   "OPTIONS are described in the OPTIONS listing below.\n" ^
+   "\n" ^
+   "One can also run the cake execuable as follows to print a li" ^
+   "sting of\n" ^
+   "the type of each top-level binding (including the bindings m" ^
+   "ade in\n" ^
+   "the standard basis library).\n" ^
+   "\n" ^
+   "Usage:  cake --types < input_file\n" ^
+   "\n" ^
+   "One can invoke the cake executable to print this help messag" ^
+   "e (--help)\n" ^
+   "or version information (--version) without an input_file:\n" ^
+   "\n" ^
+   "Usage:  cake --version\n" ^
+   "Usage:  cake --help\n" ^
+   "\n" ^
+   "OPTIONS:\n" ^
+   "\n" ^
+   "  --repl        starts an interactive read-eval-print loop; " ^
+   "all other\n" ^
+   "                flags are ignored, when the --repl flag is p" ^
+   "resent\n" ^
+   "\n" ^
+   "  --reg_alg=N   N is a natural number that specifies the reg" ^
+   "ister\n" ^
+   "                allocation algorithm to use:\n" ^
+   "                   0   - simple allocator, no spill heuristi" ^
+   "cs\n" ^
+   "                   1   - simple allocator, spill heuristics" ^
+   "\n" ^
+   "                   2   - IRC allocator, no spill heuristics " ^
+   "(default)\n" ^
+   "                   3   - IRC allocator, spill heuristics\n" ^
+   "                   >=4 - linear scan allocator\n" ^
+   "\n" ^
+   "  --gc=G        specifies garbage collector type; here G is " ^
+   "one of:\n" ^
+   "                   none   - no garbage collector is used\n" ^
+   "                   simple - a non-generational Cheney (defau" ^
+   "lt)\n" ^
+   "                   genN   - a generational Cheney garbage co" ^
+   "llector is\n" ^
+   "                            used; the size of the nursery ge" ^
+   "neration is\n" ^
+   "                            N machine words (example: --gc=g" ^
+   "en5000)\n" ^
+   "                This option has no effect under --pancake; t" ^
+   "he Pancake\n" ^
+   "                compiler always uses gc=none.\n" ^
+   "\n" ^
+   "  --target=T    specifies that compilation should produce co" ^
+   "de for target\n" ^
+   "                T, where T can be one of x64, arm8, mips, ri" ^
+   "scv for\n" ^
+   "                the 64-bit compiler; for the 32-bit compiler" ^
+   " T can be\n" ^
+   "                one of arm7 and ag32.\n" ^
+   "\n" ^
+   "  --sexp=B      B can be either true or false; here false me" ^
+   "ans that the\n" ^
+   "                input will be parsed as normal CakeML concre" ^
+   "te syntax;\n" ^
+   "                true means that the input is parsed as an s-" ^
+   "expression.\n" ^
+   "\n" ^
+   "  --print_sexp  causes the cake to print the given program i" ^
+   "n\n" ^
+   "                s-expression format; with this option, the c" ^
+   "ompiler\n" ^
+   "                does not generate machine code.\n" ^
+   "\n" ^
+   "  --exclude_prelude=B   here B can be either true or false; " ^
+   "the default\n" ^
+   "                is false; setting this to true causes the co" ^
+   "mpiler not\n" ^
+   "                to include the standard basis library.\n" ^
+   "\n" ^
+   "  --skip_type_inference=B   here B can be either true or fal" ^
+   "se; the\n" ^
+   "                default is false; true will make the compile" ^
+   "r skip\n" ^
+   "                type inference. There are no gurantees of sa" ^
+   "fety if\n" ^
+   "                the type inferencer is skipped.\n" ^
+   "\n" ^
+   "  --explore     outputs intermediate forms of the compiled p" ^
+   "rogram\n" ^
+   "\n" ^
+   "  --pancake     takes a pancake program as input\n" ^
+   "\n" ^
+   "  --no_warn     silences pancake warning output\n" ^
+   "\n" ^
+   "  --main_return=B   here B can be either true or false; the " ^
+   "default is\n" ^
+   "                false; setting this to true causes the main " ^
+   "function to\n" ^
+   "                return to caller instead of exit; this optio" ^
+   "n is\n" ^
+   "                required to use multiple entry points with P" ^
+   "ancake.\n" ^
+   "\n" ^
+   "ADDITIONAL OPTIONS:\n" ^
+   "\n" ^
+   "Optimisations can be configured using the following advanced" ^
+   " options.\n" ^
+   "\n" ^
+   "  --jump=B    true means conditional jumps to be used for ou" ^
+   "t-of-stack checks\n" ^
+   "  --multi=B   true means clos_to_bvl phase is to use multi o" ^
+   "ptimisation\n" ^
+   "  --known=B   true means clos_to_bvl phase is to use known o" ^
+   "ptimisation\n" ^
+   "  --call=B    true means clos_to_bvl phase is to use call op" ^
+   "timisation\n" ^
+   "  --tmc=B     true means tail-call modulo cons optimisations" ^
+   " is used\n" ^
+   "  --tailrec=B true means attempts to turn functions into tai" ^
+   "l-rec form\n" ^
+   "  --inline_factor=N  threshold used by for ClosLang inliner " ^
+   "in known pass\n" ^
+   "  --max_body_size=N  threshold used by for ClosLang inliner " ^
+   "in known pass\n" ^
+   "  --max_app=N   max number of optimised curried applications" ^
+   " in multi pass\n" ^
+   "  --inline_size=N  threshold used by for BVL inliner pass\n" ^
+   "  --exp_cut=N  threshold for when to cut large expression in" ^
+   "to subfunctions\n" ^
+   "  --split=B  true means main expression will be split at seq" ^
+   "uencing (;)\n" ^
+   "  --tag_bits=N  number of tag bits in every pointer\n" ^
+   "  --len_bits=N  number of length bits in every pointer\n" ^
+   "  --pad_bits=N  number of zero padding in every pointer\n" ^
+   "  --len_size=N  size of length field in heap object header c" ^
+   "ells\n" ^
+   "  --emit_empty_ffi=B  true emits debugging FFI calls for use" ^
+   " with DEBUG_FFI\n" ^
+   "  --hash_size=N  size of the memoization table used by instr" ^
+   "uction encoder\n" ^
+   "  --perf_callgraph=B  unverified: emit C-stack shadowing so " ^
+   "`perf record\n" ^
+   "                --call-graph fp` produces correct call graph" ^
+   "s (x64 only)\n" ^
+   "\n"))));;
 
 let compile_error_INDUCT,compile_error_RECURSION = define_datatype
   "compile_error = ParseError (mlstring) | TypeError (mlstring) | \
@@ -260,10 +426,10 @@ let locs_to_string_def = cake_define
              concat (REPLICATE c (implode " ") ++ REPLICATE ((stop -
                c) + 1) (implode [CHR 94])) in
              concat [(implode "line "); toString (r + 1); (implode
-               "\n\n");
-                     line; (implode "\n");
-                     underline; (implode "\n")]) | _4 -> implode
-                       "unknown location")`;;
+               ([CHR 10] ++ [CHR 10]));
+                     line; (implode [CHR 10]);
+                     underline; (implode [CHR 10])]) | _4 ->
+                       implode "unknown location")`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
 (* HOL4 overload (expanded in the port):
@@ -305,12 +471,13 @@ let compile_def = cake_define
            (let _10 = empty_ffi (implode "finished: type inference")
              in
            if compiler_config_only_print_types c then
-             (M_failure (TypeError (concat ([(implode "\n")] ++
+             (M_failure (TypeError (concat ([(implode [CHR 10])] ++
                               inf_env_to_types_string ic ++
-                              [(implode "\n")]))),misc_Nil) else if
-                                compiler_config_only_print_sexp c then
+                              [(implode [CHR 10])]))),misc_Nil) else
+                                if compiler_config_only_print_sexp c
+                                then
              (M_failure (TypeError (implode
-                ("\n" ++ print_sexp (listsexp (MAP decsexp
+                ([CHR 10] ++ print_sexp (listsexp (MAP decsexp
                   full_prog))))),misc_Nil) else
            match compile_tap (compiler_config_asm_config c)
              (compiler_config_backend_config c) full_prog with
@@ -345,26 +512,27 @@ End *)
 (* The top-level compiler *)
 let error_to_str_def = cake_define_list
   [`error_to_str (ParseError s) =
-         concat [(implode "### ERROR: parse error\n"); s;
-           (implode "\n")]`;
+         concat [(implode ("### ERROR: parse error" ++ [CHR
+           10])); s; (implode [CHR 10])]`;
    `error_to_str (TypeError s) =
          (if (if strlen s = 0 then T else
              if strsub s 0 = (CHR 10) then F else T) then
-           concat [(implode "### ERROR: type error\n"); s;
-             (implode "\n")] else s)`;
+           concat [(implode ("### ERROR: type error" ++ [CHR
+             10])); s; (implode [CHR 10])] else s)`;
    `error_to_str (ConfigError s) = concat [(implode
-  "### ERROR: config error\n"); s; (implode "\n")]`;
+  ("### ERROR: config error" ++ [CHR 10])); s; (implode [CHR 10])]`;
    `error_to_str AssembleError = (implode
-  "### ERROR: assembly error\n")`;
+  ("### ERROR: assembly error" ++ [CHR 10]))`;
    `error_to_str (StaticError e) =
         (match e with
           ScopeErr s -> concat [(implode
-            "### ERROR: scope error\n"); s; (implode "\n")] |
-            WarningErr s -> concat [(implode "# WARNING:\n"); s;
-            (implode "\n")] | GenErr s -> concat [(implode
-            "### ERROR: static error\n"); s; (implode "\n")] |
-            ShapeErr s -> concat [(implode
-            "### ERROR: shape error\n"); s; (implode "\n")])`];;
+            ("### ERROR: scope error" ++ [CHR 10])); s; (implode
+            [CHR 10])] | WarningErr s -> concat [(implode
+            ("# WARNING:" ++ [CHR 10])); s; (implode [CHR 10])] |
+            GenErr s -> concat [(implode ("### ERROR: static error"
+            ++ [CHR 10])); s; (implode [CHR 10])] | ShapeErr s ->
+            concat [(implode ("### ERROR: shape error" ++ [CHR
+            10])); s; (implode [CHR 10])])`];;
 
 let is_error_msg_def = cake_define
   `is_error_msg x = isPrefix (implode "###") x`;;
@@ -425,7 +593,7 @@ let find_num_def = cake_define
 
 let get_err_str_def = cake_define_list
   [`get_err_str (INL n) = (implode "")`;
-   `get_err_str (INR n) = concat [n; (implode "\n")]`];;
+   `get_err_str (INR n) = concat [n; (implode [CHR 10])]`];;
 
 (* All the numbers must parse *)
 let parse_num_list_def = cake_define_list

@@ -85,7 +85,7 @@ let next_sym_alt_def = cake_define_list_try (fun () ->
              SOME (t,Locs loc loc',rest) else if isPREFIX "*)" (c ::
                str) then
            SOME (ErrorS,Locs loc (next_loc 2 loc),TL str) else if
-             isPREFIX "#\"" (c :: str) then
+             isPREFIX ("#" ++ [CHR 34]) (c :: str) then
            let (t,loc',rest) = lexer_fun_read_string (TL str) ""
              (next_loc 2 loc) in
              SOME (mkCharS t,Locs loc loc',rest) else if isPREFIX

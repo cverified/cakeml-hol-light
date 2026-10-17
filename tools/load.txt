@@ -23,8 +23,11 @@ lib/peg.ml
 lib/pegexec.ml
 lib/NTproperties.ml
 lib/simpleSexp.ml
+lib/simpleSexpPEG.ml
+lib/simpleSexpParse.ml
 lib/spt_closure.ml
 lib/multiword.ml
+lib/mc_multiword.ml
 lib/term.ml
 lib/subst.ml
 lib/walk.ml

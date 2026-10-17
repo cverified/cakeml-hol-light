@@ -15,11 +15,12 @@ needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_bignum.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/mc_multiword.ml";;
 needs "lib/multiword.ml";;
 needs "lib/set_sep.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: tailrec mc_multiword *)
+(* HOL4 ancestors outside the port: tailrec *)
 
 (* HOL4 ML code, not ported:
 val good_dimindex_def = miscTheory.good_dimindex_def;
@@ -90,8 +91,9 @@ let eval_ri_pre_def = cake_define_list
   T`];;
 
 let eval_ri_def = cake_define_list
-  [`eval_ri s (Reg r) = eval_exp s (Var r)`;
-   `eval_ri s (Imm w) = w`];;
+  [`eval_ri (s:'a word_bignumProof_state) (Reg r) = eval_exp s (Var
+  r)`;
+   `eval_ri (s:'a word_bignumProof_state) (Imm w) = w`];;
 
 let dec_clock_def = cake_define
   `word_bignumProof_dec_clock s = state_clock_fupd (K (state_clock s

@@ -251,7 +251,7 @@ let flatten_def = cake_define_list
 hol4_overload "flatten" "mlsexp_flatten";;
 
 let str_tree_to_strs_def = cake_define
-  `str_tree_to_strs end v = mlsexp_flatten (implode "\n")
+  `str_tree_to_strs end v = mlsexp_flatten (implode [CHR 10])
   (smart_remove 0 0 (mlsexp_annotate (v2pretty v))) [end]`;;
 
 (*--------------------------------------------------------------*
@@ -259,7 +259,8 @@ let str_tree_to_strs_def = cake_define
  *--------------------------------------------------------------*)
 
 let is_safe_char_def = cake_define
-  `is_safe_char c <=> ~MEM c "()\"\000" /\ ~isSpace c`;;
+  `is_safe_char c <=> ~MEM c ("()" ++ [CHR 34] ++ [CHR 0]) /\
+  ~isSpace c`;;
 
 let str_every_def = cake_define
   `str_every p n s =
@@ -268,7 +269,7 @@ let str_every_def = cake_define
 
 let make_str_safe_def = cake_define
   `make_str_safe s =
-     (if s = (implode "") then implode "\"\"" else
+     (if s = (implode "") then implode ([CHR 34] ++ [CHR 34]) else
      if str_every is_safe_char (strlen s) s then s else escape_str
        s)`;;
 
@@ -296,7 +297,7 @@ let sexp_to_string_def = cake_define
 
 let sexp_to_pretty_string_def = cake_define
   `sexp_to_pretty_string s = mlstring_concat (str_tree_to_strs
-  (implode "\n") (sexp2tree s))`;;
+  (implode [CHR 10]) (sexp2tree s))`;;
 
 (*--------------------------------------------------------------*
    Proofs relating parsing with pretty prniting

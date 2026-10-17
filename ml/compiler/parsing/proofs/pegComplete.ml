@@ -139,7 +139,7 @@ val fFail_def = new_specification(
 *)
 
 let sym2peg_def = cake_define_list
-  [`sym2peg (grammar_TOK tk) = tokeq tk`;
+  [`sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk`;
    `sym2peg (grammar_NT N) = peg_nt N I`];;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
@@ -292,7 +292,7 @@ let nestoppers_def = cake_define
                    ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp])`;;
 
 let stoppers_def = cake_define
-  `stoppers x1 =
+  `pegComplete_stoppers x1 =
         match x1 with
           nAndFDecls -> nestoppers DELETE tokens_AndT
         | nDconstructor ->
@@ -585,6 +585,7 @@ let stoppers_def = cake_define
         | nTyVarList -> {tokens_RparT}
         | nOptionalSignatureAscription -> UNIV DELETE tokens_SealT
         | _9 -> UNIV`;;
+hol4_overload "stoppers" "pegComplete_stoppers";;
 
 (* HOL4 ML code, not ported:
 val normlist = REWRITE_TAC [GSYM APPEND_ASSOC, listTheory.APPEND]

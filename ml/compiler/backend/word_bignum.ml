@@ -12,9 +12,9 @@
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/mc_multiword.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
-(* HOL4 ancestors outside the port: mc_multiword *)
 
 (* syntax of a little language *)
 

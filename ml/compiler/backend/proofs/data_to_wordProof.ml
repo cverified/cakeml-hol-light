@@ -1174,7 +1174,8 @@ val th = EVAL``MAP FST (stubs (:'a) c)``;
 
 (* TODO: move somewhere better *)
 let stubs_fst_def = cake_define
-  `stubs_fst = (rconc th)`;;
+  `stubs_fst = MAP FST (data_to_word_stubs (:1)
+                 (ARB:data_to_word_config))`;;
 
 (* The incremental version ONLY does data_to_word
   TODO: MAP FST stubs is independent of the data conf,

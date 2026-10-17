@@ -23,7 +23,7 @@ import defsites
 C = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # the reasons that a CHEAT_TAC cannot do anything about
-HOPELESS = ('new_definition:', 'free:')
+HOPELESS = ('new_definition:', 'free:', 'declared')
 
 
 def rows():

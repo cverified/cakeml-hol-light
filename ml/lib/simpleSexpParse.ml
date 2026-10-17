@@ -20,9 +20,9 @@ let parse_sexp_def = cake_define
 
 let escape_string_def = cake_define
   `escape_string s =
-     (match s with "" -> "" | (CHR 92) :: s -> "\\\\" ++
-       escape_string s | (CHR 34) :: s -> "\\\"" ++ escape_string s |
-       c :: s -> c :: (escape_string s))`;;
+     (match s with "" -> "" | (CHR 92) :: s -> ([CHR 92] ++ [CHR
+       92]) ++ escape_string s | (CHR 34) :: s -> ([CHR 92] ++ [CHR
+       34]) ++ escape_string s | c :: s -> c :: (escape_string s))`;;
 
 let print_space_separated_def = cake_define
   `print_space_separated x1 =
@@ -51,7 +51,7 @@ let print_sexp_def = cake_define_wf
         match s with
           SX_SYM s -> s
         | (SX_NUM n) -> ASCIInumbers_toString n
-        | (SX_STR s) -> "\"" ++ escape_string s ++ "\""
+        | (SX_STR s) -> [CHR 34] ++ escape_string s ++ [CHR 34]
         | s ->
       (let (ls,n) = strip_dot s in
       match n with NONE ->

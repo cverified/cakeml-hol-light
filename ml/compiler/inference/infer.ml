@@ -412,7 +412,7 @@ let infer_p_def = cake_define_list
                     tv; (implode " found in type annotation. ");
                               (implode
 
-      "Type variables are not supported in type annotations.")])
+      ("Type variables are not supported in type annotatio" ++ "ns."))])
       (inf_env_inf_t
                   ienv) [] t) (\
           t''. st_ex_bind (add_constraint l t' (infer_type_subst []
@@ -801,7 +801,7 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
                     tv; (implode " found in type annotation. ");
                               (implode
 
-      "Type variables are not supported in type annotations.")])
+      ("Type variables are not supported in type annotatio" ++ "ns."))])
       (inf_env_inf_t
                   ienv) [] t) (\
            t''. st_ex_bind (add_constraint l t' (infer_type_subst []
@@ -947,8 +947,8 @@ let infer_d_def = cake_define_list_cheat CHEAT_TAC
                   cn;
                               (implode
 
-      ". Type variables are not allowed in exception declarations.")])
-      (inf_env_inf_t
+      (". Type variables are not allowed in exception decl" ++
+      "arations."))]) (inf_env_inf_t
                 ienv) [] ts) (\
         ts'.
         st_ex_return (mk_inf_env nsEmpty (nsSing cn
@@ -1087,7 +1087,7 @@ let inf_env_to_types_string_def = cake_define
      (let l = ns_to_alist (ns_nub (inf_env_inf_v s)) in
      let xs = MAP (\(n,_56,t). mlstring_concat [n; (implode ": ");
                               inf_type_to_string (inf_env_inf_t s) t;
-                              (implode "\n")]) l in
+                              (implode [CHR 10])]) l in
         REVERSE xs)`;;
 
 hol4_only "++" "APPEND";;
