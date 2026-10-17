@@ -22,10 +22,10 @@ let _ = size_thms "closLang_exp";;
    [exp_size_def, basicSizeTheory.pair_size_def] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let renumber_code_locs_def = cake_define_list_tac (
+let renumber_code_locs_def = cake_define_list_try_tac (fun () ->
   `inv_image (<) (\x. match x with INL p -> list_size closLang_exp_size
-     (SND p) | INR p -> closLang_exp_size (SND p))`,
-  CHEAT_TAC)
+     (SND p) | INR p -> closLang_exp_size (SND p))`)
+  CHEAT_TAC
   [`renumber_code_locs_list n [] = (n,[])`;
    `renumber_code_locs_list n (x :: xs) =
          (let (n,x) = renumber_code_locs n x in

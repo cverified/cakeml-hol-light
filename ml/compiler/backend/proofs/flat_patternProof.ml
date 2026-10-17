@@ -160,11 +160,8 @@ let match_rel_def = cake_define
 let _ = size_thms "flatSem_v";;
 (* HOL4 termination: \\ rw [] \\ fs [MEM_SPLIT, SUM_APPEND,
    v_size_aux] *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let encode_val_def = cake_define_tac (
-  `MEASURE flatSem_v_size`,
-  CHEAT_TAC)
+let encode_val_def = cake_define_wf
+  `MEASURE flatSem_v_size`
   `encode_val others =
       match others with
         (Litv l:flatSem_v) -> Litv l

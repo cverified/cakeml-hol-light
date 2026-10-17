@@ -76,11 +76,8 @@ let _ = size_thms "wordLang_exp";;
    MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
    `ARB`)) \\ full_simp_tac(srw_ss())[exp_size_def] \\ TRY
    (DECIDE_TAC) *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let binary_branch_exp_def = cake_define_tac (
-  `MEASURE (wordLang_exp_size ARB)`,
-  CHEAT_TAC)
+let binary_branch_exp_def = cake_define_wf
+  `MEASURE (wordLang_exp_size ARB)`
   `binary_branch_exp exp =
         match exp with
           wordLang_Op asm_Sub exps -> EVERY (binary_branch_exp) exps

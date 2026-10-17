@@ -77,9 +77,9 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let no_mutcons_def = cake_define_list_tac (
-  `MEASURE flatLang_exp_size`,
-  CHEAT_TAC)
+let no_mutcons_def = cake_define_list_try_tac (fun () ->
+  `MEASURE flatLang_exp_size`)
+  CHEAT_TAC
   [`no_mutcons (Var n:bvi_exp) <=> T`;
    `no_mutcons (If x1 x2 x3:bvi_exp) <=> no_mutcons x1 /\ no_mutcons
   x2 /\ no_mutcons x3`;
@@ -242,9 +242,9 @@ let only_fresh_def = cake_define
    (FDOM refs)’ >- fs[finite_setTheory.fCARD_EQ0] >> gvs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let mb_rel_def = cake_define_tac (
-  `MEASURE (CARD o FDOM o FST o SND o SND)`,
-  CHEAT_TAC)
+let mb_rel_def = cake_define_try_tac (fun () ->
+  `MEASURE (CARD o FDOM o FST o SND o SND)`)
+  CHEAT_TAC
   `mb_rel f x2 refs v1 v2 =
         match (x2,v1,v2) with
           ((refs_old:(num,bvlSem_v bvlSem_ref)fmap),(Block tag

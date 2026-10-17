@@ -1027,13 +1027,13 @@ let _ = size_thms "wordLang_prog";;
    decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_tac (
+let evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE (wordLang_prog_size
      (K 0)))
                      (\(xs,((s:('a,'c,'ffi)wordSem_state))).
                        (wordSem_state_termdep s,wordSem_state_clock
-                       s,xs)))`,
-  CHEAT_TAC)
+                       s,xs)))`)
+  CHEAT_TAC
   [`wordSem_evaluate ((Skip:'a
   wordLang_prog),(s:('a,'c,'ffi)wordSem_state)) = (NONE,s)`;
    `wordSem_evaluate (wordLang_Alloc n names,s) =

@@ -268,11 +268,8 @@ let bc_ref_inv_def = cake_define
 let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ rpt strip_tac \\ Induct_on `xs` \\ srw_tac []
    [v_size_def] \\ res_tac \\ DECIDE_TAC *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let v_all_ts_def = cake_define_tac (
-  `MEASURE (dataSem_v_size)`,
-  CHEAT_TAC)
+let v_all_ts_def = cake_define_wf
+  `MEASURE (dataSem_v_size)`
   `v_all_ts x1 =
       match x1 with
         (Block ts _20 xs:dataSem_v) -> ts :: FLAT (MAP v_all_ts xs)
@@ -296,9 +293,7 @@ let all_ts_def = cake_define
 let be_ok_def = cake_define
   `be_ok b1 b2 <=> b1 = b2`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let v_all_vs_def = cake_define_cheat CHEAT_TAC
+let v_all_vs_def = cake_define
   `v_all_vs x1 =
       match x1 with
         ((Block ts tag l:dataSem_v) :: xs) -> (Block ts tag l ::
@@ -1067,9 +1062,9 @@ let _ = size_thms "dataSem_v";;
    first_x_assum(qspecl_then[`0`,`t1`]mp_tac) \\ rw[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let v_same_type_def = cake_define_tac (
-  `MEASURE (dataSem_v_size o FST)`,
-  CHEAT_TAC)
+let v_same_type_def = cake_define_try_tac (fun () ->
+  `MEASURE (dataSem_v_size o FST)`)
+  CHEAT_TAC
   `v_same_type x1 x2 =
         match (x1,x2) with
           ((Number _44:dataSem_v),(Number _45:dataSem_v)) -> T
@@ -1083,11 +1078,8 @@ let v_same_type_def = cake_define_tac (
 let _ = size_thms "dataSem_v";;
 (* HOL4 termination: \\ ntac 2 gen_tac \\ Induct \\ rw[v_size_def] \\
    rw[] \\ res_tac \\ rw[] *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let v_depth_def = cake_define_tac (
-  `MEASURE dataSem_v_size`,
-  CHEAT_TAC)
+let v_depth_def = cake_define_wf
+  `MEASURE dataSem_v_size`
   `v_depth x1 =
         match x1 with
           (Block _60 _61 ls:dataSem_v) -> (if NULL ls then 0 else 1)
@@ -1171,10 +1163,10 @@ let word_is_clos_def = cake_define
 (* HOL4 termination: >> rw[] >> imp_res_tac fix_clock_IMP >> rw[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_eq_def = cake_define_tac (
+let word_eq_def = cake_define_try_tac (fun () ->
   `MEASURE (\x. match x with INL (c,st,dm,m,l1,ck1,w1,w2) -> l1 | INR
-  (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`,
-  CHEAT_TAC)
+  (c,st,dm,m,l1,ck1,w,a1,a2) -> l1)`)
+  CHEAT_TAC
   `(word_eq c st dm m l ck w1 (w2:'a word) =
       (if w1 = w2 then SOME (((n2w 1):'a word),l,ck) else
       if ~(word_bit 0 w1 /\ word_bit 0 w2) then SOME ((n2w 0),l,ck)
@@ -1247,9 +1239,9 @@ let bignum_words_def = cake_define
    [addressTheory.word_arith_lemma2,GSYM word_sub_def] \\ fs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_copy_fwd_def = cake_define_tac (
-  `MEASURE (w2n o FST o SND)`,
-  CHEAT_TAC)
+let word_copy_fwd_def = cake_define_try_tac (fun () ->
+  `MEASURE (w2n o FST o SND)`)
+  CHEAT_TAC
   `word_copy_fwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
@@ -1329,9 +1321,9 @@ let list_copy_fwd_alias_def = cake_define
    [addressTheory.word_arith_lemma2,GSYM word_sub_def] \\ fs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_copy_bwd_def = cake_define_tac (
-  `MEASURE (w2n o FST o SND)`,
-  CHEAT_TAC)
+let word_copy_bwd_def = cake_define_try_tac (fun () ->
+  `MEASURE (w2n o FST o SND)`)
+  CHEAT_TAC
   `word_copy_bwd be' (n:'a word) a b (m:'a word->'a word_loc) dm =
      (if dimword (:'a) <= 4 then NONE else
      if n <+ (n2w 4) then
@@ -1580,9 +1572,9 @@ let read_word_def = cake_define
    [dimword_def,good_dimindex_def] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_xor_bytes_def = cake_define_tac (
-  `MEASURE (\(a1,a2,len,dm,m). w2n len)`,
-  CHEAT_TAC)
+let word_xor_bytes_def = cake_define_try_tac (fun () ->
+  `MEASURE (\(a1,a2,len,dm,m). w2n len)`)
+  CHEAT_TAC
   `word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
      (if len <+ (n2w 2) \/ ~good_dimindex (:'a) then
        if len = (n2w 0) then SOME m else
@@ -1630,9 +1622,7 @@ QED
 
 (* --------- str_cmp --------- *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let word_str_cmp_loop_def = cake_define_cheat CHEAT_TAC
+let word_str_cmp_loop_def = cake_define
   `word_str_cmp_loop (a1:'a word) (a2:'a word) r1 r2 (len:'a word) dm m
   be' ck =
      (if ck = 0 then NONE else

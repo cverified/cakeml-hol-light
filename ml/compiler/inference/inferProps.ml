@@ -146,11 +146,8 @@ let infer_subst_var_def = cake_define
 let _ = size_thms "t";;
 (* HOL4 termination: >> rw [] >> induct_on `ts` >> rw [t_size_def] >>
    res_tac >> decide_tac *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let ts_tid_rename_def = cake_define_tac (
-  `MEASURE (\(_1,y). t_size y)`,
-  CHEAT_TAC)
+let ts_tid_rename_def = cake_define_wf
+  `MEASURE (\(_1,y). t_size y)`
   `ts_tid_rename f t =
         match t with
           Tapp ts tn -> Tapp (MAP (ts_tid_rename f) ts) (f tn)
@@ -164,11 +161,8 @@ val ts_tid_rename_ind = theorem"ts_tid_rename_ind";
 let _ = size_thms "t";;
 (* HOL4 termination: >> rw [] >> induct_on `ts` >> rw [t_size_def] >>
    res_tac >> decide_tac *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let set_tids_def = cake_define_tac (
-  `MEASURE t_size`,
-  CHEAT_TAC)
+let set_tids_def = cake_define_wf
+  `MEASURE t_size`
   `set_tids x1 =
         match x1 with
           Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP
@@ -201,11 +195,8 @@ val unconvert_t_ind = theorem"unconvert_t_ind"
 let _ = size_thms "infer_t";;
 (* HOL4 termination: >> rw [] >> induct_on `ts` >> rw
    [infer_tTheory.infer_t_size_def] >> res_tac >> decide_tac *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let inf_set_tids_def = cake_define_tac (
-  `MEASURE infer_t_size`,
-  CHEAT_TAC)
+let inf_set_tids_def = cake_define_wf
+  `MEASURE infer_t_size`
   `inf_set_tids x1 =
         match x1 with
           Infer_Tapp ts tn -> tn INSERT (BIGUNION (set_of_list (MAP

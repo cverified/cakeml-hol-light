@@ -46,9 +46,9 @@ let _ = size_thms "closLang_exp";;
    simp[list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let intro_multi_def = cake_define_tac (
-  `MEASURE (list_size closLang_exp_size o SND)`,
-  CHEAT_TAC)
+let intro_multi_def = cake_define_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o SND)`)
+  CHEAT_TAC
   `intro_multi max_app x2 =
         match x2 with
           [] -> []

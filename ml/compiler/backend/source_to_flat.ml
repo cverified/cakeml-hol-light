@@ -116,14 +116,14 @@ let _ = size_thms "mlstring";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exp_def = cake_define_list_tac (
+let compile_exp_def = cake_define_list_try_tac (fun () ->
   `inv_image (<) (\x. match x with INL (t,x,e) -> ast_exp_size e | INR
      (INL (t,x,es)) -> list_size ast_exp_size es | INR (INR (INL
      (t,x,pes))) -> list_size (pair_size ast_pat_size ast_exp_size)
        pes |
      INR (INR (INR (t,x,funs))) -> list_size (pair_size mlstring_size
-     (pair_size mlstring_size ast_exp_size)) funs)`,
-  CHEAT_TAC)
+     (pair_size mlstring_size ast_exp_size)) funs)`)
+  CHEAT_TAC
   [`source_to_flat_compile_exp (t:mlstring list)
   (env:source_to_flat_environment) (Raise e:ast_exp) =
         flatLang_Raise backend_common_None
@@ -346,9 +346,9 @@ let simple_dlet_def = cake_define
 let _ = size_thms "dec";;
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_decs_def = cake_define_tac (
-  `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`,
-  CHEAT_TAC)
+let compile_decs_def = cake_define_try_tac (fun () ->
+  `MEASURE (list_size dec_size o SND o SND o SND o SND o SND)`)
+  CHEAT_TAC
   `source_to_flat_compile_decs t n next' env envs' x6 =
         match (t,x6) with
           ((t:mlstring list),[Dlet locs p e]) ->

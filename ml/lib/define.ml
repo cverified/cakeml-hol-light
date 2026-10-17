@@ -3416,6 +3416,15 @@ let cake_define_tac (rel,tac) tm =
   if length(axioms()) > n0 then note_term_cheat tm;
   th;;
 
+(* the relation of HOL4 is parsed in a function, so that one that
+   does not typecheck is no error of the file: it then counts as
+   no relation at all, as it does for cake_define_list_try *)
+
+let cake_define_try_tac f tac tm =
+  match (try Some(f ()) with Failure _ -> None) with
+    Some rel -> cake_define_tac (rel,tac) tm
+  | None -> cake_define_cheat tac tm;;
+
 (* and the two for a family, whose clauses are given one by one *)
 
 let cake_define_list_cheat tac cls =
@@ -3425,11 +3434,11 @@ let cake_define_list_cheat tac cls =
     Some tm -> cake_define_cheat tac tm
   | None -> cake_cheat_list cls;;
 
-let cake_define_list_tac (rel,tac) cls =
+let cake_define_list_try_tac f tac cls =
   match (try Some(cake_conj_list cls) with Failure s ->
            (print_string ("\ncake_conj_list failed: " ^ s ^ "\n");
             flush stdout; None)) with
-    Some tm -> cake_define_tac (rel,tac) tm
+    Some tm -> cake_define_try_tac f tac tm
   | None -> cake_cheat_list cls;;
 
 (* ------------------------------------------------------------------ *)

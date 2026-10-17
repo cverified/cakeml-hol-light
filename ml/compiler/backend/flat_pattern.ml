@@ -57,10 +57,10 @@ let _ = size_thms "pattern_semantics_pat";;
    [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_pat_bindings_def = cake_define_list_tac (
+let compile_pat_bindings_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\(t,i,m,exp). SUM (MAP (pattern_semantics_pat_size o FST)
-     m) + LENGTH m)`,
-  CHEAT_TAC)
+     m) + LENGTH m)`)
+  CHEAT_TAC
   [`compile_pat_bindings _1 _2 [] exp = (LN,exp)`;
    `compile_pat_bindings t i (((Pany:flatLang_pat),_3,_4) :: m) exp =
       compile_pat_bindings t i m exp`;
@@ -192,10 +192,10 @@ let _ = size_thms "pattern_semantics_pat";;
    \\ simp [o_DEF, MAPi_eq_MAP, SUM_APPEND, pat1_size] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let naive_pattern_match_def = cake_define_tac (
+let naive_pattern_match_def = cake_define_try_tac (fun () ->
   `MEASURE (\x. SUM (MAP (pattern_semantics_pat_size o FST) (SND x)) +
-  LENGTH (SND x))`,
-  CHEAT_TAC)
+  LENGTH (SND x))`)
+  CHEAT_TAC
   `naive_pattern_match t x2 =
       match x2 with
         [] -> flatLang_Bool t T

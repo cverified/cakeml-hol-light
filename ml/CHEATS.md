@@ -9,28 +9,24 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 303: the three axioms of HOL
-Light and 300 for the 291 definitions below.
+`length (axioms ())` is 242: the three axioms of HOL
+Light and 239 for the 318 definitions below.
 
 Why they are assumed:
 
-- 72: timeout in measure
-- 71: tryfind: /\
-- 31: tryfind: ==>
-- 31: timeout in guess
-- 24: existence
-- 20: tryfind: admissible
-- 12: TAC_PROOF: Unsolved goals
+- 280: termination (CHEAT_TAC)
+- 4: timeout in measure
+- 3: tryfind: /\
 - 3: new_definition: Type variables not reflected in constant
 - 2: free: mlt
 - 2: free: basis
 - 2: free: firstSet
 - 1: free: c2
-- 1: tryfind
 - 1: (not recorded)
 - 1: free: checkT
 - 1: free: checkF
 - 1: free: e
+- 1: TAC_PROOF: Unsolved goals
 - 1: free: current_build_info_str_tm
 - 1: free: help_string_tm
 - 1: free: parse_sexp
@@ -45,155 +41,212 @@ Why they are assumed:
 - 1: free: MAP_KEYS
 - 1: free: MAP_KEYS, LINV
 - 1: free: Abbrev
+- 1: free: data_lang_safe_for_space, compute_limits
 - 1: free: LINV_OPT
 
 | definition | file | why |
 |---|---|---|
-| `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | timeout in measure |
-| `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | timeout in measure |
-| `inline_exp` | `compiler/backend/bvi_inline.ml` | timeout in measure |
-| `bvi_let_compile` | `compiler/backend/bvi_let.ml` | timeout in measure |
-| `scan_expr` | `compiler/backend/bvi_tailrec.ml` | timeout in measure |
-| `has_rec` | `compiler/backend/bvi_tailrec.ml` | tryfind: /\ |
-| `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | TAC_PROOF: Unsolved goals |
-| `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | timeout in measure |
-| `cb_to_bvi_worker_aux` | `compiler/backend/bvi_tmc.ml` | tryfind: ==> |
+| `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
+| `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
+| `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
+| `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
+| `inline_exp` | `compiler/backend/bvi_inline.ml` | termination (CHEAT_TAC) |
+| `inline_exp` | `compiler/backend/bvi_inline.ml` | termination (CHEAT_TAC) |
+| `bvi_let_compile` | `compiler/backend/bvi_let.ml` | termination (CHEAT_TAC) |
+| `bvi_let_compile` | `compiler/backend/bvi_let.ml` | termination (CHEAT_TAC) |
+| `bvi_let_compile_sing` | `compiler/backend/bvi_let.ml` | timeout in measure |
+| `scan_expr` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `scan_expr` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `has_rec` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `has_rec_sing` | `compiler/backend/bvi_tailrec.ml` | termination (CHEAT_TAC) |
+| `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
+| `bvi_to_cb_aux_sing` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
+| `cb_to_bvi_worker_aux` | `compiler/backend/bvi_tmc.ml` | termination (CHEAT_TAC) |
 | `SmartOp2` | `compiler/backend/bvl_const.ml` | free: c2 |
-| `bvl_const_compile` | `compiler/backend/bvl_const.ml` | TAC_PROOF: Unsolved goals |
-| `handle_simp` | `compiler/backend/bvl_handle.ml` | existence |
-| `tick_inline` | `compiler/backend/bvl_inline.ml` | TAC_PROOF: Unsolved goals |
-| `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | TAC_PROOF: Unsolved goals |
-| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | tryfind: /\ |
-| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | existence |
-| `JumpList` | `compiler/backend/bvl_jump.ml` | tryfind: /\ |
-| `alt_free` | `compiler/backend/clos_annotate.ml` | timeout in measure |
-| `alt_free_sing` | `compiler/backend/clos_annotate.ml` | timeout in measure |
-| `clos_annotate_shift` | `compiler/backend/clos_annotate.ml` | timeout in measure |
-| `shift_sing` | `compiler/backend/clos_annotate.ml` | timeout in measure |
-| `clos_call_free` | `compiler/backend/clos_call.ml` | timeout in measure |
-| `free_sing` | `compiler/backend/clos_call.ml` | tryfind |
-| `calls` | `compiler/backend/clos_call.ml` | timeout in measure |
-| `calls_sing` | `compiler/backend/clos_call.ml` | TAC_PROOF: Unsolved goals |
-| `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | TAC_PROOF: Unsolved goals |
-| `eq_pure_list` | `compiler/backend/clos_op.ml` | tryfind: /\ |
-| `get_size_sc_aux` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `clos_known_free` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `known` | `compiler/backend/clos_known.ml` | timeout in measure |
-| `intro_multi` | `compiler/backend/clos_mti.ml` | timeout in guess |
-| `renumber_code_locs_list` | `compiler/backend/clos_number.ml` | timeout in measure |
-| `clos_to_bvl_compile_exps` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
-| `compile_exp_sing` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
-| `code_sort` | `compiler/backend/clos_to_bvl.ml` | TAC_PROOF: Unsolved goals |
-| `get_src_names` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
-| `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | timeout in measure |
+| `bvl_const_compile` | `compiler/backend/bvl_const.ml` | termination (CHEAT_TAC) |
+| `bvl_const_compile` | `compiler/backend/bvl_const.ml` | termination (CHEAT_TAC) |
+| `handle_simp` | `compiler/backend/bvl_handle.ml` | termination (CHEAT_TAC) |
+| `handle_simp` | `compiler/backend/bvl_handle.ml` | termination (CHEAT_TAC) |
+| `tick_inline` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
+| `tick_inline` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
+| `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
+| `bvl_inline_let_op` | `compiler/backend/bvl_inline.ml` | termination (CHEAT_TAC) |
+| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
+| `bvl_to_bvi_compile_exps` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
+| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
+| `compile_exps_sing` | `compiler/backend/bvl_to_bvi.ml` | termination (CHEAT_TAC) |
+| `JumpList` | `compiler/backend/bvl_jump.ml` | termination (CHEAT_TAC) |
+| `alt_free` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `alt_free` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `alt_free_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `alt_free_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `clos_annotate_shift` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `clos_annotate_shift` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `shift_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `shift_sing` | `compiler/backend/clos_annotate.ml` | termination (CHEAT_TAC) |
+| `clos_call_free` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `clos_call_free` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `free_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `free_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `calls` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `calls` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `calls_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `calls_sing` | `compiler/backend/clos_call.ml` | termination (CHEAT_TAC) |
+| `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | termination (CHEAT_TAC) |
+| `clos_letop_let_op` | `compiler/backend/clos_letop.ml` | termination (CHEAT_TAC) |
+| `eq_pure_list` | `compiler/backend/clos_op.ml` | termination (CHEAT_TAC) |
+| `get_size_sc_aux` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `get_size_sc_aux` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `clos_known_free` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `clos_known_free` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `known` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `known` | `compiler/backend/clos_known.ml` | termination (CHEAT_TAC) |
+| `intro_multi` | `compiler/backend/clos_mti.ml` | termination (CHEAT_TAC) |
+| `renumber_code_locs_list` | `compiler/backend/clos_number.ml` | termination (CHEAT_TAC) |
+| `renumber_code_locs_list` | `compiler/backend/clos_number.ml` | termination (CHEAT_TAC) |
+| `clos_to_bvl_compile_exps` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `clos_to_bvl_compile_exps` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `compile_exp_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `compile_exp_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `code_sort` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `code_sort` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
+| `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `mc_iop_code` | `compiler/backend/word_bignum.ml` |  |
-| `call_graph` | `compiler/backend/word_depth.ml` | timeout in measure |
-| `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | timeout in measure |
-| `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | timeout in measure |
-| `concrete_v` | `semantics/semanticPrimitives.ml` | timeout in measure |
-| `st_ex_MAP` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: admissible |
-| `st_ex_PARTITION` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: admissible |
-| `st_ex_FILTER` | `compiler/backend/reg_alloc/reg_alloc.ml` | tryfind: admissible |
-| `remove_inactive_intervals` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `st_ex_FOLDL` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `st_ex_FILTER_good` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `sort_regs` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `linear_scan_sort_moves` | `compiler/backend/reg_alloc/linear_scan.ml` | tryfind: admissible |
-| `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `get_clash_tree` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `get_heu` | `compiler/backend/word_alloc.ml` | timeout in measure |
-| `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | timeout in guess |
-| `StoreAnyConsts` | `compiler/backend/data_to_word.ml` | timeout in guess |
-| `to_constant` | `compiler/backend/clos_interp.ml` | timeout in measure |
+| `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
+| `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
+| `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `semanticPrimitives_do_eq` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `concrete_v` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `concrete_v` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
+| `st_ex_MAP` | `compiler/backend/reg_alloc/reg_alloc.ml` | termination (CHEAT_TAC) |
+| `st_ex_PARTITION` | `compiler/backend/reg_alloc/reg_alloc.ml` | termination (CHEAT_TAC) |
+| `st_ex_FILTER` | `compiler/backend/reg_alloc/reg_alloc.ml` | termination (CHEAT_TAC) |
+| `remove_inactive_intervals` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
+| `st_ex_FOLDL` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
+| `st_ex_FILTER_good` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
+| `sort_regs` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
+| `linear_scan_sort_moves` | `compiler/backend/reg_alloc/linear_scan.ml` | termination (CHEAT_TAC) |
+| `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `ssa_cc_trans` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `remove_dead` | `compiler/backend/word_alloc.ml` | timeout in measure |
+| `get_clash_tree` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `get_clash_tree` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `get_heu` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `get_heu` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `get_stack_only_aux` | `compiler/backend/word_alloc.ml` | termination (CHEAT_TAC) |
+| `StoreAnyConsts` | `compiler/backend/data_to_word.ml` | termination (CHEAT_TAC) |
+| `to_constant` | `compiler/backend/clos_interp.ml` | termination (CHEAT_TAC) |
+| `to_constant` | `compiler/backend/clos_interp.ml` | termination (CHEAT_TAC) |
 | `CopyByteStr` | `compiler/backend/flat_to_clos.ml` | free: checkT |
 | `CopyByteAw8` | `compiler/backend/flat_to_clos.ml` | free: checkF |
-| `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | timeout in measure |
-| `prog_to_bytes` | `compiler/backend/lab_to_target.ml` | tryfind: /\ |
-| `find_ffi_names` | `compiler/backend/lab_to_target.ml` | tryfind: /\ |
-| `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | tryfind: /\ |
-| `getOpt` | `basis/pure/mloption.ml` | TAC_PROOF: Unsolved goals |
+| `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | termination (CHEAT_TAC) |
+| `flat_to_clos_compile` | `compiler/backend/flat_to_clos.ml` | termination (CHEAT_TAC) |
+| `prog_to_bytes` | `compiler/backend/lab_to_target.ml` | termination (CHEAT_TAC) |
+| `find_ffi_names` | `compiler/backend/lab_to_target.ml` | termination (CHEAT_TAC) |
+| `mlsexp_lex_aux` | `basis/pure/mlsexp.ml` | termination (CHEAT_TAC) |
+| `getOpt` | `basis/pure/mloption.ml` | termination (CHEAT_TAC) |
+| `getOpt` | `basis/pure/mloption.ml` | termination (CHEAT_TAC) |
 | `evaluate` | `compiler/backend/proofs/bvl_inlineProof.ml` | timeout in measure |
-| `total_pat` | `compiler/backend/flat_elim.ml` | existence |
-| `has_Eval` | `compiler/backend/flat_elim.ml` | TAC_PROOF: Unsolved goals |
-| `find_loc` | `compiler/backend/flat_elim.ml` | timeout in measure |
-| `find_lookups` | `compiler/backend/flat_elim.ml` | timeout in measure |
-| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | existence |
-| `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
-| `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | existence |
-| `exh_all` | `compiler/backend/pattern_matching/pattern_exh.ml` | tryfind: /\ |
-| `pat_to_guard` | `compiler/backend/pattern_matching/pattern_comp.ml` | existence |
-| `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | timeout in guess |
-| `naive_pattern_match` | `compiler/backend/flat_pattern.ml` | tryfind: /\ |
-| `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | timeout in measure |
-| `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | timeout in measure |
-| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | timeout in measure |
-| `num_to_hex` | `compiler/backend/presLang.ml` | TAC_PROOF: Unsolved goals |
-| `ast_t_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `pat_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `exp_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `source_to_display_dec` | `compiler/backend/presLang.ml` | timeout in measure |
-| `flat_pat_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `clos_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `data_prog_to_display` | `compiler/backend/presLang.ml` | TAC_PROOF: Unsolved goals |
-| `stack_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `word_prog_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
-| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | timeout in measure |
-| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | timeout in guess |
-| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | timeout in measure |
-| `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | tryfind: admissible |
-| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | timeout in measure |
-| `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | existence |
+| `total_pat` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `has_Eval` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `has_Eval` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `find_loc` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `find_loc` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `find_lookups` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `find_lookups` | `compiler/backend/flat_elim.ml` | termination (CHEAT_TAC) |
+| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | termination (CHEAT_TAC) |
+| `pattern_semantics_pmatch` | `compiler/backend/pattern_matching/pattern_semantics.ml` | termination (CHEAT_TAC) |
+| `exh_matrix` | `compiler/backend/pattern_matching/pattern_exh.ml` | termination (CHEAT_TAC) |
+| `exh_steps` | `compiler/backend/pattern_matching/pattern_exh.ml` | termination (CHEAT_TAC) |
+| `exh_all` | `compiler/backend/pattern_matching/pattern_exh.ml` | termination (CHEAT_TAC) |
+| `pat_to_guard` | `compiler/backend/pattern_matching/pattern_comp.ml` | termination (CHEAT_TAC) |
+| `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `compile_pat_bindings` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `naive_pattern_match` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `flat_pattern_compile_exp` | `compiler/backend/flat_pattern.ml` | termination (CHEAT_TAC) |
+| `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
+| `source_to_flat_compile_exp` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
+| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
+| `source_to_flat_compile_decs` | `compiler/backend/source_to_flat.ml` | termination (CHEAT_TAC) |
+| `num_to_hex` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `num_to_hex` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `ast_t_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `ast_t_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `exp_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `exp_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `source_to_display_dec` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `source_to_display_dec` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `flat_pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `flat_pat_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `clos_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `clos_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `bvi_to_display` | `compiler/backend/presLang.ml` | timeout in measure |
+| `data_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `data_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `stack_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `stack_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `word_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `word_prog_to_display` | `compiler/backend/presLang.ml` | termination (CHEAT_TAC) |
+| `stack_alloc_comp` | `compiler/backend/stack_alloc.ml` | termination (CHEAT_TAC) |
+| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
+| `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
+| `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | termination (CHEAT_TAC) |
+| `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | termination (CHEAT_TAC) |
+| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
+| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
+| `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | free: e |
-| `bvlSem_v_to_list` | `compiler/backend/semantics/bvlSem.ml` | tryfind: /\ |
-| `bvlSem_do_eq` | `compiler/backend/semantics/bvlSem.ml` | timeout in measure |
-| `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | timeout in guess |
-| `bviSem_finalise_cons` | `compiler/backend/semantics/bviSem.ml` | tryfind: /\ |
-| `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | timeout in measure |
-| `ptree_linfix` | `semantics/cmlPtreeConversion.ml` | tryfind: ==> |
-| `ptree_Type` | `semantics/cmlPtreeConversion.ml` | existence |
-| `ptree_TbaseList` | `semantics/cmlPtreeConversion.ml` | tryfind: admissible |
-| `ptree_Pattern` | `semantics/cmlPtreeConversion.ml` | existence |
-| `ptree_PbaseList1` | `semantics/cmlPtreeConversion.ml` | tryfind: ==> |
-| `ptree_Expr` | `semantics/cmlPtreeConversion.ml` | timeout in measure |
-| `ptree_SpeclineList` | `semantics/cmlPtreeConversion.ml` | tryfind: /\ |
-| `ptree_Decl` | `semantics/cmlPtreeConversion.ml` | existence |
-| `ptree_TopLevelDecs` | `semantics/cmlPtreeConversion.ml` | existence |
-| `toList_aux` | `basis/pure/mlvector.ml` | tryfind: ==> |
-| `split16` | `compiler/backend/export.ml` | tryfind: ==> |
-| `sexpid` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexptype` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexptype_alt` | `compiler/parsing/fromSexp.ml` | existence |
-| `sexppat` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexppat_alt` | `compiler/parsing/fromSexp.ml` | existence |
-| `sexpexp` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | timeout in guess |
-| `sexpdec` | `compiler/parsing/fromSexp.ml` | tryfind: admissible |
-| `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | existence |
-| `get_tyname` | `compiler/inference/infer_t.ml` | tryfind: /\ |
-| `inf_type_to_string_rec` | `compiler/inference/infer_t.ml` | existence |
-| `decode_infer_t` | `compiler/inference/unify.ml` | existence |
-| `apply_kclkont` | `compiler/inference/unify.ml` | tryfind: /\ |
+| `bvlSem_do_eq` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
+| `bvlSem_do_eq` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
+| `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
+| `bvlSem_evaluate` | `compiler/backend/semantics/bvlSem.ml` | termination (CHEAT_TAC) |
+| `bviSem_finalise_cons` | `compiler/backend/semantics/bviSem.ml` | termination (CHEAT_TAC) |
+| `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | termination (CHEAT_TAC) |
+| `bviSem_evaluate` | `compiler/backend/semantics/bviSem.ml` | termination (CHEAT_TAC) |
+| `ptree_Expr` | `semantics/cmlPtreeConversion.ml` | termination (CHEAT_TAC) |
+| `ptree_Expr` | `semantics/cmlPtreeConversion.ml` | termination (CHEAT_TAC) |
+| `ptree_Decl` | `semantics/cmlPtreeConversion.ml` | termination (CHEAT_TAC) |
+| `ptree_Decl` | `semantics/cmlPtreeConversion.ml` | termination (CHEAT_TAC) |
+| `split16` | `compiler/backend/export.ml` | termination (CHEAT_TAC) |
+| `sexpid` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexptype` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexptype_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexppat` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexppat_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexpexp` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexpexp_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexpdec` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `sexpdec_alt` | `compiler/parsing/fromSexp.ml` | termination (CHEAT_TAC) |
+| `decode_infer_t` | `compiler/inference/unify.ml` | termination (CHEAT_TAC) |
 | `kcwalkstarwlR` | `compiler/inference/unify.ml` | free: mlt |
-| `apply_cunifk` | `compiler/inference/unify.ml` | tryfind: /\ |
-| `PFLAT` | `compiler/inference/unify.ml` | tryfind: /\ |
 | `kcunifywlR` | `compiler/inference/unify.ml` | free: mlt |
-| `n_fresh_uvar` | `compiler/inference/infer.ml` | tryfind: admissible |
-| `add_constraints` | `compiler/inference/infer.ml` | tryfind: admissible |
-| `type_name_check_subst` | `compiler/inference/infer.ml` | existence |
-| `type_name_check_sub` | `compiler/inference/infer.ml` | existence |
-| `infer_p` | `compiler/inference/inferProps.ml` | existence |
-| `infer_e` | `compiler/inference/infer.ml` | timeout in measure |
-| `infer_d` | `compiler/inference/infer.ml` | existence |
-| `alist_nub` | `compiler/inference/infer.ml` | tryfind: ==> |
-| `ns_to_alist` | `compiler/inference/infer.ml` | tryfind: /\ |
-| `lexer_fun_read_string` | `semantics/lexer_fun.ml` | timeout in guess |
-| `read_Ident` | `semantics/lexer_fun.ml` | tryfind: ==> |
-| `lexer_fun_aux` | `semantics/lexer_fun.ml` | tryfind: ==> |
-| `split_top_level_semi` | `semantics/lexer_fun.ml` | tryfind: ==> |
-| `lexer_impl_lex_aux` | `compiler/parsing/lexer_impl.ml` | timeout in guess |
-| `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | timeout in guess |
-| `lex_impl_all` | `compiler/parsing/lexer_impl.ml` | tryfind: ==> |
-| `lex_impl_all_tokens` | `compiler/parsing/lexer_impl.ml` | tryfind: ==> |
+| `type_name_check_subst` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `type_name_check_subst` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_p` | `compiler/inference/inferProps.ml` | TAC_PROOF: Unsolved goals |
+| `infer_e` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_e` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_d` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `infer_d` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `alist_nub` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `ns_to_alist` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `lexer_fun_read_string` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
+| `read_Ident` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
+| `lexer_fun_aux` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
+| `split_top_level_semi` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
+| `lexer_impl_lex_aux` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
+| `lex_aux_alt` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
+| `lex_impl_all` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
+| `lex_impl_all_tokens` | `compiler/parsing/lexer_impl.ml` | termination (CHEAT_TAC) |
 | `current_build_info_str` | `compiler/compiler.ml` | free: current_build_info_str_tm |
 | `help_string` | `compiler/compiler.ml` | free: help_string_tm |
 | `parse_sexp_input` | `compiler/compiler.ml` | free: parse_sexp |
@@ -202,143 +255,114 @@ Why they are assumed:
 | `parse_target_32` | `compiler/compiler.ml` | free: arm7_backend_config, arm7_export, arm7_config, ag32_ba |
 | `compile_64` | `compiler/compiler.ml` | free: basis |
 | `compile_32` | `compiler/compiler.ml` | free: basis |
-| `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | timeout in guess |
-| `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | timeout in guess |
-| `size_of` | `compiler/backend/semantics/dataSem.ml` | timeout in guess |
-| `dataSem_v_to_list` | `compiler/backend/semantics/dataSem.ml` | tryfind: /\ |
-| `vb_size` | `compiler/backend/semantics/dataSem.ml` | tryfind: ==> |
-| `vs_depth` | `compiler/backend/semantics/dataSem.ml` | TAC_PROOF: Unsolved goals |
-| `dataSem_do_eq` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
-| `dataSem_finalise_cons` | `compiler/backend/semantics/dataSem.ml` | tryfind: /\ |
-| `dataSem_evaluate` | `compiler/backend/semantics/dataSem.ml` | timeout in measure |
-| `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | timeout in measure |
-| `flatSem_v_to_list` | `compiler/backend/semantics/flatSem.ml` | tryfind: /\ |
-| `flatSem_v_to_char_list` | `compiler/backend/semantics/flatSem.ml` | tryfind: /\ |
-| `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | timeout in measure |
-| `flatSem_evaluate` | `compiler/backend/semantics/flatSem.ml` | timeout in measure |
-| `gen_gc_gc_move_data` | `compiler/backend/gc/gen_gc.ml` | tryfind: ==> |
-| `gc_move_refs` | `compiler/backend/gc/gen_gc.ml` | tryfind: ==> |
-| `gen_gc_partial_gc_move_data` | `compiler/backend/gc/gen_gc_partial.ml` | tryfind: ==> |
-| `gc_move_ref_list` | `compiler/backend/gc/gen_gc_partial.ml` | timeout in guess |
-| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | timeout in measure |
-| `all_pcs` | `compiler/encoders/asm/asmProps.ml` | tryfind: ==> |
-| `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | timeout in guess |
-| `asm_code_length` | `compiler/backend/semantics/labSem.ml` | tryfind: /\ |
+| `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
+| `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
+| `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `vs_depth` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `vs_depth` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `dataSem_do_eq` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `dataSem_do_eq` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `dataSem_finalise_cons` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_do_eq` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_pmatch` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_evaluate` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `flatSem_evaluate` | `compiler/backend/semantics/flatSem.ml` | termination (CHEAT_TAC) |
+| `gen_gc_gc_move_data` | `compiler/backend/gc/gen_gc.ml` | termination (CHEAT_TAC) |
+| `gc_move_refs` | `compiler/backend/gc/gen_gc.ml` | termination (CHEAT_TAC) |
+| `gen_gc_partial_gc_move_data` | `compiler/backend/gc/gen_gc_partial.ml` | termination (CHEAT_TAC) |
+| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | termination (CHEAT_TAC) |
+| `wordSem_evaluate` | `compiler/backend/semantics/wordSem.ml` | termination (CHEAT_TAC) |
+| `all_pcs` | `compiler/encoders/asm/asmProps.ml` | termination (CHEAT_TAC) |
+| `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
+| `targetSem_evaluate` | `compiler/backend/semantics/targetSem.ml` | termination (CHEAT_TAC) |
+| `asm_code_length` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
 | `loc_to_pc` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | timeout in measure |
-| `bit_length` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
-| `stackSem_enc_stack` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
-| `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
-| `stackSem_get_labels` | `compiler/backend/semantics/stackSem.ml` | tryfind: /\ |
-| `copy_words` | `compiler/backend/semantics/stackSem.ml` | tryfind: ==> |
-| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | timeout in measure |
-| `flat_exp_conventions` | `compiler/backend/proofs/word_to_stackProof.ml` | tryfind: /\ |
-| `every_inst` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `full_inst_ok_less` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `wf_cutsets` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `call_arg_convention` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `wordConvs_extract_labels` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `wordConvs_get_code_labels` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `good_handlers` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `not_created_subprogs` | `compiler/backend/semantics/wordConvs.ml` | tryfind: /\ |
-| `find_word_ref` | `compiler/backend/word_elim.ml` | tryfind: /\ |
-| `bVarBound` | `compiler/backend/semantics/bvlProps.ml` | tryfind: /\ |
-| `bEvery` | `compiler/backend/semantics/bvlProps.ml` | tryfind: /\ |
-| `bvlProps_get_code_labels` | `compiler/backend/semantics/bvlProps.ml` | tryfind: /\ |
-| `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | tryfind: /\ |
-| `approx_of` | `compiler/backend/semantics/dataProps.ml` | timeout in guess |
-| `dataProps_get_code_labels` | `compiler/backend/semantics/dataProps.ml` | tryfind: /\ |
-| `no_mutcons` | `compiler/backend/proofs/bvi_tmcProof.ml` | tryfind: /\ |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | tryfind: ==> |
+| `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
+| `labSem_evaluate` | `compiler/backend/semantics/labSem.ml` | termination (CHEAT_TAC) |
+| `bit_length` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `stackSem_enc_stack` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `stackSem_dec_stack` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `copy_words` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `stackSem_evaluate` | `compiler/backend/semantics/stackSem.ml` | termination (CHEAT_TAC) |
+| `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
+| `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
+| `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
+| `no_mutcons` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
+| `no_mutcons` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
+| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `handle_ok` | `compiler/backend/proofs/bvl_to_bviProof.ml` | tryfind: /\ |
 | `bvl_handleProof_env_rel` | `compiler/backend/proofs/bvl_handleProof.ml` | free: LIST_RELi |
-| `bv_ok` | `compiler/backend/proofs/bvl_to_bviProof.ml` | tryfind: ==> |
-| `code_locs` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `contains_App_SOME` | `compiler/backend/semantics/closProps.ml` | timeout in guess |
-| `every_Fn_SOME` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `every_Fn_vs_NONE` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `fv` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `vsgc_free` | `compiler/backend/semantics/closProps.ml` | tryfind: /\ |
-| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `no_Labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `contains_App_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_vs_NONE` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_vs_NONE` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `no_Labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `no_Labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `compile_common_inc` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_cc |
 | `syntax_oracle_ok` | `compiler/backend/proofs/clos_to_bvlProof.ml` | free: known_co, syntax_ok |
-| `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | tryfind: ==> |
-| `word_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_partial_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_partial_move_data` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_move_roots` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_move_data` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_move_refs` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `word_gen_gc_move_loop` | `compiler/backend/proofs/word_gcFunctions.ml` | timeout in guess |
-| `v_all_ts` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: ==> |
-| `v_all_vs` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: /\ |
-| `word_cmp_loop` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: ==> |
-| `v_same_type` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
-| `v_depth` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: ==> |
-| `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | timeout in measure |
-| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | existence |
-| `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
-| `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | tryfind: admissible |
-| `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | timeout in measure |
-| `word_str_cmp_loop` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | timeout in guess |
-| `eval_exp` | `compiler/backend/proofs/word_bignumProof.ml` | timeout in guess |
-| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind: /\ |
+| `memcpy` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
+| `word_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
+| `word_gen_gc_partial_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
+| `word_gen_gc_move_list` | `compiler/backend/proofs/word_gcFunctions.ml` | termination (CHEAT_TAC) |
+| `word_cmp_loop` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `v_same_type` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `vb_eq_size` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_eq` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_copy_fwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
+| `eval_exp` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
+| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
+| `eval_exp_pre` | `compiler/backend/proofs/word_bignumProof.ml` | termination (CHEAT_TAC) |
 | `eval_ri` | `compiler/backend/proofs/word_bignumProof.ml` | new_definition: Type variables not reflected in constant |
 | `word_bignumProof_Eval` | `` | new_definition: Type variables not reflected in constant |
 | `div_code_assum` | `compiler/backend/proofs/word_bignumProof.ml` | free: single_div_pre, single_div |
-| `exp_ok` | `compiler/backend/proofs/word_bignumProof.ml` | tryfind: /\ |
-| `colouring_ok` | `compiler/backend/proofs/word_allocProof.ml` | timeout in guess |
-| `nlive_store` | `compiler/backend/proofs/word_allocProof.ml` | tryfind: /\ |
-| `binary_branch_exp` | `compiler/backend/proofs/word_instProof.ml` | tryfind: /\ |
 | `stubs_fst` | `compiler/backend/proofs/data_to_wordProof.ml` | free: rconc, th |
-| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | existence |
-| `flatProps_esgc_free` | `compiler/backend/semantics/flatProps.ml` | tryfind: /\ |
+| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
+| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/proofs/flat_to_closProof.ml` | tryfind: /\ |
-| `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | tryfind: /\ |
-| `stackProps_extract_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `stack_asm_ok` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `stack_asm_name` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `stack_asm_remove` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `alloc_arg` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `reg_bound_exp` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `reg_bound` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `call_args` | `compiler/backend/semantics/stackProps.ml` | timeout in guess |
-| `stack_get_handler_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `stackProps_get_code_labels` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `stackProps_no_install` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `no_shmemop` | `compiler/backend/semantics/stackProps.ml` | tryfind: /\ |
-| `find_next_interference` | `compiler/backend/semantics/targetProps.ml` | timeout in measure |
-| `has_odd_inst` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `has_io_name` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `all_enc_ok` | `compiler/backend/proofs/lab_to_targetProof.ml` | timeout in guess |
-| `num_pcs` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `all_enc_with_nop` | `compiler/backend/proofs/lab_to_targetProof.ml` | timeout in guess |
-| `even_labels` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | tryfind: /\ |
-| `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | existence |
-| `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | tryfind: /\ |
-| `encode_val` | `compiler/backend/proofs/flat_patternProof.ml` | tryfind: ==> |
-| `num_bindings` | `compiler/backend/proofs/source_to_flatProof.ml` | tryfind: /\ |
+| `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | termination (CHEAT_TAC) |
+| `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
+| `call_args` | `compiler/backend/semantics/stackProps.ml` | termination (CHEAT_TAC) |
+| `has_odd_inst` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `has_io_name` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `all_enc_ok` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `num_pcs` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `all_enc_with_nop` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `even_labels` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `even_labels_strong` | `compiler/backend/proofs/lab_to_targetProof.ml` | termination (CHEAT_TAC) |
+| `find_v_globals` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
+| `v_has_Eval` | `compiler/backend/proofs/flat_elimProof.ml` | termination (CHEAT_TAC) |
 | `rename_state` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS |
 | `stack_namesProof_make_init` | `compiler/backend/proofs/stack_namesProof.ml` | free: MAP_KEYS, LINV |
-| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | timeout in measure |
+| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
+| `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `contain` | `compiler/backend/proofs/stack_to_labProof.ml` | free: Abbrev |
-| `complex_get_code_labels` | `compiler/backend/proofs/stack_to_labProof.ml` | tryfind: /\ |
+| `backendProof_is_safe_for_space` | `compiler/backend/proofs/backendProof.ml` | free: data_lang_safe_for_space, compute_limits |
 | `backend_from_flat_tuple_cc` | `compiler/backend/proofs/backendProof.ml` | new_definition: Type variables not reflected in constant |
-| `ts_tid_rename` | `compiler/inference/inferProps.ml` | tryfind: ==> |
-| `set_tids` | `compiler/inference/inferProps.ml` | tryfind: ==> |
-| `inf_set_tids` | `compiler/inference/inferProps.ml` | tryfind: ==> |
 | `LINVI` | `compiler/inference/proofs/type_dCanon.ml` | free: LINV_OPT |
-| `left_insert1` | `compiler/parsing/proofs/pegComplete.ml` | tryfind: ==> |
-| `left_insert2` | `compiler/parsing/proofs/pegComplete.ml` | tryfind: ==> |
-| `left_insert` | `compiler/parsing/proofs/pegComplete.ml` | tryfind: ==> |
 | `nestoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 | `stoppers` | `compiler/parsing/proofs/pegComplete.ml` | free: firstSet |
 
-291 definitions.
+318 definitions.

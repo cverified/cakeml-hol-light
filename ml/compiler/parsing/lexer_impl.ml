@@ -107,9 +107,9 @@ let next_sym_alt_def = cake_define_list_try (fun () ->
 (* HOL4 termination: >> rw[] >> imp_res_tac next_token_LESS *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_def = cake_define_tac (
-  `MEASURE (LENGTH o FST o SND o SND)`,
-  CHEAT_TAC)
+let lex_aux_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST o SND o SND)`)
+  CHEAT_TAC
   `lexer_impl_lex_aux acc (d:num) input loc =
      (match next_token input loc with
        NONE -> NONE |
@@ -139,9 +139,9 @@ let lex_until_toplevel_semicolon_def = cake_define
 (* HOL4 termination: >> rw[] >> imp_res_tac next_sym_LESS *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_alt_def = cake_define_tac (
-  `MEASURE (LENGTH o FST o SND o SND)`,
-  CHEAT_TAC)
+let lex_aux_alt_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST o SND o SND)`)
+  CHEAT_TAC
   `lex_aux_alt acc (d:num) input l =
      (match next_sym input l with
        NONE -> NONE |
@@ -191,9 +191,9 @@ val lex_aux_alt_thm = Q.prove(
    [lex_until_toplevel_semicolon_LESS] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_impl_all_def = cake_define_tac (
-  `MEASURE (LENGTH o FST)`,
-  CHEAT_TAC)
+let lex_impl_all_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST)`)
+  CHEAT_TAC
   `lex_impl_all input l =
      (match lex_until_toplevel_semicolon input l with NONE -> [] |
        SOME (t,loc,input') -> t :: lex_impl_all input' loc)`;;
@@ -228,9 +228,9 @@ let lex_until_toplevel_semicolon_tokens_def = cake_define
    [lex_aux_tokens_LESS] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_impl_all_tokens_def = cake_define_tac (
-  `MEASURE LENGTH`,
-  CHEAT_TAC)
+let lex_impl_all_tokens_def = cake_define_try_tac (fun () ->
+  `MEASURE LENGTH`)
+  CHEAT_TAC
   `lex_impl_all_tokens input =
       (match lex_until_toplevel_semicolon_tokens input with
         NONE -> [] | SOME (t,input) -> t :: lex_impl_all_tokens

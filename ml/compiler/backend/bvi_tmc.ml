@@ -117,10 +117,10 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let bvi_to_cb_aux_def = cake_define_list_tac (
+let bvi_to_cb_aux_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_58,_59,_60,e) -> bvi_exp_size e |
-     INR (_61,_62,_63,es) -> list_size bvi_exp_size es)`,
-  CHEAT_TAC)
+     INR (_61,_62,_63,es) -> list_size bvi_exp_size es)`)
+  CHEAT_TAC
   [`bvi_to_cb_aux_sing n loc tag (Call t loc' args h:bvi_exp) =
        (match call_to_cb loc t loc' args h with SOME (bs,cb) ->
          SOME (bs,INR (CallBlock tag [] cb [])) | _49 -> NONE)`;
@@ -231,9 +231,9 @@ let cb_size_def = cake_define
 (* HOL4 termination: \\ rw [call_block_size_shift, cb_size_def] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let cb_to_bvi_worker_aux_def = cake_define_list_tac (
-  `MEASURE (cb_size o FST)`,
-  CHEAT_TAC)
+let cb_to_bvi_worker_aux_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (cb_size o FST)`)
+  CHEAT_TAC
   [`cb_to_bvi_worker_aux (RCall call_ts call_args') loc_opt ptr idx =
        optimise_call call_ts loc_opt call_args' (Var ptr) (Op
          (closLang_IntOp (closLang_Const (&idx))) [])`;

@@ -30,9 +30,9 @@ let _ = size_thms "closLang_exp";;
    [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let code_locs_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size)`,
-  CHEAT_TAC)
+let code_locs_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size)`)
+  CHEAT_TAC
   [`code_locs [] = []`;
    `code_locs (x :: y :: xs) =
          (let c1 = code_locs [x] in
@@ -78,9 +78,9 @@ let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let contains_App_SOME_def = cake_define_tac (
-  `MEASURE (list_size closLang_exp_size o SND)`,
-  CHEAT_TAC)
+let contains_App_SOME_def = cake_define_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o SND)`)
+  CHEAT_TAC
   `contains_App_SOME max_app x2 =
         match x2 with
           [] -> F
@@ -125,9 +125,9 @@ let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let every_Fn_SOME_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size)`,
-  CHEAT_TAC)
+let every_Fn_SOME_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size)`)
+  CHEAT_TAC
   [`every_Fn_SOME [] <=> T`;
    `every_Fn_SOME (x :: y :: xs) <=>
          every_Fn_SOME [x] /\
@@ -168,9 +168,9 @@ let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let every_Fn_vs_NONE_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size)`,
-  CHEAT_TAC)
+let every_Fn_vs_NONE_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size)`)
+  CHEAT_TAC
   [`every_Fn_vs_NONE [] <=> T`;
    `every_Fn_vs_NONE (x :: y :: xs) <=>
          every_Fn_vs_NONE [x] /\
@@ -212,9 +212,9 @@ let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let every_Fn_vs_SOME_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size)`,
-  CHEAT_TAC)
+let every_Fn_vs_SOME_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size)`)
+  CHEAT_TAC
   [`every_Fn_vs_SOME [] <=> T`;
    `every_Fn_vs_SOME (x :: y :: xs) <=>
          every_Fn_vs_SOME [x] /\
@@ -293,9 +293,9 @@ let _ = size_thms "closLang_exp";;
    [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let fv_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size o SND)`,
-  CHEAT_TAC)
+let fv_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o SND)`)
+  CHEAT_TAC
   [`fv n [] <=> F`;
    `fv n ((x:closLang_exp) :: y :: xs) <=>
          fv n [x] \/ fv n (y :: xs)`;
@@ -606,9 +606,9 @@ let _ = size_thms "closLang_exp";;
    [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let set_globals_def = cake_define_list_tac (
-  `MEASURE (sum_size closLang_exp_size (list_size closLang_exp_size))`,
-  CHEAT_TAC)
+let set_globals_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (sum_size closLang_exp_size (list_size closLang_exp_size))`)
+  CHEAT_TAC
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
    `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) = (BAG_UNION)
   ((BAG_UNION)
@@ -652,11 +652,8 @@ hol4_overload "set_globals" "closProps_set_globals";;
 let _ = size_thms "closSem_v";;
 (* HOL4 termination: >> simp[v_size_def] >> rpt strip_tac >>
    imp_res_tac v_size_lemma >> simp[] *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let vsgc_free_def = cake_define_tac (
-  `MEASURE closSem_v_size`,
-  CHEAT_TAC)
+let vsgc_free_def = cake_define_wf
+  `MEASURE closSem_v_size`
   `vsgc_free x1 =
         match x1 with
           (Closure _248 VL1 VL2 _249 body:closSem_v) ->
@@ -932,9 +929,9 @@ let _ = size_thms "closLang_exp";;
    mp_tac \\ gvs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let obeys_max_app_def = cake_define_list_tac (
-  `MEASURE (closLang_exp_size o SND)`,
-  CHEAT_TAC)
+let obeys_max_app_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (closLang_exp_size o SND)`)
+  CHEAT_TAC
   [`obeys_max_app m (Var _296 _297:closLang_exp) <=> T`;
    `obeys_max_app m (If _299 e1 e2 e3:closLang_exp) <=> obeys_max_app
   m e1 /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
@@ -964,9 +961,9 @@ let _ = size_thms "closLang_exp";;
    mp_tac \\ gvs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let no_Labels_def = cake_define_list_tac (
-  `MEASURE closLang_exp_size`,
-  CHEAT_TAC)
+let no_Labels_def = cake_define_list_try_tac (fun () ->
+  `MEASURE closLang_exp_size`)
+  CHEAT_TAC
   [`no_Labels (Var _334 _335:closLang_exp) <=> T`;
    `no_Labels (If _337 e1 e2 e3:closLang_exp) <=> no_Labels e1 /\
   no_Labels e2 /\ no_Labels e3`;
@@ -992,9 +989,9 @@ let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let app_call_dests_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size o SND)`,
-  CHEAT_TAC)
+let app_call_dests_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o SND)`)
+  CHEAT_TAC
   [`app_call_dests opt [] = {}`;
    `app_call_dests opt (x :: y :: xs) =
          (let c1 = app_call_dests opt [x] in
@@ -1057,9 +1054,9 @@ let _ = size_thms "closLang_exp";;
    mp_tac \\ gvs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let get_code_labels_def = cake_define_list_tac (
-  `MEASURE closLang_exp_size`,
-  CHEAT_TAC)
+let get_code_labels_def = cake_define_list_try_tac (fun () ->
+  `MEASURE closLang_exp_size`)
+  CHEAT_TAC
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION

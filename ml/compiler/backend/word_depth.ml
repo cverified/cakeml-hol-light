@@ -55,11 +55,11 @@ let _ = size_thms "wordLang_prog";;
    imp_res_tac miscTheory.lookup_zero \\ fs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let call_graph_def = cake_define_tac (
+let call_graph_def = cake_define_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE I LEX MEASURE I)
          (\(funs,n,ns,total,p). (sptree_size funs,total - LENGTH
-           ns,wordLang_prog_size (K 0) p)))`,
-  CHEAT_TAC)
+           ns,wordLang_prog_size (K 0) p)))`)
+  CHEAT_TAC
   `call_graph funs n ns total x5 =
         match x5 with
           wordLang_Seq p1 p2 ->

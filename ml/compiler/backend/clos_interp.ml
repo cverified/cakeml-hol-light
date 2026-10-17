@@ -111,10 +111,10 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let to_constant_def = cake_define_list_tac (
+let to_constant_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
-     list_size closLang_exp_size es)`,
-  CHEAT_TAC)
+     list_size closLang_exp_size es)`)
+  CHEAT_TAC
   [`to_constant ((Var t n):closLang_exp) =
       ConstCons 0 [ConstInt (&n)]`;
    `to_constant (App _48 _49 e es:closLang_exp) =

@@ -75,9 +75,9 @@ let bvl_to_bvi_def = cake_define
    fs[finite_setTheory.fCARD_EQ0] >> simp [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let finalise_cons_def = cake_define_tac (
-  `MEASURE (CARD o FDOM o SND)`,
-  CHEAT_TAC)
+let finalise_cons_def = cake_define_try_tac (fun () ->
+  `MEASURE (CARD o FDOM o SND)`)
+  CHEAT_TAC
   `bviSem_finalise_cons v refs =
         match v with
           (RefPtr b ptr:bvlSem_v) ->
@@ -266,10 +266,10 @@ let _ = size_thms "flatLang_exp";;
    imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_tac (
+let evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size flatLang_exp_size))
-                              (\(xs,env,s). (state_clock s,xs)))`,
-  CHEAT_TAC)
+                              (\(xs,env,s). (state_clock s,xs)))`)
+  CHEAT_TAC
   [`bviSem_evaluate ([],env,s) = ((Rval []:(bvlSem_v
   list,exn_or_ret)semanticPrimitives_result),s)`;
    `bviSem_evaluate (x :: y :: xs,env,s) =

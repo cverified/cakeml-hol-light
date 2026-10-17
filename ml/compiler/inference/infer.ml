@@ -68,9 +68,7 @@ let fresh_uvar_def = cake_define
    (\s. (M_success (Infer_Tuvar (infer_st_next_uvar
      s)),infer_st_next_uvar_fupd (K (infer_st_next_uvar s + 1)) s))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let n_fresh_uvar_def = cake_define_cheat CHEAT_TAC
+let n_fresh_uvar_def = cake_define
   `n_fresh_uvar (n:num) =
    (if n = 0 then
      st_ex_return [] else
@@ -108,9 +106,7 @@ let add_constraint_def = cake_define
                                 t2)]),st) | SOME s ->
            (M_success one,infer_st_subst_fupd (K s) st))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let add_constraints_def = cake_define_cheat CHEAT_TAC
+let add_constraints_def = cake_define
   `add_constraints l x2 x3 =
         match (x2,x3) with
           ([],[]) ->
@@ -247,9 +243,7 @@ val type_name_check_subst_alt =
             st_ex_return_def];
 *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let type_name_check_sub_def = cake_define_list_cheat CHEAT_TAC
+let type_name_check_sub_def = cake_define_list
   [`type_name_check_sub l tenvT fvs (Atvar tv) =
             (\s. if MEM tv fvs then (M_success (Tvar tv),s) else
               (M_failure (loc_err_info_loc l,INR tv),s))`;
@@ -679,14 +673,14 @@ let _ = size_thms "mlstring";;
 (* HOL4 termination: >> rw [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let infer_e_def = cake_define_list_tac (
+let infer_e_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_45,_46,e) -> ast_exp_size e | INR
      (INL (_47,_48,es)) -> list_size ast_exp_size es | INR (INR (INL
      (_49,_50,pes,_51,_52))) -> list_size (pair_size ast_pat_size
      ast_exp_size) pes | INR (INR (INR (_53,_54,funs))) ->
           list_size (pair_size mlstring_size
-               (pair_size mlstring_size ast_exp_size)) funs)`,
-  CHEAT_TAC)
+               (pair_size mlstring_size ast_exp_size)) funs)`)
+  CHEAT_TAC
   [`infer_e l ienv (ast_Raise e:ast_exp) =
         st_ex_bind (infer_e l ienv e) (\t2. st_ex_bind
           (add_constraint l t2 (Infer_Tapp [] Texn_num)) (\
@@ -1064,9 +1058,9 @@ let sub_completion_def = cake_define
 (* HOL4 termination: \\ fs [LESS_EQ,LENGTH_FILTER_LEQ] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let alist_nub_def = cake_define_list_tac (
-  `MEASURE LENGTH`,
-  CHEAT_TAC)
+let alist_nub_def = cake_define_list_try_tac (fun () ->
+  `MEASURE LENGTH`)
+  CHEAT_TAC
   [`alist_nub [] = []`;
    `alist_nub ((x,y) :: xs) = (x,y) :: alist_nub (FILTER (\t. ~(x =
   FST t)) xs)`];;

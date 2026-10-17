@@ -159,9 +159,7 @@ let two_reg_inst_def = cake_define
         | _7 -> T`;;
 
 (*** Recursor over instructions ***)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let every_inst_def = cake_define_cheat CHEAT_TAC
+let every_inst_def = cake_define
   `every_inst P prog =
         match prog with
           wordLang_Inst i -> P i
@@ -180,9 +178,7 @@ let every_inst_def = cake_define_cheat CHEAT_TAC
         | prog -> T`;;
 
 (*** Every instruction is well-formed ***)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let full_inst_ok_less_def = cake_define_cheat CHEAT_TAC
+let full_inst_ok_less_def = cake_define
   `full_inst_ok_less c prog =
         match prog with
           wordLang_Inst i -> inst_ok_less c i
@@ -212,9 +208,7 @@ let wf_names_def = cake_define
   `wf_names t =
      (sptree_wf (FST t) /\ sptree_wf (SND t))`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let wf_cutsets_def = cake_define_cheat CHEAT_TAC
+let wf_cutsets_def = cake_define
   `wf_cutsets x1 =
         match x1 with
           wordLang_Alloc n s -> wf_names s
@@ -253,9 +247,7 @@ let inst_arg_convention_def = cake_define
         | _17 -> T`;;
 
 (*** Calling conventions ***)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let call_arg_convention_def = cake_define_cheat CHEAT_TAC
+let call_arg_convention_def = cake_define
   `call_arg_convention p =
         match p with
           wordLang_Inst i ->
@@ -305,9 +297,7 @@ let post_alloc_conventions_def = cake_define
 
 (*** This is for label preservation -- wordLang shouldn't need to
    inspect the labels explicitly. ***)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let extract_labels_def = cake_define_cheat CHEAT_TAC
+let extract_labels_def = cake_define
   `wordConvs_extract_labels x1 =
         match x1 with
           wordLang_Call ret dest args h ->
@@ -331,9 +321,7 @@ hol4_overload "extract_labels" "wordConvs_extract_labels";;
 (*** Property on max_var ***)
 
 (*** code_labels ***)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_code_labels_def = cake_define_cheat CHEAT_TAC
+let get_code_labels_def = cake_define
   `wordConvs_get_code_labels x1 =
         match x1 with
           wordLang_Call r d a h ->
@@ -355,9 +343,7 @@ hol4_overload "get_code_labels" "wordConvs_get_code_labels";;
 (*** TODO: This seems like it must have been established before
   handler labels point only within the current table entry
 ***)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let good_handlers_def = cake_define_cheat CHEAT_TAC
+let good_handlers_def = cake_define
   `good_handlers n x2 =
         match x2 with
           wordLang_Call r d a h ->
@@ -385,9 +371,7 @@ hol4_overload "good_code_labels" "wordConvs_good_code_labels";;
 (* Examines various syntactic elements within programs that some phases
    are
    expected to possibly remove but not create. *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let not_created_subprogs_def = cake_define_cheat CHEAT_TAC
+let not_created_subprogs_def = cake_define
   `not_created_subprogs P x2 =
       match x2 with
         (wordLang_MustTerminate p:'a wordLang_prog) ->

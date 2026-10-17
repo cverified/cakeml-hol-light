@@ -485,9 +485,9 @@ let share_mem_op_def = cake_define_list
    gvs[AllCaseEqs(),inc_pc_def,dec_clock_def] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_tac (
-  `MEASURE (\s. state_clock s)`,
-  CHEAT_TAC)
+let evaluate_def = cake_define_try_tac (fun () ->
+  `MEASURE (\s. state_clock s)`)
+  CHEAT_TAC
   `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
      (if state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _44 _45) ->

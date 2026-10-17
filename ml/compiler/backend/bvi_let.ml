@@ -74,9 +74,9 @@ let _ = size_thms "bvi_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_def = cake_define_list_tac (
-  `MEASURE (list_size bvi_exp_size o SND o SND)`,
-  CHEAT_TAC)
+let compile_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size bvi_exp_size o SND o SND)`)
+  CHEAT_TAC
   [`bvi_let_compile env d [] = []`;
    `bvi_let_compile env d (x :: y :: xs) = bvi_let_compile env d [x]
   ++ bvi_let_compile env d (y :: xs)`;
@@ -128,9 +128,12 @@ let _ = size_thms "bvi_exp";;
    SNOC_CASES \\ gvs
    [SNOC_APPEND,exp2_size_APPEND,bviTheory.exp_size_def
      ,list_size_APPEND] *)
-let compile_sing_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let compile_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_10,_11,e) -> bvi_exp_size e | INR
      (_12,_13,es) -> list_size bvi_exp_size es)`)
+  CHEAT_TAC
   [`bvi_let_compile_sing env d ((Var v):bvi_exp) =
          (match (\l n. oEL n l) env v with SOME n -> Var (v + n)
            | _6 -> Var (v + d))`;

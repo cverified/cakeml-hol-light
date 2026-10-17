@@ -304,10 +304,10 @@ let _ = size_thms "ast_t";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let ast_t_to_display_def = cake_define_list_tac (
+let ast_t_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL v -> ast_t_size v | INR v -> list_size
-     ast_t_size v)`,
-  CHEAT_TAC)
+     ast_t_size v)`)
+  CHEAT_TAC
   [`ast_t_to_display c =
       (match c with Atvar n -> displayLang_Item NONE (implode
         "Atvar") [String n] | Atfun t1 t2 -> displayLang_Item NONE
@@ -325,10 +325,10 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let pat_to_display_def = cake_define_list_tac (
+let pat_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-     INR v -> list_size pattern_semantics_pat_size v)`,
-  CHEAT_TAC)
+     INR v -> list_size pattern_semantics_pat_size v)`)
+  CHEAT_TAC
   [`pat_to_display (c:ast_pat) =
       (match c with Pany -> displayLang_Item NONE (implode "Pany")
         [] | Pvar v -> displayLang_Item NONE (implode "Pvar") [String v]
@@ -414,10 +414,10 @@ let _ = size_thms "dec";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let source_to_display_dec_def = cake_define_list_tac (
+let source_to_display_dec_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL v -> dec_size v | INR v -> list_size
-     dec_size v)`,
-  CHEAT_TAC)
+     dec_size v)`)
+  CHEAT_TAC
   [`source_to_display_dec (d:dec) =
       (match d with Dlet _3 pat e -> displayLang_Item NONE (implode
         "Dlet") [pat_to_display pat; exp_to_display e] | Dletrec _4 fns
@@ -466,10 +466,10 @@ let _ = size_thms "pattern_semantics_pat";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let flat_pat_to_display_def = cake_define_list_tac (
+let flat_pat_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL v -> pattern_semantics_pat_size v |
-     INR v -> list_size pattern_semantics_pat_size v)`,
-  CHEAT_TAC)
+     INR v -> list_size pattern_semantics_pat_size v)`)
+  CHEAT_TAC
   [`flat_pat_to_display p =
         (match p with flatLang_Pvar varN -> displayLang_Item NONE
           (implode "Pvar") [string_imp varN] | Pany -> empty_item
@@ -748,7 +748,7 @@ let _ = size_thms "flatLang_exp";;
 (* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let clos_to_display_def = cake_define_list_tac (
+let clos_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_8,_9,e) -> flatLang_exp_size e | INR
      (INL (_10,_11,e)) -> list_size flatLang_exp_size e | INR (INR
        (INL
@@ -756,8 +756,8 @@ let clos_to_display_def = cake_define_list_tac (
        (INR
      (_15,_16,_17,_18,es))) -> list_size (pair_size I
        flatLang_exp_size)
-     es)`,
-  CHEAT_TAC)
+     es)`)
+  CHEAT_TAC
   [`clos_to_display ns h (Var t n:closLang_exp) =
         displayLang_Item (SOME t) (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -915,13 +915,16 @@ let bvl_fun_to_display_def = cake_define
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-let bvi_to_display_def = cake_define_list_try (fun () ->
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let bvi_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x.
         match x with
           INL (ns,h,x) -> flatLang_exp_size x | INR (INL (ns,h,xs))
             ->
             list_size flatLang_exp_size xs | INR (INR (ns,h,i,xs)) ->
             list_size flatLang_exp_size xs)`)
+  CHEAT_TAC
   [`bvi_to_display ns h (Var n:bvi_exp) =
         displayLang_Item NONE (implode "var")
           [display_num_as_varn (h - n - 1)]`;
@@ -1001,11 +1004,11 @@ let data_seqs_def = cake_define
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let data_prog_to_display_def = cake_define_list_tac (
+let data_prog_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x.
         match x with
-          INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`,
-  CHEAT_TAC)
+          INL (k,_20,_21) -> k | INR (k,_22,_23) -> k)`)
+  CHEAT_TAC
   [`data_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `data_prog_to_display (SUC k) ns prog =
           (match prog with dataLang_Skip -> empty_item (implode
@@ -1208,11 +1211,11 @@ let stack_seqs_def = cake_define
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let stack_prog_to_display_def = cake_define_list_tac (
+let stack_prog_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x.
         match x with
-          INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`,
-  CHEAT_TAC)
+          INL (k,_27,_28) -> k | INR (k,_29,_30) -> k)`)
+  CHEAT_TAC
   [`stack_prog_to_display 0 ns prog = empty_item (implode "...")`;
    `stack_prog_to_display (SUC k) ns stackLang_Skip = empty_item
   (implode "skip")`;
@@ -1435,10 +1438,10 @@ let num_sets_to_display_def = cake_define
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let word_prog_to_display_def = cake_define_list_tac (
+let word_prog_to_display_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (k,_32) -> k | INR (INL (k,_33)) -> k
-     | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`,
-  CHEAT_TAC)
+     | INR (INR (INL (k,_34))) -> k | INR (INR (INR (k,_35))) -> k)`)
+  CHEAT_TAC
   [`word_prog_to_display 0 ns x = empty_item (implode "...")`;
    `word_prog_to_display (SUC k) ns wordLang_Skip = empty_item
   (implode "skip")`;

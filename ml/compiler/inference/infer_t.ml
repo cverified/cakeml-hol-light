@@ -25,9 +25,7 @@ let id_to_string_def = cake_define_list
    `id_to_string (Long x id') =
         mlstring_concat [x; implode "."; id_to_string id']`];;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_tyname_def = cake_define_list_cheat CHEAT_TAC
+let get_tyname_def = cake_define_list
   [`get_tyname n (Bind [] []) = NONE`;
    `get_tyname n (Bind [] ((m,ys) :: xs)) =
       (match get_tyname n ys with NONE -> get_tyname n (Bind []
@@ -78,12 +76,9 @@ let add_parens_def = cake_define
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let inf_type_to_string_rec_def = cake_define_list_tac (
+let inf_type_to_string_rec_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL (_7,t) -> infer_t_size t | INR (_8,ts)
-     -> list_size infer_t_size ts)`,
-  CHEAT_TAC)
+     -> list_size infer_t_size ts)`)
   [`inf_type_to_string_rec tys (Infer_Tuvar n) =
         (mlstring_concat [(implode "_"); mlint_toString (&n)],0)`;
    `inf_type_to_string_rec tys (Infer_Tvar_db n) =

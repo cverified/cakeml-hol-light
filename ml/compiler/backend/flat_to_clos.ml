@@ -399,9 +399,9 @@ let _ = size_thms "flatLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_def = cake_define_list_tac (
-  `MEASURE (list_size flatLang_exp_size o SND)`,
-  CHEAT_TAC)
+let compile_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size flatLang_exp_size o SND)`)
+  CHEAT_TAC
   [`flat_to_clos_compile m [] = []`;
    `flat_to_clos_compile m (x :: y :: xs) = flat_to_clos_compile m
   [x] ++ flat_to_clos_compile m (y :: xs)`;

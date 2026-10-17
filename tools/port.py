@@ -858,8 +858,8 @@ class Porter:
                  if cheat else '')
     if cheat and term is None and rel is not None:
       text = (sizes + relnote + termnote + cheatnote +
-              'let %s = cake_define_list_tac (\n  `%s`,\n'
-              '  CHEAT_TAC)\n  %s;;'
+              'let %s = cake_define_list_try_tac (fun () ->\n  `%s`)\n'
+              '  CHEAT_TAC\n  %s;;'
               % (name, fmt(rel, last=2), clauses))
     elif cheat and term is None:
       text = (sizes + cheatnote +
@@ -867,8 +867,8 @@ class Porter:
               '  %s;;' % (name, clauses))
     elif cheat and rel is not None:
       text = (sizes + relnote + cheatnote +
-              'let %s = cake_define_tac (\n  `%s`,\n'
-              '  CHEAT_TAC)\n  `%s`;;' % (name, rel, term))
+              'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
+              '  CHEAT_TAC\n  `%s`;;' % (name, rel, term))
     elif cheat and b.extra is not None and wf_relation(b.extra)[0]:
       wf, rest = wf_relation(b.extra)
       wftext = fmt(self.term(wf), last=1)
@@ -876,8 +876,8 @@ class Porter:
                fill('(* HOL4 termination:', rest.split(), 69))
              + ' *)') + '\n'
       text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
-              'let %s = cake_define_tac (\n  `%s`,\n'
-              '  CHEAT_TAC)\n  `%s`;;' % (name, wftext, term))
+              'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
+              '  CHEAT_TAC\n  `%s`;;' % (name, wftext, term))
     elif cheat:
       text = (sizes + cheatnote +
               'let %s = cake_define_cheat CHEAT_TAC\n'

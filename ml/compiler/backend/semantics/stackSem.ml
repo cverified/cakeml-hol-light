@@ -388,9 +388,9 @@ let full_read_bitmap_def = cake_define
    filter_bitmap_LENGTH \\ fs [] \\ decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let enc_stack_def = cake_define_list_tac (
-  `MEASURE (LENGTH o SND)`,
-  CHEAT_TAC)
+let enc_stack_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (LENGTH o SND)`)
+  CHEAT_TAC
   [`stackSem_enc_stack bitmaps [] = NONE`;
    `stackSem_enc_stack bitmaps (w :: ws) =
          (if w = wordLang_Word (n2w 0) then (if ws = [] then SOME []
@@ -410,9 +410,9 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
    decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let dec_stack_def = cake_define_list_tac (
-  `MEASURE (LENGTH o SND o SND)`,
-  CHEAT_TAC)
+let dec_stack_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (LENGTH o SND o SND)`)
+  CHEAT_TAC
   [`stackSem_dec_stack bitmaps _28 [] = NONE`;
    `stackSem_dec_stack bitmaps ts (w :: ws) =
         (if w = wordLang_Word (n2w 0) then (if ts = [] /\ ws = []
@@ -678,9 +678,7 @@ let STOP_def = cake_define
   `stackSem_STOP x = x`;;
 hol4_overload "STOP" "stackSem_STOP";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_labels_def = cake_define_cheat CHEAT_TAC
+let get_labels_def = cake_define
   `stackSem_get_labels x1 =
         match x1 with
           stackLang_Seq p1 p2 -> stackSem_get_labels p1 UNION
@@ -720,9 +718,9 @@ let copy_words_for_pattern_def = cake_define
    copy_words_for_pattern_LESS_EQ \\ fs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let copy_words_def = cake_define_tac (
-  `MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)`,
-  CHEAT_TAC)
+let copy_words_def = cake_define_try_tac (fun () ->
+  `MEASURE (\(i,a,f,bs,dm,m). LENGTH bs - i)`)
+  CHEAT_TAC
   `copy_words i a off bs dm m =
      (if LENGTH bs <= i then NONE else
        let pattern = EL i bs in
@@ -819,11 +817,11 @@ let _ = size_thms "stackLang_prog";;
    fix_clock_IMP) \\ fs [] \\ decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_list_tac (
+let evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
-                              (state_clock s,xs)))`,
-  CHEAT_TAC)
+                              (state_clock s,xs)))`)
+  CHEAT_TAC
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
    `stackSem_evaluate (stackLang_Halt v,s) =

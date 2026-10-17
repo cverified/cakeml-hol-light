@@ -172,9 +172,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let calls_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size o FST)`,
-  CHEAT_TAC)
+let calls_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o FST)`)
+  CHEAT_TAC
   [`calls [] g = ([],g)`;
    `calls ((x:closLang_exp) :: y :: xs) g =
          (let (e1,g) = calls [x] g in
@@ -268,10 +268,10 @@ let _ = size_thms "closLang_exp";;
    NOT_LESS,list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let calls_sing_def = cake_define_list_tac (
+let calls_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (e,_26) -> closLang_exp_size e | INR
-     (es,_27) -> list_size closLang_exp_size es)`,
-  CHEAT_TAC)
+     (es,_27) -> list_size closLang_exp_size es)`)
+  CHEAT_TAC
   [`calls_sing (Var t v:closLang_exp) g =
          ((Var t v:closLang_exp),g)`;
    `calls_sing (If t x1 x2 x3:closLang_exp) g =

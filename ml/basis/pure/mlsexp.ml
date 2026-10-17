@@ -87,9 +87,9 @@ let read_symbol_def = cake_define_list
    imp_res_tac read_symbol_length \\ fs[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lex_aux_def = cake_define_list_tac (
-  `MEASURE (\(_1,input,_2). LENGTH input)`,
-  CHEAT_TAC)
+let lex_aux_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\(_1,input,_2). LENGTH input)`)
+  CHEAT_TAC
   [`(mlsexp_lex_aux depth [] acc:mlstring#string+mlsexp_token
   list#string) =
       (if depth = (0:num) then INR (acc,[]) else INL ((implode

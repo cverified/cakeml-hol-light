@@ -333,9 +333,9 @@ let _ = size_thms "bvl_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exps_def = cake_define_tac (
-  `MEASURE (list_size bvl_exp_size o SND)`,
-  CHEAT_TAC)
+let compile_exps_def = cake_define_try_tac (fun () ->
+  `MEASURE (list_size bvl_exp_size o SND)`)
+  CHEAT_TAC
   `(bvl_to_bvi_compile_exps n [] = ([],misc_Nil,n)) /\
    (bvl_to_bvi_compile_exps n ((x:bvl_exp) :: y :: xs) =
       (let (c1,aux1,n1) = bvl_to_bvi_compile_exps n [x] in
@@ -396,10 +396,10 @@ let _ = size_thms "bvl_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exps_sing_def = cake_define_tac (
+let compile_exps_sing_def = cake_define_try_tac (fun () ->
   `MEASURE (\x. match x with INL (n,e) -> bvl_exp_size e | INR (n,es)
-  -> list_size bvl_exp_size es)`,
-  CHEAT_TAC)
+  -> list_size bvl_exp_size es)`)
+  CHEAT_TAC
   `(compile_exps_sing n (Var v:bvl_exp) = (((Var
   v):bvi_exp),misc_Nil,n)) /\
    (compile_exps_sing n (If x1 x2 x3) =

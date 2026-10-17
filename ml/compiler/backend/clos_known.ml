@@ -36,9 +36,9 @@ let _ = size_thms "closLang_exp";;
 (* HOL4 termination: \\ fs[list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let get_size_sc_aux_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size o SND)`,
-  CHEAT_TAC)
+let get_size_sc_aux_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o SND)`)
+  CHEAT_TAC
   [`get_size_sc_aux n [] = n`;
    `get_size_sc_aux n (x :: y :: xs) =
          (if n = 0 then n else
@@ -488,12 +488,12 @@ let _ = size_thms "closLang_exp";;
    exp_size` mp_tac) \\ simp[list_size_pair_size_MAP_FST_SND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let known_def = cake_define_list_tac (
+let known_def = cake_define_list_try_tac (fun () ->
   `inv_image (MEASURE I LEX MEASURE I)
                               (\(c,xs,vs,g).
                               (clos_known_config_inline_factor
-                              c,list_size closLang_exp_size xs))`,
-  CHEAT_TAC)
+                              c,list_size closLang_exp_size xs))`)
+  CHEAT_TAC
   [`known c [] vs (g:val_approx spt) = ([],g)`;
    `known c ((x:closLang_exp) :: y :: xs) vs (g:val_approx spt) =
          (let (eas1,g) = known c [x] vs g in

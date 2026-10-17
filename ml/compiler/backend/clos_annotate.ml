@@ -93,11 +93,11 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let alt_free_sing_def = cake_define_list_tac (
+let alt_free_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR (INL
      es) -> list_size closLang_exp_size es | INR (INR (_7,fns)) ->
-     list_size (pair_size (\x. x) closLang_exp_size) fns)`,
-  CHEAT_TAC)
+     list_size (pair_size (\x. x) closLang_exp_size) fns)`)
+  CHEAT_TAC
   [`alt_free_sing (Var t v:closLang_exp) = ((Var t
   v:closLang_exp),Var v)`;
    `alt_free_sing (If t x1 x2 x3:closLang_exp) =
@@ -245,13 +245,13 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let shift_sing_def = cake_define_list_tac (
+let shift_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (e,_8,_9,_10) -> closLang_exp_size e |
      INR (INL (es,_11,_12,_13)) -> list_size closLang_exp_size es |
        INR
      (INR (_14,_15,_16,l)) -> list_size (pair_size (\x. x)
-     closLang_exp_size) l)`,
-  CHEAT_TAC)
+     closLang_exp_size) l)`)
+  CHEAT_TAC
   [`shift_sing (Var t v:closLang_exp) (m:num) (l:num) (i:num spt) =
          Var t (clos_annotate_get_var m l i v)`;
    `shift_sing (If t x1 x2 x3:closLang_exp) (m:num) (l:num) (i:num spt)

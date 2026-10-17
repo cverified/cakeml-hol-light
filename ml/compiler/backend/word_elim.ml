@@ -24,9 +24,7 @@ needs "semantics/ast.ml";;
 let find_word_loc_def = cake_define
   `(find_word_loc ((name:num),_1,_2) = name)`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let find_word_ref_def = cake_define_cheat CHEAT_TAC
+let find_word_ref_def = cake_define
   `find_word_ref x1 =
         match x1 with
           wordLang_MustTerminate p -> find_word_ref p

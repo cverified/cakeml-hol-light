@@ -939,7 +939,9 @@ let remove_dead_inst_def = cake_define
   This code is written assuming flat_exp_conventions,
     so many trivial cases are omitted.
 *)
-let remove_dead_def = cake_define
+(* the first pass assumes the termination:
+   replacing the CHEAT_TAC is all that is left *)
+let remove_dead_def = cake_define_cheat CHEAT_TAC
   `remove_dead prog live nlive lt =
         match prog with
           wordLang_Move pri ls ->

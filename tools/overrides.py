@@ -144,6 +144,9 @@ FIELD_VAR = {
 # flatLang)
 SIZE_OF = {
   'closProps': {'exp_size': 'closLang'},
+  # the prog_size of the relation of dataSem's evaluate is the one
+  # of dataLang (wordLang has a prog as well)
+  'dataSem': {'prog_size': 'dataLang'},
 }
 
 # CON_BODY: the theory of a constructor in the _body_ of a

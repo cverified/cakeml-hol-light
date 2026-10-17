@@ -49,9 +49,7 @@ hol4_overload "hide" "word_allocProof_hide";;
  *)
 
 (* colouring_ok correctness proof *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let colouring_ok_def = cake_define_cheat CHEAT_TAC
+let colouring_ok_def = cake_define
   `colouring_ok f prog live lt =
         match prog with
           wordLang_Seq s1 s2 ->
@@ -1877,9 +1875,7 @@ let live_store_rel_def = cake_define
      n IN set_of_list nlive) ==>
      FLOOKUP sstore n = FLOOKUP tstore n)`;;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let nlive_store_def = cake_define_cheat CHEAT_TAC
+let nlive_store_def = cake_define
   `nlive_store nlive x2 =
         match x2 with
           wordLang_Op _3 ls ->

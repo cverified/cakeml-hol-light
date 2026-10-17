@@ -159,9 +159,9 @@ let _ = size_thms "simpleSexp_sexp";;
    PULL_EXISTS, sexp_size_def] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpid_def = cake_define_tac (
-  `MEASURE (simpleSexp_sexp_size o SND)`,
-  CHEAT_TAC)
+let sexpid_def = cake_define_try_tac (fun () ->
+  `MEASURE (simpleSexp_sexp_size o SND)`)
+  CHEAT_TAC
   `sexpid p s =
      OPTION_BIND (dstrip_sexp s) (\
         (nm,args).
@@ -179,9 +179,9 @@ let _ = size_thms "simpleSexp_sexp";;
    >> simp[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_def = cake_define_tac (
-  `MEASURE simpleSexp_sexp_size`,
-  CHEAT_TAC)
+let sexptype_def = cake_define_try_tac (fun () ->
+  `MEASURE simpleSexp_sexp_size`)
+  CHEAT_TAC
   `sexptype s =
      OPTION_BIND (dstrip_sexp s) (\
         (s,args).
@@ -208,10 +208,10 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexptype_alt_def = cake_define_list_tac (
+let sexptype_alt_def = cake_define_list_try_tac (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size)
-                      (\x. match x with INL y -> y | INR y -> y)`,
-  CHEAT_TAC)
+                      (\x. match x with INL y -> y | INR y -> y)`)
+  CHEAT_TAC
   [`sexptype_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Atvar" /\ LENGTH args = 1 then
@@ -279,9 +279,9 @@ let _ = size_thms "simpleSexp_sexp";;
    listTheory.EL, dstrip_sexp_size] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_def = cake_define_tac (
-  `MEASURE simpleSexp_sexp_size`,
-  CHEAT_TAC)
+let sexppat_def = cake_define_try_tac (fun () ->
+  `MEASURE simpleSexp_sexp_size`)
+  CHEAT_TAC
   `sexppat s =
      OPTION_MAP ast_Pvar (odestSEXSTR s) ++
      OPTION_BIND (dstrip_sexp s) (\
@@ -316,10 +316,10 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexppat_alt_def = cake_define_list_tac (
+let sexppat_alt_def = cake_define_list_try_tac (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size) (\x. match x with INL y ->
-     y | INR y -> y)`,
-  CHEAT_TAC)
+     y | INR y -> y)`)
+  CHEAT_TAC
   [`sexppat_alt s =
         OPTION_MAP ast_Pvar (odestSEXSTR s) ++
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
@@ -519,9 +519,9 @@ let _ = size_thms "simpleSexp_sexp";;
    "quantHeuristics" "LIST_LENGTH_3",SF DNF_ss] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpexp_def = cake_define_tac (
-  `MEASURE simpleSexp_sexp_size`,
-  CHEAT_TAC)
+let sexpexp_def = cake_define_try_tac (fun () ->
+  `MEASURE simpleSexp_sexp_size`)
+  CHEAT_TAC
   `sexpexp s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
@@ -601,14 +601,14 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpexp_alt_def = cake_define_list_tac (
+let sexpexp_alt_def = cake_define_list_try_tac (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size)
           (\x. match x with INL y -> y | INR (INL y) -> y | INR (INR
             (INL y)) -> y | INR (INR (INR (INL y))) -> y | INR (INR
               (INR
             (INR (INL y)))) -> y | INR (INR (INR (INR (INR y)))) ->
-              y)`,
-  CHEAT_TAC)
+              y)`)
+  CHEAT_TAC
   [`sexpexp_alt s =
          (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
               (if nm = "Raise" /\ LENGTH args = 1 then
@@ -701,9 +701,9 @@ let _ = size_thms "simpleSexp_sexp";;
    metis_tac[sxMEM_sizelt,dstrip_sexp_size,MEM,LESS_TRANS] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_def = cake_define_tac (
-  `MEASURE simpleSexp_sexp_size`,
-  CHEAT_TAC)
+let sexpdec_def = cake_define_try_tac (fun () ->
+  `MEASURE simpleSexp_sexp_size`)
+  CHEAT_TAC
   `sexpdec s =
      OPTION_BIND (dstrip_sexp s) (\
        (nm,args).
@@ -755,10 +755,10 @@ let _ = size_thms "simpleSexp_sexp";;
    fs[LENGTH_EQ_NUM_compute] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sexpdec_alt_def = cake_define_list_tac (
+let sexpdec_alt_def = cake_define_list_try_tac (fun () ->
   `inv_image (MEASURE simpleSexp_sexp_size)
-          (\x. match x with INL y -> y | INR y -> y)`,
-  CHEAT_TAC)
+          (\x. match x with INL y -> y | INR y -> y)`)
+  CHEAT_TAC
   [`sexpdec_alt s =
         (match dstrip_sexp s with NONE -> NONE | SOME (nm,args) ->
           (if nm = "Dlet" /\ LENGTH args = 3 then

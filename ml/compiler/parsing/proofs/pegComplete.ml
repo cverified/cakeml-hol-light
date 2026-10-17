@@ -143,9 +143,7 @@ let sym2peg_def = cake_define_list
    `sym2peg (grammar_NT N) = peg_nt N I`];;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let left_insert1_def = cake_define_list_cheat CHEAT_TAC
+let left_insert1_def = cake_define_list
   [`left_insert1 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert1 pt (Nd (n,l0) subs) =
          (match subs with
@@ -198,9 +196,7 @@ let leftmost_def = cake_define_list
             [] -> Nd (n,l) args | h :: _4 -> leftmost h)`];;
 
 (* pt is a Tbase, and n will be DType all the way down *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let left_insert2_def = cake_define_list_cheat CHEAT_TAC
+let left_insert2_def = cake_define_list
   [`left_insert2 pt (Lf (tk,l)) = Lf (tk,merge_locs (ptree_loc pt) l)`;
    `left_insert2 pt (Nd (n,l0) subs) =
          (match subs with
@@ -252,9 +248,7 @@ let left_insert2_def = cake_define_list_cheat CHEAT_TAC
 *)
 
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let left_insert_def = cake_define_list_cheat CHEAT_TAC
+let left_insert_def = cake_define_list
   [`left_insert (Lf (tk,l)) p sep c = Lf (tk,merge_locs (ptree_loc c)
   l)`;
    `left_insert (Nd (n,l) subs) p sep c =

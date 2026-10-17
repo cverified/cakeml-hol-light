@@ -145,10 +145,10 @@ let _ = size_thms "bvi_exp";;
 (* HOL4 termination: \\ simp[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_sing_def = cake_define_list_tac (
+let compile_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (n,env,t,l,x) -> bvi_exp_size x | INR
-     (n,env,l,xs) -> list_size bvi_exp_size xs)`,
-  CHEAT_TAC)
+     (n,env,l,xs) -> list_size bvi_exp_size xs)`)
+  CHEAT_TAC
   [`bvi_to_data_compile_sing (n:num) (env:num list) tail live ((Var
   v):bvi_exp) =
          (let var = any_el v env 0 in

@@ -70,10 +70,10 @@ hol4_overload "gc_move_list" "gen_gc_partial_gc_move_list";;
    \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_data_def = cake_define_tac (
+let gc_move_data_def = cake_define_try_tac (fun () ->
   `MEASURE (\(conf,state). limit conf - heap_length (gc_state_h1
-  state))`,
-  CHEAT_TAC)
+  state))`)
+  CHEAT_TAC
   `(gen_gc_partial_gc_move_data conf state =
      (match gc_state_h2 state with [] -> state | h :: h2 ->
        (if limit conf < heap_length (gc_state_h1 state ++ (h :: h2))
@@ -89,9 +89,7 @@ let gc_move_data_def = cake_define_tac (
               state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;
 hol4_overload "gc_move_data" "gen_gc_partial_gc_move_data";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let gc_move_ref_list_def = cake_define_cheat CHEAT_TAC
+let gc_move_ref_list_def = cake_define
   `gc_move_ref_list conf state x3 =
         match x3 with
           [] -> ([],state)

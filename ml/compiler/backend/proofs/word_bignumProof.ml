@@ -358,9 +358,7 @@ let state_rel_def = cake_define
        n = FLOOKUP (wordSem_state_store t0) n)`;;
 hol4_overload "state_rel" "word_bignumProof_state_rel";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let exp_ok_def = cake_define_cheat CHEAT_TAC
+let exp_ok_def = cake_define
   `exp_ok x1 =
         match x1 with
           wordLang_Const _4 -> T

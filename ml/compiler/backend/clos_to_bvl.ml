@@ -381,9 +381,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exps_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size o FST o SND)`,
-  CHEAT_TAC)
+let compile_exps_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o FST o SND)`)
+  CHEAT_TAC
   [`clos_to_bvl_compile_exps max_app [] aux = ([],aux)`;
    `clos_to_bvl_compile_exps max_app ((x:closLang_exp) :: y :: xs) aux =
          (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
@@ -503,10 +503,10 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let compile_exp_sing_def = cake_define_list_tac (
+let compile_exp_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (_7,e,_8) -> bvl_exp_size e | INR
-     (_9,es,_10) -> list_size closLang_exp_size es)`,
-  CHEAT_TAC)
+     (_9,es,_10) -> list_size closLang_exp_size es)`)
+  CHEAT_TAC
   [`compile_exp_sing max_app (Var t v:closLang_exp) aux = (((Var
   v):bvl_exp),aux)`;
    `compile_exp_sing max_app (If t x1 x2 x3:closLang_exp) aux =
@@ -639,9 +639,9 @@ let code_merge_def = cake_define_wf
    LENGTH_NIL] >> decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let code_sort_def = cake_define_list_tac (
-  `MEASURE LENGTH`,
-  CHEAT_TAC)
+let code_sort_def = cake_define_list_try_tac (fun () ->
+  `MEASURE LENGTH`)
+  CHEAT_TAC
   [`code_sort [] = []`;
    `code_sort [x] = [x]`;
    `code_sort (x :: y :: xs) =
@@ -693,9 +693,9 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let get_src_names_def = cake_define_list_tac (
-  `MEASURE (list_size closLang_exp_size o FST)`,
-  CHEAT_TAC)
+let get_src_names_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (list_size closLang_exp_size o FST)`)
+  CHEAT_TAC
   [`get_src_names [] l = l`;
    `get_src_names (x :: y :: xs) l = get_src_names (y :: xs)
   (get_src_names [x] l)`;
@@ -730,10 +730,10 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let get_src_names_sing_def = cake_define_list_tac (
+let get_src_names_sing_def = cake_define_list_try_tac (fun () ->
   `MEASURE (\x. match x with INL (e,_70) -> closLang_exp_size e | INR
-     (es,_71) -> list_size closLang_exp_size es)`,
-  CHEAT_TAC)
+     (es,_71) -> list_size closLang_exp_size es)`)
+  CHEAT_TAC
   [`get_src_names_sing (closLang_If _38 x y z) l =
       get_src_names_sing x (get_src_names_sing y
         (get_src_names_sing z l))`;

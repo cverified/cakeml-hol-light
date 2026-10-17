@@ -587,9 +587,9 @@ let get_intervals_ct_monad_def = cake_define
 (* HOL4 termination: >> rw [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let remove_inactive_intervals_def = cake_define_tac (
-  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`,
-  CHEAT_TAC)
+let remove_inactive_intervals_def = cake_define_try_tac (fun () ->
+  `MEASURE (\(_3,st). LENGTH (linear_scan_state_active st))`)
+  CHEAT_TAC
   `remove_inactive_intervals beg st =
      (match linear_scan_state_active st with [] -> st_ex_return st |
        (e,r) :: activetail -> (
@@ -842,9 +842,9 @@ let partition_regs_def = cake_define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sort_regs_def = cake_define_tac (
-  `MEASURE (\(l,r). r - l)`,
-  CHEAT_TAC)
+let sort_regs_def = cake_define_try_tac (fun () ->
+  `MEASURE (\(l,r). r - l)`)
+  CHEAT_TAC
   `sort_regs l r =
      (if r <= l + 1 then
        st_ex_return one else
@@ -901,9 +901,9 @@ let partition_moves_def = cake_define_wf
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let sort_moves_def = cake_define_tac (
-  `MEASURE (\(l,r). r - l)`,
-  CHEAT_TAC)
+let sort_moves_def = cake_define_try_tac (fun () ->
+  `MEASURE (\(l,r). r - l)`)
+  CHEAT_TAC
   `linear_scan_sort_moves l r =
      (if r <= l + 1 then
        st_ex_return one else

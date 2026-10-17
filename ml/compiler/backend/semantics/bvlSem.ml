@@ -86,9 +86,7 @@ hol4_overload "state_code_fupd" "bvlSem_state_code_fupd";;
 hol4_overload "state_ffi" "bvlSem_state_ffi";;
 hol4_overload "state_ffi_fupd" "bvlSem_state_ffi_fupd";;
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let v_to_list_def = cake_define_cheat CHEAT_TAC
+let v_to_list_def = cake_define
   `bvlSem_v_to_list x1 =
         match x1 with
           (Block tag []:bvlSem_v) ->
@@ -759,10 +757,10 @@ let _ = size_thms "bvl_exp";;
    decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let evaluate_def = cake_define_tac (
+let evaluate_def = cake_define_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (list_size bvl_exp_size))
-                            (\(xs,env,s). (state_clock s,xs)))`,
-  CHEAT_TAC)
+                            (\(xs,env,s). (state_clock s,xs)))`)
+  CHEAT_TAC
   `(bvlSem_evaluate ([],env,(s:('c,'ffi)bvlSem_state)) = (Rval [],s)) /\
    (bvlSem_evaluate (x :: y :: xs,env,s) =
       (match fix_clock s (bvlSem_evaluate ([x],env,s)) with (Rval

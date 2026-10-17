@@ -213,11 +213,11 @@ let cons_measure_def = cake_define_wf
    fs [GSYM rich_listTheory.ZIP_APPEND,SUM_APPEND] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let eq_pure_list_def = cake_define_tac (
+let eq_pure_list_def = cake_define_try_tac (fun () ->
   `MEASURE (SUM o MAP (\(x,y). 1 + cons_measure x + cons_measure y +
                               (if cons_measure x < cons_measure y
-                                then 1 else 0)))`,
-  CHEAT_TAC)
+                                then 1 else 0)))`)
+  CHEAT_TAC
   `eq_pure_list x1 =
       match x1 with
         [] -> misc_Nil

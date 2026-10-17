@@ -79,9 +79,9 @@ let read_char_as_3digits_def = cake_define
    read_char_as_3digits_reduces >> gs[] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let read_string_def = cake_define_tac (
-  `MEASURE (LENGTH o FST)`,
-  CHEAT_TAC)
+let read_string_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST)`)
+  CHEAT_TAC
   `lexer_fun_read_string str s (loc:locn) =
      (if str = "" then (ErrorS,loc,"") else
      if HD str = (CHR 34) then (StringS s,loc,TL str) else
@@ -158,9 +158,9 @@ let read_Ident_ret_def = cake_define
    Cases_on ‘str’ \\ gvs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let read_Ident_def = cake_define_list_tac (
-  `MEASURE (LENGTH o FST)`,
-  CHEAT_TAC)
+let read_Ident_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (LENGTH o FST)`)
+  CHEAT_TAC
   [`read_Ident [] loc acc = (ErrorS,loc,[])`;
    `read_Ident (c :: str) loc acc =
       (if is_single_char_symbol c then
@@ -353,9 +353,9 @@ let next_token_def = cake_define
 (* HOL4 termination: >> rw[] >> imp_res_tac next_token_LESS *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let lexer_fun_aux_def = cake_define_tac (
-  `MEASURE (LENGTH o FST)`,
-  CHEAT_TAC)
+let lexer_fun_aux_def = cake_define_try_tac (fun () ->
+  `MEASURE (LENGTH o FST)`)
+  CHEAT_TAC
   `lexer_fun_aux input loc =
      (match next_token input loc with NONE -> [] | SOME (token,Locs
        loc' loc'',rest_of_input) ->
@@ -400,9 +400,9 @@ let toplevel_semi_dex_def = cake_define_list
    < x + 1``] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let split_top_level_semi_def = cake_define_tac (
-  `MEASURE LENGTH`,
-  CHEAT_TAC)
+let split_top_level_semi_def = cake_define_try_tac (fun () ->
+  `MEASURE LENGTH`)
+  CHEAT_TAC
   `(split_top_level_semi toks =
     (match toplevel_semi_dex 0 0 toks with NONE -> [] | SOME i ->
         TAKE i toks :: split_top_level_semi (DROP i toks)))`;;

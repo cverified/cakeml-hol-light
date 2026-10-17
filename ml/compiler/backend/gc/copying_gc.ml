@@ -48,9 +48,9 @@ hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
    [heap_length_def,el_length_def,SUM_APPEND] \\ decide_tac *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let gc_move_loop_def = cake_define_list_tac (
-  `MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)`,
-  CHEAT_TAC)
+let gc_move_loop_def = cake_define_list_try_tac (fun () ->
+  `MEASURE (\(h1,h2,a,n,heap,c,limit'). limit' - heap_length h1)`)
+  CHEAT_TAC
   [`copying_gc_gc_move_loop (h1,[],a,n,heap,c,limit') =
   (h1,a,n,heap,c)`;
    `copying_gc_gc_move_loop (h1,h :: h2,a,n,heap,c,limit') =

@@ -287,13 +287,13 @@ let mats_len_def = cake_define_list
    fs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_matrix_def = cake_define_list_tac (
+let exh_matrix_def = cake_define_list_try_tac (fun () ->
   `inv_image ((<) LEX (<) LEX (<))
           (\x. match x with INL rows -> (mat_weight rows,mat_len
             rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
               ms,LENGTH
-            ms + 1))`,
-  CHEAT_TAC)
+            ms + 1))`)
+  CHEAT_TAC
   [`exh_matrix [] = F`;
    `exh_matrix (r :: rows) =
       (if NULL r then T else
@@ -337,13 +337,13 @@ let exh_rows_def = cake_define
    fs [] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_steps_def = cake_define_list_tac (
+let exh_steps_def = cake_define_list_try_tac (fun () ->
   `inv_image ((<) LEX (<) LEX (<))
           (\x. match x with INL rows -> (mat_weight rows,mat_len
             rows,(0:num)) | INR ms -> (mats_weight ms,mats_len
               ms,LENGTH
-            ms + 1))`,
-  CHEAT_TAC)
+            ms + 1))`)
+  CHEAT_TAC
   [`exh_steps [] = (1:num)`;
    `exh_steps (r :: rows) =
       (((if NULL r then 1 else
@@ -359,9 +359,9 @@ let exh_steps_def = cake_define_list_tac (
    simp [Once exh_steps_def] *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
-let exh_all_def = cake_define_list_tac (
-  `MEASURE exh_steps_list`,
-  CHEAT_TAC)
+let exh_all_def = cake_define_list_try_tac (fun () ->
+  `MEASURE exh_steps_list`)
+  CHEAT_TAC
   [`exh_all [] = T`;
    `exh_all ([] :: ms) = F`;
    `exh_all ((r :: rows) :: ms) =
