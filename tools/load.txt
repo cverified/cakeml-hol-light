@@ -21,6 +21,7 @@ lib/machine_ieee.ml
 lib/grammar.ml
 lib/peg.ml
 lib/pegexec.ml
+lib/NTproperties.ml
 lib/simpleSexp.ml
 lib/spt_closure.ml
 lib/multiword.ml
@@ -179,7 +180,19 @@ compiler/backend/proofs/bvl_constProof.ml
 compiler/backend/proofs/bvl_handleProof.ml
 compiler/backend/proofs/bvl_inlineProof.ml
 compiler/backend/proofs/bvl_to_bviProof.ml
+compiler/backend/proofs/bvl_jumpProof.ml
 compiler/backend/semantics/closProps.ml
+compiler/backend/proofs/clos_annotateProof.ml
+compiler/backend/proofs/clos_callProof.ml
+compiler/backend/proofs/clos_constantProof.ml
+compiler/backend/proofs/clos_fvsProof.ml
+compiler/backend/proofs/clos_knownProps.ml
+compiler/backend/proofs/clos_letopProof.ml
+compiler/backend/proofs/clos_opProof.ml
+compiler/backend/proofs/clos_ticksProof.ml
+compiler/backend/proofs/clos_knownProof.ml
+compiler/backend/proofs/clos_mtiProof.ml
+compiler/backend/proofs/clos_numberProof.ml
 compiler/backend/proofs/clos_to_bvlProof.ml
 compiler/backend/semantics/wordProps.ml
 compiler/backend/proofs/word_simpProof.ml
