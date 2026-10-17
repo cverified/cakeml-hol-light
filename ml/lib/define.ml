@@ -459,6 +459,25 @@ let LOG_TAC (asl,w) =
           asl;
   failwith "LOG_TAC";;
 
+(* the size theorems of the types that a goal mentions.  A run
+   has a hundred datatypes, which is eight hundred size
+   theorems, and rewriting a big termination goal with all of
+   them four times over is what the budget of the evaluate of
+   wordSem and of stackSem goes on. *)
+
+let goal_size_thms =
+  let rec tynames ty acc =
+    if is_vartype ty then acc else
+    let s,args = dest_type ty in
+    itlist tynames args (insert s acc) in
+  let termnames tm acc =
+    itlist (fun t a -> tynames (type_of t) a)
+           (find_terms (fun t -> is_var t || is_const t) tm) acc in
+  fun (asl,w) ->
+    let ns = itlist termnames (w :: map (concl o snd) asl) [] in
+    itlist (fun (n,(a,b)) l -> if mem n ns then a @ b @ l else l)
+           (!the_size_thms) [];;
+
 let is_admissible w =
   try name_of(fst(strip_comb(snd(strip_forall w)))) = "admissible"
   with Failure _ -> false;;
@@ -479,6 +498,7 @@ and SIZE_TERM_TAC g =
      tuple apart, so that SUBST_VAR_TAC can use it (balanced_map's
      link matches on the pair (l,r), and its condition says
      Bin ...,Bin ... = l,r) *)
+  let all_size_thms () = goal_size_thms g in
   (REWRITE_TAC[MEASURE; LEX; inv_image; FORALL_PAIR_THM; PAIR_EQ;
                o_THM; FST; SND] THEN
    CONV_TAC(TOP_DEPTH_CONV GEN_BETA_CONV) THEN

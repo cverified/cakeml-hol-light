@@ -6,23 +6,34 @@ are the eleven tail recursive definitions of `unify` and the
 five Pancake definitions of `compiler`), which
 `tools/coverage.py` checks.  `tools/bin/checkseq` loads them one
 after the other in the order of `tools/load.txt`: in the run of
-2026-10-16 17:21, 5 files failed and 323 definitions were
-assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 335`;
-the run before it, of 14:43, assumed 339 of them and was 409
-axioms.  What made the difference is the termination relation
-that HOL4's `Termination` gives, which the port now uses for a
-definition whose clauses are a quotation each as well (the
-`evaluate` of wordSem, 26 clauses, and of stackSem, 35, were
-assumed clause by clause and are now defined), three gaps of
-HOL Light's admissibility machinery (a `MAP2`, a conditional
-that is not a tail call, a combination whose function is an
-argument deeper in), and two things that made every measure
-over a list fail (a second `list_size` that `size_thms "list"`
-had defined, and the test in `FACTS_TAC` that threw away the
-instances of a fact with a type variable in it).  Of the five
-files that fail, wordSem and stackSem die on the `evaluate`
-whose clauses the port cannot put together, which the round
-after this one repairs._
+2026-10-16 22:26, 2 files failed and 295 definitions were
+assumed (`ml/CHEATS.md`), which was `length (axioms ()) = 340`;
+the run before it, of 19:34, assumed 325 of them and was 370
+axioms, and the one before that, of 17:21, 323 and 335 (that
+one lost five whole files, which the two after it load).  What
+made the difference in the last round is the admissibility
+machinery: the termination conditions of a definition arrive as
+one conjunction, which the port gave to the proof of a measure
+goal as a whole, and an admissibility condition among them
+needs the proformas of HOL Light instead (which the port only
+reached when it gave no relation).  With the proforma of an
+existential, the equation of a `let`, one substitution at a
+time, the value of a constant without arguments, the two size
+lemmas of a pair one at a time, the measure of a family and the
+length of a `DROP`, the definitions of the shape of
+`wordLang$max_var` are made: wordLang went from 4 assumed
+definitions to 1, word_alloc from 8 to 4, and word_inst,
+word_simp, word_remove, word_unreach, stack_names,
+stack_remove, jsonLang and mlint to 0.  The run also got five
+minutes shorter.  `tools/smoke.ml` holds a definition of every
+shape that the round repaired._
+
+_What is left: the budget, which 107 of the 295 run out of
+("timeout in measure" 76, "timeout in guess" 31); the
+`evaluate` of stackSem, which is 40 of the 340 axioms (its
+clauses typecheck together now, and the termination proof is
+what is left); and the two files that fail, both on a record
+field of a variable that the port gives the wrong type._
 
 ## What is ported
 
