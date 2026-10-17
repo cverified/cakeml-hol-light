@@ -20,7 +20,7 @@ cd $C
 ps -eo args --no-headers | grep -q '[c]heckseq' && {
   echo "cycle: a run is going"; exit 1; }
 echo "=== the reports of the run"
-sh tmp/postrun3.sh > tmp/report.txt 2>&1
+sh tmp/postrun3.sh > /dev/null 2>&1   # it tees tmp/report.txt
 sed -n '/=== axioms and cheats/,/=== timings/p' tmp/report.txt |
   head -14
 echo "=== the cheat list"
