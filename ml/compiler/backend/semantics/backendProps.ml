@@ -47,11 +47,7 @@ let oracle_monotonic_def = cake_define
            ==> R x y) /\ (!i x y. x IN S /\ y IN f (orac i) ==> R x
            y))`;;
 
-(* HOL4 ML code, not ported:
-val conjs = MATCH_MP quotientTheory.EQ_IMPLIES (SPEC_ALL
-  oracle_monotonic_def)
-  |> UNDISCH_ALL |> CONJUNCTS |> map DISCH_ALL
-*)
+(* HOL4 backendPropsScript.sml:108-109: ML code, not ported *)
 
 (* check that an oracle with config values lists the config values that
    would be produced by the incremental compiler. *)

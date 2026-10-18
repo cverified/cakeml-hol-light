@@ -29,11 +29,8 @@ let num_set_tree_union_def = cake_define_list
                 BS (num_set_tree_union t1 t1') (sptree_union a b)
                     (num_set_tree_union t2 t2')):(1 spt) spt)`];;
 
-(* HOL4 termination: >> rw[] >> gvs[subspt_domain, SUBSET_DEF] >>
-   irule size_diff_less >> gvs[domain_union, domain_spt_fold_union,
-   lookup_inter] >> EVERY_CASE_TAC >> gvs[] >> simp[PULL_EXISTS, GSYM
-   CONJ_ASSOC] >> goal_assum drule >> goal_assum drule >> simp[] >>
-   goal_assum (drule_at Any) >> qexists_tac `k` >> simp[] *)
+(* HOL4 spt_closureScript.sml:90-99: the tactic that proves the
+   termination *)
 let closure_spt_def = cake_define_wf
   `MEASURE (\(r,t). sptree_size (difference (spt_fold sptree_union LN
   t) r))`

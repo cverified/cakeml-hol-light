@@ -15,13 +15,10 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 ML code, not ported:
-val qexistsl_tac = map_every qexists_tac;
-fun bump_assum pat = qpat_x_assum pat assume_tac;
-*)
+(* HOL4 clos_ticksProofScript.sml:10-11: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     remove_ticks = clos_ticks$remove_ticks *)
+(* HOL4 clos_ticksProofScript.sml:15: the overload remove_ticks,
+   which the port expands *)
 
 (* code relation *)
 

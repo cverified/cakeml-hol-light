@@ -125,10 +125,7 @@ hol4_overload "compile_oracle" "dataSem_state_compile_oracle";;
 hol4_overload "compile_oracle_fupd"
   "dataSem_state_compile_oracle_fupd";;
 
-(* HOL4 ML code, not ported:
-val s = ``(s:('c,'ffi) dataSem$state)``
-val vs = ``(vs:dataSem$v list)``
-*)
+(* HOL4 dataSemScript.sml:76-77: ML code, not ported *)
 
 let arch_size_def = cake_define
   `arch_size lims = (if limits_arch_64_bit lims then 64 else 32:num)`;;
@@ -156,9 +153,8 @@ let bignum_size_def = cake_define
 let _ = size_thms "dataSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt strip_tac \\ fs
-   [sptreeTheory.size_delete] \\ imp_res_tac miscTheory.lookup_zero
-   \\ fs [] \\ rw [] \\ fs [] \\ imp_res_tac check_res_IMP \\ fs [] *)
+(* HOL4 dataSemScript.sml:138-145: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let size_of_def = cake_define_list_try_tac (fun () ->
@@ -225,13 +221,11 @@ let no_thunks_in_refs_def = cake_define
   `no_thunks_in_refs refs <=> (!k e v. ~(lookup k refs = SOME (Thunk
   e v)))`;;
 
-(* HOL4 overload (expanded in the port):
-     add_space_safe = λk ^s. s.safe_for_space
-           ∧ no_thunks_in_refs s.refs
-           ∧ size_of_heap s + k <= s.limits.heap_limit *)
+(* HOL4 dataSemScript.sml:189-192: the overload add_space_safe, which
+   the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     heap_peak = λk ^s. MAX (s.peak_heap_length) (size_of_heap s + k) *)
+(* HOL4 dataSemScript.sml:194-195: the overload heap_peak, which the
+   port expands *)
 
 let add_space_def = cake_define
   `add_space (s:('c,'ffi)dataSem_state) k =
@@ -256,14 +250,11 @@ let size_of_heap_args_def = cake_define
        ((s:('c,'ffi)dataSem_state))) LN in
        n)`;;
 
-(* HOL4 overload (expanded in the port):
-     add_space_safe_args = λk op_args ^s. s.safe_for_space
-                  ∧ size_of_heap_args op_args s + k <=
-                    s.limits.heap_limit *)
+(* HOL4 dataSemScript.sml:214-216: the overload add_space_safe_args,
+   which the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     heap_peak_args = λk op_args ^s. MAX (s.peak_heap_length)
-       (size_of_heap_args op_args s + k) *)
+(* HOL4 dataSemScript.sml:218-219: the overload heap_peak_args, which
+   the port expands *)
 
 let consume_space_def = cake_define
   `consume_space k (s:('c,'ffi)dataSem_state) =
@@ -287,11 +278,8 @@ let v_to_list_def = cake_define
         | _31 -> NONE`;;
 hol4_overload "v_to_list" "dataSem_v_to_list";;
 
-(* HOL4 overload (expanded in the port):
-     bignum_limit = \i1 i2 s.
-      let il = bignum_size s.limits.arch_64_bit i1 in
-      let jl = bignum_size s.limits.arch_64_bit i2 in
-        2 * il + 2 * jl *)
+(* HOL4 dataSemScript.sml:243-247: the overload bignum_limit, which
+   the port expands *)
 
 (* Gives an upper bound to the memory consuption of an operation *)
 let space_consumed_def = cake_define
@@ -486,19 +474,11 @@ let stack_consumed_def = cake_define
         | (p,vs) ->
         (if allowed_op p (LENGTH vs) then SOME 0 else NONE)`;;
 
-(* HOL4 overload (expanded in the port):
-     do_space_safe = λop vs ^s. if op_space_reset op
-              then s.safe_for_space
-                   ∧ no_thunks_in_refs s.refs
-                   ∧ size_of_heap_args vs s
-                       + space_consumed s op vs
-                     <= s.limits.heap_limit
-              else s.safe_for_space *)
+(* HOL4 dataSemScript.sml:405-412: the overload do_space_safe, which
+   the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     do_space_peak = λop vs ^s. if op_space_reset op
-              then heap_peak_args (space_consumed s op vs) vs s
-              else s.peak_heap_length *)
+(* HOL4 dataSemScript.sml:414-417: the overload do_space_peak, which
+   the port expands *)
 
 let do_space_def = cake_define
   `do_space op vs (s:('c,'ffi)dataSem_state) =
@@ -600,9 +580,8 @@ let do_eq_def = cake_define_list_cheat CHEAT_TAC
 hol4_overload "do_eq" "dataSem_do_eq";;
 hol4_overload "do_eq_list" "dataSem_do_eq_list";;
 
-(* HOL4 overload (expanded in the port):
-     Error = (Rerr(Rabort Rtype_error)):(dataSem$v#('c,'ffi)
-       dataSem$state, dataSem$v)result *)
+(* HOL4 dataSemScript.sml:499-500: the overload Error, which the port
+   expands *)
 
 let do_install_def = cake_define
   `dataSem_do_install vs (s:('c,'ffi)dataSem_state) =
@@ -637,8 +616,8 @@ let list_to_v_def = cake_define_list
   dataSem_list_to_v (ts + 1) t l]`];;
 hol4_overload "list_to_v" "dataSem_list_to_v";;
 
-(* HOL4 overload (expanded in the port):
-     Block_nil = Block 0 nil_tag [] *)
+(* HOL4 dataSemScript.sml:534: the overload Block_nil, which the port
+   expands *)
 
 let with_fresh_ts_def = cake_define
   `with_fresh_ts (s:('c,'ffi)dataSem_state) n f = (match
@@ -938,8 +917,8 @@ hol4_overload "bad_thunk_update" "dataSem_bad_thunk_update";;
 (* mirrors bviSem$finalise_cons, but threads the timestamp counter so
    that
    each block produced by the finalisation gets a fresh time stamp *)
-(* HOL4 termination: \\ rw [] \\ imp_res_tac miscTheory.lookup_zero
-   \\ fs [sptreeTheory.size_delete] *)
+(* HOL4 dataSemScript.sml:854-858: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let finalise_cons_def = cake_define_try_tac (fun () ->
@@ -1412,22 +1391,11 @@ let do_app_aux_def = cake_define
                     ,dataSem_v)semanticPrimitives_result))`;;
 hol4_overload "do_app_aux" "dataSem_do_app_aux";;
 
-(* HOL4 overload (expanded in the port):
-     do_app_safe = λop vs s. if allowed_op op (LENGTH vs)
-              then (do_space_safe op vs s ∧ lim_safe s.limits op vs
-                    ∧ the F (OPTION_MAP ($> s.limits.stack_limit)
-                           (OPTION_MAP2 $+ (stack_consumed
-                             s.stack_frame_sizes s.limits op vs)
-                             (OPTION_MAP2 $+ (size_of_stack s.stack)
-                               s.locals_size))))
-              else F *)
+(* HOL4 dataSemScript.sml:1149-1156: the overload do_app_safe, which
+   the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     do_app_peak = λop vs s. if op = Install
-              then s.peak_heap_length
-              else if MEM op [IntOp Greater; IntOp GreaterEq] then
-                s.peak_heap_length
-              else do_space_peak op vs s *)
+(* HOL4 dataSemScript.sml:1158-1162: the overload do_app_peak, which
+   the port expands *)
 
 let do_app_def = cake_define
   `dataSem_do_app op vs (s:('c,'ffi)dataSem_state) =
@@ -1614,10 +1582,8 @@ if concl fix_clock_IMP <> `T` then
 let _ = size_thms "dataLang_prog";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
-   imp_res_tac fix_clock_IMP \\ imp_res_tac (GSYM fix_clock_IMP) \\
-   FULL_SIMP_TAC (srw_ss()) [set_var_def,push_env_clock,
-   call_env_def,LET_THM] \\ fs [dec_clock_def] *)
+(* HOL4 dataSemScript.sml:1486-1495: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->
@@ -1767,9 +1733,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                                 res)))))))`];;
 hol4_overload "evaluate" "dataSem_evaluate";;
 
-(* HOL4 ML code, not ported:
-val evaluate_ind = theorem"evaluate_ind";
-*)
+(* HOL4 dataSemScript.sml:1497: ML code, not ported *)
 
 let evaluate_safe_def = cake_define
   `evaluate_safe c s = (let (x,s1) = evaluate (c,s) in
@@ -1831,7 +1795,4 @@ let compute_limits_def = cake_define
 
 (* clean up *)
 
-(* HOL4 ML code, not ported:
-val _ = map delete_binding ["evaluate_AUX_def",
-  "evaluate_primitive_def"];
-*)
+(* HOL4 dataSemScript.sml:1660: ML code, not ported *)

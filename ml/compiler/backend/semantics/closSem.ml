@@ -52,8 +52,8 @@ hol4_overload "RefPtr" "closSem_RefPtr";;
 hol4_overload "Closure" "closSem_Closure";;
 hol4_overload "Recclosure" "closSem_Recclosure";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     clos_co = num -> 'c # clos_prog *)
+(* HOL4 closSemScript.sml:32: the type abbreviation clos_co, which
+   the port expands *)
 
 let closSem_state_FIELDS = define_record "closSem_state"
   ["globals","(closSem_v option) list";
@@ -147,9 +147,8 @@ let unit_def = cake_define
   `closSem_Unit = closSem_Block tuple_tag []`;;
 hol4_overload "Unit" "closSem_Unit";;
 
-(* HOL4 overload (expanded in the port):
-     Error = (Rerr(Rabort Rtype_error)):(closSem$v#(('c,'ffi)
-       closSem$state), closSem$v)result *)
+(* HOL4 closSemScript.sml:120-121: the overload Error, which the port
+   expands *)
 
 let v_to_bytes_def = cake_define
   `closSem_v_to_bytes lv = some (\(ns:word8 list).
@@ -162,9 +161,7 @@ let v_to_words_def = cake_define
   ns))`;;
 hol4_overload "v_to_words" "closSem_v_to_words";;
 
-(* HOL4 ML code, not ported:
-val s = ``s:('c,'ffi)closSem$state``;
-*)
+(* HOL4 closSemScript.sml:132: ML code, not ported *)
 
 let do_install_def = cake_define
   `closSem_do_install vs (s:('c,'ffi)closSem_state) =
@@ -204,9 +201,8 @@ hol4_overload "do_install" "closSem_do_install";;
 let _ = size_thms "const";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ Induct_on ‘cs’ \\ rw [] \\ fs
-   [const_size_def] \\ res_tac \\ pop_assum (qspec_then ‘t’
-   assume_tac) \\ fs [] *)
+(* HOL4 closSemScript.sml:170-175: the tactic that proves the
+   termination *)
 let make_const_def = cake_define_list_try (fun () ->
   `MEASURE const_size`)
   [`make_const (ConstInt i) = closSem_Number i`;
@@ -872,12 +868,8 @@ if concl fix_clock_IMP <> `T` then
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
-   imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\ TRY
-   DECIDE_TAC \\ imp_res_tac do_install_clock \\ imp_res_tac
-   dest_closure_length \\ imp_res_tac LESS_EQ_dec_clock \\
-   FULL_SIMP_TAC (srw_ss()) [] \\ simp [AppUnit_def] \\ IF_CASES_TAC
-   \\ gvs [] *)
+(* HOL4 closSemScript.sml:828-843: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->

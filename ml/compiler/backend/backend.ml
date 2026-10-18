@@ -53,9 +53,7 @@ let backend_config_FIELDS = define_record "backend_config"
    "tap_conf","tap_config";
    "exported","mlstring list"];;
 
-(* HOL4 ML code, not ported:
-val config_component_equality = theorem"config_component_equality";
-*)
+(* HOL4 backendScript.sml:32: ML code, not ported *)
 
 let attach_bitmaps_def = cake_define_list
   [`attach_bitmaps names c bm (SOME (bytes,c')) =
@@ -363,32 +361,8 @@ let from_livesets_def = cake_define
      word_to_word_config_col_oracle_fupd (K col) c) c in
    from_word asm_conf c names p)`;;
 
-(* TODO delete?
-Theorem to_livesets_invariant:
-  wc.reg_alg = c.word_to_word_conf.reg_alg ⇒
-  to_livesets asm_conf (c with word_to_word_conf:=wc) p =
-  let (rcm,c,p) = to_livesets asm_conf c p in
-    (rcm,c with word_to_word_conf:=wc,p)
-Proof
-  srw_tac[][FUN_EQ_THM,
-     to_data_def,
-     to_bvi_def,
-     to_bvl_def,
-     to_clos_def,
-     to_flat_def,to_livesets_def] >>
-  unabbrev_all_tac>>fs[]>>
-  rpt(rfs[]>>fs[])
-QED
-
-Theorem to_livesets_0_invariant:
-  (wc.reg_alg = c.word_to_word_conf.reg_alg) ⇒
-  (to_livesets_0 (c with word_to_word_conf:=wc,p,names) =
-  let (rcm,c,p) = to_livesets_0 (c,p,names) in
-    (rcm,c with word_to_word_conf:=wc,p))
-Proof
-  rw[FUN_EQ_THM,to_livesets_0_def]
-QED
-*)
+(* HOL4 backendScript.sml:469-494: code that the source has in a
+   comment *)
 
 let ensure_fp_conf_ok_def = cake_define
   `ensure_fp_conf_ok asm_c c = data_to_word_config_has_fp_tern_fupd (K
@@ -397,38 +371,38 @@ let ensure_fp_conf_ok_def = cake_define
   asm_c))
    c)`;;
 
-(* HOL4 overload (expanded in the port):
-     bvl_inline_compile_prog = bvl_inline$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvi_tailrec_compile_prog = bvi_tailrec$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvi_to_data_compile_prog = bvi_to_data$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile_prog = bvl_to_bvi$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile_inc = bvl_to_bvi$compile_inc *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile = bvl_to_bvi$compile *)
-(* HOL4 overload (expanded in the port):
-     bvi_to_data_compile = bvi_to_data$compile *)
-(* HOL4 overload (expanded in the port):
-     bvi_let_compile = bvi_let$compile *)
-(* HOL4 overload (expanded in the port):
-     bvl_const_compile = bvl_const$compile *)
-(* HOL4 overload (expanded in the port):
-     bvl_handle_compile = bvl_handle$compile *)
-(* HOL4 overload (expanded in the port):
-     bvl_inline_compile_inc = bvl_inline$compile_inc *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile_exps = bvl_to_bvi$compile_exps *)
-(* HOL4 overload (expanded in the port):
-     flat_to_clos_inc_compile = flat_to_clos$inc_compile_decs *)
-(* HOL4 overload (expanded in the port):
-     stack_remove_prog_comp = stack_remove$prog_comp *)
-(* HOL4 overload (expanded in the port):
-     stack_alloc_prog_comp = stack_alloc$prog_comp *)
-(* HOL4 overload (expanded in the port):
-     stack_names_prog_comp = stack_names$prog_comp *)
+(* HOL4 backendScript.sml:519: the overload bvl_inline_compile_prog,
+   which the port expands *)
+(* HOL4 backendScript.sml:520: the overload bvi_tailrec_compile_prog,
+   which the port expands *)
+(* HOL4 backendScript.sml:521: the overload bvi_to_data_compile_prog,
+   which the port expands *)
+(* HOL4 backendScript.sml:522: the overload bvl_to_bvi_compile_prog,
+   which the port expands *)
+(* HOL4 backendScript.sml:523: the overload bvl_to_bvi_compile_inc,
+   which the port expands *)
+(* HOL4 backendScript.sml:524: the overload bvl_to_bvi_compile, which
+   the port expands *)
+(* HOL4 backendScript.sml:525: the overload bvi_to_data_compile,
+   which the port expands *)
+(* HOL4 backendScript.sml:526: the overload bvi_let_compile, which
+   the port expands *)
+(* HOL4 backendScript.sml:527: the overload bvl_const_compile, which
+   the port expands *)
+(* HOL4 backendScript.sml:528: the overload bvl_handle_compile, which
+   the port expands *)
+(* HOL4 backendScript.sml:529: the overload bvl_inline_compile_inc,
+   which the port expands *)
+(* HOL4 backendScript.sml:530: the overload bvl_to_bvi_compile_exps,
+   which the port expands *)
+(* HOL4 backendScript.sml:531: the overload flat_to_clos_inc_compile,
+   which the port expands *)
+(* HOL4 backendScript.sml:532: the overload stack_remove_prog_comp,
+   which the port expands *)
+(* HOL4 backendScript.sml:533: the overload stack_alloc_prog_comp,
+   which the port expands *)
+(* HOL4 backendScript.sml:534: the overload stack_names_prog_comp,
+   which the port expands *)
 
 let backend_progs_FIELDS = define_record "backend_progs"
   ["env_id","num#num";

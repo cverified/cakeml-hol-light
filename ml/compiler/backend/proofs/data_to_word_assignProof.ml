@@ -34,48 +34,20 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: (* for word_add_carry *)
    int_bitwise While *)
 
-(* HOL4 ML code, not ported:
-fun drule0 th =
-  first_assum(mp_tac o MATCH_MP (ONCE_REWRITE_RULE[GSYM AND_IMP_INTRO]
-    th))
-*)
+(* HOL4 data_to_word_assignProofScript.sml:28-29: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     lookup = sptree$lookup *)
+(* HOL4 data_to_word_assignProofScript.sml:38: the overload lookup,
+   which the port expands *)
 
-(* HOL4 ML code, not ported:
-val assign_def =
-  data_to_wordTheory.assign_def
-  |> REWRITE_RULE [arg1_def, arg2_def, arg3_def, arg4_def,
-    all_assign_defs];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:40-42: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val clean_tac = rpt var_eq_tac \\ rpt (qpat_x_assum `T` kall_tac);
-fun rpt_drule0 th = drule0 (th |> GEN_ALL) \\ rpt (disch_then drule0 \\
-  fs []);
-*)
+(* HOL4 data_to_word_assignProofScript.sml:44-45: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val state_rel_def = data_to_word_gcProofTheory.state_rel_def;
-val code_rel_def = data_to_word_gcProofTheory.code_rel_def;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:47-48: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val do_app = LIST_CONJ [do_app_def,do_app_aux_def,do_space_def,
-  data_spaceTheory.op_space_req_def,
-  dataLangTheory.op_space_reset_def,
-  do_stack_def,stack_consumed_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:50-53: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val eval_tac = fs [wordSemTheory.evaluate_def,
-  wordSemTheory.word_exp_def, wordSemTheory.set_var_def, set_var_def,
-  wordSemTheory.get_store_def,
-  wordSemTheory.get_var_def,
-  wordSemTheory.the_words_def, wordSemTheory.mem_load_def,
-  wordLangTheory.word_op_def, wordLangTheory.word_sh_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:55-60: ML code, not ported *)
 
 (* This list must list all auxiliary definitions used in assign_def *)
 
@@ -87,12 +59,8 @@ val eval_tac = fs [wordSemTheory.evaluate_def,
 
 (*TODO: move to backendProps *)
 
-(* HOL4 ML code, not ported:
-fun sort_tac n =
-  CONV_TAC(PATH_CONV(String.concat(List.tabulate(n,(K "lr"))))(REWR_CONV
-    set_byte_sort)) \\
-  simp[good_dimindex_def]
-*)
+(* HOL4 data_to_word_assignProofScript.sml:629-631: ML code, not
+   ported *)
 
 let is_env_def = cake_define
   `is_env st = (?n vs. st = Env n vs)`;;
@@ -101,53 +69,25 @@ let is_env_def = cake_define
 
 (* TODO: copypaste from costProps *)
 
-(* HOL4 ML code, not ported:
-val get_var_get_real_addr_lemma =
-    GEN_ALL(CONV_RULE(LAND_CONV(move_conj_left(
-                                   same_const``wordSem$get_var`` o #1 o
-                                   strip_comb o lhs)))
-                     get_real_addr_lemma)
-*)
+(* HOL4 data_to_word_assignProofScript.sml:1387-1391: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val assign_thm_goal =
-  ``state_rel c l1 l2 s (t:('a,'c,'ffi) wordSem$state) NONE locs ∧
-   (op_requires_names op ≠ (names_opt = NONE)) ∧
-   cut_state_opt names_opt s = SOME x ∧
-   get_vars args s.locals = SOME vals ∧
-   t.termdep > 1 ∧
-   do_app op vals x = Rval (v,s2) ==>
-   ?q r.
-     evaluate (FST (assign c n l dest op args names_opt),t) = (q,r) ∧
-     (q = SOME NotEnoughSpace ==>
-      r.ffi = t.ffi ∧ option_le r.stack_max s2.stack_max ∧
-      (c.gc_kind <> None ==> ~s2.safe_for_space)) ∧
-     (q <> SOME NotEnoughSpace ==>
-      state_rel c l1 l2 (set_var dest v s2) r NONE locs ∧ q = NONE)``;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:1765-1778: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_Assign =
-  SIMP_CONV(srw_ss())[wordSemTheory.evaluate_def]``evaluate (Assign _ _,
-    _)``
-*)
+(* HOL4 data_to_word_assignProofScript.sml:1780-1781: ML code, not
+   ported *)
 
 let w2w_upper_def = cake_define
   `w2w_upper (w:word64) =
      (if dimindex (:'a) = 32 then ((63 >< 32) w):'a word else w2w
        w)`;;
 
-(* HOL4 ML code, not ported:
-fun cases_on_op q = Cases_on q >|
-  map (MAP_EVERY Cases_on) [[], [], [], [], [`b`], [`g`], [`m`], [],
-    [`t`]];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:2146-2147: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val mk_wf_inter = MATCH_MP wf_mk_id (SPEC_ALL wf_inter) |> GEN_ALL;
-val state_rel_cut_env' =
-  state_rel_cut_env |> REWRITE_RULE [GSYM AND_IMP_INTRO];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:2210-2212: ML code, not
+   ported *)
 
 (* cut_env is idempotent: cutting the same names twice gives the same
    result. *)
@@ -181,16 +121,10 @@ val state_rel_cut_env' =
 let STOP_def = cake_define
   `data_to_word_assignProof_STOP x = x`;;
 hol4_overload "STOP" "data_to_word_assignProof_STOP";;
-(* HOL4 ML code, not ported:
-val evaluate_AppendMainLoop_code_alt = evaluate_AppendMainLoop_code_alt
-  |> SPEC_ALL |> Q.INST [`k`|->`0`]
-  |> SIMP_RULE std_ss []
-  |> GEN_ALL;
-*)
-(* HOL4 ML code, not ported:
-val evaluate_AppendLenLoop_code = evaluate_AppendLenLoop_code
-  |> Q.SPEC `0` |> SIMP_RULE std_ss [] |> Q.GEN `refs`;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:5278-5281: ML code, not
+   ported *)
+(* HOL4 data_to_word_assignProofScript.sml:5370-5371: ML code, not
+   ported *)
 
 (* TODO: declared with [simp] further down *)
 
@@ -260,30 +194,20 @@ val evaluate_AppendLenLoop_code = evaluate_AppendLenLoop_code
 (* Binary (two-argument) instance of AllocVar_thm_nary, used by
    assign_RefArray. *)
 
-(* HOL4 ML code, not ported:
-val eval_Call_Add = Q.SPEC `0` eval_Call_Arith
-  |> SIMP_RULE std_ss [int_op_def,Arith_location_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:9692-9693: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val eval_Call_Sub = Q.SPEC `1` eval_Call_Arith
-  |> SIMP_RULE std_ss [int_op_def,Arith_location_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:9695-9696: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val eval_Call_Mul = Q.SPEC `4` eval_Call_Arith
-  |> SIMP_RULE std_ss [int_op_def,Arith_location_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:9698-9699: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val eval_Call_Div = Q.SPEC `5` eval_Call_Arith
-  |> SIMP_RULE std_ss [int_op_def,Arith_location_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:9701-9702: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val eval_Call_Mod = Q.SPEC `6` eval_Call_Arith
-  |> SIMP_RULE std_ss [int_op_def,Arith_location_def];
-*)
+(* HOL4 data_to_word_assignProofScript.sml:9704-9705: ML code, not
+   ported *)
 
 (* TODO: move? *)
 
@@ -295,49 +219,23 @@ let sane_locals_size_def = cake_define
                          t = sptree_lookup Equal1_location
                            (wordSem_state_stack_size t))`;;
 
-(* HOL4 ML code, not ported:
-val assign_WordOp64 =
-  ``assign c n l dest (WordOp (WordOpw W64 opw)) [e1; e2] names_opt``
-  |> SIMP_CONV (srw_ss()) [assign_def]
-*)
+(* HOL4 data_to_word_assignProofScript.sml:13152-13154: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val assign_WordShift64 =
-  ``assign c n l dest (WordOp (WordShift W64 sh n)) [e1] names_opt``
-  |> SIMP_CONV (srw_ss()) [assign_def]
-*)
+(* HOL4 data_to_word_assignProofScript.sml:13734-13736: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val assign_FP_cmp = SIMP_CONV (srw_ss()) [assign_def]
-  ``((assign (c:data_to_word$config) (secn:num) (l:num) (dest:num)
-    (WordOp (FP_cmp fpc))
-       (args:num list) (names:num_set option)):'a wordLang$prog #
-         num)``;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:13990-13992: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val assign_FP_top = SIMP_CONV (srw_ss()) [assign_def]
-  ``((assign (c:data_to_word$config) (secn:num) (l:num) (dest:num)
-    (WordOp (FP_top fpt))
-       (args:num list) (names:num_set option)):'a wordLang$prog #
-         num)``;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:13994-13996: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val assign_FP_bop = SIMP_CONV (srw_ss()) [assign_def]
-  ``((assign (c:data_to_word$config) (secn:num) (l:num) (dest:num)
-    (WordOp (FP_bop fpb))
-       (args:num list) (names:num_set option)):'a wordLang$prog #
-         num)``;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:13998-14000: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val assign_FP_uop = SIMP_CONV (srw_ss()) [assign_def]
-  ``((assign (c:data_to_word$config) (secn:num) (l:num) (dest:num)
-    (WordOp (FP_uop fpu))
-       (args:num list) (names:num_set option)):'a wordLang$prog #
-         num)``;
-*)
+(* HOL4 data_to_word_assignProofScript.sml:14002-14004: ML code, not
+   ported *)
 
 let memcopy_def = cake_define
   `memcopy k a1 a2 m dm =
@@ -347,6 +245,4 @@ let memcopy_def = cake_define
            ((a2 =+ m a1) m) dm else NONE)`;;
 
 
-(* HOL4 ML code, not ported:
-fun foldr1 f (x::xs) = foldr f x xs | foldr1 f [] = fail();
-*)
+(* HOL4 data_to_word_assignProofScript.sml:16926: ML code, not ported *)

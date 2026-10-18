@@ -76,9 +76,7 @@ hol4_overload "None" "backend_common_None";;
 
 (* The code below replaces "Cons" in hol output with the chosen symbol
    *)
-(* HOL4 ML code, not ported:
-val _ = set_fixity "▷" (Infixl 480);
-*)
+(* HOL4 backend_commonScript.sml:83: ML code, not ported *)
 
 (* An "orphan" expression is one that originates directly from a
    declaration.
@@ -104,9 +102,7 @@ let mk_cons_def = cake_define
      (match tr with backend_common_None -> backend_common_None |
        _1 -> backend_common_Cons tr n)`;;
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity "§" (Infixl 480);
-*)
+(* HOL4 backend_commonScript.sml:106: ML code, not ported *)
 
 (* Create new Cons trace, unless any of the original traces are `None`,
 * indicating traces are turned off. *)

@@ -25,8 +25,8 @@ needs "semantics/typeSystem.ml";;
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw [] >> induct_on `ts` >> rw
-   [infer_tTheory.infer_t_size_def] >> res_tac >> decide_tac *)
+(* HOL4 envRelScript.sml:16-23: the tactic that proves the
+   termination *)
 let convert_t_def = cake_define_list_try (fun () ->
   `MEASURE infer_t_size`)
   [`convert_t (Infer_Tvar_db n) = Tvar_db n`;
@@ -36,25 +36,9 @@ let convert_env_def = cake_define
   `convert_env s env = MAP (\(x,t). (x,convert_t (t_walkstar s t)))
   env`;;
 
-(*
-Definition convert_decls_def:
-  convert_decls idecls =
-  <| defined_mods := set idecls.inf_defined_mods;
-     defined_types :=  set idecls.inf_defined_types;
-     defined_exns := set idecls.inf_defined_exns|>
-End
+(* HOL4 envRelScript.sml:29-42: code that the source has in a comment *)
 
-Theorem convert_append_decls:
- !decls1 decls2. convert_decls (append_decls decls1 decls2) =
-   union_decls (convert_decls decls1) (convert_decls decls2)
-Proof
- rw [convert_decls_def, append_decls_def, union_decls_def]
-QED
-*)
-
-(* HOL4 ML code, not ported:
-val infer_t_induction = infer_tTheory.infer_t_induction;
-*)
+(* HOL4 envRelScript.sml:74: ML code, not ported *)
 
 (* ---------- relating inference and type system environments ----------
    *)

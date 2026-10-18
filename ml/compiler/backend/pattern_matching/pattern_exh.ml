@@ -277,14 +277,8 @@ let mats_len_def = cake_define_list
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw
-   [mats_weight_def,mats_len_def,arithmeticTheory.MAX_DEF] >-
-   (imp_res_tac mats_weight_spec_mats \\ fs []) \\ ‘mat_weight
-   (default_mat (r::rows)) <= mat_weight (r::rows)’ by fs
-   [mat_weight_default_mat] \\ Cases_on ‘mat_weight (default_mat
-   (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
-   (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
-   fs [] *)
+(* HOL4 pattern_exhScript.sml:377-389: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let exh_matrix_def = cake_define_list_try_tac (fun () ->
@@ -327,14 +321,8 @@ let exh_rows_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw
-   [mats_weight_def,mats_len_def,arithmeticTheory.MAX_DEF] THEN1
-   (imp_res_tac mats_weight_spec_mats \\ fs []) \\ ‘mat_weight
-   (default_mat (r::rows)) <= mat_weight (r::rows)’ by fs
-   [mat_weight_default_mat] \\ Cases_on ‘mat_weight (default_mat
-   (r::rows)) = mat_weight (r::rows)’ \\ fs [] \\ ‘r <> []’ by
-   (Cases_on ‘r’ \\ fs []) \\ imp_res_tac mat_len_default_mat_less \\
-   fs [] *)
+(* HOL4 pattern_exhScript.sml:420-432: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let exh_steps_def = cake_define_list_try_tac (fun () ->
@@ -355,8 +343,8 @@ let exh_steps_def = cake_define_list_try_tac (fun () ->
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [exh_steps_def,exh_steps_list_append] \\
-   simp [Once exh_steps_def] *)
+(* HOL4 pattern_exhScript.sml:448-452: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let exh_all_def = cake_define_list_try_tac (fun () ->

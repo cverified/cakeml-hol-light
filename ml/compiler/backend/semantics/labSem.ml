@@ -117,8 +117,8 @@ let upd_mem_def = cake_define
   `labSem_upd_mem a w s = mem_fupd (K ((a =+ w) (mem s))) s`;;
 hol4_overload "upd_mem" "labSem_upd_mem";;
 
-(* HOL4 overload (expanded in the port):
-     read_reg = λr s. s.regs r *)
+(* HOL4 labSemScript.sml:77: the overload read_reg, which the port
+   expands *)
 
 let assert_def = cake_define
   `labSem_assert b s = failed_fupd (K (~b \/ failed s)) s`;;
@@ -482,12 +482,8 @@ let share_mem_op_def = cake_define_list
    `share_mem_op (asm_Store32:memop) r ad
   (s:('a,'c,'ffi)labSem_state) = share_mem_store r ad s 4`];;
 
-(* HOL4 termination: \\ fs [inc_pc_def] \\ rw [] \\ IMP_RES_TAC
-   asm_fetch_IMP \\
-   fs[asm_inst_consts,upd_reg_def,upd_pc_def,dec_clock_def,inc_pc_def]
-   \\ Cases_on `m` \\
-   fs[share_mem_op_def,share_mem_load_def,share_mem_store_def] \\
-   gvs[AllCaseEqs(),inc_pc_def,dec_clock_def] *)
+(* HOL4 labSemScript.sml:610-617: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_try_tac (fun () ->

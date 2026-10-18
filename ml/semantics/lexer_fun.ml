@@ -74,9 +74,8 @@ let read_char_as_3digits_def = cake_define
          NONE -> NONE | SOME ci ->
            (if ci < 256 then SOME (CHR ci,rest) else NONE))`;;
 
-(* HOL4 termination: THEN REPEAT STRIP_TAC THEN Cases_on `str` THEN
-   FULL_SIMP_TAC (srw_ss()) [] THEN imp_res_tac
-   read_char_as_3digits_reduces >> gs[] *)
+(* HOL4 lexer_funScript.sml:122-126: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let read_string_def = cake_define_try_tac (fun () ->
@@ -154,8 +153,8 @@ let read_Ident_ret_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ imp_res_tac (GSYM read_while_thm) \\
-   Cases_on ‘str’ \\ gvs [] *)
+(* HOL4 lexer_funScript.sml:247-251: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let read_Ident_def = cake_define_list_try_tac (fun () ->
@@ -182,9 +181,8 @@ let read_Ident_def = cake_define_list_try_tac (fun () ->
    eof *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ imp_res_tac (GSYM read_while_thm) \\
-   imp_res_tac (GSYM read_string_thm) \\ Cases_on ‘str’ \\ gvs [] \\
-   imp_res_tac skip_comment_thm \\ gvs [] *)
+(* HOL4 lexer_funScript.sml:314-320: the tactic that proves the
+   termination *)
 let next_sym_def = cake_define_list_try (fun () ->
   `MEASURE (LENGTH o FST)`)
   [`next_sym "" _5 = NONE`;
@@ -246,10 +244,7 @@ let next_sym_def = cake_define_list_try (fun () ->
 
 (* EVAL “next_sym "  Foo.Bar.<  " (POSN 0 0)” *)
 
-(* HOL4 ML code, not ported:
-val listeq = CaseEq "list"
-val optioneq = CaseEq "option"
-*)
+(* HOL4 lexer_funScript.sml:350-351: ML code, not ported *)
 
 let init_loc_def = cake_define
   `init_loc = POSN 0 0`;;
@@ -350,7 +345,8 @@ let next_token_def = cake_define
 
 (* top-level lexer specification *)
 
-(* HOL4 termination: >> rw[] >> imp_res_tac next_token_LESS *)
+(* HOL4 lexer_funScript.sml:516-518: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lexer_fun_aux_def = cake_define_try_tac (fun () ->
@@ -394,10 +390,8 @@ let toplevel_semi_dex_def = cake_define_list
           - 1) t else if h = tokens_RparT then toplevel_semi_dex (i
           + 1) (d - 1) t else toplevel_semi_dex (i + 1) d t)`];;
 
-(* HOL4 termination: >> rw [] >> cases_on `toks` >> fs
-   [toplevel_semi_dex_def] >> cases_on `h` >> fs [] >> metis_tac
-   [toplevel_semi_dex_non0, DECIDE ``0 < 1:num``, DECIDE ``∀x:num. 0
-   < x + 1``] *)
+(* HOL4 lexer_funScript.sml:570-578: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let split_top_level_semi_def = cake_define_try_tac (fun () ->

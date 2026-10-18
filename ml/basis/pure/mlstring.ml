@@ -16,10 +16,7 @@ needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 (* HOL4 ancestors outside the port: toto *)
 
-(* HOL4 ML code, not ported:
-val cpn_distinct = TypeBase.distinct_of ``:ordering``
-val cpn_nchotomy = TypeBase.nchotomy_of ``:ordering``
-*)
+(* HOL4 mlstringScript.sml:13-14: ML code, not ported *)
 
 (* Defines strings as a separate type from char list. This theory should
    be
@@ -28,15 +25,13 @@ val cpn_nchotomy = TypeBase.nchotomy_of ``:ordering``
 
 let mlstring_INDUCT,mlstring_RECURSION = define_datatype
   "mlstring = implode (string)";;
-(* HOL4 ML code, not ported:
-val _ = add_strliteral_form{inj=“implode”, ldelim = "«"};
-*)
+(* HOL4 mlstringScript.sml:22: ML code, not ported *)
 
 (* backwards compatibility: strlit used to be the mlstring constructor
    and
    implode a simple wrapper. *)
-(* HOL4 overload (expanded in the port):
-     strlit = implode *)
+(* HOL4 mlstringScript.sml:26: the overload strlit, which the port
+   expands *)
 
 let strlen_def = cake_define
   `strlen (implode s) = LENGTH s`;;
@@ -98,9 +93,7 @@ let splitl_aux_def = cake_define_wf
          splitl_aux P s (i + 1) else (mlstring_extract s 0 (SOME
            i),mlstring_extract s i NONE))`;;
 
-(* HOL4 ML code, not ported:
-val splitl_aux_ind = theorem"splitl_aux_ind";
-*)
+(* HOL4 mlstringScript.sml:316: ML code, not ported *)
 
 let splitl_def = cake_define
   `splitl P s = splitl_aux P s 0`;;
@@ -116,32 +109,18 @@ let tokens_aux_def = cake_define_list
           (tokens_aux f s [] (n + 1) len) else tokens_aux f s
           (strsub s n :: (h :: t)) (n + 1) len)`];;
 
-(* HOL4 ML code, not ported:
-val tokens_aux_ind = theorem"tokens_aux_ind";
-*)
+(* HOL4 mlstringScript.sml:384: ML code, not ported *)
 
 let tokens_def = cake_define
   `tokens f s = tokens_aux f s [] 0 (strlen s)`;;
-(*
-  >> TRY (
-  recogniser (e.g., rename1_tac or qmatch_goalsub_rename_tac ...) >>
-  ... >> NO_TAC)
-  >> TRY (
-  ... >> NO_TAC)
-  >> TRY (
-  ... >> NO_TAC)
-*)
+(* HOL4 mlstringScript.sml:462-470: code that the source has in a
+   comment *)
 
-(*
-Theorem TOKENS_eq_tokens_sym
-  `!P ls. tokens P ls = MAP implode (TOKENS P (explode ls))`
-  (rw[]
-  \\ Q.ISPEC_THEN`explode`match_mp_tac INJ_MAP_EQ
-  \\ simp[MAP_MAP_o,INJ_DEF,explode_11,o_DEF,explode_implode
-    ,TOKENS_eq_tokens]
-*)
+(* HOL4 mlstringScript.sml:479-485: code that the source has in a
+   comment *)
 
-(* HOL4 termination: >>rw[] *)
+(* HOL4 mlstringScript.sml:520-522: the tactic that proves the
+   termination *)
 let tokens_alt_aux_def = cake_define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
   `(tokens_alt_aux f s i j n =
@@ -164,7 +143,8 @@ let fields_aux_def = cake_define_list
 let fields_def = cake_define
   `fields f s = fields_aux f s [] 0 (strlen s)`;;
 
-(* HOL4 termination: >>rw[] *)
+(* HOL4 mlstringScript.sml:677-679: the tactic that proves the
+   termination *)
 let fields_alt_aux_def = cake_define_wf
   `MEASURE (\(f,s,i,j,n). n - j)`
   `(fields_alt_aux f s i j n =
@@ -188,19 +168,8 @@ let isStringThere_aux_def = cake_define_list
           isStringThere_aux s1 s2 (s1i + 1) (s2i + 1) len else F)`];;
 
 
-(*
-
-val isStringThere_thm = Q.prove (
-  `!s1 s2 s1i s2i len. (s2i + len <= strlen s2) /\ (s1i + len = strlen
-    s1) /\
-  (strlen s1 <= strlen s2) /\ (s1i <= s2i) /\ (isStringThere_aux s1 s2 0
-    s2i (strlen s1)) ==>
-  (SEG len s2i (explode s2) = TAKE len (explode s1))`
-  Cases_on `s1` \\ Cases_on `s2` \\
-  rw [strlen_def, explode_thm, SEG, SEG_TAKE_DROP] \\
-  Cases_on `len` \\ rw [SEG] \\ `s2i < STRLEN s'` by DECIDE_TAC \\
-);
-*)
+(* HOL4 mlstringScript.sml:771-781: code that the source has in a
+   comment *)
 
 let isPrefix_def = cake_define
   `isPrefix s1 s2 =
@@ -279,11 +248,9 @@ let fast_ge_def = cake_define
 
 (* Properties of string orderings *)
 
-(* HOL4 ML code, not ported:
-val flip_ord_def = ternaryComparisonsTheory.invert_comparison_def
-*)
-(* HOL4 overload (expanded in the port):
-     flip_ord = invert_comparison *)
+(* HOL4 mlstringScript.sml:991: ML code, not ported *)
+(* HOL4 mlstringScript.sml:992: the overload flip_ord, which the port
+   expands *)
 
 let collate_aux_def = cake_define_list
   [`mlstring_collate_aux f (s1:mlstring) s2 ord n 0 = ord`;
@@ -329,8 +296,8 @@ let sum_sizes_def = cake_define_list
   [`sum_sizes [] k = k`;
    `sum_sizes (l :: ls) k = sum_sizes ls (strlen l + k)`];;
 
-(* HOL4 overload (expanded in the port):
-     size_limit = 2048:num *)
+(* HOL4 mlstringScript.sml:1502: the overload size_limit, which the
+   port expands *)
 
 let make_app_list_ann_def = cake_define
   `make_app_list_ann input =

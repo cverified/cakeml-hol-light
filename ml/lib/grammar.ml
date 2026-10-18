@@ -69,5 +69,5 @@ let derive_def = cake_define
                    sym IN FDOM (grammar_rules G) /\ rhs IN FAPPLY
                      (grammar_rules G) sym)`;;
 
-(* HOL4 overload (expanded in the port):
-     derives = λG. RTC (derive G) *)
+(* HOL4 grammarScript.sml:157: the overload derives, which the port
+   expands *)

@@ -19,9 +19,8 @@ needs "semantics/cmlPtreeConversion.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/typeSystem.ml";;
 
-(* HOL4 overload (expanded in the port):
-     cmlpegexec = λn t. peg_exec cmlPEG (pnt n) t [] NONE [] done failed
-       *)
+(* HOL4 cmlParseScript.sml:13: the overload cmlpegexec, which the
+   port expands *)
 
 let destResult_def = cake_define
   `cmlParse_destResult x1 =
@@ -34,9 +33,8 @@ let destResult_def = cake_define
         "Something catastrophic happened"`;;
 hol4_overload "destResult" "cmlParse_destResult";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     M = (token # locs) list -> ((token # locs) list, α, string)
-       pegresult *)
+(* HOL4 cmlParseScript.sml:23: the type abbreviation M, which the
+   port expands *)
 let pegresult_bind_def = cake_define
   `(pegresult_bind (f:(tokens_token#locs) list->((tokens_token#locs)
   list,'a,string)pegresult) (g:'a->(tokens_token#locs)

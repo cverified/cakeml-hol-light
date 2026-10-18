@@ -13,8 +13,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 overload (expanded in the port):
-     find_name = tlookup *)
+(* HOL4 stack_namesScript.sml:14: the overload find_name, which the
+   port expands *)
 
 let ri_find_name_def = cake_define_list
   [`ri_find_name f (Reg r) = Reg (tlookup f r)`;

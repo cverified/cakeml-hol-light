@@ -14,31 +14,9 @@ needs "compiler/backend/semantics/bviSem.ml";;
 needs "compiler/backend/semantics/bvlProps.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 ML code, not ported:
-val list_thms = { nchotomy = list_nchotomy, case_def = list_case_def };
-val option_thms = { nchotomy = option_nchotomy, case_def =
-  option_case_def };
-val result_thms = { nchotomy = semanticPrimitivesTheory.result_nchotomy,
-                    case_def = semanticPrimitivesTheory.result_case_def
-                      };
-val ffi_result_thms = { nchotomy = ffiTheory.ffi_result_nchotomy,
-                        case_def = ffiTheory.ffi_result_case_def };
-*)
+(* HOL4 bviPropsScript.sml:103-108: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_LENGTH = Q.prove(
-  `!xs s env. (\(xs,s,env).
-      (case evaluate (xs,s,env) of (Rval res,s1) => (LENGTH xs = LENGTH
-        res)
-            | _ => T))
-      (xs,s,env)`,
-  HO_MATCH_MP_TAC evaluate_ind \\ REPEAT STRIP_TAC
-  \\ FULL_SIMP_TAC (srw_ss()) [evaluate_def,case_elim_thms]
-  \\ rw[] \\ fs[]
-  \\ every_case_tac \\ fs[]
-  \\ first_x_assum drule \\ rw [])
-  |> SIMP_RULE std_ss [];
-*)
+(* HOL4 bviPropsScript.sml:127-137: ML code, not ported *)
 
 let inc_clock_def = cake_define
   `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = state_clock_fupd
@@ -48,9 +26,8 @@ hol4_overload "inc_clock" "bviProps_inc_clock";;
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp[bviTheory.exp_size_def] \\ rpt conj_tac
-   \\ rpt gen_tac \\ Induct_on`es` \\ rw[bviTheory.exp_size_def] \\
-   simp[] \\ res_tac \\ simp[] *)
+(* HOL4 bviPropsScript.sml:711-718: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let get_code_labels_def = cake_define_list_try_tac (fun () ->

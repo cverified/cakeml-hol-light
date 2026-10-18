@@ -225,30 +225,8 @@ let good_ctMap_def = cake_define
      ctMap_has_exns ctMap /\
      ctMap_has_lists ctMap`;;
 
-    (*
-(* The types and exceptions that are missing are all declared in
-   modules. *)
-Definition weak_decls_only_mods_def:
-  weak_decls_only_mods d1 d2 ⇔
-    (!tn. Short tn ∈ d1.defined_types ⇒ Short tn ∈ d2.defined_types) ∧
-    (!cn. Short cn ∈ d1.defined_exns ⇒ Short cn ∈ d2.defined_exns)
-End
-
-(* The run-time declared constructors and exceptions are all either
-   declared in
- * the type system, or from modules that have been declared *)
-Definition consistent_decls_def:
-  consistent_decls tes d ⇔
-    (!(te :: tes).
-       case te of
-       | TypeExn cid =>
-           cid ∈ d.defined_exns ∨
-           (?mn cn. cid = Long mn (Short cn) ∧ [mn] ∈ d.defined_mods)
-       | TypeId tid =>
-           tid ∈ d.defined_types ∨
-           (?mn tn. tid = Long mn (Short tn) ∧([mn] ∈ d.defined_mods)))
-End
-           *)
+(* HOL4 typeSoundInvariantsScript.sml:206-227: code that the source
+   has in a comment *)
 
 let consistent_ctMap_def = cake_define
   `consistent_ctMap st type_ids ctMap <=>
@@ -259,12 +237,8 @@ let consistent_ctMap_def = cake_define
        (ExnStamp id' IN FDOM ctMap ==> id' <
          semanticPrimitives_state_next_exn_stamp st))`;;
 
-       (*
-Definition decls_ok_def:
-  decls_ok d ⇔ [] ∉ d.defined_mods ∧ decls_to_mods d ⊆ {[]} ∪
-    d.defined_mods
-End
-  *)
+(* HOL4 typeSoundInvariantsScript.sml:237-241: code that the source
+   has in a comment *)
 
 let type_all_env_def = cake_define
   `type_all_env ctMap tenvS env tenv <=>

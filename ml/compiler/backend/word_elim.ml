@@ -47,9 +47,7 @@ let find_word_ref_def = cake_define
         | (Loop names body exit_names) -> find_word_ref body
         | _14 -> LN`;;
 
-(* HOL4 ML code, not ported:
-val find_word_ref_ind = theorem "find_word_ref_ind";
-*)
+(* HOL4 word_elimScript.sml:41: ML code, not ported *)
 
 let analyse_word_code_def = cake_define_list
   [`analyse_word_code [] = (LN:(1 spt) spt)`;

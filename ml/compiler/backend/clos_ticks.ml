@@ -100,9 +100,7 @@ let remove_ticks_sing_def = cake_define_list
 hol4_overload "remove_ticks_list" "clos_ticks_remove_ticks_list";;
 hol4_overload "remove_ticks_sing" "clos_ticks_remove_ticks_sing";;
 
-(* HOL4 ML code, not ported:
-val remove_ticks_ind = theorem "remove_ticks_ind";
-*)
+(* HOL4 clos_ticksScript.sml:77: ML code, not ported *)
 
 let compile_inc_def = cake_define
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;

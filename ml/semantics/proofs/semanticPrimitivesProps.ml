@@ -28,33 +28,11 @@ let do_shift_def = cake_define
           sh w n))
         | (_1,_2) -> NONE`;;
 
-(*
-Definition do_word_op_def[simp]:
-  (do_word_op op W8 (Word8 w1) (Word8 w2) = SOME (Word8 (opw_lookup op
-    w1 w2))) ∧
-  (do_word_op op W64 (Word64 w1) (Word64 w2) = SOME (Word64 (opw_lookup
-    op w1 w2))) ∧
-  (do_word_op op _ _ _ = NONE)
-End
+(* HOL4 semanticPrimitivesPropsScript.sml:58-75: code that the source
+   has in a comment *)
 
-Definition do_word_to_int_def[simp]:
-  (do_word_to_int W8 (Word8 w) = SOME(int_of_num(w2n w))) ∧
-  (do_word_to_int W64 (Word64 w) = SOME(int_of_num(w2n w))) ∧
-  (do_word_to_int _ _ = NONE)
-End
-
-Definition do_word_from_int_def[simp]:
-  (do_word_from_int W8 i = Word8 (i2w i)) ∧
-  (do_word_from_int W64 i = Word64 (i2w i))
-End
-*)
-
-(* HOL4 ML code, not ported:
-val eqs = LIST_CONJ (map TypeBase.case_eq_of
-  [``:op``, ``:'a list``, ``:'a option``, ``:v``, ``:'a store_v``,
-    ``:lit``,
-   ``:eq_result``, ``:word_size``])
-*)
+(* HOL4 semanticPrimitivesPropsScript.sml:194-196: ML code, not
+   ported *)
 
 (* Alternate definition for build_rec_env *)
 
@@ -190,8 +168,8 @@ let FV_def = cake_define_list_cheat CHEAT_TAC
    `FV_defs ((_27,x,e) :: defs) =
          (FV e DIFF {Short x}) UNION FV_defs defs`];;
 
-(* HOL4 overload (expanded in the port):
-     SFV = λe. {x | Short x ∈ FV e} *)
+(* HOL4 semanticPrimitivesPropsScript.sml:663: the overload SFV,
+   which the port expands *)
 
 let FV_dec_def = cake_define_list
   [`FV_dec (Dlet locs p e) = FV (ast_Mat e [(p,ast_Lit ARB)])`;

@@ -73,9 +73,7 @@ let let_op_def = cake_define_list_cheat CHEAT_TAC
   [closLang_Fn t loc_opt vs num_args (HD (clos_letop_let_op [x1]))]`];;
 hol4_overload "let_op" "clos_letop_let_op";;
 
-(* HOL4 ML code, not ported:
-val let_op_ind = theorem "let_op_ind";
-*)
+(* HOL4 clos_letopScript.sml:57: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with

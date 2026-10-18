@@ -147,9 +147,8 @@ let do_eq_def = cake_define_list_cheat CHEAT_TAC
 hol4_overload "do_eq" "bvlSem_do_eq";;
 hol4_overload "do_eq_list" "bvlSem_do_eq_list";;
 
-(* HOL4 overload (expanded in the port):
-     Error = (Rerr(Rabort Rtype_error)):(bvlSem$v#('c,'ffi)
-       bvlSem$state, bvlSem$v)result *)
+(* HOL4 bvlSemScript.sml:116: the overload Error, which the port
+   expands *)
 
 let v_to_bytes_def = cake_define
   `bvlSem_v_to_bytes lv = some (\(ns:word8 list).
@@ -162,9 +161,7 @@ let v_to_words_def = cake_define
   ns))`;;
 hol4_overload "v_to_words" "bvlSem_v_to_words";;
 
-(* HOL4 ML code, not ported:
-val s = ``(s:('c,'ffi) bvlSem$state)``
-*)
+(* HOL4 bvlSemScript.sml:127: ML code, not ported *)
 
 let do_install_def = cake_define
   `bvlSem_do_install vs (s:('c,'ffi)bvlSem_state) =
@@ -753,9 +750,8 @@ if concl fix_clock_IMP <> `T` then
   cake_term_facts := fix_clock_IMP :: (!cake_term_facts);;
 
 let _ = size_thms "bvl_exp";;
-(* HOL4 termination: \\ rpt strip_tac \\ simp[dec_clock_def] \\
-   imp_res_tac fix_clock_IMP \\ FULL_SIMP_TAC (srw_ss()) [] \\
-   decide_tac *)
+(* HOL4 bvlSemScript.sml:660-668: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_try_tac (fun () ->
@@ -822,9 +818,7 @@ let evaluate_def = cake_define_try_tac (fun () ->
                      1) s))) | res -> res))`;;
 hol4_overload "evaluate" "bvlSem_evaluate";;
 
-(* HOL4 ML code, not ported:
-val evaluate_ind = theorem"evaluate_ind";
-*)
+(* HOL4 bvlSemScript.sml:670: ML code, not ported *)
 
 (* We prove that the clock never increases. *)
 
@@ -860,7 +854,4 @@ hol4_overload "semantics" "bvlSem_semantics";;
 
 (* clean up *)
 
-(* HOL4 ML code, not ported:
-val _ = map delete_binding ["evaluate_AUX_def",
-  "evaluate_primitive_def"];
-*)
+(* HOL4 bvlSemScript.sml:774: ML code, not ported *)

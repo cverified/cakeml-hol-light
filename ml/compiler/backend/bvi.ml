@@ -62,13 +62,11 @@ hol4_overload "Op" "bvi_Op";;
 hol4_overload "LetCall" "bvi_LetCall";;
 hol4_overload "Return" "bvi_Return";;
 
-(* HOL4 overload (expanded in the port):
-     mk_unit = bvi$Op (BlockOp (Cons 0)) [] *)
+(* HOL4 bviScript.sml:59: the overload mk_unit, which the port
+   expands *)
 
-(* HOL4 overload (expanded in the port):
-     mk_elem_at = λb i. bvi$Op (BlockOp (ElemAt i)) [b] *)
+(* HOL4 bviScript.sml:61: the overload mk_elem_at, which the port
+   expands *)
 
-(* HOL4 overload (expanded in the port):
-     TailCall = λret_count ticks dest args.
-                       LetCall ret_count ticks dest args (Return
-                         (GENLIST Var ret_count)) *)
+(* HOL4 bviScript.sml:63-64: the overload TailCall, which the port
+   expands *)

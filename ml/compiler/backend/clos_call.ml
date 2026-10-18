@@ -73,9 +73,7 @@ let free_def = cake_define_list_cheat CHEAT_TAC
            ([closLang_Call t ticks dest c1],l1))`];;
 hol4_overload "free" "clos_call_free";;
 
-(* HOL4 ML code, not ported:
-val free_ind = theorem "free_ind";
-*)
+(* HOL4 clos_callScript.sml:63: ML code, not ported *)
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -130,17 +128,7 @@ let free_sing_def = cake_define_list_cheat CHEAT_TAC
          let (c2,l2) = free_list xs in
            (c1 :: c2,mk_Union l1 l2))`];;
 
-(* HOL4 ML code, not ported:
-val free_LENGTH_LEMMA = Q.prove(
-  `!xs. (case free xs of (ys,s1) => (LENGTH xs = LENGTH ys))`,
-  recInduct free_ind \\ REPEAT STRIP_TAC
-  \\ FULL_SIMP_TAC (srw_ss()) [free_def]
-  \\ SRW_TAC [] [] \\ SRW_TAC [] []
-  \\ REPEAT BasicProvers.FULL_CASE_TAC \\ FULL_SIMP_TAC (srw_ss()) []
-  \\ REV_FULL_SIMP_TAC std_ss [] \\ FULL_SIMP_TAC (srw_ss()) []
-  \\ SRW_TAC [] [] \\ DECIDE_TAC)
-  |> SIMP_RULE std_ss [] |> SPEC_ALL;
-*)
+(* HOL4 clos_callScript.sml:142-150: ML code, not ported *)
 let closed_def = cake_define
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (clos_call_free
   [x])))`;;
@@ -264,8 +252,8 @@ let calls_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ fs [GSYM
-   NOT_LESS,list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 clos_callScript.sml:388-393: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let calls_sing_def = cake_define_list_try_tac (fun () ->
@@ -365,23 +353,8 @@ let cond_call_compile_inc_def = cake_define
   `cond_call_compile_inc do_it = (if do_it then clos_call_compile_inc
   else CURRY I)`;;
 
-(* HOL4 ML code, not ported:
-val selftest = let
-*)
+(* HOL4 clos_callScript.sml:464: ML code, not ported *)
   (* example code *)
-(* HOL4 ML code, not ported:
-  val f = ``Fn «» (SOME 800) NONE 1 (Op None (IntOp Add) [Var None 0; Op
-    None (IntOp (Const 1)) []])``
-  val g = ``Fn «» (SOME 900) NONE 1 (App None (SOME 800) (Var None 1)
-    [Var None 0])``
-  val f_g_5 = ``App None (SOME 800) (Var None 1) [App None (SOME 900)
-    (Var None 0) [Op None (IntOp (Const 5)) []]]``
-  val let_let = ``[Let None [^f] (Let None [^g] ^f_g_5)]``
-*)
+(* HOL4 clos_callScript.sml:466-469: ML code, not ported *)
   (* compiler evaluation *)
-(* HOL4 ML code, not ported:
-  val tm = EVAL ``compile T ^let_let`` |> concl
-  val n = tm |> find_terms (aconv ``closLang$Call``) |> length
-  val _ = (n = 5) orelse failwith "clos_call implementation broken"
-  in tm end
-*)
+(* HOL4 clos_callScript.sml:471-474: ML code, not ported *)

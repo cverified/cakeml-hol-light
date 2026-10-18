@@ -150,82 +150,21 @@ let extend_bij_def = cake_define
      n + g v else
      f v)`;;
 
-(*
-Definition extend_bij_def:
-  extend_bij (f:type_ident->type_ident) g tids ids n v =
-  if v ∈ tids then
-    f v
-  else if v ∈ ids then
-    n + g v
-  else
-    v
-End
-*)
+(* HOL4 type_dCanonScript.sml:334-344: code that the source has in a
+   comment *)
 
 (* needs monotonicity of set_tids_tenv *)
 
-(*
-Theorem good_remap_extend_bij[local]:
-  good_remap f ∧ prim_tids T tids ⇒
-  good_remap (extend_bij f g tids n)
-Proof
-  rw[good_remap_def, extend_bij_def, prim_tids_def,prim_type_nums_def]
-QED
+(* HOL4 type_dCanonScript.sml:390-404: code that the source has in a
+   comment *)
 
-Theorem good_remap_extend_bij[local]:
-  good_remap f ∧ prim_tids T tids ⇒
-  good_remap (extend_bij f g tids ids n)
-Proof
-  rw[good_remap_def, extend_bij_def, prim_tids_def,prim_type_nums_def]
-QED
-*)
-
-(*
-Theorem INJ_extend_bij:
-    DISJOINT tids ids ∧
-  INJ f tids (count n) ∧
-  INJ g ids (count (CARD ids)) ⇒
-  INJ (extend_bij f g ids n) (tids ∪ ids) (count (n + CARD ids))
-Proof
-  rewrite_tac[INJ_DEF,extend_bij_def,IN_DISJOINT,IN_COUNT,IN_UNION]
-  \\ rpt strip_tac
-  \\ res_tac
-  \\ rpt (pop_assum mp_tac)
-  \\ rewrite_tac[]
-  \\ rpt IF_CASES_TAC
-  \\ rpt strip_tac
-  \\ full_simp_tac bool_ss []
-  \\ fs[]
-QED
-
-Theorem BIJ_extend_bij:
-    DISJOINT tids ids ∧
-  BIJ f tids (count n) ∧
-  BIJ g ids (count (CARD ids)) ⇒
-  BIJ (extend_bij f g tids ids n) (tids ∪ ids) (count (n + CARD ids))
-Proof
-  rewrite_tac[INJ_DEF,SURJ_DEF,BIJ_DEF,extend_bij_def,IN_DISJOINT]
-  \\ strip_tac
-  \\ rewrite_tac[IN_UNION, count_add, IN_IMAGE]
-  \\ reverse conj_tac >- metis_tac[]
-  \\ conj_tac >- metis_tac[]
-  \\ rw[]
-  \\ rpt (first_x_assum drule)>>fs[]
-QED
-*)
+(* HOL4 type_dCanonScript.sml:428-460: code that the source has in a
+   comment *)
 
 let sing_renum_def = cake_define
   `sing_renum m n = (\x. if x = m then n else x)`;;
 
-(* HOL4 ML code, not ported:
-val ast_t_ind = ast_t_induction
-  |> Q.SPECL[`P`,`EVERY P`]
-  |> UNDISCH_ALL
-  |> CONJUNCT1
-  |> DISCH_ALL
-  |> SIMP_RULE (srw_ss()) []
-  |> Q.GEN`P`;
-*)
+(* HOL4 type_dCanonScript.sml:495-501: ML code, not ported *)
 
 (* TODO: this is only true up to equivalence on tenvs *)
 
@@ -241,42 +180,14 @@ let LINVI_def = cake_define
   `LINVI f s y = (match LINV_OPT f s y with SOME x -> x | NONE -> f
   y)`;;
 
-(*
-Theorem BIJ_LINVI_RINV:
-   BIJ f s t ∧ LINVI f s y ∈ s ⇒
-   f (LINVI f s y) = y
-Proof
-  rw[LINVI_def, LINV_OPT_def] \\ fs[]
-  ff"bij""inv"
-  f"LINV_OPT"
-  \\ imp_res_tac
-  \\ drule INJ_LINV_OPT
-  \\ disch_then(qspec_then`f x`mp_tac o CONV_RULE SWAP_FORALL_CONV)
-  \\ CASE_TAC \\ rw[]
-  \\ metis_tac[INJ_DEF]
-QED
-*)
+(* HOL4 type_dCanonScript.sml:839-853: code that the source has in a
+   comment *)
 
-(* probably not be true because of shadows...
-Theorem remap_tenv_LINVI
-  `INJ f s t ∧ set_tids_tenv s tenv ⇒
-   remap_tenv (LINVI f s) (remap_tenv f tenv) = tenv`
-  (rw[remap_tenv_def, type_env_component_equality,
-     nsMap_compose, o_DEF, UNCURRY, MAP_MAP_o,
-     set_tids_tenv_def]
-*)
+(* HOL4 type_dCanonScript.sml:938-945: code that the source has in a
+   comment *)
 
-(*
-Theorem type_d_canon_tenv_equiv
-  `(∀x t d c v. type_d_canon x t d c v ⇒
-      ∀v2. tenv_equiv v v2 ⇒ type_d_canon x t d c v2) ∧
-   (∀x t d c v. type_ds_canon x t d c v ⇒
-      ∀v2. tenv_equiv v v2 ⇒ type_ds_canon x t d c v2)`
-  (ho_match_mp_tac type_d_canon_ind
-  \\ rw[]
-  \\ rw[Once type_d_canon_cases]
-  type_d_canon_rules
-*)
+(* HOL4 type_dCanonScript.sml:1173-1183: code that the source has in
+   a comment *)
 
 (* For any type_d, prove that the canonical type identifier strategy
   succeeds.

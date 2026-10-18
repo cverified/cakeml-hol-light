@@ -28,9 +28,7 @@ let toList_aux_def = cake_define_wf
    (if length (vec) <= n then [] else sub vec n :: toList_aux vec
      (n + 1))`;;
 
-(* HOL4 ML code, not ported:
-val toList_aux_ind = theorem"toList_aux_ind";
-*)
+(* HOL4 mlvectorScript.sml:36: ML code, not ported *)
 
 let toList_def = cake_define
   `mlvector_toList vec = toList_aux vec 0`;;

@@ -30,11 +30,10 @@ let ffiname_INDUCT,ffiname_RECURSION = define_datatype
 hol4_overload "ExtCall" "ffi_ExtCall";;
 hol4_overload "SharedMem" "ffi_SharedMem";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     oracle_function = 'ffi -> word8 list -> word8 list -> 'ffi
-       oracle_result *)
-(* HOL4 type abbreviation (expanded in the port):
-     oracle = ffiname -> 'ffi oracle_function *)
+(* HOL4 ffiScript.sml:31: the type abbreviation oracle_function,
+   which the port expands *)
+(* HOL4 ffiScript.sml:32: the type abbreviation oracle, which the
+   port expands *)
 
 (* An I/O event, IO_event s bytes bytes2, represents the call of FFI
    function s with

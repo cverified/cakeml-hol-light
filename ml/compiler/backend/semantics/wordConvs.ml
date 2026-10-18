@@ -399,17 +399,13 @@ let not_created_subprogs_def = cake_define
 
 (* no_alloc specialisation *)
 
-(* HOL4 ML code, not ported:
-val no_alloc_P = ``((<>) (Alloc 0 (LN,LN)))``
-*)
+(* HOL4 wordConvsScript.sml:566: ML code, not ported *)
 
 let no_alloc_subprogs_def = cake_define
   `no_alloc p = not_created_subprogs (((\x y. ~(x = y)) (Alloc 0
   (LN,LN)))) p`;;
 
-(* HOL4 ML code, not ported:
-val no_install_P = ``((<>) (Install 0 0 0 0 (LN,LN)))``
-*)
+(* HOL4 wordConvsScript.sml:576: ML code, not ported *)
 
 let no_install_subprogs_def = cake_define
   `wordConvs_no_install p = not_created_subprogs (((\x y. ~(x = y))
@@ -418,9 +414,7 @@ hol4_overload "no_install" "wordConvs_no_install";;
 
 (****** no_mt : no MustTerminate ******)
 
-(* HOL4 ML code, not ported:
-val no_mt_P = ``((<>) (MustTerminate Skip))``
-*)
+(* HOL4 wordConvsScript.sml:588: ML code, not ported *)
 
 let no_mt_subprogs_def = cake_define
   `no_mt p = not_created_subprogs (((\x y. ~(x = y))
@@ -428,17 +422,15 @@ let no_mt_subprogs_def = cake_define
 
 (* no_share_inst: no ShareInst *)
 
-(* HOL4 ML code, not ported:
-val no_share_inst_P = ``((<>) (ShareInst ARB 0 (Var 0)))``
-*)
+(* HOL4 wordConvsScript.sml:600: ML code, not ported *)
 
 let no_share_inst_subprogs_def = cake_define
   `no_share_inst p = not_created_subprogs (((\x y. ~(x = y))
   (wordLang_ShareInst ARB 0 (Var 0)))) p`;;
 
-(* HOL4 overload (expanded in the port):
-     word_get_code_labels = wordConvs$get_code_labels *)
-(* HOL4 overload (expanded in the port):
-     word_good_handlers = wordConvs$good_handlers *)
-(* HOL4 overload (expanded in the port):
-     word_good_code_labels = wordConvs$good_code_labels *)
+(* HOL4 wordConvsScript.sml:610: the overload word_get_code_labels,
+   which the port expands *)
+(* HOL4 wordConvsScript.sml:611: the overload word_good_handlers,
+   which the port expands *)
+(* HOL4 wordConvsScript.sml:612: the overload word_good_code_labels,
+   which the port expands *)

@@ -11,10 +11,7 @@ needs "compiler/backend/gc/gc_shared.ml";;
 needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: words *)
 
-(* HOL4 ML code, not ported:
-val gc_state_component_equality = DB.fetch "gc_shared"
-  "gc_state_component_equality";
-*)
+(* HOL4 gen_gcScript.sml:16: ML code, not ported *)
 
 (* Copying GC which moves references to the end of the heap. This
    implementation is a pre-stage to the generational GC. *)
@@ -67,8 +64,8 @@ let gc_move_list_def = cake_define_list
           (x :: xs,state))`];;
 hol4_overload "gc_move_list" "gen_gc_gc_move_list";;
 
-(* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
-   \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
+(* HOL4 gen_gcScript.sml:123-129: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_data_def = cake_define_try_tac (fun () ->
@@ -90,8 +87,8 @@ let gc_move_data_def = cake_define_try_tac (fun () ->
               state)))) | _5 -> gc_state_ok_fupd (K F) state)))`;;
 hol4_overload "gc_move_data" "gen_gc_gc_move_data";;
 
-(* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
-   \\ decide_tac *)
+(* HOL4 gen_gcScript.sml:143-147: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_refs_def = cake_define_try_tac (fun () ->
@@ -199,19 +196,11 @@ let gc_inv_def = cake_define
            ptr IN FDOM (heap_map 0 (gc_state_heap state))))))`;;
 hol4_overload "gc_inv" "gen_gc_gc_inv";;
 
-(* HOL4 ML code, not ported:
-val full_simp = full_simp_tac std_ss
-*)
+(* HOL4 gen_gcScript.sml:235: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val isSomeDataOrForward_lemma_expanded =
-  isSomeDataOrForward_lemma
-  |> SIMP_RULE std_ss
-    [isSomeDataOrForward_def,isSomeDataElement_def
-    ,isSomeForwardPointer_def];
-*)
+(* HOL4 gen_gcScript.sml:264-266: ML code, not ported *)
 
-(* val NOT_IN_heap_addresses = *)
+(* HOL4 gen_gcScript.sml:277: code that the source has in a comment *)
 (*   NOT_IN_heap_addresses_general |> Q.SPECL [`xs`,`0`] |> SIMP_RULE
    std_ss []; *)
 

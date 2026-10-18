@@ -15,8 +15,8 @@ let b2n_def = cake_define_list
 let b2w_def = cake_define
   `b2w c = n2w (b2n c)`;;
 
-(* HOL4 termination: \\ SIMP_TAC std_ss [MATCH_MP DIV_LT_X
-   ZERO_LT_dimword,ONE_LT_dimword] \\ DECIDE_TAC *)
+(* HOL4 multiwordScript.sml:69-74: the tactic that proves the
+   termination *)
 let n2mw_def = cake_define_wf
   `MEASURE I`
   `n2mw n = (if n = 0 then []:('a word) list else

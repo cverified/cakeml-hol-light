@@ -41,14 +41,7 @@ let opt_bind_def = cake_define
 
 (* this is copied in preamble.sml, but needed here to avoid cyclic dep
    *)
-(* HOL4 ML code, not ported:
-fun drule th =
-  first_assum(mp_tac o MATCH_MP (ONCE_REWRITE_RULE[GSYM AND_IMP_INTRO]
-    th))
-val rveq = rpt BasicProvers.VAR_EQ_TAC
-val match_exists_tac = part_match_exists_tac (hd o strip_conj)
-val asm_exists_tac = first_assum(match_exists_tac o concl)
-*)
+(* HOL4 miscScript.sml:42-46: ML code, not ported *)
 (* -- *)
 
 (* TODO: move/categorize *)
@@ -88,8 +81,8 @@ hol4_overload "shift_seq" "misc_shift_seq";;
 
 (* disgusting and used only in clos_callProof *)
 
-(* HOL4 overload (expanded in the port):
-     LLOOKUP = λl n. oEL n l *)
+(* HOL4 miscScript.sml:182: the overload LLOOKUP, which the port
+   expands *)
 
 (* app_list stuff should be in an app_list theory *)
 let app_list_INDUCT,app_list_RECURSION = define_datatype
@@ -187,15 +180,13 @@ let anub_def = cake_define_list
        (if MEM k acc then anub ls acc else
        (k,v) :: (anub ls (k :: acc)))`];;
 
-(* HOL4 ML code, not ported:
-val anub_ind = theorem"anub_ind"
-*)
+(* HOL4 miscScript.sml:691: ML code, not ported *)
 
 (* terrible rewrite *)
 
 new_type_abbrev("misc_num_set",`: 1 spt`);;
-(* HOL4 type abbreviation (expanded in the port):
-     num_map = 'a spt *)
+(* HOL4 miscScript.sml:788: the type abbreviation num_map, which the
+   port expands *)
 
 (* only used below in proof of theorem that is in turn used just twice
    *)
@@ -222,18 +213,7 @@ let find_index_def = cake_define_list
    `find_index y (x :: xs) n = (if x = y then SOME n else
   find_index y xs (n + 1))`];;
 
-(* HOL4 ML code, not ported:
-val ALOOKUP_find_index_SOME = Q.prove(
-  `∀env. (ALOOKUP env k = SOME v) ⇒
-      ∀m. ∃i. (find_index k (MAP FST env) m = SOME (m+i)) ∧
-          (v = EL i (MAP SND env))`,
-  Induct >> simp[] >> Cases >>
-  srw_tac[][find_index_def] >> full_simp_tac(srw_ss())[] >>
-  first_x_assum(qspec_then`m+1`mp_tac)>>srw_tac[][]>>srw_tac[][]>>
-  qexists_tac`SUC i`>>simp[])
-|> SPEC_ALL |> UNDISCH_ALL |> Q.SPEC`0` |> DISCH_ALL |> SIMP_RULE
-  (srw_ss())[]
-*)
+(* HOL4 miscScript.sml:1138-1146: ML code, not ported *)
 
 (* surely better with UNZIP rather than ZIP: i.e., UNZIP l1 = (a,b)...
    *)
@@ -308,17 +288,12 @@ let fmap_linv_def = cake_define
 
 (* never used *)
 
-(* HOL4 ML code, not ported:
-val _ = augment_srw_ss [rewrites [map_some_eq,map_some_eq_append]];
-*)
+(* HOL4 miscScript.sml:1766: ML code, not ported *)
 
 
 (* list misc *)
-(*
-NB: this is weaker:
-Theorem MAP_EQ_MAP_IMP =
-  INJ_MAP_EQ |> SIMP_RULE (srw_ss()) [INJ_DEF]
-*)
+(* HOL4 miscScript.sml:1817-1821: code that the source has in a
+   comment *)
 
 (* move into HOL? *)
 
@@ -477,9 +452,7 @@ let is_subseq_def = cake_define_list
        (is_subseq ys (x :: xs))`];;
 
 (* TODO - candidate for move to HOL *)
-(* HOL4 ML code, not ported:
-val is_subseq_ind = theorem"is_subseq_ind";
-*)
+(* HOL4 miscScript.sml:3413: ML code, not ported *)
 
 (* TODO - candidate for move to HOL *)
 
@@ -523,9 +496,7 @@ let steps_rel_def = cake_define_list
         R x j y /\
         steps_rel R y tr`];;
 
-(* HOL4 ML code, not ported:
-val steps_rel_ind = theorem"steps_rel_ind";
-*)
+(* HOL4 miscScript.sml:3681: ML code, not ported *)
 
 let all_words_def = cake_define_list
   [`all_words base 0 = {}`;
@@ -602,14 +573,7 @@ let bytes_in_mem_def = cake_define_list
 let good_dimindex_def = cake_define
   `good_dimindex (:'a) <=> dimindex (:'a) = 32 \/ dimindex (:'a) = 64`;;
 
-(* HOL4 ML code, not ported:
-val LESS4 = DECIDE ``n < 4 <=> (n = 0) \/ (n = 1) \/ (n = 2) \/ (n =
-  3:num)``
-val LESS8 = DECIDE ``n < 8 <=> (n = 0) \/ (n = 1) \/ (n = 2) \/ (n =
-  3:num) \/
-                               (n = 4) \/ (n = 5) \/ (n = 6) \/ (n =
-                                 7)``
-*)
+(* HOL4 miscScript.sml:4351-4353: ML code, not ported *)
 
 (* helpful theorems for _size *)
 

@@ -162,9 +162,8 @@ hol4_overload "dec_clock" "stackSem_dec_clock";;
 let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
-   wordLangTheory.MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC
-   o Q.SPEC `ARB`)) \\ DECIDE_TAC *)
+(* HOL4 stackSemScript.sml:151-156: the tactic that proves the
+   termination *)
 let word_exp_def = cake_define_list_try (fun () ->
   `MEASURE (wordLang_exp_size ARB o SND)`)
   [`stackSem_word_exp s (wordLang_Const w) = SOME w`;
@@ -384,8 +383,8 @@ let full_read_bitmap_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
-   filter_bitmap_LENGTH \\ fs [] \\ decide_tac *)
+(* HOL4 stackSemScript.sml:330-334: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let enc_stack_def = cake_define_list_try_tac (fun () ->
@@ -405,9 +404,8 @@ hol4_overload "enc_stack" "stackSem_enc_stack";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ IMP_RES_TAC map_bitmap_LENGTH \\ fs
-   [LENGTH_NIL] \\ rw [] \\ fs [map_bitmap_def] \\ rw [] \\
-   decide_tac *)
+(* HOL4 stackSemScript.sml:349-354: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let dec_stack_def = cake_define_list_try_tac (fun () ->
@@ -714,8 +712,8 @@ let copy_words_for_pattern_def = cake_define
              (pattern >>> 1) (i + 1) (a + bytes_in_word) off bs dm
                m else NONE)`;;
 
-(* HOL4 termination: \\ rw [] \\ imp_res_tac
-   copy_words_for_pattern_LESS_EQ \\ fs [] *)
+(* HOL4 stackSemScript.sml:720-723: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let copy_words_def = cake_define_try_tac (fun () ->
@@ -811,10 +809,8 @@ if concl fix_clock_IMP <> `T` then
 let _ = size_thms "stackLang_prog";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt strip_tac \\
-   fs[empty_env_def,dec_clock_def,set_var_def,STOP_def] \\
-   imp_res_tac fix_clock_IMP \\ fs [] \\ imp_res_tac (GSYM
-   fix_clock_IMP) \\ fs [] \\ decide_tac *)
+(* HOL4 stackSemScript.sml:1022-1029: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->
@@ -1127,7 +1123,4 @@ let read_stack_space_def = cake_define
 
 (* clean up *)
 
-(* HOL4 ML code, not ported:
-val _ = map delete_binding ["evaluate_AUX_def",
-  "evaluate_primitive_def"];
-*)
+(* HOL4 stackSemScript.sml:1154: ML code, not ported *)

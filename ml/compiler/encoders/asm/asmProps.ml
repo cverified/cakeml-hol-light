@@ -126,22 +126,6 @@ let encoder_correct_def = cake_define
 
 (* lemma for proofs *)
 
-(* HOL4 ML code, not ported:
-local
-  fun genlist f 0 = []
-    | genlist f n = genlist f (n-1) @ [f (n-1)]
-  fun suc_num 0 = ``0:num``
-    | suc_num n = mk_comb(``SUC``,suc_num (n-1))
-  fun gen_rw n =
-    ``asserts ^(suc_num n) next (s:'a) P Q``
-    |> ONCE_REWRITE_CONV [asserts_def] |> SIMP_RULE std_ss []
-in
-*)
+(* HOL4 asmPropsScript.sml:197-205: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-local
-  fun gen_rw n =
-    ``asserts2 ^(numSyntax.term_of_int n) fi fc (s:'a) P``
-    |> ONCE_REWRITE_CONV [asserts2_def] |> SIMP_RULE std_ss []
-in
-*)
+(* HOL4 asmPropsScript.sml:269-273: ML code, not ported *)

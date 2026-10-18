@@ -37,31 +37,18 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: int_bitwise finite_map While *)
 
-(* HOL4 ML code, not ported:
-val shift_def = backend_commonTheory.word_shift_def
-val upper_w2w_def = backend_commonTheory.upper_w2w_def
-val isWord_def = wordSemTheory.isWord_def
-val theWord_def = wordSemTheory.theWord_def
-val is_fwd_ptr_def = wordSemTheory.is_fwd_ptr_def
-*)
+(* HOL4 data_to_word_gcProofScript.sml:19-23: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     lookup = sptree$lookup *)
+(* HOL4 data_to_word_gcProofScript.sml:25: the overload lookup, which
+   the port expands *)
 
 (* TODO: move *)
-(* HOL4 type abbreviation (expanded in the port):
-     state = ('a,'c,'ffi)wordSem$state *)
+(* HOL4 data_to_word_gcProofScript.sml:30: the type abbreviation
+   state, which the port expands *)
 
-(* HOL4 ML code, not ported:
-fun op by1 (q,tac) = q by (tac \\ NO_TAC)
-infix 8 by1
-*)
+(* HOL4 data_to_word_gcProofScript.sml:32-33: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val clean_tac = rpt var_eq_tac \\ rpt (qpat_x_assum `T` kall_tac)
-fun rpt_drule th = old_drule (th |> GEN_ALL) \\ rpt (disch_then
-  old_drule \\ fs [])
-*)
+(* HOL4 data_to_word_gcProofScript.sml:35-36: ML code, not ported *)
 
 (* -- *)
 
@@ -85,9 +72,7 @@ let flat_def = cake_define
         join_env env vs ++ flat xs ys
         | (_11,_12) -> []`;;
 
-(* HOL4 ML code, not ported:
-val DISJ_EQ_IMP = METIS_PROVE [] ``(~b \/ c) <=> (b ==> c)``
-*)
+(* HOL4 data_to_word_gcProofScript.sml:583: ML code, not ported *)
 
 let can_select_def = cake_define
   `can_select k n w <=> ((word_bits (k - 1) n) (w << n) = w)`;;
@@ -223,9 +208,7 @@ let limits_inv_def = cake_define
      lims = c_has_fp_ops /\ limits_has_fp_tops
      lims = c_has_fp_tern`;;
 
-(* HOL4 ML code, not ported:
-val s = ``(s:('c,'ffi) dataSem$state)``
-*)
+(* HOL4 data_to_word_gcProofScript.sml:4501: ML code, not ported *)
 
 let state_rel_thm = cake_define
   `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
@@ -321,18 +304,14 @@ let init_store_ok_def = cake_define
 let mk_loc_def = cake_define
   `mk_loc (SOME (t1,d1,d2)) = Loc d1 d2`;;
 
-(* HOL4 ML code, not ported:
-val s1 = mk_var("s1",type_of s);
-*)
+(* HOL4 data_to_word_gcProofScript.sml:4878: ML code, not ported *)
 
 let inc_clock_def = cake_define
   `data_to_word_gcProof_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
   wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
 hol4_overload "inc_clock" "data_to_word_gcProof_inc_clock";;
 
-(* HOL4 ML code, not ported:
-val s' = mk_var("s'",type_of s);
-*)
+(* HOL4 data_to_word_gcProofScript.sml:5826: ML code, not ported *)
 
 let loc_ok_def = cake_define
   `loc_ok x1 =
@@ -340,9 +319,7 @@ let loc_ok_def = cake_define
         (Loc m n:semanticPrimitives_v) -> (n = 0)
       | _24 -> T`;;
 
-(* HOL4 ML code, not ported:
-val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2``
-*)
+(* HOL4 data_to_word_gcProofScript.sml:6232: ML code, not ported *)
 
 let loc_merge_def = cake_define_list
   [`loc_merge [] ys = []`;
@@ -387,37 +364,12 @@ let cut_locals_def = cake_define
        -> state_locals_fupd (K env) s | NONE -> state_locals_fupd (K
        LN) s)`;;
 
-(* HOL4 ML code, not ported:
-val do_app = LIST_CONJ [dataSemTheory.do_app_def,do_space_def,
-  data_spaceTheory.op_space_req_def,
-  dataLangTheory.op_space_reset_def,
-  dataSemTheory.do_app_aux_def]
-*)
-(* HOL4 ML code, not ported:
-val alloc_alt_gen =
-  SPEC_ALL alloc_lemma_gen
-  |> ConseqConv.WEAKEN_CONSEQ_CONV_RULE
-     (ConseqConv.CONSEQ_REWRITE_CONV
-        ([],[],[prove(``alloc_size k <> -1w ==> T``,fs [])]))
-  |> GEN_ALL;
-*)
+(* HOL4 data_to_word_gcProofScript.sml:7721-7724: ML code, not ported *)
+(* HOL4 data_to_word_gcProofScript.sml:7887-7892: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val alloc_alt =
-  SPEC_ALL alloc_lemma
-  |> ConseqConv.WEAKEN_CONSEQ_CONV_RULE
-     (ConseqConv.CONSEQ_REWRITE_CONV
-        ([],[],[prove(``alloc_size k ≠ -1w ==> T``,fs [])]))
-  |> GEN_ALL
-*)
+(* HOL4 data_to_word_gcProofScript.sml:8030-8035: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val alloc_fail_lemma = alloc_lemma
-  |> Q.INST [`k`|->`dimword (:'a)`]
-  |> SIMP_RULE std_ss [UNDISCH alloc_size_dimword]
-  |> DISCH_ALL |> MP_CANON
-  |> SIMP_RULE std_ss [AC ADD_COMM ADD_ASSOC]
-*)
+(* HOL4 data_to_word_gcProofScript.sml:8045-8049: ML code, not ported *)
 
 let join_env_locals_def = cake_define
   `join_env_locals sl tl =

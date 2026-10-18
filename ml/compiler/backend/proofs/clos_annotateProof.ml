@@ -17,10 +17,7 @@ needs "pancake/panLang.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 ML code, not ported:
-val EVERY2_EL = LIST_REL_EL_EQN |> SPEC_ALL |> EQ_IMP_RULE |> fst
-                |> UNDISCH |> CONJUNCT2 |> DISCH_ALL;
-*)
+(* HOL4 clos_annotateProofScript.sml:14-15: ML code, not ported *)
 
 (* alternative definition of free_vars (fv) function *)
 
@@ -32,8 +29,8 @@ let alt_fv1_def = cake_define
 
 (* value relation *)
 
-(* HOL4 overload (expanded in the port):
-     alt_fv_set = λx y. alt_fv y x *)
+(* HOL4 clos_annotateProofScript.sml:101: the overload alt_fv_set,
+   which the port expands *)
 
 let v_rel = cake_inductive
   `(clos_annotateProof_v_rel (closSem_Number j) (closSem_Number j)) /\
@@ -81,34 +78,15 @@ let v_rel = cake_inductive
     env_ok m l i env2 env2' n)`;;
 hol4_overload "v_rel" "clos_annotateProof_v_rel";;
 
-(* HOL4 ML code, not ported:
-val env_ok_def = v_rel_cases |> CONJUNCT2
-*)
+(* HOL4 clos_annotateProofScript.sml:180: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val env_ok_cons = env_ok_EXTEND
-  |> Q.INST [`env1`|->`[v1]`,`env2`|->`[v2]`] |> Q.GEN `l1`
-  |> SIMP_RULE (srw_ss()) []
-*)
+(* HOL4 clos_annotateProofScript.sml:211-213: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val env_ok_1 = env_ok_EXTEND
-  |> Q.INST [`env1`|->`[v1]`,`env2`|->`[v2]`,`l`|->`0`] |> Q.GEN `l1`
-  |> SIMP_RULE (srw_ss()) []
-*)
+(* HOL4 clos_annotateProofScript.sml:215-217: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val env_ok_some = env_ok_EXTEND
-  |> DISCH ``l + LENGTH (env1:closSem$v list) = k``
-  |> Q.GEN `l1` |> SIMP_RULE std_ss []
-  |> REWRITE_RULE [AND_IMP_INTRO] |> GEN_ALL
-*)
+(* HOL4 clos_annotateProofScript.sml:219-222: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val env_ok_append = env_ok_EXTEND
-  |> GSYM |> Q.INST [`l`|->`0`]
-  |> SIMP_RULE (srw_ss()) []
-*)
+(* HOL4 clos_annotateProofScript.sml:224-226: ML code, not ported *)
 
 let state_rel_def = cake_define
   `clos_annotateProof_state_rel (s:('c,'ffi)closSem_state)
@@ -143,36 +121,16 @@ hol4_overload "state_rel" "clos_annotateProof_state_rel";;
 
 (* compiler correctness *)
 
-(*
-Theorem MAPi_MAPi:
-   !xs. MAPi f (MAPi g xs) = MAPi (\i x. f i (g i x)) xs
-Proof
-  ...
-QED
-*)
+(* HOL4 clos_annotateProofScript.sml:533-539: code that the source
+   has in a comment *)
 
-(* HOL4 ML code, not ported:
-val every_Fn_vs_NONE_EVERY_MAP =
-  every_Fn_vs_NONE_EVERY
-  |> Q.SPEC`MAP f ls`
-  |> SIMP_RULE std_ss [EVERY_MAP]
-  |> GSYM
-*)
+(* HOL4 clos_annotateProofScript.sml:573-577: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val code_tac =
-    imp_res_tac evaluate_code
-    \\ fs[DISTINCT_FUPDATE_LIST_UNION,DISJOINT_FEVERY_FUNION,
-          ALL_DISTINCT_FEVERY_alist_to_fmap,EVERY_FLAT,
-          EVERY_MAP,EVERY_GENLIST,shift_seq_def]
-    \\ fs[every_Fn_vs_NONE_EVERY_MAP,o_DEF];
-*)
+(* HOL4 clos_annotateProofScript.sml:579-584: ML code, not ported *)
 
 (* more correctness properties *)
 
-(* HOL4 ML code, not ported:
-val IF_MAP_EQ = MAP_EQ_f |> SPEC_ALL |> EQ_IMP_RULE |> snd;
-*)
+(* HOL4 clos_annotateProofScript.sml:1375: ML code, not ported *)
 
 (* semantics preservation *)
 

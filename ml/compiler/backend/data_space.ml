@@ -50,27 +50,8 @@ let op_space_req_def = cake_define
         | (ThunkOp (AllocThunk _8)) -> l + 1
         | _9 -> 0`;;
 
-(*
-Theorem op_space_req_pmatch:
-  !op l.
-  op_space_req op l =
-    pmatch op of
-      Cons _ => if l = 0n then 0 else l+1
-    | Ref => l + 1
-    | WordOp (WordOpw W64 _) => 3
-    | WordShift W64 _ _ => 3
-    | WordFromInt => 3
-    | WordToInt => 3
-    | WordFromWord b => (if b then 0 else 3)
-    | FP_uop _ => 3
-    | FP_bop _ => 3
-    | _ => 0
-Proof
-  rpt strip_tac
-  >> CONV_TAC(RAND_CONV patternMatchesLib.PMATCH_ELIM_CONV)
-  >> every_case_tac >> fs[op_space_req_def]
-QED
-*)
+(* HOL4 data_spaceScript.sml:46-66: code that the source has in a
+   comment *)
 
 let pMakeSpace_def = cake_define_list
   [`pMakeSpace (INL c) = c`;

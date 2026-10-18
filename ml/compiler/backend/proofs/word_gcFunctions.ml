@@ -20,15 +20,11 @@ needs "lib/byte.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 ML code, not ported:
-val shift_def = backend_commonTheory.word_shift_def;
-*)
+(* HOL4 word_gcFunctionsScript.sml:12: ML code, not ported *)
 
 (* move candidates *)
 
-(* HOL4 ML code, not ported:
-val IMP_EQ_DISJ = METIS_PROVE [] ``(b1 ==> b2) <=> ~b1 \/ b2``
-*)
+(* HOL4 word_gcFunctionsScript.sml:30: ML code, not ported *)
 
 (* -------------------------------------------------------
     definition and verification of GC functions

@@ -56,10 +56,8 @@ let total_pat_def = cake_define_list_cheat CHEAT_TAC
    changes
     (other than writing to globals) *)
 let _ = size_thms "flatLang_exp";;
-(* HOL4 termination: >> rw[exp_size_def] >> fs[] >> fs [MEM_MAP,
-   EXISTS_PROD] >> fs [exp1_size, exp3_size, exp6_size, MEM_SPLIT,
-   SUM_APPEND, exp_size_def]>>
-   simp[list_size_append,list_size_def,basicSizeTheory.pair_size_def] *)
+(* HOL4 flat_elimScript.sml:75-80: the tactic that proves the
+   termination *)
 let is_pure_def = cake_define_wf
   `MEASURE (\e. flatLang_exp_size e)`
   `flat_elim_is_pure x1 =
@@ -124,7 +122,8 @@ let dest_GlobalVarLookup_def = cake_define
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 flat_elimScript.sml:151-156: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let find_loc_def = cake_define_list_try_tac (fun () ->
@@ -159,7 +158,8 @@ let find_loc_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 flat_elimScript.sml:180-186: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let find_lookups_def = cake_define_list_try_tac (fun () ->

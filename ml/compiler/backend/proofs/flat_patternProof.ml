@@ -22,9 +22,7 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: bag *)
 
-(* HOL4 ML code, not ported:
-val build_rec_env_merge = flatPropsTheory.build_rec_env_merge;
-*)
+(* HOL4 flat_patternProofScript.sml:14: ML code, not ported *)
 
 (* simple properties *)
 
@@ -39,32 +37,10 @@ let ALOOKUP_rel_def = cake_define
   `ALOOKUP_rel P R env1 env2 =
    (!x. P x ==> OPTREL R (ALOOKUP env1 x) (ALOOKUP env2 x))`;;
 
-(*
-Theorem pat_bindings_evaluate_FOLDR_lemma:
-  !new_names.
-  (!x. MEM x xs ==> IS_SOME (f x)) /\
-  (!x. IMAGE (THE o f) (set xs) ⊆ new_names) /\
-  (!x. MEM x xs ==> (?rv. !env2.
-    ALOOKUP_rel (\x. x ∉ new_names) (=) env2.v env.v ==>
-    evaluate env2 s [g x] = (s, Rval [rv])))
-  ==>
-  evaluate env s
-    [FOLDR (λx exp. flatLang$Let t (f x) (g x) exp) exp xs] =
-  evaluate (env with v := MAP (λx. (THE (f x),
-        case evaluate env s [g x] of (_, Rval rv) => HD rv)) (REVERSE
-          xs)
-             ++ env.v) s [exp]
-Proof
-  rw []
-  \\ DEP_REWRITE_TAC [pat_bindings_evaluate_FOLDR_lemma1]
-  \\ simp [ALOOKUP_rel_refl]
-QED
-*)
+(* HOL4 flat_patternProofScript.sml:382-401: code that the source has
+   in a comment *)
 
-(* HOL4 ML code, not ported:
-val EVERY_EL_IMP = ASSUME ``EVERY P xs`` |> REWRITE_RULE [EVERY_EL]
-  |> DISCH_ALL
-*)
+(* HOL4 flat_patternProofScript.sml:411-412: ML code, not ported *)
 
 (* a note on 'naming' below. the existing (encoded) names in the program
    (in the original x and exp)
@@ -76,21 +52,13 @@ val EVERY_EL_IMP = ASSUME ``EVERY P xs`` |> REWRITE_RULE [EVERY_EL]
      original
    program. also new/old names mix in env, thus the many filters. *)
 
-(* HOL4 ML code, not ported:
-val s = ``s:('c, 'ffi) flatSem$state``;
-val s1 = mk_var ("s1", type_of s);
-val s2 = mk_var ("s2", type_of s);
-*)
+(* HOL4 flat_patternProofScript.sml:651-653: ML code, not ported *)
 (* on the right side of the state relation, the pattern compiler's
    config is
    also needed in the compiler state *)
-(* HOL4 ML code, not ported:
-val t = ``t:('c, 'ffi) flatSem$state``;
-*)
+(* HOL4 flat_patternProofScript.sml:656: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = IndDefLib.add_mono_thm ALOOKUP_rel_mono_rel;
-*)
+(* HOL4 flat_patternProofScript.sml:658: ML code, not ported *)
 
 let v_rel = cake_inductive
   `(!v v'. simple_basic_val_rel v v' /\
@@ -118,10 +86,7 @@ let v_rel = cake_inductive
 hol4_overload "env_rel" "flat_patternProof_env_rel";;
 hol4_overload "v_rel" "flat_patternProof_v_rel";;
 
-(* HOL4 ML code, not ported:
-val env_rel_def = ``env_rel N env1 env2``
-    |> SIMP_CONV bool_ss [v_rel_cases]
-*)
+(* HOL4 flat_patternProofScript.sml:688-689: ML code, not ported *)
 
 let install_conf_rel_def = cake_define
   `install_conf_rel pat_cfg ic1 ic2 <=>
@@ -145,8 +110,8 @@ let state_rel_def = cake_define
        (flatSem_state_eval_config t)`;;
 hol4_overload "state_rel" "flat_patternProof_state_rel";;
 
-(* HOL4 overload (expanded in the port):
-     nv_rel = \N. ALOOKUP_rel (\x. dec_name_to_num x < N) v_rel *)
+(* HOL4 flat_patternProofScript.sml:722-723: the overload nv_rel,
+   which the port expands *)
 
 let match_rel_def = cake_define
   `match_rel N x2 x3 =
@@ -158,8 +123,8 @@ let match_rel_def = cake_define
         | (_1,_2) -> F`;;
 
 let _ = size_thms "flatSem_v";;
-(* HOL4 termination: \\ rw [] \\ fs [MEM_SPLIT, SUM_APPEND,
-   v_size_aux] *)
+(* HOL4 flat_patternProofScript.sml:974-978: the tactic that proves
+   the termination *)
 let encode_val_def = cake_define_wf
   `MEASURE flatSem_v_size`
   `encode_val others =
@@ -177,8 +142,6 @@ let encode_refs_def = cake_define
      (count (LENGTH (state_refs s)) INTER {i | ?v. EL i
        (state_refs s) = semanticPrimitives_Refv v})`;;
 
-(* HOL4 ML code, not ported:
-val evaluate_ind2 = induct_tweakLib.list_single_induct evaluate_ind;
-*)
+(* HOL4 flat_patternProofScript.sml:1541: ML code, not ported *)
 
 (* set_globals and esgc properties *)

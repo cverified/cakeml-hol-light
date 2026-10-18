@@ -22,8 +22,8 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 overload (expanded in the port):
-     num_stubs = bvl_num_stubs *)
+(* HOL4 bviSemScript.sml:13: the overload num_stubs, which the port
+   expands *)
 
 let exn_or_ret_INDUCT,exn_or_ret_RECURSION = define_datatype
   "exn_or_ret = Exn (bvlSem_v) | Ret (bvlSem_v list)";;
@@ -71,9 +71,8 @@ let bvl_to_bvi_def = cake_define
   s))
      t))`;;
 
-(* HOL4 termination: >> simp [finite_mapTheory.FDOM_DOMSUB,
-   FLOOKUP_DEF] >> rw [] >> Cases_on ‘CARD (FDOM refs)’ >> rw [] >-
-   fs[finite_setTheory.fCARD_EQ0] >> simp [] *)
+(* HOL4 bviSemScript.sml:69-77: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let finalise_cons_def = cake_define_try_tac (fun () ->
@@ -93,9 +92,7 @@ let finalise_cons_def = cake_define_try_tac (fun () ->
         | v -> SOME (v,refs)`;;
 hol4_overload "finalise_cons" "bviSem_finalise_cons";;
 
-(* HOL4 ML code, not ported:
-val s = ``(s:('c,'ffi) bviSem$state)``;
-*)
+(* HOL4 bviSemScript.sml:79: ML code, not ported *)
 
 let do_app_aux_def = cake_define
   `bviSem_do_app_aux op (vs:bvlSem_v list) (s:('c,'ffi)bviSem_state) =
@@ -263,8 +260,8 @@ if concl fix_clock_IMP <> `T` then
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rpt strip_tac >> simp[dec_clock_def] >>
-   imp_res_tac fix_clock_IMP >> imp_res_tac LESS_EQ_dec_clock >> rw[] *)
+(* HOL4 bviSemScript.sml:339-347: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->
@@ -367,9 +364,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                           -> res)) | res -> res)`];;
 hol4_overload "evaluate" "bviSem_evaluate";;
 
-(* HOL4 ML code, not ported:
-val evaluate_ind = theorem"evaluate_ind";
-*)
+(* HOL4 bviSemScript.sml:349: ML code, not ported *)
 
 (* We prove that the clock never increases. *)
 
@@ -407,7 +402,4 @@ hol4_overload "semantics" "bviSem_semantics";;
 
 (* clean up *)
 
-(* HOL4 ML code, not ported:
-val _ = map delete_binding ["evaluate_AUX_def",
-  "evaluate_primitive_def"];
-*)
+(* HOL4 bviSemScript.sml:437: ML code, not ported *)

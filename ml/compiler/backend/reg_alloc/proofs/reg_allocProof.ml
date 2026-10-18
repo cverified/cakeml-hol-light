@@ -77,30 +77,15 @@ let good_pref_def = cake_define
      (match res with
        NONE -> T | SOME k -> MEM k ks)))`;;
 
-(* HOL4 ML code, not ported:
-val msimps = [st_ex_bind_def,st_ex_ignore_bind_def,st_ex_return_def];
-*)
+(* HOL4 reg_allocProofScript.sml:84: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val get_eqns = [get_dim_def,
-  get_unavail_moves_wl_def,get_avail_moves_wl_def,get_simp_wl_def
-  ,get_spill_wl_def,set_spill_wl_def,get_freeze_wl_def,get_stack_def];
-*)
+(* HOL4 reg_allocProofScript.sml:86: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val set_eqns = [set_dim_def,
-  set_unavail_moves_wl_def,set_avail_moves_wl_def,set_simp_wl_def
-  ,set_spill_wl_def,set_freeze_wl_def,set_stack_def];
-*)
+(* HOL4 reg_allocProofScript.sml:88: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val add_eqns =
-  [add_freeze_wl_def,add_unavail_moves_wl_def,add_spill_wl_def];
-*)
+(* HOL4 reg_allocProofScript.sml:90: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val all_eqns = get_eqns @ set_eqns @ add_eqns @ msimps;
-*)
+(* HOL4 reg_allocProofScript.sml:92: ML code, not ported *)
 
 (* M_success conditions *)
 
@@ -176,75 +161,9 @@ let sp_inverts_def = cake_define
      sptree_lookup m f = SOME fm ==>
      sptree_lookup fm g = SOME m)`;;
 
-(* HOL4 ML code, not ported:
-val list_remap_bij = Q.prove(`
-  ∀ls ta fa n ta' fa' n'.
-  list_remap ls (ta,fa,n) = (ta',fa',n') ∧
-  sp_inverts ta fa ∧
-  sp_inverts fa ta ∧
-  domain fa = count n ==>
-  Abbrev(sp_inverts ta' fa' ∧
-  sp_inverts fa' ta' ∧
-  domain fa' = count n')`,
-  Induct>>rw[list_remap_def]>>fs[markerTheory.Abbrev_def]>>
-  reverse EVERY_CASE_TAC>>
-  first_x_assum drule
-  >-
-    metis_tac[]
-  >>
-    impl_tac >-
-      (rw[]>>
-      TRY(match_mp_tac sp_inverts_insert>>
-        fs[]>>
-        CCONTR_TAC>>rfs[domain_lookup])>>
-      fs[domain_insert,EXTENSION])>>
-    metis_tac[])|>SIMP_RULE std_ss [markerTheory.Abbrev_def];
-*)
+(* HOL4 reg_allocProofScript.sml:814-835: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val mk_bij_aux_bij = Q.prove(`
-  ∀ct ta fa n ta' fa' n'.
-  mk_bij_aux ct (ta,fa,n) = (ta',fa',n') ∧
-  sp_inverts ta fa ∧
-  sp_inverts fa ta ∧
-  domain fa = count n ==>
-  Abbrev(sp_inverts ta' fa' ∧
-  sp_inverts fa' ta' ∧
-  domain fa' = count n')`,
-  Induct>>rw[mk_bij_aux_def]>>
-  simp[markerTheory.Abbrev_def]
-  >- (
-    Cases_on`list_remap l0 (ta,fa,n)`>>Cases_on`r`>>
-    match_mp_tac list_remap_bij>>
-    asm_exists_tac>> simp[]>>
-    match_mp_tac list_remap_bij>>
-    metis_tac[])
-  >- (
-    match_mp_tac list_remap_bij>>
-    asm_exists_tac>> fs[])
-  >- (
-    `∃ta1 fa1 n1. mk_bij_aux ct (ta,fa,n) = (ta1,fa1,n1) ∧
-     ∃ta2 fa2 n2. mk_bij_aux ct' (ta1,fa1,n1) = (ta2,fa2,n2)` by
-       metis_tac[PAIR]>>
-    last_x_assum drule>> simp[markerTheory.Abbrev_def]>>
-    strip_tac>>
-    last_x_assum drule >> simp[markerTheory.Abbrev_def]>>
-    strip_tac>>
-    qpat_x_assum`_= (_,_,n')` mp_tac>> TOP_CASE_TAC>> fs[]
-    >-
-      metis_tac[]
-    >>
-      strip_tac>> metis_tac[list_remap_bij])
-  >>
-    `∃ta1 fa1 n1. mk_bij_aux ct' (ta,fa,n) = (ta1,fa1,n1) ∧
-     ∃ta2 fa2 n2. mk_bij_aux ct (ta1,fa1,n1) = (ta2,fa2,n2)` by
-       metis_tac[PAIR]>>
-    fs[]>>
-    last_x_assum drule>> simp[markerTheory.Abbrev_def]>>
-    strip_tac>>
-    last_x_assum drule >> simp[markerTheory.Abbrev_def]) |> SIMP_RULE
-      std_ss [markerTheory.Abbrev_def];
-*)
+(* HOL4 reg_allocProofScript.sml:879-919: ML code, not ported *)
 
 (* Properties of the graph manipulating functions
    All of these simultaneously prove success
@@ -314,43 +233,17 @@ let colouring_satisfactory_def = cake_define
 
 (* do_coalesce *)
 
-(* HOL4 ML code, not ported:
-val st_ex_MAP_deg_or_inf = Q.prove(`
-  ∀ls s.
-  good_ra_state s ∧
-  EVERY (\x. x < s.dim) ls ⇒
-  ∃degs.
-  st_ex_MAP (deg_or_inf k) ls s =
-  (M_success degs,s)`,
-  Induct>>fs[st_ex_MAP_def,deg_or_inf_def,is_Fixed_k_def]>>
-  simp msimps>>
-  reverse (rw[])
-  >- metis_tac[good_ra_state_def]>>
-  qmatch_goalsub_abbrev_tac`if cc then _ else _`>>
-  IF_CASES_TAC>>fs[]
-  >-
-    (first_x_assum drule>>rw[]>>
-    simp[])
-  >>
-  first_x_assum drule>>rw[]>>
-  fs[good_ra_state_def])|>GEN_ALL;
-*)
+(* HOL4 reg_allocProofScript.sml:2364-2382: ML code, not ported *)
 
 (* do freeze *)
 
 (* do spill *)
 
-(* HOL4 ML code, not ported:
-val drule = FREEZE_THEN drule
-*)
+(* HOL4 reg_allocProofScript.sml:2862: ML code, not ported *)
 
 (* The top-most correctness theorem *)
 
-(* HOL4 ML code, not ported:
-fun first_prove_imp thms =
-  (first_assum(fn x => sg `^(fst(dest_imp(concl x)))`) >- (fs thms) >>
-  POP_ASSUM(fn x  => fs[x]));
-*)
+(* HOL4 reg_allocProofScript.sml:3455-3457: ML code, not ported *)
 
 (* The top-most correctness theorem *)
 (* --- --- *)

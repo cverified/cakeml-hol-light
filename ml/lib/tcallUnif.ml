@@ -15,5 +15,5 @@ needs "lib/walkstar.ml";;
 (* HOL4 ancestors outside the port: pair While cps relation pred_set
    finite_map option *)
 
-(* HOL4 overload (expanded in the port):
-     BAG_OF_LIST = FOLDR BAG_INSERT EMPTY_BAG *)
+(* HOL4 tcallUnifScript.sml:270: the overload BAG_OF_LIST, which the
+   port expands *)

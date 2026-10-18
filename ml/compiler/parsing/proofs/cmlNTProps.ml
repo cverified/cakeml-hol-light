@@ -10,10 +10,4 @@
 needs "lib/NTproperties.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
-(* HOL4 ML code, not ported:
-val _ =
-firstSetML_def |> CONJUNCTS |> (fn l => List.take(l,2)) |> rewrites
-                                                        |> (fn ss =>
-                                                          augment_srw_ss
-                                                          [ss])
-*)
+(* HOL4 cmlNTPropsScript.sml:57-59: ML code, not ported *)

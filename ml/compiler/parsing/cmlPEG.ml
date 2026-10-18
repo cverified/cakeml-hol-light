@@ -17,25 +17,11 @@ needs "semantics/ast.ml";;
 needs "semantics/gram.ml";;
 needs "semantics/tokenUtils.ml";;
 
-(* HOL4 overload (expanded in the port):
-     monad_bind = OPTION_BIND *)
+(* HOL4 cmlPEGScript.sml:14: the overload monad_bind, which the port
+   expands *)
 hol4_overload "assert" "OPTION_GUARD";;
 
-(* HOL4 ML code, not ported:
-val distinct_ths = let
-  val ntlist = TypeBase.constructors_of ``:MMLnonT``
-  fun recurse [] = []
-    | recurse (t::ts) = let
-      val eqns = map (fn t' => mk_eq(t,t')) ts
-      val ths0 = map (SIMP_CONV (srw_ss()) []) eqns
-      val ths1 = map (CONV_RULE (LAND_CONV (REWR_CONV EQ_SYM_EQ))) ths0
-    in
-      ths0 @ ths1 @ recurse ts
-    end
-in
-  recurse ntlist
-end
-*)
+(* HOL4 cmlPEGScript.sml:17-29: ML code, not ported *)
 
 let sumID_def = cake_define_list
   [`cmlPEG_sumID (INL x) = x`;
@@ -95,12 +81,7 @@ let seql_def = cake_define
   `seql l f = pegf (ITLIST (\p acc. peg_seq p acc (++)) l (peg_empty
   [])) f`;;
 
-(* unused
-Definition peg_nonfix_def:
-  peg_nonfix tgtnt argsym opsym =
-    seql [argsym; choicel [seq opsym argsym (++); empty []]] (bindNT
-      tgtnt)
-End *)
+(* HOL4 cmlPEGScript.sml:94-98: code that the source has in a comment *)
 
 let try_def = cake_define
   `cmlPEG_try sym = choicel [sym; peg_empty []]`;;
@@ -643,230 +624,40 @@ let cmlPEG_def = cake_define
                   pegf (peg_empty []) (bindNT
                     nNonETopLevelDecs)])])`;;
 
-(* HOL4 ML code, not ported:
-val rules_t = ``cmlPEG.rules``
-fun ty2frag ty = let
-  open simpLib
-  val {convs,rewrs} = TypeBase.simpls_of ty
-in
-  merge_ss (rewrites rewrs :: map conv_ss convs)
-end
-*)
-(* can't use srw_ss() as it will attack the bodies of the rules,
-   and in particular, will destroy predicates from tok
-   constructors of the form
-        do ... od = SOME ()
-   which matches optionTheory.OPTION_BIND_EQUALS_OPTION, putting
-   an existential into our rewrite thereby *)
-(* HOL4 ML code, not ported:
-val rules = SIMP_CONV (bool_ss ++ ty2frag ``:(α,β,γ,δ)peg``)
-                      [cmlPEG_def, combinTheory.K_DEF,
-                       finite_mapTheory.FUPDATE_LIST_THM] rules_t
-*)
+(* HOL4 cmlPEGScript.sml:526-532: ML code, not ported *)
+(* HOL4 cmlPEGScript.sml:533-538: code that the source has in a
+   comment *)
+(* HOL4 cmlPEGScript.sml:539-541: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = print "Calculating application of cmlPEG rules\n"
-val cmlpeg_rules_applied = let
-  val app0 = finite_mapSyntax.fapply_tm
-  val theta =
-      Type.match_type (type_of app0 |> dom_rng |> #1) (type_of rules_t)
-  val app = inst theta app0
-  val app_rules = AP_TERM app rules
-  val sset = bool_ss ++ ty2frag ``:'a + 'b`` ++ ty2frag ``:MMLnonT``
-  fun mkrule t =
-      AP_THM app_rules ``mkNT ^t``
-             |> SIMP_RULE sset
-                  [finite_mapTheory.FAPPLY_FUPDATE_THM]
-  val ths = TypeBase.constructors_of ``:MMLnonT`` |> map mkrule
-in
-    save_thm("cmlpeg_rules_applied", LIST_CONJ ths);
-    ths
-end
-*)
+(* HOL4 cmlPEGScript.sml:543-559: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val spec0 =
-    peg_nt_thm |> Q.GEN `G`  |> Q.ISPEC `cmlPEG`
-               |> SIMP_RULE (srw_ss()) [FDOM_cmlPEG]
-               |> Q.GEN `n`
-*)
+(* HOL4 cmlPEGScript.sml:568-571: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val mkNT = ``mkNT``
-*)
+(* HOL4 cmlPEGScript.sml:573: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val test1 = time EVAL
-             “peg_exec cmlPEG (pnt nErel)
-              (map_loc [IntT 3; StarT; IntT 4; SymbolT «/»; IntT (-2);
-                        SymbolT «>»; AlphaT «x»] 0)
-              [] NONE [] done failed”
-*)
+(* HOL4 cmlPEGScript.sml:582-586: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val peg_range =
-    SIMP_CONV (srw_ss())
-              (FDOM_cmlPEG :: frange_image :: cmlpeg_rules_applied)
-              ``FRANGE cmlPEG.rules``
-*)
+(* HOL4 cmlPEGScript.sml:594-597: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val peg_start = SIMP_CONV(srw_ss()) [cmlPEG_def]``cmlPEG.start``
-*)
+(* HOL4 cmlPEGScript.sml:599: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val wfpeg_rwts = wfpeg_cases
-                   |> ISPEC ``cmlPEG``
-                   |> (fn th => map (fn t => Q.SPEC t th)
-                                    [`seq e1 e2 f`, `choice e1 e2 f`,
-                                      `tok P f`,
-                                     `any f`, `empty v`, `not e v`, `rpt
-                                       e f`,
-                                     `choicel []`, `choicel (h::t)`,
-                                       `tokeq t`,
-                                     `pegf e f`, ‘tokSymP P’
-                      ])
-                   |> map (CONV_RULE
-                             (RAND_CONV (SIMP_CONV (srw_ss())
-                                                   [choicel_def,
-                                                     seql_def,
-                                                    tokeq_def,
-                                                      tokSymP_def,
-                                                    pegf_def])))
-*)
+(* HOL4 cmlPEGScript.sml:601-613: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val wfpeg_pnt = wfpeg_cases
-                  |> ISPEC ``cmlPEG``
-                  |> Q.SPEC `pnt n`
-                  |> CONV_RULE (RAND_CONV (SIMP_CONV (srw_ss())
-                    [pnt_def]))
-*)
+(* HOL4 cmlPEGScript.sml:615-618: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val peg0_rwts = peg0_cases
-                  |> ISPEC ``cmlPEG`` |> CONJUNCTS
-                  |> map (fn th => map (fn t => Q.SPEC t th)
-                                       [`tok P f`, `choice e1 e2 f`,
-                                        ‘seq e1 e2 f’, ‘tokSymP P’,
-                                        `tokeq t`, `empty l`, `not e
-                                          v`])
-                  |> List.concat
-                  |> map (CONV_RULE
-                            (RAND_CONV (SIMP_CONV (srw_ss())
-                                                  [tokeq_def,
-                                                    tokSymP_def])))
-*)
+(* HOL4 cmlPEGScript.sml:620-629: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val pegfail_t = ``pegfail``
-val peg0_rwts = let
-  fun filterthis th = let
-    val c = concl th
-    val (l,r) = dest_eq c
-    val (f,_) = strip_comb l
-  in
-    not (same_const pegfail_t f) orelse is_const r
-  end
-in
-  List.filter filterthis peg0_rwts
-end
-*)
+(* HOL4 cmlPEGScript.sml:631-642: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val pegnt_case_ths = peg0_cases
-                      |> ISPEC ``cmlPEG`` |> CONJUNCTS
-                      |> map (Q.SPEC `pnt n`)
-                      |> map (CONV_RULE (RAND_CONV (SIMP_CONV (srw_ss())
-                        [pnt_def])))
-*)
+(* HOL4 cmlPEGScript.sml:644-647: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun pegnt(t,acc) = let
-  val th =
-      Q.prove(`¬peg0 cmlPEG (pnt ^t)`,
-            simp pegnt_case_ths >>
-            simp cmlpeg_rules_applied >>
-            simp[FDOM_cmlPEG, peg_V_def, peg_UQConstructorName_def,
-                 peg_StructName_def, peg_EbaseParen_def,
-                 peg_TypeDec_def, peg_longV_def, peg_linfix_def] >>
-            simp(peg0_rwts @ acc))
-  val nm = "peg0_" ^ term_to_string t
-  val th' = save_thm(nm, SIMP_RULE bool_ss [pnt_def] th)
-  val _ = export_rewrites [nm]
-in
-  th::acc
-end
-*)
+(* HOL4 cmlPEGScript.sml:681-695: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val npeg0_rwts =
-    List.foldl pegnt []
-               [“nTypeDec”, “nTypeAbbrevDec”, “nOpID”, “nStructure”,
-                “nDecl”, “nV”, “nUQTyOp”,
-                “nUQConstructorName”, “nStructName”, “nConstructorName”,
-                “nTypeName”,
-                “nDtypeDecl”, “nDconstructor”, “nFDecl”, “nTyvarN”,
-                “nTyOp”, “nTbase”, “nPTbase”, “nDType”, “nPType”,
-                  “nType”,
-                “nTypeList1”, “nTypeList2”,
-                “nRelOps”, “nPtuple”, “nPbase”, “nPapp”,
-                “nPcons”, “nPas”, “nPattern”,
-                “nPatternList”, “nPbaseList1”,
-                “nLetDec”, “nMultOps”, “nListOps”,
-                “nFQV”, “nAddOps”, “nCompOps”, “nEliteral”,
-                “nEbase”, “nEapp”,
-                “nEmult”, “nEadd”, “nElistop”, “nErel”, “nEcomp”,
-                “nEbefore”,
-                “nEtyped”, “nElogicAND”, “nElogicOR”, “nEhandle”,
-                “nE”, “nPE”, “nPEs”, “nElist1”,
-                “nSpecLine”
-               ]
-*)
+(* HOL4 cmlPEGScript.sml:697-717: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun wfnt(t,acc) = let
-  val th =
-    Q.prove(`wfpeg cmlPEG (pnt ^t)`,
-          SIMP_TAC (srw_ss())
-                   (cmlpeg_rules_applied @
-                    [wfpeg_pnt, FDOM_cmlPEG, try_def, peg_longV_def,
-                     seql_def, peg_TypeDec_def, peg_V_def,
-                     peg_EbaseParen_def, peg_StructName_def,
-                     peg_UQConstructorName_def,
-                     tokeq_def, peg_linfix_def]) THEN
-          simp(wfpeg_rwts @ npeg0_rwts @ peg0_rwts @ acc))
-in
-  th::acc
-end;
-*)
+(* HOL4 cmlPEGScript.sml:719-732: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val topo_nts = [“nV”, “nTyvarN”, “nTypeDec”, “nTypeAbbrevDec”,
-                “nSpecLine”, “nSpecLineList”, “nSignatureValue”,
-                “nStructure”,
-                “nDecl”,
-                “nUQTyOp”, “nUQConstructorName”, “nStructName”,
-                “nConstructorName”, “nTyVarList”, “nTypeName”, “nTyOp”,
-                “nTbase”, “nPTbase”, “nTbaseList”, “nDType”, “nPType”,
-                “nListOps”, “nRelOps”, “nPtuple”, “nPbase”, “nPapp”,
-                “nPcons”, “nPas”, “nPattern”,
-                “nPatternList”, “nPbaseList1”,
-                “nPEs”, “nMultOps”, “nLetDec”, “nLetDecs”,
-                “nFQV”,
-                “nFDecl”, “nAddOps”, “nCompOps”, “nOpID”,
-                “nEliteral”, “nEbase”, “nEapp”,
-                “nEmult”, “nEadd”, “nElistop”, “nErel”,
-                “nEcomp”, “nEbefore”, “nEtyped”, “nElogicAND”,
-                “nElogicOR”, “nPE”, “nPEsfx”, “nEhandle”, “nE”,
-                “nType”, “nTypeList1”, “nTypeList2”,
-                “nEseq”, “nElist1”, “nDtypeDecl”,
-                “nOptTypEqn”,
-                “nDecls”, “nDconstructor”, “nAndFDecls”,
-                “nOptionalSignatureAscription”,
-                “nTopLevelDecs”, “nNonETopLevelDecs”
-               ]
-*)
+(* HOL4 cmlPEGScript.sml:734-757: ML code, not ported *)
 
 (*
 set_diff (TypeBase.constructors_of ``:MMLnonT``)
@@ -874,47 +665,10 @@ set_diff (TypeBase.constructors_of ``:MMLnonT``)
                       ``nDtypeCons``])
 *)
 
-(* HOL4 ML code, not ported:
-local
-  val c = concl FDOM_cmlPEG
-  val r = rhs c
-  fun recurse acc t =
-      case Lib.total pred_setSyntax.dest_insert t of
-          SOME(e,t') => recurse (e :: acc) t'
-        | NONE => acc
-  val nts = recurse [] r
-in
-*)
+(* HOL4 cmlPEGScript.sml:808-816: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-  local
-    fun p t = Q.prove(`^t ∈ FDOM cmlPEG.rules`, simp[FDOM_cmlPEG])
-  in
-*)
+(* HOL4 cmlPEGScript.sml:818-820: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-  local
-    val exprs_th' = REWRITE_RULE [pnt_def] PEG_exprs
-                                 |> INST_TYPE [alpha |-> “:string”]
-    val exprs_t = rhs (concl exprs_th')
-    val nt = mk_thy_const{Thy = "peg", Name = "nt",
-                          Ty = ``:MMLnonT inf -> (mlptree list ->
-                            mlptree list) ->
-                               (token,MMLnonT,mlptree list,string)
-                                 pegsym``}
-    val I_t = mk_thy_const{Thy = "combin", Name = "I",
-                           Ty = ``:mlptree list -> mlptree list``}
-    fun p t = let
-      val _ = print ("PEGexpr: "^term_to_string t^"\n")
-      val th0 = prove(pred_setSyntax.mk_in(list_mk_comb(nt,[t,I_t]),
-        exprs_t),
-                      simp[pnt_def])
-                handle e => (print("Failed on "^term_to_string t^"\n");
-                             raise e)
-    in CONV_RULE (RAND_CONV (K (SYM exprs_th'))) th0 end
-  in
-*)
+(* HOL4 cmlPEGScript.sml:824-840: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-end (* local *)
-*)
+(* HOL4 cmlPEGScript.sml:844: ML code, not ported *)

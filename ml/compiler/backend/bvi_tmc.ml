@@ -230,7 +230,8 @@ let cb_size_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [call_block_size_shift, cb_size_def] *)
+(* HOL4 bvi_tmcScript.sml:644-647: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let cb_to_bvi_worker_aux_def = cake_define_list_try_tac (fun () ->

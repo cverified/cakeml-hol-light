@@ -21,49 +21,8 @@ needs "semantics/semanticPrimitives.ml";;
 
 (************************** LEMMAS ***************************)
 
-(*
-Theorem wf_find_loc_wf_find_locL:
-     (∀ e locs . find_loc  e = locs ⇒ wf locs) ∧
-    (∀ l locs . find_locL l = locs ⇒ wf locs)
-Proof
-    ho_match_mp_tac find_loc_ind >> rw[find_loc_def, wf_union] >>
-      rw[wf_def] >>
-    Cases_on `dest_GlobalVarInit op` >> fs[wf_insert]
-QED
-
-Theorem wf_find_locL:
-     ∀ l . wf(find_locL l)
-Proof
-    metis_tac[wf_find_loc_wf_find_locL]
-QED
-
-Theorem wf_find_loc:
-     ∀ e . wf(find_loc e)
-Proof
-    metis_tac[wf_find_loc_wf_find_locL]
-QED
-
-Theorem wf_find_lookups_wf_find_lookupsL:
-     (∀ e lookups . find_lookups e = lookups ⇒ wf lookups) ∧
-    (∀ l lookups . find_lookupsL l = lookups ⇒ wf lookups)
-Proof
-    ho_match_mp_tac find_lookups_ind >>
-    rw[find_lookups_def, wf_union] >> rw[wf_def] >>
-    Cases_on `dest_GlobalVarLookup op` >> fs[wf_insert]
-QED
-
-Theorem wf_find_lookupsL:
-     ∀ l . wf(find_lookupsL l)
-Proof
-    metis_tac[wf_find_lookups_wf_find_lookupsL]
-QED
-
-Theorem wf_find_lookups:
-     ∀ e . wf(find_lookups e)
-Proof
-    metis_tac[wf_find_lookups_wf_find_lookupsL]
-QED
-*)
+(* HOL4 flat_elimProofScript.sml:15-56: code that the source has in a
+   comment *)
 
 
 (************************** DEFINITIONS ***************************)
@@ -71,9 +30,8 @@ QED
 let _ = size_thms "flatSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
-   Cases_on ‘env’ \\ gvs [environment_size_def] \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 flat_elimProofScript.sml:118-126: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let find_v_globals_def = cake_define_list_try_tac (fun () ->
@@ -96,9 +54,7 @@ let find_v_globals_def = cake_define_list_try_tac (fun () ->
    `find_v_globalsL (h :: t) = sptree_union (find_v_globals h)
   (find_v_globalsL t)`];;
 
-(* HOL4 ML code, not ported:
-val find_v_globals_ind = theorem "find_v_globals_ind";
-*)
+(* HOL4 flat_elimProofScript.sml:128: ML code, not ported *)
 
 let find_refs_globals_def = cake_define
   `find_refs_globals x1 =
@@ -112,9 +68,7 @@ let find_refs_globals_def = cake_define
         | (_9 :: t) -> find_refs_globals t
         | [] -> LN`;;
 
-(* HOL4 ML code, not ported:
-val find_refs_globals_ind = theorem "find_refs_globals_ind";
-*)
+(* HOL4 flat_elimProofScript.sml:225: ML code, not ported *)
 
 let find_env_globals_def = cake_define
   `find_env_globals env = find_v_globalsL (MAP SND
@@ -126,9 +80,7 @@ let find_result_globals_def = cake_define
           SOME (Rraise v) -> find_v_globals v
         | _10 -> LN`;;
 
-(* HOL4 ML code, not ported:
-val find_result_globals_ind = theorem "find_result_globals_ind";
-*)
+(* HOL4 flat_elimProofScript.sml:294: ML code, not ported *)
 
 let find_sem_prim_res_globals_def = cake_define_list
   [`find_sem_prim_res_globals (Rerr e:(flatSem_v
@@ -136,18 +88,11 @@ let find_sem_prim_res_globals_def = cake_define_list
             find_result_globals (SOME e)`;
    `find_sem_prim_res_globals (Rval e) = find_v_globalsL e`];;
 
-(* HOL4 ML code, not ported:
-val s =  ``s:('c,'ffi) state``
-val t = mk_var ("t", type_of s)
-val new_state = mk_var ("new_state", type_of s);
-val state = mk_var ("state", type_of s);
-*)
+(* HOL4 flat_elimProofScript.sml:303-306: ML code, not ported *)
 
 let _ = size_thms "flatSem_v";;
-(* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] \\ rw
-   [] \\ Cases_on ‘env’ \\ gvs [environment_size_def] \\ imp_res_tac
-   MEM_list_size \\ pop_assum $ qspec_then ‘v_size’ mp_tac \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 flat_elimProofScript.sml:317-324: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let v_has_Eval_def1 = cake_define_try_tac (fun () ->
@@ -201,35 +146,20 @@ let flat_state_rel_def = cake_define
 (**************************** FLATLANG LEMMAS
    *****************************)
 
-(* HOL4 ML code, not ported:
-val v_has_Eval_Unitv = EVAL ``v_has_Eval Unitv``;
-*)
+(* HOL4 flat_elimProofScript.sml:462: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun qif_pat_tac qpat (tac : tactic) goal = if can (rename [qpat]) goal
-  then tac goal
-  else ALL_TAC goal
-*)
+(* HOL4 flat_elimProofScript.sml:479-481: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun conseq xs = ConseqConv.CONSEQ_REWRITE_TAC (xs, [], [])
-*)
+(* HOL4 flat_elimProofScript.sml:483: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val eqs = flatSemTheory.case_eq_thms;
-*)
+(* HOL4 flat_elimProofScript.sml:519: ML code, not ported *)
 
 
 (**************************** MAIN LEMMAS *****************************)
 
 (******** EVALUATE INDUCTION ********)
 
-(* HOL4 ML code, not ported:
-val evaluate_exp_ind = evaluate_ind
-  |> Q.SPECL [`P`, `\_ _. T`, `\_ _. T`]
-  |> UNDISCH |> CONJUNCT1 |> DISCH_ALL
-  |> Q.GEN `P`
-*)
+(* HOL4 flat_elimProofScript.sml:773-776: ML code, not ported *)
 
 (******** EVALUATE SPECIALISATION ********)
 

@@ -65,60 +65,15 @@ let adj_clock_def = cake_define
   `adj_clock inc dec s = (semanticPrimitives_state_clock_fupd (K
   ((semanticPrimitives_state_clock s + inc) - dec)) s)`;;
 
-(* HOL4 ML code, not ported:
-val step_tac =
-  rpt (FIRST ([strip_tac]
-    @ map ho_match_mp_tac [is_clock_io_mono_bind,
-      is_clock_io_mono_check]
-    @ [CHANGED_TAC (fs [Cong is_clock_io_mono_cong,
-                        is_clock_io_mono_return, is_clock_io_mono_err,
-                        do_eval_res_def, dec_inc_clock]),
-                          TOP_CASE_TAC]));
-*)
+(* HOL4 evaluatePropsScript.sml:321-326: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun mk_extra_lemmas mp_rule monad_rule
-  = BODY_CONJUNCTS monad_rule
-    |> map (BETA_RULE o MATCH_MP mp_rule o Q.GEN `s`)
-fun prove_extra mp_rule monad_rule
-  = simp_tac bool_ss (mk_extra_lemmas mp_rule monad_rule)
-*)
+(* HOL4 evaluatePropsScript.sml:407-411: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_decs_lemmas
-  = BODY_CONJUNCTS is_clock_io_mono_evaluate_decs
-    |> map (BETA_RULE o MATCH_MP is_clock_io_mono_extra o Q.GEN `s`)
-*)
+(* HOL4 evaluatePropsScript.sml:586-588: ML code, not ported *)
 
-(* due to Eval this is no longer true
-Theorem evaluate_state_unchanged:
-  (!(st:'ffi state) env es st' r.
-    evaluate st env es = (st', r)
-    ⇒
-    st'.next_type_stamp = st.next_type_stamp ∧
-    st'.next_exn_stamp = st.next_exn_stamp) ∧
-  (!(st:'ffi state) env v pes err_v st' r.
-    evaluate_match st env v pes err_v = (st', r)
-    ⇒
-    st'.next_type_stamp = st.next_type_stamp ∧
-    st'.next_exn_stamp = st.next_exn_stamp)
-Proof
- ho_match_mp_tac evaluate_ind
- >> rw [evaluate_def]
- >> every_case_tac
- >> fs []
- >> rw [dec_clock_def, shift_fp_opts_def]
-QED
-*)
+(* HOL4 evaluatePropsScript.sml:693-712: code that the source has in
+   a comment *)
 
-(* HOL4 ML code, not ported:
-val evaluate_set_clock_lemmas
-  = (BODY_CONJUNCTS is_clock_io_mono_evaluate
-    @ BODY_CONJUNCTS is_clock_io_mono_evaluate_decs)
-  |> map (BETA_RULE o MATCH_MP is_clock_io_mono_set_clock);
-*)
+(* HOL4 evaluatePropsScript.sml:899-902: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_minimal_lemmas = BODY_CONJUNCTS is_clock_io_mono_evaluate
-  |> map (BETA_RULE o MATCH_MP is_clock_io_mono_minimal);
-*)
+(* HOL4 evaluatePropsScript.sml:937-938: ML code, not ported *)

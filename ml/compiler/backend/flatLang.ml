@@ -97,9 +97,7 @@ hol4_overload "Mat" "flatLang_Mat";;
 hol4_overload "Let" "flatLang_Let";;
 hol4_overload "Letrec" "flatLang_Letrec";;
 
-(* HOL4 ML code, not ported:
-val exp_size_def = definition"exp_size_def";
-*)
+(* HOL4 flatLangScript.sml:86: ML code, not ported *)
 
 let bool_id_def = cake_define
   `bool_id = 0`;;

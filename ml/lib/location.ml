@@ -22,10 +22,10 @@ let locn_colupdate_def = cake_define
 let locs_INDUCT,locs_RECURSION = define_datatype
   "locs = Locs (locn) (locn)";;
 
-(* HOL4 overload (expanded in the port):
-     end_locn = EOFpt *)
-(* HOL4 overload (expanded in the port):
-     unknown_locn = UNKNOWNpt *)
+(* HOL4 locationScript.sml:35: the overload end_locn, which the port
+   expands *)
+(* HOL4 locationScript.sml:36: the overload unknown_locn, which the
+   port expands *)
 
 let unknown_loc_def = cake_define
   `unknown_loc = Locs UNKNOWNpt UNKNOWNpt`;;

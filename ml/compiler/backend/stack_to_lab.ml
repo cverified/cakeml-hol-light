@@ -25,8 +25,8 @@ needs "lib/comparison.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 overload (expanded in the port):
-     Asm = λa. Asm (Asmi a) *)
+(* HOL4 stack_to_labScript.sml:17: the overload Asm, which the port
+   expands *)
 
 let compile_jump_def = cake_define_list
   [`compile_jump (INL n) = labLang_LabAsm (Jump (labLang_Lab n 0))

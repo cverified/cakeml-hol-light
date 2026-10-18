@@ -51,9 +51,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* -- *)
 
-(* HOL4 ML code, not ported:
-val compile_tap_def = backend_passesTheory.compile_tap_def;
-*)
+(* HOL4 backendProofScript.sml:51: ML code, not ported *)
 
 let backend_config_ok_def = cake_define
   `backend_config_ok (asm_conf:'a asm_config) (c:backend_config) <=>
@@ -151,67 +149,58 @@ let heap_regs_def = cake_define
   `heap_regs reg_names =
      (tlookup reg_names 2,tlookup reg_names 4)`;;
 
-(* HOL4 overload (expanded in the port):
-     bvl_inline_compile_prog = bvl_inline$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvi_tailrec_compile_prog = bvi_tailrec$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvi_tmc_compile_prog = bvi_tmc$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvi_inline_compile_inc = bvi_inline$compile_inc *)
-(* HOL4 overload (expanded in the port):
-     bvi_to_data_compile_prog = bvi_to_data$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile_prog = bvl_to_bvi$compile_prog *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile_inc = bvl_to_bvi$compile_inc *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile = bvl_to_bvi$compile *)
-(* HOL4 overload (expanded in the port):
-     bvi_to_data_compile = bvi_to_data$compile *)
-(* HOL4 overload (expanded in the port):
-     bvi_let_compile = bvi_let$compile *)
-(* HOL4 overload (expanded in the port):
-     bvl_const_compile = bvl_const$compile *)
-(* HOL4 overload (expanded in the port):
-     bvl_handle_compile = bvl_handle$compile *)
-(* HOL4 overload (expanded in the port):
-     bvl_inline_compile_inc = bvl_inline$compile_inc *)
-(* HOL4 overload (expanded in the port):
-     bvl_to_bvi_compile_exps = bvl_to_bvi$compile_exps *)
-(* HOL4 overload (expanded in the port):
-     flat_to_clos_inc_compile = flat_to_clos$inc_compile_decs *)
-(* HOL4 overload (expanded in the port):
-     stack_remove_prog_comp = stack_remove$prog_comp *)
-(* HOL4 overload (expanded in the port):
-     stack_alloc_prog_comp = stack_alloc$prog_comp *)
-(* HOL4 overload (expanded in the port):
-     stack_names_prog_comp = stack_names$prog_comp *)
+(* HOL4 backendProofScript.sml:175: the overload
+   bvl_inline_compile_prog, which the port expands *)
+(* HOL4 backendProofScript.sml:176: the overload
+   bvi_tailrec_compile_prog, which the port expands *)
+(* HOL4 backendProofScript.sml:177: the overload
+   bvi_tmc_compile_prog, which the port expands *)
+(* HOL4 backendProofScript.sml:178: the overload
+   bvi_inline_compile_inc, which the port expands *)
+(* HOL4 backendProofScript.sml:179: the overload
+   bvi_to_data_compile_prog, which the port expands *)
+(* HOL4 backendProofScript.sml:180: the overload
+   bvl_to_bvi_compile_prog, which the port expands *)
+(* HOL4 backendProofScript.sml:181: the overload
+   bvl_to_bvi_compile_inc, which the port expands *)
+(* HOL4 backendProofScript.sml:182: the overload bvl_to_bvi_compile,
+   which the port expands *)
+(* HOL4 backendProofScript.sml:183: the overload bvi_to_data_compile,
+   which the port expands *)
+(* HOL4 backendProofScript.sml:184: the overload bvi_let_compile,
+   which the port expands *)
+(* HOL4 backendProofScript.sml:185: the overload bvl_const_compile,
+   which the port expands *)
+(* HOL4 backendProofScript.sml:186: the overload bvl_handle_compile,
+   which the port expands *)
+(* HOL4 backendProofScript.sml:187: the overload
+   bvl_inline_compile_inc, which the port expands *)
+(* HOL4 backendProofScript.sml:188: the overload
+   bvl_to_bvi_compile_exps, which the port expands *)
+(* HOL4 backendProofScript.sml:189: the overload
+   flat_to_clos_inc_compile, which the port expands *)
+(* HOL4 backendProofScript.sml:190: the overload
+   stack_remove_prog_comp, which the port expands *)
+(* HOL4 backendProofScript.sml:191: the overload
+   stack_alloc_prog_comp, which the port expands *)
+(* HOL4 backendProofScript.sml:192: the overload
+   stack_names_prog_comp, which the port expands *)
 
 (* TODO: remove when theorems are moved *)
-(* HOL4 overload (expanded in the port):
-     obeys_max_app = closProps$obeys_max_app *)
-(* HOL4 overload (expanded in the port):
-     no_Labels = closProps$no_Labels *)
-(* HOL4 overload (expanded in the port):
-     every_Fn_SOME = closProps$every_Fn_SOME *)
-(* HOL4 overload (expanded in the port):
-     code_locs = closProps$code_locs *)
-(* HOL4 overload (expanded in the port):
-     no_mti = closProps$no_mti *)
+(* HOL4 backendProofScript.sml:195: the overload obeys_max_app, which
+   the port expands *)
+(* HOL4 backendProofScript.sml:196: the overload no_Labels, which the
+   port expands *)
+(* HOL4 backendProofScript.sml:197: the overload every_Fn_SOME, which
+   the port expands *)
+(* HOL4 backendProofScript.sml:198: the overload code_locs, which the
+   port expands *)
+(* HOL4 backendProofScript.sml:199: the overload no_mti, which the
+   port expands *)
 
 (* TODO: move these *)
 
-(* HOL4 ML code, not ported:
-val semantics_thms = [source_to_flatProofTheory.compile_semantics,
-  flat_to_closProofTheory.compile_semantics,
-  clos_to_bvlProofTheory.compile_semantics,
-  bvl_to_bviProofTheory.compile_semantics,
-  bvi_to_dataProofTheory.compile_prog_semantics,
-  data_to_wordProofTheory.compile_semantics,
-  word_to_stackProofTheory.compile_semantics,
-  full_make_init_semantics]
-*)
+(* HOL4 backendProofScript.sml:308-315: ML code, not ported *)
 
 let cake_configs_def = cake_define
   `cake_configs asm_conf c source =
@@ -240,76 +229,24 @@ let config_tuple1_def = cake_define
      FST (clos_to_bvl_config_call_state (backend_config_clos_conf
        c)),config_tuple2 c)`;;
 
-(* HOL4 ML code, not ported:
-val cake_orac_config_inv_f =
-  ``(\ (sc, cc, bc, mc). (sc.pattern_cfg, cc.max_app, cc.do_call,
-    IS_SOME cc.known_conf,
-        known_static_conf cc.known_conf, cc.do_mti,
-          bc.inline_size_limit,
-        bc.split_main_at_seq, bc.exp_cut, bc.do_tailrec, bc.do_tmc, mc))
-    o (\c. (c.source_conf, c.clos_conf, c.bvl_conf, c.data_conf,
-            c.word_to_word_conf.reg_alg, c.stack_conf, (asm_conf: 'a
-              asm_config)))``
-*)
+(* HOL4 backendProofScript.sml:404-409: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val cake_orac_config_tuple_eq_step = ISPEC cake_orac_config_inv_f
-  cake_configs_eq
-  |> SIMP_RULE std_ss []
-*)
+(* HOL4 backendProofScript.sml:411-412: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val orac_eq_prop = let
-    val m = match_term ``A /\ B /\ C ==> P``
-        (concl cake_orac_config_tuple_eq_step)
-  in subst (fst m) ``A ==> P`` end;
-*)
+(* HOL4 backendProofScript.sml:414-417: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val [source_to_flat_orac_eq, flat_to_clos_orac_eq,
-    clos_to_bvl_orac_eq, bvl_to_bvi_orac_eq, bvi_to_data_orac_eq,
-    data_to_word_orac_eq, word_to_stack_orac_eq, stack_to_lab_orac_eq] =
-        map GEN_ALL (CONJUNCTS cake_orac_eqs);
-*)
+(* HOL4 backendProofScript.sml:583-586: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val simple_orac_eqs = LIST_CONJ [source_to_flat_orac_eq,
-  flat_to_clos_orac_eq,
-    bvi_to_data_orac_eq];
-*)
+(* HOL4 backendProofScript.sml:588-589: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val from_EXS = [
-    from_clos_conf_EX,
-    from_bvl_conf_EX,
-    from_bvi_conf_EX,
-    from_data_conf_EX,
-    from_word_conf_EX,
-    from_stack_conf_EX,
-    from_lab_conf_EX]
-*)
+(* HOL4 backendProofScript.sml:694-701: ML code, not ported *)
 
-(*
-Theorem MAP_compile_distinct_setglobals:
-  BAG_ALL_DISTINCT (flatProps$elist_globals es) ⇒
-  BAG_ALL_DISTINCT (closProps$elist_globals (flat_to_clos_compile m es))
-Proof
-  fs [closPropsTheory.elist_globals_FOLDR, MAP_MAP_o, o_DEF,
-    GSYM pat_to_closProofTheory.set_globals_eq, ETA_THM,
-    patPropsTheory.elist_globals_FOLDR]
-QED
-*)
+(* HOL4 backendProofScript.sml:703-712: code that the source has in a
+   comment *)
 
-(* HOL4 ML code, not ported:
-fun conseq xs = ConseqConv.CONSEQ_REWRITE_TAC (xs, [], [])
-*)
+(* HOL4 backendProofScript.sml:753: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun qsubpat_x_assum tac = let
-    fun m t = can (find_term (can (match_term t)))
-    fun ttac t thm = if m t (concl thm) then tac thm else NO_TAC
-  in Tactical.Q_TAC (fn t => first_x_assum (ttac t)) end
-*)
+(* HOL4 backendProofScript.sml:755-758: ML code, not ported *)
 
 let state_co_fun_def = cake_define
   `state_co_fun f_inc x =
@@ -436,12 +373,10 @@ let backend_from_flat_tuple_cc_def = cake_define
               bvi_to_data_compile_prog
               (backend_from_data_tuple_cc asm_conf c)))))`;;
 
-(* HOL4 overload (expanded in the port):
-     mk_flat_install_conf = flatProps$mk_flat_install_conf *)
+(* HOL4 backendProofScript.sml:3046: the overload
+   mk_flat_install_conf, which the port expands *)
 
-(* HOL4 ML code, not ported:
-val mk_flat_install_conf_def = flatPropsTheory.mk_flat_install_conf_def;
-*)
+(* HOL4 backendProofScript.sml:3048: ML code, not ported *)
 
 let the_EvalDecs_def = cake_define
   `the_EvalDecs (EvalDecs x) = x`;;

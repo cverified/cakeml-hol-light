@@ -143,12 +143,8 @@ let stack_frame_INDUCT,stack_frame_RECURSION = define_datatype
   "stack_frame = StackFrame (num option) ((num#'a word_loc) list) \
    ((num#'a word_loc) list) ((num#num#num) option)";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     gc_fun_type = ('a word_loc list) # (('a word) -> ('a word_loc)) #
-       ('a word) set #
-      (store_name |-> 'a word_loc) ->
-      (('a word_loc list) # (('a word) -> ('a word_loc)) #
-      (store_name |-> 'a word_loc)) option *)
+(* HOL4 wordSemScript.sml:193-197: the type abbreviation gc_fun_type,
+   which the port expands *)
 
 let gc_bij_ok_def = cake_define
   `gc_bij_ok (seq':num->num->num) = (!n. BIJ (seq' n) UNIV UNIV)`;;
@@ -234,9 +230,7 @@ let stack_size_frame_def = cake_define
 let stack_size_def = cake_define
   `stack_size = FOLDR (OPTION_MAP2 (+) o stack_size_frame) (SOME 1)`;;
 
-(* HOL4 ML code, not ported:
-val state_component_equality = theorem"state_component_equality";
-*)
+(* HOL4 wordSemScript.sml:239: ML code, not ported *)
 
 let wordSem_result_INDUCT,wordSem_result_RECURSION = define_datatype
   "wordSem_result = wordSem_Result ('w word_loc) (('w word_loc) list) \
@@ -267,9 +261,7 @@ let isException_def = cake_define
         | _20 -> F`;;
 hol4_overload "isException" "wordSem_isException";;
 
-(* HOL4 ML code, not ported:
-val s = ``(s:('a,'c,'ffi) wordSem$state)``
-*)
+(* HOL4 wordSemScript.sml:260: ML code, not ported *)
 
 let dec_clock_def = cake_define
   `wordSem_dec_clock (s:('a,'c,'ffi)wordSem_state) =
@@ -358,9 +350,8 @@ hol4_overload "set_store" "wordSem_set_store";;
 let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
-   MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
-   `ARB`)) \\ DECIDE_TAC *)
+(* HOL4 wordSemScript.sml:357-362: the tactic that proves the
+   termination *)
 let word_exp_def = cake_define_list_try (fun () ->
   `MEASURE (wordLang_exp_size ARB o SND)`)
   [`wordSem_word_exp (s:('a,'c,'ffi)wordSem_state) (wordLang_Const w)
@@ -1012,19 +1003,8 @@ if concl fix_clock_IMP <> `T` then
 let _ = size_thms "wordLang_prog";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ TRY
-   (full_simp_tac(srw_ss())[] \\ DECIDE_TAC) \\
-   full_simp_tac(srw_ss())[termdep_rw,STOP_def] \\ imp_res_tac
-   fix_clock_IMP_LESS_EQ \\ full_simp_tac(srw_ss())[] \\ imp_res_tac
-   (GSYM fix_clock_IMP_LESS_EQ) \\ TRY (Cases_on `handler`) \\ TRY
-   (PairCases_on `x`) \\
-   full_simp_tac(srw_ss())[set_var_def,set_vars_def,push_env_def
-     ,call_env_def,dec_clock_def,LET_THM]
-   \\ rpt (pairarg_tac \\ full_simp_tac(srw_ss())[]) \\
-   full_simp_tac(srw_ss())[pop_env_def] \\ every_case_tac \\
-   full_simp_tac(srw_ss())[] \\ srw_tac[][] \\
-   full_simp_tac(srw_ss())[] \\ gvs [cut_state_def,CaseEq"option"] \\
-   decide_tac *)
+(* HOL4 wordSemScript.sml:1247-1260: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->
@@ -1336,7 +1316,4 @@ let word_lang_safe_for_space_def = cake_define
 
 (* clean up *)
 
-(* HOL4 ML code, not ported:
-val _ = map delete_binding ["evaluate_AUX_def",
-  "evaluate_primitive_def"];
-*)
+(* HOL4 wordSemScript.sml:1412: ML code, not ported *)

@@ -85,95 +85,13 @@ let ffi_asm_def = cake_define_list
            (implode "\n")]) (export_arm7_ffi_asm ffis)`];;
 hol4_overload "ffi_asm" "export_arm7_ffi_asm";;
 
-(* HOL4 ML code, not ported:
-val ffi_code' =
-  ``λret. SmartAppend
-    (List (MAP (\n. strlit(n ++ "\n"))
-     ["/* CakeML FFI interface (each block is 16 bytes long) */";
-       "";
-       "     .p2align 4";
-       ""]))(
-    SmartAppend
-     (ffi_asm (REVERSE ffi_names))
-     (List (MAP (\n. strlit(n ++ "\n"))
-      (["cake_clear:";
-       "     b   cdecl(cml_exit)";
-       "     .p2align 4";
-       "";
-       "cake_exit:"] ++
-       (if ret then
-         ["     b   cml_return"]
-       else
-         ["     b   cdecl(cml_exit)"]) ++
-      ["     .p2align 4";
-       "";
-       "cake_main:";
-       "";
-       "/* Generated machine code follows */";
-       ""]))))``
-*)
+(* HOL4 export_arm7Script.sml:69-93: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val (ffi_code_true,ffi_code_false) =
-    (``^ffi_code' T`` |> EVAL |> concl |> rand,
-     ``^ffi_code' F`` |> EVAL |> concl |> rand);
-*)
+(* HOL4 export_arm7Script.sml:95-97: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val ffi_code =
-  ``λret. if ret then ^ffi_code_true else ^ffi_code_false``;
-*)
+(* HOL4 export_arm7Script.sml:99-100: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val entry_point_code =
-  ``(List (MAP (\n. strlit(n ++ "\n"))
-    [""; "";
-     "cml_enter:";
-     "     push   {r5,r6,r8,r10,r11,lr}";
-     "     b      cake_main";
-     "     .p2align 4";
-     ""; "";
-     "cake_enter:";
-     "     push   {r5,r6,r8,r10,r11,lr}";
-     "     ldr    r5,=can_enter";
-     "     ldr    r6, [r5]";
-     "     cmp    r6, #0";
-     "     beq    cake_err3";
-     "     mov    r6, #0";
-     "     str    r6, [r5]";
-     "     ldr    r5,=ret_base";
-     "     ldr    r10, [r5]";
-     "     ldr    r5,=ret_stack";
-     "     ldr    r11, [r5]";
-     "     ldr    r5,=ret_stackend";
-     "     ldr    r8, [r5]";
-     "     ldr    lr,=cake_return";
-     "     bx     r4";
-     "     .p2align 4";
-     ""; "";
-     "cml_return:";
-     "     ldr    r5,=ret_base";
-     "     str    r10, [r5]";
-     "     ldr    r5,=ret_stack";
-     "     str    r11, [r5]";
-     "     ldr    r5,=ret_stackend";
-     "     str    r8, [r5]";
-     "";
-     "cake_return:";
-     "     ldr    r5,=can_enter";
-     "     mov    r6, #1";
-     "     str    r6, [r5]";
-     "     pop    {r5,r6,r8,r10,r11,lr}";
-     "     pop    {r4}";
-     "     bx     lr";
-     "     .p2align 4";
-     ""; "";
-     "cake_err3:";
-     "     mov    r0, #3";
-     "     b      cdecl(cml_err)";
-     "     .p2align 4";
-     ""]))`` |> EVAL |> concl |> rand;
-*)
+(* HOL4 export_arm7Script.sml:102-149: ML code, not ported *)
 
 let export_func_def = cake_define
   `export_arm7_export_func appl (name,label,start',len) =

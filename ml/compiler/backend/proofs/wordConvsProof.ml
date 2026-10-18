@@ -213,20 +213,9 @@ needs "compiler/backend/word_unreach.ml";;
 
 (* labels_rel *)
 
-(* HOL4 ML code, not ported:
-fun FIRST_THEN tacs tac = FIRST (map (fn t => t \\ tac) tacs)
-*)
+(* HOL4 wordConvsProofScript.sml:252: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val try_cancel_labels_rel_append =
-  FIRST_THEN [ALL_TAC, irule labels_rel_append_imp]
-  (FIRST_THEN [REWRITE_TAC [GSYM APPEND_ASSOC],
-      REWRITE_TAC [APPEND_ASSOC], ONCE_REWRITE_TAC [APPEND_ASSOC]]
-  (FIRST_THEN [ALL_TAC, irule labels_rel_append_imp]
-  (FIRST_THEN [REWRITE_TAC [GSYM APPEND_ASSOC], REWRITE_TAC
-    [APPEND_ASSOC]]
-  (drule_at_then Any irule labels_rel_APPEND))));
-*)
+(* HOL4 wordConvsProofScript.sml:254-260: ML code, not ported *)
 
 (* The tricky part: to prove this syntactic property (and only for this)
    we
@@ -250,12 +239,7 @@ val try_cancel_labels_rel_append =
 (*** full_ssa_cc_trans ***)
 
 (*** remove_dead_prog ***)
-(* HOL4 ML code, not ported:
-val convs =
-  [flat_exp_conventions_def,full_inst_ok_less_def,every_inst_def
-  ,pre_alloc_conventions_def,call_arg_convention_def,every_stack_var_def
-  ,every_var_def,extract_labels_def,wf_cutsets_def];
-*)
+(* HOL4 wordConvsProofScript.sml:1519: ML code, not ported *)
 
 (*** word_common_subexp_elim ***)
 
@@ -267,25 +251,7 @@ val convs =
 (*** copy_prop ***)
 
 (* may not prove goal fully *)
-(* HOL4 ML code, not ported:
-fun boring_tac def =
-  ho_match_mp_tac copy_prop_prog_ind
-  >>rw[copy_prop_prog_def,def]
-  >>rpt(pairarg_tac>>fs[])
-  >>rw[def]
-  >-(
-    qid_spec_tac‘cs’>>qid_spec_tac‘i’
-    >>ho_match_mp_tac copy_prop_inst_ind
-    >>rw[copy_prop_inst_def,def]
-  )
-  >-(
-    TOP_CASE_TAC>>rw[def]
-  )
-  >- (
-    every_case_tac>>simp[def]>>
-    pairarg_tac>>simp[def]
-  );
-*)
+(* HOL4 wordConvsProofScript.sml:1855-1871: ML code, not ported *)
 
 (* trivial and tedious *)
 
@@ -297,12 +263,7 @@ fun boring_tac def =
 
 (*** remove_must_terminate ***)
 
-(* HOL4 ML code, not ported:
-val rmt_convs = [flat_exp_conventions_def, full_inst_ok_less_def,
-  every_inst_def, post_alloc_conventions_def, call_arg_convention_def,
-  wordLangTheory.every_stack_var_def, wordLangTheory.every_var_def,
-  extract_labels_def]
-*)
+(* HOL4 wordConvsProofScript.sml:2924-2927: ML code, not ported *)
 
 (*** word_to_word ***)
 

@@ -14,41 +14,13 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 ML code, not ported:
-val s = ``(s:('c,'ffi) bvlSem$state)``
-*)
+(* HOL4 bvlPropsScript.sml:14: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val case_eq_thms = LIST_CONJ
-  (CaseEq "eq_result" :: CaseEq "const_part" :: CaseEq "word_size" ::
-   CaseEq "result" :: CaseEq "error_result" ::
-   map TypeBase.case_eq_of
-  [``:v``, ``:'a ref``, ``:'a option``, ``:'a list``, ``:'a + 'b``,
-   ``:closLang$op``, ``:closLang$mem_op``, ``:closLang$int_op``,
-   ``:closLang$word_op``, ``:closLang$block_op``, ``:closLang$glob_op``,
-   ``:'a ffi_result``])
-val case_eq_thms = CONJ bool_case_eq (CONJ pair_case_eq case_eq_thms)
-*)
+(* HOL4 bvlPropsScript.sml:34-42: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_LENGTH = Q.prove(
-  `!xs s env. (\(xs,s,env).
-      (case evaluate (xs,s,env) of (Rval res,s1) => (LENGTH xs = LENGTH
-        res)
-            | _ => T))
-      (xs,s,env)`,
-  HO_MATCH_MP_TAC evaluate_ind \\ REPEAT STRIP_TAC
-  \\ FULL_SIMP_TAC (srw_ss()) [evaluate_def]
-  \\ SRW_TAC [] [] \\ SRW_TAC [] []
-  \\ BasicProvers.EVERY_CASE_TAC \\ FULL_SIMP_TAC (srw_ss()) []
-  \\ REV_FULL_SIMP_TAC std_ss [] \\ FULL_SIMP_TAC (srw_ss()) [])
-  |> SIMP_RULE std_ss [];
-*)
+(* HOL4 bvlPropsScript.sml:213-223: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun split_tac q = Cases_on q \\ Cases_on `q` \\ FULL_SIMP_TAC (srw_ss())
-  [];
-*)
+(* HOL4 bvlPropsScript.sml:417: ML code, not ported *)
 
 let inc_clock_def = cake_define
   `bvlProps_inc_clock ck s = bvlSem_state_clock_fupd (K
@@ -121,9 +93,8 @@ let bEvery_def = cake_define_list_wf
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp[bvlTheory.exp_size_def] \\ rpt conj_tac
-   \\ rpt gen_tac \\ Induct_on`es` \\ rw[bvlTheory.exp_size_def] \\
-   simp[] \\ res_tac \\ simp[] *)
+(* HOL4 bvlPropsScript.sml:888-895: the tactic that proves the
+   termination *)
 let get_code_labels_def = cake_define_list_try (fun () ->
   `MEASURE flatLang_exp_size`)
   [`bvlProps_get_code_labels (bvl_Var _2) = {}`;

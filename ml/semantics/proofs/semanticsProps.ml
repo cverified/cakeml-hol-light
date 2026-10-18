@@ -16,22 +16,9 @@ needs "semantics/proofs/typeSound.ml";;
 needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semantics.ml";;
 
-(* HOL4 ML code, not ported:
-val tac1 =
-    metis_tac[semanticPrimitivesTheory.result_11
-      ,evaluate_decs_ffi_mono_clock,io_events_mono_def,
-              semanticPrimitivesTheory.error_result_11,option_nchotomy
-                ,LESS_EQ_CASES,
-              semanticPrimitivesTheory.abort_distinct,pair_CASES,FST
-                ,THE_DEF,
-              PAIR_EQ,IS_SOME_EXISTS,SOME_11,NOT_SOME_NONE,SND,PAIR
-                ,LESS_OR_EQ]
-*)
+(* HOL4 semanticsPropsScript.sml:76-80: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val tac2 = every_case_tac >> rfs[] >> first_x_assum (qspec_then `k`
-  assume_tac) >> rfs[]
-*)
+(* HOL4 semanticsPropsScript.sml:82: ML code, not ported *)
 
 let state_invariant_def = cake_define
   `state_invariant st <=>

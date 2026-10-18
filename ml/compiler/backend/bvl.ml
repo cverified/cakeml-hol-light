@@ -53,8 +53,8 @@ hol4_overload "Bool" "bvl_Bool";;
 let mk_tick_def = cake_define
   `mk_tick n e = (FUNPOW Tick n e:bvl_exp)`;;
 
-(* HOL4 overload (expanded in the port):
-     mk_unit = bvl$Op (BlockOp (Cons 0)) [] *)
+(* HOL4 bvlScript.sml:50: the overload mk_unit, which the port
+   expands *)
 
-(* HOL4 overload (expanded in the port):
-     mk_elem_at = λb i. bvl$Op (BlockOp (ElemAt i)) [b] *)
+(* HOL4 bvlScript.sml:52: the overload mk_elem_at, which the port
+   expands *)

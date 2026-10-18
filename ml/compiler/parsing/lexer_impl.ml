@@ -17,14 +17,7 @@ needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
 (* HOL4 ancestors outside the port: rich_list *)
 
-(* HOL4 ML code, not ported:
-val tac =
- full_simp_tac (srw_ss()) [char_le_def, char_lt_def] >>
- Cases_on `t` >>
- rw [get_token_def, processIdent_def, isAlphaNum_def, isAlpha_def,
-   isDigit_def,
-     isLower_def, isUpper_def];
-*)
+(* HOL4 lexer_implScript.sml:16-20: ML code, not ported *)
 
 let unhex_alt_def = cake_define
   `unhex_alt x = (if isHexDigit x then UNHEX x else 0)`;;
@@ -36,10 +29,8 @@ let num_from_hex_string_alt_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: THEN REPEAT STRIP_TAC THEN IMP_RES_TAC (GSYM
-   read_while_thm) THEN IMP_RES_TAC (GSYM read_string_thm) THEN
-   IMP_RES_TAC skip_comment_thm THEN Cases_on `str` THEN
-   FULL_SIMP_TAC (srw_ss()) [LENGTH] THEN DECIDE_TAC *)
+(* HOL4 lexer_implScript.sml:239-245: the tactic that proves the
+   termination *)
 let next_sym_alt_def = cake_define_list_try (fun () ->
   `MEASURE (LENGTH o FST)`)
   [`next_sym_alt "" _1 = NONE`;
@@ -104,7 +95,8 @@ let next_sym_alt_def = cake_define_list_try (fun () ->
 
 (* lex_until_toplevel_semicolon *)
 
-(* HOL4 termination: >> rw[] >> imp_res_tac next_token_LESS *)
+(* HOL4 lexer_implScript.sml:344-347: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_aux_def = cake_define_try_tac (fun () ->
@@ -136,7 +128,8 @@ let lex_until_toplevel_semicolon_def = cake_define
 
 (* lex_until_toplevel_semicolon_alt *)
 
-(* HOL4 termination: >> rw[] >> imp_res_tac next_sym_LESS *)
+(* HOL4 lexer_implScript.sml:402-405: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_aux_alt_def = cake_define_try_tac (fun () ->
@@ -164,31 +157,12 @@ let lex_until_top_semicolon_alt_def = cake_define
 let token_of_sym_loc_def = cake_define
   `token_of_sym_loc (t,l) = (token_of_sym t,l)`;;
 
-(* HOL4 ML code, not ported:
-val lex_aux_alt_thm = Q.prove(
-  `!acc d input l.
-      case lex_aux_alt acc d input l of
-      | NONE => (lex_aux (MAP token_of_sym_loc acc) d input l = NONE)
-      | SOME (ts, rest) => (lex_aux (MAP token_of_sym_loc acc) d input l
-        =
-                           SOME (MAP token_of_sym_loc ts,rest))`,
-  HO_MATCH_MP_TAC (fetch "-" "lex_aux_alt_ind") THEN REPEAT STRIP_TAC
-  THEN ONCE_REWRITE_TAC [lex_aux_alt_def,lex_aux_def]
-  THEN SIMP_TAC std_ss [next_token_def]
-  THEN Cases_on `next_sym input l` THEN1 EVAL_TAC
-  THEN every_case_tac THEN FULL_SIMP_TAC (srw_ss()) [LET_DEF]
-  THEN FULL_SIMP_TAC std_ss [token_of_sym_EQ_LEMMA]
-  THEN SRW_TAC [] [] THEN FULL_SIMP_TAC (srw_ss())
-    [rich_listTheory.MAP_REVERSE]
-  THEN FULL_SIMP_TAC (srw_ss())
-    [token_of_sym_loc_def,token_of_sym_def,get_token_def])
-  |> Q.SPECL [`[]`,`0`] |> SIMP_RULE std_ss [MAP] ;
-*)
+(* HOL4 lexer_implScript.sml:460-474: ML code, not ported *)
 
 (* lex_impl_all *)
 
-(* HOL4 termination: >> rw [] >> metis_tac
-   [lex_until_toplevel_semicolon_LESS] *)
+(* HOL4 lexer_implScript.sml:493-497: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_impl_all_def = cake_define_try_tac (fun () ->
@@ -223,9 +197,8 @@ let lex_until_toplevel_semicolon_tokens_def = cake_define
   `lex_until_toplevel_semicolon_tokens input = lex_aux_tokens [] 0
   input`;;
 
-(* HOL4 termination: >> SIMP_TAC std_ss
-   [lex_until_toplevel_semicolon_tokens_def] >> METIS_TAC
-   [lex_aux_tokens_LESS] *)
+(* HOL4 lexer_implScript.sml:549-553: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_impl_all_tokens_def = cake_define_try_tac (fun () ->

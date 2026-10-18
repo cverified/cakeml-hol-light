@@ -16,10 +16,7 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-(* HOL4 ML code, not ported:
-val _ = disable_tyabbrev_printing "type_ident"
-val _ = disable_tyabbrev_printing "alist"
-*)
+(* HOL4 linear_scanProofScript.sml:12-13: ML code, not ported *)
 
 hol4_overload "++" "otherwise";;
 
@@ -31,9 +28,7 @@ hol4_overload "++" "otherwise";;
 (* This theorem looks like lipschitz continuity: it says something like
    f(x+y) <= f(x)+y *)
 
-(* HOL4 ML code, not ported:
-val msimps = [st_ex_bind_def,st_ex_ignore_bind_def,st_ex_return_def];
-*)
+(* HOL4 linear_scanProofScript.sml:2130: ML code, not ported *)
 
 let lookup_default_id_def = cake_define
   `lookup_default_id s x = option_CASE (sptree_lookup x s) x (\x. x)`;;
@@ -115,16 +110,7 @@ let good_linear_scan_state_def = cake_define
        EVERY (\c. mincol <= c) (linear_scan_state_colorpool st ++
          MAP (\r. EL r (linear_scan_hidden_state_colors sth)) l))`;;
 
-(* HOL4 ML code, not ported:
-val good_linear_scan_state_def' = let
-  val inj_rwt = Q.prove(‘(f x = f y ==> x = y) ⇔ (f x = f y ⇔ x = y)’,
-                        metis_tac[])
-in
-  good_linear_scan_state_def
-    |> SIMP_RULE bool_ss [GSYM AND_IMP_INTRO, inj_rwt]
-    |> SIMP_RULE bool_ss [AND_IMP_INTRO]
-end
-*)
+(* HOL4 linear_scanProofScript.sml:2444-2451: ML code, not ported *)
 
 (* TODO: this should be part of the standard library, but I couldn't
    find it *)

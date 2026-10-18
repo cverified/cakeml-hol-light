@@ -24,11 +24,9 @@ needs "misc/misc.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-(* HOL4 ML code, not ported:
-val word_shift_def = backend_commonTheory.word_shift_def
-*)
-(* HOL4 overload (expanded in the port):
-     num_stubs = stack_num_stubs *)
+(* HOL4 stack_removeProofScript.sml:16: ML code, not ported *)
+(* HOL4 stack_removeProofScript.sml:17: the overload num_stubs, which
+   the port expands *)
 
 (* TODO: move *)
 
@@ -132,41 +130,19 @@ hol4_overload "state_rel" "stack_removeProof_state_rel";;
 
 (* basically the same thing, but without the read assumption *)
 
-(* HOL4 ML code, not ported:
-val write_fun2set2 = write_fun2set |> SIMP_RULE std_ss [GSYM STAR_COMM]
-*)
+(* HOL4 stack_removeProofScript.sml:1175: ML code, not ported *)
 
 (* init code *)
 
-(* HOL4 ML code, not ported:
-val tac = simp
-  [list_Seq_def,evaluate_def,inst_def,word_exp_def,get_var_def,
-       wordLangTheory.word_op_def,mem_load_def,assign_def,set_var_def,
-       FLOOKUP_UPDATE,mem_store_def,dec_clock_def,get_var_imm_def,
-       asmTheory.word_cmp_def,
-       wordSemTheory.word_cmp_def,GREATER_EQ,GSYM NOT_LESS,FUPDATE_LIST,
-       wordLangTheory.word_sh_def,halt_inst_def]
-*)
+(* HOL4 stack_removeProofScript.sml:2617-2622: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val tac1 = simp [Once
-  list_Seq_def,evaluate_def,inst_def,word_exp_def,get_var_def,
-       wordLangTheory.word_op_def,mem_load_def,assign_def,set_var_def,
-       FLOOKUP_UPDATE,mem_store_def,dec_clock_def,get_var_imm_def,
-       asmTheory.word_cmp_def,
-       wordSemTheory.word_cmp_def,GREATER_EQ,GSYM NOT_LESS,FUPDATE_LIST,
-       wordLangTheory.word_sh_def,halt_inst_def]
-*)
+(* HOL4 stack_removeProofScript.sml:2624-2629: ML code, not ported *)
 
 let mem_val_def = cake_define_list
   [`mem_val (regs':(num,'a word_loc)fmap) (INL w) = wordLang_Word w`;
    `mem_val (regs':(num,'a word_loc)fmap) (INR n) = FAPPLY regs' n`];;
 
-(* HOL4 ML code, not ported:
-val halt_tac =
-  tac \\ fs [good_dimindex_def]
-  \\ rw [] \\ fs [dimword_def]
-*)
+(* HOL4 stack_removeProofScript.sml:2723-2725: ML code, not ported *)
 
 let read_mem_def = cake_define_list
   [`stack_removeProof_read_mem a m 0 = []`;
@@ -480,16 +456,7 @@ let propagate_these_def = cake_define
                word)))
           (fun2set (state_memory s,state_mdomain s)))`;;
 
-(*
-Theorem make_init_any_data_buffer:
-   (make_init_any ggc max_heap bitmaps data_sp coracle jump off k code
-     s).data_buffer =
-    the correct thing on the success branch (which needs to be set on
-      the fail branch too)
-Proof
-  fs [make_init_any_def,make_init_opt_def,init_reduce_def]
-  \\ every_case_tac \\ fs []
-QED
-*)
+(* HOL4 stack_removeProofScript.sml:4158-4166: code that the source
+   has in a comment *)
 
 (* Syntactic *)

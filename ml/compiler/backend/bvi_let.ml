@@ -3,46 +3,7 @@
     compiler/backend/bvi_letScript.sml  *)
 (* ======================================================== *)
 
-(*
-
-   This is a BVI transformation that propagates variable lookups that
-   are immediately assigned to a new variable in Let bindings. This
-   optimisation is to run immediately when entering BVI.
-
-   This optimisation removes each Var in a Let, i.e.
-
-     Let [ ... ; Var ... ; ... ] ...
-
-   and replaces them with constants
-
-     Let [ ... ; Op (IntOp (Const _)) [] ; ... ] ....
-
-   and then replaces all occurrences of the bound var in the body with
-   a lookup to the original variable.
-
-   There is a similar optimisation in BVL (bvl_const). This version
-   (which is slightly simpler) is run again because the BVL-to-BVI
-   compiler can introduce large Let expressions consisting of only
-   variable lookups.
-
-   This BVI version differs from the BVL version (bvl_const) by having
-   the ability to move expressions into tail-position, e.g.
-
-     let
-       val x = foo ...
-       val y = bar x
-     in y end
-
-   becomes:
-
-     let
-       val x = foo ...
-     in bar x end
-
-   This is important because pat-to-clos translates Seq p1 p2 into
-   Let [compile p1; compile p2] (Var 1).
-
-*)
+(* HOL4 bvi_letScript.sml:1-40: code that the source has in a comment *)
 
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -123,11 +84,8 @@ hol4_overload "compile" "bvi_let_compile";;
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw[bviTheory.exp_size_def] \\ rename1`xs ≠
-   []` \\ pop_assum mp_tac \\ qid_spec_tac`xs` \\ Cases using
-   SNOC_CASES \\ gvs
-   [SNOC_APPEND,exp2_size_APPEND,bviTheory.exp_size_def
-     ,list_size_APPEND] *)
+(* HOL4 bvi_letScript.sml:158-168: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let compile_sing_def = cake_define_list_try_tac (fun () ->

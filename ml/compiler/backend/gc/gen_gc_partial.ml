@@ -12,10 +12,7 @@ needs "compiler/backend/gc/gen_gc.ml";;
 needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: words *)
 
-(* HOL4 ML code, not ported:
-val gc_state_component_equality = DB.fetch "gc_shared"
-  "gc_state_component_equality";
-*)
+(* HOL4 gen_gc_partialScript.sml:14: ML code, not ported *)
 
 let gen_gc_partial_conf_FIELDS = define_record "gen_gc_partial_conf"
   ["limit","num";
@@ -66,8 +63,8 @@ let gc_move_list_def = cake_define_list
           (x :: xs,state))`];;
 hol4_overload "gc_move_list" "gen_gc_partial_gc_move_list";;
 
-(* HOL4 termination: \\ rw [heap_length_def,el_length_def,SUM_APPEND]
-   \\ imp_res_tac (GSYM gc_move_list_IMP) \\ fs [] \\ decide_tac *)
+(* HOL4 gen_gc_partialScript.sml:113-119: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_data_def = cake_define_try_tac (fun () ->
@@ -219,9 +216,7 @@ let RootsRefs = cake_inductive
       RootsRefs refs roots ==>
       RootsRefs (ForwardPointer _9 _10 _11 :: refs) roots)`;;
 
-(* HOL4 ML code, not ported:
-val RootsRefs_def = RootsRefs_rules;
-*)
+(* HOL4 gen_gc_partialScript.sml:346: ML code, not ported *)
 
 (*
 
@@ -273,10 +268,7 @@ let has_old_ptr_def = cake_define
        (ptr < gen_gc_partial_conf_gen_start conf \/
          gen_gc_partial_conf_refs_start conf <= ptr))`;;
 
-(* HOL4 ML code, not ported:
-val has_old_ptr_CONS =
-  has_old_ptr_APPEND |> Q.SPEC `[x]` |> SIMP_RULE std_ss [APPEND]
-*)
+(* HOL4 gen_gc_partialScript.sml:399-400: ML code, not ported *)
 
 let all_old_ptrs_def = cake_define
   `all_old_ptrs conf xs ptr <=>
@@ -317,10 +309,7 @@ let new_f_def = cake_define
                       (IMAGE ((+) (gen_gc_partial_conf_gen_start
                         conf)) (FDOM f)))`;;
 
-(* HOL4 ML code, not ported:
-val heap_lookup_heap_expand = isSomeDataElement_heap_lookup_heap_expand
-  |> SIMP_RULE std_ss [isSomeDataElement_def];
-*)
+(* HOL4 gen_gc_partialScript.sml:1581-1582: ML code, not ported *)
 
 let similar_ptr_def = cake_define
   `similar_ptr conf x1 x2 =

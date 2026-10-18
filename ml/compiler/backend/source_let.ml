@@ -14,8 +14,8 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 
 
-(* HOL4 overload (expanded in the port):
-     string_size = list_size char_size *)
+(* HOL4 source_letScript.sml:12: the overload string_size, which the
+   port expands *)
 
 let dest_Let_def = cake_define
   `dest_Let x1 =
@@ -41,9 +41,8 @@ let lift_let_def = cake_define
         | _3 -> NONE`;;
 
 let _ = size_thms "dec";;
-(* HOL4 termination: \\ Cases_on ‘d’ \\ rw [lift_let_def] \\ gvs
-   [CaseEqs ["option", "prod"], dec_size_def, exp_size_def,
-   dest_Let_SOME, dest_Letrec_SOME] *)
+(* HOL4 source_letScript.sml:68-73: the tactic that proves the
+   termination *)
 let lift_lets_def = cake_define_wf
   `MEASURE (dec_size o SND)`
   `lift_lets sofar d =
@@ -69,22 +68,5 @@ let compile_decs_def = cake_define_list_try (fun () ->
                   source_let_compile_decs ds))`];;
 hol4_overload "compile_decs" "source_let_compile_decs";;
 
-(*
-val test3 = EVAL “
-  compile_decs [
-    Dlet l (Pvar "foo")
-      (Letrec [("bar", "x", App Opapp [Var (Short "baz"); Con NONE []])]
-              (Var (Short "glob")))]”;
-val test4 = EVAL “
-  compile_decs [
-    Dlocal [
-        Dlet l (Pvar "foo")
-          (Letrec [("bar", "x", App Opapp [Var (Short "baz"); Con NONE
-            []])]
-                  (Var (Short "glob")))] []
-    ]”;
-val test5 = EVAL “
-  compile_decs [
-    Dlet l (Pvar "foo") (Var (Short "bar"))
-    ]”;
- *)
+(* HOL4 source_letScript.sml:91-108: code that the source has in a
+   comment *)

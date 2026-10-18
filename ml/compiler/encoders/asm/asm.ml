@@ -78,8 +78,8 @@ needs "semantics/ast.ml";;
 
 new_type_abbrev("asm_reg",`: num`);;
 new_type_abbrev("fp_reg",`: num`);;
-(* HOL4 type abbreviation (expanded in the port):
-     imm = 'a word *)
+(* HOL4 asmScript.sml:72: the type abbreviation imm, which the port
+   expands *)
 
 let asm_reg_imm_INDUCT,asm_reg_imm_RECURSION = define_datatype
   "asm_reg_imm = Reg (num) | Imm ('a word)";;
@@ -302,18 +302,18 @@ let offset_ok_def = cake_define
      alignment_aligned a w)`;;
 hol4_overload "offset_ok" "asm_offset_ok";;
 
-(* HOL4 overload (expanded in the port):
-     addr_offset_ok = λc. offset_ok 0 c.addr_offset *)
-(* HOL4 overload (expanded in the port):
-     hw_offset_ok = λc. offset_ok 0 c.hw_offset *)
-(* HOL4 overload (expanded in the port):
-     byte_offset_ok = λc. offset_ok 0 c.byte_offset *)
-(* HOL4 overload (expanded in the port):
-     jump_offset_ok = λc. offset_ok c.code_alignment c.jump_offset *)
-(* HOL4 overload (expanded in the port):
-     cjump_offset_ok = λc. offset_ok c.code_alignment c.cjump_offset *)
-(* HOL4 overload (expanded in the port):
-     loc_offset_ok = λc. offset_ok c.code_alignment c.loc_offset *)
+(* HOL4 asmScript.sml:279: the overload addr_offset_ok, which the
+   port expands *)
+(* HOL4 asmScript.sml:280: the overload hw_offset_ok, which the port
+   expands *)
+(* HOL4 asmScript.sml:281: the overload byte_offset_ok, which the
+   port expands *)
+(* HOL4 asmScript.sml:282: the overload jump_offset_ok, which the
+   port expands *)
+(* HOL4 asmScript.sml:283: the overload cjump_offset_ok, which the
+   port expands *)
+(* HOL4 asmScript.sml:284: the overload loc_offset_ok, which the port
+   expands *)
 
 let inst_ok_def = cake_define
   `inst_ok x1 c =

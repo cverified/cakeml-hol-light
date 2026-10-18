@@ -13,8 +13,8 @@ hol4_overload "++" "OPTION_CHOICE";;
 let simpleSexp_sexp_INDUCT,simpleSexp_sexp_RECURSION = define_datatype
   "simpleSexp_sexp = SX_CONS (simpleSexp_sexp) (simpleSexp_sexp) | \
    SX_SYM (string) | SX_NUM (num) | SX_STR (string)";;
-(* HOL4 overload (expanded in the port):
-     nil = SX_SYM "nil" *)
+(* HOL4 simpleSexpScript.sml:23-34: the overload nil, which the port
+   expands *)
 
 let valid_first_symchar_def = cake_define
   `valid_first_symchar c <=>

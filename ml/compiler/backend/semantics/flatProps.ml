@@ -16,11 +16,7 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 ML code, not ported:
-val s =  ``s:('c,'ffi) state``
-val st = ``st:('c,'ffi) state``
-val st' = ``st':('d,'ffi) state``
-*)
+(* HOL4 flatPropsScript.sml:31-33: ML code, not ported *)
 
 (* Alternate definition for build_rec_env *)
 
@@ -28,69 +24,8 @@ let bind_locals_list_def = cake_define
   `bind_locals_list ts ks = MAP2 (\t x. (flatLang_Var_local t x)) ts
   ks`;;
 
-(*
-Theorem pmatch_evaluate_vars:
-  (!^s p v evs env' ts.
-    flatSem$pmatch s p v evs = Match env' ∧
-    ALL_DISTINCT (pat_bindings p (MAP FST evs)) ∧
-    LENGTH ts = LENGTH (pat_bindings p (MAP FST evs))
-    ⇒
-    flatSem$evaluate (env with v := env') s (bind_locals_list ts
-      (pat_bindings p (MAP FST evs))) = (s,Rval (MAP SND env'))) ∧
-   (!^s ps vs evs env' ts.
-    flatSem$pmatch_list s ps vs evs = Match env' ∧
-    ALL_DISTINCT (pats_bindings ps (MAP FST evs)) ∧
-    LENGTH ts = LENGTH (pats_bindings ps (MAP FST evs))
-    ⇒
-    flatSem$evaluate (env with v := env') s (bind_locals_list ts
-      (pats_bindings ps (MAP FST evs))) = (s,Rval (MAP SND env')))
-Proof
-  ho_match_mp_tac pmatch_ind >>
-  srw_tac[][pat_bindings_def, pmatch_def]
-  >- (
-    match_mp_tac evaluate_vars >> srw_tac[][] >>
-    qexists_tac`(x,v)::evs` >> srw_tac[][] )
-  >- (
-    match_mp_tac evaluate_vars >> srw_tac[][] >>
-    first_assum(match_exists_tac o concl) >> simp[] )
-  >- (
-    match_mp_tac evaluate_vars >> srw_tac[][] >>
-    first_assum(match_exists_tac o concl) >> simp[] )
-  >- (
-    first_x_assum (match_mp_tac o MP_CANON) >>
-    every_case_tac >> full_simp_tac(srw_ss())[] )
-  >- (
-    first_x_assum (match_mp_tac o MP_CANON) >>
-    every_case_tac >> full_simp_tac(srw_ss())[] )
-  >- (
-    match_mp_tac evaluate_vars >> srw_tac[][] >>
-    first_assum(match_exists_tac o concl) >> simp[] ) >>
-  every_case_tac >> full_simp_tac(srw_ss())[] >>
-  `ALL_DISTINCT (pat_bindings p (MAP FST evs))`
-          by metis_tac[pat_bindings_accum, ALL_DISTINCT_APPEND] >>
-  rfs [] >> fs [] >>
-  `pat_bindings p (MAP FST evs) = MAP FST a`
-               by (imp_res_tac pmatch_extend >>
-                   srw_tac[][] >>
-                   metis_tac [pat_bindings_accum]) >>
-  fsrw_tac[QUANT_INST_ss[record_default_qp]][] >>
-  rev_full_simp_tac(srw_ss())[]
-QED
-
-Theorem pmatch_evaluate_vars_lem:
-  ∀p v bindings env ^s ts.
-    pmatch s p v [] = Match bindings ∧
-    ALL_DISTINCT (pat_bindings p []) ∧
-    LENGTH ts = LENGTH (pat_bindings p [])
-    ⇒
-    evaluate (env with v := bindings) s (bind_locals_list ts
-      (pat_bindings p [])) = (s,Rval (MAP SND bindings))
-Proof
-  rw [] >>
-  imp_res_tac pmatch_evaluate_vars >>
-  fs []
-QED
-*)
+(* HOL4 flatPropsScript.sml:546-605: code that the source has in a
+   comment *)
 
 let eval_sim_def = cake_define
   `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel allow_fail =
@@ -119,12 +54,8 @@ hol4_overload "op_gbag" "flatProps_op_gbag";;
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [flatLangTheory.exp_size_def] \\ fs [GSYM
-   o_DEF] >- (irule LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size
-   (pair_size mlstring_size (pair_size mlstring_size exp_size)) fs’
-   \\ gvs [] \\ Induct_on ‘fs’ \\ gvs [FORALL_PROD]) \\ irule
-   LESS_EQ_LESS_TRANS \\ qexists_tac ‘list_size (pair_size pat_size
-   exp_size) pes’ \\ gvs [] \\ Induct_on ‘pes’ \\ gvs [FORALL_PROD] *)
+(* HOL4 flatPropsScript.sml:819-833: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let set_globals_def = cake_define_list_try_tac (fun () ->
@@ -161,9 +92,8 @@ hol4_overload "set_globals" "flatProps_set_globals";;
 
 
 let _ = size_thms "flatLang_exp";;
-(* HOL4 termination: \\ rw [] \\ gvs
-   [list_size_pair_size_MAP_FST_SND] \\ drule MEM_list_size \\
-   disch_then $ qspec_then ‘exp_size’ mp_tac \\ gvs [] *)
+(* HOL4 flatPropsScript.sml:850-856: the tactic that proves the
+   termination *)
 let esgc_free_def = cake_define_wf
   `MEASURE flatLang_exp_size`
   `flatProps_esgc_free x1 =
@@ -195,11 +125,7 @@ let isClosure_def = cake_define
      (?vs n x. exp = Closure vs n x) \/
      (?vs fs x. exp = Recclosure vs fs x))`;;
 
-(* HOL4 ML code, not ported:
-val v_conss = TypeBase.nchotomy_of ``: v``
-  |> concl |> dest_forall |> snd |> strip_disj
-  |> map (rhs o snd o strip_exists)
-*)
+(* HOL4 flatPropsScript.sml:921-923: ML code, not ported *)
 
 let simple_basic_val_rel_def = cake_define_list
   [`simple_basic_val_rel (Litv l:flatSem_v) v = (v = (Litv
@@ -249,9 +175,7 @@ let simple_state_rel_def = cake_define
            (state_ffi_fupd (K tffi) t))`;;
 hol4_overload "simple_state_rel" "flatProps_simple_state_rel";;
 
-(* HOL4 ML code, not ported:
-val sv_rel_cases = semanticPrimitivesPropsTheory.sv_rel_cases;
-*)
+(* HOL4 flatPropsScript.sml:1157: ML code, not ported *)
 
 let evaluate_match_def = cake_define
   `flatProps_evaluate_match env s v pes err_v =
@@ -264,24 +188,7 @@ let evaluate_match_def = cake_define
            (Rabort Rtype_error))))`;;
 hol4_overload "evaluate_match" "flatProps_evaluate_match";;
 
-(* HOL4 ML code, not ported:
-local
-  val tm1 = ``flatLang$Mat``
-  val tm2 = ``flatLang$Handle``
-in
-  val flat_evaluate_def =
-    flatSemTheory.evaluate_def
-    |> CONJUNCTS
-    |> filter (fn th => not (can (find_term (aconv tm1)) (concl th))
-      andalso
-                        not (can (find_term (aconv tm2)) (concl th)))
-    |> (fn thms => thms @ [GEN_ALL evaluate_Handle])
-    |> (fn thms => thms @ [GEN_ALL evaluate_Mat])
-    |> (fn thms => thms @ [GEN_ALL evaluate_match_NIL])
-    |> (fn thms => thms @ [GEN_ALL evaluate_match_CONS])
-    |> LIST_CONJ
-end
-*)
+(* HOL4 flatPropsScript.sml:1432-1446: ML code, not ported *)
 
 let store_v_vs_def = cake_define_list
   [`flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;
@@ -300,9 +207,8 @@ let result_vs_def = cake_define
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ imp_res_tac MEM_list_size \\
-   pop_assum $ qspec_then ‘exp_size’ mp_tac \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 flatPropsScript.sml:1484-1489: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let no_Mat_def = cake_define_list_try_tac (fun () ->

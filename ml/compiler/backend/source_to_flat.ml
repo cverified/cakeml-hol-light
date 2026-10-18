@@ -66,8 +66,8 @@ let compile_var_def = cake_define_list
   flatLang_Var_local t s`];;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* HOL4 termination: >> rw [ast_pat1_size] >> fs [MEM_SPLIT,
-   SUM_APPEND] *)
+(* HOL4 source_to_flatScript.sml:68-72: the tactic that proves the
+   termination *)
 let compile_pat_def = cake_define_wf
   `MEASURE (pattern_semantics_pat_size o SND)`
   `(compile_pat env (ast_Pvar v) = flatLang_Pvar v) /\

@@ -86,7 +86,8 @@ let single_stack_alloc_def = cake_define
            (stackLang_If asm_Lower k (Reg (k + 1)) (halt_inst (n2w
              2)) stackLang_Skip))`;;
 
-(* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
+(* HOL4 stack_removeScript.sml:85-87: the tactic that proves the
+   termination *)
 let stack_alloc_def = cake_define_wf
   `MEASURE (SND o SND)`
   `stack_alloc jump k n =
@@ -100,7 +101,8 @@ let single_stack_free_def = cake_define
      stackLang_Inst (Arith (asm_Binop asm_Add k k (Imm
        (word_offset n))))`;;
 
-(* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
+(* HOL4 stack_removeScript.sml:100-102: the tactic that proves the
+   termination *)
 let stack_free_def = cake_define_wf
   `MEASURE SND`
   `stack_remove_stack_free k n =
@@ -111,7 +113,8 @@ let stack_free_def = cake_define_wf
 hol4_overload "stack_free" "stack_remove_stack_free";;
 
 (* upshift the stack pointer *)
-(* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
+(* HOL4 stack_removeScript.sml:112-114: the tactic that proves the
+   termination *)
 let upshift_def = cake_define_wf
   `MEASURE SND`
   `upshift r n =
@@ -122,7 +125,8 @@ let upshift_def = cake_define_wf
          (Imm (word_offset max_stack_alloc)))))
        (upshift r (n - max_stack_alloc)))`;;
 
-(* HOL4 termination: \\ fs [max_stack_alloc_def] \\ decide_tac *)
+(* HOL4 stack_removeScript.sml:123-125: the tactic that proves the
+   termination *)
 let downshift_def = cake_define_wf
   `MEASURE SND`
   `downshift r n =

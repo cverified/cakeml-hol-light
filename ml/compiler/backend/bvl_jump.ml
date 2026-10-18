@@ -11,12 +11,8 @@ needs "compiler/backend/bvl.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\
-   Q.ISPEC_THEN`xs`STRIP_ASSUME_TAC SPLIT_LIST \\ FULL_SIMP_TAC
-   std_ss [] \\ REPEAT STRIP_TAC \\ fs
-   [rich_listTheory.TAKE_LENGTH_APPEND,
-   rich_listTheory.DROP_LENGTH_APPEND] \\ rfs [DIV_EQ_X] >>
-   full_simp_tac std_ss [GSYM LENGTH_NIL] >> decide_tac *)
+(* HOL4 bvl_jumpScript.sml:22-30: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let JumpList_def = cake_define_try_tac (fun () ->

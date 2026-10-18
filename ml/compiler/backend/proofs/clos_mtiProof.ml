@@ -16,9 +16,7 @@ needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 ML code, not ported:
-val _ = bring_fwd_ctors "closLang" ``:closLang$exp``
-*)
+(* HOL4 clos_mtiProofScript.sml:18: ML code, not ported *)
 
 (* code relation *)
 
@@ -146,41 +144,12 @@ let evaluate_apps_def = cake_define_list
       (match evaluate_apps f xs s with (Rval [v],s1) ->
         evaluate_app NONE v [x] s1 | res -> res)`];;
 
-(* HOL4 ML code, not ported:
-val do_app_inst =
-  simple_val_rel_do_app_rev
-  |> Q.INST [`vr`|->`v_rel s.max_app`]
-  |> INST_TYPE [``:'a``|->``:'c``]
-  |> Q.INST [`sr`|->`\r t. (r.max_app = s.max_app) /\ state_rel r t`]
-  |> SIMP_RULE std_ss [simple_val_rel, simple_state_rel]
-*)
+(* HOL4 clos_mtiProofScript.sml:581-586: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val do_install_inst =
-  simple_val_rel_do_install
-  |> Q.INST [`vr`|->`v_rel s.max_app`]
-  |> Q.INST [`sr`|->`\r t. (r.max_app = s.max_app) /\ state_rel r t`,
-        `cr`|->`code_rel s.max_app`]
-  |> SIMP_RULE bool_ss [simple_val_rel, simple_state_rel]
-  |> Q.SPEC `clos_mti$compile_inc s.max_app`
-*)
+(* HOL4 clos_mtiProofScript.sml:611-617: ML code, not ported *)
 
 (* syntax well-formedness *)
 
-(* HOL4 ML code, not ported:
-val intro1_pat = ``intro_multi max_app [e]``
-fun intro_sing th =
-  case gen_find_term
-         (fn (bvs,t) => if can (match_term intro1_pat) t andalso
-                           null (op_intersect aconv bvs (free_vars t))
-                        then SOME t
-                        else NONE)
-                     (concl th)
-   of
-      SOME t => strip_assume_tac
-                  (PART_MATCH (lhs o #2 o dest_exists)
-                              clos_mtiTheory.intro_multi_sing t)
-    | NONE => NO_TAC
-*)
+(* HOL4 clos_mtiProofScript.sml:1469-1481: ML code, not ported *)
 
 (* preservation of observable semantics *)

@@ -193,8 +193,8 @@ let sec_ok_light_def = cake_define
   `sec_ok_light c (Section k ls) <=>
      EVERY (line_ok_light c) ls`;;
 
-(* HOL4 overload (expanded in the port):
-     all_enc_ok_light = λc ls. EVERY (sec_ok_light c) ls *)
+(* HOL4 lab_to_targetScript.sml:188: the overload all_enc_ok_light,
+   which the port expands *)
 
 (* pad with nop byte, and nop instruction *)
 
@@ -320,9 +320,7 @@ let prog_to_bytes_def = cake_define_list_cheat CHEAT_TAC
    `prog_to_bytes (Section k (y :: ys) :: xs) =
          line_bytes y ++ prog_to_bytes ((Section k ys) :: xs)`];;
 
-(* HOL4 ML code, not ported:
-val prog_to_bytes_ind = theorem"prog_to_bytes_ind";
-*)
+(* HOL4 lab_to_targetScript.sml:339: ML code, not ported *)
 
 (* compile labels *)
 let shmem_info_num_FIELDS = define_record "shmem_info_num"
@@ -404,32 +402,8 @@ let get_shmem_info_def = cake_define
        get_shmem_info (Section k xs :: rest) (pos + LENGTH bytes)
          ffi_names' shmem_info`;;
 
-(*
-Definition compile_lab_def:
-  compile_lab c sec_list =
-    let current_ffis = FILTER (\x. x <> "MappedRead" /\ x <>
-      "MappedWrite") $
-      find_ffi_names sec_list in
-    let (ffis,ffis_ok) =
-      case c.ffi_names of SOME ffis => (ffis, list_subset current_ffis
-        ffis) | _ => (current_ffis,T)
-    in
-    if ffis_ok then
-      case remove_labels c.init_clock c.asm_conf c.pos c.labels ffis
-        sec_list of
-      | SOME (sec_list,l1) =>
-          let bytes = prog_to_bytes sec_list in
-          let (new_ffis,shmem_infos) = get_shmem_info sec_list c.pos []
-            [] in
-          SOME (bytes,
-                c with <| labels := l1; pos := LENGTH bytes + c.pos;
-                          sec_pos_len := get_symbols c.pos sec_list;
-                          ffi_names := SOME $ ffis ++ new_ffis;
-                          shmem_extra := shmem_infos |>)
-      | NONE => NONE
-    else NONE
-End
-*)
+(* HOL4 lab_to_targetScript.sml:429-450: code that the source has in
+   a comment *)
 
 
 let compile_lab_def = cake_define

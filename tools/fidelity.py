@@ -10,7 +10,7 @@ part of the definition (a clause of a pattern match, say).
 """
 import sys, os, re
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import hol4, hterm, db as dbmod, port as portmod
+import hol4, hterm, db as dbmod, port as portmod, overrides
 
 KINDS = ('Definition', 'Inductive', 'CoInductive')
 
@@ -88,7 +88,14 @@ for thy in thys:
               break
       continue
     if b.kind not in KINDS or not p.wanted(b): continue
+    # a definition that the port does not have (PENDING.md says
+    # why) has none of its names
+    if (thy, b.name) in overrides.NOT_YET: continue
     body = hol4.strip_comments(b.body)
+    # the theory that a source writes before a constant
+    # (stack_alloc$stub_names) is not a name to look for: it is
+    # the name of a constant of another theory often enough
+    body = re.sub(r"\b[A-Za-z][A-Za-z0-9_']*\$", ' ', body)
     # HOL4 writes a case expression that need not be exhaustive as
     # "pmatch <term> of ...", where pmatch is syntax and not the
     # constant of that name (infer's constrain_op)

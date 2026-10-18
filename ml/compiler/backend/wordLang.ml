@@ -30,8 +30,8 @@ hol4_overload "Load" "wordLang_Load";;
 hol4_overload "Op" "wordLang_Op";;
 hol4_overload "Shift" "wordLang_Shift";;
 
-(* HOL4 overload (expanded in the port):
-     ShiftN = λsh e n. Shift sh e (Const (n2w n)) *)
+(* HOL4 wordLangScript.sml:23: the overload ShiftN, which the port
+   expands *)
 
 new_type_abbrev("cutsets",`: 1 spt#1 spt`);;
 
@@ -89,10 +89,8 @@ let store_consts_stub_location_def = cake_define
 hol4_overload "store_consts_stub_location"
   "wordLang_store_consts_stub_location";;
 
-(* wordLang uses syntactic invariants compared to stackLang that uses
-   semantic flags
-   Some of these are also used to EVAL (e.g. for the oracle)
-*)
+(* HOL4 wordLangScript.sml:80-82: code that the source has in a
+   comment *)
 
 (* Recursors for variables *)
 let every_var_exp_def = cake_define
@@ -356,8 +354,8 @@ let exp_to_addr_def = cake_define
           ad offset)
         | _14 -> NONE`;;
 
-(* HOL4 overload (expanded in the port):
-     shift = backend_common$word_shift *)
+(* HOL4 wordLangScript.sml:329: the overload shift, which the port
+   expands *)
 
 let word_loc_INDUCT,word_loc_RECURSION = define_datatype
   "word_loc = wordLang_Word ('a word) | wordLang_Loc (num) (num)";;

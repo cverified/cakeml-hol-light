@@ -52,9 +52,8 @@ let enc_num_to_name_def = cake_define
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw
-   [MAP_MAP_o, o_DEF, UNCURRY, SUM_APPEND, pat1_size] \\ simp
-   [LENGTH_enumerate, MAP_enumerate_MAPi, MAPi_eq_MAP] *)
+(* HOL4 flat_patternScript.sml:91-96: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let compile_pat_bindings_def = cake_define_list_try_tac (fun () ->
@@ -172,7 +171,8 @@ let decode_dtree_def = cake_define
      (decode_guard t v guard') dec1 dec2)`;;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* HOL4 termination: \\ rw [pat1_size] \\ fs [MEM_SPLIT, SUM_APPEND] *)
+(* HOL4 flat_patternScript.sml:173-177: the tactic that proves the
+   termination *)
 let encode_pat_def = cake_define_wf
   `MEASURE pattern_semantics_pat_size`
   `encode_pat x1 =
@@ -188,8 +188,8 @@ let encode_pat_def = cake_define_wf
       | (Pref p) -> pattern_semantics_Ref (encode_pat p)`;;
 
 let _ = size_thms "pattern_semantics_pat";;
-(* HOL4 termination: \\ simp [flatLangTheory.pat_size_def] \\ rw []
-   \\ simp [o_DEF, MAPi_eq_MAP, SUM_APPEND, pat1_size] *)
+(* HOL4 flat_patternScript.sml:197-202: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let naive_pattern_match_def = cake_define_try_tac (fun () ->

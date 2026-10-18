@@ -82,37 +82,15 @@ let interp_assum_def = cake_define
            state_clock t1)) t1) =
          (res,t2) /\ clos_interpProof_state_rel s2 t2))`;;
 
-(* HOL4 ML code, not ported:
-val evaluate_If =
-  SIMP_CONV std_ss [evaluate_def] “evaluate ([If t x1 x2 x3],env,s)”;
-*)
+(* HOL4 clos_interpProofScript.sml:171-172: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_Var =
-  SIMP_CONV std_ss [evaluate_def] “evaluate ([Var t n],env,s)”;
-*)
+(* HOL4 clos_interpProofScript.sml:174-175: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_TagLenEq =
-  SIMP_CONV (srw_ss()) [evaluate_def,do_app_def]
-    “evaluate ([Op None (BlockOp (TagLenEq t l)) [V 0]],Block t1 xs ::
-      env,s)”;
-*)
+(* HOL4 clos_interpProofScript.sml:177-179: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val init0_tac =
-  simp [to_constant_def,make_const_def,Boolv_def,
-        evaluate_Var,evaluate_If,evaluate_TagLenEq,
-        backend_commonTheory.true_tag_def,
-        backend_commonTheory.false_tag_def,clos_interpreter_body_def];
-*)
+(* HOL4 clos_interpProofScript.sml:181-185: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val init_tac =
-  init0_tac
-  \\ qpat_x_assum ‘evaluate ([_],env,s4) = (r,s5)’ mp_tac
-  \\ simp [Once evaluate_def,CaseEq"prod"] \\ rw [PULL_EXISTS];
-*)
+(* HOL4 clos_interpProofScript.sml:187-190: ML code, not ported *)
 
 (* ---------------------------------------------------------------------
    ---- *
@@ -123,7 +101,8 @@ val init_tac =
 let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp[v_size_def] *)
+(* HOL4 clos_interpProofScript.sml:1097-1099: the tactic that proves
+   the termination *)
 let v_ok_def = cake_define_list_try (fun () ->
   `MEASURE closSem_v_size`)
   [`v_ok (closSem_Number i:closSem_v) <=> T`;

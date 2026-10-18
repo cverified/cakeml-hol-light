@@ -250,7 +250,8 @@ let bits_to_word_def = cake_define_list
    `bits_to_word (T :: xs) = (bits_to_word xs << 1 || (n2w 1))`;
    `bits_to_word (F :: xs) = (bits_to_word xs << 1)`];;
 
-(* HOL4 termination: \\ fs [LENGTH_DROP] \\ DECIDE_TAC *)
+(* HOL4 word_to_stackScript.sml:235-238: the tactic that proves the
+   termination *)
 let word_list_def = cake_define_wf
   `MEASURE (LENGTH o FST)`
   `word_to_stack_word_list (xs:bool list) d =

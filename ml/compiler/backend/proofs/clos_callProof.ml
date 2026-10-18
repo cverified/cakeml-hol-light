@@ -20,17 +20,9 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* TODO: move *)
 
-(* HOL4 ML code, not ported:
-val PUSH_EXISTS_IMP = SPEC_ALL RIGHT_EXISTS_IMP_THM;
-*)
+(* HOL4 clos_callProofScript.sml:32: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_add_clock =
-  evaluate_add_to_clock
-  |> SIMP_RULE (srw_ss()) []
-  |> CONJUNCT1 |> GEN_ALL
-  |> REWRITE_RULE[GSYM AND_IMP_INTRO]
-*)
+(* HOL4 clos_callProofScript.sml:63-67: ML code, not ported *)
 
 let is_Recclosure_def = cake_define
   `is_Recclosure x1 =
@@ -124,8 +116,8 @@ hol4_overload "env_rel" "clos_callProof_env_rel";;
 let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> simp[v_size_def] >> rpt strip_tac >>
-   imp_res_tac v_size_lemma >> simp[] *)
+(* HOL4 clos_callProofScript.sml:330-333: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let v_rel_def = cake_define_list_try_tac (fun () ->
@@ -162,13 +154,11 @@ let v_rel_def = cake_define_list_try_tac (fun () ->
              code) env1 env2 (LENGTH fns2) fns2)`];;
 hol4_overload "v_rel" "clos_callProof_v_rel";;
 
-(* HOL4 ML code, not ported:
-val v_rel_ind = theorem"v_rel_ind";
-*)
+(* HOL4 clos_callProofScript.sml:335: ML code, not ported *)
 
 let _ = size_thms "closSem_v";;
-(* HOL4 termination: >> simp[v_size_def] >> rpt strip_tac >>
-   imp_res_tac v_size_lemma >> simp[] *)
+(* HOL4 clos_callProofScript.sml:350-353: the tactic that proves the
+   termination *)
 let wfv_def = cake_define_wf
   `MEASURE (closSem_v_size o SND o SND o SND)`
   `wfv g l code x4 =
@@ -186,9 +176,7 @@ let wfv_def = cake_define_wf
         | (closSem_Block _26 vs) -> EVERY (wfv g l code) vs
         | _27 -> T`;;
 
-(* HOL4 ML code, not ported:
-val wfv_ind = theorem"wfv_ind";
-*)
+(* HOL4 clos_callProofScript.sml:355: ML code, not ported *)
 
 let wfv_state_def = cake_define
   `wfv_state g l code s <=>
@@ -222,26 +210,9 @@ let insert_each'_def = cake_define_list
        insert_each' gt (p + 2) n (sptree_insert p one g1,((p +
          1,THE (ALOOKUP gt (p + 1))) :: g2))`];;
 
-(* HOL4 ML code, not ported:
-val insert_each'_ind = theorem"insert_each'_ind";
-*)
+(* HOL4 clos_callProofScript.sml:965: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun pairmaparg_tac (g as (asl,w)) =
-  (tryfind
-    (Lib.partial
-      (mk_HOL_ERR"clos_callProofTheory""pairmaparg_tac""not found")
-        (bvk_find_term
-          (fn (bvs,tm) =>
-            is_comb tm andalso
-            pairSyntax.is_pair_map (rator tm) andalso
-            HOLset.isEmpty
-              (HOLset.intersection (FVL bvs empty_tmset,
-                                    FVL [rand tm] empty_tmset)) andalso
-            not (pairSyntax.is_pair (rand tm)))
-          (fn tm => Cases_on [ANTIQUOTE (rand tm)])))
-    (w::asl)) g
-*)
+(* HOL4 clos_callProofScript.sml:1102-1114: ML code, not ported *)
 
 (* properties of value relation *)
 
@@ -284,102 +255,31 @@ let code_inv_def = cake_define
      (!k. let (cfg,exp,aux) = s_co (k:num) in
          clos_callProof_syntax_ok exp /\ aux = [])`;;
 
-(*
-val dummy_code_inv = mk_var("code_inv",
-  type_of(#1(strip_comb(lhs(concl(SPEC_ALL code_inv_def))))))
-Definition code_inv_def:
-  ^dummy_code_inv g1_opt s_code
-     s_cc s_co t_code t_cc t_co ⇔ (s_code = FEMPTY)
-End
-*)
+(* HOL4 clos_callProofScript.sml:2113-2120: code that the source has
+   in a comment *)
 
 let includes_state_def = cake_define
   `includes_state g1 s_compile_oracle <=>
      (?(k:num). FST (FST (s_compile_oracle k)) = FST g1)`;;
 
-(*
-val dummy_includes_state = mk_var("includes_state",
-  type_of(#1(strip_comb(lhs(concl(SPEC_ALL includes_state_def))))))
-Definition includes_state_def:
-  ^dummy_includes_state g1_s compile_oracle ⇔ T
-End
-*)
+(* HOL4 clos_callProofScript.sml:2145-2151: code that the source has
+   in a comment *)
 
-(*
-Theorem code_inv_g_SUB_UN_locs:
-  !i cfg exps aux.
-  code_inv g1o s_code s_cc s_co t_code t_cc t_co ==>
-  s_co i = (cfg,exps,aux) ==>
-  x ∈ domain (FST cfg) ==>
-  (x ∈ domain (FST (FST (s_co 0))) \/
-    (?j. j < i /\ x ∈ set (code_locs (FST (SND (s_co j))))))
-Proof
-  Induct \\ rw []
-  \\ fs [code_inv_def, is_state_oracle_def]
-  \\ rpt (first_x_assum (qspec_then `i` mp_tac))
-  \\ rw []
-  \\ Cases_on `SND (s_co i)`
-  \\ fs [compile_inc_def]
-  \\ rpt (pairarg_tac \\ fs [])
-  \\ rveq \\ fs []
-  \\ old_drule calls_domain_locs
-  \\ rw [SUBSET_DEF]
-  \\ first_x_assum old_drule
-  \\ rw []
-  \\ fs [prim_recTheory.LESS_THM, PULL_EXISTS]
-  \\ metis_tac [FST, SND]
-QED
-
-Theorem code_inv_DISJOINT:
-  code_inv g1o s_code s_cc s_co t_code t_cc t_co ==>
-  s_co i = (cfg,exps,aux) ==>
-  DISJOINT (set (code_locs exps)) (domain (FST cfg))
-Proof
-  rw []
-  \\ imp_res_tac code_inv_g_SUB_UN_locs
-  \\ fs [code_inv_def, IN_DISJOINT]
-  \\ CCONTR_TAC \\ fs []
-  \\ first_x_assum old_drule
-  \\ rpt strip_tac \\ fs []
-  >- (
-    old_drule is_state_oracle_0
-    \\ rw []
-    \\ old_drule oracle_monotonic_init
-    \\ disch_then (qspec_then `i` mp_tac)
-    \\ CCONTR_TAC \\ fs []
-    \\ rfs []
-    \\ metis_tac [prim_recTheory.LESS_REFL]
-  )
-  \\ old_drule oracle_monotonic_step
-  \\ disch_then old_drule
-  \\ fs []
-  \\ metis_tac [prim_recTheory.LESS_REFL]
-QED
-*)
+(* HOL4 clos_callProofScript.sml:2331-2381: code that the source has
+   in a comment *)
 
 let mk_code_g_def = cake_define
   `mk_code_g code = (list_to_num_set (MAP PRE (SET_TO_LIST (FDOM
   code))),
      fmap_to_alist code)`;;
 
-(* HOL4 ML code, not ported:
-fun asm_exists_pat_conj_tac0 pat = first_assum (part_match_exists_tac
-    (hd o filter (can (match_term pat)) o strip_conj) o concl)
-val asm_exists_pat_conj_tac = Q_TAC asm_exists_pat_conj_tac0
-*)
+(* HOL4 clos_callProofScript.sml:2400-2402: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val asm_exists_pat_tac = Q_TAC (fn pat => first_assum
-  (part_match_exists_tac
-    (find_term (can (match_term pat))) o find_term (can (match_term
-      pat)) o concl))
-*)
+(* HOL4 clos_callProofScript.sml:2404-2405: ML code, not ported *)
 
 (* compiler correctness *)
 
-(* HOL4 ML code, not ported:
-val t0 = ``t0:('c,'ffi) closSem$state``;
-*)
+(* HOL4 clos_callProofScript.sml:2429: ML code, not ported *)
 
 (*
 max_print_depth := 8
@@ -387,10 +287,7 @@ max_print_depth := 80
 max_print_depth := 800
 *)
 
-(* HOL4 ML code, not ported:
-fun say0 pfx s g = (print (pfx ^ ": " ^ s ^ "\n"); ALL_TAC g)
-val say = say0 "calls_correct";
-*)
+(* HOL4 clos_callProofScript.sml:2437-2438: ML code, not ported *)
 
 (* All code_locs come from the original code,
    and therefore, are all even
@@ -414,27 +311,8 @@ hol4_overload "nth_code" "clos_callProof_nth_code";;
   every_Fn_SOME xs ∧ every_Fn_vs_NONE xs
 *)
 
-(*
-val tm = ``closLang$Let [Op (IntOp (Const 0)) []; Op (IntOp (Const 0))
-  []]
-             (App NONE (Fn (SOME 1) NONE 1 (Fn (SOME 2) NONE 1 (Op
-               (IntOp (Const 1)) []))) [Op (IntOp (Const 2)) []])``
-val res1 = EVAL``evaluate ([^tm],[],<|clock := 1|>)``
-val (ctm,ctab) = EVAL``clos_call$compile T ^tm`` |> concl |> rhs |>
-  dest_pair
-val res2 = EVAL``evaluate ([^ctm],[],<|clock := 2; code :=
-  (alist_to_fmap ^ctab)|>)``
-
-val tm2 = ``closLang$Let [Op (IntOp (Const 0)) []; Op (IntOp (Const 0))
-  []]
-             (Fn (SOME 1) NONE 1 (App NONE (Fn (SOME 2) NONE 1 (Op
-               (IntOp (Const 1)) [])) [Op (IntOp (Const 2)) []]))``
-val res3 = EVAL``evaluate ([^tm2],[],<|clock := 1|>)``
-val (ctm2,ctab2) = EVAL``clos_call$compile T ^tm2`` |> concl |> rhs |>
-  dest_pair
-val res4 = EVAL``evaluate ([^ctm2],[],<|clock := 2; code :=
-  (alist_to_fmap ^ctab2)|>)``
-*)
+(* HOL4 clos_callProofScript.sml:4672-4684: code that the source has
+   in a comment *)
 
 (* obeys_max_app and no_Labels *)
 
@@ -444,156 +322,5 @@ let state_syntax_def = cake_define
 
 (* names *)
 
-(*
-Theorem app_call_dests_GENLIST_Var:
-   !t i num_args. app_call_dests opt (GENLIST_Var t i num_args) = {}
-Proof
-  Induct_on `num_args`
-  \\ once_rewrite_tac [clos_callTheory.GENLIST_Var_def]
-  \\ fs [app_call_dests_append]
-QED
-
-Theorem pure_code_locs: (* DUPLCATED! clos_annotate *)
-   !xs. pure xs ==> code_locs [xs] = [] /\
-                    app_call_dests opt [xs] = {}
-Proof
-  recInduct closLangTheory.pure_ind
-  \\ rw[closLangTheory.pure_def, closPropsTheory.code_locs_def]
-  \\ fsrw_tac[ETA_ss][EVERY_MEM]
-  \\ Q.ISPEC_THEN`es`mp_tac code_locs_map
-  \\ disch_then(qspec_then`I`mp_tac)
-  \\ simp[FLAT_EQ_NIL, EVERY_MAP, EVERY_MEM]
-  \\ ...
-QED
-
-Theorem call_dests_code_list_SUBSET:
-   !xs n g.
-      call_dests (MAP SND xs) ⊆ set (MAP FST (SND g)) /\
-      call_dests (MAP (λx. SND (SND x)) (SND g)) ⊆ set (MAP FST (SND g))
-        ==>
-      call_dests (MAP (λx. SND (SND x)) (SND (code_list n xs g))) ⊆
-      set (MAP FST (SND (code_list n xs g)))
-Proof
-  Induct \\ fs [FORALL_PROD] THEN1 (EVAL_TAC \\ fs [])
-  \\ fs [code_list_def] \\ rw []
-  \\ first_x_assum match_mp_tac \\ fs []
-  \\ rpt (pop_assum mp_tac)
-  \\ once_rewrite_tac [app_call_dests_cons] \\ fs []
-  \\ fs [SUBSET_DEF]
-QED
-
-Theorem code_locs_MAP_SND_calls_list:
-   !t x y fns. code_locs (MAP SND (calls_list t x y fns)) = []
-Proof
-  Induct_on `fns` \\ fs [calls_list_def,FORALL_PROD]
-  \\ once_rewrite_tac [code_locs_cons]
-  \\ fs [code_locs_def]
-QED
-
-Theorem calls_locs:
-   !known_code g call_code g1.
-      calls known_code g = (call_code,g1) /\
-      call_dests known_code = ∅ /\
-      call_dests (MAP (SND ∘ SND) (SND g)) ⊆ set (MAP FST (SND g)) ==>
-      set (MAP FST (SND g)) ⊆ set (MAP FST (SND g1)) ∧
-      call_dests (MAP (SND ∘ SND) (SND g)) ⊆
-      call_dests (MAP (SND ∘ SND) (SND g1)) ∧
-      call_dests call_code ⊆ set (MAP FST (SND g1)) ∧
-      call_dests (MAP (SND ∘ SND) (SND g1)) ⊆ set (MAP FST (SND g1)) ∧
-      app_dests call_code UNION app_dests (MAP (SND ∘ SND) (SND g1))
-        ⊆ app_dests known_code UNION app_dests (MAP (SND ∘ SND) (SND g))
-          ∧
-      set (code_locs call_code) ∪ set (code_locs (MAP (SND ∘ SND) (SND
-        g1))) =
-      set (code_locs known_code) ∪ set (code_locs (MAP (SND ∘ SND) (SND
-        g)))
-Proof
-  ...
-QED
-
-(*
-
-  recInduct calls_ind
-  \\ rpt conj_tac
-
-  \\ TRY (
-
-    full_simp_tac std_ss [calls_def,LET_THM,app_call_dests_def,
-            every_Fn_SOME_def,MAP,LIST_TO_SET,UNION_EMPTY,
-            BIGUNION_INSERT,BIGUNION_EMPTY,
-            AC UNION_COMM UNION_ASSOC,SUBSET_REFL,EMPTY_SUBSET]
-    \\ rpt gen_tac \\ strip_tac
-    \\ rpt gen_tac \\ strip_tac
-    \\ rpt (pairarg_tac \\ full_simp_tac std_ss [])
-    \\ imp_res_tac calls_sing \\ rveq
-    \\ rveq \\ full_simp_tac std_ss [APPEND,bool_case_eq,EMPTY_UNION]
-    \\ rveq \\ full_simp_tac std_ss [APPEND,code_locs_def,
-                  LET_THM,LIST_TO_SET,LIST_TO_SET_APPEND]
-    \\ TRY CASE_TAC \\ full_simp_tac std_ss [APPEND]
-    \\ once_rewrite_tac [app_call_dests_cons,code_locs_cons]
-    \\ rveq \\ full_simp_tac std_ss
-      [app_call_dests_def,UNION_EMPTY,LIST_TO_SET,
-         code_locs_def,APPEND_NIL,LIST_TO_SET_APPEND,LET_THM,
-         MAP,o_DEF]
-    \\ rpt (pop_assum mp_tac)
-    \\ once_rewrite_tac [app_call_dests_cons,code_locs_cons]
-    \\ rveq \\ full_simp_tac std_ss
-      [app_call_dests_def,UNION_EMPTY,LIST_TO_SET,
-         code_locs_def,APPEND_NIL,LIST_TO_SET_APPEND]
-    \\ rpt (disch_then assume_tac)
-    \\ full_simp_tac std_ss [calls_def,LET_THM,
-          every_Fn_SOME_def,MAP,LIST_TO_SET,UNION_EMPTY,
-          BIGUNION_INSERT,BIGUNION_EMPTY,HD,
-          IS_SOME_EXISTS,SND_insert_each,app_call_dests_GENLIST_Var,
-          code_locs_GENLIST_Var]
-    \\ rev_full_simp_tac std_ss []
-    \\ TRY (qpat_x_assum `_ ==> _` mp_tac \\ impl_tac
-            THEN1 (match_mp_tac call_dests_code_list_SUBSET
-                   \\ imp_res_tac calls_length \\ fs [MAP_ZIP])
-            \\ disch_then strip_assume_tac)
-    \\ imp_res_tac calls_length \\ fs [MAP_ZIP,calls_list_length]
-    \\ imp_res_tac calls_pure_sing
-    \\ imp_res_tac pure_code_locs \\ fs []
-    \\ full_simp_tac std_ss [AC UNION_ASSOC UNION_COMM,
-         code_locs_MAP_SND_calls_list]
-
-    \\ once_rewrite_tac [app_call_dests_cons,code_locs_cons]
-    \\ rveq \\ full_simp_tac std_ss
-      [app_call_dests_def,UNION_EMPTY,LIST_TO_SET,
-         code_locs_def,APPEND_NIL,LIST_TO_SET_APPEND,GSYM ADD1]
-    \\ rpt conj_tac
-    \\ rveq \\ full_simp_tac std_ss [APPEND]
-    \\ TRY CASE_TAC \\ full_simp_tac std_ss [APPEND]
-    \\ full_simp_tac std_ss
-      [SUBSET_DEF,IN_UNION,IN_INSERT,NOT_IN_EMPTY,IN_IMAGE,
-          MAP,LIST_TO_SET,SUBSET_DEF,BIGUNION_INSERT,BIGUNION_EMPTY
-            ,EXTENSION]
-    \\ metis_tac []
-
-)
-
-  remaining cases:
-     App -- almost works (problem with relating FST g with SND g
-                          because they can be out-of-sync, i.e.
-                          statement above needs updating)
-     Letrec -- needs some work
-
-*)
-
-Theorem call_compile_locs:
-   clos_call$compile b known_code = (call_code,g,aux) /\
-    call_dests known_code = ∅ ==>
-    call_dests call_code ∪ call_dests (MAP (SND ∘ SND) aux) ⊆
-    set (MAP FST aux) /\
-    app_dests call_code ∪ app_dests (MAP (SND ∘ SND) aux) ⊆
-    app_dests known_code /\
-    set (code_locs call_code) ∪ set (code_locs (MAP (SND ∘ SND) aux)) =
-    set (code_locs known_code)
-Proof
-  reverse (Cases_on `b`) \\ fs [clos_callTheory.compile_def]
-  THEN1 (strip_tac \\ rveq \\ fs [closPropsTheory.code_locs_def])
-  \\ pairarg_tac \\ fs []
-  \\ strip_tac \\ rveq \\ fs []
-  \\ old_drule calls_locs \\ fs [EVAL ``(code_locs [])``]
-QED
-*)
+(* HOL4 clos_callProofScript.sml:4766-4909: code that the source has
+   in a comment *)

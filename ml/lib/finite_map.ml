@@ -52,7 +52,7 @@ parse_as_infix("|++",(15,"left"));;
 let FUPDATE_LIST = new_definition
   `(fm:(A,B)fmap) |++ l = FOLDL (|+) fm l`;;
 
-(* removing a key, which HOL4 writes fm \\ k *)
+(* removing a key from a finite map *)
 
 (* HOL4 writes this fold as FUPDATE_LIST as well *)
 override_interface("FUPDATE_LIST",

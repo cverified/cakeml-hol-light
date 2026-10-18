@@ -9,25 +9,25 @@ needs "lib/integer_word.ml";;
 (* HOL4 ancestors outside the port: words real intreal pred_set
    set_relation arithmetic *)
 
-(* HOL4 overload (expanded in the port):
-     tc = transitive_closure *)
+(* HOL4 binary_ieeeScript.sml:25: the overload tc, which the port
+   expands *)
 
 let float_FIELDS = define_record "float"
   ["Sign","word1";
    "Exponent","'w word";
    "Significand","'t word"];;
-(* HOL4 overload (expanded in the port):
-     fsign = λa. -1 pow w2n a.Sign *)
-(* HOL4 overload (expanded in the port):
-     sign = fsign *)
+(* HOL4 binary_ieeeScript.sml:34: the overload fsign, which the port
+   expands *)
+(* HOL4 binary_ieeeScript.sml:35: the overload sign, which the port
+   expands *)
 
 let float_value_INDUCT,float_value_RECURSION = define_datatype
   "float_value = Float (real) | Infinity | NaN";;
 
-(* HOL4 overload (expanded in the port):
-     precision = fcp$dimindex *)
-(* HOL4 overload (expanded in the port):
-     bias = words$INT_MAX *)
+(* HOL4 binary_ieeeScript.sml:44: the overload precision, which the
+   port expands *)
+(* HOL4 binary_ieeeScript.sml:45: the overload bias, which the port
+   expands *)
 
 let float_to_real_def = cake_define
   `float_to_real (x:('t,'w)float) =

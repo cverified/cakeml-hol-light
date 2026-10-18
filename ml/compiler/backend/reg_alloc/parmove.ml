@@ -22,18 +22,12 @@ needs "misc/misc.ml";;
 
 (* NONE is a temporary register; real registers are SOME x. *)
 
-(* HOL4 overload (expanded in the port):
-     NoRead = λμ dn. ¬MEM dn (MAP SND μ) *)
+(* HOL4 parmoveScript.sml:22: the overload NoRead, which the port
+   expands *)
 
-(* HOL4 ML code, not ported:
-fun replace_quote from to (QUOTE s) = QUOTE(Portable.replace_string
-  {from=from,to=to} s)
-  | replace_quote _ _ x = x
-*)
+(* HOL4 parmoveScript.sml:24-25: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = add_infix("step",450,NONASSOC);
-*)
+(* HOL4 parmoveScript.sml:27: ML code, not ported *)
 
 let step_rules = cake_inductive
   `(step (mu1 ++ [(r,r)] ++ mu2,sigma,tau) (mu1 ++ mu2,sigma,tau)) /\
@@ -48,17 +42,13 @@ let step_rules = cake_inductive
    ((\mu dn. ~MEM dn (MAP SND mu)) mu d ==> step
     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity"\226\150\183"(Infix(NONASSOC,450));
-*)
-(* HOL4 overload (expanded in the port):
-     \226\150\183 = $step *)
+(* HOL4 parmoveScript.sml:39: ML code, not ported *)
+(* HOL4 parmoveScript.sml:40: the overload \226\150\183, which the
+   port expands *)
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity "\226\150\183*" (Infix(NONASSOC,450));
-*)
-(* HOL4 overload (expanded in the port):
-     \226\150\183* = RTC $▷ *)
+(* HOL4 parmoveScript.sml:42: ML code, not ported *)
+(* HOL4 parmoveScript.sml:43: the overload \226\150\183*, which the
+   port expands *)
 
 (* invariant on states *)
 
@@ -81,8 +71,7 @@ let wf_def = cake_define
      EVERY IS_SOME (MAP FST sigma) /\
      parmove_path sigma`;;
 hol4_overload "wf" "parmove_wf";;
-(* HOL4 overload (expanded in the port):
-     ⊢ = wf *)
+(* HOL4 parmoveScript.sml:129: the overload ⊢, which the port expands *)
 
 (* The invariant is preserved *)
 
@@ -96,9 +85,7 @@ let seqsem_def = cake_define_list
   [`seqsem [] rho = rho`;
    `seqsem ((d,s) :: tau) rho = seqsem tau ((d =+ rho s) rho)`];;
 
-(* HOL4 ML code, not ported:
-val seqsem_ind = theorem"seqsem_ind";
-*)
+(* HOL4 parmoveScript.sml:323: ML code, not ported *)
 
 (* semantics of the state *)
 
@@ -110,17 +97,13 @@ let sem_def = cake_define
 
 let eqenv_def = cake_define
   `eqenv rho1 rho2 <=> (!r. IS_SOME r ==> (rho1 r = rho2 r))`;;
-(* HOL4 ML code, not ported:
-val _ = set_fixity"\226\137\161"(Infix(NONASSOC,450));
-*)
-(* HOL4 overload (expanded in the port):
-     \226\137\161 = eqenv *)
+(* HOL4 parmoveScript.sml:361: ML code, not ported *)
+(* HOL4 parmoveScript.sml:362: the overload \226\137\161, which the
+   port expands *)
 
 (* deterministic algorithm *)
 
-(* HOL4 ML code, not ported:
-val _ = add_infix("dstep",450,NONASSOC);
-*)
+(* HOL4 parmoveScript.sml:476: ML code, not ported *)
 
 let dstep_rules = cake_inductive
   `(dstep ([(r,r)] ++ mu,[],tau) (mu,[],tau)) /\
@@ -138,17 +121,13 @@ let dstep_rules = cake_inductive
    ((\mu dn. ~MEM dn (MAP SND mu)) mu d ==> dstep
     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity"\226\134\170"(Infix(NONASSOC,450));
-*)
-(* HOL4 overload (expanded in the port):
-     \226\134\170 = $dstep *)
+(* HOL4 parmoveScript.sml:494: ML code, not ported *)
+(* HOL4 parmoveScript.sml:495: the overload \226\134\170, which the
+   port expands *)
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity "\226\134\170*" (Infix(NONASSOC,450));
-*)
-(* HOL4 overload (expanded in the port):
-     \226\134\170* = RTC $↪ *)
+(* HOL4 parmoveScript.sml:497: ML code, not ported *)
+(* HOL4 parmoveScript.sml:498: the overload \226\134\170*, which the
+   port expands *)
 
 (* ⊢ s1 condition not included in paper;
    not sure if necessary, but couldn't get
@@ -170,32 +149,15 @@ let fstep_def = cake_define
                    (NONE,d) :: l) else (t,b,(d,s) :: l)))
        t)`;;
 
-(* HOL4 ML code, not ported:
-val not_or = METIS_PROVE[]``¬a ∨ b ⇔ a ⇒ b``;
-*)
+(* HOL4 parmoveScript.sml:547: ML code, not ported *)
 
-(* HOL4 termination: >> rw[fstep_def] >- (
-   fs[NULL_LENGTH,LENGTH_NIL,splitAtPki_def] >> simp[UNCURRY] >> rw[]
-   >>
-   simp[LENGTH_FRONT,PRE_SUB1,LENGTH_NOT_NULL,NULL_LENGTH,LENGTH_NIL]
-   ) >- ( simp[splitAtPki_def,UNCURRY] >> rw[] >> simp[] >>
-   fs[NULL_LENGTH,LENGTH_NIL] >>
-   simp[LENGTH_FRONT,PRE_SUB1,LENGTH_NOT_NULL,NULL_LENGTH,LENGTH_NIL]
-   ) >> ( every_case_tac >> simp[splitAtPki_def,UNCURRY] >> rw[] >>
-   simp[splitAtPki_def,UNCURRY] >> simp[splitAtPki_EQN] >>
-   every_case_tac >> simp[] >> TRY ( fs[NULL_LENGTH,LENGTH_NIL] >>
-   simp[LENGTH_FRONT,PRE_SUB1,LENGTH_NOT_NULL,NULL_LENGTH,LENGTH_NIL]
-   >> NO_TAC) >> fs[WhileTheory.OLEAST_def] >> rw[] >> pop_assum
-   mp_tac >> numLib.LEAST_ELIM_TAC >> conj_tac >- metis_tac[] >> rw[]
-   >> simp[LENGTH_TAKE,ADD1] >> rfs[DROP_CONS_EL] >> rw[] >>
-   simp[ADD1] >> metis_tac[]) *)
+(* HOL4 parmoveScript.sml:610-638: the tactic that proves the
+   termination *)
 let pmov_def = cake_define_wf
   `MEASURE (\(mu,sigma,tau). 2 * LENGTH mu + LENGTH sigma)`
   `pmov s = (match s with ([],[],_3) -> s | _4 -> pmov (fstep s))`;;
 
-(* HOL4 ML code, not ported:
-val pmov_ind = theorem"pmov_ind";
-*)
+(* HOL4 parmoveScript.sml:640: ML code, not ported *)
 
 (* The top-level parallel move compiler *)
 

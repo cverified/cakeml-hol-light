@@ -57,130 +57,15 @@ let staterr_INDUCT,staterr_RECURSION = define_datatype
   "staterr = ScopeErr (mlstring) | WarningErr (mlstring) \
              | GenErr (mlstring) | ShapeErr (mlstring)";;
 
-(* HOL4 ML code, not ported:
-val help_string = (* beginning of --help string *) ‘
-
-Usage:  cake [OPTIONS] < input_file > output_file
-
-The cake executable is usually invoked as shown above. The different
-OPTIONS are described in the OPTIONS listing below.
-
-One can also run the cake execuable as follows to print a listing of
-the type of each top-level binding (including the bindings made in
-the standard basis library).
-
-Usage:  cake --types < input_file
-
-One can invoke the cake executable to print this help message (--help)
-or version information (--version) without an input_file:
-
-Usage:  cake --version
-Usage:  cake --help
-
-OPTIONS:
-
-  --repl        starts an interactive read-eval-print loop; all other
-                flags are ignored, when the --repl flag is present
-
-  --reg_alg=N   N is a natural number that specifies the register
-                allocation algorithm to use:
-                   0   - simple allocator, no spill heuristics
-                   1   - simple allocator, spill heuristics
-                   2   - IRC allocator, no spill heuristics (default)
-                   3   - IRC allocator, spill heuristics
-                   >=4 - linear scan allocator
-
-  --gc=G        specifies garbage collector type; here G is one of:
-                   none   - no garbage collector is used
-                   simple - a non-generational Cheney (default)
-                   genN   - a generational Cheney garbage collector is
-                            used; the size of the nursery generation is
-                            N machine words (example: --gc=gen5000)
-                This option has no effect under --pancake; the Pancake
-                compiler always uses gc=none.
-
-  --target=T    specifies that compilation should produce code for
-    target
-                T, where T can be one of x64, arm8, mips, riscv for
-                the 64-bit compiler; for the 32-bit compiler T can be
-                one of arm7 and ag32.
-
-  --sexp=B      B can be either true or false; here false means that the
-                input will be parsed as normal CakeML concrete syntax;
-                true means that the input is parsed as an s-expression.
-
-  --print_sexp  causes the cake to print the given program in
-                s-expression format; with this option, the compiler
-                does not generate machine code.
-
-  --exclude_prelude=B   here B can be either true or false; the default
-                is false; setting this to true causes the compiler not
-                to include the standard basis library.
-
-  --skip_type_inference=B   here B can be either true or false; the
-                default is false; true will make the compiler skip
-                type inference. There are no gurantees of safety if
-                the type inferencer is skipped.
-
-  --explore     outputs intermediate forms of the compiled program
-
-  --pancake     takes a pancake program as input
-
-  --no_warn     silences pancake warning output
-
-  --main_return=B   here B can be either true or false; the default is
-                false; setting this to true causes the main function to
-                return to caller instead of exit; this option is
-                required to use multiple entry points with Pancake.
-
-ADDITIONAL OPTIONS:
-
-Optimisations can be configured using the following advanced options.
-
-  --jump=B    true means conditional jumps to be used for out-of-stack
-    checks
-  --multi=B   true means clos_to_bvl phase is to use multi optimisation
-  --known=B   true means clos_to_bvl phase is to use known optimisation
-  --call=B    true means clos_to_bvl phase is to use call optimisation
-  --tmc=B     true means tail-call modulo cons optimisations is used
-  --tailrec=B true means attempts to turn functions into tail-rec form
-  --inline_factor=N  threshold used by for ClosLang inliner in known
-    pass
-  --max_body_size=N  threshold used by for ClosLang inliner in known
-    pass
-  --max_app=N   max number of optimised curried applications in multi
-    pass
-  --inline_size=N  threshold used by for BVL inliner pass
-  --exp_cut=N  threshold for when to cut large expression into
-    subfunctions
-  --split=B  true means main expression will be split at sequencing (;)
-  --tag_bits=N  number of tag bits in every pointer
-  --len_bits=N  number of length bits in every pointer
-  --pad_bits=N  number of zero padding in every pointer
-  --len_size=N  size of length field in heap object header cells
-  --emit_empty_ffi=B  true emits debugging FFI calls for use with
-    DEBUG_FFI
-  --hash_size=N  size of the memoization table used by instruction
-    encoder
-  --perf_callgraph=B  unverified: emit C-stack shadowing so `perf record
-                --call-graph fp` produces correct call graphs (x64 only)
-
-’ (* end of --help string *)
-*)
+(* HOL4 compilerScript.sml:18-117: ML code, not ported *)
 
 (* == Build info
    =========================================================== *)
 
-(* HOL4 ML code, not ported:
-val current_version_tm = mlstring_from_proc "git" ["rev-parse", "HEAD"]
-*)
+(* HOL4 compilerScript.sml:121: ML code, not ported *)
 (*"" *)
 
-(* HOL4 ML code, not ported:
-val date_str = Date.toString (Date.fromTimeUniv (Time.now ())) ^
-  " UTC\n"
-val date_tm = Term `strlit^(stringSyntax.fromMLstring date_str)`
-*)
+(* HOL4 compilerScript.sml:126-127: ML code, not ported *)
 
 let print_option_def = cake_define
   `print_option h x =
@@ -189,18 +74,7 @@ let print_option_def = cake_define
          strcat x y) ((\x y. strcat x y) h (implode " ")) y) (implode
          "\n"))`;;
 
-(* HOL4 ML code, not ported:
-val current_build_info_str_tm = EVAL ``
-    let commit = print_option «CakeML:» ^current_version_tm in
-    let hol    = print_option «HOL4:  » ^hol_version_tm in
-    let poly   = print_option «PolyML:» ^poly_version_tm in
-      concat
-        [ «The CakeML compiler\n\n»
-        ; «Version details:\n»
-        ; ^date_tm; «\n»
-        ; commit; hol; poly ]``
-  |> concl |> rhs
-*)
+(* HOL4 compilerScript.sml:136-145: ML code, not ported *)
 
 let current_build_info_str_def = cake_define
   `current_build_info_str =
@@ -228,17 +102,9 @@ let compiler_config_FIELDS = define_record "compiler_config"
    "only_print_types","bool";
    "only_print_sexp","bool"];;
 
-(* HOL4 ML code, not ported:
-fun drop_until p [] = []
-  | drop_until p (x::xs) = if p x then x::xs else drop_until p xs;
-*)
+(* HOL4 compilerScript.sml:166-167: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val help_string_tm =
-  help_string |> hd |> (fn QUOTE s => s) |> explode
-  |> drop_until (fn c => c = #"\n") |> tl |> implode
-  |> stringSyntax.fromMLstring;
-*)
+(* HOL4 compilerScript.sml:169-172: ML code, not ported *)
 
 (* HOL4 takes this string from the quotation of the --help text at
    the head of the source, without its first line (the ML code of
@@ -446,8 +312,8 @@ let locs_to_string_def = cake_define
                        "unknown location")`;;
 
 (* this is a rather annoying feature of peg_exec requiring locs... *)
-(* HOL4 overload (expanded in the port):
-     add_locs = MAP (λc. (c,unknown_loc)) *)
+(* HOL4 compilerScript.sml:231: the overload add_locs, which the port
+   expands *)
 
 let parse_sexp_input_def = cake_define
   `parse_sexp_input input =
@@ -989,23 +855,8 @@ let compile_pancake_64_def = cake_define
                       else warns)))))))`;;
 
 (* PENDING: the file system of the basis library, which the port does
-not have (add_stdout, add_stderr, fastForwardFD)
-Definition full_compile_64_def:
-  full_compile_64 cl inp fs =
-  if has_help_flag cl then
-    add_stdout fs help_string
-  else if has_version_flag cl then
-    add_stdout fs current_build_info_str
-  else
-    let (out, err) =
-        if has_pancake_flag cl then
-          compile_pancake_64 cl inp
-        else
-          compile_64 cl inp
-    in
-      add_stderr (add_stdout (fastForwardFD fs 0) (concat (append out)))
-        err
-End *)
+   not have (add_stdout, add_stderr, fastForwardFD) *)
+(* HOL4 compilerScript.sml:759-773: the definition *)
 
 let compile_32_def = cake_define
   `compile_32 cl input =
@@ -1067,20 +918,5 @@ let compile_pancake_32_def = cake_define
                       else warns)))))))`;;
 
 (* PENDING: the file system of the basis library, which the port does
-not have (add_stdout, add_stderr, fastForwardFD)
-Definition full_compile_32_def:
-  full_compile_32 cl inp fs =
-  if has_help_flag cl then
-    add_stdout fs help_string
-  else if has_version_flag cl then
-    add_stdout fs current_build_info_str
-  else
-    let (out, err) =
-        if has_pancake_flag cl then
-          compile_pancake_32 cl inp
-        else
-          compile_32 cl inp
-    in
-      add_stderr (add_stdout (fastForwardFD fs 0) (concat (append out)))
-        err
-End *)
+   not have (add_stdout, add_stderr, fastForwardFD) *)
+(* HOL4 compilerScript.sml:835-849: the definition *)

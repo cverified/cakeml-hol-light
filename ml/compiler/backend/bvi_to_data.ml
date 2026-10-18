@@ -142,7 +142,8 @@ hol4_overload "compile" "bvi_to_data_compile";;
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp[] *)
+(* HOL4 bvi_to_dataScript.sml:232-237: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let compile_sing_def = cake_define_list_try_tac (fun () ->

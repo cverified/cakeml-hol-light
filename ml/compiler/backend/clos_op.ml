@@ -79,14 +79,14 @@ let dest_Op_Nil_def = cake_define
      (match dest_Op f x with NONE -> NONE | SOME (i,xs) -> (if
        NULL xs then SOME i else NONE))`;;
 
-(* HOL4 overload (expanded in the port):
-     dest_Op_Cons = dest_Op dest_Cons *)
-(* HOL4 overload (expanded in the port):
-     dest_Op_Cons_Nil = dest_Op_Nil dest_Cons *)
-(* HOL4 overload (expanded in the port):
-     dest_Op_Const = dest_Op_Nil dest_Const *)
-(* HOL4 overload (expanded in the port):
-     dest_Op_Constant = dest_Op_Nil dest_Constant *)
+(* HOL4 clos_opScript.sml:141: the overload dest_Op_Cons, which the
+   port expands *)
+(* HOL4 clos_opScript.sml:142: the overload dest_Op_Cons_Nil, which
+   the port expands *)
+(* HOL4 clos_opScript.sml:143: the overload dest_Op_Const, which the
+   port expands *)
+(* HOL4 clos_opScript.sml:144: the overload dest_Op_Constant, which
+   the port expands *)
 
 let dest_Op_Consts_def = cake_define
   `dest_Op_Consts x y =
@@ -187,30 +187,16 @@ let eq_direct_def = cake_define
        NONE -> eq_direct_nil x y))`;;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 termination: \\ Cases \\ fs [dest_Op_def] \\ Cases_on ‘o'’ \\
-   fs [dest_Cons_def,exp_size_def] \\ Cases_on ‘b’ \\ fs
-   [dest_Cons_def,exp_size_def] \\ Induct_on ‘l’ \\ fs [exp_size_def]
-   \\ rw [] \\ res_tac \\ fs [] *)
+(* HOL4 clos_opScript.sml:261-268: the tactic that proves the
+   termination *)
 let cons_measure_def = cake_define_wf
   `MEASURE closLang_exp_size`
   `cons_measure x =
      (match (dest_Op clos_op_dest_Cons) x with NONE -> 0 | SOME
        (_14,xs) -> SUM (MAP cons_measure xs) + LENGTH xs + 1)`;;
 
-(* HOL4 termination: \\ reverse (rpt strip_tac) \\ fs [] THEN1
-   (imp_res_tac cons_measure_lemma \\ fs [cons_measure_lemma]) THEN1
-   (fs [o_DEF,cons_measure_lemma] \\ imp_res_tac cons_measure_lemma
-   \\ fs [] \\ ‘LENGTH p_2 = LENGTH (REVERSE p_2)’ by fs [] \\ ‘SUM
-   (MAP cons_measure p_2) = SUM (MAP cons_measure (REVERSE p_2))’ by
-   (rpt (pop_assum kall_tac) \\ Induct_on ‘p_2’ \\ fs [SUM_APPEND])
-   \\ asm_rewrite_tac[] \\ qspec_tac (‘REVERSE p_2’,‘p_3’) \\ Induct
-   using SNOC_INDUCT \\ fs [SNOC_APPEND,MAPi_APPEND,SUM_APPEND]) \\
-   imp_res_tac cons_measure_lemma \\ fs
-   [cons_measure_lemma,MEM_SPLIT,SUM_APPEND] \\ qpat_x_assum ‘LENGTH
-   _ = _’ mp_tac \\ rename [‘LENGTH xs = LENGTH ys’] \\ qid_spec_tac
-   ‘ys’ \\ qid_spec_tac ‘xs’ \\ Induct THEN1 (Cases \\ fs []) \\
-   Cases_on ‘ys'’ \\ fs [] \\ rpt strip_tac \\ first_x_assum drule \\
-   fs [GSYM rich_listTheory.ZIP_APPEND,SUM_APPEND] *)
+(* HOL4 clos_opScript.sml:294-317: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let eq_pure_list_def = cake_define_try_tac (fun () ->

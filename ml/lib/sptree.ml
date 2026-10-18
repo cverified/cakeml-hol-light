@@ -12,12 +12,12 @@
 let spt_INDUCT,spt_RECURSION = define_datatype
   "spt = LN | LS ('a) | BN (spt) (spt) | BS (spt) ('a) (spt)";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     num_map = 'a spt *)
+(* HOL4 sptreeScript.sml:34: the type abbreviation num_map, which the
+   port expands *)
 new_type_abbrev("sptree_num_set",`: 1 spt`);;
 
-(* HOL4 overload (expanded in the port):
-     isEmpty = \t. t = LN *)
+(* HOL4 sptreeScript.sml:37: the overload isEmpty, which the port
+   expands *)
 
 let wf_def = cake_define_list
   [`sptree_wf LN <=> T`;
@@ -30,7 +30,8 @@ hol4_overload "wf" "sptree_wf";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> simp[DIV_LT_X] *)
+(* HOL4 sptreeScript.sml:46-56: the tactic that proves the
+   termination *)
 let lookup_def = cake_define_list_try (fun () ->
   `MEASURE FST`)
   [`sptree_lookup k LN = NONE`;
@@ -45,7 +46,8 @@ hol4_overload "lookup" "sptree_lookup";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> simp[DIV_LT_X] *)
+(* HOL4 sptreeScript.sml:83-85: the tactic that proves the
+   termination *)
 let insert_def = cake_define_list_try (fun () ->
   `MEASURE FST`)
   [`sptree_insert k a LN = (if k = 0 then LS a else if EVEN k then BN
@@ -167,8 +169,8 @@ let difference_def = cake_define_list
            t2') | BS t1' a' t2' -> mk_BN (difference t1 t1')
            (difference t2 t2'))`];;
 
-(* HOL4 termination: \\ fs [DIV_LT_X] \\ REPEAT STRIP_TAC \\
-   DECIDE_TAC *)
+(* HOL4 sptreeScript.sml:423-425: the tactic that proves the
+   termination *)
 let lrnext_def = cake_define_wf
   `MEASURE I`
   `lrnext n = (if n = 0 then 1 else 2 * lrnext ((n - 1) DIV 2))`;;
@@ -305,8 +307,8 @@ let spts_to_alist_add_pause_def = cake_define
   `spts_to_alist_add_pause j q = (match q with [] -> [(j,LN)] |
   ((i,spt) :: q) -> ((i + j,spt) :: q))`;;
 
-(* HOL4 overload (expanded in the port):
-     add_pause = spts_to_alist_add_pause *)
+(* HOL4 sptreeScript.sml:2378: the overload add_pause, which the port
+   expands *)
 
 let spts_to_alist_aux_def = cake_define
   `spts_to_alist_aux i xs acc_cent acc_right acc_left repeat =
@@ -324,9 +326,8 @@ let spts_to_alist_aux_def = cake_define
          T))`;;
 
 let _ = size_thms "spt";;
-(* HOL4 termination: \\ rw [] \\ first_x_assum (assume_tac o GSYM) \\
-   drule_then mp_tac spts_to_alist_aux_size \\ simp
-   [combinTheory.o_DEF] *)
+(* HOL4 sptreeScript.sml:2436-2442: the tactic that proves the
+   termination *)
 let spts_to_alist_def = cake_define_wf
   `MEASURE (\(_8,xs,_9). SUM (MAP (spt_size (K 0) o SND) xs))`
   `spts_to_alist i xs acc_cent =

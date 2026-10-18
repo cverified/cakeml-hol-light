@@ -62,5 +62,5 @@ let section_lines_def = cake_define
 
 (* A full assembly program consists of a list of sections. *)
 
-(* HOL4 type abbreviation (expanded in the port):
-     prog = ('a sec) list *)
+(* HOL4 labLangScript.sml:61: the type abbreviation prog, which the
+   port expands *)

@@ -51,8 +51,8 @@ let mk_Branch_def = cake_define
        word_depth_Branch t1 t2)`;;
 
 let _ = size_thms "wordLang_prog";;
-(* HOL4 termination: \\ rpt strip_tac \\ fs [size_delete] \\
-   imp_res_tac miscTheory.lookup_zero \\ fs [] *)
+(* HOL4 word_depthScript.sml:81-86: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let call_graph_def = cake_define_try_tac (fun () ->

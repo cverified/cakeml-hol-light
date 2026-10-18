@@ -26,8 +26,8 @@ hol4_overload "ref_rel" "closProps_ref_rel";;
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:158-161: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let code_locs_def = cake_define_list_try_tac (fun () ->
@@ -75,7 +75,8 @@ let code_locs_def = cake_define_list_try_tac (fun () ->
          code_locs xs`];;
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:229-232: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let contains_App_SOME_def = cake_define_try_tac (fun () ->
@@ -122,7 +123,8 @@ let contains_App_SOME_def = cake_define_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:275-278: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let every_Fn_SOME_def = cake_define_list_try_tac (fun () ->
@@ -165,7 +167,8 @@ let every_Fn_SOME_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:327-330: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let every_Fn_vs_NONE_def = cake_define_list_try_tac (fun () ->
@@ -209,7 +212,8 @@ let every_Fn_vs_NONE_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ gvs [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:386-389: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let every_Fn_vs_SOME_def = cake_define_list_try_tac (fun () ->
@@ -253,8 +257,8 @@ let every_Fn_vs_SOME_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp [] \\ rw [] \\ fs [MEM_SPLIT,
-   SUM_APPEND, exp3_size, exp_size_def] *)
+(* HOL4 closPropsScript.sml:446-450: the tactic that proves the
+   termination *)
 let no_mti_def = cake_define_list_try (fun () ->
   `MEASURE closLang_exp_size`)
   [`no_mti (Var t n:closLang_exp) = T`;
@@ -289,8 +293,8 @@ let no_mti_def = cake_define_list_try (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:473-476: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let fv_def = cake_define_list_try_tac (fun () ->
@@ -322,172 +326,19 @@ let fv_def = cake_define_list_try_tac (fun () ->
 let fv1_def = cake_define
   `fv1 v e = fv v [e]`;;
 
-(* HOL4 ML code, not ported:
-val evaluate_LENGTH_ind =
-  evaluate_ind
-  |> Q.SPEC `\(xs,s,env).
-       (case evaluate (xs,s,env) of (Rval res,s1) => (LENGTH xs = LENGTH
-         res)
-            | _ => T)`
-  |> Q.SPEC `\x1 x2 x3 x4.
-       (case evaluate_app x1 x2 x3 x4 of (Rval res,s1) => (LENGTH res =
-         1)
-            | _ => T)`;
-*)
+(* HOL4 closPropsScript.sml:590-597: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_LENGTH = prove(evaluate_LENGTH_ind |> concl |> rand,
-  MATCH_MP_TAC evaluate_LENGTH_ind
-  \\ REPEAT STRIP_TAC \\ full_simp_tac(srw_ss())[]
-  \\ ONCE_REWRITE_TAC [evaluate_def] \\ full_simp_tac(srw_ss())[LET_THM]
-  \\ BasicProvers.EVERY_CASE_TAC \\ full_simp_tac(srw_ss())[] \\
-    rev_full_simp_tac(srw_ss())[] \\ full_simp_tac(srw_ss())[])
-  |> SIMP_RULE std_ss [FORALL_PROD];
-*)
+(* HOL4 closPropsScript.sml:599-604: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_const_ind =
-  evaluate_ind
-  |> Q.SPEC `\(xs,env,s).
-       (case evaluate (xs,env,s) of (_,s1) =>
-          (s1.max_app = s.max_app))`
-  |> Q.SPEC `\x1 x2 x3 x4.
-       (case evaluate_app x1 x2 x3 x4 of (_,s1) =>
-          (s1.max_app = x4.max_app))`;
-*)
+(* HOL4 closPropsScript.sml:679-686: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_const_lemma = prove(
-  evaluate_const_ind |> concl |> rand,
-  MATCH_MP_TAC evaluate_const_ind
-  \\ REPEAT STRIP_TAC \\ full_simp_tac(srw_ss())[]
-  \\ ONCE_REWRITE_TAC [evaluate_def] \\ full_simp_tac(srw_ss())[LET_THM]
-  \\ BasicProvers.EVERY_CASE_TAC \\ full_simp_tac(srw_ss())[] \\
-    rev_full_simp_tac(srw_ss())[]
-  \\ BasicProvers.EVERY_CASE_TAC \\ full_simp_tac(srw_ss())[] \\
-    rev_full_simp_tac(srw_ss())[]
-  \\ IMP_RES_TAC do_app_const
-  \\ IMP_RES_TAC do_install_const
-  \\ full_simp_tac(srw_ss())[dec_clock_def])
-  |> SIMP_RULE std_ss [FORALL_PROD]
-*)
+(* HOL4 closPropsScript.sml:698-708: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_code_ind =
-  evaluate_ind
-  |> Q.SPEC `\(xs,env,s).
-       (case evaluate (xs,env,s) of (_,s1) =>
-          ∃n.
-            s1.compile_oracle = shift_seq n s.compile_oracle ∧
-            let ls = FLAT (MAP (SND o SND) (GENLIST s.compile_oracle n))
-              in
-            s1.code = s.code |++ ls ∧
-            ALL_DISTINCT (MAP FST ls) ∧
-            DISJOINT (FDOM s.code) (set(MAP FST ls)))`
-  |> Q.SPEC `\x1 x2 x3 s.
-       (case evaluate_app x1 x2 x3 s of (_,s1) =>
-          ∃n.
-            s1.compile_oracle = shift_seq n s.compile_oracle ∧
-            let ls = FLAT (MAP (SND o SND) (GENLIST s.compile_oracle n))
-              in
-            s1.code = s.code |++ ls ∧
-            ALL_DISTINCT (MAP FST ls) ∧
-            DISJOINT (FDOM s.code) (set(MAP FST ls)))`;
-*)
+(* HOL4 closPropsScript.sml:728-745: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val evaluate_code_lemma = prove(
-  evaluate_code_ind |> concl |> rand,
-  MATCH_MP_TAC evaluate_code_ind \\ rw[]
-  \\ ONCE_REWRITE_TAC [evaluate_def] \\ fs[] \\ rw []
-  \\ every_case_tac \\ fs[] \\ rfs[shift_seq_def,FUN_EQ_THM]
-  \\ fs[dec_clock_def]
-  \\ TRY(qexists_tac`0` \\ simp[FUPDATE_LIST_THM] \\ NO_TAC)
-  \\ TRY (
-    qmatch_goalsub_rename_tac`(n1 + (n2 + (n3 + _)))` \\
-    qexists_tac`n3+n2+n1` \\
-    fs[GENLIST_APPEND,GSYM FUPDATE_LIST_APPEND,ALL_DISTINCT_APPEND] \\
-    fsrw_tac[ETA_ss][GSYM FUN_EQ_THM] \\
-    rfs[IN_DISJOINT,FDOM_FUPDATE_LIST] \\
-    metis_tac[])
-  \\ TRY (
-    qmatch_goalsub_rename_tac`(z1 + (z2 + _))` \\
-    qexists_tac`z2+z1` \\
-    fs[GENLIST_APPEND,GSYM FUPDATE_LIST_APPEND,ALL_DISTINCT_APPEND] \\
-    fsrw_tac[ETA_ss][GSYM FUN_EQ_THM] \\
-    rfs[IN_DISJOINT,FDOM_FUPDATE_LIST] \\
-    metis_tac[])
-  \\ TRY (
-    qmatch_goalsub_rename_tac`(z1 + (z2 + _))` \\
-    qexists_tac`z1+z2` \\
-    fs[GENLIST_APPEND,GSYM FUPDATE_LIST_APPEND,ALL_DISTINCT_APPEND] \\
-    fsrw_tac[ETA_ss][GSYM FUN_EQ_THM] \\
-    rfs[IN_DISJOINT,FDOM_FUPDATE_LIST] \\
-    metis_tac[])
-  \\ TRY (
-    qmatch_asmsub_rename_tac`_ = _ ((nn:num) + _)` \\
-    qexists_tac`nn` \\
-    imp_res_tac do_app_const \\
-    fs[] \\ NO_TAC)
-  \\ TRY
-   (qmatch_asmsub_rename_tac`_ = _ ((z:num) + _)`
-    \\ qmatch_asmsub_rename_tac`s.compile_oracle (y + _)`
-    \\ gvs[do_install_def,case_eq_thms,pair_case_eq,UNCURRY,bool_case_eq
-      ,shift_seq_def]
-    \\ qexists_tac`1+y`
-    \\ fs[GENLIST_APPEND,FUPDATE_LIST_APPEND,ALL_DISTINCT_APPEND] \\
-      rfs[]
-    \\ fs[IN_DISJOINT,FDOM_FUPDATE_LIST] \\ rveq \\ fs[]
-    \\ metis_tac[])
-  \\ TRY
-   (qmatch_asmsub_rename_tac`_ = _ ((z:num) + _)`
-    \\ qmatch_asmsub_rename_tac`s.compile_oracle (y + _)`
-    \\ gvs[do_install_def,case_eq_thms,pair_case_eq,UNCURRY,bool_case_eq
-      ,shift_seq_def]
-    \\ qexists_tac`z+1+y`
-    \\ fs[GENLIST_APPEND,FUPDATE_LIST_APPEND,ALL_DISTINCT_APPEND] \\
-      rfs[]
-    \\ fs[IN_DISJOINT,FDOM_FUPDATE_LIST] \\ rveq \\ fs[]
-    \\ metis_tac[])
-  >-
-   (fs [do_install_def]
-    \\ fs [case_eq_thms, pair_case_eq, UNCURRY, bool_case_eq] \\ TRY
-      (metis_tac [])
-    \\ rw [] \\ fs [shift_seq_def]
-    \\ qmatch_goalsub_rename_tac `nn + _`
-    \\ qexists_tac `nn+1` \\ fs []
-    \\ once_rewrite_tac [ADD_COMM]
-    \\ fs [GENLIST_APPEND] \\ rfs []
-    \\ last_x_assum (qspec_then `0` (assume_tac o GSYM)) \\ fs []
-    \\ fs [FUPDATE_LIST_APPEND, ALL_DISTINCT_APPEND, IN_DISJOINT]
-    \\ rfs []
-    \\ fs [FDOM_FUPDATE_LIST]
-    \\ metis_tac [])
-  \\ qmatch_goalsub_rename_tac`(n1 + (n2 + (n3 + _)))`
-  \\ qexists_tac `n1+n2+n3` \\ fs []
-  \\ sg `GENLIST r.compile_oracle n1 = GENLIST (\x. s.compile_oracle (n2
-    + x)) n1`
-  >- fsrw_tac [ETA_ss] [GSYM FUN_EQ_THM]
-  \\ fs []
-  \\ rfs []
-  \\ sg `GENLIST r'.compile_oracle n3 = GENLIST (\x. s.compile_oracle
-    (n1 + (n2 + x))) n3`
-  >- (fsrw_tac [ETA_ss] [GSYM FUN_EQ_THM] \\ fs [])
-  \\ fs []
-  \\ once_rewrite_tac [ADD_ASSOC]
-  \\ once_rewrite_tac [ADD_COMM]
-  \\ fs [GSYM FUPDATE_LIST_APPEND, GENLIST_APPEND, ALL_DISTINCT_APPEND,
-         IN_DISJOINT, FDOM_FUPDATE_LIST]
-  \\ metis_tac [])
-  |> SIMP_RULE std_ss [FORALL_PROD];
-*)
+(* HOL4 closPropsScript.sml:747-823: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun cases_on_op q = Cases_on q
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘BlockOp’]) (Cases_on `b`)
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘GlobOp’]) (Cases_on `g`)
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘MemOp’]) (Cases_on `m`);
-*)
+(* HOL4 closPropsScript.sml:931-934: ML code, not ported *)
 
 let is_closure_def = cake_define
   `is_closure x1 =
@@ -543,53 +394,14 @@ let check_closures_def = cake_define
        clo_can_apply loc cl num_args ==> clo_can_apply loc cl'
          num_args)`;;
 
-(* HOL4 ML code, not ported:
-val case_eq_thms =
-  pair_case_eq::bool_case_eq::list_case_eq::option_case_eq::map
-  TypeBase.case_eq_of
-  [``:'a ffi_result``, ``:v``, ``:'a ref``, ``:closLang$op``,
-    ``:closLang$mem_op``,
-   ``:closLang$int_op``, ``:closLang$word_op``, ``:closLang$block_op``,
-     ``:closLang$glob_op``,
-   ``:word_size``, ``:eq_result``, ``:('a,'b) result``, ``:'a
-     error_result``, ``:app_kind``]
-  |> LIST_CONJ;
-*)
+(* HOL4 closPropsScript.sml:1512-1516: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val s = ``s:('c,'ffi) closSem$state``;
-*)
-(* HOL4 ML code, not ported:
-val lemma = DECIDE``¬(x < y - z) ⇒ ((a:num) + x - (y - z) = x - (y - z)
-  + a)``
-val lemma2 = DECIDE``x ≠ 0n ⇒ a + (x - 1) = a + x - 1``
-val lemma3 = DECIDE``¬(x:num < t+1) ⇒ a + (x - (t+1)) = a + x - (t+1)``
-*)
+(* HOL4 closPropsScript.sml:1565: ML code, not ported *)
+(* HOL4 closPropsScript.sml:1669-1671: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val tac =
-  imp_res_tac evaluate_add_to_clock >> rev_full_simp_tac(srw_ss())[] >>
-    full_simp_tac(srw_ss())[] >> srw_tac[][] >>
-  imp_res_tac evaluate_io_events_mono_imp >> full_simp_tac(srw_ss())[]
-    >> srw_tac[][] >> rev_full_simp_tac(srw_ss())[] >>
-  full_simp_tac(srw_ss())[dec_clock_def] >>
-    full_simp_tac(srw_ss())[do_app_add_to_clock] >>
-  imp_res_tac do_install_add_to_clock >> fs[] >>
-  TRY(first_assum(split_uncurry_arg_tac o rhs o concl) >>
-    full_simp_tac(srw_ss())[]) >>
-  imp_res_tac do_app_io_events_mono >>
-  imp_res_tac do_install_const >>
-  rveq >>
-  fsrw_tac[ARITH_ss][AC ADD_ASSOC ADD_COMM] >>
-  rveq >> fs[] >>
-  gvs[AppUnit_def] >>
-  metis_tac[evaluate_io_events_mono,with_clock_ffi,FST,SND
-    ,IS_PREFIX_TRANS,lemma,Boolv_11,lemma2,lemma3]
-*)
+(* HOL4 closPropsScript.sml:1673-1685: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = export_rewrites ["closLang.exp_size_def"]
-*)
+(* HOL4 closPropsScript.sml:1737: ML code, not ported *)
 
 (* finding the SetGlobal operations *)
 let op_gbag_def = cake_define
@@ -603,8 +415,8 @@ hol4_overload "op_gbag" "closProps_op_gbag";;
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ gvs
-   [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:1783-1786: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let set_globals_def = cake_define_list_try_tac (fun () ->
@@ -651,8 +463,8 @@ hol4_overload "set_globals" "closProps_set_globals";;
 
 (* value is setglobal-closure free *)
 let _ = size_thms "closSem_v";;
-(* HOL4 termination: >> simp[v_size_def] >> rpt strip_tac >>
-   imp_res_tac v_size_lemma >> simp[] *)
+(* HOL4 closPropsScript.sml:1809-1812: the tactic that proves the
+   termination *)
 let vsgc_free_def = cake_define_wf
   `MEASURE closSem_v_size`
   `vsgc_free x1 =
@@ -677,8 +489,8 @@ let rsgc_free_def = cake_define
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> simp[] >> rpt strip_tac >> imp_res_tac
-   exp_size_MEM >> simp[] *)
+(* HOL4 closPropsScript.sml:1849-1852: the tactic that proves the
+   termination *)
 let esgc_free_def = cake_define_list_try (fun () ->
   `MEASURE closLang_exp_size`)
   [`closProps_esgc_free (Var _257 _258:closLang_exp) <=> T`;
@@ -801,15 +613,9 @@ hol4_overload "simple_state_rel" "closProps_simple_state_rel";;
 
 (*TODO remove once its in Typebase and automatically
  simp*)
-(* HOL4 ML code, not ported:
-fun case_constant typ =
-  prove_case_const_thm {case_def = TypeBase.case_def_of typ,
-  nchotomy = TypeBase.nchotomy_of typ};
-*)
+(* HOL4 closPropsScript.sml:2294-2296: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = print "The following proof is slow due to Rerr cases.\n";
-*)
+(* HOL4 closPropsScript.sml:2325: ML code, not ported *)
 
 (* generic do_install compile proof *)
 let simple_compile_state_rel_def = cake_define
@@ -836,23 +642,12 @@ let simple_compile_state_rel_def = cake_define
                            (closSem_state_compile_oracle t)))
                            (state_clock_fupd (K n) t)))))`;;
 
-(* HOL4 ML code, not ported:
-fun first_term f tm = f (find_term (can f) tm);
-*)
+(* HOL4 closPropsScript.sml:2726: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun TYPE_CASE_TAC nm (g as (_, tm)) =
-*)
+(* HOL4 closPropsScript.sml:2728: ML code, not ported *)
   (* CASE_TAC restricted to a particular type. Works in the proof below,
      but needs more code from BasicProvers to be robust. *)
-(* HOL4 ML code, not ported:
-  let
-    val ERR = mk_HOL_ERR "TYPE_CASE_TAC"
-    fun m (_, x, _) = if fst (dest_type (type_of x)) = nm
-        then x else raise ERR "TYPE_CASE_TAC" "no match"
-    val t = first_term (m o TypeBase.dest_case) tm
-  in CHANGED_TAC (Cases_on `^t`) end g;
-*)
+(* HOL4 closPropsScript.sml:2731-2736: ML code, not ported *)
 
 (* after do_install evaluate uses the LAST element, and this helps *)
 (* FIXME move *)
@@ -875,13 +670,7 @@ let eval_sim_def = cake_define
            res1 res2 /\ state_ffi s2 = state_ffi t2))`;;
 hol4_overload "eval_sim" "closProps_eval_sim";;
 
-(* HOL4 ML code, not ported:
-val evaluate_add_to_clock_io_events_mono_alt =
-  evaluate_add_to_clock_io_events_mono
-  |> SIMP_RULE std_ss [] |> CONJUNCT1 |> SPEC_ALL
-  |> DISCH ``evaluate (es,env,s) = (res,s1:('c,'ffi) closSem$state)``
-  |> SIMP_RULE std_ss [] |> GEN_ALL;
-*)
+(* HOL4 closPropsScript.sml:2800-2804: ML code, not ported *)
 
 let adj_orac_rel_def = cake_define
   `closProps_adj_orac_rel cc f s1 s2 <=>
@@ -894,15 +683,7 @@ let adj_orac_rel_def = cake_define
         (closSem_state_max_app s1)`;;
 hol4_overload "adj_orac_rel" "closProps_adj_orac_rel";;
 
-(* HOL4 ML code, not ported:
-val do_app_lemma =
-  simple_val_rel_do_app
-  |> Q.GENL [`vr`,`sr`]
-  |> ISPEC ``(=):closSem$v -> closSem$v -> bool``
-  |> ISPEC ``adj_orac_rel cc f``
-  |> Q.INST [`opp`|->`op`,`s`|->`s1`,`t`|->`s2`,`ys`|->`xs`]
-  |> SIMP_RULE std_ss [do_app_lemma_simp]
-*)
+(* HOL4 closPropsScript.sml:3178-3184: ML code, not ported *)
 
 let SUBMAP_rel_def = cake_define
   `SUBMAP_rel z1 z2 <=>
@@ -912,22 +693,13 @@ let SUBMAP_rel_def = cake_define
          (FDOM (closSem_state_code z2))
            (closSem_state_compile_oracle z1)`;;
 
-(* HOL4 ML code, not ported:
-val do_app_lemma =
-  simple_val_rel_do_app
-  |> Q.GENL [`vr`,`sr`]
-  |> ISPEC ``(=):closSem$v -> closSem$v -> bool``
-  |> ISPEC ``SUBMAP_rel``
-  |> Q.INST [`opp`|->`op`,`s`|->`s1`,`t`|->`s2`,`ys`|->`xs`]
-  |> SIMP_RULE std_ss [do_app_lemma_simp]
-*)
+(* HOL4 closPropsScript.sml:3396-3402: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
-   imp_res_tac MEM_list_size \\ pop_assum $ qspec_then ‘exp_size’
-   mp_tac \\ gvs [] *)
+(* HOL4 closPropsScript.sml:3554-3560: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let obeys_max_app_def = cake_define_list_try_tac (fun () ->
@@ -957,9 +729,8 @@ let obeys_max_app_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
-   imp_res_tac MEM_list_size \\ pop_assum $ qspec_then ‘exp_size’
-   mp_tac \\ gvs [] *)
+(* HOL4 closPropsScript.sml:3578-3584: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let no_Labels_def = cake_define_list_try_tac (fun () ->
@@ -987,7 +758,8 @@ let no_Labels_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 closPropsScript.sml:3631-3634: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let app_call_dests_def = cake_define_list_try_tac (fun () ->
@@ -1036,23 +808,20 @@ let app_call_dests_def = cake_define_list_try_tac (fun () ->
          (if opt = SOME F then app_call_dests opt xs else
            dest INSERT app_call_dests opt xs)`];;
 
-(* HOL4 overload (expanded in the port):
-     call_dests = app_call_dests (SOME T) *)
-(* HOL4 overload (expanded in the port):
-     app_dests = app_call_dests (SOME F) *)
-(* HOL4 overload (expanded in the port):
-     any_dests = app_call_dests NONE *)
+(* HOL4 closPropsScript.sml:3639: the overload call_dests, which the
+   port expands *)
+(* HOL4 closPropsScript.sml:3640: the overload app_dests, which the
+   port expands *)
+(* HOL4 closPropsScript.sml:3641: the overload any_dests, which the
+   port expands *)
 
-(* HOL4 ML code, not ported:
-val app_call_dests_ind = theorem"app_call_dests_ind";
-*)
+(* HOL4 closPropsScript.sml:3643: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [list_size_pair_size_MAP_FST_SND] \\
-   imp_res_tac MEM_list_size \\ pop_assum $ qspec_then ‘exp_size’
-   mp_tac \\ gvs [] *)
+(* HOL4 closPropsScript.sml:3725-3731: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let get_code_labels_def = cake_define_list_try_tac (fun () ->
@@ -1097,6 +866,4 @@ let get_code_labels_def = cake_define_list_try_tac (fun () ->
         assign_get_code_label op`];;
 hol4_overload "get_code_labels" "closProps_get_code_labels";;
 
-(* HOL4 ML code, not ported:
-val code_locs_ind = theorem"code_locs_ind";
-*)
+(* HOL4 closPropsScript.sml:3737: ML code, not ported *)

@@ -81,42 +81,39 @@ hol4_overload "StackSetSize" "stackLang_StackSetSize";;
 hol4_overload "BitmapLoad" "stackLang_BitmapLoad";;
 hol4_overload "Halt" "stackLang_Halt";;
 
-(* HOL4 overload (expanded in the port):
-     While = λcmp r ri c. Loop (If cmp r ri c (Break 0)) *)
+(* HOL4 stackLangScript.sml:68: the overload While, which the port
+   expands *)
 
-(* HOL4 overload (expanded in the port):
-     move = λdest src. Inst (Arith (Binop Or dest src (Reg src))) *)
-(* HOL4 overload (expanded in the port):
-     sub_1_inst = λr1. Inst (Arith (Binop Sub r1 r1 (Imm 1w))) *)
-(* HOL4 overload (expanded in the port):
-     sub_inst = λr1 r2. Inst (Arith (Binop Sub r1 r1 (Reg r2))) *)
-(* HOL4 overload (expanded in the port):
-     add_inst = λr1 r2. Inst (Arith (Binop Add r1 r1 (Reg r2))) *)
-(* HOL4 overload (expanded in the port):
-     and_inst = λr1 r2. Inst (Arith (Binop And r1 r1 (Reg r2))) *)
-(* HOL4 overload (expanded in the port):
-     xor_inst = λr1 r2. Inst (Arith (Binop Xor r1 r1 (Reg r2))) *)
-(* HOL4 overload (expanded in the port):
-     add_1_inst = λr1. Inst (Arith (Binop Add r1 r1 (Imm 1w))) *)
-(* HOL4 overload (expanded in the port):
-     or_inst = λr1 r2. Inst (Arith (Binop Or r1 r1 (Reg r2))) *)
-(* HOL4 overload (expanded in the port):
-     add_bytes_in_word_inst = λr1. Inst (Arith (Binop Add r1 r1 (Imm
-       (bytes_in_word)))) *)
-(* HOL4 overload (expanded in the port):
-     div2_inst = λr. Inst (Arith (Shift Lsr r r (Imm 1w))) *)
-(* HOL4 overload (expanded in the port):
-     left_shift_inst = λr v. Inst (Arith (Shift Lsl r r (Imm (n2w v))))
-       *)
-(* HOL4 overload (expanded in the port):
-     right_shift_inst = λr v. Inst (Arith (Shift Lsr r r (Imm (n2w v))))
-       *)
-(* HOL4 overload (expanded in the port):
-     const_inst = λr w. Inst (Const r w) *)
-(* HOL4 overload (expanded in the port):
-     load_inst = λr a. Inst (Mem Load r (Addr a 0w)) *)
-(* HOL4 overload (expanded in the port):
-     store_inst = λr a. Inst (Mem Store r (Addr a 0w)) *)
+(* HOL4 stackLangScript.sml:70: the overload move, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:71: the overload sub_1_inst, which the
+   port expands *)
+(* HOL4 stackLangScript.sml:72: the overload sub_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:73: the overload add_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:74: the overload and_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:75: the overload xor_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:76: the overload add_1_inst, which the
+   port expands *)
+(* HOL4 stackLangScript.sml:77: the overload or_inst, which the port
+   expands *)
+(* HOL4 stackLangScript.sml:78: the overload add_bytes_in_word_inst,
+   which the port expands *)
+(* HOL4 stackLangScript.sml:79: the overload div2_inst, which the
+   port expands *)
+(* HOL4 stackLangScript.sml:80: the overload left_shift_inst, which
+   the port expands *)
+(* HOL4 stackLangScript.sml:81: the overload right_shift_inst, which
+   the port expands *)
+(* HOL4 stackLangScript.sml:82: the overload const_inst, which the
+   port expands *)
+(* HOL4 stackLangScript.sml:83: the overload load_inst, which the
+   port expands *)
+(* HOL4 stackLangScript.sml:84: the overload store_inst, which the
+   port expands *)
 
 let list_Seq_def = cake_define_list
   [`stackLang_list_Seq [] = Skip`;

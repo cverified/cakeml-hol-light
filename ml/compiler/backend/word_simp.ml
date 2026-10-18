@@ -185,8 +185,8 @@ let is_gc_const_def = cake_define
 let all_names_def = cake_define
   `all_names (n,m) = sptree_union n m`;;
 
-(* HOL4 overload (expanded in the port):
-     delete_all = λn l. FOLDR delete l n *)
+(* HOL4 word_simpScript.sml:262: the overload delete_all, which the
+   port expands *)
 
 (* We only drop constants that can potentially be in registers *)
 let drop_consts_def = cake_define_list

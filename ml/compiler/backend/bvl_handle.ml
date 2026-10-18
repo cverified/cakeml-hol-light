@@ -101,12 +101,8 @@ let handle_size_def = cake_define_list
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt conj_tac \\ rpt gen_tac \\ simp_tac
-   std_ss [] \\ fs [handle_size_def] \\ rw [] \\ gvs
-   [DefnBase.one_line_ify NONE dest_handle_If_def,AllCaseEqs()] \\
-   gvs [DefnBase.one_line_ify NONE
-   dest_handle_Raise_def,AllCaseEqs()] \\ fs [handle_size_def] \\ rw
-   [] \\ fs [dest_handle_Let_def,handle_size_non_zero] *)
+(* HOL4 bvl_handleScript.sml:112-123: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let handle_simp_def = cake_define_list_try_tac (fun () ->
@@ -225,9 +221,7 @@ let compile_def = cake_define_list
            OptionalLetLet (Call t dest ys) n lx (s1 + 1) l F)`];;
 hol4_overload "compile" "bvl_handle_compile";;
 
-(* HOL4 ML code, not ported:
-val compile_ind = theorem"compile_ind";
-*)
+(* HOL4 bvl_handleScript.sml:214: ML code, not ported *)
 
 let compile_sing_def = cake_define_list
   [`bvl_handle_compile_sing l n (Var v:bvl_exp) = (if v < n then (Var
@@ -299,8 +293,8 @@ let dest_Seq_def = cake_define
 hol4_overload "dest_Seq" "bvl_handle_dest_Seq";;
 
 let _ = size_thms "bvl_exp";;
-(* HOL4 termination: ( \\ strip_tac \\ HO_MATCH_MP_TAC (fetch "-"
-   "dest_Seq_ind") \\ fs [dest_Seq_def] \\ EVAL_TAC \\ fs []):tactic *)
+(* HOL4 bvl_handleScript.sml:316-320: the tactic that proves the
+   termination *)
 let compile_seqs_def = cake_define_wf
   `MEASURE (\(c,e,a). bvl_exp_size e)`
   `compile_seqs cut_size e acc =

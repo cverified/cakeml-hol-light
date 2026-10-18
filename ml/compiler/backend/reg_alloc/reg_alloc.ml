@@ -177,32 +177,15 @@ let set_stack_def = cake_define
      (\state. (M_success one,ra_state_stack_fupd (K x) state))`;;
 
 
-(* HOL4 ML code, not ported:
-val adj_ls_accessors = el 1 accessors;
-val (adj_ls,get_adj_ls_def,set_adj_ls_def) = adj_ls_accessors;
-*)
+(* HOL4 reg_allocScript.sml:85-86: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val node_tag_accessors = el 2 accessors;
-val (node_tag,get_node_tag_def,set_node_tag_def) = node_tag_accessors;
-*)
+(* HOL4 reg_allocScript.sml:88-89: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val degrees_accessors = el 3 accessors;
-val (degrees,get_degrees_def,set_degrees_def) = degrees_accessors;
-*)
+(* HOL4 reg_allocScript.sml:91-92: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val coalesced_accessors = el 10 accessors;
-val (coalesced, get_coalesced_def, set_coalesced_def) =
-  coalesced_accessors;
-*)
+(* HOL4 reg_allocScript.sml:94-95: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val move_related_accessors = el 11 accessors;
-val (move_related, get_move_related_def, set_move_related_def) =
-  move_related_accessors;
-*)
+(* HOL4 reg_allocScript.sml:97-98: ML code, not ported *)
 
 (* Data type for the exceptions *)
 let state_exn_INDUCT,state_exn_RECURSION = define_datatype
@@ -244,10 +227,7 @@ let handle_Subscript_def = cake_define
 
 hol4_overload "failwith" "raise_Fail";;
 
-(* HOL4 ML code, not ported:
-val sub_exn = ``Subscript``;
-val update_exn = ``Subscript``;
-*)
+(* HOL4 reg_allocScript.sml:109-110: ML code, not ported *)
 
 (* Fixed-size array manipulators *)
 (* HOL4 makes the manipulators of the fixed size arrays with
@@ -321,17 +301,9 @@ let update_move_related_def = cake_define
          reg_alloc_Subscript`;;
 
 
-(* HOL4 ML code, not ported:
-fun accessor_thm (a,b,c,d,e,f) = LIST_CONJ [b,c,d,e,f]
-*)
+(* HOL4 reg_allocScript.sml:117: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val adj_ls_manip = el 1 arr_manip;
-val node_tag_manip = el 2 arr_manip;
-val degrees_manip = el 3 arr_manip;
-val coalesced_manip = el 4 arr_manip;
-val move_related_manip = el 5 arr_manip;
-*)
+(* HOL4 reg_allocScript.sml:119-123: ML code, not ported *)
 
 (* Helper functions for defining the allocator *)
 

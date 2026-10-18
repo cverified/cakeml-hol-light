@@ -28,18 +28,11 @@ let padLen_DEC_def = cake_define
 let maxSmall_DEC_def1 = cake_define
   `maxSmall_DEC = 10 EXP exp_for_dec_enc`;;
 
-(* HOL4 ML code, not ported:
-val exp_thm = EVAL ``10n ** exp_for_dec_enc``
-val exp_tm = rhs (concl exp_thm)
-*)
+(* HOL4 mlintScript.sml:37-38: ML code, not ported *)
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp [GSYM DIVISION, GSYM exp_thm] \\ rw
-   [exp_for_dec_enc_def] \\ simp [EXP] \\ irule (Q.prove (`a <= d /\
-   b <= c /\ (a < d \/ b < c) ==> (a : num) + b < c + d`, simp []))
-   \\ simp [arithmeticTheory.DIV_LESS_EQ] \\ Cases_on `i = 0` \\ fs
-   [] *)
+(* HOL4 mlintScript.sml:45-54: the tactic that proves the termination *)
 let num_to_chars_def = cake_define_list_try (fun () ->
   `inv_image (MEASURE I LEX MEASURE I)
           (\(i,j,k,_1). (i * (10 EXP j)) + k,exp_for_dec_enc - j)`)
@@ -92,7 +85,8 @@ let fromChars_range_def = cake_define_list
           head = fromChar (strsub str (l + n)) in OPTION_MAP2
             (+) rest head)`];;
 
-(* HOL4 termination: \\ rw [padLen_DEC_eq] *)
+(* HOL4 mlintScript.sml:188-190: the tactic that proves the
+   termination *)
 let fromChars_unsafe_def = cake_define_wf
   `MEASURE FST`
   `fromChars_unsafe n str =
@@ -104,11 +98,10 @@ let fromChars_unsafe_def = cake_define_wf
               front = fromChars_unsafe n' str * maxSmall_DEC in let
               back = fromChars_range_unsafe n' padLen_DEC str in
                 front + back)`;;
-(* HOL4 ML code, not ported:
-val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
-*)
+(* HOL4 mlintScript.sml:191: ML code, not ported *)
 
-(* HOL4 termination: \\ rw [padLen_DEC_eq] *)
+(* HOL4 mlintScript.sml:202-204: the tactic that proves the
+   termination *)
 let fromChars_def = cake_define_wf
   `MEASURE FST`
   `fromChars n str =
@@ -121,9 +114,7 @@ let fromChars_def = cake_define_wf
                 str) in let
               back = fromChars_range n' padLen_DEC str in
                 OPTION_MAP2 (+) front back)`;;
-(* HOL4 ML code, not ported:
-val fromChars_ind = theorem"fromChars_ind"
-*)
+(* HOL4 mlintScript.sml:205: ML code, not ported *)
 
 let fromString_unsafe_def = cake_define
   `fromString_unsafe str =

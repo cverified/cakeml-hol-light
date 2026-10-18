@@ -16,14 +16,12 @@ needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 
-(* HOL4 ML code, not ported:
-fun bump_assum pat = qpat_x_assum pat assume_tac;
-*)
+(* HOL4 clos_letopProofScript.sml:11: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     let_op = clos_letop$let_op *)
-(* HOL4 overload (expanded in the port):
-     var_list = clos_letop$var_list *)
+(* HOL4 clos_letopProofScript.sml:15: the overload let_op, which the
+   port expands *)
+(* HOL4 clos_letopProofScript.sml:16: the overload var_list, which
+   the port expands *)
 
 let code_rel_def = cake_define
   `clos_letopProof_code_rel e1 e2 <=>

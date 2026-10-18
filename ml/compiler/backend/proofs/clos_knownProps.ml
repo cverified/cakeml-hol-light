@@ -12,9 +12,7 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "lib/mergesort.ml";;
 needs "lib/sptree.ml";;
 
-(* HOL4 ML code, not ported:
-val va_case_eq = TypeBase.case_eq_of ``:val_approx``
-*)
+(* HOL4 clos_knownPropsScript.sml:10: ML code, not ported *)
 
 (* See merge as a join operation on a semi-lattice: it's a join because
    it's
@@ -26,9 +24,7 @@ val va_case_eq = TypeBase.case_eq_of ``:val_approx``
 let subapprox_def = cake_define
   `subapprox a1 a2 <=> merge a1 a2 = a2`;;
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity "◁" (Infix(NONASSOC,450))
-*)
+(* HOL4 clos_knownPropsScript.sml:61: ML code, not ported *)
 
 let better_definedg_def = cake_define
   `better_definedg g1 g2 <=>

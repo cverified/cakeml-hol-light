@@ -160,15 +160,8 @@ let SmartOp2_def = cake_define
          (num_of_int i))) [x2]) | _21 -> default else default)`;;
 
 (* NOTE: the space after case and pmatch is important *)
-(* HOL4 ML code, not ported:
-val tm = (SmartOp2_quotation |>
-   map (fn QUOTE s => Portable.replace_string
-     {from="case ",to="pmatch "} s |> QUOTE
-       | aq => aq)) |> Term
-*)
-(* HOL4 ML code, not ported:
-end
-*)
+(* HOL4 bvl_constScript.sml:196-198: ML code, not ported *)
+(* HOL4 bvl_constScript.sml:206: ML code, not ported *)
 
 
 let dest_EqualInt_def = cake_define

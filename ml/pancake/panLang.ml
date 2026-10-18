@@ -141,12 +141,12 @@ let struct_info_FIELDS = define_record "struct_info"
   ["fields","(mlstring#shape) list";
    "size","num"];;
 
-(* HOL4 overload (expanded in the port):
-     TailCall = Call NONE *)
-(* HOL4 overload (expanded in the port):
-     AssignCall = \s h. Call (SOME (SOME s , h)) *)
-(* HOL4 overload (expanded in the port):
-     StandAloneCall = \h. Call (SOME (NONE , h)) *)
+(* HOL4 panLangScript.sml:127: the overload TailCall, which the port
+   expands *)
+(* HOL4 panLangScript.sml:128: the overload AssignCall, which the
+   port expands *)
+(* HOL4 panLangScript.sml:129: the overload StandAloneCall, which the
+   port expands *)
 
 let is_wf_shape_def = cake_define_list
   [`is_wf_shape ctxt One = T`;
@@ -248,8 +248,8 @@ let size_of_eids_def = cake_define
 let _ = size_thms "panLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> simp[MEM_MAP, EXISTS_PROD] >> rw [MEM_SPLIT]
-   >> simp [list_size_append] *)
+(* HOL4 panLangScript.sml:271-276: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let var_exp_def = cake_define_list_try_tac (fun () ->
@@ -282,8 +282,8 @@ let var_exp_def = cake_define_list_try_tac (fun () ->
 let _ = size_thms "panLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rpt strip_tac >> imp_res_tac MEM_IMP_exp_size
-   >> TRY (first_x_assum (assume_tac o Q.SPEC `ARB`)) >> decide_tac *)
+(* HOL4 panLangScript.sml:292-298: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let global_var_exp_def = cake_define_list_try_tac (fun () ->

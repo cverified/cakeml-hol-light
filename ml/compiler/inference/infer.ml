@@ -237,14 +237,7 @@ let type_name_check_subst_def = cake_define_list_cheat CHEAT_TAC
           ts'.
           st_ex_return (t' :: ts')))`];;
 
-(* HOL4 ML code, not ported:
-val type_name_check_subst_alt =
-  type_name_check_subst_def
-  |> SRULE [bind_guard, ignore_bind_guard]
-  |> SRULE [st_ex_bind_pair]
-  |> SRULE [st_ex_bind_def,st_ex_ignore_bind_def,lookup_st_ex_def,
-            st_ex_return_def];
-*)
+(* HOL4 inferScript.sml:307-312: ML code, not ported *)
 
 let type_name_check_sub_def = cake_define_list
   [`type_name_check_sub l tenvT fvs (Atvar tv) =
@@ -490,8 +483,7 @@ let op_to_string_def = cake_define
         | (ast_ThunkOp (UpdateThunk _15)) -> ((implode
           "UpdateThunk"),2)`;;
 
-(* HOL4 overload (expanded in the port):
-     Tem = Infer_Tapp [] *)
+(* HOL4 inferScript.sml:646: the overload Tem, which the port expands *)
 
 let t_num_of_def = cake_define
   `t_num_of x1 =
@@ -675,7 +667,8 @@ let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw [] *)
+(* HOL4 inferScript.sml:1016-1025: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let infer_e_def = cake_define_list_try_tac (fun () ->
@@ -1060,7 +1053,8 @@ let sub_completion_def = cake_define
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ fs [LESS_EQ,LENGTH_FILTER_LEQ] *)
+(* HOL4 inferScript.sml:1243-1245: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let alist_nub_def = cake_define_list_try_tac (fun () ->

@@ -22,14 +22,9 @@ needs "lib/sptree.ml";;
 needs "lib/tailrec.ml";;
 needs "semantics/ast.ml";;
 
-(* HOL4 ML code, not ported:
-val good_dimindex_def = miscTheory.good_dimindex_def;
-val env_to_list_lookup_equiv = wordPropsTheory.env_to_list_lookup_equiv;
-*)
+(* HOL4 word_bignumProofScript.sml:11-12: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val shift_def = backend_commonTheory.word_shift_def
-*)
+(* HOL4 word_bignumProofScript.sml:16: ML code, not ported *)
 
 
 (* semantics of the little language *)
@@ -230,30 +225,9 @@ let eval = cake_inductive
         s3))`;;
 hol4_overload "Eval" "word_bignumProof_Eval";;
 
-(* HOL4 ML code, not ported:
-val raw_eval_cases = eval_cases;
-*)
+(* HOL4 word_bignumProofScript.sml:158: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val eval_cases =
-  map (SIMP_CONV (srw_ss()) [Once raw_eval_cases])
-    [``Eval rec s1 Skip s2``,
-     ``Eval rec s1 Continue s2``,
-     ``Eval rec s1 (Delete vs) s2``,
-     ``Eval rec s1 (Seq p1 p2) s2``,
-     ``Eval rec s1 (Assign n x) s2``,
-     ``Eval rec s1 (If c r ri p1 p2) s2``,
-     ``Eval rec s1 (Load r i a) s2``,
-     ``Eval rec s1 (Store r i) s2``,
-     ``Eval rec s1 Swap s2``,
-     ``Eval rec s1 (Add r1 r2 r3 r4 r5) s2``,
-     ``Eval rec s1 (Sub r1 r2 r3 r4 r5) s2``,
-     ``Eval rec s1 (Mul r1 r2 r3 r4) s2``,
-     ``Eval rec s1 (Div r1 r2 r3 r4 r5) s2``,
-     ``Eval rec s1 (Rec save_regs vs) s2``,
-     ``Eval rec s1 (Loop r vs p) s2``,
-     ``Eval rec s1 (LoopBody p) s2``] |> LIST_CONJ;
-*)
+(* HOL4 word_bignumProofScript.sml:160-177: ML code, not ported *)
 
 
 (* verification of compiler to wordLang *)
@@ -315,8 +289,8 @@ let div_code_assum_def = cake_define
                (wordSem_state_permute_fupd (K (\n.
                wordSem_state_permute t1 (n + 1))) t1)))))))`;;
 
-(* HOL4 overload (expanded in the port):
-     max_var_name = 25n *)
+(* HOL4 word_bignumProofScript.sml:244: the overload max_var_name,
+   which the port expands *)
 
 let state_rel_def = cake_define
   `word_bignumProof_state_rel s (t:('a,'c,'ffi)wordSem_state) cs t0
@@ -413,14 +387,7 @@ let list_store_def = cake_define_list
    `list_store (x :: xs) ys s = (list_store xs (TL ys) s) |+ (Temp
   (n2w x),HD ys)`];;
 
-(* HOL4 ML code, not ported:
-fun uncurry_case_rand x = x
-                         |> TypeBase.case_rand_of
-                         |> ISPEC ``(UNCURRY (A:'uniquea -> 'uniqueb ->
-                           'uniquec))``
-                         |> GEN ``(A:'uniquea -> 'uniqueb ->
-                           'uniquec)``;
-*)
+(* HOL4 word_bignumProofScript.sml:677-680: ML code, not ported *)
 
 let good_code_def = cake_define
   `word_bignumProof_good_code cs3 =
@@ -434,9 +401,7 @@ hol4_overload "good_code" "word_bignumProof_good_code";;
 
 (* correctenss judgement *)
 
-(* HOL4 ML code, not ported:
-val all_corrs = ref (tl [TRUTH]);
-*)
+(* HOL4 word_bignumProofScript.sml:1335: ML code, not ported *)
 
 let corr_def = cake_define
   `Corr prog (s:'a word_bignumProof_state) s1 p <=>
@@ -452,741 +417,114 @@ let tick_before_def = cake_define
      (if state_clock s = 0 then (s,F) else f (delete_vars vs
        (dec_clock s)))`;;
 
-(* HOL4 ML code, not ported:
-val Corr_Loop = MATCH_MP Corr_Loop_lemma (Corr_LoopBody |> UNDISCH) |>
-  DISCH_ALL;
-*)
+(* HOL4 word_bignumProofScript.sml:1514: ML code, not ported *)
 
 
 (* derive Corr thm from AST *)
 
-(* HOL4 ML code, not ported:
-val write_simps = LIST_CONJ [array_write_simp, reg_write_simp,
-  dec_clock_write_simp, clock_write_simp]
-*)
+(* HOL4 word_bignumProofScript.sml:1618-1619: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val s_var = Corr_def |> concl |> dest_forall |> snd |> dest_forall |>
-  fst
-*)
+(* HOL4 word_bignumProofScript.sml:1627: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun find_ret_tuple tm =
-  if is_var tm then
-    tm
-  else if pairSyntax.is_pair tm then
-    tm
-  else if is_let tm then
-    pairSyntax.dest_anylet tm |> snd |> find_ret_tuple
-  else if is_cond tm then let
-    val (_,x1,x2) = dest_cond tm
-    in find_ret_tuple x1 handle HOL_ERR _ =>
-       find_ret_tuple x2 end
-  else fail()
-*)
+(* HOL4 word_bignumProofScript.sml:1629-1640: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun get_array_name a = let
-  val a = a |> dest_var |> fst
-  val a = if a = "xs" then ``In1`` else
-          if a = "ys" then ``In2`` else
-          if a = "zs" then ``Out`` else fail()
-  in a end
-*)
+(* HOL4 word_bignumProofScript.sml:1642-1647: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun get_pat th =
-  th |> SPEC_ALL |> UNDISCH_ALL |> concl |> rator |> rator |> rator |>
-    rand;
-*)
+(* HOL4 word_bignumProofScript.sml:1649-1650: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun D th = let
-  val th1 = th |> DISCH_ALL |> PURE_REWRITE_RULE [AND_IMP_INTRO,GSYM
-    CONJ_ASSOC]
-  in if th1 |> concl |> is_imp then th1 else DISCH T th end
-*)
+(* HOL4 word_bignumProofScript.sml:1652-1654: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val const_def = el 1 (all_code_defs |> CONJUNCTS |> rev)
-*)
+(* HOL4 word_bignumProofScript.sml:1656: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val simp_var_assums_conv =
-  SIMP_CONV (srw_ss()) [FLOOKUP_UPDATE,APPLY_UPDATE_THM]
-*)
+(* HOL4 word_bignumProofScript.sml:1658-1659: ML code, not ported *)
 
 (* order: clock then array then reg_write *)
-(* HOL4 ML code, not ported:
-val sort_lemma = prove(
-  ``(clock_write l1 (clock_write l2 s) = clock_write l1 s) /\
-    (* array_write move inwards *)
-    (array_write a1 x1 (clock_write l s) = clock_write l (array_write a1
-      x1 s)) /\
-    (array_write a1 x1 (array_write a1 x2 s) = array_write a1 x1 s) /\
-    (array_write In2 x1 (array_write In1 x2 s) =
-     array_write In1 x2 (array_write In2 x1 s)) /\
-    (array_write Out x1 (array_write In1 x2 s) =
-     array_write In1 x2 (array_write Out x1 s)) /\
-    (array_write Out x1 (array_write In2 x2 s) =
-     array_write In2 x2 (array_write Out x1 s)) /\
-    (* reg_write move inwards *)
-    (n2 < n1 ==>
-     reg_write n1 w1 (reg_write n2 w2 s) = reg_write n2 w2 (reg_write n1
-       w1 s)) /\
-    (reg_write n1 w1 (reg_write n1 w2 s) = reg_write n1 w1 s) /\
-    (reg_write n1 w1 (clock_write l s) = clock_write l (reg_write n1 w1
-      s)) /\
-    (reg_write n1 w1 (array_write a1 x1 s) = array_write a1 x1
-      (reg_write n1 w1 s))``,
-  Cases_on `w1`
-  \\ Cases_on `w2`
-  \\ rw
-    [state_eq_lemma,EXTENSION,FAPPLY_FUPDATE_THM,array_write_def
-    ,clock_write_def]
-  \\ TRY eq_tac \\ rw [] \\ CCONTR_TAC \\ fs [DOMSUB_FAPPLY_THM]
-  \\ rfs [FAPPLY_FUPDATE_THM,APPLY_UPDATE_THM]
-  \\ rpt (pop_assum mp_tac) \\ rw []) |> CONJUNCTS |> map GEN_ALL |>
-    LIST_CONJ;
-*)
+(* HOL4 word_bignumProofScript.sml:1662-1684: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val reg_write_pat = ``reg_write n v s``
-val clock_write_pat = clock_write_def |> SPEC_ALL |> concl |> lhs
-val array_write_pat = array_write_def |> SPEC_ALL |> concl |> lhs
-val dec_clock_pat = dec_clock_def |> SPEC_ALL |> concl |> lhs
-val delete_vars_pat = ``delete_vars vs s``
-*)
+(* HOL4 word_bignumProofScript.sml:1686-1690: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-local val s = HolKernel.syntax_fns2 "word_bignumProof" in
-  val (clock_write_tm,mk_clock_write,dest_clock_write,is_clock_write) =
-    s "clock_write"
-end
-local val s = HolKernel.syntax_fns3 "word_bignumProof" in
-  val (reg_write_tm,mk_reg_write,dest_reg_write,is_reg_write) = s
-    "reg_write"
-  val (array_write_tm,mk_array_write,dest_array_write,is_array_write) =
-    s "array_write"
-end
-*)
+(* HOL4 word_bignumProofScript.sml:1692-1698: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val sort_thms = let
-  val xs = sort_lemma |> CONJUNCTS |> map SPEC_ALL
-  val x = first (is_imp o concl) xs
-  fun up_to 0 = []
-    | up_to n = n-1 :: up_to (n-1)
-  fun pairs 0 = []
-    | pairs n = map (fn m => (n-1,m)) (up_to (n-1)) @ pairs (n-1)
-  fun f (n1,n2) =
-    x |> INST [``n1:num``|->numSyntax.term_of_int n1,
-               ``n2:num``|->numSyntax.term_of_int n2]
-      |> SIMP_RULE std_ss []
-  val ys = filter (not o is_imp o concl) xs @
-             map f (pairs 23) (* all variables have names < 23 *)
-  in ys end
-*)
+(* HOL4 word_bignumProofScript.sml:1700-1713: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val all_goals = ref (tl [T]);
-*)
+(* HOL4 word_bignumProofScript.sml:1715: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val sort_writes_conv = let
-  val raw_sort_conv = QCONV (REWRITE_CONV sort_thms)
-  val cc = REWRITE_CONV [delete_vars_def,dec_clock_thm,write_simps]
-  fun do_it_conv tm = let
-    fun dest_writes tm =
-      let
-        val (l,s) = dest_clock_write tm
-      in rator (mk_clock_write(genvar(type_of l),s_var)) :: dest_writes
-        s end
-      handle HOL_ERR _ =>
-      let
-        val (a,x,s) = dest_array_write tm
-      in rator (mk_array_write(a,genvar(type_of x),s_var)) ::
-        dest_writes s end
-      handle HOL_ERR _ =>
-      let
-        val (a,x,s) = dest_reg_write tm
-      in rator (mk_reg_write(a,genvar(type_of x),s_var)) :: dest_writes
-        s end
-      handle HOL_ERR _ => []
-    val xs = dest_writes tm
-    fun make_term [] = s_var
-      | make_term (x::xs) = mk_comb(x,make_term xs)
-    val lemma = raw_sort_conv (make_term xs)
-    in REWR_CONV lemma tm end
-  fun is_inl_inr_conv tm =
-    if can (match_term reg_write_pat) tm
-       orelse can (match_term clock_write_pat) tm
-       orelse can (match_term array_write_pat) tm
-    then ALL_CONV tm else NO_CONV tm
-  in cc THENC ONCE_DEPTH_CONV (is_inl_inr_conv THENC do_it_conv) end
-*)
+(* HOL4 word_bignumProofScript.sml:1717-1744: ML code, not ported *)
 
-(*
-val th = (Corr_Skip |> INST [s_var |-> ret_tm])
-*)
+(* HOL4 word_bignumProofScript.sml:1746-1748: code that the source
+   has in a comment *)
 
-(* HOL4 ML code, not ported:
-fun remove_write_from_init th = let
-  val tm = concl th |> rator |> rator |> rand
-  val del_pat = ``delete_vars vs ^s_var``
-  val xs = find_terms (can (match_term del_pat)) tm |> map (rand o
-    rator)
-             |> map (fst o listSyntax.dest_list) |> Lib.flatten
-  val del_assums = map (fn tm => ``~(^tm IN FDOM ^s_var.regs)``) xs
-  val reg_pat = reg_write_def |> CONJUNCT2 |> SPEC_ALL |> concl |> lhs
-    |> rator
-  val xs = find_terms (can (match_term reg_pat)) tm
-  val reg_assums =
-    map (fn tm => ``FLOOKUP s.regs ^(tm |> rator |> rand) = ^(tm |>
-      rand)``) xs
-  val clock_pat = clock_write_def |> SPEC_ALL |> concl |> lhs |> rator
-  val xs = find_terms (can (match_term clock_pat)) tm
-  val clock_assums = map (fn tm => ``^(s_var).clock = ^(tm |> rand)``)
-    xs
-  val array_pat = array_write_def |> SPEC_ALL |> concl |> lhs |> rator
-  val xs = find_terms (can (match_term array_pat)) tm
-  val array_assums =
-    map (fn tm => ``s.arrays ^(tm |> rator |> rand) = ^(tm |> rand)``)
-      xs
-  val goal = foldr mk_imp (mk_eq(tm,s_var)) (array_assums @ del_assums @
-                reg_assums @ clock_assums)
-  val lemma = prove(``^goal``,
-    CONV_TAC sort_writes_conv
-    \\ rw [] \\ fs [FLOOKUP_DEF] \\ rw []
-    \\ fs [state_eq_lemma,clock_write_def]) |> UNDISCH_ALL
-  in th |> CONV_RULE ((RATOR_CONV o RATOR_CONV o RAND_CONV) (REWR_CONV
-    lemma)) end
-*)
+(* HOL4 word_bignumProofScript.sml:1750-1773: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val reg_read_lemma1_pat =
-  reg_read_lemma1 |> SPEC_ALL |> concl |> dest_imp |> snd |> lhs
-*)
+(* HOL4 word_bignumProofScript.sml:1781-1782: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val reg_read_lemma2_pat =
-  reg_read_lemma2 |> SPEC_ALL |> concl |> dest_imp |> snd |> lhs
-*)
+(* HOL4 word_bignumProofScript.sml:1790-1791: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val array_read_lemma_pat =
-  array_read_lemma |> SPEC_ALL |> concl |> dest_imp |> snd |> lhs
-*)
+(* HOL4 word_bignumProofScript.sml:1799-1800: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val clock_read_lemma_pat =
-  clock_read_lemma |> SPEC_ALL |> concl |> dest_imp |> snd |> lhs
-*)
+(* HOL4 word_bignumProofScript.sml:1808-1809: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun read_conv tm =
-  if can (match_term reg_read_lemma1_pat) tm then let
-    val n = tm |> rator |> rand
-    val nn = "r" ^ int_to_string (numSyntax.int_of_term n)
-    val lemma = reg_read_lemma1 |> SPECL [mk_var(nn,``:'a word``), n]
-    in UNDISCH lemma end
-  else if can (match_term reg_read_lemma2_pat) tm then let
-    val n = tm |> rand
-    val nn = "r" ^ int_to_string (numSyntax.int_of_term n)
-    val lemma = reg_read_lemma2 |> SPECL [mk_var(nn,``:'a word``), n]
-    in UNDISCH lemma end
-  else if can (match_term clock_read_lemma_pat) tm then let
-    val lemma = clock_read_lemma
-    in UNDISCH lemma end
-  else if can (match_term array_read_lemma_pat) tm then let
-    val n = tm |> rand
-    val nn = dest_const n |> fst
-    val nn = if nn = "In1" then "xs" else
-             if nn = "In2" then "ys" else "zs"
-    val lemma = array_read_lemma |> SPECL [mk_var(nn,type_of tm), n]
-    in UNDISCH lemma end
-  else NO_CONV tm
-*)
+(* HOL4 word_bignumProofScript.sml:1811-1832: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun make_new_vars th = let
-  val vs = D th |> concl |> free_vars
-  fun f v =
-    if v ~~ s_var then s_var |-> s_var else let
-      val (n,ty) = dest_var v
-      in v |-> mk_var("new_" ^ n,ty) end
-  in INST (map f vs) th end
-*)
+(* HOL4 word_bignumProofScript.sml:1834-1840: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun remove_new_vars th = let
-  val vs = D th |> concl |> free_vars
-  fun f v = let
-    val (n,ty) = dest_var v
-    in if String.isPrefix "new_" n then
-         v |-> mk_var(String.substring(n,4,size(n)-4),ty)
-       else v |-> v end
-  in INST (map f vs) th end
-*)
+(* HOL4 word_bignumProofScript.sml:1842-1849: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun let_intro_conv v =
-   UNBETA_CONV v THENC REWR_CONV (GSYM LET_THM);
-*)
+(* HOL4 word_bignumProofScript.sml:1851-1852: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun list_let_intro_conv [] = ALL_CONV
-  | list_let_intro_conv (v::vs) =
-      let_intro_conv v THENC list_let_intro_conv vs
-*)
+(* HOL4 word_bignumProofScript.sml:1854-1856: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun first_let_if_conv c tm =
-  if is_cond tm then
-    (RATOR_CONV o RATOR_CONV o RAND_CONV) c tm
-  else if can pairSyntax.dest_anylet tm then
-    (RAND_CONV) c tm
-  else if is_var tm then ALL_CONV tm
-  else if is_const tm then ALL_CONV tm
-  else if is_abs tm then ABS_CONV (first_let_if_conv c) tm
-  else if is_comb tm then
-    (RATOR_CONV (first_let_if_conv c) THENC
-     RAND_CONV (first_let_if_conv c)) tm
-  else ALL_CONV tm
-*)
+(* HOL4 word_bignumProofScript.sml:1902-1913: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-local val s = HolKernel.syntax_fns1 "word_bignum" in
-  val (Delete_tm,mk_Delete,dest_Delete,is_Delete) = s "Delete"
-end
-local val s = HolKernel.syntax_fns2 "word_bignum" in
-  val (Assign_tm,mk_Assign,dest_Assign,is_Assign) = s "Assign"
-  val (Seq_tm,mk_Seq,dest_Seq,is_Seq) = s "Seq"
-  val (Store_tm,mk_Store,dest_Store,is_Store) = s "Store"
-end
-local val s = HolKernel.syntax_fns3 "word_bignum" in
-  val (Loop_tm,mk_Loop,dest_Loop,is_Loop) = s "Loop"
-  val (Load_tm,mk_Load,dest_Load,is_Load) = s "Load"
-end
-*)
+(* HOL4 word_bignumProofScript.sml:1915-1926: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-local
-  val word_ty = ``:'a word``
-in
-  fun dest_reg v = let
-    val (n,ty) = dest_var v
-    val _ = ty = word_ty orelse fail()
-    val n = String.substring(n,1,String.size(n)-1) |> string_to_int
-    val n = numSyntax.term_of_int n
-    in n end handle Subscript => fail()
-end;
-*)
+(* HOL4 word_bignumProofScript.sml:1928-1937: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val Skip_tm = ``Skip:'a word_bignum$mini``
-val Swap_tm = ``Swap:'a word_bignum$mini``
-val Continue_tm = ``Continue:'a word_bignum$mini``
-*)
+(* HOL4 word_bignumProofScript.sml:1939-1941: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val If_pat = ``word_bignum$If c r (ri:'a reg_imm) p1 p2``
-fun dest_If tm = let
-  val i = fst (match_term If_pat tm)
-  fun list_dest f tm = let
-    val (x,y) = f tm
-    in list_dest f x @ list_dest f y end handle HOL_ERR _ => [tm]
-  val ts = list_dest dest_comb If_pat
-  in (subst i (el 2 ts),
-      subst i (el 3 ts),
-      subst i (el 4 ts),
-      subst i (el 5 ts),
-      subst i (el 6 ts)) end
-fun mk_If (c,r,ri,p1,p2) = ``word_bignum$If ^c ^r ^ri ^p1 ^p2``;
-fun is_If tm = can dest_If tm
-*)
+(* HOL4 word_bignumProofScript.sml:1943-1956: ML code, not ported *)
 
-(* val _ = diminish_srw_ss ["LET"]; *)
+(* HOL4 word_bignumProofScript.sml:1958: code that the source has in
+   a comment *)
 
-(* HOL4 ML code, not ported:
-fun derive_corr_thm const_def = let
-*)
+(* HOL4 word_bignumProofScript.sml:1960: ML code, not ported *)
 
   (* look up definitions *)
-(* HOL4 ML code, not ported:
-  val (r,l) = const_def |> concl |> dest_eq
-  val name = r |> dest_const |> fst
-  val name = String.substring(name,0,size(name)-5)
-  val def = fetch "mc_multiword" (name ^ "_def")
-  val pre_def = fetch "mc_multiword" (name ^ "_pre_def")
-  val def_tail = fetch "mc_multiword" (name)
-  val pre_tail = fetch "mc_multiword" (name ^ "_pre")
-  val _ = print ("derive_corr_thm " ^ name ^ " \t")
-*)
+(* HOL4 word_bignumProofScript.sml:1963-1970: ML code, not ported *)
   (* compute ret and cont Corr thms *)
-(* HOL4 ML code, not ported:
-  val inp = def |> concl |> lhs |> rand
-  val out = find_ret_tuple (def |> concl |> rhs)
-  val is = helperLib.list_dest pairSyntax.dest_pair inp
-  val os = helperLib.list_dest pairSyntax.dest_pair out
-  fun add_all_writes ws dels tm = let
-    val vs = map (fn v => dest_reg v handle HOL_ERR _ => s_var) ws
-    fun add_extra_writes tm = mk_comb(``(delete_vars ^dels):α state -> α
-      state``,tm)
-    fun add_writes [] tm = tm
-      | add_writes (v::vs) tm = let
-          val n = dest_reg v
-          in add_writes vs (``reg_write ^n (SOME ^v) ^tm``) end
-        handle HOL_ERR _ => let
-          val _ = type_of v = ``:num`` orelse fail()
-          in add_writes vs (``clock_write ^v ^tm``) end
-        handle HOL_ERR _ => let
-          val n = get_array_name v
-          in add_writes vs (``array_write ^n ^v ^tm``) end
-        handle HOL_ERR _ => failwith("add_writes should not break")
-    in add_extra_writes (add_writes ws tm) end
-  val del_pat = ``Seq (Delete vs) Skip:'a mini``
-  val dels = find_term (can (match_term del_pat)) l |> rator |> rand |>
-    rand
-             handle HOL_ERR _ => ``[]:num list``
-  val ret_tm = add_all_writes (rev os) dels s_var
-  val del_pat = ``Seq (Delete vs) Continue:'a mini``
-  val dels = find_term (can (match_term del_pat)) l |> rator |> rand |>
-    rand
-             handle HOL_ERR _ => ``[]:num list``
-  val cont_tm = add_all_writes (rev is) dels s_var
-  val skip_thm = remove_write_from_init (Corr_Skip |> INST [s_var |->
-    ret_tm])
-  val cont_thm = remove_write_from_init (Corr_Continue |> INST [s_var
-    |-> cont_tm])
-  fun close_corr th = let
-      val th = th |> DISCH_ALL |> REWRITE_RULE [flookup_thm,GSYM
-        AND_IMP_INTRO]
-                  |> UNDISCH_ALL
-      val ss = filter (can dest_eq) (hyp th)
-      val th = INST (map (fn tm => rhs tm |-> lhs tm) ss) th
-      val th = th |> DISCH_ALL |> REWRITE_RULE [AND_IMP_INTRO]
-      val th = th |> REWRITE_RULE [Corr_move_pre]
-      in th end
-*)
+(* HOL4 word_bignumProofScript.sml:1972-2008: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-  fun get_corr tm =
-    if tm ~~ Skip_tm then skip_thm else
-    if tm ~~ Continue_tm then cont_thm else
-    if is_If tm then let
-      val i = fst (match_term (get_pat Corr_If) tm)
-      val p1 = get_corr (tm |> rator |> rand)
-      val p2 = get_corr (tm |> rand)
-      val th = REWRITE_RULE
-        [eval_exp_def,eval_exp_pre_def,asmTheory.word_cmp_def,
-                 eval_ri_pre_def,eval_ri_def] (INST i Corr_If)
-               |> CONV_RULE (DEPTH_CONV read_conv) |> REWRITE_RULE []
-      in MATCH_MP th (CONJ p1 p2) end
-    else if is_Seq tm then let
-      val (p1,p2) = dest_Seq tm
-      val th2 = get_corr p2
-      val th2 = th2 |> D |> INST [s_var |-> mk_var("t",type_of s_var)]
-      val lemmas = [Corr_Assign,Corr_Delete,
-                    Corr_Load,Corr_Store,Corr_Swap,
-                    Corr_Add,Corr_Sub,Corr_Mul,Corr_Div] @ (!all_corrs)
-      val lemma = first (fn th => can (match_term (get_pat th)) p1)
-        lemmas
-      val i = fst (match_term (get_pat lemma) p1)
-      val th1 = REWRITE_RULE [eval_exp_def,eval_exp_pre_def,
-                  eval_ri_pre_def,eval_ri_def] (INST i lemma)
-      val th1 = CONV_RULE (DEPTH_CONV read_conv) th1
-      val th1 = make_new_vars th1
-      val th = MATCH_MP (MATCH_MP Corr_Seq_alt th2) th1 |> REWRITE_RULE
-        []
-      val th = th |> CONV_RULE ((RATOR_CONV o RAND_CONV)
-        simp_var_assums_conv)
-      val th = th |> PURE_REWRITE_RULE [GSYM AND_IMP_INTRO] |>
-        UNDISCH_ALL
-      val th = CONV_RULE sort_writes_conv th
-      val ss = filter (fn tm => not (tmem s_var (free_vars (lhs tm))))
-        (hyp th)
-      val cc = list_let_intro_conv (map rhs ss)
-      val th = th |> CONV_RULE (RAND_CONV cc THENC (RATOR_CONV o
-        RAND_CONV) cc)
-      val th = INST (map (fn tm => rhs tm |-> lhs tm) ss) th
-      val th = DISCH_ALL th |> REWRITE_RULE [] |> UNDISCH_ALL
-      val th = remove_new_vars th
-      in th end
-    else if can (match_term (get_pat Corr_Loop)) tm then let
-      val i = fst (match_term (get_pat Corr_Loop) tm)
-      val th = get_corr (tm |> rand)
-      val th = th |> DISCH_ALL |> REWRITE_RULE [flookup_thm,GSYM
-        AND_IMP_INTRO]
-                  |> UNDISCH_ALL
-      val ss = filter (can dest_eq) (hyp th)
-      val th = INST (map (fn tm => rhs tm |-> lhs tm) ss) th
-      val th = th |> DISCH_ALL |> REWRITE_RULE [AND_IMP_INTRO]
-      val th = th |> REWRITE_RULE [Corr_move_pre]
-      val th = th |> CONV_RULE
-        (RAND_CONV (UNBETA_CONV s_var) THENC
-         (RATOR_CONV o RAND_CONV) (UNBETA_CONV s_var)) |> GEN s_var
-      in MATCH_MP Corr_Loop th |> INST i end
-    else fail ()
-*)
+(* HOL4 word_bignumProofScript.sml:2010-2058: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-  val raw_thm = get_corr l |> REWRITE_RULE [GSYM const_def] |>
-    close_corr
-  val LOOP_pat = loop_app_def |> SPEC_ALL |> concl |> lhs |> rator
-  val r1 = raw_thm |> concl |> rator |> rand
-  val r2 = raw_thm |> concl |> rand
-  val (r1,is_rec) = (find_term (can (match_term LOOP_pat)) r1 |> rator
-    |> rand, true)
-                    handle HOL_ERR _ => (r1, false)
-  val (r2,is_rec) = (find_term (can (match_term LOOP_pat)) r2 |> rand,
-    true)
-                    handle HOL_ERR _ => (r2, false)
-  val v = mk_var(name ^ "_raw", type_of (mk_abs(s_var,r1)))
-  val raw_def = new_definition(dest_var v |> fst,
-    mk_eq(mk_comb(v,s_var),r1))
-  val v = mk_var(name ^ "_raw_pre", type_of (mk_abs(s_var,r2)))
-  val raw_pre_def = new_definition(dest_var v |> fst,
-    mk_eq(mk_comb(v,s_var),r2))
-  val corr = raw_thm |> REWRITE_RULE [GSYM raw_def,GSYM raw_pre_def]
-*)
+(* HOL4 word_bignumProofScript.sml:2060-2072: ML code, not ported *)
   (* -- *)
-(* HOL4 ML code, not ported:
-  val inp = def |> concl |> lhs |> rand
-  val out = find_ret_tuple (def |> concl |> rhs)
-  val is = helperLib.list_dest pairSyntax.dest_pair inp
-  val os = helperLib.list_dest pairSyntax.dest_pair out
-  fun add_pres [] tm = tm
-    | add_pres (v::vs) tm = let
-          val n = dest_reg v
-          in add_pres vs (mk_conj(``^n IN FDOM ^(s_var).regs``,tm)) end
-        handle HOL_ERR _ => add_pres vs tm
-  val pre_tm = add_pres (rev is) (pre_def |> concl |> lhs)
-  val pre_tm = if is_rec then mk_conj(pre_tm,``(^s_var).clock <> 0``)
-    else pre_tm
-  val del_pat = ``Seq (Delete vs) Skip:'a mini``
-  val dels = find_term (can (match_term del_pat)) l |> rator |> rand |>
-    rand
-             handle HOL_ERR _ => ``[]:num list``
-  val cont_del_pat = ``Seq (Delete vs) Continue:'a mini``
-  val cont_dels = find_term (can (match_term cont_del_pat)) l |> rator
-    |> rand |> rand
-                  handle HOL_ERR _ => ``[]:num list``
-  val num_pair_pat = ``(n:num,w:'a word)``
-  val reg_write_pat = ``reg_write n (w:'a word option):α state -> α
-    state``
-  fun add_all_writes ws dels tm = let
-    val vs = map (fn v => dest_reg v handle HOL_ERR _ => s_var) ws
-    fun add_extra_writes tm = mk_comb(``(delete_vars ^dels):α state -> α
-      state``,tm)
-    fun add_writes [] tm = tm
-      | add_writes (v::vs) tm = let
-          val n = dest_reg v
-          in add_writes vs (``reg_write ^n (SOME ^v) ^tm``) end
-        handle HOL_ERR _ => let
-          val _ = type_of v = ``:num`` orelse fail()
-          in add_writes vs (``clock_write ^v ^tm``) end
-        handle HOL_ERR _ => let
-          val n = get_array_name v
-          in add_writes vs (``array_write ^n ^v ^tm``) end
-        handle HOL_ERR _ => failwith("add_writes should not break")
-    in add_extra_writes (add_writes ws tm) end
-  val new_state =
-    pairSyntax.mk_anylet ([(out,def |> concl |> lhs)],
-      add_all_writes (rev os) dels s_var)
-  fun let_inp [] tm = tm
-    | let_inp (v::vs) tm = let
-          val n = dest_reg v
-          val tm = ``let ^v = (^s_var).regs ' ^n in ^tm``
-          in let_inp vs tm end
-        handle HOL_ERR _ => let
-          val n = get_array_name v
-          val tm = ``let ^v = (^s_var).arrays ^n in ^tm``
-          in let_inp vs tm end
-        handle HOL_ERR _ => let
-          val _ = type_of v = ``:num`` orelse fail()
-          val tm = ``let ^v = (^s_var).clock in ^tm``
-          in let_inp vs tm end
-        handle HOL_ERR _ => failwith("let_inp should not fail")
-  val ii = if is_rec then subst [``l:num``|->``l-1n``] else I
-  val new_post = let_inp (rev is) (ii new_state)
-  val new_pre = let_inp (rev is) (ii pre_tm)
-  val th = MATCH_MP Corr_STRENGTHEN_TERM corr |> SPECL
-    [new_post,new_pre]
-  val goal = th |> concl |> dest_imp |> fst
-*)
+(* HOL4 word_bignumProofScript.sml:2074-2129: ML code, not ported *)
 
 (*
   max_print_depth := 15
 *)
 
-(* HOL4 ML code, not ported:
-  in
-    if not is_rec then let
-      val lemma = prove(``^goal``,
-        CONV_TAC sort_writes_conv
-        \\ full_simp_tac std_ss [def] \\ rw []
-        \\ REV_FULL_SIMP_TAC std_ss [pre_def,LET_THM]
-        \\ full_simp_tac std_ss [LET_THM]
-        \\ REV_FULL_SIMP_TAC std_ss [pre_def,LET_THM]
-        \\ rpt (pairarg_tac \\ FULL_SIMP_TAC std_ss [] \\
-          every_case_tac)
-        \\ full_simp_tac std_ss [LET_THM] \\ rveq
-        \\ REV_FULL_SIMP_TAC std_ss []
-        \\ rpt (pairarg_tac \\ FULL_SIMP_TAC std_ss [] \\
-          every_case_tac)
-        \\ asm_rewrite_tac
-          [raw_def,INL_11,INR_11,delete_vars_def,raw_pre_def]
-        \\ rpt (pop_assum mp_tac)
-        \\ rpt (CHANGED_TAC
-             (CONV_TAC (first_let_if_conv
-               (SIMP_CONV (srw_ss())
-                  [DOMSUB_FAPPLY_THM,FAPPLY_FUPDATE_THM
-                    ,APPLY_UPDATE_THM]))
-              \\ simp_tac std_ss []
-              \\ CONV_TAC (first_let_if_conv
-               (SIMP_CONV (srw_ss())
-                  [DOMSUB_FAPPLY_THM,FAPPLY_FUPDATE_THM
-                    ,APPLY_UPDATE_THM]))
-              \\ simp_tac std_ss [Once LET_THM]))
-        \\ fs [] \\ rw []
-        \\ TRY (CHANGED_TAC (simp[oneline SND]) \\ TOP_CASE_TAC \\ fs[])
-        \\ imp_res_tac single_add_word_imp_0_1
-        \\ rw [] \\ TRY eq_tac \\ rw [] \\ fs [true_pres]
-        \\ CONV_TAC sort_writes_conv \\ fs []
-        \\ CONV_TAC sort_writes_conv \\ fs [true_pres])
-      val raw_th = MP th lemma |> SIMP_RULE std_ss [LET_THM]
-      val th = raw_th |> CONV_RULE (DEPTH_CONV PairRules.PBETA_CONV
-        THENC
-                                    sort_writes_conv)
-      val _ = save_thm(name ^ "_corr_thm", raw_th)
-      val _ = (all_corrs := th::(!all_corrs))
-      in (def,raw_th) end
-    else let
-*)
+(* HOL4 word_bignumProofScript.sml:2135-2170: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-      val tm = add_all_writes (rev is) cont_dels ``s0:'a state``
-      val r = pairSyntax.mk_pabs(inp,``\s. s = ^tm``)
-      val tm = add_all_writes (rev os) dels ``s0:'a state``
-      val p = pairSyntax.mk_pabs(out,``\s. s = ^tm``)
-      val loop_app_tm = loop_app_def
-        |> ISPEC (raw_def |> SPEC_ALL |> concl |> lhs)
-        |> ISPEC (raw_pre_def |> SPEC_ALL |> concl |> lhs)
-        |> SPEC_ALL |> concl |> lhs |> rator
-      val th1 =
-        SHORT_TAILREC_SIM
-        |> ISPEC (def_tail |> concl |> rand |> rand)
-        |> REWRITE_RULE [GSYM def_tail, GSYM pre_tail]
-        |> ISPEC loop_app_tm |> SIMP_RULE std_ss
-          [loop_app_EQ,PULL_EXISTS]
-        |> SPEC r |> SPEC p
-      val goal1 = th1 |> concl |> dest_imp |> fst
-*)
+(* HOL4 word_bignumProofScript.sml:2172-2186: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-      val lemma1 = prove(``^goal1``,
-        CONV_TAC sort_writes_conv
-        \\ strip_tac \\ TRY (PairCases_on `x`) \\ fs [loop_app_EQ]
-        \\ rpt (pairarg_tac \\ full_simp_tac std_ss []) \\ rveq
-        \\ rpt TOP_CASE_TAC \\ rveq
-        \\ simp_tac std_ss []
-        \\ rewrite_tac
-          [raw_def,raw_pre_def,delete_vars_def,dec_clock_thm]
-        \\ simp_tac std_ss
-          [PULL_EXISTS,write_simps,FDOM_FUPDATE,IN_INSERT,
-                DOMSUB_FAPPLY_THM,FAPPLY_FUPDATE_THM,APPLY_UPDATE_THM
-                  ,true_pres]
-        \\ rpt (CHANGED_TAC
-             (CONV_TAC (first_let_if_conv
-               (SIMP_CONV (srw_ss())
-                  [DOMSUB_FAPPLY_THM,FAPPLY_FUPDATE_THM
-                    ,APPLY_UPDATE_THM]))
-              \\ simp_tac std_ss []
-              \\ CONV_TAC (first_let_if_conv
-               (SIMP_CONV (srw_ss())
-                  [DOMSUB_FAPPLY_THM,FAPPLY_FUPDATE_THM
-                    ,APPLY_UPDATE_THM]))
-              \\ simp_tac std_ss [Once LET_THM]))
-        \\ simp_tac (srw_ss()) [DOMSUB_FAPPLY_THM,true_pres,
-             FAPPLY_FUPDATE_THM,EXTENSION,APPLY_UPDATE_THM]
-        \\ CONV_TAC sort_writes_conv \\ fs [true_pres]
-        \\ CONV_TAC sort_writes_conv \\ fs [true_pres])
-*)
+(* HOL4 word_bignumProofScript.sml:2188-2209: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-      val th1 = MP th1 lemma1
-      val lemma = prove(``^goal``,
-        fs [LET_DEF] \\ rpt strip_tac \\ rw [] \\ fs []
-        \\ drule (GEN_ALL th1) \\ fs []
-        \\ pairarg_tac \\ fs []
-        \\ disch_then (qspecl_then [`s`,`s`] strip_assume_tac) \\ fs []
-        \\ rfs [dec_clock_thm])
-      val raw_th = MP th lemma |> SIMP_RULE std_ss [LET_THM]
-      val th = raw_th |> CONV_RULE (DEPTH_CONV PairRules.PBETA_CONV
-        THENC
-                                    sort_writes_conv)
-      val _ = save_thm(name ^ "_corr_thm", raw_th)
-      val _ = (all_corrs := th::(!all_corrs))
-      in (def,raw_th) end
-  end;
-*)
+(* HOL4 word_bignumProofScript.sml:2211-2224: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val const_def = time (first (not o time (can derive_corr_thm)))
-                     (all_code_defs |> CONJUNCTS |> rev)
-                handle HOL_ERR _ => TRUTH;
-*)
+(* HOL4 word_bignumProofScript.sml:2226-2228: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = (Teq (concl const_def)) orelse failwith
-  "derive_corr_thm failed";
-*)
+(* HOL4 word_bignumProofScript.sml:2230: ML code, not ported *)
 
-(*
-
-val mc_fac_init_corr = snd (derive_corr_thm mc_fac_init_code_def);
-val mc_fac_final_corr = snd (derive_corr_thm mc_fac_final_code_def);
-
-Theorem mc_fac_corr:
-   Corr mc_fac_code s
-     (INR
-        (let (l,r1) = mc_fac (s.clock-1,s.regs ' 1) in
-           delete_vars [3;0;2] (clock_write l (reg_write 1 (SOME r1)
-             s))))
-     (1 ∈ FDOM s.regs ∧ mc_fac_pre (s.clock-1,s.regs ' 1) ∧ s.clock <>
-       0)
-Proof
-  all_tac
-QED
-
-val th = let
-  val raw_th = mc_fac_corr |> SIMP_RULE std_ss [LET_THM]
-  val th = raw_th |> CONV_RULE (DEPTH_CONV PairRules.PBETA_CONV THENC
-                                sort_writes_conv)
-  val _ = (all_corrs := th::(!all_corrs))
-  in th end
-
-val mc_use_fac_corr = snd (derive_corr_thm mc_use_fac_code_def);
-
-*)
+(* HOL4 word_bignumProofScript.sml:2232-2256: code that the source
+   has in a comment *)
 
 (* connecting all the theormes *)
 
-(* HOL4 ML code, not ported:
-val iop_lemma =
-  mc_multiwordTheory.mc_iop_thm
-    |> SIMP_RULE std_ss [GSYM PULL_EXISTS] |> UNDISCH_ALL
-*)
+(* HOL4 word_bignumProofScript.sml:2260-2262: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val lemma = METIS_PROVE [] ``b /\ c <=> b /\ (b ==> c)``
-*)
+(* HOL4 word_bignumProofScript.sml:2264: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val lemma2 = multiwordTheory.mwi_op_thm |> Q.SPECL [`iop`,`i1`,`i2`]
-*)
+(* HOL4 word_bignumProofScript.sml:2266: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val mc_iop_corr_thm = fetch "-" "mc_iop_corr_thm"
-*)
+(* HOL4 word_bignumProofScript.sml:2287: ML code, not ported *)

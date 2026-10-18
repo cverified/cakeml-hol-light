@@ -40,11 +40,8 @@ let strip_dot_def = cake_define_list
   ls,n))`];;
 
 let _ = size_thms "simpleSexp_sexp";;
-(* HOL4 termination: >> rw[] >> simp[sexp_size_def] >> fs[Once
-   strip_dot_def] >> pairarg_tac \\ fs[] \\ rw[sexp_size_def] \\ fs[]
-   \\ imp_res_tac strip_dot_MEM_sizelt \\ imp_res_tac
-   strip_dot_last_sizeleq \\ fsrw_tac[boolSimps.DNF_ss][] \\ simp[]
-   \\ fs[LENGTH_EQ_NUM_compute] \\ gvs[] *)
+(* HOL4 simpleSexpParseScript.sml:260-268: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let print_sexp_def = cake_define_try_tac (fun () ->

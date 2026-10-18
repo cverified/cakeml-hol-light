@@ -111,13 +111,11 @@ let lit_to_display_def = cake_define_list
         displayLang_Item NONE (implode "Float64")
           [word_to_display w]`];;
 
-(* HOL4 overload (expanded in the port):
-     list_to_display = λf xs. displayLang$Tuple (MAP f xs) *)
+(* HOL4 presLangScript.sml:105: the overload list_to_display, which
+   the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     option_to_display = λf opt. case opt of
-          | NONE => empty_item «none»
-          | SOME opt' => Item NONE «some» [f opt'] *)
+(* HOL4 presLangScript.sml:107-110: the overload option_to_display,
+   which the port expands *)
 (* source *)
 
 let fp_cmp_to_display_def = cake_define
@@ -558,7 +556,8 @@ let flat_to_display_def = cake_define_list
 
 (* clos to displayLang *)
 
-(* HOL4 termination: \\ rw [] \\ fs [DIV_LT_X] *)
+(* HOL4 presLangScript.sml:541-543: the tactic that proves the
+   termination *)
 let num_to_varn_aux_def = cake_define_wf
   `MEASURE I`
   `num_to_varn_aux n =
@@ -747,7 +746,8 @@ hol4_overload "commas" "presLang_commas";;
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw[list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 presLangScript.sml:744-751: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let clos_to_display_def = cake_define_list_try_tac (fun () ->
@@ -1616,17 +1616,7 @@ let bvl_to_strs_def = cake_define
                     display_to_str_tree o
                     bvl_fun_to_display names) xs`;;
 
-(* HOL4 ML code, not ported:
-val bvl_test =
-  “concat $ append $ bvl_to_strs
-     (insert 50 «foo» (insert 60 «bar» LN))
-     [(50,2,Let [Var 0; Var 1]
-              $ Op (IntOp Add) [Var 0; Var 1; Var 2; Var 3]);
-      (60,2,Let [Var 0; Var 1]
-              $ Call 0 (SOME 50) [Var 2; Var 0])]”
-  |> EVAL |> concl |> rand |> rand |> stringSyntax.fromHOLstring
-  |> (fn t => (print "\n\n"; print t; print "\n"))
-*)
+(* HOL4 presLangScript.sml:1513-1521: ML code, not ported *)
 
 let bvi_to_strs_def = cake_define
   `bvi_to_strs names xs =
@@ -1634,17 +1624,7 @@ let bvi_to_strs_def = cake_define
                     display_to_str_tree o
                     bvi_fun_to_display names) xs`;;
 
-(* HOL4 ML code, not ported:
-val bvi_test =
-  “concat $ append $ bvi_to_strs
-     (insert 50 «foo» (insert 60 «bar» LN))
-     [(50,2,Let [Var 0]
-              $ Op (IntOp Add) [Var 0; Var 1; Var 2; Var 3]);
-      (60,2,Let [Var 0; Var 1]
-              $ Call 0 (SOME 50) [Var 2; Var 0] (SOME (Var 0)))]”
-  |> EVAL |> concl |> rand |> rand |> stringSyntax.fromHOLstring
-  |> (fn t => (print "\n\n"; print t; print "\n"))
-*)
+(* HOL4 presLangScript.sml:1530-1538: ML code, not ported *)
 
 let data_to_strs_def = cake_define
   `data_to_strs names xs =
@@ -1652,17 +1632,7 @@ let data_to_strs_def = cake_define
                     display_to_str_tree o
                     data_fun_to_display names) xs`;;
 
-(* HOL4 ML code, not ported:
-val data_test =
-  “concat $ append $ data_to_strs
-     (insert 50 «foo» (insert 60 «bar» LN))
-     [(50,2,Seq (Move 5 1) $
-            Seq (Assign 3 (IntOp Add) [0;1] NONE) $
-            Seq (Assign 6 (IntOp Sub) [5;3] NONE) $ Return [6]);
-      (60,2,Skip)]”
-  |> EVAL |> concl |> rand |> rand |> stringSyntax.fromHOLstring
-  |> (fn t => (print "\n\n"; print t; print "\n"));
-*)
+(* HOL4 presLangScript.sml:1547-1555: ML code, not ported *)
 
 let word_to_strs_def = cake_define
   `word_to_strs names xs =
@@ -1682,28 +1652,7 @@ let lab_to_strs_def = cake_define
                     display_to_str_tree o
                     lab_fun_to_display names) xs`;;
 
-(* HOL4 ML code, not ported:
-val lab_test =
-  “concat $ append $ lab_to_strs
-     (insert 50 «foo» (insert 60 «bar» LN))
-     [Section 50 [Label 50 1 0;
-                  Asm (Asmi (Inst (Const 5 (70w:word32)))) [] 0;
-                  Label 50 2 0];
-      Section 60 [Label 50 5 0]]”
-  |> EVAL |> concl |> rand |> rand |> stringSyntax.fromHOLstring
-  |> (fn t => (print "\n\n"; print t; print "\n"));
-*)
+(* HOL4 presLangScript.sml:1578-1586: ML code, not ported *)
 
-(*
-
-val names_tm = “(insert 50 «foo» (insert 60 «bar» LN))”
-
-val data_prog_tm =
-    “[(50,2,Seq (Move 5 1) $
-            Seq (Assign 3 Add [0;1] NONE) $
-            Seq (Assign 6 Sub [5;3] NONE) $ Return 6);
-      (60n,2n,Skip)]”
-
-val _ = data_to_strs data_prog_tm names_tm |> print_strs
-
-*)
+(* HOL4 presLangScript.sml:1588-1600: code that the source has in a
+   comment *)

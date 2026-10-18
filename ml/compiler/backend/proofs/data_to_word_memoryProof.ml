@@ -36,32 +36,16 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 ancestors outside the port: int_bitwise While *)
 
 
-(* HOL4 ML code, not ported:
-val shift_def = backend_commonTheory.word_shift_def;
-val good_dimindex_def = miscTheory.good_dimindex_def;
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:13-14: ML code, not ported *)
 
 (* TODO: move? *)
-(* HOL4 ML code, not ported:
-val clean_tac = rpt var_eq_tac \\ rpt (qpat_x_assum `T` kall_tac)
-fun rpt_drule th = old_drule (th |> GEN_ALL) \\ rpt (disch_then
-  old_drule \\ fs [])
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:21-22: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = augment_srw_ss[rewrites[LENGTH_REPLICATE]]
-*)
-(* HOL4 overload (expanded in the port):
-     good_dimindex = misc$good_dimindex *)
+(* HOL4 data_to_word_memoryProofScript.sml:24: ML code, not ported *)
+(* HOL4 data_to_word_memoryProofScript.sml:28: the overload
+   good_dimindex, which the port expands *)
 
-(* HOL4 ML code, not ported:
-val LESS_4 = DECIDE ``i < 4 <=> (i = 0) \/ (i = 1) \/ (i = 2) \/ (i =
-  3n)``
-val LESS_8 = DECIDE ``i < 8 <=> (i = 0) \/ (i = 1) \/ (i = 2) \/ (i =
-  3n) \/
-                                (i = 4) \/ (i = 5) \/ (i = 6) \/ (i =
-                                  7)``
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:30-32: ML code, not ported *)
 
 (* MutBlock payloads have the shape l ++ [c] ++ r, which simplifiers
    split
@@ -79,10 +63,10 @@ let data_to_word_memoryProof_tag_INDUCT,
 let BlockRep_def = cake_define
   `BlockRep tag xs = DataElement xs (LENGTH xs) (BlockTag tag,[])`;;
 
-(* HOL4 type abbreviation (expanded in the port):
-     ml_el = ('a word_loc, tag # ('a word_loc list)) heap_element *)
-(* HOL4 type abbreviation (expanded in the port):
-     ml_heap = 'a ml_el list *)
+(* HOL4 data_to_word_memoryProofScript.sml:139: the type abbreviation
+   ml_el, which the port expands *)
+(* HOL4 data_to_word_memoryProofScript.sml:140: the type abbreviation
+   ml_heap, which the port expands *)
 
 let bytes_def = cake_define
   `((Bytes is_bigendian cmp_by_contents (bs:word8 list) (ws:('a word)
@@ -213,8 +197,8 @@ let v_inv_eq = cake_define
 let _ = size_thms "dataSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rpt strip_tac \\ Induct_on `vs` \\ srw_tac []
-   [v_size_def] \\ res_tac \\ DECIDE_TAC *)
+(* HOL4 data_to_word_memoryProofScript.sml:389-392: the tactic that
+   proves the termination *)
 let get_refs_def = cake_define_list_try (fun () ->
   `MEASURE (dataSem_v_size)`)
   [`get_refs (Number _3:dataSem_v) = []`;
@@ -266,8 +250,8 @@ let bc_ref_inv_def = cake_define
 
 (* TODO: MOVE *)
 let _ = size_thms "dataSem_v";;
-(* HOL4 termination: \\ rpt strip_tac \\ Induct_on `xs` \\ srw_tac []
-   [v_size_def] \\ res_tac \\ DECIDE_TAC *)
+(* HOL4 data_to_word_memoryProofScript.sml:451-454: the tactic that
+   proves the termination *)
 let v_all_ts_def = cake_define_wf
   `MEASURE (dataSem_v_size)`
   `v_all_ts x1 =
@@ -393,44 +377,27 @@ let abs_ml_inv_def = cake_define
 
 (* TODO: move/reorganise various things in this file *)
 
-(* HOL4 ML code, not ported:
-val EVERY2_LENGTH = LIST_REL_LENGTH
-val EVERY2_IMP_LENGTH = EVERY2_LENGTH
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:621-622: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val EVERY2_IMP_APPEND = rich_listTheory.EVERY2_APPEND_suff
-val IMP_EVERY2_APPEND = EVERY2_IMP_APPEND
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:654-655: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val EVERY2_EQ_EL = LIST_REL_EL_EQN
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:657: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val EVERY2_IMP_EL = METIS_PROVE[EVERY2_EQ_EL]
-  ``!xs ys P. EVERY2 P xs ys ==> !n. n < LENGTH ys ==> P (EL n xs) (EL n
-    ys)``
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:659-660: ML code, not
+   ported *)
 
 (* Prove refinement is maintained past GC calls *)
 
-(* HOL4 ML code, not ported:
-val _ = augment_srw_ss [rewrites [LIST_REL_def]];
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:719: ML code, not ported *)
 
 let evaluated_thunk_ptr_def = cake_define
   `evaluated_thunk_ptr refs n <=> (?v. lookup n refs = SOME (Thunk
   Evaluated v))`;;
 
-(* HOL4 ML code, not ported:
-val v_ind =
-  TypeBase.induction_of``:v``
-  |> Q.SPECL[`P`,`EVERY P`]
-  |> SIMP_RULE(srw_ss())[]
-  |> UNDISCH_ALL |> CONJUNCT1
-  |> DISCH_ALL
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:725-730: ML code, not
+   ported *)
 
 let gc_inline_rel = cake_inductive
   `(gc_inline_rel inline h1 x x) /\
@@ -548,11 +515,8 @@ let list_to_BlockReps_def = cake_define_list
               conf cons_tag 2))] ::
               list_to_BlockReps conf t (a + 3) l)`];;
 
-(* HOL4 ML code, not ported:
-fun unlength_tac thms =
-  fs ([heap_length_def, el_length_def, SUM_APPEND] @ thms)
-  \\ fs [GSYM heap_length_def]
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:2388-2390: ML code, not
+   ported *)
 
 let bind_each_def = cake_define_list
   [`bind_each tf ts (k:num) i 0 = tf`;
@@ -624,31 +588,11 @@ let RefBlock_inv_def = cake_define
      no
    timestamp is consumed *)
 
-(* HOL4 ML code, not ported:
-val update_ref_gen_state_ok = prove(
-  ``heap_store b [RefBlock t1] heap = (heap2,T) /\ a <= b /\
-    gen_state_ok a (a + (sp + sp1)) heap gens ==>
-    gen_state_ok a (a + (sp + sp1)) heap2 gens``,
-  Cases_on `gens` \\ fs [gen_state_ok_def]
-  \\ fs [EVERY_MEM] \\ rpt strip_tac \\ fs [] \\ res_tac
-  \\ fs [gen_start_ok_def] \\ rpt strip_tac
-  \\ old_drule (GEN_ALL heap_split_heap_store)
-  \\ disch_then old_drule \\ fs [] \\ strip_tac
-  \\ fs [] \\ rpt strip_tac \\ res_tac \\ fs []) |> GEN_ALL;
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:4680-4689: ML code, not
+   ported *)
 
-(* HOL4 ML code, not ported:
-val update_thunk_gen_state_ok = prove(
-  ``heap_store b [ThunkBlock ev t1] heap = (heap2,T) ∧ a <= b ∧
-    gen_state_ok a (a + (sp + sp1)) heap gens ⇒
-    gen_state_ok a (a + (sp + sp1)) heap2 gens``,
-  Cases_on `gens` \\ fs [gen_state_ok_def]
-  \\ fs [EVERY_MEM] \\ rpt strip_tac \\ fs [] \\ res_tac
-  \\ fs [gen_start_ok_def] \\ rpt strip_tac
-  \\ old_drule (GEN_ALL heap_split_heap_store)
-  \\ disch_then old_drule \\ fs [] \\ strip_tac
-  \\ fs [] \\ rpt strip_tac \\ res_tac \\ fs []) |> GEN_ALL;
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:4704-4713: ML code, not
+   ported *)
 
 let heap_deref_def = cake_define
   `(heap_deref a heap =
@@ -956,20 +900,8 @@ let word_of_byte_def = cake_define
      let w = (w << 16 || w) in
        if dimindex (:'a) = 32 then w else w << 32 || w)`;;
 
-(* HOL4 ML code, not ported:
-val (set_byte_sort_dec,set_byte_sort_asc) = let
-  fun cross [] ys = []
-    | cross (x::xs) ys = map (fn y => (x,y)) ys :: cross xs ys
-  val xs = [0,1,2,3,4,5,6,7]
-  val ys = cross xs xs |> Lib.flatten
-  fun f (x,y) =
-    SPECL [numSyntax.term_of_int x,numSyntax.term_of_int y]
-      set_byte_sort
-    |> SIMP_RULE (srw_ss()) [good_dimindex_def]
-  val ts1 = filter (fn (x,y) => x < y) ys
-  val ts2 = filter (fn (x,y) => y < x) ys
-  in (LIST_CONJ (map f ts1), LIST_CONJ (map f ts2)) end
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:10203-10213: ML code, not
+   ported *)
 
 (* slow *)
 
@@ -996,16 +928,10 @@ let copy_list_def = cake_define
              if c then copy_list c' st (k - 1) (a,x,b,m,dm) else
                NONE)))`;;
 
-(* HOL4 ML code, not ported:
-val not_bit_lt_2 = not_bit_lt_2exp |> Q.SPEC `0` |> SIMP_RULE (srw_ss())
-  []
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:11090: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val expand_num =
-  DECIDE ``4 = SUC 3 /\ 3 = SUC 2 /\ 2 = SUC 1 /\ 1 = SUC 0 /\
-           5 = SUC 4 /\ 6 = SUC 5 /\ 7 = SUC 6 /\ 8 = SUC 7``
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:11655-11657: ML code, not
+   ported *)
 
 let hide_memory_rel_def = cake_define
   `hide_memory_rel = memory_rel`;;
@@ -1022,11 +948,8 @@ let hide_heap_in_memory_store_def = cake_define
    header, whose bits 2 and 3 are both clear, so the conclusion below
      fails *)
 
-(* HOL4 ML code, not ported:
-val lt8 =
-  DECIDE ``(n < 8n) = (n = 0 \/ n = 1 \/ n = 2 \/ n = 3 \/
-                       n = 4 \/ n = 5 \/ n = 6 \/ n = 7)``
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:12767-12769: ML code, not
+   ported *)
 
 let word_cmp_res_def = cake_define
   `word_cmp_res i (j:int) =
@@ -1048,18 +971,13 @@ let word_cmp_loop_def = cake_define_cheat CHEAT_TAC
                    SOME (n2w 0) else SOME ((n2w 2):'a word)) | _41 ->
                    NONE else NONE)`;;
 
-(* HOL4 ML code, not ported:
-val word_cmp_loop_ind =  theorem"word_cmp_loop_ind";
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:13106: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val good_dimindex_def = good_dimindex_def;
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:13246: ML code, not ported *)
 
 let _ = size_thms "dataSem_v";;
-(* HOL4 termination: \\ Induct_on`l1` \\ ntac 2 (rw[v_size_def]) \\
-   Cases_on`l2` \\ fs[] \\ rw[] \\ res_tac \\ fs[] \\ rfs[] \\
-   first_x_assum(qspecl_then[`0`,`t1`]mp_tac) \\ rw[] *)
+(* HOL4 data_to_word_memoryProofScript.sml:13255-13261: the tactic
+   that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let v_same_type_def = cake_define_try_tac (fun () ->
@@ -1076,8 +994,8 @@ let v_same_type_def = cake_define_try_tac (fun () ->
         | (_56,_57) -> F`;;
 
 let _ = size_thms "dataSem_v";;
-(* HOL4 termination: \\ ntac 2 gen_tac \\ Induct \\ rw[v_size_def] \\
-   rw[] \\ res_tac \\ rw[] *)
+(* HOL4 data_to_word_memoryProofScript.sml:13421-13425: the tactic
+   that proves the termination *)
 let v_depth_def = cake_define_wf
   `MEASURE dataSem_v_size`
   `v_depth x1 =
@@ -1086,9 +1004,7 @@ let v_depth_def = cake_define_wf
             + MAX_LIST (MAP v_depth ls)
         | _62 -> 0`;;
 
-(* HOL4 ML code, not ported:
-val v_depth_ind = theorem"v_depth_ind";
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:13427: ML code, not ported *)
 
 let elements_list_def = cake_define_list
   [`elements_list [] = T`;
@@ -1098,9 +1014,7 @@ let elements_list_def = cake_define_list
          w = Block ts t (ls1 ++ [v] ++ ls2) /\
          elements_list (w :: vs))`];;
 
-(* HOL4 ML code, not ported:
-val elements_list_ind = theorem"elements_list_ind";
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:13453: ML code, not ported *)
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -1160,7 +1074,8 @@ let word_is_clos_def = cake_define
    ck is an upper bound on the number of stack frames
       allocated by an equality comparison.
   *)
-(* HOL4 termination: >> rw[] >> imp_res_tac fix_clock_IMP >> rw[] *)
+(* HOL4 data_to_word_memoryProofScript.sml:14020-14025: the tactic
+   that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let word_eq_def = cake_define_try_tac (fun () ->
@@ -1204,9 +1119,7 @@ let word_eq_def = cake_define_try_tac (fun () ->
                               (a1 + bytes_in_word) (a2 +
                                 bytes_in_word))) | _88 -> NONE))`;;
 
-(* HOL4 ML code, not ported:
-val word_eq_ind = theorem "word_eq_ind";
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:14027: ML code, not ported *)
 
 let eq_assum_def = cake_define_list
   [`eq_assum a m dm [] = T`;
@@ -1234,9 +1147,8 @@ let bignum_words_def = cake_define
 
 (* copy forward *)
 
-(* HOL4 termination: \\ Cases_on `n` \\ fs [] \\ rw [] \\ fs
-   [WORD_LO] \\ rfs [NOT_LESS] \\ rewrite_tac
-   [addressTheory.word_arith_lemma2,GSYM word_sub_def] \\ fs [] *)
+(* HOL4 data_to_word_memoryProofScript.sml:15324-15329: the tactic
+   that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let word_copy_fwd_def = cake_define_try_tac (fun () ->
@@ -1316,9 +1228,8 @@ let list_copy_fwd_alias_def = cake_define
 
 (* copy backward *)
 
-(* HOL4 termination: \\ Cases_on `n` \\ fs [] \\ rw [] \\ fs
-   [WORD_LO] \\ rfs [NOT_LESS] \\ rewrite_tac
-   [addressTheory.word_arith_lemma2,GSYM word_sub_def] \\ fs [] *)
+(* HOL4 data_to_word_memoryProofScript.sml:15569-15574: the tactic
+   that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let word_copy_bwd_def = cake_define_try_tac (fun () ->
@@ -1387,9 +1298,7 @@ let list_copy_bwd_def = cake_define
                             LUPDATE (EL (minus xp 0) xs) (minus yp
                               0)) ys) else NONE)`;;
 
-(* HOL4 ML code, not ported:
-val list_copy_bwd_def = list_copy_bwd_def |> REWRITE_RULE [minus_def];
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:15598: ML code, not ported *)
 
 let list_copy_bwd_alias_def = cake_define
   `list_copy_bwd_alias n xp yp ys =
@@ -1416,10 +1325,8 @@ let list_copy_bwd_alias_def = cake_define
                               o
                             LUPDATE (EL (minus xp 0) ys) (minus yp
                               0)) ys) else NONE)`;;
-(* HOL4 ML code, not ported:
-val list_copy_bwd_alias_def = list_copy_bwd_alias_def
-                                |> REWRITE_RULE [minus_def];
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:15617-15618: ML code, not
+   ported *)
 
 (* copy array *)
 
@@ -1436,26 +1343,8 @@ let list_copy_alias_def = cake_define
 
 (* see more interesting theorem below *)
 
-(*
-
-val xs = EVAL ``GENLIST I 20`` |> concl |> rand
-
-fun cross [] xs = []
-  | cross (y::ys) xs = map (fn x => (y,x)) xs @ cross ys xs
-
-val nums = xs |> listSyntax.dest_list |> fst
-
-val inputs = cross nums (cross nums nums)
-
-fun test (n1,(n2,n3)) =
-  (ISPEC xs list_copy_alias_thm
-   |> Q.SPECL [`1`,`4`,`18`] |> SPEC_ALL
-   |> CONV_RULE (RATOR_CONV EVAL THENC RAND_CONV EVAL)
-   |> GEN_ALL |> SIMP_RULE std_ss [] |> concl) = T
-
-val (n1,(n2,n3)) = first (not o test) inputs
-
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:16024-16043: code that the
+   source has in a comment *)
 
 let word_copy_array_def = cake_define
   `word_copy_array be' n a a1 b b1 (m:'a word->'a word_loc) dm =
@@ -1464,13 +1353,8 @@ let word_copy_array_def = cake_define
        word_copy_bwd be' n ((a + a1 + n) - (n2w 1)) ((b + b1 + n)
          - (n2w 1)) m dm)`;;
 
-(* HOL4 ML code, not ported:
-val memory_rel_copy_array_NONE_lemma =
-  memory_rel_RefByte_alt
-  |> Q.INST [`w`|->`0w`]
-  |> SIMP_RULE (srw_ss()) [w2w_def,w2n_n2w,word_of_byte_0,last_bytes_0,
-       LET_THM,LUPDATE_REPLICATE]
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:16179-16183: ML code, not
+   ported *)
 
 let append_writes_def = cake_define_list
   [`append_writes c ptr (hdr:'a word) [] l = ARB`;
@@ -1566,10 +1450,8 @@ let good_loc_def = cake_define
 let read_word_def = cake_define
   `read_word dm m a = (theWord (m a),(a IN dm /\ isWord (m a)))`;;
 
-(* HOL4 termination: \\ Cases_on ‘len’ \\ gvs [WORD_LO] \\
-   rewrite_tac [GSYM word_sub_def,addressTheory.word_arith_lemma2] \\
-   Cases_on ‘good_dimindex (:α)’ \\ simp [] \\ gvs
-   [dimword_def,good_dimindex_def] *)
+(* HOL4 data_to_word_memoryProofScript.sml:18378-18384: the tactic
+   that proves the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let word_xor_bytes_def = cake_define_try_tac (fun () ->
@@ -1610,15 +1492,8 @@ let xor_words_def = cake_define
      (match xor_words xs ys with NONE -> NONE | SOME rest -> SOME
        (word_xor (x:'a word) y :: rest))`;;
 
-(*
-Theorem xor_bytes_length:
-  ∀xs ys zs. xor_bytes xs ys = SOME zs ⇒ LENGTH zs = LENGTH ys
-Proof
-  Induct \\ Cases_on ‘ys’ \\ gvs
-    [semanticPrimitivesTheory.xor_bytes_def,AllCaseEqs()]
-  \\ rw [] \\ gvs []
-QED
-*)
+(* HOL4 data_to_word_memoryProofScript.sml:18637-18644: code that the
+   source has in a comment *)
 
 (* --------- str_cmp --------- *)
 

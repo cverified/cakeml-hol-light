@@ -11,8 +11,8 @@
 (* this file needs nothing of the port *)
 (* HOL4 ancestors outside the port: alist *)
 
-(* HOL4 type abbreviation (expanded in the port):
-     alist = ('k # 'v) list *)
+(* HOL4 namespaceScript.sml:11: the type abbreviation alist, which
+   the port expands *)
 
 (* Identifiers *)
 let namespace_id_INDUCT,namespace_id_RECURSION = define_datatype

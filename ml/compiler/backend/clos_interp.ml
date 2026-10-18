@@ -145,25 +145,20 @@ let to_constant_def = cake_define_list_try_tac (fun () ->
 
 (* interpreter as closLang program *)
 
-(* HOL4 overload (expanded in the port):
-     V = Var None *)
+(* HOL4 clos_interpScript.sml:119: the overload V, which the port
+   expands *)
 
-(* HOL4 overload (expanded in the port):
-     IsCase = λtag len. If None (Op None (BlockOp (TagLenEq tag len)) [V
-       0]) *)
+(* HOL4 clos_interpScript.sml:121: the overload IsCase, which the
+   port expands *)
 
-(* HOL4 overload (expanded in the port):
-     GetEl = λn x. Op None (BlockOp (ElemAt n)) [x] *)
+(* HOL4 clos_interpScript.sml:123: the overload GetEl, which the port
+   expands *)
 
-(* HOL4 overload (expanded in the port):
-     CallInterp = λenv x. App None NONE (App None NONE (App None NONE
-       (Op None (GlobOp (Global 0)) [])
-            [env]) [Op None (BlockOp (Cons 0)) []]) [x] *)
+(* HOL4 clos_interpScript.sml:125-127: the overload CallInterp, which
+   the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     CallInterpList = λenv x. App None NONE (App None NONE (App None
-       NONE (Op None (GlobOp (Global 0)) [])
-            [env]) [Op None (BlockOp (Cons 1)) []]) [x] *)
+(* HOL4 clos_interpScript.sml:129-131: the overload CallInterpList,
+   which the port expands *)
 
 let clos_interp_el_def = cake_define
   `clos_interp_el =

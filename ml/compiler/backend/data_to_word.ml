@@ -1086,10 +1086,10 @@ let smallnum_def = cake_define
      (if i < (&0) then (n2w 0) - n2w (num_of_int ((&4) * ((&0) -
        i))) else n2w (num_of_int ((&4) * i)))`;;
 
-(* HOL4 overload (expanded in the port):
-     FALSE_CONST = Const (n2w 2:'a word) *)
-(* HOL4 overload (expanded in the port):
-     TRUE_CONST = Const (n2w 18:'a word) *)
+(* HOL4 data_to_wordScript.sml:1099: the overload FALSE_CONST, which
+   the port expands *)
+(* HOL4 data_to_wordScript.sml:1100: the overload TRUE_CONST, which
+   the port expands *)
 
 let MemEqList_def = cake_define_list
   [`MemEqList a [] = (Assign 1 (Const (n2w 18:'a word)):'a
@@ -1148,13 +1148,7 @@ let arg4_def = cake_define
   `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
   _4 -> x)`;;
 
-(* HOL4 ML code, not ported:
-val assign_defs = ref ([]:thm list);
-fun assign_Define q = let
-  val thm = Define q
-  val _ = (assign_defs := thm :: (!assign_defs))
-  in thm end;
-*)
+(* HOL4 data_to_wordScript.sml:1176-1180: ML code, not ported *)
 
 let assign_Const_def = cake_define
   `assign_Const i (l:num) (dest:num) =
@@ -1319,11 +1313,8 @@ let getWords_def = cake_define_list
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ fs [getWords_def] \\ rw [] \\ qsuff_tac ‘∀ws
-   aux (ws1:(bool # 'a word) list) vs1. (ws1,vs1) = getWords ws aux ⇒
-   LENGTH vs1 ≤ LENGTH ws’ THEN1 (rw [] \\ res_tac \\ fs []) \\
-   once_rewrite_tac [EQ_SYM_EQ] \\ Induct \\ fs [getWords_def] \\ fs
-   [AllCaseEqs()] \\ rw[] \\ res_tac \\ fs [getWords_def] *)
+(* HOL4 data_to_wordScript.sml:1349-1358: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let StoreAnyConsts_def = cake_define_list_try_tac (fun () ->
@@ -3049,24 +3040,7 @@ let compile_0_def = cake_define
 
 (* compute bignum call graph *)
 
-(* HOL4 ML code, not ported:
-val th_FF = EVAL ``full_call_graph AnyArith_location
-       (fromAList (stubs (:'a) (data_conf with <| call_empty_ffi := F ;
-                                                     has_longdiv := F
-                                                       |>)))``
-val th_FT = EVAL ``full_call_graph AnyArith_location
-       (fromAList (stubs (:'a) (data_conf with <| call_empty_ffi := F ;
-                                                     has_longdiv := T
-                                                       |>)))``
-val th_TF = EVAL ``full_call_graph AnyArith_location
-       (fromAList (stubs (:'a) (data_conf with <| call_empty_ffi := T ;
-                                                     has_longdiv := F
-                                                       |>)))``
-val th_TT = EVAL ``full_call_graph AnyArith_location
-       (fromAList (stubs (:'a) (data_conf with <| call_empty_ffi := T ;
-                                                     has_longdiv := T
-                                                       |>)))``
-*)
+(* HOL4 data_to_wordScript.sml:2856-2867: ML code, not ported *)
 
 let AnyArith_call_tree_def = cake_define
   `AnyArith_call_tree =

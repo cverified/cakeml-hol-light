@@ -1337,7 +1337,8 @@ let mc_fac_final_def,mc_fac_final_pre_def =
         (INR (l,r1),cond')):num#'a word#'a word->(num#'a word#'a
           word+num#'a word)#bool`;;
 
-(* HOL4 termination: \\ rw [] *)
+(* HOL4 mc_multiwordScript.sml:4196-4212: the tactic that proves the
+   termination *)
 let mc_fac_def = cake_define_wf
   `MEASURE FST`
   `mc_fac ((l:num),(r1:'a word)) =
@@ -1356,7 +1357,8 @@ let mc_fac_def = cake_define_wf
          let (l,r1) = mc_fac_final (l,r1,r2) in
            (l,r1))`;;
 
-(* HOL4 termination: \\ rw [] *)
+(* HOL4 mc_multiwordScript.sml:4214-4233: the tactic that proves the
+   termination *)
 let mc_fac_pre_def = cake_define_wf
   `MEASURE FST`
   `mc_fac_pre ((l:num),(r1:'a word)) =

@@ -702,6 +702,4 @@ hol4_overload "Seqs" "word_cse_Seqs";;
    so
    nothing survives the join and the trailing Add is not CSE'd. *)
 
-(* HOL4 ML code, not ported:
-val _ = Theory.delete_const "Seqs";
-*)
+(* HOL4 word_cseScript.sml:905: ML code, not ported *)

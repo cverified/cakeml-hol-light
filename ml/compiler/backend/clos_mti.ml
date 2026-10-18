@@ -22,9 +22,7 @@ let collect_args_def = cake_define
          (num_args,closLang_Fn t NONE NONE num_args' e))
         | e -> (num_args,e)`;;
 
-(* HOL4 ML code, not ported:
-val collect_args_ind = theorem "collect_args_ind";
-*)
+(* HOL4 clos_mtiScript.sml:22: ML code, not ported *)
 
 let collect_apps_def = cake_define
   `collect_apps max_app args e =
@@ -35,15 +33,11 @@ let collect_apps_def = cake_define
          (args,App tra NONE e es))
         | e -> (args,e)`;;
 
-(* HOL4 ML code, not ported:
-val collect_apps_ind = theorem "collect_apps_ind";
-*)
+(* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
-(* HOL4 termination: >> rw[]>> imp_res_tac collect_args_size >>
-   imp_res_tac collect_apps_size >> gvs[]>> drule MEM_list_size>>
-   disch_then (qspec_then `pair_size (λx. x) exp_size` mp_tac)>>
-   simp[list_size_pair_size_MAP_FST_SND] *)
+(* HOL4 clos_mtiScript.sml:144-153: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let intro_multi_def = cake_define_try_tac (fun () ->
@@ -102,9 +96,7 @@ let intro_multi_def = cake_define_try_tac (fun () ->
         | [closLang_Op t op es] ->
        [closLang_Op t op (intro_multi max_app es)]`;;
 
-(* HOL4 ML code, not ported:
-val intro_multi_ind = theorem "intro_multi_ind";
-*)
+(* HOL4 clos_mtiScript.sml:155: ML code, not ported *)
 
 let compile_def = cake_define_list
   [`clos_mti_compile F max_app exps = exps`;

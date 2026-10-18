@@ -44,8 +44,8 @@ hol4_overload "gc_move_list" "copying_gc_gc_move_list";;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ SRW_TAC []
-   [heap_length_def,el_length_def,SUM_APPEND] \\ decide_tac *)
+(* HOL4 copying_gcScript.sml:50-53: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let gc_move_loop_def = cake_define_list_try_tac (fun () ->
@@ -81,9 +81,7 @@ let full_gc_def = cake_define
 
 (* Invariant *)
 
-(* HOL4 ML code, not ported:
-val _ = augment_srw_ss [rewrites [LIST_REL_def]];
-*)
+(* HOL4 copying_gcScript.sml:67: ML code, not ported *)
 
 let gc_inv_def = cake_define
   `copying_gc_gc_inv (h1,h2,a,n,heap,c,limit')
@@ -113,65 +111,16 @@ hol4_overload "gc_inv" "copying_gc_gc_inv";;
 
 (* Invariant maintained *)
 
-(* HOL4 ML code, not ported:
-val NOT_IN_heap_addresses = Q.prove(
-  `!xs n. ~(n + heap_length xs IN heap_addresses n xs)`,
-  Induct \\ full_simp_tac (srw_ss())
-    [heap_addresses_def,APPEND,heap_length_def]
-  \\ full_simp_tac (srw_ss()) [EXTENSION] \\ rpt strip_tac
-  \\ full_simp_tac std_ss [ADD_ASSOC]
-  THEN1 (Cases_on `h` \\ EVAL_TAC \\ decide_tac) \\ metis_tac [])
-  |> Q.SPECL [`xs`,`0`] |> SIMP_RULE std_ss [];
-*)
+(* HOL4 copying_gcScript.sml:126-132: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val APPEND_NIL_LEMMA = METIS_PROVE [APPEND_NIL] ``?xs1. xs = xs ++
-  xs1:'a list``
-*)
+(* HOL4 copying_gcScript.sml:247: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val heap_lookup_IMP_heap_addresses = Q.prove(
-  `!xs n x j. (heap_lookup j xs = SOME x) ==> n + j IN heap_addresses n
-    xs`,
-  Induct \\ full_simp_tac std_ss
-    [MEM,heap_lookup_def,heap_addresses_def]
-  \\ SRW_TAC [] [] \\ res_tac
-  \\ pop_assum (mp_tac o Q.SPEC `n + el_length h`)
-  \\ `n + el_length h + (j - el_length h) = n + j` by decide_tac
-  \\ metis_tac []) |> Q.SPECL [`xs`,`0`] |> SIMP_RULE std_ss [] |>
-    GEN_ALL;
-*)
+(* HOL4 copying_gcScript.sml:411-417: ML code, not ported *)
 
 (* Lemmas about ok and a *)
 
-(* HOL4 ML code, not ported:
-val th =
-  fetch "-" "gc_move_loop_ind" |> Q.SPEC `(\(h1,h2,a,n,heap,c,limit).
-     !xs' h1' a' n' heap' c'.
-       (gc_move_loop (h1,h2,a,n,heap,c,limit) = (h1',a',n',heap',T)) ==>
-       c)`
-*)
+(* HOL4 copying_gcScript.sml:598-602: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val lemma = prove(th |> concl |> dest_imp |> fst,
-  rpt strip_tac \\ simp_tac std_ss [gc_move_loop_def]
-  \\ rpt strip_tac \\ pop_assum mp_tac
-  \\ Cases_on `limit < heap_length (h1 ++ h::h2)`
-  \\ asm_rewrite_tac [] \\ simp_tac std_ss []
-  \\ Cases_on `h` \\ simp_tac (srw_ss()) []
-  \\ `?x1 x2 x3 x4 x5 x6.
-        gc_move_list (l,DataElement l n'' b::h2,a,n,heap,c,limit) =
-          (x1,x2,x3,x4,x5,x6)` by metis_tac [PAIR]
-  \\ asm_rewrite_tac [] \\ simp_tac std_ss [LET_DEF]
-  \\ qpat_x_assum `!xs.bbb` mp_tac
-  \\ CONV_TAC (RATOR_CONV (SIMP_CONV (srw_ss()) []))
-  \\ asm_rewrite_tac [] \\ simp_tac std_ss [LET_DEF] \\ rpt strip_tac
-  \\ res_tac \\ full_simp_tac std_ss [] \\ imp_res_tac gc_move_list_ok)
-*)
+(* HOL4 copying_gcScript.sml:604-617: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val th = MP th lemma |> SIMP_RULE std_ss []
-         |> Q.SPECL
-           [`h1`,`h2`,`a`,`n`,`heap`,`c`,`limit`,`h1'`,`a'`,`n'`
-           ,`heap'`]
-*)
+(* HOL4 copying_gcScript.sml:619-620: ML code, not ported *)

@@ -27,9 +27,7 @@ hol4_overload "String" "displayLang_String";;
 hol4_overload "Tuple" "displayLang_Tuple";;
 hol4_overload "List" "displayLang_List";;
 
-(* HOL4 ML code, not ported:
-val sExp_size_def = fetch "-" "sExp_size_def";
-*)
+(* HOL4 displayLangScript.sml:21: ML code, not ported *)
 
 (* display_to_json *)
 let trace_to_json_def = cake_define_list

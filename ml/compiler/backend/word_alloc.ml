@@ -25,10 +25,10 @@ needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 (* HOL4 ancestors outside the port: (* for arity-2 Const *) *)
 
-(* HOL4 overload (expanded in the port):
-     Move0 = Move 0n *)
-(* HOL4 overload (expanded in the port):
-     Move1 = Move 1n *)
+(* HOL4 word_allocScript.sml:19: the overload Move0, which the port
+   expands *)
+(* HOL4 word_allocScript.sml:20: the overload Move1, which the port
+   expands *)
 
 (*SSA form*)
 let apply_nummap_key_def = cake_define
@@ -1065,43 +1065,8 @@ let get_writes_def = cake_define
         | prog -> LN`;;
 
 (* Old representation *)
-(* Definition get_clash_sets_def:
-  (get_clash_sets (Seq s1 s2) live =
-    let (hd,ls) = get_clash_sets s2 live in
-    let (hd',ls') = get_clash_sets s1 hd in
-      (hd',(ls' ++ ls))) ∧
-  (get_clash_sets (MustTerminate s1) live =
-     get_clash_sets s1 live) ∧
-  (get_clash_sets (If cmp r1 ri e2 e3) live =
-    let (h2,ls2) = get_clash_sets e2 live in
-    let (h3,ls3) = get_clash_sets e3 live in
-    let union_live = union h2 h3 in
-    let merged = case ri of Reg r2 => insert r2 () (insert r1 ()
-      union_live)
-                      | _ => insert r1 () union_live in
-      (merged,ls2++ls3)) ∧
-  (get_clash_sets (Call(SOME(v,cutset,ret_handler,l1,l2))dest args h)
-    live =
-    (*top level*)
-    let args_set = numset_list_insert args LN in
-    let (hd,ls) = get_clash_sets ret_handler live in
-    (*Outer liveset*)
-    let live_set = union cutset args_set in
-    (*Returning clash set*)
-    let ret_clash = insert v () cutset in
-    (case h of
-      NONE => (live_set,ret_clash::hd::ls)
-    | SOME(v',prog,l1,l2) =>
-        let (hd',ls') = get_clash_sets prog live in
-        (*Handler clash set*)
-        let h_clash = insert v' () cutset in
-        (live_set,h_clash::ret_clash::hd::hd'::ls++ls'))) ∧
-  (*Catchall for cases where we dont have in sub programs live sets*)
-  (get_clash_sets prog live =
-    let i_set = union (get_writes prog) live in
-      (get_live prog live,[i_set]))
-  End
-*)
+(* HOL4 word_allocScript.sml:1049-1083: code that the source has in a
+   comment *)
 
 (* Potentially more efficient liveset representation for checking /
    allocation*)

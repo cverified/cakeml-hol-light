@@ -58,10 +58,8 @@ let _ = size_thms "ast_pat";;
 let _ = size_thms "dec";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw
-   [do_if_def,do_log_def,do_eval_res_def,dec_clock_def] \\
-   imp_res_tac fix_clock_IMP \\ fs [] \\ fs
-   [listTheory.list_size_def,list_size_REVERSE] *)
+(* HOL4 evaluateScript.sml:268-277: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->
@@ -325,26 +323,8 @@ hol4_overload "evaluate_match" "evaluate_evaluate_match";;
 
 (* store evaluate_def and evaluate_ind in parts *)
 
-(* HOL4 ML code, not ported:
-val eval_pat = “evaluate$evaluate _ _ _”
-val evaluate_conjs =
-  CONJUNCTS full_evaluate_def
-  |> filter (fn th => (th |> SPEC_ALL |> concl |> dest_eq |> fst
-                          |> can (match_term eval_pat)));
-*)
+(* HOL4 evaluateScript.sml:322-326: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val match_pat = “evaluate$evaluate_match _ _ _ _ _”
-val evaluate_match_conjs =
-  CONJUNCTS full_evaluate_def
-  |> filter (fn th => (th |> SPEC_ALL |> concl |> dest_eq |> fst
-                          |> can (match_term match_pat)));
-*)
+(* HOL4 evaluateScript.sml:328-332: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val decs_pat = “evaluate$evaluate_decs _ _ _”
-val evaluate_decs_conjs =
-  CONJUNCTS full_evaluate_def
-  |> filter (fn th => (th |> SPEC_ALL |> concl |> dest_eq |> fst
-                          |> can (match_term decs_pat)));
-*)
+(* HOL4 evaluateScript.sml:334-338: ML code, not ported *)

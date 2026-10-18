@@ -13,9 +13,7 @@ needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_unreach.ml";;
 
-(* HOL4 ML code, not ported:
-val s = ``s:('a,'c,'ffi) wordSem$state``
-*)
+(* HOL4 word_unreachProofScript.sml:10: ML code, not ported *)
 
 (* -- proofs about semantics -- *)
 
@@ -26,23 +24,6 @@ let copy_vars_def = cake_define_list
         (word_unreachProof_copy_vars rest from to)`];;
 hol4_overload "copy_vars" "word_unreachProof_copy_vars";;
 
-(* HOL4 ML code, not ported:
-Resume evaluate_Seq_assoc_right_lemma[Loop]:
-  irule evaluate_SimpSeq \\ gvs[] \\
-  qpat_x_assum `evaluate (Seq _ _, _) = _` mp_tac \\
-  simp[Once evaluate_def] \\
-  pairarg_tac \\ fs[] \\ strip_tac \\
-  simp[Once evaluate_def] \\
-  mp_tac (evaluate_Loop_body_eq
-    |> INST_TYPE [beta |-> gamma, gamma |-> ``:'ffi``]
-    |> Q.INST [`p2` |-> `Seq_assoc_right p1 Skip`]) \\
-  impl_tac >- fs[evaluate_Seq_Skip] \\
-  disch_then drule \\
-  impl_tac >- (strip_tac \\ fs[]) \\
-  strip_tac \\ fs[]
-QED
-*)
+(* HOL4 word_unreachProofScript.sml:351-364: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-Finalise evaluate_Seq_assoc_right_lemma;
-*)
+(* HOL4 word_unreachProofScript.sml:366: ML code, not ported *)

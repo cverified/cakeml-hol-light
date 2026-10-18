@@ -30,27 +30,12 @@ let x64_names_def = cake_define
       insert 14 4 o
       insert 15 5) LN:num spt)`;;
 
-(* HOL4 ML code, not ported:
-val clos_conf = rconc (EVAL ``clos_to_bvl$default_config``)
-val bvl_conf = rconc (EVAL``bvl_to_bvi$default_config``)
-val word_to_word_conf = ``<| reg_alg:=2; col_oracle := [] |>``
-*)
+(* HOL4 x64_configScript.sml:41-43: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val x64_data_conf = ``<| tag_bits:=4; len_bits:=4; pad_bits:=2;
-  len_size:=32; has_div:=F; has_longdiv:=T; has_fp_ops:=T;
-  has_fp_tern:=F; be:=F; call_empty_ffi:=F; gc_kind:=Simple|>``
-val x64_word_conf = ``<| bitmaps_length := 0; stack_frame_size := LN
-  |>``
-*)
+(* HOL4 x64_configScript.sml:45-46: ML code, not ported *)
 (* perf_calls=T yields an unverified binary suitable for
    `perf record --call-graph fp` profiling (x64 only). *)
-(* HOL4 ML code, not ported:
-val x64_stack_conf = ``<|jump:=T;reg_names:=x64_names;perf_calls:=F|>``
-val x64_lab_conf =
-  ``<|pos:=0;ffi_names:=NONE;labels:=LN;sec_pos_len:=
-  [];init_clock:=5;hash_size:=104729n;shmem_extra:=[]|>``
-*)
+(* HOL4 x64_configScript.sml:49-50: ML code, not ported *)
 
 let x64_backend_config_def = cake_define
   `x64_backend_config =

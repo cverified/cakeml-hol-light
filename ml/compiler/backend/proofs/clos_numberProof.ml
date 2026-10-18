@@ -17,25 +17,7 @@ needs "semantics/semanticPrimitives.ml";;
 
 (* properties of renumber_code_locs *)
 
-(* HOL4 ML code, not ported:
-fun tac (g as (asl,w)) =
-  let
-    fun finder tm =
-      let
-        val (f,args) = strip_comb tm
-      in
-        (same_const``renumber_code_locs`` f orelse
-         same_const``renumber_code_locs_list`` f)
-        andalso
-         all is_var args
-        andalso
-         length args = 2
-      end
-    val tms = find_terms finder w
-  in
-    map_every (fn tm => Cases_on [ANTIQUOTE tm]) tms g
-  end
-*)
+(* HOL4 clos_numberProofScript.sml:20-36: ML code, not ported *)
 
 (* value relation *)
 
@@ -89,36 +71,13 @@ hol4_overload "state_rel" "clos_numberProof_state_rel";;
 
 (* semantic functions respect relation *)
 
-(* HOL4 ML code, not ported:
-val do_app_inst =
-  simple_val_rel_do_app
-  |> Q.INST [`vr`|->`v_rel s.max_app`]
-  |> INST_TYPE [``:'a``|->``:num # 'a``,``:'c``|->``:'a``]
-  |> Q.INST [`sr`|->`\r t. (r.max_app = s.max_app) /\ state_rel r t`]
-  |> SIMP_RULE std_ss []
-*)
+(* HOL4 clos_numberProofScript.sml:467-472: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun DFOCUS_PAT pat thm = let
-    fun UN Ps thm = let
-        val (P, Q) = dest_imp (concl thm)
-      in if can (match_term pat) P then (UNDISCH thm, P, Ps)
-        else UN (P :: Ps) (UNDISCH thm)
-      end
-    val (thm, P, Ps) = UN [] thm
-  in DISCH P (List.foldl (uncurry DISCH) thm Ps) end
-*)
+(* HOL4 clos_numberProofScript.sml:531-538: ML code, not ported *)
 
 (* compiler correctness *)
 
-(*
-val do_install_Rabort = prove(
-  ``closSem$do_install xs s2 = (Rerr (Rabort a),s3) ==>
-    a = Rtype_error \/ a = Rtimeout_error``,
-  rw [do_install_def]
-  \\ fs[case_eq_thms,pair_case_eq] \\ rveq \\ fs[]
-  \\ pairarg_tac \\ fs []
-  \\ fs [do_install_def,case_eq_thms,pair_case_eq,bool_case_eq]);
-*)
+(* HOL4 clos_numberProofScript.sml:637-645: code that the source has
+   in a comment *)
 
 (* preservation of observable semantics *)

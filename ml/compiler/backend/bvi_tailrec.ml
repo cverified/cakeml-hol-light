@@ -154,8 +154,8 @@ let exp_size_get_bin_args = prove
 cake_term_facts := exp_size_get_bin_args :: (!cake_term_facts);;
 
 let _ = size_thms "bvi_exp";;
-(* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
-   fs[] *)
+(* HOL4 bvi_tailrecScript.sml:280-284: the tactic that proves the
+   termination *)
 let term_ok_int_def = cake_define_wf
   `MEASURE (bvi_exp_size o SND)`
   `term_ok_int ts expr =
@@ -168,8 +168,8 @@ let term_ok_int_def = cake_define_wf
              | _14 -> F)`;;
 
 let _ = size_thms "bvi_exp";;
-(* HOL4 termination: \\ rw [] \\ imp_res_tac exp_size_get_bin_args \\
-   fs [] *)
+(* HOL4 bvi_tailrecScript.sml:303-307: the tactic that proves the
+   termination *)
 let term_ok_any_def = cake_define_wf
   `MEASURE (bvi_exp_size o SND o SND)`
   `term_ok_any ts list' expr =
@@ -190,34 +190,8 @@ let term_ok_any_def = cake_define_wf
              T x /\ term_ok_any ts F y else F))
         | expr -> F`;;
 
-(* TODO the translator does not accept this with the induction theorem
-   above (yet):
-
-Theorem term_ok_any_PMATCH:
-   term_ok_any ts list expr =
-     pmatch expr of
-       Var i => if ~list then i < LENGTH ts
-                else if i < LENGTH ts then EL i ts = List
-                else F
-     | Op op xs =>
-          (case get_bin_args (Op op xs) of
-            NONE       => xs = [] /\ if list then op = Cons 0 else
-              is_const op
-          | SOME (x,y) =>
-              if op = ListAppend then term_ok_any ts T x /\ term_ok_any
-                ts T y
-              else if ~list /\ is_arith op then term_ok_int ts x /\
-                term_ok_int ts y
-              else if ~list /\ is_rel op   then term_ok_int ts x /\
-                term_ok_int ts y
-              else if op = Cons 0 then term_ok_any ts T x /\ term_ok_any
-                ts F y
-              else F)
-     | _ => F
-Proof
-  Cases_on `expr` \\ once_rewrite_tac [term_ok_any_def] \\ fs []
-QED
-*)
+(* HOL4 bvi_tailrecScript.sml:324-346: code that the source has in a
+   comment *)
 
 let term_ok_def = cake_define
   `term_ok ts ty expr =
@@ -523,13 +497,9 @@ let has_rec_sing_def = cake_define_list_cheat CHEAT_TAC
    `has_rec_list loc (x :: xs) =
         (if has_rec_sing loc x then T else has_rec_list loc xs)`];;
 
-(* HOL4 ML code, not ported:
-val test1_tm = ``Let [] (Call 0 (SOME 0) [] NONE)``
-*)
+(* HOL4 bvi_tailrecScript.sml:744: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val test2_tm = ``Op (IntOp Add) [Call 0 (SOME 0) [] NONE; Var 0]``
-*)
+(* HOL4 bvi_tailrecScript.sml:751: ML code, not ported *)
 
 let check_exp_def = cake_define
   `check_exp loc arity exp =
@@ -580,51 +550,12 @@ hol4_overload "compile_prog" "bvi_tailrec_compile_prog";;
 
 (* --- Test rewriting --- *)
 
-(* HOL4 ML code, not ported:
-val fac_tm = ``
-  Let [Op (IntOp LessEq) [Var 0; Op (IntOp (Const 1)) []]]
-    (If (Var 0)
-       (Op (IntOp (Const 1)) [])
-       (Let [Op (IntOp Sub) [Op (IntOp (Const 1)) []; Var 1]]
-         (Op (IntOp Mult) [Var 2; Call 0 (SOME 0) [Var 0] NONE])))``
-*)
+(* HOL4 bvi_tailrecScript.sml:860-865: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val opt_tm = ``
-  Let [Op (IntOp LessEq) [Var 0; Op (IntOp (Const 1)) []]]
-     (If (Var 0) (Op (IntOp Mult) [Var 2; Op (IntOp (Const 1)) []])
-        (Let [Op (IntOp Sub) [Op (IntOp (Const 1)) []; Var 1]]
-           (Call 0 (SOME 1) [Var 0; Op (IntOp Mult) [Var 3; Var 2]]
-              NONE)))``
-val aux_tm = ``Let [Var 0; Op (IntOp (Const 1)) []] ^opt_tm``
-*)
+(* HOL4 bvi_tailrecScript.sml:867-873: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val rev_tm = ``
-  Let [Op (IntOp (Const 0)) []]
-    (If (Op (BlockOp (TagLenEq 0 0)) [Var 1])
-        (Op (BlockOp (Cons 0)) [])
-        (Let [Op (MemOp El) [Op (IntOp (Const 0)) []; Var 1]]
-          (Let [Op (MemOp El) [Op (IntOp (Const 1)) []; Var 2]]
-            (Op (BlockOp ListAppend)
-              [Op (BlockOp (Cons 0)) [Op (BlockOp (Cons 0)) []; Var 1];
-               Call 0 (SOME 444) [Var 0] NONE]))))``
-*)
+(* HOL4 bvi_tailrecScript.sml:887-895: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val opt_tm = ``
-  Let [Op (IntOp (Const 0)) []]
-    (If (Op (BlockOp (TagLenEq 0 0)) [Var 1])
-        (Op (BlockOp ListAppend) [Var 2; Op (BlockOp (Cons 0)) []])
-        (Let [Op (MemOp El) [Op (IntOp (Const 0)) []; Var 1]]
-          (Let [Op (MemOp El) [Op (IntOp (Const 1)) []; Var 2]]
-            (Call 0 (SOME 445)
-              [Var 0;
-               Op (BlockOp ListAppend) [Var 4; Op (BlockOp (Cons 0)) [Op
-                 (BlockOp (Cons 0)) []; Var 1]]]
-              NONE))))``
-*)
+(* HOL4 bvi_tailrecScript.sml:897-906: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val aux_tm = ``Let [Var 0; Op (BlockOp (Cons 0)) []] ^opt_tm``
-*)
+(* HOL4 bvi_tailrecScript.sml:908: ML code, not ported *)

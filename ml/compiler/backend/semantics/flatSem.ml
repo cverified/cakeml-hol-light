@@ -82,9 +82,7 @@ hol4_overload "state_ffi_fupd" "flatSem_state_ffi_fupd";;
 hol4_overload "state_globals" "flatSem_state_globals";;
 hol4_overload "state_globals_fupd" "flatSem_state_globals_fupd";;
 
-(* HOL4 ML code, not ported:
-val s = ``s:('c,'ffi) flatSem$state``
-*)
+(* HOL4 flatSemScript.sml:66: ML code, not ported *)
 
 let list_id_def = cake_define
   `list_id = 1`;;
@@ -638,7 +636,8 @@ let pmatch_stamps_ok = cake_inductive
 let _ = size_thms "flatLang_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp [] *)
+(* HOL4 flatSemScript.sml:704-708: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let pmatch_def = cake_define_list_try_tac (fun () ->
@@ -807,10 +806,8 @@ if concl fix_clock_IMP <> `T` then
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp [dec_clock_def] \\ rw [] \\ imp_res_tac
-   fix_clock_IMP \\ imp_res_tac do_if_either_or \\ imp_res_tac
-   pmatch_rows_Match_exp_alt_size \\ fs [] \\ simp [MAP_REVERSE,
-   SUM_REVERSE, exp6_alt_size, AppUnit_def, char_size_def] *)
+(* HOL4 flatSemScript.sml:932-945: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let evaluate_def = cake_define_list_try_tac (fun () ->
@@ -949,14 +946,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
 hol4_overload "evaluate" "flatSem_evaluate";;
 hol4_overload "evaluate_decs" "flatSem_evaluate_decs";;
 
-(* HOL4 ML code, not ported:
-val eqs = LIST_CONJ (map TypeBase.case_eq_of
-  [``:op``, ``:'a list``, ``:'a option``, ``:v``, ``:'a store_v``,
-    ``:lit``,
-   ``:eq_result``, ``:word_size``, ``:('a,'b) result``, ``:'a
-     ffi_result``,
-   ``:'a error_result``])
-*)
+(* HOL4 flatSemScript.sml:947-950: ML code, not ported *)
 
 let initial_state_def = cake_define
   `flatSem_initial_state ffi k ec =
@@ -985,8 +975,4 @@ let semantics_def = cake_define
                 UNIV)))`;;
 hol4_overload "semantics" "flatSem_semantics";;
 
-(* HOL4 ML code, not ported:
-val _ = map (can delete_const)
-  ["do_eq_UNION_aux","do_eq_UNION",
-   "pmatch_UNION_aux","pmatch_UNION"];
-*)
+(* HOL4 flatSemScript.sml:1025-1027: ML code, not ported *)

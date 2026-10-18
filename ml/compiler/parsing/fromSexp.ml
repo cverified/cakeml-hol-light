@@ -28,47 +28,18 @@ hol4_overload "++" "OPTION_CHOICE";;
 
 (* TODO: this is duplicated in parserProgTheory *)
 
-(* HOL4 overload (expanded in the port):
-     lift = OPTION_MAP *)
+(* HOL4 fromSexpScript.sml:26: the overload lift, which the port
+   expands *)
 
 (* TODO: move*)
 
-(* HOL4 ML code, not ported:
-val type_ind =
-  (TypeBase.induction_of``:ast_t``)
-  |> Q.SPECL[`P`,`EVERY P`]
-  |> SIMP_RULE list_ss []
-  |> UNDISCH_ALL |> CONJUNCT1
-  |> DISCH_ALL |> Q.GEN`P`
-*)
+(* HOL4 fromSexpScript.sml:103-108: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val pat_ind =
-  (TypeBase.induction_of``:pat``)
-  |> Q.SPECL[`P`,`EVERY P`]
-  |> SIMP_RULE list_ss []
-  |> UNDISCH_ALL |> CONJUNCT1
-  |> DISCH_ALL |> Q.GEN`P`
-*)
+(* HOL4 fromSexpScript.sml:110-115: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val exp_ind =
-  (TypeBase.induction_of``:exp``)
-  |> Q.SPECL[`P`,`EVERY (P o SND o SND)`,`P o SND o SND`,`EVERY (P o
-    SND)`,`P o SND`,`P o SND`,`EVERY P`]
-  |> SIMP_RULE list_ss []
-  |> UNDISCH_ALL |> CONJUNCT1
-  |> DISCH_ALL |> Q.GEN`P`
-*)
+(* HOL4 fromSexpScript.sml:117-122: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val dec_ind =
-  (TypeBase.induction_of``:dec``)
-  |> Q.SPECL[`P`,`EVERY P`]
-  |> SIMP_RULE list_ss []
-  |> UNDISCH_ALL |> CONJUNCT1
-  |> DISCH_ALL |> Q.GEN`P`
-*)
+(* HOL4 fromSexpScript.sml:124-129: ML code, not ported *)
 
 (* end TODO *)
 
@@ -151,12 +122,12 @@ let sexppair_def = cake_define
        SX_CONS s1 s2 -> OPTION_MAP2 (,) (p1 s1) (p2 s2) | _8 ->
          NONE)`;;
 
-(* HOL4 overload (expanded in the port):
-     guard = λb m. monad_unitbind (assert b) m *)
+(* HOL4 fromSexpScript.sml:431: the overload guard, which the port
+   expands *)
 
 let _ = size_thms "simpleSexp_sexp";;
-(* HOL4 termination: >> simp[dstrip_sexp_SOME, LENGTH_EQ_NUM_compute,
-   PULL_EXISTS, sexp_size_def] *)
+(* HOL4 fromSexpScript.sml:442-445: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexpid_def = cake_define_try_tac (fun () ->
@@ -174,9 +145,8 @@ let sexpid_def = cake_define_try_tac (fun () ->
                  p (EL 1 args)))))`;;
 
 let _ = size_thms "simpleSexp_sexp";;
-(* HOL4 termination: >> simp[LENGTH_EQ_NUM_compute, dstrip_sexp_SOME,
-   PULL_EXISTS, sexp_size_def] >> rpt strip_tac >> drule sxMEM_sizelt
-   >> simp[] *)
+(* HOL4 fromSexpScript.sml:461-465: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexptype_def = cake_define_try_tac (fun () ->
@@ -204,8 +174,8 @@ let sexptype_def = cake_define_try_tac (fun () ->
 let _ = size_thms "simpleSexp_sexp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
-   fs[LENGTH_EQ_NUM_compute] *)
+(* HOL4 fromSexpScript.sml:493-498: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexptype_alt_def = cake_define_list_try_tac (fun () ->
@@ -268,15 +238,8 @@ let sexplit_def = cake_define
    Unclear if this sort of special-casing is ever likely to be helpful
      *)
 let _ = size_thms "simpleSexp_sexp";;
-(* HOL4 termination: >> simp[] >> rpt strip_tac >-
-   metis_tac[arithmeticTheory.LESS_TRANS, rich_listTheory.EL_MEM,
-   DECIDE ``1n < 2``, sxMEM_sizelt, dstrip_sexp_size] >-
-   metis_tac[arithmeticTheory.LESS_TRANS, rich_listTheory.EL_MEM,
-   DECIDE ``0n < 2``, sxMEM_sizelt, dstrip_sexp_size, EL ] >-
-   metis_tac[arithmeticTheory.LESS_TRANS, rich_listTheory.EL_MEM,
-   DECIDE ``0n < 2``, sxMEM_sizelt, dstrip_sexp_size, EL ] >-
-   metis_tac[rich_listTheory.EL_MEM, DECIDE ``0n < 1``,
-   listTheory.EL, dstrip_sexp_size] *)
+(* HOL4 fromSexpScript.sml:582-594: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexppat_def = cake_define_try_tac (fun () ->
@@ -312,8 +275,8 @@ let sexppat_def = cake_define_try_tac (fun () ->
 let _ = size_thms "simpleSexp_sexp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
-   fs[LENGTH_EQ_NUM_compute] *)
+(* HOL4 fromSexpScript.sml:629-633: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexppat_alt_def = cake_define_list_try_tac (fun () ->
@@ -346,9 +309,7 @@ let sexppat_alt_def = cake_define_list_try_tac (fun () ->
            (match sexppat_list d with NONE -> NONE | SOME t ->
              SOME (h :: t))) | _10 -> NONE)`];;
 
-(* HOL4 ML code, not ported:
-val sexppat_alt_ind = theorem"sexppat_alt_ind";
-*)
+(* HOL4 fromSexpScript.sml:635: ML code, not ported *)
 
 let decode_thunk_mode_def = cake_define
   `decode_thunk_mode s =
@@ -514,9 +475,8 @@ let sexplocn_def = cake_define
               (sexplocpt (EL 1 ls))))`;;
 
 let _ = size_thms "simpleSexp_sexp";;
-(* HOL4 termination: >> rw[]>> imp_res_tac dstrip_sexp_size >>
-   imp_res_tac sxMEM_sizelt >> gvs[sexp_size_def,DB.fetch
-   "quantHeuristics" "LIST_LENGTH_3",SF DNF_ss] *)
+(* HOL4 fromSexpScript.sml:875-881: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexpexp_def = cake_define_try_tac (fun () ->
@@ -597,8 +557,8 @@ let sexpexp_def = cake_define_try_tac (fun () ->
 let _ = size_thms "simpleSexp_sexp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
-   fs[LENGTH_EQ_NUM_compute] *)
+(* HOL4 fromSexpScript.sml:991-1002: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexpexp_alt_def = cake_define_list_try_tac (fun () ->
@@ -697,8 +657,8 @@ let sexptype_def_def = cake_define
          (sexplist (sexppair odestSEXSTR (sexplist sexptype)))))`;;
 
 let _ = size_thms "simpleSexp_sexp";;
-(* HOL4 termination: \\ rw[LENGTH_EQ_NUM_compute] \\ fs[] \\
-   metis_tac[sxMEM_sizelt,dstrip_sexp_size,MEM,LESS_TRANS] *)
+(* HOL4 fromSexpScript.sml:1104-1108: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexpdec_def = cake_define_try_tac (fun () ->
@@ -751,8 +711,8 @@ let sexpdec_def = cake_define_try_tac (fun () ->
 let _ = size_thms "simpleSexp_sexp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw[] \\ imp_res_tac dstrip_sexp_size \\
-   fs[LENGTH_EQ_NUM_compute] *)
+(* HOL4 fromSexpScript.sml:1153-1160: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let sexpdec_alt_def = cake_define_list_try_tac (fun () ->
@@ -799,9 +759,7 @@ let sexpdec_alt_def = cake_define_list_try_tac (fun () ->
              (match sexpdec_list d with NONE -> NONE | SOME t
                -> SOME (h :: t))) | _27 -> NONE)`];;
 
-(* HOL4 ML code, not ported:
-val sexpdec_alt_ind = theorem"sexpdec_alt_ind";
-*)
+(* HOL4 fromSexpScript.sml:1162: ML code, not ported *)
 
 (* now the reverse: toSexp *)
 
@@ -820,8 +778,8 @@ let idsexp_def = cake_define_list
 let _ = size_thms "ast_t";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw[] \\ Induct_on`ts` >> simp[ast_t_size_def]
-   >> rw[] >> res_tac >> simp[] *)
+(* HOL4 fromSexpScript.sml:1233-1237: the tactic that proves the
+   termination *)
 let typesexp_def = cake_define_list_try (fun () ->
   `MEASURE ast_t_size`)
   [`typesexp (Atvar s) = listsexp [SX_SYM "Atvar"; SEXSTR (explode
@@ -848,9 +806,8 @@ let litsexp_def = cake_define_list
 let _ = size_thms "ast_pat";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> simp [] >> Induct_on`ps`>>simp[pat_size_def]
-   >> rw[] >> simp[] >> res_tac >>
-   first_x_assum(qspec_then`cn`strip_assume_tac)>> decide_tac *)
+(* HOL4 fromSexpScript.sml:1277-1284: the tactic that proves the
+   termination *)
 let patsexp_def = cake_define_list_try (fun () ->
   `MEASURE ast_pat_size`)
   [`patsexp (ast_Pany:ast_pat) = listsexp [SX_SYM "Pany"]`;
@@ -1076,15 +1033,7 @@ let decsexp_def = cake_define_list
 
 (* round trip *)
 
-(* HOL4 ML code, not ported:
-val exists_g_tac =
-  (fn (g as (asl,w)) =>
-    let
-      val (x,b) = dest_exists w
-      val tm = find_term (fn y => type_of x = type_of y andalso not
-        (is_var y)) b
-    in EXISTS_TAC tm end g)
-*)
+(* HOL4 fromSexpScript.sml:1784-1789: ML code, not ported *)
 
 (* valid sexps *)
 

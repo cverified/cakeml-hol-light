@@ -78,8 +78,8 @@ let optimize_consts_def = cake_define
 (* If this expression contains a constant it should
     be head of the output operation list *)
 let _ = size_thms "wordLang_exp";;
-(* HOL4 termination: \\ rw[] \\ gvs[] \\ drule MEM_list_size \\
-   disch_then(qspec_then `exp_size ARB` mp_tac) \\ rw[] *)
+(* HOL4 word_instScript.sml:122-129: the tactic that proves the
+   termination *)
 let pull_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB)`
   `pull_exp exp =
@@ -108,9 +108,8 @@ let pull_exp_def = cake_define_wf
 c d
 *)
 let _ = size_thms "wordLang_exp";;
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
-   MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
-   `ARB`)) \\ fs[exp_size_def] \\ TRY (DECIDE_TAC) *)
+(* HOL4 word_instScript.sml:171-177: the tactic that proves the
+   termination *)
 let flatten_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB)`
   `flatten_exp exp =
@@ -127,35 +126,10 @@ let flatten_exp_def = cake_define_wf
         | exp -> exp`;;
 
 
-  (*
-Theorem flatten_exp_pmatch:
-  !exp.
-  flatten_exp exp =
-  pmatch exp of
-    (Op Sub exps) => Op Sub (MAP flatten_exp exps)
-  | (Op op []) => op_consts op
-  | (Op op [x]) => flatten_exp x
-  | (Op op (x::xs)) => Op op [flatten_exp (Op op xs);flatten_exp x]
-  | (Load exp) => Load (flatten_exp exp)
-  | (Shift shift exp nexp) => Shift shift (flatten_exp exp) nexp
-  | exp => exp
-Proof
-  rpt strip_tac
-  >> CONV_TAC(RAND_CONV patternMatchesLib.PMATCH_ELIM_CONV)
-  >> every_case_tac
-  >> fs[flatten_exp_def, ETA_THM]
-QED*)
-(*
-val test = EVAL ``flatten_exp (pull_exp (Op Add [Const 1w;Const 2w;
-  Const 3w; Op Add [Const 4w; Const 5w; Op Add[Const 6w; Const 7w];Op
-  Xor[Const 1w;Var y;Var x]] ; Const (8w:8 word)]))``
-
-val test = EVAL ``flatten_exp (pull_exp (Op Sub [Const 1w; Op Sub[Const
-  2w;Const (3w:64 word)]]))``
-
- Op Add [Const 4w; Const 5w; Op Add[Const 6w; Const 7w];Op Xor[Const
-   1w;Var y;Var x]] ; Const (8w:8 word)]))``
-*)
+(* HOL4 word_instScript.sml:180-197: code that the source has in a
+   comment *)
+(* HOL4 word_instScript.sml:198-204: code that the source has in a
+   comment *)
 
 let is_Lookup_CurrHeap_def = cake_define
   `is_Lookup_CurrHeap x1 =
@@ -178,9 +152,8 @@ let is_Lookup_CurrHeap_def = cake_define
 *)
 
 let _ = size_thms "wordLang_exp";;
-(* HOL4 termination: \\ REPEAT STRIP_TAC \\ IMP_RES_TAC
-   MEM_IMP_exp_size \\ TRY (FIRST_X_ASSUM (ASSUME_TAC o Q.SPEC
-   `ARB`)) \\ fs[exp_size_def] \\ TRY (DECIDE_TAC) *)
+(* HOL4 word_instScript.sml:294-300: the tactic that proves the
+   termination *)
 let inst_select_exp_def = cake_define_wf
   `MEASURE (wordLang_exp_size ARB o SND o SND o SND)`
   `inst_select_exp c tar temp x4 =

@@ -17,9 +17,8 @@ needs "semantics/ast.ml";;
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> rw [] >> TRY decide_tac >> Induct_on `fns` >>
-   srw_tac [ARITH_ss] [exp_size_def] >> Cases_on `h` >> rw
-   [exp_size_def, basicSizeTheory.pair_size_def] *)
+(* HOL4 clos_numberScript.sml:56-64: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let renumber_code_locs_def = cake_define_list_try_tac (fun () ->
@@ -70,9 +69,7 @@ let renumber_code_locs_def = cake_define_list_try_tac (fun () ->
          (let (n,xs) = renumber_code_locs_list n xs in
            (n,closLang_Op t (closLang_IntOp closLang_Add) xs))`];;
 
-(* HOL4 ML code, not ported:
-val renumber_code_locs_ind = theorem"renumber_code_locs_ind";
-*)
+(* HOL4 clos_numberScript.sml:66: ML code, not ported *)
 
 let compile_inc_def = cake_define
   `clos_number_compile_inc n xs =

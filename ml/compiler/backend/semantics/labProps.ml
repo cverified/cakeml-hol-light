@@ -26,9 +26,7 @@ let extract_labels_def = cake_define
         | (x :: xs) -> labProps_extract_labels xs`;;
 hol4_overload "extract_labels" "labProps_extract_labels";;
 
-(* HOL4 ML code, not ported:
-val extract_labels_ind = theorem"extract_labels_ind";
-*)
+(* HOL4 labPropsScript.sml:18: ML code, not ported *)
 
 let labs_of_def = cake_define
   `labs_of x1 =
@@ -103,8 +101,8 @@ let sec_ok_pre_def = cake_define
   `sec_ok_pre c (Section k ls) <=>
      EVERY (line_ok_pre c) ls`;;
 
-(* HOL4 overload (expanded in the port):
-     all_enc_ok_pre = λc ls. EVERY (sec_ok_pre c) ls *)
+(* HOL4 labPropsScript.sml:1257: the overload all_enc_ok_pre, which
+   the port expands *)
 
 (* invariant: labels have correct section number and are non-zero *)
 

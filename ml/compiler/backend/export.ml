@@ -17,7 +17,8 @@ needs "lib/regexp_compiler.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-(* HOL4 termination: \\ fs [listTheory.LENGTH_DROP] *)
+(* HOL4 exportScript.sml:17-20: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let split16_def = cake_define_try_tac (fun () ->
@@ -31,60 +32,7 @@ let split16_def = cake_define_try_tac (fun () ->
         let xs2 = DROP 16 xs in
           SmartAppend (f xs1) (split16 f xs2))`;;
 
-(* HOL4 ML code, not ported:
-val preamble_tm =
-  ``(MAP (\n. strlit(n ++ "\n"))
-      ["/* Preprocessor to get around Mac OS, Windows, and Linux differe
-      nces in naming and calling conventions */";
-       "";
-       "#if defined(__APPLE__)";
-       "# define cdecl(s) _##s";
-       "#else";
-       "# define cdecl(s) s";
-       "#endif";
-       "";
-       "#if defined(__APPLE__)";
-       "# define wcdecl(s) _##s";
-       "#elif defined(__WIN32)";
-       "# define wcdecl(s) windows_##s";
-       "#else";
-       "# define wcdecl(s) s";
-       "#endif";
-       "";
-       "#if defined(__APPLE__)";
-       "# define wcml(s) s";
-       "#elif defined(__WIN32)";
-       "# define wcml(s) windows_##s";
-       "#else";
-       "# define wcml(s) s";
-       "#endif";
-       "";
-       "#if defined(__APPLE__)";
-       ".macro _makesym name, base, len";
-       ".set \\name, cake_main+\\base";
-       ".endm";
-       "# define makesym(name,base,len) _makesym name, base, len";
-       "#elif defined(__WIN32)";
-       ".macro _makesym name, base, len";
-       ".set \\name, cake_main+\\base";
-       ".endm";
-       "# define makesym(name,base,len) _makesym name, base, len";
-       "#else";
-       ".macro _makesym name, base, len";
-       ".local \\name";
-       ".set \\name, cake_main+\\base";
-       ".size \\name, \\len";
-       ".type \\name, function";
-       ".endm";
-       "# define makesym(name,base,len) _makesym name, base, len";
-       "#endif";
-       "";
-       "#define DATA_BUFFER_SIZE    65536";
-       "#define CODE_BUFFER_SIZE  5242880";
-       "";
-       "     .file        \"cake.S\"";
-       ""])`` |> EVAL |> rconc;
-*)
+(* HOL4 exportScript.sml:22-72: ML code, not ported *)
 let preamble_def = cake_define
   `preamble = ((MAP (\n. implode (n ++ "\n"))
        [("/* Preprocessor to get around Mac OS, Windows, and" ++

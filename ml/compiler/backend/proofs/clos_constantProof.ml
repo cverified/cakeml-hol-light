@@ -15,20 +15,8 @@ needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/ast.ml";;
 
-(*
-Definition make_const_def:
-  make_const (ConstInt i) = Number i ∧
-  make_const (ConstStr s) = ByteVector (MAP (n2w o ORD)
-    (mlstring$explode s)) ∧
-  make_const (ConstWord64 w) = Word64 w ∧
-  make_const (ConstCons t cs) = Block t (MAP make_const cs)
-Termination
-  WF_REL_TAC ‘measure const_size’
-  \\ Induct_on ‘cs’ \\ rw []
-  \\ fs [const_size_def] \\ res_tac
-  \\ pop_assum (qspec_then ‘t’ assume_tac) \\ fs []
-End
-*)
+(* HOL4 clos_constantProofScript.sml:11-23: code that the source has
+   in a comment *)
 
 (* naive implementation *)
 

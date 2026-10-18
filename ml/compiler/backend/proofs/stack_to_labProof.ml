@@ -37,15 +37,13 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-(* HOL4 ML code, not ported:
-val get_labels_def = stackSemTheory.get_labels_def;
-val get_reg_value_def = targetSemTheory.get_reg_value_def;
-*)
+(* HOL4 stack_to_labProofScript.sml:23-24: ML code, not ported *)
 
-(* val _ = set_prover (fn (tm,_) => mk_thm([],tm)); remove *)
+(* HOL4 stack_to_labProofScript.sml:26: code that the source has in a
+   comment *)
 
-(* HOL4 overload (expanded in the port):
-     Loc = wordLang$Loc *)
+(* HOL4 stack_to_labProofScript.sml:28: the overload Loc, which the
+   port expands *)
 
 (* TODO: move *)
 
@@ -94,14 +92,9 @@ let labs_correct_def = cake_define_list
            (match x with Label l1 l2 v2 -> loc_to_pc l1 l2 code
              = SOME n | _6 -> T) else labs_correct (n + 1) xs code)`];;
 
-(* HOL4 ML code, not ported:
-val is_Label_def = labSemTheory.is_Label_def
-*)
+(* HOL4 stack_to_labProofScript.sml:391: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val extract_labels_def = labPropsTheory.extract_labels_def
-val extract_labels_append = labPropsTheory.extract_labels_append
-*)
+(* HOL4 stack_to_labProofScript.sml:434-435: ML code, not ported *)
 
 let labels_ok_def = cake_define
   `labels_ok code <=>
@@ -171,9 +164,7 @@ let state_rel_def = cake_define
      good_dimindex (:'a)`;;
 hol4_overload "state_rel" "stack_to_labProof_state_rel";;
 
-(* HOL4 ML code, not ported:
-val s = ``s:('a,'c,'ffi) labSem$state``;
-*)
+(* HOL4 stack_to_labProofScript.sml:926: ML code, not ported *)
 
 let result_view_INDUCT,result_view_RECURSION = define_datatype
   "result_view = Vloc (num) (num) | Vcont (num) (num) | Vtimeout | \
@@ -204,69 +195,10 @@ let halt_view_def = cake_define
           outcome))
         | _13 -> NONE`;;
 
-(* HOL4 ML code, not ported:
-val finish_tac =
-  rename1`halt_view (SOME z)` \\ Cases_on`z` \\ fs[] >>
-  imp_res_tac loc_to_pc_isPREFIX>>
-  imp_res_tac code_installed_isPREFIX>>fs[]>>
-  TRY(rename1`result_view (_ w)` \\ Cases_on`w` \\ fs[]) >>
-  TRY (
-    map_every qexists_tac[`ck+ck'+1`,`t2'`] >> simp[] >>
-    reverse conj_tac >- metis_tac[IS_PREFIX_TRANS,evaluate_mono] >>
-    gen_tac >>
-    qpat_abbrev_tac`ss:('a,'c,'ffi)labSem$state = _ _` >>
-    first_x_assum(qspec_then`ss`mp_tac) >>
-    impl_tac >- (
-      simp[Abbr`ss`] >>
-      srw_tac[][] >>
-        full_simp_tac(srw_ss())[Abbr`regs`,APPLY_UPDATE_THM] >>
-      full_simp_tac(srw_ss())[find_code_def,DOMSUB_FLOOKUP_THM] >>
-      full_simp_tac(srw_ss())[FLOOKUP_DEF] >>
-      full_simp_tac(srw_ss())[state_rel_def,FLOOKUP_DEF] >>
-      every_case_tac >> full_simp_tac(srw_ss())[]) >>
-    simp[upd_pc_def,dec_clock_def,Abbr`ss`] >>
-    strip_tac >>
-    last_x_assum(qspec_then`ck1+ck'`mp_tac) >>
-    last_x_assum(qspec_then`ck1+ck'`mp_tac) >>
-    simp[] >> NO_TAC ) >>
-  TRY(rename1 `FFI_outcome` >>
-      simp[Once
-        labSemTheory.evaluate_def,asm_fetch_def,get_pc_value_def,
-          inc_pc_def,dec_clock_def,upd_reg_def,lab_to_loc_def] >>
-      qexists_tac `ck + ck' + 1` >> simp[] >>
-      qmatch_goalsub_abbrev_tac `evaluate a1` >>
-      first_x_assum(qspec_then `a1` mp_tac) >>
-      impl_tac >- (
-       simp[Abbr`a1`] >>
-       srw_tac[][] >>
-         full_simp_tac(srw_ss())[Abbr`regs`,APPLY_UPDATE_THM] >>
-       full_simp_tac(srw_ss())[find_code_def,DOMSUB_FLOOKUP_THM] >>
-       full_simp_tac(srw_ss())[FLOOKUP_DEF] >>
-       full_simp_tac(srw_ss())[state_rel_def,FLOOKUP_DEF] >>
-       every_case_tac >> full_simp_tac(srw_ss())[]) >>
-      simp[upd_pc_def,dec_clock_def,Abbr`a1`] >> NO_TAC) >>
-  simp[Once labSemTheory.evaluate_def,asm_fetch_def,get_pc_value_def,
-       inc_pc_def,dec_clock_def,upd_reg_def,lab_to_loc_def] >>
-  map_every qexists_tac[`ck+ck'+1`,`t2'`] >> simp[] >>
-  qpat_abbrev_tac`ss:('a,'c,'ffi)labSem$state = _ _` >>
-  first_x_assum(qspec_then`ss`mp_tac) >>
-  (impl_tac >- (
-     simp[Abbr`ss`] >>
-     srw_tac[][] >> full_simp_tac(srw_ss())[Abbr`regs`,APPLY_UPDATE_THM]
-       >>
-     full_simp_tac(srw_ss())[find_code_def,DOMSUB_FLOOKUP_THM] >>
-     full_simp_tac(srw_ss())[FLOOKUP_DEF] >>
-     full_simp_tac(srw_ss())[state_rel_def,FLOOKUP_DEF] >>
-     every_case_tac >> full_simp_tac(srw_ss())[])) >>
-  simp[upd_pc_def,dec_clock_def,Abbr`ss`] >>
-  first_x_assum(qspec_then`ck'`mp_tac) \\ simp[] >>
-  first_x_assum(qspec_then`ck'`mp_tac) \\ simp[];
-*)
+(* HOL4 stack_to_labProofScript.sml:966-1017: ML code, not ported *)
 
 (* Proving that stack_to_lab generates labels_ok *)
-(* HOL4 ML code, not ported:
-val sextract_labels_def = stackPropsTheory.extract_labels_def
-*)
+(* HOL4 stack_to_labProofScript.sml:1020: ML code, not ported *)
 
 let halt_assum_def = cake_define
   `halt_assum (:'ffi#'c) code <=>
@@ -291,22 +223,16 @@ let make_init_def = cake_define
        s):('a,'c,'ffi)stackSem_state)`;;
 hol4_overload "make_init" "stack_to_labProof_make_init";;
 
-(* HOL4 ML code, not ported:
-val make_init_semantics = flatten_semantics
-  |> Q.INST [`s1`|->`make_init code coracle regs save_regs
-    (s:('a,'c,'ffi)labSem$state)`,`s2`|->`s`]
-  |> SIMP_RULE std_ss [EVAL ``(make_init code coracle regs save_regs
-    s).code``];
-*)
+(* HOL4 stack_to_labProofScript.sml:3047-3049: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     stack_to_lab_compile = stack_to_lab$compile *)
-(* HOL4 overload (expanded in the port):
-     stack_names_compile = stack_names$compile *)
-(* HOL4 overload (expanded in the port):
-     stack_alloc_compile = stack_alloc$compile *)
-(* HOL4 overload (expanded in the port):
-     stack_remove_compile = stack_remove$compile *)
+(* HOL4 stack_to_labProofScript.sml:3051: the overload
+   stack_to_lab_compile, which the port expands *)
+(* HOL4 stack_to_labProofScript.sml:3052: the overload
+   stack_names_compile, which the port expands *)
+(* HOL4 stack_to_labProofScript.sml:3053: the overload
+   stack_alloc_compile, which the port expands *)
+(* HOL4 stack_to_labProofScript.sml:3054: the overload
+   stack_remove_compile, which the port expands *)
 
 let full_make_init_def = cake_define
   `full_make_init stack_conf data_conf max_heap sp offset bitmaps code
@@ -371,69 +297,10 @@ let memory_assumption_def = cake_define
            word)))
         (fun2set (labSem_state_mem t,labSem_state_mem_domain t)))`;;
 
-(* HOL4 ML code, not ported:
-val sextract_labels_def = stackPropsTheory.extract_labels_def
-*)
+(* HOL4 stack_to_labProofScript.sml:3209: ML code, not ported *)
 
-(*
-Theorem stack_to_lab_lab_pres:
-    ∀p n nl.
-  EVERY (λ(l1,l2). l1 = n ∧ l2 ≠ 0) (extract_labels p) ∧
-  ALL_DISTINCT (extract_labels p) ∧
-  next_lab p 1 ≤ nl ⇒
-  let (cp,nr,nl') = flatten p n nl in
-  EVERY (λ(l1,l2). l1 = n ∧ l2 ≠ 0) (extract_labels (append cp)) ∧
-  ALL_DISTINCT (extract_labels (append cp)) ∧
-  (∀lab. MEM lab (extract_labels (append cp)) ⇒ MEM lab (extract_labels
-    p) ∨ (nl ≤ SND lab ∧ SND lab < nl')) ∧
-  nl ≤ nl'
-Proof
-  HO_MATCH_MP_TAC flatten_ind>>Cases_on`p`>>rw[]>>
-  once_rewrite_tac
-    [flatten_def]>>fs[extract_labels_def,sextract_labels_def]
-  >-
-    (Cases_on`s`>>BasicProvers.EVERY_CASE_TAC>>fs[]>>rveq>>fs
-      [extract_labels_def,sextract_labels_def,compile_jump_def]>>
-    rpt(pairarg_tac>>fs[])>>rveq>>fs[extract_labels_def
-      ,sextract_labels_def]>>
-    qpat_x_assum`A<=nl` mp_tac>>
-    simp[Once next_lab_thm]>>
-    strip_tac>>
-    TRY
-      (fs[ALL_DISTINCT_APPEND,extract_labels_append]>>rw[]>>
-      CCONTR_TAC>>fs[]>>res_tac>>fs[]>>NO_TAC)
-    >>
-    `1 ≤ nl` by metis_tac[LESS_EQ_TRANS,next_lab_non_zero]>>
-    fs[extract_labels_append,ALL_DISTINCT_APPEND,extract_labels_def]>>
-    `next_lab q 1 ≤ m'` by fs[]>>
-    fs[]>>rfs[]>>
-    `r < nl ∧ r' < nl` by
-      fs[MAX_DEF]>>
-    rw[]>>
-    CCONTR_TAC>>fs[]>>
-    res_tac>>fs[]>>
-    imp_res_tac extract_labels_next_lab>>fs[]>>
-    metis_tac[])
-  >>
-    (rpt(pairarg_tac>>fs[])>>rveq>>fs[extract_labels_def
-      ,sextract_labels_def]>>
-    qpat_x_assum`A<=nl` mp_tac>>
-    simp[Once next_lab_thm]>>
-    strip_tac>>
-    `1 ≤ nl` by
-      metis_tac[LESS_EQ_TRANS,next_lab_non_zero]>>
-    fs[ALL_DISTINCT_APPEND]>>
-    qpat_x_assum`A=(cp,_,nl')` mp_tac>>
-    BasicProvers.EVERY_CASE_TAC>>strip_tac>>rveq>>fs[extract_labels_def
-      ,extract_labels_append,ALL_DISTINCT_APPEND]>>
-    TRY
-      (rw[]>>
-      CCONTR_TAC>>fs[]>>
-      res_tac>>fs[]>>
-      imp_res_tac extract_labels_next_lab>>fs[])>>
-    metis_tac[])
-QED
-*)
+(* HOL4 stack_to_labProofScript.sml:3218-3270: code that the source
+   has in a comment *)
 
 let good_code_def = cake_define
   `stack_to_labProof_good_code sp code <=>
@@ -451,9 +318,7 @@ hol4_overload "good_code" "stack_to_labProof_good_code";;
 let contain_def = cake_define
   `contain b = Abbrev b`;;
 
-(* HOL4 ML code, not ported:
-val stack_asm_ok_def = stackPropsTheory.stack_asm_ok_def
-*)
+(* HOL4 stack_to_labProofScript.sml:3627: ML code, not ported *)
 
 (* stack_name renames registers to obey non-clashing names
   It should be sufficient that the incoming nregs < reg_count -

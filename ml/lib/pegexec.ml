@@ -57,10 +57,10 @@ hol4_overload "AP" "pegexec_AP";;
 hol4_overload "Result" "pegexec_Result";;
 hol4_overload "Looped" "pegexec_Looped";;
 
-(* HOL4 overload (expanded in the port):
-     OME = optmax MAXerr *)
-(* HOL4 overload (expanded in the port):
-     EOF = Locs EOFpt EOFpt *)
+(* HOL4 pegexecScript.sml:55: the overload OME, which the port
+   expands *)
+(* HOL4 pegexecScript.sml:56: the overload EOF, which the port
+   expands *)
 
 let coreloop_def = cake_define
   `coreloop G =

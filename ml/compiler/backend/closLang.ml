@@ -162,17 +162,13 @@ hol4_overload "Fn" "closLang_Fn";;
 hol4_overload "Letrec" "closLang_Letrec";;
 hol4_overload "Op" "closLang_Op";;
 
-(* HOL4 ML code, not ported:
-val exp_size_def = definition"exp_size_def";
-*)
+(* HOL4 closLangScript.sml:143: ML code, not ported *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ qsuff_tac ‘list_size exp_size (MAP
-   SND fns) ≤ list_size (pair_size (λx. x) exp_size) fns’ >- fs [] \\
-   Induct_on ‘fns’ \\ fs [] \\ fs [list_size_def,FORALL_PROD] \\ rw
-   [] \\ fs [basicSizeTheory.pair_size_def] *)
+(* HOL4 closLangScript.sml:159-168: the tactic that proves the
+   termination *)
 let has_install_def = cake_define_list_try (fun () ->
   `MEASURE (\x. match x with INL e -> closLang_exp_size e | INR es ->
      list_size closLang_exp_size es)`)
@@ -238,6 +234,5 @@ let assign_get_code_label_def = cake_define
 new_type_abbrev("clos_prog",`: closLang_exp
    list#(num#num#closLang_exp) list`);;
 
-(* HOL4 type abbreviation (expanded in the port):
-     clos_cc = 'c -> clos_prog -> (word8 list # word64 list # 'c) option
-       *)
+(* HOL4 closLangScript.sml:228: the type abbreviation clos_cc, which
+   the port expands *)

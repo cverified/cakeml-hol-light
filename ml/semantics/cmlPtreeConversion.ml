@@ -24,8 +24,8 @@ let PCstate0_FIELDS = define_record "PCstate0"
 (* recording a fixity of NONE is what you have to do to represent an
    explicit nonfix declaration *)
 
-(* HOL4 type abbreviation (expanded in the port):
-     M = PCstate0 list -> ('a # PCstate0 list) option *)
+(* HOL4 cmlPtreeConversionScript.sml:22: the type abbreviation M,
+   which the port expands *)
 
 let empty_PCstate0_def = cake_define
   `empty_PCstate0 = mk_PCstate0 FEMPTY FEMPTY`;;
@@ -92,8 +92,8 @@ let mpop_namedscope_def = cake_define
 
 hol4_overload "++" "OPTION_CHOICE";;
 
-(* HOL4 overload (expanded in the port):
-     lift = option$OPTION_MAP *)
+(* HOL4 cmlPtreeConversionScript.sml:94: the overload lift, which the
+   port expands *)
 
 let ifM_def = cake_define
   `ifM bM tM eM =
@@ -107,8 +107,8 @@ let mk_binop_def = cake_define
        (implode "::"))) [a1; a2] else ast_App ast_Opapp [ast_App
        ast_Opapp [ast_Var a_op; a1]; a2])`;;
 
-(* HOL4 overload (expanded in the port):
-     ' = λf a. OPTION_BIND a f *)
+(* HOL4 cmlPtreeConversionScript.sml:110: the overload ', which the
+   port expands *)
 
 let tokcheck_def = cake_define
   `tokcheck pt tok' <=> ((\f a. OPTION_BIND a f) destTOK (destLf pt)

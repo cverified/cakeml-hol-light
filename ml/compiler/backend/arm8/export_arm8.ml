@@ -98,126 +98,13 @@ let ffi_asm_def = cake_define_list
            (implode "\n")]) (export_arm8_ffi_asm ffis)`];;
 hol4_overload "ffi_asm" "export_arm8_ffi_asm";;
 
-(* HOL4 ML code, not ported:
-val ffi_code' =
-  ``λret. SmartAppend
-    (List (MAP (\n. strlit(n ++ "\n"))
-     ["/* CakeML FFI interface (each block is 16 bytes long) */";
-       "";
-       "     .p2align 4";
-       ""]))(
-    SmartAppend
-     (ffi_asm (REVERSE ffi_names))
-     (List (MAP (\n. strlit(n ++ "\n"))
-      (["cake_clear:";
-       "     b   cdecl(cml_exit)";
-       "     .p2align 4";
-       "";
-       "cake_exit:"] ++
-       (if ret then
-         ["     b   cml_return"]
-       else
-         ["     b   cdecl(cml_exit)"]) ++
-       ["     .p2align 4";
-       "";
-       "cake_main:";
-       "";
-       "/* Generated machine code follows */";
-       ""]))))``
-*)
+(* HOL4 export_arm8Script.sml:82-106: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val (ffi_code_true,ffi_code_false) =
-    (``^ffi_code' T`` |> EVAL |> concl |> rand,
-     ``^ffi_code' F`` |> EVAL |> concl |> rand);
-*)
+(* HOL4 export_arm8Script.sml:108-110: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val ffi_code =
-  ``λret. if ret then ^ffi_code_true else ^ffi_code_false``;
-*)
+(* HOL4 export_arm8Script.sml:112-113: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val entry_point_code =
-  ``(List (MAP (\n. strlit(n ++ "\n"))
-    [""; "";
-     "cml_enter:";
-     "     str    x30, [sp, #-32]!";
-     "     str    x29, [sp, #-32]!";
-     "     str    x28, [sp, #-32]!";
-     "     str    x27, [sp, #-32]!";
-     "     str    x26, [sp, #-32]!";
-     "     str    x25, [sp, #-32]!";
-     "     str    x24, [sp, #-32]!";
-     "     str    x23, [sp, #-32]!";
-     "     str    x22, [sp, #-32]!";
-     "     str    x21, [sp, #-32]!";
-     "     str    x20, [sp, #-32]!";
-     "     str    x19, [sp, #-32]!";
-     "     b      cake_main";
-     "     .p2align 4";
-     ""; "";
-     "cake_enter:";
-     "     str    x30, [sp, #-32]!";
-     "     str    x29, [sp, #-32]!";
-     "     str    x28, [sp, #-32]!";
-     "     str    x27, [sp, #-32]!";
-     "     str    x26, [sp, #-32]!";
-     "     str    x25, [sp, #-32]!";
-     "     str    x24, [sp, #-32]!";
-     "     str    x23, [sp, #-32]!";
-     "     str    x22, [sp, #-32]!";
-     "     str    x21, [sp, #-32]!";
-     "     str    x20, [sp, #-32]!";
-     "     str    x19, [sp, #-32]!";
-     "     _ldrel x9, can_enter";
-     "     ldr    x11, [x9]";
-     "     cbz    x11, cake_err3";
-     "     str    xzr, [x9]";
-     "     _ldrel x9, ret_base";
-     "     ldr    x28, [x9]";
-     "     _ldrel x9, ret_stack";
-     "     ldr    x25, [x9]";
-     "     _ldrel x9, ret_stackend";
-     "     ldr    x27, [x9]";
-     "     _ldrel x30, cake_return";
-     "     br     x10";
-     "     .p2align 4";
-     ""; "";
-     "cml_return:";
-     "     _ldrel x9, ret_base";
-     "     str    x28, [x9]";
-     "     _ldrel x9, ret_stack";
-     "     str    x25, [x9]";
-     "     _ldrel x9, ret_stackend";
-     "     str    x27, [x9]";
-     "";
-     "cake_return:";
-     "     _ldrel x9, can_enter";
-     "     mov    x11, #1";
-     "     str    x11, [x9]";
-     "     mov    x8, x0";
-     "     ldr    x19, [sp], #32";
-     "     ldr    x20, [sp], #32";
-     "     ldr    x21, [sp], #32";
-     "     ldr    x22, [sp], #32";
-     "     ldr    x23, [sp], #32";
-     "     ldr    x24, [sp], #32";
-     "     ldr    x25, [sp], #32";
-     "     ldr    x26, [sp], #32";
-     "     ldr    x27, [sp], #32";
-     "     ldr    x28, [sp], #32";
-     "     ldr    x29, [sp], #32";
-     "     ldr    x30, [sp], #32";
-     "     ret";
-     "     .p2align 4";
-     ""; "";
-     "cake_err3:";
-     "     mov    x0, #3";
-     "     b      cdecl(cml_err)";
-     "     .p2align 4";
-     ""]))`` |> EVAL |> concl |> rand;
-*)
+(* HOL4 export_arm8Script.sml:115-193: ML code, not ported *)
 
 let export_func_def = cake_define
   `export_arm8_export_func appl (name,label,start',len) =

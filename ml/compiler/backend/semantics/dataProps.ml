@@ -20,9 +20,8 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
 let _ = size_thms "dataSem_v";;
-(* HOL4 termination: \\ rpt strip_tac \\ fs
-   [sptreeTheory.size_delete] \\ imp_res_tac miscTheory.lookup_zero
-   \\ fs [] *)
+(* HOL4 dataPropsScript.sml:43-48: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let approx_of_def = cake_define_try_tac (fun () ->
@@ -54,33 +53,12 @@ let approx_of_def = cake_define_try_tac (fun () ->
         | [Block ts tag vs] ->
        approx_of lims vs refs + LENGTH vs + 1`;;
 
-(* HOL4 ML code, not ported:
-val s = ``s:('c,'ffi) dataSem$state``
-*)
+(* HOL4 dataPropsScript.sml:85: ML code, not ported *)
 
 (* ops that are not allowed_op have stack_consumed = NONE, which has to
    propagate through do_stack's safe_for_space computation *)
-(*
-Theorem lim_safe_eq[simp]:
-  lim_safe (s with locals := x0)            op xs = lim_safe s op xs
-∧ lim_safe (s with stack := x1)             op xs = lim_safe s op xs
-∧ lim_safe (s with global := x2)            op xs = lim_safe s op xs
-∧ lim_safe (s with handler := x3)           op xs = lim_safe s op xs
-∧ lim_safe (s with refs := x4)              op xs = lim_safe s op xs
-∧ lim_safe (s with compile := x5)           op xs = lim_safe s op xs
-∧ lim_safe (s with clock := x6)             op xs = lim_safe s op xs
-∧ lim_safe (s with code := x7)              op xs = lim_safe s op xs
-∧ lim_safe (s with ffi := x8)               op xs = lim_safe s op xs
-∧ lim_safe (s with space := x9)             op xs = lim_safe s op xs
-∧ lim_safe (s with tstamps := x10)          op xs = lim_safe s op xs
-∧ lim_safe (s with safe_for_space := x11)   op xs = lim_safe s op xs
-∧ lim_safe (s with peak_heap_length := x12) op xs = lim_safe s op xs
-∧ lim_safe (s with compile_oracle := x13)   op xs = lim_safe s op xs
-Proof
-  MAP_EVERY (fn t => Q.SPEC_TAC (t,t)) [`xs`,`op`,`s`]
-  \\ ho_match_mp_tac lim_safe_ind \\ rw []
-QED
-*)
+(* HOL4 dataPropsScript.sml:133-153: code that the source has in a
+   comment *)
 
 let var_corr_def = cake_define
   `var_corr env corr t <=>
@@ -88,96 +66,34 @@ let var_corr_def = cake_define
 
 (* INFO: only used in bvi_to_dataProof *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
-(* HOL4 ML code, not ported:
-fun cases_on_op_fs q = Cases_on q \\ full_simp_tac(srw_ss()) []
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘BlockOp b_’]) (Cases_on `b_`)
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘GlobOp g_’]) (Cases_on `g_`)
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘MemOp m_’]) (Cases_on `m_`)
-  >>> SELECT_LT_THEN (Q.RENAME_TAC [‘ThunkOp t_’]) (Cases_on `t_`);
-*)
+(* HOL4 dataPropsScript.sml:263: code that the source has in a
+   comment *)
+(* HOL4 dataPropsScript.sml:264-268: ML code, not ported *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:270: code that the source has in a
+   comment *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:296: code that the source has in a
+   comment *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:324: code that the source has in a
+   comment *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:342: code that the source has in a
+   comment *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:360: code that the source has in a
+   comment *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
-(* HOL4 ML code, not ported:
-val do_app_swap_tac =
-   Count.apply (strip_tac
-   \\ cases_on_op_fs ‘op’
-   \\ TRY (rename [‘EqualConst cc’] \\ Cases_on ‘cc’)
-   \\ rw[do_app_def,do_stack_def
-              , do_install_def
-              , do_app_aux_def
-              , with_fresh_ts_def
-              , do_space_def
-              , op_space_reset_def
-              , data_spaceTheory.op_space_req_def
-              , consume_space_def
-              , stack_consumed_def
-              , size_of_heap_with_safe
-              , MAX_DEF
-              , check_lim_def]
-  \\ TRY
-    (full_simp_tac(srw_ss())[LET_DEF,UNCURRY_EQ,list_case_eq
-    ,option_case_eq,v_case_eq,bool_case_eq,bvlSemTheory.ref_case_eq
-        , ffiTheory.ffi_result_case_eq,ffiTheory.oracle_result_case_eq,
-          state_component_equality
-        , semanticPrimitivesTheory.eq_result_case_eq
-          ,astTheory.word_size_case_eq,pair_case_eq
-        , limits_component_equality,stack_consumed_def]
-          \\ full_simp_tac(srw_ss())
-            [data_spaceTheory.op_space_req_def,stack_consumed_def]
-          \\ rev_full_simp_tac(srw_ss())
-            [data_spaceTheory.op_space_req_def]
-          \\ simp [Once CONJ_COMM] \\ NO_TAC)
-  \\ rpt(PURE_TOP_CASE_TAC \\ fs[] \\ rveq) \\
-    fs[state_component_equality,stack_consumed_def]
-  \\ gvs [AllCaseEqs()]);
-*)
+(* HOL4 dataPropsScript.sml:484: code that the source has in a
+   comment *)
+(* HOL4 dataPropsScript.sml:485-509: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val full_fs = fs[ get_var_def, set_var_def
-                      , cut_state_opt_def
-                      , cut_state_def
-                      , get_vars_def
-                      , do_install_def
-                      , op_space_reset_def
-                      , call_env_def
-                      , flush_state_def
-                      , dec_clock_def
-                      , add_space_def
-                      , jump_exc_def
-                      , MAX_DEF
-                      , size_of_heap_with_safe
-                      , op_requires_names_def];
-*)
+(* HOL4 dataPropsScript.sml:663-676: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val full_cases = fs [ list_case_eq,option_case_eq
-                          , v_case_eq
-                          , bool_case_eq
-                          , bvlSemTheory.ref_case_eq
-                          , ffiTheory.ffi_result_case_eq
-                          , ffiTheory.oracle_result_case_eq
-                          , semanticPrimitivesTheory.eq_result_case_eq
-                          , astTheory.word_size_case_eq
-                          , pair_case_eq];
-*)
+(* HOL4 dataPropsScript.sml:678-686: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val basic_tac = fs [evaluate_def]
-                      \\ rpt (every_case_tac
-                      \\ full_fs
-                      \\ fs [state_component_equality]);
-*)
+(* HOL4 dataPropsScript.sml:688-691: ML code, not ported *)
 
 
 (* The field-swap (stack_max/safe_for_space/peak_heap_length) commutes
@@ -203,7 +119,8 @@ let locals_ok_def = cake_define
    locals and yields a state equal up to (and locals_ok on) its locals.
      *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:1868: code that the source has in a
+   comment *)
 
 let get_code_labels_def = cake_define
   `dataProps_get_code_labels x1 =
@@ -228,18 +145,14 @@ let good_code_labels_def = cake_define
      (set_of_list (MAP FST p)) UNION elabs`;;
 hol4_overload "good_code_labels" "dataProps_good_code_labels";;
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:2259: code that the source has in a
+   comment *)
 
 let zero_limits_def = cake_define
   `zero_limits = (mk_limits 0 0 0 ARB ARB ARB:limits)`;;
 
 
-(* HOL4 ML code, not ported:
-val trivial_tac = qpat_x_assum `evaluate _ = (_,_)` (strip_assume_tac o
-                   SIMP_RULE(srw_ss())[evaluate_def,AllCaseEqs()] ) >>
-                  rveq >> simp[evaluate_def] >>
-                  simp[state_component_equality];
-*)
+(* HOL4 dataPropsScript.sml:2311-2314: ML code, not ported *)
 
 (* The limits-swap commutes through the narrow cut in evaluate(Assign).
    *)
@@ -254,13 +167,7 @@ let stack_frame_size_rel_def = cake_define
        spt = spt'
         | (_16,_17) -> F`;;
 
-(* HOL4 ML code, not ported:
-val basics_tac = fs [evaluate_def]
-                 \\ every_case_tac
-                 \\ full_fs
-                 \\ fs [state_component_equality]
-                 \\ rfs[];
-*)
+(* HOL4 dataPropsScript.sml:2541-2545: ML code, not ported *)
 
 (* The locals_size/stack/stack_frame_sizes-swap commutes through the
    narrow
@@ -287,9 +194,11 @@ let cc_co_only_diff_def = cake_define
        dataSem_state_peak_heap_length
      s = dataSem_state_peak_heap_length t`;;
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:2992: code that the source has in a
+   comment *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:3027: code that the source has in a
+   comment *)
 
 (* The narrow cut in evaluate(Assign) only depends on locals (equal
    under
@@ -299,4 +208,5 @@ let cc_co_only_diff_def = cake_define
 
 (* TODO: move *)
 
-(*fs[] is slower than full_simp_tac(srw_ss())[]*)
+(* HOL4 dataPropsScript.sml:3303: code that the source has in a
+   comment *)

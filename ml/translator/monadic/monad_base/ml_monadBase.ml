@@ -17,8 +17,8 @@ needs "semantics/semanticPrimitives.ml";;
 let exc_INDUCT,exc_RECURSION = define_datatype
   "exc = M_success ('a) | M_failure ('b)";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     M = 'a -> ('b, 'c) exc # 'a *)
+(* HOL4 ml_monadBaseScript.sml:21: the type abbreviation M, which the
+   port expands *)
 
 let liftM_def = cake_define
   `((liftM read' (write':('a->'a)->'d->'d)
@@ -51,21 +51,15 @@ let st_ex_ignore_bind_def = cake_define
  * Ensures that intermediate values of the monad bind (y, s'')
  * are captured.
  *)
-(* HOL4 ML code, not ported:
-DefnBase.export_cong "st_ex_ignore_bind_CONG";
-*)
-(* HOL4 ML code, not ported:
-DefnBase.export_cong "st_ex_bind_CONG";
-*)
+(* HOL4 ml_monadBaseScript.sml:70: ML code, not ported *)
+(* HOL4 ml_monadBaseScript.sml:83: ML code, not ported *)
 
 
 let st_ex_return_def = cake_define
   `(st_ex_return) x =
      (\s. (M_success x,s))`;;
 
-(* HOL4 ML code, not ported:
-val _ = add_infix ("otherwise", 400, HOLgrammars.RIGHT);
-*)
+(* HOL4 ml_monadBaseScript.sml:91: ML code, not ported *)
 
 let otherwise_def = cake_define
   `otherwise
@@ -194,12 +188,7 @@ let mset_ref_def = cake_define
 
 (* Rules to deal with the monads *)
 
-(* HOL4 ML code, not ported:
-val monad_eqs = LIST_CONJ
-  [ st_ex_return_success, st_ex_bind_success, otherwise_eq, can_success,
-    Marray_length_success, Marray_sub_eq, Marray_update_eq,
-    Marray_alloc_success ];
-*)
+(* HOL4 ml_monadBaseScript.sml:557-560: ML code, not ported *)
 
 (* Run *)
 let run_def = cake_define

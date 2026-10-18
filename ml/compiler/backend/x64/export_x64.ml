@@ -123,48 +123,11 @@ let ffi_asm_def = cake_define_list
            (implode "\n")]) (export_x64_ffi_asm ffis)`];;
 hol4_overload "ffi_asm" "export_x64_ffi_asm";;
 
-(* HOL4 ML code, not ported:
-val ffi_code' =
-  ``λret. SmartAppend
-    (List (MAP (\n. strlit(n ++ "\n"))
-     ["/* CakeML FFI interface (each block is 16 bytes long) */";
-       "";
-       "     .p2align 4";
-       ""]))(
-    SmartAppend
-     (ffi_asm (REVERSE ffi_names))
-     (List (MAP (\n. strlit(n ++ "\n"))
-      (["cake_clear:";
-       "     pushq   %rax";
-       "     pushq   %rdi";
-       "     callq   wcdecl(cml_clear)";
-       "     popq    %rdi";
-       "     ret";
-       "     .p2align 4";
-       "";
-       "cake_exit:"] ++
-       (if ret then
-         ["     jmp     cml_return"]
-       else
-         ["     callq   cdecl(cml_exit)"]) ++
-       ["     .p2align 4";
-       "";
-       "cake_main:";
-       "";
-       "/* Generated machine code follows */";
-       ""]))))``
-*)
+(* HOL4 export_x64Script.sml:87-115: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val (ffi_code_true,ffi_code_false) =
-    (``^ffi_code' T`` |> EVAL |> concl |> rand,
-     ``^ffi_code' F`` |> EVAL |> concl |> rand);
-*)
+(* HOL4 export_x64Script.sml:117-119: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val ffi_code =
-  ``λret. if ret then ^ffi_code_true else ^ffi_code_false``;
-*)
+(* HOL4 export_x64Script.sml:121-122: ML code, not ported *)
 
 let windows_ffi_asm_def = cake_define_list
   [`windows_ffi_asm [] = misc_Nil`;
@@ -178,114 +141,13 @@ let windows_ffi_asm_def = cake_define_list
            (implode "     jmp     cdecl(ffi"); ffi; (implode ")\n");
            (implode "\n")]) (windows_ffi_asm ffis)`];;
 
-(* HOL4 ML code, not ported:
-val windows_ffi_code' =
-  ``λret. SmartAppend
-    (
-     List [«\n/* Windows Compatibility for CakeML FFI interface */\n\n»]
-    )
-    (
-    SmartAppend
-     (windows_ffi_asm (REVERSE ffi_names))
-     (List (MAP (\n. strlit(n ++ "\n"))
-      (["windows_cml_clear:";
-        "     movq    %rcx, %r9";
-        "     movq    %rdx, %r8";
-        "     movq    %rsi, %rdx";
-        "     movq    %rdi, %rcx";
-        "     jmp     cdecl(cml_clear)"] ++
-       (if ret then (* don't need to treat cake_exit as a function *)
-         []
-       else
-         ["windows_cml_exit:";
-         "     movq    %rcx, %r9";
-         "     movq    %rdx, %r8";
-         "     movq    %rsi, %rdx";
-         "     movq    %rdi, %rcx";
-         "     callq   cdecl(cml_exit)"])))))``;
-*)
+(* HOL4 export_x64Script.sml:137-160: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val (windows_ffi_code_true,windows_ffi_code_false) =
-    (``^windows_ffi_code' T`` |> EVAL |> concl |> rand,
-     ``^windows_ffi_code' F`` |> EVAL |> concl |> rand);
-*)
+(* HOL4 export_x64Script.sml:162-164: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val windows_ffi_code =
-  ``λret. if ret then ^windows_ffi_code_true else
-    ^windows_ffi_code_false``;
-*)
+(* HOL4 export_x64Script.sml:166-167: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val entry_point_code =
-  ``(List (MAP (\n. strlit(n ++ "\n"))
-    ["cml_enter:";
-     "     sub     $0x30, %rsp";
-     "     movq    %r12, -0x8(%rbp)";
-     "     movq    %r13, -0x10(%rbp)";
-     "     movq    %r14, -0x18(%rbp)";
-     "     movq    %r15, -0x20(%rbp)";
-     "     movq    %rbx, -0x28(%rbp)";
-     "     jmp     cake_main";
-     "";
-     "windows_cake_enter:";
-     "     movq    %rcx, %rdi";
-     "     movq    %rdx, %rsi";
-     "     movq    %r8, %rdx";
-     "     movq    %r9, %rcx";
-     "";
-     "cake_enter:";
-     "     pushq   %rbp";
-     "     movq    %rsp, %rbp";
-     "     sub     $0x30, %rsp";
-     "     movq    %r12, -0x8(%rbp)";
-     "     movq    %r13, -0x10(%rbp)";
-     "     movq    %r14, -0x18(%rbp)";
-     "     movq    %r15, -0x20(%rbp)";
-     "     movq    %rbx, -0x28(%rbp)";
-     "     movq    can_enter(%rip), %r11";
-     "     cmp     $0, %r11";
-     "     je      cake_err3";
-     "     movq    $0, can_enter(%rip)";
-     "     movq    ret_base(%rip), %r14";
-     "     movq    ret_stack(%rip), %r12";
-     "     movq    ret_stackend(%rip), %r13";
-     "     lea     cake_return(%rip), %rax";
-     "     jmp     *%r10";
-     "     .p2align 4";
-     "";
-     "cml_return:";
-     "     movq    %r14, ret_base(%rip)";
-     "     movq    %r12, ret_stack(%rip)";
-     "     movq    %r13, ret_stackend(%rip)";
-     "";
-     "cake_return:";
-     "     movq    $1, can_enter(%rip)";
-     "     mov     %edi, %eax";
-     "     movq    -0x28(%rbp),%rbx";
-     "     movq    -0x20(%rbp),%r15";
-     "     movq    -0x18(%rbp),%r14";
-     "     movq    -0x10(%rbp),%r13";
-     "     movq    -0x8(%rbp),%r12";
-     "     leave";
-     "     ret";
-     "     .p2align 4";
-     "";
-     "cake_err3:";
-     "     pushq   %rax";
-     "     movq    $3, %rdi";
-     "     jmp     wcdecl(cml_err)";
-     "     .p2align 4";
-     "";
-     "windows_cml_err:";
-     "     movq    %rcx, %r9";
-     "     movq    %rdx, %r8";
-     "     movq    %rsi, %rdx";
-     "     movq    %rdi, %rcx";
-     "     jmp     cdecl(cml_err)";
-     ""]))`` |> EVAL |> concl |> rand;
-*)
+(* HOL4 export_x64Script.sml:169-235: ML code, not ported *)
 
 let export_func_def = cake_define
   `export_x64_export_func appl (name,label,start',len) =

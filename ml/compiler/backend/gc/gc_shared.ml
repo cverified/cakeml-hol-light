@@ -134,26 +134,8 @@ let gc_forward_ptr_def = cake_define_list
              ok in
              (x :: xs,ok))`];;
 
-(*Theorem gc_forward_ptr_ok:
-   !heap n a ok x. (gc_forward_ptr n heap a d ok = (x,T)) ==> ok
-Proof
-  Induct
-  >- simp [gc_forward_ptr_def]
-  \\ once_rewrite_tac [gc_forward_ptr_def]
-  \\ ntac 5 strip_tac
-  \\ IF_CASES_TAC
-  >- (once_rewrite_tac [PAIR_EQ] \\ strip_tac \\ fs [])
-  \\ IF_CASES_TAC
-  >- metis_tac [PAIR_EQ]
-  \\ rewrite_tac [LET_THM]
-  \\ pairarg_tac
-  \\ asm_rewrite_tac []
-  \\ DISCH_TAC
-  \\ fs []
-  \\ qpat_x_assum `!n a ok x. _` (qspecl_then [`n - el_length
-    h`,`a`,`ok`,`xs`] assume_tac)
-  \\ fs []
-QED*)
+(* HOL4 gc_sharedScript.sml:309-327: code that the source has in a
+   comment *)
 
 let heap_expand_def = cake_define
   `heap_expand n = (if n = 0 then [] else [Unused (n - 1)])`;;
@@ -186,9 +168,7 @@ let ADDR_APPLY_def = cake_define_list
    `ADDR_APPLY f (gc_shared_Data y) = (gc_shared_Data y:'a
   heap_address)`];;
 
-(* HOL4 ML code, not ported:
-val _ = augment_srw_ss [rewrites [LIST_REL_def]];
-*)
+(* HOL4 gc_sharedScript.sml:397: ML code, not ported *)
 
 let heaps_similar_def = cake_define
   `heaps_similar heap0 heap =
@@ -232,12 +212,4 @@ let heap_filter_aux_def = cake_define_list
 let heap_filter_def = cake_define
   `heap_filter = heap_filter_aux 0`;;
 
-(* HOL4 ML code, not ported:
-val heap_filter_aux_ADD_SING = prove(
-  ``!k n e heap.
-      heap_filter_aux (k+n) {e+n} heap = heap_filter_aux k {e} heap``,
-  Induct_on `heap`
-  \\ fs [heap_filter_aux_def] \\ rw []
-  \\ first_x_assum (qspecl_then [`k+el_length h`,`n`,`e`] mp_tac)
-  \\ fs []) |> Q.SPEC `0` |> SIMP_RULE std_ss [];
-*)
+(* HOL4 gc_sharedScript.sml:706-712: ML code, not ported *)

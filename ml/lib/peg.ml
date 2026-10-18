@@ -55,8 +55,7 @@ let optmax_def = cake_define
       | ((SOME x),NONE) -> SOME x
       | ((SOME x),(SOME y)) -> SOME (f x y)`;;
 
-(* HOL4 overload (expanded in the port):
-     EOF = Locs EOFpt EOFpt *)
+(* HOL4 pegScript.sml:84: the overload EOF, which the port expands *)
 let sloc_def = cake_define_list
   [`sloc [] = (Locs EOFpt EOFpt)`;
    `sloc (h :: t) = SND h`];;

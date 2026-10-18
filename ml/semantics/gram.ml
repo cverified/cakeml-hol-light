@@ -15,62 +15,9 @@ needs "lib/location.ml";;
 needs "semantics/tokens.ml";;
 
 
-(* HOL4 ML code, not ported:
-val tokmap0 =
-    List.foldl (fn ((s,t), acc) => Binarymap.insert(acc,s,t))
-               (Binarymap.mkDict String.compare)
-               [("(", ``LparT``), (")", ``RparT``), (",", ``CommaT``),
-                ("[", ``LbrackT``),
-                ("]", ``RbrackT``),
-                (";", ``SemicolonT``), (":=", ``SymbolT «:=»``),
-                (":>", ``SealT``),
-                ("->", ``ArrowT``), ("=>", ``DarrowT``),
-                ("*", ``StarT``),
-                ("::", “SymbolT «::»”),
-                ("|", ``BarT``), ("=", ``EqualsT``), (":", ``ColonT``),
-                ("_", ``UnderbarT``),
-                ("and", ``AndT``),
-                ("andalso", ``AndalsoT``),
-                ("as", ``AsT``),
-                ("before", ``AlphaT «before»``),
-                ("Bind", ``AlphaT «Bind»``),
-                ("case", ``CaseT``),
-                ("datatype", ``DatatypeT``),
-                ("Div", ``AlphaT «Div»``),
-                ("else", ``ElseT``),
-                ("end", ``EndT``),
-                ("exception", ``ExceptionT``),
-                ("fn", ``FnT``),
-                ("fun", ``FunT``),
-                ("handle", ``HandleT``),
-                ("if", ``IfT``),
-                ("in", ``InT``),
-                ("IntError", ``AlphaT «IntError»``),
-                ("let", ``LetT``),
-                ("local", ``LocalT``),
-                ("o", ``AlphaT «o»``),
-                ("of", ``OfT``),
-                ("op", ``OpT``),
-                ("orelse", ``OrelseT``),
-                ("raise", ``RaiseT``),
-                ("sig", ``SigT``),
-                ("struct", ``StructT``),
-                ("structure", ``StructureT``),
-                ("then", ``ThenT``),
-                ("type", ``TypeT``),
-                ("val", ``ValT``)]
-fun tokmap s =
-    case Binarymap.peek(tokmap0, s) of
-        NONE => raise Fail ("No token binding for "^s)
-      | SOME t => t
-*)
+(* HOL4 gramScript.sml:12-58: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val ginfo = { tokmap = tokmap,
-              tokty = ``:token``, nt_tyname = "MMLnonT",
-              start = "TopLevelDecs",
-              gname = "cmlG", mkntname = (fn s => "n" ^ s) }
-*)
+(* HOL4 gramScript.sml:60-63: ML code, not ported *)
 
 let validMultSym_def = cake_define
   `validMultSym s <=> "/" <<= s \/ "*" <<= s \/ "%" <<= s \/ "&" <<=
@@ -382,30 +329,13 @@ let cmlG_def = cake_define
 
 new_type_abbrev("gram_NT",`: MMLnonT+num`);;
 
-(* HOL4 overload (expanded in the port):
-     mkNT = INL : MMLnonT -> NT *)
-(* HOL4 overload (expanded in the port):
-     NN = \nt. NT (mkNT nt) *)
-(* HOL4 overload (expanded in the port):
-     TK = TOK : token -> (token,MMLnonT)symbol *)
+(* HOL4 gramScript.sml:234: the overload mkNT, which the port expands *)
+(* HOL4 gramScript.sml:235: the overload NN, which the port expands *)
+(* HOL4 gramScript.sml:236: the overload TK, which the port expands *)
 
 new_type_abbrev("mlptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 
-(* HOL4 ML code, not ported:
-val nt_distinct_ths = let
-  val ntlist = TypeBase.constructors_of ``:MMLnonT``
-  fun recurse [] = []
-    | recurse (t::ts) = let
-      val eqns = map (fn t' => mk_eq(t,t')) ts
-      val ths0 = map (SIMP_CONV (srw_ss()) []) eqns
-      val ths1 = map (CONV_RULE (LAND_CONV (REWR_CONV EQ_SYM_EQ))) ths0
-    in
-      ths0 @ ths1 @ recurse ts
-    end
-in
-  save_thm("nt_distinct_ths",  LIST_CONJ (recurse ntlist))
-end
-*)
+(* HOL4 gramScript.sml:240-252: ML code, not ported *)
 
 let ndl_def = cake_define
   `(Ndl n l = Nd (n,unknown_loc) l)`;;
@@ -413,34 +343,8 @@ let ndl_def = cake_define
 let lfl_def = cake_define
   `(Lfl t = Lf (t,unknown_loc))`;;
 
-(* HOL4 ML code, not ported:
-val ast =
-  ``let mkI = λn. Ndl (mkNT nEbase) [Ndl (mkNT nEliteral) [Lfl (TK (IntT
-    n))]]
-    in
-      Ndl (mkNT nEmult) [
-              Ndl (mkNT nEmult) [
-                Ndl (mkNT nEmult) [Ndl (mkNT nEapp) [mkI 3]];
-                Ndl (mkNT nMultOps) [Lfl (TK StarT)];
-                Ndl (mkNT nEapp) [mkI 4]
-              ];
-              Ndl (mkNT nMultOps) [Lfl (TK (SymbolT «/»))];
-              Ndl (mkNT nEapp) [mkI 5]
-            ]``
-*)
+(* HOL4 gramScript.sml:264-275: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val check_results =
-    time (SIMP_CONV (srw_ss())
-              [valid_ptree_def, cmlG_def,DISJ_IMP_THM, FORALL_AND_THM,
-               finite_mapTheory.FAPPLY_FUPDATE_THM,
-                 LET_THM,Ndl_def,Lfl_def,
-               validMultSym_def])
- ``valid_ptree cmlG ^ast``
-*)
+(* HOL4 gramScript.sml:277-282: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = if aconv (rhs (concl check_results)) T then print
-  "valid_ptree: OK\n"
-        else raise Fail "valid_ptree: failed"
-*)
+(* HOL4 gramScript.sml:284-285: ML code, not ported *)

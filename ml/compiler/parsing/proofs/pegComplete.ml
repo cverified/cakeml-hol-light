@@ -20,123 +20,32 @@ needs "semantics/gram.ml";;
 needs "semantics/proofs/gramProps.ml";;
 
 (* Set up ML bindings *)
-(* HOL4 ML code, not ported:
-open pegTheory grammarTheory pegSoundTheory
-     gramTheory gramPropsTheory cmlPEGTheory cmlNTPropsTheory;
-*)
+(* HOL4 pegCompleteScript.sml:13-14: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val bindNT0_lemma = REWRITE_RULE [GSYM mkNd_def] bindNT0_def
-val _ = augment_srw_ss [rewrites [bindNT0_lemma]]
-*)
+(* HOL4 pegCompleteScript.sml:18-19: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun SRULE ths = SIMP_RULE (srw_ss()) ths
-*)
+(* HOL4 pegCompleteScript.sml:21: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val skths = [GSYM RIGHT_EXISTS_IMP_THM, SKOLEM_THM]
-val SKRULE = SRULE skths
-val SKTAC = gs skths
-*)
+(* HOL4 pegCompleteScript.sml:23-25: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val peg_det = CONJUNCT1 peg_deterministic
-*)
+(* HOL4 pegCompleteScript.sml:38: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun PULLV v t = let
-  val (bv,b) = dest_abs(rand t)
-in
-  if bv ~~ v then ALL_CONV
-  else BINDER_CONV (PULLV v) THENC SWAP_VARS_CONV
-end t
-*)
+(* HOL4 pegCompleteScript.sml:40-45: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun REFINE_EXISTS_TAC t (asl, w) = let
-  val (qvar, body) = dest_exists w
-  val ctxt = free_varsl (w::asl)
-  val qvars = op_set_diff aconv (free_vars t) ctxt
-  val newgoal = subst [qvar |-> t] body
-  fun chl [] ttac = ttac
-    | chl (h::t) ttac = X_CHOOSE_THEN h (chl t ttac)
-in
-  SUBGOAL_THEN
-    (list_mk_exists(rev qvars, newgoal))
-    (chl (rev qvars) (fn th => Tactic.EXISTS_TAC t THEN ACCEPT_TAC th))
-    (asl, w)
-end
-*)
+(* HOL4 pegCompleteScript.sml:47-59: ML code, not ported *)
 
 
-(* HOL4 ML code, not ported:
-fun unify_firstconj k th (g as (asl,w)) = let
-  val (exvs, body) = strip_exists w
-  val c = hd (strip_conj body)
-  val (favs, fabody) = strip_forall (concl th)
-  val con = #2 (dest_imp fabody)
-  val theta = Unify.simp_unify_terms (op_set_diff aconv (free_vars c)
-    exvs) c con
-  fun inst_exvs theta =
-      case theta of
-          [] => ALL_TAC
-        | {redex,residue} :: rest =>
-          if tmem redex exvs andalso
-             HOLset.isEmpty (HOLset.intersection (FVL [residue]
-               empty_tmset, HOLset.addList(empty_tmset,exvs)))
-          then
-            if HOLset.isEmpty (HOLset.intersection (FVL [residue]
-              empty_tmset, HOLset.addList(empty_tmset,favs))) then
-              CONV_TAC (PULLV redex) THEN EXISTS_TAC residue THEN
-              inst_exvs rest
-            else CONV_TAC (PULLV redex) THEN REFINE_EXISTS_TAC residue
-              THEN
-                 inst_exvs rest
-          else inst_exvs rest
-  fun inst_favs theta th =
-      case theta of
-          [] => k th
-        | {redex,residue} :: rest =>
-          if tmem redex favs then
-            inst_favs rest (th |> CONV_RULE (PULLV redex) |> SPEC
-              residue)
-          else inst_favs rest th
-in
-  inst_exvs theta THEN inst_favs theta th
-end g
-*)
+(* HOL4 pegCompleteScript.sml:62-90: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val _ = augment_srw_ss [rewrites [
-  peg_eval_tok_SOME, tokeq_def, bindNT_def, mktokLf_def,
-  pegf_def, peg_eval_seq_SOME, pnt_def, peg_eval_try,
-  try_def]]
-*)
+(* HOL4 pegCompleteScript.sml:163-166: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val has_length = assert (can (find_term (same_const
-  listSyntax.length_tm)) o
-                         concl)
-*)
+(* HOL4 pegCompleteScript.sml:168-169: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val peg_eval_choice_NONE =
-  ``peg_eval G (i, choice s1 s2 f) (Failure fl fe)``
-    |> SIMP_CONV (srw_ss()) [Once peg_eval_cases]
-*)
+(* HOL4 pegCompleteScript.sml:171-173: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val cmlPEG_total =
-    peg_eval_total |> Q.GEN `G` |> Q.ISPEC `cmlPEG`
-                             |> C MATCH_MP PEG_wellformed
-*)
+(* HOL4 pegCompleteScript.sml:201-203: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val fFail_def = new_specification(
-  "fFail_def", ["fFAIL1", "fFAIL2"],
-  SKRULE peg_respects_firstSets);
-*)
+(* HOL4 pegCompleteScript.sml:263-265: ML code, not ported *)
 
 let sym2peg_def = cake_define_list
   [`sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk`;
@@ -151,9 +60,7 @@ let left_insert1_def = cake_define_list
                [x] -> mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n
                (left_insert1 pt x :: xs))`];;
 
-(* HOL4 ML code, not ported:
-val _ = export_rewrites ["grammar.ptree_loc_def"]
-*)
+(* HOL4 pegCompleteScript.sml:341: ML code, not ported *)
 
 let leftLoc_def = cake_define
   `leftLoc (Locs l1 _1) = l1`;;
@@ -163,29 +70,8 @@ let rightLoc_def = cake_define
 (* two valid parse-trees with the same head, and the same fringes, which
    are all tokens, must be identical. *)
 
-(* Problem with Eapp is that it's left-recursive in the grammar :
-
-     Eapp ::= Eapp Ebase | Ebase
-
-   but the PEG parses it by calling Ebase >> rpt Ebase, and then doing
-   a FOLDL on the resulting list to assemble it into a valid parse-tree.
-
-   Then, when it comes time to prove completeness (eapp_completeness
-   below), we know that we have a valid Eapp parse-tree, but we expand
-   the PEG invocation out into Ebase >> rpt Ebase, and do an induction
-     on the
-   length of the token-list to be consumed.  The gist of it all is that
-     we
-   end up wanting to know that if we've generated an Eapp to our right,
-     then
-   we can insert an Ebase from its left, generating a valid tree.
-
-   This next result says that if we have a parse tree (i.e., with an
-   Eapp (pt) to the left, and an Ebase bpt to the right, then we can
-   "reassociate", giving us an Ebase (bpt') sitting to the left and an
-   Eapp (pt') sitting to the right, such that left-inserting the
-   former into the latter gives us back what we started with.
-*)
+(* HOL4 pegCompleteScript.sml:395-414: code that the source has in a
+   comment *)
 
 let leftmost_def = cake_define_list
   [`leftmost (Lf s) = Lf s`;
@@ -259,16 +145,9 @@ let left_insert_def = cake_define_list
                  c'] -> mkNd p [left_insert p' p sep c; s'; c'] |
                  _8 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
 
-(* HOL4 ML code, not ported:
-fun has_const c = assert (Lib.can (find_term (same_const c)) o concl)
-*)
+(* HOL4 pegCompleteScript.sml:697: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun qpat_drule pat th =
-  qpat_assum pat (mp_then (Pos hd) assume_tac th)
-fun qpat_dxrule pat th =
-  qpat_x_assum pat (mp_then (Pos hd) assume_tac th)
-*)
+(* HOL4 pegCompleteScript.sml:734-737: ML code, not ported *)
 
 let nestoppers_def = cake_define
   `nestoppers =
@@ -587,12 +466,10 @@ let stoppers_def = cake_define
         | _9 -> UNIV`;;
 hol4_overload "stoppers" "pegComplete_stoppers";;
 
-(* HOL4 ML code, not ported:
-val normlist = REWRITE_TAC [GSYM APPEND_ASSOC, listTheory.APPEND]
-*)
+(* HOL4 pegCompleteScript.sml:897: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     RANK = λn. NT_rank (mkNT n) *)
+(* HOL4 pegCompleteScript.sml:1137: the overload RANK, which the port
+   expands *)
 
 (* could generalise this slightly: allowing for nullable seps, but this
    would
@@ -601,38 +478,14 @@ val normlist = REWRITE_TAC [GSYM APPEND_ASSOC, listTheory.APPEND]
      (sfx ≠ [] ∧ nullable cmlG [SEP] ⇒ HD sfx ∉ firstSet cmlG [C])
    and I can't be bothered with that right now. *)
 
-(* HOL4 ML code, not ported:
-val stdstart =
-    simp[Once peg_eval_NT_SOME, cmlpeg_rules_applied, MAP_EQ_CONS] >>
-      rw[] >>
-    fs[MAP_EQ_CONS, MAP_EQ_APPEND, DISJ_IMP_THM, FORALL_AND_THM] >> rw[]
-*)
+(* HOL4 pegCompleteScript.sml:2024-2026: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun note_tac s g = (print (s ^ "\n"); ALL_TAC g)
-*)
+(* HOL4 pegCompleteScript.sml:2028: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val list_case_eq = TypeBase.case_eq_of ``:'a list``
-*)
+(* HOL4 pegCompleteScript.sml:2030: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-fun hasc cnm t = #1 (dest_const t) = cnm handle HOL_ERR _ => false
-fun const_assum0 f cnm k =
-  f (k o assert (can (find_term (hasc cnm)) o concl))
-val const_assum = const_assum0 first_assum
-val const_x_assum = const_assum0 first_x_assum
-*)
+(* HOL4 pegCompleteScript.sml:2032-2036: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val pmap_cases =
-  rpt ((rename [`(_,_) = (_ ## _) pair`] >> Cases_on `pair` >> fs[] >>
-    rveq)
-         ORELSE
-       (rename [`(_ ## _) pair = (_,_)`] >> Cases_on `pair` >> fs[] >>
-         rveq))
-*)
+(* HOL4 pegCompleteScript.sml:2038-2041: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val loseRK = loseC “NT_rank”
-*)
+(* HOL4 pegCompleteScript.sml:2087: ML code, not ported *)

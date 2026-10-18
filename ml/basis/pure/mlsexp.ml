@@ -29,8 +29,8 @@ let mlsexp_token_INDUCT,mlsexp_token_RECURSION = define_datatype
 (* Functions may not consume the entire input (string), so they always
    return
    the rest of the string, independent of success or failure. *)
-(* HOL4 type abbreviation (expanded in the port):
-     result = (α # string) + (β # string) *)
+(* HOL4 mlsexpScript.sml:29: the type abbreviation result, which the
+   port expands *)
 
 let read_string_aux_def = cake_define_list
   [`read_string_aux [] acc =
@@ -82,9 +82,8 @@ let read_symbol_def = cake_define_list
    time. *)
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw[] \\ imp_res_tac read_string_length \\
-   fs[] \\ fs[Once read_symbol_def] \\ gvs [AllCaseEqs()] \\
-   imp_res_tac read_symbol_length \\ fs[] *)
+(* HOL4 mlsexpScript.sml:131-137: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let lex_aux_def = cake_define_list_try_tac (fun () ->

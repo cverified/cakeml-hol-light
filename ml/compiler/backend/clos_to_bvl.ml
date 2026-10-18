@@ -69,8 +69,8 @@ needs "semantics/ast.ml";;
 
 (* Constant flattening *)
 
-(* HOL4 overload (expanded in the port):
-     PRIME = 999983:num *)
+(* HOL4 clos_to_bvlScript.sml:67: the overload PRIME, which the port
+   expands *)
 
 let part_hash_def = cake_define_list
   [`part_hash (Int i:const_part) = num_of_int (abs i) MOD
@@ -496,9 +496,7 @@ let compile_exps_def = cake_define_list_try_tac (fun () ->
              c1],aux1))`];;
 hol4_overload "compile_exps" "clos_to_bvl_compile_exps";;
 
-(* HOL4 ML code, not ported:
-val compile_exps_ind = theorem"compile_exps_ind";
-*)
+(* HOL4 clos_to_bvlScript.sml:495: ML code, not ported *)
 
 let _ = size_thms "bvl_exp";;
 let _ = size_thms "closLang_exp";;
@@ -625,7 +623,8 @@ let code_split_def = cake_define_list
   [`code_split [] xs ys = (xs,ys)`;
    `code_split (z :: zs) xs ys = code_split zs (z :: ys) xs`];;
 
-(* HOL4 termination: \\ rw [] *)
+(* HOL4 clos_to_bvlScript.sml:725-727: the tactic that proves the
+   termination *)
 let code_merge_def = cake_define_wf
   `MEASURE (\(xs,ys). LENGTH xs + LENGTH ys)`
   `code_merge xs ys =
@@ -637,9 +636,8 @@ let code_merge_def = cake_define_wf
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ rw [] \\ imp_res_tac code_split_LENGTH \\
-   drule code_split_NULL \\ fs [] \\ full_simp_tac std_ss [GSYM
-   LENGTH_NIL] >> decide_tac *)
+(* HOL4 clos_to_bvlScript.sml:751-756: the tactic that proves the
+   termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let code_sort_def = cake_define_list_try_tac (fun () ->

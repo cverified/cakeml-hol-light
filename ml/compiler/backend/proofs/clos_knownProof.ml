@@ -24,29 +24,17 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 ML code, not ported:
-fun patresolve p f th = Q.PAT_ASSUM p (mp_then (Pos f) mp_tac th);
-fun say0 pfx s g = (print (pfx ^ ": " ^ s ^ "\n"); ALL_TAC g);
-*)
+(* HOL4 clos_knownProofScript.sml:21-22: ML code, not ported *)
 
 (* fixeqs flips any equations in the assumption that have evaluate on
    the rhs *)
-(* HOL4 ML code, not ported:
-val evaluate_t = ``closSem$evaluate``;
-*)
+(* HOL4 clos_knownProofScript.sml:25: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val va_case_eq = TypeBase.case_eq_of ``:val_approx``;
-*)
+(* HOL4 clos_knownProofScript.sml:27: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val inlD_case_eq = TypeBase.case_eq_of ``:inliningDecision``;
-*)
+(* HOL4 clos_knownProofScript.sml:29: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val result_case_eq = TypeBase.case_eq_of
-  ``:(α,β)semanticPrimitives$result``;
-*)
+(* HOL4 clos_knownProofScript.sml:31: ML code, not ported *)
 
 (* simple properties of constants from clos_known: i.e., merge and known
    *)
@@ -62,9 +50,7 @@ let unique_set_globals_def = cake_define
      (!n. BAG_ALL_DISTINCT (closProps_elist_globals (es ++ FLAT
        (first_n_exps co n))))`;;
 
-(* HOL4 ML code, not ported:
-val unique_set_globals_subexps = GEN_ALL unique_set_globals_subexps;
-*)
+(* HOL4 clos_knownProofScript.sml:224: ML code, not ported *)
 
 
 (* Value approximation is sgc free *)
@@ -127,27 +113,11 @@ let mglobals_extend_def = cake_define
 let fv_max_def = cake_define
   `fv_max n xs = (!v. fv v xs ==> v < n)`;;
 
-(* HOL4 ML code, not ported:
-fun cases_on_op q = Cases_on q
-  >>> TRY_LT (SELECT_LT_THEN (Q.RENAME_TAC [‘BlockOp b_’]) (Cases_on
-    `b_`))
-  >>> TRY_LT (SELECT_LT_THEN (Q.RENAME_TAC [‘GlobOp g_’]) (Cases_on
-    `g_`))
-  >>> TRY_LT (SELECT_LT_THEN (Q.RENAME_TAC [‘MemOp m_’]) (Cases_on
-    `m_`));
-*)
+(* HOL4 clos_knownProofScript.sml:612-615: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val value_ind =
-  TypeBase.induction_of ``:closSem$v``
-   |> Q.SPECL [`P`, `EVERY P`]
-   |> SIMP_RULE (srw_ss()) []
-   |> UNDISCH |> CONJUNCT1 |> DISCH_ALL |> Q.GEN `P`;
-*)
+(* HOL4 clos_knownProofScript.sml:705-709: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val say = say0 "evaluate_changed_globals_0";
-*)
+(* HOL4 clos_knownProofScript.sml:883: ML code, not ported *)
 
 (* Evaluate  *)
 
@@ -211,9 +181,7 @@ let gapprox_extend_def = cake_define
 
 (* essentially a duplicate of the above  *)
 
-(* HOL4 ML code, not ported:
-val say = say0 "known_correct_approx";
-*)
+(* HOL4 clos_knownProofScript.sml:1893: ML code, not ported *)
 
 (* code relation *)
 
@@ -238,8 +206,8 @@ hol4_overload "f_rel" "clos_knownProof_f_rel";;
 let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: \\ simp [v1_size_append, v_size_def] \\ rpt
-   strip_tac \\ imp_res_tac v_size_lemma \\ simp [] *)
+(* HOL4 clos_knownProofScript.sml:2614-2617: the tactic that proves
+   the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let v_rel_def = cake_define_list_try_tac (fun () ->
@@ -286,9 +254,7 @@ let v_rel_def = cake_define_list_try_tac (fun () ->
              i else F)`];;
 hol4_overload "v_rel" "clos_knownProof_v_rel";;
 
-(* HOL4 ML code, not ported:
-val v_rel_ind = theorem "v_rel_ind";
-*)
+(* HOL4 clos_knownProofScript.sml:2622: ML code, not ported *)
 
 let v_rel_app_def = cake_define_list
   [`v_rel_app c g (closSem_Number i:closSem_v) v args1 <=> v_rel c g
@@ -360,21 +326,7 @@ let co_every_Fn_vs_NONE_def = cake_define
        every_Fn_vs_NONE exps /\
        every_Fn_vs_NONE (MAP (SND o SND) aux))`;;
 
-(* HOL4 ML code, not ported:
-val v_caseT = v_case_eq |> INST_TYPE [alpha |-> bool] |> Q.INST [`v` |->
-  `T`]
-                        |> REWRITE_RULE []
-val optcaset = ``option$option_CASE``
-val opt_caseT = case_eq_thms |> CONJUNCTS
-                    |> List.find (fn th => th |> concl |> lhs |> lhs
-                                              |> strip_comb
-                                              |> #1 |> same_const
-                                                optcaset)
-                    |> valOf
-                    |> INST_TYPE [beta |-> bool]
-                    |> Q.INST [`v'` |-> `T`]
-                    |> SIMP_RULE (srw_ss()) []
-*)
+(* HOL4 clos_knownProofScript.sml:2960-2970: ML code, not ported *)
 
 
 (* Set globals in all future installs is disjoint from currently mapped
@@ -385,9 +337,7 @@ let state_oracle_mglobals_disjoint_def = cake_define
   n))))`;;
 
 
-(* HOL4 ML code, not ported:
-val say = say0 "known_correct0";
-*)
+(* HOL4 clos_knownProofScript.sml:3185: ML code, not ported *)
 
 let syntax_ok_def = cake_define
   `clos_knownProof_syntax_ok xs <=>
@@ -396,12 +346,10 @@ let syntax_ok_def = cake_define
      EVERY closProps_esgc_free xs`;;
 hol4_overload "syntax_ok" "clos_knownProof_syntax_ok";;
 
-(* HOL4 overload (expanded in the port):
-     fvs_compile = clos_fvs$compile *)
+(* HOL4 clos_knownProofScript.sml:5010: the overload fvs_compile,
+   which the port expands *)
 
-(* HOL4 ML code, not ported:
-val fvs_inc = ``clos_fvs$compile_inc : clos_prog -> clos_prog``;
-*)
+(* HOL4 clos_knownProofScript.sml:5012: ML code, not ported *)
 
 let syntax_oracle_ok_def = cake_define
   `clos_knownProof_syntax_oracle_ok c xs co conf <=>
@@ -477,8 +425,8 @@ let known_co_progs_def = cake_define
        IS_SOME kc then clos_fvs_compile_inc else I)`;;
 
 let _ = size_thms "val_approx";;
-(* HOL4 termination: \\ gen_tac \\ Induct \\ EVAL_TAC \\ rw[] \\
-   res_tac \\ rw[] *)
+(* HOL4 clos_knownProofScript.sml:5264-5268: the tactic that proves
+   the termination *)
 let val_approx_every_Fn_SOME_def = cake_define_wf
   `MEASURE val_approx_size`
   `val_approx_every_Fn_SOME x1 =
@@ -494,8 +442,8 @@ let globals_approx_every_Fn_SOME_def = cake_define
        val_approx_every_Fn_SOME d)`;;
 
 let _ = size_thms "val_approx";;
-(* HOL4 termination: \\ gen_tac \\ Induct \\ EVAL_TAC \\ rw[] \\
-   res_tac \\ rw[] *)
+(* HOL4 clos_knownProofScript.sml:5383-5387: the tactic that proves
+   the termination *)
 let val_approx_every_Fn_vs_NONE_def = cake_define_wf
   `MEASURE val_approx_size`
   `val_approx_every_Fn_vs_NONE x1 =
@@ -522,15 +470,7 @@ let val_approx_no_Labels_def = cake_define_wf
         | (clos_known_Tuple tag vas) -> EVERY val_approx_no_Labels
           vas
         | _17 -> T`;;
-(* HOL4 ML code, not ported:
-fun trivial x = x
-              |> concl
-              |> strip_forall
-              |> snd
-              |> dest_eq
-              |> snd
-              |> aconv T
-*)
+(* HOL4 clos_knownProofScript.sml:5516-5522: ML code, not ported *)
 
 let globals_approx_no_Labels_def = cake_define
   `globals_approx_no_Labels g =

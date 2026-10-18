@@ -35,9 +35,7 @@ let destLet_def = cake_define
           ((Let xs b):bvl_exp) -> (xs,b)
         | _1 -> ([],Var 0)`;;
 
-(* HOL4 ML code, not ported:
-val large_int = ``268435457:int``; (* 2**28-1 *)
-*)
+(* HOL4 bvl_to_bviScript.sml:37: ML code, not ported *)
 
 let compile_int_def = cake_define
   `compile_int (i:int) =
@@ -233,8 +231,8 @@ let stubs_def = cake_define
                     (ConcatByte_location,ConcatByte_code)]`;;
 hol4_overload "stubs" "bvl_to_bvi_stubs";;
 
-(* HOL4 overload (expanded in the port):
-     num_stubs = backend_common$bvl_num_stubs *)
+(* HOL4 bvl_to_bviScript.sml:243: the overload num_stubs, which the
+   port expands *)
 
 let compile_op_def = cake_define
   `bvl_to_bvi_compile_op op c1 =
@@ -320,8 +318,8 @@ let compile_op_def = cake_define
 hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
 
 hol4_overload "++" "SmartAppend";;
-(* HOL4 overload (expanded in the port):
-     nss = bvl_to_bvi_namespaces *)
+(* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port
+   expands *)
 
 let compile_aux_def = cake_define
   `compile_aux (k,args,p) =

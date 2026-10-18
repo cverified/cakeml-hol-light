@@ -158,8 +158,8 @@ let store_v_same_type_def = cake_define
        _7,semanticPrimitives_Thunk _8 _9) -> T | _10 -> F)`;;
 
 (* The nth item in the list is the value at location n *)
-(* HOL4 type abbreviation (expanded in the port):
-     store = ('a store_v) list *)
+(* HOL4 semanticPrimitivesScript.sml:189: the type abbreviation
+   store, which the port expands *)
 
 let empty_store_def = cake_define
   `empty_store = ([]:('a store_v) list)`;;
@@ -397,8 +397,8 @@ let eq_result_INDUCT,eq_result_RECURSION = define_datatype
 let _ = size_thms "semanticPrimitives_v";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
-(* HOL4 termination: >> Cases_on ‘compress_bool v1’ >> gs[Boolv_def,
-   listTheory.list_size_def] *)
+(* HOL4 semanticPrimitivesScript.sml:440-444: the tactic that proves
+   the termination *)
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let do_eq_def = cake_define_list_try_tac (fun () ->
@@ -717,45 +717,8 @@ let ws_to_chars_def = cake_define
 let chars_to_ws_def = cake_define
   `chars_to_ws cs = (MAP (\c. i2w (&(ORD c))) cs:word8 list)`;;
 
-(*
-
-Definition opn_lookup_def:
-  opn_lookup n =
-    case n of
-    | Plus => $+
-    | Minus => $-
-    | Times => $*
-    | Divide => $/
-    | Modulo => $%
-End
-
-Definition opb_lookup_def:
-  opb_lookup n =
-    case n of Lt => $< | Gt => $> | Leq => $<= | Geq => ($>= : int ->
-      int -> bool)
-End
-
-Definition opw8_lookup_def:
-  opw8_lookup op =
-    case op of
-    | Andw => word_and
-    | Orw => word_or
-    | Xor => word_xor
-    | Add => word_add
-    | Sub => word_sub : word8 -> word8 -> word8
-End
-
-Definition opw64_lookup_def:
-  opw64_lookup op =
-    case op of
-    | Andw => word_and
-    | Orw => word_or
-    | Xor => word_xor
-    | Add => word_add
-    | Sub => word_sub : word64 -> word64 -> word64
-End
-
-*)
+(* HOL4 semanticPrimitivesScript.sml:700-737: code that the source
+   has in a comment *)
 
 let shift8_lookup_def = cake_define
   `shift8_lookup sh =
@@ -770,13 +733,13 @@ let shift64_lookup_def = cake_define
 let exp_or_val_INDUCT,exp_or_val_RECURSION = define_datatype
   "exp_or_val = Exp (ast_exp) | Val (semanticPrimitives_v)";;
 
-(* HOL4 type abbreviation (expanded in the port):
-     store_ffi = 'v store # 'ffi ffi_state *)
+(* HOL4 semanticPrimitivesScript.sml:761: the type abbreviation
+   store_ffi, which the port expands *)
 
-(* HOL4 overload (expanded in the port):
-     w64lit = λw. Litv (Word64 w) *)
-(* HOL4 overload (expanded in the port):
-     f64lit = λw. Litv (Float64 w) *)
+(* HOL4 semanticPrimitivesScript.sml:763: the overload w64lit, which
+   the port expands *)
+(* HOL4 semanticPrimitivesScript.sml:764: the overload f64lit, which
+   the port expands *)
 
 let xor_bytes_def = cake_define
   `xor_bytes bs1 bs2 =
@@ -1418,6 +1381,4 @@ let extend_dec_env_def = cake_define
      mk_sem_env (nsAppend (sem_env_v new_env) (sem_env_v env))
        (nsAppend (sem_env_c new_env) (sem_env_c env))`;;
 
-(* HOL4 ML code, not ported:
-val _ = set_fixity "+++" (Infixl 480);
-*)
+(* HOL4 semanticPrimitivesScript.sml:1376: ML code, not ported *)

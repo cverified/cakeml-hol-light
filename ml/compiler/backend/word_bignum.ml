@@ -636,9 +636,7 @@ let compile_def = cake_define
         | _3 -> (Skip,l,i,cs)`;;
 hol4_overload "compile" "word_bignum_compile";;
 
-(* HOL4 ML code, not ported:
-val _ = (max_print_depth := 25);
-*)
+(* HOL4 word_bignumScript.sml:568: ML code, not ported *)
 
 let generated_bignum_stubs_def = cake_define
   `generated_bignum_stubs n =

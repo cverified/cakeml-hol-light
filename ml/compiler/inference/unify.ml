@@ -27,10 +27,7 @@ needs "lib/walkstar.ml";;
 
 hol4_overload "++" "OPTION_CHOICE";;
 
-(* HOL4 ML code, not ported:
-val option_map_case = optionTheory.OPTION_MAP_CASE
-val option_bind_thm = oneline optionTheory.OPTION_BIND_def
-*)
+(* HOL4 unifyScript.sml:20-21: ML code, not ported *)
 
 let atom_INDUCT,atom_RECURSION = define_datatype
   "atom = TC_tag (num) | DB_tag (num) | Tapp_tag | Null_tag";;
@@ -76,13 +73,8 @@ let substR_def = cake_define
 let cwfs_def = cake_define
   `cwfs s <=> swfs (sptree_map encode_infer_t s) /\ sptree_wf s`;;
 
-(*
-Theorem RKC_FORALL[transfer_rule]:
-  ((RKC |==> (==>)) |==> (==>)) $! $!
-Proof
-  irule transferTheory.ALL_surj_imp_imp >> simp[surj_RKC]
-QED
-*)
+(* HOL4 unifyScript.sml:185-191: code that the source has in a
+   comment *)
 
 let cvwalk_def = cake_define
   `cvwalk s n = decode_infer_t (svwalk (sptree_map encode_infer_t s)
@@ -92,10 +84,7 @@ let cwalk_def = cake_define
   `cwalk s it = decode_infer_t (swalk (sptree_map encode_infer_t s)
   (encode_infer_t it))`;;
 
-(* HOL4 ML code, not ported:
-val cwf = ASSUME “cwfs s” |> SRULE[cwfs_def] |> cj 2
-val cwfs = ASSUME “cwfs s” |> SRULE[cwfs_def] |> cj 1
-*)
+(* HOL4 unifyScript.sml:286-287: ML code, not ported *)
 
 let coc_def = cake_define
   `coc s it n = soc (sptree_map encode_infer_t s) (encode_infer_t it)
@@ -134,30 +123,14 @@ let cwalkstar_def = cake_define
    decode_infer_t (walkstar (encode_infer_t o_f sp2fm s)
      (encode_infer_t it))`;;
 
-(* HOL4 ML code, not ported:
-fun tcallify_th fixedvs th =
-  let val (l,r) = dest_eq (concl th)
-      val (lf0, args0) = strip_comb l
-      val args = op_set_diff aconv args0 fixedvs
-      val lf = list_mk_comb(lf0, fixedvs)
-      val atup = pairSyntax.list_mk_pair args
-      val inty = type_of atup
-      val body_t = tailrecLib.mk_sum_term lf inty r
-  in
-      pairSyntax.mk_pabs(atup, body_t)
-  end
-*)
+(* HOL4 unifyScript.sml:750-760: ML code, not ported *)
 
-(* HOL4 ML code, not ported:
-val cvwalk_code = tcallify_th [“s:infer_t num_map”] cvwalk_thm
-*)
+(* HOL4 unifyScript.sml:762: ML code, not ported *)
 
 cake_declare "cvwalk_code" `:infer_t spt -> num -> num + infer_t`;;
 
-(* PENDING: tcallify_th makes it with ML code
-Definition cvwalk_code_def:
-  cvwalk_code s = ^cvwalk_code
-End *)
+(* PENDING: tcallify_th makes it with ML code *)
+(* HOL4 unifyScript.sml:764-766: the definition *)
 
 let cvwalkR_def = cake_define
   `cvwalkR sigma = (\v v0. vR (encode_infer_t o_f sp2fm sigma) v v0)`;;
@@ -195,33 +168,21 @@ let dfkcoc_def = cake_define
 let dfkcocl_def = cake_define
   `dfkcocl s ts n k = kcocl s ts n (apply_kcockont s n k)`;;
 
-(* HOL4 ML code, not ported:
-val remove = CONV_RULE (RAND_CONV (REWRITE_CONV[dfkcocl_removed]))
-*)
+(* HOL4 unifyScript.sml:975: ML code, not ported *)
 
-(* HOL4 overload (expanded in the port):
-     kcocwl0 = apply_kcockont *)
+(* HOL4 unifyScript.sml:985: the overload kcocwl0, which the port
+   expands *)
 
 let kcocwl_def = cake_define
   `kcocwl s n ts = apply_kcockont s n ts F`;;
 
-(* HOL4 ML code, not ported:
-val kcocwl_code =
-tcallify_th [“s:infer_t num_map”, “n:num”]
-            (DefnBase.one_line_ify NONE
-                     (kcocwl_thm |> CONJUNCTS
-                                 |> map SPEC_ALL
-                                 |> LIST_CONJ
-                                 |> Q.INST [‘s'’ |-> ‘s’]))
-*)
+(* HOL4 unifyScript.sml:1008-1014: ML code, not ported *)
 
 cake_declare "kcocwl_code"
   `:infer_t spt -> num -> kcockont -> kcockont + bool`;;
 
-(* PENDING: tcallify_th makes it with ML code
-Definition kcocwl_code_def:
-  kcocwl_code s n = ^kcocwl_code
-End *)
+(* PENDING: tcallify_th makes it with ML code *)
+(* HOL4 unifyScript.sml:1016-1018: the definition *)
 
 let kcocwlR_def = cake_define
   `kcocwlR (s:infer_t spt) (n:num) =
@@ -308,18 +269,13 @@ let kcwalkstarwlR_def = cake_define
               MEASURE (\b. if b then 0 else 1))
              (\(v,its,k). (star_workbag v its k,LENGTH k,k,v))`;;
 
-(* HOL4 ML code, not ported:
-val kcwalkstarwl_code = tcallify_th [“s:infer_t num_map”] $
-  kcwalkstarwl_thm
-*)
+(* HOL4 unifyScript.sml:1391: ML code, not ported *)
 cake_declare "kcwalkstarwl_code"
   `:infer_t spt -> bool#infer_t list#kclkont list ->
     (bool#infer_t list#kclkont list) + infer_t list`;;
 
-(* PENDING: tcallify_th makes it with ML code
-Definition kcwalkstarwl_code_def:
-  kcwalkstarwl_code s = ^kcwalkstarwl_code
-End *)
+(* PENDING: tcallify_th makes it with ML code *)
+(* HOL4 unifyScript.sml:1392-1394: the definition *)
 
 let tcwalkstarwl_def = cake_define
   `tcwalkstarwl s v its k = TAILREC (kcwalkstarwl_code s) (v,its,k)`;;
@@ -349,18 +305,13 @@ let dfkcunifyl_def = cake_define
 let kcunifywl_def = cake_define
   `kcunifywl s k = apply_cunifk k (SOME s)`;;
 
-(* HOL4 ML code, not ported:
-val cunify_code = DefnBase.one_line_ify NONE kcunifywl_thm |>
-  tcallify_th []
-*)
+(* HOL4 unifyScript.sml:1593: ML code, not ported *)
 cake_declare "cunify_code"
   `:(infer_t spt)#kcunifkont ->
     ((infer_t spt)#kcunifkont) + (infer_t spt)option`;;
 
-(* PENDING: tcallify_th makes it with ML code
-Definition cunify_code_def:
-  cunify_code = ^cunify_code
-End *)
+(* PENDING: tcallify_th makes it with ML code *)
+(* HOL4 unifyScript.sml:1594-1596: the definition *)
 
 let isvars_def = cake_define_list
   [`isvars [] = {}`;
@@ -391,8 +342,8 @@ let kcunifywlR_def = cake_define
           (PFLAT wl,LENGTH wl)
           (PFLAT wl0,LENGTH wl0)`;;
 
-(* HOL4 overload (expanded in the port):
-     kcuR = kcunifywlR *)
+(* HOL4 unifyScript.sml:1659: the overload kcuR, which the port
+   expands *)
 
 let tcunify_def = cake_define
   `tcunify s wl = TAILREC cunify_code (s,wl)`;;
@@ -410,41 +361,8 @@ let t_walk_def = cake_define
 let t_oc_def = cake_define
   `t_oc s t v = oc (encode_infer_t o_f s) (encode_infer_t t) v`;;
 
-(*
-Theorem t_oc_ind'[local]:
-  ∀s oc'.
-  t_wfs s ∧
-  (∀t v. v ∈ t_vars t ∧ v ∉ FDOM s ⇒ oc' t v) ∧
-  (∀t v u t'. u ∈ t_vars t ∧ (t_vwalk s u = t') ∧ oc' t' v ⇒ oc' t v) ⇒
-  (∀a0 a1. oc (FMAP_MAP2 (λ(n,t). encode_infer_t t) s) a0 a1 ⇒ !a0'. (a0
-    = encode_infer_t a0') ⇒ oc' a0' a1)
-Proof
-  NTAC 3 STRIP_TAC >>
-ho_match_mp_tac oc_ind >>
-rw [] >|
-[qpat_x_assum `∀t v. v ∈ t_vars t ∧ v ∉ FDOM s ⇒ oc' t v`
-  ho_match_mp_tac >>
-     fs [t_vars_def, FMAP_MAP2_THM],
- qpat_x_assum `∀t v u t'. u ∈ t_vars t ∧ (t_vwalk s u = t') ∧ oc' t' v ⇒
-   oc' t v` ho_match_mp_tac >>
-     rw [t_vars_def] >>
-     qexists_tac `u` >>
-     rw [] >>
-     pop_assum ho_match_mp_tac >>
-     rw [encode_vwalk]]
-QED
-
-Theorem t_oc_ind:
- ∀s oc'.
-  t_wfs s ∧
-  (∀t v. v ∈ t_vars t ∧ v ∉ FDOM s ⇒ oc' t v) ∧
-  (∀t v u t'. u ∈ t_vars t ∧ (t_vwalk s u = t') ∧ oc' t' v ⇒ oc' t v) ⇒
-  (∀a0 a1. t_oc s a0 a1 ⇒ oc' a0 a1)
-Proof
-rw [t_oc_def] >>
-metis_tac [t_oc_ind', FMAP2_FMAP2, FMAP2_id, decode_left_inverse]
-QED
-*)
+(* HOL4 unifyScript.sml:2110-2141: code that the source has in a
+   comment *)
 
 let t_ext_s_check_def = cake_define
   `t_ext_s_check s v t =
@@ -492,12 +410,7 @@ let t_rangevars_def = cake_define
 
 (*Theorems about unification for completeness proof*)
 
-(* HOL4 ML code, not ported:
-val encode_walkstar_reverse = encode_walkstar |>
-                              REWRITE_RULE [t_walkstar_def] |>
-                              SPEC_ALL|>UNDISCH|>SYM |>
-                              DISCH_ALL |> GEN_ALL;
-*)
+(* HOL4 unifyScript.sml:3129-3132: ML code, not ported *)
 
 (*t_compat theorems*)
 let t_compat_def = cake_define

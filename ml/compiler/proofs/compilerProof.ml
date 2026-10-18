@@ -81,19 +81,6 @@ let is_safe_for_space_def = cake_define
   backendProof_is_safe_for_space ffi (compiler_config_asm_config cc)
   (compiler_config_backend_config cc)`;;
 hol4_overload "is_safe_for_space" "compilerProof_is_safe_for_space";;
-(* HOL4 ML code, not ported:
-          (* see the compile_correct_safe_for_space version above
-             for the one without the ⊆ and extend_with_resource_limit
-               *)`,
-*)
-(* HOL4 ML code, not ported:
-  rw [] \\ mp_tac (SPEC_ALL compile_correct_lemma)
-  \\ fs [] \\ TOP_CASE_TAC \\ fs []
-  \\ rename [‘(M_success a,_)’]
-  \\ PairCases_on `a` \\ fs [] \\ strip_tac \\ fs []
-  \\ rw [] \\ first_x_assum drule \\ rw []
-  \\ match_mp_tac SUBSET_TRANS
-  \\ asm_exists_tac \\ fs
-    [semanticsPropsTheory.extend_with_resource_limit'_SUBSET])
-  |> check_thm;
-*)
+(* HOL4 compilerProofScript.sml:280-281: a comment with ML code after
+   it, which the port does not have *)
+(* HOL4 compilerProofScript.sml:282-289: ML code, not ported *)
