@@ -244,6 +244,14 @@ FIELD_VAR = {
     'senv': 'sem_env',
     # env' is the sem_env of a Recclosure, as env is
     "env'": 'sem_env',
+    # gen is the store of the generations of the environments,
+    # whose generation and next the oracle state of
+    # semanticPrimitives has as well
+    'gen': 'environment_generation_store',
+    # c is the configuration of source_to_flat, whose envs and
+    # next several records have (the c of orac_rel_inner is a
+    # state of flatSem, which FIELD_VAR_DEF says)
+    'c': 'source_to_flat_config',
     'comp_map2': 'source_to_flat_environment',
     'e1': 'sem_env', 'e2': 'sem_env',
     "env_v_local'": 'flatSem_environment',
@@ -293,6 +301,10 @@ FIELD_VAR_DEF = {
   # which the annotation of the other side of the equation says
   ('source_to_flatProof', 'env_updated_lem'):
     {'env': 'flatSem_environment'},
+  # the c of this definition is the state of flatSem whose compile
+  # and compile_oracle it is about, where the c of the theory is
+  # the configuration of source_to_flat
+  ('source_to_flatProof', 'orac_rel_inner_def'): {'c': 'flatSem_state'},
   # the var_map of env_domain_eq is an environment of
   # source_to_flat, where the v and the c of this theory are
   # the ones of its own global_env
