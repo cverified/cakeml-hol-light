@@ -910,6 +910,13 @@ ANNOTATE = set([
 # the blocks in between -- they are ported, so there is no reason
 # to keep them in a comment
 ML_PORTED = {
+  # the body of CopyByteStr and of CopyByteAw8 is built by the ML
+  # of the source from the term of the copy and a function that
+  # gives the variable of an argument
+  ('flat_to_clos', 'fun var_fun'):
+    ('val checkF',
+     open(os.path.dirname(os.path.abspath(__file__)) +
+          '/flat_to_clos_check.ml').read()),
   ('word_bignum', 'val Skip_tm'):
     ('val def = mc_use_fac_def',
      open(os.path.dirname(os.path.abspath(__file__)) +
@@ -947,75 +954,11 @@ let current_build_info_str_def = cake_define
   # CopyByteAw8 is Var t (4 - n))
   ('flat_to_clos', 'CopyByteStr_def'): r"""
 let CopyByteStr_def = cake_define
-  `CopyByteStr t =
-     closLang_If t
-       (closLang_Op t (closLang_IntOp closLang_Less)
-          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-           closLang_Var t 0])
-       (closLang_Raise t (closLang_Op t
-          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-       (closLang_If t
-         (closLang_Op t (closLang_IntOp closLang_Less)
-            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-             closLang_Var t 1])
-         (closLang_Raise t (closLang_Op t
-            (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-         (closLang_If t
-           (closLang_Op t
-             (closLang_MemOp (closLang_BoundsCheckByte T))
-              [closLang_Op t (closLang_IntOp closLang_Add)
-                 [closLang_Var t 0; closLang_Var t 1];
-               closLang_Var t 2])
-           (closLang_Op t (closLang_MemOp (closLang_CopyByte T))
-              [closLang_Var t 0; closLang_Var t 1; closLang_Var t 2])
-           (closLang_Raise t (closLang_Op t
-              (closLang_BlockOp (closLang_Cons subscript_tag))
-              []))))`;;
+  (mk_eq (`(CopyByteStr (t:tra)):closLang_exp`,checkT));;
 """,
   ('flat_to_clos', 'CopyByteAw8_def'): r"""
 let CopyByteAw8_def = cake_define
-  `CopyByteAw8 t =
-     closLang_If t
-       (closLang_Op t (closLang_IntOp closLang_Less)
-          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-           closLang_Var t 2])
-       (closLang_Raise t (closLang_Op t
-          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-       (closLang_If t
-         (closLang_Op t (closLang_IntOp closLang_Less)
-            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-             closLang_Var t 3])
-         (closLang_Raise t (closLang_Op t
-            (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-         (closLang_If t
-           (closLang_Op t
-             (closLang_MemOp (closLang_BoundsCheckByte T))
-              [closLang_Op t (closLang_IntOp closLang_Add)
-                 [closLang_Var t 2; closLang_Var t 3];
-               closLang_Var t 4])
-           (closLang_If t
-             (closLang_Op t (closLang_IntOp closLang_Less)
-                [closLang_Op t (closLang_IntOp (closLang_Const (&0)))
-                   []; closLang_Var t 0])
-             (closLang_Raise t (closLang_Op t
-                (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-             (closLang_If t
-               (closLang_Op t
-                 (closLang_MemOp (closLang_BoundsCheckByte T))
-                  [closLang_Op t (closLang_IntOp closLang_Add)
-                     [closLang_Var t 2; closLang_Var t 0];
-                   closLang_Var t 1])
-               (closLang_Op t
-                 (closLang_MemOp (closLang_CopyByte F))
-                  [closLang_Var t 0; closLang_Var t 1;
-                   closLang_Var t 2; closLang_Var t 3;
-                   closLang_Var t 4])
-               (closLang_Raise t (closLang_Op t
-                  (closLang_BlockOp (closLang_Cons subscript_tag))
-                  []))))
-           (closLang_Raise t (closLang_Op t
-              (closLang_BlockOp (closLang_Cons subscript_tag))
-              []))))`;;
+  (mk_eq (`(CopyByteAw8 (t:tra)):closLang_exp`,checkF));;
 """,
   # the compiler that the oracle relation takes is a compiler_fun,
   # whose v is the one of semanticPrimitives; the port expands the
