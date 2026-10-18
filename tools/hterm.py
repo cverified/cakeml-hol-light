@@ -211,6 +211,15 @@ def tokenize(s):
           toks += [x for x in tokenize(ANTIQ[nm]) if x.kind != 'eof']
           toks.append(Tok('sym', ')', start, 0, icol))
           i = k + 1; nl = 0; continue
+        # an ML expression that the port cannot evaluate: a
+        # statement that is one is a pointer at the source, and
+        # not the ML read as a term (wordProps' evaluate_clock_const
+        # is the conjunction that an ML function of the source
+        # builds out of the goals of an induction theorem)
+        if ANTIQ_STRICT[0]:
+          raise SyntaxError('the ML expression ^(%s...), which the'
+                            ' port cannot evaluate'
+                            % ' '.join(nm.split())[:30])
       # ^( : the parenthesis that follows does the grouping
       i += 1; col += 1; continue
     if c == '«':
