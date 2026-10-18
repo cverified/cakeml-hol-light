@@ -1305,6 +1305,13 @@ def layout(tok, s):
   return s
 
 
+def sameline(s):
+  """the text without the line break that the layout of the source
+     put in front of it: what the port writes before it (the ~( of
+     a negation) would be alone on a line of its own"""
+  return re.sub(r'^\n+[ ]*', '', s)
+
+
 NUMCTX = set(['+', '-', '*', '/', 'DIV', 'MOD', 'EXP', '**',
               '<', '<=', '>', '>='])
 
@@ -1573,13 +1580,15 @@ class Printer:
         if self.intvar(e.l) or self.intvar(e.r):
           self.ctx.intnums = True
         try:
-          return self.paren('~(' + self.pr(e.l, 12) + ' = ' +
-                            self.pr(e.r, 13) + ')', PRE_APP, prec)
+          return self.paren('~(' + sameline(self.pr(e.l, 12)) +
+                            ' = ' + self.pr(e.r, 13) + ')',
+                            PRE_APP, prec)
         finally:
           self.ctx.intnums = oldint
       if op == 'NOTIN':
-        return self.paren('~(' + self.pr(e.l, 11) + ' IN ' +
-                          self.pr(e.r, 12) + ')', PRE_APP, prec)
+        return self.paren('~(' + sameline(self.pr(e.l, 11)) +
+                          ' IN ' + self.pr(e.r, 12) + ')',
+                          PRE_APP, prec)
       if op == '$':
         return self.paren(self.pr(e.l, PRE_APP) + ' ' +
                           self.pr(e.r, APP), PRE_APP, prec)
@@ -1614,8 +1623,8 @@ class Printer:
         else:
           fn = self.ctx.name(hop)
           if fn in HL_INFIX: fn = '(' + fn + ')'
-        return self.paren(fn + ' ' + self.pr(e.l, APP) + ' ' +
-                          self.pr(e.r, APP), PRE_APP, prec)
+        return self.paren(fn + ' ' + sameline(self.pr(e.l, APP)) +
+                          ' ' + self.pr(e.r, APP), PRE_APP, prec)
       old = self.numctx
       self.numctx = op in NUMCTX
       # the exponent of pow, EXP and ** is a natural number, also in
@@ -1658,18 +1667,20 @@ class Printer:
         # a prefix of HOL Light takes the atom after it and no
         # more, so an application under one needs its parentheses
         op = '--' if numeric(e.e) or self.numctx else '~'
-        return self.paren(op + sym_space(op, self.pr(e.e, APP)),
-                          PRE_APP, prec)
+        return self.paren(
+          op + sym_space(op, sameline(self.pr(e.e, APP))),
+          PRE_APP, prec)
       if e.op == '-':
-        return self.paren('--' + sym_space('--', self.pr(e.e, APP)),
-                          PRE_APP, prec)
+        return self.paren(
+          '--' + sym_space('--', sameline(self.pr(e.e, APP))),
+          PRE_APP, prec)
       if e.op == '&':
         # the argument of HOL4's & is a natural number, also in a
         # definition whose other numerals are integers or reals
         # (clos_to_bvlProof's cl_rel has Number (&(num_args - 1)))
         oldint = self.ctx.intnums
         self.ctx.intnums = False
-        s = '&' + self.pr(e.e, APP)
+        s = '&' + sameline(self.pr(e.e, APP))
         self.ctx.intnums = oldint
         return self.paren(s, PRE_APP, prec)
     if k == 'some':
