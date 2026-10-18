@@ -250,6 +250,13 @@ FIELD_VAR = {
   # the state that these are about is the one of their own
   # semantics, which the overloaded accessors do not say
   'bvlProps': {'s': 'bvlSem_state'},
+  # the states that these theories are about, whose clock, code,
+  # stack, ffi and compile oracle every other state has as well
+  'wordProps': {'s': 'wordSem_state', 's1': 'wordSem_state',
+                's2': 'wordSem_state'},
+  'bvl_inlineProof': {'s1': 'bvlSem_state', 's2': 'bvlSem_state',
+                      't1': 'bvlSem_state', 't2': 'bvlSem_state'},
+  'data_to_word_memoryProof': {'s': 'dataSem_state'},
   'source_to_flatProof': {
     'env': 'sem_env',
     'comp_map': 'source_to_flat_environment',
