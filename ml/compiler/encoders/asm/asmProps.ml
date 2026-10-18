@@ -14,6 +14,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "compiler/encoders/asm/asmSem.ml";;
 needs "misc/misc.ml";;
 
+cake_hide ["failed"; "state_ok"];;
+
 (* -- semantics is deterministic -- *)
 
 let asm_deterministic = cake_theorem "asm_deterministic"
@@ -391,3 +393,5 @@ let RTC_asm_step_outside_mem_domain =
        asm_state_mem_domain s1) ==> (asm_state_mem s2 a =
        asm_state_mem s1 a))`)
   CHEAT_TAC;;
+
+cake_hide [];;

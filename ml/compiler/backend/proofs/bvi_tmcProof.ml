@@ -175,18 +175,20 @@ let fmap_inj_update = cake_theorem "fmap_inj_update"
 
 let state_rel_def = cake_define
   `bvi_tmcProof_state_rel f s (t:('a,'ffi)bviSem_state) <=>
-     state_ref_rel f (state_refs s) (state_refs t) /\ state_clock
+     state_ref_rel f (state_refs s) (bviSem_state_refs t) /\
+       bviSem_state_clock
      t = state_clock s /\
      OPTREL (\p p'. FLOOKUP f p = SOME p') (bviSem_state_global s)
-       (bviSem_state_global t) /\ state_ffi
-     t = state_ffi s /\ compile_oracle
+       (bviSem_state_global t) /\ bviSem_state_ffi
+     t = state_ffi s /\ bviSem_state_compile_oracle
      t = state_co bvi_tmc_compile_each (compile_oracle s) /\ compile
-     s = state_cc bvi_tmc_compile_each (compile t) /\
-     bvi_tmcProof_code_rel (state_code s) (state_code t) /\
-     bvi_tmcProof_namespace_rel (state_code s) (state_code t) /\
+     s = state_cc bvi_tmc_compile_each (bviSem_state_compile t) /\
+     bvi_tmcProof_code_rel (state_code s) (bviSem_state_code t) /\
+     bvi_tmcProof_namespace_rel (state_code s) (bviSem_state_code t)
+       /\
      (!n. let ((next',cfg),prog) = compile_oracle s n in
              bvi_tmcProof_input_condition next' prog) /\
-     (!n. n IN domain (state_code t) /\ (\n. n MOD
+     (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
        bvl_to_bvi_namespaces = 3) n ==> n < FST (FST (compile_oracle s
        0))) /\
      fmap_inj f`;;
@@ -1557,7 +1559,7 @@ let evaluate_rewrite_tmc = cake_theorem "evaluate_rewrite_tmc"
   (fun () ->
     `!n xs (s:(num#'c,'ffi)bviSem_state) env1 r t opt f s' env2 loc.
        evaluate (xs,env1,s) = (r,t) /\
-       n = (state_clock s,list_size flatLang_exp_size xs) /\
+       n = (bviSem_state_clock s,list_size flatLang_exp_size xs) /\
        bvi_tmcProof_env_rel opt f env1 env2 /\ EVERY (\x.
          no_mutcons x) xs /\
        bvi_tmcProof_state_rel f s s' /\
@@ -1575,8 +1577,8 @@ let evaluate_rewrite_tmc = cake_theorem "evaluate_rewrite_tmc"
          holes_still_not_finalised f (state_refs s') (state_refs
            t') /\
          (!loc_opt.
-            optimised_code loc loc_opt (state_code s) (state_code
-              s') ==>
+            optimised_code loc loc_opt (bviSem_state_code s)
+              (state_code s') ==>
             (!wrap.
                LENGTH xs = 1 /\
                rewrite_wrapper loc loc_opt (LENGTH env1) (HD xs) =
@@ -1624,7 +1626,8 @@ let evaluate_rewrite_tmc = cake_theorem "evaluate_rewrite_tmc"
 (* HOL4 bvi_tmcProofScript.sml:3031-3106: a proof *)
 
 let hypothesis_def = cake_define
-  `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=> state_clock
+  `hypothesis xs' (s'':(num#'c,'ffi)bviSem_state) clock <=>
+  bviSem_state_clock
    s'' < clock ==>
    (!env1' r' t' opt' f' s'3' env2' loc'.
              evaluate (xs',env1',s'') = (r',t') /\
@@ -1644,7 +1647,7 @@ let hypothesis_def = cake_define
                holes_still_not_finalised f' (state_refs s'3')
                  (state_refs t'') /\
                (!loc_opt.
-                 optimised_code loc' loc_opt (state_code s'')
+                 optimised_code loc' loc_opt (bviSem_state_code s'')
                    (state_code s'3') ==>
                  (!wrap.
                     LENGTH xs' = 1 /\
@@ -1827,7 +1830,7 @@ let evaluate_cb = cake_theorem "evaluate_cb"
        evaluate ([cb_to_bvi loc cb],env,s) = (r,t) /\
        wf_cb (LENGTH env) cb /\
        bvi_tmcProof_env_rel opt f env env2 /\
-       bvi_tmcProof_state_rel f s s' /\ state_clock
+       bvi_tmcProof_state_rel f s s' /\ bviSem_state_clock
        s <= clock /\ ~(r = Rerr (Rabort Rtype_error)) /\
        (!xs' (s'':(num#'c,'ffi)bviSem_state).
           hypothesis xs' s'' clock) ==>
@@ -1843,8 +1846,8 @@ let evaluate_cb = cake_theorem "evaluate_cb"
           holes_still_not_finalised f (state_refs s') (state_refs
             t')) /\
        (!loc_opt.
-         optimised_code loc loc_opt (state_code s) (state_code s')
-           ==>
+         optimised_code loc loc_opt (bviSem_state_code s)
+           (state_code s') ==>
          (!tag left child right.
             cb = CallBlock tag left child right ==>
             (?t_wrap f_wrap r_wrap.
@@ -1861,7 +1864,7 @@ let evaluate_cb = cake_theorem "evaluate_cb"
               holes_still_not_finalised f (state_refs s')
                 (state_refs t_wrap))) /\
          (!refs extras ptr idx hole_ptr.
-            state_ref_rel f (state_refs s) refs /\
+            state_ref_rel f (bviSem_state_refs s) refs /\
             (?c. alloc_hole_has_val f refs extras ptr idx c) /\
             (FDOM (state_refs s')) SUBSET (FDOM refs) /\
             EL ptr extras = RefPtr F hole_ptr ==>

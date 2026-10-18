@@ -122,13 +122,13 @@ let state_rel_def = cake_define
      s = FEMPTY /\ closSem_state_code t = FEMPTY /\
        closSem_state_max_app
      t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       state_clock
-     t = state_clock s /\ state_ffi
-     t = state_ffi s /\
+       closSem_state_clock
+     t = closSem_state_clock s /\ closSem_state_ffi
+     t = closSem_state_ffi s /\
      LIST_REL (OPTREL clos_letopProof_v_rel) (closSem_state_globals
        s) (closSem_state_globals t) /\
-     clos_letopProof_FMAP_REL ref_rel (state_refs s) (state_refs t)
-       /\ closSem_state_compile
+     clos_letopProof_FMAP_REL ref_rel (closSem_state_refs s)
+       (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc clos_letop_compile_inc (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = pure_co clos_letop_compile_inc o

@@ -107,12 +107,13 @@ let firstSet_nDecls = cake_theorem "firstSet_nDecls[simp]"
 
 let IMAGE_GSPEC1 = cake_theorem "IMAGE_GSPEC1[local]"
   (fun () ->
-    `IMAGE f (GSPEC (\a. (g a,P a))) = GSPEC (\a. (f (g a),P a))`)
+    `IMAGE f (hol4_GSPEC (\a. (g a,P a))) = hol4_GSPEC (\a. (f (g a),P
+  a))`)
   CHEAT_TAC;;
 
 let BIGUNION_singletons = cake_theorem "BIGUNION_singletons[local,simp]"
   (fun () ->
-    `BIGUNION (GSPEC (\a. {f a},P a)) = GSPEC (\a. f a,P a)`)
+    `BIGUNION (hol4_GSPEC (\a. {f a},P a)) = hol4_GSPEC (\a. f a,P a)`)
   CHEAT_TAC;;
 
 let firstSet_nMultOps = cake_theorem "firstSet_nMultOps[simp]"

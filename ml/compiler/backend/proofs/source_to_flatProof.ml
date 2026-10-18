@@ -35,7 +35,7 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["vars"];;
+cake_hide ["gc"; "id"; "path"; "vars"];;
 
 (* HOL4 source_to_flatProofScript.sml:20: ML code, not ported *)
 
@@ -727,10 +727,11 @@ let source_to_flatProof_do_app = cake_theorem "do_app[local]"
   (fun () ->
     `!genv s1 s2 op vs r ((s1_i1:('f_orac_st,'ffi)flatSem_state)) vs_i1.
        do_app s1 op vs = SOME (s2,r) /\
-       LIST_REL (sv_rel genv) (FST s1) (TL (state_refs s1_i1)) /\
-       ~(NULL (state_refs s1_i1)) /\
+       LIST_REL (sv_rel genv) (FST s1) (TL (flatSem_state_refs
+         s1_i1)) /\
+       ~(NULL (flatSem_state_refs s1_i1)) /\
        LIST_REL (source_to_flatProof_v_rel genv) vs vs_i1 /\
-       SND s1 = state_ffi s1_i1 /\
+       SND s1 = flatSem_state_ffi s1_i1 /\
        genv_c_ok (global_env_c genv) /\ ~(op = ast_AallocEmpty) /\
          ~(op = ast_Env_id) ==>
         (?r_i1 s2_i1.
@@ -739,7 +740,8 @@ let source_to_flatProof_do_app = cake_theorem "do_app[local]"
           ~(NULL (state_refs s2_i1)) /\
           SND s2 = state_ffi s2_i1 /\ flatSem_state_globals
           s1_i1 = flatSem_state_globals s2_i1 /\
-          TAKE 1 (state_refs s1_i1) = TAKE 1 (state_refs s2_i1) /\
+          TAKE 1 (flatSem_state_refs s1_i1) = TAKE 1 (state_refs
+            s2_i1) /\
           result_rel source_to_flatProof_v_rel genv r r_i1 /\
           do_app s1_i1 (astOp_to_flatOp op) vs_i1 = SOME
             (s2_i1,r_i1))`)
@@ -771,8 +773,8 @@ let do_app_rec_help = cake_theorem "do_app_rec_help[local]"
                 (\(f,n,e).
                    (f,
                     Recclosure
-                      (global_env_v_fupd (K (nsAppend env_v_local
-                        (global_env_v env'))) env')
+                      (sem_env_v_fupd (K (nsAppend env_v_local
+                        (sem_env_v env'))) env')
                       funs' f)) funs))
           (MAP
              (\(fn,n,e).
@@ -916,7 +918,7 @@ let source_to_flatProof_pmatch = cake_theorem "pmatch[local]"
       global_env_inv genv comp_map2 shadowers senv /\
       genv_c_ok (global_env_c genv) /\
       genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
-      cenv = global_env_c senv /\ global_env_c
+      cenv = sem_env_c senv /\ source_to_flat_environment_c
       comp_map2 = source_to_flat_environment_c comp_map /\
       env = env' ++ env'' /\ flatSem_state_globals
       s_i1 = global_env_v genv /\
@@ -933,7 +935,7 @@ let source_to_flatProof_pmatch = cake_theorem "pmatch[local]"
       global_env_inv genv comp_map2 shadowers senv /\
       genv_c_ok (global_env_c genv) /\
       genv_c_tys_ok (global_env_c genv) (global_env_tys genv) /\
-      cenv = global_env_c senv /\ global_env_c
+      cenv = sem_env_c senv /\ source_to_flat_environment_c
       comp_map2 = source_to_flat_environment_c comp_map /\
       env = env' ++ env'' /\ flatSem_state_globals
       s_i1 = global_env_v genv /\
@@ -956,7 +958,7 @@ let opt_bind_lem = cake_theorem "opt_bind_lem[local]"
 
 let env_updated_lem = cake_theorem "env_updated_lem[local]"
   (fun () ->
-    `sem_env_v_fupd (\y. y)
+    `flatSem_environment_v_fupd (\y. y)
        env = (env:'a flatSem_environment)`)
   CHEAT_TAC;;
 
@@ -1065,20 +1067,23 @@ let genv_allocated_idxs_def = cake_define
    next field will always be free *)
 let env_gen_inv_def = cake_define
   `env_gen_inv (e:environment_generation_store) =
-     (domain (envs e) SUBSET count (next e))`;;
+     (domain (environment_generation_store_envs e) SUBSET count
+       (environment_generation_store_next e))`;;
 
 let env_store_inv_def = cake_define
   `env_store_inv (e:environment_store) =
-     (domain (environment_store_env_gens e) SUBSET count (next e))`;;
+     (domain (environment_store_env_gens e) SUBSET count
+       (environment_store_next e))`;;
 
 let inc_compile_prog_env_submap =
   cake_theorem "inc_compile_prog_env_submap"
   (fun () ->
     `inc_compile_prog env_id c p = (c',p') /\
-     env_store_inv (envs c) ==>
+     env_store_inv (source_to_flat_config_envs c) ==>
      env_store_inv (envs c') /\
-     subspt (environment_store_env_gens (envs c))
-       (environment_store_env_gens (envs c'))`)
+     subspt (environment_store_env_gens
+       (source_to_flat_config_envs c)) (environment_store_env_gens
+       (envs c'))`)
   CHEAT_TAC;;
 
 (* The source oracle states can always be decoded according to the
@@ -1145,13 +1150,14 @@ let src_orac_env_invs_def = cake_define
   `src_orac_env_invs interp genv eval_state = (match eval_state with
   NONE -> T | SOME (EvalOracle s) ->
      (?c. src_orac_next_cfg interp eval_state = SOME c /\
-       env_store_inv (envs c) /\ next (envs
+       env_store_inv (source_to_flat_config_envs c) /\ next
+         (source_to_flat_config_envs
        c) = LENGTH (envs s) /\
        (!g_id id'. g_id < LENGTH (envs s) /\ id' < LENGTH (EL g_id
          (envs s)) ==>
          (?comp_map_gen comp_map.
-         sptree_lookup g_id (environment_store_env_gens (envs c)) =
-           SOME comp_map_gen /\
+         sptree_lookup g_id (environment_store_env_gens
+           (source_to_flat_config_envs c)) = SOME comp_map_gen /\
          sptree_lookup id' comp_map_gen = SOME comp_map /\
          global_env_inv genv comp_map {} (EL id' (EL g_id (envs
            s)))))) | _10 -> F)`;;
@@ -1182,9 +1188,9 @@ let src_orac_invs_weak = cake_theorem "src_orac_invs_weak"
    of an exception that is later handled *)
 let env_gen_rel_def = cake_define
   `env_gen_rel gen eval_state = (match eval_state with NONE -> T | SOME
-  (EvalOracle s) -> generation
+  (EvalOracle s) -> environment_generation_store_generation
          gen = generation s /\ generation
-         s < LENGTH (envs s) /\ next
+         s < LENGTH (envs s) /\ environment_generation_store_next
          gen = LENGTH (EL (generation s) (envs s)) | _11 -> F)`;;
 
 (* the oracle state is in the future, where this generation
@@ -1193,9 +1199,11 @@ let env_gen_future_rel_def = cake_define
   `env_gen_future_rel interp gen eval_state =
      (match src_orac_next_cfg interp eval_state with SOME c ->
        (?gen_final.
-         sptree_lookup (generation gen) (environment_store_env_gens
-           (envs c)) = SOME gen_final /\
-         subspt (envs gen) gen_final) | NONE -> T)`;;
+         sptree_lookup (environment_generation_store_generation gen)
+           (environment_store_env_gens (source_to_flat_config_envs c)) =
+           SOME gen_final /\
+         subspt (environment_generation_store_envs gen) gen_final)
+           | NONE -> T)`;;
 
 (* indexes and ranges: the source-to-flat compiler allocates names in order.
    however, evaluation order is different to compile order. each block of
@@ -1215,7 +1223,7 @@ let idx_range_rel_def = cake_define
      (?idx end_idx fin_idx other_blocks.
      idxs = (idx,end_idx,other_blocks) /\
      (match src_orac_next_cfg interp s_eval with NONE -> T | SOME c
-       -> fin_idx = next c) /\
+       -> fin_idx = source_to_flat_config_next c) /\
      idx_prev end_idx fin_idx /\
      ALL_DISJOINT [idx_block idx end_idx; idx_final_block fin_idx;
        other_blocks;
@@ -1231,7 +1239,7 @@ let idx_range_rel_def = cake_define
 let fin_idx_match_def = cake_define
   `fin_idx_match len end_idx next_cfg = (match next_cfg with NONE ->
   next_indices_vidx end_idx <= len | SOME c -> next_indices_vidx
-  (next c) = len)`;;
+  (source_to_flat_config_next c) = len)`;;
 
 let eval_ref_inv_def = cake_define
   `eval_ref_inv first_global first_ref <=>
@@ -1264,8 +1272,9 @@ hol4_overload "invariant" "source_to_flatProof_invariant";;
 (* subsequent oracle config will still have the previous envs in store *)
 let orac_config_envs_subspt_def = cake_define
   `orac_config_envs_subspt interp es1 es2 <=>
-     OPTREL (\c c'. subspt (environment_store_env_gens (envs c))
-       (environment_store_env_gens (envs c')))
+     OPTREL (\c c'. subspt (environment_store_env_gens
+       (source_to_flat_config_envs c)) (environment_store_env_gens (envs
+       c')))
      (src_orac_next_cfg interp es1)
      (src_orac_next_cfg interp es2)`;;
 
@@ -1481,7 +1490,8 @@ let invariant_idx_range_shrink_gen =
 let pmatch_invariant = cake_theorem "pmatch_invariant"
   (fun () ->
     `source_to_flatProof_invariant interp g gen genv idxs st st' /\
-     env_all_rel genv comp_map2 env env' locals /\ global_env_c
+     env_all_rel genv comp_map2 env env' locals /\
+       source_to_flat_environment_c
      comp_map2 = source_to_flat_environment_c comp_map /\
      source_to_flatProof_v_rel genv v v' ==>
      match_result_rel genv [] (pmatch (sem_env_c env) (state_refs
@@ -1497,8 +1507,8 @@ let evaluate_make_varls = cake_theorem "evaluate_make_varls[local]"
        LENGTH g = idx /\
        LENGTH vals = LENGTH vars' /\
        len = LENGTH vars' /\
-       (!n. n < LENGTH vals ==> ALOOKUP (sem_env_v env) (EL n
-         vars') = SOME (EL n vals)) ==>
+       (!n. n < LENGTH vals ==> ALOOKUP (flatSem_environment_v env)
+         (EL n vars') = SOME (EL n vals)) ==>
        flatSem_evaluate env s [make_varls n t idx vars'] =
        (flatSem_state_globals_fupd (K (g ++ MAP SOME vals ++ g'))
          s,Rval [flatSem_Conv NONE []])`)
@@ -1561,8 +1571,8 @@ let global_env_inv_extend = cake_theorem "global_env_inv_extend[local]"
        genv = g1 ++ MAP SOME (REVERSE (MAP SND pat_env')) ++ g2 /\
        ALL_DISTINCT (MAP FST pat_env) ==>
        global_env_inv genv
-         (mk_sem_env (alist_to_ns (alloc_defs tt (LENGTH g1)
-           (REVERSE (MAP FST pat_env')))) nsEmpty)
+         (mk_source_to_flat_environment nsEmpty (alist_to_ns
+           (alloc_defs tt (LENGTH g1) (REVERSE (MAP FST pat_env')))))
          {}
          (mk_sem_env (alist_to_ns pat_env) nsEmpty)`)
   CHEAT_TAC;;
@@ -1596,8 +1606,8 @@ let invariant_make_varls = cake_theorem "invariant_make_varls"
   (idx,end_idx,others) st st' /\ next_indices_vidx
      idx = vidx /\ next_indices_vidx
      idx + LENGTH vars <= next_indices_vidx end_idx /\
-     vars = REVERSE (MAP FST (sem_env_v env)) /\
-     ALL_DISTINCT (MAP FST (sem_env_v env)) ==>
+     vars = REVERSE (MAP FST (flatSem_environment_v env)) /\
+     ALL_DISTINCT (MAP FST (flatSem_environment_v env)) ==>
      (?genv' st''.
      evaluate env st' [make_varls n t vidx vars] = (st'',Rval
        [Unitv]) /\
@@ -1608,11 +1618,12 @@ let invariant_make_varls = cake_theorem "invariant_make_varls"
      genv' = global_env_c genv /\ global_env_tys
      genv' = global_env_tys genv /\
      subglobals (global_env_v genv) (global_env_v genv') /\
-     (!env1 tt. env_rel genv' (alist_to_ns env1) (sem_env_v env)
-       ==>
+     (!env1 tt. env_rel genv' (alist_to_ns env1)
+       (flatSem_environment_v env) ==>
        global_env_inv genv'
-         (mk_sem_env (alist_to_ns (alloc_defs tt vidx (REVERSE (MAP
-           FST (sem_env_v env))))) nsEmpty)
+         (mk_source_to_flat_environment nsEmpty (alist_to_ns
+           (alloc_defs tt vidx (REVERSE (MAP FST (flatSem_environment_v
+           env))))))
          {}
          (mk_sem_env (alist_to_ns env1) nsEmpty)))`)
   CHEAT_TAC;;
@@ -1694,8 +1705,8 @@ let src_orac_env_invs_lookup_env =
      es 0 = (env_id,st_v,decs) ==>
      (?c x gen comp_map.
      (THE interp) st_v = SOME (c,x) /\
-     sptree_lookup (FST env_id) (environment_store_env_gens (envs
-       c)) = SOME gen /\
+     sptree_lookup (FST env_id) (environment_store_env_gens
+       (source_to_flat_config_envs c)) = SOME gen /\
      sptree_lookup (SND env_id) gen = SOME comp_map /\
      global_env_inv genv comp_map {} env)`)
   CHEAT_TAC;;
@@ -1742,22 +1753,25 @@ let do_eval = cake_theorem "do_eval"
      inc_compile_prog env_id c decs = (c',decs') /\ ~(decs' = [])
        /\
      source_to_flatProof_invariant interp g
-       (mk_environment_generation_store 0 (next (envs c)) LN) genv'
-       (next c,next c',idx_block idx end_idx UNION other)
+       (mk_environment_generation_store 0 (next
+       (source_to_flat_config_envs c)) LN) genv'
+       (source_to_flat_config_next c,next c',idx_block idx end_idx
+         UNION other)
        (semanticPrimitives_state_eval_state_fupd (K eval_state) s)
          (flatSem_state_globals_fupd (K (flatSem_state_globals t ++
          REPLICATE (next_indices_vidx (next c') - next_indices_vidx
-         (next c)) NONE)) (flatSem_state_eval_config_fupd (K
-         eval_config') t)) /\
-     env_gen_rel (mk_environment_generation_store 0 (next (envs c))
-       LN) eval_state /\
+         (source_to_flat_config_next c)) NONE))
+         (flatSem_state_eval_config_fupd (K eval_config') t)) /\
+     env_gen_rel (mk_environment_generation_store 0 (next
+       (source_to_flat_config_envs c)) LN) eval_state /\
      (let (_13,_14,_15,gen,_16) = source_to_flat_compile_decs [] 1
-       (next c)
-       (lookup_env_id env_id (envs c))
-       (mk_environment_generation_store 0 (next (envs c)) LN) decs
-         in
+       (source_to_flat_config_next c)
+       (lookup_env_id env_id (source_to_flat_config_envs c))
+       (mk_environment_generation_store 0 (next
+         (source_to_flat_config_envs c)) LN) decs in
        env_gen_future_rel interp gen eval_state) /\
-     global_env_inv genv' (lookup_env_id env_id (envs c)) {} env /\
+     global_env_inv genv' (lookup_env_id env_id
+       (source_to_flat_config_envs c)) {} env /\
      src_orac_next_cfg interp eval_state = SOME c' /\
      idx_prev end_idx (next c') /\ global_env_c
      genv SUBMAP global_env_c genv' /\ global_env_tys
@@ -1850,8 +1864,10 @@ let alloc_tags_invariant = cake_theorem "alloc_tags_invariant"
      (let build_env = mk_sem_env nsEmpty (alist_to_ns
            (REVERSE (build_constrs
              (semanticPrimitives_state_next_type_stamp st) ctors))) in
-      global_env_inv genv' (mk_sem_env nsEmpty ns) {} build_env /\
-      env_domain_eq (mk_sem_env nsEmpty ns) build_env))`)
+      global_env_inv genv' (mk_source_to_flat_environment ns
+        nsEmpty) {} build_env /\
+      env_domain_eq (mk_source_to_flat_environment ns nsEmpty)
+        build_env))`)
   CHEAT_TAC;;
 
 let nsAppend_foldl' = cake_theorem "nsAppend_foldl'[local]"
@@ -2048,19 +2064,21 @@ let declare_env_store_env_id = cake_theorem "declare_env_store_env_id"
      source_to_flatProof_invariant interp g gen genv idxs st
        (s_i1:('f_orac_st,'ffi)flatSem_state) /\
      env_gen_rel gen (semanticPrimitives_state_eval_state st) /\
-     gen_id = generation gen /\
-     id = next gen /\
+     gen_id = environment_generation_store_generation gen /\
+     id = environment_generation_store_next gen /\
      (match src_orac_next_cfg interp
        (semanticPrimitives_state_eval_state st) with NONE -> T | SOME c
-       -> (match sptree_lookup gen_id (environment_store_env_gens (envs
-       c)) with NONE -> F | SOME gen' -> (match sptree_lookup id gen'
-       with NONE -> F | SOME e -> global_env_inv genv e {} env))) ==>
+       -> (match sptree_lookup gen_id (environment_store_env_gens
+       (source_to_flat_config_envs c)) with NONE -> F | SOME gen' ->
+       (match sptree_lookup id gen' with NONE -> F | SOME e ->
+       global_env_inv genv e {} env))) ==>
      (?y.
      evaluate_decs s_i1 [store_env_id gen_id id] =
-       (state_refs_fupd (K (semanticPrimitives_Refv y :: TL
-         (state_refs s_i1))) s_i1,NONE) /\
-     source_to_flatProof_invariant interp g (next_fupd (K (next gen
-       + 1)) gen) genv idxs
+       (flatSem_state_refs_fupd (K (semanticPrimitives_Refv y :: TL
+         (flatSem_state_refs s_i1))) s_i1,NONE) /\
+     source_to_flatProof_invariant interp g
+       (environment_generation_store_next_fupd (K
+       (environment_generation_store_next gen + 1)) gen) genv idxs
        (semanticPrimitives_state_eval_state_fupd (K es2) st) s_i1
          /\
      (?xs. flatSem_state_globals s_i1 = SOME (Loc T 0) :: xs) /\
@@ -2405,8 +2423,9 @@ let make_varls_esgc_free = cake_theorem "make_varls_esgc_free"
 
 let nsAll_extend_env = cake_theorem "nsAll_extend_env"
   (fun () ->
-    `nsAll P (global_env_v e1) /\ nsAll P (global_env_v e2) ==> nsAll
-  P (global_env_v (extend_env e1 e2))`)
+    `nsAll P (source_to_flat_environment_v e1) /\ nsAll P
+  (source_to_flat_environment_v e2) ==> nsAll P
+  (source_to_flat_environment_v (extend_env e1 e2))`)
   CHEAT_TAC;;
 
 let source_to_flatProof_compile_decs_esgc_free =

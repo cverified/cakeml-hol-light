@@ -255,7 +255,8 @@ let evaluate_complete_ind = cake_theorem "evaluate_complete_ind"
         (!ys t.
           list_size flatLang_exp_size ys < list_size
             flatLang_exp_size xs /\ state_clock
-          t <= state_clock s \/ state_clock t < state_clock s ==>
+          t <= bviSem_state_clock s \/ state_clock t <
+            bviSem_state_clock s ==>
           P ys t) ==>
         P xs s) ==>
       (!(xs:bvi_exp list) ((s:(num#'c,'ffi)bviSem_state)). P xs
@@ -553,19 +554,23 @@ let input_condition_def = cake_define
 hol4_overload "input_condition" "bvi_tailrecProof_input_condition";;
 
 let state_rel_def = cake_define
-  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=> state_refs
-     t = state_refs s /\ state_clock
+  `bvi_tailrecProof_state_rel s (t:('a,'ffi)bviSem_state) <=>
+  bviSem_state_refs
+     t = state_refs s /\ bviSem_state_clock
      t = state_clock s /\ bviSem_state_global
-     t = bviSem_state_global s /\ state_ffi
-     t = state_ffi s /\ compile_oracle
+     t = bviSem_state_global s /\ bviSem_state_ffi
+     t = state_ffi s /\ bviSem_state_compile_oracle
      t = state_co bvi_tailrec_compile_each (compile_oracle s) /\
        compile
-     s = state_cc bvi_tailrec_compile_each (compile t) /\
-     bvi_tailrecProof_code_rel (state_code s) (state_code t) /\
-     bvi_tailrecProof_namespace_rel (state_code s) (state_code t) /\
+     s = state_cc bvi_tailrec_compile_each (bviSem_state_compile t)
+       /\
+     bvi_tailrecProof_code_rel (state_code s) (bviSem_state_code t)
+       /\
+     bvi_tailrecProof_namespace_rel (state_code s) (bviSem_state_code
+       t) /\
      (!n. let ((next',cfg),prog) = compile_oracle s n in
              bvi_tailrecProof_input_condition next' prog) /\
-     (!n. n IN domain (state_code t) /\ (\n. n MOD
+     (!n. n IN domain (bviSem_state_code t) /\ (\n. n MOD
        bvl_to_bvi_namespaces = 2) n ==> n < FST (FST (compile_oracle
        s 0)))`;;
 hol4_overload "state_rel" "bvi_tailrecProof_state_rel";;
@@ -739,7 +744,8 @@ let evaluate_rewrite_tail = cake_theorem "evaluate_rewrite_tail"
          bvi_tailrecProof_state_rel t t' /\
          (opt ==>
            (!op n exp arity.
-             sptree_lookup loc (state_code s) = SOME (arity,exp) /\
+             sptree_lookup loc (bviSem_state_code s) = SOME
+               (arity,exp) /\
              optimized_code loc arity exp n (state_code s') op /\
              op_type op = ty /\
              (?op1 tt ty r.

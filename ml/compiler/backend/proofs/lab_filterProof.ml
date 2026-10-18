@@ -19,6 +19,8 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semantics.ml";;
 
+cake_hide ["failed"];;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let adjust_pc_def = cake_define_cheat CHEAT_TAC
@@ -266,8 +268,8 @@ let filter_correct = cake_theorem "filter_correct"
         (evaluate s1 = (res,s2)) /\ lab_filterProof_state_rel s1 t1
           /\ ~(failed t1) ==>
         (?k t2.
-          (evaluate (state_clock_fupd (K (state_clock s1 + k)) t1)
-            = (res,t2)) /\
+          (evaluate (state_clock_fupd (K (labSem_state_clock s1 +
+            k)) t1) = (res,t2)) /\
           (state_ffi s2 = state_ffi t2))`)
   CHEAT_TAC;;
 
@@ -297,3 +299,5 @@ let sec_ends_with_label_filter_skip =
      EVERY sec_ends_with_label code ==>
      EVERY sec_ends_with_label (filter_skip code)`)
   CHEAT_TAC;;
+
+cake_hide [];;

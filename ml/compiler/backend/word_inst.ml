@@ -17,6 +17,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (*Scheme:
 1) Pull all nested ops and consts as far up as possible and convert
   Sub [ x ; Const w ] to Add [x ; Const -w]
@@ -533,3 +535,5 @@ let three_to_two_reg_pmatch = cake_theorem "three_to_two_reg_pmatch"
 let three_to_two_reg_prog_def = cake_define
   `three_to_two_reg_prog b prog =
      (if b then three_to_two_reg prog else prog)`;;
+
+cake_hide [];;

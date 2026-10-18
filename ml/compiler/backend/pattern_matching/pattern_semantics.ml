@@ -2,7 +2,7 @@
 (*  pattern_semantics: ported from HOL4's
     compiler/backend/pattern_matching/pattern_semanticsScript.sml
     A definition theory, with 7 definitions, 5 datatypes and no
-    theorems.  Needed by 10 files of the port.  *)
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*

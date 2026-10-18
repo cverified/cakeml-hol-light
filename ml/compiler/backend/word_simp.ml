@@ -19,6 +19,8 @@ needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (* function that makes all Seq associate to the left *)
 
 let SmartSeq_def = cake_define
@@ -457,3 +459,5 @@ let compile_exp_def = cake_define
      let e = push_out_if e in
        e)`;;
 hol4_overload "compile_exp" "word_simp_compile_exp";;
+
+cake_hide [];;

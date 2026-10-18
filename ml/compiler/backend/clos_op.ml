@@ -18,6 +18,8 @@ needs "lib/indexedLists.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (* matchers *)
 
 let dest_Const_def = cake_define
@@ -383,3 +385,5 @@ let SmartOp_def = cake_define
      (match SmartOp' tra op xs with NONE -> closLang_Op tra op xs
        | SOME x -> x)`;;
 hol4_overload "SmartOp" "clos_op_SmartOp";;
+
+cake_hide [];;

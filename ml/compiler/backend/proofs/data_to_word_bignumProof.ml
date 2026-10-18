@@ -48,7 +48,7 @@ needs "semantics/ast.ml";;
 needs "semantics/evaluate.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-cake_hide ["memory"];;
+cake_hide ["failed"; "memory"];;
 (* HOL4 ancestors outside the port: int_bitwise finite_map *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:26-27: a proof *)
@@ -193,31 +193,38 @@ let LongDiv1_thm' = cake_theorem "LongDiv1_thm'"
     `!k n1 n2 m i1 i2 (t2:('a,'c,'ffi)wordSem_state)
           r1 r2 m1 is1 (c:data_to_word_config).
         single_div_loop (n2w k,[n1; n2],m,[i1; i2]) = (m1,is1) /\
-        lookup LongDiv1_location (state_code t2) = SOME
+        lookup LongDiv1_location (wordSem_state_code t2) = SOME
           (7,LongDiv1_code c) /\
-        lookup 0 (state_locals t2) = SOME (Loc r1 r2) /\
-        lookup 2 (state_locals t2) = SOME (wordLang_Word (n2w k))
+        lookup 0 (wordSem_state_locals t2) = SOME (Loc r1 r2) /\
+        lookup 2 (wordSem_state_locals t2) = SOME (wordLang_Word
+          (n2w k)) /\
+        lookup 4 (wordSem_state_locals t2) = SOME (wordLang_Word
+          n2) /\
+        lookup 6 (wordSem_state_locals t2) = SOME (wordLang_Word
+          n1) /\
+        lookup 8 (wordSem_state_locals t2) = SOME (wordLang_Word m)
           /\
-        lookup 4 (state_locals t2) = SOME (wordLang_Word n2) /\
-        lookup 6 (state_locals t2) = SOME (wordLang_Word n1) /\
-        lookup 8 (state_locals t2) = SOME (wordLang_Word m) /\
-        lookup 10 (state_locals t2) = SOME (wordLang_Word i1) /\
-        lookup 12 (state_locals t2) = SOME (wordLang_Word i2) /\
-        k < dimword (:'a) /\ k < state_clock t2 /\ good_dimindex
-          (:'a) /\ ~(data_to_word_config_has_longdiv c) ==>
+        lookup 10 (wordSem_state_locals t2) = SOME (wordLang_Word
+          i1) /\
+        lookup 12 (wordSem_state_locals t2) = SOME (wordLang_Word
+          i2) /\
+        k < dimword (:'a) /\ k < wordSem_state_clock t2 /\
+          good_dimindex (:'a) /\ ~(data_to_word_config_has_longdiv c)
+          ==>
         (?j1 j2 max'.
           is1 = [j1; j2] /\
           evaluate (LongDiv1_code c,t2) = (SOME (wordSem_Result
             (wordLang_Loc r1 r2) [wordLang_Word
             m1]),wordSem_state_store_fupd (K (wordSem_state_store t2 |+
             (Temp (n2w 28),wordLang_Word (HD is1))))
-            (state_stack_max_fupd (K max') (state_locals_size_fupd (K
-            (SOME 0)) (state_locals_fupd (K LN) (state_clock_fupd (K
-            (state_clock t2 - k))
+            (wordSem_state_stack_max_fupd (K max')
+            (wordSem_state_locals_size_fupd (K (SOME 0))
+            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd
+            (K (wordSem_state_clock t2 - k))
             t2))))) /\
-         (max' = state_stack_max t2 \/ max' = OPTION_MAP2 MAX
-           (state_stack_max t2)
-            (OPTION_MAP2 (+) (stack_size (stack t2))
+         (max' = wordSem_state_stack_max t2 \/ max' = OPTION_MAP2
+           MAX (wordSem_state_stack_max t2)
+            (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t2))
                (lookup LongDiv1_location
                  (wordSem_state_stack_size t2)))))`)
   CHEAT_TAC;;
@@ -227,34 +234,41 @@ let LongDiv1_thm = cake_theorem "LongDiv1_thm"
     `!k n1 n2 m i1 i2 (t2:('a,'c,'ffi)wordSem_state)
           r1 r2 m1 is1 (c:data_to_word_config).
         single_div_loop (n2w k,[n1; n2],m,[i1; i2]) = (m1,is1) /\
-        lookup LongDiv1_location (state_code t2) = SOME
+        lookup LongDiv1_location (wordSem_state_code t2) = SOME
           (7,LongDiv1_code c) /\
-        lookup 0 (state_locals t2) = SOME (Loc r1 r2) /\
-        lookup 2 (state_locals t2) = SOME (wordLang_Word (n2w k))
+        lookup 0 (wordSem_state_locals t2) = SOME (Loc r1 r2) /\
+        lookup 2 (wordSem_state_locals t2) = SOME (wordLang_Word
+          (n2w k)) /\
+        lookup 4 (wordSem_state_locals t2) = SOME (wordLang_Word
+          n2) /\
+        lookup 6 (wordSem_state_locals t2) = SOME (wordLang_Word
+          n1) /\
+        lookup 8 (wordSem_state_locals t2) = SOME (wordLang_Word m)
           /\
-        lookup 4 (state_locals t2) = SOME (wordLang_Word n2) /\
-        lookup 6 (state_locals t2) = SOME (wordLang_Word n1) /\
-        lookup 8 (state_locals t2) = SOME (wordLang_Word m) /\
-        lookup 10 (state_locals t2) = SOME (wordLang_Word i1) /\
-        lookup 12 (state_locals t2) = SOME (wordLang_Word i2) /\
-        k < dimword (:'a) /\ k < state_clock t2 /\ good_dimindex
-          (:'a) /\ ~(data_to_word_config_has_longdiv c) ==>
+        lookup 10 (wordSem_state_locals t2) = SOME (wordLang_Word
+          i1) /\
+        lookup 12 (wordSem_state_locals t2) = SOME (wordLang_Word
+          i2) /\
+        k < dimword (:'a) /\ k < wordSem_state_clock t2 /\
+          good_dimindex (:'a) /\ ~(data_to_word_config_has_longdiv c)
+          ==>
         (?j1 j2 max'.
           is1 = [j1; j2] /\
           evaluate (LongDiv1_code c,t2) = (SOME (wordSem_Result
             (wordLang_Loc r1 r2) [wordLang_Word
             m1]),wordSem_state_store_fupd (K (wordSem_state_store t2 |+
             (Temp (n2w 28),wordLang_Word (HD is1))))
-            (state_stack_max_fupd (K max') (state_locals_size_fupd (K
-            (SOME 0)) (state_locals_fupd (K LN) (state_clock_fupd (K
-            (state_clock t2 - k))
+            (wordSem_state_stack_max_fupd (K max')
+            (wordSem_state_locals_size_fupd (K (SOME 0))
+            (wordSem_state_locals_fupd (K LN) (wordSem_state_clock_fupd
+            (K (wordSem_state_clock t2 - k))
             t2))))) /\
-        (option_le (OPTION_MAP2 (+) (stack_size (stack t2))
-          (state_locals_size t2)) (state_stack_max t2) /\
-          state_locals_size
+        (option_le (OPTION_MAP2 (+) (stack_size
+          (wordSem_state_stack t2)) (wordSem_state_locals_size t2))
+          (wordSem_state_stack_max t2) /\ wordSem_state_locals_size
              t2 = lookup LongDiv1_location
                (wordSem_state_stack_size t2) ==> max' =
-               state_stack_max t2))`)
+               wordSem_state_stack_max t2))`)
   CHEAT_TAC;;
 
 let lt_dimindex_MOD_dimword =
@@ -381,25 +395,30 @@ let evaluate_LongDiv_code' = cake_theorem "evaluate_LongDiv_code'"
     `!(t:('a,'c,'ffi)wordSem_state) l1 l2 c w x1 x2 y d1 m1.
         single_div_pre x1 x2 y /\
         single_div x1 x2 y = (d1,(m1:'a word)) /\
-        lookup LongDiv1_location (state_code t) = SOME
+        lookup LongDiv1_location (wordSem_state_code t) = SOME
           (7,LongDiv1_code c) /\
-        lookup 0 (state_locals t) = SOME (Loc l1 l2) /\
-        lookup 2 (state_locals t) = SOME (wordLang_Word x1) /\
-        lookup 4 (state_locals t) = SOME (wordLang_Word x2) /\
-        lookup 6 (state_locals t) = SOME (wordLang_Word y) /\
-        dimword (:'a) < state_clock t /\ good_dimindex (:'a) ==>
+        lookup 0 (wordSem_state_locals t) = SOME (Loc l1 l2) /\
+        lookup 2 (wordSem_state_locals t) = SOME (wordLang_Word x1)
+          /\
+        lookup 4 (wordSem_state_locals t) = SOME (wordLang_Word x2)
+          /\
+        lookup 6 (wordSem_state_locals t) = SOME (wordLang_Word y)
+          /\
+        dimword (:'a) < wordSem_state_clock t /\ good_dimindex
+          (:'a) ==>
         (?ck max'.
           evaluate (LongDiv_code c,t) =
             (SOME (wordSem_Result (wordLang_Loc l1 l2)
-              [wordLang_Word d1]),state_stack_max_fupd (K max')
+              [wordLang_Word d1]),wordSem_state_stack_max_fupd (K max')
               (wordSem_state_store_fupd (K (wordSem_state_store t |+
-              (Temp (n2w 28),wordLang_Word m1))) (state_locals_size_fupd
-              (K (SOME 0)) (state_locals_fupd (K LN) (state_clock_fupd
-              (K ck)
+              (Temp (n2w 28),wordLang_Word m1)))
+              (wordSem_state_locals_size_fupd (K (SOME 0))
+              (wordSem_state_locals_fupd (K LN)
+              (wordSem_state_clock_fupd (K ck)
              t))))) /\
-       (max' = state_stack_max t \/ max' = OPTION_MAP2 MAX
-         (state_stack_max t)
-            (OPTION_MAP2 (+) (stack_size (stack t))
+       (max' = wordSem_state_stack_max t \/ max' = OPTION_MAP2 MAX
+         (wordSem_state_stack_max t)
+            (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
                (lookup LongDiv1_location
                  (wordSem_state_stack_size t)))))`)
   CHEAT_TAC;;
@@ -409,33 +428,38 @@ let evaluate_LongDiv_code = cake_theorem "evaluate_LongDiv_code"
     `!(t:('a,'c,'ffi)wordSem_state) l1 l2 c w x1 x2 y d1 m1.
         single_div_pre x1 x2 y /\
         single_div x1 x2 y = (d1,(m1:'a word)) /\
-        lookup LongDiv1_location (state_code t) = SOME
+        lookup LongDiv1_location (wordSem_state_code t) = SOME
           (7,LongDiv1_code c) /\
-        lookup 0 (state_locals t) = SOME (Loc l1 l2) /\
-        lookup 2 (state_locals t) = SOME (wordLang_Word x1) /\
-        lookup 4 (state_locals t) = SOME (wordLang_Word x2) /\
-        lookup 6 (state_locals t) = SOME (wordLang_Word y) /\
-        dimword (:'a) < state_clock t /\ good_dimindex (:'a) ==>
+        lookup 0 (wordSem_state_locals t) = SOME (Loc l1 l2) /\
+        lookup 2 (wordSem_state_locals t) = SOME (wordLang_Word x1)
+          /\
+        lookup 4 (wordSem_state_locals t) = SOME (wordLang_Word x2)
+          /\
+        lookup 6 (wordSem_state_locals t) = SOME (wordLang_Word y)
+          /\
+        dimword (:'a) < wordSem_state_clock t /\ good_dimindex
+          (:'a) ==>
         (?ck max'.
           evaluate (LongDiv_code c,t) =
             (SOME (wordSem_Result (wordLang_Loc l1 l2)
-              [wordLang_Word d1]),state_stack_max_fupd (K max')
+              [wordLang_Word d1]),wordSem_state_stack_max_fupd (K max')
               (wordSem_state_store_fupd (K (wordSem_state_store t |+
-              (Temp (n2w 28),wordLang_Word m1))) (state_locals_size_fupd
-              (K (SOME 0)) (state_locals_fupd (K LN) (state_clock_fupd
-              (K ck)
+              (Temp (n2w 28),wordLang_Word m1)))
+              (wordSem_state_locals_size_fupd (K (SOME 0))
+              (wordSem_state_locals_fupd (K LN)
+              (wordSem_state_clock_fupd (K ck)
              t))))) /\
-        (option_le (OPTION_MAP2 (+) (stack_size (stack t))
-          (state_locals_size t)) (state_stack_max t) /\
-          state_locals_size
+        (option_le (OPTION_MAP2 (+) (stack_size
+          (wordSem_state_stack t)) (wordSem_state_locals_size t))
+          (wordSem_state_stack_max t) /\ wordSem_state_locals_size
          t = lookup LongDiv1_location (wordSem_state_stack_size
-           t) ==> max' = state_stack_max t))`)
+           t) ==> max' = wordSem_state_stack_max t))`)
   CHEAT_TAC;;
 
 let div_code_assum_thm = cake_theorem "div_code_assum_thm"
   (fun () ->
     `state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs ==>
-      div_code_assum (:'ffi) (:'c) (state_code t)`)
+      div_code_assum (:'ffi) (:'c) (wordSem_state_code t)`)
   CHEAT_TAC;;
 
 let IMP_bignum_code_rel = cake_theorem "IMP_bignum_code_rel"
@@ -482,7 +506,7 @@ let lookup_Arith_location = cake_theorem "lookup_Arith_location"
 let replicate_code_thm = cake_theorem "Replicate_code_thm"
   (fun () ->
     `!n a r m1 a1 a2 a3 a4 a5.
-        lookup Replicate_location (state_code r) = SOME
+        lookup Replicate_location (wordSem_state_code r) = SOME
           (5,Replicate_code) /\
         data_to_word_memoryProof_store_list (a + bytes_in_word)
           (REPLICATE n v) (wordSem_state_memory
@@ -494,19 +518,21 @@ let replicate_code_thm = cake_theorem "Replicate_code_thm"
         get_var a4 r = SOME (wordLang_Word (n2w (4 * n))) /\
         get_var a5 (r:('a,'c,'ffi)wordSem_state) = SOME ret_val /\
         4 * n < dimword (:'a) /\
-        n < state_clock r ==>
+        n < wordSem_state_clock r ==>
         (?m.
           evaluate (Call NONE (SOME Replicate_location) [a1; a2;
             a3; a4; a5] NONE,r) =
             (SOME (wordSem_Result (wordLang_Loc l1 l2)
-              [ret_val]),state_stack_max_fupd (K m)
-              (state_locals_size_fupd (K (SOME 0)) (state_locals_fupd (K
-              LN) (state_clock_fupd (K (state_clock r - n - 1))
-              (wordSem_state_memory_fupd (K m1)
+              [ret_val]),wordSem_state_stack_max_fupd (K m)
+              (wordSem_state_locals_size_fupd (K (SOME 0))
+              (wordSem_state_locals_fupd (K LN)
+              (wordSem_state_clock_fupd (K (wordSem_state_clock r - n -
+              1)) (wordSem_state_memory_fupd (K m1)
              r))))) /\
           option_le m
-            (OPTION_MAP2 MAX (state_stack_max r)
-               (OPTION_MAP2 (+) (stack_size (stack r))
+            (OPTION_MAP2 MAX (wordSem_state_stack_max r)
+               (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+                 r))
                   (lookup Replicate_location
                     (wordSem_state_stack_size r)))))`)
   CHEAT_TAC;;
@@ -514,7 +540,7 @@ let replicate_code_thm = cake_theorem "Replicate_code_thm"
 let replicate_code_alt_thm = cake_theorem "Replicate_code_alt_thm"
   (fun () ->
     `!n a r m1 a1 a2 a3 a4 a5 var.
-        lookup Replicate_location (state_code r) = SOME
+        lookup Replicate_location (wordSem_state_code r) = SOME
           (5,Replicate_code) /\
         data_to_word_memoryProof_store_list (a + bytes_in_word)
           (REPLICATE n v) (wordSem_state_memory
@@ -525,17 +551,18 @@ let replicate_code_alt_thm = cake_theorem "Replicate_code_alt_thm"
         get_var a4 r = SOME (wordLang_Word (n2w (4 * n))) /\
         get_var 0 (r:('a,'c,'ffi)wordSem_state) = SOME ret_val /\
         4 * n < dimword (:'a) /\
-        n < state_clock r ==>
+        n < wordSem_state_clock r ==>
         (?max'.
           evaluate (Call (SOME ([0],(fromList
             [one],LN),Skip,l1,l2))
                       (SOME Replicate_location) [a2; a3; a4; 0]
                         NONE,r) =
           (NONE,wordSem_state_permute_fupd (K (\n.
-            wordSem_state_permute r (n + 1))) (state_stack_max_fupd (K
-            max') (state_locals_fupd (K (insert 0 ret_val LN))
-            (state_clock_fupd (K (state_clock r - n - 1))
-            (wordSem_state_memory_fupd (K m1)
+            wordSem_state_permute r (n + 1)))
+            (wordSem_state_stack_max_fupd (K max')
+            (wordSem_state_locals_fupd (K (insert 0 ret_val LN))
+            (wordSem_state_clock_fupd (K (wordSem_state_clock r - n -
+            1)) (wordSem_state_memory_fupd (K m1)
            r))))))`)
   CHEAT_TAC;;
 
@@ -559,19 +586,19 @@ let AnyArith_thm = cake_theorem "AnyArith_thm"
     `!op_index i j v t s r2 r1 locs l2 l1 c.
        state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
          (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-       get_vars [0; 1; 2] (state_locals s) = SOME [Number i; Number
-         j; Number (&op_index)] /\ state_clock
+       get_vars [0; 1; 2] (dataSem_state_locals s) = SOME [Number
+         i; Number j; Number (&op_index)] /\ wordSem_state_clock
        t = MustTerminate_limit (:'a) - 2 /\ ~(wordSem_state_termdep
          t = 0) /\
-       lookup 6 (state_locals t) = SOME (wordLang_Word (n2w (4 *
-         op_index))) /\
+       lookup 6 (wordSem_state_locals t) = SOME (wordLang_Word (n2w
+         (4 * op_index))) /\
        int_op op_index i j = SOME v ==>
        (?q r new_c.
          evaluate (AnyArith_code c,t) = (q,r) /\
          (if q = SOME wordSem_NotEnoughSpace then state_ffi
-           r = state_ffi t /\
+           r = wordSem_state_ffi t /\
            (~(data_to_word_config_gc_kind c = None) /\
-             no_thunks_in_refs (state_refs s) ==>
+             no_thunks_in_refs (dataSem_state_refs s) ==>
               (let il = bignum_size (limits_arch_64_bit
                 (dataSem_state_limits s)) i in
               let jl = bignum_size (limits_arch_64_bit
@@ -584,10 +611,11 @@ let AnyArith_thm = cake_theorem "AnyArith_thm"
            ?rv. q = SOME (wordSem_Result (wordLang_Loc l1 l2) [rv])
              /\
                 state_rel c r1 r2
-                  (state_stack_max_fupd (K NONE)
-                    (dataSem_state_space_fupd (K 0) (state_clock_fupd (K
-                    new_c) (state_locals_size_fupd (K (SOME 0))
-                    (state_locals_fupd (K LN) s))))) r
+                  (dataSem_state_stack_max_fupd (K NONE)
+                    (dataSem_state_space_fupd (K 0)
+                    (dataSem_state_clock_fupd (K new_c)
+                    (dataSem_state_locals_size_fupd (K (SOME 0))
+                    (dataSem_state_locals_fupd (K LN) s))))) r
                   (SOME [(Number v,rv)]) locs))`)
   CHEAT_TAC;;
 
@@ -632,8 +660,8 @@ let eval_Call_Arith_max_stack_NONE =
         state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
           (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(names_opt = NONE)
           /\ 1 < wordSem_state_termdep t /\
-        get_vars [a1; a2] (state_locals s) = SOME [Number i1;
-          Number i2] /\
+        get_vars [a1; a2] (dataSem_state_locals s) = SOME [Number
+          i1; Number i2] /\
         cut_state_opt names_opt s = SOME x /\
         int_op index i1 i2 = SOME r ==>
         (?q r'.
@@ -649,9 +677,9 @@ let eval_Call_Arith_max_stack_NONE =
                   [adjust_var a1; adjust_var a2] NONE),t)) = (q,r')
                     /\
           (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-           r' = state_ffi s /\
+           r' = dataSem_state_ffi s /\
            (~(data_to_word_config_gc_kind c = None) /\
-             no_thunks_in_refs (state_refs s) ==>
+             no_thunks_in_refs (dataSem_state_refs s) ==>
               (let il = bignum_size (limits_arch_64_bit
                 (dataSem_state_limits s)) i1 in
               let jl = bignum_size (limits_arch_64_bit
@@ -690,8 +718,8 @@ let eval_Call_Arith = cake_theorem "eval_Call_Arith"
         state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
           (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(names_opt = NONE)
           /\ 1 < wordSem_state_termdep t /\
-        get_vars [a1; a2] (state_locals s) = SOME [Number i1;
-          Number i2] /\
+        get_vars [a1; a2] (dataSem_state_locals s) = SOME [Number
+          i1; Number i2] /\
         cut_state_opt names_opt s = SOME x /\
         int_op index i1 i2 = SOME r ==>
         (?q r'.
@@ -706,18 +734,19 @@ let eval_Call_Arith = cake_theorem "eval_Call_Arith"
                   (SOME (Arith_location index))
                   [adjust_var a1; adjust_var a2] NONE),t)) = (q,r')
                     /\
-          (let max' = OPTION_MAP2 MAX (state_stack_max s)
-                  (OPTION_MAP2 (+) (stack_size (stack t))
-                    (OPTION_MAP2 (+) (state_locals_size t)
+          (let max' = OPTION_MAP2 MAX (dataSem_state_stack_max s)
+                  (OPTION_MAP2 (+) (stack_size (wordSem_state_stack
+                    t))
+                    (OPTION_MAP2 (+) (wordSem_state_locals_size t)
                       (OPTION_MAP2 MAX (lookup (Arith_location
                         index) (wordSem_state_stack_size t))
                               (max_depth (wordSem_state_stack_size
                                 t) AnyArith_call_tree)))) in
           option_le (state_stack_max r') max' /\
           (q = SOME wordSem_NotEnoughSpace ==> state_ffi
-           r' = state_ffi s /\
+           r' = dataSem_state_ffi s /\
            (~(data_to_word_config_gc_kind c = None) /\
-             no_thunks_in_refs (state_refs s) ==>
+             no_thunks_in_refs (dataSem_state_refs s) ==>
               (let il = bignum_size (limits_arch_64_bit
                 (dataSem_state_limits s)) i1 in
               let jl = bignum_size (limits_arch_64_bit

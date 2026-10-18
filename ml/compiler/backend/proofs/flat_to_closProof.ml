@@ -115,15 +115,15 @@ let install_config_rel'_def = cake_define
 let state_rel_def = cake_define
   `flat_to_closProof_state_rel (s:('c,'ffi)flatSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     1 <= closSem_state_max_app t /\ state_ffi
-     s = state_ffi t /\ state_clock
-     s = state_clock t /\
-     store_rel (state_refs s) (state_refs t) /\ ~(LENGTH
-       (state_globals t) = 0) /\
-     LIST_REL (OPTREL flat_to_closProof_v_rel) (state_globals s) (TL
-       (state_globals t)) /\
+     1 <= closSem_state_max_app t /\ flatSem_state_ffi
+     s = closSem_state_ffi t /\ flatSem_state_clock
+     s = closSem_state_clock t /\
+     store_rel (flatSem_state_refs s) (closSem_state_refs t) /\
+       ~(LENGTH (closSem_state_globals t) = 0) /\
+     LIST_REL (OPTREL flat_to_closProof_v_rel) (flatSem_state_globals
+       s) (TL (closSem_state_globals t)) /\
      install_config_rel' (flatSem_state_eval_config s)
-       (compile_oracle t) (compile t)`;;
+       (closSem_state_compile_oracle t) (closSem_state_compile t)`;;
 hol4_overload "state_rel" "flat_to_closProof_state_rel";;
 
 let v_rel_to_list = cake_theorem "v_rel_to_list"

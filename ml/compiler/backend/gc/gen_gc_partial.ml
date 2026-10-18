@@ -12,6 +12,8 @@
 needs "compiler/backend/gc/gc_shared.ml";;
 needs "compiler/backend/gc/gen_gc.ml";;
 needs "lib/integer_word.ml";;
+
+cake_hide ["isRef"];;
 (* HOL4 ancestors outside the port: words *)
 
 (* HOL4 gen_gc_partialScript.sml:14: ML code, not ported *)
@@ -216,9 +218,11 @@ let to_gen_heap_address_def = cake_define_list
 
 let to_gen_conf_def = cake_define
   `to_gen_conf (conf:'a gen_gc_partial_conf) =
-     (mk_gen_gc_conf (limit conf - gen_gc_partial_conf_gen_start
-       conf - (limit conf - gen_gc_partial_conf_refs_start conf))
-       (isRef conf):'a gen_gc_conf)`;;
+     (mk_gen_gc_conf (gen_gc_partial_conf_limit conf -
+       gen_gc_partial_conf_gen_start conf -
+       (gen_gc_partial_conf_limit conf -
+       gen_gc_partial_conf_refs_start conf))
+       (gen_gc_partial_conf_isRef conf):'a gen_gc_conf)`;;
 
 let to_gen_heap_element_def = cake_define_list
   [`to_gen_heap_element conf (Unused n) = Unused n`;
@@ -314,7 +318,7 @@ let gen_inv_def = cake_define
   (gen_gc_partial_conf_gen_start
      conf <= gen_gc_partial_conf_refs_start conf /\
        gen_gc_partial_conf_refs_start
-     conf <= limit conf /\
+     conf <= gen_gc_partial_conf_limit conf /\
      (?heap_old heap_current heap_refs.
        (heap_segment (gen_gc_partial_conf_gen_start
          conf,gen_gc_partial_conf_refs_start conf) heap =
@@ -863,7 +867,7 @@ let roots_ok_simulation = cake_theorem "roots_ok_simulation[local]"
     `!roots heap heap_old heap_current heap_refs (conf:'b
   gen_gc_partial_conf).
      roots_ok roots (heap:(('a,'b)heap_element) list) /\
-     heap_ok heap (limit conf) /\
+     heap_ok heap (gen_gc_partial_conf_limit conf) /\
      (heap_segment (gen_gc_partial_conf_gen_start
        conf,gen_gc_partial_conf_refs_start conf) heap = SOME
        (heap_old,heap_current,heap_refs)) /\
@@ -899,13 +903,15 @@ let heap_ok_simulation = cake_theorem "heap_ok_simulation[local]"
   (fun () ->
     `!heap heap_old heap_current heap_refs (conf:'b
   gen_gc_partial_conf).
-     heap_ok (heap:(('a,'b)heap_element) list) (limit conf) /\
+     heap_ok (heap:(('a,'b)heap_element) list)
+       (gen_gc_partial_conf_limit conf) /\
      (heap_segment (gen_gc_partial_conf_gen_start
        conf,gen_gc_partial_conf_refs_start conf) heap = SOME
        (heap_old,heap_current,heap_refs)) /\
      (gen_gc_partial_conf_gen_start conf <=
        gen_gc_partial_conf_refs_start conf) /\
-     (gen_gc_partial_conf_refs_start conf <= limit conf) ==>
+     (gen_gc_partial_conf_refs_start conf <=
+       gen_gc_partial_conf_limit conf) ==>
      heap_ok
        (MAP (to_gen_heap_element conf) heap_current) (limit
        (to_gen_conf conf))`)
@@ -1467,3 +1473,5 @@ let gen_gc_partial_partial_gc_IMP = cake_theorem "partial_gc_IMP"
                             (?xs l d. MEM (DataElement xs l d)
                               curr /\ isRef c d)))`)
   CHEAT_TAC;;
+
+cake_hide [];;

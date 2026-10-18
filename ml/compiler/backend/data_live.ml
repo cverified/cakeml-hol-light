@@ -2,7 +2,7 @@
 (*  data_live: ported from HOL4's
     compiler/backend/data_liveScript.sml
     A definition theory, with 2 definitions and 1 theorem.  Needed
-    by 15 files of the port.  *)
+    by 14 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -16,6 +16,8 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+
+cake_hide ["pmatch"];;
 
 let is_pure_def = cake_define
   `data_live_is_pure x1 =
@@ -153,3 +155,5 @@ let compile_def = cake_define_list
          let l2 = list_insert vs l1 in
            (Call (SOME (ns,l1)) dest vs (SOME (v,d)),l2))`];;
 hol4_overload "compile" "data_live_compile";;
+
+cake_hide [];;

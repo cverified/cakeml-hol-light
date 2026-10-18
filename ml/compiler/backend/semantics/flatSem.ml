@@ -985,11 +985,11 @@ let flatSem_do_app_const = cake_theorem "do_app_const"
 let flatSem_evaluate_clock = cake_theorem "evaluate_clock"
   (fun () ->
     `(!env (s:('c,'ffi)flatSem_state) e r s2. evaluate env s e = (s2,r)
-  ==> state_clock s2 <= state_clock s) /\
+  ==> state_clock s2 <= flatSem_state_clock s) /\
      (!(s:('c,'ffi)flatSem_state) e r s2. evaluate_dec s e = (s2,r)
-       ==> state_clock s2 <= state_clock s) /\
+       ==> state_clock s2 <= flatSem_state_clock s) /\
      (!(s:('c,'ffi)flatSem_state) e r s2. evaluate_decs s e =
-       (s2,r) ==> state_clock s2 <= state_clock s)`)
+       (s2,r) ==> state_clock s2 <= flatSem_state_clock s)`)
   CHEAT_TAC;;
 
 let flatSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"

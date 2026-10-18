@@ -278,10 +278,11 @@ let make_init_def = cake_define
   `stack_namesProof_make_init f code oracle'
   (s:('a,'c,'ffi)stackSem_state) = stackSem_state_ffi_save_regs_fupd (K
   (IMAGE (LINV (tlookup f) UNIV) (stackSem_state_ffi_save_regs s)))
-  (compile_oracle_fupd (K oracle') (compile_fupd (K (\cfg. compile s cfg
-  o (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS
-  (LINV (tlookup f) UNIV) (stackSem_state_regs s))) (state_code_fupd (K
-  code)
+  (stackSem_state_compile_oracle_fupd (K oracle')
+  (stackSem_state_compile_fupd (K (\cfg. stackSem_state_compile s cfg o
+  (stack_names_compile f))) (stackSem_state_regs_fupd (K (MAP_KEYS (LINV
+  (tlookup f) UNIV) (stackSem_state_regs s))) (stackSem_state_code_fupd
+  (K code)
      s))))`;;
 hol4_overload "make_init" "stack_namesProof_make_init";;
 

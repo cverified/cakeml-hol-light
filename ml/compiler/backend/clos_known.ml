@@ -28,7 +28,7 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
-cake_hide ["all"];;
+cake_hide ["all"; "pmatch"];;
 
 (* HOL4 clos_knownScript.sml:16: code that the source has in a
    comment *)

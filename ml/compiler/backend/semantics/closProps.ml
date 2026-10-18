@@ -20,9 +20,11 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["comp"; "compile"];;
+
 let closProps_with_same_clock = cake_theorem "with_same_clock[simp]"
   (fun () ->
-    `state_clock_fupd (K (state_clock s))
+    `closSem_state_clock_fupd (K (closSem_state_clock s))
         (s:('c,'ffi)closSem_state) = s`)
   CHEAT_TAC;;
 
@@ -69,20 +71,21 @@ let forall_sum = cake_theorem "forall_sum[local]"
 let evaluate_better_ind = cake_theorem "evaluate_better_ind"
   (fun () ->
     `(!xs s1.
-       (!ys s2. state_clock s2 <= state_clock s1 /\ (state_clock s2
-         = state_clock s1 ==> closSem_exp3_alt_size ys <
-         closSem_exp3_alt_size xs) ==> P1 ys s2) ==>
-       (!args s2. state_clock s2 <= state_clock s1 /\ (state_clock
-         s2 = state_clock s1 ==> LENGTH args < closSem_exp3_alt_size xs)
-         ==> P2 args s2) ==>
+       (!ys s2. state_clock s2 <= closSem_state_clock s1 /\
+         (state_clock s2 = closSem_state_clock s1 ==>
+         closSem_exp3_alt_size ys < closSem_exp3_alt_size xs) ==> P1 ys
+         s2) ==>
+       (!args s2. state_clock s2 <= closSem_state_clock s1 /\
+         (state_clock s2 = closSem_state_clock s1 ==> LENGTH args <
+         closSem_exp3_alt_size xs) ==> P2 args s2) ==>
        P1 xs s1) /\
      (!args s1.
-       (!ys s2. state_clock s2 <= state_clock s1 /\ (state_clock s2
-         = state_clock s1 ==> closSem_exp3_alt_size ys < LENGTH args)
-         ==> P1 ys s2) ==>
-       (!args' s2. state_clock s2 <= state_clock s1 /\ (state_clock
-         s2 = state_clock s1 ==> LENGTH args' < LENGTH args) ==> P2
-         args' s2) ==>
+       (!ys s2. state_clock s2 <= closSem_state_clock s1 /\
+         (state_clock s2 = closSem_state_clock s1 ==>
+         closSem_exp3_alt_size ys < LENGTH args) ==> P1 ys s2) ==>
+       (!args' s2. state_clock s2 <= closSem_state_clock s1 /\
+         (state_clock s2 = closSem_state_clock s1 ==> LENGTH args' <
+         LENGTH args) ==> P2 args' s2) ==>
        P2 args s1) ==>
      (!(xs:closLang_exp list) (s1:('c,'ffi)closSem_state). P1 xs
        s1) /\
@@ -1086,14 +1089,14 @@ let closProps_evaluate_add_to_clock =
          p = (es,env,s) /\
          closSem_evaluate (es,env,s) = (r,s') /\ ~(r = Rerr (Rabort
            Rtimeout_error)) ==>
-         closSem_evaluate (es,env,state_clock_fupd (K (state_clock
-           s + extra)) s) =
+         closSem_evaluate (es,env,closSem_state_clock_fupd (K
+           (closSem_state_clock s + extra)) s) =
            (r,state_clock_fupd (K (state_clock s' + extra)) s')) /\
      (!loc_opt v rest_args (s:('c,'ffi)closSem_state) r s'.
          evaluate_app loc_opt v rest_args s = (r,s') /\ ~(r = Rerr
            (Rabort Rtimeout_error)) ==>
-         evaluate_app loc_opt v rest_args (state_clock_fupd (K
-           (state_clock s + extra)) s) =
+         evaluate_app loc_opt v rest_args (closSem_state_clock_fupd
+           (K (closSem_state_clock s + extra)) s) =
            (r,state_clock_fupd (K (state_clock s' + extra)) s'))`)
   CHEAT_TAC;;
 
@@ -1121,11 +1124,11 @@ let closProps_do_app_io_events_mono =
 let closProps_evaluate_io_events_mono =
   cake_theorem "evaluate_io_events_mono"
   (fun () ->
-    `(!p. ffi_state_io_events (state_ffi ((SND (SND
+    `(!p. ffi_state_io_events (closSem_state_ffi ((SND (SND
   p)):('c,'ffi)closSem_state)) <<= ffi_state_io_events (state_ffi (SND
   (closSem_evaluate p)))) /\
      (!loc_opt v rest (s:('c,'ffi)closSem_state).
-       ffi_state_io_events (state_ffi
+       ffi_state_io_events (closSem_state_ffi
        s) <<= ffi_state_io_events (state_ffi (SND (evaluate_app
          loc_opt v rest s))))`)
   CHEAT_TAC;;
@@ -1155,14 +1158,14 @@ let closProps_evaluate_add_to_clock_io_events_mono =
        p = (es,env,s) ==> ffi_state_io_events (state_ffi
        (SND (closSem_evaluate p))) <<= ffi_state_io_events
          (state_ffi
-       (SND (closSem_evaluate (es,env,state_clock_fupd (K
-         (state_clock s + extra)) s))))) /\
+       (SND (closSem_evaluate (es,env,closSem_state_clock_fupd (K
+         (closSem_state_clock s + extra)) s))))) /\
      (!l v r (s:('c,'ffi)closSem_state). ffi_state_io_events
        (state_ffi
        (SND (evaluate_app l v r s))) <<= ffi_state_io_events
          (state_ffi
-       (SND (evaluate_app l v r (state_clock_fupd (K (state_clock
-         s + extra)) s)))))`)
+       (SND (evaluate_app l v r (closSem_state_clock_fupd (K
+         (closSem_state_clock s + extra)) s)))))`)
   CHEAT_TAC;;
 
 let do_app_never_timesout = cake_theorem "do_app_never_timesout[simp]"
@@ -1174,7 +1177,7 @@ let evaluate_timeout_clocks0 = cake_theorem "evaluate_timeout_clocks0"
   (fun () ->
     `(!v (s:('c,'ffi)closSem_state).
         closSem_evaluate v = (Rerr (Rabort Rtimeout_error),s) ==>
-          state_clock s = 0) /\
+          closSem_state_clock s = 0) /\
      (!locopt v env (s:('c,'ffi)closSem_state) s'.
          evaluate_app locopt v env s = (Rerr (Rabort
            Rtimeout_error),s') ==> state_clock
@@ -1330,9 +1333,9 @@ let ssgc_free_def = cake_define
   `ssgc_free (s:('c,'ffi)closSem_state) <=>
      (!n m e. FLOOKUP (closSem_state_code s) n = SOME (m,e) ==>
        closProps_set_globals e = EMPTY_BAG) /\
-     (!n vl. FLOOKUP (state_refs s) n = SOME (closSem_ValueArray vl)
-       ==> EVERY vsgc_free vl) /\
-     (!n m v. FLOOKUP (state_refs s) n = SOME (Thunk m v) ==>
+     (!n vl. FLOOKUP (closSem_state_refs s) n = SOME
+       (closSem_ValueArray vl) ==> EVERY vsgc_free vl) /\
+     (!n m v. FLOOKUP (closSem_state_refs s) n = SOME (Thunk m v) ==>
        vsgc_free v) /\
      (!v. MEM (SOME v) (closSem_state_globals s) ==> vsgc_free v) /\
      (!n exp aux. SND (closSem_state_compile_oracle s n) = (exp,aux)
@@ -1435,45 +1438,51 @@ let simple_val_rel_alt = cake_theorem "simple_val_rel_alt[local]"
 
 let simple_state_rel_def = cake_define
   `closProps_simple_state_rel vr sr <=>
-     (!s t ptr. FLOOKUP (state_refs t) ptr = NONE /\ sr s t ==>
-                FLOOKUP (state_refs s) ptr = NONE) /\
+     (!s t ptr. FLOOKUP (closSem_state_refs t) ptr = NONE /\ sr s t
+       ==>
+                FLOOKUP (closSem_state_refs s) ptr = NONE) /\
      (!w t s ptr.
-       FLOOKUP (state_refs t) ptr = SOME (closSem_ByteArray w) /\ sr
-         s t ==>
-       FLOOKUP (state_refs s) ptr = SOME (closSem_ByteArray w)) /\
+       FLOOKUP (closSem_state_refs t) ptr = SOME (closSem_ByteArray
+         w) /\ sr s t ==>
+       FLOOKUP (closSem_state_refs s) ptr = SOME (closSem_ByteArray
+         w)) /\
      (!w (t:('c,'ffi)closSem_state) (s:('d,'ffi)closSem_state) ptr.
-       FLOOKUP (state_refs t) ptr = SOME (closSem_ValueArray w) /\ sr
-         s t ==>
+       FLOOKUP (closSem_state_refs t) ptr = SOME (closSem_ValueArray
+         w) /\ sr s t ==>
        (?w1.
-         FLOOKUP (state_refs s) ptr = SOME (closSem_ValueArray w1) /\
+         FLOOKUP (closSem_state_refs s) ptr = SOME
+           (closSem_ValueArray w1) /\
          LIST_REL vr w1 w)) /\
      (!m v t s ptr.
-       FLOOKUP (state_refs t) ptr = SOME (Thunk m v) /\ sr s t ==>
+       FLOOKUP (closSem_state_refs t) ptr = SOME (Thunk m v) /\ sr s
+         t ==>
        (?w.
-         FLOOKUP (state_refs s) ptr = SOME (Thunk m w) /\
+         FLOOKUP (closSem_state_refs s) ptr = SOME (Thunk m w) /\
          vr w v)) /\
-     (!s t. sr s t ==> state_ffi s = state_ffi t /\ FDOM (state_refs
-       s) = FDOM (state_refs t) /\
+     (!s t. sr s t ==> closSem_state_ffi s = closSem_state_ffi t /\
+       FDOM (closSem_state_refs s) = FDOM (closSem_state_refs t) /\
                        LIST_REL (OPTREL vr) (closSem_state_globals s)
                          (closSem_state_globals t)) /\
      (!f s t.
-       sr s t ==> sr (state_ffi_fupd (K f) s)
-                     (state_ffi_fupd (K f) t)) /\
+       sr s t ==> sr (closSem_state_ffi_fupd (K f) s)
+                     (closSem_state_ffi_fupd (K f) t)) /\
      (!bs s t p.
-       sr s t ==> sr (state_refs_fupd (K (state_refs s |+
-         (p,closSem_ByteArray bs))) s)
-                     (state_refs_fupd (K (state_refs t |+
-                       (p,closSem_ByteArray bs))) t)) /\
+       sr s t ==> sr (closSem_state_refs_fupd (K (closSem_state_refs
+         s |+ (p,closSem_ByteArray bs))) s)
+                     (closSem_state_refs_fupd (K (closSem_state_refs
+                       t |+ (p,closSem_ByteArray bs))) t)) /\
      (!s t p xs ys.
        sr s t /\ LIST_REL vr xs ys ==>
-       sr (state_refs_fupd (K (state_refs s |+ (p,closSem_ValueArray
-         xs))) s)
-          (state_refs_fupd (K (state_refs t |+ (p,closSem_ValueArray
-            ys))) t)) /\
+       sr (closSem_state_refs_fupd (K (closSem_state_refs s |+
+         (p,closSem_ValueArray xs))) s)
+          (closSem_state_refs_fupd (K (closSem_state_refs t |+
+            (p,closSem_ValueArray ys))) t)) /\
      (!s t p m v w.
        sr s t /\ vr v w ==>
-       sr (state_refs_fupd (K (state_refs s |+ (p,Thunk m v))) s)
-          (state_refs_fupd (K (state_refs t |+ (p,Thunk m w))) t)) /\
+       sr (closSem_state_refs_fupd (K (closSem_state_refs s |+
+         (p,Thunk m v))) s)
+          (closSem_state_refs_fupd (K (closSem_state_refs t |+
+            (p,Thunk m w))) t)) /\
      (!s t xs ys.
        sr s t /\ LIST_REL (OPTREL vr) xs ys ==>
        sr (closSem_state_globals_fupd (K xs) s)
@@ -1634,9 +1643,10 @@ let simple_state_rel_FLOOKUP_refs_IMP =
 
 let refs_ffi_lemma = cake_theorem "refs_ffi_lemma[local]"
   (fun () ->
-    `(state_ffi_fupd (K ffi') (state_refs_fupd (K refs')
+    `(closSem_state_ffi_fupd (K ffi') (closSem_state_refs_fupd (K refs')
   (s:('c,'ffi)closSem_state))) =
-     (state_ffi_fupd (K ffi') (state_refs_fupd (K refs') s))`)
+     (state_ffi_fupd (K ffi') (closSem_state_refs_fupd (K refs')
+       s))`)
   CHEAT_TAC;;
 
 let simple_val_rel_list = cake_theorem "simple_val_rel_list"
@@ -1748,9 +1758,10 @@ let simple_compile_state_rel_def = cake_define
   `simple_compile_state_rel vr sr comp' cr <=>
      closProps_simple_state_rel vr sr /\
      (!(s:('c,'ffi)closSem_state) (t:('c,'ffi)closSem_state).
-         sr s t ==> state_clock
-         t = state_clock s /\ closSem_state_compile s = pure_cc comp'
-           (closSem_state_compile t) /\ closSem_state_compile_oracle
+         sr s t ==> closSem_state_clock
+         t = closSem_state_clock s /\ closSem_state_compile s =
+           pure_cc comp' (closSem_state_compile t) /\
+           closSem_state_compile_oracle
          t = pure_co comp' o closSem_state_compile_oracle s /\
          (!n exps res p aux. SND (closSem_state_compile_oracle s n) =
            (p,aux) ==>
@@ -1761,12 +1772,12 @@ let simple_compile_state_rel_def = cake_define
            (closSem_state_compile_oracle_fupd (K
                          (misc_shift_seq 1
                            (closSem_state_compile_oracle s)))
-                           (state_clock_fupd (K n) s)))
+                           (closSem_state_clock_fupd (K n) s)))
               (closSem_state_code_fupd (K (closSem_state_code t))
                 (closSem_state_compile_oracle_fupd (K
                          (misc_shift_seq 1
                            (closSem_state_compile_oracle t)))
-                           (state_clock_fupd (K n) t)))))`;;
+                           (closSem_state_clock_fupd (K n) t)))))`;;
 
 let simple_val_rel_v_to_bytes = cake_theorem "simple_val_rel_v_to_bytes"
   (fun () ->
@@ -2325,3 +2336,5 @@ let initial_state_clock = cake_theorem "initial_state_clock"
          f co cc k')) =
         closSem_initial_state ffi max_app f co cc k)`)
   CHEAT_TAC;;
+
+cake_hide [];;

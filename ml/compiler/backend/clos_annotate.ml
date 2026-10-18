@@ -2,7 +2,7 @@
 (*  clos_annotate: ported from HOL4's
     compiler/backend/clos_annotateScript.sml
     A definition theory, with 13 definitions and 15 theorems.
-    Needed by 10 files of the port.  *)
+    Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*

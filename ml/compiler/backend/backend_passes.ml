@@ -207,13 +207,13 @@ let to_bvi_all_def = cake_define
      let ps = ps ++ [((implode "after bvi_inline"),backend_passes_Bvi
        code' names)] in
      let c = backend_config_clos_conf_fupd (\c.
-       clos_to_bvl_config_start_fupd (K s) c) c in
+       backend_config_start_fupd (K s) c) c in
      let c = backend_config_bvl_conf_fupd
-       (\c. bvl_to_bvi_config_next_name3_fupd (K n3)
-         (bvl_to_bvi_config_next_name2_fupd (K n2)
-         (bvl_to_bvi_config_next_name1_fupd (K n1)
-         (bvl_to_bvi_config_bvi_inlines_fupd (K bl)
-         (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
+       (\c. backend_config_next_name3_fupd (K n3)
+         (backend_config_next_name2_fupd (K n2)
+         (backend_config_next_name1_fupd (K n1)
+         (backend_config_bvi_inlines_fupd (K bl)
+         (backend_config_inlines_fupd (K l) c))))) c in
       ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
 let to_bvi_thm = cake_theorem "to_bvi_thm"
@@ -317,7 +317,7 @@ let to_word_all_def = cake_define
      let ps = ps ++ [((implode
        "after word_alloc (and remove_must_terminate)"),Word p names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
-       word_to_word_config_col_oracle_fupd (K col) c) c in
+       backend_config_col_oracle_fupd (K col) c) c in
        ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
 let LENGTH_next_n_oracle = cake_theorem "LENGTH_next_n_oracle"
@@ -491,7 +491,7 @@ let from_word_0_all_def = cake_define
      let ps = ps ++ [((implode
        "after word_alloc (and remove_must_terminate)"),Word p names)] in
      let c = backend_config_word_to_word_conf_fupd (\c.
-       word_to_word_config_col_oracle_fupd (K col) c) c in
+       backend_config_col_oracle_fupd (K col) c) c in
        from_word_all ps asm_conf c names p)`;;
 
 let from_word_0_thm = cake_theorem "from_word_0_thm"

@@ -17,6 +17,8 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (*Removes MustTerminate*)
 
 let remove_must_terminate_def = cake_define
@@ -60,3 +62,5 @@ let remove_must_terminate_pmatch =
        Loop names (remove_must_terminate body) exit_names | prog
          -> prog)`)
   CHEAT_TAC;;
+
+cake_hide [];;

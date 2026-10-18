@@ -606,6 +606,8 @@ class Porter:
         if v.kind == 'id':
           rec = pr.annot_rec(n)
           if rec: out.setdefault(v.name, rec)
+          # a variable that two annotations of the statement give
+          # two records says nothing (the port keeps the first)
       for t in hterm.subnodes(n): go(t)
 
     go(e)

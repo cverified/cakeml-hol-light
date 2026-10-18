@@ -28,12 +28,13 @@ needs "semantics/semanticPrimitives.ml";;
 let state_rel_def = cake_define
   `bvl_inlineProof_state_rel (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
-     t = compile_oracle_fupd (K ((I ##
-       MAP (I ## I ## (\x. HD (remove_ticks [x])))) o compile_oracle
-         s)) (compile_fupd (K (compile t)) (state_code_fupd (K
-         (sptree_map (I ## (\x. HD (remove_ticks [x]))) (state_code s)))
-         s)) /\ compile
-     s = (\cfg prog. compile t cfg
+     t = bvlSem_state_compile_oracle_fupd (K ((I ##
+       MAP (I ## I ## (\x. HD (remove_ticks [x])))) o
+         bvlSem_state_compile_oracle s)) (bvlSem_state_compile_fupd (K
+         (bvlSem_state_compile t)) (bvlSem_state_code_fupd (K
+         (sptree_map (I ## (\x. HD (remove_ticks [x])))
+         (bvlSem_state_code s))) s)) /\ bvlSem_state_compile
+     s = (\cfg prog. bvlSem_state_compile t cfg
                     (MAP (I ## I ## (\x. HD (remove_ticks [x])))
                       prog))`;;
 hol4_overload "state_rel" "bvl_inlineProof_state_rel";;
@@ -58,8 +59,8 @@ let bvl_inlineProof_evaluate_remove_ticks =
     `!k xs env s (t:('c,'ffi)bvlSem_state) res s'.
         bvl_inlineProof_state_rel t s /\ state_clock s = k /\
         evaluate (remove_ticks xs,env,s) = (res,s') ==>
-        (?ck t'. evaluate (xs,env,state_clock_fupd (K (state_clock
-          t + ck)) t) = (res,t') /\
+        (?ck t'. evaluate (xs,env,bvlSem_state_clock_fupd (K
+          (bvlSem_state_clock t + ck)) t) = (res,t') /\
                 bvl_inlineProof_state_rel t' s')`)
   CHEAT_TAC;;
 
@@ -90,7 +91,7 @@ let bvl_inlineProof_evaluate_compile_prog =
         ([Call 0 (SOME start) []],[],
           initial_state ffi0 prog co
             (bvl_inlineProof_remove_ticks_cc cc) (k + ck)) = (r,s2) /\
-            state_ffi
+            bvlSem_state_ffi
        s2 = state_ffi s)`)
   CHEAT_TAC;;
 
@@ -419,12 +420,14 @@ let let_opt_def = cake_define
 let let_state_rel_def = cake_define
   `let_state_rel split_seq cut_size (s:('c,'ffi)bvlSem_state)
   (t:('c,'ffi)bvlSem_state) <=>
-     t = compile_oracle_fupd (K ((I ##
-       MAP (I ## let_opt split_seq cut_size)) o compile_oracle s))
-         (compile_fupd (K (compile t)) (state_code_fupd (K (sptree_map
-         (let_opt split_seq cut_size) (state_code s))) s)) /\ compile
-     s = (\cfg prog. compile t cfg (MAP (I ## let_opt split_seq
-       cut_size) prog))`;;
+     t = bvlSem_state_compile_oracle_fupd (K ((I ##
+       MAP (I ## let_opt split_seq cut_size)) o
+         bvlSem_state_compile_oracle s)) (bvlSem_state_compile_fupd (K
+         (bvlSem_state_compile t)) (bvlSem_state_code_fupd (K
+         (sptree_map (let_opt split_seq cut_size) (bvlSem_state_code
+         s))) s)) /\ bvlSem_state_compile
+     s = (\cfg prog. bvlSem_state_compile t cfg (MAP (I ## let_opt
+       split_seq cut_size) prog))`;;
 
 (* HOL4 bvl_inlineProofScript.sml:1432: ML code, not ported *)
 
@@ -492,8 +495,9 @@ let let_evaluate_Call = cake_theorem "let_evaluate_Call[local]"
          ([Call 0 (SOME start) []],[],
            initial_state ffi0 (sptree_map (let_opt q4 l4) prog)
              ((I ## MAP (I ## let_opt q4 l4)) o co)
-             cc k) = (r,s2) /\ state_ffi
-        s2 = state_ffi s /\ state_clock s = state_clock s2)`)
+             cc k) = (r,s2) /\ bvlSem_state_ffi
+        s2 = state_ffi s /\ state_clock s = bvlSem_state_clock
+          s2)`)
   CHEAT_TAC;;
 
 let semantics_let_op = cake_theorem "semantics_let_op"

@@ -38,7 +38,7 @@ let weak_tenvE_refl = cake_theorem "weak_tenvE_refl"
 
 let weak_tenv_refl = cake_theorem "weak_tenv_refl"
   (fun () ->
-    `!tenv. tenv_val_ok (sem_env_v tenv) ==> weak_tenv tenv tenv`)
+    `!tenv. tenv_val_ok (type_env_v tenv) ==> weak_tenv tenv tenv`)
   CHEAT_TAC;;
 
 let weakS_refl = cake_theorem "weakS_refl"
@@ -105,16 +105,16 @@ let eLookupC_weak = cake_theorem "eLookupC_weak[local]"
   (fun () ->
     `!cn tenv tenv' tvs ts tn.
        weak_tenv tenv' tenv /\
-       nsLookup (sem_env_c tenv) cn = SOME (tvs,ts,tn) ==>
-       nsLookup (sem_env_c tenv') cn = SOME (tvs,ts,tn)`)
+       nsLookup (type_env_c tenv) cn = SOME (tvs,ts,tn) ==>
+       nsLookup (type_env_c tenv') cn = SOME (tvs,ts,tn)`)
   CHEAT_TAC;;
 
 let eLookupV_weak = cake_theorem "eLookupV_weak[local]"
   (fun () ->
     `!n tenv tenv' tvs t.
        weak_tenv tenv' tenv /\
-       nsLookup (sem_env_v tenv) n = SOME (tvs,t) ==>
-       (?tvs' t'. nsLookup (sem_env_v tenv') n = SOME (tvs',t')
+       nsLookup (type_env_v tenv) n = SOME (tvs,t) ==>
+       (?tvs' t'. nsLookup (type_env_v tenv') n = SOME (tvs',t')
          /\ tscheme_inst (tvs,t) (tvs',t'))`)
   CHEAT_TAC;;
 
@@ -273,7 +273,7 @@ let type_s_weakening = cake_theorem "type_s_weakening"
 let weak_tenv_extend_dec_tenv = cake_theorem "weak_tenv_extend_dec_tenv"
   (fun () ->
     `!tenv1 tenv2 tenv3.
-      tenv_val_ok (sem_env_v tenv1) /\
+      tenv_val_ok (type_env_v tenv1) /\
       weak_tenv tenv2 tenv3 ==>
       weak_tenv (extend_dec_tenv tenv1 tenv2) (extend_dec_tenv
         tenv1 tenv3)`)

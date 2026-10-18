@@ -743,8 +743,8 @@ let evaluate_mk_Ticks_rw = cake_theorem "evaluate_mk_Ticks_rw"
   (fun () ->
     `!t tc n exp env (s:('c,'ffi)closSem_state).
        closSem_evaluate ([mk_Ticks t tc n exp],env,s) =
-       (if state_clock s < n then (Rerr (Rabort
-         Rtimeout_error),state_clock_fupd (K 0) s) else
+       (if closSem_state_clock s < n then (Rerr (Rabort
+         Rtimeout_error),closSem_state_clock_fupd (K 0) s) else
          closSem_evaluate ([exp],env,closSem_dec_clock n s))`)
   CHEAT_TAC;;
 
@@ -753,8 +753,8 @@ let evaluate_mk_Ticks_IMP = cake_theorem "evaluate_mk_Ticks_IMP"
     `!t tc n exp env (s0:('c,'ffi)closSem_state) res s.
        closSem_evaluate ([mk_Ticks t tc n exp],env,s0) = (res,s)
          ==>
-       (res = Rerr (Rabort Rtimeout_error) /\ s = state_clock_fupd
-         (K 0) s0) \/
+       (res = Rerr (Rabort Rtimeout_error) /\ s =
+         closSem_state_clock_fupd (K 0) s0) \/
        (closSem_evaluate ([exp],env,closSem_dec_clock n s0) =
          (res,s))`)
   CHEAT_TAC;;
@@ -1342,13 +1342,15 @@ let state_rel_def = cake_define
      (!n. SND (SND (closSem_state_compile_oracle s n)) = []) /\
      (!n. fv_max 0 (FST (SND (closSem_state_compile_oracle s n)))) /\
        closSem_state_code
-     s = FEMPTY /\ closSem_state_code t = FEMPTY /\ state_clock
-     s = state_clock t /\ state_ffi s = state_ffi t /\
-       closSem_state_max_app s = closSem_state_max_app t /\
+     s = FEMPTY /\ closSem_state_code t = FEMPTY /\
+       closSem_state_clock
+     s = closSem_state_clock t /\ closSem_state_ffi s =
+       closSem_state_ffi t /\ closSem_state_max_app s =
+       closSem_state_max_app t /\
      LIST_REL (OPTREL (v_rel c g)) (closSem_state_globals s)
        (closSem_state_globals t) /\
-     fmap_rel (ref_rel c g) (state_refs s) (state_refs t) /\
-       closSem_state_compile
+     fmap_rel (ref_rel c g) (closSem_state_refs s)
+       (closSem_state_refs t) /\ closSem_state_compile
      s = state_cc (compile_inc c) (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = state_co (compile_inc c) (closSem_state_compile_oracle s)`;;

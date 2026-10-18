@@ -16,6 +16,8 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 
+cake_hide ["Equal"; "Greater"; "Less"];;
+
 (* HOL4 mlvectorScript.sml:10-11: a theorem that HOL4 states as the
    value of an ML expression: vector_nchotomy *)
 
@@ -320,3 +322,5 @@ let mlvector_collate_thm = cake_theorem "collate_thm"
        collate f vec1 vec2 = mllist_collate f (toList vec1)
          (toList vec2)`)
   CHEAT_TAC;;
+
+cake_hide [];;

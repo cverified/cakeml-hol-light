@@ -2,7 +2,7 @@
 (*  lab_to_target: ported from HOL4's
     compiler/backend/lab_to_targetScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 2
-    theorems.  Needed by 9 files of the port.  *)
+    theorems.  Needed by 8 files of the port.  *)
 (* ======================================================== *)
 
 (*

@@ -23,6 +23,8 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+cake_hide ["id"];;
+
 (*Useful lemmas about pure add constraints, some of these imply the others*)
 let pure_add_constraints_success =
   cake_theorem "pure_add_constraints_success"
@@ -756,3 +758,5 @@ let infer_e_complete = cake_theorem "infer_e_complete"
           t_compat s s' /\
           MAP SND env = MAP (convert_t o t_walkstar s') env')))`)
   CHEAT_TAC;;
+
+cake_hide [];;

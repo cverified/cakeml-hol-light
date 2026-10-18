@@ -159,20 +159,20 @@ hol4_field_overload "be_fupd" "stackSem_state_be_fupd";;
 let mem_store_def = cake_define
   `stackSem_mem_store (addr':'a word) (w:'a word_loc)
   (s:('a,'c,'ffi)stackSem_state) =
-     (if addr' IN state_mdomain s then
-       SOME (state_memory_fupd (K ((addr' =+ w) (state_memory s)))
-         s) else NONE)`;;
+     (if addr' IN stackSem_state_mdomain s then
+       SOME (stackSem_state_memory_fupd (K ((addr' =+ w)
+         (stackSem_state_memory s))) s) else NONE)`;;
 hol4_overload "mem_store" "stackSem_mem_store";;
 
 let mem_load_def = cake_define
   `stackSem_mem_load (addr':'a word) (s:('a,'c,'ffi)stackSem_state) =
-     (if addr' IN state_mdomain s then
-       SOME (state_memory s addr') else NONE)`;;
+     (if addr' IN stackSem_state_mdomain s then
+       SOME (stackSem_state_memory s addr') else NONE)`;;
 hol4_overload "mem_load" "stackSem_mem_load";;
 
 let dec_clock_def = cake_define
   `stackSem_dec_clock (s:('a,'c,'ffi)stackSem_state) =
-  state_clock_fupd (K (state_clock s - 1)) s`;;
+  stackSem_state_clock_fupd (K (stackSem_state_clock s - 1)) s`;;
 hol4_overload "dec_clock" "stackSem_dec_clock";;
 
 let _ = size_thms "wordLang_exp";;
@@ -218,7 +218,7 @@ hol4_overload "get_vars" "stackSem_get_vars";;
 
 let get_fp_var_def = cake_define
   `stackSem_get_fp_var v (s:('a,'c,'ffi)stackSem_state) = FLOOKUP
-  (fp_regs s) v`;;
+  (stackSem_state_fp_regs s) v`;;
 hol4_overload "get_fp_var" "stackSem_get_fp_var";;
 
 let set_var_def = cake_define
@@ -229,17 +229,19 @@ hol4_overload "set_var" "stackSem_set_var";;
 
 let set_fp_var_def = cake_define
   `stackSem_set_fp_var v x (s:('a,'c,'ffi)stackSem_state) =
-     (fp_regs_fupd (K (fp_regs s |+ (v,x))) s)`;;
+     (stackSem_state_fp_regs_fupd (K (stackSem_state_fp_regs s |+
+       (v,x))) s)`;;
 hol4_overload "set_fp_var" "stackSem_set_fp_var";;
 
 let set_store_def = cake_define
   `stackSem_set_store v x (s:('a,'c,'ffi)stackSem_state) =
-  (state_store_fupd (K (state_store s |+ (v,x))) s)`;;
+  (stackSem_state_store_fupd (K (stackSem_state_store s |+ (v,x))) s)`;;
 hol4_overload "set_store" "stackSem_set_store";;
 
 let empty_env_def = cake_define
-  `stackSem_empty_env (s:('a,'c,'ffi)stackSem_state) = stack_fupd (K
-  []) (stackSem_state_regs_fupd (K FEMPTY) s)`;;
+  `stackSem_empty_env (s:('a,'c,'ffi)stackSem_state) =
+  stackSem_state_stack_fupd (K []) (stackSem_state_regs_fupd (K
+  FEMPTY) s)`;;
 hol4_overload "empty_env" "stackSem_empty_env";;
 
 let sh_mem_store_def = cake_define
@@ -248,30 +250,30 @@ let sh_mem_store_def = cake_define
   option#('a,'c,'ffi)stackSem_state) =
    (match get_var r s with
       SOME (wordLang_Word w) ->
-        (if a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
-            [(n2w 0):word8]
+        (if a IN stackSem_state_sh_mdomain s then
+          (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+            MappedWrite) [(n2w 0):word8]
                          (word_to_bytes w F ++ word_to_bytes a F)
                            with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
-               FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
-               (K new_ffi) s)) else (SOME Error,s)) | _23 -> (SOME
-               Error,s))`;;
+               FFI_return new_ffi new_bytes ->
+               (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
+               (SOME Error,s)) | _23 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store" "stackSem_sh_mem_store";;
 
 let sh_mem_load_def = cake_define
   `(stackSem_sh_mem_load r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
-   (if a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
-       0):word8]
+   (if a IN stackSem_state_sh_mdomain s then
+     (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+       MappedRead) [(n2w 0):word8]
                     (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
-          (NONE,state_ffi_fupd (K new_ffi) (stackSem_state_regs_fupd
-            (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
-            F (n2w 0) new_bytes))))
+          (NONE,stackSem_state_ffi_fupd (K new_ffi)
+            (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
+            (r,wordLang_Word (word_of_bytes F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load" "stackSem_sh_mem_load";;
 
@@ -281,15 +283,15 @@ let sh_mem_store_byte_def = cake_define
   option#('a,'c,'ffi)stackSem_state) =
    (match get_var r s with
       SOME (wordLang_Word w) ->
-        (if byte_align a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
-            [(n2w 1):word8]
+        (if byte_align a IN stackSem_state_sh_mdomain s then
+          (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+            MappedWrite) [(n2w 1):word8]
                          ([get_byte (n2w 0) w F] ++ word_to_bytes a
                            F) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
-               FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
-               (K new_ffi) s)) else (SOME Error,s)) | _24 -> (SOME
-               Error,s))`;;
+               FFI_return new_ffi new_bytes ->
+               (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
+               (SOME Error,s)) | _24 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store_byte" "stackSem_sh_mem_store_byte";;
 
 let sh_mem_store16_def = cake_define
@@ -298,15 +300,15 @@ let sh_mem_store16_def = cake_define
   option#('a,'c,'ffi)stackSem_state) =
    (match get_var r s with
       SOME (wordLang_Word w) ->
-        (if byte_align a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
-            [(n2w 2):word8]
+        (if byte_align a IN stackSem_state_sh_mdomain s then
+          (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+            MappedWrite) [(n2w 2):word8]
                          (TAKE 2 (word_to_bytes w F) ++ word_to_bytes
                            a F) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
-               FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
-               (K new_ffi) s)) else (SOME Error,s)) | _25 -> (SOME
-               Error,s))`;;
+               FFI_return new_ffi new_bytes ->
+               (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
+               (SOME Error,s)) | _25 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store16" "stackSem_sh_mem_store16";;
 
 let sh_mem_store32_def = cake_define
@@ -315,29 +317,29 @@ let sh_mem_store32_def = cake_define
   option#('a,'c,'ffi)stackSem_state) =
    (match get_var r s with
       SOME (wordLang_Word w) ->
-        (if byte_align a IN state_sh_mdomain s then
-          (match call_FFI (state_ffi s) (ffi_SharedMem MappedWrite)
-            [(n2w 4):word8]
+        (if byte_align a IN stackSem_state_sh_mdomain s then
+          (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+            MappedWrite) [(n2w 4):word8]
                          (TAKE 4 (word_to_bytes w F) ++ word_to_bytes
                            a F) with
              FFI_final outcome -> (SOME (FinalFFI outcome),s) |
-               FFI_return new_ffi new_bytes -> (NONE,state_ffi_fupd
-               (K new_ffi) s)) else (SOME Error,s)) | _26 -> (SOME
-               Error,s))`;;
+               FFI_return new_ffi new_bytes ->
+               (NONE,stackSem_state_ffi_fupd (K new_ffi) s)) else
+               (SOME Error,s)) | _26 -> (SOME Error,s))`;;
 hol4_overload "sh_mem_store32" "stackSem_sh_mem_store32";;
 
 let sh_mem_load_byte_def = cake_define
   `(stackSem_sh_mem_load_byte r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
-   (if byte_align a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
-       1):word8] (word_to_bytes a F) with
+   (if byte_align a IN stackSem_state_sh_mdomain s then
+     (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+       MappedRead) [(n2w 1):word8] (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
-          (NONE,state_ffi_fupd (K new_ffi) (stackSem_state_regs_fupd
-            (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
-            F (n2w 0) new_bytes))))
+          (NONE,stackSem_state_ffi_fupd (K new_ffi)
+            (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
+            (r,wordLang_Word (word_of_bytes F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load_byte" "stackSem_sh_mem_load_byte";;
 
@@ -345,14 +347,14 @@ let sh_mem_load16_def = cake_define
   `(stackSem_sh_mem_load16 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
-   (if byte_align a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
-       2):word8] (word_to_bytes a F) with
+   (if byte_align a IN stackSem_state_sh_mdomain s then
+     (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+       MappedRead) [(n2w 2):word8] (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
-          (NONE,state_ffi_fupd (K new_ffi) (stackSem_state_regs_fupd
-            (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
-            F (n2w 0) new_bytes))))
+          (NONE,stackSem_state_ffi_fupd (K new_ffi)
+            (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
+            (r,wordLang_Word (word_of_bytes F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load16" "stackSem_sh_mem_load16";;
 
@@ -360,14 +362,14 @@ let sh_mem_load32_def = cake_define
   `(stackSem_sh_mem_load32 r (a:'a word)
   (s:('a,'c,'ffi)stackSem_state):('a stackSem_result)
   option#('a,'c,'ffi)stackSem_state) =
-   (if byte_align a IN state_sh_mdomain s then
-     (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead) [(n2w
-       4):word8] (word_to_bytes a F) with
+   (if byte_align a IN stackSem_state_sh_mdomain s then
+     (match call_FFI (stackSem_state_ffi s) (ffi_SharedMem
+       MappedRead) [(n2w 4):word8] (word_to_bytes a F) with
         FFI_final outcome -> (SOME (FinalFFI outcome),s) | FFI_return
           new_ffi new_bytes ->
-          (NONE,state_ffi_fupd (K new_ffi) (stackSem_state_regs_fupd
-            (K (stackSem_state_regs s |+ (r,wordLang_Word (word_of_bytes
-            F (n2w 0) new_bytes))))
+          (NONE,stackSem_state_ffi_fupd (K new_ffi)
+            (stackSem_state_regs_fupd (K (stackSem_state_regs s |+
+            (r,wordLang_Word (word_of_bytes F (n2w 0) new_bytes))))
            s))) else (SOME Error,s))`;;
 hol4_overload "sh_mem_load32" "stackSem_sh_mem_load32";;
 
@@ -472,10 +474,10 @@ let alloc_def = cake_define
   `stackSem_alloc (w:'a word) (s:('a,'c,'ffi)stackSem_state) =
        (match gc (set_store AllocSize (wordLang_Word w) s) with NONE
          -> (SOME Error,s) | SOME s ->
-          (match FLOOKUP (state_store s) AllocSize with NONE -> (SOME
-            Error,s) | SOME w ->
-            (match has_space w (state_store s) with NONE -> (SOME
-              Error,s) | SOME T ->
+          (match FLOOKUP (stackSem_state_store s) AllocSize with NONE
+            -> (SOME Error,s) | SOME w ->
+            (match has_space w (stackSem_state_store s) with NONE ->
+              (SOME Error,s) | SOME T ->
                          (NONE,s) | SOME F ->
                          (SOME (Halt (wordLang_Word ((n2w 1):'a
                            word))),stackSem_empty_env s))))`;;
@@ -554,34 +556,37 @@ let inst_def = cake_define
                (set_var r w s))) | asm_Mem asm_Load8 r (Addr a w) ->
         (match word_exp s (wordLang_Op asm_Add [Var a; Const w]) with
           SOME w ->
-            (match mem_load_byte_aux (state_memory s) (state_mdomain
-              s) (be s) w with NONE -> NONE | SOME w -> SOME (set_var r
-              (wordLang_Word (w2w w)) s)) | _36 -> NONE) | asm_Mem
-              asm_Load16 _37 _38 -> NONE | asm_Mem asm_Load32 r (Addr a
-              w) ->
+            (match mem_load_byte_aux (stackSem_state_memory s)
+              (stackSem_state_mdomain s) (stackSem_state_be s) w with
+              NONE -> NONE | SOME w -> SOME (set_var r (wordLang_Word
+              (w2w w)) s)) | _36 -> NONE) | asm_Mem asm_Load16 _37 _38
+              -> NONE | asm_Mem asm_Load32 r (Addr a w) ->
         (match word_exp s (wordLang_Op asm_Add [Var a; Const w]) with
           SOME w ->
-            (match mem_load_32 (state_memory s) (state_mdomain s) (be
-              s) w with NONE -> NONE | SOME w -> SOME (set_var r
-              (wordLang_Word (w2w w)) s)) | _39 -> NONE) | asm_Mem
-              asm_Store r (Addr a w) ->
+            (match mem_load_32 (stackSem_state_memory s)
+              (stackSem_state_mdomain s) (stackSem_state_be s) w with
+              NONE -> NONE | SOME w -> SOME (set_var r (wordLang_Word
+              (w2w w)) s)) | _39 -> NONE) | asm_Mem asm_Store r (Addr a
+              w) ->
         (match (word_exp s (wordLang_Op asm_Add [Var a; Const
           w]),get_var r s) with (SOME a,SOME w) ->
              (match mem_store a w s with SOME s1 -> SOME s1 | NONE ->
                NONE) | _40 -> NONE) | asm_Mem asm_Store8 r (Addr a w) ->
         (match (word_exp s (wordLang_Op asm_Add [Var a; Const
           w]),get_var r s) with (SOME a,SOME (wordLang_Word w)) ->
-             (match mem_store_byte_aux (state_memory s)
-               (state_mdomain s) (be s) a (w2w w) with SOME new_m ->
-               SOME (state_memory_fupd (K new_m) s) | NONE -> NONE) |
-               _41 -> NONE) | asm_Mem asm_Store16 _42 _43 -> NONE |
-               asm_Mem asm_Store32 r (Addr a w) ->
+             (match mem_store_byte_aux (stackSem_state_memory s)
+               (stackSem_state_mdomain s) (stackSem_state_be s) a (w2w
+               w) with SOME new_m -> SOME (stackSem_state_memory_fupd (K
+               new_m) s) | NONE -> NONE) | _41 -> NONE) | asm_Mem
+               asm_Store16 _42 _43 -> NONE | asm_Mem asm_Store32 r (Addr
+               a w) ->
         (match (word_exp s (wordLang_Op asm_Add [Var a; Const
           w]),get_var r s) with (SOME a,SOME (wordLang_Word w)) ->
-             (match mem_store_32 (state_memory s) (state_mdomain s)
-               (be s) a (w2w w) with SOME new_m -> SOME
-               (state_memory_fupd (K new_m) s) | NONE -> NONE) | _44 ->
-               NONE) | asm_FP (FPLess r d1 d2) ->
+             (match mem_store_32 (stackSem_state_memory s)
+               (stackSem_state_mdomain s) (stackSem_state_be s) a (w2w
+               w) with SOME new_m -> SOME (stackSem_state_memory_fupd (K
+               new_m) s) | NONE -> NONE) | _44 -> NONE) | asm_FP (FPLess
+               r d1 d2) ->
        (match (get_fp_var d1 s,get_fp_var d2 s) with (SOME f1,SOME
          f2) ->
          SOME (set_var r
@@ -770,15 +775,15 @@ let store_const_sem_def = cake_define
          (wordLang_Word i),SOME (wordLang_Word a),SOME (wordLang_Word
          off)) ->
            (match copy_words (w2n i) a off (stackSem_state_bitmaps s)
-             (state_mdomain s) (state_memory s) with NONE -> (SOME
-             Error,s) | SOME (a,m) -> (NONE,
+             (stackSem_state_mdomain s) (stackSem_state_memory s) with
+             NONE -> (SOME Error,s) | SOME (a,m) -> (NONE,
                (if stackSem_state_use_alloc s then unset_var 0 else
                  I)
                  (set_var t1 (wordLang_Word (n2w 1)) (set_var t2
                    (wordLang_Word (n2w 1))
                    (set_var 1 (wordLang_Word (n2w 1)) (set_var 2
-                     (wordLang_Word a) (state_memory_fupd (K m)
-                     s))))))) | _68 -> (SOME Error,s))`;;
+                     (wordLang_Word a) (stackSem_state_memory_fupd (K
+                     m) s))))))) | _68 -> (SOME Error,s))`;;
 
 let check_store_consts_opt_def = cake_define_list
   [`check_store_consts_opt t1 t2 NONE _69 = T`;
@@ -846,7 +851,7 @@ let _ = size_thms "stackLang_prog";;
 let evaluate_def = cake_define_list_try_tac (fun () ->
   `(inv_image (MEASURE I LEX MEASURE (stackLang_prog_size (K 0)))
                               (\(xs,(s:('a,'c,'ffi)stackSem_state)).
-                              (state_clock s,xs)))`)
+                              (stackSem_state_clock s,xs)))`)
   CHEAT_TAC
   [`stackSem_evaluate ((Skip:'a stackLang_prog),s) =
   (NONE,(s:('a,'c,'ffi)stackSem_state))`;
@@ -1188,7 +1193,7 @@ hol4_overload "semantics" "stackSem_semantics";;
 (* record accessors *)
 
 let read_stack_def = cake_define
-  `read_stack s = stack (s:('a,'b,'c)stackSem_state)`;;
+  `read_stack s = stackSem_state_stack (s:('a,'b,'c)stackSem_state)`;;
 
 let read_stack_space_def = cake_define
   `read_stack_space s = stackSem_state_stack_space

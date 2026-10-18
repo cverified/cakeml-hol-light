@@ -58,6 +58,8 @@ needs "compiler/backend/clos_number.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (* HOL4 clos_to_bvlScript.sml:50-51: a theorem that HOL4 states as
    the value of an ML expression: partial_app_tag_neq_closure_tag *)
 
@@ -999,3 +1001,5 @@ let clos_to_bvl_compile_inc_def = cake_define
      let p = clos_to_bvl_compile_inc' (clos_to_bvl_config_max_app c)
        p in
        (c,p))`;;
+
+cake_hide [];;

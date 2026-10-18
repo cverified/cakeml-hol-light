@@ -19,6 +19,8 @@ needs "misc/misc.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+cake_hide ["return"];;
+
 (* HOL4 linear_scanProofScript.sml:12-13: ML code, not ported *)
 
 hol4_overload "++" "otherwise";;
@@ -2547,3 +2549,5 @@ let linear_scan_reg_alloc_correct =
   CHEAT_TAC;;
 
 hol4_only "++" "APPEND";;
+
+cake_hide [];;

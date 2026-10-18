@@ -18,7 +18,7 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/typeSystem.ml";;
 
-cake_hide ["all"];;
+cake_hide ["all"; "id"];;
 
 (* TODO: move *)
 
@@ -562,14 +562,8 @@ let inj_ts_tid_rename_eq = cake_theorem "inj_ts_tid_rename_eq"
       (ts_tid_rename f t1 = ts_tid_rename f t2) ==> t1 = t2`)
   CHEAT_TAC;;
 
-(* probably not be true because of shadows...
-Theorem remap_tenv_LINVI
-  `INJ f s t ∧ set_tids_tenv s tenv ⇒
-   remap_tenv (LINVI f s) (remap_tenv f tenv) = tenv`
-  (rw[remap_tenv_def, type_env_component_equality,
-     nsMap_compose, o_DEF, UNCURRY, MAP_MAP_o,
-     set_tids_tenv_def]
-*)
+(* HOL4 type_dCanonScript.sml:938-945: code that the source has in a
+   comment *)
 
 let type_p_ts_tid_rename_sing_renum =
   cake_theorem "type_p_ts_tid_rename_sing_renum[local]"
@@ -668,17 +662,8 @@ let build_ctor_tenv_type_identities =
      (build_ctor_tenv tenvt xs type_identities)`)
   CHEAT_TAC;;
 
-(*
-Theorem type_d_canon_tenv_equiv
-  `(∀x t d c v. type_d_canon x t d c v ⇒
-      ∀v2. tenv_equiv v v2 ⇒ type_d_canon x t d c v2) ∧
-   (∀x t d c v. type_ds_canon x t d c v ⇒
-      ∀v2. tenv_equiv v v2 ⇒ type_ds_canon x t d c v2)`
-  (ho_match_mp_tac type_d_canon_ind
-  \\ rw[]
-  \\ rw[Once type_d_canon_cases]
-  type_d_canon_rules
-*)
+(* HOL4 type_dCanonScript.sml:1173-1183: code that the source has in
+   a comment *)
 
 let DISJOINT_CARD_UNION = cake_theorem "DISJOINT_CARD_UNION"
   (fun () ->

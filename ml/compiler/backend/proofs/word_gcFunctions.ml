@@ -22,6 +22,8 @@ needs "lib/byte.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["shift"];;
+
 (* HOL4 word_gcFunctionsScript.sml:12: ML code, not ported *)
 
 (* move candidates *)
@@ -776,3 +778,5 @@ let word_gc_fun_has_fp_ops = cake_theorem "word_gc_fun_has_fp_ops[simp]"
   (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = word_gc_fun
   conf`)
   CHEAT_TAC;;
+
+cake_hide [];;

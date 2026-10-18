@@ -29,7 +29,7 @@ needs "lib/sptree.ml";;
 needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 
-cake_hide ["C"; "num_from_hex_string"; "num_to_hex_string"];;
+cake_hide ["C"; "num_cmp"; "num_from_hex_string"; "num_to_hex_string"];;
 (* HOL4 ancestors outside the port: alist arithmetic blast bag combin
    container list pred_set finite_map rich_list llist option pair
    relation bit words string address path res_quan *)

@@ -24,6 +24,8 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 let dest_simple_def = cake_define
   `dest_simple x1 =
         match x1 with
@@ -378,3 +380,5 @@ hol4_overload "compile_exp" "bvl_const_compile_exp";;
 
 (* HOL4 bvl_constScript.sml:397: a theorem that HOL4 states as the
    value of an ML expression: compile_exp_eq *)
+
+cake_hide [];;

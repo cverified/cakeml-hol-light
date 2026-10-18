@@ -26,6 +26,8 @@
 needs "compiler/backend/backend_common.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["id"; "pmatch"];;
+
 (* Most ops are inherited from ast$op via the Src wrapper.
  * GlobalVar ops, TagLenEq, LenEq, El, and Id are flatLang-specific. *)
 let flatLang_op_INDUCT,flatLang_op_RECURSION = define_datatype
@@ -148,3 +150,5 @@ let SmartIf_PMATCH = cake_theorem "SmartIf_PMATCH"
                  then q else If t e p q else If t e p q) | _6 -> If t
                  e p q)`)
   CHEAT_TAC;;
+
+cake_hide [];;

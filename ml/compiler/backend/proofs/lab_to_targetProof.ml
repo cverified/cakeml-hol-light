@@ -36,7 +36,7 @@ needs "semantics/proofs/evaluateProps.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["contain"];;
+cake_hide ["contain"; "failed"; "invariant"; "not"];;
 
 (* HOL4 lab_to_targetProofScript.sml:16: ML code, not ported *)
 
@@ -106,14 +106,15 @@ let enc_with_nop_thm = cake_theorem "enc_with_nop_thm[local]"
 
 let asm_step_nop_def = cake_define
   `asm_step_nop bytes c s1 i s2 <=>
-     bytes_in_memory (pc s1) bytes (mem s1) (mem_domain s1) /\
+     bytes_in_memory (labSem_state_pc s1) bytes (labSem_state_mem s1)
+       (labSem_state_mem_domain s1) /\
      enc_with_nop (asm_config_encode c) i bytes /\
-     (match link_reg c with NONE -> T | SOME r -> asm_state_lr s1 =
-       r) /\
-     (be s1 <=> asm_config_big_endian c) /\ asm_state_align s1 =
-       asm_config_code_alignment c /\
-     asmSem_asm i (pc s1 + n2w (LENGTH bytes)) s1 = s2 /\ ~(failed
-       s2) /\
+     (match link_reg c with NONE -> T | SOME r -> labSem_state_lr s1
+       = r) /\
+     (labSem_state_be s1 <=> asm_config_big_endian c) /\
+       labSem_state_align s1 = asm_config_code_alignment c /\
+     asmSem_asm i (labSem_state_pc s1 + n2w (LENGTH bytes)) s1 = s2
+       /\ ~(failed s2) /\
      asm_ok i c`;;
 
 (* HOL4 lab_to_targetProofScript.sml:125-130: ML code, not ported *)
@@ -125,7 +126,7 @@ let shift_interfer_0 = cake_theorem "shift_interfer_0[local]"
 
 let upd_pc_with_pc = cake_theorem "upd_pc_with_pc[local]"
   (fun () ->
-    `upd_pc (pc s1) s1 = (s1:'a asm_state)`)
+    `upd_pc (asm_state_pc s1) s1 = (s1:'a asm_state)`)
   CHEAT_TAC;;
 
 let shift_interfer_twice = cake_theorem "shift_interfer_twice[simp]"
@@ -139,23 +140,24 @@ let evaluate_nop_steps = cake_theorem "evaluate_nop_steps[local]"
     `!n s1 ms1 c.
          encoder_correct (machine_config_target c) /\
            machine_config_prog_addresses
-         c = mem_domain s1 /\
+         c = asm_state_mem_domain s1 /\
          ffi_entry_pcs_disjoint c s1
            (n * LENGTH (asm_config_encode (target_config
              (machine_config_target c)) (Inst asm_Skip))) /\
          interference_ok (machine_config_next_interfer c)
-           (target_proj (machine_config_target c) (mem_domain s1)) /\
-         bytes_in_memory (pc s1)
+           (target_proj (machine_config_target c) (asm_state_mem_domain
+           s1)) /\
+         bytes_in_memory (asm_state_pc s1)
            (FLAT (REPLICATE n (asm_config_encode (target_config
-             (machine_config_target c)) (Inst asm_Skip)))) (mem s1)
-             (mem_domain
+             (machine_config_target c)) (Inst asm_Skip))))
+             (asm_state_mem s1) (asm_state_mem_domain
            s1) /\
          (match link_reg (target_config (machine_config_target c))
            with NONE -> T | SOME r -> asm_state_lr s1 = r) /\
-         (be s1 <=> asm_config_big_endian (target_config
+         (asm_state_be s1 <=> asm_config_big_endian (target_config
            (machine_config_target c))) /\ asm_state_align
          s1 = asm_config_code_alignment (target_config
-           (machine_config_target c)) /\ ~(failed s1) /\
+           (machine_config_target c)) /\ ~(asm_state_failed s1) /\
          target_state_rel (machine_config_target c) (s1:'a
            asm_state) (ms1:'state) ==>
          (?l ms2.
@@ -167,7 +169,7 @@ let evaluate_nop_steps = cake_theorem "evaluate_nop_steps[local]"
                 /\
              target_state_rel (machine_config_target c)
                (upd_pc
-                 (pc s1 +
+                 (asm_state_pc s1 +
                   n2w (n * LENGTH (asm_config_encode (target_config
                     (machine_config_target c)) (Inst asm_Skip)))) s1)
                ms2)`)
@@ -188,14 +190,17 @@ let asm_step_IMP_evaluate_step_nop =
     `!c s1 ms1 io i s2 bytes.
         encoder_correct (machine_config_target c) /\
           machine_config_prog_addresses
-        c = mem_domain s1 /\
+        c = asm_state_mem_domain s1 /\
         ffi_entry_pcs_disjoint c s1 (LENGTH bytes) /\
         interference_ok (machine_config_next_interfer c)
-          (target_proj (machine_config_target c) (mem_domain s1)) /\
-        bytes_in_memory (pc s1) bytes (mem s2) (mem_domain s1) /\
+          (target_proj (machine_config_target c) (asm_state_mem_domain
+          s1)) /\
+        bytes_in_memory (asm_state_pc s1) bytes (mem s2)
+          (asm_state_mem_domain s1) /\
         asm_step_nop bytes (target_config (machine_config_target
           c)) s1 i s2 /\
-        s2 = asmSem_asm i (pc s1 + n2w (LENGTH bytes)) s1 /\
+        s2 = asmSem_asm i (asm_state_pc s1 + n2w (LENGTH bytes)) s1
+          /\
         target_state_rel (machine_config_target c) (s1:'a
           asm_state) (ms1:'state) /\
         (!x. ~(i = Call x)) ==>
@@ -525,14 +530,16 @@ let share_mem_domain_code_rel_def = cake_define
      (!pc' op re a inst' len i.
          (asm_fetch_aux pc' code2 = SOME (labLang_Asm (ShareMem op re
            a) inst' len) /\
-         mmio_pcs_min_index (ffi_names mc_conf) = SOME i) ==>
+         mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+           i) ==>
          (?index.
            i <= index /\
            find_index (p + n2w (pos_val pc' 0 code2))
              (machine_config_ffi_entry_pcs mc_conf) 0 =
              SOME index /\
            (let (name,nb) = get_memop_info op in
-             EL index (ffi_names mc_conf) = ffi_SharedMem name /\
+             EL index (machine_config_ffi_names mc_conf) =
+               ffi_SharedMem name /\
              (
               ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
                 (nb,a,re,p + n2w (pos_val pc' 0 code2 + len)))))) /\
@@ -553,18 +560,22 @@ let share_mem_state_rel_def = cake_define
   `share_mem_state_rel mc_conf
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
       (!ms2 k index new_bytes t1 nb ad offs re pc' ad' st new_st i.
-       mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
-       i <= index /\ index < LENGTH (ffi_names mc_conf) /\ RTC
-       call_FFI_rel (state_ffi s1) st /\
+       mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
+         /\
+       i <= index /\ index < LENGTH (machine_config_ffi_names
+         mc_conf) /\ RTC
+       call_FFI_rel (labSem_state_ffi s1) st /\
        ALOOKUP (machine_config_mmio_info mc_conf) index = SOME
          (nb,Addr ad offs,re,pc') /\
-       (machine_config_prog_addresses mc_conf = mem_domain t1) /\
+       (machine_config_prog_addresses mc_conf = asm_state_mem_domain
+         t1) /\
        ad' = target_get_reg (machine_config_target mc_conf) ms2 ad +
          offs /\
        target_state_rel (machine_config_target mc_conf)
-         (pc_fupd (K (EL index (machine_config_ffi_entry_pcs
-           mc_conf))) t1) ms2 ==>
-       (?op. EL index (ffi_names mc_conf) = ffi_SharedMem op /\
+         (asm_state_pc_fupd (K (EL index
+           (machine_config_ffi_entry_pcs mc_conf))) t1) ms2 ==>
+       (?op. EL index (machine_config_ffi_names mc_conf) =
+         ffi_SharedMem op /\
           (match op with MappedRead ->
           ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
             = 0 else T) /\
@@ -578,9 +589,10 @@ let share_mem_state_rel_def = cake_define
             (word_to_bytes ad' F) =
             FFI_return new_st new_bytes ==>
            target_state_rel (machine_config_target mc_conf)
-             (regs_fupd (K (\n. if n = re then
-                    (word_of_bytes F (n2w 0) new_bytes) else regs t1
-                      n)) (pc_fupd (K pc') t1))
+             (asm_state_regs_fupd (K (\n. if n = re then
+                    (word_of_bytes F (n2w 0) new_bytes) else
+                      asm_state_regs t1 n)) (asm_state_pc_fupd (K pc')
+                      t1))
                (machine_config_ffi_interfer mc_conf k
                  (index,new_bytes,ms2))) | MappedWrite ->
           ((if nb = (n2w 0) then (w2n ad' MOD (dimindex (:'a) DIV 8))
@@ -600,12 +612,13 @@ let share_mem_state_rel_def = cake_define
                  F)) =
            FFI_return new_st new_bytes ==>
            target_state_rel (machine_config_target mc_conf)
-             (pc_fupd (K pc') t1)
+             (asm_state_pc_fupd (K pc') t1)
              (machine_config_ffi_interfer mc_conf k
                (index,new_bytes,ms2)))))) /\
-    (!index i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
-       index < LENGTH (ffi_names mc_conf) /\ i <= index ==>
-         ~(machine_config_halt_pc
+    (!index i. mmio_pcs_min_index (machine_config_ffi_names mc_conf)
+      = SOME i /\
+       index < LENGTH (machine_config_ffi_names mc_conf) /\ i <=
+         index ==> ~(machine_config_halt_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs mc_conf)))
          /\ ~(machine_config_ccache_pc
        mc_conf = (EL index (machine_config_ffi_entry_pcs
@@ -625,44 +638,44 @@ let no_install_or_no_share_mem_def = cake_define
 let oracle_tie_def = cake_define
   `oracle_tie (mc_conf:('a,'state,'b)machine_config) ms
   (s1:('a,'c,'ffi)labSem_state) <=> labSem_state_io_regs
-     s1 = target_io_regs mc_conf (state_ffi s1) ms /\
+     s1 = target_io_regs mc_conf (labSem_state_ffi s1) ms /\
        labSem_state_io_fp_regs
-     s1 = target_io_fp_regs mc_conf (state_ffi s1) ms /\
+     s1 = target_io_fp_regs mc_conf (labSem_state_ffi s1) ms /\
        labSem_state_cc_regs
-     s1 = target_cc_regs mc_conf (state_ffi s1) ms /\
+     s1 = target_cc_regs mc_conf (labSem_state_ffi s1) ms /\
        labSem_state_cc_fp_regs
-     s1 = target_cc_fp_regs mc_conf (state_ffi s1) ms`;;
+     s1 = target_cc_fp_regs mc_conf (labSem_state_ffi s1) ms`;;
 
 let oracle_tie_shift_interfer = cake_theorem "oracle_tie_shift_interfer"
   (fun () ->
     `oracle_tie mc_conf ms1 s1 /\
-     (!k. find_next_interference mc_conf (state_ffi s1) (k + l) ms1
-       =
+     (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k +
+       l) ms1 =
           find_next_interference (shift_interfer l mc_conf)
-            (state_ffi s1) k ms2) ==>
+            (labSem_state_ffi s1) k ms2) ==>
      oracle_tie (shift_interfer l mc_conf) ms2 s1`)
   CHEAT_TAC;;
 
 let oracle_tie_step = cake_theorem "oracle_tie_step"
   (fun () ->
     `oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
-     (!k. find_next_interference mc_conf (state_ffi s1) (k + l) ms1
-       =
+     (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k +
+       l) ms1 =
           find_next_interference (shift_interfer l mc_conf)
-            (state_ffi s1) k ms2) /\ labSem_state_io_regs
+            (labSem_state_ffi s1) k ms2) /\ labSem_state_io_regs
      (s2:('a,'c,'ffi)labSem_state) = labSem_state_io_regs s1 /\
        labSem_state_io_fp_regs
      s2 = labSem_state_io_fp_regs s1 /\ labSem_state_cc_regs
      s2 = labSem_state_cc_regs s1 /\ labSem_state_cc_fp_regs s2 =
-       labSem_state_cc_fp_regs s1 /\ state_ffi
-     s2 = state_ffi s1 ==>
+       labSem_state_cc_fp_regs s1 /\ labSem_state_ffi
+     s2 = labSem_state_ffi s1 ==>
      oracle_tie (shift_interfer l mc_conf) ms2 s2`)
   CHEAT_TAC;;
 
 let oracle_tie_ffi_step = cake_theorem "oracle_tie_ffi_step"
   (fun () ->
     `oracle_tie mc_conf ms1 s1 /\
-     next_interference mc_conf (state_ffi s1) ms1 =
+     next_interference mc_conf (labSem_state_ffi s1) ms1 =
        SOME (FfiApp index new_bytes ms_pre ms_post,mc',ffi') ==>
      (!name r. labSem_state_io_regs
         s1 0 name r =
@@ -687,12 +700,12 @@ let oracle_tie_ffi_step = cake_theorem "oracle_tie_ffi_step"
 let oracle_tie_ccache_step = cake_theorem "oracle_tie_ccache_step"
   (fun () ->
     `oracle_tie mc_conf ms1 s1 /\
-     next_interference mc_conf (state_ffi s1) ms1 =
+     next_interference mc_conf (labSem_state_ffi s1) ms1 =
        SOME (CcApp a1 a2 ms_pre ms_post,mc',ffi') ==>
      (!r. labSem_state_cc_regs
         s1 0 r =
           (if MEM r (machine_config_callee_saved_regs mc_conf) \/ r
-            = ptr_reg mc_conf \/
+            = machine_config_ptr_reg mc_conf \/
              ~(r < asm_config_reg_count (target_config
                (machine_config_target mc_conf))) \/
              MEM r (asm_config_avoid_regs (target_config
@@ -713,7 +726,7 @@ let oracle_tie_ccache_step = cake_theorem "oracle_tie_ccache_step"
 let oracle_tie_ffi_next = cake_theorem "oracle_tie_ffi_next"
   (fun () ->
     `oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
-     next_interference mc_conf (state_ffi s1) ms1 =
+     next_interference mc_conf (labSem_state_ffi s1) ms1 =
        SOME (FfiApp index new_bytes ms_pre ms_post,mc',ffi') /\
          labSem_state_io_regs
      (s2:('a,'c,'ffi)labSem_state) = misc_shift_seq 1
@@ -721,7 +734,7 @@ let oracle_tie_ffi_next = cake_theorem "oracle_tie_ffi_next"
      s2 = misc_shift_seq 1 (labSem_state_io_fp_regs s1) /\
        labSem_state_cc_regs
      s2 = labSem_state_cc_regs s1 /\ labSem_state_cc_fp_regs s2 =
-       labSem_state_cc_fp_regs s1 /\ state_ffi
+       labSem_state_cc_fp_regs s1 /\ labSem_state_ffi
      s2 = ffi' ==>
      oracle_tie mc' ms_post s2`)
   CHEAT_TAC;;
@@ -729,7 +742,7 @@ let oracle_tie_ffi_next = cake_theorem "oracle_tie_ffi_next"
 let oracle_tie_ccache_next = cake_theorem "oracle_tie_ccache_next"
   (fun () ->
     `oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
-     next_interference mc_conf (state_ffi s1) ms1 =
+     next_interference mc_conf (labSem_state_ffi s1) ms1 =
        SOME (CcApp a1 a2 ms_pre ms_post,mc',ffi') /\
          labSem_state_cc_regs
      (s2:('a,'c,'ffi)labSem_state) = misc_shift_seq 1
@@ -737,7 +750,7 @@ let oracle_tie_ccache_next = cake_theorem "oracle_tie_ccache_next"
      s2 = misc_shift_seq 1 (labSem_state_cc_fp_regs s1) /\
        labSem_state_io_regs
      s2 = labSem_state_io_regs s1 /\ labSem_state_io_fp_regs s2 =
-       labSem_state_io_fp_regs s1 /\ state_ffi
+       labSem_state_io_fp_regs s1 /\ labSem_state_ffi
      s2 = ffi' ==>
      oracle_tie mc' ms_post s2`)
   CHEAT_TAC;;
@@ -747,12 +760,12 @@ let oracle_tie_ExtCall_residues =
   (fun () ->
     `!mc_conf ms1 s1 ms2 l index name bytes bytes2 new_ffi new_bytes t1.
      oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
-     (!k. find_next_interference mc_conf (state_ffi s1) (k + l) ms1
-       =
+     (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k +
+       l) ms1 =
           find_next_interference
             (machine_config_next_interfer_fupd (K (misc_shift_seq l
               (machine_config_next_interfer mc_conf))) mc_conf)
-              (state_ffi
+              (labSem_state_ffi
             s1) k ms2) /\ ~(target_get_pc (machine_config_target
      mc_conf) ms2 IN machine_config_prog_addresses mc_conf DIFF
        set_of_list (machine_config_ffi_entry_pcs mc_conf)) /\
@@ -762,19 +775,21 @@ let oracle_tie_ExtCall_residues =
      mc_conf) ms2 = machine_config_ccache_pc mc_conf) /\
      find_index (target_get_pc (machine_config_target mc_conf) ms2)
        (machine_config_ffi_entry_pcs mc_conf) 0 = SOME index /\
-     EL index (ffi_names mc_conf) = ffi_ExtCall name /\
+     EL index (machine_config_ffi_names mc_conf) = ffi_ExtCall name
+       /\
      ALOOKUP (machine_config_mmio_info mc_conf) index = NONE /\
      read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
-     call_FFI (state_ffi s1) (ffi_ExtCall name) bytes bytes2 =
-       FFI_return new_ffi new_bytes ==>
+     call_FFI (labSem_state_ffi s1) (ffi_ExtCall name) bytes bytes2
+       = FFI_return new_ffi new_bytes ==>
      (\a. get_reg_value (labSem_state_io_regs s1 0 (ffi_ExtCall
-       name) a) (regs t1 a) I) =
+       name) a) (asm_state_regs t1 a) I) =
        (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
                ~(a < asm_config_reg_count (target_config
                  (machine_config_target mc_conf))) \/
                MEM a (asm_config_avoid_regs (target_config
-                 (machine_config_target mc_conf))) then regs t1 a else
-                 target_get_reg (machine_config_target mc_conf)
+                 (machine_config_target mc_conf))) then asm_state_regs
+                 t1 a else target_get_reg (machine_config_target
+                 mc_conf)
                    (machine_config_ffi_interfer mc_conf 0
                      (index,new_bytes,ms2)) a) /\
      (\n. labSem_state_io_fp_regs s1 0 n) =
@@ -791,84 +806,98 @@ let state_rel_def = cake_define
   (s1:('a,lab_to_target_config,'ffi)labSem_state) t1 ms1 <=>
      target_state_rel (machine_config_target mc_conf) t1 ms1 /\
        good_dimindex (:'a) /\
-     (machine_config_prog_addresses mc_conf = mem_domain t1) /\
+     (machine_config_prog_addresses mc_conf = asm_state_mem_domain
+       t1) /\
      ~(machine_config_halt_pc mc_conf IN
        machine_config_prog_addresses mc_conf) /\
      ~(machine_config_ccache_pc mc_conf IN
        machine_config_prog_addresses mc_conf) /\
-     reg_ok (ptr_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (ptr_reg mc_conf = ptr_reg s1) /\
-     reg_ok (len_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (len_reg mc_conf = len_reg s1) /\
-     reg_ok (ptr2_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (ptr2_reg mc_conf = ptr2_reg s1) /\
-     reg_ok (len2_reg s1) (target_config (machine_config_target
-       mc_conf)) /\ (len2_reg mc_conf = len2_reg s1) /\
-     reg_ok (link_reg s1) (target_config (machine_config_target
-       mc_conf)) /\
-     (?i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
-          (!index. if i <= index /\ index < LENGTH (ffi_names
-            mc_conf) then ?info. ALOOKUP (machine_config_mmio_info
-            mc_conf) index = SOME info else ALOOKUP
-            (machine_config_mmio_info mc_conf) index = NONE)) /\
+     reg_ok (labSem_state_ptr_reg s1) (target_config
+       (machine_config_target mc_conf)) /\ (machine_config_ptr_reg
+       mc_conf = labSem_state_ptr_reg s1) /\
+     reg_ok (labSem_state_len_reg s1) (target_config
+       (machine_config_target mc_conf)) /\ (machine_config_len_reg
+       mc_conf = labSem_state_len_reg s1) /\
+     reg_ok (labSem_state_ptr2_reg s1) (target_config
+       (machine_config_target mc_conf)) /\ (machine_config_ptr2_reg
+       mc_conf = labSem_state_ptr2_reg s1) /\
+     reg_ok (labSem_state_len2_reg s1) (target_config
+       (machine_config_target mc_conf)) /\ (machine_config_len2_reg
+       mc_conf = labSem_state_len2_reg s1) /\
+     reg_ok (labSem_state_link_reg s1) (target_config
+       (machine_config_target mc_conf)) /\
+     (?i. mmio_pcs_min_index (machine_config_ffi_names mc_conf) =
+       SOME i /\
+          (!index. if i <= index /\ index < LENGTH
+            (machine_config_ffi_names mc_conf) then ?info. ALOOKUP
+            (machine_config_mmio_info mc_conf) index = SOME info else
+            ALOOKUP (machine_config_mmio_info mc_conf) index = NONE)) /\
      (!ms2 k index new_bytes t1 bytes bytes2 st new_st i.
-        mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+        mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+          i /\
         index < i /\
         read_ffi_bytearrays mc_conf ms2 = (SOME bytes,SOME bytes2) /\
           RTC
-        call_FFI_rel (state_ffi s1) st /\
-        call_FFI st (EL index (ffi_names mc_conf)) bytes bytes2 =
-          FFI_return new_st new_bytes /\
-        (machine_config_prog_addresses mc_conf = mem_domain t1) /\
+        call_FFI_rel (labSem_state_ffi s1) st /\
+        call_FFI st (EL index (machine_config_ffi_names mc_conf))
+          bytes bytes2 = FFI_return new_st new_bytes /\
+        (machine_config_prog_addresses mc_conf = asm_state_mem_domain
+          t1) /\
         target_state_rel (machine_config_target mc_conf)
-          (pc_fupd (K (p - n2w ((3 + index) * ffi_offset))) t1) ms2
-            /\
+          (asm_state_pc_fupd (K (p - n2w ((3 + index) * ffi_offset)))
+            t1) ms2 /\
         alignment_aligned (asm_config_code_alignment (target_config
-          (machine_config_target mc_conf))) (regs t1 (link_reg s1)) ==>
+          (machine_config_target mc_conf))) (asm_state_regs t1
+          (labSem_state_link_reg s1)) ==>
         (let ms' = machine_config_ffi_interfer mc_conf k
           (index,new_bytes,ms2) in
            target_state_rel (machine_config_target mc_conf)
-             (pc_fupd (K (regs t1 (link_reg s1))) (mem_fupd (K
-               (asm_write_bytearray (regs t1 (ptr2_reg s1)) new_bytes
-               (mem t1))) (fp_regs_fupd (K (\n. target_get_fp_reg
-               (machine_config_target mc_conf) ms' n)) (regs_fupd (K
-               (\a. if MEM a (machine_config_callee_saved_regs mc_conf)
-               \/
+             (asm_state_pc_fupd (K (asm_state_regs t1
+               (labSem_state_link_reg s1))) (asm_state_mem_fupd (K
+               (asm_write_bytearray (asm_state_regs t1
+               (labSem_state_ptr2_reg s1)) new_bytes (asm_state_mem
+               t1))) (asm_state_fp_regs_fupd (K (\n. target_get_fp_reg
+               (machine_config_target mc_conf) ms' n))
+               (asm_state_regs_fupd (K (\a. if MEM a
+               (machine_config_callee_saved_regs mc_conf) \/
                               ~(a < asm_config_reg_count
                                 (target_config (machine_config_target
                                 mc_conf))) \/
                               MEM a (asm_config_avoid_regs
                                 (target_config (machine_config_target
-                                mc_conf))) then regs t1 a else
+                                mc_conf))) then asm_state_regs t1 a else
                                 target_get_reg (machine_config_target
                                 mc_conf) ms' a)) t1))))
              ms')) /\
      (!ms2 t1 k a1 a2.
        target_state_rel (machine_config_target mc_conf)
-         (pc_fupd (K (p - n2w ((2 * ffi_offset)))) t1) ms2 /\
+         (asm_state_pc_fupd (K (p - n2w ((2 * ffi_offset)))) t1) ms2
+           /\
        alignment_aligned (asm_config_code_alignment (target_config
-         (machine_config_target mc_conf))) (regs t1 (link_reg s1)) ==>
+         (machine_config_target mc_conf))) (asm_state_regs t1
+         (labSem_state_link_reg s1)) ==>
        (let ms' = machine_config_ccache_interfer mc_conf k
          (a1,a2,ms2) in
           target_state_rel (machine_config_target mc_conf)
-            (pc_fupd (K (regs t1 (link_reg s1))) (fp_regs_fupd (K
+            (asm_state_pc_fupd (K (asm_state_regs t1
+              (labSem_state_link_reg s1))) (asm_state_fp_regs_fupd (K
               (\n. target_get_fp_reg (machine_config_target mc_conf) ms'
-              n)) (regs_fupd (K (\a. if MEM a
+              n)) (asm_state_regs_fupd (K (\a. if MEM a
               (machine_config_callee_saved_regs mc_conf) \/
-                              a = ptr_reg s1 \/
+                              a = labSem_state_ptr_reg s1 \/
                               ~(a < asm_config_reg_count
                                 (target_config (machine_config_target
                                 mc_conf))) \/
                               MEM a (asm_config_avoid_regs
                                 (target_config (machine_config_target
-                                mc_conf))) then regs t1 a else
+                                mc_conf))) then asm_state_regs t1 a else
                                 target_get_reg (machine_config_target
                                 mc_conf) ms' a)) t1)))
-            ms')) /\ compile
+            ms')) /\ labSem_state_compile
      s1 = compile_lab (target_config (machine_config_target mc_conf))
        /\
      (no_share_mem_inst code2 ==> (!k. let (cfg,code) =
-       compile_oracle s1 k in
+       labSem_state_compile_oracle s1 k in
              lab_to_targetProof_good_code (target_config
                (machine_config_target mc_conf))
                (lab_to_target_config_labels cfg) code /\
@@ -876,96 +905,110 @@ let state_rel_def = cake_define
              (k = 0 ==> lab_to_target_config_labels
              cfg = labs /\ lab_to_target_config_pos
              cfg = LENGTH (prog_to_bytes code2) /\ ffi_names
-             cfg = SOME (ffi_names mc_conf)))) /\
+             cfg = SOME (machine_config_ffi_names mc_conf)))) /\
      (!l1 l2 x.
         (lab_lookup l1 l2 labs = SOME x) ==> EVEN x) /\
      (((n2w 1) && p) = (n2w 0)) /\
      (list_subset
        (FILTER (\x. ?s. x = ffi_ExtCall s) (find_ffi_names
-         (state_code s1))) (ffi_names
+         (labSem_state_code s1))) (machine_config_ffi_names
        mc_conf)) /\
      EVEN (LENGTH (prog_to_bytes code2)) /\
      (!name i.
-         MEM name (ffi_names mc_conf) /\
-         mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
-         get_ffi_index (ffi_names mc_conf) name < i ==>
+         MEM name (machine_config_ffi_names mc_conf) /\
+         mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+           i /\
+         get_ffi_index (machine_config_ffi_names mc_conf) name < i
+           ==>
          (?s. name = ffi_ExtCall s) /\
-        ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
-          ffi_offset) IN machine_config_prog_addresses mc_conf) /\
-        ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
-          ffi_offset) = machine_config_halt_pc mc_conf) /\
-        ~(p - n2w ((3 + get_ffi_index (ffi_names mc_conf) name) *
-          ffi_offset) = machine_config_ccache_pc mc_conf) /\
-        (find_index (p - n2w ((3 + get_ffi_index (ffi_names mc_conf)
-          name) * ffi_offset)) (machine_config_ffi_entry_pcs
-                    mc_conf) 0 = SOME (get_ffi_index (ffi_names
-                      mc_conf) name))) /\
+        ~(p - n2w ((3 + get_ffi_index (machine_config_ffi_names
+          mc_conf) name) * ffi_offset) IN machine_config_prog_addresses
+          mc_conf) /\
+        ~(p - n2w ((3 + get_ffi_index (machine_config_ffi_names
+          mc_conf) name) * ffi_offset) = machine_config_halt_pc mc_conf)
+          /\
+        ~(p - n2w ((3 + get_ffi_index (machine_config_ffi_names
+          mc_conf) name) * ffi_offset) = machine_config_ccache_pc
+          mc_conf) /\
+        (find_index (p - n2w ((3 + get_ffi_index
+          (machine_config_ffi_names mc_conf) name) * ffi_offset))
+          (machine_config_ffi_entry_pcs
+                    mc_conf) 0 = SOME (get_ffi_index
+                      (machine_config_ffi_names mc_conf) name))) /\
      (p - n2w ffi_offset = machine_config_halt_pc mc_conf) /\
      (p - n2w (2 * ffi_offset) = machine_config_ccache_pc mc_conf) /\
      interference_ok (machine_config_next_interfer mc_conf)
-       (target_proj (machine_config_target mc_conf) (mem_domain t1)) /\
+       (target_proj (machine_config_target mc_conf)
+       (asm_state_mem_domain t1)) /\
      (!l1 l2 x2.
-        (loc_to_pc l1 l2 (state_code s1) = SOME x2) ==>
+        (loc_to_pc l1 l2 (labSem_state_code s1) = SOME x2) ==>
         (lab_lookup l1 l2 labs = SOME (pos_val x2 0 code2))) /\
-     (!r. fp_regs s1 r = fp_regs t1 r) /\
-     (!r. word_loc_val p labs (regs s1 r) = SOME (regs t1 r)) /\
-     (!a. byte_align a IN mem_domain s1 ==>
-          a IN mem_domain t1 /\ a IN mem_domain s1 /\
-          (word_loc_val_byte p labs (mem s1) a (be s1) = SOME (mem t1
-            a))) /\
+     (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
+     (!r. word_loc_val p labs (labSem_state_regs s1 r) = SOME
+       (asm_state_regs t1 r)) /\
+     (!a. byte_align a IN labSem_state_mem_domain s1 ==>
+          a IN asm_state_mem_domain t1 /\ a IN
+            labSem_state_mem_domain s1 /\
+          (word_loc_val_byte p labs (labSem_state_mem s1) a
+            (labSem_state_be s1) = SOME (asm_state_mem t1 a))) /\
      (!n.
-       n < buffer_space_left (state_code_buffer s1) ==>
-       (let addr' = buffer_position (state_code_buffer s1) + n2w
-         (LENGTH (buffer_buffer (state_code_buffer s1)) + n) in
-       addr' IN mem_domain t1 /\ ~(addr' IN mem_domain s1))) /\
-     bytes_in_mem p (prog_to_bytes code2) (mem
-       t1) (mem_domain t1) (mem_domain s1) /\ buffer_position
-         (state_code_buffer
+       n < buffer_space_left (labSem_state_code_buffer s1) ==>
+       (let addr' = buffer_position (labSem_state_code_buffer s1) +
+         n2w (LENGTH (buffer_buffer (labSem_state_code_buffer s1)) + n)
+         in
+       addr' IN asm_state_mem_domain t1 /\ ~(addr' IN
+         labSem_state_mem_domain s1))) /\
+     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem
+       t1) (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
+         buffer_position (labSem_state_code_buffer
      s1) = p + n2w (LENGTH (prog_to_bytes code2)) /\
-     bytes_in_mem (buffer_position (state_code_buffer s1))
-       (buffer_buffer (state_code_buffer s1)) (mem
-       t1) (mem_domain t1) (mem_domain s1) /\
+     bytes_in_mem (buffer_position (labSem_state_code_buffer s1))
+       (buffer_buffer (labSem_state_code_buffer s1)) (asm_state_mem
+       t1) (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
      LENGTH (prog_to_bytes code2) + LENGTH (buffer_buffer
-       (state_code_buffer s1)) + buffer_space_left (state_code_buffer
-       s1) < dimword (:'a) /\
+       (labSem_state_code_buffer s1)) + buffer_space_left
+       (labSem_state_code_buffer s1) < dimword (:'a) /\
      (!bn.
-       bn < LENGTH (buffer_buffer (state_code_buffer s1)) +
-         buffer_space_left (state_code_buffer s1) ==>
-       ~(MEM (buffer_position (state_code_buffer s1) + n2w bn)
+       bn < LENGTH (buffer_buffer (labSem_state_code_buffer s1)) +
+         buffer_space_left (labSem_state_code_buffer s1) ==>
+       ~(MEM (buffer_position (labSem_state_code_buffer s1) + n2w bn)
          (machine_config_ffi_entry_pcs mc_conf))) /\
-     ~(failed s1) /\ ~(failed t1) /\ (be s1 = be t1) /\
-     (pc t1 = p + n2w (pos_val (pc s1) 0 code2)) /\
+     ~(labSem_state_failed s1) /\ ~(asm_state_failed t1) /\
+       (labSem_state_be s1 = asm_state_be t1) /\
+     (asm_state_pc t1 = p + n2w (pos_val (labSem_state_pc s1) 0
+       code2)) /\
      ((p && n2w (2 EXP asm_state_align t1 - 1)) = (n2w 0)) /\
      (match link_reg (target_config (machine_config_target mc_conf))
        with NONE -> T | SOME r -> asm_state_lr t1 = r) /\
-     (be t1 <=> asm_config_big_endian (target_config
+     (asm_state_be t1 <=> asm_config_big_endian (target_config
        (machine_config_target mc_conf))) /\
      (asm_state_align t1 = asm_config_code_alignment (target_config
        (machine_config_target mc_conf))) /\
      (enc_ok (target_config (machine_config_target mc_conf))) /\
      all_enc_ok (target_config (machine_config_target mc_conf)) labs
-       (TAKE (THE (mmio_pcs_min_index (ffi_names mc_conf)))
-         (ffi_names mc_conf)) 0 code2 /\
+       (TAKE (THE (mmio_pcs_min_index (machine_config_ffi_names
+         mc_conf))) (machine_config_ffi_names mc_conf)) 0 code2 /\
      EVERY sec_labels_ok code2 /\
-     code_similar (state_code s1) code2 /\
+     code_similar (labSem_state_code s1) code2 /\
      share_mem_state_rel mc_conf s1 t1 ms1 /\
      share_mem_domain_code_rel mc_conf p code2
        (labSem_state_shared_mem_domain s1) /\
-     LENGTH (ffi_names mc_conf) = LENGTH
+     LENGTH (machine_config_ffi_names mc_conf) = LENGTH
        (machine_config_ffi_entry_pcs mc_conf) /\
-     no_install_or_no_share_mem code2 (ffi_names mc_conf)`;;
+     no_install_or_no_share_mem code2 (machine_config_ffi_names
+       mc_conf)`;;
 hol4_overload "state_rel" "lab_to_targetProof_state_rel";;
 
 let oracle_tie_clock = cake_theorem "oracle_tie_clock"
   (fun () ->
     `oracle_tie mc_conf ms s1 ==>
-     oracle_tie mc_conf ms (state_clock_fupd (K k) s1)`)
+     oracle_tie mc_conf ms (labSem_state_clock_fupd (K k) s1)`)
   CHEAT_TAC;;
 
 let lab_to_targetProof_state_rel_clock = cake_theorem "state_rel_clock"
   (fun () ->
     `state_rel x s1 t1 ms ==>
-       state_rel x (state_clock_fupd (K k) s1) (t1) ms`)
+       state_rel x (labSem_state_clock_fupd (K k) s1) (t1) ms`)
   CHEAT_TAC;;
 
 let share_mem_state_rel_shift_interfer =
@@ -1056,17 +1099,18 @@ let IMP_bytes_in_memory = cake_theorem "IMP_bytes_in_memory[local]"
 let IMP_bytes_in_memory_JumpReg =
   cake_theorem "IMP_bytes_in_memory_JumpReg[local]"
   (fun () ->
-    `code_similar (state_code s1) code2 /\
+    `code_similar (labSem_state_code s1) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_JumpReg r1)) l
          n)) ==>
-       bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-         code2))
+       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
+         s1) 0 code2))
          (asm_config_encode (target_config (machine_config_target
-           mc_conf)) (asm_JumpReg r1)) (mem t1) (mem_domain t1) /\
+           mc_conf)) (asm_JumpReg r1)) (asm_state_mem t1)
+           (asm_state_mem_domain t1) /\
        asm_ok (asm_JumpReg r1) (target_config
          (machine_config_target
          (mc_conf:('a,'state,'b)machine_config)))`)
@@ -1077,22 +1121,22 @@ let IMP_bytes_in_memory_JumpReg =
 let IMP_bytes_in_memory_Jump =
   cake_theorem "IMP_bytes_in_memory_Jump[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm (Jump jtarget) l bytes
          n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
-               n2w (pos_val (pc s1) 0 code2)) /\
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          (enc = asm_config_encode (target_config
            (machine_config_target mc_conf)) (Jump tt)) /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           enc (mem t1) (mem_domain t1) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
          asm_ok (Jump tt) (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
   CHEAT_TAC;;
@@ -1100,22 +1144,22 @@ let IMP_bytes_in_memory_Jump =
 let IMP_bytes_in_memory_JumpCmp =
   cake_theorem "IMP_bytes_in_memory_JumpCmp[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri
          jtarget) l bytes n)) ==>
        (?tt enc.
          (tt = n2w (find_pos jtarget labs) -
-               n2w (pos_val (pc s1) 0 code2)) /\
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          (enc = asm_config_encode (target_config
            (machine_config_target mc_conf)) (JumpCmp cmp rr ri tt)) /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           enc (mem t1) (mem_domain t1) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
          asm_ok (JumpCmp cmp rr ri tt) (target_config
            (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
@@ -1124,25 +1168,25 @@ let IMP_bytes_in_memory_JumpCmp =
 let IMP_bytes_in_memory_JumpCmp_1 =
   cake_theorem "IMP_bytes_in_memory_JumpCmp_1[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm (JumpCmp cmp rr ri
          jtarget) l bytes n)) ==>
        (?tt bytes.
          (tt = n2w (find_pos jtarget labs) -
-               n2w (pos_val (pc s1) 0 code2)) /\
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (JumpCmp cmp rr ri tt)
            bytes /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           bytes (mem t1) (mem_domain t1) /\
-         (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
-           LENGTH bytes) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
          asm_ok (JumpCmp cmp rr ri tt) (target_config
            (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
@@ -1151,13 +1195,14 @@ let IMP_bytes_in_memory_JumpCmp_1 =
 let IMP_bytes_in_memory_Call =
   cake_theorem "IMP_bytes_in_memory_Call[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target
          (mc_conf:('a,'state,'b)machine_config))) labs ffi_names 0
            code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         (t1:'a asm_state)) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain
+         (t1:'a asm_state)) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm (Call ww) l bytes n))
          ==>
        F`)
@@ -1166,24 +1211,24 @@ let IMP_bytes_in_memory_Call =
 let IMP_bytes_in_memory_LocValue =
   cake_theorem "IMP_bytes_in_memory_LocValue[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm (LocValue reg
          (labLang_Lab l1 l2)) l bytes n)) ==>
        (?tt bytes.
          (tt = n2w (find_pos (labLang_Lab l1 l2) labs) -
-               n2w (pos_val (pc s1) 0 code2)) /\
+               n2w (pos_val (labSem_state_pc s1) 0 code2)) /\
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (Loc reg tt) bytes /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           bytes (mem t1) (mem_domain t1) /\
-         (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
-           LENGTH bytes) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
          asm_ok (Loc reg tt) (target_config
            (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
@@ -1192,24 +1237,26 @@ let IMP_bytes_in_memory_LocValue =
 let IMP_bytes_in_memory_Inst =
   cake_theorem "IMP_bytes_in_memory_Inst[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_Asm (Asmi (asm_Inst i)) bytes
          len)) ==>
        (?bytes.
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (Inst i) bytes /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           bytes (mem t1) (mem_domain t1) /\
-         bytes_in_mem ((p:'a word) + n2w (pos_val (pc s1) 0 code2))
-           bytes (mem t1) (mem_domain t1) (mem_domain s1) /\
-         (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
-           LENGTH bytes) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc
+           s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1)
+             (labSem_state_mem_domain s1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
          asm_ok (Inst i) (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
   CHEAT_TAC;;
@@ -1217,25 +1264,27 @@ let IMP_bytes_in_memory_Inst =
 let IMP_bytes_in_memory_Cbw =
   cake_theorem "IMP_bytes_in_memory_Cbw[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_Asm (Cbw r1 r2) bytes len))
          ==>
        (?bytes.
          enc_with_nop (asm_config_encode (target_config
            (machine_config_target mc_conf))) (Inst (asm_Mem asm_Store8
            r2 (Addr r1 (n2w 0)))) bytes /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           bytes (mem t1) (mem_domain t1) /\
-         bytes_in_mem ((p:'a word) + n2w (pos_val (pc s1) 0 code2))
-           bytes (mem t1) (mem_domain t1) (mem_domain s1) /\
-         (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
-           LENGTH bytes) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+         bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc
+           s1) 0 code2))
+           bytes (asm_state_mem t1) (asm_state_mem_domain t1)
+             (labSem_state_mem_domain s1) /\
+         (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+           (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
          asm_ok (Inst (asm_Mem asm_Store8 r2 (Addr r1 (n2w 0))))
            (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
@@ -1244,22 +1293,23 @@ let IMP_bytes_in_memory_Cbw =
 let IMP_bytes_in_memory_CallFFI =
   cake_theorem "IMP_bytes_in_memory_CallFFI[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm (labLang_CallFFI name)
          l bytes n)) ==>
        (?tt enc.
-         (tt = (n2w 0) - n2w (pos_val (pc s1) 0 code2 + (3 +
-           get_ffi_index ffi_names (ffi_ExtCall name)) * ffi_offset)) /\
+         (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
+           + (3 + get_ffi_index ffi_names (ffi_ExtCall name)) *
+           ffi_offset)) /\
          (enc = asm_config_encode (target_config
            (machine_config_target mc_conf)) (Jump tt)) /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           enc (mem t1) (mem_domain t1) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
          asm_ok (Jump tt) (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
   CHEAT_TAC;;
@@ -1267,22 +1317,22 @@ let IMP_bytes_in_memory_CallFFI =
 let IMP_bytes_in_memory_Halt =
   cake_theorem "IMP_bytes_in_memory_Halt[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm labLang_Halt l bytes
          n)) ==>
        (?tt enc.
-         (tt = (n2w 0) - n2w (pos_val (pc s1) 0 code2 +
-           ffi_offset)) /\
+         (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
+           + ffi_offset)) /\
          (enc = asm_config_encode (target_config
            (machine_config_target mc_conf)) (Jump tt)) /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           enc (mem t1) (mem_domain t1) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
          asm_ok (Jump tt) (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
   CHEAT_TAC;;
@@ -1290,21 +1340,21 @@ let IMP_bytes_in_memory_Halt =
 let IMP_bytes_in_memory_Install =
   cake_theorem "IMP_bytes_in_memory_Install[local]"
   (fun () ->
-    `code_similar (state_code
+    `code_similar (labSem_state_code
   (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain
-         t1) (mem_domain s1) /\
+       bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+         (asm_state_mem_domain t1) (labSem_state_mem_domain s1) /\
        (asm_fetch s1 = SOME (labLang_LabAsm Install c l n)) ==>
        (?tt enc.
-         (tt = (n2w 0) - n2w (pos_val (pc s1) 0 code2 + 2 *
-           ffi_offset)) /\
+         (tt = (n2w 0) - n2w (pos_val (labSem_state_pc s1) 0 code2
+           + 2 * ffi_offset)) /\
          (enc = asm_config_encode (target_config
            (machine_config_target mc_conf)) (Jump tt)) /\
-         bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-           code2))
-           enc (mem t1) (mem_domain t1) /\
+         bytes_in_memory ((p:'a word) + n2w (pos_val
+           (labSem_state_pc s1) 0 code2))
+           enc (asm_state_mem t1) (asm_state_mem_domain t1) /\
          asm_ok (Jump tt) (target_config (machine_config_target
            (mc_conf:('a,'state,'b)machine_config))))`)
   CHEAT_TAC;;
@@ -1341,28 +1391,30 @@ let asm_fetch_aux_pos_val_LENGTH_EQ =
 let IMP_bytes_in_memory_ShareMem =
   cake_theorem "IMP_bytes_in_memory_ShareMem"
   (fun () ->
-    `(asm_fetch_aux (pc s1) (state_code s1) = SOME (labLang_Asm
-  (ShareMem mop r ad) l n)) /\
-     code_similar (state_code
+    `(asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) = SOME
+  (labLang_Asm (ShareMem mop r ad) l n)) /\
+     code_similar (labSem_state_code
        (s1:('a,lab_to_target_config,'ffi)labSem_state)) code2 /\
      all_enc_ok (target_config (machine_config_target mc_conf))
        labs ffi_names 0 code2 /\
-     bytes_in_mem p (prog_to_bytes code2) (mem t1) (mem_domain t1)
-       (mem_domain s1) ==>
+     bytes_in_mem p (prog_to_bytes code2) (asm_state_mem t1)
+       (asm_state_mem_domain t1) (labSem_state_mem_domain s1) ==>
      (?bytes.
-       asm_fetch_aux (pc s1) code2 = SOME (labLang_Asm (ShareMem
-         mop r ad)
+       asm_fetch_aux (labSem_state_pc s1) code2 = SOME (labLang_Asm
+         (ShareMem mop r ad)
          bytes (LENGTH bytes)) /\
        enc_with_nop (asm_config_encode (target_config
          (machine_config_target mc_conf))) (Inst (asm_Mem mop r ad))
          bytes /\
-       bytes_in_memory ((p:'a word) + n2w (pos_val (pc s1) 0
-         code2))
-         bytes (mem t1) (mem_domain t1) /\
-       bytes_in_mem ((p:'a word) + n2w (pos_val (pc s1) 0 code2))
-         bytes (mem t1) (mem_domain t1) (mem_domain s1) /\
-       (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
-         LENGTH bytes) /\
+       bytes_in_memory ((p:'a word) + n2w (pos_val (labSem_state_pc
+         s1) 0 code2))
+         bytes (asm_state_mem t1) (asm_state_mem_domain t1) /\
+       bytes_in_mem ((p:'a word) + n2w (pos_val (labSem_state_pc
+         s1) 0 code2))
+         bytes (asm_state_mem t1) (asm_state_mem_domain t1)
+           (labSem_state_mem_domain s1) /\
+       (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+         (labSem_state_pc s1) 0 code2 + LENGTH bytes) /\
        asm_ok (Inst (asm_Mem mop r ad)) (target_config
          (machine_config_target
          (mc_conf:('a,'state,'b)machine_config))))`)
@@ -1384,11 +1436,12 @@ let read_bytearray_state_rel =
   (fun () ->
     `!n a x.
          state_rel (mc_conf,code2,labs,p) s1 t1 ms1 /\
-         (read_bytearray a n (mem_load_byte_aux (mem s1)
-           (mem_domain s1) (be s1)) = SOME x) ==>
+         (read_bytearray a n (mem_load_byte_aux (labSem_state_mem
+           s1) (labSem_state_mem_domain s1) (labSem_state_be s1)) = SOME
+           x) ==>
          (read_bytearray a n
            (\a. if a IN machine_config_prog_addresses mc_conf then
-             SOME (mem t1 a) else NONE) =
+             SOME (asm_state_mem t1 a) else NONE) =
           SOME x)`)
   CHEAT_TAC;;
 
@@ -1396,7 +1449,7 @@ let IMP_has_io_name = cake_theorem "IMP_has_io_name[local]"
   (fun () ->
     `(asm_fetch s1 = SOME (labLang_LabAsm (labLang_CallFFI index) l
   bytes n)) ==>
-       has_io_name index (state_code s1)`)
+       has_io_name index (labSem_state_code s1)`)
   CHEAT_TAC;;
 
 let bytes_in_mem_asm_write_bytearray_lemma =
@@ -1411,42 +1464,51 @@ let bytes_in_mem_asm_write_bytearray_lemma =
 let bytes_in_mem_asm_write_bytearray =
   cake_theorem "bytes_in_mem_asm_write_bytearray[local]"
   (fun () ->
-    `(!a. byte_align a IN mem_domain s1 ==> a IN mem_domain s1) /\
+    `(!a. byte_align a IN labSem_state_mem_domain s1 ==> a IN
+  labSem_state_mem_domain s1) /\
        (read_bytearray c1 (LENGTH new_bytes) (mem_load_byte_aux
-         (mem s1) (mem_domain s1) (be s1)) = SOME x) ==>
-       bytes_in_mem p xs (mem t1) (mem_domain t1) (mem_domain s1)
-         ==>
+         (labSem_state_mem s1) (labSem_state_mem_domain s1)
+         (labSem_state_be s1)) = SOME x) ==>
+       bytes_in_mem p xs (asm_state_mem t1) (asm_state_mem_domain
+         t1) (labSem_state_mem_domain s1) ==>
        bytes_in_mem p xs
-         (asm_write_bytearray c1 new_bytes (mem t1)) (mem_domain
-           t1) (mem_domain s1)`)
+         (asm_write_bytearray c1 new_bytes (asm_state_mem t1))
+           (asm_state_mem_domain t1) (labSem_state_mem_domain s1)`)
   CHEAT_TAC;;
 
 let write_bytearray_NOT_Loc =
   cake_theorem "write_bytearray_NOT_Loc[local]"
   (fun () ->
     `!xs c1 s1 a c.
-         (mem s1 a = wordLang_Word c) ==> ~((write_bytearray c1
-           xs (mem s1) (mem_domain s1) (be s1)) a = Loc n n0)`)
+         (labSem_state_mem s1 a = wordLang_Word c) ==>
+           ~((write_bytearray c1 xs (labSem_state_mem s1)
+           (labSem_state_mem_domain s1) (labSem_state_be s1)) a = Loc
+           n n0)`)
   CHEAT_TAC;;
 
 let CallFFI_bytearray_lemma =
   cake_theorem "CallFFI_bytearray_lemma[local]"
   (fun () ->
-    `byte_align (a:'a word) IN mem_domain s1 /\ good_dimindex (:'a) /\
-       a IN mem_domain t1 /\
-       a IN mem_domain s1 /\
-       (be s1 = asm_config_big_endian (target_config
+    `byte_align (a:'a word) IN labSem_state_mem_domain s1 /\
+  good_dimindex (:'a) /\
+       a IN asm_state_mem_domain t1 /\
+       a IN labSem_state_mem_domain s1 /\
+       (labSem_state_be s1 = asm_config_big_endian (target_config
          (machine_config_target mc_conf))) /\
        (read_bytearray c1 (LENGTH new_bytes) (mem_load_byte_aux
-         (mem s1) (mem_domain s1) (be s1)) = SOME x) /\
-       (word_loc_val_byte p labs (mem s1) a (asm_config_big_endian
-         (target_config (machine_config_target mc_conf))) =
-          SOME (mem t1 a)) ==>
-       (word_loc_val_byte p labs (write_bytearray c1 new_bytes (mem
-         s1) (mem_domain s1) (be s1)) a (asm_config_big_endian
-         (target_config (machine_config_target
+         (labSem_state_mem s1) (labSem_state_mem_domain s1)
+         (labSem_state_be s1)) = SOME x) /\
+       (word_loc_val_byte p labs (labSem_state_mem s1) a
+         (asm_config_big_endian (target_config (machine_config_target
+         mc_conf))) =
+          SOME (asm_state_mem t1 a)) ==>
+       (word_loc_val_byte p labs (write_bytearray c1 new_bytes
+         (labSem_state_mem s1) (labSem_state_mem_domain s1)
+         (labSem_state_be s1)) a (asm_config_big_endian (target_config
+         (machine_config_target
           mc_conf))) =
-        SOME (asm_write_bytearray c1 new_bytes (mem t1) a))`)
+        SOME (asm_write_bytearray c1 new_bytes (asm_state_mem t1)
+          a))`)
   CHEAT_TAC;;
 
 (* inst correct *)
@@ -1593,8 +1655,8 @@ let byte_align_64_IMP = cake_theorem "byte_align_64_IMP[local]"
 
 let arith_upd_lemma = cake_theorem "arith_upd_lemma[local]"
   (fun () ->
-    `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME (regs t1
-  r)) /\ ~(failed (arith_upd a s1)) ==>
+    `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME
+  (asm_state_regs t1 r)) /\ ~(failed (arith_upd a s1)) ==>
       (!r. word_loc_val p labs ((\r s. regs s r) r (arith_upd a
         s1)) =
           SOME (regs (arith_upd a t1) r))`)
@@ -1604,14 +1666,14 @@ let arith_upd_lemma = cake_theorem "arith_upd_lemma[local]"
 let arith_upd_fp_regs = cake_theorem "arith_upd_fp_regs[simp]"
   (fun () ->
     `(fp_regs (arith_upd a s) = fp_regs s /\ fp_regs
-     (arith_upd a (t:'a asm_state)) = fp_regs t)`)
+     (arith_upd a (t:'a asm_state)) = asm_state_fp_regs t)`)
   CHEAT_TAC;;
 
 let fp_upd_lemma = cake_theorem "fp_upd_lemma[local]"
   (fun () ->
-    `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME (regs t1
-  r)) /\
-     (!r. fp_regs s1 r = fp_regs t1 r) /\
+    `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME
+  (asm_state_regs t1 r)) /\
+     (!r. labSem_state_fp_regs s1 r = asm_state_fp_regs t1 r) /\
       ~(failed (fp_upd f s1)) ==>
      (!r. fp_regs (fp_upd f s1) r = fp_regs (fp_upd f t1) r) /\
      (!r.
@@ -1623,11 +1685,12 @@ let inst_share_mem_pc_update_helper =
   cake_theorem "Inst_share_mem_pc_update_helper"
   (fun () ->
     `share_mem_state_rel mc_conf s1 t1 ms1 /\
-     target_state_rel (machine_config_target mc_conf) (pc_fupd (K
-       pc') t1) ms2 ==>
-     share_mem_state_rel mc_conf (state_clock_fupd (K (state_clock
-       s1 - 1)) (pc_fupd (K (pc s1 + 1)) s1))
-       (pc_fupd (K pc') t1) ms2`)
+     target_state_rel (machine_config_target mc_conf)
+       (asm_state_pc_fupd (K pc') t1) ms2 ==>
+     share_mem_state_rel mc_conf (labSem_state_clock_fupd (K
+       (labSem_state_clock s1 - 1)) (labSem_state_pc_fupd (K
+       (labSem_state_pc s1 + 1)) s1))
+       (asm_state_pc_fupd (K pc') t1) ms2`)
   CHEAT_TAC;;
 
 let inst_share_mem_reg_update_helper =
@@ -1635,13 +1698,14 @@ let inst_share_mem_reg_update_helper =
   (fun () ->
     `share_mem_state_rel mc_conf s1 t1 ms1 /\
      target_state_rel (machine_config_target mc_conf)
-       (pc_fupd (K pc') (regs_fupd (K ((n =+ c) (regs t1))) t1))
-         ms2 ==>
-     share_mem_state_rel mc_conf (state_clock_fupd (K (state_clock
-       s1 - 1)) (pc_fupd (K (pc s1 + 1)) (regs_fupd (K ((n =+
-       wordLang_Word c) (regs s1))) s1)))
-       (pc_fupd (K pc') (regs_fupd (K ((n =+ c) (regs t1))) t1))
-         ms2`)
+       (asm_state_pc_fupd (K pc') (asm_state_regs_fupd (K ((n =+ c)
+         (asm_state_regs t1))) t1)) ms2 ==>
+     share_mem_state_rel mc_conf (labSem_state_clock_fupd (K
+       (labSem_state_clock s1 - 1)) (labSem_state_pc_fupd (K
+       (labSem_state_pc s1 + 1)) (labSem_state_regs_fupd (K ((n =+
+       wordLang_Word c) (labSem_state_regs s1))) s1)))
+       (asm_state_pc_fupd (K pc') (asm_state_regs_fupd (K ((n =+
+         c) (asm_state_regs t1))) t1)) ms2`)
   CHEAT_TAC;;
 
 let arith_upd_share_mem_domain_unchange =
@@ -1676,17 +1740,18 @@ let inst_lemma = cake_theorem "Inst_lemma"
       state_rel
         ((mc_conf:('a,'state,'b)machine_config),code2,labs,p) s1 t1 ms1
         /\
-      (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
-        LENGTH bytes') ==>
+      (pos_val (labSem_state_pc s1 + 1) 0 code2 = pos_val
+        (labSem_state_pc s1) 0 code2 + LENGTH bytes') ==>
       ~(failed (inst i t1)) /\
-       (!a. ~(a IN mem_domain s1) ==> mem (inst i t1) a = mem t1 a)
-         /\
+       (!a. ~(a IN labSem_state_mem_domain s1) ==> mem (inst i t1)
+         a = asm_state_mem t1 a) /\
       (target_state_rel (machine_config_target mc_conf)
-         (upd_pc (pc t1 + n2w (LENGTH bytes')) (inst i t1)) ms2 ==>
+         (upd_pc (asm_state_pc t1 + n2w (LENGTH bytes')) (inst i
+           t1)) ms2 ==>
        state_rel (mc_conf,code2,labs,p)
          (inc_pc (dec_clock (asm_inst i s1)))
-         (upd_pc (pc t1 + n2w (LENGTH (bytes':word8 list))) (inst
-           i t1)) ms2)`)
+         (upd_pc (asm_state_pc t1 + n2w (LENGTH (bytes':word8
+           list))) (inst i t1)) ms2)`)
   CHEAT_TAC;;
 
 (* compile correct *)
@@ -3895,20 +3960,20 @@ let IMP_ffi_entry_pcs_disjoint_Asm =
   (fun () ->
     `!(s1:('a,lab_to_target_config,'ffi)labSem_state)
   (mc_conf:('a,'state,'b)machine_config).
-       code_similar (state_code s1) code2 /\
+       code_similar (labSem_state_code s1) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       asm_fetch_aux (pc s1) (state_code s1) = SOME (labLang_Asm
-         instr _bytes _len) /\
+       asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) =
+         SOME (labLang_Asm instr _bytes _len) /\
        (!op re a. ~(instr = ShareMem op re a)) /\
        share_mem_domain_code_rel mc_conf p code2
          (labSem_state_shared_mem_domain s1) /\
-       bytes_in_mem (p + n2w (pos_val (pc s1) 0 code2)) bytes' (mem
-         t1) (mem_domain
-         t1) (mem_domain s1) /\
-       pos_val (pc s1 + 1) 0 code2 = LENGTH bytes' + pos_val (pc
-         s1) 0 code2 /\ pc
-       t1 = p + n2w (pos_val (pc s1) 0 code2) ==>
+       bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0
+         code2)) bytes' (asm_state_mem t1) (asm_state_mem_domain
+         t1) (labSem_state_mem_domain s1) /\
+       pos_val (labSem_state_pc s1 + 1) 0 code2 = LENGTH bytes' +
+         pos_val (labSem_state_pc s1) 0 code2 /\ asm_state_pc
+       t1 = p + n2w (pos_val (labSem_state_pc s1) 0 code2) ==>
        ffi_entry_pcs_disjoint
          (mc_conf:('a,'state,'b)machine_config) t1 (LENGTH bytes')`)
   CHEAT_TAC;;
@@ -3918,19 +3983,19 @@ let IMP_ffi_entry_pcs_disjoint_LabAsm =
   (fun () ->
     `!(s1:('a,lab_to_target_config,'ffi)labSem_state)
   (mc_conf:('a,'state,'b)machine_config).
-       code_similar (state_code s1) code2 /\
+       code_similar (labSem_state_code s1) code2 /\
        all_enc_ok (target_config (machine_config_target mc_conf))
          labs ffi_names 0 code2 /\
-       asm_fetch_aux (pc s1) (state_code s1) = SOME (labLang_LabAsm
-         instr _pos _bytes _len) /\
+       asm_fetch_aux (labSem_state_pc s1) (labSem_state_code s1) =
+         SOME (labLang_LabAsm instr _pos _bytes _len) /\
        share_mem_domain_code_rel mc_conf p code2
          (labSem_state_shared_mem_domain s1) /\
-       bytes_in_mem (p + n2w (pos_val (pc s1) 0 code2)) bytes' (mem
-         t1) (mem_domain
-         t1) (mem_domain s1) /\
-       pos_val (pc s1 + 1) 0 code2 = LENGTH bytes' + pos_val (pc
-         s1) 0 code2 /\ pc
-       t1 = p + n2w (pos_val (pc s1) 0 code2) ==>
+       bytes_in_mem (p + n2w (pos_val (labSem_state_pc s1) 0
+         code2)) bytes' (asm_state_mem t1) (asm_state_mem_domain
+         t1) (labSem_state_mem_domain s1) /\
+       pos_val (labSem_state_pc s1 + 1) 0 code2 = LENGTH bytes' +
+         pos_val (labSem_state_pc s1) 0 code2 /\ asm_state_pc
+       t1 = p + n2w (pos_val (labSem_state_pc s1) 0 code2) ==>
        ffi_entry_pcs_disjoint
          (mc_conf:('a,'state,'b)machine_config) t1 (LENGTH bytes')`)
   CHEAT_TAC;;
@@ -4063,11 +4128,13 @@ let pos_val_asm_fetch_aux_distinct =
 let bytes_in_memory_eq_mem = cake_theorem "bytes_in_memory_eq_mem"
   (fun () ->
     `!pc' bytes.
-       (!a. a IN mem_domain t1 ==> target_get_byte
-         (machine_config_target mc_conf) ms1 a = mem t1 a) /\
-       bytes_in_memory pc' bytes (mem t1) (mem_domain t1) ==>
+       (!a. a IN asm_state_mem_domain t1 ==> target_get_byte
+         (machine_config_target mc_conf) ms1 a = asm_state_mem t1 a) /\
+       bytes_in_memory pc' bytes (asm_state_mem t1)
+         (asm_state_mem_domain t1) ==>
        bytes_in_memory pc' bytes (target_get_byte
-         (machine_config_target mc_conf) ms1) (mem_domain t1)`)
+         (machine_config_target mc_conf) ms1) (asm_state_mem_domain
+         t1)`)
   CHEAT_TAC;;
 
 (* HOL4 lab_to_targetProofScript.sml:6959-6967: ML code, not ported *)
@@ -4213,14 +4280,14 @@ let oracle_tie_shift_gen = cake_theorem "oracle_tie_shift_gen"
   (fun () ->
     `!mc_conf mc2 ms1 s1 ms2 l.
      oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
-     (!k. find_next_interference mc_conf (state_ffi s1) (k + l) ms1
-       =
-          find_next_interference mc2 (state_ffi s1) k ms2) /\
-            machine_config_target
+     (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k +
+       l) ms1 =
+          find_next_interference mc2 (labSem_state_ffi s1) k ms2)
+            /\ machine_config_target
      mc2 = machine_config_target mc_conf /\
        machine_config_callee_saved_regs
      mc2 = machine_config_callee_saved_regs mc_conf /\ ptr_reg
-     mc2 = ptr_reg mc_conf ==>
+     mc2 = machine_config_ptr_reg mc_conf ==>
      oracle_tie mc2 ms2 s1`)
   CHEAT_TAC;;
 
@@ -4229,13 +4296,14 @@ let oracle_tie_ccache_residues =
   (fun () ->
     `!mc_conf mc2 ms1 s1 ms2 l t1.
      oracle_tie mc_conf ms1 (s1:('a,'c,'ffi)labSem_state) /\
-     (!k. find_next_interference mc_conf (state_ffi s1) (k + l) ms1
-       =
-          find_next_interference mc2 (state_ffi s1) k ms2) /\
-            machine_config_target
+     (!k. find_next_interference mc_conf (labSem_state_ffi s1) (k +
+       l) ms1 =
+          find_next_interference mc2 (labSem_state_ffi s1) k ms2)
+            /\ machine_config_target
      mc2 = machine_config_target mc_conf /\ ptr_reg
-     mc2 = ptr_reg mc_conf /\ len_reg
-     mc2 = len_reg mc_conf /\ machine_config_ccache_interfer
+     mc2 = machine_config_ptr_reg mc_conf /\ len_reg
+     mc2 = machine_config_len_reg mc_conf /\
+       machine_config_ccache_interfer
      mc2 = machine_config_ccache_interfer mc_conf /\
        ~(target_get_pc (machine_config_target
      mc2) ms2 IN machine_config_prog_addresses mc2 DIFF set_of_list
@@ -4244,27 +4312,30 @@ let oracle_tie_ccache_residues =
      mc2) ms2 = machine_config_halt_pc mc2) /\ target_get_pc
        (machine_config_target
      mc2) ms2 = machine_config_ccache_pc mc2 ==>
-     (\a. get_reg_value (labSem_state_cc_regs s1 0 a) (regs t1 a)
-       I) =
+     (\a. get_reg_value (labSem_state_cc_regs s1 0 a)
+       (asm_state_regs t1 a) I) =
        (\a. if MEM a (machine_config_callee_saved_regs mc_conf) \/
-         a = ptr_reg mc_conf \/
+         a = machine_config_ptr_reg mc_conf \/
                ~(a < asm_config_reg_count (target_config
                  (machine_config_target mc_conf))) \/
                MEM a (asm_config_avoid_regs (target_config
-                 (machine_config_target mc_conf))) then regs t1 a else
-                 target_get_reg (machine_config_target mc_conf)
+                 (machine_config_target mc_conf))) then asm_state_regs
+                 t1 a else target_get_reg (machine_config_target
+                 mc_conf)
                    (machine_config_ccache_interfer mc_conf 0
                       (target_get_reg (machine_config_target
-                        mc_conf) ms2 (ptr_reg mc_conf),target_get_reg
-                        (machine_config_target
-                       mc_conf) ms2 (len_reg mc_conf),ms2)) a) /\
+                        mc_conf) ms2 (machine_config_ptr_reg
+                        mc_conf),target_get_reg (machine_config_target
+                       mc_conf) ms2 (machine_config_len_reg
+                         mc_conf),ms2)) a) /\
      (\n. labSem_state_cc_fp_regs s1 0 n) =
        (\n. target_get_fp_reg (machine_config_target mc_conf)
               (machine_config_ccache_interfer mc_conf 0
                  (target_get_reg (machine_config_target mc_conf)
-                   ms2 (ptr_reg mc_conf),target_get_reg
+                   ms2 (machine_config_ptr_reg mc_conf),target_get_reg
                    (machine_config_target
-                  mc_conf) ms2 (len_reg mc_conf),ms2)) n)`)
+                  mc_conf) ms2 (machine_config_len_reg
+                    mc_conf),ms2)) n)`)
   CHEAT_TAC;;
 
 (* HOL4 lab_to_targetProofScript.sml:7526: ML code, not ported *)
@@ -4278,8 +4349,8 @@ let lab_to_targetProof_compile_correct = cake_theorem "compile_correct"
         encoder_correct (machine_config_target mc_conf) /\
         state_rel (mc_conf,code2,labs,p) s1 t1 ms1 ==>
         (?k t2 ms2.
-          (evaluate mc_conf (state_ffi s1) (state_clock s1 + k) ms1
-            =
+          (evaluate mc_conf (labSem_state_ffi s1)
+            (labSem_state_clock s1 + k) ms1 =
              (res,
               ms2,state_ffi s2)))`)
   CHEAT_TAC;;
@@ -4366,7 +4437,8 @@ let machine_sem_EQ_sem = cake_theorem "machine_sem_EQ_sem"
   (s1:('a,lab_to_target_config,'ffi)labSem_state).
        encoder_correct (machine_config_target mc_conf) /\
        init_ok (mc_conf,p) s1 ms /\ ~(semantics s1 = ffi_Fail) ==>
-       machine_sem mc_conf (state_ffi s1) ms = {semantics s1}`)
+       machine_sem mc_conf (labSem_state_ffi s1) ms = {semantics
+         s1}`)
   CHEAT_TAC;;
 
 (* HOL4 lab_to_targetProofScript.sml:9528-9531: code that the source
@@ -4398,10 +4470,12 @@ let make_init_def = cake_define
        (machine_config_target mc_conf))) ffi (target_io_regs mc_conf
        ffi ms) (target_cc_regs mc_conf ffi ms) (target_io_fp_regs
        mc_conf ffi ms) (target_cc_fp_regs mc_conf ffi ms) code comp'
-       coracle (mk_buffer cbpos [] cbspace) 0 F (ptr_reg mc_conf)
-       (len_reg mc_conf) (ptr2_reg mc_conf) (len2_reg mc_conf) (match
-       link_reg (target_config (machine_config_target mc_conf)) with
-       SOME n -> n | _82 -> 0)`;;
+       coracle (mk_buffer cbpos [] cbspace) 0 F
+       (machine_config_ptr_reg mc_conf) (machine_config_len_reg
+       mc_conf) (machine_config_ptr2_reg mc_conf)
+       (machine_config_len2_reg mc_conf) (match link_reg
+       (target_config (machine_config_target mc_conf)) with SOME n ->
+       n | _82 -> 0)`;;
 hol4_overload "make_init" "lab_to_targetProof_make_init";;
 
 let oracle_tie_make_init = cake_theorem "oracle_tie_make_init"
@@ -4432,14 +4506,14 @@ let mc_conf_ok_def = cake_define
   `mc_conf_ok (mc_conf:('a,'b,'c)machine_config) <=>
      good_dimindex (:'a) /\
      encoder_correct (machine_config_target mc_conf) /\
-     reg_ok (ptr_reg mc_conf) (target_config (machine_config_target
-       mc_conf)) /\
-     reg_ok (len_reg mc_conf) (target_config (machine_config_target
-       mc_conf)) /\
-     reg_ok (ptr2_reg mc_conf) (target_config (machine_config_target
-       mc_conf)) /\
-     reg_ok (len2_reg mc_conf) (target_config (machine_config_target
-       mc_conf)) /\
+     reg_ok (machine_config_ptr_reg mc_conf) (target_config
+       (machine_config_target mc_conf)) /\
+     reg_ok (machine_config_len_reg mc_conf) (target_config
+       (machine_config_target mc_conf)) /\
+     reg_ok (machine_config_ptr2_reg mc_conf) (target_config
+       (machine_config_target mc_conf)) /\
+     reg_ok (machine_config_len2_reg mc_conf) (target_config
+       (machine_config_target mc_conf)) /\
      reg_ok (match link_reg (target_config (machine_config_target
        mc_conf)) with NONE -> 0 | SOME n -> n) (target_config
        (machine_config_target
@@ -4543,7 +4617,7 @@ let MEM_get_shmem_info = cake_theorem "MEM_get_shmem_info"
        mk_shmem_info_num (pos_val pc p code2) r (match a with Addr
          r off -> r) (match a with Addr r off -> w2n off) re (pos_val pc
          (p + LENGTH inst') code2))
-       (ZIP (get_shmem_info code2 p [] []))`)
+       (UNCURRY ZIP (get_shmem_info code2 p [] []))`)
   CHEAT_TAC;;
 
 let get_shmem_info_ALL_DISTINCT =
@@ -4641,8 +4715,9 @@ let asm_fetch_NOT_ffi_entry_pcs =
   cake_theorem "asm_fetch_NOT_ffi_entry_pcs"
   (fun () ->
     `LENGTH (prog_to_bytes code2) < dimword (:'a) /\
-     mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
-     LENGTH (ffi_names mc_conf) = LENGTH
+     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
+       /\
+     LENGTH (machine_config_ffi_names mc_conf) = LENGTH
        (machine_config_ffi_entry_pcs mc_conf) /\
      all_enc_ok (target_config (machine_config_target mc_conf))
        labs ffi_names 0 (code2:('a sec) list) /\
@@ -4721,11 +4796,13 @@ let IMP_state_rel_make_init =
       (no_share_mem_inst code ==>
         compiler_oracle_ok coracle labs (LENGTH (prog_to_bytes
           code2)) (target_config (machine_config_target mc_conf))
-          (ffi_names mc_conf)) /\
+          (machine_config_ffi_names mc_conf)) /\
       list_subset (FILTER (\x. ?s. x = ffi_ExtCall s)
-         (find_ffi_names code)) (TAKE i (ffi_names mc_conf)) /\
+         (find_ffi_names code)) (TAKE i (machine_config_ffi_names
+           mc_conf)) /\
       remove_labels clock (target_config (machine_config_target
-        mc_conf)) 0 LN (TAKE i (ffi_names mc_conf)) code =
+        mc_conf)) 0 LN (TAKE i (machine_config_ffi_names mc_conf)) code
+        =
          SOME (code2,labs) /\
       good_init_state mc_conf ms (prog_to_bytes code2)
          cbspace t m dm sdm /\
@@ -4735,8 +4812,9 @@ let IMP_state_rel_make_init =
         shmem_info_num_exit_pc rec)) (shmem_info_num_entry_pc_fupd (K
         (w2n (target_get_pc (machine_config_target mc_conf) ms) +
         shmem_info_num_entry_pc rec)) rec)) shmem_info /\
-      DROP i (ffi_names mc_conf) = new_ffi_names /\
-      mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+      DROP i (machine_config_ffi_names mc_conf) = new_ffi_names /\
+      mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+        i /\
       MAP (\rec. shmem_info_num_entry_pc rec) new_shmem_info = DROP
         i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\
       (machine_config_mmio_info mc_conf = ZIP (GENLIST (\index.
@@ -4748,7 +4826,8 @@ let IMP_state_rel_make_init =
                                 rec)),shmem_info_num_reg
                               rec,n2w (shmem_info_num_exit_pc
                                 rec))) new_shmem_info)) /\
-      no_install_or_no_share_mem code (ffi_names mc_conf) /\
+      no_install_or_no_share_mem code (machine_config_ffi_names
+        mc_conf) /\
       (!bn. bn < cbspace ==>
          ~(MEM (n2w bn + n2w (LENGTH (prog_to_bytes code2)) +
            target_get_pc (machine_config_target
@@ -4959,7 +5038,8 @@ let semantics_compile_lemma' =
     `mc_conf_ok mc_conf /\
      (no_share_mem_inst code ==>
        compiler_oracle_ok coracle (lab_to_target_config_labels c')
-         (LENGTH bytes) (asm_conf:'a asm_config) (ffi_names mc_conf)) /\
+         (LENGTH bytes) (asm_conf:'a asm_config)
+         (machine_config_ffi_names mc_conf)) /\
      lab_to_targetProof_good_code (target_config
        (machine_config_target mc_conf)) LN code /\
      asm_conf = target_config (machine_config_target mc_conf) /\
@@ -4967,7 +5047,7 @@ let semantics_compile_lemma' =
      c = LN /\ lab_to_target_config_pos c = 0 /\
      lab_to_target_compile asm_conf (c:lab_to_target_config) code =
        SOME (bytes,c') /\ ffi_names
-     c' = SOME (ffi_names mc_conf) /\
+     c' = SOME (machine_config_ffi_names mc_conf) /\
      good_init_state mc_conf ms bytes cbspace t m dm sdm /\
      MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
        ms) + shmem_info_num_entry_pc rec)
@@ -4985,13 +5065,15 @@ let semantics_compile_lemma' =
                                 mc_conf) ms))
                                 (lab_to_target_config_shmem_extra
                               c')) /\
-     no_install_or_no_share_mem code (ffi_names mc_conf) /\
-     (mmio_pcs_min_index (ffi_names mc_conf) = SOME i) /\
+     no_install_or_no_share_mem code (machine_config_ffi_names
+       mc_conf) /\
+     (mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+       i) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a)
        /\
-     (!ffis. ffi_names c = SOME ffis ==> EVERY (\x. ?s. x =
-       ffi_ExtCall s) ffis) /\ ~(semantics (lab_to_targetProof_make_init
-       mc_conf ffi t m dm sdm ms code
+     (!ffis. lab_to_target_config_ffi_names c = SOME ffis ==> EVERY
+       (\x. ?s. x = ffi_ExtCall s) ffis) /\ ~(semantics
+       (lab_to_targetProof_make_init mc_conf ffi t m dm sdm ms code
        (lab_to_target_compile asm_conf) (target_get_pc
          (machine_config_target mc_conf) ms + n2w (LENGTH bytes))
          cbspace
@@ -5020,7 +5102,7 @@ let lab_to_targetProof_semantics_compile =
     `mc_conf_ok mc_conf /\
      (no_share_mem_inst code ==>
        compiler_oracle_ok coracle (lab_to_target_config_labels c')
-         (LENGTH bytes) asm_conf (ffi_names mc_conf)) /\
+         (LENGTH bytes) asm_conf (machine_config_ffi_names mc_conf)) /\
      lab_to_targetProof_good_code asm_conf
        (lab_to_target_config_labels c) code /\
      asm_conf = target_config (machine_config_target mc_conf) /\
@@ -5028,9 +5110,10 @@ let lab_to_targetProof_semantics_compile =
      c = LN /\ lab_to_target_config_pos c = 0 /\
      compile asm_conf c (code:('a sec) list) = SOME (bytes,c') /\
        ffi_names
-     c' = SOME (ffi_names mc_conf) /\
+     c' = SOME (machine_config_ffi_names mc_conf) /\
      good_init_state mc_conf ms bytes cbspace t m dm sdm /\
-     mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
+     mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME i
+       /\
      MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
        ms) + shmem_info_num_entry_pc rec)
        (lab_to_target_config_shmem_extra c') =
@@ -5047,7 +5130,8 @@ let lab_to_targetProof_semantics_compile =
                                 mc_conf) ms))
                                 (lab_to_target_config_shmem_extra
                               c')) /\
-     no_install_or_no_share_mem code (ffi_names mc_conf) /\
+     no_install_or_no_share_mem code (machine_config_ffi_names
+       mc_conf) /\
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a)
        /\
      (!ffis. ffi_names c = SOME ffis ==> EVERY (\x. ?s. x =

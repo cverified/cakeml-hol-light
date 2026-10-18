@@ -22,7 +22,7 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["dummy"; "memory"];;
+cake_hide ["addr"; "dummy"; "memory"];;
 (* HOL4 ancestors outside the port: alist *)
 
 (* HOL4 word_simpProofScript.sml:10: the ML values that the
@@ -530,7 +530,7 @@ let push_env_pop_env_locals_thm =
   s''' env names (handler:(num#'a wordLang_prog#num#num) option).
      cut_envs names (wordSem_state_locals s) = SOME env /\
      wordSem_push_env env handler s = s' /\
-     LIST_REL sf_gc_consts (stack s') (stack s'') /\
+     LIST_REL sf_gc_consts (stack s') (wordSem_state_stack s'') /\
      wordSem_pop_env s'' = SOME s''' ==>
      (!v w. wordSem_get_var v s = SOME w /\ is_gc_word_const w /\
        ~(sptree_lookup v (all_names names) = NONE) ==> wordSem_get_var

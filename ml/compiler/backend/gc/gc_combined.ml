@@ -23,8 +23,8 @@ let gen_state_INDUCT,gen_state_RECURSION = define_datatype
 
 let make_partial_conf_def = cake_define
   `make_partial_conf (conf:'a gen_gc_conf) (GenState _1 gen_starts) rs =
-     mk_gen_gc_partial_conf (limit conf) (isRef conf) (HD
-       gen_starts) rs`;;
+     mk_gen_gc_partial_conf (gen_gc_conf_limit conf)
+       (gen_gc_conf_isRef conf) (HD gen_starts) rs`;;
 
 let gc_combined_def = cake_define
   `gc_combined conf x2 x3 =

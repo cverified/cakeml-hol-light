@@ -21,7 +21,7 @@ needs "lib/spt_closure.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 
-cake_hide ["memory"];;
+cake_hide ["addr"; "memory"];;
 
 (**************************** ANALYSIS LEMMAS *****************************)
 

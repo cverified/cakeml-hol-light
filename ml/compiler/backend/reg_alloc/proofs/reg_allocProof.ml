@@ -16,6 +16,8 @@ needs "lib/sptree.ml";;
 needs "lib/state_transformer.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
+cake_hide ["return"];;
+
 hol4_overload "++" "otherwise";;
 
 (* Edge from node x to node y, in terms of an adjacency list *)
@@ -1499,3 +1501,5 @@ let reg_alloc_correct = cake_theorem "reg_alloc_correct"
 (* --- --- *)
 
 hol4_only "++" "APPEND";;
+
+cake_hide [];;

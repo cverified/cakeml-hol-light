@@ -166,7 +166,7 @@ let word_to_stackProof_get_var_set_var =
 
 let state_with_const = cake_theorem "state_with_const[simp]"
   (fun () ->
-    `(state_clock_fupd (K (state_clock t)) t) =
+    `(stackSem_state_clock_fupd (K (stackSem_state_clock t)) t) =
   (t:('a,'c,'ffi)stackSem_state)`)
   CHEAT_TAC;;
 
@@ -740,44 +740,49 @@ let state_rel_def = cake_define
   `word_to_stackProof_state_rel ac k f f'
   (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state) lens
   extra <=>
-     (state_clock s = state_clock t) /\ (state_gc_fun s =
-       state_gc_fun t) /\ (wordSem_state_permute s = K I) /\
-     (state_ffi t = state_ffi s) /\ stackSem_state_use_stack t /\
-       stackSem_state_use_store t /\ stackSem_state_use_alloc t /\
-     (state_memory t = state_memory s) /\ (state_mdomain t =
-       state_mdomain s) /\ 4 < k /\
-     (state_sh_mdomain t = state_sh_mdomain s) /\
-     (state_store s = state_store t \\ Handler) /\ gc_fun_ok
-       (state_gc_fun t) /\ wordSem_state_termdep s = 0 /\ be
-     t = be s /\ state_ffi t = state_ffi s /\ Handler IN FDOM
-       (state_store t) /\ fp_regs
-     t = fp_regs s /\ state_data_buffer
-     t = state_data_buffer s /\ state_code_buffer
-     t = state_code_buffer s /\ compile
+     (wordSem_state_clock s = stackSem_state_clock t) /\
+       (wordSem_state_gc_fun s = stackSem_state_gc_fun t) /\
+       (wordSem_state_permute s = K I) /\
+     (stackSem_state_ffi t = wordSem_state_ffi s) /\
+       stackSem_state_use_stack t /\ stackSem_state_use_store t /\
+       stackSem_state_use_alloc t /\
+     (stackSem_state_memory t = wordSem_state_memory s) /\
+       (stackSem_state_mdomain t = wordSem_state_mdomain s) /\ 4 < k /\
+     (stackSem_state_sh_mdomain t = wordSem_state_sh_mdomain s) /\
+     (wordSem_state_store s = stackSem_state_store t \\ Handler) /\
+       gc_fun_ok (stackSem_state_gc_fun t) /\ wordSem_state_termdep s =
+       0 /\ stackSem_state_be
+     t = wordSem_state_be s /\ stackSem_state_ffi t =
+       wordSem_state_ffi s /\ Handler IN FDOM (stackSem_state_store t)
+       /\ stackSem_state_fp_regs
+     t = wordSem_state_fp_regs s /\ stackSem_state_data_buffer
+     t = wordSem_state_data_buffer s /\ stackSem_state_code_buffer
+     t = wordSem_state_code_buffer s /\ wordSem_state_compile
      s = (\(bm0,cfg) progs.
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
          (misc_Nil,bm0) in
        OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
          bm,cfg)))
-         (compile t cfg progs)) /\ compile_oracle
+         (stackSem_state_compile t cfg progs)) /\
+           stackSem_state_compile_oracle
      t = (\n.
-       let ((bm0,cfg),progs) = compile_oracle s n in
+       let ((bm0,cfg),progs) = wordSem_state_compile_oracle s n in
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
          (misc_Nil,bm0) in
          (cfg,progs,append (FST bm))) /\
-     (!n. let ((bm0,cfg),progs) = compile_oracle s n in
+     (!n. let ((bm0,cfg),progs) = wordSem_state_compile_oracle s n in
          EVERY (post_alloc_conventions k o SND o SND) progs /\
          EVERY (flat_exp_conventions o SND o SND) progs /\
          EVERY ((\x y. ~(x = y)) raise_stub_location o FST) progs /\
          EVERY ((\x y. ~(x = y)) store_consts_stub_location o FST)
            progs /\
          (n = 0 ==> bm0 = LENGTH (stackSem_state_bitmaps t))) /\
-     domain (state_code t) = raise_stub_location INSERT
+     domain (stackSem_state_code t) = raise_stub_location INSERT
                        store_consts_stub_location INSERT domain
-                         (state_code s) /\
+                         (wordSem_state_code s) /\
      (!n word_prog arg_count.
-        (sptree_lookup n (state_code s) = SOME (arg_count,word_prog))
-          ==>
+        (sptree_lookup n (wordSem_state_code s) = SOME
+          (arg_count,word_prog)) ==>
         post_alloc_conventions k word_prog /\
         flat_exp_conventions word_prog /\
         (?bs i bs2 i2 f stack_prog.
@@ -787,35 +792,38 @@ let state_rel_def = cake_define
             (stackSem_state_bitmaps t) /\
           isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
             (stackSem_state_bitmaps t)) /\
-          (sptree_lookup n (state_code t) = SOME stack_prog) /\
+          (sptree_lookup n (stackSem_state_code t) = SOME stack_prog)
+            /\
           the f (sptree_lookup n (wordSem_state_stack_size s)) = f))
             /\
-     (sptree_lookup raise_stub_location (state_code t) = SOME
-       (raise_stub F k)) /\
-     (sptree_lookup store_consts_stub_location (state_code t) = SOME
-       (store_consts_stub k)) /\
+     (sptree_lookup raise_stub_location (stackSem_state_code t) =
+       SOME (raise_stub F k)) /\
+     (sptree_lookup store_consts_stub_location (stackSem_state_code
+       t) = SOME (store_consts_stub k)) /\
      good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-       (state_data_buffer s)) + buffer_space_left (state_data_buffer s)
-       + 1 < dimword (:'a) /\
+       (wordSem_state_data_buffer s)) + buffer_space_left
+       (wordSem_state_data_buffer s) + 1 < dimword (:'a) /\
      1 <= LENGTH (stackSem_state_bitmaps t) /\ HD
        (stackSem_state_bitmaps t) = (n2w 4) /\
        stackSem_state_stack_space
-     t + f <= LENGTH (stack t) /\ LENGTH (stack t) < dimword (:'a) /\
+     t + f <= LENGTH (stackSem_state_stack t) /\ LENGTH
+       (stackSem_state_stack t) < dimword (:'a) /\
      (if f' = 0 then f = 0 else (f = f' + 1)) /\
      wf (wordSem_state_locals s) /\
      stack_size_rel f (wordSem_state_locals_size s)
-       (wordSem_state_stack_limit s) (wordSem_state_stack_max s) (stack
-       s) (stack
+       (wordSem_state_stack_limit s) (wordSem_state_stack_max s)
+       (wordSem_state_stack s) (stackSem_state_stack
        t) (stackSem_state_stack_space t) (extra:num) /\
-     (let stack' = DROP (stackSem_state_stack_space t + extra) (stack
-       t) in
+     (let stack' = DROP (stackSem_state_stack_space t + extra)
+       (stackSem_state_stack t) in
      let current_frame = TAKE f stack' in
      let rest_of_stack = DROP f stack' in
        word_to_stackProof_stack_rel k (wordSem_state_handler s)
-         (stack s) (FLOOKUP (state_store t) Handler)
-         rest_of_stack (LENGTH (stack t)) (stackSem_state_bitmaps t)
-           lens /\
+         (wordSem_state_stack s) (FLOOKUP (stackSem_state_store t)
+         Handler)
+         rest_of_stack (LENGTH (stackSem_state_stack t))
+           (stackSem_state_bitmaps t) lens /\
        (!n v.
          (sptree_lookup n (wordSem_state_locals s) = SOME v) ==>
          EVEN n /\
@@ -1051,7 +1059,7 @@ let evaluate_wLive = cake_theorem "evaluate_wLive[local]"
          ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
          lens) 0 /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
-       LENGTH (stack t5) = LENGTH (stack t) /\
+       LENGTH (stackSem_state_stack t5) = LENGTH (stack t) /\
          stackSem_state_stack_space t5 = stackSem_state_stack_space t /\
        (!i. ~(i = k) ==> get_var i t5 = get_var i t))`)
   CHEAT_TAC;;
@@ -1205,26 +1213,30 @@ let dec_stack_lemma = cake_theorem "dec_stack_lemma[local]"
      1 <= LENGTH (stackSem_state_bitmaps t1) /\
      HD (stackSem_state_bitmaps t1) = (n2w 4) /\
        stackSem_state_stack_space
-     (t1:('a,'c,'ffi)stackSem_state) <= LENGTH (stack t1) /\
+     (t1:('a,'c,'ffi)stackSem_state) <= LENGTH
+       (stackSem_state_stack t1) /\
      enc_stack (stackSem_state_bitmaps t1) (DROP
-       (stackSem_state_stack_space t1) (stack t1)) =
-         SOME (enc_stack (stack s1)) /\
-       (dec_stack x0 (stack (s1:('a,num#'c,'ffi)wordSem_state)) =
-         SOME x) /\
+       (stackSem_state_stack_space t1) (stackSem_state_stack t1)) =
+         SOME (enc_stack (wordSem_state_stack s1)) /\
+       (dec_stack x0 (wordSem_state_stack
+         (s1:('a,num#'c,'ffi)wordSem_state)) = SOME x) /\
        word_to_stackProof_stack_rel k (wordSem_state_handler s1)
-         (stack s1) (SOME (FAPPLY (state_store t1) Handler))
-         (DROP (stackSem_state_stack_space t1) (stack t1)) (LENGTH
-           (stack t1)) (stackSem_state_bitmaps t1) lens /\
-       (LENGTH (enc_stack (stack s1)) = LENGTH x0) ==>
+         (wordSem_state_stack s1) (SOME (FAPPLY (stackSem_state_store
+         t1) Handler))
+         (DROP (stackSem_state_stack_space t1)
+           (stackSem_state_stack t1)) (LENGTH (stackSem_state_stack t1))
+           (stackSem_state_bitmaps t1) lens /\
+       (LENGTH (enc_stack (wordSem_state_stack s1)) = LENGTH x0)
+         ==>
        (?(yy:'a) word_loc list'. dec_stack (stackSem_state_bitmaps
-         t1) x0 (DROP (stackSem_state_stack_space t1) (stack t1)) = SOME
-         yy /\
+         t1) x0 (DROP (stackSem_state_stack_space t1)
+         (stackSem_state_stack t1)) = SOME yy /\
             (stackSem_state_stack_space t1 + LENGTH yy = LENGTH
-              (stack t1)) /\
+              (stackSem_state_stack t1)) /\
             word_to_stackProof_stack_rel k (wordSem_state_handler
-              s1) x (SOME (FAPPLY (state_store t1) Handler)) yy
-               (LENGTH (stack t1)) (stackSem_state_bitmaps t1)
-                 lens)`)
+              s1) x (SOME (FAPPLY (stackSem_state_store t1) Handler)) yy
+               (LENGTH (stackSem_state_stack t1))
+                 (stackSem_state_bitmaps t1) lens)`)
   CHEAT_TAC;;
 
 let dec_stack_stack_size = cake_theorem "dec_stack_stack_size[local]"
@@ -1243,9 +1255,9 @@ let gc_state_rel = cake_theorem "gc_state_rel[local]"
        gc t1 = SOME t2 /\
        word_to_stackProof_state_rel ac k 0 0
          (wordSem_state_locals_fupd (K LN) s2) t2 lens 0 /\
-       LENGTH (stack t2) = LENGTH (stack t1) /\
-         stackSem_state_stack_space t2 = stackSem_state_stack_space
-         t1)`)
+       LENGTH (stackSem_state_stack t2) = LENGTH
+         (stackSem_state_stack t1) /\ stackSem_state_stack_space t2 =
+         stackSem_state_stack_space t1)`)
   CHEAT_TAC;;
 
 let alloc_alt = cake_theorem "alloc_alt[local]"
@@ -1314,12 +1326,13 @@ let alloc_IMP_alloc = cake_theorem "alloc_IMP_alloc[local]"
          (if res = NONE then
            res1 = NONE /\
            word_to_stackProof_state_rel ac k f f' s1 t1 lens 0 /\
-           LENGTH (stack t1) = LENGTH (stack t5) /\
+           LENGTH (stackSem_state_stack t1) = LENGTH (stack t5) /\
              stackSem_state_stack_space
            t1 = stackSem_state_stack_space t5 else
            res = SOME wordSem_NotEnoughSpace /\ res1 = SOME (Halt
              (wordLang_Word (n2w 1))) /\ state_clock
-           s1 = state_clock t1 /\ state_ffi s1 = state_ffi t1))`)
+           s1 = stackSem_state_clock t1 /\ state_ffi s1 =
+             stackSem_state_ffi t1))`)
   CHEAT_TAC;;
 
 let word_gc_empty_frame = cake_theorem "word_gc_empty_frame[local]"
@@ -1352,12 +1365,13 @@ let alloc_IMP_alloc2 = cake_theorem "alloc_IMP_alloc2[local]"
        (if res = NONE then
          res1 = NONE /\
          word_to_stackProof_state_rel ac k 0 0 s1 t1 lens 0 /\
-         LENGTH (stack t1) = LENGTH (stack t) /\
+         LENGTH (stackSem_state_stack t1) = LENGTH (stack t) /\
            stackSem_state_stack_space
          t1 = stackSem_state_stack_space t else
          res = SOME wordSem_NotEnoughSpace /\ res1 = SOME (Halt
            (wordLang_Word (n2w 1))) /\ state_clock
-         s1 = state_clock t1 /\ state_ffi s1 = state_ffi t1))`)
+         s1 = stackSem_state_clock t1 /\ state_ffi s1 =
+           stackSem_state_ffi t1))`)
   CHEAT_TAC;;
 
 let compile_result_def = cake_define_list
@@ -1730,14 +1744,15 @@ let call_dest_lemma = cake_theorem "call_dest_lemma[local]"
      (?(t4:('a,'c,'ffi)stackSem_state).
        evaluate (q0,t) = (NONE,t4) /\
        word_to_stackProof_state_rel ac k f f' s t4 lens 0 /\
-       LENGTH (stack t4) = LENGTH (stack t) /\
+       LENGTH (stackSem_state_stack t4) = LENGTH (stack t) /\
          stackSem_state_stack_space
        t4 = stackSem_state_stack_space t /\
        (!real_args prog ssize.
          find_code dest
                    (add_ret_loc (ret:(num list#(1 spt#1 spt)#'a
                      wordLang_prog#num#num) option)
-                              args':('a word_loc) list) (state_code
+                              args':('a word_loc) list)
+                                (wordSem_state_code
                    s) (wordSem_state_stack_size s) = SOME
                      (real_args,prog,ssize) ==>
          (?bs i bs2 i2 fs stack_prog.
@@ -1748,8 +1763,8 @@ let call_dest_lemma = cake_theorem "call_dest_lemma[local]"
            isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
              (stackSem_state_bitmaps t)) /\
            the fs ssize = fs /\
-           find_code dest' (stackSem_state_regs t4) (state_code
-             t4) = SOME stack_prog)))`)
+           find_code dest' (stackSem_state_regs t4)
+             (stackSem_state_code t4) = SOME stack_prog)))`)
   CHEAT_TAC;;
 
 let compile_result_NOT_2 = cake_theorem "compile_result_NOT_2[local]"
@@ -2046,9 +2061,9 @@ let evaluate_wStackLoad_wReg1 =
      word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (wStackLoad x Skip,t) = (NONE,t') /\ state_clock
-     t = state_clock t' /\
+     t = stackSem_state_clock t' /\
      word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
-     LENGTH (stack t') = LENGTH (stack t) /\
+     LENGTH (stackSem_state_stack t') = LENGTH (stack t) /\
        stackSem_state_stack_space t' = stackSem_state_stack_space t /\
        stackSem_state_bitmaps
      t' = stackSem_state_bitmaps t /\
@@ -2068,9 +2083,9 @@ let evaluate_wStackLoad_wReg1_with_const =
      word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (wStackLoad x Skip,t) = (NONE,t') /\ state_clock
-     t = state_clock t' /\
+     t = stackSem_state_clock t' /\
      word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
-     LENGTH (stack t') = LENGTH (stack t) /\
+     LENGTH (stackSem_state_stack t') = LENGTH (stack t) /\
        stackSem_state_stack_space t' = stackSem_state_stack_space t /\
        ~(r' = k + 1) /\
      (stackSem_word_exp t' (wordLang_Op asm_Add [Var r'; Const
@@ -2095,10 +2110,10 @@ let evaluate_wStackLoad_wReg2 =
      word_to_stackProof_state_rel ac k f f' s t lens 0 ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (wStackLoad x Skip,t) = (NONE,t') /\ state_clock
-     t = state_clock t' /\ stackSem_state_bitmaps
+     t = stackSem_state_clock t' /\ stackSem_state_bitmaps
      t = stackSem_state_bitmaps t' /\
      word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
-     LENGTH (stack t') = LENGTH (stack t) /\
+     LENGTH (stackSem_state_stack t') = LENGTH (stack t) /\
        stackSem_state_stack_space t' = stackSem_state_stack_space t /\
      (!r. ~(r = k + 1) ==> get_var r t' = get_var r t) /\
      (!r c. ~(r = k + 1) ==>
@@ -2125,14 +2140,14 @@ let evaluate_wStackStore_wReg1 =
      word_to_stackProof_state_rel ac k f f'
        (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state)
        lens 0 /\
-     LENGTH (stack t) = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t) = LENGTH_t_stack /\
        stackSem_state_stack_space
      t = t_stack_space ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (wStackStore x Skip,(set_var r' c t)) = (NONE,t') /\
      word_to_stackProof_state_rel ac k f f' (set_var r c s) t' lens
        0 /\
-     LENGTH (stack t') = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
        stackSem_state_stack_space t' = t_stack_space)`)
   CHEAT_TAC;;
 
@@ -2150,8 +2165,9 @@ let evaluate_wStackStore_wReg1_strong =
        r' c t') /\
      word_to_stackProof_state_rel ac k f f' (set_var r c s)
        (set_var r' c t') lens 0 /\
-     LENGTH (stack t') = LENGTH (stack t) /\
-       stackSem_state_stack_space t' = stackSem_state_stack_space t)`)
+     LENGTH (stackSem_state_stack t') = LENGTH
+       (stackSem_state_stack t) /\ stackSem_state_stack_space t' =
+       stackSem_state_stack_space t)`)
   CHEAT_TAC;;
 
 
@@ -2164,13 +2180,13 @@ let evaluate_wStackStore_wReg1_new =
      (?t'.
      evaluate (kont,t) = (NONE,set_var r' c t') /\
      word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
-     LENGTH (stack t') = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
        stackSem_state_stack_space t' = t_stack_space) ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (Seq kont (wStackStore x Skip),t) = (NONE,t') /\
      word_to_stackProof_state_rel ac k f f' (set_var r c s) t' lens
        0 /\
-     LENGTH (stack t') = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
        stackSem_state_stack_space t' = t_stack_space)`)
   CHEAT_TAC;;
 
@@ -2183,13 +2199,13 @@ let evaluate_wStackStore_wReg2_new =
      (?t'.
      evaluate (kont,t) = (NONE,set_var r' c t') /\
      word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
-     LENGTH (stack t') = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
        stackSem_state_stack_space t' = t_stack_space) ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (Seq kont (wStackStore x Skip),t) = (NONE,t') /\
      word_to_stackProof_state_rel ac k f f' (set_var r c s) t' lens
        0 /\
-     LENGTH (stack t') = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
        stackSem_state_stack_space t' = t_stack_space)`)
   CHEAT_TAC;;
 
@@ -2202,7 +2218,7 @@ let evaluate_wStackStore_wReg1_0 =
      word_to_stackProof_state_rel ac k f f'
        (s:('a,num#'c,'ffi)wordSem_state) (t:('a,'c,'ffi)stackSem_state)
        lens 0 /\
-     LENGTH (stack t) = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t) = LENGTH_t_stack /\
        stackSem_state_stack_space
      t = t_stack_space ==>
      (?(t':('a,'c,'ffi)stackSem_state).
@@ -2210,7 +2226,7 @@ let evaluate_wStackStore_wReg1_0 =
        = (NONE,t') /\
      word_to_stackProof_state_rel ac k f f' (set_var 0 c1 (set_var
        r c s)) t' lens 0 /\
-     LENGTH (stack t') = LENGTH_t_stack /\
+     LENGTH (stackSem_state_stack t') = LENGTH_t_stack /\
        stackSem_state_stack_space t' = t_stack_space)`)
   CHEAT_TAC;;
 
@@ -2286,8 +2302,8 @@ let evaluate_call_dest_clock =
   cake_theorem "evaluate_call_dest_clock[local]"
   (fun () ->
     `call_dest dest args (k,f,f') = (q0,dest') ==>
-     evaluate (q0,state_clock_fupd (K clk) t) =
-     (I ## (\t. state_clock_fupd (K clk) t)) (evaluate
+     evaluate (q0,stackSem_state_clock_fupd (K clk) t) =
+     (I ## (\t. stackSem_state_clock_fupd (K clk) t)) (evaluate
        (q0,(t:('a,'c,'ffi)stackSem_state)))`)
   CHEAT_TAC;;
 
@@ -2295,7 +2311,7 @@ let evaluate_wLive_clock = cake_theorem "evaluate_wLive_clock[local]"
   (fun () ->
     `!x t q bs bs'.
      wLive x bs kf = (q,bs') ==>
-     evaluate (q,state_clock_fupd (K clk) t) =
+     evaluate (q,stackSem_state_clock_fupd (K clk) t) =
      (FST (evaluate (q,(t:('a,'c,'ffi)stackSem_state))),
       (state_clock_fupd (K clk) (SND (evaluate (q,t)))))`)
   CHEAT_TAC;;
@@ -2346,7 +2362,7 @@ let evaluate_stack_move_clock = cake_theorem "evaluate_stack_move_clock"
   (fun () ->
     `!a b c d (t:('a,'c,'ffi)stackSem_state).
        let prog = stack_move a b c d Skip in
-       evaluate (prog,state_clock_fupd (K clk) t) =
+       evaluate (prog,stackSem_state_clock_fupd (K clk) t) =
        (FST (evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
         (state_clock_fupd (K clk) (SND (evaluate (prog,t)))))`)
   CHEAT_TAC;;
@@ -2440,18 +2456,20 @@ let evaluate_PushHandler = cake_theorem "evaluate_PushHandler[local]"
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (PushHandler F (x''2:num) (x''3:num)
        (k,(f:num),f'),t) = (NONE,t') /\
-     t' = state_store_fupd (K (state_store t')) (stack_fupd (K
-       (stack t')) (stackSem_state_regs_fupd (K (stackSem_state_regs
-       t')) (stackSem_state_stack_space_fupd (K
-       (stackSem_state_stack_space t')) t))) /\
+     t' = state_store_fupd (K (stackSem_state_store t'))
+       (stack_fupd (K (stackSem_state_stack t'))
+       (stackSem_state_regs_fupd (K (stackSem_state_regs t'))
+       (stackSem_state_stack_space_fupd (K (stackSem_state_stack_space
+       t')) t))) /\
      (!n.
        n < LENGTH (stack t) - stackSem_state_stack_space t ==>
        EL n (DROP (stackSem_state_stack_space t) (stack t)) = EL (n
-         + 3) (DROP (stackSem_state_stack_space t') (stack t'))) /\
+         + 3) (DROP (stackSem_state_stack_space t')
+         (stackSem_state_stack t'))) /\
      (!i. ~(i = k) ==> get_var i t' = get_var i t) /\
        stackSem_state_stack_space
      t' + 3 = stackSem_state_stack_space t /\
-     LENGTH (stack t') = LENGTH (stack t) /\
+     LENGTH (stackSem_state_stack t') = LENGTH (stack t) /\
      word_to_stackProof_state_rel ac k 0 0
        (wordSem_state_locals_size_fupd (K (SOME 0))
        (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' (SOME
@@ -2464,7 +2482,7 @@ let evaluate_PushHandler_clock =
   (fun () ->
     `!(t:('a,'c,'ffi)stackSem_state).
      evaluate (PushHandler F a b
-       (k,(f:num),(f':num)),state_clock_fupd (K clk) t) =
+       (k,(f:num),(f':num)),stackSem_state_clock_fupd (K clk) t) =
      (FST (evaluate (PushHandler F a b
        (k,(f:num),(f':num)),(t:('a,'c,'ffi)stackSem_state))),
       (state_clock_fupd (K clk) (SND (evaluate (PushHandler F a b
@@ -2476,7 +2494,7 @@ let evaluate_PopHandler_clock =
   (fun () ->
     `!(t:('a,'c,'ffi)stackSem_state).
      let prog = PopHandler F (k,(f:num),(f':num)) Skip in
-     evaluate (prog,state_clock_fupd (K clk) t) =
+     evaluate (prog,stackSem_state_clock_fupd (K clk) t) =
      (FST (evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
       (state_clock_fupd (K clk) (SND (evaluate (prog,t)))))`)
   CHEAT_TAC;;
@@ -2752,9 +2770,9 @@ let evaluate_const_inst = cake_theorem "evaluate_const_inst[local]"
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate ((\r w. Inst (asm_Const r w)) (k + 1) i,t) =
        (NONE,t') /\ state_clock
-     t = state_clock t' /\
+     t = stackSem_state_clock t' /\
      word_to_stackProof_state_rel ac k f f' s t' lens extra /\
-     LENGTH (stack t') = LENGTH (stack t) /\
+     LENGTH (stackSem_state_stack t') = LENGTH (stack t) /\
        stackSem_state_stack_space t' = stackSem_state_stack_space t /\
      stackSem_get_var (k + 1) t' = (SOME (wordLang_Word i)))`)
   CHEAT_TAC;;
@@ -3169,7 +3187,7 @@ let state_rel_cut_state = cake_theorem "state_rel_cut_state[local]"
 let word_to_stackProof_evaluate_Seq_Skip =
   cake_theorem "evaluate_Seq_Skip[local]"
   (fun () ->
-    `stackSem_evaluate (wordLang_Seq Skip p,s) = evaluate (p,s)`)
+    `stackSem_evaluate (stackLang_Seq Skip p,s) = evaluate (p,s)`)
   CHEAT_TAC;;
 
 (* HOL4 word_to_stackProofScript.sml:10080-10088: ML code, not ported *)
@@ -3186,10 +3204,10 @@ let comp_Call = cake_theorem "comp_Call[local]"
            (res1,t1) /\ ~((n2w 1) = ((n2w 0):'a word)) /\ ~((n2w 2)
              = ((n2w 0):'a word)) /\
            (if OPTION_MAP compile_result res = res1 then state_ffi
-             s1 = state_ffi t1 /\ state_clock s1 = state_clock t1
-               else
+             s1 = stackSem_state_ffi t1 /\ state_clock s1 =
+               stackSem_state_clock t1 else
              res1 = SOME (Halt (wordLang_Word (n2w 2))) /\
-               ffi_state_io_events (state_ffi
+               ffi_state_io_events (stackSem_state_ffi
              t1) <<= ffi_state_io_events (state_ffi s1) /\
              the (wordSem_state_stack_limit s1 + 1)
                (wordSem_state_stack_max s1) >
@@ -3239,18 +3257,19 @@ let init_state_ok_def = cake_define
      4 < k /\ good_dimindex (:'a) /\ 8 <= dimindex (:'a) /\
        stackSem_state_use_stack
      t /\ stackSem_state_use_store t /\ stackSem_state_use_alloc t /\
-       gc_fun_ok (state_gc_fun t) /\ stackSem_state_stack_space
-     t <= LENGTH (stack t) /\
+       gc_fun_ok (stackSem_state_gc_fun t) /\ stackSem_state_stack_space
+     t <= LENGTH (stackSem_state_stack t) /\
      FLOOKUP (stackSem_state_regs t) 0 = SOME (Loc 1 0) /\
      LENGTH (stackSem_state_bitmaps t) + 1 < dimword (:'a) /\
      [(n2w 4)] <<= stackSem_state_bitmaps t /\
-     LENGTH (stack t) < dimword (:'a) /\
-     DROP (stackSem_state_stack_space t) (stack t) = [wordLang_Word
-       (n2w 0)] /\
-     Handler IN FDOM (state_store t) /\
+     LENGTH (stackSem_state_stack t) < dimword (:'a) /\
+     DROP (stackSem_state_stack_space t) (stackSem_state_stack t) =
+       [wordLang_Word (n2w 0)] /\
+     Handler IN FDOM (stackSem_state_store t) /\
      LENGTH (stackSem_state_bitmaps t) + LENGTH (buffer_buffer
-       (state_data_buffer t)) + buffer_space_left (state_data_buffer
-        t) + 1 < dimword (:'a) /\ compile_oracle
+       (stackSem_state_data_buffer t)) + buffer_space_left
+       (stackSem_state_data_buffer
+        t) + 1 < dimword (:'a) /\ stackSem_state_compile_oracle
      t = (\n.
        let ((bm0,cfg),progs) = coracle n in
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
@@ -3268,27 +3287,29 @@ let make_init_def = cake_define
   `word_to_stackProof_make_init ac k (t:('a,'c,'ffi)stackSem_state) code
   coracle =
      mk_wordSem_state (sptree_insert 0 (Loc 1 0) LN) (SOME 0)
-       (fp_regs t) (state_store t \\ Handler) [] (LENGTH (stack t))
-       (stack_size ([]:('a stack_frame) list)) (mapi (\n
-       (arg_count,prog). FST (SND (word_to_stack_compile_prog ac F prog
-       arg_count k (misc_Nil,0)))) code) (state_memory t) (state_mdomain
-       t) (state_sh_mdomain t) (K I) (\(bm0,cfg) progs.
+       (stackSem_state_fp_regs t) (stackSem_state_store t \\ Handler) []
+       (LENGTH (stackSem_state_stack t)) (stack_size ([]:('a
+       stack_frame) list)) (mapi (\n (arg_count,prog). FST (SND
+       (word_to_stack_compile_prog ac F prog arg_count k (misc_Nil,0))))
+       code) (stackSem_state_memory t) (stackSem_state_mdomain t)
+       (stackSem_state_sh_mdomain t) (K I) (\(bm0,cfg) progs.
        let (progs,fs,bm) = compile_word_to_stack ac F k progs
          (misc_Nil,bm0) in
        OPTION_MAP (\(bytes,cfg). (bytes,append (FST bm),(SND
          bm,cfg)))
-         (compile t cfg progs)) coracle (state_code_buffer t)
-           (state_data_buffer t) (state_gc_fun t) 0 (state_clock t) 0
-           code (be t) (state_ffi t)`;;
+         (stackSem_state_compile t cfg progs)) coracle
+           (stackSem_state_code_buffer t) (stackSem_state_data_buffer
+           t) (stackSem_state_gc_fun t) 0 (stackSem_state_clock t) 0
+           code (stackSem_state_be t) (stackSem_state_ffi t)`;;
 hol4_overload "make_init" "word_to_stackProof_make_init";;
 
 let init_state_ok_IMP_state_rel =
   cake_theorem "init_state_ok_IMP_state_rel[local]"
   (fun () ->
-    `sptree_lookup raise_stub_location (state_code t) = SOME (raise_stub
-  F k) /\
-     sptree_lookup store_consts_stub_location (state_code t) = SOME
-       (store_consts_stub k) /\
+    `sptree_lookup raise_stub_location (stackSem_state_code t) = SOME
+  (raise_stub F k) /\
+     sptree_lookup store_consts_stub_location (stackSem_state_code
+       t) = SOME (store_consts_stub k) /\
       (!n word_prog arg_count.
          (sptree_lookup n code = SOME (arg_count,word_prog)) ==>
          post_alloc_conventions k word_prog /\
@@ -3300,8 +3321,9 @@ let init_state_ok_IMP_state_rel =
              LENGTH (stackSem_state_bitmaps t) /\
            isPREFIX (append bs2) (DROP (i - LENGTH (append bs))
              (stackSem_state_bitmaps t)) /\
-           (sptree_lookup n (state_code t) = SOME stack_prog))) /\
-      domain (state_code t) =
+           (sptree_lookup n (stackSem_state_code t) = SOME
+             stack_prog))) /\
+      domain (stackSem_state_code t) =
         raise_stub_location INSERT store_consts_stub_location
           INSERT domain code /\
       init_state_ok ac k t coracle ==>
@@ -3327,7 +3349,7 @@ let state_rel_IMP_semantics' = cake_theorem "state_rel_IMP_semantics'"
 let word_to_stackProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
-    `state_code
+    `stackSem_state_code
          ((t:('a,'c,'ffi)stackSem_state)) = fromAList (SND (SND
            (SND (compile asm_conf F code)))) /\
          k = (asm_config_reg_count asm_conf - (5 + LENGTH

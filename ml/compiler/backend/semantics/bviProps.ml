@@ -19,6 +19,8 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["error"];;
+
 let bviProps_initial_state_simp =
   cake_theorem "initial_state_simp[simp]"
   (fun () ->
@@ -171,8 +173,8 @@ let bviProps_evaluate_APPEND = cake_theorem "evaluate_APPEND"
   CHEAT_TAC;;
 
 let inc_clock_def = cake_define
-  `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) = state_clock_fupd
-  (K (state_clock s + n)) s`;;
+  `bviProps_inc_clock n (s:('c,'ffi)bviSem_state) =
+  bviSem_state_clock_fupd (K (bviSem_state_clock s + n)) s`;;
 hol4_overload "inc_clock" "bviProps_inc_clock";;
 
 let inc_clock_ZERO = cake_theorem "inc_clock_ZERO"
@@ -551,14 +553,16 @@ hol4_overload "good_code_labels" "bviProps_good_code_labels";;
 
 let adj_orac_def = cake_define
   `(adj_orac cc f (s:('a,'ffi)bviSem_state):('b,'ffi)bviSem_state) =
-     mk_bviSem_state (state_refs s) (state_clock s)
-       (bviSem_state_global s) cc ((f ## I) o compile_oracle s)
-       (state_code s) (state_ffi s)`;;
+     mk_bviSem_state (bviSem_state_refs s) (bviSem_state_clock s)
+       (bviSem_state_global s) cc ((f ## I) o
+       bviSem_state_compile_oracle s) (bviSem_state_code s)
+       (bviSem_state_ffi s)`;;
 
 let adj_orac_ok_def = cake_define
   `adj_orac_ok cc f (s:('a,'ffi)bviSem_state) <=>
-     (!n x y. compile_oracle s n = (x,y) ==>
-       OPTION_MAP (I ## (I ## f)) (compile s x y) = cc (f x) y)`;;
+     (!n x y. bviSem_state_compile_oracle s n = (x,y) ==>
+       OPTION_MAP (I ## (I ## f)) (bviSem_state_compile s x y) =
+         cc (f x) y)`;;
 
 let adj_orac_simps = cake_theorem "adj_orac_simps[local]"
   (fun () ->
@@ -613,30 +617,31 @@ let do_app_cfg_swap = cake_theorem "do_app_cfg_swap[local]"
 let do_app_cfg_swap_Rval = cake_theorem "do_app_cfg_swap_Rval[local]"
   (fun () ->
     `!op args (s) (s1)
-         (t) value. ~(op = closLang_Install) /\ domain (state_code
-           s) = domain (state_code t) /\
+         (t) value. ~(op = closLang_Install) /\ domain
+           (bviSem_state_code s) = domain (bviSem_state_code t) /\
        do_app op args s = Rval (value,s1) ==>
        do_app op args
-         (state_ffi_fupd (K (state_ffi s))
+         (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
            (bviSem_state_global_fupd (K (bviSem_state_global s))
-           (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K
-           (state_refs s)) t)))) =
-       Rval (value,state_ffi_fupd (K (state_ffi s1))
-         (bviSem_state_global_fupd (K (bviSem_state_global s1))
-         (state_clock_fupd (K (state_clock s1)) (state_refs_fupd (K
-         (state_refs s1)) t))))`)
+           (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+           (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) =
+       Rval (value,bviSem_state_ffi_fupd (K (bviSem_state_ffi
+         s1)) (bviSem_state_global_fupd (K (bviSem_state_global s1))
+         (bviSem_state_clock_fupd (K (bviSem_state_clock s1))
+         (bviSem_state_refs_fupd (K (bviSem_state_refs s1)) t))))`)
   CHEAT_TAC;;
 
 let do_app_cfg_swap_Rerr = cake_theorem "do_app_cfg_swap_Rerr[local]"
   (fun () ->
     `!op args (s) (t) error'. ~(op = closLang_Install) /\ domain
-  (state_code s) = domain (state_code t) /\
+  (bviSem_state_code s) = domain (bviSem_state_code t) /\
        do_app op args s = Rerr error' ==>
        do_app op args
-         (state_ffi_fupd (K (state_ffi s))
+         (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
            (bviSem_state_global_fupd (K (bviSem_state_global s))
-           (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K
-           (state_refs s)) t)))) = Rerr error'`)
+           (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+           (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) =
+           Rerr error'`)
   CHEAT_TAC;;
 
 let do_install_Rerr_type = cake_theorem "do_install_Rerr_type[local]"
@@ -719,3 +724,5 @@ let semantics_CURRY_I = cake_theorem "semantics_CURRY_I"
        semantics ffi code co (state_cc (CURRY I) cc) start =
        semantics ffi code (state_co (CURRY I) co) cc start`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -11,7 +11,6 @@
 
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/data_live.ml";;
-needs "compiler/backend/pattern_matching/pattern_semantics.ml";;
 needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
@@ -23,12 +22,11 @@ needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
-needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
-needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"; "memory"; "precondition"];;
+cake_hide ["Term"; "code_buffer"; "comp"; "compile"; "data_buffer";
+           "memory"; "precondition"];;
 
 (*
 Main lemmas:
@@ -1800,31 +1798,14 @@ let cut_state_const = cake_theorem "cut_state_const"
 (* HOL4 wordPropsScript.sml:1303-1309: the ML values that the
    definitions below antiquote *)
 
-let evaluate_clock_const = cake_theorem "evaluate_clock_const[local]"
-  (fun () ->
-    `(let fun' = (\sel s. first (can (find_term (can (match_term (Term
-  [QUOTE s]))))) ind_goals) in list_mk_conj (sptree_map sel
-       ["Skip","Alloc","StoreConsts","Move","Inst","Assign",
-        "Get","Set","OpCurrHeap","Store","Return","Raise",
-        "wordLang$Break","wordLang$Continue",
-        "LocValue","Install","CodeBufferWrite","DataBufferWrite",
-        "FFI","ShareInst"]) end)`)
-  CHEAT_TAC;;
+(* HOL4 wordPropsScript.sml:1311-1325: a theorem whose statement the
+   port cannot state yet: evaluate_clock_const *)
 
 (* HOL4 wordPropsScript.sml:1327-1332: the ML values that the
    definitions below antiquote *)
 
-let evaluate_clock_with_const =
-  cake_theorem "evaluate_clock_with_const[local]"
-  (fun () ->
-    `(let fun' = (\sel s. first (can (find_term (can (match_term (Term
-  [QUOTE s]))))) ind_goals2) in list_mk_conj (sptree_map sel
-       ["Skip","Alloc","StoreConsts","Move","Inst","Assign",
-        "Get","Set","OpCurrHeap","Store","Return","Raise",
-        "wordLang$Break","wordLang$Continue",
-        "LocValue","Install","CodeBufferWrite","DataBufferWrite",
-        "FFI","ShareInst"]) end)`)
-  CHEAT_TAC;;
+(* HOL4 wordPropsScript.sml:1334-1345: a theorem whose statement the
+   port cannot state yet: evaluate_clock_with_const *)
 
 (******CONST LEMMAS END *****)
 
@@ -2835,7 +2816,7 @@ let evaluate_stack_limit_stack_max =
 
 let inc_clock_def = cake_define
   `wordProps_inc_clock n (t:('a,'c,'ffi)wordSem_state) =
-  state_clock_fupd (K (state_clock t + n)) t`;;
+  wordSem_state_clock_fupd (K (wordSem_state_clock t + n)) t`;;
 hol4_overload "inc_clock" "wordProps_inc_clock";;
 
 let inc_clock_0 = cake_theorem "inc_clock_0[simp]"

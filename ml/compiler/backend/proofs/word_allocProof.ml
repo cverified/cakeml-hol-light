@@ -28,7 +28,8 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["C"; "code_buffer"; "data_buffer"; "sloc"];;
+cake_hide ["C"; "code_buffer"; "compile"; "data_buffer"; "not"; "sloc";
+           "val"];;
 
 (* Ensures we have the correct ML bindings *)
 (* HOL4 word_allocProofScript.sml:13-15: ML code, not ported *)
@@ -140,8 +141,8 @@ let word_state_eq_rel_def = cake_define
   (t:('a,'c,'ffi)wordSem_state) <=> wordSem_state_fp_regs
    t = wordSem_state_fp_regs s /\ wordSem_state_store
    t = wordSem_state_store s /\ wordSem_state_locals_size
-   t = wordSem_state_locals_size s /\ stack
-   t = stack s /\ wordSem_state_stack_limit
+   t = wordSem_state_locals_size s /\ wordSem_state_stack
+   t = wordSem_state_stack s /\ wordSem_state_stack_limit
    t = wordSem_state_stack_limit s /\ wordSem_state_stack_max
    t = wordSem_state_stack_max s /\ wordSem_state_stack_size
    t = wordSem_state_stack_size s /\ wordSem_state_memory
@@ -149,10 +150,10 @@ let word_state_eq_rel_def = cake_define
    t = wordSem_state_mdomain s /\ wordSem_state_sh_mdomain
    t = wordSem_state_sh_mdomain s /\ wordSem_state_gc_fun
    t = wordSem_state_gc_fun s /\ wordSem_state_handler
-   t = wordSem_state_handler s /\ state_clock
-   t = state_clock s /\ wordSem_state_code
-   t = wordSem_state_code s /\ state_ffi
-   t = state_ffi s /\ wordSem_state_be
+   t = wordSem_state_handler s /\ wordSem_state_clock
+   t = wordSem_state_clock s /\ wordSem_state_code
+   t = wordSem_state_code s /\ wordSem_state_ffi
+   t = wordSem_state_ffi s /\ wordSem_state_be
    t = wordSem_state_be s /\ wordSem_state_termdep
    t = wordSem_state_termdep s /\ wordSem_state_compile
    t = wordSem_state_compile s /\ wordSem_state_compile_oracle

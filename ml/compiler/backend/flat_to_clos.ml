@@ -23,6 +23,8 @@ needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 
+cake_hide ["pmatch"];;
+
 let dest_pat_def = cake_define
   `dest_pat x1 =
       match x1 with
@@ -548,3 +550,5 @@ let HD_compile = cake_theorem "HD_compile[simp]"
   (fun () ->
     `[HD (flat_to_clos_compile m [x])] = flat_to_clos_compile m [x]`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -55,7 +55,7 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 
-cake_hide ["code_buffer"; "data_buffer"];;
+cake_hide ["code_buffer"; "data_buffer"; "failed"];;
 
 (* HOL4 stack_to_labProofScript.sml:23-24: ML code, not ported *)
 
@@ -465,7 +465,7 @@ hol4_overload "state_rel" "stack_to_labProof_state_rel";;
 let loc_check_IMP_loc_to_pc = cake_theorem "loc_check_IMP_loc_to_pc"
   (fun () ->
     `loc_check (stackSem_state_code s) (l1,l2) /\ state_rel s t1 ==>
-      (?v. loc_to_pc l1 l2 (state_code t1) = SOME v)`)
+      (?v. loc_to_pc l1 l2 (labSem_state_code t1) = SOME v)`)
   CHEAT_TAC;;
 
 let stack_to_labProof_state_rel_dec_clock =
@@ -567,10 +567,10 @@ let compile_jump_correct = cake_theorem "compile_jump_correct"
     `asm_fetch_aux pc code = SOME (compile_jump dest) /\
      loc_to_pc (dest_to_loc' regs dest) 0 code = SOME pc' /\
      (!r. dest = INR r ==> (?p. (\r s. regs s r) r s = wordLang_Loc
-       p 0)) /\ pc
-     (s:('a,'c,'ffi)labSem_state) = pc /\ stackSem_state_code s =
-       code /\ stackSem_state_regs s = regs /\ ~(stackSem_state_clock s
-       = 0) ==>
+       p 0)) /\ labSem_state_pc
+     (s:('a,'c,'ffi)labSem_state) = pc /\ labSem_state_code s =
+       code /\ labSem_state_regs s = regs /\ ~(labSem_state_clock s = 0)
+       ==>
      evaluate s = evaluate (upd_pc pc' (dec_clock s))`)
   CHEAT_TAC;;
 
@@ -687,63 +687,70 @@ let flatten_correct = cake_theorem "flatten_correct"
     `!prog s1 t r s2 n l cs bs (t1:('a,'c,'ffi)labSem_state).
        evaluate (prog,s1) = (r,s2) /\ ~(r = SOME Error) /\
        state_rel s1 t1 /\
-       call_args prog (ptr_reg t1) (len_reg t1) (ptr2_reg t1)
-         (len2_reg t1) (link_reg t1) /\
-       stack_to_labProof_code_installed (pc t1) (append (FST
-         (stack_to_lab_flatten t prog n l cs bs))) (state_code t1) /\
-       EVERY (\k. IS_SOME (loc_to_pc n k (state_code t1))) (cs ++
-         bs ++ [0]) ==>
+       call_args prog (labSem_state_ptr_reg t1)
+         (labSem_state_len_reg t1) (labSem_state_ptr2_reg t1)
+         (labSem_state_len2_reg t1) (labSem_state_link_reg t1) /\
+       stack_to_labProof_code_installed (labSem_state_pc t1)
+         (append (FST (stack_to_lab_flatten t prog n l cs bs)))
+         (labSem_state_code t1) /\
+       EVERY (\k. IS_SOME (loc_to_pc n k (labSem_state_code t1)))
+         (cs ++ bs ++ [0]) ==>
        (?ck t2.
        match halt_view r with SOME res ->
-         evaluate (state_clock_fupd (K (state_clock t1 + ck)) t1) =
-           (res,t2) /\ state_ffi t2 = state_ffi s2 | NONE ->
-         (!ck1. evaluate (state_clock_fupd (K (state_clock t1 + ck
-           + ck1)) t1) =
-           evaluate (state_clock_fupd (K (state_clock t2 + ck1))
-             t2)) /\ len_reg
-         t2 = len_reg t1 /\ ptr_reg
-         t2 = ptr_reg t1 /\ len2_reg
-         t2 = len2_reg t1 /\ ptr2_reg
-         t2 = ptr2_reg t1 /\ link_reg
-         t2 = link_reg t1 /\ state_code
-         t1 <<= state_code t2 /\
+         evaluate (labSem_state_clock_fupd (K (labSem_state_clock
+           t1 + ck)) t1) =
+           (res,t2) /\ labSem_state_ffi t2 = state_ffi s2 | NONE ->
+         (!ck1. evaluate (labSem_state_clock_fupd (K
+           (labSem_state_clock t1 + ck + ck1)) t1) =
+           evaluate (labSem_state_clock_fupd (K (labSem_state_clock
+             t2 + ck1)) t2)) /\ labSem_state_len_reg
+         t2 = labSem_state_len_reg t1 /\ labSem_state_ptr_reg
+         t2 = labSem_state_ptr_reg t1 /\ labSem_state_len2_reg
+         t2 = labSem_state_len2_reg t1 /\ labSem_state_ptr2_reg
+         t2 = labSem_state_ptr2_reg t1 /\ labSem_state_link_reg
+         t2 = labSem_state_link_reg t1 /\ labSem_state_code
+         t1 <<= labSem_state_code t2 /\
          (match OPTION_MAP (\w. result_view w n cs bs) r with NONE
-           -> pc
-           t2 = pc t1 + LENGTH (FILTER ((~) o is_Label)
+           -> labSem_state_pc
+           t2 = labSem_state_pc t1 + LENGTH (FILTER ((~) o
+             is_Label)
                              (append (FST (stack_to_lab_flatten t
                                prog n l cs bs)))) /\
            state_rel s2 t2 | SOME (Vloc n1 n2) ->
              (!n. IS_SOME (lookup n (state_code s2)) ==> IS_SOME
-               (loc_to_pc n 0 (state_code t2))) /\
-             (!w. loc_to_pc n1 n2 (state_code t2) = SOME w ==>
-                 w = pc t2 /\
+               (loc_to_pc n 0 (labSem_state_code t2))) /\
+             (!w. loc_to_pc n1 n2 (labSem_state_code t2) = SOME w
+               ==>
+                 w = labSem_state_pc t2 /\
                  state_rel s2 t2) | SOME (Vcont n1 n2) ->
              state_rel s2 t2 /\
-             stack_to_labProof_code_installed (pc t2)
-               [labLang_LabAsm (Jump (labLang_Lab n1 n2)) (n2w 0) []
-               0] (state_code t2) | SOME Vtimeout -> state_ffi t2 =
-               state_ffi s2 /\ state_clock t2 = 0 | _15 -> F))`)
+             stack_to_labProof_code_installed (labSem_state_pc
+               t2) [labLang_LabAsm (Jump (labLang_Lab n1 n2)) (n2w 0)
+               [] 0] (labSem_state_code t2) | SOME Vtimeout ->
+               labSem_state_ffi t2 = state_ffi s2 /\
+               labSem_state_clock t2 = 0 | _15 -> F))`)
   CHEAT_TAC;;
 
 let flatten_call_correct = cake_theorem "flatten_call_correct"
   (fun () ->
     `evaluate (Call NONE (INL start) NONE,s1) = (res,s2) /\
      state_rel (s1:('a,'c,'ffi)stackSem_state) t1 /\
-     loc_to_pc start 0 (state_code t1) = SOME (pc t1) /\ ~(res =
-       SOME Error) /\
+     loc_to_pc start 0 (labSem_state_code t1) = SOME
+       (labSem_state_pc t1) /\ ~(res = SOME Error) /\
      (~(res = SOME TimeOut) ==>
        (?w. res = SOME (Halt (wordLang_Word w))) \/
        (?f. res = SOME (FinalFFI f)) \/
        (?n. res = SOME (Result (wordLang_Loc n 0)) /\
-         (!(s:('a,'c,'ffi)stackSem_state). subspt (state_code s1)
-           (stackSem_state_code s) /\ ~(stackSem_state_clock s = 0) ==>
+         (!(s:('a,'c,'ffi)stackSem_state). subspt
+           (stackSem_state_code s1) (stackSem_state_code s) /\
+           ~(stackSem_state_clock s = 0) ==>
              (?t. evaluate (Call NONE (INL n) NONE,s) = (SOME (Halt
                (wordLang_Word (n2w 0))),t) /\ labSem_state_ffi
                  t = stackSem_state_ffi s /\ labSem_state_clock t =
                    stackSem_state_clock s - 1)))) ==>
      (?ck r2 t2.
-       evaluate (state_clock_fupd (K (state_clock t1 - 1 + ck))
-         (t1:('a,'c,'ffi)labSem_state)) = (r2,t2) /\
+       evaluate (labSem_state_clock_fupd (K (labSem_state_clock t1
+         - 1 + ck)) (t1:('a,'c,'ffi)labSem_state)) = (r2,t2) /\
        (!f. res = SOME (FinalFFI f) ==> r2 = Halt (ffi_FFI_outcome
          f)) /\
        (!w. res = SOME (Halt w) ==> r2 =
@@ -751,7 +758,7 @@ let flatten_call_correct = cake_theorem "flatten_call_correct"
           wordLang_Word _16 -> Halt ffi_Resource_limit_hit | _17 ->
           Error)) /\
        (!n. res = SOME (Result (wordLang_Loc n 0)) ==> r2 = Halt
-         ffi_Success) /\ state_ffi
+         ffi_Success) /\ labSem_state_ffi
        t2 = state_ffi s2 /\ ~(r2 = Error) /\ (res = SOME TimeOut
          ==> r2 = TimeOut))`)
   CHEAT_TAC;;
@@ -768,11 +775,11 @@ let halt_assum_def = cake_define
 
 let flatten_semantics = cake_theorem "flatten_semantics"
   (fun () ->
-    `halt_assum (:'ffi#'c) (state_code (s1:('a,'c,'ffi)stackSem_state))
-  /\
+    `halt_assum (:'ffi#'c) (stackSem_state_code
+  (s1:('a,'c,'ffi)stackSem_state)) /\
      state_rel s1 (s2:('a,'c,'ffi)labSem_state) /\
-     loc_to_pc start 0 (state_code s2) = SOME (pc s2) /\
-       ~(semantics start s1 = Fail) ==>
+     loc_to_pc start 0 (labSem_state_code s2) = SOME
+       (labSem_state_pc s2) /\ ~(semantics start s1 = Fail) ==>
      semantics s2 = semantics start s1`)
   CHEAT_TAC;;
 
@@ -909,45 +916,44 @@ let state_rel_make_init = cake_theorem "state_rel_make_init"
   (s:('a,'c,'ffi)labSem_state) <=>
       (!n prog.
        lookup n code = SOME (prog) ==>
-       call_args prog (stackSem_state_ptr_reg s)
-         (stackSem_state_len_reg s) (stackSem_state_ptr2_reg s)
-         (stackSem_state_len2_reg s) (stackSem_state_link_reg s) /\
+       call_args prog (labSem_state_ptr_reg s)
+         (labSem_state_len_reg s) (labSem_state_ptr2_reg s)
+         (labSem_state_len2_reg s) (labSem_state_link_reg s) /\
        (?pc'.
          stack_to_labProof_code_installed pc' (append (FST
            (stack_to_lab_flatten T prog n (next_lab prog 2) [] [])))
-           (stackSem_state_code s) /\
-         loc_to_pc n 0 (stackSem_state_code s) = SOME pc')) /\
-           ~(stackSem_state_failed s) /\ stackSem_state_compile_oracle
+           (labSem_state_code s) /\
+         loc_to_pc n 0 (labSem_state_code s) = SOME pc')) /\
+           ~(labSem_state_failed s) /\ labSem_state_compile_oracle
       s = (\n. (\(c,p,_18). (c,MAP prog_to_section p)) (coracle n))
         /\
       (!k.
         (\(c,ps,_19).
            EVERY
              (\(n,p).
-                call_args p (stackSem_state_ptr_reg s)
-                  (stackSem_state_len_reg s) (stackSem_state_ptr2_reg s)
-                  (stackSem_state_len2_reg s) (stackSem_state_link_reg
-                  s) /\
+                call_args p (labSem_state_ptr_reg s)
+                  (labSem_state_len_reg s) (labSem_state_ptr2_reg s)
+                  (labSem_state_len2_reg s) (labSem_state_link_reg s) /\
                 EVERY (\(l1,l2). l1 = n /\ ~(l2 = 0) /\ ~(l2 = 1))
                   (extract_labels p) /\
                 ALL_DISTINCT (extract_labels p)) ps /\
            ALL_DISTINCT (MAP FST ps)) (coracle k)) /\
-             ~(stackSem_state_link_reg
-      s = stackSem_state_len_reg s) /\ ~(stackSem_state_link_reg s
-        = stackSem_state_ptr_reg s) /\ ~(stackSem_state_link_reg
-      s = stackSem_state_len2_reg s) /\ ~(stackSem_state_link_reg s
-        = stackSem_state_ptr2_reg s) /\ ~(stackSem_state_link_reg
+             ~(labSem_state_link_reg
+      s = labSem_state_len_reg s) /\ ~(labSem_state_link_reg s =
+        labSem_state_ptr_reg s) /\ ~(labSem_state_link_reg
+      s = labSem_state_len2_reg s) /\ ~(labSem_state_link_reg s =
+        labSem_state_ptr2_reg s) /\ ~(labSem_state_link_reg
       s IN save_regs) /\
-      domain code = set_of_list (MAP Section_num
-        (stackSem_state_code s)) /\
-      EVERY sec_labels_ok (stackSem_state_code s) /\
-      (!k i n. k IN save_regs ==> stackSem_state_io_regs s n i k =
+      domain code = set_of_list (MAP Section_num (labSem_state_code
+        s)) /\
+      EVERY sec_labels_ok (labSem_state_code s) /\
+      (!k i n. k IN save_regs ==> labSem_state_io_regs s n i k =
         NONE) /\
-      (!k n. k IN save_regs ==> stackSem_state_cc_regs s n k =
-        NONE) /\
-      (!x. x IN stackSem_state_mem_domain s ==> w2n x MOD (dimindex
+      (!k n. k IN save_regs ==> labSem_state_cc_regs s n k = NONE)
+        /\
+      (!x. x IN labSem_state_mem_domain s ==> w2n x MOD (dimindex
         (:'a) DIV 8) = 0) /\
-      (!x. x IN stackSem_state_shared_mem_domain s ==> w2n x MOD
+      (!x. x IN labSem_state_shared_mem_domain s ==> w2n x MOD
         (dimindex (:'a) DIV 8) = 0) /\
       good_dimindex (:'a)`)
   CHEAT_TAC;;

@@ -24,6 +24,8 @@ needs "lib/simpleSexp.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/fpSem.ml";;
 needs "semantics/namespace.ml";;
+
+cake_hide ["assert"; "return"];;
 (* HOL4 ancestors outside the port: quantHeuristics *)
 
 hol4_overload "++" "OPTION_CHOICE";;
@@ -1775,3 +1777,5 @@ let decsexp_valid = cake_theorem "decsexp_valid[simp]"
   CHEAT_TAC;;
 
 hol4_only "++" "APPEND";;
+
+cake_hide [];;

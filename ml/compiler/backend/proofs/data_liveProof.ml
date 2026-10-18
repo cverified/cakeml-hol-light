@@ -24,16 +24,17 @@ let SPLIT_PAIR = cake_theorem "SPLIT_PAIR[local]"
 
 let state_rel_def = cake_define
   `data_liveProof_state_rel (s1:('a,'ffi)dataSem_state)
-  (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> state_code
-     s1 = state_code t1 /\ state_clock s1 = state_clock t1 /\
-       dataSem_state_space s1 = dataSem_state_space t1 /\ state_ffi
-     s1 = state_ffi t1 /\ state_refs s1 = state_refs t1 /\
-       dataSem_state_global s1 = dataSem_state_global t1 /\
-       dataSem_state_handler
-     s1 = dataSem_state_handler t1 /\ (LENGTH (stack s1) = LENGTH
-       (stack t1)) /\ compile
-     s1 = compile t1 /\ compile_oracle s1 = compile_oracle t1 /\
-       dataSem_state_tstamps
+  (t1:('a,'ffi)dataSem_state) (live:1 spt) <=> dataSem_state_code
+     s1 = dataSem_state_code t1 /\ dataSem_state_clock s1 =
+       dataSem_state_clock t1 /\ dataSem_state_space s1 =
+       dataSem_state_space t1 /\ dataSem_state_ffi
+     s1 = dataSem_state_ffi t1 /\ dataSem_state_refs s1 =
+       dataSem_state_refs t1 /\ dataSem_state_global s1 =
+       dataSem_state_global t1 /\ dataSem_state_handler
+     s1 = dataSem_state_handler t1 /\ (LENGTH (dataSem_state_stack
+       s1) = LENGTH (dataSem_state_stack t1)) /\ dataSem_state_compile
+     s1 = dataSem_state_compile t1 /\ dataSem_state_compile_oracle s1
+       = dataSem_state_compile_oracle t1 /\ dataSem_state_tstamps
      s1 = dataSem_state_tstamps t1 /\ dataSem_state_limits
      s1 = dataSem_state_limits t1 /\ dataSem_state_stack_frame_sizes
      s1 = dataSem_state_stack_frame_sizes t1 /\

@@ -171,7 +171,7 @@ let with_same_locals = cake_theorem "with_same_locals"
 
 let var_corr_def = cake_define
   `var_corr env corr t <=>
-     EVERY2 (\v x. get_var v t = SOME x) corr env`;;
+     EVERY2 (\v x. dataSem_get_var v t = SOME x) corr env`;;
 
 let get_vars_thm = cake_theorem "get_vars_thm"
   (fun () ->
@@ -475,7 +475,7 @@ let do_space_alt = cake_theorem "do_space_alt"
 
 let Seq_Skip = cake_theorem "Seq_Skip"
   (fun () ->
-    `evaluate (word_bignum_Seq c Skip,s) = evaluate (c,s)`)
+    `evaluate ((Seq c Skip:dataLang_prog),s) = evaluate (c,s)`)
   CHEAT_TAC;;
 
 let evaluate_safe_alt = cake_theorem "evaluate_safe_alt"
@@ -812,12 +812,12 @@ let evaluate_stack_and_locals_swap =
     `!c (s:('c,'ffi)dataSem_state).
         match evaluate (c,s) with (SOME (Rerr (Rabort
           Rtype_error)),s1) -> T | (SOME (Rerr (Rabort a)),s1) ->
-                 (stack s1 = []) /\ (!xs lsz. (LENGTH (stack s) =
-                   LENGTH xs) ==>
+                 (stack s1 = []) /\ (!xs lsz. (LENGTH
+                   (dataSem_state_stack s) = LENGTH xs) ==>
                           (?lss sfs smx phl.
                           evaluate
                             (c,dataSem_state_locals_size_fupd (K lsz)
-                            (stack_fupd (K xs) s)) =
+                            (dataSem_state_stack_fupd (K xs) s)) =
                             (SOME (Rerr (Rabort
                               a)),dataSem_state_peak_heap_length_fupd (K
                               phl) (dataSem_state_stack_max_fupd (K smx)
@@ -832,12 +832,15 @@ let evaluate_stack_and_locals_swap =
                            dataSem_state_handler s1) /\
                          (!xs s7 lsz. (dataSem_jump_exc
                            (dataSem_state_locals_size_fupd (K lsz)
-                           (stack_fupd (K xs) s)) = SOME s7) /\
-                              (LENGTH (stack s) = LENGTH xs) ==>
+                           (dataSem_state_stack_fupd (K xs) s)) = SOME
+                           s7) /\
+                              (LENGTH (dataSem_state_stack s) =
+                                LENGTH xs) ==>
                               (?lss sfs smx phl.
                               (evaluate
                                 (c,dataSem_state_locals_size_fupd (K
-                                lsz) (stack_fupd (K xs) s)) =
+                                lsz) (dataSem_state_stack_fupd (K xs)
+                                s)) =
                               (SOME (Rerr (Rraise
                                 t)),dataSem_state_peak_heap_length_fupd
                                 (K phl) (dataSem_state_stack_max_fupd (K
@@ -849,14 +852,16 @@ let evaluate_stack_and_locals_swap =
                                 (dataSem_state_handler s7)) (stack_fupd
                                 (K (stack s7))
                               s1))))))))))) | (res,s1) -> (stack s1
-                                = stack s) /\ (dataSem_state_handler s1
-                                = dataSem_state_handler s) /\
-                           (!xs lsz. (LENGTH (stack s) = LENGTH xs)
-                             ==>
+                                = dataSem_state_stack s) /\
+                                (dataSem_state_handler s1 =
+                                dataSem_state_handler s) /\
+                           (!xs lsz. (LENGTH (dataSem_state_stack
+                             s) = LENGTH xs) ==>
                               (?lss sfs smx phl.
                               evaluate
                                 (c,dataSem_state_locals_size_fupd (K
-                                lsz) (stack_fupd (K xs) s)) =
+                                lsz) (dataSem_state_stack_fupd (K xs)
+                                s)) =
                               (res
                                 ,dataSem_state_peak_heap_length_fupd
                                 (K phl) (dataSem_state_stack_max_fupd
@@ -872,10 +877,11 @@ let evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
     `!c (s:('c,'ffi)dataSem_state).
         match evaluate (c,s) with (SOME (Rerr (Rabort
           Rtype_error)),s1) -> T | (SOME (Rerr (Rabort a)),s1) ->
-                 (stack s1 = []) /\ (!xs. (LENGTH (stack s) =
-                   LENGTH xs) ==>
+                 (stack s1 = []) /\ (!xs. (LENGTH
+                   (dataSem_state_stack s) = LENGTH xs) ==>
                           (?lss sfs smx phl.
-                          evaluate (c,stack_fupd (K xs) s) =
+                          evaluate (c,dataSem_state_stack_fupd (K
+                            xs) s) =
                             (SOME (Rerr (Rabort
                               a)),dataSem_state_peak_heap_length_fupd (K
                               phl) (dataSem_state_stack_max_fupd (K smx)
@@ -888,11 +894,14 @@ let evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
                          (stack s2 = stack s1) /\
                            (dataSem_state_handler s2 =
                            dataSem_state_handler s1) /\
-                         (!xs s7. (dataSem_jump_exc (stack_fupd (K
-                           xs) s) = SOME s7) /\
-                              (LENGTH (stack s) = LENGTH xs) ==>
+                         (!xs s7. (dataSem_jump_exc
+                           (dataSem_state_stack_fupd (K xs) s) = SOME
+                           s7) /\
+                              (LENGTH (dataSem_state_stack s) =
+                                LENGTH xs) ==>
                               (?lss sfs smx phl.
-                              (evaluate (c,stack_fupd (K xs) s) =
+                              (evaluate (c,dataSem_state_stack_fupd
+                                (K xs) s) =
                               (SOME (Rerr (Rraise
                                 t)),dataSem_state_peak_heap_length_fupd
                                 (K phl) (dataSem_state_stack_max_fupd (K
@@ -904,11 +913,14 @@ let evaluate_stack_swap = cake_theorem "evaluate_stack_swap"
                                 (dataSem_state_handler s7)) (stack_fupd
                                 (K (stack s7))
                               s1))))))))))) | (res,s1) -> (stack s1
-                                = stack s) /\ (dataSem_state_handler s1
-                                = dataSem_state_handler s) /\
-                           (!xs. (LENGTH (stack s) = LENGTH xs) ==>
+                                = dataSem_state_stack s) /\
+                                (dataSem_state_handler s1 =
+                                dataSem_state_handler s) /\
+                           (!xs. (LENGTH (dataSem_state_stack s) =
+                             LENGTH xs) ==>
                               (?lss sfs smx phl.
-                              evaluate (c,stack_fupd (K xs) s) =
+                              evaluate (c,dataSem_state_stack_fupd
+                                (K xs) s) =
                               (res
                                 ,dataSem_state_peak_heap_length_fupd
                                 (K phl) (dataSem_state_stack_max_fupd
@@ -930,7 +942,8 @@ let evaluate_stack = cake_theorem "evaluate_stack"
                     (stack s2 = stack s1) /\
                       (dataSem_state_handler s2 =
                       dataSem_state_handler s1)) | (_9,s1) -> (stack
-                      s1 = stack s) /\ (dataSem_state_handler s1 =
+                      s1 = dataSem_state_stack s) /\
+                      (dataSem_state_handler s1 =
                       dataSem_state_handler s)`)
   CHEAT_TAC;;
 
@@ -941,7 +954,8 @@ let evaluate_NONE_jump_exc = cake_theorem "evaluate_NONE_jump_exc"
        (dataSem_jump_exc s = SOME (dataSem_state_locals_size_fupd
          (K (dataSem_state_locals_size x)) (dataSem_state_locals_fupd
          (K (dataSem_state_locals x)) (dataSem_state_handler_fupd (K
-         (dataSem_state_handler x)) (stack_fupd (K (stack x)) s)))))`)
+         (dataSem_state_handler x)) (dataSem_state_stack_fupd (K
+         (stack x)) s)))))`)
   CHEAT_TAC;;
 
 let evaluate_NONE_jump_exc_ALT =
@@ -1252,7 +1266,7 @@ let cut_state_eq_none = cake_theorem "cut_state_eq_none"
 
 let dataProps_with_same_clock = cake_theorem "with_same_clock[simp]"
   (fun () ->
-    `state_clock_fupd (K (state_clock s))
+    `dataSem_state_clock_fupd (K (dataSem_state_clock s))
        (s:('c,'ffi)dataSem_state) = s`)
   CHEAT_TAC;;
 
@@ -1309,8 +1323,8 @@ let dataProps_evaluate_io_events_mono =
 let dataProps_with_clock_ffi = cake_theorem "with_clock_ffi"
   (fun () ->
     `state_ffi
-        (state_clock_fupd (K y) (s:('c,'ffi)dataSem_state)) =
-          state_ffi s`)
+        (dataSem_state_clock_fupd (K y)
+          (s:('c,'ffi)dataSem_state)) = dataSem_state_ffi s`)
   CHEAT_TAC;;
 
 let jump_exc_with_const = cake_theorem "jump_exc_with_const"
@@ -1598,16 +1612,16 @@ let cc_co_only_diff_def = cake_define
   `cc_co_only_diff (s:('a,'ffi)dataSem_state) (t:('b,'ffi)dataSem_state)
   <=> dataSem_state_locals
      s = dataSem_state_locals t /\ dataSem_state_locals_size
-     s = dataSem_state_locals_size t /\ stack
-     s = stack t /\ dataSem_state_stack_max
+     s = dataSem_state_locals_size t /\ dataSem_state_stack
+     s = dataSem_state_stack t /\ dataSem_state_stack_max
      s = dataSem_state_stack_max t /\ dataSem_state_stack_frame_sizes
      s = dataSem_state_stack_frame_sizes t /\ dataSem_state_global
      s = dataSem_state_global t /\ dataSem_state_handler
-     s = dataSem_state_handler t /\ state_refs
-     s = state_refs t /\ state_clock
-     s = state_clock t /\ state_code
-     s = state_code t /\ state_ffi
-     s = state_ffi t /\ dataSem_state_space
+     s = dataSem_state_handler t /\ dataSem_state_refs
+     s = dataSem_state_refs t /\ dataSem_state_clock
+     s = dataSem_state_clock t /\ dataSem_state_code
+     s = dataSem_state_code t /\ dataSem_state_ffi
+     s = dataSem_state_ffi t /\ dataSem_state_space
      s = dataSem_state_space t /\ dataSem_state_tstamps
      s = dataSem_state_tstamps t /\ dataSem_state_limits
      s = dataSem_state_limits t /\ dataSem_state_safe_for_space

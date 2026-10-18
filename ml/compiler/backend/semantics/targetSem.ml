@@ -174,8 +174,8 @@ let evaluate_def = cake_define_cheat CHEAT_TAC
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE ->
            (Error,ms,ffi) | SOME ffi_index ->
-             (match EL ffi_index (ffi_names mc) with ffi_SharedMem op
-               ->
+             (match EL ffi_index (machine_config_ffi_names mc) with
+               ffi_SharedMem op ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with NONE -> (Error,ms,ffi) | SOME
                     (nb,a,reg,pc') ->
@@ -193,7 +193,7 @@ let evaluate_def = cake_define_cheat CHEAT_TAC
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (ffi_names mc)) [nb]
+                                (machine_config_ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome ->
                               (Halt (ffi_FFI_outcome outcome),ms,ffi)
@@ -221,7 +221,7 @@ let evaluate_def = cake_define_cheat CHEAT_TAC
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (ffi_names mc)) [nb]
+                                (machine_config_ffi_names mc)) [nb]
                               (
                               (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
@@ -245,8 +245,8 @@ let evaluate_def = cake_define_cheat CHEAT_TAC
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
-                              (ffi_names mc)) bytes bytes2 with
-                              FFI_final outcome -> (Halt
+                              (machine_config_ffi_names mc)) bytes
+                              bytes2 with FFI_final outcome -> (Halt
                               (ffi_FFI_outcome outcome),ms,ffi) |
                               FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
@@ -291,7 +291,7 @@ let code_loaded_def = cake_define
    will be proved at the top-level by creating an appropriate t *)
 let target_configured_def = cake_define
   `target_configured (t:'a asm_state) mc_conf <=>
-     ~(asm_state_failed t) /\ be
+     ~(asm_state_failed t) /\ asm_state_be
      t = asm_config_big_endian (target_config (machine_config_target
        mc_conf)) /\ asm_state_align
      t = asm_config_code_alignment (target_config
@@ -469,7 +469,7 @@ let post_ffi_asm_def = cake_define
                   NONE -> 0 | SOME n -> n))) (asm_state_mem_fupd (K
                   (asm_write_bytearray (asm_state_regs t1
                   (machine_config_ptr2_reg mc_conf)) new_bytes
-                  (asm_state_mem t1))) (fp_regs_fupd (K (\i.
+                  (asm_state_mem t1))) (asm_state_fp_regs_fupd (K (\i.
                   target_get_fp_reg (machine_config_target mc_conf) ms'
                   i)) (asm_state_regs_fupd (K (\a. if MEM a
                   (machine_config_callee_saved_regs mc_conf) \/
@@ -485,8 +485,8 @@ let post_ccache_asm_def = cake_define
   `post_ccache_asm (mc_conf:('a,'state,'b)machine_config) (t1:'a
   asm_state) (ms':'state) = asm_state_pc_fupd (K (asm_state_regs t1
   (match asm_config_link_reg (target_config (machine_config_target
-  mc_conf)) with NONE -> 0 | SOME n -> n))) (fp_regs_fupd (K (\i.
-  target_get_fp_reg (machine_config_target mc_conf) ms' i))
+  mc_conf)) with NONE -> 0 | SOME n -> n))) (asm_state_fp_regs_fupd (K
+  (\i. target_get_fp_reg (machine_config_target mc_conf) ms' i))
   (asm_state_regs_fupd (K (\a. if MEM a
   (machine_config_callee_saved_regs mc_conf) \/
                          a = machine_config_ptr_reg mc_conf \/
@@ -579,8 +579,9 @@ let installed_def = cake_define
          word_list_exists (bitmap_ptr + bytes_in_word * n2w (LENGTH
            bitmaps)) data_sp)
         (fun2set (m,byte_aligned INTER bitmaps_dm)) /\
-       ffi_names' = SOME (ffi_names mc_conf) /\
-    (!i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i ==>
+       ffi_names' = SOME (machine_config_ffi_names mc_conf) /\
+    (!i. mmio_pcs_min_index (machine_config_ffi_names mc_conf) = SOME
+      i ==>
       MAP (\rec. w2n (target_get_pc (machine_config_target mc_conf)
         ms) + shmem_info_num_entry_pc rec) shmem_extra =
         DROP i (MAP w2n (machine_config_ffi_entry_pcs mc_conf)) /\

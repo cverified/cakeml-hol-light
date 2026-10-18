@@ -18,6 +18,8 @@ needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 
+cake_hide ["Equal"; "Greater"; "Less"];;
+
 (* HOL4 mlstringScript.sml:13-14: ML code, not ported *)
 
 (* Defines strings as a separate type from char list. This theory should be
@@ -1010,3 +1012,5 @@ let word8_to_char_def = cake_define
    used for logging/timing purposes. *)
 let empty_ffi_def = cake_define
   `empty_ffi (s:mlstring) = one`;;
+
+cake_hide [];;

@@ -26,6 +26,8 @@ needs "lib/tailrec.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["shift"];;
+
 (* HOL4 word_bignumProofScript.sml:11-12: ML code, not ported *)
 
 (* HOL4 word_bignumProofScript.sml:16: ML code, not ported *)
@@ -306,7 +308,7 @@ let div_code_assum_def = cake_define
 let state_rel_def = cake_define
   `word_bignumProof_state_rel s (t:('a,'c,'ffi)wordSem_state) cs t0
   frame <=> state_clock
-     s = state_clock t /\
+     s = wordSem_state_clock t /\
      array_rel (word_bignumProof_state_arrays s) (FLOOKUP
        (wordSem_state_store t) TempIn1)
                         (FLOOKUP (wordSem_state_store t) TempIn2)
@@ -327,7 +329,7 @@ let state_rel_def = cake_define
      t0 = wordSem_state_termdep t /\ wordSem_state_code
      t0 = wordSem_state_code t /\ wordSem_state_be
      t0 = wordSem_state_be t /\ state_ffi
-     t0 = state_ffi t /\ wordSem_state_compile
+     t0 = wordSem_state_ffi t /\ wordSem_state_compile
      t0 = wordSem_state_compile t /\ wordSem_state_compile_oracle
      t0 = wordSem_state_compile_oracle t /\ wordSem_state_code_buffer
      t0 = wordSem_state_code_buffer t /\ wordSem_state_data_buffer
@@ -1237,3 +1239,5 @@ let word_bignumProof_code_subset_refl =
 
 (* HOL4 word_bignumProofScript.sml:2289-2333: a theorem that HOL4
    states as the value of an ML expression: evaluate_mc_iop *)
+
+cake_hide [];;

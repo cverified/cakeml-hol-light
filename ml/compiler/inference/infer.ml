@@ -26,6 +26,8 @@ needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
+
+cake_hide ["not"];;
 (* HOL4 ancestors outside the port: string *)
 
 hol4_overload "++" "otherwise";;
@@ -1247,3 +1249,5 @@ let inf_env_to_types_string_def = cake_define
         REVERSE xs)`;;
 
 hol4_only "++" "APPEND";;
+
+cake_hide [];;

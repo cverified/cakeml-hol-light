@@ -32,7 +32,7 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["parts"];;
+cake_hide ["isException"; "isResult"; "parts"];;
 
 (* value relation *)
 
@@ -92,16 +92,17 @@ let data_to_bvi_ref_def = cake_define_list
 let state_rel_def = cake_define
   `bvi_to_dataProof_state_rel (s:('c,'ffi)bviSem_state)
   (t:('c,'ffi)dataSem_state) <=>
-     (state_clock s = state_clock t) /\
-     bvi_to_dataProof_code_rel (state_code s) (state_code t) /\
-     (compile_oracle t = ((I ## bvi_to_data_compile_prog) o
-       compile_oracle s)) /\
-     (compile s = (\cfg prog. compile t cfg (bvi_to_data_compile_prog
-       prog))) /\
-     (!n. FLOOKUP (state_refs s) n = lookup n (map data_to_bvi_ref
-       (state_refs t))) /\
-     (state_ffi s = state_ffi t) /\
-     (state_global s = state_global t)`;;
+     (bviSem_state_clock s = dataSem_state_clock t) /\
+     bvi_to_dataProof_code_rel (bviSem_state_code s)
+       (dataSem_state_code t) /\
+     (dataSem_state_compile_oracle t = ((I ##
+       bvi_to_data_compile_prog) o bviSem_state_compile_oracle s)) /\
+     (bviSem_state_compile s = (\cfg prog. dataSem_state_compile t
+       cfg (bvi_to_data_compile_prog prog))) /\
+     (!n. FLOOKUP (bviSem_state_refs s) n = lookup n (map
+       data_to_bvi_ref (dataSem_state_refs t))) /\
+     (bviSem_state_ffi s = dataSem_state_ffi t) /\
+     (bviSem_state_global s = dataSem_state_global t)`;;
 hol4_overload "state_rel" "bvi_to_dataProof_state_rel";;
 
 (* semantics lemmas *)

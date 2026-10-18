@@ -294,14 +294,14 @@ new_type_abbrev("abs_calls_state",`: 1 spt`);;
 let state_rel_def = cake_define
   `clos_callProof_state_rel g l (s:(1 spt#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (state_ffi s = state_ffi t) /\
-     (state_clock s = state_clock t) /\
+     (closSem_state_ffi s = closSem_state_ffi t) /\
+     (closSem_state_clock s = closSem_state_clock t) /\
      (closSem_state_max_app s = closSem_state_max_app t) /\
      LIST_REL (OPTREL (clos_callProof_v_rel g l (closSem_state_code
        t))) (closSem_state_globals s) (closSem_state_globals t) /\
      fmap_rel (closProps_ref_rel (clos_callProof_v_rel g l
-       (closSem_state_code t))) (state_refs s) (state_refs t) /\
-       closSem_state_code
+       (closSem_state_code t))) (closSem_state_refs s)
+       (closSem_state_refs t) /\ closSem_state_code
      s = FEMPTY`;;
 hol4_overload "state_rel" "clos_callProof_state_rel";;
 
@@ -1274,8 +1274,8 @@ let calls_correct = cake_theorem "calls_correct"
            (domain (FST g2)) /\
          every_result (EVERY (wfv g2 l2 (closSem_state_code t)))
            (wfv g2 l2 (closSem_state_code t)) res /\
-         closSem_evaluate (ys,env2,state_clock_fupd (K (state_clock
-           t0 + ck)) t0) = (res',t) /\
+         closSem_evaluate (ys,env2,closSem_state_clock_fupd (K
+           (closSem_state_clock t0 + ck)) t0) = (res',t) /\
          clos_callProof_state_rel g2 l2 s t /\
          semanticPrimitivesProps_result_rel (LIST_REL
            (clos_callProof_v_rel g2 l2 (closSem_state_code t)))
@@ -1307,8 +1307,8 @@ let calls_correct = cake_theorem "calls_correct"
          wfv_state g2 l2 (closSem_state_code t) s /\
          every_result (EVERY (wfv g2 l2 (closSem_state_code t)))
            (wfv g2 l2 (closSem_state_code t)) res /\
-         evaluate_app loco f' args' (state_clock_fupd (K
-           (state_clock t0 + ck)) t0) = (res',t) /\
+         evaluate_app loco f' args' (closSem_state_clock_fupd (K
+           (closSem_state_clock t0 + ck)) t0) = (res',t) /\
          clos_callProof_state_rel g2 l2 s t /\
          subg g g2 /\ wfg g2 /\ l SUBSET l2 /\ DISJOINT l2 (domain
            (FST g2)) /\

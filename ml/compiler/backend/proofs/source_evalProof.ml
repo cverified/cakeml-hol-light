@@ -23,7 +23,7 @@ needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["init_state"];;
+cake_hide ["compile"; "compile_decs"; "id"; "init_state"];;
 (* HOL4 ancestors outside the port: string *)
 
 (* The things the translator is expected to produce from the

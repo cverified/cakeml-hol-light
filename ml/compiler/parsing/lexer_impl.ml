@@ -17,6 +17,8 @@ needs "lib/location.ml";;
 needs "misc/misc.ml";;
 needs "semantics/lexer_fun.ml";;
 needs "semantics/tokens.ml";;
+
+cake_hide ["val"];;
 (* HOL4 ancestors outside the port: rich_list *)
 
 (* HOL4 lexer_implScript.sml:16-20: a proof *)
@@ -478,3 +480,5 @@ let lexer_correct = cake_theorem "lexer_correct"
     `!input. split_top_level_semi (lexer_fun_aux input l) =
   lex_impl_all input l`)
   CHEAT_TAC;;
+
+cake_hide [];;

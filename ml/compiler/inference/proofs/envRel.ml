@@ -22,6 +22,8 @@ needs "semantics/proofs/typeSysProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+cake_hide ["id"];;
+
 (* ---------- Converting infer types and envs to type system ones ---------- *)
 
 let _ = size_thms "infer_t";;
@@ -490,3 +492,5 @@ let tenv_to_ienv_lift = cake_theorem "tenv_to_ienv_lift"
     `!mn tenv. tenv_to_ienv (tenvLift mn tenv) = lift_ienv mn
   (tenv_to_ienv tenv)`)
   CHEAT_TAC;;
+
+cake_hide [];;

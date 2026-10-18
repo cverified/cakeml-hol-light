@@ -11,7 +11,6 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/labLang.ml";;
-needs "compiler/backend/lab_to_target.ml";;
 needs "compiler/backend/semantics/targetSem.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -304,7 +303,7 @@ let mem_store_def = cake_define
   `labSem_mem_store r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w -> assert ((w2n
        w MOD (dimindex (:'a) DIV 8) = 0) /\
-                         w IN mem_domain s)
+                         w IN labSem_state_mem_domain s)
                    (upd_mem w ((\r s. regs s r) r s) s))`;;
 hol4_overload "mem_store" "labSem_mem_store";;
 
@@ -312,14 +311,15 @@ let mem_load_def = cake_define
   `labSem_mem_load r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w -> assert ((w2n
        w MOD (dimindex (:'a) DIV 8) = 0) /\
-                         w IN mem_domain s)
-                   (upd_reg r (mem s w) s))`;;
+                         w IN labSem_state_mem_domain s)
+                   (upd_reg r (labSem_state_mem s w) s))`;;
 hol4_overload "mem_load" "labSem_mem_load";;
 
 let mem_load32_def = cake_define
   `mem_load32 r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w ->
-         (match mem_load_32 (mem s) (mem_domain s) (be s) w with
+         (match mem_load_32 (labSem_state_mem s)
+           (labSem_state_mem_domain s) (labSem_state_be s) w with
            SOME v -> upd_reg r (wordLang_Word (w2w v)) s | NONE ->
            assert F s))`;;
 
@@ -327,24 +327,27 @@ let mem_store32_def = cake_define
   `mem_store32 r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w ->
          (match (\r s. regs s r) r s with wordLang_Word b ->
-            (match mem_store_32 (mem s) (mem_domain s) (be s) w
-              (w2w b) with SOME m -> (mem_fupd (K m) s) | NONE ->
-              assert F s) | _42 -> assert F s))`;;
+            (match mem_store_32 (labSem_state_mem s)
+              (labSem_state_mem_domain s) (labSem_state_be s) w (w2w
+              b) with SOME m -> (labSem_state_mem_fupd (K m) s) |
+              NONE -> assert F s) | _42 -> assert F s))`;;
 
 let mem_load_byte_def = cake_define
   `mem_load_byte r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w ->
-         (match mem_load_byte_aux (mem s) (mem_domain s) (be s) w
-           with SOME v -> upd_reg r (wordLang_Word (w2w v)) s | NONE
-           -> assert F s))`;;
+         (match mem_load_byte_aux (labSem_state_mem s)
+           (labSem_state_mem_domain s) (labSem_state_be s) w with
+           SOME v -> upd_reg r (wordLang_Word (w2w v)) s | NONE ->
+           assert F s))`;;
 
 let mem_store_byte_def = cake_define
   `mem_store_byte r a (s:('a,'c,'ffi)labSem_state) =
      (match addr a s with NONE -> assert F s | SOME w ->
          (match (\r s. regs s r) r s with wordLang_Word b ->
-            (match mem_store_byte_aux (mem s) (mem_domain s) (be
-              s) w (w2w b) with SOME m -> (mem_fupd (K m) s) | NONE
-              -> assert F s) | _43 -> assert F s))`;;
+            (match mem_store_byte_aux (labSem_state_mem s)
+              (labSem_state_mem_domain s) (labSem_state_be s) w (w2w
+              b) with SOME m -> (labSem_state_mem_fupd (K m) s) |
+              NONE -> assert F s) | _43 -> assert F s))`;;
 
 let mem_op_def = cake_define_list
   [`labSem_mem_op (Load:memop) r (a:'a asm_addr) = mem_load r a`;
@@ -435,7 +438,7 @@ let asm_inst_consts = cake_theorem "asm_inst_consts"
 let get_pc_value_def = cake_define
   `get_pc_value lab (s:('a,'c,'ffi)labSem_state) =
      (match lab with labLang_Lab n1 n2 -> loc_to_pc n1 n2
-       (state_code s))`;;
+       (labSem_state_code s))`;;
 
 let next_label_def = cake_define
   `next_label x1 =
@@ -466,25 +469,29 @@ let share_mem_load_def = cake_define
                   w2n v MOD (dimindex (:'a) DIV 8) = 0 /\ (v IN
                     labSem_state_shared_mem_domain s)) else byte_align v
                     IN labSem_state_shared_mem_domain s) then
-           (match call_FFI (state_ffi s) (ffi_SharedMem MappedRead)
+           (match call_FFI (labSem_state_ffi s) (ffi_SharedMem
+             MappedRead)
              [n2w n]
              (word_to_bytes v F) with FFI_final outcome -> SOME
                (FFI_final outcome,s) | FFI_return new_ffi new_bytes ->
-               SOME (FFI_return new_ffi new_bytes,state_clock_fupd (K
-                 (state_clock s - 1)) (pc_fupd (K (pc s + 1)) (regs_fupd
-                 (K ((r =+ wordLang_Word (word_of_bytes F (n2w 0)
-                 new_bytes)) (regs s))) (state_ffi_fupd (K new_ffi)
+               SOME (FFI_return new_ffi
+                 new_bytes,labSem_state_clock_fupd (K
+                 (labSem_state_clock s - 1)) (labSem_state_pc_fupd (K
+                 (labSem_state_pc s + 1)) (labSem_state_regs_fupd (K ((r
+                 =+ wordLang_Word (word_of_bytes F (n2w 0) new_bytes))
+                 (labSem_state_regs s))) (labSem_state_ffi_fupd (K
+                 new_ffi)
                  s))))) else NONE))`;;
 
 let share_mem_store_def = cake_define
   `share_mem_store r ad (s:('a,'c,'ffi)labSem_state) n =
-     (match regs s r with wordLang_Word w ->
+     (match labSem_state_regs s r with wordLang_Word w ->
        (match addr ad s with NONE -> NONE | SOME v ->
          (if (if n = 0 then (
                   w2n v MOD (dimindex (:'a) DIV 8) = 0 /\ (v IN
                     labSem_state_shared_mem_domain s)) else byte_align v
                     IN labSem_state_shared_mem_domain s) then
-              (match call_FFI (state_ffi s) (ffi_SharedMem
+              (match call_FFI (labSem_state_ffi s) (ffi_SharedMem
                 MappedWrite)
                 [n2w n]
                 ((if n = 0 then word_to_bytes w F else TAKE n
@@ -492,8 +499,8 @@ let share_mem_store_def = cake_define
                   FFI_final outcome -> SOME (FFI_final outcome,s) |
                   FFI_return new_ffi new_bytes ->
                   SOME ((FFI_return new_ffi new_bytes),
-                    inc_pc (dec_clock (state_ffi_fupd (K new_ffi)
-                      s)))) else NONE)) | _45 -> NONE)`;;
+                    inc_pc (dec_clock (labSem_state_ffi_fupd (K
+                      new_ffi) s)))) else NONE)) | _45 -> NONE)`;;
 
 let share_mem_op_def = cake_define_list
   [`share_mem_op (Load:memop) r ad (s:('a,'c,'ffi)labSem_state) =
@@ -521,25 +528,26 @@ let evaluate_def = cake_define_try_tac (fun () ->
   `MEASURE (\s. state_clock s)`)
   CHEAT_TAC
   `labSem_evaluate (s:('a,'c,'ffi)labSem_state) =
-     (if state_clock s = 0 then (TimeOut,s) else
+     (if labSem_state_clock s = 0 then (TimeOut,s) else
      match asm_fetch s with SOME (labLang_Asm (Asmi a) _46 _47) ->
          (match a with Inst i ->
              (let s1 = asm_inst i s in
                 if failed s1 then (Error,s) else labSem_evaluate
                   (inc_pc (dec_clock s1))) | asm_JumpReg r ->
              (match (\r s. regs s r) r s with Loc n1 n2 ->
-                  (match loc_to_pc n1 n2 (state_code s) with NONE ->
-                    (Error,s) | SOME p ->
+                  (match loc_to_pc n1 n2 (labSem_state_code s) with
+                    NONE -> (Error,s) | SOME p ->
                        labSem_evaluate (upd_pc p (dec_clock s))) |
                          _48 -> (Error,s)) | _49 -> (Error,s)) | SOME
                          (labLang_Asm (Cbw r1 r2) _50 _51) ->
        (match ((\r s. regs s r) r1 s,(\r s. regs s r) r2 s) with
          (wordLang_Word w1,wordLang_Word w2) ->
-         (match buffer_write (state_code_buffer s) w1 (w2w w2) with
-           SOME new_cb ->
-           labSem_evaluate (inc_pc (dec_clock (state_code_buffer_fupd
-             (K new_cb) s))) | _52 -> (Error,s)) | _53 -> (Error,s)) |
-             SOME (labLang_Asm (ShareMem m r ad) _54 _55) ->
+         (match buffer_write (labSem_state_code_buffer s) w1 (w2w w2)
+           with SOME new_cb ->
+           labSem_evaluate (inc_pc (dec_clock
+             (labSem_state_code_buffer_fupd (K new_cb) s))) | _52 ->
+             (Error,s)) | _53 -> (Error,s)) | SOME (labLang_Asm
+             (ShareMem m r ad) _54 _55) ->
         (match share_mem_op m r ad s with SOME (FFI_final outcome,s')
           -> (Halt (ffi_FFI_outcome outcome),s') | SOME (FFI_return _56
           _57,s') ->
@@ -548,10 +556,10 @@ let evaluate_def = cake_define_try_tac (fun () ->
                (labSem_state_io_regs_fupd (K (misc_shift_seq 1
                (labSem_state_io_regs s'))) s')) | NONE -> (Error,s)) |
                SOME (labLang_LabAsm labLang_Halt _58 _59 _60) ->
-        (match regs s (ptr_reg s) with wordLang_Word (n2w 0) -> (Halt
-          ffi_Success,s) | wordLang_Word _61 -> (Halt
-          ffi_Resource_limit_hit,s) | _62 -> (Error,s)) | SOME
-          (labLang_LabAsm (LocValue r lab) _63 _64 _65) ->
+        (match labSem_state_regs s (labSem_state_ptr_reg s) with
+          wordLang_Word (n2w 0) -> (Halt ffi_Success,s) | wordLang_Word
+          _61 -> (Halt ffi_Resource_limit_hit,s) | _62 -> (Error,s)) |
+          SOME (labLang_LabAsm (LocValue r lab) _63 _64 _65) ->
         (if get_pc_value lab s = NONE then (Error,s) else
            let s1 = upd_reg r (lab_to_loc lab) s in
              labSem_evaluate (inc_pc (dec_clock s1))) | SOME
@@ -567,76 +575,93 @@ let evaluate_def = cake_define_try_tac (fun () ->
             (labLang_LabAsm (Call l) _72 _73 _74) ->
         (match get_pc_value l s with NONE -> (Error,s) | SOME p ->
           (match get_ret_Loc s with NONE -> (Error,s) | SOME k ->
-              (let s1 = upd_reg (link_reg s) k s in
+              (let s1 = upd_reg (labSem_state_link_reg s) k s in
                 labSem_evaluate (upd_pc p (dec_clock s1))))) | SOME
                   (labLang_LabAsm Install _75 _76 _77) ->
-        (match (regs s (ptr_reg s),regs s (len_reg s),regs s
-          (link_reg s)) with (wordLang_Word w1,wordLang_Word w2,Loc n1
-          n2) ->
-            (match (buffer_flush (state_code_buffer s) w1
-              w2,loc_to_pc n1 n2 (state_code s)) with (SOME
+        (match (labSem_state_regs s (labSem_state_ptr_reg
+          s),labSem_state_regs s (labSem_state_len_reg
+          s),labSem_state_regs s (labSem_state_link_reg s)) with
+          (wordLang_Word w1,wordLang_Word w2,Loc n1 n2) ->
+            (match (buffer_flush (labSem_state_code_buffer s) w1
+              w2,loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
               (bytes,cb),SOME new_pc) ->
-               (let (cfg,prog) = compile_oracle s 0 in
-               let new_oracle = misc_shift_seq 1 (compile_oracle s)
-                 in
-                 (match (compile s cfg prog,prog) with (SOME
-                   (bytes',cfg'),Section k _78 :: _79) ->
+               (let (cfg,prog) = labSem_state_compile_oracle s 0 in
+               let new_oracle = misc_shift_seq 1
+                 (labSem_state_compile_oracle s) in
+                 (match (labSem_state_compile s cfg prog,prog) with
+                   (SOME (bytes',cfg'),Section k _78 :: _79) ->
                     (if bytes = bytes' /\ FST (new_oracle 0) = cfg'
                       then
                       labSem_evaluate
-                        (state_clock_fupd (K (state_clock s - 1))
-                          (compile_oracle_fupd (K new_oracle)
-                          (fp_regs_fupd (K (\n. labSem_state_cc_fp_regs
-                          s 0 n)) (regs_fupd (K ((ptr_reg s =+ Loc k 0)
+                        (labSem_state_clock_fupd (K
+                          (labSem_state_clock s - 1))
+                          (labSem_state_compile_oracle_fupd (K
+                          new_oracle) (labSem_state_fp_regs_fupd (K (\n.
+                          labSem_state_cc_fp_regs s 0 n))
+                          (labSem_state_regs_fupd (K
+                          ((labSem_state_ptr_reg s =+ Loc k 0)
                               (\a. get_reg_value
                                 (labSem_state_cc_regs s 0 a)
-                              (regs s a) wordLang_Word)))
+                              (labSem_state_regs s a)
+                                wordLang_Word)))
                                 (labSem_state_cc_fp_regs_fupd (K
                                 (misc_shift_seq 1
                                 (labSem_state_cc_fp_regs s)))
                                 (labSem_state_cc_regs_fupd (K
                                 (misc_shift_seq 1 (labSem_state_cc_regs
-                                s))) (state_code_fupd (K (state_code s
-                                ++ prog)) (state_code_buffer_fupd (K cb)
-                                (pc_fupd (K new_pc) s))))))))) else
+                                s))) (labSem_state_code_fupd (K
+                                (labSem_state_code s ++ prog))
+                                (labSem_state_code_buffer_fupd (K cb)
+                                (labSem_state_pc_fupd (K new_pc)
+                                s))))))))) else
                       (Error,s)) | _80 -> (Error,s))) | _81 ->
                         (Error,s)) | _82 -> (Error,s)) | SOME
                         (labLang_LabAsm (labLang_CallFFI ffi_index) _83
                         _84 _85) ->
-        (match (regs s (len_reg s),regs s (ptr_reg s),regs
-               s (len2_reg s),regs s (ptr2_reg s),regs s (link_reg
-                 s)) with (wordLang_Word w,wordLang_Word
-                 w2,wordLang_Word w3,wordLang_Word w4,Loc n1 n2) ->
-          (match (read_bytearray w2 (w2n w) (mem_load_byte_aux (mem
-            s) (mem_domain s) (be s)),
-                 read_bytearray w4 (w2n w3) (mem_load_byte_aux (mem
-                   s) (mem_domain s) (be s)),
-                 loc_to_pc n1 n2 (state_code s)) with (SOME
+        (match (labSem_state_regs s (labSem_state_len_reg
+          s),labSem_state_regs s (labSem_state_ptr_reg
+          s),labSem_state_regs
+               s (labSem_state_len2_reg s),labSem_state_regs s
+                 (labSem_state_ptr2_reg s),labSem_state_regs s
+                 (labSem_state_link_reg s)) with (wordLang_Word
+                 w,wordLang_Word w2,wordLang_Word w3,wordLang_Word
+                 w4,Loc n1 n2) ->
+          (match (read_bytearray w2 (w2n w) (mem_load_byte_aux
+            (labSem_state_mem s) (labSem_state_mem_domain s)
+            (labSem_state_be s)),
+                 read_bytearray w4 (w2n w3) (mem_load_byte_aux
+                   (labSem_state_mem s) (labSem_state_mem_domain s)
+                   (labSem_state_be s)),
+                 loc_to_pc n1 n2 (labSem_state_code s)) with (SOME
                    bytes,SOME bytes2,SOME new_pc) ->
-              (match call_FFI (state_ffi s) (ffi_ExtCall ffi_index)
-                bytes bytes2 with FFI_final outcome -> (Halt
+              (match call_FFI (labSem_state_ffi s) (ffi_ExtCall
+                ffi_index) bytes bytes2 with FFI_final outcome -> (Halt
                 (ffi_FFI_outcome outcome),s) | FFI_return new_ffi
                 new_bytes ->
                    (let new_io_regs = misc_shift_seq 1
                      (labSem_state_io_regs s) in
                    let new_io_fp_regs = misc_shift_seq 1
                      (labSem_state_io_fp_regs s) in
-                   let new_m = write_bytearray w4 new_bytes (mem s)
-                     (mem_domain s) (be s) in
-                     labSem_evaluate (state_clock_fupd (K
-                       (state_clock s - 1)) (pc_fupd (K new_pc)
-                       (fp_regs_fupd (K (\n. labSem_state_io_fp_regs s 0
-                       n)) (regs_fupd (K (\a. get_reg_value
+                   let new_m = write_bytearray w4 new_bytes
+                     (labSem_state_mem s) (labSem_state_mem_domain s)
+                     (labSem_state_be s) in
+                     labSem_evaluate (labSem_state_clock_fupd (K
+                       (labSem_state_clock s - 1)) (labSem_state_pc_fupd
+                       (K new_pc) (labSem_state_fp_regs_fupd (K (\n.
+                       labSem_state_io_fp_regs s 0 n))
+                       (labSem_state_regs_fupd (K (\a. get_reg_value
                        (labSem_state_io_regs s 0 (ffi_ExtCall ffi_index)
                        a)
-                              (regs s a) wordLang_Word))
+                              (labSem_state_regs s a)
+                                wordLang_Word))
                                 (labSem_state_io_fp_regs_fupd (K
                                 new_io_fp_regs)
                                 (labSem_state_io_regs_fupd (K
-                                new_io_regs) (state_ffi_fupd (K
-                                new_ffi) (mem_fupd (K new_m)
-                                s)))))))))) | _86 -> (Error,s)) | _87
-                                -> (Error,s)) | _88 -> (Error,s))`;;
+                                new_io_regs) (labSem_state_ffi_fupd
+                                (K new_ffi) (labSem_state_mem_fupd (K
+                                new_m) s)))))))))) | _86 ->
+                                (Error,s)) | _87 -> (Error,s)) | _88
+                                -> (Error,s))`;;
 hol4_overload "evaluate" "labSem_evaluate";;
 
 let semantics_def = cake_define

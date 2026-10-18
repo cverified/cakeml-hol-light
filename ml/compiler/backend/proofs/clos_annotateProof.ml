@@ -191,8 +191,8 @@ let env_ok_EXTEND_IGNORE = cake_theorem "env_ok_EXTEND_IGNORE[local]"
 let state_rel_def = cake_define
   `clos_annotateProof_state_rel (s:('c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (state_clock s = state_clock t) /\
-     (state_ffi s = state_ffi t) /\
+     (closSem_state_clock s = closSem_state_clock t) /\
+     (closSem_state_ffi s = closSem_state_ffi t) /\
      (closSem_state_max_app s = closSem_state_max_app t) /\
      (closSem_state_compile_oracle t = (I ## (clos_annotate_annotate
        0) ## clos_annotate_compile) o closSem_state_compile_oracle s) /\
@@ -201,10 +201,10 @@ let state_rel_def = cake_define
        /\
      EVERY2 (OPTREL clos_annotateProof_v_rel) (closSem_state_globals
        s) (closSem_state_globals t) /\
-     (FDOM (state_refs s) = FDOM (state_refs t)) /\
+     (FDOM (closSem_state_refs s) = FDOM (closSem_state_refs t)) /\
      (!n r1.
-       (FLOOKUP (state_refs s) n = SOME r1) ==>
-       (?r2. (FLOOKUP (state_refs t) n = SOME r2) /\
+       (FLOOKUP (closSem_state_refs s) n = SOME r1) ==>
+       (?r2. (FLOOKUP (closSem_state_refs t) n = SOME r2) /\
          closProps_ref_rel clos_annotateProof_v_rel r1 r2)) /\
      (FDOM (closSem_state_code s) = FDOM (closSem_state_code t)) /\
      (!name arity c.

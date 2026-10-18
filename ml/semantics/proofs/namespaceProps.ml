@@ -12,6 +12,8 @@
 needs "semantics/ast.ml";;
 needs "semantics/namespace.ml";;
 
+cake_hide ["id"; "path"];;
+
 let mk_id_11 = cake_theorem "mk_id_11[simp]"
   (fun () ->
     `!a b c d. mk_id a b = mk_id c d <=> (a = c) /\ (b = d)`)
@@ -660,3 +662,5 @@ let nsDomMod_nsAppend_flat = cake_theorem "nsDomMod_nsAppend_flat"
     `!n1 n2. nsDomMod n1 = {[]} ==> nsDomMod (nsAppend n1 n2) =
   nsDomMod n2`)
   CHEAT_TAC;;
+
+cake_hide [];;

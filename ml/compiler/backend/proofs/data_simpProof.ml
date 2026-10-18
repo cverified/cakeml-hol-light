@@ -17,7 +17,7 @@ needs "semantics/evaluate.ml";;
 
 let evaluate_Seq_Skip = cake_theorem "evaluate_Seq_Skip[local]"
   (fun () ->
-    `!c s. evaluate (word_bignum_Seq c Skip,s) = evaluate (c,s)`)
+    `!c s. evaluate ((Seq c Skip:dataLang_prog),s) = evaluate (c,s)`)
   CHEAT_TAC;;
 
 let evaluate_pSeq = cake_theorem "evaluate_pSeq[local]"

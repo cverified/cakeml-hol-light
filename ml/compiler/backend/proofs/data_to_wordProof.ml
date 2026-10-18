@@ -74,7 +74,8 @@ let state_rel_with_locals_sfs =
 let do_space_code_const = cake_theorem "do_space_code_const"
   (fun () ->
     `do_space op vs (s:('a,'b)dataSem_state) = SOME s1 ==> state_code
-     s1 = state_code s /\ compile_oracle s1 = compile_oracle s`)
+     s1 = dataSem_state_code s /\ compile_oracle s1 =
+       dataSem_state_compile_oracle s`)
   CHEAT_TAC;;
 
 let word_test_lemma1 = cake_theorem "word_test_lemma1[local]"
@@ -393,7 +394,7 @@ let option_le_SOME = cake_theorem "option_le_SOME"
 let data_to_wordProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
-    `state_handler
+    `wordSem_state_handler
        (t:('a,'c,'ffi)wordSem_state) = 0 /\ wordSem_state_gc_fun t
          = word_gc_fun c /\
        init_store_ok c (wordSem_state_store t)

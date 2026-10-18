@@ -248,7 +248,7 @@ let ALOOKUP_rel_eq_fst = cake_theorem "ALOOKUP_rel_eq_fst"
 
 let env_set_v_noop = cake_theorem "env_set_v_noop"
   (fun () ->
-    `sem_env_v_fupd (K (flatSem_environment_v env))
+    `flatSem_environment_v_fupd (K (flatSem_environment_v env))
        an_env = env`)
   CHEAT_TAC;;
 
@@ -371,12 +371,12 @@ let install_conf_rel_def = cake_define
 
 let state_rel_def = cake_define
   `flat_patternProof_state_rel cfg (s:('c,'ffi)flatSem_state)
-  (t:('c,'ffi)flatSem_state) <=> state_clock
-     t = state_clock s /\
+  (t:('c,'ffi)flatSem_state) <=> flatSem_state_clock
+     t = flatSem_state_clock s /\
      LIST_REL (semanticPrimitivesProps_sv_rel
-       flat_patternProof_v_rel) (state_refs s) (state_refs t) /\
-       state_ffi
-     t = state_ffi s /\
+       flat_patternProof_v_rel) (flatSem_state_refs s)
+       (flatSem_state_refs t) /\ flatSem_state_ffi
+     t = flatSem_state_ffi s /\
      LIST_REL (OPTREL flat_patternProof_v_rel) (flatSem_state_globals
        s) (flatSem_state_globals t) /\
      install_conf_rel cfg (flatSem_state_eval_config s)
@@ -777,7 +777,7 @@ let compile_match_EL = cake_theorem "compile_match_EL"
 
 let evaluate_compile_pat_rhs = cake_theorem "evaluate_compile_pat_rhs"
   (fun () ->
-    `evaluate (sem_env_v_fupd f env3) s
+    `evaluate (flatSem_environment_v_fupd f env3) s
        [compile_pat_rhs tr N (flatLang_Var_local tr
          (enc_num_to_name N))
        (p,exp)] = (t,res) /\
@@ -785,7 +785,7 @@ let evaluate_compile_pat_rhs = cake_theorem "evaluate_compile_pat_rhs"
      flat_patternProof_env_rel M env1 env2 /\
      (\N. ALOOKUP_rel (\x. dec_name_to_num x < N)
        flat_patternProof_v_rel) M l_bindings bindings /\
-     f (sem_env_v env3) = (enc_num_to_name N,v) ::
+     f (flatSem_environment_v env3) = (enc_num_to_name N,v) ::
        flatSem_environment_v env2 /\
      N <= M /\
      max_dec_name (pat_bindings p) < N - 1 ==>

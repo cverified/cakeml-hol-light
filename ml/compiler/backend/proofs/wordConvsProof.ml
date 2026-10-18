@@ -28,7 +28,7 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
-cake_hide ["C"; "dummy"];;
+cake_hide ["C"; "comp"; "dummy"];;
 
 (***
   This theory should serve also as documentation for

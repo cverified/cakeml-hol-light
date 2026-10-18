@@ -22,6 +22,8 @@ needs "semantics/evaluate.ml";;
 needs "semantics/ffi/ffi.ml";;
 needs "semantics/typeSystem.ml";;
 
+cake_hide ["state_ok"];;
+
 let shift_interfer_def = cake_define
   `shift_interfer k s = machine_config_next_interfer_fupd (K
   (misc_shift_seq k (machine_config_next_interfer s)))
@@ -116,8 +118,8 @@ let find_next_interference_def = cake_define
          match find_index (target_get_pc (machine_config_target mc)
            ms) (machine_config_ffi_entry_pcs mc) 0 with NONE -> NONE |
            SOME ffi_index ->
-             (match EL ffi_index (ffi_names mc) with ffi_SharedMem op
-               ->
+             (match EL ffi_index (machine_config_ffi_names mc) with
+               ffi_SharedMem op ->
                   (match ALOOKUP (machine_config_mmio_info mc)
                     ffi_index with NONE -> NONE | SOME (nb,a,reg,pc') ->
                        (match op with MappedRead ->
@@ -134,7 +136,7 @@ let find_next_interference_def = cake_define
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (ffi_names mc)) [nb]
+                                (machine_config_ffi_names mc)) [nb]
                               (word_to_bytes ad F) with FFI_final
                                 outcome -> NONE | FFI_return new_ffi
                                 new_bytes ->
@@ -161,7 +163,7 @@ let find_next_interference_def = cake_define
                               mc) ms (machine_config_prog_addresses
                                 mc) then
                               (match call_FFI ffi (EL ffi_index
-                                (ffi_names mc)) [nb]
+                                (machine_config_ffi_names mc)) [nb]
                               (
                               (let w = target_get_reg
                                 (machine_config_target mc) ms reg in
@@ -184,9 +186,9 @@ let find_next_interference_def = cake_define
                        (match read_ffi_bytearrays mc ms with (SOME
                          bytes,SOME bytes2) ->
                             (match call_FFI ffi (EL ffi_index
-                              (ffi_names mc)) bytes bytes2 with
-                              FFI_final outcome -> NONE | FFI_return
-                              new_ffi new_bytes ->
+                              (machine_config_ffi_names mc)) bytes
+                              bytes2 with FFI_final outcome -> NONE |
+                              FFI_return new_ffi new_bytes ->
                               (let (ms1,new_oracle) = apply_oracle
                                 (machine_config_ffi_interfer mc)
                               (ffi_index,new_bytes,ms) in
@@ -553,7 +555,8 @@ let next_interference_MappedRead =
        mc) ms = machine_config_ccache_pc mc) /\
        find_index (target_get_pc (machine_config_target mc) ms)
          (machine_config_ffi_entry_pcs mc) 0 = SOME index /\
-       EL index (ffi_names mc) = ffi_SharedMem MappedRead /\
+       EL index (machine_config_ffi_names mc) = ffi_SharedMem
+         MappedRead /\
        ALOOKUP (machine_config_mmio_info mc) index = SOME (nb,Addr
          r off,reg,pc') /\
        (nb = (n2w 0) ==>
@@ -564,7 +567,7 @@ let next_interference_MappedRead =
        is_valid_mapped_read (target_get_pc (machine_config_target
          mc) ms) nb (Addr r off) reg pc' (machine_config_target
          mc) ms (machine_config_prog_addresses mc) /\
-       call_FFI ffi (EL index (ffi_names mc)) [nb]
+       call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
          (word_to_bytes (target_get_reg (machine_config_target mc)
            ms r + off) F) =
          FFI_return new_ffi new_bytes ==>
@@ -589,7 +592,8 @@ let next_interference_MappedWrite =
        mc) ms = machine_config_ccache_pc mc) /\
        find_index (target_get_pc (machine_config_target mc) ms)
          (machine_config_ffi_entry_pcs mc) 0 = SOME index /\
-       EL index (ffi_names mc) = ffi_SharedMem MappedWrite /\
+       EL index (machine_config_ffi_names mc) = ffi_SharedMem
+         MappedWrite /\
        ALOOKUP (machine_config_mmio_info mc) index = SOME (nb,Addr
          r off,reg,pc') /\
        (nb = (n2w 0) ==>
@@ -600,7 +604,7 @@ let next_interference_MappedWrite =
        is_valid_mapped_write (target_get_pc (machine_config_target
          mc) ms) nb (Addr r off) reg pc' (machine_config_target
          mc) ms (machine_config_prog_addresses mc) /\
-       call_FFI ffi (EL index (ffi_names mc)) [nb]
+       call_FFI ffi (EL index (machine_config_ffi_names mc)) [nb]
          ((let w = target_get_reg (machine_config_target mc) ms reg
            in
              if nb = (n2w 0) then word_to_bytes w F else
@@ -629,7 +633,7 @@ let next_interference_SharedMem =
        mc) ms = machine_config_ccache_pc mc) /\
        find_index (target_get_pc (machine_config_target mc) ms)
          (machine_config_ffi_entry_pcs mc) 0 = SOME index /\
-       EL index (ffi_names mc) = ffi_SharedMem op /\
+       EL index (machine_config_ffi_names mc) = ffi_SharedMem op /\
        ALOOKUP (machine_config_mmio_info mc) index = SOME (nb,Addr
          r off,reg,pc') /\
        (nb = (n2w 0) ==>
@@ -642,7 +646,8 @@ let next_interference_SharedMem =
             (machine_config_target mc) ms) nb (Addr r off) reg pc'
             (machine_config_target
             mc) ms (machine_config_prog_addresses mc) /\
-          call_FFI ffi (EL index (ffi_names mc)) [nb]
+          call_FFI ffi (EL index (machine_config_ffi_names mc))
+            [nb]
             (word_to_bytes (target_get_reg (machine_config_target
               mc) ms r + off) F) =
             FFI_return new_ffi new_bytes) /\
@@ -651,7 +656,8 @@ let next_interference_SharedMem =
             (machine_config_target mc) ms) nb (Addr r off) reg pc'
             (machine_config_target
             mc) ms (machine_config_prog_addresses mc) /\
-          call_FFI ffi (EL index (ffi_names mc)) [nb]
+          call_FFI ffi (EL index (machine_config_ffi_names mc))
+            [nb]
             ((let w = target_get_reg (machine_config_target mc) ms
               reg in
                 if nb = (n2w 0) then word_to_bytes w F else
@@ -924,3 +930,5 @@ let ccache_interfer_ok_post_ccache_asm =
          mc_conf k (a1,a2,ms2)))
        (machine_config_ccache_interfer mc_conf k (a1,a2,ms2))`)
   CHEAT_TAC;;
+
+cake_hide [];;

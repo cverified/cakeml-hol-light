@@ -16,6 +16,8 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/namespaceProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["id"];;
+
 
 let with_same_v = cake_theorem "with_same_v[simp]"
   (fun () ->
@@ -649,3 +651,5 @@ let do_arith_check_type = cake_theorem "do_arith_check_type"
     `do_arith a ty vs = SOME (INR res) ==>
      semanticPrimitives_check_type ty res`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -15,6 +15,8 @@ needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (* fits in subset *)
 
 let can_interpret_op_def = cake_define
@@ -485,3 +487,5 @@ let to_constant_op_pmatch = cake_theorem "to_constant_op_pmatch"
          ConstCons 1 [ConstCons tag []] else ConstCons (tag + 5) [cs])
          | _70 -> ConstInt (&0))`)
   CHEAT_TAC;;
+
+cake_hide [];;

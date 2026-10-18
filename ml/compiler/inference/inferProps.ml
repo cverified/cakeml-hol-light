@@ -22,7 +22,7 @@ needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
-cake_hide ["C"];;
+cake_hide ["C"; "id"; "inst"];;
 
 let ienv_unchanged = cake_theorem "ienv_unchanged[simp]"
   (fun () ->

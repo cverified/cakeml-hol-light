@@ -34,11 +34,11 @@ let state_rel_def = cake_define
      s = FEMPTY /\ closSem_state_code t = FEMPTY /\
        closSem_state_max_app
      t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       state_clock
-     t = state_clock s /\ state_ffi
-     t = state_ffi s /\ closSem_state_globals
-     s = closSem_state_globals t /\ state_refs
-     s = state_refs t /\ closSem_state_compile
+       closSem_state_clock
+     t = closSem_state_clock s /\ closSem_state_ffi
+     t = closSem_state_ffi s /\ closSem_state_globals
+     s = closSem_state_globals t /\ closSem_state_refs
+     s = closSem_state_refs t /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o closSem_state_compile_oracle
@@ -54,11 +54,11 @@ let state_rel_1_def = cake_define
      s = FEMPTY /\ closSem_state_code t = FEMPTY /\
        closSem_state_max_app
      t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       state_clock
-     t = state_clock s /\ state_ffi
-     t = state_ffi s /\ closSem_state_globals
-     s = closSem_state_globals t /\ state_refs
-     s = state_refs t /\ closSem_state_compile
+       closSem_state_clock
+     t = closSem_state_clock s /\ closSem_state_ffi
+     t = closSem_state_ffi s /\ closSem_state_globals
+     s = closSem_state_globals t /\ closSem_state_refs
+     s = closSem_state_refs t /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o
@@ -89,8 +89,8 @@ let interp_assum_def = cake_define
          (Rabort Rtype_error)) ==>
        clos_interpProof_state_rel s1 t1 ==>
        (?ck t2.
-         closSem_evaluate (xs,env,state_clock_fupd (K (ck +
-           state_clock t1)) t1) = (res,t2) /\
+         closSem_evaluate (xs,env,closSem_state_clock_fupd (K (ck +
+           closSem_state_clock t1)) t1) = (res,t2) /\
          clos_interpProof_state_rel s2 t2)) /\
      (!args s1 loc f (t1:('c,'ffi)closSem_state) res s2. state_clock
        s1 <= c /\
@@ -98,8 +98,8 @@ let interp_assum_def = cake_define
          Rtype_error)) ==>
        clos_interpProof_state_rel s1 t1 ==>
        (?ck t2.
-         evaluate_app loc f args (state_clock_fupd (K (ck +
-           state_clock t1)) t1) =
+         evaluate_app loc f args (closSem_state_clock_fupd (K (ck +
+           closSem_state_clock t1)) t1) =
          (res,t2) /\ clos_interpProof_state_rel s2 t2))`;;
 
 let interp_assum_leq = cake_theorem "interp_assum_leq"
@@ -188,28 +188,29 @@ let clos_interpreter_correct = cake_theorem "clos_interpreter_correct"
   s5.
         closSem_evaluate ([e],env,s4) = (r,s5) /\
         can_interpret e /\
-        interp_assum (:'c) (:'ffi) (state_clock s4) /\
+        interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
         clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
           Rtype_error)) ==>
         (?c t5.
           closSem_evaluate ([clos_interpreter_body],
                     [make_const (to_constant e); closSem_Block 0
-                      []; list_to_v env],state_clock_fupd (K (c +
-                      state_clock t4))
+                      []; list_to_v env],closSem_state_clock_fupd (K (c
+                      + closSem_state_clock t4))
                     t4) = (r,t5) /\
           clos_interpProof_state_rel s5 t5)) /\
      (!es env (s4:('c,'ffi)closSem_state)
        (t4:('c,'ffi)closSem_state) r s5.
         closSem_evaluate (es,env,s4) = (r,s5) /\
         can_interpret_list es /\
-        interp_assum (:'c) (:'ffi) (state_clock s4) /\
+        interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
         clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
           Rtype_error)) ==>
         (?c t5 r5.
           closSem_evaluate ([clos_interpreter_body],
                     [make_const (to_constant_list es);
                       closSem_Block 1 []; list_to_v
-                      env],state_clock_fupd (K (c + state_clock t4))
+                      env],closSem_state_clock_fupd (K (c +
+                      closSem_state_clock t4))
                     t4) = (r5,t5) /\
           clos_interpProof_state_rel s5 t5 /\
           (match r with Rval vs -> r5 = Rval [list_to_v vs] | _1
@@ -219,7 +220,7 @@ let clos_interpreter_correct = cake_theorem "clos_interpreter_correct"
 let opt_interp_thm = cake_theorem "opt_interp_thm"
   (fun () ->
     `opt_interp e = SOME x /\
-     interp_assum (:'c) (:'ffi) (state_clock s4) /\
+     interp_assum (:'c) (:'ffi) (closSem_state_clock s4) /\
      closSem_evaluate ([e],[],(s4:('c,'ffi)closSem_state)) = (r,s5)
        /\
      clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
@@ -368,16 +369,16 @@ let state_rel'_def = cake_define
      s = FEMPTY /\ closSem_state_code t = FEMPTY /\
        closSem_state_max_app
      t = closSem_state_max_app s /\ 1 <= closSem_state_max_app s /\
-       state_clock
-     t = state_clock s /\ state_ffi
-     t = state_ffi s /\ closSem_state_globals
+       closSem_state_clock
+     t = closSem_state_clock s /\ closSem_state_ffi
+     t = closSem_state_ffi s /\ closSem_state_globals
      s = closSem_state_globals t /\ EVERY (OPTION_ALL v_ok)
-       (closSem_state_globals t) /\ state_refs
-     s = state_refs t /\
+       (closSem_state_globals t) /\ closSem_state_refs
+     s = closSem_state_refs t /\
      FEVERY (\(k,v). !vs. v = closSem_ValueArray vs ==> EVERY v_ok
-       vs) (state_refs t) /\
-     FEVERY (\(k,v). !m w. v = Thunk m w ==> v_ok w) (state_refs t)
-       /\ closSem_state_compile
+       vs) (closSem_state_refs t) /\
+     FEVERY (\(k,v). !m w. v = Thunk m w ==> v_ok w)
+       (closSem_state_refs t) /\ closSem_state_compile
      s = pure_cc (insert_interp ## I) (closSem_state_compile t) /\
        closSem_state_compile_oracle
      t = pure_co (insert_interp ## I) o

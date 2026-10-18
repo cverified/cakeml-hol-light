@@ -26,6 +26,8 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
+cake_hide ["error"];;
+
 let inline_exps_LENGTH = cake_theorem "inline_exps_LENGTH[simp]"
   (fun () ->
     `!cs es. LENGTH (inline_exps cs es) = LENGTH es`)
@@ -343,20 +345,22 @@ hol4_overload "in_co" "bvi_inlineProof_in_co";;
 
 let in_state_rel_def = cake_define
   `bvi_inlineProof_in_state_rel s (t:('c,'ffi)bviSem_state) <=>
-  state_refs
-     t = state_refs s /\ state_clock
+  bviSem_state_refs
+     t = state_refs s /\ bviSem_state_clock
      t = state_clock s /\ bviSem_state_global
-     t = bviSem_state_global s /\ state_ffi
-     t = state_ffi s /\ compile_oracle
+     t = bviSem_state_global s /\ bviSem_state_ffi
+     t = state_ffi s /\ bviSem_state_compile_oracle
      t = bvi_inlineProof_in_co (compile_oracle s) /\
-     subspt (FST (FST (compile_oracle s 0))) (state_code t) /\
+     subspt (FST (FST (compile_oracle s 0))) (bviSem_state_code t) /\
        compile
-     s = bvi_inlineProof_in_cc (compile t) /\
-     domain (state_code t) = domain (state_code s) /\
+     s = bvi_inlineProof_in_cc (bviSem_state_compile t) /\
+     domain (bviSem_state_code t) = domain (state_code s) /\
      (!k arity exp.
         sptree_lookup k (state_code s) = SOME (arity,exp) ==>
-        (?exp1. sptree_lookup k (state_code t) = SOME (arity,exp1) /\
-               bvi_inlineProof_exp_rel (state_code t) exp exp1))`;;
+        (?exp1. sptree_lookup k (bviSem_state_code t) = SOME
+          (arity,exp1) /\
+               bvi_inlineProof_exp_rel (bviSem_state_code t) exp
+                 exp1))`;;
 hol4_overload "in_state_rel" "bvi_inlineProof_in_state_rel";;
 
 let in_state_rel_find_code =
@@ -418,17 +422,19 @@ let do_app_state_swap_Rval =
          (source_state)
          (t) value. ~(op = closLang_Install) /\
        do_app op args s = Rval (value,source_state) /\
-       domain (state_code s) SUBSET domain (state_code t) ==>
+       domain (bviSem_state_code s) SUBSET domain
+         (bviSem_state_code t) ==>
        do_app op args
-         (state_ffi_fupd (K (state_ffi s))
+         (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
            (bviSem_state_global_fupd (K (bviSem_state_global s))
-           (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K
-           (state_refs s)) t)))) =
+           (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+           (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) =
        Rval
-         (value,state_ffi_fupd (K (state_ffi source_state))
-           (bviSem_state_global_fupd (K (bviSem_state_global
-           source_state)) (state_clock_fupd (K (state_clock
-           source_state)) (state_refs_fupd (K (state_refs source_state))
+         (value,bviSem_state_ffi_fupd (K (bviSem_state_ffi
+           source_state)) (bviSem_state_global_fupd (K
+           (bviSem_state_global source_state)) (bviSem_state_clock_fupd
+           (K (bviSem_state_clock source_state)) (bviSem_state_refs_fupd
+           (K (bviSem_state_refs source_state))
           t))))`)
   CHEAT_TAC;;
 
@@ -438,13 +444,14 @@ let do_app_state_swap_Rerr =
     `!op args (s)
          (t) error'. ~(op = closLang_Install) /\
        do_app op args s = Rerr error' /\
-       (domain (state_code t) SUBSET domain (state_code s) \/
-         ~(error' = Rabort Rtype_error)) ==>
+       (domain (bviSem_state_code t) SUBSET domain
+         (bviSem_state_code s) \/ ~(error' = Rabort Rtype_error)) ==>
        do_app op args
-         (state_ffi_fupd (K (state_ffi s))
+         (bviSem_state_ffi_fupd (K (bviSem_state_ffi s))
            (bviSem_state_global_fupd (K (bviSem_state_global s))
-           (state_clock_fupd (K (state_clock s)) (state_refs_fupd (K
-           (state_refs s)) t)))) = Rerr error'`)
+           (bviSem_state_clock_fupd (K (bviSem_state_clock s))
+           (bviSem_state_refs_fupd (K (bviSem_state_refs s)) t)))) =
+           Rerr error'`)
   CHEAT_TAC;;
 
 let inline_all_head_names = cake_theorem "inline_all_head_names[local]"
@@ -621,15 +628,16 @@ hol4_overload "remove_ticks_co" "bvi_inlineProof_remove_ticks_co";;
 
 let remove_state_rel_def = cake_define
   `remove_state_rel (s:('c,'ffi)bviSem_state) (t:('c,'ffi)bviSem_state)
-  <=> state_refs
-     t = state_refs s /\ state_clock t = state_clock s /\
-       bviSem_state_global t = bviSem_state_global s /\ state_ffi t =
-       state_ffi s /\ state_code
-     t = sptree_map (I ## remove_ticks_exp) (state_code s) /\
-       compile_oracle
-     t = bvi_inlineProof_remove_ticks_co o compile_oracle s /\
-       compile
-     s = bvi_inlineProof_remove_ticks_cc (compile t)`;;
+  <=> bviSem_state_refs
+     t = bviSem_state_refs s /\ bviSem_state_clock t =
+       bviSem_state_clock s /\ bviSem_state_global t =
+       bviSem_state_global s /\ bviSem_state_ffi t = bviSem_state_ffi s
+       /\ bviSem_state_code
+     t = sptree_map (I ## remove_ticks_exp) (bviSem_state_code s) /\
+       bviSem_state_compile_oracle
+     t = bvi_inlineProof_remove_ticks_co o
+       bviSem_state_compile_oracle s /\ bviSem_state_compile
+     s = bvi_inlineProof_remove_ticks_cc (bviSem_state_compile t)`;;
 
 let remove_ticks_exps_NIL = cake_theorem "remove_ticks_exps_NIL[simp]"
   (fun () ->
@@ -642,7 +650,7 @@ let remove_state_rel_find_code_eq =
     `!s (t:('c,'ffi)bviSem_state).
        remove_state_rel s t ==>
        (!dest vs.
-         find_code dest vs (state_code t) =
+         find_code dest vs (bviSem_state_code t) =
            OPTION_MAP (I ## remove_ticks_exp) (find_code dest vs
              (state_code s)))`)
   CHEAT_TAC;;
@@ -656,10 +664,11 @@ let evaluate_add_extra_clock =
   cake_theorem "evaluate_add_extra_clock[local]"
   (fun () ->
     `!xs env (s:('c,'ffi)bviSem_state) res s1 extra extra'.
-       evaluate (xs,env,state_clock_fupd (K (extra + state_clock
-         s)) s) = (res,s1) /\ ~(res = Rerr (Rabort Rtimeout_error)) ==>
-       evaluate (xs,env,state_clock_fupd (K (extra + extra' +
-         state_clock s)) s) =
+       evaluate (xs,env,bviSem_state_clock_fupd (K (extra +
+         bviSem_state_clock s)) s) = (res,s1) /\ ~(res = Rerr (Rabort
+         Rtimeout_error)) ==>
+       evaluate (xs,env,bviSem_state_clock_fupd (K (extra + extra'
+         + bviSem_state_clock s)) s) =
          (res,state_clock_fupd (K (extra' + state_clock s1)) s1)`)
   CHEAT_TAC;;
 
@@ -704,14 +713,14 @@ let evaluate_remove_ticks_mutual =
   (fun () ->
     `!k.
        (!e env (t:('c,'ffi)bviSem_state) s res t1.
-          remove_state_rel s t /\ state_clock t <= k /\
+          remove_state_rel s t /\ bviSem_state_clock t <= k /\
           evaluate ([remove_ticks_exp e],env,t) = (res,t1) ==>
           (?extra s1.
             evaluate ([e],env,state_clock_fupd (K (state_clock s +
               extra)) s) =
               (res,s1) /\ remove_state_rel s1 t1)) /\
        (!es env (t:('c,'ffi)bviSem_state) s res t1.
-          remove_state_rel s t /\ state_clock t <= k /\
+          remove_state_rel s t /\ bviSem_state_clock t <= k /\
           evaluate (remove_ticks_exps es,env,t) = (res,t1) ==>
           (?extra s1.
             evaluate (es,env,state_clock_fupd (K (state_clock s +
@@ -750,7 +759,7 @@ let evaluate_remove_ticks_mutual =
 let evaluate_remove_ticks = cake_theorem "evaluate_remove_ticks"
   (fun () ->
     `!k es env (t:('c,'ffi)bviSem_state) s res t1.
-       remove_state_rel s t /\ state_clock t = k /\
+       remove_state_rel s t /\ bviSem_state_clock t = k /\
        evaluate (remove_ticks_exps es,env,t) = (res,t1) ==>
        (?extra s1.
          evaluate (es,env,state_clock_fupd (K (state_clock s +
@@ -785,10 +794,10 @@ let evaluate_add_clock_io_events_mono =
   (fun () ->
     `!exps env (s:('c,'ffi)bviSem_state) k extra. ffi_state_io_events
   (state_ffi
-       (SND (evaluate (exps,env,state_clock_fupd (K k) s)))) <<=
-         ffi_state_io_events (state_ffi
-       (SND (evaluate (exps,env,state_clock_fupd (K (k + extra))
-         s))))`)
+       (SND (evaluate (exps,env,bviSem_state_clock_fupd (K k) s))))
+         <<= ffi_state_io_events (state_ffi
+       (SND (evaluate (exps,env,bviSem_state_clock_fupd (K (k +
+         extra)) s))))`)
   CHEAT_TAC;;
 
 let inline_initial_state_rel =
@@ -916,3 +925,5 @@ let compile_prog_semantics = cake_theorem "compile_prog_semantics"
      semantics ffi (fromAList prog) co (state_cc compile_inc cc)
        start`)
   CHEAT_TAC;;
+
+cake_hide [];;

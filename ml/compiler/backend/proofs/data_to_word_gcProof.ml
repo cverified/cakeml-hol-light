@@ -13,7 +13,6 @@
 needs "basis/pure/mllist.ml";;
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/clos_annotate.ml";;
-needs "compiler/backend/data_live.ml";;
 needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/gc/copying_gc.ml";;
 needs "compiler/backend/gc/gc_combined.ml";;
@@ -2161,13 +2160,14 @@ let code_oracle_rel_NextFree =
 
 let limits_inv_def = cake_define
   `limits_inv (lims:limits) heaplength t_stack_limit c_len_size
-  c_has_fp_ops c_has_fp_tern <=> stack_limit
+  c_has_fp_ops c_has_fp_tern <=> limits_stack_limit
      lims = t_stack_limit /\ limits_length_limit
      lims = c_len_size /\ limits_arch_64_bit
      lims = (dimindex (:'a) = 64) /\
      heaplength = SOME (wordLang_Word (bytes_in_word * (n2w
        (limits_heap_limit lims):'a word))) /\ limits_heap_limit
-     lims * w2n (bytes_in_word:'a word) < dimword (:'a) /\ has_fp_ops
+     lims * w2n (bytes_in_word:'a word) < dimword (:'a) /\
+       limits_has_fp_ops
      lims = c_has_fp_ops /\ limits_has_fp_tops
      lims = c_has_fp_tern`;;
 
@@ -2177,13 +2177,14 @@ let limits_inv_def = cake_define
 let state_rel_thm = cake_define
   `data_to_word_gcProof_state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
   (t:('a,'c,'ffi)wordSem_state) v1 locs <=>
-     (wordSem_state_ffi t = state_ffi s) /\
-     (wordSem_state_clock t = state_clock s) /\
-     (wordSem_state_handler t = state_handler s) /\
+     (wordSem_state_ffi t = dataSem_state_ffi s) /\
+     (wordSem_state_clock t = dataSem_state_clock s) /\
+     (wordSem_state_handler t = dataSem_state_handler s) /\
      (wordSem_state_gc_fun t = word_gc_fun c) /\
-     code_rel c (state_code s) (wordSem_state_code t) /\
-     code_oracle_rel c (compile s) (compile_oracle s)
-       (wordSem_state_store t) (wordSem_state_compile
+     code_rel c (dataSem_state_code s) (wordSem_state_code t) /\
+     code_oracle_rel c (dataSem_state_compile s)
+       (dataSem_state_compile_oracle s) (wordSem_state_store t)
+       (wordSem_state_compile
        t) (wordSem_state_compile_oracle t) (wordSem_state_code_buffer
          t) (wordSem_state_data_buffer t) /\
      good_dimindex (:'a) /\
@@ -2192,32 +2193,34 @@ let state_rel_thm = cake_define
      EVERY (\n. n IN FDOM (wordSem_state_store t)) [Globals] /\
      (v1 = NONE ==> sptree_lookup 0 (wordSem_state_locals t) = SOME
        (Loc l1 l2)) /\
-     (!n. IS_SOME (sptree_lookup n (state_locals s)) ==>
+     (!n. IS_SOME (sptree_lookup n (dataSem_state_locals s)) ==>
           IS_SOME (sptree_lookup (adjust_var n) (wordSem_state_locals
             t))) /\
-     EVERY2 data_to_word_gcProof_stack_rel (stack s)
+     EVERY2 data_to_word_gcProof_stack_rel (dataSem_state_stack s)
        (wordSem_state_stack t) /\
      EVERY2 contains_loc (wordSem_state_stack t) locs /\
      option_le (OPTION_MAP2 (+) (stack_size (wordSem_state_stack t))
        (wordSem_state_locals_size t)) (wordSem_state_stack_max t) /\
-     option_le (wordSem_state_stack_max t) (state_stack_max s) /\
-       wordSem_state_stack_size
+     option_le (wordSem_state_stack_max t) (dataSem_state_stack_max
+       s) /\ wordSem_state_stack_size
      t = dataSem_state_stack_frame_sizes s /\
        wordSem_state_locals_size
-     t = state_locals_size s /\
+     t = dataSem_state_locals_size s /\
      limits_inv (dataSem_state_limits s) (FLOOKUP
        (wordSem_state_store t) HeapLength) (wordSem_state_stack_limit t)
        (data_to_word_config_len_size c) (has_fp_ops c)
        (data_to_word_config_has_fp_tern c) /\
      memory_rel c (wordSem_state_be t) (THE (dataSem_state_tstamps
-       s)) (state_refs s) (dataSem_state_space s) (wordSem_state_store
-       t) (wordSem_state_memory t) (wordSem_state_mdomain t)
+       s)) (dataSem_state_refs s) (dataSem_state_space s)
+       (wordSem_state_store t) (wordSem_state_memory t)
+       (wordSem_state_mdomain t)
        ((match v1 with NONE -> [] | SOME vs -> vs) ++
-        join_env (state_locals s) (toAList (inter
-          (wordSem_state_locals t) (adjust_set (state_locals s)))) ++
+        join_env (dataSem_state_locals s) (toAList (inter
+          (wordSem_state_locals t) (adjust_set (dataSem_state_locals
+          s)))) ++
         [(the_global (dataSem_state_global s),FAPPLY
           (wordSem_state_store t) Globals)] ++
-        flat (stack s) (wordSem_state_stack t))`;;
+        flat (dataSem_state_stack s) (wordSem_state_stack t))`;;
 hol4_overload "state_rel" "data_to_word_gcProof_state_rel";;
 
 (* HOL4 data_to_word_gcProofScript.sml:4538-4539: a theorem that HOL4
@@ -2238,7 +2241,7 @@ let data_to_word_gcProof_state_rel_with_clock =
 let state_rel_with_fp_regs = cake_theorem "state_rel_with_fp_regs"
   (fun () ->
     `state_rel a b c s1 (s2:('a,'c,'ffi)wordSem_state) d e ==>
-     state_rel a b c s1 (fp_regs_fupd (K f) s2) d e`)
+     state_rel a b c s1 (wordSem_state_fp_regs_fupd (K f) s2) d e`)
   CHEAT_TAC;;
 
 (* -------------------------------------------------------
@@ -2340,7 +2343,7 @@ let adjust_var_NOT_0 = cake_theorem "adjust_var_NOT_0[simp]"
 let state_rel_get_var_IMP = cake_theorem "state_rel_get_var_IMP"
   (fun () ->
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t v1 locs ==>
-      (get_var n (state_locals s) = SOME x) ==>
+      (get_var n (dataSem_state_locals s) = SOME x) ==>
       (?w. get_var (adjust_var n) t = SOME w)`)
   CHEAT_TAC;;
 
@@ -2349,7 +2352,7 @@ let state_rel_get_vars_IMP = cake_theorem "state_rel_get_vars_IMP"
     `!n xs.
         state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE locs
           ==>
-        (get_vars n (state_locals s) = SOME xs) ==>
+        (get_vars n (dataSem_state_locals s) = SOME xs) ==>
         (?ws. get_vars (MAP adjust_var n) t = SOME ws /\ (LENGTH
           xs = LENGTH ws))`)
   CHEAT_TAC;;
@@ -2357,7 +2360,7 @@ let state_rel_get_vars_IMP = cake_theorem "state_rel_get_vars_IMP"
 let state_rel_0_get_vars_IMP = cake_theorem "state_rel_0_get_vars_IMP"
   (fun () ->
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE locs ==>
-      (get_vars n (state_locals s) = SOME xs) ==>
+      (get_vars n (dataSem_state_locals s) = SOME xs) ==>
       (?ws. get_vars (0 :: MAP adjust_var n) t = SOME ((Loc l1 l2)
         :: ws) /\
            (LENGTH xs = LENGTH ws))`)
@@ -2367,7 +2370,7 @@ let get_var_T_OR_F = cake_theorem "get_var_T_OR_F"
   (fun () ->
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state))
   (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-      get_var n (state_locals s) = SOME x /\
+      get_var n (dataSem_state_locals s) = SOME x /\
       get_var (adjust_var n) t = SOME w ==> ~(18 MOD dimword (:'a)
         = 2 MOD dimword (:'a)) /\
       ((x = Boolv T) ==> (w = wordLang_Word (n2w 18))) /\
@@ -2378,7 +2381,7 @@ let get_var_isT_OR_isF = cake_theorem "get_var_isT_OR_isF"
   (fun () ->
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state))
   (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-       get_var n (state_locals s) = SOME x /\
+       get_var n (dataSem_state_locals s) = SOME x /\
        get_var (adjust_var n) t = SOME w ==> ~(18 MOD dimword (:'a)
          = 2 MOD dimword (:'a)) /\
        ((isBool T x) ==> (w = wordLang_Word (n2w 18))) /\
@@ -2391,7 +2394,7 @@ let mk_loc_def = cake_define
 let cut_env_IMP_cut_env = cake_theorem "cut_env_IMP_cut_env"
   (fun () ->
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state)) t NONE locs /\
-      dataSem_cut_env r (state_locals s) = SOME x ==>
+      dataSem_cut_env r (dataSem_state_locals s) = SOME x ==>
       (?y. wordSem_cut_env (adjust_sets r) (wordSem_state_locals
         t) = SOME y)`)
   CHEAT_TAC;;
@@ -2504,7 +2507,7 @@ let state_rel_jump_exc = cake_theorem "state_rel_jump_exc"
   (fun () ->
     `state_rel c l1 l2 ((s:('c,'ffi)dataSem_state))
   (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-      get_var n (state_locals s) = SOME x /\
+      get_var n (dataSem_state_locals s) = SOME x /\
       get_var (adjust_var n) t = SOME w /\
       jump_exc s = SOME s1 ==>
       (?t1 d1 d2 l5 l6 ll.
@@ -2542,8 +2545,8 @@ let stack_rel_IMP_size_of_stack =
 
 let state_rel_call_env = cake_theorem "state_rel_call_env"
   (fun () ->
-    `get_vars args (state_locals ((s:('c,'ffi)dataSem_state))) = SOME q
-  /\
+    `get_vars args (dataSem_state_locals ((s:('c,'ffi)dataSem_state))) =
+  SOME q /\
      get_vars (MAP adjust_var args) (t:('a,'c,'ffi)wordSem_state) =
        SOME ws /\
      state_rel c l5 l6 s t NONE locs ==>
@@ -2853,7 +2856,7 @@ let state_rel_cut_state_opt_get_var =
      get_var v (state_locals x) = SOME w ==>
      (?s'. state_rel c l1 l2 ((s':('c,'ffi)dataSem_state)) t NONE
        locs /\
-          get_var v (state_locals s') = SOME w)`)
+          get_var v (dataSem_state_locals s') = SOME w)`)
   CHEAT_TAC;;
 
 let jump_exc_push_env_NONE_simp =
@@ -2891,7 +2894,7 @@ let eval_push_env_T_Raise_IMP_stack_length =
     `evaluate (p,call_env ys ss (push_env x T (dec_clock
   (s:('c,'ffi)dataSem_state)))) =
          (SOME (Rerr (Rraise a)),r') ==>
-      LENGTH (stack r') = LENGTH (stack s)`)
+      LENGTH (stack r') = LENGTH (dataSem_state_stack s)`)
   CHEAT_TAC;;
 
 let eval_push_env_SOME_exc_IMP_s_key_eq =
@@ -2909,7 +2912,7 @@ let eval_exc_stack_shorter = cake_theorem "eval_exc_stack_shorter"
     `evaluate (c,call_env ys ss (push_env x F (dec_clock
   (s:('c,'ffi)dataSem_state)))) =
         (SOME (Rerr (Rraise a)),r') ==>
-      LENGTH (stack r') < LENGTH (stack s)`)
+      LENGTH (stack r') < LENGTH (dataSem_state_stack s)`)
   CHEAT_TAC;;
 
 let NOT_1_domain = cake_theorem "NOT_1_domain"
@@ -3620,9 +3623,9 @@ let state_rel_gc_gen = cake_theorem "state_rel_gc_gen"
 
 let cut_locals_def = cake_define
   `cut_locals names (s:('a,'b)dataSem_state) =
-     (match dataSem_cut_env names (state_locals s) with SOME env
-       -> state_locals_fupd (K env) s | NONE -> state_locals_fupd (K
-       LN) s)`;;
+     (match dataSem_cut_env names (dataSem_state_locals s) with
+       SOME env -> dataSem_state_locals_fupd (K env) s | NONE ->
+       dataSem_state_locals_fupd (K LN) s)`;;
 
 let size_of_heap_call_push_env =
   cake_theorem "size_of_heap_call_push_env"
@@ -3636,7 +3639,7 @@ let gc_lemma_gen = cake_theorem "gc_lemma_gen"
   (fun () ->
     `let t0 = call_env [Loc l1 l2] ss (push_env y
           (NONE:(num#'a wordLang_prog#num#num) option) t) in
-        dataSem_cut_env names (state_locals
+        dataSem_cut_env names (dataSem_state_locals
           (s:('c,'ffi)dataSem_state)) = SOME x /\
         state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs
           /\
@@ -3658,29 +3661,30 @@ let gc_lemma_gen = cake_theorem "gc_lemma_gen"
             (wordLang_Word (alloc_size k)) /\
           (wordSem_has_space (wordLang_Word ((alloc_size k):'a
             word)) t2 = SOME F /\ ~(data_to_word_config_gc_kind
-           c = None) /\ no_thunks_in_refs (state_refs s) ==>
+           c = None) /\ no_thunks_in_refs (dataSem_state_refs s)
+             ==>
              (!roots2 dups n2 r2 s2.
                PERM roots2 (dups ++ toList x ++ FLAT (MAP
-                 extract_stack (stack s)) ++
+                 extract_stack (dataSem_state_stack s)) ++
                             [the_global (dataSem_state_global s)])
                               /\
                set_of_list dups SUBSET set_of_list (toList x ++
-                 FLAT (MAP extract_stack (stack s)) ++
+                 FLAT (MAP extract_stack (dataSem_state_stack s)) ++
                               [the_global (dataSem_state_global
                                 s)]) /\
-               size_of (dataSem_state_limits s) roots2 (state_refs
-                 s) LN = (n2,r2,s2) ==> limits_heap_limit
-                 (dataSem_state_limits
+               size_of (dataSem_state_limits s) roots2
+                 (dataSem_state_refs s) LN = (n2,r2,s2) ==>
+                 limits_heap_limit (dataSem_state_limits
                s) < n2 + k)) /\
-          state_rel c l1 l2 (state_stack_max_fupd (K (OPTION_MAP2
-            MAX
-            (OPTION_MAP2 MAX (state_stack_max s)
-               (size_of_stack (Env (state_locals_size s) x :: stack
-                 s)))
+          state_rel c l1 l2 (dataSem_state_stack_max_fupd (K
+            (OPTION_MAP2 MAX
+            (OPTION_MAP2 MAX (dataSem_state_stack_max s)
+               (size_of_stack (Env (dataSem_state_locals_size s) x
+                 :: dataSem_state_stack s)))
             (OPTION_MAP2 (+) (size_of_stack (Env
-              (state_locals_size s) x :: stack s)) ss)))
-              (dataSem_state_space_fupd (K 0) (state_locals_fupd (K x)
-              s))) t2 NONE locs)`)
+              (dataSem_state_locals_size s) x :: dataSem_state_stack
+              s)) ss))) (dataSem_state_space_fupd (K 0)
+              (dataSem_state_locals_fupd (K x) s))) t2 NONE locs)`)
   CHEAT_TAC;;
 
 
@@ -3876,11 +3880,12 @@ let alloc_fail = cake_theorem "alloc_fail"
   (fun () ->
     `good_dimindex (:'a) /\ state_rel c l1 l2
   ((s:('c,'ffi)dataSem_state)) t NONE locs /\
-     dataSem_cut_env names (state_locals s) = SOME x /\
+     dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
      wordSem_alloc (--((n2w 1):'a word)) (adjust_sets names) t =
        (q,r) ==>
-     (q = SOME wordSem_NotEnoughSpace ==> state_ffi r = state_ffi s
-       /\ option_le (state_stack_max r) (state_stack_max s)) /\
+     (q = SOME wordSem_NotEnoughSpace ==> state_ffi r =
+       dataSem_state_ffi s /\ option_le (state_stack_max r)
+       (dataSem_state_stack_max s)) /\
      q = SOME wordSem_NotEnoughSpace`)
   CHEAT_TAC;;
 
@@ -3979,37 +3984,39 @@ let cut_env_insert_1 = cake_theorem "cut_env_insert_1"
 let AllocVar_thm_gen = cake_theorem "AllocVar_thm_gen"
   (fun () ->
     `state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-      dataSem_cut_env names (state_locals s) = SOME x /\
+      dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
       get_var 1 t = SOME (wordLang_Word w) /\
       evaluate (AllocVar c limit names,t) = (q,r) /\
       limit < dimword (:'a) DIV 8 ==>
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi r = state_ffi
-        s /\ option_le (state_stack_max r) (state_stack_max s) /\
+      (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi r =
+        dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
+        (dataSem_state_stack_max s) /\
             (~(data_to_word_config_gc_kind c = None) /\ w2n w DIV 4
-              < limit /\ no_thunks_in_refs (state_refs s) ==>
+              < limit /\ no_thunks_in_refs (dataSem_state_refs s) ==>
                (!roots2 dups n2 r2 s2.
                  PERM roots2 (dups ++ toList x ++ FLAT (MAP
-                   extract_stack (stack s)) ++
+                   extract_stack (dataSem_state_stack s)) ++
                               [the_global (dataSem_state_global
                                 s)]) /\
                  set_of_list dups SUBSET set_of_list (toList x ++
-                   FLAT (MAP extract_stack (stack s)) ++
+                   FLAT (MAP extract_stack (dataSem_state_stack s)) ++
                               [the_global (dataSem_state_global
                                 s)]) /\
                  size_of (dataSem_state_limits s) roots2
-                   (state_refs s) LN = (n2,r2,s2) ==> limits_heap_limit
-                   (dataSem_state_limits
+                   (dataSem_state_refs s) LN = (n2,r2,s2) ==>
+                   limits_heap_limit (dataSem_state_limits
                  s) < n2 + (w2n w DIV 4 + 1)))) /\
       (~(q = SOME wordSem_NotEnoughSpace) ==>
         w2n w DIV 4 < limit /\
         state_rel c l1 l2 (dataSem_state_space_fupd (K (w2n w DIV 4
-          + 1)) (state_locals_fupd (K x) s)) r NONE locs /\
+          + 1)) (dataSem_state_locals_fupd (K x) s)) r NONE locs /\
         FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
-          (wordSem_state_store t) (Temp (n2w 29)) /\ state_code
-        r = wordSem_state_code t /\ state_code_buffer
+          (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
+        r = wordSem_state_code t /\ wordSem_state_code_buffer
         r = wordSem_state_code_buffer t /\
           wordSem_state_data_buffer
-        r = wordSem_state_data_buffer t /\ compile_oracle
+        r = wordSem_state_data_buffer t /\
+          wordSem_state_compile_oracle
         r = wordSem_state_compile_oracle t /\
         q = NONE)`)
   CHEAT_TAC;;
@@ -4017,27 +4024,29 @@ let AllocVar_thm_gen = cake_theorem "AllocVar_thm_gen"
 let AllocVar_thm = cake_theorem "AllocVar_thm"
   (fun () ->
     `state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
-      dataSem_cut_env names (state_locals s) = SOME x /\
+      dataSem_cut_env names (dataSem_state_locals s) = SOME x /\
       get_var 1 t = SOME (wordLang_Word w) /\
       evaluate (AllocVar c limit names,t) = (q,r) /\
       limit < dimword (:'a) DIV 8 ==>
-      (q = SOME wordSem_NotEnoughSpace ==> state_ffi r = state_ffi
-        s /\ option_le (state_stack_max r) (state_stack_max s) /\
+      (q = SOME wordSem_NotEnoughSpace ==> wordSem_state_ffi r =
+        dataSem_state_ffi s /\ option_le (wordSem_state_stack_max r)
+        (dataSem_state_stack_max s) /\
             (~(data_to_word_config_gc_kind c = None) /\ w2n w DIV 4
-              < limit /\ no_thunks_in_refs (state_refs s) ==>
+              < limit /\ no_thunks_in_refs (dataSem_state_refs s) ==>
               limits_heap_limit (dataSem_state_limits
              s) < size_of_heap (cut_locals names s) + w2n w DIV 4 +
                1)) /\
       (~(q = SOME wordSem_NotEnoughSpace) ==>
         w2n w DIV 4 < limit /\
         state_rel c l1 l2 (dataSem_state_space_fupd (K (w2n w DIV 4
-          + 1)) (state_locals_fupd (K x) s)) r NONE locs /\
+          + 1)) (dataSem_state_locals_fupd (K x) s)) r NONE locs /\
         FLOOKUP (wordSem_state_store r) (Temp (n2w 29)) = FLOOKUP
-          (wordSem_state_store t) (Temp (n2w 29)) /\ state_code
-        r = wordSem_state_code t /\ state_code_buffer
+          (wordSem_state_store t) (Temp (n2w 29)) /\ wordSem_state_code
+        r = wordSem_state_code t /\ wordSem_state_code_buffer
         r = wordSem_state_code_buffer t /\
           wordSem_state_data_buffer
-        r = wordSem_state_data_buffer t /\ compile_oracle
+        r = wordSem_state_data_buffer t /\
+          wordSem_state_compile_oracle
         r = wordSem_state_compile_oracle t /\
         q = NONE)`)
   CHEAT_TAC;;
@@ -4157,19 +4166,19 @@ let memory_rel_get_vars_IMP_lemma =
 
 let memory_rel_get_vars_IMP = cake_theorem "memory_rel_get_vars_IMP"
   (fun () ->
-    `memory_rel c be ts (state_refs s) sp st m dm
-       (join_env (state_locals s)
+    `memory_rel c be ts (dataSem_state_refs s) sp st m dm
+       (join_env (dataSem_state_locals s)
           (toAList (inter (wordSem_state_locals t) (adjust_set
-            (state_locals s)))) ++ envs) /\
-      get_vars n (state_locals ((s:('c,'ffi)dataSem_state))) = SOME
-        x /\
+            (dataSem_state_locals s)))) ++ envs) /\
+      get_vars n (dataSem_state_locals
+        ((s:('c,'ffi)dataSem_state))) = SOME x /\
       get_vars (MAP adjust_var n) (t:('a,'c,'ffi)wordSem_state) =
         SOME w ==>
-      memory_rel c be ts (state_refs s) sp st m dm
+      memory_rel c be ts (dataSem_state_refs s) sp st m dm
         (ZIP x w ++
-         join_env (state_locals s)
+         join_env (dataSem_state_locals s)
            (toAList (inter (wordSem_state_locals t) (adjust_set
-             (state_locals s)))) ++ envs)`)
+             (dataSem_state_locals s)))) ++ envs)`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_gcProofScript.sml:8671-8674: a theorem that HOL4

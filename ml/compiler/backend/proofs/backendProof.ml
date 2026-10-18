@@ -75,6 +75,8 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
+cake_hide ["done"];;
+
 (* TODO: move/rephrase *)
 
 let byte_aligned_mult = cake_theorem "byte_aligned_mult"
@@ -2053,3 +2055,5 @@ let compile_correct_eval = cake_theorem "compile_correct_eval"
         extend_with_resource_limit
           (semantics_prog (add_eval_state ev s0) env prog))`)
   CHEAT_TAC;;
+
+cake_hide [];;

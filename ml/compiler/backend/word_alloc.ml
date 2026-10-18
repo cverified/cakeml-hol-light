@@ -24,6 +24,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
+
+cake_hide ["inst"];;
 (* HOL4 ancestors outside the port: (* for arity-2 Const *) *)
 
 (* HOL4 word_allocScript.sml:19: the overload Move0, which the port
@@ -1781,3 +1783,5 @@ let full_ssa_cc_trans_def = cake_define
      let (mov,ssa,na) = setup_ssa n lim prog in
      let (prog',ssa',na') = ssa_cc_trans prog ssa na [] in
        Seq mov prog')`;;
+
+cake_hide [];;

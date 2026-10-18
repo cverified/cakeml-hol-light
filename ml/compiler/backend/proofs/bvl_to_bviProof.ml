@@ -37,7 +37,7 @@ needs "semantics/namespace.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-cake_hide ["parts"];;
+cake_hide ["id"; "parts"];;
 
 (* HOL4 bvl_to_bviProofScript.sml:22: ML code, not ported *)
 
@@ -116,18 +116,18 @@ hol4_overload "names_ok" "bvl_to_bviProof_names_ok";;
 let state_rel_def = cake_define
   `bvl_to_bviProof_state_rel (b:num->num) s (t:('c,'ffi)bviSem_state)
   <=>
-     INJ b (FDOM (state_refs s)) (FDOM (state_refs t)) /\
+     INJ b (FDOM (state_refs s)) (FDOM (bviSem_state_refs t)) /\
      (!k. match FLOOKUP (state_refs s) k with NONE -> T | SOME
        (ValueArray vs) ->
-              (FLOOKUP (state_refs t) (b k) = SOME (ValueArray (MAP
-                (adjust_bv b) vs))) | SOME (Thunk m v) ->
-              (FLOOKUP (state_refs t) (b k) = SOME (Thunk m
-                (adjust_bv b v))) | SOME res -> (FLOOKUP (state_refs t)
-                (b k) = SOME res)) /\
-     (state_ffi s = state_ffi t) /\
+              (FLOOKUP (bviSem_state_refs t) (b k) = SOME (ValueArray
+                (MAP (adjust_bv b) vs))) | SOME (Thunk m v) ->
+              (FLOOKUP (bviSem_state_refs t) (b k) = SOME (Thunk m
+                (adjust_bv b v))) | SOME res -> (FLOOKUP
+                (bviSem_state_refs t) (b k) = SOME res)) /\
+     (state_ffi s = bviSem_state_ffi t) /\
      (!p. bviSem_state_global t = SOME p ==> ~(p IN IMAGE b (FDOM
        (state_refs s))) /\
-            (?z. FLOOKUP (state_refs t) p =
+            (?z. FLOOKUP (bviSem_state_refs t) p =
                   SOME (ValueArray
                     ((Number (&(SUC (LENGTH (state_globals s))))) ::
                      (MAP (the (Number (&0)) o OPTION_MAP (adjust_bv
@@ -135,32 +135,34 @@ let state_rel_def = cake_define
                      REPLICATE (z - (SUC (LENGTH (state_globals s))))
                        (Number (&0))))) /\
                 SUC (LENGTH (state_globals s)) <= z)) /\
-     (state_clock s = state_clock t) /\ compile_oracle
+     (state_clock s = bviSem_state_clock t) /\
+       bviSem_state_compile_oracle
      t = state_co compile_inc (compile_oracle s) /\ compile
-     s = state_cc compile_inc (compile t) /\
-     (sptree_lookup AllocGlobal_location (state_code t) = SOME
+     s = state_cc compile_inc (bviSem_state_compile t) /\
+     (sptree_lookup AllocGlobal_location (bviSem_state_code t) = SOME
        AllocGlobal_code) /\
-     (sptree_lookup CopyGlobals_location (state_code t) = SOME
+     (sptree_lookup CopyGlobals_location (bviSem_state_code t) = SOME
        CopyGlobals_code) /\
-     (sptree_lookup ListLength_location (state_code t) = SOME
+     (sptree_lookup ListLength_location (bviSem_state_code t) = SOME
        ListLength_code) /\
-     (sptree_lookup FromListByte_location (state_code t) = SOME
-       FromListByte_code) /\
-     (sptree_lookup ToListByte_location (state_code t) = SOME
+     (sptree_lookup FromListByte_location (bviSem_state_code t) =
+       SOME FromListByte_code) /\
+     (sptree_lookup ToListByte_location (bviSem_state_code t) = SOME
        ToListByte_code) /\
-     (sptree_lookup SumListLength_location (state_code t) = SOME
-       SumListLength_code) /\
-     (sptree_lookup ConcatByte_location (state_code t) = SOME
+     (sptree_lookup SumListLength_location (bviSem_state_code t) =
+       SOME SumListLength_code) /\
+     (sptree_lookup ConcatByte_location (bviSem_state_code t) = SOME
        ConcatByte_code) /\
-     bvl_to_bviProof_names_ok (state_code s) (state_code t)
+     bvl_to_bviProof_names_ok (state_code s) (bviSem_state_code t)
        (compile_oracle s) /\
      (!name arity exp.
         (sptree_lookup name (state_code s) = SOME (arity,exp)) ==>
         (?n. let (c1,aux1,n1) = compile_exps n [exp] in
               (sptree_lookup (bvl_num_stubs + bvl_to_bvi_namespaces *
-                name) (state_code t) =
+                name) (bviSem_state_code t) =
                  SOME (arity,bvi_let_compile_exp (HD c1))) /\
-              aux_code_installed (append aux1) (state_code t) /\
+              aux_code_installed (append aux1) (bviSem_state_code t)
+                /\
               handle_ok [exp]))`;;
 hol4_overload "state_rel" "bvl_to_bviProof_state_rel";;
 
@@ -242,11 +244,11 @@ let bv_ok_IMP_adjust_bv_eq =
 
 let state_ok_def = cake_define
   `bvl_to_bviProof_state_ok (s:('c,'ffi)bvlSem_state) <=>
-     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok (state_refs
-       s) v) (state_globals s) /\
-     (!k. match FLOOKUP (state_refs s) k with SOME (ValueArray vs)
-       -> EVERY (bv_ok (state_refs s)) vs | SOME (Thunk _2 v) ->
-       bv_ok (state_refs s) v | _3 -> T)`;;
+     EVERY (\x. match x with NONE -> T | SOME v -> bv_ok
+       (bvlSem_state_refs s) v) (bvlSem_state_globals s) /\
+     (!k. match FLOOKUP (bvlSem_state_refs s) k with SOME
+       (ValueArray vs) -> EVERY (bv_ok (bvlSem_state_refs s)) vs |
+       SOME (Thunk _2 v) -> bv_ok (bvlSem_state_refs s) v | _3 -> T)`;;
 hol4_overload "state_ok" "bvl_to_bviProof_state_ok";;
 
 (* evaluate preserves state_ok *)
@@ -426,33 +428,35 @@ let evaluate_FromListByte_code =
     `!lv vs n bs (s:('c,'ffi)bviSem_state).
       v_to_list lv = SOME (MAP (Number o (&)) vs) /\ LENGTH vs <=
         LENGTH bs /\
-      sptree_lookup FromListByte_location (state_code s) = SOME
-        (3,SND FromListByte_code) /\
+      sptree_lookup FromListByte_location (bviSem_state_code s) =
+        SOME (3,SND FromListByte_code) /\
       EVERY (\n. n < 256) vs /\
-      FLOOKUP (state_refs s) p = SOME (ByteArray fl bs) /\ n =
-        LENGTH bs - LENGTH vs ==>
+      FLOOKUP (bviSem_state_refs s) p = SOME (ByteArray fl bs) /\ n
+        = LENGTH bs - LENGTH vs ==>
       (?c.
         evaluate ([SND FromListByte_code],[lv; Number (&n); RefPtr
           b p],inc_clock c s) =
-          (Rval [RefPtr b p],state_refs_fupd (K (state_refs s |+
-            (p,ByteArray fl (TAKE n bs ++ (MAP n2w vs))))) s))`)
+          (Rval [RefPtr b p],bviSem_state_refs_fupd (K
+            (bviSem_state_refs s |+ (p,ByteArray fl (TAKE n bs ++ (MAP
+            n2w vs))))) s))`)
   CHEAT_TAC;;
 
 let evaluate_ToListByte_code = cake_theorem "evaluate_ToListByte_code"
   (fun () ->
     `!bs rest p (s:('c,'ffi)bviSem_state).
-       sptree_lookup ToListByte_location (state_code s) = SOME
-         (3,SND ToListByte_code) /\
-       FLOOKUP (state_refs s) p = SOME (ByteArray fl (bs ++ rest))
-         ==>
+       sptree_lookup ToListByte_location (bviSem_state_code s) =
+         SOME (3,SND ToListByte_code) /\
+       FLOOKUP (bviSem_state_refs s) p = SOME (ByteArray fl (bs ++
+         rest)) ==>
        (?c.
          evaluate ([SND ToListByte_code],
            [list_to_v (MAP (\b. Number (&(w2n b))) rest);
             Number (&(LENGTH bs)); RefPtr b p],inc_clock c s) =
            (Rval [list_to_v (MAP (\b. Number (&(w2n b))) bs ++
                              MAP (\b. Number (&(w2n b)))
-                               rest)],state_refs_fupd (K (state_refs s
-                               |+ (p,ByteArray fl (bs ++ rest))))
+                               rest)],bviSem_state_refs_fupd (K
+                               (bviSem_state_refs s |+ (p,ByteArray fl
+                               (bs ++ rest))))
             s))`)
   CHEAT_TAC;;
 
@@ -475,23 +479,24 @@ let evaluate_SumListLength_code =
 let evaluate_ConcatByte_code = cake_theorem "evaluate_ConcatByte_code"
   (fun () ->
     `!lv ps wss (s:('c,'ffi)bviSem_state) ds1 ds2 n.
-     sptree_lookup SumListLength_location (state_code s) = SOME
-       (2,SND SumListLength_code) /\
-     sptree_lookup ConcatByte_location (state_code s) = SOME (3,SND
-       ConcatByte_code) /\
+     sptree_lookup SumListLength_location (bviSem_state_code s) =
+       SOME (2,SND SumListLength_code) /\
+     sptree_lookup ConcatByte_location (bviSem_state_code s) = SOME
+       (3,SND ConcatByte_code) /\
      v_to_list lv = SOME (MAP (RefPtr T) ps) /\ ~(dst IN
        set_of_list ps) /\
-     MAP (FLOOKUP (state_refs s)) ps = MAP (SOME o ByteArray T) wss
-       /\
-     FLOOKUP (state_refs s) dst = SOME (ByteArray T (ds1 ++ ds2))
-       /\
+     MAP (FLOOKUP (bviSem_state_refs s)) ps = MAP (SOME o ByteArray
+       T) wss /\
+     FLOOKUP (bviSem_state_refs s) dst = SOME (ByteArray T (ds1 ++
+       ds2)) /\
      n = LENGTH ds1 /\ LENGTH (FLAT wss) = LENGTH ds2 ==>
      (?c.
        evaluate
          ([SND ConcatByte_code],[lv; Number (&n); RefPtr b
            dst],inc_clock c s) =
-         (Rval [RefPtr b dst],state_refs_fupd (K (state_refs s |+
-           (dst,ByteArray T (ds1 ++ FLAT wss)))) s))`)
+         (Rval [RefPtr b dst],bviSem_state_refs_fupd (K
+           (bviSem_state_refs s |+ (dst,ByteArray T (ds1 ++ FLAT
+           wss)))) s))`)
   CHEAT_TAC;;
 
 (* compiler correctness *)
@@ -695,23 +700,23 @@ let state_rel_add_bytearray = cake_theorem "state_rel_add_bytearray"
   (fun () ->
     `state_rel b2 s5 (t2:('c,'ffi)bviSem_state) /\
      bvl_to_bviProof_state_ok s5 /\ ~(pp IN FDOM (state_refs s5))
-       /\ ~(qq IN FDOM (state_refs t2)) ==>
+       /\ ~(qq IN FDOM (bviSem_state_refs t2)) ==>
      state_rel ((pp =+ qq) b2)
        (state_refs_fupd (K (state_refs s5 |+ (pp,ByteArray fl ws)))
          s5)
-       (state_refs_fupd (K (state_refs t2 |+ (qq,ByteArray fl
-         ws))) t2)`)
+       (bviSem_state_refs_fupd (K (bviSem_state_refs t2 |+
+         (qq,ByteArray fl ws))) t2)`)
   CHEAT_TAC;;
 
 let state_rel_add_thunk = cake_theorem "state_rel_add_thunk"
   (fun () ->
     `state_rel b s (t:('c,'ffi)bviSem_state) /\
      bvl_to_bviProof_state_ok s /\ ~(pp IN FDOM (state_refs s)) /\
-       ~(qq IN FDOM (state_refs t)) ==>
+       ~(qq IN FDOM (bviSem_state_refs t)) ==>
      state_rel ((pp =+ qq) b)
        (state_refs_fupd (K (state_refs s |+ (pp,Thunk m v))) s)
-       (state_refs_fupd (K (state_refs t |+ (qq,Thunk m
-         (adjust_bv ((pp =+ qq) b) v)))) t)`)
+       (bviSem_state_refs_fupd (K (bviSem_state_refs t |+
+         (qq,Thunk m (adjust_bv ((pp =+ qq) b) v)))) t)`)
   CHEAT_TAC;;
 
 let state_rel_update_thunk = cake_theorem "state_rel_update_thunk"
@@ -721,8 +726,8 @@ let state_rel_update_thunk = cake_theorem "state_rel_update_thunk"
      ptr IN FDOM (state_refs s) ==>
      state_rel b
        (state_refs_fupd (K (state_refs s |+ (ptr,Thunk m v))) s)
-       (state_refs_fupd (K (state_refs t |+ (b ptr,Thunk m
-         (adjust_bv b v)))) t)`)
+       (bviSem_state_refs_fupd (K (bviSem_state_refs t |+ (b
+         ptr,Thunk m (adjust_bv b v)))) t)`)
   CHEAT_TAC;;
 
 let iEval_bVarBound_extra = cake_theorem "iEval_bVarBound_extra[local]"
@@ -920,7 +925,7 @@ let compile_exps_correct = cake_theorem "compile_exps_correct"
        state_rel b1 s1 t1 /\
        bvl_to_bviProof_state_ok s1 /\ EVERY (bv_ok (state_refs s1))
          env /\
-       aux_code_installed (append aux) (state_code t1) /\
+       aux_code_installed (append aux) (bviSem_state_code t1) /\
        handle_ok xs /\ IS_SOME (bviSem_state_global t1) ==>
        (?t2 b2 c.
           (evaluate (ys,MAP (adjust_bv b2) env,inc_clock c t1) =

@@ -18,6 +18,8 @@ needs "semantics/gram.ml";;
 needs "semantics/namespace.ml";;
 needs "semantics/tokenUtils.ml";;
 
+cake_hide ["assert"; "pmatch"];;
+
 (* handling constructor arities gets very complicated when "open" is
    implemented *)
 let PCstate0_FIELDS = define_record "PCstate0"
@@ -1355,3 +1357,5 @@ let ptree_TopLevelDecs_def = cake_define_list
                  SOME (td :: tds)))) | _150 -> NONE)`];;
 
 hol4_only "++" "APPEND";;
+
+cake_hide [];;

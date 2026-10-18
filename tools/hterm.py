@@ -1891,6 +1891,11 @@ class Printer:
       # (s1:('a,'c,'ffi)stackSem$state), and its s is a state of
       # labSem in two statements and one of stackSem in the rest)
       rec = self.annot_rec(e.e)
+      # the field has to be one of that record: an annotation of a
+      # record says the type of the term and not of the field, and
+      # a term can be annotated where the field is of another
+      # record of the statement
+      if rec and e.fld not in self.ctx.recs.get(rec, []): rec = None
       if not rec:
         v = e.e
         while v.kind in ('paren', 'typed'): v = v.e

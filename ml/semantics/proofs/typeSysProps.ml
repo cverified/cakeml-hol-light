@@ -17,6 +17,8 @@ needs "semantics/proofs/typeSoundInvariants.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
 
+cake_hide ["id"];;
+
 (* HOL4 typeSysPropsScript.sml:14: ML code, not ported *)
 (* HOL4 typeSysPropsScript.sml:15-20: code that the source has in a
    comment *)
@@ -1148,3 +1150,5 @@ let type_ds_sing = cake_theorem "type_ds_sing[simp]"
 
 (* HOL4 typeSysPropsScript.sml:3384-3408: code that the source has in
    a comment *)
+
+cake_hide [];;

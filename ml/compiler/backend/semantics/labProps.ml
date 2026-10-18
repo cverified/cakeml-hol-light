@@ -25,7 +25,7 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["code_buffer"];;
+cake_hide ["code_buffer"; "failed"];;
 
 let extract_labels_def = cake_define
   `labProps_extract_labels x1 =
@@ -347,7 +347,8 @@ let labProps_evaluate_add_clock_io_events_mono =
 
 let align_dm_def = cake_define
   `align_dm (s:('a,'c,'ffi)labSem_state) =
-     (mem_domain_fupd (K (mem_domain s INTER byte_aligned)) s)`;;
+     (labSem_state_mem_domain_fupd (K (labSem_state_mem_domain s
+       INTER byte_aligned)) s)`;;
 
 let align_dm_const = cake_theorem "align_dm_const[simp]"
   (fun () ->

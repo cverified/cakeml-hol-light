@@ -33,7 +33,7 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
 
-cake_hide ["data_buffer"; "memory"; "stack_alloc"];;
+cake_hide ["data_buffer"; "memory"; "not"; "shift"; "stack_alloc"];;
 (* HOL4 ancestors outside the port: (* for memcpy *) *)
 
 (* HOL4 stack_allocProofScript.sml:16: ML code, not ported *)
@@ -571,9 +571,9 @@ let word_gc_move_code_thm = cake_theorem "word_gc_move_code_thm"
         0) /\
       (!(w:'a word). w << backend_common_word_shift (:'a) = w *
         bytes_in_word) /\
-      FLOOKUP (state_store (s:('a,'c,'b)stackSem_state)) CurrHeap =
-        SOME (wordLang_Word old) /\ stackSem_state_use_store s /\
-        stackSem_state_memory
+      FLOOKUP (stackSem_state_store (s:('a,'c,'b)stackSem_state))
+        CurrHeap = SOME (wordLang_Word old) /\ stackSem_state_use_store
+        s /\ stackSem_state_memory
       s = m /\ stackSem_state_mdomain s = dm /\
       0 IN FDOM (stackSem_state_regs s) /\
       1 IN FDOM (stackSem_state_regs s) /\
@@ -1470,7 +1470,7 @@ let word_gen_gc_move_code_thm = cake_theorem "word_gen_gc_move_code_thm"
         bytes_in_word) /\
       FLOOKUP (stackSem_state_store s) CurrHeap = SOME
         (wordLang_Word old) /\ stackSem_state_use_store s /\
-        state_memory
+        stackSem_state_memory
       (s:('a,'c,'b)stackSem_state) = m /\ stackSem_state_mdomain s
         = dm /\
       0 IN FDOM (stackSem_state_regs s) /\
@@ -2751,7 +2751,8 @@ let stack_allocProof_compile_semantics =
     `(!k prog. lookup k (stackSem_state_code s) = SOME prog ==> ~(k =
   gc_stub_location) /\ alloc_arg prog) /\
       (!n k p. MEM (k,p) (FST (SND (stackSem_state_compile_oracle s
-        n))) ==> ~(k = gc_stub_location) /\ alloc_arg p) /\ state_gc_fun
+        n))) ==> ~(k = gc_stub_location) /\ alloc_arg p) /\
+        stackSem_state_gc_fun
      (s:('a,'c,'b)stackSem_state) = (word_gc_fun c:('a word_loc)
        list#('a word->'a word_loc)#('a word->bool)#(store_name,'a
        word_loc)fmap->(('a word_loc) list#('a word->'a
@@ -2787,10 +2788,8 @@ let make_init_def = cake_define
      s)))))`;;
 hol4_overload "make_init" "stack_allocProof_make_init";;
 
-let prog_comp_lambda = cake_theorem "prog_comp_lambda"
-  (fun () ->
-    `prog_comp = (\(n,p). (rhs (concl (SPEC_ALL prog_comp_def))))`)
-  CHEAT_TAC;;
+(* HOL4 stack_allocProofScript.sml:6075-6079: a theorem whose
+   statement the port cannot state yet: prog_comp_lambda *)
 
 let stack_allocProof_make_init_semantics =
   cake_theorem "make_init_semantics"

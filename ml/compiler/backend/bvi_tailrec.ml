@@ -17,6 +17,8 @@ needs "compiler/backend/closLang.ml";;
 needs "lib/comparison.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 let dummy_def = cake_define
   `dummy = bvi_Var 1234567890`;;
 
@@ -929,3 +931,5 @@ let rev_compile_exp = cake_theorem "rev_compile_exp[local]"
                    (closLang_Cons 0)) [Op (closLang_BlockOp
                    (closLang_Cons 0)) []; Var 1]]] NONE))))))`)
   CHEAT_TAC;;
+
+cake_hide [];;

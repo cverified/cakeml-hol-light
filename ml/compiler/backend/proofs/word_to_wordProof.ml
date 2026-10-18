@@ -239,9 +239,9 @@ let compile_word_to_word_thm = cake_theorem "compile_word_to_word_thm"
       let (res1,rst1) = wordSem_evaluate
         (prog,wordSem_state_compile_oracle_fupd (K coracle)
         (wordSem_state_compile_fupd (K cc) (wordSem_state_termdep_fupd
-        (K 0) (state_clock_fupd (K (state_clock st + clk))
-        (wordSem_state_code_fupd (K (map (I ## remove_must_terminate)
-        l))
+        (K 0) (wordSem_state_clock_fupd (K (wordSem_state_clock st +
+        clk)) (wordSem_state_code_fupd (K (map (I ##
+        remove_must_terminate) l))
         st))))) in
         res1 = res /\ state_clock
         rst1 = state_clock rst /\ state_ffi
@@ -517,7 +517,7 @@ let word_to_word_compile_semantics =
      no_install_code (wordSem_state_code s) /\ no_alloc_code
        (wordSem_state_code s) /\
      no_mt_code (fromAList wprog0) /\
-     ALL_DISTINCT (MAP FST wprog0) /\ stack s = [] /\
+     ALL_DISTINCT (MAP FST wprog0) /\ wordSem_state_stack s = [] /\
        wordSem_state_code
      t = fromAList wprog /\ lookup 0 (wordSem_state_locals t) =
        SOME (Loc 1 0) /\

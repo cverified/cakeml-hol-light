@@ -132,15 +132,17 @@ hol4_overload "v_rel" "clos_numberProof_v_rel";;
 let state_rel_def = cake_define
   `clos_numberProof_state_rel (s:(num#'c,'ffi)closSem_state)
   (t:('c,'ffi)closSem_state) <=>
-     (state_clock s = state_clock t) /\ (state_ffi s = state_ffi t)
-       /\ (closSem_state_max_app t = closSem_state_max_app s) /\
+     (closSem_state_clock s = closSem_state_clock t) /\
+       (closSem_state_ffi s = closSem_state_ffi t) /\
+       (closSem_state_max_app t = closSem_state_max_app s) /\
        closSem_state_compile
      s = state_cc (ignore_table clos_number_compile_inc)
        (closSem_state_compile t) /\ closSem_state_compile_oracle
      t = state_co (ignore_table clos_number_compile_inc)
        (closSem_state_compile_oracle s) /\
      fmap_rel (closProps_ref_rel (clos_numberProof_v_rel
-       (closSem_state_max_app s))) (state_refs s) (state_refs t) /\
+       (closSem_state_max_app s))) (closSem_state_refs s)
+       (closSem_state_refs t) /\
      EVERY2 (OPTREL (clos_numberProof_v_rel (closSem_state_max_app
        s))) (closSem_state_globals s) (closSem_state_globals t) /\
      (!n. SND (SND (closSem_state_compile_oracle s n)) = [] /\

@@ -16,6 +16,8 @@ needs "compiler/encoders/asm/asm.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+
+cake_hide ["inst"];;
 (*** Mono and conj lemmas for every_var/every_stack_var ***)
 let every_var_inst_mono = cake_theorem "every_var_inst_mono"
   (fun () ->
@@ -567,3 +569,5 @@ let no_share_inst_subprogs_def = cake_define
    which the port expands *)
 (* HOL4 wordConvsScript.sml:612: the overload word_good_code_labels,
    which the port expands *)
+
+cake_hide [];;

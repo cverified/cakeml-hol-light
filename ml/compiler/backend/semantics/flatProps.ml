@@ -40,11 +40,12 @@ let pats_bindings_FLAT_MAP = cake_theorem "pats_bindings_FLAT_MAP"
 let pmatch_state = cake_theorem "pmatch_state"
   (fun () ->
     `(!(st) p v l (st') res.
-       pmatch st p v l = res /\ state_refs
-       st = state_refs st' ==> pmatch st' p v l = res) /\
+       pmatch st p v l = res /\ flatSem_state_refs
+       st = flatSem_state_refs st' ==> pmatch st' p v l = res) /\
      (!(st) p vs l (st') res.
-       pmatch_list st p vs l = res /\ state_refs
-       st = state_refs st' ==> pmatch_list st' p vs l = res)`)
+       pmatch_list st p vs l = res /\ flatSem_state_refs
+       st = flatSem_state_refs st' ==> pmatch_list st' p vs l =
+         res)`)
   CHEAT_TAC;;
 
 let flatProps_pmatch_extend = cake_theorem "pmatch_extend"
@@ -246,7 +247,8 @@ let flatProps_do_app_add_to_clock =
   cake_theorem "do_app_add_to_clock[local]"
   (fun () ->
     `do_app (s:('c,'ffi)flatSem_state) op es = SOME (t,r) ==>
-      do_app (state_clock_fupd (K (state_clock s + k)) s) op es =
+      do_app (flatSem_state_clock_fupd (K (flatSem_state_clock s +
+        k)) s) op es =
         SOME (state_clock_fupd (K (state_clock t + k)) t,r)`)
   CHEAT_TAC;;
 
@@ -254,8 +256,8 @@ let do_app_add_to_clock_NONE =
   cake_theorem "do_app_add_to_clock_NONE[local]"
   (fun () ->
     `do_app (s:('c,'ffi)flatSem_state) op es = NONE ==>
-      do_app (state_clock_fupd (K (state_clock s + k)) s) op es =
-        NONE`)
+      do_app (flatSem_state_clock_fupd (K (flatSem_state_clock s
+        + k)) s) op es = NONE`)
   CHEAT_TAC;;
 
 let flatProps_evaluate_add_to_clock =
@@ -264,20 +266,20 @@ let flatProps_evaluate_add_to_clock =
     `(!env (s:('c,'ffi)flatSem_state) es s' r.
          evaluate env s es = (s',r) /\ ~(r = Rerr (Rabort
            Rtimeout_error)) ==>
-         evaluate env (state_clock_fupd (K (state_clock s + extra))
-           s) es =
+         evaluate env (flatSem_state_clock_fupd (K
+           (flatSem_state_clock s + extra)) s) es =
            (state_clock_fupd (K (state_clock s' + extra)) s',r)) /\
      (!(s:('c,'ffi)flatSem_state) d s' r.
          evaluate_dec s d = (s',r) /\ ~(r = SOME (Rabort
            Rtimeout_error)) ==>
-         evaluate_dec (state_clock_fupd (K (state_clock s + extra))
-           s) d =
+         evaluate_dec (flatSem_state_clock_fupd (K
+           (flatSem_state_clock s + extra)) s) d =
            (state_clock_fupd (K (state_clock s' + extra)) s',r)) /\
      (!(s:('c,'ffi)flatSem_state) ds s' r.
          evaluate_decs s ds = (s',r) /\ ~(r = SOME (Rabort
            Rtimeout_error)) ==>
-         evaluate_decs (state_clock_fupd (K (state_clock s +
-           extra)) s) ds =
+         evaluate_decs (flatSem_state_clock_fupd (K
+           (flatSem_state_clock s + extra)) s) ds =
            (state_clock_fupd (K (state_clock s' + extra)) s',r))`)
   CHEAT_TAC;;
 
@@ -295,21 +297,23 @@ let flatProps_do_app_io_events_mono =
   cake_theorem "do_app_io_events_mono"
   (fun () ->
     `do_app (s:('c,'ffi)flatSem_state) op vs = SOME (t,r) ==>
-  ffi_state_io_events (state_ffi
+  ffi_state_io_events (flatSem_state_ffi
      s) <<= ffi_state_io_events (state_ffi t)`)
   CHEAT_TAC;;
 
 let flatProps_evaluate_io_events_mono =
   cake_theorem "evaluate_io_events_mono"
   (fun () ->
-    `(!env (s:('c,'ffi)flatSem_state) es. ffi_state_io_events (state_ffi
+    `(!env (s:('c,'ffi)flatSem_state) es. ffi_state_io_events
+  (flatSem_state_ffi
         s) <<= ffi_state_io_events (state_ffi (FST (evaluate env s
           es)))) /\
-     (!(s:('c,'ffi)flatSem_state) d. ffi_state_io_events (state_ffi
+     (!(s:('c,'ffi)flatSem_state) d. ffi_state_io_events
+       (flatSem_state_ffi
         s) <<= ffi_state_io_events (state_ffi (FST (evaluate_dec s
           d)))) /\
      (!(s:('c,'ffi)flatSem_state) ds. ffi_state_io_events
-       (state_ffi
+       (flatSem_state_ffi
         s) <<= ffi_state_io_events (state_ffi (FST (evaluate_decs
           s ds))))`)
   CHEAT_TAC;;
@@ -338,19 +342,19 @@ let flatProps_evaluate_add_to_clock_io_events_mono =
     `(!env (s:('c,'ffi)flatSem_state) es. ffi_state_io_events (state_ffi
          (FST (evaluate env s es))) <<= ffi_state_io_events
            (state_ffi
-         (FST (evaluate env (state_clock_fupd (K (state_clock s +
-           extra)) s) es)))) /\
+         (FST (evaluate env (flatSem_state_clock_fupd (K
+           (flatSem_state_clock s + extra)) s) es)))) /\
      (!(s:('c,'ffi)flatSem_state) d. ffi_state_io_events (state_ffi
          (FST (evaluate_dec s d))) <<= ffi_state_io_events
            (state_ffi
-         (FST (evaluate_dec (state_clock_fupd (K (state_clock s +
-           extra)) s) d)))) /\
+         (FST (evaluate_dec (flatSem_state_clock_fupd (K
+           (flatSem_state_clock s + extra)) s) d)))) /\
      (!(s:('c,'ffi)flatSem_state) ds. ffi_state_io_events
        (state_ffi
          (FST (evaluate_decs s ds))) <<= ffi_state_io_events
            (state_ffi
-         (FST (evaluate_decs (state_clock_fupd (K (state_clock s
-           + extra)) s) ds))))`)
+         (FST (evaluate_decs (flatSem_state_clock_fupd (K
+           (flatSem_state_clock s + extra)) s) ds))))`)
   CHEAT_TAC;;
 
 let evaluate_dec_io_events_mono =
@@ -368,15 +372,15 @@ let evaluate_dec_add_to_clock_io_events_mono =
   (state_ffi
       (FST (evaluate_dec s prog))) <<= ffi_state_io_events
         (state_ffi
-      (FST (evaluate_dec (state_clock_fupd (K (state_clock s +
-        extra)) s) prog)))`)
+      (FST (evaluate_dec (flatSem_state_clock_fupd (K
+        (flatSem_state_clock s + extra)) s) prog)))`)
   CHEAT_TAC;;
 
 let evaluate_decs_io_events_mono =
   cake_theorem "evaluate_decs_io_events_mono"
   (fun () ->
     `!ds (s:('c,'ffi)flatSem_state) s' y. evaluate_decs s ds = (s',y)
-  ==> ffi_state_io_events (state_ffi
+  ==> ffi_state_io_events (flatSem_state_ffi
       s) <<= ffi_state_io_events (state_ffi s')`)
   CHEAT_TAC;;
 
@@ -387,8 +391,8 @@ let flatProps_evaluate_decs_add_to_clock_io_events_mono =
   (state_ffi
        (FST (evaluate_decs s ds))) <<= ffi_state_io_events
          (state_ffi
-       (FST (evaluate_decs (state_clock_fupd (K (state_clock s +
-         extra)) s) ds)))`)
+       (FST (evaluate_decs (flatSem_state_clock_fupd (K
+         (flatSem_state_clock s + extra)) s) ds)))`)
   CHEAT_TAC;;
 
 let evaluate_MAP_Var_local = cake_theorem "evaluate_MAP_Var_local"
@@ -600,8 +604,9 @@ let evaluate_decs_add_to_clock_io_events_mono_alt =
   cake_theorem "evaluate_decs_add_to_clock_io_events_mono_alt"
   (fun () ->
     `evaluate_decs (s:('c,'ffi)flatSem_state) ds = (s1,res) /\
-     evaluate_decs (state_clock_fupd (K (state_clock s + extra)) s)
-       ds = (s2,res2) ==> ffi_state_io_events (state_ffi
+     evaluate_decs (flatSem_state_clock_fupd (K
+       (flatSem_state_clock s + extra)) s) ds = (s2,res2) ==>
+       ffi_state_io_events (state_ffi
      s1) <<= ffi_state_io_events (state_ffi s2)`)
   CHEAT_TAC;;
 

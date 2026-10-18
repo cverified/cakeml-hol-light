@@ -358,7 +358,7 @@ let num_gcd_def = cake_define
 
 let num_gcd_eq_gcd = cake_theorem "num_gcd_eq_gcd"
   (fun () ->
-    `mlint_num_gcd = gcd`)
+    `mlint_num_gcd = hol4_gcd`)
   CHEAT_TAC;;
 
 let int_gcd_def = cake_define

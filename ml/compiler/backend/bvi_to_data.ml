@@ -21,6 +21,8 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 (* compilation from BVI to dataLang *)
 
 let op_space_reset_pmatch = cake_theorem "op_space_reset_pmatch"
@@ -357,3 +359,5 @@ let compile_exp_eq = cake_theorem "compile_exp_eq"
        bvi_to_data_optimise (FST (bvi_to_data_compile_sing
          arg_count (COUNT_LIST arg_count) T [] exp))`)
   CHEAT_TAC;;
+
+cake_hide [];;

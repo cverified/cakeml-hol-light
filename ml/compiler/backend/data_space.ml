@@ -19,6 +19,8 @@ needs "compiler/backend/dataLang.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 let num_size_def = cake_define
   `data_space_num_size (n:num) =
      (if n < 2 EXP 32 then 2:num else 1 + data_space_num_size (n
@@ -120,3 +122,5 @@ let space_pmatch = cake_theorem "space_pmatch"
 let compile_def = cake_define
   `data_space_compile c = pMakeSpace (space c)`;;
 hol4_overload "compile" "data_space_compile";;
+
+cake_hide [];;

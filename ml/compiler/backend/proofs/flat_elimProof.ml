@@ -332,13 +332,15 @@ let decs_closed_reduce_HD = cake_theorem "decs_closed_reduce_HD"
 (* s = state, t = removed state *)
 let flat_state_rel_def = cake_define
   `flat_state_rel reachable (s:('c,'ffi)flatSem_state)
-  (t:('c,'ffi)flatSem_state) <=> state_clock
-     s = state_clock t /\ state_refs s = state_refs t /\ state_ffi
-     s = state_ffi t /\ globals_rel reachable (flatSem_state_globals
-       s) (flatSem_state_globals t) /\
-     domain (find_refs_globals (state_refs s)) SUBSET domain
+  (t:('c,'ffi)flatSem_state) <=> flatSem_state_clock
+     s = flatSem_state_clock t /\ flatSem_state_refs s =
+       flatSem_state_refs t /\ flatSem_state_ffi
+     s = flatSem_state_ffi t /\ globals_rel reachable
+       (flatSem_state_globals s) (flatSem_state_globals t) /\
+     domain (find_refs_globals (flatSem_state_refs s)) SUBSET domain
        reachable /\
-     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs s)`;;
+     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs)
+       (flatSem_state_refs s)`;;
 
 let flat_state_rel_trans = cake_theorem "flat_state_rel_trans"
   (fun () ->
@@ -357,17 +359,17 @@ let pmatch_Match_reachable = cake_theorem "pmatch_Match_reachable"
         domain (find_v_globals v) SUBSET domain reachable /\
         domain (find_v_globalsL (MAP SND l)) SUBSET domain
           reachable /\
-        domain (find_refs_globals (state_refs s)) SUBSET domain
-          reachable ==> domain (find_v_globalsL (MAP SND a)) SUBSET
-          domain reachable) /\
+        domain (find_refs_globals (flatSem_state_refs s)) SUBSET
+          domain reachable ==> domain (find_v_globalsL (MAP SND a))
+          SUBSET domain reachable) /\
      (!(s:('c,'ffi)flatSem_state) p vs l a (reachable:1 spt).
         pmatch_list s p vs l = Match a /\
         domain (find_v_globalsL vs) SUBSET domain reachable /\
         domain (find_v_globalsL (MAP SND l)) SUBSET domain
           reachable /\
-        domain (find_refs_globals (state_refs s)) SUBSET domain
-          reachable ==> domain (find_v_globalsL (MAP SND a)) SUBSET
-          domain reachable)`)
+        domain (find_refs_globals (flatSem_state_refs s)) SUBSET
+          domain reachable ==> domain (find_v_globalsL (MAP SND a))
+          SUBSET domain reachable)`)
   CHEAT_TAC;;
 
 let find_v_globals_list_to_v_APPEND =
@@ -517,15 +519,15 @@ let pmatch_not_has_Eval = cake_theorem "pmatch_not_has_Eval"
     `(
      !(s:('c,'ffi)flatSem_state) p v bindings env.
      pmatch s p v bindings = Match env /\ ~(v_has_Eval v) /\
-     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs s)
-       /\
+     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs)
+       (flatSem_state_refs s) /\
      EVERY ((~) o v_has_Eval o SND) bindings ==>
      EVERY ((~) o v_has_Eval o SND) env) /\ (
      !(s:('c,'ffi)flatSem_state) ps vs bindings env.
      pmatch_list s ps vs bindings = Match env /\
      EVERY ((~) o v_has_Eval) vs /\
-     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs s)
-       /\
+     EVERY (EVERY ((~) o v_has_Eval) o store_v_vs)
+       (flatSem_state_refs s) /\
      EVERY ((~) o v_has_Eval o SND) bindings ==>
      EVERY ((~) o v_has_Eval o SND) env)`)
   CHEAT_TAC;;

@@ -20,6 +20,8 @@ needs "lib/indexedLists.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
+cake_hide ["pmatch"];;
+
 let can_raise_def = cake_define_list
   [`can_raise (Var v:bvl_exp) = F`;
    `can_raise (If x1 x2 x3:bvl_exp) = (can_raise x1 \/ can_raise x2
@@ -361,3 +363,5 @@ let bvl_handle_compile_sing = cake_theorem "compile_sing"
 
 (* HOL4 bvl_handleScript.sml:346-353: a theorem that HOL4 states as
    the value of an ML expression: compile_seqs_compute *)
+
+cake_hide [];;
