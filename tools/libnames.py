@@ -37,6 +37,10 @@ DEFPAT = [
              r'(?:new_definition|new_recursive_definition|'
              r'new_specification|Define|TotalDefn)', re.M),
   re.compile(r'new_definition\s*\(\s*"([A-Za-z0-9_\']+)"', re.M),
+  # HOL4 makes a definition with new_specification as well, out of
+  # a theorem that says that the constant exists (rich_list's
+  # IS_SUBLIST and SEG)
+  re.compile(r'new_specification\s*\(\s*"([A-Za-z0-9_\']+)"', re.M),
   re.compile(r'^Inductive\s+([A-Za-z0-9_\']+)', re.M),
 ]
 

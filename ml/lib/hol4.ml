@@ -58,6 +58,23 @@ let FOLDR_THM = prove
    (!f e x xs. FOLDR f e (CONS x xs) = f x (FOLDR f e xs))`,
   REWRITE_TAC[FOLDR_def; ITLIST]);;
 
+(* IS_SUBLIST of HOL4's rich_listTheory: l2 is a contiguous part
+   of l1 (rich_listScript.sml:252-271, where HOL4 makes it with
+   new_specification out of the recursion theorem of a list) *)
+
+let IS_SUBLIST = new_recursive_definition list_RECURSION
+  `(IS_SUBLIST [] (l:A list) <=> (if NULL l then T else F)) /\
+   (IS_SUBLIST (CONS x t) l <=>
+    (if NULL l then T
+     else (x = HD l) /\ (TL l) <<= t \/ IS_SUBLIST t l))`;;
+
+(* IS_SUFFIX of the same theory: l2 is a suffix of l1, which HOL4
+   defines by recursion on a SNOC (rich_listScript.sml:288-304)
+   and its IS_SUFFIX_APPEND says is this *)
+
+let IS_SUFFIX = new_definition
+  `IS_SUFFIX l1 (l2:A list) <=> ?l. l1 = APPEND l l2`;;
+
 (* HOL4's relationTheory hides the C of combinTheory from its
    parser, so a statement that means that combinator writes
    combin$C for it (misc's anub_eq_nil and two of clos_callProof),
