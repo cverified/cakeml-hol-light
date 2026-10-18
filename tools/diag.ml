@@ -28,6 +28,8 @@ let diag_run infile outfile =
   let oc = open_out outfile in
   let n = ref 0 and bad = ref 0 and fv = ref 0 in
   let hid = ref ([]:string list) in
+  let nexthid = ref ([]:string list) in
+  let curfile = ref "" in
   let cur = ref ("","","") and buf = ref ([]:string list) in
   let say tag f l nm s =
     output_string oc (tag^"\t"^f^"\t"^l^"\t"^nm^"\t"^s^"\n");
@@ -70,15 +72,20 @@ let diag_run infile outfile =
     let line = input_line ic in
     if String.length line > 7 && String.sub line 0 7 = "@@@HIDE" then
       (one (); cur := ("","","");
-       hid := filter (fun s -> s <> "")
-                (String.split_on_char ' '
-                   (String.sub line 8 (String.length line - 8))))
+       nexthid := filter (fun s -> s <> "")
+                    (String.split_on_char ' '
+                       (String.sub line 8 (String.length line - 8))))
     else if String.length line > 3 && String.sub line 0 3 = "@@@"
     then begin
       one ();
-      match String.split_on_char '\t' line with
-        _::f::l::nm::_ -> cur := (f,l,nm)
-      | _ -> cur := ("?","0","?")
+      (match String.split_on_char '\t' line with
+         _::f::l::nm::_ -> cur := (f,l,nm)
+       | _ -> cur := ("?","0","?"));
+      (* a file hides what its own cake_hide says and nothing of
+         the file before it *)
+      let f,_,_ = !cur in
+      if f <> !curfile then
+        (curfile := f; hid := !nexthid; nexthid := [])
     end else buf := line :: !buf
   done with End_of_file -> ());
   one ();

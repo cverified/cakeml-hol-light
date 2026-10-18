@@ -27,6 +27,16 @@ Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
 what it reports missing is the two blocks below and these 482.
 
+Four statements use a constant of a HOL4 library that the port
+does not have, so a name of them is a free variable and the
+statement says less than the source's does.  `tools/libnames.py`
+is the check that finds them:
+
+| theorem | what it needs |
+|---|---|
+| `misc$toPath_fromList`, `misc$steps_rel_okpath` | `pathTheory`: the type of a path (a state and a lazy list of transitions), with `toPath`, `stopped_at`, `pcons` and `okpath` |
+| `presLang$num_to_hex_eq` | `words$word_to_hex_string`, which is `w2s 16 HEX` and needs the `n2s` of ASCIInumbers, a theory that the hand written library layer is loaded before |
+
 The theorems of the **HOL4 library theories** of `ml/lib` are not
 in the port either, and are not counted: of a library theory the
 port has the definitions that CakeML needs (which is what the

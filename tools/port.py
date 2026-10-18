@@ -581,6 +581,10 @@ class Porter:
           'hol4_only "%s" "%s";;\n'
           % (tok, overrides.BASE_INFIX_CONST[tok])
           for tok in sorted(self.restore))
+    # a hide list stays in the session until the next one, so a
+    # file that makes one takes it back at the end of itself
+    if self.db.hidden_for(self.thy, blocks):
+      text += '\ncake_hide [];;\n'
     # the files that the translation needs
     deps = sorted(set(self.deps) |
                   self.db.providers(self.thy, strip_ml(text),
