@@ -15,9 +15,8 @@ UNI = {
   '∈': 'IN', '∉': 'NOTIN', '⊆': 'SUBSET', '∪': 'UNION', '∩': 'INTER',
   '∅': '{}', '⧺': '++', '∘': 'o', '−': '-', '×': '*', '≼': '<<=',
   '⊂': 'PSUBSET', '≥': '>=', '⊕': '??',
-  '⊌': 'FUNION', '⊑': 'SUBMAP', '≪': '<<', '≫': '>>', '⋙': '>>>',
-  '⋲': 'BAG_IN', '⇎': '<>',
-  '‖': '||', '↦': '|->', '⊎': 'BAG_UNION',
+  '⊑': 'SUBMAP', '≪': '<<', '≫': '>>', '⋙': '>>>',
+  '⇎': '<>', '‖': '||', '↦': '|->',
 }
 
 # HOL4 prints the type variable 'a as α, 'b as β and so on, so
@@ -36,7 +35,7 @@ KEYWORDS = ['if', 'then', 'else', 'let', 'and', 'in', 'case', 'of',
 
 # symbols, longest first
 SYMS = ['<=>', '==>', '>>>', '#>>', '#<<', '<=+', '>=+', '||', '!!',
-        '|==>', '===>', '###', '◁', '⦇', '⦈',
+        '|==>', '===>', '###', '◁', '⦇', '⦈', '⊎', '⊌', '⋲',
         '&&',
         '{|', '|}', '❲', '❳',
         '##',
@@ -128,8 +127,16 @@ def ascii_name(nm):
   return ''.join(SUPERSCRIPT.get(c, SUBSCRIPT.get(c, c)) for c in nm)
 
 
+# a theory in front of a symbolic name (misc's prim_rec$< is the
+# < of the numbers): the name after the $ is what it means, and
+# the $ of HOL4 before an operator is how the port already reads
+# the operator as a function
+QUAL_SYM = re.compile(r"\b[A-Za-z][A-Za-z0-9_']*\$(?=[-+*/<>=!?~^&|#%:@])")
+
+
 def tokenize(s):
   s = expand_sx(s) if '\u27ea' in s else s
+  s = QUAL_SYM.sub('$', s)
   toks = []
   i = 0
   n = len(s)
@@ -330,10 +337,12 @@ INFIX = {
   '@@':    (700, 'l', '@@',     23),
   'o':     (800, 'r', 'o',      26),
   '##':    (490, 'r', '##',     20),
-  'FUNION':(500, 'l', 'FUNION', None),
-  'BAG_UNION':(500, 'l', 'BAG_UNION', None),
+  # HOL4 declares only the symbol of these an infix, so the name
+  # itself is an identifier there (misc's FOLDR BAG_UNION b0 ls)
+  '⊎':     (500, 'l', 'BAG_UNION', None),
+  '⊌':     (500, 'l', 'FUNION', None),
   'SUBMAP':(450, 'n', 'SUBMAP', 12),
-  'BAG_IN':(450, 'n', 'BAG_IN', None),
+  '⋲':     (450, 'n', 'BAG_IN', None),
   # the walkstar of HOL4's unification library, which it writes
   # s <| t (with a triangle)
   '◁':     (700, 'r', 'walkstar', None),
@@ -1486,6 +1495,10 @@ class Printer:
         return c if re.match(r"^[A-Za-z_][A-Za-z0-9_']*$", c) \
                else '(' + c + ')'
       n2 = self.ctx.name(n)
+      # a constant that the library layer declares as an infix of
+      # HOL Light needs its parentheses where it stands on its own
+      # (misc's FOLDR BAG_UNION b0 ls)
+      if n2 in HL_INFIX: return '(' + n2 + ')'
       # HOL4's auxiliary size functions of a datatype family
       # (exp1_size, exp2_size, ...) number the types of the family
       # in another order than HOL Light does, so the port cannot
