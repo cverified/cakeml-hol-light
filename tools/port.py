@@ -707,6 +707,12 @@ class Porter:
     elif k in ('Theorem', 'Triviality'):
       self.theorem(b)
     elif k == 'ThmValue':
+      # where the value is a prover applied to a quotation, that
+      # quotation is the statement, and phase two states it
+      stmt = hol4.thmvalue_statement(b.text)
+      if stmt and b.name:
+        self.state(b, b.name, b.attrs, stmt)
+        return
       # a theorem that HOL4 binds to the value of an ML
       # expression: the statement is what that expression
       # computes, which the port cannot

@@ -192,6 +192,21 @@ def ml_theorems(text):
   return out
 
 
+# a theorem that HOL4 states as the value of a prover applied to a
+# quotation of its statement (misc's IMP_IMP is a METIS_PROVE of
+# one, unify's disj2cond a DECIDE of one)
+PROVER_VALUE = re.compile(
+  r'=\s*(?:METIS_PROVE|DECIDE|TAUT|PROVE_TAC)\s*(?:\[[^\]]*\])?\s*'
+  r'(``|`|\u201c)(.*?)(``|`|\u201d)\s*;?\s*$', re.S)
+
+
+def thmvalue_statement(text):
+  """the statement of a ThmValue block whose value is a prover
+     applied to a quotation, which is the statement itself"""
+  m = PROVER_VALUE.search(text)
+  return m.group(2).strip() if m else None
+
+
 def hol_reln(text):
   """the name and the rules of an ML block that calls Hol_reln"""
   m = HOL_RELN.match(text.strip())
