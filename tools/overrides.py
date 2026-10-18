@@ -1250,6 +1250,13 @@ let mergesortN_tail_def = cake_define_wf
 ANTIQUOTE = {
   # exp_tm is rhs (concl (EVAL ``10n ** exp_for_dec_enc``))
   ('mlint', 'exp_tm'): '10 EXP exp_for_dec_enc',
+  # the state variables that ML code makes with a type that it
+  # computes from the type of an evaluate: the state of the
+  # semantics that the theorems of the file are about
+  ('bvi_tailrecProof', 's'): "(s:(num#'c,'ffi) bviSem$state)",
+  ('bvi_tailrecProof', 's1'): "(s:('c,'ffi) bviSem$state)",
+  ('source_to_flatProof', 's'):
+    "(s:'ffi semanticPrimitives$state)",
 }
 
 NOT_YET = {
