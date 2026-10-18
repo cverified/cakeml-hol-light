@@ -84,8 +84,10 @@ EXPECT = [
   ('the overload', r'^\s*Overload\b'),
   ('the type abbreviation', r'^\s*Type\b'),
   ('the definition', r'^\s*Definition\b'),
+  # the value may be a Theorem block of the source or the ML of
+  # one (val foo = Q.prove(...) |> SIMP_RULE ..., save_thm)
   ('a theorem that HOL4 states as the value of an ML expression',
-   r'^\s*(Theorem|Triviality)\b'),
+   r'^\s*(Theorem|Triviality|val|fun|local)\b|save_thm'),
   ('a theorem whose statement the port cannot state yet',
    r'^\s*(Theorem|Triviality)\b'),
   ('the theorem', r'^\s*(Theorem|Triviality)\b'),
