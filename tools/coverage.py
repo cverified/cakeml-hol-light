@@ -69,6 +69,19 @@ def main():
         else:
           tmissing.append('%s %s' % (b.kind, b.name or '(a value)'))
         continue
+      elif b.kind == 'ML':
+        # a theorem that the ML code of the source states itself
+        # (val foo = Q.prove(`...`, tactic)) is a theorem of it;
+        # of a HOL4 library theory the port has the definitions
+        if p.kind == 'lib': continue
+        for nm, _, _ in hol4.ml_theorems(b.text or ''):
+          twant += 1
+          if re.search(r'cake_theorem\s*"%s[]["]' % re.escape(nm),
+                       text):
+            thave += 1
+          else:
+            tmissing.append('ML %s' % nm)
+        continue
       elif b.kind not in KINDS or not p.wanted(b):
         continue
       want += 1
