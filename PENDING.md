@@ -89,8 +89,9 @@ as well: each is the `SHORT_TAILREC` of a step function
 proves there, is assumed -- 132 of the assumed theorems of the
 port are these.
 
-Six constants are declared for another reason: the one field of
-the asm configuration of a target that is not data is its
+Six constants are declared for another reason (of the fourteen
+that the port declares in all): the one field of the asm
+configuration of a target that is not data is its
 encoder, and an encoder needs a machine model of HOL4 (`x64_step`
 and the five others), which is not part of the CakeML sources, so
 the six encoder theories are outside the port

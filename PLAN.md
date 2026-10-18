@@ -12,15 +12,15 @@ on is the definitions that HOL Light cannot make **at all**: a
 body with a type variable that the constant does not reflect,
 or a constant that the port does not have.  See `CLAUDE.md`._
 
-_State: the port has every definition block of the 263 files that
-it has to have but two (4430 of 4432, which `tools/coverage.py`
+_State: the port has every definition block of the 269 files that
+it has to have but two (4442 of 4444, which `tools/coverage.py`
 checks: every `Datatype`, `Type`, `Overload`, `Definition` and
 `Inductive` of every ported source; the two are the command line
 drivers of the compiler binary, which need the file system of the
 basis library -- see `PENDING.md`).  `tools/bin/checkseq` loads
 the files one after the other in the order of `tools/load.txt`:
-in the run of 2026-10-18 00:53 **every file loads to the end**,
-and of the 454 theorems that the pass assumes (`ml/CHEATS.md`)
+in the run of 2026-10-18 09:53 **every file loads to the end**,
+and of the 448 theorems that the pass assumes (`ml/CHEATS.md`)
 
 - **302 are the termination of a definition** (`CHEAT_TAC` on the
   condition): the constant is introduced by `new_specification`,
@@ -34,14 +34,16 @@ and of the 454 theorems that the pass assumes (`ml/CHEATS.md`)
   (`ml/lib/mc_tailrec.ml`), and HOL4's `mc_tailrecLib` then
   proves the equation that unfolds each of the two, which the
   pass assumes;
-- **20 are a constant that is declared** without a value, because
+- **14 are a constant that is declared** without a value, because
   HOL4 makes the value in a way that the port has no counterpart
-  for (`PENDING.md` lists them: the twelve configurations of the
-  targets, the basis program, the four step functions of the tail
-  recursions of `unify` and the three entry points of Pancake);
+  for (`PENDING.md` lists them: the six asm configurations of the
+  targets, whose `encode` field is the encoder of a machine model
+  that the CakeML sources do not have, the basis program, the
+  four step functions of the tail recursions of `unify` and the
+  three entry points of Pancake);
 - **none is a definition that the port does not make**.
 
-That was `length (axioms ()) = 338` and 5185 s, no cheat has a
+That was `length (axioms ()) = 338` and 4883 s, no cheat has a
 free variable (`tools/bin/freevars`), no definition has clauses
 that do not typecheck apart (`tools/conjfail.log`) and no
 constant has a type outside the scope of its theory
@@ -52,8 +54,13 @@ assumed, 335 axioms, 5 files that die), 19:34 (325, 370, 2),
 not made, 239, 0), 16:49 (25 not made, 250, 0), 18:43 (one not
 made, 232, 0), 20:39 (**none not made**, 205, 0), 22:11 (none,
 208, 0, with `panLang`, the exports of the targets and the
-Pancake definitions of `compiler` in it) and 00:53 (none, 338, 0,
-with the bignum routines built as HOL4 builds them)._
+Pancake definitions of `compiler` in it) 00:53 (none, 338, 0,
+with the bignum routines built as HOL4 builds them), 02:43 (none,
+338, 0, and 4964 s: the translator of the bignum embedding only
+matches what can match, which took `word_bignum.ml` from 448 s to
+48 s) and 09:53 (none, 338, 0, 4883 s, with the configurations of
+the backend of the six targets in it and no HOL4 code left in the
+port)._
 
 _What the port builds the way HOL4 builds it (2026-10-18, from
 the user: if HOL4 builds a definition from a source file, the
