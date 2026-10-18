@@ -232,6 +232,7 @@ HAS_SIZE
 has_sup
 hashek
 HD
+hol4_GSPEC
 hreal
 hreal_add
 hreal_inv
@@ -515,6 +516,8 @@ RTC
 SEG
 SET_OF_BAG
 set_of_list
+set_relation_domain
+set_relation_range
 SETSPEC
 simd16
 simd2

@@ -18,8 +18,13 @@ STR = re.compile(r'"((?:[^"\\]|\\.)*)"')
 
 
 def statements(path):
-  """the name, the line and the statement text of every theorem"""
-  text = open(path).read()
+  """the name, the line and the statement text of every theorem of
+     a file of the port"""
+  return scan(open(path).read())
+
+
+def scan(text):
+  """the same of the text of a ported file"""
   for m in re.finditer(r'\bcake_theorem\b', text):
     s = STR.search(text, m.end())
     if not s or text[m.end():s.start()].strip():

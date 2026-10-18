@@ -321,6 +321,12 @@ class Porter:
     # nothing in the statement says so (overrides.THM_INT_VARS)
     self.ctx.intvars = set(
       overrides.THM_INT_VARS.get((self.thy, nm), []))
+    # a name that this statement means another constant by
+    # (overrides.THM_NAMES)
+    was = {}
+    for n, new in overrides.THM_NAMES.get((self.thy, nm), {}).items():
+      was[n] = self.ctx.names.get(n)
+      self.ctx.names[n] = new
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
@@ -334,6 +340,9 @@ class Porter:
       finally:
         hterm.ANTIQ_STRICT[0] = False
         hterm.DROP_TYVAR_ANNOT[0] = False
+        for n, old2 in was.items():
+          if old2 is None: self.ctx.names.pop(n, None)
+          else: self.ctx.names[n] = old2
     except Exception as ex:
       self.warn.append('%s %s: %s' % (b.kind, nm, ex))
       self.out.append(self.at(b, 'a theorem whose statement the'
@@ -456,13 +465,36 @@ class Porter:
        them is an integer too (linear_scanProof's 0 <= beg, whose
        beg is the beginning of an interval)"""
     out = set()
+    nums = set()
+
+    def intpos(nm):
+      """the int arguments of a constant, also where the name is
+         one that the port overloads: every constant of that name
+         has to take an int there"""
+      ps = hterm.int_arg_pos(nm)
+      if ps: return ps
+      cands = [self.db.rename.get((t, nm), nm)
+               for t, k in self.db.defs.get(nm, [])
+               if k in ('con', 'def', 'rel')]
+      sets = [hterm.int_arg_pos(c) for c in cands]
+      return (set.intersection(*sets) if sets and all(sets)
+              else set())
 
     def go(n):
+      # a variable under the & of HOL4 is a number and not an
+      # integer, whatever another part of the statement does with
+      # the name (bvlSem's do_int_app_eq_some has an n that one
+      # conjunct gives to Const, which takes an int, and another
+      # to & )
+      if n.kind == 'prefix' and n.op == '&':
+        b = n.e
+        while b.kind == 'paren': b = b.e
+        if b.kind == 'id': nums.add(b.name)
       if n.kind == 'app':
         h, args = hterm.strip_app(n)
         if h.kind == 'id':
           nm = self.ctx.name(h.name)
-          for i in hterm.int_arg_pos(nm):
+          for i in intpos(nm):
             if i < len(args):
               a = args[i]
               while a.kind == 'paren': a = a.e
@@ -479,7 +511,7 @@ class Porter:
       for t in hterm.subnodes(n): go(t)
 
     go(e)
-    return out
+    return out - nums
 
   def shadowing(self, e, defn=True):
     """HOL4 lets a variable shadow a constant, HOL Light does not,

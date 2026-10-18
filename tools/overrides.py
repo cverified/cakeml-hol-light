@@ -529,6 +529,19 @@ INT_NUMERALS = set([
 # ('c,'d) whose fields have to agree does not typecheck there.
 # Without the annotations HOL Light infers the types, which are
 # the ones that HOL4 gives the theorem.
+# a name that one statement means another constant by: HOL4's
+# set_relationTheory has a domain and a range of a relation, which
+# the port cannot have under those names (sptree's domain is what
+# the port means by domain everywhere else), and HOL4's GSPEC
+# takes a function to a pair while HOL Light's takes a predicate.
+# The library layer has them under a name of their own and the
+# statements that mean them say so here.
+THM_NAMES = {
+  ('misc', 'domain_rrestrict_subset'): {'domain': 'set_relation_domain'},
+  ('misc', 'range_rrestrict_subset'): {'range': 'set_relation_range'},
+  ('misc', 'GSPEC_o'): {'GSPEC': 'hol4_GSPEC'},
+}
+
 THM_NO_TYVARS = set([
   ('bvi_inlineProof', 'do_app_state_swap_Rval'),
   ('bvi_inlineProof', 'do_app_state_swap_Rerr'),
