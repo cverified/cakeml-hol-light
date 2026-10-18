@@ -2,18 +2,18 @@
 
 Phase two states every theorem of the sources with its name, its
 attributes and its statement (`CLAUDE.md`).  Of the 10,688
-theorems of the 270 sources the port states 10,137 and points at
-551 with a comment that names them:
+theorems of the 270 sources the port states 10,131 and points at
+557 with a comment that names them:
 
 | | stated | a pointer |
 |---|---|---|
-| `Theorem` (and `Triviality`) | 10,091 | 43 |
-| `ThmValue` (the value of an ML expression) | 12 | 467 |
-| a theorem that ML code states (`Q.prove`) | 34 | 41 |
+| `Theorem` (and `Triviality`) | 10,089 | 45 |
+| `ThmValue` (the value of an ML expression) | 11 | 468 |
+| a theorem that ML code states (`Q.prove`) | 31 | 44 |
 
-What the 551 are, and why the port cannot state them:
+What the 557 are, and why the port cannot state them:
 
-- **467 theorems that HOL4 states as the value of an ML
+- **468 theorems that HOL4 states as the value of an ML
   expression** (`Theorem foo[simp] = CONV_RULE (RAND_CONV EVAL)
   foo_def`, `Theorem bar = SIMP_RULE bool_ss [] baz`, `Theorem
   baz = theorem"baz_ind"`).  The statement is not in the source:
@@ -22,7 +22,7 @@ What the 551 are, and why the port cannot state them:
   three, where it has the theorem that the expression starts from
   and HOL Light's own rules to apply, but none of it is a
   statement that phase two can read off the source.
-- **41 theorems that ML code states as the value of a rule
+- **44 theorems that ML code states as the value of a rule
   applied to another one** (`val foo = Q.prove(...) |> SIMP_RULE
   ...`, `save_thm("foo", th)`): the same case, with the statement
   of the theorem that the rule starts from in the source.
@@ -37,23 +37,10 @@ What the 551 are, and why the port cannot state them:
 
 Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
-what it reports missing is the two blocks below and these 482.
+what it reports missing is the two blocks below and these 515.
 
-**Twenty-three statements of `cmlNTProps` apply `firstSetML` and
-`nullableML` to a grammar**, which HOL4 defines with the attribute
-`[schematic]`: the grammar is a free variable of the definition
-there, and HOL4 makes it the *first argument* of the constant.  The
-port has the definition with the grammar free, which it has to
-assume (`ml/CHEATS.md` lists both as `free: G`), so its constant
-takes one argument less than HOL4's and the statements about it do
-not typecheck.  The fix is to make the schematic variable an
-argument, which turns an assumed definition into a real one with
-an assumed termination; the four schematic definitions of the
-library layer are `nullableML`, `firstSetML`, `pre_vwalk` and
-`pre_walkstar`.
-
-**Forty statements use an auxiliary size function of a datatype
-family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
+**Forty-four statements use an auxiliary size function of a
+datatype family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
 `Datatype` makes one of these for every type that the family
 needs besides the type itself (`exp1_size` of closLang is the
 size of a `(num # exp) list`), and HOL Light numbers the types of
