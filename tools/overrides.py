@@ -872,6 +872,10 @@ CON_OF = {
   # the location that this puts in front of the arguments of a
   # call is a word_loc of wordLang
   ('wordSem', 'add_ret_loc_def'): {'Loc': 'wordLang'},
+  # loc_ok says of a word_loc of wordLang that it is a code
+  # pointer with the offset zero (the theorems about it filter a
+  # list of word_locs with isWord)
+  ('data_to_word_gcProof', 'loc_ok_def'): {'Loc': 'wordLang'},
   # the program that this takes apart is stackLang's, which only
   # the annotation on the second component says
   ('stackSem', 'dest_Seq_def'): {'Seq': 'stackLang'},

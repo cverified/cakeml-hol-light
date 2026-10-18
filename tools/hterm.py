@@ -493,7 +493,6 @@ class Parser:
     while self.starts_atom(True):
       a = self.closures(self.parse_fields(self.parse_atom()))
       e = Node('app', tok=e.tok, fn=e, arg=a)
-    e = self.parse_postfix(e)
     if annot and self.at(':'):
       self.next()
       ty = self.parse_type()
@@ -517,6 +516,32 @@ class Parser:
       if t.text == '.' and self.peek(1).kind == 'id':
         self.next(); fld = self.next()
         e = Node('field', tok=t, e=e, fld=fld.text)
+      # fm⟨k ↦ v⟩ is fm |+ (k,v) and fm⟨k⟩ is fm ' k (the finite
+      # map syntax of HOL4's combinpp), which binds to the atom
+      # before it (FAPPLY tf⟨ts2 ↦ x⟩ applies FAPPLY to the map)
+      elif t.text == '⟨':
+        self.next()
+        while True:
+          k = self.parse(101)
+          if self.at('|->'):
+            self.next()
+            v = self.parse(0)
+            e = Node('infix', tok=t, op='|+', l=e,
+                     r=Node('infix', tok=t, op=',', l=k, r=v))
+          else:
+            e = Node('infix', tok=t, op="'", l=e, r=k)
+          if self.at(';'): self.next(); continue
+          break
+        self.expect('⟩')
+      elif t.text == 'with':
+        self.next()
+        if self.at('<|'):
+          self.next()
+          upds = self.parse_updates()
+          self.expect('|>')
+        else:
+          upds = self.parse_updates(single=True)
+        e = Node('recupd', tok=t, e=e, upds=upds)
       # HOL4 writes the update of a function f⦇k ↦ v⦈, which is
       # the (k =+ v) f of its combinTheory
       elif t.text == '⦇':
@@ -542,38 +567,6 @@ class Parser:
         else:
           e = mk_app('EL', [i, e], t)
         self.expect('❳')
-      else:
-        break
-    return e
-
-  def parse_postfix(self, e):
-    while True:
-      t = self.peek()
-      # fm⟨k ↦ v⟩ is fm |+ (k,v) and fm⟨k⟩ is fm ' k (the finite map
-      # syntax of HOL4's combinpp)
-      if t.text == '⟨':
-        self.next()
-        while True:
-          k = self.parse(101)
-          if self.at('|->'):
-            self.next()
-            v = self.parse(0)
-            e = Node('infix', tok=t, op='|+', l=e,
-                     r=Node('infix', tok=t, op=',', l=k, r=v))
-          else:
-            e = Node('infix', tok=t, op="'", l=e, r=k)
-          if self.at(';'): self.next(); continue
-          break
-        self.expect('⟩')
-      elif t.text == 'with':
-        self.next()
-        if self.at('<|'):
-          self.next()
-          upds = self.parse_updates()
-          self.expect('|>')
-        else:
-          upds = self.parse_updates(single=True)
-        e = Node('recupd', tok=t, e=e, upds=upds)
       else:
         break
     return e
