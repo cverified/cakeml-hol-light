@@ -101,6 +101,46 @@ hol4_overload "Letrec" "flatLang_Letrec";;
 
 (* HOL4 flatLangScript.sml:86: ML code, not ported *)
 
+let exp6_size_APPEND = cake_theorem "exp6_size_APPEND[simp]"
+  (fun () ->
+    `exp6_size (e ++ e2) = exp6_size e + exp6_size e2`)
+  CHEAT_TAC;;
+
+let exp6_size_REVERSE = cake_theorem "exp6_size_REVERSE[simp]"
+  (fun () ->
+    `exp6_size (REVERSE es) = exp6_size es`)
+  CHEAT_TAC;;
+
+let exp6_size = cake_theorem "exp6_size"
+  (fun () ->
+    `exp6_size xs = LENGTH xs + SUM (MAP flatLang_exp_size xs)`)
+  CHEAT_TAC;;
+
+let exp1_size = cake_theorem "exp1_size"
+  (fun () ->
+    `exp1_size xs = LENGTH xs + SUM (MAP exp2_size xs)`)
+  CHEAT_TAC;;
+
+let exp3_size = cake_theorem "exp3_size"
+  (fun () ->
+    `exp3_size xs = LENGTH xs + SUM (MAP exp5_size xs)`)
+  CHEAT_TAC;;
+
+let exp_size_MAP = cake_theorem "exp_size_MAP"
+  (fun () ->
+    `(!xs. exp6_size (MAP SND xs) < exp3_size xs + 1) /\
+     (!xs. exp6_size (MAP (SND o SND) xs) < exp1_size xs + 1)`)
+  CHEAT_TAC;;
+
+let exp_size_MEM = cake_theorem "exp_size_MEM"
+  (fun () ->
+    `(!xs x. MEM x xs ==> flatLang_exp_size x < exp6_size xs) /\
+     (!xs x. MEM x xs ==> flatLang_exp_size (SND (SND x)) <
+       exp1_size xs) /\
+     (!xs x. MEM x xs ==> flatLang_exp_size (SND x) < exp3_size
+       xs)`)
+  CHEAT_TAC;;
+
 let bool_id_def = cake_define
   `bool_id = 0`;;
 
@@ -115,3 +155,15 @@ let SmartIf_def = cake_define
          (if id' = bool_id then
            if tag = true_tag then p else if tag = false_tag then q
              else If t e p q else If t e p q) | _4 -> If t e p q)`;;
+
+let SmartIf_PMATCH = cake_theorem "SmartIf_PMATCH"
+  (fun () ->
+    `!t e p q.
+       SmartIf t e p q =
+         (match e with
+           Con _5 (SOME (tag,SOME id')) [] ->
+             (if id' = bool_id then
+               if tag = true_tag then p else if tag = false_tag
+                 then q else If t e p q else If t e p q) | _6 -> If t
+                 e p q)`)
+  CHEAT_TAC;;

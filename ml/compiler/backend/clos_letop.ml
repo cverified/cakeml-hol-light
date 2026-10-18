@@ -77,6 +77,11 @@ hol4_overload "let_op" "clos_letop_let_op";;
 
 (* HOL4 clos_letopScript.sml:57: ML code, not ported *)
 
+let LENGTH_let_op = cake_theorem "LENGTH_let_op"
+  (fun () ->
+    `!xs. LENGTH (clos_letop_let_op xs) = LENGTH xs`)
+  CHEAT_TAC;;
+
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -125,6 +130,16 @@ let let_op_sing_def = cake_define_list_try (fun () ->
        (num_args,clos_letop_let_op_sing x) :: let_op_let xs`];;
 hol4_overload "let_op_list" "clos_letop_let_op_list";;
 hol4_overload "let_op_sing" "clos_letop_let_op_sing";;
+
+let let_op_sing_eq = cake_theorem "let_op_sing_eq"
+  (fun () ->
+    `(!e. clos_letop_let_op [e] = [clos_letop_let_op_sing e]) /\
+     (!es. clos_letop_let_op es = clos_letop_let_op_list es) /\
+     (!fns.
+       let_op_let fns =
+       MAP (\(num_args,x). (num_args,HD (clos_letop_let_op [x])))
+         fns)`)
+  CHEAT_TAC;;
 
 let compile_inc_def = cake_define
   `clos_letop_compile_inc (e,xs) = (clos_letop_let_op e,[])`;;

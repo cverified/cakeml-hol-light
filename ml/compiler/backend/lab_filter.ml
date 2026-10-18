@@ -2,7 +2,8 @@
 (*  lab_filter: ported from HOL4's
     compiler/backend/lab_filterScript.sml
     A definition theory, with 2 definitions and 1 theorem.  Needed
-    by backend_passes.ml, lab_filterProof.ml and lab_to_target.ml.  *)
+    by backend_passes.ml, lab_filterProof.ml, lab_to_target.ml and
+    lab_to_targetProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -20,3 +21,9 @@ let filter_skip_def = cake_define_list
   [`filter_skip [] = []`;
    `filter_skip (Section n xs :: rest) =
          Section n (FILTER not_skip xs) :: filter_skip rest`];;
+
+let filter_skip_MAP = cake_theorem "filter_skip_MAP"
+  (fun () ->
+    `!ls. filter_skip ls = MAP (\x. match x with Section n xs ->
+  Section n (FILTER not_skip xs)) ls`)
+  CHEAT_TAC;;

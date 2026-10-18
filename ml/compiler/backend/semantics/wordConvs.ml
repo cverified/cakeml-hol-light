@@ -2,7 +2,7 @@
 (*  wordConvs: ported from HOL4's
     compiler/backend/semantics/wordConvsScript.sml
     A definition theory, with 22 definitions and 23 theorems.
-    Needed by 13 files of the port.  *)
+    Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -13,19 +13,122 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/backend/wordLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 (*** Mono and conj lemmas for every_var/every_stack_var ***)
+let every_var_inst_mono = cake_theorem "every_var_inst_mono"
+  (fun () ->
+    `!P inst' Q.
+     (!x. P x ==> Q x) /\
+     every_var_inst P inst' ==>
+     every_var_inst Q inst'`)
+  CHEAT_TAC;;
+
+let every_var_exp_mono = cake_theorem "every_var_exp_mono"
+  (fun () ->
+    `!P exp Q.
+     (!x. P x ==> Q x) /\
+     every_var_exp P exp ==>
+     every_var_exp Q exp`)
+  CHEAT_TAC;;
+
+let every_name_mono = cake_theorem "every_name_mono"
+  (fun () ->
+    `!P names Q.
+     (!x. P x ==> Q x) /\
+     every_name P names ==> every_name Q names`)
+  CHEAT_TAC;;
+
+let every_var_mono = cake_theorem "every_var_mono"
+  (fun () ->
+    `!P prog Q.
+     (!x. P x ==> Q x) /\
+     wordLang_every_var P prog ==>
+     wordLang_every_var Q prog`)
+  CHEAT_TAC;;
 
 (*Conjunct*)
+let every_var_inst_conj = cake_theorem "every_var_inst_conj"
+  (fun () ->
+    `!P inst' Q.
+     every_var_inst P inst' /\ every_var_inst Q inst' <=>
+     every_var_inst (\x. P x /\ Q x) inst'`)
+  CHEAT_TAC;;
+
+let every_var_exp_conj = cake_theorem "every_var_exp_conj"
+  (fun () ->
+    `!P exp Q.
+     every_var_exp P exp /\ every_var_exp Q exp <=>
+     every_var_exp (\x. P x /\ Q x) exp`)
+  CHEAT_TAC;;
+
+let every_name_conj = cake_theorem "every_name_conj"
+  (fun () ->
+    `!P names Q.
+     every_name P names /\ every_name Q names <=>
+     every_name (\x. P x /\ Q x) names`)
+  CHEAT_TAC;;
+
+let every_var_conj = cake_theorem "every_var_conj"
+  (fun () ->
+    `!P prog Q.
+     wordLang_every_var P prog /\ wordLang_every_var Q prog <=>
+     wordLang_every_var (\x. P x /\ Q x) prog`)
+  CHEAT_TAC;;
 
 (*Similar lemmas about every_stack_var*)
+let every_var_imp_every_stack_var =
+  cake_theorem "every_var_imp_every_stack_var"
+  (fun () ->
+    `!P prog.
+     wordLang_every_var P prog ==> every_stack_var P prog`)
+  CHEAT_TAC;;
+
+let every_stack_var_mono = cake_theorem "every_stack_var_mono"
+  (fun () ->
+    `!P prog Q.
+     (!x. P x ==> Q x) /\
+     every_stack_var P prog ==>
+     every_stack_var Q prog`)
+  CHEAT_TAC;;
+
+let every_stack_var_conj = cake_theorem "every_stack_var_conj"
+  (fun () ->
+    `!P prog Q.
+     every_stack_var P prog /\ every_stack_var Q prog <=>
+     every_stack_var (\x. P x /\ Q x) prog`)
+  CHEAT_TAC;;
 
 (*** labels_rel ***)
 let labels_rel_def = cake_define
   `labels_rel old_labs new_labs <=>
      (ALL_DISTINCT old_labs ==> ALL_DISTINCT new_labs) /\
      set_of_list new_labs SUBSET set_of_list old_labs`;;
+
+let labels_rel_refl = cake_theorem "labels_rel_refl[simp]"
+  (fun () ->
+    `!xs. labels_rel xs xs`)
+  CHEAT_TAC;;
+
+let labels_rel_APPEND = cake_theorem "labels_rel_APPEND"
+  (fun () ->
+    `labels_rel xs xs1 /\ labels_rel ys ys1 ==>
+     labels_rel (xs ++ ys) (xs1 ++ ys1)`)
+  CHEAT_TAC;;
+
+(* HOL4 wordConvsScript.sml:158-160: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+let PERM_IMP_labels_rel = cake_theorem "PERM_IMP_labels_rel"
+  (fun () ->
+    `PERM xs ys ==> labels_rel ys xs`)
+  CHEAT_TAC;;
+
+let labels_rel_TRANS = cake_theorem "labels_rel_TRANS"
+  (fun () ->
+    `labels_rel xs ys /\ labels_rel ys zs ==> labels_rel xs zs`)
+  CHEAT_TAC;;
 
 (***
   Expressions in ShareInst must be Var or Op Add;
@@ -318,6 +421,19 @@ let extract_labels_def = cake_define
 hol4_overload "extract_labels" "wordConvs_extract_labels";;
 
 (*** Property on max_var ***)
+let max_var_exp_IMP = cake_theorem "max_var_exp_IMP[local]"
+  (fun () ->
+    `!exp.
+     P 0 /\ every_var_exp P exp ==>
+     P (max_var_exp exp)`)
+  CHEAT_TAC;;
+
+let max_var_intro = cake_theorem "max_var_intro"
+  (fun () ->
+    `!prog.
+     P 0 /\ wordLang_every_var P prog ==>
+     P (max_var prog)`)
+  CHEAT_TAC;;
 
 (*** code_labels ***)
 let get_code_labels_def = cake_define
@@ -395,6 +511,9 @@ let not_created_subprogs_def = cake_define
       | (Install _60 _61 _62 _63 _64) -> P (Install 0 0 0 0 (LN,LN))
       | _65 -> T`;;
 
+(* HOL4 wordConvsScript.sml:558-562: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* no_alloc specialisation *)
 
 (* HOL4 wordConvsScript.sml:566: the ML values that the definitions
@@ -404,6 +523,9 @@ let no_alloc_subprogs_def = cake_define
   `no_alloc p = not_created_subprogs (((\x y. ~(x = y)) (Alloc 0
   (LN,LN)))) p`;;
 
+(* HOL4 wordConvsScript.sml:572-574: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* HOL4 wordConvsScript.sml:576: the ML values that the definitions
    below antiquote *)
 
@@ -411,6 +533,9 @@ let no_install_subprogs_def = cake_define
   `wordConvs_no_install p = not_created_subprogs (((\x y. ~(x = y))
   (Install 0 0 0 0 (LN,LN)))) p`;;
 hol4_overload "no_install" "wordConvs_no_install";;
+
+(* HOL4 wordConvsScript.sml:582-584: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (****** no_mt : no MustTerminate ******)
 
@@ -421,6 +546,9 @@ let no_mt_subprogs_def = cake_define
   `no_mt p = not_created_subprogs (((\x y. ~(x = y))
   (wordLang_MustTerminate wordLang_Skip))) p`;;
 
+(* HOL4 wordConvsScript.sml:594-596: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* no_share_inst: no ShareInst *)
 
 (* HOL4 wordConvsScript.sml:600: the ML values that the definitions
@@ -429,6 +557,9 @@ let no_mt_subprogs_def = cake_define
 let no_share_inst_subprogs_def = cake_define
   `no_share_inst p = not_created_subprogs (((\x y. ~(x = y))
   (wordLang_ShareInst ARB 0 (Var 0)))) p`;;
+
+(* HOL4 wordConvsScript.sml:606-608: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (* HOL4 wordConvsScript.sml:610: the overload word_get_code_labels,
    which the port expands *)

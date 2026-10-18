@@ -2,7 +2,7 @@
 (*  closSem: ported from HOL4's
     compiler/backend/semantics/closSemScript.sml
     A definition theory, with 30 definitions, 5 datatypes and 14
-    theorems.  Needed by 24 files of the port.  *)
+    theorems.  Needed by 37 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -713,6 +713,13 @@ let dec_clock_def = cake_define
   (K (state_clock s - n)) s`;;
 hol4_overload "dec_clock" "closSem_dec_clock";;
 
+let LESS_EQ_dec_clock = cake_theorem "LESS_EQ_dec_clock[local]"
+  (fun () ->
+    `state_clock
+       (r:('c,'ffi)closSem_state) <= state_clock
+         (closSem_dec_clock n s) ==> state_clock r <= state_clock s`)
+  CHEAT_TAC;;
+
 let find_code_def = cake_define
   `closSem_find_code p args code =
      (match FLOOKUP code p with NONE -> NONE | SOME (arity,exp) ->
@@ -731,6 +738,12 @@ let fix_clock_def = cake_define
   `closSem_fix_clock s (res,s1) = (res,state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "closSem_fix_clock";;
+
+let closSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+  (fun () ->
+    `closSem_fix_clock s x = (res,s1) ==> state_clock s1 <=
+  state_clock s`)
+  CHEAT_TAC;;
 
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
@@ -782,6 +795,14 @@ let dest_closure_def = cake_define
                  SOME (Partial_app (closSem_Recclosure loc (args
                    ++ arg_env) clo_env fns i))) | _85 -> NONE)`;;
 
+let dest_closure_length = cake_theorem "dest_closure_length"
+  (fun () ->
+    `!max_app loc_opt f args exp args1 args2 so_far.
+       dest_closure max_app loc_opt f args = SOME (Full_app exp
+         args1 args2) ==>
+       LENGTH args2 < LENGTH args`)
+  CHEAT_TAC;;
+
 let clos_env_def = cake_define
   `clos_env restrict names env =
      (if restrict then lookup_vars names env else SOME env)`;;
@@ -791,6 +812,21 @@ let build_recc_def = cake_define
      (match clos_env restrict names env with SOME env1 -> SOME
        (GENLIST (Recclosure loc [] env1 fns) (LENGTH fns)) | NONE ->
        NONE)`;;
+
+(* HOL4 closSemScript.sml:639-649: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let do_install_clock = cake_theorem "do_install_clock"
+  (fun () ->
+    `closSem_do_install vs s = (Rval e,s') ==> 0 < state_clock s /\
+  state_clock s' = state_clock s - 1`)
+  CHEAT_TAC;;
+
+let do_install_clock_less_eq = cake_theorem "do_install_clock_less_eq"
+  (fun () ->
+    `closSem_do_install vs s = (res,s') ==> state_clock s' <=
+  state_clock s`)
+  CHEAT_TAC;;
 
 let AppUnit_def = cake_define
   `closSem_AppUnit x = closLang_App backend_common_None NONE x
@@ -851,6 +887,11 @@ hol4_overload "exp1_alt_size" "closSem_exp1_alt_size";;
 hol4_overload "exp2_alt_size" "closSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "closSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "closSem_exp_alt_size";;
+
+let exp3_alt_size = cake_theorem "exp3_alt_size[local,simp]"
+  (fun () ->
+    `closSem_exp3_alt_size xs = list_size closSem_exp_alt_size xs`)
+  CHEAT_TAC;;
 
 let fix_clock_IMP =
   try prove
@@ -1005,9 +1046,55 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                      res))`];;
 hol4_overload "evaluate" "closSem_evaluate";;
 
+(* HOL4 closSemScript.sml:845-846: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 (* We prove that the clock never increases. *)
 
+let do_app_const = cake_theorem "do_app_const"
+  (fun () ->
+    `(do_app op args s1 = Rval (res,s2)) ==>
+      (state_clock s2 = state_clock s1) /\
+      (closSem_state_max_app s2 = closSem_state_max_app s1) /\
+      (closSem_state_code s2 = closSem_state_code s1) /\
+      (closSem_state_compile_oracle s2 =
+        closSem_state_compile_oracle s1) /\
+      (closSem_state_compile s2 = closSem_state_compile s1)`)
+  CHEAT_TAC;;
+
+let evaluate_clock_help = cake_theorem "evaluate_clock_help[local]"
+  (fun () ->
+    `(!tup vs (s2:('c,'ffi)closSem_state).
+         (closSem_evaluate tup = (vs,s2)) ==> state_clock s2 <=
+           state_clock (SND (SND tup))) /\
+       (!loc_opt f args (s1:('c,'ffi)closSem_state) vs s2.
+         (evaluate_app loc_opt f args s1 = (vs,s2)) ==>
+           state_clock s2 <= state_clock s1)`)
+  CHEAT_TAC;;
+
+let closSem_evaluate_clock = cake_theorem "evaluate_clock"
+  (fun () ->
+    `(!xs env s1 vs s2.
+          (closSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock
+            s2 <= state_clock s1) /\
+        (!loc_opt f args s1 vs s2.
+          (evaluate_app loc_opt f args s1 = (vs,s2)) ==>
+            state_clock s2 <= state_clock s1)`)
+  CHEAT_TAC;;
+
+let closSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+  (fun () ->
+    `closSem_fix_clock s (closSem_evaluate (xs,env,s)) =
+  closSem_evaluate (xs,env,s)`)
+  CHEAT_TAC;;
+
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
+
+(* HOL4 closSemScript.sml:900-901: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 closSemScript.sml:903-904: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* observational semantics *)
 

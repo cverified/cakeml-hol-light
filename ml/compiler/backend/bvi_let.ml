@@ -32,6 +32,11 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
+let exp2_size_APPEND = cake_theorem "exp2_size_APPEND"
+  (fun () ->
+    `!xs ys. exp2_size (xs ++ ys) = exp2_size xs + exp2_size ys`)
+  CHEAT_TAC;;
+
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -138,8 +143,27 @@ let compile_sing_def = cake_define_list_try_tac (fun () ->
 hol4_overload "compile_list" "bvi_let_compile_list";;
 hol4_overload "compile_sing" "bvi_let_compile_sing";;
 
+let compile_sing = cake_theorem "compile_sing"
+  (fun () ->
+    `(!n d e. bvi_let_compile n d [e] = [bvi_let_compile_sing n d e]) /\
+     (!n d e. bvi_let_compile_list n d e = bvi_let_compile n d e)`)
+  CHEAT_TAC;;
+
+let compile_length = cake_theorem "compile_length[simp]"
+  (fun () ->
+    `!n d xs. LENGTH (bvi_let_compile n d xs) = LENGTH xs`)
+  CHEAT_TAC;;
+
+let compile_HD_SING = cake_theorem "compile_HD_SING"
+  (fun () ->
+    `[HD (bvi_let_compile n d [x])] = bvi_let_compile n d [x]`)
+  CHEAT_TAC;;
+
 let compile_exp_def = cake_define
   `bvi_let_compile_exp x =
      (match bvi_let_compile [] 0 [x] with (y :: _14) -> y | _15 ->
        Var 0)`;;
 hol4_overload "compile_exp" "bvi_let_compile_exp";;
+
+(* HOL4 bvi_letScript.sml:202: a theorem that HOL4 states as the
+   value of an ML expression *)

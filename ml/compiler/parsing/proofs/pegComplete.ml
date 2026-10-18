@@ -30,6 +30,18 @@ needs "semantics/proofs/gramProps.ml";;
 
 (* HOL4 pegCompleteScript.sml:23-25: ML code, not ported *)
 
+let pegComplete_option_case_eq = cake_theorem "option_case_eq[local]"
+  (fun () ->
+    `(option_CASE optv n sf = v) <=>
+        optv = NONE /\ n = v \/ (?v0. optv = SOME v0 /\ sf v0 =
+          v)`)
+  CHEAT_TAC;;
+let MAP_EQ_CONS = cake_theorem "MAP_EQ_CONS[local]"
+  (fun () ->
+    `MAP f l = h :: t <=> (?h0 t0. l = h0 :: t0 /\ f h0 = h /\ MAP f
+  t0 = t)`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:38: ML code, not ported *)
 
 (* HOL4 pegCompleteScript.sml:40-45: ML code, not ported *)
@@ -39,6 +51,72 @@ needs "semantics/proofs/gramProps.ml";;
 
 (* HOL4 pegCompleteScript.sml:62-90: ML code, not ported *)
 
+let seql_cons = cake_theorem "seql_cons"
+  (fun () ->
+    `!x. peg_eval G (i0,seql (h :: t) f) x <=>
+           (?r. peg_eval G (i0,h) r /\
+               ((?fl fe. r = peg_Failure fl fe /\ x = r) \/
+                (?i1 rh eo1 r2.
+                   r = peg_Success i1 rh eo1 /\
+                   peg_eval G (i1,seql t I) r2 /\
+                   ((?fl fe. r2 = peg_Failure fl fe /\ x = r2) \/
+                    (?i rt eopt2.
+                      r2 = peg_Success i rt eopt2 /\
+                      x = peg_Success i (f (rh ++ rt)) eopt2)))))`)
+  CHEAT_TAC;;
+
+let seql_cons_SOME = cake_theorem "seql_cons_SOME"
+  (fun () ->
+    `peg_eval G (i0,seql (h :: t) f) (peg_Success i r eo) <=>
+     (?i1 rh rt eo1.
+       peg_eval G (i0,h) (peg_Success i1 rh eo1) /\
+       peg_eval G (i1,seql t I) (peg_Success i rt eo) /\
+       r = f (rh ++ rt))`)
+  CHEAT_TAC;;
+
+let choicel_cons = cake_theorem "choicel_cons"
+  (fun () ->
+    `peg_eval G (i0,cmlPEG_choicel (h :: t)) x <=>
+       (?r. peg_eval G (i0,h) r /\
+           ((?i ptl eo. r = peg_Success i ptl eo /\ x = r) \/
+            (?res2 fl1 fe1 i ptl eopt fl2 fe2.
+               r = peg_Failure fl1 fe1 /\
+               peg_eval G (i0,cmlPEG_choicel t) res2 /\
+               (res2 = peg_Success i ptl eopt /\
+                x = peg_Success i ptl (optmax MAXerr (SOME
+                  (fl1,fe1)) eopt) \/
+                res2 = peg_Failure fl2 fe2 /\
+                x = UNCURRY peg_Failure (MAXerr (fl1,fe1)
+                  (fl2,fe2))))))`)
+  CHEAT_TAC;;
+
+let choicel_cons_NONE = cake_theorem "choicel_cons_NONE"
+  (fun () ->
+    `peg_eval G (i0,cmlPEG_choicel (h :: t)) (peg_Failure fl
+  fe:(('a#locs) list,'c list,'d)pegresult) <=>
+       (?fl1 fe1 fl2 fe2.
+         peg_eval G (i0,h) (peg_Failure fl1 fe1) /\
+         peg_eval G (i0,cmlPEG_choicel t) (peg_Failure fl2 fe2) /\
+         (peg_Failure fl fe:(('a#locs) list,'c list,'d)pegresult) =
+         UNCURRY peg_Failure (MAXerr (fl1,fe1) (fl2,fe2)))`)
+  CHEAT_TAC;;
+
+let peg_eval_tok_CONS_NONE = cake_theorem "peg_eval_tok_CONS_NONE[simp]"
+  (fun () ->
+    `peg_eval G (h :: t,peg_tok P f) (peg_Failure fl fe) <=>
+       (?tk l. h = (tk,l) /\ fl = l /\ fe = peg_tokFALSE G /\ ~P
+         tk)`)
+  CHEAT_TAC;;
+
+(* HOL4 pegCompleteScript.sml:153-155: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+let peg_eval_tok_NIL = cake_theorem "peg_eval_tok_NIL[simp]"
+  (fun () ->
+    `peg_eval G ([],peg_tok P f) r <=> r = peg_Failure (Locs EOFpt
+  EOFpt) (peg_tokEOF G)`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:163-166: ML code, not ported *)
 
 (* HOL4 pegCompleteScript.sml:168-169: ML code, not ported *)
@@ -46,13 +124,103 @@ needs "semantics/proofs/gramProps.ml";;
 (* HOL4 pegCompleteScript.sml:171-173: the ML values that the
    definitions below antiquote *)
 
+let peg_eval_tokSymP_NONE = cake_theorem "peg_eval_tokSymP_NONE[simp]"
+  (fun () ->
+    `peg_eval G (i,tokSymP P) (peg_Failure fl fe) <=>
+       (!l tk t. i = (tk,l) :: t ==>
+                 (!s. tk = tokens_SymbolT s ==> ~P s /\ fl = l /\
+                   fe = peg_tokFALSE G) /\
+                 ((!s. ~(tk = tokens_SymbolT s)) ==> fl = l /\ fe =
+                   peg_tokFALSE G)) /\
+       (i = [] ==> fl = Locs EOFpt EOFpt /\ fe = peg_tokEOF G)`)
+  CHEAT_TAC;;
+
+let pegComplete_disjImpI = cake_theorem "disjImpI[local]"
+  (fun () ->
+    `~p \/ q <=> p ==> q`)
+  CHEAT_TAC;;
+
+let ptree_head_eq_tok0 = cake_theorem "ptree_head_eq_tok0[local]"
+  (fun () ->
+    `(ptree_head pt = grammar_TOK tk) <=> (?l. pt = Lf (grammar_TOK
+  tk,l))`)
+  CHEAT_TAC;;
+
+(* HOL4 pegCompleteScript.sml:197-199: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* HOL4 pegCompleteScript.sml:201-203: ML code, not ported *)
 
+let FLAT_EQ_CONS = cake_theorem "FLAT_EQ_CONS[local]"
+  (fun () ->
+    `!ll h t.
+        FLAT ll = h :: t <=>
+        (?p t0 s. ll = p ++ [h :: t0] ++ s /\
+                 EVERY ((=) []) p /\ FLAT (t0 :: s) = t)`)
+  CHEAT_TAC;;
+
+let rfirstSet_nonempty_fringe = cake_theorem "rfirstSet_nonempty_fringe"
+  (fun () ->
+    `!pt t l rest.
+       real_fringe pt = (grammar_TOK t,l) :: rest /\ valid_lptree G
+         pt ==>
+       t IN firstSet G [ptree_head pt]`)
+  CHEAT_TAC;;
+
+let peg_respects_firstSets = cake_theorem "peg_respects_firstSets"
+  (fun () ->
+    `!N i0 t l. ~(
+        t IN firstSet cmlG [grammar_NT N]) /\ ~peg0 cmlPEG (peg_nt
+          N I) /\
+        peg_nt N I IN Gexprs cmlPEG ==>
+        (?fl fe.
+          peg_eval cmlPEG ((t,l) :: i0,peg_nt N I) (peg_Failure
+            fl fe))`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:263-265: ML code, not ported *)
+
+(* HOL4 pegCompleteScript.sml:267-269: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+let peg_eval_NIL_NT = cake_theorem "peg_eval_NIL_NT"
+  (fun () ->
+    `peg_eval cmlPEG ([],peg_nt N I) (peg_Success i r eo) ==>
+     (\G n. nullable G [grammar_NT n]) cmlG N /\ i = []`)
+  CHEAT_TAC;;
+
+let not_nullable_input_CONS = cake_theorem "not_nullable_input_CONS"
+  (fun () ->
+    `~(\G n. nullable G [grammar_NT n]) cmlG N ==> peg_eval cmlPEG
+  (i0,peg_nt N I) (peg_Success i r eo) ==>
+     (?ht l t. i0 = (ht,l) :: t /\ LENGTH i <= LENGTH t)`)
+  CHEAT_TAC;;
+
+let not_nullable_seql_input_CONS =
+  cake_theorem "not_nullable_seql_input_CONS"
+  (fun () ->
+    `~(\G n. nullable G [grammar_NT n]) cmlG N ==>
+     peg_eval cmlPEG (i0,seql (peg_nt N I :: rest) f) (peg_Success
+       i r eo) ==>
+     (?ht l t. i0 = (ht,l) :: t /\ LENGTH i <= LENGTH t)`)
+  CHEAT_TAC;;
 
 let sym2peg_def = cake_define_list
   [`sym2peg (grammar_TOK tk) = cmlPEG_tokeq tk`;
    `sym2peg (grammar_NT N) = peg_nt N I`];;
+
+let not_peg0_peg_eval_NIL_NONE =
+  cake_theorem "not_peg0_peg_eval_NIL_NONE"
+  (fun () ->
+    `~peg0 G sym /\ sym IN Gexprs G /\ wfG G ==>
+     (?fl fe. peg_eval G ([],sym) (peg_Failure fl fe))`)
+  CHEAT_TAC;;
+
+let list_case_lemma = cake_theorem "list_case_lemma[local]"
+  (fun () ->
+    `([x] = (match a with [] -> [] | h :: t -> f h t)) <=>
+       (~(a = []) /\ [x] = f (HD a) (TL a))`)
+  CHEAT_TAC;;
 
 (* only the subs = [x] and subs = [x;y] cases are relevant *)
 let left_insert1_def = cake_define_list
@@ -63,18 +231,87 @@ let left_insert1_def = cake_define_list
                [x] -> mkNd n [mkNd n [pt]; x] | x :: xs -> mkNd n
                (left_insert1 pt x :: xs))`];;
 
+let left_insert1_FOLDL = cake_theorem "left_insert1_FOLDL"
+  (fun () ->
+    `left_insert1 pt (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P)
+  [a; b]) acc arg) =
+      FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
+        (left_insert1 pt acc) arg`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:341: ML code, not ported *)
+
+let ptree_loc_mkNd = cake_theorem "ptree_loc_mkNd[simp]"
+  (fun () ->
+    `ptree_loc (mkNd n subs) = ptree_list_loc subs`)
+  CHEAT_TAC;;
+
+let merge_list_locs_HDLAST = cake_theorem "merge_list_locs_HDLAST"
+  (fun () ->
+    `!h. merge_list_locs (h :: t) = merge_locs h (LAST (h :: t))`)
+  CHEAT_TAC;;
+
+let ptree_loc_left_insert1 = cake_theorem "ptree_loc_left_insert1"
+  (fun () ->
+    `!subpt pt.
+        valid_locs pt ==>
+          ptree_loc (left_insert1 subpt pt) =
+          merge_locs (ptree_loc subpt) (ptree_loc pt)`)
+  CHEAT_TAC;;
 
 let leftLoc_def = cake_define
   `leftLoc (Locs l1 _1) = l1`;;
 let rightLoc_def = cake_define
   `rightLoc (Locs _2 l2) = l2`;;
 
+let merge_locs_LR = cake_theorem "merge_locs_LR"
+  (fun () ->
+    `merge_locs l1 l2 = Locs (leftLoc l1) (rightLoc l2)`)
+  CHEAT_TAC;;
+
+let leftLoc_merge_locs = cake_theorem "leftLoc_merge_locs[simp]"
+  (fun () ->
+    `leftLoc (merge_locs l1 l2) = leftLoc l1`)
+  CHEAT_TAC;;
+
+let rightLoc_merge_locs = cake_theorem "rightLoc_merge_locs[simp]"
+  (fun () ->
+    `rightLoc (merge_locs l1 l2) = rightLoc l2`)
+  CHEAT_TAC;;
+
 (* two valid parse-trees with the same head, and the same fringes, which
    are all tokens, must be identical. *)
 
 (* HOL4 pegCompleteScript.sml:395-414: code that the source has in a
    comment *)
+
+let eapp_reassociated = cake_theorem "eapp_reassociated"
+  (fun () ->
+    `!pt bpt pf bf.
+        valid_lptree cmlG pt /\ ptree_head pt = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) nEapp /\
+        real_fringe pt = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) pf /\
+        valid_lptree cmlG bpt /\ ptree_head bpt = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) nEbase /\
+        real_fringe bpt = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) bf ==>
+        (?pt' bpt'.
+          valid_lptree cmlG pt' /\ valid_lptree cmlG bpt' /\
+          leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
+          rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
+          ptree_head pt' = (\nt'. grammar_NT
+            ((INL:MMLnonT->MMLnonT+num) nt')) nEapp /\ ptree_head bpt' =
+            (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase
+            /\
+          real_fringe bpt' ++ real_fringe pt' = MAP
+            ((grammar_TOK:tokens_token->(tokens_token
+            ,MMLnonT)grammar_symbol) ## I) (pf ++ bf) /\
+          mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [pt; bpt] =
+            left_insert1 bpt' pt')`)
+  CHEAT_TAC;;
 
 let leftmost_def = cake_define_list
   [`leftmost (Lf s) = Lf s`;
@@ -92,6 +329,22 @@ let left_insert2_def = cake_define_list
              [] -> Nd (n,merge_locs (ptree_loc pt) l0) [pt] |
                [Nd _6 [tyop]] -> mkNd n [mkNd n [pt]; tyop] | x ::
                ys -> mkNd n (left_insert2 pt x :: ys))`];;
+
+let ptree_loc_left_insert2 = cake_theorem "ptree_loc_left_insert2"
+  (fun () ->
+    `!bpt dpt.
+       valid_locs dpt ==>
+         ptree_loc (left_insert2 bpt dpt) =
+         merge_locs (ptree_loc bpt) (ptree_loc dpt)`)
+  CHEAT_TAC;;
+
+let left_insert2_FOLDL = cake_theorem "left_insert2_FOLDL"
+  (fun () ->
+    `left_insert2 pt (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P)
+  [a; b]) acc arg) =
+      FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) P) [a; b])
+        (left_insert2 pt acc) arg`)
+  CHEAT_TAC;;
 
 (* the situation with DType is similar to that with Eapp and Ebase.
 
@@ -122,6 +375,37 @@ let left_insert2_def = cake_define_list
            `- TyOp -- "option"
 *)
 
+let dtype_reassociated = cake_theorem "dtype_reassociated"
+  (fun () ->
+    `!pt bpt pf bf.
+        valid_lptree cmlG pt /\ ptree_head pt = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) nDType /\
+        real_fringe pt = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) pf /\
+        valid_lptree cmlG bpt /\ ptree_head bpt = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp /\
+        real_fringe bpt = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) bf ==>
+        (?pt' bpt'.
+          valid_lptree cmlG pt' /\ valid_lptree cmlG bpt' /\
+          valid_lptree cmlG (leftmost pt') /\
+          ptree_head (leftmost pt') = (\nt'. grammar_NT
+            ((INL:MMLnonT->MMLnonT+num) nt')) nTyOp /\
+          ptree_head pt' = (\nt'. grammar_NT
+            ((INL:MMLnonT->MMLnonT+num) nt')) nDType /\ ptree_head bpt'
+            = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nTbase
+            /\
+          real_fringe bpt' ++ real_fringe pt' = MAP
+            ((grammar_TOK:tokens_token->(tokens_token
+            ,MMLnonT)grammar_symbol) ## I) (pf ++ bf) /\
+          leftLoc (ptree_loc bpt') = leftLoc (ptree_loc pt) /\
+          rightLoc (ptree_loc pt') = rightLoc (ptree_loc bpt) /\
+          mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [pt; bpt] =
+            left_insert2 bpt' pt')`)
+  CHEAT_TAC;;
+
 (*
   The next reassociation scenario is the general story of a left-associative
   binary operator, such that the rule is of the form
@@ -145,7 +429,107 @@ let left_insert_def = cake_define_list
                  c'] -> mkNd p [left_insert p' p sep c; s'; c'] |
                  _8 -> Nd (n,merge_locs (ptree_loc c) l) subs)`];;
 
+
+let left_insert_mkNd = cake_theorem "left_insert_mkNd[simp]"
+  (fun () ->
+    `(left_insert (mkNd n [c0]) n sep c = mkNd n [mkNd n [c]; sep; c0])
+  /\
+     (left_insert (mkNd n [p'; s'; c']) n sep c =
+        mkNd n [left_insert p' n sep c; s'; c'])`)
+  CHEAT_TAC;;
+
+let ptree_loc_left_insert = cake_theorem "ptree_loc_left_insert"
+  (fun () ->
+    `!bpt n sep c.
+       valid_locs bpt ==>
+         ptree_loc (left_insert bpt n sep c) =
+         merge_locs (ptree_loc c) (ptree_loc bpt)`)
+  CHEAT_TAC;;
+
+let lassoc_reassociated = cake_theorem "lassoc_reassociated"
+  (fun () ->
+    `!G P SEP C' ppt spt cpt pf sf cf. FAPPLY (rules
+        G) P = {[grammar_NT P; SEP; C'],[C']} ==>
+        valid_lptree G ppt /\ ptree_head ppt = grammar_NT P /\
+          real_fringe ppt = MAP (grammar_TOK ## I) pf /\
+        valid_lptree G spt /\ ptree_head spt = SEP /\
+          real_fringe spt = MAP (grammar_TOK ## I) sf /\
+        valid_lptree G cpt /\ ptree_head cpt = C' /\
+          real_fringe cpt = MAP (grammar_TOK ## I) cf ==>
+        (?cpt' spt' ppt'.
+          valid_lptree G ppt' /\ ptree_head ppt' = grammar_NT P /\
+          valid_lptree G spt' /\ ptree_head spt' = SEP /\
+          valid_lptree G cpt' /\ ptree_head cpt' = C' /\
+          real_fringe cpt' ++ real_fringe spt' ++ real_fringe ppt'
+            =
+            MAP (grammar_TOK ## I) (pf ++ sf ++ cf) /\
+          leftLoc (ptree_loc cpt') = leftLoc (ptree_loc ppt) /\
+          rightLoc (ptree_loc ppt') = rightLoc (ptree_loc cpt) /\
+          mkNd P [ppt; spt; cpt] = left_insert ppt' P spt' cpt')`)
+  CHEAT_TAC;;
+
+let left_insert_mk_linfix = cake_theorem "left_insert_mk_linfix"
+  (fun () ->
+    `left_insert (mk_linfix N acc arg) N s c =
+      mk_linfix N (left_insert acc N s c) arg`)
+  CHEAT_TAC;;
+
+let elim_disjineq = cake_theorem "elim_disjineq[local]"
+  (fun () ->
+    `p \/ ~(x = y) <=> (x = y ==> p)`)
+  CHEAT_TAC;;
+
+let elim_det = cake_theorem "elim_det[local]"
+  (fun () ->
+    `(!x. P x <=> (x = y)) ==> P y`)
+  CHEAT_TAC;;
+
+let peg_seql_NONE_det = cake_theorem "peg_seql_NONE_det"
+  (fun () ->
+    `peg_eval G (i0,seql syms f) (peg_Failure fl fe) ==>
+      (!f' r. peg_eval G (i0,seql syms f') r <=> r = (peg_Failure
+        fl fe))`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:697: ML code, not ported *)
+
+let firstSet_respect_peg_eval_not_success =
+  cake_theorem "firstSet_respect_peg_eval_not_success"
+  (fun () ->
+    `~(
+       t IN firstSet cmlG [grammar_NT N]) /\ ~peg0 cmlPEG (peg_nt N
+         I) /\ peg_nt N I IN Gexprs cmlPEG ==>
+       ~peg_eval cmlPEG ((t,l) :: i0,peg_nt N I) (peg_Success i r
+         e0)`)
+  CHEAT_TAC;;
+
+let eOR_wrongtok = cake_theorem "eOR_wrongtok"
+  (fun () ->
+    `~peg_eval cmlPEG ((tokens_RaiseT,loc) :: i0,peg_nt
+  ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo) /\
+     ~peg_eval cmlPEG ((tokens_FnT,loc) :: i0,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo) /\
+     ~peg_eval cmlPEG ((tokens_CaseT,loc) :: i0,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo) /\
+     ~peg_eval cmlPEG ((tokens_IfT,loc) :: i0,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nElogicOR) I) (peg_Success i r eo)`)
+  CHEAT_TAC;;
+
+let peg_eval_seqempty = cake_theorem "peg_eval_seqempty"
+  (fun () ->
+    `peg_eval G (i0,peg_seq e1 (peg_empty []) f) r =
+     (?r0. peg_eval G (i0,e1) r0 /\
+          ((?fl fe. r0 = peg_Failure fl fe /\ r = r0) \/
+           (?i r00 eo. r0 = peg_Success i r00 eo /\ r =
+             peg_Success i (f r00 []) NONE)))`)
+  CHEAT_TAC;;
+
+let peg_eval_NT = cake_theorem "peg_eval_NT"
+  (fun () ->
+    `peg_eval G (i0,peg_nt N f) r <=>
+       (?r0. r = resultmap f r0 /\ N IN FDOM (rules G) /\
+         peg_eval G (i0,FAPPLY (rules G) N) r0)`)
+  CHEAT_TAC;;
 
 (* HOL4 pegCompleteScript.sml:734-737: ML code, not ported *)
 
@@ -468,14 +852,410 @@ hol4_overload "stoppers" "pegComplete_stoppers";;
 
 (* HOL4 pegCompleteScript.sml:897: ML code, not ported *)
 
+
+let left_insert1_mkNd = cake_theorem "left_insert1_mkNd"
+  (fun () ->
+    `left_insert1 pt1 (mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [pt2]) =
+     mkNd ((INL:MMLnonT->MMLnonT+num) nEapp) [mkNd
+       ((INL:MMLnonT->MMLnonT+num) nEapp) [pt1]; pt2]`)
+  CHEAT_TAC;;
+
+let eapp_complete = cake_theorem "eapp_complete"
+  (fun () ->
+    `(!pt' pfx' sfx' N.
+         LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
+         (INL:MMLnonT->MMLnonT+num) N IN FDOM (rules cmlPEG) /\
+         ptree_head pt' = (\nt'. grammar_NT
+           ((INL:MMLnonT->MMLnonT+num) nt')) N /\ real_fringe pt' = MAP
+           ((grammar_TOK:tokens_token->(tokens_token
+           ,MMLnonT)grammar_symbol) ## I) pfx' /\
+         (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers N)
+           ==>
+         (?eo.
+           peg_eval cmlPEG (pfx' ++ sfx',peg_nt
+             ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success sfx' [pt']
+             eo))) /\
+      (!pt' sfx'.
+         valid_lptree cmlG pt' /\ ptree_head pt' = (\nt'.
+           grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nEbase /\
+         real_fringe pt' = MAP
+           ((grammar_TOK:tokens_token->(tokens_token
+           ,MMLnonT)grammar_symbol) ## I) master /\
+         (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers
+           nEbase) ==>
+         (?eo.
+         peg_eval cmlPEG (master ++ sfx',peg_nt
+           ((INL:MMLnonT->MMLnonT+num) nEbase) I)
+                  (peg_Success sfx' [pt'] eo))) ==>
+       (!pfx apt sfx.
+         IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
+         ptree_head apt = (\nt'. grammar_NT
+           ((INL:MMLnonT->MMLnonT+num) nt')) nEapp /\ real_fringe apt =
+           MAP
+           ((grammar_TOK:tokens_token->(tokens_token
+           ,MMLnonT)grammar_symbol) ## I) pfx /\
+         (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers
+           nEapp) ==>
+         (?eo.
+           peg_eval cmlPEG (pfx ++ sfx,peg_nt
+             ((INL:MMLnonT->MMLnonT+num) nEapp) I) (peg_Success sfx
+             [apt] eo)))`)
+  CHEAT_TAC;;
+
+let peg_respects_firstSets' = cake_theorem "peg_respects_firstSets'"
+  (fun () ->
+    `peg_eval cmlPEG ((t,l) :: rest,peg_nt N I) (peg_Success sfx res eo)
+  /\
+     peg_nt N I IN Gexprs cmlPEG /\ ~peg0 cmlPEG (peg_nt N I) ==>
+     t IN firstSet cmlG [grammar_NT N]`)
+  CHEAT_TAC;;
+
+let nUQConstructorName_input_monotone =
+  cake_theorem "nUQConstructorName_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+  nUQConstructorName) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0 ++ sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+       nUQConstructorName) I)
+       (peg_Success (i ++ sfx) r eo)`)
+  CHEAT_TAC;;
+
+let nConstructorName_input_monotone =
+  cake_theorem "nConstructorName_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+  nConstructorName) I) (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0 ++ sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+       nConstructorName) I)
+       (peg_Success (i ++ sfx) r eo)`)
+  CHEAT_TAC;;
+
+(* HOL4 pegCompleteScript.sml:1030-1032: a theorem that HOL4 states
+   as the value of an ML expression *)
+
+let nConstructorName_NONE_input_monotone =
+  cake_theorem "nConstructorName_NONE_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG ((tk,l) :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+  nConstructorName) I) (peg_Failure fl fe) ==>
+     peg_eval cmlPEG
+              ((tk,l) :: (i ++ sfx),peg_nt
+                ((INL:MMLnonT->MMLnonT+num) nConstructorName) I)
+              (peg_Failure fl fe)`)
+  CHEAT_TAC;;
+
+let nV_input_monotone = cake_theorem "nV_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nV) I)
+  (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0 ++ sfx,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nV) I) (peg_Success (i ++ sfx) r
+       eo)`)
+  CHEAT_TAC;;
+
+let nV_NONE_input_monotone = cake_theorem "nV_NONE_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG ((tk,l) :: i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+  nV) I) (peg_Failure fl fe) ==>
+     peg_eval cmlPEG ((tk,l) :: (i0 ++ sfx),peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nV) I) (peg_Failure fl fe)`)
+  CHEAT_TAC;;
+
+let nOpID_input_monotone = cake_theorem "nOpID_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nOpID) I)
+  (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0 ++ sfx,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nOpID) I) (peg_Success (i ++ sfx) r
+       eo)`)
+  CHEAT_TAC;;
+
+let nUQTyOp_input_monotone = cake_theorem "nUQTyOp_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nUQTyOp) I)
+  (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0 ++ sfx,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nUQTyOp) I) (peg_Success (i ++ sfx)
+       r eo)`)
+  CHEAT_TAC;;
+
+(* HOL4 pegCompleteScript.sml:1085-1086: a theorem that HOL4 states
+   as the value of an ML expression *)
+
+let nTyOp_input_monotone = cake_theorem "nTyOp_input_monotone"
+  (fun () ->
+    `peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) nTyOp) I)
+  (peg_Success i r eo) ==>
+     peg_eval cmlPEG (i0 ++ sfx,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nTyOp) I) (peg_Success (i ++ sfx) r
+       eo)`)
+  CHEAT_TAC;;
+
+(* HOL4 pegCompleteScript.sml:1102-1103: a theorem that HOL4 states
+   as the value of an ML expression *)
+
+let nTyOplist_input_monotone = cake_theorem "nTyOplist_input_monotone"
+  (fun () ->
+    `!pts res i0 i sfx.
+       peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+         nTyOp) I) (i,pts,res) /\
+       (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN
+         pegComplete_stoppers nDType) ==>
+       (?res'.
+         peg_eval_list cmlPEG (i0 ++ sfx,peg_nt
+           ((INL:MMLnonT->MMLnonT+num) nTyOp) I) (i ++ sfx,pts,res'))`)
+  CHEAT_TAC;;
+
+let peg_eval_TyOp_LparT = cake_theorem "peg_eval_TyOp_LparT[local,simp]"
+  (fun () ->
+    `peg_eval cmlPEG' ((tokens_LparT,loc) :: i0,peg_nt
+  ((INL:MMLnonT->MMLnonT+num) nTyOp) I') (peg_Success i r eo) <=> F`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:1137: the overload RANK, which the port
    expands *)
+
+let type_input_monotone = cake_theorem "Type_input_monotone"
+  (fun () ->
+    `!N i0 i r sfx eo.
+       N IN {nTypeList2,nTypeList1,nType,nPType,nDType,nTbase} /\
+       (~(i = []) ==> FST (HD i) IN pegComplete_stoppers N) /\
+       (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN
+         pegComplete_stoppers N) /\
+       peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) N) I)
+         (peg_Success i r eo) ==>
+       peg_eval cmlPEG (i0 ++ sfx,peg_nt
+         ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success (i ++ sfx) r
+         eo)`)
+  CHEAT_TAC;;
+
+let Pattern_nV_nCons = cake_theorem "Pattern_nV_nCons[local]"
+  (fun () ->
+    `peg_eval cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num) nV) I)
+  (peg_Success j r eo) /\
+     (~(j = []) ==> FST (HD j) IN pegComplete_stoppers nPcons) ==>
+     (?r1 eo1.
+       peg_eval cmlPEG (i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+         nPcons) I) (peg_Success j r1 eo1))`)
+  CHEAT_TAC;;
+
+let pattern_input_monotone0 =
+  cake_theorem "Pattern_input_monotone0[local]"
+  (fun () ->
+    `!N i0 rlist b i r l sfx eo res.
+       (N IN
+         {nPbase,nPtuple,nPattern,nPapp,nPatternList,nPas,nPcons,nV} /\
+         ~b /\
+        (~(i = []) ==> FST (HD i) IN pegComplete_stoppers N) /\
+        (i = [] /\ ~(sfx = []) ==> FST (HD sfx) IN
+          pegComplete_stoppers N) /\
+        peg_eval cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num) N)
+          I) (peg_Success i r eo) ==>
+        peg_eval cmlPEG (i0 ++ sfx,peg_nt
+          ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success (i ++ sfx) r
+          eo)) /\
+       (N = nPbase /\ b /\
+        (~(i = []) ==> ~(FST (HD i) IN firstSet cmlG [(\nt'.
+          grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase])) /\
+        (i = [] /\ ~(sfx = []) ==> ~(FST (HD sfx) IN firstSet cmlG
+          [(\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase]))
+          /\
+        peg_eval_list cmlPEG (i0,peg_nt ((INL:MMLnonT->MMLnonT+num)
+          N) I) (i,rlist,l,res) ==>
+        (?res'.
+          peg_eval_list cmlPEG (i0 ++ sfx,peg_nt
+            ((INL:MMLnonT->MMLnonT+num) N) I) (i ++ sfx,rlist,res')))`)
+  CHEAT_TAC;;
+
+(* HOL4 pegCompleteScript.sml:1645-1646: a theorem that HOL4 states
+   as the value of an ML expression *)
+
+let extend_Pbase_list = cake_theorem "extend_Pbase_list"
+  (fun () ->
+    `!results pfx sfx sfx' result e eo.
+       peg_eval_list cmlPEG (pfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+         nPbase) I) ([],results,e) /\
+       peg_eval cmlPEG (sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+         nPbase) I) (peg_Success sfx' result eo) /\
+       (~(sfx' = []) ==> ~(FST (HD sfx') IN firstSet cmlG [(\nt'.
+         grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPbase])) ==>
+       (?e'. peg_eval_list cmlPEG (pfx ++ sfx,peg_nt
+         ((INL:MMLnonT->MMLnonT+num) nPbase) I)
+                          (sfx',results ++ [result],e'))`)
+  CHEAT_TAC;;
+
+let papp_complete = cake_theorem "papp_complete"
+  (fun () ->
+    `(!pt' pfx' N sfx'.
+        LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
+        (INL:MMLnonT->MMLnonT+num) N IN FDOM (rules cmlPEG) /\
+          ptree_head pt' = (\nt'. grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          nt')) N /\
+        real_fringe pt' = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) pfx' /\
+        (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers N)
+          ==>
+        (?eo.
+          peg_eval cmlPEG (pfx' ++ sfx',peg_nt
+            ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success sfx' [pt']
+            eo))) /\
+     (!pt' sfx'.
+        valid_lptree cmlG pt' /\ ptree_head pt' = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) nConstructorName /\
+        real_fringe pt' = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) master ==>
+        (?eo.
+          peg_eval cmlPEG (master ++ sfx',peg_nt
+            ((INL:MMLnonT->MMLnonT+num) nConstructorName) I)
+                   (peg_Success sfx' [pt'] eo))) ==>
+     (!pfx accpt sfx.
+       pfx <<= master /\
+       valid_lptree cmlG accpt /\ ptree_head accpt = (\nt'.
+         grammar_NT ((INL:MMLnonT->MMLnonT+num) nt')) nPConApp /\
+       real_fringe accpt = MAP
+         ((grammar_TOK:tokens_token->(tokens_token
+         ,MMLnonT)grammar_symbol) ## I) pfx /\
+       (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers
+         nPConApp) ==>
+       (?cpt i bpts eo e.
+          peg_eval cmlPEG
+                   (pfx ++ sfx,peg_nt ((INL:MMLnonT->MMLnonT+num)
+                     nConstructorName) I)
+                   (peg_Success i [cpt] eo) /\
+          peg_eval_list cmlPEG (i,peg_nt
+            ((INL:MMLnonT->MMLnonT+num) nPbase) I) (sfx,bpts,e) /\
+          accpt =
+          FOLDL (\pcpt bpt. bindNT0 nPConApp [pcpt; bpt])
+                (mkNd ((INL:MMLnonT->MMLnonT+num) nPConApp)
+                  [cpt]) (FLAT bpts)))`)
+  CHEAT_TAC;;
+
+let leftmost_mkNd_DType = cake_theorem "leftmost_mkNd_DType[simp]"
+  (fun () ->
+    `leftmost (mkNd ((INL:MMLnonT->MMLnonT+num) nDType) (c :: cs)) =
+  leftmost c`)
+  CHEAT_TAC;;
+
+let leftmost_mkNd_Tbase = cake_theorem "leftmost_mkNd_Tbase[simp]"
+  (fun () ->
+    `leftmost (mkNd ((INL:MMLnonT->MMLnonT+num) nTbase) (x :: xs)) = x`)
+  CHEAT_TAC;;
+
+let leftmost_FOLDL = cake_theorem "leftmost_FOLDL"
+  (fun () ->
+    `leftmost (FOLDL (\a b. mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [a;
+  b]) acc args) =
+      leftmost acc`)
+  CHEAT_TAC;;
+
+let left_insert2_mkNd = cake_theorem "left_insert2_mkNd[simp]"
+  (fun () ->
+    `left_insert2 bpt (mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [mkNd n
+  [sub']]) =
+     mkNd ((INL:MMLnonT->MMLnonT+num) nDType) [mkNd
+       ((INL:MMLnonT->MMLnonT+num) nDType) [bpt]; sub']`)
+  CHEAT_TAC;;
+
+let dtype_complete = cake_theorem "dtype_complete"
+  (fun () ->
+    `(!pt' pfx' sfx' N.
+        LENGTH pfx' < LENGTH master /\ valid_lptree cmlG pt' /\
+        (INL:MMLnonT->MMLnonT+num) N IN FDOM (rules cmlPEG) /\
+        ptree_head pt' = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) N /\ real_fringe pt' = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) pfx' /\
+        (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers N)
+          ==>
+        (?eo.
+          peg_eval cmlPEG (pfx' ++ sfx',peg_nt
+            ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success sfx' [pt']
+            eo))) /\
+     (!pt' sfx'.
+        valid_lptree cmlG pt' /\ ptree_head pt' = (\nt'. grammar_NT
+          ((INL:MMLnonT->MMLnonT+num) nt')) nTbase /\
+        real_fringe pt' = MAP
+          ((grammar_TOK:tokens_token->(tokens_token
+          ,MMLnonT)grammar_symbol) ## I) master /\
+        (~(sfx' = []) ==> FST (HD sfx') IN pegComplete_stoppers
+          nEbase) ==>
+        (?eo.
+          peg_eval cmlPEG (master ++ sfx',peg_nt
+            ((INL:MMLnonT->MMLnonT+num) nTbase) I)
+                   (peg_Success sfx' [pt'] eo))) ==>
+     (!pfx apt sfx.
+       IS_SUFFIX master pfx /\ valid_lptree cmlG apt /\
+       ptree_head apt = (\nt'. grammar_NT
+         ((INL:MMLnonT->MMLnonT+num) nt')) nDType /\ real_fringe apt =
+         MAP
+         ((grammar_TOK:tokens_token->(tokens_token
+         ,MMLnonT)grammar_symbol) ## I) pfx /\
+       (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers
+         nDType) ==>
+       (?eo.
+         peg_eval cmlPEG (pfx ++ sfx,peg_nt
+           ((INL:MMLnonT->MMLnonT+num) nDType) I) (peg_Success sfx
+           [apt] eo)))`)
+  CHEAT_TAC;;
 
 (* could generalise this slightly: allowing for nullable seps, but this would
    require a more complicated condition on the sfx, something like
      (sfx ≠ [] ∧ ¬nullable cmlG [SEP] ⇒ HD sfx ∉ firstSet cmlG [SEP]) ∧
      (sfx ≠ [] ∧ nullable cmlG [SEP] ⇒ HD sfx ∉ firstSet cmlG [C])
    and I can't be bothered with that right now. *)
+
+let peg_linfix_complete = cake_theorem "peg_linfix_complete"
+  (fun () ->
+    `(!n. SEP = grammar_NT n ==>
+          (?nn. n = (INL:MMLnonT->MMLnonT+num) nn /\ peg_nt
+            ((INL:MMLnonT->MMLnonT+num) nn) I IN Gexprs cmlPEG /\
+               pegComplete_stoppers nn = UNIV)) /\
+     (!n. C = grammar_NT n ==> (?nn. n = (INL:MMLnonT->MMLnonT+num)
+       nn)) /\
+     (!t. t IN firstSet cmlG [SEP] ==> ~(t IN pegComplete_stoppers
+       P)) /\
+     (!n. C = grammar_NT ((INL:MMLnonT->MMLnonT+num) n) ==>
+          (!t. t IN firstSet cmlG [SEP] ==> t IN
+            pegComplete_stoppers n) /\
+          (!t. t IN pegComplete_stoppers P ==> t IN
+            pegComplete_stoppers n)) /\
+     ~peg0 cmlPEG (sym2peg C) /\ ~nullable cmlG [C] /\
+     ~peg0 cmlPEG (sym2peg SEP) /\ ~nullable cmlG [SEP] /\ FAPPLY
+       (rules
+     cmlG) ((INL:MMLnonT->MMLnonT+num) P) = {[grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) P); SEP; C],[C]} /\
+     (!pt pfx0 sfx.
+        LENGTH pfx0 < LENGTH master /\
+        (!n. ptree_head pt = grammar_NT ((INL:MMLnonT->MMLnonT+num)
+          n) /\ ~(sfx = []) ==>
+             FST (HD sfx) IN pegComplete_stoppers n) /\
+        valid_lptree cmlG pt /\ ptree_head pt IN {SEP,C} /\
+        real_fringe pt = MAP (grammar_TOK ## I) pfx0 ==>
+        (?eo.
+          peg_eval cmlPEG (pfx0 ++ sfx,sym2peg (ptree_head pt))
+                   (peg_Success sfx [pt] eo))) /\
+     (!pt sfx.
+        valid_lptree cmlG pt /\ ptree_head pt = C /\
+        (!n. C = grammar_NT ((INL:MMLnonT->MMLnonT+num) n) /\ ~(sfx
+          = []) ==> FST (HD sfx) IN pegComplete_stoppers n) /\
+        real_fringe pt = MAP (grammar_TOK ## I) master ==>
+        (?eo.
+          peg_eval cmlPEG (master ++ sfx,sym2peg C) (peg_Success
+            sfx [pt] eo))) ==>
+     (!pfx pt sfx.
+      IS_SUFFIX master pfx /\
+      valid_lptree cmlG pt /\ ptree_head pt = grammar_NT
+        ((INL:MMLnonT->MMLnonT+num) P) /\
+      (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers P) /\
+      real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
+     (?eo.
+       peg_eval cmlPEG (pfx ++ sfx,
+                        peg_linfix ((INL:MMLnonT->MMLnonT+num) P)
+                          (sym2peg C) (sym2peg SEP))
+                (peg_Success sfx [pt] eo)))`)
+  CHEAT_TAC;;
 
 (* HOL4 pegCompleteScript.sml:2024-2026: a proof *)
 
@@ -488,5 +1268,74 @@ hol4_overload "stoppers" "pegComplete_stoppers";;
 
 (* HOL4 pegCompleteScript.sml:2038-2041: a proof *)
 
+let pmap_EQ = cake_theorem "pmap_EQ[simp]"
+  (fun () ->
+    `(x,y) = (f ## g) p <=> (?x0 y0. p = (x0,y0) /\ x = f x0 /\ y = g
+  y0)`)
+  CHEAT_TAC;;
+
+let ptPapply0_FOLDL = cake_theorem "ptPapply0_FOLDL"
+  (fun () ->
+    `!l a pt.
+       ptPapply0 a (l ++ [pt]) =
+       [bindNT0 nPapp [FOLDL (\pcpt bpt. bindNT0 nPConApp [pcpt;
+         bpt]) a l;
+                       pt]]`)
+  CHEAT_TAC;;
+
+let FST_EQ = cake_theorem "FST_EQ[simp]"
+  (fun () ->
+    `FST p = x <=> (?y. p = (x,y))`)
+  CHEAT_TAC;;
+
+let FST_NEQ = cake_theorem "FST_NEQ[simp]"
+  (fun () ->
+    `~(
+       FST p = x) <=> (?x0 y. p = (x0,y) /\ ~(x0 = x))`)
+  CHEAT_TAC;;
+
+let ALL_FST_NEQ = cake_theorem "ALL_FST_NEQ[simp]"
+  (fun () ->
+    `(!y. ~(p = (x,y))) <=> (?x0 y. p = (x0,y) /\ ~(x0 = x))`)
+  CHEAT_TAC;;
+
+let FST_IN = cake_theorem "FST_IN"
+  (fun () ->
+    `FST p IN s <=> (?tk l. p = (tk,l) /\ tk IN s)`)
+  CHEAT_TAC;;
+
+let FST_NOTIN = cake_theorem "FST_NOTIN"
+  (fun () ->
+    `~(
+       FST p IN s) <=> (?tk l. p = (tk,l) /\ ~(tk IN s))`)
+  CHEAT_TAC;;
+
 (* HOL4 pegCompleteScript.sml:2087: the ML values that the
    definitions below antiquote *)
+
+let completeness = cake_theorem "completeness"
+  (fun () ->
+    `!pt N pfx sfx.
+       valid_lptree cmlG pt /\ ptree_head pt = grammar_NT
+         ((INL:MMLnonT->MMLnonT+num) N) /\
+       (INL:MMLnonT->MMLnonT+num) N IN FDOM (rules cmlPEG) /\
+       (~(sfx = []) ==> FST (HD sfx) IN pegComplete_stoppers N) /\
+       real_fringe pt = MAP (grammar_TOK ## I) pfx ==>
+       (?eo.
+         peg_eval cmlPEG (pfx ++ sfx,peg_nt
+           ((INL:MMLnonT->MMLnonT+num) N) I) (peg_Success sfx [pt]
+           eo))`)
+  CHEAT_TAC;;
+
+let cmlG_unambiguous = cake_theorem "cmlG_unambiguous"
+  (fun () ->
+    `valid_lptree cmlG pt1 /\ ptree_head pt1 = grammar_NT
+  ((INL:MMLnonT->MMLnonT+num) N) /\
+     valid_lptree cmlG pt2 /\ ptree_head pt2 = grammar_NT
+       ((INL:MMLnonT->MMLnonT+num) N) /\
+     (INL:MMLnonT->MMLnonT+num) N IN FDOM (rules cmlPEG) /\
+     real_fringe pt2 = real_fringe pt1 /\
+     (!s. s IN set_of_list (ptree_fringe pt1) ==> (?t. s =
+       grammar_TOK t)) ==>
+       pt1 = pt2`)
+  CHEAT_TAC;;

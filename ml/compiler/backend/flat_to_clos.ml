@@ -2,7 +2,8 @@
 (*  flat_to_clos: ported from HOL4's
     compiler/backend/flat_to_closScript.sml
     A definition theory, with 17 definitions and 9 theorems.  Needed
-    by backend.ml, backendProof.ml and flat_to_closProof.ml.  *)
+    by backend.ml, backendProof.ml, flat_to_closProof.ml and
+    source_evalProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -28,6 +29,18 @@ let dest_pat_def = cake_define
         [(Pvar v:flatLang_pat),h] -> SOME ((v:mlstring),h)
       | _1 -> NONE`;;
 
+let dest_pat_pmatch = cake_theorem "dest_pat_pmatch"
+  (fun () ->
+    `dest_pat x =
+       (match x with [(Pvar v,h)] -> SOME ((v:mlstring),h) | _2
+         -> NONE)`)
+  CHEAT_TAC;;
+
+let dest_pat_thm = cake_theorem "dest_pat_thm"
+  (fun () ->
+    `dest_pat pes = SOME (p_1,p_2) <=> pes = [(Pvar p_1,p_2)]`)
+  CHEAT_TAC;;
+
 let compile_lit_def = cake_define
   `compile_lit t l =
      closLang_Op t
@@ -41,15 +54,29 @@ let compile_lit_def = cake_define
 
 let arg1_def = cake_define
   `flat_to_clos_arg1 xs f =
-     (match xs with [x] -> f x | _2 -> closLang_Let
+     (match xs with [x] -> f x | _3 -> closLang_Let
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
 hol4_overload "arg1" "flat_to_clos_arg1";;
 
+let arg1_pmatch = cake_theorem "arg1_pmatch"
+  (fun () ->
+    `flat_to_clos_arg1 xs f =
+       (match xs with [x] -> f x | _4 -> closLang_Let
+         backend_common_None xs (closLang_Var backend_common_None 0))`)
+  CHEAT_TAC;;
+
 let arg2_def = cake_define
   `flat_to_clos_arg2 xs f =
-     (match xs with [x; y] -> f x y | _3 -> closLang_Let
+     (match xs with [x; y] -> f x y | _5 -> closLang_Let
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
 hol4_overload "arg2" "flat_to_clos_arg2";;
+
+let flat_to_clos_arg2_pmatch = cake_theorem "arg2_pmatch"
+  (fun () ->
+    `flat_to_clos_arg2 xs f =
+       (match xs with [x; y] -> f x y | _6 -> closLang_Let
+         backend_common_None xs (closLang_Var backend_common_None 0))`)
+  CHEAT_TAC;;
 
 let var_fun m n =
   list_mk_icomb "closLang_Var" [`t:tra`; mk_small_numeral (m - n)];;
@@ -131,7 +158,7 @@ let compile_arith_def = cake_define
                                 div_tag)) []))
                               (closLang_Op t (closLang_IntOp
                                 closLang_Mod) [Var t 0; Var t 1])) |
-                                _4 -> Let backend_common_None xs (Var
+                                _7 -> Let backend_common_None xs (Var
                                 backend_common_None 0)) |
                                 ast_Float64T -> (match a with ast_Abs
                                 -> closLang_Op t (closLang_WordOp
@@ -149,7 +176,7 @@ let compile_arith_def = cake_define
                                 closLang_Op t (closLang_WordOp
                                 (FP_bop FP_Div)) xs | ast_FMA ->
                                 closLang_Op t (closLang_WordOp
-                                (FP_top FP_Fma)) xs | _5 -> Let
+                                (FP_top FP_Fma)) xs | _8 -> Let
                                 backend_common_None xs (Var
                                 backend_common_None 0)) | ast_WordT
                                 ws -> (match a with Add ->
@@ -164,10 +191,10 @@ let compile_arith_def = cake_define
                                 (WordOpw ws backend_common_Orw)) xs |
                                 Xor -> closLang_Op t (closLang_WordOp
                                 (WordOpw ws backend_common_Xor)) xs |
-                                _6 -> Let backend_common_None xs (Var
+                                _9 -> Let backend_common_None xs (Var
                                 backend_common_None 0)) | ast_BoolT
                                 -> closLang_Op t (closLang_BlockOp
-                                closLang_BoolNot) xs | _7 -> Let
+                                closLang_BoolNot) xs | _10 -> Let
                                 backend_common_None xs (Var
                                 backend_common_None 0))`;;
 
@@ -222,20 +249,20 @@ let compile_op_def = cake_define
             (closLang_IntOp closLang_LessEq) xs | ast_Compare ast_Gt ->
             closLang_Op t (closLang_IntOp Greater) xs | ast_Compare
             ast_Geq -> closLang_Op t (closLang_IntOp closLang_GreaterEq)
-            xs | _8 -> closLang_Op t (closLang_BlockOp closLang_Equal)
+            xs | _11 -> closLang_Op t (closLang_BlockOp closLang_Equal)
             xs) | ast_Float64T -> (match test with ast_Compare ast_Lt ->
             closLang_Op t (closLang_WordOp (FP_cmp FP_Less)) xs |
             ast_Compare ast_Leq -> closLang_Op t (closLang_WordOp
             (FP_cmp FP_LessEqual)) xs | ast_Compare ast_Gt ->
             closLang_Op t (closLang_WordOp (FP_cmp FP_Greater)) xs |
             ast_Compare ast_Geq -> closLang_Op t (closLang_WordOp
-            (FP_cmp FP_GreaterEqual)) xs | _9 -> closLang_Op t
+            (FP_cmp FP_GreaterEqual)) xs | _12 -> closLang_Op t
             (closLang_WordOp (FP_cmp FP_Equal)) xs) | ast_StrT -> (match
             test with ast_Compare opb -> closLang_Op t (closLang_MemOp
             (closLang_StringCmp F opb)) xs | ast_AltCompare opb ->
             closLang_Op t (closLang_MemOp (closLang_StringCmp T opb)) xs
-            | _10 -> closLang_Op t (closLang_BlockOp closLang_Equal) xs)
-            | _11 -> closLang_Op t (closLang_BlockOp closLang_Equal) xs)
+            | _13 -> closLang_Op t (closLang_BlockOp closLang_Equal) xs)
+            | _14 -> closLang_Op t (closLang_BlockOp closLang_Equal) xs)
             | flatLang_Src ast_Aw8length -> closLang_Op t
             (closLang_MemOp closLang_LengthByte) xs | flatLang_Src
             ast_AallocFixed -> closLang_Op t (closLang_MemOp
@@ -366,7 +393,7 @@ let compile_op_def = cake_define
                              (ast_FromTo (ast_WordT ast_W64)
                              ast_Float64T) -> Let backend_common_None
                              xs (Var backend_common_None 0) |
-                             flatLang_Src _12 -> Let
+                             flatLang_Src _15 -> Let
                              backend_common_None xs (Var
                              backend_common_None 0))`;;
 hol4_overload "compile_op" "flat_to_clos_compile_op";;
@@ -380,13 +407,24 @@ let dest_nop_def = cake_define
   `dest_nop op e =
      (if op = flatLang_Src (ast_FromTo ast_IntT (ast_WordT ast_W8))
        then
-       (match e with [App _13 op1 [x]] -> (if op1 = flatLang_Src
-         (ast_FromTo ast_CharT ast_IntT) then SOME x else NONE) | _14 ->
+       (match e with [App _16 op1 [x]] -> (if op1 = flatLang_Src
+         (ast_FromTo ast_CharT ast_IntT) then SOME x else NONE) | _17 ->
          NONE) else if op = flatLang_Src (ast_FromTo ast_IntT ast_CharT)
          then
-       (match e with [App _15 op1 [x]] -> (if op1 = flatLang_Src
+       (match e with [App _18 op1 [x]] -> (if op1 = flatLang_Src
          (ast_FromTo (ast_WordT ast_W8) ast_IntT) then SOME x else
-         NONE) | _16 -> NONE) else NONE)`;;
+         NONE) | _19 -> NONE) else NONE)`;;
+
+let dest_nop_thm = cake_theorem "dest_nop_thm"
+  (fun () ->
+    `dest_nop op es = SOME x <=>
+       (?t. op = flatLang_Src (ast_FromTo ast_IntT (ast_WordT
+         ast_W8)) /\ es = [App t (flatLang_Src (ast_FromTo ast_CharT
+         ast_IntT)) [x]]) \/
+       (?t. op = flatLang_Src (ast_FromTo ast_IntT ast_CharT) /\
+         es = [App t (flatLang_Src (ast_FromTo (ast_WordT ast_W8)
+         ast_IntT)) [x]])`)
+  CHEAT_TAC;;
 
 let dest_Constant_def = cake_define
   `flat_to_clos_dest_Constant x1 =
@@ -397,8 +435,19 @@ let dest_Constant_def = cake_define
         SOME (ConstInt i)
       | (closLang_Op t (closLang_BlockOp (closLang_Cons n)) []) ->
         SOME (ConstCons n [])
-      | _17 -> NONE`;;
+      | _20 -> NONE`;;
 hol4_overload "dest_Constant" "flat_to_clos_dest_Constant";;
+
+let flat_to_clos_dest_Constant_pmatch =
+  cake_theorem "dest_Constant_pmatch"
+  (fun () ->
+    `flat_to_clos_dest_Constant xs =
+       (match xs with closLang_Op t (closLang_BlockOp
+         (closLang_Constant x)) [] -> SOME x | closLang_Op t
+         (closLang_IntOp (closLang_Const i)) [] -> SOME (ConstInt i) |
+         closLang_Op t (closLang_BlockOp (closLang_Cons n)) [] -> SOME
+         (ConstCons n []) | _21 -> NONE)`)
+  CHEAT_TAC;;
 
 let dest_Constants_def = cake_define_list
   [`dest_Constants [] = SOME []`;
@@ -434,7 +483,7 @@ let compile_def = cake_define_list_try_tac (fun () ->
    `flat_to_clos_compile m [flatLang_Var_local t v] = [closLang_Var t
   (indexedLists_findi (SOME v) m)]`;
    `flat_to_clos_compile m [(Con t n es:flatLang_exp)] =
-         (let tag = (match n with SOME (t,_24) -> t | _25 -> 0) in
+         (let tag = (match n with SOME (t,_28) -> t | _29 -> 0) in
            [SmartCons t tag (flat_to_clos_compile m (REVERSE
              es))])`;
    `flat_to_clos_compile m [(App t op es:flatLang_exp)] =
@@ -457,7 +506,7 @@ let compile_def = cake_define_list_try_tac (fun () ->
    `flat_to_clos_compile m [(Handle t e pes:flatLang_exp)] =
          (match dest_pat pes with SOME (v,h) -> [closLang_Handle
            t (HD (flat_to_clos_compile m [e])) (HD
-           (flat_to_clos_compile (SOME v :: m) [h]))] | _28 ->
+           (flat_to_clos_compile (SOME v :: m) [h]))] | _32 ->
            flat_to_clos_compile m [e])`;
    `flat_to_clos_compile m [(Letrec t funs e:flatLang_exp)] =
          (let new_m = MAP (\n. SOME (FST n)) funs ++ m in
@@ -484,3 +533,19 @@ let inc_compile_decs_def = cake_define
      (let xs = flat_to_clos_compile_decs decs ++
        flat_to_clos_compile_decs [Con backend_common_None NONE []] in
        (insert_interp xs,[]))`;;
+
+let LENGTH_compile = cake_theorem "LENGTH_compile"
+  (fun () ->
+    `!m xs. LENGTH (flat_to_clos_compile m xs) = LENGTH xs`)
+  CHEAT_TAC;;
+
+let compile_NOT_NIL = cake_theorem "compile_NOT_NIL[simp]"
+  (fun () ->
+    `~(
+       flat_to_clos_compile m (x :: xs) = [])`)
+  CHEAT_TAC;;
+
+let HD_compile = cake_theorem "HD_compile[simp]"
+  (fun () ->
+    `[HD (flat_to_clos_compile m [x])] = flat_to_clos_compile m [x]`)
+  CHEAT_TAC;;

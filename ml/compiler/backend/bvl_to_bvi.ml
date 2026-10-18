@@ -37,6 +37,14 @@ let destLet_def = cake_define
           ((Let xs b):bvl_exp) -> (xs,b)
         | _1 -> ([],Var 0)`;;
 
+let destLet_pmatch = cake_theorem "destLet_pmatch"
+  (fun () ->
+    `!exp.
+     destLet exp =
+       (match exp with
+         Let xs b -> (xs,b) | _2 -> ([],Var 0))`)
+  CHEAT_TAC;;
+
 (* HOL4 bvl_to_bviScript.sml:37: the ML values that the definitions
    below antiquote *)
 
@@ -52,7 +60,7 @@ let alloc_glob_count_def = cake_define
           [] -> (0:num)
         | (x :: y :: xs) ->
         alloc_glob_count [x] + alloc_glob_count (y :: xs)
-        | [(Var _2):bvl_exp] -> 0
+        | [(Var _3):bvl_exp] -> 0
         | [If x y z] ->
         alloc_glob_count [x] +
         alloc_glob_count [y] +
@@ -64,11 +72,11 @@ let alloc_glob_count_def = cake_define
         | [Force loc v] -> 0
         | [Raise x] -> alloc_glob_count [x]
         | [Let xs x] -> alloc_glob_count (x :: xs)
-        | [Call _3 _4 xs] -> alloc_glob_count xs
+        | [Call _4 _5 xs] -> alloc_glob_count xs
         | [Op op xs] ->
         (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
           alloc_glob_count xs else alloc_glob_count xs)
-        | [_5] -> 0`;;
+        | [_6] -> 0`;;
 
 let _ = size_thms "bvl_exp";;
 (* the termination relation that HOL4 gives, with
@@ -76,7 +84,7 @@ let _ = size_thms "bvl_exp";;
 let global_count_sing_def = cake_define_list_wf
   `MEASURE (\x. match x with INL e -> bvl_exp_size e | INR es ->
   list_size bvl_exp_size es)`
-  [`global_count_sing ((Var _6):bvl_exp) = 0`;
+  [`global_count_sing ((Var _7):bvl_exp) = 0`;
    `global_count_sing (If x y z:bvl_exp) =
          global_count_sing x +
          global_count_sing y +
@@ -89,13 +97,21 @@ let global_count_sing_def = cake_define_list_wf
    `global_count_sing (Raise x:bvl_exp) = global_count_sing x`;
    `global_count_sing (Let xs x:bvl_exp) =
          global_count_sing x + global_count_list xs`;
-   `global_count_sing (Call _9 _10 xs:bvl_exp) = global_count_list xs`;
+   `global_count_sing (Call _10 _11 xs:bvl_exp) = global_count_list
+  xs`;
    `global_count_sing (Op op xs:bvl_exp) =
          (if op = closLang_GlobOp closLang_AllocGlobal then 1 +
            global_count_list xs else global_count_list xs)`;
    `global_count_list [] = (0:num)`;
    `global_count_list (x :: xs) = ((
          global_count_sing x + global_count_list xs):num)`];;
+
+let alloc_glob_count_eq_global_count_list =
+  cake_theorem "alloc_glob_count_eq_global_count_list"
+  (fun () ->
+    `(!e. global_count_sing e = alloc_glob_count [e]) /\
+     (!es. global_count_list es = alloc_glob_count es)`)
+  CHEAT_TAC;;
 
 let AllocGlobal_location_def = cake_define
   `AllocGlobal_location = data_num_stubs`;;
@@ -113,6 +129,23 @@ let SumListLength_location_def = cake_define
   `SumListLength_location = ToListByte_location + 1`;;
 let ConcatByte_location_def = cake_define
   `ConcatByte_location = SumListLength_location + 1`;;
+
+(* HOL4 bvl_to_bviScript.sml:129-130: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:131-132: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:133-134: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:135-136: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:137-138: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:139-140: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:141-142: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 bvl_to_bviScript.sml:143-144: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 let AllocGlobal_code_def = cake_define
   `AllocGlobal_code = ((1:num),
@@ -240,7 +273,7 @@ hol4_overload "stubs" "bvl_to_bvi_stubs";;
 let compile_op_def = cake_define
   `bvl_to_bvi_compile_op op c1 =
      (match op with closLang_IntOp (closLang_Const i) ->
-       (match c1 with [] -> compile_int i | _11 -> Let [Op
+       (match c1 with [] -> compile_int i | _12 -> Let [Op
          (closLang_IntOp (closLang_Const (&0))) c1] (compile_int i)) |
          closLang_GlobOp (closLang_Global n) ->
        (if NULL c1 then Op (closLang_GlobOp (closLang_Global (n +
@@ -316,9 +349,12 @@ let compile_op_def = cake_define
                 closLang_MemOp closLang_UpdateCons -> Let c1 (Op
                 (closLang_IntOp (closLang_Const (&0))) []) |
                 closLang_MemOp closLang_FinaliseCons -> Let c1 (Op
-                (closLang_IntOp (closLang_Const (&0))) []) | _12 ->
+                (closLang_IntOp (closLang_Const (&0))) []) | _13 ->
                 Op op c1)`;;
 hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
+
+(* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 hol4_overload "++" "SmartAppend";;
 (* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port
@@ -454,6 +490,31 @@ let compile_exps_sing_def = cake_define_try_tac (fun () ->
       let (c2,aux2,n2) = compile_exps_list n1 xs in
         (c1 :: c2,aux1 ++ aux2,n2)))`;;
 
+let compile_exps_sing = cake_theorem "compile_exps_sing"
+  (fun () ->
+    `(!n e. bvl_to_bvi_compile_exps n [e] =
+            (let (x,y,z) = compile_exps_sing n e in ([x],y,z))) /\
+     (!n es. compile_exps_list n es = bvl_to_bvi_compile_exps n
+       es)`)
+  CHEAT_TAC;;
+
+let compile_exps_LENGTH_lemma =
+  cake_theorem "compile_exps_LENGTH_lemma[local]"
+  (fun () ->
+    `!n xs. (LENGTH (FST (bvl_to_bvi_compile_exps n xs)) = LENGTH xs)`)
+  CHEAT_TAC;;
+
+let compile_exps_LENGTH = cake_theorem "compile_exps_LENGTH"
+  (fun () ->
+    `(bvl_to_bvi_compile_exps n xs = (ys,aux,n1)) ==> (LENGTH ys =
+  LENGTH xs)`)
+  CHEAT_TAC;;
+
+let compile_exps_SING = cake_theorem "compile_exps_SING"
+  (fun () ->
+    `(bvl_to_bvi_compile_exps n [x] = (c,aux,n1)) ==> (?y. c = [y])`)
+  CHEAT_TAC;;
+
 let compile_single_def = cake_define
   `bvl_to_bvi_compile_single n (name,arg_count,exp) =
      (let (c,aux,n1) = bvl_to_bvi_compile_exps n [exp] in
@@ -461,6 +522,15 @@ let compile_single_def = cake_define
          List [(bvl_num_stubs + bvl_to_bvi_namespaces *
            name,arg_count,bvi_let_compile_exp (HD c))] ++ aux,n1))`;;
 hol4_overload "compile_single" "bvl_to_bvi_compile_single";;
+
+let compile_single_eq = cake_theorem "compile_single_eq"
+  (fun () ->
+    `bvl_to_bvi_compile_single n (name,arg_count,exp) =
+       (let (c,aux,n1) = compile_exps_sing n exp in
+         (
+           List [(bvl_num_stubs + bvl_to_bvi_namespaces *
+             name,arg_count,bvi_let_compile_exp c)] ++ aux,n1))`)
+  CHEAT_TAC;;
 
 let compile_list_def = cake_define_list
   [`bvl_to_bvi_compile_list n [] = (List [],n)`;
@@ -478,11 +548,14 @@ hol4_overload "compile_inc" "bvl_to_bvi_compile_inc";;
 
 let compile_prog_def = cake_define
   `bvl_to_bvi_compile_prog start' n prog =
-     (let k = alloc_glob_count (MAP (\(_13,_14,p). p) prog) in
+     (let k = alloc_glob_count (MAP (\(_14,_15,p). p) prog) in
      let (code,n1) = compile_list n prog in
        (InitGlobals_location,bvl_to_bvi_stubs (bvl_num_stubs +
          bvl_to_bvi_namespaces * start') k ++ append code,n1))`;;
 hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
+
+(* HOL4 bvl_to_bviScript.sml:520-521: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
   ["inline_size_limit","num";

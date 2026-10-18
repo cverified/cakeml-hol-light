@@ -2,7 +2,7 @@
 (*  ml_monadBase: ported from HOL4's
     translator/monadic/monad_base/ml_monadBaseScript.sml
     A definition theory, with 26 definitions, 2 datatypes and 27
-    theorems.  Needed by 10 files of the port.  *)
+    theorems.  Needed by 17 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -52,7 +52,24 @@ let st_ex_ignore_bind_def = cake_define
  * Ensures that intermediate values of the monad bind (y, s'')
  * are captured.
  *)
+
+let st_ex_ignore_bind_CONG = cake_theorem "st_ex_ignore_bind_CONG"
+  (fun () ->
+    `!x s x' s' f f'.
+       (x = x') /\ (s = s') /\
+       (!y s''. (x' s' = (M_success y,s'')) ==> (f s'' = f' s''))
+         ==> (st_ex_ignore_bind x f s =
+         st_ex_ignore_bind x' f' s')`)
+  CHEAT_TAC;;
 (* HOL4 ml_monadBaseScript.sml:70: ML code, not ported *)
+
+let st_ex_bind_CONG = cake_theorem "st_ex_bind_CONG"
+  (fun () ->
+    `!x s x' s' f f'.
+       (x = x') /\ (s = s') /\
+       (!y s''. (x' s' = (M_success y,s'')) ==> (f y s'' = f' y
+         s'')) ==> (st_ex_bind x f s = st_ex_bind x' f' s')`)
+  CHEAT_TAC;;
 (* HOL4 ml_monadBaseScript.sml:83: ML code, not ported *)
 
 
@@ -89,6 +106,16 @@ let msub_def = cake_define
        [] -> M_failure e | x :: l' -> (if n = 0 then M_success x
          else Msub e (n - 1) l'))`;;
 
+let msub_eq = cake_theorem "Msub_eq"
+  (fun () ->
+    `!l n e. n < LENGTH l ==> (Msub e n l = M_success (EL n l))`)
+  CHEAT_TAC;;
+
+let msub_exn_eq = cake_theorem "Msub_exn_eq"
+  (fun () ->
+    `!l n e. n >= LENGTH l ==> (Msub e n l = M_failure e)`)
+  CHEAT_TAC;;
+
 (* Mupdate *)
 let mupdate_def = cake_define
   `Mupdate e x (n:num) l =
@@ -100,6 +127,17 @@ let mupdate_def = cake_define
               M_success l'' -> M_success (x' :: l'') | other ->
                 other)))`;;
 
+let mupdate_eq = cake_theorem "Mupdate_eq"
+  (fun () ->
+    `!l n x e. n < LENGTH l ==> (Mupdate e x n l = M_success (LUPDATE
+  x n l))`)
+  CHEAT_TAC;;
+
+let mupdate_exn_eq = cake_theorem "Mupdate_exn_eq"
+  (fun () ->
+    `!l n x e. n >= LENGTH l ==> (Mupdate e x n l = M_failure e)`)
+  CHEAT_TAC;;
+
 (* Array resize *)
 let array_resize_def = cake_define
   `array_resize (n:num) x a =
@@ -108,6 +146,12 @@ let array_resize_def = cake_define
        match a with
          [] -> x :: array_resize (n - 1) x a | x' :: a' -> x' ::
            array_resize (n - 1) x a')`;;
+
+let array_resize_eq = cake_theorem "array_resize_eq"
+  (fun () ->
+    `!a n x. array_resize n x a = TAKE n a ++ REPLICATE (n - LENGTH a)
+  x`)
+  CHEAT_TAC;;
 
 (* User functions *)
 let marray_length_def = cake_define
@@ -174,6 +218,40 @@ let mref_assign_def = cake_define
 let ref_assign_def = cake_define
   `ref_assign n x = (\s. LUPDATE x (LENGTH s - n - 1) s)`;;
 
+let dref_cons_state = cake_theorem "dref_cons_state"
+  (fun () ->
+    `n < LENGTH state ==> (dref n (x :: state) = dref n state)`)
+  CHEAT_TAC;;
+
+let dref_first = cake_theorem "dref_first"
+  (fun () ->
+    `dref (LENGTH s) (r :: s) = r`)
+  CHEAT_TAC;;
+
+let mdref_eq = cake_theorem "Mdref_eq"
+  (fun () ->
+    `!state n.
+       n < LENGTH state ==>
+       (Mdref e (StoreRef n) state = (M_success (dref n
+         state),state))`)
+  CHEAT_TAC;;
+
+let mref_assign_aux_eq = cake_theorem "Mref_assign_aux_eq"
+  (fun () ->
+    `!state e n x.
+       n < LENGTH state ==>
+       (Mref_assign_aux e (LENGTH state - n - 1) x state =
+        M_success (ref_assign n x state))`)
+  CHEAT_TAC;;
+
+let mref_assign_eq = cake_theorem "Mref_assign_eq"
+  (fun () ->
+    `!state e n x.
+       n < LENGTH state ==>
+       (Mref_assign e (StoreRef n) x state = (M_success
+         one,ref_assign n x state))`)
+  CHEAT_TAC;;
+
 let ref_bind_def = cake_define
   `ref_bind create f pop =
      (\s. match create s with
@@ -188,8 +266,125 @@ let mset_ref_def = cake_define
   `Mset_ref set_var' x = (\s. (M_success one,set_var' x s))`;;
 
 (* Rules to deal with the monads *)
+let st_ex_return_success = cake_theorem "st_ex_return_success[local]"
+  (fun () ->
+    `!v st r st'.
+        st_ex_return v st = (r,st') <=>
+        r = M_success v /\ st' = st`)
+  CHEAT_TAC;;
+
+let st_ex_bind_success = cake_theorem "st_ex_bind_success[local]"
+  (fun () ->
+    `!f g st st' v.
+        st_ex_bind f g st = (M_success v,st') <=>
+        (?v' st''.
+          f st = (M_success v',st'') /\
+          g v' st'' = (M_success v,st'))`)
+  CHEAT_TAC;;
+
+let otherwise_success = cake_theorem "otherwise_success[local]"
+  (fun () ->
+    `(otherwise x y) s = (M_success v,s') <=>
+      x s = (M_success v,s') \/
+      (?e s''. x s = (M_failure e,s'') /\ y s'' = (M_success
+        v,s'))`)
+  CHEAT_TAC;;
+
+let otherwise_failure = cake_theorem "otherwise_failure[local]"
+  (fun () ->
+    `(otherwise x y) s = (M_failure e,s') <=>
+      (?e' s''. x s = (M_failure e',s'') /\ y s'' = (M_failure
+        e,s'))`)
+  CHEAT_TAC;;
+
+let otherwise_eq = cake_theorem "otherwise_eq[local]"
+  (fun () ->
+    `(otherwise x y) s = (r,s') <=>
+      (?v. ((x s = (M_success v,s') /\ r = M_success v) \/
+            (?e s''. x s = (M_failure e,s'') /\
+                     y s'' = (M_success v,s') /\
+                     r = M_success v))) \/
+      (?e e' s''. x s = (M_failure e',s'') /\
+                  y s'' = (M_failure e,s') /\
+                  r = M_failure e)`)
+  CHEAT_TAC;;
+
+let can_success = cake_theorem "can_success[local]"
+  (fun () ->
+    `can f x s = (M_failure e,s') <=> F`)
+  CHEAT_TAC;;
+
+let marray_length_success = cake_theorem "Marray_length_success[local]"
+  (fun () ->
+    `!get_arr s r s'.
+        Marray_length get_arr s = (r,s') <=>
+        r = M_success (LENGTH (get_arr s)) /\
+        s' = s`)
+  CHEAT_TAC;;
+
+let marray_sub_success = cake_theorem "Marray_sub_success[local]"
+  (fun () ->
+    `!get_arr e n s v s'.
+        Marray_sub get_arr e n s = (M_success v,s') <=>
+        n < LENGTH (get_arr s) /\ v = EL n (get_arr s) /\ s' = s`)
+  CHEAT_TAC;;
+
+let marray_sub_failure = cake_theorem "Marray_sub_failure[local]"
+  (fun () ->
+    `!get_arr e n s e' s'.
+        Marray_sub get_arr e n s = (M_failure e',s') <=>
+        n >= LENGTH (get_arr s) /\ e' = e /\ s' = s`)
+  CHEAT_TAC;;
+
+let marray_sub_eq = cake_theorem "Marray_sub_eq[local]"
+  (fun () ->
+    `Marray_sub get_arr e n s = (r,s') <=>
+      (n < LENGTH (get_arr s) /\ s' = s /\ r = M_success (EL n
+        (get_arr s))) \/
+      (n >= LENGTH (get_arr s) /\ s' = s /\ r = M_failure e)`)
+  CHEAT_TAC;;
+
+let marray_update_success = cake_theorem "Marray_update_success[local]"
+  (fun () ->
+    `!get_arr set_arr e n x s s'.
+        Marray_update get_arr set_arr e n x s = (M_success v,s')
+          <=>
+        n < LENGTH (get_arr s) /\
+        v = one /\
+        s' = set_arr (LUPDATE x n (get_arr s)) s`)
+  CHEAT_TAC;;
+
+let marray_update_failure = cake_theorem "Marray_update_failure[local]"
+  (fun () ->
+    `!get_arr set_arr e e' n x s s'.
+        Marray_update get_arr set_arr e n x s = (M_failure e',s')
+          <=>
+        n >= LENGTH (get_arr s) /\
+        e' = e /\
+        s' = s`)
+  CHEAT_TAC;;
+
+let marray_update_eq = cake_theorem "Marray_update_eq[local]"
+  (fun () ->
+    `Marray_update get_arr set_arr e n x s = (r,s') <=>
+      (n < LENGTH (get_arr s) /\
+       s' = set_arr (LUPDATE x n (get_arr s)) s /\
+       r = M_success one) \/
+      (n >= LENGTH (get_arr s) /\
+       s' = s /\
+       r = M_failure e)`)
+  CHEAT_TAC;;
+
+let marray_alloc_success = cake_theorem "Marray_alloc_success[local]"
+  (fun () ->
+    `Marray_alloc set_arr n x s = (r,s') <=>
+      r = M_success one /\
+      s' = set_arr (REPLICATE n x) s`)
+  CHEAT_TAC;;
 
 (* HOL4 ml_monadBaseScript.sml:557-560: ML code, not ported *)
+(* HOL4 ml_monadBaseScript.sml:561-562: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (* Run *)
 let run_def = cake_define

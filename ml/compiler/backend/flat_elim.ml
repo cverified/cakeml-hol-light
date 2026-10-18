@@ -2,7 +2,8 @@
 (*  flat_elim: ported from HOL4's
     compiler/backend/flat_elimScript.sml
     A definition theory, with 15 definitions and 3 theorems.  Needed
-    by backend_passes.ml, flat_elimProof.ml and source_to_flat.ml.  *)
+    by backend_passes.ml, flat_elimProof.ml, source_to_flat.ml and
+    source_to_flatProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -79,6 +80,9 @@ let is_pure_def = cake_define_wf
         | _7 -> F`;;
 hol4_overload "is_pure" "flat_elim_is_pure";;
 
+(* HOL4 flat_elimScript.sml:82: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let has_Eval_def = cake_define_list_cheat CHEAT_TAC
@@ -117,6 +121,17 @@ let dest_GlobalVarLookup_def = cake_define
     match x1 with
       flatLang_GlobalVarLookup n -> SOME n
     | _34 -> NONE`;;
+
+let exp_size_map_snd = cake_theorem "exp_size_map_snd"
+  (fun () ->
+    `!p_es. exp6_size (MAP SND p_es) <= exp3_size p_es`)
+  CHEAT_TAC;;
+
+let exp_size_map_snd_snd = cake_theorem "exp_size_map_snd_snd"
+  (fun () ->
+    `!vv_es. exp6_size (MAP (\x. SND (SND x)) vv_es) <= exp1_size
+  vv_es`)
+  CHEAT_TAC;;
 
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with

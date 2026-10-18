@@ -61,6 +61,32 @@ let NT_rank_def = cake_define
 (* HOL4 gramPropsScript.sml:104-131: the ML values that the
    definitions below antiquote *)
 
+(* HOL4 gramPropsScript.sml:133-134: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+let paireq = cake_theorem "paireq[local]"
+  (fun () ->
+    `(x,y) = z <=> x = FST z /\ y = SND z`)
+  CHEAT_TAC;;
+
+let GSPEC_INTER = cake_theorem "GSPEC_INTER[local]"
+  (fun () ->
+    `GSPEC f INTER Q =
+       GSPEC (S ((,) o FST o f) (S ((/\) o SND o f) (Q o FST o
+         f)))`)
+  CHEAT_TAC;;
+
+let RIGHT_INTER_OVER_UNION =
+  cake_theorem "RIGHT_INTER_OVER_UNION[local]"
+  (fun () ->
+    `(a UNION b) INTER c = (a INTER c) UNION (b INTER c)`)
+  CHEAT_TAC;;
+
+let GSPEC_applied = cake_theorem "GSPEC_applied[local]"
+  (fun () ->
+    `GSPEC f x <=> x IN GSPEC f`)
+  CHEAT_TAC;;
+
 (* HOL4 gramPropsScript.sml:162-167: the ML values that the
    definitions below antiquote *)
 
@@ -69,6 +95,18 @@ let NT_rank_def = cake_define
 (* HOL4 gramPropsScript.sml:177: ML code, not ported *)
 
 (* HOL4 gramPropsScript.sml:179: ML code, not ported *)
+
+let nullloop_th = cake_theorem "nullloop_th[local]"
+  (fun () ->
+    `nullableML G (N INSERT sn) (grammar_NT N :: rest) = F`)
+  CHEAT_TAC;;
+
+let null2 = cake_theorem "null2[local]"
+  (fun () ->
+    `nullableML G sn (x :: y :: z) <=>
+         nullableML G sn [x] /\ nullableML G sn [y] /\
+         nullableML G sn z`)
+  CHEAT_TAC;;
 
 
 (* HOL4 gramPropsScript.sml:197-243: the ML values that the
@@ -89,3 +127,32 @@ let fringe_lengths_def = cake_define
   grammar_TOK i)}`;;
 
 (* HOL4 gramPropsScript.sml:292: ML code, not ported *)
+let fringe_length_ptree = cake_theorem "fringe_length_ptree"
+  (fun () ->
+    `!G i pt. ptree_fringe pt = MAP grammar_TOK i /\ valid_ptree G pt
+  ==>
+             LENGTH i IN fringe_lengths G [ptree_head pt]`)
+  CHEAT_TAC;;
+
+let fringe_length_not_nullable =
+  cake_theorem "fringe_length_not_nullable"
+  (fun () ->
+    `!G s. ~nullable G [s] ==>
+            (!pt. ptree_head pt = s ==> valid_ptree G pt ==>
+                 0 < LENGTH (ptree_fringe pt))`)
+  CHEAT_TAC;;
+
+let derives_singleTOK = cake_theorem "derives_singleTOK[simp]"
+  (fun () ->
+    `(\G. RTC (derive G)) G [grammar_TOK t] l <=> (l = [grammar_TOK
+  t])`)
+  CHEAT_TAC;;
+
+let fringe_lengths_V = cake_theorem "fringe_lengths_V"
+  (fun () ->
+    `fringe_lengths cmlG' [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)]
+  = {1}`)
+  CHEAT_TAC;;
+
+(* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as
+   the value of an ML expression *)

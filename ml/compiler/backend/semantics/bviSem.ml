@@ -61,6 +61,13 @@ let dec_clock_def = cake_define
   `bviSem_dec_clock x s = state_clock_fupd (K (state_clock s - x)) s`;;
 hol4_overload "dec_clock" "bviSem_dec_clock";;
 
+let bviSem_LESS_EQ_dec_clock = cake_theorem "LESS_EQ_dec_clock[local]"
+  (fun () ->
+    `state_clock
+       r <= state_clock (dec_clock x s) ==> state_clock r <=
+         state_clock s`)
+  CHEAT_TAC;;
+
 let bvi_to_bvl_def = cake_define
   `(bvi_to_bvl:('c,'ffi)bviSem_state->('c,'ffi)bvlSem_state) s =
      mk_bvlSem_state ARB (state_refs s) (state_clock s) ARB ARB
@@ -239,6 +246,11 @@ let fix_clock_def = cake_define
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "bviSem_fix_clock";;
 
+let bviSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+  (fun () ->
+    `fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`)
+  CHEAT_TAC;;
+
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of bvi_exp expressions. *)
@@ -371,8 +383,32 @@ hol4_overload "evaluate" "bviSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
+let bviSem_do_app_const = cake_theorem "do_app_const"
+  (fun () ->
+    `(bviSem_do_app op args s1 = Rval (res,s2)) ==>
+      (state_clock s2 = state_clock s1)`)
+  CHEAT_TAC;;
+
+let bviSem_evaluate_clock = cake_theorem "evaluate_clock"
+  (fun () ->
+    `!xs env s1 vs s2.
+       (bviSem_evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2
+         <= state_clock s1`)
+  CHEAT_TAC;;
+
+let bviSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+  (fun () ->
+    `fix_clock s (evaluate (xs,env,s)) = evaluate (xs,env,s)`)
+  CHEAT_TAC;;
+
 
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
+
+(* HOL4 bviSemScript.sml:392-393: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 bviSemScript.sml:395-396: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* observational semantics *)
 

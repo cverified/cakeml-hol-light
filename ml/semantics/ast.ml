@@ -2,7 +2,7 @@
 (*  ast: ported from HOL4's
     semantics/astScript.sml
     A definition theory, with 6 definitions, 16 datatypes and no
-    theorems.  Needed by 141 files of the port.  *)
+    theorems.  Needed by 155 files of the port.  *)
 (* ======================================================== *)
 
 (*

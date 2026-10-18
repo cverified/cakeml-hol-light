@@ -12,6 +12,7 @@
 needs "basis/pure/mlstring.ml";;
 needs "compiler/inference/infer_t.ml";;
 needs "compiler/inference/unify.ml";;
+needs "compiler/parsing/cmlPEG.ml";;
 needs "lib/errorMonad.ml";;
 needs "lib/integer_word.ml";;
 needs "lib/peg.ml";;
@@ -183,6 +184,17 @@ let infer_type_subst_def = cake_define_list
    `infer_type_subst_list s (x :: xs) =
       infer_type_subst s x :: infer_type_subst_list s xs`];;
 
+let infer_type_subst_alt = cake_theorem "infer_type_subst_alt"
+  (fun () ->
+    `(infer_type_subst s (Tvar tv) =
+       (match ALOOKUP s tv with SOME t -> t | NONE -> Infer_Tvar_db
+         0)) /\
+     (infer_type_subst s (Tvar_db n) =
+       Infer_Tvar_db n) /\
+     (infer_type_subst s (Tapp ts tn) =
+       Infer_Tapp (MAP (infer_type_subst s) ts) tn)`)
+  CHEAT_TAC;;
+
 let infer_deBruijn_subst_def = cake_define_list
   [`infer_deBruijn_subst s (Infer_Tvar_db n) =
       (if n < LENGTH s then
@@ -196,6 +208,18 @@ let infer_deBruijn_subst_def = cake_define_list
    `infer_deBruijn_subst_list s (t :: ts) =
       infer_deBruijn_subst s t :: infer_deBruijn_subst_list s
         ts`];;
+
+let infer_deBruijn_subst_alt = cake_theorem "infer_deBruijn_subst_alt"
+  (fun () ->
+    `(infer_deBruijn_subst s (Infer_Tvar_db n) =
+       (if n < LENGTH s then
+         EL n s else
+         Infer_Tvar_db (n - LENGTH s))) /\
+     (infer_deBruijn_subst s (Infer_Tapp ts tn) =
+       Infer_Tapp (MAP (infer_deBruijn_subst s) ts) tn) /\
+     (infer_deBruijn_subst s (Infer_Tuvar n) =
+       Infer_Tuvar n)`)
+  CHEAT_TAC;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -235,6 +259,36 @@ let type_name_check_subst_def = cake_define_list_cheat CHEAT_TAC
             ts) (\
           ts'.
           st_ex_return (t' :: ts')))`];;
+
+let bind_guard = cake_theorem "bind_guard"
+  (fun () ->
+    `st_ex_bind (infer_guard b l x) g =
+     (\s. if b then g one s else (M_failure (loc_err_info_loc
+       l,x),s))`)
+  CHEAT_TAC;;
+
+let ignore_bind_guard = cake_theorem "ignore_bind_guard"
+  (fun () ->
+    `st_ex_ignore_bind (infer_guard b l x) g =
+     (\s. if b then g s else (M_failure (loc_err_info_loc
+       l,x),s))`)
+  CHEAT_TAC;;
+
+let st_ex_bind_pair = cake_theorem "st_ex_bind_pair"
+  (fun () ->
+    `monad_bind x f =
+     (\s.
+        match x s with (M_success (y,z),s) -> f (y,z) s |
+          (M_failure x,s) -> (M_failure x,s))`)
+  CHEAT_TAC;;
+
+let st_ex_bind_triple = cake_theorem "st_ex_bind_triple"
+  (fun () ->
+    `monad_bind x f =
+     (\s.
+        match x s with (M_success (y,z,q),s) -> f (y,z,q) s |
+          (M_failure x,s) -> (M_failure x,s))`)
+  CHEAT_TAC;;
 
 (* HOL4 inferScript.sml:307-312: ML code, not ported *)
 
@@ -297,6 +351,53 @@ let type_name_check_sub_def = cake_define_list
                          x,s)) | (M_failure x,s) -> (M_failure
                          x,s))`];;
 
+let to_type_name_check_sub = cake_theorem "to_type_name_check_sub"
+  (fun () ->
+    `(!t l f tenvT fvs.
+        type_name_check_subst l f tenvT fvs t =
+        (\(s:'a). match type_name_check_sub l tenvT fvs t s with
+          (M_failure (x,INR r),s) -> (M_failure (x,f r),s) | (M_failure
+          (x,INL r),s) -> (M_failure (x,r),s) | (M_success y,s) ->
+          (M_success y,s))) /\
+     (!t l f tenvT fvs.
+        type_name_check_subst_list l f tenvT fvs t =
+        (\(s:'a). match type_name_check_sub_list l tenvT fvs t s
+          with (M_failure (x,INR r),s) -> (M_failure (x,f r),s) |
+          (M_failure (x,INL r),s) -> (M_failure (x,r),s) | (M_success
+          y,s) -> (M_success y,s)))`)
+  CHEAT_TAC;;
+
+let bind_type_name_check_subst =
+  cake_theorem "bind_type_name_check_subst"
+  (fun () ->
+    `(st_ex_bind (type_name_check_subst l f tenvT fvs t) g =
+      (\(s:'a). match type_name_check_sub l tenvT fvs t s with
+        (M_failure (x,INR r),s) -> (M_failure (x,f r),s) | (M_failure
+        (x,INL r),s) -> (M_failure (x,r),s) | (M_success y,s) -> g y s))
+        /\
+     (st_ex_bind (type_name_check_subst_list l f tenvT fvs ts) gs =
+      (\(s:'a). match type_name_check_sub_list l tenvT fvs ts s
+        with (M_failure (x,INR r),s) -> (M_failure (x,f r),s) |
+        (M_failure (x,INL r),s) -> (M_failure (x,r),s) | (M_success
+        y,s) -> gs y s))`)
+  CHEAT_TAC;;
+
+let ignore_bind_type_name_check_subst =
+  cake_theorem "ignore_bind_type_name_check_subst"
+  (fun () ->
+    `(st_ex_ignore_bind (type_name_check_subst l f tenvT fvs t) g =
+      (\(s:'a). match type_name_check_sub l tenvT fvs t s with
+        (M_failure (x,INR r),s) -> (M_failure (x,f r),s) | (M_failure
+        (x,INL r),s) -> (M_failure (x,r),s) | (M_success y,s) -> g s))
+        /\
+     (st_ex_ignore_bind (type_name_check_subst_list l f tenvT fvs
+       ts) gs =
+      (\(s:'a). match type_name_check_sub_list l tenvT fvs ts s
+        with (M_failure (x,INR r),s) -> (M_failure (x,f r),s) |
+        (M_failure (x,INL r),s) -> (M_failure (x,r),s) | (M_success
+        y,s) -> gs s))`)
+  CHEAT_TAC;;
+
 let find_dup_def = cake_define_list
   [`find_dup [] = NONE`;
    `find_dup (x :: xs) = (if MEM x xs then SOME x else find_dup xs)`];;
@@ -307,6 +408,14 @@ let check_dups_def = cake_define_list
          (if MEM h t then
            infer_failwith l (f h) else
            check_dups l f t)`];;
+
+let check_dups_eq_find_dup = cake_theorem "check_dups_eq_find_dup"
+  (fun () ->
+    `!xs.
+       st_ex_ignore_bind (check_dups l f xs) g =
+       (\s. match find_dup xs with NONE -> g s | SOME x ->
+         (M_failure (loc_err_info_loc l,f x),s))`)
+  CHEAT_TAC;;
 
 let check_ctor_types_def = cake_define_list
   [`check_ctor_types l tenvT tvs [] = st_ex_return one`;
@@ -320,6 +429,9 @@ let check_ctor_types_def = cake_define_list
       " in type definition with constructor "); cn])
                 tenvT tvs ts) (
           check_ctor_types l tenvT tvs ctors)`];;
+
+(* HOL4 inferScript.sml:475-476: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let check_ctors_def = cake_define_list
   [`check_ctors l tenvT [] = st_ex_return one`;
@@ -340,6 +452,9 @@ let check_ctors_def = cake_define_list
           (check_ctor_types l tenvT tvs ctors) (
           check_ctors l tenvT tds)))`];;
 
+(* HOL4 inferScript.sml:495-497: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 let check_type_definition_def = cake_define
   `check_type_definition l tenvT tds =
      st_ex_ignore_bind
@@ -351,6 +466,9 @@ let check_type_definition_def = cake_define
       " in a mutually recursive type definition")])
                   (MAP (FST o SND) tds)) (
        check_ctors l tenvT tds)`;;
+
+(* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -423,6 +541,15 @@ let infer_p_def = cake_define_list_cheat CHEAT_TAC
           (infer_ps l ienv ps) (\
            (ts,tenv').
            st_ex_return (t :: ts,APPEND tenv' tenv)))`];;
+
+let option_case_rand = cake_theorem "option_case_rand"
+  (fun () ->
+    `(match x with NONE -> y | SOME a -> f a) s =
+     (match x with NONE -> y s | SOME a -> f a s)`)
+  CHEAT_TAC;;
+
+(* HOL4 inferScript.sml:584-589: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let word_tc_def = cake_define_list
   [`word_tc ast_W8 = Tword8_num`;
@@ -661,6 +788,31 @@ let constrain_op_def = cake_define
                "Type mismatch")) s | _40 -> infer_failwith l
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
+(* HOL4 inferScript.sml:796-797: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 inferScript.sml:799-800: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let st_ex_bind_failure = cake_theorem "st_ex_bind_failure"
+  (fun () ->
+    `st_ex_bind f g s = (M_failure r,s') <=>
+     (f s = (M_failure r,s') \/
+       (?x st. f s = (M_success x,st) /\ g x st = (M_failure
+         r,s')))`)
+  CHEAT_TAC;;
+
+let constrain_op_error_msg_sanity =
+  cake_theorem "constrain_op_error_msg_sanity"
+  (fun () ->
+    `!l op args s l' s' msg.
+       LENGTH args = SND (op_to_string op) /\
+       constrain_op l op args s = (M_failure (l',msg),s') ==>
+       IS_PREFIX (explode msg) "Type mismatch" \/
+       IS_PREFIX (explode msg) "Unsafe" \/
+       IS_PREFIX (explode msg) "Thunk"`)
+  CHEAT_TAC;;
+
 let _ = size_thms "ast_exp";;
 let _ = size_thms "ast_pat";;
 let _ = size_thms "mlstring";;
@@ -839,6 +991,14 @@ let infer_e_def = cake_define_list_try_tac (fun () ->
            ts.
            st_ex_return (Infer_Tapp [uvar; t] Tfn_num :: ts))))`];;
 
+let FUN_EQ_THM_state = cake_theorem "FUN_EQ_THM_state[local]"
+  (fun () ->
+    `f = g <=> (!s. f s = g s)`)
+  CHEAT_TAC;;
+
+(* HOL4 inferScript.sml:1033-1038: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 let extend_dec_ienv_def = cake_define
   `extend_dec_ienv ienv' ienv =
       mk_inf_env (nsAppend (inf_env_inf_v ienv') (inf_env_inf_v
@@ -967,6 +1127,9 @@ let infer_d_def = cake_define_list_cheat CHEAT_TAC
           (\
         ienv''.
         st_ex_return (extend_dec_ienv ienv'' ienv')))`];;
+
+(* HOL4 inferScript.sml:1147-1152: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* The starting Id should be greater than Tlist_num :: (Tbool_num :: prim_type_nums) *)
 let start_type_id_def = cake_define

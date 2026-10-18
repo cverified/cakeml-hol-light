@@ -2,7 +2,7 @@
 (*  sptree: ported from HOL4's
     src/finite_maps/sptreeScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 91 files of the port.  *)
+    that CakeML needs.  Needed by 105 files of the port.  *)
 (* ======================================================== *)
 
 (* this file needs nothing of the port *)

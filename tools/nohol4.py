@@ -84,6 +84,12 @@ EXPECT = [
   ('the overload', r'^\s*Overload\b'),
   ('the type abbreviation', r'^\s*Type\b'),
   ('the definition', r'^\s*Definition\b'),
+  ('a theorem that HOL4 states as the value of an ML expression',
+   r'^\s*(Theorem|Triviality)\b'),
+  ('a theorem whose statement the port cannot state yet',
+   r'^\s*(Theorem|Triviality)\b'),
+  ('the theorem', r'^\s*(Theorem|Triviality)\b'),
+  ('the triviality', r'^\s*(Theorem|Triviality)\b'),
 ]
 
 AT = re.compile(r'\s*HOL4 (\S+\.sml):(\d+)(?:-(\d+))?:\s*(.*)', re.S)

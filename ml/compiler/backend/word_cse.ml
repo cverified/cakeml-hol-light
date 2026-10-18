@@ -653,30 +653,251 @@ let seqs_def = cake_define_list
   :: xs))`];;
 hol4_overload "Seqs" "word_cse_Seqs";;
 
+let test_latest_name_used = cake_theorem "test_latest_name_used[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+             Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)));
+             Inst (Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
+       Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             wordLang_Move 0 [(9,7)];
+             wordLang_Move 0 [(11,9)];
+             wordLang_Move 0 [(13,11)]]`)
+  CHEAT_TAC;;
+
+let test_get_set = cake_theorem "test_get_set[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Get 1 NextFree;
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             Set NextFree (Var 7);
+             Get 9 NextFree;
+             Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)));
+             Get 33 NextFree;
+             Get 35 NextFree;
+             Get 37 NextFree]) =
+       Seqs [Get 1 NextFree;
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             Set NextFree (Var 7);
+             wordLang_Move 1 [(9,7)];
+             wordLang_Move 0 [(11,9)];
+             wordLang_Move 1 [(33,11)];
+             wordLang_Move 1 [(35,33)];
+             wordLang_Move 1 [(37,35)]]`)
+  CHEAT_TAC;;
+
 (* Concrete word type: the load-fact keys compare distinct offsets, which is
    only decidable at a fixed word width. *)
+let test_pattern_match_and_cons =
+  cake_theorem "test_pattern_match_and_cons[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (Arith (asm_Shift Lsr 301 297 (Imm ((n2w
+         9):word64))));
+             OpCurrHeap asm_Add 305 301;
+             Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
+             wordLang_Move 0 [(313,297)];
+             Inst (Arith (asm_Shift Lsr 317 313 (Imm (n2w 9))));
+             OpCurrHeap asm_Add 321 317;
+             Inst (asm_Mem asm_Load 325 (Addr 321 (n2w 16)));
+             wordLang_Move 0 [(329,313)];
+             Inst (Arith (asm_Shift Lsr 333 329 (Imm (n2w 9))));
+             OpCurrHeap asm_Add 337 333;
+             Inst (asm_Mem asm_Load 341 (Addr 337 (n2w 24)));
+             Get 345 NextFree;
+             Inst (asm_Const 349 (n2w 0x200000003));
+             wordLang_Move 0 [(353,345)];
+             Inst (asm_Mem asm_Store 349 (Addr 353 (n2w 0)));
+             wordLang_Move 0 [(357,353)];
+             Inst (asm_Mem asm_Store 325 (Addr 357 (n2w 8)));
+             wordLang_Move 0 [(361,357)];
+             Inst (asm_Mem asm_Store 341 (Addr 361 (n2w 16)));
+             wordLang_Move 0 [(365,361)];
+             OpCurrHeap asm_Sub 369 365;
+             Inst (Arith (asm_Shift Lsl 373 369 (Imm (n2w 9))));
+             Inst (Arith (asm_Binop asm_Or 377 373 (Imm (n2w 5))));
+             wordLang_Move 0 [(381,365)];
+             Inst (Arith (asm_Binop asm_Add 385 381 (Imm (n2w
+               24))));
+             Set NextFree (Var 385);
+             Get 389 NextFree;
+             Inst (asm_Const 393 (n2w 0x200000003));
+             wordLang_Move 0 [(397,389)];
+             Inst (asm_Mem asm_Store 393 (Addr 397 (n2w 0)));
+             wordLang_Move 0 [(401,397)];
+             Inst (asm_Mem asm_Store 309 (Addr 401 (n2w 8)));
+             wordLang_Move 0 [(405,401)];
+             Inst (asm_Mem asm_Store 377 (Addr 405 (n2w 16)));
+             wordLang_Move 0 [(409,405)];
+             OpCurrHeap asm_Sub 413 409;
+             Inst (Arith (asm_Shift Lsl 417 413 (Imm (n2w 9))));
+             Inst (Arith (asm_Binop asm_Or 421 417 (Imm (n2w 5))));
+             wordLang_Move 0 [(425,409)];
+             Inst (Arith (asm_Binop asm_Add 429 425 (Imm (n2w
+               24))));
+             Set NextFree (Var 429);
+             wordLang_Move 0 [(2,421)]; Return 273 [2]]) =
+       Seqs [Inst (Arith (asm_Shift Lsr 301 297 (Imm (n2w 9))));
+             OpCurrHeap asm_Add 305 301;
+             Inst (asm_Mem asm_Load 309 (Addr 305 (n2w 8)));
+             wordLang_Move 0 [(313,297)];
+             wordLang_Move 0 [(317,301)];
+             wordLang_Move 0 [(321,305)];
+             Inst (asm_Mem asm_Load 325 (Addr 321 (n2w 16)));
+             wordLang_Move 0 [(329,313)];
+             wordLang_Move 0 [(333,317)];
+             wordLang_Move 0 [(337,321)];
+             Inst (asm_Mem asm_Load 341 (Addr 337 (n2w 24)));
+             Get 345 NextFree;
+             Inst (asm_Const 349 (n2w 0x200000003));
+             wordLang_Move 0 [(353,345)];
+             Inst (asm_Mem asm_Store 349 (Addr 353 (n2w 0)));
+             wordLang_Move 0 [(357,353)];
+             Inst (asm_Mem asm_Store 325 (Addr 357 (n2w 8)));
+             wordLang_Move 0 [(361,357)];
+             Inst (asm_Mem asm_Store 341 (Addr 361 (n2w 16)));
+             wordLang_Move 0 [(365,361)];
+             OpCurrHeap asm_Sub 369 365;
+             Inst (Arith (asm_Shift Lsl 373 369 (Imm (n2w 9))));
+             Inst (Arith (asm_Binop asm_Or 377 373 (Imm (n2w 5))));
+             wordLang_Move 0 [(381,365)];
+             Inst (Arith (asm_Binop asm_Add 385 381 (Imm (n2w
+               24))));
+             Set NextFree (Var 385);
+             wordLang_Move 1 [(389,385)];
+             Inst (asm_Const 393 (n2w 0x200000003));
+             wordLang_Move 0 [(397,389)];
+             Inst (asm_Mem asm_Store 393 (Addr 397 (n2w 0)));
+             wordLang_Move 0 [(401,397)];
+             Inst (asm_Mem asm_Store 309 (Addr 401 (n2w 8)));
+             wordLang_Move 0 [(405,401)];
+             Inst (asm_Mem asm_Store 377 (Addr 405 (n2w 16)));
+             wordLang_Move 0 [(409,405)];
+             OpCurrHeap asm_Sub 413 409;
+             Inst (Arith (asm_Shift Lsl 417 413 (Imm (n2w 9))));
+             Inst (Arith (asm_Binop asm_Or 421 417 (Imm (n2w 5))));
+             wordLang_Move 0 [(425,409)];
+             Inst (Arith (asm_Binop asm_Add 429 425 (Imm (n2w
+               24))));
+             Set NextFree (Var 429);
+             wordLang_Move 0 [(2,421)];
+             Return 273 [2]]`)
+  CHEAT_TAC;;
 
 (* Loads from the same canonical address at the same width are CSE'd (and a
    chain hanging off the loaded value then CSEs too); a different width is a
    different fact; any store invalidates all load facts but no register
    facts. *)
+let test_load_cse = cake_theorem "test_load_cse[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (asm_Mem asm_Load 9 (Addr 7 ((n2w 0):word64)));
+             Inst (Arith (asm_Shift Lsr 11 9 (Imm (n2w 29))));
+             Inst (asm_Mem asm_Load 13 (Addr 7 (n2w 0)));
+             Inst (Arith (asm_Shift Lsr 15 13 (Imm (n2w 29))));
+             Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
+             Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
+             Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]) =
+       Seqs [Inst (asm_Mem asm_Load 9 (Addr 7 (n2w 0)));
+             Inst (Arith (asm_Shift Lsr 11 9 (Imm (n2w 29))));
+             wordLang_Move 0 [(13,9)];
+             wordLang_Move 0 [(15,11)];
+             Inst (asm_Mem asm_Load8 17 (Addr 7 (n2w 0)));
+             Inst (asm_Mem asm_Store 15 (Addr 7 (n2w 0)));
+             Inst (asm_Mem asm_Load 19 (Addr 7 (n2w 0)))]`)
+  CHEAT_TAC;;
 
 (* Set CurrHeap conservatively resets all knowledge (it is not emitted by
    data_to_word, so a finer treatment is not worth its proof cost): nothing
    after it is CSE'd. *)
+let test_set_currheap = cake_theorem "test_set_currheap[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             OpCurrHeap asm_Add 3 1;
+             Set CurrHeap (Var 7);
+             Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+             OpCurrHeap asm_Add 5 1]) =
+       Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             OpCurrHeap asm_Add 3 1;
+             Set CurrHeap (Var 7);
+             Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+             OpCurrHeap asm_Add 5 1]`)
+  CHEAT_TAC;;
 
 (* A repeated LocValue of the same label is CSE'd to a Move. *)
+let test_locvalue = cake_theorem "test_locvalue[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [LocValue 7 100; LocValue 9 100]) =
+       Seqs [LocValue 7 100; wordLang_Move 0 [(9,7)]]`)
+  CHEAT_TAC;;
 
 (* LongMul clobbers both outputs (7 and 9), so the value previously stored in
    9 is invalidated and the later Add is NOT replaced by a Move from 9. *)
+let test_multi_output_invalidation =
+  cake_theorem "test_multi_output_invalidation[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+             Inst (Arith (asm_LongMul 7 9 3 5));
+             Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)))]) =
+       Seqs [Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)));
+             Inst (Arith (asm_LongMul 7 9 3 5));
+             Inst (Arith (asm_Binop asm_Add 11 1 (Reg 1)))]`)
+  CHEAT_TAC;;
 
 (* An instruction that reads the register it writes is not stored as a fact,
    so the second Add (reading the NEW 7) is not replaced by a Move. *)
+let test_self_read_not_cse =
+  cake_theorem "test_self_read_not_cse[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (Arith (asm_Binop asm_Add 7 7 (Imm (n2w 1))));
+             Inst (Arith (asm_Binop asm_Add 9 7 (Imm (n2w 1))))]) =
+       Seqs [Inst (Arith (asm_Binop asm_Add 7 7 (Imm (n2w 1))));
+             Inst (Arith (asm_Binop asm_Add 9 7 (Imm (n2w 1))))]`)
+  CHEAT_TAC;;
 
 (* Facts valid after both arms of an If survive the join: the Add fact
    (holder 7) is used both inside the first arm and after the join. *)
+let test_if_merge = cake_theorem "test_if_merge[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             If Equal 1 (Imm (n2w 0))
+                (Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1))))
+                (wordLang_Move 0 [(11,7)]);
+             Inst (Arith (asm_Binop asm_Add 13 1 (Reg 1)))]) =
+       Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             If Equal 1 (Imm (n2w 0)) (wordLang_Move 0 [(9,7)])
+               (wordLang_Move 0 [(11,7)]);
+             wordLang_Move 0 [(13,7)]]`)
+  CHEAT_TAC;;
 
 (* An arm that clobbers a tracked register resets its branch knowledge, so
    nothing survives the join and the trailing Add is not CSE'd. *)
+let test_if_merge_clobber = cake_theorem "test_if_merge_clobber[local]"
+  (fun () ->
+    `word_common_subexp_elim
+       (Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             If Equal 1 (Imm (n2w 0))
+                (wordLang_Move 0 [(7,3)])
+                Skip;
+             Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)))]) =
+       Seqs [Inst (asm_Const 1 (n2w 0));
+             Inst (Arith (asm_Binop asm_Add 7 1 (Reg 1)));
+             If Equal 1 (Imm (n2w 0)) (wordLang_Move 0 [(7,3)])
+               Skip;
+             Inst (Arith (asm_Binop asm_Add 9 1 (Reg 1)))]`)
+  CHEAT_TAC;;
 
 (* HOL4 word_cseScript.sml:905: ML code, not ported *)

@@ -2,7 +2,7 @@
 (*  db_vars: ported from HOL4's
     compiler/backend/db_varsScript.sml
     A definition theory, with 8 definitions, 1 datatype and 14
-    theorems.  Needed by 8 files of the port.  *)
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -26,9 +26,22 @@ let mk_Union_def = cake_define
      if t2 = db_vars_Empty then t1 else
        db_vars_Union t1 t2)`;;
 
+let mk_Union_Empty = cake_theorem "mk_Union_Empty[simp]"
+  (fun () ->
+    `mk_Union (db_vars_Empty:db_var_set) A = A /\ mk_Union A
+  db_vars_Empty = A`)
+  CHEAT_TAC;;
+
 let list_mk_Union_def = cake_define_list
   [`list_mk_Union [] = db_vars_Empty`;
    `list_mk_Union (x :: xs) = mk_Union x (list_mk_Union xs)`];;
+
+let FOLDR_mk_Union_UNZIP = cake_theorem "FOLDR_mk_Union_UNZIP"
+  (fun () ->
+    `ITLIST (\(x,l) (ts,frees). (x :: ts,mk_Union l frees)) l ([],A) =
+     (let (ts,fvs) = UNZIP l in
+       (ts,list_mk_Union (fvs ++ [A])))`)
+  CHEAT_TAC;;
 
 let db_to_set_acc_def = cake_define_list
   [`db_to_set_acc (n:num) (db_vars_Empty:db_var_set) s = s`;
@@ -39,8 +52,18 @@ let db_to_set_acc_def = cake_define_list
    `db_to_set_acc (n:num) (db_vars_Union v1 v2:db_var_set) s =
          db_to_set_acc n v1 (db_to_set_acc n v2 s)`];;
 
+let wf_db_to_set_acc = cake_theorem "wf_db_to_set_acc"
+  (fun () ->
+    `!s n a. sptree_wf a ==> sptree_wf (db_to_set_acc n s a)`)
+  CHEAT_TAC;;
+
 let db_to_set_def = cake_define
   `db_to_set db = db_to_set_acc 0 db LN`;;
+
+let wf_db_to_set = cake_theorem "wf_db_to_set"
+  (fun () ->
+    `!db. sptree_wf (db_to_set db)`)
+  CHEAT_TAC;;
 
 let vars_to_list_def = cake_define
   `vars_to_list db = MAP FST (toAList (db_to_set db))`;;
@@ -58,3 +81,59 @@ let has_var_def = cake_define_list
    `has_var n (db_vars_Shift k d:db_var_set) <=> has_var (n + k) d`;
    `has_var n (db_vars_Union d1 d2:db_var_set) <=> has_var n d1 \/
   has_var n d2`];;
+
+let has_var_mk_Union = cake_theorem "has_var_mk_Union[simp]"
+  (fun () ->
+    `has_var n (mk_Union l1 l2) <=> has_var n l1 \/ has_var n l2`)
+  CHEAT_TAC;;
+
+let has_var_list_mk_Union = cake_theorem "has_var_list_mk_Union[simp]"
+  (fun () ->
+    `!ls. has_var n (list_mk_Union ls) <=> EXISTS (has_var n) ls`)
+  CHEAT_TAC;;
+
+let lookup_db_to_set_acc = cake_theorem "lookup_db_to_set_acc"
+  (fun () ->
+    `!d n k s.
+       sptree_lookup n (db_to_set_acc k d s) =
+         (if has_var (n + k) d then SOME one else sptree_lookup n
+           s)`)
+  CHEAT_TAC;;
+
+let lookup_db_to_set = cake_theorem "lookup_db_to_set"
+  (fun () ->
+    `has_var n d = (sptree_lookup n (db_to_set d) = SOME one)`)
+  CHEAT_TAC;;
+
+let lookup_db_to_set_Shift = cake_theorem "lookup_db_to_set_Shift"
+  (fun () ->
+    `sptree_lookup n (db_to_set (db_vars_Shift k s)) = sptree_lookup
+  (n + k) (db_to_set s)`)
+  CHEAT_TAC;;
+
+let MEM_vars_to_list = cake_theorem "MEM_vars_to_list"
+  (fun () ->
+    `MEM n (vars_to_list d) = has_var n d`)
+  CHEAT_TAC;;
+
+let has_var_FOLDL_Union = cake_theorem "has_var_FOLDL_Union[local]"
+  (fun () ->
+    `!vs n s. has_var n (FOLDL (\s1 v. db_vars_Union (db_vars_Var v) s1)
+  s vs) <=>
+                MEM n vs \/ has_var n s`)
+  CHEAT_TAC;;
+
+let MEM_vars_from_list = cake_theorem "MEM_vars_from_list"
+  (fun () ->
+    `!vs n. has_var n (vars_from_list vs) <=> MEM n vs`)
+  CHEAT_TAC;;
+
+let has_var_vars_flatten = cake_theorem "has_var_vars_flatten[simp]"
+  (fun () ->
+    `has_var n (vars_flatten d) = has_var n d`)
+  CHEAT_TAC;;
+
+let ALL_DISTINCT_vars_to_list = cake_theorem "ALL_DISTINCT_vars_to_list"
+  (fun () ->
+    `ALL_DISTINCT (vars_to_list d)`)
+  CHEAT_TAC;;

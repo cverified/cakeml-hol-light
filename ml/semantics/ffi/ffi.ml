@@ -2,7 +2,7 @@
 (*  ffi: ported from HOL4's
     semantics/ffi/ffiScript.sml
     A definition theory, with 3 definitions, 10 datatypes and no
-    theorems.  Needed by 26 files of the port.  *)
+    theorems.  Needed by 55 files of the port.  *)
 (* ======================================================== *)
 
 (*

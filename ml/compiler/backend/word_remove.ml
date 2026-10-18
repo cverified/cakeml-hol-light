@@ -3,7 +3,7 @@
     compiler/backend/word_removeScript.sml
     A definition theory, with 1 definition and 1 theorem.  Needed by
     backend.ml, backend_passes.ml, wordConvsProof.ml,
-    word_removeProof.ml and word_to_word.ml.  *)
+    word_removeProof.ml, word_to_word.ml and word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -39,3 +39,24 @@ let remove_must_terminate_def = cake_define
         | (Loop names body exit_names) ->
        Loop names (remove_must_terminate body) exit_names
         | prog -> prog`;;
+
+let remove_must_terminate_pmatch =
+  cake_theorem "remove_must_terminate_pmatch"
+  (fun () ->
+    `!prog.
+     remove_must_terminate prog =
+     (match prog with (Seq p0 p1) -> Seq (remove_must_terminate p0)
+       (remove_must_terminate p1) | (If cmp r1 ri e2 e3) ->
+       If cmp r1 ri (remove_must_terminate e2)
+         (remove_must_terminate e3) | (wordLang_MustTerminate p) ->
+         remove_must_terminate p | (Call ret dest args h) ->
+       (let ret = (match ret with NONE -> NONE | SOME
+         (v,cutset,ret_handler,l1,l2) ->
+                             SOME (v,cutset,remove_must_terminate
+                               ret_handler,l1,l2)) in
+       let h = (match h with NONE -> NONE | SOME (v,prog,l1,l2) ->
+         SOME (v,remove_must_terminate prog,l1,l2)) in
+         Call ret dest args h) | (Loop names body exit_names) ->
+       Loop names (remove_must_terminate body) exit_names | prog
+         -> prog)`)
+  CHEAT_TAC;;

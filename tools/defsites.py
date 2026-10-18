@@ -39,6 +39,9 @@ def sites():
       rel = os.path.relpath(p, C + '/ml')
       src = open(p).read()
       for m in PHRASE.finditer(src):
+        # a theorem of phase two is not a definition of the
+        # constants its statement mentions
+        if 'cake_theorem' in m.group(0): continue
         for h in clause_heads(m.group(0)):
           out.setdefault(h, (rel, m.group(1)))
       for m in DECLARE.finditer(src):

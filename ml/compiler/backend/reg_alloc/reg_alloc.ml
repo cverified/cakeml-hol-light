@@ -2,7 +2,7 @@
 (*  reg_alloc: ported from HOL4's
     compiler/backend/reg_alloc/reg_allocScript.sml
     A definition theory, with 88 definitions, 5 datatypes and 6
-    theorems.  Needed by 11 files of the port.  *)
+    theorems.  Needed by 15 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -304,6 +304,17 @@ let update_move_related_def = cake_define
 (* HOL4 reg_allocScript.sml:117: ML code, not ported *)
 
 (* HOL4 reg_allocScript.sml:119-123: ML code, not ported *)
+
+(* HOL4 reg_allocScript.sml:125-126: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 reg_allocScript.sml:127-128: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 reg_allocScript.sml:129-130: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 reg_allocScript.sml:131-132: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 reg_allocScript.sml:133-134: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (* Helper functions for defining the allocator *)
 
@@ -1142,6 +1153,13 @@ let is_phy_var_def = cake_define
   `is_phy_var (n:num) = (n MOD 2 = 0)`;;
 let is_alloc_var_def = cake_define
   `is_alloc_var (n:num) = (n MOD 4 = 1)`;;
+
+let convention_partitions = cake_theorem "convention_partitions"
+  (fun () ->
+    `!n. (is_stack_var n <=> (~is_phy_var n) /\ ~(is_alloc_var n)) /\
+       (is_phy_var n <=> (~is_stack_var n) /\ ~(is_alloc_var n)) /\
+       (is_alloc_var n <=> (~is_phy_var n) /\ ~(is_stack_var n))`)
+  CHEAT_TAC;;
 
 (* Set the tags according to wordLang conventions *)
 let mk_tags_def = cake_define

@@ -13,6 +13,7 @@ needs "Library/words.ml";;
 needs "lib/fastdef.ml";;
 needs "lib/hol4.ml";;
 needs "lib/define.ml";;
+needs "lib/theorem.ml";;
 needs "lib/records.ml";;
 needs "lib/words4.ml";;
 needs "lib/finite_map.ml";;

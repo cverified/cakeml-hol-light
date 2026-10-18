@@ -284,6 +284,48 @@ class Porter:
     return (bool(re.match(r"^[A-Za-z][A-Za-z0-9_']*$", txt.strip())) and
             len({t for t, _ in self.db.defs.get(nm, [])}) > 1)
 
+  def theorem(self, b):
+    """a theorem of a source: its name, its attributes and its
+       statement, with CHEAT_TAC where HOL4 has its proof (phase
+       two; phase three puts a proof there)"""
+    name = self.thmname(b.name)
+    attrs = ('[' + ','.join(b.attrs) + ']') if b.attrs else ''
+    self.ctx.defining = set()
+    self.ctx.intnums = False
+    self.ctx.intneg = False
+    self.intargs = set()
+    self.intresult = False
+    try:
+      # the statement is a quotation in a function, so that one
+      # that does not typecheck is no error of the file but a
+      # cheat of its own that the reports count (THEOREM_THUNK)
+      stmt = fmt(self.term(b.body), indent=5, width=72, last=2)
+    except Exception as ex:
+      self.warn.append('%s %s: %s' % (b.kind, b.name, ex))
+      self.out.append(self.at(b, 'a theorem whose statement the'
+                                 ' port cannot state yet'))
+      return
+    head = 'let %s = cake_theorem "%s%s"' % (name, b.name, attrs)
+    if len(head) > 72:
+      head = ('let %s =\n  cake_theorem "%s%s"'
+              % (name, b.name, attrs))
+      if max(len(l) for l in head.split('\n')) > 72:
+        head = ('let %s =\n  cake_theorem\n    "%s%s"'
+                % (name, b.name, attrs))
+    self.out.append('%s\n  (fun () ->\n    `%s`)\n  CHEAT_TAC;;'
+                    % (head, stmt))
+
+  def thmname(self, name):
+    """the OCaml binding that a theorem of this theory gets: its
+       own name, or the name with the theory in front of it where
+       that name is one of HOL Light\'s or one that another theory
+       of the port has already taken"""
+    nm = ocaml_name(name)
+    if nm in self.db.hl or nm in self.db.thmnames:
+      nm = ocaml_name(self.thy + '_' + name)
+    self.db.thmnames.add(nm)
+    return nm
+
   def srcname(self):
     """the path of the HOL4 source, over as many lines as it
        takes to stay within the line length"""
@@ -444,8 +486,13 @@ class Porter:
         self.block(b)
       except Exception as ex:
         self.warn.append(f'{b.kind} {b.name}: {ex}')
-        self.out.append(f'(* PORT FAILED: {b.kind} {b.name}: {ex}\n'
-                        f'{b.text}\n*)')
+        # the port holds no HOL4 code, so what it could not
+        # translate is a pointer at the source, as everything
+        # else it cannot say is
+        self.out.append(
+          '\n'.join(fill('(* PORT FAILED: %s %s:' % (b.kind, b.name),
+                          str(ex).split(), 69)) + ' *)\n'
+          + self.at(b, 'the %s' % b.kind.lower()))
       new = self.out[before:]
       if new:
         # the needs of the port start a paragraph of their own
@@ -481,6 +528,10 @@ class Porter:
   def wanted(self, b):
     """of a HOL4 library theory only the needed definitions are ported"""
     if self.kind != 'lib': return True
+    # and none of its theorems: the theorems of the port are
+    # CakeML's, and what it needs of a HOL4 library is what phase
+    # three takes from it
+    if b.kind in ('Theorem', 'Triviality', 'ThmValue'): return False
     if b.kind == 'Datatype':
       names = []
       for ty, cons, flds in hol4.datatype_names(b.body):
@@ -560,8 +611,14 @@ class Porter:
       self.overload(b)
     elif k in ('Inductive', 'CoInductive'):
       self.inductive(b)
-    elif k in ('Theorem', 'Triviality', 'ThmValue'):
-      pass
+    elif k in ('Theorem', 'Triviality'):
+      self.theorem(b)
+    elif k == 'ThmValue':
+      # a theorem that HOL4 binds to the value of an ML
+      # expression: the statement is what that expression
+      # computes, which the port cannot
+      self.out.append(self.at(b, 'a theorem that HOL4 states as'
+                                 ' the value of an ML expression'))
     elif k == 'ML':
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
         return

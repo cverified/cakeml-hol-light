@@ -143,6 +143,8 @@ let flatten_def = cake_define_cheat CHEAT_TAC
        (List [labLang_Asm (Cbw r1 r2) [] 0],F,m) | _11 -> (List
          [],F,m))`;;
 hol4_overload "flatten" "stack_to_lab_flatten";;
+(* HOL4 stack_to_labScript.sml:115-124: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 let is_Seq_def = cake_define
   `is_Seq x1 =

@@ -13,6 +13,11 @@ import hol4, hterm, db as dbmod, port as portmod
 
 KINDS = ('Datatype', 'Definition', 'Inductive', 'CoInductive')
 
+# phase two: the theorems of a CakeML source are in the port as
+# well, with CHEAT_TAC where HOL4 has its proof.  A theorem is in
+# when the port states it (cake_theorem with its name).
+THMKINDS = ('Theorem', 'Triviality', 'ThmValue')
+
 
 def names_of(b, p):
   """the names that a block defines, as (name, is a type)"""
@@ -29,7 +34,7 @@ def names_of(b, p):
 def main():
   db = dbmod.Db()
   thys = sys.argv[1:] or [t for t, _, k in db.order]
-  tot = [0, 0, 0]
+  tot = [0, 0, 0, 0, 0, 0]
   rows = []
   for thy in thys:
     path = db.thy_of_file.get(thy)
@@ -40,8 +45,9 @@ def main():
                                    db.mlpath_of(thy)).read(), False)
     except Exception:
       text = ''
-    want = have = 0
+    want = have = twant = thave = 0
     missing = []
+    tmissing = []
     db.base_grammar(thy)
     for b in hol4.parse(path):
       if b.kind == 'ML':
@@ -54,6 +60,15 @@ def main():
           if hterm.type_vars_of(ty): continue
         except Exception:
           continue
+      elif b.kind in THMKINDS:
+        if not p.wanted(b): continue
+        twant += 1
+        if b.name and re.search(r'cake_theorem\s*"%s[]["]'
+                                % re.escape(b.name), text):
+          thave += 1
+        else:
+          tmissing.append('%s %s' % (b.kind, b.name or '(a value)'))
+        continue
       elif b.kind not in KINDS or not p.wanted(b):
         continue
       want += 1
@@ -69,13 +84,19 @@ def main():
         missing.append('%s %s' % (b.kind, b.name or
                                   [n for n, _ in nms[:1]]))
     tot[0] += want; tot[1] += have; tot[2] += len(missing)
-    rows.append((thy, want, have, missing))
-  print('%-28s %6s %6s' % ('theory', 'blocks', 'in'))
-  for thy, want, have, missing in rows:
-    if want != have or '-v' in sys.argv:
-      print('%-28s %6d %6d' % (thy, want, have))
+    tot[3] += twant; tot[4] += thave; tot[5] += len(tmissing)
+    rows.append((thy, want, have, missing, twant, thave, tmissing))
+  print('%-28s %6s %6s %8s %6s' % ('theory', 'blocks', 'in',
+                                   'theorems', 'in'))
+  for thy, want, have, missing, twant, thave, tmissing in rows:
+    if want != have or twant != thave or '-v' in sys.argv:
+      print('%-28s %6d %6d %8d %6d' % (thy, want, have, twant, thave))
       for m in missing: print('        missing:', m)
-  print('%-28s %6d %6d  (%d missing)' % ('TOTAL', tot[0], tot[1], tot[2]))
+      for m in tmissing[:4]: print('        not stated:', m)
+      if len(tmissing) > 4:
+        print('        not stated: and %d more' % (len(tmissing) - 4))
+  print('%-28s %6d %6d %8d %6d  (%d blocks, %d theorems missing)'
+        % ('TOTAL', tot[0], tot[1], tot[3], tot[4], tot[2], tot[5]))
 
 
 main()

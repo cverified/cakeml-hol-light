@@ -2,7 +2,7 @@
 (*  word_gcFunctions: ported from HOL4's
     compiler/backend/proofs/word_gcFunctionsScript.sml
     A proof theory, with 30 definitions and 32 theorems.  Needed by
-    5 files of the port.  *)
+    6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -25,9 +25,29 @@ needs "semantics/ast.ml";;
 (* HOL4 word_gcFunctionsScript.sml:12: ML code, not ported *)
 
 (* move candidates *)
+let bytes_in_word_mul_eq_shift =
+  cake_theorem "bytes_in_word_mul_eq_shift"
+  (fun () ->
+    `good_dimindex (:'a) ==>
+     (bytes_in_word * w = ((w << backend_common_word_shift
+       (:'a)):'a word))`)
+  CHEAT_TAC;;
+
+let word_or_eq_0 = cake_theorem "word_or_eq_0"
+  (fun () ->
+    `(w || v) = (n2w 0) <=> w = (n2w 0) /\ v = (n2w 0)`)
+  CHEAT_TAC;;
 
 (* HOL4 word_gcFunctionsScript.sml:30: the ML values that the
    definitions below antiquote *)
+
+let shift_length_has_fp_ops =
+  cake_theorem "shift_length_has_fp_ops[simp]"
+  (fun () ->
+    `shift_length (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = shift_length
+  conf`)
+  CHEAT_TAC;;
 
 (* -------------------------------------------------------
     definition and verification of GC functions
@@ -155,6 +175,42 @@ let word_gen_gc_partial_move_list_def = cake_define_cheat CHEAT_TAC
       let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a +
         bytes_in_word,l - (n2w 1),i1,pa1,old,m1,dm,gs,rs) in
         (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`;;
+
+let word_gen_gc_partial_move_list_zero =
+  cake_theorem "word_gen_gc_partial_move_list_zero"
+  (fun () ->
+    `word_gen_gc_partial_move_list conf (a,(n2w
+  0),i,pa,old,m,dm,gs,rs) = (a,i,pa,m,T)`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_list_suc =
+  cake_theorem "word_gen_gc_partial_move_list_suc"
+  (fun () ->
+    `word_gen_gc_partial_move_list conf (a,(n2w (SUC l):'a
+  word),i,pa,old,m,dm,gs,rs) =
+     (if n2w (SUC l) = ((n2w 0):'a word) then (a,i,pa,m,T) else
+      let w = m a in
+      let (w1,i1,pa1,m1,c1) = word_gen_gc_partial_move conf
+        (w,i,pa,old,m,dm,gs,rs) in
+      let m1 = (a =+ w1) m1 in
+      let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf (a
+        + bytes_in_word,n2w l,i1,pa1,old,m1,dm,gs,rs) in
+        (a2,i2,pa2,m2,(a IN dm /\ c1 /\ c2)))`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_list_append =
+  cake_theorem "word_gen_gc_partial_move_list_append"
+  (fun () ->
+    `!a l l' i pa old m dm gs rs conf.
+     (l + l' < dimword (:'a)) ==> (
+     word_gen_gc_partial_move_list conf (a,(n2w (l + l'):'a
+       word),i,pa,old,m,dm,gs,rs) =
+     (let (a2,i2,pa2,m2,c2) = word_gen_gc_partial_move_list conf
+       (a,n2w l,i,pa,old,m,dm,gs,rs) in
+     let (a3,i3,pa3,m3,c3) = word_gen_gc_partial_move_list conf
+       (a2,n2w l',i2,pa2,old,m2,dm,gs,rs) in
+       (a3,i3,pa3,m3,(c2 /\ c3))))`)
+  CHEAT_TAC;;
 
 let word_gc_move_loop_def = cake_define
   `word_gc_move_loop k conf (pb,i,pa,old,m,dm,c) =
@@ -503,4 +559,221 @@ let word_gc_fun_def = cake_define
                             (Temp (n2w 6),wordLang_Word (n2w 0))] in
               if c2 then SOME (TL roots1,m1,s1) else NONE)))`;;
 
+let word_gc_move_roots_IMP_EVERY2 =
+  cake_theorem "word_gc_move_roots_IMP_EVERY2"
+  (fun () ->
+    `!xs ys pa m i c1 m1 pa1 i1 old dm c.
+        word_gc_move_roots c (xs,i,pa,old,m,dm) = (ys,i1,pa1,m1,c1)
+          ==>
+        EVERY2 (\x y. (isWord x <=> isWord y) /\
+                      (is_gc_word_const x ==> x = y)) xs ys`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_roots_IMP_EVERY2 =
+  cake_theorem "word_gen_gc_move_roots_IMP_EVERY2"
+  (fun () ->
+    `!xs ys pa m i ib pb c1 m1 pa1 i1 ib1 pb1 old dm c.
+        word_gen_gc_move_roots c (xs,i,pa,ib,pb,old,m,dm) =
+           (ys,i1,pa1,ib1,pb1,m1,c1) ==>
+        EVERY2 (\x y. (isWord x <=> isWord y) /\
+                      (is_gc_word_const x ==> x = y)) xs ys`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_roots_IMP_EVERY2 =
+  cake_theorem "word_gen_gc_partial_move_roots_IMP_EVERY2"
+  (fun () ->
+    `!xs ys pa m i gs rs c1 m1 pa1 i1 old dm c.
+        word_gen_gc_partial_move_roots c (xs,i,pa,old,m,dm,gs,rs) =
+           (ys,i1,pa1,m1,c1) ==>
+        EVERY2 (\x y. (isWord x <=> isWord y) /\
+                      (is_gc_word_const x ==> x = y)) xs ys`)
+  CHEAT_TAC;;
+
+let word_gc_IMP_EVERY2 = cake_theorem "word_gc_IMP_EVERY2"
+  (fun () ->
+    `word_gc_fun c (xs,m,dm,st) = SOME (ys,m1,s1) ==>
+      EVERY2 (\x y. (isWord x <=> isWord y) /\ (is_gc_word_const
+        x ==> x = y)) xs ys`)
+  CHEAT_TAC;;
+
+let word_gc_fun_LENGTH = cake_theorem "word_gc_fun_LENGTH"
+  (fun () ->
+    `word_gc_fun c (xs,m,dm,s) = SOME (zs,m1,s1) ==> LENGTH xs =
+  LENGTH zs`)
+  CHEAT_TAC;;
+
 (* lemmas about has_fp_ops *)
+let word_gc_fun_assum_has_fp_ops =
+  cake_theorem "word_gc_fun_assum_has_fp_ops[simp]"
+  (fun () ->
+    `word_gc_fun_assum (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) s =
+      word_gc_fun_assum conf s`)
+  CHEAT_TAC;;
+
+let word_gc_move_has_fp_ops =
+  cake_theorem "word_gc_move_has_fp_ops[simp]"
+  (fun () ->
+    `!x. word_gc_move (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+          word_gc_move conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_has_fp_ops =
+  cake_theorem "word_gen_gc_move_has_fp_ops[simp]"
+  (fun () ->
+    `!x. word_gen_gc_move (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+          word_gen_gc_move conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_has_fp_ops =
+  cake_theorem "word_gen_gc_partial_move_has_fp_ops[simp]"
+  (fun () ->
+    `!x. word_gen_gc_partial_move (data_to_word_config_has_fp_tern_fupd
+  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+          word_gen_gc_partial_move conf x`)
+  CHEAT_TAC;;
+
+let word_gc_move_list_has_fp_ops =
+  cake_theorem "word_gc_move_list_has_fp_ops[simp]"
+  (fun () ->
+    `!conf x. word_gc_move_list (data_to_word_config_has_fp_tern_fupd (K
+  b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+               word_gc_move_list conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_list_has_fp_ops =
+  cake_theorem "word_gen_gc_move_list_has_fp_ops[simp]"
+  (fun () ->
+    `!conf x. word_gen_gc_move_list
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+               word_gen_gc_move_list conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_list_has_fp_ops =
+  cake_theorem "word_gen_gc_partial_move_list_has_fp_ops[simp]"
+  (fun () ->
+    `!conf x. word_gen_gc_partial_move_list
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+               word_gen_gc_partial_move_list conf x`)
+  CHEAT_TAC;;
+
+let word_gc_move_roots_has_fp_ops =
+  cake_theorem "word_gc_move_roots_has_fp_ops[simp]"
+  (fun () ->
+    `!conf x. word_gc_move_roots (data_to_word_config_has_fp_tern_fupd
+  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+               word_gc_move_roots conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_roots_has_fp_ops =
+  cake_theorem "word_gen_gc_move_roots_has_fp_ops[simp]"
+  (fun () ->
+    `!conf x. word_gen_gc_move_roots
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+               word_gen_gc_move_roots conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_roots_has_fp_ops =
+  cake_theorem "word_gen_gc_partial_move_roots_has_fp_ops[simp]"
+  (fun () ->
+    `!conf x. word_gen_gc_partial_move_roots
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+               word_gen_gc_partial_move_roots conf x`)
+  CHEAT_TAC;;
+
+let word_gc_move_loop_has_fp_ops =
+  cake_theorem "word_gc_move_loop_has_fp_ops[simp]"
+  (fun () ->
+    `!n conf x. word_gc_move_loop n
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+                 word_gc_move_loop n conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_data_has_fp_ops =
+  cake_theorem "word_gen_gc_partial_move_data_has_fp_ops[simp]"
+  (fun () ->
+    `!n conf x. word_gen_gc_partial_move_data
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+                 word_gen_gc_partial_move_data conf n x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_data_has_fp_ops =
+  cake_theorem "word_gen_gc_move_data_has_fp_ops[simp]"
+  (fun () ->
+    `!n conf x. word_gen_gc_move_data
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+                 word_gen_gc_move_data conf n x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_refs_has_fp_ops =
+  cake_theorem "word_gen_gc_move_refs_has_fp_ops[simp]"
+  (fun () ->
+    `!n conf x. word_gen_gc_move_refs
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+                 word_gen_gc_move_refs conf n x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_move_ref_list_has_fp_ops =
+  cake_theorem "word_gen_gc_partial_move_ref_list_has_fp_ops[simp]"
+  (fun () ->
+    `!n conf x. word_gen_gc_partial_move_ref_list n
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+                 word_gen_gc_partial_move_ref_list n conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_move_loop_has_fp_ops =
+  cake_theorem "word_gen_gc_move_loop_has_fp_ops[simp]"
+  (fun () ->
+    `!n conf x. word_gen_gc_move_loop
+  (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) n x =
+                 word_gen_gc_move_loop conf n x`)
+  CHEAT_TAC;;
+
+let word_full_gc_has_fp_ops =
+  cake_theorem "word_full_gc_has_fp_ops[simp]"
+  (fun () ->
+    `!x. word_full_gc (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+          word_full_gc conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_partial_full_has_fp_ops =
+  cake_theorem "word_gen_gc_partial_full_has_fp_ops[simp]"
+  (fun () ->
+    `!x. word_gen_gc_partial_full (data_to_word_config_has_fp_tern_fupd
+  (K b2) (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+          word_gen_gc_partial_full conf x`)
+  CHEAT_TAC;;
+
+let word_gen_gc_has_fp_ops = cake_theorem "word_gen_gc_has_fp_ops[simp]"
+  (fun () ->
+    `!x. word_gen_gc (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x =
+          word_gen_gc conf x`)
+  CHEAT_TAC;;
+
+let glob_real_has_fp_ops = cake_theorem "glob_real_has_fp_ops[simp]"
+  (fun () ->
+    `glob_real (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) x y =
+     glob_real conf x y`)
+  CHEAT_TAC;;
+
+let word_gc_fun_has_fp_ops = cake_theorem "word_gc_fun_has_fp_ops[simp]"
+  (fun () ->
+    `word_gc_fun (data_to_word_config_has_fp_tern_fupd (K b2)
+  (data_to_word_config_has_fp_ops_fupd (K b1) conf)) = word_gc_fun
+  conf`)
+  CHEAT_TAC;;

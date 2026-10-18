@@ -418,9 +418,13 @@ def parse(path):
       body = mm.group(4) if mm else ''
       blocks.append(Block(kind, name, attrs, body.strip(), text=text))
       i = j; continue
-    # Theorem name = term is a one line form without Proof and QED
+    # Theorem name = term is a one line form without Proof and
+    # QED; the = may be on the line after the name
     if kind in ('Theorem', 'Triviality') and \
-       re.match(r'^\w+\s+[A-Za-z0-9_\']+\s*(\[[^\]]*\])?\s*=', line):
+       (re.match(r'^\w+\s+[A-Za-z0-9_\']+\s*(\[[^\]]*\])?\s*=', line)
+        or (re.match(r'^\w+\s+[A-Za-z0-9_\']+\s*(\[[^\]]*\])?\s*$',
+                     line)
+            and i + 1 < n and lines[i+1].lstrip().startswith('='))):
       j = i + 1
       while j < n and lines[j].strip() and not HEAD.match(lines[j]) \
           and not lines[j].lstrip().startswith('(*'):

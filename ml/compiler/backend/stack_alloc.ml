@@ -866,6 +866,9 @@ let next_lab_def = cake_define
            next_lab p (next_lab p' ((MAX (MAX l2 l3 + 2) aux))) |
              _16 -> aux)`;;
 
+(* HOL4 stack_allocScript.sml:664-674: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let comp_def = cake_define_cheat CHEAT_TAC
@@ -891,6 +894,9 @@ let comp_def = cake_define_cheat CHEAT_TAC
                    (Skip,0,n,m)) (INL loc) NONE,m + 1) | _17 ->
                    (p,m))`;;
 hol4_overload "comp" "stack_alloc_comp";;
+
+(* HOL4 stack_allocScript.sml:705-714: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 let prog_comp_def = cake_define
   `stack_alloc_prog_comp (n,p) = (n,FST (comp n (next_lab p 2) p))`;;

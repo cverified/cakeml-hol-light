@@ -318,6 +318,14 @@ let detuplify_def = cake_define
         Attup args -> args
       | ty -> [ty]`;;
 
+let detuplify_pmatch = cake_theorem "detuplify_pmatch"
+  (fun () ->
+    `!ty.
+       detuplify ty =
+       (match ty with
+         Attup args -> args | ty -> [ty])`)
+  CHEAT_TAC;;
+
 let ptree_PTbase_def = cake_define
   `ptree_PTbase ast =
      (match ast with
@@ -652,6 +660,12 @@ let ptree_Pattern_def = cake_define_list
                  SOME (hdpat :: tlpats)))) | _68 -> NONE)`];;
 
 new_type_abbrev("ptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
+
+(* HOL4 cmlPtreeConversionScript.sml:742-745: a theorem that HOL4
+   states as the value of an ML expression *)
+
+(* HOL4 cmlPtreeConversionScript.sml:747-748: a theorem that HOL4
+   states as the value of an ML expression *)
 
 let ptree_PbaseList1_def = cake_define_list
   [`ptree_PbaseList1 (Lf _70) = NONE`;
@@ -1124,6 +1138,23 @@ let ptree_Expr_def = cake_define_list_cheat CHEAT_TAC
                 e. OPTION_BIND (ptree_Eseq seq_pt) (\
                 seq'.
                 SOME (e :: seq')))) | _122 -> NONE)`];;
+
+let dumb1 = cake_theorem "dumb1[local]"
+  (fun () ->
+    `COND (p = q) t e = COND (q = p) t e`)
+  CHEAT_TAC;;
+let dumb2 = cake_theorem "dumb2[local]"
+  (fun () ->
+    `COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`)
+  CHEAT_TAC;;
+(* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4
+   states as the value of an ML expression *)
+
+(* HOL4 cmlPtreeConversionScript.sml:1264-1271: a theorem that HOL4
+   states as the value of an ML expression *)
+
+(* HOL4 cmlPtreeConversionScript.sml:1273-1274: a theorem that HOL4
+   states as the value of an ML expression *)
 
 let ptree_StructName_def = cake_define_list
   [`ptree_StructName (Lf _124) = NONE`;

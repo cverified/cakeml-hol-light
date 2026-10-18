@@ -2,7 +2,7 @@
 (*  word_bignum: ported from HOL4's
     compiler/backend/word_bignumScript.sml
     A definition theory, with 17 definitions, 2 datatypes and 2
-    theorems.  Needed by 12 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -484,6 +484,9 @@ let mc_fac_final_code_def = to_deep mc_fac_final_def;;
 let mc_fac_code_def = to_deep mc_fac_def;;
 let mc_use_fac_code_def = to_deep mc_use_fac_def;;
 
+(* HOL4 word_bignumScript.sml:414-415: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* compiler into wordLang *)
 
 let has_compiled_def = cake_define
@@ -646,3 +649,6 @@ let generated_bignum_stubs_def = cake_define
        mc_iop_code in
        (n,1,Seq x1 (Return 0 [0])) :: MAP (\(x,y,z). (y,1,Seq z
          (Return 0 [0]))) cs)`;;
+
+(* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
+   the value of an ML expression *)

@@ -160,6 +160,14 @@ let byte_to_string_def = cake_define
 let all_bytes_def = cake_define
   `all_bytes = Vector (GENLIST (\n. byte_to_string (n2w n)) 256)`;;
 
+(* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let byte_to_string_eq = cake_theorem "byte_to_string_eq"
+  (fun () ->
+    `!b. byte_to_string b = sub all_bytes (w2n b)`)
+  CHEAT_TAC;;
+
 (* gas allows 0-9a-zA-Z_$. in labels as long as the first is _A-Za-z *)
 (* we prefix labels and reserve $; . is special *)
 

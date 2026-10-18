@@ -18,6 +18,9 @@ needs "semantics/ast.ml";;
 let ag32_names_def = cake_define
   `ag32_names = (LN:num spt)`;;
 
+(* HOL4 ag32_configScript.sml:14-15: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* HOL4 ag32_configScript.sml:17-23: the ML values that the
    definitions below antiquote *)
 

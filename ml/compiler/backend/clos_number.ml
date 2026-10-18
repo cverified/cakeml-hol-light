@@ -2,8 +2,8 @@
 (*  clos_number: ported from HOL4's
     compiler/backend/clos_numberScript.sml
     A definition theory, with 3 definitions and 1 theorem.  Needed
-    by backend_passes.ml, clos_numberProof.ml, clos_to_bvl.ml and
-    clos_to_bvlProof.ml.  *)
+    by backendProof.ml, backend_passes.ml, clos_numberProof.ml,
+    clos_to_bvl.ml and clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -73,6 +73,12 @@ let renumber_code_locs_def = cake_define_list_try_tac (fun () ->
            (n,closLang_Op t (closLang_IntOp closLang_Add) xs))`];;
 
 (* HOL4 clos_numberScript.sml:66: ML code, not ported *)
+
+let renumber_code_locs_length = cake_theorem "renumber_code_locs_length"
+  (fun () ->
+    `(!x y. LENGTH (SND (renumber_code_locs_list x y)) = LENGTH y) /\
+      (!(x:num) (y:closLang_exp). T)`)
+  CHEAT_TAC;;
 
 let compile_inc_def = cake_define
   `clos_number_compile_inc n xs =

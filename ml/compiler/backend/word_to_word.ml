@@ -101,4 +101,52 @@ let full_compile_single_for_eval_def = cake_define
      let _11 = empty_ffi (implode "finished: word_remove") in
        (name_num,arg_count,rmt_prog))`;;
 
+let full_compile_single_for_eval_eq =
+  cake_theorem "full_compile_single_for_eval_eq"
+  (fun () ->
+    `full_compile_single two_reg_arith reg_count alg c p =
+     full_compile_single_for_eval two_reg_arith reg_count alg c p`)
+  CHEAT_TAC;;
+
 (* used for bootstrap translation *)
+let compile_alt = cake_theorem "compile_alt"
+  (fun () ->
+    `word_to_word_compile word_conf (asm_conf:'a asm_config) progs =
+     (let (two_reg_arith,reg_count) = (asm_config_two_reg_arith
+       asm_conf,asm_config_reg_count asm_conf - (5 + LENGTH
+       (asm_config_avoid_regs asm_conf))) in
+     let (n_oracles,col) = next_n_oracle (LENGTH progs)
+       (word_to_word_config_col_oracle word_conf) in
+     let alg = word_to_word_config_reg_alg word_conf in
+     let names = MAP (\(x,y,z). x) progs in
+     let args = MAP (\(x,y,z). y) progs in
+     let ps = MAP (\(x,y,z). z) progs in
+     let simp_ps = MAP word_simp_compile_exp ps in
+     let _12 = empty_ffi (implode "finished: word_simp") in
+     let inst_ps = MAP (\p. inst_select asm_conf (max_var p + 1) p)
+       simp_ps in
+     let _13 = empty_ffi (implode "finished: word_inst") in
+     let ssa_ps = MAP2 (\a p. full_ssa_cc_trans a p) args inst_ps
+       in
+     let _14 = empty_ffi (implode "finished: word_ssa") in
+     let rm_ssa_ps = MAP remove_dead_prog ssa_ps in
+     let _15 = empty_ffi (implode
+       "finished: word_remove_dead after word_ssa") in
+     let cse_ps = MAP word_common_subexp_elim rm_ssa_ps in
+     let _16 = empty_ffi (implode "finished: word_cse") in
+     let cp_ps = MAP copy_prop cse_ps in
+     let _17 = empty_ffi (implode "finished: word_copy") in
+     let two_ps = MAP (three_to_two_reg_prog two_reg_arith) cp_ps
+       in
+     let _18 = empty_ffi (implode "finished: word_two_reg") in
+     let unreach_ps = MAP remove_unreach two_ps in
+     let _19 = empty_ffi (implode "finished: word_unreach") in
+     let dead_ps = MAP remove_dead_prog unreach_ps in
+     let _20 = empty_ffi (implode "finished: word_remove_dead") in
+     let reg_ps = MAP2 (\c (n,p). word_alloc n asm_conf alg
+       reg_count p c) n_oracles (ZIP names dead_ps) in
+     let _21 = empty_ffi (implode "finished: word_alloc") in
+     let rmt_ps = MAP remove_must_terminate reg_ps in
+     let _22 = empty_ffi (implode "finished: word_remove") in
+     (col,ZIP names (ZIP args rmt_ps)))`)
+  CHEAT_TAC;;

@@ -92,6 +92,9 @@ let comp_def = cake_define
                                 (tlookup f r2) dest | p -> p)`;;
 hol4_overload "comp" "stack_names_comp";;
 
+(* HOL4 stack_namesScript.sml:89-99: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 let prog_comp_def = cake_define
   `stack_names_prog_comp f (n,p) = (n,stack_names_comp f p)`;;
 hol4_overload "prog_comp" "stack_names_prog_comp";;

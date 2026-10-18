@@ -24,11 +24,31 @@ let dest_Let_def = cake_define
         (ast_Let opt x y:ast_exp) -> SOME (opt,x,y)
       | _1 -> NONE`;;
 
+let dest_Let_SOME = cake_theorem "dest_Let_SOME"
+  (fun () ->
+    `dest_Let z = SOME (opt,x,y) <=> z = ast_Let opt x y`)
+  CHEAT_TAC;;
+
+let dest_Let_NONE = cake_theorem "dest_Let_NONE"
+  (fun () ->
+    `dest_Let z = NONE <=> (!opt x y. ~(z = ast_Let opt x y))`)
+  CHEAT_TAC;;
+
 let dest_Letrec_def = cake_define
   `dest_Letrec x1 =
       match x1 with
         (ast_Letrec funs x:ast_exp) -> SOME (funs,x)
       | _2 -> NONE`;;
+
+let dest_Letrec_SOME = cake_theorem "dest_Letrec_SOME"
+  (fun () ->
+    `dest_Letrec z = SOME (funs,x) <=> z = ast_Letrec funs x`)
+  CHEAT_TAC;;
+
+let dest_Letrec_NONE = cake_theorem "dest_Letrec_NONE"
+  (fun () ->
+    `dest_Letrec z = NONE <=> (!funs x. ~(z = ast_Letrec funs x))`)
+  CHEAT_TAC;;
 
 let lift_let_def = cake_define
   `lift_let x1 =

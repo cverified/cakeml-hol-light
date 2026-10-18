@@ -624,6 +624,11 @@ let do_if_def = cake_define
         NONE))`;;
 hol4_overload "do_if" "flatSem_do_if";;
 
+let do_if_either_or = cake_theorem "do_if_either_or"
+  (fun () ->
+    `do_if v e1 e2 = SOME e ==> e = e1 \/ e = e2`)
+  CHEAT_TAC;;
+
 let pmatch_stamps_ok = cake_inductive
   `(
      pmatch_stamps_ok (SOME (cn,NONE)) (SOME (cn',NONE)) n_ps n_vs)
@@ -701,6 +706,11 @@ let fix_clock_def = cake_define
   `flatSem_fix_clock s (s1,res) = (state_clock_fupd (K (MIN
   (state_clock s) (state_clock s1))) s1,res)`;;
 hol4_overload "fix_clock" "flatSem_fix_clock";;
+
+let flatSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+  (fun () ->
+    `fix_clock s x = (s1,res) ==> state_clock s1 <= state_clock s`)
+  CHEAT_TAC;;
 
 
 let do_eval_def = cake_define
@@ -786,6 +796,19 @@ hol4_overload "exp1_alt_size" "flatSem_exp1_alt_size";;
 hol4_overload "exp2_alt_size" "flatSem_exp2_alt_size";;
 hol4_overload "exp3_alt_size" "flatSem_exp3_alt_size";;
 hol4_overload "exp_alt_size" "flatSem_exp_alt_size";;
+
+let exp6_alt_size = cake_theorem "exp6_alt_size"
+  (fun () ->
+    `exp6_alt_size xs = LENGTH xs + SUM (MAP flatSem_exp_alt_size xs)`)
+  CHEAT_TAC;;
+
+let pmatch_rows_Match_exp_alt_size =
+  cake_theorem "pmatch_rows_Match_exp_alt_size"
+  (fun () ->
+    `!pes s v env e.
+       pmatch_rows pes s v = Match (env',p,e) ==>
+       flatSem_exp_alt_size e < flatSem_exp3_alt_size pes`)
+  CHEAT_TAC;;
 
 let dec_alt_size_def = cake_define
   `dec_alt_size a = 1 + flatSem_exp_alt_size a`;;
@@ -950,6 +973,37 @@ hol4_overload "evaluate" "flatSem_evaluate";;
 hol4_overload "evaluate_decs" "flatSem_evaluate_decs";;
 
 (* HOL4 flatSemScript.sml:947-950: ML code, not ported *)
+
+(* HOL4 flatSemScript.sml:952-953: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let flatSem_do_app_const = cake_theorem "do_app_const"
+  (fun () ->
+    `do_app s op vs = SOME (s',r) ==> state_clock s = state_clock s'`)
+  CHEAT_TAC;;
+
+let flatSem_evaluate_clock = cake_theorem "evaluate_clock"
+  (fun () ->
+    `(!env (s:('c,'ffi)flatSem_state) e r s2. evaluate env s e = (s2,r)
+  ==> state_clock s2 <= state_clock s) /\
+     (!(s:('c,'ffi)flatSem_state) e r s2. evaluate_dec s e = (s2,r)
+       ==> state_clock s2 <= state_clock s) /\
+     (!(s:('c,'ffi)flatSem_state) e r s2. evaluate_decs s e =
+       (s2,r) ==> state_clock s2 <= state_clock s)`)
+  CHEAT_TAC;;
+
+let flatSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+  (fun () ->
+    `fix_clock s (evaluate env s e) = evaluate env s e /\
+     fix_clock s (evaluate_dec s d) = evaluate_dec s d /\
+     fix_clock s (evaluate_decs s ds) = evaluate_decs s ds`)
+  CHEAT_TAC;;
+
+(* HOL4 flatSemScript.sml:986-987: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 flatSemScript.sml:989-990: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let initial_state_def = cake_define
   `flatSem_initial_state ffi k ec =

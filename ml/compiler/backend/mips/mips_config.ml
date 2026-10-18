@@ -28,6 +28,9 @@ let mips_names_def = cake_define
       insert 24 0 o
       insert 31 1) LN:num spt)`;;
 
+(* HOL4 mips_configScript.sml:35-36: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 (* HOL4 mips_configScript.sml:38-44: the ML values that the
    definitions below antiquote *)
 

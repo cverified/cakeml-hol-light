@@ -2,7 +2,8 @@
 (*  cmlPEG: ported from HOL4's
     compiler/parsing/cmlPEGScript.sml
     A definition theory, with 25 definitions and 17 theorems.
-    Needed by cmlParse.ml, pegComplete.ml and pegSound.ml.  *)
+    Needed by cmlParse.ml, fromSexp.ml, infer.ml, pegComplete.ml and
+    pegSound.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -635,12 +636,23 @@ let cmlPEG_def = cake_define
 (* HOL4 cmlPEGScript.sml:543-559: the ML values that the definitions
    below antiquote *)
 
+(* HOL4 cmlPEGScript.sml:561-566: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 (* HOL4 cmlPEGScript.sml:568-571: ML code, not ported *)
 
 (* HOL4 cmlPEGScript.sml:573: the ML values that the definitions
    below antiquote *)
 
+(* HOL4 cmlPEGScript.sml:575-580: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 (* HOL4 cmlPEGScript.sml:582-586: ML code, not ported *)
+
+let frange_image = cake_theorem "frange_image[local]"
+  (fun () ->
+    `FRANGE fm = IMAGE (FAPPLY fm) (FDOM fm)`)
+  CHEAT_TAC;;
 
 (* HOL4 cmlPEGScript.sml:594-597: ML code, not ported *)
 
@@ -658,6 +670,34 @@ let cmlPEG_def = cake_define
 
 (* HOL4 cmlPEGScript.sml:644-647: ML code, not ported *)
 
+let peg0_pegf = cake_theorem "peg0_pegf[simp]"
+  (fun () ->
+    `peg0 G (pegf s f) = peg0 G s`)
+  CHEAT_TAC;;
+
+let peg0_seql = cake_theorem "peg0_seql[simp]"
+  (fun () ->
+    `(peg0 G (seql [] f) <=> T) /\
+     (peg0 G (seql (h :: t) f) <=> peg0 G h /\ peg0 G (seql t I))`)
+  CHEAT_TAC;;
+
+let peg0_tokeq = cake_theorem "peg0_tokeq[simp]"
+  (fun () ->
+    `peg0 G (cmlPEG_tokeq t) = F`)
+  CHEAT_TAC;;
+
+let peg0_tokSymP = cake_theorem "peg0_tokSymP[simp]"
+  (fun () ->
+    `peg0 G (tokSymP P) <=> F`)
+  CHEAT_TAC;;
+
+let peg0_choicel = cake_theorem "peg0_choicel[simp]"
+  (fun () ->
+    `(peg0 G (choicel []) = F) /\
+     (peg0 G (choicel (h :: t)) <=> peg0 G h \/ pegfail G h /\
+       peg0 G (choicel t))`)
+  CHEAT_TAC;;
+
 (* HOL4 cmlPEGScript.sml:681-695: a proof *)
 
 (* HOL4 cmlPEGScript.sml:697-717: ML code, not ported *)
@@ -667,16 +707,45 @@ let cmlPEG_def = cake_define
 (* HOL4 cmlPEGScript.sml:734-757: the ML values that the definitions
    below antiquote *)
 
+(* HOL4 cmlPEGScript.sml:759-760: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 (*
 set_diff (TypeBase.constructors_of ``:MMLnonT``)
          (topo_nts @ [``nTyVarList``, ``nTypeList``, ``nDtypeDecls``,
                       ``nDtypeCons``])
 *)
 
+let subexprs_pnt = cake_theorem "subexprs_pnt[local]"
+  (fun () ->
+    `subexprs (cmlPEG_pnt n) = {cmlPEG_pnt n}`)
+  CHEAT_TAC;;
+
+(* HOL4 cmlPEGScript.sml:774-783: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let PEG_wellformed = cake_theorem "PEG_wellformed[simp]"
+  (fun () ->
+    `wfG cmlPEG`)
+  CHEAT_TAC;;
+
+(* HOL4 cmlPEGScript.sml:797-799: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 cmlPEGScript.sml:801-803: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 cmlPEGScript.sml:805-806: a theorem that HOL4 states as the
+   value of an ML expression *)
+
 (* HOL4 cmlPEGScript.sml:808-816: ML code, not ported *)
 
 (* HOL4 cmlPEGScript.sml:818-820: a proof *)
+(* HOL4 cmlPEGScript.sml:821-822: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* HOL4 cmlPEGScript.sml:824-840: a proof *)
+(* HOL4 cmlPEGScript.sml:841-842: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* HOL4 cmlPEGScript.sml:844: ML code, not ported *)

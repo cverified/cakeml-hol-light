@@ -9,12 +9,12 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 338: the three axioms of HOL
-Light and 335 for the 448 definitions below.
+`length (axioms ())` is 339: the three axioms of HOL
+Light and 336 for the 449 definitions below.
 
-Of these 448 definitions
+Of these 449 definitions
 
-- 302 have only their **termination** assumed, so the
+- 303 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
 - 14 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
@@ -23,7 +23,7 @@ Of these 448 definitions
 
 Why they are assumed:
 
-- 302: termination (CHEAT_TAC)
+- 303: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
 - 14: declared (no value)
 
@@ -461,6 +461,7 @@ Why they are assumed:
 | `word_copy_bwd` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `word_xor_bytes` | `compiler/backend/proofs/data_to_word_memoryProof.ml` | termination (CHEAT_TAC) |
 | `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
+| `flatProps_set_globals` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `no_Mat` | `compiler/backend/semantics/flatProps.ml` | termination (CHEAT_TAC) |
 | `adjust_pc` | `compiler/backend/proofs/lab_filterProof.ml` | termination (CHEAT_TAC) |
@@ -478,4 +479,4 @@ Why they are assumed:
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 
-448 definitions.
+449 definitions.

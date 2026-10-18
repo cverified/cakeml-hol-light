@@ -2,7 +2,7 @@
 (*  labSem: ported from HOL4's
     compiler/backend/semantics/labSemScript.sml
     A definition theory, with 37 definitions, 2 datatypes and 2
-    theorems.  Needed by 5 files of the port.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -385,6 +385,12 @@ let asm_code_length_def = cake_define_list_cheat CHEAT_TAC
          asm_code_length ((Section k ys) :: xs) + (if is_Label
            y then 0 else 1:num)`];;
 
+let asm_fetch_IMP = cake_theorem "asm_fetch_IMP[local]"
+  (fun () ->
+    `(asm_fetch s = SOME x) ==> pc
+       s < asm_code_length (state_code s)`)
+  CHEAT_TAC;;
+
 let lab_to_loc_def = cake_define
   `lab_to_loc (labLang_Lab n1 n2:lab) = Loc n1 n2`;;
 
@@ -402,6 +408,27 @@ let loc_to_pc_def = cake_define_list_cheat CHEAT_TAC
                  match loc_to_pc n1 n2 ((Section k zs) :: ys)
                    with NONE -> NONE | SOME pos -> SOME (pos +
                    (1:num))))`];;
+
+let asm_inst_consts = cake_theorem "asm_inst_consts"
+  (fun () ->
+    `(pc (asm_inst i s) = pc s) /\
+     (state_code (asm_inst i s) = state_code s) /\
+     (state_clock (asm_inst i s) = state_clock s) /\
+     (state_ffi (asm_inst i s) = state_ffi s) /\
+     (labSem_state_io_regs (asm_inst i s) = labSem_state_io_regs s)
+       /\
+     (labSem_state_io_fp_regs (asm_inst i s) =
+       labSem_state_io_fp_regs s) /\
+     (labSem_state_cc_regs (asm_inst i s) = labSem_state_cc_regs s)
+       /\
+     (labSem_state_cc_fp_regs (asm_inst i s) =
+       labSem_state_cc_fp_regs s) /\
+     (ptr_reg (asm_inst i s) = ptr_reg s) /\
+     (len_reg (asm_inst i s) = len_reg s) /\
+     (ptr2_reg (asm_inst i s) = ptr2_reg s) /\
+     (len2_reg (asm_inst i s) = len2_reg s) /\
+     (link_reg (asm_inst i s) = link_reg s)`)
+  CHEAT_TAC;;
 
 let get_pc_value_def = cake_define
   `get_pc_value lab (s:('a,'c,'ffi)labSem_state) =

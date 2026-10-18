@@ -2,7 +2,7 @@
 (*  closLang: ported from HOL4's
     compiler/backend/closLangScript.sml
     A definition theory, with 4 definitions, 9 datatypes and 1
-    theorem.  Needed by 60 files of the port.  *)
+    theorem.  Needed by 72 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -195,6 +195,11 @@ let has_install_def = cake_define_list_try (fun () ->
    `has_install_list [] = F`;
    `has_install_list (x :: xs) = (has_install x \/ has_install_list
   xs)`];;
+
+let exp1_size_lemma = cake_theorem "exp1_size_lemma"
+  (fun () ->
+    `!fns n x. MEM (n,x) fns ==> closLang_exp_size x < exp1_size fns`)
+  CHEAT_TAC;;
 
 let pure_op_def = cake_define
   `closLang_pure_op op <=>

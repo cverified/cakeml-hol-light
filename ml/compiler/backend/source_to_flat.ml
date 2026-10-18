@@ -2,8 +2,8 @@
 (*  source_to_flat: ported from HOL4's
     compiler/backend/source_to_flatScript.sml
     A definition theory, with 31 definitions, 6 datatypes and 8
-    theorems.  Needed by backend.ml, presLang.ml and
-    source_to_flatProof.ml.  *)
+    theorems.  Needed by backend.ml, backendProof.ml, presLang.ml
+    and source_to_flatProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -68,6 +68,12 @@ let compile_var_def = cake_define_list
    `compile_var t (source_to_flat_Local _3 s:var_name) =
   flatLang_Var_local t s`];;
 
+let ast_pat1_size = cake_theorem "ast_pat1_size"
+  (fun () ->
+    `pat1_size xs = LENGTH xs + SUM (MAP pattern_semantics_pat_size
+  xs)`)
+  CHEAT_TAC;;
+
 let _ = size_thms "pattern_semantics_pat";;
 (* HOL4 source_to_flatScript.sml:68-72: the tactic that proves the
    termination *)
@@ -102,6 +108,11 @@ let type_group_id_type_def = cake_define
         NONE -> NONE
       | (SOME (cn,NONE)) -> SOME (cn,NONE)
       | (SOME (cn,(SOME (ty_id,ctors)))) -> SOME (cn,SOME ty_id)`;;
+
+let type_group_id_type_MAP = cake_theorem "type_group_id_type_MAP"
+  (fun () ->
+    `type_group_id_type = OPTION_MAP (I ## OPTION_MAP FST)`)
+  CHEAT_TAC;;
 
 let str_sep_def = cake_define
   `str_sep = (implode "_")`;;
@@ -277,6 +288,37 @@ let compile_exp_def = cake_define_list_try_tac (fun () ->
 hol4_overload "compile_exp" "source_to_flat_compile_exp";;
 hol4_overload "compile_exps" "source_to_flat_compile_exps";;
 
+let compile_exps_append = cake_theorem "compile_exps_append"
+  (fun () ->
+    `!env es es'.
+      compile_exps t env (es ++ es') =
+      compile_exps t env es ++ compile_exps t env es'`)
+  CHEAT_TAC;;
+
+let compile_exps_reverse = cake_theorem "compile_exps_reverse"
+  (fun () ->
+    `!env es.
+      compile_exps t env (REVERSE es) = REVERSE (compile_exps t
+        env es)`)
+  CHEAT_TAC;;
+
+let compile_funs_map = cake_theorem "compile_funs_map"
+  (fun () ->
+    `!env funs.
+      compile_funs t env funs =
+        MAP (\(f,x,e). (f,x,compile_exp
+          (f :: t) (source_to_flat_environment_v_fupd (K (nsBind
+            x (source_to_flat_Local backend_common_None x)
+            (source_to_flat_environment_v env))) env) e)) funs`)
+  CHEAT_TAC;;
+
+let compile_funs_dom = cake_theorem "compile_funs_dom"
+  (fun () ->
+    `!funs.
+      (MAP (\(x,y,z). x) funs) =
+      (MAP (\(x,y,z). x) (compile_funs t env funs))`)
+  CHEAT_TAC;;
+
 let om_tra_def = cake_define
   `om_tra = Cons orphan_trace 1`;;
 
@@ -285,6 +327,19 @@ let alloc_defs_def = cake_define_list
    `alloc_defs n next' (x :: xs) =
         (x,source_to_flat_Glob om_tra next') :: alloc_defs (n +
           1) (next' + 1) xs`];;
+
+let fst_alloc_defs = cake_theorem "fst_alloc_defs"
+  (fun () ->
+    `!n next' l. MAP FST' (alloc_defs n next' l) = l`)
+  CHEAT_TAC;;
+
+let alloc_defs_append = cake_theorem "alloc_defs_append"
+  (fun () ->
+    `!m n l1 l2.
+       alloc_defs m n (l1 ++ l2) =
+       alloc_defs m n l1 ++ alloc_defs (m + LENGTH l1) (n +
+         LENGTH l1) l2`)
+  CHEAT_TAC;;
 
 let make_varls_def = cake_define
   `make_varls n t idx x4 =

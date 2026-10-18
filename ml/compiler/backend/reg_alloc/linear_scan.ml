@@ -2,8 +2,7 @@
 (*  linear_scan: ported from HOL4's
     compiler/backend/reg_alloc/linear_scanScript.sml
     A definition theory, with 67 definitions, 4 datatypes and 5
-    theorems.  Needed by linear_scanProof.ml, word_alloc.ml and
-    word_allocProof.ml.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -457,6 +456,17 @@ let update_sorted_moves_def = cake_define
 (* HOL4 linear_scanScript.sml:363: ML code, not ported *)
 
 (* HOL4 linear_scanScript.sml:365-369: ML code, not ported *)
+
+(* HOL4 linear_scanScript.sml:371-372: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 linear_scanScript.sml:373-374: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 linear_scanScript.sml:375-376: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 linear_scanScript.sml:377-378: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 linear_scanScript.sml:379-380: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (* HOL4 linear_scanScript.sml:382-384: ML code, not ported *)
 

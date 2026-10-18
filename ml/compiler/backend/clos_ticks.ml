@@ -104,6 +104,24 @@ hol4_overload "remove_ticks_sing" "clos_ticks_remove_ticks_sing";;
 
 (* HOL4 clos_ticksScript.sml:77: ML code, not ported *)
 
+let clos_ticks_LENGTH_remove_ticks = cake_theorem "LENGTH_remove_ticks"
+  (fun () ->
+    `!(es:closLang_exp list). LENGTH (clos_ticks_remove_ticks es) =
+  LENGTH es`)
+  CHEAT_TAC;;
+
+let remove_ticks_sing_eq = cake_theorem "remove_ticks_sing_eq"
+  (fun () ->
+    `(!e. clos_ticks_remove_ticks [e] = [clos_ticks_remove_ticks_sing
+  e]) /\
+     (!es. clos_ticks_remove_ticks es =
+       clos_ticks_remove_ticks_list es) /\
+     (!fns.
+       remove_ticks_let fns =
+       MAP (\(num_args,x). (num_args,HD (clos_ticks_remove_ticks
+         [x]))) fns)`)
+  CHEAT_TAC;;
+
 let compile_inc_def = cake_define
   `clos_ticks_compile_inc (e,xs) = (clos_ticks_remove_ticks e,[])`;;
 hol4_overload "compile_inc" "clos_ticks_compile_inc";;

@@ -2,8 +2,7 @@
 (*  panLang: ported from HOL4's
     pancake/panLangScript.sml
     A definition theory, with 24 definitions, 10 datatypes and 2
-    theorems.  Needed by clos_annotateProof.ml, compiler.ml and
-    infer.ml.  *)
+    theorems.  Needed by compiler.ml, evaluateProps.ml and infer.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -151,6 +150,12 @@ let struct_info_FIELDS = define_record "struct_info"
 (* HOL4 panLangScript.sml:129: the overload StandAloneCall, which the
    port expands *)
 
+let MEM_IMP_shape_size = cake_theorem "MEM_IMP_shape_size"
+  (fun () ->
+    `!shapes a. MEM a shapes ==> (shape_size a < 1 + shape1_size
+  shapes)`)
+  CHEAT_TAC;;
+
 let is_wf_shape_def = cake_define_list
   [`is_wf_shape ctxt One = T`;
    `is_wf_shape ctxt (Comb shs) = EVERY (is_wf_shape ctxt) shs`;
@@ -201,6 +206,13 @@ let shape_val_def = cake_define_list
    `shape_val (Named nm) = Const (n2w 0)`;
    `shape_vals [] = []`;
    `shape_vals (sh :: shs) = shape_val sh :: shape_vals shs`];;
+
+let MEM_IMP_exp_size = cake_theorem "MEM_IMP_exp_size"
+  (fun () ->
+    `(!xs a. MEM a xs ==> (panLang_exp_size l a < exp3_size l xs)) /\
+     (!xs a. MEM a xs ==> (panLang_exp_size l (SND a) < exp1_size
+       l xs))`)
+  CHEAT_TAC;;
 
 
 let nested_seq_def = cake_define_list

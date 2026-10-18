@@ -2,7 +2,8 @@
 (*  data_space: ported from HOL4's
     compiler/backend/data_spaceScript.sml
     A definition theory, with 6 definitions and 1 theorem.  Needed
-    by bvi_to_data.ml, dataSem.ml, data_spaceProof.ml and export.ml.  *)
+    by bvi_to_data.ml, dataProps.ml, dataSem.ml, data_spaceProof.ml,
+    data_to_word_memoryProof.ml and export.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -86,6 +87,35 @@ let space_def = cake_define
         | (If n c2 c3) ->
         INL (If n (pMakeSpace (space c2)) (pMakeSpace (space c3)))
         | c -> INL c`;;
+
+let space_pmatch = cake_theorem "space_pmatch"
+  (fun () ->
+    `!c.
+     space c =
+       (match c with dataLang_MakeSpace k names -> INR
+         (k,names,dataLang_Skip) | dataLang_Seq c1 c2 -> (
+        let d1 = pMakeSpace (space c1) in
+        let x2 = space c2 in
+          match x2 with INL c4 ->
+             (match c1 with dataLang_MakeSpace k names -> INR
+               (k,names,c4) | dataLang_Skip -> INL c4 | _12 -> INL
+               (dataLang_Seq d1 c4)) | INR (k2,names2,c4) ->
+             (match c1 with dataLang_Skip -> INR (k2,names2,c4) |
+               dataLang_MakeSpace k1 names1 -> INR (k2,inter names1
+               names2,c4) | dataLang_Move dest src ->
+                  INR (k2,sptree_insert src one (sptree_delete dest
+                    names2),
+                       dataLang_Seq (dataLang_Move dest src) c4) |
+                         dataLang_Assign dest op args NONE ->
+                  INR (op_space_req op (LENGTH args) + k2,
+                       list_insert args (sptree_delete dest
+                         names2),
+                       dataLang_Seq (dataLang_Assign dest op args
+                         NONE) c4) | _13 -> INL (dataLang_Seq d1
+                         (pMakeSpace x2)))) | If n c2 c3 ->
+         INL (If n (pMakeSpace (space c2)) (pMakeSpace (space
+           c3))) | c -> INL c)`)
+  CHEAT_TAC;;
 
 let compile_def = cake_define
   `data_space_compile c = pMakeSpace (space c)`;;

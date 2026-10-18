@@ -2,7 +2,7 @@
 (*  typeSoundInvariants: ported from HOL4's
     semantics/proofs/typeSoundInvariantsScript.sml
     A proof theory, with 18 definitions, 1 datatype and no theorems.
-    Needed by 10 files of the port.  *)
+    Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*

@@ -2,7 +2,7 @@
 (*  dataSem: ported from HOL4's
     compiler/backend/semantics/dataSemScript.sml
     A definition theory, with 73 definitions, 5 datatypes and 16
-    theorems.  Needed by 11 files of the port.  *)
+    theorems.  Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -138,6 +138,11 @@ let check_res_def = cake_define
      (if sptree_size refs <= sptree_size r then (n,refs,seen) else
        (n,r,seen))`;;
 
+let check_res_IMP = cake_theorem "check_res_IMP"
+  (fun () ->
+    `!y. (n,r,s) = check_res t y ==> size r <= size t`)
+  CHEAT_TAC;;
+
 let small_num_def = cake_define
   `small_num arch64 (i:int) =
      (if arch64 then --(&(2 EXP 61)) <= i /\ i < (&(2 EXP 61))
@@ -195,6 +200,17 @@ let size_of_def = cake_define_list_try_tac (fun () ->
            let (n,refs,seen) = size_of lims vs refs (insert ts one
              seen) in
              (n + LENGTH vs + 1,refs,seen))`];;
+
+let check_res_size_of = cake_theorem "check_res_size_of[local]"
+  (fun () ->
+    `check_res refs (size_of lims vs refs seen) = size_of lims vs refs
+  seen`)
+  CHEAT_TAC;;
+
+(* HOL4 dataSemScript.sml:159: a theorem that HOL4 states as the
+   value of an ML expression *)
+(* HOL4 dataSemScript.sml:160: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let extract_stack_def = cake_define_list
   [`extract_stack (Env _22 env:dataSem_stack) = sptree_toList env`;
@@ -1439,6 +1455,18 @@ let fix_clock_def = cake_define
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "dataSem_fix_clock";;
 
+let dataSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+  (fun () ->
+    `fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`)
+  CHEAT_TAC;;
+
+let dataSem_LESS_EQ_dec_clock = cake_theorem "LESS_EQ_dec_clock[local]"
+  (fun () ->
+    `state_clock
+       r <= state_clock (dec_clock s) ==> state_clock r <=
+         state_clock s`)
+  CHEAT_TAC;;
+
 let flush_state_def = cake_define_list
   [`dataSem_flush_state T (s:('c,'ffi)dataSem_state) =
   dataSem_state_locals_size_fupd (K (SOME 0)) (stack_fupd (K [])
@@ -1529,6 +1557,18 @@ let cut_state_opt_def = cake_define
      (match names with NONE -> SOME s | SOME names ->
        dataSem_cut_state names s)`;;
 hol4_overload "cut_state_opt" "dataSem_cut_state_opt";;
+
+let pop_env_clock = cake_theorem "pop_env_clock[local]"
+  (fun () ->
+    `(dataSem_pop_env s = SOME s1) ==> (state_clock s1 = state_clock
+  s)`)
+  CHEAT_TAC;;
+
+let push_env_clock = cake_theorem "push_env_clock[local]"
+  (fun () ->
+    `state_clock
+       (dataSem_push_env env b s) = state_clock s`)
+  CHEAT_TAC;;
 
 let find_code_def = cake_define_list
   [`dataSem_find_code (SOME p) args code ssize =
@@ -1745,7 +1785,45 @@ let evaluate_peak_def = cake_define
 
 (* We prove that the clock never increases. *)
 
+(* HOL4 dataSemScript.sml:1511-1517: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+let do_stack_clock = cake_theorem "do_stack_clock"
+  (fun () ->
+    `state_clock
+        (do_stack op args s1) = state_clock s1`)
+  CHEAT_TAC;;
+
+let do_app_clock = cake_theorem "do_app_clock"
+  (fun () ->
+    `(dataSem_do_app op args s1 = Rval (res,s2)) ==> state_clock s2 <=
+  state_clock s1`)
+  CHEAT_TAC;;
+
+let set_vars_clock = cake_theorem "set_vars_clock[local,simp]"
+  (fun () ->
+    `state_clock
+       (dataSem_set_vars ns vs s) = state_clock s`)
+  CHEAT_TAC;;
+
+let dataSem_evaluate_clock = cake_theorem "evaluate_clock"
+  (fun () ->
+    `!xs s1 vs s2. (evaluate (xs,s1) = (vs,s2)) ==> state_clock s2 <=
+  state_clock s1`)
+  CHEAT_TAC;;
+
+let dataSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+  (fun () ->
+    `fix_clock s (evaluate (xs,s)) = evaluate (xs,s)`)
+  CHEAT_TAC;;
+
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
+
+(* HOL4 dataSemScript.sml:1583-1584: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+(* HOL4 dataSemScript.sml:1586-1587: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (* observational semantics *)
 

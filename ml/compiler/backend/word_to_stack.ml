@@ -3,7 +3,7 @@
     compiler/backend/word_to_stackScript.sml
     A definition theory, with 45 definitions, 1 datatype and no
     theorems.  Needed by backend.ml, backendProof.ml,
-    stack_to_lab.ml and word_to_stackProof.ml.  *)
+    stack_to_lab.ml, stack_to_labProof.ml and word_to_stackProof.ml.  *)
 (* ======================================================== *)
 
 (*

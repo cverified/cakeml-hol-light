@@ -2,7 +2,8 @@
 (*  clos_mti: ported from HOL4's
     compiler/backend/clos_mtiScript.sml
     A definition theory, with 6 definitions and 12 theorems.  Needed
-    by clos_mtiProof.ml, clos_to_bvl.ml and clos_to_bvlProof.ml.  *)
+    by backendProof.ml, clos_mtiProof.ml, clos_to_bvl.ml and
+    clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -26,6 +27,28 @@ let collect_args_def = cake_define
 
 (* HOL4 clos_mtiScript.sml:22: ML code, not ported *)
 
+let collect_args_size = cake_theorem "collect_args_size"
+  (fun () ->
+    `!max_app num_args e num_args' e'.
+       (num_args',e') = collect_args max_app num_args e ==>
+       num_args' + closLang_exp_size e' <= num_args +
+         closLang_exp_size e`)
+  CHEAT_TAC;;
+
+let collect_args_more = cake_theorem "collect_args_more[local]"
+  (fun () ->
+    `!max_app num_args e num_args' e'.
+       (num_args',e') = collect_args max_app num_args e ==>
+       num_args <= num_args'`)
+  CHEAT_TAC;;
+
+let collect_args_zero = cake_theorem "collect_args_zero"
+  (fun () ->
+    `!max_app num_args e e'.
+      collect_args max_app num_args e = (0,e') ==>
+      num_args = 0`)
+  CHEAT_TAC;;
+
 let collect_apps_def = cake_define
   `collect_apps max_app args e =
         match e with
@@ -36,6 +59,26 @@ let collect_apps_def = cake_define
         | e -> (args,e)`;;
 
 (* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
+
+let exp3_size_append = cake_theorem "exp3_size_append[local]"
+  (fun () ->
+    `!es1 es2. exp3_size (es1 ++ es2) = exp3_size es1 + exp3_size es2`)
+  CHEAT_TAC;;
+
+let collect_apps_more = cake_theorem "collect_apps_more[local]"
+  (fun () ->
+    `!max_app args e args' e'.
+       (args',e') = collect_apps max_app args e ==>
+       LENGTH args <= LENGTH args'`)
+  CHEAT_TAC;;
+
+let collect_apps_size = cake_theorem "collect_apps_size"
+  (fun () ->
+    `!max_app args e args' e'.
+      (args',e') = collect_apps max_app args e ==>
+      list_size closLang_exp_size args' + closLang_exp_size e' <=
+        list_size closLang_exp_size args + closLang_exp_size e`)
+  CHEAT_TAC;;
 
 let _ = size_thms "closLang_exp";;
 (* HOL4 clos_mtiScript.sml:144-153: the tactic that proves the
@@ -100,6 +143,39 @@ let intro_multi_def = cake_define_try_tac (fun () ->
 
 (* HOL4 clos_mtiScript.sml:155: ML code, not ported *)
 
+let intro_multi_length = cake_theorem "intro_multi_length"
+  (fun () ->
+    `!max_app es. LENGTH (intro_multi max_app es) = LENGTH es`)
+  CHEAT_TAC;;
+
+let intro_multi_sing = cake_theorem "intro_multi_sing"
+  (fun () ->
+    `!e max_app. ?e'. intro_multi max_app [e] = [e']`)
+  CHEAT_TAC;;
+
+let collect_args_idem = cake_theorem "collect_args_idem"
+  (fun () ->
+    `!max_app num_args e num_args' e'.
+      collect_args max_app num_args e = (num_args',e') ==>
+      collect_args max_app num_args' (HD (intro_multi max_app
+        [e'])) = (num_args',(HD (intro_multi max_app [e'])))`)
+  CHEAT_TAC;;
+
+let collect_apps_idem = cake_theorem "collect_apps_idem"
+  (fun () ->
+    `!max_app args e args' e'.
+      collect_apps max_app args e = (args',e') ==>
+      collect_apps max_app (intro_multi max_app args') (HD
+        (intro_multi max_app [e'])) = (intro_multi max_app args',(HD
+        (intro_multi max_app [e'])))`)
+  CHEAT_TAC;;
+
+let intro_multi_idem = cake_theorem "intro_multi_idem"
+  (fun () ->
+    `!max_app e. intro_multi max_app (intro_multi max_app e) =
+  intro_multi max_app e`)
+  CHEAT_TAC;;
+
 let compile_def = cake_define_list
   [`clos_mti_compile F max_app exps = exps`;
    `clos_mti_compile T max_app exps = intro_multi max_app exps`];;
@@ -113,3 +189,8 @@ hol4_overload "compile_inc" "clos_mti_compile_inc";;
 let cond_mti_compile_inc_def = cake_define
   `cond_mti_compile_inc do_it max_app =
      (if do_it then (clos_mti_compile_inc max_app) else I)`;;
+
+let clos_mti_compile_nil = cake_theorem "compile_nil[simp]"
+  (fun () ->
+    `clos_mti_compile do_mti max_app [] = []`)
+  CHEAT_TAC;;

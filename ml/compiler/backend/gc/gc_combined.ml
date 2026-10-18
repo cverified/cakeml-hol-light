@@ -2,7 +2,8 @@
 (*  gc_combined: ported from HOL4's
     compiler/backend/gc/gc_combinedScript.sml
     A definition theory, with 2 definitions, 1 datatype and no
-    theorems.  Needed by data_to_word_memoryProof.ml.  *)
+    theorems.  Needed by data_to_word_gcProof.ml and
+    data_to_word_memoryProof.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -2,7 +2,7 @@
 (*  backend_common: ported from HOL4's
     compiler/backend/backend_commonScript.sml
     A definition theory, with 28 definitions, 2 datatypes and 3
-    theorems.  Needed by 55 files of the port.  *)
+    theorems.  Needed by 64 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -123,6 +123,16 @@ let bvl_num_stubs_def = cake_define
 let bvl_to_bvi_namespaces_def = cake_define
   `bvl_to_bvi_namespaces = 4`;;
 
+let data_num_stubs_EVEN = cake_theorem "data_num_stubs_EVEN"
+  (fun () ->
+    `EVEN data_num_stubs`)
+  CHEAT_TAC;;
+
+let bvl_num_stub_MOD = cake_theorem "bvl_num_stub_MOD"
+  (fun () ->
+    `bvl_num_stubs MOD bvl_to_bvi_namespaces = 0`)
+  CHEAT_TAC;;
+
 (* shift values, per dimindex(:α) *)
 let word_shift_def = cake_define
   `backend_common_word_shift (:'a) =
@@ -146,3 +156,9 @@ let word_add_carry_def = cake_define
 let list_delete_def = cake_define_list
   [`list_delete [] s = s`;
    `list_delete (v :: vs) s = list_delete vs (sptree_delete v s)`];;
+
+let lookup_list_delete = cake_theorem "lookup_list_delete"
+  (fun () ->
+    `!xs l n. sptree_lookup n (list_delete xs l) =
+              (if MEM n xs then NONE else sptree_lookup n l)`)
+  CHEAT_TAC;;

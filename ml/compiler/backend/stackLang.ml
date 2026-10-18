@@ -2,7 +2,7 @@
 (*  stackLang: ported from HOL4's
     compiler/backend/stackLangScript.sml
     A definition theory, with 3 definitions, 2 datatypes and 2
-    theorems.  Needed by 42 files of the port.  *)
+    theorems.  Needed by 52 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -130,3 +130,7 @@ let store_consts_stub_location_def = cake_define
   `stackLang_store_consts_stub_location = gc_stub_location - 1`;;
 hol4_overload "store_consts_stub_location"
   "stackLang_store_consts_stub_location";;
+(* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the
+   value of an ML expression *)
+(* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as
+   the value of an ML expression *)

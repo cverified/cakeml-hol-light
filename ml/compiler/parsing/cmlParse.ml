@@ -2,7 +2,7 @@
 (*  cmlParse: ported from HOL4's
     compiler/parsing/cmlParseScript.sml
     A definition theory, with 8 definitions and no theorems.  Needed
-    by compiler.ml.  *)
+    by compiler.ml and compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*

@@ -74,3 +74,11 @@ let seq_assoc_right_def = cake_define
 let remove_unreach_def = cake_define
   `remove_unreach (e:'a wordLang_prog) =
      Seq_assoc_right e Skip`;;
+
+let remove_unreach_test = cake_theorem "remove_unreach_test[local]"
+  (fun () ->
+    `remove_unreach (wordLang_Seq (wordLang_Move 1 [(1,11); (2,22);
+  (3,33)])
+                         (wordLang_Move 1 [(3,1); (2,99)])) =
+     wordLang_Move 1 [(3,11); (2,99); (1,11)]`)
+  CHEAT_TAC;;

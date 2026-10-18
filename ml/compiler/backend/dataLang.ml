@@ -2,7 +2,7 @@
 (*  dataLang: ported from HOL4's
     compiler/backend/dataLangScript.sml
     A definition theory, with 3 definitions, 1 datatype and no
-    theorems.  Needed by 16 files of the port.  *)
+    theorems.  Needed by 20 files of the port.  *)
 (* ======================================================== *)
 
 (*

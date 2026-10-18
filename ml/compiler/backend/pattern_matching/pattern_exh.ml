@@ -254,6 +254,77 @@ let mats_len_def = cake_define_list
   [`mats_len [] = 0`;
    `mats_len (m :: ms) = MAX (mat_len m) (mats_len ms)`];;
 
+let pats_weight_append = cake_theorem "pats_weight_append[local]"
+  (fun () ->
+    `!xs ys. pats_weight (xs ++ ys) = pats_weight xs + pats_weight ys`)
+  CHEAT_TAC;;
+
+let pats_weight_anys = cake_theorem "pats_weight_anys[local]"
+  (fun () ->
+    `!n. pats_weight (anys n) = 0`)
+  CHEAT_TAC;;
+
+let mat_weight_append = cake_theorem "mat_weight_append[local]"
+  (fun () ->
+    `!xs ys. mat_weight (xs ++ ys) = mat_weight xs + mat_weight ys`)
+  CHEAT_TAC;;
+
+let mat_len_append = cake_theorem "mat_len_append[local]"
+  (fun () ->
+    `!xs ys. mat_len (xs ++ ys) = mat_len xs + mat_len ys`)
+  CHEAT_TAC;;
+
+let mat_weight_spec_row = cake_theorem "mat_weight_spec_row[local]"
+  (fun () ->
+    `!c r. mat_weight (spec_row c r) <= pats_weight r`)
+  CHEAT_TAC;;
+
+let mat_weight_spec_mat = cake_theorem "mat_weight_spec_mat[local]"
+  (fun () ->
+    `!c rows. mat_weight (spec_mat c rows) <= mat_weight rows`)
+  CHEAT_TAC;;
+
+let mat_weight_spec_row_less =
+  cake_theorem "mat_weight_spec_row_less[local]"
+  (fun () ->
+    `!c p r. ~(ctors_of p = NONE) ==>
+             mat_weight (spec_row c (p :: r)) < pats_weight (p ::
+               r)`)
+  CHEAT_TAC;;
+
+let mat_weight_spec_mat_less =
+  cake_theorem "mat_weight_spec_mat_less[local]"
+  (fun () ->
+    `!c rows cs. col_ctors rows = SOME cs ==>
+                 mat_weight (spec_mat c rows) < mat_weight rows`)
+  CHEAT_TAC;;
+
+let mat_weight_default_mat =
+  cake_theorem "mat_weight_default_mat[local]"
+  (fun () ->
+    `!rows. mat_weight (default_mat rows) <= mat_weight rows`)
+  CHEAT_TAC;;
+
+let mat_len_default_mat = cake_theorem "mat_len_default_mat[local]"
+  (fun () ->
+    `!rows. mat_len (default_mat rows) <= mat_len rows`)
+  CHEAT_TAC;;
+
+let mats_weight_spec_mats = cake_theorem "mats_weight_spec_mats[local]"
+  (fun () ->
+    `!cs rows ds.
+       col_ctors rows = SOME ds ==>
+       mats_weight (spec_mats cs rows) < mat_weight rows`)
+  CHEAT_TAC;;
+
+let mat_len_default_mat_less =
+  cake_theorem "mat_len_default_mat_less[local]"
+  (fun () ->
+    `!r rows. ~(r = []) ==>
+              mat_len (default_mat (r :: rows)) < mat_len (r ::
+                rows)`)
+  CHEAT_TAC;;
+
 
 (* -------------------------------------------------------------------- *
    The matrix algorithm and the entry point.
@@ -322,6 +393,12 @@ let exh_steps_def = cake_define_list_try_tac (fun () ->
    `exh_steps_list [] = 0`;
    `exh_steps_list (m :: ms) = exh_steps m + exh_steps_list ms`];;
 
+let exh_steps_list_append = cake_theorem "exh_steps_list_append[local]"
+  (fun () ->
+    `!xs ys. exh_steps_list (xs ++ ys) = exh_steps_list xs +
+  exh_steps_list ys`)
+  CHEAT_TAC;;
+
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 pattern_exhScript.sml:448-452: the tactic that proves the
@@ -338,6 +415,21 @@ let exh_all_def = cake_define_list_try_tac (fun () ->
          match col_ctors (r :: rows) with NONE -> exh_all
            (default_mat (r :: rows) :: ms) | SOME cs -> exh_all
            (spec_mats cs (r :: rows) ++ ms))`];;
+
+let exh_mats_append = cake_theorem "exh_mats_append[local]"
+  (fun () ->
+    `!xs ys. exh_mats (xs ++ ys) <=> exh_mats xs /\ exh_mats ys`)
+  CHEAT_TAC;;
+
+let exh_all_thm = cake_theorem "exh_all_thm[local]"
+  (fun () ->
+    `!ms. exh_all ms <=> exh_mats ms`)
+  CHEAT_TAC;;
+
+let exh_rows_eq = cake_theorem "exh_rows_eq"
+  (fun () ->
+    `exh_rows rows <=> exh_all [or_rows rows]`)
+  CHEAT_TAC;;
 
 
 (* ====================================================================== *
@@ -368,18 +460,139 @@ let pand_def = cake_define_list
   else PMatchFailure)`;
    `pand PTypeFailure y = PTypeFailure`];;
 
+let pand_simps = cake_theorem "pand_simps[local,simp]"
+  (fun () ->
+    `pand PMatchSuccess y = y /\
+     pand x PMatchSuccess = x /\
+     pand PTypeFailure y = PTypeFailure /\
+     pand x PTypeFailure = PTypeFailure`)
+  CHEAT_TAC;;
+
+let pand_eq_PTypeFailure =
+  cake_theorem "pand_eq_PTypeFailure[local,simp]"
+  (fun () ->
+    `(pand x y = PTypeFailure) <=> x = PTypeFailure \/ y =
+  PTypeFailure`)
+  CHEAT_TAC;;
+
+let pand_eq_PMatchSuccess =
+  cake_theorem "pand_eq_PMatchSuccess[local,simp]"
+  (fun () ->
+    `(pand x y = PMatchSuccess) <=> x = PMatchSuccess /\ y =
+  PMatchSuccess`)
+  CHEAT_TAC;;
+
+let pand_assoc = cake_theorem "pand_assoc[local]"
+  (fun () ->
+    `pand (pand x y) z = pand x (pand y z)`)
+  CHEAT_TAC;;
+
 (* From here on pmatch_list is only ever unfolded through these four
    rewrites, never through pmatch_def, the raw clauses of pmatch_def
    would compete with pmatch_list_cons and leave case expressions
    behind. *)
 
+let pmatch_Any = cake_theorem "pmatch_Any[local,simp]"
+  (fun () ->
+    `pmatch refs (pattern_semantics_Any:pattern_semantics_pat) v =
+  PMatchSuccess`)
+  CHEAT_TAC;;
+
+let pmatch_list_nil = cake_theorem "pmatch_list_nil[local,simp]"
+  (fun () ->
+    `pmatch_list refs [] [] = PMatchSuccess /\
+     pmatch_list refs [] (v :: vs) = PTypeFailure /\
+     pmatch_list refs (p :: ps) [] = PTypeFailure`)
+  CHEAT_TAC;;
+
+let pmatch_list_cons = cake_theorem "pmatch_list_cons[local,simp]"
+  (fun () ->
+    `pmatch_list refs (p :: ps) (v :: vs) =
+     pand (pmatch refs p v) (pmatch_list refs ps vs)`)
+  CHEAT_TAC;;
+
+let pmatch_list_LENGTH = cake_theorem "pmatch_list_LENGTH[local]"
+  (fun () ->
+    `!ps vs. ~(pmatch_list refs ps vs = PTypeFailure) ==> LENGTH ps =
+  LENGTH vs`)
+  CHEAT_TAC;;
+
+let pmatch_list_append = cake_theorem "pmatch_list_append[local]"
+  (fun () ->
+    `!ps us qs ws refs.
+       LENGTH ps = LENGTH us ==>
+       pmatch_list refs (ps ++ qs) (us ++ ws) =
+       pand (pmatch_list refs ps us) (pmatch_list refs qs ws)`)
+  CHEAT_TAC;;
+
+let LENGTH_anys = cake_theorem "LENGTH_anys[local,simp]"
+  (fun () ->
+    `!n. LENGTH (anys n) = n`)
+  CHEAT_TAC;;
+
 (* Stated with the width as an argument rather than as LENGTH as, so that
    it also rewrites the anys (ctor_arity c) that spec_row produces. *)
+let pmatch_list_anys = cake_theorem "pmatch_list_anys[local,simp]"
+  (fun () ->
+    `!n as refs.
+       pmatch_list refs (anys n) as =
+       (if LENGTH as = n then PMatchSuccess else PTypeFailure)`)
+  CHEAT_TAC;;
 
 
 (* ---------------------------------------------------------------------- *
    What the first-order list-building helpers put into their results.
  * ---------------------------------------------------------------------- *)
+
+let MEM_ctor_nub = cake_theorem "MEM_ctor_nub[local,simp]"
+  (fun () ->
+    `!l x. MEM x (ctor_nub l) <=> MEM x l`)
+  CHEAT_TAC;;
+
+let MEM_ctor_keep = cake_theorem "MEM_ctor_keep[local,simp]"
+  (fun () ->
+    `!xs ys x. MEM x (ctor_keep xs ys) <=> MEM x xs /\ MEM x ys`)
+  CHEAT_TAC;;
+
+let MEM_tag_ctors = cake_theorem "MEM_tag_ctors[local]"
+  (fun () ->
+    `!sibs t a. MEM (TagC t a) (tag_ctors sibs) <=> MEM (t,a) sibs`)
+  CHEAT_TAC;;
+
+let MEM_spec_mats = cake_theorem "MEM_spec_mats[local]"
+  (fun () ->
+    `!cs c rows. MEM c cs ==> MEM (spec_mat c rows) (spec_mats cs
+  rows)`)
+  CHEAT_TAC;;
+
+let MEM_add_head = cake_theorem "MEM_add_head[local,simp]"
+  (fun () ->
+    `!yss x ys. MEM ys (add_head x yss) <=> (?zs. MEM zs yss /\ ys = x
+  :: zs)`)
+  CHEAT_TAC;;
+
+let MEM_mk_prods = cake_theorem "MEM_mk_prods[local,simp]"
+  (fun () ->
+    `!xs yss zs. MEM zs (mk_prods xs yss) <=>
+                 (?x ys. MEM x xs /\ MEM ys yss /\ zs = x :: ys)`)
+  CHEAT_TAC;;
+
+let MEM_mk_refs = cake_theorem "MEM_mk_refs[local,simp]"
+  (fun () ->
+    `!ps q. MEM q (mk_refs ps) <=> (?p. MEM p ps /\ q =
+  pattern_semantics_Ref p)`)
+  CHEAT_TAC;;
+
+let MEM_mk_conses = cake_theorem "MEM_mk_conses[local,simp]"
+  (fun () ->
+    `!pss t q. MEM q (mk_conses t pss) <=> (?ps. MEM ps pss /\ q =
+  pattern_semantics_Cons t ps)`)
+  CHEAT_TAC;;
+
+let MEM_mk_rows = cake_theorem "MEM_mk_rows[local,simp]"
+  (fun () ->
+    `!ps r. MEM r (mk_rows ps) <=> (?p. MEM p ps /\ r = [p])`)
+  CHEAT_TAC;;
 
 
 (* ---------------------------------------------------------------------- *
@@ -389,6 +602,27 @@ let pand_def = cake_define_list
    if an expanded pattern matches then so does the original.  (The
    converse also holds, but soundness does not need it.)
  * ---------------------------------------------------------------------- *)
+
+let LENGTH_expand_list = cake_theorem "LENGTH_expand_list[local]"
+  (fun () ->
+    `!ps qs. MEM qs (expand_list ps) ==> LENGTH qs = LENGTH ps`)
+  CHEAT_TAC;;
+
+let expand_thm = cake_theorem "expand_thm[local]"
+  (fun () ->
+    `(!p q refs v.
+        MEM q (expand p) /\ ~(pmatch refs p v = PTypeFailure) ==>
+          ~(
+        pmatch refs q v = PTypeFailure) /\
+        (pmatch refs q v = PMatchSuccess ==> pmatch refs p v =
+          PMatchSuccess)) /\
+     (!ps qs refs vs.
+        MEM qs (expand_list ps) /\ ~(pmatch_list refs ps vs =
+          PTypeFailure) ==> ~(
+        pmatch_list refs qs vs = PTypeFailure) /\
+        (pmatch_list refs qs vs = PMatchSuccess ==>
+         pmatch_list refs ps vs = PMatchSuccess))`)
+  CHEAT_TAC;;
 
 
 (* ---------------------------------------------------------------------- *
@@ -412,10 +646,41 @@ let dest_val_def = cake_define
       | (Litv l) -> NONE
       | pattern_semantics_Other -> NONE`;;
 
+let dest_val_eq_SOME = cake_theorem "dest_val_eq_SOME[local]"
+  (fun () ->
+    `dest_val refs v = SOME (c,as) <=>
+     (?t. v = pattern_semantics_Term (SOME t) as /\ c = TagC t
+       (LENGTH as)) \/
+     (v = pattern_semantics_Term NONE as /\ c = TupC (LENGTH as))
+       \/
+     (?r w. v = pattern_semantics_RefPtr r /\ FLOOKUP refs r =
+       SOME w /\ as = [w] /\ c = RefC)`)
+  CHEAT_TAC;;
+
+let LENGTH_dest_val = cake_theorem "LENGTH_dest_val[local]"
+  (fun () ->
+    `dest_val refs v = SOME (c,as) ==> LENGTH as = ctor_arity c`)
+  CHEAT_TAC;;
+
 (* A head pattern that reports a constructor set really does confine a
    value that it does not type-fail on to that set. *)
 
+let ctors_of_thm = cake_theorem "ctors_of_thm[local]"
+  (fun () ->
+    `ctors_of p = SOME xs /\ ~(pmatch refs p v = PTypeFailure) ==>
+     (?c as. dest_val refs v = SOME (c,as) /\ MEM c xs)`)
+  CHEAT_TAC;;
+
 (* ... and therefore so does the intersection over a whole column. *)
+
+let col_ctors_thm = cake_theorem "col_ctors_thm[local]"
+  (fun () ->
+    `!M cs refs v vs.
+       col_ctors M = SOME cs /\
+       EVERY (\r. ~(pmatch_list refs r (v :: vs) = PTypeFailure)) M
+         ==>
+       (?c as. dest_val refs v = SOME (c,as) /\ MEM c cs)`)
+  CHEAT_TAC;;
 
 
 (* ---------------------------------------------------------------------- *
@@ -429,6 +694,38 @@ let dest_val_def = cake_define
    matrix less exhaustive, and soundness is the direction we need.
  * ---------------------------------------------------------------------- *)
 
+let spec_row_thm = cake_theorem "spec_row_thm[local]"
+  (fun () ->
+    `!c r row refs v vs as.
+       dest_val refs v = SOME (c,as) /\ MEM row (spec_row c r) ==>
+       pmatch_list refs row (as ++ vs) = pmatch_list refs r (v ::
+         vs)`)
+  CHEAT_TAC;;
+
+let spec_mat_MEM = cake_theorem "spec_mat_MEM[local]"
+  (fun () ->
+    `!M c as refs v vs row.
+       dest_val refs v = SOME (c,as) /\ MEM row (spec_mat c M) ==>
+       (?r. MEM r M /\
+           pmatch_list refs row (as ++ vs) = pmatch_list refs r
+             (v :: vs))`)
+  CHEAT_TAC;;
+
+let default_row_thm = cake_theorem "default_row_thm[local]"
+  (fun () ->
+    `!r row refs v vs.
+       MEM row (default_row r) ==>
+       pmatch_list refs row vs = pmatch_list refs r (v :: vs)`)
+  CHEAT_TAC;;
+
+let default_mat_MEM = cake_theorem "default_mat_MEM[local]"
+  (fun () ->
+    `!M refs v vs row.
+       MEM row (default_mat M) ==>
+       (?r. MEM r M /\ pmatch_list refs row vs = pmatch_list refs
+         r (v :: vs))`)
+  CHEAT_TAC;;
+
 
 (* ---------------------------------------------------------------------- *
    Soundness of the matrix algorithm.
@@ -437,12 +734,63 @@ let dest_val_def = cake_define
    (some row succeeds) is reflected back out of them.
  * ---------------------------------------------------------------------- *)
 
+let exh_matrix_thm = cake_theorem "exh_matrix_thm[local]"
+  (fun () ->
+    `(!M refs vs.
+        exh_matrix M /\ EVERY (\r. ~(pmatch_list refs r vs =
+          PTypeFailure)) M ==>
+        EXISTS (\r. pmatch_list refs r vs = PMatchSuccess) M) /\
+     (!ms m refs vs.
+        exh_mats ms /\ MEM m ms /\
+        EVERY (\r. ~(pmatch_list refs r vs = PTypeFailure)) m ==>
+        EXISTS (\r. pmatch_list refs r vs = PMatchSuccess) m)`)
+  CHEAT_TAC;;
+
 
 (* ---------------------------------------------------------------------- *
    From the matrix back to match.
  * ---------------------------------------------------------------------- *)
 
+let match_no_PTypeFailure = cake_theorem "match_no_PTypeFailure[local]"
+  (fun () ->
+    `!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
+            EVERY (\(p,e). ~(pmatch refs p v = PTypeFailure))
+              rows`)
+  CHEAT_TAC;;
+
+let match_EXISTS = cake_theorem "match_EXISTS[local]"
+  (fun () ->
+    `!rows. ~(pattern_semantics_match refs rows v = NONE) /\
+            EXISTS (\(p,e). pmatch refs p v = PMatchSuccess) rows
+              ==> ~(
+            pattern_semantics_match refs rows v = SOME
+              MatchFailure)`)
+  CHEAT_TAC;;
+
+let or_rows_ok = cake_theorem "or_rows_ok[local]"
+  (fun () ->
+    `!rows. EVERY (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows ==>
+            EVERY (\r. ~(pmatch_list refs r [v] = PTypeFailure))
+              (or_rows rows)`)
+  CHEAT_TAC;;
+
+let or_rows_hit = cake_theorem "or_rows_hit[local]"
+  (fun () ->
+    `!rows. EVERY (\(p,e). ~(pmatch refs p v = PTypeFailure)) rows /\
+            EXISTS (\r. pmatch_list refs r [v] = PMatchSuccess)
+              (or_rows rows) ==>
+            EXISTS (\(p,e). pmatch refs p v = PMatchSuccess) rows`)
+  CHEAT_TAC;;
+
 
 (* ---------------------------------------------------------------------- *
    Soundness of exh_rows: the theorem the pattern compiler needs.
  * ---------------------------------------------------------------------- *)
+
+let exh_rows_thm = cake_theorem "exh_rows_thm"
+  (fun () ->
+    `~(
+       pattern_semantics_match refs rows v = NONE) /\ exh_rows rows
+         ==> ~(
+       pattern_semantics_match refs rows v = SOME MatchFailure)`)
+  CHEAT_TAC;;

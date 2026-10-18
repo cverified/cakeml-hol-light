@@ -2,8 +2,7 @@
 (*  clos_to_bvl: ported from HOL4's
     compiler/backend/clos_to_bvlScript.sml
     A definition theory, with 45 definitions, 1 datatype and 24
-    theorems.  Needed by backend.ml, backend_passes.ml, bvlSem.ml,
-    clos_constantProof.ml, clos_to_bvlProof.ml and presLang.ml.  *)
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -58,6 +57,20 @@ needs "compiler/backend/clos_mti.ml";;
 needs "compiler/backend/clos_number.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
+
+(* HOL4 clos_to_bvlScript.sml:50-51: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+(* HOL4 clos_to_bvlScript.sml:53-54: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+(* HOL4 clos_to_bvlScript.sml:56-57: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+let clos_tag_shift_inj = cake_theorem "clos_tag_shift_inj"
+  (fun () ->
+    `clos_tag_shift n1 = clos_tag_shift n2 ==> n1 = n2`)
+  CHEAT_TAC;;
 
 (* Constant flattening *)
 
@@ -142,6 +155,32 @@ let compile_op_def = cake_define
       | x -> x`;;
 hol4_overload "compile_op" "clos_to_bvl_compile_op";;
 
+let compile_op_pmatch = cake_theorem "compile_op_pmatch"
+  (fun () ->
+    `!op.
+     clos_to_bvl_compile_op op =
+       (match op with
+           closLang_BlockOp (closLang_Cons tag) ->
+             closLang_BlockOp (closLang_Cons (clos_tag_shift tag)) |
+             closLang_BlockOp (closLang_ConsExtend tag) ->
+             closLang_BlockOp (closLang_ConsExtend (clos_tag_shift
+             tag)) | closLang_BlockOp (closLang_TagEq tag) ->
+             closLang_BlockOp (closLang_TagEq (clos_tag_shift tag)) |
+             closLang_BlockOp (closLang_TagLenEq tag a) ->
+             closLang_BlockOp (closLang_TagLenEq (clos_tag_shift tag)
+             a) | closLang_BlockOp (closLang_FromList tag) ->
+             closLang_BlockOp (closLang_FromList (clos_tag_shift tag))
+             | closLang_MemOp closLang_LengthByteVec -> closLang_MemOp
+             closLang_LengthByte | closLang_MemOp
+             closLang_DerefByteVec -> closLang_MemOp
+             closLang_DerefByte | closLang_GlobOp (closLang_SetGlobal
+             n) -> closLang_GlobOp (closLang_SetGlobal (n +
+             num_added_globals)) | closLang_GlobOp (closLang_Global n)
+             -> closLang_GlobOp (closLang_Global (n +
+             num_added_globals)) | closLang_BlockOp (closLang_Constant
+             c) -> compile_const c | x -> x)`)
+  CHEAT_TAC;;
+
 let mk_const_def = cake_define
   `(mk_const n:bvl_exp) = Op (closLang_IntOp (closLang_Const (&n)))
   []`;;
@@ -169,6 +208,40 @@ let build_aux_def = cake_define_list
   [`build_aux (i:num) [] aux = ((i:num),aux)`;
    `build_aux (i:num) ((x:num#bvl_exp) :: xs) aux = build_aux (i +
   2) xs ((i,x) :: aux)`];;
+
+let build_aux_LENGTH = cake_theorem "build_aux_LENGTH"
+  (fun () ->
+    `!l n aux n1 t.
+        (build_aux n l aux = (n1,t)) ==> (n1 = n + 2 * LENGTH l)`)
+  CHEAT_TAC;;
+
+let build_aux_MOVE = cake_theorem "build_aux_MOVE"
+  (fun () ->
+    `!xs n aux n1 aux1.
+        (build_aux n xs aux = (n1,aux1)) <=>
+        (?aux2. (build_aux n xs [] = (n1,aux2)) /\ (aux1 = aux2
+          ++ aux))`)
+  CHEAT_TAC;;
+
+let build_aux_acc = cake_theorem "build_aux_acc"
+  (fun () ->
+    `!k n aux. ?aux1. SND (build_aux n k aux) = aux1 ++ aux`)
+  CHEAT_TAC;;
+
+let build_aux_MEM = cake_theorem "build_aux_MEM"
+  (fun () ->
+    `!c n aux n7 aux7.
+         (build_aux n c aux = (n7,aux7)) ==>
+         (!k. k < LENGTH c ==> (?d. MEM (n + 2 * k,d) aux7))`)
+  CHEAT_TAC;;
+
+let build_aux_APPEND1 = cake_theorem "build_aux_APPEND1"
+  (fun () ->
+    `!xs x n aux.
+        build_aux n (xs ++ [x]) aux =
+          (let (n1,aux1) = build_aux n xs aux in
+            (n1 + 2,(n1,x) :: aux1))`)
+  CHEAT_TAC;;
 
 let recc_Let_def = cake_define
   `recc_Let n num_args i =
@@ -585,6 +658,14 @@ let compile_exp_sing_def = cake_define_list_try_tac (fun () ->
          let (c2,aux2) = compile_exp_list max_app xs aux1 in
            (c1 :: c2,aux2))`];;
 
+let compile_exp_sing_eq = cake_theorem "compile_exp_sing_eq"
+  (fun () ->
+    `(!n e l. clos_to_bvl_compile_exps n [e] l = (\(a,b). ([a],b))
+  (compile_exp_sing n e l)) /\
+     (!n es l. clos_to_bvl_compile_exps n es l = compile_exp_list
+       n es l)`)
+  CHEAT_TAC;;
+
 let compile_prog_def = cake_define
   `clos_to_bvl_compile_prog max_app prog =
      (let (new_exps,aux) = clos_to_bvl_compile_exps max_app (MAP (SND
@@ -592,6 +673,59 @@ let compile_prog_def = cake_define
        MAP2 (\(loc,args,_7) exp. (loc + num_stubs max_app,args,exp))
          prog new_exps ++ aux)`;;
 hol4_overload "compile_prog" "clos_to_bvl_compile_prog";;
+
+(* HOL4 clos_to_bvlScript.sml:610: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let pair_lem1 = cake_theorem "pair_lem1[local]"
+  (fun () ->
+    `!f x. (\(a,b). f a b) x = f (FST x) (SND x)`)
+  CHEAT_TAC;;
+
+let pair_lem2 = cake_theorem "pair_lem2[local]"
+  (fun () ->
+    `!x y z. (x,y) = z <=> x = FST z /\ y = SND z`)
+  CHEAT_TAC;;
+
+let compile_exps_acc = cake_theorem "compile_exps_acc"
+  (fun () ->
+    `!max_app xs aux.
+        let (c,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+          (LENGTH c = LENGTH xs) /\ (?ys. aux1 = ys ++ aux)`)
+  CHEAT_TAC;;
+
+let clos_to_bvl_compile_exps_LENGTH = cake_theorem "compile_exps_LENGTH"
+  (fun () ->
+    `(clos_to_bvl_compile_exps max_app xs aux = (c,aux1)) ==> (LENGTH
+  c = LENGTH xs)`)
+  CHEAT_TAC;;
+
+let clos_to_bvl_compile_exps_SING = cake_theorem "compile_exps_SING"
+  (fun () ->
+    `(clos_to_bvl_compile_exps max_app [x] aux = (c,aux1)) ==> (?d. c
+  = [d])`)
+  CHEAT_TAC;;
+
+let compile_exps_CONS = cake_theorem "compile_exps_CONS"
+  (fun () ->
+    `!max_app xs x aux.
+        clos_to_bvl_compile_exps max_app (x :: xs) aux =
+        (let (c1,aux1) = clos_to_bvl_compile_exps max_app [x] aux
+          in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app xs aux1
+           in
+           (c1 ++ c2,aux2))`)
+  CHEAT_TAC;;
+
+let compile_exps_SNOC = cake_theorem "compile_exps_SNOC"
+  (fun () ->
+    `!xs x aux max_app.
+        clos_to_bvl_compile_exps max_app (SNOC x xs) aux =
+        (let (c1,aux1) = clos_to_bvl_compile_exps max_app xs aux in
+         let (c2,aux2) = clos_to_bvl_compile_exps max_app [x] aux1
+           in
+           (c1 ++ c2,aux2))`)
+  CHEAT_TAC;;
 
 let clos_to_bvl_config_FIELDS = define_record "clos_to_bvl_config"
   ["next_loc","num";
@@ -623,6 +757,22 @@ let code_merge_def = cake_define_wf
          (if FST x1 < ((FST y1):num) then
            x1 :: code_merge xs1 ys else
            y1 :: code_merge xs ys1))`;;
+
+let code_split_NULL = cake_theorem "code_split_NULL"
+  (fun () ->
+    `!ts1 ts2 ts3 xs ys.
+        (xs,ys) = code_split ts1 ts2 ts3 /\ ~(ts2 = []) /\ ~(ts3 =
+          []) ==> ~(
+        xs = []) /\ ~(ys = [])`)
+  CHEAT_TAC;;
+
+let code_split_LENGTH = cake_theorem "code_split_LENGTH"
+  (fun () ->
+    `!ts1 ts2 ts3 xs ys.
+        (xs,ys) = code_split ts1 ts2 ts3 ==>
+        LENGTH xs + LENGTH ys = LENGTH ts1 + LENGTH ts2 + LENGTH
+          ts3`)
+  CHEAT_TAC;;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -757,6 +907,12 @@ let get_src_names_sing_def = cake_define_list_try_tac (fun () ->
    `get_src_names_list (x :: xs) l = get_src_names_list xs
   (get_src_names_sing x l)`];;
 
+let get_src_names_sing_eq = cake_theorem "get_src_names_sing_eq"
+  (fun () ->
+    `(!e l. get_src_names [e] l = get_src_names_sing e l) /\
+     (!es l. get_src_names es l = get_src_names_list es l)`)
+  CHEAT_TAC;;
+
 let make_name_alist_def = cake_define
   `make_name_alist nums prog nstubs dec_start (dec_length:num) =
      (let src_names = get_src_names (MAP (SND o SND) prog) LN in
@@ -774,6 +930,9 @@ let make_name_alist_def = cake_define
                                 src_names with NONE -> implode
                                 "unknown_clos_fun" | SOME s -> s)))
                                 nums):mlstring spt)`;;
+
+(* HOL4 clos_to_bvlScript.sml:878-879: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 let compile_def = cake_define
   `clos_to_bvl_compile c0 es =
@@ -802,6 +961,17 @@ let extract_name_def = cake_define_list
       (match (some (\n. ?t. x = Op t (closLang_IntOp
         (closLang_Const (&n))) [])) with NONE -> (0,x :: xs) | SOME
         n -> (n,(if xs = [] then [x] else xs)))`];;
+
+let extract_name_pmatch = cake_theorem "extract_name_pmatch"
+  (fun () ->
+    `extract_name xs =
+       (match xs with [] -> (0,xs) | (x :: xs) ->
+         (match x with
+           (Op t (closLang_IntOp (closLang_Const i)) []) ->
+             (if i < (&0) then (0,x :: xs) else
+               (num_of_int (abs i),(if xs = [] then [x] else
+                 xs))) | _66 -> (0,x :: xs)))`)
+  CHEAT_TAC;;
 
 let compile_inc_def = cake_define
   `clos_to_bvl_compile_inc' max_app (es,prog) =

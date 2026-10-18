@@ -2,8 +2,8 @@
 (*  stack_remove: ported from HOL4's
     compiler/backend/stack_removeScript.sml
     A definition theory, with 27 definitions and 1 theorem.  Needed
-    by backendProof.ml, backend_passes.ml, stack_removeProof.ml and
-    stack_to_lab.ml.  *)
+    by backendProof.ml, backend_passes.ml, stack_removeProof.ml,
+    stack_to_lab.ml and stack_to_labProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -12,6 +12,7 @@
 *)
 
 needs "basis/pure/mlstring.ml";;
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/stackLang.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/byte.ml";;
@@ -431,6 +432,12 @@ let stub_names_def = cake_define
      (1,implode "_Halt0");
      (2,implode "_Halt2")]`;;
 hol4_overload "stub_names" "stack_remove_stub_names";;
+
+let check_init_stubs_length = cake_theorem "check_init_stubs_length"
+  (fun () ->
+    `LENGTH (init_stubs gen_gc max_heap k start) + 2 =
+     stack_num_stubs`)
+  CHEAT_TAC;;
 
 (* -- full compiler -- *)
 

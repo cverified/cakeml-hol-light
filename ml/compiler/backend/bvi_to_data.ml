@@ -2,8 +2,7 @@
 (*  bvi_to_data: ported from HOL4's
     compiler/backend/bvi_to_dataScript.sml
     A definition theory, with 7 definitions and 10 theorems.  Needed
-    by backend.ml, backendProof.ml, backend_passes.ml,
-    bvi_to_dataProof.ml and data_to_word_assignProof.ml.  *)
+    by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -23,6 +22,44 @@ needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 
 (* compilation from BVI to dataLang *)
+
+let op_space_reset_pmatch = cake_theorem "op_space_reset_pmatch"
+  (fun () ->
+    `!op.
+     op_space_reset op =
+       (match op with
+         closLang_IntOp closLang_Add -> T | closLang_IntOp
+           closLang_Sub -> T | closLang_IntOp closLang_Mult -> T |
+           closLang_IntOp closLang_Div -> T | closLang_IntOp
+           closLang_Mod -> T | closLang_IntOp closLang_Less -> T |
+           closLang_IntOp closLang_LessEq -> T | closLang_IntOp
+           Greater -> T | closLang_IntOp closLang_GreaterEq -> T |
+           closLang_BlockOp closLang_Equal -> T | closLang_BlockOp
+           ListAppend -> T | closLang_BlockOp (closLang_FromList _1)
+           -> T | closLang_BlockOp (closLang_ConsExtend _2) -> T |
+           closLang_MemOp closLang_RefArray -> T | closLang_MemOp
+           (closLang_RefByte _3) -> T | closLang_MemOp
+           (closLang_CopyByte new_flag) -> new_flag | closLang_MemOp
+           ConfigGC -> T | FFI _4 -> T | _5 -> F)`)
+  CHEAT_TAC;;
+
+let op_requires_names_eqn = cake_theorem "op_requires_names_eqn"
+  (fun () ->
+    `!op. op_requires_names op =
+      (op_space_reset op \/ (match op with FFI n -> T |
+        closLang_Install -> T | closLang_MemOp (closLang_CopyByte
+        new_flag) -> T | closLang_MemOp closLang_XorByte -> T |
+        closLang_MemOp (closLang_StringCmp b cmp) -> T | _6 -> F))`)
+  CHEAT_TAC;;
+
+let op_requires_names_pmatch = cake_theorem "op_requires_names_pmatch"
+  (fun () ->
+    `!op. op_requires_names op =
+     (op_space_reset op \/ (match op with FFI n -> T |
+       closLang_Install -> T | closLang_MemOp (closLang_CopyByte
+       new_flag) -> T | closLang_MemOp closLang_XorByte -> T |
+       closLang_MemOp (closLang_StringCmp b cmp) -> T | _7 -> F))`)
+  CHEAT_TAC;;
 
 let iAssign_def = cake_define
   `iAssign n1 op vs live env =
@@ -247,6 +284,48 @@ let compile_sing_def = cake_define_list_try_tac (fun () ->
 hol4_overload "compile_list" "bvi_to_data_compile_list";;
 hol4_overload "compile_sing" "bvi_to_data_compile_sing";;
 
+let compile_sing_eq = cake_theorem "compile_sing_eq"
+  (fun () ->
+    `(!n env t l x c1 v1 n1.
+        bvi_to_data_compile_sing n env t l x = (c1,v1,n1) ==>
+        compile n env t l [x] = (c1,[v1],n1)) /\
+     (!n env l xs.
+        bvi_to_data_compile_list n env l xs =
+        compile n env F l xs)`)
+  CHEAT_TAC;;
+
+let compile_LESS_EQ_lemma = cake_theorem "compile_LESS_EQ_lemma[local]"
+  (fun () ->
+    `!n env tail live xs.
+         n <= SND (SND (compile n env tail live xs))`)
+  CHEAT_TAC;;
+
+let compile_LESS_EQ = cake_theorem "compile_LESS_EQ"
+  (fun () ->
+    `!n env tail live xs c vs new_var.
+        (compile n env tail live xs = (c,vs,new_var)) ==> n <=
+          new_var`)
+  CHEAT_TAC;;
+
+let compile_LENGTH_lemma = cake_theorem "compile_LENGTH_lemma[local]"
+  (fun () ->
+    `!n env tail live xs.
+         (LENGTH (FST (SND (compile n env tail live xs))) =
+           LENGTH xs)`)
+  CHEAT_TAC;;
+
+let compile_LENGTH = cake_theorem "compile_LENGTH"
+  (fun () ->
+    `!n env tail live xs c vs new_var.
+        (compile n env tail live xs = (c,vs,new_var)) ==> (LENGTH
+          vs = LENGTH xs)`)
+  CHEAT_TAC;;
+
+let compile_SING_IMP = cake_theorem "compile_SING_IMP"
+  (fun () ->
+    `(compile n env tail live [x] = (c,vs,new_var)) ==> (?t. vs = [t])`)
+  CHEAT_TAC;;
+
 (* combine dataLang optimisations *)
 
 let optimise_def = cake_define
@@ -271,3 +350,10 @@ hol4_overload "compile_part" "bvi_to_data_compile_part";;
 let compile_prog_def = cake_define
   `bvi_to_data_compile_prog prog = MAP bvi_to_data_compile_part prog`;;
 hol4_overload "compile_prog" "bvi_to_data_compile_prog";;
+
+let compile_exp_eq = cake_theorem "compile_exp_eq"
+  (fun () ->
+    `bvi_to_data_compile_exp arg_count exp =
+       bvi_to_data_optimise (FST (bvi_to_data_compile_sing
+         arg_count (COUNT_LIST arg_count) T [] exp))`)
+  CHEAT_TAC;;

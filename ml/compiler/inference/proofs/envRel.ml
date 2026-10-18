@@ -40,7 +40,126 @@ let convert_env_def = cake_define
 
 (* HOL4 envRelScript.sml:29-42: code that the source has in a comment *)
 
+let check_convert_freevars = cake_theorem "check_convert_freevars"
+  (fun () ->
+    `(!tvs uvs t. check_t tvs uvs t ==> (uvs = {}) ==> check_freevars
+  tvs [] (convert_t t))`)
+  CHEAT_TAC;;
+
+let check_t_to_check_freevars = cake_theorem "check_t_to_check_freevars"
+  (fun () ->
+    `!tvs (n:num->bool) t. check_t tvs {} t ==> check_freevars tvs []
+  (convert_t t)`)
+  CHEAT_TAC;;
+
+let convert_inc = cake_theorem "convert_inc"
+  (fun () ->
+    `!t tvs tvs'.
+      check_t tvs' {} t ==>
+      (convert_t (infer_deBruijn_inc tvs t) = deBruijn_inc 0 tvs
+        (convert_t t))`)
+  CHEAT_TAC;;
+
 (* HOL4 envRelScript.sml:74: ML code, not ported *)
+
+let db_subst_infer_subst_swap = cake_theorem "db_subst_infer_subst_swap"
+  (fun () ->
+    `(!t s tvs uvar n.
+      t_wfs s /\
+      count (uvar + tvs) SUBSET FDOM s /\
+      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s
+        (Infer_Tuvar uv))) /\
+      check_t tvs (FDOM s) t ==>
+      (convert_t
+        (t_walkstar s
+           (infer_deBruijn_subst
+              (MAP (\n. Infer_Tuvar (uvar + n)) (COUNT_LIST tvs))
+              t)) =
+       deBruijn_subst 0
+        (MAP (convert_t o t_walkstar s)
+           (MAP (\n. Infer_Tuvar (uvar + n)) (COUNT_LIST tvs)))
+        (convert_t (t_walkstar (infer_deBruijn_inc tvs o_f s) t))))
+          /\
+     (!ts s tvs uvar n.
+      t_wfs s /\
+      count (uvar + tvs) SUBSET FDOM s /\
+      (!uv. uv IN FDOM s ==> check_t n {} (t_walkstar s
+        (Infer_Tuvar uv))) /\
+      EVERY (\t. check_t tvs (FDOM s) t) ts ==>
+      (MAP (convert_t o
+           t_walkstar s o
+           infer_deBruijn_subst (MAP (\n. Infer_Tuvar (uvar + n))
+             (COUNT_LIST tvs)))
+          ts =
+       MAP (deBruijn_subst 0 (MAP (convert_t o t_walkstar s) (MAP
+         (\n. Infer_Tuvar (uvar + n)) (COUNT_LIST tvs))) o
+           convert_t o
+           t_walkstar (infer_deBruijn_inc tvs o_f s))
+          ts))`)
+  CHEAT_TAC;;
+
+let inc_convert_t = cake_theorem "inc_convert_t"
+  (fun () ->
+    `(!t tvs' tvs. check_t tvs' {} t ==> (deBruijn_inc tvs' tvs
+  (convert_t t) = convert_t t)) /\
+     (!ts tvs' tvs. EVERY (check_t tvs' {}) ts ==> (MAP
+       (deBruijn_inc tvs' tvs o convert_t) ts = MAP convert_t ts))`)
+  CHEAT_TAC;;
+
+let convert_t_subst = cake_theorem "convert_t_subst"
+  (fun () ->
+    `(!t tvs ts'.
+        (LENGTH tvs = LENGTH ts') /\
+        check_freevars 0 tvs t ==>
+        convert_t (infer_type_subst (ZIP tvs ts') t) =
+        type_subst (alist_to_fmap (ZIP tvs (MAP convert_t ts'))) t)
+          /\
+     (!ts tvs ts'.
+        (LENGTH tvs = LENGTH ts') /\
+        EVERY (check_freevars 0 tvs) ts ==>
+        MAP convert_t (MAP (infer_type_subst (ZIP tvs ts')) ts) =
+        MAP (type_subst (alist_to_fmap (ZIP tvs (MAP convert_t
+          ts')))) ts)`)
+  CHEAT_TAC;;
+
+let deBruijn_subst_convert = cake_theorem "deBruijn_subst_convert"
+  (fun () ->
+    `(!t.
+     check_t n {} t ==>
+     deBruijn_subst 0 (MAP convert_t subst) (convert_t t) =
+     convert_t (infer_deBruijn_subst subst t)) /\
+     (!ts.
+     EVERY (check_t n {}) ts ==>
+     MAP ((deBruijn_subst 0 (MAP convert_t subst)) o convert_t) ts
+       =
+     MAP (convert_t o (infer_deBruijn_subst subst)) ts)`)
+  CHEAT_TAC;;
+
+let check_freevars_empty_convert_unconvert_id =
+  cake_theorem "check_freevars_empty_convert_unconvert_id"
+  (fun () ->
+    `!t. check_freevars n [] t ==> convert_t (unconvert_t t) = t`)
+  CHEAT_TAC;;
+
+let check_t_empty_unconvert_convert_id =
+  cake_theorem "check_t_empty_unconvert_convert_id"
+  (fun () ->
+    `!t n. check_t n {} t ==>
+      unconvert_t (convert_t t) = t`)
+  CHEAT_TAC;;
+
+let check_freevars_to_check_t = cake_theorem "check_freevars_to_check_t"
+  (fun () ->
+    `!t z. check_freevars n [] t ==> check_t n {} (unconvert_t t)`)
+  CHEAT_TAC;;
+
+let infer_type_subst_nil = cake_theorem "infer_type_subst_nil"
+  (fun () ->
+    `(!t. check_freevars n [] t ==> infer_type_subst [] t = unconvert_t
+  t) /\
+      (!ts. EVERY (check_freevars n []) ts ==> MAP
+        (infer_type_subst []) ts = MAP unconvert_t ts)`)
+  CHEAT_TAC;;
 
 (* ---------- relating inference and type system environments ---------- *)
 
@@ -92,7 +211,49 @@ let tscheme_approx_def = cake_define
         t_walkstar s (infer_deBruijn_subst (MAP
           (infer_deBruijn_subst subst) subst') t')))`;;
 
+let tscheme_approx_thm = cake_theorem "tscheme_approx_thm"
+  (fun () ->
+    `!t' max_tvs s tvs tvs' t.
+      t_wfs s ==>
+      (tscheme_approx max_tvs s (tvs,t) (tvs',t') ==>
+       (!subst.
+        LENGTH subst = tvs /\
+        EVERY (check_t max_tvs {}) subst ==>
+        (?subst'.
+          LENGTH subst' = tvs' /\
+          EVERY (check_t max_tvs (FDOM s)) subst' /\
+          t_walkstar s (infer_deBruijn_subst subst t) =
+            t_walkstar s (infer_deBruijn_subst subst' t'))))`)
+  CHEAT_TAC;;
+
+let tscheme_approx_refl = cake_theorem "tscheme_approx_refl"
+  (fun () ->
+    `!max_tvs s tvs t. tscheme_approx max_tvs s (tvs,t) (tvs,t)`)
+  CHEAT_TAC;;
+
 (* TODO: should be able to use max_tvs in place of 0 *)
+let tscheme_approx_trans = cake_theorem "tscheme_approx_trans"
+  (fun () ->
+    `tscheme_approx max_tvs s (tvs1,t1) (tvs2,t2) /\
+     tscheme_approx 0 s (tvs2,t2) (tvs3,t3) ==>
+     tscheme_approx max_tvs s (tvs1,t1) (tvs3,t3)`)
+  CHEAT_TAC;;
+
+let unconvert_db_subst = cake_theorem "unconvert_db_subst"
+  (fun () ->
+    `!t subst fvs l.
+       check_freevars l [] t ==>
+       unconvert_t (deBruijn_subst 0 subst t) =
+       infer_deBruijn_subst (MAP unconvert_t subst) (unconvert_t
+         t)`)
+  CHEAT_TAC;;
+
+let tscheme_inst_to_approx = cake_theorem "tscheme_inst_to_approx"
+  (fun () ->
+    `tscheme_inst (tvs,t) (tvs',t') ==>
+     tscheme_approx 0 FEMPTY (tvs,unconvert_t t)
+       (tvs',unconvert_t t')`)
+  CHEAT_TAC;;
 
 let env_rel_sound_def = cake_define
   `env_rel_sound s ienv tenv tenvE <=> inf_env_inf_t
@@ -106,6 +267,116 @@ let env_rel_sound_def = cake_define
          tscheme_approx (num_tvs tenvE) s ts (tvs',unconvert_t
            t')))`;;
 
+let env_rel_sound_lookup_none = cake_theorem "env_rel_sound_lookup_none"
+  (fun () ->
+    `!ienv tenv s tenvE id'.
+      env_rel_sound s ienv tenv tenvE /\
+      lookup_var id' tenvE tenv = NONE ==>
+      nsLookup (inf_env_inf_v ienv) id' = NONE`)
+  CHEAT_TAC;;
+
+let env_rel_sound_lookup_some = cake_theorem "env_rel_sound_lookup_some"
+  (fun () ->
+    `!id' ts s ienv tenv tenvE.
+      nsLookup (inf_env_inf_v ienv) id' = SOME ts /\ env_rel_sound
+        s ienv tenv tenvE ==>
+      (?tvs' t'.
+        check_freevars (tvs' + num_tvs tenvE) [] t' /\
+        lookup_var id' tenvE tenv = SOME (tvs',t') /\
+        tscheme_approx (num_tvs tenvE) s ts (tvs',unconvert_t
+          t'))`)
+  CHEAT_TAC;;
+
+let db_subst_infer_subst_swap3 =
+  cake_theorem "db_subst_infer_subst_swap3"
+  (fun () ->
+    `!t tvs s subst.
+      t_wfs s /\
+      check_freevars tvs [] t ==>
+      convert_t (t_walkstar s (infer_deBruijn_subst subst
+        (unconvert_t t))) =
+      deBruijn_subst 0 (MAP (convert_t o t_walkstar s) subst) t`)
+  CHEAT_TAC;;
+
+let tscheme_approx_weakening = cake_theorem "tscheme_approx_weakening"
+  (fun () ->
+    `!tvs tvs' s1 s2 ts1 ts2.
+      tscheme_approx tvs s1 ts1 ts2 /\
+      t_wfs s2 /\
+      s1 SUBMAP s2 /\
+      tvs <= tvs' ==>
+      tscheme_approx tvs' s2 ts1 ts2`)
+  CHEAT_TAC;;
+
+let env_rel_sound_extend_tvs = cake_theorem "env_rel_sound_extend_tvs"
+  (fun () ->
+    `!s ienv tenv bindings tvs.
+      t_wfs s /\
+      env_rel_sound s ienv tenv typeSystem_Empty ==>
+      env_rel_sound s ienv tenv (bind_tvar tvs typeSystem_Empty)`)
+  CHEAT_TAC;;
+
+let tscheme_approx0 = cake_theorem "tscheme_approx0"
+  (fun () ->
+    `!tvs s t. t_wfs s ==> tscheme_approx tvs s (0,t) (0,t_walkstar s
+  t)`)
+  CHEAT_TAC;;
+
+let env_rel_sound_extend0 = cake_theorem "env_rel_sound_extend0"
+  (fun () ->
+    `!s x t ienv tenv tenvE.
+      env_rel_sound s ienv tenv tenvE /\
+      t_wfs s /\
+      check_t (num_tvs tenvE) (FDOM s) t /\
+      (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar
+        s (Infer_Tuvar uv))) ==>
+      env_rel_sound s (inf_env_inf_v_fupd (K (nsBind x (0,t)
+        (inf_env_inf_v ienv))) ienv)
+        tenv (typeSystem_Bind_name x 0 (convert_t (t_walkstar s
+          t)) tenvE)`)
+  CHEAT_TAC;;
+
+let env_rel_sound_merge0 = cake_theorem "env_rel_sound_merge0"
+  (fun () ->
+    `!s ienv bindings tenv tenvE.
+      t_wfs s /\
+      (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar
+        s (Infer_Tuvar uv))) /\
+      EVERY (\(x,t). check_t 0 (FDOM s) t) bindings /\
+      env_rel_sound s ienv tenv tenvE ==>
+      env_rel_sound s
+         (inf_env_inf_v_fupd (K (nsAppend (alist_to_ns (MAP
+           (\(n,t). (n,0,t)) bindings)) (inf_env_inf_v ienv))) ienv)
+         tenv
+         (bind_var_list 0 (convert_env s bindings) tenvE)`)
+  CHEAT_TAC;;
+
+let env_rel_e_sound_letrec_merge0 =
+  cake_theorem "env_rel_e_sound_letrec_merge0"
+  (fun () ->
+    `!funs ienv tenv tenvE s uvs.
+      t_wfs s /\
+      (!uv. uv IN FDOM s ==> check_t (num_tvs tenvE) {} (t_walkstar
+        s (Infer_Tuvar uv))) /\
+      count (uvs + LENGTH funs) SUBSET FDOM s /\
+      env_rel_sound s ienv tenv tenvE ==>
+      env_rel_sound s
+        (inf_env_inf_v_fupd (K
+          (nsAppend
+            (alist_to_ns
+              (MAP2 (\(f,x,e) uvar. (f,0,uvar))
+                funs
+                (MAP (\n. Infer_Tuvar (uvs + n)) (COUNT_LIST
+                  (LENGTH funs))))) (inf_env_inf_v
+            ienv))) ienv)
+        tenv
+        (bind_var_list 0 (MAP2 (\(f,x,e) t. (f,t))
+                           funs
+                           (MAP (\n. convert_t (t_walkstar s
+                             (Infer_Tuvar (uvs + n))))
+                             (COUNT_LIST (LENGTH funs)))) tenvE)`)
+  CHEAT_TAC;;
+
 let env_rel_complete_def = cake_define
   `env_rel_complete s ienv tenv tenvE <=> inf_env_inf_t
      ienv = type_env_t tenv /\ inf_env_inf_c
@@ -118,6 +389,23 @@ let env_rel_complete_def = cake_define
          tscheme_approx (num_tvs tenvE) s (tvs,unconvert_t t)
            (tvs',t')))`;;
 
+let env_rel_complete_lookup_none =
+  cake_theorem "env_rel_complete_lookup_none"
+  (fun () ->
+    `!ienv tenv s tenvE x.
+      env_rel_complete s ienv tenv tenvE /\
+      nsLookup (inf_env_inf_v ienv) x = NONE ==>
+      nsLookup (type_env_v tenv) x = NONE`)
+  CHEAT_TAC;;
+
+let env_rel_e_sound_empty_to = cake_theorem "env_rel_e_sound_empty_to"
+  (fun () ->
+    `!s ienv tenv tenvE.
+      t_wfs s /\ ienv_ok {} ienv /\ env_rel_sound FEMPTY ienv tenv
+        tenvE ==>
+      env_rel_sound s ienv tenv tenvE`)
+  CHEAT_TAC;;
+
 (* Environment relation at infer_d and above *)
 let env_rel_def = cake_define
   `envRel_env_rel tenv ienv <=>
@@ -129,13 +417,76 @@ let env_rel_def = cake_define
     env_rel_complete FEMPTY ienv tenv typeSystem_Empty`;;
 hol4_overload "env_rel" "envRel_env_rel";;
 
+let lookup_varE_empty = cake_theorem "lookup_varE_empty[simp]"
+  (fun () ->
+    `!x. lookup_varE x (typeSystem_Empty:tenv_val_exp) = NONE`)
+  CHEAT_TAC;;
+
+let env_rel_extend = cake_theorem "env_rel_extend"
+  (fun () ->
+    `!tenv1 ienv1 tenv2 ienv2.
+      envRel_env_rel tenv1 ienv1 /\
+      envRel_env_rel tenv2 ienv2 ==>
+      envRel_env_rel (extend_dec_tenv tenv1 tenv2)
+        (extend_dec_ienv ienv1 ienv2)`)
+  CHEAT_TAC;;
+
+let env_rel_empty = cake_theorem "env_rel_empty[simp]"
+  (fun () ->
+    `envRel_env_rel (mk_type_env nsEmpty nsEmpty nsEmpty)
+             (mk_inf_env nsEmpty nsEmpty nsEmpty)`)
+  CHEAT_TAC;;
+
+let env_rel_lift = cake_theorem "env_rel_lift"
+  (fun () ->
+    `!tenv ienv mn. envRel_env_rel tenv ienv ==> envRel_env_rel
+  (tenvLift mn tenv) (lift_ienv mn ienv)`)
+  CHEAT_TAC;;
+
 let ienv_to_tenv_def = cake_define
   `ienv_to_tenv ienv =
      mk_type_env (nsMap (\(tvs,t). (tvs,convert_t t))
        (inf_env_inf_v ienv)) (inf_env_inf_c ienv) (inf_env_inf_t
        ienv)`;;
 
+let ienv_to_tenv_extend = cake_theorem "ienv_to_tenv_extend"
+  (fun () ->
+    `!ienv1 ienv2.
+      ienv_to_tenv (extend_dec_ienv ienv2 ienv1) =
+      extend_dec_tenv (ienv_to_tenv ienv2) (ienv_to_tenv ienv1)`)
+  CHEAT_TAC;;
+
+let ienv_to_tenv_lift = cake_theorem "ienv_to_tenv_lift"
+  (fun () ->
+    `!mn ienv. ienv_to_tenv (lift_ienv mn ienv) = tenvLift mn
+  (ienv_to_tenv ienv)`)
+  CHEAT_TAC;;
+
+let env_rel_ienv_to_tenv = cake_theorem "env_rel_ienv_to_tenv"
+  (fun () ->
+    `!ienv. ienv_ok {} ienv ==> envRel_env_rel (ienv_to_tenv ienv)
+  ienv`)
+  CHEAT_TAC;;
+
 let tenv_to_ienv_def = cake_define
   `tenv_to_ienv tenv =
      mk_inf_env (nsMap (\(tvs,t). (tvs,unconvert_t t)) (type_env_v
        tenv)) (type_env_c tenv) (type_env_t tenv)`;;
+
+let tenv_to_ienv_extend = cake_theorem "tenv_to_ienv_extend"
+  (fun () ->
+    `!tenv1 tenv2.
+      tenv_to_ienv (extend_dec_tenv tenv2 tenv1) =
+      extend_dec_ienv (tenv_to_ienv tenv2) (tenv_to_ienv tenv1)`)
+  CHEAT_TAC;;
+
+let env_rel_tenv_to_ienv = cake_theorem "env_rel_tenv_to_ienv"
+  (fun () ->
+    `!tenv. tenv_ok tenv ==> envRel_env_rel tenv (tenv_to_ienv tenv)`)
+  CHEAT_TAC;;
+
+let tenv_to_ienv_lift = cake_theorem "tenv_to_ienv_lift"
+  (fun () ->
+    `!mn tenv. tenv_to_ienv (tenvLift mn tenv) = lift_ienv mn
+  (tenv_to_ienv tenv)`)
+  CHEAT_TAC;;

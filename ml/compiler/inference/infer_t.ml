@@ -2,7 +2,7 @@
 (*  infer_t: ported from HOL4's
     compiler/inference/infer_tScript.sml
     A definition theory, with 8 definitions, 1 datatype and 1
-    theorem.  Needed by 8 files of the port.  *)
+    theorem.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -21,6 +21,9 @@ needs "semantics/typeSystem.ml";;
 let infer_t_INDUCT,infer_t_RECURSION = define_datatype
   "infer_t = Infer_Tvar_db (num) | Infer_Tapp (infer_t list) (num) | \
    Infer_Tuvar (num)";;
+
+(* HOL4 infer_tScript.sml:19-20: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let id_to_string_def = cake_define_list
   [`id_to_string (Short s) = s`;

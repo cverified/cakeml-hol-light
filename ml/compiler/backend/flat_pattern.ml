@@ -2,7 +2,7 @@
 (*  flat_pattern: ported from HOL4's
     compiler/backend/flat_patternScript.sml
     A definition theory, with 20 definitions, 1 datatype and 5
-    theorems.  Needed by 5 files of the port.  *)
+    theorems.  Needed by 6 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -50,6 +50,17 @@ let enc_num_to_name_aux_def = cake_define
 
 let enc_num_to_name_def = cake_define
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
+
+let pat1_size = cake_theorem "pat1_size"
+  (fun () ->
+    `pat1_size xs = LENGTH xs + SUM (MAP pattern_semantics_pat_size
+  xs)`)
+  CHEAT_TAC;;
+
+let MAPi_eq_MAP = cake_theorem "MAPi_eq_MAP"
+  (fun () ->
+    `MAPi (\n x. f x) xs = MAP f xs`)
+  CHEAT_TAC;;
 
 let _ = size_thms "pattern_semantics_pat";;
 (* the termination relation that HOL4 gives, with
@@ -245,6 +256,11 @@ let op_sets_globals_def = cake_define
         flatLang_GlobalVarInit n -> T
       | _47 -> F`;;
 
+let op_sets_globals_EX = cake_theorem "op_sets_globals_EX"
+  (fun () ->
+    `op_sets_globals op = (?n. op = flatLang_GlobalVarInit n)`)
+  CHEAT_TAC;;
+
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
 let compile_exp_def = cake_define_list_cheat CHEAT_TAC
@@ -315,6 +331,23 @@ let compile_exp_def = cake_define_list_cheat CHEAT_TAC
         (MAX i (MAX j k),(sgx \/ sgp),((p,y) :: ps2)))`];;
 hol4_overload "compile_exp" "flat_pattern_compile_exp";;
 hol4_overload "compile_exps" "flat_pattern_compile_exps";;
+
+let LENGTH_compile_exps_IMP = cake_theorem "LENGTH_compile_exps_IMP"
+  (fun () ->
+    `(!cfg x. let v = flat_pattern_compile_exp cfg x in T) /\
+     (!cfg xs i sg ys. flat_pattern_compile_exps cfg xs = (i,sg,ys)
+       ==>
+       LENGTH ys = LENGTH xs) /\
+     (!cfg ps i sg ps2. compile_match cfg ps = (i,sg,ps2) ==>
+       LENGTH ps2 = LENGTH ps)`)
+  CHEAT_TAC;;
+
+let LENGTH_SND_compile_exps = cake_theorem "LENGTH_SND_compile_exps"
+  (fun () ->
+    `LENGTH (SND (SND (flat_pattern_compile_exps cfg xs))) = LENGTH xs
+  /\
+     LENGTH (SND (SND (compile_match cfg ps))) = LENGTH ps`)
+  CHEAT_TAC;;
 
 let compile_dec_def = cake_define
   `compile_dec cfg exp = SND (SND (flat_pattern_compile_exp cfg exp))`;;

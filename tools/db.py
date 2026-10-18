@@ -123,6 +123,10 @@ class Db:
     self.con_argty = {}        # (constructor,index) -> {type texts}
     self.con_argty_thy = {}    # (thy,constructor,index) -> type text
     self._overloaded = None
+    # the OCaml bindings that the theorems of the port have taken
+    # (a theorem keeps its own name where no other theory and no
+    # name of HOL Light has it)
+    self.thmnames = set()
     self._ambflds = None
     self.ty_params = {}        # (thy,type) -> the type parameters
     self.monads = {'option': {'bind': 'OPTION_BIND',

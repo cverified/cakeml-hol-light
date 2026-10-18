@@ -81,6 +81,12 @@ let tick_inline_sing_def = cake_define_list
    `tick_inline_list cs (x :: xs) =
          (tick_inline_sing cs x) :: tick_inline_list cs xs`];;
 
+let tick_inline_sing = cake_theorem "tick_inline_sing"
+  (fun () ->
+    `(!e. tick_inline cs [e] = [tick_inline_sing cs e]) /\
+     (!es. tick_inline_list cs es = tick_inline cs es)`)
+  CHEAT_TAC;;
+
 (* This definition is written to exit as soon as possible. *)
 let is_small_aux_def = cake_define_list
   [`is_small_aux n [] = n`;
@@ -146,8 +152,17 @@ let is_small_sing_def = cake_define_list
            let n = is_small_sing n x in if n = 0 then n else
              is_small_list n xs)`];;
 
+let is_small_sing = cake_theorem "is_small_sing"
+  (fun () ->
+    `(!e n. is_small_aux n [e] = is_small_sing n e) /\
+     (!es n. is_small_list n es = is_small_aux n es)`)
+  CHEAT_TAC;;
+
 let is_small_def = cake_define
   `is_small limit' e = ~(is_small_aux limit' [e] = 0)`;;
+
+(* HOL4 bvl_inlineScript.sml:164: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let is_rec_def = cake_define_list
   [`bvl_inline_is_rec n [] = F`;
@@ -197,10 +212,19 @@ let is_rec_sing_def = cake_define_list
          (if is_rec_sing n x then T else
            is_rec_list n xs)`];;
 
+let is_rec_sing = cake_theorem "is_rec_sing"
+  (fun () ->
+    `(!e n. bvl_inline_is_rec n [e] = is_rec_sing n e) /\
+     (!es n. is_rec_list n es = bvl_inline_is_rec n es)`)
+  CHEAT_TAC;;
+
 let must_inline_def = cake_define
   `must_inline name limit' e =
      (if is_small limit' e then ~(bvl_inline_is_rec name [e]) else
        F)`;;
+
+(* HOL4 bvl_inlineScript.sml:227: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let tick_inline_all_def = cake_define_list
   [`tick_inline_all limit' cs [] aux = (cs,REVERSE aux)`;
@@ -210,9 +234,22 @@ let tick_inline_all_def = cake_define_list
            (arity,e2) cs else cs) in
            tick_inline_all limit' cs2 xs ((n,arity,e2) :: aux))`];;
 
+(* HOL4 bvl_inlineScript.sml:237-238: a theorem that HOL4 states as
+   the value of an ML expression *)
+
 let tick_compile_prog_def = cake_define
   `tick_compile_prog limit' cs prog = tick_inline_all limit' cs prog
   []`;;
+
+let LENGTH_tick_inline = cake_theorem "LENGTH_tick_inline"
+  (fun () ->
+    `!cs xs. LENGTH (tick_inline cs xs) = LENGTH xs`)
+  CHEAT_TAC;;
+
+let HD_tick_inline = cake_theorem "HD_tick_inline[simp]"
+  (fun () ->
+    `[HD (tick_inline cs [x])] = tick_inline cs [x]`)
+  CHEAT_TAC;;
 
 (* remove_ticks -- a function that removes Ticks *)
 
@@ -272,6 +309,24 @@ let remove_ticks_sing_def = cake_define_list
            bvl_inline_remove_ticks_list xs`];;
 hol4_overload "remove_ticks_list" "bvl_inline_remove_ticks_list";;
 hol4_overload "remove_ticks_sing" "bvl_inline_remove_ticks_sing";;
+
+let remove_ticks_sing = cake_theorem "remove_ticks_sing"
+  (fun () ->
+    `(!e. bvl_inline_remove_ticks [e] = [bvl_inline_remove_ticks_sing
+  e]) /\
+     (!es. bvl_inline_remove_ticks_list es =
+       bvl_inline_remove_ticks es)`)
+  CHEAT_TAC;;
+
+let LENGTH_remove_ticks = cake_theorem "LENGTH_remove_ticks[simp]"
+  (fun () ->
+    `!xs. LENGTH (bvl_inline_remove_ticks xs) = LENGTH xs`)
+  CHEAT_TAC;;
+
+let remove_ticks_SING = cake_theorem "remove_ticks_SING[simp]"
+  (fun () ->
+    `[HD (bvl_inline_remove_ticks [r])] = bvl_inline_remove_ticks [r]`)
+  CHEAT_TAC;;
 
 (* let_op -- a function that optimises Let [...] (Op op [Var ...]) *)
 
@@ -350,11 +405,20 @@ let let_op_one_def = cake_define_list
          (let_op_one x) :: bvl_inline_let_op_list xs`];;
 hol4_overload "let_op_list" "bvl_inline_let_op_list";;
 
+let let_op_one = cake_theorem "let_op_one"
+  (fun () ->
+    `(!e. bvl_inline_let_op [e] = [let_op_one e]) /\
+     (!es. bvl_inline_let_op_list es = bvl_inline_let_op es)`)
+  CHEAT_TAC;;
+
 let let_op_sing_def = cake_define
   `bvl_inline_let_op_sing x =
      (match bvl_inline_let_op [x] with (y :: ys) -> y | _20 -> Op
        (closLang_IntOp (closLang_Const (&0))) [])`;;
 hol4_overload "let_op_sing" "bvl_inline_let_op_sing";;
+
+(* HOL4 bvl_inlineScript.sml:414: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let optimise_def = cake_define
   `bvl_inline_optimise split_seq cut_size (name,arity,exp) =
@@ -362,6 +426,9 @@ let optimise_def = cake_define
                    (bvl_inline_let_op_sing (HD
                      (bvl_inline_remove_ticks [exp]))))`;;
 hol4_overload "optimise" "bvl_inline_optimise";;
+
+(* HOL4 bvl_inlineScript.sml:422: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let compile_inc_def = cake_define
   `bvl_inline_compile_inc limit' split_seq cut_size cs prog =

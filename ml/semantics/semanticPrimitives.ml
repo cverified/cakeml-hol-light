@@ -2,7 +2,7 @@
 (*  semanticPrimitives: ported from HOL4's
     semantics/semanticPrimitivesScript.sml
     A definition theory, with 101 definitions, 15 datatypes and no
-    theorems.  Needed by 61 files of the port.  *)
+    theorems.  Needed by 74 files of the port.  *)
 (* ======================================================== *)
 
 (*

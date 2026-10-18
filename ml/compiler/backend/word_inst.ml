@@ -3,7 +3,7 @@
     compiler/backend/word_instScript.sml
     A definition theory, with 14 definitions and 7 theorems.  Needed
     by backend.ml, backend_passes.ml, wordConvsProof.ml,
-    word_instProof.ml and word_to_word.ml.  *)
+    word_instProof.ml, word_to_word.ml and word_to_wordProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -53,11 +53,29 @@ let convert_sub_def = cake_define
         | [x; Const w] -> wordLang_Op asm_Add [Const (--w); x]
         | ls -> wordLang_Op asm_Sub ls`;;
 
+let convert_sub_pmatch = cake_theorem "convert_sub_pmatch"
+  (fun () ->
+    `!l.
+     convert_sub l =
+     (match l with
+       [Const w1; Const w2] -> Const (w1 - w2) | [x; Const w] ->
+         wordLang_Op asm_Add [Const (--w); x] | ls -> wordLang_Op
+         asm_Sub ls)`)
+  CHEAT_TAC;;
+
 let op_consts_def = cake_define
   `op_consts x1 =
         match x1 with
           (And:binop) -> Const (word_not (n2w 0))
         | _5 -> Const (n2w 0)`;;
+
+let op_consts_pmatch = cake_theorem "op_consts_pmatch"
+  (fun () ->
+    `!op.
+     op_consts op =
+     (match op with
+       And -> Const (--(n2w 0)) | _6 -> Const (n2w 0))`)
+  CHEAT_TAC;;
 
 (* Returns a definite value *)
 let reduce_const_def = cake_define
@@ -65,7 +83,7 @@ let reduce_const_def = cake_define
    (if w = (n2w 0) then
      if op = Add \/ op = Or \/ op = Xor then
        match rest with
-         [] -> Const w | [x] -> x | _6 -> wordLang_Op op rest else if
+         [] -> Const w | [x] -> x | _7 -> wordLang_Op op rest else if
            op = And then
        Const (n2w 0) else wordLang_Op op (Const w :: rest) else
          wordLang_Op op (Const w :: rest))`;;
@@ -74,7 +92,7 @@ let optimize_consts_def = cake_define
   `optimize_consts op ls =
    (let (const_ls,nconst_ls) = PARTITION word_inst_is_const ls in
      match const_ls with
-       [] -> wordLang_Op op nconst_ls | _7 ->
+       [] -> wordLang_Op op nconst_ls | _8 ->
        (let w = THE (wordLang_word_op op (MAP rm_const const_ls)) in
        reduce_const op w nconst_ls))`;;
 
@@ -100,6 +118,22 @@ let pull_exp_def = cake_define_wf
         | (Shift shift' exp nexp) -> Shift shift' (pull_exp exp)
           (pull_exp nexp)
         | exp -> exp`;;
+
+let pull_exp_pmatch = cake_theorem "pull_exp_pmatch"
+  (fun () ->
+    `!(exp:'a wordLang_exp).
+     pull_exp exp =
+     (match exp with
+      wordLang_Op asm_Sub ls -> (
+       let new_ls = MAP pull_exp ls in
+       convert_sub new_ls) | wordLang_Op op [] -> op_consts op |
+         wordLang_Op op [x] -> pull_exp x | wordLang_Op op ls -> (
+       let new_ls = MAP pull_exp ls in
+       let pull_ls = pull_ops op new_ls [] in
+         optimize_consts op pull_ls) | Load exp -> Load (pull_exp
+           exp) | Shift sh exp nexp -> Shift sh (pull_exp exp)
+           (pull_exp nexp) | exp -> exp)`)
+  CHEAT_TAC;;
 
 (*Flatten list expressions to trees -- of the form:
       +
@@ -138,7 +172,13 @@ let is_Lookup_CurrHeap_def = cake_define
   `is_Lookup_CurrHeap x1 =
       match x1 with
         wordLang_Lookup CurrHeap -> T
-      | _8 -> F`;;
+      | _9 -> F`;;
+
+let is_Lookup_CurrHeap_pmatch = cake_theorem "is_Lookup_CurrHeap_pmatch"
+  (fun () ->
+    `is_Lookup_CurrHeap e =
+       (match e with wordLang_Lookup CurrHeap -> T | _10 -> F)`)
+  CHEAT_TAC;;
 
 (*
   Maximal Munch instruction selection on (binary) expressions
@@ -170,7 +210,7 @@ let inst_select_exp_def = cake_define_wf
                else
            let prog = inst_select_exp c temp temp exp in
              Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
-               0)))))) | _9 ->
+               0)))))) | _11 ->
          (let prog = inst_select_exp c temp temp exp in
          Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
            0)))))))
@@ -196,7 +236,7 @@ let inst_select_exp_def = cake_define_wf
              (--w))))) else
            let p2 = Inst (asm_Const (temp + 1) w) in
            Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
-             (temp + 1))))))) | _10 ->
+             (temp + 1))))))) | _12 ->
          (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
          Seq p1 (Seq p2 (Inst (Arith (asm_Binop op tar temp (Reg
            (temp + 1))))))))
@@ -209,12 +249,69 @@ let inst_select_exp_def = cake_define_wf
                    Seq prog (wordLang_Move 0 [tar,temp]) else
                     Seq prog (Inst (Arith (asm_Shift sh tar temp (Imm
                       (n2w n)))))) else
-               Inst (asm_Const tar (n2w 0))) | _11 ->
+               Inst (asm_Const tar (n2w 0))) | _13 ->
          (let p = inst_select_exp c temp temp exp in
          let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
          Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg (temp
            + 1))))))))
-        | (_12,_13,_14,_15) -> Skip`;;
+        | (_14,_15,_16,_17) -> Skip`;;
+
+let inst_select_exp_pmatch = cake_theorem "inst_select_exp_pmatch"
+  (fun () ->
+    `!c tar temp exp.
+     inst_select_exp (c:'a asm_config) tar temp exp =
+     (match exp with
+       Load (wordLang_Op asm_Add [exp'; Const w]) ->
+         (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
+           then
+           let prog = inst_select_exp c temp temp exp' in
+             Seq prog (Inst (asm_Mem asm_Load tar (Addr temp w)))
+               else
+           (let prog = inst_select_exp c temp temp (wordLang_Op
+             asm_Add [exp'; Const w]) in
+             Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
+               0))))))) | Load exp ->
+         (let prog = inst_select_exp c temp temp exp in
+         Seq prog (Inst (asm_Mem asm_Load tar (Addr temp ((n2w
+           0)))))) | Const w -> Inst (asm_Const tar w) | Var v ->
+       wordLang_Move 0 [tar,v] | wordLang_Lookup store_name ->
+       Get tar store_name | wordLang_Op op [e1; e2] ->
+       (if is_Lookup_CurrHeap e2 then
+         (let p1 = inst_select_exp c temp temp e1 in
+           Seq p1 (OpCurrHeap op tar temp)) else if
+             is_Lookup_CurrHeap e1 /\ ~(op = Sub) then
+         (let p2 = inst_select_exp c temp temp e2 in
+           Seq p2 (OpCurrHeap op tar temp)) else
+        match e2 with
+         Const w ->
+         (if asm_config_valid_imm c (INL op) w then
+           Seq (inst_select_exp c temp temp e1) (Inst (Arith
+             (asm_Binop op tar temp (Imm w)))) else if op = Add /\
+             asm_config_valid_imm c (INL Sub) (--w) then
+           Seq (inst_select_exp c temp temp e1) (Inst (Arith
+             (asm_Binop asm_Sub tar temp (Imm (--w))))) else
+           let p2 = Inst (asm_Const (temp + 1) w) in
+           Seq (inst_select_exp c temp temp e1) (Seq p2 (Inst
+             (Arith (asm_Binop op tar temp (Reg (temp + 1))))))) | _18
+             ->
+         (let p2 = inst_select_exp c (temp + 1) (temp + 1) e2 in
+         Seq (inst_select_exp c temp temp e1) (Seq p2 (Inst (Arith
+           (asm_Binop op tar temp (Reg (temp + 1)))))))) | Shift sh exp
+           e1 ->
+      (match e1 with Const shift_len ->
+           (let n = w2n shift_len in
+             if (n < dimindex (:'a)) then
+               (let prog = inst_select_exp c temp temp exp in
+                 if n = 0 then
+                   Seq prog (wordLang_Move 0 [tar,temp]) else
+                    Seq prog (Inst (Arith (asm_Shift sh tar temp
+                      (Imm (n2w n)))))) else
+               Inst (asm_Const tar (n2w 0))) | _19 ->
+         (let p = inst_select_exp c temp temp exp in
+         let p1 = inst_select_exp c (temp + 1) (temp + 1) e1 in
+         Seq p (Seq p1 (Inst (Arith (asm_Shift sh tar temp (Reg
+           (temp + 1)))))))) | _20 -> Skip)`)
+  CHEAT_TAC;;
 
 (*
 
@@ -248,7 +345,7 @@ let inst_select_def = cake_define
                else
            let prog = inst_select_exp c temp temp exp in
              Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
-               0)))))) | _16 ->
+               0)))))) | _21 ->
          (let prog = inst_select_exp c temp temp exp in
          Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
            0)))))))
@@ -271,7 +368,7 @@ let inst_select_def = cake_define
              Seq prog (wordLang_ShareInst op v (wordLang_Op asm_Add
                [Var temp; Const w])) else
            let prog = inst_select_exp c temp temp exp in
-             Seq prog (wordLang_ShareInst op v (Var temp))) | _17 ->
+             Seq prog (wordLang_ShareInst op v (Var temp))) | _22 ->
          (let prog = inst_select_exp c temp temp exp in
          Seq prog (wordLang_ShareInst op v (Var temp))))
         | (If cmp r1 ri c1 c2) ->
@@ -289,6 +386,68 @@ let inst_select_def = cake_define
         | (Loop names body exit_names) ->
        Loop names (inst_select c temp body) exit_names
         | prog -> prog`;;
+
+let inst_select_pmatch = cake_theorem "inst_select_pmatch"
+  (fun () ->
+    `!c temp prog.
+     inst_select c temp prog =
+     (match prog with wordLang_Assign v exp ->
+       (inst_select_exp c v temp o flatten_exp o pull_exp) exp |
+         Set store exp ->
+       (let prog = (inst_select_exp c temp temp o flatten_exp o
+         pull_exp) exp in
+       Seq prog (Set store (Var temp))) | Store exp var ->
+       (let exp = (flatten_exp o pull_exp) exp in
+       match exp with wordLang_Op asm_Add [exp'; Const w] ->
+         (if (\c. asm_offset_ok 0 (asm_config_addr_offset c)) c w
+           then
+           let prog = inst_select_exp c temp temp exp' in
+             Seq prog (Inst (asm_Mem asm_Store var (Addr temp w)))
+               else
+           let prog = inst_select_exp c temp temp exp in
+             Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
+               0)))))) | _23 ->
+         (let prog = inst_select_exp c temp temp exp in
+         Seq prog (Inst (asm_Mem asm_Store var (Addr temp ((n2w
+           0))))))) | Seq p1 p2 ->
+       Seq (inst_select c temp p1) (inst_select c temp p2) |
+         wordLang_MustTerminate p1 ->
+       wordLang_MustTerminate (inst_select c temp p1) | (If cmp r1
+         ri c1 c2) ->
+         If cmp r1 ri (inst_select c temp c1) (inst_select c temp
+           c2) | wordLang_ShareInst op var exp ->
+       (let exp = (flatten_exp o pull_exp) exp in
+       match exp with wordLang_Op asm_Add [exp'; Const w] ->
+         (if ((op = Load \/ op = Store) /\ (\c. asm_offset_ok 0
+           (asm_config_addr_offset c)) c w) \/
+             ((op = asm_Load32 \/ op = asm_Store32) /\ (\c.
+               asm_offset_ok 0 (asm_config_addr_offset c)) c w) \/
+             ((op = asm_Load16 \/ op = asm_Store16) /\ (\c.
+               asm_offset_ok 0 (asm_config_hw_offset c)) c w) \/
+             ((op = asm_Load8 \/ op = asm_Store8) /\ (\c.
+               asm_offset_ok 0 (asm_config_byte_offset c)) c w) then
+           let prog = inst_select_exp c temp temp exp' in
+             Seq prog (wordLang_ShareInst op var (wordLang_Op
+               asm_Add [Var temp; Const w])) else
+           let prog = inst_select_exp c temp temp exp in
+             Seq prog (wordLang_ShareInst op var (Var temp))) | _24
+               ->
+         (let prog = inst_select_exp c temp temp exp in
+         Seq prog (wordLang_ShareInst op var (Var temp)))) | (Call
+           ret dest args handler) ->
+       (let retsel =
+         (match ret with
+           NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
+           SOME (n,names,inst_select c temp ret_handler,l1,l2)) in
+       let handlersel =
+         (match handler with
+           NONE -> NONE | SOME (n,h,l1,l2) -> SOME (n,inst_select c
+             temp h,l1,l2)) in
+       Call retsel dest args handlersel) | (Loop names body
+         exit_names) ->
+       Loop names (inst_select c temp body) exit_names | prog ->
+         prog)`)
+  CHEAT_TAC;;
 
 (*
   Convert all 3 register instructions to 2 register instructions
@@ -332,6 +491,44 @@ let three_to_two_reg_def = cake_define
         | (Loop names body exit_names) ->
        Loop names (three_to_two_reg body) exit_names
         | prog -> prog`;;
+
+let three_to_two_reg_pmatch = cake_theorem "three_to_two_reg_pmatch"
+  (fun () ->
+    `!prog.
+     three_to_two_reg prog =
+     (match prog with (Inst (Arith (asm_Binop bop r1 r2 ri))) ->
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Binop bop r1
+         r1 ri))) | (Inst (Arith (asm_Shift l r1 r2 n))) ->
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_Shift l r1
+         r1 n))) | (Inst (Arith (asm_AddCarry r1 r2 r3 r4))) ->
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddCarry r1
+         r1 r3 r4))) | (Inst (Arith (asm_AddOverflow r1 r2 r3 r4))) ->
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_AddOverflow
+         r1 r1 r3 r4))) | (Inst (Arith (asm_SubOverflow r1 r2 r3 r4)))
+         ->
+       Seq (wordLang_Move 0 [r1,r2]) (Inst (Arith (asm_SubOverflow
+         r1 r1 r3 r4))) | (OpCurrHeap bop r1 r2) ->
+       Seq (wordLang_Move 0 [r1,r2]) (OpCurrHeap bop r1 r1) | (Seq
+         p1 p2) ->
+       Seq (three_to_two_reg p1) (three_to_two_reg p2) |
+         (wordLang_MustTerminate p1) ->
+       wordLang_MustTerminate (three_to_two_reg p1) | (If cmp r1 ri
+         c1 c2) ->
+       If cmp r1 ri (three_to_two_reg c1) (three_to_two_reg c2) |
+         (Call ret dest args handler) ->
+       (let retsel =
+         (match ret with
+           NONE -> NONE | SOME (n,names,ret_handler,l1,l2) ->
+           SOME (n,names,three_to_two_reg ret_handler,l1,l2)) in
+       let handlersel =
+         (match handler with
+           NONE -> NONE | SOME (n,h,l1,l2) -> SOME
+             (n,three_to_two_reg h,l1,l2)) in
+       Call retsel dest args handlersel) | (Loop names body
+         exit_names) ->
+       Loop names (three_to_two_reg body) exit_names | prog ->
+         prog)`)
+  CHEAT_TAC;;
 
 let three_to_two_reg_prog_def = cake_define
   `three_to_two_reg_prog b prog =

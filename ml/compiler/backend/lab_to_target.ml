@@ -2,7 +2,7 @@
 (*  lab_to_target: ported from HOL4's
     compiler/backend/lab_to_targetScript.sml
     A definition theory, with 39 definitions, 2 datatypes and 2
-    theorems.  Needed by 7 files of the port.  *)
+    theorems.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -232,6 +232,13 @@ let pad_code_def = cake_define_list
    `pad_code nop (Section n xs :: ys) =
       Section n (pad_section nop xs []) :: pad_code nop ys`];;
 
+let pad_code_MAP = cake_theorem "pad_code_MAP"
+  (fun () ->
+    `pad_code nop =
+      MAP (\x. Section (Section_num x) (pad_section nop
+        (Section_lines x) []))`)
+  CHEAT_TAC;;
+
 let sec_length_def = cake_define_list
   [`sec_length [] k = k`;
    `sec_length (labLang_Label _25 _26 l :: xs) k = sec_length xs (k +
@@ -323,6 +330,12 @@ let prog_to_bytes_def = cake_define_list_cheat CHEAT_TAC
          line_bytes y ++ prog_to_bytes ((Section k ys) :: xs)`];;
 
 (* HOL4 lab_to_targetScript.sml:339: ML code, not ported *)
+
+let prog_to_bytes_MAP = cake_theorem "prog_to_bytes_MAP"
+  (fun () ->
+    `!ls. prog_to_bytes ls = FLAT
+            (MAP (FLAT o MAP line_bytes o Section_lines) ls)`)
+  CHEAT_TAC;;
 
 (* compile labels *)
 let shmem_info_num_FIELDS = define_record "shmem_info_num"

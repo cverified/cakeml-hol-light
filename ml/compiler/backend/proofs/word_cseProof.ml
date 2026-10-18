@@ -18,7 +18,11 @@ needs "compiler/backend/wordLang.ml";;
 needs "compiler/backend/word_cse.ml";;
 needs "compiler/backend/word_simp.ml";;
 needs "compiler/encoders/asm/asm.ml";;
+needs "lib/balanced_map.ml";;
+needs "lib/comparison.ml";;
 needs "lib/sptree.ml";;
+needs "lib/ternaryComparisons.ml";;
+needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 (* HOL4 ancestors outside the port: alist toto *)
 
@@ -118,57 +122,379 @@ let data_inv_def = cake_define
   `data_inv (data:knowledge) (s:('a,'c,'ffi)wordSem_state) <=>
      wf_data (:'a) data /\ sem_inv data s`;;
 
+let canonicalRegs_correct = cake_theorem "canonicalRegs_correct[simp]"
+  (fun () ->
+    `!data r s. data_inv data s ==> wordSem_get_var (canonicalRegs
+  data r) s = wordSem_get_var r s`)
+  CHEAT_TAC;;
+
+let canonicalRegs'_correct = cake_theorem "canonicalRegs'_correct[simp]"
+  (fun () ->
+    `!a data r s. data_inv data s ==> wordSem_get_var (canonicalRegs'
+  a data r) s = wordSem_get_var r s`)
+  CHEAT_TAC;;
+
+let canonicalRegs_correct_bis =
+  cake_theorem "canonicalRegs_correct_bis[simp]"
+  (fun () ->
+    `!data r s. data_inv data s ==> lookup (canonicalRegs data r)
+  (wordSem_state_locals s) = lookup r (wordSem_state_locals s)`)
+  CHEAT_TAC;;
+
+let canonicalArith_correct = cake_theorem "canonicalArith_correct[simp]"
+  (fun () ->
+    `!data s a. data_inv data s ==> wordSem_inst (Arith
+  (canonicalArith data a)) s = wordSem_inst (Arith a) s`)
+  CHEAT_TAC;;
+
+let wordToNum_unique = cake_theorem "wordToNum_unique[simp]"
+  (fun () ->
+    `!c1 c2. wordToNum c1 = wordToNum c2 <=> c1 = c2`)
+  CHEAT_TAC;;
+
+let arithOpToNum_eq = cake_theorem "arithOpToNum_eq[simp]"
+  (fun () ->
+    `!op1 op2. arithOpToNum op1 = arithOpToNum op2 <=> op1 = op2`)
+  CHEAT_TAC;;
+
+let memOpToNum_eq = cake_theorem "memOpToNum_eq[simp]"
+  (fun () ->
+    `!op1 op2. memOpToNum op1 = memOpToNum op2 <=> op1 = op2`)
+  CHEAT_TAC;;
+
+let firstRegOfArith_canonicalArith =
+  cake_theorem "firstRegOfArith_canonicalArith[simp]"
+  (fun () ->
+    `!data a. firstRegOfArith (canonicalArith data a) =
+  firstRegOfArith a`)
+  CHEAT_TAC;;
+
 (* Some usefull proofs to automize *)
+
+let data_inv_locals = cake_theorem "data_inv_locals[simp]"
+  (fun () ->
+    `!s. wordSem_state_locals_fupd (K (wordSem_state_locals s = s)) s`)
+  CHEAT_TAC;;
+
+let insert_eq = cake_theorem "insert_eq"
+  (fun () ->
+    `!(n1:num) n2 v1 v2 l. insert n1 v1 l = insert n1 v2 l <=> v1 = v2`)
+  CHEAT_TAC;;
 
 (* A stored arith fact concerns a can_mem_arith shape, whose evaluation is
    a single set_var of a value computed from the registers it reads; the
    fact transports across a write to any register the instruction does not
    read. *)
+let evaluate_arith_set_var = cake_theorem "evaluate_arith_set_var"
+  (fun () ->
+    `!a r u w s.
+       can_mem_arith a /\ ~MEM r (arithReads a) ==>
+       (wordSem_evaluate (Inst (Arith a),wordSem_set_var r u s) =
+          (NONE,wordSem_set_var (firstRegOfArith a) w
+            (wordSem_set_var r u s)) <=>
+        wordSem_evaluate (Inst (Arith a),s) =
+          (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
+  CHEAT_TAC;;
 
 (* A successful load evaluation determines the loaded value from the address
    register and memory alone, so the same load at ANY destination evaluates
    the same way — this gives the ∀-quantified-destination form stored by the
    loads clause of sem_inv. *)
+let evaluate_load_any_dest = cake_theorem "evaluate_load_any_dest"
+  (fun () ->
+    `!op r0 a ofs w s r.
+       ~is_store op /\
+       wordSem_evaluate (Inst (asm_Mem op r0 (Addr a ofs)),s) =
+         (NONE,wordSem_set_var r0 w s) ==>
+       wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
+         (NONE,wordSem_set_var r w s)`)
+  CHEAT_TAC;;
 
 (* A load reads its address register, the memory fields and be; the
    evaluation equation transports across a write to any OTHER register, for
    any destination (including the written one, by insert collapsing). *)
+let evaluate_load_set_var = cake_theorem "evaluate_load_set_var"
+  (fun () ->
+    `!op r a ofs n u w s.
+       ~is_store op /\ ~(a = n) ==>
+       (wordSem_evaluate (Inst (asm_Mem op r (Addr a
+         ofs)),wordSem_set_var n u s) =
+          (NONE,wordSem_set_var r w (wordSem_set_var n u s)) <=>
+        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
+          (NONE,wordSem_set_var r w s))`)
+  CHEAT_TAC;;
 
 (* A load's address register may be replaced by any register holding the
    same value — the bridge from the executed address to its canonical
    representative. *)
+let evaluate_load_change_addr =
+  cake_theorem "evaluate_load_change_addr[local]"
+  (fun () ->
+    `!op r a a' ofs w (s:('a,'c,'ffi)wordSem_state).
+       ~is_store op /\
+       lookup a' (wordSem_state_locals s) = lookup a
+         (wordSem_state_locals s) /\
+       wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
+         (NONE,wordSem_set_var r w s) ==>
+       wordSem_evaluate (Inst (asm_Mem op r (Addr a' ofs)),s) =
+         (NONE,wordSem_set_var r w s)`)
+  CHEAT_TAC;;
 
 (* A storable arith instruction reads and writes registers only; its
    evaluation equation is insensitive to the memory contents. *)
+let evaluate_arith_memory = cake_theorem "evaluate_arith_memory[local]"
+  (fun () ->
+    `!a w s m.
+       can_mem_arith a ==>
+       (wordSem_evaluate (Inst (Arith a),wordSem_state_memory_fupd
+         (K m) s) =
+          (NONE,wordSem_state_memory_fupd (K m) (wordSem_set_var
+            (firstRegOfArith a) w s)) <=>
+        wordSem_evaluate (Inst (Arith a),s) =
+          (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
+  CHEAT_TAC;;
 
 (* Every register mentioned by the invariant lies in the domain of
    to_canonical, so an untracked register is unmentioned. *)
+let wf_data_untracked = cake_theorem "wf_data_untracked"
+  (fun () ->
+    `!data n.
+       wf_data (:'a) data /\ sptree_lookup n
+         (knowledge_to_canonical data) = NONE ==>
+       (!r v. lookup r (knowledge_to_canonical data) = SOME v ==>
+         ~(r = n) /\ ~(v = n)) /\
+       (!r v. lookup r (knowledge_to_latest data) = SOME v ==> ~(r
+         = n) /\ ~(v = n)) /\
+       (!k v. balanced_map_lookup listCmp k (knowledge_instrs_mem
+         data) = SOME v ==> ~(v = n)) /\
+       (!(a:'a asm_arith) v.
+          balanced_map_lookup listCmp (instToNumList (Arith a))
+            (knowledge_instrs_mem data) = SOME v ==>
+          ~MEM n (arithReads a) /\ can_mem_arith a) /\
+       (!op src v.
+          balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
+            (knowledge_instrs_mem data) = SOME v ==> ~(
+          src = n)) /\
+       (!x v. ALOOKUP (knowledge_gets_mem data) x = SOME v ==> ~(v
+         = n)) /\
+       (!k v. balanced_map_lookup listCmp k (knowledge_loads_mem
+         data) = SOME v ==> ~(v = n)) /\
+       (!op a (ofs:'a word) v.
+          balanced_map_lookup listCmp (loadToNumList op a ofs)
+            (knowledge_loads_mem data) = SOME v ==> ~(
+          a = n))`)
+  CHEAT_TAC;;
+
+let data_inv_set_var = cake_theorem "data_inv_set_var"
+  (fun () ->
+    `!data s n v.
+       sptree_lookup n (knowledge_to_canonical data) = NONE ==>
+       data_inv data (wordSem_set_var n v s) = data_inv data s`)
+  CHEAT_TAC;;
 
 (* The unset_var (locals-delete) clones of the set_var transports, for
    StoreConsts' two unsets. *)
+let evaluate_arith_unset_var =
+  cake_theorem "evaluate_arith_unset_var[local]"
+  (fun () ->
+    `!a r w (s:('a,'c,'ffi)wordSem_state).
+       can_mem_arith a /\ ~MEM r (arithReads a) ==>
+       (wordSem_evaluate (Inst (Arith a),wordSem_unset_var r s) =
+          (NONE,wordSem_set_var (firstRegOfArith a) w
+            (wordSem_unset_var r s)) <=>
+        wordSem_evaluate (Inst (Arith a),s) =
+          (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
+  CHEAT_TAC;;
+
+let evaluate_load_unset_var =
+  cake_theorem "evaluate_load_unset_var[local]"
+  (fun () ->
+    `!op r a ofs n w (s:('a,'c,'ffi)wordSem_state).
+       ~is_store op /\ ~(a = n) ==>
+       (wordSem_evaluate (Inst (asm_Mem op r (Addr a
+         ofs)),wordSem_unset_var n s) =
+          (NONE,wordSem_set_var r w (wordSem_unset_var n s)) <=>
+        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
+          (NONE,wordSem_set_var r w s))`)
+  CHEAT_TAC;;
+
+let data_inv_unset_var = cake_theorem "data_inv_unset_var"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) n.
+       sptree_lookup n (knowledge_to_canonical data) = NONE ==>
+       data_inv data (wordSem_unset_var n s) = data_inv data s`)
+  CHEAT_TAC;;
+
+let not_seen_data_inv_alist_insert =
+  cake_theorem "not_seen_data_inv_alist_insert[simp]"
+  (fun () ->
+    `!data s l r v.
+       sptree_lookup r (knowledge_to_canonical data) = NONE ==>
+       data_inv data (wordSem_state_locals_fupd (K l) s) ==>
+       data_inv data (wordSem_state_locals_fupd (K (insert r v
+         l)) s)`)
+  CHEAT_TAC;;
+
+let listCmpEq_correct = cake_theorem "listCmpEq_correct"
+  (fun () ->
+    `!L1 L2. listCmp L1 L2 = Equal <=> L1 = L2`)
+  CHEAT_TAC;;
+
+let antisym_listCmp = cake_theorem "antisym_listCmp"
+  (fun () ->
+    `!x y. listCmp x y = GREATER <=> listCmp y x = Less`)
+  CHEAT_TAC;;
+
+let transit_listCmp = cake_theorem "transit_listCmp"
+  (fun () ->
+    `!x y z. listCmp x y = Less /\ listCmp y z = Less ==> listCmp x z
+  = Less`)
+  CHEAT_TAC;;
+
+let TotOrd_listCmp = cake_theorem "TotOrd_listCmp[simp]"
+  (fun () ->
+    `TotOrd listCmp`)
+  CHEAT_TAC;;
+
+let good_cmp_listCmp = cake_theorem "good_cmp_listCmp[simp]"
+  (fun () ->
+    `good_cmp listCmp`)
+  CHEAT_TAC;;
+
+let lookup_listCmp_empty = cake_theorem "lookup_listCmp_empty[simp]"
+  (fun () ->
+    `lookup listCmp' k empty' = NONE`)
+  CHEAT_TAC;;
+
+let data_inv_empty = cake_theorem "data_inv_empty[simp]"
+  (fun () ->
+    `!s. data_inv empty_data s`)
+  CHEAT_TAC;;
+
+let invariant_listCmp_empty =
+  cake_theorem "invariant_listCmp_empty[simp]"
+  (fun () ->
+    `balanced_map_invariant listCmp balanced_map_empty`)
+  CHEAT_TAC;;
 
 (* The loads-wipe transport: a pure memory write preserves the whole
    invariant once the load facts are wiped — every other clause reads only
    locals, store and code. Used by the Mem-store and StoreConsts cases. *)
+let data_inv_memory = cake_theorem "data_inv_memory"
+  (fun () ->
+    `!data s m.
+       data_inv data s ==>
+       data_inv (knowledge_loads_mem_fupd (K balanced_map_empty)
+         data) (wordSem_state_memory_fupd (K m) s)`)
+  CHEAT_TAC;;
 
 (* A storable arith instruction reads and writes locals only; its evaluation
    equation transports to any state with the same locals. *)
+let evaluate_arith_agree = cake_theorem "evaluate_arith_agree[local]"
+  (fun () ->
+    `!a w (s1:('a,'c,'ffi)wordSem_state) (s2:('a,'c,'ffi)wordSem_state).
+       wordSem_evaluate (Inst (Arith a),s1) =
+         (NONE,wordSem_set_var (firstRegOfArith a) w s1) /\
+       can_mem_arith a /\ wordSem_state_locals s2 =
+         wordSem_state_locals s1 ==>
+       wordSem_evaluate (Inst (Arith a),s2) =
+         (NONE,wordSem_set_var (firstRegOfArith a) w s2)`)
+  CHEAT_TAC;;
 
 (* A load reads its address register, the memory fields and be; its
    evaluation equation transports to any state agreeing on those. *)
+let evaluate_load_agree = cake_theorem "evaluate_load_agree[local]"
+  (fun () ->
+    `!op r a ofs w (s1:('a,'c,'ffi)wordSem_state)
+  (s2:('a,'c,'ffi)wordSem_state).
+       wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s1) =
+         (NONE,wordSem_set_var r w s1) /\
+       ~is_store op /\ wordSem_state_locals s2 =
+         wordSem_state_locals s1 /\ wordSem_state_memory s2 =
+         wordSem_state_memory s1 /\ wordSem_state_mdomain
+       s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 =
+         wordSem_state_be s1 ==>
+       wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s2) =
+         (NONE,wordSem_set_var r w s2)`)
+  CHEAT_TAC;;
 
 (* The generic state-agreement transport: the whole invariant depends only
    on locals, store and the memory fields.  Covers buffer writes, ffi
    extensions and stack changes in one lemma. *)
+let data_inv_state_agree = cake_theorem "data_inv_state_agree"
+  (fun () ->
+    `!data (s1:('a,'c,'ffi)wordSem_state)
+  (s2:('a,'c,'ffi)wordSem_state).
+       data_inv data s1 /\ wordSem_state_locals
+       s2 = wordSem_state_locals s1 /\ wordSem_state_store s2 =
+         wordSem_state_store s1 /\ wordSem_state_memory s2 =
+         wordSem_state_memory s1 /\ wordSem_state_mdomain
+       s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 =
+         wordSem_state_be s1 ==>
+       data_inv data s2`)
+  CHEAT_TAC;;
 
 (* IF-JOIN MERGE SUPPORT
 
    bm_inter_eq_acc m2 m1 acc inserts into acc exactly the entries of m1 that
    are present with an equal value in m2; characterised pointwise on to_fmap. *)
+let bm_inter_eq_acc_thm = cake_theorem "bm_inter_eq_acc_thm"
+  (fun () ->
+    `!m2 m1 acc.
+       balanced_map_invariant listCmp m2 /\ balanced_map_invariant
+         listCmp m1 /\ balanced_map_invariant listCmp acc ==>
+       balanced_map_invariant listCmp (bm_inter_eq_acc m2 m1 acc)
+         /\
+       (!ks. FLOOKUP (to_fmap listCmp (bm_inter_eq_acc m2 m1 acc))
+         ks =
+            (match FLOOKUP (to_fmap listCmp m1) ks with NONE ->
+              FLOOKUP (to_fmap listCmp acc) ks | SOME v -> (if FLOOKUP
+              (to_fmap listCmp m2) ks = SOME v then SOME v else
+              FLOOKUP (to_fmap listCmp acc) ks)))`)
+  CHEAT_TAC;;
+
+let invariant_bm_inter_eq = cake_theorem "invariant_bm_inter_eq"
+  (fun () ->
+    `!m1 m2.
+       balanced_map_invariant listCmp m1 /\ balanced_map_invariant
+         listCmp m2 ==>
+       balanced_map_invariant listCmp (bm_inter_eq m1 m2)`)
+  CHEAT_TAC;;
+
+let lookup_bm_inter_eq = cake_theorem "lookup_bm_inter_eq"
+  (fun () ->
+    `!m1 m2 k v.
+       balanced_map_invariant listCmp m1 /\ balanced_map_invariant
+         listCmp m2 ==>
+       (balanced_map_lookup listCmp k (bm_inter_eq m1 m2) = SOME v
+         <=>
+        balanced_map_lookup listCmp k m1 = SOME v /\
+        balanced_map_lookup listCmp k m2 = SOME v)`)
+  CHEAT_TAC;;
+
+let ALL_DISTINCT_MAP_FST_FILTER =
+  cake_theorem "ALL_DISTINCT_MAP_FST_FILTER[local]"
+  (fun () ->
+    `!l P. ALL_DISTINCT (MAP FST l) ==> ALL_DISTINCT (MAP FST (FILTER
+  P l))`)
+  CHEAT_TAC;;
 
 (* A merged fact is present (with equal value) in both branches' data; its
    semantic content comes from whichever branch actually ran, its syntactic
    well-formedness from both. *)
+let data_inv_merge_l = cake_theorem "data_inv_merge_l"
+  (fun () ->
+    `!d1 d2 (s:('a,'c,'ffi)wordSem_state).
+       wf_data (:'a) d1 /\ wf_data (:'a) d2 /\ sem_inv d1 s ==>
+       data_inv (merge_data d1 d2) s`)
+  CHEAT_TAC;;
+
+let data_inv_merge_r = cake_theorem "data_inv_merge_r"
+  (fun () ->
+    `!d1 d2 (s:('a,'c,'ffi)wordSem_state).
+       wf_data (:'a) d1 /\ wf_data (:'a) d2 /\ sem_inv d2 s ==>
+       data_inv (merge_data d1 d2) s`)
+  CHEAT_TAC;;
 
 (* ------------------------------------------------------------------------
    KNOWLEDGE-UPDATE SUPPORT
@@ -178,33 +504,247 @@ let data_inv_def = cake_define
    extension lemmas for the knowledge fields.
    ------------------------------------------------------------------------ *)
 
+let lookup_insert_listCmp = cake_theorem "lookup_insert_listCmp"
+  (fun () ->
+    `!k i v m.
+       balanced_map_invariant listCmp m ==>
+       balanced_map_invariant listCmp (insert listCmp i v m) /\
+       lookup listCmp k (insert listCmp i v m) =
+       (if k = i then SOME v else lookup listCmp k m)`)
+  CHEAT_TAC;;
+
+let register_read_simps = cake_theorem "register_read_simps[simp]"
+  (fun () ->
+    `knowledge_instrs_mem
+       (register_read data r) = knowledge_instrs_mem data /\
+         knowledge_to_latest
+       (register_read data r) = knowledge_to_latest data /\
+         knowledge_gets_mem
+       (register_read data r) = knowledge_gets_mem data /\
+         knowledge_loads_mem
+       (register_read data r) = knowledge_loads_mem data`)
+  CHEAT_TAC;;
+
+let register_reads_simps = cake_theorem "register_reads_simps[simp]"
+  (fun () ->
+    `!rs data. knowledge_instrs_mem
+       (register_reads data rs) = knowledge_instrs_mem data /\
+         knowledge_to_latest
+       (register_reads data rs) = knowledge_to_latest data /\
+         knowledge_gets_mem
+       (register_reads data rs) = knowledge_gets_mem data /\
+         knowledge_loads_mem
+       (register_reads data rs) = knowledge_loads_mem data`)
+  CHEAT_TAC;;
+
+let lookup_register_read = cake_theorem "lookup_register_read"
+  (fun () ->
+    `sptree_lookup x (knowledge_to_canonical (register_read data r)) =
+     (if x = r /\ ~EVEN r /\ sptree_lookup r
+       (knowledge_to_canonical data) = NONE then SOME r else
+       sptree_lookup x (knowledge_to_canonical data))`)
+  CHEAT_TAC;;
+
+let lookup_register_reads = cake_theorem "lookup_register_reads"
+  (fun () ->
+    `!rs data x.
+       sptree_lookup x (knowledge_to_canonical (register_reads data
+         rs)) =
+       (if MEM x rs /\ ~EVEN x /\ sptree_lookup x
+         (knowledge_to_canonical data) = NONE then SOME x else
+         sptree_lookup x (knowledge_to_canonical data))`)
+  CHEAT_TAC;;
+
 (* Extending to_canonical with a fresh key mapped to itself or to an
    already-canonical register preserves the invariant: the fresh key is
    unmentioned elsewhere, and existing self-maps survive the insert. *)
+let data_inv_insert_to_canonical =
+  cake_theorem "data_inv_insert_to_canonical"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x y.
+       data_inv data s /\
+       sptree_lookup x (knowledge_to_canonical data) = NONE /\
+       sptree_lookup y (insert x y (knowledge_to_canonical data)) =
+         SOME y /\
+       ODD x /\ ODD y /\
+       wordSem_get_var x s = wordSem_get_var y s ==>
+       data_inv (knowledge_to_canonical_fupd (K (insert x y
+         (knowledge_to_canonical data))) data) s`)
+  CHEAT_TAC;;
 
 (* to_latest entries only require domain membership and agreeing values. *)
+let data_inv_insert_to_latest = cake_theorem "data_inv_insert_to_latest"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x y.
+       data_inv data s /\
+       x IN domain (knowledge_to_canonical data) /\ y IN domain
+         (knowledge_to_canonical data) /\
+       wordSem_get_var x s = wordSem_get_var y s ==>
+       data_inv (knowledge_to_latest_fupd (K (insert x y
+         (knowledge_to_latest data))) data) s`)
+  CHEAT_TAC;;
 
 (* Record a fresh Get fact: the destination becomes self-tracked and the
    store name maps to it.  Matches the Get-miss arm of word_cse. *)
+let data_inv_insert_gets = cake_theorem "data_inv_insert_gets[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) name v w.
+       data_inv data s /\
+       sptree_lookup v (knowledge_to_canonical data) = NONE /\ ODD
+         v /\
+       ALOOKUP (knowledge_gets_mem data) name = NONE /\
+       FLOOKUP (wordSem_state_store s) name = SOME w /\
+         wordSem_get_var v s = SOME w ==>
+       data_inv (knowledge_gets_mem_fupd (K ((name,v) ::
+         knowledge_gets_mem data)) (knowledge_to_latest_fupd (K
+         (insert v v (knowledge_to_latest data)))
+         (knowledge_to_canonical_fupd (K (insert v v
+         (knowledge_to_canonical data))) data))) s`)
+  CHEAT_TAC;;
 
 (* Dropping store facts never hurts. Matches the Set-arm FILTER. *)
+let data_inv_filter_gets = cake_theorem "data_inv_filter_gets[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x.
+       data_inv data s ==>
+       data_inv (knowledge_gets_mem_fupd (K (FILTER (\(m,n). ~(m
+         = x)) (knowledge_gets_mem data))) data) s`)
+  CHEAT_TAC;;
 
 (* Record a true store fact about an already-tracked register.  Matches the
    Set-arm cons. *)
+let data_inv_cons_gets = cake_theorem "data_inv_cons_gets[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x h w.
+       data_inv data s /\
+       ALOOKUP (knowledge_gets_mem data) x = NONE /\
+       sptree_lookup h (knowledge_to_canonical data) = SOME h /\
+       FLOOKUP (wordSem_state_store s) x = SOME w /\
+         wordSem_get_var h s = SOME w ==>
+       data_inv (knowledge_gets_mem_fupd (K ((x,h) ::
+         knowledge_gets_mem data)) data) s`)
+  CHEAT_TAC;;
 
 (* A store write to a name no fact mentions preserves the invariant: only
    the OpCurrHeap clause (CurrHeap) and the gets clauses read the store. *)
+let data_inv_set_store = cake_theorem "data_inv_set_store"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x w.
+       data_inv data s /\ ~(x = CurrHeap) /\ ALOOKUP
+         (knowledge_gets_mem data) x = NONE ==>
+       data_inv data (wordSem_set_store x w s)`)
+  CHEAT_TAC;;
 
 (* Re-registering a register's canonical entry is sound: fresh self-map for
    an untracked register, no-op for a tracked one. *)
+let data_inv_reinsert_canonical =
+  cake_theorem "data_inv_reinsert_canonical[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) v.
+       data_inv data s /\ ODD v ==>
+       data_inv (knowledge_to_canonical_fupd (K
+                   (insert v (lookup_any v (knowledge_to_canonical
+                     data) v) (knowledge_to_canonical
+                     data))) data) s`)
+  CHEAT_TAC;;
+
+let empty_data_loads_wipe = cake_theorem "empty_data_loads_wipe[simp]"
+  (fun () ->
+    `knowledge_loads_mem_fupd (K (balanced_map_empty = empty_data))
+       empty_data`)
+  CHEAT_TAC;;
+
+let lookup_empty_data = cake_theorem "lookup_empty_data[simp]"
+  (fun () ->
+    `sptree_lookup r (knowledge_to_canonical empty_data) = NONE`)
+  CHEAT_TAC;;
+
+let data_inv_register_read = cake_theorem "data_inv_register_read"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r.
+       data_inv data s ==> data_inv (register_read data r) s`)
+  CHEAT_TAC;;
+
+let data_inv_register_reads = cake_theorem "data_inv_register_reads"
+  (fun () ->
+    `!rs data (s:('a,'c,'ffi)wordSem_state).
+       data_inv data s ==> data_inv (register_reads data rs) s`)
+  CHEAT_TAC;;
 
 (* Invalidation facts for multi-output instructions. *)
+let lookup_invalidate_regs_mono =
+  cake_theorem "lookup_invalidate_regs_mono[local]"
+  (fun () ->
+    `!ws data r.
+       sptree_lookup r (knowledge_to_canonical data) = NONE ==>
+       sptree_lookup r (knowledge_to_canonical (invalidate_regs
+         data ws)) = NONE`)
+  CHEAT_TAC;;
+
+let lookup_invalidate_regs =
+  cake_theorem "lookup_invalidate_regs[local]"
+  (fun () ->
+    `!ws data r.
+       MEM r ws ==>
+       sptree_lookup r (knowledge_to_canonical (invalidate_regs
+         data ws)) = NONE`)
+  CHEAT_TAC;;
+
+let data_inv_invalidate_regs =
+  cake_theorem "data_inv_invalidate_regs[local]"
+  (fun () ->
+    `!ws data (s:('a,'c,'ffi)wordSem_state).
+       data_inv data s ==> data_inv (invalidate_regs data ws) s`)
+  CHEAT_TAC;;
 
 (* The invariant never reads the fp registers. *)
+let data_inv_set_fp_var = cake_theorem "data_inv_set_fp_var[simp]"
+  (fun () ->
+    `!data v x (s:('a,'c,'ffi)wordSem_state).
+       data_inv data (wordSem_set_fp_var v x s) = data_inv data s`)
+  CHEAT_TAC;;
+
+let with_locals_insert = cake_theorem "with_locals_insert[local]"
+  (fun () ->
+    `wordSem_state_locals_fupd (K (insert r v l = wordSem_set_var r v
+  (wordSem_state_locals_fupd (K l) s)))
+       s`)
+  CHEAT_TAC;;
+
+let data_inv_alist_insert_locals =
+  cake_theorem "data_inv_alist_insert_locals[local]"
+  (fun () ->
+    `!xs ys data (s:('a,'c,'ffi)wordSem_state) l.
+       EVERY (\x. sptree_lookup x (knowledge_to_canonical data) =
+         NONE) xs ==>
+       (data_inv data (wordSem_state_locals_fupd (K (alist_insert
+         xs ys l)) s) <=>
+        data_inv data (wordSem_state_locals_fupd (K l) s))`)
+  CHEAT_TAC;;
 
 (* data_inv is insensitive to writes to untracked registers. *)
+let data_inv_set_vars = cake_theorem "data_inv_set_vars"
+  (fun () ->
+    `!xs ys data (s:('a,'c,'ffi)wordSem_state).
+       EVERY (\x. sptree_lookup x (knowledge_to_canonical data) =
+         NONE) xs ==>
+       (data_inv data (wordSem_set_vars xs ys s) <=> data_inv
+         data s)`)
+  CHEAT_TAC;;
 
 (* The Move every cache hit emits. *)
+let evaluate_Move1 = cake_theorem "evaluate_Move1"
+  (fun () ->
+    `!pri r k w (s:('a,'c,'ffi)wordSem_state).
+       wordSem_get_var k s = SOME w ==>
+       wordSem_evaluate (wordLang_Move pri [(r,k)],s) =
+         (NONE,wordSem_set_var r w s)`)
+  CHEAT_TAC;;
+
+let shiftToNum_eq = cake_theorem "shiftToNum_eq[simp]"
+  (fun () ->
+    `!s1 s2. shiftToNum s1 = shiftToNum s2 <=> s1 = s2`)
+  CHEAT_TAC;;
 
 (* The instruction-map key of a can_mem_arith instruction determines its
    operation and reads (but not its destination), hence also the value it
@@ -212,50 +752,412 @@ let data_inv_def = cake_define
    the destination register. The sem_inv arith clause quantifies over all
    instructions with a stored key, so inserting a fact for one of them must
    yield the fact for all of them. *)
+let arith_keys_eq = cake_theorem "arith_keys_eq"
+  (fun () ->
+    `!a1 a2.
+       can_mem_arith a1 /\ arithToNumList a1 = arithToNumList a2
+         ==>
+       can_mem_arith a2 /\ arithReads a2 = arithReads a1 /\
+       (!(s:('a,'c,'ffi)wordSem_state) w.
+         wordSem_evaluate (Inst (Arith a1),s) =
+           (NONE,wordSem_set_var (firstRegOfArith a1) w s) ==>
+         wordSem_evaluate (Inst (Arith a2),s) =
+           (NONE,wordSem_set_var (firstRegOfArith a2) w s))`)
+  CHEAT_TAC;;
 
 (* Storing a new fact: one lemma per key family, each requiring the holder
    to be self-mapped and the fact's semantic content to hold. *)
+let data_inv_insert_instrs_Const =
+  cake_theorem "data_inv_insert_instrs_Const[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r n (w:'a word).
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       lookup r (wordSem_state_locals s) = SOME (wordLang_Word w)
+         ==>
+       data_inv (knowledge_instrs_mem_fupd (K
+                   (insert listCmp (instToNumList (Const n w)) r
+                     (knowledge_instrs_mem data))) data) s`)
+  CHEAT_TAC;;
+
+let data_inv_insert_instrs_Arith =
+  cake_theorem "data_inv_insert_instrs_Arith[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r (a:'a asm_arith) w.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       can_mem_arith a /\ in_names_set a (knowledge_to_canonical
+         data) /\
+       wordSem_get_var r s = SOME w /\
+       wordSem_evaluate (Inst (Arith a),s) = (NONE,wordSem_set_var
+         (firstRegOfArith a) w s) ==>
+       data_inv (knowledge_instrs_mem_fupd (K
+                   (insert listCmp (instToNumList (Arith a)) r
+                     (knowledge_instrs_mem data))) data) s`)
+  CHEAT_TAC;;
+
+let data_inv_insert_instrs_OpCurrHeap =
+  cake_theorem "data_inv_insert_instrs_OpCurrHeap[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r op src w.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       sptree_lookup src (knowledge_to_canonical data) = SOME src
+         /\
+       wordSem_word_exp s (wordLang_Op op [Var src; wordLang_Lookup
+         CurrHeap]) = SOME w /\
+       wordSem_get_var r s = SOME w ==>
+       data_inv (knowledge_instrs_mem_fupd (K
+                   (insert listCmp (OpCurrHeapToNumList op src) r
+                     (knowledge_instrs_mem data))) data) s`)
+  CHEAT_TAC;;
+
+let data_inv_insert_instrs_LocValue =
+  cake_theorem "data_inv_insert_instrs_LocValue[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r l.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       lookup r (wordSem_state_locals s) = SOME (Loc l 0) ==>
+       data_inv (knowledge_instrs_mem_fupd (K
+                   (insert listCmp [48; l] r
+                     (knowledge_instrs_mem data))) data) s`)
+  CHEAT_TAC;;
 
 (* Generic correctness of add_to_data_aux, with the family-specific content
    as premises: a hit's holder carries the computed value, and (for the odd
    destination of a miss) inserting the new fact preserves the invariant.
    The destination is freshly invalidated at every call site. *)
+let add_to_data_aux_correct = cake_theorem "add_to_data_aux_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r i p w data' p'.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       add_to_data_aux data r i p = (data',p') /\
+       wordSem_evaluate (p,s) = (NONE,wordSem_set_var r w s) /\
+       (!v. balanced_map_lookup listCmp i (knowledge_instrs_mem
+         data) = SOME v ==>
+            wordSem_get_var v s = SOME w) /\
+       (~EVEN r ==>
+          data_inv (
+                    knowledge_instrs_mem_fupd (K
+                      (insert listCmp i r (knowledge_instrs_mem
+                        (knowledge_to_canonical_fupd (K
+                           (insert r r (knowledge_to_canonical
+                             data))) data))))
+                             (knowledge_to_canonical_fupd (K (insert r r
+                             (knowledge_to_canonical data))) data))
+                   (wordSem_set_var r w s)) ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
+       data_inv data' (wordSem_set_var r w s)`)
+  CHEAT_TAC;;
 
 (* A canonical representative is itself canonical (by idempotence) or an
    untracked register mapped to itself by the next registration. *)
+let canonicalRegs_self_or_fresh =
+  cake_theorem "canonicalRegs_self_or_fresh[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x.
+       data_inv data s ==>
+       sptree_lookup (canonicalRegs data x) (knowledge_to_canonical
+         data) =
+         SOME (canonicalRegs data x) \/
+       sptree_lookup (canonicalRegs data x)
+         (knowledge_to_canonical data) = NONE`)
+  CHEAT_TAC;;
 
 (* The avoiding variant only differs when the canonical representative is
    the (freshly invalidated) destination, which forces the argument itself
    to be that untracked destination. *)
+let canonicalRegs'_self_or_fresh =
+  cake_theorem "canonicalRegs'_self_or_fresh[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r1 x.
+       data_inv data s /\ sptree_lookup r1 (knowledge_to_canonical
+         data) = NONE ==>
+       sptree_lookup (canonicalRegs' r1 data x)
+         (knowledge_to_canonical data) =
+         SOME (canonicalRegs' r1 data x) \/
+       sptree_lookup (canonicalRegs' r1 data x)
+         (knowledge_to_canonical data) = NONE`)
+  CHEAT_TAC;;
+
+let can_mem_arith_ODD_reads =
+  cake_theorem "can_mem_arith_ODD_reads[local]"
+  (fun () ->
+    `!a. can_mem_arith a ==> EVERY ODD (arithReads a)`)
+  CHEAT_TAC;;
 
 (* Correctness of add_to_data_const: a repeated constant keeps its register
    equivalence (to_canonical/to_latest) but is rematerialised — both arms emit
    Inst (Const r w), so the destination ends up holding Word w either way and
    the data invariant is maintained. The destination is freshly invalidated at
    the call site (ODD r, untracked). *)
+let add_to_data_const_correct = cake_theorem "add_to_data_const_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r (w:'a word) data' p'.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+         ~EVEN r /\
+       add_to_data_const data r w = (data',p') ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r
+         (wordLang_Word w) s) /\
+       data_inv data' (wordSem_set_var r (wordLang_Word w) s)`)
+  CHEAT_TAC;;
+
+let add_to_data_LocValue_correct =
+  cake_theorem "add_to_data_LocValue_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r l data' p'.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       l IN domain (wordSem_state_code s) /\
+       add_to_data_aux data r [48; l] (LocValue r l) = (data',p')
+         ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r (Loc l 0)
+         s) /\
+       data_inv data' (wordSem_set_var r (Loc l 0) s)`)
+  CHEAT_TAC;;
+
+let add_to_data_OpCurrHeap_correct =
+  cake_theorem "add_to_data_OpCurrHeap_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) b r1 r2 r2' w data' p'.
+       data_inv data s /\
+       sptree_lookup r1 (knowledge_to_canonical data) = NONE /\
+       r2' = canonicalRegs' r1 data r2 /\
+       ~EVEN r2 /\ ~(r2 = r1) /\
+       wordSem_word_exp s (wordLang_Op b [Var r2; wordLang_Lookup
+         CurrHeap]) = SOME w /\
+       add_to_data_aux (register_read data r2') r1
+         (OpCurrHeapToNumList b r2')
+         (OpCurrHeap b r1 r2) = (data',p') ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r1 w s) /\
+       data_inv data' (wordSem_set_var r1 w s)`)
+  CHEAT_TAC;;
+
+let add_to_data_Arith_correct = cake_theorem "add_to_data_Arith_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) a a' r w data' p'.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       a' = canonicalArith data a /\
+       can_mem_arith a' /\ ~MEM r (arithReads a') /\
+       r = firstRegOfArith a /\
+       wordSem_evaluate (Inst (Arith a),s) = (NONE,wordSem_set_var
+         r w s) /\
+       add_to_data (register_reads data (arithReads a')) r (Arith
+         a') (Arith a) = (data',p') ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
+       data_inv data' (wordSem_set_var r w s)`)
+  CHEAT_TAC;;
 
 (* Storing a new load fact (the loads_mem sibling of the F-family): the
    holder and the address must be self-mapped, and the fact's ∀-destination
    evaluation equation must hold. *)
+let data_inv_insert_loads = cake_theorem "data_inv_insert_loads[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r op a (ofs:'a word) w.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       sptree_lookup a (knowledge_to_canonical data) = SOME a /\
+       ~is_store op /\
+       wordSem_get_var r s = SOME w /\
+       (!r'. wordSem_evaluate (Inst (asm_Mem op r' (Addr a ofs)),s)
+         = (NONE,wordSem_set_var r' w s)) ==>
+       data_inv (knowledge_loads_mem_fupd (K
+                   (insert listCmp (loadToNumList op a ofs) r
+                     (knowledge_loads_mem data))) data) s`)
+  CHEAT_TAC;;
 
 (* Generic correctness of add_to_load_aux — the loads_mem mirror of
    add_to_data_aux_correct, with the same premise structure. *)
+let add_to_load_aux_correct = cake_theorem "add_to_load_aux_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) r i p w data' p'.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       add_to_load_aux data r i p = (data',p') /\
+       wordSem_evaluate (p,s) = (NONE,wordSem_set_var r w s) /\
+       (!v. balanced_map_lookup listCmp i (knowledge_loads_mem
+         data) = SOME v ==>
+            wordSem_get_var v s = SOME w) /\
+       (~EVEN r ==>
+          data_inv (
+                    knowledge_loads_mem_fupd (K
+                      (insert listCmp i r (knowledge_loads_mem
+                        (knowledge_to_canonical_fupd (K
+                           (insert r r (knowledge_to_canonical
+                             data))) data))))
+                             (knowledge_to_canonical_fupd (K (insert r r
+                             (knowledge_to_canonical data))) data))
+                   (wordSem_set_var r w s)) ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
+       data_inv data' (wordSem_set_var r w s)`)
+  CHEAT_TAC;;
 
 (* The instantiation of add_to_load_aux_correct at the word_cseInst Mem-arm
    call site. *)
+let add_to_load_correct = cake_theorem "add_to_load_correct"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) op r a a' (ofs:'a word) w data'
+  p'.
+       data_inv data s /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       a' = canonicalRegs' r data a /\
+       ~is_store op /\ ~EVEN r /\ ~EVEN a /\ ~(a = r) /\
+       wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
+         (NONE,wordSem_set_var r w s) /\
+       add_to_load_aux (register_read data a') r (loadToNumList op
+         a' ofs)
+         (Inst (asm_Mem op r (Addr a ofs))) = (data',p') ==>
+       wordSem_evaluate (p',s) = (NONE,wordSem_set_var r w s) /\
+       data_inv data' (wordSem_set_var r w s)`)
+  CHEAT_TAC;;
+
+let MAP_FST_lemma = cake_theorem "MAP_FST_lemma[local]"
+  (fun () ->
+    `!moves. MAP FST' (MAP (\(a,b). (a,canonicalRegs data b)) moves) =
+  MAP FST' moves`)
+  CHEAT_TAC;;
+
+let MAP_SND_lemma = cake_theorem "MAP_SND_lemma[local]"
+  (fun () ->
+    `!moves x.
+       wordSem_get_vars (MAP SND moves) s = SOME x /\ data_inv data
+         s ==>
+       wordSem_get_vars (MAP SND (MAP (\(a,b). (a,canonicalRegs
+         data b)) moves)) s = SOME x`)
+  CHEAT_TAC;;
+
+let lookup_map_insert0 = cake_theorem "lookup_map_insert0"
+  (fun () ->
+    `!xs r. lookup r (map_insert xs m) =
+            (match ALOOKUP xs r with NONE -> lookup r m | SOME r'
+              -> SOME r')`)
+  CHEAT_TAC;;
+
+let get_set_vars_lemma = cake_theorem "get_set_vars_lemma"
+  (fun () ->
+    `!xs xs' x y s. ~MEM x xs /\ ~MEM y xs ==>
+                    wordSem_get_var x s = wordSem_get_var y s ==>
+                    wordSem_get_var x (wordSem_set_vars xs xs' s)
+                      = wordSem_get_var y (wordSem_set_vars xs xs' s)`)
+  CHEAT_TAC;;
+
+let get_set_vars_not_in = cake_theorem "get_set_vars_not_in[local]"
+  (fun () ->
+    `!rs vs r s. ~MEM r rs ==> wordSem_get_var r (wordSem_set_vars rs
+  vs s) = wordSem_get_var r s`)
+  CHEAT_TAC;;
+
+let MEM_FST_reduc = cake_theorem "MEM_FST_reduc"
+  (fun () ->
+    `!moves r p_2. MEM (r,p_2) moves ==> MEM r (MAP FST moves)`)
+  CHEAT_TAC;;
+
+let get_set_vars_in = cake_theorem "get_set_vars_in[local]"
+  (fun () ->
+    `!moves r p_2 x s.
+       MEM (r,p_2) moves ==>
+       ALL_DISTINCT (MAP FST moves) ==>
+       wordSem_get_vars (MAP SND moves) s = SOME x ==>
+       wordSem_get_var r (wordSem_set_vars (MAP FST moves) x s) =
+         wordSem_get_var p_2 s`)
+  CHEAT_TAC;;
+
+let get_set_vars_in_2 = cake_theorem "get_set_vars_in_2[local]"
+  (fun () ->
+    `!moves r p_2 x' x data s.
+       MEM (r,p_2) moves ==>
+       ALL_DISTINCT (MAP FST moves) ==>
+       lookup p_2 (knowledge_to_canonical data) = SOME x' ==>
+       wordSem_get_vars (MAP SND (MAP (\(a,b). (a,canonicalRegs
+         data b)) moves)) s = SOME x ==>
+       wordSem_get_var r (wordSem_set_vars (MAP FST moves) x s) =
+         wordSem_get_var x' s`)
+  CHEAT_TAC;;
+
+let lookup_set_vars_not_in =
+  cake_theorem "lookup_set_vars_not_in[local]"
+  (fun () ->
+    `!moves v data c x.
+       ~MEM v (MAP FST moves) ==>
+       lookup v (wordSem_state_locals s) = SOME (wordLang_Word c)
+         ==>
+       lookup v (wordSem_state_locals (wordSem_set_vars (MAP FST
+         moves) x s)) = SOME (wordLang_Word c)`)
+  CHEAT_TAC;;
+
+let list_insert_insert = cake_theorem "list_insert_insert[local]"
+  (fun () ->
+    `!l n an. list_insert l (insert n one an) = insert n one
+  (list_insert l an)`)
+  CHEAT_TAC;;
 
 (* Field-explicit corollaries of the two extension lemmas, in the shape the
    map_insert induction produces. *)
+let data_inv_insert_canonical_pair =
+  cake_theorem "data_inv_insert_canonical_pair[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x y tc tl.
+       data_inv (knowledge_to_latest_fupd (K tl)
+         (knowledge_to_canonical_fupd (K tc) data)) s /\
+       sptree_lookup x tc = NONE /\
+       sptree_lookup y (insert x y tc) = SOME y /\
+       ODD x /\ ODD y /\
+       wordSem_get_var x s = wordSem_get_var y s ==>
+       data_inv (knowledge_to_latest_fupd (K tl)
+         (knowledge_to_canonical_fupd (K (insert x y tc)) data)) s`)
+  CHEAT_TAC;;
 
 (* One recorded register equivalence (fresh destination, already-canonical
    source) on top of arbitrary to_canonical/to_latest contents. *)
+let data_inv_insert_pair = cake_theorem "data_inv_insert_pair[local]"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) x y tc tl.
+       data_inv (knowledge_to_latest_fupd (K tl)
+         (knowledge_to_canonical_fupd (K tc) data)) s /\
+       sptree_lookup x tc = NONE /\ sptree_lookup y tc = SOME y /\
+       ODD x /\ ODD y /\ wordSem_get_var x s = wordSem_get_var y s
+         ==>
+       data_inv (knowledge_to_latest_fupd (K (insert y x tl))
+         (knowledge_to_canonical_fupd (K (insert x y tc)) data)) s`)
+  CHEAT_TAC;;
 
 (* Recording a list of register equivalences (fresh destination, canonical
    source) pair by pair: the Move case's knowledge update. *)
+let data_inv_move_pairs = cake_theorem "data_inv_move_pairs[local]"
+  (fun () ->
+    `!ps data (s:('a,'c,'ffi)wordSem_state).
+       data_inv data s /\
+       ALL_DISTINCT (MAP FST ps) /\
+       EVERY (\(x,y). sptree_lookup x (knowledge_to_canonical data)
+         = NONE /\
+                      sptree_lookup y (knowledge_to_canonical data)
+                        = SOME y /\
+                      ODD x /\ wordSem_get_var x s =
+                        wordSem_get_var y s) ps ==>
+       data_inv (knowledge_to_latest_fupd (K (map_insert (MAP
+         (\(a,b). (b,a)) ps) (knowledge_to_latest
+                              data)))
+                                (knowledge_to_canonical_fupd (K
+                                (map_insert ps (knowledge_to_canonical
+                                data))) data)) s`)
+  CHEAT_TAC;;
 
 (* The Move case: registering the sources and recording the surviving
    destination/canonical-source equivalences preserves the invariant across
    the parallel assignment. *)
+let canonicalMoveRegs_lemma = cake_theorem "canonicalMoveRegs_lemma"
+  (fun () ->
+    `!data (s:('a,'c,'ffi)wordSem_state) rs vs.
+       data_inv data s /\
+       ALL_DISTINCT (MAP FST rs) /\
+       wordSem_get_vars (MAP SND rs) s = SOME vs ==>
+       data_inv (canonicalMoveRegs data rs) (wordSem_set_vars
+         (MAP FST rs) vs s)`)
+  CHEAT_TAC;;
 
 (* ------------------------------------------------------------------------
    THE MAIN CORRECTNESS THEOREM
@@ -266,11 +1168,48 @@ let data_inv_def = cake_define
    case's proof.
    ------------------------------------------------------------------------ *)
 
+let if_eq_rw = cake_theorem "if_eq_rw[local,simp]"
+  (fun () ->
+    `(if x = y then y else x) = x`)
+  CHEAT_TAC;;
+
 (* The stored evaluation equations are insensitive to the clock and termdep
    fields — clones of the memory transports for the Tick/MustTerminate
    cases. *)
+let evaluate_arith_clock = cake_theorem "evaluate_arith_clock[local]"
+  (fun () ->
+    `!a w s c td.
+       can_mem_arith a ==>
+       (wordSem_evaluate (Inst (Arith a),wordSem_state_termdep_fupd
+         (K td) (state_clock_fupd (K c) s)) =
+          (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd
+            (K c)
+           (wordSem_set_var (firstRegOfArith a) w s))) <=>
+        wordSem_evaluate (Inst (Arith a),s) =
+          (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
+  CHEAT_TAC;;
+
+let evaluate_load_clock = cake_theorem "evaluate_load_clock[local]"
+  (fun () ->
+    `!op r a ofs w s c td.
+       ~is_store op ==>
+       (wordSem_evaluate (Inst (asm_Mem op r (Addr a
+         ofs)),wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
+                  s)) =
+          (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd
+            (K c) (wordSem_set_var r w s))) <=>
+        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
+          (NONE,wordSem_set_var r w s))`)
+  CHEAT_TAC;;
 
 (* data_inv is insensitive to the clock and termdep fields. *)
+let data_inv_clock = cake_theorem "data_inv_clock"
+  (fun () ->
+    `!data s c td.
+       data_inv data s ==> data_inv data
+         (wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
+         s))`)
+  CHEAT_TAC;;
 
 (* ------------------------------------------------------------------------
    SYNTACTIC WF PRESERVATION
@@ -282,28 +1221,239 @@ let data_inv_def = cake_define
    their wf_data content, and culminate in word_cse_wf_data.
    ------------------------------------------------------------------------ *)
 
+let wf_data_empty = cake_theorem "wf_data_empty[simp]"
+  (fun () ->
+    `wf_data (:'a) empty_data`)
+  CHEAT_TAC;;
+
 (* Wiping the load facts only removes obligations. *)
+let wf_data_loads_wipe = cake_theorem "wf_data_loads_wipe"
+  (fun () ->
+    `!data. wf_data (:'a) data ==> wf_data (:'a)
+  (knowledge_loads_mem_fupd (K balanced_map_empty) data)`)
+  CHEAT_TAC;;
+
+let wf_data_invalidate = cake_theorem "wf_data_invalidate"
+  (fun () ->
+    `!data r. wf_data (:'a) data ==> wf_data (:'a) (invalidate_data
+  data r)`)
+  CHEAT_TAC;;
+
+let wf_data_invalidate_regs = cake_theorem "wf_data_invalidate_regs"
+  (fun () ->
+    `!rs data. wf_data (:'a) data ==> wf_data (:'a) (invalidate_regs
+  data rs)`)
+  CHEAT_TAC;;
 
 (* wf sibling of data_inv_insert_to_canonical. *)
+let wf_data_insert_to_canonical =
+  cake_theorem "wf_data_insert_to_canonical"
+  (fun () ->
+    `!data x y.
+       wf_data (:'a) data /\
+       sptree_lookup x (knowledge_to_canonical data) = NONE /\
+       sptree_lookup y (insert x y (knowledge_to_canonical data)) =
+         SOME y /\
+       ODD x /\ ODD y ==>
+       wf_data (:'a) (knowledge_to_canonical_fupd (K (insert x y
+         (knowledge_to_canonical data))) data)`)
+  CHEAT_TAC;;
 
 (* wf sibling of data_inv_insert_to_latest. *)
+let wf_data_insert_to_latest = cake_theorem "wf_data_insert_to_latest"
+  (fun () ->
+    `!data x y.
+       wf_data (:'a) data /\
+       x IN domain (knowledge_to_canonical data) /\ y IN domain
+         (knowledge_to_canonical data) ==>
+       wf_data (:'a) (knowledge_to_latest_fupd (K (insert x y
+         (knowledge_to_latest data))) data)`)
+  CHEAT_TAC;;
+
+let wf_data_register_read = cake_theorem "wf_data_register_read"
+  (fun () ->
+    `!data r. wf_data (:'a) data ==> wf_data (:'a) (register_read data
+  r)`)
+  CHEAT_TAC;;
+
+let wf_data_register_reads = cake_theorem "wf_data_register_reads"
+  (fun () ->
+    `!rs data. wf_data (:'a) data ==> wf_data (:'a) (register_reads
+  data rs)`)
+  CHEAT_TAC;;
 
 (* wf siblings of the per-family fact-insert lemmas (F1-F5): a new fact
    with a self-mapped holder (and, per family, self-mapped reads) keeps the
    data well-formed. *)
+let wf_data_insert_instrs_Const =
+  cake_theorem "wf_data_insert_instrs_Const[local]"
+  (fun () ->
+    `!data r n (w:'a word).
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r ==>
+       wf_data (:'a) (knowledge_instrs_mem_fupd (K
+                        (insert listCmp (instToNumList (Const n w))
+                          r (knowledge_instrs_mem
+                          data))) data)`)
+  CHEAT_TAC;;
+
+let wf_data_insert_instrs_Arith =
+  cake_theorem "wf_data_insert_instrs_Arith[local]"
+  (fun () ->
+    `!data r (a:'a asm_arith).
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       can_mem_arith a /\ in_names_set a (knowledge_to_canonical
+         data) ==>
+       wf_data (:'a) (knowledge_instrs_mem_fupd (K
+                        (insert listCmp (instToNumList (Arith a)) r
+                          (knowledge_instrs_mem
+                          data))) data)`)
+  CHEAT_TAC;;
+
+let wf_data_insert_instrs_OpCurrHeap =
+  cake_theorem "wf_data_insert_instrs_OpCurrHeap[local]"
+  (fun () ->
+    `!data r op src.
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       sptree_lookup src (knowledge_to_canonical data) = SOME src
+         ==>
+       wf_data (:'a) (knowledge_instrs_mem_fupd (K
+                        (insert listCmp (OpCurrHeapToNumList op
+                          src) r (knowledge_instrs_mem
+                          data))) data)`)
+  CHEAT_TAC;;
+
+let wf_data_insert_instrs_LocValue =
+  cake_theorem "wf_data_insert_instrs_LocValue[local]"
+  (fun () ->
+    `!data r l.
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r ==>
+       wf_data (:'a) (knowledge_instrs_mem_fupd (K
+                        (insert listCmp [48; l] r
+                          (knowledge_instrs_mem data))) data)`)
+  CHEAT_TAC;;
+
+let wf_data_insert_loads = cake_theorem "wf_data_insert_loads[local]"
+  (fun () ->
+    `!data r op a (ofs:'a word).
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = SOME r /\
+       sptree_lookup a (knowledge_to_canonical data) = SOME a ==>
+       wf_data (:'a) (knowledge_loads_mem_fupd (K
+                        (insert listCmp (loadToNumList op a ofs) r
+                          (knowledge_loads_mem
+                          data))) data)`)
+  CHEAT_TAC;;
 
 (* wf mirror of add_to_data_aux_correct: the hit case re-points the
    destination at the stored (self-mapped) holder; the family-specific
    miss case arrives as a premise in the same nested-with form. *)
+let wf_add_to_data_aux = cake_theorem "wf_add_to_data_aux"
+  (fun () ->
+    `!data r i (p:'a wordLang_prog) data' p'.
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       add_to_data_aux data r i p = (data',p') /\
+       (~EVEN r ==>
+          wf_data (:'a)
+            (
+             knowledge_instrs_mem_fupd (K
+               (insert listCmp i r (knowledge_instrs_mem
+                 (knowledge_to_canonical_fupd (K
+                    (insert r r (knowledge_to_canonical data)))
+                      data)))) (knowledge_to_canonical_fupd (K (insert r
+                      r (knowledge_to_canonical data))) data))) ==>
+       wf_data (:'a) data'`)
+  CHEAT_TAC;;
 
 (* wf mirror of add_to_data_const_correct: both arms keep the data well-formed
    — the hit re-points the destination at the (self-mapped) holder, the miss
    records a fresh self-mapped constant fact. *)
+let wf_add_to_data_const = cake_theorem "wf_add_to_data_const"
+  (fun () ->
+    `!data r (w:'a word) data' p'.
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+         ~EVEN r /\
+       add_to_data_const data r w = (data',p') ==>
+       wf_data (:'a) data'`)
+  CHEAT_TAC;;
+
+let wf_add_to_load_aux = cake_theorem "wf_add_to_load_aux"
+  (fun () ->
+    `!data r i (p:'a wordLang_prog) data' p'.
+       wf_data (:'a) data /\
+       sptree_lookup r (knowledge_to_canonical data) = NONE /\
+       add_to_load_aux data r i p = (data',p') /\
+       (~EVEN r ==>
+          wf_data (:'a)
+            (
+             knowledge_loads_mem_fupd (K
+               (insert listCmp i r (knowledge_loads_mem
+                 (knowledge_to_canonical_fupd (K
+                    (insert r r (knowledge_to_canonical data)))
+                      data)))) (knowledge_to_canonical_fupd (K (insert r
+                      r (knowledge_to_canonical data))) data))) ==>
+       wf_data (:'a) data'`)
+  CHEAT_TAC;;
 
 (* wf siblings of the Get/Set knowledge-update lemmas. *)
+let wf_data_insert_gets = cake_theorem "wf_data_insert_gets[local]"
+  (fun () ->
+    `!data name v.
+       wf_data (:'a) data /\
+       sptree_lookup v (knowledge_to_canonical data) = NONE /\ ODD
+         v /\
+       ALOOKUP (knowledge_gets_mem data) name = NONE ==>
+       wf_data (:'a) (knowledge_gets_mem_fupd (K ((name,v) ::
+         knowledge_gets_mem data)) (knowledge_to_latest_fupd (K
+         (insert v v (knowledge_to_latest data)))
+         (knowledge_to_canonical_fupd (K (insert v v
+         (knowledge_to_canonical data))) data)))`)
+  CHEAT_TAC;;
+
+let wf_data_filter_gets = cake_theorem "wf_data_filter_gets[local]"
+  (fun () ->
+    `!data x.
+       wf_data (:'a) data ==>
+       wf_data (:'a) (knowledge_gets_mem_fupd (K
+                        (FILTER (\(m,n). ~(m = x))
+                          (knowledge_gets_mem data))) data)`)
+  CHEAT_TAC;;
+
+let wf_data_cons_gets = cake_theorem "wf_data_cons_gets[local]"
+  (fun () ->
+    `!data x h.
+       wf_data (:'a) data /\
+       ALOOKUP (knowledge_gets_mem data) x = NONE /\
+       sptree_lookup h (knowledge_to_canonical data) = SOME h ==>
+       wf_data (:'a) (knowledge_gets_mem_fupd (K ((x,h) ::
+         knowledge_gets_mem data)) data)`)
+  CHEAT_TAC;;
+
+let wf_data_reinsert_canonical =
+  cake_theorem "wf_data_reinsert_canonical[local]"
+  (fun () ->
+    `!data v.
+       wf_data (:'a) data /\ ODD v ==>
+       wf_data (:'a) (knowledge_to_canonical_fupd (K
+                        (insert v (lookup_any v
+                          (knowledge_to_canonical data) v)
+                          (knowledge_to_canonical
+                          data))) data)`)
+  CHEAT_TAC;;
 
 (* wf sibling of data_inv_merge_l/_r: well-formedness of both arms is
    enough for the equality-intersection merge. *)
+let wf_data_merge = cake_theorem "wf_data_merge"
+  (fun () ->
+    `!d1 d2.
+       wf_data (:'a) d1 /\ wf_data (:'a) d2 ==> wf_data (:'a)
+         (merge_data d1 d2)`)
+  CHEAT_TAC;;
 
 (* wf sibling of data_inv_move_pairs — WITHOUT the ALL_DISTINCT premise:
    word_cse runs on syntactically arbitrary Moves, including ones with
@@ -311,19 +1461,104 @@ let data_inv_def = cake_define
    a direct characterization via lookup_map_insert0 rather than the
    pair-by-pair induction.  Sources are self-mapped, hence never
    destinations, so their entries survive every insert. *)
+let wf_data_move_pairs = cake_theorem "wf_data_move_pairs[local]"
+  (fun () ->
+    `!ps data.
+       wf_data (:'a) data /\
+       EVERY (\(x,y). sptree_lookup x (knowledge_to_canonical data)
+         = NONE /\
+                      sptree_lookup y (knowledge_to_canonical data)
+                        = SOME y /\
+                      ODD x /\ ODD y) ps ==>
+       wf_data (:'a)
+         (knowledge_to_latest_fupd (K (map_insert (MAP (\(a,b).
+           (b,a)) ps) (knowledge_to_latest
+                              data)))
+                                (knowledge_to_canonical_fupd (K
+                                (map_insert ps (knowledge_to_canonical
+                                data))) data))`)
+  CHEAT_TAC;;
 
 (* wf sibling of canonicalMoveRegs_lemma's knowledge-update content. *)
+let wf_canonicalMoveRegs = cake_theorem "wf_canonicalMoveRegs"
+  (fun () ->
+    `!data rs. wf_data (:'a) data ==> wf_data (:'a) (canonicalMoveRegs
+  data rs)`)
+  CHEAT_TAC;;
 
 (* wf-premise variants of the self-or-fresh lemmas (the data_inv versions
    above only use the wf half of their premise). *)
+let canonicalRegs_self_or_fresh_wf =
+  cake_theorem "canonicalRegs_self_or_fresh_wf[local]"
+  (fun () ->
+    `!data x.
+       wf_data (:'a) data ==>
+       sptree_lookup (canonicalRegs data x) (knowledge_to_canonical
+         data) =
+         SOME (canonicalRegs data x) \/
+       sptree_lookup (canonicalRegs data x)
+         (knowledge_to_canonical data) = NONE`)
+  CHEAT_TAC;;
+
+let canonicalRegs'_self_or_fresh_wf =
+  cake_theorem "canonicalRegs'_self_or_fresh_wf[local]"
+  (fun () ->
+    `!data r1 x.
+       wf_data (:'a) data /\ sptree_lookup r1
+         (knowledge_to_canonical data) = NONE ==>
+       sptree_lookup (canonicalRegs' r1 data x)
+         (knowledge_to_canonical data) =
+         SOME (canonicalRegs' r1 data x) \/
+       sptree_lookup (canonicalRegs' r1 data x)
+         (knowledge_to_canonical data) = NONE`)
+  CHEAT_TAC;;
+
+let in_names_set_insert_self =
+  cake_theorem "in_names_set_insert_self[local]"
+  (fun () ->
+    `!a tc x. in_names_set a tc ==> in_names_set a (insert x x tc)`)
+  CHEAT_TAC;;
+
+let in_names_set_register_reads =
+  cake_theorem "in_names_set_register_reads[local]"
+  (fun () ->
+    `!a data.
+       EVERY ODD (arithReads a) /\
+       EVERY (\w. sptree_lookup w (knowledge_to_canonical data) =
+         NONE \/
+                  sptree_lookup w (knowledge_to_canonical data) =
+                    SOME w) (arithReads a) ==>
+       in_names_set a (knowledge_to_canonical (register_reads
+         data (arithReads a)))`)
+  CHEAT_TAC;;
 
 (* The reads of a canonicalized storable arith are canonical registers:
    tracked-and-self-mapped, or untracked (registered as self-maps next). *)
+let canonicalArith_reads_self_or_fresh =
+  cake_theorem "canonicalArith_reads_self_or_fresh[local]"
+  (fun () ->
+    `!data (a:'a asm_arith).
+       wf_data (:'a) data /\
+       can_mem_arith (canonicalArith data a) /\
+       sptree_lookup (firstRegOfArith a) (knowledge_to_canonical
+         data) = NONE ==>
+       EVERY (\w. sptree_lookup w (knowledge_to_canonical data) =
+         NONE \/
+                  sptree_lookup w (knowledge_to_canonical data) =
+                    SOME w)
+             (arithReads (canonicalArith data a))`)
+  CHEAT_TAC;;
 
 (* The main syntactic preservation theorem, one Resume per constructor
    whose case updates the knowledge (the catch-all closes the identity and
    full-reset cases).  Consumed by the If case of comp_correct for the
    not-taken branch. *)
+let word_cse_wf_data = cake_theorem "word_cse_wf_data"
+  (fun () ->
+    `!p data.
+       wf_data (:'a) data ==> wf_data (:'a) (FST (word_cse data
+         (p:'a wordLang_prog)))`)
+  CHEAT_TAC;;
 
 (* HOL4 word_cseProofScript.sml:2935-2937: a proof *)
 
@@ -352,6 +1587,17 @@ let data_inv_def = cake_define
 (* HOL4 word_cseProofScript.sml:3299-3301: a proof *)
 
 (* HOL4 word_cseProofScript.sml:3303: a proof *)
+
+let comp_correct = cake_theorem "comp_correct"
+  (fun () ->
+    `!v v1 res s' data p' data'.
+       wordSem_evaluate (v,v1) = (res,s') /\ flat_exp_conventions v
+         /\ data_inv data v1 /\ ~(
+       res = SOME wordSem_Error) /\ word_cse data v = (data',p')
+         ==>
+       wordSem_evaluate (p',v1) = (res,s') /\ (res = NONE ==>
+         data_inv data' s')`)
+  CHEAT_TAC;;
 
 (* proof of the cases *)
 
@@ -405,6 +1651,14 @@ let data_inv_def = cake_define
 
 (* HOL4 word_cseProofScript.sml:3793: a proof *)
 
+let word_common_subexp_elim_correct =
+  cake_theorem "word_common_subexp_elim_correct"
+  (fun () ->
+    `wordSem_evaluate (p,s) = (res,s1) /\
+     flat_exp_conventions p /\ ~(res = SOME wordSem_Error) ==>
+     wordSem_evaluate (word_common_subexp_elim p,s) = (res,s1)`)
+  CHEAT_TAC;;
+
 (* ------------------------------------------------------------------------
    SYNTACTIC CONVENTIONS
 
@@ -412,3 +1666,57 @@ let data_inv_def = cake_define
    arith only feeds the hash key, never the output program), so every
    syntactic convention transports with no well-formedness premise.
    ------------------------------------------------------------------------ *)
+
+let word_cse_full_inst_ok_less =
+  cake_theorem "word_cse_full_inst_ok_less"
+  (fun () ->
+    `!p data c data' (q:'a wordLang_prog).
+       full_inst_ok_less c p /\ word_cse data p = (data',q) ==>
+       full_inst_ok_less c q`)
+  CHEAT_TAC;;
+
+let word_cse_pre_alloc_conventions =
+  cake_theorem "word_cse_pre_alloc_conventions"
+  (fun () ->
+    `!p data data' (q:'a wordLang_prog).
+       pre_alloc_conventions p /\ word_cse data p = (data',q) ==>
+       pre_alloc_conventions q`)
+  CHEAT_TAC;;
+
+let word_cse_every_inst_distinct_tar_reg =
+  cake_theorem "word_cse_every_inst_distinct_tar_reg"
+  (fun () ->
+    `!p data data' (q:'a wordLang_prog).
+       every_inst distinct_tar_reg p /\ word_cse data p = (data',q)
+         ==>
+       every_inst distinct_tar_reg q`)
+  CHEAT_TAC;;
+
+let word_cse_every_inst_two_reg =
+  cake_theorem "word_cse_every_inst_two_reg"
+  (fun () ->
+    `!p data data' (q:'a wordLang_prog).
+       every_inst two_reg_inst p /\ word_cse data p = (data',q) ==>
+       every_inst two_reg_inst q`)
+  CHEAT_TAC;;
+
+let every_inst_distinct_tar_reg_word_common_subexp_elim =
+  cake_theorem "every_inst_distinct_tar_reg_word_common_subexp_elim"
+  (fun () ->
+    `every_inst distinct_tar_reg p ==>
+     every_inst distinct_tar_reg (word_common_subexp_elim p)`)
+  CHEAT_TAC;;
+
+let pre_alloc_conventions_word_common_subexp_elim =
+  cake_theorem "pre_alloc_conventions_word_common_subexp_elim"
+  (fun () ->
+    `pre_alloc_conventions p ==>
+     pre_alloc_conventions (word_common_subexp_elim p)`)
+  CHEAT_TAC;;
+
+let full_inst_ok_less_word_common_subexp_elim =
+  cake_theorem "full_inst_ok_less_word_common_subexp_elim"
+  (fun () ->
+    `full_inst_ok_less ac p ==>
+     full_inst_ok_less ac (word_common_subexp_elim p)`)
+  CHEAT_TAC;;

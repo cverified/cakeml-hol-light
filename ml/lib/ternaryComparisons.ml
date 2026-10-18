@@ -2,7 +2,7 @@
 (*  ternaryComparisons: ported from HOL4's
     src/sort/ternaryComparisonsScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 8 files of the port.  *)
+    that CakeML needs.  Needed by 9 files of the port.  *)
 (* ======================================================== *)
 
 let ordering_INDUCT,ordering_RECURSION = define_datatype

@@ -2,7 +2,8 @@
 (*  backend_passes: ported from HOL4's
     compiler/backend/backend_passesScript.sml
     A definition theory, with 18 definitions, 1 datatype and 20
-    theorems.  Needed by backendProof.ml and compiler.ml.  *)
+    theorems.  Needed by backendProof.ml, compiler.ml and
+    compilerProof.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -86,12 +87,22 @@ let to_flat_all_def = cake_define
      let c = backend_config_source_conf_fupd (K c') c in
        ((ps:(mlstring#'a any_prog) list),c,p))`;;
 
+let to_flat_thm = cake_theorem "to_flat_thm"
+  (fun () ->
+    `SND (to_flat_all c p) = to_flat c p`)
+  CHEAT_TAC;;
+
 let to_clos_all_def = cake_define
   `to_clos_all (c:backend_config) p =
      (let (ps,c,p) = to_flat_all c p in
      let p = flat_to_clos_compile_prog p in
      let ps = ps ++ [((implode "after flat_to_clos"),Clos p [])] in
        ((ps:(mlstring#'a any_prog) list),c,p))`;;
+
+let to_clos_thm = cake_theorem "to_clos_thm"
+  (fun () ->
+    `SND (to_clos_all c p) = to_clos c p`)
+  CHEAT_TAC;;
 
 let to_bvl_all_def = cake_define
   `to_bvl_all (c:backend_config) p =
@@ -144,6 +155,11 @@ let to_bvl_all_def = cake_define
      let p = code_sort prog' in
      let c = backend_config_clos_conf_fupd (K c2) c in
        ((ps:(mlstring#'a any_prog) list),c,p,func_names))`;;
+
+let to_bvl_thm = cake_theorem "to_bvl_thm"
+  (fun () ->
+    `SND (to_bvl_all c p) = to_bvl c p`)
+  CHEAT_TAC;;
 
 let to_bvi_all_def = cake_define
   `to_bvi_all (c:backend_config) p =
@@ -200,6 +216,11 @@ let to_bvi_all_def = cake_define
          (bvl_to_bvi_config_inlines_fupd (K l) c))))) c in
       ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
+let to_bvi_thm = cake_theorem "to_bvi_thm"
+  (fun () ->
+    `SND (to_bvi_all c p) = to_bvi c p`)
+  CHEAT_TAC;;
+
 let to_data_all_def = cake_define
   `to_data_all (c:backend_config) p =
      (let (ps,c,p,names) = to_bvi_all c p in
@@ -217,6 +238,11 @@ let to_data_all_def = cake_define
      let ps = ps ++ [((implode
        "after data_space"),backend_passes_Data p names)] in
        ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
+
+let to_data_thm = cake_theorem "to_data_thm"
+  (fun () ->
+    `SND (to_data_all (c:backend_config) p) = to_data c p`)
+  CHEAT_TAC;;
 
 (* NOTE: this definition is meant to minimize code duplication
   in the explorer pretty printing. *)
@@ -294,6 +320,25 @@ let to_word_all_def = cake_define
        word_to_word_config_col_oracle_fupd (K col) c) c in
        ((ps:(mlstring#'a any_prog) list),c,p,names))`;;
 
+let LENGTH_next_n_oracle = cake_theorem "LENGTH_next_n_oracle"
+  (fun () ->
+    `next_n_oracle n col = (a,b) ==> LENGTH a = n`)
+  CHEAT_TAC;;
+
+let ZIP_MAP_1 = cake_theorem "ZIP_MAP_1[local]"
+  (fun () ->
+    `!l1 l2 f1 f2.
+       LENGTH l1 = LENGTH l2 ==>
+       ZIP (MAP f1 l1) l2 = MAP (\p. (f1 (FST p),SND p)) (ZIP l1
+         l2)`)
+  CHEAT_TAC;;
+
+let backend_passes_to_word_thm = cake_theorem "to_word_thm"
+  (fun () ->
+    `SND (to_word_all asm_conf (c:backend_config) p) = to_word
+  asm_conf c p`)
+  CHEAT_TAC;;
+
 let to_stack_all_def = cake_define
   `to_stack_all asm_conf (c:backend_config) p =
      (let (ps,c,p,names) = to_word_all asm_conf c p in
@@ -304,6 +349,12 @@ let to_stack_all_def = cake_define
        "after word_to_stack"),backend_passes_Stack p names)] in
      let c = backend_config_word_conf_fupd (K c') c in
        ((ps:(mlstring#'a any_prog) list),bm,c,p,names))`;;
+
+let to_stack_thm = cake_theorem "to_stack_thm"
+  (fun () ->
+    `SND (to_stack_all asm_conf (c:backend_config) p) = to_stack
+  asm_conf c p`)
+  CHEAT_TAC;;
 
 let to_lab_all_def = cake_define
   `to_lab_all asm_conf (c:backend_config) p =
@@ -336,6 +387,12 @@ let to_lab_all_def = cake_define
        ((ps:(mlstring#'a any_prog) list),(bm:('a word)
          list),c,(p:('a sec) list),names))`;;
 
+let to_lab_thm = cake_theorem "to_lab_thm"
+  (fun () ->
+    `SND (to_lab_all asm_conf (c:backend_config) p) = to_lab asm_conf
+  c p`)
+  CHEAT_TAC;;
+
 let to_target_all_def = cake_define
   `to_target_all asm_conf (c:backend_config) p =
      (let (ps,bm,c,p,names) = to_lab_all asm_conf c p in
@@ -345,6 +402,11 @@ let to_target_all_def = cake_define
        ((ps:(mlstring#'a any_prog) list),attach_bitmaps names c bm
          p))`;;
 
+let to_target_thm = cake_theorem "to_target_thm"
+  (fun () ->
+    `SND (to_target_all asm_conf c p) = to_target asm_conf c p`)
+  CHEAT_TAC;;
+
 let from_lab_all_def = cake_define
   `from_lab_all ps asm_conf (c:backend_config) names p (bm:('a word)
   list) =
@@ -353,6 +415,12 @@ let from_lab_all_def = cake_define
      let p = compile_lab asm_conf (backend_config_lab_conf c) p in
        ((ps:(mlstring#'a any_prog) list),attach_bitmaps names c bm
          p))`;;
+
+let from_lab_thm = cake_theorem "from_lab_thm"
+  (fun () ->
+    `SND (from_lab_all ps asm_conf c names p bm) = from_lab asm_conf c
+  names p bm`)
+  CHEAT_TAC;;
 
 let from_stack_all_def = cake_define
   `from_stack_all ps (asm_conf:'a asm_config) (c:backend_config) names p
@@ -384,6 +452,12 @@ let from_stack_all_def = cake_define
      let ps = ps ++ [((implode "after stack_to_lab"),Lab p names)] in
        from_lab_all ps asm_conf c names p bm)`;;
 
+let from_stack_thm = cake_theorem "from_stack_thm"
+  (fun () ->
+    `SND (from_stack_all ps asm_conf c names p bm) = from_stack
+  asm_conf c names p bm`)
+  CHEAT_TAC;;
+
 let from_word_all_def = cake_define
   `from_word_all ps asm_conf (c:backend_config) names p =
      (let (bm,c',fs,p) = word_to_stack_compile asm_conf
@@ -393,6 +467,12 @@ let from_word_all_def = cake_define
        "after word_to_stack"),backend_passes_Stack p names)] in
      let c = backend_config_word_conf_fupd (K c') c in
        from_stack_all ps asm_conf c names p bm)`;;
+
+let from_word_thm = cake_theorem "from_word_thm"
+  (fun () ->
+    `SND (from_word_all ps asm_conf c names p) = from_word asm_conf c
+  names p`)
+  CHEAT_TAC;;
 
 let from_word_0_all_def = cake_define
   `from_word_0_all ps asm_conf (c:backend_config) names p =
@@ -414,6 +494,12 @@ let from_word_0_all_def = cake_define
        word_to_word_config_col_oracle_fupd (K col) c) c in
        from_word_all ps asm_conf c names p)`;;
 
+let from_word_0_thm = cake_theorem "from_word_0_thm"
+  (fun () ->
+    `SND (from_word_0_all ps asm_conf c names p) = from_word_0
+  asm_conf c names p`)
+  CHEAT_TAC;;
+
 let from_data_all_def = cake_define
   `from_data_all ps asm_conf c names p =
      (let data_conf = backend_config_data_conf c in
@@ -429,6 +515,30 @@ let from_data_all_def = cake_define
      let ps = ps ++ [((implode "after data_to_word"),Word p names)]
        in
        from_word_0_all ps asm_conf c names p)`;;
+
+let backend_passes_from_data_thm = cake_theorem "from_data_thm"
+  (fun () ->
+    `SND (from_data_all ps asm_conf c names p) = from_data asm_conf c
+  names p`)
+  CHEAT_TAC;;
+
+let to_data_all_from_data_all_correctness =
+  cake_theorem "to_data_all_from_data_all_correctness"
+  (fun () ->
+    `to_target_all asm_conf c p =
+       (let (ps,c',p,ns) = to_data_all c p in
+         from_data_all ps asm_conf c' ns p)`)
+  CHEAT_TAC;;
+
+let compile_eq_to_target_all = cake_theorem "compile_eq_to_target_all"
+  (fun () ->
+    `compile asm_conf c p = SND (to_target_all asm_conf c p)`)
+  CHEAT_TAC;;
+
+let number_of_passes = cake_theorem "number_of_passes"
+  (fun () ->
+    `LENGTH (FST (to_target_all asm_conf c p)) = 41`)
+  CHEAT_TAC;;
 
 let any_prog_pp_def = cake_define
   `any_prog_pp p = (match p with backend_passes_Source p ->
@@ -450,3 +560,8 @@ let compile_tap_def = cake_define
        let (ps,out) = to_target_all asm_conf c p in
          (out,ITLIST (pp_with_title any_prog_pp) ps misc_Nil) else
            (compile asm_conf c p,misc_Nil))`;;
+
+let backend_passes_compile_alt = cake_theorem "compile_alt"
+  (fun () ->
+    `compile asm_conf c p = FST (compile_tap asm_conf c p)`)
+  CHEAT_TAC;;

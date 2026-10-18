@@ -2,7 +2,7 @@
 (*  clos_call: ported from HOL4's
     compiler/backend/clos_callScript.sml
     A definition theory, with 12 definitions and 16 theorems.
-    Needed by clos_callProof.ml, clos_to_bvl.ml and
+    Needed by backendProof.ml, clos_callProof.ml, clos_to_bvl.ml and
     clos_to_bvlProof.ml.  *)
 (* ======================================================== *)
 
@@ -131,11 +131,54 @@ let free_sing_def = cake_define_list_cheat CHEAT_TAC
          let (c2,l2) = free_list xs in
            (c1 :: c2,mk_Union l1 l2))`];;
 
+let free_sing_eq = cake_theorem "free_sing_eq"
+  (fun () ->
+    `(!e. clos_call_free [e] = (\(e,vs). ([e],vs)) (free_sing e)) /\
+     (!es. clos_call_free es = free_list es)`)
+  CHEAT_TAC;;
+
 (* HOL4 clos_callScript.sml:142-150: a proof *)
+
+let free_LENGTH = cake_theorem "free_LENGTH"
+  (fun () ->
+    `!xs ys l. (clos_call_free xs = (ys,l)) ==> (LENGTH ys = LENGTH
+  xs)`)
+  CHEAT_TAC;;
+
+let free_SING = cake_theorem "free_SING"
+  (fun () ->
+    `(clos_call_free [x] = (ys,l)) ==> (?y. ys = [y])`)
+  CHEAT_TAC;;
+
+let LENGTH_FST_free = cake_theorem "LENGTH_FST_free"
+  (fun () ->
+    `LENGTH (FST (clos_call_free fns)) = LENGTH fns`)
+  CHEAT_TAC;;
+
+let HD_FST_free = cake_theorem "HD_FST_free"
+  (fun () ->
+    `[HD (FST (clos_call_free [x1]))] = FST (clos_call_free [x1])`)
+  CHEAT_TAC;;
+
+let free_CONS = cake_theorem "free_CONS"
+  (fun () ->
+    `FST (clos_call_free (x :: xs)) = HD (FST (clos_call_free [x])) ::
+  FST (clos_call_free xs)`)
+  CHEAT_TAC;;
 let closed_def = cake_define
   `clos_call_closed x = (\t. t = LN) (db_to_set (SND (clos_call_free
   [x])))`;;
 hol4_overload "closed" "clos_call_closed";;
+
+let closed_eq = cake_theorem "closed_eq"
+  (fun () ->
+    `clos_call_closed x = (\t. t = LN) (db_to_set (SND (free_sing x)))`)
+  CHEAT_TAC;;
+
+let EL_MEM_LEMMA = cake_theorem "EL_MEM_LEMMA[local]"
+  (fun () ->
+    `!xs i x. i < LENGTH xs /\ (x = EL i xs) ==> MEM x xs`)
+  CHEAT_TAC;;
 
 let insert_each_def = cake_define_list
   [`insert_each p 0 g = g`;
@@ -157,6 +200,11 @@ let calls_list_def = cake_define_list
    `calls_list t (i:num) loc ((n,_7) :: xs) =
          (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
               calls_list t (i + 1) (loc + 2) xs`];;
+
+let exp3_size_MAP_SND = cake_theorem "exp3_size_MAP_SND[local]"
+  (fun () ->
+    `!fns. exp3_size (MAP SND fns) <= exp1_size fns`)
+  CHEAT_TAC;;
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -340,6 +388,12 @@ let calls_sing_def = cake_define_list_try_tac (fun () ->
          let (e2,g) = calls_sing_list xs g in
            (e1 :: e2,g))`];;
 
+let calls_sing_eq = cake_theorem "calls_sing_eq"
+  (fun () ->
+    `(!e g. calls [e] g = (\(e,rest). ([e],rest)) (calls_sing e g)) /\
+     (!es g. calls es g = calls_sing_list es g)`)
+  CHEAT_TAC;;
+
 let compile_def = cake_define_list
   [`clos_call_compile F x = (x,(LN,[]))`;
    `clos_call_compile T x = (let (xs,g) = calls x (LN,[]) in
@@ -352,9 +406,43 @@ let compile_inc_def = cake_define
        (d1,ea,new_code))`;;
 hol4_overload "compile_inc" "clos_call_compile_inc";;
 
+let clos_call_compile_eq = cake_theorem "compile_eq"
+  (fun () ->
+    `clos_call_compile F x = (x,(LN,[])) /\
+     clos_call_compile T x = (let (xs,g) = calls_sing_list x
+       (LN,[]) in (xs,g))`)
+  CHEAT_TAC;;
+
+let clos_call_compile_inc_eq = cake_theorem "compile_inc_eq"
+  (fun () ->
+    `clos_call_compile_inc d (e,xs) =
+       (let (ea,d1,new_code) = calls_sing_list e (d,[]) in
+         (d1,ea,new_code))`)
+  CHEAT_TAC;;
+
 let cond_call_compile_inc_def = cake_define
   `cond_call_compile_inc do_it = (if do_it then clos_call_compile_inc
   else CURRY I)`;;
+
+let calls_length = cake_theorem "calls_length"
+  (fun () ->
+    `!xs g0 ys g. calls xs g0 = (ys,g) ==> LENGTH ys = LENGTH xs`)
+  CHEAT_TAC;;
+
+let calls_sing = cake_theorem "calls_sing"
+  (fun () ->
+    `!x g0 ys g. calls [x] g0 = (ys,g) ==> (?y. ys = [y])`)
+  CHEAT_TAC;;
+
+let clos_call_compile_LENGTH = cake_theorem "compile_LENGTH"
+  (fun () ->
+    `clos_call_compile x y = (a,b) ==> LENGTH y = LENGTH a`)
+  CHEAT_TAC;;
+
+let compile_nil = cake_theorem "compile_nil"
+  (fun () ->
+    `clos_call_compile x [] = (a,g,b) ==> a = [] /\ g = LN /\ b = []`)
+  CHEAT_TAC;;
 
 (* HOL4 clos_callScript.sml:464: ML code, not ported *)
   (* example code *)

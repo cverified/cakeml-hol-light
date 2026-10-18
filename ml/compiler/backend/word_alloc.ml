@@ -2,8 +2,7 @@
 (*  word_alloc: ported from HOL4's
     compiler/backend/word_allocScript.sml
     A definition theory, with 68 definitions and 4 theorems.  Needed
-    by backend.ml, backend_passes.ml, wordConvsProof.ml,
-    word_allocProof.ml, word_to_stack.ml and word_to_word.ml.  *)
+    by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -1062,6 +1061,26 @@ let get_writes_def = cake_define
           one LN
         | prog -> LN`;;
 
+let get_writes_pmatch = cake_theorem "get_writes_pmatch"
+  (fun () ->
+    `!inst'.
+     get_writes inst' =
+       (match inst' with wordLang_Move pri ls ->
+         numset_list_insert (MAP FST ls) LN | Inst i ->
+         get_writes_inst i | wordLang_Assign num' exp -> sptree_insert
+         num' one LN | Get num' store -> sptree_insert num' one LN |
+         LocValue r l1 -> sptree_insert r one LN | Install r1 _27 _28
+         _29 _30 -> sptree_insert r1 one LN | OpCurrHeap b r1 _31 ->
+         sptree_insert r1 one LN | StoreConsts a b c d _32 ->
+         sptree_insert a one (sptree_insert b one (sptree_insert c one
+         (sptree_insert d one LN))) | wordLang_ShareInst asm_Load v
+         _33 -> sptree_insert v one LN | wordLang_ShareInst asm_Load8
+         v _34 -> sptree_insert v one LN | wordLang_ShareInst
+         asm_Load16 v _35 -> sptree_insert v one LN |
+         wordLang_ShareInst asm_Load32 v _36 -> sptree_insert v one LN
+         | prog -> LN)`)
+  CHEAT_TAC;;
+
 (* Old representation *)
 (* HOL4 word_allocScript.sml:1049-1083: code that the source has in a
    comment *)
@@ -1073,10 +1092,10 @@ let get_delta_inst_def = cake_define
           asm_Skip -> reg_alloc_Delta [] []
         | (Const reg w) -> reg_alloc_Delta [reg] []
         | (Arith (asm_Binop bop r1 r2 ri)) ->
-       (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _27
+       (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _37
          -> reg_alloc_Delta [r1] [r2])
         | (Arith (asm_Shift shift' r1 r2 ri)) ->
-       (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _28
+       (match ri with Reg r3 -> reg_alloc_Delta [r1] [r2; r3] | _38
          -> reg_alloc_Delta [r1] [r2])
         | (Arith (asm_Div r1 r2 r3)) -> reg_alloc_Delta [r1] [r3; r2]
         | (Arith (asm_AddCarry r1 r2 r3 r4)) -> reg_alloc_Delta [r1;
@@ -1141,7 +1160,7 @@ let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
         let e3t = get_clash_tree e3 lt in
         match ri with
           Reg r2 -> reg_alloc_Seq (reg_alloc_Delta [] [r1; r2])
-            (reg_alloc_Branch NONE e2t e3t) | _31 -> reg_alloc_Seq
+            (reg_alloc_Branch NONE e2t e3t) | _41 -> reg_alloc_Seq
             (reg_alloc_Delta [] [r1]) (reg_alloc_Branch NONE e2t
             e3t))`;
    `get_clash_tree (wordLang_MustTerminate s) lt =
@@ -1197,7 +1216,7 @@ let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
         (let args_set = numset_list_insert args LN in
         match ret with
           NONE -> reg_alloc_Set args_set | SOME
-            (vs,cutsets,ret_handler,_48,_49) ->
+            (vs,cutsets,ret_handler,_58,_59) ->
           (let cutset = sptree_union (FST cutsets) (SND cutsets) in
           let live_set = sptree_union cutset args_set in
           let ret_tree = reg_alloc_Seq (reg_alloc_Set
@@ -1205,7 +1224,7 @@ let get_clash_tree_def = cake_define_list_cheat CHEAT_TAC
             lt) in
           match h with
             NONE -> reg_alloc_Seq (reg_alloc_Set live_set) ret_tree
-              | SOME (v',prog,_50,_51) ->
+              | SOME (v',prog,_60,_61) ->
             (let handler_tree =
               reg_alloc_Seq (reg_alloc_Set (sptree_insert v' one
                 cutset)) (get_clash_tree prog lt) in
@@ -1231,6 +1250,25 @@ let get_prefs_def = cake_define
            get_prefs prog (get_prefs ret_handler acc))
         | (Loop names body exit_names) -> get_prefs body acc
         | prog -> acc`;;
+
+let get_prefs_pmatch = cake_theorem "get_prefs_pmatch"
+  (fun () ->
+    `!s acc.
+     get_prefs s acc =
+       (match s with (wordLang_Move pri ls) -> (MAP (\(x,y).
+         (pri,x,y)) ls) ++ acc | (wordLang_MustTerminate s1) ->
+       get_prefs s1 acc | (Seq s1 s2) ->
+       get_prefs s1 (get_prefs s2 acc) | (If cmp num' rimm e2 e3)
+         ->
+       get_prefs e2 (get_prefs e3 acc) | (Call (SOME
+         (v,cutset,ret_handler,l1,l2)) dest args NONE) ->
+       get_prefs ret_handler acc | (Call (SOME
+         (v,cutset,ret_handler,l1,l2)) dest args (SOME
+         (_62,prog,_63,_64))) ->
+       get_prefs prog (get_prefs ret_handler acc) | (Loop names
+         body exit_names) ->
+       get_prefs body acc | prog -> acc)`)
+  CHEAT_TAC;;
 
 (*
   For each var, we collect 5 tuples indicating the number of
@@ -1291,14 +1329,14 @@ let get_heu_inst_def = cake_define
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
-           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _52 ->
+           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _65 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (asm_Shift shift' r1 r2 ri)) ->
        (match ri with
          Reg r3 ->
            (add1_lhs_reg r1
-           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _53 ->
+           (add1_rhs_reg r3 (add1_rhs_reg r2 tup))) | _66 ->
            (add1_lhs_reg r1
            (add1_rhs_reg r2 tup)))
         | (Arith (asm_Div r1 r2 r3)) ->
@@ -1378,9 +1416,9 @@ let get_heu_def = cake_define_cheat CHEAT_TAC
         | ((Inst i),(lr,calls')) -> (get_heu_inst i lr,calls')
         | ((Get num' store),(lr,calls')) ->
        (add1_lhs_mem num' lr,calls')
-        | ((Set _54 exp),(lr,calls')) ->
+        | ((Set _67 exp),(lr,calls')) ->
        (match exp with (Var r) ->
-          (add1_rhs_mem r lr,calls') | _55 -> (lr,calls'))
+          (add1_rhs_mem r lr,calls') | _68 -> (lr,calls'))
         | ((OpCurrHeap b dst src),(lr,calls')) ->
        (add1_lhs_reg dst (add1_rhs_reg src lr),calls')
         | ((LocValue r l1),(lr,calls')) ->
@@ -1393,37 +1431,37 @@ let get_heu_def = cake_define_cheat CHEAT_TAC
        let lr = heu_max_all lr2 lr3 in
        let calls' = heu_merge_call (calls2:1 spt) calls3 in
        ((match ri with
-         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _56 ->
+         Reg r2 -> add1_rhs_reg r1 (add1_rhs_reg r2 lr) | _69 ->
          add1_rhs_reg r1 lr),calls'))
         | ((Call NONE dest args h),(lr,calls')) ->
        (match dest with
          NONE -> (lr,calls') | SOME p ->
          (if p = fc then (lr,add_call lr calls') else (lr,calls')))
-        | ((Call (SOME (_57,_58,e2,_59,_60)) dest args
+        | ((Call (SOME (_70,_71,e2,_72,_73)) dest args
           h),(lr,calls')) ->
        (let calls' =
          (match dest with NONE -> calls' | SOME p ->
            (if p = fc then (add_call lr calls') else calls')) in
        let (lr2,calls2) = (get_heu fc e2 (lr,calls')) in
        match h with
-         NONE -> (lr2,calls') | SOME (_61,e3,_62,_63) ->
+         NONE -> (lr2,calls') | SOME (_74,e3,_75,_76) ->
          (let (lr3,calls3) = get_heu fc e3 (lr,calls') in
          (heu_max_all lr2 lr3,heu_merge_call calls2 calls3)))
-        | ((wordLang_ShareInst asm_Load r _64),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Load r _77),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Load8 r _65),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Load8 r _78),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Load16 r _66),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Load16 r _79),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Load32 r _67),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Load32 r _80),(lr,calls')) ->
           (add1_lhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Store r _68),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Store r _81),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Store8 r _69),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Store8 r _82),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Store16 r _70),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Store16 r _83),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')
-        | ((wordLang_ShareInst asm_Store32 r _71),(lr,calls')) ->
+        | ((wordLang_ShareInst asm_Store32 r _84),(lr,calls')) ->
           (add1_rhs_mem r lr,calls')
         | ((Loop names body exit_names),lr) -> get_heu fc body lr
         | (f,lrc) -> lrc`;;
@@ -1459,7 +1497,7 @@ let get_forced_def = cake_define
            (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
              []) ++ acc | asm_FP (FPMovFromReg d r1 r2) ->
            (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)] else
-             []) ++ acc | _72 -> acc)
+             []) ++ acc | _85 -> acc)
         | (c,(wordLang_MustTerminate s1)) ->
        get_forced c s1 acc
         | (c,(Seq s1 s2)) ->
@@ -1473,6 +1511,52 @@ let get_forced_def = cake_define
            -> get_forced c prog (get_forced c ret_handler acc))
         | (c,(Loop names body exit_names)) -> get_forced c body acc
         | (c,prog) -> acc`;;
+
+let get_forced_pmatch = cake_theorem "get_forced_pmatch"
+  (fun () ->
+    `!c prog acc.
+     (get_forced (c:'a asm_config) prog acc =
+       (match prog with
+         Inst (Arith (asm_AddCarry r1 r2 r3 r4)) ->
+          (if (asm_config_ISA c = MIPS \/ asm_config_ISA c =
+            RISC_V) then
+             (if r1 = r3 then [] else [(r1,r3)]) ++
+             (if r1 = r4 then [] else [(r1,r4)]) ++
+             acc else acc) | Inst (Arith (asm_AddOverflow r1 r2 r3
+               r4)) ->
+          (if (asm_config_ISA c = MIPS \/ asm_config_ISA c =
+            RISC_V) then
+             (if r1 = r3 then [] else [(r1,r3)]) ++
+             acc else acc) | Inst (Arith (asm_SubOverflow r1 r2 r3
+               r4)) ->
+          (if (asm_config_ISA c = MIPS \/ asm_config_ISA c =
+            RISC_V) then
+             (if r1 = r3 then [] else [(r1,r3)]) ++
+             acc else acc) | Inst (Arith (asm_LongMul r1 r2 r3 r4))
+               ->
+          (if (asm_config_ISA c = ARMv7) then
+            (if (r1 = r2) then [] else [(r1,r2)]) ++ acc else if
+              (asm_config_ISA c = ARMv8) \/ (asm_config_ISA c = RISC_V)
+              \/ (asm_config_ISA c = Ag32) then
+            (if r1 = r3 then [] else [(r1,r3)]) ++
+            (if r1 = r4 then [] else [(r1,r4)]) ++
+            acc else
+            acc) | Inst (asm_FP (FPMovToReg r1 r2 d)) ->
+           (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)]
+             else []) ++ acc | Inst (asm_FP (FPMovFromReg d r1 r2)) ->
+           (if dimindex (:'a) = 32 /\ ~(r1 = r2) then [(r1,r2)]
+             else []) ++ acc | wordLang_MustTerminate s1 -> get_forced c
+             s1 acc | Seq s1 s2 -> get_forced c s1 (get_forced c s2 acc)
+             | If cmp num' rimm e2 e3 ->
+         get_forced c e2 (get_forced c e3 acc) | Call (SOME
+           (v,cutset,ret_handler,l1,l2)) dest args NONE ->
+         get_forced c ret_handler acc | Call (SOME
+           (v,cutset,ret_handler,l1,l2)) dest args (SOME
+           (_86,prog,_87,_88)) ->
+         get_forced c prog (get_forced c ret_handler acc) | Loop
+           names body exit_names ->
+         get_forced c body acc | _89 -> acc))`)
+  CHEAT_TAC;;
 
 (*col is injective over every cut set*)
 let check_colouring_ok_alt_def = cake_define_list
@@ -1491,6 +1575,11 @@ let total_colour_def = cake_define
   `total_colour col x =
      (match sptree_lookup x col with NONE -> (if is_phy_var x then
        x else 0) | SOME x -> 2 * x)`;;
+
+let total_colour_alt = cake_theorem "total_colour_alt"
+  (fun () ->
+    `total_colour col = (\x. 2 * x) o (sp_default col)`)
+  CHEAT_TAC;;
 
 (*Check that the oracle provided colour (if it exists) is okay*)
 let oracle_colour_ok_def = cake_define
@@ -1624,16 +1713,16 @@ let get_stack_only_aux_def = cake_define_cheat CHEAT_TAC
        let tfsR = get_stack_only_aux tfs e3 in
        let tfsM = merge_stack_sets tfs tfsL tfsR in
          match ri with
-           Reg r2 -> remove_temp_stack [r1; r2] tfsM | _73 ->
+           Reg r2 -> remove_temp_stack [r1; r2] tfsM | _90 ->
              remove_temp_stack [r1] tfsM)
         | (wordLang_MustTerminate s) ->
        get_stack_only_aux tfs s
         | (Call ret dest args h) ->
        (match ret with
-         NONE -> tfs | SOME (v,cutset,ret_handler,_74,_75) ->
+         NONE -> tfs | SOME (v,cutset,ret_handler,_91,_92) ->
          (let rettfs = get_stack_only_aux tfs ret_handler in
          match h with
-           NONE -> rettfs | SOME (v',handler,_76,_77) ->
+           NONE -> rettfs | SOME (v',handler,_93,_94) ->
            (let handlertfs =
              get_stack_only_aux tfs handler in
            merge_stack_sets tfs rettfs handlertfs)))
@@ -1642,7 +1731,7 @@ let get_stack_only_aux_def = cake_define_cheat CHEAT_TAC
         | prog ->
        (match get_clash_tree prog [] with
          reg_alloc_Delta ws rs -> remove_temp_stack (ws ++ rs) tfs
-           | _78 -> tfs)`;;
+           | _95 -> tfs)`;;
 
 let get_stack_only_def = cake_define
   `get_stack_only prog = SND (get_stack_only_aux (LN,LN) prog)`;;
@@ -1670,7 +1759,7 @@ let word_alloc_def = cake_define
        (match select_reg_alloc alg spillcosts k heu_moves tree forced
          fs with
          M_success col ->
-           apply_colour (total_colour col) prog | M_failure _79 ->
+           apply_colour (total_colour col) prog | M_failure _96 ->
              prog)) | SOME col_prog ->
        col_prog)`;;
 

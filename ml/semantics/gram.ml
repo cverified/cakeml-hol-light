@@ -41,6 +41,26 @@ let validListSym_def = cake_define
 let validPrefixSym_def = cake_define
   `validPrefixSym s <=> s = "~" \/ "!" <<= s \/ "?" <<= s`;;
 
+let disjneq = cake_theorem "disjneq"
+  (fun () ->
+    `~(
+       x = y) \/ P <=> x = y ==> P`)
+  CHEAT_TAC;;
+
+let validSym_incompatibility = cake_theorem "validSym_incompatibility"
+  (fun () ->
+    `~(validAddSym s /\ validRelSym s) /\
+     ~(validAddSym s /\ validListSym s) /\
+     ~(validAddSym s /\ validPrefixSym s) /\
+     ~(validAddSym s /\ validMultSym s) /\
+     ~(validRelSym s /\ validListSym s) /\
+     ~(validRelSym s /\ validPrefixSym s) /\
+     ~(validRelSym s /\ validMultSym s) /\
+     ~(validListSym s /\ validPrefixSym s) /\
+     ~(validListSym s /\ validMultSym s) /\
+     ~(validPrefixSym s /\ validMultSym s)`)
+  CHEAT_TAC;;
+
 (* HOL4 makes the datatype of the nonterminals and the
    grammar itself with the ML code of grammarLib
    (mk_grammar_def); the port writes out what it makes *)

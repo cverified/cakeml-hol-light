@@ -2,7 +2,7 @@
 (*  data_to_word: ported from HOL4's
     compiler/backend/data_to_wordScript.sml
     A definition theory, with 201 definitions, 3 datatypes and 40
-    theorems.  Needed by 18 files of the port.  *)
+    theorems.  Needed by 21 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -253,6 +253,73 @@ let StringCmpLoop_location_def = cake_define
   `StringCmpLoop_location = Unused_location + 1`;;
 let bignum_location_def = cake_define
   `Bignum_location = StringCmpLoop_location + 1`;;
+
+(* HOL4 data_to_wordScript.sml:273-274: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:275-276: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:277-278: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:279-280: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:281-282: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:283-284: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:285-286: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:287-288: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:289-290: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:291-292: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:293-294: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:295-296: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:297-298: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:299-300: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:301-302: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:303-304: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:305-306: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:307-308: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:309-310: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:311-312: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:313-314: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:315-316: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:317-318: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:319-320: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:321-322: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:323-324: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:325-326: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:327-328: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:329-330: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:331-332: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:333-334: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:335-336: a theorem that HOL4 states as
+   the value of an ML expression *)
+(* HOL4 data_to_wordScript.sml:337-338: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 let SilentFFI_def = cake_define
   `SilentFFI c n names =
@@ -1150,6 +1217,24 @@ let arg4_def = cake_define
   `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
   _4 -> x)`;;
 
+let arg2_pmatch = cake_theorem "arg2_pmatch"
+  (fun () ->
+    `data_to_word_arg2 vs f x = (match vs with [v1; v2] -> f v1 v2 |
+  _5 -> x)`)
+  CHEAT_TAC;;
+
+let arg3_pmatch = cake_theorem "arg3_pmatch"
+  (fun () ->
+    `arg3 vs f x = (match vs with [v1; v2; v3] -> f v1 v2 v3 | _6 ->
+  x)`)
+  CHEAT_TAC;;
+
+let arg4_pmatch = cake_theorem "arg4_pmatch"
+  (fun () ->
+    `arg4 vs f x = (match vs with [v1; v2; v3; v4] -> f v1 v2 v3 v4 |
+  _7 -> x)`)
+  CHEAT_TAC;;
+
 (* HOL4 data_to_wordScript.sml:1176-1180: ML code, not ported *)
 
 let assign_Const_def = cake_define
@@ -1290,7 +1375,7 @@ let assign_Cons_def = cake_define
 let assign_MutCons_def = cake_define
   `assign_MutCons (c:data_to_word_config) (l:num) (dest:num) tag args =
      (match data_to_word_config_gc_kind c with
-       data_to_word_Generational _5 -> (GiveUp,l) | _6 ->
+       data_to_word_Generational _8 -> (GiveUp,l) | _9 ->
        (assign_Cons (c:data_to_word_config) (l:num) (dest:num) tag
        args:'a wordLang_prog#num))`;;
 
@@ -1311,7 +1396,7 @@ let getWords_def = cake_define_list
   [`getWords [] aux = (REVERSE aux,[])`;
    `getWords (c :: cs) aux =
       (match c with (b,wordLang_Word w) -> getWords cs ((b,w)
-        :: aux) | _8 -> (REVERSE aux,c :: cs))`];;
+        :: aux) | _11 -> (REVERSE aux,c :: cs))`];;
 
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
@@ -1324,16 +1409,16 @@ let StoreAnyConsts_def = cake_define_list_try_tac (fun () ->
   CHEAT_TAC
   [`StoreAnyConsts r1 r2 r3 [] v =
       Seq (Set NextFree (Var r2))
-          (match SND v with Loc n _12 -> LocValue r1 n |
+          (match SND v with Loc n _15 -> LocValue r1 n |
             wordLang_Word w -> Assign r1 (if FST v then Op asm_Add
             [Const w; Var r3] else (Const w)))`;
    `StoreAnyConsts r1 r2 r3 (v :: vs) w =
-      (match ((SND v):'a word_loc) with Loc n _13 -> list_Seq
+      (match ((SND v):'a word_loc) with Loc n _16 -> list_Seq
         [LocValue r1 n;
                              Store (Var r2) r1;
                              Assign r2 (Op asm_Add [Var r2; Const
                                bytes_in_word]);
-                             StoreAnyConsts r1 r2 r3 vs w] | _14 ->
+                             StoreAnyConsts r1 r2 r3 vs w] | _17 ->
                                (let (ws,vs1) = getWords (v :: vs) [] in
                Seq (StoreConsts r2 r3 r2 r3 ws)
                    (StoreAnyConsts r1 r2 r3 vs1 w)))`];;
@@ -1362,7 +1447,7 @@ let get_lowerbits_def = cake_define
         match x2 with
           wordLang_Word w ->
         (((word_bits (small_shift_length conf - 1) 0) w) || (n2w 1))
-        | _15 -> (n2w 1)`;;
+        | _18 -> (n2w 1)`;;
 
 let make_cons_ptr_def = cake_define
   `make_cons_ptr conf nf tag len =
@@ -1449,7 +1534,7 @@ let get_Word_def = cake_define
   `get_Word x1 =
       match x1 with
         wordLang_Word w -> w
-      | _16 -> (n2w 0)`;;
+      | _19 -> (n2w 0)`;;
 
 let assign_Build_def = cake_define
   `assign_Build (c:data_to_word_config) (secn:num) (l:num) (dest:num)
@@ -1510,7 +1595,7 @@ let assign_ConsExtend_def = cake_define
                           names),
                               Skip,secn,l))
                            (SOME MemCopy_location) [15; 11; 13; 3]
-                             NONE)])]),l + 1)) | _17 -> (Skip,l)):'a
+                             NONE)])]),l + 1)) | _20 -> (Skip,l)):'a
                              wordLang_prog#num)`;;
 
 let assign_Ref_def = cake_define
@@ -1664,7 +1749,7 @@ let assign_CopyByte_def = cake_define
                  (SOME ByteCopyNew_location)
                     [adjust_var v1; adjust_var v2;
                      adjust_var v3] NONE):'a wordLang_prog),l + 1)
-                       | _18 -> (Skip,l)):'a wordLang_prog#num)`;;
+                       | _21 -> (Skip,l)):'a wordLang_prog#num)`;;
 
 let assign_RefArray_def = cake_define
   `assign_RefArray (c:data_to_word_config) (secn:num) (l:num) (dest:num)
@@ -1738,7 +1823,7 @@ let assign_WordTest_def = cake_define
                               (Assign (adjust_var dest) (Const (n2w
                                 18:'a word)))
                               (Assign (adjust_var dest) (Const
-                                (n2w 2:'a word))) | _19 ->
+                                (n2w 2:'a word))) | _22 ->
                                 Skip),l):'a wordLang_prog#num)`;;
 
 let assign_BoundsCheckByte_def = cake_define
@@ -2410,13 +2495,13 @@ let assign_FFI_def = cake_define
 let assign_EqualConst_def = cake_define
   `assign_EqualConst p (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v =
-     (match part_to_words c LN p (n2w 0) with SOME ((F,w),_20) ->
+     (match part_to_words c LN p (n2w 0) with SOME ((F,w),_23) ->
          (If Equal (adjust_var v) (Imm (get_Word w))
                      (Assign (adjust_var dest) (Const (n2w 18:'a
                        word)))
                      (Assign (adjust_var dest) (Const (n2w 2:'a
-                       word))),l) | SOME (_21,words) ->
-         ((match p with closLang_Int _22 -> If Test (adjust_var v)
+                       word))),l) | SOME (_24,words) ->
+         ((match p with closLang_Int _25 -> If Test (adjust_var v)
            (Imm (n2w 1))
                         (Assign (adjust_var dest) (Const (n2w 2:'a
                           word)))
@@ -2426,7 +2511,7 @@ let assign_EqualConst_def = cake_define
                             MemEqList (n2w 0) (MAP (get_Word o SND)
                               words);
                             Assign (adjust_var dest) (Var 1)]) | W64
-                              _23 -> (list_Seq
+                              _26 -> (list_Seq
                            [Assign 1 (Const (n2w 2:'a word));
                             Assign 3 (Op asm_Add [real_addr c
                               (adjust_var v);
@@ -2434,13 +2519,13 @@ let assign_EqualConst_def = cake_define
                             MemEqList (n2w 0) (MAP (get_Word o SND)
                               (TL words));
                             Assign (adjust_var dest) (Var 1)]) |
-                              closLang_Str _24 -> (list_Seq
+                              closLang_Str _27 -> (list_Seq
                            [Assign 1 (Const (n2w 2:'a word));
                             Assign 3 (real_addr c (adjust_var v));
                             MemEqList (n2w 0) (MAP (get_Word o SND)
                               words);
                             Assign (adjust_var dest) (Var 1)]) |
-                              _25 -> Skip),l) | _26 -> ((Assign
+                              _28 -> Skip),l) | _29 -> ((Assign
                               (adjust_var dest) (Const (n2w 2:'a
                               word)),l):'a wordLang_prog#num))`;;
 
@@ -2626,6 +2711,9 @@ let assign_FinaliseCons_def = cake_define
                   ((Assign (adjust_var dest) (Var (adjust_var
                     v1)),l):'a wordLang_prog#num)`;;
 
+(* HOL4 data_to_wordScript.sml:2460-2461: a theorem that HOL4 states
+   as the value of an ML expression *)
+
 let assign_def = cake_define
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (op:closLang_op) (args:num list) (names:(1 spt) option) =
@@ -2651,7 +2739,7 @@ let assign_def = cake_define
        ListAppend -> data_to_word_arg2 args (assign_ListAppend c secn l
        dest names) (Skip,l) | closLang_BlockOp (closLang_Cons tag) ->
        assign_Cons c l dest tag args | closLang_MemOp (closLang_MutCons
-       tag _27) -> assign_MutCons c l dest tag args | closLang_MemOp
+       tag _30) -> assign_MutCons c l dest tag args | closLang_MemOp
        ConfigGC -> data_to_word_arg2 args (assign_ConfigGC c secn l dest
        names) (Skip,l) | closLang_BlockOp (closLang_Build parts') ->
        assign_Build c secn l dest names parts' | closLang_BlockOp
@@ -2742,7 +2830,7 @@ let assign_def = cake_define
            closLang_WordOp (FP_bop fpb) -> data_to_word_arg2 args
            (assign_FP_bop fpb c secn l dest names) (Skip,l) |
            closLang_WordOp (FP_uop fpu) -> data_to_word_arg1 args
-           (assign_FP_uop fpu c secn l dest names) (Skip,l) | _28 ->
+           (assign_FP_uop fpu c secn l dest names) (Skip,l) | _31 ->
            (Skip,l))`;;
 hol4_overload "assign" "data_to_word_assign";;
 
@@ -2752,7 +2840,7 @@ let force_thunk_def = cake_define
        (header:'a word) ->
       If Test (adjust_var v1) (Imm (n2w 1))
         (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-          (dest,_29) -> Assign (adjust_var dest) (Var (adjust_var v1)))
+          (dest,_32) -> Assign (adjust_var dest) (Var (adjust_var v1)))
         (list_Seq
            [Assign 1 (real_addr c (adjust_var v1));
             Assign 3 (Op And [Load (Var 1); Const (n2w 0b111100)]);
@@ -2761,13 +2849,13 @@ let force_thunk_def = cake_define
                   list_Seq
                     [Assign 1 (wordLang_Load (Op asm_Add [Var 1;
                       Const bytes_in_word]));
-                     Return 0 [1]] | SOME (dest,_30) ->
+                     Return 0 [1]] | SOME (dest,_33) ->
                    Assign (adjust_var dest)
                           (wordLang_Load (Op asm_Add [Var 1; Const
                             bytes_in_word])))
             (If asm_NotEqual 3 (Imm (n2w ((0 + 6) * 4)))
               (match ret with NONE -> Return 0 [adjust_var v1] | SOME
-                (dest,_31) -> Assign (adjust_var dest) (Var (adjust_var
+                (dest,_34) -> Assign (adjust_var dest) (Var (adjust_var
                 v1)))
               (list_Seq
                  [Assign 5 (wordLang_Load (Op asm_Add [Var 1; Const
@@ -3017,6 +3105,17 @@ let stub_names_def = cake_define
      (data_num_stubs - Bignum_location)`;;
 hol4_overload "stub_names" "data_to_word_stub_names";;
 
+let check_stubs_length = cake_theorem "check_stubs_length"
+  (fun () ->
+    `word_num_stubs + LENGTH (data_to_word_stubs (:'a) c) =
+  data_num_stubs`)
+  CHEAT_TAC;;
+
+let check_LongDiv_location = cake_theorem "check_LongDiv_location"
+  (fun () ->
+    `LongDiv_location = div_location`)
+  CHEAT_TAC;;
+
 let compile_def = cake_define
   `data_to_word_compile data_conf word_conf asm_conf prog =
      (let data_conf =
@@ -3055,12 +3154,20 @@ let AnyArith_call_tree_def = cake_define
 let structure_le_def = cake_define
   `structure_le x1 x2 =
       match (x1,x2) with
-        ((word_depth_Leaf:call_tree),_32) -> T
-      | (_33,word_depth_Unknown) -> T
+        ((word_depth_Leaf:call_tree),_35) -> T
+      | (_36,word_depth_Unknown) -> T
       | ((Const k1 t1),(Const k2 t2)) ->
      (k1 <= k2 /\ structure_le t1 t2)
       | ((Call n1 t2),(Call m1 u2)) ->
      (n1 = m1 /\ structure_le t2 u2)
       | ((Branch t1 t2),(Branch u1 u2)) ->
      (structure_le t1 u1 /\ structure_le t2 u2)
-      | (_34,_35) -> F`;;
+      | (_37,_38) -> F`;;
+
+let AnyArith_call_tree_thm = cake_theorem "AnyArith_call_tree_thm"
+  (fun () ->
+    `structure_le
+       (full_call_graph AnyArith_location (fromAList
+         (data_to_word_stubs (:'a) (data_conf))))
+       AnyArith_call_tree`)
+  CHEAT_TAC;;

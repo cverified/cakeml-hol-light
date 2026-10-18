@@ -2,7 +2,7 @@
 (*  bvlSem: ported from HOL4's
     compiler/backend/semantics/bvlSemScript.sml
     A definition theory, with 23 definitions, 4 datatypes and 10
-    theorems.  Needed by 12 files of the port.  *)
+    theorems.  Needed by 14 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -239,6 +239,42 @@ let do_int_app_def = cake_define
            SOME (Boolv (i < &n)) else NONE)
       | ((op:closLang_int_op),(vs:bvlSem_v list)) -> NONE`;;
 hol4_overload "do_int_app" "bvlSem_do_int_app";;
+
+let do_int_app_eq_some = cake_theorem "do_int_app_eq_some"
+  (fun () ->
+    `(!n. do_int_app (closLang_Const n) vs = SOME res ==>
+       vs = [] /\ res = Number n) /\
+     (do_int_app (Add) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Number (n1 +
+         n2))) /\
+     (do_int_app (Sub) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Number (n1 -
+         n2))) /\
+     (do_int_app (closLang_Mult) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Number (n1 *
+         n2))) /\
+     (do_int_app (Div) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = (&0)) /\ res
+         = Number (n1 / n2))) /\
+     (do_int_app (Mod) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ ~(n2 = (&0)) /\ res
+         = Number (n1 % n2))) /\
+     (do_int_app (Less) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 <
+         n2))) /\
+     (do_int_app (closLang_LessEq) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 <=
+         n2))) /\
+     (do_int_app (Greater) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 >
+         n2))) /\
+     (do_int_app (closLang_GreaterEq) vs = SOME res ==>
+       (?n1 n2. vs = [Number n1; Number n2] /\ res = Boolv (n1 >=
+         n2))) /\
+     (!n. do_int_app (closLang_LessConstSmall n) vs = SOME res ==>
+       (?i. vs = [Number i] /\ (&0) <= i /\ i <= (&1000000) /\ n
+         < 1000000 /\ res = Boolv (i < &n)))`)
+  CHEAT_TAC;;
 
 (* same as closSem$do_word_app *)
 let do_word_app_def = cake_define
@@ -730,6 +766,11 @@ let fix_clock_def = cake_define
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "bvlSem_fix_clock";;
 
+let bvlSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+  (fun () ->
+    `fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`)
+  CHEAT_TAC;;
+
 (* The semantics of expression evaluation is defined next. For
    convenience of subsequent proofs, the evaluation function is
    defined to evaluate a list of exp expressions. *)
@@ -824,7 +865,54 @@ hol4_overload "evaluate" "bvlSem_evaluate";;
 
 (* We prove that the clock never increases. *)
 
+(* HOL4 bvlSemScript.sml:674-681: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let bvlSem_do_app_const = cake_theorem "do_app_const"
+  (fun () ->
+    `(bvlSem_do_app op args s1 = Rval (res,s2)) ==>
+      (state_clock s2 = state_clock s1) /\
+      (~(op = closLang_Install) ==> state_code s2 = state_code s1
+        /\ compile
+                         s2 = compile s1 /\ compile_oracle
+                         s2 = compile_oracle s1)`)
+  CHEAT_TAC;;
+
+let bvl_do_app_Ref = cake_theorem "bvl_do_app_Ref[simp]"
+  (fun () ->
+    `do_app (closLang_MemOp closLang_Ref) vs s = Rval
+       (RefPtr T (LEAST (\ptr. ~(ptr IN FDOM (state_refs
+         s)))),state_refs_fupd (K (state_refs
+          s |+ ((LEAST (\ptr. ~(ptr IN FDOM (state_refs
+            s)))),ValueArray vs)))
+        s)`)
+  CHEAT_TAC;;
+
+let bvl_do_app_Cons = cake_theorem "bvl_do_app_Cons[simp]"
+  (fun () ->
+    `do_app (closLang_BlockOp (closLang_Cons tag)) vs s = Rval (Block
+  tag vs,s)`)
+  CHEAT_TAC;;
+
+let bvlSem_evaluate_clock = cake_theorem "evaluate_clock"
+  (fun () ->
+    `!xs env s1 vs s2.
+       (evaluate (xs,env,s1) = (vs,s2)) ==> state_clock s2 <=
+         state_clock s1`)
+  CHEAT_TAC;;
+
+let bvlSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+  (fun () ->
+    `fix_clock s (evaluate (xs,env,s)) = evaluate (xs,env,s)`)
+  CHEAT_TAC;;
+
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
+
+(* HOL4 bvlSemScript.sml:729-730: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+(* HOL4 bvlSemScript.sml:732-733: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 (* observational semantics *)
 

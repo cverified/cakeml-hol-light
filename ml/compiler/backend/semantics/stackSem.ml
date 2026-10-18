@@ -72,6 +72,19 @@ let map_bitmap_def = cake_define
           (xs,ys,zs) -> SOME (t :: xs,ys,zs))
         | (_3,_4,_5) -> NONE`;;
 
+let filter_bitmap_LENGTH = cake_theorem "filter_bitmap_LENGTH"
+  (fun () ->
+    `!bs xs x y. (filter_bitmap bs xs = SOME (x,y)) ==> LENGTH y <=
+  LENGTH xs`)
+  CHEAT_TAC;;
+
+let map_bitmap_LENGTH = cake_theorem "map_bitmap_LENGTH"
+  (fun () ->
+    `!t1 t2 t3 x y z. (map_bitmap t1 t2 t3 = SOME (x,y,z)) ==>
+                     LENGTH y <= LENGTH t2 /\
+                     LENGTH z <= LENGTH t3`)
+  CHEAT_TAC;;
+
 let read_bitmap_def = cake_define_list
   [`read_bitmap [] = NONE`;
    `read_bitmap ((w:'a word) :: ws) =
@@ -674,6 +687,11 @@ let fix_clock_def = cake_define
   (state_clock s) (state_clock s1))) s1)`;;
 hol4_overload "fix_clock" "stackSem_fix_clock";;
 
+let stackSem_fix_clock_IMP = cake_theorem "fix_clock_IMP[local]"
+  (fun () ->
+    `fix_clock s x = (res,s1) ==> state_clock s1 <= state_clock s`)
+  CHEAT_TAC;;
+
 let STOP_def = cake_define
   `stackSem_STOP x = x`;;
 hol4_overload "STOP" "stackSem_STOP";;
@@ -713,6 +731,14 @@ let copy_words_for_pattern_def = cake_define
            copy_words_for_pattern
              (pattern >>> 1) (i + 1) (a + bytes_in_word) off bs dm
                m else NONE)`;;
+
+let copy_words_for_pattern_LESS_EQ =
+  cake_theorem "copy_words_for_pattern_LESS_EQ"
+  (fun () ->
+    `!p i a f bs dm m j a1.
+       copy_words_for_pattern p i a f bs dm m = SOME (j,a1) ==> i
+         <= j`)
+  CHEAT_TAC;;
 
 (* HOL4 stackSemScript.sml:720-723: the tactic that proves the
    termination *)
@@ -1086,6 +1112,50 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
 hol4_overload "evaluate" "stackSem_evaluate";;
 
 (* We prove that the clock never increases. *)
+
+let stackSem_gc_clock = cake_theorem "gc_clock"
+  (fun () ->
+    `!s1 s2. (gc s1 = SOME s2) ==> state_clock s2 <= state_clock s1`)
+  CHEAT_TAC;;
+
+let stackSem_alloc_clock = cake_theorem "alloc_clock"
+  (fun () ->
+    `!xs s1 vs s2. (alloc x s1 = (vs,s2)) ==> state_clock s2 <=
+  state_clock s1`)
+  CHEAT_TAC;;
+
+let store_const_sem_clock = cake_theorem "store_const_sem_clock"
+  (fun () ->
+    `!s1 v s2. (store_const_sem t1 t2 s1 = (v,s2)) ==> state_clock s2
+  <= state_clock s1`)
+  CHEAT_TAC;;
+
+let stackSem_inst_clock = cake_theorem "inst_clock[local]"
+  (fun () ->
+    `inst i s = SOME s2 ==> state_clock s2 <= state_clock s`)
+  CHEAT_TAC;;
+
+let sh_mem_op_clock = cake_theorem "sh_mem_op_clock[local]"
+  (fun () ->
+    `sh_mem_op op r a s = (res,s') ==> state_clock s' <= state_clock s`)
+  CHEAT_TAC;;
+
+let stackSem_evaluate_clock = cake_theorem "evaluate_clock"
+  (fun () ->
+    `!xs s1 vs s2. (evaluate (xs,s1) = (vs,s2)) ==> state_clock s2 <=
+  state_clock s1`)
+  CHEAT_TAC;;
+
+let stackSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
+  (fun () ->
+    `fix_clock s (evaluate (xs,s)) = evaluate (xs,s)`)
+  CHEAT_TAC;;
+
+(* HOL4 stackSemScript.sml:1108-1109: a theorem that HOL4 states as
+   the value of an ML expression *)
+
+(* HOL4 stackSemScript.sml:1111-1112: a theorem that HOL4 states as
+   the value of an ML expression *)
 
 (* observational semantics *)
 

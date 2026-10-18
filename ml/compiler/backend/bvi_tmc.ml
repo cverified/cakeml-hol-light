@@ -52,9 +52,53 @@ let pure_exp_def = cake_define_list_try (fun () ->
    `pure_exps n [] = T`;
    `pure_exps n (h :: t) = (pure_exp n h /\ pure_exps n t)`];;
 
+let pure_exps_sing = cake_theorem "pure_exps_sing[simp]"
+  (fun () ->
+    `!n h. pure_exps n [h] <=> pure_exp n h`)
+  CHEAT_TAC;;
+
+let pure_exps_cons = cake_theorem "pure_exps_cons"
+  (fun () ->
+    `!n h t.
+       pure_exps n [h] /\
+       pure_exps n t <=>
+       pure_exps n (h :: t)`)
+  CHEAT_TAC;;
+
 (* The equations below express pure_exps without the auxiliary pure_exp.  This
    is the shape the ml_translator prefers (cf. bvi_let$compile_def), whereas the
    mutually recursive pure_exp_def above is the shape cv_trans requires. *)
+let pure_exps_eqns = cake_theorem "pure_exps_eqns"
+  (fun () ->
+    `(pure_exps n [] <=> T) /\
+     (pure_exps n [bvi_Var v] <=> v < n) /\
+     (pure_exps n [bvi_If e1 e2 e3] <=> F) /\
+     (pure_exps n [bvi_Let les le] <=> pure_exps n [le] /\
+       pure_exps n les) /\
+     (pure_exps n [bvi_Raise re] <=> F) /\
+     (pure_exps n [bvi_Tick te] <=> F) /\
+     (pure_exps n [bvi_Call ct cd cargs ch] <=> F) /\
+     (pure_exps n [bvi_Force fl fw] <=> F) /\
+     (pure_exps n [bvi_LetCall la lb lc largs lce] <=> F) /\
+     (pure_exps n [bvi_Return res] <=> F) /\
+     (pure_exps n [bvi_Op oop oargs] <=> pure_op oop oargs /\
+       pure_exps n oargs) /\
+     (pure_exps n (x1 :: x2 :: xs) <=> pure_exps n [x1] /\
+       pure_exps n (x2 :: xs))`)
+  CHEAT_TAC;;
+
+let pure_exp_eq = cake_theorem "pure_exp_eq"
+  (fun () ->
+    `!n e. pure_exp n e = pure_exps n [e]`)
+  CHEAT_TAC;;
+
+let pure_exps_append = cake_theorem "pure_exps_append"
+  (fun () ->
+    `!n es1 es2.
+       pure_exps n es1 /\
+       pure_exps n es2 ==>
+       pure_exps n (es1 ++ es2)`)
+  CHEAT_TAC;;
 
 let dest_Cons_def = cake_define
   `bvi_tmc_dest_Cons x1 =
@@ -83,6 +127,13 @@ let bind_def = cake_define_list
          vs,n'))`];;
 hol4_overload "bind" "bvi_tmc_bind";;
 
+let bind_size = cake_theorem "bind_size"
+  (fun () ->
+    `!args n vs n'.
+       bvi_tmc_bind n args = (vs,n') ==>
+       LENGTH args = LENGTH vs`)
+  CHEAT_TAC;;
+
 let shift_vars_def = cake_define_list
   [`shift_vars (n:num) [] = []`;
    `shift_vars (n:num) (h :: t) = (h + (n:num)) :: shift_vars n t`];;
@@ -100,6 +151,31 @@ let call_to_cb_def = cake_define
    (if call_loc = SOME loc /\ call_h = NONE then
      match bvi_tmc_bind 0 call_args' with (vs,_46) ->
          SOME (call_args',RCall call_ts vs) else NONE)`;;
+
+let shift_vars_zero = cake_theorem "shift_vars_zero"
+  (fun () ->
+    `!ns.
+       shift_vars 0 ns = ns`)
+  CHEAT_TAC;;
+
+let length_shift_vars = cake_theorem "length_shift_vars"
+  (fun () ->
+    `!l n.
+        LENGTH (shift_vars n l) = LENGTH l`)
+  CHEAT_TAC;;
+
+let shift_vars_dist = cake_theorem "shift_vars_dist"
+  (fun () ->
+    `!l n1 n2.
+       shift_vars n1 (shift_vars n2 l) = shift_vars (n1 + n2) l`)
+  CHEAT_TAC;;
+
+let shift_cb_dist = cake_theorem "shift_cb_dist"
+  (fun () ->
+    `!cb n1 n2.
+       shift_cb n1 (shift_cb n2 cb) =
+       shift_cb (n1 + n2) cb`)
+  CHEAT_TAC;;
 
 (* Attempts to build a CallBlock from the tag and args of a BlockOp Cons.
    If no recursive call found, returns each op arg expression in a list and (INL) a list of corresponding de Bruijn indeces.
@@ -153,6 +229,57 @@ let bvi_to_cb_aux_def = cake_define_list_try_tac (fun () ->
 let wf_vars_def = cake_define
   `wf_vars n (vs:num list) <=> EVERY (\v. v < n) vs`;;
 
+let wf_vars_empty = cake_theorem "wf_vars_empty"
+  (fun () ->
+    `!n.
+       wf_vars n []`)
+  CHEAT_TAC;;
+
+let wf_vars_expand = cake_theorem "wf_vars_expand"
+  (fun () ->
+    `!n1 n2 vs.
+       wf_vars n1 vs /\
+       n1 <= n2 ==>
+       wf_vars n2 vs`)
+  CHEAT_TAC;;
+
+let wf_vars_shift = cake_theorem "wf_vars_shift"
+  (fun () ->
+    `!n1 n2 vs.
+       wf_vars n1 vs ==>
+       wf_vars (n2 + n1) (shift_vars n2 vs)`)
+  CHEAT_TAC;;
+
+let wf_vars_shift_sing = cake_theorem "wf_vars_shift_sing"
+  (fun () ->
+    `!n vs.
+       wf_vars n vs ==>
+       wf_vars (SUC n) (shift_vars 1 vs)`)
+  CHEAT_TAC;;
+
+let wf_vars_append = cake_theorem "wf_vars_append"
+  (fun () ->
+    `!n vs1 vs2.
+       wf_vars n vs1 /\
+       wf_vars n vs2 ==>
+       wf_vars n (vs1 ++ vs2)`)
+  CHEAT_TAC;;
+
+let wf_vars_cons = cake_theorem "wf_vars_cons"
+  (fun () ->
+    `!n v vs.
+       v < n /\
+       wf_vars n vs ==>
+       wf_vars n (v :: vs)`)
+  CHEAT_TAC;;
+
+let wf_vars_bind = cake_theorem "wf_vars_bind"
+  (fun () ->
+    `!bs vs n n'.
+       bvi_tmc_bind n bs = (vs,n') ==>
+       wf_vars (n + LENGTH bs) vs`)
+  CHEAT_TAC;;
+
 let wf_cb_def = cake_define_list
   [`wf_cb n (RCall ts args) =
        wf_vars n args`;
@@ -161,6 +288,65 @@ let wf_cb_def = cake_define_list
         wf_cb n child /\
         wf_vars n right /\
         small_enough_int (&(LENGTH right)))`];;
+
+let wf_cb_expand = cake_theorem "wf_cb_expand"
+  (fun () ->
+    `!n1 n2 cb.
+       wf_cb n1 cb /\
+       n1 <= n2 ==>
+       wf_cb n2 cb`)
+  CHEAT_TAC;;
+
+let wf_cb_shift_sing = cake_theorem "wf_cb_shift_sing"
+  (fun () ->
+    `!n cb.
+       wf_cb n cb ==>
+       wf_cb (SUC n) (shift_cb 1 cb)`)
+  CHEAT_TAC;;
+
+let bvi_to_cb_aux_wf_inl_lemma =
+  cake_theorem "bvi_to_cb_aux_wf_inl_lemma[local]"
+  (fun () ->
+    `(!n loc tag exp bs vs.
+        bvi_to_cb_aux_sing n loc tag exp = SOME (bs,INL vs) ==>
+        pure_exps n bs /\
+        wf_vars (LENGTH bs) vs /\
+        small_enough_int (&(LENGTH vs))) /\
+     (!n loc tag args bs vs.
+        bvi_to_cb_aux n loc tag args = SOME (bs,INL vs) ==>
+        pure_exps n bs /\
+        wf_vars (LENGTH bs) vs /\
+        small_enough_int (&(LENGTH vs)))`)
+  CHEAT_TAC;;
+
+(* HOL4 bvi_tmcScript.sml:443: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let bvi_to_cb_aux_sing = cake_theorem "bvi_to_cb_aux_sing"
+  (fun () ->
+    `!n loc tag arg bs cb.
+       bvi_to_cb_aux n loc tag [arg] = SOME (bs,INR cb) ==>
+       (?child.
+         cb = CallBlock tag [] child [])`)
+  CHEAT_TAC;;
+
+let bvi_to_cb_aux_wf_inr_lemma =
+  cake_theorem "bvi_to_cb_aux_wf_inr_lemma[local]"
+  (fun () ->
+    `(!n loc tag exp bs cb.
+        bvi_to_cb_aux_sing n loc tag exp = SOME (bs,INR cb) ==>
+        wf_cb (LENGTH bs) cb /\
+        (?l child r.
+          cb = CallBlock tag l child r)) /\
+     (!n loc tag args bs cb.
+        bvi_to_cb_aux n loc tag args = SOME (bs,INR cb) ==>
+        wf_cb (LENGTH bs) cb /\
+        (?l child r.
+          cb = CallBlock tag l child r))`)
+  CHEAT_TAC;;
+
+(* HOL4 bvi_tmcScript.sml:490: a theorem that HOL4 states as the
+   value of an ML expression *)
 
 let bvi_to_cb_def = cake_define
   `bvi_to_cb n loc x3 =
@@ -173,6 +359,25 @@ let bvi_to_cb_def = cake_define
             SOME (bs,cb) | _64 -> NONE) | _65 -> NONE)
         | _66 -> NONE`;;
 
+let bvi_to_cb_wf = cake_theorem "bvi_to_cb_wf"
+  (fun () ->
+    `!n loc x bs cb.
+       bvi_to_cb n loc x = SOME (bs,cb) ==>
+       wf_cb (LENGTH bs) cb`)
+  CHEAT_TAC;;
+
+let bvi_to_cb_cases = cake_theorem "bvi_to_cb_cases"
+  (fun () ->
+    `!n loc x bs cb.
+       bvi_to_cb n loc x = SOME (bs,cb) ==>
+       (?tag args l child r.
+          x = Op (closLang_BlockOp (closLang_Cons tag)) args /\
+          cb = CallBlock tag l child r) \/
+       (?ts args vs.
+          x = Call ts (SOME loc) args NONE /\
+          cb = RCall ts vs)`)
+  CHEAT_TAC;;
+
 (* Convert back to BlockOp Cons for comparing semantics *)
 let cb_to_bvi_def = cake_define_list
   [`cb_to_bvi loc (CallBlock tag l child r) =
@@ -184,6 +389,27 @@ let cb_to_bvi_def = cake_define_list
    `cb_to_bvi loc (RCall ts args) =
          (let args' = MAP (\n. Var n) args in
            bvi_Call ts (SOME loc) args' NONE)`];;
+
+let bvi_to_cb_aux_size_lemma =
+  cake_theorem "bvi_to_cb_aux_size_lemma[local]"
+  (fun () ->
+    `(!n loc tag exp bs sum'.
+        bvi_to_cb_aux_sing n loc tag exp = SOME (bs,sum') ==>
+        list_size bvi_exp_size bs <= bvi_exp_size exp + 1) /\
+     (!n loc tag args bs sum'.
+        bvi_to_cb_aux n loc tag args = SOME (bs,sum') ==>
+        list_size bvi_exp_size bs <= list_size bvi_exp_size args)`)
+  CHEAT_TAC;;
+
+(* HOL4 bvi_tmcScript.sml:577: a theorem that HOL4 states as the
+   value of an ML expression *)
+
+let bvi_to_cb_size = cake_theorem "bvi_to_cb_size"
+  (fun () ->
+    `!n loc x bs cb.
+       bvi_to_cb n loc x = SOME (bs,cb) ==>
+       list_size bvi_exp_size bs < bvi_exp_size x`)
+  CHEAT_TAC;;
 
 (* Phase 2 - Transformations. *)
 
@@ -220,6 +446,11 @@ let cb_size_def = cake_define
         CallBlock _67 _68 x _69 -> cb_size x + 1
       | _70 -> 0`;;
 
+let call_block_size_shift = cake_theorem "call_block_size_shift[local]"
+  (fun () ->
+    `!x n. cb_size (shift_cb n x) = cb_size x`)
+  CHEAT_TAC;;
+
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 bvi_tmcScript.sml:644-647: the tactic that proves the
@@ -240,6 +471,11 @@ let cb_to_bvi_worker_aux_def = cake_define_list_try_tac (fun () ->
          (cb_to_bvi_worker_aux (shift_cb 2 child) loc_opt 1
            (LENGTH right)))`];;
 
+let shift_cb_zero = cake_theorem "shift_cb_zero"
+  (fun () ->
+    `!x. shift_cb 0 x = x`)
+  CHEAT_TAC;;
+
 (* Same as cb_to_bvi_worker_aux, but with the shift carried as an accumulator
    so that the recursion is on a subterm of the call block.  This version is
    the one used by the cv translation. *)
@@ -257,6 +493,20 @@ let cb_to_bvi_worker_aux_alt_def = cake_define_list
          (closLang_Const (&idx))) []) (Var 0)]
          (cb_to_bvi_worker_aux_alt (sh + 2) child loc_opt 1
            (LENGTH right)))`];;
+
+let cb_to_bvi_worker_aux_alt_thm =
+  cake_theorem "cb_to_bvi_worker_aux_alt_thm"
+  (fun () ->
+    `!cb sh loc_opt ptr idx.
+       cb_to_bvi_worker_aux_alt sh cb loc_opt ptr idx =
+       cb_to_bvi_worker_aux (shift_cb sh cb) loc_opt ptr idx`)
+  CHEAT_TAC;;
+
+let cb_to_bvi_worker_aux_eq = cake_theorem "cb_to_bvi_worker_aux_eq"
+  (fun () ->
+    `cb_to_bvi_worker_aux cb loc_opt ptr idx =
+     cb_to_bvi_worker_aux_alt 0 cb loc_opt ptr idx`)
+  CHEAT_TAC;;
 
 let cb_to_bvi_worker_def = cake_define_list
   [`cb_to_bvi_worker (RCall call_ts call_args') loc_opt ptr idx =

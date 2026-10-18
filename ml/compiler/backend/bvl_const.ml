@@ -2,7 +2,7 @@
 (*  bvl_const: ported from HOL4's
     compiler/backend/bvl_constScript.sml
     A definition theory, with 13 definitions and 12 theorems.
-    Needed by 10 files of the port.  *)
+    Needed by 11 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -31,11 +31,26 @@ let dest_simple_def = cake_define
             xs then SOME i else NONE)
         | _1 -> NONE`;;
 
+let dest_simple_pmatch = cake_theorem "dest_simple_pmatch"
+  (fun () ->
+    `!op. dest_simple op =
+     (match op with
+       bvl_Op (closLang_IntOp (closLang_Const i)) [] -> SOME i |
+         _2 -> NONE)`)
+  CHEAT_TAC;;
+
 let case_op_const_def = cake_define
   `case_op_const exp =
        (match exp with (Op op [x1; Op (closLang_IntOp
          (closLang_Const n2)) l]) -> (if NULL l then SOME (op,x1,n2)
-         else NONE) | _2 -> NONE)`;;
+         else NONE) | _3 -> NONE)`;;
+
+let case_op_const_pmatch = cake_theorem "case_op_const_pmatch"
+  (fun () ->
+    `!exp. case_op_const exp =
+     (match exp with (Op op [x1; Op (closLang_IntOp
+       (closLang_Const n2)) []]) -> SOME (op,x1,n2) | _4 -> NONE)`)
+  CHEAT_TAC;;
 
 let SmartOp_flip_def = cake_define
   `SmartOp_flip op x1 x2 =
@@ -44,7 +59,18 @@ let SmartOp_flip_def = cake_define
            closLang_Mult] then (op,x2,x1) else if op = closLang_IntOp
            closLang_Sub then (closLang_IntOp closLang_Add,x2,Op
            (closLang_IntOp (closLang_Const (--i))) []) else
-           (op,x1,x2)) | _3 -> (op,x1,x2))`;;
+           (op,x1,x2)) | _5 -> (op,x1,x2))`;;
+
+let SmartOp_flip_pmatch = cake_theorem "SmartOp_flip_pmatch"
+  (fun () ->
+    `!op x1 x2. SmartOp_flip op x1 x2 =
+       (match (dest_simple x1) with (SOME i) ->
+           (if MEM op [closLang_IntOp closLang_Add;
+             closLang_IntOp closLang_Mult] then (op,x2,x1) else if op
+             = closLang_IntOp closLang_Sub then (closLang_IntOp
+             closLang_Add,x2,Op (closLang_IntOp (closLang_Const
+             (--i))) []) else (op,x1,x2)) | _6 -> (op,x1,x2))`)
+  CHEAT_TAC;;
 
 let SmartOp2_def = cake_define
   `SmartOp2 (op,(x1:bvl_exp),(x2:bvl_exp)) =
@@ -59,11 +85,11 @@ let SmartOp2_def = cake_define
                    mk_add_const x11 (n2 + n12) else if op =
                    closLang_IntOp closLang_Sub then Op (closLang_IntOp
                    closLang_Sub) [x11; Op (closLang_IntOp
-                   (closLang_Const (n2 + n12))) []] else default) | _4
+                   (closLang_Const (n2 + n12))) []] else default) | _7
                    ->
                  (match (dest_simple x1) with SOME n1 -> Op
-                   (closLang_IntOp (closLang_Const (n2 + n1))) [] | _5
-                   -> mk_add_const x1 n2)) | _6 ->
+                   (closLang_IntOp (closLang_Const (n2 + n1))) [] | _8
+                   -> mk_add_const x1 n2)) | _9 ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
                  (if op1 = closLang_IntOp closLang_Add /\ op2 =
@@ -78,7 +104,7 @@ let SmartOp2_def = cake_define
                      else if op1 = closLang_IntOp closLang_Sub /\ op2 =
                      closLang_IntOp closLang_Add then
                    mk_add_const (Op (closLang_IntOp closLang_Sub)
-                     [x11; x21]) (n22 + n12) else default) | _7 ->
+                     [x11; x21]) (n22 + n12) else default) | _10 ->
                      default)) in
      let mk_sub = (\x1 x2.
        let default = Op (closLang_IntOp closLang_Sub) [x1; x2] in
@@ -88,10 +114,10 @@ let SmartOp2_def = cake_define
                    (closLang_IntOp closLang_Sub) [x11; Op
                    (closLang_IntOp (closLang_Const (n2 - n12))) []] else
                    if op = closLang_IntOp closLang_Sub then mk_add_const
-                   x11 (n2 - n12) else default) | _8 ->
+                   x11 (n2 - n12) else default) | _11 ->
                  (match (dest_simple x1) with SOME n1 -> Op
-                   (closLang_IntOp (closLang_Const (n2 - n1))) [] | _9
-                   -> default)) | _10 ->
+                   (closLang_IntOp (closLang_Const (n2 - n1))) [] | _12
+                   -> default)) | _13 ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
                  (if op1 = closLang_IntOp closLang_Add /\ op2 =
@@ -107,7 +133,7 @@ let SmartOp2_def = cake_define
                      else if op1 = closLang_IntOp closLang_Sub /\ op2 =
                      closLang_IntOp closLang_Add then
                    mk_add_const (Op (closLang_IntOp closLang_Add)
-                     [x11; x21]) (n22 - n12) else default) | _11 ->
+                     [x11; x21]) (n22 - n12) else default) | _14 ->
                      default)) in
      let mk_mul = (\x1 x2.
        let default = Op (closLang_IntOp closLang_Mult) [x1; x2] in
@@ -116,13 +142,13 @@ let SmartOp2_def = cake_define
                  (if op = closLang_IntOp closLang_Mult then Op
                    (closLang_IntOp closLang_Mult) [x11; Op
                    (closLang_IntOp (closLang_Const (n2 * n12))) []] else
-                   default) | _12 ->
+                   default) | _15 ->
                  (match (dest_simple x1) with SOME n1 -> Op
-                   (closLang_IntOp (closLang_Const (n2 * n1))) [] | _13
+                   (closLang_IntOp (closLang_Const (n2 * n1))) [] | _16
                    ->
                      (if n2 = (&1) then x1 else if n2 = --(&1) then
                        mk_sub x1 (Op (closLang_IntOp (closLang_Const
-                       (&0))) []) else default))) | _14 ->
+                       (&0))) []) else default))) | _17 ->
              (match (case_op_const x1,case_op_const x2) with (SOME
                (op1,x11,n12),SOME (op2,x21,n22)) ->
                  (if op1 = closLang_IntOp closLang_Mult /\ op2 =
@@ -130,7 +156,7 @@ let SmartOp2_def = cake_define
                    Op (closLang_IntOp closLang_Mult) [Op
                      (closLang_IntOp (closLang_Const (n22 * n12))) [];
                      Op (closLang_IntOp closLang_Mult) [x11; x21]] else
-                     default) | _15 -> default)) in
+                     default) | _18 -> default)) in
      let default = Op op [x1; x2] in
      if op = closLang_IntOp closLang_Add then
        mk_add x1 x2 else if op = closLang_IntOp closLang_Sub then
@@ -149,20 +175,25 @@ let SmartOp2_def = cake_define
              (x2 < x1) | closLang_IntOp closLang_LessEq -> bvl_Bool (x2
              <= x1) | closLang_IntOp Greater -> bvl_Bool (x2 > x1) |
              closLang_IntOp closLang_GreaterEq -> bvl_Bool (x2 >= x1) |
-             _16 -> default) | _17 -> default else if op =
+             _19 -> default) | _20 -> default else if op =
              closLang_BlockOp closLang_Equal then
        match (dest_simple x1,dest_simple x2) with (SOME i,SOME j) ->
-         bvl_Bool (j = i) | (SOME i,_18) -> Op (closLang_BlockOp
-         (closLang_EqualConst (closLang_Int i))) [x2] | (_19,SOME i) ->
+         bvl_Bool (j = i) | (SOME i,_21) -> Op (closLang_BlockOp
+         (closLang_EqualConst (closLang_Int i))) [x2] | (_22,SOME i) ->
          Op (closLang_BlockOp (closLang_EqualConst (closLang_Int i)))
-         [x1] | _20 -> default else if op = closLang_MemOp closLang_El
+         [x1] | _23 -> default else if op = closLang_MemOp closLang_El
          then
        match dest_simple x1 with SOME i -> (if i < (&0) then
          default else Op (closLang_BlockOp (closLang_ElemAt
-         (num_of_int i))) [x2]) | _21 -> default else default)`;;
+         (num_of_int i))) [x2]) | _24 -> default else default)`;;
 
 (* NOTE: the space after case and pmatch is important *)
 (* HOL4 bvl_constScript.sml:196-198: ML code, not ported *)
+
+let SmartOp2_pmatch = cake_theorem "SmartOp2_pmatch"
+  (fun () ->
+    `tm`)
+  CHEAT_TAC;;
 (* HOL4 bvl_constScript.sml:206: ML code, not ported *)
 
 
@@ -171,7 +202,13 @@ let dest_EqualInt_def = cake_define
       match x1 with
         closLang_BlockOp (closLang_EqualConst (closLang_Int i)) ->
           SOME i
-      | _22 -> NONE`;;
+      | _25 -> NONE`;;
+
+let dest_EqualInt_pmatch = cake_theorem "dest_EqualInt_pmatch"
+  (fun () ->
+    `dest_EqualInt x = (match x with closLang_BlockOp
+  (closLang_EqualConst (closLang_Int i)) -> SOME i | _26 -> NONE)`)
+  CHEAT_TAC;;
 
 let SmartOp1_def = cake_define
   `SmartOp1 op x =
@@ -183,8 +220,15 @@ let SmartOp1_def = cake_define
 let SmartOp_def = cake_define
   `bvl_const_SmartOp op xs =
      (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2) |
-       [x] -> SmartOp1 op x | _23 -> Op op xs)`;;
+       [x] -> SmartOp1 op x | _27 -> Op op xs)`;;
 hol4_overload "SmartOp" "bvl_const_SmartOp";;
+
+let SmartOp_pmatch = cake_theorem "SmartOp_pmatch"
+  (fun () ->
+    `!op xs. bvl_const_SmartOp op xs =
+     (match xs with [x1; x2] -> SmartOp2 (SmartOp_flip op x1 x2)
+       | [x] -> SmartOp1 op x | _28 -> Op op xs)`)
+  CHEAT_TAC;;
 
 let extract_def = cake_define
   `bvl_const_extract x1 ys =
@@ -196,8 +240,19 @@ let extract_def = cake_define
         | (Op (closLang_BlockOp (closLang_Cons t)) xs) ->
        (if NULL xs then SOME (Op (closLang_BlockOp (closLang_Cons t))
          []) else NONE)
-        | _24 -> NONE`;;
+        | _29 -> NONE`;;
 hol4_overload "extract" "bvl_const_extract";;
+
+let extract_pmatch = cake_theorem "extract_pmatch"
+  (fun () ->
+    `!op ys. extract op ys =
+     (match op with
+       ((Var n):bvl_exp) -> SOME ((Var (n + LENGTH ys +
+         1)):bvl_exp) | Op (closLang_IntOp (closLang_Const i)) xs ->
+         SOME (Op (closLang_IntOp (closLang_Const i)) []) | Op
+         (closLang_BlockOp (closLang_Cons t)) [] -> SOME (Op
+         (closLang_BlockOp (closLang_Cons t)) []) | _30 -> NONE)`)
+  CHEAT_TAC;;
 
 let extract_list_def = cake_define_list
   [`bvl_const_extract_list [] = []`;
@@ -212,6 +267,15 @@ let delete_var_def = cake_define
             (&0))) []
         | x -> x`;;
 hol4_overload "delete_var" "bvl_const_delete_var";;
+
+let delete_var_pmatch = cake_theorem "delete_var_pmatch"
+  (fun () ->
+    `!op.
+     bvl_const_delete_var op =
+       (match op with
+         Var n -> Op (closLang_IntOp (closLang_Const (&0))) [] |
+           x -> x)`)
+  CHEAT_TAC;;
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -290,8 +354,29 @@ let compile_sing_def = cake_define_list
 hol4_overload "compile_list" "bvl_const_compile_list";;
 hol4_overload "compile_sing" "bvl_const_compile_sing";;
 
+let compile_eq = cake_theorem "compile_eq"
+  (fun () ->
+    `(!e env. bvl_const_compile env [e] = [bvl_const_compile_sing env
+  e]) /\
+     (!es env. bvl_const_compile env es = bvl_const_compile_list
+       env es)`)
+  CHEAT_TAC;;
+
+let bvl_const_compile_length = cake_theorem "compile_length[simp]"
+  (fun () ->
+    `!n xs. LENGTH (bvl_const_compile n xs) = LENGTH xs`)
+  CHEAT_TAC;;
+
+let bvl_const_compile_HD_SING = cake_theorem "compile_HD_SING"
+  (fun () ->
+    `[HD (bvl_const_compile n [x])] = bvl_const_compile n [x]`)
+  CHEAT_TAC;;
+
 let compile_exp_def = cake_define
   `bvl_const_compile_exp x =
-     (match bvl_const_compile [] [x] with (y :: _25) -> y | _26 ->
+     (match bvl_const_compile [] [x] with (y :: _31) -> y | _32 ->
        Var 0)`;;
 hol4_overload "compile_exp" "bvl_const_compile_exp";;
+
+(* HOL4 bvl_constScript.sml:397: a theorem that HOL4 states as the
+   value of an ML expression *)
