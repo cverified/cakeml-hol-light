@@ -60,10 +60,8 @@ let collect_apps_def = cake_define
 
 (* HOL4 clos_mtiScript.sml:70: ML code, not ported *)
 
-let exp3_size_append = cake_theorem "exp3_size_append[local]"
-  (fun () ->
-    `!es1 es2. exp3_size (es1 ++ es2) = exp3_size es1 + exp3_size es2`)
-  CHEAT_TAC;;
+(* HOL4 clos_mtiScript.sml:72-77: a theorem whose statement the port
+   cannot state yet: exp3_size_append *)
 
 let collect_apps_more = cake_theorem "collect_apps_more[local]"
   (fun () ->

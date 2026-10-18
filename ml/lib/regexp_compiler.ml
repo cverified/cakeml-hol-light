@@ -3,7 +3,7 @@
     examples/formal-languages/regular/regexp_compilerScript.sml
     A HOL4 library theory, of which the port has the definitions
     that CakeML needs.  Needed by export.ml, export_x64.ml,
-    infer_t.ml, mlvector.ml and word_bignum.ml.  *)
+    infer_t.ml, mlvector.ml, pegComplete.ml and word_bignum.ml.  *)
 (* ======================================================== *)
 
 needs "lib/balanced_map.ml";;
@@ -25,3 +25,5 @@ let sub_def = cake_define
 
 let length_def = cake_define
   `length (Vector l) = LENGTH l`;;
+
+cake_hide [];;

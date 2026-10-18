@@ -360,4 +360,4 @@ let bvl_handle_compile_sing = cake_theorem "compile_sing"
   CHEAT_TAC;;
 
 (* HOL4 bvl_handleScript.sml:346-353: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: compile_seqs_compute *)

@@ -81,16 +81,16 @@ let word_test_lemma1 = cake_theorem "word_test_lemma1[local]"
   (fun () ->
     `good_dimindex (:'a) ==>
      ((n2w 0b111100) && x = (n2w ((8 + 6) * 4):'a word) <=>
-      ~word_bit 2 x /\ word_bit 3 x /\ word_bit 4 x /\ word_bit 5
-        x)`)
+      ~(word_bit 2 x) /\ word_bit 3 x /\ word_bit 4 x /\ word_bit
+        5 x)`)
   CHEAT_TAC;;
 
 let word_test_lemma2 = cake_theorem "word_test_lemma2[local]"
   (fun () ->
     `good_dimindex (:'a) ==>
      ((n2w 0b111100) && x = (n2w ((0 + 6) * 4):'a word) <=>
-      ~word_bit 2 x /\ word_bit 3 x /\ word_bit 4 x /\ ~word_bit
-        5 x)`)
+      ~(word_bit 2 x) /\ word_bit 3 x /\ word_bit 4 x /\
+        ~(word_bit 5 x))`)
   CHEAT_TAC;;
 
 let memory_rel_Thunk_bits = cake_theorem "memory_rel_Thunk_bits"
@@ -102,9 +102,8 @@ let memory_rel_Thunk_bits = cake_theorem "memory_rel_Thunk_bits"
      get_real_addr c st w = SOME a /\
      m a = wordLang_Word x /\ FAPPLY
      w 0 ==>
-     (~bl /\ ev = Evaluated /\ ~(
-      ((n2w 0b111100) && x) = n2w ((0 + 6) * 4)) /\ ~(
-      ((n2w 0b111100) && x) = n2w ((8 + 6) * 4))) \/
+     (~bl /\ ev = Evaluated /\ ~(((n2w 0b111100) && x) = n2w ((0 +
+       6) * 4)) /\ ~(((n2w 0b111100) && x) = n2w ((8 + 6) * 4))) \/
      (match ev with NotEvaluated -> (n2w 0b111100) && x = n2w ((0
        + 6) * 4) | Evaluated -> (n2w 0b111100) && x = n2w ((8 + 6) *
        4))`)
@@ -124,7 +123,8 @@ let jump_exc_locals = cake_theorem "jump_exc_locals"
   CHEAT_TAC;;
 
 (* HOL4 data_to_wordProofScript.sml:123-126: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   state_rel_cut_env_IMP_cut_env *)
 
 let v_inv_Loc = cake_theorem "v_inv_Loc[local]"
   (fun () ->
@@ -177,8 +177,8 @@ let state_rel_pop_env_set_vars_IMP =
 let data_compile_correct = cake_theorem "data_compile_correct"
   (fun () ->
     `!prog s c n l l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) locs.
-        (dataSem_evaluate (prog,s) = (res,s1)) /\ ~(
-        res = SOME (Rerr (Rabort Rtype_error))) /\
+        (dataSem_evaluate (prog,s) = (res,s1)) /\ ~(res = SOME
+          (Rerr (Rabort Rtype_error))) /\
         state_rel c l1 l2 s t NONE locs /\ wordSem_state_termdep
         t > 1 ==>
         (?t1 res1.
@@ -189,7 +189,7 @@ let data_compile_correct = cake_theorem "data_compile_correct"
             ffi_state_io_events (state_ffi
              t1) <<= ffi_state_io_events (state_ffi s1) /\
              (~(data_to_word_config_gc_kind c = None) ==>
-               ~dataSem_state_safe_for_space s1)) /\
+               ~(dataSem_state_safe_for_space s1))) /\
           (~(res1 = SOME wordSem_NotEnoughSpace) ==>
            (match res with NONE -> state_rel c l1 l2 s1 t1 NONE
              locs /\ (res1 = NONE) | SOME (Rval v) ->
@@ -246,8 +246,7 @@ let compile_correct_lemma = cake_theorem "compile_correct_lemma"
   (fun () ->
     `!s c l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
         (dataSem_evaluate (Call NONE (SOME start') [] NONE,s) =
-          (res,s1)) /\ ~(
-        res = SOME (Rerr (Rabort Rtype_error))) /\
+          (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
           wordSem_state_termdep
         t > 1 /\
         state_rel c l1 l2 s t NONE [] ==>
@@ -259,7 +258,7 @@ let compile_correct_lemma = cake_theorem "compile_correct_lemma"
             ffi_state_io_events (state_ffi
              t1) <<= ffi_state_io_events (state_ffi s1) /\
              (~(data_to_word_config_gc_kind c = None) ==>
-               ~dataSem_state_safe_for_space s1)) /\
+               ~(dataSem_state_safe_for_space s1))) /\
           (~(res1 = SOME wordSem_NotEnoughSpace) ==>
            (match res with NONE -> (state_ffi t1 = state_ffi s1) /\
              (res1 = NONE) | SOME (Rval v) -> (state_ffi t1 = state_ffi
@@ -306,8 +305,7 @@ let data_to_wordProof_compile_correct = cake_theorem "compile_correct"
   (fun () ->
     `!x s l1 l2 res s1 (t:('a,'c,'ffi)wordSem_state) start'.
         (dataSem_evaluate (Call NONE (SOME start') [] NONE,s) =
-          (res,s1)) /\ ~(
-        res = SOME (Rerr (Rabort Rtype_error))) /\
+          (res,s1)) /\ ~(res = SOME (Rerr (Rabort Rtype_error))) /\
         state_rel_ext x l1 l2 s t ==>
         (?ck t1 res1.
           (wordSem_evaluate (Call NONE (SOME start') [0] NONE,
@@ -317,7 +315,7 @@ let data_to_wordProof_compile_correct = cake_theorem "compile_correct"
             ffi_state_io_events (state_ffi
              t1) <<= ffi_state_io_events (state_ffi s1) /\
              (~(data_to_word_config_gc_kind x = None) ==>
-               ~dataSem_state_safe_for_space s1)) /\
+               ~(dataSem_state_safe_for_space s1))) /\
           (~(res1 = SOME wordSem_NotEnoughSpace) ==>
            (state_ffi t1 = state_ffi s1) /\
            (match res with NONE -> (res1 = NONE) | SOME (Rval v)
@@ -343,8 +341,8 @@ let compile_semantics_lemma = cake_theorem "compile_semantics_lemma"
     `state_rel_ext conf 1 0 (initial_state (ffi:'ffi ffi_state)
   (fromAList prog) co cc T lims (wordSem_state_stack_size t)
   (wordSem_state_clock t)) (t:('a,'c,'ffi)wordSem_state) /\ fs =
-  wordSem_state_stack_size t /\ ~(
-     semantics ffi (fromAList prog) co cc lims fs start = Fail) ==>
+  wordSem_state_stack_size t /\ ~(semantics ffi (fromAList prog) co cc
+  lims fs start = Fail) ==>
      semantics t start IN
        extend_with_resource_limit {semantics ffi (fromAList prog)
          co cc lims fs start}`)
@@ -358,8 +356,8 @@ let compile_semantics_precise_lemma =
   (wordSem_state_clock t)) (t:('a,'c,'ffi)wordSem_state) /\ fs =
   wordSem_state_stack_size t /\
      data_lang_safe_for_space ffi (fromAList prog) lims fs start /\
-       ~(data_to_word_config_gc_kind conf = None) /\ ~(
-     semantics ffi (fromAList prog) co cc lims fs start = Fail) ==>
+       ~(data_to_word_config_gc_kind conf = None) /\ ~(semantics ffi
+       (fromAList prog) co cc lims fs start = Fail) ==>
      semantics t start IN
        extend_with_resource_limit' T {semantics ffi (fromAList
          prog) co cc lims fs start}`)
@@ -371,8 +369,8 @@ let compile_semantics_precise = cake_theorem "compile_semantics_precise"
   (fromAList prog) co cc T lims (wordSem_state_stack_size t)
   (wordSem_state_clock t)) (t:('a,'c,'ffi)wordSem_state) /\
      fs = wordSem_state_stack_size t /\
-       ~(data_to_word_config_gc_kind conf = None) /\ ~(
-     semantics ffi (fromAList prog) co cc lims fs start = Fail) /\
+       ~(data_to_word_config_gc_kind conf = None) /\ ~(semantics ffi
+       (fromAList prog) co cc lims fs start = Fail) /\
      data_lang_safe_for_space ffi (fromAList prog) lims fs start
        ==>
      semantics t start = semantics ffi (fromAList prog) co cc
@@ -426,9 +424,9 @@ let data_to_wordProof_compile_semantics =
                t conf
                  (MAP (\p. full_compile_single tt kk aa coo
                    (p,NONE)) progs))) /\
-       fs = wordSem_state_stack_size t /\ ~(
-       Fail = semantics (wordSem_state_ffi t) (fromAList prog) co
-         cc zero_limits fs start) ==>
+       fs = wordSem_state_stack_size t /\ ~(Fail = semantics
+         (wordSem_state_ffi t) (fromAList prog) co cc zero_limits fs
+         start) ==>
        (data_lang_safe_for_space (wordSem_state_ffi t) (fromAList
          prog) (get_limits c t) fs start /\
          ~(data_to_word_config_gc_kind
@@ -495,8 +493,7 @@ let extract_labels_assignWordShift =
 
 let data_to_word_lab_pres_lem = cake_theorem "data_to_word_lab_pres_lem"
   (fun () ->
-    `!c n l p. ~(
-       l = 0) ==>
+    `!c n l p. ~(l = 0) ==>
        (let (cp,l') = comp c n l p in
        l <= l' /\
        EVERY (\(l1,l2). l1 = n /\ l <= l2 /\ l2 < l')
@@ -569,7 +566,7 @@ let comp_no_share_inst = cake_theorem "comp_no_share_inst"
 
 let MAP_FST_ZIP = cake_theorem "MAP_FST_ZIP[local]"
   (fun () ->
-    `!xs ys. MAP FST' (ZIP xs ys) = TAKE (LENGTH ys) xs`)
+    `!xs ys. MAP FST (ZIP xs ys) = TAKE (LENGTH ys) xs`)
   CHEAT_TAC;;
 
 let compile_no_share_inst = cake_theorem "compile_no_share_inst"
@@ -869,7 +866,7 @@ let stubs_fst_def = cake_define
                  (ARB:data_to_word_config))`;;
 
 (* HOL4 data_to_wordProofScript.sml:2757-2758: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: stubs_fst_eq *)
 
 (* The incremental version ONLY does data_to_word
   TODO: MAP FST stubs is independent of the data conf,
@@ -898,3 +895,5 @@ let data_to_word_good_handlers_incr =
     `EVERY (\(n,m,pp). good_handlers n pp) (MAP (compile_part dc)
   progs)`)
   CHEAT_TAC;;
+
+cake_hide [];;

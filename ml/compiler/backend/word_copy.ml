@@ -279,7 +279,7 @@ let copy_prop_prog_def = cake_define
        (Skip,cs)
         | (wordLang_Move pri xs) ->
        (let tt = MAP FST xs in let ss = MAP SND xs in
-       if EVERY (\t. ~MEM t ss) tt then
+       if EVERY (\t. ~(MEM t ss)) tt then
          let (xs',cs') = copy_prop_move xs cs in
          (wordLang_Move pri xs',cs') else (wordLang_Move pri
            xs,empty_eq))

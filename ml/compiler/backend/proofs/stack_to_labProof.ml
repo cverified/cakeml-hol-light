@@ -11,6 +11,7 @@
 
 needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/bvl_jump.ml";;
+needs "compiler/backend/bvl_to_bvi.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/clos_to_bvl.ml";;
 needs "compiler/backend/dataLang.ml";;
@@ -108,14 +109,12 @@ let not_is_Label_compile_jump =
 
 let word_cmp_not_NONE = cake_theorem "word_cmp_not_NONE[simp]"
   (fun () ->
-    `~(
-        word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) =
-          NONE)`)
+    `~(word_cmp cmp (wordLang_Word w1) (wordLang_Word w2) = NONE)`)
   CHEAT_TAC;;
 
 let word_cmp_negate_alt = cake_theorem "word_cmp_negate_alt[simp]"
   (fun () ->
-    `asm_word_cmp (negate cmp) w1 w2 <=> ~word_cmp cmp w1 w2`)
+    `asm_word_cmp (negate cmp) w1 w2 <=> ~(word_cmp cmp w1 w2)`)
   CHEAT_TAC;;
 
 let word_cmp_negate = cake_theorem "word_cmp_negate[simp]"
@@ -209,7 +208,7 @@ let loc_to_pc_isPREFIX = cake_theorem "loc_to_pc_isPREFIX"
 let MAP_prog_to_section_FST =
   cake_theorem "MAP_prog_to_section_FST[local]"
   (fun () ->
-    `MAP (\s. match s with Section n v -> n) (MAP prog_to_section' prog)
+    `MAP (\s. match s with Section n v -> n) (MAP prog_to_section prog)
   =
      MAP FST prog`)
   CHEAT_TAC;;
@@ -217,7 +216,7 @@ let MAP_prog_to_section_FST =
 let MAP_prog_to_section_Section_num =
   cake_theorem "MAP_prog_to_section_Section_num"
   (fun () ->
-    `MAP Section_num' (MAP prog_to_section' prog) =
+    `MAP Section_num (MAP prog_to_section prog) =
      MAP FST prog`)
   CHEAT_TAC;;
 
@@ -236,7 +235,7 @@ let asm_fetch_aux_SOME_append2 =
 let loc_to_pc_append2 = cake_theorem "loc_to_pc_append2"
   (fun () ->
     `!k ll code code2 pc'.
-     ~MEM k (MAP Section_num code) /\
+     ~(MEM k (MAP Section_num code)) /\
      EVERY sec_labels_ok code /\
      loc_to_pc k ll code2 = SOME pc' ==>
      loc_to_pc k ll (code ++ code2) =
@@ -247,7 +246,7 @@ let loc_to_pc_append2 = cake_theorem "loc_to_pc_append2"
 let code_installed_append2 = cake_theorem "code_installed_append2"
   (fun () ->
     `!lines pc' c1 c2 k.
-     ~MEM k (MAP Section_num c1) /\
+     ~(MEM k (MAP Section_num c1)) /\
      EVERY sec_labels_ok c1 /\
      EVERY (sec_label_ok k) lines /\
      stack_to_labProof_code_installed pc' lines c2 ==>
@@ -263,7 +262,7 @@ let ALOOKUP_PARTITION = cake_theorem "ALOOKUP_PARTITION"
      ALOOKUP ls n = SOME v ==>
      (?ls1 ls2.
      ls = ls1 ++ [(n,v)] ++ ls2 /\
-     ~MEM n (MAP FST ls1))`)
+     ~(MEM n (MAP FST ls1)))`)
   CHEAT_TAC;;
 
 let code_installed'_def = cake_define_list
@@ -283,7 +282,8 @@ let code_installed'_cons_label =
   CHEAT_TAC;;
 
 (* HOL4 stack_to_labProofScript.sml:342-349: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   code_installed'_cons_non_label *)
 
 let code_installed'_simp = cake_theorem "code_installed'_simp"
   (fun () ->
@@ -293,8 +293,7 @@ let code_installed'_simp = cake_theorem "code_installed'_simp"
 
 let loc_to_pc_skip_section = cake_theorem "loc_to_pc_skip_section"
   (fun () ->
-    `!lines. ~(
-        n = p) ==>
+    `!lines. ~(n = p) ==>
         loc_to_pc n 0 (Section p lines :: xs) =
         (match loc_to_pc n 0 xs with NONE -> NONE | SOME k ->
           SOME (k + LENGTH (FILTER (\x. ~(is_Label x)) lines)))`)
@@ -303,7 +302,7 @@ let loc_to_pc_skip_section = cake_theorem "loc_to_pc_skip_section"
 let asm_fetch_aux_add = cake_theorem "asm_fetch_aux_add"
   (fun () ->
     `!ys pc' rest.
-        asm_fetch_aux (pc' + LENGTH (FILTER (\x. ~is_Label x)
+        asm_fetch_aux (pc' + LENGTH (FILTER (\x. ~(is_Label x))
           ys)) (Section pos ys :: rest) = asm_fetch_aux pc' rest`)
   CHEAT_TAC;;
 
@@ -328,7 +327,7 @@ let stack_to_labProof_code_installed_cons =
   (fun () ->
     `!xs ys pos pc'.
         code_installed' pc' xs rest ==>
-        code_installed' (pc' + LENGTH (FILTER (\x. ~is_Label x)
+        code_installed' (pc' + LENGTH (FILTER (\x. ~(is_Label x))
           ys)) xs
           (Section pos ys :: rest)`)
   CHEAT_TAC;;
@@ -429,7 +428,7 @@ let state_rel_def = cake_define
      domain (stackSem_state_code s) = set_of_list (MAP Section_num
        (labSem_state_code t)) /\
      EVERY sec_labels_ok (labSem_state_code t) /\
-     ~labSem_state_failed t /\ ~(labSem_state_link_reg
+     ~(labSem_state_failed t) /\ ~(labSem_state_link_reg
      t = labSem_state_len_reg t) /\ ~(labSem_state_link_reg t =
        labSem_state_ptr_reg t) /\ ~(labSem_state_link_reg
      t = labSem_state_len2_reg t) /\ ~(labSem_state_link_reg t =
@@ -457,9 +456,9 @@ let state_rel_def = cake_define
            (extract_labels p) /\
          ALL_DISTINCT (extract_labels p)) ps /\
          ALL_DISTINCT (MAP FST ps)) /\
-     ~stackSem_state_use_stack s /\
-     ~stackSem_state_use_store s /\
-     ~stackSem_state_use_alloc s /\
+     ~(stackSem_state_use_stack s) /\
+     ~(stackSem_state_use_store s) /\
+     ~(stackSem_state_use_alloc s) /\
      good_dimindex (:'a)`;;
 hol4_overload "state_rel" "stack_to_labProof_state_rel";;
 
@@ -551,7 +550,7 @@ let flatten_leq = cake_theorem "flatten_leq"
 let NOT_bad_fun_return_IMP_SOME =
   cake_theorem "NOT_bad_fun_return_IMP_SOME[local]"
   (fun () ->
-    `~bad_fun_return q ==> (?n. q = SOME n)`)
+    `~(bad_fun_return q) ==> (?n. q = SOME n)`)
   CHEAT_TAC;;
 
 let no_ret_correct = cake_theorem "no_ret_correct"
@@ -649,7 +648,7 @@ let stack_to_lab_lab_pres_T = cake_theorem "stack_to_lab_lab_pres_T"
 
 let flatten_T_F = cake_theorem "flatten_T_F"
   (fun () ->
-    `~is_Seq p_2 ==>
+    `~(is_Seq p_2) ==>
      stack_to_lab_flatten T p_2 p_1 m cs bs =
        stack_to_lab_flatten F p_2 p_1 m cs bs`)
   CHEAT_TAC;;
@@ -667,7 +666,7 @@ let prog_to_section_labels_ok = cake_theorem "prog_to_section_labels_ok"
 
 let NOT_MEM_find_lab_IMP = cake_theorem "NOT_MEM_find_lab_IMP"
   (fun () ->
-    `!bs n. ~MEM (find_lab n bs) bs ==> find_lab n bs = 0`)
+    `!bs n. ~(MEM (find_lab n bs) bs) ==> find_lab n bs = 0`)
   CHEAT_TAC;;
 
 let is_some_loc_to_pc_prefix = cake_theorem "is_some_loc_to_pc_prefix"
@@ -730,8 +729,8 @@ let flatten_call_correct = cake_theorem "flatten_call_correct"
   (fun () ->
     `evaluate (Call NONE (INL start) NONE,s1) = (res,s2) /\
      state_rel (s1:('a,'c,'ffi)stackSem_state) t1 /\
-     loc_to_pc start 0 (state_code t1) = SOME (pc t1) /\ ~(
-     res = SOME Error) /\
+     loc_to_pc start 0 (state_code t1) = SOME (pc t1) /\ ~(res =
+       SOME Error) /\
      (~(res = SOME TimeOut) ==>
        (?w. res = SOME (Halt (wordLang_Word w))) \/
        (?f. res = SOME (FinalFFI f)) \/
@@ -753,8 +752,8 @@ let flatten_call_correct = cake_theorem "flatten_call_correct"
           Error)) /\
        (!n. res = SOME (Result (wordLang_Loc n 0)) ==> r2 = Halt
          ffi_Success) /\ state_ffi
-       t2 = state_ffi s2 /\ ~(
-       r2 = Error) /\ (res = SOME TimeOut ==> r2 = TimeOut))`)
+       t2 = state_ffi s2 /\ ~(r2 = Error) /\ (res = SOME TimeOut
+         ==> r2 = TimeOut))`)
   CHEAT_TAC;;
 
 let halt_assum_def = cake_define
@@ -772,8 +771,8 @@ let flatten_semantics = cake_theorem "flatten_semantics"
     `halt_assum (:'ffi#'c) (state_code (s1:('a,'c,'ffi)stackSem_state))
   /\
      state_rel s1 (s2:('a,'c,'ffi)labSem_state) /\
-     loc_to_pc start 0 (state_code s2) = SOME (pc s2) /\ ~(
-     semantics start s1 = Fail) ==>
+     loc_to_pc start 0 (state_code s2) = SOME (pc s2) /\
+       ~(semantics start s1 = Fail) ==>
      semantics s2 = semantics start s1`)
   CHEAT_TAC;;
 
@@ -906,7 +905,7 @@ let FLOOKUP_regs = cake_theorem "FLOOKUP_regs[local]"
 
 let state_rel_make_init = cake_theorem "state_rel_make_init"
   (fun () ->
-    `state_rel (make_init code coracle regs' save_regs s)
+    `state_rel (make_init code coracle regs save_regs s)
   (s:('a,'c,'ffi)labSem_state) <=>
       (!n prog.
        lookup n code = SOME (prog) ==>
@@ -918,7 +917,7 @@ let state_rel_make_init = cake_theorem "state_rel_make_init"
            (stack_to_lab_flatten T prog n (next_lab prog 2) [] [])))
            (stackSem_state_code s) /\
          loc_to_pc n 0 (stackSem_state_code s) = SOME pc')) /\
-           ~stackSem_state_failed s /\ stackSem_state_compile_oracle
+           ~(stackSem_state_failed s) /\ stackSem_state_compile_oracle
       s = (\n. (\(c,p,_18). (c,MAP prog_to_section p)) (coracle n))
         /\
       (!k.
@@ -956,10 +955,10 @@ let state_rel_make_init = cake_theorem "state_rel_make_init"
 let MAP_FST_compile_compile =
   cake_theorem "MAP_FST_compile_compile[local]"
   (fun () ->
-    `MAP FST' (compile jump off gen max_heap k InitGlobals_location'
+    `MAP FST (compile jump off gen max_heap k InitGlobals_location
                  (stack_alloc_compile c
                     (stack_rawcall_compile code))) =
-       0 :: 1 :: 2 :: gc_stub_location :: MAP FST' code`)
+       0 :: 1 :: 2 :: gc_stub_location :: MAP FST code`)
   CHEAT_TAC;;
 
 (* HOL4 stack_to_labProofScript.sml:3209: ML code, not ported *)
@@ -977,7 +976,7 @@ let stack_to_labProof_next_lab_non_zero =
 let stack_to_labProof_MAP_prog_to_section_FST =
   cake_theorem "MAP_prog_to_section_FST[local]"
   (fun () ->
-    `MAP (\s. match s with Section n v -> n) (MAP prog_to_section' prog)
+    `MAP (\s. match s with Section n v -> n) (MAP prog_to_section prog)
   =
      MAP FST prog`)
   CHEAT_TAC;;
@@ -1032,7 +1031,7 @@ let full_make_init_semantics = cake_theorem "full_make_init_semantics"
          (c,compile_no_stubs (stack_to_lab_config_reg_names
            stack_conf) (stack_to_lab_config_jump stack_conf) offset sp
            p)) /\
-     ~labSem_state_failed t /\
+     ~(labSem_state_failed t) /\
      memory_assumption (stack_to_lab_config_reg_names stack_conf)
        bitmaps data_sp t /\
      max_stack_alloc <= max_heap /\ ~(labSem_state_link_reg
@@ -1068,7 +1067,7 @@ let full_make_init_semantics = cake_theorem "full_make_init_semantics"
   CHEAT_TAC;;
 
 (* HOL4 stack_to_labProofScript.sml:3617-3618: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: full_make_init_semantics *)
 
 let EVERY_sec_ends_with_label_MAP_prog_to_section =
   cake_theorem "EVERY_sec_ends_with_label_MAP_prog_to_section[simp]"
@@ -1897,3 +1896,5 @@ let stack_to_lab_compile_no_install =
        ==>
      labProps_no_install prog'`)
   CHEAT_TAC;;
+
+cake_hide [];;

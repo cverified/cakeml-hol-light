@@ -14,13 +14,15 @@ hol4_overload "++" "OPTION_CHOICE";;
 let simpleSexp_sexp_INDUCT,simpleSexp_sexp_RECURSION = define_datatype
   "simpleSexp_sexp = SX_CONS (simpleSexp_sexp) (simpleSexp_sexp) | \
    SX_SYM (string) | SX_NUM (num) | SX_STR (string)";;
+
+hol4_numeral_form "SX_NUM";;
 (* HOL4 simpleSexpScript.sml:23-34: the overload nil, which the port
    expands *)
 
 let valid_first_symchar_def = cake_define
   `valid_first_symchar c <=>
      isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR 41),(CHR 46),(CHR
-       34)}) /\ ~isDigit c`;;
+       34)}) /\ ~(isDigit c)`;;
 
 let valid_symchar_def = cake_define
   `valid_symchar c <=> isGraph c /\ ~(c IN {(CHR 39),(CHR 40),(CHR

@@ -18,8 +18,7 @@ needs "lib/ternaryComparisons.ml";;
 needs "lib/toto.ml";;
 needs "misc/misc.ml";;
 
-(* HOL4 mlstringScript.sml:13-14: the ML values that the definitions
-   below antiquote *)
+(* HOL4 mlstringScript.sml:13-14: ML code, not ported *)
 
 (* Defines strings as a separate type from char list. This theory should be
    moved into HOL, either as its own theory, or as an addendum to stringTheory *)
@@ -164,8 +163,7 @@ let strcat_thm = cake_theorem "strcat_thm"
 
 let strcat_assoc = cake_theorem "strcat_assoc[simp]"
   (fun () ->
-    `!s1 s2 s3. strcat
-      s1 (strcat s2 s3) = strcat (strcat s1 s2) s3`)
+    `!s1 s2 s3. strcat s1 (strcat s2 s3) = strcat (strcat s1 s2) s3`)
   CHEAT_TAC;;
 
 let strcat_o = cake_theorem "strcat_o"
@@ -331,14 +329,14 @@ let TOKENS_eq_tokens_aux = cake_theorem "TOKENS_eq_tokens_aux"
 
 let TOKENS_eq_tokens = cake_theorem "TOKENS_eq_tokens"
   (fun () ->
-    `!P ls. (MAP explode' (tokens P ls) = TOKENS P (explode' ls))`)
+    `!P ls. (MAP explode (tokens P ls) = TOKENS P (explode ls))`)
   CHEAT_TAC;;
 
 (* HOL4 mlstringScript.sml:479-485: code that the source has in a
    comment *)
 
 (* HOL4 mlstringScript.sml:487-491: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: TOKENS_eq_tokens_sym *)
 
 
 let tokens_append = cake_theorem "tokens_append"
@@ -376,8 +374,8 @@ let substring_0 = cake_theorem "substring_0[simp]"
 let substring_add = cake_theorem "substring_add"
   (fun () ->
     `i + x + y <= strlen s ==>
-     substring s i (x + y) = strcat
-     (substring s i x) (substring s (i + x) y)`)
+     substring s i (x + y) = strcat (substring s i x) (substring
+       s (i + x) y)`)
   CHEAT_TAC;;
 
 let tokens_alt_tokens_alt_aux = cake_theorem "tokens_alt_tokens_alt_aux"
@@ -567,8 +565,7 @@ let isSubstring_SEG = cake_theorem "isSubstring_SEG"
 
 let strlit_STRCAT = cake_theorem "strlit_STRCAT"
   (fun () ->
-    `strcat
-        (implode a) (implode b) = implode (a ++ b)`)
+    `strcat (implode a) (implode b) = implode (a ++ b)`)
   CHEAT_TAC;;
 
 let isSubString_spec = cake_theorem "isSubString_spec"
@@ -807,7 +804,7 @@ let StrongLinearOrder_mlstring_lt =
 
 let fast_lt_nonrefl = cake_theorem "fast_lt_nonrefl"
   (fun () ->
-    `!s. ~fast_lt s s`)
+    `!s. ~(fast_lt s s)`)
   CHEAT_TAC;;
 
 let fast_lt_trans = cake_theorem "fast_lt_trans"
@@ -943,7 +940,7 @@ let ALL_DISTINCT_MAP_implode =
 let ALL_DISTINCT_MAP_explode =
   cake_theorem "ALL_DISTINCT_MAP_explode[simp]"
   (fun () ->
-    `!ls. ALL_DISTINCT (MAP explode' ls) <=> ALL_DISTINCT ls`)
+    `!ls. ALL_DISTINCT (MAP explode ls) <=> ALL_DISTINCT ls`)
   CHEAT_TAC;;
 
 (* optimising mlstring app_list *)

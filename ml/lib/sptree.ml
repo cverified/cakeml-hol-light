@@ -340,3 +340,5 @@ let spts_to_alist_def = cake_define_wf
 
 let toSortedAList_def = cake_define
   `toSortedAList spt = spts_to_alist 0 [(1,spt)] []`;;
+
+cake_hide [];;

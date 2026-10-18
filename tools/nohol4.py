@@ -9,7 +9,9 @@ port's own prose about what HOL4 does, and the pointers.
 Two things are looked for:
 
   - a comment of ml/ whose body is HOL4 code (the same test that
-    tools/port.py uses on the comments of a source)
+    tools/port.py uses on the comments of a source: a comment that
+    holds a block of one is code, and one that sketches a line or
+    two of it in prose is a comment)
   - a line of ml/ outside a comment that starts with one of the
     keywords of a HOL4 script
 """
@@ -151,11 +153,17 @@ def main():
         # a pointer at the lines of a HOL4 source is what the port
         # puts where it cannot say what the source says
         if POINTER.match(body): continue
-        m = portmod.COMMENTED_CODE.search(portmod.uncomment(body))
-        if m:
+        # the same test that tools/port.py uses on a comment of a
+        # source: a comment with a block of one in it is code, and
+        # one that sketches a line or two of it in prose is a
+        # comment (the head comment of bvi_let documents the
+        # transformation and sketches a Let of BVI in the prose)
+        if portmod.commented_code(body):
           bad += 1
+          m = portmod.COMMENTED_CODE.search(portmod.uncomment(body))
           print('%s:%d: HOL4 code in a comment: %r'
-                % (rel, line, m.group(0).strip()[:40]))
+                % (rel, line, (m.group(0) if m else body)
+                   .strip()[:40]))
       for i, l in enumerate(code_free(text).split('\n')):
         m = HOL4_LINE.match(l)
         if m:

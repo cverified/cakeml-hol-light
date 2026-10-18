@@ -65,7 +65,7 @@ let ctMap_ok_def = cake_define
        tvs = [] /\ ti = Texn_num) /\
      (!cn x tvs ts ti. FLOOKUP ctMap (TypeStamp cn x) = SOME
        (tvs,ts,ti) ==>
-       ~MEM ti prim_type_nums) /\
+       ~(MEM ti prim_type_nums)) /\
      (!stamp1 tvs1 ts1 ti stamp2 tvs2 ts2.
        FLOOKUP ctMap stamp1 = SOME (tvs1,ts1,ti) /\
        FLOOKUP ctMap stamp2 = SOME (tvs2,ts2,ti) ==>

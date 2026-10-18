@@ -53,7 +53,7 @@ let float_is_nan_def = cake_define
 
 let float_is_signalling_def = cake_define
   `float_is_signalling (x:('t,'w)float) <=>
-      float_is_nan x /\ ~word_msb (float_Significand x)`;;
+      float_is_nan x /\ ~(word_msb (float_Significand x))`;;
 
 let float_is_infinite_def = cake_define
   `float_is_infinite (x:('t,'w)float) =
@@ -153,7 +153,7 @@ let round_def = cake_define
         (let t = threshold (:'t#'w) in
           if x <= --t then float_minus_infinity (:'t#'w) else if x >=
             t then float_plus_infinity (:'t#'w) else closest_such (\a.
-            ~word_lsb (float_Significand a)) float_is_finite x) |
+            ~(word_lsb (float_Significand a))) float_is_finite x) |
             roundTowardZero ->
         (let t = largest (:'t#'w) in
           if x < --t then float_bottom (:'t#'w) else if x > t then
@@ -190,7 +190,7 @@ hol4_overload "FP_MulSub" "binary_ieee_FP_MulSub";;
 let float_some_qnan_def = cake_define
   `float_some_qnan (fp_op:('t,'w)fp_op) =
    ((@f. let qnan = f fp_op in float_is_nan qnan /\
-     ~float_is_signalling qnan)
+     ~(float_is_signalling qnan))
      fp_op:('t,'w)float)`;;
 
 let float_round_def = cake_define

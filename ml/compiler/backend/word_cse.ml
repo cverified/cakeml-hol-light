@@ -109,8 +109,8 @@ let invalidate_regs_def = cake_define_list
   already tracked, and pre-allocated (EVEN) registers, are left alone. *)
 let register_read_def = cake_define
   `register_read data (r:num) =
-     (if ~EVEN r /\ keep_data (knowledge_to_canonical data) r then
-       knowledge_to_canonical_fupd (K (insert r r
+     (if ~(EVEN r) /\ keep_data (knowledge_to_canonical data) r
+       then knowledge_to_canonical_fupd (K (insert r r
        (knowledge_to_canonical data))) data else data)`;;
 
 let register_reads_def = cake_define_list
@@ -152,7 +152,7 @@ let canonicalMoveRegs_def = cake_define
    (let data = register_reads data (MAP SND moves) in
    if EVERY (keep_data (knowledge_to_canonical data)) (MAP FST moves)
      then
-     let xs = FILTER (\(a,b). ~EVEN a /\ ~EVEN b) moves in
+     let xs = FILTER (\(a,b). ~(EVEN a) /\ ~(EVEN b)) moves in
      let ys = MAP (\(a,b). (a,canonicalRegs data b)) xs in
      let to_c = map_insert ys (knowledge_to_canonical data) in
      let zs = MAP (\(a,b). (b,a)) ys in
@@ -466,7 +466,7 @@ let word_cseInst_def = cake_define
         let data = invalidate_regs data (arithWrites a) in
         let a' = canonicalArith data a in
         let rds = arithReads a' in
-          if can_mem_arith a' /\ ~MEM r rds then
+          if can_mem_arith a' /\ ~(MEM r rds) then
             add_to_data (register_reads data rds) r (Arith a') (Arith
               a) else
             (data,Inst (Arith a)))

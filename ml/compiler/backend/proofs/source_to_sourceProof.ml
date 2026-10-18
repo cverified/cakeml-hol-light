@@ -25,7 +25,7 @@ needs "semantics/semantics.ml";;
 let source_to_sourceProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
-    `~semantics_prog s env prog ffi_Fail /\
+    `~(semantics_prog s env prog ffi_Fail) /\
      semantics_prog s env prog outcome ==>
        semantics_prog s env (source_to_source_compile prog)
          outcome`)
@@ -37,7 +37,7 @@ let source_to_sourceProof_compile_semantics_oracle =
     `!f.
      is_insert_oracle ci f (semanticPrimitives_state_eval_state s)
        /\
-     ~semantics_prog s env prog ffi_Fail /\
+     ~(semantics_prog s env prog ffi_Fail) /\
      semantics_prog s env prog outcome ==>
      semantics_prog (semanticPrimitives_state_eval_state_fupd
                (adjust_oracle ci (source_to_source_compile o f)) s)

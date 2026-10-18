@@ -209,9 +209,9 @@ let check_res_size_of = cake_theorem "check_res_size_of[local]"
   CHEAT_TAC;;
 
 (* HOL4 dataSemScript.sml:159: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: size_of_def *)
 (* HOL4 dataSemScript.sml:160: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: size_of_ind *)
 
 let extract_stack_def = cake_define_list
   [`extract_stack (Env _22 env:dataSem_stack) = sptree_toList env`;
@@ -606,9 +606,9 @@ let do_install_def = cake_define
        (match vs with [v1; v2; vl1; vl2] ->
             (match (v_to_bytes v1,v_to_words v2) with (SOME
               bytes,SOME data) ->
-                (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(
-                   vl2 = Number (&(LENGTH data))) then Rerr (Rabort
-                     Rtype_error) else
+                (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(vl2 =
+                  Number (&(LENGTH data))) then Rerr (Rabort
+                  Rtype_error) else
                 let (cfg,progs) = compile_oracle s 0 in
                 let new_oracle = misc_shift_seq 1 (compile_oracle s)
                   in
@@ -1744,7 +1744,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                        (Rerr (Rabort Rtype_error)),s) | (SOME res,s) ->
                        (SOME res,s)) else (SOME (Rerr (Rabort
                        Rtype_error)),s)) | SOME (ns,names) ->
-                 (if ~ALL_DISTINCT ns then (SOME (Rerr (Rabort
+                 (if ~(ALL_DISTINCT ns) then (SOME (Rerr (Rabort
                    Rtype_error)),s) else
                  (match dataSem_cut_env names (dataSem_state_locals
                    s) with NONE -> (SOME (Rerr (Rabort Rtype_error)),s)
@@ -1787,7 +1787,7 @@ let evaluate_peak_def = cake_define
 (* We prove that the clock never increases. *)
 
 (* HOL4 dataSemScript.sml:1511-1517: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: case_eq_thms *)
 
 let do_stack_clock = cake_theorem "do_stack_clock"
   (fun () ->
@@ -1821,10 +1821,10 @@ let dataSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* HOL4 dataSemScript.sml:1583-1584: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_def *)
 
 (* HOL4 dataSemScript.sml:1586-1587: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_ind *)
 
 (* observational semantics *)
 

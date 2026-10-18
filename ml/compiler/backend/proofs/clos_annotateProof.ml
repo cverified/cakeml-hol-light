@@ -82,9 +82,9 @@ let alt_fv1_def = cake_define
   `alt_fv1 v e = alt_fv v [e]`;;
 
 (* HOL4 clos_annotateProofScript.sml:81-82: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: alt_fv1_intro *)
 (* HOL4 clos_annotateProofScript.sml:83-84: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: alt_fv1_thm *)
 
 let alt_fv_cons = cake_theorem "alt_fv_cons[simp]"
   (fun () ->
@@ -148,7 +148,7 @@ let v_rel = cake_inductive
 hol4_overload "v_rel" "clos_annotateProof_v_rel";;
 
 (* HOL4 clos_annotateProofScript.sml:148-164: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_simp *)
 
 let v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
   (fun () ->
@@ -158,8 +158,9 @@ let v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
 
 let v_rel_Unit = cake_theorem "v_rel_Unit[simp]"
   (fun () ->
-    `(clos_annotateProof_v_rel x Unit' <=> (x = Unit')) /\
-      (clos_annotateProof_v_rel Unit' x <=> (x = Unit'))`)
+    `(clos_annotateProof_v_rel x closSem_Unit <=> (x = closSem_Unit)) /\
+      (clos_annotateProof_v_rel closSem_Unit x <=> (x =
+        closSem_Unit))`)
   CHEAT_TAC;;
 
 (* HOL4 clos_annotateProofScript.sml:180: ML code, not ported *)
@@ -224,7 +225,7 @@ let state_rel_max_app = cake_theorem "state_rel_max_app"
 
 let MAP_FST_compile = cake_theorem "MAP_FST_compile[simp]"
   (fun () ->
-    `MAP FST' (clos_annotate_compile p) = MAP FST' p`)
+    `MAP FST (clos_annotate_compile p) = MAP FST p`)
   CHEAT_TAC;;
 
 let REVERSE_compile = cake_theorem "REVERSE_compile"
@@ -390,8 +391,7 @@ let no_overlap_has_var_IMP =
 let evaluate_pure_IMP = cake_theorem "evaluate_pure_IMP[local]"
   (fun () ->
     `closSem_evaluate (xs,env,(s:('c,'ffi)closSem_state)) = (q,r) /\
-  EVERY pure xs /\ ~(
-     q = Rerr (Rabort Rtype_error)) ==>
+  EVERY pure xs /\ ~(q = Rerr (Rabort Rtype_error)) ==>
      (?vs. q = Rval vs /\ r = s /\ LENGTH vs = LENGTH xs)`)
   CHEAT_TAC;;
 
@@ -478,7 +478,7 @@ let env_set_default = cake_theorem "env_set_default[local]"
   CHEAT_TAC;;
 
 (* HOL4 clos_annotateProofScript.sml:1306-1309: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: annotate_correct *)
 
 (* more correctness properties *)
 
@@ -622,9 +622,8 @@ let code_locs_annotate = cake_theorem "code_locs_annotate"
 
 let semantics_annotate = cake_theorem "semantics_annotate"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app
-          (alist_to_fmap prog) co
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app (alist_to_fmap
+  prog) co
           (pure_cc clos_annotate_compile_inc cc) xs = ffi_Fail) ==>
         every_Fn_vs_NONE xs /\
         every_Fn_vs_NONE (MAP (SND o SND) prog) /\

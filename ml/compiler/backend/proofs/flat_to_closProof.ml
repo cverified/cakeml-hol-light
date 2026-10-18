@@ -82,10 +82,10 @@ hol4_overload "env_rel" "flat_to_closProof_env_rel";;
 hol4_overload "v_rel" "flat_to_closProof_v_rel";;
 
 (* HOL4 flat_to_closProofScript.sml:55-68: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: v_rel_def *)
 
 (* HOL4 flat_to_closProofScript.sml:70: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: env_rel_def *)
 
 let store_rel_def = cake_define
   `store_rel refs t_refs =
@@ -118,8 +118,8 @@ let state_rel_def = cake_define
      1 <= closSem_state_max_app t /\ state_ffi
      s = state_ffi t /\ state_clock
      s = state_clock t /\
-     store_rel (state_refs s) (state_refs t) /\ ~(
-     LENGTH (state_globals t) = 0) /\
+     store_rel (state_refs s) (state_refs t) /\ ~(LENGTH
+       (state_globals t) = 0) /\
      LIST_REL (OPTREL flat_to_closProof_v_rel) (state_globals s) (TL
        (state_globals t)) /\
      install_config_rel' (flatSem_state_eval_config s)
@@ -211,7 +211,7 @@ let initial_state'_def = cake_define
 let initate_state'_clock =
   cake_theorem "initate_state'_clock[simp,local]"
   (fun () ->
-    `(state_clock_fupd (K k) (initial_state' b ffi max_app FEMPTY co cc
+    `(initial_state' b ffi max_app FEMPTY co cc (state_clock_fupd (K k)
   k')) =
      initial_state' b ffi max_app FEMPTY co cc k /\ state_clock
      (initial_state' b ffi max_app FEMPTY co cc k) = k`)
@@ -264,8 +264,7 @@ let flat_to_closProof_compile_correct = cake_theorem "compile_correct"
             /\
      (!(s:('c,'ffi)flatSem_state) ds res1 s1 t.
        evaluate_decs s ds = (s1,res1) /\ state_rel s t /\
-         no_Mat_decs ds /\ ~(
-       res1 = SOME (Rabort Rtype_error)) ==>
+         no_Mat_decs ds /\ ~(res1 = SOME (Rabort Rtype_error)) ==>
        (?res2 t1.
          evaluate (flat_to_clos_compile_decs ds,[],t) = (res2,t1)
            /\ state_rel s1 t1 /\
@@ -386,9 +385,9 @@ let evaluate_Op_error = cake_theorem "evaluate_Op_error"
 
 let compile_op_evaluates_args = cake_theorem "compile_op_evaluates_args"
   (fun () ->
-    `evaluate (xs,db,t) = (Rerr err,t1) /\ ~(
-     op = flatLang_Src ast_Opapp) /\ ~(op = flatLang_Src ast_Eval)
-       /\ ~(op = flatLang_Src (ast_ThunkOp ForceThunk)) ==>
+    `evaluate (xs,db,t) = (Rerr err,t1) /\ ~(op = flatLang_Src
+  ast_Opapp) /\ ~(op = flatLang_Src ast_Eval) /\ ~(op = flatLang_Src
+  (ast_ThunkOp ForceThunk)) ==>
      evaluate ([flat_to_clos_compile_op tra op xs],db,t) = (Rerr
        err,t1)`)
   CHEAT_TAC;;
@@ -400,7 +399,7 @@ let flat_to_closProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
 
 let v_rel_Unitv = cake_theorem "v_rel_Unitv[simp]"
   (fun () ->
-    `flat_to_closProof_v_rel Unitv' v = (v = closSem_Block 0 [])`)
+    `flat_to_closProof_v_rel Unitv v = (v = closSem_Block 0 [])`)
   CHEAT_TAC;;
 
 (* HOL4 flat_to_closProofScript.sml:634-643: the ML values that the
@@ -888,14 +887,14 @@ let flat_to_closProof_rel_update_thunk =
 (* HOL4 flat_to_closProofScript.sml:1995: a proof *)
 
 (* HOL4 flat_to_closProofScript.sml:1997: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: compile_decs_correct *)
 
 let compile_decs_correct2 = cake_theorem "compile_decs_correct2"
   (fun () ->
     `evaluate_decs s1 decs = res_tup /\
      evaluate (flat_to_clos_compile_decs decs,[],s2) = (res2,t2) /\
-     state_rel s1 s2 /\ no_Mat_decs decs /\ ~(
-     SND res_tup = SOME (Rabort Rtype_error)) ==>
+     state_rel s1 s2 /\ no_Mat_decs decs /\ ~(SND res_tup = SOME
+       (Rabort Rtype_error)) ==>
      state_rel (FST res_tup) t2 /\
      semanticPrimitivesProps_result_rel (\x y. T)
        flat_to_closProof_v_rel
@@ -936,8 +935,7 @@ let evaluate_compile_prog_initial_state_FST_Err =
 let compile_semantics' = cake_theorem "compile_semantics'"
   (fun () ->
     `0 < max_app /\ no_Mat_decs ds /\ install_config_rel' ec co cc ==>
-  ~(
-     flatSem_semantics ec (ffi:'ffi ffi_state) ds = ffi_Fail) ==>
+  ~(flatSem_semantics ec (ffi:'ffi ffi_state) ds = ffi_Fail) ==>
      closSem_semantics ffi max_app FEMPTY co cc
        (flat_to_clos_compile_prog ds) =
      flatSem_semantics ec ffi ds`)
@@ -946,10 +944,9 @@ let compile_semantics' = cake_theorem "compile_semantics'"
 let inc_compile_decs_intro =
   cake_theorem "inc_compile_decs_intro[local]"
   (fun () ->
-    `pure_co (insert_interp' ## I') o pure_co inc_compile_decs'' o f =
+    `pure_co (insert_interp ## I) o pure_co inc_compile_decs' o f =
      pure_co inc_compile_decs o f /\
-     pure_cc inc_compile_decs'' (pure_cc (insert_interp' ## I') cc)
-       =
+     pure_cc inc_compile_decs' (pure_cc (insert_interp ## I) cc) =
      pure_cc inc_compile_decs cc`)
   CHEAT_TAC;;
 
@@ -962,8 +959,8 @@ let install_config_rel_def = cake_define
 let flat_to_closProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
-    `0 < max_app /\ no_Mat_decs ds /\ install_config_rel ec co cc ==> ~(
-     semantics ec ffi ds = ffi_Fail) ==>
+    `0 < max_app /\ no_Mat_decs ds /\ install_config_rel ec co cc ==>
+  ~(semantics ec ffi ds = ffi_Fail) ==>
      semantics ffi max_app FEMPTY co cc (flat_to_clos_compile_prog
        ds) =
      semantics ec ffi ds`)
@@ -979,7 +976,7 @@ let contains_App_SOME_APPEND = cake_theorem "contains_App_SOME_APPEND"
 
 let EVERY_IMP_HD = cake_theorem "EVERY_IMP_HD"
   (fun () ->
-    `EVERY P xs /\ ~NULL xs ==> P (HD xs)`)
+    `EVERY P xs /\ ~(NULL xs) ==> P (HD xs)`)
   CHEAT_TAC;;
 
 let flat_to_closProof_elist_globals_empty =
@@ -1050,8 +1047,7 @@ let compile_prog_set_globals = cake_theorem "compile_prog_set_globals"
   (fun () ->
     `!decs. no_Mat_decs decs ==>
      closProps_elist_globals (flat_to_clos_compile_prog decs) =
-       (BAG_UNION)
-     (BAG_INSERT 0 (EMPTY_BAG)) (BAG_IMAGE SUC
+       (BAG_UNION) (BAG_INSERT 0 (EMPTY_BAG)) (BAG_IMAGE SUC
        (flatProps_elist_globals decs))`)
   CHEAT_TAC;;
 
@@ -1097,7 +1093,7 @@ let no_mti_SmartCons = cake_theorem "no_mti_SmartCons"
 let compile_syntactic_props = cake_theorem "compile_syntactic_props"
   (fun () ->
     `0 < max_app ==> (!m e.
-       ~contains_App_SOME max_app (flat_to_clos_compile m e) /\
+       ~(contains_App_SOME max_app (flat_to_clos_compile m e)) /\
        EVERY no_mti (flat_to_clos_compile m e) /\
        every_Fn_vs_NONE (flat_to_clos_compile m e))`)
   CHEAT_TAC;;
@@ -1107,14 +1103,14 @@ let compile_decs_syntactic_props =
   (fun () ->
     `!decs. EVERY no_mti (flat_to_clos_compile_decs decs) /\
        every_Fn_vs_NONE (flat_to_clos_compile_decs decs) /\
-       (0 < max_app ==> ~contains_App_SOME max_app
-         (flat_to_clos_compile_decs decs))`)
+       (0 < max_app ==> ~(contains_App_SOME max_app
+         (flat_to_clos_compile_decs decs)))`)
   CHEAT_TAC;;
 
 let contains_App_SOME_compile_init =
   cake_theorem "contains_App_SOME_compile_init[local]"
   (fun () ->
-    `0 < max_app ==> ~contains_App_SOME max_app [compile_init b]`)
+    `0 < max_app ==> ~(contains_App_SOME max_app [compile_init b])`)
   CHEAT_TAC;;
 
 let no_mti_compile_init = cake_theorem "no_mti_compile_init[local]"
@@ -1140,8 +1136,8 @@ let compile_prog_syntactic_props =
   (fun () ->
     `!decs. EVERY no_mti (flat_to_clos_compile_prog decs) /\
        every_Fn_vs_NONE (flat_to_clos_compile_prog decs) /\
-       (0 < max_app ==> ~contains_App_SOME max_app
-         (flat_to_clos_compile_prog decs))`)
+       (0 < max_app ==> ~(contains_App_SOME max_app
+         (flat_to_clos_compile_prog decs)))`)
   CHEAT_TAC;;
 
 let FST_inc_compile_syntactic_props =
@@ -1149,8 +1145,8 @@ let FST_inc_compile_syntactic_props =
   (fun () ->
     `EVERY no_mti (FST (inc_compile_decs decs)) /\
      every_Fn_vs_NONE (FST (inc_compile_decs decs)) /\
-     (0 < max_app ==> ~contains_App_SOME max_app (FST
-       (inc_compile_decs decs)))`)
+     (0 < max_app ==> ~(contains_App_SOME max_app (FST
+       (inc_compile_decs decs))))`)
   CHEAT_TAC;;
 
 let FST_inc_compile_set_globals =

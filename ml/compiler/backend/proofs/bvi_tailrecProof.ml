@@ -47,9 +47,8 @@ let get_bin_args_SOME = cake_theorem "get_bin_args_SOME[simp]"
 let opbinargs_SOME = cake_theorem "opbinargs_SOME[simp]"
   (fun () ->
     `!exp opr.
-     opbinargs opr exp = SOME q <=> ~(
-     opr = bvi_tailrec_Noop) /\ (?x y. q = (x,y) /\ exp = Op
-       (to_op opr) [x; y])`)
+     opbinargs opr exp = SOME q <=> ~(opr = bvi_tailrec_Noop) /\
+       (?x y. q = (x,y) /\ exp = Op (to_op opr) [x; y])`)
   CHEAT_TAC;;
 
 let decide_ty_simp1 = cake_theorem "decide_ty_simp1[simp]"
@@ -122,8 +121,7 @@ let ty_rel_def = cake_define
      (\v t. (t = Int ==> (?k. v = bvlSem_Number k)) /\
             (t = List ==> (?ys. bvlSem_v_to_list v = SOME ys)))`;;
 
-(* HOL4 bvi_tailrecProofScript.sml:120-122: the ML values that the
-   definitions below antiquote *)
+(* HOL4 bvi_tailrecProofScript.sml:120-122: ML code, not ported *)
 
 let list_to_v_imp = cake_theorem "list_to_v_imp"
   (fun () ->
@@ -181,8 +179,8 @@ let op_id_val_def = cake_define_list
 let scan_expr_not_Noop = cake_theorem "scan_expr_not_Noop"
   (fun () ->
     `!exp ts loc tt ty r ok op.
-       scan_expr ts loc [exp] = [(tt,ty,r,SOME op)] ==> ~(
-         op = bvi_tailrec_Noop)`)
+       scan_expr ts loc [exp] = [(tt,ty,r,SOME op)] ==> ~(op =
+         bvi_tailrec_Noop)`)
   CHEAT_TAC;;
 
 let env_rel_def = cake_define
@@ -219,8 +217,8 @@ let code_rel_find_code_SOME =
   (fun () ->
     `!c1 c2 (args:bvlSem_v list) a exp.
         bvi_tailrecProof_code_rel c1 c2 /\
-        find_code (SOME n) args c1 = SOME (a,exp) ==> ~(
-          find_code (SOME n) args c2 = NONE)`)
+        find_code (SOME n) args c1 = SOME (a,exp) ==> ~(find_code
+          (SOME n) args c2 = NONE)`)
   CHEAT_TAC;;
 
 let code_rel_find_code_NONE =
@@ -228,8 +226,8 @@ let code_rel_find_code_NONE =
   (fun () ->
     `!c1 c2 (args:bvlSem_v list) a exp.
         bvi_tailrecProof_code_rel c1 c2 /\
-        find_code NONE args c1 = SOME (a,exp) ==> ~(
-          find_code NONE args c2 = NONE)`)
+        find_code NONE args c1 = SOME (a,exp) ==> ~(find_code
+          NONE args c2 = NONE)`)
   CHEAT_TAC;;
 
 let code_rel_domain = cake_theorem "code_rel_domain"
@@ -241,8 +239,7 @@ let code_rel_domain = cake_theorem "code_rel_domain"
 
 let evaluate_let_wrap = cake_theorem "evaluate_let_wrap"
   (fun () ->
-    `!x op vs s1 r t. ~(
-       op = bvi_tailrec_Noop) ==>
+    `!x op vs s1 r t. ~(op = bvi_tailrec_Noop) ==>
        evaluate ([let_wrap (LENGTH vs) (id_from_op op) x],vs,s) =
        evaluate ([x],vs ++ [op_id_val op] ++ vs,s)`)
   CHEAT_TAC;;
@@ -349,8 +346,8 @@ let check_op_thm = cake_theorem "check_op_thm"
 let rewrite_scan_expr = cake_theorem "rewrite_scan_expr"
   (fun () ->
     `!loc next' op acc ts exp tt ty p exp2 r opr.
-     rewrite loc next' op acc ts exp = (p,exp2) /\ ~(
-     op = bvi_tailrec_Noop) /\
+     rewrite loc next' op acc ts exp = (p,exp2) /\ ~(op =
+       bvi_tailrec_Noop) /\
      scan_expr ts loc [exp] = [(tt,ty,r,opr)] ==>
        (match opr with
          SOME op1 -> op = op1 ==> p | NONE -> ~p)`)
@@ -506,10 +503,10 @@ let compile_prog_MEM = cake_theorem "compile_prog_MEM"
 let compile_each_intro = cake_theorem "compile_each_intro[local]"
   (fun () ->
     `!xs n ys n1 name.
-       ~MEM name (MAP FST xs) /\
+       ~(MEM name (MAP FST xs)) /\
        bvi_tailrecProof_free_names n name /\
        bvi_tailrec_compile_each n xs = (n1,ys) ==>
-         ~MEM name (MAP FST ys) /\
+         ~(MEM name (MAP FST ys)) /\
          bvi_tailrecProof_free_names n1 name`)
   CHEAT_TAC;;
 
@@ -617,8 +614,16 @@ let compile_each_namespace_rel =
        prog2)`)
   CHEAT_TAC;;
 
-(* HOL4 bvi_tailrecProofScript.sml:1110-1127: a theorem whose
-   statement the port cannot state yet *)
+let state_rel_do_app_aux = cake_theorem "state_rel_do_app_aux"
+  (fun () ->
+    `bviSem_do_app_aux op vs s = res /\
+     bvi_tailrecProof_state_rel s t /\ ~(op = closLang_Install) /\
+       (!n. ~(op = closLang_Label n)) ==>
+     (?res'.
+       bviSem_do_app_aux op vs t = res' /\
+       OPTREL (OPTREL (RPROD (=) bvi_tailrecProof_state_rel)) res
+         res')`)
+  CHEAT_TAC;;
 
 let state_rel_do_app = cake_theorem "state_rel_do_app"
   (fun () ->
@@ -682,9 +687,8 @@ let term_ok_extend = cake_theorem "term_ok_extend"
 
 let decide_ty_imp = cake_theorem "decide_ty_imp"
   (fun () ->
-    `~(
-        decide_ty ty1 ty2 = bvi_tailrec_Any) ==> ~(ty1 =
-          bvi_tailrec_Any) /\ ~(ty2 = bvi_tailrec_Any)`)
+    `~(decide_ty ty1 ty2 = bvi_tailrec_Any) ==> ~(ty1 =
+  bvi_tailrec_Any) /\ ~(ty2 = bvi_tailrec_Any)`)
   CHEAT_TAC;;
 
 let op_type_simp = cake_theorem "op_type_simp"
@@ -706,15 +710,13 @@ let scan_expr_Op = cake_theorem "scan_expr_Op"
 let is_rec_term_ok = cake_theorem "is_rec_term_ok"
   (fun () ->
     `!exp ts loc ty.
-       (bvi_tailrec_is_rec loc exp ==> ~term_ok ts ty exp) /\
-       (term_ok ts ty exp ==> ~bvi_tailrec_is_rec loc exp)`)
+       (bvi_tailrec_is_rec loc exp ==> ~(term_ok ts ty exp)) /\
+       (term_ok ts ty exp ==> ~(bvi_tailrec_is_rec loc exp))`)
   CHEAT_TAC;;
 
 let op_type_lem = cake_theorem "op_type_lem[simp]"
   (fun () ->
-    `~(
-        op = bvi_tailrec_Noop) <=> ~(op_type op =
-          bvi_tailrec_Any)`)
+    `~(op = bvi_tailrec_Noop) <=> ~(op_type op = bvi_tailrec_Any)`)
   CHEAT_TAC;;
 
 let evaluate_rewrite_tail = cake_theorem "evaluate_rewrite_tail"
@@ -724,8 +726,8 @@ let evaluate_rewrite_tail = cake_theorem "evaluate_rewrite_tail"
        bvi_tailrecProof_env_rel ty opt acc env1 env2 /\
        bvi_tailrecProof_state_rel s s' /\
        ty_rel env1 ts /\
-       (opt ==> LENGTH xs = 1) /\ ~(
-       r = Rerr (Rabort Rtype_error)) ==>
+       (opt ==> LENGTH xs = 1) /\ ~(r = Rerr (Rabort Rtype_error))
+         ==>
          (?t'.
          evaluate (xs,env2,s') = (r,t') /\
          bvi_tailrecProof_state_rel t t' /\
@@ -736,9 +738,8 @@ let evaluate_rewrite_tail = cake_theorem "evaluate_rewrite_tail"
              op_type op = ty /\
              (?op1 tt ty r.
                scan_expr ts loc [HD xs] = [(tt,ty,r,SOME op1)] /\
-                 ~(
-               ty = bvi_tailrec_Any) /\ ~(op1 = bvi_tailrec_Noop)
-                 /\ op_type op1 = op_type op) ==>
+                 ~(ty = bvi_tailrec_Any) /\ ~(op1 = bvi_tailrec_Noop) /\
+                 op_type op1 = op_type op) ==>
                  (let (lr,x) = rewrite loc n op acc ts (HD xs) in
                    ?rrr t1 t2.
                    evaluate ([x],env2,s') = (rrr,t1) /\
@@ -795,8 +796,7 @@ let evaluate_compile_each = cake_theorem "evaluate_compile_each"
      evaluate ([Call 0 (SOME start) [] NONE],[],
                initial_state ffi0 (fromAList prog) co
                    (state_cc bvi_tailrec_compile_each cc) k) =
-                     (r,s) /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+                     (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?s2.
        evaluate
         ([Call 0 (SOME start) [] NONE],[],
@@ -814,9 +814,9 @@ let compile_each_semantics = cake_theorem "compile_each_semantics"
        bvi_tailrecProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 2) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tailrec_compile_each n prog) = prog2 /\ ~(
-     semantics ffi (fromAList prog) co (state_cc
-       bvi_tailrec_compile_each cc) start =
+     SND (bvi_tailrec_compile_each n prog) = prog2 /\ ~(semantics
+       ffi (fromAList prog) co (state_cc bvi_tailrec_compile_each cc)
+       start =
         ffi_Fail) ==>
      semantics ffi (fromAList prog) co (state_cc
        bvi_tailrec_compile_each cc) start =
@@ -832,9 +832,8 @@ let bvi_tailrecProof_compile_prog_semantics =
        bvi_tailrecProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 2) k ==> k < FST (FST (co 0))) /\
-     SND (compile_prog b n prog) = prog2 /\ ~(
-     semantics ffi (fromAList prog) co (state_cc (compile_prog b)
-       cc) start =
+     SND (compile_prog b n prog) = prog2 /\ ~(semantics ffi
+       (fromAList prog) co (state_cc (compile_prog b) cc) start =
         ffi_Fail) ==>
      semantics ffi (fromAList prog) co (state_cc (compile_prog b)
        cc) start =
@@ -915,3 +914,5 @@ let bvi_tailrecProof_compile_prog_good_code_labels =
      BIGUNION (set_of_list (MAP (bviProps_get_code_labels o SND o
        SND) c2)) SUBSET all`)
   CHEAT_TAC;;
+
+cake_hide [];;

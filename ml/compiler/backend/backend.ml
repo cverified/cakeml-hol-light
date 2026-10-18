@@ -237,7 +237,7 @@ let prim_src_config_def = cake_define
        next') empty_config)))`;;
 
 (* HOL4 backendScript.sml:203: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: prim_src_config_eq *)
 
 let prim_config_def = cake_define
   `prim_config =
@@ -245,7 +245,7 @@ let prim_config_def = cake_define
        ARB ARB ARB ARB ARB ARB) (prim_types_program))`;;
 
 (* HOL4 backendScript.sml:210-211: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: prim_config_eq *)
 
 let from_lab_def = cake_define
   `from_lab asm_conf c names p bm =
@@ -668,3 +668,5 @@ let set_oracle_def = cake_define
   (word_to_word_config_col_oracle_fupd (K oracle')
   (backend_config_word_to_word_conf c)))
      c`;;
+
+cake_hide [];;

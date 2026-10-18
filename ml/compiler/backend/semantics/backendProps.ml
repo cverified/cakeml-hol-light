@@ -74,12 +74,12 @@ let pure_co_comb_pure_co = cake_theorem "pure_co_comb_pure_co"
 
 let pure_co_I = cake_theorem "pure_co_I"
   (fun () ->
-    `pure_co I' = I'`)
+    `pure_co I = I`)
   CHEAT_TAC;;
 
 let pure_cc_I = cake_theorem "pure_cc_I"
   (fun () ->
-    `pure_cc I' = I'`)
+    `pure_cc I = I`)
   CHEAT_TAC;;
 
 (* somewhat generic wrappers for defining standard properties about oracles *)
@@ -97,9 +97,9 @@ let oracle_monotonic_def = cake_define
 (* HOL4 backendPropsScript.sml:108-109: ML code, not ported *)
 
 (* HOL4 backendPropsScript.sml:111: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: oracle_monotonic_step *)
 (* HOL4 backendPropsScript.sml:112: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: oracle_monotonic_init *)
 
 let oracle_monotonic_step2 = cake_theorem "oracle_monotonic_step2"
   (fun () ->
@@ -218,8 +218,8 @@ let syntax_to_full_oracle_o_assoc =
 let oracle_monotonic_SND_syntax_to_full =
   cake_theorem "oracle_monotonic_SND_syntax_to_full"
   (fun () ->
-    `oracle_monotonic (f o SND') R St (syntax_to_full_oracle mk progs) =
-     oracle_monotonic (f o SND') R St (I syntax_to_full_oracle I
+    `oracle_monotonic (f o SND) R St (syntax_to_full_oracle mk progs) =
+     oracle_monotonic (f o SND) R St (I syntax_to_full_oracle I
        progs) /\
      oracle_monotonic (a o b o c) = oracle_monotonic ((a o b) o
        c)`)
@@ -233,7 +233,7 @@ let is_state_oracle_add_state_co =
   CHEAT_TAC;;
 
 (* HOL4 backendPropsScript.sml:283-287: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: syntax_oracle_unpack *)
 
 let FST_add_state_co_0 = cake_theorem "FST_add_state_co_0"
   (fun () ->
@@ -275,10 +275,10 @@ let oracle_monotonic_state_with_inv_init =
   CHEAT_TAC;;
 
 (* HOL4 backendPropsScript.sml:348-349: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: oracle_monotonic_state *)
 
 (* HOL4 backendPropsScript.sml:351-352: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: oracle_monotonic_state_init *)
 
 let restrict_zero_def = cake_define
   `restrict_zero (labels:num#num->bool) =
@@ -350,13 +350,13 @@ let option_le_trans = cake_theorem "option_le_trans"
 
 let option_le_max = cake_theorem "option_le_max"
   (fun () ->
-    `option_le (OPTION_MAP2 MAX' n m) x <=> option_le n x /\ option_le
+    `option_le (OPTION_MAP2 MAX n m) x <=> option_le n x /\ option_le
   m x`)
   CHEAT_TAC;;
 
 let option_le_max_right = cake_theorem "option_le_max_right"
   (fun () ->
-    `option_le x (OPTION_MAP2 MAX' n m) <=> option_le x n \/ option_le
+    `option_le x (OPTION_MAP2 MAX n m) <=> option_le x n \/ option_le
   x m`)
   CHEAT_TAC;;
 
@@ -389,11 +389,11 @@ let option_le_eq_eqns = cake_theorem "option_le_eq_eqns"
 
 let option_map2_max_add = cake_theorem "option_map2_max_add"
   (fun () ->
-    `(OPTION_MAP2 (+) n (OPTION_MAP2 MAX' m p) =
-      OPTION_MAP2 MAX' (OPTION_MAP2 (+) n m) (OPTION_MAP2 (+) n p))
+    `(OPTION_MAP2 (+) n (OPTION_MAP2 MAX m p) =
+      OPTION_MAP2 MAX (OPTION_MAP2 (+) n m) (OPTION_MAP2 (+) n p))
         /\
-     (OPTION_MAP2 (+) (OPTION_MAP2 MAX' m p) n =
-      OPTION_MAP2 MAX' (OPTION_MAP2 (+) m n) (OPTION_MAP2 (+) p
+     (OPTION_MAP2 (+) (OPTION_MAP2 MAX m p) n =
+      OPTION_MAP2 MAX (OPTION_MAP2 (+) m n) (OPTION_MAP2 (+) p
         n))`)
   CHEAT_TAC;;
 
@@ -404,11 +404,11 @@ let option_le_add = cake_theorem "option_le_add"
 
 let OPTION_MAP2_MAX_COMM = cake_theorem "OPTION_MAP2_MAX_COMM"
   (fun () ->
-    `OPTION_MAP2 MAX' x y = OPTION_MAP2 MAX' y x`)
+    `OPTION_MAP2 MAX x y = OPTION_MAP2 MAX y x`)
   CHEAT_TAC;;
 
 let OPTION_MAP2_MAX_ASSOC = cake_theorem "OPTION_MAP2_MAX_ASSOC"
   (fun () ->
-    `OPTION_MAP2 MAX' x (OPTION_MAP2 MAX' y z) =
-     OPTION_MAP2 MAX' (OPTION_MAP2 MAX' x y) z`)
+    `OPTION_MAP2 MAX x (OPTION_MAP2 MAX y z) =
+     OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) z`)
   CHEAT_TAC;;

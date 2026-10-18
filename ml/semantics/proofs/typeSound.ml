@@ -57,7 +57,7 @@ let EVERY_LIST_REL = cake_theorem "EVERY_LIST_REL[local]"
 
 let v_unchanged = cake_theorem "v_unchanged[simp]"
   (fun () ->
-    `!tenv x. sem_env_v_fupd (K (sem_env_v tenv = tenv)) tenv`)
+    `!tenv x. type_env_v_fupd (K (type_env_v tenv)) tenv = tenv`)
   CHEAT_TAC;;
 
 let check_dup_ctors_thm = cake_theorem "check_dup_ctors_thm"
@@ -155,13 +155,13 @@ let eq_same_type = cake_theorem "eq_same_type[local]"
     `(!v1 v2 tvs ctMap cns tenvS t.
         ctMap_ok ctMap /\
         type_v tvs ctMap tenvS v1 t /\
-        type_v tvs ctMap tenvS v2 t ==> ~(
-        semanticPrimitives_do_eq v1 v2 = Eq_type_error)) /\
+        type_v tvs ctMap tenvS v2 t ==> ~(semanticPrimitives_do_eq
+          v1 v2 = Eq_type_error)) /\
      (!vs1 vs2 tvs ctMap cns tenvS ts.
         ctMap_ok ctMap /\
         LIST_REL (type_v tvs ctMap tenvS) vs1 ts /\
-        LIST_REL (type_v tvs ctMap tenvS) vs2 ts ==> ~(
-        semanticPrimitives_do_eq_list vs1 vs2 = Eq_type_error))`)
+        LIST_REL (type_v tvs ctMap tenvS) vs2 ts ==>
+          ~(semanticPrimitives_do_eq_list vs1 vs2 = Eq_type_error))`)
   CHEAT_TAC;;
 
 let type_env_conv_thm = cake_theorem "type_env_conv_thm[local]"
@@ -188,8 +188,8 @@ let type_recfun_env_help = cake_theorem "type_recfun_env_help[local]"
     `!fn funs funs' ctMap tenv bindings tenvE env tenvS tvs bindings'.
        ALL_DISTINCT (MAP FST funs') /\
        tenv_ok tenv /\
-       type_all_env ctMap tenvS env (sem_env_v_fupd (K (add_tenvE
-         tenvE (sem_env_v tenv))) tenv) /\
+       type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE
+         tenvE (type_env_v tenv))) tenv) /\
        tenv_val_exp_ok tenvE /\
        num_tvs tenvE = 0 /\
        (!fn t. (ALOOKUP bindings fn = SOME t) ==> (ALOOKUP
@@ -209,8 +209,8 @@ let type_recfun_env = cake_theorem "type_recfun_env[local]"
   (fun () ->
     `!funs ctMap tenvS tvs tenv tenvE env bindings.
        tenv_ok tenv /\
-       type_all_env ctMap tenvS env (sem_env_v_fupd (K (add_tenvE
-         tenvE (sem_env_v tenv))) tenv) /\
+       type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE
+         tenvE (type_env_v tenv))) tenv) /\
        tenv_val_exp_ok tenvE /\
        num_tvs tenvE = 0 /\
        type_funs tenv (bind_var_list 0 bindings (bind_tvar tvs
@@ -247,8 +247,8 @@ let opapp_type_sound = cake_theorem "opapp_type_sound"
          tenv_ok tenv /\
          tenv_val_exp_ok tenvE /\
          num_tvs tenvE = 0 /\
-         type_all_env ctMap tenvS env (sem_env_v_fupd (K (add_tenvE
-           tenvE (sem_env_v tenv))) tenv) /\
+         type_all_env ctMap tenvS env (type_env_v_fupd (K
+           (add_tenvE tenvE (type_env_v tenv))) tenv) /\
          type_e tenv tenvE e t /\
          semanticPrimitives_do_opapp vs = SOME (env,e))`)
   CHEAT_TAC;;
@@ -352,8 +352,7 @@ let prim_canonical_Boolv_cases =
 let op_type_sound = cake_theorem "op_type_sound"
   (fun () ->
     `!ctMap tenvS vs op ts t store (ffi:'ffi ffi_state).
-       good_ctMap ctMap /\ ~(
-       op = ast_Opapp) /\
+       good_ctMap ctMap /\ ~(op = ast_Opapp) /\
        type_s ctMap store tenvS /\
        type_op op ts t /\
        check_freevars 0 [] t /\
@@ -401,7 +400,7 @@ let pat_type_sound = cake_theorem "pat_type_sound"
     `(!(cenv:(mlstring,mlstring,num#stamp)namespace) st p v bindings
   tenv ctMap tbindings t new_tbindings tenvS tvs.
       ctMap_ok ctMap /\
-      nsAll2 (type_ctor ctMap) cenv (sem_env_c tenv) /\
+      nsAll2 (type_ctor ctMap) cenv (type_env_c tenv) /\
       type_v tvs ctMap tenvS v t /\
       type_p tvs tenv p t new_tbindings /\
       type_s ctMap st tenvS /\
@@ -417,7 +416,7 @@ let pat_type_sound = cake_theorem "pat_type_sound"
      (!(cenv:(mlstring,mlstring,num#stamp)namespace) st ps vs
        bindings tenv ctMap tbindings new_tbindings ts tenvS tvs.
       ctMap_ok ctMap /\
-      nsAll2 (type_ctor ctMap) cenv (sem_env_c tenv) /\
+      nsAll2 (type_ctor ctMap) cenv (type_env_c tenv) /\
       LIST_REL (type_v tvs ctMap tenvS) vs ts /\
       type_ps tvs tenv ps ts new_tbindings /\
       type_s ctMap st tenvS /\
@@ -442,8 +441,8 @@ let lookup_var_sound = cake_theorem "lookup_var_sound"
       tenv_val_exp_ok tenvE /\
       num_tvs tenvE = 0 /\
       EVERY (check_freevars tvs []) targs /\
-      type_all_env ctMap tenvS env (sem_env_v_fupd (K (add_tenvE
-        tenvE (sem_env_v tenv))) tenv) ==>
+      type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE
+        tenvE (type_env_v tenv))) tenv) ==>
       (?v. nsLookup (sem_env_v env) n = SOME v /\ type_v tvs
         ctMap tenvS v (deBruijn_subst 0 targs t))`)
   CHEAT_TAC;;
@@ -471,8 +470,8 @@ let exp_type_sound = cake_theorem "exp_type_sound"
        tenv_val_exp_ok tenvE /\
        good_ctMap ctMap /\
        num_tvs tenvE = 0 /\
-       type_all_env ctMap tenvS env (sem_env_v_fupd (K (add_tenvE
-         tenvE (sem_env_v tenv))) tenv) /\
+       type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE
+         tenvE (type_env_v tenv))) tenv) /\
        type_s ctMap (semanticPrimitives_state_refs s) tenvS /\
        (~(tvs = 0) ==> EVERY is_value es) /\
        type_es tenv (bind_tvar tvs tenvE) es ts ==>
@@ -494,8 +493,8 @@ let exp_type_sound = cake_theorem "exp_type_sound"
        tenv_val_exp_ok tenvE /\
        good_ctMap ctMap /\
        num_tvs tenvE = 0 /\
-       type_all_env ctMap tenvS env (sem_env_v_fupd (K (add_tenvE
-         tenvE (sem_env_v tenv))) tenv) /\
+       type_all_env ctMap tenvS env (type_env_v_fupd (K (add_tenvE
+         tenvE (type_env_v tenv))) tenv) /\
        type_s ctMap (semanticPrimitives_state_refs s) tenvS /\
        type_v tvs ctMap tenvS v t1 /\
        type_v 0 ctMap tenvS err_v Texn /\
@@ -556,15 +555,15 @@ let type_e_con_check = cake_theorem "type_e_con_check"
   (fun () ->
     `(!tenv tenvE e t.
        type_e tenv tenvE e t ==>
-       nsAll2 (type_ctor ctMap) envc (sem_env_c tenv) ==>
+       nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
        every_exp (one_con_check envc) e) /\
      (!tenv tenvE es ts.
        type_es tenv tenvE es ts ==>
-       nsAll2 (type_ctor ctMap) envc (sem_env_c tenv) ==>
+       nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
        EVERY (every_exp (one_con_check envc)) es) /\
      (!tenv tenvE funs env.
        type_funs tenv tenvE funs env ==>
-       nsAll2 (type_ctor ctMap) envc (sem_env_c tenv) ==>
+       nsAll2 (type_ctor ctMap) envc (type_env_c tenv) ==>
        EVERY (\(f,n,e). every_exp (one_con_check envc) e) funs)`)
   CHEAT_TAC;;
 
@@ -621,6 +620,6 @@ let semantics_type_sound = cake_theorem "semantics_type_sound"
   tenv new_tenv tids.
       semantics_prog st env tops r /\
       type_ds checks tenv tops tids new_tenv /\
-      type_sound_invariant st env ctMap tenvS tids tenv ==> ~(
-      r = ffi_Fail)`)
+      type_sound_invariant st env ctMap tenvS tids tenv ==> ~(r =
+        ffi_Fail)`)
   CHEAT_TAC;;

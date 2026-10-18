@@ -9,6 +9,7 @@
   Properties about closLang and its semantics
 *)
 
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -21,8 +22,8 @@ needs "semantics/semanticPrimitives.ml";;
 
 let closProps_with_same_clock = cake_theorem "with_same_clock[simp]"
   (fun () ->
-    `state_clock_fupd (K (state_clock s = s))
-        (s:('c,'ffi)closSem_state)`)
+    `state_clock_fupd (K (state_clock s))
+        (s:('c,'ffi)closSem_state) = s`)
   CHEAT_TAC;;
 
 let closProps_dec_clock_code = cake_theorem "dec_clock_code"
@@ -178,9 +179,9 @@ let code_locs_map = cake_theorem "code_locs_map"
 let BIGUNION_MAP_code_locs_SND_SND =
   cake_theorem "BIGUNION_MAP_code_locs_SND_SND"
   (fun () ->
-    `BIGUNION (set_of_list (MAP (set_of_list o code_locs' o (\x. [SND
+    `BIGUNION (set_of_list (MAP (set_of_list o code_locs o (\x. [SND
   (SND x)])) xs)) =
-      set_of_list (code_locs' (MAP (SND o SND) xs))`)
+      set_of_list (code_locs (MAP (SND o SND) xs))`)
   CHEAT_TAC;;
 
 let _ = size_thms "closLang_exp";;
@@ -408,17 +409,11 @@ let every_Fn_vs_SOME_APPEND =
   every_Fn_vs_SOME l2`)
   CHEAT_TAC;;
 
-let closProps_exp3_size = cake_theorem "exp3_size"
-  (fun () ->
-    `exp3_size xs = LENGTH xs + SUM (MAP closLang_exp_size xs)`)
-  CHEAT_TAC;;
+(* HOL4 closPropsScript.sml:404-408: a theorem whose statement the
+   port cannot state yet: exp3_size *)
 
-let exp1_size_rw = cake_theorem "exp1_size_rw[simp]"
-  (fun () ->
-    `exp1_size fbinds =
-       exp3_size (MAP SND fbinds) + SUM (MAP FST fbinds) + LENGTH
-         fbinds`)
-  CHEAT_TAC;;
+(* HOL4 closPropsScript.sml:410-415: a theorem whose statement the
+   port cannot state yet: exp1_size_rw *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -503,9 +498,9 @@ let fv1_def = cake_define
   `fv1 v e = fv v [e]`;;
 
 (* HOL4 closPropsScript.sml:499-500: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: fv1_intro *)
 (* HOL4 closPropsScript.sml:501-502: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: fv1_thm *)
 
 let fv_cons = cake_theorem "fv_cons[simp]"
   (fun () ->
@@ -534,7 +529,7 @@ let fv_REPLICATE = cake_theorem "fv_REPLICATE[simp]"
   CHEAT_TAC;;
 
 (* HOL4 closPropsScript.sml:536-543: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: v_ind *)
 
 let closProps_do_app_err = cake_theorem "do_app_err"
   (fun () ->
@@ -569,7 +564,7 @@ let do_eq_list_rel = cake_theorem "do_eq_list_rel"
 (* HOL4 closPropsScript.sml:599-604: a proof *)
 
 (* HOL4 closPropsScript.sml:606-607: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_LENGTH *)
 
 let closProps_evaluate_IMP_LENGTH = cake_theorem "evaluate_IMP_LENGTH"
   (fun () ->
@@ -699,7 +694,7 @@ let lookup_vars_SOME = cake_theorem "lookup_vars_SOME"
   CHEAT_TAC;;
 
 (* HOL4 closPropsScript.sml:892-900: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: lookup_vars_MEM *)
 
 let closProps_clock_lemmas = cake_theorem "clock_lemmas"
   (fun () ->
@@ -708,8 +703,7 @@ let closProps_clock_lemmas = cake_theorem "clock_lemmas"
 
 let evaluate_app_rw = cake_theorem "evaluate_app_rw"
   (fun () ->
-    `(!args loc_opt f s. ~(
-      args = []) ==>
+    `(!args loc_opt f s. ~(args = []) ==>
       evaluate_app loc_opt f args s =
         (match dest_closure (closSem_state_max_app s) loc_opt f
           args with NONE -> (Rerr (Rabort Rtype_error),s) | SOME
@@ -732,10 +726,10 @@ let evaluate_app_rw = cake_theorem "evaluate_app_rw"
 (* HOL4 closPropsScript.sml:931-934: a proof *)
 
 (* HOL4 closPropsScript.sml:936-970: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: EVERY_pure_correct *)
 
 (* HOL4 closPropsScript.sml:972-974: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: pure_correct *)
 
 let evaluate_pure = cake_theorem "evaluate_pure"
   (fun () ->
@@ -820,8 +814,7 @@ let dest_closure_full_length = cake_theorem "dest_closure_full_length"
 let evaluate_app_clock_less = cake_theorem "evaluate_app_clock_less"
   (fun () ->
     `!loc_opt f args s1 vs s2.
-       ~(
-       args = []) /\
+       ~(args = []) /\
        evaluate_app loc_opt f args s1 = (Rval vs,s2) ==>
          state_clock
        s2 < state_clock s1`)
@@ -864,8 +857,8 @@ let is_closure_add_partial_args_nil =
 let evaluate_app_clock0 = cake_theorem "evaluate_app_clock0"
   (fun () ->
     `state_clock
-        s0 = 0 /\ ~(args = []) ==> ~(
-        evaluate_app lopt r args s0 = (Rval vs,s))`)
+        s0 = 0 /\ ~(args = []) ==> ~(evaluate_app lopt r args s0
+          = (Rval vs,s))`)
   CHEAT_TAC;;
 
 let evaluate_app_clock0_timeout =
@@ -873,8 +866,8 @@ let evaluate_app_clock0_timeout =
   (fun () ->
     `state_clock
         s0 = 0 /\ ~(args = []) /\
-        evaluate_app lopt r args s0 = (Rerr e,s) /\ ~(
-        e = Rabort Rtype_error) ==>
+        evaluate_app lopt r args s0 = (Rerr e,s) /\ ~(e = Rabort
+          Rtype_error) ==>
           e = Rabort Rtimeout_error`)
   CHEAT_TAC;;
 
@@ -1091,28 +1084,27 @@ let closProps_evaluate_add_to_clock =
   (fun () ->
     `(!p es env (s:('c,'ffi)closSem_state) r s'.
          p = (es,env,s) /\
-         closSem_evaluate (es,env,s) = (r,s') /\ ~(
-         r = Rerr (Rabort Rtimeout_error)) ==>
+         closSem_evaluate (es,env,s) = (r,s') /\ ~(r = Rerr (Rabort
+           Rtimeout_error)) ==>
          closSem_evaluate (es,env,state_clock_fupd (K (state_clock
            s + extra)) s) =
            (r,state_clock_fupd (K (state_clock s' + extra)) s')) /\
      (!loc_opt v rest_args (s:('c,'ffi)closSem_state) r s'.
-         evaluate_app loc_opt v rest_args s = (r,s') /\ ~(
-         r = Rerr (Rabort Rtimeout_error)) ==>
+         evaluate_app loc_opt v rest_args s = (r,s') /\ ~(r = Rerr
+           (Rabort Rtimeout_error)) ==>
          evaluate_app loc_opt v rest_args (state_clock_fupd (K
            (state_clock s + extra)) s) =
            (r,state_clock_fupd (K (state_clock s' + extra)) s'))`)
   CHEAT_TAC;;
 
 (* HOL4 closPropsScript.sml:1622-1626: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_add_clock *)
 
 let closProps_evaluate_add_clock_initial_state =
   cake_theorem "evaluate_add_clock_initial_state"
   (fun () ->
     `closSem_evaluate (es,env,closSem_initial_state ffi ma code co cc k)
-  = (r,s') /\ ~(
-     r = Rerr (Rabort Rtimeout_error)) ==>
+  = (r,s') /\ ~(r = Rerr (Rabort Rtimeout_error)) ==>
      (!extra.
        closSem_evaluate (es,env,closSem_initial_state ffi ma code
          co cc (k + extra)) =
@@ -1175,8 +1167,7 @@ let closProps_evaluate_add_to_clock_io_events_mono =
 
 let do_app_never_timesout = cake_theorem "do_app_never_timesout[simp]"
   (fun () ->
-    `~(
-        do_app op args s = Rerr (Rabort Rtimeout_error))`)
+    `~(do_app op args s = Rerr (Rabort Rtimeout_error))`)
   CHEAT_TAC;;
 
 let evaluate_timeout_clocks0 = cake_theorem "evaluate_timeout_clocks0"
@@ -1192,13 +1183,8 @@ let evaluate_timeout_clocks0 = cake_theorem "evaluate_timeout_clocks0"
 
 (* HOL4 closPropsScript.sml:1737: ML code, not ported *)
 
-let closProps_exp_size_MEM = cake_theorem "exp_size_MEM"
-  (fun () ->
-    `(!e elist. MEM e elist ==> closLang_exp_size e < exp3_size elist)
-  /\
-     (!x e ealist. MEM (x,e) ealist ==> closLang_exp_size e <
-       exp1_size ealist)`)
-  CHEAT_TAC;;
+(* HOL4 closPropsScript.sml:1739-1744: a theorem whose statement the
+   port cannot state yet: exp_size_MEM *)
 
 let evaluate_eq_nil = cake_theorem "evaluate_eq_nil[simp]"
   (fun () ->
@@ -1214,26 +1200,20 @@ let op_gbag_def = cake_define
       | _209 -> EMPTY_BAG`;;
 hol4_overload "op_gbag" "closProps_op_gbag";;
 
-let exp2_size_rw = cake_theorem "exp2_size_rw[simp]"
-  (fun () ->
-    `exp2_size h = 1 + FST h + closLang_exp_size (SND h)`)
-  CHEAT_TAC;;
+(* HOL4 closPropsScript.sml:1761-1765: a theorem whose statement the
+   port cannot state yet: exp2_size_rw *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:1783-1786: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let set_globals_def = cake_define_list_try_tac (fun () ->
+let set_globals_def = cake_define_list_try (fun () ->
   `MEASURE (sum_size closLang_exp_size (list_size closLang_exp_size))`)
-  CHEAT_TAC
   [`closProps_set_globals (Var _212 _213:closLang_exp) = EMPTY_BAG`;
-   `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) = (BAG_UNION)
-  ((BAG_UNION)
-        (closProps_set_globals e1) (closProps_set_globals e2))
-          (closProps_set_globals e3)`;
+   `closProps_set_globals (If _215 e1 e2 e3:closLang_exp) =
+  (BAG_UNION) ((BAG_UNION) (closProps_set_globals e1)
+  (closProps_set_globals e2)) (closProps_set_globals e3)`;
    `closProps_set_globals (Let _217 binds e:closLang_exp) =
   (BAG_UNION) (closProps_set_globals e) (closProps_elist_globals
   binds)`;
@@ -1251,9 +1231,8 @@ let set_globals_def = cake_define_list_try_tac (fun () ->
    `closProps_set_globals (closLang_Fn _234 _235 _236 _237 bod) =
   closProps_set_globals bod`;
    `closProps_set_globals (Letrec _241 _242 _243 fbinds
-  bod:closLang_exp) = (BAG_UNION)
-        (closProps_set_globals bod) (closProps_elist_globals (MAP
-          SND fbinds))`;
+  bod:closLang_exp) = (BAG_UNION) (closProps_set_globals bod)
+  (closProps_elist_globals (MAP SND fbinds))`;
    `closProps_set_globals (closLang_Op _245 opn args:closLang_exp) =
   (BAG_UNION) (closProps_op_gbag opn) (closProps_elist_globals args)`;
    `closProps_elist_globals [] = EMPTY_BAG`;
@@ -1266,10 +1245,8 @@ hol4_overload "set_globals" "closProps_set_globals";;
    include calls to SetGlobal, for
      foo = {(e)xpr, (v)alue, (r)esult, and (s)tate}
 *)
-let v_size_lemma = cake_theorem "v_size_lemma"
-  (fun () ->
-    `MEM (v:closSem_v) vl ==> closSem_v_size v < v1_size vl`)
-  CHEAT_TAC;;
+(* HOL4 closPropsScript.sml:1792-1797: a theorem whose statement the
+   port cannot state yet: v_size_lemma *)
 
 (* value is setglobal-closure free *)
 let _ = size_thms "closSem_v";;
@@ -1289,7 +1266,7 @@ let vsgc_free_def = cake_define_wf
         | _253 -> T`;;
 
 (* HOL4 closPropsScript.sml:1814-1815: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: vsgc_free_def *)
 
 let vsgc_free_Unit = cake_theorem "vsgc_free_Unit[simp]"
   (fun () ->
@@ -1343,7 +1320,7 @@ let esgc_free_def = cake_define_list_try (fun () ->
 hol4_overload "esgc_free" "closProps_esgc_free";;
 
 (* HOL4 closPropsScript.sml:1854-1855: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: esgc_free_def *)
 
 (* state is setglobal-closure free *)
 let ssgc_free_def = cake_define
@@ -1385,7 +1362,7 @@ let set_globals_empty_esgc_free =
 let elist_globals_append = cake_theorem "elist_globals_append"
   (fun () ->
     `!a b. closProps_elist_globals (a ++ b) = (BAG_UNION)
-     (closProps_elist_globals a) (closProps_elist_globals b)`)
+  (closProps_elist_globals a) (closProps_elist_globals b)`)
   CHEAT_TAC;;
 let elist_globals_FOLDR = cake_theorem "elist_globals_FOLDR"
   (fun () ->
@@ -1704,18 +1681,23 @@ let result_rel_Rval2 = cake_theorem "result_rel_Rval2[local,simp]"
   CHEAT_TAC;;
 
 (*TODO upstream to HOL*)
-(* HOL4 closPropsScript.sml:2284-2290: a theorem whose statement the
-   port cannot state yet *)
+let PAIR_REL_SIMP = cake_theorem "PAIR_REL_SIMP[local,simp]"
+  (fun () ->
+    `(((RPROD R1 R2) n (c,d)) <=> (?x y. n = (x,y) /\ R1 x c /\ R2 y d))
+  /\
+     (((RPROD R1 R2) (a,b) m) <=> (?x y. m = (x,y) /\ R1 a x /\
+       R2 b y))`)
+  CHEAT_TAC;;
 
 (*TODO remove once its in Typebase and automatically
  simp*)
 (* HOL4 closPropsScript.sml:2294-2296: ML code, not ported *)
 (* HOL4 closPropsScript.sml:2297: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: v_case_const *)
 (* HOL4 closPropsScript.sml:2298: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: option_case_const *)
 (* HOL4 closPropsScript.sml:2299: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: list_case_const *)
 
 let LIST_REL_REFL_EVERY = cake_theorem "LIST_REL_REFL_EVERY"
   (fun () ->
@@ -1839,7 +1821,7 @@ let LIST_REL_LAST = cake_theorem "LIST_REL_LAST"
 
 (* a generic semantics preservation lemma *)
 
-let FST_EQ_LEMMA = cake_theorem "FST_EQ_LEMMA[local]"
+let closProps_FST_EQ_LEMMA = cake_theorem "FST_EQ_LEMMA[local]"
   (fun () ->
     `FST x = y <=> (?y1. x = (y,y1))`)
   CHEAT_TAC;;
@@ -1872,18 +1854,17 @@ hol4_overload "eval_sim" "closProps_eval_sim";;
 let initial_state_with_clock =
   cake_theorem "initial_state_with_clock[local]"
   (fun () ->
-    `(state_clock_fupd (K (state_clock
-       (closSem_initial_state ffi ma code co cc k) + ck))
-         (closSem_initial_state ffi ma code co cc k)) =
+    `(closSem_initial_state ffi ma code co cc (state_clock_fupd (K
+  (state_clock
+       (closSem_initial_state ffi ma code co cc k) + ck)) k)) =
      closSem_initial_state ffi ma code co cc (k + ck)`)
   CHEAT_TAC;;
 
 let IMP_semantics_eq = cake_theorem "IMP_semantics_eq"
   (fun () ->
     `closProps_eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 es2
-  rel F /\ ~(
-     closSem_semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1
-       es1 = ffi_Fail) ==>
+  rel F /\ ~(closSem_semantics (ffi:'ffi ffi_state) max_app code1 co1
+  cc1 es1 = ffi_Fail) ==>
      rel code1 co1 cc1 es1 code2 co2 cc2 es2 ==>
      closSem_semantics ffi max_app code2 co2 cc2 es2 =
      closSem_semantics ffi max_app code1 co1 cc1 es1`)
@@ -1912,8 +1893,8 @@ hol4_overload "adj_orac_rel" "closProps_adj_orac_rel";;
 let closProps_do_install_adj_orac = cake_theorem "do_install_adj_orac"
   (fun () ->
     `closSem_do_install xs z1 = (r,s1) /\
-     closProps_adj_orac_rel cc f z1 z2 /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+     closProps_adj_orac_rel cc f z1 z2 /\ ~(r = Rerr (Rabort
+       Rtype_error)) ==>
      (?s2.
        closSem_do_install xs z2 = (r,s2) /\
        closProps_adj_orac_rel cc f s1 s2)`)
@@ -1953,16 +1934,15 @@ let closProps_evaluate_adj_orac = cake_theorem "evaluate_adj_orac"
     `(!p (z1:('a,'ffi)closSem_state) r s1 s2
   (z2:('b,'ffi)closSem_state).
       closSem_evaluate p = (r,s1) /\
-      SND (SND p) = z1 /\ ~(
-      r = Rerr (Rabort Rtype_error)) /\
+      SND (SND p) = z1 /\ ~(r = Rerr (Rabort Rtype_error)) /\
       closProps_adj_orac_rel cc f z1 z2 ==>
       (?s2.
       closSem_evaluate (FST p,FST (SND p),z2) = (r,s2) /\
       closProps_adj_orac_rel cc f s1 s2)) /\
      (!w x y (z1:('a,'ffi)closSem_state) r s1 s2
        (z2:('b,'ffi)closSem_state).
-      evaluate_app w x y z1 = (r,s1) /\ ~(
-      r = Rerr (Rabort Rtype_error)) /\
+      evaluate_app w x y z1 = (r,s1) /\ ~(r = Rerr (Rabort
+        Rtype_error)) /\
       closProps_adj_orac_rel cc f z1 z2 ==>
       (?s2.
       evaluate_app w x y z2 = (r,s2) /\
@@ -1971,9 +1951,7 @@ let closProps_evaluate_adj_orac = cake_theorem "evaluate_adj_orac"
 
 let semantics_adj_orac = cake_theorem "semantics_adj_orac"
   (fun () ->
-    `~(
-        closSem_semantics ffi max_app code co cc_x es = ffi_Fail)
-          /\
+    `~(closSem_semantics ffi max_app code co cc_x es = ffi_Fail) /\
         (co_x = (f ## I) o co) /\
         (!n x y. co n = (x,y) ==> cc (f x) y = OPTION_MAP (I ## (I
           ## f)) (cc_x x y)) ==>
@@ -1984,8 +1962,7 @@ let semantics_adj_orac = cake_theorem "semantics_adj_orac"
 let semantics_CURRY_I_gen = cake_theorem "semantics_CURRY_I_gen"
   (fun () ->
     `(!n x y. co n = (x,y) ==> cc_x x y = state_cc (CURRY I) cc x y) ==>
-  ~(
-     closSem_semantics ffi max_app code co cc_x es = ffi_Fail) ==>
+  ~(closSem_semantics ffi max_app code co cc_x es = ffi_Fail) ==>
      closSem_semantics ffi max_app code (state_co (CURRY I) co) cc
        es =
      closSem_semantics ffi max_app code co cc_x es`)
@@ -1993,9 +1970,8 @@ let semantics_CURRY_I_gen = cake_theorem "semantics_CURRY_I_gen"
 
 let closProps_semantics_CURRY_I = cake_theorem "semantics_CURRY_I"
   (fun () ->
-    `~(
-        closSem_semantics ffi max_app code co (state_cc (CURRY I)
-          cc) es = ffi_Fail) ==>
+    `~(closSem_semantics ffi max_app code co (state_cc (CURRY I) cc) es
+  = ffi_Fail) ==>
         closSem_semantics ffi max_app code (state_co (CURRY I) co)
           cc es =
         closSem_semantics ffi max_app code co (state_cc (CURRY I)
@@ -2090,16 +2066,16 @@ let evaluate_code_SUBMAP = cake_theorem "evaluate_code_SUBMAP"
     `(!p x y (z1:('c,'ffi)closSem_state) r s1 s2
   (z2:('c,'ffi)closSem_state).
       p = (x,y,z1) /\
-      closSem_evaluate (x,y,z1) = (r,s1) /\ ~(
-      r = Rerr (Rabort Rtype_error)) /\
+      closSem_evaluate (x,y,z1) = (r,s1) /\ ~(r = Rerr (Rabort
+        Rtype_error)) /\
       SUBMAP_rel z1 z2 ==>
       (?s2.
       closSem_evaluate (x,y,z2) = (r,s2) /\
       SUBMAP_rel s1 s2)) /\
      (!w x y (z1:('c,'ffi)closSem_state) r s1 s2
        (z2:('c,'ffi)closSem_state).
-      evaluate_app w x y z1 = (r,s1) /\ ~(
-      r = Rerr (Rabort Rtype_error)) /\
+      evaluate_app w x y z1 = (r,s1) /\ ~(r = Rerr (Rabort
+        Rtype_error)) /\
       SUBMAP_rel z1 z2 ==>
       (?s2.
       evaluate_app w x y z2 = (r,s2) /\
@@ -2111,11 +2087,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3554-3560: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let obeys_max_app_def = cake_define_list_try_tac (fun () ->
+let obeys_max_app_def = cake_define_list_try (fun () ->
   `MEASURE (closLang_exp_size o SND)`)
-  CHEAT_TAC
   [`obeys_max_app m (Var _296 _297:closLang_exp) <=> T`;
    `obeys_max_app m (If _299 e1 e2 e3:closLang_exp) <=> obeys_max_app
   m e1 /\ obeys_max_app m e2 /\ obeys_max_app m e3`;
@@ -2138,18 +2111,15 @@ let obeys_max_app_def = cake_define_list_try_tac (fun () ->
   EVERY (obeys_max_app m) es`];;
 
 (* HOL4 closPropsScript.sml:3562-3564: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: obeys_max_app_def *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3578-3584: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let no_Labels_def = cake_define_list_try_tac (fun () ->
+let no_Labels_def = cake_define_list_try (fun () ->
   `MEASURE closLang_exp_size`)
-  CHEAT_TAC
   [`no_Labels (Var _334 _335:closLang_exp) <=> T`;
    `no_Labels (If _337 e1 e2 e3:closLang_exp) <=> no_Labels e1 /\
   no_Labels e2 /\ no_Labels e3`;
@@ -2170,18 +2140,15 @@ let no_Labels_def = cake_define_list_try_tac (fun () ->
   closLang_Label n)) /\ EVERY no_Labels es`];;
 
 (* HOL4 closPropsScript.sml:3586-3588: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: no_Labels_def *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3631-3634: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let app_call_dests_def = cake_define_list_try_tac (fun () ->
+let app_call_dests_def = cake_define_list_try (fun () ->
   `MEASURE (list_size closLang_exp_size o SND)`)
-  CHEAT_TAC
   [`app_call_dests opt [] = {}`;
    `app_call_dests opt (x :: y :: xs) =
          (let c1 = app_call_dests opt [x] in
@@ -2226,7 +2193,7 @@ let app_call_dests_def = cake_define_list_try_tac (fun () ->
            dest INSERT app_call_dests opt xs)`];;
 
 (* HOL4 closPropsScript.sml:3636-3637: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: app_call_dests_def *)
 
 (* HOL4 closPropsScript.sml:3639: the overload call_dests, which the
    port expands *)
@@ -2244,11 +2211,11 @@ let app_call_dests_cons = cake_theorem "app_call_dests_cons"
   CHEAT_TAC;;
 
 (* HOL4 closPropsScript.sml:3652-3653: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: any_dest_cons *)
 (* HOL4 closPropsScript.sml:3654-3655: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: call_dest_cons *)
 (* HOL4 closPropsScript.sml:3656-3657: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: app_dest_cons *)
 
 let app_call_dests_append = cake_theorem "app_call_dests_append"
   (fun () ->
@@ -2257,11 +2224,11 @@ let app_call_dests_append = cake_theorem "app_call_dests_append"
   CHEAT_TAC;;
 
 (* HOL4 closPropsScript.sml:3668-3669: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: any_dest_append *)
 (* HOL4 closPropsScript.sml:3670-3671: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: call_dest_append *)
 (* HOL4 closPropsScript.sml:3672-3673: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: app_dest_append *)
 
 let app_call_dests_map = cake_theorem "app_call_dests_map"
   (fun () ->
@@ -2282,11 +2249,8 @@ let _ = size_thms "closLang_exp";;
    the names that the port gives the constants *)
 (* HOL4 closPropsScript.sml:3725-3731: the tactic that proves the
    termination *)
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let get_code_labels_def = cake_define_list_try_tac (fun () ->
+let get_code_labels_def = cake_define_list_try (fun () ->
   `MEASURE closLang_exp_size`)
-  CHEAT_TAC
   [`closProps_get_code_labels (Var _394 _395:closLang_exp) = {}`;
    `closProps_get_code_labels (If _397 e1 e2 e3:closLang_exp) =
         closProps_get_code_labels e1 UNION
@@ -2327,7 +2291,7 @@ let get_code_labels_def = cake_define_list_try_tac (fun () ->
 hol4_overload "get_code_labels" "closProps_get_code_labels";;
 
 (* HOL4 closPropsScript.sml:3733-3735: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: get_code_labels_def *)
 
 (* HOL4 closPropsScript.sml:3737: ML code, not ported *)
 
@@ -2344,7 +2308,7 @@ let initial_state_clock = cake_theorem "initial_state_clock"
   (fun () ->
     `state_clock
        (closSem_initial_state ffi max_app f co cc k) = k /\
-       ((state_clock_fupd (K k) (closSem_initial_state ffi max_app
-         f co cc k')) =
+       ((closSem_initial_state ffi max_app f co cc
+         (state_clock_fupd (K k) k')) =
         closSem_initial_state ffi max_app f co cc k)`)
   CHEAT_TAC;;

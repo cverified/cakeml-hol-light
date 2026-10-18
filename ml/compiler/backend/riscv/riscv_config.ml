@@ -32,7 +32,7 @@ let riscv_names_def = cake_define
     insert 30 4) LN:num spt)`;;
 
 (* HOL4 riscv_configScript.sml:45-46: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: riscv_names_def *)
 
 (* HOL4 riscv_configScript.sml:48-54: the ML values that the
    definitions below antiquote *)

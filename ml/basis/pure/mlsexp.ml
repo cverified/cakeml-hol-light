@@ -347,7 +347,7 @@ let test2_str_tree_to_strs =
  *--------------------------------------------------------------*)
 
 let is_safe_char_def = cake_define
-  `is_safe_char c <=> ~MEM c "()\"\000" /\ ~isSpace c`;;
+  `is_safe_char c <=> ~(MEM c "()\"\000") /\ ~(isSpace c)`;;
 
 let str_every_def = cake_define
   `str_every p n s =
@@ -425,7 +425,7 @@ let read_symbol_thm = cake_theorem "read_symbol_thm"
 let read_string_aux_thm = cake_theorem "read_string_aux_thm"
   (fun () ->
     `!xs s acc.
-       read_string_aux (STRCAT (STRCAT (CONCAT (MAP char_escaped'
+       read_string_aux (STRCAT (STRCAT (CONCAT (MAP char_escaped
          xs)) "\"") s) acc =
        INR (implode (REVERSE acc ++ xs),s)`)
   CHEAT_TAC;;
@@ -459,9 +459,8 @@ let lex_aux_sexp2tree = cake_theorem "lex_aux_sexp2tree"
   (fun () ->
     `(!x s ts depth m n indent.
         (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-        (depth = 0 ==> ts = []) /\ ~(
-        indent = (implode "")) /\ EVERY isSpace (explode indent)
-          ==>
+        (depth = 0 ==> ts = []) /\ ~(indent = (implode "")) /\
+          EVERY isSpace (explode indent) ==>
         mlsexp_lex_aux depth
                 (STRCAT
                  (explode
@@ -484,9 +483,8 @@ let lex_aux_sexp2tree = cake_theorem "lex_aux_sexp2tree"
           mlsexp_lex_aux depth s (REVERSE (to_tokens x) ++ ts))) /\
      (!xs s ts depth indent m n.
         (~(s = "") ==> isSpace (HD s) \/ HD s = (CHR 41)) /\
-          ~(depth = 0) /\ ~(
-        indent = (implode "")) /\ EVERY isSpace (explode indent)
-          ==>
+          ~(depth = 0) /\ ~(indent = (implode "")) /\ EVERY isSpace
+          (explode indent) ==>
         mlsexp_lex_aux depth
                 (STRCAT
                  (explode

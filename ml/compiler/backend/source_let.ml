@@ -89,5 +89,21 @@ let compile_decs_def = cake_define_list_try (fun () ->
                   source_let_compile_decs ds))`];;
 hol4_overload "compile_decs" "source_let_compile_decs";;
 
-(* HOL4 source_letScript.sml:91-108: code that the source has in a
-   comment *)
+(*
+val test3 = EVAL “
+  compile_decs [
+    Dlet l (Pvar "foo")
+      (Letrec [("bar", "x", App Opapp [Var (Short "baz"); Con NONE []])]
+              (Var (Short "glob")))]”;
+val test4 = EVAL “
+  compile_decs [
+    Dlocal [
+        Dlet l (Pvar "foo")
+          (Letrec [("bar", "x", App Opapp [Var (Short "baz"); Con NONE []])]
+                  (Var (Short "glob")))] []
+    ]”;
+val test5 = EVAL “
+  compile_decs [
+    Dlet l (Pvar "foo") (Var (Short "bar"))
+    ]”;
+ *)

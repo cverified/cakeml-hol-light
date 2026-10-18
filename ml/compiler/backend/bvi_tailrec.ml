@@ -20,10 +20,8 @@ needs "semantics/ast.ml";;
 let dummy_def = cake_define
   `dummy = bvi_Var 1234567890`;;
 
-let MEM_exp_size_imp = cake_theorem "MEM_exp_size_imp"
-  (fun () ->
-    `!xs a. MEM a xs ==> bvi_exp_size a < exp2_size xs`)
-  CHEAT_TAC;;
+(* HOL4 bvi_tailrecScript.sml:21-25: a theorem whose statement the
+   port cannot state yet: MEM_exp_size_imp *)
 
 let is_rec_def = cake_define
   `bvi_tailrec_is_rec name x2 =
@@ -100,7 +98,7 @@ let from_op_PMATCH = cake_theorem "from_op_PMATCH"
   CHEAT_TAC;;
 
 (* HOL4 bvi_tailrecScript.sml:103-107: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: from_op_thm *)
 
 let op_eq_def = cake_define
   `op_eq x1 x2 =
@@ -194,8 +192,8 @@ let exp_size_get_bin_args = cake_theorem "exp_size_get_bin_args"
   CHEAT_TAC;;
 
 let opbinargs_def = cake_define
-  `opbinargs opr exp = (if ~op_eq opr exp then NONE else get_bin_args
-  exp)`;;
+  `opbinargs opr exp = (if ~(op_eq opr exp) then NONE else
+  get_bin_args exp)`;;
 
 let try_update_def = cake_define_list
   [`try_update vty NONE ts = ts`;
@@ -277,7 +275,7 @@ let term_ok_int_def = cake_define_wf
              | _27 -> F)`;;
 
 (* HOL4 bvi_tailrecScript.sml:286: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: term_ok_int_ind *)
 
 let _ = size_thms "bvi_exp";;
 (* HOL4 bvi_tailrecScript.sml:303-307: the tactic that proves the
@@ -304,15 +302,15 @@ let term_ok_any_def = cake_define_wf
 
 let is_op_thms = cake_theorem "is_op_thms"
   (fun () ->
-    `~is_arith (closLang_BlockOp (closLang_Cons 0)) /\ ~is_arith
-  (closLang_BlockOp ListAppend) /\
-     ~is_rel (closLang_BlockOp (closLang_Cons 0)) /\ ~is_rel
-       (closLang_BlockOp ListAppend) /\
+    `~(is_arith (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_arith
+  (closLang_BlockOp ListAppend)) /\
+     ~(is_rel (closLang_BlockOp (closLang_Cons 0))) /\ ~(is_rel
+       (closLang_BlockOp ListAppend)) /\
      (!op. ~(op = closLang_BlockOp ListAppend) /\ is_arith op <=>
        is_arith op) /\
-     (!op. ~(op = closLang_BlockOp ListAppend) /\ ~is_arith op /\
+     (!op. ~(op = closLang_BlockOp ListAppend) /\ ~(is_arith op) /\
        is_rel op <=> is_rel op) /\
-     (!op. ~is_arith op /\ ~is_rel op /\ op = closLang_BlockOp
+     (!op. ~(is_arith op) /\ ~(is_rel op) /\ op = closLang_BlockOp
        (closLang_Cons 0) <=> op = closLang_BlockOp (closLang_Cons 0)) /\
      (!op. ~(op = closLang_BlockOp ListAppend) /\ op =
        closLang_BlockOp (closLang_Cons 0) <=> op = closLang_BlockOp
@@ -320,7 +318,7 @@ let is_op_thms = cake_theorem "is_op_thms"
   CHEAT_TAC;;
 
 (* HOL4 bvi_tailrecScript.sml:322: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: term_ok_any_ind *)
 
 (* HOL4 bvi_tailrecScript.sml:324-346: code that the source has in a
    comment *)
@@ -510,7 +508,7 @@ let scan_expr_def = cake_define_list_cheat CHEAT_TAC
                     (if bvi_tailrec_is_const op then
                       [(ts,Int,F,NONE)] else
                       [(ts,bvi_tailrec_Any,F,NONE)]) | SOME (x,y) ->
-                    (if ~bvi_tailrec_is_const op then
+                    (if ~(bvi_tailrec_is_const op) then
                       [(update_context Int ts x
                         y,bvi_tailrec_Any,F,NONE)] else
                       [(ts,bvi_tailrec_Any,F,NONE)]) else if op =
@@ -572,7 +570,7 @@ let scan_expr_sing_def = cake_define_list
                     (if bvi_tailrec_is_const op then
                       (ts,Int,F,NONE) else
                       (ts,bvi_tailrec_Any,F,NONE)) | SOME (x,y) ->
-                    (if ~bvi_tailrec_is_const op then
+                    (if ~(bvi_tailrec_is_const op) then
                       (update_context Int ts x
                         y,bvi_tailrec_Any,F,NONE) else
                       (ts,bvi_tailrec_Any,F,NONE)) else if op =
@@ -669,7 +667,7 @@ let rewrite_PMATCH = cake_theorem "rewrite_PMATCH"
   CHEAT_TAC;;
 
 (* HOL4 bvi_tailrecScript.sml:694: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: rewrite_eq *)
 
 
 (* --- Top-level expression check --- *)
@@ -732,7 +730,7 @@ let has_rec_test2 = cake_theorem "has_rec_test2"
 
 let check_exp_def = cake_define
   `check_exp loc arity exp =
-     (if ~has_rec1 loc exp then NONE else
+     (if ~(has_rec1 loc exp) then NONE else
        let context = REPLICATE arity bvi_tailrec_Any in
          match scan_expr context loc [exp] with
            [] -> NONE | (ts,ty,r,opr) :: _77 ->
@@ -741,7 +739,7 @@ let check_exp_def = cake_define
                  (if ~(ty = op_type op) then NONE else opr)))`;;
 
 (* HOL4 bvi_tailrecScript.sml:771-772: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: check_exp_eq *)
 
 let let_wrap_def = cake_define
   `let_wrap arity id' exp =

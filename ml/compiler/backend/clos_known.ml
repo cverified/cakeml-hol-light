@@ -289,7 +289,7 @@ let merge_def = cake_define
 hol4_overload "merge" "clos_known_merge";;
 
 (* HOL4 clos_knownScript.sml:294-295: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: merge_def *)
 
 (* Avoid MAP2 *)
 let _ = size_thms "val_approx";;
@@ -467,7 +467,7 @@ let decide_inline_def = cake_define
            (if app_lopt = NONE /\ app_arity = arity then
              (if body_size < clos_known_config_inline_factor c * (1 +
                app_arity) /\
-                 ~contains_closures [body] /\
+                 ~(contains_closures [body]) /\
                  clos_known_closed (closLang_Fn (implode "") NONE
                    NONE app_arity body) then inlD_LetInline body else
                    inlD_Annotate loc) else inlD_Nothing) | _20 ->
@@ -627,8 +627,8 @@ hol4_overload "compile_inc" "clos_known_compile_inc";;
 
 let known_static_conf_def = cake_define
   `known_static_conf kc = (match kc with NONE -> NONE | SOME kc ->
-  SOME (clos_known_config_val_approx_spt_fupd (K LN)
-  (reset_inline_factor kc)))`;;
+  SOME (reset_inline_factor (clos_known_config_val_approx_spt_fupd (K
+  LN) kc)))`;;
 
 let known_compile_inc_def = cake_define_list
   [`known_compile_inc NONE spt (p:closLang_exp
@@ -652,8 +652,93 @@ let option_upd_val_spt_def = cake_define_list
    `option_upd_val_spt spt (SOME kc) = SOME
   (clos_known_config_val_approx_spt_fupd (K spt) kc)`];;
 
-(* HOL4 clos_knownScript.sml:711-795: code that the source has in a
-   comment *)
+(*
+
+(* Trace starting points *)
+val t0 = ``SourceLoc 0 0 0 0``;
+val t1 = ``SourceLoc 1 1 1 1``;
+
+(* The numerical constant 1 *)
+val const1 = ``Op None (IntOp (Const 1)) []``;
+val const2 = ``Op None (IntOp (Const 2)) []``;
+
+
+(* fn f x => f x *)
+val apply = ``Fn None (SOME 0) NONE 2 (App ^t0 NONE (Var None 0) [Var None 1])``;
+
+(* fn x => x + 1 *)
+val succ = ``Fn None (SOME 2) NONE 1 (Op None (IntOp Add) [Var None 0; ^const1])``;
+
+(* -------------------------------*)
+
+(* (fn f x => f x) (fn x => x + 1) 2 *)
+val example_direct = ``App ^t1 NONE ^apply [^succ; ^const2]``;
+
+val inline_direct = ``clos_known$compile T ^example_direct``;
+EVAL inline_direct;
+
+val exp = ``Let None [^const1; ^const2] (Op None (IntOp Add) [Var None 0; Var None 1])``
+
+EVAL ``clos_letop$let_op [^exp]``;
+
+(*-------------------------------*)
+
+(*
+let apply = fn f x => f x
+    succ = fn x => x + 1
+in
+  apply succ 1
+end
+*)
+val example_local = ``Let None [^apply; ^succ] (App ^t1 NONE (Var None 0) [Var None 1; ^const1])``;
+val inlined_local = EVAL ``clos_known$compile T ^example_local``;
+
+val inline_local = ``clos_known$compile T ^example_local``;
+EVAL inline_local;
+
+(*-------------------------------*)
+
+(* fun apply <f,x> = f x *)
+val sg_apply = ``Op None (GlobOp (SetGlobal 0)) [^apply]``;
+val g_apply = ``Op None (GlobOp (Global 0)) []``;
+
+(* fun succ <x> = x + 1 *)
+val sg_succ = ``Op None (GlobOp (SetGlobal 1)) [^succ]``;
+val g_succ = ``Op None (GlobOp (Global 1)) []``;
+
+(*
+let _ = SetGlobal 0 (fn f x => f x)
+    _ = SetGlobal 1 (fn x => x + 1)
+in
+  (Global 0) (Global 1) 1
+end
+*)
+val example_global = ``Let None [^sg_apply; ^sg_succ] (App ^t1 NONE ^g_apply [^g_succ; ^const1])``;
+
+val inline_global = ``clos_known$compile T ^example_global``;
+
+EVAL inline_global;
+
+EVAL ``known (100,0) [^apply] [] LN``;
+EVAL ``known (100,0) [^succ] [] LN``;
+
+EVAL ``known (0,0) [^example_global] [] LN``;
+
+EVAL ``
+    let exp = ^example_local in
+    let (_,g1) = known (0,0) [exp] [] LN in
+    let (e1,g1') = known (0,0) [exp] [] g1 in
+    let (e2,g2) = known (0,0) [FST (HD e1)] [] LN in
+    (e1, e2, g1, g1')
+``
+
+
+    let (e2,_) = known (100,2) [FST (HD e1)] [] g2 in
+      FST (HD e2)
+
+*)
 
 (* HOL4 clos_knownScript.sml:797-921: code that the source has in a
    comment *)
+
+cake_hide [];;

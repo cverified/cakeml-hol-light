@@ -63,8 +63,8 @@ let compile_single_lem = cake_theorem "compile_single_lem"
 
 let rm_perm = cake_theorem "rm_perm[local]"
   (fun () ->
-    `wordSem_state_permute_fupd (K (wordSem_state_permute s = s))
-       s`)
+    `wordSem_state_permute_fupd (K (wordSem_state_permute s))
+       s = s`)
   CHEAT_TAC;;
 
 (* HOL4 word_to_wordProofScript.sml:165: ML code, not ported *)
@@ -166,8 +166,10 @@ let compile_single_correct =
 
 (* HOL4 word_to_wordProofScript.sml:328-341: a proof *)
 
-(* HOL4 word_to_wordProofScript.sml:343-346: code that the source has
-   in a comment *)
+(* Call: dispatch with Tail-call branch closing inline (via
+   every_case_tac >> gvs[bad_fun_return_def] for cake-while's
+   Break/Continue handling), then suspend "non_tail_call" for
+   the more involved non-tail-call branch. *)
 (* HOL4 word_to_wordProofScript.sml:347-438: a proof *)
     (*Manual simulation for Result*)
 (* HOL4 word_to_wordProofScript.sml:440-507: a proof *)
@@ -323,13 +325,13 @@ let code_rel_not_created_subprogs =
   CHEAT_TAC;;
 
 (* HOL4 word_to_wordProofScript.sml:1082: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: code_rel_P *)
 
 (* HOL4 word_to_wordProofScript.sml:1084-1085: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: code_rel_no_alloc *)
 
 (* HOL4 word_to_wordProofScript.sml:1087-1088: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: code_rel_no_install *)
 
 
 (***** compile_single correctness for no_alloc & no_install ******)
@@ -521,9 +523,8 @@ let word_to_word_compile_semantics =
        SOME (Loc 1 0) /\
      t = wordSem_state_code_fupd (K (wordSem_state_code t)) s /\
        wordSem_state_code
-     s = fromAList wprog0 /\ ~(
-     wordSem_semantics (s:('a,'b,'ffi)wordSem_state) start = Fail)
-       ==>
+     s = fromAList wprog0 /\ ~(wordSem_semantics
+       (s:('a,'b,'ffi)wordSem_state) start = Fail) ==>
      wordSem_semantics s start =
      wordSem_semantics (t:('a,'b,'ffi)wordSem_state) start`)
   CHEAT_TAC;;

@@ -28,7 +28,7 @@ needs "semantics/typeSystem.ml";;
 let unchanged_tenv = cake_theorem "unchanged_tenv[simp]"
   (fun () ->
     `!(tenv:type_env).
-     mk_type_env (sem_env_v tenv) (sem_env_c tenv) (type_env_t
+     mk_type_env (type_env_v tenv) (type_env_c tenv) (type_env_t
        tenv) = tenv`)
   CHEAT_TAC;;
 
@@ -607,7 +607,7 @@ let tveLookup_db_merge_some = cake_theorem "tveLookup_db_merge_some"
 (* HOL4 typeSysPropsScript.sml:909-917: ML code, not ported *)
 
 (* HOL4 typeSysPropsScript.sml:919-923: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: type_op_cases *)
 
 (* ---------- type_p ---------- *)
 
@@ -634,7 +634,7 @@ let type_p_subst = cake_theorem "type_p_subst"
     `(!n tenv p t new_bindings. type_p n tenv p t new_bindings ==>
         (!targs' inc tvs targs.
         tenv_abbrev_ok (type_env_t tenv) /\
-        tenv_ctor_ok (sem_env_c tenv) /\
+        tenv_ctor_ok (type_env_c tenv) /\
         (n = inc + LENGTH targs) /\
         EVERY (check_freevars tvs []) targs /\
         (targs' = MAP (deBruijn_inc 0 inc) targs) ==>
@@ -647,7 +647,7 @@ let type_p_subst = cake_theorem "type_p_subst"
        ==>
         (!targs' inc targs tvs.
         tenv_abbrev_ok (type_env_t tenv) /\
-        tenv_ctor_ok (sem_env_c tenv) /\
+        tenv_ctor_ok (type_env_c tenv) /\
         (n = inc + LENGTH targs) /\
         EVERY (check_freevars tvs []) targs /\
         (targs' = MAP (deBruijn_inc 0 inc) targs) ==>
@@ -672,11 +672,11 @@ let type_p_bvl = cake_theorem "type_p_bvl"
 let type_p_tenvV_indep = cake_theorem "type_p_tenvV_indep"
   (fun () ->
     `(!p tvs tenv t bindings tenvV.
-      type_p tvs tenv p t bindings = type_p tvs (sem_env_v_fupd (K
+      type_p tvs tenv p t bindings = type_p tvs (type_env_v_fupd (K
         tenvV) tenv) p t bindings) /\
      (!ps tvs tenv t bindings tenvV.
       type_ps tvs tenv ps t bindings = type_ps tvs
-        (sem_env_v_fupd (K tenvV) tenv) ps t bindings)`)
+        (type_env_v_fupd (K tenvV) tenv) ps t bindings)`)
   CHEAT_TAC;;
 
 (* ---------- type_e, type_es, type_funs ---------- *)
@@ -721,15 +721,15 @@ let type_e_freevars = cake_theorem "type_e_freevars"
   (fun () ->
     `(!tenv tenvE e t.
        type_e tenv tenvE e t ==>
-       tenv_val_exp_ok tenvE /\ tenv_val_ok (sem_env_v tenv) ==>
+       tenv_val_exp_ok tenvE /\ tenv_val_ok (type_env_v tenv) ==>
        check_freevars (num_tvs tenvE) [] t) /\
      (!tenv tenvE es ts.
        type_es tenv tenvE es ts ==>
-       tenv_val_exp_ok tenvE /\ tenv_val_ok (sem_env_v tenv) ==>
+       tenv_val_exp_ok tenvE /\ tenv_val_ok (type_env_v tenv) ==>
        EVERY (check_freevars (num_tvs tenvE) []) ts) /\
      (!tenv tenvE funs env.
        type_funs tenv tenvE funs env ==>
-       tenv_val_exp_ok tenvE /\ tenv_val_ok (sem_env_v tenv) ==>
+       tenv_val_exp_ok tenvE /\ tenv_val_ok (type_env_v tenv) ==>
        EVERY (check_freevars (num_tvs tenvE) []) (MAP SND env))`)
   CHEAT_TAC;;
 
@@ -739,8 +739,8 @@ let type_e_subst = cake_theorem "type_e_subst"
         (!tenvE1 targs tvs targs'.
           num_tvs tenvE2 = 0 /\
           tenv_abbrev_ok (type_env_t tenv) /\
-          tenv_ctor_ok (sem_env_c tenv) /\
-          tenv_val_ok (sem_env_v tenv) /\
+          tenv_ctor_ok (type_env_c tenv) /\
+          tenv_val_ok (type_env_v tenv) /\
           tenv_val_exp_ok tenvE /\
           EVERY (check_freevars tvs []) targs /\
           tenvE = db_merge tenvE1 (bind_tvar (LENGTH targs) tenvE2)
@@ -755,8 +755,8 @@ let type_e_subst = cake_theorem "type_e_subst"
         (!tenvE1 targs tvs targs'.
           num_tvs tenvE2 = 0 /\
           tenv_abbrev_ok (type_env_t tenv) /\
-          tenv_ctor_ok (sem_env_c tenv) /\
-          tenv_val_ok (sem_env_v tenv) /\
+          tenv_ctor_ok (type_env_c tenv) /\
+          tenv_val_ok (type_env_v tenv) /\
           tenv_val_exp_ok tenvE /\
           EVERY (check_freevars tvs []) targs /\
           tenvE = db_merge tenvE1 (bind_tvar (LENGTH targs) tenvE2)
@@ -771,8 +771,8 @@ let type_e_subst = cake_theorem "type_e_subst"
         (!tenvE1 targs tvs targs'.
           num_tvs tenvE2 = 0 /\
           tenv_abbrev_ok (type_env_t tenv) /\
-          tenv_ctor_ok (sem_env_c tenv) /\
-          tenv_val_ok (sem_env_v tenv) /\
+          tenv_ctor_ok (type_env_c tenv) /\
+          tenv_val_ok (type_env_v tenv) /\
           tenv_val_exp_ok tenvE /\
           EVERY (check_freevars tvs []) targs /\
           tenvE = db_merge tenvE1 (bind_tvar (LENGTH targs) tenvE2)
@@ -847,8 +847,8 @@ let type_e_subst_lem = cake_theorem "type_e_subst_lem[local]"
        targs) tenvE)) e t /\
      num_tvs tenvE = 0 /\
      tenv_abbrev_ok (type_env_t tenv) /\
-     tenv_ctor_ok (sem_env_c tenv) /\
-     tenv_val_ok (sem_env_v tenv) /\
+     tenv_ctor_ok (type_env_c tenv) /\
+     tenv_val_ok (type_env_v tenv) /\
      tenv_val_exp_ok (bind_tvar (LENGTH targs) tenvE) /\
      EVERY (check_freevars tvs []) targs /\
      check_freevars (LENGTH targs) [] t1 ==>
@@ -1011,7 +1011,7 @@ let tenv_val_ok_add_tenvE = cake_theorem "tenv_val_ok_add_tenvE"
 
 let add_tenvE_nsAppend = cake_theorem "add_tenvE_nsAppend"
   (fun () ->
-    `!tenvE tenvV. nsAppend (add_tenvE tenvE nsEmpty') tenvV =
+    `!tenvE tenvV. nsAppend (add_tenvE tenvE nsEmpty) tenvV =
   add_tenvE tenvE tenvV`)
   CHEAT_TAC;;
 

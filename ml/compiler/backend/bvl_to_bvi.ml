@@ -2,7 +2,7 @@
 (*  bvl_to_bvi: ported from HOL4's
     compiler/backend/bvl_to_bviScript.sml
     A definition theory, with 34 definitions, 1 datatype and 17
-    theorems.  Needed by 6 files of the port.  *)
+    theorems.  Needed by 7 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -133,21 +133,21 @@ let ConcatByte_location_def = cake_define
   `ConcatByte_location = SumListLength_location + 1`;;
 
 (* HOL4 bvl_to_bviScript.sml:129-130: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: AllocGlobal_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:131-132: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: CopyGlobals_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:133-134: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: InitGlobals_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:135-136: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ListLength_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:137-138: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: FromListByte_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:139-140: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ToListByte_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:141-142: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: SumListLength_location_eq *)
 (* HOL4 bvl_to_bviScript.sml:143-144: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ConcatByte_location_eq *)
 
 let AllocGlobal_code_def = cake_define
   `AllocGlobal_code = ((1:num),
@@ -356,7 +356,7 @@ let compile_op_def = cake_define
 hol4_overload "compile_op" "bvl_to_bvi_compile_op";;
 
 (* HOL4 bvl_to_bviScript.sml:313-321: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: compile_op_pmatch *)
 
 hol4_overload "++" "SmartAppend";;
 (* HOL4 bvl_to_bviScript.sml:324: the overload nss, which the port
@@ -557,7 +557,7 @@ let compile_prog_def = cake_define
 hol4_overload "compile_prog" "bvl_to_bvi_compile_prog";;
 
 (* HOL4 bvl_to_bviScript.sml:520-521: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: compile_prog_eq *)
 
 let bvl_to_bvi_config_FIELDS = define_record "bvl_to_bvi_config"
   ["inline_size_limit","num";
@@ -596,8 +596,7 @@ let get_names_def = cake_define
          let n = (match sptree_lookup kd old_names with NONE ->
            implode "bvi_unmapped" | SOME name -> name) in
          let aux = (if km = 0 then implode "" else implode
-           "_bvi_aux") in (\x y. strcat x y)
-           n aux))) final_nums)`;;
+           "_bvi_aux") in (\x y. strcat x y) n aux))) final_nums)`;;
 hol4_overload "get_names" "bvl_to_bvi_get_names";;
 
 let compile_def = cake_define
@@ -640,3 +639,5 @@ let bvl_to_bvi_compile_inc_all_def = cake_define
        (c,p))`;;
 
 hol4_only "++" "APPEND";;
+
+cake_hide [];;

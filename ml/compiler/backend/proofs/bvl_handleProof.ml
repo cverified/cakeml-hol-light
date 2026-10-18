@@ -125,7 +125,7 @@ let handle_ok_def = cake_define_list_try_tac (fun () ->
    `handle_ok [(Call ticks dest xs:bvl_exp)] <=> handle_ok xs`];;
 
 (* HOL4 bvl_handleProofScript.sml:192-195: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: evaluate_GENLIST *)
 
 let env_rel_def = cake_define
   `bvl_handleProof_env_rel l env env1 =
@@ -155,10 +155,10 @@ let IMP_EL_SING = cake_theorem "IMP_EL_SING"
   CHEAT_TAC;;
 
 (* HOL4 bvl_handleProofScript.sml:228-233: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: ALOOKUP_MAPi_SWAP *)
 
 (* HOL4 bvl_handleProofScript.sml:235-239: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: ALOOKUP_MAPi_APPEND2 *)
 
 let IS_SOME_lookup_db_to_set = cake_theorem "IS_SOME_lookup_db_to_set"
   (fun () ->
@@ -208,10 +208,11 @@ let OptionalLetLet_nr = cake_theorem "OptionalLetLet_nr"
   CHEAT_TAC;;
 
 (* HOL4 bvl_handleProofScript.sml:352-473: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: compile_correct *)
 
-(* HOL4 bvl_handleProofScript.sml:475-476: a theorem that HOL4 states
-   as the value of an ML expression *)
+let bvl_handleProof_compile_correct =
+  cake_alias "compile_correct[allow_rebind]"
+    bvi_to_dataProof_compile_correct;;
 
 let bvl_handleProof_compile_correct =
   cake_theorem "compile_correct[allow_rebind]"
@@ -232,10 +233,10 @@ let compile_seqs_correct = cake_theorem "compile_seqs_correct"
   (fun () ->
     `!l x acc s1 s2 s3 res res3.
         evaluate ([x],[],s1) = (res,s2) /\
-        (!y r. acc = SOME y /\ res = Rval r ==> ~(
-               res3 = Rerr (Rabort Rtype_error)) /\
-               evaluate ([y],[],s2) = (res3,s3)) /\ ~(
-        res = Rerr (Rabort Rtype_error)) ==>
+        (!y r. acc = SOME y /\ res = Rval r ==> ~(res3 = Rerr
+          (Rabort Rtype_error)) /\
+               evaluate ([y],[],s2) = (res3,s3)) /\ ~(res = Rerr
+                 (Rabort Rtype_error)) ==>
         evaluate ([compile_seqs l x acc],[],s1) =
           (if acc = NONE then (res,s2) else
             match res with Rval _5 -> (res3,s3) | _6 -> (res,s2))`)
@@ -400,10 +401,10 @@ let get_code_labels_dest_handle_Raise =
 let get_code_labels_handle_adj_vars =
   cake_theorem "get_code_labels_handle_adj_vars[local]"
   (fun () ->
-    `(!x d l. get_code_labels' (handle_adj_vars d l x) =
-  get_code_labels' x) /\
-     (!x d l. MAP get_code_labels' (handle_adj_vars1 d l x) = MAP
-       get_code_labels' x)`)
+    `(!x d l. bvlProps_get_code_labels (handle_adj_vars d l x) =
+  bvlProps_get_code_labels x) /\
+     (!x d l. MAP bvlProps_get_code_labels (handle_adj_vars1 d l
+       x) = MAP bvlProps_get_code_labels x)`)
   CHEAT_TAC;;
 
 let get_code_labels_handle_simp =

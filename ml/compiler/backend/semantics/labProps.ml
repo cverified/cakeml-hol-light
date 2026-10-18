@@ -104,7 +104,7 @@ let get_code_labels_cons = cake_theorem "get_code_labels_cons"
 
 let sec_ends_with_label_def = cake_define
   `sec_ends_with_label (Section _19 ls) <=>
-     ~NULL ls /\ is_Label (LAST ls)`;;
+     ~(NULL ls) /\ is_Label (LAST ls)`;;
 
 let reg_imm_with_clock = cake_theorem "reg_imm_with_clock[simp]"
   (fun () ->
@@ -113,8 +113,8 @@ let reg_imm_with_clock = cake_theorem "reg_imm_with_clock[simp]"
 
 let asm_inst_with_clock = cake_theorem "asm_inst_with_clock[simp]"
   (fun () ->
-    `asm_inst i (state_clock_fupd (K z) s) = state_clock_fupd (K z)
-  (asm_inst i s)`)
+    `asm_inst i (state_clock_fupd (K z) s) = asm_inst i
+  (state_clock_fupd (K z) s)`)
   CHEAT_TAC;;
 
 let read_reg_inc_pc = cake_theorem "read_reg_inc_pc[simp]"
@@ -289,11 +289,11 @@ let line_length_def = cake_define_list
 
 let LENGTH_line_bytes = cake_theorem "LENGTH_line_bytes[simp]"
   (fun () ->
-    `!x2. ~is_Label x2 ==> (LENGTH (line_bytes x2) = line_length x2)`)
+    `!x2. ~(is_Label x2) ==> (LENGTH (line_bytes x2) = line_length x2)`)
   CHEAT_TAC;;
 
 (* HOL4 labPropsScript.sml:271-277: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_eq_thms *)
 
 let labProps_evaluate_io_events_mono =
   cake_theorem "evaluate_io_events_mono"
@@ -376,8 +376,8 @@ let align_dm_const = cake_theorem "align_dm_const[simp]"
 
 let align_dm_with_clock = cake_theorem "align_dm_with_clock"
   (fun () ->
-    `align_dm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
-  (align_dm s)`)
+    `align_dm (state_clock_fupd (K k) s) = align_dm (state_clock_fupd
+  (K k) s)`)
   CHEAT_TAC;;
 
 let asm_fetch_align_dm = cake_theorem "asm_fetch_align_dm[simp]"
@@ -619,8 +619,8 @@ let align_sdm_const = cake_theorem "align_sdm_const[simp]"
 
 let align_sdm_with_clock = cake_theorem "align_sdm_with_clock"
   (fun () ->
-    `align_sdm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
-  (align_sdm s)`)
+    `align_sdm (state_clock_fupd (K k) s) = align_sdm
+  (state_clock_fupd (K k) s)`)
   CHEAT_TAC;;
 
 let asm_fetch_align_sdm = cake_theorem "asm_fetch_align_sdm[simp]"
@@ -862,7 +862,7 @@ let line_get_code_labels_extract_labels =
   cake_theorem "line_get_code_labels_extract_labels"
   (fun () ->
     `!l.
-     BIGUNION (IMAGE line_get_code_labels' (set_of_list l)) =
+     BIGUNION (IMAGE line_get_code_labels (set_of_list l)) =
      IMAGE SND (set_of_list (labProps_extract_labels l))`)
   CHEAT_TAC;;
 
@@ -879,13 +879,13 @@ let get_code_labels_extract_labels =
 
 let no_install_def = cake_define
   `labProps_no_install code <=>
-   (!p w bytes l. ~(
-     asm_fetch_aux p code =
+   (!p w bytes l. ~(asm_fetch_aux p code =
        SOME (labLang_LabAsm Install w bytes l)))`;;
 hol4_overload "no_install" "labProps_no_install";;
 
 let no_share_mem_inst_def = cake_define
   `no_share_mem_inst code <=>
-   (!p op re a inst' len. ~(
-     asm_fetch_aux p code =
+   (!p op re a inst' len. ~(asm_fetch_aux p code =
        SOME (labLang_Asm (ShareMem op re a) inst' len)))`;;
+
+cake_hide [];;

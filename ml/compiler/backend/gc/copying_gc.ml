@@ -132,7 +132,8 @@ let heap_addresses_SNOC = cake_theorem "heap_addresses_SNOC[local]"
          heap_addresses n xs UNION {heap_length xs + n}`)
   CHEAT_TAC;;
 
-(* HOL4 copying_gcScript.sml:126-132: a proof *)
+(* HOL4 copying_gcScript.sml:126-132: a theorem that HOL4 states as
+   the value of an ML expression: NOT_IN_heap_addresses *)
 
 let gc_move_thm = cake_theorem "gc_move_thm[local]"
   (fun () ->
@@ -181,9 +182,9 @@ let gc_move_list_thm = cake_theorem "gc_move_list_thm[local]"
 
 let gc_move_ALT = cake_theorem "gc_move_ALT"
   (fun () ->
-    `copying_gc_gc_move (ys,xs,a,n,heap,c,limit') =
+    `copying_gc_gc_move (ys,xs,a,n,heap,c,limit) =
         (let (ys,xs1,x) = copying_gc_gc_move
-          (ys,[],a,n,heap,c,limit') in
+          (ys,[],a,n,heap,c,limit) in
           (ys,xs ++ xs1,x))`)
   CHEAT_TAC;;
 
@@ -220,8 +221,8 @@ let gc_move_loop_thm = cake_theorem "gc_move_loop_thm[local]"
 
 let gc_inv_init = cake_theorem "gc_inv_init[local]"
   (fun () ->
-    `copying_gc_gc_inv ([],[],0,limit',heap,T,limit') heap roots =
-  heap_ok heap limit'`)
+    `copying_gc_gc_inv ([],[],0,limit,heap,T,limit) heap roots =
+  heap_ok heap limit`)
   CHEAT_TAC;;
 
 let full_gc_thm = cake_theorem "full_gc_thm"
@@ -237,7 +238,8 @@ let full_gc_thm = cake_theorem "full_gc_thm"
           heap roots)`)
   CHEAT_TAC;;
 
-(* HOL4 copying_gcScript.sml:411-417: a proof *)
+(* HOL4 copying_gcScript.sml:411-417: a theorem that HOL4 states as
+   the value of an ML expression: heap_lookup_IMP_heap_addresses *)
 
 let full_gc_LENGTH = cake_theorem "full_gc_LENGTH"
   (fun () ->
@@ -301,8 +303,7 @@ let gc_move_list_ok = cake_theorem "gc_move_list_ok"
 
 (* HOL4 copying_gcScript.sml:619-620: ML code, not ported *)
 
-(* HOL4 copying_gcScript.sml:622-623: a theorem that HOL4 states as
-   the value of an ML expression *)
+let gc_move_loop_ok = cake_alias "gc_move_loop_ok" cmlPEG_th;;
 
 let gc_move_list_IMP_LENGTH = cake_theorem "gc_move_list_IMP_LENGTH"
   (fun () ->

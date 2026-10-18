@@ -379,4 +379,4 @@ let compile_exp_def = cake_define
 hol4_overload "compile_exp" "bvl_const_compile_exp";;
 
 (* HOL4 bvl_constScript.sml:397: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: compile_exp_eq *)

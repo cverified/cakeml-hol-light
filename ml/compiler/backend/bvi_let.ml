@@ -5,7 +5,46 @@
     by bvi_letProof.ml, bvl_to_bvi.ml and bvl_to_bviProof.ml.  *)
 (* ======================================================== *)
 
-(* HOL4 bvi_letScript.sml:1-40: code that the source has in a comment *)
+(*
+
+   This is a BVI transformation that propagates variable lookups that
+   are immediately assigned to a new variable in Let bindings. This
+   optimisation is to run immediately when entering BVI.
+
+   This optimisation removes each Var in a Let, i.e.
+
+     Let [ ... ; Var ... ; ... ] ...
+
+   and replaces them with constants
+
+     Let [ ... ; Op (IntOp (Const _)) [] ; ... ] ....
+
+   and then replaces all occurrences of the bound var in the body with
+   a lookup to the original variable.
+
+   There is a similar optimisation in BVL (bvl_const). This version
+   (which is slightly simpler) is run again because the BVL-to-BVI
+   compiler can introduce large Let expressions consisting of only
+   variable lookups.
+
+   This BVI version differs from the BVL version (bvl_const) by having
+   the ability to move expressions into tail-position, e.g.
+
+     let
+       val x = foo ...
+       val y = bar x
+     in y end
+
+   becomes:
+
+     let
+       val x = foo ...
+     in bar x end
+
+   This is important because pat-to-clos translates Seq p1 p2 into
+   Let [compile p1; compile p2] (Var 1).
+
+*)
 
 needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/closLang.ml";;
@@ -32,10 +71,8 @@ let delete_var_def = cake_define
         | x -> x`;;
 hol4_overload "delete_var" "bvi_let_delete_var";;
 
-let exp2_size_APPEND = cake_theorem "exp2_size_APPEND"
-  (fun () ->
-    `!xs ys. exp2_size (xs ++ ys) = exp2_size xs + exp2_size ys`)
-  CHEAT_TAC;;
+(* HOL4 bvi_letScript.sml:62-66: a theorem whose statement the port
+   cannot state yet: exp2_size_APPEND *)
 
 let _ = size_thms "bvi_exp";;
 (* the termination relation that HOL4 gives, with
@@ -166,4 +203,4 @@ let compile_exp_def = cake_define
 hol4_overload "compile_exp" "bvi_let_compile_exp";;
 
 (* HOL4 bvi_letScript.sml:202: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: compile_exp_eq *)

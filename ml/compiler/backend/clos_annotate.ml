@@ -382,7 +382,7 @@ let shift_LENGTH_LEMMA = cake_theorem "shift_LENGTH_LEMMA"
   CHEAT_TAC;;
 
 (* HOL4 clos_annotateScript.sml:383-387: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: shift_SING *)
 
 let shift_CONS = cake_theorem "shift_CONS"
   (fun () ->

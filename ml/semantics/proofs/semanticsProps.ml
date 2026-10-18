@@ -66,7 +66,7 @@ let semantics_prog_Terminate_not_Fail =
   cake_theorem "semantics_prog_Terminate_not_Fail"
   (fun () ->
     `semantics_prog s e p (ffi_Terminate x y) ==>
-      ~semantics_prog s e p ffi_Fail /\
+      ~(semantics_prog s e p ffi_Fail) /\
       semantics_prog s e p = {ffi_Terminate x y}`)
   CHEAT_TAC;;
 
@@ -74,7 +74,7 @@ let semantics_prog_Diverge_not_Fail =
   cake_theorem "semantics_prog_Diverge_not_Fail"
   (fun () ->
     `semantics_prog s e p (ffi_Diverge y) ==>
-      ~semantics_prog s e p ffi_Fail /\
+      ~(semantics_prog s e p ffi_Fail) /\
       semantics_prog s e p = {ffi_Diverge y}`)
   CHEAT_TAC;;
 
@@ -95,7 +95,7 @@ let clock_lemmas = cake_theorem "clock_lemmas[local]"
         (semanticPrimitives_state_clock_fupd (K c) x)) =
         (semanticPrimitives_state_clock_fupd (K d) x)) /\
       (semanticPrimitives_state_clock_fupd (K
-        (semanticPrimitives_state_clock x = x)) x)`)
+        (semanticPrimitives_state_clock x)) x = x)`)
   CHEAT_TAC;;
 
 let semantics_deterministic = cake_theorem "semantics_deterministic"

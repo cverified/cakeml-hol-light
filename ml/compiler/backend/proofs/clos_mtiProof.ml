@@ -20,13 +20,12 @@ needs "semantics/ffi/ffi.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
-(* HOL4 clos_mtiProofScript.sml:18: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_mtiProofScript.sml:18: ML code, not ported *)
 
 (* code relation *)
 
 (* HOL4 clos_mtiProofScript.sml:22-23: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: no_mti_def *)
 
 let code_rel_def = cake_define
   `clos_mtiProof_code_rel max_app e1 e2 <=>
@@ -134,7 +133,7 @@ let ref_rel = cake_inductive
 hol4_overload "ref_rel" "clos_mtiProof_ref_rel";;
 
 (* HOL4 clos_mtiProofScript.sml:128-132: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: ref_rel_simps *)
 
 let FMAP_REL_def = cake_define
   `clos_mtiProof_FMAP_REL r f1 f2 <=>
@@ -375,7 +374,7 @@ let LIST_REL_f_rel_IMP = cake_theorem "LIST_REL_f_rel_IMP[local]"
   CHEAT_TAC;;
 
 (* HOL4 clos_mtiProofScript.sml:494-507: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: v_rel_simps *)
 
 let v_rel_opt_thm = cake_theorem "v_rel_opt_thm[local]"
   (fun () ->
@@ -628,7 +627,7 @@ let collect_apps_preserves_set_globals =
   (fun () ->
     `!max_app es e es' e'.
        collect_apps max_app es e = (es',e') ==> (BAG_UNION)
-       (closProps_elist_globals es) (closProps_set_globals e) =
+         (closProps_elist_globals es) (closProps_set_globals e) =
          (BAG_UNION) (closProps_elist_globals es')
          (closProps_set_globals e')`)
   CHEAT_TAC;;
@@ -717,8 +716,7 @@ let intro_multi_no_Labels = cake_theorem "intro_multi_no_Labels"
 
 let semantics_intro_multi = cake_theorem "semantics_intro_multi"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
           co (pure_cc (clos_mti_compile_inc max_app) cc) xs =
             ffi_Fail) ==>
         (!n. SND (SND (co n)) = [] /\ EVERY no_mti (FST (SND (co
@@ -733,9 +731,7 @@ let semantics_intro_multi = cake_theorem "semantics_intro_multi"
 
 let clos_mtiProof_semantics_compile = cake_theorem "semantics_compile"
   (fun () ->
-    `~(
-        closSem_semantics ffi max_app FEMPTY co cc1 xs = ffi_Fail)
-          /\
+    `~(closSem_semantics ffi max_app FEMPTY co cc1 xs = ffi_Fail) /\
         cc1 = (if do_mti then pure_cc (clos_mti_compile_inc
           max_app) else I) cc /\
         co1 = (if do_mti then pure_co (clos_mti_compile_inc

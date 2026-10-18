@@ -33,7 +33,7 @@ let x64_names_def = cake_define
       insert 15 5) LN:num spt)`;;
 
 (* HOL4 x64_configScript.sml:38-39: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: x64_names_def *)
 
 (* HOL4 x64_configScript.sml:41-43: the ML values that the
    definitions below antiquote *)

@@ -12,6 +12,7 @@
 needs "compiler/backend/bvi_let.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
+needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/typeSystem.ml";;
@@ -59,8 +60,8 @@ let evaluate_delete_var_Rerr_SING =
   cake_theorem "evaluate_delete_var_Rerr_SING"
   (fun () ->
     `!x s r e env2.
-        evaluate ([x],env2,s) = (Rerr e,r) /\ ~(
-        e = Rabort Rtype_error) ==>
+        evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort
+          Rtype_error) ==>
         evaluate ([delete_var x],env2,s) = (Rerr e,r)`)
   CHEAT_TAC;;
 
@@ -68,8 +69,8 @@ let evaluate_delete_var_Rerr =
   cake_theorem "evaluate_delete_var_Rerr[local]"
   (fun () ->
     `!xs s r e env2.
-         evaluate (xs,env2,s) = (Rerr e,r) /\ ~(
-         e = Rabort Rtype_error) ==>
+         evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort
+           Rtype_error) ==>
          evaluate (MAP delete_var xs,env2,s) = (Rerr e,r)`)
   CHEAT_TAC;;
 
@@ -110,10 +111,8 @@ let IMP_COMM = cake_theorem "IMP_COMM"
     `(b1 ==> b2 ==> b3) <=> (b2 ==> b1 ==> b3)`)
   CHEAT_TAC;;
 
-let exp_size_APPEND = cake_theorem "exp_size_APPEND"
-  (fun () ->
-    `!xs ys. exp2_size (xs ++ ys) = exp2_size xs + exp2_size ys`)
-  CHEAT_TAC;;
+(* HOL4 bvi_letProofScript.sml:146-150: a theorem whose statement the
+   port cannot state yet: exp_size_APPEND *)
 
 let env_rel_MAP = cake_theorem "env_rel_MAP"
   (fun () ->
@@ -135,8 +134,8 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
   (fun () ->
     `!xs env1 (s1:('c,'ffi)bviSem_state) ax env2 res s2 ys d.
         (evaluate (xs,env1,s1) = (res,s2)) /\
-        bvi_letProof_env_rel ax d env1 env2 /\ ~(
-        res = Rerr (Rabort Rtype_error)) ==>
+        bvi_letProof_env_rel ax d env1 env2 /\ ~(res = Rerr (Rabort
+          Rtype_error)) ==>
         (evaluate (compile ax d xs,env2,s1) = (res,s2))`)
   CHEAT_TAC;;
 
@@ -167,12 +166,12 @@ let evaluate_env_rel = cake_theorem "evaluate_env_rel"
 (* HOL4 bvi_letProofScript.sml:389: a proof *)
 
 (* HOL4 bvi_letProofScript.sml:391-394: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: compile_thm *)
 
 let evaluate_compile_exp = cake_theorem "evaluate_compile_exp"
   (fun () ->
-    `evaluate ([d],env,s) = (r,t) /\ ~(
-      r = Rerr (Rabort Rtype_error)) ==>
+    `evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error))
+  ==>
       evaluate ([bvi_let_compile_exp d],env,s) = (r,t)`)
   CHEAT_TAC;;
 
@@ -183,9 +182,9 @@ let dest_var_code_labels = cake_theorem "dest_var_code_labels[simp]"
 
 let compile_code_labels = cake_theorem "compile_code_labels"
   (fun () ->
-    `!x y z. BIGUNION (set_of_list (MAP get_code_labels'
-  (bvi_let_compile x y z))) =
-             BIGUNION (set_of_list (MAP get_code_labels' z))`)
+    `!x y z. BIGUNION (set_of_list (MAP get_code_labels (bvi_let_compile
+  x y z))) =
+             BIGUNION (set_of_list (MAP get_code_labels z))`)
   CHEAT_TAC;;
 
 let compile_exp_code_labels =

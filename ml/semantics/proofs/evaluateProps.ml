@@ -286,13 +286,15 @@ let is_clock_io_mono_acc_safe = cake_theorem "is_clock_io_mono_acc_safe"
   CHEAT_TAC;;
 
 (* HOL4 evaluatePropsScript.sml:306-308: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: is_clock_io_mono_if_safe *)
 (* HOL4 evaluatePropsScript.sml:309-311: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression:
+   is_clock_io_mono_option_case_safe *)
 (* HOL4 evaluatePropsScript.sml:312-315: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: is_clock_io_mono_match_case_safe *)
 (* HOL4 evaluatePropsScript.sml:316-319: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression:
+   is_clock_io_mono_match_case_pair_safe *)
 
 (* HOL4 evaluatePropsScript.sml:321-326: a proof *)
 
@@ -339,8 +341,8 @@ let is_clock_io_mono_extra_mono =
 let evaluate_add_to_clock = cake_theorem "evaluate_add_to_clock"
   (fun () ->
     `!(s:'ffi semanticPrimitives_state) env es s' r extra.
-      evaluate s env es = (s',r) /\ ~(
-      r = Rerr (Rabort Rtimeout_error)) ==>
+      evaluate s env es = (s',r) /\ ~(r = Rerr (Rabort
+        Rtimeout_error)) ==>
       evaluate (semanticPrimitives_state_clock_fupd (K
         (semanticPrimitives_state_clock s + extra)) s) env es =
       (semanticPrimitives_state_clock_fupd (K
@@ -351,8 +353,8 @@ let evaluate_match_add_to_clock =
   cake_theorem "evaluate_match_add_to_clock"
   (fun () ->
     `!(s:'ffi semanticPrimitives_state) env v pes err_v s' r extra.
-      evaluate_evaluate_match s env v pes err_v = (s',r) /\ ~(
-      r = Rerr (Rabort Rtimeout_error)) ==>
+      evaluate_evaluate_match s env v pes err_v = (s',r) /\ ~(r =
+        Rerr (Rabort Rtimeout_error)) ==>
       evaluate_evaluate_match (semanticPrimitives_state_clock_fupd
         (K (semanticPrimitives_state_clock s + extra)) s) env v pes
         err_v =
@@ -466,8 +468,8 @@ let evaluate_decs_add_to_clock =
   cake_theorem "evaluate_decs_add_to_clock"
   (fun () ->
     `!s e p s' r extra.
-     evaluate_evaluate_decs s e p = (s',r) /\ ~(
-     r = Rerr (Rabort Rtimeout_error)) ==>
+     evaluate_evaluate_decs s e p = (s',r) /\ ~(r = Rerr (Rabort
+       Rtimeout_error)) ==>
      evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K
        (semanticPrimitives_state_clock s + extra)) s) e p =
      (semanticPrimitives_state_clock_fupd (K
@@ -578,7 +580,7 @@ let evaluate_next_exn_stamp_mono =
   CHEAT_TAC;;
 
 (* HOL4 evaluatePropsScript.sml:744-746: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: evaluate_case_eqs *)
 
 let evaluate_set_next_stamps = cake_theorem "evaluate_set_next_stamps"
   (fun () ->
@@ -691,8 +693,8 @@ let is_clock_io_mono_set_clock =
 let evaluate_set_clock = cake_theorem "evaluate_set_clock"
   (fun () ->
     `!(s:'ffi semanticPrimitives_state) env exps s1 res.
-        evaluate s env exps = (s1,res) /\ ~(
-        res = Rerr (Rabort Rtimeout_error)) ==>
+        evaluate s env exps = (s1,res) /\ ~(res = Rerr (Rabort
+          Rtimeout_error)) ==>
         (!ck. ?ck1. evaluate (semanticPrimitives_state_clock_fupd
           (K ck1) s) env exps =
                      (semanticPrimitives_state_clock_fupd (K ck)
@@ -702,8 +704,8 @@ let evaluate_set_clock = cake_theorem "evaluate_set_clock"
 let evaluate_decs_set_clock = cake_theorem "evaluate_decs_set_clock"
   (fun () ->
     `!s env decs s1 res.
-        evaluate_evaluate_decs s env decs = (s1,res) /\ ~(
-        res = Rerr (Rabort Rtimeout_error)) ==>
+        evaluate_evaluate_decs s env decs = (s1,res) /\ ~(res =
+          Rerr (Rabort Rtimeout_error)) ==>
         (!ck. ?ck1. evaluate_evaluate_decs
           (semanticPrimitives_state_clock_fupd (K ck1) s) env decs =
                      (semanticPrimitives_state_clock_fupd (K ck)
@@ -728,8 +730,7 @@ let evaluate_minimal_clock = cake_theorem "evaluate_minimal_clock"
   (fun () ->
     `(!(s:'ffi semanticPrimitives_state) env es s' r k.
       evaluate s env es = (s',r) /\ semanticPrimitives_state_clock
-      s' = 0 /\ ~(
-      r = Rerr (Rabort Rtimeout_error)) /\
+      s' = 0 /\ ~(r = Rerr (Rabort Rtimeout_error)) /\
         semanticPrimitives_state_clock
       s > k ==>
       (?s''.
@@ -746,8 +747,7 @@ let evaluate_match_minimal_clock =
     `(!(s:'ffi semanticPrimitives_state) env v pes err_v s' r k.
       evaluate_evaluate_match s env v pes err_v = (s',r) /\
         semanticPrimitives_state_clock
-      s' = 0 /\ ~(
-      r = Rerr (Rabort Rtimeout_error)) /\
+      s' = 0 /\ ~(r = Rerr (Rabort Rtimeout_error)) /\
         semanticPrimitives_state_clock
       s > k ==>
       (?s''.
@@ -761,8 +761,8 @@ let evaluate_match_minimal_clock =
 
 let evaluate_set_init_clock = cake_theorem "evaluate_set_init_clock"
   (fun () ->
-    `evaluate st env xs = (st',res) /\ ~(
-     res = Rerr (Rabort Rtimeout_error)) ==>
+    `evaluate st env xs = (st',res) /\ ~(res = Rerr (Rabort
+  Rtimeout_error)) ==>
      (!k. ?ck res1 st1.
      evaluate (semanticPrimitives_state_clock_fupd (K k) st) env xs
        = (st1,res1) /\
@@ -808,8 +808,7 @@ let eval_no_eval_simulation = cake_theorem "eval_no_eval_simulation"
     `(!(s:'ffi semanticPrimitives_state) env exps s' res.
         evaluate s env exps = (s',res) /\
           semanticPrimitives_state_eval_state
-        s = NONE /\ ~(
-        res = Rerr (Rabort Rtype_error)) ==>
+        s = NONE /\ ~(res = Rerr (Rabort Rtype_error)) ==>
           semanticPrimitives_state_eval_state
         s' = NONE /\
         evaluate (semanticPrimitives_state_eval_state_fupd (K es)
@@ -819,8 +818,7 @@ let eval_no_eval_simulation = cake_theorem "eval_no_eval_simulation"
      (!(s:'ffi semanticPrimitives_state) env x pes err_x s' res.
         evaluate_evaluate_match s env x pes err_x = (s',res) /\
           semanticPrimitives_state_eval_state
-        s = NONE /\ ~(
-        res = Rerr (Rabort Rtype_error)) ==>
+        s = NONE /\ ~(res = Rerr (Rabort Rtype_error)) ==>
           semanticPrimitives_state_eval_state
         s' = NONE /\
         evaluate_evaluate_match
@@ -831,8 +829,7 @@ let eval_no_eval_simulation = cake_theorem "eval_no_eval_simulation"
      (!(s:'ffi semanticPrimitives_state) env decs s' res.
         evaluate_evaluate_decs s env decs = (s',res) /\
           semanticPrimitives_state_eval_state
-        s = NONE /\ ~(
-        res = Rerr (Rabort Rtype_error)) ==>
+        s = NONE /\ ~(res = Rerr (Rabort Rtype_error)) ==>
           semanticPrimitives_state_eval_state
         s' = NONE /\
         evaluate_evaluate_decs
@@ -851,8 +848,7 @@ let evaluate_ffi_etc_intro = cake_theorem "evaluate_ffi_etc_intro"
        semanticPrimitives_state_next_exn_stamp
      s1 = semanticPrimitives_state_next_exn_stamp s0 /\
        semanticPrimitives_state_eval_state
-     s0 = NONE /\ ~(
-     res = Rerr (Rabort Rtype_error)) /\
+     s0 = NONE /\ ~(res = Rerr (Rabort Rtype_error)) /\
        semanticPrimitives_state_refs
      s = semanticPrimitives_state_refs s0 ==>
      (?ck1 ck2. evaluate (semanticPrimitives_state_clock_fupd (K
@@ -879,15 +875,14 @@ let pmatch_not_type_error_EQ = cake_theorem "pmatch_not_type_error_EQ"
         v = semanticPrimitives_Conv (SOME t) ys /\
         nsLookup envC name = SOME (l,stamp) /\ LENGTH xs = l /\
         same_type stamp t /\
-        (t = stamp ==> l = LENGTH ys /\ ~(
-                       semanticPrimitives_pmatch_list envC refs xs
-                         ys acc = Match_type_error)))) /\
+        (t = stamp ==> l = LENGTH ys /\
+          ~(semanticPrimitives_pmatch_list envC refs xs ys acc =
+          Match_type_error)))) /\
      (~(semanticPrimitives_pmatch envC refs (ast_Pcon NONE xs) v
        acc = Match_type_error) <=>
       (?ys. v = semanticPrimitives_Conv NONE ys /\ LENGTH xs =
-        LENGTH ys /\ ~(
-           semanticPrimitives_pmatch_list envC refs xs ys acc =
-             Match_type_error))) /\
+        LENGTH ys /\ ~(semanticPrimitives_pmatch_list envC refs xs ys
+        acc = Match_type_error))) /\
      (~(semanticPrimitives_pmatch_list envC refs [] [] acc =
        Match_type_error) <=> T) /\
      (~(semanticPrimitives_pmatch_list envC refs [] (v :: vs) acc =
@@ -895,17 +890,14 @@ let pmatch_not_type_error_EQ = cake_theorem "pmatch_not_type_error_EQ"
      (~(semanticPrimitives_pmatch_list envC refs (p :: ps) [] acc =
        Match_type_error) <=> F) /\
      (~(semanticPrimitives_pmatch_list envC refs (p :: ps) (v ::
-       vs) acc = Match_type_error) <=> ~(
-        semanticPrimitives_pmatch envC refs p v acc =
-          Match_type_error) /\
+       vs) acc = Match_type_error) <=> ~(semanticPrimitives_pmatch envC
+       refs p v acc = Match_type_error) /\
         (!a. semanticPrimitives_pmatch envC refs p v acc = No_match
-          ==> ~(
-             semanticPrimitives_pmatch_list envC refs ps vs acc =
-               Match_type_error)) /\
-        (!a. semanticPrimitives_pmatch envC refs p v acc = Match a
-          ==> ~(
-             semanticPrimitives_pmatch_list envC refs ps vs a =
-               Match_type_error)))`)
+          ==> ~(semanticPrimitives_pmatch_list envC refs ps vs acc =
+          Match_type_error)) /\
+        (!a. semanticPrimitives_pmatch envC refs p v acc = Match
+          a ==> ~(semanticPrimitives_pmatch_list envC refs ps vs a =
+          Match_type_error)))`)
   CHEAT_TAC;;
 
 let do_app_ffi_mono = cake_theorem "do_app_ffi_mono"

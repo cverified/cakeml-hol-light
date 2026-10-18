@@ -466,8 +466,7 @@ let mc_imul_def,mc_imul_pre_def =
                word) list#('a word) list)#bool`;;
 
 let single_div_pre_def = cake_define
-  `single_div_pre r2 r0 r9 <=> ~(
-     r9 = ((n2w 0x0):'a word)) /\
+  `single_div_pre r2 r0 r9 <=> ~(r9 = ((n2w 0x0):'a word)) /\
      (w2n r2 * dimword (:'a) + w2n r0) DIV w2n r9 < dimword (:'a)`;;
 
 let mc_single_div_def,mc_single_div_pre_def =

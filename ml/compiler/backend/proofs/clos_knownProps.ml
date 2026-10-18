@@ -16,8 +16,7 @@ needs "compiler/backend/semantics/closProps.ml";;
 needs "lib/mergesort.ml";;
 needs "lib/sptree.ml";;
 
-(* HOL4 clos_knownPropsScript.sml:10: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownPropsScript.sml:10: ML code, not ported *)
 
 let merge_Other = cake_theorem "merge_Other[simp]"
   (fun () ->
@@ -54,76 +53,74 @@ let subapprox_def = cake_define
   `subapprox a1 a2 <=> merge a1 a2 = a2`;;
 
 (* HOL4 clos_knownPropsScript.sml:61: ML code, not ported *)
+hol4_overload "◁" "subapprox";;
 
 let subapprox_refl = cake_theorem "subapprox_refl[simp]"
   (fun () ->
-    `subapprox
-        a a`)
+    `(subapprox) a a`)
   CHEAT_TAC;;
 
 let subapprox_trans = cake_theorem "subapprox_trans"
   (fun () ->
-    `subapprox
-        a1 a2 /\ subapprox a2 a3 ==> subapprox a1 a3`)
+    `(subapprox) a1 a2 /\ (subapprox) a2 a3 ==> (subapprox) a1 a3`)
   CHEAT_TAC;;
 
 let subapprox_antisym = cake_theorem "subapprox_antisym"
   (fun () ->
-    `subapprox
-        a1 a2 /\ subapprox a2 a1 ==> a1 = a2`)
+    `(subapprox) a1 a2 /\ (subapprox) a2 a1 ==> a1 = a2`)
   CHEAT_TAC;;
 
 let subapprox_merge = cake_theorem "subapprox_merge[simp]"
   (fun () ->
-    `subapprox
-        a (merge a b) /\ subapprox a (merge b a)`)
+    `(subapprox) a (merge a b) /\ (subapprox) a (merge b a)`)
   CHEAT_TAC;;
 
 let subapprox_Other = cake_theorem "subapprox_Other[simp]"
   (fun () ->
-    `(subapprox clos_known_Other a <=> (a = clos_known_Other)) /\
-  subapprox a clos_known_Other`)
+    `((subapprox) clos_known_Other a <=> (a = clos_known_Other)) /\
+  (subapprox) a clos_known_Other`)
   CHEAT_TAC;;
 
 let subapprox_Int = cake_theorem "subapprox_Int[simp]"
   (fun () ->
-    `(subapprox a (Int i) <=> a = Int i \/ a = clos_known_Impossible) /\
-     (subapprox (Int i) a <=> a = Int i \/ a = clos_known_Other)`)
+    `((subapprox) a (Int i) <=> a = Int i \/ a = clos_known_Impossible)
+  /\
+     ((subapprox) (Int i) a <=> a = Int i \/ a =
+       clos_known_Other)`)
   CHEAT_TAC;;
 
 
 let subapprox_ClosNoInline = cake_theorem "subapprox_ClosNoInline[simp]"
   (fun () ->
-    `(subapprox a (clos_known_ClosNoInline m n) <=> a =
+    `((subapprox) a (clos_known_ClosNoInline m n) <=> a =
   clos_known_ClosNoInline m n \/ a = clos_known_Impossible) /\
-     (subapprox (clos_known_ClosNoInline m n) a <=> a =
+     ((subapprox) (clos_known_ClosNoInline m n) a <=> a =
        clos_known_ClosNoInline m n \/ a = clos_known_Other)`)
   CHEAT_TAC;;
 
 let subapprox_Clos = cake_theorem "subapprox_Clos[simp]"
   (fun () ->
-    `(subapprox a (clos_known_Clos m n e s) <=> a = clos_known_Clos m n
-  e s \/ a = clos_known_Impossible) /\
-     (subapprox (clos_known_Clos m n e s) a <=> a =
+    `((subapprox) a (clos_known_Clos m n e s) <=> a = clos_known_Clos m
+  n e s \/ a = clos_known_Impossible) /\
+     ((subapprox) (clos_known_Clos m n e s) a <=> a =
        clos_known_Clos m n e s \/ a = clos_known_Other)`)
   CHEAT_TAC;;
 
 let subapprox_Impossible = cake_theorem "subapprox_Impossible[simp]"
   (fun () ->
-    `(subapprox a clos_known_Impossible <=> a = clos_known_Impossible)
-  /\ subapprox clos_known_Impossible a`)
+    `((subapprox) a clos_known_Impossible <=> a =
+  clos_known_Impossible) /\ (subapprox) clos_known_Impossible a`)
   CHEAT_TAC;;
 
 let subapprox_Tuple = cake_theorem "subapprox_Tuple[simp]"
   (fun () ->
-    `subapprox
-        (clos_known_Tuple tg1 as1) (clos_known_Tuple tg2 as2) <=>
-          tg1 = tg2 /\ LIST_REL subapprox as1 as2`)
+    `(subapprox) (clos_known_Tuple tg1 as1) (clos_known_Tuple tg2 as2)
+  <=> tg1 = tg2 /\ LIST_REL subapprox as1 as2`)
   CHEAT_TAC;;
 
 let better_definedg_def = cake_define
   `better_definedg g1 g2 <=>
-     (!k. k IN domain g1 ==> k IN domain g2 /\ subapprox (THE
+     (!k. k IN domain g1 ==> k IN domain g2 /\ (subapprox) (THE
        (sptree_lookup k g1)) (THE (sptree_lookup k g2)))`;;
 
 let better_definedg_refl = cake_theorem "better_definedg_refl[simp]"

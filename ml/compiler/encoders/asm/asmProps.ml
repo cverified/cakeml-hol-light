@@ -2,8 +2,8 @@
 (*  asmProps: ported from HOL4's
     compiler/encoders/asm/asmPropsScript.sml
     A proof theory about asm.ml, with 9 definitions, 1 datatype and
-    31 theorems.  Needed by lab_to_targetProof.ml, targetProps.ml
-    and targetSem.ml.  *)
+    31 theorems.  Needed by bvi_inlineProof.ml,
+    lab_to_targetProof.ml, targetProps.ml and targetSem.ml.  *)
 (* ======================================================== *)
 
 (*
@@ -37,8 +37,8 @@ let enc_ok_def = cake_define
      (2 EXP asm_config_code_alignment c = LENGTH (asm_config_encode c
        (asm_Inst asm_Skip))) /\
      (!w. (LENGTH (asm_config_encode c w) MOD 2 EXP
-       asm_config_code_alignment c = 0) /\ ~(
-           LENGTH (asm_config_encode c w) = 0)) /\
+       asm_config_code_alignment c = 0) /\ ~(LENGTH (asm_config_encode c
+       w) = 0)) /\
      (!w1 w2. offset_monotonic (asm_config_encode c) c w1 w2
        (asm_Jump w1) (asm_Jump w2)) /\
      (!cmp r ri w1 w2.
@@ -68,8 +68,8 @@ let target_state_rel_def = cake_define
    t ms /\ (target_get_pc t ms = asm_state_pc s) /\
    (!a. a IN asm_state_mem_domain s ==> (target_get_byte t ms a =
      asm_state_mem s a)) /\
-   (!i. i < asm_config_reg_count (target_config t) /\ ~MEM i
-     (asm_config_avoid_regs (target_config t)) ==>
+   (!i. i < asm_config_reg_count (target_config t) /\ ~(MEM i
+     (asm_config_avoid_regs (target_config t))) ==>
         (target_get_reg t ms i = asm_state_regs s i)) /\
    (!i. i < asm_config_fp_reg_count (target_config t) ==>
      (target_get_fp_reg t ms i = asm_state_fp_regs s i))`;;
@@ -164,8 +164,8 @@ let sym_target_state_rel = cake_theorem "sym_target_state_rel"
        t ms /\ (asm_state_pc s = target_get_pc t ms) /\
        (!a. a IN asm_state_mem_domain s ==> (asm_state_mem s a =
          target_get_byte t ms a)) /\
-       (!i. i < asm_config_reg_count (target_config t) /\ ~MEM i
-         (asm_config_avoid_regs (target_config t)) ==>
+       (!i. i < asm_config_reg_count (target_config t) /\ ~(MEM i
+         (asm_config_avoid_regs (target_config t))) ==>
             (asm_state_regs s i = target_get_reg t ms i)) /\
        (!i. i < asm_config_fp_reg_count (target_config t) ==>
          (asm_state_fp_regs s i = target_get_fp_reg t ms i))`)
@@ -173,7 +173,7 @@ let sym_target_state_rel = cake_theorem "sym_target_state_rel"
 
 (* HOL4 asmPropsScript.sml:197-205: ML code, not ported *)
 (* HOL4 asmPropsScript.sml:206-207: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: asserts_eval *)
 
 let asserts_IMP_FOLDR_COUNT_LIST =
   cake_theorem "asserts_IMP_FOLDR_COUNT_LIST"
@@ -204,7 +204,7 @@ let asserts_WEAKEN = cake_theorem "asserts_WEAKEN"
 
 (* HOL4 asmPropsScript.sml:269-273: ML code, not ported *)
 (* HOL4 asmPropsScript.sml:274-275: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: asserts2_eval *)
 
 let asserts2_change_interfer = cake_theorem "asserts2_change_interfer"
   (fun () ->
@@ -347,7 +347,7 @@ let write_mem_word_mem_domain = cake_theorem "write_mem_word_mem_domain"
 let write_mem_word_mem_eq = cake_theorem "write_mem_word_mem_eq"
   (fun () ->
     `!k b a s x.
-        ~asm_state_failed (write_mem_word b k a s) /\ ~(x IN
+        ~(asm_state_failed (write_mem_word b k a s)) /\ ~(x IN
           asm_state_mem_domain s) ==>
         (asm_state_mem (write_mem_word b k a s) x = asm_state_mem
           s x)`)
@@ -355,23 +355,23 @@ let write_mem_word_mem_eq = cake_theorem "write_mem_word_mem_eq"
 
 let mem_op_outside_mem_domain = cake_theorem "mem_op_outside_mem_domain"
   (fun () ->
-    `!m n a s x. ~(x IN asm_state_mem_domain s) /\ ~asm_state_failed
-  (asmSem_mem_op m n a s) ==>
+    `!m n a s x. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed
+  (asmSem_mem_op m n a s)) ==>
                  (asm_state_mem (asmSem_mem_op m n a s) x =
                    asm_state_mem s x)`)
   CHEAT_TAC;;
 
 let inst_outside_mem_domain = cake_theorem "inst_outside_mem_domain"
   (fun () ->
-    `!i. ~(x IN asm_state_mem_domain s) /\ ~asm_state_failed
-  (asmSem_inst i s) ==> (asm_state_mem (asmSem_inst i s) x =
+    `!i. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed
+  (asmSem_inst i s)) ==> (asm_state_mem (asmSem_inst i s) x =
   asm_state_mem s x)`)
   CHEAT_TAC;;
 
 let asm_outside_mem_domain = cake_theorem "asm_outside_mem_domain"
   (fun () ->
-    `!i p s x. ~(x IN asm_state_mem_domain s) /\ ~asm_state_failed
-  (asmSem_asm i p s) ==> (asm_state_mem (asmSem_asm i p s) x =
+    `!i p s x. ~(x IN asm_state_mem_domain s) /\ ~(asm_state_failed
+  (asmSem_asm i p s)) ==> (asm_state_mem (asmSem_asm i p s) x =
   asm_state_mem s x)`)
   CHEAT_TAC;;
 

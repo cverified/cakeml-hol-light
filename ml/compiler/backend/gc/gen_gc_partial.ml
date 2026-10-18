@@ -319,8 +319,8 @@ let gen_inv_def = cake_define
        (heap_segment (gen_gc_partial_conf_gen_start
          conf,gen_gc_partial_conf_refs_start conf) heap =
          SOME (heap_old,heap_current,heap_refs)) /\
-       EVERY (\e. ~heap_element_is_ref conf e) heap_old /\
-       EVERY (\e. ~heap_element_is_ref conf e) heap_current /\
+       EVERY (\e. ~(heap_element_is_ref conf e)) heap_old /\
+       EVERY (\e. ~(heap_element_is_ref conf e)) heap_current /\
        EVERY isDataElement heap_refs /\
        (!n a d.
           MEM (ForwardPointer n a d) heap ==>
@@ -786,7 +786,7 @@ let f_old_ptrs_finite = cake_theorem "f_old_ptrs_finite[simp]"
   CHEAT_TAC;;
 
 (* HOL4 gen_gc_partialScript.sml:1315-1316: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: f_old_ptrs_finite_open *)
 
 let new_f_def = cake_define
   `new_f f conf heap =
@@ -827,7 +827,8 @@ let isSomeDataElement_to_gen_heap_list =
   CHEAT_TAC;;
 
 (* HOL4 gen_gc_partialScript.sml:1371-1372: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   isSomeDataElement_to_gen_heap_element *)
 
 let MEM_refs_to_roots_IMP_MEM =
   cake_theorem "MEM_refs_to_roots_IMP_MEM[local]"
@@ -874,7 +875,8 @@ let roots_ok_simulation = cake_theorem "roots_ok_simulation[local]"
   CHEAT_TAC;;
 
 (* HOL4 gen_gc_partialScript.sml:1459-1460: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   heap_length_to_gen_heap_element *)
 
 let MEM_to_gen_heap_IMP_MEM =
   cake_theorem "MEM_to_gen_heap_IMP_MEM[local]"
@@ -936,7 +938,7 @@ let new_f_FAPPLY = cake_theorem "new_f_FAPPLY[local]"
 let isSomeDataElement_heap_lookup_heap_expand =
   cake_theorem "isSomeDataElement_heap_lookup_heap_expand[simp]"
   (fun () ->
-    `~isSomeDataElement (heap_lookup x (heap_expand n))`)
+    `~(isSomeDataElement (heap_lookup x (heap_expand n)))`)
   CHEAT_TAC;;
 
 (* HOL4 gen_gc_partialScript.sml:1581-1582: ML code, not ported *)

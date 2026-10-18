@@ -663,7 +663,7 @@ let pmatch_def = cake_define_list_try_tac (fun () ->
           Match_type_error)`;
    `flatSem_pmatch s (Pcon stmp ps:flatLang_pat) (Conv stmp'
   vs:flatSem_v) bindings =
-        (if ~pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs)
+        (if ~(pmatch_stamps_ok stmp stmp' (LENGTH ps) (LENGTH vs))
           then
           Match_type_error else if OPTION_MAP FST stmp = OPTION_MAP
             FST stmp' /\
@@ -975,7 +975,7 @@ hol4_overload "evaluate_decs" "flatSem_evaluate_decs";;
 (* HOL4 flatSemScript.sml:947-950: ML code, not ported *)
 
 (* HOL4 flatSemScript.sml:952-953: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_eq_thms *)
 
 let flatSem_do_app_const = cake_theorem "do_app_const"
   (fun () ->
@@ -1000,10 +1000,10 @@ let flatSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
   CHEAT_TAC;;
 
 (* HOL4 flatSemScript.sml:986-987: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_def *)
 
 (* HOL4 flatSemScript.sml:989-990: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_ind *)
 
 let initial_state_def = cake_define
   `flatSem_initial_state ffi k ec =

@@ -291,7 +291,7 @@ let code_loaded_def = cake_define
    will be proved at the top-level by creating an appropriate t *)
 let target_configured_def = cake_define
   `target_configured (t:'a asm_state) mc_conf <=>
-     ~asm_state_failed t /\ be
+     ~(asm_state_failed t) /\ be
      t = asm_config_big_endian (target_config (machine_config_target
        mc_conf)) /\ asm_state_align
      t = asm_config_code_alignment (target_config
@@ -329,16 +329,13 @@ let start_pc_ok_def = cake_define
      ((n2w 1) && pc') = (n2w 0) /\
      (?i. mmio_pcs_min_index (ffi_names mc_conf) = SOME i /\
      (!index.
-        index < i ==> ~(
-        pc' - n2w ((3 + index) * ffi_offset) IN
+        index < i ==> ~(pc' - n2w ((3 + index) * ffi_offset) IN
           machine_config_prog_addresses
-        mc_conf) /\ ~(
-        pc' - n2w ((3 + index) * ffi_offset) IN
+        mc_conf) /\ ~(pc' - n2w ((3 + index) * ffi_offset) IN
           machine_config_shared_addresses
-        mc_conf) /\ ~(
-        pc' - n2w ((3 + index) * ffi_offset) = machine_config_halt_pc
-        mc_conf) /\ ~(
-        pc' - n2w ((3 + index) * ffi_offset) =
+        mc_conf) /\ ~(pc' - n2w ((3 + index) * ffi_offset) =
+          machine_config_halt_pc
+        mc_conf) /\ ~(pc' - n2w ((3 + index) * ffi_offset) =
           machine_config_ccache_pc
         mc_conf) /\
         find_index
@@ -377,8 +374,8 @@ let ffi_interfer_ok_def = cake_define
             (EL index (ffi_names mc_conf) = ffi_ExtCall (implode "")
               ==> new_bytes = bytes2) /\
             target_state_rel (machine_config_target mc_conf)
-              (asm_state_pc_fupd (K (--n2w ((3 + index) * ffi_offset)
-                + pc')) t1) ms2 /\
+              (asm_state_pc_fupd (K (--(n2w ((3 + index) *
+                ffi_offset)) + pc')) t1) ms2 /\
             alignment_aligned (asm_config_code_alignment
               (target_config (machine_config_target mc_conf)))
              (asm_state_regs t1 (match asm_config_link_reg
@@ -401,8 +398,8 @@ let ffi_interfer_ok_def = cake_define
             (!r. MEM r (machine_config_callee_saved_regs mc_conf) /\
                  r < asm_config_reg_count (target_config
                    (machine_config_target mc_conf)) /\
-                 ~MEM r (asm_config_avoid_regs (target_config
-                   (machine_config_target mc_conf))) ==> target_get_reg
+                 ~(MEM r (asm_config_avoid_regs (target_config
+                   (machine_config_target mc_conf)))) ==> target_get_reg
                    (machine_config_target
                  mc_conf) ms' r = asm_state_regs t1 r))) /\
           (i <= index /\
@@ -436,7 +433,7 @@ let ccache_interfer_ok_def = cake_define
   `ccache_interfer_ok pc' mc_conf <=>
      (!ms2 t1 k a1 a2.
         target_state_rel (machine_config_target mc_conf)
-          (asm_state_pc_fupd (K (--n2w (2 * ffi_offset) + pc')) t1)
+          (asm_state_pc_fupd (K (--(n2w (2 * ffi_offset)) + pc')) t1)
         ms2 /\
         alignment_aligned (asm_config_code_alignment (target_config
           (machine_config_target mc_conf))) (asm_state_regs t1 (match
@@ -456,8 +453,8 @@ let ccache_interfer_ok_def = cake_define
              r = machine_config_ptr_reg mc_conf) /\
                 r < asm_config_reg_count (target_config
                   (machine_config_target mc_conf)) /\
-                ~MEM r (asm_config_avoid_regs (target_config
-                  (machine_config_target mc_conf))) ==> target_get_reg
+                ~(MEM r (asm_config_avoid_regs (target_config
+                  (machine_config_target mc_conf)))) ==> target_get_reg
                   (machine_config_target
                 mc_conf) ms' r = asm_state_regs t1 r)))`;;
 
@@ -540,8 +537,8 @@ let good_init_state_def = cake_define
        m (byte_align a) = wordLang_Word w) /\
      (!n. n < cbspace ==>
        n2w (n + LENGTH bytes) + asm_state_pc t IN
-         asm_state_mem_domain t /\ ~(
-       n2w (n + LENGTH bytes) + asm_state_pc t IN dm)) /\
+         asm_state_mem_domain t /\ ~(n2w (n + LENGTH bytes) +
+         asm_state_pc t IN dm)) /\
      cbspace + LENGTH bytes < dimword (:'a)`;;
 
 (* CakeML code, bytes, and code buffer space, cspace, and FFI functions, ffi,

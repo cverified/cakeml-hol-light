@@ -309,8 +309,7 @@ let init_memory_def = cake_define
                store_list_code (k + 1) 0 xs]`;;
 
 let store_init_def = cake_define
-  `store_init gen_gc' (k:num) = UPDATE_LIST
-     (K (INL (n2w 0)))
+  `store_init gen_gc' (k:num) = UPDATE_LIST (K (INL (n2w 0)))
        [(CurrHeap,INR (k + 2));
         (GlobReal,INR (k + 2));
         (NextFree,INR (k + 2));
@@ -448,3 +447,5 @@ let compile_def = cake_define
      init_stubs gen_gc' max_heap k start' ++
      MAP (stack_remove_prog_comp jump off k) prog`;;
 hol4_overload "compile" "stack_remove_compile";;
+
+cake_hide [];;

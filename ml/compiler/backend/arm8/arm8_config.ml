@@ -29,7 +29,7 @@ let arm8_names_def = cake_define
       insert 30 26) LN:num spt)`;;
 
 (* HOL4 arm8_configScript.sml:32-33: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: arm8_names_def *)
 
 (* HOL4 arm8_configScript.sml:35-37: the ML values that the
    definitions below antiquote *)

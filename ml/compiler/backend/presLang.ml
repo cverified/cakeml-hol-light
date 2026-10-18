@@ -468,11 +468,8 @@ let source_to_display_dec_def = cake_define_list_try_tac (fun () ->
 
 (* flatLang *)
 
-let MEM_pat_size = cake_theorem "MEM_pat_size[local]"
-  (fun () ->
-    `!pats a. MEM a (pats:flatLang_pat list) ==>
-  pattern_semantics_pat_size a < pat1_size pats`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:414-418: a theorem whose statement the
+   port cannot state yet: MEM_pat_size *)
 
 let opt_con_to_display_def = cake_define
   `opt_con_to_display ocon = (match ocon with NONE -> empty_item
@@ -516,22 +513,14 @@ let flat_op_to_display_def = cake_define
   [n1] | El n -> item_with_num (implode "El") n | flatLang_Id ->
   empty_item (implode "Id"))`;;
 
-let MEM_funs_size = cake_theorem "MEM_funs_size[local]"
-  (fun () ->
-    `!fs v1 v2 e. MEM (v1,v2,e) fs ==> flatLang_exp_size e < exp1_size
-  fs`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:457-462: a theorem whose statement the
+   port cannot state yet: MEM_funs_size *)
 
-let MEM_exps_size = cake_theorem "MEM_exps_size[local]"
-  (fun () ->
-    `!exps e. MEM e exps ==> flatLang_exp_size e < exp6_size exps`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:464-469: a theorem whose statement the
+   port cannot state yet: MEM_exps_size *)
 
-let MEM_pats_size = cake_theorem "MEM_pats_size[local]"
-  (fun () ->
-    `!pats p e. MEM (p,e) pats ==> flatLang_exp_size e < exp3_size
-  pats`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:471-476: a theorem whose statement the
+   port cannot state yet: MEM_pats_size *)
 
 let add_name_hint_def = cake_define
   `add_name_hint prefix name_hint =
@@ -769,10 +758,8 @@ let clos_op_to_display_def = cake_define
                                 String (implode "Install") | ThunkOp
                                 t -> thunk_op_to_display t)`;;
 
-let MEM_clos_exps_size = cake_theorem "MEM_clos_exps_size[local]"
-  (fun () ->
-    `!exps e. MEM e exps ==> closLang_exp_size e < exp3_size exps`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:675-680: a theorem whose statement the
+   port cannot state yet: MEM_clos_exps_size *)
 
 let commas_def = cake_define
   `presLang_commas x1 =
@@ -895,10 +882,8 @@ let clos_dec_to_display_def = cake_define
 
 (* bvl to displayLang *)
 
-let MEM_bvl_exps_size = cake_theorem "MEM_bvl_exps_size[local]"
-  (fun () ->
-    `!exps e. MEM e exps ==> bvl_exp_size e < exp1_size exps`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:769-774: a theorem whose statement the
+   port cannot state yet: MEM_bvl_exps_size *)
 
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -961,10 +946,8 @@ let bvl_fun_to_display_def = cake_define
 
 (* bvi to displayLang *)
 
-let MEM_bvi_exps_size = cake_theorem "MEM_bvi_exps_size[local]"
-  (fun () ->
-    `!exps e. MEM e exps ==> bvi_exp_size e < exp2_size exps`)
-  CHEAT_TAC;;
+(* HOL4 presLangScript.sml:829-834: a theorem whose statement the
+   port cannot state yet: MEM_bvi_exps_size *)
 
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -1285,8 +1268,8 @@ let list_size_append_stack_seqs =
   cake_theorem "list_size_append_stack_seqs[local]"
   (fun () ->
     `!x.
-     list_size (labLang_prog_size ARB') (append (stack_seqs x)) =
-     labLang_prog_size ARB' x + 1`)
+     list_size (labLang_prog_size ARB) (append (stack_seqs x)) =
+     labLang_prog_size ARB x + 1`)
   CHEAT_TAC;;
 
 (* the termination relation that HOL4 gives, with
@@ -1486,7 +1469,7 @@ let MEM_append_word_seqs = cake_theorem "MEM_append_word_seqs[local]"
   CHEAT_TAC;;
 
 (* HOL4 presLangScript.sml:1311-1312: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: MEM_word_exps_size_ARB *)
 
 let _ = size_thms "wordLang_exp";;
 (* the termination relation that HOL4 gives, with
@@ -1747,5 +1730,18 @@ let lab_to_strs_def = cake_define
 (* HOL4 presLangScript.sml:1578-1586: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 presLangScript.sml:1588-1600: code that the source has in a
-   comment *)
+(*
+
+val names_tm = “(insert 50 «foo» (insert 60 «bar» LN))”
+
+val data_prog_tm =
+    “[(50,2,Seq (Move 5 1) $
+            Seq (Assign 3 Add [0;1] NONE) $
+            Seq (Assign 6 Sub [5;3] NONE) $ Return 6);
+      (60n,2n,Skip)]”
+
+val _ = data_to_strs data_prog_tm names_tm |> print_strs
+
+*)
+
+cake_hide [];;

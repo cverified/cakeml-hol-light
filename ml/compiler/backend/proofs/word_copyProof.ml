@@ -42,9 +42,8 @@ let unique_rep = cake_theorem "unique_rep[local]"
   (fun () ->
     `CPstate_inv cs ==>
      c IN domain (copy_state_from_eq cs) /\
-     c' IN domain (copy_state_from_eq cs) /\ ~(
-     c = c') ==> ~(
-     sptree_lookup c (copy_state_from_eq cs) = sptree_lookup c'
+     c' IN domain (copy_state_from_eq cs) /\ ~(c = c') ==>
+       ~(sptree_lookup c (copy_state_from_eq cs) = sptree_lookup c'
        (copy_state_from_eq cs))`)
   CHEAT_TAC;;
 
@@ -127,7 +126,7 @@ let both_alloc_vars_def = cake_define
 let lookup_eq_set_eq_not_alloc_var =
   cake_theorem "lookup_eq_set_eq_not_alloc_var"
   (fun () ->
-    `~both_alloc_vars (t,s) ==>
+    `~(both_alloc_vars (t,s)) ==>
      lookup_eq (set_eq cs t s) v =
      lookup_eq cs v`)
   CHEAT_TAC;;
@@ -148,9 +147,8 @@ let lookup_eq_set_eq_is_alloc_var2 =
   (fun () ->
     `CPstate_inv cs /\
      both_alloc_vars (t,s) ==>
-     sptree_lookup t (copy_state_to_eq cs) = NONE ==> ~(
-     v = t) ==> ~(
-     lookup_eq cs s = lookup_eq cs v) ==>
+     sptree_lookup t (copy_state_to_eq cs) = NONE ==> ~(v = t) ==>
+       ~(lookup_eq cs s = lookup_eq cs v) ==>
      lookup_eq (set_eq cs t s) v = lookup_eq cs v`)
   CHEAT_TAC;;
 
@@ -477,8 +475,7 @@ let copy_prop_move_eval = cake_theorem "copy_prop_move_eval"
 
 let lookup_alist_insert_same = cake_theorem "lookup_alist_insert_same"
   (fun () ->
-    `~(
-       s IN set_of_list tt) ==>
+    `~(s IN set_of_list tt) ==>
        sptree_lookup s (alist_insert tt values locals) =
          sptree_lookup s locals`)
   CHEAT_TAC;;
@@ -527,8 +524,8 @@ let copy_prop_move_model = cake_theorem "copy_prop_move_model"
 
 let EVERY_NOT_MEM_D = cake_theorem "EVERY_NOT_MEM_D"
   (fun () ->
-    `EVERY (\t. ~MEM t ss) tt ==> set_of_list tt INTER set_of_list ss
-  = {}`)
+    `EVERY (\t. ~(MEM t ss)) tt ==> set_of_list tt INTER set_of_list
+  ss = {}`)
   CHEAT_TAC;;
 
 let copy_prop_move_correct = cake_theorem "copy_prop_move_correct"
@@ -570,8 +567,14 @@ let word_exp_cong_Shift = cake_theorem "word_exp_cong_Shift"
   CHEAT_TAC;;
 
 (* HOL4 word_copyProofScript.sml:872-895: a proof *)
-(* HOL4 word_copyProofScript.sml:896-903: code that the source has in
-   a comment *)
+(*
+          let
+            val (xty,_) = dom_rng exp_rator_ty
+            val case_rand = ISPEC (mk_comb (r, el 1 d)) $ TypeBase.case_rand_of xty
+          in
+            rw[case_rand]
+          end
+*)
 (* HOL4 word_copyProofScript.sml:904-906: ML code, not ported *)
         (* use appropriate case_cong *)
 (* HOL4 word_copyProofScript.sml:908-916: a proof *)
@@ -654,8 +657,7 @@ let lookup_store_eq_set_store_eq_2 =
   cake_theorem "lookup_store_eq_set_store_eq_2"
   (fun () ->
     `CPstate_inv cs /\
-     is_alloc_var x /\ ~(
-     s = t) /\
+     is_alloc_var x /\ ~(s = t) /\
      lookup_store_eq (set_store_eq cs s x) t = SOME y ==>
      lookup_store_eq cs t = SOME y`)
   CHEAT_TAC;;
@@ -715,8 +717,8 @@ let copy_prop_correct = cake_theorem "copy_prop_correct"
     `!prog cs st prog' cs' err st'.
      CPstate_inv cs /\
      CPstate_models cs st /\
-     copy_prop_prog prog cs = (prog',cs') /\ ~(
-     err = SOME wordSem_Error) /\
+     copy_prop_prog prog cs = (prog',cs') /\ ~(err = SOME
+       wordSem_Error) /\
      wordSem_evaluate (prog,st) = (err,st') ==>
      wordSem_evaluate (prog',st) = (err,st') /\
      (err = NONE ==> CPstate_models cs' st')`)
@@ -729,7 +731,8 @@ let copy_prop_correct = cake_theorem "copy_prop_correct"
 (* Main semantics result *)
 let evaluate_copy_prop = cake_theorem "evaluate_copy_prop"
   (fun () ->
-    `~(
-       FST (wordSem_evaluate (e,s)) = SOME wordSem_Error) ==>
+    `~(FST (wordSem_evaluate (e,s)) = SOME wordSem_Error) ==>
        wordSem_evaluate (copy_prop e,s) = wordSem_evaluate (e,s)`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -246,7 +246,7 @@ let labels_rel_append_imp = cake_theorem "labels_rel_append_imp[local]"
 (* HOL4 wordConvsProofScript.sml:254-260: ML code, not ported *)
 
 (* HOL4 wordConvsProofScript.sml:262-265: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: const_fp_loop_Seq *)
 
 (* The tricky part: to prove this syntactic property (and only for this) we
    have to show that the strategy actually works, and that any program which
@@ -962,7 +962,8 @@ let remove_dead_conventions =
   CHEAT_TAC;;
 
 (* HOL4 wordConvsProofScript.sml:1563-1565: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   remove_dead_prog_conventions *)
 
 let word_get_code_labels_remove_dead =
   cake_theorem "word_get_code_labels_remove_dead[local]"
@@ -1150,8 +1151,9 @@ let flat_exp_conventions_copy_prop =
 let copy_prop_prog_not_alloc_var_aux1 =
   cake_theorem "copy_prop_prog_not_alloc_var_aux1[local]"
   (fun () ->
-    `(!x. ~is_alloc_var x ==> lookup x (copy_state_to_eq cs) = NONE) ==>
-     ~is_alloc_var x ==>
+    `(!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq cs) = NONE)
+  ==>
+     ~(is_alloc_var x) ==>
      lookup x (copy_state_to_eq (remove_eq cs y)) = NONE`)
   CHEAT_TAC;;
 
@@ -1159,9 +1161,9 @@ let copy_prop_prog_not_alloc_var_aux2 =
   cake_theorem "copy_prop_prog_not_alloc_var_aux2[local]"
   (fun () ->
     `!cs.
-     (!x. ~is_alloc_var x ==> lookup x (copy_state_to_eq cs) =
+     (!x. ~(is_alloc_var x) ==> lookup x (copy_state_to_eq cs) =
        NONE) ==>
-     ~is_alloc_var x ==>
+     ~(is_alloc_var x) ==>
      lookup x (copy_state_to_eq (remove_eqs cs yy)) = NONE`)
   CHEAT_TAC;;
 
@@ -1409,7 +1411,7 @@ let MEM_extract_labels_Seq_assoc_right_lemma =
   CHEAT_TAC;;
 
 (* HOL4 wordConvsProofScript.sml:2491-2492: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: helper *)
 
 let ALL_DISTINCT_extract_labels_Seq_assoc_right_lemma =
   cake_theorem
@@ -1735,3 +1737,5 @@ let word_good_code_labels_word_to_word =
      wordConvs_good_code_labels (SND (word_to_word_compile wc ac
        progs)) elabs`)
   CHEAT_TAC;;
+
+cake_hide [];;

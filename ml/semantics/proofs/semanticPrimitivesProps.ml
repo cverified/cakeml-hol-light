@@ -19,8 +19,8 @@ needs "semantics/semanticPrimitives.ml";;
 
 let with_same_v = cake_theorem "with_same_v[simp]"
   (fun () ->
-    `sem_env_v_fupd (K (sem_env_v env = env))
-        (env:'v sem_env)`)
+    `sem_env_v_fupd (K (sem_env_v env))
+        (env:'v sem_env) = env`)
   CHEAT_TAC;;
 
 let unchanged_env = cake_theorem "unchanged_env[simp]"
@@ -33,8 +33,8 @@ let semanticPrimitivesProps_with_same_clock =
   cake_theorem "with_same_clock"
   (fun () ->
     `semanticPrimitives_state_clock_fupd (K
-  (semanticPrimitives_state_clock st = st))
-        (st:'ffi semanticPrimitives_state)`)
+  (semanticPrimitives_state_clock st))
+        (st:'ffi semanticPrimitives_state) = st`)
   CHEAT_TAC;;
 
 let semanticPrimitivesProps_Boolv_11 = cake_theorem "Boolv_11[simp]"
@@ -130,9 +130,9 @@ let pmatch_nsAppend = cake_theorem "pmatch_nsAppend"
   CHEAT_TAC;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:163: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: pmatch_nsAppend_No_match *)
 (* HOL4 semanticPrimitivesPropsScript.sml:164: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: pmatch_nsAppend_Match *)
 
 let pmatch_acc = cake_theorem "pmatch_acc"
   (fun () ->
@@ -179,7 +179,7 @@ let semanticPrimitivesProps_pair_lam_lem =
   CHEAT_TAC;;
 
 (* HOL4 semanticPrimitivesPropsScript.sml:211-215: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: do_app_cases *)
 
 let do_opapp_cases = cake_theorem "do_opapp_cases"
   (fun () ->
@@ -223,15 +223,13 @@ let do_app_ffi_unchanged = cake_theorem "do_app_ffi_unchanged"
 let do_app_ffi_changed = cake_theorem "do_app_ffi_changed"
   (fun () ->
     `semanticPrimitives_do_app (st,ffi) op vs = SOME ((st',ffi'),res) /\
-  ~(
-     ffi = ffi') ==>
+  ~(ffi = ffi') ==>
      (?s conf lnum ws ffi_st ws' b.
        op = ast_FFI s /\
        vs = [semanticPrimitives_Litv (ast_StrLit conf);
          semanticPrimitives_Loc b lnum] /\
        store_lookup lnum st = SOME (semanticPrimitives_W8array ws)
-         /\ ~(
-       s = (implode "")) /\ oracle
+         /\ ~(s = (implode "")) /\ oracle
        ffi
           (ffi_ExtCall s) (ffi_state_ffi_state
           ffi)
@@ -253,8 +251,7 @@ let do_app_ffi_changed = cake_theorem "do_app_ffi_changed"
 let do_app_not_timeout = cake_theorem "do_app_not_timeout"
   (fun () ->
     `semanticPrimitives_do_app s op vs = SOME (s',Rerr (Rabort a)) ==>
-  ~(
-     a = Rtimeout_error)`)
+  ~(a = Rtimeout_error)`)
   CHEAT_TAC;;
 
 let do_app_type_error = cake_theorem "do_app_type_error"
@@ -301,7 +298,7 @@ let map_error_result_Rtype_error =
 
 let map_error_result_I = cake_theorem "map_error_result_I[simp]"
   (fun () ->
-    `map_error_result I' e = e`)
+    `map_error_result I e = e`)
   CHEAT_TAC;;
 
 let map_result_def = cake_define_list
@@ -469,9 +466,9 @@ let sv_rel_cases = cake_theorem "sv_rel_cases"
 
 let sv_rel_O = cake_theorem "sv_rel_O"
   (fun () ->
-    `!R1 R2. semanticPrimitivesProps_sv_rel (R1 O R2) =
-  semanticPrimitivesProps_sv_rel R1 O semanticPrimitivesProps_sv_rel
-  R2`)
+    `!R1 R2. semanticPrimitivesProps_sv_rel (O R1 R2) = O
+  (semanticPrimitivesProps_sv_rel R1) (semanticPrimitivesProps_sv_rel
+  R2)`)
   CHEAT_TAC;;
 
 let sv_rel_mono = cake_theorem "sv_rel_mono"
@@ -554,9 +551,7 @@ let ctors_of_dec_def = cake_define
 
 (* free vars *)
 
-(* the first pass assumes the termination:
-   replacing the CHEAT_TAC is all that is left *)
-let FV_def = cake_define_list_cheat CHEAT_TAC
+let FV_def = cake_define_list
   [`FV (ast_Raise e:ast_exp) = FV e`;
    `FV (ast_Handle e pes:ast_exp) = FV e UNION FV_pes pes`;
    `FV (ast_Lit _21:ast_exp) = {}`;
@@ -624,7 +619,7 @@ let concrete_v_simps = cake_theorem "concrete_v_simps[simp]"
        concrete_v xs) /\
      (concrete_v (semanticPrimitives_Vectorv xs) = EVERY concrete_v
        xs) /\
-     (concrete_v (semanticPrimitives_Env id' e) = F) /\
+     (concrete_v (semanticPrimitives_Env id e) = F) /\
      (concrete_v (semanticPrimitives_Closure e2 nm x) = F) /\
      (concrete_v (semanticPrimitives_Recclosure e3 funs nm2) = F)`)
   CHEAT_TAC;;

@@ -485,7 +485,7 @@ let mc_fac_code_def = to_deep mc_fac_def;;
 let mc_use_fac_code_def = to_deep mc_use_fac_def;;
 
 (* HOL4 word_bignumScript.sml:414-415: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: all_code_defs *)
 
 (* compiler into wordLang *)
 
@@ -651,4 +651,4 @@ let generated_bignum_stubs_def = cake_define
          (Return 0 [0]))) cs)`;;
 
 (* HOL4 word_bignumScript.sml:576-577: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: generated_bignum_stubs_eq *)

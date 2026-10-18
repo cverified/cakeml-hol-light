@@ -14,6 +14,7 @@ needs "compiler/backend/bvi.ml";;
 needs "compiler/backend/bvi_to_data.ml";;
 needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/data_live.ml";;
+needs "compiler/backend/data_to_word.ml";;
 needs "compiler/backend/proofs/data_liveProof.ml";;
 needs "compiler/backend/proofs/data_simpProof.ml";;
 needs "compiler/backend/proofs/data_spaceProof.ml";;
@@ -67,7 +68,7 @@ let data_to_bvi_v_def = cake_define_list_try (fun () ->
 (* Projection for Unit constant *)
 let data_to_bvi_v_Unit = cake_theorem "data_to_bvi_v_Unit[simp]"
   (fun () ->
-    `data_to_bvi_v Unit' = Unit'`)
+    `data_to_bvi_v Unit = Unit`)
   CHEAT_TAC;;
 
 (* Projection for Boolv constant *)
@@ -119,8 +120,7 @@ let find_code_lemma = cake_theorem "find_code_lemma[local]"
 let optimise_correct = cake_theorem "optimise_correct"
   (fun () ->
     `!c s. ~(FST (evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error))) /\
-  ~(
-           FST (evaluate (c,s)) = NONE) ==>
+  ~(FST (evaluate (c,s)) = NONE) ==>
            (?safe peak smx ls.
              evaluate (bvi_to_data_optimise c,s) = (I ## (\x.
                dataSem_state_stack_max_fupd (K smx)
@@ -149,8 +149,7 @@ let compile_RANGE = cake_theorem "compile_RANGE[local]"
 (* HOL4 bvi_to_dataProofScript.sml:158: the overload isResult, which
    the port expands *)
 
-(* HOL4 bvi_to_dataProofScript.sml:160: the ML values that the
-   definitions below antiquote *)
+(* HOL4 bvi_to_dataProofScript.sml:160: ML code, not ported *)
 
 (* HOL4 bvi_to_dataProofScript.sml:162: ML code, not ported *)
 
@@ -184,15 +183,15 @@ let v_to_list_eq = cake_theorem "v_to_list_eq[simp]"
 let data_to_bvi_number_eq = cake_theorem "data_to_bvi_number_eq"
   (fun () ->
     `!ns.
-       MAP data_to_bvi_v' (MAP (Number o (&) o w2n') ns) =
-       MAP (Number o (&) o w2n') ns`)
+       MAP data_to_bvi_v (MAP (Number o (&) o w2n) ns) =
+       MAP (Number o (&) o w2n) ns`)
   CHEAT_TAC;;
 
 (* Special bijection for `data_to_bvi_v` with `dataSem$Word64` + `MAP` *)
 let data_to_bvi_word_eq = cake_theorem "data_to_bvi_word_eq"
   (fun () ->
     `!ns.
-       MAP data_to_bvi_v' (MAP Word64 ns) =
+       MAP data_to_bvi_v (MAP Word64 ns) =
        MAP Word64 ns`)
   CHEAT_TAC;;
 
@@ -225,8 +224,8 @@ let v_to_words_eq = cake_theorem "v_to_words_eq[simp]"
 (* isBool simplifications *)
 let isBool_simps = cake_theorem "isBool_simps"
   (fun () ->
-    `(!b z. isBool T (z:dataSem_v) ==> ~isBool F z) /\
-     (!b z. isBool F (z:dataSem_v) ==> ~isBool T z)`)
+    `(!b z. isBool T (z:dataSem_v) ==> ~(isBool F z)) /\
+     (!b z. isBool F (z:dataSem_v) ==> ~(isBool T z))`)
   CHEAT_TAC;;
 
 (* HOL4 bvi_to_dataProofScript.sml:272-273: ML code, not ported *)
@@ -279,7 +278,7 @@ let data_to_bvi_v_eq = cake_theorem "data_to_bvi_v_eq[simp]"
   CHEAT_TAC;;
 (*flip LHS equalities*)
 (* HOL4 bvi_to_dataProofScript.sml:351-353: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: data_to_bvi_v_eq' *)
 
 (* HOL4 bvi_to_dataProofScript.sml:355-361: ML code, not ported *)
 
@@ -302,7 +301,7 @@ let data_to_bvi_ref_eq = cake_theorem "data_to_bvi_ref_eq[simp]"
   CHEAT_TAC;;
 
 (* HOL4 bvi_to_dataProofScript.sml:377-379: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: data_to_bvi_ref_eq' *)
 
 (* HOL4 bvi_to_dataProofScript.sml:381-385: ML code, not ported *)
 
@@ -318,7 +317,7 @@ let data_to_bvi_v_list_to_v_Nil =
   cake_theorem "data_to_bvi_v_list_to_v_Nil"
   (fun () ->
     `!z ts.
-     data_to_bvi_v (list_to_v ts Block_nil' z) =
+     data_to_bvi_v (list_to_v ts (Block 0 nil_tag []) z) =
      list_to_v (MAP data_to_bvi_v z)`)
   CHEAT_TAC;;
 
@@ -394,16 +393,12 @@ let data_to_bvi_finalise_cons = cake_theorem "data_to_bvi_finalise_cons"
 let data_to_bvi_do_app = cake_theorem "data_to_bvi_do_app"
   (fun () ->
     `!op t r z res s1.
-       ~(
-       op = Install) /\ ~(
-       op = closLang_IntOp Greater) /\ ~(
-       op = closLang_IntOp closLang_GreaterEq) /\ ~(
-       op = closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Gt)))
-         /\ ~(
-       op = closLang_WordOp (WordTest ast_W8 (ast_Compare
-         ast_Geq))) /\
-       (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ ~(
-       op = ThunkOp ForceThunk) /\
+       ~(op = Install) /\ ~(op = closLang_IntOp Greater) /\ ~(op =
+         closLang_IntOp closLang_GreaterEq) /\ ~(op = closLang_WordOp
+         (WordTest ast_W8 (ast_Compare ast_Gt))) /\ ~(op =
+         closLang_WordOp (WordTest ast_W8 (ast_Compare ast_Geq))) /\
+       (!b. ~(op = closLang_MemOp (closLang_CopyByte b))) /\ ~(op =
+         ThunkOp ForceThunk) /\
        state_rel r t /\
        do_app op (MAP data_to_bvi_v z) r = Rval (res,s1) ==> (?s2
          pres.
@@ -509,8 +504,8 @@ let evaluate_Return_GENLIST_Var =
 let bvi_to_dataProof_compile_correct = cake_theorem "compile_correct"
   (fun () ->
     `!xs env s1 res s2 t1 n corr tail live.
-        evaluate (xs,env,s1) = (res,s2) /\ ~(
-        res = Rerr (Rabort Rtype_error)) /\
+        evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+          Rtype_error)) /\
         var_corr env corr (map data_to_bvi_v (dataSem_state_locals
           t1)) /\
         (~(LENGTH xs = 1) ==> ~tail) /\
@@ -526,7 +521,7 @@ let bvi_to_dataProof_compile_correct = cake_theorem "compile_correct"
             evaluate (prog,t1) = (pres,t2) /\
             state_rel s2 t2 /\
             (match pres with SOME r ->
-                ((~(\x. ?vs. x = Rerr (Rraise (Ret vs))) res ==>
+                ((~((\x. ?vs. x = Rerr (Rraise (Ret vs))) res) ==>
                   data_to_bvi_result r = res) /\
                  ((\x. ?vs. x = Rerr (Rraise (Ret vs))) res ==>
                     (?vs'. r = Rval vs' /\
@@ -553,7 +548,7 @@ let bvi_to_dataProof_compile_correct = cake_theorem "compile_correct"
                          SOME x) ==> k < next_var) /\
                        (!k x. (lookup k (dataSem_state_locals t1) =
                          SOME x) /\
-                              (~MEM k live ==> MEM k corr) ==>
+                              (~(MEM k live) ==> MEM k corr) ==>
                               (lookup k (dataSem_state_locals t2) =
                                 SOME x)) /\
                        (stack t1 = stack t2) /\
@@ -598,7 +593,7 @@ let bvi_to_dataProof_compile_correct = cake_theorem "compile_correct"
 (* HOL4 bvi_to_dataProofScript.sml:2894-2897: ML code, not ported *)
 
 (* HOL4 bvi_to_dataProofScript.sml:2899-2918: a theorem whose
-   statement the port cannot state yet *)
+   statement the port cannot state yet: compile_exp_correct *)
 
 let state_rel_dec_clock = cake_theorem "state_rel_dec_clock[local]"
   (fun () ->
@@ -607,8 +602,8 @@ let state_rel_dec_clock = cake_theorem "state_rel_dec_clock[local]"
 
 let compile_part_evaluate = cake_theorem "compile_part_evaluate"
   (fun () ->
-    `evaluate ([Call 0 (SOME start) [] NONE],[],s1) = (res,s2) /\ ~(
-     res = Rerr (Rabort Rtype_error)) /\ state_rel s1 t1 /\
+    `evaluate ([Call 0 (SOME start) [] NONE],[],s1) = (res,s2) /\ ~(res
+  = Rerr (Rabort Rtype_error)) /\ state_rel s1 t1 /\
      (\t. t = LN) (dataSem_state_locals t1) /\ (!x. res = Rerr
        (Rraise x) ==> ~(dataSem_jump_exc t1 = NONE)) ==> (?r t2.
         evaluate ((Call NONE (SOME start) [] NONE),t1) = (SOME
@@ -618,16 +613,15 @@ let compile_part_evaluate = cake_theorem "compile_part_evaluate"
 
 let MAP_FST_compile_prog = cake_theorem "MAP_FST_compile_prog[simp]"
   (fun () ->
-    `!prog. MAP FST' (compile_prog prog) = MAP FST' prog`)
+    `!prog. MAP FST (compile_prog prog) = MAP FST prog`)
   CHEAT_TAC;;
 
 let compile_prog_evaluate = cake_theorem "compile_prog_evaluate"
   (fun () ->
     `evaluate ([Call 0 (SOME start) [] NONE],[],
        initial_state ffi0 (fromAList prog) co (\cfg prog. cc cfg
-         (compile_prog prog)) k) = (r,s) /\ ~(
-     r = Rerr (Rabort Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x)))
-       ==> (?r2 s2.
+         (compile_prog prog)) k) = (r,s) /\ ~(r = Rerr (Rabort
+         Rtype_error)) /\ (!x. ~(r = Rerr (Rraise x))) ==> (?r2 s2.
          evaluate (Call NONE (SOME start) [] NONE,
            initial_state ffi0 (fromAList (compile_prog prog)) ((I
              ## compile_prog) o co) cc T lims ss k) = (SOME r2,s2) /\
@@ -644,8 +638,7 @@ let FST_compile_part = cake_theorem "FST_compile_part[simp]"
 let bvi_to_dataProof_compile_prog_semantics =
   cake_theorem "compile_prog_semantics"
   (fun () ->
-    `~(
-     semantics (ffi0:'ffi ffi_state)
+    `~(semantics (ffi0:'ffi ffi_state)
                (fromAList prog) co
                (\cfg prog. cc cfg (compile_prog prog)) start =
                  Fail) ==> semantics ffi0
@@ -676,3 +669,5 @@ let compile_prog_good_code_labels =
     `!p. good_code_labels p elabs ==> good_code_labels
   (bvi_to_data_compile_prog p) elabs`)
   CHEAT_TAC;;
+
+cake_hide [];;

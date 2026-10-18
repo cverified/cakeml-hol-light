@@ -94,18 +94,25 @@ let bvl_inlineProof_evaluate_compile_prog =
        s2 = state_ffi s)`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:329-331: a proof *)
+let FST_EQ_LEMMA = cake_theorem "FST_EQ_LEMMA"
+  (fun () ->
+    `FST x = y <=> (?y1. x = (y,y1))`)
+  CHEAT_TAC;;
 
 let semantics_remove_ticks = cake_theorem "semantics_remove_ticks"
   (fun () ->
-    `semantics ffi (sptree_map (I' ## (\x. HD (remove_ticks [x]))) prog)
-  (remove_ticks_co' o co)
-                   cc start' =
+    `semantics ffi (sptree_map (I ## (\x. HD (remove_ticks [x]))) prog)
+  (bvl_inlineProof_remove_ticks_co o co)
+                   cc start =
      semantics (ffi:'b ffi_state) prog co
-       (bvl_inlineProof_remove_ticks_cc cc) start'`)
+       (bvl_inlineProof_remove_ticks_cc cc) start`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:563-566: a proof *)
+let remove_ticks_CONS = cake_theorem "remove_ticks_CONS"
+  (fun () ->
+    `!xs x. bvl_inline_remove_ticks (x :: xs) =
+                HD (remove_ticks [x]) :: remove_ticks xs`)
+  CHEAT_TAC;;
 
 (* correctness of tick_inline *)
 
@@ -182,7 +189,13 @@ let subspt_exp_rel = cake_theorem "subspt_exp_rel"
   ==> bvl_inlineProof_exp_rel s2 xs ys`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:641-649: a proof *)
+let tick_inline_all_acc = cake_theorem "tick_inline_all_acc"
+  (fun () ->
+    `!limit' cs t aux.
+           tick_inline_all limit' cs t aux =
+             (let (cs1,xs) = tick_inline_all limit' cs t [] in
+               (cs1,REVERSE aux ++ xs))`)
+  CHEAT_TAC;;
 
 let tick_inline_all_names = cake_theorem "tick_inline_all_names"
   (fun () ->
@@ -191,11 +204,26 @@ let tick_inline_all_names = cake_theorem "tick_inline_all_names"
        MAP FST (REVERSE aux) ++ MAP FST t = MAP FST xs`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:663-669: a proof *)
+let tick_compile_prog_IMP = cake_theorem "tick_compile_prog_IMP"
+  (fun () ->
+    `tick_compile_prog limit q0 ((k,prog) :: t) = (cs1,prog1) ==>
+         (?p1 vs. prog1 = (k,p1) :: vs /\ MAP FST vs = MAP FST t)`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:671-674: a proof *)
+let subspt_union_lemma = cake_theorem "subspt_union_lemma"
+  (fun () ->
+    `(!x. sptree_lookup x t1 = sptree_lookup x t2) ==>
+         subspt x (sptree_union c t1) ==> subspt x (sptree_union
+           c t2)`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:676-685: a proof *)
+let tick_inline_all_domain = cake_theorem "tick_inline_all_domain"
+  (fun () ->
+    `!limit' cs0 in1 cs1 xs.
+           tick_inline_all limit' cs0 in1 [] = (cs1,xs) ==>
+           domain cs1 SUBSET domain cs0 UNION set_of_list (MAP
+             FST xs)`)
+  CHEAT_TAC;;
 
 let tick_compile_prog_res_range =
   cake_theorem "tick_compile_prog_res_range"
@@ -208,7 +236,12 @@ let tick_compile_prog_res_range =
         subspt cs1 (sptree_union c (fromAList in2))`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:737-742: a proof *)
+let exp_rel_swap_lemma = cake_theorem "exp_rel_swap_lemma"
+  (fun () ->
+    `!x1 x2 x3. bvl_inlineProof_exp_rel x1 x2 x3 ==>
+           (!y1. (!k. sptree_lookup k x1 = sptree_lookup k y1)
+             ==> bvl_inlineProof_exp_rel y1 x2 x3)`)
+  CHEAT_TAC;;
 
 let exp_rel_swap = cake_theorem "exp_rel_swap"
   (fun () ->
@@ -218,7 +251,14 @@ let exp_rel_swap = cake_theorem "exp_rel_swap"
           y1 x2 x3`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:751-758: a proof *)
+let exp_rel_rw = cake_theorem "exp_rel_rw"
+  (fun () ->
+    `bvl_inlineProof_exp_rel (sptree_union (sptree_union src_code
+  (sptree_insert p1 (p2,p3) LN)) (fromAList in1))
+           [exp] [exp2] <=>
+         bvl_inlineProof_exp_rel (sptree_union src_code
+           (fromAList ((p1,p2,p3) :: in1))) [exp] [exp2]`)
+  CHEAT_TAC;;
 
 let exp_rel_tick_inline = cake_theorem "exp_rel_tick_inline"
   (fun () ->
@@ -287,21 +327,87 @@ hol4_overload "in_co" "bvl_inlineProof_in_co";;
 let MAP_FST_tick_inline_all = cake_theorem "MAP_FST_tick_inline_all"
   (fun () ->
     `!limit' cs prog.
-        MAP FST' (SND (tick_inline_all limit' cs prog [])) = MAP
-          FST' prog`)
+        MAP FST (SND (tick_inline_all limit' cs prog [])) = MAP
+          FST prog`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1077-1088: a proof *)
+let bvl_inlineProof_exp_rel_rw = cake_theorem "exp_rel_rw"
+  (fun () ->
+    `~(MEM x (MAP FST prog)) ==>
+         bvl_inlineProof_exp_rel (sptree_union (sptree_insert x y
+           (fromAList prog)) acc) [exp] [exp2] =
+         bvl_inlineProof_exp_rel (sptree_union (fromAList prog)
+           (sptree_insert x y acc)) [exp] [exp2]`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1090-1142: a proof *)
+let lookup_tick_inline_all = cake_theorem "lookup_tick_inline_all"
+  (fun () ->
+    `!cs0 prog acc.
+           (!k arity v.
+               sptree_lookup k cs0 = SOME (arity,v) ==>
+               (?exp.
+                 sptree_lookup k (sptree_union (fromAList prog)
+                   acc) = SOME (arity,exp) /\
+                 bvl_inlineProof_exp_rel (sptree_union (fromAList
+                   prog) acc) [exp] [v])) /\
+           DISJOINT (set_of_list (MAP FST prog)) (domain cs0) /\
+           DISJOINT (set_of_list (MAP FST prog)) (domain acc) /\
+           ALL_DISTINCT (MAP FST prog) ==>
+           (!k arity exp.
+             sptree_lookup k (fromAList prog) = SOME (arity,exp)
+               ==>
+             (?exp2.
+               sptree_lookup k (fromAList (SND (tick_inline_all
+                 limit cs0 prog []))) =
+               SOME (arity,exp2) /\ bvl_inlineProof_exp_rel
+                 (sptree_union (fromAList prog) acc) [exp] [exp2]))`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1144-1158: a proof *)
+let subspt_tick_inline = cake_theorem "subspt_tick_inline"
+  (fun () ->
+    `!prog cs aux.
+           subspt cs (fromAList (REVERSE aux)) /\
+           EVERY (\x. ~(FST x IN domain cs)) prog /\
+           ALL_DISTINCT (MAP FST prog ++ MAP FST aux) ==>
+           subspt (FST (tick_inline_all limit cs prog aux))
+                  (fromAList (SND (tick_inline_all limit cs prog
+                    aux)))`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1160-1186: a proof *)
+(* HOL4 bvl_inlineProofScript.sml:1160-1186: a theorem that HOL4
+   states as the value of an ML expression: evaluate_initial_state *)
 
-(* HOL4 bvl_inlineProofScript.sml:1188-1202: a proof *)
+let in_evaluate_Call = cake_theorem "in_evaluate_Call"
+  (fun () ->
+    `evaluate
+          ([Call 0 (SOME start) []],env,
+           initial_state ffi0 (fromAList prog) co
+             (bvl_inlineProof_in_cc limit cc1) k) = (res,s2) /\
+         FST (FST (co 0)) = FST (tick_compile_prog limit LN prog)
+           /\
+         ALL_DISTINCT (MAP FST prog) /\ ~(res = Rerr (Rabort
+           Rtype_error)) ==>
+         (?t2.
+           evaluate
+             ([Call 0 (SOME start) []],env,
+              initial_state ffi0
+               (fromAList (SND (tick_compile_prog limit LN prog)))
+                 (bvl_inlineProof_in_co limit co) cc1 k) =
+             (res,t2) /\ state_ffi s2 = state_ffi t2)`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1204-1413: a proof *)
+let semantics_tick_inline = cake_theorem "semantics_tick_inline"
+  (fun () ->
+    `FST (FST (co 0)) = FST (tick_compile_prog limit LN prog) /\
+         ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+           prog) co (bvl_inlineProof_in_cc limit cc) start = ffi_Fail)
+           ==>
+         semantics ffi (fromAList (SND (tick_compile_prog limit LN
+           prog)))
+                       (bvl_inlineProof_in_co limit co) cc start =
+         semantics (ffi:'b ffi_state) (fromAList prog) co
+           (bvl_inlineProof_in_cc limit cc) start`)
+  CHEAT_TAC;;
 
 (* let_op *)
 
@@ -329,11 +435,25 @@ let HD_let_op = cake_theorem "HD_let_op[simp]"
     `[HD (let_op [x:bvl_exp])] = let_op [x]`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1444-1447: a proof *)
+let let_op_sing_thm = cake_theorem "let_op_sing_thm"
+  (fun () ->
+    `let_op_sing (x:bvl_exp) = HD (let_op [x])`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1449-1466: a proof *)
+let var_list_IMP_evaluate = cake_theorem "var_list_IMP_evaluate"
+  (fun () ->
+    `!a2 a1 l (xs:bvl_exp list) (s:('a,'b)bvlSem_state).
+           var_list (LENGTH a1) l xs /\ LENGTH xs = LENGTH a2 ==>
+           evaluate (l,a1 ++ a2 ++ env,s) = (Rval a2,s)`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1468-1474: a proof *)
+let bvl_inlineProof_var_list_IMP_evaluate =
+  cake_theorem "var_list_IMP_evaluate"
+  (fun () ->
+    `var_list 0 l xs /\ LENGTH (xs:bvl_exp list) = LENGTH a ==>
+         evaluate (l,a ++ env,(s:('a,'b)bvlSem_state)) = (Rval
+           a,s)`)
+  CHEAT_TAC;;
 
 let bvl_inlineProof_LENGTH_let_op = cake_theorem "LENGTH_let_op"
   (fun () ->
@@ -366,8 +486,7 @@ let let_evaluate_Call = cake_theorem "let_evaluate_Call[local]"
   (fun () ->
     `evaluate ([Call 0 (SOME start) []],[],
                 initial_state ffi0 prog co (let_op_cc q4 l4 cc) k)
-                  = (r,s) /\ ~(
-      r = Rerr (Rabort Rtype_error)) ==>
+                  = (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
       (?(s2:('c,'ffi)bvlSem_state).
         evaluate
          ([Call 0 (SOME start) []],[],
@@ -377,29 +496,68 @@ let let_evaluate_Call = cake_theorem "let_evaluate_Call[local]"
         s2 = state_ffi s /\ state_clock s = state_clock s2)`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1670-1869: a proof *)
+let semantics_let_op = cake_theorem "semantics_let_op"
+  (fun () ->
+    `~(semantics ffi prog co (let_op_cc q4 l4 cc) start = ffi_Fail) ==>
+         semantics ffi (sptree_map (let_opt q4 l4) prog)
+                       ((I ## MAP (I ## let_opt q4 l4)) o co) cc
+                         start =
+         semantics (ffi:'b ffi_state) prog co (let_op_cc q4 l4
+           cc) start`)
+  CHEAT_TAC;;
 
 (* combined theorems *)
 
-(* HOL4 bvl_inlineProofScript.sml:1873-1876: a proof *)
+let remove_ticks_mk_tick = cake_theorem "remove_ticks_mk_tick"
+  (fun () ->
+    `!n r. remove_ticks [mk_tick n r] = remove_ticks [r]`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1878-1881: a proof *)
+let is_small_aux_0 = cake_theorem "is_small_aux_0"
+  (fun () ->
+    `!(n:num) xs. is_small_aux 0 xs = 0`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1883-1889: a proof *)
+let is_small_aux_CONS = cake_theorem "is_small_aux_CONS"
+  (fun () ->
+    `is_small_aux n (x :: xs) =
+         (if n = 0 then n else
+           let n = is_small_aux n [x] in
+             if n = 0 then n else is_small_aux n xs)`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1891-1897: a proof *)
+let is_small_aux_remove_ticks = cake_theorem "is_small_aux_remove_ticks"
+  (fun () ->
+    `!limit' d. is_small_aux limit' (remove_ticks d) = is_small_aux
+  limit' d`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1899-1901: a proof *)
+let is_rec_CONS = cake_theorem "is_rec_CONS"
+  (fun () ->
+    `bvl_inline_is_rec n (x :: xs) <=> bvl_inline_is_rec n [x] \/
+  bvl_inline_is_rec n xs`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1903-1909: a proof *)
+let is_rec_remove_ticks = cake_theorem "is_rec_remove_ticks"
+  (fun () ->
+    `!p_1 xs. bvl_inline_is_rec p_1 (remove_ticks xs) =
+  bvl_inline_is_rec p_1 xs`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1911-1920: a proof *)
+let must_inline_remove_ticks = cake_theorem "must_inline_remove_ticks"
+  (fun () ->
+    `must_inline p_1 limit (HD (remove_ticks (tick_inline cs [p_2]))) =
+         must_inline p_1 limit (HD ((tick_inline cs [p_2])))`)
+  CHEAT_TAC;;
 
 let let_opt_remove_def = cake_define
   `let_opt_remove b l (arity,prog) =
      let_opt b l (arity,HD (remove_ticks [prog]))`;;
 
-(* HOL4 bvl_inlineProofScript.sml:1927-1931: a proof *)
+let map_fromAList_HASH = cake_theorem "map_fromAList_HASH"
+  (fun () ->
+    `sptree_map f (fromAList ls) = fromAList (MAP (I ## f) ls)`)
+  CHEAT_TAC;;
 
 let map_fromAList = cake_theorem "map_fromAList"
   (fun () ->
@@ -410,9 +568,28 @@ let map_fromAList = cake_theorem "map_fromAList"
 
 (* HOL4 bvl_inlineProofScript.sml:1944-1947: ML code, not ported *)
 
-(* HOL4 bvl_inlineProofScript.sml:1949-1959: a proof *)
+let inline_ticks = cake_theorem "inline_ticks"
+  (fun () ->
+    `FST (FST (co 0)) = (FST (tick_compile_prog limit LN prog)) /\
+         ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+           prog) co
+           (bvl_inlineProof_in_cc limit
+             (bvl_inlineProof_remove_ticks_cc cc)) start = ffi_Fail) ==>
+         semantics ffi (fromAList (MAP (I ## I ## (\x. HD
+           (remove_ticks [x])))
+                              (SND (tick_compile_prog limit LN
+                                prog))))
+           (bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
+             limit co) cc start =
+         semantics ffi (fromAList prog) co (bvl_inlineProof_in_cc
+           limit (bvl_inlineProof_remove_ticks_cc cc)) start`)
+  CHEAT_TAC;;
 
-(* HOL4 bvl_inlineProofScript.sml:1961-1964: a proof *)
+let comp_lemma = cake_theorem "comp_lemma"
+  (fun () ->
+    `(I ## let_opt q4 l4) o (I ## I ## (\x. HD (remove_ticks [x]))) =
+         (I ## let_opt_remove q4 l4)`)
+  CHEAT_TAC;;
 
 let bvl_inline_cc_def = cake_define
   `bvl_inline_cc limit' q4 l4 cc =
@@ -425,23 +602,29 @@ let bvl_inline_co_def = cake_define
            (bvl_inlineProof_remove_ticks_co (bvl_inlineProof_in_co
              limit' co x)))`;;
 
-(* HOL4 bvl_inlineProofScript.sml:1977-1982: a proof *)
+let MAP_optimise = cake_theorem "MAP_optimise"
+  (fun () ->
+    `!prog.
+           MAP (bvl_inline_optimise o1 o2) prog =
+           MAP (I ## let_opt o1 o2)
+             (MAP (I ## I ## (\x. HD (remove_ticks [x]))) prog)`)
+  CHEAT_TAC;;
 
 let bvl_inlineProof_state_cc_compile_inc_eq =
   cake_theorem "state_cc_compile_inc_eq"
   (fun () ->
-    `(state_cc (compile_inc limit' o1 o2) cc) =
-        (bvl_inlineProof_in_cc limit'
+    `(state_cc (compile_inc limit o1 o2) cc) =
+        (bvl_inlineProof_in_cc limit
           (bvl_inlineProof_remove_ticks_cc (let_op_cc o1 o2 cc)))`)
   CHEAT_TAC;;
 
 let bvl_inlineProof_state_co_compile_inc_eq =
   cake_theorem "state_co_compile_inc_eq"
   (fun () ->
-    `(state_co (compile_inc limit' o1 o2) co) =
+    `(state_co (compile_inc limit o1 o2) co) =
         ((I ## MAP (I ## let_opt o1 o2)) o
           bvl_inlineProof_remove_ticks_co o bvl_inlineProof_in_co
-          limit' co)`)
+          limit co)`)
   CHEAT_TAC;;
 
 let bvl_inlineProof_compile_prog_semantics =
@@ -449,9 +632,8 @@ let bvl_inlineProof_compile_prog_semantics =
   (fun () ->
     `compile_prog limit o1 o2 prog = (s1,prog1) /\
       FST (FST (co 0)) = s1 /\
-      ALL_DISTINCT (MAP FST prog) ==> ~(
-      semantics ffi (fromAList prog) co (state_cc (compile_inc
-        limit o1 o2) cc)
+      ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+        prog) co (state_cc (compile_inc limit o1 o2) cc)
         start = ffi_Fail) ==>
       semantics ffi (fromAList prog1) (state_co (compile_inc limit
         o1 o2) co) cc
@@ -474,7 +656,7 @@ let compile_prog_handle_ok = cake_theorem "compile_prog_handle_ok"
 
 let MAP_FST_MAP_optimise = cake_theorem "MAP_FST_MAP_optimise[simp]"
   (fun () ->
-    `MAP FST' (MAP (bvl_inline_optimise x y) z) = MAP FST' z`)
+    `MAP FST (MAP (bvl_inline_optimise x y) z) = MAP FST z`)
   CHEAT_TAC;;
 
 let compile_prog_names = cake_theorem "compile_prog_names"
@@ -491,8 +673,8 @@ let var_list_code_labels_imp = cake_theorem "var_list_code_labels_imp"
 
 let let_op_code_labels = cake_theorem "let_op_code_labels"
   (fun () ->
-    `!x. BIGUNION (set_of_list (MAP get_code_labels' (let_op x))) =
-  BIGUNION (set_of_list (MAP get_code_labels' x))`)
+    `!x. BIGUNION (set_of_list (MAP bvlProps_get_code_labels (let_op
+  x))) = BIGUNION (set_of_list (MAP bvlProps_get_code_labels x))`)
   CHEAT_TAC;;
 
 let let_op_sing_code_labels =
@@ -505,9 +687,9 @@ let let_op_sing_code_labels =
 let remove_ticks_code_labels = cake_theorem "remove_ticks_code_labels"
   (fun () ->
     `!x.
-       BIGUNION (set_of_list (MAP get_code_labels' (remove_ticks
-         x))) =
-       BIGUNION (set_of_list (MAP get_code_labels' x))`)
+       BIGUNION (set_of_list (MAP bvlProps_get_code_labels
+         (remove_ticks x))) =
+       BIGUNION (set_of_list (MAP bvlProps_get_code_labels x))`)
   CHEAT_TAC;;
 
 let optimise_get_code_labels = cake_theorem "optimise_get_code_labels"

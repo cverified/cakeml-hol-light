@@ -101,45 +101,26 @@ hol4_overload "Letrec" "flatLang_Letrec";;
 
 (* HOL4 flatLangScript.sml:86: ML code, not ported *)
 
-let exp6_size_APPEND = cake_theorem "exp6_size_APPEND[simp]"
-  (fun () ->
-    `exp6_size (e ++ e2) = exp6_size e + exp6_size e2`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:88-92: a theorem whose statement the port
+   cannot state yet: exp6_size_APPEND *)
 
-let exp6_size_REVERSE = cake_theorem "exp6_size_REVERSE[simp]"
-  (fun () ->
-    `exp6_size (REVERSE es) = exp6_size es`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:94-98: a theorem whose statement the port
+   cannot state yet: exp6_size_REVERSE *)
 
-let exp6_size = cake_theorem "exp6_size"
-  (fun () ->
-    `exp6_size xs = LENGTH xs + SUM (MAP flatLang_exp_size xs)`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:100-104: a theorem whose statement the
+   port cannot state yet: exp6_size *)
 
-let exp1_size = cake_theorem "exp1_size"
-  (fun () ->
-    `exp1_size xs = LENGTH xs + SUM (MAP exp2_size xs)`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:106-110: a theorem whose statement the
+   port cannot state yet: exp1_size *)
 
-let exp3_size = cake_theorem "exp3_size"
-  (fun () ->
-    `exp3_size xs = LENGTH xs + SUM (MAP exp5_size xs)`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:112-116: a theorem whose statement the
+   port cannot state yet: exp3_size *)
 
-let exp_size_MAP = cake_theorem "exp_size_MAP"
-  (fun () ->
-    `(!xs. exp6_size (MAP SND xs) < exp3_size xs + 1) /\
-     (!xs. exp6_size (MAP (SND o SND) xs) < exp1_size xs + 1)`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:118-130: a theorem whose statement the
+   port cannot state yet: exp_size_MAP *)
 
-let exp_size_MEM = cake_theorem "exp_size_MEM"
-  (fun () ->
-    `(!xs x. MEM x xs ==> flatLang_exp_size x < exp6_size xs) /\
-     (!xs x. MEM x xs ==> flatLang_exp_size (SND (SND x)) <
-       exp1_size xs) /\
-     (!xs x. MEM x xs ==> flatLang_exp_size (SND x) < exp3_size
-       xs)`)
-  CHEAT_TAC;;
+(* HOL4 flatLangScript.sml:132-149: a theorem whose statement the
+   port cannot state yet: exp_size_MEM *)
 
 let bool_id_def = cake_define
   `bool_id = 0`;;

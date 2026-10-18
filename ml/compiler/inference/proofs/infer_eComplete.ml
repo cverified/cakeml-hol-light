@@ -98,9 +98,9 @@ let extend_t_vR_WF = cake_theorem "extend_t_vR_WF[local]"
 
 let not_t_oc = cake_theorem "not_t_oc[local]"
   (fun () ->
-    `(!t s v lim. t_wfs s /\ check_t lim {} t ==> ~t_oc s t v) /\
+    `(!t s v lim. t_wfs s /\ check_t lim {} t ==> ~(t_oc s t v)) /\
      (!ts s t v lim. t_wfs s /\ EVERY (check_t lim {}) ts ==>
-       ~EXISTS (\t. t_oc s t v) ts)`)
+       ~(EXISTS (\t. t_oc s t v) ts))`)
   CHEAT_TAC;;
 
 let FDOM_extend = cake_theorem "FDOM_extend[local]"
@@ -524,8 +524,8 @@ let infer_p_complete = cake_theorem "infer_p_complete"
     `(!tvs tenv p t tenvE.
      type_p tvs tenv p t tenvE ==>
      (!l s ienv st constraints.
-     tenv_ctor_ok (sem_env_c tenv) /\ inf_env_inf_c
-     ienv = sem_env_c tenv /\ inf_env_inf_t
+     tenv_ctor_ok (type_env_c tenv) /\ inf_env_inf_c
+     ienv = type_env_c tenv /\ inf_env_inf_t
      ienv = type_env_t tenv /\
      tenv_abbrev_ok (type_env_t tenv) /\
      t_wfs (infer_st_subst st) /\
@@ -547,8 +547,8 @@ let infer_p_complete = cake_theorem "infer_p_complete"
      (!tvs tenv ps ts tenvE.
      type_ps tvs tenv ps ts tenvE ==>
      (!l s ienv st constraints.
-     tenv_ctor_ok (sem_env_c tenv) /\ inf_env_inf_c
-     ienv = sem_env_c tenv /\ inf_env_inf_t
+     tenv_ctor_ok (type_env_c tenv) /\ inf_env_inf_c
+     ienv = type_env_c tenv /\ inf_env_inf_t
      ienv = type_env_t tenv /\
      tenv_abbrev_ok (type_env_t tenv) /\
      t_wfs (infer_st_subst st) /\
@@ -597,8 +597,7 @@ let lookup_var_bind_var_list =
 let infer_pes_complete = cake_theorem "infer_pes_complete[local]"
   (fun () ->
     `!pes st' constraints' s'.
-     ~(
-     pes = []) /\
+     ~(pes = []) /\
      ienv_ok (count uvar) ienv /\
      uvar <= infer_st_next_uvar st' /\
      t_wfs (infer_st_subst st') /\

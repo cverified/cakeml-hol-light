@@ -24,8 +24,7 @@ needs "semantics/tokenUtils.ml";;
    expands *)
 hol4_overload "assert" "OPTION_GUARD";;
 
-(* HOL4 cmlPEGScript.sml:17-29: the ML values that the definitions
-   below antiquote *)
+(* HOL4 cmlPEGScript.sml:17-29: ML code, not ported *)
 
 let sumID_def = cake_define_list
   [`cmlPEG_sumID (INL x) = x`;
@@ -130,9 +129,8 @@ let peg_V_def = cake_define
                    (OPTION_BIND) (destAlphaT t) (\s.
                       OPTION_GUARD (~(s IN {(implode
                         "before"),(implode "div"),(implode
-                        "mod"),(implode "o")}) /\ ~(
-                             s = (implode "")) /\ ~isUpper (strsub s
-                               0))) = SOME one)
+                        "mod"),(implode "o")}) /\ ~(s = (implode "")) /\
+                        ~(isUpper (strsub s 0)))) = SOME one)
                  (bindNT nV o mktokLf);
              pegf (tokSymP (validPrefixSym o explode)) (bindNT
                nV)]`;;
@@ -141,8 +139,8 @@ let peg_longV_def = cake_define
   `peg_longV = peg_tok (\t. (OPTION_BIND) (destLongidT t) (\
                          (str,s).
                          OPTION_GUARD (~(s = (implode "")) /\
-                           (isAlpha (strsub s 0) ==> ~isUpper (strsub s
-                           0)))) = SOME one)
+                           (isAlpha (strsub s 0) ==> ~(isUpper (strsub s
+                           0))))) = SOME one)
                    (bindNT nFQV o mktokLf)`;;
 
 let peg_EbaseParenFn_def = cake_define
@@ -628,16 +626,19 @@ let cmlPEG_def = cake_define
 
 (* HOL4 cmlPEGScript.sml:526-532: the ML values that the definitions
    below antiquote *)
-(* HOL4 cmlPEGScript.sml:533-538: code that the source has in a
-   comment *)
-(* HOL4 cmlPEGScript.sml:539-541: the ML values that the definitions
-   below antiquote *)
+(* can't use srw_ss() as it will attack the bodies of the rules,
+   and in particular, will destroy predicates from tok
+   constructors of the form
+        do ... od = SOME ()
+   which matches optionTheory.OPTION_BIND_EQUALS_OPTION, putting
+   an existential into our rewrite thereby *)
+(* HOL4 cmlPEGScript.sml:539-541: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:543-559: the ML values that the definitions
-   below antiquote *)
+(* HOL4 cmlPEGScript.sml:543-559: a theorem that HOL4 states as the
+   value of an ML expression: cmlpeg_rules_applied *)
 
 (* HOL4 cmlPEGScript.sml:561-566: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: FDOM_cmlPEG *)
 
 (* HOL4 cmlPEGScript.sml:568-571: ML code, not ported *)
 
@@ -645,7 +646,7 @@ let cmlPEG_def = cake_define
    below antiquote *)
 
 (* HOL4 cmlPEGScript.sml:575-580: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cmlPEG_exec_thm *)
 
 (* HOL4 cmlPEGScript.sml:582-586: ML code, not ported *)
 
@@ -698,17 +699,23 @@ let peg0_choicel = cake_theorem "peg0_choicel[simp]"
        peg0 G (choicel t))`)
   CHEAT_TAC;;
 
-(* HOL4 cmlPEGScript.sml:681-695: a proof *)
+let th = cake_theorem "th"
+  (fun () ->
+    `~(peg0 cmlPEG (cmlPEG_pnt t))`)
+  CHEAT_TAC;;
 
 (* HOL4 cmlPEGScript.sml:697-717: ML code, not ported *)
 
-(* HOL4 cmlPEGScript.sml:719-732: a proof *)
+let cmlPEG_th = cake_theorem "th"
+  (fun () ->
+    `wfpeg cmlPEG (cmlPEG_pnt t)`)
+  CHEAT_TAC;;
 
 (* HOL4 cmlPEGScript.sml:734-757: the ML values that the definitions
    below antiquote *)
 
 (* HOL4 cmlPEGScript.sml:759-760: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cml_wfpeg_thm *)
 
 (*
 set_diff (TypeBase.constructors_of ``:MMLnonT``)
@@ -722,7 +729,7 @@ let subexprs_pnt = cake_theorem "subexprs_pnt[local]"
   CHEAT_TAC;;
 
 (* HOL4 cmlPEGScript.sml:774-783: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: PEG_exprs *)
 
 let PEG_wellformed = cake_theorem "PEG_wellformed[simp]"
   (fun () ->
@@ -730,22 +737,22 @@ let PEG_wellformed = cake_theorem "PEG_wellformed[simp]"
   CHEAT_TAC;;
 
 (* HOL4 cmlPEGScript.sml:797-799: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: parse_TopLevelDecs_total *)
 
 (* HOL4 cmlPEGScript.sml:801-803: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: coreloop_TopLevelDecs_total *)
 
 (* HOL4 cmlPEGScript.sml:805-806: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: owhile_TopLevelDecs_total *)
 
 (* HOL4 cmlPEGScript.sml:808-816: ML code, not ported *)
 
 (* HOL4 cmlPEGScript.sml:818-820: a proof *)
 (* HOL4 cmlPEGScript.sml:821-822: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: FDOM_cmlPEG_nts *)
 
 (* HOL4 cmlPEGScript.sml:824-840: a proof *)
 (* HOL4 cmlPEGScript.sml:841-842: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: NTS_in_PEG_exprs *)
 
 (* HOL4 cmlPEGScript.sml:844: ML code, not ported *)

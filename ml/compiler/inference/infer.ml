@@ -431,7 +431,7 @@ let check_ctor_types_def = cake_define_list
           check_ctor_types l tenvT tvs ctors)`];;
 
 (* HOL4 inferScript.sml:475-476: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: check_ctor_types_expand *)
 
 let check_ctors_def = cake_define_list
   [`check_ctors l tenvT [] = st_ex_return one`;
@@ -453,7 +453,7 @@ let check_ctors_def = cake_define_list
           check_ctors l tenvT tds)))`];;
 
 (* HOL4 inferScript.sml:495-497: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: check_ctors_expand *)
 
 let check_type_definition_def = cake_define
   `check_type_definition l tenvT tds =
@@ -468,7 +468,7 @@ let check_type_definition_def = cake_define
        check_ctors l tenvT tds)`;;
 
 (* HOL4 inferScript.sml:510-511: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: check_type_definition_expand *)
 
 (* the first pass assumes the termination:
    replacing the CHEAT_TAC is all that is left *)
@@ -549,7 +549,7 @@ let option_case_rand = cake_theorem "option_case_rand"
   CHEAT_TAC;;
 
 (* HOL4 inferScript.sml:584-589: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: infer_p_expand *)
 
 let word_tc_def = cake_define_list
   [`word_tc ast_W8 = Tword8_num`;
@@ -789,10 +789,10 @@ let constrain_op_def = cake_define
                (op_n_args_msg op (LENGTH ts)) s)`;;
 
 (* HOL4 inferScript.sml:796-797: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: constrain_op_case_def *)
 
 (* HOL4 inferScript.sml:799-800: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: constrain_op_expand *)
 
 let st_ex_bind_failure = cake_theorem "st_ex_bind_failure"
   (fun () ->
@@ -997,7 +997,7 @@ let FUN_EQ_THM_state = cake_theorem "FUN_EQ_THM_state[local]"
   CHEAT_TAC;;
 
 (* HOL4 inferScript.sml:1033-1038: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: infer_e_expand *)
 
 let extend_dec_ienv_def = cake_define
   `extend_dec_ienv ienv' ienv =
@@ -1129,7 +1129,7 @@ let infer_d_def = cake_define_list_cheat CHEAT_TAC
         st_ex_return (extend_dec_ienv ienv'' ienv')))`];;
 
 (* HOL4 inferScript.sml:1147-1152: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: infer_d_expand *)
 
 (* The starting Id should be greater than Tlist_num :: (Tbool_num :: prim_type_nums) *)
 let start_type_id_def = cake_define

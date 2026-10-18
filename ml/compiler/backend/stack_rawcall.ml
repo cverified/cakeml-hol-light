@@ -80,7 +80,7 @@ let comp_def = cake_define
            (stack_rawcall_comp i p2,k1,k2)) | _10 -> p)`;;
 hol4_overload "comp" "stack_rawcall_comp";;
 (* HOL4 stack_rawcallScript.sml:85-93: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: comp_pmatch *)
 
 let comp_top_def = cake_define
   `comp_top i (p:'a stackLang_prog) =

@@ -49,10 +49,8 @@ let trace_to_json_def = cake_define_list
             ((implode "pos"),jsonLang_Array arr)])`;
    `trace_to_json (backend_common_None:tra) = jsonLang_Null`];;
 
-let MEM_sExp_size = cake_theorem "MEM_sExp_size"
-  (fun () ->
-    `!es a. MEM a es ==> sExp_size a < sExp1_size es`)
-  CHEAT_TAC;;
+(* HOL4 displayLangScript.sml:45-49: a theorem whose statement the
+   port cannot state yet: MEM_sExp_size *)
 
 (* Converts a display expression to JSON *)
 let display_to_json_def = cake_define

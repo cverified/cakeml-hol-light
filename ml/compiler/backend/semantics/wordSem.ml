@@ -127,16 +127,16 @@ let mem_store_32_def = cake_define
 
 let mem_load_32_alt = cake_theorem "mem_load_32_alt"
   (fun () ->
-    `mem_load_32 m dm be' (w:'a word) =
+    `mem_load_32 m dm be (w:'a word) =
      (if alignment_aligned 2 w then match m (byte_align w) with Loc
        _11 _12 -> NONE | wordLang_Word v ->
               (if byte_align w IN dm then
-                let b0 = get_byte w v be' in
-                let b1 = get_byte (w + (n2w 1)) v be' in
-                let b2 = get_byte (w + (n2w 2)) v be' in
-                let b3 = get_byte (w + (n2w 3)) v be' in
+                let b0 = get_byte w v be in
+                let b1 = get_byte (w + (n2w 1)) v be in
+                let b2 = get_byte (w + (n2w 2)) v be in
+                let b3 = get_byte (w + (n2w 3)) v be in
                   let v' =
-                      (if be' then
+                      (if be then
                          (w2w b0) << 24 || (w2w b1) << 16 || (w2w
                            b2) << 8 || (w2w b3) else
                          (w2w b0) || (w2w b1) << 8 || (w2w b2) <<
@@ -146,27 +146,26 @@ let mem_load_32_alt = cake_theorem "mem_load_32_alt"
 
 let mem_store_32_alt = cake_theorem "mem_store_32_alt"
   (fun () ->
-    `mem_store_32 m dm be' (w:'a word) (hw:word32) =
+    `mem_store_32 m dm be (w:'a word) (hw:word32) =
      (if alignment_aligned 2 w then match m (byte_align w) with
        wordLang_Word v ->
               (if byte_align w IN dm then
-                if be' then
-                  let v0 = set_byte w (w2w (hw >>> 24)) v be' in
+                if be then
+                  let v0 = set_byte w (w2w (hw >>> 24)) v be in
                   let v1 = set_byte (w + (n2w 1)) (w2w (hw >>> 16))
-                    v0 be' in
+                    v0 be in
                   let v2 = set_byte (w + (n2w 2)) (w2w (hw >>> 8))
-                    v1 be' in
-                  let v3 = set_byte (w + (n2w 3)) (w2w hw) v2 be'
-                    in
+                    v1 be in
+                  let v3 = set_byte (w + (n2w 3)) (w2w hw) v2 be in
                     SOME ((byte_align w =+ wordLang_Word v3) m)
                       else
-                  let v0 = set_byte w (w2w hw) v be' in
+                  let v0 = set_byte w (w2w hw) v be in
                   let v1 = set_byte (w + (n2w 1)) (w2w (hw >>> 8))
-                    v0 be' in
+                    v0 be in
                   let v2 = set_byte (w + (n2w 2)) (w2w (hw >>> 16))
-                    v1 be' in
+                    v1 be in
                   let v3 = set_byte (w + (n2w 3)) (w2w (hw >>> 24))
-                    v2 be' in
+                    v2 be in
                     SOME ((byte_align w =+ wordLang_Word v3) m)
                       else NONE) | _13 -> NONE else NONE)`)
   CHEAT_TAC;;
@@ -1110,7 +1109,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
    `wordSem_evaluate (wordLang_StoreConsts t1 t2 addr' offset words,s) =
          (match (wordSem_get_var addr' s,wordSem_get_var offset s)
            with (SOME (wordLang_Word a),SOME (wordLang_Word off)) ->
-            (if ~const_addresses a words (wordSem_state_mdomain s)
+            (if ~(const_addresses a words (wordSem_state_mdomain s))
               then
                (SOME wordSem_Error,s) else
                let s = wordSem_state_memory_fupd (K (const_writes a
@@ -1309,8 +1308,8 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                          wordSem_Error,s) else (res,s))) else (SOME
                          wordSem_Error,s)) | SOME
                          (n,names,ret_handler,l1,l2) ->
-                     (if domain (FST names) = {} \/ ~ALL_DISTINCT n
-                       then (SOME wordSem_Error,s) else
+                     (if domain (FST names) = {} \/ ~(ALL_DISTINCT
+                       n) then (SOME wordSem_Error,s) else
                        (match cut_envs names (wordSem_state_locals
                          s) with NONE -> (SOME wordSem_Error,s) | SOME
                          envs' ->
@@ -1420,9 +1419,9 @@ let wordSem_fix_clock_evaluate =
 (* We store the theorems without fix_clock *)
 
 (* HOL4 wordSemScript.sml:1367-1368: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_ind *)
 (* HOL4 wordSemScript.sml:1369-1370: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_def *)
 
 (* observational semantics *)
 

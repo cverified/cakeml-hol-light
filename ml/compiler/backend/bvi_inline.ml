@@ -35,8 +35,8 @@ let canonical_wrapper_def = cake_define
   `canonical_wrapper name arity x3 =
         match x3 with
           bvi_LetCall rets ticks worker args
-           (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) -> ~(
-        worker = name) /\
+           (bvi_Op (closLang_BlockOp (closLang_Cons tag)) rvs) ->
+             ~(worker = name) /\
         args = GENLIST bvi_Var arity /\
         rvs = REVERSE (GENLIST bvi_Var rets)
         | _1 -> F`;;
@@ -147,19 +147,19 @@ let canonical_four_result_wrapper =
 let malformed_wrappers_rejected =
   cake_theorem "malformed_wrappers_rejected"
   (fun () ->
-    `~wrapper_ok 10 3
+    `~(wrapper_ok 10 3
          (bvi_LetCall 4 0 10 (GENLIST Var 3)
            (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4))) /\
-     ~wrapper_ok 10 3
+             Var 4)))) /\
+     ~(wrapper_ok 10 3
          (bvi_LetCall 4 0 11 [Var 0; Var 2; Var 1]
            (bvi_Op (closLang_BlockOp (closLang_Cons 7)) (GENLIST
-             Var 4))) /\
-     ~wrapper_ok 10 3
+             Var 4)))) /\
+     ~(wrapper_ok 10 3
          (bvi_LetCall 4 0 11 (GENLIST Var 3)
            (bvi_Op (closLang_BlockOp (closLang_Cons 7)) [Var 0; Var
-             1; Var 2])) /\
-     ~wrapper_ok 10 3 (bvi_Return (GENLIST Var 3))`)
+             1; Var 2]))) /\
+     ~(wrapper_ok 10 3 (bvi_Return (GENLIST Var 3)))`)
   CHEAT_TAC;;
 
 let inline_boundary_examples = cake_theorem "inline_boundary_examples"

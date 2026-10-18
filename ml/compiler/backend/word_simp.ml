@@ -366,14 +366,14 @@ let dest_Raise_num_pmatch_def = cake_define
   `dest_Raise_num p = (match p with wordLang_Raise n -> n | _44 -> 0)`;;
 
 (* HOL4 word_simpScript.sml:378-379: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: dest_Raise_num_def *)
 
 let is_simple_pmatch_def = cake_define
   `is_simple p = (match p with Tick -> T | Skip -> T | wordLang_Move
   _45 _46 -> T | wordLang_Assign _47 _48 -> T | _49 -> F)`;;
 
 (* HOL4 word_simpScript.sml:390-391: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: is_simple_def *)
 
 let try_if_hoist2_def = cake_define
   `try_if_hoist2 N p1 interm dummy' p2 = (if N = 0 then NONE else match

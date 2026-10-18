@@ -69,8 +69,8 @@ let eq_direct_thm = cake_theorem "eq_direct_thm"
   (fun () ->
     `!x y env s res s1 t z.
        closSem_evaluate ([closLang_Op t (closLang_BlockOp
-         closLang_Equal) [x; y]],env,s) = (res,s1) /\ ~(
-       res = Rerr (Rabort Rtype_error)) /\
+         closLang_Equal) [x; y]],env,s) = (res,s1) /\ ~(res = Rerr
+         (Rabort Rtype_error)) /\
        eq_direct x y = SOME z ==>
        closSem_evaluate ([z],env,s) = (res,s1)`)
   CHEAT_TAC;;
@@ -310,7 +310,7 @@ let red_rel = cake_inductive
        red_rel [If t x y z] (x1 ++ x2 ++ x3)))`;;
 
 (* HOL4 clos_opProofScript.sml:733-734: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: red_rel_nil *)
 
 let red_rel_ConjList = cake_theorem "red_rel_ConjList"
   (fun () ->

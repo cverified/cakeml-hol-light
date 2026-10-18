@@ -79,9 +79,9 @@ let stack_removeProof_call_FFI_LENGTH = cake_theorem "call_FFI_LENGTH"
 let stack_removeProof_with_same_clock =
   cake_theorem "with_same_clock[simp]"
   (fun () ->
-    `!(x:('a,'c,'ffi)stackSem_state). state_clock_fupd (K (state_clock x
-  = x))
-       x`)
+    `!(x:('a,'c,'ffi)stackSem_state). state_clock_fupd (K (state_clock
+  x))
+       x = x`)
   CHEAT_TAC;;
 
 let stack_removeProof_set_var_set_var =
@@ -155,9 +155,10 @@ let state_rel_def = cake_define
   (s1:('a,'c,'ffi)stackSem_state) (s2:('a,'c,'ffi)stackSem_state) <=>
   stackSem_state_use_stack
      s1 /\ stackSem_state_use_store s1 /\
-     ~stackSem_state_use_stack s2 /\ ~stackSem_state_use_store s2 /\
-     ~stackSem_state_use_alloc s2 /\ ~stackSem_state_use_alloc s1 /\
-       be
+     ~(stackSem_state_use_stack s2) /\ ~(stackSem_state_use_store s2)
+       /\
+     ~(stackSem_state_use_alloc s2) /\ ~(stackSem_state_use_alloc s1)
+       /\ be
      s2 = be s1 /\ state_gc_fun
      s2 = state_gc_fun s1 /\ state_clock
      s2 = state_clock s1 /\ state_ffi
@@ -236,7 +237,7 @@ let stack_removeProof_state_rel_const = cake_theorem "state_rel_const"
     `stack_removeProof_state_rel jump off k s t ==> state_code_buffer
      t = state_code_buffer s /\ state_sh_mdomain
      t = state_sh_mdomain s /\
-     ~stackSem_state_use_stack t /\ stackSem_state_use_stack s /\
+     ~(stackSem_state_use_stack t) /\ stackSem_state_use_stack s /\
        state_ffi t = state_ffi s /\ compile_oracle
      t = (\n. (I ## MAP (prog_comp jump off k) ## I)
        (compile_oracle s n)) /\ compile
@@ -394,8 +395,8 @@ let evaluate_single_stack_alloc =
      ((r,s2) = (if stackSem_state_stack_space s < n then (SOME
        (Halt (wordLang_Word (n2w 2))),stackSem_empty_env s) else
        (NONE,stackSem_state_stack_space_fupd (K
-       (stackSem_state_stack_space s - n)) s))) /\ ~(
-     n = 0) /\ n <= max_stack_alloc ==>
+       (stackSem_state_stack_space s - n)) s))) /\ ~(n = 0) /\ n <=
+       max_stack_alloc ==>
      (?ck t2.
        evaluate (single_stack_alloc jump k n,state_clock_fupd (K
          (state_clock t1 + ck)) t1) = (r,t2) /\
@@ -560,8 +561,8 @@ let evaluate_single_stack_free =
     `stack_removeProof_state_rel jump off k s t1 /\
      ((r,s2) = (NONE,stackSem_state_stack_space_fupd (K
        (stackSem_state_stack_space s + n)) s)) /\
-     ~(LENGTH (stack s) < stackSem_state_stack_space s + n) /\ ~(
-     n = 0) /\ n <= max_stack_alloc ==>
+     ~(LENGTH (stack s) < stackSem_state_stack_space s + n) /\ ~(n
+       = 0) /\ n <= max_stack_alloc ==>
      (?ck t2.
        evaluate (single_stack_free k n,state_clock_fupd (K
          (state_clock t1 + ck)) t1) = (r,t2) /\
@@ -903,7 +904,7 @@ let word_list_IMP_read_mem =
 let INSERT_DELETE_EQ_DELETE =
   cake_theorem "INSERT_DELETE_EQ_DELETE[local]"
   (fun () ->
-    `(x INSERT s) DELETE' x = s DELETE' x`)
+    `(x INSERT s) DELETE x = s DELETE x`)
   CHEAT_TAC;;
 
 let word_list_exists_addresses =
@@ -1033,8 +1034,8 @@ let init_code_pre_def = cake_define
      (?ptr2 ptr3 ptr4 bitmap_ptr.
        good_dimindex (:'a) /\ 8 <= k /\ 1 IN domain (state_code s) /\
        {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s /\
-       ~stackSem_state_use_stack s /\ ~stackSem_state_use_store s /\
-         ~stackSem_state_use_alloc s /\
+       ~(stackSem_state_use_stack s) /\ ~(stackSem_state_use_store s)
+         /\ ~(stackSem_state_use_alloc s) /\
        FLOOKUP (stackSem_state_regs s) 2 = SOME (wordLang_Word
          (ptr2:'a word)) /\
        FLOOKUP (stackSem_state_regs s) 3 = SOME (wordLang_Word ptr3)
@@ -1092,8 +1093,7 @@ let sub_rewrite = cake_theorem "sub_rewrite[local]"
 
 let div_rewrite = cake_theorem "div_rewrite[local]"
   (fun () ->
-    `n <= x /\ 1 < n ==> ~(
-     x DIV n = 0)`)
+    `n <= x /\ 1 < n ==> ~(x DIV n = 0)`)
   CHEAT_TAC;;
 
 let stack_removeProof_push_if = cake_theorem "push_if"
@@ -1402,9 +1402,10 @@ let discharge_these_def = cake_define
          code) /\
        8 <= k /\ 1 IN domain (state_code s2) /\
        {k,k + 1,k + 2} SUBSET stackSem_state_ffi_save_regs s2 /\
-         ~stackSem_state_use_stack s2 /\
-       ~stackSem_state_use_store s2 /\ ~stackSem_state_use_alloc
-         s2 /\ max_stack_alloc <= max_heap`;;
+         ~(stackSem_state_use_stack s2) /\
+       ~(stackSem_state_use_store s2) /\
+         ~(stackSem_state_use_alloc s2) /\ max_stack_alloc <=
+         max_heap`;;
 
 let propagate_these_def = cake_define
   `propagate_these s (bitmaps:('a word) list) data_sp <=>
@@ -1491,8 +1492,8 @@ let make_init_any_use_store = cake_theorem "make_init_any_use_store"
 
 let make_init_any_use_alloc = cake_theorem "make_init_any_use_alloc"
   (fun () ->
-    `~stackSem_state_use_alloc (make_init_any gen_gc max_heap bitmaps
-  data_sp coracle jump off k code s)`)
+    `~(stackSem_state_use_alloc (make_init_any gen_gc max_heap bitmaps
+  data_sp coracle jump off k code s))`)
   CHEAT_TAC;;
 
 let make_init_any_code = cake_theorem "make_init_any_code"
@@ -1595,3 +1596,5 @@ let stack_remove_call_args = cake_theorem "stack_remove_call_args"
       EVERY (\p. call_args p 1 2 3 4 0) (MAP SND p) ==>
       EVERY (\p. call_args p 1 2 3 4 0) (MAP SND p')`)
   CHEAT_TAC;;
+
+cake_hide [];;

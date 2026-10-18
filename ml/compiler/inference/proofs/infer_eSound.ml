@@ -151,8 +151,8 @@ let infer_p_sound = cake_theorem "infer_p_sound"
     `(!l ienv p st t tenv env st' tvs extra_constraints s.
        infer_p l ienv p st = (M_success (t,env),st') /\
        t_wfs (infer_st_subst st) /\
-       tenv_ctor_ok (sem_env_c tenv) /\ inf_env_inf_c
-       ienv = sem_env_c tenv /\ inf_env_inf_t
+       tenv_ctor_ok (type_env_c tenv) /\ inf_env_inf_c
+       ienv = type_env_c tenv /\ inf_env_inf_t
        ienv = type_env_t tenv /\
        tenv_abbrev_ok (type_env_t tenv) /\
        sub_completion tvs (infer_st_next_uvar st') (infer_st_subst
@@ -162,8 +162,8 @@ let infer_p_sound = cake_theorem "infer_p_sound"
      (!l ienv ps st ts tenv env st' tvs extra_constraints s.
        infer_ps l ienv ps st = (M_success (ts,env),st') /\
        t_wfs (infer_st_subst st) /\
-       tenv_ctor_ok (sem_env_c tenv) /\ inf_env_inf_c
-       ienv = sem_env_c tenv /\ inf_env_inf_t
+       tenv_ctor_ok (type_env_c tenv) /\ inf_env_inf_c
+       ienv = type_env_c tenv /\ inf_env_inf_t
        ienv = type_env_t tenv /\
        tenv_abbrev_ok (type_env_t tenv) /\
        sub_completion tvs (infer_st_next_uvar st') (infer_st_subst

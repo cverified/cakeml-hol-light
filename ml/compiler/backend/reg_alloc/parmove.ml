@@ -38,11 +38,11 @@ let step_rules = cake_inductive
      mu2,[(r,d); (d,s)] ++ sigma,tau)) /\
    (step (mu,sigma ++ [(d,s)],tau) (mu,sigma ++ [(d,NONE)],[(NONE,s)]
      ++ tau)) /\
-   ((\mu dn. ~MEM dn (MAP SND mu)) mu dn /\ ~(dn = s0) ==> step
-    (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau) (mu,sigma ++
-      [(d0,s0)],[(dn,sn)] ++ tau)) /\
-   ((\mu dn. ~MEM dn (MAP SND mu)) mu d ==> step
-    (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu dn /\ ~(dn = s0) ==> step
+     (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau) (mu,sigma ++
+     [(d0,s0)],[(dn,sn)] ++ tau)) /\
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu d ==> step
+     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
 (* HOL4 parmoveScript.sml:39: ML code, not ported *)
 (* HOL4 parmoveScript.sml:40: the overload ▷, which the port expands *)
@@ -57,7 +57,7 @@ let windmill_def = cake_define
 
 let windmill_cons = cake_theorem "windmill_cons"
   (fun () ->
-    `windmill (x :: ls) <=> ~MEM (FST x) (MAP FST ls) /\ windmill ls`)
+    `windmill (x :: ls) <=> ~(MEM (FST x) (MAP FST ls)) /\ windmill ls`)
   CHEAT_TAC;;
 
 let path_def = cake_define_list
@@ -81,23 +81,22 @@ let path_tail = cake_theorem "path_tail"
 let path_imp_mem = cake_theorem "path_imp_mem[local]"
   (fun () ->
     `parmove_path (x :: y) ==>
-      ~NULL y ==> MEM (SND x) (MAP FST y)`)
+      ~(NULL y) ==> MEM (SND x) (MAP FST y)`)
   CHEAT_TAC;;
 
 let path_imp_mem2 = cake_theorem "path_imp_mem2[local]"
   (fun () ->
     `parmove_path x ==>
-      (!y. MEM y (MAP SND x) /\ ~(
-          y = SND (LAST x)) ==>
+      (!y. MEM y (MAP SND x) /\ ~(y = SND (LAST x)) ==>
           MEM y (MAP FST x))`)
   CHEAT_TAC;;
 
 let NoRead_path = cake_theorem "NoRead_path[local]"
   (fun () ->
     `!sigma. parmove_path sigma /\ windmill sigma /\ LENGTH sigma >= 2
-  /\ ~(
-      FST (HD sigma) = SND (LAST sigma)) ==>
-      (\mu dn. ~MEM dn (MAP SND mu)) (TL sigma) (FST (HD sigma))`)
+  /\ ~(FST (HD sigma) = SND (LAST sigma)) ==>
+      (\mu dn. ~(MEM dn (MAP SND mu))) (TL sigma) (FST (HD
+        sigma))`)
   CHEAT_TAC;;
 
 let wf_def = cake_define
@@ -105,7 +104,7 @@ let wf_def = cake_define
      windmill (mu ++ sigma) /\
      EVERY IS_SOME (MAP FST mu) /\
      EVERY IS_SOME (MAP SND mu) /\
-     (~NULL sigma ==> EVERY IS_SOME (MAP SND (FRONT sigma))) /\
+     (~(NULL sigma) ==> EVERY IS_SOME (MAP SND (FRONT sigma))) /\
      EVERY IS_SOME (MAP FST sigma) /\
      parmove_path sigma`;;
 hol4_overload "wf" "parmove_wf";;
@@ -144,7 +143,7 @@ let parsem_nil = cake_theorem "parsem_nil[simp]"
 
 let parsem_cons = cake_theorem "parsem_cons"
   (fun () ->
-    `~MEM x (MAP FST mu) ==>
+    `~(MEM x (MAP FST mu)) ==>
      parsem ((x,y) :: mu) rho = (x =+ rho y) (parsem mu rho)`)
   CHEAT_TAC;;
 
@@ -162,20 +161,20 @@ let parsem_perm = cake_theorem "parsem_perm"
 
 let parsem_untouched = cake_theorem "parsem_untouched"
   (fun () ->
-    `!rho mu x. windmill mu /\ ~MEM x (MAP FST mu) ==> parsem mu rho x
-  = rho x`)
+    `!rho mu x. windmill mu /\ ~(MEM x (MAP FST mu)) ==> parsem mu rho
+  x = rho x`)
   CHEAT_TAC;;
 
 let parsem_change_env = cake_theorem "parsem_change_env"
   (fun () ->
-    `(~MEM x (MAP FST mu) ==> rho1 x = rho2 x) /\
+    `(~(MEM x (MAP FST mu)) ==> rho1 x = rho2 x) /\
      MAP (rho1 o SND) mu = MAP (rho2 o SND) mu ==>
      parsem mu rho1 x = parsem mu rho2 x`)
   CHEAT_TAC;;
 
 let parsem_NoRead = cake_theorem "parsem_NoRead"
   (fun () ->
-    `(\mu dn. ~MEM dn (MAP SND mu)) mu x ==>
+    `(\mu dn. ~(MEM dn (MAP SND mu))) mu x ==>
      parsem ((x,y) :: mu) rho = parsem mu ((x =+ rho y) rho)`)
   CHEAT_TAC;;
 
@@ -200,7 +199,7 @@ let seqsem_append = cake_theorem "seqsem_append"
 
 let seqsem_move_unchanged = cake_theorem "seqsem_move_unchanged"
   (fun () ->
-    `!ms r. ~MEM k (MAP FST ms) ==> seqsem ms r k = r k`)
+    `!ms r. ~(MEM k (MAP FST ms)) ==> seqsem ms r k = r k`)
   CHEAT_TAC;;
 
 (* semantics of the state *)
@@ -227,8 +226,7 @@ let eqenv_def = cake_define
 
 let eqenv_sym = cake_theorem "eqenv_sym[local]"
   (fun () ->
-    `eqenv
-       p1 p2 ==> eqenv p2 p1`)
+    `eqenv p1 p2 ==> eqenv p2 p1`)
   CHEAT_TAC;;
 
 let step_sem = cake_theorem "step_sem[local]"
@@ -248,7 +246,7 @@ let steps_correct = cake_theorem "steps_correct"
     `windmill mu /\
      EVERY IS_SOME (MAP FST mu) /\
      EVERY IS_SOME (MAP SND mu) /\ (RTC (backend_common_Cons))
-     (mu,[],[]) ([],[],tau) ==>
+       (mu,[],[]) ([],[],tau) ==>
      (!rho. eqenv (parsem mu rho) (seqsem (REVERSE tau) rho))`)
   CHEAT_TAC;;
 
@@ -258,19 +256,18 @@ let steps_correct = cake_theorem "steps_correct"
 
 let dstep_rules = cake_inductive
   `(dstep ([(r,r)] ++ mu,[],tau) (mu,[],tau)) /\
-   (~(s = d) ==> dstep
-    ([(d,s)] ++ mu,[],tau) (mu,[(d,s)],tau)) /\
-   ((\mu dn. ~MEM dn (MAP SND mu)) mu1 d ==> dstep
-    (mu1 ++ [(r,d)] ++ mu2,[(d,s)] ++ sigma,tau)
+   (~(s = d) ==> dstep ([(d,s)] ++ mu,[],tau) (mu,[(d,s)],tau)) /\
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu1 d ==> dstep (mu1 ++ [(r,d)]
+     ++ mu2,[(d,s)] ++ sigma,tau)
     (mu1 ++ mu2,[(r,d); (d,s)] ++ sigma,tau)) /\
-   ((\mu dn. ~MEM dn (MAP SND mu)) mu r ==> dstep
-    (mu,[(r,s)] ++ sigma ++ [(d,r)],tau)
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu r ==> dstep (mu,[(r,s)] ++
+     sigma ++ [(d,r)],tau)
     (mu,sigma ++ [(d,NONE)],[(r,s); (NONE,r)] ++ tau)) /\
-   ((\mu dn. ~MEM dn (MAP SND mu)) mu dn /\ ~(dn = s0) ==> dstep
-    (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau)
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu dn /\ ~(dn = s0) ==> dstep
+     (mu,[(dn,sn)] ++ sigma ++ [(d0,s0)],tau)
     (mu,sigma ++ [(d0,s0)],[(dn,sn)] ++ tau)) /\
-   ((\mu dn. ~MEM dn (MAP SND mu)) mu d ==> dstep
-    (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
+   ((\mu dn. ~(MEM dn (MAP SND mu))) mu d ==> dstep
+     (mu,[(d,s)],tau) (mu,[],[(d,s)] ++ tau))`;;
 
 (* HOL4 parmoveScript.sml:494: ML code, not ported *)
 (* HOL4 parmoveScript.sml:495: the overload ↪, which the port expands *)
@@ -430,8 +427,8 @@ let steps_not_use_temp_before_assign =
   (fun () ->
     `!s1 s2.
       (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST
-        (SND s1) ++ SND (SND s1)))) s1 /\ (RTC (backend_common_Cons))
-      s1 s2 ==>
+        (SND s1) ++ SND (SND s1)))) s1 /\ (RTC (backend_common_Cons)) s1
+        s2 ==>
       (\s1. (wf) s1 /\ not_use_temp_before_assign (REVERSE (FST
         (SND s1) ++ SND (SND s1)))) s2`)
   CHEAT_TAC;;
@@ -471,7 +468,7 @@ let ALL_DISTINCT_steps = cake_theorem "ALL_DISTINCT_steps"
     `!s1 s2.
       (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST
         (SND s1) ++ (SND (SND s1)))))) s1 /\ (RTC (backend_common_Cons))
-      s1 s2 ==>
+        s1 s2 ==>
       (\s1. ALL_DISTINCT (FILTER IS_SOME (MAP FST (FST s1 ++ FST
         (SND s1) ++ (SND (SND s1)))))) s2`)
   CHEAT_TAC;;
@@ -506,8 +503,7 @@ let steps_preserves_moves = cake_theorem "steps_preserves_moves"
   (fun () ->
     `!s1 s2.
       (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s1 /\
-        (RTC (backend_common_Cons))
-      s1 s2 ==>
+        (RTC (backend_common_Cons)) s1 s2 ==>
       (\s1. (?y. MEM (x,y) (state_to_list s1) /\ ~(x = y))) s2`)
   CHEAT_TAC;;
 
@@ -556,7 +552,7 @@ let steps_MAP_INJ = cake_theorem "steps_MAP_INJ[local]"
   (fun () ->
     `!s1 s2. (RTC (backend_common_Cons)) s1 s2 ==>
        inj_on_state f s1 ==> (RTC (backend_common_Cons))
-       (map_state f s1) (map_state f s2)`)
+         (map_state f s1) (map_state f s2)`)
   CHEAT_TAC;;
 
 let fstep_MAP_INJ = cake_theorem "fstep_MAP_INJ"

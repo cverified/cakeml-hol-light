@@ -17,6 +17,7 @@ needs "compiler/backend/closLang.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
+needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
 needs "lib/sptree.ml";;
@@ -224,7 +225,7 @@ let bvi_tmcProof_EVERY_free_names_thm =
 
 let free_names_mult_F = cake_theorem "free_names_mult_F[local,simp]"
   (fun () ->
-    `bvi_tmcProof_free_names n (n + k * bvl_to_bvi_namespaces') <=> F`)
+    `bvi_tmcProof_free_names n (n + k * bvl_to_bvi_namespaces) <=> F`)
   CHEAT_TAC;;
 
 let free_names_refl_F = cake_theorem "free_names_refl_F[local,simp]"
@@ -234,8 +235,8 @@ let free_names_refl_F = cake_theorem "free_names_refl_F[local,simp]"
 
 let free_names_succ_F = cake_theorem "free_names_succ_F[local,simp]"
   (fun () ->
-    `bvi_tmcProof_free_names n (n + (bvl_to_bvi_namespaces' + k *
-  bvl_to_bvi_namespaces')) <=> F`)
+    `bvi_tmcProof_free_names n (n + (bvl_to_bvi_namespaces + k *
+  bvl_to_bvi_namespaces)) <=> F`)
   CHEAT_TAC;;
 
 let rewrite_wrapper_NONE_irrel =
@@ -300,9 +301,10 @@ let bvi_tmcProof_compile_each_intro =
   cake_theorem "compile_each_intro[local]"
   (fun () ->
     `!xs n ys n1 name.
-       ~MEM name (MAP FST xs) /\ bvi_tmcProof_free_names n name /\
+       ~(MEM name (MAP FST xs)) /\ bvi_tmcProof_free_names n name
+         /\
        bvi_tmc_compile_each n xs = (n1,ys) ==>
-         ~MEM name (MAP FST ys) /\ bvi_tmcProof_free_names n1
+         ~(MEM name (MAP FST ys)) /\ bvi_tmcProof_free_names n1
            name`)
   CHEAT_TAC;;
 
@@ -522,16 +524,14 @@ let bvi_tmcProof_state_rel_with_clock =
 let state_ref_rel_filled = cake_theorem "state_ref_rel_filled"
   (fun () ->
     `!f refs refs' k v.
-       state_ref_rel f refs refs' /\ ~(
-       k IN FRANGE f) ==>
-       state_ref_rel f refs refs' |+ (k,v)`)
+       state_ref_rel f refs refs' /\ ~(k IN FRANGE f) ==>
+       state_ref_rel f refs (refs' |+ (k,v))`)
   CHEAT_TAC;;
 
 let state_rel_filled = cake_theorem "state_rel_filled"
   (fun () ->
     `!f s s' k v.
-       bvi_tmcProof_state_rel f s s' /\ ~(
-       k IN FRANGE f) ==>
+       bvi_tmcProof_state_rel f s s' /\ ~(k IN FRANGE f) ==>
        bvi_tmcProof_state_rel f s (state_refs_fupd (K (state_refs
          s' |+ (k,v))) s')`)
   CHEAT_TAC;;
@@ -543,15 +543,13 @@ let hole_has_val_def = cake_define
    (?hole_ptr tag finalised left right. EL (LENGTH env1)
      env2 = RefPtr F hole_ptr /\ EL (LENGTH env1 + 1)
      env2 = Number (&(LENGTH left)) /\
-     small_enough_int (&(LENGTH left)) /\ ~(
-     hole_ptr IN FRANGE f) /\
+     small_enough_int (&(LENGTH left)) /\ ~(hole_ptr IN FRANGE f) /\
      FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag finalised
        left c right))`;;
 
 let holes_unchanged_except_def = cake_define
   `holes_unchanged_except f refs refs' changed <=>
-     (!ptr tag finalised left child right. ~(
-        ptr IN FRANGE f) /\
+     (!ptr tag finalised left child right. ~(ptr IN FRANGE f) /\
         FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag finalised left
           child right) ==>
         (?finalised' child'.
@@ -568,8 +566,7 @@ let hole_not_finalised_def = cake_define
 let holes_still_not_finalised_def = cake_define
   `holes_still_not_finalised f (refs:('b,'c bvlSem_ref)fmap)
   (refs':('b,'c bvlSem_ref)fmap) <=>
-     (!ptr. ~(
-       ptr IN FRANGE f) /\
+     (!ptr. ~(ptr IN FRANGE f) /\
        hole_not_finalised refs ptr ==>
        hole_not_finalised refs' ptr)`;;
 
@@ -585,16 +582,16 @@ let holes_still_not_finalised_ins =
   (fun () ->
     `!f refs refs' ptr tag l c r.
        holes_still_not_finalised f refs refs' ==>
-       holes_still_not_finalised f refs refs' |+
-         (ptr,bvlSem_MutBlock tag F l c r)`)
+       holes_still_not_finalised f refs (refs' |+
+         (ptr,bvlSem_MutBlock tag F l c r))`)
   CHEAT_TAC;;
 
 let holes_still_not_finalised_del =
   cake_theorem "holes_still_not_finalised_del"
   (fun () ->
-    `(!f refs refs' ptr tag l c r.
-       holes_still_not_finalised f refs |+ (ptr,bvlSem_MutBlock tag
-         F l c r)) refs' ==>
+    `!f refs refs' ptr tag l c r.
+       holes_still_not_finalised f (refs |+ (ptr,bvlSem_MutBlock
+         tag F l c r)) refs' ==>
        holes_still_not_finalised f refs refs'`)
   CHEAT_TAC;;
 
@@ -653,10 +650,9 @@ let holes_unchanged_except_subset =
 let holes_unchanged_except_del =
   cake_theorem "holes_unchanged_except_del"
   (fun () ->
-    `(!f refs_old refs_new changed ptr v.
-       holes_unchanged_except f refs_old |+ (ptr,v)) refs_new
-         changed /\ ~(
-       ptr IN FDOM refs_old) ==>
+    `!f refs_old refs_new changed ptr v.
+       holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new
+         changed /\ ~(ptr IN FDOM refs_old) ==>
        holes_unchanged_except f refs_old refs_new (changed DIFF
          {ptr})`)
   CHEAT_TAC;;
@@ -664,18 +660,17 @@ let holes_unchanged_except_del =
 let holes_unchanged_except_del_SING =
   cake_theorem "holes_unchanged_except_del_SING"
   (fun () ->
-    `(!f refs_old refs_new changed ptr v.
-       holes_unchanged_except f refs_old |+ (ptr,v)) refs_new {ptr}
-         /\ ~(
-       ptr IN FDOM refs_old) ==>
+    `!f refs_old refs_new changed ptr v.
+       holes_unchanged_except f (refs_old |+ (ptr,v)) refs_new
+         {ptr} /\ ~(ptr IN FDOM refs_old) ==>
        holes_unchanged_except f refs_old refs_new EMPTY`)
   CHEAT_TAC;;
 
 let holes_unchanged_except_changed =
   cake_theorem "holes_unchanged_except_changed"
   (fun () ->
-    `(!f refs_old refs_new changed ptr tag fin l c r.
-       holes_unchanged_except f refs_old |+ (ptr,bvlSem_MutBlock
+    `!f refs_old refs_new changed ptr tag fin l c r.
+       holes_unchanged_except f (refs_old |+ (ptr,bvlSem_MutBlock
          tag fin l c r)) refs_new EMPTY /\
        FLOOKUP refs_old ptr = SOME (bvlSem_MutBlock tag fin' l c'
          r) ==>
@@ -685,11 +680,11 @@ let holes_unchanged_except_changed =
 let holes_unchanged_except_filled =
   cake_theorem "holes_unchanged_except_filled"
   (fun () ->
-    `(!f refs_old refs_new changed ptr tag fin l c r.
+    `!f refs_old refs_new changed ptr tag fin l c r.
        holes_unchanged_except f refs_old refs_new EMPTY /\
        FLOOKUP refs_old ptr = SOME (bvlSem_MutBlock tag fin' l c'
          r) ==>
-       holes_unchanged_except f refs_old refs_new |+
+       holes_unchanged_except f refs_old (refs_new |+
          (ptr,bvlSem_MutBlock tag fin l c r)) {ptr}`)
   CHEAT_TAC;;
 
@@ -699,8 +694,8 @@ let unchanged_hole_has_val = cake_theorem "unchanged_hole_has_val"
        hole_has_val f env (env' ++ [RefPtr F hole_ptr; Number
          hole_idx]) refs c /\
        only_fresh f f' refs /\
-       holes_unchanged_except f refs refs' changed /\ ~(
-       hole_ptr IN changed) ==>
+       holes_unchanged_except f refs refs' changed /\ ~(hole_ptr IN
+         changed) ==>
        hole_has_val f' env (env' ++ [RefPtr F hole_ptr; Number
          hole_idx]) refs' c`)
   CHEAT_TAC;;
@@ -761,37 +756,32 @@ let only_fresh_submap = cake_theorem "only_fresh_submap"
 
 let non_fresh_not_in_frange = cake_theorem "non_fresh_not_in_frange"
   (fun () ->
-    `ptr IN FDOM refs_old /\ ~(
-     ptr IN FRANGE f) /\
-     only_fresh f f' refs_old ==> ~(
-     ptr IN FRANGE f')`)
+    `ptr IN FDOM refs_old /\ ~(ptr IN FRANGE f) /\
+     only_fresh f f' refs_old ==> ~(ptr IN FRANGE f')`)
   CHEAT_TAC;;
 
 let fresh_ptr_fresh = cake_theorem "fresh_ptr_fresh"
   (fun () ->
-    `!refs. ~(
-       (LEAST (\ptr. ~(ptr IN FDOM refs))) IN FDOM refs)`)
+    `!refs. ~((LEAST (\ptr. ~(ptr IN FDOM refs))) IN FDOM refs)`)
   CHEAT_TAC;;
 
 let fresh_not_in_range_f = cake_theorem "fresh_not_in_range_f"
   (fun () ->
     `!f s_refs t_refs.
-       state_ref_rel f s_refs t_refs ==> ~(
-       (LEAST (\ptr. ~(ptr IN FDOM t_refs))) IN FRANGE f)`)
+       state_ref_rel f s_refs t_refs ==> ~((LEAST (\ptr. ~(ptr IN
+         FDOM t_refs))) IN FRANGE f)`)
   CHEAT_TAC;;
 
 let only_fresh_del = cake_theorem "only_fresh_del"
   (fun () ->
     `!f f' refs ptr v.
-       only_fresh f f' refs |+ (ptr,v) /\ ~(
-       ptr IN FRANGE f) ==>
+       only_fresh f f' (refs |+ (ptr,v)) /\ ~(ptr IN FRANGE f) ==>
        only_fresh f f' refs`)
   CHEAT_TAC;;
 
 let flookup_com_neq = cake_theorem "flookup_com_neq"
   (fun () ->
-    `!m k1 v1 k2 v2. ~(
-       k1 = k2) ==>
+    `!m k1 v1 k2 v2. ~(k1 = k2) ==>
        m |+ (k1,v1) |+ (k2,v2) = m |+ (k2,v2) |+ (k1,v1)`)
   CHEAT_TAC;;
 
@@ -826,9 +816,7 @@ let mb_rel_cons = cake_theorem "mb_rel_cons"
        LIST_REL (bvi_tmcProof_v_rel f) left left' /\
        LIST_REL (bvi_tmcProof_v_rel f) right right' /\
        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left' v'
-         right') /\ ~(
-       ptr IN FRANGE f) /\ ~(
-       ptr IN FDOM refs_old) ==>
+         right') /\ ~(ptr IN FRANGE f) /\ ~(ptr IN FDOM refs_old) ==>
        mb_rel f refs_old refs (Block tag (left ++ [v] ++ right))
          (RefPtr F ptr)`)
   CHEAT_TAC;;
@@ -838,10 +826,8 @@ let mb_rel_del = cake_theorem "mb_rel_del"
     `!f refs_old refs v1 v2 ptr tag left ptr' right.
        mb_rel f refs_old refs v1 v2 /\
        FLOOKUP refs ptr = SOME (bvlSem_MutBlock tag F left (RefPtr
-         F ptr') right) /\ ~(
-       ptr' IN FDOM refs) /\ ~(
-       ptr' IN FDOM refs_old) /\ ~(
-       ptr' IN FRANGE f) ==>
+         F ptr') right) /\ ~(ptr' IN FDOM refs) /\ ~(ptr' IN FDOM
+         refs_old) /\ ~(ptr' IN FRANGE f) ==>
        mb_rel f refs_old (refs \\ ptr) v1 v2`)
   CHEAT_TAC;;
 
@@ -855,7 +841,7 @@ let state_ref_rel_update = cake_theorem "state_ref_rel_update"
 
 let bvl_to_bvi_refs = cake_theorem "bvl_to_bvi_refs"
   (fun () ->
-    `bvl_to_bvi (state_refs_fupd (K r) (bvi_to_bvl s)) s =
+    `bvl_to_bvi (bvi_to_bvl (state_refs_fupd (K r) s)) s =
   state_refs_fupd (K r) s`)
   CHEAT_TAC;;
 
@@ -884,9 +870,8 @@ let ref_rel_submap = cake_theorem "ref_rel_submap"
 let state_ref_rel_alloc = cake_theorem "state_ref_rel_alloc"
   (fun () ->
     `!f s_refs t_refs src tgt rv rw.
-       state_ref_rel f s_refs t_refs /\ ~(
-       src IN FDOM s_refs) /\ ~(tgt IN FDOM t_refs) /\ ~(tgt IN
-         FRANGE f) /\
+       state_ref_rel f s_refs t_refs /\ ~(src IN FDOM s_refs) /\
+         ~(tgt IN FDOM t_refs) /\ ~(tgt IN FRANGE f) /\
        bvi_tmcProof_ref_rel (f |+ (src,tgt)) rv rw ==>
        state_ref_rel (f |+ (src,tgt)) (s_refs |+ (src,rv))
          (t_refs |+ (tgt,rw))`)
@@ -895,9 +880,8 @@ let state_ref_rel_alloc = cake_theorem "state_ref_rel_alloc"
 let state_rel_alloc = cake_theorem "state_rel_alloc"
   (fun () ->
     `!f s s' src tgt rv rw.
-       bvi_tmcProof_state_rel f s s' /\ ~(
-       src IN FDOM (state_refs s)) /\ ~(tgt IN FDOM (state_refs
-         s')) /\ ~(tgt IN FRANGE f) /\
+       bvi_tmcProof_state_rel f s s' /\ ~(src IN FDOM (state_refs
+         s)) /\ ~(tgt IN FDOM (state_refs s')) /\ ~(tgt IN FRANGE f) /\
        bvi_tmcProof_ref_rel (f |+ (src,tgt)) rv rw ==>
        FLOOKUP (f |+ (src,tgt)) src = SOME tgt /\
        bvi_tmcProof_state_rel (f |+ (src,tgt))
@@ -1276,8 +1260,7 @@ let list_rel_reverse = cake_theorem "list_rel_reverse"
 let list_rel_last = cake_theorem "list_rel_last"
   (fun () ->
     `!r l1 l2.
-       LIST_REL r l1 l2 /\ ~(
-       l1 = []) ==>
+       LIST_REL r l1 l2 /\ ~(l1 = []) ==>
        r (LAST l1) (LAST l2)`)
   CHEAT_TAC;;
 
@@ -1396,16 +1379,16 @@ let evaluate_vars_expand_env = cake_theorem "evaluate_vars_expand_env"
 let evaluate_var_list = cake_theorem "evaluate_var_list"
   (fun () ->
     `!ns env s t r.
-       evaluate (MAP (\n. Var n) ns,env,s) = (r,t) /\ ~(
-       r = Rerr (Rabort Rtype_error)) ==>
+       evaluate (MAP (\n. Var n) ns,env,s) = (r,t) /\ ~(r = Rerr
+         (Rabort Rtype_error)) ==>
        (r,t) = (Rval (MAP (\n. EL n env) ns),s)`)
   CHEAT_TAC;;
 
 let evaluate_var_list_binders = cake_theorem "evaluate_var_list_binders"
   (fun () ->
     `!ns extras env s r t.
-       evaluate (MAP (\n. Var n) ns,env,s) = (r,t) /\ ~(
-       r = Rerr (Rabort Rtype_error)) ==>
+       evaluate (MAP (\n. Var n) ns,env,s) = (r,t) /\ ~(r = Rerr
+         (Rabort Rtype_error)) ==>
        evaluate (MAP (\n. Var (n + LENGTH extras)) ns,extras ++
          env,s) = (r,t)`)
   CHEAT_TAC;;
@@ -1502,7 +1485,7 @@ let evaluate_bvi_to_cb_aux_inl_lemma =
   CHEAT_TAC;;
 
 (* HOL4 bvi_tmcProofScript.sml:2708: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_bvi_to_cb_aux_inl *)
 
 let evaluate_bvi_to_cb_aux_inr_lemma =
   cake_theorem "evaluate_bvi_to_cb_aux_inr_lemma[local]"
@@ -1544,7 +1527,7 @@ let evaluate_bvi_to_cb_aux_inr_lemma =
   CHEAT_TAC;;
 
 (* HOL4 bvi_tmcProofScript.sml:2897: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_bvi_to_cb_aux_inr *)
 
 let evaluate_bvi_to_cb = cake_theorem "evaluate_bvi_to_cb"
   (fun () ->
@@ -1578,8 +1561,8 @@ let evaluate_rewrite_tmc = cake_theorem "evaluate_rewrite_tmc"
        bvi_tmcProof_env_rel opt f env1 env2 /\ EVERY (\x.
          no_mutcons x) xs /\
        bvi_tmcProof_state_rel f s s' /\
-       (opt ==> LENGTH xs = 1) /\ ~(
-       r = Rerr (Rabort Rtype_error)) ==>
+       (opt ==> LENGTH xs = 1) /\ ~(r = Rerr (Rabort Rtype_error))
+         ==>
        (?t' f' r'.
          evaluate (xs,env2,s') = (r',t') /\
          semanticPrimitivesProps_result_rel (LIST_REL
@@ -1648,8 +1631,8 @@ let hypothesis_def = cake_define
              bvi_tmcProof_env_rel opt' f' env1' env2' /\ EVERY (\x.
                no_mutcons x) xs' /\
              bvi_tmcProof_state_rel f' s'' s'3' /\
-             (opt' ==> LENGTH xs' = 1) /\ ~(
-             r' = Rerr (Rabort Rtype_error)) ==>
+             (opt' ==> LENGTH xs' = 1) /\ ~(r' = Rerr (Rabort
+               Rtype_error)) ==>
              (?t'' f'' r''.
                evaluate (xs',env2',s'3') = (r'',t'') /\
                semanticPrimitivesProps_result_rel (LIST_REL
@@ -1714,8 +1697,8 @@ let alloc_hole_has_val_def = cake_define
        i_ptr < LENGTH extras /\ EL i_ptr
        extras = RefPtr F hole_ptr /\
        c_idx = LENGTH left /\
-       small_enough_int (&(LENGTH left)) /\ ~(
-       hole_ptr IN FRANGE f) /\
+       small_enough_int (&(LENGTH left)) /\ ~(hole_ptr IN FRANGE f)
+         /\
        FLOOKUP refs hole_ptr = SOME (bvlSem_MutBlock tag F left c
          right))`;;
 
@@ -1749,8 +1732,7 @@ let wf_vars_env_rel_opt = cake_theorem "wf_vars_env_rel_opt"
 
 let state_ref_rel_sub = cake_theorem "state_ref_rel_sub"
   (fun () ->
-    `!ptr f s_refs t_refs. ~(
-       ptr IN FRANGE f) /\
+    `!ptr f s_refs t_refs. ~(ptr IN FRANGE f) /\
        state_ref_rel f s_refs t_refs ==>
        state_ref_rel f s_refs (t_refs \\ ptr)`)
   CHEAT_TAC;;
@@ -1758,20 +1740,18 @@ let state_ref_rel_sub = cake_theorem "state_ref_rel_sub"
 let holes_unchanged_except_finalised =
   cake_theorem "holes_unchanged_except_finalised"
   (fun () ->
-    `(!f p ptr r1 r2 tag fin1 left child right fin2.
+    `!f p ptr r1 r2 tag fin1 left child right fin2.
        holes_unchanged_except f (r1 \\ ptr) r2 EMPTY /\
        FLOOKUP r1 ptr = SOME (bvlSem_MutBlock tag fin1 left child
-         right) /\ ~(
-       ptr IN FRANGE f) ==>
-       holes_unchanged_except f r1 r2 |+ (ptr,bvlSem_MutBlock tag
-         fin2 left child right)) EMPTY`)
+         right) /\ ~(ptr IN FRANGE f) ==>
+       holes_unchanged_except f r1 (r2 |+ (ptr,bvlSem_MutBlock
+         tag fin2 left child right)) EMPTY`)
   CHEAT_TAC;;
 
 let holes_still_not_finalised_sub =
   cake_theorem "holes_still_not_finalised_sub"
   (fun () ->
-    `~(
-       ptr IN FDOM refs) /\
+    `~(ptr IN FDOM refs) /\
        holes_still_not_finalised f refs refs' ==>
        holes_still_not_finalised f refs (refs' \\ ptr)`)
   CHEAT_TAC;;
@@ -1780,10 +1760,10 @@ let holes_still_not_finalised_non_dom =
   cake_theorem "holes_still_not_finalised_non_dom"
   (fun () ->
     `!f refs refs' ptr tag l c r.
-       holes_still_not_finalised f refs refs' /\ ~(
-       ptr IN FDOM refs) ==>
-       holes_still_not_finalised f refs refs' |+
-         (ptr,bvlSem_MutBlock tag T l c r)`)
+       holes_still_not_finalised f refs refs' /\ ~(ptr IN FDOM
+         refs) ==>
+       holes_still_not_finalised f refs (refs' |+
+         (ptr,bvlSem_MutBlock tag T l c r))`)
   CHEAT_TAC;;
 
 let evaluate_finalise_cons = cake_theorem "evaluate_finalise_cons"
@@ -1848,8 +1828,7 @@ let evaluate_cb = cake_theorem "evaluate_cb"
        wf_cb (LENGTH env) cb /\
        bvi_tmcProof_env_rel opt f env env2 /\
        bvi_tmcProof_state_rel f s s' /\ state_clock
-       s <= clock /\ ~(
-       r = Rerr (Rabort Rtype_error)) /\
+       s <= clock /\ ~(r = Rerr (Rabort Rtype_error)) /\
        (!xs' (s'':(num#'c,'ffi)bviSem_state).
           hypothesis xs' s'' clock) ==>
        (?r' t' f'.
@@ -1958,7 +1937,7 @@ let bvi_to_cb_aux_no_mutcons_lemma =
   CHEAT_TAC;;
 
 (* HOL4 bvi_tmcProofScript.sml:4193: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: bvi_to_cb_aux_no_mutcons *)
 
 let bvi_to_cb_no_mutcons = cake_theorem "bvi_to_cb_no_mutcons"
   (fun () ->
@@ -2083,8 +2062,7 @@ let bvi_tmcProof_evaluate_compile_each =
      evaluate ([Call 0 (SOME start) [] NONE],[],
                initial_state ffi0 (fromAList prog) co
                    (state_cc bvi_tmc_compile_each cc) k) = (r,s) /\
-                     ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+                     ~(r = Rerr (Rabort Rtype_error)) ==>
      (?f s2 r2.
        evaluate
         ([Call 0 (SOME start) [] NONE],[],
@@ -2111,9 +2089,9 @@ let bvi_tmcProof_compile_each_semantics =
        bvi_tmcProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 3) k ==> k < FST (FST (co 0))) /\
-     SND (bvi_tmc_compile_each n prog) = prog2 /\ ~(
-     semantics ffi (fromAList prog) co (state_cc
-       bvi_tmc_compile_each cc) start = ffi_Fail) ==>
+     SND (bvi_tmc_compile_each n prog) = prog2 /\ ~(semantics ffi
+       (fromAList prog) co (state_cc bvi_tmc_compile_each cc) start =
+       ffi_Fail) ==>
      semantics ffi (fromAList prog) co (state_cc
        bvi_tmc_compile_each cc) start =
      semantics ffi (fromAList prog2) (state_co
@@ -2128,9 +2106,8 @@ let bvi_tmcProof_compile_prog_semantics =
        bvi_tmcProof_input_condition n prog) /\
      (!k. MEM k (MAP FST prog2) /\ (\n. n MOD bvl_to_bvi_namespaces
        = 3) k ==> k < FST (FST (co 0))) /\
-     SND (compile_prog b n prog) = prog2 /\ ~(
-     semantics ffi (fromAList prog) co (state_cc (compile_prog b)
-       cc) start =
+     SND (compile_prog b n prog) = prog2 /\ ~(semantics ffi
+       (fromAList prog) co (state_cc (compile_prog b) cc) start =
        ffi_Fail) ==>
      semantics ffi (fromAList prog) co (state_cc (compile_prog b)
        cc) start =
@@ -2147,8 +2124,8 @@ let bvi_tmcProof_compile_prog_semantics =
 let get_code_labels_MAP_Var =
   cake_theorem "get_code_labels_MAP_Var[local,simp]"
   (fun () ->
-    `BIGUNION (set_of_list (MAP get_code_labels' (MAP (\n. Var n)
-  vs))) = {}`)
+    `BIGUNION (set_of_list (MAP get_code_labels (MAP (\n. Var n) vs)))
+  = {}`)
   CHEAT_TAC;;
 
 let cb_to_bvi_worker_aux_code_labels =
@@ -2264,3 +2241,5 @@ let bvi_tmcProof_compile_prog_keeps_names =
          ==>
        MEM x (MAP FST ys)`)
   CHEAT_TAC;;
+
+cake_hide [];;

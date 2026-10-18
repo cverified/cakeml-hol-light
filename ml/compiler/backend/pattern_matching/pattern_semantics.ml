@@ -92,7 +92,7 @@ let pmatch_def = cake_define_list_try_tac (fun () ->
   (pattern_semantics_Any:pattern_semantics_pat) t = PMatchSuccess`;
    `pattern_semantics_pmatch refs (Lit l:pattern_semantics_pat) (Litv
   l':pattern_semantics_term) =
-         (if ~lit_same_type l l' then PTypeFailure else
+         (if ~(lit_same_type l l') then PTypeFailure else
          if l = l' then PMatchSuccess else PMatchFailure)`;
    `pattern_semantics_pmatch refs (pattern_semantics_Cons (SOME
   (tag,siblings)) pargs:pattern_semantics_pat) (pattern_semantics_Term

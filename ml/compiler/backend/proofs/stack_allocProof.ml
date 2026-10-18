@@ -81,8 +81,8 @@ let stack_allocProof_FST_prog_comp = cake_theorem "FST_prog_comp[simp]"
 let lookup_IMP_lookup_compile =
   cake_theorem "lookup_IMP_lookup_compile[local]"
   (fun () ->
-    `lookup dest (stackSem_state_code s) = SOME x /\ ~(
-     dest = gc_stub_location) ==>
+    `lookup dest (stackSem_state_code s) = SOME x /\ ~(dest =
+  gc_stub_location) ==>
       (?m1 n1. lookup dest (fromAList (compile c (toAList
         (stackSem_state_code s)))) =
               SOME (FST (comp m1 n1 x)))`)
@@ -156,8 +156,7 @@ let filter_bitmap_APPEND = cake_theorem "filter_bitmap_APPEND[local]"
 
 let bit_length_minus_1 = cake_theorem "bit_length_minus_1"
   (fun () ->
-    `~(
-        w = (n2w 0)) ==> bit_length w - 1 = bit_length (w >>> 1)`)
+    `~(w = (n2w 0)) ==> bit_length w - 1 = bit_length (w >>> 1)`)
   CHEAT_TAC;;
 
 let bit_length_eq_1 = cake_theorem "bit_length_eq_1"
@@ -183,8 +182,7 @@ let split_num_forall_to_10 =
 
 let word_shift_not_0 = cake_theorem "word_shift_not_0"
   (fun () ->
-    `~(
-        backend_common_word_shift (:'a) = 0)`)
+    `~(backend_common_word_shift (:'a) = 0)`)
   CHEAT_TAC;;
 
 let select_lower_lemma = cake_theorem "select_lower_lemma"
@@ -517,7 +515,8 @@ let word_gc_move_bitmap_def = cake_define
             match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
-(* HOL4 stack_allocProofScript.sml:718-740: a proof *)
+(* HOL4 stack_allocProofScript.sml:718-740: a theorem that HOL4
+   states as the value of an ML expression: map_bitmap_APPEND_APPEND *)
 
 (* HOL4 stack_allocProofScript.sml:742-744: the ML values that the
    definitions below antiquote *)
@@ -919,7 +918,7 @@ let stack_allocProof_word_gc_fun_thm =
     `data_to_word_config_gc_kind
        conf = (data_to_word_Generational gen_sizes) ==>
         word_gc_fun conf (roots,m,dm,s) =
-          (if ~word_gc_fun_assum conf s then NONE else
+          (if ~(word_gc_fun_assum conf s) then NONE else
           if word_gen_gc_can_do_partial gen_sizes s then
             (\(roots1,i1,pa1,m1,c2).
                if c2 /\
@@ -1075,8 +1074,8 @@ let stack_allocProof_gc_thm = cake_theorem "gc_thm[local]"
         gc (s:('a,'c,'b)stackSem_state) =
         (if LENGTH (stackSem_state_stack s) <
           stackSem_state_stack_space s then NONE else
-          if ~word_gc_fun_assum conf (stackSem_state_store s) then
-            NONE else
+          if ~(word_gc_fun_assum conf (stackSem_state_store s))
+            then NONE else
           if word_gen_gc_can_do_partial gen_sizes
             (stackSem_state_store s) then
            (let unused = TAKE (stackSem_state_stack_space s)
@@ -1357,7 +1356,8 @@ let word_gen_gc_partial_move_bitmap_def = cake_define
             match map_bitmap bs wl stack' with NONE -> NONE | SOME
               (hd,v2) -> SOME (hd,ws,i2,pa2,m2,c2)))`;;
 
-(* HOL4 stack_allocProofScript.sml:2225-2247: a proof *)
+(* HOL4 stack_allocProofScript.sml:2225-2247: a theorem that HOL4
+   states as the value of an ML expression: map_bitmap_APPEND_APPEND *)
 
 (* HOL4 stack_allocProofScript.sml:2249-2251: the ML values that the
    definitions below antiquote *)
@@ -2601,8 +2601,8 @@ let stack_allocProof_get_labels_comp = cake_theorem "get_labels_comp"
 let loc_check_compile = cake_theorem "loc_check_compile"
   (fun () ->
     `loc_check (stackSem_state_code s) (l1,l2) /\
-      (!k prog. lookup k (stackSem_state_code s) = SOME prog ==> ~(
-                k = gc_stub_location)) ==>
+      (!k prog. lookup k (stackSem_state_code s) = SOME prog ==>
+        ~(k = gc_stub_location)) ==>
       loc_check (fromAList (compile c (toAList
         (stackSem_state_code s)))) (l1,l2)`)
   CHEAT_TAC;;
@@ -2678,13 +2678,11 @@ let stack_allocProof_comp_correct = cake_theorem "comp_correct"
        evaluate (p,s) = (r,t) /\ ~(r = SOME Error) /\ alloc_arg p
          /\
        (!k prog. lookup k (stackSem_state_code s) = SOME prog ==>
-         ~(
-                 k = gc_stub_location) /\
+         ~(k = gc_stub_location) /\
                  alloc_arg prog) /\
        (!n k p. MEM (k,p) (FST (SND (stackSem_state_compile_oracle
-         s n))) ==> ~(
-                k = gc_stub_location) /\ alloc_arg p) /\
-                  stackSem_state_gc_fun
+         s n))) ==> ~(k = gc_stub_location) /\ alloc_arg p) /\
+         stackSem_state_gc_fun
        s = word_gc_fun c /\ stackSem_state_use_alloc s /\
        LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) <
          dimword (:'a) /\ stackSem_state_regs
@@ -2750,12 +2748,10 @@ let with_same_regs_lemma = cake_theorem "with_same_regs_lemma[local]"
 let stack_allocProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
-    `(!k prog. lookup k (stackSem_state_code s) = SOME prog ==> ~(
-               k = gc_stub_location) /\ alloc_arg prog) /\
+    `(!k prog. lookup k (stackSem_state_code s) = SOME prog ==> ~(k =
+  gc_stub_location) /\ alloc_arg prog) /\
       (!n k p. MEM (k,p) (FST (SND (stackSem_state_compile_oracle s
-        n))) ==> ~(
-                k = gc_stub_location) /\ alloc_arg p) /\
-                  state_gc_fun
+        n))) ==> ~(k = gc_stub_location) /\ alloc_arg p) /\ state_gc_fun
      (s:('a,'c,'b)stackSem_state) = (word_gc_fun c:('a word_loc)
        list#('a word->'a word_loc)#('a word->bool)#(store_name,'a
        word_loc)fmap->(('a word_loc) list#('a word->'a
@@ -2766,8 +2762,8 @@ let stack_allocProof_compile_semantics =
      LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) <
        dimword (:'a) /\ stackSem_state_use_stack
      s /\ stackSem_state_use_alloc s /\ stackSem_state_compile
-     s = (\c. compile_rest c o (MAP prog_comp)) /\ ~(
-     semantics start s = Fail) ==>
+     s = (\c. compile_rest c o (MAP prog_comp)) /\ ~(semantics
+       start s = Fail) ==>
      semantics start (stackSem_state_use_alloc_fupd (K F)
        (stackSem_state_use_stack_fupd (K T)
        (stackSem_state_use_store_fupd (K T)
@@ -2799,13 +2795,12 @@ let prog_comp_lambda = cake_theorem "prog_comp_lambda"
 let stack_allocProof_make_init_semantics =
   cake_theorem "make_init_semantics"
   (fun () ->
-    `(!k prog. ALOOKUP code k = SOME prog ==> ~(
-               k = gc_stub_location) /\ alloc_arg prog) /\
-     (!n k p. MEM (k,p) (FST (SND (oracle n))) ==> ~(
-               k = gc_stub_location) /\ alloc_arg p) /\
-                 stackSem_state_use_stack
-     s /\ stackSem_state_use_store s /\ ~stackSem_state_use_alloc s
-       /\ stackSem_state_code s = fromAList (compile c code) /\
+    `(!k prog. ALOOKUP code k = SOME prog ==> ~(k = gc_stub_location) /\
+  alloc_arg prog) /\
+     (!n k p. MEM (k,p) (FST (SND (oracle n))) ==> ~(k =
+       gc_stub_location) /\ alloc_arg p) /\ stackSem_state_use_stack
+     s /\ stackSem_state_use_store s /\ ~(stackSem_state_use_alloc
+       s) /\ stackSem_state_code s = fromAList (compile c code) /\
        stackSem_state_compile_oracle
      s = (I ## MAP prog_comp ## I) o oracle /\
      LENGTH (stackSem_state_bitmaps s) + LENGTH (buffer_buffer
@@ -2813,16 +2808,16 @@ let stack_allocProof_make_init_semantics =
        (stackSem_state_data_buffer s) < dimword (:'a) - 1 /\
      LENGTH (stackSem_state_stack s) * (dimindex (:'a) DIV 8) <
        dimword (:'a) /\
-     ALL_DISTINCT (MAP FST code) /\ ~(
-     semantics start (stack_allocProof_make_init c (fromAList code)
-       oracle s) = Fail) ==>
+     ALL_DISTINCT (MAP FST code) /\ ~(semantics start
+       (stack_allocProof_make_init c (fromAList code) oracle s) = Fail)
+       ==>
      semantics start (s:('a,'c,'ffi)stackSem_state) =
      semantics start (stack_allocProof_make_init c (fromAList
        code) oracle s)`)
   CHEAT_TAC;;
 
 (* HOL4 stack_allocProofScript.sml:6111-6121: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: next_lab_EQ_MAX *)
 
 let MAX_SIMP = cake_theorem "MAX_SIMP[local]"
   (fun () ->
@@ -2914,3 +2909,5 @@ let compile_has_fp_ops = cake_theorem "compile_has_fp_ops[simp]"
   (data_to_word_config_has_fp_ops_fupd (K b1) dconf)) code =
      compile dconf code`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -66,17 +66,17 @@ let nsAll2_mono = cake_theorem "nsAll2_mono[mono]"
 
 let nsLookup_nsEmpty = cake_theorem "nsLookup_nsEmpty[simp]"
   (fun () ->
-    `!id'. nsLookup nsEmpty' id' = NONE`)
+    `!id'. nsLookup nsEmpty id' = NONE`)
   CHEAT_TAC;;
 
 let nsLookupMod_nsEmpty = cake_theorem "nsLookupMod_nsEmpty[simp]"
   (fun () ->
-    `!x y. nsLookupMod nsEmpty' (x :: y) = NONE`)
+    `!x y. nsLookupMod nsEmpty (x :: y) = NONE`)
   CHEAT_TAC;;
 
 let nsAppend_nsEmpty = cake_theorem "nsAppend_nsEmpty[simp]"
   (fun () ->
-    `!env. nsAppend env nsEmpty' = env /\ nsAppend nsEmpty' env = env`)
+    `!env. nsAppend env nsEmpty = env /\ nsAppend nsEmpty env = env`)
   CHEAT_TAC;;
 
 let alist_to_ns_nil = cake_theorem "alist_to_ns_nil[simp]"
@@ -101,17 +101,17 @@ let nsAll2_nsEmpty = cake_theorem "nsAll2_nsEmpty[simp]"
 
 let nsDom_nsEmpty = cake_theorem "nsDom_nsEmpty[simp]"
   (fun () ->
-    `nsDom nsEmpty' = {}`)
+    `nsDom nsEmpty = {}`)
   CHEAT_TAC;;
 
 let nsDomMod_nsEmpty = cake_theorem "nsDomMod_nsEmpty[simp]"
   (fun () ->
-    `nsDomMod nsEmpty' = {[]}`)
+    `nsDomMod nsEmpty = {[]}`)
   CHEAT_TAC;;
 
 let nsMap_nsEmpty = cake_theorem "nsMap_nsEmpty[simp]"
   (fun () ->
-    `!f. nsMap f nsEmpty' = nsEmpty'`)
+    `!f. nsMap f nsEmpty = nsEmpty`)
   CHEAT_TAC;;
 
 let nsBind_nsEmpty = cake_theorem "nsBind_nsEmpty[simp]"
@@ -469,7 +469,7 @@ let nsSub_compute_def = cake_define_try_tac (fun () ->
 
 let nsLookup_FOLDR_nsLift = cake_theorem "nsLookup_FOLDR_nsLift"
   (fun () ->
-    `!e p k. nsLookup (ITLIST nsLift' p e) (mk_id p k) = nsLookup e
+    `!e p k. nsLookup (ITLIST nsLift p e) (mk_id p k) = nsLookup e
   (Short k)`)
   CHEAT_TAC;;
 
@@ -574,7 +574,7 @@ let nsMap_compose = cake_theorem "nsMap_compose"
 
 let nsMap_I = cake_theorem "nsMap_I[simp]"
   (fun () ->
-    `!ns. nsMap I' ns = ns`)
+    `!ns. nsMap I ns = ns`)
   CHEAT_TAC;;
 
 let nsMap_nsAppend = cake_theorem "nsMap_nsAppend"

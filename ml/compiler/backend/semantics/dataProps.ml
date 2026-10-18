@@ -88,7 +88,7 @@ let OPTION_MAP2_ADD_SOME_0 = cake_theorem "OPTION_MAP2_ADD_SOME_0[simp]"
 
 let OPTION_MAP2_MAX_CANCEL = cake_theorem "OPTION_MAP2_MAX_CANCEL[simp]"
   (fun () ->
-    `OPTION_MAP2 MAX' (OPTION_MAP2 MAX' x y) y = OPTION_MAP2 MAX' x y`)
+    `OPTION_MAP2 MAX (OPTION_MAP2 MAX x y) y = OPTION_MAP2 MAX x y`)
   CHEAT_TAC;;
 
 (* ops that are not allowed_op have stack_consumed = NONE, which has to
@@ -122,12 +122,12 @@ let dataProps_initial_state_simp =
 let dataProps_initial_state_with_simp =
   cake_theorem "initial_state_with_simp[simp]"
   (fun () ->
-    `(state_clock_fupd (K (k' = initial_state f c co cc ts l ss k'))
-  (initial_state f c co cc ts l ss k)) /\
-     (stack_fupd (K ([] = initial_state f c co cc ts l ss k))
-       (initial_state f c co cc ts l ss k)) /\
-     (dataSem_state_locals_fupd (K (LN = initial_state f c co cc
-       ts l ss k)) (initial_state f c co cc ts l ss k))`)
+    `(initial_state f c co cc ts l ss (state_clock_fupd (K k') k) =
+  initial_state f c co cc ts l ss k') /\
+     (initial_state f c co cc ts l ss (stack_fupd (K []) k) =
+       initial_state f c co cc ts l ss k) /\
+     (initial_state f c co cc ts l ss (dataSem_state_locals_fupd
+       (K LN) k) = initial_state f c co cc ts l ss k)`)
   CHEAT_TAC;;
 (* HOL4 dataPropsScript.sml:133-153: code that the source has in a
    comment *)
@@ -549,7 +549,7 @@ let do_app_lss_sm_safe_peak_swap_aux =
   CHEAT_TAC;;
 
 (* HOL4 dataPropsScript.sml:550-551: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: do_app_lss_sm_safe_peak_swap *)
 
 let do_app_sm_safe_peak_swap_aux =
   cake_theorem "do_app_sm_safe_peak_swap_aux[local]"
@@ -565,7 +565,7 @@ let do_app_sm_safe_peak_swap_aux =
   CHEAT_TAC;;
 
 (* HOL4 dataPropsScript.sml:564-565: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: do_app_sm_safe_peak_swap *)
 
 let do_app_aux_sm_safe_peak_swap =
   cake_theorem "do_app_aux_sm_safe_peak_swap"
@@ -640,7 +640,7 @@ let do_app_lss_stk_stfrm_swap_aux =
   CHEAT_TAC;;
 
 (* HOL4 dataPropsScript.sml:621: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: do_app_lss_stk_stfrm_swap *)
 
 let do_app_err_lss_stk_stfrm_swap =
   cake_theorem "do_app_err_lss_stk_stfrm_swap"
@@ -664,7 +664,7 @@ let do_app_lim_swap_aux = cake_theorem "do_app_lim_swap_aux[local]"
   CHEAT_TAC;;
 
 (* HOL4 dataPropsScript.sml:643: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: do_app_lim_swap *)
 
 
 let do_app_err_lim_swap = cake_theorem "do_app_err_lim_swap"
@@ -677,11 +677,11 @@ let do_app_err_lim_swap = cake_theorem "do_app_err_lim_swap"
 
 let size_of_stack_eq = cake_theorem "size_of_stack_eq"
   (fun () ->
-    `(size_of_stack ((Env n l:dataSem_stack) :: stack') = OPTION_MAP2
-  (+) n (size_of_stack stack')) /\
-     (size_of_stack (dataSem_Exc n v1 v2 :: stack') =
+    `(size_of_stack ((Env n l:dataSem_stack) :: stack) = OPTION_MAP2 (+)
+  n (size_of_stack stack)) /\
+     (size_of_stack (dataSem_Exc n v1 v2 :: stack) =
         OPTION_MAP2 (+) (OPTION_MAP ((+) 3) n) (size_of_stack
-          stack')) /\
+          stack)) /\
      (size_of_stack [] = SOME 1)`)
   CHEAT_TAC;;
 
@@ -753,13 +753,13 @@ let evaluate_fl_smx_safe_peak_swap_aux =
   CHEAT_TAC;;
 
 (* HOL4 dataPropsScript.sml:876-877: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_smx_safe_peak_swap_aux *)
 (* HOL4 dataPropsScript.sml:878: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_smx_safe_peak_swap *)
 
 
 (* HOL4 dataPropsScript.sml:881-882: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_safe_peak_swap_aux *)
 
 let evaluate_safe_peak_swap = cake_theorem "evaluate_safe_peak_swap"
   (fun () ->
@@ -788,14 +788,14 @@ let same_stack_size_size_of_stack =
 let s_peak_heap = cake_theorem "s_peak_heap[simp]"
   (fun () ->
     `dataSem_state_peak_heap_length_fupd (K
-  (dataSem_state_peak_heap_length s = s))
-       s /\ dataSem_state_safe_for_space_fupd (K
-         (dataSem_state_safe_for_space s = s))
-       s /\ dataSem_state_stack_max_fupd (K
-         (dataSem_state_stack_max s = s))
-       s /\ dataSem_state_locals_size_fupd (K
-         (dataSem_state_locals_size s = s))
-       s /\ dataSem_state_safe_for_space_fupd (K ssnew)
+  (dataSem_state_peak_heap_length s))
+       s = s /\ dataSem_state_safe_for_space_fupd (K
+         (dataSem_state_safe_for_space s))
+       s = s /\ dataSem_state_stack_max_fupd (K
+         (dataSem_state_stack_max s))
+       s = s /\ dataSem_state_locals_size_fupd (K
+         (dataSem_state_locals_size s))
+       s = s /\ dataSem_state_safe_for_space_fupd (K ssnew)
          (state_clock_fupd (K clock) (dataSem_state_stack_max_fupd (K
          smnew) (stack_fupd (K (stack s))
        s))) = dataSem_state_safe_for_space_fupd (K ssnew)
@@ -959,10 +959,8 @@ let evaluate_NONE_jump_exc_ALT =
 let evaluate_locals_LN_lemma =
   cake_theorem "evaluate_locals_LN_lemma[local]"
   (fun () ->
-    `!c (s:('c,'ffi)dataSem_state). ~(
-         FST (evaluate (c,s)) = NONE) /\ ~(
-         FST (evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error)))
-           ==>
+    `!c (s:('c,'ffi)dataSem_state). ~(FST (evaluate (c,s)) = NONE) /\
+  ~(FST (evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error))) ==>
          (dataSem_state_locals (SND (evaluate (c,s))) = LN) \/
          (?t. FST (evaluate (c,s)) = SOME (Rerr (Rraise t)))`)
   CHEAT_TAC;;
@@ -1033,9 +1031,8 @@ let cut_state_opt_locals_ok =
 
 let evaluate_locals = cake_theorem "evaluate_locals"
   (fun () ->
-    `!c s res s2 vars' l. ~(
-         res = SOME (Rerr (Rabort Rtype_error))) /\ (evaluate (c,s)
-           = (res,s2)) /\
+    `!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error))) /\
+  (evaluate (c,s) = (res,s2)) /\
          locals_ok (dataSem_state_locals s) l ==>
          (?w safe peak sm. (evaluate (c,dataSem_state_locals_fupd
            (K l) s) =
@@ -1186,7 +1183,7 @@ let set_var_const = cake_theorem "set_var_const[simp]"
 let set_var_with_const = cake_theorem "set_var_with_const"
   (fun () ->
     `(dataSem_set_var x y (state_clock_fupd (K k) z)) =
-  state_clock_fupd (K k) (dataSem_set_var x y z)`)
+  dataSem_set_var x y (state_clock_fupd (K k) z)`)
   CHEAT_TAC;;
 
 let set_vars_const = cake_theorem "set_vars_const[simp]"
@@ -1199,7 +1196,7 @@ let set_vars_const = cake_theorem "set_vars_const[simp]"
 let set_vars_with_const = cake_theorem "set_vars_with_const[simp]"
   (fun () ->
     `(dataSem_set_vars xs ys (state_clock_fupd (K k) z)) =
-  state_clock_fupd (K k) (dataSem_set_vars xs ys z)`)
+  dataSem_set_vars xs ys (state_clock_fupd (K k) z)`)
   CHEAT_TAC;;
 
 let call_env_const = cake_theorem "call_env_const[simp]"
@@ -1212,7 +1209,7 @@ let call_env_const = cake_theorem "call_env_const[simp]"
 let call_env_with_const = cake_theorem "call_env_with_const"
   (fun () ->
     `(dataSem_call_env x s (state_clock_fupd (K z) y)) =
-  state_clock_fupd (K z) (dataSem_call_env x s y)`)
+  dataSem_call_env x s (state_clock_fupd (K z) y)`)
   CHEAT_TAC;;
 
 let push_env_const = cake_theorem "push_env_const[simp]"
@@ -1256,15 +1253,15 @@ let cut_state_eq_none = cake_theorem "cut_state_eq_none"
 
 let dataProps_with_same_clock = cake_theorem "with_same_clock[simp]"
   (fun () ->
-    `state_clock_fupd (K (state_clock s = s))
-       (s:('c,'ffi)dataSem_state)`)
+    `state_clock_fupd (K (state_clock s))
+       (s:('c,'ffi)dataSem_state) = s`)
   CHEAT_TAC;;
 
 let dataProps_evaluate_add_clock = cake_theorem "evaluate_add_clock"
   (fun () ->
     `!exps s1 res s2.
-       evaluate (exps,s1) = (res,s2) /\ ~(
-       res = SOME (Rerr (Rabort Rtimeout_error))) ==>
+       evaluate (exps,s1) = (res,s2) /\ ~(res = SOME (Rerr (Rabort
+         Rtimeout_error))) ==>
        (!ck. evaluate (exps,state_clock_fupd (K (state_clock s1 +
          ck)) s1) = (res,state_clock_fupd (K (state_clock s2 + ck))
          s2))`)
@@ -1579,8 +1576,8 @@ let evaluate_stack_frame_sizes_ffi =
 
 let semantics_zero_limits = cake_theorem "semantics_zero_limits"
   (fun () ->
-    `dataSem_semantics ffi code co cc lim ss start' =
-     dataSem_semantics ffi code co cc zero_limits LN start'`)
+    `dataSem_semantics ffi code co cc lim ss start =
+     dataSem_semantics ffi code co cc zero_limits LN start`)
   CHEAT_TAC;;
 
 let do_app_stack_max = cake_theorem "do_app_stack_max"
@@ -1635,8 +1632,8 @@ let do_app_cc_co_only_diff_rval =
 let do_app_cc_co_only_diff_rerr =
   cake_theorem "do_app_cc_co_only_diff_rerr"
   (fun () ->
-    `dataSem_do_app op vs s = Rerr r /\ ~(
-     op = Install) /\ cc_co_only_diff s t ==>
+    `dataSem_do_app op vs s = Rerr r /\ ~(op = Install) /\
+  cc_co_only_diff s t ==>
      dataSem_do_app op vs t = Rerr r`)
   CHEAT_TAC;;
 
@@ -1733,3 +1730,5 @@ let evaluate_stack_max_le_stack_limit =
        option_le (dataSem_state_stack_max s1) (SOME
          (limits_stack_limit (dataSem_state_limits s1)))`)
   CHEAT_TAC;;
+
+cake_hide [];;

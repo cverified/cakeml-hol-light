@@ -94,17 +94,13 @@ let strip_sxcons_EQ_CONS = cake_theorem "strip_sxcons_EQ_CONS[simp]"
        (?s0. s = SX_CONS h s0 /\ strip_sxcons s0 = SOME t)`)
   CHEAT_TAC;;
 
-(* HOL4 fromSexpScript.sml:103-108: the ML values that the
-   definitions below antiquote *)
+(* HOL4 fromSexpScript.sml:103-108: ML code, not ported *)
 
-(* HOL4 fromSexpScript.sml:110-115: the ML values that the
-   definitions below antiquote *)
+(* HOL4 fromSexpScript.sml:110-115: ML code, not ported *)
 
-(* HOL4 fromSexpScript.sml:117-122: the ML values that the
-   definitions below antiquote *)
+(* HOL4 fromSexpScript.sml:117-122: ML code, not ported *)
 
-(* HOL4 fromSexpScript.sml:124-129: the ML values that the
-   definitions below antiquote *)
+(* HOL4 fromSexpScript.sml:124-129: ML code, not ported *)
 
 (* end TODO *)
 
@@ -126,8 +122,8 @@ let decode_control_def = cake_define_list
              (isHexDigit d1 /\
               isHexDigit d2 /\
               (isAlpha d1 ==> isUpper d1) /\
-              (isAlpha d2 ==> isUpper d2) /\ ~isPrint (CHR
-                (num_from_hex_string [d1; d2]))))
+              (isAlpha d2 ==> isUpper d2) /\ ~(isPrint (CHR
+                (num_from_hex_string [d1; d2])))))
            (OPTION_MAP (CONS (CHR (num_from_hex_string [d1;
              d2]))) (decode_control cs)) | _2 -> NONE else
              OPTION_IGNORE_BIND (OPTION_GUARD (isPrint c))
@@ -154,8 +150,10 @@ let UNHEX_lt16 = cake_theorem "UNHEX_lt16[local]"
     `isHexDigit c ==> UNHEX c < 16`)
   CHEAT_TAC;;
 
-(* HOL4 fromSexpScript.sml:207-211: a theorem whose statement the
-   port cannot state yet *)
+let isAlpha_isUpper_isLower = cake_theorem "isAlpha_isUpper_isLower"
+  (fun () ->
+    `isAlpha c ==> (~(isUpper c = isLower c))`)
+  CHEAT_TAC;;
 
 let isLower_isAlpha = cake_theorem "isLower_isAlpha"
   (fun () ->
@@ -394,7 +392,7 @@ let sexptype_alt_intro = cake_theorem "sexptype_alt_intro"
 
 let sexptype_alt_intro1 = cake_theorem "sexptype_alt_intro1"
   (fun () ->
-    `sexptype' = sexptype_alt /\ sexplist sexptype' = sexptype_list`)
+    `sexptype = sexptype_alt /\ sexplist sexptype = sexptype_list`)
   CHEAT_TAC;;
 
 let sexplit_def = cake_define
@@ -407,7 +405,7 @@ let sexplit_def = cake_define
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "-")
              (OPTION_BIND (odestSXNUM (HD args))
                           (\n. if n = 0 then NONE else SOME
-                            (ast_IntLit (-- &n)))) ++
+                            (ast_IntLit (--(&n))))) ++
        (\b m. OPTION_IGNORE_BIND (OPTION_GUARD b) m) (nm = "char")
              (OPTION_BIND (odestSEXSTR (HD args)) (\
                cs. OPTION_IGNORE_BIND
@@ -513,7 +511,7 @@ let sexppat_alt_intro = cake_theorem "sexppat_alt_intro"
 
 let sexppat_alt_intro1 = cake_theorem "sexppat_alt_intro1"
   (fun () ->
-    `sexppat' = sexppat_alt /\ sexplist sexppat' = sexppat_list`)
+    `sexppat = sexppat_alt /\ sexplist sexppat = sexppat_list`)
   CHEAT_TAC;;
 
 let decode_thunk_mode_def = cake_define
@@ -797,22 +795,19 @@ let sexpexp_alt_def = cake_define_list_try_tac (fun () ->
                  OPTION_MAP2 ast_App (sexpop (EL 0 args))
                    (sexpexp_list (EL 1 args)) else
               if nm = "Log" /\ LENGTH args = 3 then OPTION_APPLY
-                (OPTION_APPLY
-                 (OPTION_MAP ast_Log (sexplog (EL 0 args)))
-                   (sexpexp_alt (EL 1 args)))
+                (OPTION_APPLY (OPTION_MAP ast_Log (sexplog (EL 0 args)))
+                (sexpexp_alt (EL 1 args)))
                  (sexpexp_alt (EL 2 args)) else
               if nm = "If" /\ LENGTH args = 3 then OPTION_APPLY
-                (OPTION_APPLY
-                 (OPTION_MAP ast_If (sexpexp_alt (EL 0 args)))
-                   (sexpexp_alt (EL 1 args)))
+                (OPTION_APPLY (OPTION_MAP ast_If (sexpexp_alt (EL 0
+                args))) (sexpexp_alt (EL 1 args)))
                  (sexpexp_alt (EL 2 args)) else
               if nm = "Mat" /\ LENGTH args = 2 then
                  OPTION_MAP2 ast_Mat (sexpexp_alt (EL 0 args))
                    (sexppes (EL 1 args)) else
               if nm = "Let" /\ LENGTH args = 3 then OPTION_APPLY
-                (OPTION_APPLY
-                 (OPTION_MAP ast_Let (sexpopt odestSEXSTR (EL 0
-                   args)))
+                (OPTION_APPLY (OPTION_MAP ast_Let (sexpopt odestSEXSTR
+                (EL 0 args)))
                  (sexpexp_alt (EL 1 args))) (sexpexp_alt (EL 2
                    args)) else
               if nm = "Letrec" /\ LENGTH args = 2 then
@@ -856,21 +851,21 @@ let sexpexp_alt_def = cake_define_list_try_tac (fun () ->
 
 let sexpexp_alt_intro = cake_theorem "sexpexp_alt_intro"
   (fun () ->
-    `(!s. sexpexp' s = sexpexp_alt s) /\
-     (!s. sexplist sexpexp' s = sexpexp_list s) /\
-     (!s. sexplist (sexppair sexppat' sexpexp') s = sexppes s) /\
-     (!s. sexplist (sexppair odestSEXSTR' (sexppair odestSEXSTR'
-       sexpexp')) s = sexpfuns s) /\
-     (!s. sexppair sexppat' sexpexp' s = sexppatexp s) /\
-     (!s. sexppair odestSEXSTR' (sexppair odestSEXSTR' sexpexp')
-       s = sexpfun s)`)
+    `(!s. sexpexp s = sexpexp_alt s) /\
+     (!s. sexplist sexpexp s = sexpexp_list s) /\
+     (!s. sexplist (sexppair sexppat sexpexp) s = sexppes s) /\
+     (!s. sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
+       sexpexp)) s = sexpfuns s) /\
+     (!s. sexppair sexppat sexpexp s = sexppatexp s) /\
+     (!s. sexppair odestSEXSTR (sexppair odestSEXSTR sexpexp) s =
+       sexpfun s)`)
   CHEAT_TAC;;
 
 let sexpexp_alt_intro1 = cake_theorem "sexpexp_alt_intro1"
   (fun () ->
-    `sexpexp' = sexpexp_alt /\
-     sexplist (sexppair odestSEXSTR' (sexppair odestSEXSTR'
-       sexpexp')) = sexpfuns`)
+    `sexpexp = sexpexp_alt /\
+     sexplist (sexppair odestSEXSTR (sexppair odestSEXSTR
+       sexpexp)) = sexpfuns`)
   CHEAT_TAC;;
 
 let sexptype_def_def = cake_define
@@ -987,14 +982,14 @@ let sexpdec_alt_def = cake_define_list_try_tac (fun () ->
 
 let sexpdec_alt_intro = cake_theorem "sexpdec_alt_intro"
   (fun () ->
-    `(!s. sexpdec' s = sexpdec_alt s) /\
-     (!s. sexplist sexpdec' s = sexpdec_list s)`)
+    `(!s. sexpdec s = sexpdec_alt s) /\
+     (!s. sexplist sexpdec s = sexpdec_list s)`)
   CHEAT_TAC;;
 
 let sexpdec_alt_intro1 = cake_theorem "sexpdec_alt_intro1"
   (fun () ->
-    `sexpdec' = sexpdec_alt /\
-     sexplist sexpdec' = sexpdec_list`)
+    `sexpdec = sexpdec_alt /\
+     sexplist sexpdec = sexpdec_list`)
   CHEAT_TAC;;
 
 (* now the reverse: toSexp *)
@@ -1257,7 +1252,7 @@ let sexpopt_optsexp = cake_theorem "sexpopt_optsexp[simp]"
 let sexpid_odestSEXSTR_idsexp =
   cake_theorem "sexpid_odestSEXSTR_idsexp[simp]"
   (fun () ->
-    `sexpid odestSEXSTR' (idsexp i) = SOME i`)
+    `sexpid odestSEXSTR (idsexp i) = SOME i`)
   CHEAT_TAC;;
 
 let dstrip_sexp_thm = cake_theorem "dstrip_sexp_thm[simp]"
@@ -1465,10 +1460,8 @@ let type_defsexp_11 = cake_theorem "type_defsexp_11[simp]"
     `!t1 t2. type_defsexp t1 = type_defsexp t2 <=> t1 = t2`)
   CHEAT_TAC;;
 
-let dec1_size_eq = cake_theorem "dec1_size_eq"
-  (fun () ->
-    `dec1_size xs = list_size dec_size xs`)
-  CHEAT_TAC;;
+(* HOL4 fromSexpScript.sml:1737-1741: a theorem whose statement the
+   port cannot state yet: dec1_size_eq *)
 
 let mem_size_lemma = cake_theorem "mem_size_lemma"
   (fun () ->
@@ -1589,8 +1582,9 @@ let sexppair_SOME = cake_theorem "sexppair_SOME"
          y /\ p = (a,b))`)
   CHEAT_TAC;;
 
-(* HOL4 fromSexpScript.sml:1915: a theorem that HOL4 states as the
-   value of an ML expression *)
+let OPTION_CHOICE_EQ_SOME =
+  cake_alias "OPTION_CHOICE_EQ_SOME"
+    OPTION_CHOICE_EQUALS_OPTION;;
 
 let odestSXNUM_EQ_SOME = cake_theorem "odestSXNUM_EQ_SOME[simp]"
   (fun () ->

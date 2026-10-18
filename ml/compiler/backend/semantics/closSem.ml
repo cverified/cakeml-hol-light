@@ -777,11 +777,11 @@ let dest_closure_def = cake_define
            NONE) | Recclosure loc arg_env clo_env fns i ->
          (let (num_args,exp) = EL i fns in
            if LENGTH fns <= i \/
-              ~check_loc max_app
+              ~(check_loc max_app
                          loc_opt
                          (OPTION_MAP ((+) (2 * i)) loc) num_args
                          (LENGTH args)
-                         (LENGTH arg_env) \/
+                         (LENGTH arg_env)) \/
               ~(LENGTH arg_env < num_args) then NONE else
              let rs = GENLIST (Recclosure loc [] clo_env fns) (LENGTH
                fns) in
@@ -814,7 +814,7 @@ let build_recc_def = cake_define
        NONE)`;;
 
 (* HOL4 closSemScript.sml:639-649: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_eq_thms *)
 
 let do_install_clock = cake_theorem "do_install_clock"
   (fun () ->
@@ -1047,7 +1047,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
 hol4_overload "evaluate" "closSem_evaluate";;
 
 (* HOL4 closSemScript.sml:845-846: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_app_NIL *)
 
 (* We prove that the clock never increases. *)
 
@@ -1091,10 +1091,10 @@ let closSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* HOL4 closSemScript.sml:900-901: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_def *)
 
 (* HOL4 closSemScript.sml:903-904: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_ind *)
 
 (* observational semantics *)
 

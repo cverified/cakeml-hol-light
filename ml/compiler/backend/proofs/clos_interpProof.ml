@@ -85,8 +85,8 @@ let interp_assum_def = cake_define
   `interp_assum (:'c) (:'ffi) c <=>
      (!xs s1 env (t1:('c,'ffi)closSem_state) res s2. state_clock
        s1 <= c /\
-       closSem_evaluate (xs,env,s1) = (res,s2) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+       closSem_evaluate (xs,env,s1) = (res,s2) /\ ~(res = Rerr
+         (Rabort Rtype_error)) ==>
        clos_interpProof_state_rel s1 t1 ==>
        (?ck t2.
          closSem_evaluate (xs,env,state_clock_fupd (K (ck +
@@ -94,8 +94,8 @@ let interp_assum_def = cake_define
          clos_interpProof_state_rel s2 t2)) /\
      (!args s1 loc f (t1:('c,'ffi)closSem_state) res s2. state_clock
        s1 <= c /\
-       evaluate_app loc f args s1 = (res,s2) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+       evaluate_app loc f args s1 = (res,s2) /\ ~(res = Rerr (Rabort
+         Rtype_error)) ==>
        clos_interpProof_state_rel s1 t1 ==>
        (?ck t2.
          evaluate_app loc f args (state_clock_fupd (K (ck +
@@ -189,8 +189,8 @@ let clos_interpreter_correct = cake_theorem "clos_interpreter_correct"
         closSem_evaluate ([e],env,s4) = (r,s5) /\
         can_interpret e /\
         interp_assum (:'c) (:'ffi) (state_clock s4) /\
-        clos_interpProof_state_rel s4 t4 /\ ~(
-        r = Rerr (Rabort Rtype_error)) ==>
+        clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+          Rtype_error)) ==>
         (?c t5.
           closSem_evaluate ([clos_interpreter_body],
                     [make_const (to_constant e); closSem_Block 0
@@ -203,8 +203,8 @@ let clos_interpreter_correct = cake_theorem "clos_interpreter_correct"
         closSem_evaluate (es,env,s4) = (r,s5) /\
         can_interpret_list es /\
         interp_assum (:'c) (:'ffi) (state_clock s4) /\
-        clos_interpProof_state_rel s4 t4 /\ ~(
-        r = Rerr (Rabort Rtype_error)) ==>
+        clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+          Rtype_error)) ==>
         (?c t5 r5.
           closSem_evaluate ([clos_interpreter_body],
                     [make_const (to_constant_list es);
@@ -235,8 +235,8 @@ let opt_interp1_thm' = cake_theorem "opt_interp1_thm'"
     `!l s4 t4 s5 r.
        interp_assum (:'c) (:'ffi) (state_clock s4) /\
        closSem_evaluate ([l],[],s4) = (r,s5) /\
-       clos_interpProof_state_rel s4 t4 /\ ~(
-       r = Rerr (Rabort Rtype_error)) ==>
+       clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+         Rtype_error)) ==>
        (?ck (t5:('c,'ffi)closSem_state).
          closSem_evaluate ([opt_interp1 l],[],state_clock_fupd (K
            (state_clock t4 + ck)) t4) = (r,t5) /\
@@ -248,8 +248,8 @@ let opt_interp1_thm = cake_theorem "opt_interp1_thm"
     `!l s4 t4 s5 r.
        interp_assum (:'c) (:'ffi) (state_clock s4) /\
        closSem_evaluate (l,[],s4) = (r,s5) /\
-       clos_interpProof_state_rel s4 t4 /\ ~(
-       r = Rerr (Rabort Rtype_error)) ==>
+       clos_interpProof_state_rel s4 t4 /\ ~(r = Rerr (Rabort
+         Rtype_error)) ==>
        (?ck (t5:('c,'ffi)closSem_state).
          closSem_evaluate (MAP opt_interp1 l,[],state_clock_fupd (K
            (state_clock t4 + ck)) t4) = (r,t5) /\
@@ -349,7 +349,7 @@ let v_ok_def = cake_define_list_try (fun () ->
    `v_ok (closSem_ByteVector ws) <=> T`;
    `v_ok (closSem_RefPtr b n:closSem_v) <=> T`;
    `v_ok (Closure loco vs1 env1 n bod1:closSem_v) <=>
-        ~has_install bod1 /\ EVERY v_ok env1 /\ EVERY v_ok vs1`;
+        ~(has_install bod1) /\ EVERY v_ok env1 /\ EVERY v_ok vs1`;
    `v_ok (Recclosure loco vs1 env1 fns1 i:closSem_v) <=>
         EVERY v_ok env1 /\ EVERY v_ok vs1 /\ i < LENGTH fns1 /\
         EVERY ((~) o has_install o SND) fns1`];;
@@ -443,8 +443,7 @@ let init_globals = cake_theorem "init_globals[local]"
 let semantics_attach_interpreter =
   cake_theorem "semantics_attach_interpreter"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
           co (pure_cc (insert_interp ## I) cc) (attach_interpreter
             xs) = ffi_Fail) ==>
         (!n. SND (SND (co n)) = []) /\ 0 < max_app ==>
@@ -465,7 +464,7 @@ let opt_interp_lemma = cake_theorem "opt_interp_lemma[local]"
     `opt_interp x = SOME x' ==>
      closProps_set_globals x' = EMPTY_BAG /\
      closProps_set_globals x = EMPTY_BAG /\
-     (1 <= max_app ==> ~contains_App_SOME max_app [x']) /\
+     (1 <= max_app ==> ~(contains_App_SOME max_app [x'])) /\
      every_Fn_vs_NONE [x'] /\
      no_mti x' /\
      closProps_esgc_free x /\
@@ -482,8 +481,8 @@ let elist_globals_insert_interp =
 let contains_App_SOME_insert_interp =
   cake_theorem "contains_App_SOME_insert_interp"
   (fun () ->
-    `~contains_App_SOME max_app xs /\ 1 <= max_app ==>
-     ~contains_App_SOME max_app (insert_interp xs)`)
+    `~(contains_App_SOME max_app xs) /\ 1 <= max_app ==>
+     ~(contains_App_SOME max_app (insert_interp xs))`)
   CHEAT_TAC;;
 
 let every_Fn_vs_NONE_insert_interp =
@@ -499,5 +498,6 @@ let insert_interp_no_mti = cake_theorem "insert_interp_no_mti"
 
 let insert_interp_esgc_free = cake_theorem "insert_interp_esgc_free"
   (fun () ->
-    `EVERY esgc_free' (insert_interp xs) = EVERY esgc_free' xs`)
+    `EVERY closProps_esgc_free (insert_interp xs) = EVERY
+  closProps_esgc_free xs`)
   CHEAT_TAC;;

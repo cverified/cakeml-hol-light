@@ -117,8 +117,14 @@ let env_rel_add_nsBind = cake_theorem "env_rel_add_nsBind"
        ev)) env) (sem_env_v_fupd (K (nsBind n y ev')) env')`)
   CHEAT_TAC;;
 
-(* HOL4 source_evalProofScript.sml:118-129: a theorem whose statement
-   the port cannot state yet *)
+let env_rel_add_nsBindList = cake_theorem "env_rel_add_nsBindList"
+  (fun () ->
+    `!xs ys. source_evalProof_env_rel R (sem_env_v_fupd (K ev) env)
+  (sem_env_v_fupd (K ev') env') /\
+     LIST_REL (RPROD (=) R) xs ys ==>
+     source_evalProof_env_rel R (sem_env_v_fupd (K (nsBindList xs
+       ev)) env) (sem_env_v_fupd (K (nsBindList ys ev')) env')`)
+  CHEAT_TAC;;
 
 let env_rel_nsLift = cake_theorem "env_rel_nsLift"
   (fun () ->
@@ -132,7 +138,7 @@ let env_rel_nsLift = cake_theorem "env_rel_nsLift"
   CHEAT_TAC;;
 
 (* HOL4 source_evalProofScript.sml:144-148: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: env_rel_nsEmpty *)
 
 (* HOL4 source_evalProofScript.sml:150: ML code, not ported *)
 
@@ -173,10 +179,10 @@ let env_rel_nsLookup_c = cake_theorem "env_rel_nsLookup_c[local]"
 (* various trivia *)
 
 (* HOL4 source_evalProofScript.sml:194-196: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: alist_to_ns_to_bind2 *)
 
 (* HOL4 source_evalProofScript.sml:198-200: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: nsSing_eq_bind *)
 
 let pair_CASE_eq_pairarg = cake_theorem "pair_CASE_eq_pairarg[local]"
   (fun () ->
@@ -213,7 +219,7 @@ let v_rel = cake_inductive
 hol4_overload "v_rel" "source_evalProof_v_rel";;
 
 (* HOL4 source_evalProofScript.sml:229-237: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_l_simps *)
 
 let source_evalProof_v_rel_Boolv = cake_theorem "v_rel_Boolv"
   (fun () ->
@@ -352,8 +358,8 @@ let store_lookup_rel = cake_theorem "store_lookup_rel"
 
 let s_rel_store_lookup = cake_theorem "s_rel_store_lookup"
   (fun () ->
-    `source_evalProof_s_rel (:'cfg compiler_instance) s t /\ j = i /\ es
-  = orac_s (semanticPrimitives_state_eval_state t) ==>
+    `source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ j = i
+  /\ es = orac_s (semanticPrimitives_state_eval_state t) ==>
      OPTREL (semanticPrimitivesProps_sv_rel
        (source_evalProof_v_rel es)) (store_lookup i
        (semanticPrimitives_state_refs s)) (store_lookup j
@@ -373,17 +379,56 @@ let v_to_env_id_SOME = cake_theorem "v_to_env_id_SOME"
        nat_to_v (SND id')]`)
   CHEAT_TAC;;
 
-(* HOL4 source_evalProofScript.sml:403-453: a theorem whose statement
-   the port cannot state yet *)
+let pmatch = cake_theorem "pmatch"
+  (fun () ->
+    `source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\ es =
+  orac_s (semanticPrimitives_state_eval_state t) /\
+  source_evalProof_env_rel (source_evalProof_v_rel es) env env' ==>
+     (!env_c s_refs p x binds y binds'.
+     s_refs = semanticPrimitives_state_refs s /\ env_c = sem_env_c
+       env /\
+     source_evalProof_v_rel es x y /\
+     LIST_REL (RPROD (=) (source_evalProof_v_rel es)) binds binds'
+       ==>
+     source_evalProof_match_result_rel T (LIST_REL (RPROD (=)
+       (source_evalProof_v_rel es)))
+       (semanticPrimitives_pmatch env_c s_refs p x binds)
+       (semanticPrimitives_pmatch (sem_env_c env')
+         (semanticPrimitives_state_refs t) p y binds')) /\
+     (!env_c s_refs ps xs binds ys binds'.
+     s_refs = semanticPrimitives_state_refs s /\ env_c = sem_env_c
+       env /\
+     LIST_REL (source_evalProof_v_rel es) xs ys /\
+     LIST_REL (RPROD (=) (source_evalProof_v_rel es)) binds binds'
+       ==>
+     source_evalProof_match_result_rel T (LIST_REL (RPROD (=)
+       (source_evalProof_v_rel es)))
+       (semanticPrimitives_pmatch_list env_c s_refs ps xs binds)
+       (semanticPrimitives_pmatch_list (sem_env_c env')
+         (semanticPrimitives_state_refs t) ps ys binds'))`)
+  CHEAT_TAC;;
 
-(* HOL4 source_evalProofScript.sml:455-466: a theorem whose statement
-   the port cannot state yet *)
+let pmatch_drule_form = cake_theorem "pmatch_drule_form[local]"
+  (fun () ->
+    `semanticPrimitives_pmatch (sem_env_c env)
+  (semanticPrimitives_state_refs s) p x [] = res /\
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
+       source_evalProof_env_rel (source_evalProof_v_rel (orac_s
+       (semanticPrimitives_state_eval_state t))) env env' /\
+     source_evalProof_v_rel (orac_s
+       (semanticPrimitives_state_eval_state t)) x y ==>
+     source_evalProof_match_result_rel T (LIST_REL (RPROD (=)
+       (source_evalProof_v_rel (orac_s
+       (semanticPrimitives_state_eval_state t)))))
+       res (semanticPrimitives_pmatch (sem_env_c env')
+         (semanticPrimitives_state_refs t) p y [])`)
+  CHEAT_TAC;;
 
 let can_pmatch_all = cake_theorem "can_pmatch_all"
   (fun () ->
     `can_pmatch_all (sem_env_c env) (semanticPrimitives_state_refs s)
   pats x /\
-     source_evalProof_s_rel (:'cfg compiler_instance) s t /\
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
      source_evalProof_env_rel (source_evalProof_v_rel (orac_s
        (semanticPrimitives_state_eval_state t))) env env' /\
      source_evalProof_v_rel (orac_s
@@ -394,7 +439,8 @@ let can_pmatch_all = cake_theorem "can_pmatch_all"
 
 let num_11 = cake_theorem "Num_11"
   (fun () ->
-    `0 <= i /\ 0 <= j ==> (num_of_int i = num_of_int j) = (i = j)`)
+    `(&0) <= i /\ (&0) <= j ==> (num_of_int i = num_of_int j) = (i =
+  j)`)
   CHEAT_TAC;;
 
 let source_evalProof_do_eq = cake_theorem "do_eq"
@@ -459,7 +505,7 @@ let vs_to_string = cake_theorem "vs_to_string"
   CHEAT_TAC;;
 
 (* HOL4 source_evalProofScript.sml:600-604: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: sv_rel_l_cases *)
 
 let v_rel_check_type = cake_theorem "v_rel_check_type[local]"
   (fun () ->
@@ -483,10 +529,10 @@ let do_app_sim = cake_theorem "do_app_sim"
     `semanticPrimitives_do_app (semanticPrimitives_state_refs
   s,semanticPrimitives_state_ffi s) op (REVERSE xs) = SOME
   ((refs,ffi),r) /\
-     source_evalProof_s_rel (:'cfg compiler_instance) s t /\
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
      LIST_REL (source_evalProof_v_rel (orac_s
-       (semanticPrimitives_state_eval_state t))) xs ys /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+       (semanticPrimitives_state_eval_state t))) xs ys /\ ~(r = Rerr
+       (Rabort Rtype_error)) ==>
      (?ref1 refs' r' es.
        es = orac_s (semanticPrimitives_state_eval_state t) /\
        semanticPrimitives_do_app (semanticPrimitives_state_refs
@@ -505,7 +551,7 @@ let pairarg_to_pair_map = cake_theorem "pairarg_to_pair_map"
 
 let s_rel_clock = cake_theorem "s_rel_clock"
   (fun () ->
-    `source_evalProof_s_rel (:'cfg compiler_instance) s t ==>
+    `source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t ==>
   semanticPrimitives_state_clock s = semanticPrimitives_state_clock t /\
        source_evalProof_s_rel ci (evaluate_dec_clock s)
          (evaluate_dec_clock t)`)
@@ -566,7 +612,7 @@ let do_eval_sim = cake_theorem "do_eval_sim"
   (fun () ->
     `semanticPrimitives_do_eval (REVERSE xs)
   (semanticPrimitives_state_eval_state s) = SOME (env,decs,es) /\
-     source_evalProof_s_rel (:'cfg compiler_instance) (s:'a
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) (s:'a
        semanticPrimitives_state) t /\
      LIST_REL (source_evalProof_v_rel (orac_s
        (semanticPrimitives_state_eval_state t))) xs ys ==>
@@ -608,7 +654,7 @@ let declare_env_sim = cake_theorem "declare_env_sim"
   (fun () ->
     `declare_env (semanticPrimitives_state_eval_state s) env = SOME
   (v,es) /\
-     source_evalProof_s_rel (:'cfg compiler_instance) s t /\
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
      source_evalProof_env_rel (source_evalProof_v_rel (orac_s
        (semanticPrimitives_state_eval_state t))) env env' ==>
      (?v' es2.
@@ -639,7 +685,7 @@ let abort_simps = cake_theorem "abort_simps[simp]"
 let abort_imp_intro = cake_theorem "abort_imp_intro[local]"
   (fun () ->
     `(!v. x = Rval v ==> P) /\ (!e. x = Rerr (Rraise e) ==> P) ==>
-     (~source_evalProof_abort x ==> P)`)
+     (~(source_evalProof_abort x) ==> P)`)
   CHEAT_TAC;;
 
 (* case splits for evaluate proofs *)
@@ -659,12 +705,12 @@ let env_rel_imp_c = cake_theorem "env_rel_imp_c[local]"
 
 let eval_simulation = cake_theorem "eval_simulation"
   (fun () ->
-    `(!(:'ffi semanticPrimitives_state) env exps s' res es t env'.
+    `(!((s:'ffi semanticPrimitives_state)) env exps s' res es t env'.
      evaluate s env exps = (s',res) /\
-     source_evalProof_s_rel (:'cfg compiler_instance) s t /\
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
      source_evalProof_env_rel (source_evalProof_v_rel (orac_s
-       (semanticPrimitives_state_eval_state t))) env env' /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+       (semanticPrimitives_state_eval_state t))) env env' /\ ~(res =
+       Rerr (Rabort Rtype_error)) ==>
      (?es' t' res'.
      evaluate t env' exps = (t',res') /\
      source_evalProof_s_rel ci s' t' /\
@@ -674,18 +720,18 @@ let eval_simulation = cake_theorem "eval_simulation"
        res' /\
      es_forward (orac_s (semanticPrimitives_state_eval_state t))
        es' /\
-     (~source_evalProof_abort res' ==> es_stack_forward (orac_s
+     (~(source_evalProof_abort res') ==> es_stack_forward (orac_s
        (semanticPrimitives_state_eval_state t)) es'))) /\
-     (!(:'ffi semanticPrimitives_state) env x pes err_x s' res es t
-       env' y err_y.
+     (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res
+       es t env' y err_y.
      evaluate_evaluate_match s env x pes err_x = (s',res) /\
      source_evalProof_s_rel ci s t /\
      es = orac_s (semanticPrimitives_state_eval_state t) /\
      source_evalProof_env_rel (source_evalProof_v_rel es) env env'
        /\
      source_evalProof_v_rel es x y /\
-     source_evalProof_v_rel es err_x err_y /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+     source_evalProof_v_rel es err_x err_y /\ ~(res = Rerr (Rabort
+       Rtype_error)) ==>
      (?es' t' res'.
      evaluate_evaluate_match t env' y pes err_y = (t',res') /\
      source_evalProof_s_rel ci s' t' /\
@@ -694,14 +740,14 @@ let eval_simulation = cake_theorem "eval_simulation"
        (source_evalProof_v_rel es')) (source_evalProof_v_rel es') res
        res' /\
      es_forward es es' /\
-     (~source_evalProof_abort res' ==> es_stack_forward es es')))
+     (~(source_evalProof_abort res') ==> es_stack_forward es es')))
        /\
-     (!(:'ffi semanticPrimitives_state) env decs s' res t env'.
+     (!((s:'ffi semanticPrimitives_state)) env decs s' res t env'.
      evaluate_evaluate_decs s env decs = (s',res) /\
      source_evalProof_s_rel ci s t /\
      source_evalProof_env_rel (source_evalProof_v_rel (orac_s
-       (semanticPrimitives_state_eval_state t))) env env' /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+       (semanticPrimitives_state_eval_state t))) env env' /\ ~(res =
+       Rerr (Rabort Rtype_error)) ==>
      (?es' t' res'.
      evaluate_evaluate_decs t env' decs = (t',res') /\
      source_evalProof_s_rel ci s' t' /\
@@ -711,7 +757,7 @@ let eval_simulation = cake_theorem "eval_simulation"
        res' /\
      es_forward (orac_s (semanticPrimitives_state_eval_state t))
        es' /\
-     (~source_evalProof_abort res' ==> es_stack_forward (orac_s
+     (~(source_evalProof_abort res') ==> es_stack_forward (orac_s
        (semanticPrimitives_state_eval_state t)) es')))`)
   CHEAT_TAC;;
 
@@ -816,8 +862,8 @@ let is_record_def = cake_define
 
 let is_record_IMP = cake_theorem "is_record_IMP"
   (fun () ->
-    `is_record (:'cfg compiler_instance) es ==> (?orac_st. es = SOME
-  (EvalOracle orac_st))`)
+    `is_record ((ci:'cfg compiler_instance)) es ==> (?orac_st. es =
+  SOME (EvalOracle orac_st))`)
   CHEAT_TAC;;
 
 let insert_do_eval = cake_theorem "insert_do_eval"
@@ -873,14 +919,14 @@ let reset_env_generation_orac_eqs =
   CHEAT_TAC;;
 
 (* HOL4 source_evalProofScript.sml:1547-1548: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: record_forward_trans_sym *)
 
 let evaluate_is_record_forward =
   cake_theorem "evaluate_is_record_forward"
   (fun () ->
-    `(!(:'ffi semanticPrimitives_state) env exps s' res.
+    `(!((s:'ffi semanticPrimitives_state)) env exps s' res.
      evaluate s env exps = (s',res) /\
-     is_record (:'cfg compiler_instance)
+     is_record ((ci:'cfg compiler_instance))
        (semanticPrimitives_state_eval_state s) ==>
      is_record ci (semanticPrimitives_state_eval_state s') /\
      record_forward (semanticPrimitives_state_eval_state s)
@@ -889,7 +935,7 @@ let evaluate_is_record_forward =
        (semanticPrimitives_state_eval_state s))) ==>
        recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle
          (orac_s (semanticPrimitives_state_eval_state s'))))) /\
-     (!(:'ffi semanticPrimitives_state) env x pes err_x s' res.
+     (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
      evaluate_evaluate_match s env x pes err_x = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) ==>
      is_record ci (semanticPrimitives_state_eval_state s') /\
@@ -899,7 +945,7 @@ let evaluate_is_record_forward =
        (semanticPrimitives_state_eval_state s))) ==>
        recorded_orac_wf (mk_compiler_fun_from_ci ci) (oracle
          (orac_s (semanticPrimitives_state_eval_state s'))))) /\
-     (!(:'ffi semanticPrimitives_state) env decs s' res.
+     (!((s:'ffi semanticPrimitives_state)) env decs s' res.
      evaluate_evaluate_decs s env decs = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) ==>
      is_record ci (semanticPrimitives_state_eval_state s') /\
@@ -923,34 +969,34 @@ let evaluate_is_record_forward =
 
 let insert_oracle_correct = cake_theorem "insert_oracle_correct"
   (fun () ->
-    `(!(:'ffi semanticPrimitives_state) env exps s' res.
+    `(!((s:'ffi semanticPrimitives_state)) env exps s' res.
      evaluate s env exps = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) /\
      orac_agrees orac (semanticPrimitives_state_eval_state s') /\
-     orac_extended_wf (mk_compiler_fun_from_ci ci) orac /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+     orac_extended_wf (mk_compiler_fun_from_ci ci) orac /\ ~(res =
+       Rerr (Rabort Rtype_error)) ==>
      evaluate (semanticPrimitives_state_eval_state_fupd ((\ci.
        insert_gen_oracle ci I (FST o FST)) ci orac) s) env exps =
      (semanticPrimitives_state_eval_state_fupd ((\ci.
        insert_gen_oracle ci I (FST o FST)) ci orac) s',res)) /\
-     (!(:'ffi semanticPrimitives_state) env x pes err_x s' res.
+     (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
      evaluate_evaluate_match s env x pes err_x = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) /\
      orac_agrees orac (semanticPrimitives_state_eval_state s') /\
-     orac_extended_wf (mk_compiler_fun_from_ci ci) orac /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+     orac_extended_wf (mk_compiler_fun_from_ci ci) orac /\ ~(res =
+       Rerr (Rabort Rtype_error)) ==>
      evaluate_evaluate_match
        (semanticPrimitives_state_eval_state_fupd ((\ci.
        insert_gen_oracle ci I (FST o FST)) ci orac) s)
        env x pes err_x =
      (semanticPrimitives_state_eval_state_fupd ((\ci.
        insert_gen_oracle ci I (FST o FST)) ci orac) s',res)) /\
-     (!(:'ffi semanticPrimitives_state) env decs s' res.
+     (!((s:'ffi semanticPrimitives_state)) env decs s' res.
      evaluate_evaluate_decs s env decs = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) /\
      orac_agrees orac (semanticPrimitives_state_eval_state s') /\
-     orac_extended_wf (mk_compiler_fun_from_ci ci) orac /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+     orac_extended_wf (mk_compiler_fun_from_ci ci) orac /\ ~(res =
+       Rerr (Rabort Rtype_error)) ==>
      evaluate_evaluate_decs
        (semanticPrimitives_state_eval_state_fupd ((\ci.
        insert_gen_oracle ci I (FST o FST)) ci orac) s) env decs =
@@ -994,7 +1040,7 @@ let less_sub_1_cases = cake_theorem "less_sub_1_cases[local]"
 
 let evaluate_record_suffix = cake_theorem "evaluate_record_suffix"
   (fun () ->
-    `(!(:'ffi semanticPrimitives_state) env exps s' res.
+    `(!((s:'ffi semanticPrimitives_state)) env exps s' res.
      evaluate s env exps = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) /\
      k <= semanticPrimitives_state_clock s ==>
@@ -1007,7 +1053,7 @@ let evaluate_record_suffix = cake_theorem "evaluate_record_suffix"
      ?s''. ev = (s'',Rerr (Rabort Rtimeout_error)) /\
      record_forward (semanticPrimitives_state_eval_state s'')
        (semanticPrimitives_state_eval_state s')))) /\
-     (!(:'ffi semanticPrimitives_state) env x pes err_x s' res.
+     (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
      evaluate_evaluate_match s env x pes err_x = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) /\
      k <= semanticPrimitives_state_clock s ==>
@@ -1021,7 +1067,7 @@ let evaluate_record_suffix = cake_theorem "evaluate_record_suffix"
      ?s''. ev = (s'',Rerr (Rabort Rtimeout_error)) /\
      record_forward (semanticPrimitives_state_eval_state s'')
        (semanticPrimitives_state_eval_state s')))) /\
-     (!(:'ffi semanticPrimitives_state) env decs s' res.
+     (!((s:'ffi semanticPrimitives_state)) env decs s' res.
      evaluate_evaluate_decs s env decs = (s',res) /\
      is_record ci (semanticPrimitives_state_eval_state s) /\
      k <= semanticPrimitives_state_clock s ==>
@@ -1057,7 +1103,7 @@ let evaluate_decs_clock_record_common_prefix =
     `evaluate_evaluate_decs s env decs = (s',res) /\
      evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K
        k) s) env decs = (s'',res') /\
-     is_record (:'cfg compiler_instance)
+     is_record ((ci:'cfg compiler_instance))
        (semanticPrimitives_state_eval_state s) /\
      j < FST (FST (oracle (orac_s
        (semanticPrimitives_state_eval_state s')) 0)) /\
@@ -1073,15 +1119,14 @@ let recorded_orac_wf_defined =
   (fun () ->
     `recorded_orac_wf compiler orac /\
      i <= FST (FST (orac 0)) /\
-     0 < i ==> ~(
-     compiler (orac i) = NONE)`)
+     0 < i ==> ~(compiler (orac i) = NONE)`)
   CHEAT_TAC;;
 
 let extract_oracle_agrees = cake_theorem "extract_oracle_agrees"
   (fun () ->
     `evaluate_evaluate_decs (semanticPrimitives_state_clock_fupd (K k)
   t) env decs = (t',res) /\
-     source_evalProof_s_rel (:'cfg compiler_instance) s t /\
+     source_evalProof_s_rel ((ci:'cfg compiler_instance)) s t /\
      (!i r. extract_oracle t env decs i = SOME r /\
        ~(mk_compiler_fun_from_ci ci r = NONE) ==>
        orac i = r) ==>
@@ -1138,7 +1183,7 @@ let extract_oracle_SOME_SUC =
 let extract_oracle_0_st = cake_theorem "extract_oracle_0_st[local]"
   (fun () ->
     `extract_oracle t env decs 0 = SOME r /\
-     ~semantics_prog s env decs ffi_Fail /\
+     ~(semantics_prog s env decs ffi_Fail) /\
      source_evalProof_s_rel ci s t /\
      nsAll (K concrete_v) (sem_env_v env) ==>
      FST (SND r) = compiler_instance_config_v ci
@@ -1160,7 +1205,7 @@ let extract_oracle_SUC_st = cake_theorem "extract_oracle_SUC_st[local]"
     `IS_SOME (extract_oracle t env decs (SUC i)) /\
      source_evalProof_s_rel ci s t /\
      nsAll (K concrete_v) (sem_env_v env) /\
-     ~semantics_prog s env decs ffi_Fail ==>
+     ~(semantics_prog s env decs ffi_Fail) ==>
      (?r r' x. extract_oracle t env decs (SUC i) = SOME r' /\
      extract_oracle t env decs i = SOME r /\
      mk_compiler_fun_from_ci ci r = SOME x /\
@@ -1173,7 +1218,7 @@ let get_oracle_props = cake_theorem "get_oracle_props"
   semanticPrimitives_state_refs
      s = [] /\ semanticPrimitives_state_eval_state
      s = SOME (mk_init_eval_state ci) /\
-     ~semantics_prog s env decs ffi_Fail ==>
+     ~(semantics_prog s env decs ffi_Fail) ==>
      (!r. get_oracle ci s env decs 0 = SOME r ==>
        FST (SND r) = compiler_instance_config_v ci
          (compiler_instance_init_state ci)) /\
@@ -1187,12 +1232,11 @@ let evaluate_prog_with_clock_put_oracle =
   cake_theorem "evaluate_prog_with_clock_put_oracle"
   (fun () ->
     `precond_eval_state orac ci s1 env decs /\
-     evaluate_prog_with_clock s1 env k decs = (ffi,res) /\ ~(
-     res = Rerr (Rabort Rtype_error)) /\
-       semanticPrimitives_state_refs
+     evaluate_prog_with_clock s1 env k decs = (ffi,res) /\ ~(res =
+       Rerr (Rabort Rtype_error)) /\ semanticPrimitives_state_refs
      s1 = [] /\
      nsAll (K concrete_v) (sem_env_v env) /\
-     ~semantics_prog s1 env decs ffi_Fail ==>
+     ~(semantics_prog s1 env decs ffi_Fail) ==>
      (?res'.
      evaluate_prog_with_clock
        (semanticPrimitives_state_eval_state_fupd (K (put_oracle ci
@@ -1204,12 +1248,12 @@ let evaluate_prog_with_clock_put_oracle =
 
 let oracle_semantics_prog = cake_theorem "oracle_semantics_prog"
   (fun () ->
-    `~semantics_prog s1 env decs ffi_Fail /\
+    `~(semantics_prog s1 env decs ffi_Fail) /\
      semantics_prog (semanticPrimitives_state_eval_state_fupd (K
        (put_oracle ci orac)) s1)
        env decs outcome /\
-     precond_eval_state orac (:'cfg compiler_instance) s1 env decs
-       /\ semanticPrimitives_state_refs
+     precond_eval_state orac ((ci:'cfg compiler_instance)) s1 env
+       decs /\ semanticPrimitives_state_refs
      s1 = [] /\
      nsAll (K concrete_v) (sem_env_v env) ==>
      semantics_prog s1 env decs outcome`)
@@ -1295,16 +1339,15 @@ let declare_env_is_insert = cake_theorem "declare_env_is_insert[local]"
 
 let adjust_oracle_evaluate = cake_theorem "adjust_oracle_evaluate"
   (fun () ->
-    `(!(:'ffi semanticPrimitives_state) env ds s' res.
-       evaluate_evaluate_decs s env ds = (s',res) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+    `(!((s:'ffi semanticPrimitives_state)) env ds s' res.
+       evaluate_evaluate_decs s env ds = (s',res) /\ ~(res = Rerr
+         (Rabort Rtype_error)) ==>
          evaluate_evaluate_decs s env (compile_decs ds) = (s',res))
            ==>
-     (!(:'ffi semanticPrimitives_state) env exps s' res.
+     (!((s:'ffi semanticPrimitives_state)) env exps s' res.
        evaluate s env exps = (s',res) /\
        is_insert_oracle ci f (semanticPrimitives_state_eval_state
-         s) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+         s) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
          is_insert_oracle ci f (semanticPrimitives_state_eval_state
            s') /\
          evaluate ((\ci f s.
@@ -1312,11 +1355,10 @@ let adjust_oracle_evaluate = cake_theorem "adjust_oracle_evaluate"
            s) ci (compile_decs o f) s) env exps =
              ((\ci f s. semanticPrimitives_state_eval_state_fupd
                (adjust_oracle ci f) s) ci (compile_decs o f) s',res)) /\
-     (!(:'ffi semanticPrimitives_state) env x pes err_x s' res.
+     (!((s:'ffi semanticPrimitives_state)) env x pes err_x s' res.
        evaluate_evaluate_match s env x pes err_x = (s',res) /\
        is_insert_oracle ci f (semanticPrimitives_state_eval_state
-         s) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+         s) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
          is_insert_oracle ci f (semanticPrimitives_state_eval_state
            s') /\
          evaluate_evaluate_match ((\ci f s.
@@ -1324,11 +1366,10 @@ let adjust_oracle_evaluate = cake_theorem "adjust_oracle_evaluate"
            s) ci (compile_decs o f) s) env x pes err_x =
              ((\ci f s. semanticPrimitives_state_eval_state_fupd
                (adjust_oracle ci f) s) ci (compile_decs o f) s',res)) /\
-     (!(:'ffi semanticPrimitives_state) env ds s' res.
+     (!((s:'ffi semanticPrimitives_state)) env ds s' res.
        evaluate_evaluate_decs s env ds = (s',res) /\
        is_insert_oracle ci f (semanticPrimitives_state_eval_state
-         s) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+         s) /\ ~(res = Rerr (Rabort Rtype_error)) ==>
          is_insert_oracle ci f (semanticPrimitives_state_eval_state
            s') /\
          evaluate_evaluate_decs ((\ci f s.
@@ -1339,24 +1380,26 @@ let adjust_oracle_evaluate = cake_theorem "adjust_oracle_evaluate"
   CHEAT_TAC;;
 
 (* HOL4 source_evalProofScript.sml:2431-2435: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: adjust_oracle_ev_decs *)
 
 let adjust_oracle_semantics_prog =
   cake_theorem "adjust_oracle_semantics_prog"
   (fun () ->
     `!compile' f.
-     (!(:'ffi semanticPrimitives_state) env ds s' res.
-       evaluate_evaluate_decs s env ds = (s',res) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+     (!((s:'ffi semanticPrimitives_state)) env ds s' res.
+       evaluate_evaluate_decs s env ds = (s',res) /\ ~(res = Rerr
+         (Rabort Rtype_error)) ==>
          evaluate_evaluate_decs s env (compile' ds) = (s',res)) ==>
      is_insert_oracle ci f (semanticPrimitives_state_eval_state
-       (:'ffi semanticPrimitives_state)) /\
-     ~semantics_prog (:'ffi semanticPrimitives_state) env prog
-       ffi_Fail /\
-     semantics_prog (:'ffi semanticPrimitives_state) env prog
+       ((s:'ffi semanticPrimitives_state))) /\
+     ~(semantics_prog ((s:'ffi semanticPrimitives_state)) env prog
+       ffi_Fail) /\
+     semantics_prog ((s:'ffi semanticPrimitives_state)) env prog
        outcome ==>
      semantics_prog ((\ci f s.
        semanticPrimitives_state_eval_state_fupd (adjust_oracle ci f)
-       s) ci (compile' o f) (:'ffi semanticPrimitives_state)) env prog
-       outcome`)
+       s) ci (compile' o f) ((s:'ffi semanticPrimitives_state))) env
+       prog outcome`)
   CHEAT_TAC;;
+
+cake_hide [];;

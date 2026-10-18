@@ -16,6 +16,7 @@ needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
+needs "semantics/typeSystem.ml";;
 needs "translator/monadic/monad_base/ml_monadBase.ml";;
 
 (* HOL4 linear_scanProofScript.sml:12-13: ML code, not ported *)
@@ -27,7 +28,7 @@ hol4_overload "++" "otherwise";;
 let set_MAP_FST_toAList_eq_domain =
   cake_theorem "set_MAP_FST_toAList_eq_domain"
   (fun () ->
-    `!s. set_of_list (MAP FST' (toAList s)) = domain s`)
+    `!s. set_of_list (MAP FST (toAList s)) = domain s`)
   CHEAT_TAC;;
 
 let numset_list_insert_FOLDL = cake_theorem "numset_list_insert_FOLDL"
@@ -420,8 +421,8 @@ let check_number_property_intend =
   (fun () ->
     `!end_out lt n_in live_in.
      check_number_property (\n (live:1 spt). !r. r IN domain live
-       ==> (?v. sptree_lookup r end_out = SOME v /\ n + 1 <= v)) lt n_in
-       live_in ==>
+       ==> (?v. sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt
+       n_in live_in ==>
      (!r. r IN domain (get_live_backward lt live_in) ==> (?v.
        sptree_lookup r end_out = SOME v /\ n_in - (size_of_live_tree
        lt) <= v))`)
@@ -436,7 +437,7 @@ let get_intervals_live_less_end =
      (!r. r IN domain live_in ==> (?v. sptree_lookup r end_in =
        SOME v /\ n_in <= v)) ==>
      check_number_property (\n (live:1 spt). !r. r IN domain live
-       ==> (?v. sptree_lookup r end_out = SOME v /\ n + 1 <= v)) lt
+       ==> (?v. sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt
        n_in live_in`)
   CHEAT_TAC;;
 
@@ -711,8 +712,8 @@ let check_intervals_check_live_tree_lemma =
        domain live' ==> option_CASE (sptree_lookup r beg_out) n_out (\x.
        x) <= n) lt n_in live /\
      check_number_property (\n (live':1 spt). !r. r IN domain live'
-       ==> (?v. sptree_lookup r end_out = SOME v /\ n + 1 <= v)) lt n_in
-       live /\
+       ==> (?v. sptree_lookup r end_out = SOME v /\ n + (&1) <= v)) lt
+       n_in live /\
      check_number_property_strong (\n (live':1 spt). domain live'
        SUBSET domain end_out) lt n_in live /\
      domain beg_out = domain end_out /\
@@ -1133,8 +1134,8 @@ let find_color_in_colornum_invariants =
        linear_scan_state_colornum
      st <= col /\ col < linear_scan_state_colornum stout /\
        linear_scan_state_colornum
-     st <= linear_scan_state_colornum stout /\ ~(
-     col IN domain forbidden) /\
+     st <= linear_scan_state_colornum stout /\ ~(col IN domain
+       forbidden) /\
      st = linear_scan_state_colornum_fupd (K
        (linear_scan_state_colornum st))
        (linear_scan_state_colorpool_fupd (K
@@ -1150,8 +1151,8 @@ let find_color_invariants = cake_theorem "find_color_invariants"
      find_color st forbidden = (stout,SOME col) ==>
      good_linear_scan_state (linear_scan_state_colorpool_fupd (\l.
        col :: l) stout) sth l pos forced mincol /\
-     col < linear_scan_state_colornum stout /\ ~(
-     col IN domain forbidden) /\
+     col < linear_scan_state_colornum stout /\ ~(col IN domain
+       forbidden) /\
      st = linear_scan_state_colornum_fupd (K
        (linear_scan_state_colornum st))
        (linear_scan_state_colorpool_fupd (K
@@ -1252,7 +1253,8 @@ let spill_register_FILTER_invariants_hidden =
   CHEAT_TAC;;
 
 (* HOL4 linear_scanProofScript.sml:2914-2916: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   spill_register_FILTER_invariants *)
 
 let FILTER_MEM_active = cake_theorem "FILTER_MEM_active"
   (fun () ->
@@ -1381,7 +1383,7 @@ let find_last_stealable_output =
     `!forbidden sth active steal rest.
      find_last_stealable active forbidden sth = (M_success (SOME
        (steal,rest)),sth) ==>
-     ~is_phy_var (SND steal) /\ sptree_lookup (EL (SND steal)
+     ~(is_phy_var (SND steal)) /\ sptree_lookup (EL (SND steal)
        (linear_scan_hidden_state_colors sth)) forbidden = NONE /\
      (?l1 l2. rest = l1 ++ l2 /\ active = l1 ++ (steal :: l2))`)
   CHEAT_TAC;;
@@ -1414,20 +1416,20 @@ let color_register_invariants = cake_theorem "color_register_invariants"
     `!st sth l pos forced reg col forbidden mincol.
      good_linear_scan_state st sth l pos forced mincol /\
      forbidden_is_from_map_color_forced forced l
-       (linear_scan_hidden_state_colors sth) reg forbidden /\ ~(
-     col IN domain forbidden) /\
+       (linear_scan_hidden_state_colors sth) reg forbidden /\ ~(col IN
+       domain forbidden) /\
      (is_phy_var reg ==> domain (linear_scan_state_phyregs st)
        SUBSET domain forbidden) /\
-     ~MEM col (linear_scan_state_colorpool st ++ MAP (\(e,r). EL r
+     ~(MEM col (linear_scan_state_colorpool st ++ MAP (\(e,r). EL r
        (linear_scan_hidden_state_colors sth)) (linear_scan_state_active
-       st)) /\
+       st))) /\
      EL reg (linear_scan_hidden_state_int_beg sth) = pos /\
      EL reg (linear_scan_hidden_state_int_beg sth) <= EL reg
        (linear_scan_hidden_state_int_end sth) /\
      col < linear_scan_state_colornum st /\
      mincol <= col /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
-     ~MEM reg l ==>
+     ~(MEM reg l) ==>
      (?stout sthout. (M_success stout,sthout) = color_register st
        reg col (EL reg (linear_scan_hidden_state_int_end sth)) sth /\
      good_linear_scan_state stout sthout (reg :: l) pos forced
@@ -1447,7 +1449,7 @@ let color_register_invariants = cake_theorem "color_register_invariants"
 let find_spill_invariants = cake_theorem "find_spill_invariants"
   (fun () ->
     `!st sth l forbidden forced reg force mincol.
-     ~MEM reg l /\
+     ~(MEM reg l) /\
      good_linear_scan_state st sth l (EL reg
        (linear_scan_hidden_state_int_beg sth)) forced mincol /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
@@ -1468,7 +1470,7 @@ let find_spill_invariants = cake_theorem "find_spill_invariants"
      sthout = linear_scan_hidden_state_int_beg sth /\
        linear_scan_hidden_state_int_end sthout =
        linear_scan_hidden_state_int_end sth /\
-     (!r. ~MEM r (reg :: l) ==> EL r
+     (!r. ~(MEM r (reg :: l)) ==> EL r
        (linear_scan_hidden_state_colors sthout) = EL r
        (linear_scan_hidden_state_colors sth)) /\
      (!r. MEM r l /\ is_phy_var r ==> EL r
@@ -1482,7 +1484,7 @@ let linear_reg_alloc_step_aux_invariants =
   cake_theorem "linear_reg_alloc_step_aux_invariants"
   (fun () ->
     `!st sth l preferred (forbidden:1 spt) forced reg force mincol.
-     ~MEM reg l /\
+     ~(MEM reg l) /\
      good_linear_scan_state st sth l (EL reg
        (linear_scan_hidden_state_int_beg sth)) forced mincol /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
@@ -1505,7 +1507,7 @@ let linear_reg_alloc_step_aux_invariants =
      sthout = linear_scan_hidden_state_int_beg sth /\
        linear_scan_hidden_state_int_end sthout =
        linear_scan_hidden_state_int_end sth /\
-     (!r. ~MEM r (reg :: l) ==> EL r
+     (!r. ~(MEM r (reg :: l)) ==> EL r
        (linear_scan_hidden_state_colors sthout) = EL r
        (linear_scan_hidden_state_colors sth)) /\
      (!r. MEM r l /\ is_phy_var r ==> EL r
@@ -1535,7 +1537,7 @@ let linear_reg_alloc_step_pass1_invariants =
   cake_theorem "linear_reg_alloc_step_pass1_invariants"
   (fun () ->
     `!st sth l moves forced_adj forced reg pos mincol.
-     ~MEM reg l /\
+     ~(MEM reg l) /\
      good_linear_scan_state st sth l pos forced mincol /\
      pos <= (EL reg (linear_scan_hidden_state_int_beg sth)) /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
@@ -1558,7 +1560,7 @@ let linear_reg_alloc_step_pass1_invariants =
      sthout = linear_scan_hidden_state_int_beg sth /\
        linear_scan_hidden_state_int_end sthout =
        linear_scan_hidden_state_int_end sth /\
-     (!r. ~MEM r (reg :: l) ==> EL r
+     (!r. ~(MEM r (reg :: l)) ==> EL r
        (linear_scan_hidden_state_colors sthout) = EL r
        (linear_scan_hidden_state_colors sth)) /\
      (!r. MEM r l /\ is_phy_var r ==> EL r
@@ -1573,7 +1575,7 @@ let linear_reg_alloc_step_pass2_invariants =
   cake_theorem "linear_reg_alloc_step_pass2_invariants"
   (fun () ->
     `!st sth l moves forced_adj forced reg pos mincol.
-     ~MEM reg l /\
+     ~(MEM reg l) /\
      good_linear_scan_state st sth l pos forced mincol /\
      pos <= (EL reg (linear_scan_hidden_state_int_beg sth)) /\
      reg < LENGTH (linear_scan_hidden_state_colors sth) /\
@@ -1596,7 +1598,7 @@ let linear_reg_alloc_step_pass2_invariants =
      sthout = linear_scan_hidden_state_int_beg sth /\
        linear_scan_hidden_state_int_end sthout =
        linear_scan_hidden_state_int_end sth /\
-     (!r. ~MEM r (reg :: l) ==> EL r
+     (!r. ~(MEM r (reg :: l)) ==> EL r
        (linear_scan_hidden_state_colors sthout) = EL r
        (linear_scan_hidden_state_colors sth)) /\
      (!r. MEM r l /\ is_phy_var r ==> EL r
@@ -1631,7 +1633,7 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma =
      (!r1 r2. MEM r1 l /\ MEM r2 regl ==> intbeg_less
        (linear_scan_hidden_state_int_beg sth) r1 r2) /\
      ALL_DISTINCT regl /\
-     EVERY (\r. ~MEM r regl) l /\
+     EVERY (\r. ~(MEM r regl)) l /\
      good_linear_scan_state st sth l pos forced mincol /\
      EVERY (\r. pos <= (EL r (linear_scan_hidden_state_int_beg
        sth))) regl /\
@@ -1659,7 +1661,7 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants_lemma =
      sthout = linear_scan_hidden_state_int_beg sth /\
        linear_scan_hidden_state_int_end sthout =
        linear_scan_hidden_state_int_end sth /\
-     (!r. ~MEM r (l ++ regl) ==> EL r
+     (!r. ~(MEM r (l ++ regl)) ==> EL r
        (linear_scan_hidden_state_colors sthout) = EL r
        (linear_scan_hidden_state_colors sth)) /\
      (b ==> (phystack_on_stack l st sth ==> phystack_on_stack
@@ -1701,7 +1703,7 @@ let st_ex_FOLDL_linear_reg_alloc_step_passn_invariants =
      sthout = linear_scan_hidden_state_int_beg sth /\
        linear_scan_hidden_state_int_end sthout =
        linear_scan_hidden_state_int_end sth /\
-     (!r. ~MEM r regl ==> EL r (linear_scan_hidden_state_colors
+     (!r. ~(MEM r regl) ==> EL r (linear_scan_hidden_state_colors
        sthout) = EL r (linear_scan_hidden_state_colors sth)) /\
      (b ==> phystack_on_stack (REVERSE regl) stout sthout) /\
        linear_scan_state_colormax
@@ -1967,7 +1969,7 @@ let lookup_fromAList_MAP_not_NONE =
 
 let linear_scanProof_PERM_PARTITION = cake_theorem "PERM_PARTITION"
   (fun () ->
-    `!P l. PERM l ((FILTER (\x. P x) l) ++ (FILTER (\x. ~P x) l))`)
+    `!P l. PERM l ((FILTER (\x. P x) l) ++ (FILTER (\x. ~(P x)) l))`)
   CHEAT_TAC;;
 
 let forbidden_is_from_forced_take_sublist =
@@ -2137,9 +2139,10 @@ let good_bijection_state_def = cake_define
 
 let convention_partitions_or = cake_theorem "convention_partitions_or"
   (fun () ->
-    `!r. (is_phy_var r /\ ~is_stack_var r /\ ~is_alloc_var r) \/
-         (~is_phy_var r /\ is_stack_var r /\ ~is_alloc_var r) \/
-         (~is_phy_var r /\ ~is_stack_var r /\ is_alloc_var r)`)
+    `!r. (is_phy_var r /\ ~(is_stack_var r) /\ ~(is_alloc_var r)) \/
+         (~(is_phy_var r) /\ is_stack_var r /\ ~(is_alloc_var r))
+           \/
+         (~(is_phy_var r) /\ ~(is_stack_var r) /\ is_alloc_var r)`)
   CHEAT_TAC;;
 
 let find_bijection_invariants = cake_theorem "find_bijection_invariants"
@@ -2208,7 +2211,7 @@ let numset_list_add_if_lt_monad_correct =
   cake_theorem "numset_list_add_if_lt_monad_correct"
   (fun () ->
     `!int_beg sth l v.
-     v <= 0 /\
+     v <= (&0) /\
      sptree_eq_list int_beg (linear_scan_hidden_state_int_beg sth)
        /\
      EVERY (\r. r < LENGTH (linear_scan_hidden_state_int_beg sth))
@@ -2227,7 +2230,7 @@ let numset_list_add_if_gt_monad_correct =
   cake_theorem "numset_list_add_if_gt_monad_correct"
   (fun () ->
     `!int_end sth l v.
-     v <= 0 /\
+     v <= (&0) /\
      sptree_eq_list int_end (linear_scan_hidden_state_int_end sth)
        /\
      EVERY (\r. r < LENGTH (linear_scan_hidden_state_int_end sth))
@@ -2246,7 +2249,7 @@ let get_intervals_ct_monad_aux_correct =
   cake_theorem "get_intervals_ct_monad_aux_correct"
   (fun () ->
     `!ct sth live n int_beg int_end nout int_begout int_endout liveout.
-     n <= 0 /\
+     n <= (&0) /\
      sptree_eq_list int_beg (linear_scan_hidden_state_int_beg sth)
        /\
      sptree_eq_list int_end (linear_scan_hidden_state_int_end sth)

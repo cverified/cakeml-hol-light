@@ -213,8 +213,7 @@ let evaluate_compile = cake_theorem "evaluate_compile[local]"
 let compile_correct = cake_theorem "compile_correct"
   (fun () ->
     `!c s. ~(FST (evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error))) /\
-  ~(
-           FST (evaluate (c,s)) = NONE) ==>
+  ~(FST (evaluate (c,s)) = NONE) ==>
              (?ls sm safe peak.
                evaluate (FST (compile c LN),s) =
                  (I ## (\s. dataSem_state_peak_heap_length_fupd (K

@@ -22,7 +22,7 @@ needs "semantics/semantics.ml";;
 needs "semantics/typeSystem.ml";;
 
 (* HOL4 primSemEnvScript.sml:12-13: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: prim_sem_env_eq *)
 
 let prim_type_sound_invariants =
   cake_theorem "prim_type_sound_invariants"

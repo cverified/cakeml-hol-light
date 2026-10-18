@@ -43,11 +43,11 @@ let config_ok_def = cake_define
      env_rel prim_tenv (compiler_config_inferencer_config cc) /\
      inf_set_tids_ienv prim_type_ids
        (compiler_config_inferencer_config cc) /\
-     ~compiler_config_input_is_sexp cc /\
-     ~compiler_config_exclude_prelude cc /\
-     ~compiler_config_skip_type_inference cc /\
-     ~compiler_config_only_print_types cc /\
-     ~compiler_config_only_print_sexp cc /\
+     ~(compiler_config_input_is_sexp cc) /\
+     ~(compiler_config_exclude_prelude cc) /\
+     ~(compiler_config_skip_type_inference cc) /\
+     ~(compiler_config_only_print_types cc) /\
+     ~(compiler_config_only_print_sexp cc) /\
      backend_config_ok (compiler_config_asm_config cc)
        (compiler_config_backend_config cc) /\
      mc_conf_ok mc /\ mc_init_ok (compiler_config_asm_config cc)
@@ -71,11 +71,11 @@ let initial_condition_def = cake_define
      set_tids_tenv (count start_type_id) (semantics_state_tenv st) /\
      inf_set_tids_ienv (count start_type_id)
        (compiler_config_inferencer_config cc) /\
-     ~compiler_config_input_is_sexp cc /\
-     ~compiler_config_exclude_prelude cc /\
-     ~compiler_config_skip_type_inference cc /\
-     ~compiler_config_only_print_types cc /\
-     ~compiler_config_only_print_sexp cc /\
+     ~(compiler_config_input_is_sexp cc) /\
+     ~(compiler_config_exclude_prelude cc) /\
+     ~(compiler_config_skip_type_inference cc) /\
+     ~(compiler_config_only_print_types cc) /\
+     ~(compiler_config_only_print_sexp cc) /\
      backend_config_ok (compiler_config_asm_config cc)
        (compiler_config_backend_config cc) /\
      mc_conf_ok mc /\ mc_init_ok (compiler_config_asm_config cc)
@@ -204,7 +204,7 @@ let compile_correct_safe_for_space =
   CHEAT_TAC;;
 
 (* HOL4 compilerProofScript.sml:264-279: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: compile_correct *)
 (* HOL4 compilerProofScript.sml:280-281: a comment with ML code after
    it, which the port does not have *)
 (* HOL4 compilerProofScript.sml:282-289: a proof *)

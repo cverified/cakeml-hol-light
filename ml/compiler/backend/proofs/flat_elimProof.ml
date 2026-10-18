@@ -61,12 +61,8 @@ let find_loc_EVERY_isEmpty = cake_theorem "find_loc_EVERY_isEmpty"
 
 (************************** DEFINITIONS ***************************)
 
-let SUM_MAP_v3_size = cake_theorem "SUM_MAP_v3_size"
-  (fun () ->
-    `!xs. SUM (MAP v3_size xs) = LENGTH xs +
-       SUM (MAP (mlstring_size o FST) xs) +
-       SUM (MAP (flatSem_v_size o SND) xs)`)
-  CHEAT_TAC;;
+(* HOL4 flat_elimProofScript.sml:99-105: a theorem whose statement
+   the port cannot state yet: SUM_MAP_v3_size *)
 
 let _ = size_thms "flatSem_v";;
 (* the termination relation that HOL4 gives, with
@@ -287,7 +283,7 @@ let v_has_Eval_def1 = cake_define_try_tac (fun () ->
         | _15 -> F`;;
 
 (* HOL4 flat_elimProofScript.sml:326: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: v_has_Eval_def *)
 
 (* s_g = state globals, t_g = removed state globals *)
 let globals_rel_def = cake_define
@@ -303,7 +299,7 @@ let globals_rel_def = cake_define
          n < LENGTH t_g /\ EL n s_g = NONE ==> EL n t_g = NONE) /\
        (!n x.
            n IN domain reachable /\ n < LENGTH t_g /\
-         EL n t_g = SOME x ==> ~v_has_Eval x /\ domain
+         EL n t_g = SOME x ==> ~(v_has_Eval x) /\ domain
            (find_v_globals x) SUBSET domain reachable)`;;
 
 let globals_rel_trans = cake_theorem "globals_rel_trans"
@@ -385,7 +381,7 @@ let find_v_globals_list_to_v_APPEND =
 
 let find_v_globals_Unitv = cake_theorem "find_v_globals_Unitv[simp]"
   (fun () ->
-    `find_v_globals Unitv' = LN`)
+    `find_v_globals Unitv = LN`)
   CHEAT_TAC;;
 
 let EVERY_EL_IMP = cake_theorem "EVERY_EL_IMP"
@@ -396,8 +392,8 @@ let EVERY_EL_IMP = cake_theorem "EVERY_EL_IMP"
 let not_v_has_Eval_EVERY_EL =
   cake_theorem "not_v_has_Eval_EVERY_EL[local]"
   (fun () ->
-    `EVERY ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~v_has_Eval (EL
-  i xs)`)
+    `EVERY ((~) o v_has_Eval) xs /\ i < LENGTH xs ==> ~(v_has_Eval (EL
+  i xs))`)
   CHEAT_TAC;;
 
 (* HOL4 flat_elimProofScript.sml:462: the ML values that the
@@ -450,13 +446,13 @@ let flat_elimProof_pair_lam_lem = cake_theorem "pair_lam_lem[local]"
 (* HOL4 flat_elimProofScript.sml:519: ML code, not ported *)
 
 (* HOL4 flat_elimProofScript.sml:521-524: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: do_app_cases *)
 
 
 let fvg_v_to_flat = cake_theorem "fvg_v_to_flat[local,simp]"
   (fun () ->
     `domain (find_v_globals (v_to_flat v)) SUBSET domain reachable /\
-     ~v_has_Eval (v_to_flat v)`)
+     ~(v_has_Eval (v_to_flat v))`)
   CHEAT_TAC;;
 
 let do_app_SOME_flat_state_rel =
@@ -470,9 +466,8 @@ let do_app_SOME_flat_state_rel =
         domain (find_lookups (App tra op [])) SUBSET domain
           reachable /\
         EVERY ((~) o v_has_Eval) l ==>
-            do_app state op l = SOME (new_state,result) /\ ~(
-            result = Rerr (Rabort Rtype_error)) ==>
-              (?new_removed_state.
+            do_app state op l = SOME (new_state,result) /\ ~(result
+              = Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
                 flat_state_rel reachable new_state
                   new_removed_state /\
                 do_app removed_state op l =
@@ -520,7 +515,7 @@ let pmatch_not_has_Eval = cake_theorem "pmatch_not_has_Eval"
   (fun () ->
     `(
      !(s:('c,'ffi)flatSem_state) p v bindings env.
-     pmatch s p v bindings = Match env /\ ~v_has_Eval v /\
+     pmatch s p v bindings = Match env /\ ~(v_has_Eval v) /\
      EVERY (EVERY ((~) o v_has_Eval) o store_v_vs) (state_refs s)
        /\
      EVERY ((~) o v_has_Eval o SND) bindings ==>
@@ -570,9 +565,8 @@ let evaluate_keep_flat_state_rel_eq_lemma =
          domain (find_env_globals env) SUBSET domain reachable /\
          EVERY (((~)) o v_has_Eval o SND) (flatSem_environment_v
            env) /\
-         EVERY (((~)) o has_Eval) exprL /\ ~(
-         result = Rerr (Rabort Rtype_error)) ==>
-           (?new_removed_state.
+         EVERY (((~)) o has_Eval) exprL /\ ~(result = Rerr (Rabort
+           Rtype_error)) ==> (?new_removed_state.
          evaluate env removed_state exprL =
            (new_removed_state,result) /\
          flat_state_rel reachable new_state new_removed_state /\
@@ -594,8 +588,8 @@ let evaluate_sing_keep_flat_state_rel_eq =
        exprL = [expr] /\
        keep reachable expr /\
        domain (find_lookups expr) SUBSET domain reachable /\
-       ~has_Eval expr /\ ~(
-       result = Rerr (Rabort Rtype_error)) ==> (?new_removed_state.
+       ~(has_Eval expr) /\ ~(result = Rerr (Rabort Rtype_error))
+         ==> (?new_removed_state.
          evaluate (flatSem_environment_v_fupd (K []) env)
            removed_state exprL = (new_removed_state,result) /\
          flat_state_rel reachable new_state new_removed_state)`)
@@ -612,8 +606,8 @@ let evaluate_dec_flat_state_rel =
        decs_closed reachable [dec] /\
        flat_state_rel reachable state removed_state /\ keep
          reachable dec /\
-       ~has_Eval_dec dec /\ ~(
-       result = SOME (Rabort Rtype_error)) ==> (?new_removed_state.
+       ~(has_Eval_dec dec) /\ ~(result = SOME (Rabort Rtype_error))
+         ==> (?new_removed_state.
          evaluate_dec removed_state dec =
              (new_removed_state,result) /\
          flat_state_rel reachable new_state new_removed_state)`)
@@ -632,8 +626,8 @@ let total_pat_IMP = cake_theorem "total_pat_IMP"
 
 let EXISTS_total_pat = cake_theorem "EXISTS_total_pat"
   (fun () ->
-    `EXISTS total_pat (MAP FST pes) ==> ~(
-     pmatch_rows pes new_state v = No_match)`)
+    `EXISTS total_pat (MAP FST pes) ==> ~(pmatch_rows pes new_state v
+  = No_match)`)
   CHEAT_TAC;;
 
 
@@ -653,9 +647,9 @@ let evaluate_flat_state_rel_lemma =
          EVERY (((~)) o has_Eval) exprL /\
          EVERY (\e. (\t. t = LN) (inter (find_loc e) reachable))
            exprL /\
-         flat_state_rel reachable state removed_state /\ ~(
-         result = Rerr (Rabort Rtype_error)) ==> (?values.
-           flat_state_rel reachable new_state removed_state /\
+         flat_state_rel reachable state removed_state /\ ~(result =
+           Rerr (Rabort Rtype_error)) ==> (?values. flat_state_rel
+           reachable new_state removed_state /\
          result = Rval values /\
          EVERY (((~)) o v_has_Eval) values))`)
   CHEAT_TAC;;
@@ -670,11 +664,11 @@ let evaluate_sing_notKeep_flat_state_rel =
          flatSem_evaluate (flatSem_environment_v_fupd (K []) env)
            state exprL = (new_state,result) /\
          exprL = [expr] /\
-         ~has_Eval expr /\
-         ~keep reachable expr /\
-         flat_state_rel reachable state removed_state /\ ~(
-         result = Rerr (Rabort Rtype_error)) ==> flat_state_rel
-           reachable new_state removed_state /\
+         ~(has_Eval expr) /\
+         ~(keep reachable expr) /\
+         flat_state_rel reachable state removed_state /\ ~(result =
+           Rerr (Rabort Rtype_error)) ==> flat_state_rel reachable
+           new_state removed_state /\
          (?(value:flatSem_v). result = Rval [value])`)
   CHEAT_TAC;;
 
@@ -685,8 +679,8 @@ let flat_decs_removal_lemma = cake_theorem "flat_decs_removal_lemma"
   (fun () ->
     `!state decs new_state result
         reachable removed_decs removed_state.
-        evaluate_decs state decs = (new_state,result) /\ ~(
-        result = SOME (Rabort Rtype_error)) /\
+        evaluate_decs state decs = (new_state,result) /\ ~(result =
+          SOME (Rabort Rtype_error)) /\
         remove_unreachable reachable decs = removed_decs /\
         flat_state_rel reachable state removed_state /\
         EVERY ((~) o has_Eval_dec) decs /\
@@ -702,11 +696,11 @@ let flat_removal_thm = cake_theorem "flat_removal_thm"
     `!ffi k decs new_state result roots tree
          reachable removed_decs.
          evaluate_decs (flatSem_initial_state ffi k ec) decs =
-           (new_state,result) /\ ~(
-         result = SOME (Rabort Rtype_error)) /\
+           (new_state,result) /\ ~(result = SOME (Rabort Rtype_error))
+           /\
          (roots,tree) = analyse_code decs /\
          reachable = closure_spt roots tree /\
-         ~EXISTS has_Eval_dec decs /\
+         ~(EXISTS has_Eval_dec decs) /\
          remove_unreachable reachable decs = removed_decs ==> (?s.
            state_ffi
          s = state_ffi new_state /\
@@ -721,7 +715,7 @@ let flat_remove_eval_sim = cake_theorem "flat_remove_eval_sim"
   CHEAT_TAC;;
 
 (* HOL4 flat_elimProofScript.sml:1676-1678: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: flat_remove_semantics *)
 
 (* syntactic results *)
 

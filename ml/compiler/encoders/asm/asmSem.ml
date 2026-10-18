@@ -320,4 +320,4 @@ let asm_step_def = cake_define
      (asm_state_align s1 = asm_config_code_alignment c) /\
      (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH (asm_config_encode
        c i))) s1 = s2) /\
-     ~asm_state_failed s2 /\ asm_ok i c`;;
+     ~(asm_state_failed s2) /\ asm_ok i c`;;

@@ -58,13 +58,12 @@ let state_rel_def = cake_define
 hol4_overload "state_rel" "stack_rawcallProof_state_rel";;
 
 (* HOL4 stack_rawcallProofScript.sml:46-47: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: state_rel_thm *)
 
 let with_stack_space = cake_theorem "with_stack_space[local]"
   (fun () ->
-    `stackSem_state_stack_space_fupd (K (stackSem_state_stack_space t1 =
-  t1))
-       t1`)
+    `stackSem_state_stack_space_fupd (K (stackSem_state_stack_space t1))
+       t1 = t1`)
   CHEAT_TAC;;
 
 let comp_LN = cake_theorem "comp_LN"
@@ -74,8 +73,7 @@ let comp_LN = cake_theorem "comp_LN"
 
 let comp_seq_neq_IMP = cake_theorem "comp_seq_neq_IMP"
   (fun () ->
-    `~(
-       comp_seq p1 p2 i default = default) ==>
+    `~(comp_seq p1 p2 i default = default) ==>
        (?k dest. p1 = stackLang_StackFree k /\ p2 = Call NONE
          (INL dest) NONE)`)
   CHEAT_TAC;;
@@ -151,8 +149,7 @@ let stack_rawcallProof_compile_semantics =
   (fun () ->
     `ALL_DISTINCT (MAP FST code) /\ stackSem_state_use_stack s /\
   state_code
-     s = fromAList code /\ ~(
-     semantics start s = Fail) ==>
+     s = fromAList code /\ ~(semantics start s = Fail) ==>
      semantics start (state_code_fupd (K (fromAList
        (stack_rawcall_compile code))) s) =
      semantics start s`)
@@ -196,9 +193,9 @@ let reg_bound_comp = cake_theorem "reg_bound_comp"
 
 let stack_rawcall_reg_bound = cake_theorem "stack_rawcall_reg_bound"
   (fun () ->
-    `EVERY (\p. reg_bound p sp) (MAP SND' (stack_rawcall_compile prog1))
+    `EVERY (\p. reg_bound p sp) (MAP SND (stack_rawcall_compile prog1))
   =
-     EVERY (\p. reg_bound p sp) (MAP SND' prog1)`)
+     EVERY (\p. reg_bound p sp) (MAP SND prog1)`)
   CHEAT_TAC;;
 
 let call_args_comp = cake_theorem "call_args_comp"
@@ -213,14 +210,14 @@ let call_args_comp = cake_theorem "call_args_comp"
 let stack_rawcallProof_stack_alloc_call_args =
   cake_theorem "stack_alloc_call_args"
   (fun () ->
-    `EVERY (\p. call_args p 1 2 3 4 0) (MAP SND' (stack_rawcall_compile
+    `EVERY (\p. call_args p 1 2 3 4 0) (MAP SND (stack_rawcall_compile
   prog1)) =
-     EVERY (\p. call_args p 1 2 3 4 0) (MAP SND' prog1)`)
+     EVERY (\p. call_args p 1 2 3 4 0) (MAP SND prog1)`)
   CHEAT_TAC;;
 
 let stack_rawcallProof_MAP_FST_compile = cake_theorem "MAP_FST_compile"
   (fun () ->
-    `MAP FST' (stack_rawcall_compile code) = MAP FST' code`)
+    `MAP FST (stack_rawcall_compile code) = MAP FST code`)
   CHEAT_TAC;;
 
 let call_arg_comp = cake_theorem "call_arg_comp"

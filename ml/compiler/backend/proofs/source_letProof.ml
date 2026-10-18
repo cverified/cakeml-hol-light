@@ -32,8 +32,8 @@ let env_c_lemma = cake_theorem "env_c_lemma[local]"
 
 let evaluate_lift_let = cake_theorem "evaluate_lift_let"
   (fun () ->
-    `evaluate_evaluate_decs s env [d] = (s',res) /\ ~(
-     res = Rerr (Rabort Rtype_error)) /\
+    `evaluate_evaluate_decs s env [d] = (s',res) /\ ~(res = Rerr (Rabort
+  Rtype_error)) /\
      lift_let d = SOME (d1,d2) ==>
        evaluate_evaluate_decs s env [Dlocal [d1] [d2]] = (s',res)`)
   CHEAT_TAC;;
@@ -50,8 +50,7 @@ let evaluate_lift_lets = cake_theorem "evaluate_lift_lets"
        evaluate_evaluate_decs s env (REVERSE ds) = (s1,Rval env1)
          /\
        evaluate_evaluate_decs s1 (extend_dec_env env1 env) [d] =
-         (s2,res) /\ ~(
-       res = Rerr (Rabort Rtype_error)) /\
+         (s2,res) /\ ~(res = Rerr (Rabort Rtype_error)) /\
        lift_lets ds d = SOME (ds1,ds2) ==>
          evaluate_evaluate_decs s env [Dlocal ds1 [ds2]] =
            (s2,res)`)
@@ -64,20 +63,20 @@ let lift_lets_mod_local = cake_theorem "lift_lets_mod_local[local,simp]"
   CHEAT_TAC;;
 
 (* HOL4 source_letProofScript.sml:105-107: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: evaluate_lift_start *)
 
 let compile_decs_correct = cake_theorem "compile_decs_correct"
   (fun () ->
     `!s env ds s' res.
-       evaluate_evaluate_decs s env ds = (s',res) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+       evaluate_evaluate_decs s env ds = (s',res) /\ ~(res = Rerr
+         (Rabort Rtype_error)) ==>
          evaluate_evaluate_decs s env (source_let_compile_decs
            ds) = (s',res)`)
   CHEAT_TAC;;
 
 let source_letProof_compile_semantics = cake_theorem "compile_semantics"
   (fun () ->
-    `~semantics_prog s env prog ffi_Fail /\
+    `~(semantics_prog s env prog ffi_Fail) /\
      semantics_prog s env prog outcome ==>
        semantics_prog s env (source_let_compile_decs prog)
          outcome`)
@@ -88,7 +87,7 @@ let compile_semantics_oracle = cake_theorem "compile_semantics_oracle"
     `!f.
      is_insert_oracle ci f (semanticPrimitives_state_eval_state s)
        /\
-     ~semantics_prog s env prog ffi_Fail /\
+     ~(semantics_prog s env prog ffi_Fail) /\
      semantics_prog s env prog outcome ==>
      semantics_prog (semanticPrimitives_state_eval_state_fupd
                (adjust_oracle ci (source_let_compile_decs o f)) s)

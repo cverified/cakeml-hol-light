@@ -19,7 +19,9 @@ needs "compiler/backend/db_vars.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bviProps.ml";;
 needs "compiler/backend/semantics/bviSem.ml";;
+needs "compiler/backend/semantics/bvlProps.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
+needs "compiler/encoders/asm/asmProps.ml";;
 needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/semanticPrimitives.ml";;
@@ -80,8 +82,7 @@ let canonical_wrapper_thm = cake_theorem "canonical_wrapper_thm"
   (fun () ->
     `!name arity body.
        canonical_wrapper name arity body <=>
-         (?rets ticks worker tag. ~(
-           worker = name) /\
+         (?rets ticks worker tag. ~(worker = name) /\
            body =
              bvi_LetCall rets ticks worker (GENLIST bvi_Var arity)
                (bvi_Op (closLang_BlockOp (closLang_Cons tag))
@@ -95,16 +96,15 @@ let wrapper_ok_inline_exp = cake_theorem "wrapper_ok_inline_exp[simp]"
 
 let inline_all_MAP_FST = cake_theorem "inline_all_MAP_FST"
   (fun () ->
-    `!cs prog. MAP FST' (SND (inline_all cs prog)) = MAP FST' prog`)
+    `!cs prog. MAP FST (SND (inline_all cs prog)) = MAP FST prog`)
   CHEAT_TAC;;
 
 let MAP_FST_remove_ticks_prog =
   cake_theorem "MAP_FST_remove_ticks_prog[simp]"
   (fun () ->
     `!prog.
-       MAP FST' (MAP (\(name,arity,body).
-         (name,arity,remove_ticks_exp body)) prog) = MAP FST'
-           prog`)
+       MAP FST (MAP (\(name,arity,body).
+         (name,arity,remove_ticks_exp body)) prog) = MAP FST prog`)
   CHEAT_TAC;;
 
 let compile_inc_MAP_FST = cake_theorem "compile_inc_MAP_FST"
@@ -123,21 +123,21 @@ let compile_inc_ALL_DISTINCT = cake_theorem "compile_inc_ALL_DISTINCT"
 let remove_ticks_get_code_labels =
   cake_theorem "remove_ticks_get_code_labels"
   (fun () ->
-    `(!e. get_code_labels' (remove_ticks_exp e) = get_code_labels' e) /\
-     (!es. BIGUNION (set_of_list (MAP get_code_labels'
+    `(!e. get_code_labels (remove_ticks_exp e) = get_code_labels e) /\
+     (!es. BIGUNION (set_of_list (MAP get_code_labels
        (remove_ticks_exps es))) =
-           BIGUNION (set_of_list (MAP get_code_labels' es)))`)
+           BIGUNION (set_of_list (MAP get_code_labels es)))`)
   CHEAT_TAC;;
 
 let remove_ticks_prog_code_labels =
   cake_theorem "remove_ticks_prog_code_labels"
   (fun () ->
     `!prog.
-       BIGUNION (set_of_list (MAP (get_code_labels' o SND' o SND')
+       BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
          (MAP (\(name,arity,body).
            (name,arity,remove_ticks_exp body)) prog))) =
-       BIGUNION (set_of_list (MAP (get_code_labels' o SND' o
-         SND') prog))`)
+       BIGUNION (set_of_list (MAP (get_code_labels o SND o SND)
+         prog))`)
   CHEAT_TAC;;
 
 let compile_inc_code_labels = cake_theorem "compile_inc_code_labels"
@@ -320,8 +320,8 @@ let evaluate_bvi_mk_tick = cake_theorem "evaluate_bvi_mk_tick"
 let bvi_inlineProof_evaluate_expand_env =
   cake_theorem "evaluate_expand_env"
   (fun () ->
-    `!xs a s env. ~(
-       FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error)) ==>
+    `!xs a s env. ~(FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error))
+  ==>
        evaluate (xs,a ++ env,s) = evaluate (xs,a,s)`)
   CHEAT_TAC;;
 
@@ -386,8 +386,7 @@ let inline_all_ALOOKUP = cake_theorem "inline_all_ALOOKUP"
 
 let do_app_state_swap = cake_theorem "do_app_state_swap[local]"
   (fun () ->
-    `~(
-       op = closLang_Install) ==>
+    `~(op = closLang_Install) ==>
          ((do_app op args s = Rval (value,s1) /\
            domain (state_code s) SUBSET domain (state_code t) ==>
            do_app op args
@@ -403,8 +402,7 @@ let do_app_state_swap = cake_theorem "do_app_state_swap[local]"
               t))))) /\
           (do_app op args s = Rerr error /\
            (domain (state_code t) SUBSET domain (state_code s) \/
-             ~(
-            error = Rabort Rtype_error)) ==>
+             ~(error = Rabort Rtype_error)) ==>
            do_app op args
              (state_ffi_fupd (K (state_ffi s))
                (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -418,8 +416,8 @@ let do_app_state_swap_Rval =
   (fun () ->
     `!op args (s:('c,'ffi)bviSem_state)
          (source_state:('c,'ffi)bviSem_state)
-         (t:('d,'ffi)bviSem_state) value. ~(
-       op = closLang_Install) /\
+         (t:('d,'ffi)bviSem_state) value. ~(op = closLang_Install)
+           /\
        do_app op args s = Rval (value,source_state) /\
        domain (state_code s) SUBSET domain (state_code t) ==>
        do_app op args
@@ -439,8 +437,8 @@ let do_app_state_swap_Rerr =
   cake_theorem "do_app_state_swap_Rerr[local]"
   (fun () ->
     `!op args (s:('c,'ffi)bviSem_state)
-         (t:('d,'ffi)bviSem_state) error'. ~(
-       op = closLang_Install) /\
+         (t:('d,'ffi)bviSem_state) error'. ~(op = closLang_Install)
+           /\
        do_app op args s = Rerr error' /\
        (domain (state_code t) SUBSET domain (state_code s) \/
          ~(error' = Rabort Rtype_error)) ==>
@@ -557,8 +555,8 @@ let exp_rel_inv = cake_theorem "exp_rel_inv[local,simp]"
    [Ret]-raise only, which the side condition excludes. *)
 let evaluate_inlined_call = cake_theorem "evaluate_inlined_call[local]"
   (fun () ->
-    `sptree_lookup n (state_code t) = SOME (LENGTH ys,body) /\ ~(
-     FST (evaluate ([Call ticks (SOME n) ys NONE],env,t)) =
+    `sptree_lookup n (state_code t) = SOME (LENGTH ys,body) /\ ~(FST
+  (evaluate ([Call ticks (SOME n) ys NONE],env,t)) =
        Rerr (Rabort Rtype_error)) ==>
      evaluate ([Let ys (bvi_mk_tick (SUC ticks) body)],env,t) =
      evaluate ([Call ticks (SOME n) ys NONE],env,t)`)
@@ -569,8 +567,8 @@ let evaluate_inline = cake_theorem "evaluate_inline"
     `!es env s res s1 t es1.
        bvi_inlineProof_in_state_rel s t /\ LIST_REL
          (bvi_inlineProof_exp_rel (state_code t)) es es1 /\
-       evaluate (es,env,s) = (res,s1) /\ ~(
-       res = Rerr (Rabort Rtype_error)) ==>
+       evaluate (es,env,s) = (res,s1) /\ ~(res = Rerr (Rabort
+         Rtype_error)) ==>
        (?t1. evaluate (es1,env,t) = (res,t1) /\
          bvi_inlineProof_in_state_rel s1 t1)`)
   CHEAT_TAC;;
@@ -661,8 +659,7 @@ let evaluate_add_extra_clock =
   (fun () ->
     `!xs env (s:('c,'ffi)bviSem_state) res s1 extra extra'.
        evaluate (xs,env,state_clock_fupd (K (extra + state_clock
-         s)) s) = (res,s1) /\ ~(
-       res = Rerr (Rabort Rtimeout_error)) ==>
+         s)) s) = (res,s1) /\ ~(res = Rerr (Rabort Rtimeout_error)) ==>
        evaluate (xs,env,state_clock_fupd (K (extra + extra' +
          state_clock s)) s) =
          (res,state_clock_fupd (K (extra' + state_clock s1)) s1)`)
@@ -677,8 +674,8 @@ let clean_prog_CONS = cake_theorem "clean_prog_CONS[local,simp]"
 
 let clean_prog_simps = cake_theorem "clean_prog_simps[local,simp]"
   (fun () ->
-    `MAP FST' (clean_prog prog) = MAP FST' prog /\
-     sptree_map (I' ## remove_ticks_exp') (fromAList prog) =
+    `MAP FST (clean_prog prog) = MAP FST prog /\
+     sptree_map (I ## remove_ticks_exp) (fromAList prog) =
        fromAList (clean_prog prog)`)
   CHEAT_TAC;;
 
@@ -765,13 +762,13 @@ let evaluate_remove_ticks = cake_theorem "evaluate_remove_ticks"
 
 let state_cc_compile_inc_eq = cake_theorem "state_cc_compile_inc_eq"
   (fun () ->
-    `state_cc compile_inc' cc = state_cc inline_all
+    `state_cc compile_inc cc = state_cc inline_all
   (bvi_inlineProof_remove_ticks_cc cc)`)
   CHEAT_TAC;;
 
 let state_co_compile_inc_eq = cake_theorem "state_co_compile_inc_eq"
   (fun () ->
-    `state_co compile_inc' co = bvi_inlineProof_remove_ticks_co o
+    `state_co compile_inc co = bvi_inlineProof_remove_ticks_co o
   state_co inline_all co`)
   CHEAT_TAC;;
 
@@ -820,8 +817,7 @@ let evaluate_inline_compile =
      evaluate ([Call 0 (SOME start') [] NONE],[],
        initial_state ffi (fromAList prog) co (state_cc inline_all
          cc) k) =
-         (r,s) /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+         (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?s2.
        evaluate ([Call 0 (SOME start') [] NONE],[],
          initial_state ffi (fromAList prog1) (state_co inline_all
@@ -848,18 +844,18 @@ let evaluate_remove_ticks_compile =
 let semantics_not_Fail_cond =
   cake_theorem "semantics_not_Fail_cond[local]"
   (fun () ->
-    `!ffi code co cc start'. ~(
-       semantics ffi code co cc start' = ffi_Fail) ==>
+    `!ffi code co cc start'. ~(semantics ffi code co cc start' =
+  ffi_Fail) ==>
        ~(?j e. FST (evaluate ([Call 0 (SOME start') [] NONE],[],
-         initial_state ffi code co cc j)) = Rerr e /\ ~(
-         e = Rabort Rtimeout_error) /\ (!f. ~(e = Rabort
-           (Rffi_error f))))`)
+         initial_state ffi code co cc j)) = Rerr e /\ ~(e =
+           Rabort Rtimeout_error) /\ (!f. ~(e = Rabort (Rffi_error
+           f))))`)
   CHEAT_TAC;;
 
 let semantics_error_cases = cake_theorem "semantics_error_cases[local]"
   (fun () ->
-    `!ffi code co cc start'. ~(
-       semantics ffi code co cc start' = ffi_Fail) ==>
+    `!ffi code co cc start'. ~(semantics ffi code co cc start' =
+  ffi_Fail) ==>
        (!j e t. evaluate ([Call 0 (SOME start') [] NONE],[],
          initial_state ffi code co cc j) = (Rerr e,t) ==>
          e = Rabort Rtimeout_error \/ (?f. e = Rabort (Rffi_error
@@ -873,17 +869,17 @@ let semantics_terminate_unique =
        evaluate ([Call 0 (SOME start') [] NONE],[],
          initial_state ffi code co cc k1) = (r1,t1) /\
        evaluate ([Call 0 (SOME start') [] NONE],[],
-         initial_state ffi code co cc k2) = (r2,t2) /\ ~(
-       r1 = Rerr (Rabort Rtimeout_error)) /\ ~(
-       r2 = Rerr (Rabort Rtimeout_error)) ==>
+         initial_state ffi code co cc k2) = (r2,t2) /\ ~(r1 = Rerr
+           (Rabort Rtimeout_error)) /\ ~(r2 = Rerr (Rabort
+           Rtimeout_error)) ==>
        r1 = r2 /\ state_ffi t1 = state_ffi t2`)
   CHEAT_TAC;;
 
 let semantics_no_type_error =
   cake_theorem "semantics_no_type_error[local]"
   (fun () ->
-    `!ffi code co cc start'. ~(
-       semantics ffi code co cc start' = ffi_Fail) ==>
+    `!ffi code co cc start'. ~(semantics ffi code co cc start' =
+  ffi_Fail) ==>
        (!j. ~(FST (evaluate ([Call 0 (SOME start') [] NONE],[],
          initial_state ffi code co cc j)) = Rerr (Rabort
            Rtype_error)))`)
@@ -915,9 +911,8 @@ let compile_prog_semantics = cake_theorem "compile_prog_semantics"
   (fun () ->
     `compile_prog prog = (cs1,prog1) /\
      FST (FST (co 0)) = cs1 /\
-     ALL_DISTINCT (MAP FST prog) ==> ~(
-     semantics ffi (fromAList prog) co (state_cc compile_inc cc)
-       start = ffi_Fail) ==>
+     ALL_DISTINCT (MAP FST prog) ==> ~(semantics ffi (fromAList
+       prog) co (state_cc compile_inc cc) start = ffi_Fail) ==>
      semantics ffi (fromAList prog1) (state_co compile_inc co) cc
        start =
      semantics ffi (fromAList prog) co (state_cc compile_inc cc)

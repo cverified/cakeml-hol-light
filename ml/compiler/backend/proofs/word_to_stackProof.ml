@@ -25,6 +25,7 @@ needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
+needs "lib/pegexec.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/toto.ml";;
@@ -55,6 +56,7 @@ needs "compiler/backend/word_to_stack.ml";;
 needs "compiler/encoders/asm/asm.ml";;
 needs "lib/bitstring.ml";;
 needs "lib/byte.ml";;
+needs "lib/pegexec.ml";;
 needs "lib/sorting.ml";;
 needs "lib/sptree.ml";;
 needs "lib/toto.ml";;
@@ -136,16 +138,14 @@ let copy_ret_F = cake_theorem "copy_ret_F"
 (* TODO: move to word/stackProps? *)
 let set_var_swap = cake_theorem "set_var_swap"
   (fun () ->
-    `~(
-        a = a') ==> stackSem_set_var a b (set_var a' b' c) =
-          set_var a' b' (set_var a b c)`)
+    `~(a = a') ==> stackSem_set_var a b (set_var a' b' c) = set_var a'
+  b' (set_var a b c)`)
   CHEAT_TAC;;
 
 let set_var_swap_word = cake_theorem "set_var_swap_word"
   (fun () ->
-    `~(
-        a = a') ==> wordSem_set_var a b (set_var a' b' c) =
-          set_var a' b' (set_var a b c)`)
+    `~(a = a') ==> wordSem_set_var a b (set_var a' b' c) = set_var a'
+  b' (set_var a b c)`)
   CHEAT_TAC;;
 
 let set_var_cancel = cake_theorem "set_var_cancel"
@@ -323,13 +323,13 @@ let EL_index_list2 = cake_theorem "EL_index_list2"
 
 let MAP_SND_index_list = cake_theorem "MAP_SND_index_list"
   (fun () ->
-    `!xs k. MAP SND' (index_list xs k) = xs`)
+    `!xs k. MAP SND (index_list xs k) = xs`)
   CHEAT_TAC;;
 
 (*TODO This should use GENLIST instead of MAP _ (COUNT_LIST _)*)
 let MAP_FST_index_list = cake_theorem "MAP_FST_index_list"
   (fun () ->
-    `!xs k. MAP FST' (index_list xs k) = REVERSE (MAP ((+) k)
+    `!xs k. MAP FST (index_list xs k) = REVERSE (MAP ((+) k)
   (COUNT_LIST (LENGTH xs)))`)
   CHEAT_TAC;;
 
@@ -556,7 +556,7 @@ let LENGTH_word_list = cake_theorem "LENGTH_word_list"
 
 let list_rearrange_I = cake_theorem "list_rearrange_I[local]"
   (fun () ->
-    `(list_rearrange I' = I')`)
+    `(list_rearrange I = I)`)
   CHEAT_TAC;;
 
 (* state relation *)
@@ -626,7 +626,7 @@ let MAP_FST_def = cake_define
 
 let MAP_SND_MAP_FST = cake_theorem "MAP_SND_MAP_FST[local]"
   (fun () ->
-    `!xs f. MAP SND' (MAP_FST f xs) = MAP SND' xs`)
+    `!xs f. MAP SND (MAP_FST f xs) = MAP SND xs`)
   CHEAT_TAC;;
 
 let adjust_names_def = cake_define
@@ -841,7 +841,7 @@ let evaluate_SeqStackFree = cake_theorem "evaluate_SeqStackFree[local]"
    has in a comment *)
 
 (* HOL4 word_to_stackProofScript.sml:995-996: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: DROP_list_LUPDATE_lemma *)
 
 let bits_to_word_bit = cake_theorem "bits_to_word_bit[local]"
   (fun () ->
@@ -1045,11 +1045,10 @@ let evaluate_wLive = cake_theorem "evaluate_wLive[local]"
        (stackSem_state_bitmaps t)) ==>
      (?(t5:('a,'c,'ffi)stackSem_state) bs5.
        (evaluate (wlive_prog,t) = (NONE,t5)) /\
-       word_to_stackProof_state_rel ac k 0 0
+       word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env envs
+         ((NONE:(num#'a wordLang_prog#num#num) option))
          (wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
-         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
-         lens) 0 /\
+         (wordSem_state_locals_fupd (K LN) s))) t5 (f' :: lens) 0 /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
        LENGTH (stack t5) = LENGTH (stack t) /\
          stackSem_state_stack_space t5 = stackSem_state_stack_space t /\
@@ -1065,8 +1064,7 @@ let state_rel_set_store_0 = cake_theorem "state_rel_set_store_0[local]"
 
 let read_bitmap_not_empty = cake_theorem "read_bitmap_not_empty[local]"
   (fun () ->
-    `read_bitmap stack = SOME a ==> ~(
-     stack = [])`)
+    `read_bitmap stack = SOME a ==> ~(stack = [])`)
   CHEAT_TAC;;
 
 let n2w_lsr_1 = cake_theorem "n2w_lsr_1[local]"
@@ -1251,17 +1249,16 @@ let gc_state_rel = cake_theorem "gc_state_rel[local]"
 
 let alloc_alt = cake_theorem "alloc_alt[local]"
   (fun () ->
-    `~(
-       FST (alloc c names (s:('a,num#'c,'ffi)wordSem_state)) =
+    `~(FST (alloc c names (s:('a,num#'c,'ffi)wordSem_state)) =
          SOME (Error:'a wordSem_result)) ==>
          (alloc c names (s:('a,num#'c,'ffi)wordSem_state) =
           (match cut_envs names (wordSem_state_locals s) with
             NONE -> (SOME Error,s) | SOME env ->
               (match gc (set_store AllocSize (wordLang_Word c)
-                         (wordSem_state_locals_size_fupd (K (SOME
-                           0)) (wordSem_state_locals_fupd (K LN)
-                           (wordSem_push_env env ((NONE:(num#'a
-                           wordLang_prog#num#num) option)) s)))) with
+                         (wordSem_push_env env ((NONE:(num#'a
+                           wordLang_prog#num#num) option))
+                           (wordSem_state_locals_size_fupd (K (SOME 0))
+                           (wordSem_state_locals_fupd (K LN) s)))) with
                 NONE -> (SOME Error,s) | SOME s' ->
                   (match wordSem_pop_env s' with
                     NONE -> (SOME Error,s') | SOME s' ->
@@ -1303,13 +1300,12 @@ let alloc_IMP_alloc = cake_theorem "alloc_IMP_alloc[local]"
        (!x. x IN domain (SND names) ==> EVEN x /\ k <= x DIV 2) /\
        1 <= f /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
-       word_to_stackProof_state_rel ac k 0 0
+       word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env envs
+         ((NONE:(num#'a wordLang_prog#num#num) option))
          (wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
-         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
-         lens) 0 /\
-       (cut_envs names (wordSem_state_locals s) = SOME envs) /\ ~(
-       res = SOME Error) ==>
+         (wordSem_state_locals_fupd (K LN) s))) t5 (f' :: lens) 0 /\
+       (cut_envs names (wordSem_state_locals s) = SOME envs) /\
+         ~(res = SOME Error) ==>
        (?(t1:('a,'c,'ffi)stackSem_state) res1.
          (stackSem_alloc c t5 = ((res1:('a stackSem_result)
            option),t1)) /\
@@ -1347,8 +1343,7 @@ let alloc_IMP_alloc2 = cake_theorem "alloc_IMP_alloc2[local]"
   ((res:('a wordSem_result) option),s1)) /\
      word_to_stackProof_state_rel ac k 0 0 s t lens 0 /\
      domain (FST names) = {} /\
-     domain (SND names) = {} /\ ~(
-     res = SOME Error) ==>
+     domain (SND names) = {} /\ ~(res = SOME Error) ==>
      (?(t1:('a,'c,'ffi)stackSem_state) res1.
        (stackSem_alloc c t = ((res1:('a stackSem_result)
          option),t1)) /\
@@ -1667,7 +1662,7 @@ let IS_SOME_get_vars_EVERY = cake_theorem "IS_SOME_get_vars_EVERY"
   CHEAT_TAC;;
 
 (* HOL4 word_to_stackProofScript.sml:3127-3128: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: with_same_locals *)
 
 let evaluate_wMoveAux_seqsem = cake_theorem "evaluate_wMoveAux_seqsem"
   (fun () ->
@@ -1719,14 +1714,13 @@ let word_to_stackProof_get_vars_eq = cake_theorem "get_vars_eq[local]"
 
 let LAST_add_ret_loc = cake_theorem "LAST_add_ret_loc[local]"
   (fun () ->
-    `~(
-       args' = []) ==>
+    `~(args' = []) ==>
        LAST (add_ret_loc ret args') = LAST args'`)
   CHEAT_TAC;;
 
 let call_dest_lemma = cake_theorem "call_dest_lemma[local]"
   (fun () ->
-    `~bad_dest_args dest args /\
+    `~(bad_dest_args dest args) /\
      word_to_stackProof_state_rel ac k f f'
        (s:('a,num#'c,'ffi)wordSem_state) t lens 0 /\
      call_dest dest args (k,f,f') = (q0,dest') /\
@@ -1758,27 +1752,27 @@ let call_dest_lemma = cake_theorem "call_dest_lemma[local]"
 
 let compile_result_NOT_2 = cake_theorem "compile_result_NOT_2[local]"
   (fun () ->
-    `good_dimindex (:'a) ==> ~(
-       compile_result x = Halt (wordLang_Word ((n2w 2):'a word)))`)
+    `good_dimindex (:'a) ==> ~(compile_result x = Halt (wordLang_Word
+  ((n2w 2):'a word)))`)
   CHEAT_TAC;;
 
 let MAP_o_THE_FILTER_IS_SOME = cake_theorem "MAP_o_THE_FILTER_IS_SOME"
   (fun () ->
-    `MAP (f o THE') (FILTER IS_SOME' ls) =
-     MAP (THE' o OPTION_MAP f) (FILTER IS_SOME' ls)`)
+    `MAP (f o THE) (FILTER IS_SOME ls) =
+     MAP (THE o OPTION_MAP f) (FILTER IS_SOME ls)`)
   CHEAT_TAC;;
 
 let MAP_OPTION_MAP_FILTER_IS_SOME =
   cake_theorem "MAP_OPTION_MAP_FILTER_IS_SOME"
   (fun () ->
-    `MAP (OPTION_MAP (f:'a->'a)) (FILTER IS_SOME' ls) =
-     FILTER IS_SOME' (MAP (OPTION_MAP f) ls)`)
+    `MAP (OPTION_MAP (f:'a->'a)) (FILTER IS_SOME ls) =
+     FILTER IS_SOME (MAP (OPTION_MAP f) ls)`)
   CHEAT_TAC;;
 
 let MAP_FILTER_IS_SOME = cake_theorem "MAP_FILTER_IS_SOME"
   (fun () ->
-    `MAP f (FILTER IS_SOME' ls) = MAP (f o SOME o THE) (FILTER
-  IS_SOME' ls)`)
+    `MAP f (FILTER IS_SOME ls) = MAP (f o SOME o THE) (FILTER IS_SOME
+  ls)`)
   CHEAT_TAC;;
 
 let TIMES2_DIV2_lemma = cake_theorem "TIMES2_DIV2_lemma[local]"
@@ -2056,8 +2050,8 @@ let evaluate_wStackLoad_wReg1 =
        stackSem_state_stack_space t' = stackSem_state_stack_space t /\
        stackSem_state_bitmaps
      t' = stackSem_state_bitmaps t /\
-      (!r. ~(r = k) ==> get_var r t' = get_var r t) /\ ~(
-     r' = k + 1) /\
+      (!r. ~(r = k) ==> get_var r t' = get_var r t) /\ ~(r' = k +
+        1) /\
      get_var r' t' = SOME c)`)
   CHEAT_TAC;;
 
@@ -2076,8 +2070,7 @@ let evaluate_wStackLoad_wReg1_with_const =
      word_to_stackProof_state_rel ac k f f' s t' lens 0 /\
      LENGTH (stack t') = LENGTH (stack t) /\
        stackSem_state_stack_space t' = stackSem_state_stack_space t /\
-       ~(
-     r' = k + 1) /\
+       ~(r' = k + 1) /\
      (stackSem_word_exp t' (wordLang_Op asm_Add [Var r'; Const
        c])) = SOME (w))`)
   CHEAT_TAC;;
@@ -2302,7 +2295,7 @@ let evaluate_wLive_clock = cake_theorem "evaluate_wLive_clock[local]"
      wLive x bs kf = (q,bs') ==>
      evaluate (q,state_clock_fupd (K clk) t) =
      (FST (evaluate (q,(t:('a,'c,'ffi)stackSem_state))),
-      (state_clock_fupd (K clk) (SND (evaluate (q,t)))))`)
+      (SND (state_clock_fupd (K clk) (evaluate (q,t)))))`)
   CHEAT_TAC;;
 
 let state_rel_IMP_LENGTH = cake_theorem "state_rel_IMP_LENGTH[local]"
@@ -2347,7 +2340,14 @@ let evaluate_stack_move_seq =
      evaluate (Seq prog (stack_move a b c d Skip),t)`)
   CHEAT_TAC;;
 
-(* HOL4 word_to_stackProofScript.sml:5349-5357: a proof *)
+let evaluate_stack_move_clock = cake_theorem "evaluate_stack_move_clock"
+  (fun () ->
+    `!a b c d (t:('a,'c,'ffi)stackSem_state).
+       let prog = stack_move a b c d Skip in
+       evaluate (prog,state_clock_fupd (K clk) t) =
+       (FST (evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
+        (SND (state_clock_fupd (K clk) (evaluate (prog,t)))))`)
+  CHEAT_TAC;;
   (*get_var_set_var?*)
 (* HOL4 word_to_stackProofScript.sml:5359: a proof *)
 
@@ -2375,10 +2375,9 @@ let stack_rel_DROP_SOME = cake_theorem "stack_rel_DROP_SOME[local]"
 
 let LAST_GENLIST_evens = cake_theorem "LAST_GENLIST_evens[local]"
   (fun () ->
-    `~(
-       n = 0) ==>
-       (let reg = LAST (GENLIST (\x. 2 * (x + 1)) n) in ~(
-       reg = 0) /\ EVEN reg)`)
+    `~(n = 0) ==>
+       (let reg = LAST (GENLIST (\x. 2 * (x + 1)) n) in ~(reg =
+         0) /\ EVEN reg)`)
   CHEAT_TAC;;
 
 let stack_rel_cons_LEN_NONE =
@@ -2431,10 +2430,9 @@ let DROP_SUB2 = cake_theorem "DROP_SUB2[local]"
 let evaluate_PushHandler = cake_theorem "evaluate_PushHandler[local]"
   (fun () ->
     `3 <= stackSem_state_stack_space t /\
-     word_to_stackProof_state_rel ac k 0 0
-       (wordSem_state_locals_size_fupd (K (SOME 0))
-       (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' NONE s)))
-       t (f' :: lens) 0 /\
+     word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env x'
+       NONE (wordSem_state_locals_size_fupd (K (SOME 0))
+       (wordSem_state_locals_fupd (K LN) s))) t (f' :: lens) 0 /\
      loc_check (state_code t) (x''2,x''3) ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (PushHandler F (x''2:num) (x''3:num)
@@ -2451,11 +2449,10 @@ let evaluate_PushHandler = cake_theorem "evaluate_PushHandler[local]"
        stackSem_state_stack_space
      t' + 3 = stackSem_state_stack_space t /\
      LENGTH (stack t') = LENGTH (stack t) /\
-     word_to_stackProof_state_rel ac k 0 0
+     word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env x'
+       (SOME (x''0,(x''1:'a wordLang_prog),x''2,x''3))
        (wordSem_state_locals_size_fupd (K (SOME 0))
-       (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' (SOME
-       (x''0,(x''1:'a wordLang_prog),x''2,x''3)) s))) t' (f' :: lens)
-       0)`)
+       (wordSem_state_locals_fupd (K LN) s))) t' (f' :: lens) 0)`)
   CHEAT_TAC;;
 
 let evaluate_PushHandler_clock =
@@ -2466,7 +2463,7 @@ let evaluate_PushHandler_clock =
        (k,(f:num),(f':num)),state_clock_fupd (K clk) t) =
      (FST (evaluate (PushHandler F a b
        (k,(f:num),(f':num)),(t:('a,'c,'ffi)stackSem_state))),
-      (state_clock_fupd (K clk) (SND (evaluate (PushHandler F a b
+      (SND (state_clock_fupd (K clk) (evaluate (PushHandler F a b
         (k,(f:num),(f':num)),t)))))`)
   CHEAT_TAC;;
 
@@ -2477,7 +2474,7 @@ let evaluate_PopHandler_clock =
      let prog = PopHandler F (k,(f:num),(f':num)) Skip in
      evaluate (prog,state_clock_fupd (K clk) t) =
      (FST (evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
-      (state_clock_fupd (K clk) (SND (evaluate (prog,t)))))`)
+      (SND (state_clock_fupd (K clk) (evaluate (prog,t)))))`)
   CHEAT_TAC;;
 
 let evaluate_PopHandler_seq =
@@ -2596,7 +2593,7 @@ let compile_word_to_stack_IMP_ALOOKUP =
 (* HOL4 word_to_stackProofScript.sml:5754: ML code, not ported *)
 
 (* HOL4 word_to_stackProofScript.sml:5756-5787: a theorem whose
-   statement the port cannot state yet *)
+   statement the port cannot state yet: comp_correct *)
 
 
 (* HOL4 word_to_stackProofScript.sml:5790-5796: a proof *)
@@ -2608,8 +2605,8 @@ let chunk_to_bits_bound = cake_theorem "chunk_to_bits_bound"
     `!ws.
        LENGTH ws < dimindex (:'a) ==> FAPPLY
        (chunk_to_bits ws:'a word) (LENGTH ws) /\
-       (!i. LENGTH ws < i /\ i < dimindex (:'a) ==> FAPPLY
-         (~(chunk_to_bits ws:'a word)) i)`)
+       (!i. LENGTH ws < i /\ i < dimindex (:'a) ==> ~(FAPPLY
+         (chunk_to_bits ws:'a word) i))`)
   CHEAT_TAC;;
 
 let chunk_to_bits_0 = cake_theorem "chunk_to_bits_0"
@@ -2830,8 +2827,7 @@ let share_load_lemma1 = cake_theorem "share_load_lemma1"
      v < f' + k /\
      k <= v /\
      (op = Load \/ op = asm_Load8 \/ op = asm_Load16 \/ op =
-       asm_Load32) /\ ~(
-     res = SOME Error) ==>
+       asm_Load32) /\ ~(res = SOME Error) ==>
      (?t1. sh_mem_op op k ad' t =
          (OPTION_MAP compile_result res,t1) /\
      (((?f. (res = SOME (wordSem_FinalFFI f)) /\
@@ -2855,8 +2851,7 @@ let share_load_lemma2 = cake_theorem "share_load_lemma2"
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
      v < k /\
      (op = Load \/ op = asm_Load8 \/ op = asm_Load16 \/ op =
-       asm_Load32) /\ ~(
-     res = SOME Error) ==>
+       asm_Load32) /\ ~(res = SOME Error) ==>
      (?t1.
        sh_mem_op op v ad' t =
          (OPTION_MAP compile_result res,t1) /\
@@ -2873,8 +2868,7 @@ let share_store_lemma1 = cake_theorem "share_store_lemma1"
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
      ~(v < k) /\
      (op = Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
-       asm_Store32) /\ ~(
-     res = SOME Error) ==>
+       asm_Store32) /\ ~(res = SOME Error) ==>
      (?t1.
        sh_mem_op op (k + 1) ad'
          (stackSem_state_regs_fupd (K (stackSem_state_regs t |+
@@ -2895,8 +2889,7 @@ let share_store_lemma2 = cake_theorem "share_store_lemma2"
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
      v < k /\
      (op = Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
-       asm_Store32) /\ ~(
-     res = SOME Error) ==>
+       asm_Store32) /\ ~(res = SOME Error) ==>
      (?t1.
        sh_mem_op op v ad' t =
          (OPTION_MAP compile_result res,t1) /\
@@ -2911,8 +2904,7 @@ let evaluate_ShareInst_Load = cake_theorem "evaluate_ShareInst_Load"
   (fun () ->
     `evaluate (wordLang_ShareInst op (2 * v)
        (wordLang_Op asm_Add [Var (2 * ad); Const offset]),s) =
-         (res,s1) /\ ~(
-     res = SOME Error) /\
+         (res,s1) /\ ~(res = SOME Error) /\
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
      v < f' + k /\
      ad < f' + k /\
@@ -2937,8 +2929,7 @@ let evaluate_ShareInst_Store = cake_theorem "evaluate_ShareInst_Store"
          (res,s1) /\
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
      v < f' + k /\
-     ad < f' + k /\ ~(
-     res = SOME Error) /\
+     ad < f' + k /\ ~(res = SOME Error) /\
      (op = Store \/ op = asm_Store8 \/ op = asm_Store16 \/ op =
        asm_Store32) ==>
      (?ck t1.
@@ -2958,8 +2949,7 @@ let evaluate_ShareInst_correct_lemma =
   (fun () ->
     `evaluate (wordLang_ShareInst op (2 * v)
        (wordLang_Op asm_Add [Var (2 * ad); Const offset]),s) =
-         (res,s1) /\ ~(
-     res = SOME Error) /\
+         (res,s1) /\ ~(res = SOME Error) /\
      word_to_stackProof_state_rel ac k f f' s t lens 0 /\
      v < f' + k /\
      ad < f' + k ==>
@@ -3184,9 +3174,8 @@ let comp_Call = cake_theorem "comp_Call[local]"
   (fun () ->
     `!start' (s:('a,num#'c,'ffi)wordSem_state) k res s1 t lens.
          evaluate (Call NONE (SOME start') [0] NONE,s) = (res,s1)
-           /\ ~(
-         res = SOME Error) /\ word_to_stackProof_state_rel ac k 0 0
-           s t lens 0 ==>
+           /\ ~(res = SOME Error) /\ word_to_stackProof_state_rel ac k 0
+           0 s t lens 0 ==>
          (?ck (t1:('a,'c,'ffi)stackSem_state) res1.
            evaluate (Call NONE (INL start') NONE,state_clock_fupd
              (K (state_clock t + ck)) t) =
@@ -3346,8 +3335,8 @@ let word_to_stackProof_compile_semantics =
            /\
          EVERY (\(n,m,prog). flat_exp_conventions prog /\
          post_alloc_conventions (asm_config_reg_count asm_conf - (5
-           + LENGTH (asm_config_avoid_regs asm_conf))) prog) code /\ ~(
-         semantics (word_to_stackProof_make_init asm_conf k t
+           + LENGTH (asm_config_avoid_regs asm_conf))) prog) code /\
+           ~(semantics (word_to_stackProof_make_init asm_conf k t
            (fromAList code) coracle) start = Fail) ==>
          semantics start t IN
          extend_with_resource_limit' (word_lang_safe_for_space
@@ -3689,7 +3678,8 @@ let compile_word_to_stack_convs =
   CHEAT_TAC;;
 
 (* this is the only property needed of the wRegs  *)
-(* HOL4 word_to_stackProofScript.sml:11698-11703: a proof *)
+(* HOL4 word_to_stackProofScript.sml:11698-11703: a theorem that HOL4
+   states as the value of an ML expression: get_code_labels_wReg *)
 
 let get_code_handler_labels_wStackLoad =
   cake_theorem "get_code_handler_labels_wStackLoad[local]"
@@ -3975,3 +3965,5 @@ let word_to_stack_compile_no_install =
      word_to_stack_compile ac F prog = (bm,c,fs,p) ==>
      EVERY (\(n,x). no_install x) p`)
   CHEAT_TAC;;
+
+cake_hide [];;

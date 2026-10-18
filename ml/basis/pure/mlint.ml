@@ -35,11 +35,11 @@ let exp_for_dec_enc_def = cake_define
 let padLen_DEC_def = cake_define
   `padLen_DEC = exp_for_dec_enc`;;
 (* HOL4 mlintScript.sml:31: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: padLen_DEC_eq *)
 let maxSmall_DEC_def1 = cake_define
   `maxSmall_DEC = 10 EXP exp_for_dec_enc`;;
 (* HOL4 mlintScript.sml:35: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: maxSmall_DEC_def *)
 
 (* HOL4 mlintScript.sml:37-38: the ML values that the definitions
    below antiquote *)
@@ -81,7 +81,7 @@ let toString_def1 = cake_define
 hol4_overload "toString" "mlint_toString";;
 
 (* HOL4 mlintScript.sml:95: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: toString_def *)
 
 let int_to_string_thm = cake_theorem "int_to_string_thm"
   (fun () ->
@@ -184,8 +184,8 @@ let fromChars_eq_unsafe = cake_theorem "fromChars_eq_unsafe"
 let fromString_unsafe_def = cake_define
   `fromString_unsafe str =
      (if strlen str = 0 then (&0) else if strsub str 0 = (CHR 126)
-       then -- &(fromChars_unsafe (strlen str - 1)
-                              (substring str 1 (strlen str - 1)))
+       then --(&(fromChars_unsafe (strlen str - 1)
+                              (substring str 1 (strlen str - 1))))
                                 else &(fromChars_unsafe (strlen str)
                                 str))`;;
 
@@ -252,34 +252,33 @@ let fromString_unsafe_thm = cake_theorem "fromString_unsafe_thm"
     `!str. (~(HD str = (CHR 126)) ==> EVERY isDigit str) /\
            (HD str = (CHR 126) ==> EVERY isDigit (DROP 1 str)) ==>
            fromString_unsafe (implode str) =
-             (if HD str = (CHR 126) then -- &(num_from_dec_string
-               (DROP 1 str)) else &(num_from_dec_string str))`)
+             (if HD str = (CHR 126) then --(&(num_from_dec_string
+               (DROP 1 str))) else &(num_from_dec_string str))`)
   CHEAT_TAC;;
 
 (* HOL4 mlintScript.sml:355-362: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: fromChars_range_lemma *)
 
 let fromString_thm = cake_theorem "fromString_thm"
   (fun () ->
-    `!str. ~(
-       str = "") /\
+    `!str. ~(str = "") /\
        (~(HD str = (CHR 126)) /\ ~(HD str = (CHR 45)) /\ ~(HD str =
          (CHR 43)) ==> EVERY isDigit str) /\
        (HD str = (CHR 126) \/ HD str = (CHR 45) \/ HD str = (CHR
          43) ==> EVERY isDigit (DROP 1 str) /\ STRLEN str >= 2) ==>
          fromString (implode str) = SOME
-           (if HD str = (CHR 126) \/ HD str = (CHR 45) then --
-             &(num_from_dec_string (DROP 1 str)) else if HD str = (CHR
-             43) then &(num_from_dec_string (DROP 1 str)) else
+           (if HD str = (CHR 126) \/ HD str = (CHR 45) then
+             --(&(num_from_dec_string (DROP 1 str))) else if HD str =
+             (CHR 43) then &(num_from_dec_string (DROP 1 str)) else
              &(num_from_dec_string str))`)
   CHEAT_TAC;;
 
 (* HOL4 mlintScript.sml:386-387: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: fromString_eq_unsafe *)
 
 let fromString_toString_Num = cake_theorem "fromString_toString_Num"
   (fun () ->
-    `0 <= n ==> fromString (implode (num_to_dec_string (num_of_int
+    `(&0) <= n ==> fromString (implode (num_to_dec_string (num_of_int
   n))) = SOME n`)
   CHEAT_TAC;;
 
@@ -342,7 +341,7 @@ let fromChars_IS_SOME_IFF = cake_theorem "fromChars_IS_SOME_IFF"
 
 let fromString_EQ_NONE = cake_theorem "fromString_EQ_NONE"
   (fun () ->
-    `~isDigit c /\ ~(c = (CHR 43)) /\ ~(c = (CHR 126)) /\ ~(c = (CHR
+    `~(isDigit c) /\ ~(c = (CHR 43)) /\ ~(c = (CHR 126)) /\ ~(c = (CHR
   45)) ==>
      fromString (implode (STRING c x)) = NONE`)
   CHEAT_TAC;;
@@ -410,3 +409,5 @@ let num_to_str_APPEND_11 = cake_theorem "num_to_str_APPEND_11"
      ~(48 <= ORD x2 /\ ORD x2 <= 57) ==>
      n1 = n2 /\ x1 :: xs1 = x2 :: xs2`)
   CHEAT_TAC;;
+
+cake_hide [];;

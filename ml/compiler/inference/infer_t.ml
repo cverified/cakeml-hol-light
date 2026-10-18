@@ -23,7 +23,7 @@ let infer_t_INDUCT,infer_t_RECURSION = define_datatype
    Infer_Tuvar (num)";;
 
 (* HOL4 infer_tScript.sml:19-20: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: infer_t_ind *)
 
 let id_to_string_def = cake_define_list
   [`id_to_string (Short s) = s`;

@@ -162,7 +162,7 @@ let is_small_def = cake_define
   `is_small limit' e = ~(is_small_aux limit' [e] = 0)`;;
 
 (* HOL4 bvl_inlineScript.sml:164: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: is_small_eq *)
 
 let is_rec_def = cake_define_list
   [`bvl_inline_is_rec n [] = F`;
@@ -224,7 +224,7 @@ let must_inline_def = cake_define
        F)`;;
 
 (* HOL4 bvl_inlineScript.sml:227: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: must_inline_eq *)
 
 let tick_inline_all_def = cake_define_list
   [`tick_inline_all limit' cs [] aux = (cs,REVERSE aux)`;
@@ -235,7 +235,7 @@ let tick_inline_all_def = cake_define_list
            tick_inline_all limit' cs2 xs ((n,arity,e2) :: aux))`];;
 
 (* HOL4 bvl_inlineScript.sml:237-238: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: tick_inline_all_eq *)
 
 let tick_compile_prog_def = cake_define
   `tick_compile_prog limit' cs prog = tick_inline_all limit' cs prog
@@ -418,7 +418,7 @@ let let_op_sing_def = cake_define
 hol4_overload "let_op_sing" "bvl_inline_let_op_sing";;
 
 (* HOL4 bvl_inlineScript.sml:414: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: let_op_sing_eq *)
 
 let optimise_def = cake_define
   `bvl_inline_optimise split_seq cut_size (name,arity,exp) =
@@ -428,7 +428,7 @@ let optimise_def = cake_define
 hol4_overload "optimise" "bvl_inline_optimise";;
 
 (* HOL4 bvl_inlineScript.sml:422: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: optimise_eq *)
 
 let compile_inc_def = cake_define
   `bvl_inline_compile_inc limit' split_seq cut_size cs prog =

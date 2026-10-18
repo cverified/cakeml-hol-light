@@ -34,8 +34,7 @@ let locnle_def = cake_define
   `locnle l1 l2 <=>
      l1 = l2 \/
      l1 = UNKNOWNpt \/
-     l2 = EOFpt \/ ~(
-     l2 = UNKNOWNpt) /\ ~(l1 = EOFpt) /\
+     l2 = EOFpt \/ ~(l2 = UNKNOWNpt) /\ ~(l1 = EOFpt) /\
      (locnrow l1 < locnrow l2 \/ locnrow l1 = locnrow l2 /\
        locncol l1 < locncol l2)`;;
 

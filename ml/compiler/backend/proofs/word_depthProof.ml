@@ -28,13 +28,13 @@ let option_le_X_MAX_X = cake_theorem "option_le_X_MAX_X[local,simp]"
 let OPTION_MAP2_MAX_IDEMPOT =
   cake_theorem "OPTION_MAP2_MAX_IDEMPOT[local,simp]"
   (fun () ->
-    `OPTION_MAP2 MAX' x x = x`)
+    `OPTION_MAP2 MAX x x = x`)
   CHEAT_TAC;;
 
 let OPTION_MAP2_SOME_0 = cake_theorem "OPTION_MAP2_SOME_0[local,simp]"
   (fun () ->
     `OPTION_MAP2 (+) x (SOME 0) = x /\
-     OPTION_MAP2 MAX' x (SOME 0) = x`)
+     OPTION_MAP2 MAX x (SOME 0) = x`)
   CHEAT_TAC;;
 
 let max_depth_mk_Branch = cake_theorem "max_depth_mk_Branch"
@@ -74,7 +74,7 @@ let option_le_max_depth_graphs =
 let LENGTH_LESS_size = cake_theorem "LENGTH_LESS_size[local]"
   (fun () ->
     `!name ns funs y.
-       ~MEM name ns /\ set_of_list ns SUBSET domain funs /\
+       ~(MEM name ns) /\ set_of_list ns SUBSET domain funs /\
          ALL_DISTINCT ns /\
        sptree_lookup name funs = SOME y ==>
        LENGTH ns < sptree_size funs`)
@@ -100,10 +100,9 @@ let max_depth_call_graph_lemma =
                (max_depth (wordSem_state_stack_size s) (call_graph
                  funs n ns (sptree_size funs2) prog))))) /\
        (~(max_depth_graphs (wordSem_state_stack_size s) ns ns funs
-         funs2 = NONE) /\ ~(
-        max_depth (wordSem_state_stack_size s) (call_graph funs n
-          ns (sptree_size funs2) prog) = NONE) ==>
-          wordSem_state_stack_size
+         funs2 = NONE) /\ ~(max_depth (wordSem_state_stack_size s)
+         (call_graph funs n ns (sptree_size funs2) prog) = NONE) ==>
+         wordSem_state_stack_size
         s1 = wordSem_state_stack_size s /\
         ((res = NONE \/ (?k. res = SOME (Break k)) \/ (?k. res =
           SOME (Continue k))) ==> wordSem_state_locals_size s1 =
@@ -146,9 +145,8 @@ let max_depth_call_graph = cake_theorem "max_depth_call_graph"
 let max_depth_Call_SOME = cake_theorem "max_depth_Call_SOME"
   (fun () ->
     `wordSem_evaluate (Call (SOME (n1,n2,Skip,n3,n4)) (SOME dest) args
-  NONE,s) = (res,s1) /\ ~(
-     res = SOME wordSem_Error) /\ subspt funs (wordSem_state_code
-       s) ==>
+  NONE,s) = (res,s1) /\ ~(res = SOME wordSem_Error) /\ subspt funs
+  (wordSem_state_code s) ==>
      option_le (wordSem_state_stack_max s1)
        (OPTION_MAP2 MAX (wordSem_state_stack_max s)
          (OPTION_MAP2 (+) (wordSem_state_locals_size s)
@@ -160,9 +158,7 @@ let max_depth_Call_SOME = cake_theorem "max_depth_Call_SOME"
 let max_depth_Call_NONE = cake_theorem "max_depth_Call_NONE"
   (fun () ->
     `wordSem_evaluate (Call NONE (SOME dest) args NONE,s) = (res,s1) /\
-  ~(
-     res = SOME wordSem_Error) /\ subspt funs (wordSem_state_code
-       s) ==>
+  ~(res = SOME wordSem_Error) /\ subspt funs (wordSem_state_code s) ==>
      option_le (wordSem_state_stack_max s1)
        (OPTION_MAP2 MAX (wordSem_state_stack_max s)
          (OPTION_MAP2 (+) (stack_size (stack s))

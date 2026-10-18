@@ -2,7 +2,7 @@
 (*  pegexec: ported from HOL4's
     examples/formal-languages/context-free/pegexecScript.sml
     A HOL4 library theory, of which the port has the definitions
-    that CakeML needs.  Needed by 9 files of the port.  *)
+    that CakeML needs.  Needed by 10 files of the port.  *)
 (* ======================================================== *)
 
 needs "lib/location.ml";;

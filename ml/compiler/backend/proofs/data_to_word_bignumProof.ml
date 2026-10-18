@@ -58,7 +58,7 @@ cake_hide ["memory"];;
 (* HOL4 data_to_word_bignumProofScript.sml:32-36: a proof *)
 
 (* HOL4 data_to_word_bignumProofScript.sml:38-46: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: eq_eval *)
 
 let word_list_IMP_store_list = cake_theorem "word_list_IMP_store_list"
   (fun () ->
@@ -84,7 +84,7 @@ let i2mw_small_int_IMP_0 = cake_theorem "i2mw_small_int_IMP_0"
   (fun () ->
     `(!v1. ~(i2mw v = (F,[v1:'a word]))) /\ (!v1. ~(i2mw v = (T,[v1:'a
   word]))) /\
-      small_int (:'a) v /\ good_dimindex (:'a) ==> v = 0`)
+      small_int (:'a) v /\ good_dimindex (:'a) ==> v = (&0)`)
   CHEAT_TAC;;
 
 let state_rel_Number_small_int =
@@ -118,7 +118,7 @@ let mc_header_i2mw_eq_0w = cake_theorem "mc_header_i2mw_eq_0w"
   (fun () ->
     `2 * LENGTH (SND (i2mw i):('a word) list) + 1 < dimword (:'a) ==>
       (mc_header (i2mw i:bool#('a word) list) = ((n2w 0):'a word)
-        <=> i = 0)`)
+        <=> i = (&0))`)
   CHEAT_TAC;;
 
 let MustTerminate_limit_eq = cake_theorem "MustTerminate_limit_eq"
@@ -131,7 +131,7 @@ let MustTerminate_limit_eq = cake_theorem "MustTerminate_limit_eq"
 
 let SND_i2mw_NIL = cake_theorem "SND_i2mw_NIL"
   (fun () ->
-    `SND (i2mw i) = [] <=> i = 0`)
+    `SND (i2mw i) = [] <=> i = (&0)`)
   CHEAT_TAC;;
 
 let word_cmp_Test_1 = cake_theorem "word_cmp_Test_1"
@@ -180,7 +180,7 @@ let option_le_max_dest = cake_theorem "option_le_max_dest"
 
 let option_map_max_comm = cake_theorem "option_map_max_comm"
   (fun () ->
-    `OPTION_MAP2 MAX' a b = OPTION_MAP2 MAX' b a`)
+    `OPTION_MAP2 MAX a b = OPTION_MAP2 MAX b a`)
   CHEAT_TAC;;
 
 let b2n_not = cake_theorem "b2n_not[local]"
@@ -204,7 +204,7 @@ let LongDiv1_thm' = cake_theorem "LongDiv1_thm'"
         lookup 10 (state_locals t2) = SOME (wordLang_Word i1) /\
         lookup 12 (state_locals t2) = SOME (wordLang_Word i2) /\
         k < dimword (:'a) /\ k < state_clock t2 /\ good_dimindex
-          (:'a) /\ ~data_to_word_config_has_longdiv c ==>
+          (:'a) /\ ~(data_to_word_config_has_longdiv c) ==>
         (?j1 j2 max'.
           is1 = [j1; j2] /\
           evaluate (LongDiv1_code c,t2) = (SOME (wordSem_Result
@@ -238,7 +238,7 @@ let LongDiv1_thm = cake_theorem "LongDiv1_thm"
         lookup 10 (state_locals t2) = SOME (wordLang_Word i1) /\
         lookup 12 (state_locals t2) = SOME (wordLang_Word i2) /\
         k < dimword (:'a) /\ k < state_clock t2 /\ good_dimindex
-          (:'a) /\ ~data_to_word_config_has_longdiv c ==>
+          (:'a) /\ ~(data_to_word_config_has_longdiv c) ==>
         (?j1 j2 max'.
           is1 = [j1; j2] /\
           evaluate (LongDiv1_code c,t2) = (SOME (wordSem_Result
@@ -313,11 +313,11 @@ let AnyHeader_thm = cake_theorem "AnyHeader_thm"
           (i = (&0) ==>
              small_int (:'a) (&0) /\ i2mw i = (F,[]) /\
              a2 = (n2w 0) /\ a3 = (n2w 0)) /\
-          (small_int (:'a) i /\ ~(i = 0) ==>
-             i2mw i = ((i < 0),[a3]) /\
+          (small_int (:'a) i /\ ~(i = (&0)) ==>
+             i2mw i = ((i < (&0)),[a3]) /\
              FLOOKUP (wordSem_state_store t) (if a then OtherHeap
                else NextFree) = SOME (wordLang_Word a2)) /\
-          (~small_int (:'a) i ==>
+          (~(small_int (:'a) i) ==>
              (?w x. get_var (adjust_var r) t = SOME (wordLang_Word
                w) /\
                    get_real_addr c (wordSem_state_store t) w = SOME
@@ -603,8 +603,7 @@ let MAP_FST_EQ_IMP_IS_SOME_ALOOKUP =
 
 let domain_adjust_sets = cake_theorem "domain_adjust_sets"
   (fun () ->
-    `~(
-       domain (FST (adjust_sets kept_names)) = {})`)
+    `~(domain (FST (adjust_sets kept_names)) = {})`)
   CHEAT_TAC;;
 
 let env_to_list_domain_eq = cake_theorem "env_to_list_domain_eq"
@@ -631,8 +630,8 @@ let eval_Call_Arith_max_stack_NONE =
   (fun () ->
     `!index r.
         state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
-          (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(
-        names_opt = NONE) /\ 1 < wordSem_state_termdep t /\
+          (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(names_opt = NONE)
+          /\ 1 < wordSem_state_termdep t /\
         get_vars [a1; a2] (state_locals s) = SOME [Number i1;
           Number i2] /\
         cut_state_opt names_opt s = SOME x /\
@@ -682,14 +681,15 @@ let structure_le_IMP_option_le =
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_bignumProofScript.sml:2450-2453: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   evaluate_Assign_Const *)
 
 let eval_Call_Arith = cake_theorem "eval_Call_Arith"
   (fun () ->
     `!index r.
         state_rel c l1 l2 (s:('c,'ffi)dataSem_state)
-          (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(
-        names_opt = NONE) /\ 1 < wordSem_state_termdep t /\
+          (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(names_opt = NONE)
+          /\ 1 < wordSem_state_termdep t /\
         get_vars [a1; a2] (state_locals s) = SOME [Number i1;
           Number i2] /\
         cut_state_opt names_opt s = SOME x /\
@@ -734,3 +734,5 @@ let eval_Call_Arith = cake_theorem "eval_Call_Arith"
                (insert dest (Number r) (state_locals x))) x)))
              r' NONE locs /\ q = NONE)))`)
   CHEAT_TAC;;
+
+cake_hide [];;

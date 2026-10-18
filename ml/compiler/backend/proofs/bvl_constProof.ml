@@ -69,8 +69,8 @@ let bvl_constProof_evaluate_delete_var_Rerr_SING =
   cake_theorem "evaluate_delete_var_Rerr_SING"
   (fun () ->
     `!x s r e env2.
-        evaluate ([x],env2,s) = (Rerr e,r) /\ ~(
-        e = Rabort Rtype_error) ==>
+        evaluate ([x],env2,s) = (Rerr e,r) /\ ~(e = Rabort
+          Rtype_error) ==>
         evaluate ([bvl_const_delete_var x],env2,s) = (Rerr e,r)`)
   CHEAT_TAC;;
 
@@ -78,8 +78,8 @@ let bvl_constProof_evaluate_delete_var_Rerr =
   cake_theorem "evaluate_delete_var_Rerr[local]"
   (fun () ->
     `!xs s r e env2.
-         evaluate (xs,env2,s) = (Rerr e,r) /\ ~(
-         e = Rabort Rtype_error) ==>
+         evaluate (xs,env2,s) = (Rerr e,r) /\ ~(e = Rabort
+           Rtype_error) ==>
          evaluate (MAP bvl_const_delete_var xs,env2,s) = (Rerr
            e,r)`)
   CHEAT_TAC;;
@@ -119,29 +119,29 @@ let case_op_const_eq = cake_theorem "case_op_const_eq[local]"
 let SmartOp_flip_thm = cake_theorem "SmartOp_flip_thm[local]"
   (fun () ->
     `(op',x1',x2') = SmartOp_flip op x1 x2 /\
-     evaluate ([Op op [x1; x2]],env,s) = (res,s2) /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+     evaluate ([Op op [x1; x2]],env,s) = (res,s2) /\ ~(res = Rerr
+       (Rabort Rtype_error)) ==>
      evaluate ([Op op' [x1'; x2']],env,s) = (res,s2)`)
   CHEAT_TAC;;
 
 let SmartOp2_thm = cake_theorem "SmartOp2_thm[local]"
   (fun () ->
-    `evaluate ([Op op [x1; x2]],env,s) = (res,s2) /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+    `evaluate ([Op op [x1; x2]],env,s) = (res,s2) /\ ~(res = Rerr
+  (Rabort Rtype_error)) ==>
      evaluate ([SmartOp2 (op,x1,x2)],env,s) = (res,s2)`)
   CHEAT_TAC;;
 
 let SmartOp1_thm = cake_theorem "SmartOp1_thm"
   (fun () ->
-    `evaluate ([Op op [x]],env,s) = (res,s2) /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+    `evaluate ([Op op [x]],env,s) = (res,s2) /\ ~(res = Rerr (Rabort
+  Rtype_error)) ==>
      evaluate ([SmartOp1 op x],env,s) = (res,s2)`)
   CHEAT_TAC;;
 
 let SmartOp_thm = cake_theorem "SmartOp_thm"
   (fun () ->
-    `evaluate ([Op op xs],env,s) = (res,s2) /\ ~(
-      res = Rerr (Rabort Rtype_error)) ==>
+    `evaluate ([Op op xs],env,s) = (res,s2) /\ ~(res = Rerr (Rabort
+  Rtype_error)) ==>
       evaluate ([SmartOp op xs],env,s) = (res,s2)`)
   CHEAT_TAC;;
 
@@ -149,19 +149,19 @@ let bvl_constProof_evaluate_env_rel = cake_theorem "evaluate_env_rel"
   (fun () ->
     `!xs env1 (s1:('c,'ffi)bvlSem_state) ax env2 res s2 ys.
         (evaluate (xs,env1,s1) = (res,s2)) /\
-        bvl_constProof_env_rel (:'c) (:'ffi) ax env1 env2 /\ ~(
-        res = Rerr (Rabort Rtype_error)) ==>
+        bvl_constProof_env_rel (:'c) (:'ffi) ax env1 env2 /\ ~(res
+          = Rerr (Rabort Rtype_error)) ==>
         (evaluate (compile ax xs,env2,s1) = (res,s2))`)
   CHEAT_TAC;;
 
 (* HOL4 bvl_constProofScript.sml:311-314: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: compile_thm *)
 
 let bvl_constProof_evaluate_compile_exp =
   cake_theorem "evaluate_compile_exp"
   (fun () ->
-    `evaluate ([d],env,s) = (r,t) /\ ~(
-      r = Rerr (Rabort Rtype_error)) ==>
+    `evaluate ([d],env,s) = (r,t) /\ ~(r = Rerr (Rabort Rtype_error))
+  ==>
       evaluate ([bvl_const_compile_exp d],env,s) = (r,t)`)
   CHEAT_TAC;;
 

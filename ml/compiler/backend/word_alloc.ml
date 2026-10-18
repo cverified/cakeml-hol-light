@@ -359,7 +359,7 @@ let ssa_cc_trans_def = cake_define_list_cheat CHEAT_TAC
         let ren_ls2 = MAP (option_lookup ssa) ls_2 in
         let (ren_ls1,ssa',na') = list_next_var_rename ls_1 ssa na in
         let force =
-          FILTER (\(x,y). ~MEM x ls_1) (ZIP ls_2 ren_ls1) in
+          FILTER (\(x,y). ~(MEM x ls_1)) (ZIP ls_2 ren_ls1) in
           (wordLang_Move pri (ZIP ren_ls1 ren_ls2),force_rename
             force ssa',na'))`;
    `ssa_cc_trans (wordLang_StoreConsts a b c d ws) ssa na lt =

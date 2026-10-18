@@ -320,7 +320,7 @@ let bvi_to_cb_aux_wf_inl_lemma =
   CHEAT_TAC;;
 
 (* HOL4 bvi_tmcScript.sml:443: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: bvi_to_cb_aux_wf_inl *)
 
 let bvi_to_cb_aux_sing = cake_theorem "bvi_to_cb_aux_sing"
   (fun () ->
@@ -346,7 +346,7 @@ let bvi_to_cb_aux_wf_inr_lemma =
   CHEAT_TAC;;
 
 (* HOL4 bvi_tmcScript.sml:490: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: bvi_to_cb_aux_wf_inr *)
 
 let bvi_to_cb_def = cake_define
   `bvi_to_cb n loc x3 =
@@ -402,7 +402,7 @@ let bvi_to_cb_aux_size_lemma =
   CHEAT_TAC;;
 
 (* HOL4 bvi_tmcScript.sml:577: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: bvi_to_cb_aux_size *)
 
 let bvi_to_cb_size = cake_theorem "bvi_to_cb_size"
   (fun () ->

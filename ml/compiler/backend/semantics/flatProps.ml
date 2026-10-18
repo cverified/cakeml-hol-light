@@ -10,6 +10,7 @@
   Properties about flatLang and its semantics
 *)
 
+needs "compiler/backend/backend_common.ml";;
 needs "compiler/backend/flatLang.ml";;
 needs "compiler/backend/semantics/flatSem.ml";;
 needs "lib/lprefix_lub.ml";;
@@ -150,15 +151,15 @@ let map_match_eq_case = cake_theorem "map_match_eq_case"
 let flatProps_pmatch_append = cake_theorem "pmatch_append"
   (fun () ->
     `(!(s:('c,'ffi)flatSem_state) p v env pred_env.
-       map_match (C APPEND' tail_env) (pmatch s p v env) =
+       map_match (C APPEND tail_env) (pmatch s p v env) =
          pmatch s p v (env ++ tail_env)) /\
      (!(s:('c,'ffi)flatSem_state) ps vs env n.
-       map_match (C APPEND' tail_env) (pmatch_list s ps vs env) =
+       map_match (C APPEND tail_env) (pmatch_list s ps vs env) =
         pmatch_list s ps vs (env ++ tail_env))`)
   CHEAT_TAC;;
 
 (* HOL4 flatPropsScript.sml:217-221: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: pmatch_nil *)
 
 let pmatch_ignore_clock = cake_theorem "pmatch_ignore_clock"
   (fun () ->
@@ -261,20 +262,20 @@ let flatProps_evaluate_add_to_clock =
   cake_theorem "evaluate_add_to_clock"
   (fun () ->
     `(!env (s:('c,'ffi)flatSem_state) es s' r.
-         evaluate env s es = (s',r) /\ ~(
-         r = Rerr (Rabort Rtimeout_error)) ==>
+         evaluate env s es = (s',r) /\ ~(r = Rerr (Rabort
+           Rtimeout_error)) ==>
          evaluate env (state_clock_fupd (K (state_clock s + extra))
            s) es =
            (state_clock_fupd (K (state_clock s' + extra)) s',r)) /\
      (!(s:('c,'ffi)flatSem_state) d s' r.
-         evaluate_dec s d = (s',r) /\ ~(
-         r = SOME (Rabort Rtimeout_error)) ==>
+         evaluate_dec s d = (s',r) /\ ~(r = SOME (Rabort
+           Rtimeout_error)) ==>
          evaluate_dec (state_clock_fupd (K (state_clock s + extra))
            s) d =
            (state_clock_fupd (K (state_clock s' + extra)) s',r)) /\
      (!(s:('c,'ffi)flatSem_state) ds s' r.
-         evaluate_decs s ds = (s',r) /\ ~(
-         r = SOME (Rabort Rtimeout_error)) ==>
+         evaluate_decs s ds = (s',r) /\ ~(r = SOME (Rabort
+           Rtimeout_error)) ==>
          evaluate_decs (state_clock_fupd (K (state_clock s +
            extra)) s) ds =
            (state_clock_fupd (K (state_clock s' + extra)) s',r))`)
@@ -283,8 +284,7 @@ let flatProps_evaluate_add_to_clock =
 let flatProps_evaluate_decs_add_to_clock =
   cake_theorem "evaluate_decs_add_to_clock"
   (fun () ->
-    `!decs s s' r. ~(
-      r = SOME (Rabort Rtimeout_error)) /\
+    `!decs s s' r. ~(r = SOME (Rabort Rtimeout_error)) /\
       evaluate_decs s decs = (s',r) ==>
       evaluate_decs (state_clock_fupd (K (state_clock s + extra))
         s) decs =
@@ -425,8 +425,7 @@ let pmatch_list_MAP_Pvar = cake_theorem "pmatch_list_MAP_Pvar"
 let evaluate_decs_add_to_clock_initial_state =
   cake_theorem "evaluate_decs_add_to_clock_initial_state[local]"
   (fun () ->
-    `~(
-       r = SOME (Rabort Rtimeout_error)) /\
+    `~(r = SOME (Rabort Rtimeout_error)) /\
         evaluate_decs (flatSem_initial_state ffi k ec) decs =
           (s',r) ==>
         evaluate_decs (flatSem_initial_state ffi (ck + k) ec) decs
@@ -448,8 +447,8 @@ let evaluate_decs_add_to_clock_initial_state_io_events_mono =
 let flatProps_initial_state_with_clock =
   cake_theorem "initial_state_with_clock[local]"
   (fun () ->
-    `(state_clock_fupd (K (state_clock (flatSem_initial_state ffi k ec)
-  + ck)) (flatSem_initial_state ffi k ec)) =
+    `(flatSem_initial_state ffi k (state_clock_fupd (K (state_clock
+  (flatSem_initial_state ffi k ec) + ck)) ec)) =
       flatSem_initial_state ffi (k + ck) ec`)
   CHEAT_TAC;;
 
@@ -477,8 +476,8 @@ hol4_overload "eval_sim" "flatProps_eval_sim";;
 
 let flatProps_IMP_semantics_eq = cake_theorem "IMP_semantics_eq"
   (fun () ->
-    `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel F /\ ~(
-     flatSem_semantics ec (ffi:'ffi ffi_state) ds1 = ffi_Fail) ==>
+    `flatProps_eval_sim ffi ds1 ds2 ec ec2 rel F /\ ~(flatSem_semantics
+  ec (ffi:'ffi ffi_state) ds1 = ffi_Fail) ==>
      rel ds1 ds2 ==>
      flatSem_semantics ec ffi ds1 =
      flatSem_semantics ec2 ffi ds2`)
@@ -513,16 +512,15 @@ let set_globals_def = cake_define_list_try_tac (fun () ->
    `flatProps_set_globals (App t op es:flatLang_exp) = (BAG_UNION)
   (flatProps_elist_globals es) (flatProps_op_gbag op)`;
    `flatProps_set_globals (If t e1 e2 e3:flatLang_exp) = (BAG_UNION)
-  ((BAG_UNION)
-        (flatProps_set_globals e1) (flatProps_set_globals e2))
-          (flatProps_set_globals e3)`;
+  ((BAG_UNION) (flatProps_set_globals e1) (flatProps_set_globals e2))
+  (flatProps_set_globals e3)`;
    `flatProps_set_globals (Mat t e pes:flatLang_exp) = (BAG_UNION)
   (flatProps_set_globals e) (flatProps_elist_globals (MAP SND pes))`;
    `flatProps_set_globals (Let t v e1 e2:flatLang_exp) = (BAG_UNION)
   (flatProps_set_globals e1) (flatProps_set_globals e2)`;
    `flatProps_set_globals (Letrec t fs e:flatLang_exp) = (BAG_UNION)
-        (flatProps_set_globals e) (flatProps_elist_globals (MAP
-          (SND o SND) fs))`;
+  (flatProps_set_globals e) (flatProps_elist_globals (MAP (SND o SND)
+  fs))`;
    `flatProps_set_globals _5 = EMPTY_BAG`;
    `flatProps_elist_globals [] = EMPTY_BAG`;
    `flatProps_elist_globals (e :: es) = (BAG_UNION)
@@ -559,7 +557,7 @@ let esgc_free_def = cake_define_wf
 hol4_overload "esgc_free" "flatProps_esgc_free";;
 
 (* HOL4 flatPropsScript.sml:858-859: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: esgc_free_def *)
 
 let elist_globals_eq_empty = cake_theorem "elist_globals_eq_empty"
   (fun () ->
@@ -588,7 +586,7 @@ let flatProps_initial_state_clock = cake_theorem "initial_state_clock"
   (fun () ->
     `state_clock
        (flatSem_initial_state ffi k ec) = k /\
-       ((state_clock_fupd (K k1) (flatSem_initial_state ffi k
+       ((flatSem_initial_state ffi k (state_clock_fupd (K k1)
          ec)) = flatSem_initial_state ffi k1 ec)`)
   CHEAT_TAC;;
 
@@ -614,11 +612,10 @@ let isClosure_def = cake_define
      (?vs n x. exp = Closure vs n x) \/
      (?vs fs x. exp = Recclosure vs fs x))`;;
 
-(* HOL4 flatPropsScript.sml:921-923: the ML values that the
-   definitions below antiquote *)
+(* HOL4 flatPropsScript.sml:921-923: ML code, not ported *)
 
 (* HOL4 flatPropsScript.sml:925-927: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: isClosure_simps *)
 
 let simple_basic_val_rel_def = cake_define_list
   [`simple_basic_val_rel (Litv l:flatSem_v) v = (v = (Litv
@@ -643,16 +640,16 @@ let v_container_xs_def = cake_define_list
 let simple_val_rel_def = cake_define
   `flatProps_simple_val_rel vr = (
      (!v1 v2. (vr v1 v2 ==> isClosure v1 = isClosure v2)) /\ (!v1 v2.
-       ~isClosure v1 ==> vr v1 v2 = (
+       ~(isClosure v1) ==> vr v1 v2 = (
          simple_basic_val_rel v1 v2 /\ LIST_REL vr (v_container_xs
            v1) (v_container_xs v2))))`;;
 hol4_overload "simple_val_rel" "flatProps_simple_val_rel";;
 
 (* HOL4 flatPropsScript.sml:953-954: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: simple_val_rel_rew *)
 
 (* HOL4 flatPropsScript.sml:956-960: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: simple_val_rel_simps *)
 
 let simple_val_rel_isClosure = cake_theorem "simple_val_rel_isClosure"
   (fun () ->
@@ -695,7 +692,7 @@ let simple_do_eq_thm_ind = cake_theorem "simple_do_eq_thm_ind"
   CHEAT_TAC;;
 
 (* HOL4 flatPropsScript.sml:1005: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: simple_do_eq_thm *)
 
 let simple_state_rel_store_assign =
   cake_theorem "simple_state_rel_store_assign"
@@ -837,18 +834,18 @@ let evaluate_match_CONS = cake_theorem "evaluate_match_CONS"
        (match pmatch s p v [] with No_match -> evaluate_match env s
          v pes err_v | Match_type_error -> (s,Rerr (Rabort Rtype_error))
          | Match env_v' ->
-           (if ALL_DISTINCT (pat_bindings p) /\ ~(
-              pmatch_rows pes s v = Match_type_error) then
-                evaluate (flatSem_environment_v_fupd (K (env_v' ++
-                flatSem_environment_v env)) env) s [e] else (s,Rerr
-                (Rabort Rtype_error))))`)
+           (if ALL_DISTINCT (pat_bindings p) /\ ~(pmatch_rows pes
+             s v = Match_type_error) then evaluate
+             (flatSem_environment_v_fupd (K (env_v' ++
+             flatSem_environment_v env)) env) s [e] else (s,Rerr
+             (Rabort Rtype_error))))`)
   CHEAT_TAC;;
 
 (* HOL4 flatPropsScript.sml:1432-1446: the ML values that the
    definitions below antiquote *)
 
 (* HOL4 flatPropsScript.sml:1448: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: flat_evaluate_def *)
 
 let store_v_vs_def = cake_define_list
   [`flatProps_store_v_vs (semanticPrimitives_Varray vs) = vs`;
@@ -864,12 +861,8 @@ let result_vs_def = cake_define
       | (Rerr (Rraise x)) -> [x]
       | (Rerr (Rabort y)) -> []`;;
 
-let v_size_aux = cake_theorem "v_size_aux"
-  (fun () ->
-    `(!env. v1_size env = 1 + v2_size (flatSem_environment_v env)) /\
-     (!xs. v2_size xs = LENGTH xs + SUM (MAP v3_size xs)) /\
-     (!xs. v4_size xs = LENGTH xs + SUM (MAP flatSem_v_size xs))`)
-  CHEAT_TAC;;
+(* HOL4 flatPropsScript.sml:1463-1469: a theorem whose statement the
+   port cannot state yet: v_size_aux *)
 
 let _ = size_thms "flatLang_exp";;
 (* the termination relation that HOL4 gives, with

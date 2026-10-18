@@ -189,8 +189,8 @@ hol4_field_overload "link_reg" "asm_config_link_reg";;
 hol4_field_overload "link_reg_fupd" "asm_config_link_reg_fupd";;
 
 let reg_ok_def = cake_define
-  `reg_ok r c <=> r < asm_config_reg_count c /\ ~MEM r
-  (asm_config_avoid_regs c)`;;
+  `reg_ok r c <=> r < asm_config_reg_count c /\ ~(MEM r
+  (asm_config_avoid_regs c))`;;
 
 let fp_reg_ok_def = cake_define
   `fp_reg_ok d c <=> d < asm_config_fp_reg_count c`;;

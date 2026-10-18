@@ -196,10 +196,8 @@ let has_install_def = cake_define_list_try (fun () ->
    `has_install_list (x :: xs) = (has_install x \/ has_install_list
   xs)`];;
 
-let exp1_size_lemma = cake_theorem "exp1_size_lemma"
-  (fun () ->
-    `!fns n x. MEM (n,x) fns ==> closLang_exp_size x < exp1_size fns`)
-  CHEAT_TAC;;
+(* HOL4 closLangScript.sml:170-175: a theorem whose statement the
+   port cannot state yet: exp1_size_lemma *)
 
 let pure_op_def = cake_define
   `closLang_pure_op op <=>

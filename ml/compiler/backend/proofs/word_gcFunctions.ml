@@ -255,8 +255,7 @@ let word_gc_fun_assum_def = cake_define
 
 let word_gen_gc_can_do_partial_def = cake_define
   `word_gen_gc_can_do_partial gen_sizes (s:(store_name,'a word_loc)fmap)
-  <=> ~(
-     gen_sizes = []) /\
+  <=> ~(gen_sizes = []) /\
      (let allo = theWord (FAPPLY s AllocSize) in
      let trig = theWord (FAPPLY s TriggerGC) in
      let endh = theWord (FAPPLY s EndOfHeap) in

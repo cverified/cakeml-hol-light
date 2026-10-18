@@ -266,7 +266,7 @@ let ADDR_APPLY_def = cake_define_list
   heap_address)`];;
 
 (* HOL4 gc_sharedScript.sml:383-395: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: heap_lookup_FLOOKUP *)
 
 (* HOL4 gc_sharedScript.sml:397: ML code, not ported *)
 
@@ -282,7 +282,7 @@ let IN_heap_map_IMP = cake_theorem "IN_heap_map_IMP"
   CHEAT_TAC;;
 
 (* HOL4 gc_sharedScript.sml:414-423: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: NOT_IN_heap_map *)
 
 let isSomeDataOrForward_lemma = cake_theorem "isSomeDataOrForward_lemma"
   (fun () ->
@@ -333,7 +333,7 @@ let heap_map_APPEND = cake_theorem "heap_map_APPEND"
   CHEAT_TAC;;
 
 (* HOL4 gc_sharedScript.sml:493-500: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: FDOM_heap_map *)
 
 let heap_addresses_APPEND = cake_theorem "heap_addresses_APPEND"
   (fun () ->
@@ -367,7 +367,7 @@ let heap_similar_Data_IMP_DataOrForward =
 let FILTER_LEMMA = cake_theorem "FILTER_LEMMA"
   (fun () ->
     `!heap. (FILTER isForwardPointer heap = []) ==>
-             (FILTER (\h. ~isForwardPointer h) heap = heap)`)
+             (FILTER (\h. ~(isForwardPointer h)) heap = heap)`)
   CHEAT_TAC;;
 
 let heaps_similar_REFL = cake_theorem "heaps_similar_REFL"
@@ -496,7 +496,8 @@ let heap_length_heap_filter_INSERT =
           (heap_filter s heap))`)
   CHEAT_TAC;;
 
-(* HOL4 gc_sharedScript.sml:706-712: a proof *)
+(* HOL4 gc_sharedScript.sml:706-712: a theorem that HOL4 states as
+   the value of an ML expression: heap_filter_aux_ADD_SING *)
 
 let heap_filter_aux_SING_ZERO =
   cake_theorem "heap_filter_aux_SING_ZERO[local]"

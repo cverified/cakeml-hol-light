@@ -182,9 +182,9 @@ let do_install_def = cake_define
        (match vs with [v1; v2; vl1; vl2] ->
             (match (v_to_bytes v1,v_to_words v2) with (SOME
               bytes,SOME data) ->
-                (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(
-                   vl2 = Number (&(LENGTH data))) then Rerr (Rabort
-                     Rtype_error) else
+                (if ~(vl1 = Number (&(LENGTH bytes))) \/ ~(vl2 =
+                  Number (&(LENGTH data))) then Rerr (Rabort
+                  Rtype_error) else
                 let (cfg,progs) = compile_oracle s 0 in
                 let new_oracle = misc_shift_seq 1 (compile_oracle s)
                   in
@@ -406,10 +406,10 @@ let bviSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* HOL4 bviSemScript.sml:392-393: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_def *)
 
 (* HOL4 bviSemScript.sml:395-396: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_ind *)
 
 (* observational semantics *)
 

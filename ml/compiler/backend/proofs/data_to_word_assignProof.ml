@@ -25,7 +25,6 @@ needs "compiler/backend/proofs/data_to_word_gcProof.ml";;
 needs "compiler/backend/proofs/data_to_word_memoryProof.ml";;
 needs "compiler/backend/proofs/word_bignumProof.ml";;
 needs "compiler/backend/proofs/word_gcFunctions.ml";;
-needs "compiler/backend/reg_alloc/linear_scan.ml";;
 needs "compiler/backend/semantics/backendProps.ml";;
 needs "compiler/backend/semantics/bvlSem.ml";;
 needs "compiler/backend/semantics/closSem.ml";;
@@ -72,7 +71,7 @@ cake_hide ["code_buffer"; "data_buffer"; "memory"; "parts"; "vars"];;
 
 (* This list must list all auxiliary definitions used in assign_def *)
 (* HOL4 data_to_word_assignProofScript.sml:63-72: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: assign_def_extras *)
 
 let get_vars_SING = cake_theorem "get_vars_SING"
   (fun () ->
@@ -171,8 +170,8 @@ let state_rel_push_env_loc = cake_theorem "state_rel_push_env_loc"
 
 let evaluate_IMP_domain_union = cake_theorem "evaluate_IMP_domain_union"
   (fun () ->
-    `evaluate (p,wordSem_state_termdep_fupd (K tp) (state_clock_fupd (K
-  ck) (call_env args b (push_env (y1,y2) NONE
+    `evaluate (p,call_env args b (wordSem_state_termdep_fupd (K tp)
+  (state_clock_fupd (K ck) (push_env (y1,y2) NONE
   (t:('a,'c,'ffi)wordSem_state))))) = (SOME (wordSem_Result ret1
   ret2),t1) /\
      pop_env t1 = SOME t2 /\
@@ -213,7 +212,7 @@ let reorder_2_lemma = cake_theorem "reorder_2_lemma"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_assignProofScript.sml:263-289: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: evaluate_StoreEach *)
 
 let get_vars_adjust_var = cake_theorem "get_vars_adjust_var"
   (fun () ->
@@ -386,7 +385,7 @@ let state_rel_get_var_Number_IMP_alt =
             get_var k (state_locals s) = SOME (Number i) /\
             get_var (2 * k + 2) t = SOME a1 ==>
             (?(w:'a word). a1 = wordLang_Word w /\ FAPPLY w 0 =
-              ~small_int (:'a) i)`)
+              ~(small_int (:'a) i))`)
   CHEAT_TAC;;
 
 (* TODO: move to sptreeTheory *)
@@ -476,10 +475,10 @@ let size_of_Number_head = cake_theorem "size_of_Number_head"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_assignProofScript.sml:707-710: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: ADD4DIV4 *)
 
 (* HOL4 data_to_word_assignProofScript.sml:712-715: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: ADD8DIV8 *)
 
 let RefByte_thm = cake_theorem "RefByte_thm"
   (fun () ->
@@ -503,8 +502,8 @@ let RefByte_thm = cake_theorem "RefByte_thm"
            (match vals with
                 (Number i :: _2) ->
                 (i < (&0) \/
-                ~small_num (limits_arch_64_bit
-                  (dataSem_state_limits s)) i \/
+                ~(small_num (limits_arch_64_bit
+                  (dataSem_state_limits s)) i) \/
                 ~(num_of_int i DIV (arch_size (dataSem_state_limits
                   s) DIV 8) < dimword (:'a) DIV arch_size
                   (dataSem_state_limits s)) \/
@@ -571,9 +570,7 @@ let EXP_LEMMA1 = cake_theorem "EXP_LEMMA1"
 
 let evaluate_Maxout_bits_code = cake_theorem "evaluate_Maxout_bits_code"
   (fun () ->
-    `~(
-        n_reg = dest) /\ n < dimword (:'a) /\ rep_len < dimindex
-          (:'a) /\
+    `~(n_reg = dest) /\ n < dimword (:'a) /\ rep_len < dimindex (:'a) /\
          k < dimindex (:'a) /\
          sptree_lookup n_reg (state_locals
            (t:('a,'c,'ffi)wordSem_state)) = SOME (wordLang_Word (n2w
@@ -586,12 +583,10 @@ let evaluate_Maxout_bits_code = cake_theorem "evaluate_Maxout_bits_code"
 
 let make_ptr_bits_thm = cake_theorem "Make_ptr_bits_thm"
   (fun () ->
-    `~(
-        tag_reg = dest) /\ tag1 < dimword (:'a) /\
-          data_to_word_config_tag_bits c < dimindex (:'a) /\ ~(
-         len_reg = dest) /\ len1 < dimword (:'a) /\
-           data_to_word_config_len_bits c < dimindex (:'a) /\
-           data_to_word_config_len_bits
+    `~(tag_reg = dest) /\ tag1 < dimword (:'a) /\
+  data_to_word_config_tag_bits c < dimindex (:'a) /\ ~(len_reg = dest)
+  /\ len1 < dimword (:'a) /\ data_to_word_config_len_bits c < dimindex
+  (:'a) /\ data_to_word_config_len_bits
          c + 1 < dimindex (:'a) /\
          FLOOKUP (wordSem_state_store
            (t:('a,'c,'ffi)wordSem_state)) NextFree = SOME (wordLang_Word
@@ -631,8 +626,7 @@ let evaluate_WriteWord64 = cake_theorem "evaluate_WriteWord64"
        (join_env_locals sl (state_locals t) ++ vars) /\
      get_var src (t:('a,'c,'ffi)wordSem_state) = SOME
        (wordLang_Word w) /\
-     shift_length c < dimindex (:'a) /\ ~(
-     src = 1) /\ 1 < sp /\
+     shift_length c < dimindex (:'a) /\ ~(src = 1) /\ 1 < sp /\
      dimindex (:'a) = 64 /\
      encode_header c 3 1 = SOME header /\
      (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
@@ -663,8 +657,8 @@ let evaluate_WriteWord64_on_32 =
        (wordLang_Word ((31 >< 0) w)) /\
      get_var src2 (t:('a,'c,'ffi)wordSem_state) = SOME
        (wordLang_Word ((63 >< 32) w)) /\
-     shift_length c < dimindex (:'a) /\ ~(
-     src1 = 1) /\ ~(src2 = 1) /\ 2 < sp /\
+     shift_length c < dimindex (:'a) /\ ~(src1 = 1) /\ ~(src2 = 1)
+       /\ 2 < sp /\
      dimindex (:'a) = 32 /\
      encode_header c 3 2 = SOME header /\
      (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
@@ -687,7 +681,7 @@ let evaluate_WriteWord64_on_32 =
 
 let Num_ABS_AND = cake_theorem "Num_ABS_AND[local]"
   (fun () ->
-    `num_of_int (abs (&n)) = n /\ num_of_int (abs (-- &n)) = n`)
+    `num_of_int (abs (&n)) = n /\ num_of_int (abs (--(&n))) = n`)
   CHEAT_TAC;;
 
 let evaluate_WriteWord64_on_32_num =
@@ -700,8 +694,8 @@ let evaluate_WriteWord64_on_32_num =
        (wordLang_Word w1) /\
      get_var src2 (t:('a,'c,'ffi)wordSem_state) = SOME
        (wordLang_Word w2) /\
-     shift_length c < dimindex (:'a) /\ ~(w2 = (n2w 0)) /\ ~(
-     src1 = 1) /\ ~(src2 = 1) /\ 2 < sp /\
+     shift_length c < dimindex (:'a) /\ ~(w2 = (n2w 0)) /\ ~(src1 =
+       1) /\ ~(src2 = 1) /\ 2 < sp /\
      dimindex (:'a) = 32 /\
      encode_header c 3 2 = SOME header /\
      (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
@@ -730,11 +724,10 @@ let evaluate_WriteWord32_bignum =
        (join_env_locals sl (state_locals t) ++ vars) /\
      get_var src (t:('a,'c,'ffi)wordSem_state) = SOME
        (wordLang_Word w) /\
-     shift_length c < dimindex (:'a) /\ ~(
-     src = 1) /\ 1 < sp /\
+     shift_length c < dimindex (:'a) /\ ~(src = 1) /\ 1 < sp /\
      dimindex (:'a) = 32 /\
      encode_header c 3 1 = SOME header /\
-     ~small_int (:'a) (&(w2n w)) /\
+     ~(small_int (:'a) (&(w2n w))) /\
      (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
        (adjust_var n) (state_locals t))) ==>
      (?nf m' locals' v.
@@ -761,11 +754,10 @@ let evaluate_WriteWord64_bignum =
        (join_env_locals sl (state_locals t) ++ vars) /\
      get_var src (t:('a,'c,'ffi)wordSem_state) = SOME
        (wordLang_Word w) /\
-     shift_length c < dimindex (:'a) /\ ~(
-     src = 1) /\ 1 < sp /\
+     shift_length c < dimindex (:'a) /\ ~(src = 1) /\ 1 < sp /\
      dimindex (:'a) = 64 /\
      encode_header c 3 1 = SOME header /\
-     ~small_int (:'a) (&(w2n w)) /\
+     ~(small_int (:'a) (&(w2n w))) /\
      (!n. IS_SOME (sptree_lookup n sl) ==> IS_SOME (sptree_lookup
        (adjust_var n) (state_locals t))) ==>
      (?nf m' locals' v.
@@ -789,8 +781,8 @@ let evaluate_LoadBignum = cake_theorem "evaluate_LoadBignum"
     `memory_rel c be ts refs sp (wordSem_state_store t)
   (wordSem_state_memory t) (wordSem_state_mdomain t) ((Number i,v) ::
   vars) /\
-     ~small_int (:'a) i /\ good_dimindex (:'a) /\ shift_length c <
-       dimindex (:'a) /\
+     ~(small_int (:'a) i) /\ good_dimindex (:'a) /\ shift_length c
+       < dimindex (:'a) /\
      get_var src (t:('a,'c,'ffi)wordSem_state) = SOME v /\ ~(header
        = w1) ==>
      (?h junk.
@@ -798,7 +790,7 @@ let evaluate_LoadBignum = cake_theorem "evaluate_LoadBignum"
        (NONE,set_vars [w1; header; w1]
                        [wordLang_Word (n2w (num_of_int (abs i)));
                          (wordLang_Word h); junk] t) /\
-     (((n2w 16) && h) = (n2w 0) <=> 0 <= i))`)
+     (((n2w 16) && h) = (n2w 0) <=> (&0) <= i))`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_assignProofScript.sml:1765-1778: the ML values
@@ -830,7 +822,7 @@ let cut_names_adjust_set_insert_5 =
 
 let word_bit_test_0 = cake_theorem "word_bit_test_0"
   (fun () ->
-    `((n2w 1) && w) = (n2w 0) <=> ~word_bit 0 w`)
+    `((n2w 1) && w) = (n2w 0) <=> ~(word_bit 0 w)`)
   CHEAT_TAC;;
 
 let MAP_Number_11_w2n_word8 =
@@ -959,18 +951,17 @@ let w2w_upper_upper_w2w = cake_theorem "w2w_upper_upper_w2w"
 let MAP_FST_MAP_compile_part =
   cake_theorem "MAP_FST_MAP_compile_part[local]"
   (fun () ->
-    `!full_list. MAP FST' (MAP (compile_part c) full_list) = MAP FST'
+    `!full_list. MAP FST (MAP (compile_part c) full_list) = MAP FST
   full_list`)
   CHEAT_TAC;;
 
 let memory_rel_ignore_buffers =
   cake_theorem "memory_rel_ignore_buffers[local]"
   (fun () ->
-    `memory_rel c be' ts refs sp (st |+ (BitmapBuffer,x)) m dm vars' =
-     memory_rel c be' ts refs sp st m dm vars' /\
-     memory_rel c be' ts refs sp (st |+ (CodeBuffer,x)) m dm vars'
-       =
-     memory_rel c be' ts refs sp st m dm vars'`)
+    `memory_rel c be ts refs sp (st |+ (BitmapBuffer,x)) m dm vars =
+     memory_rel c be ts refs sp st m dm vars /\
+     memory_rel c be ts refs sp (st |+ (CodeBuffer,x)) m dm vars =
+     memory_rel c be ts refs sp st m dm vars`)
   CHEAT_TAC;;
 
 let compile_part_loc_IMP = cake_theorem "compile_part_loc_IMP[local]"
@@ -1175,7 +1166,7 @@ let assign_Install = cake_theorem "assign_Install"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1198,7 +1189,7 @@ let assign_MutCons = cake_theorem "assign_MutCons"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1221,7 +1212,7 @@ let assign_UpdateCons = cake_theorem "assign_UpdateCons"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1244,7 +1235,7 @@ let assign_FinaliseCons = cake_theorem "assign_FinaliseCons"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1420,7 +1411,7 @@ let assign_WordFromWord = cake_theorem "assign_WordFromWord"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -1502,7 +1493,7 @@ let assign_CopyByte = cake_theorem "assign_CopyByte"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1550,9 +1541,9 @@ let evaluate_AssignCmp = cake_theorem "evaluate_AssignCmp"
 
 let evaluate_StringCmpMin = cake_theorem "evaluate_StringCmpMin[local]"
   (fun () ->
-    `evaluate ((Seq (Assign 9 (Var 5))
+    `evaluate (wordLang_Seq (Assign 9 (Var 5))
                    (Seq (If asm_Lower 7 (Reg 5) (Assign 9 (Var 7))
-                     Skip) p):live_tree),state_locals_fupd (K l)
+                     Skip) p),state_locals_fupd (K l)
                t1) =
      (match (sptree_lookup 5 l,sptree_lookup 7 l) with (SOME
        (wordLang_Word w1),SOME (wordLang_Word w2)) ->
@@ -1581,7 +1572,7 @@ let assign_StringCmp = cake_theorem "assign_StringCmp"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1630,7 +1621,7 @@ let assign_XorByte = cake_theorem "assign_XorByte"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1839,7 +1830,7 @@ let opt_map_plus_zero_id = cake_theorem "opt_map_plus_zero_id[local]"
 (* TODO: move *)
 let option_le_flip_neg = cake_theorem "option_le_flip_neg"
   (fun () ->
-    `~option_le a b ==> option_le b a`)
+    `~(option_le a b) ==> option_le b a`)
   CHEAT_TAC;;
 
 let cut_state_refs_same = cake_theorem "cut_state_refs_same"
@@ -1865,7 +1856,7 @@ let assign_ListAppend = cake_theorem "assign_ListAppend"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1912,7 +1903,7 @@ let assign_AllocThunk = cake_theorem "assign_AllocThunk"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1935,7 +1926,7 @@ let assign_UpdateThunk = cake_theorem "assign_UpdateThunk"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -1991,7 +1982,7 @@ let assign_ConfigGC = cake_theorem "assign_ConfigGC"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -2014,7 +2005,7 @@ let assign_WordToInt = cake_theorem "assign_WordToInt"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -2068,8 +2059,8 @@ let FromList1_code_thm = cake_theorem "FromList1_code_thm"
 
 let FromList_thm = cake_theorem "FromList_thm"
   (fun () ->
-    `state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\ ~(
-      encode_header c (4 * tag) 0 = (NONE:('a word) option)) /\
+    `state_rel c l1 l2 s (t:('a,'c,'ffi)wordSem_state) NONE locs /\
+  ~(encode_header c (4 * tag) 0 = (NONE:('a word) option)) /\
       get_vars [0; 1; 2] (state_locals s) = SOME [v1; v2; Number
         (&(4 * tag))] /\ state_clock
       t = MustTerminate_limit (:'a) - 1 /\
@@ -2090,8 +2081,8 @@ let FromList_thm = cake_theorem "FromList_thm"
           (~(data_to_word_config_gc_kind c = None) /\
             no_thunks_in_refs (state_refs s) ==>
            (match (v1,v2) with
-             (Number n,_11) -> ~small_num (limits_arch_64_bit
-               (dataSem_state_limits s)) n \/
+             (Number n,_11) -> ~(small_num (limits_arch_64_bit
+               (dataSem_state_limits s)) n) \/
                              ~(num_of_int n < dimword (:'a) DIV 16)
                                \/
                              ~(num_of_int n < 2 EXP
@@ -2258,7 +2249,7 @@ let assign_FromList = cake_theorem "assign_FromList"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2267,12 +2258,12 @@ let assign_FromList = cake_theorem "assign_FromList"
 (* TODO: move to backendProps? *)
 let not_the_F_option_le = cake_theorem "not_the_F_option_le"
   (fun () ->
-    `~the F (OPTION_MAP ((>) n) m) <=> option_le (SOME n) m`)
+    `~(the F (OPTION_MAP ((>) n) m)) <=> option_le (SOME n) m`)
   CHEAT_TAC;;
 
 let the_F_not_option_le = cake_theorem "the_F_not_option_le"
   (fun () ->
-    `the F (OPTION_MAP ((>) n) m) <=> ~option_le (SOME n) m`)
+    `the F (OPTION_MAP ((>) n) m) <=> ~(option_le (SOME n) m)`)
   CHEAT_TAC;;
 
 (* Helper: do_app on RefByte gives a precise equation s' = s with <known-update>
@@ -2283,7 +2274,7 @@ let do_app_RefByte_eq = cake_theorem "do_app_RefByte_eq[local]"
     `do_app (closLang_MemOp (closLang_RefByte fl)) [Number i; Number
   (&(w2n (w:word8)))] (s:('c,'ffi)dataSem_state) = Rval (v,s') ==>
      (?ptr. v = RefPtr T ptr /\ ptr = (LEAST (\p. ~(p IN domain
-       (state_refs s)))) /\ 0 <= i /\
+       (state_refs s)))) /\ (&0) <= i /\
            s' = dataSem_state_peak_heap_length_fupd (K
                     ((\k op_args (s:('c,'ffi)dataSem_state). MAX
                       (dataSem_state_peak_heap_length s)
@@ -2370,7 +2361,7 @@ let assign_RefByte = cake_theorem "assign_RefByte"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2446,7 +2437,7 @@ let assign_RefArray = cake_theorem "assign_RefArray"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2477,14 +2468,14 @@ let explode_less_32 = cake_theorem "explode_less_32[local]"
 
 let LESS_IMP_NOT_BIT = cake_theorem "LESS_IMP_NOT_BIT[local]"
   (fun () ->
-    `!k n. n < 2 EXP k ==> ~BIT k n`)
+    `!k n. n < 2 EXP k ==> ~(BIT k n)`)
   CHEAT_TAC;;
 
 let smallnum_alt = cake_theorem "Smallnum_alt"
   (fun () ->
     `Smallnum i =
-      (if i < 0 then ((n2w 0) - n2w (num_of_int (--i))) << 2 else
-        n2w (num_of_int i) << 2)`)
+      (if i < (&0) then ((n2w 0) - n2w (num_of_int (--i))) << 2
+        else n2w (num_of_int i) << 2)`)
   CHEAT_TAC;;
 
 let BIT_lemma = cake_theorem "BIT_lemma[local]"
@@ -2516,7 +2507,7 @@ let assign_WordFromInt = cake_theorem "assign_WordFromInt"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2539,7 +2530,7 @@ let assign_TagEq = cake_theorem "assign_TagEq"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2618,7 +2609,7 @@ let assign_TagLenEq = cake_theorem "assign_TagLenEq"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2626,8 +2617,7 @@ let assign_TagLenEq = cake_theorem "assign_TagLenEq"
 
 let all_ones_and_1 = cake_theorem "all_ones_and_1"
   (fun () ->
-    `~(
-       k = 0) ==> all_ones k 0 && (n2w 1) = (n2w 1)`)
+    `~(k = 0) ==> all_ones k 0 && (n2w 1) = (n2w 1)`)
   CHEAT_TAC;;
 
 let all_ones_and_ptr_bits_tag_0 =
@@ -2654,7 +2644,7 @@ let assign_LenEq = cake_theorem "assign_LenEq"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2727,7 +2717,7 @@ let memory_rel_small_int = cake_theorem "memory_rel_small_int"
     `memory_rel c be ts refs sp st m dm ((Number i,wordLang_Word (w:'a
   word)) :: vars) /\
      word_bit 0 w /\ good_dimindex (:'a) ==>
-     ~small_int (:'a) i`)
+     ~(small_int (:'a) i)`)
   CHEAT_TAC;;
 
 let small_int_Smallnum_add = cake_theorem "small_int_Smallnum_add"
@@ -2739,7 +2729,7 @@ let small_int_Smallnum_add = cake_theorem "small_int_Smallnum_add"
 let small_int_INT_MIN_MAX = cake_theorem "small_int_INT_MIN_MAX"
   (fun () ->
     `good_dimindex (:'a) /\ small_int (:'a) i ==>
-     (INT_MIN (:'a) <= 4 * i /\ 4 * i <= INT_MAX (:'a))`)
+     (INT_MIN (:'a) <= (&4) * i /\ (&4) * i <= INT_MAX (:'a))`)
   CHEAT_TAC;;
 
 let small_int_w2i_Smallnum_add =
@@ -2798,7 +2788,7 @@ let assign_Add = cake_theorem "assign_Add"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2821,8 +2811,8 @@ let small_int_w2i_Smallnum_sub =
 
 let word_bit_0_sub_lemma = cake_theorem "word_bit_0_sub_lemma[local]"
   (fun () ->
-    `!w1 (w2:'a word). ~word_bit 0 w1 /\ ~word_bit 0 w2 ==> ~word_bit
-  0 (w1 + --(n2w 1) * w2)`)
+    `!w1 (w2:'a word). ~(word_bit 0 w1) /\ ~(word_bit 0 w2) ==>
+  ~(word_bit 0 (w1 + --(n2w 1) * w2))`)
   CHEAT_TAC;;
 
 let assign_Sub = cake_theorem "assign_Sub"
@@ -2842,7 +2832,7 @@ let assign_Sub = cake_theorem "assign_Sub"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2883,7 +2873,7 @@ let assign_Mult = cake_theorem "assign_Mult"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2902,8 +2892,8 @@ let state_rel_Number_IMP = cake_theorem "state_rel_Number_IMP"
       sptree_lookup (adjust_var a1) (state_locals t) = SOME v1 ==>
       (?w1. (v1 = wordLang_Word w1) /\
            (~(word_bit 0 w1) <=> small_int (:'a) i1) /\
-           (~(word_msb w1) /\ ~(word_bit 0 w1) ==> 0 <= i1 /\ w1
-             = n2w (4 * num_of_int i1)))`)
+           (~(word_msb w1) /\ ~(word_bit 0 w1) ==> (&0) <= i1 /\
+             w1 = n2w (4 * num_of_int i1)))`)
   CHEAT_TAC;;
 
 let option_le_add_comm = cake_theorem "option_le_add_comm"
@@ -2934,7 +2924,7 @@ let assign_Div = cake_theorem "assign_Div"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2957,7 +2947,7 @@ let assign_Mod = cake_theorem "assign_Mod"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -2980,7 +2970,7 @@ let assign_LengthByte = cake_theorem "assign_LengthByte"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3003,7 +2993,7 @@ let assign_Length = cake_theorem "assign_Length"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3026,7 +3016,7 @@ let assign_LengthBlock = cake_theorem "assign_LengthBlock"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3075,7 +3065,7 @@ let data_to_word_assignProof_assign_BoundsCheckBlock =
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -3121,7 +3111,7 @@ let data_to_word_assignProof_assign_BoundsCheckArray =
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3173,7 +3163,7 @@ let data_to_word_assignProof_assign_BoundsCheckByte =
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3209,7 +3199,7 @@ let assign_LessSmallConst =
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3232,7 +3222,7 @@ let assign_BoolNot = cake_theorem "assign_BoolNot[allow_rebind]"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3255,7 +3245,7 @@ let assign_BoolTest = cake_theorem "assign_BoolTest[allow_rebind]"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3278,7 +3268,7 @@ let assign_WordTest = cake_theorem "assign_WordTest[allow_rebind]"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3333,7 +3323,7 @@ let compare_code_thm = cake_theorem "Compare_code_thm"
       dm = wordSem_state_mdomain (t:('a,'c,'ffi)wordSem_state) /\
       m = wordSem_state_memory t /\
       st = wordSem_state_store t /\
-      (~word_bit 0 v1 ==> word_bit 0 v2) /\
+      (~(word_bit 0 v1) ==> word_bit 0 v2) /\
       shift_length c < dimindex (:'a) /\
       sptree_lookup Compare1_location (state_code t) = SOME
         (4,Compare1_code) /\
@@ -3380,16 +3370,16 @@ let word_cmp_not_NotLess_word_cmp_res =
   cake_theorem "word_cmp_not_NotLess_word_cmp_res"
   (fun () ->
     `!i i'. good_dimindex (:'a) ==>
-             (~word_cmp asm_NotLess ((n2w 1):'a word)
-               (word_cmp_res i i') <=> (i' < i))`)
+             (~(word_cmp asm_NotLess ((n2w 1):'a word)
+               (word_cmp_res i i')) <=> (i' < i))`)
   CHEAT_TAC;;
 
 let not_word_cmp_Less_word_cmp_res =
   cake_theorem "not_word_cmp_Less_word_cmp_res"
   (fun () ->
     `!i i'. good_dimindex (:'a) ==>
-             (~word_cmp Less (word_cmp_res i i') ((n2w 1):'a
-               word) <=> (i' <= i))`)
+             (~(word_cmp Less (word_cmp_res i i') ((n2w 1):'a
+               word)) <=> (i' <= i))`)
   CHEAT_TAC;;
 
 let IMP_spt_eq = cake_theorem "IMP_spt_eq"
@@ -3429,7 +3419,7 @@ let assign_Less = cake_theorem "assign_Less"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3452,7 +3442,7 @@ let assign_LessEq = cake_theorem "assign_LessEq"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3480,7 +3470,7 @@ let MemEqList_thm = cake_theorem "MemEqList_thm[local]"
                                 I)) (state_locals t))) t))`)
   CHEAT_TAC;;
 (* HOL4 data_to_word_assignProofScript.sml:12206-12207: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: MemEqList_thm *)
 
 let assign_EqualConst = cake_theorem "assign_EqualConst"
   (fun () ->
@@ -3499,7 +3489,7 @@ let assign_EqualConst = cake_theorem "assign_EqualConst"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3514,8 +3504,7 @@ let option_map_mult_suc = cake_theorem "option_map_mult_suc"
 
 let eq_code_stack_max_sub1 = cake_theorem "eq_code_stack_max_sub1"
   (fun () ->
-    `~(
-       l = 0) ==>
+    `~(l = 0) ==>
        eq_code_stack_max l tsz =
        OPTION_MAP2 ((+))
          (OPTION_MAP2 MAX
@@ -3675,7 +3664,7 @@ let assign_Equal = cake_theorem "assign_Equal"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3698,7 +3687,7 @@ let assign_WordOpW8 = cake_theorem "assign_WordOpW8"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3752,9 +3741,9 @@ let evaluate_WordOp64_on_32 = cake_theorem "evaluate_WordOp64_on_32"
 let IMP_encode_header_NOT_NONE =
   cake_theorem "IMP_encode_header_NOT_NONE"
   (fun () ->
-    `dimindex (:'a) = 32 /\ 1 < data_to_word_config_len_size c /\ 1 < 30
-  - data_to_word_config_len_size c ==> ~(
-     encode_header c 3 2 = (NONE:('a word) option))`)
+    `dimindex (:'a) = 32 /\ 1 < data_to_word_config_len_size c /\ 1 <
+  30 - data_to_word_config_len_size c ==> ~(encode_header c 3 2 =
+  (NONE:('a word) option))`)
   CHEAT_TAC;;
 
 let assign_WordOpW64 = cake_theorem "assign_WordOpW64"
@@ -3774,7 +3763,7 @@ let assign_WordOpW64 = cake_theorem "assign_WordOpW64"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3797,7 +3786,7 @@ let assign_WordShiftW8 = cake_theorem "assign_WordShiftW8"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3843,7 +3832,7 @@ let assign_WordShiftW64 = cake_theorem "assign_WordShiftW64"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3907,7 +3896,7 @@ let assign_FP_cmp = cake_theorem "assign_FP_cmp"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3930,7 +3919,7 @@ let assign_FP_top = cake_theorem "assign_FP_top"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3953,7 +3942,7 @@ let assign_FP_bop = cake_theorem "assign_FP_bop"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3976,7 +3965,7 @@ let assign_FP_uop = cake_theorem "assign_FP_uop"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -3999,7 +3988,7 @@ let assign_Label = cake_theorem "assign_Label"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4041,7 +4030,7 @@ let assign_Ref = cake_theorem "assign_Ref"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4064,7 +4053,7 @@ let assign_Update = cake_theorem "assign_Update"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4087,7 +4076,7 @@ let assign_El = cake_theorem "assign_El"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4110,7 +4099,7 @@ let assign_ElemAt = cake_theorem "assign_ElemAt"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4133,7 +4122,7 @@ let assign_UpdateByte = cake_theorem "assign_UpdateByte"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4156,7 +4145,7 @@ let assign_DerefByte = cake_theorem "assign_DerefByte"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4179,7 +4168,7 @@ let assign_Const = cake_theorem "assign_Const"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4202,7 +4191,7 @@ let assign_GlobalsPtr = cake_theorem "assign_GlobalsPtr"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4225,7 +4214,7 @@ let assign_Global = cake_theorem "assign_Global"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4248,7 +4237,7 @@ let assign_SetGlobal = cake_theorem "assign_SetGlobal"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4271,7 +4260,7 @@ let assign_SetGlobalsPtr = cake_theorem "assign_SetGlobalsPtr"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4318,7 +4307,8 @@ let MemCopy_thm = cake_theorem "MemCopy_thm"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_assignProofScript.sml:15317-15319: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression:
+   assign_ConsExtend_expand *)
 
 let data_to_word_assignProof_get_vars_IMP_domain =
   cake_theorem "get_vars_IMP_domain"
@@ -4394,12 +4384,12 @@ let memory_rel_store_list_to_unused =
 
 let get_vars_delete_lemma = cake_theorem "get_vars_delete_lemma"
   (fun () ->
-    `!t7. get_vars (MAP adjust_var' t7) (state_locals_fupd (K
+    `!t7. get_vars (MAP adjust_var t7) (state_locals_fupd (K
                  (insert 9 x9
                    (insert 7 x7
                       (insert 5 x5
                          (insert 1 x1 (state_locals s1)))))) s1) =
-        get_vars (MAP adjust_var' t7) s1`)
+        get_vars (MAP adjust_var t7) s1`)
   CHEAT_TAC;;
 
 let INTRO_IS_SOME = cake_theorem "INTRO_IS_SOME"
@@ -4435,7 +4425,7 @@ let IMP_memcopy_lemma = cake_theorem "IMP_memcopy_lemma"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_assignProofScript.sml:15487-15545: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: IMP_memcopy *)
 
 let data_to_word_assignProof_cut_envs_adjust_sets_insert_ODD =
   cake_theorem "cut_envs_adjust_sets_insert_ODD"
@@ -4468,7 +4458,7 @@ let assign_ConsExtend = cake_theorem "assign_ConsExtend"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
@@ -4491,7 +4481,7 @@ let assign_Cons = cake_theorem "assign_Cons"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4514,7 +4504,7 @@ let assign_FFI = cake_theorem "assign_FFI"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4532,9 +4522,9 @@ let assign_FFI_final = cake_theorem "assign_FFI_final"
      (?q r.
        evaluate (FST (assign c n l dest (FFI i) args names_opt),t)
          = (q,r) /\
-       option_le (state_stack_max r) (state_stack_max s) /\ ~(
-       q = SOME wordSem_NotEnoughSpace) /\ state_ffi r =
-         state_ffi t /\ q = SOME (wordSem_FinalFFI f))`)
+       option_le (state_stack_max r) (state_stack_max s) /\ ~(q =
+         SOME wordSem_NotEnoughSpace) /\ state_ffi r = state_ffi t /\
+         q = SOME (wordSem_FinalFFI f))`)
   CHEAT_TAC;;
 
 let getWords_acc = cake_theorem "getWords_acc"
@@ -4584,7 +4574,7 @@ let evaluate_StoreAnyConsts = cake_theorem "evaluate_StoreAnyConsts"
                                 (wordSem_state_memory_fupd (K m1) s)))
                                 /\
          sptree_lookup r1 ll = SOME (word_cond_add c a w) /\
-         (!n. ~MEM n [r1; r2; r3] ==> sptree_lookup n ll =
+         (!n. ~(MEM n [r1; r2; r3]) ==> sptree_lookup n ll =
            sptree_lookup n (state_locals s)))`)
   CHEAT_TAC;;
 
@@ -4643,7 +4633,7 @@ let assign_Build = cake_theorem "assign_Build"
         r = state_ffi t /\ option_le (state_stack_max r)
           (state_stack_max s2) /\
         (~(data_to_word_config_gc_kind c = None) ==>
-          ~dataSem_state_safe_for_space s2)) /\
+          ~(dataSem_state_safe_for_space s2))) /\
        (~(q = SOME wordSem_NotEnoughSpace) ==>
         state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
           NONE)))`)
@@ -4652,11 +4642,13 @@ let assign_Build = cake_theorem "assign_Build"
 
 (* HOL4 data_to_word_assignProofScript.sml:16926: ML code, not ported *)
 
-(* HOL4 data_to_word_assignProofScript.sml:16928-16929: a theorem
-   that HOL4 states as the value of an ML expression *)
+let join_lemma = cake_theorem "join_lemma[local]"
+  (fun () ->
+    `(b1 ==> x) /\ (b2 ==> x) ==> (b1 \/ b2 ==> x)`)
+  CHEAT_TAC;;
 
 (* HOL4 data_to_word_assignProofScript.sml:16931-16933: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: imp_assign *)
 
 let assign_thm = cake_theorem "assign_thm"
   (fun () ->
@@ -4674,8 +4666,10 @@ let assign_thm = cake_theorem "assign_thm"
          r = state_ffi t /\ option_le (state_stack_max r)
            (state_stack_max s2) /\
          (~(data_to_word_config_gc_kind c = None) ==>
-           ~dataSem_state_safe_for_space s2)) /\
+           ~(dataSem_state_safe_for_space s2))) /\
         (~(q = SOME wordSem_NotEnoughSpace) ==>
          state_rel c l1 l2 (set_var dest v s2) r NONE locs /\ q =
            NONE)))`)
   CHEAT_TAC;;
+
+cake_hide [];;

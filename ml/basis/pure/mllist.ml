@@ -54,8 +54,9 @@ let mergetail_merge = cake_theorem "mergetail_merge"
   (fun () ->
     `!negate' R xs ys acc.
         merge_tail negate' R xs ys acc =
-        (if negate' then REVERSE (mergesort_merge (\x y. ~R x y)
-          xs ys) ++ acc else REVERSE (mergesort_merge R xs ys) ++ acc)`)
+        (if negate' then REVERSE (mergesort_merge (\x y. ~(R x
+          y)) xs ys) ++ acc else REVERSE (mergesort_merge R xs ys) ++
+          acc)`)
   CHEAT_TAC;;
 
 let merge_tail_acc = cake_theorem "merge_tail_acc"
@@ -183,7 +184,7 @@ let mapPartial_thm = cake_theorem "mapPartial_thm"
 
 let index_find_thm = cake_theorem "index_find_thm"
   (fun () ->
-    `!x y. OPTION_MAP SND' (INDEX_FIND x f l) = OPTION_MAP SND'
+    `!x y. OPTION_MAP SND (INDEX_FIND x f l) = OPTION_MAP SND
   (INDEX_FIND y f l)`)
   CHEAT_TAC;;
 
@@ -325,10 +326,10 @@ let LENGTH_AUX_def = cake_define_list
    `LENGTH_AUX (x :: xs) (n:num) = ((LENGTH_AUX xs (n + 1)):num)`];;
 
 (* HOL4 mllistScript.sml:572-575: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LENGTH_AUX_THM *)
 
 (* HOL4 mllistScript.sml:577-578: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: list_compare_def *)
 
 (* tail-recursive MAP *)
 
@@ -387,3 +388,5 @@ let flat_rev_thm = cake_theorem "flat_rev_thm"
   (fun () ->
     `flat_rev xs = REVERSE (FLAT xs)`)
   CHEAT_TAC;;
+
+cake_hide [];;

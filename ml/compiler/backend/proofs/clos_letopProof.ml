@@ -91,7 +91,7 @@ let v_rel = cake_inductive
 hol4_overload "v_rel" "clos_letopProof_v_rel";;
 
 (* HOL4 clos_letopProofScript.sml:76-88: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: v_rel_simps *)
 
 (* state relation *)
 
@@ -187,7 +187,8 @@ let var_list_IMP_LENGTH = cake_theorem "var_list_IMP_LENGTH"
     `!n xs ys. clos_letop_var_list n xs ys ==> LENGTH xs = LENGTH ys`)
   CHEAT_TAC;;
 
-let var_list_IMP_evaluate = cake_theorem "var_list_IMP_evaluate[local]"
+let clos_letopProof_var_list_IMP_evaluate =
+  cake_theorem "var_list_IMP_evaluate[local]"
   (fun () ->
     `!a2 a1 xs (ys:closLang_exp list) (s:('c,'ffi)closSem_state) env.
        clos_letop_var_list (LENGTH a1) xs ys /\ LENGTH ys = LENGTH
@@ -368,10 +369,9 @@ let let_op_correct = cake_theorem "let_op_correct"
 
 (* preservation of observational semantics *)
 
-let semantics_let_op = cake_theorem "semantics_let_op"
+let clos_letopProof_semantics_let_op = cake_theorem "semantics_let_op"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
           co (pure_cc clos_letop_compile_inc cc) xs = ffi_Fail) ==>
         (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
         closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
@@ -432,7 +432,7 @@ let let_op_obeys_max_app = cake_theorem "let_op_obeys_max_app"
 
 let let_op_no_Labels = cake_theorem "let_op_no_Labels"
   (fun () ->
-    `!es. EVERY no_Labels' (clos_letop_let_op es) <=> EVERY no_Labels'
+    `!es. EVERY no_Labels (clos_letop_let_op es) <=> EVERY no_Labels
   es`)
   CHEAT_TAC;;
 
@@ -456,6 +456,6 @@ let clos_letopProof_var_list_code_labels_imp =
 
 let let_op_get_code_labels = cake_theorem "let_op_get_code_labels[simp]"
   (fun () ->
-    `!es. MAP get_code_labels' (clos_letop_let_op es) = MAP
-  get_code_labels' es`)
+    `!es. MAP closProps_get_code_labels (clos_letop_let_op es) = MAP
+  closProps_get_code_labels es`)
   CHEAT_TAC;;

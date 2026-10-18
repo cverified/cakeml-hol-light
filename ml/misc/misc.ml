@@ -52,8 +52,10 @@ let opt_bind_def = cake_define
 (* TODO: move/categorize *)
 
 (* theorem behind impl_tac *)
-(* HOL4 miscScript.sml:54-55: a theorem that HOL4 states as the value
-   of an ML expression *)
+let IMP_IMP = cake_theorem "IMP_IMP"
+  (fun () ->
+    `(P /\ (Q ==> R)) ==> ((P ==> Q) ==> R)`)
+  CHEAT_TAC;;
 
 (* used elsewhere in cakeml *)
 let SUBSET_IMP = cake_theorem "SUBSET_IMP"
@@ -143,7 +145,7 @@ let CARD_IMAGE_EQ_BIJ = cake_theorem "CARD_IMAGE_EQ_BIJ"
 *)
 let DISJOINT_IMAGE_SUC = cake_theorem "DISJOINT_IMAGE_SUC"
   (fun () ->
-    `DISJOINT (IMAGE SUC' x) (IMAGE SUC' y) <=> DISJOINT x y`)
+    `DISJOINT (IMAGE SUC x) (IMAGE SUC y) <=> DISJOINT x y`)
   CHEAT_TAC;;
 
 (* disgusting and used only in clos_callProof *)
@@ -157,17 +159,17 @@ let IMAGE_SUC_SUBSET_UNION = cake_theorem "IMAGE_SUC_SUBSET_UNION"
    expands *)
 
 (* HOL4 miscScript.sml:184-185: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LLOOKUP_def *)
 (* HOL4 miscScript.sml:186-187: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LLOOKUP_EQ_EL *)
 (* HOL4 miscScript.sml:188-189: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LLOOKUP_THM *)
 (* HOL4 miscScript.sml:190-191: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LLOOKUP_DROP *)
 (* HOL4 miscScript.sml:192-193: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LLOOKUP_TAKE_IMP *)
 (* HOL4 miscScript.sml:194-195: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LLOOKUP_LUPDATE *)
 
 (* app_list stuff should be in an app_list theory *)
 let app_list_INDUCT,app_list_RECURSION = define_datatype
@@ -265,7 +267,7 @@ let LIST_REL_MEM = cake_theorem "LIST_REL_MEM"
 (* only used in theorem immediately below *)
 let LIST_REL_GENLIST_I = cake_theorem "LIST_REL_GENLIST_I"
   (fun () ->
-    `!xs. LIST_REL P (GENLIST I' (LENGTH xs)) xs =
+    `!xs. LIST_REL P (GENLIST I (LENGTH xs)) xs =
            (!n. n < LENGTH xs ==> P n (EL n xs))`)
   CHEAT_TAC;;
 
@@ -287,8 +289,7 @@ let LIST_REL_lookup_fromList_MAP =
 (* only used in examples/stackProg; oriented badly *)
 let LIST_REL_FRONT_LAST = cake_theorem "LIST_REL_FRONT_LAST"
   (fun () ->
-    `~(
-        l1 = []) /\ ~(l2 = []) ==>
+    `~(l1 = []) /\ ~(l2 = []) ==>
          (LIST_REL A l1 l2 <=>
           LIST_REL A (FRONT l1) (FRONT l2) /\ A (LAST l1) (LAST
             l2))`)
@@ -395,12 +396,12 @@ let MEM_ZIP2 = cake_theorem "MEM_ZIP2"
 
 let ZIP_MAP_FST_SND_EQ = cake_theorem "ZIP_MAP_FST_SND_EQ"
   (fun () ->
-    `!ls. ZIP (MAP FST' ls) (MAP SND' ls) = ls`)
+    `!ls. ZIP (MAP FST ls) (MAP SND ls) = ls`)
   CHEAT_TAC;;
 
 let MAP_FST_I_PAIR_MAP = cake_theorem "MAP_FST_I_PAIR_MAP[simp]"
   (fun () ->
-    `!xs. MAP FST' (MAP (I' ## f) xs) = MAP FST' xs`)
+    `!xs. MAP FST (MAP (I ## f) xs) = MAP FST xs`)
   CHEAT_TAC;;
 
 let EVERY_FST_SND = cake_theorem "EVERY_FST_SND"
@@ -419,8 +420,7 @@ let tlookup_def = cake_define
 
 let tlookup_id = cake_theorem "tlookup_id"
   (fun () ->
-    `~(
-     x IN domain names) ==> tlookup names x = x`)
+    `~(x IN domain names) ==> tlookup names x = x`)
   CHEAT_TAC;;
 
 let tlookup_bij_suff = cake_theorem "tlookup_bij_suff"
@@ -431,7 +431,7 @@ let tlookup_bij_suff = cake_theorem "tlookup_bij_suff"
 
 let tlookup_bij_iff = cake_theorem "tlookup_bij_iff"
   (fun () ->
-    `BIJ (tlookup names) UNIV' UNIV' <=>
+    `BIJ (tlookup names) UNIV UNIV <=>
      set_of_list (toList names) = domain names`)
   CHEAT_TAC;;
 
@@ -473,7 +473,7 @@ let MAX_LIST_max = cake_theorem "MAX_LIST_max"
 
 let FOLDR_MAX_0_MAX_LIST = cake_theorem "FOLDR_MAX_0_MAX_LIST"
   (fun () ->
-    `!ls. ITLIST MAX' ls 0 = MAX_LIST ls`)
+    `!ls. ITLIST MAX ls 0 = MAX_LIST ls`)
   CHEAT_TAC;;
 
 (* never used *)
@@ -501,7 +501,7 @@ let ALOOKUP_ZIP_FAIL = cake_theorem "ALOOKUP_ZIP_FAIL"
   (fun () ->
     `!A B x.
      LENGTH A = LENGTH B ==>
-     (ALOOKUP (ZIP A B) x = NONE <=> ~MEM x A)`)
+     (ALOOKUP (ZIP A B) x = NONE <=> ~(MEM x A))`)
   CHEAT_TAC;;
 
 let MEM_ALOOKUP = cake_theorem "MEM_ALOOKUP"
@@ -545,13 +545,13 @@ let anub_eq_nil = cake_theorem "anub_eq_nil"
 let EVERY_anub_suff = cake_theorem "EVERY_anub_suff"
   (fun () ->
     `!ls acc.
-      (!x. ~MEM x acc ==> (match ALOOKUP ls x with SOME v -> P
+      (!x. ~(MEM x acc) ==> (match ALOOKUP ls x with SOME v -> P
         (x,v) | NONE -> T)) ==> EVERY P (anub ls acc)`)
   CHEAT_TAC;;
 
 let anub_notin_acc = cake_theorem "anub_notin_acc"
   (fun () ->
-    `!ls acc. MEM x acc ==> ~MEM x (MAP FST (anub ls acc))`)
+    `!ls acc. MEM x acc ==> ~(MEM x (MAP FST (anub ls acc)))`)
   CHEAT_TAC;;
 
 let anub_tl_anub = cake_theorem "anub_tl_anub"
@@ -580,7 +580,7 @@ new_type_abbrev("misc_num_set",`: 1 spt`);;
 
 let toAList_domain = cake_theorem "toAList_domain"
   (fun () ->
-    `!x. MEM x (MAP FST' (toAList t)) <=> x IN domain t`)
+    `!x. MEM x (MAP FST (toAList t)) <=> x IN domain t`)
   CHEAT_TAC;;
 
 let domain_nat_set_from_list =
@@ -629,8 +629,8 @@ let C_BIT_11 = cake_theorem "C_BIT_11"
 let BIT_num_from_bin_list_leading =
   cake_theorem "BIT_num_from_bin_list_leading"
   (fun () ->
-    `!l x. EVERY ((>) 2) l /\ LENGTH l <= x ==> ~BIT x
-  (num_from_bin_list l)`)
+    `!l x. EVERY ((>) 2) l /\ LENGTH l <= x ==> ~(BIT x
+  (num_from_bin_list l))`)
   CHEAT_TAC;;
 
 let least_from_def = cake_define
@@ -657,7 +657,7 @@ let FUNPOW_mono = cake_theorem "FUNPOW_mono"
 
 let FUNPOW_SUC_PLUS = cake_theorem "FUNPOW_SUC_PLUS"
   (fun () ->
-    `!n a. FUNPOW SUC' n = (+) n`)
+    `!n a. FUNPOW SUC n = (+) n`)
   CHEAT_TAC;;
 
 (* used just once; better as
@@ -696,7 +696,7 @@ let INDEX_FIND_CONS_EQ_SOME = cake_theorem "INDEX_FIND_CONS_EQ_SOME"
   (fun () ->
     `(INDEX_FIND n f (x :: xs) = SOME y) <=>
       (f x /\ (y = (n,x))) \/
-      (~f x /\ (INDEX_FIND (n + 1) f xs = SOME y))`)
+      (~(f x) /\ (INDEX_FIND (n + 1) f xs = SOME y))`)
   CHEAT_TAC;;
 
 let find_index_INDEX_FIND = cake_theorem "find_index_INDEX_FIND"
@@ -712,7 +712,7 @@ let find_index_INDEX_OF = cake_theorem "find_index_INDEX_OF"
 
 let find_index_NOT_MEM = cake_theorem "find_index_NOT_MEM"
   (fun () ->
-    `!ls x n. ~MEM x ls = (find_index x ls n = NONE)`)
+    `!ls x n. ~(MEM x ls) = (find_index x ls n = NONE)`)
   CHEAT_TAC;;
 
 let find_index_MEM = cake_theorem "find_index_MEM"
@@ -738,7 +738,8 @@ let ALOOKUP_find_index_NONE = cake_theorem "ALOOKUP_find_index_NONE"
     `(ALOOKUP env k = NONE) ==> (find_index k (MAP FST env) m = NONE)`)
   CHEAT_TAC;;
 
-(* HOL4 miscScript.sml:1138-1146: a proof *)
+(* HOL4 miscScript.sml:1138-1146: a theorem that HOL4 states as the
+   value of an ML expression: ALOOKUP_find_index_SOME *)
 
 let ALOOKUP_find_index_SOME = cake_theorem "ALOOKUP_find_index_SOME"
   (fun () ->
@@ -1046,7 +1047,7 @@ let I_PERMUTES = cake_theorem "I_PERMUTES[simp]"
 (* never used *)
 let INJ_I = cake_theorem "INJ_I"
   (fun () ->
-    `!s t. INJ I' s t <=> s SUBSET t`)
+    `!s t. INJ I s t <=> s SUBSET t`)
   CHEAT_TAC;;
 
 
@@ -1068,7 +1069,7 @@ let FUN_FMAP_FAPPLY_FEMPTY_FAPPLY =
 
 let NOT_MEM_FLOOKUP_ZIP = cake_theorem "NOT_MEM_FLOOKUP_ZIP"
   (fun () ->
-    `!ys xs zs. ~MEM n ys ==> FLOOKUP (xs |++ ZIP ys zs) n = FLOOKUP
+    `!ys xs zs. ~(MEM n ys) ==> FLOOKUP (xs |++ ZIP ys zs) n = FLOOKUP
   xs n`)
   CHEAT_TAC;;
 
@@ -1084,7 +1085,7 @@ let LESS_1 = cake_theorem "LESS_1[simp]"
 
 let map_fst = cake_theorem "map_fst"
   (fun () ->
-    `!l f. MAP FST' (MAP (\(x,y). (x,f y)) l) = MAP FST' l`)
+    `!l f. MAP FST (MAP (\(x,y). (x,f y)) l) = MAP FST l`)
   CHEAT_TAC;;
 
 (* use INJ_MAP_EQ_IFF and INJ_DEF *)
@@ -1112,7 +1113,7 @@ let LASTN_LEMMA = cake_theorem "LASTN_LEMMA"
   CHEAT_TAC;;
 
 (* HOL4 miscScript.sml:1779-1782: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: LASTN_TL *)
 
 let LASTN_LENGTH_LESS_EQ = cake_theorem "LASTN_LENGTH_LESS_EQ"
   (fun () ->
@@ -1137,8 +1138,11 @@ let MAP_EQ_MAP_IMP = cake_theorem "MAP_EQ_MAP_IMP"
         (!x y. MEM x xs /\ MEM y ys /\ (f x = f y) ==> (x = y)) ==>
         (MAP f xs = MAP f ys) ==> (xs = ys)`)
   CHEAT_TAC;;
-(* HOL4 miscScript.sml:1817-1821: code that the source has in a
-   comment *)
+(*
+NB: this is weaker:
+Theorem MAP_EQ_MAP_IMP =
+  INJ_MAP_EQ |> SIMP_RULE (srw_ss()) [INJ_DEF]
+*)
 
 let INJ_MAP_EQ_2 = cake_theorem "INJ_MAP_EQ_2"
   (fun () ->
@@ -1289,7 +1293,7 @@ let MEM_enumerate_IMP = cake_theorem "MEM_enumerate_IMP"
 
 let MAP_FST_enumerate = cake_theorem "MAP_FST_enumerate"
   (fun () ->
-    `MAP FST' (enumerate k ls) = GENLIST ((+) k) (LENGTH ls)`)
+    `MAP FST (enumerate k ls) = GENLIST ((+) k) (LENGTH ls)`)
   CHEAT_TAC;;
 
 let ALL_DISTINCT_MAP_FST_enumerate =
@@ -1308,7 +1312,7 @@ let ALOOKUP_enumerate = cake_theorem "ALOOKUP_enumerate"
 
 let SUM_MAP_LENGTH_REPLICATE = cake_theorem "SUM_MAP_LENGTH_REPLICATE"
   (fun () ->
-    `!n ls. SUM (MAP LENGTH' (REPLICATE n ls)) = n * LENGTH' ls`)
+    `!n ls. SUM (MAP LENGTH (REPLICATE n ls)) = n * LENGTH ls`)
   CHEAT_TAC;;
 
 let SUM_MAP_COUNT_LIST = cake_theorem "SUM_MAP_COUNT_LIST"
@@ -1367,7 +1371,7 @@ let FLAT_MAP_NIL = cake_theorem "FLAT_MAP_NIL"
 
 let UPDATE_LIST_NOT_MEM = cake_theorem "UPDATE_LIST_NOT_MEM"
   (fun () ->
-    `!ls f x. ~MEM x (MAP FST ls) ==> (UPDATE_LIST f ls) x = f x`)
+    `!ls f x. ~(MEM x (MAP FST ls)) ==> (UPDATE_LIST f ls) x = f x`)
   CHEAT_TAC;;
 
 let MAP_ZIP_UPDATE_LIST_ALL_DISTINCT_same =
@@ -1434,7 +1438,7 @@ let UNCURRY_eq_pair = cake_theorem "UNCURRY_eq_pair"
 
 let OLEAST_SOME_IMP = cake_theorem "OLEAST_SOME_IMP"
   (fun () ->
-    `OLEAST P = SOME i ==> P i /\ (!n. n < i ==> ~P n)`)
+    `OLEAST P = SOME i ==> P i /\ (!n. n < i ==> ~(P n))`)
   CHEAT_TAC;;
 
 let EXP2_EVEN = cake_theorem "EXP2_EVEN"
@@ -1457,7 +1461,7 @@ let ALL_DISTINCT_FLAT = cake_theorem "ALL_DISTINCT_FLAT"
     `!l. ALL_DISTINCT (FLAT l) <=>
           (!l0. MEM l0 l ==> ALL_DISTINCT l0) /\
           (!i j. i < j /\ j < LENGTH l ==>
-                 (!e. MEM e (EL i l) ==> ~MEM e (EL j l)))`)
+                 (!e. MEM e (EL i l) ==> ~(MEM e (EL j l))))`)
   CHEAT_TAC;;
 
 let ALL_DISTINCT_FLAT_EVERY = cake_theorem "ALL_DISTINCT_FLAT_EVERY"
@@ -1623,8 +1627,7 @@ let ALOOKUP_EXISTS_IFF = cake_theorem "ALOOKUP_EXISTS_IFF"
 
 let LUPDATE_commutes = cake_theorem "LUPDATE_commutes"
   (fun () ->
-    `!m n e1 e2 l. ~(
-      m = n) ==>
+    `!m n e1 e2 l. ~(m = n) ==>
       LUPDATE e1 m (LUPDATE e2 n l) = LUPDATE e2 n (LUPDATE e1 m
         l)`)
   CHEAT_TAC;;
@@ -1669,11 +1672,11 @@ let findi_APPEND = cake_theorem "findi_APPEND"
 
 let NOT_MEM_findi_IFF = cake_theorem "NOT_MEM_findi_IFF"
   (fun () ->
-    `~MEM e l <=> indexedLists_findi e l = LENGTH l`)
+    `~(MEM e l) <=> indexedLists_findi e l = LENGTH l`)
   CHEAT_TAC;;
 
 (* HOL4 miscScript.sml:2585-2586: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: NOT_MEM_findi *)
 
 let ORD_eq_0 = cake_theorem "ORD_eq_0"
   (fun () ->
@@ -1692,7 +1695,7 @@ let DROP_LUPDATE = cake_theorem "DROP_LUPDATE"
   CHEAT_TAC;;
 
 (* HOL4 miscScript.sml:2608-2610: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: w2n_lt_256 *)
 
 let CHR_w2n_n2w_ORD = cake_theorem "CHR_w2n_n2w_ORD"
   (fun () ->
@@ -1754,8 +1757,8 @@ let shift_right_rwt = cake_theorem "shift_right_rwt"
 let arith_shift_right_def = cake_define
   `arith_shift_right (a:'a word) n =
    (if n = 0 then a else if (a = (n2w 0)) \/ n > dimindex (:'a) /\
-     ~word_msb a then (n2w 0) else if (a = --(n2w 1)) \/ n > dimindex
-     (:'a) /\ word_msb a then --(n2w 1) else if n > 32 then
+     ~(word_msb a) then (n2w 0) else if (a = --(n2w 1)) \/ n >
+     dimindex (:'a) /\ word_msb a then --(n2w 1) else if n > 32 then
      arith_shift_right (a >> 32) (n - 32) else if n > 16 then
      arith_shift_right (a >> 16) (n - 16) else if n > 8 then
      arith_shift_right (a >> 8) (n - 8) else arith_shift_right (a >>
@@ -1809,8 +1812,7 @@ let LENGTH_FIELDS = cake_theorem "LENGTH_FIELDS"
 
 let FIELDS_NEQ_NIL = cake_theorem "FIELDS_NEQ_NIL[simp]"
   (fun () ->
-    `~(
-        FIELDS P ls = [])`)
+    `~(FIELDS P ls = [])`)
   CHEAT_TAC;;
 
 let CONCAT_FIELDS = cake_theorem "CONCAT_FIELDS"
@@ -1860,7 +1862,7 @@ let splitlines_next = cake_theorem "splitlines_next"
   CHEAT_TAC;;
 
 (* HOL4 miscScript.sml:2935: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: splitlines_nil *)
 
 let splitlines_eq_nil = cake_theorem "splitlines_eq_nil[simp]"
   (fun () ->
@@ -1904,11 +1906,11 @@ let plus_0_I = cake_theorem "plus_0_I[simp]"
 
 (* used once *)
 (* HOL4 miscScript.sml:3037-3038: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: SUM_COUNT_LIST *)
 
 let OPTION_MAP_I = cake_theorem "OPTION_MAP_I[simp]"
   (fun () ->
-    `OPTION_MAP I' x = x`)
+    `OPTION_MAP I x = x`)
   CHEAT_TAC;;
 
 (* should be made an iff in conclusion *)
@@ -2054,7 +2056,7 @@ let OPTION_CHOICE_EQUALS_OPTION =
   CHEAT_TAC;;
 
 (* HOL4 miscScript.sml:3210-3214: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: option_eq_some *)
 
 let ALL_DISTINCT_alist_to_fmap_REVERSE =
   cake_theorem "ALL_DISTINCT_alist_to_fmap_REVERSE"
@@ -2090,7 +2092,7 @@ let SUM_MAP_K = cake_theorem "SUM_MAP_K"
 
 let LAST_FLAT = cake_theorem "LAST_FLAT"
   (fun () ->
-    `!ls. ~NULL (FLAT ls) ==> (LAST (FLAT ls) = LAST (LAST (FILTER
+    `!ls. ~(NULL (FLAT ls)) ==> (LAST (FLAT ls) = LAST (LAST (FILTER
   ((~) o NULL) ls)))`)
   CHEAT_TAC;;
 
@@ -2171,7 +2173,7 @@ let LESS_LENGTH = cake_theorem "LESS_LENGTH"
   CHEAT_TAC;;
 
 (* HOL4 miscScript.sml:3372-3373: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: IN_EVEN *)
 
 let FOLDL_OPTION_CHOICE_EQ_SOME_IMP_MEM =
   cake_theorem "FOLDL_OPTION_CHOICE_EQ_SOME_IMP_MEM"
@@ -2183,7 +2185,7 @@ let BAG_ALL_DISTINCT_FOLDR_BAG_UNION =
   cake_theorem "BAG_ALL_DISTINCT_FOLDR_BAG_UNION"
   (fun () ->
     `!ls b0.
-     BAG_ALL_DISTINCT ((BAG_UNION) FOLDR' (b0 ls)) <=>
+     BAG_ALL_DISTINCT ((BAG_UNION) FOLDR (b0 ls)) <=>
      BAG_ALL_DISTINCT b0 /\
      (!n. n < LENGTH ls ==>
           BAG_DISJOINT (EL n ls) b0 /\ BAG_ALL_DISTINCT (EL n ls)
@@ -2355,8 +2357,7 @@ let MULT_DIV_MULT_LEMMA = cake_theorem "MULT_DIV_MULT_LEMMA"
 
 let IMP_MULT_DIV_LESS = cake_theorem "IMP_MULT_DIV_LESS"
   (fun () ->
-    `~(
-        m = 0) /\ d < k ==> m * (d DIV m) < k`)
+    `~(m = 0) /\ d < k ==> m * (d DIV m) < k`)
   CHEAT_TAC;;
 
 let DIV_LESS_DIV = cake_theorem "DIV_LESS_DIV"
@@ -2403,7 +2404,7 @@ let steps_rel_LRC = cake_theorem "steps_rel_LRC"
 
 let LAST_MAP_SND_steps_FOLDL = cake_theorem "LAST_MAP_SND_steps_FOLDL"
   (fun () ->
-    `!f x ls. LAST (x :: MAP SND' (steps f x ls)) = FOLDL f x ls`)
+    `!f x ls. LAST (x :: MAP SND (steps f x ls)) = FOLDL f x ls`)
   CHEAT_TAC;;
 
 let all_words_def = cake_define_list
@@ -2634,8 +2635,7 @@ let range_delete = cake_theorem "range_delete"
 
 let range_insert = cake_theorem "range_insert"
   (fun () ->
-    `~(
-       n IN domain fml) ==>
+    `~(n IN domain fml) ==>
        range (sptree_insert n l fml) = l INSERT range fml`)
   CHEAT_TAC;;
 
@@ -2881,3 +2881,5 @@ let TotOrd_pair_cmp = cake_theorem "TotOrd_pair_cmp"
     `TotOrd c1 /\ TotOrd c2 ==>
      TotOrd (pair_compare c1 c2)`)
   CHEAT_TAC;;
+
+cake_hide [];;

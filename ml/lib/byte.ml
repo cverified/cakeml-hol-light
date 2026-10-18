@@ -49,3 +49,5 @@ let word_to_bytes_aux_def = cake_define_list
 let word_to_bytes_def = cake_define
   `word_to_bytes (w:'a word) be' =
    word_to_bytes_aux (dimindex (:'a) DIV 8) w be'`;;
+
+cake_hide [];;

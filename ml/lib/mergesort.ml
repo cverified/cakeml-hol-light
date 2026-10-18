@@ -120,3 +120,5 @@ let mergesortN_tail_def = cake_define_wf
 
 let mergesort_tail_def = cake_define
   `mergesort_tail R l = mergesortN_tail F R (LENGTH l) l`;;
+
+cake_hide [];;

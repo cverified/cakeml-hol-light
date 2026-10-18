@@ -51,9 +51,8 @@ let do_stack_with_locals = cake_theorem "do_stack_with_locals"
 let data_spaceProof_evaluate_compile =
   cake_theorem "evaluate_compile[local]"
   (fun () ->
-    `!c s res s2 vars' l. ~(
-        res = SOME (Rerr (Rabort Rtype_error))) /\ (evaluate (c,s)
-          = (res,s2)) /\
+    `!c s res s2 vars' l. ~(res = SOME (Rerr (Rabort Rtype_error))) /\
+  (evaluate (c,s) = (res,s2)) /\
         locals_ok (dataSem_state_locals s) l ==>
         (?w safe peak smx.
          (evaluate (compile c,dataSem_state_locals_fupd (K l) s) =
@@ -94,10 +93,8 @@ let data_spaceProof_evaluate_compile =
 
 let data_spaceProof_compile_correct = cake_theorem "compile_correct"
   (fun () ->
-    `!c s. ~(
-        FST (evaluate (c,s)) = NONE) /\ ~(
-        FST (evaluate (c,s)) = SOME (Rerr (Rabort Rtype_error)))
-          ==>
+    `!c s. ~(FST (evaluate (c,s)) = NONE) /\ ~(FST (evaluate (c,s)) =
+  SOME (Rerr (Rabort Rtype_error))) ==>
         (?safe peak smx. evaluate (compile c,s) =
                         (I ## (\s. dataSem_state_stack_max_fupd (K
                           smx) (dataSem_state_peak_heap_length_fupd (K
@@ -121,3 +118,5 @@ let data_spaceProof_get_code_labels_compile =
     `!x. dataProps_get_code_labels (data_space_compile x) =
   dataProps_get_code_labels x`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -11,7 +11,6 @@
 *)
 
 needs "basis/pure/mllist.ml";;
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
 needs "compiler/backend/stackLang.ml";;
@@ -39,13 +38,13 @@ let evaluate_SmartSeq = cake_theorem "evaluate_SmartSeq"
 
 let word_simpProof_evaluate_Seq_Skip = cake_theorem "evaluate_Seq_Skip"
   (fun () ->
-    `!p1 s. wordSem_evaluate ((Seq p1 Skip:clash_tree),s) =
+    `!p1 s. wordSem_evaluate (wordLang_Seq p1 Skip,s) =
   wordSem_evaluate (p1,(s:('a,'c,'ffi)wordSem_state))`)
   CHEAT_TAC;;
 
 let evaluate_Skip_Seq = cake_theorem "evaluate_Skip_Seq"
   (fun () ->
-    `wordSem_evaluate ((Seq Skip p:clash_tree),s) = wordSem_evaluate
+    `wordSem_evaluate (wordLang_Seq Skip p,s) = wordSem_evaluate
   (p,(s:('a,'c,'ffi)wordSem_state))`)
   CHEAT_TAC;;
 
@@ -213,7 +212,7 @@ let lookup_const_fp_move_cs_SOME_part =
   cake_theorem "lookup_const_fp_move_cs_SOME_part"
   (fun () ->
     `!moves q cs cs' x.
-     ~MEM q (MAP FST moves) /\
+     ~(MEM q (MAP FST moves)) /\
      sptree_lookup q cs' = x ==>
      sptree_lookup q (const_fp_move_cs moves cs cs') = x`)
   CHEAT_TAC;;
@@ -590,12 +589,12 @@ let lookup_FOLDR_delete = cake_theorem "lookup_FOLDR_delete[local]"
   (fun () ->
     `!l m v w.
        sptree_lookup v (ITLIST sptree_delete l m) = SOME w ==>
-       sptree_lookup v m = SOME w /\ ~MEM v l`)
+       sptree_lookup v m = SOME w /\ ~(MEM v l)`)
   CHEAT_TAC;;
 
 let get_var_set_vars_ignore = cake_theorem "get_var_set_vars_ignore"
   (fun () ->
-    `!xs l m. ~MEM v xs ==> wordSem_get_var v (wordSem_set_vars xs l
+    `!xs l m. ~(MEM v xs) ==> wordSem_get_var v (wordSem_set_vars xs l
   m) = wordSem_get_var v m`)
   CHEAT_TAC;;
 
@@ -654,8 +653,7 @@ let push_out_if_aux_T = cake_theorem "push_out_if_aux_T[local]"
   (fun () ->
     `!c2 c2' res s s'.
      push_out_if_aux c2 = (c2',T) ==>
-     wordSem_evaluate (c2,s) = (res,s') ==> ~(
-     res = NONE)`)
+     wordSem_evaluate (c2,s) = (res,s') ==> ~(res = NONE)`)
   CHEAT_TAC;;
 
 (* HOL4 word_simpProofScript.sml:1282-1285: ML code, not ported *)
@@ -675,3 +673,5 @@ let compile_exp_thm = cake_theorem "compile_exp_thm"
      gc_fun_const_ok (wordSem_state_gc_fun s) ==>
      wordSem_evaluate (word_simp_compile_exp prog,s) = (res,s2)`)
   CHEAT_TAC;;
+
+cake_hide [];;

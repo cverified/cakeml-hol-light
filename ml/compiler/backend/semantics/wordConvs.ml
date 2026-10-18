@@ -118,7 +118,7 @@ let labels_rel_APPEND = cake_theorem "labels_rel_APPEND"
   CHEAT_TAC;;
 
 (* HOL4 wordConvsScript.sml:158-160: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: labels_rel_CONS *)
 
 let PERM_IMP_labels_rel = cake_theorem "PERM_IMP_labels_rel"
   (fun () ->
@@ -512,7 +512,7 @@ let not_created_subprogs_def = cake_define
       | _65 -> T`;;
 
 (* HOL4 wordConvsScript.sml:558-562: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: not_created_subprogs_P_def *)
 
 (* no_alloc specialisation *)
 
@@ -524,7 +524,7 @@ let no_alloc_subprogs_def = cake_define
   (LN,LN)))) p`;;
 
 (* HOL4 wordConvsScript.sml:572-574: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: no_alloc_def *)
 
 (* HOL4 wordConvsScript.sml:576: the ML values that the definitions
    below antiquote *)
@@ -535,7 +535,7 @@ let no_install_subprogs_def = cake_define
 hol4_overload "no_install" "wordConvs_no_install";;
 
 (* HOL4 wordConvsScript.sml:582-584: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: no_install_def *)
 
 (****** no_mt : no MustTerminate ******)
 
@@ -547,7 +547,7 @@ let no_mt_subprogs_def = cake_define
   (wordLang_MustTerminate wordLang_Skip))) p`;;
 
 (* HOL4 wordConvsScript.sml:594-596: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: no_mt_def *)
 
 (* no_share_inst: no ShareInst *)
 
@@ -559,7 +559,7 @@ let no_share_inst_subprogs_def = cake_define
   (wordLang_ShareInst ARB 0 (Var 0)))) p`;;
 
 (* HOL4 wordConvsScript.sml:606-608: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: no_share_inst_def *)
 
 (* HOL4 wordConvsScript.sml:610: the overload word_get_code_labels,
    which the port expands *)

@@ -2,7 +2,7 @@
 (*  namespace: ported from HOL4's
     semantics/namespaceScript.sml
     A definition theory, with 19 definitions, 2 datatypes and no
-    theorems.  Needed by 30 files of the port.  *)
+    theorems.  Needed by 31 files of the port.  *)
 (* ======================================================== *)
 
 (*

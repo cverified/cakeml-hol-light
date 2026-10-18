@@ -662,10 +662,10 @@ let ptree_Pattern_def = cake_define_list
 new_type_abbrev("ptree",`: (tokens_token,MMLnonT,locs)parsetree`);;
 
 (* HOL4 cmlPtreeConversionScript.sml:742-745: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ptree_Pattern_pevaled *)
 
 (* HOL4 cmlPtreeConversionScript.sml:747-748: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ptree_Plist_thm *)
 
 let ptree_PbaseList1_def = cake_define_list
   [`ptree_PbaseList1 (Lf _70) = NONE`;
@@ -1148,13 +1148,13 @@ let dumb2 = cake_theorem "dumb2[local]"
     `COND gd t NONE = OPTION_IGNORE_BIND (OPTION_GUARD gd) t`)
   CHEAT_TAC;;
 (* HOL4 cmlPtreeConversionScript.sml:1259-1262: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ptree_Expr_def' *)
 
 (* HOL4 cmlPtreeConversionScript.sml:1264-1271: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ptree_Expr_pevaled *)
 
 (* HOL4 cmlPtreeConversionScript.sml:1273-1274: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ptree_Expr_others *)
 
 let ptree_StructName_def = cake_define_list
   [`ptree_StructName (Lf _124) = NONE`;

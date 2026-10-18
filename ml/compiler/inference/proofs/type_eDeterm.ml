@@ -90,12 +90,12 @@ let infer_e_type_pe_determ = cake_theorem "infer_e_type_pe_determ"
 let t_vars_check_t = cake_theorem "t_vars_check_t"
   (fun () ->
     `(!t.
-     ~check_t 0 {} t /\
+     ~(check_t 0 {} t) /\
      check_t 0 s t ==>
      (?n'. n' IN s /\ n' IN t_vars t)) /\
      (!ts.
      !x. MEM x ts ==>
-     ~check_t 0 {} x /\
+     ~(check_t 0 {} x) /\
      check_t 0 s x ==>
      (?n'. n' IN s /\ n' IN t_vars x))`)
   CHEAT_TAC;;
@@ -113,7 +113,7 @@ let t_walkstar_diff = cake_theorem "t_walkstar_diff"
   CHEAT_TAC;;
 
 (* HOL4 type_eDetermScript.sml:233-239: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: env_rel_sound_weaken *)
 
 let type_pe_determ_infer_e = cake_theorem "type_pe_determ_infer_e"
   (fun () ->
@@ -129,8 +129,15 @@ let type_pe_determ_infer_e = cake_theorem "type_pe_determ_infer_e"
       EVERY (\(n,t). check_t 0 {} (t_walkstar s t)) new_bindings`)
   CHEAT_TAC;;
 
-(* HOL4 type_eDetermScript.sml:442-450: code that the source has in a
-   comment *)
+ (*From ¬check_t 0 {} (t_walkstar s tt) it should follow that
+   t_walkstar s tt must contain some unification variables.
+   (*
+   first_assum(
+     mp_tac o (MATCH_MP (GEN_ALL(CONTRAPOS(SPEC_ALL(CONJUNCT1 check_t_walkstar)))))) >>
+   *)
+   But we know that s is completed by s1 and s2 therefore those
+   unification variables are exactly bound in s1 and s2 to
+   Infer_Tbool and Infer_Tint, hence the walkstars must differ *)
 
 let infer_funs_complete = cake_theorem "infer_funs_complete"
   (fun () ->

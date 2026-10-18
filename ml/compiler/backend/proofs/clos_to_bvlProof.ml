@@ -436,8 +436,8 @@ let evaluate_generic_app_partial =
          (LENGTH prev_args + (LENGTH args - 1)) IN domain
            (state_code st) /\
        total_args < max_app /\
-       LENGTH args < (total_args + 1) - LENGTH prev_args /\ ~(
-       LENGTH args = 0) /\
+       LENGTH args < (total_args + 1) - LENGTH prev_args /\
+         ~(LENGTH args = 0) /\
        get_global 0 (state_globals st) = SOME (SOME (global_table
          max_app)) /\
        unpack_closure cl (prev_args,total_args,sub_cl) ==>
@@ -524,8 +524,7 @@ let evaluate_mk_cl_call = cake_theorem "evaluate_mk_cl_call[local]"
          SOME (LENGTH args' + 1,generate_generic_app max_app
            (LENGTH args' - 1)) /\
        LENGTH args' - 1 >= n /\
-       n < max_app /\ ~(
-       LENGTH args = 0) ==>
+       n < max_app /\ ~(LENGTH args = 0) ==>
        evaluate ([mk_cl_call cl args],env,s) =
         (if n = LENGTH args - 1 then
           if state_clock s < LENGTH args then (Rerr (Rabort
@@ -556,8 +555,7 @@ let evaluate_partial_app_fn =
     `!num_args args' num_args' prev_args tag num' tag' l l' fvs exp
   code.
        sptree_lookup l code = SOME (LENGTH args' + LENGTH prev_args
-         + 1,exp) /\ ~(
-       LENGTH prev_args = 0) /\
+         + 1,exp) /\ ~(LENGTH prev_args = 0) /\
        LENGTH prev_args < num_args /\
        num_args = LENGTH prev_args + LENGTH args' ==>
        (!st. evaluate ([generate_partial_app_closure_fn (num_args -
@@ -590,8 +588,7 @@ hol4_overload "code_installed" "clos_to_bvlProof_code_installed";;
 let closure_code_installed_def = cake_define
   `closure_code_installed max_app code exps_ps (env:closSem_v list) =
      EVERY (\((n,exp),p).
-       n <= max_app /\ ~(
-       n = 0) /\
+       n <= max_app /\ ~(n = 0) /\
        (?aux c aux1.
          (clos_to_bvl_compile_exps max_app [exp] aux = ([c],aux1)) /\
          (sptree_lookup p code = SOME (n + 1,SND (code_for_recc_case
@@ -600,8 +597,7 @@ let closure_code_installed_def = cake_define
 
 let cl_rel = cake_inductive
   `(
-    num_args <= max_app /\ ~(
-     num_args = 0) /\
+    num_args <= max_app /\ ~(num_args = 0) /\
      every_Fn_SOME [x] /\
      every_Fn_vs_SOME [x] /\
      (clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1)) /\
@@ -615,8 +611,7 @@ let cl_rel = cake_inductive
            (Block closure_tag (bvlSem_CodePtr (p + (num_stubs
              max_app)) :: Number (&(num_args - 1)) :: ys))) /\
    (
-     num_args <= max_app /\ ~(
-     num_args = 0) /\
+     num_args <= max_app /\ ~(num_args = 0) /\
      every_Fn_SOME [x] /\
      every_Fn_vs_SOME [x] /\
      clos_to_bvl_compile_exps max_app [x] aux = ([c],aux1) /\
@@ -689,8 +684,7 @@ let v_rel = cake_inductive
    (
     EVERY2 (clos_to_bvlProof_v_rel max_app f refs code) env fvs /\
     EVERY2 (clos_to_bvlProof_v_rel max_app f refs code) arg_env ys /\
-      ~(
-    arg_env = []) /\
+      ~(arg_env = []) /\
     LENGTH arg_env < num_args /\
     (sptree_lookup (partial_app_fn_location max_app (num_args - 1)
       (LENGTH ys - 1)) code =
@@ -711,28 +705,26 @@ hol4_overload "v_rel" "clos_to_bvlProof_v_rel";;
 
 let cl_rel_F = cake_theorem "cl_rel_F[local]"
   (fun () ->
-    `~cl_rel max_app f refs code (env,ys) (Number i) cl /\
-      ~cl_rel max_app f refs code (env,ys) (Word64 w) cl /\
-      ~cl_rel max_app f refs code (env,ys) (RefPtr b p) cl /\
-      ~cl_rel max_app f refs code (env,ys) (Block tag xs) cl /\
-      ~cl_rel max_app f refs code (env,ys) (closSem_ByteVector
-        bs) cl`)
+    `~(cl_rel max_app f refs code (env,ys) (Number i) cl) /\
+      ~(cl_rel max_app f refs code (env,ys) (Word64 w) cl) /\
+      ~(cl_rel max_app f refs code (env,ys) (RefPtr b p) cl) /\
+      ~(cl_rel max_app f refs code (env,ys) (Block tag xs) cl) /\
+      ~(cl_rel max_app f refs code (env,ys) (closSem_ByteVector
+        bs) cl)`)
   CHEAT_TAC;;
 
 let add_args_F = cake_theorem "add_args_F[local]"
   (fun () ->
-    `!cl args p i tag xs. ~(
-      add_args cl args = SOME (RefPtr b p)) /\ ~(
-      add_args cl args = SOME (Number i)) /\ ~(
-      add_args cl args = SOME (Word64 w)) /\ ~(
-      add_args cl args = SOME (Block tag xs)) /\ ~(
-      add_args cl args = SOME (closSem_ByteVector bs))`)
+    `!cl args p i tag xs. ~(add_args cl args = SOME (RefPtr b p)) /\
+  ~(add_args cl args = SOME (Number i)) /\ ~(add_args cl args = SOME
+  (Word64 w)) /\ ~(add_args cl args = SOME (Block tag xs)) /\
+  ~(add_args cl args = SOME (closSem_ByteVector bs))`)
   CHEAT_TAC;;
 
 let clos_to_bvlProof_v_rel_Unit = cake_theorem "v_rel_Unit[simp]"
   (fun () ->
-    `(v_rel max_app f refs code Unit' y <=> (y = Unit')) /\
-     (v_rel max_app f refs code x Unit' <=> (x = Unit'))`)
+    `(v_rel max_app f refs code Unit y <=> (y = Unit)) /\
+     (v_rel max_app f refs code x Unit <=> (x = Unit))`)
   CHEAT_TAC;;
 
 let clos_to_bvlProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
@@ -742,7 +734,7 @@ let clos_to_bvlProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
   CHEAT_TAC;;
 
 (* HOL4 clos_to_bvlProofScript.sml:984-995: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_SIMP *)
 
 let env_rel_def = cake_define
   `clos_to_bvlProof_env_rel max_app f refs code x5 ys =
@@ -912,9 +904,11 @@ let cl_rel_SUBMAP = cake_theorem "cl_rel_SUBMAP[local]"
       cl_rel max_app f2 refs2 code (env,ys) x y`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:1175-1193: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1175-1193: a theorem that HOL4
+   states as the value of an ML expression: v_rel_SUBMAP *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1195-1201: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1195-1201: a theorem that HOL4
+   states as the value of an ML expression: env_rel_SUBMAP *)
 
 let cl_rel_NEW_REF = cake_theorem "cl_rel_NEW_REF[local]"
   (fun () ->
@@ -923,7 +917,8 @@ let cl_rel_NEW_REF = cake_theorem "cl_rel_NEW_REF[local]"
             cl_rel max_app f1 (refs1 |+ (r,t)) code (env,ys) x y`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:1217-1232: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1217-1232: a theorem that HOL4
+   states as the value of an ML expression: v_rel_NEW_REF *)
 
 let cl_rel_UPDATE_REF = cake_theorem "cl_rel_UPDATE_REF[local]"
   (fun () ->
@@ -932,7 +927,8 @@ let cl_rel_UPDATE_REF = cake_theorem "cl_rel_UPDATE_REF[local]"
              cl_rel max_app f1 (refs1 |+ (r,t)) code (env,ys) x y`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:1250-1266: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1250-1266: a theorem that HOL4
+   states as the value of an ML expression: v_rel_UPDATE_REF *)
 
 let OPTREL_v_rel_NEW_REF = cake_theorem "OPTREL_v_rel_NEW_REF[local]"
   (fun () ->
@@ -965,9 +961,11 @@ let cl_rel_NEW_F = cake_theorem "cl_rel_NEW_F[local]"
            (state_code t2) (env,ys) x y`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:1304-1323: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1304-1323: a theorem that HOL4
+   states as the value of an ML expression: v_rel_NEW_F *)
 
-(* HOL4 clos_to_bvlProofScript.sml:1325-1331: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1325-1331: a theorem that HOL4
+   states as the value of an ML expression: OPTREL_v_rel_NEW_F *)
 
 let state_rel_UPDATE_REF = cake_theorem "state_rel_UPDATE_REF"
   (fun () ->
@@ -1001,7 +999,7 @@ let clos_to_bvlProof_v_to_list = cake_theorem "v_to_list[local]"
   CHEAT_TAC;;
 
 (* HOL4 clos_to_bvlProofScript.sml:1445-1449: a theorem whose
-   statement the port cannot state yet *)
+   statement the port cannot state yet: not_isClos *)
 
 let do_eq = cake_theorem "do_eq[local]"
   (fun () ->
@@ -1023,8 +1021,8 @@ let do_eq = cake_theorem "do_eq[local]"
 
 let clos_to_bvlProof_do_eq_sym = cake_theorem "do_eq_sym[local]"
   (fun () ->
-    `(!(:(num,'a bvlSem_ref)fmap) x y. do_eq r x y = do_eq r y x) /\
-      (!(:(num,'a bvlSem_ref)fmap) x y. do_eq_list r x y =
+    `(!((r:(num,'a bvlSem_ref)fmap)) x y. do_eq r x y = do_eq r y x) /\
+      (!((r:(num,'a bvlSem_ref)fmap)) x y. do_eq_list r x y =
         do_eq_list r y x)`)
   CHEAT_TAC;;
 
@@ -1074,8 +1072,7 @@ let clos_to_bvlProof_do_app = cake_theorem "do_app[local]"
 
 let clos_to_bvlProof_do_app_err = cake_theorem "do_app_err[local]"
   (fun () ->
-    `do_app op xs s1 = Rerr err /\ ~(
-      err = Rabort Rtype_error) /\
+    `do_app op xs s1 = Rerr err /\ ~(err = Rabort Rtype_error) /\
       state_rel f s1 t1 /\
       LIST_REL (v_rel (closSem_state_max_app s1) f (state_refs t1)
         (state_code t1)) xs ys ==>
@@ -1094,8 +1091,7 @@ let eq_res_def = cake_define
 
 let eq_res_not_timeout = cake_theorem "eq_res_not_timeout[local]"
   (fun () ->
-    `~(
-       eq_res x = Rerr (Rabort Rtimeout_error))`)
+    `~(eq_res x = Rerr (Rabort Rtimeout_error))`)
   CHEAT_TAC;;
 
 let evaluate_check_closure =
@@ -1119,7 +1115,8 @@ let EXISTS_NOT_IN_refs = cake_theorem "EXISTS_NOT_IN_refs[local]"
     `?x. ~(x IN FDOM (state_refs (t1:('c,'ffi)bvlSem_state)))`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:1874-1887: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:1874-1887: a theorem that HOL4
+   states as the value of an ML expression: lookup_vars_IMP2 *)
 
 let lookup_vars_IMP = cake_theorem "lookup_vars_IMP[local]"
   (fun () ->
@@ -1247,8 +1244,7 @@ let num_remaining_args_def = cake_define
 let dest_closure_part_app = cake_theorem "dest_closure_part_app[local]"
   (fun () ->
     `!loc_opt func args c f1 t1.
-       ~(
-       LENGTH args = 0) /\
+       ~(LENGTH args = 0) /\
        dest_closure max_app loc_opt func args = SOME (Partial_app
          c) ==>
        loc_opt = NONE /\
@@ -1306,12 +1302,12 @@ let v_rel_num_rem_args = cake_theorem "v_rel_num_rem_args[local]"
        num_remaining_args v1 = SOME n ==>
        (?tag ptr rest exp.
          v2 = Block tag (bvlSem_CodePtr ptr :: Number (&n - (&1))
-           :: rest) /\ ~(
-         n = 0) /\
+           :: rest) /\ ~(n = 0) /\
          sptree_lookup ptr code = SOME (n + 1,exp))`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2209-2240: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:2209-2240: a theorem that HOL4
+   states as the value of an ML expression: unpack_closure_thm *)
 
 let cl_rel_get_num_args = cake_theorem "cl_rel_get_num_args[local]"
   (fun () ->
@@ -1322,15 +1318,14 @@ let cl_rel_get_num_args = cake_theorem "cl_rel_get_num_args[local]"
 
 let arith_helper_lem = cake_theorem "arith_helper_lem[local]"
   (fun () ->
-    `~(
-       LENGTH args' = 0) ==> x - 1 - (LENGTH args' - 1) = x -
-         LENGTH args'`)
+    `~(LENGTH args' = 0) ==> x - 1 - (LENGTH args' - 1) = x - LENGTH
+  args'`)
   CHEAT_TAC;;
 
 let arith_helper_lem3 = cake_theorem "arith_helper_lem3[local]"
   (fun () ->
-    `LENGTH args' < (total_args + 1) - LENGTH prev_args /\ ~(
-      LENGTH args' = 0) /\
+    `LENGTH args' < (total_args + 1) - LENGTH prev_args /\ ~(LENGTH
+  args' = 0) /\
       total_args - LENGTH prev_args + 1 = num_args - LENGTH
         prev_args ==>
       total_args - ((LENGTH args' + LENGTH prev_args) - 1) =
@@ -1354,8 +1349,7 @@ let evaluate_mk_cl_call_spec =
          SOME (LENGTH args + 1,generate_generic_app max_app (LENGTH
            args - 1)) /\
        LENGTH args - 1 >= n /\
-       n < max_app /\ ~(
-       LENGTH args = 0) ==>
+       n < max_app /\ ~(LENGTH args = 0) ==>
        evaluate ([mk_cl_call (Var (LENGTH args)) (GENLIST Var
          (LENGTH args))],args ++ [Block tag (bvlSem_CodePtr p :: Number
          (&n) :: xs)] ++ env,s) =
@@ -1442,7 +1436,8 @@ let cl_rel_run_lemma1 = cake_theorem "cl_rel_run_lemma1[local]"
       (Rval (DROP (LENGTH args' - num_args) args'),t1)`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2420-2431: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:2420-2431: a theorem that HOL4
+   states as the value of an ML expression: cl_rel_run_lemma2 *)
 
 let cl_rel_run_lemma3 = cake_theorem "cl_rel_run_lemma3[local]"
   (fun () ->
@@ -1451,7 +1446,8 @@ let cl_rel_run_lemma3 = cake_theorem "cl_rel_run_lemma3[local]"
         args' - n) args')`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2444-2456: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:2444-2456: a theorem that HOL4
+   states as the value of an ML expression: bEval_free_let_Block *)
 
 (* HOL4 clos_to_bvlProofScript.sml:2458-2480: a proof *)
 
@@ -1525,8 +1521,7 @@ let dest_closure_full_of_part =
   cake_theorem "dest_closure_full_of_part[local]"
   (fun () ->
     `dest_closure max_app loc func args = SOME (Full_app body newenv
-  rest) /\ ~(
-      LENGTH arg_env = 0) /\
+  rest) /\ ~(LENGTH arg_env = 0) /\
       add_args cl arg_env = SOME func /\
       get_num_args cl = SOME num_args /\
       LENGTH arg_env < num_args ==>
@@ -1534,7 +1529,30 @@ let dest_closure_full_of_part =
         body newenv rest)`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2668-2690: a proof *)
+let v_rel_run = cake_theorem "v_rel_run"
+  (fun () ->
+    `!f1 refs code args args' env' ptr body newenv func func' rest tag n
+  loc.
+         ~(LENGTH args = 0) /\
+         func' = Block tag (bvlSem_CodePtr ptr :: Number (&n) ::
+           env') /\
+         dest_closure max_app loc func args = SOME (Full_app body
+           newenv rest) /\
+         v_rel max_app f1 refs code func func' /\
+         LIST_REL (v_rel max_app f1 refs code) args args' ==>
+         (?ck' body' aux1 aux2 newenv' exp'.
+           sptree_lookup ptr code = SOME (n + 2,exp') /\
+           clos_to_bvl_compile_exps max_app [body] aux1 =
+             ([body'],aux2) /\ clos_to_bvlProof_code_installed aux2 code
+             /\
+           env_rel max_app f1 refs code newenv newenv' /\
+           (!t1.
+             evaluate ([exp'],DROP (LENGTH args' - (n + 1)) args'
+               ++ [func'],bvlProps_inc_clock ck' (state_code_fupd (K
+               code) (state_refs_fupd (K refs) t1))) =
+             evaluate ([body'],newenv',(state_code_fupd (K code)
+               (state_refs_fupd (K refs) t1)))))`)
+  CHEAT_TAC;;
 (* HOL4 clos_to_bvlProofScript.sml:2691: code that the source has in
    a comment *)
 (* HOL4 clos_to_bvlProofScript.sml:2692-2765: a proof *)
@@ -1549,13 +1567,13 @@ let list_rel_app = cake_theorem "list_rel_app[local]"
        LIST_REL R l0 (TAKE (LENGTH args' - rem_args) args')`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:2788-2812: a proof *)
+(* HOL4 clos_to_bvlProofScript.sml:2788-2812: a theorem that HOL4
+   states as the value of an ML expression: mk_call_simp2 *)
 
 let no_partial_args = cake_theorem "no_partial_args[local]"
   (fun () ->
     `num_remaining_args func = SOME x /\
-      get_num_args func = SOME x /\ ~(
-      x = 0) /\
+      get_num_args func = SOME x /\ ~(x = 0) /\
       add_args cl arg_env = SOME func ==>
       arg_env = []`)
   CHEAT_TAC;;
@@ -1587,7 +1605,7 @@ let cl_rel_subspt = cake_theorem "cl_rel_subspt"
   CHEAT_TAC;;
 
 (* HOL4 clos_to_bvlProofScript.sml:2866-2880: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_subspt *)
 
 let env_rel_subspt = cake_theorem "env_rel_subspt"
   (fun () ->
@@ -1863,8 +1881,8 @@ let clos_to_bvlProof_compile_exps_correct =
           s2 = state_clock t2)) /\
      (!loc_opt func args (s1:('c,'ffi)closSem_state) res s2 env
        (t1:('c,'ffi)bvlSem_state) args' func' f1.
-       evaluate_app loc_opt func args s1 = (res,s2) /\ ~(
-       res = Rerr (Rabort Rtype_error)) /\
+       evaluate_app loc_opt func args s1 = (res,s2) /\ ~(res = Rerr
+         (Rabort Rtype_error)) /\
        FEVERY (\p. every_Fn_SOME [SND (SND p)]) (state_code s1) /\
        FEVERY (\p. every_Fn_vs_SOME [SND (SND p)]) (state_code s1)
          /\
@@ -1979,8 +1997,8 @@ let domain_init_code = cake_theorem "domain_init_code"
 let compile_prog_code_locs = cake_theorem "compile_prog_code_locs"
   (fun () ->
     `!ls.
-     MAP FST' (clos_to_bvl_compile_prog max_app ls) =
-     MAP ((+) (num_stubs max_app) o FST') ls ++
+     MAP FST (clos_to_bvl_compile_prog max_app ls) =
+     MAP ((+) (num_stubs max_app) o FST) ls ++
      MAP ((+) (num_stubs max_app)) (REVERSE (code_locs (MAP (SND
        o SND) ls)))`)
   CHEAT_TAC;;
@@ -2009,7 +2027,7 @@ let set_MAP_code_sort = cake_theorem "set_MAP_code_sort"
 
 let ALL_DISTINCT_code_sort = cake_theorem "ALL_DISTINCT_code_sort"
   (fun () ->
-    `ALL_DISTINCT (MAP FST' (code_sort xs)) <=> ALL_DISTINCT (MAP FST'
+    `ALL_DISTINCT (MAP FST (code_sort xs)) <=> ALL_DISTINCT (MAP FST
   xs)`)
   CHEAT_TAC;;
 
@@ -2041,14 +2059,14 @@ let MAP_FST_chain_exps = cake_theorem "MAP_FST_chain_exps"
 
 let MAP_FST_chain_exps_any = cake_theorem "MAP_FST_chain_exps_any"
   (fun () ->
-    `!i ls. (MAP FST' (chain_exps i ls) = MAP ((+) i) (COUNT_LIST (MAX
+    `!i ls. (MAP FST (chain_exps i ls) = MAP ((+) i) (COUNT_LIST (MAX
   1 (LENGTH ls))))`)
   CHEAT_TAC;;
 
 let chain_exps_code_locs = cake_theorem "chain_exps_code_locs[simp]"
   (fun () ->
-    `!n es. code_locs (MAP (SND' o SND') (chain_exps n es)) =
-  code_locs es`)
+    `!n es. code_locs (MAP (SND o SND) (chain_exps n es)) = code_locs
+  es`)
   CHEAT_TAC;;
 
 let chain_exps_ALL_DISTINCT =
@@ -2151,8 +2169,7 @@ let eval_sim_def = cake_define
   start' rel =
      (!k res1 s2.
        evaluate (es1,[],initial_state ffi max_app code1 co1 cc1 k) =
-         (res1,s2) /\ ~(
-       res1 = Rerr (Rabort Rtype_error)) /\
+         (res1,s2) /\ ~(res1 = Rerr (Rabort Rtype_error)) /\
        rel code1 co1 cc1 es1 code2 co2 cc2 start' ==>
        (?ck res2 t2.
          bvlSem_evaluate ([Call 0 (SOME start') []],[],
@@ -2164,18 +2181,16 @@ hol4_overload "eval_sim" "clos_to_bvlProof_eval_sim";;
 let clos_to_bvlProof_initial_state_with_clock =
   cake_theorem "initial_state_with_clock[local]"
   (fun () ->
-    `(state_clock_fupd (K (state_clock
-       (initial_state ffi ma code co cc k) + ck)) (initial_state
-         ffi ma code co cc k)) =
+    `(initial_state ffi ma code co cc (state_clock_fupd (K (state_clock
+       (initial_state ffi ma code co cc k) + ck)) k)) =
      initial_state ffi ma code co cc (k + ck)`)
   CHEAT_TAC;;
 
 let initial_state_with_clock_bvl =
   cake_theorem "initial_state_with_clock_bvl[local]"
   (fun () ->
-    `(state_clock_fupd (K (state_clock
-       (initial_state ffi code co cc k) + ck)) (initial_state ffi
-         code co cc k)) =
+    `(initial_state ffi code co cc (state_clock_fupd (K (state_clock
+       (initial_state ffi code co cc k) + ck)) k)) =
      initial_state ffi code co cc (k + ck) /\
      (bvlProps_inc_clock ck (initial_state ffi code co cc k) =
      initial_state ffi code co cc (k + ck))`)
@@ -2184,9 +2199,8 @@ let initial_state_with_clock_bvl =
 let clos_to_bvlProof_IMP_semantics_eq = cake_theorem "IMP_semantics_eq"
   (fun () ->
     `eval_sim ffi max_app code1 co1 cc1 es1 code2 co2 cc2 start rel /\
-  ~(
-     closSem_semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1
-       es1 = ffi_Fail) ==>
+  ~(closSem_semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 es1 =
+  ffi_Fail) ==>
      rel code1 co1 cc1 es1 code2 co2 cc2 start ==>
      bvlSem_semantics ffi code2 co2 cc2 start =
      closSem_semantics ffi max_app code1 co1 cc1 es1`)
@@ -2223,11 +2237,11 @@ let chain_installed_def = cake_define
 
 let chain_installed_cons = cake_theorem "chain_installed_cons"
   (fun () ->
-    `chain_installed start' (e :: es) code <=>
-     find_code start' ([]:closSem_v list) code = SOME ([],(if es =
+    `chain_installed start (e :: es) code <=>
+     find_code start ([]:closSem_v list) code = SOME ([],(if es =
        [] then e else Let backend_common_None [e] (Call
-       backend_common_None 0 (start' + 1) []))) /\
-     chain_installed (start' + 1) es code`)
+       backend_common_None 0 (start + 1) []))) /\
+     chain_installed (start + 1) es code`)
   CHEAT_TAC;;
 
 let chain_installed_SUBMAP = cake_theorem "chain_installed_SUBMAP"
@@ -2261,8 +2275,7 @@ let chain_installed_chain_exps =
 
 let chain_exps_semantics = cake_theorem "chain_exps_semantics"
   (fun () ->
-    `~(
-      semantics ffi max_app code co cc es = ffi_Fail) /\
+    `~(semantics ffi max_app code co cc es = ffi_Fail) /\
       DISJOINT (IMAGE ((+) start) (count (LENGTH es))) (FDOM code)
         /\
       oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
@@ -2277,8 +2290,7 @@ let chain_exps_semantics = cake_theorem "chain_exps_semantics"
 
 let chain_exps_semantics_call = cake_theorem "chain_exps_semantics_call"
   (fun () ->
-    `~(
-      semantics ffi max_app code co cc es = ffi_Fail) /\
+    `~(semantics ffi max_app code co cc es = ffi_Fail) /\
       DISJOINT (IMAGE ((+) start) (count (LENGTH es))) (FDOM code)
         /\
       oracle_monotonic (set_of_list o MAP FST o SND o SND) (<)
@@ -2451,7 +2463,7 @@ let chain_exps_every_Fn_vs_NONE =
   cake_theorem "chain_exps_every_Fn_vs_NONE"
   (fun () ->
     `!n xs.
-       every_Fn_vs_NONE (MAP (SND' o SND') (chain_exps n xs)) <=>
+       every_Fn_vs_NONE (MAP (SND o SND) (chain_exps n xs)) <=>
        every_Fn_vs_NONE xs`)
   CHEAT_TAC;;
 
@@ -2577,8 +2589,7 @@ let clos_state_cc_def = cake_define
 let semantics_cond_call_compile_inc =
   cake_theorem "semantics_cond_call_compile_inc"
   (fun () ->
-    `~(
-     semantics ffi max_app FEMPTY co
+    `~(semantics ffi max_app FEMPTY co
          (clos_state_cc (cond_call_compile_inc do_call) cc) es =
            ffi_Fail) /\
      clos_call_compile do_call es = (es',g,aux) /\
@@ -2600,8 +2611,7 @@ let semantics_cond_call_compile_inc =
 let semantics_cond_mti_compile_inc =
   cake_theorem "semantics_cond_mti_compile_inc"
   (fun () ->
-    `~(
-         semantics ffi max_app FEMPTY co
+    `~(semantics ffi max_app FEMPTY co
              (pure_cc (cond_mti_compile_inc do_mti max_app) cc) xs
                = ffi_Fail) /\
          (do_mti ==>
@@ -2844,9 +2854,8 @@ let FST_known_co = cake_theorem "FST_known_co"
 
 let compile_common_semantics = cake_theorem "compile_common_semantics"
   (fun () ->
-    `~(
-     closSem_semantics (ffi:'ffi ffi_state)
-       (clos_to_bvl_config_max_app c) FEMPTY co1
+    `~(closSem_semantics (ffi:'ffi ffi_state)
+  (clos_to_bvl_config_max_app c) FEMPTY co1
       (compile_common_inc c cc) es1 = ffi_Fail) /\
      compile_common c es1 = (c',code2) /\
      (!n. SND (SND (co1 n)) = []) /\
@@ -2883,10 +2892,10 @@ let compile_common_semantics = cake_theorem "compile_common_semantics"
            (co1 n')))) /\
                  EVERY closProps_esgc_free (FST (SND (co1 n')))))
                    /\
-     ~contains_App_SOME (clos_to_bvl_config_max_app c) es1 /\
+     ~(contains_App_SOME (clos_to_bvl_config_max_app c) es1) /\
        clos_knownProof_syntax_ok es1 /\
-     (!n. ~contains_App_SOME (clos_to_bvl_config_max_app c) (FST
-       (SND (co1 n))) /\
+     (!n. ~(contains_App_SOME (clos_to_bvl_config_max_app c) (FST
+       (SND (co1 n)))) /\
              every_Fn_vs_NONE (FST (SND (co1 n)))) /\
      is_state_oracle (ignore_table clos_number_compile_inc)
          (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
@@ -2928,9 +2937,8 @@ let REPLICATE_1 = cake_theorem "REPLICATE_1[local,simp]"
 let clos_to_bvlProof_compile_prog_semantics =
   cake_theorem "compile_prog_semantics"
   (fun () ->
-    `~(
-     semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 [Call
-       backend_common_None 0 start []] = ffi_Fail) /\
+    `~(semantics (ffi:'ffi ffi_state) max_app code1 co1 cc1 [Call
+  backend_common_None 0 start []] = ffi_Fail) /\
      (!name arity c.
        FLOOKUP code1 name = SOME (arity,c) ==>
        (?aux1 c2 aux2.
@@ -2988,10 +2996,10 @@ let syntax_oracle_ok_def = cake_define
         (!n'. BAG_ALL_DISTINCT (closProps_elist_globals (FST (SND (co
           n')))) /\
                 EVERY closProps_esgc_free (FST (SND (co n'))))) /\
-    ~contains_App_SOME (clos_to_bvl_config_max_app c) es /\
+    ~(contains_App_SOME (clos_to_bvl_config_max_app c) es) /\
       clos_knownProof_syntax_ok es /\
-    (!n. ~contains_App_SOME (clos_to_bvl_config_max_app c) (FST (SND
-      (co n))) /\
+    (!n. ~(contains_App_SOME (clos_to_bvl_config_max_app c) (FST (SND
+      (co n)))) /\
             every_Fn_vs_NONE (FST (SND (co n)))) /\
     is_state_oracle (ignore_table clos_number_compile_inc)
         (pure_co (cond_mti_compile_inc (clos_to_bvl_config_do_mti
@@ -3077,11 +3085,11 @@ let compile_inc_monotonic = cake_theorem "compile_inc_monotonic"
   CHEAT_TAC;;
 
 (* HOL4 clos_to_bvlProofScript.sml:7921-7922: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: code_locs_Op_cons *)
 
 let EXISTS_CONS_NOT_NULL = cake_theorem "EXISTS_CONS_NOT_NULL"
   (fun () ->
-    `(?x xs. ys = x :: xs) = (~NULL ys)`)
+    `(?x xs. ys = x :: xs) = (~(NULL ys))`)
   CHEAT_TAC;;
 
 let can_extract_to_case = cake_theorem "can_extract_to_case"
@@ -3116,8 +3124,7 @@ let subset_req_orac_to_oracle = cake_theorem "subset_req_orac_to_oracle"
        req_compile_inc_addrs xs2 o SND) R St orac2`)
   CHEAT_TAC;;
 
-(* HOL4 clos_to_bvlProofScript.sml:7965-7972: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_to_bvlProofScript.sml:7965-7972: ML code, not ported *)
 
 let annotate_compile_code_locs =
   cake_theorem "annotate_compile_code_locs"
@@ -3299,9 +3306,9 @@ let every_Fn_vs_NONE_cond_mti_compile_inc =
 let clos_to_bvlProof_MAP_FST_compile_prog =
   cake_theorem "MAP_FST_compile_prog"
   (fun () ->
-    `MAP FST' (clos_to_bvl_compile_prog max_app ls) =
+    `MAP FST (clos_to_bvl_compile_prog max_app ls) =
       MAP (((+) (num_stubs max_app)))
-        (MAP FST' ls ++ REVERSE (code_locs (MAP (SND o SND) ls)))`)
+        (MAP FST ls ++ REVERSE (code_locs (MAP (SND o SND) ls)))`)
   CHEAT_TAC;;
 
 let IMAGE_ADD_SUBSET_count = cake_theorem "IMAGE_ADD_SUBSET_count"
@@ -3366,14 +3373,14 @@ let compile_common_max_app = cake_theorem "compile_common_max_app"
 
 let chain_exps_every_Fn_SOME = cake_theorem "chain_exps_every_Fn_SOME"
   (fun () ->
-    `!x y. every_Fn_SOME (MAP (SND' o SND') (chain_exps x y)) <=>
+    `!x y. every_Fn_SOME (MAP (SND o SND) (chain_exps x y)) <=>
   every_Fn_SOME y`)
   CHEAT_TAC;;
 
 let chain_exps_every_Fn_vs_SOME =
   cake_theorem "chain_exps_every_Fn_vs_SOME"
   (fun () ->
-    `!x y. every_Fn_vs_SOME (MAP (SND' o SND') (chain_exps x y)) <=>
+    `!x y. every_Fn_vs_SOME (MAP (SND o SND) (chain_exps x y)) <=>
   every_Fn_vs_SOME y`)
   CHEAT_TAC;;
 
@@ -3434,16 +3441,16 @@ let renumber_code_locs_sing = cake_theorem "renumber_code_locs_sing"
 
 let MAP_FST_compile_inc = cake_theorem "MAP_FST_compile_inc"
   (fun () ->
-    `MAP FST' (compile_inc max_app p) =
+    `MAP FST (compile_inc max_app p) =
       MAP ((+) (num_stubs max_app))
         (
-        MAP ((+) (FST' (extract_name (FST' p))))
-          (COUNT_LIST (MAX 1 (LENGTH (SND (extract_name (FST'
-            p)))))) ++ (MAP FST' (SND p)) ++ (REVERSE
+        MAP ((+) (FST (extract_name (FST p))))
+          (COUNT_LIST (MAX 1 (LENGTH (SND (extract_name (FST
+            p)))))) ++ (MAP FST (SND p)) ++ (REVERSE
             (code_locs
               (MAP (SND o SND)
-                (chain_exps (FST' (extract_name (FST' p)))
-                  (SND (extract_name (FST' p))) ++ SND p)))))`)
+                (chain_exps (FST (extract_name (FST p)))
+                  (SND (extract_name (FST p))) ++ SND p)))))`)
   CHEAT_TAC;;
 
 let mcompile_inc_nil = cake_theorem "mcompile_inc_nil"
@@ -3527,9 +3534,8 @@ let syntax_oracle_ok_start = cake_theorem "syntax_oracle_ok_start"
 let clos_to_bvlProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
-    `~(
-     semantics (ffi:'ffi ffi_state) (clos_to_bvl_config_max_app c)
-       FEMPTY co
+    `~(semantics (ffi:'ffi ffi_state) (clos_to_bvl_config_max_app c)
+  FEMPTY co
        (compile_common_inc c (pure_cc (compile_inc
          (clos_to_bvl_config_max_app c)) cc)) es = ffi_Fail) /\
      compile c es = (c',prog,names) /\
@@ -3644,3 +3650,5 @@ let clos_to_bvlProof_chain_exps_every_Fn_SOME =
     `!es l. every_Fn_SOME es ==>
              every_Fn_SOME (MAP (SND o SND) (chain_exps l es))`)
   CHEAT_TAC;;
+
+cake_hide [];;

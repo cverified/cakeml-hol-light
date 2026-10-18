@@ -33,6 +33,7 @@ needs "lib/sptree.ml";;
 needs "misc/misc.ml";;
 needs "semantics/ast.ml";;
 needs "semantics/ffi/ffi.ml";;
+needs "semantics/namespace.ml";;
 needs "semantics/proofs/semanticPrimitivesProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 
@@ -65,7 +66,7 @@ let adjust_bv_def = cake_define_list_try (fun () ->
 
 let adjust_bv_Unit = cake_theorem "adjust_bv_Unit[simp]"
   (fun () ->
-    `adjust_bv x Unit' = Unit'`)
+    `adjust_bv x Unit = Unit`)
   CHEAT_TAC;;
 
 let adjust_bv_Boolv = cake_theorem "adjust_bv_Boolv[simp]"
@@ -124,8 +125,8 @@ let state_rel_def = cake_define
                 (adjust_bv b v))) | SOME res -> (FLOOKUP (state_refs t)
                 (b k) = SOME res)) /\
      (state_ffi s = state_ffi t) /\
-     (!p. bviSem_state_global t = SOME p ==> ~(
-            p IN IMAGE b (FDOM (state_refs s))) /\
+     (!p. bviSem_state_global t = SOME p ==> ~(p IN IMAGE b (FDOM
+       (state_refs s))) /\
             (?z. FLOOKUP (state_refs t) p =
                   SOME (ValueArray
                     ((Number (&(SUC (LENGTH (state_globals s))))) ::
@@ -320,8 +321,7 @@ let do_app_ok = cake_theorem "do_app_ok"
 let bvl_to_bviProof_dec_clock_inc_clock =
   cake_theorem "dec_clock_inc_clock[local]"
   (fun () ->
-    `~(
-         c = 0) ==> dec_clock 1 (inc_clock c t) =
+    `~(c = 0) ==> dec_clock 1 (inc_clock c t) =
                     inc_clock (c - 1) (t:('c,'ffi)bviSem_state)`)
   CHEAT_TAC;;
 
@@ -346,9 +346,11 @@ let evaluate_ok = cake_theorem "evaluate_ok"
 
 (* semantics lemmas *)
 
-(* HOL4 bvl_to_bviProofScript.sml:680-694: a proof *)
+(* HOL4 bvl_to_bviProofScript.sml:680-694: a theorem that HOL4 states
+   as the value of an ML expression: evaluate_MAP_Var *)
 
-(* HOL4 bvl_to_bviProofScript.sml:696-707: a proof *)
+(* HOL4 bvl_to_bviProofScript.sml:696-707: a theorem that HOL4 states
+   as the value of an ML expression: evaluate_MAP_Var2 *)
 
 let bEval_bVarBound = cake_theorem "bEval_bVarBound[local]"
   (fun () ->
@@ -370,8 +372,8 @@ let evaluate_CopyGlobals_code =
       sptree_lookup CopyGlobals_location (state_code s) = SOME
         (3,SND CopyGlobals_code) /\
       FLOOKUP (state_refs s) p = SOME (ValueArray ls) /\
-      FLOOKUP (state_refs s) p1 = SOME (ValueArray l1) /\ ~(
-      p = p1) /\
+      FLOOKUP (state_refs s) p1 = SOME (ValueArray l1) /\ ~(p = p1)
+        /\
       n < LENGTH ls /\ n < LENGTH l1 ==>
       (?c.
         evaluate ([SND CopyGlobals_code],
@@ -507,7 +509,8 @@ let compile_int_thm = cake_theorem "compile_int_thm[local]"
     `!i env s. evaluate ([compile_int i],env,s) = (Rval [Number i],s)`)
   CHEAT_TAC;;
 
-(* HOL4 bvl_to_bviProofScript.sml:1105-1136: a proof *)
+(* HOL4 bvl_to_bviProofScript.sml:1105-1136: a theorem that HOL4
+   states as the value of an ML expression: compile_string_thm *)
 
 let HD_APPEND3 = cake_theorem "HD_APPEND3"
   (fun () ->
@@ -583,8 +586,8 @@ let do_app_adjust = cake_theorem "do_app_adjust[local]"
        (~(op = closLang_MemOp closLang_RefArray)) /\
      (!n. ~(op = closLang_GlobOp (closLang_Global n))) /\ (!n. ~(op
        = closLang_GlobOp (closLang_SetGlobal n))) /\ (~(op =
-       closLang_GlobOp closLang_AllocGlobal)) /\ ~(
-     op = closLang_Install) /\
+       closLang_GlobOp closLang_AllocGlobal)) /\ ~(op =
+       closLang_Install) /\
      (!t. ~(op = ThunkOp t)) /\
      (!n. ~(op = closLang_BlockOp (closLang_FromList n))) /\ (~(op
        = closLang_MemOp closLang_FromListByte)) /\
@@ -613,8 +616,8 @@ let eval_ind_alt = cake_theorem "eval_ind_alt"
             /\
        (!x1 x2 x3 env s.
           (!v2 s1 vs.
-             evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\ ~(
-             Boolv T = HD vs) /\ Boolv F = HD vs ==>
+             evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
+               ~(Boolv T = HD vs) /\ Boolv F = HD vs ==>
              P ([x3],env,s1)) /\
           (!v2 s1 vs.
              evaluate ([x1],env,s) = (v2,s1) /\ v2 = Rval vs /\
@@ -683,17 +686,16 @@ let do_app_Ref = cake_theorem "do_app_Ref[local]"
         Rval
          (RefPtr T (LEAST (\ptr. ~(ptr IN FDOM (state_refs s)))),
           bvl_to_bvi
-           (state_refs_fupd (K (state_refs
+           (bvi_to_bvl (state_refs_fupd (K (state_refs
               s |+ ((LEAST (\ptr. ~(ptr IN FDOM (state_refs
-                s)))),ValueArray vs))) (bvi_to_bvl s)) s)`)
+                s)))),ValueArray vs))) s)) s)`)
   CHEAT_TAC;;
 
 let state_rel_add_bytearray = cake_theorem "state_rel_add_bytearray"
   (fun () ->
     `state_rel b2 s5 (t2:('c,'ffi)bviSem_state) /\
-     bvl_to_bviProof_state_ok s5 /\ ~(
-     pp IN FDOM (state_refs s5)) /\ ~(
-     qq IN FDOM (state_refs t2)) ==>
+     bvl_to_bviProof_state_ok s5 /\ ~(pp IN FDOM (state_refs s5))
+       /\ ~(qq IN FDOM (state_refs t2)) ==>
      state_rel ((pp =+ qq) b2)
        (state_refs_fupd (K (state_refs s5 |+ (pp,ByteArray fl ws)))
          s5)
@@ -704,9 +706,8 @@ let state_rel_add_bytearray = cake_theorem "state_rel_add_bytearray"
 let state_rel_add_thunk = cake_theorem "state_rel_add_thunk"
   (fun () ->
     `state_rel b s (t:('c,'ffi)bviSem_state) /\
-     bvl_to_bviProof_state_ok s /\ ~(
-     pp IN FDOM (state_refs s)) /\ ~(
-     qq IN FDOM (state_refs t)) ==>
+     bvl_to_bviProof_state_ok s /\ ~(pp IN FDOM (state_refs s)) /\
+       ~(qq IN FDOM (state_refs t)) ==>
      state_rel ((pp =+ qq) b)
        (state_refs_fupd (K (state_refs s |+ (pp,Thunk m v))) s)
        (state_refs_fupd (K (state_refs t |+ (qq,Thunk m
@@ -813,7 +814,7 @@ let in_ns_1_add_1 = cake_theorem "in_ns_1_add_1"
 
 let in_ns_add_num_stubs = cake_theorem "in_ns_add_num_stubs[simp]"
   (fun () ->
-    `in_ns k (num_stubs' + x) <=> in_ns k x`)
+    `in_ns k (bvl_num_stubs + x) <=> in_ns k x`)
   CHEAT_TAC;;
 
 let compile_list_imp = cake_theorem "compile_list_imp[local]"
@@ -830,9 +831,7 @@ let compile_list_imp = cake_theorem "compile_list_imp[local]"
 
 let nss_lemma = cake_theorem "nss_lemma[local]"
   (fun () ->
-    `~(
-         n * bvl_to_bvi_namespaces = k * bvl_to_bvi_namespaces +
-           1)`)
+    `~(n * bvl_to_bvi_namespaces = k * bvl_to_bvi_namespaces + 1)`)
   CHEAT_TAC;;
 
 let in_ns_0_simp = cake_theorem "in_ns_0_simp[local]"
@@ -965,8 +964,8 @@ let compile_single_evaluate = cake_theorem "compile_single_evaluate"
   (fun () ->
     `evaluate ([Call 0 (SOME start) []],[],s1) = (res,s2) /\
      state_rel b1 s1 t1 /\ IS_SOME (bviSem_state_global t1) /\
-       bvl_to_bviProof_state_ok s1 /\ ~(
-     res = Rerr (Rabort Rtype_error)) ==>
+       bvl_to_bviProof_state_ok s1 /\ ~(res = Rerr (Rabort Rtype_error))
+       ==>
      (?ck b2 t2.
        evaluate ([Call 0 (SOME (bvl_num_stubs +
          bvl_to_bvi_namespaces * start)) [] NONE],[],inc_clock ck t1) =
@@ -1017,8 +1016,8 @@ let compile_list_distinct_locs =
          MAP (\n. bvl_num_stubs + bvl_to_bvi_namespaces * n) (MAP
            FST prog) /\
         EVERY ((<=) bvl_num_stubs) (MAP FST code) /\
-       EVERY (\n. ~in_ns 2 (n - bvl_num_stubs) /\ ~in_ns 3 (n -
-         bvl_num_stubs))
+       EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
+         bvl_num_stubs)))
          (MAP FST code) /\
        n <= n'`)
   CHEAT_TAC;;
@@ -1034,8 +1033,8 @@ let bvl_to_bviProof_compile_prog_evaluate =
      ALL_DISTINCT (MAP FST prog) /\
      handle_ok (MAP (SND o SND) prog) /\
      (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
-     n' <= (FST (FST (co 0))) /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+     n' <= (FST (FST (co 0))) /\ ~(r = Rerr (Rabort Rtype_error))
+       ==>
      (?ck b2 s2.
      evaluate ([Call 0 (SOME start') [] NONE],[],
                initial_state ffi0 (fromAList prog') (state_co
@@ -1054,9 +1053,8 @@ let bvl_to_bviProof_compile_prog_semantics =
      handle_ok (MAP (SND o SND) prog) /\
      (!n. EVERY ((\e. handle_ok [e]) o SND o SND) (SND (co n))) /\
      n' <= FST (FST ((co:num->(num#'c)#(num#num#bvl_exp) list) 0))
-       /\ ~(
-     semantics (ffi0:'ffi ffi_state) (fromAList prog) co (state_cc
-       compile_inc cc) start = ffi_Fail) ==>
+       /\ ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co
+       (state_cc compile_inc cc) start = ffi_Fail) ==>
      semantics ffi0 (fromAList prog') (state_co compile_inc co) cc
        start' =
      semantics ffi0 (fromAList prog) co (state_cc compile_inc cc)
@@ -1073,8 +1071,8 @@ let compile_prog_distinct_locs =
         (bvl_to_bvi_namespaces * n1 + bvl_num_stubs))
         (FILTER (\n. in_ns 1 (n - bvl_num_stubs)) (MAP FST prog1))
           /\
-      EVERY (\n. ~in_ns 2 (n - bvl_num_stubs) /\ ~in_ns 3 (n -
-        bvl_num_stubs))
+      EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs)) /\ ~(in_ns 3 (n -
+        bvl_num_stubs)))
         (MAP FST prog1)`)
   CHEAT_TAC;;
 
@@ -1243,8 +1241,8 @@ let id_from_op_no_mutcons =
 
 let let_wrap_no_mutcons = cake_theorem "let_wrap_no_mutcons[local,simp]"
   (fun () ->
-    `no_mutcons (let_wrap arity id' x) <=> no_mutcons id' /\
-  no_mutcons x`)
+    `no_mutcons (let_wrap arity id x) <=> no_mutcons id /\ no_mutcons
+  x`)
   CHEAT_TAC;;
 
 let get_bin_args_no_mutcons =
@@ -1336,7 +1334,7 @@ let bvi_tailrec_compile_prog_no_mutcons =
 let EVERY_free_names_not_in_ns_2 =
   cake_theorem "EVERY_free_names_not_in_ns_2[local]"
   (fun () ->
-    `EVERY (\n. ~in_ns 2 (n - bvl_num_stubs)) (MAP FST xs) ==>
+    `EVERY (\n. ~(in_ns 2 (n - bvl_num_stubs))) (MAP FST xs) ==>
      EVERY (bvi_tailrecProof_free_names (bvl_num_stubs + 2) o
        FST) xs`)
   CHEAT_TAC;;
@@ -1356,9 +1354,8 @@ let compile_semantics = cake_theorem "compile_semantics"
           bvl_num_stubs <= FST (SND (SND (SND (FST (co n))))) /\
           in_ns 3 (FST (SND (SND (SND (FST (co n))))))) /\
      ALL_DISTINCT (MAP FST prog) ==>
-     ~(
-     semantics (ffi0:'ffi ffi_state) (fromAList prog) co (full_cc c
-       cc) start = ffi_Fail) ==>
+     ~(semantics (ffi0:'ffi ffi_state) (fromAList prog) co (full_cc
+       c cc) start = ffi_Fail) ==>
      semantics ffi0 (fromAList prog') (full_co c co) cc start' =
      semantics ffi0 (fromAList prog) co (full_cc c cc) start`)
   CHEAT_TAC;;
@@ -1517,3 +1514,5 @@ let compile_prog_code_labels_domain =
          /\ k < m} UNION
        set_of_list (MAP FST (bvl_to_bvi_stubs x y))`)
   CHEAT_TAC;;
+
+cake_hide [];;

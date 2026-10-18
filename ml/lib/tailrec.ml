@@ -12,7 +12,7 @@ let TAILREC_PRE_def = cake_define
   `TAILREC_PRE f1 guard' precondition' (x:'a) <=>
      (!k. (!m. m < k ==> guard' (FUNPOW f1 m x)) ==> precondition'
        (FUNPOW f1 k x)) /\
-     (?n. ~guard' (FUNPOW f1 n x))`;;
+     (?n. ~(guard' (FUNPOW f1 n x)))`;;
 
 let TAILREC_def = cake_define
   `tailrec_TAILREC f1 (f2:'a->'b) g x = f2 (WHILE g f1 x)`;;

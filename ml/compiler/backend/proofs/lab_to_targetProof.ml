@@ -112,8 +112,8 @@ let asm_step_nop_def = cake_define
        r) /\
      (be s1 <=> asm_config_big_endian c) /\ asm_state_align s1 =
        asm_config_code_alignment c /\
-     asmSem_asm i (pc s1 + n2w (LENGTH bytes)) s1 = s2 /\ ~failed s2
-       /\
+     asmSem_asm i (pc s1 + n2w (LENGTH bytes)) s1 = s2 /\ ~(failed
+       s2) /\
      asm_ok i c`;;
 
 (* HOL4 lab_to_targetProofScript.sml:125-130: ML code, not ported *)
@@ -155,7 +155,7 @@ let evaluate_nop_steps = cake_theorem "evaluate_nop_steps[local]"
          (be s1 <=> asm_config_big_endian (target_config
            (machine_config_target c))) /\ asm_state_align
          s1 = asm_config_code_alignment (target_config
-           (machine_config_target c)) /\ ~failed s1 /\
+           (machine_config_target c)) /\ ~(failed s1) /\
          target_state_rel (machine_config_target c) (s1:'a
            asm_state) (ms1:'state) ==>
          (?l ms2.
@@ -233,8 +233,7 @@ let labs_domain_LN = cake_theorem "labs_domain_LN[simp]"
 
 let labs_domain_insert = cake_theorem "labs_domain_insert"
   (fun () ->
-    `~(
-        k IN domain labs) ==>
+    `~(k IN domain labs) ==>
         labs_domain (sptree_insert k s labs) = IMAGE (\n2.
           (k,n2)) (domain s) UNION labs_domain labs`)
   CHEAT_TAC;;
@@ -246,8 +245,8 @@ let has_odd_inst_def = cake_define_list_cheat CHEAT_TAC
   [`has_odd_inst [] = F`;
    `has_odd_inst (Section k [] :: xs) = has_odd_inst xs`;
    `has_odd_inst (Section k (y :: ys) :: xs) <=>
-         ~EVEN (line_length y) \/ has_odd_inst ((Section k ys)
-           :: xs)`];;
+         ~(EVEN (line_length y)) \/ has_odd_inst ((Section k
+           ys) :: xs)`];;
 
 let line_similar_def = cake_define
   `line_similar x1 x2 =
@@ -918,8 +917,7 @@ let state_rel_def = cake_define
        n < buffer_space_left (state_code_buffer s1) ==>
        (let addr' = buffer_position (state_code_buffer s1) + n2w
          (LENGTH (buffer_buffer (state_code_buffer s1)) + n) in
-       addr' IN mem_domain t1 /\ ~(
-       addr' IN mem_domain s1))) /\
+       addr' IN mem_domain t1 /\ ~(addr' IN mem_domain s1))) /\
      bytes_in_mem p (prog_to_bytes code2) (mem
        t1) (mem_domain t1) (mem_domain s1) /\ buffer_position
          (state_code_buffer
@@ -933,9 +931,9 @@ let state_rel_def = cake_define
      (!bn.
        bn < LENGTH (buffer_buffer (state_code_buffer s1)) +
          buffer_space_left (state_code_buffer s1) ==>
-       ~MEM (buffer_position (state_code_buffer s1) + n2w bn)
-         (machine_config_ffi_entry_pcs mc_conf)) /\
-     ~failed s1 /\ ~failed t1 /\ (be s1 = be t1) /\
+       ~(MEM (buffer_position (state_code_buffer s1) + n2w bn)
+         (machine_config_ffi_entry_pcs mc_conf))) /\
+     ~(failed s1) /\ ~(failed t1) /\ (be s1 = be t1) /\
      (pc t1 = p + n2w (pos_val (pc s1) 0 code2)) /\
      ((p && n2w (2 EXP asm_state_align t1 - 1)) = (n2w 0)) /\
      (match link_reg (target_config (machine_config_target mc_conf))
@@ -1028,8 +1026,7 @@ let bytes_in_mem_APPEND = cake_theorem "bytes_in_mem_APPEND[local]"
 let bytes_in_mem_UPDATE = cake_theorem "bytes_in_mem_UPDATE"
   (fun () ->
     `!ls a m md md2 w1 w2.
-     (!n. n < LENGTH ls ==> ~(
-      a + n2w n = w1)) /\
+     (!n. n < LENGTH ls ==> ~(a + n2w n = w1)) /\
      bytes_in_mem a ls m md md2 ==>
      bytes_in_mem a ls ((w1 =+ w2) m) md md2`)
   CHEAT_TAC;;
@@ -1075,8 +1072,7 @@ let IMP_bytes_in_memory_JumpReg =
          (mc_conf:('a,'state,'b)machine_config)))`)
   CHEAT_TAC;;
 
-(* HOL4 lab_to_targetProofScript.sml:1281-1284: the ML values that
-   the definitions below antiquote *)
+(* HOL4 lab_to_targetProofScript.sml:1281-1284: ML code, not ported *)
 
 let IMP_bytes_in_memory_Jump =
   cake_theorem "IMP_bytes_in_memory_Jump[local]"
@@ -1429,9 +1425,8 @@ let write_bytearray_NOT_Loc =
   cake_theorem "write_bytearray_NOT_Loc[local]"
   (fun () ->
     `!xs c1 s1 a c.
-         (mem s1 a = wordLang_Word c) ==> ~(
-         (write_bytearray c1 xs (mem s1) (mem_domain s1) (be s1))
-           a = Loc n n0)`)
+         (mem s1 a = wordLang_Word c) ==> ~((write_bytearray c1
+           xs (mem s1) (mem_domain s1) (be s1)) a = Loc n n0)`)
   CHEAT_TAC;;
 
 let CallFFI_bytearray_lemma =
@@ -1479,12 +1474,9 @@ let aligned_2_imp = cake_theorem "aligned_2_imp"
 
 let aligned_2_not_eq = cake_theorem "aligned_2_not_eq"
   (fun () ->
-    `alignment_aligned 2 (x:'a word) /\ dimindex (:'a) = 32 /\ ~(
-      x = byte_align a) ==> ~(
-      x = a) /\ ~(
-      x + (n2w 1) = a) /\ ~(
-      x + (n2w 2) = a) /\ ~(
-      x + (n2w 3) = a)`)
+    `alignment_aligned 2 (x:'a word) /\ dimindex (:'a) = 32 /\ ~(x =
+  byte_align a) ==> ~(x = a) /\ ~(x + (n2w 1) = a) /\ ~(x + (n2w 2) =
+  a) /\ ~(x + (n2w 3) = a)`)
   CHEAT_TAC;;
 
 let aligned_3_imp = cake_theorem "aligned_3_imp"
@@ -1502,16 +1494,10 @@ let aligned_3_imp = cake_theorem "aligned_3_imp"
 
 let aligned_3_not_eq = cake_theorem "aligned_3_not_eq"
   (fun () ->
-    `alignment_aligned 3 (x:'a word) /\ dimindex (:'a) = 64 /\ ~(
-      x = byte_align a) ==> ~(
-      x = a) /\ ~(
-      x + (n2w 1) = a) /\ ~(
-      x + (n2w 2) = a) /\ ~(
-      x + (n2w 3) = a) /\ ~(
-      x + (n2w 4) = a) /\ ~(
-      x + (n2w 5) = a) /\ ~(
-      x + (n2w 6) = a) /\ ~(
-      x + (n2w 7) = a)`)
+    `alignment_aligned 3 (x:'a word) /\ dimindex (:'a) = 64 /\ ~(x =
+  byte_align a) ==> ~(x = a) /\ ~(x + (n2w 1) = a) /\ ~(x + (n2w 2) =
+  a) /\ ~(x + (n2w 3) = a) /\ ~(x + (n2w 4) = a) /\ ~(x + (n2w 5) = a)
+  /\ ~(x + (n2w 6) = a) /\ ~(x + (n2w 7) = a)`)
   CHEAT_TAC;;
 
 let dimword_eq_32_imp_or_bytes =
@@ -1608,7 +1594,7 @@ let byte_align_64_IMP = cake_theorem "byte_align_64_IMP[local]"
 let arith_upd_lemma = cake_theorem "arith_upd_lemma[local]"
   (fun () ->
     `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME (regs t1
-  r)) /\ ~failed (arith_upd a s1) ==>
+  r)) /\ ~(failed (arith_upd a s1)) ==>
       (!r. word_loc_val p labs ((\r s. regs s r) r (arith_upd a
         s1)) =
           SOME (regs (arith_upd a t1) r))`)
@@ -1626,7 +1612,7 @@ let fp_upd_lemma = cake_theorem "fp_upd_lemma[local]"
     `(!r. word_loc_val p labs ((\r s. regs s r) r s1) = SOME (regs t1
   r)) /\
      (!r. fp_regs s1 r = fp_regs t1 r) /\
-      ~failed (fp_upd f s1) ==>
+      ~(failed (fp_upd f s1)) ==>
      (!r. fp_regs (fp_upd f s1) r = fp_regs (fp_upd f t1) r) /\
      (!r.
        word_loc_val p labs ((\r s. regs s r) r (fp_upd f s1)) =
@@ -1676,7 +1662,7 @@ let fp_upd_share_mem_domain_unchange =
 
 let align2_not_align3_4w = cake_theorem "align2_not_align3_4w"
   (fun () ->
-    `~alignment_aligned 3 x /\ alignment_aligned 2 (x:'a word) /\
+    `~(alignment_aligned 3 x) /\ alignment_aligned 2 (x:'a word) /\
   dimindex (:'a) = 64 ==>
      x = byte_align x + (n2w 4) /\
      x + (n2w 1) = byte_align x + (n2w 5) /\
@@ -1686,13 +1672,13 @@ let align2_not_align3_4w = cake_theorem "align2_not_align3_4w"
 
 let inst_lemma = cake_theorem "Inst_lemma"
   (fun () ->
-    `~failed (asm_inst i s1) /\
+    `~(failed (asm_inst i s1)) /\
       state_rel
         ((mc_conf:('a,'state,'b)machine_config),code2,labs,p) s1 t1 ms1
         /\
       (pos_val (pc s1 + 1) 0 code2 = pos_val (pc s1) 0 code2 +
         LENGTH bytes') ==>
-      ~failed (inst i t1) /\
+      ~(failed (inst i t1)) /\
        (!a. ~(a IN mem_domain s1) ==> mem (inst i t1) a = mem t1 a)
          /\
       (target_state_rel (machine_config_target mc_conf)
@@ -1708,7 +1694,7 @@ let inst_lemma = cake_theorem "Inst_lemma"
 let line_length_MOD_0 = cake_theorem "line_length_MOD_0[local]"
   (fun () ->
     `encoder_correct (machine_config_target mc_conf) /\
-       (~EVEN p ==> (asm_config_code_alignment (target_config
+       (~(EVEN p) ==> (asm_config_code_alignment (target_config
          (machine_config_target mc_conf)) = 0)) /\
        line_ok (target_config (machine_config_target mc_conf)) labs
          ffi_names p h ==>
@@ -1722,7 +1708,8 @@ let pos_val_MOD_0_lemma = cake_theorem "pos_val_MOD_0_lemma[local]"
   (machine_config_target mc_conf)) = 0)`)
   CHEAT_TAC;;
 
-(* HOL4 lab_to_targetProofScript.sml:2955-2979: a proof *)
+(* HOL4 lab_to_targetProofScript.sml:2955-2979: a theorem that HOL4
+   states as the value of an ML expression: pos_val_MOD_0 *)
 
 (* HOL4 lab_to_targetProofScript.sml:2981: the ML values that the
    definitions below antiquote *)
@@ -1886,7 +1873,7 @@ let section_labels_append = cake_theorem "section_labels_append"
 let line_length_add_nop1 = cake_theorem "line_length_add_nop1"
   (fun () ->
     `!nop ls.
-     ~EVERY is_Label ls ==>
+     ~(EVERY is_Label ls) ==>
      SUM (MAP line_length (add_nop nop ls)) =
      SUM (MAP line_length ls) + LENGTH nop`)
   CHEAT_TAC;;
@@ -1924,15 +1911,15 @@ let EXISTS_not_Label_add_nop =
   cake_theorem "EXISTS_not_Label_add_nop[simp]"
   (fun () ->
     `!nop acc.
-       EXISTS ((~) o is_Label') (add_nop nop acc) <=> EXISTS ((~)
-         o is_Label') acc`)
+       EXISTS ((~) o is_Label) (add_nop nop acc) <=> EXISTS ((~)
+         o is_Label) acc`)
   CHEAT_TAC;;
 
 let EVERY_is_Label_add_nop_preserved =
   cake_theorem "EVERY_is_Label_add_nop_preserved[simp]"
   (fun () ->
     `!nop acc.
-       EVERY is_Label' (add_nop nop acc) <=> EVERY is_Label' acc`)
+       EVERY is_Label (add_nop nop acc) <=> EVERY is_Label acc`)
   CHEAT_TAC;;
 
 let EVERY_is_Label_add_nop = cake_theorem "EVERY_is_Label_add_nop"
@@ -1974,8 +1961,8 @@ let code_similar_pad_code = cake_theorem "code_similar_pad_code"
 let LIST_REL_enc_line = cake_theorem "LIST_REL_enc_line[local]"
   (fun () ->
     `!ls ls'.
-     LIST_REL line_similar' ls ls' <=>
-     LIST_REL line_similar' (MAP (enc_line enc len) ls) ls'`)
+     LIST_REL line_similar ls ls' <=>
+     LIST_REL line_similar (MAP (enc_line enc len) ls) ls'`)
   CHEAT_TAC;;
 
 let code_similar_enc_sec_list =
@@ -2004,15 +1991,16 @@ let enc_secs_again_IMP_similar =
        code_similar code code1`)
   CHEAT_TAC;;
 
-(* HOL4 lab_to_targetProofScript.sml:3402-3408: a proof *)
+(* HOL4 lab_to_targetProofScript.sml:3402-3408: a theorem that HOL4
+   states as the value of an ML expression: lines_upd_lab_len_AUX *)
 
 let line_similar_lines_upd_lab_len =
   cake_theorem "line_similar_lines_upd_lab_len[local]"
   (fun () ->
     `!l aux pos l1.
-         LIST_REL line_similar' (FST (lines_upd_lab_len pos l []))
+         LIST_REL line_similar (FST (lines_upd_lab_len pos l []))
            l1 =
-         LIST_REL line_similar' l l1`)
+         LIST_REL line_similar l l1`)
   CHEAT_TAC;;
 
 let code_similar_upd_lab_len = cake_theorem "code_similar_upd_lab_len"
@@ -2125,8 +2113,8 @@ let pad_code_sec_labels_ok = cake_theorem "pad_code_sec_labels_ok"
 let sec_labels_ok_filter_skip =
   cake_theorem "sec_labels_ok_filter_skip[simp]"
   (fun () ->
-    `!code. EVERY sec_labels_ok' (filter_skip code) <=> EVERY
-  sec_labels_ok' code`)
+    `!code. EVERY sec_labels_ok (filter_skip code) <=> EVERY
+  sec_labels_ok code`)
   CHEAT_TAC;;
 
 (* invariant: lines are encoded and non-label lengths annotated *)
@@ -2259,7 +2247,7 @@ let line_length_pad_section1 = cake_theorem "line_length_pad_section1"
      LENGTH nop = 1 /\
      EVERY label_one ls /\
      EVERY line_length_leq ls /\
-     ~EVERY is_Label acc /\
+     ~(EVERY is_Label acc) /\
      SUM (MAP line_length acc) = SUM (MAP line_len acc) ==>
      SUM (MAP line_length (pad_section nop ls acc)) =
      SUM (MAP line_len ls) + SUM (MAP line_len acc)`)
@@ -2270,7 +2258,7 @@ let line_len_pad_section1 = cake_theorem "line_len_pad_section1"
     `!nop xs aux.
      LENGTH nop = 1 /\
      EVERY label_one xs /\
-     ~EVERY is_Label aux ==>
+     ~(EVERY is_Label aux) ==>
      SUM (MAP line_len (pad_section nop xs aux)) =
      SUM (MAP line_len xs) + SUM (MAP line_len aux)`)
   CHEAT_TAC;;
@@ -2283,27 +2271,27 @@ let line_encd_def = cake_define
           labLang_Asm b bytes len ->
        enc (cbw_to_asm b) = bytes /\ len = LENGTH bytes
         | (labLang_LabAsm labLang_Halt _40 bytes len) ->
-       enc (Jump (--n2w (pos + ffi_offset))) = bytes /\
+       enc (Jump (--(n2w (pos + ffi_offset)))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm Install _41 bytes len) ->
-       enc (Jump (--n2w (pos + 2 * ffi_offset))) = bytes /\
+       enc (Jump (--(n2w (pos + 2 * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (labLang_CallFFI s) _42 bytes len) ->
-       enc (Jump (--n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) +
-         3) * ffi_offset))) = bytes /\
+       enc (Jump (--(n2w (pos + (get_ffi_index ffis (ffi_ExtCall s) +
+         3) * ffi_offset)))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (Jump l) _43 bytes len) ->
-       enc (Jump (n2w (find_pos l labs) + --n2w pos)) = bytes /\
+       enc (Jump (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (JumpCmp a b c l) _44 bytes len) ->
-       enc (JumpCmp a b c (n2w (find_pos l labs) + --n2w pos)) =
+       enc (JumpCmp a b c (n2w (find_pos l labs) + --(n2w pos))) =
          bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (LocValue k l) _45 bytes len) ->
-       enc (Loc k (n2w (find_pos l labs) + --n2w pos)) = bytes /\
+       enc (Loc k (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
         | (labLang_LabAsm (Call l) _46 bytes len) ->
-       enc (Call (n2w (find_pos l labs) + --n2w pos)) = bytes /\
+       enc (Call (n2w (find_pos l labs) + --(n2w pos))) = bytes /\
        LENGTH bytes <= len
         | _47 -> T`;;
 
@@ -2395,7 +2383,7 @@ let sec_label_zero_def = cake_define
 let EVERY_label_zero_add_nop =
   cake_theorem "EVERY_label_zero_add_nop[local]"
   (fun () ->
-    `!xs. EVERY label_zero' (add_nop nop xs) = EVERY label_zero' xs`)
+    `!xs. EVERY label_zero (add_nop nop xs) = EVERY label_zero xs`)
   CHEAT_TAC;;
 
 let EVERY_label_zero_pad_section =
@@ -2467,7 +2455,7 @@ let upd_lab_len_encd0_label_zero =
 
 let sec_pos_val_0 = cake_theorem "sec_pos_val_0"
   (fun () ->
-    `!pos lines. ~EVERY is_Label lines /\ EVERY label_zero lines ==>
+    `!pos lines. ~(EVERY is_Label lines) /\ EVERY label_zero lines ==>
   sec_pos_val 0 pos lines = SOME pos`)
   CHEAT_TAC;;
 
@@ -2644,26 +2632,26 @@ let line_enc_with_nop_def = cake_define
           labLang_Asm b bytes len ->
        enc_with_nop enc (cbw_to_asm b) bytes /\ LENGTH bytes = len
         | (labLang_LabAsm labLang_Halt _56 bytes len) ->
-       enc_with_nop enc (Jump (--n2w (pos + ffi_offset))) bytes /\
+       enc_with_nop enc (Jump (--(n2w (pos + ffi_offset)))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm Install _57 bytes len) ->
-       enc_with_nop enc (Jump (--n2w (pos + 2 * ffi_offset))) bytes
+       enc_with_nop enc (Jump (--(n2w (pos + 2 * ffi_offset)))) bytes
          /\
        LENGTH bytes = len
         | (labLang_LabAsm (labLang_CallFFI s) _58 bytes len) ->
-       enc_with_nop enc (Jump (--n2w (pos + (get_ffi_index ffis
-         (ffi_ExtCall s) + 3) * ffi_offset))) bytes /\
+       enc_with_nop enc (Jump (--(n2w (pos + (get_ffi_index ffis
+         (ffi_ExtCall s) + 3) * ffi_offset)))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm (Jump l) _59 bytes len) ->
-       enc_with_nop enc (Jump (n2w (find_pos l labs) + --n2w pos))
+       enc_with_nop enc (Jump (n2w (find_pos l labs) + --(n2w pos)))
          bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm (JumpCmp a b c l) _60 bytes len) ->
-       enc_with_nop enc (JumpCmp a b c (n2w (find_pos l labs) + --n2w
-         pos)) bytes /\
+       enc_with_nop enc (JumpCmp a b c (n2w (find_pos l labs) +
+         --(n2w pos))) bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm (LocValue k l) _61 bytes len) ->
-       enc_with_nop enc (Loc k (n2w (find_pos l labs) + --n2w pos))
+       enc_with_nop enc (Loc k (n2w (find_pos l labs) + --(n2w pos)))
          bytes /\
        LENGTH bytes = len
         | (labLang_LabAsm _62 _63 bytes len) -> LENGTH bytes = len
@@ -2806,7 +2794,7 @@ let lines_enc_with_nop_pad_section1 =
       lines_encd enc labs ffis (pos + (SUM (MAP line_len aux)))
         code /\
       lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
-      ~EVERY is_Label aux /\
+      ~(EVERY is_Label aux) /\
       EVERY label_one code ==>
       lines_enc_with_nop enc labs ffis pos (pad_section nop code
         aux)`)
@@ -2821,7 +2809,7 @@ let lines_enc_with_nop_pad_section01 =
       lines_encd enc labs ffis (pos + SUM (MAP line_len aux)) code
         /\
       lines_enc_with_nop enc labs ffis pos (REVERSE aux) /\
-      ~EVERY is_Label aux /\ EVERY label_zero code ==>
+      ~(EVERY is_Label aux) /\ EVERY label_zero code ==>
       lines_enc_with_nop enc labs ffis pos (pad_section nop code
         aux)`)
   CHEAT_TAC;;
@@ -3030,9 +3018,9 @@ let lines_offset_ok_pad_section =
     `!nop lines aux labs ffis pos.
       lab_len_pos_ok (pos + SUM (MAP line_len aux)) lines /\
       lab_len_pos_ok pos (REVERSE aux) /\ EVERY label_zero aux /\
-      (~NULL lines /\ is_Label (HD lines) /\ line_len (HD lines) =
-        1 ==>
-       ~NULL aux /\ ~is_Label (HD aux)) /\
+      (~(NULL lines) /\ is_Label (HD lines) /\ line_len (HD lines)
+        = 1 ==>
+       ~(NULL aux) /\ ~(is_Label (HD aux))) /\
       lines_offset_ok labs ffis pos (REVERSE aux ++ lines) ==>
       lines_offset_ok labs ffis pos (pad_section nop lines aux)`)
   CHEAT_TAC;;
@@ -3094,7 +3082,7 @@ let sec_get_zero_labs_acc_eq_sec_get_zero_labels =
 let get_zero_labs_acc_eq_get_zero_labels =
   cake_theorem "get_zero_labs_acc_eq_get_zero_labels[local]"
   (fun () ->
-    `domain (ITLIST sec_get_zero_labs_acc' code acc) =
+    `domain (ITLIST sec_get_zero_labs_acc code acc) =
      IMAGE FST (restrict_zero (get_labels code)) UNION domain acc`)
   CHEAT_TAC;;
 
@@ -3281,7 +3269,7 @@ let ALOOKUP_section_labels_ignore =
   cake_theorem "ALOOKUP_section_labels_ignore"
   (fun () ->
     `!pos lines acc.
-     ~MEM n2 (MAP SND (extract_labels lines)) ==>
+     ~(MEM n2 (MAP SND (extract_labels lines))) ==>
      ALOOKUP (SND (section_labels pos lines acc)) n2 =
      ALOOKUP acc n2`)
   CHEAT_TAC;;
@@ -3364,7 +3352,7 @@ let lab_lookup_compute_labels_alt_ignore =
   cake_theorem "lab_lookup_compute_labels_alt_ignore"
   (fun () ->
     `!pos secs acc.
-     ~MEM n1 (MAP Section_num secs) ==>
+     ~(MEM n1 (MAP Section_num secs)) ==>
      lab_lookup n1 n2 (compute_labels_alt pos secs acc) =
        lab_lookup n1 n2 acc`)
   CHEAT_TAC;;
@@ -3376,8 +3364,7 @@ let ALOOKUP_section_labels = cake_theorem "ALOOKUP_section_labels"
      EVERY line_length_ok lines /\
      EVERY label_zero lines /\
      ALL_DISTINCT (extract_labels lines) /\
-     sec_loc_to_pc n2 lines = SOME pc' /\ ~(
-     n2 = 0) ==>
+     sec_loc_to_pc n2 lines = SOME pc' /\ ~(n2 = 0) ==>
      (?i.
        ALOOKUP (SND (section_labels pos lines acc)) n2 = SOME i /\
        ((sec_pos_val pc' pos lines = NONE /\
@@ -3406,8 +3393,8 @@ let enc_lines_again_simp_ends_with_label =
   (fun () ->
     `!labs ffis pos enc ls res ok.
       enc_lines_again_simp labs ffis pos enc ls = (res,ok) /\
-      ~NULL ls /\ is_Label (LAST ls) ==>
-      ~NULL res /\ is_Label (LAST res)`)
+      ~(NULL ls) /\ is_Label (LAST ls) ==>
+      ~(NULL res) /\ is_Label (LAST res)`)
   CHEAT_TAC;;
 
 let enc_secs_again_ends_with_label =
@@ -3453,8 +3440,27 @@ let label_zero_pos_ok_even_labels =
      even_labels pos code`)
   CHEAT_TAC;;
 
-(* HOL4 lab_to_targetProofScript.sml:5645-5665: code that the source
-   has in a comment *)
+(*
+  val code = ``[Label a1 b1 0; Label a2 b2 0; Asm x3 [b3] 1; Label a4 b4 1; Label a5 b5 0]``
+  EVAL ``lab_len_pos_ok 0 ^code``
+  EVAL ``(pad_section nop ^code [])``
+  EVAL ``lab_len_pos_ok 0 (pad_section nop ^code [])``
+
+  [Label a1 b1 0; Label a2 b2 0; Asm x3 [b3] 1; Label a4 b4 1; Label a5 b5 0]
+  []
+
+  [Label a2 b2 0; Asm x3 [b3] 1; Label a4 b4 1; Label a5 b5 0]
+  [Label a1 b1 0]
+
+  [Asm x3 [b3] 1; Label a4 b4 1; Label a5 b5 0]
+  [Label a2 b2 0; Label a1 b1 0]
+
+  [Label a4 b4 1; Label a5 b5 0]
+  [Asm x3 [b3] 1; Label a2 b2 0; Label a1 b1 0]
+
+  [Label a5 b5 0]
+  [Label a4 b4 0; Asm x3 [b3;nop] 2; Label a2 b2 0; Label a1 b1 0]
+*)
 
 let pad_code_ends_with_label = cake_theorem "pad_code_ends_with_label"
   (fun () ->
@@ -3480,17 +3486,36 @@ let enc_secs_again_compute_labels =
      compute_labels_alt pos secs acc`)
   CHEAT_TAC;;
 
-(* HOL4 lab_to_targetProofScript.sml:5715-5735: code that the source
-   has in a comment *)
+(*
+  val code = ``[Label 1 1 0; Label 1 2 0; Asm x3 [b3] 1; Label 1 3 1; Label 1 4 0]``
+  EVAL ``section_labels 0 ^code LN``
+  EVAL ``(pad_section nop ^code [])``
+  EVAL ``section_labels 0 (pad_section nop ^code []) LN``
+
+  [Label 1 1 0; Label 1 2 0; Asm x3 [b3] 1; Label 1 3 1; Label 1 4 0]
+  []
+
+  [Label 1 2 0; Asm x3 [b3] 1; Label 1 3 1; Label 1 4 0]
+  [Label 1 1 0]
+
+  [Asm x3 [b3] 1; Label 1 3 1; Label 1 4 0]
+  [Label 1 2 0; Label 1 1 0]
+
+  [Label 1 3 1; Label 1 4 0]
+  [Asm x3 [b3] 1; Label 1 2 0; Label 1 1 0]
+
+  [Label 1 4 0]
+  [Label 1 3 0; Asm x3 [b3;nop] 2; Label 1 2 0; Label 1 1 0]
+*)
 
 let pad_section_labels = cake_theorem "pad_section_labels"
   (fun () ->
     `!nop lines aux pos labs.
       lab_len_pos_ok (pos + SUM (MAP line_len aux)) lines /\
       lab_len_pos_ok pos (REVERSE aux) /\ EVERY label_zero aux /\
-      (~NULL lines /\ is_Label (HD lines) /\ line_len (HD lines) =
-        1 ==>
-       ~NULL aux /\ ~is_Label (HD aux)) ==>
+      (~(NULL lines) /\ is_Label (HD lines) /\ line_len (HD lines)
+        = 1 ==>
+       ~(NULL aux) /\ ~(is_Label (HD aux))) ==>
       section_labels pos (pad_section nop lines aux) labs =
       section_labels pos (REVERSE aux ++ lines) labs`)
   CHEAT_TAC;;
@@ -3794,8 +3819,8 @@ let pos_val_acc = cake_theorem "pos_val_acc"
   (fun () ->
     `!ls n.
      pos_val (SUM (MAP ((\xs. LENGTH (FILTER ((~) o is_Label) xs))
-       o Section_lines') ls)) n ls =
-     n + SUM (MAP (SUM o (MAP line_length) o Section_lines') ls)`)
+       o Section_lines) ls)) n ls =
+     n + SUM (MAP (SUM o (MAP line_length) o Section_lines) ls)`)
   CHEAT_TAC;;
 
 let pos_val_bound = cake_theorem "pos_val_bound"
@@ -3826,7 +3851,8 @@ let find_ffi_names_append = cake_theorem "find_ffi_names_append[local]"
     `!l1 l2.
      find_ffi_names (l1 ++ l2) =
      (find_ffi_names l2) ++
-     FILTER (\n. ~MEM n (find_ffi_names l2)) (find_ffi_names l1)`)
+     FILTER (\n. ~(MEM n (find_ffi_names l2))) (find_ffi_names
+       l1)`)
   CHEAT_TAC;;
 
 let all_enc_ok_aligned_pos_val =
@@ -3920,7 +3946,7 @@ let asm_fetch_SOME_IMP_LESS_num_pcs =
 let GENLIST_asm_fetch_aux_next =
   cake_theorem "GENLIST_asm_fetch_aux_next"
   (fun () ->
-    `~is_Label x ==>
+    `~(is_Label x) ==>
      GENLIST (\i.
        (i,asm_fetch_aux i (Section k (x :: xs) :: rest)))
        (n + 1) =
@@ -4030,9 +4056,8 @@ let pos_val_asm_fetch_aux_distinct =
      enc_ok c /\
      asm_fetch_aux pc code2 = SOME line /\
      a < LENGTH (line_bytes line) /\
-     LENGTH (prog_to_bytes code2) < dimword (:'a) /\ ~(
-     pc' = pc) ==> ~(
-     a + pos_val pc p code2 = pos_val pc' p code2)`)
+     LENGTH (prog_to_bytes code2) < dimword (:'a) /\ ~(pc' = pc)
+       ==> ~(a + pos_val pc p code2 = pos_val pc' p code2)`)
   CHEAT_TAC;;
 
 let bytes_in_memory_eq_mem = cake_theorem "bytes_in_memory_eq_mem"
@@ -4060,10 +4085,9 @@ let ffi_entry_pcs_NOT_ccache_OR_halt_pc =
         SOME index /\ ~(machine_config_halt_pc
      mc_conf = EL index (machine_config_ffi_entry_pcs mc_conf)) /\
        ~(machine_config_ccache_pc
-     mc_conf = EL index (machine_config_ffi_entry_pcs mc_conf)) ==>
-       ~(
-     pc = machine_config_ccache_pc mc_conf) /\ ~(
-     pc = machine_config_halt_pc mc_conf)`)
+     mc_conf = EL index (machine_config_ffi_entry_pcs mc_conf))
+       ==> ~(pc = machine_config_ccache_pc mc_conf) /\ ~(pc =
+       machine_config_halt_pc mc_conf)`)
   CHEAT_TAC;;
 
 (* HOL4 lab_to_targetProofScript.sml:7171-7200: a proof *)
@@ -4114,8 +4138,8 @@ let pos_val_APPEND1 = cake_theorem "pos_val_APPEND1"
 let asm_fetch_aux_APPEND2 = cake_theorem "asm_fetch_aux_APPEND2"
   (fun () ->
     `!code.
-       asm_fetch_aux (pc' + num_pcs code) (code ++ sec_list) =
-         asm_fetch_aux pc' sec_list`)
+       asm_fetch_aux (pc + num_pcs code) (code ++ sec_list) =
+         asm_fetch_aux pc sec_list`)
   CHEAT_TAC;;
 
 let pos_val_APPEND2 = cake_theorem "pos_val_APPEND2"
@@ -4494,10 +4518,10 @@ let get_shmem_info_thm = cake_theorem "get_shmem_info_thm"
 
 let FILTER_NOT_MEM_Mapped = cake_theorem "FILTER_NOT_MEM_Mapped[local]"
   (fun () ->
-    `~MEM "MappedRead" (FILTER (\x. ~(x = "MappedRead") /\ ~(x =
-  "MappedWrite")) l) /\
-     ~MEM "MappedWrite" (FILTER (\x. ~(x = "MappedRead") /\ ~(x =
-       "MappedWrite")) l)`)
+    `~(MEM "MappedRead" (FILTER (\x. ~(x = "MappedRead") /\ ~(x =
+  "MappedWrite")) l)) /\
+     ~(MEM "MappedWrite" (FILTER (\x. ~(x = "MappedRead") /\ ~(x
+       = "MappedWrite")) l))`)
   CHEAT_TAC;;
 
 let mmio_pcs_min_index_APPEND_thm =
@@ -4543,17 +4567,17 @@ let get_shmem_info_EMPTY_LENGTH_EQ =
 let line_to_info_offset_FST_eq =
   cake_theorem "line_to_info_offset_FST_eq"
   (fun () ->
-    `MAP FST' (line_to_info code p accum) = MAP FST' (line_to_info
-  code 0 accum)`)
+    `MAP FST (line_to_info code p accum) = MAP FST (line_to_info code
+  0 accum)`)
   CHEAT_TAC;;
 
 let line_to_info_offset_SND_eq =
   cake_theorem "line_to_info_offset_SND_eq"
   (fun () ->
-    `MAP SND' (line_to_info code p accum) = MAP (\x.
-  shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc (SND' x)))
-  (shmem_info_num_entry_pc_fupd (K (p + shmem_info_num_entry_pc (SND'
-  x))) (SND' x)))
+    `MAP SND (line_to_info code p accum) = MAP (\x. SND
+  (shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc (SND x)))
+  (shmem_info_num_entry_pc_fupd (K (p + shmem_info_num_entry_pc (SND
+  x))) x)))
        (line_to_info code 0 accum)`)
   CHEAT_TAC;;
 
@@ -4624,23 +4648,21 @@ let asm_fetch_NOT_ffi_entry_pcs =
        labs ffi_names 0 (code2:('a sec) list) /\
      enc_ok (target_config (machine_config_target mc_conf)) /\
      (!index.
-       index < i ==> ~(
-       --n2w (ffi_offset * (index + 3)) + target_get_pc
-         (machine_config_target mc_conf) (ms:'state) IN
+       index < i ==> ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) (ms:'state) IN
          machine_config_prog_addresses
-       mc_conf) /\ ~(
-       --n2w (ffi_offset * (index + 3)) + target_get_pc
-         (machine_config_target mc_conf) ms IN
+       mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) ms IN
          machine_config_shared_addresses
-       mc_conf) /\ ~(
-       --n2w (ffi_offset * (index + 3)) + target_get_pc
-         (machine_config_target mc_conf) ms = machine_config_halt_pc
-       mc_conf) /\ ~(
-       --n2w (ffi_offset * (index + 3)) + target_get_pc
-         (machine_config_target mc_conf) ms = machine_config_ccache_pc
+       mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) ms =
+         machine_config_halt_pc
+       mc_conf) /\ ~(--(n2w (ffi_offset * (index + 3))) +
+         target_get_pc (machine_config_target mc_conf) ms =
+         machine_config_ccache_pc
        mc_conf) /\
        find_index
-         (--n2w (ffi_offset * (index + 3)) + target_get_pc
+         (--(n2w (ffi_offset * (index + 3))) + target_get_pc
            (machine_config_target mc_conf) ms)
            (machine_config_ffi_entry_pcs
          mc_conf) 0 = SOME index) /\
@@ -4649,9 +4671,9 @@ let asm_fetch_NOT_ffi_entry_pcs =
         (mc_conf:('a,'state,'b)machine_config)) dm /\
      asm_fetch_aux pos code2 = SOME line /\
      a < LENGTH (line_bytes line) ==>
-     ~MEM (target_get_pc (machine_config_target mc_conf) ms + n2w a
-       + (n2w (pos_val pos 0 code2)))
-       (TAKE i (machine_config_ffi_entry_pcs mc_conf))`)
+     ~(MEM (target_get_pc (machine_config_target mc_conf) ms + n2w
+       a + (n2w (pos_val pos 0 code2)))
+       (TAKE i (machine_config_ffi_entry_pcs mc_conf)))`)
   CHEAT_TAC;;
 
 let list_subset_refl = cake_theorem "list_subset_refl"
@@ -4685,8 +4707,8 @@ let genlist_line_to_info_entry_pc_max =
 
 let find_index_MAP_w2n = cake_theorem "find_index_MAP_w2n[local]"
   (fun () ->
-    `!l (x:'a word) n. find_index (w2n' x) (MAP w2n' l) n = find_index
-  x l n`)
+    `!l (x:'a word) n. find_index (w2n x) (MAP w2n l) n = find_index x
+  l n`)
   CHEAT_TAC;;
 
 (* This is set up for the very first compile call *)
@@ -4728,10 +4750,10 @@ let IMP_state_rel_make_init =
                                 rec))) new_shmem_info)) /\
       no_install_or_no_share_mem code (ffi_names mc_conf) /\
       (!bn. bn < cbspace ==>
-         ~MEM (n2w bn + n2w (LENGTH (prog_to_bytes code2)) +
+         ~(MEM (n2w bn + n2w (LENGTH (prog_to_bytes code2)) +
            target_get_pc (machine_config_target
                 mc_conf) ms) (TAKE i (machine_config_ffi_entry_pcs
-                  mc_conf))) ==>
+                  mc_conf)))) ==>
       state_rel
         ((mc_conf:('a,'state,'b)machine_config),code2,labs,target_get_pc
         (machine_config_target
@@ -4807,7 +4829,7 @@ let make_init_simp = cake_theorem "make_init_simp[simp]"
   CHEAT_TAC;;
 
 (* HOL4 lab_to_targetProofScript.sml:10524-10538: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: semantics_make_init *)
 
 let make_init_filter_skip = cake_theorem "make_init_filter_skip"
   (fun () ->
@@ -4840,15 +4862,14 @@ let all_enc_ok_pre_filter_skip =
 let MAP_Section_num_filter_skip =
   cake_theorem "MAP_Section_num_filter_skip[simp]"
   (fun () ->
-    `!code. MAP Section_num' (filter_skip code) = MAP Section_num'
-  code`)
+    `!code. MAP Section_num (filter_skip code) = MAP Section_num code`)
   CHEAT_TAC;;
 
 let filter_skip_extract_labels =
   cake_theorem "filter_skip_extract_labels[simp]"
   (fun () ->
-    `!code. MAP (extract_labels' o Section_lines') (filter_skip code) =
-     MAP (extract_labels' o Section_lines') code`)
+    `!code. MAP (extract_labels o Section_lines) (filter_skip code) =
+     MAP (extract_labels o Section_lines) code`)
   CHEAT_TAC;;
 
 let get_code_labels_filter_skip =
@@ -4875,7 +4896,7 @@ let find_ffi_names_ALL_DISTINCT =
 
 let not_not_skip_IMP_Skip = cake_theorem "not_not_skip_IMP_Skip[local]"
   (fun () ->
-    `~not_skip inst' ==> (?l n. inst' = labLang_Asm (Asmi (asm_Inst
+    `~(not_skip inst') ==> (?l n. inst' = labLang_Asm (Asmi (asm_Inst
   asm_Skip)) l n)`)
   CHEAT_TAC;;
 
@@ -4969,9 +4990,8 @@ let semantics_compile_lemma' =
      cbspace + LENGTH bytes + ffi_offset * (i + 3) < dimword (:'a)
        /\
      (!ffis. ffi_names c = SOME ffis ==> EVERY (\x. ?s. x =
-       ffi_ExtCall s) ffis) /\ ~(
-     semantics (lab_to_targetProof_make_init mc_conf ffi t m dm sdm
-       ms code
+       ffi_ExtCall s) ffis) /\ ~(semantics (lab_to_targetProof_make_init
+       mc_conf ffi t m dm sdm ms code
        (lab_to_target_compile asm_conf) (target_get_pc
          (machine_config_target mc_conf) ms + n2w (LENGTH bytes))
          cbspace
@@ -4986,7 +5006,7 @@ let semantics_compile_lemma' =
   CHEAT_TAC;;
 
 (* HOL4 lab_to_targetProofScript.sml:11167-11171: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: semantics_compile_lemma *)
 
 (* try to show the condition of semantics_compile is not vacuous *)
 (* HOL4 lab_to_targetProofScript.sml:11174-11199: code that the
@@ -5040,3 +5060,5 @@ let lab_to_targetProof_semantics_compile =
                 (machine_config_target mc_conf) ms + n2w (LENGTH bytes))
               cbspace coracle)}`)
   CHEAT_TAC;;
+
+cake_hide [];;

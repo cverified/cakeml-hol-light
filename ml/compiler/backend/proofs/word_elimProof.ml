@@ -339,10 +339,9 @@ let get_locals_fromList2_FRONT =
   cake_theorem "get_locals_fromList2_FRONT"
   (fun () ->
     `!args s x xf t.
-     wordSem_get_vars args s = SOME x /\ ~(
-        x = []) /\ xf = FRONT x /\ t = fromList2 xf ==> domain
-          (get_locals t) SUBSET domain (get_locals
-          (wordSem_state_locals s))`)
+     wordSem_get_vars args s = SOME x /\ ~(x = []) /\ xf = FRONT
+       x /\ t = fromList2 xf ==> domain (get_locals t) SUBSET domain
+       (get_locals (wordSem_state_locals s))`)
   CHEAT_TAC;;
 
 let get_memory_write_bytearray_lemma =
@@ -380,10 +379,10 @@ let remove_word_code_MAP_FST_lemma =
   cake_theorem "remove_word_code_MAP_FST_lemma"
   (fun () ->
     `!(reachable:1 spt).
-        MAP FST' (FILTER (\x. IS_SOME (sptree_lookup (FST' x)
+        MAP FST (FILTER (\x. IS_SOME (sptree_lookup (FST x)
           reachable)) l) =
             FILTER (\x. IS_SOME (sptree_lookup x reachable)) (MAP
-              FST' l)`)
+              FST l)`)
   CHEAT_TAC;;
 
 (**************************** WORD STATE REL ***************************)
@@ -544,9 +543,9 @@ let word_state_rel_gc = cake_theorem "word_state_rel_gc"
 let word_state_rel_alloc = cake_theorem "word_state_rel_alloc"
   (fun () ->
     `!reachable s t res c n s1.
-     word_state_rel reachable s t /\ ~(
-     res = SOME wordSem_Error) /\ gc_no_new_locs
-       (wordSem_state_gc_fun s) ==> wordSem_alloc c n s = (res,s1) ==>
+     word_state_rel reachable s t /\ ~(res = SOME wordSem_Error) /\
+       gc_no_new_locs (wordSem_state_gc_fun s) ==> wordSem_alloc c n s =
+       (res,s1) ==>
         (?t1. wordSem_alloc c n t = (res,t1) /\ word_state_rel
           reachable s1 t1 /\
       dest_result_loc res SUBSET domain reachable)`)
@@ -586,8 +585,8 @@ let get_locals_inter_subset =
 let word_removal_lemma = cake_theorem "word_removal_lemma"
   (fun () ->
     `!program state result new_state reachable removed_state.
-        wordSem_evaluate (program,state) = (result,new_state) /\ ~(
-        result = SOME wordSem_Error) /\ word_state_rel reachable
+        wordSem_evaluate (program,state) = (result,new_state) /\
+          ~(result = SOME wordSem_Error) /\ word_state_rel reachable
           state removed_state /\
         gc_no_new_locs (wordSem_state_gc_fun state) /\
         wordConvs_no_install program /\ no_install_code
@@ -657,9 +656,8 @@ let word_removal_thm = cake_theorem "word_removal_thm"
   (fun () ->
     `!start' state result new_state r reachable code1.
         wordSem_evaluate (Call NONE (SOME start') [0] NONE,state) =
-            (result,new_state) /\ ~(
-        result = SOME wordSem_Error) /\ wordSem_state_code state =
-          fromAList code1 /\
+            (result,new_state) /\ ~(result = SOME wordSem_Error) /\
+              wordSem_state_code state = fromAList code1 /\
         domain (find_loc_state state) SUBSET domain reachable /\
         gc_no_new_locs (wordSem_state_gc_fun state) /\
         reachable = closure_spt (sptree_insert start' one LN)
@@ -671,3 +669,5 @@ let word_removal_thm = cake_theorem "word_removal_thm"
                     (fromAList (remove_word_code reachable code1)))
                 state) = (result,s))`)
   CHEAT_TAC;;
+
+cake_hide [];;

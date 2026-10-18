@@ -35,10 +35,10 @@ let bviProps_initial_state_simp =
 let bviProps_initial_state_with_simp =
   cake_theorem "initial_state_with_simp[simp]"
   (fun () ->
-    `state_clock_fupd (K (k1 = initial_state f c co cc k1))
-        (initial_state f c co cc k) /\ state_code_fupd (K (c1 =
-          initial_state f c1 co cc k))
-        (initial_state f c co cc k)`)
+    `initial_state f c co cc (state_clock_fupd (K k1) k) = initial_state
+  f c co cc k1 /\
+     initial_state f c co cc (state_code_fupd (K c1) k) =
+       initial_state f c1 co cc k`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_id = cake_theorem "bvl_to_bvi_id"
@@ -48,20 +48,20 @@ let bvl_to_bvi_id = cake_theorem "bvl_to_bvi_id"
 
 let bvl_to_bvi_with_refs = cake_theorem "bvl_to_bvi_with_refs"
   (fun () ->
-    `bvl_to_bvi (state_refs_fupd (K y) x) z = state_refs_fupd (K y)
-  (bvl_to_bvi x z)`)
+    `bvl_to_bvi (state_refs_fupd (K y) x) z = bvl_to_bvi x
+  (state_refs_fupd (K y) z)`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_with_clock = cake_theorem "bvl_to_bvi_with_clock"
   (fun () ->
-    `bvl_to_bvi (state_clock_fupd (K y) x) z = state_clock_fupd (K y)
-  (bvl_to_bvi x z)`)
+    `bvl_to_bvi (state_clock_fupd (K y) x) z = bvl_to_bvi x
+  (state_clock_fupd (K y) z)`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_with_ffi = cake_theorem "bvl_to_bvi_with_ffi"
   (fun () ->
-    `bvl_to_bvi (state_ffi_fupd (K y) x) z = state_ffi_fupd (K y)
-  (bvl_to_bvi x z)`)
+    `bvl_to_bvi (state_ffi_fupd (K y) x) z = bvl_to_bvi x
+  (state_ffi_fupd (K y) z)`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_code = cake_theorem "bvl_to_bvi_code[simp]"
@@ -103,7 +103,7 @@ let bvi_to_bvl_ffi = cake_theorem "bvi_to_bvl_ffi[simp]"
 let bvi_to_bvl_to_bvi_with_ffi =
   cake_theorem "bvi_to_bvl_to_bvi_with_ffi"
   (fun () ->
-    `bvl_to_bvi (state_ffi_fupd (K f) (bvi_to_bvl x)) x =
+    `bvl_to_bvi (bvi_to_bvl (state_ffi_fupd (K f) x)) x =
   state_ffi_fupd (K f) x`)
   CHEAT_TAC;;
 
@@ -120,15 +120,16 @@ let pair_case_elim = cake_theorem "pair_case_elim[local]"
   CHEAT_TAC;;
 
 (* HOL4 bviPropsScript.sml:116-119: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_elim_thms *)
 
 (* HOL4 bviPropsScript.sml:121-125: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_eq_thms *)
 
-(* HOL4 bviPropsScript.sml:127-137: a proof *)
+(* HOL4 bviPropsScript.sml:127-137: a theorem that HOL4 states as the
+   value of an ML expression: evaluate_LENGTH *)
 
 (* HOL4 bviPropsScript.sml:139-140: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_LENGTH *)
 
 let bviProps_evaluate_IMP_LENGTH = cake_theorem "evaluate_IMP_LENGTH"
   (fun () ->
@@ -235,8 +236,8 @@ let bviProps_dec_clock_refs = cake_theorem "dec_clock_refs[simp]"
 let bviProps_dec_clock_with_code =
   cake_theorem "dec_clock_with_code[simp]"
   (fun () ->
-    `bviSem_dec_clock n (state_code_fupd (K c) s) = state_code_fupd (K
-  c) (dec_clock n s)`)
+    `bviSem_dec_clock n (state_code_fupd (K c) s) = dec_clock n
+  (state_code_fupd (K c) s)`)
   CHEAT_TAC;;
 
 let bviProps_dec_clock_code = cake_theorem "dec_clock_code[simp]"
@@ -311,9 +312,10 @@ let GENLIST_add_split = cake_theorem "GENLIST_add_split[local]"
 let FOLDL_union_GENLIST_split =
   cake_theorem "FOLDL_union_GENLIST_split[local]"
   (fun () ->
-    `FOLDL union' (FOLDL union' c (MAP (fromAList' o SND') (GENLIST f
-  a))) (MAP (fromAList' o SND') (GENLIST (\i. f (i + a)) b)) =
-     FOLDL union' c (MAP (fromAList' o SND') (GENLIST f (a + b)))`)
+    `FOLDL sptree_union (FOLDL sptree_union c (MAP (fromAList o SND)
+  (GENLIST f a))) (MAP (fromAList o SND) (GENLIST (\i. f (i + a)) b)) =
+     FOLDL sptree_union c (MAP (fromAList o SND) (GENLIST f (a +
+       b)))`)
   CHEAT_TAC;;
 
 let bviProps_evaluate_code = cake_theorem "evaluate_code"
@@ -402,8 +404,8 @@ let bviProps_do_app_change_clock_err =
 let bviProps_evaluate_add_clock = cake_theorem "evaluate_add_clock"
   (fun () ->
     `!exps env s1 res s2.
-      evaluate (exps,env,s1) = (res,s2) /\ ~(
-      res = Rerr (Rabort Rtimeout_error)) ==>
+      evaluate (exps,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+        Rtimeout_error)) ==>
       (!ck. evaluate (exps,env,inc_clock ck s1) = (res,inc_clock
         ck s2))`)
   CHEAT_TAC;;
@@ -441,9 +443,7 @@ let bviProps_do_app_inc_clock = cake_theorem "do_app_inc_clock[local]"
 let bviProps_dec_clock_1_inc_clock =
   cake_theorem "dec_clock_1_inc_clock[local]"
   (fun () ->
-    `~(
-       x = 0) ==> dec_clock 1 (inc_clock x s) = inc_clock (x - 1)
-         s`)
+    `~(x = 0) ==> dec_clock 1 (inc_clock x s) = inc_clock (x - 1) s`)
   CHEAT_TAC;;
 
 let bviProps_dec_clock_1_inc_clock2 =
@@ -481,8 +481,7 @@ let bviProps_take_drop_lem = cake_theorem "take_drop_lem[local]"
   (fun () ->
     `!skip env.
        skip < LENGTH env /\
-       skip + SUC n <= LENGTH env /\ ~(
-       DROP skip env = []) ==>
+       skip + SUC n <= LENGTH env /\ ~(DROP skip env = []) ==>
        EL skip env :: TAKE n (DROP (1 + skip) env) = TAKE (n + 1)
          (DROP skip env)`)
   CHEAT_TAC;;
@@ -534,7 +533,7 @@ let get_code_labels_def = cake_define_list_try_tac (fun () ->
 hol4_overload "get_code_labels" "bviProps_get_code_labels";;
 
 (* HOL4 bviPropsScript.sml:720-721: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: get_code_labels_def *)
 
 let good_code_labels_def = cake_define
   `bviProps_good_code_labels p elabs <=>
@@ -586,8 +585,7 @@ hol4_overload "adj_orac_rel" "bviProps_adj_orac_rel";;
 
 let do_app_cfg_swap = cake_theorem "do_app_cfg_swap[local]"
   (fun () ->
-    `~(
-       op = closLang_Install) ==>
+    `~(op = closLang_Install) ==>
          ((do_app op args s = Rval (value,s1) /\
            domain (state_code s) SUBSET domain (state_code t) ==>
            do_app op args
@@ -603,8 +601,7 @@ let do_app_cfg_swap = cake_theorem "do_app_cfg_swap[local]"
               t))))) /\
           (do_app op args s = Rerr error /\
            (domain (state_code t) SUBSET domain (state_code s) \/
-             ~(
-            error = Rabort Rtype_error)) ==>
+             ~(error = Rabort Rtype_error)) ==>
            do_app op args
              (state_ffi_fupd (K (state_ffi s))
                (bviSem_state_global_fupd (K (bviSem_state_global s))
@@ -616,9 +613,8 @@ let do_app_cfg_swap = cake_theorem "do_app_cfg_swap[local]"
 let do_app_cfg_swap_Rval = cake_theorem "do_app_cfg_swap_Rval[local]"
   (fun () ->
     `!op args (s:('a,'ffi)bviSem_state) (s1:('a,'ffi)bviSem_state)
-         (t:('b,'ffi)bviSem_state) value. ~(
-       op = closLang_Install) /\ domain (state_code s) = domain
-         (state_code t) /\
+         (t:('b,'ffi)bviSem_state) value. ~(op = closLang_Install)
+           /\ domain (state_code s) = domain (state_code t) /\
        do_app op args s = Rval (value,s1) ==>
        do_app op args
          (state_ffi_fupd (K (state_ffi s))
@@ -634,9 +630,8 @@ let do_app_cfg_swap_Rval = cake_theorem "do_app_cfg_swap_Rval[local]"
 let do_app_cfg_swap_Rerr = cake_theorem "do_app_cfg_swap_Rerr[local]"
   (fun () ->
     `!op args (s:('a,'ffi)bviSem_state) (t:('b,'ffi)bviSem_state)
-  error'. ~(
-       op = closLang_Install) /\ domain (state_code s) = domain
-         (state_code t) /\
+  error'. ~(op = closLang_Install) /\ domain (state_code s) = domain
+  (state_code t) /\
        do_app op args s = Rerr error' ==>
        do_app op args
          (state_ffi_fupd (K (state_ffi s))
@@ -681,8 +676,8 @@ let evaluate_adj_orac_rel = cake_theorem "evaluate_adj_orac_rel[local]"
   (fun () ->
     `!xs env (s:('a,'ffi)bviSem_state).
        !res t1 cc f (s2:('b,'ffi)bviSem_state).
-         evaluate (xs,env,s) = (res,t1) /\ ~(
-         res = Rerr (Rabort Rtype_error)) /\
+         evaluate (xs,env,s) = (res,t1) /\ ~(res = Rerr (Rabort
+           Rtype_error)) /\
          bviProps_adj_orac_rel cc f s s2 ==>
          (?t2. evaluate (xs,env,s2) = (res,t2) /\
            bviProps_adj_orac_rel cc f t1 t2)`)
@@ -690,8 +685,8 @@ let evaluate_adj_orac_rel = cake_theorem "evaluate_adj_orac_rel[local]"
 
 let evaluate_adj_orac = cake_theorem "evaluate_adj_orac"
   (fun () ->
-    `evaluate (xs,env,(s:('a,'ffi)bviSem_state)) = (res,t1) /\ ~(
-     res = Rerr (Rabort Rtype_error)) /\
+    `evaluate (xs,env,(s:('a,'ffi)bviSem_state)) = (res,t1) /\ ~(res =
+  Rerr (Rabort Rtype_error)) /\
      adj_orac_ok cc (f:'a->'b) s ==>
      evaluate (xs,env,adj_orac cc f s) = (res,adj_orac cc f t1) /\
      adj_orac_ok cc f t1`)
@@ -700,9 +695,9 @@ let evaluate_adj_orac = cake_theorem "evaluate_adj_orac"
 let adj_orac_initial_state =
   cake_theorem "adj_orac_initial_state[local]"
   (fun () ->
-    `adj_orac cc SND' (initial_state ffi code co (state_cc (CURRY I')
-  cc) k) =
-     initial_state ffi code (state_co (CURRY I') co) cc k`)
+    `adj_orac cc SND (initial_state ffi code co (state_cc (CURRY I) cc)
+  k) =
+     initial_state ffi code (state_co (CURRY I) co) cc k`)
   CHEAT_TAC;;
 
 let adj_orac_ok_initial_state =
@@ -715,8 +710,7 @@ let adj_orac_ok_initial_state =
 let evaluate_CURRY_I = cake_theorem "evaluate_CURRY_I[local]"
   (fun () ->
     `evaluate (es,env,initial_state ffi code co (state_cc (CURRY I) cc)
-  k) = (r,s) /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+  k) = (r,s) /\ ~(r = Rerr (Rabort Rtype_error)) ==>
      (?s2.
        evaluate (es,env,initial_state ffi code (state_co (CURRY I)
          co) cc k) =
@@ -725,9 +719,8 @@ let evaluate_CURRY_I = cake_theorem "evaluate_CURRY_I[local]"
 
 let semantics_CURRY_I = cake_theorem "semantics_CURRY_I"
   (fun () ->
-    `~(
-       semantics ffi code co (state_cc (CURRY I) cc) start =
-         ffi_Fail) ==>
+    `~(semantics ffi code co (state_cc (CURRY I) cc) start = ffi_Fail)
+  ==>
        semantics ffi code co (state_cc (CURRY I) cc) start =
        semantics ffi code (state_co (CURRY I) co) cc start`)
   CHEAT_TAC;;

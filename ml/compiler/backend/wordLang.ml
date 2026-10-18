@@ -35,10 +35,8 @@ hol4_overload "Shift" "wordLang_Shift";;
 (* HOL4 wordLangScript.sml:23: the overload ShiftN, which the port
    expands *)
 
-let wordLang_MEM_IMP_exp_size = cake_theorem "MEM_IMP_exp_size"
-  (fun () ->
-    `!xs a. MEM a xs ==> (wordLang_exp_size l a < exp1_size l xs)`)
-  CHEAT_TAC;;
+(* HOL4 wordLangScript.sml:25-31: a theorem whose statement the port
+   cannot state yet: MEM_IMP_exp_size *)
 
 new_type_abbrev("cutsets",`: 1 spt#1 spt`);;
 
@@ -97,9 +95,9 @@ hol4_overload "store_consts_stub_location"
   "wordLang_store_consts_stub_location";;
 
 (* HOL4 wordLangScript.sml:77: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: raise_stub_location_eq *)
 (* HOL4 wordLangScript.sml:78: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: store_consts_stub_location_eq *)
 
 (* HOL4 wordLangScript.sml:80-82: code that the source has in a
    comment *)

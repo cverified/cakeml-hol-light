@@ -9,7 +9,6 @@
   Correctness proof for word_unreach
 *)
 
-needs "compiler/backend/reg_alloc/reg_alloc.ml";;
 needs "compiler/backend/semantics/wordConvs.ml";;
 needs "compiler/backend/semantics/wordProps.ml";;
 needs "compiler/backend/semantics/wordSem.ml";;
@@ -27,21 +26,21 @@ needs "misc/misc.ml";;
 let word_unreachProof_evaluate_Skip_Seq =
   cake_theorem "evaluate_Skip_Seq"
   (fun () ->
-    `wordSem_evaluate ((Seq Skip p:clash_tree),s) = wordSem_evaluate
+    `wordSem_evaluate (wordLang_Seq Skip p,s) = wordSem_evaluate
   (p,(s:('a,'c,'ffi)wordSem_state))`)
   CHEAT_TAC;;
 
 let word_unreachProof_evaluate_Seq_Skip =
   cake_theorem "evaluate_Seq_Skip"
   (fun () ->
-    `!p1 s. wordSem_evaluate ((Seq p1 Skip:clash_tree),s) =
+    `!p1 s. wordSem_evaluate (wordLang_Seq p1 Skip,s) =
   wordSem_evaluate (p1,(s:('a,'c,'ffi)wordSem_state))`)
   CHEAT_TAC;;
 
 let word_unreachProof_evaluate_Seq_assoc =
   cake_theorem "evaluate_Seq_assoc"
   (fun () ->
-    `wordSem_evaluate ((Seq p1 (Seq p2 p3):clash_tree),s) =
+    `wordSem_evaluate (wordLang_Seq p1 (Seq p2 p3),s) =
   wordSem_evaluate (Seq (Seq p1 p2) p3,s)`)
   CHEAT_TAC;;
 
@@ -129,8 +128,7 @@ let merge_moves_Skip = cake_theorem "merge_moves_Skip"
   (fun () ->
     `!l1 l2 s res s1.
        wordSem_evaluate (Seq (wordLang_Move n1 l1) (wordLang_Move
-         n2 l2),s) = (res,s1) /\ ~(
-       res = SOME wordSem_Error) ==>
+         n2 l2),s) = (res,s1) /\ ~(res = SOME wordSem_Error) ==>
        wordSem_evaluate (wordLang_Move m
          (word_unreach_merge_moves l1 l2),s) = (res,s1)`)
   CHEAT_TAC;;
@@ -139,8 +137,8 @@ let merge_moves_thm = cake_theorem "merge_moves_thm"
   (fun () ->
     `!p l1 l2 s res s1.
        wordSem_evaluate (Seq (wordLang_Move n1 l1) (Seq
-         (wordLang_Move n2 l2) p),s) = (res,s1) /\ ~(
-       res = SOME wordSem_Error) ==>
+         (wordLang_Move n2 l2) p),s) = (res,s1) /\ ~(res = SOME
+         wordSem_Error) ==>
        wordSem_evaluate (Seq (wordLang_Move m
          (word_unreach_merge_moves l1 l2)) p,s) = (res,s1)`)
   CHEAT_TAC;;

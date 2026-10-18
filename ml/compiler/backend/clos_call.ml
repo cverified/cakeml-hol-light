@@ -137,7 +137,8 @@ let free_sing_eq = cake_theorem "free_sing_eq"
      (!es. clos_call_free es = free_list es)`)
   CHEAT_TAC;;
 
-(* HOL4 clos_callScript.sml:142-150: a proof *)
+(* HOL4 clos_callScript.sml:142-150: a theorem that HOL4 states as
+   the value of an ML expression: free_LENGTH_LEMMA *)
 
 let free_LENGTH = cake_theorem "free_LENGTH"
   (fun () ->
@@ -201,10 +202,8 @@ let calls_list_def = cake_define_list
          (n,closLang_Call t 0 (loc + 1) (GENLIST_Var t 1 n)) ::
               calls_list t (i + 1) (loc + 2) xs`];;
 
-let exp3_size_MAP_SND = cake_theorem "exp3_size_MAP_SND[local]"
-  (fun () ->
-    `!fns. exp3_size (MAP SND fns) <= exp1_size fns`)
-  CHEAT_TAC;;
+(* HOL4 clos_callScript.sml:226-230: a theorem whose statement the
+   port cannot state yet: exp3_size_MAP_SND *)
 
 let _ = size_thms "closLang_exp";;
 (* the termination relation that HOL4 gives, with

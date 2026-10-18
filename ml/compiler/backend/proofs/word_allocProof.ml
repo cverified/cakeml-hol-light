@@ -445,8 +445,7 @@ let ALOOKUP_key_remap_INJ = cake_theorem "ALOOKUP_key_remap_INJ"
      ALOOKUP (ZIP (MAP f ls) vals) (f n)`)
   CHEAT_TAC;;
 
-(* HOL4 word_allocProofScript.sml:657: the ML values that the
-   definitions below antiquote *)
+(* HOL4 word_allocProofScript.sml:657: ML code, not ported *)
 
 let strong_locals_rel_subset =
   cake_theorem "strong_locals_rel_subset[local]"
@@ -470,20 +469,20 @@ let list_rearrange_keys = cake_theorem "list_rearrange_keys"
 
 let list_rearrange_keys_2 = cake_theorem "list_rearrange_keys_2"
   (fun () ->
-    `set_of_list (MAP FST' (list_rearrange perm (ls:('a#'b) list))) =
-  set_of_list (MAP FST' ls)`)
+    `set_of_list (MAP FST (list_rearrange perm (ls:('a#'b) list))) =
+  set_of_list (MAP FST ls)`)
   CHEAT_TAC;;
 
 let MAP_FST_list_rearrange_keys_SORT =
   cake_theorem "MAP_FST_list_rearrange_keys_SORT"
   (fun () ->
-    `set_of_list (MAP FST' (list_rearrange perm
-       (sort key_val_compare' (toAList x)))) = domain x`)
+    `set_of_list (MAP FST (list_rearrange perm
+       (sort key_val_compare (toAList x)))) = domain x`)
   CHEAT_TAC;;
 
 let MAP_FST_keys_SORT = cake_theorem "MAP_FST_keys_SORT[local]"
   (fun () ->
-    `set_of_list (MAP FST' (sort f (toAList x))) = domain x`)
+    `set_of_list (MAP FST (sort f (toAList x))) = domain x`)
   CHEAT_TAC;;
 
 let pop_env_frame = cake_theorem "pop_env_frame"
@@ -537,9 +536,7 @@ let LASTN_LENGTH2 = cake_theorem "LASTN_LENGTH2[local]"
 
 let toAList_not_empty = cake_theorem "toAList_not_empty[local]"
   (fun () ->
-    `~(
-       domain t = {}) ==> ~(
-       toAList t = [])`)
+    `~(domain t = {}) ==> ~(toAList t = [])`)
   CHEAT_TAC;;
 
 let PAIR_CASE_PAIR_MAP = cake_theorem "PAIR_CASE_PAIR_MAP"
@@ -852,8 +849,8 @@ let word_allocProof_check_partial_col_INJ =
 let domain_insert_eq_union =
   cake_theorem "domain_insert_eq_union[local]"
   (fun () ->
-    `domain (sptree_insert num' one live) = domain (sptree_union
-  (sptree_insert num' one LN) live)`)
+    `domain (sptree_insert num one live) = domain (sptree_union
+  (sptree_insert num one LN) live)`)
   CHEAT_TAC;;
 
 let domain_numset_list_insert_eq_union =
@@ -1033,14 +1030,13 @@ let word_alloc_correct = cake_theorem "word_alloc_correct"
 
 let apply_colour_exp_I = cake_theorem "apply_colour_exp_I[local]"
   (fun () ->
-    `apply_colour_exp I' exp = exp`)
+    `apply_colour_exp I exp = exp`)
   CHEAT_TAC;;
 
 (* Dead code removal *)
 let live_store_rel_def = cake_define
   `live_store_rel nlive sstore tstore <=>
-   (!n. ~(
-     n IN set_of_list nlive) ==>
+   (!n. ~(n IN set_of_list nlive) ==>
      FLOOKUP sstore n = FLOOKUP tstore n)`;;
 
 let live_store_rel_less = cake_theorem "live_store_rel_less"
@@ -1053,8 +1049,7 @@ let live_store_rel_less = cake_theorem "live_store_rel_less"
 let live_store_rel_FLOOKUP_store =
   cake_theorem "live_store_rel_FLOOKUP_store"
   (fun () ->
-    `live_store_rel ls sstore tstore /\ ~(
-     s IN set_of_list ls) ==>
+    `live_store_rel ls sstore tstore /\ ~(s IN set_of_list ls) ==>
      FLOOKUP tstore s = FLOOKUP sstore s`)
   CHEAT_TAC;;
 
@@ -1063,8 +1058,7 @@ let nlive_store_def = cake_define
         match x2 with
           wordLang_Op _16 ls ->
          EVERY (nlive_store nlive) ls
-        | (wordLang_Lookup s) -> ~(
-       s IN set_of_list nlive)
+        | (wordLang_Lookup s) -> ~(s IN set_of_list nlive)
         | (Load e) ->
        nlive_store nlive e
         | (Shift _17 e1 e2) ->
@@ -1108,8 +1102,7 @@ let strong_locals_rel_I_word_exp =
 let strong_locals_rel_insert_notin =
   cake_theorem "strong_locals_rel_insert_notin[local]"
   (fun () ->
-    `strong_locals_rel f live s t /\ ~(
-     n IN live) ==>
+    `strong_locals_rel f live s t /\ ~(n IN live) ==>
      strong_locals_rel f live (sptree_insert n v s) t`)
   CHEAT_TAC;;
 
@@ -1189,15 +1182,15 @@ let live_store_rel_refl = cake_theorem "live_store_rel_refl[simp,local]"
 
 let with_same_store = cake_theorem "with_same_store[simp,local]"
   (fun () ->
-    `wordSem_state_store_fupd (K (wordSem_state_store st = st))
-       st`)
+    `wordSem_state_store_fupd (K (wordSem_state_store st))
+       st = st`)
   CHEAT_TAC;;
 
 let word_allocProof_with_same_locals =
   cake_theorem "with_same_locals[simp,local]"
   (fun () ->
-    `wordSem_state_locals_fupd (K (wordSem_state_locals st = st))
-       st`)
+    `wordSem_state_locals_fupd (K (wordSem_state_locals st))
+       st = st`)
   CHEAT_TAC;;
 
 let evaluate_remove_dead_Loop_helper =
@@ -1213,8 +1206,7 @@ let evaluate_remove_dead_Loop_helper =
        flat_exp_conventions body /\
        remove_dead (Loop names body exit_names) live nlive lt =
          (prog',livein,nlivein) /\
-       nlivein = [] /\ ~(
-       res = SOME wordSem_Error) /\
+       nlivein = [] /\ ~(res = SOME wordSem_Error) /\
        (!(st':('a,'c,'ffi)wordSem_state) t' tstore' prog'' livein'
          nlivein' res' rst'.
           strong_locals_rel I (domain livein')
@@ -1223,8 +1215,8 @@ let evaluate_remove_dead_Loop_helper =
             /\
           wordSem_evaluate (body,st') = (res',rst') /\
           remove_dead body names [] ((names,exit_names) :: lt) =
-            (prog'',livein',nlivein') /\ ~(
-          res' = SOME wordSem_Error) ==>
+            (prog'',livein',nlivein') /\ ~(res' = SOME
+              wordSem_Error) ==>
           (?t'' tstore''.
             wordSem_evaluate (prog'',wordSem_state_store_fupd (K
               tstore') (wordSem_state_locals_fupd (K t') st')) =
@@ -1283,8 +1275,8 @@ let evaluate_remove_dead = cake_theorem "evaluate_remove_dead"
      live_store_rel nlivein (wordSem_state_store st) tstore /\
      wordSem_evaluate (prog,st) = (res,rst) /\
      flat_exp_conventions prog /\
-     remove_dead prog live nlive lt = (prog',livein,nlivein) /\ ~(
-     res = SOME wordSem_Error) ==>
+     remove_dead prog live nlive lt = (prog',livein,nlivein) /\
+       ~(res = SOME wordSem_Error) ==>
      (?t' tstore'.
        wordSem_evaluate (prog',wordSem_state_store_fupd (K tstore)
          (wordSem_state_locals_fupd (K t) st)) =
@@ -1371,8 +1363,8 @@ let evaluate_remove_dead_prog = cake_theorem "evaluate_remove_dead_prog"
   (fun () ->
     `!prog st rst res.
      flat_exp_conventions prog /\
-     wordSem_evaluate (prog,st) = (res,rst) /\ ~(
-     res = SOME wordSem_Error) ==>
+     wordSem_evaluate (prog,st) = (res,rst) /\ ~(res = SOME
+       wordSem_Error) ==>
      (?t'.
        wordSem_evaluate (remove_dead_prog prog,st) =
          (res,wordSem_state_locals_fupd (K t') rst) /\
@@ -1402,7 +1394,7 @@ let ssa_locals_rel_def = cake_define
 let ssa_map_ok_def = cake_define
   `ssa_map_ok na ssa =
    (!x y. sptree_lookup x ssa = SOME y ==>
-     ~is_phy_var y /\ y < na)`;;
+     ~(is_phy_var y) /\ y < na)`;;
 
 let list_next_var_rename_lemma_1 =
   cake_theorem "list_next_var_rename_lemma_1[local]"
@@ -1423,8 +1415,8 @@ let list_next_var_rename_lemma_2 =
      (let (ls',ssa',na') = list_next_var_rename ls ssa na in
      ls' = MAP (\x. THE (sptree_lookup x ssa')) ls /\
      domain ssa' = domain ssa UNION set_of_list ls /\
-     (!x. ~MEM x ls ==> sptree_lookup x ssa' = sptree_lookup x ssa)
-       /\
+     (!x. ~(MEM x ls) ==> sptree_lookup x ssa' = sptree_lookup x
+       ssa) /\
      (!x. MEM x ls ==> (?y. sptree_lookup x ssa' = SOME y)))`)
   CHEAT_TAC;;
 
@@ -1436,8 +1428,8 @@ let list_next_var_rename_lemma_2' =
      ALL_DISTINCT ls ==>
      ls' = MAP (\x. THE (sptree_lookup x ssa')) ls /\
      domain ssa' = domain ssa UNION set_of_list ls /\
-     (!x. ~MEM x ls ==> sptree_lookup x ssa' = sptree_lookup x ssa)
-       /\
+     (!x. ~(MEM x ls) ==> sptree_lookup x ssa' = sptree_lookup x
+       ssa) /\
      (!x. MEM x ls ==> (?y. sptree_lookup x ssa' = SOME y))`)
   CHEAT_TAC;;
 
@@ -1465,7 +1457,7 @@ let ssa_locals_rel_get_vars =
 let ssa_map_ok_extend = cake_theorem "ssa_map_ok_extend[local]"
   (fun () ->
     `ssa_map_ok na ssa /\
-     ~is_phy_var na ==>
+     ~(is_phy_var na) ==>
      ssa_map_ok (na + 4) (sptree_insert h na ssa)`)
   CHEAT_TAC;;
 
@@ -1509,7 +1501,7 @@ let merge_moves_frame3 = cake_theorem "merge_moves_frame3[local]"
     `!ls na ssaL ssaR.
      let (moveL,moveR,na',ssaL',ssaR') = word_alloc_merge_moves ls
        ssaL ssaR na in
-     !x. ~MEM x ls \/ ~(x IN domain (inter ssaL ssaR)) ==>
+     !x. ~(MEM x ls) \/ ~(x IN domain (inter ssaL ssaR)) ==>
        sptree_lookup x ssaL' = sptree_lookup x ssaL /\
        sptree_lookup x ssaR' = sptree_lookup x ssaR`)
   CHEAT_TAC;;
@@ -1521,8 +1513,8 @@ let mov_eval_head = cake_theorem "mov_eval_head[local]"
   (fun () ->
     `wordSem_evaluate (wordLang_Move p moves,st) = (NONE,rst) /\
      y IN domain (wordSem_state_locals st) /\
-     ~MEM y (MAP FST moves) /\
-     ~MEM x (MAP FST moves) ==>
+     ~(MEM y (MAP FST moves)) /\
+     ~(MEM x (MAP FST moves)) ==>
      wordSem_evaluate (wordLang_Move p ((x,y) :: moves),st) =
        (NONE,wordSem_state_locals_fupd (K (sptree_insert x (THE
        (sptree_lookup y (wordSem_state_locals st)))
@@ -1542,7 +1534,7 @@ let merge_moves_correctL = cake_theorem "merge_moves_correctL[local]"
      (let (resL,rcstL) = wordSem_evaluate (wordLang_Move pri
        moveL,cstL) in
        resL = NONE /\
-       (!x. ~MEM x ls ==> sptree_lookup x ssaL' = sptree_lookup x
+       (!x. ~(MEM x ls) ==> sptree_lookup x ssaL' = sptree_lookup x
          ssaL) /\
        (!x y.
        (x < na /\ sptree_lookup x (wordSem_state_locals cstL) =
@@ -1566,7 +1558,7 @@ let merge_moves_correctR = cake_theorem "merge_moves_correctR[local]"
      (let (resR,rcstR) = wordSem_evaluate (wordLang_Move pri
        moveR,cstR) in
        resR = NONE /\
-       (!x. ~MEM x ls ==> sptree_lookup x ssaR' = sptree_lookup x
+       (!x. ~(MEM x ls) ==> sptree_lookup x ssaR' = sptree_lookup x
          ssaR) /\
        (!x y.
        (x < na /\ sptree_lookup x (wordSem_state_locals cstR) =
@@ -1607,7 +1599,7 @@ let fake_moves_frame3 = cake_theorem "fake_moves_frame3[local]"
     `!ls na ssaL ssaR.
      let (moveL,moveR,na',ssaL',ssaR') = fake_moves prio ls ssaL
        ssaR na in
-     !x. ~MEM x ls \/ x IN domain (inter ssaL ssaR) ==>
+     !x. ~(MEM x ls) \/ x IN domain (inter ssaL ssaR) ==>
        sptree_lookup x ssaL' = sptree_lookup x ssaL /\
        sptree_lookup x ssaR' = sptree_lookup x ssaR`)
   CHEAT_TAC;;
@@ -1624,7 +1616,7 @@ let fake_moves_correctL = cake_theorem "fake_moves_correctL[local]"
        (wordSem_state_locals cstL) ==>
      (let (resL,rcstL) = wordSem_evaluate (moveL,cstL) in
        resL = NONE /\
-       (!x. ~MEM x ls ==> sptree_lookup x ssaL' = sptree_lookup x
+       (!x. ~(MEM x ls) ==> sptree_lookup x ssaL' = sptree_lookup x
          ssaL) /\
        (!x y.
        (x < na /\ sptree_lookup x (wordSem_state_locals cstL) =
@@ -1647,7 +1639,7 @@ let fake_moves_correctR = cake_theorem "fake_moves_correctR[local]"
        (wordSem_state_locals cstR) ==>
      (let (resR,rcstR) = wordSem_evaluate (moveR,cstR) in
        resR = NONE /\
-       (!x. ~MEM x ls ==> sptree_lookup x ssaR' = sptree_lookup x
+       (!x. ~(MEM x ls) ==> sptree_lookup x ssaR' = sptree_lookup x
          ssaR) /\
        (!x y.
        (x < na /\ sptree_lookup x (wordSem_state_locals cstR) =
@@ -1686,7 +1678,7 @@ let get_var_ignore = cake_theorem "get_var_ignore[local]"
   (fun () ->
     `!ls a.
      wordSem_get_var x cst = SOME y /\
-     ~MEM x ls /\
+     ~(MEM x ls) /\
      LENGTH ls = LENGTH a ==>
      wordSem_get_var x (wordSem_set_vars ls a cst) = SOME y`)
   CHEAT_TAC;;
@@ -1747,7 +1739,7 @@ let list_next_var_rename_move_preserve =
        ssa_locals_rel na' ssa' (wordSem_state_locals st)
          (wordSem_state_locals rcst) /\
        word_state_eq_rel st rcst /\
-       (~is_phy_var na ==> (!w. is_phy_var w ==> sptree_lookup w
+       (~(is_phy_var na) ==> (!w. is_phy_var w ==> sptree_lookup w
          (wordSem_state_locals rcst) = sptree_lookup w
          (wordSem_state_locals cst))) /\
        (!x y. sptree_lookup x (wordSem_state_locals st) = SOME y
@@ -1790,7 +1782,7 @@ let get_vars_list_insert_eq_gen =
     `!ls x locs a b.
      (LENGTH ls = LENGTH x /\ ALL_DISTINCT ls /\
                      LENGTH a = LENGTH b /\ (!e. MEM e ls ==>
-                       ~MEM e a)) ==> wordSem_get_vars ls
+                       ~(MEM e a))) ==> wordSem_get_vars ls
                        (wordSem_state_locals_fupd (K (alist_insert (a
                        ++ ls) (b ++ x) locs)) st) = SOME x`)
   CHEAT_TAC;;
@@ -1866,7 +1858,7 @@ let ssa_locals_rel_list_next_var_rename =
      LENGTH xs = LENGTH ls /\
      EVERY (\x. x < na) xs /\
      ALL_DISTINCT xs /\
-     ~is_phy_var na ==>
+     ~(is_phy_var na) ==>
      ssa_locals_rel na' ssa' (alist_insert xs ls stloc)
        (alist_insert ys ls cstloc)`)
   CHEAT_TAC;;
@@ -1998,7 +1990,7 @@ let ssa_map_ok_inter = cake_theorem "ssa_map_ok_inter[local]"
 let ssa_map_ok_insert = cake_theorem "ssa_map_ok_insert"
   (fun () ->
     `ssa_map_ok na ssa /\
-     y < na /\ ~is_phy_var y ==>
+     y < na /\ ~(is_phy_var y) ==>
      ssa_map_ok na (sptree_insert x y ssa)`)
   CHEAT_TAC;;
 
@@ -2006,7 +1998,7 @@ let ssa_map_ok_force_rename = cake_theorem "ssa_map_ok_force_rename"
   (fun () ->
     `!ls ssa.
      ssa_map_ok na ssa /\
-     EVERY (\x. SND x < na /\ ~is_phy_var (SND x)) ls ==>
+     EVERY (\x. SND x < na /\ ~(is_phy_var (SND x))) ls ==>
      ssa_map_ok na (force_rename ls ssa)`)
   CHEAT_TAC;;
 
@@ -2074,7 +2066,7 @@ let ssa_cc_trans_exp_correct =
 let get_var_set_vars_notin =
   cake_theorem "get_var_set_vars_notin[local]"
   (fun () ->
-    `~MEM v ls /\
+    `~(MEM v ls) /\
      LENGTH ls = LENGTH vs ==>
      wordSem_get_var v (wordSem_set_vars ls vs st) =
        wordSem_get_var v st`)
@@ -2139,7 +2131,7 @@ let list_next_var_rename_move_distinct =
 
 let get_vars_NOT_MEM = cake_theorem "get_vars_NOT_MEM"
   (fun () ->
-    `~MEM h xs ==>
+    `~(MEM h xs) ==>
      wordSem_get_vars xs (wordSem_state_locals_fupd (K
        (sptree_insert h h' ys)) cs) = wordSem_get_vars xs
        (wordSem_state_locals_fupd (K ys) cs)`)
@@ -2237,7 +2229,7 @@ let alookup_zip_map_option_lookup_none =
     `!ls vs n ns f.
        INJ f (domain ns) UNIV /\
        n IN domain ns /\
-       ~MEM n ls /\
+       ~(MEM n ls) /\
        (!v. MEM v ls ==> v IN domain ns) /\
        LENGTH vs = LENGTH ls ==>
        ALOOKUP (ZIP (MAP f ls) vs) (f n) = NONE`)
@@ -2295,7 +2287,7 @@ let evaluate_fake_const_chain_locals =
        word_state_eq_rel cst rcst /\
        domain (wordSem_state_locals rcst) = domain
          (wordSem_state_locals cst) UNION set_of_list rs /\
-       (!r. ~MEM r rs ==> sptree_lookup r (wordSem_state_locals
+       (!r. ~(MEM r rs) ==> sptree_lookup r (wordSem_state_locals
          rcst) = sptree_lookup r (wordSem_state_locals cst)) /\
        (!r. MEM r rs ==> sptree_lookup r (wordSem_state_locals
          rcst) = SOME (wordLang_Word (n2w 0)))`)
@@ -3019,3 +3011,5 @@ let word_alloc_full_inst_ok_less =
      full_inst_ok_less c prog ==>
      full_inst_ok_less c (word_alloc fc c alg k prog col_opt)`)
   CHEAT_TAC;;
+
+cake_hide [];;

@@ -125,10 +125,10 @@ let COND_true = cake_theorem "COND_true"
   CHEAT_TAC;;
 
 (* HOL4 flat_patternProofScript.sml:165-166: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: FILTER_EQ_MONO *)
 
 (* HOL4 flat_patternProofScript.sml:168-171: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: FILTER_EQ_MONO_TRANS *)
 
 let FILTER_EQ_ALOOKUP_EQ = cake_theorem "FILTER_EQ_ALOOKUP_EQ"
   (fun () ->
@@ -137,7 +137,7 @@ let FILTER_EQ_ALOOKUP_EQ = cake_theorem "FILTER_EQ_ALOOKUP_EQ"
   CHEAT_TAC;;
 
 (* HOL4 flat_patternProofScript.sml:183-184: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ALOOKUP_FILTER_EQ *)
 
 let MEM_enumerate_EL = cake_theorem "MEM_enumerate_EL"
   (fun () ->
@@ -186,10 +186,10 @@ let ALOOKUP_rel_empty = cake_theorem "ALOOKUP_rel_empty"
 
 let ALOOKUP_rel_cons_false = cake_theorem "ALOOKUP_rel_cons_false"
   (fun () ->
-    `(~P x ==> ALOOKUP_rel P R ((x,y) :: env1) env2 = ALOOKUP_rel P R
+    `(~(P x) ==> ALOOKUP_rel P R ((x,y) :: env1) env2 = ALOOKUP_rel P R
   env1 env2) /\
-     (~P x ==> ALOOKUP_rel P R env1 ((x,y) :: env2) = ALOOKUP_rel
-       P R env1 env2)`)
+     (~(P x) ==> ALOOKUP_rel P R env1 ((x,y) :: env2) =
+       ALOOKUP_rel P R env1 env2)`)
   CHEAT_TAC;;
 
 let ALOOKUP_rel_APPEND_L_false =
@@ -356,7 +356,7 @@ hol4_overload "env_rel" "flat_patternProof_env_rel";;
 hol4_overload "v_rel" "flat_patternProof_v_rel";;
 
 (* HOL4 flat_patternProofScript.sml:680-686: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_l_cases *)
 
 (* HOL4 flat_patternProofScript.sml:688-689: the ML values that the
    definitions below antiquote *)
@@ -494,16 +494,14 @@ let do_opapp_thm_REVERSE = cake_theorem "do_opapp_thm_REVERSE"
 let pmatch_thm = cake_theorem "pmatch_thm"
   (fun () ->
     `(!(s:('c,'ffi)flatSem_state) p v vs r s1 v1 vs1.
-       pmatch s p v vs = r /\ ~(
-       r = Match_type_error) /\
+       pmatch s p v vs = r /\ ~(r = Match_type_error) /\
        flat_patternProof_state_rel cfg s s1 /\
        flat_patternProof_v_rel v v1 /\
        (\N. ALOOKUP_rel (\x. dec_name_to_num x < N)
          flat_patternProof_v_rel) N vs vs1 ==> (?r1. pmatch s1 p v1 vs1
          = r1 /\ match_rel N r r1)) /\
      (!(s:('c,'ffi)flatSem_state) ps v vs r s1 v1 vs1.
-       pmatch_list s ps v vs = r /\ ~(
-       r = Match_type_error) /\
+       pmatch_list s ps v vs = r /\ ~(r = Match_type_error) /\
        flat_patternProof_state_rel cfg s s1 /\
        LIST_REL flat_patternProof_v_rel v v1 /\
        (\N. ALOOKUP_rel (\x. dec_name_to_num x < N)
@@ -514,7 +512,7 @@ let pmatch_thm = cake_theorem "pmatch_thm"
 let simple_val_rel_step_isClosure =
   cake_theorem "simple_val_rel_step_isClosure"
   (fun () ->
-    `simple_basic_val_rel x y ==> ~isClosure x /\ ~isClosure y`)
+    `simple_basic_val_rel x y ==> ~(isClosure x) /\ ~(isClosure y)`)
   CHEAT_TAC;;
 
 let flat_patternProof_simple_val_rel = cake_theorem "simple_val_rel"
@@ -529,7 +527,7 @@ let flat_patternProof_simple_state_rel = cake_theorem "simple_state_rel"
   CHEAT_TAC;;
 
 (* HOL4 flat_patternProofScript.sml:929-930: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: do_app_thm *)
 
 let do_app_thm_REVERSE = cake_theorem "do_app_thm_REVERSE"
   (fun () ->
@@ -613,7 +611,7 @@ let decode_pos_simulation = cake_theorem "decode_pos_simulation"
   CHEAT_TAC;;
 
 (* HOL4 flat_patternProofScript.sml:1052-1054: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: fold_Boolv *)
 
 let flat_patternProof_do_eq_Boolv = cake_theorem "do_eq_Boolv"
   (fun () ->
@@ -671,14 +669,14 @@ let encode_pat_match_simulation =
   cake_theorem "encode_pat_match_simulation"
   (fun () ->
     `(!(s:('c,'ffi)flatSem_state) pat v pre_bindings res.
-     flatSem_pmatch s pat v pre_bindings = res /\ ~(
-     res = Match_type_error) ==>
+     flatSem_pmatch s pat v pre_bindings = res /\ ~(res =
+       Match_type_error) ==>
      pattern_semantics_pmatch (encode_refs s) (encode_pat pat)
        (encode_val v) =
      (if res = No_match then PMatchFailure else PMatchSuccess)) /\
      (!(s:('c,'ffi)flatSem_state) ps vs pre_bindings res.
-     flatSem_pmatch_list s ps vs pre_bindings = res /\ ~(
-     res = Match_type_error) ==>
+     flatSem_pmatch_list s ps vs pre_bindings = res /\ ~(res =
+       Match_type_error) ==>
      pattern_semantics_pmatch_list (encode_refs s) (MAP encode_pat
        ps)
        (MAP encode_val vs) =
@@ -688,8 +686,7 @@ let encode_pat_match_simulation =
 let pmatch_rows_encode = cake_theorem "pmatch_rows_encode"
   (fun () ->
     `!pats j_offs.
-     ~(
-     pmatch_rows pats s v = Match_type_error) ==>
+     ~(pmatch_rows pats s v = Match_type_error) ==>
      (match (pattern_semantics_match (encode_refs s)
        (MAPi (\j (p,_10). (encode_pat p,j + j_offs)) pats)
            (encode_val v)) with NONE -> F | SOME (MatchSuccess n)
@@ -704,14 +701,15 @@ let naive_pattern_match_correct =
   (fun () ->
     `!t mats vs bindings exp res.
       LIST_REL (pure_eval_to s env) (MAP SND mats) vs /\
-      pmatch_list s (MAP FST mats) vs bindings = res /\ ~(
-      res = Match_type_error) /\
+      pmatch_list s (MAP FST mats) vs bindings = res /\ ~(res =
+        Match_type_error) /\
       naive_pattern_match t mats = exp ==>
       pure_eval_to s env exp (Boolv (~(res = No_match)))`)
   CHEAT_TAC;;
 
 (* HOL4 flat_patternProofScript.sml:1308-1312: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   naive_pattern_match_correct_inst *)
 
 let naive_pattern_matches_correct =
   cake_theorem "naive_pattern_matches_correct"
@@ -719,8 +717,7 @@ let naive_pattern_matches_correct =
     `!t x mats dflt exp v res.
      naive_pattern_matches t x mats dflt = exp /\
      pure_eval_to s env x v /\
-     pmatch_rows mats s v = res /\ ~(
-     res = Match_type_error) ==>
+     pmatch_rows mats s v = res /\ ~(res = Match_type_error) ==>
      evaluate env s [exp] = (match res with Match (_11,_12,exp) ->
          evaluate env s [exp] | _13 -> evaluate env s [dflt])`)
   CHEAT_TAC;;
@@ -736,12 +733,11 @@ let pmatch_rows_same_FST = cake_theorem "pmatch_rows_same_FST"
   CHEAT_TAC;;
 
 (* HOL4 flat_patternProofScript.sml:1358-1360: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: comp_thm *)
 
 let evaluate_compile_pats = cake_theorem "evaluate_compile_pats"
   (fun () ->
-    `~(
-     pmatch_rows pats s v = Match_type_error) /\
+    `~(pmatch_rows pats s v = Match_type_error) /\
      pure_eval_to s env exp v ==>
      evaluate env s [compile_pats cfg naive t N exp default_x pats]
        =
@@ -842,8 +838,8 @@ let compile_exps_evaluate = cake_theorem "compile_exps_evaluate"
        evaluate env1 s1 xs = (t1,r1) /\
        flat_pattern_compile_exps cfg xs = (i,sg,ys) /\
        flat_patternProof_env_rel N env1 env2 /\
-         flat_patternProof_state_rel s_cfg s1 s2 /\ i < N /\ ~(
-       r1 = Rerr (Rabort Rtype_error)) ==>
+         flat_patternProof_state_rel s_cfg s1 s2 /\ i < N /\ ~(r1 = Rerr
+         (Rabort Rtype_error)) ==>
        (?t2 r2.
          semanticPrimitivesProps_result_rel (LIST_REL
            flat_patternProof_v_rel) flat_patternProof_v_rel r1 r2 /\
@@ -852,8 +848,8 @@ let compile_exps_evaluate = cake_theorem "compile_exps_evaluate"
      (!s1 decs s2 t1 cfg decs' res.
        evaluate_decs s1 decs = (t1,res) /\
        decs' = MAP (compile_dec cfg) decs /\
-       flat_patternProof_state_rel s_cfg s1 s2 /\ ~(
-       res = SOME (Rabort Rtype_error)) ==>
+       flat_patternProof_state_rel s_cfg s1 s2 /\ ~(res = SOME
+         (Rabort Rtype_error)) ==>
        (?t2 res'.
          evaluate_decs s2 decs' = (t2,res') /\
          OPTREL (exc_rel flat_patternProof_v_rel) res res' /\
@@ -869,8 +865,8 @@ let compile_decs_eval_sim = cake_theorem "compile_decs_eval_sim"
 
 let compile_decs_semantics = cake_theorem "compile_decs_semantics"
   (fun () ->
-    `install_conf_rel cfg ic1 ic2 /\ ~(
-     flatSem_semantics ic1 ffi prog = Fail) ==>
+    `install_conf_rel cfg ic1 ic2 /\ ~(flatSem_semantics ic1 ffi prog =
+  Fail) ==>
      flatSem_semantics ic1 ffi prog =
      flatSem_semantics ic2 ffi (MAP (compile_dec cfg1) prog)`)
   CHEAT_TAC;;
@@ -956,8 +952,7 @@ let set_globals_compile_pats = cake_theorem "set_globals_compile_pats"
 
 let SUB_BAG_2 = cake_theorem "SUB_BAG_2"
   (fun () ->
-    `x <= y /\ x' <= y' ==> (BAG_UNION)
-     x x' <= (BAG_UNION) y y'`)
+    `x <= y /\ x' <= y' ==> (BAG_UNION) x x' <= (BAG_UNION) y y'`)
   CHEAT_TAC;;
 
 let compile_exp_set_globals = cake_theorem "compile_exp_set_globals"

@@ -117,8 +117,8 @@ let subst_infer_subst_swap = cake_theorem "subst_infer_subst_swap"
 
 let infer_subst_FEMPTY = cake_theorem "infer_subst_FEMPTY"
   (fun () ->
-    `(!t. infer_subst FEMPTY' t = t) /\
-     (!ts. MAP (infer_subst FEMPTY') ts = ts)`)
+    `(!t. infer_subst FEMPTY t = t) /\
+     (!ts. MAP (infer_subst FEMPTY) ts = ts)`)
   CHEAT_TAC;;
 
 let infer_subst_submap = cake_theorem "infer_subst_submap"
@@ -296,8 +296,7 @@ let lookup_st_ex_success = cake_theorem "lookup_st_ex_success[local]"
      ((nsLookup l x = SOME v) /\ (st = st'))`)
   CHEAT_TAC;;
 
-(* HOL4 inferPropsScript.sml:502-507: the ML values that the
-   definitions below antiquote *)
+(* HOL4 inferPropsScript.sml:502-507: ML code, not ported *)
 
 (* HOL4 inferPropsScript.sml:509-511: ML code, not ported *)
 
@@ -321,7 +320,7 @@ let constrain_op_op_case = cake_theorem "constrain_op_op_case[local]"
    definitions below antiquote *)
 
 (* HOL4 inferPropsScript.sml:552-553: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: constrain_op_success *)
 
 let get_next_uvar_success = cake_theorem "get_next_uvar_success[local]"
   (fun () ->
@@ -404,7 +403,7 @@ let option_case_eq = cake_theorem "option_case_eq[local]"
 (* HOL4 inferPropsScript.sml:724-734: ML code, not ported *)
 
 (* HOL4 inferPropsScript.sml:736-737: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: success_eqns *)
 
 let remove_pair_lem = cake_theorem "remove_pair_lem"
   (fun () ->
@@ -1112,7 +1111,7 @@ let inferProps_fst_lem = cake_theorem "fst_lem[local]"
   CHEAT_TAC;;
 
 (* HOL4 inferPropsScript.sml:2462-2468: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: t_ind *)
 
 (* Rename (type_system) type identifiers with a function *)
 let _ = size_thms "t";;
@@ -1129,7 +1128,7 @@ let ts_tid_rename_def = cake_define_wf
 
 let ts_tid_rename_I = cake_theorem "ts_tid_rename_I[simp]"
   (fun () ->
-    `ts_tid_rename I' = I'`)
+    `ts_tid_rename I = I`)
   CHEAT_TAC;;
 
 (* All type ids in a type belonging to a set *)
@@ -1192,7 +1191,7 @@ let inf_set_tids_subset_def = cake_define
   `inf_set_tids_subset tids t <=> inf_set_tids t SUBSET tids`;;
 
 (* HOL4 inferPropsScript.sml:2574-2575: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: typeSystem_t_ind *)
 
 let inf_set_tids_infer_type_subst_SUBSET =
   cake_theorem "inf_set_tids_infer_type_subst_SUBSET"
@@ -1546,7 +1545,7 @@ let remap_tenv_def = cake_define
 
 let remap_tenv_I = cake_theorem "remap_tenv_I[simp]"
   (fun () ->
-    `remap_tenv I' = I'`)
+    `remap_tenv I = I`)
   CHEAT_TAC;;
 
 let t_vwalk_set_tids = cake_theorem "t_vwalk_set_tids"
@@ -1720,8 +1719,8 @@ let build_ctor_tenv_FOLDL = cake_theorem "build_ctor_tenv_FOLDL"
 
 let nsMap_FOLDL_nsAppend = cake_theorem "nsMap_FOLDL_nsAppend"
   (fun () ->
-    `!ls ns. nsMap f (FOLDL nsAppend' ns ls) =
-     FOLDL nsAppend' (nsMap f ns) (MAP (nsMap f) ls)`)
+    `!ls ns. nsMap f (FOLDL nsAppend ns ls) =
+     FOLDL nsAppend (nsMap f ns) (MAP (nsMap f) ls)`)
   CHEAT_TAC;;
 
 let nsAll_FOLDL_nsAppend = cake_theorem "nsAll_FOLDL_nsAppend"

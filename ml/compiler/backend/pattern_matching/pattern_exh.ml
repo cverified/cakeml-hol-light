@@ -612,14 +612,12 @@ let expand_thm = cake_theorem "expand_thm[local]"
   (fun () ->
     `(!p q refs v.
         MEM q (expand p) /\ ~(pmatch refs p v = PTypeFailure) ==>
-          ~(
-        pmatch refs q v = PTypeFailure) /\
+          ~(pmatch refs q v = PTypeFailure) /\
         (pmatch refs q v = PMatchSuccess ==> pmatch refs p v =
           PMatchSuccess)) /\
      (!ps qs refs vs.
         MEM qs (expand_list ps) /\ ~(pmatch_list refs ps vs =
-          PTypeFailure) ==> ~(
-        pmatch_list refs qs vs = PTypeFailure) /\
+          PTypeFailure) ==> ~(pmatch_list refs qs vs = PTypeFailure) /\
         (pmatch_list refs qs vs = PMatchSuccess ==>
          pmatch_list refs ps vs = PMatchSuccess))`)
   CHEAT_TAC;;
@@ -762,8 +760,7 @@ let match_EXISTS = cake_theorem "match_EXISTS[local]"
   (fun () ->
     `!rows. ~(pattern_semantics_match refs rows v = NONE) /\
             EXISTS (\(p,e). pmatch refs p v = PMatchSuccess) rows
-              ==> ~(
-            pattern_semantics_match refs rows v = SOME
+              ==> ~(pattern_semantics_match refs rows v = SOME
               MatchFailure)`)
   CHEAT_TAC;;
 
@@ -789,8 +786,6 @@ let or_rows_hit = cake_theorem "or_rows_hit[local]"
 
 let exh_rows_thm = cake_theorem "exh_rows_thm"
   (fun () ->
-    `~(
-       pattern_semantics_match refs rows v = NONE) /\ exh_rows rows
-         ==> ~(
-       pattern_semantics_match refs rows v = SOME MatchFailure)`)
+    `~(pattern_semantics_match refs rows v = NONE) /\ exh_rows rows
+  ==> ~(pattern_semantics_match refs rows v = SOME MatchFailure)`)
   CHEAT_TAC;;

@@ -48,8 +48,7 @@ let sexpPEG_def = cake_define
      "Failed to see expected token because of EOF"
      "Failed to fail in a not rule" (
      FEMPTY |++
-            [(INL sxnt_sexp,ignoreR
-              (simpleSexpPEG_pnt sxnt_WSsexp)
+            [(INL sxnt_sexp,ignoreR (simpleSexpPEG_pnt sxnt_WSsexp)
               (peg_seq (peg_rpt (peg_tok isSpace (K arb_sexp)) (K
                 arb_sexp))
                   (peg_not (peg_any (K arb_sexp)) arb_sexp)
@@ -57,10 +56,9 @@ let sexpPEG_def = cake_define
              (INL sxnt_sexp0,
               choicel [
                   simpleSexpPEG_pnt sxnt_sexpnum; ignoreL
-                  (simpleSexpPEG_tokeq (CHR 40)) (simpleSexpPEG_pnt
+                    (simpleSexpPEG_tokeq (CHR 40)) (simpleSexpPEG_pnt
                     sxnt_sexpseq);
-                   ignoreR (ignoreL
-                  (simpleSexpPEG_tokeq (CHR 34))
+                   ignoreR (ignoreL (simpleSexpPEG_tokeq (CHR 34))
                       (simpleSexpPEG_pnt sxnt_strcontents))
                         (peg_choice (simpleSexpPEG_tokeq (CHR 34))
                         (peg_error "Expected \"") simpleSexpPEG_sumID);
@@ -81,16 +79,15 @@ let sexpPEG_def = cake_define
                        (choicel [
                            pegf (grabWS (simpleSexpPEG_tokeq (CHR
                              41))) (K (SX_SYM "nil"));
-                              ignoreR (ignoreL
-                           (grabWS (simpleSexpPEG_tokeq (CHR 46)))
+                              ignoreR (ignoreL (grabWS
+                                (simpleSexpPEG_tokeq (CHR 46)))
                               (grabWS (simpleSexpPEG_pnt
                                 sxnt_sexp0))) (grabWS
                                 (simpleSexpPEG_tokeq (CHR 41)))])
                        replace_nil)
                       SX_CONS]);
-             (INL sxnt_WSsexp,ignoreL
-              (peg_rpt (peg_tok isSpace (K arb_sexp)) (K arb_sexp))
-                (simpleSexpPEG_pnt sxnt_sexp0));
+             (INL sxnt_WSsexp,ignoreL (peg_rpt (peg_tok isSpace (K
+               arb_sexp)) (K arb_sexp)) (simpleSexpPEG_pnt sxnt_sexp0));
              (INL sxnt_sexpnum,
               peg_seq (simpleSexpPEG_pnt sxnt_digit)
                   (peg_rpt (simpleSexpPEG_pnt sxnt_digit)
@@ -113,9 +110,8 @@ let sexpPEG_def = cake_define
               peg_rpt (simpleSexpPEG_pnt sxnt_strchar)
                   (SX_STR o FOLDR (\s a. destSXSYM s ++ a) []));
              (INL sxnt_strchar,
-              choicel [ignoreL
-                  (simpleSexpPEG_tokeq (CHR 92)) (simpleSexpPEG_pnt
-                    sxnt_escapedstrchar);
+              choicel [ignoreL (simpleSexpPEG_tokeq (CHR 92))
+                (simpleSexpPEG_pnt sxnt_escapedstrchar);
                   simpleSexpPEG_pnt sxnt_normstrchar]);
              (INL sxnt_escapedstrchar,
               choicel [simpleSexpPEG_tokeq (CHR 92);

@@ -80,8 +80,7 @@ let st_ex_return_def = cake_define
 (* HOL4 ml_monadBaseScript.sml:91: ML code, not ported *)
 
 let otherwise_def = cake_define
-  `otherwise
-     x y =
+  `otherwise x y =
        (\s. match ((x:'a->('b,'c)exc#'a) s) with
              (M_success y,s) -> (M_success y,s) | (M_failure e,s)
                -> (y:'a->('b,'c)exc#'a) s)`;;
@@ -384,7 +383,7 @@ let marray_alloc_success = cake_theorem "Marray_alloc_success[local]"
 
 (* HOL4 ml_monadBaseScript.sml:557-560: ML code, not ported *)
 (* HOL4 ml_monadBaseScript.sml:561-562: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: monad_eqs *)
 
 (* Run *)
 let run_def = cake_define

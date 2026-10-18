@@ -92,7 +92,7 @@ let v_rel = cake_inductive
 hol4_overload "v_rel" "clos_fvsProof_v_rel";;
 
 (* HOL4 clos_fvsProofScript.sml:81-93: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: v_rel_simps *)
 
 (* state relation *)
 
@@ -329,8 +329,7 @@ let remove_fvs_correct = cake_theorem "remove_fvs_correct"
 
 let clos_fvsProof_semantics_compile = cake_theorem "semantics_compile"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
           co (pure_cc clos_fvs_compile_inc cc) xs = ffi_Fail) ==>
         (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
         closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
@@ -369,7 +368,8 @@ let remove_fvs_every_Fn_vs_NONE =
 
 let remove_fvs_set_globals = cake_theorem "remove_fvs_set_globals[simp]"
   (fun () ->
-    `!fvs x. MAP set_globals' (remove_fvs fvs x) = MAP set_globals' x`)
+    `!fvs x. MAP closProps_set_globals (remove_fvs fvs x) = MAP
+  closProps_set_globals x`)
   CHEAT_TAC;;
 
 let set_globals_HD_remove_fvs_SING =
@@ -381,8 +381,8 @@ let set_globals_HD_remove_fvs_SING =
 
 let remove_fvs_esgc_free = cake_theorem "remove_fvs_esgc_free[simp]"
   (fun () ->
-    `!fvs x. EVERY esgc_free' (remove_fvs fvs x) <=> EVERY esgc_free'
-  x`)
+    `!fvs x. EVERY closProps_esgc_free (remove_fvs fvs x) <=> EVERY
+  closProps_esgc_free x`)
   CHEAT_TAC;;
 
 let remove_fvs_elist_globals =
@@ -399,7 +399,7 @@ let EVERY_remove_fvs_sing = cake_theorem "EVERY_remove_fvs_sing"
 
 let remove_fvs_no_Labels = cake_theorem "remove_fvs_no_Labels"
   (fun () ->
-    `!n xs. EVERY no_Labels' (remove_fvs n xs) = EVERY no_Labels' xs`)
+    `!n xs. EVERY no_Labels (remove_fvs n xs) = EVERY no_Labels xs`)
   CHEAT_TAC;;
 
 let remove_fvs_obeys_max_app = cake_theorem "remove_fvs_obeys_max_app"
@@ -411,6 +411,6 @@ let remove_fvs_obeys_max_app = cake_theorem "remove_fvs_obeys_max_app"
 let get_code_labels_remove_fvs =
   cake_theorem "get_code_labels_remove_fvs[simp]"
   (fun () ->
-    `!n es. MAP get_code_labels' (remove_fvs n es) = MAP
-  get_code_labels' es`)
+    `!n es. MAP closProps_get_code_labels (remove_fvs n es) = MAP
+  closProps_get_code_labels es`)
   CHEAT_TAC;;

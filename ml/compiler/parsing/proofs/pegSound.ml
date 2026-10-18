@@ -26,9 +26,8 @@ needs "semantics/proofs/gramProps.ml";;
 
 let Success_COND_Failure = cake_theorem "Success_COND_Failure[simp]"
   (fun () ->
-    `~(
-       peg_Success i r opt = (if P then peg_Failure fl1 fe1 else
-         peg_Failure fl2 fe2))`)
+    `~(peg_Success i r opt = (if P then peg_Failure fl1 fe1 else
+  peg_Failure fl2 fe2))`)
   CHEAT_TAC;;
 
 let peg_eval_choicel_NIL = cake_theorem "peg_eval_choicel_NIL[simp]"
@@ -40,13 +39,13 @@ let peg_eval_choicel_NIL = cake_theorem "peg_eval_choicel_NIL[simp]"
 let peg_TF = cake_theorem "peg_TF"
   (fun () ->
     `(?i' r eopt. peg_eval G (i,e) (peg_Success i' r eopt)) ==>
-     ~peg_eval G (i,e) (peg_Failure fl fe)`)
+     ~(peg_eval G (i,e) (peg_Failure fl fe))`)
   CHEAT_TAC;;
 
 let peg_FT = cake_theorem "peg_FT"
   (fun () ->
     `(?fl fe. peg_eval G (i,e) (peg_Failure fl fe)) ==>
-     ~peg_eval G (i,e) (peg_Success i' r eopt)`)
+     ~(peg_eval G (i,e) (peg_Success i' r eopt))`)
   CHEAT_TAC;;
 
 let peg_eval_choicel_CONS = cake_theorem "peg_eval_choicel_CONS"
@@ -97,12 +96,12 @@ let peg_eval_seql_CONS = cake_theorem "peg_eval_seql_CONS"
   CHEAT_TAC;;
 
 (* HOL4 pegSoundScript.sml:100-107: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: peg_eval_choicel_SING *)
 
 let not_peg0_LENGTH_decreases = cake_theorem "not_peg0_LENGTH_decreases"
   (fun () ->
-    `~peg0 G s ==> peg_eval G (i0,s) (peg_Success i r eo) ==> LENGTH i
-  < LENGTH i0`)
+    `~(peg0 G s) ==> peg_eval G (i0,s) (peg_Success i r eo) ==> LENGTH
+  i < LENGTH i0`)
   CHEAT_TAC;;
 
 (* HOL4 pegSoundScript.sml:115-118: ML code, not ported *)
@@ -116,53 +115,51 @@ let peg_eval_tokSymP = cake_theorem "peg_eval_tokSymP[simp]"
 
 let FADISJ_EQ_IMP' = cake_theorem "FADISJ_EQ_IMP'[simp,local]"
   (fun () ->
-    `((!x. P x) \/ Q <=> (!x. ~P x ==> Q)) /\
-     ((Q \/ (!x. P x)) <=> (!x. ~P x ==> Q))`)
+    `((!x. P x) \/ Q <=> (!x. ~(P x) ==> Q)) /\
+     ((Q \/ (!x. P x)) <=> (!x. ~(P x) ==> Q))`)
   CHEAT_TAC;;
 
 let peg_eval_TypeDec_wrongtok = cake_theorem "peg_eval_TypeDec_wrongtok"
   (fun () ->
-    `~(
-        FST tk = tokens_DatatypeT) ==>
-        ~peg_eval cmlPEG (tk :: i,peg_nt
+    `~(FST tk = tokens_DatatypeT) ==>
+        ~(peg_eval cmlPEG (tk :: i,peg_nt
           ((INL:MMLnonT->MMLnonT+num) nTypeDec) f) (peg_Success i' r
-          eo)`)
+          eo))`)
   CHEAT_TAC;;
 
 let peg_eval_TypeAbbrevDec_wrongtok =
   cake_theorem "peg_eval_TypeAbbrevDec_wrongtok"
   (fun () ->
-    `~(
-        FST tk = tokens_TypeT) ==>
-        ~peg_eval cmlPEG (tk :: i,peg_nt
+    `~(FST tk = tokens_TypeT) ==>
+        ~(peg_eval cmlPEG (tk :: i,peg_nt
           ((INL:MMLnonT->MMLnonT+num) nTypeAbbrevDec) f) (peg_Success
-          i' r eo)`)
+          i' r eo))`)
   CHEAT_TAC;;
 
 let peg_eval_Structure_wrongtok =
   cake_theorem "peg_eval_Structure_wrongtok"
   (fun () ->
-    `~(
-       FST tk = tokens_StructureT) ==>
-       ~peg_eval cmlPEG (tk :: i,peg_nt
+    `~(FST tk = tokens_StructureT) ==>
+       ~(peg_eval cmlPEG (tk :: i,peg_nt
          ((INL:MMLnonT->MMLnonT+num) nStructure) f) (peg_Success i' r
-         e0)`)
+         e0))`)
   CHEAT_TAC;;
 
 
 let peg_eval_LetDec_wrongtok = cake_theorem "peg_eval_LetDec_wrongtok"
   (fun () ->
     `FST tk = tokens_SemicolonT ==>
-     ~peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-       nLetDec) f) (peg_Success i' r eo)`)
+     ~(peg_eval cmlPEG (tk :: i,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nLetDec) f) (peg_Success i' r eo))`)
   CHEAT_TAC;;
 
 let peg_eval_nUQConstructor_wrongtok =
   cake_theorem "peg_eval_nUQConstructor_wrongtok"
   (fun () ->
     `(!s. ~(FST t = tokens_AlphaT s)) ==>
-      ~peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-        nUQConstructorName) f) (peg_Success i' r eo)`)
+      ~(peg_eval cmlPEG (t :: i,peg_nt
+        ((INL:MMLnonT->MMLnonT+num) nUQConstructorName) f)
+        (peg_Success i' r eo))`)
   CHEAT_TAC;;
 
 let peg_eval_nConstructor_wrongtok =
@@ -170,16 +167,16 @@ let peg_eval_nConstructor_wrongtok =
   (fun () ->
     `(!s. ~(FST t = tokens_AlphaT s)) /\ (!s1 s2. ~(FST t =
   tokens_LongidT s1 s2)) ==>
-     ~peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-       nConstructorName) f) (peg_Success i' r eo)`)
+     ~(peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+       nConstructorName) f) (peg_Success i' r eo))`)
   CHEAT_TAC;;
 
 let peg_eval_nV_wrongtok = cake_theorem "peg_eval_nV_wrongtok"
   (fun () ->
     `(!s. ~(FST t = tokens_AlphaT s)) /\ (!s. ~(FST t = tokens_SymbolT
   s)) ==>
-      ~peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-        nV) f) (peg_Success i' r eo)`)
+      ~(peg_eval cmlPEG (t :: i,peg_nt
+        ((INL:MMLnonT->MMLnonT+num) nV) f) (peg_Success i' r eo))`)
   CHEAT_TAC;;
 
 let peg_eval_nFQV_wrongtok = cake_theorem "peg_eval_nFQV_wrongtok"
@@ -187,14 +184,14 @@ let peg_eval_nFQV_wrongtok = cake_theorem "peg_eval_nFQV_wrongtok"
     `(!s. ~(FST t = tokens_AlphaT s)) /\ (!s. ~(FST t = tokens_SymbolT
   s)) /\
      (!s1 s2. ~(FST t = tokens_LongidT s1 s2)) ==>
-     ~peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-       nFQV) f) (peg_Success i' r eo)`)
+     ~(peg_eval cmlPEG (t :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
+       nFQV) f) (peg_Success i' r eo))`)
   CHEAT_TAC;;
 
 let peg_eval_rpt_never_NONE =
   cake_theorem "peg_eval_rpt_never_NONE[simp]"
   (fun () ->
-    `~peg_eval G (i,peg_rpt sym f) (peg_Failure fl fe)`)
+    `~(peg_eval G (i,peg_rpt sym f) (peg_Failure fl fe))`)
   CHEAT_TAC;;
 
 let pegsym_to_sym_def = cake_define
@@ -238,7 +235,7 @@ let valid_locs_mkNd = cake_theorem "valid_locs_mkNd[simp]"
 let rfringe_length_not_nullable =
   cake_theorem "rfringe_length_not_nullable"
   (fun () ->
-    `!G s. ~nullable G [s] ==>
+    `!G s. ~(nullable G [s]) ==>
            (!pt. ptree_head pt = s ==> valid_lptree G pt ==>
                 0 < LENGTH (real_fringe pt))`)
   CHEAT_TAC;;
@@ -299,7 +296,7 @@ let peg_linfix_correct_lemma = cake_theorem "peg_linfix_correct_lemma"
                   MAP
                   ((grammar_TOK:tokens_token->(tokens_token
                   ,MMLnonT)grammar_symbol) ## I) i)) /\
-        ~peg0 cmlPEG sym /\
+        ~(peg0 cmlPEG sym) /\
         UpperN IN FDOM (rules cmlG) /\
         {[gsym] | gsym IN pegsym_to_sym sym} SUBSET FAPPLY (rules
           cmlG) UpperN /\
@@ -334,8 +331,8 @@ let MAP_TK_11 = cake_theorem "MAP_TK_11[simp]"
 let peg_eval_nTyOp_wrongtok = cake_theorem "peg_eval_nTyOp_wrongtok"
   (fun () ->
     `FST tk = tokens_LparT ==>
-     ~peg_eval cmlPEG (tk :: i,peg_nt ((INL:MMLnonT->MMLnonT+num)
-       nTyOp) f) (peg_Success i' r eo)`)
+     ~(peg_eval cmlPEG (tk :: i,peg_nt
+       ((INL:MMLnonT->MMLnonT+num) nTyOp) f) (peg_Success i' r eo))`)
   CHEAT_TAC;;
 
 let peg_EbaseParen_sound = cake_theorem "peg_EbaseParen_sound"
@@ -367,7 +364,7 @@ let PAIR_MAP_I = cake_theorem "PAIR_MAP_I[local,simp]"
   CHEAT_TAC;;
 
 (* HOL4 pegSoundScript.sml:443: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: bindNT0_lemma *)
 
 (* left recursive rules in the grammar turn into calls to rpt in the PEG,
    and this in turn requires inductions *)

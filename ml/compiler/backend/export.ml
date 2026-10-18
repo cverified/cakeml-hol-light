@@ -161,7 +161,7 @@ let all_bytes_def = cake_define
   `all_bytes = Vector (GENLIST (\n. byte_to_string (n2w n)) 256)`;;
 
 (* HOL4 exportScript.sml:155-156: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: all_bytes_eq *)
 
 let byte_to_string_eq = cake_theorem "byte_to_string_eq"
   (fun () ->
@@ -174,16 +174,15 @@ let byte_to_string_eq = cake_theorem "byte_to_string_eq"
 let escape_sym_char_def = cake_define
   `escape_sym_char ch = (let code = ORD ch in
      if code >= 97 /\ code <= 122 \/ code >= 65 /\ code <= 90 \/
-        code >= 48 /\ code <= 57 \/ code = 95 then toString ch else
-          (\x y. strcat x y) ((\x y. strcat x y)
-     (implode "$") (toString (code))) (implode "_"))`;;
+        code >= 48 /\ code <= 57 \/ code = 95 then toString ch
+          else (\x y. strcat x y) ((\x y. strcat x y) (implode "$")
+          (toString (code))) (implode "_"))`;;
 
 let get_sym_label_def = cake_define
   `get_sym_label (ix,appl) (name,start',len) =
      (let label = (\x y. strcat x y) ((\x y. strcat x y) ((\x y.
-       strcat x y)
-       (implode "cml_") (concat (MAP escape_sym_char (explode
-         name))))
+       strcat x y) (implode "cml_") (concat (MAP escape_sym_char
+       (explode name))))
        (implode "_")) (toString (ix)) in
      (ix + 1,appl ++ [(name,label,start',len)]))`;;
 

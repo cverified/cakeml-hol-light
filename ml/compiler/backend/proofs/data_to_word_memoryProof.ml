@@ -157,10 +157,8 @@ let Word64Rep_DataElement = cake_theorem "Word64Rep_DataElement"
 let ThunkBlock_def = cake_define
   `ThunkBlock ev x = DataElement [x] 1 (ThunkTag ev,[])`;;
 
-let v_size_LEMMA = cake_theorem "v_size_LEMMA[local]"
-  (fun () ->
-    `!vs v. MEM v vs ==> dataSem_v_size v <= v1_size vs`)
-  CHEAT_TAC;;
+(* HOL4 data_to_word_memoryProofScript.sml:176-181: a theorem whose
+   statement the port cannot state yet: v_size_LEMMA *)
 
 (* v_inv conf v refs (x,f,tf,heap)
    v    : the dataSem value
@@ -188,7 +186,7 @@ let v_inv_ck = cake_inductive
                     i)),f,tf,(heap:(('a
                     word_loc,data_to_word_memoryProof_tag#('a word_loc)
                     list)heap_element) list))) /\
-   (~small_int (:'a) i /\
+   (~(small_int (:'a) i) /\
      heap_lookup ptr heap = SOME (Bignum i) ==>
        v_inv_ck ck conf (Number i) refs (gc_shared_Pointer ptr
          (wordLang_Word (n2w 0)),f,tf,(heap:(('a
@@ -269,7 +267,7 @@ let v_inv_ck_mono = cake_theorem "v_inv_ck_mono"
 
 let v_inv_def = cake_theorem "v_inv_def"
   (fun () ->
-    `(v_inv conf (Number i:bvlSem_v) (refs:(dataSem_v bvlSem_ref) spt)
+    `(v_inv conf (Number i:dataSem_v) (refs:(dataSem_v bvlSem_ref) spt)
   (x,f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
   list)heap_element) list)) <=>
         (if small_int (:'a) i then (x = gc_shared_Data
@@ -322,7 +320,7 @@ let v_inv_def = cake_theorem "v_inv_def"
    pointer annotation is always 0 *)
 let v_inv_RefPtr_T = cake_theorem "v_inv_RefPtr_T"
   (fun () ->
-    `v_inv conf (RefPtr T n:bvlSem_v) (refs:(dataSem_v bvlSem_ref) spt)
+    `v_inv conf (RefPtr T n:dataSem_v) (refs:(dataSem_v bvlSem_ref) spt)
   (x,f,tf,(heap:(('a word_loc,data_to_word_memoryProof_tag#('a word_loc)
   list)heap_element) list)) <=>
        n IN FDOM f /\
@@ -507,8 +505,8 @@ let gc_kind_inv_def = cake_define
        Simple -> (sp1 = 0) | data_to_word_Generational sizes ->
          gen_state_ok a (a + sp + sp1) heap gens /\
          (?h1 h2. (heap_split (a + sp + sp1) heap = SOME (h1,h2)) /\
-                 EVERY (\x. ~data_to_word_memoryProof_isRef x) h1
-                   /\ EVERY data_to_word_memoryProof_isRef h2))`;;
+                 EVERY (\x. ~(data_to_word_memoryProof_isRef x))
+                   h1 /\ EVERY data_to_word_memoryProof_isRef h2))`;;
 
 let abs_ml_inv_def = cake_define
   `abs_ml_inv conf stack' refs (roots,heap,be',a,sp,sp1,gens) limit' ts
@@ -585,7 +583,7 @@ let EVERY2_APPEND_IMP_APPEND = cake_theorem "EVERY2_APPEND_IMP_APPEND"
 
 let EVERY2_MAP_FST_SND = cake_theorem "EVERY2_MAP_FST_SND[local]"
   (fun () ->
-    `!xs. EVERY2 P (MAP FST' xs) (MAP SND' xs) = EVERY (\(x,y). P x y)
+    `!xs. EVERY2 P (MAP FST xs) (MAP SND xs) = EVERY (\(x,y). P x y)
   xs`)
   CHEAT_TAC;;
 
@@ -639,8 +637,8 @@ let evaluated_thunk_ptr_def = cake_define
   `evaluated_thunk_ptr refs n <=> (?v. lookup n refs = SOME (Thunk
   Evaluated v))`;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:725-730: the ML values
-   that the definitions below antiquote *)
+(* HOL4 data_to_word_memoryProofScript.sml:725-730: ML code, not
+   ported *)
 
 let v_inv_related_lemma = cake_theorem "v_inv_related_lemma[local]"
   (fun () ->
@@ -726,12 +724,9 @@ let gc_heap_inline_rel_heap_lookup =
 
 let ThunkBlock_not_EQ = cake_theorem "ThunkBlock_not_EQ[local]"
   (fun () ->
-    `~(
-       ThunkBlock ev x = Bignum i) /\ ~(
-       ThunkBlock ev x = Word64Rep (:'a) w) /\ ~(
-       ThunkBlock ev x = BlockRep n xs) /\ ~(
-       ThunkBlock ev x = RefBlock zs) /\ ~(
-       ThunkBlock ev x = Bytes be flag bs ys)`)
+    `~(ThunkBlock ev x = Bignum i) /\ ~(ThunkBlock ev x = Word64Rep
+  (:'a) w) /\ ~(ThunkBlock ev x = BlockRep n xs) /\ ~(ThunkBlock ev x
+  = RefBlock zs) /\ ~(ThunkBlock ev x = Bytes be flag bs ys)`)
   CHEAT_TAC;;
 
 let LIST_REL_gc_heap_inline_DataElement =
@@ -814,7 +809,8 @@ let all_reachable_from_roots_def = cake_define
         p IN reachable_addresses roots heap)`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:1196-1198: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   IN_reachable_addresses *)
 
 let reachable_addresses_related =
   cake_theorem "reachable_addresses_related"
@@ -886,10 +882,10 @@ let gc_move_data_refs_split =
     `(gen_gc_gc_move cc s x = (x1,s1)) /\ (!t r. isRef cc (t,r) <=>
   isMutTag t) /\
       EVERY isDataElement (gc_state_h2 s) /\ EVERY (\x.
-        ~data_to_word_memoryProof_isRef x) (gc_state_h2 s) /\ EVERY
+        ~(data_to_word_memoryProof_isRef x)) (gc_state_h2 s) /\ EVERY
         data_to_word_memoryProof_isRef (gc_state_r4 s) ==>
       EVERY isDataElement (gc_state_h2 s1) /\
-      (EVERY (\x. ~data_to_word_memoryProof_isRef x))
+      (EVERY (\x. ~(data_to_word_memoryProof_isRef x)))
         (gc_state_h2 s1) /\ EVERY data_to_word_memoryProof_isRef
         (gc_state_r4 s1)`)
   CHEAT_TAC;;
@@ -901,11 +897,11 @@ let gc_move_list_data_refs_split =
      (gen_gc_gc_move_list cc s x = (x1,s1)) /\
       (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ EVERY
         isDataElement (gc_state_h2 s) /\ (EVERY (\x.
-        ~data_to_word_memoryProof_isRef x)) (gc_state_h2 s) /\ EVERY
+        ~(data_to_word_memoryProof_isRef x))) (gc_state_h2 s) /\ EVERY
         data_to_word_memoryProof_isRef (gc_state_r4 s) ==>
       EVERY isDataElement (gc_state_h2 s1) /\ (EVERY (\x.
-        ~data_to_word_memoryProof_isRef x)) (gc_state_h2 s1) /\ EVERY
-        data_to_word_memoryProof_isRef (gc_state_r4 s1)`)
+        ~(data_to_word_memoryProof_isRef x))) (gc_state_h2 s1) /\
+        EVERY data_to_word_memoryProof_isRef (gc_state_r4 s1)`)
   CHEAT_TAC;;
 
 let gc_move_refs_data_refs_split =
@@ -915,13 +911,13 @@ let gc_move_refs_data_refs_split =
      (gc_move_refs cc s = s1) /\
       (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ EVERY
         isDataElement (gc_state_h1 s ++ gc_state_h2 s) /\ (EVERY (\x.
-        ~data_to_word_memoryProof_isRef x)) (gc_state_h1 s ++
+        ~(data_to_word_memoryProof_isRef x))) (gc_state_h1 s ++
         gc_state_h2 s) /\
       EVERY data_to_word_memoryProof_isRef (gc_state_r1 s ++
         gc_state_r2 s ++ gc_state_r3 s ++ gc_state_r4 s) ==>
       EVERY isDataElement (gc_state_h1 s1 ++ gc_state_h2 s1) /\
-      (EVERY (\x. ~data_to_word_memoryProof_isRef x)) (gc_state_h1
-        s1 ++ gc_state_h2 s1) /\
+      (EVERY (\x. ~(data_to_word_memoryProof_isRef x)))
+        (gc_state_h1 s1 ++ gc_state_h2 s1) /\
       EVERY data_to_word_memoryProof_isRef (gc_state_r1 s1 ++
         gc_state_r2 s1 ++ gc_state_r3 s1 ++ gc_state_r4 s1)`)
   CHEAT_TAC;;
@@ -932,14 +928,14 @@ let gc_move_data_data_refs_split =
     `!cc s s1.
      (gen_gc_gc_move_data cc s = s1) /\
       (!t r. (isRef cc (t,r) <=> isMutTag t)) /\ (EVERY (\x.
-        ~data_to_word_memoryProof_isRef x)) (gc_state_h1 s ++
+        ~(data_to_word_memoryProof_isRef x))) (gc_state_h1 s ++
         gc_state_h2 s) /\
       EVERY isDataElement (gc_state_h1 s ++ gc_state_h2 s) /\
       EVERY data_to_word_memoryProof_isRef (gc_state_r1 s ++
         gc_state_r2 s ++ gc_state_r3 s ++ gc_state_r4 s) ==>
       EVERY isDataElement (gc_state_h1 s1 ++ gc_state_h2 s1) /\
-      (EVERY (\x. ~data_to_word_memoryProof_isRef x)) (gc_state_h1
-        s1 ++ gc_state_h2 s1) /\
+      (EVERY (\x. ~(data_to_word_memoryProof_isRef x)))
+        (gc_state_h1 s1 ++ gc_state_h2 s1) /\
       EVERY data_to_word_memoryProof_isRef (gc_state_r1 s1 ++
         gc_state_r2 s1 ++ gc_state_r3 s1 ++ gc_state_r4 s1)`)
   CHEAT_TAC;;
@@ -951,12 +947,12 @@ let gc_move_loop_data_refs_split =
      (gen_gc_gc_move_loop cc s clock = s1) /\
      (!t r. (isRef cc (t,r) <=> isMutTag t)) /\
      EVERY isDataElement (gc_state_h1 s ++ gc_state_h2 s) /\
-     (EVERY (\x. ~data_to_word_memoryProof_isRef x)) (gc_state_h1 s
-       ++ gc_state_h2 s) /\
+     (EVERY (\x. ~(data_to_word_memoryProof_isRef x))) (gc_state_h1
+       s ++ gc_state_h2 s) /\
      EVERY data_to_word_memoryProof_isRef (gc_state_r1 s ++
        gc_state_r2 s ++ gc_state_r3 s ++ gc_state_r4 s) ==>
      EVERY isDataElement (gc_state_h1 s1 ++ gc_state_h2 s1) /\
-     (EVERY (\x. ~data_to_word_memoryProof_isRef x)) (gc_state_h1
+     (EVERY (\x. ~(data_to_word_memoryProof_isRef x))) (gc_state_h1
        s1 ++ gc_state_h2 s1) /\
      EVERY data_to_word_memoryProof_isRef (gc_state_r1 s1 ++
        gc_state_r2 s1 ++ gc_state_r3 s1 ++ gc_state_r4 s1)`)
@@ -968,8 +964,8 @@ let gen_gc_data_refs_split =
     `!cc roots heap.
      (gen_gc cc (roots,heap) = (roots1,s)) /\
      (!t r. (isRef cc (t,r) <=> isMutTag t)) ==>
-     (EVERY (\x. ~data_to_word_memoryProof_isRef x)) (gc_state_h1 s
-       ++ gc_state_h2 s) /\
+     (EVERY (\x. ~(data_to_word_memoryProof_isRef x))) (gc_state_h1
+       s ++ gc_state_h2 s) /\
      EVERY isDataElement (gc_state_h1 s ++ gc_state_h2 s) /\
      EVERY data_to_word_memoryProof_isRef (gc_state_r1 s ++
        gc_state_r2 s ++ gc_state_r3 s ++ gc_state_r4 s)`)
@@ -977,7 +973,7 @@ let gen_gc_data_refs_split =
 
 let heap_expand_not_isRef = cake_theorem "heap_expand_not_isRef"
   (fun () ->
-    `EVERY (\x. ~data_to_word_memoryProof_isRef x) (heap_expand n)`)
+    `EVERY (\x. ~(data_to_word_memoryProof_isRef x)) (heap_expand n)`)
   CHEAT_TAC;;
 
 let reset_gens_def = cake_define
@@ -1036,7 +1032,8 @@ let heap_split_LESS_EQ = cake_theorem "heap_split_LESS_EQ"
 
 let isRef_heap_expand = cake_theorem "isRef_heap_expand[local]"
   (fun () ->
-    `!x. EVERY (\x. ~data_to_word_memoryProof_isRef x) (heap_expand x)`)
+    `!x. EVERY (\x. ~(data_to_word_memoryProof_isRef x)) (heap_expand
+  x)`)
   CHEAT_TAC;;
 
 let gen_gc_partial_thm = cake_theorem "gen_gc_partial_thm"
@@ -1187,8 +1184,7 @@ let isSomeDataElement_heap_lookup_lemma2 =
 let isSomeDataElement_heap_lookup_lemma3 =
   cake_theorem "isSomeDataElement_heap_lookup_lemma3[local]"
   (fun () ->
-    `~(
-       n = 0) ==>
+    `~(n = 0) ==>
          (isSomeDataElement (heap_lookup n (x :: xs)) <=>
           el_length x <= n /\ isSomeDataElement (heap_lookup (n -
             el_length x) xs))`)
@@ -1202,10 +1198,10 @@ let IMP_heap_store_unused = cake_theorem "IMP_heap_store_unused[local]"
                unused_space_inv a (sp - el_length x) heap2 /\
                (heap_lookup ((a + sp) - el_length x) heap2 = SOME
                  x) /\
-               ~isSomeDataElement (heap_lookup ((a + sp) -
-                 el_length x) heap) /\
+               ~(isSomeDataElement (heap_lookup ((a + sp) -
+                 el_length x) heap)) /\
                (heap_length heap2 = heap_length heap) /\
-               (~isForwardPointer x ==>
+               (~(isForwardPointer x) ==>
                 (FILTER isForwardPointer heap2 = FILTER
                   isForwardPointer heap)) /\
                (!xs l d.
@@ -1230,9 +1226,9 @@ let IMP_heap_store_unused_alt =
                   unused_space_inv (a + el_length x) (sp -
                     el_length x) heap2) /\
                (heap_lookup a heap2 = SOME x) /\
-               ~isSomeDataElement (heap_lookup a heap) /\
+               ~(isSomeDataElement (heap_lookup a heap)) /\
                (heap_length heap2 = heap_length heap) /\
-               (~isForwardPointer x ==>
+               (~(isForwardPointer x) ==>
                 (FILTER isForwardPointer heap2 = FILTER
                   isForwardPointer heap)) /\
                (!xs l d.
@@ -1347,8 +1343,7 @@ let list_to_BlockReps_heap_length =
   cake_theorem "list_to_BlockReps_heap_length"
   (fun () ->
     `!xs len.
-       ~(
-       xs = []) ==>
+       ~(xs = []) ==>
        heap_length (list_to_BlockReps conf x len xs) =
         3 * LENGTH xs`)
   CHEAT_TAC;;
@@ -1361,8 +1356,7 @@ let heap_lookup_heap_length = cake_theorem "heap_lookup_heap_length"
 let list_to_BlockReps_heap_lookup_0 =
   cake_theorem "list_to_BlockReps_heap_lookup_0"
   (fun () ->
-    `~(
-     xs = []) ==>
+    `~(xs = []) ==>
      isSomeDataElement (heap_lookup 0 (list_to_BlockReps conf x
        len xs))`)
   CHEAT_TAC;;
@@ -1371,42 +1365,39 @@ let list_to_BlockReps_isDataElement =
   cake_theorem "list_to_BlockReps_isDataElement"
   (fun () ->
     `!xs x len.
-       ~(
-       xs = []) ==>
+       ~(xs = []) ==>
        EVERY isDataElement (list_to_BlockReps conf x len xs)`)
   CHEAT_TAC;;
 
 let list_to_BlockReps_data_up_to_lem =
   cake_theorem "list_to_BlockReps_data_up_to_lem[local]"
   (fun () ->
-    `~(
-       xs = []) /\
+    `~(xs = []) /\
         h1 = list_to_BlockReps conf x len xs ==>
         data_up_to (heap_length h1) (h1 ++ h2)`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2360-2363: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   list_to_BlockReps_data_up_to *)
 
 let list_to_BlockReps_ForwardPointer =
   cake_theorem "list_to_BlockReps_ForwardPointer"
   (fun () ->
-    `~(
-        xs = []) ==> FILTER isForwardPointer (list_to_BlockReps
-          conf x len xs) = []`)
+    `~(xs = []) ==> FILTER isForwardPointer (list_to_BlockReps conf x
+  len xs) = []`)
   CHEAT_TAC;;
 
 let list_to_BlockReps_Ref = cake_theorem "list_to_BlockReps_Ref"
   (fun () ->
-    `!xs len x conf. ~(
-       xs = []) ==> EVERY (\v. ~data_to_word_memoryProof_isRef v)
-         (list_to_BlockReps conf x len xs)`)
+    `!xs len x conf. ~(xs = []) ==> EVERY (\v.
+  ~(data_to_word_memoryProof_isRef v)) (list_to_BlockReps conf x len
+  xs)`)
   CHEAT_TAC;;
 
 let list_to_BlockReps_NULL = cake_theorem "list_to_BlockReps_NULL"
   (fun () ->
-    `~(
-        xs = []) ==> ~(list_to_BlockReps conf x len xs = [])`)
+    `~(xs = []) ==> ~(list_to_BlockReps conf x len xs = [])`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2388-2390: a proof *)
@@ -1425,8 +1416,8 @@ let list_to_BlockReps_Pointer_lem =
   cake_theorem "list_to_BlockReps_Pointer_lem[local]"
   (fun () ->
     `!xs len ys l d ptr u.
-        let allocd = list_to_BlockReps conf x len xs in ~(
-          xs = []) /\
+        let allocd = list_to_BlockReps conf x len xs in ~(xs = [])
+          /\
           MEM (DataElement ys l d) allocd /\
           MEM (gc_shared_Pointer ptr u) ys ==>
             gc_shared_Pointer ptr u = x \/
@@ -1438,7 +1429,8 @@ let list_to_BlockReps_Pointer_lem =
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2435-2437: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   list_to_BlockReps_Pointer *)
 
 let list_to_v_get_refs = cake_theorem "list_to_v_get_refs"
   (fun () ->
@@ -1504,8 +1496,7 @@ let v_inv_list_to_v_lem = cake_theorem "v_inv_list_to_v_lem"
   (fun () ->
     `!rs xs t rt ha hb sp ts.
        let hm = list_to_BlockReps conf rt (heap_length ha) rs in
-         ~(
-         rs = []) /\
+         ~(rs = []) /\
          v_inv conf t refs (rt,f,tf,ha ++ heap_expand sp ++ hb) /\
          LIST_REL (\v x. v_inv conf v refs (x,f,tf,ha ++
            heap_expand sp ++ hb)) xs rs /\
@@ -1518,7 +1509,7 @@ let v_inv_list_to_v_lem = cake_theorem "v_inv_list_to_v_lem"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:2670-2671: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: v_inv_list_to_v *)
 
 (* A timestamp that is not in the  *)
 
@@ -1628,8 +1619,7 @@ let v_all_vs_ts_list = cake_theorem "v_all_vs_ts_list"
 let v_inv_tf_update_thm_lemma = cake_theorem "v_inv_tf_update_thm_lemma"
   (fun () ->
     `!ck v refs y f tf heap ts' a.
-       v_inv conf v refs (y,f,tf,heap) /\ ~(
-       ts' IN FDOM tf) ==>
+       v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN FDOM tf) ==>
          v_inv_ck ck conf v refs (y,f,tf |+ (ts',a),heap)`)
   CHEAT_TAC;;
 
@@ -1644,18 +1634,16 @@ let v_inv_tf_update_thm_alt_lemma =
   cake_theorem "v_inv_tf_update_thm_alt_lemma"
   (fun () ->
     `!ck v refs y f tf heap ts' a.
-       v_inv conf v refs (y,f,tf,heap) /\ ~(
-         ts' IN (all_ts refs stack)) /\ ~(
-         ts' IN set_of_list (v_all_ts v)) ==>
+       v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN (all_ts refs
+         stack)) /\ ~(ts' IN set_of_list (v_all_ts v)) ==>
            v_inv_ck ck conf v refs (y,f,tf |+ (ts',a),heap)`)
   CHEAT_TAC;;
 
 let v_inv_tf_update_thm_alt = cake_theorem "v_inv_tf_update_thm_alt"
   (fun () ->
     `!conf v refs y f tf heap ts' a stack'.
-       v_inv conf v refs (y,f,tf,heap) /\ ~(
-       ts' IN (all_ts refs stack')) /\ ~(
-       ts' IN set_of_list (v_all_ts v)) ==>
+       v_inv conf v refs (y,f,tf,heap) /\ ~(ts' IN (all_ts refs
+         stack')) /\ ~(ts' IN set_of_list (v_all_ts v)) ==>
        v_inv conf v refs (y,f,tf |+ (ts',a),heap)`)
   CHEAT_TAC;;
 
@@ -1666,16 +1654,16 @@ let v_inv_tf_update_lemma = cake_theorem "v_inv_tf_update_lemma"
          (!ts tag xs y f tf heap.
            v1 = (Block ts tag xs) /\
            v2 = (y,f,tf,heap) /\
-           v1 IN (all_vs refs stack) /\ ~(
-           ts' IN all_ts refs stack) ==>
+           v1 IN (all_vs refs stack) /\ ~(ts' IN all_ts refs stack)
+             ==>
              v_inv_ck ck conf v1 refs (y,f,tf |+ (ts',a),heap))`)
   CHEAT_TAC;;
 
 let v_inv_tf_update = cake_theorem "v_inv_tf_update"
   (fun () ->
     `!conf refs y f tf heap heap1 a stack' ts ts' tag xs.
-        (Block ts tag xs) IN (all_vs refs stack') /\ ~(
-        ts' IN all_ts refs stack') /\
+        (Block ts tag xs) IN (all_vs refs stack') /\ ~(ts' IN
+          all_ts refs stack') /\
         v_inv conf (Block ts tag xs) refs (y,f,tf,heap) ==> v_inv
           conf ((Block ts tag xs)) refs (y,f,tf |+ (ts',a),heap)`)
   CHEAT_TAC;;
@@ -1825,7 +1813,7 @@ let bignum_alt_thm = cake_theorem "bignum_alt_thm"
   (fun () ->
     `abs_ml_inv conf (ws ++ stack) refs (rs ++
   roots,heap,be,a,sp,sp1,gens) limit ts /\
-     LENGTH ws = LENGTH rs /\ ~small_int (:'a) i /\
+     LENGTH ws = LENGTH rs /\ ~(small_int (:'a) i) /\
      (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a
        word_loc) list)heap_element) = DataElement [] len (tag,xs) /\
      LENGTH xs < sp ==>
@@ -1874,7 +1862,7 @@ let reachable_refs_UPDATE1 =
   (fun () ->
     `reachable_refs (xs ++ (RefPtr b ptr :: stack)) (insert ptr
   (ValueArray xs1) refs) n ==>
-       (!v. MEM v xs1 ==> ~MEM v xs ==> (?xs2. (lookup ptr refs =
+       (!v. MEM v xs1 ==> ~(MEM v xs) ==> (?xs2. (lookup ptr refs =
          SOME (ValueArray xs2)) /\ MEM v xs2)) ==>
        reachable_refs (xs ++ (RefPtr b ptr :: stack)) refs n`)
   CHEAT_TAC;;
@@ -2072,8 +2060,7 @@ let all_ts_SUBSET_ts = cake_theorem "all_ts_SUBSET_ts[local]"
 
 let all_ts_mutcons = cake_theorem "all_ts_mutcons[local]"
   (fun () ->
-    `~(
-       ptr IN domain refs) ==>
+    `~(ptr IN domain refs) ==>
        all_ts refs ((l ++ [c] ++ r) ++ stack) SUBSET
        all_ts (insert ptr (bvlSem_MutBlock tag F l c r) refs)
          (RefPtr F ptr :: stack)`)
@@ -2101,8 +2088,7 @@ let reachable_refs_MutCons_lemma =
   (fun () ->
     `!r1 n.
        RTC (ref_edge (insert ptr (bvlSem_MutBlock tag F l c r)
-         refs)) r1 n ==> ~(
-       n = ptr) ==>
+         refs)) r1 n ==> ~(n = ptr) ==>
        RTC (ref_edge refs) r1 n \/
        (?s. MEM s (get_refs (Block 0 ARB (l ++ [c] ++ r))) /\ RTC
          (ref_edge refs) s n)`)
@@ -2112,8 +2098,8 @@ let reachable_refs_MutCons =
   cake_theorem "reachable_refs_MutCons[local]"
   (fun () ->
     `reachable_refs (RefPtr F ptr :: stack)
-       (insert ptr (bvlSem_MutBlock tag F l c r) refs) n /\ ~(
-     n = ptr) /\ ~(ptr IN domain refs) ==>
+       (insert ptr (bvlSem_MutBlock tag F l c r) refs) n /\ ~(n =
+         ptr) /\ ~(ptr IN domain refs) ==>
      reachable_refs ((l ++ [c] ++ r) ++ stack) refs n`)
   CHEAT_TAC;;
 
@@ -2138,8 +2124,7 @@ let take_el_drop = cake_theorem "take_el_drop[local]"
 let dest_thunk_insert_fresh =
   cake_theorem "dest_thunk_insert_fresh[local]"
   (fun () ->
-    `~(
-       ptr IN domain refs) /\ dest_thunk v refs = NotThunk ==>
+    `~(ptr IN domain refs) /\ dest_thunk v refs = NotThunk ==>
        dest_thunk v (insert ptr x refs) = NotThunk`)
   CHEAT_TAC;;
 
@@ -2233,9 +2218,8 @@ let INJ_NEQ = cake_theorem "INJ_NEQ"
     `INJ (FAPPLY f) (FDOM f) {a | isSomeDataElement (heap_lookup a
   heap)} /\
      n IN FDOM f /\
-     ptr IN FDOM f /\ ~(
-     n = ptr) ==> ~(
-       (FAPPLY f n) = (FAPPLY f ptr))`)
+     ptr IN FDOM f /\ ~(n = ptr) ==> ~((FAPPLY f n) = (FAPPLY f
+       ptr))`)
   CHEAT_TAC;;
 
 let v_inv_Thunk_insert_lemma =
@@ -2254,8 +2238,8 @@ let v_inv_Thunk_insert_lemma =
        heap_store (FAPPLY f ptr) [ThunkBlock ev q] heap = (heap2,T)
          /\
        heap_lookup (FAPPLY f ptr) heap2 = SOME (ThunkBlock ev q) /\
-       (!m x. ~(
-          m = FAPPLY f ptr) /\ heap_lookup m heap = SOME x ==>
+       (!m x. ~(m = FAPPLY f ptr) /\ heap_lookup m heap = SOME x
+         ==>
           heap_lookup m heap2 = SOME x) /\
        v_inv conf h refs (q,f,tf,heap) ==>
          v_inv_ck ck conf v1 (insert ptr (Thunk ev h) refs)
@@ -2263,7 +2247,7 @@ let v_inv_Thunk_insert_lemma =
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:4636-4640: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: v_inv_Thunk_insert *)
 
 let heap_lookup_heap_split =
   cake_theorem "heap_lookup_heap_split[local]"
@@ -2281,18 +2265,22 @@ let heap_store_heap_lookup = cake_theorem "heap_store_heap_lookup"
         heap_lookup n heap = heap_lookup n heap2`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:4680-4689: a proof *)
+(* HOL4 data_to_word_memoryProofScript.sml:4680-4689: a theorem that
+   HOL4 states as the value of an ML expression:
+   update_ref_gen_state_ok *)
 
 let data_up_to_alt = cake_theorem "data_up_to_alt[local]"
   (fun () ->
     `(data_up_to n [] <=> (n = 0)) /\
      (data_up_to n (x :: xs) <=>
         (if n = 0 then T else
-        if n < el_length x \/ ~isDataElement x then F else
+        if n < el_length x \/ ~(isDataElement x) then F else
           data_up_to (n - el_length x) xs))`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:4704-4713: a proof *)
+(* HOL4 data_to_word_memoryProofScript.sml:4704-4713: a theorem that
+   HOL4 states as the value of an ML expression:
+   update_thunk_gen_state_ok *)
 
 let data_up_to_heap_store = cake_theorem "data_up_to_heap_store"
   (fun () ->
@@ -2452,7 +2440,7 @@ let v_inv_BlockRep_upd_lemma =
 (* the binders are renamed apart from the names used at the application sites,
    so that qexists can name the witnesses *)
 (* HOL4 data_to_word_memoryProofScript.sml:5514-5518: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: v_inv_BlockRep_upd *)
 
 (* v_inv cannot see what sits in a MutBlock's hole, only how long the two
    sides of it are *)
@@ -2572,7 +2560,7 @@ let gen_state_ok_update_byte =
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:5900-5902: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: heap_length_Bytes *)
 
 let unused_space_inv_byte_update =
   cake_theorem "unused_space_inv_byte_update[local]"
@@ -2668,16 +2656,16 @@ let v_inv_new_Thunk_insert_lemma =
   cake_theorem "v_inv_new_Thunk_insert_lemma[local]"
   (fun () ->
     `!ck v refs x f tf heap ptr.
-       v_inv conf v refs (x,f,tf,heap) /\ ~(
-       ptr IN FDOM f) /\ ~(
-       ptr IN domain refs) /\
+       v_inv conf v refs (x,f,tf,heap) /\ ~(ptr IN FDOM f) /\ ~(ptr
+         IN domain refs) /\
        (ev = Evaluated ==> dest_thunk h refs = NotThunk) ==>
          v_inv_ck ck conf v (insert ptr (Thunk ev h) refs)
            (x,f,tf,heap)`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:6472-6476: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   v_inv_new_Thunk_insert *)
 
 let blocks_unique_new_thunk = cake_theorem "blocks_unique_new_thunk"
   (fun () ->
@@ -2825,13 +2813,13 @@ let num_eq_thm = cake_theorem "num_eq_thm"
 
 let smallnum_i2w = cake_theorem "Smallnum_i2w"
   (fun () ->
-    `Smallnum i = i2w (4 * i)`)
+    `Smallnum i = i2w ((&4) * i)`)
   CHEAT_TAC;;
 
 let small_int_IMP_MIN_MAX = cake_theorem "small_int_IMP_MIN_MAX"
   (fun () ->
     `good_dimindex (:'a) /\ small_int (:'a) i ==>
-      INT_MIN (:'a) <= 4 * i /\ 4 * i <= INT_MAX (:'a)`)
+      INT_MIN (:'a) <= (&4) * i /\ (&4) * i <= INT_MAX (:'a)`)
   CHEAT_TAC;;
 
 let num_less_thm = cake_theorem "num_less_thm"
@@ -2919,7 +2907,7 @@ let duplicate_thm = cake_theorem "duplicate_thm"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:7427-7429: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: duplicate1_thm *)
 
 (* move *)
 
@@ -3331,7 +3319,7 @@ let word_ml_inv_num = cake_theorem "word_ml_inv_num"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:8032-8033: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression: word_ml_inv_zero *)
 
 let word_ml_inv_neg_num_lemma = cake_theorem "word_ml_inv_neg_num_lemma"
   (fun () ->
@@ -3343,10 +3331,10 @@ let word_ml_inv_neg_num = cake_theorem "word_ml_inv_neg_num"
   (fun () ->
     `word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s) ws /\
       good_dimindex (:'a) /\
-      small_enough_int (-- &n) /\ ~(n = 0) ==>
+      small_enough_int (--(&n)) /\ ~(n = 0) ==>
       word_ml_inv (heap,be,a,sp,sp1,gens) limit ts c (state_refs s)
-        ((Number (-- &n),wordLang_Word (--(n2w (4 * n):'a word)))
-          :: ws)`)
+        ((Number (--(&n)),wordLang_Word (--(n2w (4 * n):'a
+          word))) :: ws)`)
   CHEAT_TAC;;
 
 let word_list_APPEND = cake_theorem "word_list_APPEND"
@@ -3753,13 +3741,14 @@ let memory_rel_Word64_alt = cake_theorem "memory_rel_Word64_alt"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:9026-9028: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   memory_rel_WordOp64_alt *)
 
 let IMP_memory_rel_bignum_alt =
   cake_theorem "IMP_memory_rel_bignum_alt[local]"
   (fun () ->
     `memory_rel c be ts refs sp st m dm (vs ++ vars) /\
-      good_dimindex (:'a) /\ ~small_int (:'a) i /\
+      good_dimindex (:'a) /\ ~(small_int (:'a) i) /\
       (Bignum i:('a word_loc,data_to_word_memoryProof_tag#('a
         word_loc) list)heap_element) = DataElement [] (LENGTH ws)
         (NumTag is_neg,MAP wordLang_Word ws) /\
@@ -3780,7 +3769,8 @@ let IMP_memory_rel_bignum_alt =
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:9113-9114: a theorem that
-   HOL4 states as the value of an ML expression *)
+   HOL4 states as the value of an ML expression:
+   IMP_memory_rel_bignum_alt *)
 
 let memory_rel_Cons1 = cake_theorem "memory_rel_Cons1"
   (fun () ->
@@ -3835,7 +3825,7 @@ let INJ_FUPDATE = cake_theorem "INJ_FUPDATE"
   (fun () ->
     `INJ (FAPPLY tf) (FDOM tf) s /\ ~(ts2 IN FDOM tf) /\ ~(x IN FRANGE
   tf) /\ x IN s ==>
-     INJ (FAPPLY tf |+ (ts2,x)) (FDOM tf |+ (ts2,x)) s`)
+     INJ (FAPPLY (tf |+ (ts2,x))) (FDOM (tf |+ (ts2,x))) s`)
   CHEAT_TAC;;
 
 let finalise_cons_none = cake_theorem "finalise_cons_none[local]"
@@ -4132,7 +4122,8 @@ let memory_rel_REPLICATE = cake_theorem "memory_rel_REPLICATE"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10078-10084: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression:
+   memory_rel_RefArray *)
 
 let word_of_byte_def = cake_define
   `word_of_byte (w:'a word) =
@@ -4141,7 +4132,7 @@ let word_of_byte_def = cake_define
        if dimindex (:'a) = 32 then w else w << 32 || w)`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10093-10096: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: ADD_DIV_EQ *)
 
 let set_byte_word_of_byte = cake_theorem "set_byte_word_of_byte[local]"
   (fun () ->
@@ -4191,15 +4182,14 @@ let write_bytes_APPEND = cake_theorem "write_bytes_APPEND"
 let set_byte_sort = cake_theorem "set_byte_sort"
   (fun () ->
     `!n1 n2.
-        set_byte (n2w n1) b1 (set_byte (n2w n2:'a word) b2 w be')
-          be' =
-        (if n1 = n2 then set_byte (n2w n1) b1 w be' else
+        set_byte (n2w n1) b1 (set_byte (n2w n2:'a word) b2 w be) be
+          =
+        (if n1 = n2 then set_byte (n2w n1) b1 w be else
         if n1 < dimindex (:'a) DIV 8 /\ n2 < dimindex (:'a) DIV 8
           /\
            good_dimindex (:'a) /\ ~(n2 = n1) then
-          set_byte (n2w n2) b2 (set_byte (n2w n1) b1 w be') be'
-            else
-          set_byte (n2w n1) b1 (set_byte (n2w n2) b2 w be') be')`)
+          set_byte (n2w n2) b2 (set_byte (n2w n1) b1 w be) be else
+          set_byte (n2w n1) b1 (set_byte (n2w n2) b2 w be) be)`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10203-10213: ML code, not
@@ -4336,7 +4326,7 @@ let last_bytes_def = cake_define
          be')`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10399-10403: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: last_bytes_simp *)
 
 let last_bytes_bytes_to_word_REPLICATE =
   cake_theorem "last_bytes_bytes_to_word_REPLICATE"
@@ -4365,8 +4355,8 @@ let decode_length_make_byte_header =
 let memory_rel_RefByte_content =
   cake_theorem "memory_rel_RefByte_content"
   (fun () ->
-    `memory_rel c be ts refs sp st m dm vars /\ ~(
-     new IN (domain refs)) /\ byte_len (:'a) n < sp /\
+    `memory_rel c be ts refs sp st m dm vars /\ ~(new IN (domain refs))
+  /\ byte_len (:'a) n < sp /\
      byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
      byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\ n =
        LENGTH bytes /\
@@ -4390,8 +4380,8 @@ let memory_rel_RefByte_content =
 
 let memory_rel_RefByte_alt = cake_theorem "memory_rel_RefByte_alt"
   (fun () ->
-    `memory_rel c be ts refs sp st m dm vars /\ ~(
-      new IN (domain refs)) /\ byte_len (:'a) n < sp /\
+    `memory_rel c be ts refs sp st m dm vars /\ ~(new IN (domain refs))
+  /\ byte_len (:'a) n < sp /\
       byte_len (:'a) n < 2 EXP (dimindex (:'a) - 4) /\
       byte_len (:'a) n < 2 EXP data_to_word_config_len_size c /\
       good_dimindex (:'a) ==>
@@ -4521,7 +4511,7 @@ let copy_list_def = cake_define
                NONE)))`;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:10872-10965: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: copy_list_thm *)
 
 let memory_rel_FromList = cake_theorem "memory_rel_FromList"
   (fun () ->
@@ -4595,14 +4585,13 @@ let memory_rel_test_none_eq = cake_theorem "memory_rel_test_none_eq"
   (fun () ->
     `encode_header c (4 * n) len = (NONE:('a word) option) /\
       memory_rel c be ts refs sp st m dm ((Block ts' tag l,(w:'a
-        word_loc)) :: rest) /\ ~(
-      len = 0) /\ good_dimindex (:'a) ==>
+        word_loc)) :: rest) /\ ~(len = 0) /\ good_dimindex (:'a) ==>
       ~(tag = n /\ LENGTH l = len)`)
   CHEAT_TAC;;
 
 let not_bit_lt_2exp = cake_theorem "not_bit_lt_2exp[local]"
   (fun () ->
-    `!p x n. n < 2 EXP (p + 1) ==> ~BIT (p + (x + 1)) n`)
+    `!p x n. n < 2 EXP (p + 1) ==> ~(BIT (p + (x + 1)) n)`)
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:11090: ML code, not ported *)
@@ -4624,7 +4613,7 @@ let memory_rel_ValueArray_IMP = cake_theorem "memory_rel_ValueArray_IMP"
         ==>
       (?w a x.
         v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\
-          ~word_bit 2 x /\ ~word_bit 4 x /\
+          ~(word_bit 2 x) /\ ~(word_bit 4 x) /\
         get_real_simple_addr c st w = SOME a /\
         get_real_addr c st w = SOME a /\
         m a = wordLang_Word x /\ a IN dm /\
@@ -4660,12 +4649,12 @@ let memory_rel_Thunk_IMP = cake_theorem "memory_rel_Thunk_IMP"
         (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
            memory_rel c be ts refs sp st m dm ((z,v) :: vars) /\
            (?a x. get_real_addr c st w = SOME a /\
-                 m a = wordLang_Word x /\ a IN dm /\ ~(
-                 (x && (n2w 0b111100)) = n2w ((0 + 6) * 4)) /\ ~(
-                 (x && (n2w 0b111100)) = n2w ((8 + 6) * 4))))) \/
+                 m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
+                   0b111100)) = n2w ((0 + 6) * 4)) /\ ~((x && (n2w
+                   0b111100)) = n2w ((8 + 6) * 4))))) \/
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\ word_bit 3 x /\
-           ~word_bit 2 x /\ word_bit 4 x /\
+           ~(word_bit 2 x) /\ word_bit 4 x /\
          get_real_simple_addr c st w = SOME a /\
          get_real_addr c st w = SOME a /\
          m a = wordLang_Word x /\ a IN dm /\
@@ -4832,7 +4821,7 @@ let memory_rel_RefPtr_T_IMP = cake_theorem "memory_rel_RefPtr_T_IMP"
      good_dimindex (:'a) ==>
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
-         (word_bit 3 x <=> ~word_bit 2 x) /\
+         (word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)`)
@@ -4849,7 +4838,7 @@ let memory_rel_RefPtr_IMP = cake_theorem "memory_rel_RefPtr_IMP"
        fin l cv rs))) ==>
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
-         (word_bit 3 x <=> ~word_bit 2 x) /\
+         (word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)`)
@@ -4863,12 +4852,12 @@ let memory_rel_RefPtr_gen_IMP = cake_theorem "memory_rel_RefPtr_gen_IMP"
      (match r with Thunk Evaluated x ->
        (!w. v = wordLang_Word w /\ FAPPLY w 0 ==>
           (?a x. get_real_addr c st w = SOME a /\
-                m a = wordLang_Word x /\ a IN dm /\ ~(
-                (x && (n2w 0b111100)) = n2w ((0 + 6) * 4)))) |
-                  bvlSem_MutBlock _48 _49 _50 _51 _52 -> T | _53 ->
+                m a = wordLang_Word x /\ a IN dm /\ ~((x && (n2w
+                  0b111100)) = n2w ((0 + 6) * 4)))) | bvlSem_MutBlock
+                  _48 _49 _50 _51 _52 -> T | _53 ->
        (?w a x.
          v = wordLang_Word w /\ FAPPLY w 0 /\
-         (word_bit 3 x <=> ~word_bit 2 x) /\
+         (word_bit 3 x <=> ~(word_bit 2 x)) /\
          get_real_addr c st w = SOME a /\
          get_real_simple_addr c st w = SOME a /\
          m a = wordLang_Word (x:'a word) /\ a IN dm)))`)
@@ -4885,8 +4874,8 @@ let memory_rel_any_Number_IMP = cake_theorem "memory_rel_any_Number_IMP"
     `good_dimindex (:'a) /\
       memory_rel c be ts refs sp st m dm ((Number i,(v:'a
         word_loc)) :: vars) ==>
-      (?w. v = wordLang_Word w /\ (FAPPLY w 0 <=> ~small_int
-        (:'a) i))`)
+      (?w. v = wordLang_Word w /\ (FAPPLY w 0 <=> ~(small_int
+        (:'a) i)))`)
   CHEAT_TAC;;
 
 let memory_rel_Number_IMP = cake_theorem "memory_rel_Number_IMP"
@@ -4901,7 +4890,7 @@ let memory_rel_Number_bignum_IMP_ALT =
   cake_theorem "memory_rel_Number_bignum_IMP_ALT"
   (fun () ->
     `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) /\
-      ~small_int (:'a) i /\ good_dimindex (:'a) ==>
+      ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
       (?ff w x a y.
         v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a
           word)) /\
@@ -4909,14 +4898,14 @@ let memory_rel_Number_bignum_IMP_ALT =
         a IN dm /\ m a = wordLang_Word x /\ (~((x && (n2w 8)) =
           (n2w 0))) /\
         word_bit 2 x /\ word_bit 3 x /\
-        (word_bit 4 x <=> i < 0) /\
+        (word_bit 4 x <=> i < (&0)) /\
         (misc_word_list (a + bytes_in_word)
           (MAP wordLang_Word (n2mw (num_of_int (abs i)))) * ff)
             (fun2set (m,dm)) /\
         a + bytes_in_word IN dm /\
         m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
           i))) /\
-        ((x && (n2w 16)) = (n2w 0) <=> 0 <= i) /\
+        ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i) /\
         LENGTH (n2mw (num_of_int (abs i)):('a word) list) < 2 EXP
           (dimindex (:'a) - 4) /\
         LENGTH (n2mw (num_of_int (abs i)):('a word) list) < dimword
@@ -4930,14 +4919,14 @@ let memory_rel_Number_bignum_header =
   (fun () ->
     `memory_rel c be ts refs sp st m dm ((Number i,(v:'a word_loc)) ::
   vars) /\
-      ~small_int (:'a) i /\ good_dimindex (:'a) ==>
+      ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
       (?ff w x a y.
         v = wordLang_Word w /\ get_real_addr c st w = SOME a /\
-        IS_SOME ((encode_header c (w2n ((b2w (i < 0) << 2 || (n2w
-          3)):'a word))
+        IS_SOME ((encode_header c (w2n ((b2w (i < (&0)) << 2 ||
+          (n2w 3)):'a word))
             (LENGTH (n2mw (num_of_int (abs i)):('a word)
               list))):('a word) option) /\
-        m a = wordLang_Word (make_header c (b2w (i < 0) << 2 ||
+        m a = wordLang_Word (make_header c (b2w (i < (&0)) << 2 ||
           (n2w 3))
                 (LENGTH (n2mw (num_of_int (abs i)):('a word)
                   list))))`)
@@ -4948,8 +4937,8 @@ let memory_rel_bignum_cmp = cake_theorem "memory_rel_bignum_cmp"
     `memory_rel c be ts refs sp st m dm
           ((Number i1,v1) :: (Number i2,(v2:'a word_loc)) :: vars)
             /\
-      good_dimindex (:'a) /\ ~small_int (:'a) i1 /\ ~small_int
-        (:'a) i2 ==>
+      good_dimindex (:'a) /\ ~(small_int (:'a) i1) /\ ~(small_int
+        (:'a) i2) ==>
       (?w1 w2 a1 a2 x1 x2.
          v1 = wordLang_Word w1 /\ v2 = wordLang_Word w2 /\
          get_real_addr c st w1 = SOME a1 /\
@@ -4957,8 +4946,8 @@ let memory_rel_bignum_cmp = cake_theorem "memory_rel_bignum_cmp"
          m a1 = wordLang_Word x1 /\
          m a2 = wordLang_Word x2 /\
          (~(x1 = x2) ==>
-          (decode_length c (x1) = decode_length c (x2)) ==> ~(
-          (((n2w 16) && x1) = (n2w 0)) = (((n2w 16) && x2) = (n2w
+          (decode_length c (x1) = decode_length c (x2)) ==>
+            ~((((n2w 16) && x1) = (n2w 0)) = (((n2w 16) && x2) = (n2w
             0)))))`)
   CHEAT_TAC;;
 
@@ -4966,7 +4955,7 @@ let memory_rel_Number_bignum_IMP =
   cake_theorem "memory_rel_Number_bignum_IMP"
   (fun () ->
     `memory_rel c be ts refs sp st m dm ((Number i,v) :: vars) /\
-      ~small_int (:'a) i /\ good_dimindex (:'a) ==>
+      ~(small_int (:'a) i) /\ good_dimindex (:'a) ==>
       (?w x a y.
         v = wordLang_Word w /\ ~((w && (n2w 1)) = ((n2w 0):'a
           word)) /\
@@ -4976,7 +4965,7 @@ let memory_rel_Number_bignum_IMP =
         a + bytes_in_word IN dm /\
         m (a + bytes_in_word) = wordLang_Word (n2w (num_of_int (abs
           i))) /\
-        ((x && (n2w 16)) = (n2w 0) <=> 0 <= i))`)
+        ((x && (n2w 16)) = (n2w 0) <=> (&0) <= i))`)
   CHEAT_TAC;;
 
 let memory_rel_Word64_IMP = cake_theorem "memory_rel_Word64_IMP"
@@ -4990,7 +4979,7 @@ let memory_rel_Word64_IMP = cake_theorem "memory_rel_Word64_IMP"
        get_real_addr c st (get_addr c ptr (wordLang_Word (n2w 0)))
          = SOME x /\
        x IN dm /\ m x = wordLang_Word w /\ word_bit 3 w /\
-         ~word_bit 4 w /\ word_bit 2 w /\
+         ~(word_bit 4 w) /\ word_bit 2 w /\
        (x + bytes_in_word) IN dm /\
        (if dimindex (:'a) < 64 then
          (m (x + bytes_in_word) = wordLang_Word ((63 >< 32) w64) /\
@@ -5060,7 +5049,7 @@ let memory_rel_Number_word_msb =
     `memory_rel c be ts refs sp st m dm ((Number i1,wordLang_Word (w:'a
   word)) :: vars) /\
       good_dimindex (:'a) /\ small_int (:'a) i1 ==>
-      (word_msb w <=> i1 < 0)`)
+      (word_msb w <=> i1 < (&0))`)
   CHEAT_TAC;;
 
 let memory_rel_RefPtr_EQ_lemma =
@@ -5126,13 +5115,13 @@ let smallnum_test = cake_theorem "Smallnum_test[local]"
     `((Smallnum i && --(n2w 1) << (dimindex (:'a) - 2)) = ((n2w 0):'a
   word)) /\
        good_dimindex (:'a) /\ small_int (:'a) i ==>
-       ~(i < 0) /\ i < 2 EXP (dimindex (:'a) - 4)`)
+       ~(i < (&0)) /\ i < &(2 EXP (dimindex (:'a) - 4))`)
   CHEAT_TAC;;
 
 let small_int_w2i_i2w = cake_theorem "small_int_w2i_i2w[local]"
   (fun () ->
     `small_int (:'a) i /\ good_dimindex (:'a) ==>
-     w2i ((i2w (4 * i)):'a word) = 4 * i`)
+     w2i ((i2w ((&4) * i)):'a word) = (&4) * i`)
   CHEAT_TAC;;
 
 let memory_rel_Add = cake_theorem "memory_rel_Add"
@@ -5140,7 +5129,7 @@ let memory_rel_Add = cake_theorem "memory_rel_Add"
     `memory_rel c be ts refs sp st m dm
         ((Number i,wordLang_Word wi) :: (Number j,wordLang_Word wj)
           :: vars) /\
-      ~word_bit 0 wi /\ ~word_bit 0 wj /\
+      ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
       good_dimindex (:'a) /\ (w2i (wi + wj) = w2i wi + w2i wj) ==>
       memory_rel c be ts refs sp st m dm
         ((Number (i + j),wordLang_Word (wi + (wj:'a word))) ::
@@ -5152,7 +5141,7 @@ let memory_rel_Sub = cake_theorem "memory_rel_Sub"
     `memory_rel c be ts refs sp st m dm
         ((Number i,wordLang_Word wi) :: (Number j,wordLang_Word wj)
           :: vars) /\
-      ~word_bit 0 wi /\ ~word_bit 0 wj /\
+      ~(word_bit 0 wi) /\ ~(word_bit 0 wj) /\
       good_dimindex (:'a) /\ (w2i (wi - wj) = w2i wi - w2i wj) ==>
       memory_rel c be ts refs sp st m dm
         ((Number (i - j),wordLang_Word (wi - (wj:'a word))) ::
@@ -5258,7 +5247,7 @@ let make_cons_ptr_thm = cake_theorem "make_cons_ptr_thm"
 
 let Num_ABS_lemmas = cake_theorem "Num_ABS_lemmas[local]"
   (fun () ->
-    `num_of_int (abs (&n)) = n /\ num_of_int (abs (-- &n)) = n`)
+    `num_of_int (abs (&n)) = n /\ num_of_int (abs (--(&n))) = n`)
   CHEAT_TAC;;
 
 let word_cmp_res_def = cake_define
@@ -5305,10 +5294,9 @@ let memory_rel_Number_cmp = cake_theorem "memory_rel_Number_cmp"
      good_dimindex (:'a) ==>
      (?w1 w2.
        v1 = wordLang_Word w1 /\ v2 = wordLang_Word (w2:'a word) /\
-       (if ~word_bit 0 w1 /\ ~word_bit 0 w2 then
+       (if ~(word_bit 0 w1) /\ ~(word_bit 0 w2) then
          (i1 < i2 <=> w1 < w2) /\ (i1 = i2 <=> w1 = w2) else if
-           ~word_bit 0 w1 /\ word_bit 0 w2 then ~(
-         i1 = i2) /\
+           ~(word_bit 0 w1) /\ word_bit 0 w2 then ~(i1 = i2) /\
          (?a x2. get_real_addr c st w2 = SOME a /\
                 m a = wordLang_Word x2 /\ a IN dm /\
                 word_cmp_res i1 i2 = (if (x2 && (n2w 16)) = (n2w 0)
@@ -5339,7 +5327,8 @@ let memory_rel_Number_cmp = cake_theorem "memory_rel_Number_cmp"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13234-13244: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression:
+   word_cmp_loop_refl *)
 
 (* HOL4 data_to_word_memoryProofScript.sml:13246: ML code, not ported *)
 
@@ -5377,13 +5366,12 @@ let memory_rel_Block_MEM = cake_theorem "memory_rel_Block_MEM"
 
 let smallnum_0 = cake_theorem "Smallnum_0"
   (fun () ->
-    `FAPPLY
-        (~(Smallnum i:'a word)) 0`)
+    `~(FAPPLY (Smallnum i:'a word) 0)`)
   CHEAT_TAC;;
 
 let smallnum_1 = cake_theorem "Smallnum_1"
   (fun () ->
-    `good_dimindex (:'a) ==> FAPPLY (~(Smallnum i:'a word)) 1`)
+    `good_dimindex (:'a) ==> ~(FAPPLY (Smallnum i:'a word) 1)`)
   CHEAT_TAC;;
 
 let do_eq_list_F_IMP_MEM = cake_theorem "do_eq_list_F_IMP_MEM[local]"
@@ -5401,12 +5389,11 @@ let memory_rel_rotate3 = cake_theorem "memory_rel_rotate3[local]"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:13328-13410: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression:
+   memory_rel_pointer_eq *)
 
-let v1_size_map = cake_theorem "v1_size_map"
-  (fun () ->
-    `!ls. v1_size ls = SUM (MAP dataSem_v_size ls) + LENGTH ls`)
-  CHEAT_TAC;;
+(* HOL4 data_to_word_memoryProofScript.sml:13412-13416: a theorem
+   whose statement the port cannot state yet: v1_size_map *)
 
 let _ = size_thms "dataSem_v";;
 (* HOL4 data_to_word_memoryProofScript.sml:13421-13425: the tactic
@@ -5457,7 +5444,7 @@ let memory_rel_depth_limit = cake_theorem "memory_rel_depth_limit"
 let not_all_distinct_map_snd =
   cake_theorem "not_all_distinct_map_snd[local]"
   (fun () ->
-    `~ALL_DISTINCT (MAP SND xs) ==>
+    `~(ALL_DISTINCT (MAP SND xs)) ==>
      (?xs1 xs2 xs3 x y1 y2. xs = xs1 ++ [(y1,x)] ++ xs2 ++
        [(y2,x)] ++ xs3)`)
   CHEAT_TAC;;
@@ -5489,9 +5476,8 @@ let shift_shift = cake_theorem "shift_shift[local]"
 let word_addr_Data_NE_get_addr =
   cake_theorem "word_addr_Data_NE_get_addr[local]"
   (fun () ->
-    `good_dimindex (:'a) ==> ~(
-       word_addr c (gc_shared_Data a1) = wordLang_Word (get_addr
-         c n a2:'a word))`)
+    `good_dimindex (:'a) ==> ~(word_addr c (gc_shared_Data a1) =
+  wordLang_Word (get_addr c n a2:'a word))`)
   CHEAT_TAC;;
 
 let memory_rel_Block_ptr_eq = cake_theorem "memory_rel_Block_ptr_eq"
@@ -5515,8 +5501,7 @@ let memory_rel_elements_list_distinct_lemma =
     `!vs vars' tag a b.
        memory_rel c be ts refs sp st m (dm:'a word->bool) vars' /\
        elements_list vs /\ vs = MAP FST vars' /\
-       good_dimindex (:'a) /\ ~(
-       vs = []) /\
+       good_dimindex (:'a) /\ ~(vs = []) /\
        HD vs = Block tag a b ==>
        ALL_DISTINCT (MAP SND vars')`)
   CHEAT_TAC;;
@@ -5616,8 +5601,8 @@ let memory_rel_Block_Block_small_eq =
     `memory_rel c be ts refs sp st m dm
        ((Block ts1 t1 v1,wordLang_Word (w1:'a word)) :: (Block ts2
          t2 v2,wordLang_Word w2) :: vars) /\
-     good_dimindex (:'a) /\ ~(w1 = w2) /\ ~word_bit 0 w1 ==> ~(
-     LENGTH v1 = LENGTH v2) \/ ~(t1 = t2)`)
+     good_dimindex (:'a) /\ ~(w1 = w2) /\ ~(word_bit 0 w1) ==>
+       ~(LENGTH v1 = LENGTH v2) \/ ~(t1 = t2)`)
   CHEAT_TAC;;
 
 let memory_rel_simple_eq = cake_theorem "memory_rel_simple_eq"
@@ -5627,7 +5612,7 @@ let memory_rel_simple_eq = cake_theorem "memory_rel_simple_eq"
      good_dimindex (:'a) ==>
      (?w1 (w2:'a word).
        x1 = wordLang_Word w1 /\ x2 = wordLang_Word w2 /\
-       (~word_bit 0 w1 \/ ~word_bit 0 w2 ==>
+       (~(word_bit 0 w1) \/ ~(word_bit 0 w2) ==>
        (w1 = w2) = b))`)
   CHEAT_TAC;;
 
@@ -5730,16 +5715,16 @@ let fix_clock_word_eq = cake_theorem "fix_clock_word_eq[local]"
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:14055-14056: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: word_eq_def *)
 
 (* HOL4 data_to_word_memoryProofScript.sml:14058-14059: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression: word_eq_ind *)
 
 let bit_pattern_1100 = cake_theorem "bit_pattern_1100[simp]"
   (fun () ->
     `good_dimindex (:'a) ==>
-      (((n2w 0b1100) && x1) = (n2w 0) <=> ~word_bit 2 x1 /\
-        ~word_bit 3 (x1:'a word))`)
+      (((n2w 0b1100) && x1) = (n2w 0) <=> ~(word_bit 2 x1) /\
+        ~(word_bit 3 (x1:'a word)))`)
   CHEAT_TAC;;
 
 let word_eq_add_clock = cake_theorem "word_eq_add_clock"
@@ -5986,7 +5971,7 @@ let word_mem_eq_def = cake_define_list
   [`word_mem_eq a [] dm m = SOME T`;
    `word_mem_eq a (x :: xs) dm m =
          (if ~(a IN dm) then NONE else
-         if ~isWord (m a) then NONE else
+         if ~(isWord (m a)) then NONE else
          if ~(m a = wordLang_Word x) then SOME F else
            word_mem_eq (a + bytes_in_word) xs dm m)`];;
 
@@ -6037,9 +6022,8 @@ let memory_rel_Word64_const_test =
 
 let or_seven_eq = cake_theorem "or_seven_eq[local]"
   (fun () ->
-    `~(
-       (w << k) = (v << k)) /\ 2 < k ==> ~(
-       ((w << k) || (n2w 7)) = ((v << k) || (n2w 7)))`)
+    `~((w << k) = (v << k)) /\ 2 < k ==> ~(((w << k) || (n2w 7)) = ((v
+  << k) || (n2w 7)))`)
   CHEAT_TAC;;
 
 let make_byte_header_eq = cake_theorem "make_byte_header_eq"
@@ -6458,8 +6442,26 @@ let copy_array_NONE_IMP = cake_theorem "copy_array_NONE_IMP"
         list_copy_fwd n xp xs 0 (REPLICATE n (n2w 0)) = SOME ys`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:16024-16043: code that the
-   source has in a comment *)
+(*
+
+val xs = EVAL ``GENLIST I 20`` |> concl |> rand
+
+fun cross [] xs = []
+  | cross (y::ys) xs = map (fn x => (y,x)) xs @ cross ys xs
+
+val nums = xs |> listSyntax.dest_list |> fst
+
+val inputs = cross nums (cross nums nums)
+
+fun test (n1,(n2,n3)) =
+  (ISPEC xs list_copy_alias_thm
+   |> Q.SPECL [`1`,`4`,`18`] |> SPEC_ALL
+   |> CONV_RULE (RATOR_CONV EVAL THENC RAND_CONV EVAL)
+   |> GEN_ALL |> SIMP_RULE std_ss [] |> concl) = T
+
+val (n1,(n2,n3)) = first (not o test) inputs
+
+*)
 
 let word_copy_array_def = cake_define
   `word_copy_array be' n a a1 b b1 (m:'a word->'a word_loc) dm =
@@ -6518,7 +6520,7 @@ let word_of_byte_0 = cake_theorem "word_of_byte_0"
 
 let last_bytes_0 = cake_theorem "last_bytes_0"
   (fun () ->
-    `!nb a. last_bytes nb (n2w 0) a (n2w 0) be' = (n2w 0)`)
+    `!nb a. last_bytes nb (n2w 0) a (n2w 0) be = (n2w 0)`)
   CHEAT_TAC;;
 
 let LUPDATE_REPLICATE = cake_theorem "LUPDATE_REPLICATE[simp]"
@@ -6533,8 +6535,7 @@ let memory_rel_copy_array_NONE =
   cake_theorem "memory_rel_copy_array_NONE"
   (fun () ->
     `memory_rel c be ts refs sp st m dm ((RefPtr bl p1,(v1:'a word_loc))
-  :: vars) /\ ~(
-      new IN (domain refs)) /\
+  :: vars) /\ ~(new IN (domain refs)) /\
       lookup p1 refs = SOME (ByteArray fl_xs xs) /\
       copy_array (xs,&xp) (&n) NONE = SOME ys /\
       byte_len (:'a) n < sp /\ byte_len (:'a) n < 2 EXP (dimindex
@@ -6598,7 +6599,8 @@ let memory_rel_write_bytearray_lemma =
   CHEAT_TAC;;
 
 (* HOL4 data_to_word_memoryProofScript.sml:16298-16299: a theorem
-   that HOL4 states as the value of an ML expression *)
+   that HOL4 states as the value of an ML expression:
+   memory_rel_write_bytearray *)
 
 let memory_rel_space_max = cake_theorem "memory_rel_space_max"
   (fun () ->
@@ -6630,9 +6632,8 @@ let append_writes_def = cake_define_list
 
 let append_writes_LENGTH = cake_theorem "append_writes_LENGTH"
   (fun () ->
-    `!xs ptr. ~(
-     xs = []) ==> LENGTH (append_writes c ptr hdr xs l) = 3 *
-       LENGTH xs`)
+    `!xs ptr. ~(xs = []) ==> LENGTH (append_writes c ptr hdr xs l) = 3
+  * LENGTH xs`)
   CHEAT_TAC;;
 
 let ptr_bits_or_1_add_1 = cake_theorem "ptr_bits_or_1_add_1"
@@ -6788,8 +6789,7 @@ let bind_each_isSomeDataElement =
   cake_theorem "bind_each_isSomeDataElement"
   (fun () ->
     `!l tf ts x p k conf.
-      ~(
-      l = []) /\
+      ~(l = []) /\
       x IN {x | ts <= x /\ x < ts + (LENGTH l)} /\ (!t. t IN FDOM
         tf ==> t < ts) ==> isSomeDataElement (heap_lookup ((FAPPLY
         (bind_each tf ts 0 3 (LENGTH l)) x))
@@ -6848,30 +6848,27 @@ let v_all_vs_list_to_v1 = cake_theorem "v_all_vs_list_to_v1"
 let blocks_unique_GT_ts = cake_theorem "blocks_unique_GT_ts"
   (fun () ->
     `blocks_unique ts (all_vs refs (t :: (xs ++ stack))) /\
-     t' >= ts /\ ~(
-     xs1 = []) ==> ~(
-       Block t' a1 xs1 IN all_vs refs (t :: (xs ++ stack)))`)
+     t' >= ts /\ ~(xs1 = []) ==> ~(Block t' a1 xs1 IN all_vs refs
+       (t :: (xs ++ stack)))`)
   CHEAT_TAC;;
 
 let Block_NOT_IN_all_vs = cake_theorem "Block_NOT_IN_all_vs"
   (fun () ->
-    `!xs t t' a2 xs2 h stack' refs. ~(
-     Block t' a2 xs2 IN all_vs refs (t :: h :: (xs ++ stack'))) ==>
-       (!m. m > 0 ==> ~MEM (Block t' a2 xs2) (v_all_vs [list_to_v
-         (t' + m) t xs]))`)
+    `!xs t t' a2 xs2 h stack' refs. ~(Block t' a2 xs2 IN all_vs refs (t
+  :: h :: (xs ++ stack'))) ==>
+       (!m. m > 0 ==> ~(MEM (Block t' a2 xs2) (v_all_vs
+         [list_to_v (t' + m) t xs])))`)
   CHEAT_TAC;;
 
 let v_all_vs_list_to_v2 = cake_theorem "v_all_vs_list_to_v2"
   (fun () ->
     `!xs t' a1 a2 xs1 xs2 ts t stack' refs.
      MEM (Block t' a1 xs1) (v_all_vs (list_to_v ts t xs :: stack'))
-       /\ ~(
-     xs1 = []) /\
+       /\ ~(xs1 = []) /\
      MEM (Block t' a2 xs2) (v_all_vs (list_to_v ts t xs :: stack'))
-       /\ ~(
-     xs2 = []) /\ ~(
-     Block t' a1 xs1 IN all_vs refs (t :: (xs ++ stack'))) /\ ~(
-     Block t' a2 xs2 IN all_vs refs (t :: (xs ++ stack'))) ==>
+       /\ ~(xs2 = []) /\ ~(Block t' a1 xs1 IN all_vs refs (t :: (xs ++
+       stack'))) /\ ~(Block t' a2 xs2 IN all_vs refs (t :: (xs ++
+       stack'))) ==>
        a1 = a2 /\ xs1 = xs2 /\ t' < ts + LENGTH xs`)
   CHEAT_TAC;;
 
@@ -6944,8 +6941,7 @@ hol4_overload "walk" "data_to_word_memoryProof_walk";;
 let v_inv_v_to_list_lemma = cake_theorem "v_inv_v_to_list_lemma"
   (fun () ->
     `v_inv c v refs (y,f,tf,heap) /\
-     v_to_list v = SOME vs /\ ~(
-     vs = []) ==>
+     v_to_list v = SOME vs /\ ~(vs = []) ==>
       (?p ys. y = gc_shared_Pointer p (wordLang_Word (ptr_bits c
         cons_tag 2)) /\
                  heap_lookup p heap = SOME (BlockRep cons_tag
@@ -6957,8 +6953,7 @@ let walk_LENGTH = cake_theorem "walk_LENGTH"
     `!vs ptr ps v ts.
        v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word
          (ptr_bits c cons_tag 2)),f,tf,heap) /\
-       v_to_list v = SOME vs /\ ~(
-       vs = []) /\
+       v_to_list v = SOME vs /\ ~(vs = []) /\
        data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps
          ==>
        LENGTH ps = LENGTH vs`)
@@ -6993,8 +6988,7 @@ let walk_heap_lookup = cake_theorem "walk_heap_lookup"
        v_inv c v refs
          (gc_shared_Pointer p (wordLang_Word (ptr_bits c cons_tag
            2)),f,tf,heap) /\
-       v_to_list v = SOME vs /\ ~(
-       vs = []) /\
+       v_to_list v = SOME vs /\ ~(vs = []) /\
        data_to_word_memoryProof_walk c heap p (LENGTH vs) = ps ==>
        EVERY (\p. ?x y. heap_lookup p heap = SOME (BlockRep
          cons_tag [x; y])) ps`)
@@ -7004,8 +6998,7 @@ let walk_MEM = cake_theorem "walk_MEM"
   (fun () ->
     `v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits c
   cons_tag 2)),f,tf,heap) /\
-     v_to_list v = SOME vs /\ ~(
-     vs = []) ==>
+     v_to_list v = SOME vs /\ ~(vs = []) ==>
      MEM ptr (data_to_word_memoryProof_walk c heap ptr (LENGTH
        vs))`)
   CHEAT_TAC;;
@@ -7015,8 +7008,7 @@ let walk_EL = cake_theorem "walk_EL"
     `!vs ptr ps v ts.
        v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word
          (ptr_bits c cons_tag 2)),f,tf,heap) /\
-       v_to_list v = SOME vs /\ ~(
-       vs = []) /\
+       v_to_list v = SOME vs /\ ~(vs = []) /\
        data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps
          ==>
        (!n. SUC n < LENGTH vs ==>
@@ -7049,8 +7041,7 @@ let v_to_list_DROP = cake_theorem "v_to_list_DROP"
     `!vs ptr ps k v ts.
      v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word (ptr_bits
        c cons_tag 2)),f,tf,heap) /\
-     v_to_list v = SOME vs /\ ~(
-     vs = []) /\
+     v_to_list v = SOME vs /\ ~(vs = []) /\
      data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps /\
      ALL_DISTINCT ps /\
      k < LENGTH vs ==>
@@ -7071,8 +7062,7 @@ let walk_ALL_DISTINCT = cake_theorem "walk_ALL_DISTINCT"
     `!vs ptr ps v ts.
        v_inv c v refs (gc_shared_Pointer ptr (wordLang_Word
          (ptr_bits c cons_tag 2)),f,tf,heap) /\
-       v_to_list v = SOME vs /\ ~(
-       vs = []) /\
+       v_to_list v = SOME vs /\ ~(vs = []) /\
        data_to_word_memoryProof_walk c heap ptr (LENGTH vs) = ps
          ==>
        ALL_DISTINCT ps`)
@@ -7081,8 +7071,7 @@ let walk_ALL_DISTINCT = cake_theorem "walk_ALL_DISTINCT"
 let v_to_list_heap_length = cake_theorem "v_to_list_heap_length"
   (fun () ->
     `v_inv c v refs (x,f,tf,heap) /\
-     v_to_list v = SOME vs /\ ~(
-     vs = []) ==>
+     v_to_list v = SOME vs /\ ~(vs = []) ==>
      3 * LENGTH vs <= heap_length heap`)
   CHEAT_TAC;;
 
@@ -7146,8 +7135,14 @@ let do_part_SOME_IMP_SOME = cake_theorem "do_part_SOME_IMP_SOME"
   ts')`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:17787-17795: a theorem
-   whose statement the port cannot state yet *)
+let memory_rel_IMP_MAP_UPDATE = cake_theorem "memory_rel_IMP_MAP_UPDATE"
+  (fun () ->
+    `memory_rel c be ts refs sp st m dm
+             (((b,w) :: MAP (\k. (map0 k,map0' k)) ks) ++ vars) ==>
+     memory_rel c be ts refs sp st m dm
+             (MAP (\k. ((i =+ b) map0 k,((i =+ w) map0' k))) ks
+               ++ vars)`)
+  CHEAT_TAC;;
 
 let data_to_word_memoryProof_ZIP_MAP_MAP =
   cake_theorem "ZIP_MAP_MAP[local]"
@@ -7164,9 +7159,7 @@ let LENGTH_n2mw_LE_num_size =
 
 let least_notin_domain = cake_theorem "least_notin_domain"
   (fun () ->
-    `~(
-       (LEAST (\ptr. ~(ptr IN domain refs))) IN domain (refs:'a
-         spt))`)
+    `~((LEAST (\ptr. ~(ptr IN domain refs))) IN domain (refs:'a spt))`)
   CHEAT_TAC;;
 
 let memory_rel_do_build = cake_theorem "memory_rel_do_build"
@@ -7193,7 +7186,7 @@ let memory_rel_do_build = cake_theorem "memory_rel_do_build"
 
 let word_and_lsr_0 = cake_theorem "word_and_lsr_0"
   (fun () ->
-    `(!i. k <= i /\ i < dimindex (:'a) ==> FAPPLY (~w) i) ==> w && n
+    `(!i. k <= i /\ i < dimindex (:'a) ==> ~(FAPPLY w i)) ==> w && n
   << k = ((n2w 0):'a word)`)
   CHEAT_TAC;;
 
@@ -7324,7 +7317,7 @@ let const_parts_to_words_LENGTH =
 let good_loc_def = cake_define
   `good_loc code x2 =
       match x2 with
-        (Loc n m:semanticPrimitives_v) -> (m = 0 /\ n IN code)
+        wordLang_Loc n m -> (m = 0 /\ n IN code)
       | _104 -> T`;;
 
 let const_parts_to_words_good_loc =
@@ -7364,7 +7357,7 @@ let word_xor_bytes_def = cake_define_try_tac (fun () ->
   `MEASURE (\(a1,a2,len,dm,m). w2n len)`)
   CHEAT_TAC
   `word_xor_bytes (a1:'a word) (a2:'a word) (len:'a word) dm m =
-     (if len <+ (n2w 2) \/ ~good_dimindex (:'a) then
+     (if len <+ (n2w 2) \/ ~(good_dimindex (:'a)) then
        if len = (n2w 0) then SOME m else
          let (w1a,c1) = read_word dm m a1 in
          let (w2a,c2) = read_word dm m a2 in
@@ -7400,12 +7393,19 @@ let xor_words_def = cake_define
 
 let word_xor_set_byte = cake_theorem "word_xor_set_byte"
   (fun () ->
-    `word_xor (set_byte a h1 w1 be') (set_byte a h2 w2 be') =
-     set_byte a (word_xor h1 h2) (word_xor w1 w2) be'`)
+    `word_xor (set_byte a h1 w1 be) (set_byte a h2 w2 be) =
+     set_byte a (word_xor h1 h2) (word_xor w1 w2) be`)
   CHEAT_TAC;;
 
-(* HOL4 data_to_word_memoryProofScript.sml:18414-18429: a theorem
-   whose statement the port cannot state yet *)
+let xor_bytes_bytes_to_word =
+  cake_theorem "xor_bytes_bytes_to_word[local]"
+  (fun () ->
+    `!k vals1 vals2 res_vals a.
+       xor_bytes vals1 vals2 = SOME res_vals ==>
+       bytes_to_word k a vals1 (n2w 0) be ??
+       bytes_to_word k a vals2 (n2w 0) be =
+       bytes_to_word k a res_vals (n2w 0) be`)
+  CHEAT_TAC;;
 
 let xor_bytes_length = cake_theorem "xor_bytes_length"
   (fun () ->
@@ -7518,7 +7518,7 @@ let xor_bytes_word_list_alias = cake_theorem "xor_bytes_word_list_alias"
 
 let el_length_Bytes = cake_theorem "el_length_Bytes"
   (fun () ->
-    `el_length (Bytes be' fl vals zeros) = LENGTH zeros + 1`)
+    `el_length (Bytes be fl vals zeros) = LENGTH zeros + 1`)
   CHEAT_TAC;;
 
 let blocks_unique_insert_ByteArray2 =
@@ -7699,3 +7699,5 @@ let memory_rel_str_cmp = cake_theorem "memory_rel_str_cmp"
                      (implode (MAP (CHR o w2n) vals2)) =
        semanticPrimitives_num_cmp cmp (w2n r1) (w2n r2))`)
   CHEAT_TAC;;
+
+cake_hide [];;

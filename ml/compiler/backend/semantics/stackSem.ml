@@ -764,7 +764,8 @@ hol4_overload "unset_var" "stackSem_unset_var";;
 
 let store_const_sem_def = cake_define
   `store_const_sem t1 t2 (s:('a,'c,'ffi)stackSem_state) =
-     (if ~ALL_DISTINCT [0; 1; 2; 3; t1; t2] then (SOME Error,s) else
+     (if ~(ALL_DISTINCT [0; 1; 2; 3; t1; t2]) then (SOME Error,s)
+       else
        match (get_var 1 s,get_var 2 s,get_var 3 s) with (SOME
          (wordLang_Word i),SOME (wordLang_Word a),SOME (wordLang_Word
          off)) ->
@@ -853,29 +854,29 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
          (match get_var v s with SOME w -> (SOME (Halt
            w),stackSem_empty_env s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Alloc n,s) =
-         (if ~stackSem_state_use_alloc s then (SOME Error,s) else
+         (if ~(stackSem_state_use_alloc s) then (SOME Error,s) else
          match get_var n s with SOME (wordLang_Word w) -> alloc w
            s | _79 -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_StoreConsts t1 t2 stub_opt,s) =
-         (if ~stackSem_state_use_store s then (SOME Error,s) else
-         if ~stackSem_state_use_alloc s /\ IS_SOME stub_opt then
+         (if ~(stackSem_state_use_store s) then (SOME Error,s) else
+         if ~(stackSem_state_use_alloc s) /\ IS_SOME stub_opt then
            (SOME Error,s) else
-         if ~check_store_consts_opt t1 t2 stub_opt (state_code s)
+         if ~(check_store_consts_opt t1 t2 stub_opt (state_code s))
            then (SOME Error,s) else
            store_const_sem t1 t2 s)`;
    `stackSem_evaluate (stackLang_Inst i,s) =
          (match inst i s with SOME s1 -> (NONE,s1) | NONE ->
            (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Get v name,s) =
-         (if ~stackSem_state_use_store s then (SOME Error,s) else
+         (if ~(stackSem_state_use_store s) then (SOME Error,s) else
          match FLOOKUP (state_store s) name with SOME x ->
            (NONE,set_var v x s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_Set name v,s) =
-         (if ~stackSem_state_use_store s then (SOME Error,s) else
+         (if ~(stackSem_state_use_store s) then (SOME Error,s) else
          match get_var v s with SOME w -> (NONE,set_store name w
            s) | NONE -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_OpCurrHeap binop v src,s) =
-         (if ~stackSem_state_use_store s then (SOME Error,s) else
+         (if ~(stackSem_state_use_store s) then (SOME Error,s) else
          match word_exp s (wordLang_Op binop [wordLang_Var src;
            wordLang_Lookup CurrHeap]) with SOME w -> (NONE,set_var v
            (wordLang_Word w) s) | _82 -> (SOME Error,s))`;
@@ -1008,7 +1009,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                 (NONE,state_code_buffer_fupd (K new_cb) s) | _125
                   -> (SOME Error,s)) | _126 -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_DataBufferWrite r1 r2,s) =
-        (if ~stackSem_state_use_stack s then (SOME Error,s) else
+        (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
         (match (get_var r1 s,get_var r2 s) with (SOME (wordLang_Word
           w1),SOME (wordLang_Word w2)) ->
               (match buffer_write (state_data_buffer s) w1 w2 with
@@ -1042,24 +1043,24 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
          (if loc_check (state_code s) (l1,l2) then
            (NONE,set_var r (Loc l1 l2) s) else (SOME Error,s))`;
    `stackSem_evaluate (stackLang_StackAlloc n,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          if stackSem_state_stack_space s < n then (SOME (Halt
            (wordLang_Word (n2w 2))),stackSem_empty_env s) else
            (NONE,stackSem_state_stack_space_fupd (K
              (stackSem_state_stack_space s - n)) s))`;
    `stackSem_evaluate (stackLang_StackFree n,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          if LENGTH (stack s) < stackSem_state_stack_space s + n then
            (SOME Error,stackSem_empty_env s) else
            (NONE,stackSem_state_stack_space_fupd (K
              (stackSem_state_stack_space s + n)) s))`;
    `stackSem_evaluate (stackLang_StackLoad r n,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          if stackSem_state_stack_space s + n < LENGTH (stack s)
            then (NONE,set_var r (EL (stackSem_state_stack_space s +
            n) (stack s)) s) else (SOME Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackLoadAny r rn,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
            match get_var rn s with SOME (wordLang_Word (w:'a word))
              ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
@@ -1071,7 +1072,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                     Error,stackSem_empty_env s)) | _136 -> (SOME
                     Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackStore r n,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          if LENGTH (stack s) <= stackSem_state_stack_space s + n
            then (SOME Error,stackSem_empty_env s) else
            match get_var r s with NONE -> (SOME
@@ -1079,7 +1080,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
              (K (LUPDATE v (stackSem_state_stack_space s + n) (stack
              s))) s))`;
    `stackSem_evaluate (stackLang_StackStoreAny r rn,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
            match (get_var r s,get_var rn s) with (SOME v,SOME
              (wordLang_Word (w:'a word))) ->
              (let i = stackSem_state_stack_space s + w2n (w >>>
@@ -1091,11 +1092,11 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                     else (SOME Error,stackSem_empty_env s)) | _137 ->
                     (SOME Error,stackSem_empty_env s))`;
    `stackSem_evaluate (stackLang_StackGetSize r,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          (NONE,set_var r (wordLang_Word (n2w
            (stackSem_state_stack_space s))) s))`;
    `stackSem_evaluate (stackLang_StackSetSize r,s) =
-         (if ~stackSem_state_use_stack s then (SOME Error,s) else
+         (if ~(stackSem_state_use_stack s) then (SOME Error,s) else
          match get_var r s with SOME (wordLang_Word (w:'a word)) ->
              (if LENGTH (stack s) <= w2n w then (SOME
                Error,stackSem_empty_env s) else (NONE,set_var r
@@ -1103,7 +1104,7 @@ let evaluate_def = cake_define_list_try_tac (fun () ->
                            (stackSem_state_stack_space_fupd (K
                              (w2n w)) s))) | _138 -> (SOME Error,s))`;
    `stackSem_evaluate (stackLang_BitmapLoad r v,s) =
-         (if ~stackSem_state_use_stack s \/ r = v then (SOME
+         (if ~(stackSem_state_use_stack s) \/ r = v then (SOME
            Error,s) else
          match get_var v s with SOME (wordLang_Word w) ->
              (if LENGTH (stackSem_state_bitmaps s) <= w2n w
@@ -1153,10 +1154,10 @@ let stackSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
   CHEAT_TAC;;
 
 (* HOL4 stackSemScript.sml:1108-1109: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_def *)
 
 (* HOL4 stackSemScript.sml:1111-1112: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: evaluate_ind *)
 
 (* observational semantics *)
 
@@ -1164,9 +1165,8 @@ let semantics_def = cake_define
   `stackSem_semantics start' s =
    (let prog = Call NONE (INL start') NONE in
    if ?k. let res = FST (evaluate (prog,state_clock_fupd (K k) s)) in
-     ~(
-            res = SOME TimeOut) /\ ~(res = SOME (Result (wordLang_Loc
-              1 0))) /\
+     ~(res = SOME TimeOut) /\ ~(res = SOME (Result (wordLang_Loc 1 0)))
+     /\
             (!w. ~(res = SOME (Halt (wordLang_Word w)))) /\ (!f.
               ~(res = SOME (FinalFFI f))) then ffi_Fail else
      match some (\res.

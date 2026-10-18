@@ -71,11 +71,8 @@ let compile_var_def = cake_define_list
    `compile_var t (source_to_flat_Local _3 s:var_name) =
   flatLang_Var_local t s`];;
 
-let ast_pat1_size = cake_theorem "ast_pat1_size"
-  (fun () ->
-    `pat1_size xs = LENGTH xs + SUM (MAP pattern_semantics_pat_size
-  xs)`)
-  CHEAT_TAC;;
+(* HOL4 source_to_flatScript.sml:51-55: a theorem whose statement the
+   port cannot state yet: ast_pat1_size *)
 
 let _ = size_thms "pattern_semantics_pat";;
 (* HOL4 source_to_flatScript.sml:68-72: the tactic that proves the
@@ -333,7 +330,7 @@ let alloc_defs_def = cake_define_list
 
 let fst_alloc_defs = cake_theorem "fst_alloc_defs"
   (fun () ->
-    `!n next' l. MAP FST' (alloc_defs n next' l) = l`)
+    `!n next' l. MAP FST (alloc_defs n next' l) = l`)
   CHEAT_TAC;;
 
 let alloc_defs_append = cake_theorem "alloc_defs_append"

@@ -541,8 +541,7 @@ let LENGTH_compile = cake_theorem "LENGTH_compile"
 
 let compile_NOT_NIL = cake_theorem "compile_NOT_NIL[simp]"
   (fun () ->
-    `~(
-       flat_to_clos_compile m (x :: xs) = [])`)
+    `~(flat_to_clos_compile m (x :: xs) = [])`)
   CHEAT_TAC;;
 
 let HD_compile = cake_theorem "HD_compile[simp]"

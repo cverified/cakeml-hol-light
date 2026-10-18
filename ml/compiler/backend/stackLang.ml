@@ -131,6 +131,6 @@ let store_consts_stub_location_def = cake_define
 hol4_overload "store_consts_stub_location"
   "stackLang_store_consts_stub_location";;
 (* HOL4 stackLangScript.sml:98-99: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: gc_stub_location_eq *)
 (* HOL4 stackLangScript.sml:100-101: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: store_consts_stub_location_eq *)

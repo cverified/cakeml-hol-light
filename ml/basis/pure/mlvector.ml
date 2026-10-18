@@ -17,16 +17,16 @@ needs "lib/ternaryComparisons.ml";;
 needs "misc/misc.ml";;
 
 (* HOL4 mlvectorScript.sml:10-11: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: vector_nchotomy *)
 
 (* HOL4 mlvectorScript.sml:13-14: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: sub_def *)
 
 let sub_unsafe_def = cake_define
   `sub_unsafe (Vector l) n = EL n l`;;
 
 (* HOL4 mlvectorScript.sml:20-21: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: length_def *)
 
 let tabulate_def = cake_define
   `mlvector_tabulate n f = Vector (GENLIST f n)`;;

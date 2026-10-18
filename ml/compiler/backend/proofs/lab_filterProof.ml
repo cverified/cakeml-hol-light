@@ -89,10 +89,10 @@ let asm_fetch_not_skip_adjust_pc =
 
 let state_rw = cake_theorem "state_rw[local]"
   (fun () ->
-    `state_clock_fupd (K (state_clock s = s))
-       s /\ pc_fupd (K (pc s = s))
-       s /\ state_clock_fupd (K (state_clock s + k')) (pc_fupd (K
-         (pc s))
+    `state_clock_fupd (K (state_clock s))
+       s = s /\ pc_fupd (K (pc s))
+       s = s /\ state_clock_fupd (K (state_clock s + k')) (pc_fupd
+         (K (pc s))
        s) = state_clock_fupd (K (state_clock s + k')) s`)
   CHEAT_TAC;;
 
@@ -101,7 +101,7 @@ let all_skips_evaluate = cake_theorem "all_skips_evaluate[local]"
   (fun () ->
     `!k s.
      all_skips (pc s) (state_code s) k /\
-     ~failed s ==>
+     ~(failed s) ==>
      (!k'.
      evaluate (state_clock_fupd (K (state_clock s + k' + k)) s) =
      evaluate (state_clock_fupd (K (state_clock s + k')) (pc_fupd
@@ -116,7 +116,7 @@ let state_rel_def = cake_define
         (adjust_pc (pc t1) (state_code t1))) (state_code_fupd (K
         (filter_skip (state_code t1))) t1))) /\ compile
      t1 = (\c p. s1compile c (filter_skip p))) /\
-     ~failed t1`;;
+     ~(failed t1)`;;
 hol4_overload "state_rel" "lab_filterProof_state_rel";;
 
 let adjust_pc_all_skips = cake_theorem "adjust_pc_all_skips[local]"
@@ -138,7 +138,7 @@ let asm_fetch_aux_eq2 = cake_theorem "asm_fetch_aux_eq2[local]"
 
 let all_skips_evaluate_rw = cake_theorem "all_skips_evaluate_rw[local]"
   (fun () ->
-    `all_skips (pc s) (state_code s) k /\ ~failed s /\ state_clock
+    `all_skips (pc s) (state_code s) k /\ ~(failed s) /\ state_clock
      s = clk + k /\
      t = state_clock_fupd (K clk) (pc_fupd (K (pc s + k)) s) ==>
      evaluate s = evaluate t`)
@@ -226,7 +226,7 @@ let share_mem_op_FFI_return_filter_correct =
   (fun () ->
     `(all_skips (pc t1) (state_code t1) k /\ ~(state_clock t1 = 0) /\
   compile
-     t1 = (\c p. s1compile c (filter_skip p)) /\ ~failed t1 /\
+     t1 = (\c p. s1compile c (filter_skip p)) /\ ~(failed t1) /\
      share_mem_op m r a
        (compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
          (compile_oracle t1 n))) (compile_fupd (K s1compile)
@@ -235,7 +235,8 @@ let share_mem_op_FFI_return_filter_correct =
          f l,s)) ==>
      (?s2. !k'. share_mem_op m r a (pc_fupd (K (k + pc t1)) t1) =
        SOME (FFI_return f l,s2) /\
-     lab_filterProof_state_rel s s2 /\ ~failed s /\ ~failed s2 /\
+     lab_filterProof_state_rel s s2 /\ ~(failed s) /\ ~(failed s2)
+       /\
      share_mem_op m r a (state_clock_fupd (K (k' + state_clock t1))
        (pc_fupd (K (k + pc t1)) t1)) =
        SOME (FFI_return f l,state_clock_fupd (K (k' + state_clock
@@ -247,7 +248,7 @@ let share_mem_op_FFI_final_filter_correct =
   (fun () ->
     `(all_skips (pc t1) (state_code t1) k /\ ~(state_clock t1 = 0) /\
   compile
-     t1 = (\c p. s1compile c (filter_skip p)) /\ ~failed t1 /\
+     t1 = (\c p. s1compile c (filter_skip p)) /\ ~(failed t1) /\
      share_mem_op m r a
        (compile_oracle_fupd (K (\n. (\(a,b). (a,filter_skip b))
          (compile_oracle t1 n))) (compile_fupd (K s1compile)
@@ -263,7 +264,7 @@ let filter_correct = cake_theorem "filter_correct"
   (fun () ->
     `!(s1:('a,'c,'ffi)labSem_state) t1 res s2.
         (evaluate s1 = (res,s2)) /\ lab_filterProof_state_rel s1 t1
-          /\ ~failed t1 ==>
+          /\ ~(failed t1) ==>
         (?k t2.
           (evaluate (state_clock_fupd (K (state_clock s1 + k)) t1)
             = (res,t2)) /\
@@ -278,14 +279,14 @@ let state_rel_IMP_sem_EQ_sem =
 
 let filter_skip_semantics = cake_theorem "filter_skip_semantics"
   (fun () ->
-    `!s t. (pc t = 0) /\ ~failed t /\
+    `!s t. (pc t = 0) /\ ~(failed t) /\
      (?scompile.
        s = compile_fupd (K scompile) (compile_oracle_fupd (K
          ((\(a,b). (a,filter_skip b)) o compile_oracle t))
          (state_code_fupd (K (filter_skip (state_code t))) t)) /\
          compile
       t = (\c p. scompile c (filter_skip p))) /\
-      ~failed t ==>
+      ~(failed t) ==>
      semantics s = semantics t`)
   CHEAT_TAC;;
 

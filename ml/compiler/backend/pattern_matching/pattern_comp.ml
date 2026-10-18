@@ -54,7 +54,7 @@ let move_const_up_def = cake_define
        if 5 <= LENGTH new_rows \/ EXISTS is_Or_row new_rows then
          new_rows else
          FILTER is_const_row new_rows ++
-         FILTER (\x. ~is_const_row x) new_rows)`;;
+         FILTER (\x. ~(is_const_row x)) new_rows)`;;
 
 let is_Any_pmatch = cake_theorem "is_Any_pmatch"
   (fun () ->
@@ -63,8 +63,7 @@ let is_Any_pmatch = cake_theorem "is_Any_pmatch"
 
 let match_take_until_Any = cake_theorem "match_take_until_Any"
   (fun () ->
-    `!rows. ~(
-       pattern_semantics_match refs rows v = NONE) ==>
+    `!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
        pattern_semantics_match refs (take_until_Any rows) v =
          pattern_semantics_match refs rows v`)
   CHEAT_TAC;;
@@ -87,38 +86,36 @@ let pmatchResult_case_NONE =
   CHEAT_TAC;;
 
 (* HOL4 pattern_compScript.sml:92: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: pmatchResult_case_NONE *)
 
 let is_const_row_lemma = cake_theorem "is_const_row_lemma"
   (fun () ->
     `(!t. ~(v = pattern_semantics_Term t [])) /\ is_const_row (p_1,p_2)
-  /\ ~(
-     pmatch refs p_1 v = PTypeFailure) ==>
+  /\ ~(pmatch refs p_1 v = PTypeFailure) ==>
      pmatch refs p_1 v = PMatchFailure`)
   CHEAT_TAC;;
 
 let not_is_const_row = cake_theorem "not_is_const_row"
   (fun () ->
-    `~is_const_row (p,x) /\ ~is_Or_row (p,x) /\ ~is_Any p ==> ~(
-     pmatch refs p (pattern_semantics_Term t []) = PMatchSuccess)`)
+    `~(is_const_row (p,x)) /\ ~(is_Or_row (p,x)) /\ ~(is_Any p) ==>
+  ~(pmatch refs p (pattern_semantics_Term t []) = PMatchSuccess)`)
   CHEAT_TAC;;
 
 let EVERY_take_until_Any = cake_theorem "EVERY_take_until_Any"
   (fun () ->
-    `!rows. EVERY (\(x,y). ~is_Any x) (TL (REVERSE (take_until_Any
+    `!rows. EVERY (\(x,y). ~(is_Any x)) (TL (REVERSE (take_until_Any
   (rows:(pattern_semantics_pat#num) list))))`)
   CHEAT_TAC;;
 
 let matdch_FILTER_NOT_NONE = cake_theorem "matdch_FILTER_NOT_NONE"
   (fun () ->
-    `!xs. ~(pattern_semantics_match refs xs v = NONE) ==> ~(
-          pattern_semantics_match refs (FILTER P xs) v = NONE)`)
+    `!xs. ~(pattern_semantics_match refs xs v = NONE) ==>
+  ~(pattern_semantics_match refs (FILTER P xs) v = NONE)`)
   CHEAT_TAC;;
 
 let match_move_const_up = cake_theorem "match_move_const_up"
   (fun () ->
-    `~(
-       pattern_semantics_match refs rows v = NONE) ==>
+    `~(pattern_semantics_match refs rows v = NONE) ==>
        pattern_semantics_match refs (move_const_up rows) v =
          pattern_semantics_match refs rows v`)
   CHEAT_TAC;;
@@ -141,9 +138,8 @@ let insert_Any_def = cake_define
 
 let match_insert_Any = cake_theorem "match_insert_Any"
   (fun () ->
-    `!rows. ~(
-       pattern_semantics_match refs rows v = NONE) ==> ~(
-       pattern_semantics_match refs (insert_Any rows) v = NONE) /\
+    `!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
+  ~(pattern_semantics_match refs (insert_Any rows) v = NONE) /\
        (~(pattern_semantics_match refs rows v = SOME MatchFailure)
          ==>
         pattern_semantics_match refs (insert_Any rows) v =
@@ -264,13 +260,12 @@ let dt_eval_guard_mk_Conj = cake_theorem "dt_eval_guard_mk_Conj[local]"
 let dt_eval_guard_pat_to_guard =
   cake_theorem "dt_eval_guard_pat_to_guard"
   (fun () ->
-    `(!l p x. ~(
-       pmatch refs p x = PTypeFailure) /\
+    `(!l p x. ~(pmatch refs p x = PTypeFailure) /\
        pattern_comp_walk (REVERSE l) v refs = SOME x ==>
        dt_eval_guard refs v (pat_to_guard l p) =
          SOME (pmatch refs p x = PMatchSuccess)) /\
-     (!l k ps xs ys. ~(
-       pmatch_list refs ps xs = PTypeFailure) /\ LENGTH ys = k /\
+     (!l k ps xs ys. ~(pmatch_list refs ps xs = PTypeFailure) /\
+       LENGTH ys = k /\
        walk_list (REVERSE l) v refs = SOME (ys ++ xs) /\ LENGTH xs
          = LENGTH ps ==>
        dt_eval_guard refs v (pats_to_guard l k ps) =
@@ -284,8 +279,7 @@ let mk_If_thm = cake_theorem "mk_If_thm[local]"
 
 let pat_to_code_thm = cake_theorem "pat_to_code_thm"
   (fun () ->
-    `!rows. ~(
-       pattern_semantics_match refs rows v = NONE) ==>
+    `!rows. ~(pattern_semantics_match refs rows v = NONE) ==>
        dt_eval refs v (pats_to_code rows) =
          pattern_semantics_match refs rows v`)
   CHEAT_TAC;;
@@ -303,8 +297,7 @@ hol4_overload "comp" "pattern_comp_comp";;
 
 let comp_thm = cake_theorem "comp_thm"
   (fun () ->
-    `~(
-       pattern_semantics_match refs rows v = NONE) ==>
+    `~(pattern_semantics_match refs rows v = NONE) ==>
        dt_eval refs v (pattern_comp_comp rows) =
          pattern_semantics_match refs rows v`)
   CHEAT_TAC;;

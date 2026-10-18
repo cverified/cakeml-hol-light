@@ -362,7 +362,8 @@ let token_of_sym_EQ_LEMMA = cake_theorem "token_of_sym_EQ_LEMMA[local]"
 let token_of_sym_loc_def = cake_define
   `token_of_sym_loc (t,l) = (token_of_sym t,l)`;;
 
-(* HOL4 lexer_implScript.sml:460-474: a proof *)
+(* HOL4 lexer_implScript.sml:460-474: a theorem that HOL4 states as
+   the value of an ML expression: lex_aux_alt_thm *)
 
 let lex_until_top_semicolon_alt_thm =
   cake_theorem "lex_until_top_semicolon_alt_thm"
@@ -442,7 +443,7 @@ let lex_aux_tokens_thm_1 = cake_theorem "lex_aux_tokens_thm_1[local]"
   CHEAT_TAC;;
 
 (* HOL4 lexer_implScript.sml:578: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: lex_aux_tokens_thm *)
 
 let lex_impl_all_tokens_thm =
   cake_theorem "lex_impl_all_tokens_thm[local]"
@@ -464,7 +465,7 @@ let lexer_impl_lex_aux_tokens_thm_1 =
   CHEAT_TAC;;
 
 (* HOL4 lexer_implScript.sml:614-615: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: lex_aux_tokens_thm *)
 
 let split_top_level_semi_thm =
   cake_theorem "split_top_level_semi_thm[local]"

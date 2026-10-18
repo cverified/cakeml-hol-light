@@ -352,20 +352,18 @@ let sing_renum_NOT_tscheme_inst =
   cake_theorem "sing_renum_NOT_tscheme_inst[local]"
   (fun () ->
     `!t.
-     m IN set_tids t /\ ~(
-     m = n) ==> ~(
-     ts_tid_rename (sing_renum m n) t = t) /\
+     m IN set_tids t /\ ~(m = n) ==> ~(ts_tid_rename (sing_renum m
+       n) t = t) /\
      (!tvs tvs'.
-     ~tscheme_inst (tvs,ts_tid_rename (sing_renum m n) t) (tvs',t)
-       /\
-     ~tscheme_inst (tvs',t) (tvs,ts_tid_rename (sing_renum m n)
-       t))`)
+     ~(tscheme_inst (tvs,ts_tid_rename (sing_renum m n) t)
+       (tvs',t)) /\
+     ~(tscheme_inst (tvs',t) (tvs,ts_tid_rename (sing_renum m n)
+       t)))`)
   CHEAT_TAC;;
 
 let sing_renum_NOTIN_ID = cake_theorem "sing_renum_NOTIN_ID"
   (fun () ->
-    `!t. ~(
-     m IN set_tids t) ==>
+    `!t. ~(m IN set_tids t) ==>
      ts_tid_rename (sing_renum m n) t = t`)
   CHEAT_TAC;;
 
@@ -378,8 +376,7 @@ let sing_renum_IN_NOT_ID = cake_theorem "sing_renum_IN_NOT_ID"
 (* TODO: this is only true up to equivalence on tenvs *)
 let sing_renum_NOTIN_tenv_ID = cake_theorem "sing_renum_NOTIN_tenv_ID"
   (fun () ->
-    `set_tids_tenv tids tenv /\ ~(
-     m IN tids) ==>
+    `set_tids_tenv tids tenv /\ ~(m IN tids) ==>
      tenv_equiv (remap_tenv (sing_renum m n) tenv) (tenv)`)
   CHEAT_TAC;;
 
@@ -565,14 +562,19 @@ let inj_ts_tid_rename_eq = cake_theorem "inj_ts_tid_rename_eq"
       (ts_tid_rename f t1 = ts_tid_rename f t2) ==> t1 = t2`)
   CHEAT_TAC;;
 
-(* HOL4 type_dCanonScript.sml:938-945: code that the source has in a
-   comment *)
+(* probably not be true because of shadows...
+Theorem remap_tenv_LINVI
+  `INJ f s t ∧ set_tids_tenv s tenv ⇒
+   remap_tenv (LINVI f s) (remap_tenv f tenv) = tenv`
+  (rw[remap_tenv_def, type_env_component_equality,
+     nsMap_compose, o_DEF, UNCURRY, MAP_MAP_o,
+     set_tids_tenv_def]
+*)
 
 let type_p_ts_tid_rename_sing_renum =
   cake_theorem "type_p_ts_tid_rename_sing_renum[local]"
   (fun () ->
-    `~(
-     m IN tids) /\ prim_tids T tids /\
+    `~(m IN tids) /\ prim_tids T tids /\
      type_p tvs tenv p t bindings /\
      set_tids_tenv tids tenv ==>
      type_p tvs tenv p (ts_tid_rename (sing_renum m n) t)
@@ -583,8 +585,7 @@ let type_p_ts_tid_rename_sing_renum =
 let type_e_ts_tid_rename_sing_renum =
   cake_theorem "type_e_ts_tid_rename_sing_renum[local]"
   (fun () ->
-    `~(
-     m IN tids) /\ prim_tids T tids /\
+    `~(m IN tids) /\ prim_tids T tids /\
      type_e tenv tenvE e t /\
      set_tids_tenv tids tenv ==>
      type_e tenv (remap_tenvE (sing_renum m n) tenvE) e
@@ -594,8 +595,7 @@ let type_e_ts_tid_rename_sing_renum =
 let type_funs_ts_tid_rename_sing_renum =
   cake_theorem "type_funs_ts_tid_rename_sing_renum"
   (fun () ->
-    `~(
-       m IN tids) /\ prim_tids T tids /\
+    `~(m IN tids) /\ prim_tids T tids /\
      type_funs tenv tenvE funs res /\
      set_tids_tenv tids tenv ==>
      type_funs tenv (remap_tenvE (sing_renum m n) tenvE) funs
@@ -668,8 +668,17 @@ let build_ctor_tenv_type_identities =
      (build_ctor_tenv tenvt xs type_identities)`)
   CHEAT_TAC;;
 
-(* HOL4 type_dCanonScript.sml:1173-1183: code that the source has in
-   a comment *)
+(*
+Theorem type_d_canon_tenv_equiv
+  `(∀x t d c v. type_d_canon x t d c v ⇒
+      ∀v2. tenv_equiv v v2 ⇒ type_d_canon x t d c v2) ∧
+   (∀x t d c v. type_ds_canon x t d c v ⇒
+      ∀v2. tenv_equiv v v2 ⇒ type_ds_canon x t d c v2)`
+  (ho_match_mp_tac type_d_canon_ind
+  \\ rw[]
+  \\ rw[Once type_d_canon_cases]
+  type_d_canon_rules
+*)
 
 let DISJOINT_CARD_UNION = cake_theorem "DISJOINT_CARD_UNION"
   (fun () ->
@@ -731,3 +740,5 @@ let type_d_canon_tenv_ok = cake_theorem "type_d_canon_tenv_ok"
       tenv_ok tenv ==>
       tenv_ok tenv')`)
   CHEAT_TAC;;
+
+cake_hide [];;

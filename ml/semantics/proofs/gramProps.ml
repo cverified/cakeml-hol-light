@@ -15,6 +15,7 @@
 needs "lib/NTproperties.ml";;
 needs "lib/grammar.ml";;
 needs "semantics/gram.ml";;
+needs "semantics/typeSystem.ml";;
 (* HOL4 ancestors outside the port: pred_set *)
 
 (* HOL4 gramPropsScript.sml:12-13: ML code, not ported *)
@@ -58,11 +59,13 @@ let NT_rank_def = cake_define
            nAndFDecls then 3 else if n = nFDecl then 2 else if n =
            nTyVarList then 2 else if n = nTyvarN then 1 else 0))`;;
 
+(* HOL4 gramPropsScript.sml:104-131: a theorem that HOL4 states as
+   the value of an ML expression: cmlG_applied *)
 (* HOL4 gramPropsScript.sml:104-131: the ML values that the
    definitions below antiquote *)
 
 (* HOL4 gramPropsScript.sml:133-134: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: cmlG_FDOM *)
 
 let paireq = cake_theorem "paireq[local]"
   (fun () ->
@@ -137,7 +140,7 @@ let fringe_length_ptree = cake_theorem "fringe_length_ptree"
 let fringe_length_not_nullable =
   cake_theorem "fringe_length_not_nullable"
   (fun () ->
-    `!G s. ~nullable G [s] ==>
+    `!G s. ~(nullable G [s]) ==>
             (!pt. ptree_head pt = s ==> valid_ptree G pt ==>
                  0 < LENGTH (ptree_fringe pt))`)
   CHEAT_TAC;;
@@ -150,9 +153,9 @@ let derives_singleTOK = cake_theorem "derives_singleTOK[simp]"
 
 let fringe_lengths_V = cake_theorem "fringe_lengths_V"
   (fun () ->
-    `fringe_lengths cmlG' [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)]
+    `fringe_lengths cmlG [grammar_NT ((INL:MMLnonT->MMLnonT+num) nV)]
   = {1}`)
   CHEAT_TAC;;
 
 (* HOL4 gramPropsScript.sml:340-350: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: parsing_ind *)

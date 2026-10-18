@@ -274,7 +274,7 @@ let do_int_app_eq_some = cake_theorem "do_int_app_eq_some"
          n2))) /\
      (!n. do_int_app (closLang_LessConstSmall n) vs = SOME res ==>
        (?i. vs = [Number i] /\ 0 <= i /\ i <= 1000000 /\ n <
-         1000000 /\ res = Boolv (i < &n)))`)
+         (&1000000) /\ res = Boolv (i < &n)))`)
   CHEAT_TAC;;
 
 (* same as closSem$do_word_app *)
@@ -867,7 +867,7 @@ hol4_overload "evaluate" "bvlSem_evaluate";;
 (* We prove that the clock never increases. *)
 
 (* HOL4 bvlSemScript.sml:674-681: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_eq_thms *)
 
 let bvlSem_do_app_const = cake_theorem "do_app_const"
   (fun () ->
@@ -910,10 +910,10 @@ let bvlSem_fix_clock_evaluate = cake_theorem "fix_clock_evaluate"
 (* Finally, we remove fix_clock from the induction and definition theorems. *)
 
 (* HOL4 bvlSemScript.sml:729-730: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_def *)
 
 (* HOL4 bvlSemScript.sml:732-733: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_ind *)
 
 (* observational semantics *)
 

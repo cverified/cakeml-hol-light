@@ -51,11 +51,8 @@ let enc_num_to_name_aux_def = cake_define
 let enc_num_to_name_def = cake_define
   `enc_num_to_name i = implode (enc_num_to_name_aux i [])`;;
 
-let pat1_size = cake_theorem "pat1_size"
-  (fun () ->
-    `pat1_size xs = LENGTH xs + SUM (MAP pattern_semantics_pat_size
-  xs)`)
-  CHEAT_TAC;;
+(* HOL4 flat_patternScript.sml:48-52: a theorem whose statement the
+   port cannot state yet: pat1_size *)
 
 let MAPi_eq_MAP = cake_theorem "MAPi_eq_MAP"
   (fun () ->

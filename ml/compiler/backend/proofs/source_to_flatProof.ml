@@ -87,8 +87,8 @@ let nsAppend_bind_locals = cake_theorem "nsAppend_bind_locals[local]"
   (fun () ->
     `!funs.
      nsAppend (alist_to_ns (MAP (\x. (x,source_to_flat_Local t x))
-       (MAP FST' funs))) (bind_locals ts locals comp_map) =
-     bind_locals (REPLICATE (LENGTH funs) t ++ ts) (MAP FST' funs
+       (MAP FST funs))) (bind_locals ts locals comp_map) =
+     bind_locals (REPLICATE (LENGTH funs) t ++ ts) (MAP FST funs
        ++ locals) comp_map`)
   CHEAT_TAC;;
 
@@ -110,8 +110,7 @@ let global_env_FIELDS = define_record "global_env"
 let submap_distinct_fupdate_flookup =
   cake_theorem "submap_distinct_fupdate_flookup"
   (fun () ->
-    `~(
-       x IN FDOM f) ==>
+    `~(x IN FDOM f) ==>
        (f |+ (x,y) SUBMAP g <=> FLOOKUP g x = SOME y /\ f SUBMAP
          g)`)
   CHEAT_TAC;;
@@ -246,8 +245,7 @@ let v_rel = cake_inductive
        env')) /\
    (!genv comp_map shadowers env.
      (!x v.
-        ~(
-        x IN IMAGE Short shadowers) /\
+        ~(x IN IMAGE Short shadowers) /\
         nsLookup (sem_env_v env) x = SOME v ==>
         (?n v' t.
           nsLookup (source_to_flat_environment_v comp_map) x = SOME
@@ -271,13 +269,13 @@ hol4_overload "v_rel" "source_to_flatProof_v_rel";;
    has in a comment *)
 
 (* HOL4 source_to_flatProofScript.sml:336-343: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_eqns *)
 
 (* HOL4 source_to_flatProofScript.sml:345-351: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_more_eqns *)
 
 (* HOL4 source_to_flatProofScript.sml:353-354: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_global_eqn *)
 
 let env_rel_LIST_REL = cake_theorem "env_rel_LIST_REL"
   (fun () ->
@@ -314,12 +312,12 @@ let source_to_flatProof_env_rel_append =
 
 let env_rel_one = cake_theorem "env_rel_one[local]"
   (fun () ->
-    `env_rel genv (nsBind a b nsEmpty') xs <=>
+    `env_rel genv (nsBind a b nsEmpty) xs <=>
      (?v. xs = [(a,v)] /\ source_to_flatProof_v_rel genv b v)`)
   CHEAT_TAC;;
 
 (* HOL4 source_to_flatProofScript.sml:434-437: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: env_rel_bind_one *)
 
 let source_to_flatProof_env_rel_el = cake_theorem "env_rel_el[local]"
   (fun () ->
@@ -494,7 +492,7 @@ let sv_rel_weak = cake_theorem "sv_rel_weak[local]"
 
 let s_rel = cake_inductive
   `(!genv s s'.
-     ~NULL (state_refs s') /\
+     ~(NULL (state_refs s')) /\
      LIST_REL (sv_rel genv) (state_refs s) (TL (state_refs s')) /\
        state_clock
      s = state_clock s' /\ state_ffi
@@ -639,7 +637,7 @@ let LIST_REL_IMP_EL = cake_theorem "LIST_REL_IMP_EL"
 
 let NOT_NULL_EQ = cake_theorem "NOT_NULL_EQ[local]"
   (fun () ->
-    `(~NULL xs) = (?y ys. xs = CONS y ys)`)
+    `(~(NULL xs)) = (?y ys. xs = CONS y ys)`)
   CHEAT_TAC;;
 
 let source_to_flatProof_v_rel_check_type =
@@ -730,16 +728,15 @@ let source_to_flatProof_do_app = cake_theorem "do_app[local]"
     `!genv s1 s2 op vs r s1_i1 vs_i1.
        do_app s1 op vs = SOME (s2,r) /\
        LIST_REL (sv_rel genv) (FST s1) (TL (state_refs s1_i1)) /\
-       ~NULL (state_refs s1_i1) /\
+       ~(NULL (state_refs s1_i1)) /\
        LIST_REL (source_to_flatProof_v_rel genv) vs vs_i1 /\
        SND s1 = state_ffi s1_i1 /\
-       genv_c_ok (global_env_c genv) /\ ~(
-       op = ast_AallocEmpty) /\ ~(
-       op = ast_Env_id) ==>
+       genv_c_ok (global_env_c genv) /\ ~(op = ast_AallocEmpty) /\
+         ~(op = ast_Env_id) ==>
         (?r_i1 s2_i1.
           LIST_REL (sv_rel genv) (FST s2) (TL (state_refs s2_i1))
             /\
-          ~NULL (state_refs s2_i1) /\
+          ~(NULL (state_refs s2_i1)) /\
           SND s2 = state_ffi s2_i1 /\ flatSem_state_globals
           s1_i1 = flatSem_state_globals s2_i1 /\
           TAKE 1 (state_refs s1_i1) = TAKE 1 (state_refs s2_i1) /\
@@ -816,8 +813,8 @@ let global_env_inv_extend2 =
        set_of_list (MAP (Short o FST) new_vars) = nsDom env' /\
        global_env_inv genv comp_map locals env /\
        global_env_inv genv (source_to_flat_environment_v_fupd (K
-         (alist_to_ns new_vars)) comp_map) locals (mk_global_env env'
-         env_c ARB) ==>
+         (alist_to_ns new_vars)) comp_map) locals (mk_sem_env env'
+         env_c) ==>
        global_env_inv genv (source_to_flat_environment_v_fupd (K
          (nsBindList new_vars (source_to_flat_environment_v comp_map)))
          comp_map) locals
@@ -836,8 +833,8 @@ let lookup_build_rec_env_lem =
 
 let sem_env_eq_lemma = cake_theorem "sem_env_eq_lemma[local]"
   (fun () ->
-    `!(env:'a sem_env) x. (sem_env_v_fupd (K x) env) = mk_global_env x
-  (sem_env_c env) ARB`)
+    `!(env:'a sem_env) x. (sem_env_v_fupd (K x) env) = mk_sem_env x
+  (sem_env_c env)`)
   CHEAT_TAC;;
 
 let do_opapp = cake_theorem "do_opapp[local]"
@@ -959,8 +956,8 @@ let opt_bind_lem = cake_theorem "opt_bind_lem[local]"
 
 let env_updated_lem = cake_theorem "env_updated_lem[local]"
   (fun () ->
-    `sem_env_v_fupd ((\y. y) = (env:'a flatSem_environment))
-       env`)
+    `sem_env_v_fupd (\y. y)
+       env = (env:'a flatSem_environment)`)
   CHEAT_TAC;;
 
 let evaluate_foldr_let_err =
@@ -1333,8 +1330,7 @@ let can_pmatch_all_IMP_pmatch_rows =
      source_to_flatProof_invariant interp g gen genv idxs st s_i1
        /\
      env_all_rel genv comp_map env env_i1 locals /\
-     source_to_flatProof_v_rel genv v v' ==> ~(
-     pmatch_rows
+     source_to_flatProof_v_rel genv v v' ==> ~(pmatch_rows
        (compile_pes t (source_to_flat_environment_v_fupd (K
          (bind_locals ts locals (source_to_flat_environment_v
          comp_map))) comp_map) pes)
@@ -1434,7 +1430,7 @@ let compile_decs_env_gen_inv = cake_theorem "compile_decs_env_gen_inv"
   CHEAT_TAC;;
 
 (* HOL4 source_to_flatProofScript.sml:2556-2559: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_eqns_non_global *)
 
 let ALL_DISJOINT_SUBSETS = cake_theorem "ALL_DISJOINT_SUBSETS"
   (fun () ->
@@ -1529,8 +1525,7 @@ let subglobals_NONE = cake_theorem "subglobals_NONE"
 
 let EL_add_SOME_SOME = cake_theorem "EL_add_SOME_SOME[local]"
   (fun () ->
-    `~(
-       EL i (pre ++ MAP SOME xs ++ post) = NONE) <=>
+    `~(EL i (pre ++ MAP SOME xs ++ post) = NONE) <=>
        (~(EL i (pre ++ REPLICATE (LENGTH xs) NONE ++ post) = NONE)
          \/
          (LENGTH pre <= i /\ i < LENGTH pre + LENGTH xs))`)
@@ -1566,10 +1561,10 @@ let global_env_inv_extend = cake_theorem "global_env_inv_extend[local]"
        genv = g1 ++ MAP SOME (REVERSE (MAP SND pat_env')) ++ g2 /\
        ALL_DISTINCT (MAP FST pat_env) ==>
        global_env_inv genv
-         (mk_global_env (alist_to_ns (alloc_defs tt (LENGTH g1)
-           (REVERSE (MAP FST pat_env')))) nsEmpty ARB)
+         (mk_sem_env (alist_to_ns (alloc_defs tt (LENGTH g1)
+           (REVERSE (MAP FST pat_env')))) nsEmpty)
          {}
-         (mk_global_env (alist_to_ns pat_env) nsEmpty ARB)`)
+         (mk_sem_env (alist_to_ns pat_env) nsEmpty)`)
   CHEAT_TAC;;
 
 let LIST_REL_sv_rel_weak = cake_theorem "LIST_REL_sv_rel_weak"
@@ -1616,15 +1611,15 @@ let invariant_make_varls = cake_theorem "invariant_make_varls"
      (!env1 tt. env_rel genv' (alist_to_ns env1) (sem_env_v env)
        ==>
        global_env_inv genv'
-         (mk_global_env (alist_to_ns (alloc_defs tt vidx (REVERSE
-           (MAP FST (sem_env_v env))))) nsEmpty ARB)
+         (mk_sem_env (alist_to_ns (alloc_defs tt vidx (REVERSE (MAP
+           FST (sem_env_v env))))) nsEmpty)
          {}
-         (mk_global_env (alist_to_ns env1) nsEmpty ARB)))`)
+         (mk_sem_env (alist_to_ns env1) nsEmpty)))`)
   CHEAT_TAC;;
 
 let compile_funs_dom2 = cake_theorem "compile_funs_dom2"
   (fun () ->
-    `MAP FST' (compile_funs t env funs) = MAP FST' funs`)
+    `MAP FST (compile_funs t env funs) = MAP FST funs`)
   CHEAT_TAC;;
 
 let genv_c_ok_extend = cake_theorem "genv_c_ok_extend"
@@ -1638,8 +1633,7 @@ let genv_c_ok_extend = cake_theorem "genv_c_ok_extend"
            cn')) /\
          (stamp = stamp' ==> (cn = cn' /\ arity = arity'))) /\
        (!cn' arity' stamp'. FLOOKUP c (cn',arity') = SOME stamp'
-         ==> ~(
-         stamp = stamp') /\
+         ==> ~(stamp = stamp') /\
          (~(SND cn = NONE) ==> ~(SND cn = SND cn')) /\
          (!s s' n. stamp = TypeStamp s n ==> ~(stamp' = TypeStamp
            s' n)))) ==>
@@ -1745,8 +1739,8 @@ let do_eval = cake_theorem "do_eval"
      do_eval (DROP 4 vs') (flatSem_state_eval_config t) = SOME
        (decs',eval_config',Unitv) /\
      LENGTH vs' = 6 /\
-     inc_compile_prog env_id c decs = (c',decs') /\ ~(
-     decs' = []) /\
+     inc_compile_prog env_id c decs = (c',decs') /\ ~(decs' = [])
+       /\
      source_to_flatProof_invariant interp g
        (mk_environment_generation_store 0 (next (envs c)) LN) genv'
        (next c,next c',idx_block idx end_idx UNION other)
@@ -1853,13 +1847,11 @@ let alloc_tags_invariant = cake_theorem "alloc_tags_invariant"
        idx,end_idx,os)
        (semanticPrimitives_state_next_type_stamp_fupd (K
          (semanticPrimitives_state_next_type_stamp st + 1)) st) st' /\
-     (let build_env = mk_global_env nsEmpty (alist_to_ns
+     (let build_env = mk_sem_env nsEmpty (alist_to_ns
            (REVERSE (build_constrs
-             (semanticPrimitives_state_next_type_stamp st) ctors))) ARB
-             in
-      global_env_inv genv' (mk_global_env nsEmpty ns ARB) {}
-        build_env /\
-      env_domain_eq (mk_global_env nsEmpty ns ARB) build_env))`)
+             (semanticPrimitives_state_next_type_stamp st) ctors))) in
+      global_env_inv genv' (mk_sem_env nsEmpty ns) {} build_env /\
+      env_domain_eq (mk_sem_env nsEmpty ns) build_env))`)
   CHEAT_TAC;;
 
 let nsAppend_foldl' = cake_theorem "nsAppend_foldl'[local]"
@@ -1906,8 +1898,8 @@ hol4_overload "abort" "source_to_flatProof_abort";;
 
 let not_abort_IMP_cases = cake_theorem "not_abort_IMP_cases[local]"
   (fun () ->
-    `(~abort r ==> P) ==>
-     ((?a. r = Rerr (Rabort a)) \/ (~abort r /\ P))`)
+    `(~(abort r) ==> P) ==>
+     ((?a. r = Rerr (Rabort a)) \/ (~(abort r) /\ P))`)
   CHEAT_TAC;;
 
 let source_to_flatProof_abort_simps = cake_theorem "abort_simps[simp]"
@@ -1927,8 +1919,7 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
        env_all_rel genv comp_map env env_i1 locals /\
        LENGTH ts = LENGTH locals /\
        env_gen_rel gen (semanticPrimitives_state_eval_state s) /\
-         ~(
-       r = Rerr (Rabort Rtype_error)) /\
+         ~(r = Rerr (Rabort Rtype_error)) /\
        es_i1 = compile_exps t (source_to_flat_environment_v_fupd (K
          (bind_locals ts locals (source_to_flat_environment_v
          comp_map))) comp_map) es ==>
@@ -1937,7 +1928,7 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
        result_rel (LIST_REL o source_to_flatProof_v_rel) genv' r
          r_i1 /\
        s_rel genv' s' s'_i1 /\
-       (~abort r ==>
+       (~(abort r) ==>
          source_to_flatProof_invariant interp g gen genv' idxs s'
            s'_i1 /\
          env_gen_rel gen (semanticPrimitives_state_eval_state s')
@@ -1958,12 +1949,11 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
        source_to_flatProof_v_rel genv v v_i1 /\
        LENGTH ts = LENGTH locals /\
        env_gen_rel gen (semanticPrimitives_state_eval_state s) /\
-         ~(
-       r = Rerr (Rabort Rtype_error)) /\
+         ~(r = Rerr (Rabort Rtype_error)) /\
        pes_i1 = compile_pes t (source_to_flat_environment_v_fupd (K
          (bind_locals ts locals (source_to_flat_environment_v
-         comp_map))) comp_map) pes /\ ~(
-       pmatch_rows pes_i1 s_i1 v_i1 = Match_type_error) /\
+         comp_map))) comp_map) pes /\ ~(pmatch_rows pes_i1 s_i1 v_i1 =
+         Match_type_error) /\
        source_to_flatProof_v_rel genv err_v err_v_i1 ==>
        (?s'_i1 r_i1 genv'.
        flatProps_evaluate_match env_i1 s_i1 v_i1 pes_i1 err_v_i1 =
@@ -1971,7 +1961,7 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
        result_rel (LIST_REL o source_to_flatProof_v_rel) genv' r
          r_i1 /\
        s_rel genv' s' s'_i1 /\
-       (~abort r ==>
+       (~(abort r) ==>
          source_to_flatProof_invariant interp g gen genv' idxs s'
            s'_i1 /\
          env_gen_rel gen (semanticPrimitives_state_eval_state s')
@@ -1990,8 +1980,8 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
          (idx,end_idx,os) s s_i1 /\
        source_to_flat_compile_decs path' t idx comp_map gen ds =
            (t',idx',comp_map',gen',ds_i1) /\
-       global_env_inv genv comp_map {} env /\ ~(
-       r = Rerr (Rabort Rtype_error)) /\
+       global_env_inv genv comp_map {} env /\ ~(r = Rerr (Rabort
+         Rtype_error)) /\
        env_gen_rel gen (semanticPrimitives_state_eval_state s) /\
        env_gen_future_rel interp gen'
          (semanticPrimitives_state_eval_state s) /\
@@ -1999,7 +1989,7 @@ let source_to_flatProof_compile_correct = cake_theorem "compile_correct"
        (?s1_i1 genv' r_i1.
        flatSem_evaluate_decs s_i1 ds_i1 = (s1_i1,r_i1) /\
        s_rel genv' s' s1_i1 /\
-       (~abort r ==>
+       (~(abort r) ==>
          source_to_flatProof_invariant interp g gen' genv'
            (idx',end_idx,os) s' s1_i1 /\
          orac_forward_rel interp
@@ -2303,18 +2293,17 @@ let invariant_begin_alloc_blanks =
        (global_env_v_fupd (K init_globs) init_genv)
        (next_indices_vidx_fupd (K 1) (next cfg),next cfg',{})
        s1
-       (flatSem_state_globals_fupd (K init_globs)
-         (state_refs_fupd (K [semanticPrimitives_Refv (Conv NONE [])])
-         (flatSem_initial_state (state_ffi s1) (state_clock s1)
-         eval_conf)))`)
+       (flatSem_initial_state (state_ffi s1) (state_clock s1)
+         (flatSem_state_globals_fupd (K init_globs) (state_refs_fupd
+         (K [semanticPrimitives_Refv (Conv NONE [])]) eval_conf)))`)
   CHEAT_TAC;;
 
 let compile_prog_correct = cake_theorem "compile_prog_correct"
   (fun () ->
     `precondition1 interp g s env cfg eval_conf ds /\
      source_to_flat_compile_prog cfg ds = (cfg',ds') /\
-     evaluate_decs s env ds = (s',r) /\ ~(
-     r = Rerr (Rabort Rtype_error)) ==>
+     evaluate_decs s env ds = (s',r) /\ ~(r = Rerr (Rabort
+       Rtype_error)) ==>
      (?s_i1 s_i1' genv' r_i1.
      s_i1 = flatSem_initial_state (state_ffi s) (state_clock s)
        eval_conf /\
@@ -2335,7 +2324,7 @@ let source_to_flatProof_compile_prog_semantics =
   cake_theorem "compile_prog_semantics"
   (fun () ->
     `precondition1 interp g s1 env1 conf eval_conf prog ==>
-      ~semantics_prog s1 env1 prog Fail ==>
+      ~(semantics_prog s1 env1 prog Fail) ==>
       semantics_prog s1 env1 prog
          (semantics eval_conf (state_ffi s1)
              (SND (source_to_flat_compile_prog conf prog)))`)
@@ -2345,8 +2334,8 @@ let source_to_flatProof_compile_prog_semantics =
 
 let compile_flat_correct = cake_theorem "compile_flat_correct"
   (fun () ->
-    `install_conf_rel cfg ec1 ec2 /\ ~(
-     semantics ec1 ffi prog = Fail) ==>
+    `install_conf_rel cfg ec1 ec2 /\ ~(semantics ec1 ffi prog = Fail)
+  ==>
      semantics ec1 ffi prog =
      semantics ec2 ffi (compile_flat cfg prog)`)
   CHEAT_TAC;;
@@ -2361,7 +2350,7 @@ let source_to_flatProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
     `precondition interp s env cfg ec prog ==>
-     ~semantics_prog s env prog Fail ==>
+     ~(semantics_prog s env prog Fail) ==>
      semantics_prog s env prog
         (semantics ec (state_ffi s) (SND (source_to_flat_compile
           cfg prog)))`)
@@ -2525,7 +2514,8 @@ let compile_flat_sub_bag = cake_theorem "compile_flat_sub_bag"
   CHEAT_TAC;;
 
 (* HOL4 source_to_flatProofScript.sml:5885-5887: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   compile_flat_BAG_ALL_DISTINCT *)
 
 let compile_globals_BAG_ALL_DISTINCT =
   cake_theorem "compile_globals_BAG_ALL_DISTINCT"
@@ -2541,8 +2531,10 @@ let inc_compile_globals_BAG_ALL_DISTINCT =
   env_id c prog)))`)
   CHEAT_TAC;;
 
-(* HOL4 source_to_flatProofScript.sml:5924-5931: a theorem whose
-   statement the port cannot state yet *)
+let SUB_BAG_IMP = cake_theorem "SUB_BAG_IMP"
+  (fun () ->
+    `(B1 <= B2) ==> BAG_IN x B1 ==> BAG_IN x B2`)
+  CHEAT_TAC;;
 
 (* not sure if this variant of the inc. compiler is the one we need *)
 let monotonic_globals_state_co_compile =
@@ -2559,3 +2551,5 @@ let monotonic_globals_state_co_compile =
        (state_co (\c (env_id,decs). inc_compile env_id c (f
          decs)) orac)`)
   CHEAT_TAC;;
+
+cake_hide [];;

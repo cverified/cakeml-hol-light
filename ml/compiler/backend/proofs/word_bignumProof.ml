@@ -407,7 +407,7 @@ hol4_overload "syntax_ok" "word_bignumProof_syntax_ok";;
 let evaluate_Seq_Seq = cake_theorem "evaluate_Seq_Seq"
   (fun () ->
     `!p1 p2 p3 t1.
-        wordSem_evaluate (word_bignum_Seq p1 (Seq p2 p3),t1) =
+        wordSem_evaluate (wordLang_Seq p1 (Seq p2 p3),t1) =
           wordSem_evaluate (Seq (Seq p1 p2) p3,t1)`)
   CHEAT_TAC;;
 
@@ -576,7 +576,7 @@ let list_store_def = cake_define_list
 let list_store_FUPDATE = cake_theorem "list_store_FUPDATE[local]"
   (fun () ->
     `!save_regs st ys.
-       ~MEM h save_regs /\ h < (25) /\
+       ~(MEM h save_regs) /\ h < (25) /\
        EVERY (\n. n < (25)) save_regs ==>
        list_store save_regs ys (st |+ (Temp (n2w h),wordLang_Word
          v)) =
@@ -631,7 +631,7 @@ let copy_vars_ignore = cake_theorem "copy_vars_ignore[local]"
   (fun () ->
     `!save_regs regs' s2 s3.
        word_bignumProof_copy_vars save_regs regs' s2 = SOME s3 /\
-       ~MEM a save_regs /\ a < (25) /\
+       ~(MEM a save_regs) /\ a < (25) /\
        EVERY (\n. n < (25)) save_regs ==> FAPPLY
          (word_bignumProof_state_regs
        s3) a = FAPPLY (word_bignumProof_state_regs s2) a`)
@@ -711,7 +711,7 @@ let compile_LESS_mini_size =
   (fun () ->
     `!k l1 l2 yy5 code xx1 xx2 xx3 xx5.
        word_bignum_compile k l1 l2 yy5 code = (xx1,xx2,xx3,xx5) ==>
-       (!x. MEM x (SND xx5) /\ ~MEM x (SND yy5) ==>
+       (!x. MEM x (SND xx5) /\ ~(MEM x (SND yy5)) ==>
            mini_size (K 0) (FST x) < mini_size (K 0) code)`)
   CHEAT_TAC;;
 
@@ -724,7 +724,7 @@ let MEM_compile = cake_theorem "MEM_compile[local]"
   CHEAT_TAC;;
 
 (* HOL4 word_bignumProofScript.sml:1327-1330: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: compile_NIL_IMP *)
 
 
 (* correctenss judgement *)
@@ -1048,7 +1048,8 @@ let FLOOKUP_DOMSUB = cake_theorem "FLOOKUP_DOMSUB[simp]"
 (* HOL4 word_bignumProofScript.sml:1658-1659: ML code, not ported *)
 
 (* order: clock then array then reg_write *)
-(* HOL4 word_bignumProofScript.sml:1662-1684: a proof *)
+(* HOL4 word_bignumProofScript.sml:1662-1684: a theorem that HOL4
+   states as the value of an ML expression: sort_lemma *)
 
 (* HOL4 word_bignumProofScript.sml:1686-1690: the ML values that the
    definitions below antiquote *)
@@ -1064,6 +1065,8 @@ let FLOOKUP_DOMSUB = cake_theorem "FLOOKUP_DOMSUB[simp]"
 (* HOL4 word_bignumProofScript.sml:1746-1748: code that the source
    has in a comment *)
 
+(* HOL4 word_bignumProofScript.sml:1750-1773: a theorem that HOL4
+   states as the value of an ML expression: lemma *)
 (* HOL4 word_bignumProofScript.sml:1750-1773: the ML values that the
    definitions below antiquote *)
 
@@ -1099,8 +1102,7 @@ let clock_read_lemma = cake_theorem "clock_read_lemma[local]"
 
 (* HOL4 word_bignumProofScript.sml:1808-1809: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:1811-1832: the ML values that the
-   definitions below antiquote *)
+(* HOL4 word_bignumProofScript.sml:1811-1832: ML code, not ported *)
 
 (* HOL4 word_bignumProofScript.sml:1834-1840: ML code, not ported *)
 
@@ -1151,8 +1153,7 @@ let single_add_word_imp_0_1 =
 
 (* HOL4 word_bignumProofScript.sml:1915-1926: ML code, not ported *)
 
-(* HOL4 word_bignumProofScript.sml:1928-1937: the ML values that the
-   definitions below antiquote *)
+(* HOL4 word_bignumProofScript.sml:1928-1937: ML code, not ported *)
 
 (* HOL4 word_bignumProofScript.sml:1939-1941: the ML values that the
    definitions below antiquote *)
@@ -1182,15 +1183,23 @@ let single_add_word_imp_0_1 =
   max_print_depth := 15
 *)
 
+(* HOL4 word_bignumProofScript.sml:2135-2170: a theorem that HOL4
+   states as the value of an ML expression: lemma *)
 (* HOL4 word_bignumProofScript.sml:2135-2170: the ML values that the
    definitions below antiquote *)
 
 (* HOL4 word_bignumProofScript.sml:2172-2186: the ML values that the
    definitions below antiquote *)
 
+let lemma1 = cake_theorem "lemma1"
+  (fun () ->
+    `goal1`)
+  CHEAT_TAC;;
 (* HOL4 word_bignumProofScript.sml:2188-2209: the ML values that the
    definitions below antiquote *)
 
+(* HOL4 word_bignumProofScript.sml:2211-2224: a theorem that HOL4
+   states as the value of an ML expression: lemma *)
 (* HOL4 word_bignumProofScript.sml:2211-2224: the ML values that the
    definitions below antiquote *)
 
@@ -1212,8 +1221,7 @@ let single_add_word_imp_0_1 =
 
 let i2mw_NOT_NIL = cake_theorem "i2mw_NOT_NIL[local]"
   (fun () ->
-    `~(
-         SND (i2mw i2) = []) <=> ~(i2 = 0)`)
+    `~(SND (i2mw i2) = []) <=> ~(i2 = (&0))`)
   CHEAT_TAC;;
 
 let mw_ok_SND_i2mw = cake_theorem "mw_ok_SND_i2mw[local]"
@@ -1230,4 +1238,4 @@ let word_bignumProof_code_subset_refl =
 (* HOL4 word_bignumProofScript.sml:2287: ML code, not ported *)
 
 (* HOL4 word_bignumProofScript.sml:2289-2333: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: evaluate_mc_iop *)

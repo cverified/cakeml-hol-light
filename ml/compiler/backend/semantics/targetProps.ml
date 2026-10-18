@@ -257,8 +257,8 @@ let target_io_fp_regs_def = cake_define
 
 let target_cc_regs_def = cake_define
   `target_cc_regs mc ffi ms k r =
-     (match interference_pos (\app. ~is_ffi_app app) mc ffi ms k with
-       NONE -> NONE | SOME n ->
+     (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k
+       with NONE -> NONE | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2
          ms_pre ms_post,mc',ffi') ->
             (if MEM r (machine_config_callee_saved_regs mc) \/ r =
@@ -272,8 +272,8 @@ let target_cc_regs_def = cake_define
 
 let target_cc_fp_regs_def = cake_define
   `target_cc_fp_regs mc ffi ms k (i:num) =
-     (match interference_pos (\app. ~is_ffi_app app) mc ffi ms k with
-       NONE -> ((n2w 0):word64) | SOME n ->
+     (match interference_pos (\app. ~(is_ffi_app app)) mc ffi ms k
+       with NONE -> ((n2w 0):word64) | SOME n ->
        (match interference_app_seq mc ffi ms n with SOME (CcApp a1 a2
          ms_pre ms_post,mc',ffi') -> target_get_fp_reg
          (machine_config_target
@@ -397,7 +397,7 @@ let interference_pos_tail_hit = cake_theorem "interference_pos_tail_hit"
 let interference_pos_tail_miss =
   cake_theorem "interference_pos_tail_miss"
   (fun () ->
-    `next_interference mc ffi ms = SOME (app0,mcc,ffic) /\ ~P app0 ==>
+    `next_interference mc ffi ms = SOME (app0,mcc,ffic) /\ ~(P app0) ==>
      interference_pos P mc ffi ms k =
      OPTION_MAP SUC (interference_pos P mcc ffic (app_post app0)
        k)`)
@@ -795,9 +795,8 @@ let asm_step_IMP_evaluate_step =
                 evaluate (shift_interfer l c) io k ms2) /\
            target_state_rel (machine_config_target c)
              (asmSem_asm i (asm_state_pc s1 + n2w (LENGTH
-               (asm_config_encode (target_config (machine_config_target
-               c)) i))) s1) ms2 /\ ~(
-           l = 0))`)
+               (asm_config_encode (target_config
+               (machine_config_target c)) i))) s1) ms2 /\ ~(l = 0))`)
   CHEAT_TAC;;
 
 (* basic properties *)
@@ -893,7 +892,7 @@ let ffi_interfer_ok_post_ffi_asm =
      (EL index (ffi_names mc_conf) = ffi_ExtCall (implode "") ==>
        new_bytes = bytes2) /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_pc_fupd (K (--n2w ((3 + index) * ffi_offset) +
+       (asm_state_pc_fupd (K (--(n2w ((3 + index) * ffi_offset)) +
          pc)) t1) ms2 /\
      alignment_aligned (asm_config_code_alignment (target_config
        (machine_config_target mc_conf)))
@@ -913,8 +912,8 @@ let ccache_interfer_ok_post_ccache_asm =
   (fun () ->
     `ccache_interfer_ok pc mc_conf /\
      target_state_rel (machine_config_target mc_conf)
-       (asm_state_pc_fupd (K (--n2w (2 * ffi_offset) + pc)) t1) ms2
-         /\
+       (asm_state_pc_fupd (K (--(n2w (2 * ffi_offset)) + pc)) t1)
+         ms2 /\
      alignment_aligned (asm_config_code_alignment (target_config
        (machine_config_target mc_conf)))
        (asm_state_regs t1 (match asm_config_link_reg (target_config

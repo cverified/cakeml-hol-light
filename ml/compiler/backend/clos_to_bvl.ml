@@ -59,13 +59,13 @@ needs "lib/sptree.ml";;
 needs "semantics/ast.ml";;
 
 (* HOL4 clos_to_bvlScript.sml:50-51: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: partial_app_tag_neq_closure_tag *)
 
 (* HOL4 clos_to_bvlScript.sml:53-54: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: clos_tag_shift_nil_tag *)
 
 (* HOL4 clos_to_bvlScript.sml:56-57: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: clos_tag_shift_cons_tag *)
 
 let clos_tag_shift_inj = cake_theorem "clos_tag_shift_inj"
   (fun () ->
@@ -675,7 +675,7 @@ let compile_prog_def = cake_define
 hol4_overload "compile_prog" "clos_to_bvl_compile_prog";;
 
 (* HOL4 clos_to_bvlScript.sml:610: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: compile_prog_eq *)
 
 let pair_lem1 = cake_theorem "pair_lem1[local]"
   (fun () ->
@@ -761,9 +761,8 @@ let code_merge_def = cake_define_wf
 let code_split_NULL = cake_theorem "code_split_NULL"
   (fun () ->
     `!ts1 ts2 ts3 xs ys.
-        (xs,ys) = code_split ts1 ts2 ts3 /\ ~(ts2 = []) /\ ~(ts3 =
-          []) ==> ~(
-        xs = []) /\ ~(ys = [])`)
+        (xs,ys) = code_split ts1 ts2 ts3 /\ ~(ts2 = []) /\ ~(ts3
+          = []) ==> ~(xs = []) /\ ~(ys = [])`)
   CHEAT_TAC;;
 
 let code_split_LENGTH = cake_theorem "code_split_LENGTH"
@@ -932,7 +931,7 @@ let make_name_alist_def = cake_define
                                 nums):mlstring spt)`;;
 
 (* HOL4 clos_to_bvlScript.sml:878-879: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: make_name_alist_eq *)
 
 let compile_def = cake_define
   `clos_to_bvl_compile c0 es =

@@ -114,7 +114,7 @@ let sem_inv_def = cake_define
         (?w. FLOOKUP (wordSem_state_store s) x = SOME w /\
           wordSem_get_var v s = SOME w)) /\
      (!op a ofs v.
-        ~is_store op /\
+        ~(is_store op) /\
         balanced_map_lookup listCmp (loadToNumList op a ofs)
           (knowledge_loads_mem data) = SOME v ==>
         (?w. wordSem_get_var v s = SOME w /\
@@ -176,7 +176,7 @@ let firstRegOfArith_canonicalArith =
 
 let data_inv_locals = cake_theorem "data_inv_locals[simp]"
   (fun () ->
-    `!s. wordSem_state_locals_fupd (K (wordSem_state_locals s = s)) s`)
+    `!s. wordSem_state_locals_fupd (K (wordSem_state_locals s)) s = s`)
   CHEAT_TAC;;
 
 let insert_eq = cake_theorem "insert_eq"
@@ -191,7 +191,7 @@ let insert_eq = cake_theorem "insert_eq"
 let evaluate_arith_set_var = cake_theorem "evaluate_arith_set_var"
   (fun () ->
     `!a r u w s.
-       can_mem_arith a /\ ~MEM r (arithReads a) ==>
+       can_mem_arith a /\ ~(MEM r (arithReads a)) ==>
        (wordSem_evaluate (Inst (Arith a),wordSem_set_var r u s) =
           (NONE,wordSem_set_var (firstRegOfArith a) w
             (wordSem_set_var r u s)) <=>
@@ -206,7 +206,7 @@ let evaluate_arith_set_var = cake_theorem "evaluate_arith_set_var"
 let evaluate_load_any_dest = cake_theorem "evaluate_load_any_dest"
   (fun () ->
     `!op r0 a ofs w s r.
-       ~is_store op /\
+       ~(is_store op) /\
        wordSem_evaluate (Inst (asm_Mem op r0 (Addr a ofs)),s) =
          (NONE,wordSem_set_var r0 w s) ==>
        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
@@ -219,7 +219,7 @@ let evaluate_load_any_dest = cake_theorem "evaluate_load_any_dest"
 let evaluate_load_set_var = cake_theorem "evaluate_load_set_var"
   (fun () ->
     `!op r a ofs n u w s.
-       ~is_store op /\ ~(a = n) ==>
+       ~(is_store op) /\ ~(a = n) ==>
        (wordSem_evaluate (Inst (asm_Mem op r (Addr a
          ofs)),wordSem_set_var n u s) =
           (NONE,wordSem_set_var r w (wordSem_set_var n u s)) <=>
@@ -234,7 +234,7 @@ let evaluate_load_change_addr =
   cake_theorem "evaluate_load_change_addr[local]"
   (fun () ->
     `!op r a a' ofs w (s:('a,'c,'ffi)wordSem_state).
-       ~is_store op /\
+       ~(is_store op) /\
        lookup a' (wordSem_state_locals s) = lookup a
          (wordSem_state_locals s) /\
        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
@@ -251,8 +251,8 @@ let evaluate_arith_memory = cake_theorem "evaluate_arith_memory[local]"
        can_mem_arith a ==>
        (wordSem_evaluate (Inst (Arith a),wordSem_state_memory_fupd
          (K m) s) =
-          (NONE,wordSem_state_memory_fupd (K m) (wordSem_set_var
-            (firstRegOfArith a) w s)) <=>
+          (NONE,wordSem_set_var (firstRegOfArith a) w
+            (wordSem_state_memory_fupd (K m) s)) <=>
         wordSem_evaluate (Inst (Arith a),s) =
           (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
   CHEAT_TAC;;
@@ -273,19 +273,17 @@ let wf_data_untracked = cake_theorem "wf_data_untracked"
        (!(a:'a asm_arith) v.
           balanced_map_lookup listCmp (instToNumList (Arith a))
             (knowledge_instrs_mem data) = SOME v ==>
-          ~MEM n (arithReads a) /\ can_mem_arith a) /\
+          ~(MEM n (arithReads a)) /\ can_mem_arith a) /\
        (!op src v.
           balanced_map_lookup listCmp (OpCurrHeapToNumList op src)
-            (knowledge_instrs_mem data) = SOME v ==> ~(
-          src = n)) /\
+            (knowledge_instrs_mem data) = SOME v ==> ~(src = n)) /\
        (!x v. ALOOKUP (knowledge_gets_mem data) x = SOME v ==> ~(v
          = n)) /\
        (!k v. balanced_map_lookup listCmp k (knowledge_loads_mem
          data) = SOME v ==> ~(v = n)) /\
        (!op a (ofs:'a word) v.
           balanced_map_lookup listCmp (loadToNumList op a ofs)
-            (knowledge_loads_mem data) = SOME v ==> ~(
-          a = n))`)
+            (knowledge_loads_mem data) = SOME v ==> ~(a = n))`)
   CHEAT_TAC;;
 
 let data_inv_set_var = cake_theorem "data_inv_set_var"
@@ -301,7 +299,7 @@ let evaluate_arith_unset_var =
   cake_theorem "evaluate_arith_unset_var[local]"
   (fun () ->
     `!a r w (s:('a,'c,'ffi)wordSem_state).
-       can_mem_arith a /\ ~MEM r (arithReads a) ==>
+       can_mem_arith a /\ ~(MEM r (arithReads a)) ==>
        (wordSem_evaluate (Inst (Arith a),wordSem_unset_var r s) =
           (NONE,wordSem_set_var (firstRegOfArith a) w
             (wordSem_unset_var r s)) <=>
@@ -313,7 +311,7 @@ let evaluate_load_unset_var =
   cake_theorem "evaluate_load_unset_var[local]"
   (fun () ->
     `!op r a ofs n w (s:('a,'c,'ffi)wordSem_state).
-       ~is_store op /\ ~(a = n) ==>
+       ~(is_store op) /\ ~(a = n) ==>
        (wordSem_evaluate (Inst (asm_Mem op r (Addr a
          ofs)),wordSem_unset_var n s) =
           (NONE,wordSem_set_var r w (wordSem_unset_var n s)) <=>
@@ -366,7 +364,7 @@ let good_cmp_listCmp = cake_theorem "good_cmp_listCmp[simp]"
 
 let lookup_listCmp_empty = cake_theorem "lookup_listCmp_empty[simp]"
   (fun () ->
-    `lookup listCmp' k empty' = NONE`)
+    `lookup listCmp k balanced_map_empty = NONE`)
   CHEAT_TAC;;
 
 let data_inv_empty = cake_theorem "data_inv_empty[simp]"
@@ -412,7 +410,7 @@ let evaluate_load_agree = cake_theorem "evaluate_load_agree[local]"
   (s2:('a,'c,'ffi)wordSem_state).
        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s1) =
          (NONE,wordSem_set_var r w s1) /\
-       ~is_store op /\ wordSem_state_locals s2 =
+       ~(is_store op) /\ wordSem_state_locals s2 =
          wordSem_state_locals s1 /\ wordSem_state_memory s2 =
          wordSem_state_memory s1 /\ wordSem_state_mdomain
        s2 = wordSem_state_mdomain s1 /\ wordSem_state_be s2 =
@@ -543,7 +541,7 @@ let register_reads_simps = cake_theorem "register_reads_simps[simp]"
 let lookup_register_read = cake_theorem "lookup_register_read"
   (fun () ->
     `sptree_lookup x (knowledge_to_canonical (register_read data r)) =
-     (if x = r /\ ~EVEN r /\ sptree_lookup r
+     (if x = r /\ ~(EVEN r) /\ sptree_lookup r
        (knowledge_to_canonical data) = NONE then SOME r else
        sptree_lookup x (knowledge_to_canonical data))`)
   CHEAT_TAC;;
@@ -553,7 +551,7 @@ let lookup_register_reads = cake_theorem "lookup_register_reads"
     `!rs data x.
        sptree_lookup x (knowledge_to_canonical (register_reads data
          rs)) =
-       (if MEM x rs /\ ~EVEN x /\ sptree_lookup x
+       (if MEM x rs /\ ~(EVEN x) /\ sptree_lookup x
          (knowledge_to_canonical data) = NONE then SOME x else
          sptree_lookup x (knowledge_to_canonical data))`)
   CHEAT_TAC;;
@@ -653,8 +651,8 @@ let data_inv_reinsert_canonical =
 
 let empty_data_loads_wipe = cake_theorem "empty_data_loads_wipe[simp]"
   (fun () ->
-    `knowledge_loads_mem_fupd (K (balanced_map_empty = empty_data))
-       empty_data`)
+    `knowledge_loads_mem_fupd (K balanced_map_empty)
+       empty_data = empty_data`)
   CHEAT_TAC;;
 
 let lookup_empty_data = cake_theorem "lookup_empty_data[simp]"
@@ -709,9 +707,9 @@ let data_inv_set_fp_var = cake_theorem "data_inv_set_fp_var[simp]"
 
 let with_locals_insert = cake_theorem "with_locals_insert[local]"
   (fun () ->
-    `wordSem_state_locals_fupd (K (insert r v l = wordSem_set_var r v
-  (wordSem_state_locals_fupd (K l) s)))
-       s`)
+    `wordSem_state_locals_fupd (K (insert r v l))
+       s = wordSem_set_var r v (wordSem_state_locals_fupd (K l)
+         s)`)
   CHEAT_TAC;;
 
 let data_inv_alist_insert_locals =
@@ -841,7 +839,7 @@ let add_to_data_aux_correct = cake_theorem "add_to_data_aux_correct"
        (!v. balanced_map_lookup listCmp i (knowledge_instrs_mem
          data) = SOME v ==>
             wordSem_get_var v s = SOME w) /\
-       (~EVEN r ==>
+       (~(EVEN r) ==>
           data_inv (
                     knowledge_instrs_mem_fupd (K
                       (insert listCmp i r (knowledge_instrs_mem
@@ -901,7 +899,7 @@ let add_to_data_const_correct = cake_theorem "add_to_data_const_correct"
     `!data (s:('a,'c,'ffi)wordSem_state) r (w:'a word) data' p'.
        data_inv data s /\
        sptree_lookup r (knowledge_to_canonical data) = NONE /\
-         ~EVEN r /\
+         ~(EVEN r) /\
        add_to_data_const data r w = (data',p') ==>
        wordSem_evaluate (p',s) = (NONE,wordSem_set_var r
          (wordLang_Word w) s) /\
@@ -929,7 +927,7 @@ let add_to_data_OpCurrHeap_correct =
        data_inv data s /\
        sptree_lookup r1 (knowledge_to_canonical data) = NONE /\
        r2' = canonicalRegs' r1 data r2 /\
-       ~EVEN r2 /\ ~(r2 = r1) /\
+       ~(EVEN r2) /\ ~(r2 = r1) /\
        wordSem_word_exp s (wordLang_Op b [Var r2; wordLang_Lookup
          CurrHeap]) = SOME w /\
        add_to_data_aux (register_read data r2') r1
@@ -945,7 +943,7 @@ let add_to_data_Arith_correct = cake_theorem "add_to_data_Arith_correct"
        data_inv data s /\
        sptree_lookup r (knowledge_to_canonical data) = NONE /\
        a' = canonicalArith data a /\
-       can_mem_arith a' /\ ~MEM r (arithReads a') /\
+       can_mem_arith a' /\ ~(MEM r (arithReads a')) /\
        r = firstRegOfArith a /\
        wordSem_evaluate (Inst (Arith a),s) = (NONE,wordSem_set_var
          r w s) /\
@@ -964,7 +962,7 @@ let data_inv_insert_loads = cake_theorem "data_inv_insert_loads[local]"
        data_inv data s /\
        sptree_lookup r (knowledge_to_canonical data) = SOME r /\
        sptree_lookup a (knowledge_to_canonical data) = SOME a /\
-       ~is_store op /\
+       ~(is_store op) /\
        wordSem_get_var r s = SOME w /\
        (!r'. wordSem_evaluate (Inst (asm_Mem op r' (Addr a ofs)),s)
          = (NONE,wordSem_set_var r' w s)) ==>
@@ -985,7 +983,7 @@ let add_to_load_aux_correct = cake_theorem "add_to_load_aux_correct"
        (!v. balanced_map_lookup listCmp i (knowledge_loads_mem
          data) = SOME v ==>
             wordSem_get_var v s = SOME w) /\
-       (~EVEN r ==>
+       (~(EVEN r) ==>
           data_inv (
                     knowledge_loads_mem_fupd (K
                       (insert listCmp i r (knowledge_loads_mem
@@ -1008,7 +1006,7 @@ let add_to_load_correct = cake_theorem "add_to_load_correct"
        data_inv data s /\
        sptree_lookup r (knowledge_to_canonical data) = NONE /\
        a' = canonicalRegs' r data a /\
-       ~is_store op /\ ~EVEN r /\ ~EVEN a /\ ~(a = r) /\
+       ~(is_store op) /\ ~(EVEN r) /\ ~(EVEN a) /\ ~(a = r) /\
        wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
          (NONE,wordSem_set_var r w s) /\
        add_to_load_aux (register_read data a') r (loadToNumList op
@@ -1020,8 +1018,8 @@ let add_to_load_correct = cake_theorem "add_to_load_correct"
 
 let MAP_FST_lemma = cake_theorem "MAP_FST_lemma[local]"
   (fun () ->
-    `!moves. MAP FST' (MAP (\(a,b). (a,canonicalRegs data b)) moves) =
-  MAP FST' moves`)
+    `!moves. MAP FST (MAP (\(a,b). (a,canonicalRegs data b)) moves) =
+  MAP FST moves`)
   CHEAT_TAC;;
 
 let MAP_SND_lemma = cake_theorem "MAP_SND_lemma[local]"
@@ -1042,7 +1040,7 @@ let lookup_map_insert0 = cake_theorem "lookup_map_insert0"
 
 let get_set_vars_lemma = cake_theorem "get_set_vars_lemma"
   (fun () ->
-    `!xs xs' x y s. ~MEM x xs /\ ~MEM y xs ==>
+    `!xs xs' x y s. ~(MEM x xs) /\ ~(MEM y xs) ==>
                     wordSem_get_var x s = wordSem_get_var y s ==>
                     wordSem_get_var x (wordSem_set_vars xs xs' s)
                       = wordSem_get_var y (wordSem_set_vars xs xs' s)`)
@@ -1050,8 +1048,8 @@ let get_set_vars_lemma = cake_theorem "get_set_vars_lemma"
 
 let get_set_vars_not_in = cake_theorem "get_set_vars_not_in[local]"
   (fun () ->
-    `!rs vs r s. ~MEM r rs ==> wordSem_get_var r (wordSem_set_vars rs
-  vs s) = wordSem_get_var r s`)
+    `!rs vs r s. ~(MEM r rs) ==> wordSem_get_var r (wordSem_set_vars
+  rs vs s) = wordSem_get_var r s`)
   CHEAT_TAC;;
 
 let MEM_FST_reduc = cake_theorem "MEM_FST_reduc"
@@ -1085,7 +1083,7 @@ let lookup_set_vars_not_in =
   cake_theorem "lookup_set_vars_not_in[local]"
   (fun () ->
     `!moves v data c x.
-       ~MEM v (MAP FST moves) ==>
+       ~(MEM v (MAP FST moves)) ==>
        lookup v (wordSem_state_locals s) = SOME (wordLang_Word c)
          ==>
        lookup v (wordSem_state_locals (wordSem_set_vars (MAP FST
@@ -1185,9 +1183,10 @@ let evaluate_arith_clock = cake_theorem "evaluate_arith_clock[local]"
        can_mem_arith a ==>
        (wordSem_evaluate (Inst (Arith a),wordSem_state_termdep_fupd
          (K td) (state_clock_fupd (K c) s)) =
-          (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd
-            (K c)
-           (wordSem_set_var (firstRegOfArith a) w s))) <=>
+          (NONE,
+           wordSem_set_var (firstRegOfArith a) w
+             (wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
+             s))) <=>
         wordSem_evaluate (Inst (Arith a),s) =
           (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
   CHEAT_TAC;;
@@ -1195,12 +1194,12 @@ let evaluate_arith_clock = cake_theorem "evaluate_arith_clock[local]"
 let evaluate_load_clock = cake_theorem "evaluate_load_clock[local]"
   (fun () ->
     `!op r a ofs w s c td.
-       ~is_store op ==>
+       ~(is_store op) ==>
        (wordSem_evaluate (Inst (asm_Mem op r (Addr a
          ofs)),wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
                   s)) =
-          (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd
-            (K c) (wordSem_set_var r w s))) <=>
+          (NONE,wordSem_set_var r w (wordSem_state_termdep_fupd (K
+            td) (state_clock_fupd (K c) s))) <=>
         wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
           (NONE,wordSem_set_var r w s))`)
   CHEAT_TAC;;
@@ -1360,7 +1359,7 @@ let wf_add_to_data_aux = cake_theorem "wf_add_to_data_aux"
        wf_data (:'a) data /\
        sptree_lookup r (knowledge_to_canonical data) = NONE /\
        add_to_data_aux data r i p = (data',p') /\
-       (~EVEN r ==>
+       (~(EVEN r) ==>
           wf_data (:'a)
             (
              knowledge_instrs_mem_fupd (K
@@ -1380,7 +1379,7 @@ let wf_add_to_data_const = cake_theorem "wf_add_to_data_const"
     `!data r (w:'a word) data' p'.
        wf_data (:'a) data /\
        sptree_lookup r (knowledge_to_canonical data) = NONE /\
-         ~EVEN r /\
+         ~(EVEN r) /\
        add_to_data_const data r w = (data',p') ==>
        wf_data (:'a) data'`)
   CHEAT_TAC;;
@@ -1391,7 +1390,7 @@ let wf_add_to_load_aux = cake_theorem "wf_add_to_load_aux"
        wf_data (:'a) data /\
        sptree_lookup r (knowledge_to_canonical data) = NONE /\
        add_to_load_aux data r i p = (data',p') /\
-       (~EVEN r ==>
+       (~(EVEN r) ==>
           wf_data (:'a)
             (
              knowledge_loads_mem_fupd (K
@@ -1595,9 +1594,8 @@ let comp_correct = cake_theorem "comp_correct"
   (fun () ->
     `!v v1 res s' data p' data'.
        wordSem_evaluate (v,v1) = (res,s') /\ flat_exp_conventions v
-         /\ data_inv data v1 /\ ~(
-       res = SOME wordSem_Error) /\ word_cse data v = (data',p')
-         ==>
+         /\ data_inv data v1 /\ ~(res = SOME wordSem_Error) /\ word_cse
+         data v = (data',p') ==>
        wordSem_evaluate (p',v1) = (res,s') /\ (res = NONE ==>
          data_inv data' s')`)
   CHEAT_TAC;;
@@ -1723,3 +1721,5 @@ let full_inst_ok_less_word_common_subexp_elim =
     `full_inst_ok_less ac p ==>
      full_inst_ok_less ac (word_common_subexp_elim p)`)
   CHEAT_TAC;;
+
+cake_hide [];;

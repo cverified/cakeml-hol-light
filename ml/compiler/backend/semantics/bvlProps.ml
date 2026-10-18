@@ -2,7 +2,7 @@
 (*  bvlProps: ported from HOL4's
     compiler/backend/semantics/bvlPropsScript.sml
     A proof theory about bvl.ml, with 7 definitions and 65 theorems.
-    Needed by 9 files of the port.  *)
+    Needed by 12 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -26,26 +26,26 @@ cake_hide ["parts"];;
 
 let with_same_code = cake_theorem "with_same_code[simp]"
   (fun () ->
-    `bvlSem_state_code_fupd (K (bvlSem_state_code s = s))
-        ((s:('c,'ffi)bvlSem_state))`)
+    `bvlSem_state_code_fupd (K (bvlSem_state_code s))
+        ((s:('c,'ffi)bvlSem_state)) = s`)
   CHEAT_TAC;;
 
 let with_same_clock = cake_theorem "with_same_clock[simp]"
   (fun () ->
-    `state_clock_fupd (K (state_clock st = st))
-        (st:('a,'b)bvlSem_state)`)
+    `state_clock_fupd (K (state_clock st))
+        (st:('a,'b)bvlSem_state) = st`)
   CHEAT_TAC;;
 
 let dec_clock_with_code = cake_theorem "dec_clock_with_code[simp]"
   (fun () ->
-    `bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) =
-  state_code_fupd (K c) (dec_clock n s)`)
+    `bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) = dec_clock n
+  (bvlSem_state_code_fupd (K c) s)`)
   CHEAT_TAC;;
 
 (* HOL4 bvlPropsScript.sml:34-42: ML code, not ported *)
 
 (* HOL4 bvlPropsScript.sml:44-45: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: case_eq_thms *)
 
 let do_app_split_list = cake_theorem "do_app_split_list[local]"
   (fun () ->
@@ -61,10 +61,10 @@ let pair_lam_lem = cake_theorem "pair_lam_lem[local]"
   CHEAT_TAC;;
 
 (* HOL4 bvlPropsScript.sml:62-67: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: do_app_cases_val *)
 
 (* HOL4 bvlPropsScript.sml:69-74: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: do_app_cases_err *)
 
 let do_app_Rval_swap = cake_theorem "do_app_Rval_swap"
   (fun () ->
@@ -139,10 +139,10 @@ let initial_state_simp = cake_theorem "initial_state_simp[simp]"
 let initial_state_with_simp =
   cake_theorem "initial_state_with_simp[simp]"
   (fun () ->
-    `state_clock_fupd (K (k1 = initial_state f c co cc k1))
-        (initial_state f c co cc k) /\ state_code_fupd (K (c1 =
-          initial_state f c1 co cc k))
-        (initial_state f c co cc k)`)
+    `initial_state f c co cc (state_clock_fupd (K k1) k) = initial_state
+  f c co cc k1 /\
+     initial_state f c co cc (state_code_fupd (K c1) k) =
+       initial_state f c1 co cc k`)
   CHEAT_TAC;;
 
 let bool_to_tag_11 = cake_theorem "bool_to_tag_11[simp]"
@@ -170,10 +170,11 @@ let do_app_err = cake_theorem "do_app_err"
                                 (Rffi_error x))`)
   CHEAT_TAC;;
 
-(* HOL4 bvlPropsScript.sml:213-223: a proof *)
+(* HOL4 bvlPropsScript.sml:213-223: a theorem that HOL4 states as the
+   value of an ML expression: evaluate_LENGTH *)
 
 (* HOL4 bvlPropsScript.sml:225: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: evaluate_LENGTH *)
 
 let evaluate_IMP_LENGTH = cake_theorem "evaluate_IMP_LENGTH"
   (fun () ->
@@ -259,8 +260,8 @@ let evaluate_Bool = cake_theorem "evaluate_Bool[simp]"
 
 let evaluate_expand_env = cake_theorem "evaluate_expand_env"
   (fun () ->
-    `!xs a s env. ~(
-       FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error)) ==>
+    `!xs a s env. ~(FST (evaluate (xs,a,s)) = Rerr (Rabort Rtype_error))
+  ==>
        (evaluate (xs,a ++ env,s) = evaluate (xs,a,s))`)
   CHEAT_TAC;;
 
@@ -343,8 +344,8 @@ let do_app_change_clock_err = cake_theorem "do_app_change_clock_err"
 let evaluate_add_clock = cake_theorem "evaluate_add_clock"
   (fun () ->
     `!exps env s1 res s2.
-       evaluate (exps,env,s1) = (res,s2) /\ ~(
-       res = Rerr (Rabort Rtimeout_error)) ==>
+       evaluate (exps,env,s1) = (res,s2) /\ ~(res = Rerr (Rabort
+         Rtimeout_error)) ==>
        (!ck. evaluate (exps,env,bvlProps_inc_clock ck s1) =
          (res,bvlProps_inc_clock ck s2))`)
   CHEAT_TAC;;
@@ -352,8 +353,8 @@ let evaluate_add_clock = cake_theorem "evaluate_add_clock"
 let evaluate_add_clock_initial_state =
   cake_theorem "evaluate_add_clock_initial_state"
   (fun () ->
-    `evaluate (es,env,initial_state ffi code co cc k) = (r,s') /\ ~(
-      r = Rerr (Rabort Rtimeout_error)) ==>
+    `evaluate (es,env,initial_state ffi code co cc k) = (r,s') /\ ~(r =
+  Rerr (Rabort Rtimeout_error)) ==>
       (!extra.
         evaluate (es,env,initial_state ffi code co cc (k + extra))
           =
@@ -383,9 +384,8 @@ let do_app_inc_clock = cake_theorem "do_app_inc_clock[local]"
 
 let dec_clock_1_inc_clock = cake_theorem "dec_clock_1_inc_clock[local]"
   (fun () ->
-    `~(
-       x = 0) ==> dec_clock 1 (bvlProps_inc_clock x s) =
-         bvlProps_inc_clock (x - 1) s`)
+    `~(x = 0) ==> dec_clock 1 (bvlProps_inc_clock x s) =
+  bvlProps_inc_clock (x - 1) s`)
   CHEAT_TAC;;
 
 let dec_clock_1_inc_clock2 =
@@ -415,8 +415,7 @@ let take_drop_lem = cake_theorem "take_drop_lem[local]"
   (fun () ->
     `!skip env.
        skip < LENGTH env /\
-       skip + SUC n <= LENGTH env /\ ~(
-       DROP skip env = []) ==>
+       skip + SUC n <= LENGTH env /\ ~(DROP skip env = []) ==>
        EL skip env :: TAKE n (DROP (1 + skip) env) = TAKE (n + 1)
          (DROP skip env)`)
   CHEAT_TAC;;
@@ -584,10 +583,12 @@ let get_code_labels_def = cake_define_list_try (fun () ->
 hol4_overload "get_code_labels" "bvlProps_get_code_labels";;
 
 (* HOL4 bvlPropsScript.sml:897-898: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: get_code_labels_def *)
 
 let mk_tick_code_labels = cake_theorem "mk_tick_code_labels[simp]"
   (fun () ->
     `!n x. bvlProps_get_code_labels (mk_tick n x) =
   bvlProps_get_code_labels x`)
   CHEAT_TAC;;
+
+cake_hide [];;

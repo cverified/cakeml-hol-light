@@ -32,8 +32,8 @@ let rename_state_def = cake_define
 
 let rename_state_with_clock = cake_theorem "rename_state_with_clock"
   (fun () ->
-    `rename_state c f (state_clock_fupd (K k) s) = state_clock_fupd (K
-  k) (rename_state c f s)`)
+    `rename_state c f (state_clock_fupd (K k) s) = rename_state c f
+  (state_clock_fupd (K k) s)`)
   CHEAT_TAC;;
 
 let rename_state_const = cake_theorem "rename_state_const[simp]"
@@ -54,8 +54,8 @@ let rename_state_const = cake_theorem "rename_state_const[simp]"
 
 let rename_state_with_memory = cake_theorem "rename_state_with_memory"
   (fun () ->
-    `rename_state c f (state_memory_fupd (K k) s) = state_memory_fupd
-  (K k) (rename_state c f s)`)
+    `rename_state c f (state_memory_fupd (K k) s) = rename_state c f
+  (state_memory_fupd (K k) s)`)
   CHEAT_TAC;;
 
 let dec_clock_rename_state = cake_theorem "dec_clock_rename_state"
@@ -212,7 +212,7 @@ let inst_rename = cake_theorem "inst_rename"
 let stack_namesProof_MAP_FST_compile =
   cake_theorem "MAP_FST_compile[simp]"
   (fun () ->
-    `MAP FST' (stack_names_compile f c) = MAP FST' c`)
+    `MAP FST (stack_names_compile f c) = MAP FST c`)
   CHEAT_TAC;;
 
 let domain_rename_state_code =
@@ -245,8 +245,8 @@ let stack_namesProof_comp_correct = cake_theorem "comp_correct[local]"
   (fun () ->
     `!p s r t.
         evaluate (p,s) = (r,t) /\ BIJ (tlookup f) UNIV UNIV /\
-        ~stackSem_state_use_alloc s /\ ~stackSem_state_use_store s
-          /\ ~stackSem_state_use_stack s /\ compile
+        ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store
+          s) /\ ~(stackSem_state_use_stack s) /\ compile
         s = (\cfg. c cfg o (stack_names_compile f)) ==>
         evaluate (stack_names_comp f p,rename_state c f s) =
           (r,rename_state c f t)`)
@@ -256,8 +256,8 @@ let stack_namesProof_compile_semantics =
   cake_theorem "compile_semantics"
   (fun () ->
     `BIJ (tlookup f) UNIV UNIV /\
-      ~stackSem_state_use_alloc s /\ ~stackSem_state_use_store s /\
-        ~stackSem_state_use_stack s /\ compile
+      ~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store
+        s) /\ ~(stackSem_state_use_stack s) /\ compile
       s = (\cfg. c cfg o (stack_names_compile f)) ==>
       semantics start (rename_state c f s) = semantics start s`)
   CHEAT_TAC;;
@@ -268,8 +268,9 @@ let compile_semantics_alt = cake_theorem "compile_semantics_alt[local]"
          BIJ (tlookup f) UNIV UNIV /\ (rename_state (compile t) f s
            = t) /\ compile
          s = (\c. compile t c o (stack_names_compile f)) /\
-         ~stackSem_state_use_alloc s /\ ~stackSem_state_use_store s
-           /\ ~stackSem_state_use_stack s ==>
+         ~(stackSem_state_use_alloc s) /\
+           ~(stackSem_state_use_store s) /\ ~(stackSem_state_use_stack
+           s) ==>
          semantics start t = semantics start s`)
   CHEAT_TAC;;
 
@@ -287,8 +288,8 @@ hol4_overload "make_init" "stack_namesProof_make_init";;
 let stack_namesProof_make_init_semantics =
   cake_theorem "make_init_semantics"
   (fun () ->
-    `~stackSem_state_use_alloc s /\ ~stackSem_state_use_store s /\
-  ~stackSem_state_use_stack s /\
+    `~(stackSem_state_use_alloc s) /\ ~(stackSem_state_use_store s) /\
+  ~(stackSem_state_use_stack s) /\
      BIJ (tlookup f) UNIV UNIV /\ ALL_DISTINCT (MAP FST code) /\
        state_code
      s = fromAList (stack_names_compile f code) /\ compile_oracle
@@ -315,10 +316,9 @@ let names_ok_imp = cake_theorem "names_ok_imp[local]"
 let names_ok_imp2 = cake_theorem "names_ok_imp2[local]"
   (fun () ->
     `stack_names_names_ok f (asm_config_reg_count c)
-  (asm_config_avoid_regs c) /\ ~(
-     n = n') /\
-     reg_name n c /\ reg_name n' c ==> ~(
-     tlookup f n = tlookup f n')`)
+  (asm_config_avoid_regs c) /\ ~(n = n') /\
+     reg_name n c /\ reg_name n' c ==> ~(tlookup f n = tlookup f
+       n')`)
   CHEAT_TAC;;
 
 let stack_names_comp_stack_asm_ok =
@@ -351,3 +351,5 @@ let stack_names_call_args = cake_theorem "stack_names_call_args"
                             (tlookup f 4)
                             (tlookup f 0)) (MAP SND p')`)
   CHEAT_TAC;;
+
+cake_hide [];;

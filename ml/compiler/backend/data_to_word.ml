@@ -2,7 +2,7 @@
 (*  data_to_word: ported from HOL4's
     compiler/backend/data_to_wordScript.sml
     A definition theory, with 201 definitions, 3 datatypes and 40
-    theorems.  Needed by 20 files of the port.  *)
+    theorems.  Needed by 21 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -256,71 +256,71 @@ let bignum_location_def = cake_define
   `Bignum_location = StringCmpLoop_location + 1`;;
 
 (* HOL4 data_to_wordScript.sml:273-274: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: FromList_location_eq *)
 (* HOL4 data_to_wordScript.sml:275-276: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: FromList1_location_eq *)
 (* HOL4 data_to_wordScript.sml:277-278: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: RefByte_location_eq *)
 (* HOL4 data_to_wordScript.sml:279-280: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: RefArray_location_eq *)
 (* HOL4 data_to_wordScript.sml:281-282: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Replicate_location_eq *)
 (* HOL4 data_to_wordScript.sml:283-284: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: AnyArith_location_eq *)
 (* HOL4 data_to_wordScript.sml:285-286: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Add_location_eq *)
 (* HOL4 data_to_wordScript.sml:287-288: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Sub_location_eq *)
 (* HOL4 data_to_wordScript.sml:289-290: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Mul_location_eq *)
 (* HOL4 data_to_wordScript.sml:291-292: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Div_location_eq *)
 (* HOL4 data_to_wordScript.sml:293-294: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Mod_location_eq *)
 (* HOL4 data_to_wordScript.sml:295-296: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Compare1_location_eq *)
 (* HOL4 data_to_wordScript.sml:297-298: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Compare_location_eq *)
 (* HOL4 data_to_wordScript.sml:299-300: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Equal1_location_eq *)
 (* HOL4 data_to_wordScript.sml:301-302: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Equal_location_eq *)
 (* HOL4 data_to_wordScript.sml:303-304: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: LongDiv1_location_eq *)
 (* HOL4 data_to_wordScript.sml:305-306: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: LongDiv_location_eq *)
 (* HOL4 data_to_wordScript.sml:307-308: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: MemCopy_location_eq *)
 (* HOL4 data_to_wordScript.sml:309-310: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Bignum_location_eq *)
 (* HOL4 data_to_wordScript.sml:311-312: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ByteCopy_location_eq *)
 (* HOL4 data_to_wordScript.sml:313-314: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ByteCopyAdd_location_eq *)
 (* HOL4 data_to_wordScript.sml:315-316: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ByteCopySub_location_eq *)
 (* HOL4 data_to_wordScript.sml:317-318: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: ByteCopyNew_location_eq *)
 (* HOL4 data_to_wordScript.sml:319-320: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Install_location_eq *)
 (* HOL4 data_to_wordScript.sml:321-322: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: InstallCode_location_eq *)
 (* HOL4 data_to_wordScript.sml:323-324: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: InstallData_location_eq *)
 (* HOL4 data_to_wordScript.sml:325-326: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Dummy_location_eq *)
 (* HOL4 data_to_wordScript.sml:327-328: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Append_location_eq *)
 (* HOL4 data_to_wordScript.sml:329-330: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: AppendMainLoop_location_eq *)
 (* HOL4 data_to_wordScript.sml:331-332: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: AppendLenLoop_location_eq *)
 (* HOL4 data_to_wordScript.sml:333-334: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: XorLoop_location_eq *)
 (* HOL4 data_to_wordScript.sml:335-336: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: Unused_location_eq *)
 (* HOL4 data_to_wordScript.sml:337-338: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: StringCmpLoop_location_eq *)
 
 let SilentFFI_def = cake_define
   `SilentFFI c n names =
@@ -1471,7 +1471,7 @@ let write_bytes_def = cake_define_list
 
 let small_int_def = cake_define
   `small_int (:'a) i <=>
-     -- &(dimword (:'a) DIV 8) <= i /\ i < (&(dimword (:'a) DIV
+     --(&(dimword (:'a) DIV 8)) <= i /\ i < (&(dimword (:'a) DIV
        8):int)`;;
 
 let part_to_words_def = cake_define_list
@@ -2467,7 +2467,7 @@ let assign_WordToInt_def = cake_define
 let assign_FFI_def = cake_define
   `assign_FFI ffi_index (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
-       (if ~data_to_word_config_call_empty_ffi c /\ ffi_index =
+       (if ~(data_to_word_config_call_empty_ffi c) /\ ffi_index =
          (implode "") then (Assign (adjust_var dest)
          data_to_word_Unit,l) else
          let addr1 = real_addr c (adjust_var v1) in
@@ -2558,7 +2558,7 @@ let assign_Install_def = cake_define
 let assign_FP_cmp_def = cake_define
   `assign_FP_cmp fpc (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
-        ((if ~data_to_word_config_has_fp_ops c then (GiveUp,l) else
+        ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
          if dimindex (:'a) = 64 then
             ((list_Seq [
                 Assign 3 (wordLang_Load (Op asm_Add
@@ -2592,8 +2592,8 @@ let assign_FP_cmp_def = cake_define
 let assign_FP_top_def = cake_define
   `assign_FP_top fpt (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 v3 =
-        ((if ~data_to_word_config_has_fp_ops c \/
-          ~data_to_word_config_has_fp_tern c then (GiveUp,l) else
+        ((if ~(data_to_word_config_has_fp_ops c) \/
+          ~(data_to_word_config_has_fp_tern c) then (GiveUp,l) else
          if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
@@ -2642,7 +2642,7 @@ let assign_FP_top_def = cake_define
 let assign_FP_bop_def = cake_define
   `assign_FP_bop fpb (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 v2 =
-        ((if ~data_to_word_config_has_fp_ops c then (GiveUp,l) else
+        ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
          if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
@@ -2681,7 +2681,7 @@ let assign_FP_bop_def = cake_define
 let assign_FP_uop_def = cake_define
   `assign_FP_uop fpu (c:data_to_word_config) (secn:num) (l:num)
   (dest:num) (names:(1 spt) option) v1 =
-        ((if ~data_to_word_config_has_fp_ops c then (GiveUp,l) else
+        ((if ~(data_to_word_config_has_fp_ops c) then (GiveUp,l) else
          if dimindex (:'a) = 64 then
           (match encode_header c 3 1 with NONE -> (GiveUp,l) | SOME
             (header:'a word) ->
@@ -2713,7 +2713,7 @@ let assign_FinaliseCons_def = cake_define
                     v1)),l):'a wordLang_prog#num)`;;
 
 (* HOL4 data_to_wordScript.sml:2460-2461: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: all_assign_defs *)
 
 let assign_def = cake_define
   `data_to_word_assign (c:data_to_word_config) (secn:num) (l:num)

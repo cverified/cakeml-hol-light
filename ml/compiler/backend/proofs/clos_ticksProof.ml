@@ -56,7 +56,7 @@ let clos_ticksProof_code_rel_IMP_LENGTH =
     `!xs ys. clos_ticksProof_code_rel xs ys ==> LENGTH xs = LENGTH ys`)
   CHEAT_TAC;;
 
-let remove_ticks_CONS = cake_theorem "remove_ticks_CONS"
+let clos_ticksProof_remove_ticks_CONS = cake_theorem "remove_ticks_CONS"
   (fun () ->
     `!es e. clos_ticks_remove_ticks (e :: es) = HD
   (clos_ticks_remove_ticks [e]) :: clos_ticks_remove_ticks es`)
@@ -105,7 +105,7 @@ let v_rel = cake_inductive
 hol4_overload "v_rel" "clos_ticksProof_v_rel";;
 
 (* HOL4 clos_ticksProofScript.sml:93-105: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: v_rel_simps *)
 
 (* state relation *)
 
@@ -465,8 +465,7 @@ let remove_ticks_correct = cake_theorem "remove_ticks_correct"
 let clos_ticksProof_semantics_remove_ticks =
   cake_theorem "semantics_remove_ticks"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
           co (pure_cc clos_ticks_compile_inc cc) xs = ffi_Fail) ==>
         (!n. SND (SND (co n)) = []) /\ 1 <= max_app ==>
         closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
@@ -526,6 +525,6 @@ let remove_ticks_app_call_dests =
 let clos_ticksProof_remove_ticks_code_labels =
   cake_theorem "remove_ticks_code_labels[simp]"
   (fun () ->
-    `!es. MAP get_code_labels' (clos_ticks_remove_ticks es) = MAP
-  get_code_labels' es`)
+    `!es. MAP closProps_get_code_labels (clos_ticks_remove_ticks es) =
+  MAP closProps_get_code_labels es`)
   CHEAT_TAC;;

@@ -91,7 +91,7 @@ let good_pref_def = cake_define
 
 (* M_success conditions *)
 (* HOL4 reg_allocProofScript.sml:95-98: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: case_eq_thms *)
 
 let tag_case_st = cake_theorem "tag_case_st"
   (fun () ->
@@ -266,7 +266,7 @@ let remove_colours_success = cake_theorem "remove_colours_success"
      Abbrev (set_of_list ls SUBSET set_of_list ks /\
      (!n. MEM n adjs /\ n < LENGTH (ra_state_node_tag s') ==>
      (match EL n (ra_state_node_tag s) with
-       Fixed c -> ~MEM c ls | _2 -> T)))`)
+       Fixed c -> ~(MEM c ls) | _2 -> T)))`)
   CHEAT_TAC;;
 
 let no_clash_LUPDATE_Stemp =
@@ -282,8 +282,8 @@ let no_clash_LUPDATE_Fixed =
     `undirected adjls /\
      EVERY (\ls. EVERY (\v. v < LENGTH tags) ls) adjls /\
      n < LENGTH adjls /\
-     (!m. MEM m (EL n adjls) /\ m < LENGTH tags ==> ~(
-       EL m tags = Fixed x)) /\
+     (!m. MEM m (EL n adjls) /\ m < LENGTH tags ==> ~(EL m tags =
+       Fixed x)) /\
      no_clash adjls tags ==>
      no_clash adjls (LUPDATE (Fixed x) n tags)`)
   CHEAT_TAC;;
@@ -355,7 +355,7 @@ let SORTED_HEAD_LT = cake_theorem "SORTED_HEAD_LT[local]"
   (fun () ->
     `!ls.
      (col:num) < h /\ SORTED (\x y. x <= y) (h :: ls) ==>
-     ~MEM col ls`)
+     ~(MEM col ls)`)
   CHEAT_TAC;;
 
 (* Correctness for the second step *)
@@ -364,7 +364,7 @@ let unbound_colour_correct = cake_theorem "unbound_colour_correct"
     `!ls k k'.
      SORTED (\x y. x <= y) ls ==>
      k <= unbound_colour k ls /\
-     ~MEM (unbound_colour k ls) ls`)
+     ~(MEM (unbound_colour k ls) ls)`)
   CHEAT_TAC;;
 
 (*
@@ -378,7 +378,7 @@ let good_neg_pref_def = cake_define
      (?res.
      pref n bads s = (M_success res,s) /\
      (match res with
-       NONE -> T | SOME c -> ~MEM c bads /\ k <= c)))`;;
+       NONE -> T | SOME c -> ~(MEM c bads) /\ k <= c)))`;;
 
 let assign_Stemp_tag_correct = cake_theorem "assign_Stemp_tag_correct"
   (fun () ->
@@ -484,9 +484,7 @@ let sp_inverts_def = cake_define
 
 let sp_inverts_insert = cake_theorem "sp_inverts_insert"
   (fun () ->
-    `sp_inverts f g /\ ~(
-     x IN domain f) /\ ~(
-     y IN domain g) ==>
+    `sp_inverts f g /\ ~(x IN domain f) /\ ~(y IN domain g) ==>
      sp_inverts (sptree_insert x y f) (sptree_insert y x g)`)
   CHEAT_TAC;;
 
@@ -497,7 +495,8 @@ let list_remap_domain = cake_theorem "list_remap_domain[local]"
      domain ta' = domain ta UNION set_of_list ls`)
   CHEAT_TAC;;
 
-(* HOL4 reg_allocProofScript.sml:814-835: a proof *)
+(* HOL4 reg_allocProofScript.sml:814-835: a theorem that HOL4 states
+   as the value of an ML expression: list_remap_bij *)
 
 let mk_bij_aux_domain = cake_theorem "mk_bij_aux_domain[local]"
   (fun () ->
@@ -506,7 +505,8 @@ let mk_bij_aux_domain = cake_theorem "mk_bij_aux_domain[local]"
      domain ta' = domain ta UNION {x | in_clash_tree ct x}`)
   CHEAT_TAC;;
 
-(* HOL4 reg_allocProofScript.sml:879-919: a proof *)
+(* HOL4 reg_allocProofScript.sml:879-919: a theorem that HOL4 states
+   as the value of an ML expression: mk_bij_aux_bij *)
 
 let list_remap_wf = cake_theorem "list_remap_wf[local]"
   (fun () ->
@@ -783,7 +783,7 @@ let IMAGE_DIFF = cake_theorem "IMAGE_DIFF[local]"
 let set_FILTER = cake_theorem "set_FILTER[local]"
   (fun () ->
     `set_of_list (FILTER P live) =
-     set_of_list live DIFF (\x. ~P x)`)
+     set_of_list live DIFF (\x. ~(P x))`)
   CHEAT_TAC;;
 
 let MEM_MAP_IMAGE = cake_theorem "MEM_MAP_IMAGE[local]"
@@ -1101,7 +1101,8 @@ let st_ex_FILTER_considered_var =
      EVERY (\x. x < LENGTH (ra_state_node_tag s)) ts)`)
   CHEAT_TAC;;
 
-(* HOL4 reg_allocProofScript.sml:2364-2382: a proof *)
+(* HOL4 reg_allocProofScript.sml:2364-2382: a theorem that HOL4
+   states as the value of an ML expression: st_ex_MAP_deg_or_inf *)
 
 let bg_ok_success = cake_theorem "bg_ok_success[local]"
   (fun () ->
@@ -1377,8 +1378,7 @@ let check_clash_tree_same_dom = cake_theorem "check_clash_tree_same_dom"
 
 let opt_split = cake_theorem "opt_split[local]"
   (fun () ->
-    `~(
-       a = NONE) <=> a = SOME one`)
+    `~(a = NONE) <=> a = SOME one`)
   CHEAT_TAC;;
 
 let INJ_IMG_lookup = cake_theorem "INJ_IMG_lookup"
@@ -1430,7 +1430,7 @@ let neg_first_match_col_correct =
      ?res. neg_first_match_col k ks x s = (res,s) /\
      (match res with
        M_failure v -> v = reg_alloc_Subscript | M_success (SOME
-         c) -> ~MEM c ks /\ k <= c | _7 -> T)`)
+         c) -> ~(MEM c ks) /\ k <= c | _7 -> T)`)
   CHEAT_TAC;;
 
 let good_neg_pref_neg_biased_pref =

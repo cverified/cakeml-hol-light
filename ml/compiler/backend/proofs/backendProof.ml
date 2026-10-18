@@ -75,14 +75,6 @@ needs "semantics/proofs/semanticsProps.ml";;
 needs "semantics/semanticPrimitives.ml";;
 needs "semantics/semantics.ml";;
 
-cake_hide ["addresses"; "compute_limits"; "data_lang_safe_for_space";
-           "every_Fn_SOME"; "every_inst"; "flat_exp_conventions";
-           "full_cc"; "full_co"; "full_inst_ok_less"; "inst_ok_less";
-           "known_cc"; "known_co"; "labels_ok"; "labels_rel";
-           "mc_conf_ok"; "no_Labels"; "no_Mat_decs"; "no_mti";
-           "no_share_inst"; "obeys_max_app"; "post_alloc_conventions";
-           "src_orac_step_invs"; "two_reg_inst"];;
-
 (* TODO: move/rephrase *)
 
 let byte_aligned_mult = cake_theorem "byte_aligned_mult"
@@ -206,18 +198,17 @@ let mc_init_ok_def = cake_define
      (match link_reg (target_config (machine_config_target mc)) with
        NONE -> 0 | SOME n -> n) /\ be (backend_config_data_conf
    c) = asm_config_big_endian (target_config (machine_config_target
-     mc)) /\ ~(
-   (match link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = len_reg mc) /\ ~(
-   (match link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = ptr_reg mc) /\ ~(
-   (match link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = len2_reg mc) /\ ~(
-   (match link_reg (target_config (machine_config_target mc)) with
-     NONE -> 0 | SOME n -> n) = ptr2_reg mc) /\
-   ~MEM (match link_reg (target_config (machine_config_target mc))
-     with NONE -> 0 | SOME n -> n) (machine_config_callee_saved_regs mc)
-     /\
+     mc)) /\ ~((match link_reg (target_config (machine_config_target
+     mc)) with NONE -> 0 | SOME n -> n) = len_reg mc) /\ ~((match
+     link_reg (target_config (machine_config_target mc)) with NONE -> 0
+     | SOME n -> n) = ptr_reg mc) /\ ~((match link_reg (target_config
+     (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
+     len2_reg mc) /\ ~((match link_reg (target_config
+     (machine_config_target mc)) with NONE -> 0 | SOME n -> n) =
+     ptr2_reg mc) /\
+   ~(MEM (match link_reg (target_config (machine_config_target mc))
+     with NONE -> 0 | SOME n -> n) (machine_config_callee_saved_regs
+     mc)) /\
     asm_conf = target_config (machine_config_target mc)`;;
 
 let mc_init_ok_with_bvl_conf_updated =
@@ -470,7 +461,7 @@ let keep_progs_T = cake_theorem "keep_progs_T[local]"
   CHEAT_TAC;;
 
 (* HOL4 backendProofScript.sml:493-494: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: compile_inc_progs_defs *)
 
 let cake_orac_eqs = cake_theorem "cake_orac_eqs"
   (fun () ->
@@ -709,8 +700,9 @@ let bvl_to_bvi_compile_semantics2 =
            (state_co (bvl_inline_compile_inc
              (bvl_to_bvi_config_inline_size_limit c)
              (bvl_to_bvi_config_split_main_at_seq
-               c) (bvl_to_bvi_config_exp_cut c)) co))) ==> ~(
-     bvlSem_semantics ffi0 (fromAList prog) co (full_cc c cc)
+               c) (bvl_to_bvi_config_exp_cut c)) co))) ==>
+                 ~(bvlSem_semantics ffi0 (fromAList prog) co (full_cc c
+                 cc)
        start = Fail) ==>
      bviSem_semantics ffi0 (fromAList prog') (full_co c co)
        cc start' =
@@ -727,7 +719,7 @@ let compile_no_stubs_wrap_pure_co =
   CHEAT_TAC;;
 
 (* HOL4 backendProofScript.sml:832-833: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: full_make_init_semantics2 *)
 
 let data_num_stubs_LE_tailrec_compile =
   cake_theorem "data_num_stubs_LE_tailrec_compile"
@@ -819,7 +811,7 @@ let bvl_num_stubs_LE_bvi_prog = cake_theorem "bvl_num_stubs_LE_bvi_prog"
   CHEAT_TAC;;
 
 (* HOL4 backendProofScript.sml:1003-1005: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: stack_to_lab_orac_eq_std_sym *)
 
 let state_co_fun_def = cake_define
   `state_co_fun f_inc x =
@@ -846,7 +838,7 @@ let is_state_oracle_cake_orac_comp =
   CHEAT_TAC;;
 
 (* HOL4 backendProofScript.sml:1039-1041: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: is_state_oracle_cake_orac *)
 
 let cake_orac_clos_is_state = cake_theorem "cake_orac_clos_is_state"
   (fun () ->
@@ -866,7 +858,7 @@ let cake_orac_source_is_state = cake_theorem "cake_orac_source_is_state"
   CHEAT_TAC;;
 
 (* HOL4 backendProofScript.sml:1066-1068: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: SND_flat_to_clos_inc_compile *)
 
 let is_state_oracle_cake_orac_to_comp =
   cake_theorem "is_state_oracle_cake_orac_to_comp"
@@ -1257,16 +1249,16 @@ let inline_compile_inc_names = cake_theorem "inline_compile_inc_names"
 let bvi_inline_state_co_MAP_FST =
   cake_theorem "bvi_inline_state_co_MAP_FST[simp]"
   (fun () ->
-    `MAP FST' (SND (state_co bvi_inline_compile_inc co n)) =
-     MAP FST' (SND (co n))`)
+    `MAP FST (SND (state_co bvi_inline_compile_inc co n)) =
+     MAP FST (SND (co n))`)
   CHEAT_TAC;;
 
 let oracle_monotonic_bvi_inline =
   cake_theorem "oracle_monotonic_bvi_inline[simp]"
   (fun () ->
-    `oracle_monotonic (set_of_list o MAP FST' o SND') R init (state_co
+    `oracle_monotonic (set_of_list o MAP FST o SND) R init (state_co
   bvi_inline_compile_inc co) =
-     oracle_monotonic (set_of_list o MAP FST' o SND') R init co`)
+     oracle_monotonic (set_of_list o MAP FST o SND) R init co`)
   CHEAT_TAC;;
 
 (* bvi_inline is name preserving, so the namespace-sliced projection used
@@ -1459,10 +1451,10 @@ let to_lab_good_code_lemma = cake_theorem "to_lab_good_code_lemma"
   CHEAT_TAC;;
 
 (* HOL4 backendProofScript.sml:2670-2671: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: data_to_word_orac_eq_std *)
 
 (* HOL4 backendProofScript.sml:2673-2675: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: data_to_word_orac_eq_sym_std *)
 
 (*
 max_print_depth := 20
@@ -1789,7 +1781,7 @@ let cake_orac_extended_wf = cake_theorem "cake_orac_extended_wf[local]"
 let cake_orac_eq_get_oracle =
   cake_theorem "cake_orac_eq_get_oracle[local]"
   (fun () ->
-    `~semantics_prog s env prog Fail /\
+    `~(semantics_prog s env prog Fail) /\
      opt_eval_config_wf (asm_conf:'a asm_config)
        (c':backend_config) (SOME ci) /\
      nsAll (K concrete_v) (sem_env_v env) /\
@@ -1825,7 +1817,7 @@ let step_invs_cake_orac = cake_theorem "step_invs_cake_orac[local]"
 let source_to_source_semantics_prog_equiv =
   cake_theorem "source_to_source_semantics_prog_equiv[local]"
   (fun () ->
-    `~semantics_prog s0 env prog Fail ==>
+    `~(semantics_prog s0 env prog Fail) ==>
      semantics_prog s0 env (source_to_source_compile prog) res =
      semantics_prog s0 env prog res`)
   CHEAT_TAC;;
@@ -1833,8 +1825,8 @@ let source_to_source_semantics_prog_equiv =
 let source_to_source_semantics_prog_intro =
   cake_theorem "source_to_source_semantics_prog_intro[local]"
   (fun () ->
-    `~semantics_prog s0 env prog Fail ==>
-     (~semantics_prog s0 env (source_to_source_compile prog) Fail
+    `~(semantics_prog s0 env prog Fail) ==>
+     (~(semantics_prog s0 env (source_to_source_compile prog) Fail)
        ==>
        semantics_prog s0 env (source_to_source_compile prog) res)
          ==>
@@ -1844,12 +1836,12 @@ let source_to_source_semantics_prog_intro =
 let eval_oracle_semantics_prog_intro =
   cake_theorem "eval_oracle_semantics_prog_intro[local]"
   (fun () ->
-    `!ci. ~semantics_prog s1 env decs Fail /\
+    `!ci. ~(semantics_prog s1 env decs Fail) /\
      precond_eval_state orac ci s1 env decs /\
        semanticPrimitives_state_refs s1 = [] /\
      nsAll (K concrete_v) (sem_env_v env) /\
-     (~semantics_prog (semanticPrimitives_state_eval_state_fupd (K
-       (put_oracle ci orac)) s1) env decs Fail ==>
+     (~(semantics_prog (semanticPrimitives_state_eval_state_fupd (K
+       (put_oracle ci orac)) s1) env decs Fail) ==>
        semantics_prog (semanticPrimitives_state_eval_state_fupd (K
          (put_oracle ci orac)) s1) env decs res) ==>
      semantics_prog s1 env decs res`)
@@ -1858,11 +1850,11 @@ let eval_oracle_semantics_prog_intro =
 let source_to_source_semantics_prog_oracle_intro =
   cake_theorem "source_to_source_semantics_prog_oracle_intro[local]"
   (fun () ->
-    `~semantics_prog (semanticPrimitives_state_eval_state_fupd (K
-  (insert_gen_oracle ev I sf orac es)) s0) env prog Fail ==>
-     (~semantics_prog (semanticPrimitives_state_eval_state_fupd (K
+    `~(semantics_prog (semanticPrimitives_state_eval_state_fupd (K
+  (insert_gen_oracle ev I sf orac es)) s0) env prog Fail) ==>
+     (~(semantics_prog (semanticPrimitives_state_eval_state_fupd (K
        (insert_gen_oracle ev source_to_source_compile sf orac es)) s0)
-       env prog Fail ==>
+       env prog Fail) ==>
          semantics_prog (semanticPrimitives_state_eval_state_fupd
            (K (insert_gen_oracle ev source_to_source_compile sf orac
            es)) s0) env prog res) ==>
@@ -1873,7 +1865,7 @@ let source_to_source_semantics_prog_oracle_intro =
 let source_eval_to_flat_semantics =
   cake_theorem "source_eval_to_flat_semantics"
   (fun () ->
-    `~semantics_prog (add_eval_state ev s0) env prog Fail /\
+    `~(semantics_prog (add_eval_state ev s0) env prog Fail) /\
      compile asm_conf (c:backend_config) prog = SOME (b,bm,c') /\
      source_to_flat_compile prim_src_config
        (source_to_source_compile prog) = (src_c',p') /\
@@ -1899,8 +1891,7 @@ let flat_semantics = cake_theorem "flat_semantics"
   backend_progs_flat_prog ps) in
      let f_inst = flatProps_mk_flat_install_conf
            (pure_cc inc_compile_decs cc)
-           co in ~(
-     flatSem_semantics f_inst ffi ds = Fail) /\
+           co in ~(flatSem_semantics f_inst ffi ds = Fail) /\
      0 < clos_to_bvl_config_max_app cconf /\ no_Mat_decs ds ==>
      closSem_semantics ffi (clos_to_bvl_config_max_app cconf)
        FEMPTY
@@ -1977,7 +1968,7 @@ let compile_correct' = cake_theorem "compile_correct'"
   (bytes,bitmaps,c') ==>
       (let (s0,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
       let s = add_eval_state ev s0 in
-      ~semantics_prog s env prog Fail /\
+      ~(semantics_prog s env prog Fail) /\
       backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
         asm_conf c mc /\
       opt_eval_config_wf asm_conf c' ev /\
@@ -1995,14 +1986,14 @@ let compile_correct' = cake_theorem "compile_correct'"
 
 
 (* HOL4 backendProofScript.sml:4429-4431: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: compile_correct_no_eval *)
 
 let backendProof_compile_correct = cake_theorem "compile_correct"
   (fun () ->
     `compile (asm_conf:'a asm_config) (c:backend_config) prog = SOME
   (bytes,bitmaps,c') ==>
       (let (s,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
-      ~semantics_prog s env prog Fail /\
+      ~(semantics_prog s env prog Fail) /\
       backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
         asm_conf c mc /\
       installed bytes cbspace bitmaps data_sp (ffi_names
@@ -2030,7 +2021,7 @@ let compile_correct_is_safe_for_space =
      (backendProof_read_limits asm_conf c mc ms) =
        (stack_limit,heap_limit) ==>
      (let (s,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
-     ~semantics_prog s env prog Fail /\
+     ~(semantics_prog s env prog Fail) /\
      backend_config_ok asm_conf c /\ mc_conf_ok mc /\ mc_init_ok
        asm_conf c mc /\
      installed bytes cbspace bitmaps data_sp (ffi_names
@@ -2050,7 +2041,7 @@ let compile_correct_eval = cake_theorem "compile_correct_eval"
   (fun () ->
     `compile asm_conf c prog = SOME (bytes,bitmaps,c') ==>
       (let (s0,env) = THE (prim_sem_env (ffi:'ffi ffi_state)) in
-      ~semantics_prog (add_eval_state ev s0) env prog Fail /\
+      ~(semantics_prog (add_eval_state ev s0) env prog Fail) /\
         backend_config_ok asm_conf c /\
       mc_conf_ok mc /\ mc_init_ok asm_conf c mc /\
         opt_eval_config_wf asm_conf c' ev /\

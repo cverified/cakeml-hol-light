@@ -614,7 +614,7 @@ let gen_gc_LESS_IMP_heap_lookup = cake_theorem "LESS_IMP_heap_lookup"
   CHEAT_TAC;;
 
 (* HOL4 gen_gcScript.sml:1619-1623: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: heap_lookup_IMP_heap_addresses *)
 
 let heap_lookup_AND_APPEND_IMP =
   cake_theorem "heap_lookup_AND_APPEND_IMP[local]"
@@ -641,7 +641,7 @@ let MEM_heap_expand_FALSE = cake_theorem "MEM_heap_expand_FALSE[local]"
 let FILTER_isForward_heap_expand_lemma =
   cake_theorem "FILTER_isForward_heap_expand_lemma[local]"
   (fun () ->
-    `!n. FILTER isForwardPointer' (heap_expand n) = []`)
+    `!n. FILTER isForwardPointer (heap_expand n) = []`)
   CHEAT_TAC;;
 
 let heap_lookup_CONS_IMP = cake_theorem "heap_lookup_CONS_IMP[local]"
@@ -743,7 +743,7 @@ let gc_move_refs_ok = cake_theorem "gc_move_refs_ok"
     `!conf s. gc_state_ok (gc_move_refs conf s) ==> gc_state_ok s`)
   CHEAT_TAC;;
 
-let gc_move_loop_ok = cake_theorem "gc_move_loop_ok"
+let gen_gc_gc_move_loop_ok = cake_theorem "gc_move_loop_ok"
   (fun () ->
     `!conf s c. gc_state_ok (gen_gc_gc_move_loop conf s c) ==>
   gc_state_ok s`)

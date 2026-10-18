@@ -66,8 +66,7 @@ let convert_sub_ok = cake_theorem "convert_sub_ok[local]"
 let word_exp_op_permute_lem =
   cake_theorem "word_exp_op_permute_lem[local]"
   (fun () ->
-    `~(
-       op = Sub) ==>
+    `~(op = Sub) ==>
        (!ls ls'.
        PERM ls ls' ==>
        wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp
@@ -92,8 +91,7 @@ let pull_ops_simp_pull_ops_perm =
 let pull_ops_simp_pull_ops_word_exp =
   cake_theorem "pull_ops_simp_pull_ops_word_exp[local]"
   (fun () ->
-    `~(
-       op = Sub) ==>
+    `~(op = Sub) ==>
        wordSem_word_exp s (wordLang_Op op (pull_ops op ls [])) =
          wordSem_word_exp s (wordLang_Op op (pull_ops_simp op ls))`)
   CHEAT_TAC;;
@@ -102,8 +100,7 @@ let pull_ops_simp_pull_ops_word_exp =
 
 let word_exp_op_mono = cake_theorem "word_exp_op_mono[local]"
   (fun () ->
-    `~(
-       op = Sub) ==>
+    `~(op = Sub) ==>
        wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
          (wordLang_Op op ls') ==>
        wordSem_word_exp s (wordLang_Op op (x :: ls)) =
@@ -122,8 +119,7 @@ let the_words_append = cake_theorem "the_words_append[local]"
 
 let word_exp_op_op = cake_theorem "word_exp_op_op[local]"
   (fun () ->
-    `~(
-       op = Sub) ==>
+    `~(op = Sub) ==>
        (!ls ls'.
        wordSem_word_exp s (wordLang_Op op ls) = wordSem_word_exp s
          (wordLang_Op op ls') ==>
@@ -134,8 +130,7 @@ let word_exp_op_op = cake_theorem "word_exp_op_op[local]"
 
 let pull_ops_ok = cake_theorem "pull_ops_ok[local]"
   (fun () ->
-    `~(
-       op = Sub) ==>
+    `~(op = Sub) ==>
        (!ls. wordSem_word_exp s (wordLang_Op op (pull_ops op ls
          [])) =
               wordSem_word_exp s (wordLang_Op op ls))`)
@@ -145,8 +140,7 @@ let pull_ops_ok = cake_theorem "pull_ops_ok[local]"
 
 let word_exp_swap_head = cake_theorem "word_exp_swap_head[local]"
   (fun () ->
-    `!B. ~(
-     op = Sub) ==>
+    `!B. ~(op = Sub) ==>
      wordSem_word_exp s (wordLang_Op op A) = SOME (wordLang_Word w)
        ==>
      wordSem_word_exp s (wordLang_Op op (B ++ A)) =
@@ -162,8 +156,7 @@ let EVERY_is_const_word_exp =
 
 let all_consts_simp = cake_theorem "all_consts_simp[local]"
   (fun () ->
-    `~(
-       op = Sub) ==>
+    `~(op = Sub) ==>
        (!ls.
        EVERY word_inst_is_const ls ==>
        wordSem_word_exp s (wordLang_Op op ls) =
@@ -179,9 +172,7 @@ let word_exp_reduce_const = cake_theorem "word_exp_reduce_const[local]"
 
 let optimize_consts_ok = cake_theorem "optimize_consts_ok[local]"
   (fun () ->
-    `~(
-       op = Sub) /\ wordSem_word_exp s (wordLang_Op op ls) = SOME x
-         ==>
+    `~(op = Sub) /\ wordSem_word_exp s (wordLang_Op op ls) = SOME x ==>
        wordSem_word_exp s (optimize_consts op ls) = SOME x`)
   CHEAT_TAC;;
 
@@ -209,7 +200,8 @@ let optimize_consts_every_var_exp =
      every_var_exp P (optimize_consts op ls)`)
   CHEAT_TAC;;
 
-(* HOL4 word_instProofScript.sml:341-346: a proof *)
+(* HOL4 word_instProofScript.sml:341-346: a theorem that HOL4 states
+   as the value of an ML expression: pull_ops_every_var_exp *)
 
 let pull_exp_every_var_exp =
   cake_theorem "pull_exp_every_var_exp[local]"
@@ -281,8 +273,8 @@ let inst_select_exp_thm = cake_theorem "inst_select_exp_thm[local]"
 
 let locals_rm = cake_theorem "locals_rm[local]"
   (fun () ->
-    `wordSem_state_locals_fupd (K (wordSem_state_locals D = D))
-       D`)
+    `wordSem_state_locals_fupd (K (wordSem_state_locals D))
+       D = D`)
   CHEAT_TAC;;
 
 (*  Main semantics theorem for inst selection:
@@ -293,8 +285,8 @@ let inst_select_thm = cake_theorem "inst_select_thm"
   (fun () ->
     `!c temp prog st res rst loc.
      wordSem_evaluate (prog,st) = (res,rst) /\
-     wordLang_every_var (\x. x < temp) prog /\ ~(
-     res = SOME wordSem_Error) /\
+     wordLang_every_var (\x. x < temp) prog /\ ~(res = SOME
+       wordSem_Error) /\
      locals_rel temp (wordSem_state_locals st) loc ==>
      (?loc'.
      wordSem_evaluate (inst_select c temp
@@ -355,8 +347,7 @@ let inst_select_Loop_helper = cake_theorem "inst_select_Loop_helper"
                 locals_rel temp (wordSem_state_locals rst) loc' | SOME
                 _8 -> wordSem_state_locals rst = loc'))) /\
        wordSem_evaluate (Loop names prog exit_names,s) = (res,rst)
-         /\ ~(
-       res = SOME wordSem_Error) /\
+         /\ ~(res = SOME wordSem_Error) /\
        wordLang_every_var (\x. x < temp) prog /\
        every_name (\x. x < temp) (names,LN) /\
        every_name (\x. x < temp) (exit_names,LN) /\

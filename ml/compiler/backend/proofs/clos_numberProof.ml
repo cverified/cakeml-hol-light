@@ -115,14 +115,14 @@ let v_rel = cake_inductive
      (closSem_RefPtr b r1)) /\
    (LIST_REL (clos_numberProof_v_rel max_app) env env' /\
     LIST_REL (clos_numberProof_v_rel max_app) argenv argenv' /\
-    ~contains_App_SOME max_app [c] /\
+    ~(contains_App_SOME max_app [c]) /\
     c' = SND (renumber_code_locs n c) ==>
     clos_numberProof_v_rel max_app (Closure p argenv env num_args c)
       (Closure p' argenv' env' num_args c')) /\
    (
     LIST_REL (clos_numberProof_v_rel max_app) env env' /\
     LIST_REL (clos_numberProof_v_rel max_app) argenv argenv' /\
-    ~contains_App_SOME max_app (MAP SND es) /\
+    ~(contains_App_SOME max_app (MAP SND es)) /\
     es' = ZIP (MAP FST es) (SND (renumber_code_locs_list n (MAP SND
       es))) ==>
     clos_numberProof_v_rel max_app (Recclosure p argenv env es k)
@@ -144,8 +144,8 @@ let state_rel_def = cake_define
      EVERY2 (OPTREL (clos_numberProof_v_rel (closSem_state_max_app
        s))) (closSem_state_globals s) (closSem_state_globals t) /\
      (!n. SND (SND (closSem_state_compile_oracle s n)) = [] /\
-          ~contains_App_SOME (closSem_state_max_app s) (FST (SND
-            (closSem_state_compile_oracle s n)))) /\ closSem_state_code
+          ~(contains_App_SOME (closSem_state_max_app s) (FST (SND
+            (closSem_state_compile_oracle s n))))) /\ closSem_state_code
      s = FEMPTY /\ closSem_state_code t = FEMPTY`;;
 hol4_overload "state_rel" "clos_numberProof_state_rel";;
 
@@ -192,7 +192,7 @@ let state_rel_code = cake_theorem "state_rel_code[local]"
   CHEAT_TAC;;
 
 (* HOL4 clos_numberProofScript.sml:246-262: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_simp *)
 
 let clos_numberProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
   (fun () ->
@@ -203,8 +203,10 @@ let clos_numberProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
 
 let clos_numberProof_v_rel_Unit = cake_theorem "v_rel_Unit[simp]"
   (fun () ->
-    `(clos_numberProof_v_rel max_app x Unit' <=> (x = Unit')) /\
-      (clos_numberProof_v_rel max_app Unit' x <=> (x = Unit'))`)
+    `(clos_numberProof_v_rel max_app x closSem_Unit <=> (x =
+  closSem_Unit)) /\
+      (clos_numberProof_v_rel max_app closSem_Unit x <=> (x =
+        closSem_Unit))`)
   CHEAT_TAC;;
 
 (* semantic functions respect relation *)
@@ -245,7 +247,7 @@ let dest_closure_v_rel_full =
            (renumber_code_locs n exp)) args1' args2') /\
          LIST_REL (clos_numberProof_v_rel max_app) args1 args1' /\
          LIST_REL (clos_numberProof_v_rel max_app) args2 args2' /\
-         ~contains_App_SOME max_app [exp])`)
+         ~(contains_App_SOME max_app [exp]))`)
   CHEAT_TAC;;
 
 let helper = cake_theorem "helper[local]"
@@ -350,9 +352,9 @@ let do_install = cake_theorem "do_install[local]"
                     clos_numberProof_state_rel t t')) /\
       (!e1 t1. closSem_do_install x1 s1 = (Rval e1,t1) ==>
         (?e2 t2. closSem_do_install x2 s2 = (Rval e2,t2) /\
-                ~contains_App_SOME (closSem_state_max_app t1) (e1)
-                  /\ closSem_state_max_app t1 = closSem_state_max_app s1
-                  /\
+                ~(contains_App_SOME (closSem_state_max_app t1)
+                  (e1)) /\ closSem_state_max_app t1 =
+                  closSem_state_max_app s1 /\
                 e2 = SND (clos_number_compile_inc (FST (FST
                   (closSem_state_compile_oracle s1 0))) e1) /\
                 clos_numberProof_state_rel t1 t2))`)
@@ -400,7 +402,7 @@ let renumber_code_locs_correct =
        tmp = (xs,env,s1) /\
        (closSem_evaluate (xs,env,s1) = (res,s2)) /\ ~(res = Rerr
          (Rabort Rtype_error)) ==>
-       ~contains_App_SOME (closSem_state_max_app s1) xs /\
+       ~(contains_App_SOME (closSem_state_max_app s1) xs) /\
        LIST_REL (clos_numberProof_v_rel (closSem_state_max_app s1))
          env env' /\
        clos_numberProof_state_rel s1 t1 ==>
@@ -535,14 +537,13 @@ let renumber_code_locs_any_dests =
 
 let semantics_number = cake_theorem "semantics_number"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
           (state_cc (ignore_table clos_number_compile_inc) cc) xs =
             ffi_Fail) ==>
-        ~contains_App_SOME max_app xs /\
+        ~(contains_App_SOME max_app xs) /\
         (!n.
            SND (SND (co n)) = [] /\
-           ~contains_App_SOME max_app (FST (SND (co n)))) ==>
+           ~(contains_App_SOME max_app (FST (SND (co n))))) ==>
         closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY
           (state_co (ignore_table clos_number_compile_inc) co) cc
              (SND (renumber_code_locs_list n xs)) =

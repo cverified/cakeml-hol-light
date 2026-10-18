@@ -33,7 +33,7 @@ hol4_overload "++" "OPTION_CHOICE";;
 
 let i_o_f = cake_theorem "I_o_f[local,simp]"
   (fun () ->
-    `!m. I o_f' m = m`)
+    `!m. I o_f m = m`)
   CHEAT_TAC;;
 
 let atom_INDUCT,atom_RECURSION = define_datatype
@@ -142,11 +142,16 @@ let substR_def = cake_define
   `substR fm sp <=> wfs fm /\ sptree_wf sp /\ fm = encode_infer_t o_f
   sp2fm sp`;;
 
-(* HOL4 unifyScript.sml:153-157: a theorem whose statement the port
-   cannot state yet *)
+let substR_FDOM = cake_theorem "substR_FDOM[transfer_rule]"
+  (fun () ->
+    `(FUN_REL substR (=)) FDOM domain`)
+  CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:159-164: a theorem whose statement the port
-   cannot state yet *)
+let substR_FLOOKUP = cake_theorem "substR_FLOOKUP[transfer_rule]"
+  (fun () ->
+    `(FUN_REL substR (FUN_REL (=) (OPTREL RKC))) FLOOKUP (C
+  sptree_lookup)`)
+  CHEAT_TAC;;
 
 let cwfs_def = cake_define
   `cwfs s <=> swfs (sptree_map encode_infer_t s) /\ sptree_wf s`;;
@@ -156,14 +161,19 @@ let sp2fm_map = cake_theorem "sp2fm_map"
     `sp2fm (sptree_map f sp) = f o_f sp2fm sp`)
   CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:178-183: a theorem whose statement the port
-   cannot state yet *)
+let substR_RFORALL = cake_theorem "substR_RFORALL[transfer_rule]"
+  (fun () ->
+    `(FUN_REL (FUN_REL substR (==>)) (==>)) (RES_FORALL wfs)
+  (RES_FORALL cwfs)`)
+  CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:185-191: code that the source has in a
    comment *)
 
-(* HOL4 unifyScript.sml:193-198: a theorem whose statement the port
-   cannot state yet *)
+let wfs_rule = cake_theorem "wfs_rule[transfer_rule]"
+  (fun () ->
+    `(FUN_REL substR (=)) wfs cwfs`)
+  CHEAT_TAC;;
 
 let svwalk_result_encodable = cake_theorem "svwalk_result_encodable"
   (fun () ->
@@ -175,8 +185,10 @@ let cvwalk_def = cake_define
   `cvwalk s n = decode_infer_t (svwalk (sptree_map encode_infer_t s)
   n)`;;
 
-(* HOL4 unifyScript.sml:217-226: a theorem whose statement the port
-   cannot state yet *)
+let cvwalk_rule = cake_theorem "cvwalk_rule[transfer_rule]"
+  (fun () ->
+    `(FUN_REL substR (FUN_REL (=) RKC)) vwalk cvwalk`)
+  CHEAT_TAC;;
 
 let term_CASE_encode = cake_theorem "term_CASE_encode"
   (fun () ->
@@ -190,7 +202,7 @@ let term_CASE_encode = cake_theorem "term_CASE_encode"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:239-247: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cvwalk_thm *)
 
 let cwalk_def = cake_define
   `cwalk s it = decode_infer_t (swalk (sptree_map encode_infer_t s)
@@ -211,13 +223,15 @@ let swalk_elim = cake_theorem "swalk_elim"
      encode_infer_t (cwalk s it)`)
   CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:276-284: a theorem whose statement the port
-   cannot state yet *)
+let substR_walk = cake_theorem "substR_walk[transfer_rule]"
+  (fun () ->
+    `(FUN_REL substR (FUN_REL RKC RKC)) walk cwalk`)
+  CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:286-287: the ML values that the definitions
    below antiquote *)
 (* HOL4 unifyScript.sml:288-293: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cwalk_thm *)
 
 let coc_def = cake_define
   `coc s it n = soc (sptree_map encode_infer_t s) (encode_infer_t it)
@@ -231,11 +245,13 @@ let soc_encode_ts = cake_theorem "soc_encode_ts"
           (encode_infer_t i) n) its)`)
   CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:309-313: a theorem whose statement the port
-   cannot state yet *)
+let substR_oc = cake_theorem "substR_oc[transfer_rule]"
+  (fun () ->
+    `(FUN_REL substR (FUN_REL RKC (FUN_REL (=) (=)))) oc coc`)
+  CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:315-321: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: coc_thm *)
 
 let t_vars_def = cake_define
   `t_vars t = vars (encode_infer_t t)`;;
@@ -265,8 +281,7 @@ let swalk_encode_infer_ts_EQ_VAR =
 
 let encode_t_vs_ts = cake_theorem "encode_t_vs_ts"
   (fun () ->
-    `~(
-       encode_infer_t x = encode_infer_ts l)`)
+    `~(encode_infer_t x = encode_infer_ts l)`)
   CHEAT_TAC;;
 
 let swalk_encode_infer_ts = cake_theorem "swalk_encode_infer_ts"
@@ -371,8 +386,11 @@ let sunify_preserves_swfs = cake_theorem "sunify_preserves_swfs"
     `swfs s /\ sunify s t1 t2 = SOME s' ==> swfs s'`)
   CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:543-567: a theorem whose statement the port
-   cannot state yet *)
+let substR_unify = cake_theorem "substR_unify"
+  (fun () ->
+    `(FUN_REL substR (FUN_REL RKC (FUN_REL RKC (OPTREL substR))))
+  unify cunify`)
+  CHEAT_TAC;;
 
 let _ = size_thms "infer_t";;
 (* the termination relation that HOL4 gives, with
@@ -387,20 +405,20 @@ let capply_subst_def = cake_define_list_try (fun () ->
    `capply_subst s (Infer_Tvar_db n) = Infer_Tvar_db n`];;
 
 (* HOL4 unifyScript.sml:579: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: capply_subst_thm *)
 
 (* HOL4 unifyScript.sml:581-592: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunify_thm *)
 
 (* HOL4 unifyScript.sml:594-601: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunifyl_NIL2 *)
 (* HOL4 unifyScript.sml:602-609: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunifyl_NILCONS *)
 (* HOL4 unifyScript.sml:610-617: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunifyl_CONSNIL *)
 
 (* HOL4 unifyScript.sml:619-630: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunifyl_CONS2 *)
 
 let cunify_preserves_cwfs = cake_theorem "cunify_preserves_cwfs"
   (fun () ->
@@ -422,9 +440,9 @@ let cwalkstar_def = cake_define
      (encode_infer_t it))`;;
 
 (* HOL4 unifyScript.sml:660-664: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: walkstar1 *)
 (* HOL4 unifyScript.sml:665-668: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: walkstar2 *)
 
 let cvwalk_rwt = cake_theorem "cvwalk_rwt"
   (fun () ->
@@ -442,12 +460,12 @@ let decode_infer_ts_walkstar = cake_theorem "decode_infer_ts_walkstar"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:692-704: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cwalkstar_thm *)
 
 (* HOL4 unifyScript.sml:706-709: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: walkstar_def' *)
 (* HOL4 unifyScript.sml:710-713: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: walkstar_thm' *)
 let infer_t_CASE_RAND = cake_theorem "infer_t_CASE_RAND"
   (fun () ->
     `f (infer_t_CASE it tvf taf tuf) =
@@ -517,10 +535,10 @@ let cvwalk_eta = cake_theorem "cvwalk_eta[local]"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:833-837: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcvwalk_thm *)
 
 (* HOL4 unifyScript.sml:839-840: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcvwalk_correct *)
 
 let tcwalk_def = cake_define
   `tcwalk s it = (match it with
@@ -543,7 +561,7 @@ let cocl_EXISTS = cake_theorem "cocl_EXISTS"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:866: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: coc_thm' *)
 
 let kcoc_def = cake_define
   `kcoc s it n k = cwc (coc s it n) k`;;
@@ -561,7 +579,7 @@ let contify_infer_case = cake_theorem "contify_infer_case"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:886-893: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcoc_thm *)
 
 let cwc_OR = cake_theorem "cwc_OR"
   (fun () ->
@@ -574,7 +592,7 @@ let kcocl_Ky = cake_theorem "kcocl_Ky"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:907-916: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcocl_thm *)
 
 new_type_abbrev("kcockont",`: (infer_t list) list`);;
 
@@ -596,13 +614,13 @@ let dfkcocl_def = cake_define
   `dfkcocl s ts n k = kcocl s ts n (apply_kcockont s n k)`;;
 
 (* HOL4 unifyScript.sml:941-942: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: apply_kcockont_thm *)
 
 (* HOL4 unifyScript.sml:944-947: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: dfkcoc_thm *)
 
 (* HOL4 unifyScript.sml:949-953: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: dfkcocl_thm *)
 
 let apply_kcockont_HDNIL = cake_theorem "apply_kcockont_HDNIL"
   (fun () ->
@@ -621,16 +639,16 @@ let dfkcocl_removed = cake_theorem "dfkcocl_removed"
 
 (* HOL4 unifyScript.sml:975: ML code, not ported *)
 (* HOL4 unifyScript.sml:976: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: dfkcocl_nonrecursive0 *)
 
 (* HOL4 unifyScript.sml:978-983: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: dfkcocl_nonrecursive *)
 
 (* HOL4 unifyScript.sml:985: the overload kcocwl0, which the port
    expands *)
 
 (* HOL4 unifyScript.sml:987-991: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcocwl0_thm *)
 
 let kcocwl_def = cake_define
   `kcocwl s n ts = apply_kcockont s n ts F`;;
@@ -641,7 +659,7 @@ let kcocwl0_varcheck = cake_theorem "kcocwl0_varcheck"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:1001-1006: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcocwl_thm *)
 
 (* HOL4 unifyScript.sml:1008-1014: the ML values that the definitions
    below antiquote *)
@@ -674,12 +692,12 @@ let WF_kcocwlR = cake_theorem "WF_kcocwlR"
 let FINITE_BAG_FOLDR_INSERT =
   cake_theorem "FINITE_BAG_FOLDR_INSERT[simp]"
   (fun () ->
-    `FINITE_BAG (ITLIST BAG_INSERT' xs b) = FINITE_BAG b`)
+    `FINITE_BAG (ITLIST BAG_INSERT xs b) = FINITE_BAG b`)
   CHEAT_TAC;;
 
 let FOLDR_BAG_INSERT_UNION = cake_theorem "FOLDR_BAG_INSERT_UNION"
   (fun () ->
-    `ITLIST BAG_INSERT' xs b = (BAG_UNION) b ((FOLDR BAG_INSERT
+    `ITLIST BAG_INSERT xs b = (BAG_UNION) b ((FOLDR BAG_INSERT
   EMPTY_BAG) xs)`)
   CHEAT_TAC;;
 
@@ -719,7 +737,7 @@ let subterm_pair_count = cake_theorem "subterm_pair_count"
 
 let subterm_REFL = cake_theorem "subterm_REFL[simp]"
   (fun () ->
-    `~subterm t t`)
+    `~(subterm t t)`)
   CHEAT_TAC;;
 
 let subterm_TRANS = cake_theorem "subterm_TRANS"
@@ -767,16 +785,18 @@ let tcocwl_def = cake_define
   `tcocwl s n is = TAILREC (kcocwl_code s n) is`;;
 
 (* HOL4 unifyScript.sml:1207-1208: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcocwl_correct0 *)
 let tcocwl_correct = cake_theorem "tcocwl_correct"
   (fun () ->
     `cwfs s ==> cocl s ts n = tcocwl s n [ts]`)
   CHEAT_TAC;;
-(* HOL4 unifyScript.sml:1215: a theorem that HOL4 states as the value
-   of an ML expression *)
+let disj2cond = cake_theorem "disj2cond[local]"
+  (fun () ->
+    `p \/ q <=> (if p then T else q)`)
+  CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:1217-1222: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcocwl_thm *)
 
 (* ----------------------------------------------------------------------
     tail-recursification of cwalkstar
@@ -798,16 +818,16 @@ let kcwalkstarl_def = cake_define
   `kcwalkstarl s its k = cwc (cwalkstarl s its) k`;;
 
 (* HOL4 unifyScript.sml:1247-1252: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cwalkstar_thm' *)
 
 (* HOL4 unifyScript.sml:1254-1263: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcwalkstar_thm *)
 
 (* HOL4 unifyScript.sml:1265-1274: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcwalkstarl_thm0 *)
 
 (* HOL4 unifyScript.sml:1276-1277: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcwalkstarl_thm *)
 
 let kclkont_INDUCT,kclkont_RECURSION = define_datatype
   "kclkont = DBk (num) | APPk (infer_t list) (num) | UVk (num) | \
@@ -829,23 +849,23 @@ let dfkcwalkstarl_def = cake_define
   `dfkcwalkstarl s t k = kcwalkstarl s t (apply_kclkont s k)`;;
 
 (* HOL4 unifyScript.sml:1298-1299: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: apply_kclkont5 *)
 
 (* HOL4 unifyScript.sml:1301-1306: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: apply_kclkont_thm *)
 
 (* HOL4 unifyScript.sml:1308-1313: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: dfkcwalkstarl_thm *)
 
 let kcwalkstarwl_def = cake_define_list
   [`kcwalkstarwl s T t k = apply_kclkont s k t`;
    `kcwalkstarwl s F t k = dfkcwalkstarl s t k`];;
 
 (* HOL4 unifyScript.sml:1320-1324: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcwalkstarwl_thm *)
 
 (* HOL4 unifyScript.sml:1326: a theorem that HOL4 states as the value
-   of an ML expression *)
+   of an ML expression: dfkcwalkstarl_removed *)
 let apply_kclkont_ID = cake_theorem "apply_kclkont_ID[simp]"
   (fun () ->
     `apply_kclkont s [] = I`)
@@ -961,10 +981,10 @@ let tcwalkstar_p2_def = cake_define
   `tcwalkstar_p2 s its k = tcwalkstarwl s T its k`;;
 
 (* HOL4 unifyScript.sml:1492-1503: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcwalkstarwl_thm *)
 
 (* HOL4 unifyScript.sml:1505-1506: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcwalkstarwl_correct0 *)
 
 let tcwalkstarwl_correct = cake_theorem "tcwalkstarwl_correct"
   (fun () ->
@@ -978,10 +998,10 @@ let kcunifyl_def = cake_define
   `kcunifyl s ts us k = cwc (cunifyl s ts us) k`;;
 
 (* HOL4 unifyScript.sml:1523-1525: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunifyl_thm' *)
 
 (* HOL4 unifyScript.sml:1527-1541: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcunifyl_thm *)
 
 new_type_abbrev("kcunifkont",`: (infer_t list#infer_t list) list`);;
 let apply_cunifk_def = cake_define_list
@@ -1006,19 +1026,19 @@ let abs_EQ_apply_cunifk = cake_theorem "abs_EQ_apply_cunifk"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:1568-1569: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: apply_cunifk_thm *)
 
 (* HOL4 unifyScript.sml:1571-1577: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: dfkcunifyl_thm *)
 
 (* HOL4 unifyScript.sml:1579-1582: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: cunifywl0 *)
 
 let kcunifywl_def = cake_define
   `kcunifywl s k = apply_cunifk k (SOME s)`;;
 
 (* HOL4 unifyScript.sml:1588-1591: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: kcunifywl_thm *)
 
 (* HOL4 unifyScript.sml:1593: ML code, not ported *)
 cake_declare "cunify_code"
@@ -1101,19 +1121,18 @@ let mlt_BAG_INSERT2 = cake_theorem "mlt_BAG_INSERT2"
 
 let cwfs_insert_tvar_db = cake_theorem "cwfs_insert_tvar_db"
   (fun () ->
-    `~(
-       v IN domain s) /\ cwfs s ==> cwfs (sptree_insert v
-         (Infer_Tvar_db c) s)`)
+    `~(v IN domain s) /\ cwfs s ==> cwfs (sptree_insert v
+  (Infer_Tvar_db c) s)`)
   CHEAT_TAC;;
 
 let tcwalk_EQ_Infer_Tuvar = cake_theorem "tcwalk_EQ_Infer_Tuvar"
   (fun () ->
-    `cwfs s /\ tcwalk s t = Infer_Tuvar v ==> ~(
-     v IN domain s) /\ (?u. t = Infer_Tuvar u)`)
+    `cwfs s /\ tcwalk s t = Infer_Tuvar v ==> ~(v IN domain s) /\ (?u.
+  t = Infer_Tuvar u)`)
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:1814-1818: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: svwalk_result_encodable' *)
 
 let tcvwalk_substvars = cake_theorem "tcvwalk_substvars"
   (fun () ->
@@ -1159,8 +1178,13 @@ let PFLAT_eqn = cake_theorem "PFLAT_eqn"
                    encode_infer_t l2)) (PFLAT rest))`)
   CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:1876-1884: a theorem whose statement the port
-   cannot state yet *)
+let vars_walkstar_encode_infer_ts =
+  cake_theorem "vars_walkstar_encode_infer_ts"
+  (fun () ->
+    `wfs s ==>
+     vars (walkstar s (encode_infer_ts L)) =
+     BIGUNION {vars (walkstar s (encode_infer_t e)) | MEM e L}`)
+  CHEAT_TAC;;
 
 let kcunifywl_ensures_decrease =
   cake_theorem "kcunifywl_ensures_decrease"
@@ -1186,10 +1210,10 @@ let tcunify_def = cake_define
   `tcunify s wl = TAILREC cunify_code (s,wl)`;;
 
 (* HOL4 unifyScript.sml:2007-2012: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcunify_thm *)
 
 (* HOL4 unifyScript.sml:2014-2015: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: tcunify_correct0 *)
 
 let tcunify_correct = cake_theorem "tcunify_correct"
   (fun () ->
@@ -1221,7 +1245,7 @@ let t_vwalk_ind' = cake_theorem "t_vwalk_ind'[local]"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:2064-2065: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: t_vwalk_ind *)
 
 let t_vwalk_eqn = cake_theorem "t_vwalk_eqn"
   (fun () ->
@@ -1261,8 +1285,8 @@ let encode_vwalk = cake_theorem "encode_vwalk[local]"
 let t_oc_eqn_help = cake_theorem "t_oc_eqn_help[local]"
   (fun () ->
     `!l v s.
-     oc (encode_infer_t o_f' s) (encode_infer_ts l) v <=>
-     EXISTS (\t. oc (encode_infer_t o_f' s) (encode_infer_t t) v)
+     oc (encode_infer_t o_f s) (encode_infer_ts l) v <=>
+     EXISTS (\t. oc (encode_infer_t o_f s) (encode_infer_t t) v)
        l`)
   CHEAT_TAC;;
 
@@ -1439,8 +1463,14 @@ let t_walkstar_cwalkstar = cake_theorem "t_walkstar_cwalkstar"
     `t_walkstar s t = cwalkstar (fm2sp s) t`)
   CHEAT_TAC;;
 
-(* HOL4 unifyScript.sml:2657-2666: a theorem whose statement the port
-   cannot state yet *)
+let ts_walkstar_thm = cake_theorem "ts_walkstar_thm[local]"
+  (fun () ->
+    `!l s.
+     t_wfs s ==>
+     (decode_infer_ts (walkstar (encode_infer_t o_f s)
+       (encode_infer_ts l)) =
+      MAP (t_walkstar s) l)`)
+  CHEAT_TAC;;
 
 let t_walkstar_eqn = cake_theorem "t_walkstar_eqn"
   (fun () ->
@@ -1504,7 +1534,7 @@ let t_unify_strongind' = cake_theorem "t_unify_strongind'[local]"
   CHEAT_TAC;;
 
 (* HOL4 unifyScript.sml:2778-2779: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: t_unify_strongind *)
 
 let encode_walkstar = cake_theorem "encode_walkstar[local]"
   (fun () ->
@@ -1516,7 +1546,7 @@ let encode_walkstar = cake_theorem "encode_walkstar[local]"
 
 let t_walkstar_FEMPTY = cake_theorem "t_walkstar_FEMPTY"
   (fun () ->
-    `!t. (t_walkstar FEMPTY' t = t)`)
+    `!t. (t_walkstar FEMPTY t = t)`)
   CHEAT_TAC;;
 
 let t_wfs_SUBMAP = cake_theorem "t_wfs_SUBMAP"
@@ -1627,12 +1657,12 @@ let t_walkstar_eqn1 = cake_theorem "t_walkstar_eqn1"
 
 let oc_tvar_db = cake_theorem "oc_tvar_db"
   (fun () ->
-    `!s uv tvs. t_wfs s ==> ~t_oc s (Infer_Tvar_db tvs) uv`)
+    `!s uv tvs. t_wfs s ==> ~(t_oc s (Infer_Tvar_db tvs) uv)`)
   CHEAT_TAC;;
 
 let oc_unit = cake_theorem "oc_unit"
   (fun () ->
-    `!s uv tc. t_wfs s ==> ~t_oc s (Infer_Tapp [] tc) uv`)
+    `!s uv tc. t_wfs s ==> ~(t_oc s (Infer_Tapp [] tc) uv)`)
   CHEAT_TAC;;
 
 let no_vars_lem = cake_theorem "no_vars_lem"

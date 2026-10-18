@@ -2,7 +2,7 @@
 (*  reg_alloc: ported from HOL4's
     compiler/backend/reg_alloc/reg_allocScript.sml
     A definition theory, with 88 definitions, 5 datatypes and 6
-    theorems.  Needed by 15 files of the port.  *)
+    theorems.  Needed by 13 files of the port.  *)
 (* ======================================================== *)
 
 (*
@@ -306,15 +306,15 @@ let update_move_related_def = cake_define
 (* HOL4 reg_allocScript.sml:119-123: ML code, not ported *)
 
 (* HOL4 reg_allocScript.sml:125-126: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: adj_ls_accessor *)
 (* HOL4 reg_allocScript.sml:127-128: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: node_tag_accessor *)
 (* HOL4 reg_allocScript.sml:129-130: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: degrees_accessor *)
 (* HOL4 reg_allocScript.sml:131-132: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: coalesced_accessor *)
 (* HOL4 reg_allocScript.sml:133-134: a theorem that HOL4 states as
-   the value of an ML expression *)
+   the value of an ML expression: move_related_accessor *)
 
 (* Helper functions for defining the allocator *)
 
@@ -652,7 +652,7 @@ let bg_ok_def = cake_define
        case2degs.
        let c2len = LENGTH (FILTER (\x. x >= k) case2degs) in
        if c2len = 0 then st_ex_return (SOME (case1,case2)) else
-       let case3 = FILTER (\v. ~sorted_mem v adjy) adjx in
+       let case3 = FILTER (\v. ~(sorted_mem v adjy)) adjx in
        st_ex_bind (st_ex_FILTER (considered_var k) case3 []) (\
          case3. st_ex_bind (st_ex_MAP (deg_or_inf (k + 1)) case1) (\
          case1degs. st_ex_bind (st_ex_MAP (deg_or_inf k) case3) (\
@@ -1156,9 +1156,11 @@ let is_alloc_var_def = cake_define
 
 let convention_partitions = cake_theorem "convention_partitions"
   (fun () ->
-    `!n. (is_stack_var n <=> (~is_phy_var n) /\ ~(is_alloc_var n)) /\
-       (is_phy_var n <=> (~is_stack_var n) /\ ~(is_alloc_var n)) /\
-       (is_alloc_var n <=> (~is_phy_var n) /\ ~(is_stack_var n))`)
+    `!n. (is_stack_var n <=> (~(is_phy_var n)) /\ ~(is_alloc_var n)) /\
+       (is_phy_var n <=> (~(is_stack_var n)) /\ ~(is_alloc_var n))
+         /\
+       (is_alloc_var n <=> (~(is_phy_var n)) /\ ~(is_stack_var
+         n))`)
   CHEAT_TAC;;
 
 (* Set the tags according to wordLang conventions *)
@@ -1183,7 +1185,7 @@ let mk_graph_def = cake_define_list
         st_ex_bind (st_ex_return (MAP ta w)) (\
           wta. st_ex_bind (st_ex_return (MAP ta r)) (\
           rta. st_ex_bind (extend_clique wta liveout) (\
-          live. st_ex_bind (st_ex_return (FILTER (\x. ~MEM x wta)
+          live. st_ex_bind (st_ex_return (FILTER (\x. ~(MEM x wta))
             live)) (\
           live. st_ex_bind (extend_clique rta live) (\
           livein.

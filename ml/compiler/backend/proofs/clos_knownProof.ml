@@ -35,14 +35,11 @@ needs "semantics/semanticPrimitives.ml";;
 (* HOL4 clos_knownProofScript.sml:25: the ML values that the
    definitions below antiquote *)
 
-(* HOL4 clos_knownProofScript.sml:27: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownProofScript.sml:27: ML code, not ported *)
 
-(* HOL4 clos_knownProofScript.sml:29: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownProofScript.sml:29: ML code, not ported *)
 
-(* HOL4 clos_knownProofScript.sml:31: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownProofScript.sml:31: ML code, not ported *)
 
 (* simple properties of constants from clos_known: i.e., merge and known *)
 
@@ -214,7 +211,7 @@ let val_approx_sgc_free_def = cake_define_wf
         | _1 -> T`;;
 
 (* HOL4 clos_knownProofScript.sml:257-258: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: val_approx_sgc_free_def *)
 
 let val_approx_sgc_free_merge = cake_theorem "val_approx_sgc_free_merge"
   (fun () ->
@@ -245,7 +242,7 @@ let val_approx_val = cake_inductive
      (Closure (SOME m) [] env n b))`;;
 
 (* HOL4 clos_knownProofScript.sml:294-302: a theorem that HOL4 states
-   as the value of an ML expression *)
+   as the value of an ML expression: val_approx_val_simps *)
 
 let val_approx_val_merge_I_lemma =
   cake_theorem "val_approx_val_merge_I_lemma"
@@ -510,8 +507,7 @@ let do_install_ssgc = cake_theorem "do_install_ssgc"
        (closSem_state_globals s1)`)
   CHEAT_TAC;;
 
-(* HOL4 clos_knownProofScript.sml:705-709: the ML values that the
-   definitions below antiquote *)
+(* HOL4 clos_knownProofScript.sml:705-709: ML code, not ported *)
 
 let not_less_zero_imp = cake_theorem "not_less_zero_imp[local]"
   (fun () ->
@@ -586,10 +582,11 @@ let evaluate_changed_globals_0 =
   CHEAT_TAC;;
 
 (* HOL4 clos_knownProofScript.sml:1231-1232: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: evaluate_changed_globals *)
 
 (* HOL4 clos_knownProofScript.sml:1234-1235: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression:
+   evaluate_app_changed_globals *)
 
 let mk_Ticks_set_globals = cake_theorem "mk_Ticks_set_globals[simp]"
   (fun () ->
@@ -992,14 +989,31 @@ let state_globals_approx_known_op_evaluate =
      state_globals_approx s g`)
   CHEAT_TAC;;
 
-(* HOL4 clos_knownProofScript.sml:1802-1809: a theorem whose
-   statement the port cannot state yet *)
+let elist_globals_first_n_exps_lemma =
+  cake_theorem "elist_globals_first_n_exps_lemma"
+  (fun () ->
+    `!i k co. BAG_IN i (closProps_elist_globals (FST (SND (co k)))) ==>
+           (!n. k < n ==> BAG_IN i (closProps_elist_globals (FLAT
+             (first_n_exps co n))))`)
+  CHEAT_TAC;;
 
-(* HOL4 clos_knownProofScript.sml:1811-1819: a theorem whose
-   statement the port cannot state yet *)
+let elist_globals_first_n_exps_shift_seq_lemma =
+  cake_theorem "elist_globals_first_n_exps_shift_seq_lemma"
+  (fun () ->
+    `!i k co. BAG_IN i (closProps_elist_globals (FST (SND (co k)))) ==>
+           (!m n. m < k /\ k < m + n ==> BAG_IN i
+             (closProps_elist_globals (FLAT (first_n_exps
+             (misc_shift_seq m co) n))))`)
+  CHEAT_TAC;;
 
-(* HOL4 clos_knownProofScript.sml:1821-1829: a theorem whose
-   statement the port cannot state yet *)
+let elist_globals_first_n_exps_exists =
+  cake_theorem "elist_globals_first_n_exps_exists"
+  (fun () ->
+    `!i co n. BAG_IN i (closProps_elist_globals (FLAT (first_n_exps co
+  n))) ==>
+       (?k. k < n /\ BAG_IN i (closProps_elist_globals (FST (SND
+         (co k)))))`)
+  CHEAT_TAC;;
 
 let oracle_gapprox_disjoint_Install =
   cake_theorem "oracle_gapprox_disjoint_Install"
@@ -1078,7 +1092,7 @@ let elist_globals_FLAT_APPEND_FOLDR =
   CHEAT_TAC;;
 
 (* HOL4 clos_knownProofScript.sml:2503-2504: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: elist_globals_FLAT_FOLDR *)
 
 let monotonic_unique_set_globals =
   cake_theorem "monotonic_unique_set_globals"
@@ -1135,10 +1149,8 @@ let f_rel_def = cake_define
         clos_known_Other ++ aenv) g e1 e2`;;
 hol4_overload "f_rel" "clos_knownProof_f_rel";;
 
-let v1_size_append = cake_theorem "v1_size_append"
-  (fun () ->
-    `!xs ys. v1_size (xs ++ ys) = v1_size xs + v1_size ys`)
-  CHEAT_TAC;;
+(* HOL4 clos_knownProofScript.sml:2578-2582: a theorem whose
+   statement the port cannot state yet: v1_size_append *)
 
 let _ = size_thms "closSem_v";;
 (* the termination relation that HOL4 gives, with
@@ -1192,7 +1204,7 @@ let v_rel_def = cake_define_list_try_tac (fun () ->
 hol4_overload "v_rel" "clos_knownProof_v_rel";;
 
 (* HOL4 clos_knownProofScript.sml:2619-2620: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: v_rel_def *)
 
 (* HOL4 clos_knownProofScript.sml:2622: ML code, not ported *)
 
@@ -1265,8 +1277,8 @@ let clos_knownProof_v_rel_Boolv = cake_theorem "v_rel_Boolv[simp]"
 
 let clos_knownProof_v_rel_Unit = cake_theorem "v_rel_Unit[simp]"
   (fun () ->
-    `(v_rel c g Unit' v <=> v = Unit') /\ (v_rel c g v Unit' <=> v =
-  Unit')`)
+    `(v_rel c g closSem_Unit v <=> v = closSem_Unit) /\ (v_rel c g v
+  closSem_Unit <=> v = closSem_Unit)`)
   CHEAT_TAC;;
 
 let clos_knownProof_v_rel_IMP_v_to_bytes_lemma =
@@ -1316,7 +1328,7 @@ let ref_rel = cake_inductive
 hol4_overload "ref_rel" "clos_knownProof_ref_rel";;
 
 (* HOL4 clos_knownProofScript.sml:2762-2766: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: ref_rel_simps *)
 
 let ref_rel_upd_inline_factor = cake_theorem "ref_rel_upd_inline_factor"
   (fun () ->
@@ -1446,8 +1458,7 @@ let clos_knownProof_do_app_lemma = cake_theorem "do_app_lemma[local]"
 
 let evaluate_app_exact_rw = cake_theorem "evaluate_app_exact_rw"
   (fun () ->
-    `~(
-     args = []) /\ num_args = LENGTH args ==>
+    `~(args = []) /\ num_args = LENGTH args ==>
      evaluate_app (SOME loc) (Closure (SOME loc) [] env num_args
        body) args s =
      (if state_clock s < LENGTH args then
@@ -1460,10 +1471,10 @@ let evaluate_app_exact_rw = cake_theorem "evaluate_app_exact_rw"
    definitions below antiquote *)
 
 (* HOL4 clos_knownProofScript.sml:2972-2974: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: loptrel_arg1_SOME *)
 
 (* HOL4 clos_knownProofScript.sml:2976-2978: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: loptrel_arg1_NONE *)
 
 let clos_knownProof_dest_closure_SOME_IMP =
   cake_theorem "dest_closure_SOME_IMP"
@@ -1594,8 +1605,8 @@ let known_correct0 = cake_theorem "known_correct0[local]"
         unique_set_globals xs (closSem_state_compile_oracle s0) /\
         is_state_oracle (compile_inc c)
           (closSem_state_compile_oracle s0) /\
-        env1full = env1 ++ xenv1 /\ ~(
-        res1 = Rerr (Rabort Rtype_error)) ==>
+        env1full = env1 ++ xenv1 /\ ~(res1 = Rerr (Rabort
+          Rtype_error)) ==>
         (?res2 t.
           closSem_evaluate (MAP FST eas,env2 ++ xenv2,t0) =
             (res2,t) /\
@@ -1627,8 +1638,8 @@ let known_correct0 = cake_theorem "known_correct0[local]"
         loptrel f2 (LENGTH args1) lopt1 lopt2 /\
         (IS_SOME argsopt ==> argsopt = SOME args1 /\ ~(args1 = [])
           /\ (?exp env. dest_closure (closSem_state_max_app s0) lopt1 f1
-          args1 = SOME (Full_app exp env []))) /\ ~(
-        res1 = Rerr (Rabort Rtype_error)) ==>
+          args1 = SOME (Full_app exp env []))) /\ ~(res1 = Rerr (Rabort
+          Rtype_error)) ==>
         (?res2 t.
           evaluate_app lopt2 f2 args2 t0 = (res2,t) /\
           semanticPrimitivesProps_result_rel (LIST_REL (v_rel c
@@ -1643,8 +1654,7 @@ let known_correct0 = cake_theorem "known_correct0[local]"
 
 let semantics_known = cake_theorem "semantics_known"
   (fun () ->
-    `~(
-        closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
+    `~(closSem_semantics (ffi:'ffi ffi_state) max_app FEMPTY co
           (state_cc (compile_inc c) cc) xs = ffi_Fail) ==>
         (!n. SND (SND (co n)) = []) /\
         (!n. fv_max 0 (FST (SND (co n)))) /\
@@ -1675,7 +1685,7 @@ let code_locs_mk_Ticks = cake_theorem "code_locs_mk_Ticks[simp]"
 let contains_closures_code_locs =
   cake_theorem "contains_closures_code_locs"
   (fun () ->
-    `!es. ~contains_closures es ==> code_locs es = []`)
+    `!es. ~(contains_closures es) ==> code_locs es = []`)
   CHEAT_TAC;;
 
 let code_locs_decide_inline = cake_theorem "code_locs_decide_inline"
@@ -1831,8 +1841,7 @@ let syntax_oracle_ok_gapprox_subspt =
 
 let clos_knownProof_semantics_compile = cake_theorem "semantics_compile"
   (fun () ->
-    `~(
-     closSem_semantics ffi max_app FEMPTY co cc1 xs = ffi_Fail) /\
+    `~(closSem_semantics ffi max_app FEMPTY co cc1 xs = ffi_Fail) /\
      (cc1 = known_cc known_conf cc) /\
      (co1 = known_co known_conf co) /\
      (compile known_conf xs = (known_conf',es)) /\
@@ -1990,7 +1999,7 @@ let val_approx_no_Labels_def = cake_define_wf
 (* HOL4 clos_knownProofScript.sml:5516-5522: ML code, not ported *)
 
 (* HOL4 clos_knownProofScript.sml:5524-5527: a theorem that HOL4
-   states as the value of an ML expression *)
+   states as the value of an ML expression: val_approx_no_Labels_simp *)
 
 let decide_inline_no_Labels = cake_theorem "decide_inline_no_Labels"
   (fun () ->

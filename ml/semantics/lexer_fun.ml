@@ -302,7 +302,7 @@ let lem2 = cake_theorem "lem2[local]"
   CHEAT_TAC;;
 
 (* HOL4 lexer_funScript.sml:342: a theorem that HOL4 states as the
-   value of an ML expression *)
+   value of an ML expression: read_while_EMPTY *)
 
 let NOT_NIL_EXISTS_CONS = cake_theorem "NOT_NIL_EXISTS_CONS[local]"
   (fun () ->
