@@ -183,6 +183,12 @@ Not ported (and why):
                  guessed one.  Everything but the last derives
                  the clauses as HOL4 states them.
                  `cake_inductive` is HOL4's `Inductive`
+- `mc_tailrec.ml` HOL4's `mc_tailrecLib` for HOL Light: the
+                 routines of the bignum library are defined from
+                 their step function, as the `SHORT_TAILREC` of
+                 it (and their precondition as its
+                 `SHORT_TAILREC_PRE`), and the equation that
+                 unfolds each of the two is assumed
 - then the HOL4 library theories themselves: `sptree.ml`,
   `finite_map.ml`, `balanced_map.ml`, `words4.ml`,
   `integer_word.ml`, `alignment.ml`, `bitstring.ml`,
@@ -191,7 +197,8 @@ Not ported (and why):
   `pegexec.ml`, `grammar.ml`, `ASCIInumbers.ml`,
   `numposrep.ml`, `mergesort.ml`, `comparison.ml`, `toto.ml`,
   `state_transformer.ml`, `spt_closure.ml`, `unification.ml`,
-  `multiword.ml`
+  `multiword.ml`, `mc_multiword.ml` (the bignum routines, which
+  `tailrec.ml` and `mc_tailrec.ml` are for), `errorMonad.ml`
 
 ## Names
 
