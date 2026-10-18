@@ -27,6 +27,19 @@ Everything else of the sources is in: `tools/coverage.py` counts
 the blocks and the theorems of every source against its port, and
 what it reports missing is the two blocks below and these 482.
 
+**Twenty-three statements of `cmlNTProps` apply `firstSetML` and
+`nullableML` to a grammar**, which HOL4 defines with the attribute
+`[schematic]`: the grammar is a free variable of the definition
+there, and HOL4 makes it the *first argument* of the constant.  The
+port has the definition with the grammar free, which it has to
+assume (`ml/CHEATS.md` lists both as `free: G`), so its constant
+takes one argument less than HOL4's and the statements about it do
+not typecheck.  The fix is to make the schematic variable an
+argument, which turns an assumed definition into a real one with
+an assumed termination; the four schematic definitions of the
+library layer are `nullableML`, `firstSetML`, `pre_vwalk` and
+`pre_walkstar`.
+
 **Forty statements use an auxiliary size function of a datatype
 family** (`exp1_size`, `exp3_size`, `v1_size`, ...).  HOL4's
 `Datatype` makes one of these for every type that the family
