@@ -49,107 +49,63 @@ let arg2_def = cake_define
        backend_common_None xs (closLang_Var backend_common_None 0))`;;
 hol4_overload "arg2" "flat_to_clos_arg2";;
 
-(* HOL4 ML code, not ported:
-fun var_fun m n = ``closLang$Var t ^(numSyntax.term_of_int(m-n))``;
-*)
+let var_fun m n =
+  list_mk_icomb "closLang_Var" [`t:tra`; mk_small_numeral (m - n)];;
 
-(* HOL4 ML code, not ported:
-fun check1 tm var =
-``(If t (Op t (IntOp Less) [Op t (IntOp (Const 0)) []; ^(var 2)]) (Raise
-  t (Op t (BlockOp (Cons subscript_tag)) []))
-  (If t (Op t (IntOp Less) [Op t (IntOp (Const 0)) []; ^(var 1)]) (Raise
-    t (Op t (BlockOp (Cons subscript_tag)) []))
-  (If t (Op t (MemOp (BoundsCheckByte T)) [Op t (IntOp Add) [^(var 2);
-    ^(var 1)]; ^(var 0)]) ^tm
-  (Raise t (Op t (BlockOp (Cons subscript_tag)) [])))))``;
-*)
+let check1 tm var =
+  vsubst [var 2,`v2:closLang_exp`; var 1,`v1:closLang_exp`;
+          var 0,`v0:closLang_exp`; tm,`tm:closLang_exp`]
+  `closLang_If t
+     (closLang_Op t (closLang_IntOp closLang_Less)
+        [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+         v2])
+     (closLang_Raise t (closLang_Op t
+        (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+     (closLang_If t
+       (closLang_Op t (closLang_IntOp closLang_Less)
+          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+           v1])
+       (closLang_Raise t (closLang_Op t
+          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+       (closLang_If t
+         (closLang_Op t (closLang_MemOp (closLang_BoundsCheckByte T))
+            [closLang_Op t (closLang_IntOp closLang_Add) [v2; v1];
+             v0])
+         tm
+         (closLang_Raise t (closLang_Op t
+            (closLang_BlockOp (closLang_Cons subscript_tag))
+            []))))`;;
 
-(* HOL4 ML code, not ported:
-val checkT = check1
-  ``(closLang$Op t (MemOp (CopyByte T)) [Var t 0; Var t 1; Var t 2])``
-    (var_fun 2);
-*)
+let checkT =
+  check1 `closLang_Op t (closLang_MemOp (closLang_CopyByte T))
+            [closLang_Var t 0; closLang_Var t 1; closLang_Var t 2]`
+         (var_fun 2);;
 
-(* HOL4 ML code, not ported:
-val checkF = check1
-``(If t (Op t (IntOp Less) [Op t (IntOp (Const 0)) []; Var t 0]) (Raise
-  t (Op t (BlockOp (Cons subscript_tag)) []))
-  (If t (Op t (MemOp (BoundsCheckByte T)) [Op t (IntOp Add) [Var t 2;
-    Var t 0]; Var t 1])
-     (Op t (MemOp (CopyByte F)) [Var t 0; Var t 1; Var t 2; Var t 3; Var
-       t 4])
-     (Raise t (Op t (BlockOp (Cons subscript_tag)) []))))`` (var_fun 4);
-*)
+let checkF =
+  check1
+  `closLang_If t
+     (closLang_Op t (closLang_IntOp closLang_Less)
+        [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
+         closLang_Var t 0])
+     (closLang_Raise t (closLang_Op t
+        (closLang_BlockOp (closLang_Cons subscript_tag)) []))
+     (closLang_If t
+       (closLang_Op t (closLang_MemOp (closLang_BoundsCheckByte T))
+          [closLang_Op t (closLang_IntOp closLang_Add)
+             [closLang_Var t 2; closLang_Var t 0];
+           closLang_Var t 1])
+       (closLang_Op t (closLang_MemOp (closLang_CopyByte F))
+          [closLang_Var t 0; closLang_Var t 1; closLang_Var t 2;
+           closLang_Var t 3; closLang_Var t 4])
+       (closLang_Raise t (closLang_Op t
+          (closLang_BlockOp (closLang_Cons subscript_tag)) [])))`
+  (var_fun 4);;
 
 let CopyByteStr_def = cake_define
-  `CopyByteStr t =
-     closLang_If t
-       (closLang_Op t (closLang_IntOp closLang_Less)
-          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-           closLang_Var t 0])
-       (closLang_Raise t (closLang_Op t
-          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-       (closLang_If t
-         (closLang_Op t (closLang_IntOp closLang_Less)
-            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-             closLang_Var t 1])
-         (closLang_Raise t (closLang_Op t
-            (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-         (closLang_If t
-           (closLang_Op t
-             (closLang_MemOp (closLang_BoundsCheckByte T))
-              [closLang_Op t (closLang_IntOp closLang_Add)
-                 [closLang_Var t 0; closLang_Var t 1];
-               closLang_Var t 2])
-           (closLang_Op t (closLang_MemOp (closLang_CopyByte T))
-              [closLang_Var t 0; closLang_Var t 1; closLang_Var t 2])
-           (closLang_Raise t (closLang_Op t
-              (closLang_BlockOp (closLang_Cons subscript_tag))
-              []))))`;;
+  (mk_eq (`(CopyByteStr (t:tra)):closLang_exp`,checkT));;
 
 let CopyByteAw8_def = cake_define
-  `CopyByteAw8 t =
-     closLang_If t
-       (closLang_Op t (closLang_IntOp closLang_Less)
-          [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-           closLang_Var t 2])
-       (closLang_Raise t (closLang_Op t
-          (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-       (closLang_If t
-         (closLang_Op t (closLang_IntOp closLang_Less)
-            [closLang_Op t (closLang_IntOp (closLang_Const (&0))) [];
-             closLang_Var t 3])
-         (closLang_Raise t (closLang_Op t
-            (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-         (closLang_If t
-           (closLang_Op t
-             (closLang_MemOp (closLang_BoundsCheckByte T))
-              [closLang_Op t (closLang_IntOp closLang_Add)
-                 [closLang_Var t 2; closLang_Var t 3];
-               closLang_Var t 4])
-           (closLang_If t
-             (closLang_Op t (closLang_IntOp closLang_Less)
-                [closLang_Op t (closLang_IntOp (closLang_Const (&0)))
-                   []; closLang_Var t 0])
-             (closLang_Raise t (closLang_Op t
-                (closLang_BlockOp (closLang_Cons subscript_tag)) []))
-             (closLang_If t
-               (closLang_Op t
-                 (closLang_MemOp (closLang_BoundsCheckByte T))
-                  [closLang_Op t (closLang_IntOp closLang_Add)
-                     [closLang_Var t 2; closLang_Var t 0];
-                   closLang_Var t 1])
-               (closLang_Op t
-                 (closLang_MemOp (closLang_CopyByte F))
-                  [closLang_Var t 0; closLang_Var t 1;
-                   closLang_Var t 2; closLang_Var t 3;
-                   closLang_Var t 4])
-               (closLang_Raise t (closLang_Op t
-                  (closLang_BlockOp (closLang_Cons subscript_tag))
-                  []))))
-           (closLang_Raise t (closLang_Op t
-              (closLang_BlockOp (closLang_Cons subscript_tag))
-              []))))`;;
+  (mk_eq (`(CopyByteAw8 (t:tra)):closLang_exp`,checkF));;
 
 let compile_arith_def = cake_define
   `compile_arith t (a:ast_arith) ty xs =

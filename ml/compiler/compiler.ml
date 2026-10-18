@@ -989,17 +989,24 @@ let compile_pancake_64_def = cake_define
                     concat (MAP error_to_str (if nowarn then []
                       else warns)))))))`;;
 
-let full_compile_64_def = cake_define
-  `full_compile_64 cl inp fs =
-   (if has_help_flag cl then
-     add_stdout fs help_string else if has_version_flag cl then
-     add_stdout fs current_build_info_str else
-     let (out,err) =
-         (if has_pancake_flag cl then
-           compile_pancake_64 cl inp else
-           compile_64 cl inp) in
-       add_stderr (add_stdout (fastForwardFD fs 0) (concat (append
-         out))) err)`;;
+(* PENDING: the file system of the basis library, which the port does
+not have (add_stdout, add_stderr, fastForwardFD)
+Definition full_compile_64_def:
+  full_compile_64 cl inp fs =
+  if has_help_flag cl then
+    add_stdout fs help_string
+  else if has_version_flag cl then
+    add_stdout fs current_build_info_str
+  else
+    let (out, err) =
+        if has_pancake_flag cl then
+          compile_pancake_64 cl inp
+        else
+          compile_64 cl inp
+    in
+      add_stderr (add_stdout (fastForwardFD fs 0) (concat (append out)))
+        err
+End *)
 
 let compile_32_def = cake_define
   `compile_32 cl input =
@@ -1060,14 +1067,21 @@ let compile_pancake_32_def = cake_define
                     concat (MAP error_to_str (if nowarn then []
                       else warns)))))))`;;
 
-let full_compile_32_def = cake_define
-  `full_compile_32 cl inp fs =
-   (if has_help_flag cl then
-     add_stdout fs help_string else if has_version_flag cl then
-     add_stdout fs current_build_info_str else
-     let (out,err) =
-         (if has_pancake_flag cl then
-           compile_pancake_32 cl inp else
-           compile_32 cl inp) in
-       add_stderr (add_stdout (fastForwardFD fs 0) (concat (append
-         out))) err)`;;
+(* PENDING: the file system of the basis library, which the port does
+not have (add_stdout, add_stderr, fastForwardFD)
+Definition full_compile_32_def:
+  full_compile_32 cl inp fs =
+  if has_help_flag cl then
+    add_stdout fs help_string
+  else if has_version_flag cl then
+    add_stdout fs current_build_info_str
+  else
+    let (out, err) =
+        if has_pancake_flag cl then
+          compile_pancake_32 cl inp
+        else
+          compile_32 cl inp
+    in
+      add_stderr (add_stdout (fastForwardFD fs 0) (concat (append out)))
+        err
+End *)

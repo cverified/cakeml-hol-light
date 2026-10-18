@@ -136,10 +136,6 @@ clos_interp	Overload GetEl
 clos_interp	Overload CallInterp
 clos_interp	Overload CallInterpList
 flatLang	ML code skipped: val exp_size_def = definition"exp_size_def";
-flat_to_clos	ML code skipped: fun var_fun m n = ``closLang$Var t ^(numSyntax.term_of_int(m
-flat_to_clos	ML code skipped: fun check1 tm var = ``(If t (Op t (IntOp Less) [Op t (IntOp 
-flat_to_clos	ML code skipped: val checkT = check1   ``(closLang$Op t (MemOp (CopyByte T)) 
-flat_to_clos	ML code skipped: val checkF = check1 ``(If t (Op t (IntOp Less) [Op t (IntOp 
 mlint	ML code skipped: val exp_thm = EVAL ``10n ** exp_for_dec_enc`` val exp_tm = r
 mlint	ML code skipped: val fromChars_unsafe_ind = theorem"fromChars_unsafe_ind"
 mlint	ML code skipped: val fromChars_ind = theorem"fromChars_ind"
@@ -298,6 +294,8 @@ compiler	ML code skipped: val current_build_info_str_tm = EVAL ``     let commit
 compiler	ML code skipped: fun drop_until p [] = []   | drop_until p (x::xs) = if p x t
 compiler	ML code skipped: val help_string_tm =   help_string |> hd |> (fn QUOTE s => s
 compiler	Overload add_locs
+compiler	full_compile_64_def: PENDING (the file system of the basis library, which the port does)
+compiler	full_compile_32_def: PENDING (the file system of the basis library, which the port does)
 gc_shared	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];
 gc_shared	ML code skipped: val heap_filter_aux_ADD_SING = prove(   ``!k n e heap.      
 copying_gc	ML code skipped: val _ = augment_srw_ss [rewrites [LIST_REL_def]];
