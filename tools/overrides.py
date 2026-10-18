@@ -290,6 +290,12 @@ FIELD_VAR = {
 # flatLang)
 SIZE_OF = {
   'closProps': {'exp_size': 'closLang'},
+  # the exp_size of the induction principles of these two is the
+  # one of bvi, the language that they are about (flatLang has an
+  # exp as well, and it is the last theory of their scope that
+  # has one)
+  'bvi_tailrecProof': {'exp_size': 'bvi'},
+  'bvi_tmcProof': {'exp_size': 'bvi'},
   # the prog_size of the relation of dataSem's evaluate is the one
   # of dataLang (wordLang has a prog as well)
   'dataSem': {'prog_size': 'dataLang'},
