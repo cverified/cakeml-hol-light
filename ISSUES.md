@@ -89,6 +89,15 @@ sources, and why.
   hidden.  HOL4 reads such a name as a variable because the
   theory that defines it is not an ancestor; the port has every
   constant in one namespace, so it has to hide it.
+- A **schematic definition** of HOL4 (`Definition
+  foo[schematic]`) has a free variable in its body, which HOL4
+  takes into the constant as its **first argument**:
+  NTproperties' `nullableML` and `firstSetML` are defined for a
+  grammar `G` that their clauses do not mention, and every
+  theorem about them applies them to one.  The port writes that
+  argument itself (`overrides.SCHEMATIC`), because it reads a
+  definition as it stands and a free variable in one is a
+  definition it cannot make.
 - A theorem that HOL4 states as the value of an ML expression is
   a comment that points at the source and names the theorem: the
   statement is not in the source, HOL4 computes it (`PENDING.md`).

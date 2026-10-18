@@ -6,12 +6,24 @@ its proof, and every comment of the source in its place
 (`CLAUDE.md`).  The test is to read a source and its port next to
 each other: they have to read "the same"._
 
-_State: the port has 10,610 of the 10,613 theorems of the 270
-files with their statement (`tools/coverage.py` counts both), and
-`tools/thmcheck.py` and a session of a run say which of those
-statements HOL Light cannot read.  The first phase-two run of
-14:03 said 688 of 10,096; the machinery below took that to the
-tail that the run of 16:30 measures._
+_State: the port has 10,137 of the 10,688 theorems of the 270
+files with their statement and 551 as a pointer that names them
+(`tools/coverage.py` counts both; `PENDING.md` says what the 551
+are).  Of the statements, the run of 16:30 could read all but
+295 -- the first phase-two run of 14:03 could not read 688 of
+them -- and the run of 18:16 measures what the machinery below
+and the repairs of the tail have made of that.  390 statements
+are read with the overloads of the record field names taken away._
+
+_What the run of 16:30 also found: `tools/bin/checkseq` read the
+word "timeout" anywhere in the output of a step as the timeout of
+`repl-step`, and `grep -q` ends the step as soon as it matches, so
+the file that was loading was interrupted in the middle.  Six
+files lost their tails that way (and everything that needed
+them).  The test is the line that `repl-step` writes, and the
+message of a statement that HOL Light cannot read goes out as one
+line now, because a line of the output that starts with a `#` is
+the prompt of the toplevel as far as the scripts are concerned._
 
 - **A theorem is a cheat of its own.**  `cake_theorem name mkterm
   tac` (`ml/lib/theorem.ml`) reads the statement in a function,
