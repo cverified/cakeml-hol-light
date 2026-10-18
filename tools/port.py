@@ -2938,6 +2938,12 @@ COMMENTED_CODE = re.compile('|'.join('(?:%s)' % p for p in [
 BLOCK_IN_COMMENT = re.compile('|'.join('(?:%s)' % p for p in [
   r"^\s*(Theorem|Triviality|Definition|Inductive|CoInductive)\s+"
   r"[A-Za-z0-9_']+\s*(\[[^\]]*\])?\s*:",
+  # a block that the source has commented out can have the name on
+  # a line of its own, with the statement in a quotation under it
+  # (type_dCanon has two theorems that way, which an older HOL4
+  # would have taken: Theorem foo `...` (tactic))
+  r"^\s*(Theorem|Triviality|Definition|Inductive|CoInductive)\s+"
+  r"[A-Za-z0-9_']+\s*(\[[^\]]*\])?\s*$",
   r'^\s*Datatype\s*:',
   r'^\s*(Proof|QED|End|Termination)\s*$',
 ]), re.M)

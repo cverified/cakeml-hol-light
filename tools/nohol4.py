@@ -25,6 +25,13 @@ ML = os.path.dirname(os.path.abspath(__file__)) + '/../ml/'
 # source says: it points at the file and the lines of the source
 POINTER = re.compile(r'\s*HOL4 \S+\.sml:\d')
 
+# the symbols that HOL4 writes a term with and HOL Light has no
+# parser for: a quotation of the port that has one in it is a term
+# of HOL4 that the translation left as it stands
+HOL4_SYMBOL = re.compile(u'[\u00ac\u2190-\u22ff\u27e8\u27e9'
+                         u'\u2983\u2984\u00ab\u00bb\u27f0-\u27ff]')
+
+
 # a line of a HOL4 script, which no line of the port can be
 HOL4_LINE = re.compile(
   r"^\s*(Theory|Ancestors|Libs|Theorem|Triviality|Proof|QED|End|"
@@ -164,7 +171,20 @@ def main():
           print('%s:%d: HOL4 code in a comment: %r'
                 % (rel, line, (m.group(0) if m else body)
                    .strip()[:40]))
-      for i, l in enumerate(code_free(text).split('\n')):
+      # a quotation of the port is a term of HOL Light, whose
+      # parser is ASCII: a symbol of HOL4's in one is a term that
+      # the translation left as it stands (the comments are out of
+      # the way first, so a comment of a source that writes a
+      # condition of HOL4 in prose is no error)
+      code = code_free(text)
+      for m in re.finditer(r'`([^`]*)`', code):
+        m2 = HOL4_SYMBOL.search(m.group(1))
+        if m2:
+          bad += 1
+          print('%s:%d: a symbol of HOL4 in a quotation: %r'
+                % (rel, code[:m.start()].count('\n') + 1,
+                   ' '.join(m.group(1).split())[:40]))
+      for i, l in enumerate(code.split('\n')):
         m = HOL4_LINE.match(l)
         if m:
           bad += 1
