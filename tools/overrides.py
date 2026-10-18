@@ -98,6 +98,11 @@ ACCESSORS = {
 # known (overrides.FIELD_VAR) that one settles it, which is the
 # first thing to try.
 THM_ACCESSORS = {
+  # the v of this statement is the v of a sem_env three times
+  # over, the third of them of the sem_env that extend_env gives
+  # (a field of an application, which the record of a variable
+  # cannot say)
+  ('source_to_flatProof', 'nsAll_extend_env'): {'v': 'sem_env_v'},
 }
 
 # UPDATERS: the field updates that HOL4 declares with ML code
@@ -134,6 +139,12 @@ THM_RECLITS = {
     ['source_to_flat_environment', 'sem_env'],
   ('source_to_flatProof', 'invariant_make_varls'):
     ['source_to_flat_environment', 'sem_env'],
+  # the build_env that this one builds is a sem_env, and the two
+  # literals after it are the environments of source_to_flat that
+  # global_env_inv and env_domain_eq take
+  ('source_to_flatProof', 'alloc_tags_invariant'):
+    ['sem_env', 'source_to_flat_environment',
+     'source_to_flat_environment'],
 }
 
 # FIELD_DEFAULT: the record type that a field name means where
@@ -227,6 +238,14 @@ FIELD_VAR = {
   'source_to_flatProof': {
     'env': 'sem_env',
     'comp_map': 'source_to_flat_environment',
+    # senv is the environment of the source that the invariant
+    # relates, comp_map2 one of source_to_flat as comp_map is,
+    # and e1 and e2 the two sem_envs that extend_env extends
+    'senv': 'sem_env',
+    # env' is the sem_env of a Recclosure, as env is
+    "env'": 'sem_env',
+    'comp_map2': 'source_to_flat_environment',
+    'e1': 'sem_env', 'e2': 'sem_env',
     "env_v_local'": 'flatSem_environment',
     'flat_env': 'flatSem_environment'},
 }
@@ -269,6 +288,10 @@ FIELD_VAR_DEF = {
   ('source_to_flatProof', 'evaluate_make_varls'):
     {'env': 'flatSem_environment'},
   ('source_to_flatProof', 'invariant_make_varls'):
+    {'env': 'flatSem_environment'},
+  # the env whose v this one updates is an environment of flatSem,
+  # which the annotation of the other side of the equation says
+  ('source_to_flatProof', 'env_updated_lem'):
     {'env': 'flatSem_environment'},
   # the var_map of env_domain_eq is an environment of
   # source_to_flat, where the v and the c of this theory are
