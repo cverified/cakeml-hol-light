@@ -9,26 +9,55 @@ Scope: everything that is needed for the main correctness
 theorem, which in HOL4 is `compilerProofTheory.compile_correct`
 in `compiler/proofs/compilerProofScript.sml`.
 
-The work has two passes:
+The work has three phases:
 
-1. _First pass (current):_ port **all** definitions (and type
+1. _Phase one (done):_ **all** definitions (and type
    definitions) of the HOL4 sources in the dependency closure
    of the main correctness theorem.  No theorems, no proofs.
-   "All of them" means all of them: this pass is only done when
-   every `Datatype`, `Type`, `Overload` and `Definition` of
-   every ported source file has a HOL Light counterpart.
+   "All of them" means all of them: this phase is only done when
+   every `Datatype`, `Type`, `Overload`, `Definition` and
+   `Inductive` of every ported source file has a HOL Light
+   counterpart.  `tools/coverage.py` is what checks it, and the
+   handful of blocks that are out are in `PENDING.md`, each with
+   the reason.
 
-2. _Second pass (later):_ the theorems and their proofs.
+2. _Phase two (current):_ **everything else of the sources
+   except the proofs** -- every `Theorem` (and `Triviality`, and
+   the theorems that HOL4 binds to the value of an ML
+   expression), with its statement and its name and its
+   attributes, and every comment, in the order of the source.
+   Every proof is `CHEAT_TAC`.
 
-**In the first pass proofs are irrelevant.**  Not "kept short",
-irrelevant: no time goes on one.  HOL Light will not make a
-recursive definition without a termination proof, so when its
-machinery does not discharge the termination condition and the
-condition is evidently true, it is assumed with `CHEAT_TAC` and
-the definition is made.  Do not look for a measure, do not
+   The test of this phase is to read a HOL4 source and its port
+   next to each other: they have to **clearly read "the same"**.
+   Same blocks in the same order, same names, same statements,
+   same comments in the same places; where HOL4 has `Proof ...
+   QED` the port has a cheat, and that is the only difference
+   that a reader should see.
+
+   So phase two is where every _statement_ of CakeML is settled.
+   That is worth doing before any proof, because a statement
+   that changes afterwards throws its proof away, and because a
+   statement that will not even typecheck is the one real test
+   of whether phase one got the definitions, the types, the
+   notation and the names right.
+
+3. _Phase three (later):_ the proofs.  Every `CHEAT_TAC` of
+   phases one and two is replaced by a real proof -- HOL4's own
+   proof, transliterated -- until `length (axioms ())` is 3.
+   Then the port is done.
+
+**In phases one and two proofs are irrelevant.**  Not "kept
+short", irrelevant: no time goes on one.  HOL Light will not
+make a recursive definition without a termination proof, so when
+its machinery does not discharge the termination condition and
+the condition is evidently true, it is assumed with `CHEAT_TAC`
+and the definition is made.  Do not look for a measure, do not
 prove a lemma to help one, do not spend a budget on one.  The
 same holds for any other condition that stands between a source
-definition and its HOL Light counterpart.
+definition and its HOL Light counterpart, and it holds for every
+theorem of phase two: the statement is the work, the proof is a
+cheat, and a cheat that another cheat depends on is fine.
 
 ## Ground rules
 
@@ -41,8 +70,8 @@ definition and its HOL Light counterpart.
 - The HOL Light sources must be _as similar in style to the
   original CakeML sources as possible_: same directory layout,
   same file names (`fooScript.sml` becomes `foo.ml`), same
-  order of definitions, same names of constants, and the
-  original comments kept in place.
+  order of the blocks, same names of constants and of theorems,
+  and the original comments kept in place.
 - The HOL Light files must **load efficiently**.  A definition
   that takes minutes to process is a bug; fix it (or record the
   timing in a comment if there really is no alternative).
@@ -53,30 +82,34 @@ definition and its HOL Light counterpart.
   `new_axiom` and no cheat is left, and every definition goes
   through `new_definition`, `new_specification` or `define_type`.
 
-  **Until the definitions are done this rule is suspended, and
-  so is the rule that nothing may depend on a cheat.**  A cheat
-  is how the first pass gets on with the next definition.  What
-  it costs is visible and counted the whole time: `ml/CHEATS.md`
-  lists every one with the reason, and `length (axioms())`
-  counts them.  There are two kinds, and the first is much the
-  better one:
+  **Until phase three this rule is suspended, and so is the
+  rule that nothing may depend on a cheat.**  A cheat is how
+  phase one gets on with the next definition and how phase two
+  gets on with the next statement.  What it costs is visible
+  and counted the whole time: `ml/CHEATS.md` lists every one
+  with the reason, and `length (axioms())` counts them.  There
+  are three kinds, and the first two are the good ones:
 
+  - a _theorem of the source_ is assumed: its statement is
+    stated, with its name, and `CHEAT_TAC` stands where HOL4's
+    proof is.  This is what phase two does, and what phase
+    three turns into a proof, one theorem at a time.
   - the _termination_ of a definition is assumed (`CHEAT_TAC` on
     the condition), and the definition itself is made: the
     constant is introduced by `new_specification`, it has the
     right type, and its clauses are theorems.  One axiom, and
     everything after it can be ported as if the definition were
     there, because it is.
-  - the _definition_ is assumed (`cake_cheat`), because HOL
-    Light cannot make it at all: the body has a type variable
-    that the constant's type does not reflect, or it uses a
-    constant that the port does not have.  These are the ones to
-    work on, and they need a decision or a missing piece ported,
-    not a proof.
+  - the _definition_ is assumed (`cake_cheat`), or the constant
+    is declared without a value (`cake_declare`), because HOL
+    Light cannot make the definition at all: the body has a type
+    variable that the constant's type does not reflect, or it
+    uses a constant that the port does not have.  These are the
+    ones to work on, and they need a decision or a missing piece
+    ported, not a proof.
 
-  Paying the debt back -- making every assumed termination real
-  -- comes after the definitions are all in, with HOL4's own
-  `Termination` tactic to transliterate.
+  Paying the debt back is phase three, with HOL4's own proof (or
+  its `Termination` tactic) to transliterate.
 
 ## Layout of this directory
 
