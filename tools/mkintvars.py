@@ -40,20 +40,36 @@ def rows():
   return out
 
 
+def thy_of_name():
+  """the theory whose port states a theorem of this name"""
+  import os
+  ml = T + '../ml/'
+  out = {}
+  for dp, _, fs in os.walk(ml):
+    for f in sorted(fs):
+      if not f.endswith('.ml'): continue
+      p = os.path.join(dp, f)
+      for m in re.finditer(r'cake_theorem\s*\n?\s*"([^"\[]+)',
+                           open(p).read()):
+        out.setdefault(m.group(1), os.path.relpath(p, ml))
+  return out
+
+
 def main():
   db = dbmod.Db()
   thy_of = {db.mlpath_of(t): t for t, _, _ in db.order}
-  byname = collections.defaultdict(set)
+  byname = thy_of_name()
+  found = collections.defaultdict(set)
   for f, nm, msg in rows():
     m = NUMINT.search(msg)
     if not m: continue
-    thy = thy_of.get(f) if f else None
-    byname[(thy, re.sub(r'\[.*', '', nm))].add(m.group(1))
-  for (thy, nm), vs in sorted(byname.items(),
+    thy = thy_of.get(f or byname.get(re.sub(r'\[.*', '', nm)))
+    found[(thy, re.sub(r'\[.*', '', nm))].add(m.group(1))
+  for (thy, nm), vs in sorted(found.items(),
                               key=lambda kv: (str(kv[0][0]), kv[0][1])):
     print("  ('%s', '%s'): [%s],"
           % (thy, nm, ', '.join("'%s'" % v for v in sorted(vs))))
-  print('# %d theorems' % len(byname))
+  print('# %d theorems' % len(found))
 
 
 if __name__ == '__main__':

@@ -524,6 +524,21 @@ INT_NUMERALS = set([
 # simultaneously"), which tools/mkintvars.py turns into this
 # table.
 THM_INT_VARS = {
+  ('bvlSem', 'do_int_app_eq_some'): ['n2'],
+  ('data_to_word_assignProof', 'INT_EQ_NUM_LEMMA'): ['i'],
+  ('data_to_word_assignProof', 'NONNEG_INT'): ['i'],
+  ('data_to_word_assignProof', 'do_app_RefByte_eq'): ['i'],
+  ('data_to_word_assignProof', 'evaluate_LoadBignum'): ['i'],
+  ('data_to_word_assignProof', 'small_int_INT_MIN_MAX'): ['i'],
+  ('data_to_word_assignProof', 'state_rel_Number_IMP'): ['i1'],
+  ('data_to_word_memoryProof', 'memory_rel_Number_bignum_IMP'): ['i'],
+  ('data_to_word_memoryProof', 'small_int_IMP_MIN_MAX'): ['i'],
+  ('data_to_word_memoryProof', 'w2i_i2w_IMP'): ['i'],
+  ('linear_scanProof', 'get_intervals_ct_monad_aux_correct'): ['n'],
+  ('linear_scanProof', 'numset_list_add_if_gt_monad_correct'): ['v'],
+  ('linear_scanProof', 'numset_list_add_if_lt_monad_correct'): ['v'],
+  ('mlint', 'fromString_toString_Num'): ['n'],
+  ('source_evalProof', 'Num_11'): ['i'],
 }
 
 # HOL4's Definition foo[schematic] has a free variable in its

@@ -1464,6 +1464,14 @@ class Printer:
       return self.intvar(e.l) or self.intvar(e.r)
     if e.kind == 'prefix' and e.op in ('-', '~'):
       return self.intvar(e.e)
+    # a term that the source annotates with int holds one, and so
+    # does the Num of one (data_to_word's 0 <= (i:int))
+    if e.kind == 'typed':
+      if any(t.text == 'int' for t in e.ty): return True
+      return self.intvar(e.e)
+    if e.kind == 'app':
+      h, _ = strip_app(e)
+      return h.kind == 'id' and h.name in INT_FUNS
     return False
 
   def pr0(self, e, prec):
