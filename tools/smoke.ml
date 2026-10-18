@@ -279,6 +279,28 @@ print_string
    " (sfld,smoke_opaque)\n");;
 
 (* ---------------------------------------------------------------- *)
+(* the parts of the hand written library layer that the statements
+   of the port need: a path of HOL4's pathTheory (whose okpath is
+   the greatest fixed point written out), the domain and the range
+   of a relation of its set_relationTheory and its GSPEC *)
+
+let smoke_lib = cake_theorem "smoke_lib"
+  (fun () ->
+    `okpath R (toPath (x,fromList tr)) /\
+     (hol4_GSPEC (\a. (f a,P a)) = set_relation_domain r) /\
+     (set_relation_range r = s)`)
+  CHEAT_TAC;;
+
+print_string
+  ("\nSMOKELIB " ^
+   (let n,_,th = last (cake_theorems ()) in
+    n ^ " " ^ string_of_int (length (hyp th))) ^
+   " stated " ^
+   string_of_bool (not (mem "smoke_lib"
+                          (map fst (cake_unstated ())))) ^
+   " (smoke_lib 0 stated true)\n");;
+
+(* ---------------------------------------------------------------- *)
 (* a theorem that a source states as the value of another one
    (HOL4's Theorem foo = bar), which the port binds with
    cake_alias so that the name of the source is in the port *)
