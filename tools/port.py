@@ -325,8 +325,12 @@ class Porter:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
       # cheat of its own that the reports count (THEOREM_THUNK)
-      stmt = fmt(self.term(body, defn=False), indent=5, width=72,
-                 last=2)
+      hterm.ANTIQ_STRICT[0] = True
+      try:
+        stmt = fmt(self.term(body, defn=False), indent=5, width=72,
+                   last=2)
+      finally:
+        hterm.ANTIQ_STRICT[0] = False
     except Exception as ex:
       self.warn.append('%s %s: %s' % (b.kind, nm, ex))
       self.out.append(self.at(b, 'a theorem whose statement the'

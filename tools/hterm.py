@@ -182,6 +182,16 @@ def tokenize(s):
         toks.append(Tok('sym', ')', start, 0, icol))
         i = j; col += j - i; nl = 0; continue
       if nm:
+        # an ML value that the port does not have: a statement
+        # that antiquotes one is a term that HOL4 builds with ML
+        # code, and the port points at the source instead of
+        # writing the name as a variable (bvl_const's
+        # SmartOp2_pmatch is a ^tm of its own).  In a definition
+        # the name stays, and the definition is assumed with it
+        # free, which ml/CHEATS.md reports.
+        if ANTIQ_STRICT[0]:
+          raise SyntaxError('the ML value ^%s, which the port does'
+                            ' not have' % nm)
         toks.append(Tok('id', nm, start, nl, icol))
         i = j; col += j - i; nl = 0; continue
       # ^(name) : HOL4 splices in the value of the ML expression
@@ -1386,6 +1396,11 @@ OWN_INFIX = set()      # the infixes a CakeML source declares itself
 HL_INFIX = {'BAG_UNION', 'LEX', 'o_f', 'SUBMAP'}
 MONAD = [None]         # the monad that a source has enabled
 ANTIQ = {}             # the ML values that a source antiquotes
+# with this, an ML value that ANTIQ does not have is an error and
+# not a variable: a statement of phase two that antiquotes one is
+# a term that HOL4 builds with ML code, and the port cannot state
+# it (tools/port.py sets this while it reads a statement)
+ANTIQ_STRICT = [False]
 
 
 def set_monad(m):
