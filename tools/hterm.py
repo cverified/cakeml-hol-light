@@ -1691,6 +1691,12 @@ class Printer:
           return self.paren(self.ctx.name(hop.name) + ' ' +
                             self.pr(a.l, APP) + ' ' +
                             self.pr(a.r, APP), PRE_APP, prec)
+        # where the pair is not written out (the argument is a
+        # term that gives one), the two arguments come from it
+        # with the UNCURRY of HOL Light
+        self.numctx = old
+        return self.paren('UNCURRY ' + self.ctx.name(hop.name) +
+                          ' ' + self.pr(a, APP), PRE_APP, prec)
       fn = self.pr(e.fn, PRE_APP)
       # a constant that the library layer declares as an infix of
       # HOL Light needs its parentheses where it is applied
@@ -1880,14 +1886,16 @@ class Printer:
       # the record type of a variable that the overrides name
       # (typeSoundInvariants has the c of a sem_env and the c of
       # a type_env in one rule)
-      v = e.e
-      while v.kind in ('paren', 'typed'): v = v.e
-      rec = (self.ctx.fieldvar.get(v.name)
-             if v.kind == 'id' else None)
-      # an annotation of the record says which one it is itself
-      # (stack_to_labProof reads the code of
-      # (s1:('a,'c,'ffi)stackSem$state))
-      if not rec: rec = self.annot_rec(e.e)
+      # an annotation of the record says which one it is, and says
+      # it of this occurrence (stack_to_labProof reads the code of
+      # (s1:('a,'c,'ffi)stackSem$state), and its s is a state of
+      # labSem in two statements and one of stackSem in the rest)
+      rec = self.annot_rec(e.e)
+      if not rec:
+        v = e.e
+        while v.kind in ('paren', 'typed'): v = v.e
+        rec = (self.ctx.fieldvar.get(v.name)
+               if v.kind == 'id' else None)
       acc = (rec + '_' + e.fld) if rec else self.ctx.field(e.fld)
       return self.paren(acc + ' ' + self.pr(e.e, APP),
                         PRE_APP, prec)

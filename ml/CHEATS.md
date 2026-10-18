@@ -9,30 +9,29 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 10328: the three axioms of HOL
-Light and 10325 for the 447 definitions below.
+`length (axioms ())` is 10363: the three axioms of HOL
+Light and 10360 for the 454 definitions below.
 
-Of these 447 definitions
+Of these 454 definitions
 
-- 293 have only their **termination** assumed, so the
+- 308 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
 - 14 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
-- 140 are **not made** at all, which is the work that is
+- 132 are **not made** at all, which is the work that is
   left.
 
 Why they are assumed:
 
-- 293: termination (CHEAT_TAC)
+- 308: termination (CHEAT_TAC)
 - 132: equation of a tail recursion assumed
 - 14: declared (no value)
-- 6: timeout in measure
-- 2: tryfind: /\
 
 | definition | file | why |
 |---|---|---|
-| `nullableML` | `lib/NTproperties.ml` | tryfind: /\ |
-| `firstSetML` | `lib/NTproperties.ml` | tryfind: /\ |
+| `nullableML` | `lib/NTproperties.ml` | termination (CHEAT_TAC) |
+| `firstSetML` | `lib/NTproperties.ml` | termination (CHEAT_TAC) |
+| `firstSetML` | `lib/NTproperties.ml` | termination (CHEAT_TAC) |
 | `print_sexp` | `lib/simpleSexpParse.ml` | termination (CHEAT_TAC) |
 | `mw_shift` | `lib/multiword.ml` | termination (CHEAT_TAC) |
 | `mw_shift` | `lib/multiword.ml` | termination (CHEAT_TAC) |
@@ -327,7 +326,8 @@ Why they are assumed:
 | `word_to_stack_comp` | `compiler/backend/word_to_stack.ml` | termination (CHEAT_TAC) |
 | `stack_to_lab_flatten` | `compiler/backend/stack_to_lab.ml` | termination (CHEAT_TAC) |
 | `nsSub_compute` | `semantics/proofs/namespaceProps.ml` | termination (CHEAT_TAC) |
-| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | timeout in measure |
+| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
+| `FV` | `semantics/proofs/semanticPrimitivesProps.ml` | termination (CHEAT_TAC) |
 | `closSem_do_eq` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
 | `closSem_evaluate` | `compiler/backend/semantics/closSem.ml` | termination (CHEAT_TAC) |
@@ -368,6 +368,7 @@ Why they are assumed:
 | `infer_d` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `alist_nub` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
 | `ns_to_alist` | `compiler/inference/infer.ml` | termination (CHEAT_TAC) |
+| `lexer_fun_read_string` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
 | `lexer_fun_read_string` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
 | `read_Ident` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
 | `lexer_fun_aux` | `semantics/lexer_fun.ml` | termination (CHEAT_TAC) |
@@ -425,7 +426,6 @@ Why they are assumed:
 | `bviProps_get_code_labels` | `compiler/backend/semantics/bviProps.ml` | termination (CHEAT_TAC) |
 | `approx_of` | `compiler/backend/semantics/dataProps.ml` | termination (CHEAT_TAC) |
 | `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
-| `mb_rel` | `compiler/backend/proofs/bvi_tmcProof.ml` | termination (CHEAT_TAC) |
 | `handle_ok` | `compiler/backend/proofs/bvl_handleProof.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `code_locs` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
@@ -438,11 +438,16 @@ Why they are assumed:
 | `every_Fn_vs_SOME` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `fv` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
-| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `no_Labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
-| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | timeout in measure |
+| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_set_globals` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `obeys_max_app` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `no_Labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `no_Labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `app_call_dests` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
+| `closProps_get_code_labels` | `compiler/backend/semantics/closProps.ml` | termination (CHEAT_TAC) |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
 | `clos_callProof_v_rel` | `compiler/backend/proofs/clos_callProof.ml` | termination (CHEAT_TAC) |
 | `clos_knownProof_v_rel` | `compiler/backend/proofs/clos_knownProof.ml` | termination (CHEAT_TAC) |
@@ -479,4 +484,4 @@ Why they are assumed:
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 
-447 definitions.
+454 definitions.

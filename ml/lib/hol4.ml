@@ -58,6 +58,12 @@ let FOLDR_THM = prove
    (!f e x xs. FOLDR f e (CONS x xs) = f x (FOLDR f e xs))`,
   REWRITE_TAC[FOLDR_def; ITLIST]);;
 
+(* HOL4's gcd takes its two arguments one at a time where HOL
+   Light's takes a pair of them (gcdTheory against int.ml) *)
+
+let hol4_gcd = new_definition
+  `hol4_gcd a b = gcd (a,b)`;;
+
 (* HOL4's cwc of cpsScript (the port does not have that
    theory): the combinator that gives a value to a continuation *)
 

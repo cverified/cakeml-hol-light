@@ -654,8 +654,13 @@ class Db:
             if k in ('def', 'con', 'rel')}
       if not ts or (ts & anc): continue
       # the port writes the name of the constant, so one that it
-      # renamed does not hide anything
-      if any(self.rename.get((t, n), n) == n for t in ts):
+      # renamed hides nothing -- unless it overloads the bare name
+      # with the constant it renamed, which puts the name back
+      # (linear_scanProof's id is linear_scanProof_id and id is an
+      # overload of it, so a statement of another theory that
+      # writes id for a variable of its own reads the overload)
+      if any(self.rename.get((t, n), n) == n for t in ts) or \
+         n in self.overloaded():
         out.add(n)
     return sorted(out)
 

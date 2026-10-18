@@ -503,10 +503,17 @@ class Porter:
           self.arg_cons(self.arm_intvars(self.lambda_cons(e))))
     old = self.ctx.vars
     oldint = self.ctx.intvars
+    oldfv = self.ctx.fieldvar
     # a statement says nowhere which of its variables hold an
     # integer, so the types of the constants of the port say it
     if not defn:
       self.ctx.intvars = oldint | self.int_vars_by_type(e)
+    # an annotation of a variable says which record its fields are
+    # of, wherever the term reads one of them
+    fv = self.annot_fieldvars(e)
+    if fv:
+      self.ctx.fieldvar = dict(self.ctx.fieldvar)
+      self.ctx.fieldvar.update(fv)
     self.ctx.vars = self.shadowing(e, defn)
     # the patterns of the first clause of every function carry the
     # type of their constructor where its name is one that several
@@ -526,6 +533,7 @@ class Porter:
     finally:
       self.ctx.vars = old
       self.ctx.intvars = oldint
+      self.ctx.fieldvar = oldfv
 
   def int_vars_by_type(self, e):
     """the variables of a term that stand where a constant takes an
@@ -580,6 +588,28 @@ class Porter:
 
     go(e)
     return out - nums
+
+  def annot_fieldvars(self, e):
+    """the record of a variable that the term says the type of: a
+       statement that writes (s:('a,'c,'ffi)labSem$state) means the
+       fields of a state of labSem wherever it reads a field of s,
+       also where the theory means another record by that name
+       (stack_to_labProof's s is a state of stackSem in most of its
+       statements and one of labSem in two of them)"""
+    out = {}
+    pr = hterm.Printer(self.ctx)
+
+    def go(n):
+      if n.kind == 'typed':
+        v = n.e
+        while v.kind == 'paren': v = v.e
+        if v.kind == 'id':
+          rec = pr.annot_rec(n)
+          if rec: out.setdefault(v.name, rec)
+      for t in hterm.subnodes(n): go(t)
+
+    go(e)
+    return out
 
   def shadowing(self, e, defn=True):
     """HOL4 lets a variable shadow a constant, HOL Light does not,

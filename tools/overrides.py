@@ -69,6 +69,9 @@ NAME_MAP = {
   # combin's flip is its C (the export theories of the targets
   # filter the symbols with flip MEM)
   'flip': 'C',
+  # the gcd of HOL4 takes its two arguments one at a time where
+  # the one of HOL Light takes a pair (ml/lib/hol4.ml)
+  'gcd': 'hol4_gcd',
   # HOL4's option theory overloads lift2 with OPTION_MAP2
   'lift2': 'OPTION_MAP2',
   # monadsyntax's unit bind, which the overloads of a source that
@@ -102,7 +105,8 @@ THM_ACCESSORS = {
   # over, the third of them of the sem_env that extend_env gives
   # (a field of an application, which the record of a variable
   # cannot say)
-  ('source_to_flatProof', 'nsAll_extend_env'): {'v': 'sem_env_v'},
+  ('source_to_flatProof', 'nsAll_extend_env'):
+    {'v': 'source_to_flat_environment_v'},
 }
 
 # UPDATERS: the field updates that HOL4 declares with ML code
@@ -189,8 +193,8 @@ FIELD_VAR = {
   'typeSysProps': {'tenv': 'type_env'},
   # the environments that weakening is about are type
   # environments, whose v and c a sem_env has as well
-  'weakening': {'tenv': 'type_env', 'tenv2': 'type_env',
-                "tenv'": 'type_env'},
+  'weakening': {'tenv': 'type_env', 'tenv1': 'type_env',
+                'tenv2': 'type_env', "tenv'": 'type_env'},
   'infer_eSound': {'tenv': 'type_env'},
   'infer_eComplete': {'tenv': 'type_env'},
   'envRel': {'tenv': 'type_env'},
@@ -215,6 +219,8 @@ FIELD_VAR = {
   'flat_elimProof': {'env': 'flatSem_environment'},
   'flat_patternProof': {'env1': 'flatSem_environment',
                         'env2': 'flatSem_environment',
+                        'env3': 'flatSem_environment',
+                        'an_env': 'flatSem_environment',
                         'env': 'flatSem_environment'},
   # t is the state of wordSem and s the one of dataSem in the
   # invariant that these relate them with
@@ -262,7 +268,10 @@ FIELD_VAR = {
     # state of flatSem, which FIELD_VAR_DEF says)
     'c': 'source_to_flat_config',
     'comp_map2': 'source_to_flat_environment',
-    'e1': 'sem_env', 'e2': 'sem_env',
+    # the extend_env of this theory is source_to_flat's, so the
+    # two environments that nsAll_extend_env is about are its
+    'e1': 'source_to_flat_environment',
+    'e2': 'source_to_flat_environment',
     "env_v_local'": 'flatSem_environment',
     'flat_env': 'flatSem_environment'},
 }
@@ -300,6 +309,12 @@ FIELD_VAR_DEF = {
   # semantics is taken of, where the s2 of the statements about
   # evaluate is the state of stackSem that it gives
   ('stack_to_labProof', 'flatten_semantics'): {'s2': 'labSem_state'},
+  # the s1 of these three is a state of the target, where the s1
+  # of the theory is one of labSem
+  ('lab_to_targetProof', 'upd_pc_with_pc'): {'s1': 'asm_state'},
+  ('lab_to_targetProof', 'evaluate_nop_steps'): {'s1': 'asm_state'},
+  ('lab_to_targetProof', 'asm_step_IMP_evaluate_step_nop'):
+    {'s1': 'asm_state'},
   # the env that make_varls is evaluated in is an environment of
   # flatSem, where the env of this theory is a sem_env
   ('source_to_flatProof', 'evaluate_make_varls'):
@@ -986,6 +1001,11 @@ ONE_QUOTATION = set([
 # Inst of wordLang comes later)
 CON_OF = {
   ('stack_remove', 'single_stack_free_def'): {'Inst': 'stackLang'},
+  # the get_var of this one is dataSem's, which takes the map of
+  # the locals itself (the get_var of wordSem and of stackSem take
+  # a state, so the port gave var_corr a state as its third
+  # argument and the statements about it did not typecheck)
+  ('dataProps', 'var_corr_def'): {'get_var': 'dataSem'},
   # the Seq and the Skip of these two statements are the ones of
   # the language that the theory is about, which the evaluate in
   # them does not say: every intermediate language has both, and
