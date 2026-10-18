@@ -251,8 +251,8 @@ let evaluate_arith_memory = cake_theorem "evaluate_arith_memory[local]"
        can_mem_arith a ==>
        (wordSem_evaluate (Inst (Arith a),wordSem_state_memory_fupd
          (K m) s) =
-          (NONE,wordSem_set_var (firstRegOfArith a) w
-            (wordSem_state_memory_fupd (K m) s)) <=>
+          (NONE,wordSem_state_memory_fupd (K m) (wordSem_set_var
+            (firstRegOfArith a) w s)) <=>
         wordSem_evaluate (Inst (Arith a),s) =
           (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
   CHEAT_TAC;;
@@ -1183,10 +1183,9 @@ let evaluate_arith_clock = cake_theorem "evaluate_arith_clock[local]"
        can_mem_arith a ==>
        (wordSem_evaluate (Inst (Arith a),wordSem_state_termdep_fupd
          (K td) (state_clock_fupd (K c) s)) =
-          (NONE,
-           wordSem_set_var (firstRegOfArith a) w
-             (wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
-             s))) <=>
+          (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd
+            (K c)
+           (wordSem_set_var (firstRegOfArith a) w s))) <=>
         wordSem_evaluate (Inst (Arith a),s) =
           (NONE,wordSem_set_var (firstRegOfArith a) w s))`)
   CHEAT_TAC;;
@@ -1198,8 +1197,8 @@ let evaluate_load_clock = cake_theorem "evaluate_load_clock[local]"
        (wordSem_evaluate (Inst (asm_Mem op r (Addr a
          ofs)),wordSem_state_termdep_fupd (K td) (state_clock_fupd (K c)
                   s)) =
-          (NONE,wordSem_set_var r w (wordSem_state_termdep_fupd (K
-            td) (state_clock_fupd (K c) s))) <=>
+          (NONE,wordSem_state_termdep_fupd (K td) (state_clock_fupd
+            (K c) (wordSem_set_var r w s))) <=>
         wordSem_evaluate (Inst (asm_Mem op r (Addr a ofs)),s) =
           (NONE,wordSem_set_var r w s))`)
   CHEAT_TAC;;

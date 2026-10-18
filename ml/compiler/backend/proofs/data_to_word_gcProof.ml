@@ -2430,7 +2430,7 @@ let jump_exc_push_env_NONE = cake_theorem "jump_exc_push_env_NONE"
      mk_loc (jump_exc s) /\
      mk_loc (jump_exc (push_env y NONE s)) =
      mk_loc (jump_exc (s:('a,'c,'ffi)wordSem_state)) /\
-     mk_loc (jump_exc (push_env y NONE (state_stack_max_fupd (K m)
+     mk_loc (jump_exc (state_stack_max_fupd (K m) (push_env y NONE
        s))) =
      mk_loc (jump_exc (s:('a,'c,'ffi)wordSem_state))`)
   CHEAT_TAC;;

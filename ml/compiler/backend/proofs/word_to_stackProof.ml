@@ -1045,10 +1045,11 @@ let evaluate_wLive = cake_theorem "evaluate_wLive[local]"
        (stackSem_state_bitmaps t)) ==>
      (?(t5:('a,'c,'ffi)stackSem_state) bs5.
        (evaluate (wlive_prog,t) = (NONE,t5)) /\
-       word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env envs
-         ((NONE:(num#'a wordLang_prog#num#num) option))
+       word_to_stackProof_state_rel ac k 0 0
          (wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) s))) t5 (f' :: lens) 0 /\
+         (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
+         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
+         lens) 0 /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
        LENGTH (stack t5) = LENGTH (stack t) /\
          stackSem_state_stack_space t5 = stackSem_state_stack_space t /\
@@ -1255,10 +1256,10 @@ let alloc_alt = cake_theorem "alloc_alt[local]"
           (match cut_envs names (wordSem_state_locals s) with
             NONE -> (SOME Error,s) | SOME env ->
               (match gc (set_store AllocSize (wordLang_Word c)
-                         (wordSem_push_env env ((NONE:(num#'a
-                           wordLang_prog#num#num) option))
-                           (wordSem_state_locals_size_fupd (K (SOME 0))
-                           (wordSem_state_locals_fupd (K LN) s)))) with
+                         (wordSem_state_locals_size_fupd (K (SOME
+                           0)) (wordSem_state_locals_fupd (K LN)
+                           (wordSem_push_env env ((NONE:(num#'a
+                           wordLang_prog#num#num) option)) s)))) with
                 NONE -> (SOME Error,s) | SOME s' ->
                   (match wordSem_pop_env s' with
                     NONE -> (SOME Error,s') | SOME s' ->
@@ -1300,10 +1301,11 @@ let alloc_IMP_alloc = cake_theorem "alloc_IMP_alloc[local]"
        (!x. x IN domain (SND names) ==> EVEN x /\ k <= x DIV 2) /\
        1 <= f /\
        word_to_stackProof_state_rel ac k f f' s t5 lens 0 /\
-       word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env envs
-         ((NONE:(num#'a wordLang_prog#num#num) option))
+       word_to_stackProof_state_rel ac k 0 0
          (wordSem_state_locals_size_fupd (K (SOME 0))
-         (wordSem_state_locals_fupd (K LN) s))) t5 (f' :: lens) 0 /\
+         (wordSem_state_locals_fupd (K LN) (wordSem_push_env envs
+         ((NONE:(num#'a wordLang_prog#num#num) option)) s))) t5 (f' ::
+         lens) 0 /\
        (cut_envs names (wordSem_state_locals s) = SOME envs) /\
          ~(res = SOME Error) ==>
        (?(t1:('a,'c,'ffi)stackSem_state) res1.
@@ -2295,7 +2297,7 @@ let evaluate_wLive_clock = cake_theorem "evaluate_wLive_clock[local]"
      wLive x bs kf = (q,bs') ==>
      evaluate (q,state_clock_fupd (K clk) t) =
      (FST (evaluate (q,(t:('a,'c,'ffi)stackSem_state))),
-      (SND (state_clock_fupd (K clk) (evaluate (q,t)))))`)
+      (state_clock_fupd (K clk) (SND (evaluate (q,t)))))`)
   CHEAT_TAC;;
 
 let state_rel_IMP_LENGTH = cake_theorem "state_rel_IMP_LENGTH[local]"
@@ -2346,7 +2348,7 @@ let evaluate_stack_move_clock = cake_theorem "evaluate_stack_move_clock"
        let prog = stack_move a b c d Skip in
        evaluate (prog,state_clock_fupd (K clk) t) =
        (FST (evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
-        (SND (state_clock_fupd (K clk) (evaluate (prog,t)))))`)
+        (state_clock_fupd (K clk) (SND (evaluate (prog,t)))))`)
   CHEAT_TAC;;
   (*get_var_set_var?*)
 (* HOL4 word_to_stackProofScript.sml:5359: a proof *)
@@ -2430,9 +2432,10 @@ let DROP_SUB2 = cake_theorem "DROP_SUB2[local]"
 let evaluate_PushHandler = cake_theorem "evaluate_PushHandler[local]"
   (fun () ->
     `3 <= stackSem_state_stack_space t /\
-     word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env x'
-       NONE (wordSem_state_locals_size_fupd (K (SOME 0))
-       (wordSem_state_locals_fupd (K LN) s))) t (f' :: lens) 0 /\
+     word_to_stackProof_state_rel ac k 0 0
+       (wordSem_state_locals_size_fupd (K (SOME 0))
+       (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' NONE s)))
+       t (f' :: lens) 0 /\
      loc_check (state_code t) (x''2,x''3) ==>
      (?(t':('a,'c,'ffi)stackSem_state).
      evaluate (PushHandler F (x''2:num) (x''3:num)
@@ -2449,10 +2452,11 @@ let evaluate_PushHandler = cake_theorem "evaluate_PushHandler[local]"
        stackSem_state_stack_space
      t' + 3 = stackSem_state_stack_space t /\
      LENGTH (stack t') = LENGTH (stack t) /\
-     word_to_stackProof_state_rel ac k 0 0 (wordSem_push_env x'
-       (SOME (x''0,(x''1:'a wordLang_prog),x''2,x''3))
+     word_to_stackProof_state_rel ac k 0 0
        (wordSem_state_locals_size_fupd (K (SOME 0))
-       (wordSem_state_locals_fupd (K LN) s))) t' (f' :: lens) 0)`)
+       (wordSem_state_locals_fupd (K LN) (wordSem_push_env x' (SOME
+       (x''0,(x''1:'a wordLang_prog),x''2,x''3)) s))) t' (f' :: lens)
+       0)`)
   CHEAT_TAC;;
 
 let evaluate_PushHandler_clock =
@@ -2463,7 +2467,7 @@ let evaluate_PushHandler_clock =
        (k,(f:num),(f':num)),state_clock_fupd (K clk) t) =
      (FST (evaluate (PushHandler F a b
        (k,(f:num),(f':num)),(t:('a,'c,'ffi)stackSem_state))),
-      (SND (state_clock_fupd (K clk) (evaluate (PushHandler F a b
+      (state_clock_fupd (K clk) (SND (evaluate (PushHandler F a b
         (k,(f:num),(f':num)),t)))))`)
   CHEAT_TAC;;
 
@@ -2474,7 +2478,7 @@ let evaluate_PopHandler_clock =
      let prog = PopHandler F (k,(f:num),(f':num)) Skip in
      evaluate (prog,state_clock_fupd (K clk) t) =
      (FST (evaluate (prog,(t:('a,'c,'ffi)stackSem_state))),
-      (SND (state_clock_fupd (K clk) (evaluate (prog,t)))))`)
+      (state_clock_fupd (K clk) (SND (evaluate (prog,t)))))`)
   CHEAT_TAC;;
 
 let evaluate_PopHandler_seq =

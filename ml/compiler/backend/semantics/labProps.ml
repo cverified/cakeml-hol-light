@@ -113,8 +113,8 @@ let reg_imm_with_clock = cake_theorem "reg_imm_with_clock[simp]"
 
 let asm_inst_with_clock = cake_theorem "asm_inst_with_clock[simp]"
   (fun () ->
-    `asm_inst i (state_clock_fupd (K z) s) = asm_inst i
-  (state_clock_fupd (K z) s)`)
+    `asm_inst i (state_clock_fupd (K z) s) = state_clock_fupd (K z)
+  (asm_inst i s)`)
   CHEAT_TAC;;
 
 let read_reg_inc_pc = cake_theorem "read_reg_inc_pc[simp]"
@@ -376,8 +376,8 @@ let align_dm_const = cake_theorem "align_dm_const[simp]"
 
 let align_dm_with_clock = cake_theorem "align_dm_with_clock"
   (fun () ->
-    `align_dm (state_clock_fupd (K k) s) = align_dm (state_clock_fupd
-  (K k) s)`)
+    `align_dm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
+  (align_dm s)`)
   CHEAT_TAC;;
 
 let asm_fetch_align_dm = cake_theorem "asm_fetch_align_dm[simp]"
@@ -619,8 +619,8 @@ let align_sdm_const = cake_theorem "align_sdm_const[simp]"
 
 let align_sdm_with_clock = cake_theorem "align_sdm_with_clock"
   (fun () ->
-    `align_sdm (state_clock_fupd (K k) s) = align_sdm
-  (state_clock_fupd (K k) s)`)
+    `align_sdm (state_clock_fupd (K k) s) = state_clock_fupd (K k)
+  (align_sdm s)`)
   CHEAT_TAC;;
 
 let asm_fetch_align_sdm = cake_theorem "asm_fetch_align_sdm[simp]"

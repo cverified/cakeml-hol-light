@@ -32,8 +32,8 @@ let rename_state_def = cake_define
 
 let rename_state_with_clock = cake_theorem "rename_state_with_clock"
   (fun () ->
-    `rename_state c f (state_clock_fupd (K k) s) = rename_state c f
-  (state_clock_fupd (K k) s)`)
+    `rename_state c f (state_clock_fupd (K k) s) = state_clock_fupd (K
+  k) (rename_state c f s)`)
   CHEAT_TAC;;
 
 let rename_state_const = cake_theorem "rename_state_const[simp]"
@@ -54,8 +54,8 @@ let rename_state_const = cake_theorem "rename_state_const[simp]"
 
 let rename_state_with_memory = cake_theorem "rename_state_with_memory"
   (fun () ->
-    `rename_state c f (state_memory_fupd (K k) s) = rename_state c f
-  (state_memory_fupd (K k) s)`)
+    `rename_state c f (state_memory_fupd (K k) s) = state_memory_fupd
+  (K k) (rename_state c f s)`)
   CHEAT_TAC;;
 
 let dec_clock_rename_state = cake_theorem "dec_clock_rename_state"

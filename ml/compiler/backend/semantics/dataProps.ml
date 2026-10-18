@@ -122,12 +122,12 @@ let dataProps_initial_state_simp =
 let dataProps_initial_state_with_simp =
   cake_theorem "initial_state_with_simp[simp]"
   (fun () ->
-    `(initial_state f c co cc ts l ss (state_clock_fupd (K k') k) =
+    `(state_clock_fupd (K k') (initial_state f c co cc ts l ss k) =
   initial_state f c co cc ts l ss k') /\
-     (initial_state f c co cc ts l ss (stack_fupd (K []) k) =
+     (stack_fupd (K []) (initial_state f c co cc ts l ss k) =
        initial_state f c co cc ts l ss k) /\
-     (initial_state f c co cc ts l ss (dataSem_state_locals_fupd
-       (K LN) k) = initial_state f c co cc ts l ss k)`)
+     (dataSem_state_locals_fupd (K LN) (initial_state f c co cc
+       ts l ss k) = initial_state f c co cc ts l ss k)`)
   CHEAT_TAC;;
 (* HOL4 dataPropsScript.sml:133-153: code that the source has in a
    comment *)
@@ -1183,7 +1183,7 @@ let set_var_const = cake_theorem "set_var_const[simp]"
 let set_var_with_const = cake_theorem "set_var_with_const"
   (fun () ->
     `(dataSem_set_var x y (state_clock_fupd (K k) z)) =
-  dataSem_set_var x y (state_clock_fupd (K k) z)`)
+  state_clock_fupd (K k) (dataSem_set_var x y z)`)
   CHEAT_TAC;;
 
 let set_vars_const = cake_theorem "set_vars_const[simp]"
@@ -1196,7 +1196,7 @@ let set_vars_const = cake_theorem "set_vars_const[simp]"
 let set_vars_with_const = cake_theorem "set_vars_with_const[simp]"
   (fun () ->
     `(dataSem_set_vars xs ys (state_clock_fupd (K k) z)) =
-  dataSem_set_vars xs ys (state_clock_fupd (K k) z)`)
+  state_clock_fupd (K k) (dataSem_set_vars xs ys z)`)
   CHEAT_TAC;;
 
 let call_env_const = cake_theorem "call_env_const[simp]"
@@ -1209,7 +1209,7 @@ let call_env_const = cake_theorem "call_env_const[simp]"
 let call_env_with_const = cake_theorem "call_env_with_const"
   (fun () ->
     `(dataSem_call_env x s (state_clock_fupd (K z) y)) =
-  dataSem_call_env x s (state_clock_fupd (K z) y)`)
+  state_clock_fupd (K z) (dataSem_call_env x s y)`)
   CHEAT_TAC;;
 
 let push_env_const = cake_theorem "push_env_const[simp]"

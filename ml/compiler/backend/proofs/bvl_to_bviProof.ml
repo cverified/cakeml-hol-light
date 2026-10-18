@@ -686,9 +686,9 @@ let do_app_Ref = cake_theorem "do_app_Ref[local]"
         Rval
          (RefPtr T (LEAST (\ptr. ~(ptr IN FDOM (state_refs s)))),
           bvl_to_bvi
-           (bvi_to_bvl (state_refs_fupd (K (state_refs
+           (state_refs_fupd (K (state_refs
               s |+ ((LEAST (\ptr. ~(ptr IN FDOM (state_refs
-                s)))),ValueArray vs))) s)) s)`)
+                s)))),ValueArray vs))) (bvi_to_bvl s)) s)`)
   CHEAT_TAC;;
 
 let state_rel_add_bytearray = cake_theorem "state_rel_add_bytearray"

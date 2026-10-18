@@ -2181,16 +2181,18 @@ hol4_overload "eval_sim" "clos_to_bvlProof_eval_sim";;
 let clos_to_bvlProof_initial_state_with_clock =
   cake_theorem "initial_state_with_clock[local]"
   (fun () ->
-    `(initial_state ffi ma code co cc (state_clock_fupd (K (state_clock
-       (initial_state ffi ma code co cc k) + ck)) k)) =
+    `(state_clock_fupd (K (state_clock
+       (initial_state ffi ma code co cc k) + ck)) (initial_state
+         ffi ma code co cc k)) =
      initial_state ffi ma code co cc (k + ck)`)
   CHEAT_TAC;;
 
 let initial_state_with_clock_bvl =
   cake_theorem "initial_state_with_clock_bvl[local]"
   (fun () ->
-    `(initial_state ffi code co cc (state_clock_fupd (K (state_clock
-       (initial_state ffi code co cc k) + ck)) k)) =
+    `(state_clock_fupd (K (state_clock
+       (initial_state ffi code co cc k) + ck)) (initial_state ffi
+         code co cc k)) =
      initial_state ffi code co cc (k + ck) /\
      (bvlProps_inc_clock ck (initial_state ffi code co cc k) =
      initial_state ffi code co cc (k + ck))`)

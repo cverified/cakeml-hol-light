@@ -38,8 +38,8 @@ let with_same_clock = cake_theorem "with_same_clock[simp]"
 
 let dec_clock_with_code = cake_theorem "dec_clock_with_code[simp]"
   (fun () ->
-    `bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) = dec_clock n
-  (bvlSem_state_code_fupd (K c) s)`)
+    `bvlSem_dec_clock n (bvlSem_state_code_fupd (K c) s) =
+  state_code_fupd (K c) (dec_clock n s)`)
   CHEAT_TAC;;
 
 (* HOL4 bvlPropsScript.sml:34-42: ML code, not ported *)
@@ -139,10 +139,10 @@ let initial_state_simp = cake_theorem "initial_state_simp[simp]"
 let initial_state_with_simp =
   cake_theorem "initial_state_with_simp[simp]"
   (fun () ->
-    `initial_state f c co cc (state_clock_fupd (K k1) k) = initial_state
-  f c co cc k1 /\
-     initial_state f c co cc (state_code_fupd (K c1) k) =
-       initial_state f c1 co cc k`)
+    `state_clock_fupd (K k1)
+        (initial_state f c co cc k) = initial_state f c co cc k1 /\
+          state_code_fupd (K c1)
+        (initial_state f c co cc k) = initial_state f c1 co cc k`)
   CHEAT_TAC;;
 
 let bool_to_tag_11 = cake_theorem "bool_to_tag_11[simp]"

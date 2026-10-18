@@ -211,7 +211,7 @@ let initial_state'_def = cake_define
 let initate_state'_clock =
   cake_theorem "initate_state'_clock[simp,local]"
   (fun () ->
-    `(initial_state' b ffi max_app FEMPTY co cc (state_clock_fupd (K k)
+    `(state_clock_fupd (K k) (initial_state' b ffi max_app FEMPTY co cc
   k')) =
      initial_state' b ffi max_app FEMPTY co cc k /\ state_clock
      (initial_state' b ffi max_app FEMPTY co cc k) = k`)

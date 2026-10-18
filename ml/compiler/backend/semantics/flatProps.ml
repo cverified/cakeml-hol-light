@@ -447,8 +447,8 @@ let evaluate_decs_add_to_clock_initial_state_io_events_mono =
 let flatProps_initial_state_with_clock =
   cake_theorem "initial_state_with_clock[local]"
   (fun () ->
-    `(flatSem_initial_state ffi k (state_clock_fupd (K (state_clock
-  (flatSem_initial_state ffi k ec) + ck)) ec)) =
+    `(state_clock_fupd (K (state_clock (flatSem_initial_state ffi k ec)
+  + ck)) (flatSem_initial_state ffi k ec)) =
       flatSem_initial_state ffi (k + ck) ec`)
   CHEAT_TAC;;
 
@@ -586,7 +586,7 @@ let flatProps_initial_state_clock = cake_theorem "initial_state_clock"
   (fun () ->
     `state_clock
        (flatSem_initial_state ffi k ec) = k /\
-       ((flatSem_initial_state ffi k (state_clock_fupd (K k1)
+       ((state_clock_fupd (K k1) (flatSem_initial_state ffi k
          ec)) = flatSem_initial_state ffi k1 ec)`)
   CHEAT_TAC;;
 

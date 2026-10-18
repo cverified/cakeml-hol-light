@@ -1854,9 +1854,9 @@ hol4_overload "eval_sim" "closProps_eval_sim";;
 let initial_state_with_clock =
   cake_theorem "initial_state_with_clock[local]"
   (fun () ->
-    `(closSem_initial_state ffi ma code co cc (state_clock_fupd (K
-  (state_clock
-       (closSem_initial_state ffi ma code co cc k) + ck)) k)) =
+    `(state_clock_fupd (K (state_clock
+       (closSem_initial_state ffi ma code co cc k) + ck))
+         (closSem_initial_state ffi ma code co cc k)) =
      closSem_initial_state ffi ma code co cc (k + ck)`)
   CHEAT_TAC;;
 
@@ -2308,7 +2308,7 @@ let initial_state_clock = cake_theorem "initial_state_clock"
   (fun () ->
     `state_clock
        (closSem_initial_state ffi max_app f co cc k) = k /\
-       ((closSem_initial_state ffi max_app f co cc
-         (state_clock_fupd (K k) k')) =
+       ((state_clock_fupd (K k) (closSem_initial_state ffi max_app
+         f co cc k')) =
         closSem_initial_state ffi max_app f co cc k)`)
   CHEAT_TAC;;

@@ -4574,10 +4574,10 @@ let line_to_info_offset_FST_eq =
 let line_to_info_offset_SND_eq =
   cake_theorem "line_to_info_offset_SND_eq"
   (fun () ->
-    `MAP SND (line_to_info code p accum) = MAP (\x. SND
-  (shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc (SND x)))
+    `MAP SND (line_to_info code p accum) = MAP (\x.
+  shmem_info_num_exit_pc_fupd (K (p + shmem_info_num_exit_pc (SND x)))
   (shmem_info_num_entry_pc_fupd (K (p + shmem_info_num_entry_pc (SND
-  x))) x)))
+  x))) (SND x)))
        (line_to_info code 0 accum)`)
   CHEAT_TAC;;
 

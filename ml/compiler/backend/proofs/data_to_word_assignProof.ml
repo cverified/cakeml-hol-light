@@ -170,8 +170,8 @@ let state_rel_push_env_loc = cake_theorem "state_rel_push_env_loc"
 
 let evaluate_IMP_domain_union = cake_theorem "evaluate_IMP_domain_union"
   (fun () ->
-    `evaluate (p,call_env args b (wordSem_state_termdep_fupd (K tp)
-  (state_clock_fupd (K ck) (push_env (y1,y2) NONE
+    `evaluate (p,wordSem_state_termdep_fupd (K tp) (state_clock_fupd (K
+  ck) (call_env args b (push_env (y1,y2) NONE
   (t:('a,'c,'ffi)wordSem_state))))) = (SOME (wordSem_Result ret1
   ret2),t1) /\
      pop_env t1 = SOME t2 /\

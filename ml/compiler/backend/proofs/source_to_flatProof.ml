@@ -2293,9 +2293,10 @@ let invariant_begin_alloc_blanks =
        (global_env_v_fupd (K init_globs) init_genv)
        (next_indices_vidx_fupd (K 1) (next cfg),next cfg',{})
        s1
-       (flatSem_initial_state (state_ffi s1) (state_clock s1)
-         (flatSem_state_globals_fupd (K init_globs) (state_refs_fupd
-         (K [semanticPrimitives_Refv (Conv NONE [])]) eval_conf)))`)
+       (flatSem_state_globals_fupd (K init_globs)
+         (state_refs_fupd (K [semanticPrimitives_Refv (Conv NONE [])])
+         (flatSem_initial_state (state_ffi s1) (state_clock s1)
+         eval_conf)))`)
   CHEAT_TAC;;
 
 let compile_prog_correct = cake_theorem "compile_prog_correct"

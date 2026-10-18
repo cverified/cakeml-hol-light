@@ -627,8 +627,8 @@ hol4_overload "compile_inc" "clos_known_compile_inc";;
 
 let known_static_conf_def = cake_define
   `known_static_conf kc = (match kc with NONE -> NONE | SOME kc ->
-  SOME (reset_inline_factor (clos_known_config_val_approx_spt_fupd (K
-  LN) kc)))`;;
+  SOME (clos_known_config_val_approx_spt_fupd (K LN)
+  (reset_inline_factor kc)))`;;
 
 let known_compile_inc_def = cake_define_list
   [`known_compile_inc NONE spt (p:closLang_exp

@@ -35,10 +35,10 @@ let bviProps_initial_state_simp =
 let bviProps_initial_state_with_simp =
   cake_theorem "initial_state_with_simp[simp]"
   (fun () ->
-    `initial_state f c co cc (state_clock_fupd (K k1) k) = initial_state
-  f c co cc k1 /\
-     initial_state f c co cc (state_code_fupd (K c1) k) =
-       initial_state f c1 co cc k`)
+    `state_clock_fupd (K k1)
+        (initial_state f c co cc k) = initial_state f c co cc k1 /\
+          state_code_fupd (K c1)
+        (initial_state f c co cc k) = initial_state f c1 co cc k`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_id = cake_theorem "bvl_to_bvi_id"
@@ -48,20 +48,20 @@ let bvl_to_bvi_id = cake_theorem "bvl_to_bvi_id"
 
 let bvl_to_bvi_with_refs = cake_theorem "bvl_to_bvi_with_refs"
   (fun () ->
-    `bvl_to_bvi (state_refs_fupd (K y) x) z = bvl_to_bvi x
-  (state_refs_fupd (K y) z)`)
+    `bvl_to_bvi (state_refs_fupd (K y) x) z = state_refs_fupd (K y)
+  (bvl_to_bvi x z)`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_with_clock = cake_theorem "bvl_to_bvi_with_clock"
   (fun () ->
-    `bvl_to_bvi (state_clock_fupd (K y) x) z = bvl_to_bvi x
-  (state_clock_fupd (K y) z)`)
+    `bvl_to_bvi (state_clock_fupd (K y) x) z = state_clock_fupd (K y)
+  (bvl_to_bvi x z)`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_with_ffi = cake_theorem "bvl_to_bvi_with_ffi"
   (fun () ->
-    `bvl_to_bvi (state_ffi_fupd (K y) x) z = bvl_to_bvi x
-  (state_ffi_fupd (K y) z)`)
+    `bvl_to_bvi (state_ffi_fupd (K y) x) z = state_ffi_fupd (K y)
+  (bvl_to_bvi x z)`)
   CHEAT_TAC;;
 
 let bvl_to_bvi_code = cake_theorem "bvl_to_bvi_code[simp]"
@@ -103,7 +103,7 @@ let bvi_to_bvl_ffi = cake_theorem "bvi_to_bvl_ffi[simp]"
 let bvi_to_bvl_to_bvi_with_ffi =
   cake_theorem "bvi_to_bvl_to_bvi_with_ffi"
   (fun () ->
-    `bvl_to_bvi (bvi_to_bvl (state_ffi_fupd (K f) x)) x =
+    `bvl_to_bvi (state_ffi_fupd (K f) (bvi_to_bvl x)) x =
   state_ffi_fupd (K f) x`)
   CHEAT_TAC;;
 
@@ -236,8 +236,8 @@ let bviProps_dec_clock_refs = cake_theorem "dec_clock_refs[simp]"
 let bviProps_dec_clock_with_code =
   cake_theorem "dec_clock_with_code[simp]"
   (fun () ->
-    `bviSem_dec_clock n (state_code_fupd (K c) s) = dec_clock n
-  (state_code_fupd (K c) s)`)
+    `bviSem_dec_clock n (state_code_fupd (K c) s) = state_code_fupd (K
+  c) (dec_clock n s)`)
   CHEAT_TAC;;
 
 let bviProps_dec_clock_code = cake_theorem "dec_clock_code[simp]"

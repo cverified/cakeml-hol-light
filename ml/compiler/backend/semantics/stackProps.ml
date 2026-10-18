@@ -59,8 +59,8 @@ let stackProps_set_store_const = cake_theorem "set_store_const[simp]"
 let stackProps_set_store_with_const =
   cake_theorem "set_store_with_const[simp]"
   (fun () ->
-    `set_store x y (state_clock_fupd (K a) z) = set_store x y
-  (state_clock_fupd (K a) z)`)
+    `set_store x y (state_clock_fupd (K a) z) = state_clock_fupd (K a)
+  (set_store x y z)`)
   CHEAT_TAC;;
 
 let stackProps_set_var_const = cake_theorem "set_var_const[simp]"
@@ -94,24 +94,24 @@ let stackProps_set_var_const = cake_theorem "set_var_const[simp]"
 let stackProps_set_var_with_const =
   cake_theorem "set_var_with_const[simp]"
   (fun () ->
-    `set_var x y (state_clock_fupd (K clk) z) = set_var x y
-  (state_clock_fupd (K clk) z) /\
-     set_var x y (state_memory_fupd (K m) z) = set_var x y
-       (state_memory_fupd (K m) z) /\
-     set_var x y (state_ffi_fupd (K ffi) z) = set_var x y
-       (state_ffi_fupd (K ffi) z) /\
-     set_var x y (stack_fupd (K stk) z) = set_var x y (stack_fupd
-       (K stk) z) /\
+    `set_var x y (state_clock_fupd (K clk) z) = state_clock_fupd (K clk)
+  (set_var x y z) /\
+     set_var x y (state_memory_fupd (K m) z) = state_memory_fupd (K
+       m) (set_var x y z) /\
+     set_var x y (state_ffi_fupd (K ffi) z) = state_ffi_fupd (K
+       ffi) (set_var x y z) /\
+     set_var x y (stack_fupd (K stk) z) = stack_fupd (K stk)
+       (set_var x y z) /\
      set_var x y (stackSem_state_stack_space_fupd (K stk_space)
-       z) = set_var x y (stackSem_state_stack_space_fupd (K stk_space)
+       z) = stackSem_state_stack_space_fupd (K stk_space) (set_var x y
        z)`)
   CHEAT_TAC;;
 
 let stackProps_set_fp_var_with_const =
   cake_theorem "set_fp_var_with_const[local,simp]"
   (fun () ->
-    `set_fp_var x y (state_clock_fupd (K k) z) = set_fp_var x y
-  (state_clock_fupd (K k) z)`)
+    `set_fp_var x y (state_clock_fupd (K k) z) = state_clock_fupd (K
+  k) (set_fp_var x y z)`)
   CHEAT_TAC;;
 
 let stackProps_set_fp_var_const =
@@ -204,8 +204,8 @@ let empty_env_const = cake_theorem "empty_env_const[simp]"
 
 let empty_env_with_const = cake_theorem "empty_env_with_const[simp]"
   (fun () ->
-    `stackSem_empty_env (state_clock_fupd (K y) x) =
-  stackSem_empty_env (state_clock_fupd (K y) x)`)
+    `stackSem_empty_env (state_clock_fupd (K y) x) = state_clock_fupd
+  (K y) (stackSem_empty_env x)`)
   CHEAT_TAC;;
 
 let stackProps_alloc_const = cake_theorem "alloc_const"

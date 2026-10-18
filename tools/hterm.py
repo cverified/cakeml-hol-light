@@ -495,6 +495,7 @@ class Parser:
     while self.starts_atom(True):
       a = self.closures(self.parse_fields(self.parse_atom()))
       e = Node('app', tok=e.tok, fn=e, arg=a)
+    e = self.parse_with(e)
     if annot and self.at(':'):
       self.next()
       ty = self.parse_type()
@@ -510,6 +511,22 @@ class Parser:
           self.peek(1).pos == self.peek().pos + 1:
       self.next()
       e = mk_app('RTC' if self.next().text == '*' else 'TC', [e])
+    return e
+
+  def parse_with(self, e):
+    """HOL4's r with fld := v binds looser than an application, so
+       initial_state f c co cc k with clock := k1 is the update of
+       the state that initial_state gives and not of its last
+       argument"""
+    while self.peek().text == 'with':
+      t = self.next()
+      if self.at('<|'):
+        self.next()
+        upds = self.parse_updates()
+        self.expect('|>')
+      else:
+        upds = self.parse_updates(single=True)
+      e = Node('recupd', tok=t, e=e, upds=upds)
     return e
 
   def parse_fields(self, e):
@@ -535,15 +552,6 @@ class Parser:
           if self.at(';'): self.next(); continue
           break
         self.expect('⟩')
-      elif t.text == 'with':
-        self.next()
-        if self.at('<|'):
-          self.next()
-          upds = self.parse_updates()
-          self.expect('|>')
-        else:
-          upds = self.parse_updates(single=True)
-        e = Node('recupd', tok=t, e=e, upds=upds)
       # HOL4 writes the update of a function f⦇k ↦ v⦈, which is
       # the (k =+ v) f of its combinTheory
       elif t.text == '⦇':

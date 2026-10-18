@@ -841,7 +841,7 @@ let state_ref_rel_update = cake_theorem "state_ref_rel_update"
 
 let bvl_to_bvi_refs = cake_theorem "bvl_to_bvi_refs"
   (fun () ->
-    `bvl_to_bvi (bvi_to_bvl (state_refs_fupd (K r) s)) s =
+    `bvl_to_bvi (state_refs_fupd (K r) (bvi_to_bvl s)) s =
   state_refs_fupd (K r) s`)
   CHEAT_TAC;;
 
