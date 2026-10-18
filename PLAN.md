@@ -12,38 +12,73 @@ on is the definitions that HOL Light cannot make **at all**: a
 body with a type variable that the constant does not reflect,
 or a constant that the port does not have.  See `CLAUDE.md`._
 
-_State: the port has **every** definition block of the 262 files
-that it has to have (4426 of 4426, which `tools/coverage.py`
+_State: the port has every definition block of the 263 files that
+it has to have but two (4430 of 4432, which `tools/coverage.py`
 checks: every `Datatype`, `Type`, `Overload`, `Definition` and
-`Inductive` of every ported source).  `tools/bin/checkseq` loads
-them one after the other in the order of `tools/load.txt`: in the
-run of 2026-10-17 20:39 (the 254 files of the port as it was
-then) **every file loads to the end**, and of the 323 definitions
-that are assumed (`ml/CHEATS.md`)
+`Inductive` of every ported source; the two are the command line
+drivers of the compiler binary, which need the file system of the
+basis library -- see `PENDING.md`).  `tools/bin/checkseq` loads
+the files one after the other in the order of `tools/load.txt`:
+in the run of 2026-10-18 00:53 **every file loads to the end**,
+and of the 454 theorems that the pass assumes (`ml/CHEATS.md`)
 
-- **299 only have their termination assumed** (`CHEAT_TAC` on the
+- **302 are the termination of a definition** (`CHEAT_TAC` on the
   condition): the constant is introduced by `new_specification`,
   it has the right type and its clauses are theorems, so
   everything after it is ported as if the definition were there,
   because it is;
-- **24 are a constant that is declared** without a value, because
+- **132 are the equation of a tail recursion** of the bignum
+  library: `mc_multiword` defines each of its 66 routines as the
+  `SHORT_TAILREC` of a step function and its precondition as the
+  `SHORT_TAILREC_PRE` of it, which the port does as well
+  (`ml/lib/mc_tailrec.ml`), and HOL4's `mc_tailrecLib` then
+  proves the equation that unfolds each of the two, which the
+  pass assumes;
+- **20 are a constant that is declared** without a value, because
   HOL4 makes the value in a way that the port has no counterpart
-  for (`PENDING.md` lists them);
-- **none is a definition that the port does not make**, which is
-  what the rest of the first pass was about.
+  for (`PENDING.md` lists them: the twelve configurations of the
+  targets, the basis program, the four step functions of the tail
+  recursions of `unify` and the three entry points of Pancake);
+- **none is a definition that the port does not make**.
 
-That was `length (axioms ()) = 205` and 4383 s, no cheat has a
-free variable (`tools/bin/freevars`) and no definition has
-clauses that do not typecheck apart (`tools/conjfail.log`).  The
-runs of this round were 17:21 (323 assumed, 335 axioms, 5 files
-that die), 19:34 (325, 370, 2), 22:26 (295, 340, 2), 01:12 (292,
-304, 2), 03:14 (290, 299, 1), 05:37 (291, 303, **0**), 10:35 (38
-not made, 239, 1), 12:04 (35 not made, 239, 0), 16:49 (25 not
-made, 250, 0, with thirteen more files in the port), 18:43 (one
-not made, 232, 0) and 20:39 (**none not made**, 205, 0).  The run
-of 22:11 is the first of the port with `panLang`, the six export
-theories of the targets and the Pancake definitions of
-`compiler` in it._
+That was `length (axioms ()) = 338` and 5185 s, no cheat has a
+free variable (`tools/bin/freevars`), no definition has clauses
+that do not typecheck apart (`tools/conjfail.log`) and no
+constant has a type outside the scope of its theory
+(`tools/bin/types`).  The runs of this round were 17:21 (323
+assumed, 335 axioms, 5 files that die), 19:34 (325, 370, 2),
+22:26 (295, 340, 2), 01:12 (292, 304, 2), 03:14 (290, 299, 1),
+05:37 (291, 303, **0**), 10:35 (38 not made, 239, 1), 12:04 (35
+not made, 239, 0), 16:49 (25 not made, 250, 0), 18:43 (one not
+made, 232, 0), 20:39 (**none not made**, 205, 0), 22:11 (none,
+208, 0, with `panLang`, the exports of the targets and the
+Pancake definitions of `compiler` in it) and 00:53 (none, 338, 0,
+with the bignum routines built as HOL4 builds them)._
+
+_What the port builds the way HOL4 builds it (2026-10-18, from
+the user: if HOL4 builds a definition from a source file, the
+port should do that too, and the port should be as similar in
+structure to the HOL4 version as reasonable):_
+
+- _the deep embedding of the bignum routines
+  (`word_bignum$mc_iop_code` and ten others): the `to_deep` of
+  `word_bignumScript.sml` is `tools/word_bignum_todeep.ml` in
+  OCaml, which `ML_PORTED` writes where the source has its ML;_
+- _the routines that it translates: the 66 `tailrec_define`s of
+  `mc_multiword` are 66 calls of the port's own
+  `tailrec_define`;_
+- _the bodies that the `check1` of `flat_to_closScript.sml`
+  builds (`CopyByteStr`, `CopyByteAw8`):
+  `tools/flat_to_clos_check.ml`;_
+- _the FFI blocks of the assembly of the six targets, which the
+  ML of each `export_<target>Script.sml` builds and `EVAL`
+  computes: the port writes the term that HOL4 evaluates (both
+  terms of a binding of two, which `tools/hol4.py` reads now);_
+- _what is left of that kind: the basis program (the proof
+  producing translator of HOL4 builds it) and the four step
+  functions of the tail recursions of `unify` (HOL4's
+  `tcallify_th` makes each from a theorem that the second pass
+  has to prove first).  Both are declared constants._
 
 _What the last one was.  `word_bignumProof$Eval` is an
 `Inductive` whose rules apply `eval_exp` to a `wordLang$exp` that

@@ -9,29 +9,159 @@ axiom; one that is assumed clause by clause (its
 clauses did not fit together, which is a bug of the
 port) is one axiom per clause.
 
-`length (axioms ())` is 208: the three axioms of HOL
-Light and 205 for the 323 definitions below.
+`length (axioms ())` is 338: the three axioms of HOL
+Light and 335 for the 454 definitions below.
 
-Of these 323 definitions
+Of these 454 definitions
 
-- 298 have only their **termination** assumed, so the
+- 302 have only their **termination** assumed, so the
   constant, its type and its clauses are the real ones;
-- 21 are a constant that is **declared** without a
+- 20 are a constant that is **declared** without a
   value, because HOL4 computes the value with ML code;
-- 4 are **not made** at all, which is the work that is
+- 132 are **not made** at all, which is the work that is
   left.
 
 Why they are assumed:
 
-- 298: termination (CHEAT_TAC)
-- 21: declared (no value)
-- 2: tryfind: /\
-- 1: free: add_stderr:?933662->mlstring->?933662, add_stdout:?933666->m
-- 1: free: add_stderr:?934531->mlstring->?934531, add_stdout:?934535->m
+- 302: termination (CHEAT_TAC)
+- 132: equation of a tail recursion assumed
+- 20: declared (no value)
 
 | definition | file | why |
 |---|---|---|
 | `print_sexp` | `lib/simpleSexpParse.ml` | termination (CHEAT_TAC) |
+| `mc_cmp` | `` | equation of a tail recursion assumed |
+| `mc_cmp_pre` | `` | equation of a tail recursion assumed |
+| `mc_compare` | `` | equation of a tail recursion assumed |
+| `mc_compare_pre` | `` | equation of a tail recursion assumed |
+| `mc_icompare` | `` | equation of a tail recursion assumed |
+| `mc_icompare_pre` | `` | equation of a tail recursion assumed |
+| `mc_add_loop2` | `` | equation of a tail recursion assumed |
+| `mc_add_loop2_pre` | `` | equation of a tail recursion assumed |
+| `mc_add_loop1` | `` | equation of a tail recursion assumed |
+| `mc_add_loop1_pre` | `` | equation of a tail recursion assumed |
+| `mc_add_loop` | `` | equation of a tail recursion assumed |
+| `mc_add_loop_pre` | `` | equation of a tail recursion assumed |
+| `mc_add` | `` | equation of a tail recursion assumed |
+| `mc_add_pre` | `` | equation of a tail recursion assumed |
+| `mc_sub_loop2` | `` | equation of a tail recursion assumed |
+| `mc_sub_loop2_pre` | `` | equation of a tail recursion assumed |
+| `mc_sub_loop1` | `` | equation of a tail recursion assumed |
+| `mc_sub_loop1_pre` | `` | equation of a tail recursion assumed |
+| `mc_sub_loop` | `` | equation of a tail recursion assumed |
+| `mc_sub_loop_pre` | `` | equation of a tail recursion assumed |
+| `mc_fix` | `` | equation of a tail recursion assumed |
+| `mc_fix_pre` | `` | equation of a tail recursion assumed |
+| `mc_sub` | `` | equation of a tail recursion assumed |
+| `mc_sub_pre` | `` | equation of a tail recursion assumed |
+| `mc_iadd1` | `` | equation of a tail recursion assumed |
+| `mc_iadd1_pre` | `` | equation of a tail recursion assumed |
+| `mc_iadd2` | `` | equation of a tail recursion assumed |
+| `mc_iadd2_pre` | `` | equation of a tail recursion assumed |
+| `mc_iadd3` | `` | equation of a tail recursion assumed |
+| `mc_iadd3_pre` | `` | equation of a tail recursion assumed |
+| `mc_iadd` | `` | equation of a tail recursion assumed |
+| `mc_iadd_pre` | `` | equation of a tail recursion assumed |
+| `mc_single_mul_add` | `` | equation of a tail recursion assumed |
+| `mc_single_mul_add_pre` | `` | equation of a tail recursion assumed |
+| `mc_mul_pass` | `` | equation of a tail recursion assumed |
+| `mc_mul_pass_pre` | `` | equation of a tail recursion assumed |
+| `mc_mul` | `` | equation of a tail recursion assumed |
+| `mc_mul_pre` | `` | equation of a tail recursion assumed |
+| `mc_mul_zero` | `` | equation of a tail recursion assumed |
+| `mc_mul_zero_pre` | `` | equation of a tail recursion assumed |
+| `mc_imul1` | `` | equation of a tail recursion assumed |
+| `mc_imul1_pre` | `` | equation of a tail recursion assumed |
+| `mc_imul` | `` | equation of a tail recursion assumed |
+| `mc_imul_pre` | `` | equation of a tail recursion assumed |
+| `mc_single_div` | `` | equation of a tail recursion assumed |
+| `mc_single_div_pre` | `` | equation of a tail recursion assumed |
+| `mc_simple_div` | `` | equation of a tail recursion assumed |
+| `mc_simple_div_pre` | `` | equation of a tail recursion assumed |
+| `mc_simple_div1` | `` | equation of a tail recursion assumed |
+| `mc_simple_div1_pre` | `` | equation of a tail recursion assumed |
+| `mc_calc_d` | `` | equation of a tail recursion assumed |
+| `mc_calc_d_pre` | `` | equation of a tail recursion assumed |
+| `mc_single_mul` | `` | equation of a tail recursion assumed |
+| `mc_single_mul_pre` | `` | equation of a tail recursion assumed |
+| `mc_mul_by_single2` | `` | equation of a tail recursion assumed |
+| `mc_mul_by_single2_pre` | `` | equation of a tail recursion assumed |
+| `mc_cmp3` | `` | equation of a tail recursion assumed |
+| `mc_cmp3_pre` | `` | equation of a tail recursion assumed |
+| `mc_cmp_mul2` | `` | equation of a tail recursion assumed |
+| `mc_cmp_mul2_pre` | `` | equation of a tail recursion assumed |
+| `mc_sub1` | `` | equation of a tail recursion assumed |
+| `mc_sub1_pre` | `` | equation of a tail recursion assumed |
+| `mc_cmp2` | `` | equation of a tail recursion assumed |
+| `mc_cmp2_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_test` | `` | equation of a tail recursion assumed |
+| `mc_div_test_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_r1` | `` | equation of a tail recursion assumed |
+| `mc_div_r1_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_guess` | `` | equation of a tail recursion assumed |
+| `mc_div_guess_pre` | `` | equation of a tail recursion assumed |
+| `mc_adj_cmp` | `` | equation of a tail recursion assumed |
+| `mc_adj_cmp_pre` | `` | equation of a tail recursion assumed |
+| `mc_adjust_aux` | `` | equation of a tail recursion assumed |
+| `mc_adjust_aux_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_adjust` | `` | equation of a tail recursion assumed |
+| `mc_div_adjust_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_sub` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_loop` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_loop_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_loop` | `` | equation of a tail recursion assumed |
+| `mc_div_loop_pre` | `` | equation of a tail recursion assumed |
+| `mc_mul_by_single` | `` | equation of a tail recursion assumed |
+| `mc_mul_by_single_pre` | `` | equation of a tail recursion assumed |
+| `mc_top_two` | `` | equation of a tail recursion assumed |
+| `mc_top_two_pre` | `` | equation of a tail recursion assumed |
+| `mc_copy_down` | `` | equation of a tail recursion assumed |
+| `mc_copy_down_pre` | `` | equation of a tail recursion assumed |
+| `mc_copy_over` | `` | equation of a tail recursion assumed |
+| `mc_copy_over_pre` | `` | equation of a tail recursion assumed |
+| `mc_div0` | `` | equation of a tail recursion assumed |
+| `mc_div0_pre` | `` | equation of a tail recursion assumed |
+| `mc_div1` | `` | equation of a tail recursion assumed |
+| `mc_div1_pre` | `` | equation of a tail recursion assumed |
+| `mc_div2` | `` | equation of a tail recursion assumed |
+| `mc_div2_pre` | `` | equation of a tail recursion assumed |
+| `mc_div3` | `` | equation of a tail recursion assumed |
+| `mc_div3_pre` | `` | equation of a tail recursion assumed |
+| `mc_div` | `` | equation of a tail recursion assumed |
+| `mc_div_pre` | `` | equation of a tail recursion assumed |
+| `mc_add1` | `` | equation of a tail recursion assumed |
+| `mc_add1_pre` | `` | equation of a tail recursion assumed |
+| `mc_add1_call` | `` | equation of a tail recursion assumed |
+| `mc_add1_call_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_aux1` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_aux1_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_aux` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_aux_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_sub1` | `` | equation of a tail recursion assumed |
+| `mc_div_sub1_pre` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_call` | `` | equation of a tail recursion assumed |
+| `mc_div_sub_call_pre` | `` | equation of a tail recursion assumed |
+| `mc_idiv_mod_header` | `` | equation of a tail recursion assumed |
+| `mc_idiv_mod_header_pre` | `` | equation of a tail recursion assumed |
+| `mc_idiv0` | `` | equation of a tail recursion assumed |
+| `mc_idiv0_pre` | `` | equation of a tail recursion assumed |
+| `mc_idiv` | `` | equation of a tail recursion assumed |
+| `mc_idiv_pre` | `` | equation of a tail recursion assumed |
+| `mc_isub_flip` | `` | equation of a tail recursion assumed |
+| `mc_isub_flip_pre` | `` | equation of a tail recursion assumed |
+| `mc_icmp_res` | `` | equation of a tail recursion assumed |
+| `mc_icmp_res_pre` | `` | equation of a tail recursion assumed |
+| `mc_full_cmp` | `` | equation of a tail recursion assumed |
+| `mc_full_cmp_pre` | `` | equation of a tail recursion assumed |
+| `mc_iop` | `` | equation of a tail recursion assumed |
+| `mc_iop_pre` | `` | equation of a tail recursion assumed |
+| `mc_fac_init` | `` | equation of a tail recursion assumed |
+| `mc_fac_init_pre` | `` | equation of a tail recursion assumed |
+| `mc_fac_final` | `` | equation of a tail recursion assumed |
+| `mc_fac_final_pre` | `` | equation of a tail recursion assumed |
+| `mc_use_fac` | `` | equation of a tail recursion assumed |
+| `mc_use_fac_pre` | `` | equation of a tail recursion assumed |
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
 | `bvi_to_data_compile` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
 | `bvi_to_data_compile_sing` | `compiler/backend/bvi_to_data.ml` | termination (CHEAT_TAC) |
@@ -101,9 +231,10 @@ Why they are assumed:
 | `get_src_names` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
 | `get_src_names_sing` | `compiler/backend/clos_to_bvl.ml` | termination (CHEAT_TAC) |
-| `var_exp` | `pancake/panLang.ml` | tryfind: /\ |
-| `global_var_exp` | `pancake/panLang.ml` | tryfind: /\ |
-| `mc_iop_code` | `compiler/backend/word_bignum.ml` | declared (no value) |
+| `var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
+| `var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
+| `global_var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
+| `global_var_exp` | `pancake/panLang.ml` | termination (CHEAT_TAC) |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
 | `call_graph` | `compiler/backend/word_depth.ml` | termination (CHEAT_TAC) |
 | `semanticPrimitives_pmatch` | `semantics/semanticPrimitives.ml` | termination (CHEAT_TAC) |
@@ -256,8 +387,6 @@ Why they are assumed:
 | `ag32_backend_config` | `compiler/compiler.ml` | declared (no value) |
 | `ag32_config` | `compiler/compiler.ml` | declared (no value) |
 | `basis` | `compiler/compiler.ml` | declared (no value) |
-| `full_compile_64` | `compiler/compiler.ml` | free: add_stderr:?933662->mlstring->?933662, add_stdout:?933 |
-| `full_compile_32` | `compiler/compiler.ml` | free: add_stderr:?934531->mlstring->?934531, add_stdout:?934 |
 | `copying_gc_gc_move_list` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `copying_gc_gc_move_loop` | `compiler/backend/gc/copying_gc.ml` | termination (CHEAT_TAC) |
 | `size_of` | `compiler/backend/semantics/dataSem.ml` | termination (CHEAT_TAC) |
@@ -355,4 +484,4 @@ Why they are assumed:
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 | `abs_stack` | `compiler/backend/proofs/word_to_stackProof.ml` | termination (CHEAT_TAC) |
 
-323 definitions.
+454 definitions.
