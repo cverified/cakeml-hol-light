@@ -320,14 +320,26 @@ def parse(path):
     if not m: return [line]
     return [line[:m.end(1)], line[m.end(1):].lstrip()]
 
-  lines = [l for line in lines for l in split_end(line)]
+  # srcline[i] is the line of the source that lines[i] came from
+  # (1 based), which split_end makes two lines of
+  srcline = []
+  split = []
+  for k, line in enumerate(lines):
+    for l in split_end(line):
+      split.append(l); srcline.append(k + 1)
+  lines = split
   # every block records the line it starts at, so that the port can
-  # keep the blank lines of the source between the blocks
+  # keep the blank lines of the source between the blocks, and the
+  # lines of the source that it spans, so that the port can point
+  # at it (the port never holds HOL4 code itself)
   cur = [0]
   class Blocks(list):
     def append(self, b):
       b.line = cur[0]
       b.blanks = blanks_before(lines, cur[0])
+      b.src = srcline[cur[0]] if cur[0] < len(srcline) else 0
+      k = cur[0] + (b.text.count('\n') if b.text else 0)
+      b.src_end = srcline[k] if k < len(srcline) else srcline[-1]
       list.append(self, b)
   blocks = Blocks()
   i = 0

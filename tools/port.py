@@ -267,6 +267,24 @@ class Porter:
       line += part
     return out + line
 
+  def at(self, b, what, kw=None):
+    """a comment that points at a block of the HOL4 source.  The
+       port holds no HOL4 code, not even in a comment, so where it
+       cannot say what the source says it says where to read it:
+       the file and the lines of the block, or of the part of it
+       that starts at the line kw (Termination, Proof)"""
+    f = re.sub(r'^.*/', '', self.path)
+    a = getattr(b, 'src', 0) or 0
+    z = getattr(b, 'src_end', 0) or a
+    if kw is not None and b.text:
+      for i, l in enumerate(b.text.split('\n')):
+        if l.strip() == kw:
+          a = a + i
+          break
+    where = '%s:%d' % (f, a) if z <= a else '%s:%d-%d' % (f, a, z)
+    return '\n'.join(fill('(* HOL4 %s:' % where,
+                          what.split(), 69)) + ' *)'
+
   def nm(self, n):
     return self.ctx.name(n)
 
@@ -470,11 +488,14 @@ class Porter:
       # a comment block of the source can have ML code after the
       # comment (word_bignum's get_exp has '(* Var *) let' on one
       # line), and that code is not OCaml
-      if comment_only(b.text):
+      if COMMENTED_CODE.search(b.text):
+        self.out.append(self.at(b, 'code that the source has in a'
+                                   ' comment'))
+      elif comment_only(b.text):
         self.out.append(shorten(b.text))
       else:
-        self.out.append('(* HOL4 ML code, not ported:\n' +
-                        shorten(b.text) + '\n*)')
+        self.out.append(self.at(b, 'a comment with ML code after it,'
+                                   ' which the port does not have'))
     elif k == 'Theory':
       # the header of the port comes first, before the comments that
       # the HOL4 file has before its Theory line
@@ -521,8 +542,7 @@ class Porter:
       if self.grammar_block(b):
         return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
-      self.out.append('(* HOL4 ML code, not ported:\n' +
-                      shorten(b.text) + '\n*)')
+      self.out.append(self.at(b, 'ML code, not ported'))
     else:
       self.warn.append('unknown block ' + k)
 
@@ -759,8 +779,10 @@ class Porter:
     if key in overrides.NOT_YET:
       self.warn.append('%s: PENDING (%s)'
                        % (b.name, overrides.NOT_YET[key].split('\n')[0]))
-      self.out.append('(* PENDING: %s\n%s *)'
-                      % (overrides.NOT_YET[key], shorten(b.text.strip())))
+      self.out.append(
+        '\n'.join(fill('(* PENDING:',
+                       overrides.NOT_YET[key].split(), 69)) + ' *)\n'
+        + self.at(b, 'the definition'))
       return
     key = (self.thy, name)
     if key in overrides.REPLACE:
@@ -876,9 +898,9 @@ class Porter:
       wf, rest = wf_relation(b.extra)
       if wf is not None:
         rel = fmt(self.term(wf), last=1)
-        termnote = '' if not rest.split() else shorten('\n'.join(
-                     fill('(* HOL4 termination:', rest.split(), 69))
-                   + ' *)') + '\n'
+        termnote = '' if not rest.split() else \
+                   self.at(b, 'the tactic of the Termination',
+                           'Termination') + '\n'
 
     def size_prelude(text):
       """a measure that uses the size function of a datatype needs
@@ -942,9 +964,9 @@ class Porter:
     elif cheat and b.extra is not None and wf_relation(b.extra)[0]:
       wf, rest = wf_relation(b.extra)
       wftext = fmt(self.term(wf), last=1)
-      note = '' if not rest.split() else shorten('\n'.join(
-               fill('(* HOL4 termination:', rest.split(), 69))
-             + ' *)') + '\n'
+      note = '' if not rest.split() else \
+             self.at(b, 'the tactic of the Termination',
+                     'Termination') + '\n'
       text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
               'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
               '  CHEAT_TAC\n  `%s`;;' % (name, wftext, term))
@@ -977,16 +999,17 @@ class Porter:
       if wf is None:
         self.warn.append(f'{name}: no WF_REL_TAC in the Termination')
         text = (sizes +
-                shorten('(* TERMINATION: %s *)' % b.extra.strip()) +
+                self.at(b, 'the Termination, which has no'
+                           ' WF_REL_TAC in it', 'Termination') +
                 '\nlet %s = cake_define\n  `%s`;;' % (name, term))
       else:
         wftext = fmt(self.term(wf), last=1)
         # the tactic that proves the goals of the relation is of no
         # use to the port, but it is kept as a comment where there
         # is one
-        note = '' if not rest.split() else shorten('\n'.join(
-                 fill('(* HOL4 termination:', rest.split(), 69))
-               + ' *)') + '\n'
+        note = '' if not rest.split() else \
+               self.at(b, 'the tactic of the Termination',
+                       'Termination') + '\n'
         text = (size_prelude(wftext + ' ' + term) + note +
                 'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
                 % (name, wftext, term))
@@ -2119,9 +2142,9 @@ class Porter:
     ty = hterm.parse_type_text(txt)
     params = hterm.type_vars_of(ty)
     if params:
-      self.out.append(shorten(
-        '(* HOL4 type abbreviation (expanded in the port):'
-        '\n     %s = %s *)' % (b.name, txt)))
+      self.out.append(self.at(
+        b, 'the type abbreviation %s, which the port expands'
+           % b.name))
     else:
       # the type may be too long for one line
       body = self.typ(txt)
@@ -2164,9 +2187,8 @@ class Porter:
         not IDENT.match(txt.strip()) and
         self.ctx.overloads.get(b.name)):
       hterm.set_infix_lambda(b.name)
-      self.out.append(shorten(
-        '(* HOL4 overload (expanded in the port):\n'
-        '     %s = %s *)' % (b.name, txt)))
+      self.out.append(self.at(
+        b, 'the overload %s, which the port expands' % b.name))
       return
     # an infix that HOL Light has as well becomes an overload of
     # HOL Light, which resolves it by the type as HOL4 does
@@ -2177,9 +2199,8 @@ class Porter:
         self.restore.add(b.name)
       return
     self.warn.append('Overload %s' % b.name)
-    self.out.append(shorten(
-      '(* HOL4 overload (expanded in the port):\n'
-      '     %s = %s *)' % (b.name, txt)))
+    self.out.append(self.at(
+      b, 'the overload %s, which the port expands' % b.name))
 
   def enable_monad(self, text):
     """the do notation of a source is the bind of the monad that it
@@ -2451,6 +2472,23 @@ def iscon(n):
   """is this the name of a constructor?  A CakeML source may write
      it with the name of its theory (fpSem$FP_Add)"""
   return n.split('$')[-1] in CONS
+
+
+# a comment of the source whose body is HOL4 code (a definition or
+# a theorem that the source has commented out, an SML binding, a
+# tactic): the port has no HOL4 code, not even in a comment, so it
+# points at those lines instead of keeping them
+COMMENTED_CODE = re.compile('|'.join('(?:%s)' % p for p in [
+  r"^\s*(Theorem|Triviality|Definition|Inductive|CoInductive)\s+"
+  r"[A-Za-z0-9_']+\s*(\[[^\]]*\])?\s*:",
+  r'^\s*Datatype\s*:',
+  r'^\s*(Proof|QED|End|Termination)\s*$',
+  r"^\s*(val|fun)\s+[A-Za-z0-9_'()]+\s*[=(]",
+  r'^\s*open\s+[A-Za-z]',
+  r'(^|\s)(>>|>-|\\\\)(\s|$)',
+  r'\b(store_thm|save_thm|prove|metis_tac|srw_ss|EVAL)\s*[("\[]',
+  r'\b(rw|fs|gvs|simp|rfs|asm_simp_tac|rpt)\s*[\[(]',
+]), re.M)
 
 
 def comment_only(text):
