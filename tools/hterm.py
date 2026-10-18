@@ -1469,9 +1469,6 @@ class Printer:
     if e.kind == 'typed':
       if any(t.text == 'int' for t in e.ty): return True
       return self.intvar(e.e)
-    if e.kind == 'app':
-      h, _ = strip_app(e)
-      return h.kind == 'id' and h.name in INT_FUNS
     return False
 
   def pr0(self, e, prec):

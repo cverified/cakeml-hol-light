@@ -260,6 +260,12 @@ class Porter:
     # an overload of an ancestor does not shadow a constant that
     # this theory defines itself (semanticPrimitives defines
     # num_cmp, which comparison has as an overload of num_compare)
+    # the term grammar of the theory, before the bodies of its
+    # overloads are read below: with the one that the file before
+    # it left, a token that another theory overloads too would be
+    # read as that theory's (parmove's RTC of its own step read as
+    # the Cons of backend_common)
+    db.base_grammar(thy)
     raw = {nm: txt for nm, txt in db.overloads_for(thy).items()
            if not any(t == thy and k in ('def', 'con', 'rel')
                       for t, k in db.defs.get(nm, []))
@@ -526,11 +532,23 @@ class Porter:
 
   def run(self):
     blocks = hol4.parse(self.path)
+    # the names that HOL4 reads as variables in this theory,
+    # because no theory in its ancestry defines them; of a HOL4
+    # library theory the port has the definitions and no
+    # statement, so it needs no list
+    hide = ([] if self.kind == 'lib'
+            else self.db.hidden_for(self.thy, blocks))
     self.db.base_grammar(self.thy)
     # an infix that an ancestor overloads with a constant is written
     # as an application of that constant
     anc = self.db.ancestors(self.thy)
     for (thy, tok), (txt, loc) in self.db.ovl_infix.items():
+      # a token that this theory overloads itself is what its own
+      # Overload says, not what an ancestor says (parmove's ▷ is
+      # its step, and backend_common overloads the same token
+      # with its Cons)
+      if (self.thy, tok) in self.db.ovl_infix and thy != self.thy:
+        continue
       if (thy in anc and not loc and tok in hterm.OWN_INFIX
           and IDENT.match(txt)):
         hterm.set_infix_name(tok, self.ctx.name(txt))
@@ -596,7 +614,7 @@ class Porter:
           for tok in sorted(self.restore))
     # a hide list stays in the session until the next one, so a
     # file that makes one takes it back at the end of itself
-    if self.db.hidden_for(self.thy, blocks):
+    if hide:
       text += '\ncake_hide [];;\n'
     # the files that the translation needs
     deps = sorted(set(self.deps) |
@@ -606,9 +624,6 @@ class Porter:
                        for d in deps if d in self.db.thy_of_file))
     head = '\n'.join(needs) if needs else \
            '(* this file needs nothing of the port *)'
-    # the names that HOL4 reads as variables here, because no
-    # theory in the scope of this one defines them
-    hide = self.db.hidden_for(self.thy, blocks)
     if hide:
       lines = ['cake_hide ["' + hide[0] + '"']
       for n in hide[1:]:
