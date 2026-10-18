@@ -56,3 +56,9 @@ let RINTER = new_definition
 
 let RSUBSET = new_definition
   `RSUBSET (R1:A->B->bool) R2 <=> !x y. R1 x y ==> R2 x y`;;
+
+(* the composition of two relations, which HOL4 writes R1 O R2 *)
+
+let O_DEF = new_definition
+  `O (R1:B->C->bool) (R2:A->B->bool) x z <=>
+   ?y. R2 x y /\ R1 y z`;;

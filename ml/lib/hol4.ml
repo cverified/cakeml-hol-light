@@ -308,6 +308,29 @@ let INDEX_FIND = new_recursive_definition list_RECURSION
    (INDEX_FIND i P (CONS h t) =
     if P h then SOME (i,h) else INDEX_FIND (SUC i) P t)`;;
 
+(* HOL4's LRC of listTheory: the list is a chain of R from x to
+   y; its LLEX, the lexicographic order of two lists; and the
+   SPLITL of its rich_listTheory *)
+
+let LRC = new_recursive_definition list_RECURSION
+  `(LRC (R:A->A->bool) [] x y <=> x = y) /\
+   (LRC R (CONS h t) x y <=> x = h /\ (?z. R x z /\ LRC R t z y))`;;
+
+let LLEX = new_recursive_definition list_RECURSION
+  `(LLEX (R:A->A->bool) [] l2 <=> ~(l2 = [])) /\
+   (LLEX R (CONS h1 t1) l2 <=>
+    ~(l2 = []) /\
+    (if R h1 (HD l2) then T
+     else if h1 = HD l2 then LLEX R t1 (TL l2) else F))`;;
+
+let SPLITL = new_definition
+  `SPLITL (P:A->bool) = SPLITP (\x. ~(P x))`;;
+
+(* the list without its last n elements, of rich_listTheory *)
+
+let BUTLASTN = new_definition
+  `BUTLASTN n (xs:(A)list) = REVERSE (DROP n (REVERSE xs))`;;
+
 (* HOL4's FIND of listTheory and LIST_ELEM_COUNT of
    rich_listTheory *)
 
@@ -397,6 +420,15 @@ let TAILCALL = new_definition
 
 let COMPL = new_definition
   `COMPL (P:A->bool) = UNIV DIFF P`;;
+
+let PREIMAGE = new_definition
+  `PREIMAGE (f:A->B) s = {x | f x IN s}`;;
+
+(* HOL4's FAIL of combinTheory, which it uses to keep a term that
+   nothing evaluates (with the name of what failed beside it) *)
+
+let FAIL = new_definition
+  `FAIL (x:A) (y:B) = x`;;
 
 (* HOL4 sums a function over a set with ITSET, which says nothing
    about an infinite set; HOL Light's nsum is the same sum *)

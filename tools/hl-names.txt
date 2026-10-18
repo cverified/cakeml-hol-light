@@ -119,6 +119,7 @@ bool
 bool_size
 BOTTOM
 BUTLAST
+BUTLASTN
 byte
 C
 CARD
@@ -181,6 +182,7 @@ EXTENSIONAL
 F
 f_o_f
 FACT
+FAIL
 false
 FAPPLY
 FCARD
@@ -193,6 +195,7 @@ FIELDS
 FILTER
 FIND
 FINITE
+FINITE_BAG
 finite_diff
 finite_image
 finite_index
@@ -345,6 +348,7 @@ list_size
 LIST_TO_BAG
 LIST_TO_SET
 LLENGTH
+LLEX
 llist
 llist_fn
 LMAP
@@ -352,6 +356,7 @@ LNIL
 LNTH
 LOG2
 LPREFIX
+LRC
 LTAKE
 LTL
 LUNFOLD
@@ -381,6 +386,8 @@ mk_real
 mk_word
 mktybit0
 mktybit1
+mlt
+mlt1
 MOD
 mod
 MOD_2EXP
@@ -422,6 +429,7 @@ NUMRIGHT
 NUMSND
 NUMSUM
 nybble
+O
 o
 o_f
 ODD
@@ -461,6 +469,7 @@ PCROSS
 polynomial_function
 pow
 PRE
+PREIMAGE
 prime
 prod
 product
@@ -517,6 +526,7 @@ sndcart
 SNOC
 SOME
 some
+SPLITL
 SPLITP
 sqrt
 STRCAT

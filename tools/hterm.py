@@ -338,6 +338,8 @@ INFIX = {
   # s <| t (with a triangle)
   '◁':     (700, 'r', 'walkstar', None),
   'f_o_f': (800, 'r', 'f_o_f', 26),
+  # the composition of two relations of HOL4's relationTheory
+  'O':     (800, 'r', 'O', None),
   # the relation between two functions of HOL4's transfer library
   # and the relation between two pairs of its pairTheory
   '|==>':  (490, 'r', 'FUN_REL', None),
