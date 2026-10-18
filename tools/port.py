@@ -235,6 +235,7 @@ class Porter:
       {k[1] if isinstance(k, tuple) else k
        for k in self.ctx.tynames} |
       set(self.ctx.tynames.values()) | set(self.abbrevs) |
+      db.types_in_scope(thy) |
       dbmod.hl_types() | set(overrides.TYPE_MAP))
     self.out = []
     self.warn = []

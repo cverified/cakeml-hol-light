@@ -664,6 +664,22 @@ class Db:
         out.add(n)
     return sorted(out)
 
+  def types_in_scope(self, thy):
+    """the names of every type and type abbreviation that a theory
+       in the scope of this one defines, under the name that HOL4
+       gives it and the one that the port gives it.  The parser
+       needs them to see where a type that is not in parentheses
+       ends: HOL4 reads ls:'a word_loc list as one type, and a
+       name that is no type of its own ends it"""
+    scope = self.scope(thy)
+    out = set()
+    for nm, v in self.defs.items():
+      for t, k in v:
+        if k in ('type', 'tyabbrev') and t in scope:
+          out.add(nm)
+          out.add(self.rename.get((t, nm), nm))
+    return out
+
   def defnames_for(self, thy):
     """the names that a theory in the scope of this one defines as
        a constant of its own, which is what HOL4 reads such a name
