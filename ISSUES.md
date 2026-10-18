@@ -98,6 +98,11 @@ sources, and why.
   argument itself (`overrides.SCHEMATIC`), because it reads a
   definition as it stands and a free variable in one is a
   definition it cannot make.
+- A comment **inside** a statement is dropped: HOL Light's term
+  parser has no comments (`1 + (* two *) 2` is an error there), so
+  the `(* gc + dummy *)` of `stack_remove$check_init_stubs_length`
+  and the comments of seventy other statements are not in the
+  port.  The comments **around** a statement are.
 - A theorem that HOL4 states as the value of an ML expression is
   a comment that points at the source and names the theorem: the
   statement is not in the source, HOL4 computes it (`PENDING.md`).
