@@ -657,7 +657,7 @@ class Porter:
       # a comment block of the source can have ML code after the
       # comment (word_bignum's get_exp has '(* Var *) let' on one
       # line), and that code is not OCaml
-      if COMMENTED_CODE.search(uncomment(b.text)):
+      if commented_code(b.text):
         self.out.append(self.at(b, 'code that the source has in a'
                                    ' comment'))
       elif comment_only(b.text):
@@ -2707,6 +2707,30 @@ COMMENTED_CODE = re.compile('|'.join('(?:%s)' % p for p in [
   r'\b(store_thm|save_thm|prove|metis_tac|srw_ss|EVAL)\s*[("\[]',
   r'\b(rw|fs|gvs|simp|rfs|asm_simp_tac|rpt)\s*[\[(]',
 ]), re.M)
+
+
+# a comment that holds a block of a source is code, whatever else
+# is in it
+BLOCK_IN_COMMENT = re.compile('|'.join('(?:%s)' % p for p in [
+  r"^\s*(Theorem|Triviality|Definition|Inductive|CoInductive)\s+"
+  r"[A-Za-z0-9_']+\s*(\[[^\]]*\])?\s*:",
+  r'^\s*Datatype\s*:',
+  r'^\s*(Proof|QED|End|Termination)\s*$',
+]), re.M)
+
+
+def commented_code(text):
+  """is this comment of a source HOL4 code, which the port does not
+     have, or prose, which it keeps?  A comment with a block of a
+     source in it is code; one that sketches a line or two of it in
+     prose is a comment (the head comment of bvi_let sketches a Let
+     of BVI and an SML let, and is the documentation of the file)"""
+  body = uncomment(text)
+  if BLOCK_IN_COMMENT.search(body): return True
+  lines = [l for l in body.split('\n') if l.strip()]
+  if not lines: return False
+  n = sum(1 for l in lines if COMMENTED_CODE.search(l))
+  return 2 * n >= len(lines)
 
 
 def uncomment(text):

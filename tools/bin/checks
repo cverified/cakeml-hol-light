@@ -6,6 +6,8 @@
 #   literals  the strings and the numerals of a definition survive
 #   lets      a let that binds a function abstracts its arguments
 #   nohol4    no HOL4 code is in the port, not even in a comment
+#   comments  every comment of a source is in its port, or a
+#             pointer says where the code in it is
 #   lines     no line of ml/ outside a comment is longer than 72
 #             characters (a comment of a source is unaltered)
 C=/home/freek/claude/hol-light/cakeml
@@ -20,5 +22,7 @@ echo "=== lets"
 python3 -I tools/lets.py 2>&1 | tail -3
 echo "=== HOL4 code in the port"
 python3 -I tools/nohol4.py 2>&1 | tail -4
+echo "=== the comments of the sources"
+python3 -I tools/comments.py 2>&1 | tail -2
 echo "=== lines over 72 characters"
 python3 -I tools/lines.py 2>&1 | tail -6
