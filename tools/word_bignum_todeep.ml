@@ -1,25 +1,39 @@
 (* syntax helper funs *)
 
+(* HOL4 builds a term of the deep embedding in a quotation, where
+   its typechecker makes the type of the word of every piece the
+   same one; the port builds the pieces one by one, so it gives
+   each the type variable of the others *)
+
+let at_A tm =
+  inst (map (fun v -> `:A`,v) (type_vars_in_term tm)) tm;;
+
 let skip_tm = `word_bignum_Skip:(A)mini`;;
 let swap_tm = `word_bignum_Swap:(A)mini`;;
 let continue_tm = `word_bignum_Continue:(A)mini`;;
 
-let mk_Delete n = list_mk_icomb "word_bignum_Delete" [n];;
-let mk_Assign (n,x) = list_mk_icomb "word_bignum_Assign" [n; x];;
-let mk_Rec (xs,ys) = list_mk_icomb "word_bignum_Rec" [xs; ys];;
-let mk_Seq (p1,p2) = list_mk_icomb "word_bignum_Seq" [p1; p2];;
-let mk_Store (n,i) = list_mk_icomb "word_bignum_Store" [n; i];;
-let mk_Loop (b,ns,p) = list_mk_icomb "word_bignum_Loop" [b; ns; p];;
-let mk_Load (n,i,a) = list_mk_icomb "word_bignum_Load" [n; i; a];;
-let mk_Imm w = list_mk_icomb "Imm" [w];;
-let mk_Reg n = list_mk_icomb "Reg" [n];;
+let mk_Delete n = at_A (list_mk_icomb "word_bignum_Delete" [n]);;
+let mk_Assign (n,x) =
+  at_A (list_mk_icomb "word_bignum_Assign" [n; x]);;
+let mk_Rec (xs,ys) =
+  at_A (list_mk_icomb "word_bignum_Rec" [xs; ys]);;
+let mk_Seq (p1,p2) =
+  at_A (list_mk_icomb "word_bignum_Seq" [p1; p2]);;
+let mk_Store (n,i) =
+  at_A (list_mk_icomb "word_bignum_Store" [n; i]);;
+let mk_Loop (b,ns,p) =
+  at_A (list_mk_icomb "word_bignum_Loop" [b; ns; p]);;
+let mk_Load (n,i,a) =
+  at_A (list_mk_icomb "word_bignum_Load" [n; i; a]);;
+let mk_Imm w = at_A (list_mk_icomb "Imm" [w]);;
+let mk_Reg n = at_A (list_mk_icomb "Reg" [n]);;
 
 let is_Rec tm =
   try fst(dest_const(fst(strip_comb tm))) = "word_bignum_Rec"
   with Failure _ -> false;;
 
 let mk_If (c,r,ri,p1,p2) =
-  list_mk_icomb "word_bignum_If" [c; r; ri; p1; p2];;
+  at_A (list_mk_icomb "word_bignum_If" [c; r; ri; p1; p2]);;
 
 (* generate deep embeddings *)
 
@@ -38,26 +52,34 @@ let dest_reg v =
     (String.sub n 1 (String.length n - 1)));;
 
 let binops =
-  [`word_add:(A)word->(A)word->(A)word`,`asm_Add`;
-   `word_sub:(A)word->(A)word->(A)word`,`asm_Sub`;
-   `word_and:(A)word->(A)word->(A)word`,`asm_And`;
-   `word_xor:(A)word->(A)word->(A)word`,`asm_Xor`;
-   `word_or:(A)word->(A)word->(A)word`,`asm_Or`];;
+  [`word_add (v:(A)word) w`,`asm_Add`;
+   `word_sub (v:(A)word) w`,`asm_Sub`;
+   `word_and (v:(A)word) w`,`asm_And`;
+   `word_xor (v:(A)word) w`,`asm_Xor`;
+   `word_or (v:(A)word) w`,`asm_Or`];;
 
 let shifts =
-  [`word_lsr:(A)word->num->(A)word`,`Lsr`;
-   `word_lsl:(A)word->num->(A)word`,`Lsl`;
-   `word_asr:(A)word->num->(A)word`,`Asr`];;
+  [`word_lsr (v:(A)word) n`,`Lsr`;
+   `word_lsl (v:(A)word) n`,`Lsl`;
+   `word_asr (v:(A)word) n`,`Asr`];;
 
-let head_is f x =
-  try aconv (fst(strip_comb x)) f with Failure _ -> false;;
+(* HOL4 reads these patterns with match_term, which instantiates
+   the type of the words and the variables of the pattern *)
+
+let matches pat tm = can (term_match [] pat) tm;;
+
+(* the same constant, at any type (HOL4's same_const) *)
+
+let same_const x y =
+  try fst (dest_const x) = fst (dest_const y)
+  with Failure _ -> false;;
 
 (* the little of HOL4's wordsSyntax that the translation uses *)
 
-let is_n2w tm = is_comb tm && head_is `n2w:num->(A)word` tm;;
+let is_n2w tm = matches `(n2w n):(A)word` tm;;
 
 let dest_word_1comp tm =
-  if head_is `word_1comp:(A)word->(A)word` tm then rand tm
+  if matches `word_1comp (w:(A)word)` tm then rand tm
   else failwith "dest_word_1comp";;
 
 let word_ty_of tm = hd (snd (dest_type (type_of tm)));;
@@ -69,31 +91,31 @@ let mk_word tm n =
   inst [word_ty_of tm,`:A`]
        (mk_comb(`n2w:num->(A)word`,mk_small_numeral n));;
 
-let mk_Const_of ty n =
-  inst [ty,`:A`]
-       (mk_comb(`wordLang_Const:(A)word->(A)wordLang_exp`,
-                mk_comb(`n2w:num->(A)word`,n)));;
+let mk_Const_of n =
+  mk_comb(`wordLang_Const:(A)word->(A)wordLang_exp`,
+          mk_comb(`n2w:num->(A)word`,n));;
 
 let rec get_exp x =
   (* Var *)
-  try let n = dest_reg x in list_mk_icomb "wordLang_Var" [n]
+  try let n = dest_reg x in at_A (list_mk_icomb "wordLang_Var" [n])
   with Failure _ ->
   (* Const *)
   try if not (is_n2w x) then failwith "get_exp" else
-      list_mk_icomb "wordLang_Const" [x]
+      at_A (list_mk_icomb "wordLang_Const" [x])
   with Failure _ ->
   (* Op *)
-  try let _,name = find (fun (pat,_) -> head_is pat x) binops in
+  try let _,name = find (fun (pat,_) -> matches pat x) binops in
       let x1 = get_exp (rand (rator x)) in
       let x2 = get_exp (rand x) in
-      list_mk_icomb "wordLang_Op" [name; mk_list([x1; x2],type_of x1)]
+      at_A (list_mk_icomb "wordLang_Op"
+              [name; mk_list([x1; x2],type_of x1)])
   with Failure _ ->
   (* Shift *)
-  try let _,name = find (fun (pat,_) -> head_is pat x) shifts in
+  try let _,name = find (fun (pat,_) -> matches pat x) shifts in
       let x1 = get_exp (rand (rator x)) in
       let x2 = rand x in
-      list_mk_icomb "wordLang_Shift"
-        [name; x1; mk_Const_of (word_ty_of x) x2]
+      at_A (list_mk_icomb "wordLang_Shift"
+              [name; x1; mk_Const_of x2])
   with Failure _ ->
   (* ~ *)
   let r = dest_word_1comp x in
@@ -102,9 +124,9 @@ let rec get_exp x =
                    [mk_word r 0; mk_word r 1]]);;
 
 let cmps =
-  [`word_lo:(A)word->(A)word->bool`,`asm_Lower`;
-   `word_lt:(A)word->(A)word->bool`,`asm_Less`;
-   `(=):(A)word->(A)word->bool`,`asm_Equal`];;
+  [`word_lo (v:(A)word) w`,`asm_Lower`;
+   `word_lt (v:(A)word) w`,`asm_Less`;
+   `(v:(A)word) = w`,`asm_Equal`];;
 
 let dest_reg_imm ri =
   try mk_Reg (dest_reg ri) with Failure _ ->
@@ -112,40 +134,41 @@ let dest_reg_imm ri =
 
 let get_guard b =
   (* Op *)
-  try let _,name = find (fun (pat,_) -> head_is pat b) cmps in
+  try let _,name = find (fun (pat,_) -> matches pat b) cmps in
       let x1 = dest_reg (rand (rator b)) in
       let x2 = dest_reg_imm (rand b) in
       (name,x1,x2)
   with Failure _ ->
   (* Test *)
   let l,r = dest_eq b in
-  if not (is_n2w r && head_is `word_and:(A)word->(A)word->(A)word` l)
+  if not (is_n2w r && matches `word_and (v:(A)word) w` l)
   then failwith "get_guard" else
   (`asm_Test`,dest_reg (rand (rator l)),dest_reg_imm (rand l));;
 
 let dest_lupdate_let tm =
   let (v,r),body = my_dest_let tm in
   if not (aconv v (rand r) &&
-          head_is `LUPDATE:A->num->(A)list->(A)list` r)
+          matches `LUPDATE a (w2n (r:(A)word)) (zs:(B)list)` r)
   then failwith "dest_lupdate_let" else
   let x = rand (rator (rator r)) in
-  let y = rand (rator r) in
+  let y = rand (rand (rator r)) in
   (x,y,body);;
 
 let dest_el_let tm =
   let (v,r),body = my_dest_let tm in
-  if not (head_is `EL:num->(A)list->A` r) then failwith "dest_el_let"
+  if not (matches `EL (w2n (r:(A)word)) (zs:(B)list)` r)
+  then failwith "dest_el_let"
   else
   let a = fst (dest_var (rand r)) in
   let a = if a = "xs" then `In1` else
           if a = "ys" then `In2` else
           if a = "zs" then `Out` else failwith "dest_el_let" in
-  let y = rand (rator r) in
+  let y = rand (rand (rator r)) in
   (v,y,a,body);;
 
 let dest_single_add_sub_let pat tm =
   let (v,r),body = my_dest_let tm in
-  if not (head_is pat r) then failwith "dest_single_add_sub_let" else
+  if not (matches pat r) then failwith "dest_single_add_sub_let" else
   let a1,a2 = dest_pair v in
   let a1 = dest_reg a1 and a2 = dest_reg a2 in
   let args = snd (strip_comb r) in
@@ -156,15 +179,14 @@ let dest_single_add_sub_let pat tm =
 
 let dest_single_add_let =
   dest_single_add_sub_let
-    `single_add_word:(A)word->(A)word->(A)word->(A)word#(A)word`;;
+    `single_add_word (r0:(A)word) r1 ri`;;
 let dest_single_sub_let =
   dest_single_add_sub_let
-    `single_sub_word:(A)word->(A)word->(A)word->(A)word#(A)word`;;
+    `single_sub_word (r0:(A)word) r1 ri`;;
 
 let dest_single_mul_let tm =
   let (v,r),body = my_dest_let tm in
-  if not (head_is
-            `single_mul:(A)word->(A)word->(A)word->(A)word#(A)word` r)
+  if not (matches `single_mul (r0:(A)word) r2 (n2w 0)` r)
   then failwith "dest_single_mul_let" else
   let a1,a2 = dest_pair v in
   let a1 = dest_reg a1 and a2 = dest_reg a2 in
@@ -175,8 +197,7 @@ let dest_single_mul_let tm =
 
 let dest_single_div_let tm =
   let (v,r),body = my_dest_let tm in
-  if not (head_is
-            `single_div:(A)word->(A)word->(A)word->(A)word#(A)word` r)
+  if not (matches `single_div (r2:(A)word) r0 r1` r)
   then failwith "dest_single_div_let" else
   let a1,a2 = dest_pair v in
   let a1 = dest_reg a1 and a2 = dest_reg a2 in
@@ -211,33 +232,38 @@ let get_let tm =
   with Failure _ ->
   (* Add *)
   try let a1,a2,r1,r2,r3,rest = dest_single_add_let tm in
-      (list_mk_icomb "word_bignum_Add" [a1;a2;r1;r2;r3],rest)
+      (at_A (list_mk_icomb "word_bignum_Add" [a1;a2;r1;r2;r3]),rest)
   with Failure _ ->
   (* Sub *)
   try let a1,a2,r1,r2,r3,rest = dest_single_sub_let tm in
-      (list_mk_icomb "word_bignum_Sub" [a1;a2;r1;r2;r3],rest)
+      (at_A (list_mk_icomb "word_bignum_Sub" [a1;a2;r1;r2;r3]),rest)
   with Failure _ ->
   (* Mul *)
   try let a1,a2,r1,r2,rest = dest_single_mul_let tm in
-      (list_mk_icomb "word_bignum_Mul" [a1;a2;r1;r2],rest)
+      (at_A (list_mk_icomb "word_bignum_Mul" [a1;a2;r1;r2]),rest)
   with Failure _ ->
   (* Div *)
   let a1,a2,r1,r2,r3,rest = dest_single_div_let tm in
-  (list_mk_icomb "word_bignum_Div" [a1;a2;r1;r2;r3],rest);;
+  (at_A (list_mk_icomb "word_bignum_Div" [a1;a2;r1;r2;r3]),rest);;
 
 let code_defs = ref ([]:thm list);;
 let prev_trans = ref ([]:(term * term) list);;
 
 (* the name of a function that the translation needs and that is
-   not translated yet (HOL4 raises UnableToTranslate for it) *)
+   not translated yet.  HOL4 raises UnableToTranslate for it, an
+   exception of its own, so that the handlers of the translation
+   (which catch a HOL_ERR) let it through; the port raises
+   Invalid_argument, which its handlers (which catch a Failure)
+   let through in the same way *)
 
-let unable_to_translate str = failwith ("UnableToTranslate " ^ str);;
+let unable_to_translate str =
+  invalid_arg ("UnableToTranslate " ^ str);;
 
 let dest_unable e =
   match e with
-    Failure s when String.length s > 19 &&
-                   String.sub s 0 19 = "UnableToTranslate " ^ "" ->
-      String.sub s 19 (String.length s - 19)
+    Invalid_argument s when String.length s > 18 &&
+                            String.sub s 0 18 = "UnableToTranslate " ->
+      String.sub s 18 (String.length s - 18)
   | _ -> raise e;;
 
 let rec dest_tuple tm =
@@ -277,7 +303,8 @@ let get_full_prog inp tm =
     (* previous translation *)
     try let (_,x),rest = my_dest_let tm in
         let f = repeat rator x in
-        let _,code = find (fun (x,_) -> aconv x f) (!prev_trans) in
+        let _,code = find (fun (x,_) -> same_const x f)
+                            (!prev_trans) in
         immediate_deps := code :: (!immediate_deps);
         mk_Seq (code,get_prog rest)
     with Failure _ ->
@@ -298,15 +325,20 @@ let get_full_prog inp tm =
     then (cont_vars := frees tm; !cont_tm) else
     try get_prog (dest_num_let_or_if tm)
     with Failure _ ->
-      let (_,x),_ = my_dest_let tm in
-      unable_to_translate (fst (dest_const (repeat rator x))) in
+      try let (_,x),_ = my_dest_let tm in
+          unable_to_translate (fst (dest_const (repeat rator x)))
+      with Failure e ->
+        (print_string "Unable to translate\n\n";
+         print_string (string_of_term tm);
+         print_string "\n\n"; failwith e) in
   (* compute deps *)
   let init_prog = get_prog tm in
   (* compute what vars are deleted or assigned *)
   let x = list_mk_conj
-            (init_prog ::
-             map concl (filter (fun th -> mem (lhs (concl th))
-                                              (!immediate_deps))
+            (mk_eq (init_prog,init_prog) ::
+             map concl (filter (fun th -> exists (same_const
+                                        (lhs (concl th)))
+                                        (!immediate_deps))
                                (!code_defs))) in
   let is_delete tm =
     can (term_match [] `(word_bignum_Delete n):(A)mini`) tm in
@@ -344,11 +376,11 @@ let rec to_deep def =
   (* produce deep embedding *)
   let f = repeat rator (lhs (concl (SPEC_ALL def))) in
   let tm = rand (concl (SPEC_ALL def)) in
-  let inp = rand (rator (concl (SPEC_ALL def))) in
+  let inp = rand (rand (rator (concl (SPEC_ALL def)))) in
   let is_rec = can (find_term (aconv f)) tm in
   let rec loop () =
     try get_full_prog inp tm
-    with Failure _ as e ->
+    with Invalid_argument _ as e ->
       let str = dest_unable e in
       (ignore (to_deep (assoc (str ^ "_def") (!the_tailrec_defs)));
        loop ()) in

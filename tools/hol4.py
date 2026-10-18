@@ -104,6 +104,12 @@ TAILREC_ML = re.compile(r'tailrec_define\s+"([A-Za-z0-9_\']+)"\s*'
                         r'(?:``|\u201c)(.*?)(?:``|\u201d)', re.S)
 
 
+# a function that mc_multiword defines with a measure
+TDEFINE_ML = re.compile(r'tDefine\s+"([A-Za-z0-9_\']+)"\s*'
+                        r'`(.*?)`\s*\(\s*WF_REL_TAC\s*`([^`]*)`',
+                        re.S)
+
+
 def ml_terms(text):
   """the terms that an ML block keeps in a value, which the source
      may antiquote into a definition (dataSem's ^s)"""

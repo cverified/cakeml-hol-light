@@ -321,6 +321,10 @@ ALSO_NEEDED = set([
   # does not see that it needs these four
   ('tailrec', 'TAILREC'), ('tailrec', 'TAILREC_PRE'),
   ('tailrec', 'SHORT_TAILREC'), ('tailrec', 'SHORT_TAILREC_PRE'),
+  # the factorial of mc_multiword, which HOL4 defines with a
+  # measure and the step function of its mc_use_fac calls (the
+  # example of the deep embedding that produces a Rec)
+  ('mc_multiword', 'mc_fac'), ('mc_multiword', 'mc_fac_pre'),
   # the error of errorMonad is the result type of Pancake's static
   # check, which compiler's compile_pancake matches on; the port
   # declares the check itself, so the scan only sees the two

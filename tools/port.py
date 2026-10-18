@@ -616,12 +616,17 @@ class Porter:
     for m in hol4.TAILREC_ML.finditer(b.text):
       nm, step = m.group(1), m.group(2)
       self.ctx.defining = {nm, nm + '_pre'}
+      # the registers of the step function are machine words, so a
+      # ~ of one of them is the complement of a word, not the
+      # negation of a proposition (which ~ is of the rest)
+      self.ctx.wordnotvars = set(re.findall(r"\br[0-9]+\b", step))
       try:
         term = fmt(self.term(step))
       except Exception as ex:
         self.warn.append('tailrec_define %s: %s' % (nm, ex))
         continue
       self.ctx.defining = set()
+      self.ctx.wordnotvars = set()
       new = self.nm_defined(nm)
       self.out.append('let %s_def,%s_pre_def =\n'
                       '  tailrec_define "%s"\n  `%s`;;'

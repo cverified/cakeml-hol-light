@@ -1013,6 +1013,7 @@ class Ctx:
                                        # binds its own)
     self.vars = {}                     # bound variables to rename
     self.wordnot = False               # is ~ the word complement?
+    self.wordnotvars = set()           # ... of these variables
     self.append = False                # is ++ the append of lists?
     self.fieldvar = {}                 # variable -> its record
     self.iffeq = False                 # is <=> plain equality?
@@ -1529,7 +1530,8 @@ class Printer:
         # HOL4 writes ~ for the negation of a number and for the
         # complement of a word as well as for the negation of a
         # proposition; HOL Light writes -- and word_not for those
-        if self.ctx.wordnot:
+        if self.ctx.wordnot or (e.e.kind == 'id' and
+                                e.e.name in self.ctx.wordnotvars):
           return self.paren('word_not ' + self.pr(e.e, APP),
                             PRE_APP, prec)
         op = '--' if numeric(e.e) or self.numctx else '~'
