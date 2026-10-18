@@ -334,6 +334,18 @@ class Porter:
     for n, new in overrides.THM_NAMES.get((self.thy, nm), {}).items():
       was[n] = self.ctx.names.get(n)
       self.ctx.names[n] = new
+    # the record type of a variable, for this statement only
+    # (overrides.FIELD_VAR_DEF, which a definition takes the same
+    # way): the env of source_to_flatProof is a sem_env in most of
+    # its statements and an environment of flatSem in some
+    fv = overrides.FIELD_VAR_DEF.get((self.thy, nm))
+    if fv:
+      self.ctx.fieldvar = dict(self.fieldvar)
+      self.ctx.fieldvar.update(fv)
+    # the record types of the literals of this statement, in the
+    # order in which they stand in it (overrides.THM_RECLITS)
+    self.ctx.reclits = list(
+      overrides.THM_RECLITS.get((self.thy, nm), []))
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
@@ -347,6 +359,8 @@ class Porter:
       finally:
         hterm.ANTIQ_STRICT[0] = False
         hterm.DROP_TYVAR_ANNOT[0] = False
+        if fv: self.ctx.fieldvar = self.fieldvar
+        self.ctx.reclits = []
         for n, old2 in was.items():
           if old2 is None: self.ctx.names.pop(n, None)
           else: self.ctx.names[n] = old2

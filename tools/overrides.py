@@ -114,6 +114,20 @@ RECORD_OF = {
   ('source_to_flatProof', 'env_all_rel'): 'sem_env',
 }
 
+# THM_RECLITS: the record types of the literals of a statement, in
+# the order in which they stand in it, where several record types
+# have the fields that they give and what each literal is an
+# argument of is the only thing that says which
+THM_RECLITS = {
+  # the second argument of global_env_inv is an environment of
+  # source_to_flat and the fourth a sem_env, and both of the
+  # literals give a v and a c
+  ('source_to_flatProof', 'global_env_inv_extend'):
+    ['source_to_flat_environment', 'sem_env'],
+  ('source_to_flatProof', 'invariant_make_varls'):
+    ['source_to_flat_environment', 'sem_env'],
+}
+
 # FIELD_DEFAULT: the record type that a field name means where
 # several record types in scope have it and nothing says which one.
 # A field that has a default is not an overloaded name, so the port
@@ -154,6 +168,10 @@ FIELD_VAR = {
   # system and about the soundness of the inferencer as well
   'typeSound': {'tenv': 'type_env'},
   'typeSysProps': {'tenv': 'type_env'},
+  # the environments that weakening is about are type
+  # environments, whose v and c a sem_env has as well
+  'weakening': {'tenv': 'type_env', 'tenv2': 'type_env',
+                "tenv'": 'type_env'},
   'infer_eSound': {'tenv': 'type_env'},
   'infer_eComplete': {'tenv': 'type_env'},
   'envRel': {'tenv': 'type_env'},
@@ -221,6 +239,12 @@ CON_BODY = {
 # make_init, which builds one out of a state of labSem)
 FIELD_VAR_DEF = {
   ('stack_to_labProof', 'make_init_def'): {'s': 'labSem_state'},
+  # the env that make_varls is evaluated in is an environment of
+  # flatSem, where the env of this theory is a sem_env
+  ('source_to_flatProof', 'evaluate_make_varls'):
+    {'env': 'flatSem_environment'},
+  ('source_to_flatProof', 'invariant_make_varls'):
+    {'env': 'flatSem_environment'},
   # the var_map of env_domain_eq is an environment of
   # source_to_flat, where the v and the c of this theory are
   # the ones of its own global_env
@@ -539,7 +563,12 @@ INT_NUMERALS = set([
 THM_NAMES = {
   ('misc', 'domain_rrestrict_subset'): {'domain': 'set_relation_domain'},
   ('misc', 'range_rrestrict_subset'): {'range': 'set_relation_range'},
+  # HOL4's GSPEC takes a function to a pair of an element and a
+  # condition, where HOL Light's takes the predicate itself, so
+  # the library layer has HOL4's under a name of its own
   ('misc', 'GSPEC_o'): {'GSPEC': 'hol4_GSPEC'},
+  ('cmlNTProps', 'IMAGE_GSPEC1'): {'GSPEC': 'hol4_GSPEC'},
+  ('cmlNTProps', 'BIGUNION_singletons'): {'GSPEC': 'hol4_GSPEC'},
 }
 
 THM_NO_TYVARS = set([
@@ -583,7 +612,14 @@ THM_INT_VARS = {
 # read with that constant hidden (db.hidden_for), and a
 # definition that means the constant writes it qualified
 # (mips_target's mips_enc is a combin$C of LIST_BIND)
-HOL4_HIDDEN = set(['C'])
+# a name that HOL4 reads as a variable and the port has as a
+# constant of HOL Light: relationTheory hides combinTheory's C
+# from the parser of HOL4 (Parse.hide "C"), and HOL4 cannot have a
+# constant called val at all, because val is a keyword of SML,
+# while HOL Light's words library has one (the number of a word).
+# The statements that write these names are read with the constant
+# of HOL Light hidden (tools/db.py's hidden_for).
+HOL4_HIDDEN = set(['C', 'val'])
 
 # HOL4's Definition foo[schematic] has a free variable in its
 # body, which HOL4 makes the first argument of the constant:

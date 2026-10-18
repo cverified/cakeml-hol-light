@@ -1092,6 +1092,7 @@ class Ctx:
     self.recs = recs or {}       # record type -> [field names]
     self.ambfields = ambfields or {}  # field -> overloaded name
     self.reclit = None           # the record type of a literal
+    self.reclits = []            # ... of the literals in order
     self.recdflt = {}            # field -> the record it is of by
                                  # default, where several have it
     self.overloads = overloads or {}   # name -> hol light term text
@@ -1841,6 +1842,21 @@ class Printer:
       return self.paren(s, PRE_APP, prec)
     if k == 'reclit':
       flds = [f for f, _, _ in e.upds]
+      # a statement whose literals are of several record types that
+      # have the same fields says which in order: the two literals
+      # of source_to_flatProof's global_env_inv_extend are an
+      # environment of source_to_flat and a sem_env, and nothing
+      # but the argument of global_env_inv that each is tells which
+      # (overrides.THM_RECLITS)
+      if self.ctx.reclits:
+        rty = self.ctx.reclits.pop(0)
+        order = self.ctx.recs.get(rty, flds)
+        vals = []
+        for f in order:
+          v = [v for g, v, _ in e.upds if g == f]
+          vals.append(self.pr(v[0], APP) if v else 'ARB')
+        return self.paren('mk_' + rty + ' ' + ' '.join(vals),
+                          PRE_APP, prec)
       # the record type of a literal is the one whose fields are
       # exactly the ones of the literal; a field name on its own may
       # be one of several record types
