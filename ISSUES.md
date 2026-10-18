@@ -100,6 +100,24 @@ sources, and why.
 
 ## Syntax
 
+- A **prefix of HOL Light takes the atom after it and no more**:
+  `~MEM x l` is `(~MEM) x l` there, while HOL4 reads it as
+  `~(MEM x l)`.  The port parenthesises the operand of a `~` and
+  of a `-`, and the prefix takes the infixes that bind tighter
+  than it does with it (HOL4's `'` is the bit of a word, so
+  `~(Smallnum i:'a word) ' 0` says that the bit is not set).
+- The **value of a record update stops at an equation**: HOL4
+  reads `tenv with v := tenv.v = tenv` as the equation it looks
+  like, not as an update whose value is an equation.
+- The **finite map and function postfixes bind to the atom**
+  before them: `FAPPLY tf⟨ts2 ↦ x⟩` applies `FAPPLY` to the
+  updated map, and `map0⦇i ↦ b⦈ k` is `(i =+ b) map0 k`.
+- A theorem that the **ML code of a source states itself**
+  (`val foo = Q.prove(`...`, tactic)`) is a theorem of the source
+  with its statement in it, and the port states it as it states a
+  `Theorem`; one whose value is a rule applied to such a theorem
+  (`|> SIMP_RULE ...`) is a pointer that names it.
+
 - HOL4's `simpleSexp` writes an s-expression list as
   `⟪x; y; z⟫` and a cons as `⟪h • t⟫`
   (`add_listform` and `add_rule`); the port writes out the

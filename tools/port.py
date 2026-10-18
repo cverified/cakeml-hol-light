@@ -307,9 +307,10 @@ class Porter:
     self.ctx.intneg = False
     self.intargs = set()
     self.intresult = False
-    # the record type that a literal of the last definition had is
-    # not the one of a literal of this statement
+    # the record type and the theories of the constructors that
+    # the last definition had are not the ones of this statement
     self.ctx.reclit = overrides.RECORD_OF.get((self.thy, nm))
+    self.contys = set()
     # the variables of a statement that hold an integer, where
     # nothing in the statement says so (overrides.THM_INT_VARS)
     self.ctx.intvars = set(
@@ -1355,6 +1356,18 @@ class Porter:
     if kinds == ('con',) and self.contys:
       ts = [x for x in ts if x in self.contys] or ts
     if not ts: return None
+    # a constructor of a datatype whose name several theories have
+    # is the one of the type that the theory means by that name:
+    # the v of data_to_word_memoryProof is dataSem's, so its
+    # Number is dataSem's as well
+    if kinds == ('con',) and len(ts) > 1:
+      same = [t for t in ts
+              if any(ty for (t2, ty), (cons, _)
+                     in self.db.datatypes.items()
+                     if t2 == t and n in cons and
+                     self.db.rename.get((t, ty), ty) ==
+                     self.ctx.tyname(ty))]
+      ts = same or ts
     rank = {thy: i for i, (thy, _, _) in enumerate(self.db.order)}
     return max(ts, key=lambda x: rank.get(x, -1))
 
