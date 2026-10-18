@@ -1066,6 +1066,8 @@ class Ctx:
     self.recs = recs or {}       # record type -> [field names]
     self.ambfields = ambfields or {}  # field -> overloaded name
     self.reclit = None           # the record type of a literal
+    self.recdflt = {}            # field -> the record it is of by
+                                 # default, where several have it
     self.overloads = overloads or {}   # name -> hol light term text
     self.accessors = accessors or {}   # field name -> accessor name
     self.updaters = updaters or {}     # field name -> update name
@@ -1166,8 +1168,13 @@ class Ctx:
 
 def _int_arg_pos():
   """the arguments of the constants of the port whose type is int:
-     a numeral in such a place is &n in HOL Light.  The table comes
-     from the types that the port gives its constants, which
+     a numeral in such a place is &n in HOL Light, and a variable
+     there holds an integer.  An entry i.j says that the argument
+     i is a function whose argument j is an integer, so that a
+     lambda there binds an integer (linear_scan's
+     check_number_property_strong takes a property of a number of
+     an instruction, which is an int).  The table comes from the
+     types that the port gives its constants, which
      tools/bin/intargs dumps out of a session."""
   out = {}
   f = os.path.dirname(os.path.abspath(__file__)) + '/intargs.txt'
@@ -1175,13 +1182,31 @@ def _int_arg_pos():
     for l in open(f):
       nm, ps = l.rstrip('\n').split('\t')
       if nm.startswith('_'): continue
-      out[nm] = set(int(p) for p in ps.split(','))
+      args = set(); fns = {}
+      for p in ps.split(','):
+        if '.' in p:
+          i, j = p.split('.')
+          fns.setdefault(int(i), set()).add(int(j))
+        else:
+          args.add(int(p))
+      out[nm] = (args, fns)
   except OSError:
     pass
   return out
 
 
-INT_ARG_POS = _int_arg_pos()
+INT_ARGS_OF = _int_arg_pos()
+
+
+def int_arg_pos(nm):
+  """the arguments of a constant whose type is int"""
+  return INT_ARGS_OF.get(nm, (set(), {}))[0]
+
+
+def int_fn_arg_pos(nm):
+  """the arguments of a constant that are a function with an
+     integer argument of their own"""
+  return INT_ARGS_OF.get(nm, (set(), {}))[1]
 
 NUMERIC_FUNS = set(['int_of_num', 'num_of_int', 'w2i', 'i2w', 'ival',
                     'iword', 'int_add', 'int_sub', 'int_mul',
@@ -1538,7 +1563,7 @@ class Printer:
       # and in an argument of a constant whose type says that the
       # argument is an integer (small_int (:'a) (&0))
       if hop.kind == 'id' and (len(args) - 1) in \
-         INT_ARG_POS.get(self.ctx.name(hop.name), ()):
+         int_arg_pos(self.ctx.name(hop.name)):
         self.ctx.intnums = True
       arg = self.pr(e.arg, APP)
       self.ctx.intnums = oldint
@@ -1744,10 +1769,20 @@ class Printer:
       # is for the ones that several types have (source_to_flat's
       # env_all_rel makes a sem_env of a c and a v, and an
       # environment of flatSem of a v of its own)
+      # where more than one record type has exactly these fields,
+      # the record that the field names are of by default decides:
+      # the <|v := ...; c := ...|> of a source is a sem_env, also
+      # in a theory whose .v is the v of another record
+      # (source_to_flatProof's genv.v is a global_env's)
+      dflt = [ty for ty in exact
+              if any(ty == self.ctx.recdflt.get(f) for f in flds)]
+      fld = self.ctx.fields.get(flds[0])
       rty = (exact[0] if len(exact) == 1
              else self.ctx.reclit if self.ctx.reclit in part
+             else fld if fld in exact
+             else dflt[0] if dflt
              else cand[0] if len(cand) == 1
-             else self.ctx.fields.get(flds[0], '?'))
+             else fld or '?')
       order = self.ctx.recs.get(rty, flds)
       vals = []
       for f in order:

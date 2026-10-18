@@ -222,6 +222,7 @@ class Porter:
                          con_argty=db.con_argty_for(thy),
                          defnames=db.defnames_for(thy))
     self.ctx.fieldvar = self.fieldvar
+    self.ctx.recdflt = dict(overrides.FIELD_DEFAULT)
     # a name that LOCAL_NAMES gives this theory is written as that
     # name, also where the port overloads it (word_bignumProof's
     # Eval is an overload of its own relation, and ast has an Eval
@@ -296,6 +297,9 @@ class Porter:
     self.ctx.intneg = False
     self.intargs = set()
     self.intresult = False
+    # the record type that a literal of the last definition had is
+    # not the one of a literal of this statement
+    self.ctx.reclit = overrides.RECORD_OF.get((self.thy, b.name))
     # the variables of a statement that hold an integer, where
     # nothing in the statement says so (overrides.THM_INT_VARS)
     self.ctx.intvars = set(
@@ -304,7 +308,8 @@ class Porter:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
       # cheat of its own that the reports count (THEOREM_THUNK)
-      stmt = fmt(self.term(b.body), indent=5, width=72, last=2)
+      stmt = fmt(self.term(b.body, defn=False), indent=5, width=72,
+                 last=2)
     except Exception as ex:
       self.warn.append('%s %s: %s' % (b.kind, b.name, ex))
       self.out.append(self.at(b, 'a theorem whose statement the'
@@ -383,7 +388,7 @@ class Porter:
       text = text.replace(nm, ' (' + body + ') ')
     return text
 
-  def term(self, text, annotate=False):
+  def term(self, text, annotate=False, defn=True):
     text = self.expand_syms(text)
     toks = hterm.tokenize(text)
     p = hterm.Parser(toks, self.ctx)
@@ -394,7 +399,12 @@ class Porter:
     e = self.conof_arity(
           self.arg_cons(self.arm_intvars(self.lambda_cons(e))))
     old = self.ctx.vars
-    self.ctx.vars = self.shadowing(e)
+    oldint = self.ctx.intvars
+    # a statement says nowhere which of its variables hold an
+    # integer, so the types of the constants of the port say it
+    if not defn:
+      self.ctx.intvars = oldint | self.int_vars_by_type(e)
+    self.ctx.vars = self.shadowing(e, defn)
     # the patterns of the first clause of every function carry the
     # type of their constructor where its name is one that several
     # theories in scope have, so that it is resolved as HOL4 does
@@ -412,11 +422,46 @@ class Porter:
       return hterm.Printer(self.ctx).pr(e, 0)
     finally:
       self.ctx.vars = old
+      self.ctx.intvars = oldint
 
-  def shadowing(self, e):
+  def int_vars_by_type(self, e):
+    """the variables of a term that stand where a constant takes an
+       integer (tools/intargs.txt), so that a numeral beside one of
+       them is an integer too (linear_scanProof's 0 <= beg, whose
+       beg is the beginning of an interval)"""
+    out = set()
+
+    def go(n):
+      if n.kind == 'app':
+        h, args = hterm.strip_app(n)
+        if h.kind == 'id':
+          nm = self.ctx.name(h.name)
+          for i in hterm.int_arg_pos(nm):
+            if i < len(args):
+              a = args[i]
+              while a.kind == 'paren': a = a.e
+              if a.kind == 'id': out.add(a.name)
+          # and the variables that a lambda in such a place binds
+          for i, js in hterm.int_fn_arg_pos(nm).items():
+            if i >= len(args): continue
+            a = args[i]
+            while a.kind == 'paren': a = a.e
+            if a.kind != 'quant' or a.q != '\\': continue
+            for j in js:
+              if j < len(a.vs) and a.vs[j].kind == 'id':
+                out.add(a.vs[j].name)
+      for t in hterm.subnodes(n): go(t)
+
+    go(e)
+    return out
+
+  def shadowing(self, e, defn=True):
     """HOL4 lets a variable shadow a constant, HOL Light does not,
        so a bound variable whose name is a constant of the port or of
-       HOL Light is renamed"""
+       HOL Light is renamed.  Without defn the term is not a
+       definition, so the arguments of its left hand side are not
+       bound by it (the SND of a statement about MAP (SND o SND) is
+       the constant)"""
     # an overload of HOL4 whose value is a constructor is a
     # constant, not a variable, where it occurs in a pattern; an
     # overload of a function cannot stand in a pattern, so there
@@ -424,7 +469,7 @@ class Porter:
     # and wordLang overloads shift with backend_common's
     # word_shift)
     names = hterm.bound_names(e, self.ctx.cons | self.con_overloads(),
-                              True)
+                              defn)
     # a bound variable is not a reference to a constant, so it does
     # not make the file need the theory of a constant of that name
     self.bound |= names
@@ -589,6 +634,8 @@ class Porter:
         self.grammar_block(b)
       elif k == 'ML' and 'tailrec_define "' in b.text:
         self.tailrec_block(b)
+      elif k == 'ML':
+        self.numeral_form(b)
       return
     if not self.wanted(b):
       return
@@ -654,6 +701,8 @@ class Porter:
                                  ' %s' % b.name))
     elif k == 'ML':
       if any(re.search(pat, b.text) for pat in IGNORE_ML):
+        return
+      if self.numeral_form(b):
         return
       if self.hol_reln(b):
         return
@@ -864,6 +913,20 @@ class Porter:
           text = ('hol4_field_overload "%s"\n  "%s_%s";;'
                   % (n, self.tnm(ty), c))
         self.out.append(text)
+
+  NUMERAL_FORM = re.compile(r'add_numeral_form\s*\(\s*#"."\s*,'
+                           r'\s*SOME\s*"([A-Za-z0-9_\']+)"')
+
+  def numeral_form(self, b):
+    """HOL4's add_numeral_form makes & an injection of the type of
+       the constant it names as well (simpleSexp's &n is the
+       s-expression of the number n), which is an overload of HOL
+       Light's & (an injection of the numbers too)"""
+    m = self.NUMERAL_FORM.search(b.text)
+    if not m: return False
+    self.out.append('hol4_numeral_form "%s";;'
+                    % self.ctx.name(m.group(1)))
+    return True
 
   def overloads_of(self, names):
     """the declarations that make the names of a block the overloads

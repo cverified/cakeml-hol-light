@@ -2,22 +2,35 @@
 # intargs [session] : write tools/intargs.txt, the arguments of the
 # constants of the port whose type is int, out of a session that
 # has the port loaded (hol-seq by default).  A numeral in such an
-# argument is &n in HOL Light, and tools/hterm.py writes it that
-# way.
+# argument is &n in HOL Light, and a variable there holds an
+# integer; tools/hterm.py writes them that way.  An entry i.j says
+# that the argument i is a function whose own argument j is an
+# integer, so that a lambda there binds an integer.
 PATH=/home/freek/claude/hol-light/bin:/home/freek/claude/hol-light/cakeml/tools/bin:$PATH
 C=/home/freek/claude/hol-light/cakeml
 s=${1:-seq}
 TIMEOUT=180 repl-step $s \
-  "let cake_out = open_out \"$C/tools/intargs.txt\" in
+  "let cake_int_pos ty =
+     let args,_ = splitlist dest_fun_ty ty in
+     let out = ref [] and i = ref 0 in
+     do_list (fun a ->
+         (if a = \`:int\` then out := string_of_int !i :: !out
+          else
+            let args2,_ = splitlist dest_fun_ty a in
+            let j = ref 0 in
+            do_list (fun b ->
+                (if b = \`:int\` then
+                   out := (string_of_int !i ^ \".\" ^
+                           string_of_int !j) :: !out);
+                incr j) args2);
+         incr i) args;
+     rev !out in
+   let cake_out = open_out \"$C/tools/intargs.txt\" in
    do_list (fun (n,ty) ->
-       let args,_ = splitlist dest_fun_ty ty in
-       let ps = ref [] and i = ref 0 in
-       do_list (fun a ->
-           (if a = \`:int\` then ps := !i :: !ps); incr i) args;
-       if !ps <> [] && not (String.length n > 0 && n.[0] = '_') then
+       let ps = cake_int_pos ty in
+       if ps <> [] && not (String.length n > 0 && n.[0] = '_') then
          output_string cake_out
-           (n ^ \"\\t\" ^
-            String.concat \",\" (map string_of_int (rev !ps)) ^ \"\\n\"))
+           (n ^ \"\\t\" ^ String.concat \",\" ps ^ \"\\n\"))
      (constants ());
    close_out cake_out; length (constants ());;" \
   2>&1 | tail -2

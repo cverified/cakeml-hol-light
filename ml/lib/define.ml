@@ -1910,6 +1910,18 @@ let hol4_overload name cname =
   (try make_overloadable name `:A` with Failure _ -> ());
   overload_interface(name,mk_mconst(cname,get_const_type cname));;
 
+(* HOL4's add_numeral_form makes & an injection of the type of the
+   constant it names as well (simpleSexp's &n is the s-expression
+   of the number n).  The overload goes at the end of the
+   interface, so that the injections of the numbers that HOL Light
+   has keep their place in front of it: a numeral that nothing
+   says the type of is a number, as it is in HOL Light. *)
+
+let hol4_numeral_form cname =
+  (try make_overloadable "&" `:num->A` with Failure _ -> ());
+  the_interface :=
+    !the_interface @ [("&",(cname,get_const_type cname))];;
+
 (* The accessors of a record field that several record types have
    are overloaded with the name of the field (CLAUDE.md), which is
    a name that HOL4 does not have a constant of: there a field is
