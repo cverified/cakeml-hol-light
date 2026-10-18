@@ -138,6 +138,56 @@ def ml_terms(text):
   return out
 
 
+ML_PROVE = re.compile(r"val\s+([A-Za-z0-9_']+)\s*=\s*(?:Q\.)?prove\s*"
+                     r"\(\s*(``|`|\u201c)", re.S)
+
+QEND = {'`': '`', '``': '``', '\u201c': '\u201d'}
+
+
+def ml_theorems(text):
+  """the theorems that the ML code of a source states itself: HOL4's
+     val foo = Q.prove(`...`, tactic) is a theorem named foo whose
+     statement is the quotation.  Gives (name, statement, whole),
+     where whole says that the value of the ML expression is the
+     theorem of that statement and not something that a rule makes
+     of it (copying_gc's NOT_IN_heap_addresses is the Q.SPECL of
+     one, so its statement is not in the source)."""
+  out = []
+  for m in ML_PROVE.finditer(text):
+    q = m.group(2)
+    end = text.find(QEND[q], m.end())
+    if end < 0: continue
+    stmt = text[m.end():end]
+    # the parentheses of the prove, so that what follows it says
+    # whether the value is the theorem of the statement
+    i = text.index('(', m.start())
+    depth = 0
+    j = i
+    while j < len(text):
+      c = text[j]
+      if c in '`\u201c\u201d':
+        # skip a quotation
+        k = j + (2 if text[j:j+2] == '``' else 1)
+        e = QEND.get(text[j:j+2], QEND.get(c, c))
+        k2 = text.find(e, k)
+        if k2 < 0: break
+        j = k2 + len(e); continue
+      if c == '"':
+        j += 1
+        while j < len(text) and text[j] != '"':
+          j += 2 if text[j] == '\\' else 1
+        j += 1; continue
+      if c == '(': depth += 1
+      elif c == ')':
+        depth -= 1
+        if depth == 0: break
+      j += 1
+    rest = text[j:j + 200]
+    whole = '|>' not in rest.split(';')[0]
+    out.append((m.group(1), stmt.strip(), whole))
+  return out
+
+
 def hol_reln(text):
   """the name and the rules of an ML block that calls Hol_reln"""
   m = HOL_RELN.match(text.strip())

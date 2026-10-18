@@ -290,11 +290,17 @@ class Porter:
     """a theorem of a source: its name, its attributes and its
        statement, with CHEAT_TAC where HOL4 has its proof (phase
        two; phase three puts a proof there)"""
-    name = self.thmname(b.name)
     # HOL4's Triviality is a Theorem with the attribute local
     at = list(b.attrs)
     if b.kind == 'Triviality' and 'local' not in at:
       at.append('local')
+    self.state(b, b.name, at, b.body)
+
+  def state(self, b, nm, at, body):
+    """the statement of a theorem of a source, with its name and
+       its attributes; b is the block it comes from, which a
+       pointer at the source needs"""
+    name = self.thmname(nm)
     attrs = ('[' + ','.join(at) + ']') if at else ''
     self.ctx.defining = set()
     self.ctx.intnums = False
@@ -303,30 +309,29 @@ class Porter:
     self.intresult = False
     # the record type that a literal of the last definition had is
     # not the one of a literal of this statement
-    self.ctx.reclit = overrides.RECORD_OF.get((self.thy, b.name))
+    self.ctx.reclit = overrides.RECORD_OF.get((self.thy, nm))
     # the variables of a statement that hold an integer, where
     # nothing in the statement says so (overrides.THM_INT_VARS)
     self.ctx.intvars = set(
-      overrides.THM_INT_VARS.get((self.thy, b.name), []))
+      overrides.THM_INT_VARS.get((self.thy, nm), []))
     try:
       # the statement is a quotation in a function, so that one
       # that does not typecheck is no error of the file but a
       # cheat of its own that the reports count (THEOREM_THUNK)
-      stmt = fmt(self.term(b.body, defn=False), indent=5, width=72,
+      stmt = fmt(self.term(body, defn=False), indent=5, width=72,
                  last=2)
     except Exception as ex:
-      self.warn.append('%s %s: %s' % (b.kind, b.name, ex))
+      self.warn.append('%s %s: %s' % (b.kind, nm, ex))
       self.out.append(self.at(b, 'a theorem whose statement the'
-                                 ' port cannot state yet: %s'
-                                 % b.name))
+                                 ' port cannot state yet: %s' % nm))
       return
-    head = 'let %s = cake_theorem "%s%s"' % (name, b.name, attrs)
+    head = 'let %s = cake_theorem "%s%s"' % (name, nm, attrs)
     if len(head) > 72:
       head = ('let %s =\n  cake_theorem "%s%s"'
-              % (name, b.name, attrs))
+              % (name, nm, attrs))
       if max(len(l) for l in head.split('\n')) > 72:
         head = ('let %s =\n  cake_theorem\n    "%s%s"'
-                % (name, b.name, attrs))
+                % (name, nm, attrs))
     self.out.append('%s\n  (fun () ->\n    `%s`)\n  CHEAT_TAC;;'
                     % (head, stmt))
 
@@ -717,6 +722,22 @@ class Porter:
       if self.monadic(b):
         return
       if self.grammar_block(b):
+        return
+      # a theorem that the ML code of a source states itself (HOL4's
+      # val foo = Q.prove(`...`, tactic) is a theorem named foo):
+      # phase two states it as it states a Theorem of the source
+      ths = hol4.ml_theorems(b.text)
+      if ths:
+        for nm, stmt, whole in ths:
+          if whole:
+            self.state(b, nm, [], stmt)
+          else:
+            self.out.append(self.at(b, 'a theorem that HOL4 states'
+                                       ' as the value of an ML'
+                                       ' expression: %s' % nm))
+        if hol4.ml_terms(b.text):
+          self.out.append(self.at(
+            b, 'the ML values that the definitions below antiquote'))
         return
       self.warn.append('ML code skipped: ' + b.text.strip()[:60])
       # the ML of a source that binds a term is not lost: the
