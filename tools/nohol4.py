@@ -19,6 +19,10 @@ import port as portmod
 
 ML = os.path.dirname(os.path.abspath(__file__)) + '/../ml/'
 
+# the comment that the port writes where it cannot say what the
+# source says: it points at the file and the lines of the source
+POINTER = re.compile(r'\s*HOL4 \S+\.sml:\d')
+
 # a line of a HOL4 script, which no line of the port can be
 HOL4_LINE = re.compile(
   r"^\s*(Theory|Ancestors|Libs|Theorem|Triviality|Proof|QED|End|"
@@ -72,7 +76,10 @@ def main():
       text = open(p).read()
       files += 1
       for line, body in comments(text):
-        m = portmod.COMMENTED_CODE.search(body)
+        # a pointer at the lines of a HOL4 source is what the port
+        # puts where it cannot say what the source says
+        if POINTER.match(body): continue
+        m = portmod.COMMENTED_CODE.search(portmod.uncomment(body))
         if m:
           bad += 1
           print('%s:%d: HOL4 code in a comment: %r'

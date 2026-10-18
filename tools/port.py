@@ -488,7 +488,7 @@ class Porter:
       # a comment block of the source can have ML code after the
       # comment (word_bignum's get_exp has '(* Var *) let' on one
       # line), and that code is not OCaml
-      if COMMENTED_CODE.search(b.text):
+      if COMMENTED_CODE.search(uncomment(b.text)):
         self.out.append(self.at(b, 'code that the source has in a'
                                    ' comment'))
       elif comment_only(b.text):
@@ -899,8 +899,8 @@ class Porter:
       if wf is not None:
         rel = fmt(self.term(wf), last=1)
         termnote = '' if not rest.split() else \
-                   self.at(b, 'the tactic of the Termination',
-                           'Termination') + '\n'
+                   self.at(b, 'the tactic that proves the'
+                              ' termination', 'Termination') + '\n'
 
     def size_prelude(text):
       """a measure that uses the size function of a datatype needs
@@ -965,7 +965,7 @@ class Porter:
       wf, rest = wf_relation(b.extra)
       wftext = fmt(self.term(wf), last=1)
       note = '' if not rest.split() else \
-             self.at(b, 'the tactic of the Termination',
+             self.at(b, 'the tactic that proves the termination',
                      'Termination') + '\n'
       text = (size_prelude(wftext + ' ' + term) + note + cheatnote +
               'let %s = cake_define_try_tac (fun () ->\n  `%s`)\n'
@@ -1008,7 +1008,7 @@ class Porter:
         # use to the port, but it is kept as a comment where there
         # is one
         note = '' if not rest.split() else \
-               self.at(b, 'the tactic of the Termination',
+               self.at(b, 'the tactic that proves the termination',
                        'Termination') + '\n'
         text = (size_prelude(wftext + ' ' + term) + note +
                 'let %s = cake_define_wf\n  `%s`\n  `%s`;;'
@@ -2489,6 +2489,12 @@ COMMENTED_CODE = re.compile('|'.join('(?:%s)' % p for p in [
   r'\b(store_thm|save_thm|prove|metis_tac|srw_ss|EVAL)\s*[("\[]',
   r'\b(rw|fs|gvs|simp|rfs|asm_simp_tac|rpt)\s*[\[(]',
 ]), re.M)
+
+
+def uncomment(text):
+  """the text with the brackets of its comments taken out, so that
+     a line of HOL4 code in a one line comment starts the line"""
+  return re.sub(r'\(\*|\*\)', '  ', text)
 
 
 def comment_only(text):
