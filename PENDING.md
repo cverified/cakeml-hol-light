@@ -73,8 +73,21 @@ its value:
 
 | constant | what HOL4 does |
 |---|---|
-| `word_bignum$mc_iop_code` | `to_deep` of `word_bignumScript.sml` runs the shallow definitions of the bignum routines through a translator written in ML and states the deep embedding that it finds |
 | `basisProg$basis` | the declarations of the standard basis library, which the proof producing translator of HOL4 (`ml_progLib`) builds; the basis library is outside the port (see `ISSUES.md`), and `compiler$compile_64` and `compile_32` only pass the constant on |
+
+The deep embedding of the bignum routines
+(`word_bignum$mc_iop_code` and the ten others) is built by the
+port, as HOL4 builds it: `to_deep` of `word_bignumScript.sml`
+runs the shallow definitions of `mc_multiword` through a
+translator written in the ML of that source, which the port has
+in OCaml (`tools/word_bignum_todeep.ml`, which `ML_PORTED` of
+`tools/overrides.py` writes where the source has its ML).  The
+shallow definitions themselves are made the way HOL4 makes them
+as well: each is the `SHORT_TAILREC` of a step function
+(`ml/lib/mc_tailrec.ml`, the counterpart of HOL4's
+`mc_tailrecLib`), and the equation that unfolds it, which HOL4
+proves there, is assumed -- 132 of the assumed theorems of the
+port are these.
 
 Twelve constants are declared for another reason: the encoder of
 a target needs a machine model of HOL4 (`x64_step` and the five
