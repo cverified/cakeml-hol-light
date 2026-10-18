@@ -359,6 +359,17 @@ class Porter:
     # order in which they stand in it (overrides.THM_RECLITS)
     self.ctx.reclits = list(
       overrides.THM_RECLITS.get((self.thy, nm), []))
+    # the accessor of a record field for this statement only
+    # (overrides.THM_ACCESSORS): a statement may use the name of a
+    # field for a variable of its own and read the field of a
+    # record as well (lab_to_targetProof's
+    # asm_fetch_NOT_ffi_entry_pcs has a variable ffi_names and
+    # reads mc_conf.ffi_names), and then the accessor cannot be
+    # the overloaded name
+    acc = overrides.THM_ACCESSORS.get((self.thy, nm))
+    if acc:
+      self.ctx.accessors = dict(self.ctx.accessors)
+      self.ctx.accessors.update(acc)
     # the theory whose constructor a name of this statement means
     # (overrides.CON_OF, which a definition takes the same way):
     # the Seq of data_simpProof's evaluate_Seq_Skip is dataLang's,
@@ -385,6 +396,8 @@ class Porter:
         hterm.DROP_TYVAR_ANNOT[0] = False
         hterm.UNIFY_TYVAR_ANNOT[0] = False
         if fv: self.ctx.fieldvar = self.fieldvar
+        if acc:
+          self.ctx.accessors = overrides.ACCESSORS.get(self.thy, {})
         self.ctx.reclits = []
         self.conof_said = {}
         self.ctx.overloaded |= wasovl

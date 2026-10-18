@@ -92,6 +92,14 @@ ACCESSORS = {
   'location': {'row': 'locnrow', 'col': 'locncol'},
 }
 
+# THM_ACCESSORS: the accessor that a statement reads a record
+# field with, where the overloaded name of the field is a variable
+# of the statement itself.  Where the record of the variable is
+# known (overrides.FIELD_VAR) that one settles it, which is the
+# first thing to try.
+THM_ACCESSORS = {
+}
+
 # UPDATERS: the field updates that HOL4 declares with ML code
 # (add_record_fupdate)
 UPDATERS = {
@@ -177,6 +185,13 @@ FIELD_VAR = {
   'envRel': {'tenv': 'type_env'},
   'type_dCanon': {'tenv1': 'type_env', 'tenv2': 'type_env',
                   'tenv': 'type_env'},
+  # the machine configuration, the state of labSem and the state
+  # of the target that the theory relates: the fields that it
+  # reads of them (mem, ffi_names, pc, ...) are the fields of a
+  # dozen records, and ffi_names is a variable of a statement of
+  # its own as well
+  'lab_to_targetProof': {'mc_conf': 'machine_config',
+                         's1': 'labSem_state', 't1': 'asm_state'},
   'flat_elimProof': {'env': 'flatSem_environment'},
   'flat_patternProof': {'env1': 'flatSem_environment',
                         'env2': 'flatSem_environment',
