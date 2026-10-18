@@ -185,6 +185,10 @@ def ml_theorems(text):
     rest = text[j:j + 200]
     whole = '|>' not in rest.split(';')[0]
     out.append((m.group(1), stmt.strip(), whole))
+  # a theorem that ML code saves under a name of its own, whose
+  # statement is the one of the theorem it saves
+  for m in re.finditer(r'(?:Q\.)?save_thm\s*\(\s*"([^"]+)"', text):
+    out.append((m.group(1), '', False))
   return out
 
 
