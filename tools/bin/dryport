@@ -1,0 +1,9 @@
+#!/bin/sh
+# dryport [directory] : port every theory into a scratch directory
+# (tmp/dry by default) and say which files of ml/ would differ, so
+# that a change to the translation is seen while a run is going
+C=/home/freek/claude/hol-light/cakeml
+d=${1:-$C/tmp/dry}
+mkdir -p $d
+cd $C
+python3 -I tools/dryport.py $d
